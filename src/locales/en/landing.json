@@ -318,7 +318,7 @@
     },
     "pyramid": {
       "title": "Invite your team. The org chart draws itself.",
-      "subtitle": "Everyone joins with the Cosmo account they already have, and you attach them to their manager. Then you group whoever you want into teams: those teams carry the projects, the objectives and the statistics.",
+      "subtitle": "Everyone joins with the Cosmo account they already have, and <hl>you attach them to their manager</hl>. Then you group whoever you want into teams: those teams carry the projects, the objectives and the statistics.",
       "g1t": "Invite",
       "g1d": "An organisation code or a single-use link. The person arrives with their existing account, reporting to you, with nothing to approve.",
       "g2t": "Attach",
@@ -347,7 +347,7 @@
     },
     "projects": {
       "title": "Create your projects, assign them at any scale.",
-      "subtitle": "A project belongs to a team and holds its tasks. You assign them to one person or several, and each of them finds those tasks in their own Cosmo, next to their personal ones.",
+      "subtitle": "A project belongs to a team and holds its tasks. You assign them to one person or several, and each of them finds those tasks <hl>in their own Cosmo</hl>, next to their personal ones.",
       "p1t": "To one person, to several, to a whole team",
       "p1d": "You assign to anyone within your scope. A task can carry several names, and split into subtasks assigned separately.",
       "p2t": "Board or timeline",
@@ -361,7 +361,7 @@
     },
     "okr": {
       "title": "Set your objectives, at every scale.",
-      "subtitle": "An organisation objective breaks down into team OKRs, each OKR into numeric key results. The same mechanism at every level, and nothing is lost between two floors.",
+      "subtitle": "An organisation objective breaks down into team OKRs, each OKR into numeric key results. The same mechanism at every level, and <hl>nothing is lost between two floors</hl>.",
       "orgLabel": "Organisation objective",
       "orgExample": "Make Nova Studio a reference in independent branding",
       "teamLabel": "Team OKR",
@@ -384,7 +384,7 @@
     },
     "progress": {
       "title": "Track how everyone is progressing.",
-      "subtitle": "The Statistics tab answers the Monday morning question: who is moving, who is falling behind, who is overloaded. A leadership team reads the whole organisation, a manager reads their scope, and it is the attachment from step 1 that decides.",
+      "subtitle": "The Statistics tab answers the Monday morning question: <hl>who is moving, who is falling behind, who is overloaded</hl>. A leadership team reads the whole organisation, a manager reads their scope, and it is the attachment from step 1 that decides.",
       "p1t": "The team's pace, week after week",
       "p1d": "A chart of tasks completed each week, plus the completion-rate trend it draws: you see who's speeding up and who's slowing down before it shows up anywhere else.",
       "p2t": "Everyone's workload",
@@ -396,19 +396,19 @@
     },
     "security": {
       "title": "The questions your committee will ask.",
-      "subtitle": "We answer them here, before they block the rollout.",
+      "subtitle": "We answer them here, <hl>before they block the rollout</hl>.",
       "s1t": "Database-level isolation",
-      "s1d": "Every table is protected by access policies evaluated server-side. A request forged from the browser returns nothing more than a legitimate one.",
+      "s1d": "Every table is protected by access policies <hl>evaluated server-side</hl>. A request forged from the browser returns nothing more than a legitimate one.",
       "s2t": "No disguised surveillance",
-      "s2d": "A manager sees the work in their scope, not their teammates' private lives. A member's personal tasks, habits and calendar are never exposed to their management chain.",
+      "s2d": "A manager sees the work in their scope, not their teammates' private lives. A member's personal tasks, habits and calendar <hl>are never exposed to their management chain</hl>.",
       "s3t": "GDPR compliance",
-      "s3d": "Account deletion genuinely executed server-side, documented retention, explicit consent when joining an organisation. No data resold.",
+      "s3d": "Account deletion <hl>genuinely executed server-side</hl>, documented retention, explicit consent when joining an organisation. No data resold.",
       "s4t": "Reversibility",
-      "s4d": "You leave whenever you want. Ownership transfer and organisation deletion are in the interface, not in a support ticket."
+      "s4d": "You leave whenever you want. Ownership transfer and organisation deletion are in the interface, <hl>not in a support ticket</hl>."
     },
     "pricing": {
       "title": "20 € a month for ten people.",
-      "subtitle": "The plan covers the whole organisation, whatever the number of projects. The price follows the tier you reach: no module to unlock, no quote to wait for.",
+      "subtitle": "The plan covers the whole organisation, whatever the number of projects. The price follows the tier you reach: <hl>no module to unlock, no quote to wait for</hl>.",
       "sliderLabel": "How many are you?",
       "sliderAria": "Number of members in your organisation",
       "membersUnit": "members",
@@ -423,7 +423,7 @@
       "i3": "Statistics per management scope",
       "i4": "A personal Cosmo for every member",
       "i5": "No commitment, cancel at any time",
-      "autoAdjust": "The plan adjusts itself when the organisation grows, and steps back down when headcount drops. Nothing for you to do.",
+      "autoAdjust": "The plan adjusts itself when the organisation grows, and steps back down when headcount drops. <hl>Nothing for you to do</hl>.",
       "cta": "Create my organisation",
       "ctaNote": "Free up to 5 members. Start without talking to us."
     },
@@ -443,7 +443,7 @@
     "cta": {
       "line1": "Your organisation already executes.",
       "line2": "Give it the structure to match.",
-      "subtitle": "Create your organisation in a minute, invite your first team, and watch your org chart come alive.",
+      "subtitle": "Create your organisation <hl>in a minute</hl>, invite your first team, and watch your org chart come alive.",
       "primary": "Create my organisation",
       "secondary": "Open the company demo",
       "note": "Free up to 5 members · no credit card"

@@ -4,6 +4,7 @@ import { ENTERPRISE_PRICING_TIERS } from '@/modules/billing/premium-config';
 import { ORG_TIER_LABEL_KEYS } from '@/modules/billing/org-tier-labels';
 import { useT } from '@/i18n/useT';
 import type { KeyOf } from '@/i18n/catalog';
+import ScrollHighlight from './ScrollHighlight';
 
 type Tier = (typeof ENTERPRISE_PRICING_TIERS)[number];
 
@@ -85,7 +86,7 @@ const PricingSection: React.FC<{ onRegister: () => void }> = ({ onRegister }) =>
             {t('enterprise.pricing.title')}
           </h2>
           <p className="text-base leading-relaxed text-slate-400 lg:text-lg">
-            {t('enterprise.pricing.subtitle')}
+            <ScrollHighlight text={t('enterprise.pricing.subtitle')} />
           </p>
         </header>
 
@@ -210,7 +211,7 @@ const PricingSection: React.FC<{ onRegister: () => void }> = ({ onRegister }) =>
               ))}
             </ul>
             <p className="mt-6 border-t border-white/[0.06] pt-5 text-sm leading-relaxed text-slate-500">
-              {t('enterprise.pricing.autoAdjust')}
+              <ScrollHighlight text={t('enterprise.pricing.autoAdjust')} />
             </p>
           </div>
 
