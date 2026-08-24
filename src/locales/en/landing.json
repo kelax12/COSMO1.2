@@ -363,7 +363,7 @@
     },
     "execution": {
       "title": "Track execution, not just deadlines.",
-      "subtitle": "Every task carries a workflow status and can block another one. The timeline computes the critical path: the chain where <hl>the smallest delay pushes back delivery</hl>.",
+      "subtitle": "<hl>Every task carries a status</hl>, and can block another one. The timeline computes the critical path: the chain where the smallest delay pushes back delivery.",
       "p1t": "Every team task, in one table",
       "p1d": "The Tasks tab gathers the tasks of every project in your scope, sortable by status, deadline or assignee, no need to open each project one by one.",
       "p2t": "Five statuses, not two",

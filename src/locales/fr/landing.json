@@ -363,7 +363,7 @@
     },
     "execution": {
       "title": "Suivez l'exécution, pas seulement les échéances.",
-      "subtitle": "Chaque tâche porte un statut de flux et peut en bloquer une autre. La frise calcule le chemin critique : la chaîne dont <hl>le moindre retard décale la livraison</hl>.",
+      "subtitle": "<hl>Chaque tâche porte un statut</hl> de flux et peut en bloquer une autre. La frise calcule le chemin critique : la chaîne dont le moindre retard décale la livraison.",
       "p1t": "Toutes les tâches d'équipe, dans un seul tableau",
       "p1d": "L'onglet Tâches réunit les tâches de tous les projets de votre périmètre, triables par statut, échéance ou assigné, sans ouvrir chaque projet un par un.",
       "p2t": "Cinq statuts, pas deux",
