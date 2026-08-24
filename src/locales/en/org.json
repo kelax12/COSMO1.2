@@ -882,8 +882,7 @@
     "back": "Workspace",
     "planHint": "View and upgrade your plan",
     "planAria": "Subscription: {{plan}}",
-    "planNamed": "{{name}} plan",
-    "upgrade": "Upgrade"
+    "planNamed": "{{name}} plan"
   },
   "inviteJoin": {
     "title": "Create or join a company",
