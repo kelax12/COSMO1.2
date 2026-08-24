@@ -75,6 +75,14 @@ type EventModalProps = {
    * toujours privé, sans choix possible pour l'utilisateur (F-1).
    */
   enterprisePublic?: boolean;
+  /**
+   * Catégories à proposer pour la couleur — remplace les catégories
+   * PERSONNELLES par défaut (`useCategories()`) quand fourni. Sert le mode
+   * entreprise (MemberAgendaBody) : les catégories d'entreprise (mig. 111)
+   * n'ont rien à voir avec celles du manager qui planifie l'événement, elles
+   * ne doivent donc jamais leur être substituées.
+   */
+  categoriesOverride?: { id: string; name: string; color: string }[];
 };
 
 const EventModal: React.FC<EventModalProps> = ({
@@ -91,6 +99,7 @@ const EventModal: React.FC<EventModalProps> = ({
   onConvert,
   lockedFields = [],
   enterprisePublic = false,
+  categoriesOverride,
 }) => {
   // Set pour lookup O(1) — utilisé partout dans le rendu pour disabled/readOnly
   const lockedSet = new Set(lockedFields);
@@ -110,7 +119,11 @@ const EventModal: React.FC<EventModalProps> = ({
   }, [isOpen]);
   const { favoriteColors } = useFavoriteColors();
   const { pref: tzPref } = useTimezonePref();
-  const { data: categories = [] } = useCategories();
+  // Toujours appelé (les hooks ne peuvent pas être conditionnels) : son
+  // résultat n'est utilisé que si l'appelant n'a pas fourni son propre jeu de
+  // catégories via `categoriesOverride` (mode entreprise).
+  const { data: personalCategories = [] } = useCategories();
+  const categories = categoriesOverride ?? personalCategories;
 
   const [title, setTitle] = useState("");
   const [startDate, setStartDate] = useState("");

@@ -507,6 +507,8 @@
     "namePlaceholder": "e.g. Website redesign",
     "color": "Colour",
     "colorAria": "Project colour",
+    "category": "Category",
+    "noCategory": "No category",
     "team": "Collaborators · team",
     "wholeOrg": "The whole company",
     "teamOption": "{{name}} team",

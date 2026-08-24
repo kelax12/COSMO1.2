@@ -37,6 +37,7 @@ interface ProjectRow {
   archived_at: string | null;
   created_at: string;
   team_id: string | null;
+  category_id: string | null;
 }
 
 interface TaskRow {
@@ -55,6 +56,7 @@ interface TaskRow {
   completed_at: string | null;
   created_at: string;
   updated_at: string;
+  category_id: string | null;
 }
 
 const mapProject = (r: ProjectRow): TeamProject => ({
@@ -66,6 +68,7 @@ const mapProject = (r: ProjectRow): TeamProject => ({
   archivedAt: r.archived_at,
   createdAt: r.created_at,
   teamId: r.team_id,
+  categoryId: r.category_id,
 });
 
 interface CommentRow {
@@ -105,6 +108,7 @@ const mapTask = (r: TaskRow): TeamTask => ({
   completedAt: r.completed_at,
   createdAt: r.created_at,
   updatedAt: r.updated_at,
+  categoryId: r.category_id,
 });
 
 export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
@@ -141,6 +145,7 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
         name: input.name,
         color: input.color ?? 'blue',
         team_id: input.teamId ?? null,
+        category_id: input.categoryId ?? null,
       });
     if (error) throw normalizeApiError(error);
     return {
@@ -152,6 +157,7 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
       archivedAt: null,
       createdAt: new Date().toISOString(),
       teamId: input.teamId ?? null,
+      categoryId: input.categoryId ?? null,
     };
   }
 
@@ -162,6 +168,7 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
     if (input.name !== undefined) patch.name = input.name;
     if (input.color !== undefined) patch.color = input.color;
     if (input.teamId !== undefined) patch.team_id = input.teamId;
+    if (input.categoryId !== undefined) patch.category_id = input.categoryId;
     if (input.archived !== undefined) patch.archived_at = input.archived ? new Date().toISOString() : null;
     const { data, error } = await supabase
       .from('team_projects')
@@ -214,6 +221,7 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
         estimated_time: input.estimatedTime ?? null,
         assignee_ids: input.assigneeIds ?? [],
         status: input.status ?? 'todo',
+        category_id: input.categoryId ?? null,
       })
       .select('*')
       .single();
@@ -232,6 +240,7 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
     if (input.estimatedTime !== undefined) patch.estimated_time = input.estimatedTime;
     if (input.assigneeIds !== undefined) patch.assignee_ids = input.assigneeIds;
     if (input.projectId !== undefined) patch.project_id = input.projectId;
+    if (input.categoryId !== undefined) patch.category_id = input.categoryId;
     // `status` et `completed` sont synchronisés par le trigger de la mig. 091.
     // On n'envoie donc JAMAIS les deux dans le même patch : le trigger traite
     // `status` en priorité, et un `completed` contradictoire serait écrasé

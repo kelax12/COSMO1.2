@@ -58,7 +58,7 @@ describe('SupabaseTeamProjectsRepository — projets', () => {
     expect(inserted).toEqual({
       id: inserted.id,
       org_id: 'org1', created_by: supabaseMock.user?.id,
-      name: 'Site web', color: 'green', team_id: 't1',
+      name: 'Site web', color: 'green', team_id: 't1', category_id: null,
     });
   });
 
@@ -169,7 +169,7 @@ describe('SupabaseTeamProjectsRepository — tâches', () => {
     expect(inserted).toEqual({
       org_id: 'org1', created_by: supabaseMock.user?.id, project_id: 'p1', name: 'Maquette',
       description: null, priority: 3, deadline: null, estimated_time: null, assignee_ids: [],
-      status: 'todo',
+      status: 'todo', category_id: null,
     });
   });
 
