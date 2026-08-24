@@ -338,7 +338,7 @@
       "b1t": "Scope follows the hierarchy",
       "b1d": "A manager sees their whole subtree: their teams, their projects, their objectives, their statistics. Nothing to tick, nothing to maintain.",
       "b2t": "Manage from the org chart",
-      "b2d": "Open anyone's file straight from the pyramid: their open tasks, their workload, their calendar. The org chart is not a staff photo wall, it is where you follow each person.",
+      "b2d": "Open anyone's file straight from the pyramid: their open tasks, their workload, their calendar.",
       "b3t": "Put a slot in their calendar",
       "b3d": "A manager creates, moves and edits events in the calendar of the people reporting to them. Anything they marked as personal stays private: only the slot shows.",
       "b4t": "Reorganise without migrating",
