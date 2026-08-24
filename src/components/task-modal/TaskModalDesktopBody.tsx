@@ -9,7 +9,7 @@
 // (collaborateurs) dans DesktopCollaboratorsStep. Ce fichier = chrome
 // (header, footer wizard) + aiguillage des deux étapes.
 import React from 'react';
-import { X, AlertCircle, ChevronRight, Loader2 } from 'lucide-react';
+import { X, AlertCircle, ChevronRight, Loader2, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import DesktopCollaboratorsStep from './DesktopCollaboratorsStep';
 import DesktopDetailsStep from './DesktopDetailsStep';
@@ -227,8 +227,6 @@ const TaskModalDesktopBody: React.FC<DesktopBodyProps> = ({
                     setSelectedListIds={setSelectedListIds}
                     createListMutation={createListMutation}
                     isCreating={isCreating}
-                    isLoading={isLoading}
-                    handleDelete={handleDelete}
                     task={task}
                     showDescription={showDescription}
                     setShowDescription={setShowDescription}
@@ -297,7 +295,19 @@ const TaskModalDesktopBody: React.FC<DesktopBodyProps> = ({
               paddingBottom: 'max(env(safe-area-inset-bottom), 0.75rem)',
             }}
           >
-            <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 w-full sm:ml-auto sm:w-auto">
+            {!collaboratorsOnly && !isCreating && task ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="lg"
+                onClick={handleDelete}
+                disabled={isLoading}
+                className="min-h-11 w-full sm:w-auto text-red-500 hover:text-red-600 hover:bg-red-500/10"
+              >
+                <Trash2 size={16} data-icon="inline-start" /> Supprimer
+              </Button>
+            ) : <span className="hidden sm:block" />}
+            <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
               {collaboratorsOnly ? (
                 /* Vue « Partager » : destinataire → simple « Fermer » ;
                    propriétaire → « Enregistrer » les partages modifiés. */
