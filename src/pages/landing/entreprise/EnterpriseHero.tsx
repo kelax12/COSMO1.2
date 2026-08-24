@@ -5,6 +5,7 @@ import CardSwap, { Card } from '@/components/reactbits/CardSwap';
 import AppShot from './AppShot';
 import ScrollHighlight from './ScrollHighlight';
 import { HERO_SHOTS } from './data';
+import { ENTERPRISE_FREE_OFFER } from './free-offer';
 import { useT } from '@/i18n/useT';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
 import { useMagnetic } from '@/lib/hooks/use-magnetic';
@@ -179,8 +180,15 @@ const EnterpriseHero: React.FC<EnterpriseHeroProps> = ({ onDemo }) => {
               </a>
             </div>
 
+            {/* « Jusqu'à 5 membres gratuitement » deviendrait faux pendant
+                l'offre de lancement : il n'y a aucun plafond tant que rien
+                n'est facturé. */}
             <p data-ent-hero-fade className="mt-4 text-xs text-slate-600">
-              {t('enterprise.hero.reassurance')}
+              {t(
+                ENTERPRISE_FREE_OFFER
+                  ? 'enterprise.hero.reassuranceFree'
+                  : 'enterprise.hero.reassurance',
+              )}
             </p>
           </div>
 

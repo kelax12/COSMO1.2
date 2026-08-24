@@ -4,6 +4,7 @@ import { gsap, useGSAP } from '@/lib/gsap';
 import { useT } from '@/i18n/useT';
 import ScrollHighlight from './ScrollHighlight';
 import { pauseWhenOffscreen } from '@/pages/landing/pause-offscreen';
+import { ENTERPRISE_FREE_OFFER } from './free-offer';
 
 interface EnterpriseCtaProps {
   onDemo: () => void;
@@ -90,7 +91,9 @@ const EnterpriseCta: React.FC<EnterpriseCtaProps> = ({ onDemo, onRegister }) => 
               </button>
             </div>
 
-            <p className="mt-5 text-xs text-slate-600">{t('enterprise.cta.note')}</p>
+            <p className="mt-5 text-xs text-slate-600">
+              {t(ENTERPRISE_FREE_OFFER ? 'enterprise.cta.noteFree' : 'enterprise.cta.note')}
+            </p>
           </div>
         </div>
       </div>

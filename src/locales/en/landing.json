@@ -306,6 +306,7 @@
       "ctaAria": "Open the company mode demonstration, no sign-up",
       "ctaSecondary": "See pricing",
       "reassurance": "Up to 5 members free · no credit card · reversible at any time",
+      "reassuranceFree": "Free during the launch offer · no credit card · reversible at any time",
       "scroll": "Scroll"
     },
     "problem": {
@@ -433,6 +434,12 @@
     },
     "pricing": {
       "title": "20 € a month for ten people.",
+      "promoBadge": "Launch offer",
+      "promoTitle": "Free for your whole organisation.",
+      "promoSubtitle": "Cosmo Enterprise charges nothing today, whatever your headcount. The prices below are the ones that will apply <hl>when the launch offer ends</hl> — you will be told beforehand, and nothing is ever charged unless you choose it.",
+      "insteadOf": "instead of €{{price}} / month",
+      "insteadOfShort": "instead of €{{price}}",
+      "ctaNoteFree": "Free during the launch offer, whatever your headcount. No credit card.",
       "subtitle": "The plan covers the whole organisation, whatever the number of projects. The price follows the tier you reach: <hl>no module to unlock, no quote to wait for</hl>.",
       "sliderLabel": "How many are you?",
       "sliderAria": "Number of members in your organisation",
@@ -463,7 +470,9 @@
       "q4": "What happens if we go past a tier?",
       "a4": "You can't invite past your tier until you raise it. But no member is ever removed, and nothing is lost if you step back down afterwards.",
       "q5": "Can we try without committing the company?",
-      "a5": "Yes. Create an organisation of up to five members, free and without a credit card. It is the complete product, not a crippled version."
+      "a4Free": "Nothing blocks you today: during the launch offer every tier is free and you can invite as many people as you want. Once billing is switched on, you will no longer be able to invite past your tier until you raise it — but no member is ever removed, and nothing is lost if you step back down.",
+      "a5": "Yes. Create an organisation of up to five members, free and without a credit card. It is the complete product, not a crippled version.",
+      "a5Free": "Yes. Create your organisation free and without a credit card — during the launch offer, whatever your headcount. It is the complete product, not a crippled version."
     },
     "cta": {
       "line1": "Your organisation already executes.",
@@ -471,7 +480,8 @@
       "subtitle": "Create your organisation <hl>in a minute</hl>, invite your first team, and watch your org chart come alive.",
       "primary": "Create my organisation",
       "secondary": "Open the company demo",
-      "note": "Free up to 5 members · no credit card"
+      "note": "Free up to 5 members · no credit card",
+      "noteFree": "Free during the launch offer · no credit card"
     }
   }
 }

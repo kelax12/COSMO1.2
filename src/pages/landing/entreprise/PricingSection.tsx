@@ -5,6 +5,7 @@ import { ORG_TIER_LABEL_KEYS } from '@/modules/billing/org-tier-labels';
 import { useT } from '@/i18n/useT';
 import type { KeyOf } from '@/i18n/catalog';
 import ScrollHighlight from './ScrollHighlight';
+import { ENTERPRISE_FREE_OFFER } from './free-offer';
 
 type Tier = (typeof ENTERPRISE_PRICING_TIERS)[number];
 
@@ -50,6 +51,11 @@ function tierFor(members: number): Tier {
  * et se cercle de cyan. Les montants viennent tous de
  * `ENTERPRISE_PRICING_TIERS` : la landing et le produit annoncent le même prix,
  * y compris le jour où le paywall sera activé.
+ *
+ * Pendant l'offre de lancement (`ENTERPRISE_FREE_OFFER`, cf. `free-offer.ts`),
+ * chaque montant est remplacé par « Gratuit » — le tarif reste affiché juste
+ * en dessous, barré, parce qu'une promo qui cache le prix d'après n'est pas une
+ * promo, c'est une surprise à retardement.
  */
 const PricingSection: React.FC<{ onRegister: () => void }> = ({ onRegister }) => {
   const { t } = useT('landing');
@@ -79,14 +85,27 @@ const PricingSection: React.FC<{ onRegister: () => void }> = ({ onRegister }) =>
 
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <header className="mb-12 max-w-3xl">
+          {/* Le badge annonce la nature temporaire AVANT le premier prix lu :
+              après, il ne ferait que corriger une impression déjà formée. */}
+          {ENTERPRISE_FREE_OFFER && (
+            <span className="mb-5 inline-flex items-center rounded-full border border-[#F5B942]/40 bg-[#F5B942]/10 px-3 py-1 font-mono text-caption uppercase tracking-[0.16em] text-[#F5B942]">
+              {t('enterprise.pricing.promoBadge')}
+            </span>
+          )}
           <h2
             id="pricing-title"
             className="mb-5 text-balance text-3xl font-bold leading-[1.1] tracking-[-0.02em] text-white sm:text-4xl lg:text-5xl"
           >
-            {t('enterprise.pricing.title')}
+            {t(ENTERPRISE_FREE_OFFER ? 'enterprise.pricing.promoTitle' : 'enterprise.pricing.title')}
           </h2>
           <p className="text-base leading-relaxed text-slate-400 lg:text-lg">
-            <ScrollHighlight text={t('enterprise.pricing.subtitle')} />
+            <ScrollHighlight
+              text={t(
+                ENTERPRISE_FREE_OFFER
+                  ? 'enterprise.pricing.promoSubtitle'
+                  : 'enterprise.pricing.subtitle',
+              )}
+            />
           </p>
         </header>
 
@@ -135,17 +154,28 @@ const PricingSection: React.FC<{ onRegister: () => void }> = ({ onRegister }) =>
                 des valeurs intermédiaires (48 € avant de se poser sur 50 €), et
                 un prix faux, même pendant une seconde, n'est pas un détail. Le
                 changement est signalé par une pulsation de la couleur. */}
-            <div key={activeTier.minMembers} className="ent-price flex items-baseline gap-1">
-              {activeTier.priceEurPerMonth === 0 ? (
-                <span className="text-4xl font-bold text-[#F5B942]">{t('enterprise.pricing.free')}</span>
-              ) : (
+            <div key={activeTier.minMembers} className="ent-price flex flex-col items-end">
+              {activeTier.priceEurPerMonth === 0 || ENTERPRISE_FREE_OFFER ? (
                 <>
+                  <span className="text-4xl font-bold text-[#F5B942]">{t('enterprise.pricing.free')}</span>
+                  {/* Le tarif d'après reste lisible, barré : c'est ce qui fait
+                      la différence entre « gratuit » et « gratuit pour le
+                      moment ». Rien à afficher pour le palier qui est gratuit
+                      de toute façon. */}
+                  {activeTier.priceEurPerMonth > 0 && (
+                    <s className="mt-1 text-sm text-slate-500 decoration-slate-600">
+                      {t('enterprise.pricing.insteadOf', { price: activeTier.priceEurPerMonth })}
+                    </s>
+                  )}
+                </>
+              ) : (
+                <span className="flex items-baseline gap-1">
                   <span className="text-4xl font-bold tabular-nums text-white">
                     {activeTier.priceEurPerMonth}
                   </span>
                   <span className="text-3xl font-bold text-slate-500">€</span>
                   <span className="ml-1 text-sm text-slate-500">{t('enterprise.pricing.perMonth')}</span>
-                </>
+                </span>
               )}
             </div>
           </div>
@@ -175,10 +205,17 @@ const PricingSection: React.FC<{ onRegister: () => void }> = ({ onRegister }) =>
                   <Users size={11} aria-hidden="true" />
                   {tierLabel(tier)}
                 </span>
-                {tier.priceEurPerMonth === 0 ? (
-                  <span className={`text-2xl font-bold ${isActive ? 'text-[#F5B942]' : 'text-white'}`}>
-                    {t('enterprise.pricing.free')}
-                  </span>
+                {tier.priceEurPerMonth === 0 || ENTERPRISE_FREE_OFFER ? (
+                  <>
+                    <span className={`text-2xl font-bold ${isActive ? 'text-[#F5B942]' : 'text-white'}`}>
+                      {t('enterprise.pricing.free')}
+                    </span>
+                    {tier.priceEurPerMonth > 0 && (
+                      <s className="mt-1 text-xs text-slate-600 decoration-slate-700">
+                        {t('enterprise.pricing.insteadOfShort', { price: tier.priceEurPerMonth })}
+                      </s>
+                    )}
+                  </>
                 ) : (
                   <span className="flex items-baseline gap-0.5">
                     <span className={`text-2xl font-bold tabular-nums ${isActive ? 'text-cyan-300' : 'text-white'}`}>
@@ -224,7 +261,11 @@ const PricingSection: React.FC<{ onRegister: () => void }> = ({ onRegister }) =>
               <ArrowRight size={17} className="transition-transform group-hover:translate-x-1" aria-hidden="true" />
             </button>
             <p className="text-center text-xs leading-relaxed text-slate-500">
-              {t('enterprise.pricing.ctaNote')}
+              {t(
+                ENTERPRISE_FREE_OFFER
+                  ? 'enterprise.pricing.ctaNoteFree'
+                  : 'enterprise.pricing.ctaNote',
+              )}
             </p>
           </div>
         </div>
