@@ -5,6 +5,7 @@ import EnterpriseHero from './EnterpriseHero';
 import ProblemSection from './ProblemSection';
 import PyramidSection from './PyramidSection';
 import ProjectsSection from './ProjectsSection';
+import ExecutionSection from './ExecutionSection';
 import OkrSection from './OkrSection';
 import ProgressSection from './ProgressSection';
 import SecuritySection from './SecuritySection';
@@ -22,11 +23,12 @@ interface EnterpriseTrackProps {
 /**
  * Le parcours entreprise, de bout en bout.
  *
- * La page EST l'onboarding. Après le constat, elle suit les quatre étapes de
+ * La page EST l'onboarding. Après le constat, elle suit les cinq étapes de
  * mise en place réelles, dans l'ordre où on les fait : inviter et structurer
- * (1), créer des projets et les attribuer (2), poser les OKR (3), suivre la
- * progression (4). Le visiteur qui l'a lue sait déjà quoi faire en arrivant
- * dans le produit, et retrouve les mêmes écrans.
+ * (1), créer des projets et les attribuer (2), suivre leur exécution — statuts,
+ * dépendances, chemin critique (3), poser les OKR (4), suivre la progression
+ * (5). Le visiteur qui l'a lue sait déjà quoi faire en arrivant dans le
+ * produit, et retrouve les mêmes écrans.
  *
  * Vient ensuite ce qu'un décideur demande une fois convaincu : la sécurité,
  * puis le prix. Les tarifs arrivent en avant-dernier, une fois seulement que
@@ -48,9 +50,10 @@ const EnterpriseTrack: React.FC<EnterpriseTrackProps> = ({ onDemo, onMemberDemo,
 
       <ProblemSection />
 
-      {/* Les quatre étapes de mise en place, dans l'ordre où on les fait. */}
+      {/* Les cinq étapes de mise en place, dans l'ordre où on les fait. */}
       <PyramidSection onMemberDemo={onMemberDemo} />
       <ProjectsSection />
+      <ExecutionSection />
       <OkrSection />
       <ProgressSection />
       <SecuritySection />
