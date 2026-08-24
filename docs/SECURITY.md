@@ -42,6 +42,46 @@ CREATE TRIGGER trg_prevent_user_id_change
   FOR EACH ROW EXECUTE FUNCTION prevent_user_id_change();
 ```
 
+### Helpers `SECURITY DEFINER` — exposition et appel depuis une policy
+
+> Ajouté le **2026-08-24**, après la mig. `100` (fuite inter-organisations refermée) et sa
+> régression immédiate par la mig. `107` (finding B-1 de `faille.md`).
+
+Un helper de RLS (`get_subtree`, `has_subordinates`, `org_admin_count`…) est un **prédicat
+interne**, pas une API. Étant `SECURITY DEFINER`, il s'exécute **sans RLS** : exposé en RPC
+PostgREST, il contourne la table qu'il est censé protéger.
+
+Trois règles, dans cet ordre :
+
+1. **`REVOKE EXECUTE … FROM authenticated, anon`** sur tout helper qui prend un `p_org` (ou tout
+   autre périmètre) en argument sans le vérifier contre `auth.uid()`.
+2. Cela **ne casse pas** les appels internes : dans une fonction `SECURITY DEFINER`, le rôle
+   effectif est le **propriétaire**. `claim_org_invite`, `can_access_team_project`… continuent
+   d'appeler les helpers.
+3. Mais cela **casse** l'appel direct depuis une policy : un `USING` / `WITH CHECK` s'évalue avec
+   le **rôle courant**. Une policy ne peut donc appeler qu'un helper resté exécutable par
+   `authenticated` — c'est-à-dire un helper **borné par `auth.uid()`** :
+
+| Depuis une policy | Interdit | À utiliser |
+|---|---|---|
+| « ce membre est-il sous moi ? » | `user_id IN (SELECT get_subtree(org_id, auth.uid()))` | `is_above(org_id, user_id)` |
+| « ai-je des subordonnés ici ? » | `has_subordinates(org_id, auth.uid())` | `i_have_subordinates(org_id)` |
+
+### Fonctions de trigger — `SECURITY INVOKER` et `REVOKE anon`
+
+Une fonction `RETURNS trigger` ne doit **jamais** être `SECURITY DEFINER` (règle de l'audit du
+2026-07-26) et doit être `REVOKE`-ée pour `anon` (mig. `064b`, réappliquée par `094b`).
+
+Deux raisons, la seconde souvent oubliée :
+
+- Une garde exécutée avec des privilèges élargis **devient elle-même le contournement**.
+- Un trigger `BEFORE INSERT/UPDATE` s'exécute **avant** l'évaluation du `WITH CHECK` de la RLS.
+  En `SECURITY DEFINER`, ses lectures ignorent la RLS et ses **messages d'erreur** deviennent un
+  oracle sur des lignes que l'appelant n'a pas le droit de lire. C'est exactement ce qui est
+  ouvert aujourd'hui sur `team_task_dependencies` (mig. `108`, finding B-3).
+
+Référence conforme : `freeze_team_membership_identity()` (mig. `107`).
+
 ### Repositories Supabase — anti-mass-assignment
 
 Dans tous les `mapToDb(input)` :
@@ -184,6 +224,16 @@ supabase db push  # applique 017_processed_stripe_events.sql
 - ✅ Toute donnée utilisateur recopiée depuis `auth.users.raw_user_meta_data` ou autre source contrôlée par un tiers doit passer par `public.sanitize_display_name()` (migration 026, faille M-2) avant insertion dans une table partagée — `accept_friend_request_v2` est la référence.
 - ⚠️ Le schéma réel de prod peut diverger des migrations (ex. `friend_requests` utilise `sender_id`/`receiver_id`) — vérifier avant d'écrire des policies qui réfèrent à des colonnes.
 - ✅ Toutes les `CREATE POLICY` utilisent des guillemets non-échappés (`"..."`). Ne pas réintroduire de `\"`.
+- ✅ **Toute fonction citée dans un `USING` / `WITH CHECK` doit être `EXECUTE`-able par `authenticated`.** Vérification en une requête, à faire avant de pousser une migration qui crée une policy :
+  ```sql
+  select p.proname, has_function_privilege('authenticated', p.oid, 'EXECUTE')
+    from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+   where n.nspname = 'public' and p.proname in (<fonctions citées par la policy>);
+  ```
+  Aucune garde automatique ne couvre ce cas aujourd'hui : `check:rls` vérifie le wrapping
+  d'`auth.uid()` et l'unicité des policies permissives, pas les **droits**. C'est ainsi que la
+  mig. `107` est passée (finding B-1).
+- ✅ **Fonction `RETURNS trigger` : `SECURITY INVOKER` (défaut) + `REVOKE ALL … FROM PUBLIC, anon`.** Cf. section dédiée plus haut.
 
 ## Rotation des secrets
 
