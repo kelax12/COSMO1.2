@@ -803,7 +803,10 @@
     "deleteOkrAria": "Supprimer l'objectif {{title}}",
     "editOkrAria": "Modifier l'objectif {{title}}",
     "save": "Enregistrer",
-    "saving": "Enregistrement…"
+    "saving": "Enregistrement…",
+    "unreadComments_one": "{{count}} commentaire non lu",
+    "unreadComments_many": "{{count}} de commentaires non lus",
+    "unreadComments_other": "{{count}} commentaires non lus"
   },
   "tabs": {
     "overview": "Aperçu",
@@ -873,6 +876,7 @@
     "kindAssigned": "Une tâche vous a été assignée",
     "kindMention": "Vous avez été mentionné dans un commentaire",
     "kindOverdue": "Une de vos tâches est en retard",
+    "kindComment": "Nouveau commentaire sur une tâche que vous suivez",
     "periodToday": "Aujourd'hui",
     "periodWeek": "Cette semaine",
     "periodEarlier": "Plus tôt"

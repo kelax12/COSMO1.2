@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { X, AlertCircle, Trash2, Loader2, ChevronRight, Check, MessageSquare, Send } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import type { OrgMember } from '@/modules/organizations';
+import { useMarkTaskNotificationsRead, type OrgMember } from '@/modules/organizations';
 import type { TeamProject, TeamTask, CreateTeamTaskInput, UpdateTeamTaskInput } from '@/modules/team-projects';
 import { useCreateTeamProject } from '@/modules/team-projects';
 import { PRIORITY_META, projectColor } from './team-projects.helpers';
@@ -164,6 +164,15 @@ const TeamTaskModal = ({
   const createProject = useCreateTeamProject(orgId);
   const [showNewProjectInput, setShowNewProjectInput] = useState(false);
   const [newProjectName, setNewProjectName] = useState('');
+
+  // Ouvrir une tâche EXISTANTE fait disparaître son badge « commentaires non
+  // lus » (mig. 109) — pas la tâche en cours de création, qui n'a encore
+  // aucune notification à marquer.
+  const markTaskNotificationsRead = useMarkTaskNotificationsRead(orgId);
+  useEffect(() => {
+    if (task) markTaskNotificationsRead.mutate(task.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [task?.id]);
 
   const submitNewProject = () => {
     const projectName = newProjectName.trim();

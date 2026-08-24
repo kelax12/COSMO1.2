@@ -16,8 +16,12 @@ import { ORG_NOTIFICATIONS_STORAGE_KEY } from './constants';
  * `task_overdue` (mig. 096) est produit par pg_cron, pas par une action
  * humaine : son `actorId` est donc TOUJOURS null. Afficher un auteur pour ce
  * type serait un mensonge — c'est le temps qui passe, personne ne l'a fait.
+ *
+ * `comment` (mig. 109) : posté sur une tâche où le destinataire est assigné,
+ * sans le mentionner nommément (sinon c'est `mention`, jamais les deux à la
+ * fois pour un même commentaire — cf. le trigger `notify_task_comment`).
  */
-export type OrgNotificationKind = 'task_assigned' | 'mention' | 'task_overdue';
+export type OrgNotificationKind = 'task_assigned' | 'mention' | 'task_overdue' | 'comment';
 
 export interface OrgNotification {
   id: string;
@@ -155,6 +159,50 @@ export const useMarkNotificationsRead = (orgId: string) => {
   });
 };
 
+/**
+ * Marque comme lues les notifications d'UNE tâche précise (mig. 109) —
+ * distinct de `useMarkNotificationsRead` (tout l'historique, ouverture de la
+ * cloche) : ici, ouvrir la tâche elle-même fait disparaître son badge de
+ * commentaires non lus, sans toucher au reste des notifications.
+ */
+export const useMarkTaskNotificationsRead = (orgId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (taskId: string) => {
+      if (appModeStore.isDemo) {
+        const now = new Date().toISOString();
+        const next = readDemoNotifications().map((n) =>
+          n.orgId === orgId && n.taskId === taskId && n.readAt === null ? { ...n, readAt: now } : n,
+        );
+        localStorage.setItem(ORG_NOTIFICATIONS_STORAGE_KEY, JSON.stringify(next));
+        return;
+      }
+      if (!supabase) return;
+      const { error } = await supabase
+        .from('org_notifications')
+        .update({ read_at: new Date().toISOString() })
+        .eq('org_id', orgId)
+        .eq('task_id', taskId)
+        .is('read_at', null);
+      if (error) throw normalizeApiError(error);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: orgNotificationKeys.list(orgId) });
+    },
+  });
+};
+
 /** Nombre de non-lues — alimente la pastille de navigation. */
 export const unreadCount = (notifications: OrgNotification[]): number =>
   notifications.filter((n) => n.readAt === null).length;
+
+/** Nombre de commentaires non lus PAR TÂCHE — alimente le badge à côté du
+ *  nom de la tâche dans TeamTasksTab (mig. 109). */
+export const unreadCommentCountByTask = (notifications: OrgNotification[]): Map<string, number> => {
+  const map = new Map<string, number>();
+  for (const n of notifications) {
+    if (n.kind !== 'comment' || n.readAt !== null || !n.taskId) continue;
+    map.set(n.taskId, (map.get(n.taskId) ?? 0) + 1);
+  }
+  return map;
+};

@@ -771,7 +771,9 @@
     "deleteOkrAria": "Delete the objective {{title}}",
     "editOkrAria": "Edit the objective {{title}}",
     "save": "Save",
-    "saving": "Saving…"
+    "saving": "Saving…",
+    "unreadComments_one": "{{count}} unread comment",
+    "unreadComments_other": "{{count}} unread comments"
   },
   "tabs": {
     "overview": "Overview",
@@ -839,6 +841,7 @@
     "kindAssigned": "A task was assigned to you",
     "kindMention": "You were mentioned in a comment",
     "kindOverdue": "One of your tasks is overdue",
+    "kindComment": "New comment on a task you're following",
     "periodToday": "Today",
     "periodWeek": "This week",
     "periodEarlier": "Earlier"
