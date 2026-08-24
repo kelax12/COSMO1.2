@@ -421,13 +421,13 @@
       "title": "The questions your committee will ask.",
       "subtitle": "We answer them here, <hl>before they block the rollout</hl>.",
       "s1t": "Database-level isolation",
-      "s1d": "Every table is protected by access policies <hl>evaluated server-side</hl>. A request forged from the browser returns nothing more than a legitimate one.",
+      "s1d": "Access rules <hl>live in the database, not in the code shown on screen</hl>. No one can bypass them by tampering with a request.",
       "s2t": "No disguised surveillance",
-      "s2d": "A manager sees the work in their scope, not their teammates' private lives. A member's personal tasks, habits and calendar <hl>are never exposed to their management chain</hl>.",
-      "s3t": "GDPR compliance",
-      "s3d": "Account deletion <hl>genuinely executed server-side</hl>, documented retention, explicit consent when joining an organisation. No data resold.",
-      "s4t": "Reversibility",
-      "s4d": "You leave whenever you want. Ownership transfer and organisation deletion are in the interface, <hl>not in a support ticket</hl>."
+      "s2d": "A manager sees the team projects and tasks in their scope. A member's habits, calendar and personal tasks <hl>stay invisible to their management chain</hl>.",
+      "s3t": "Your data is yours",
+      "s3d": "No data is ever resold. <hl>Account deletion is real, not symbolic</hl>, and every retention period is written down.",
+      "s4t": "Leaving is as easy as joining",
+      "s4d": "Transfer ownership, delete the organisation: it's all a few clicks away, <hl>no support ticket needed</hl>."
     },
     "pricing": {
       "title": "20 € a month for ten people.",
