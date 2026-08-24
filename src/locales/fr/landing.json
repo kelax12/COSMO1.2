@@ -384,7 +384,7 @@
     },
     "okr": {
       "title": "Posez vos objectifs, à toutes les échelles.",
-      "subtitle": "Un objectif d'organisation se décline en OKR d'équipe, chaque OKR en résultats clés chiffrés. Le même mécanisme à chaque niveau, et <hl>rien ne se perd entre deux étages</hl>.",
+      "subtitle": "Un objectif d'organisation se décline en OKR d'équipe, chaque OKR en résultats clés chiffrés. <hl>Chaque équipe voit comment son travail nourrit l'objectif commun</hl>.",
       "orgLabel": "Objectif d'organisation",
       "orgExample": "Faire de Nova Studio une référence du branding indépendant",
       "teamLabel": "OKR d'équipe",
@@ -401,8 +401,8 @@
       "team3Objective": "Devenir l'agence sur laquelle les clients savent qu'ils peuvent compter",
       "team3Kr1": "90 % des jalons livrés à la date annoncée",
       "team3Kr2": "Zéro dépassement de budget de plus de 10 % sur les projets actifs",
-      "b1": "Chaque équipe accroche ses OKR à un objectif commun, dans les catégories que vous définissez.",
-      "b2": "Les résultats clés portent un chiffre et une cible, pas une intention.",
+      "b1": "Chaque OKR d'équipe se rattache à l'objectif d'organisation qui lui donne son sens.",
+      "b2": "Un résultat clé est un chiffre à atteindre, pas une intention vague.",
       "b3": "Chaque résultat clé atteint est journalisé à la date où il l'a été."
     },
     "progress": {
