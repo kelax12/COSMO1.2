@@ -21,9 +21,9 @@ répond à une seule question : **les invariants qu'on s'est donnés tiennent-il
 | La récurrence est générée côté serveur | mig. 086 | ✅ Tenu |
 | Un seul canal Realtime, monté dans `App.tsx` | CLAUDE.md 📡 | ✅ Tenu (1 seul `.channel()` dans tout `src/`) |
 | Toutes les tables `public` ont RLS activée | `SECURITY.md` | ✅ **Tenu**, vérifié en prod le 2026-08-24 : 0 table avec `relrowsecurity = false` |
-| **Jamais de `supabase.from()` hors d'un repository** | `SCALABILITY.md` §5 | ❌ **Violé** — voir §2 (toujours le seul `SettingsPage.tsx`) |
+| **Jamais de `supabase.from()` hors d'un repository** | `SCALABILITY.md` §5 + garde | ✅ **Tenu depuis le 2026-08-24** — 4 fichiers assainis (et non 1 : le comptage manuel avait raté les trois autres), invariant désormais **outillé** (§2) |
 | Imports toujours via l'alias `@/` | CLAUDE.md + ESLint | ✅ **Tenu depuis le 2026-08-24** — 74 imports relatifs réécrits, et la convention est désormais **outillée** (`no-restricted-imports`), donc elle ne peut plus se diluer en silence (§2) |
-| Aucun fichier source > 600 LOC | refactor de juin 2026 | ❌ **Violé, et ça empire** — 13 fichiers au 2026-08-14, **15** au 2026-08-24 (§3) |
+| Aucun fichier source > 600 LOC | refactor de juin 2026 + cliquet | ❌ **Toujours violé — 17 fichiers**, mais l'hémorragie est **arrêtée** : un cliquet interdit tout nouveau dépassement et toute croissance nette (§3) |
 | Suite unitaire verte | `TESTING.md` | ✅ **Rétablie le 2026-08-24** — 1560/1560 (cf. [`TESTING.md`](./TESTING.md)) |
 
 Les invariants qui portent la **sécurité** et la **performance** tiennent tous.
@@ -36,20 +36,17 @@ seules dettes de ce tableau que **rien ne mesure encore**, et donc les deux seul
 de grandir. C'est le motif de fond de cet audit : *une règle qu'aucun script ne mesure recule à
 chaque vague de features.*
 
-## 2. 🟡 Deux entorses ponctuelles dans `SettingsPage`
+## 2. ✅ Les deux entorses de `SettingsPage` — réglées, et outillées
 
-`src/pages/SettingsPage.tsx` concentre les deux violations :
+**État au 2026-08-24 : les deux invariants sont tenus, et chacun a désormais un outil.**
+C'est la seule partie qui compte : les deux avaient déjà été « corrigés » par le passé, et les
+deux étaient revenus.
 
-- **Lignes 288 et 315** : `await supabase.from('profiles')…` en direct depuis une page. La règle
-  (« ne jamais appeler `supabase.from()` hors d'un repository ») n'est pas cosmétique : c'est elle
-  qui garde le pattern repository comme unique frontière de données, donc qui rend une sortie de
-  Supabase envisageable en jours plutôt qu'en mois.
-- **Ligne 14** : `import { useUpdateUserSettings } from '../modules/user'` — chemin relatif au lieu
-  de l'alias `@/`.
+### 2.1 Imports relatifs
 
-**Mise à jour du 2026-08-24 : ✅ réglé, et outillé.** Le comptage du 2026-08-14 (« 1 entorse »)
-était faux par sous-mesure : il ne cherchait que `../modules`. En élargissant à `../lib`,
-`../components`, `../pages`, `../i18n`, on trouvait **74 imports relatifs dans 29 fichiers**.
+Le comptage du 2026-08-14 (« 1 entorse ») était faux **par sous-mesure** : il ne cherchait que
+`../modules`. En élargissant à `../lib`, `../components`, `../pages`, `../i18n`, on trouvait
+**74 imports relatifs dans 29 fichiers**.
 
 Tous réécrits en `@/…` (résolution mécanique du chemin, `tsc -b` vert), puis la convention rendue
 **exécutable** par une règle ESLint `no-restricted-imports` — périmètre volontairement étroit :
@@ -57,12 +54,34 @@ seuls les chemins qui *remontent* pour atteindre `src/` sont interdits ; les imp
 internes à un module (`./constants`, `./types`) restent légitimes, ce sont eux qui rendent un
 module déplaçable.
 
-La leçon n'est pas « il fallait corriger 74 lignes » : c'est que **la mesure elle-même était
-fausse** tant qu'aucun outil ne la faisait. Un `grep` écrit à la main mesure ce à quoi on a pensé.
+### 2.2 `supabase.from()` hors repository
 
-Reste la première entorse de cette section : `await supabase.from('profiles')…` en direct dans
-`SettingsPage.tsx`. Non corrigée — elle demande de créer un chemin de repository, pas de déplacer
-une ligne.
+Même histoire, en pire. Ce document affirmait « `SettingsPage.tsx` concentre les deux
+violations ». **C'était faux** : il y en avait quatre, dans quatre modules différents. Les trois
+autres avaient échappé au `grep` initial parce qu'il ne balayait que `src/pages` et
+`src/components` — or les trois vivaient dans `src/modules`.
+
+| Fichier | Ce qu'il faisait | Où c'est parti |
+|---|---|---|
+| `src/pages/SettingsPage.tsx` | 2 × `UPDATE profiles` (avatar) | `src/modules/user/profile.repository.ts` |
+| `src/modules/billing/billing.context.tsx` | `SELECT` + `INSERT subscriptions` | `billing.repository.ts` → `fetchOwnSubscriptionRow()` |
+| `src/modules/friends/share-link.hooks.ts` | get-or-create sur `share_links` | `share-link.repository.ts` |
+| `src/modules/organizations/notifications.ts` | 3 requêtes sur `org_notifications` | `notifications.repository.ts` |
+
+Deux choix méritent d'être relus avant d'être « simplifiés » :
+
+- `fetchOwnSubscriptionRow()` **duplique** `getSubscription()` au lieu de l'appeler. Ce n'est pas
+  un oubli : elle utilise `getSession()` (lecture locale) au lieu de `getCurrentUser()` (qui
+  revalide le JWT auprès de Supabase, donc un RTT par appel), et renvoie `null` au lieu de lever.
+  Ce provider est monté pour toute l'application — le coût y est payé sur chaque écran.
+- Le branchement démo des notifications reste dans les hooks. Il ne lit pas une table mais
+  `localStorage` ; le sortir imposerait une paire local/supabase complète pour trois fonctions,
+  sans rien protéger de plus. Ce que l'invariant vise, c'est l'accès direct à une **table** depuis
+  du code d'interface.
+
+**Garde** : `src/architecture.guard.test.ts` échoue si un fichier hors `*.repository.ts` contient
+`supabase.from(`. Les commentaires sont retirés avant la recherche — sans ça, la phrase qui
+explique la règle déclenchait la règle.
 
 ## 3. 🟠 L'objectif « aucun fichier > 600 LOC » n'est plus tenu
 
@@ -82,9 +101,24 @@ Coût réel, mesuré ailleurs dans cette série d'audits : ces fichiers alimente
 (438 kB, cf. [`PERFORMANCE.md`](./PERFORMANCE.md)) et rendent chaque intervention plus chère à
 charger en contexte.
 
-**Correction** : découper les trois plus gros, puis ajouter une garde CI (un simple `wc -l` sur
-`src/**` qui échoue au-delà d'un seuil) — sans quoi la règle cédera à nouveau, comme l'échelle
-z-index et les invariants RLS avant elle.
+**Correction, moitié faite le 2026-08-24.** La garde CI demandée ici existe désormais
+(`src/architecture.guard.test.ts`) et pose un **cliquet** en deux temps :
+
+- aucun **nouveau** fichier ne dépasse 600 lignes ;
+- le **total** des 17 fichiers déjà hors budget (13 103 lignes) ne remonte jamais.
+
+Le budget en total plutôt que par fichier est délibéré : il autorise à déplacer du code entre deux
+gros fichiers pendant un refactor, tout en interdisant la croissance nette. Un troisième test
+interdit à la liste de garder un fichier assaini — sans lui, un découpage libérerait de la place
+pour un futur dépassement, et le cliquet reprendrait du mou en silence.
+
+Ce que la garde ne fait PAS : découper `PyramidTab.tsx`. C'est un chantier, pas un correctif, et
+il reste entier. Mais l'hémorragie s'arrête ici — les 17 fichiers de la liste sont tous arrivés
+« juste au-dessus ».
+
+> Le comptage manuel s'est trompé une troisième fois dans cet audit : `friends/supabase.repository.ts`
+> (601 lignes) manquait à la liste écrite à la main. C'est l'argument du fichier de garde, pas une
+> anecdote — **une règle mesurée à la main mesure ce à quoi on a pensé.**
 
 ## 4. 🟡 Code livré sans consommateur — un motif récurrent
 
@@ -92,7 +126,7 @@ Le dépôt accumule des primitives et des hooks livrés puis jamais adoptés :
 
 | Élément | Consommateurs |
 |---|---|
-| `useMessages` (`src/modules/user`) | **0** — et pourtant **documenté dans `CLAUDE.md`** comme API à utiliser |
+| ~~`useMessages` (`src/modules/user`)~~ | ✅ **supprimé le 2026-08-24** — avec `useUser`, `useWatchAd` et `useUpdateUserSettings` : tout le module sauf le type `User` |
 | `MobileScreen`, `ListRow` (`src/components/mobile`) | **0** (cf. [`MOBILE.md`](./MOBILE.md)) |
 | `useTasksInfinite` / `getPage` | **0** (cf. [`SCALABILITY.md`](./SCALABILITY.md) §5) |
 | `MobileHeader`, `TouchTarget`, `BottomSheet`, `Segmented` | 2 chacun |
@@ -101,10 +135,21 @@ Ce n'est pas grave pris isolément, mais c'est un **motif** : on construit la br
 migre la première page en vitrine, et la migration s'arrête là. Le coût n'est pas le code mort
 lui-même — c'est que la doc décrit alors une architecture qui n'existe pas.
 
-> ⚠️ La ligne `import { useMessages } from '@/modules/user'` de `CLAUDE.md` décrit un hook que
-> personne n'appelle. Elle a survécu à la réécriture documentaire du 2026-08-14 parce que j'ai
+> ⚠️ La ligne `import { useMessages } from '@/modules/user'` de `CLAUDE.md` décrivait un hook que
+> personne n'appelait. Elle a survécu à la réécriture documentaire du 2026-08-14 parce que j'ai
 > vérifié que le fichier existait, pas qu'il servait. **Vérifier l'existence ne suffit pas ;
 > il faut vérifier l'usage.**
+>
+> ✅ **Résolu le 2026-08-24, et la suite est plus intéressante que la ligne de doc.** En vérifiant
+> l'usage, il s'est avéré que `src/modules/user` n'avait qu'UN seul consommateur — et que ce
+> consommateur écrivait dans `cosmo_user`, une clé que plus rien ne relisait depuis que `useAuth`
+> est devenu la source de vérité du type `User`. En mode démo, changer son nom, son email ou sa
+> photo affichait « Profil mis à jour » et **ne changeait rien**, ni tout de suite ni après
+> rechargement (faille B7, deuxième occurrence). Le code mort ne coûtait pas que de la place : il
+> cachait un bug de parcours, sur le mode démo, qui est l'entonnoir d'acquisition.
+>
+> La mutation est remontée dans `AuthContext` (`updateDemoProfile`), la partie pure est isolée et
+> testée (`src/modules/auth/demo-profile.ts` + 10 tests), et le reste du module a été supprimé.
 
 ## 5. 🔴 Dérive repo ↔ prod
 

@@ -7,10 +7,13 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
-import { normalizeApiError } from '@/lib/normalizeApiError';
 import { appModeStore } from '@/lib/app-mode.store';
 import { ORG_NOTIFICATIONS_STORAGE_KEY } from './constants';
+import {
+  fetchOrgNotificationRows,
+  markOrgNotificationsRead,
+  markTaskNotificationsRead,
+} from './notifications.repository';
 
 /**
  * `task_overdue` (mig. 096) est produit par pg_cron, pas par une action
@@ -112,16 +115,8 @@ export const useOrgNotifications = (orgId: string | undefined) =>
           .filter((n) => n.orgId === orgId)
           .sort((a, b) => (a.createdAt > b.createdAt ? -1 : 1));
       }
-      if (!supabase) return [];
-      const { data, error } = await supabase
-        .from('org_notifications')
-        .select('*')
-        .eq('org_id', orgId as string)
-        // Même ordre que l'index (user_id, created_at DESC).
-        .order('created_at', { ascending: false })
-        .limit(50);
-      if (error) throw normalizeApiError(error);
-      return (data as NotificationRow[]).map(mapNotification);
+      const rows = await fetchOrgNotificationRows(orgId as string);
+      return (rows as NotificationRow[]).map(mapNotification);
     },
     enabled: !!orgId,
     staleTime: 1000 * 30,
@@ -142,16 +137,7 @@ export const useMarkNotificationsRead = (orgId: string) => {
         localStorage.setItem(ORG_NOTIFICATIONS_STORAGE_KEY, JSON.stringify(next));
         return;
       }
-      if (!supabase) return;
-      const { error } = await supabase
-        .from('org_notifications')
-        .update({ read_at: new Date().toISOString() })
-        .eq('org_id', orgId)
-        // Ne réécrit pas les lignes déjà lues : sans ce filtre, chaque ouverture
-        // du panneau réécrirait tout l'historique et écraserait la date de
-        // première lecture.
-        .is('read_at', null);
-      if (error) throw normalizeApiError(error);
+      await markOrgNotificationsRead(orgId);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: orgNotificationKeys.list(orgId) });
@@ -177,14 +163,7 @@ export const useMarkTaskNotificationsRead = (orgId: string) => {
         localStorage.setItem(ORG_NOTIFICATIONS_STORAGE_KEY, JSON.stringify(next));
         return;
       }
-      if (!supabase) return;
-      const { error } = await supabase
-        .from('org_notifications')
-        .update({ read_at: new Date().toISOString() })
-        .eq('org_id', orgId)
-        .eq('task_id', taskId)
-        .is('read_at', null);
-      if (error) throw normalizeApiError(error);
+      await markTaskNotificationsRead(orgId, taskId);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: orgNotificationKeys.list(orgId) });

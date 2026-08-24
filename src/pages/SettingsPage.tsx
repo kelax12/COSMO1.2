@@ -11,7 +11,7 @@ import { useIsAdmin } from '@/modules/admin';
 import { useHabitReminderPref } from '@/modules/ui-states';
 import { useNavigate } from 'react-router';
 import { useAuth } from '@/modules/auth/AuthContext';
-import { useUpdateUserSettings } from '@/modules/user';
+import { mirrorAvatarToProfile } from '@/modules/user/profile.repository';
 import ThemeToggle from '@/components/ThemeToggle';
 import LocaleToggle from '@/components/LocaleToggle';
 import { SUPPORTED_LOCALES } from '@/i18n/locale';
@@ -55,10 +55,9 @@ const SettingsPage: React.FC = () => {
   // le nom explicite évite toute ambiguïté quand elle le sera.
   const { t: tCommon } = useT('common');
   const { t } = useT('settings');
-  const { user, logout, isDemo } = useAuth();
+  const { user, logout, isDemo, updateDemoProfile } = useAuth();
   const { pref: tzPref, setMode: setTzMode, setOffsetHours: setTzOffset } = useTimezonePref();
   const isAdmin = useIsAdmin();
-  const updateUserSettings = useUpdateUserSettings();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState<SettingsTab>('profile');
@@ -118,9 +117,11 @@ const SettingsPage: React.FC = () => {
     setSavingProfile(true);
     try {
       if (isDemo) {
-        // Demo mode: persist locally so the UI reflects the change for the
-        // session. Real users go through Supabase.
-        updateUserSettings({ name, email });
+        // La démo n'a pas de backend : la mutation passe par AuthContext, qui
+        // EST la source lue par cet écran. L'ancien chemin écrivait dans
+        // `cosmo_user`, que plus personne ne relisait depuis que `useAuth` est
+        // devenu la source de vérité — le toast s'affichait, rien ne changeait.
+        updateDemoProfile({ name, email });
         toast.success(t('profile.updatedDemo'));
         return;
       }
@@ -265,7 +266,7 @@ const SettingsPage: React.FC = () => {
         if (isDemo) {
           // La démo n'a pas de backend : la data URL reste locale et ne part
           // dans aucun JWT — le problème AUD-04 ne s'y pose pas.
-          updateUserSettings({ avatar: canvas.toDataURL('image/jpeg', 0.85) });
+          updateDemoProfile({ avatar: canvas.toDataURL('image/jpeg', 0.85) });
         } else {
           // AUD-04 — on n'écrit PLUS la data URL dans user_metadata (elle
           // finissait dans le JWT de chaque requête). On uploade dans Storage
@@ -281,14 +282,11 @@ const SettingsPage: React.FC = () => {
 
           const { error } = await supabase.auth.updateUser({ data: { avatar_url: publicUrl } });
           if (error) { toast.error(t('profile.photoUpdateFailed')); return; }
-          // Mirror to `profiles` so other users can see the updated avatar
-          // (auth.user_metadata is private and not visible to other users).
-          // `profiles.id` / `.email` / `.account_type` sont verrouillés côté
-          // serveur (mig. 083, faille H-1) : seul l'avatar est modifiable ici.
-          // La ligne existe toujours (créée par le trigger sur auth.users).
-          await supabase.from('profiles')
-            .update({ avatar_url: publicUrl })
-            .eq('id', authUser.id);
+          // Écriture-miroir dans `profiles` pour que les AUTRES utilisateurs
+          // voient la nouvelle photo (`auth.user_metadata` est privé). Passe
+          // par le repository : aucune page n'appelle `supabase.from()` en
+          // direct (docs/ARCHITECTURE.md §2).
+          await mirrorAvatarToProfile(authUser.id, publicUrl);
         }
         toast.success(t('profile.photoUpdated'));
       };
@@ -305,18 +303,13 @@ const SettingsPage: React.FC = () => {
       variant: 'destructive',
       onConfirm: async () => {
         if (isDemo) {
-          updateUserSettings({ avatar: undefined });
+          updateDemoProfile({ avatar: undefined });
         } else {
           const { error } = await supabase.auth.updateUser({ data: { avatar_url: null } });
           if (error) { toast.error('Impossible de supprimer la photo'); return; }
-          // Also clear in profiles so friends see the removal immediately.
-          // Idem : colonnes d'identité verrouillées (mig. 083, faille H-1).
+          // Idem au retrait : les amis doivent voir la suppression tout de suite.
           const authUser = await getCurrentUser();
-          if (authUser) {
-            await supabase.from('profiles')
-              .update({ avatar_url: null })
-              .eq('id', authUser.id);
-          }
+          if (authUser) await mirrorAvatarToProfile(authUser.id, null);
         }
         toast.success(t('profile.photoDeleted'));
       },

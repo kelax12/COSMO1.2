@@ -8,9 +8,9 @@
 // ═══════════════════════════════════════════════════════════════════
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
-import { getCurrentUser } from '@/lib/auth-user';
 import { normalizeApiError } from '@/lib/normalizeApiError';
 import { friendKeys } from './constants';
+import { getOrCreateShareLink } from './share-link.repository';
 
 export const PENDING_INVITE_STORAGE_KEY = 'cosmo_pending_share_invite';
 
@@ -40,28 +40,7 @@ export function buildInviteUrl(token: string): string {
 export const useShareLink = (taskId: string, enabled: boolean) => {
   return useQuery({
     queryKey: [...friendKeys.all, 'shareLink', taskId],
-    queryFn: async (): Promise<string> => {
-      const { data: existing, error: selectError } = await supabase
-        .from('share_links')
-        .select('id, expires_at')
-        .eq('task_id', taskId)
-        .gt('expires_at', new Date().toISOString())
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (selectError) throw normalizeApiError(selectError);
-      if (existing) return existing.id as string;
-
-      const user = await getCurrentUser();
-      if (!user) throw new Error('Not authenticated');
-      const { data: created, error: insertError } = await supabase
-        .from('share_links')
-        .insert([{ task_id: taskId, owner_id: user.id }])
-        .select('id')
-        .single();
-      if (insertError) throw normalizeApiError(insertError);
-      return created.id as string;
-    },
+    queryFn: () => getOrCreateShareLink(taskId),
     enabled,
     staleTime: 1000 * 60 * 5,
   });

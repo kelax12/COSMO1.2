@@ -12,7 +12,7 @@
 >   son périmètre ne tient qu'à sa logique, donc il doit être testé contre une
 >   vraie base, pas mocké.
 >
-> **Suite unitaire au 2026-08-24 : 1560 tests / 140 fichiers, tous verts** (`npm test`, mesuré en
+> **Suite unitaire au 2026-08-24 : 1583 tests / 143 fichiers, tous verts** (`npm test`, mesuré en
 > local, ~3 min 10 s — deux fois plus rapide qu'au 2026-08-14 à volume supérieur).
 > Un échec est donc une vraie régression, pas un test pré-existant cassé.
 >
@@ -22,6 +22,24 @@
 > (`TeamAssigneeGroups.tsx`, `TeamsSection.tsx`, `TeamTasksTab.tsx` ×2). Migrées en `text-caption`,
 > puis budget abaissé à **202** et plancher sub-11px à **82** — la règle du fichier est que ces
 > nombres ne remontent jamais. Remonter le budget aurait vidé la garde de son sens.
+>
+> ## Gardes d'architecture — `src/architecture.guard.test.ts` (2026-08-24)
+>
+> Deux invariants de [`ARCHITECTURE.md`](./ARCHITECTURE.md) n'avaient aucun outil, et les deux
+> avaient reculé sans que personne le voie :
+>
+> | Garde | Forme |
+> |---|---|
+> | `supabase.from()` uniquement dans un `*.repository.ts` | binaire — 0 violation, et ça doit le rester |
+> | Aucun fichier source > 600 lignes | **cliquet** — aucun nouveau dépassement, et le total des 17 fichiers déjà hors budget (13 103 lignes) ne remonte pas |
+>
+> Le cliquet plutôt qu'un seuil dur : rendre la règle rouge sur les 17 fichiers existants
+> produirait une gate rouge en permanence, donc ignorée — exactement le travers que l'audit
+> pointe. Un troisième test interdit à la liste `KNOWN_OVERSIZED` de garder un fichier déjà
+> assaini, sans quoi un découpage libérerait de la place pour un futur dépassement.
+>
+> ⚠️ Les commentaires sont retirés avant la recherche de `supabase.from(`. Sans ça, la phrase qui
+> **explique** la règle la déclenchait. Une garde qui se mord la queue finit désactivée.
 >
 > ## Gardes de migration — tester la garde, pas seulement le code (2026-08-24)
 >
@@ -33,14 +51,32 @@
 >
 > Chaque cas construit un jeu de migrations minimal dans un dossier temporaire et exécute le script
 > réel avec ce dossier comme `cwd` — le script tel qu'il tourne en CI, ni mocké ni ré-implémenté.
+>
+> ## Tester ce que l'utilisateur obtient, pas ce que le code écrit (2026-08-24)
+>
+> `src/modules/auth/demo-profile.test.ts` — 10 tests. Ils existent à cause d'un bug qu'aucune
+> suite ne pouvait attraper : en mode démo, modifier son profil écrivait dans une clé
+> `localStorage` que plus rien ne relisait. Pas d'exception, pas de log — un **succès silencieux**.
+> Le seul test qui existait alors vérifiait… que l'écriture atteignait bien cette clé morte.
+>
+> D'où la forme de ces tests : ils assertent sur `buildDemoUser()`, c'est-à-dire **la valeur que
+> l'écran lit**, jamais sur le fait qu'un `setItem` a eu lieu. Un test qui vérifie l'écriture
+> valide le mécanisme ; seul un test qui vérifie la lecture valide le résultat.
 > Sont couverts, pour les deux sens : la régression détectée, le correctif accepté, le
 > re-`GRANT` qui annule un `REVOKE`, le `REVOKE … FROM PUBLIC` qui **ne compte pas** (leçon de la
 > mig. `094b`), la réparation par une migration ultérieure, et le cliquet qui ne juge pas
 > l'historique.
 >
-> ## Audit de couverture — 2026-08-14
+> ## Audit de couverture — 2026-08-14 (⚠️ PÉRIMÉ, cf. encadré)
 >
-> **La gate est rouge par construction, pas par régression.** Les seuils globaux se donnent une
+> > ✅ **Résolu. Vérifié le 2026-08-24 : `npm run test:coverage` ne signale AUCUNE violation de
+> > seuil.** La section ci-dessous décrit l'état d'AVANT la recalibration du 2026-08-18
+> > (`functions` 45 → 21, `branches` 60 → 21, `lines`/`statements` 10 → 26, posés au réel mesuré).
+> > Elle est conservée pour le raisonnement — « un seuil au-dessus du mesuré ne protège de rien, il
+> > casse la CI en continu et rend muettes les gates utiles du même job » —, pas comme état courant.
+> > **Ne pas la lire comme un problème ouvert.**
+>
+> **La gate était rouge par construction, pas par régression.** Les seuils globaux se donnent une
 > règle explicite dans `vitest.config.ts` : « posé **sous** le réel mesuré […] à remonter au fil
 > des phases (**jamais au-dessus du mesuré courant**) ». Deux d'entre eux la violent :
 >

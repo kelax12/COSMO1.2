@@ -200,10 +200,12 @@ Aucun ne bloque un déploiement ; tous sont des clics dans le Dashboard.
 - **CVE dev-only** (`vitest`, `eslint`, `vite`, `glob`/`minimatch`) : jamais servies au
   navigateur. `npm audit fix --force` casserait le peer `eslint-plugin-react-hooks` (vérifié en
   `--dry-run`) → mise à jour outillage dédiée, jamais dans une passe sécurité.
-- **N6 — `useUser()` lit l'identité depuis `localStorage`** (`src/modules/user/hooks.ts`).
-  Un utilisateur peut éditer `cosmo_user` pour changer son nom/email/avatar **dans son propre
-  affichage**. Aucune élévation de privilège (la donnée serveur reste la RLS). Chemin de sortie :
-  consommer `useAuth().user`.
+- ✅ **N6 — `useUser()` lit l'identité depuis `localStorage`** — **fermé le 2026-08-24**, et pas
+  par le chemin prévu. La sortie annoncée était « consommer `useAuth().user` » ; en vérifiant les
+  consommateurs, `useUser` n'en avait **aucun**. Tout `src/modules/user` était mort à l'exception
+  d'un hook qui écrivait dans `cosmo_user` — une clé que plus rien ne relisait, ce qui cachait un
+  bug de parcours en mode démo (cf. [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) §4). Le
+  module a été supprimé ; il ne reste plus une seule lecture d'identité depuis `localStorage`.
 
 ---
 

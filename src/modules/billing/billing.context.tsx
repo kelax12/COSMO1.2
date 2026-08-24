@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
+import { billingRepository } from './billing.repository';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { isPremiumSubscription } from './subscription.logic';
 import { PREMIUM_ENFORCED } from './premium-config';
@@ -58,27 +59,11 @@ export const BillingProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const { data: subscription, isLoading } = useQuery({
     queryKey: billingKeys.subscription,
     queryFn: async (): Promise<SubscriptionRow | null> => {
-      // getSession() reads from local storage — no network round-trip.
-      // getUser() would validate the JWT with Supabase on every call, adding
-      // an extra RTT that serialises behind other in-flight requests.
-      const { data: { session } } = await supabase.auth.getSession();
-      const user = session?.user;
-      if (!user) return null;
-      const { data, error } = await supabase
-        .from('subscriptions')
-        .select('*')
-        .eq('user_id', user.id)
-        .maybeSingle();
-      if (error) return null;
-      if (!data) {
-        const { data: created } = await supabase
-          .from('subscriptions')
-          .insert([{ user_id: user.id, plan: 'free', status: 'active', premium_tokens: 0, win_streak: 0 }])
-          .select()
-          .single();
-        return created ? mapRow(created as Record<string, unknown>) : null;
-      }
-      return mapRow(data as Record<string, unknown>);
+      // La requête vit dans le repository (invariant : aucun `supabase.from()`
+      // hors repository). Le choix `getSession()` plutôt que `getUser()`, et le
+      // `null` plutôt qu'une exception, y sont documentés — les deux comptent.
+      const row = await billingRepository.fetchOwnSubscriptionRow();
+      return row ? mapRow(row) : null;
     },
     enabled: isAuthenticated && !isDemo,
     staleTime: 1000 * 60 * 5,
