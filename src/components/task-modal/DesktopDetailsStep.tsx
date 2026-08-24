@@ -5,7 +5,7 @@
 // propres états locaux de création inline catégorie/liste (propres à cette
 // étape). Tout le reste vient des props.
 import React, { useEffect, useState } from 'react';
-import { X, AlertCircle, Bookmark, Trash2, List, ChevronDown, Plus, Minus } from 'lucide-react';
+import { X, AlertCircle, Bookmark, List, ChevronDown, Plus, Minus } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   DropdownMenu,
@@ -57,8 +57,6 @@ export interface DesktopDetailsStepProps {
   setSelectedListIds: React.Dispatch<React.SetStateAction<string[]>>;
   createListMutation: ReturnType<typeof useCreateList>;
   isCreating: boolean;
-  isLoading: boolean;
-  handleDelete: () => void;
   /** Tâche existante (mode édition) — requis pour la checklist de sous-tâches. */
   task?: import('@/modules/tasks').Task | null;
   /** Section Description masquée par défaut — même système que EventModal. */
@@ -72,7 +70,7 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
   dRegister, dClear, dInvalid,
   categories, createCategoryMutation, listColorOptions,
   lists, selectedListIds, setSelectedListIds, createListMutation,
-  isCreating, isLoading, handleDelete, task,
+  isCreating, task,
   showDescription, setShowDescription,
 }) => {
   const { t } = useT('taskModal');
@@ -529,19 +527,6 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                           fill={formData.bookmarked ? 'currentColor' : 'none'}
                         />
                       </button>
-
-                      {!isCreating && (
-                        <button
-                          type="button"
-                          onClick={handleDelete}
-                          disabled={isLoading}
-                          aria-label="Supprimer la tâche"
-                          className="p-2.5 rounded-lg border border-red-200 dark:border-red-900/40 hover:border-red-400/60 hover:bg-red-500/10 transition-all disabled:opacity-50"
-                          style={{ backgroundColor: 'rgb(var(--color-hover))' }}
-                        >
-                          <Trash2 size={20} className="text-red-500" />
-                        </button>
-                      )}
 
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
