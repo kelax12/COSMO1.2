@@ -433,7 +433,7 @@
       "title": "20 € par mois pour dix personnes.",
       "promoBadge": "Offre de lancement",
       "promoTitle": "Gratuit pour toute votre organisation.",
-      "promoSubtitle": "Cosmo Entreprise ne facture rien aujourd'hui, quel que soit votre effectif. Les tarifs ci-dessous sont ceux qui s'appliqueront <hl>quand l'offre de lancement prendra fin</hl> — vous serez prévenu avant, et rien ne sera jamais débité sans que vous l'ayez choisi.",
+      "promoSubtitle": "Cosmo Entreprise ne facture rien aujourd'hui, quel que soit votre effectif. Les tarifs ci-dessous sont ceux qui s'appliqueront <hl>quand l'offre de lancement prendra fin</hl>. Vous serez prévenu avant, et rien ne sera jamais débité sans que vous l'ayez choisi.",
       "insteadOf": "au lieu de {{price}} € / mois",
       "insteadOfShort": "au lieu de {{price}} €",
       "ctaNoteFree": "Gratuit pendant l'offre de lancement, quel que soit votre effectif. Sans carte bancaire.",
