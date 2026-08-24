@@ -4,7 +4,6 @@ import type { OrgTierKey } from '@/modules/billing/premium-config';
 import { ORG_TIER_LABEL_KEYS } from '@/modules/billing/org-tier-labels';
 import { formatCurrency } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
-import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
 interface Props {
   /** Palier actuellement actif — mis en avant. */
@@ -12,6 +11,16 @@ interface Props {
   /** Absent = grille purement informative (pas propriétaire, ou flag dormant). */
   onSelect?: (tier: OrgTierKey) => void;
   isPending?: boolean;
+  /**
+   * La facturation est-elle éteinte pour TOUT LE MONDE
+   * (`ENTERPRISE_BILLING_ENFORCED === false`) ?
+   *
+   * Distinct de `!onSelect` : un membre non propriétaire n'a pas non plus de
+   * `onSelect` alors que son organisation, elle, peut très bien être facturée.
+   * Lui afficher « Gratuit » serait un mensonge — il voit la grille nue, et la
+   * phrase `billing.ownerOnly` lui dit pourquoi.
+   */
+  dormant?: boolean;
 }
 
 /**
@@ -19,8 +28,13 @@ interface Props {
  * et sont rendus par `formatCurrency` — jamais de montant écrit en dur, et
  * jamais de compteur animé sur un prix (il passerait par 48 € avant de se
  * poser sur 50 €).
+ *
+ * Quand la facturation est éteinte (`dormant`), chaque palier payant porte
+ * l'étiquette « Gratuit » à la place du bouton. Les montants restent affichés :
+ * ce sont les tarifs annoncés pour plus tard, pas ce qui est facturé
+ * aujourd'hui.
  */
-export function EnterpriseTierGrid({ currentTier, onSelect, isPending }: Props) {
+export function EnterpriseTierGrid({ currentTier, onSelect, isPending, dormant }: Props) {
   const { t } = useT('org');
   const { t: tc } = useT('common');
 
@@ -78,27 +92,24 @@ export function EnterpriseTierGrid({ currentTier, onSelect, isPending }: Props) 
                   >
                     {t('billing.subscribe')}
                   </button>
-                ) : (
-                  // La facturation entreprise est dormante (ENTERPRISE_BILLING_
-                  // ENFORCED = false) : ce bouton reste visuel, jamais un vrai
-                  // CTA de paiement — `onSelect` est la SEULE condition qui
-                  // monte un checkout, cf. OrgBillingTab. `aria-disabled` plutôt
-                  // que `disabled` : un bouton natif désactivé bloque les
-                  // événements pointeur, donc le tooltip qui explique pourquoi.
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button
-                        type="button"
-                        aria-disabled="true"
-                        onClick={(e) => e.preventDefault()}
-                        className="shrink-0 rounded-lg border border-blue-600/40 dark:border-blue-400/40 px-3 py-1.5 text-xs font-medium text-blue-600 dark:text-blue-400 cursor-not-allowed"
-                      >
-                        {t('billing.upgrade')}
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent side="top">{t('billing.dormant')}</TooltipContent>
-                  </Tooltip>
-                )
+                ) : dormant ? (
+                  // Facturation éteinte : ce palier ne se paie pas, donc il ne
+                  // porte AUCUN bouton — une étiquette. Un bouton inerte qu'on
+                  // désigne comme non cliquable est une porte peinte sur un
+                  // mur : il invite au clic pour le refuser ensuite. Ce qui
+                  // reste vrai aujourd'hui, c'est le prix : zéro. La phrase qui
+                  // l'explique (`billing.dormant`) est déjà au-dessus de la
+                  // grille, dans OrgBillingTab.
+                  //
+                  // Texte en `text-primary`, pas en `accent` : mesuré dans le
+                  // navigateur, l'accent du thème sombre sur ce fond teinté ne
+                  // donne que 4,31:1 — sous le seuil AA de 4,5:1 pour du 12 px.
+                  // L'accent reste sur la bordure et le fond, qui n'ont pas à
+                  // porter de texte.
+                  <span className="shrink-0 rounded-lg border border-[rgb(var(--color-accent))] bg-[rgb(var(--color-accent)/0.1)] px-3 py-1.5 text-xs font-medium text-[rgb(var(--color-text-primary))]">
+                    {t('billing.free')}
+                  </span>
+                ) : null
               )}
             </div>
 

@@ -113,6 +113,7 @@ export function OrgBillingTab({ orgId, isOwner, memberCount, onBack }: Props) {
         currentTier={subscription?.tierKey}
         onSelect={canPay ? (tierKey) => checkout.mutate({ orgId, tierKey }) : undefined}
         isPending={checkout.isPending}
+        dormant={!ENTERPRISE_BILLING_ENFORCED}
       />
 
       {canPay && subscription && (
