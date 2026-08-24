@@ -31,3 +31,12 @@ verify_jwt = true
 
 [functions.stripe-org-portal]
 verify_jwt = true
+
+# report-bug relaie un formulaire vers une boîte mail : il n'y a rien à
+# autoriser en base, mais on garde verify_jwt = true pour que la passerelle
+# exige au minimum une clé du projet. Un visiteur non connecté passe avec la
+# clé anon (c'est voulu : un bug se signale aussi depuis un compte cassé) et
+# reste anonyme dans le mail ; un utilisateur connecté est identifié par son
+# JWT, jamais par le corps de la requête.
+[functions.report-bug]
+verify_jwt = true

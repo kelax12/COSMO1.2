@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router';
-import { Target, BarChart2, Crown, Settings, LogOut, ChevronRight, Building2, Check, Plus } from 'lucide-react';
+import { Target, BarChart2, Crown, Settings, LogOut, ChevronRight, Building2, Check, Plus, Bug } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { prefetchRoute } from '@/lib/route-prefetch';
@@ -261,6 +261,33 @@ const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({ open, onOpenChange })
                     </p>
                     <p className="text-caption text-[rgb(var(--color-text-muted))] mt-0.5 truncate">
                       {tOrg('inviteJoin.navHint')}
+                    </p>
+                  </div>
+                  <ChevronRight size={16} className="text-[rgb(var(--color-text-muted))] shrink-0" />
+                </button>
+              </div>
+
+              {/* — Signaler un bug — */}
+              {/* Meme convention que « Inviter / rejoindre » juste au-dessus :
+                  la fenetre vit dans Layout, on la demande par evenement. */}
+              <div className="bg-[rgb(var(--color-surface))] rounded-2xl shadow-sm overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleClose();
+                    window.dispatchEvent(new CustomEvent('open-bug-report'));
+                  }}
+                  className="w-full flex items-center gap-3.5 px-4 min-h-[60px] text-left active:bg-[rgb(var(--color-hover))] transition-colors"
+                >
+                  <div className="w-10 h-10 rounded-[10px] flex items-center justify-center shrink-0 bg-red-500">
+                    <Bug size={20} className="text-white" aria-hidden="true" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-body font-medium text-[rgb(var(--color-text-primary))] leading-snug">
+                      {t('nav.bugReport')}
+                    </p>
+                    <p className="text-caption text-[rgb(var(--color-text-muted))] mt-0.5 truncate">
+                      {t('nav.descriptions.bugReport')}
                     </p>
                   </div>
                   <ChevronRight size={16} className="text-[rgb(var(--color-text-muted))] shrink-0" />

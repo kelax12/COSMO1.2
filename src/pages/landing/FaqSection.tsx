@@ -7,6 +7,7 @@ import { gsap, useGSAP } from '@/lib/gsap';
 import { FAQ_ITEMS } from './data';
 import FaqItem from './FaqItem';
 import { useT } from '@/i18n/useT';
+import { CONTACT_EMAIL } from '@/lib/contact.mjs';
 
 const FaqSection: React.FC = () => {
   const { t } = useT('landing');
@@ -82,7 +83,7 @@ const FaqSection: React.FC = () => {
           <p className="text-center text-slate-500 text-sm mt-8">
             {t('faq.notListed')}{' '}
             <a
-              href="mailto:axellongattepro@gmail.com"
+              href={`mailto:${CONTACT_EMAIL}`}
               className="text-blue-400 hover:text-blue-300 transition-colors underline underline-offset-2"
             >
               {t('faq.writeUs')}
