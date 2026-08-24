@@ -18,6 +18,7 @@ import {
   ChevronRight,
   Building2,
   Plus,
+  Bug,
   Check } from
   'lucide-react';
 import Logo from './Logo';
@@ -53,6 +54,9 @@ const HabitEveningReminder = lazy(() => import('./HabitEveningReminder'));
 const ShortcutsHelp = lazy(() => import('./ShortcutsHelp'));
 // Tâches d'exemple au premier login (#49) — headless.
 const OnboardingExampleTasks = lazy(() => import('./OnboardingExampleTasks'));
+// Formulaire « Signaler un bug » — lazy : la très grande majorité des
+// sessions ne l'ouvre jamais, son chunk n'a pas à peser sur le Layout.
+const BugReportModal = lazy(() => import('./BugReportModal'));
 
 // Détection plateforme pour afficher le bon badge de raccourci (⌘K vs Ctrl K).
 const IS_MAC =
@@ -239,6 +243,9 @@ const Layout: React.FC = () => {
   // « + » de la nav : inviter un ami / rejoindre une entreprise avec un code.
   // Monte dans `globalOverlays`, donc partage par les rendus mobile ET desktop.
   const [inviteOpen, setInviteOpen] = useState(false);
+  // « Signaler un bug » — même schéma que le « + » ci-dessus : l'état vit ici,
+  // la feuille « Plus » du mobile l'ouvre par événement custom.
+  const [bugOpen, setBugOpen] = useState(false);
 
   // La feuille « Plus » du mobile vit sous MobileTabBar, plusieurs niveaux
   // sous cet etat. Meme convention que la palette de commandes : un evenement
@@ -247,6 +254,11 @@ const Layout: React.FC = () => {
     const open = () => setInviteOpen(true);
     window.addEventListener("open-invite-join", open);
     return () => window.removeEventListener("open-invite-join", open);
+  }, []);
+  useEffect(() => {
+    const open = () => setBugOpen(true);
+    window.addEventListener('open-bug-report', open);
+    return () => window.removeEventListener('open-bug-report', open);
   }, []);
   useEffect(() => {
     localStorage.setItem('sidebar-collapsed', JSON.stringify(isCollapsed));
@@ -374,6 +386,25 @@ const NavItems = () =>
 
       <NavItemLink to="/settings" label={t('nav.settings')} icon={<Settings size={20} aria-hidden="true" />}
         hoverColor="#94a3b8" collapsed={isCollapsed} />
+
+      {/* « Signaler un bug » — bouton et non lien : il n'y a pas de page, la
+          fenêtre s'ouvre par-dessus l'écran courant pour que l'URL et l'état
+          de la page fautive partent AVEC le rapport (cf. collectBugContext).
+          Mêmes classes d'alignement que le « + » de la nav : un <button> ne
+          remplit pas la largeur comme un <a>, d'où le `w-[calc(100%-1rem)]`
+          qui compense les marges de `.sidebar-item`. */}
+      <button
+        type="button"
+        onClick={() => setBugOpen(true)}
+        title={t('nav.bugReport')}
+        aria-label={t('nav.bugReport')}
+        className={`sidebar-item w-[calc(100%-1rem)] ${isCollapsed ? 'justify-center px-0' : '!ml-1 !py-[0.7rem]'}`}
+      >
+        <div className="nav-item-icon min-w-[20px] flex items-center justify-center">
+          <Bug size={20} aria-hidden="true" />
+        </div>
+        {!isCollapsed && <span className="truncate">{t('nav.bugReport')}</span>}
+      </button>
     </>;
 
 
@@ -403,6 +434,16 @@ const NavItems = () =>
       {/* Rappel deadlines du jour à l'ouverture (#30) — headless, 1×/jour */}
       <DeadlineReminder />
       <InviteOrJoinModal open={inviteOpen} onOpenChange={setInviteOpen} />
+      {/* Signalement de bug — monté ici, donc disponible depuis la sidebar
+          desktop ET la feuille « Plus » du mobile, sur toutes les pages. */}
+      {/* Rendu conditionnel et pas seulement `open={bugOpen}` : un composant
+          `lazy()` toujours rendu télécharge son chunk au montage du Layout,
+          ce qui annule tout l'intérêt du lazy. */}
+      {bugOpen && (
+        <Suspense fallback={null}>
+          <BugReportModal open onOpenChange={setBugOpen} />
+        </Suspense>
+      )}
     </>
   );
 

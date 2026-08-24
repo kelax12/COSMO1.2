@@ -111,6 +111,38 @@ Réglages actuels, à ne PAS changer :
 | `stripe-webhook` | **false** | Stripe n'envoie pas de JWT — l'authentification est la signature du webhook |
 | `stripe-create-checkout` | true | Appelée par un utilisateur connecté |
 | `delete-account` | true | Idem, et l'id supprimé est celui du JWT |
+| `report-bug` | true | Le gateway accepte aussi la clé anon : un visiteur non connecté doit pouvoir signaler un bug, il reste juste anonyme dans le mail |
+
+### `report-bug` — formulaire « Signaler un bug » (2026-08-24)
+
+L'icône insecte de la barre de navigation ouvre un formulaire (titre,
+description, pièce jointe) que cette fonction relaie **par e-mail** à
+`contact@thecosmo.app` via l'API Resend. Elle ne touche pas à la base.
+
+Mise en service, dans cet ordre :
+
+1. Créer un compte Resend et **vérifier le domaine `thecosmo.app`** (SPF +
+   DKIM). Tant que le domaine n'est pas vérifié, Resend n'accepte que l'adresse
+   de test `onboarding@resend.dev` en expéditeur.
+2. Poser les secrets :
+
+```bash
+supabase secrets set RESEND_API_KEY=re_xxx
+supabase secrets set BUG_REPORT_TO=contact@thecosmo.app
+supabase secrets set BUG_REPORT_FROM="Cosmo <bug@thecosmo.app>"
+```
+
+3. Déployer : `supabase functions deploy report-bug`
+
+**Tant que `RESEND_API_KEY` est absente**, la fonction répond `503
+mail_not_configured` — et c'est un état prévu, pas une panne : le formulaire
+affiche alors « écrivez-nous directement à contact@thecosmo.app » avec un lien
+`mailto:` pré-rempli. Aucun message n'est perdu en silence.
+
+⚠️ `BUG_REPORT_FROM` doit être une adresse **du domaine vérifié**, jamais
+l'adresse de destination d'un fournisseur tiers (Gmail refuserait de signer).
+L'auteur du rapport, lui, arrive en `Reply-To` — répondre au mail répond bien à
+l'utilisateur, et son identité vient du JWT, jamais du corps de la requête.
 
 ---
 

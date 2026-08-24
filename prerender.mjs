@@ -20,6 +20,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ARTICLES, relatedArticles } from './src/content/blog/index.mjs';
 import { USE_CASES } from './src/content/use-cases.mjs';
+import { CONTACT_EMAIL } from './src/lib/contact.mjs';
 import {
   BCP47_TAG,
   DEFAULT_LOCALE,
@@ -496,6 +497,10 @@ const staticFooterNav = (locale) => {
     link('/mentions-legales', 'Mentions légales'),
     link('/politique-confidentialite', 'Confidentialité'),
     link('/cgu', 'CGU'),
+    // Adresse de contact — même bloc que la nav statique parce qu'elle doit
+    // être lisible par un crawler sans JS, exactement comme le footer React
+    // l'affiche pour un vrai navigateur.
+    `<a href="mailto:${CONTACT_EMAIL}">${CONTACT_EMAIL}</a>`,
   ].join(' · ')}</p>`;
 };
 

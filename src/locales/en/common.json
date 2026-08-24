@@ -48,8 +48,10 @@
       "statistics": "Progress tracking",
       "premium": "Unlock every feature",
       "settings": "Account & preferences",
-      "enterprise": "Team & collaboration"
-    }
+      "enterprise": "Team & collaboration",
+      "bugReport": "Help us fix Cosmo"
+    },
+    "bugReport": "Report a bug"
   },
   "actions": {
     "all": "All"
@@ -260,5 +262,35 @@
     "t20": "Department",
     "t50": "Business",
     "tmax": "Unlimited"
+  },
+  "bugReport": {
+    "title": "Report a bug",
+    "close": "Close",
+    "intro": "Tell us what went wrong. We get your message directly, along with the page and browser it was sent from.",
+    "fields": {
+      "title": "Title",
+      "description": "Description",
+      "attachment": "Attachment (optional)"
+    },
+    "placeholders": {
+      "title": "In one sentence, what happened?",
+      "description": "What you were doing, what you expected, what happened instead."
+    },
+    "chooseFile": "Choose a file",
+    "removeFile": "Remove attachment",
+    "attachmentHint": "Screenshot, PDF or log, {{max}} MB max",
+    "submit": "Send",
+    "sending": "Sending...",
+    "done": "Close",
+    "successTitle": "Message sent, thank you!",
+    "successBody": "Your report reached us. Thanks for taking the time to help us fix Cosmo: we'll look into it as soon as we can.",
+    "toastSuccess": "Report sent. Thank you!",
+    "toastError": "Sending failed.",
+    "fallback": "Automatic sending failed. Write to us directly at",
+    "errors": {
+      "title": "The title must be between {{min}} and {{max}} characters.",
+      "description": "The description must be between {{min}} and {{max}} characters.",
+      "attachment": "Attachment rejected: image, PDF or text, {{max}} MB max."
+    }
   }
 }
