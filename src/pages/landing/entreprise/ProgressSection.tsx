@@ -27,7 +27,7 @@ const ProgressSection: React.FC = () => {
   return (
     <StepSection
       id="statistiques"
-      step={4}
+      step={5}
       titleKey="enterprise.progress.title"
       subtitleKey="enterprise.progress.subtitle"
     >

@@ -83,7 +83,7 @@ const OkrSection: React.FC = () => {
   return (
     <StepSection
       id="okr"
-      step={3}
+      step={4}
       titleKey="enterprise.okr.title"
       subtitleKey="enterprise.okr.subtitle"
     >
