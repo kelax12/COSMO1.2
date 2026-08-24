@@ -1,12 +1,12 @@
 import { useMemo, useState } from 'react';
-import { Search, X, ArrowUpDown, ChevronDown, Plus, Pencil, Trash2, MoreHorizontal, UserPlus, CalendarPlus } from 'lucide-react';
+import { Search, X, ArrowUpDown, ChevronDown, Plus, Pencil, Trash2, MoreHorizontal, UserPlus, CalendarPlus, MessageSquare } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
 } from '@/components/ui/dropdown-menu';
-import { subtreeOf, type OrgMember } from '@/modules/organizations';
+import { subtreeOf, useOrgNotifications, unreadCommentCountByTask, type OrgMember } from '@/modules/organizations';
 import {
   useTeamProjects, useTeamTasks, useCreateTeamTask, useUpdateTeamTask, useDeleteTeamTask,
   type TeamTask, type TeamTaskStatus, type CreateTeamTaskInput, type UpdateTeamTaskInput,
@@ -75,6 +75,13 @@ const TeamTasksTab = ({ orgId, members, isManager, isAdmin }: TeamTasksTabProps)
   const projects = useMemo(() => allProjects.filter((p) => !p.archivedAt), [allProjects]);
   const projectById = useMemo(() => new Map(projects.map((p) => [p.id, p])), [projects]);
   const memberById = useMemo(() => new Map(members.map((m) => [m.userId, m])), [members]);
+
+  // Badge « commentaires non lus » à côté du nom (mig. 109) — RLS ne renvoie
+  // déjà que MES notifications (org_notifications_select), donc ce badge
+  // n'apparaît que pour les tâches où je suis assigné et où quelqu'un
+  // d'autre a commenté depuis ma dernière visite de la tâche.
+  const { data: notifications = [] } = useOrgNotifications(orgId);
+  const unreadCommentsByTask = useMemo(() => unreadCommentCountByTask(notifications), [notifications]);
 
   // Agendas consultables depuis « Assigner l'événement » : soi (toujours en
   // tête, RLS `events` autorise déjà son propre user_id) + le sous-arbre
@@ -401,6 +408,17 @@ const TeamTasksTab = ({ orgId, members, isManager, isAdmin }: TeamTasksTabProps)
                         style={{ color: task.completed ? 'rgb(var(--color-text-muted))' : 'rgb(var(--color-text-primary))' }}>
                       <div className="flex items-center gap-2 min-w-0">
                         <span className="truncate" title={task.name}>{task.name}</span>
+                        {/* Commentaires non lus (mig. 109) — disparaît dès que la tâche
+                            est ouverte (useMarkTaskNotificationsRead, TeamTaskModal). */}
+                        {(unreadCommentsByTask.get(task.id) ?? 0) > 0 && (
+                          <span
+                            className="inline-flex items-center gap-1 shrink-0 rounded-full bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5"
+                            title={tp('common.unreadComments', unreadCommentsByTask.get(task.id) ?? 0)}
+                          >
+                            <MessageSquare size={10} aria-hidden="true" />
+                            {unreadCommentsByTask.get(task.id)}
+                          </span>
+                        )}
                         {/* Collaborateurs (hors nous) — visibilité immédiate de qui est
                             dessus sans ouvrir la tâche. */}
                         {(() => {

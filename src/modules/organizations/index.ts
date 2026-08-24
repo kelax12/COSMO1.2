@@ -74,7 +74,9 @@ export {
 export {
   useOrgNotifications,
   useMarkNotificationsRead,
+  useMarkTaskNotificationsRead,
   unreadCount,
+  unreadCommentCountByTask,
   orgNotificationKeys,
 } from './notifications';
 export type { OrgNotification, OrgNotificationKind } from './notifications';

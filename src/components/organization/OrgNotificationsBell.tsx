@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { formatDistanceToNow, parseISO } from 'date-fns';
 import { getDateLocale } from '@/i18n/format';
-import { Bell, UserPlus, AtSign, AlarmClock } from 'lucide-react';
+import { Bell, UserPlus, AtSign, AlarmClock, MessageSquare } from 'lucide-react';
 import {
   useOrgNotifications,
   useMarkNotificationsRead,
@@ -21,11 +21,12 @@ interface OrgNotificationsBellProps {
   members: OrgMember[];
 }
 
-/** Icône et libellé par type — le trigger n'écrit que ces trois-là. */
+/** Icône et libellé par type — le trigger n'écrit que ceux-là. */
 const KIND_META: Record<OrgNotificationKind, { Icon: typeof Bell; labelKey: KeyOf<'org'> }> = {
   task_assigned: { Icon: UserPlus, labelKey: 'notifications.kindAssigned' },
   mention: { Icon: AtSign, labelKey: 'notifications.kindMention' },
   task_overdue: { Icon: AlarmClock, labelKey: 'notifications.kindOverdue' },
+  comment: { Icon: MessageSquare, labelKey: 'notifications.kindComment' },
 };
 
 /**
