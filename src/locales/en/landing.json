@@ -295,7 +295,9 @@
       "okr": "OKRs",
       "okrAlt": "OKR tab: team objectives and their numeric key results, with their progress.",
       "stats": "Statistics",
-      "statsAlt": "Statistics tab: velocity, trend and time invested across the organisation."
+      "statsAlt": "Statistics tab: velocity, trend and time invested across the organisation.",
+      "tasks": "Tasks",
+      "tasksAlt": "Tasks tab: every team task gathered in a single sortable table, by status, deadline or assignee."
     },
     "hero": {
       "line1": "Run",

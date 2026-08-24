@@ -1,6 +1,7 @@
 /**
- * capture-entreprise-shots.mjs — capture ponctuelle des vues Kanban et
- * Planning (deadlines) de l'onglet Projets, pour la landing entreprise.
+ * capture-entreprise-shots.mjs — capture toutes les vues de la landing
+ * entreprise (public/screenshots/entreprise/*.webp), y compris le nouvel
+ * onglet Tâches.
  *
  * Usage : npm start (port 3000) puis `node scripts/capture-entreprise-shots.mjs`
  * Jetable : script d'appoint, pas branché à un `npm run`.
@@ -33,6 +34,32 @@ const HIDE_TRANSIENTS = `
   document.head.appendChild(s);
 `;
 
+/** Cadrage aligné sur les captures existantes : sans nav latérale, sans
+ * l'en-tête d'organisation — la scène commence à la barre d'onglets. */
+const clipFromTabs = async (page) => {
+  const tabsAnchor = page.getByRole('button', { name: /^Aperçu$/ }).first();
+  const tabsBox = await tabsAnchor.boundingBox();
+  return {
+    x: tabsBox.x - 8,
+    y: tabsBox.y - 12,
+    width: VIEWPORT.width - (tabsBox.x - 8) - 8,
+    height: VIEWPORT.height - (tabsBox.y - 12) - 8,
+  };
+};
+
+const capture = async (page, name) => {
+  const clip = await clipFromTabs(page);
+  await page.screenshot({ path: join(OUT, `${name}.png`), fullPage: false, clip });
+  console.log(`  ✓ ${name}.png`);
+};
+
+const goToTab = async (page, tab, waitMs = 2200) => {
+  await page.goto(`${BASE}/entreprise?tab=${tab}`, { waitUntil: 'domcontentloaded', timeout: 30000 });
+  await page.waitForSelector('main', { timeout: 20000 });
+  await wait(waitMs);
+  await page.evaluate(HIDE_TRANSIENTS);
+};
+
 const run = async () => {
   mkdirSync(OUT, { recursive: true });
   const browser = await chromium.launch();
@@ -53,42 +80,62 @@ const run = async () => {
   if (await hideBanner.isVisible().catch(() => false)) await hideBanner.click();
   await wait(1000);
 
-  await page.goto(`${BASE}/entreprise?tab=projects`, { waitUntil: 'domcontentloaded', timeout: 30000 });
-  await page.waitForSelector('main', { timeout: 20000 });
-  await wait(2500);
-  await page.evaluate(HIDE_TRANSIENTS);
+  // ── Aperçu ──
+  await goToTab(page, 'overview');
+  await capture(page, 'apercu');
 
-  // Cadrage aligné sur les captures existantes : sans la nav latérale, sans
-  // l'en-tête d'organisation — la scène commence à la barre d'onglets.
-  const tabsAnchor = page.getByRole('button', { name: /^Aperçu$/ }).first();
-  const tabsBox = await tabsAnchor.boundingBox();
-  const clip = { x: tabsBox.x - 8, y: tabsBox.y - 12, width: VIEWPORT.width - (tabsBox.x - 8) - 8, height: VIEWPORT.height - (tabsBox.y - 12) - 8 };
+  // ── Pyramide ──
+  await goToTab(page, 'pyramid', 2600); // laisse jouer l'entrée GSAP de l'organigramme
+  await capture(page, 'pyramide');
 
-  // Vue Tableau (Kanban)
+  // ── Membres ──
+  await goToTab(page, 'members');
+  await capture(page, 'membres');
+
+  // ── Tâches (nouvel onglet, mig. 091) ──
+  await goToTab(page, 'tasks');
+  await capture(page, 'taches');
+
+  // ── Projets : Liste, Tableau, Planning ──
+  await goToTab(page, 'projects');
+  const listTab = page.getByRole('button', { name: /^Liste$/ }).first();
+  await listTab.click();
+  await wait(1000);
+  await capture(page, 'projets');
+
   const kanbanTab = page.getByRole('button', { name: /tableau/i }).first();
   await kanbanTab.click();
   await wait(1200);
-  await page.screenshot({ path: join(OUT, 'projets-kanban.png'), fullPage: false, clip });
-  console.log('  ✓ projets-kanban.png');
+  await capture(page, 'projets-kanban');
 
-  // Vue Planning (deadlines)
   const timelineTab = page.getByRole('button', { name: /planning/i }).first();
   await timelineTab.click();
   await wait(1200);
-  await page.screenshot({ path: join(OUT, 'projets-planning.png'), fullPage: false, clip });
-  console.log('  ✓ projets-planning.png');
+  await capture(page, 'projets-planning');
+
+  // ── OKR ──
+  await goToTab(page, 'okr', 2600);
+  await capture(page, 'okr');
+
+  // ── Statistiques ──
+  await goToTab(page, 'stats', 2600);
+  await capture(page, 'statistiques');
 
   await browser.close();
 
   // Ré-encodage .png → .webp (canvas Chromium — pas d'encodeur webp côté
-  // Node dans ce dépôt) : convention `shot()` de data.ts, cf. les captures
-  // existantes.
-  const toWebp = async (name) => {
+  // Node dans ce dépôt) : convention `shot()` de data.ts.
+  const names = [
+    'apercu', 'pyramide', 'membres', 'taches',
+    'projets', 'projets-kanban', 'projets-planning',
+    'okr', 'statistiques',
+  ];
+  const converter = await chromium.launch();
+  const cpage = await converter.newPage();
+  for (const name of names) {
     const pngPath = join(OUT, `${name}.png`);
     const b64 = readFileSync(pngPath).toString('base64');
-    const converter = await chromium.launch();
-    const p = await converter.newPage();
-    const dataUrl = await p.evaluate(async (base64) => {
+    const dataUrl = await cpage.evaluate(async (base64) => {
       const img = new Image();
       img.src = `data:image/png;base64,${base64}`;
       await img.decode();
@@ -98,13 +145,11 @@ const run = async () => {
       canvas.getContext('2d').drawImage(img, 0, 0);
       return canvas.toDataURL('image/webp', 0.85);
     }, b64);
-    await converter.close();
     writeFileSync(join(OUT, `${name}.webp`), Buffer.from(dataUrl.split(',')[1], 'base64'));
     rmSync(pngPath);
     console.log(`  ✓ ${name}.webp`);
-  };
-  await toWebp('projets-kanban');
-  await toWebp('projets-planning');
+  }
+  await converter.close();
 };
 
 run().catch((err) => {

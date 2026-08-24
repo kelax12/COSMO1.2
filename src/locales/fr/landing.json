@@ -295,7 +295,9 @@
       "okr": "OKR",
       "okrAlt": "Onglet OKR : les objectifs d'équipe et leurs résultats clés chiffrés, avec leur progression.",
       "stats": "Statistiques",
-      "statsAlt": "Onglet Statistiques : vélocité, tendance et temps investi par l'organisation."
+      "statsAlt": "Onglet Statistiques : vélocité, tendance et temps investi par l'organisation.",
+      "tasks": "Tâches",
+      "tasksAlt": "Onglet Tâches : toutes les tâches d'équipe réunies dans un tableau unique, triable par statut, échéance ou assigné."
     },
     "hero": {
       "line1": "Pilotez",
