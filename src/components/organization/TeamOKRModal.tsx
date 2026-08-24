@@ -3,7 +3,7 @@
 // (cloisonnement). Un OKR ne s'assigne PAS à une personne (#10) : le travail
 // individuel passe par les tâches de projet.
 import { useEffect, useState } from 'react';
-import { Plus, Trash2, Users, Building2 } from 'lucide-react';
+import { Plus, Trash2, Users, Building2, X } from 'lucide-react';
 import {
   Sheet,
   SheetContent,
@@ -26,8 +26,9 @@ import {
   type CreateTeamKRInput,
   type SyncTeamKRInput,
 } from '@/modules/team-okrs';
-import { useOrgTeams } from '@/modules/org-teams';
+import { useOrgTeams, useCreateOrgTeam } from '@/modules/org-teams';
 import OKRCategoryPicker from './OKRCategoryPicker';
+import { TEAM_COLORS } from './CreateTeamModal';
 import { useT } from '@/i18n/useT';
 
 interface TeamOKRModalProps {
@@ -50,7 +51,10 @@ const newKR = (): KRDraft => ({
   title: '',
   currentValue: 0,
   targetValue: 100,
-  unit: '%',
+  // Pas d'unité par défaut — « % » n'a de sens que pour une partie des KR
+  // (taux, pourcentages) ; les autres (nombre, montant, durée) hériteraient
+  // sinon d'un symbole faux tant que l'utilisateur ne l'efface pas lui-même.
+  unit: '',
   weight: 1,
 });
 
@@ -60,6 +64,10 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
   const { data: teams = [] } = useOrgTeams(orgId);
   const createOKR = useCreateTeamOKR(orgId);
   const editOKR = useEditTeamOKR(orgId);
+  const createTeam = useCreateOrgTeam(orgId);
+  const [creatingTeam, setCreatingTeam] = useState(false);
+  const [newTeamName, setNewTeamName] = useState('');
+  const [newTeamColor, setNewTeamColor] = useState<string>(TEAM_COLORS[0].value);
 
   // Monté fermé puis ouvert au tick suivant : la transition false→true permet à
   // Radix de jouer le slide-in (un Sheet monté déjà ouvert reste hors-écran
@@ -91,6 +99,24 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
 
   const toggleTeam = (teamId: string) =>
     setTeamIds((prev) => (prev.includes(teamId) ? prev.filter((t) => t !== teamId) : [...prev, teamId]));
+
+  // Même geste que « + Nouvelle catégorie » (OKRCategoryPicker) : créer sans
+  // quitter le modal, puis sélectionner immédiatement la nouvelle équipe.
+  const handleCreateTeam = () => {
+    const name = newTeamName.trim();
+    if (!name) return;
+    createTeam.mutate(
+      { name, color: newTeamColor },
+      {
+        onSuccess: (team) => {
+          setTeamIds((prev) => [...prev, team.id]);
+          setNewTeamName('');
+          setNewTeamColor(TEAM_COLORS[0].value);
+          setCreatingTeam(false);
+        },
+      },
+    );
+  };
 
   // Un objectif sans résultat clé mesurable n'est pas valide : ≥ 1 KR nommé + cible > 0.
   const hasKeyResult = keyResults.some((k) => k.title.trim() && Number(k.targetValue) > 0);
@@ -171,7 +197,20 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
 
             <div className="grid gap-2">
               <Label htmlFor="tokr-end">{t('okrModal.deadline')}</Label>
-              <Input id="tokr-end" type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+              {/* Même style que la Deadline de TeamTaskModal (tâche d'équipe) —
+                  input natif, pas le DatePicker custom (Popover+Calendar) de la
+                  page perso : cohérence avec le reste du mode entreprise.
+                  `okr-deadline-icon` teinte l'icône native en accent plutôt
+                  que blanc (règle globale `.dark input[type="date"]…`, cf.
+                  index.css) — seule cette instance change de couleur. */}
+              <input
+                id="tokr-end"
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="okr-deadline-icon w-full px-4 h-12 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none hover:border-[rgb(var(--color-accent-solid-hover))] focus:border-[rgb(var(--color-accent-solid))] focus:border-2 transition-all text-base appearance-none"
+                style={{ backgroundColor: 'rgb(var(--color-surface))', color: 'rgb(var(--color-text-primary))' }}
+              />
             </div>
 
             {/* Catégorie — vrai système partagé (parité mode perso, #C) */}
@@ -217,7 +256,64 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
                     </button>
                   );
                 })}
+                {!creatingTeam && (
+                  <button
+                    type="button"
+                    onClick={() => setCreatingTeam(true)}
+                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium border border-dashed border-[rgb(var(--color-border))] text-[rgb(var(--color-text-muted))] hover:text-blue-500 hover:border-[rgb(var(--color-accent-solid-hover))] transition-colors"
+                  >
+                    <Plus size={12} aria-hidden="true" /> {t('team.newTeam')}
+                  </button>
+                )}
               </div>
+
+              {creatingTeam && (
+                <div className="flex flex-wrap items-center gap-2 rounded-lg border border-[rgb(var(--color-border))] p-2">
+                  <input
+                    type="text"
+                    value={newTeamName}
+                    onChange={(e) => setNewTeamName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') { e.preventDefault(); handleCreateTeam(); }
+                      if (e.key === 'Escape') setCreatingTeam(false);
+                    }}
+                    placeholder={t('team.namePlaceholder')}
+                    autoFocus
+                    maxLength={80}
+                    className="flex-1 min-w-[140px] h-8 px-2.5 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-background))] text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+                  />
+                  <div className="flex items-center gap-1">
+                    {TEAM_COLORS.map((c) => (
+                      <button
+                        key={c.value}
+                        type="button"
+                        aria-label={t('team.colorNamed', { name: t(c.labelKey) })}
+                        aria-pressed={newTeamColor === c.value}
+                        onClick={() => setNewTeamColor(c.value)}
+                        className={`w-5 h-5 rounded-full transition-transform hover:scale-110 ${newTeamColor === c.value ? 'ring-2 ring-offset-1 ring-offset-[rgb(var(--color-surface))] ring-blue-500' : ''}`}
+                        style={{ backgroundColor: c.value }}
+                      />
+                    ))}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleCreateTeam}
+                    disabled={!newTeamName.trim() || createTeam.isPending}
+                    className="h-8 px-3 rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] disabled:opacity-50 text-[rgb(var(--color-accent-solid-foreground))] text-xs font-semibold"
+                  >
+                    {t('team.create')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCreatingTeam(false)}
+                    aria-label={t('common.cancel')}
+                    className="w-8 h-8 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))]"
+                  >
+                    <X size={14} aria-hidden="true" />
+                  </button>
+                </div>
+              )}
+
               <p className="text-muted-foreground text-xs">
                 {teamIds.length === 0
                   ? t('okrModal.visibilityWholeOrg')

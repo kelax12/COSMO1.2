@@ -58,7 +58,9 @@ const newKR = (): KRDraft => ({
   title: '',
   currentValue: 0,
   targetValue: 100,
-  unit: '%',
+  // Pas d'unité par défaut (cf. TeamOKRModal, même raison) — « % » n'a de
+  // sens que pour une partie des KR.
+  unit: '',
   estimatedTime: 0,
   completed: false,
   weight: 1,
