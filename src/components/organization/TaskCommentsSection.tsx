@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { getDateLocale } from '@/i18n/format';
 import { Send, Trash2, MessageSquare } from 'lucide-react';
@@ -15,6 +15,14 @@ interface TaskCommentsSectionProps {
   taskId: string;
   members: OrgMember[];
   currentUserId?: string;
+  /**
+   * Texte d'un commentaire tapé AVANT que la tâche existe (item #3) — posté
+   * automatiquement au montage, une fois `taskId` réel disponible (la tâche
+   * vient d'être créée en silence par l'appelant). `onAutoSubmitted` efface
+   * la file côté appelant pour ne pas reposter au prochain rendu.
+   */
+  autoSubmitDraft?: string | null;
+  onAutoSubmitted?: () => void;
 }
 
 /**
@@ -22,7 +30,7 @@ interface TaskCommentsSectionProps {
  * immuable, suppression par l'auteur. Mentions : taper « @ » ouvre la liste
  * des membres ; les ids mentionnés sont recalculés du texte à l'envoi.
  */
-const TaskCommentsSection = ({ taskId, members, currentUserId }: TaskCommentsSectionProps) => {
+const TaskCommentsSection = ({ taskId, members, currentUserId, autoSubmitDraft, onAutoSubmitted }: TaskCommentsSectionProps) => {
   const { t } = useT('org');
   const { data: comments = [], isLoading, isError, refetch } = useTeamTaskComments(taskId);
   const addMutation = useAddTeamTaskComment(taskId);
@@ -32,6 +40,18 @@ const TaskCommentsSection = ({ taskId, members, currentUserId }: TaskCommentsSec
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const memberById = useMemo(() => new Map(members.map((m) => [m.userId, m])), [members]);
+
+  // Poste le commentaire mis en attente par le composeur « pré-création »
+  // dès que ce composant monte avec un vrai `taskId`. Un seul essai — même
+  // sans succès on ne le rejoue pas ici, `addMutation` notifie déjà l'échec.
+  useEffect(() => {
+    if (!autoSubmitDraft || !autoSubmitDraft.trim()) return;
+    const text = autoSubmitDraft.trim();
+    const mentions = members.filter((m) => text.includes(`@${m.displayName}`)).map((m) => m.userId);
+    addMutation.mutate({ body: text, mentions });
+    onAutoSubmitted?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [taskId]);
 
   // Détection de la mention en cours : « @ » suivi de texte sans espace,
   // en fin de saisie uniquement (UX simple, pas de curseur milieu de texte).
