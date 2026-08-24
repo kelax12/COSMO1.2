@@ -26,7 +26,16 @@ traitée par fragments dans les audits sécurité. Mesuré sur le schéma de pro
 | `org_removal_notices` *(mig. 106)* | UUID du membre retiré et de l'auteur du retrait | action d'un admin |
 | `team_task_dependencies` *(mig. 108)* | `created_by` | action utilisateur |
 
-> 🟡 **Nouveau, à arbitrer avant toute vente B2B** — la policy `org_invitations_select` autorise
+> ✅ **Traité le 2026-08-24 — migration `112`, ÉCRITE mais PAS APPLIQUÉE.** Elle ajoute une purge
+> quotidienne (pg_cron, 03:30 UTC) des invitations **refusées** de plus de 30 jours, sur le
+> modèle de `prune_processed_stripe_events` (mig. 089). Les lignes **acceptées** ne sont pas
+> purgées : elles disent qui a fait entrer qui, ce qui est l'historique légitime de la
+> composition de l'organisation, et elles tombent de toute façon avec le membre
+> (`ON DELETE CASCADE`). Les invitations **en attente** non plus : c'est l'action en cours.
+> Cette migration **supprime des lignes** — elle attend une décision explicite, contrairement
+> aux `109`/`110` qui ne faisaient que redéfinir des objets.
+>
+> Le constat qui l'a motivée — la policy `org_invitations_select` autorise
 > **tout membre** de l'organisation à lire l'`invitee_id` de **toutes** les invitations, y compris
 > celles qui ont été **refusées**. Ce ne sont que des UUID (ni email, ni nom : la policy de
 > `profiles` reste la frontière), mais c'est une trace persistante et partagée d'un refus, sans

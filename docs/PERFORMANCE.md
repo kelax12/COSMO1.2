@@ -52,6 +52,24 @@ mesure précédente pour rendre la dérive lisible :
 
 - Chunk `index` : **< 150 kB gzip** (au 2026-08-24 : **134 kB** — **marge : 16 kB**, cf. la
   trajectoire ci-dessus. C'est le poste à surveiller en priorité).
+
+> **Le levier est identifié et mesuré — il n'est PAS appliqué (2026-08-24).**
+> Le catalogue de référence `fr` est importé **statiquement** par `src/i18n/catalog.ts` : les
+> 19 namespaces, soit **208 ko de JSON brut**, partent dans le chunk `index`. (`en` est déjà
+> paresseux via `import.meta.glob` — ce point-là est propre.)
+>
+> Or la moitié de ce poids n'a rien à faire sur le chemin critique :
+> `org.json` **48 ko** (page Entreprise, lazy), `landing.json` **32 ko** (landing, lazy),
+> `guide.json` **16 ko** (GuidePage, lazy), `tutorials.json` **8 ko** → **~104 ko de JSON brut**
+> chargés sur chaque écran de l'app connectée pour des pages qu'on n'ouvrira peut-être jamais.
+>
+> ⚠️ **Ne pas le faire naïvement.** L'import statique de `fr` est ce qui rend le repli
+> **synchrone** : `t()` ne renvoie jamais de promesse. Rendre ces namespaces paresseux sans
+> rendre le montage des pages concernées conscient du chargement produirait un flash de clés
+> brutes (`org.project.name` à l'écran) — un bug bien plus visible que 100 ko d'avance.
+> Le chantier est donc : catalogue paresseux **par namespace** + attente dans le `Suspense` qui
+> enveloppe déjà chaque page lazy. À faire quand la marge de 16 ko sera consommée, avec
+> vérification visuelle sur les trois pages concernées.
 - Chaque chunk lazy : **< 80 kB gzip**. Exceptions documentées : `vendor-charts` (118 kB),
   `vendor-calendar` (85 kB), `vendor-gsap` (55 kB).
   ⚠️ **`OrganizationPage` est à 61 kB gzip au 2026-08-24** : sous le budget, mais c'est de loin le

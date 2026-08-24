@@ -10,6 +10,12 @@ import { sanitizeEmail, isValidEmail } from '@/lib/email';
 import { recordDemoVisit, recordDemoConversionIfAny } from '@/lib/demo-metrics';
 import { readFirstTouch } from '@/lib/attribution';
 import { recordSeedLocale, seedLocaleMatchesCurrent } from '@/lib/seed-i18n';
+import {
+  DEMO_SENTINEL_EMAIL,
+  buildDemoUser,
+  persistDemoProfile,
+  type DemoProfilePatch,
+} from './demo-profile';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import * as Sentry from '@sentry/react';
 import { toast } from 'sonner';
@@ -105,10 +111,6 @@ export type User = {
 // handle_new_user_profile re-valide la valeur (jamais de confiance brute).
 export type AccountType = 'personal' | 'business';
 
-// Sentinel email reserved for the local demo session. We block it at signup so an
-// attacker can't register a real Supabase account using this address (faille B0).
-const DEMO_SENTINEL_EMAIL = 'demo@cosmo.app';
-
 type AuthContextType = {
   user: User | null;
   isAuthenticated: boolean;
@@ -119,6 +121,11 @@ type AuthContextType = {
   register: (name: string, email: string, password: string, accountType?: AccountType) => Promise<{ success: boolean; error?: string }>;
   loginWithGoogle: () => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
+  /**
+   * Met à jour le profil de la session DÉMO uniquement. No-op hors démo — un
+   * vrai compte passe par `supabase.auth.updateUser`, jamais par le client.
+   */
+  updateDemoProfile: (patch: DemoProfilePatch) => void;
 };
 
 // ═══════════════════════════════════════════════════════════════════
@@ -302,11 +309,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           recordSeedLocale();
         }
         appModeStore.setDemo(true);
-        setUser({
-          id: 'demo-user',
-          name: 'Utilisateur Démo',
-          email: DEMO_SENTINEL_EMAIL,
-        });
+        setUser(buildDemoUser());
         setIsLoading(false);
         return;
       }
@@ -532,11 +535,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     recordSeedLocale();
     // Compteur d'appareils distincts ayant testé la démo (fire-and-forget).
     recordDemoVisit();
-    setUser({
-      id: 'demo-user',
-      name: 'Utilisateur Démo',
-      email: DEMO_SENTINEL_EMAIL,
-    });
+    // `clearDemoStorage()` vient d'effacer `cosmo_demo_profile` : une nouvelle
+    // démo repart d'un profil neuf, pas de celui du visiteur précédent.
+    setUser(buildDemoUser());
     setIsLoading(false);
     // Sign out any real Supabase session in the background. Without this we'd
     // leave the device in a hybrid state where `appModeStore.isDemo === true`
@@ -596,8 +597,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(null);
   };
 
+  // Mutation du profil DÉMO. Trois gardes, dans cet ordre :
+  //   1. hors démo, no-op — un vrai profil ne se modifie pas côté client ;
+  //   2. whitelist de champs — `id` n'est jamais modifiable, sinon la session
+  //      démo pourrait usurper un identifiant utilisé comme clé des seeds ;
+  //   3. persistance ET `setUser` — l'écran doit changer TOUT DE SUITE (c'est
+  //      le bug corrigé) et survivre au rechargement (`buildDemoUser`).
+  const updateDemoProfile = (patch: DemoProfilePatch): void => {
+    if (!appModeStore.isDemo) return;
+    const applied = persistDemoProfile(patch);
+    if (!applied) return;
+    // Persistance ET `setUser` : l'écran doit changer TOUT DE SUITE (c'est le
+    // bug corrigé) et survivre au rechargement (`buildDemoUser`).
+    setUser((prev) => (prev ? { ...prev, ...applied } : prev));
+  };
+
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated, isDemo, isLoading, login, loginDemo, register, loginWithGoogle, logout }}>
+    <AuthContext.Provider value={{ user, isAuthenticated, isDemo, isLoading, login, loginDemo, register, loginWithGoogle, logout, updateDemoProfile }}>
       {children}
     </AuthContext.Provider>
   );

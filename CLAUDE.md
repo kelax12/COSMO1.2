@@ -107,7 +107,7 @@ npm run lint       # ESLint (doit retourner 0 erreur)
 npm run typecheck  # tsc -b (doit retourner 0 erreur)
 npm test           # Vitest (run once) — 1560 tests, ~3 min 10 s
 npm run test:watch # Vitest en mode watch
-npm run test:coverage       # + couverture v8, seuils par fichier — 🔴 ROUGE sur main (cf. TESTING.md)
+npm run test:coverage       # + couverture v8, seuils globaux et par fichier — ✅ VERTE (vérifié 2026-08-24)
 npm run validate:migrations # Garde statique sur supabase/migration/*.sql (CI)
 npm run check:rls           # Invariants RLS : auth.uid() wrappé, 1 seule policy PERMISSIVE,
                             # + toute fonction citée par une policy exécutable par authenticated (CI)
@@ -244,10 +244,16 @@ src/modules/{module}/
 
 ```typescript
 import { useAuth } from '@/modules/auth/AuthContext';
-const { user, isAuthenticated, isDemo, isLoading, login, logout, register, loginWithGoogle } = useAuth();
+const { user, isAuthenticated, isDemo, isLoading, login, logout, register, loginWithGoogle,
+        updateDemoProfile } = useAuth();
 ```
 
 > **Ne jamais importer `useAuth` depuis `@/modules/user`** — source unique = `@/modules/auth/AuthContext`.
+>
+> `updateDemoProfile(patch)` est le **seul** chemin pour modifier le profil en mode démo
+> (`name` / `email` / `avatar` / `autoValidation`, whitelistés). Hors démo, c'est un no-op :
+> un vrai profil passe par `supabase.auth.updateUser`. Écrire dans `localStorage` en espérant
+> que l'écran suive est exactement le bug corrigé le 2026-08-24 (faille B7, 2ᵉ occurrence).
 
 ### Billing — vérification premium
 
@@ -330,8 +336,6 @@ Garde-fous propres à cette zone :
 ```typescript
 import { useFavoriteColors, usePriorityRange, useColorSettings } from '@/modules/ui-states';
 import { useFriends, useSendFriendRequest, useShareTask, useFriendRequests } from '@/modules/friends';
-// ⚠️ `useMessages` (@/modules/user) existe mais n'a AUCUN consommateur (2026-08-14) — ne pas
-// l'ajouter à une page sans vérifier qu'il fait bien ce qu'on attend.
 import { useTasks, useCreateTask, useUpdateTask, useDeleteTask } from '@/modules/tasks';
 import { useHabits } from '@/modules/habits';
 import { useEvents } from '@/modules/events';
@@ -445,8 +449,10 @@ Debug : `localStorage.removeItem('cosmo_onboarding_modules_done')` puis reload.
 ## Base de données Supabase
 
 Migrations dans `supabase/migration/*.sql`, convention `NNN_<feature>.sql`.
-**114 fichiers de migration, dernière = `110_comment_notifications.sql`** (au 2026-08-24),
-**toutes appliquées en prod**.
+**116 fichiers de migration, dernière = `112_org_invitations_retention.sql`** (au 2026-08-24).
+Appliquées en prod jusqu'à la **`110`**. La `111` (catégories d'équipe) et la `112` (péremption
+des invitations refusées, RGPD) sont **écrites, pas appliquées** — la `112` SUPPRIME des lignes,
+elle ne part pas sans décision explicite.
 
 > ⚠️ Quatre migrations ne portent pas de fonctionnalité : elles **formalisent
 > l'existant**. `subscriptions`, trois colonnes et les privilèges par défaut du
