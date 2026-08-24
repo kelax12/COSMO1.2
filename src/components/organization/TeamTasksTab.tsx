@@ -6,7 +6,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from '@/components/ui/dropdown-menu';
-import type { OrgMember } from '@/modules/organizations';
+import { subtreeOf, type OrgMember } from '@/modules/organizations';
 import {
   useTeamProjects, useTeamTasks, useCreateTeamTask, useUpdateTeamTask, useDeleteTeamTask,
   type TeamTask, type TeamTaskStatus, type CreateTeamTaskInput, type UpdateTeamTaskInput,
@@ -20,7 +20,7 @@ import {
 } from './team-projects.helpers';
 import TeamTaskModal from './TeamTaskModal';
 import AssignMembersDialog from './AssignMembersDialog';
-import ScheduleTeamEventModal from './ScheduleTeamEventModal';
+import AssignEventDialog from './AssignEventDialog';
 import MemberAvatar from './MemberAvatar';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { useT } from '@/i18n/useT';
@@ -29,6 +29,8 @@ interface TeamTasksTabProps {
   orgId: string;
   members: OrgMember[];
   isManager: boolean;
+  /** Admin : agenda de tout le monde consultable dans « Assigner l'événement » ; sinon soi + son sous-arbre. */
+  isAdmin: boolean;
 }
 
 type SortField = 'priority' | 'deadline' | 'name' | 'estimatedTime';
@@ -61,7 +63,7 @@ const chipInactive =
  * n'y avait pas de raison de dupliquer pour cinq priorités déjà triables
  * par simple clic d'en-tête.
  */
-const TeamTasksTab = ({ orgId, members, isManager }: TeamTasksTabProps) => {
+const TeamTasksTab = ({ orgId, members, isManager, isAdmin }: TeamTasksTabProps) => {
   const { t, tp } = useT('org');
   const { user } = useAuth();
   const { data: allProjects = [] } = useTeamProjects(orgId);
@@ -73,6 +75,23 @@ const TeamTasksTab = ({ orgId, members, isManager }: TeamTasksTabProps) => {
   const projects = useMemo(() => allProjects.filter((p) => !p.archivedAt), [allProjects]);
   const projectById = useMemo(() => new Map(projects.map((p) => [p.id, p])), [projects]);
   const memberById = useMemo(() => new Map(members.map((m) => [m.userId, m])), [members]);
+
+  // Agendas consultables depuis « Assigner l'événement » : soi (toujours en
+  // tête, RLS `events` autorise déjà son propre user_id) + le sous-arbre
+  // managérial (RLS `events_manager_select`/`_insert`, mig. 077/081/084) —
+  // admin : toute l'organisation. Même périmètre que `canSeeAgenda` dans
+  // MemberSheet/MemberDirectory, calculé ici faute de pyramide à disposition.
+  const agendaViewableMembers = useMemo(() => {
+    if (!user) return [];
+    const self = members.find((m) => m.userId === user.id);
+    if (isAdmin) {
+      const others = members.filter((m) => m.userId !== user.id);
+      return self ? [self, ...others] : others;
+    }
+    const subtree = subtreeOf(members, user.id);
+    const others = members.filter((m) => subtree.has(m.userId));
+    return self ? [self, ...others] : others;
+  }, [members, user, isAdmin]);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [projectFilter, setProjectFilter] = useState<string | null>(null);
@@ -513,11 +532,11 @@ const TeamTasksTab = ({ orgId, members, isManager }: TeamTasksTabProps) => {
         onClose={() => setAssigningTask(null)}
       />
 
-      <ScheduleTeamEventModal
-        open={!!schedulingTask}
-        onOpenChange={(o) => { if (!o) setSchedulingTask(null); }}
+      <AssignEventDialog
         task={schedulingTask}
-        project={schedulingTask ? projectById.get(schedulingTask.projectId) : undefined}
+        members={agendaViewableMembers}
+        currentUserId={user?.id}
+        onClose={() => setSchedulingTask(null)}
       />
     </div>
   );

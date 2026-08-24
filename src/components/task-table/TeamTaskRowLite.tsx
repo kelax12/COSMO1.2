@@ -10,7 +10,7 @@ import React from 'react';
 import { Link } from 'react-router';
 import { UsersRound, ArrowUpRight } from 'lucide-react';
 import type { TeamProject, TeamTask } from '@/modules/team-projects';
-import { isTaskOverdue, projectColor } from '../organization/team-projects.helpers';
+import { isTaskOverdue, projectColor, taskDisplayStatus } from '../organization/team-projects.helpers';
 import { formatDeadlineSmart, formatDuration } from './helpers';
 import { useT } from '@/i18n/useT';
 
@@ -23,8 +23,10 @@ interface TeamTaskRowLiteProps {
 
 export const TeamTaskRowLite = React.memo(({ task, project, onToggleComplete, onEdit }: TeamTaskRowLiteProps) => {
   const { t } = useT('tasks');
+  const { t: tOrg } = useT('org');
   const overdue = isTaskOverdue(task);
   const color = project ? projectColor(project.color) : projectColor('blue');
+  const status = taskDisplayStatus(task);
 
   return (
     <tr
@@ -65,6 +67,10 @@ export const TeamTaskRowLite = React.memo(({ task, project, onToggleComplete, on
           <span className="truncate" title={task.name}>{task.name}</span>
           <span className="inline-flex items-center gap-1 text-caption font-semibold px-1.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-500 shrink-0">
             <UsersRound size={10} aria-hidden="true" /> {t('team.badge')}
+          </span>
+          <span className="inline-flex items-center gap-1.5 text-caption shrink-0" style={{ color: 'rgb(var(--color-text-muted))' }}>
+            <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${status.dot}`} aria-hidden="true" />
+            {tOrg(status.labelKey as Parameters<typeof tOrg>[0])}
           </span>
         </div>
       </td>

@@ -413,7 +413,7 @@ const TeamTaskModal = ({
                   type="date"
                   value={deadline}
                   onChange={(e) => setDeadline(e.target.value)}
-                  className={inputClass}
+                  className={`${inputClass} appearance-none`}
                   style={inputStyle}
                 />
               </div>
@@ -428,7 +428,7 @@ const TeamTaskModal = ({
                   value={estimatedTime}
                   onChange={(e) => setEstimatedTime(e.target.value)}
                   placeholder={t('taskModal.timePlaceholder')}
-                  className={inputClass}
+                  className={`${inputClass} appearance-none`}
                   style={inputStyle}
                 />
               </div>
