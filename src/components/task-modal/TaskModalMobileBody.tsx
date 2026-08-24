@@ -15,7 +15,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { useBottomSheet } from '@/hooks/use-bottom-sheet';
 import { useInvalidShake } from '@/hooks/use-invalid-shake';
 import { useCreateCategory } from '@/modules/categories';
-import AddToListModal from '../AddToListModal';
+import AddToListModal from '@/components/AddToListModal';
 import ShareLinkField from '@/components/ShareLinkField';
 import { SectionTitle, SectionCard, CellSeparator, Cell } from './primitives';
 import { buildDatePresets } from '@/lib/date-presets';

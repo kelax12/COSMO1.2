@@ -21,6 +21,7 @@
     "forbidden": "You do not have the required permissions for this action.",
     "cannot_invite_self": "You cannot invite yourself.",
     "not_a_member": "You must belong to this company to invite someone to it.",
+    "not_allowed_to_invite": "Only an administrator or a team manager can bring someone into the company.",
     "not_a_friend": "You can only invite your COSMO contacts. Add this person as a friend first.",
     "already_a_member": "This person is already part of the company.",
     "invitation_not_found": "This invitation no longer exists.",

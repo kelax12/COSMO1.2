@@ -6,14 +6,14 @@ import {
   Mail, ChevronRight, BarChart3,
 } from 'lucide-react';
 import { useTimezonePref, clampOffsetHours } from '@/lib/timezone';
-import { ShortcutsList } from '../components/keyboard-shortcuts';
+import { ShortcutsList } from '@/components/keyboard-shortcuts';
 import { useIsAdmin } from '@/modules/admin';
 import { useHabitReminderPref } from '@/modules/ui-states';
 import { useNavigate } from 'react-router';
-import { useAuth } from '../modules/auth/AuthContext';
-import { useUpdateUserSettings } from '../modules/user';
-import ThemeToggle from '../components/ThemeToggle';
-import LocaleToggle from '../components/LocaleToggle';
+import { useAuth } from '@/modules/auth/AuthContext';
+import { useUpdateUserSettings } from '@/modules/user';
+import ThemeToggle from '@/components/ThemeToggle';
+import LocaleToggle from '@/components/LocaleToggle';
 import { SUPPORTED_LOCALES } from '@/i18n/locale';
 import { useT } from '@/i18n/useT';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
@@ -32,7 +32,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "../components/ui/alert-dialog";
+} from "@/components/ui/alert-dialog";
 
 // Atomes présentationnels + nav extraits dans ./settings/primitives.
 // Onglet « Mes données » extrait dans ./settings/DataTab.

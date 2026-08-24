@@ -172,7 +172,7 @@ const TeamsSection = ({ orgId, members, currentUserId, isAdmin, isManager }: Tea
                         {isLead && (
                           <span
                             title={t('teams.leadHint')}
-                            className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400"
+                            className="inline-flex items-center gap-0.5 text-caption font-semibold text-amber-600 dark:text-amber-400"
                           >
                             <Crown size={10} aria-hidden="true" /> {t('teams.leadBadge')}
                           </span>

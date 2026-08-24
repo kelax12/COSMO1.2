@@ -7,7 +7,7 @@
 import React from 'react';
 import { CalendarClock, UsersRound } from 'lucide-react';
 import type { TeamProject, TeamTask } from '@/modules/team-projects';
-import { isTaskOverdue, projectColor, formatDuration, taskDisplayStatus } from '../organization/team-projects.helpers';
+import { isTaskOverdue, projectColor, formatDuration, taskDisplayStatus } from '@/components/organization/team-projects.helpers';
 import { formatDate } from './helpers';
 import { useT } from '@/i18n/useT';
 

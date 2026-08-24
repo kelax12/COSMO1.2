@@ -1,6 +1,6 @@
 import React from 'react';
 import { useT } from '@/i18n/useT';
-import TrackAnchors from '../TrackAnchors';
+import TrackAnchors from '@/pages/landing/TrackAnchors';
 import EnterpriseHero from './EnterpriseHero';
 import ProblemSection from './ProblemSection';
 import PyramidSection from './PyramidSection';

@@ -105,12 +105,12 @@ npm run build      # Build prod → dist/ (vite build + node prerender.mjs)
 npm run preview    # Prévisualiser le build
 npm run lint       # ESLint (doit retourner 0 erreur)
 npm run typecheck  # tsc -b (doit retourner 0 erreur)
-npm test           # Vitest (run once) — 1550 tests, ~3 min 10 s
-                   # 🔴 ROUGE sur main au 2026-08-24 : design-system.guard (stock de tailles arbitraires 205 > 203)
+npm test           # Vitest (run once) — 1560 tests, ~3 min 10 s
 npm run test:watch # Vitest en mode watch
 npm run test:coverage       # + couverture v8, seuils par fichier — 🔴 ROUGE sur main (cf. TESTING.md)
 npm run validate:migrations # Garde statique sur supabase/migration/*.sql (CI)
-npm run check:rls           # Invariants RLS : auth.uid() wrappé, 1 seule policy PERMISSIVE (CI)
+npm run check:rls           # Invariants RLS : auth.uid() wrappé, 1 seule policy PERMISSIVE,
+                            # + toute fonction citée par une policy exécutable par authenticated (CI)
 npm run check:drift         # Dérive repo ↔ prod (2 étapes : --print-sql puis <introspection.json>)
 npm run i18n:check          # Parité des clés fr ↔ en (CI, bloquant)
 npm run i18n:scan           # Chaînes en dur non externalisées
@@ -445,8 +445,8 @@ Debug : `localStorage.removeItem('cosmo_onboarding_modules_done')` puis reload.
 ## Base de données Supabase
 
 Migrations dans `supabase/migration/*.sql`, convention `NNN_<feature>.sql`.
-**112 fichiers de migration, dernière = `108_team_task_dependencies.sql`** (au 2026-08-24,
-toutes appliquées en prod — ledger relu le 2026-08-24).
+**114 fichiers de migration, dernière = `110_comment_notifications.sql`** (au 2026-08-24).
+Appliquées en prod jusqu'à la `108` ; **`109` et `110` sont en attente d'application**.
 
 > ⚠️ Quatre migrations ne portent pas de fonctionnalité : elles **formalisent
 > l'existant**. `subscriptions`, trois colonnes et les privilèges par défaut du

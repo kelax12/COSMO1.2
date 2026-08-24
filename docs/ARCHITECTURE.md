@@ -22,14 +22,19 @@ répond à une seule question : **les invariants qu'on s'est donnés tiennent-il
 | Un seul canal Realtime, monté dans `App.tsx` | CLAUDE.md 📡 | ✅ Tenu (1 seul `.channel()` dans tout `src/`) |
 | Toutes les tables `public` ont RLS activée | `SECURITY.md` | ✅ **Tenu**, vérifié en prod le 2026-08-24 : 0 table avec `relrowsecurity = false` |
 | **Jamais de `supabase.from()` hors d'un repository** | `SCALABILITY.md` §5 | ❌ **Violé** — voir §2 (toujours le seul `SettingsPage.tsx`) |
-| Imports toujours via l'alias `@/` | CLAUDE.md | ❌ **Violé, et ça empire** — 1 occurrence au 2026-08-14, **6** au 2026-08-24 (§2) |
+| Imports toujours via l'alias `@/` | CLAUDE.md + ESLint | ✅ **Tenu depuis le 2026-08-24** — 74 imports relatifs réécrits, et la convention est désormais **outillée** (`no-restricted-imports`), donc elle ne peut plus se diluer en silence (§2) |
 | Aucun fichier source > 600 LOC | refactor de juin 2026 | ❌ **Violé, et ça empire** — 13 fichiers au 2026-08-14, **15** au 2026-08-24 (§3) |
-| Suite unitaire verte | `TESTING.md` | ❌ **Violé depuis le 2026-08-23/24** — `design-system.guard` rouge (cf. [`TESTING.md`](./TESTING.md)) |
+| Suite unitaire verte | `TESTING.md` | ✅ **Rétablie le 2026-08-24** — 1560/1560 (cf. [`TESTING.md`](./TESTING.md)) |
 
-Les invariants qui portent la **sécurité** et la **performance** tiennent tous. Les quatre
-violations sont de la dette — mais trois d'entre elles **ont progressé** depuis le 2026-08-14, et
-aucune n'a de garde automatique sauf la dernière. C'est le motif de fond de cet audit : *une règle
-qu'aucun script ne mesure recule à chaque vague de features.*
+Les invariants qui portent la **sécurité** et la **performance** tiennent tous.
+
+Au 2026-08-24, deux des quatre violations sont refermées — et c'est le **même** geste qui les a
+refermées : leur donner un outil. La convention d'import est passée de 1 à 6 entorses en dix jours
+tant qu'elle ne vivait que dans un Markdown ; elle est réglée en une règle ESLint. Restent
+`supabase.from()` hors repository (§2, une seule page) et les fichiers > 600 LOC (§3) — les deux
+seules dettes de ce tableau que **rien ne mesure encore**, et donc les deux seules qui continueront
+de grandir. C'est le motif de fond de cet audit : *une règle qu'aucun script ne mesure recule à
+chaque vague de features.*
 
 ## 2. 🟡 Deux entorses ponctuelles dans `SettingsPage`
 
@@ -42,19 +47,22 @@ qu'aucun script ne mesure recule à chaque vague de features.*
 - **Ligne 14** : `import { useUpdateUserSettings } from '../modules/user'` — chemin relatif au lieu
   de l'alias `@/`.
 
-**Mise à jour du 2026-08-24 : l'entorse d'import s'est répandue.** Elle touche maintenant
-**6 lignes dans 4 fichiers** :
+**Mise à jour du 2026-08-24 : ✅ réglé, et outillé.** Le comptage du 2026-08-14 (« 1 entorse »)
+était faux par sous-mesure : il ne cherchait que `../modules`. En élargissant à `../lib`,
+`../components`, `../pages`, `../i18n`, on trouvait **74 imports relatifs dans 29 fichiers**.
 
-| Fichier | Lignes |
-|---|---|
-| `src/modules/auth/AuthContext.tsx` | 6, 7 (`../../modules/tasks/constants`, `../../modules/habits/constants`) |
-| `src/pages/LandingPage.tsx` | 2 |
-| `src/pages/PremiumPage.tsx` | 5 |
-| `src/pages/SettingsPage.tsx` | 13, 14 |
+Tous réécrits en `@/…` (résolution mécanique du chemin, `tsc -b` vert), puis la convention rendue
+**exécutable** par une règle ESLint `no-restricted-imports` — périmètre volontairement étroit :
+seuls les chemins qui *remontent* pour atteindre `src/` sont interdits ; les imports relatifs
+internes à un module (`./constants`, `./types`) restent légitimes, ce sont eux qui rendent un
+module déplaçable.
 
-Aucune n'est fautive individuellement ; c'est la démonstration qu'une convention non outillée se
-dilue. Correction : ~30 min, plus une règle ESLint `no-restricted-imports` pour que ça ne revienne
-pas — c'est le seul vrai correctif.
+La leçon n'est pas « il fallait corriger 74 lignes » : c'est que **la mesure elle-même était
+fausse** tant qu'aucun outil ne la faisait. Un `grep` écrit à la main mesure ce à quoi on a pensé.
+
+Reste la première entorse de cette section : `await supabase.from('profiles')…` en direct dans
+`SettingsPage.tsx`. Non corrigée — elle demande de créer un chemin de repository, pas de déplacer
+une ligne.
 
 ## 3. 🟠 L'objectif « aucun fichier > 600 LOC » n'est plus tenu
 

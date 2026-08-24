@@ -3,7 +3,7 @@
 import type React from 'react';
 import type { MotionValue } from 'framer-motion';
 import type { EventRecurrence } from '@/modules/events';
-import type { EventModalMode } from '../EventModal';
+import type { EventModalMode } from '@/components/EventModal';
 
 export interface EventModalFormProps {
   mode: EventModalMode;

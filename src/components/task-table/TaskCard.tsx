@@ -6,7 +6,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence, useMotionValue, useTransform, animate } from "framer-motion";
 import { Bookmark, Calendar, MoreHorizontal, UserPlus, Copy, Trash2, CheckCircle2, X, Users, AlertTriangle, Hourglass, Pencil } from "lucide-react";
-import CollaboratorAvatars from "../CollaboratorAvatars";
+import CollaboratorAvatars from "@/components/CollaboratorAvatars";
 import { useCategoryLookup } from "@/modules/categories";
 import { Task } from "@/modules/tasks";
 import { getSnoozeOptions } from "@/modules/tasks/snooze";

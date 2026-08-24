@@ -8,12 +8,12 @@ import {
   Flame, Layers, Filter, Bell, List,
   GripVertical, PlayCircle
 } from 'lucide-react';
-import TaskTableShowcase from '../components/showcase/TaskTableShowcase';
-import AgendaShowcase from '../components/showcase/AgendaShowcase';
-import OKRCardShowcase from '../components/showcase/OKRCardShowcase';
-import HabitHeatmapShowcase from '../components/showcase/HabitHeatmapShowcase';
+import TaskTableShowcase from '@/components/showcase/TaskTableShowcase';
+import AgendaShowcase from '@/components/showcase/AgendaShowcase';
+import OKRCardShowcase from '@/components/showcase/OKRCardShowcase';
+import HabitHeatmapShowcase from '@/components/showcase/HabitHeatmapShowcase';
 // Audit perf 2026-05-29 — lazy-load Recharts wrapper (same rationale as LandingPage).
-const StatsShowcase = lazy(() => import('../components/showcase/StatsShowcase'));
+const StatsShowcase = lazy(() => import('@/components/showcase/StatsShowcase'));
 const StatsShowcaseFallback = () => (
   <div className="w-full rounded-2xl bg-slate-800/80 border border-white/10 shadow-2xl p-5 h-[340px] animate-pulse" />
 );

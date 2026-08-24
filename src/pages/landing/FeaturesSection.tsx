@@ -8,23 +8,23 @@ import { motion, useReducedMotion } from 'framer-motion';
 import { CheckCircle, Calendar, Target, Repeat, ArrowRight, BarChart2 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { gsap, ScrollTrigger, useGSAP } from '@/lib/gsap';
-import TaskTableShowcase from '../../components/showcase/TaskTableShowcase';
-import AgendaShowcase from '../../components/showcase/AgendaShowcase';
-import OKRCardShowcase from '../../components/showcase/OKRCardShowcase';
-import HabitHeatmapShowcase from '../../components/showcase/HabitHeatmapShowcase';
+import TaskTableShowcase from '@/components/showcase/TaskTableShowcase';
+import AgendaShowcase from '@/components/showcase/AgendaShowcase';
+import OKRCardShowcase from '@/components/showcase/OKRCardShowcase';
+import HabitHeatmapShowcase from '@/components/showcase/HabitHeatmapShowcase';
 import {
   TaskCardMobileShowcase,
   AgendaMobileShowcase,
   HabitMobileShowcase,
   OKRMobileShowcase,
   StatsMobileShowcase,
-} from '../../components/showcase/MobileShowcases';
+} from '@/components/showcase/MobileShowcases';
 import { useT } from '@/i18n/useT';
 
 // Audit perf 2026-05-29 — StatsShowcase pulls Recharts (≈ 320 kB). Landing
 // page should never block on it: lazy-load with a lightweight skeleton so
 // the page renders instantly and the chart streams in once Recharts arrives.
-const StatsShowcase = lazy(() => import('../../components/showcase/StatsShowcase'));
+const StatsShowcase = lazy(() => import('@/components/showcase/StatsShowcase'));
 const ShowcaseSkeleton = () => (
   <div className="w-full rounded-2xl bg-slate-800/80 border border-white/10 shadow-2xl p-5 h-[340px] animate-pulse" />
 );

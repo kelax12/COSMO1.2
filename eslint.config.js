@@ -43,6 +43,32 @@ export default tseslint.config(
       // Un commentaire suffit à satisfaire la règle — l'objectif est la
       // justification écrite, pas la gestion d'erreur cérémonielle.
       'no-empty': ['error', { allowEmptyCatch: false }],
+      // Audit doc 2026-08-24 — la convention « toujours l'alias `@/` »
+      // (CLAUDE.md) n'était portée par aucun outil : elle est passée de
+      // 1 entorse le 2026-08-14 à 6 le 2026-08-24, sans qu'aucune revue ne
+      // le voie. Une convention non outillée se dilue ; celle-ci est
+      // structurante (elle garde le pattern repository comme frontière de
+      // données unique, donc rend une sortie de Supabase envisageable).
+      //
+      // Périmètre volontairement étroit : on interdit de remonter au-dessus
+      // du dossier courant pour atteindre `src/`. Les imports relatifs
+      // INTERNES à un module (`./constants`, `./types`) restent légitimes —
+      // ce sont eux qui rendent un module déplaçable.
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['../modules/*', '../../modules/*', '../../../modules/*',
+                      '../lib/*', '../../lib/*', '../../../lib/*',
+                      '../components/*', '../../components/*', '../../../components/*',
+                      '../pages/*', '../../pages/*', '../../../pages/*',
+                      '../i18n/*', '../../i18n/*', '../../../i18n/*'],
+              message: "Utiliser l'alias `@/` (CLAUDE.md → Conventions de code).",
+            },
+          ],
+        },
+      ],
     },
   }
 );

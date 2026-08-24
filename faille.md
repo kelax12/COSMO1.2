@@ -16,146 +16,147 @@ Légende : 🔴 bloquant · 🟠 important · 🟡 à planifier · ✅ corrigé
 
 | Garde | Résultat |
 |---|---|
-| `npm run check:rls` | ✅ **120 policies analysées sur 66 migrations, 0 violation** |
-| `npm run validate:migrations` | ✅ **112 fichiers, 0 erreur, 5 avertissements** — tous préexistants (doublons de numéro `000`/`007`/`010`, deux `FOR UPDATE` sans `WITH CHECK` sur `007`/`010`) |
-| `npm run typecheck` · `npm run lint` | ✅ 0 erreur (27 warnings Fast-refresh tolérés) |
+| `npm run check:rls` | ✅ **120 policies sur 68 migrations, 0 violation** — + nouvelle règle 3 : toute fonction citée par une policy doit rester exécutable par `authenticated` |
+| `npm run validate:migrations` | ✅ **114 fichiers, 0 erreur, 6 avertissements** — 5 préexistants (doublons `000`/`007`/`010`, deux `FOR UPDATE` sans `WITH CHECK`) + 1 nouveau, informatif (mig. `110`, trigger de notification en `SECURITY DEFINER`, légitime) |
+| `npm run typecheck` · `npm run lint` | ✅ 0 erreur (27 warnings Fast-refresh tolérés) — + règle `no-restricted-imports` sur l'alias `@/` |
 | `npm run i18n:check` | ✅ 19 namespaces, 0 erreur |
 | Advisors Supabase (sécurité) | 5 INFO `rls_enabled_no_policy` (tables analytiques, **deny-all volontaire**), 1 WARN `auth_leaked_password_protection` (= A-10 ci-dessous), 48 WARN `authenticated_security_definer_function_executable`, **5** WARN `anon_security_definer_function_executable` (2 de plus qu'au 2026-08-14, cf. finding B-3) |
 | Couverture RLS | ✅ **toutes** les tables `public` ont RLS activée (vérifié en prod : `relrowsecurity = false` sur 0 table) |
-| Migrations appliquées en prod | ✅ ledger à jour jusqu'à `108_team_task_dependencies` (vérifié le 2026-08-24) |
+| Migrations appliquées en prod | ⏳ ledger à jour jusqu'à `108` (vérifié le 2026-08-24). **`109` et `110` écrites, PAS appliquées.** |
 
-Les fonctions exécutables par `anon` sont désormais **cinq**, et seules deux le sont
+Les fonctions exécutables par `anon` étaient **cinq** au 2026-08-24. Deux le sont
 volontairement : `preview_share_link(uuid)` (aperçu d'un lien d'invitation avant connexion) et
 `record_demo_visit(uuid)` (comptage des visites de démo). Toutes deux prennent un UUID non
 devinable en argument — à ne pas « nettoyer » par erreur. Les trois autres
 (`seed_default_categories`, `validate_team_task_dependency`,
 `prevent_team_task_dependency_cycle`) sont des **fonctions de trigger** : Postgres refuse leur
-appel direct, elles ne sont donc pas exploitables, mais elles violent la règle de durcissement
-posée par les migrations `064b` / `094b` (cf. B-3).
+appel direct, elles ne sont donc pas exploitables, mais elles violaient la règle de durcissement
+posée par les migrations `064b` / `094b` (cf. B-3). **La mig. `109` les révoque** — l'advisor
+retombera à deux dès qu'elle sera appliquée.
 
 ## État global
 
 **Aucun finding High ou Critical exploitable** (dernière passe complète : **2026-08-24**, contre
-la prod `ykeugqfgklejcdbrmawy`, migrations appliquées jusqu'à `108`). Risque global : **faible**.
+la prod `ykeugqfgklejcdbrmawy`). Risque global : **faible**.
 
-Deux choses ont changé depuis le 2026-08-14 :
+Trois choses ont changé depuis le 2026-08-14 :
 
 - ✅ **La fuite inter-organisations par les helpers RLS est refermée** (mig. `100`, appliquée en
-  prod le 2026-08-23). Vérifié aujourd'hui en base :
+  prod le 2026-08-23). Vérifié en base :
   `has_function_privilege('authenticated', 'get_subtree', 'EXECUTE')` → **false**, idem
-  `has_subordinates` et `org_admin_count`. Le détail du finding et son PoC sont archivés dans
-  [`docs/archive/faille-historique.md`](./docs/archive/faille-historique.md) ; la **règle durable**
-  qu'il a produite est en bas de ce fichier.
-- 🟠 **Trois nouveaux findings** ouverts par la vague entreprise du 2026-08-23/24
-  (migrations `103` → `108`) : B-1, B-2, B-3 ci-dessous.
+  `has_subordinates` et `org_admin_count`. Finding + PoC archivés dans
+  [`docs/archive/faille-historique.md`](./docs/archive/faille-historique.md).
+- 🟠 **Trois findings ouverts par la vague entreprise du 2026-08-23/24** (migrations `103` → `108`) :
+  B-1, B-2, B-3.
+- 🟡 **Les trois sont corrigés dans le dépôt** par la migration
+  `109_policy_exec_rights_and_trigger_hardening.sql` — **mais elle n'est PAS encore appliquée en
+  prod**. Tant qu'elle ne l'est pas, les trois restent OUVERTS EN PRODUCTION. C'est la seule
+  action manuelle que ce fichier réclame aujourd'hui, avec A-9.
 
 Un seul **bloquant** subsiste côté sécurité, et c'est un point de **résilience**, pas une faille :
 le plan Supabase `free`. Tout le reste est du réglage de console Supabase.
 
 ---
 
-## 🟠 Ouvert — B-1 · la mig. 107 rappelle `get_subtree` depuis une policy, que la mig. 100 a révoqué
+## 🟡 B-1 · corrigé dans le dépôt (mig. 109), en attente de prod
 
-**Régression, vérifiée en prod le 2026-08-24.** La migration `100` a fermé la fuite des helpers en
-révoquant `EXECUTE` à `authenticated` — et a pris soin de réécrire la seule policy qui appelait
-`get_subtree` **directement**, `org_team_members_insert`, en `is_above(org_id, user_id)`.
-
-La migration `107` (leads d'équipe) crée une policy `org_team_members_update` qui **réintroduit
-exactement le motif supprimé** :
+**Ce que c'était.** La mig. `100` a fermé la fuite des helpers en révoquant `EXECUTE` à
+`authenticated` sur `get_subtree` — et a réécrit la seule policy qui l'appelait **directement**,
+`org_team_members_insert`, en `is_above(org_id, user_id)`. Sept jours plus tard, la mig. `107`
+(leads d'équipe) a créé `org_team_members_update` **en réintroduisant le motif supprimé** :
 
 ```sql
-WITH CHECK (
-  can_manage_team(team_id)
-  AND ( is_org_admin(org_id)
-        OR user_id = (select auth.uid())
-        OR user_id IN (SELECT public.get_subtree(org_id, (select auth.uid()))) )  -- 🔴
-)
+OR user_id IN (SELECT public.get_subtree(org_id, (select auth.uid())))   -- 🔴
 ```
 
 Un `WITH CHECK` de policy s'évalue **avec le rôle courant** (`authenticated`), pas avec le
-propriétaire : l'appel est donc refusé au niveau des droits.
+propriétaire : l'appel est refusé au niveau des droits.
 
-**Impact** : ce n'est **pas** une fuite — ça échoue fermé. C'est une **fonctionnalité cassée en
-prod** : le `OR` court-circuite pour un admin d'organisation et pour un membre qui modifie sa
-propre ligne, mais dès qu'un **lead ou un manager non-admin** nomme un lead sur un subordonné
-(`setTeamLead`, `src/modules/org-teams/supabase.repository.ts`), Postgres renvoie
-`ERROR: permission denied for function get_subtree`. C'est précisément le cas d'usage pour lequel
-la mig. `107` a été écrite.
+**Ce n'était pas une fuite — ça échoue fermé.** C'était une **fonctionnalité cassée en prod** : le
+`OR` court-circuite pour un admin et pour quelqu'un qui modifie sa propre ligne, mais dès qu'un
+**lead ou manager non-admin** nomme un lead sur un subordonné (`setTeamLead`,
+`src/modules/org-teams/supabase.repository.ts`), Postgres renvoie
+`ERROR: permission denied for function get_subtree`. Exactement le cas d'usage de la mig. `107`.
 
-**Correction** : remplacer la troisième branche par `is_above(org_id, user_id)`, qui en est la
-définition exacte et reste exécutable par `authenticated`. Une migration `109` d'une seule policy.
+**Correctif (mig. 109)** : `public.is_above(org_id, user_id)`, qui est à la lettre
+`p_user IN (SELECT get_subtree(p_org, auth.uid()))` (vérifié via `pg_get_functiondef`) — sémantique
+identique, droit d'exécution conservé.
 
-> **Règle qui manquait** : aucune garde n'attrape ça. `check:rls` vérifie le wrapping d'`auth.uid()`
-> et l'unicité des policies permissives, pas les **droits d'exécution** des fonctions appelées
-> depuis une policy. À ajouter à `scripts/check-rls-advisors.mjs` : toute fonction citée dans un
-> `USING`/`WITH CHECK` doit être `EXECUTE`-able par `authenticated`.
+**Garde ajoutée** : `npm run check:rls` refuse désormais toute policy citant une fonction révoquée
+à `authenticated`. Il rejoue les `GRANT`/`REVOKE` de tout l'historique et évalue l'état final.
+Vérifié en réinjectant la régression : le script sort **exit 1** avec le nom de la fonction.
+Verrouillé par `scripts/migration-guards.test.mjs`.
 
-## 🟠 Ouvert — B-2 · un simple membre peut faire entrer quelqu'un dans l'organisation
+## 🟡 B-2 · corrigé dans le dépôt (mig. 109), en attente de prod
 
-`invite_friend_to_org(p_org, p_invitee)` (mig. `105`) ne demande que
-`public.is_org_member(p_org)`. Or les deux autres chemins d'entrée sont bien plus stricts —
-vérifié en prod sur `pg_policies` :
+**Ce que c'était.** `invite_friend_to_org` (mig. `105`) n'exigeait que `is_org_member(p_org)`, là
+où les deux autres chemins d'entrée dans une organisation sont bien plus stricts — vérifié en prod
+sur `pg_policies` :
 
-| Chemin | Qui peut l'ouvrir |
+| Chemin | Qui pouvait l'ouvrir |
 |---|---|
 | `org_invite_links_insert` (lien / code) | admin **ou** manager ayant des subordonnés (`i_have_subordinates`) |
 | `organization_join_requests` (demande spontanée) | l'admin décide (`respond_join_request`) |
 | **`invite_friend_to_org` (mig. 105)** | **n'importe quel membre** 🟠 |
 
-La garde d'amitié confirmée limite le rayon d'action (on n'invite qu'un ami déjà accepté) et le
-quota de sièges est bien vérifié à l'acceptation (`org_seats_allowed`, garde présente ✅). Mais le
-modèle d'autorisation de la croissance de l'organisation est désormais **incohérent** : la feuille
-la plus basse de la pyramide peut faire entrer un tiers — et, une fois le paywall entreprise
-activé, **consommer un siège payant** — sans qu'aucun admin ne l'ait décidé.
+Pas d'élévation de privilège (l'entrant arrive `role = 'member'`, `manager_id NULL`) et le quota de
+sièges était bien vérifié à l'acceptation ✅ — mais la feuille la plus basse de la pyramide pouvait
+faire entrer un tiers, et consommer un siège payant une fois le paywall actif, sans qu'aucun admin
+ne l'ait décidé.
 
-**Impact** : pas d'élévation de privilège (l'entrant arrive en `role = 'member'`, `manager_id NULL`),
-mais perte de contrôle de l'admin sur l'effectif et sur la facture.
+**Décision (Axel, 2026-08-24)** : aligner sur le chemin du lien d'invitation. La mig. `109` ajoute
+`is_org_admin(p_org) OR i_have_subordinates(p_org)` en tête de la RPC — le **même** prédicat que
+`org_invite_links_insert`, pour qu'il n'y ait qu'une seule réponse à « qui peut faire grossir
+l'organisation ».
 
-**Décision à prendre** (produit, pas technique) : soit c'est voulu — et il faut alors le dire dans
-`docs/SECURITY.md` et aligner les deux autres chemins — soit il faut ajouter
-`is_org_admin(p_org) OR i_have_subordinates(p_org)` en tête de la RPC.
+**Le front était déjà aligné, par chance et non par conception** : `OrganizationPage` monte
+`InviteFriendsToOrg` sous `isAdmin`, et `AddUnderSheet` sous
+`canEdit = isAdmin || isManagerOf(members, currentUserId)` — or `isManagerOf` est, à la lettre,
+« quelqu'un a `managerId === moi` », c'est-à-dire `i_have_subordinates`. Aucun changement d'écran
+n'est donc nécessaire ; la clé d'erreur `api.not_allowed_to_invite` est ajoutée aux deux catalogues
+comme filet, pas comme parcours attendu.
 
-**Note connexe** : `org_invitations_select` laisse **tout membre** lire l'`invitee_id` de toutes les
-invitations émises, y compris **refusées**. Ce ne sont que des UUID (pas d'email ni de nom), mais
-c'est une trace persistante d'un refus — à recouper avec `docs/RGPD.md` si le mode entreprise
-sort du cercle des testeurs.
+> ⚠️ **Reste ouvert, non traité** : `org_invitations_select` laisse tout membre lire l'`invitee_id`
+> de toutes les invitations, **y compris refusées**, sans date de péremption. Ce ne sont que des
+> UUID, mais c'est une trace persistante d'un refus. Cf. [`docs/RGPD.md`](./docs/RGPD.md) §1.
 
-## 🟡 Ouvert — B-3 · mig. 108 : triggers de garde en `SECURITY DEFINER`, non révoqués à `anon`
+## 🟡 B-3 · corrigé dans le dépôt (mig. 109), en attente de prod
 
-Deux règles durables de ce fichier sont enfreintes par la mig. `108` :
+**Ce que c'était.** La mig. `108` enfreignait deux règles déjà écrites :
 
-1. **« Un trigger de garde doit être `SECURITY INVOKER` »** (audit du 2026-07-26).
-   `validate_team_task_dependency()` et `prevent_team_task_dependency_cycle()` sont
-   `SECURITY DEFINER`. La mig. `107`, écrite le même jour, respecte pourtant la règle pour
+1. « Un trigger de garde doit être `SECURITY INVOKER` » (audit du 2026-07-26) —
+   `validate_team_task_dependency()` et `prevent_team_task_dependency_cycle()` étaient `DEFINER`,
+   alors que la mig. `107`, écrite le même jour, respecte la règle pour
    `freeze_team_membership_identity()`.
-2. **Pas de `REVOKE … FROM anon`** sur ces deux fonctions (règle posée par `064b`, réappliquée par
-   `094b`) → les 2 nouveaux WARN advisor `anon_security_definer_function_executable`.
+2. Pas de `REVOKE … FROM anon` (règle `064b`, réappliquée par `094b`).
 
-**Exploitabilité directe : nulle.** Les deux fonctions sont `RETURNS trigger` ; Postgres refuse
-tout appel direct, y compris via PostgREST.
+**Exploitabilité directe : nulle** (`RETURNS trigger`, Postgres refuse l'appel direct). Mais un
+trigger `BEFORE INSERT` s'exécute **avant** le `WITH CHECK` de la RLS : en `DEFINER`, la lecture de
+`team_tasks` ignorait la RLS, et les messages d'erreur distinguaient
+« `Both tasks must exist` » de « `… single project` » — soit un **oracle d'existence** sur
+`team_tasks` hors organisation. Étroit (UUID v4 requis, réponse booléenne), mais c'est la classe
+exacte du finding refermé par la mig. `100`.
 
-**Ce qui est réellement exploitable, et c'est le vrai point** : un trigger `BEFORE INSERT`
-s'exécute **avant** l'évaluation du `WITH CHECK` de la RLS. En `SECURITY DEFINER`, la lecture de
-`team_tasks` faite par `validate_team_task_dependency` ignore donc la RLS, et le message d'erreur
-distingue deux cas :
+**Correctif (mig. 109)** : les deux triggers repassent en `SECURITY INVOKER` — le `SELECT`
+redevient filtré par la RLS, les deux cas convergent vers `Both tasks must exist`, l'oracle
+disparaît — et **quatre** fonctions de trigger sont révoquées pour `anon` **et** `authenticated`
+(`validate_team_task_dependency`, `prevent_team_task_dependency_cycle`,
+`freeze_team_membership_identity`, `seed_default_categories`).
 
-| Insertion tentée sur `team_task_dependencies` | Message renvoyé | Ce qu'il révèle |
-|---|---|---|
-| `depends_on_id` inexistant | `Both tasks must exist` | rien |
-| `depends_on_id` existant, **autre projet, autre organisation** | `A dependency must stay within a single project` | **l'UUID correspond à une tâche réelle** 🟡 |
+Ces quatre-là sont exactement celles qui restaient exposées : vérifié en prod le 2026-08-24 sur
+les **28** fonctions `RETURNS trigger` du schéma `public`, les 24 autres sont déjà fermées.
 
-C'est un **oracle d'existence** sur `team_tasks` hors périmètre — la même classe que le finding
-helpers refermé par la mig. `100`, en plus étroit : il faut déjà connaître l'UUID (v4, non
-devinable), et il ne rend qu'un booléen.
+**Garde ajoutée** : `npm run validate:migrations` refuse toute nouvelle fonction de trigger sans
+`REVOKE` explicite pour les deux rôles, et avertit si elle est `SECURITY DEFINER`. Cliquet à partir
+de la mig. `109` — et le contrôle évalue l'**état final** de l'historique, pas chaque fichier
+isolément, pour qu'une migration puisse réparer l'oubli d'une précédente.
 
-**Correction** : passer les deux triggers en `SECURITY INVOKER` (défaut) — la lecture de
-`team_tasks` redevient filtrée par la RLS, les deux cas convergent vers `Both tasks must exist`,
-et l'oracle disparaît — puis `REVOKE ALL … FROM PUBLIC, anon` sur les deux. Même migration `109`
-que B-1.
-
-⚠️ Vérifier au passage que `validate_team_task_dependency` reste capable de redériver `org_id`
-depuis la tâche : c'est le cas, puisque l'insertion exige déjà de **voir** les deux tâches
-(policy `team_task_dependencies_insert`).
+> **Pourquoi un cliquet et pas un audit rétroactif** : le premier jet, plancher à la mig. `064`,
+> sortait 12 erreurs. Vérification en prod : **les 12 étaient des faux positifs** — ces fonctions
+> sont déjà révoquées, par des chemins qu'un modèle statique ne voit pas (privilèges par défaut du
+> schéma, `REVOKE` hors du jeu de migrations). C'est la limite que `check-rls-advisors.mjs`
+> documentait déjà : *un modèle statique de l'historique complet est faux*. Une gate rouge en
+> permanence finit ignorée — le remède aurait été pire que le mal.
 
 ---
 
@@ -208,21 +209,20 @@ Aucun ne bloque un déploiement ; tous sont des clics dans le Dashboard.
 Section référencée par [`CLAUDE.md`](./CLAUDE.md) — elle n'existait plus depuis la refonte
 documentaire du 2026-08-14, le lien pointait dans le vide. Restaurée ici.
 
-| # | Action | Nature | Effort |
-|---|---|---|---|
-| 1 | **Migration `109`** : B-1 (`get_subtree` → `is_above` dans `org_team_members_update`) **et** B-3 (deux triggers de la mig. `108` en `SECURITY INVOKER` + `REVOKE … FROM anon`) | 🟠 fonctionnalité cassée en prod + 🟡 oracle d'existence | ~30 min |
-| 2 | **Suite unitaire au vert** : `design-system.guard` est rouge sur `main` (cf. [`docs/TESTING.md`](./docs/TESTING.md)) | 🔴 gate CI | ~15 min |
-| 3 | **Arbitrer B-2** : qui a le droit de faire entrer un membre dans l'organisation | 🟠 décision produit | discussion |
-| 4 | **Réglages de console Supabase** (A-10, MFA admin, allowlist OAuth, secure email change) | 🟠 clics Dashboard | ~30 min cumulés |
-| 5 | **A-9 — plan Pro + PITR + drill de restauration** | 🔴 résilience, seul bloquant | ~1 h |
-| 6 | Ajouter au `check:rls` la garde « toute fonction citée dans une policy est `EXECUTE`-able par `authenticated` » | prévention (aurait attrapé B-1) | ~1 h |
-| 7 | Ajouter au `validate:migrations` la garde « `RETURNS trigger` ⇒ `SECURITY INVOKER` + `REVOKE anon` » | prévention (aurait attrapé B-3) | ~1 h |
+| # | Action | Nature | Qui | État |
+|---|---|---|---|---|
+| 1 | **Appliquer les migrations `109` et `110` en prod** (`109` referme B-1, B-2, B-3 ; `110` est la feature « badge de commentaires » livrée le 2026-08-24) | 🟠 les trois findings restent ouverts EN PROD tant que ce n'est pas fait | **Axel** (le CLI n'écrit pas de DDL, et écrire via le MCP est interdit) | ⏳ **en attente** |
+| 2 | **Réglages de console Supabase** : A-10 (leaked password protection), MFA sur le compte admin, allowlist de redirection OAuth, secure email change | 🟠 clics Dashboard, ~30 min cumulés | **Axel** | ⏳ **en attente** |
+| 3 | **A-9 — plan Pro + PITR + drill de restauration** | 🔴 résilience, seul bloquant | **Axel** (compte, non scriptable) | ⏳ **en attente** |
+| 4 | Test de bout en bout de l'attribution `?ref=` (cf. [`docs/ACQUISITION.md`](./docs/ACQUISITION.md) §3) | 🟡 exige une vraie inscription | **Axel** | ⏳ **en attente** |
+| — | Garde `check:rls` « fonction citée par une policy exécutable par `authenticated` » | prévention (aurait attrapé B-1) | — | ✅ **livrée**, testée |
+| — | Garde `validate:migrations` « fonction de trigger révoquée + `SECURITY DEFINER` signalé » | prévention (aurait attrapé B-3) | — | ✅ **livrée**, testée |
+| — | Règle ESLint `no-restricted-imports` sur l'alias `@/` | prévention de dérive | — | ✅ **livrée** |
 
-Les lignes 6 et 7 comptent autant que les correctifs eux-mêmes : B-1 et B-3 sont deux
-**régressions de règles déjà écrites**, chacune arrivée dans la migration qui suivait celle qui
-posait la règle. *Une règle non vérifiée par un script n'est pas une règle.*
-
----
+Les trois dernières lignes comptent autant que les correctifs : B-1 et B-3 sont deux **régressions
+de règles déjà écrites**, chacune arrivée dans la migration qui suivait celle qui posait la règle.
+*Une règle non vérifiée par un script n'est pas une règle* — et une garde qu'on n'a jamais vue
+rouge n'est pas une garde, d'où `scripts/migration-guards.test.mjs`.
 
 ## Règles durables issues des audits
 
@@ -275,9 +275,12 @@ npm run check:rls             # invariants RLS (CI)
 npm run check:drift           # dérive repo ↔ prod, 2 étapes (cf. docs/DEPLOYMENT.md)
 ```
 
-Repo au 2026-08-24 : **112 fichiers, dernière = `108_team_task_dependencies.sql`**. Les
-migrations `099` → `108` sont **toutes appliquées en prod** (ledger relu le 2026-08-24) — y
-compris la `100`, qui referme la fuite des helpers.
+Repo au 2026-08-24 : **114 fichiers, dernière = `110_comment_notifications.sql`**.
+
+- `099` → `108` : **appliquées en prod** (ledger relu le 2026-08-24), y compris la `100` qui
+  referme la fuite des helpers.
+- `109` (correctifs B-1/B-2/B-3) et `110` (notifications de commentaire) : **écrites, PAS
+  appliquées**. Elles portent leur propre bloc de vérification SQL en fin de fichier.
 
 Procédure d'application, checklist de rédaction d'une migration et pattern RLS obligatoire :
 [`docs/SECURITY.md`](./docs/SECURITY.md). Réconciliation du ledger :

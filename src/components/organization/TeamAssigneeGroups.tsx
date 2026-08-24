@@ -42,7 +42,7 @@ const TeamAssigneeGroups = ({ orgId, value, onChange }: TeamAssigneeGroupsProps)
 
   return (
     <div className="border-b" style={{ borderColor: 'rgb(var(--color-border))' }}>
-      <p className="px-3 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'rgb(var(--color-text-muted))' }}>
+      <p className="px-3 pt-2 pb-1 text-caption font-semibold uppercase tracking-wider" style={{ color: 'rgb(var(--color-text-muted))' }}>
         {t('team.sectionTitle', { count: teams.length })}
       </p>
       {teams.map((team) => {

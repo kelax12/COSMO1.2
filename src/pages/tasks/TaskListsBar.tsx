@@ -3,7 +3,7 @@
 import React from 'react';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
 import { X, Plus, Pencil, Trash2, Sparkles, Pin, PinOff, Share2 } from 'lucide-react';
-import SmartListMenu from '../../components/SmartListMenu';
+import SmartListMenu from '@/components/SmartListMenu';
 import { useCreateList, useDeleteList, type SmartRulePreset, type TaskList } from '@/modules/lists';
 import { VIRTUAL_TODAY_ID } from './task-page-filter';
 import { useT } from '@/i18n/useT';
