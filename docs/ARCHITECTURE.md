@@ -23,8 +23,10 @@ répond à une seule question : **les invariants qu'on s'est donnés tiennent-il
 | Toutes les tables `public` ont RLS activée | `SECURITY.md` | ✅ **Tenu**, vérifié en prod le 2026-08-24 : 0 table avec `relrowsecurity = false` |
 | **Jamais de `supabase.from()` hors d'un repository** | `SCALABILITY.md` §5 + garde | ✅ **Tenu depuis le 2026-08-24** — 4 fichiers assainis (et non 1 : le comptage manuel avait raté les trois autres), invariant désormais **outillé** (§2) |
 | Imports toujours via l'alias `@/` | CLAUDE.md + ESLint | ✅ **Tenu depuis le 2026-08-24** — 74 imports relatifs réécrits, et la convention est désormais **outillée** (`no-restricted-imports`), donc elle ne peut plus se diluer en silence (§2) |
-| Aucun fichier source > 600 LOC | refactor de juin 2026 + cliquet | ❌ **Toujours violé — 17 fichiers**, mais l'hémorragie est **arrêtée** : un cliquet interdit tout nouveau dépassement et toute croissance nette (§3) |
-| Suite unitaire verte | `TESTING.md` | ✅ **Rétablie le 2026-08-24** — 1560/1560 (cf. [`TESTING.md`](./TESTING.md)) |
+| Aucun fichier source > 600 LOC | refactor de juin 2026 + cliquet | ❌ **Toujours violé — 16 fichiers** (17 le matin même), mais l'hémorragie est **arrêtée** et le budget a **baissé** : 13 103 → 12 503 lignes (§3) |
+| **Les lectures de liste entreprise passent par une RPC indexable** | CLAUDE.md ⚡ + test | ✅ **Tenu depuis le 2026-08-24** — `get_my_team_projects` / `get_my_team_tasks` (mig. 113). Verrouillé par `team-projects/supabase.repository.test.ts` |
+| **Aucune position d'arrivée portée par une animation de transform** | CLAUDE.md + garde | 🟠 **17 feuilles encore écrites à la main**, mais les 5 réellement cassées sont corrigées et un cliquet interdit toute nouvelle (cf. [`MOBILE.md`](./MOBILE.md) §1) |
+| Suite unitaire verte | `TESTING.md` | ✅ **1576/1576 au 2026-08-24** — après correctifs. Elle ne l'était PAS à l'ouverture de cette passe (cf. [`TESTING.md`](./TESTING.md)) |
 
 Les invariants qui portent la **sécurité** et la **performance** tiennent tous.
 
@@ -83,7 +85,18 @@ Deux choix méritent d'être relus avant d'être « simplifiés » :
 `supabase.from(`. Les commentaires sont retirés avant la recherche — sans ça, la phrase qui
 explique la règle déclenchait la règle.
 
-## 3. 🟠 L'objectif « aucun fichier > 600 LOC » n'est plus tenu
+## 3. 🟠 L'objectif « aucun fichier > 600 LOC » — 17 → 16 fichiers (2026-08-24)
+
+> **Le cliquet a servi le jour même.** Le correctif de scalabilité (mig. 113) ajoutait du
+> commentaire à `team-projects/supabase.repository.ts` (601 lignes, donc dans la liste) : le
+> budget a refusé la croissance nette, et la découpe a suivi — les mappers de lignes brutes sont
+> partis dans `supabase.mappers.ts`, le fichier est tombé à **483**. Nouveau total :
+> **16 fichiers, 12 503 lignes** (contre 17 / 13 103).
+>
+> C'est exactement le comportement recherché : la garde ne demande pas de refactor, elle rend le
+> refactor moins cher que le contournement. `PyramidTab.tsx` (1 507) reste entier.
+
+### Le diagnostic d'origine
 
 **Au 2026-08-24 : 15 fichiers dépassent 600 lignes** (13 au 2026-08-14), le plus gros à
 **1 505** (`src/components/organization/PyramidTab.tsx`, +50 lignes en dix jours), suivi de

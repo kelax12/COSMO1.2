@@ -527,12 +527,34 @@ supabase.rpc('get_my_tasks').select(...)    // ✅ Index Scan (mig. 085)
 policies RLS restent en place (défense en profondeur) ; l'isolation est prouvée par
 `e2e/rls/get-my-tasks.test.ts`. Exception légitime : `getById` (accès par clé primaire).
 
-> 🔴 **Les tables entreprise ont le même défaut, non corrigé.** `team_tasks` et `team_projects`
-> sont filtrées par `USING (can_access_team_project(...))` : un prédicat-fonction sur une colonne
-> **ne peut pas utiliser d'index**, donc chaque lecture scanne toute la table et évalue une CTE
-> récursive par ligne. Mesuré en prod le 2026-08-14 : **≈ 60× le coût par ligne** du prédicat de
-> `tasks`. Ne pas ajouter de nouvelle table entreprise sur ce modèle — exprimer l'appartenance en
-> **jointure indexable** dans une RPC. Détail et projections : [`docs/SCALABILITY.md`](./docs/SCALABILITY.md) §2.
+### ⚡ Tables entreprise — même règle, même correctif (mig. 113)
+
+`team_tasks` et `team_projects` avaient exactement le même défaut : les policies les filtrent par
+`USING (can_access_team_project(...))`, un prédicat-fonction sur une colonne, qui **ne peut pas
+utiliser d'index** — donc `Seq Scan` de toute la table et une CTE récursive (`get_subtree`)
+évaluée **par ligne**. Mesuré en prod le 2026-08-14 : **≈ 60× le coût par ligne** du prédicat de
+`tasks`.
+
+```typescript
+supabase.from('team_tasks').select(...)                          // ❌ Seq Scan + CTE par ligne
+supabase.rpc('get_my_team_tasks',    { p_org: orgId })           // ✅ mig. 113
+supabase.rpc('get_my_team_projects', { p_org: orgId })           // ✅ mig. 113
+```
+
+- Le périmètre vient de `auth.uid()` seul : **`p_org` est un filtre, pas une portée.** Forger un
+  `p_org` étranger renvoie 0 ligne (les trois branches exigent l'appartenance de l'appelant).
+- Le gain tient en une phrase : `get_subtree()` est appelée **une fois par organisation** au lieu
+  d'une fois par ligne lue.
+- Les policies restent en place, inchangées (défense en profondeur). Le déploiement est donc
+  réversible sans downtime — mais la **mig. 113 doit être appliquée AVANT** de déployer le front,
+  sinon la RPC n'existe pas.
+- Le chemin d'accès est verrouillé par test (`src/modules/team-projects/supabase.repository.test.ts`) :
+  un retour à `.from('team_tasks')` échoue en CI.
+
+> ⚠️ **Ne pas ajouter de nouvelle table entreprise sur le modèle prédicat-fonction.** Exprimer
+> l'appartenance en **jointure indexable** dans une RPC. `team_task_dependencies` (mig. 108)
+> délègue son périmètre à `team_tasks` et hérite donc du coût — à couvrir le jour où elle porte
+> du volume. Détail et projections : [`docs/SCALABILITY.md`](./docs/SCALABILITY.md) §2.
 
 ## 🔁 Récurrence des tâches — serveur uniquement
 
@@ -684,6 +706,14 @@ Codes entre parenthèses = bugs historiques ayant motivé la règle.
 
 ### Animations
 
+- ❌ **Ne jamais écrire à la main le mouvement d'une feuille.** Utiliser `useSheetMotion()` et
+  `useSheetDrag()` (`src/components/mobile/mobile-motion.ts`). **Mesuré dans le navigateur le
+  2026-08-24**, `prefers-reduced-motion: reduce` réellement actif : `MobileMoreSheet` s'ouvrait à
+  `transform: matrix(1, 0, 0, 1, 0, 510)` — `top: 812` pour un viewport de 812, soit **0 px
+  visible**. Le voile s'affichait, la feuille non. Or c'est le SEUL accès mobile à OKR,
+  Statistiques, Paramètres et à la déconnexion : la navigation mobile était **sans issue** pour ces
+  utilisateurs. Même mécanisme sur les cascades `staggerChildren` (dix blocs du dashboard figés
+  20 px trop bas). Garde : `src/design-system.guard.test.ts`.
 - ❌ **Ne jamais faire dépendre une position finale d'une animation de transform.**
   `App.tsx` monte `<MotionConfig reducedMotion="user">` : chez un utilisateur en
   `prefers-reduced-motion`, les animations de transform ne jouent pas et la valeur `initial`

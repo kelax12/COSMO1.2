@@ -16,6 +16,7 @@ import {
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { useBottomSheet } from '@/hooks/use-bottom-sheet';
+import { useSheetMotion } from '@/components/mobile/mobile-motion';
 import { useT } from '@/i18n/useT';
 import type { KeyOf } from '@/i18n/catalog';
 
@@ -41,6 +42,7 @@ const links: SheetLink[] = [
 ];
 
 const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({ open, onOpenChange }) => {
+  const sheetMotion = useSheetMotion();
   const { t } = useT('common');
   const { t: tOrg } = useT('org');
   const { user, logout } = useAuth();
@@ -102,10 +104,11 @@ const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({ open, onOpenChange })
             // Dashboard en a un dont le titre contient « OKR »), et `.first()`
             // cliquait un élément recouvert par la feuille → timeout.
             data-mobile-more-sheet
-            initial={{ y: '100%' }}
-            animate={{ y: 0 }}
-            exit={{ y: '100%' }}
-            transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.7 }}
+            // ⚠️ `useSheetMotion` et pas un `initial={{ y }}` en dur : sous
+            // `prefers-reduced-motion`, Framer ne joue pas les transforms et
+            // la valeur `initial` reste appliquee — la feuille s ouvrait
+            // 100 % sous l ecran. Mesure le 2026-08-24 (cf. mobile-motion.ts).
+            {...sheetMotion}
             className="fixed bottom-0 inset-x-0 z-50 rounded-t-[28px] bg-[rgb(var(--color-background))] flex flex-col"
             style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
             {...sheetDragProps}

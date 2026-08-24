@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Pencil, Pin, PinOff, Trash2, Share2 } from 'lucide-react';
 import type { TaskList } from '@/modules/lists';
+import { useSheetMotion } from '@/components/mobile/mobile-motion';
 
 export interface ListColorOption {
   value: string;
@@ -34,6 +35,7 @@ const ListActionsSheet: React.FC<ListActionsSheetProps> = ({
   onPickColor,
   onShare,
 }) => {
+  const sheetMotion = useSheetMotion();
   const isOpen = !!list;
   const isSmart = list?.type === 'smart';
   const currentColor = list ? resolveListColor(list.color) : '#3B82F6';
@@ -61,10 +63,11 @@ const ListActionsSheet: React.FC<ListActionsSheetProps> = ({
           onClick={onClose}
         >
           <motion.div
-            initial={{ y: '100%' }}
-            animate={{ y: 0 }}
-            exit={{ y: '100%', transition: { duration: 0.2, ease: [0.4, 0, 1, 1] } }}
-            transition={{ type: 'spring', damping: 32, stiffness: 340, mass: 0.65 }}
+            // ⚠️ `useSheetMotion` et pas un `initial={{ y }}` en dur : sous
+            // `prefers-reduced-motion`, Framer ne joue pas les transforms et
+            // la valeur `initial` reste appliquee — la feuille s ouvrait
+            // 100 % sous l ecran. Mesure le 2026-08-24 (cf. mobile-motion.ts).
+            {...sheetMotion}
             onClick={(e) => e.stopPropagation()}
             className="w-full flex flex-col"
             style={{

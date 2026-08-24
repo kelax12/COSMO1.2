@@ -127,19 +127,29 @@ const KNOWN_OVERSIZED = new Set([
   'src/modules/auth/AuthContext.tsx', // 626
   'src/pages/tasks/TaskListsBar.tsx', // 615
   'src/components/organization/TeamProjectsTab.tsx', // 603
-  'src/modules/team-projects/supabase.repository.ts', // 601
   'src/modules/friends/supabase.repository.ts', // 601
 ]);
 
 /**
- * Somme des lignes des fichiers ci-dessus, mesurée le 2026-08-24. 17 fichiers,
- * 13 103 lignes — dont 601 pour `friends/supabase.repository.ts`, oublié du
- * premier comptage manuel (troisième fois que le comptage à la main se trompe
- * dans cet audit : c’est l’argument de ce fichier).
+ * Somme des lignes des fichiers ci-dessus.
+ *
+ * 2026-08-24 (initial) : 17 fichiers, 13 103 lignes — dont 601 pour
+ * `friends/supabase.repository.ts`, oublié du premier comptage manuel
+ * (troisième fois que le comptage à la main se trompe dans cet audit : c’est
+ * l’argument de ce fichier).
+ *
+ * 2026-08-24 (2ᵉ passe) : **16 fichiers, 12 503 lignes.**
+ * `team-projects/supabase.repository.ts` est sorti de la liste (601 → 483) par
+ * extraction de `supabase.mappers.ts`. Et c'est le cliquet lui-même qui l'a
+ * imposé : le correctif de scalabilité (mig. 113) ajoutait du commentaire à ce
+ * fichier, le budget a refusé la croissance nette, la découpe a suivi. C'est
+ * exactement le comportement recherché — la garde ne demande pas de refactor,
+ * elle rend le refactor moins cher que le contournement.
+ *
  * Ne doit JAMAIS monter. Un découpage la fait baisser — baisser aussi ce
  * nombre le jour où c'est fait, sinon le cliquet reprend du mou.
  */
-const OVERSIZED_BUDGET = 13103;
+const OVERSIZED_BUDGET = 12503;
 
 const loc = (file: string) => readFileSync(file, 'utf8').split('\n').length;
 

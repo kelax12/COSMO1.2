@@ -386,12 +386,16 @@ export const useRelatedTaskShares = () => {
   return useQuery({
     queryKey: friendKeys.relatedTaskShares(),
     queryFn: () => repository.getRelatedTaskShares(),
-    // Collaboration sans realtime : poll régulier pour que la boîte de réception
-    // (tâches reçues en attente) et les avatars de collaborateurs reflètent un
-    // partage / une acceptation récents. getRelatedTaskShares retourne [] sans
-    // amis ni partages, donc coût négligeable.
-    refetchInterval: 20_000,
+    // Plus de sondage : `useSharedTasksRealtime` (monté une seule fois dans
+    // `App.tsx`) écoute déjà `shared_tasks` sur les deux directions
+    // (`friend_id` et `shared_by`) et invalide cette clé — c'est exactement
+    // l'événement qui change cette liste. Le sondage à 20 s rejouait la même
+    // requête 180 fois par heure d'onglet ouvert pour apprendre qu'il n'y avait
+    // rien de neuf, alors que le canal qui porte l'information était ouvert.
+    // `refetchOnWindowFocus` reste le filet quand le WebSocket est indisponible
+    // (navigation privée, anti-pistage strict — cf. useSharedTasksRealtime).
     refetchOnWindowFocus: true,
+    staleTime: 1000 * 30,
   });
 };
 

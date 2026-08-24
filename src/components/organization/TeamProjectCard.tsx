@@ -138,23 +138,23 @@ const TeamProjectCard = ({
             <span className="text-sm font-bold text-[rgb(var(--color-text-primary))] truncate">{project.name}</span>
           )}
           {teamName && (
-            <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full shrink-0 ${color.soft}`}>
+            <span className={`inline-flex items-center gap-1 text-caption font-semibold px-1.5 py-0.5 rounded-full shrink-0 ${color.soft}`}>
               <UsersRound size={10} aria-hidden="true" /> {teamName}
             </span>
           )}
           {categoryName && (
-            <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full shrink-0 border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))]">
+            <span className="inline-flex items-center gap-1 text-caption font-semibold px-1.5 py-0.5 rounded-full shrink-0 border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))]">
               <Tag size={10} aria-hidden="true" /> {categoryName}
             </span>
           )}
           {archived && (
-            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-muted))] shrink-0">
+            <span className="text-caption font-semibold px-1.5 py-0.5 rounded-full bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-muted))] shrink-0">
               {t('project.archivedBadge')}
             </span>
           )}
           {overdueCount > 0 && !archived && (
             <span
-              className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-red-500/10 text-red-500 shrink-0"
+              className="text-caption font-bold px-1.5 py-0.5 rounded-full bg-red-500/10 text-red-500 shrink-0"
               title={tp('project.overdueTitle', overdueCount)}
             >
               {t('project.overdueBadge', { count: overdueCount })}

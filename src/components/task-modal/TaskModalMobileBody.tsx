@@ -13,6 +13,7 @@ import { getDateLocale } from '@/i18n/format';
 import { Bookmark, Check, Loader2, Minus, Plus, Search, UserPlus, X } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { useBottomSheet } from '@/hooks/use-bottom-sheet';
+import { useSheetMotion } from '@/components/mobile/mobile-motion';
 import { useInvalidShake } from '@/hooks/use-invalid-shake';
 import { useCreateCategory } from '@/modules/categories';
 import AddToListModal from '@/components/AddToListModal';
@@ -89,6 +90,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
   handleSave, handleClose, handleDelete, isCreating, isLoading, isFormValid,
   taskId, autoOpenCollaborators, isTaskOwner, ownerId, pendingShareIds, onGenerateShareLink,
 }) => {
+  const sheetMotion = useSheetMotion();
   const { t } = useT('taskModal');
   const [showPrioritySheet, setShowPrioritySheet] = useState(false);
   const [showCategorySheet, setShowCategorySheet] = useState(false);
@@ -487,8 +489,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
             onClick={() => setShowPrioritySheet(false)}
           >
             <motion.div
-              initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
-              transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.7 }}
+              {...sheetMotion}
               onClick={(e) => e.stopPropagation()}
               className="w-full bg-[rgb(var(--color-surface))] rounded-t-2xl overflow-hidden"
               style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
@@ -523,8 +524,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
             onClick={() => { setShowCategorySheet(false); setShowNewCatInput(false); }}
           >
             <motion.div
-              initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
-              transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.7 }}
+              {...sheetMotion}
               onClick={(e) => e.stopPropagation()}
               className="w-full bg-[rgb(var(--color-surface))] rounded-t-2xl overflow-hidden max-h-[70vh] flex flex-col"
               style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
@@ -608,8 +608,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
             onClick={() => setShowCollabSheet(false)}
           >
             <motion.div
-              initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
-              transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.7 }}
+              {...sheetMotion}
               onClick={(e) => e.stopPropagation()}
               className="w-full bg-[rgb(var(--color-surface))] rounded-t-2xl overflow-hidden max-h-[80vh] flex flex-col"
               style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}

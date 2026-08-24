@@ -8,7 +8,37 @@ l'adhérence au design system. Remplace les trois audits du 2026-07-25 archivés
 [design-skill](./archive/AUDIT-DESIGN-SKILL-MOBILE-2026-07-25.md),
 [DA brief](./archive/MOBILE-DA-BRIEF.md)), 161 commits plus tôt.
 
-### 🔴 1. Sous `prefers-reduced-motion`, deux bannières sortent de l'écran
+### ✅ 1. Sous `prefers-reduced-motion` — bien pire que deux bannières (corrigé le 2026-08-24)
+
+> **Ce finding était sous-évalué, et la liste « plus de 20 fichiers à risque, tous ne sont pas
+> cassés » n'avait jamais été vérifiée. Elle l'a été le 2026-08-24, dans le navigateur, avec
+> `prefers-reduced-motion: reduce` RÉELLEMENT actif** (le réglage est activé sur la machine
+> d'Axel — cf. mémoire projet), viewport 375×812, mode démo.
+>
+> **Ce qui était réellement cassé :**
+>
+> | Élément | Mesure | Conséquence |
+> |---|---|---|
+> | `MobileMoreSheet` (« Plus d'options ») | `matrix(1, 0, 0, 1, 0, 510)`, `top: 812` pour `vh: 812` | **0 px visible.** Le voile s'affiche, la feuille non |
+> | 10 blocs de `/dashboard` (cascade `staggerChildren`) | `matrix(1, 0, 0, 1, 0, 20)` | 20 px trop bas, définitivement |
+> | `ListActionsSheet`, 3 feuilles de `TaskModalMobileBody` | même motif (`initial` avec un `y` SEUL) | feuille hors écran |
+> | `CookieBanner`, `DemoBridgePrompt` | `transform: none` | ✅ le correctif du 14/08 tient |
+> | `WeeklyCheckinModal` (`y: '100%'` **+ `opacity`**) | `transform: none`, 812 px visibles | ✅ se résout correctement |
+>
+> `MobileMoreSheet` est le **seul** accès mobile à OKR, Statistiques, Paramètres et à la
+> déconnexion : la navigation mobile était **sans issue** pour ces utilisateurs. Invisible pour
+> tous les autres — d'où la survie du bug.
+>
+> **Correctif** : `useSheetMotion()` et `useRevealVariants()` dans
+> `src/components/mobile/mobile-motion.ts`. Sous mouvement réduit, ils n'émettent **aucune clé de
+> transform** : rien ne peut rester coincé sur `initial`. Vérifié après correctif, même
+> environnement : `MobileMoreSheet` → `transform: none`, **510 px visibles** ; `/dashboard` →
+> **0 transform figé** (contre 10 avant).
+>
+> **Garde** : `src/design-system.guard.test.ts` refuse toute NOUVELLE feuille écrite à la main
+> (cliquet sur les 17 fichiers restants, qui ne peut que rétrécir).
+
+### Le diagnostic d'origine (2026-08-14)
 
 **Mesuré** : avec `prefers-reduced-motion: reduce` actif, deux `<aside>` en `position: fixed`
 conservent `transform: matrix(1, 0, 0, 1, 0, 120)` — un décalage de **120 px vers le bas qui ne
@@ -82,8 +112,17 @@ Pire que la duplication, leur comportement diverge :
 un geste inexistant, ce qui est moins bon que de ne rien afficher. Une en a le geste sans le
 signaler. Les trois modales du mode entreprise sont toutes dans le groupe « poignée sans geste ».
 
-**Correction** : migrer ces 11 feuilles sur `BottomSheet`, ou au minimum aligner poignée et geste.
-Et corriger la phrase de ce document, qui décrit une règle que le code ne suit pas.
+**Correction, partielle au 2026-08-24.** `useSheetDrag()` (`mobile-motion.ts`) porte désormais le
+geste — mêmes valeurs que `BottomSheet` (80 px de course ou 500 px/s), pour que toutes les feuilles
+se ferment au même geste. Il est câblé sur les deux feuilles qui mentaient ET qui utilisaient déjà
+Framer : `RecurrenceDaysModal` et `DeleteObjectiveConfirm`.
+
+**Restent trois menteuses**, toutes du mode entreprise : `CreateTeamModal`, `NewTeamProjectModal`,
+`TeamTaskModal`. Elles n'utilisent pas Framer du tout — ce sont des `DialogContent` Radix en
+variante bottom-sheet, avec une poignée purement décorative. Leur donner le geste demande d'y
+introduire Framer à l'intérieur d'un dialogue Radix (piège de focus, `aria-modal`) : c'est un
+chantier, pas un correctif, et il n'a pas été fait ici. **Alternative en une ligne** : retirer la
+poignée. C'est un arbitrage produit, pas technique.
 
 ### ✅ Vérifié sain
 

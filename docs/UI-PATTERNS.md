@@ -10,7 +10,27 @@ pas sur l'esthétique ni l'équilibre visuel. Il remplace les findings de
 corrigés** (FAB masquant le CTA Paramètres, chaîne morte OKRModal, `AddCategoryButton` extrait,
 placeholder quick-add mobile, libellé « 365 jours », marges `mb-1.5`, `data-tutorial-id` du FAB).
 
-### 🟠 1. Le titre de page a quatre tailles différentes sur mobile
+### ✅ 1. Le titre de page — quatre tailles ramenées à deux (2026-08-24)
+
+> **Corrigé, sans la migration `MobileHeader`.** Les tailles MOBILE de `PageHeading` sont
+> maintenant prises dans l'échelle fermée, pas dans l'échelle Tailwind brute :
+> `hero` et `standard` → `text-display` (28 px, la taille canonique « titre de page », celle de
+> /tasks) ; `compact` → `text-headline` (17 px). Les tailles desktop (`sm:` / `lg:`) sont
+> **inchangées** : la refonte de l'échelle est mobile.
+>
+> Il reste donc deux tailles au lieu de quatre, et chacune se justifie : 28 px pour un titre de
+> page, 17 px pour le seul cas où le titre COHABITE avec une icône et des badges sur une ligne
+> (/entreprise, où c'est un nom d'organisation `truncate` — l'agrandir aggraverait le §2).
+>
+> **Ce qui n'a PAS été fait** : migrer les 6 pages vers `MobileHeader` et retirer les variantes.
+> C'est un choix de design (barre collante « large title » iOS), pas une correction — il change
+> le comportement de six pages et appartient à Axel.
+>
+> ⚠️ Cause racine trouvée au passage : `src/components/ui/typography.tsx` est **exclu du scan** de
+> `src/design-system.guard.test.ts` (qui ignore `ui/`, à cause de shadcn). Le fichier qui DÉFINIT
+> les titres de toutes les pages était donc le seul que la garde typographique ne regardait pas.
+
+### Le diagnostic d'origine
 
 Mesuré, viewport 375 px :
 
@@ -56,7 +76,25 @@ pas un multiple de 52 px : il reste 3,67 colonnes.
 dans l'espace disponible, plutôt que `min-w-[40px] md:min-w-[50px]` fixe. Le snap devient alors
 utile au lieu d'être décoratif.
 
-### 🟡 4. Huit valeurs de z-index hors barème
+### ✅ 4. z-index — l'échelle publiée était incomplète (2026-08-24)
+
+> **Le diagnostic était à l'envers.** En relisant les « 8 valeurs hors barème » une par une, ce ne
+> sont pas des accidents : elles portent un ORDRE réel et voulu. `AdModal` (300) doit passer devant
+> `CookieBanner` (200) ; `PageTutorial` (500) devant tout le chrome ; un popover ouvert DANS une
+> feuille portalisée (10000) devant la feuille (9999). Les rabattre sur 7 paliers aurait créé des
+> collisions d'empilement pour faire entrer la réalité dans un tableau.
+>
+> Le vrai défaut était l'inverse : **le barème publié ne décrivait que la moitié des couches
+> réelles.** L'échelle complète est donc publiée plus bas, et **fermée par un test**
+> (`src/design-system.guard.test.ts`) : aucune valeur hors liste, et ajouter un cran demande de
+> justifier l'ordre voulu.
+>
+> Deux valeurs seulement étaient de vrais accidents, et ont été migrées : `z-[3]`
+> (décor du hero entreprise — le parent porte `opacity-60`, qui crée son propre contexte
+> d'empilement, la valeur n'avait donc aucun effet) → `z-10` ; et `z-[75]` (`CompletedOKRsModal`)
+> → le cran voisin `z-[70]`.
+
+### Le diagnostic d'origine
 
 L'[échelle documentée plus bas](#échelle-z-index-audit-2026-07) définit 7 paliers. Le code en
 utilise **21**. Les 8 valeurs hors barème, chacune dans un seul composant :
@@ -79,7 +117,14 @@ vérifiée par un lint ne tient pas — même leçon que les invariants RLS et `
 **Correction** : mapper ces 8 composants sur les paliers existants, puis ajouter une règle ESLint
 `no-restricted-syntax` sur `z-[…]` hors liste. ~1 h 30.
 
-### 🟡 5. Résidus de l'audit précédent
+### ✅ 5. Résidus de l'audit précédent — traités le 2026-08-24
+
+> - `Bricolage Grotesque` : **déjà supprimé** avant cette passe (0 occurrence dans `src/`).
+> - `hover:text-blue-700` sans variante dark : corrigé sur `ColorSettingsModal.tsx` et
+>   `EventModalFormDesktop.tsx`. **Vérifié : plus aucun `hover:text-blue-700` sans
+>   `dark:hover:text-blue-300` dans tout `src/`.**
+
+### Le diagnostic d'origine
 
 - **`Bricolage Grotesque` en dur** dans `SettingsPage.tsx:893` (`style={{ fontFamily }}`). Le
   `<link>` Google Fonts a bien été retiré — la police n'est donc **plus chargée** et ce `h3`
@@ -274,10 +319,18 @@ Paliers en usage — **choisir dans cette table**, ne pas inventer de nouvelle v
 | `z-10` – `z-30` | Éléments locaux (sticky headers, badges, overlays de carte) | headers de modals, chips |
 | `z-40` | UI flottante de page : FAB quick-add, indicateur sync | `Layout.tsx` |
 | `z-50` | Modals/sheets standards + MobileTabBar | TaskModal, EventModal, HabitModal |
-| `z-[60]` – `z-[80]` | Couches au-dessus d'un modal ouvert (modal imbriqué, QuickAddBar `z-[70]`) | ColorSettingsModal nested |
-| `z-[100]` | Popovers Radix au-dessus des modals (date-picker, CategoryManager) | `date-picker.tsx` |
-| `z-[200]` | Surfaces système toujours au-dessus : CommandPalette, CookieBanner, PremiumGateModal | — |
-| `z-[9999]` | Popovers `createPortal` + `position: fixed` (SmartListMenu, HabitActionsMenu) | — |
+| `z-[60]` `z-[70]` `z-[80]` `z-[90]` | Couches SUCCESSIVES au-dessus d'un modal ouvert. Quatre crans, pas un intervalle : `ColorSettingsModal` empile 80 puis 90 | QuickAddBar `z-[70]`, ColorSettingsModal 80/90 |
+| `z-[100]` `z-[110]` | Popovers Radix au-dessus d'un modal (110 = imbriqué dans 100) | `date-picker.tsx`, `CategoryManager` |
+| `z-[150]` | Modal plein écran au-dessus du chrome applicatif | `WeeklyCheckinModal` |
+| `z-[190]` `z-[200]` | Surfaces système : bannières, CommandPalette, PremiumGateModal | `DemoBridgePrompt` 190, `CookieBanner` 200 |
+| `z-[250]` `z-[300]` | Interstitiels AU-DESSUS des surfaces système | `ShareInviteClaimer`, `AdModal` |
+| `z-[500]` | Tutoriel de page — au-dessus de tout le chrome | `PageTutorial` |
+| `z-[9999]` `z-[10000]` | `createPortal` + `position: fixed` (10000 = popover DANS une feuille portalisée) | SmartListMenu, `AssigneesPicker` |
+
+> 🔒 **Liste fermée, vérifiée par `src/design-system.guard.test.ts`.** Toute valeur `z-[…]` hors
+> de ces crans échoue en CI. Ajouter un cran est permis — il faut le poser ici ET dans le test, en
+> justifiant l'ordre voulu. La version précédente de cette table listait 7 paliers pendant que le
+> code en utilisait 16 : une échelle qu'aucun script ne vérifie ne tient pas.
 
 ## Shadcn UI — exceptions documentées
 

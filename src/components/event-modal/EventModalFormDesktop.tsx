@@ -342,7 +342,7 @@ const EventModalFormDesktop: React.FC<EventModalFormBodyProps> = ({
                     <button
                       type="button"
                       onClick={() => setShowDaysModal(true)}
-                      className="text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400"
+                      className="text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
                     >
                       {recurrenceDays.length > 0
                         ? [...recurrenceDays].sort().map((d) => DAY_LABELS[d]).join(', ')

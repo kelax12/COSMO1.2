@@ -38,6 +38,7 @@ import * as Sentry from '@sentry/react';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { useIsDemo } from '@/lib/app-mode.store';
 import { taskKeys } from './constants';
+import { friendKeys } from '@/modules/friends/constants';
 
 /**
  * Abonne la session courante aux partages de tâches la concernant et invalide
@@ -56,6 +57,13 @@ export function useSharedTasksRealtime(userId: string | undefined): void {
 
     const invalidate = () => {
       queryClient.invalidateQueries({ queryKey: taskKeys.lists() });
+      // Même événement, même vérité : une ligne de `shared_tasks` qui bouge
+      // change AUSSI la boîte de réception et les avatars de collaborateurs
+      // (`useRelatedTaskShares`). Cette liste se sondait toutes les 20 s alors
+      // que le canal qui porte l'information était déjà ouvert, juste à côté.
+      // On importe la clé du module `friends` plutôt que d'ouvrir un second
+      // canal : un canal Realtime est un WebSocket, pas un abonnement gratuit.
+      queryClient.invalidateQueries({ queryKey: friendKeys.relatedTaskShares() });
     };
 
     // ⚠️ `subscribe()` construit un WebSocket, et le constructeur `WebSocket`

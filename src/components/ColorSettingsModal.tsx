@@ -160,7 +160,7 @@ const ColorSettingsModal: React.FC<ColorSettingsModalProps> = ({ isOpen, onClose
             <div className="flex justify-end mb-4">
               <button 
                 onClick={handleAddCategory}
-                className="text-blue-600 hover:text-blue-700 transition-colors p-2 bg-blue-50 dark:bg-blue-900/20 rounded-full shadow-sm"
+                className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors p-2 bg-blue-50 dark:bg-blue-900/20 rounded-full shadow-sm"
               >
                 <Plus size={24} strokeWidth={3} />
               </button>

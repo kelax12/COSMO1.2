@@ -28,7 +28,33 @@ export const useTeamProjects = (orgId: string | undefined) => {
   });
 };
 
-export const useTeamTasks = (orgId: string | undefined, filters?: TeamTaskFilters) => {
+/**
+ * Tâches d'équipe de l'organisation.
+ *
+ * `live` distingue les deux usages, exactement comme `useOrgMembers` — et pour
+ * la même raison, en plus cher.
+ *
+ * Ce hook est monté par des surfaces PERMANENTES (`CommandPalette`, `TaskTable`,
+ * la vue « Aujourd'hui »), pas seulement par /entreprise. Un `refetchInterval`
+ * inconditionnel faisait donc payer à tout membre d'une organisation une lecture
+ * org-wide de `team_tasks` toutes les 20 s, sur TOUTES les pages, sans que
+ * personne ne regarde la liste — et c'est la lecture la plus chère du produit
+ * (prédicat RLS non indexable, cf. `SCALABILITY.md` §2 et mig. 113).
+ *
+ * Par défaut : pas de sondage, `refetchOnWindowFocus` suffit (le retour d'onglet
+ * est le bon déclencheur — garde-fou egress, CLAUDE.md § synchronisation de la
+ * collaboration). `live: true` est réservé aux écrans de /entreprise où l'on
+ * REGARDE la liste et où l'on attend de voir une tâche arriver.
+ *
+ * Le cache étant partagé (même `queryKey`), il suffit qu'UN observateur demande
+ * `live` pour que la donnée reste fraîche pour tous les autres montés en même
+ * temps : le sondage suit donc l'écran affiché, pas le nombre de consommateurs.
+ */
+export const useTeamTasks = (
+  orgId: string | undefined,
+  filters?: TeamTaskFilters,
+  options?: { live?: boolean },
+) => {
   const repository = useRepo();
   return useQuery({
     // Le cache est indexé sur l'org ; le filtrage se fait côté client dans l'UI
@@ -36,7 +62,8 @@ export const useTeamTasks = (orgId: string | undefined, filters?: TeamTaskFilter
     queryKey: teamProjectKeys.tasks(orgId ?? ''),
     queryFn: () => repository.getTasks(orgId as string),
     enabled: !!orgId,
-    refetchInterval: 20_000,
+    staleTime: 1000 * 30,
+    ...(options?.live ? { refetchInterval: 20_000 } : {}),
     refetchOnWindowFocus: true,
     select: filters
       ? (tasks) =>
