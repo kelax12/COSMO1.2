@@ -341,8 +341,8 @@
       "b2d": "Ouvrez la fiche de n'importe qui depuis la pyramide : ses tâches en cours, sa charge, son agenda.",
       "b3t": "Posez un créneau dans son agenda",
       "b3d": "Un responsable crée, déplace et modifie les événements de l'agenda des personnes qui lui reportent. Ce qu'elles ont marqué comme personnel reste privé : seul le créneau apparaît.",
-      "b4t": "Réorganisez sans migration",
-      "b4d": "Un changement de rattachement suffit. Les droits ne sont recopiés nulle part : ils sont recalculés depuis le lien.",
+      "b4t": "Une réorganisation en 1 clic",
+      "b4d": "Changez le rattachement d'un membre, et tout suit : ses droits, son périmètre, ce qu'il voit. Rien à reconfigurer à la main.",
       "roleLead": "Manager",
       "roleMember": "Membre",
       "roleAdmin": "Admin"
