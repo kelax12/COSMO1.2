@@ -421,13 +421,13 @@
       "title": "Les questions qu'on vous posera en comité.",
       "subtitle": "Nous y répondons ici, <hl>avant qu'elles bloquent le déploiement</hl>.",
       "s1t": "Isolation en base de données",
-      "s1d": "Chaque table est protégée par des politiques d'accès <hl>évaluées côté serveur</hl>. Une requête forgée depuis le navigateur ne rapporte rien de plus qu'une requête légitime.",
+      "s1d": "Les règles d'accès <hl>vivent dans la base de données, pas dans le code affiché à l'écran</hl>. Personne ne peut les contourner en bidouillant une requête.",
       "s2t": "Aucune surveillance déguisée",
-      "s2d": "Un manager voit le travail de son périmètre, pas la vie privée de ses collaborateurs. Les tâches, habitudes et agenda personnels d'un membre <hl>ne remontent jamais à sa hiérarchie</hl>.",
-      "s3t": "Conformité RGPD",
-      "s3d": "Effacement du compte <hl>réellement exécuté côté serveur</hl>, rétention documentée, consentement explicite à l'entrée dans une organisation. Aucune donnée revendue.",
-      "s4t": "Réversibilité",
-      "s4d": "Vous partez quand vous voulez. Transfert de propriété et suppression de l'organisation sont dans l'interface, <hl>pas dans un ticket de support</hl>."
+      "s2d": "Un manager voit les projets et tâches d'équipe de son périmètre. Les habitudes, l'agenda et les tâches personnelles d'un membre <hl>restent invisibles pour sa hiérarchie</hl>.",
+      "s3t": "Vos données vous appartiennent",
+      "s3d": "Aucune donnée n'est revendue. <hl>La suppression d'un compte est réelle, pas symbolique</hl>, et chaque rétention de données est écrite noir sur blanc.",
+      "s4t": "Partez aussi facilement que vous êtes arrivé",
+      "s4d": "Transfert de propriété, suppression de l'organisation : tout se fait en quelques clics, <hl>sans passer par le support</hl>."
     },
     "pricing": {
       "title": "20 € par mois pour dix personnes.",
