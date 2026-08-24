@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link2, GitBranch } from 'lucide-react';
+import { Link2 } from 'lucide-react';
 import { useT } from '@/i18n/useT';
 import type { KeyOf } from '@/i18n/catalog';
 import StepSection from './StepSection';
@@ -140,24 +140,6 @@ const ExecutionSection: React.FC = () => {
               </li>
             ))}
           </ul>
-
-          {/* Verdict du chemin critique, sous le tableau — même grammaire que
-              le bloc « Votre palier » de `PricingSection` (label mono, valeur
-              en gros, phrase d'explication). */}
-          <div className="mt-5 flex items-center justify-between gap-4 border-t border-white/[0.06] pt-4">
-            <div className="flex items-center gap-2.5">
-              <GitBranch size={15} className="shrink-0 text-cyan-400" aria-hidden="true" />
-              <div>
-                <span className="block text-sm font-semibold text-white">
-                  {t('enterprise.execution.pathLabel')}
-                </span>
-                <span className="block text-xs text-slate-500">{t('enterprise.execution.pathHint')}</span>
-              </div>
-            </div>
-            <span className="shrink-0 rounded-full bg-cyan-400/15 px-3 py-1 font-mono text-caption tabular-nums text-cyan-300">
-              {t('enterprise.execution.pathBadge')}
-            </span>
-          </div>
         </div>
       </div>
     </StepSection>

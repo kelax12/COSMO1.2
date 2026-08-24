@@ -380,10 +380,7 @@
       "task2": "Maquettes identité",
       "task3": "Validation client",
       "task4": "Setup Slack équipe",
-      "blockedBy": "Bloquée par « {{name}} »",
-      "pathLabel": "Chemin critique",
-      "pathHint": "3 tâches enchaînées, 6 jours cumulés. La 4ᵉ a de la marge.",
-      "pathBadge": "6 j"
+      "blockedBy": "Bloquée par « {{name}} »"
     },
     "okr": {
       "title": "Posez vos objectifs, à toutes les échelles.",

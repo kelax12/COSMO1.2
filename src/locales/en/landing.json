@@ -380,10 +380,7 @@
       "task2": "Identity mockups",
       "task3": "Client sign-off",
       "task4": "Team Slack setup",
-      "blockedBy": "Blocked by \"{{name}}\"",
-      "pathLabel": "Critical path",
-      "pathHint": "3 chained tasks, 6 days combined. The 4th has slack.",
-      "pathBadge": "6 d"
+      "blockedBy": "Blocked by \"{{name}}\""
     },
     "okr": {
       "title": "Set your objectives, at every scale.",
