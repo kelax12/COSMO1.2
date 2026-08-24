@@ -882,7 +882,9 @@
     "back": "Workspace",
     "planHint": "View and upgrade your plan",
     "planAria": "Subscription: {{plan}}",
-    "planNamed": "{{name}} plan"
+    "planNamed": "{{name}} plan",
+    "promoBadge": "Launch offer",
+    "insteadOf": "instead of €{{price}}"
   },
   "inviteJoin": {
     "title": "Create or join a company",

@@ -29,10 +29,12 @@ interface Props {
  * jamais de compteur animé sur un prix (il passerait par 48 € avant de se
  * poser sur 50 €).
  *
- * Quand la facturation est éteinte (`dormant`), chaque palier payant porte
- * l'étiquette « Gratuit » à la place du bouton. Les montants restent affichés :
- * ce sont les tarifs annoncés pour plus tard, pas ce qui est facturé
- * aujourd'hui.
+ * Quand la facturation est éteinte (`dormant`), même traitement que la landing
+ * entreprise (`PricingSection.tsx`) : le prix de chaque palier payant est
+ * REMPLACÉ par « Gratuit » en accent ambre, avec le tarif d'après affiché
+ * juste en dessous, barré. Une étiquette « Gratuit » à côté d'un prix encore
+ * affiché en gros (l'ancien rendu) laisse deux montants contradictoires à
+ * l'écran ; remplacer le prix lui-même est la seule version qui ne ment pas.
  */
 export function EnterpriseTierGrid({ currentTier, onSelect, isPending, dormant }: Props) {
   const { t } = useT('org');
@@ -43,6 +45,10 @@ export function EnterpriseTierGrid({ currentTier, onSelect, isPending, dormant }
       {ENTERPRISE_PRICING_TIERS.map((tier) => {
         const isCurrent = currentTier === tier.key;
         const isFree = tier.priceEurPerMonth === 0;
+        // Palier payant, mais gratuit PENDANT l'offre de lancement — c'est ce
+        // cas qui porte le prix barré, jamais le palier gratuit de base (rien
+        // à comparer : il n'a jamais eu de prix payant).
+        const isPromo = dormant && !isFree;
         const range =
           tier.maxMembers === null
             ? t('billing.rangeFrom', { min: tier.minMembers })
@@ -75,51 +81,47 @@ export function EnterpriseTierGrid({ currentTier, onSelect, isPending, dormant }
                 <span className="text-xs text-[rgb(var(--color-text-secondary))]">{range}</span>
               </div>
 
-              {/* Coin droit de l'en-tête : le palier actif ET l'action sur un
-                  autre palier sont mutuellement exclusifs, ils partagent donc
-                  le même emplacement plutôt que d'empiler un bouton pleine
-                  largeur sous le prix. */}
+              {/* Coin droit de l'en-tête : réservé au palier actif — le prix
+                  porte maintenant lui-même le statut « Gratuit » pendant
+                  l'offre, plus besoin d'une étiquette séparée ici. */}
               {isCurrent && (
                 <Check size={16} className="shrink-0 text-[rgb(var(--color-accent))]" aria-hidden />
               )}
-              {!isFree && !isCurrent && (
-                onSelect ? (
-                  <button
-                    type="button"
-                    disabled={isPending}
-                    onClick={() => onSelect(tier.key)}
-                    className="shrink-0 rounded-lg bg-[rgb(var(--color-accent-solid))] px-3 py-1.5 text-xs font-medium text-[rgb(var(--color-accent-solid-foreground))] hover:bg-[rgb(var(--color-accent-solid-hover))] disabled:opacity-60"
-                  >
-                    {t('billing.subscribe')}
-                  </button>
-                ) : dormant ? (
-                  // Facturation éteinte : ce palier ne se paie pas, donc il ne
-                  // porte AUCUN bouton — une étiquette. Un bouton inerte qu'on
-                  // désigne comme non cliquable est une porte peinte sur un
-                  // mur : il invite au clic pour le refuser ensuite. Ce qui
-                  // reste vrai aujourd'hui, c'est le prix : zéro. La phrase qui
-                  // l'explique (`billing.dormant`) est déjà au-dessus de la
-                  // grille, dans OrgBillingTab.
-                  //
-                  // Texte en `text-primary`, pas en `accent` : mesuré dans le
-                  // navigateur, l'accent du thème sombre sur ce fond teinté ne
-                  // donne que 4,31:1 — sous le seuil AA de 4,5:1 pour du 12 px.
-                  // L'accent reste sur la bordure et le fond, qui n'ont pas à
-                  // porter de texte.
-                  <span className="shrink-0 rounded-lg border border-[rgb(var(--color-accent))] bg-[rgb(var(--color-accent)/0.1)] px-3 py-1.5 text-xs font-medium text-[rgb(var(--color-text-primary))]">
-                    {t('billing.free')}
-                  </span>
-                ) : null
+              {!isFree && !isCurrent && !dormant && onSelect && (
+                <button
+                  type="button"
+                  disabled={isPending}
+                  onClick={() => onSelect(tier.key)}
+                  className="shrink-0 rounded-lg bg-[rgb(var(--color-accent-solid))] px-3 py-1.5 text-xs font-medium text-[rgb(var(--color-accent-solid-foreground))] hover:bg-[rgb(var(--color-accent-solid-hover))] disabled:opacity-60"
+                >
+                  {t('billing.subscribe')}
+                </button>
               )}
             </div>
 
-            <div className="text-2xl font-semibold text-[rgb(var(--color-text-primary))]">
-              {isFree ? t('billing.free') : formatCurrency(tier.priceEurPerMonth)}
-            </div>
-            {!isFree && (
-              <div className="text-xs text-[rgb(var(--color-text-secondary))]">
-                {t('billing.perMonth')}
-              </div>
+            {isFree || isPromo ? (
+              <>
+                <div className="text-2xl font-semibold text-amber-600 dark:text-amber-400">
+                  {t('billing.free')}
+                </div>
+                {/* Rien sous le palier gratuit de base (aucun tarif payant à
+                    comparer) — seulement sous les paliers rendus gratuits par
+                    l'offre de lancement, comme sur la landing. */}
+                {isPromo && (
+                  <s className="text-xs text-[rgb(var(--color-text-muted))] decoration-[rgb(var(--color-border-strong))]">
+                    {t('billing.insteadOf', { price: tier.priceEurPerMonth })}
+                  </s>
+                )}
+              </>
+            ) : (
+              <>
+                <div className="text-2xl font-semibold text-[rgb(var(--color-text-primary))]">
+                  {formatCurrency(tier.priceEurPerMonth)}
+                </div>
+                <div className="text-xs text-[rgb(var(--color-text-secondary))]">
+                  {t('billing.perMonth')}
+                </div>
+              </>
             )}
           </div>
         );
