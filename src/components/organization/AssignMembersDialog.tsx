@@ -12,9 +12,11 @@ import { Button } from '@/components/ui/button';
 import type { OrgMember } from '@/modules/organizations';
 import type { TeamTask } from '@/modules/team-projects';
 import MemberAvatar from './MemberAvatar';
+import TeamAssigneeGroups from './TeamAssigneeGroups';
 import { useT } from '@/i18n/useT';
 
 interface AssignMembersDialogProps {
+  orgId: string;
   task: TeamTask | null;
   members: OrgMember[];
   onSave: (task: TeamTask, assigneeIds: string[]) => void;
@@ -26,7 +28,7 @@ interface AssignMembersDialogProps {
  * Tâches (TeamTasksTab) — cette table n'a pas de colonne assignés, donc pas
  * d'AssigneesPicker déjà visible sur la ligne.
  */
-const AssignMembersDialog = ({ task, members, onSave, onClose }: AssignMembersDialogProps) => {
+const AssignMembersDialog = ({ orgId, task, members, onSave, onClose }: AssignMembersDialogProps) => {
   const { t } = useT('org');
   const [assigneeIds, setAssigneeIds] = useState<string[]>(task?.assigneeIds ?? []);
 
@@ -56,6 +58,7 @@ const AssignMembersDialog = ({ task, members, onSave, onClose }: AssignMembersDi
         </DialogHeader>
 
         <div className="max-h-72 overflow-y-auto rounded-xl border" style={{ borderColor: 'rgb(var(--color-border))' }}>
+          <TeamAssigneeGroups orgId={orgId} value={assigneeIds} onChange={setAssigneeIds} />
           {members.map((m) => {
             const checked = assigneeIds.includes(m.userId);
             return (

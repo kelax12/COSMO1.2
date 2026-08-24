@@ -157,9 +157,7 @@ const TeamTasksTab = ({ orgId, members, isManager, isAdmin }: TeamTasksTabProps)
   const sortIndicator = (field: SortField) =>
     field === sortField ? (sortDirection === 'asc' ? ' ↑' : ' ↓') : '';
 
-  const handleCreate = async (input: CreateTeamTaskInput) => {
-    await createTask.mutateAsync(input);
-  };
+  const handleCreate = (input: CreateTeamTaskInput) => createTask.mutateAsync(input);
 
   const handleUpdate = async (taskId: string, input: UpdateTeamTaskInput) => {
     await updateTask.mutateAsync({ taskId, input });
@@ -526,6 +524,7 @@ const TeamTasksTab = ({ orgId, members, isManager, isAdmin }: TeamTasksTabProps)
       )}
 
       <AssignMembersDialog
+        orgId={orgId}
         task={assigningTask}
         members={members}
         onSave={setAssignees}
