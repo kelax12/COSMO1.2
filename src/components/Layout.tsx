@@ -386,26 +386,22 @@ const NavItems = () =>
 
       <NavItemLink to="/settings" label={t('nav.settings')} icon={<Settings size={20} aria-hidden="true" />}
         hoverColor="#94a3b8" collapsed={isCollapsed} />
-
-      {/* « Signaler un bug » — bouton et non lien : il n'y a pas de page, la
-          fenêtre s'ouvre par-dessus l'écran courant pour que l'URL et l'état
-          de la page fautive partent AVEC le rapport (cf. collectBugContext).
-          Mêmes classes d'alignement que le « + » de la nav : un <button> ne
-          remplit pas la largeur comme un <a>, d'où le `w-[calc(100%-1rem)]`
-          qui compense les marges de `.sidebar-item`. */}
-      <button
-        type="button"
-        onClick={() => setBugOpen(true)}
-        title={t('nav.bugReport')}
-        aria-label={t('nav.bugReport')}
-        className={`sidebar-item w-[calc(100%-1rem)] ${isCollapsed ? 'justify-center px-0' : '!ml-1 !py-[0.7rem]'}`}
-      >
-        <div className="nav-item-icon min-w-[20px] flex items-center justify-center">
-          <Bug size={20} aria-hidden="true" />
-        </div>
-        {!isCollapsed && <span className="truncate">{t('nav.bugReport')}</span>}
-      </button>
     </>;
+
+  // « Signaler un bug » — plus une entrée de nav pleine largeur : une simple
+  // icône, accolée à SyncStatusIndicator sur la même ligne (cf. rendu
+  // desktop ci-dessous). Taille alignée sur l'icône du sync (13px).
+  const BugReportButton = () => (
+    <button
+      type="button"
+      onClick={() => setBugOpen(true)}
+      title={t('nav.bugReport')}
+      aria-label={t('nav.bugReport')}
+      className="flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-red-500 transition-colors"
+    >
+      <Bug size={13} aria-hidden="true" />
+    </button>
+  );
 
 
   // Composants globaux montés dans les DEUX variantes du Layout (mobile a son
@@ -554,9 +550,11 @@ const NavItems = () =>
         <div className={`border-t ${isCollapsed ? 'p-2' : 'p-4'}`} style={{ borderColor: 'rgb(var(--nav-border))' }}>
           {!isCollapsed && <div className="text-xs font-semibold uppercase mb-4 px-2 !whitespace-pre-line" style={{ color: 'rgb(var(--color-text-secondary))' }}>{t('nav.sectionOther')}</div>}
           {CompanyItems()}
-          {/* État de synchronisation (#37) */}
-          <div className={`mt-3 ${isCollapsed ? 'flex justify-center' : 'px-2'}`}>
+          {/* État de synchronisation (#37) + signaler un bug, sur la même
+              ligne : deux indicateurs secondaires, pas deux entrées de nav. */}
+          <div className={`mt-3 flex items-center ${isCollapsed ? 'flex-col gap-2 justify-center' : 'justify-between px-2'}`}>
             <SyncStatusIndicator compact={isCollapsed} />
+            <BugReportButton />
           </div>
         </div>
       </aside>
