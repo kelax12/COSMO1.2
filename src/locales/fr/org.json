@@ -917,7 +917,9 @@
     "back": "Espace entreprise",
     "planHint": "Voir et faire évoluer votre forfait",
     "planAria": "Abonnement : {{plan}}",
-    "planNamed": "Plan {{name}}"
+    "planNamed": "Plan {{name}}",
+    "promoBadge": "Offre de lancement",
+    "insteadOf": "au lieu de {{price}} €"
   },
   "inviteJoin": {
     "title": "Créer ou rejoindre une entreprise",
