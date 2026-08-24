@@ -341,8 +341,8 @@
       "b2d": "Open anyone's file straight from the pyramid: their open tasks, their workload, their calendar.",
       "b3t": "Put a slot in their calendar",
       "b3d": "A manager creates, moves and edits events in the calendar of the people reporting to them. Anything they marked as personal stays private: only the slot shows.",
-      "b4t": "Reorganise without migrating",
-      "b4d": "Changing one attachment is enough. Rights are copied nowhere: they are recomputed from the link.",
+      "b4t": "Reorganise in 1 click",
+      "b4d": "Change a member's manager, and everything follows: their rights, their scope, what they see. Nothing to reconfigure by hand.",
       "roleLead": "Manager",
       "roleMember": "Member",
       "roleAdmin": "Admin"
