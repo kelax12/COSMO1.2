@@ -288,9 +288,9 @@
       "membersAlt": "Members tab: the organisation directory, with each person's role and workload.",
       "projects": "Projects",
       "projectsAlt": "Projects tab: projects per team, their tasks, deadlines and assignees, in list, board or timeline view.",
-      "projectsKanban": "Projects — Board view",
+      "projectsKanban": "Projects · Board view",
       "projectsKanbanAlt": "Projects tab in Board view: tasks split by status, from To do to Blocked.",
-      "projectsPlanning": "Projects — Timeline view",
+      "projectsPlanning": "Projects · Timeline view",
       "projectsPlanningAlt": "Projects tab in Timeline view: tasks positioned on the calendar, at their deadline.",
       "okr": "OKRs",
       "okrAlt": "OKR tab: team objectives and their numeric key results, with their progress.",
@@ -311,11 +311,11 @@
     "problem": {
       "title": "Three reasons your team tools never stick.",
       "p1t": "They are flat",
-      "p1d": "A shared board has no idea who reports to whom. You end up replaying <hl>the hierarchy by hand</hl>, as access rights — wrong the day after the first reorg.",
+      "p1d": "A shared board has no idea who reports to whom. You end up replaying <hl>the hierarchy by hand</hl>, as access rights, and it's wrong the day after the first reorg.",
       "p2t": "They don't bend",
-      "p2d": "A role changes, a team splits, a project changes owner — the setup doesn't follow. <hl>Reconfiguring takes longer</hl> than the change itself.",
+      "p2d": "A role changes, a team splits, a project moves to someone else. <hl>With rigid tools, every change means reconfiguring.</hl> You end up adapting the tool to the change, instead of just moving forward.",
       "p3t": "No one can see who's doing what",
-      "p3d": "Without visibility into who's doing what, a project starts <hl>without knowing if it's even feasible</hl>. You find out midway — once it's too late."
+      "p3d": "Without visibility into who's doing what, a project starts <hl>without knowing if it's even feasible</hl>. You find out midway, once it's too late."
     },
     "pyramid": {
       "title": "Invite your team. The org chart draws itself.",
@@ -364,12 +364,12 @@
       "title": "Track execution, not just deadlines.",
       "subtitle": "Every task carries a workflow status and can block another one. The timeline computes the critical path: the chain where <hl>the smallest delay pushes back delivery</hl>.",
       "p1t": "Every team task, in one table",
-      "p1d": "The Tasks tab gathers the tasks of every project in your scope, sortable by status, deadline or assignee — no need to open each project one by one.",
+      "p1d": "The Tasks tab gathers the tasks of every project in your scope, sortable by status, deadline or assignee, no need to open each project one by one.",
       "p2t": "Five statuses, not two",
       "p2d": "To do, in progress, in review, blocked, done. The status dot is visible everywhere: in the table, the board, the timeline.",
       "p3t": "Declare what blocks what",
-      "p3d": "Link a task to the ones that must finish before it. Cosmo computes the critical path: the chain of tasks where the smallest delay pushes back delivery — everything else has slack.",
-      "panelLabel": "Tasks tab — preview",
+      "p3d": "Link a task to the ones that must finish before it. Cosmo computes the critical path: the chain of tasks where the smallest delay pushes back delivery. Everything else has slack.",
+      "panelLabel": "Tasks tab · preview",
       "statusTodo": "To do",
       "statusProgress": "In progress",
       "statusReview": "In review",
@@ -381,7 +381,7 @@
       "task4": "Team Slack setup",
       "blockedBy": "Blocked by \"{{name}}\"",
       "pathLabel": "Critical path",
-      "pathHint": "3 chained tasks, 6 days combined — the 4th has slack.",
+      "pathHint": "3 chained tasks, 6 days combined. The 4th has slack.",
       "pathBadge": "6 d"
     },
     "okr": {
@@ -409,7 +409,7 @@
     },
     "progress": {
       "title": "Track how everyone is progressing.",
-      "subtitle": "The Statistics tab answers the Monday morning question: <hl>who is moving, who is falling behind, who is overloaded</hl>. A leadership team reads the whole organisation, a manager reads their scope — decided by the attachment from step 1.",
+      "subtitle": "The Statistics tab answers the Monday morning question: <hl>who is moving, who is falling behind, who is overloaded</hl>. A leadership team reads the whole organisation, a manager reads their scope, decided by the attachment from step 1.",
       "p1t": "The team's pace, week after week",
       "p1d": "A chart of tasks completed each week, and its trend: you see who's speeding up, who's slowing down, before it shows up anywhere else.",
       "p2t": "Everyone's workload",
@@ -448,7 +448,7 @@
       "i3": "Statistics per management scope",
       "i4": "A personal Cosmo for every member",
       "i5": "No commitment, cancel at any time",
-      "autoAdjust": "The plan steps back down on its own if headcount drops. To grow past your tier, just raise it — <hl>no one is ever removed</hl> in the meantime.",
+      "autoAdjust": "The plan steps back down on its own if headcount drops. To grow past your tier, just raise it: <hl>no one is ever removed</hl> in the meantime.",
       "cta": "Create my organisation",
       "ctaNote": "Free up to 5 members. Start without talking to us."
     },
