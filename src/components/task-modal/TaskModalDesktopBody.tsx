@@ -141,7 +141,7 @@ const TaskModalDesktopBody: React.FC<DesktopBodyProps> = ({
         <div className="md:rounded-2xl md:shadow-2xl w-full transition-colors flex-1 min-h-0 flex flex-col" style={{ backgroundColor: 'rgb(var(--color-surface))' }}>
           {/* Header — sticky */}
           <div
-            className="sticky top-0 z-10 flex justify-between items-center px-4 sm:px-6 py-3 sm:py-4 border-b transition-colors gap-2"
+            className="sticky top-0 z-10 flex justify-between items-center px-4 sm:px-6 py-[0.420204rem] sm:py-[0.560272rem] border-b transition-colors gap-2"
             style={{ borderColor: 'rgb(var(--color-border))', backgroundColor: 'rgb(var(--color-surface))' }}
           >
             <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
@@ -288,11 +288,11 @@ const TaskModalDesktopBody: React.FC<DesktopBodyProps> = ({
 
           {/* ── Action Buttons — sticky, hors zone de scroll ── */}
           <div
-            className="px-4 sm:px-6 pt-3 pb-3 sm:pb-4 border-t flex flex-col-reverse sm:flex-row sm:justify-between items-stretch sm:items-center gap-2 sm:gap-3 shrink-0"
+            className="px-4 sm:px-6 pt-[0.6555rem] pb-[0.6555rem] sm:pb-[0.874rem] border-t flex flex-col-reverse sm:flex-row sm:justify-between items-stretch sm:items-center gap-2 sm:gap-3 shrink-0"
             style={{
               borderColor: 'rgb(var(--color-border))',
               backgroundColor: 'rgb(var(--color-surface))',
-              paddingBottom: 'max(env(safe-area-inset-bottom), 0.75rem)',
+              paddingBottom: 'max(env(safe-area-inset-bottom), 0.6555rem)',
             }}
           >
             {!collaboratorsOnly && !isCreating && task ? (

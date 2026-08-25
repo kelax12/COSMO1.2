@@ -30,7 +30,7 @@ interface NewTeamProjectModalProps {
 const labelClass = 'block text-xs font-semibold uppercase tracking-wider mb-2';
 const labelStyle = { color: 'rgb(var(--color-text-secondary))' };
 const inputClass =
-  'w-full px-4 h-12 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none hover:border-[rgb(var(--color-accent-solid-hover))] focus:border-[rgb(var(--color-accent-solid))] focus:border-2 transition-all text-base';
+  'w-full px-[0.875425rem] h-[2.626275rem] border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none hover:border-[rgb(var(--color-accent-solid-hover))] focus:border-[rgb(var(--color-accent-solid))] focus:border-2 transition-all text-[0.875425rem]';
 const inputStyle = { backgroundColor: 'rgb(var(--color-surface))', color: 'rgb(var(--color-text-primary))' };
 
 /**
@@ -94,7 +94,7 @@ const NewTeamProjectModal = ({ orgId, teams, members, defaultTeamId, onSubmit, o
 
         {/* Header */}
         <div
-          className="flex justify-between items-center px-4 sm:px-6 py-3 sm:py-4 border-b gap-2 shrink-0"
+          className="flex justify-between items-center px-4 sm:px-6 py-[0.420204rem] sm:py-[0.560272rem] border-b gap-2 shrink-0"
           style={{ borderColor: 'rgb(var(--color-border))' }}
         >
           <h2 className="text-base sm:text-lg font-semibold truncate" style={{ color: 'rgb(var(--color-text-primary))' }}>
@@ -251,11 +251,11 @@ const NewTeamProjectModal = ({ orgId, teams, members, defaultTeamId, onSubmit, o
 
         {/* Footer */}
         <div
-          className="px-4 sm:px-6 pt-3 pb-3 sm:pb-4 border-t flex flex-col-reverse sm:flex-row sm:justify-end items-stretch sm:items-center gap-2 sm:gap-3 shrink-0"
+          className="px-4 sm:px-6 pt-[0.6555rem] pb-[0.6555rem] sm:pb-[0.874rem] border-t flex flex-col-reverse sm:flex-row sm:justify-end items-stretch sm:items-center gap-2 sm:gap-3 shrink-0"
           style={{
             borderColor: 'rgb(var(--color-border))',
             backgroundColor: 'rgb(var(--color-surface))',
-            paddingBottom: 'max(env(safe-area-inset-bottom), 0.75rem)',
+            paddingBottom: 'max(env(safe-area-inset-bottom), 0.6555rem)',
           }}
         >
           <Button type="button" variant="outline" size="lg" onClick={onClose} disabled={pending} className="min-h-11 w-full sm:w-auto">

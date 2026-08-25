@@ -314,7 +314,7 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
 
                   {/* Sticky header */}
                   <div
-                    className="flex justify-between items-center px-4 sm:px-6 py-3 sm:py-4 border-b shrink-0"
+                    className="flex justify-between items-center px-4 sm:px-6 py-[0.420204rem] sm:py-[0.560272rem] border-b shrink-0"
                     style={{ borderColor: 'rgb(var(--color-border))' }}
                   >
                     <h2 className="text-lg font-semibold" style={{ color: 'rgb(var(--color-text-primary))' }}>
@@ -425,7 +425,7 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
 
                   {/* Sticky footer */}
                   <div
-                    className="px-4 sm:px-6 pt-3 pb-3 border-t shrink-0 flex flex-col-reverse sm:flex-row sm:justify-end gap-2"
+                    className="px-4 sm:px-6 pt-[0.6555rem] pb-[0.6555rem] border-t shrink-0 flex flex-col-reverse sm:flex-row sm:justify-end gap-2"
                     style={{ borderColor: 'rgb(var(--color-border))' }}
                   >
                     <Button type="button" variant="outline" size="lg" onClick={guardedClose} className="sm:w-auto">

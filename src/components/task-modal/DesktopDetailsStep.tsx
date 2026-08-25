@@ -106,7 +106,7 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                       type="text"
                       value={formData.name}
                       onChange={(e) => { handleInputChange('name', e.target.value); dClear('name'); }}
-                      className={`w-full px-4 h-12 border rounded-lg focus:outline-none hover:border-[rgb(var(--color-border-strong))] focus:border-[rgb(var(--color-accent))] focus:ring-1 focus:ring-[rgb(var(--color-accent))] transition-all text-base ${
+                      className={`w-full px-[0.875425rem] h-[2.626275rem] border rounded-lg focus:outline-none hover:border-[rgb(var(--color-border-strong))] focus:border-[rgb(var(--color-accent))] focus:ring-1 focus:ring-[rgb(var(--color-accent))] transition-all text-[0.875425rem] ${
                         errors.name || dInvalid('name') ? 'border-[rgb(var(--color-error))]' : 'border-[rgb(var(--color-border))]'
                       } ${okrFields.name ? 'bg-blue-50/50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800' : ''}`}
                       style={{
@@ -155,7 +155,7 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                             id="task-priority"
                             value={formData.priority}
                             onChange={(e) => { handleInputChange('priority', Number(e.target.value)); dClear('priority'); }}
-                            className={`w-full px-4 pr-12 h-12 border rounded-lg focus:outline-none hover:border-[rgb(var(--color-border-strong))] focus:border-[rgb(var(--color-accent))] focus:ring-1 focus:ring-[rgb(var(--color-accent))] transition-all text-base appearance-none cursor-pointer ${
+                            className={`w-full px-[0.875425rem] pr-12 h-[2.626275rem] border rounded-lg focus:outline-none hover:border-[rgb(var(--color-border-strong))] focus:border-[rgb(var(--color-accent))] focus:ring-1 focus:ring-[rgb(var(--color-accent))] transition-all text-[0.875425rem] appearance-none cursor-pointer ${
                               dInvalid('priority') ? 'border-[rgb(var(--color-error))]' : 'border-[rgb(var(--color-border))]'
                             }`}
                             style={{
@@ -196,7 +196,7 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                         <select
                           value={formData.category || ''}
                           onChange={(e) => handleInputChange('category', e.target.value)}
-                          className="w-full h-12 px-4 pr-10 border rounded-lg appearance-none text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full h-[2.626275rem] px-[0.875425rem] pr-10 border rounded-lg appearance-none text-[0.875425rem] focus:outline-none focus:ring-2 focus:ring-blue-500"
                           style={{
                             backgroundColor: 'rgb(var(--color-surface))',
                             color: formData.category ? 'rgb(var(--color-text-primary))' : 'rgb(var(--color-text-muted))',
@@ -216,7 +216,7 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                           <DropdownMenuTrigger asChild>
                                 <button
                                   type="button"
-                                  className={`w-full flex items-center justify-between px-4 h-12 border rounded-lg focus:outline-none hover:border-[rgb(var(--color-border-strong))] focus:border-[rgb(var(--color-accent))] focus:ring-1 focus:ring-[rgb(var(--color-accent))] data-[state=open]:border-[rgb(var(--color-accent))] data-[state=open]:ring-1 data-[state=open]:ring-[rgb(var(--color-accent))] transition-all text-base ${
+                                  className={`w-full flex items-center justify-between px-[0.875425rem] h-[2.626275rem] border rounded-lg focus:outline-none hover:border-[rgb(var(--color-border-strong))] focus:border-[rgb(var(--color-accent))] focus:ring-1 focus:ring-[rgb(var(--color-accent))] data-[state=open]:border-[rgb(var(--color-accent))] data-[state=open]:ring-1 data-[state=open]:ring-[rgb(var(--color-accent))] transition-all text-[0.875425rem] ${
                                     errors.category || dInvalid('category') ? 'border-[rgb(var(--color-error))]' : (okrFields.category ? 'border-[rgb(var(--color-accent-solid))] dark:border-[rgb(var(--color-accent-solid))]' : 'border-[rgb(var(--color-border))]')
                                   } ${okrFields.category ? 'bg-blue-50/50 dark:bg-blue-900/20' : ''}`}
                                   style={{
@@ -368,7 +368,7 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                           value={formData.deadline}
                           onChange={(date) => handleInputChange('deadline', date)}
                           placeholder={t('fields.deadlinePlaceholder')}
-                          className={`h-12 w-full ${errors.deadline || dInvalid('deadline') ? 'border-[rgb(var(--color-error))]' : ''}`}
+                          className={`h-[2.626275rem] w-full ${errors.deadline || dInvalid('deadline') ? 'border-[rgb(var(--color-error))]' : ''}`}
                         />
 
                         {errors.deadline &&
@@ -413,7 +413,7 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                               value={formData.estimatedTime === 0 ? '' : formData.estimatedTime}
                               onChange={(e) => handleInputChange('estimatedTime', e.target.value === '' ? '' : Number(e.target.value))}
                               placeholder={t('desktop.minuteEstimate')}
-                              className={`flex-1 min-w-0 px-4 h-12 border rounded-lg focus:outline-none hover:border-[rgb(var(--color-border-strong))] focus:border-[rgb(var(--color-accent))] focus:ring-1 focus:ring-[rgb(var(--color-accent))] transition-all text-base ${
+                              className={`flex-1 min-w-0 px-[0.875425rem] h-[2.626275rem] border rounded-lg focus:outline-none hover:border-[rgb(var(--color-border-strong))] focus:border-[rgb(var(--color-accent))] focus:ring-1 focus:ring-[rgb(var(--color-accent))] transition-all text-[0.875425rem] ${
                                 errors.estimatedTime ? 'border-[rgb(var(--color-error))]' : 'border-[rgb(var(--color-border))]'
                               } ${okrFields.estimatedTime ? 'bg-blue-50/50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800' : ''}`}
                               style={{
@@ -494,7 +494,7 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                         rows={3}
                         autoFocus={!formData.description}
                         placeholder={t('fields.descriptionPlaceholder')}
-                        className="w-full px-4 py-3 border rounded-lg focus:outline-none hover:border-[rgb(var(--color-border-strong))] focus:border-[rgb(var(--color-accent))] focus:ring-1 focus:ring-[rgb(var(--color-accent))] transition-all text-base resize-none border-[rgb(var(--color-border))]"
+                        className="w-full px-[0.875425rem] py-3 border rounded-lg focus:outline-none hover:border-[rgb(var(--color-border-strong))] focus:border-[rgb(var(--color-accent))] focus:ring-1 focus:ring-[rgb(var(--color-accent))] transition-all text-[0.875425rem] resize-none border-[rgb(var(--color-border))]"
                         style={{ backgroundColor: 'rgb(var(--color-surface))', color: 'rgb(var(--color-text-primary))' }}
                       />
                     </div>

@@ -39,7 +39,7 @@ const EventModalFormDesktop: React.FC<EventModalFormBodyProps> = ({
         <motion.div style={{ width: handleBarWidth }} className="h-[5px] rounded-full bg-slate-300/70 dark:bg-slate-500/60" />
       </div>
       <div
-        className="flex justify-between items-center px-4 md:px-6 py-3 md:py-4 border-b transition-colors gap-2"
+        className="flex justify-between items-center px-4 md:px-6 py-[0.420204rem] md:py-[0.560272rem] border-b transition-colors gap-2"
         style={{ borderColor: "rgb(var(--color-border))", backgroundColor: "rgb(var(--color-surface))" }}
       >
         <h2
@@ -513,11 +513,11 @@ const EventModalFormDesktop: React.FC<EventModalFormBodyProps> = ({
         {/* Actions — footer fixe en bas à droite de la popup, indépendant de
             la hauteur des colonnes (ne suit plus le contenu de la légende). */}
         <div
-          className="sticky bottom-0 -mx-4 md:-mx-5 px-4 md:px-5 pt-4 pb-3 md:pb-4 mt-4 border-t flex flex-col-reverse sm:flex-row sm:justify-end gap-2 sm:gap-3"
+          className="sticky bottom-0 -mx-4 md:-mx-5 px-4 md:px-5 pt-[0.874rem] pb-[0.6555rem] md:pb-[0.874rem] mt-4 border-t flex flex-col-reverse sm:flex-row sm:justify-end gap-2 sm:gap-3"
           style={{
             borderColor: 'rgb(var(--color-border))',
             backgroundColor: 'rgb(var(--color-surface))',
-            paddingBottom: 'max(env(safe-area-inset-bottom), 0.75rem)',
+            paddingBottom: 'max(env(safe-area-inset-bottom), 0.6555rem)',
           }}
         >
           {mode === 'edit' && (
