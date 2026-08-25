@@ -19,7 +19,7 @@ export default defineConfig({
     // `scripts/**` : tests du CLI COSMO (scripts/cosmo/), en .mjs. Sans cette
     // entrée ils ne seraient jamais ramassés et passeraient pour « verts ».
     // `src/**/*.mjs` : les helpers partagés avec `prerender.mjs` (Node brut,
-    // sans bundler) sont en .mjs et leurs tests aussi — dont le test de parité
+    // sans bundler) sont en .mjs et leurs tests aussi, dont le test de parité
     // entre le calcul d'URL du prérendu et celui de l'app.
     include: [
       'src/**/*.{test,spec}.{ts,tsx}',
@@ -75,7 +75,7 @@ export default defineConfig({
         // Recale au reel mesure le 2026-08-18 (26,67 / 26,28 / 21,48 / 21,86),
         // avec ~0,5 pt de marge. C'est un CLIQUET : la barre ne peut plus que
         // monter. Toute baisse nette casse la CI, y compris une baisse lente
-        // due a du code neuf non teste — c'est exactement ce qui avait fait
+        // due a du code neuf non teste, c'est exactement ce qui avait fait
         // deriver le projet de 12 % a 26 % sans que le plancher (10) bouge.
         //
         // 🔴 Ne JAMAIS baisser un de ces chiffres pour faire passer la CI.
@@ -84,12 +84,27 @@ export default defineConfig({
         lines: 26,
         statements: 26,
         functions: 21,
-        branches: 21,
+        // 21 -> 22 le 2026-08-25 : mesure a 22,75 %, donc la marge conventionnelle
+        // de ~0,5 pt est respectee. Les trois autres NE sont PAS remontes, et
+        // c'est une decision : leurs marges sont de 0,96 / 0,65 / 0,32 point,
+        // soit ~20 fonctions pour la plus serree. Les recaler au mesure
+        // reamorcerait des cette semaine le piege qu'on vient de desamorcer.
+        // On banque la marge, on remontera quand elle sera confortable.
+        branches: 22,
         // ── Gates par fichier (code à fort risque) ──
         'src/modules/**/mappers.ts': { lines: 95, functions: 100, statements: 95, branches: 85 },
         // Repositories Supabase = frontière sécurité (anti-mass-assignment,
-        // gardes injection, RPCs atomiques). Min mesuré : friends 68L / lists 38B.
-        'src/modules/**/supabase.repository.ts': { lines: 65, functions: 55, statements: 65, branches: 35 },
+        // gardes injection, RPCs atomiques).
+        //
+        // Remonte le 2026-08-25 apres la campagne de tests qui a fait passer le
+        // glob de 63,74 % a 76,79 % de statements (team-categories 3 -> 88,
+        // friends 40 -> 76, events 54 -> 83, organizations 64 -> 82, okrs
+        // 49 -> 63). Mesure : 90,55 L / 76,79 S / 93,00 F / 65,89 B ; seuils
+        // poses ~2 pt en dessous, comme le veut la convention du fichier.
+        //
+        // C'est CE cliquet-la qui mord en premier : un nouveau repository livre
+        // sans test fera tomber le glob bien avant de bouger le plancher global.
+        'src/modules/**/supabase.repository.ts': { lines: 88, functions: 90, statements: 74, branches: 63 },
         'src/lib/app-mode.store.ts': { lines: 70, functions: 75, statements: 70, branches: 75 },
         'src/lib/utils.ts': { lines: 100, functions: 100, statements: 100, branches: 100 },
         'src/lib/hooks/use-habit-pauses.ts': { lines: 90, functions: 100, statements: 90, branches: 75 },
@@ -99,7 +114,7 @@ export default defineConfig({
         'src/lib/avatar-upload.ts': { lines: 100, functions: 100, statements: 100, branches: 90 },
         'src/components/AddTaskForm.validation.ts': { lines: 100, functions: 100, statements: 100, branches: 90 },
         'src/modules/billing/ad-limit.ts': { lines: 100, functions: 100, statements: 100, branches: 90 },
-        // Définition canonique de « premium » côté client — extraite de
+        // Définition canonique de « premium » côté client, extraite de
         // billing.context.tsx (audit 2026-06-10). Une régression ici = accès
         // premium incorrect pour tous les comptes.
         'src/modules/billing/subscription.logic.ts': { lines: 100, functions: 100, statements: 100, branches: 85 },
@@ -108,7 +123,7 @@ export default defineConfig({
         'src/lib/workTimeCalculator.ts': { lines: 90, functions: 100, statements: 90, branches: 75 },
         'src/lib/pagination.warning.ts': { lines: 90, functions: 100, statements: 90, branches: 75 },
         'src/lib/acknowledged-shares.ts': { lines: 90, functions: 100, statements: 90, branches: 80 },
-        // Socle i18n — traverse toute l'app (chaque libellé, chaque date, chaque
+        // Socle i18n, traverse toute l'app (chaque libellé, chaque date, chaque
         // URL localisée). Une régression y est invisible en dev (le moteur
         // retombe sur le français) mais casse EN/ES en prod. Les catalogues
         // .json ne sont pas concernés : `include` ne prend que .ts/.tsx.
