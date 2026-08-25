@@ -619,6 +619,33 @@ Les droits du mode entreprise sont **dérivés par défaut** (`is_org_admin`, `i
   jamais un projet : c'est le trigger `enforce_team_project_archive_scope` qui rattache
   l'archivage à `project.delete`. Une policy, qui juge la ligne entière, ne sait pas le faire.
 
+## 📉 Habitudes — `completions` est BORNÉ à la lecture (mig. 119)
+
+`habits.completions` est un JSONB qui gagnait une entrée **par jour et par habitude**,
+sans aucune borne : 12,7 octets/jour mesurés, soit ~280 ko par ouverture de la page
+Habitudes à trois ans pour 20 habitudes.
+
+```typescript
+supabase.from('habits').select('*')                       // ❌ payload sans borne
+supabase.rpc('get_my_habits', { p_days: 400 })            // ✅ mig. 119
+```
+
+La RPC renvoie `completions` **filtré aux 400 derniers jours**, ET quatre agrégats
+calculés **serveur sur l'historique entier** : `streak_current`, `streak_best`,
+`completions_total`, `first_completion_date`. C'est ce qui rend la troncature acceptable.
+
+- ❌ **Ne jamais dériver une série ou un total de `habit.completions`.** Utiliser
+  `habitStreak(habit)` (`src/modules/habits/streak.ts`), `habit.completionsTotal` et
+  `habit.firstCompletionDate`. Sur la fenêtre, un utilisateur assidu depuis trois ans
+  verrait sa série plafonner à 400 — un chiffre faux, affiché comme s'il était juste.
+- ❌ **Ne jamais compter les complétions dans un export.** L'export est le support du
+  droit à la portabilité (RGPD art. 20) : il utilise `completionsTotal`.
+- ⚠️ Les agrégats sont **absents en mode démo et local** (le repository local a toute la
+  donnée) : chaque helper retombe alors sur le calcul JS. Garder ce repli.
+- ⚠️ Augmenter la fenêtre réintroduit le problème proportionnellement (+12,7 o/jour et
+  par habitude). La RPC plafonne à 3 650 quoi qu'on demande.
+- La table n'est PAS modifiée : rien n'est supprimé, c'est la LECTURE qui est bornée.
+
 ## 🔁 Récurrence des tâches — serveur uniquement
 
 La génération de l'occurrence suivante appartient à `toggle_task_complete_v2` (mig. 086), **pas

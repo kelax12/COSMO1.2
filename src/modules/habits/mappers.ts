@@ -18,6 +18,13 @@ export interface HabitRow {
   completions?: Record<string, boolean>;
   created_at?: string;
   user_id?: string;
+  // Colonnes supplementaires de `get_my_habits()` (mig. 119) — absentes d'un
+  // SELECT direct sur la table, d'ou l'optionnalite.
+  streak_current?: number;
+  streak_best?: number;
+  completions_total?: number;
+  first_completion_date?: string | null;
+  window_days?: number;
 }
 
 /** DB input type for insert/update operations (snake_case). */
@@ -44,6 +51,11 @@ export function mapHabitFromDb(row: HabitRow): Habit {
     completions: row.completions || {},
     createdAt: row.created_at,
     userId: row.user_id,
+    streakCurrent: row.streak_current,
+    streakBest: row.streak_best,
+    completionsTotal: row.completions_total,
+    firstCompletionDate: row.first_completion_date ?? undefined,
+    completionsWindowDays: row.window_days,
   };
 }
 

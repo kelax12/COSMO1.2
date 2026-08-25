@@ -5,7 +5,7 @@ import { format } from 'date-fns';
 import { formatDate, getDateLocale } from '@/i18n/format';
 import { Habit, useDeleteHabit, useToggleHabitCompletion, useCreateHabit } from '@/modules/habits';
 import { useT } from '@/i18n/useT';
-import { calculateStreak } from '@/modules/habits/streak';
+import { habitStreak } from '@/modules/habits/streak';
 import { showUndoToast } from '@/lib/undo-toast';
 import { Button } from '@/components/ui/button';
 import HabitModal from './HabitModal';
@@ -25,7 +25,7 @@ const HabitCard: React.FC<HabitCardProps> = React.memo(({ habit }) => {
   const [editOpen, setEditOpen] = useState(false);
 
   // Série de jours consécutifs (logique : modules/habits/streak.ts).
-  const streak = calculateStreak(habit.completions);
+  const streak = habitStreak(habit);
   const { isPaused, getPauseUntil } = useHabitPauses();
   const paused = isPaused(habit.id);
   const pausedUntil = getPauseUntil(habit.id);

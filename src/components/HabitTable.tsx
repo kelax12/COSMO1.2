@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Flame, CheckCircle, Circle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useHabits, useToggleHabitCompletion } from '@/modules/habits';
 import { useT } from '@/i18n/useT';
-import { calculateStreak } from '@/modules/habits/streak';
+import { habitStreak } from '@/modules/habits/streak';
 import { Button } from '@/components/ui/button';
 import { formatDate } from '@/i18n/format';
 
@@ -312,7 +312,7 @@ const HabitTable: React.FC = () => {
           <tbody>
             {habits.map((habit, index) => {
               // Série de jours consécutifs (parité vue Liste).
-              const streak = calculateStreak(habit.completions);
+              const streak = habitStreak(habit);
               return (
               <tr key={habit.id} className="border-b transition-colors" style={{
                 borderColor: 'rgb(var(--table-border))',

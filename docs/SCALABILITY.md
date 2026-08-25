@@ -197,13 +197,36 @@ d'organisation.
 > seule table où il y a quelque chose à gagner. **On ne le fait pas**, et c'est une
 > décision, pas un report.
 >
-> 🔴 **Le vrai point de rupture de payload est ailleurs, et il n'était dans aucun
-> audit** : `habits.completions` est un objet JSON qui grandit d'une entrée PAR JOUR
-> et PAR habitude, sans borne. Mesuré : **12,7 octets par jour** (1 538 o pour 121
-> jours). Projection à trois ans : ~14 ko par habitude, soit **~280 ko par lecture de
-> liste** pour 20 habitudes. C'est un problème de MODÈLE (sortir l'historique dans une
-> table dédiée, ou le borner à la fenêtre affichée), pas de `select`. À traiter avant
-> que les premiers comptes n'aient deux ans.
+> ✅ **Le vrai point de rupture de payload — CORRIGÉ le 2026-08-24 (mig. 119).**
+>
+> `habits.completions` grandissait d'une entrée PAR JOUR et PAR habitude, sans borne :
+> **12,7 octets par jour** mesurés (1 538 o pour 121 jours), soit ~14 ko par habitude
+> et **~280 ko par lecture de liste** à trois ans pour 20 habitudes.
+>
+> **Pourquoi on ne pouvait pas simplement tronquer.** Deux consommateurs ont besoin de
+> l'historique complet, et les tronquer aurait affiché des chiffres FAUX — pire qu'un
+> gros payload : la **série** (`streak.ts` remonte jusqu'à 3 650 jours) et la vue
+> **« Tout »** de `HabitGlobalTracking`.
+>
+> **Le correctif déplace le CALCUL, pas seulement la donnée.** `get_my_habits(p_days)` :
+> - `completions` filtré aux 400 derniers jours → payload **borné**, il ne croît plus ;
+> - `streak_current`, `streak_best`, `completions_total`, `first_completion_date`
+>   calculés **serveur sur l'historique entier** → chiffres **exacts** sans le transférer.
+>
+> Vérifié en prod : à fenêtre 30 j, le payload passe de **32 ko à 160 octets**. À 400 j
+> il est aujourd'hui identique (l'historique le plus ancien a 227 jours) — le correctif
+> est **préventif**, il mordra quand les premiers comptes passeront un an.
+>
+> ⚠️ **Trois dérivations ont dû suivre**, sinon la troncature aurait menti :
+> `habitStreak()` préfère le chiffre serveur, l'export CSV utilise `completionsTotal`
+> (un export tronqué casserait la portabilité RGPD art. 20), et la vue « Tout » part de
+> `firstCompletionDate`. Toute nouvelle dérivation de `completions` doit se poser la même
+> question : *est-ce que ça a besoin de plus que la fenêtre ?*
+>
+> 🟡 **Reste, borné et connu** : `toggle_habit_completion` renvoie encore la ligne
+> entière à chaque coche (~14 ko à trois ans, pour UNE habitude). Le résultat est jeté
+> — `onSuccess` invalide et refetch — donc le coût ne croît pas avec le nombre
+> d'habitudes. À traiter si le clic devient un point chaud mesuré.
 
 ### Le diagnostic d'origine
 

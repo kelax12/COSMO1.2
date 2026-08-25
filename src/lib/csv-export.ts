@@ -91,7 +91,13 @@ export function exportTasksCSV(tasks: Task[]): void {
 export function exportHabitsCSV(habits: Habit[]): void {
   const headers = ['ID', 'Nom', 'Description', 'Fréquence', 'Durée (min)', 'Couleur', 'Complétions', 'Créée le'];
   const rows = habits.map(h => {
-    const completionsCount = Object.values(h.completions).filter(Boolean).length;
+    // ⚠️ `completionsTotal` d'abord : depuis la mig. 119, `h.completions` est
+    // borné à une fenêtre glissante en mode Supabase. Compter dessus donnerait
+    // un export TRONQUÉ — inacceptable pour un export, qui est le support du
+    // droit à la portabilité (RGPD art. 20). Le repli couvre la démo et le
+    // repository local, où `completions` contient tout.
+    const completionsCount =
+      h.completionsTotal ?? Object.values(h.completions).filter(Boolean).length;
     return [
       h.id,
       h.name,
