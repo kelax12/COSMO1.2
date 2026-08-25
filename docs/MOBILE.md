@@ -117,12 +117,21 @@ geste — mêmes valeurs que `BottomSheet` (80 px de course ou 500 px/s), pour q
 se ferment au même geste. Il est câblé sur les deux feuilles qui mentaient ET qui utilisaient déjà
 Framer : `RecurrenceDaysModal` et `DeleteObjectiveConfirm`.
 
-**Restent trois menteuses**, toutes du mode entreprise : `CreateTeamModal`, `NewTeamProjectModal`,
-`TeamTaskModal`. Elles n'utilisent pas Framer du tout — ce sont des `DialogContent` Radix en
-variante bottom-sheet, avec une poignée purement décorative. Leur donner le geste demande d'y
-introduire Framer à l'intérieur d'un dialogue Radix (piège de focus, `aria-modal`) : c'est un
-chantier, pas un correctif, et il n'a pas été fait ici. **Alternative en une ligne** : retirer la
-poignée. C'est un arbitrage produit, pas technique.
+**Les trois dernières, tranchées le 2026-08-24 : poignée RETIRÉE.**
+
+`CreateTeamModal`, `NewTeamProjectModal` et `TeamTaskModal` n'utilisent pas Framer : ce sont des
+`DialogContent` Radix en variante bottom-sheet, avec une poignée purement décorative. Deux
+options existaient, et ce n'est pas la difficulté technique qui a tranché.
+
+| Option | Coût | Pourquoi elle n'a pas été retenue |
+|---|---|---|
+| Ajouter le geste | Introduire du drag Framer dans un dialogue Radix sans casser le piège de focus, `aria-modal` ni la fermeture par Échap | **Ces trois feuilles sont des FORMULAIRES.** Un glissement accidentel sur une saisie à moitié remplie la perd. Les quatre feuilles qui ont le geste (`ColorSettingsModal`, `HabitModal`, `MobileMoreSheet`, `PremiumGateModal`) sont des menus et des sélecteurs : il n'y a rien à y perdre |
+| **Retirer la poignée** ✅ | 5 min | Retenue. La feuille se ferme par la croix et par un tap sur le voile, comme avant. Elle arrête simplement de promettre un geste qui n'existe pas |
+
+> ⚠️ **Ne pas la remettre « pour faire natif ».** Une affordance qui ment coûte plus cher que pas
+> d'affordance : l'utilisateur tire, rien ne bouge, il en conclut que l'app est cassée. Sans la
+> barre, il cherche la croix et la trouve. Si le geste est ajouté un jour, il devra venir AVEC
+> une garde contre la perte de saisie (confirmation si le formulaire est sale).
 
 ### ✅ Vérifié sain
 

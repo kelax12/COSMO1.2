@@ -46,6 +46,7 @@ import {
 import { DataTab } from './settings/DataTab';
 import OrganizationSettingsCard from '@/components/organization/OrganizationSettingsCard';
 import { PageHeading } from '@/components/ui/typography';
+import { MobileHeader } from '@/components/mobile';
 
 /* ─── main component ───────────────────────────────────────────── */
 const SettingsPage: React.FC = () => {
@@ -401,8 +402,9 @@ const SettingsPage: React.FC = () => {
       </motion.aside>
 
       {/* ──────── MAIN CONTENT ──────── */}
-      <main className="flex-1 min-w-0 py-10 px-5 sm:px-8 lg:px-12">
-        <div className="mb-8 max-w-3xl">
+      <main className="flex-1 min-w-0 pt-4 pb-10 md:py-10 px-gutter sm:px-8 lg:px-12">
+        <MobileHeader title={t('page.title')} subtitle={t('page.subtitle')} />
+        <div className="mb-8 max-w-3xl hidden md:block">
           <PageHeading variant="standard" className="tracking-tight">
             {t('page.title')}
           </PageHeading>
