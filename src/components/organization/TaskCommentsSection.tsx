@@ -124,7 +124,7 @@ const TaskCommentsSection = ({ taskId, members, currentUserId, autoSubmitDraft, 
           {t('comments.empty')}
         </p>
       ) : (
-        <ul className="space-y-3 mb-3 max-h-56 overflow-y-auto pr-1 min-h-0">
+        <ul className="space-y-3 mb-3 max-h-[21rem] overflow-y-auto pr-1 min-h-0">
           {comments.map((c) => {
             const author = c.authorId ? memberById.get(c.authorId) : undefined;
             return (
