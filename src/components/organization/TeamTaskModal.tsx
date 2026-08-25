@@ -101,7 +101,7 @@ const labelStyle = { color: 'rgb(var(--color-text-secondary))' };
 // Tailles/traitement alignés sur le TaskModal personnel (DesktopDetailsStep) :
 // px-4 h-12, text-base, bordure hover/focus au lieu d'un ring.
 const inputClass =
-  'w-full px-4 h-12 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none hover:border-[rgb(var(--color-accent-solid-hover))] focus:border-[rgb(var(--color-accent-solid))] focus:border-2 transition-all text-base';
+  'w-full px-[0.95rem] h-[2.85rem] border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none hover:border-[rgb(var(--color-accent-solid-hover))] focus:border-[rgb(var(--color-accent-solid))] focus:border-2 transition-all text-[0.95rem]';
 const inputStyle = { backgroundColor: 'rgb(var(--color-surface))', color: 'rgb(var(--color-text-primary))' };
 
 /**
@@ -432,7 +432,7 @@ const TeamTaskModal = ({
                 rows={3}
                 placeholder={t('taskModal.descriptionPlaceholder')}
                 expandedTitle={t('taskModal.description')}
-                className={`${inputClass} h-auto py-3 resize-y min-h-[76px]`}
+                className={`${inputClass} h-auto py-3 resize-y min-h-[72.2px]`}
                 style={inputStyle}
               />
             </div>
