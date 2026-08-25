@@ -67,7 +67,18 @@ page vitrine, donc le composant a ajouté une quatrième échelle au lieu d'en r
 **Correction** : migrer les 6 pages restantes vers `MobileHeader`, puis retirer les variantes
 `hero` / `compact` de `PageHeading` (qui redevient le titre desktop). ~2 h.
 
-### 🟠 2. Les titres de tâches sont tronqués jusqu'à 44 % sur mobile
+### ✅ 2. Titres de tâches — deux lignes au lieu d'une (2026-08-25)
+
+> `truncate` remplacé par `line-clamp-2` sur le titre de `TaskCard`.
+> Mesuré après correctif, viewport 375 px, mode démo : **12 titres tronqués
+> → 2**, et les libellés qui étaient coupés (« Préparer la réunion de
+> lancement », « Rendez-vous médecin annuel 2026 ») s'affichent en entier.
+>
+> ⚠️ Sûr uniquement parce que la liste virtualisée MESURE chaque carte
+> (`virtualizer.measureElement` dans `task-table/list.tsx`) : la hauteur
+> variable est supportée. Ne pas revenir à `truncate` « pour la densité ».
+
+### Le diagnostic d'origine
 
 Sur `/tasks` en 375 px : **12 titres tronqués**, le pire à **124 px pour 220 px nécessaires**
 (« Préparer présentation Q1 2026 »). Les cartes accordent 124–152 px au titre, soit ~40 % de la
@@ -79,7 +90,33 @@ Même symptôme sur `/entreprise` (6 titres, jusqu'à 32 %) et `/okr`.
 **Correction** : arbitrer la répartition de la largeur dans la carte mobile (badges de priorité et
 métadonnées avant le titre), ou passer le titre sur deux lignes (`line-clamp-2`). ~1 h.
 
-### 🟡 3. Tableau Habitudes — colonne partielle : le correctif précédent ne pouvait pas marcher
+### ✅ 3. Tableau Habitudes — colonne partielle, corrigée le 2026-08-25
+
+> **La cause n'était ni le snap ni le `scrollLeft` : elle était ARITHMÉTIQUE.**
+> La largeur disponible (334 px − 143 de colonne collante − 66 de colonne
+> « série ») n'est pas un multiple de la largeur de colonne. Aucune position de
+> scroll ne pouvait donc afficher que des colonnes entières, et le `snap-x`
+> ajouté en juillet ne pouvait rien y faire.
+>
+> Correctif : largeur de colonne ÉLASTIQUE, calculée pour qu'un nombre entier
+> tienne (`n = floor(disponible / largeurNaturelle)`, puis `disponible / n`),
+> puis cadrage du scroll sur une frontière réelle mesurée.
+>
+> ⚠️ **On ÉLARGIT, jamais on ne rétrécit** : le contenu d'une cellule impose un
+> plancher que l'algorithme de table respecte quoi qu'on écrive. Demander moins
+> est ignoré en silence, et la colonne repart en morceau.
+>
+> Mesuré après correctif : **0 colonne coupée**, à 375 px comme à 1280 px, et
+> stable au changement de période. Compromis assumé sur mobile : 2 jours
+> entiers visibles au lieu de 3 entiers plus un tronqué.
+>
+> ⚠️ Pas de `ResizeObserver`, et c'est un choix APRÈS ESSAI : il se rappelait
+> lui-même (la fonction modifie les largeurs qu'il observe). Deux gardes ont
+> été essayées et mesurées, aucune n'était déterministe. Le recalcul suit donc
+> les dépendances de l'effet. Un redimensionnement de fenêtre ne recalcule pas
+> immédiatement : compromis assumé, corrigé au rendu suivant.
+
+### Le diagnostic d'origine
 
 Mesuré : `scrollLeft = 233,6 px`, la colonne « dim. 9 » est visible sur **30 px de 52**.
 

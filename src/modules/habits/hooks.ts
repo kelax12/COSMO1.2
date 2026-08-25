@@ -182,9 +182,19 @@ export const useToggleHabitCompletion = () => {
       return { previousHabits };
     },
 
-    onSuccess: (_, { id }) => {
+    // La RPC renvoie la ligne FRAÎCHE (bornée + agrégats serveur, mig. 121) :
+    // on l'écrit directement au lieu d'invalider la liste. Avant, chaque coche
+    // déclenchait un `get_my_habits()` COMPLET — toutes les habitudes — pour
+    // retrouver un état que le serveur venait de nous renvoyer.
+    //
+    // ⚠️ En mode démo/local, `updated` vient du repository local et porte tout
+    // l'historique : l'écriture reste correcte, seuls les agrégats sont
+    // absents (les helpers retombent alors sur le calcul JS).
+    onSuccess: (updated, { id }) => {
+      queryClient.setQueryData<Habit[]>(habitKeys.lists(), (old) =>
+        old?.map((habit) => (habit.id === id ? updated : habit)),
+      );
       queryClient.invalidateQueries({ queryKey: habitKeys.detail(id) });
-      queryClient.invalidateQueries({ queryKey: habitKeys.lists() });
     },
 
     // Rollback on error

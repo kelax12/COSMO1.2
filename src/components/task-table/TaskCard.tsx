@@ -291,7 +291,15 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
       {/* Title + meta */}
       <div className="flex-1 min-w-0 flex flex-col justify-center gap-0.5">
         {/* Titre */}
-        <p className={`font-medium text-body leading-tight truncate ${task.completed ? 'line-through' : ''}`} style={{ color: 'rgb(var(--color-text-primary))' }}>
+        {/* `line-clamp-2` et non `truncate` (audit UI 2026-08-14, §2).
+            Mesuré sur /tasks en 375 px : 12 titres tronqués, le pire à 124 px
+            pour 220 nécessaires, soit 44 % coupés. La carte n'accordait que
+            ~40 % de la largeur d'écran au titre — sur l'écran principal du
+            produit, où l'on distingue deux tâches par leur libellé.
+            Deux lignes suffisent : la liste virtualisée MESURE chaque carte
+            (`virtualizer.measureElement` dans `list.tsx`), la hauteur variable
+            est donc supportée. Ne pas revenir à `truncate` « pour la densité ». */}
+        <p className={`font-medium text-body leading-tight line-clamp-2 ${task.completed ? 'line-through' : ''}`} style={{ color: 'rgb(var(--color-text-primary))' }}>
           {task.name}
         </p>
 

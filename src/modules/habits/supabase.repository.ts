@@ -141,16 +141,32 @@ export class SupabaseHabitsRepository implements IHabitsRepository {
   }
 
   async toggleCompletion(id: string, date: string): Promise<Habit> {
-    // Atomic toggle via RPC (migration 023, faille TOCTOU-1). L'ancien code
-    // faisait SELECT completions → mutate JS → UPDATE — un autre tab/device
-    // pouvait écrire entre les deux et perdre ses changements.
-    const { data, error } = await supabase.rpc('toggle_habit_completion', {
+    // Bascule atomique via RPC (mig. 023, faille TOCTOU-1) : la lecture et
+    // l'écriture tiennent dans UN statement sous verrou de ligne. Ne jamais
+    // revenir à SELECT → mutate JS → UPDATE, un autre onglet écrirait entre
+    // les deux et perdrait ses changements.
+    //
+    // ⚡ `_v2` (mig. 121) : la v1 renvoyait `RETURNS public.habits`, donc la
+    // ligne ENTIÈRE avec tout l'historique de `completions`, à CHAQUE coche
+    // (~14 ko à trois ans). La v2 renvoie la même forme que `get_my_habits` :
+    // ligne bornée + agrégats calculés sur l'historique entier.
+    //
+    // C'est ce qui permet au hook d'écrire directement la ligne fraîche dans
+    // le cache au lieu d'invalider toute la liste — la v1 déclenchait un
+    // `get_my_habits()` COMPLET après chaque clic, pour retrouver un état
+    // qu'on venait de calculer.
+    const { data, error } = await supabase.rpc('toggle_habit_completion_v2', {
       p_habit_id: id,
       p_date: date,
+      p_days: HABIT_WINDOW_DAYS,
     });
 
     if (error) throw normalizeApiError(error);
-    return mapHabitFromDb(data as HabitRow);
+    // `RETURNS TABLE` → PostgREST renvoie un tableau, là où la v1 renvoyait
+    // un objet. Une seule ligne par construction (filtrée sur l'id).
+    const row = (Array.isArray(data) ? data[0] : data) as HabitRow | undefined;
+    if (!row) throw new Error('Habit not found');
+    return mapHabitFromDb(row);
   }
 
 }
