@@ -8,11 +8,23 @@
 // `ENTERPRISE_BILLING_ENFORCED` — un drapeau de production qu'on ne touche pas
 // pour regarder un rendu.
 // ═══════════════════════════════════════════════════════════════════
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeAll } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import { ensureNamespaces } from '@/i18n/catalog';
 import { EnterpriseTierGrid } from './EnterpriseTierGrid';
 
 describe('EnterpriseTierGrid — périodicité', () => {
+  // Depuis le découpage des catalogues (2026-08-25), seuls `common` et `errors`
+  // sont en mémoire au démarrage. Dans l'app, `org` est chargé par le gate de
+  // route (`lazyWithRetry`) AVANT que le composant ne rende ; un test qui monte
+  // le composant directement doit reproduire ce préalable, sinon `t()` renvoie
+  // les clés brutes et l'assertion porte sur `billing.free` au lieu du montant.
+  //
+  // ⚠️ À faire dans TOUT test de composant qui utilise un namespace non-eager.
+  beforeAll(async () => {
+    await ensureNamespaces(['org'], 'fr');
+  });
+
   it('en mensuel, affiche le tarif mensuel et « par mois »', () => {
     render(<EnterpriseTierGrid interval="monthly" />);
     expect(screen.getAllByText('20,00 €').length).toBeGreaterThan(0);

@@ -43,7 +43,12 @@ const REVOKE_GET_SUBTREE = `
 REVOKE EXECUTE ON FUNCTION public.get_subtree(uuid, uuid) FROM authenticated, anon;
 `;
 
-describe('check-rls-advisors — règle 3 : fonction appelée par une policy (B-1)', () => {
+// 30 s au lieu des 5 s par défaut : CHAQUE test de ce fichier lance le script
+// réel dans un sous-processus Node. Sous instrumentation de couverture, avec
+// 150 fichiers de test en parallèle, un spawn peut dépasser 5 s sans que rien
+// ne soit cassé — un timeout de contention se lit comme un échec de garde, ce
+// qui est le pire message possible pour un test de sécurité.
+describe('check-rls-advisors — règle 3 : fonction appelée par une policy (B-1)', { timeout: 30_000 }, () => {
   it('ÉCHOUE quand une policy appelle une fonction révoquée à authenticated', () => {
     write('100_revoke.sql', REVOKE_GET_SUBTREE);
     write(
@@ -98,7 +103,7 @@ describe('check-rls-advisors — règle 3 : fonction appelée par une policy (B-
   });
 });
 
-describe('validate-migrations — règle 5 : fonctions de trigger (B-3)', () => {
+describe('validate-migrations — règle 5 : fonctions de trigger (B-3)', { timeout: 30_000 }, () => {
   const TRIGGER_FN = (extra = '') => `
 CREATE OR REPLACE FUNCTION public.validate_thing()
 RETURNS TRIGGER

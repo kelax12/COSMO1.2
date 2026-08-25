@@ -87,8 +87,26 @@ export default defineConfig({
           if (id.includes('node_modules/@sentry')) {
             return 'vendor-sentry';
           }
+          // ⚠️ `clsx` / `tailwind-merge` / `cva` DOIVENT être assignés
+          // explicitement, et c'est le correctif le plus rentable du fichier.
+          //
+          // `cn()` (src/lib/utils.ts) est appelé par presque chaque composant,
+          // donc `clsx` est dans le graphe de l'entrée. Mais recharts l'importe
+          // AUSSI, et un module partagé entre l'entrée et un chunk manuel est
+          // absorbé par le chunk manuel. `clsx` atterrissait donc dans
+          // `vendor-charts` (117 ko gzip), ce qui en faisait un import STATIQUE
+          // de l'entrée : Vite émettait `<link rel="modulepreload">` sur
+          // `vendor-charts` dans `index.html`, et TOUT visiteur téléchargeait
+          // recharts + d3, sur la landing, sur /login, partout, pour une
+          // fonction utilitaire de 500 octets.
+          //
+          // Mesuré le 2026-08-25 : 117,6 ko gzip préchargés pour rien.
+          // Le contrôle qui l'empêche de revenir est `npm run check:bundle`.
           if (id.includes('node_modules/date-fns') ||
-              id.includes('node_modules/lucide-react')) {
+              id.includes('node_modules/lucide-react') ||
+              id.includes('node_modules/clsx') ||
+              id.includes('node_modules/tailwind-merge') ||
+              id.includes('node_modules/class-variance-authority')) {
             return 'vendor-utils';
           }
           if (id.includes('node_modules/@tanstack')) {

@@ -91,6 +91,13 @@ jobs:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
 
+      # Le seul budget du dépôt qui n'avait aucune garde · et le seul qui ait
+      # reculé sans que personne le voie (+5 ko gzip sur le chemin critique en
+      # une journée, le 2026-08-25). Mesure le build RÉEL, pas une estimation.
+      # 🔴 Ne jamais remonter un plafond pour faire passer ce job.
+      - name: Budget de bundle
+        run: npm run check:bundle
+
   # ──────────────────────────────────────────────────────────────────
   # Garde sécurité dépendances : échoue si une vulnérabilité high/critical
   # touche une dépendance de PRODUCTION (ce qui est livré au navigateur).

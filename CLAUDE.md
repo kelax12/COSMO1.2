@@ -119,6 +119,10 @@ npm run check:rls           # Invariants RLS : auth.uid() wrappé, 1 seule polic
 npm run check:drift         # Dérive repo ↔ prod (2 étapes : --print-sql puis <introspection.json>)
 npm run i18n:check          # Parité des clés fr ↔ en (CI, bloquant)
 npm run i18n:scan           # Chaînes en dur non externalisées
+npm run i18n:namespaces     # Quels catalogues le SHELL rend (donc eager) ; --pages
+                            # donne la liste à déclarer par route dans App.tsx
+npm run check:bundle        # Budget de bundle sur le build reel (CI, apres npm run build)
+                            # Entree < 92 ko gzip. ❌ Ne jamais remonter un plafond.
 npm run test:rls   # Tests d'intégration RLS (stack Supabase locale)
 npm run test:e2e   # Playwright, 62 tests × 2 projects = 124, 15 specs (+ :ui, :report)
 npm run cosmo      # CLI données réelles (cf. plus haut)
