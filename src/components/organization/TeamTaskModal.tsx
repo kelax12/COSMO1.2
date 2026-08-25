@@ -43,7 +43,9 @@ const PreCreateCommentComposer = ({ onSubmit, pending }: { onSubmit: (body: stri
       <h3 className="text-sm font-semibold mb-3 shrink-0" style={{ color: 'rgb(var(--color-text-secondary))' }}>
         Commentaires
       </h3>
-      <div className="flex items-end gap-2 border-t pt-4" style={{ borderColor: 'rgb(var(--color-border))' }}>
+      <div className="flex flex-col min-h-[8rem] border-t pt-4" style={{ borderColor: 'rgb(var(--color-border))' }}>
+      <div className="flex-1" />
+      <div className="flex items-end gap-2">
         <textarea
           value={body}
           onChange={(e) => setBody(e.target.value)}
@@ -65,6 +67,7 @@ const PreCreateCommentComposer = ({ onSubmit, pending }: { onSubmit: (body: stri
         >
           <Send size={16} aria-hidden="true" />
         </button>
+      </div>
       </div>
     </div>
   );
