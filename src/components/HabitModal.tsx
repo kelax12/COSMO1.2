@@ -336,7 +336,7 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                           type="text"
                           value={formData.name}
                           onChange={(e) => { setFormData({ ...formData, name: e.target.value }); clear('name'); }}
-                          className={`w-full px-4 h-11 border rounded-lg focus:outline-none focus:ring-2 transition-colors text-sm ${
+                          className={`w-full px-[0.875425rem] h-[2.407419rem] border rounded-lg focus:outline-none focus:ring-2 transition-colors text-[0.765997rem] ${
                             isInvalid('name') ? 'border-red-500 focus:ring-red-500/40' : 'focus:ring-[rgb(var(--color-accent))] focus:border-[rgb(var(--color-accent))]'
                           }`}
                           style={{
@@ -356,7 +356,7 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                           type="number"
                           value={formData.estimatedTime}
                           onChange={(e) => setFormData({ ...formData, estimatedTime: Number(e.target.value) })}
-                          className="w-full px-4 h-11 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))] focus:border-[rgb(var(--color-accent))] transition-colors text-sm"
+                          className="w-full px-[0.875425rem] h-[2.407419rem] border rounded-lg focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))] focus:border-[rgb(var(--color-accent))] transition-colors text-[0.765997rem]"
                           style={{
                             backgroundColor: 'rgb(var(--color-surface))',
                             color: 'rgb(var(--color-text-primary))',
