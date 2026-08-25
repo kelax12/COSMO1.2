@@ -18,6 +18,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2'
 import { opsAlert } from '../_shared/alert.ts'
 import { priceIdForTier, tierByKey, FREE_TIER_MAX_MEMBERS } from '../_shared/org-tiers.ts'
 import type { OrgBillingInterval } from '../_shared/org-tiers.ts'
+import { resolveYearlyPriceId } from '../_shared/org-stripe-prices.ts'
 
 const APP_URL = Deno.env.get('APP_URL') ?? 'http://localhost:5173'
 const ALLOWED_ORIGINS = new Set([APP_URL])
@@ -161,12 +162,36 @@ Deno.serve(async (req) => {
       }
     }
 
-    const priceId = priceIdForTier(tier.key, (name) => Deno.env.get(name), billingInterval)
+    const env = (name: string) => Deno.env.get(name)
+
+    // ── Le price ID à facturer ──
+    //
+    // Mensuel : désigné par un secret, rien à choisir.
+    // Annuel : dérivé du produit Stripe du prix mensuel, avec vérification du
+    // montant (`_shared/org-stripe-prices.ts`). Aucun secret à poser.
+    let priceId: string | null = null
+
+    if (billingInterval === 'yearly') {
+      const resolved = await resolveYearlyPriceId(stripe, tier, env)
+      if (resolved.ok) {
+        priceId = resolved.priceId
+      } else {
+        // Erreur DISTINCTE du mensuel : le propriétaire doit pouvoir basculer
+        // sur le mensuel, qui lui fonctionne, au lieu de croire que tout le
+        // paiement est en panne.
+        await opsAlert(
+          'stripe-org-checkout',
+          `prix annuel introuvable pour le palier ${tier.key} (${resolved.reason}: ${resolved.detail})`,
+        )
+        return json({ error: 'yearly_unavailable' }, 503)
+      }
+    } else {
+      priceId = priceIdForTier(tier.key, env, 'monthly')
+    }
+
     if (!priceId) {
       // Secret non configuré : échouer bruyamment plutôt que de créer une
-      // session vide ou de facturer le mauvais palier. Le cas le plus probable
-      // le jour de l'activation de l'annuel est un `STRIPE_ORG_PRICE_*_YEARLY`
-      // manquant — d'où la périodicité dans l'alerte.
+      // session vide ou de facturer le mauvais palier.
       await opsAlert(
         'stripe-org-checkout',
         `price id manquant pour le palier ${tier.key} (${billingInterval})`,

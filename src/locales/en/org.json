@@ -886,6 +886,7 @@
     "checkoutSuccess": "Subscription active. Thank you!",
     "checkoutCancelled": "Payment cancelled, nothing was charged.",
     "alreadySubscribed": "This organization already has an active subscription. Use \"Manage subscription\" to change tier.",
+    "yearlyUnavailable": "Yearly billing is not available yet. Monthly payment does work, and the grid has just switched back to it.",
     "error": "Could not reach Stripe. Please try again shortly.",
     "back": "Workspace",
     "planHint": "View and upgrade your plan",

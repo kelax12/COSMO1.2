@@ -921,6 +921,7 @@
     "checkoutSuccess": "Abonnement activé. Merci !",
     "checkoutCancelled": "Paiement annulé, rien n'a été débité.",
     "alreadySubscribed": "Cette organisation a déjà un abonnement actif. Utilisez « Gérer l'abonnement » pour changer de palier.",
+    "yearlyUnavailable": "La facturation annuelle n'est pas encore disponible. Le paiement mensuel, lui, fonctionne : la grille vient de revenir dessus.",
     "error": "Impossible de contacter Stripe. Réessayez dans un instant.",
     "back": "Espace entreprise",
     "planHint": "Voir et faire évoluer votre forfait",
