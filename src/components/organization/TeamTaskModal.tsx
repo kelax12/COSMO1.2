@@ -44,8 +44,7 @@ const PreCreateCommentComposer = ({ onSubmit, pending }: { onSubmit: (body: stri
         Commentaires
       </h3>
       <div className="flex flex-col min-h-[8rem] border-t pt-4" style={{ borderColor: 'rgb(var(--color-border))' }}>
-      <div className="flex-1" />
-      <div className="flex items-end gap-2">
+      <div className="flex-1" /><div className="flex items-end gap-2">
         <textarea
           value={body}
           onChange={(e) => setBody(e.target.value)}
@@ -67,8 +66,7 @@ const PreCreateCommentComposer = ({ onSubmit, pending }: { onSubmit: (body: stri
         >
           <Send size={16} aria-hidden="true" />
         </button>
-      </div>
-      </div>
+      </div></div>
     </div>
   );
 };
@@ -98,11 +96,7 @@ interface TeamTaskModalProps {
 
 const labelClass = 'block text-xs font-semibold uppercase tracking-wider mb-2';
 const labelStyle = { color: 'rgb(var(--color-text-secondary))' };
-// Tailles/traitement alignés sur le TaskModal personnel (DesktopDetailsStep) :
-// px-4 h-12, text-base, bordure hover/focus au lieu d'un ring.
-// Hauteur des champs — extraite pour que le groupe priorité (pas un input,
-// mais aligné visuellement à côté) reste toujours à la même taille sans
-// dupliquer la valeur à chaque réduction.
+// Hauteur extraite pour que le groupe priorité (pas un input, mais aligné à côté) la partage.
 const inputHeightClass = 'h-[2.626275rem]';
 const inputClass =
   `w-full px-[0.875425rem] ${inputHeightClass} border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none hover:border-[rgb(var(--color-accent-solid-hover))] focus:border-[rgb(var(--color-accent-solid))] focus:border-2 transition-all text-[0.875425rem]`;
