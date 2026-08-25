@@ -342,11 +342,18 @@ Garde-fous propres à cette zone :
   dire le même mot pour le même palier, comme ils annoncent déjà le même montant. Le mapping
   palier → clé est `src/modules/billing/org-tier-labels.ts` (`Record<OrgTierKey, …>`, donc un
   palier ajouté sans nom ne compile pas).
-- 🟢 **DÉSACTIVÉ le 2026-08-24, même jour que son activation** : la micro-entreprise d'Axel
-  n'existe pas encore, donc COSMO ne peut légalement rien encaisser. **Tout est gratuit, sans
-  plafond de sièges.** `ENTERPRISE_BILLING_ENFORCED = false` **et**
-  `billing_flags.enterprise_seat_limit = false` en prod — les **deux** ensemble, jamais l'un
-  sans l'autre (cf. règle ci-dessous).
+- 🔴 **ACTIVÉ le 2026-08-25** (demande Axel). `ENTERPRISE_BILLING_ENFORCED = true` **et**
+  `billing_flags.enterprise_seat_limit = true` en prod, basculés ensemble le même jour. Les CTA
+  de paiement sont montés, la landing entreprise réaffiche ses tarifs, et le quota de sièges est
+  réellement appliqué : vérifié en base, `org_seats_allowed()` renvoie `false` pour la seule
+  organisation qui dépasse le palier gratuit. Aucun membre n'est retiré, c'est la croissance qui
+  est bloquée.
+- 🔴 **Deux réserves restent ouvertes à cette date, aucune corrigée par la bascule :**
+  1. `STRIPE_SECRET_KEY` est une clé de TEST, donc le checkout n'accepte que des cartes de test.
+     **Le quota est réel, l'encaissement ne l'est pas.**
+  2. Les 4 prix ANNUELS n'existent pas côté Stripe et les secrets `STRIPE_ORG_PRICE_*_YEARLY` ne
+     sont pas posés : le sélecteur « Annuel » est cliquable, son checkout répond
+     `tier_unavailable`. Le mensuel, lui, est complet.
 - **La plomberie reste entière et déployée** : `stripe-org-checkout` / `stripe-org-portal`, les
   `org_subscriptions` (mig. 101 + 123), `org_seats_allowed()`, et `stripe-webhook`. Les deux
   fonctions qui portent la périodicité, `stripe-org-checkout` (v2) et `stripe-webhook` (v17), ont
@@ -362,7 +369,7 @@ Garde-fous propres à cette zone :
   réel est `billing_flags.enterprise_seat_limit`. Serveur `true` + client `false` = un
   propriétaire se voit refuser une invitation (`seat_limit_reached`) sans qu'aucun écran ne lui
   propose de payer : impasse. Client `true` + serveur `false` = on encaisse sans rien débloquer.
-- 🔴 **Le jour de la réactivation : la grille branchée est celle du SANDBOX DE TEST.** `STRIPE_SECRET_KEY` en prod est une
+- 🔴 **La grille branchée est celle du SANDBOX DE TEST.** `STRIPE_SECRET_KEY` en prod est une
   clé de test — les customers des vrais utilisateurs vivent dans le compte « Environnement de
   test COSMO », le compte live est vide. Un checkout n'accepte donc que des **cartes de test**
   : le quota de sièges est réel, l'encaissement ne l'est pas. Passage en live = recréer les 8
