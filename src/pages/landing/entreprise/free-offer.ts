@@ -4,6 +4,14 @@ import { ENTERPRISE_BILLING_ENFORCED } from '@/modules/billing/premium-config';
  * L'offre de lancement est-elle en cours — c'est-à-dire : tout est-il gratuit ?
  *
  * ─────────────────────────────────────────────────────────────────────────────
+ * ÉTAT AU 2026-08-25 : `false`. L'offre de lancement est TERMINÉE,
+ * `ENTERPRISE_BILLING_ENFORCED` est repassé à `true` et la landing réaffiche
+ * ses tarifs. Le paragraphe qui suit reste là parce qu'il explique pourquoi les
+ * variantes `promo*` / `*Free` existent encore dans les catalogues : elles ne
+ * remplacent rien, elles s'ajoutent, et rebasculer le drapeau restitue la page
+ * gratuite mot pour mot.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
  * POURQUOI CE DRAPEAU EXISTE (2026-08-24)
  *
  * La micro-entreprise n'est pas encore créée : COSMO ne peut légalement rien
@@ -13,7 +21,8 @@ import { ENTERPRISE_BILLING_ENFORCED } from '@/modules/billing/premium-config';
  * explicite d'une offre de lancement temporaire.
  *
  * ─────────────────────────────────────────────────────────────────────────────
- * COMMENT REVENIR À LA VERSION PAYANTE (le jour de la déclaration)
+ * COMMENT REVENIR À LA VERSION PAYANTE (fait le 2026-08-25, points 1 et 2 ;
+ * le point 3 reste ouvert)
  *
  * Rien n'a été supprimé, il n'y a rien à réécrire : les deux versions de la
  * page coexistent dans le code, et les textes payants sont restés dans les

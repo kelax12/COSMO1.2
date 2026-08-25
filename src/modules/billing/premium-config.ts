@@ -116,9 +116,23 @@ export function displayedMonthlyEur(
 //          le VRAI blocage est côté serveur (billing_flags
 //          'enterprise_seat_limit', mig. 067 — 1 UPDATE pour activer).
 //
-// REPASSÉ À `false` le 2026-08-24 (demande Axel) : la micro-entreprise n'est pas
-// encore créée, donc COSMO ne peut légalement rien encaisser. Tout est gratuit,
-// sans plafond de sièges.
+// RÉACTIVÉ le 2026-08-25 (demande Axel), après la parenthèse gratuite du
+// 2026-08-24. Les CTA de paiement sont montés, la landing entreprise réaffiche
+// ses tarifs (`ENTERPRISE_FREE_OFFER` s'en dérive), et le quota de sièges est
+// réellement appliqué : `billing_flags.enterprise_seat_limit` est repassé à
+// `true` en base le même jour, comme l'exige la règle des deux drapeaux.
+//
+// 🔴 DEUX RÉSERVES CONNUES AU MOMENT DE LA BASCULE, ni l'une ni l'autre
+// corrigée par ce drapeau :
+//
+//  1. `STRIPE_SECRET_KEY` en prod est une clé de TEST. Le checkout n'accepte
+//     donc que des cartes de test : le quota est réel, l'encaissement ne l'est
+//     pas. Passer en live = recréer les prix sur le compte live puis remplacer
+//     STRIPE_SECRET_KEY / STRIPE_WEBHOOK_SECRET / les STRIPE_ORG_PRICE_*.
+//  2. Les 4 prix ANNUELS n'existent pas côté Stripe et les secrets
+//     `STRIPE_ORG_PRICE_*_YEARLY` ne sont pas posés. Le sélecteur « Annuel »
+//     est cliquable, mais son checkout répond `tier_unavailable`. Le mensuel,
+//     lui, est complet.
 //
 // ⚠️ RIEN N'A ÉTÉ SUPPRIMÉ — toute la plomberie Stripe entreprise reste en place
 // et déployée : Edge Functions `stripe-org-checkout` / `stripe-org-portal`, les
@@ -143,5 +157,5 @@ export function displayedMonthlyEur(
 // live est vide). Passer en live = recréer les 4 prix sur le compte live,
 // réenregistrer un endpoint webhook live, puis remplacer STRIPE_SECRET_KEY /
 // STRIPE_WEBHOOK_SECRET / les 4 STRIPE_ORG_PRICE_*.
-export const ENTERPRISE_BILLING_ENFORCED = false;
+export const ENTERPRISE_BILLING_ENFORCED = true;
 export const ORG_FREE_SEATS = 5;
