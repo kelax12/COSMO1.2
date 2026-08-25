@@ -320,6 +320,17 @@ les deux ne partagent aucune colonne.
 
 Garde-fous propres à cette zone :
 
+- 🟢 **Le price ID ANNUEL se dérive, il ne se configure pas** (`_shared/org-stripe-prices.ts`) :
+  c'est le prix récurrent `year`, actif, de la devise du mensuel et **du montant exact annoncé**,
+  porté par le MÊME produit Stripe que le prix mensuel. Zéro candidate ou plusieurs → on n'ouvre
+  aucune session de paiement (`yearly_unavailable`). Conséquence directe : les 4
+  `STRIPE_ORG_PRICE_*_YEARLY` ne sont **pas** nécessaires, et le jour du passage en compte live il
+  n'y a que les 4 mensuels à re-poser. Le secret annuel reste lu en premier, comme porte de sortie
+  pour épingler un prix qui vivrait ailleurs.
+- ❌ **Ne jamais faire deviner un prix à la résolution annuelle.** Le montant est vérifié contre
+  `yearlyTotalEur` AVANT toute session, dans les deux sens (checkout et webhook). C'est le seul
+  endroit où COSMO choisit un prix au lieu de se le faire désigner, donc le seul endroit où il
+  peut se tromper de montant.
 - ❌ **Ne jamais écrire une grille de tarifs annuels à la main.** Le montant annuel est DÉRIVÉ du
   mensuel, front et Deno, par la même formule. Deux grilles, c'est une seconde occasion d'annoncer
   un prix et d'en facturer un autre, le risque qui a déjà imposé `org-tiers.parity.test.ts`.
@@ -348,12 +359,14 @@ Garde-fous propres à cette zone :
   réellement appliqué : vérifié en base, `org_seats_allowed()` renvoie `false` pour la seule
   organisation qui dépasse le palier gratuit. Aucun membre n'est retiré, c'est la croissance qui
   est bloquée.
-- 🔴 **Deux réserves restent ouvertes à cette date, aucune corrigée par la bascule :**
+- 🔴 **Deux réserves restent ouvertes à cette date :**
   1. `STRIPE_SECRET_KEY` est une clé de TEST, donc le checkout n'accepte que des cartes de test.
      **Le quota est réel, l'encaissement ne l'est pas.**
-  2. Les 4 prix ANNUELS n'existent pas côté Stripe et les secrets `STRIPE_ORG_PRICE_*_YEARLY` ne
-     sont pas posés : le sélecteur « Annuel » est cliquable, son checkout répond
-     `tier_unavailable`. Le mensuel, lui, est complet.
+  2. Les 4 prix ANNUELS n'existent pas encore côté Stripe. Il n'y a **aucun secret à poser** (cf.
+     règle de dérivation ci-dessous) : il suffit d'ajouter, sur chacun des 4 produits qui portent
+     déjà un prix mensuel, un prix récurrent `year` de 168 / 420 / 840 / 1 680 €. Le checkout
+     annuel répond `yearly_unavailable` d'ici là, la grille rebascule seule sur le mensuel, et
+     l'annuel se met à marcher tout seul dès que les prix existent.
 - **La plomberie reste entière et déployée** : `stripe-org-checkout` / `stripe-org-portal`, les
   `org_subscriptions` (mig. 101 + 123), `org_seats_allowed()`, et `stripe-webhook`. Les deux
   fonctions qui portent la périodicité, `stripe-org-checkout` (v2) et `stripe-webhook` (v17), ont

@@ -2,6 +2,7 @@ import Stripe from 'npm:stripe@14.21.0'
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { opsAlert } from '../_shared/alert.ts'
 import { tierFromPriceId, FREE_TIER_MAX_MEMBERS } from '../_shared/org-tiers.ts'
+import { resolveTierMatch } from '../_shared/org-stripe-prices.ts'
 
 const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') ?? '', {
   apiVersion: '2024-06-20',
@@ -516,7 +517,12 @@ async function applyOrgSubscription(
   // Rend le palier ET la périodicité : les deux se changent depuis le Billing
   // Portal sans repasser par notre checkout, donc les deux se redérivent du
   // price ID et jamais des metadata.
-  const match = tierFromPriceId(priceId, env)
+  //
+  // `tierFromPriceId` est passé en court-circuit : c'est une comparaison de
+  // chaînes contre les secrets, elle couvre tout le mensuel sans un seul appel
+  // réseau. Ce n'est que pour un prix ANNUEL dérivé qu'on remonte au produit
+  // Stripe, et l'index produit → palier est mis en cache par isolate.
+  const match = await resolveTierMatch(stripe, priceId, env, tierFromPriceId)
   const tier = match?.tier
 
   if (intent === 'active' && !tier) {

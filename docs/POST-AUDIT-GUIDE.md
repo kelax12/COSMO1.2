@@ -277,10 +277,17 @@ l'engagement (`ENTERPRISE_YEARLY_DISCOUNT`, 2026-08-25).
 | `t50` | 20 à 50 | 100 € | 70 € | **840 €/an** |
 | `tmax` | 50 et plus | 200 € | 140 € | **1 680 €/an** |
 
+🟢 **Les 4 prix annuels s'ajoutent sur les produits qui portent déjà les prix mensuels**, pas sur
+de nouveaux produits. C'est ce qui permet à COSMO de les trouver tout seul : le prix annuel d'un
+palier est défini comme « le prix récurrent `year`, actif, du montant exact annoncé, sur le même
+produit que le prix mensuel » (`_shared/org-stripe-prices.ts`). **Aucun secret à poser après
+coup, aucun redéploiement.**
+
 ⚠️ Les prix annuels se créent avec un **intervalle de facturation `year`** et le **montant de la
 colonne « débit réel »**, pas l'équivalent mensuel. L'équivalent mensuel n'existe que dans
 l'affichage : comparer 420 € à 50 € ne dit rien de l'économie, comparer 35 € à 50 € la dit d'un
-coup d'œil.
+coup d'œil. Un montant qui ne tombe pas juste au centime près est **refusé** : le checkout répond
+`yearly_unavailable` plutôt que de facturer autre chose que l'annoncé.
 
 ⚠️ Le **quota de sièges est identique** dans les deux périodicités : il est porté par le palier
 seul (`max_members`). Un client annuel n'achète pas plus de sièges, il achète le même palier moins
@@ -297,22 +304,16 @@ purement informatif. Aucun montant n'est recalculé côté COSMO.
 supabase secrets set STRIPE_ORG_PRICE_T10=price_... \
                      STRIPE_ORG_PRICE_T20=price_... \
                      STRIPE_ORG_PRICE_T50=price_... \
-                     STRIPE_ORG_PRICE_TMAX=price_... \
-                     STRIPE_ORG_PRICE_T10_YEARLY=price_... \
-                     STRIPE_ORG_PRICE_T20_YEARLY=price_... \
-                     STRIPE_ORG_PRICE_T50_YEARLY=price_... \
-                     STRIPE_ORG_PRICE_TMAX_YEARLY=price_...
+                     STRIPE_ORG_PRICE_TMAX=price_...
 ```
 
 Un secret manquant ne fait pas facturer le mauvais palier : `stripe-org-checkout` alerte via
 `opsAlert` et renvoie `tier_unavailable`. C'est voulu — échouer bruyamment plutôt que
 silencieusement.
 
-🔴 **Les huit secrets se posent ensemble.** Le sélecteur mensuel/annuel est monté sans condition
-d'environnement : le front ne peut pas lire les secrets Supabase. Un `*_YEARLY` manquant donne donc
-un bouton « Annuel » cliquable et un checkout qui échoue en `tier_unavailable`.
-`org-tiers.parity.test.ts` garantit que chaque palier payant DÉCLARE ses deux variables, jamais
-qu'elles sont renseignées en prod : ça, seule la pose des secrets le fait.
+🟢 **Quatre secrets, pas huit.** Les `STRIPE_ORG_PRICE_*_YEARLY` ne sont PAS nécessaires : le prix
+annuel se dérive du produit du prix mensuel. Les poser reste possible, comme porte de sortie pour
+épingler un prix annuel qui vivrait sur un autre produit ; ils sont alors lus en premier.
 
 ### 5.3 — Migration et déploiement
 
@@ -328,9 +329,10 @@ supabase functions deploy stripe-org-portal
 supabase functions deploy stripe-webhook
 ```
 
-✅ **Fait le 2026-08-25** : `stripe-org-checkout` (v2) et `stripe-webhook` (v17) sont déployées
-avec la périodicité. `stripe-org-portal` n'a pas changé, sa v1 reste valide. Il ne reste que la
-création des prix annuels et la pose des 4 secrets `*_YEARLY` (§5.1 et §5.2).
+✅ **Fait le 2026-08-25** : `stripe-org-checkout` (v3) et `stripe-webhook` (v18) sont déployées
+avec la périodicité ET la dérivation du prix annuel. `stripe-org-portal` n'a pas changé, sa v1
+reste valide. Il ne reste que la création des 4 prix annuels dans Stripe (§5.1) : aucun secret,
+aucun redéploiement derrière.
 
 `supabase/config.toml` déclare déjà les deux nouvelles fonctions en `verify_jwt = true`.
 Ajouter à l'endpoint webhook, s'ils n'y sont pas : `checkout.session.completed`,

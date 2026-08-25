@@ -25,6 +25,12 @@
 // Le QUOTA de sièges ne dépend PAS de la périodicité : `maxMembers` est porté
 // par le palier seul. Un client annuel et un client mensuel du même palier ont
 // exactement les mêmes droits.
+//
+// ⚠️ `priceEnvVarYearly` n'est PAS un secret obligatoire. Le price ID annuel
+// se DÉRIVE du produit Stripe porteur du prix mensuel
+// (`_shared/org-stripe-prices.ts`) : rien à poser, rien à re-poser le jour du
+// passage en compte live. Ce nom de variable ne sert plus que de porte de
+// sortie, pour épingler explicitement un prix annuel qui vivrait ailleurs.
 // ═══════════════════════════════════════════════════════════════════
 
 export type OrgTierKey = 'free' | 't10' | 't20' | 't50' | 'tmax'
@@ -47,7 +53,13 @@ export interface OrgTier {
   priceEurPerMonth: number
   /** Nom du secret Supabase portant le price ID mensuel. `null` = palier gratuit. */
   priceEnvVarMonthly: string | null
-  /** Nom du secret Supabase portant le price ID annuel. `null` = palier gratuit. */
+  /**
+   * Nom du secret Supabase portant le price ID annuel. `null` = palier gratuit.
+   *
+   * OPTIONNEL : s'il n'est pas renseigné, le prix annuel est dérivé du produit
+   * Stripe du prix mensuel. Le poser force ce price ID et court-circuite la
+   * dérivation.
+   */
   priceEnvVarYearly: string | null
 }
 
@@ -115,12 +127,18 @@ export interface OrgTierMatch {
 }
 
 /**
- * Sens inverse : retrouver le palier depuis un price ID Stripe.
+ * Sens inverse SYNCHRONE : retrouver le palier depuis un price ID connu d'un
+ * secret. Aucun appel réseau, donc utilisable comme court-circuit.
  *
  * Indispensable pour `customer.subscription.updated` — un changement de palier
  * OU DE PÉRIODICITÉ fait depuis le Billing Portal ne passe pas par notre
  * checkout, donc la seule information disponible est le price ID. Sans ce
  * mapping, un client paierait 100 € en restant bloqué au quota de 20 membres.
+ *
+ * ⚠️ Ne connaît QUE les price IDs nommés par un secret. Un prix annuel dérivé
+ * n'y figure pas : c'est `resolveTierMatch` (`org-stripe-prices.ts`) qui prend
+ * le relais, en remontant au produit Stripe. Cette fonction reste son premier
+ * essai, parce qu'une comparaison de chaînes ne coûte rien.
  *
  * `undefined` pour un price inconnu : l'appelant DOIT alerter et ne rien
  * écrire, plutôt que de dégrader l'org au palier gratuit.

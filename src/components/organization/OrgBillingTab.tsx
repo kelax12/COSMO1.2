@@ -167,7 +167,23 @@ export function OrgBillingTab({ orgId, isOwner, memberCount, onBack }: Props) {
 
       <EnterpriseTierGrid
         currentTier={subscription?.tierKey}
-        onSelect={canPay ? (tierKey) => checkout.mutate({ orgId, tierKey, interval: billingInterval }) : undefined}
+        onSelect={
+          canPay
+            ? (tierKey) =>
+                checkout.mutate(
+                  { orgId, tierKey, interval: billingInterval },
+                  {
+                    // L'annuel indisponible ramène la grille sur le mensuel :
+                    // le message dit qu'il fonctionne, l'écran doit le montrer
+                    // au lieu de laisser l'utilisateur re-cliquer sur le même
+                    // bouton en échec.
+                    onError: (err: Error) => {
+                      if (err.message === 'yearly_unavailable') setBillingInterval('monthly');
+                    },
+                  },
+                )
+            : undefined
+        }
         isPending={checkout.isPending}
         dormant={!ENTERPRISE_BILLING_ENFORCED}
         interval={billingInterval}

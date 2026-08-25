@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
 import { useIsDemo } from '@/lib/app-mode.store';
 import { translator } from '@/i18n/useT';
+import type { KeyOf } from '@/i18n/catalog';
 import { getOrgSubscription } from './org-billing.repository';
 import type { OrgSubscription } from './org-billing.types';
 import type { OrgBillingInterval, OrgTierKey } from './premium-config';
@@ -45,12 +46,46 @@ async function redirectToStripe(
     headers: { Authorization: `Bearer ${session.access_token}` },
     body,
   });
-  if (error) throw error;
+  // ⚠️ Sur un statut non-2xx, `invoke` renseigne `error` et laisse `data` à
+  // `null` : le code métier renvoyé par l'Edge Function (`already_subscribed`,
+  // `yearly_unavailable`…) est dans le CORPS de la réponse, pas dans le message
+  // de l'erreur, qui vaut « Edge Function returned a non-2xx status code ».
+  // Sans cette extraction, tous ces cas retombaient sur le message générique
+  // « Impossible de contacter Stripe », y compris quand Stripe répondait très
+  // bien. On dit à l'utilisateur ce qui s'est réellement passé.
+  if (error) throw new Error((await edgeErrorCode(error)) ?? 'invoke_failed');
   if (data?.error) throw new Error(data.error as string);
   if (!data?.url) throw new Error('no_url');
 
   window.location.href = data.url as string;
 }
+
+/** Le champ `error` du corps JSON d'une réponse d'Edge Function en échec. */
+async function edgeErrorCode(error: unknown): Promise<string | null> {
+  const context = (error as { context?: unknown }).context;
+  if (!context || typeof (context as Response).clone !== 'function') return null;
+  try {
+    const body: unknown = await (context as Response).clone().json();
+    const code = (body as { error?: unknown } | null)?.error;
+    return typeof code === 'string' ? code : null;
+  } catch {
+    // Corps vide ou non JSON : on retombe sur le message générique.
+    return null;
+  }
+}
+
+/**
+ * Codes métier de `stripe-org-checkout` → clé de message.
+ *
+ * `yearly_unavailable` est distinct de `tier_unavailable` exprès : le mensuel
+ * fonctionne, donc l'utilisateur a une action possible tout de suite. Un
+ * message générique le laisserait croire que le paiement est en panne.
+ */
+const CHECKOUT_ERROR_KEYS: Record<string, KeyOf<'org'>> = {
+  already_subscribed: 'billing.alreadySubscribed',
+  yearly_unavailable: 'billing.yearlyUnavailable',
+  forbidden: 'billing.ownerOnly',
+};
 
 export const useStartOrgCheckout = () =>
   useMutation({
@@ -74,9 +109,7 @@ export const useStartOrgCheckout = () =>
       // utilisée par src/modules/organizations/hooks.ts. Hors composant, on ne
       // peut pas appeler le hook `useT`.
       const { t } = translator('org');
-      toast.error(
-        err.message === 'already_subscribed' ? t('billing.alreadySubscribed') : t('billing.error'),
-      );
+      toast.error(t(CHECKOUT_ERROR_KEYS[err.message] ?? 'billing.error'));
     },
   });
 

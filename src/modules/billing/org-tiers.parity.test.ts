@@ -50,10 +50,11 @@ describe('parité ENTERPRISE_PRICING_TIERS ↔ _shared/org-tiers.ts', () => {
     expect(sansPrix.map((t) => t.key)).toEqual(['free']);
   });
 
-  it('chaque palier payant a AUSSI une variable de prix annuelle', () => {
-    // Un palier payant sans price annuel rendrait le sélecteur « Annuel »
-    // cliquable et le checkout impossible : l'utilisateur choisit un tarif que
-    // le serveur ne sait pas facturer.
+  it('chaque palier payant nomme une variable annuelle DISTINCTE de la mensuelle', () => {
+    // Ce secret est OPTIONNEL depuis le 2026-08-25 : le prix annuel se dérive
+    // du produit Stripe (`org-stripe-prices.ts`). Ce qui reste vital, c'est que
+    // les deux noms diffèrent — les confondre ferait résoudre l'annuel sur le
+    // price ID mensuel, donc facturer 50 € par an au lieu de 420 €.
     ORG_TIERS.filter((t) => t.key !== 'free').forEach((t) => {
       expect(t.priceEnvVarYearly).toBeTruthy();
       expect(t.priceEnvVarYearly).not.toBe(t.priceEnvVarMonthly);
