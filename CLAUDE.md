@@ -105,12 +105,12 @@ npm run build      # Build prod → dist/ (vite build + node prerender.mjs)
 npm run preview    # Prévisualiser le build
 npm run lint       # ESLint (doit retourner 0 erreur)
 npm run typecheck  # tsc -b (doit retourner 0 erreur)
-npm test           # Vitest (run once), 1621 tests / 144 fichiers, ~3 min 40 s (2026-08-25)
+npm test           # Vitest (run once), 1656 tests / 146 fichiers, ~6 min (2026-08-25 au soir)
 npm run test:watch # Vitest en mode watch
 npm run test:coverage       # + couverture v8, seuils globaux et par fichier
-                            # 🔴 ROUGE au 2026-08-25 : 4 seuils manqués (lines 25,95 < 26 ·
-                            # functions 20,5 < 21 · statements 25,58 < 26 ·
-                            # supabase.repository.ts 63,71 < 65). Le job CI bloque.
+                            # 🔴 ROUGE au 2026-08-25 (soir) : 3 seuils manqués
+                            # (functions 20,65 < 21 · statements 25,65 < 26 ·
+                            # supabase.repository.ts 63,74 < 65). Le job CI bloque.
                             # ❌ NE PAS baisser les seuils. Voir docs/TESTING.md
 npm run validate:migrations # Garde statique sur supabase/migration/*.sql (CI)
 npm run check:rls           # Invariants RLS : auth.uid() wrappé, 1 seule policy PERMISSIVE,

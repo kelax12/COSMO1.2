@@ -4,14 +4,14 @@
 
 | Ce qui compose la note | 08-24 | 08-25 |
 |---|---|---|
-| Suite unitaire | 1 583 / 143 fichiers, verte | **1 621 / 144, verte** |
+| Suite unitaire | 1 583 / 143 fichiers, verte | **1 656 / 146, verte** |
 | Tests E2E Playwright | 41 × 2 projects, 11 specs | **62 × 2 = 124, 15 specs** |
 | Tests d'intégration RLS (base réelle) | 5 fichiers | **6** · dont `org-permissions.test.ts`, 337 lignes |
 | Jobs CI | 4 | **5** (+ `lighthouse`) |
 | Gardes-cliquets | 6 | **6** |
-| `npm run test:coverage` | ✅ verte | 🔴 **ROUGE · 4 seuils manqués** |
+| `npm run test:coverage` | ✅ verte | 🔴 **ROUGE · 3 seuils manqués** (4 le midi, `lines` récupéré le soir) |
 
-**+3 seulement, alors que la journée a ajouté 38 tests unitaires, 21 tests E2E et une gate CI.**
+**+3 seulement, alors que la journée a ajouté 73 tests unitaires, 21 tests E2E et une gate CI.**
 La raison tient en une ligne : **la gate de couverture est repassée au rouge**, et c'est la porte
 d'entrée du déploiement.
 
@@ -23,12 +23,22 @@ standard à tenir pour toute nouvelle surface d'autorisation.
 ### 🔴 `npm run test:coverage` · rouge au 2026-08-25
 
 ```
-lines      25,95 %  < 26 %      functions   20,50 %  < 21 %
-statements 25,58 %  < 26 %      src/modules/**/supabase.repository.ts  63,71 % < 65 %
+functions  20,65 %  < 21 %      statements  25,65 %  < 26 %
+src/modules/**/supabase.repository.ts  63,74 %  < 65 %
 ```
 
+**Mesuré trois fois dans la journée**, la dernière au soir avec les 1 656 tests verts
+(146/146 fichiers) : le rouge ne vient jamais d'un test cassé, il vient du ratio. `exit 1`
+confirmé les trois fois.
+
+**Le seuil `lines` est repassé au vert entre-temps** (25,94 % le midi → **26,02 %** le soir) : les
+tests de tarification annuelle ajoutés dans la soirée (`org-stripe-prices.test.ts`,
+`org-tiers.parity.test.ts`) ont suffi à le faire basculer. **Trois erreurs au lieu de quatre.**
+C'est la démonstration que l'écart est petit et se comble en écrivant des tests, pas en baissant
+un seuil : il a suffi d'une soirée de travail normal pour en récupérer un.
+
 **Ce n'est pas une régression de qualité, c'est une régression de RATIO**, et la nuance compte
-pour décider quoi faire. La couverture absolue n'a pas baissé : 38 tests ont été ajoutés. C'est le
+pour décider quoi faire. La couverture absolue n'a pas baissé : 73 tests ont été ajoutés. C'est le
 dénominateur qui a explosé. La journée a livré environ **2 000 lignes d'interface et de hooks non
 testés** (`MemberPermissionsSheet` 310, `PyramidNodeCard` 516, `useOrgInboxRealtime` 131,
 `useFriendsInboxRealtime` 123), pendant que les 205 tests de `permissions.ts` couvraient la partie
@@ -40,14 +50,22 @@ testés** (`MemberPermissionsSheet` 310, `PyramidNodeCard` 516, `useOrgInboxReal
 en trente secondes, et viderait le cliquet de son sens, puisque c'est précisément son rôle
 d'attraper une vague de code non testé. La règle du fichier est que ces nombres **ne redescendent
 jamais**. La sortie est donc d'écrire les tests manquants, en commençant par la cible que la gate
-désigne elle-même : `src/modules/**/supabase.repository.ts` à 63,71 % pour un seuil de 65 %,
+désigne elle-même : `src/modules/**/supabase.repository.ts` à 63,74 % pour un seuil de 65 %,
 c'est la frontière anti-mass-assignment, la seule de cette liste qui porte de la sécurité.
 
-> ⚠️ **Mesure prise sur un arbre de travail non vierge.** Au moment de la mesure, une session
-> concurrente modifiait `src/modules/habits/` (ajout de `p_today`, migration `122` non commitée),
-> ce qui rendait rouge un test de `habits/supabase.repository.test.ts`. Un test rouge sur douze ne
-> déplace pas un ratio de 0,5 point, donc le constat tient, mais **le remesurer sur un arbre
-> propre avant de conclure sur les chiffres exacts.**
+> ℹ️ **Trois mesures dans la journée, et c'est ce qui rend le constat solide** (lines /
+> functions / statements / repository) :
+>
+> | Mesure | Contexte | Résultat |
+> |---|---|---|
+> | midi | une session concurrente modifiait `src/modules/habits/`, un test rouge | 25,95 / 20,50 / 25,58 / 63,71 |
+> | après-midi | travail terminé, 1 621 tests verts | 25,94 / 20,53 / 25,59 / 63,74 |
+> | **soir** | 1 656 tests verts, tarification annuelle livrée | **26,02 / 20,65 / 25,65 / 63,74** |
+>
+> Le rouge n'a jamais dépendu de l'état de l'arbre de travail. Le publier après une seule mesure
+> aurait été un pari, pas une mesure, et la troisième a rapporté une information que les deux
+> premières ne pouvaient pas donner : **le seuil `lines` se comble tout seul dès qu'on écrit des
+> tests normaux.**
 
 ---
 

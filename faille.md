@@ -19,11 +19,11 @@ Légende : 🔴 bloquant · 🟠 important · 🟡 à planifier · ✅ corrigé
 | Findings High/Critical exploitables | 0 | 0 |
 | Findings ouverts dans le code | 0 (B-1/B-2/B-3 refermés) | 0 |
 | Bloquants restants, **hors dépôt** | A-9 (pas de PITR) + 5 réglages de console | **inchangés** |
-| Gardes automatiques vertes | 4 | **4** (+ périmètre élargi : 128 policies, 125 migrations) |
+| Gardes automatiques vertes | 4 | **4** (+ périmètre élargi : 128 policies, 127 migrations) |
 | Nouvelle surface livrée **avec** son test de base réelle | · | ✅ `org_member_permissions` (mig. 115) + `e2e/rls/org-permissions.test.ts` |
 | Fonctions `anon`-exécutables | 2 (les deux volontaires) | 2 |
 
-**+4, et pas davantage.** Les six migrations du 2026-08-25 (`115` → `121`) n'ont ouvert aucune
+**+4, et pas davantage.** Les neuf migrations du 2026-08-25 (`115` → `123`) n'ont ouvert aucune
 faille : la plus sensible, un système de permissions par membre, est arrivée avec sa policy, son
 trigger de garde en `SECURITY INVOKER`, ses `REVOKE`, et **337 lignes de test d'intégration contre
 une vraie base dans le même commit**. C'est la première fois qu'une brique entreprise fait ça, et
@@ -39,15 +39,15 @@ séparent « aucune faille connue » de « rattrapable en production », et aucu
 
 | Garde | Résultat |
 |---|---|
-| `npm run check:rls` | ✅ **128 policies sur 79 migrations, 0 violation** (120/68 au 08-24) · règle 3 comprise : toute fonction citée par une policy doit rester exécutable par `authenticated` |
-| `npm run validate:migrations` | ✅ **125 fichiers, 0 erreur, 6 avertissements**, les **mêmes** 6 qu'au 08-24 : 5 préexistants (doublons `000`/`007`/`010`, deux `FOR UPDATE` sans `WITH CHECK`) + 1 informatif (mig. `110`, trigger de notification en `SECURITY DEFINER`, légitime). Les sept migrations du 25 n'en ont ajouté aucun |
+| `npm run check:rls` | ✅ **128 policies sur 81 migrations, 0 violation** (120/68 au 08-24) · règle 3 comprise : toute fonction citée par une policy doit rester exécutable par `authenticated` |
+| `npm run validate:migrations` | ✅ **127 fichiers, 0 erreur, 6 avertissements**, les **mêmes** 6 qu'au 08-24 : 5 préexistants (doublons `000`/`007`/`010`, deux `FOR UPDATE` sans `WITH CHECK`) + 1 informatif (mig. `110`, trigger de notification en `SECURITY DEFINER`, légitime). Les sept migrations du 25 n'en ont ajouté aucun |
 | `npm run typecheck` · `npm run lint` | ✅ 0 erreur (27 warnings Fast-refresh tolérés) — + règle `no-restricted-imports` sur l'alias `@/` |
 | `npm run i18n:check` | ✅ 19 namespaces, 0 erreur |
-| `npm test` | ✅ **1 621 tests / 144 fichiers**, tous verts (1 583 / 143 au 08-24) |
-| `npm run test:coverage` | 🔴 **ROUGE au 2026-08-25** · 4 seuils manqués de peu (lines 25,95 % < 26 · functions 20,5 % < 21 · statements 25,58 % < 26 · `supabase.repository.ts` 63,71 % < 65). Ce n'est **pas** une faille : c'est le job CI `lint-test-build` qui bloque. Cf. [`docs/TESTING.md`](./docs/TESTING.md) |
+| `npm test` | ✅ **1 656 tests / 146 fichiers**, tous verts (1 583 / 143 au 08-24) |
+| `npm run test:coverage` | 🔴 **ROUGE au 2026-08-25 au soir** · 3 seuils manqués de peu (functions 20,65 % < 21 · statements 25,65 % < 26 · `supabase.repository.ts` 63,74 % < 65), mesurés suite entièrement verte. `lines` est repassé au vert dans la soirée (26,02 %). Ce n'est **pas** une faille : c'est le job CI `lint-test-build` qui bloque. Cf. [`docs/TESTING.md`](./docs/TESTING.md) |
 | Advisors Supabase (sécurité) | 5 INFO `rls_enabled_no_policy` (tables analytiques, **deny-all volontaire**), 1 WARN `auth_leaked_password_protection` (= A-10 ci-dessous), 51 WARN `authenticated_security_definer_function_executable` (48 au 08-24 : les 3 nouvelles RPC de lecture), **2** WARN `anon_security_definer_function_executable`, les deux volontaires, aucun de plus après sept migrations |
 | Couverture RLS | ✅ **toutes** les tables `public` ont RLS activée (vérifié en prod : `relrowsecurity = false` sur 0 table) |
-| Migrations appliquées en prod | ✅ ledger à jour jusqu'à `121_toggle_habit_bounded` (relu en base le 2026-08-25) |
+| Migrations appliquées en prod | ✅ ledger à jour jusqu'à `123_org_subscriptions_billing_interval` (relu en base le 2026-08-25 au soir) |
 
 Les fonctions exécutables par `anon` étaient **cinq** au 2026-08-24. Deux le sont
 volontairement : `preview_share_link(uuid)` (aperçu d'un lien d'invitation avant connexion) et
@@ -64,7 +64,7 @@ retombera à deux dès qu'elle sera appliquée.
 **Aucun finding High ou Critical exploitable** (dernière passe complète : **2026-08-25**, contre
 la prod `ykeugqfgklejcdbrmawy`). Risque global : **faible**.
 
-### Ce que la vague du 2026-08-25 a changé (mig. `115` → `121`)
+### Ce que la vague du 2026-08-25 a changé (mig. `115` → `123`)
 
 - ✅ **`org_member_permissions` (mig. 115)**, dix droits surchargeables par membre. Nouvelle
   surface d'autorisation, donc nouveau risque potentiel ; elle arrive avec sa policy, un trigger
@@ -267,9 +267,9 @@ documentaire du 2026-08-14, le lien pointait dans le vide. Restaurée ici.
 
 | # | Action | Nature | Qui | État |
 |---|---|---|---|---|
-| 0 | **`npm run test:coverage` est ROUGE** · 4 seuils manqués de 0,05 à 1,3 point. Le job CI `lint-test-build` bloque donc **tout déploiement**. Ce n'est pas une faille, c'est la porte d'entrée | 🔴 CI | · | ⏳ cf. [`docs/TESTING.md`](./docs/TESTING.md) |
+| 0 | **`npm run test:coverage` est ROUGE** · 3 seuils manqués de 0,35 à 1,3 point. Le job CI `lint-test-build` bloque donc **tout déploiement**. Ce n'est pas une faille, c'est la porte d'entrée | 🔴 CI | · | ⏳ cf. [`docs/TESTING.md`](./docs/TESTING.md) |
 | 1 | Migrations `109`/`110` (B-1, B-2, B-3 + notifications de commentaire) | 🟠 sécurité + feature | — | ✅ **appliquées et vérifiées en prod le 2026-08-24** |
-| 1bis | Migrations `115` → `121` (permissions, FK RGPD, RPC indexables, Realtime, payload borné) | 🟠 sécurité + perf | · | ✅ **appliquées et vérifiées en prod le 2026-08-25** |
+| 1bis | Migrations `115` → `123` (permissions, FK RGPD, RPC indexables, Realtime, payload borné, fuseau des habitudes, périodicité de facturation) | 🟠 sécurité + perf | · | ✅ **appliquées et vérifiées en prod le 2026-08-25** |
 | 2 | **Réglages de console Supabase** : A-10 (leaked password protection), MFA sur le compte admin, allowlist de redirection OAuth, secure email change | 🟠 clics Dashboard, ~30 min cumulés | **Axel** | ⏳ **en attente** |
 | 3 | **A-9 — plan Pro + PITR + drill de restauration** | 🔴 résilience, seul bloquant | **Axel** (compte, non scriptable) | ⏳ **en attente** |
 | 4 | Test de bout en bout de l'attribution `?ref=` (cf. [`docs/ACQUISITION.md`](./docs/ACQUISITION.md) §3) | 🟡 exige une vraie inscription | **Axel** | ⏳ **en attente** |
@@ -341,11 +341,13 @@ npm run check:rls             # invariants RLS (CI)
 npm run check:drift           # dérive repo ↔ prod, 2 étapes (cf. docs/DEPLOYMENT.md)
 ```
 
-Repo au 2026-08-25 : **125 fichiers, dernière = `121_toggle_habit_bounded.sql`**,
-**toutes appliquées en prod**, `115` → `121` déployées le 2026-08-25, après `111` → `114`.
+Repo au 2026-08-25 : **127 fichiers, dernière = `123_org_subscriptions_billing_interval.sql`**,
+**toutes appliquées en prod**, `115` → `123` déployées le 2026-08-25, après `111` → `114`.
 
 Vérifié en base le 2026-08-25 (`supabase_migrations.schema_migrations`) :
-- `115_org_member_permissions` → `121_toggle_habit_bounded` présentes, dans l'ordre.
+- `115_org_member_permissions` → `123_org_subscriptions_billing_interval` présentes, dans l'ordre.
+- `122_habits_local_date` (le fuseau du client décide de « aujourd'hui ») et `123` (colonne
+  `billing_interval`) appliquées le soir du 2026-08-25.
 - ⚠️ Le ledger porte **une entrée de plus que le dépôt** :
   `119b_habits_bounded_payload_future_guard`. Contenu relu et comparé au fichier `119` du dépôt :
   **identique**. Cf. l'avertissement de l'État global.

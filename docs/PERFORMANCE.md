@@ -6,16 +6,16 @@
 
 | Ce qui compose la note | 08-24 | 08-25 |
 |---|---|---|
-| Chunk `index` (critical path) | 134 kB gzip | **138,7 kB gzip** |
-| Marge sur le budget de 150 kB | 16 kB | **11,3 kB** |
-| Vitesse de dérive mesurée | +0,6 kB / jour (10 j) | **+4,7 kB en UN jour** |
-| `OrganizationPage` | 61 kB gzip | **63,7 kB gzip** |
+| Chunk `index` (critical path) | 134 kB gzip | **139,0 kB gzip** |
+| Marge sur le budget de 150 kB | 16 kB | **11,0 kB** |
+| Vitesse de dérive mesurée | +0,6 kB / jour (10 j) | **+5,0 kB en UN jour** |
+| `OrganizationPage` | 61 kB gzip | **64,2 kB gzip** |
 | Lighthouse CI | câblé, seuils provisoires | **toujours provisoires, jamais exécuté au réel** |
 | Levier i18n identifié (~104 ko de JSON hors chemin critique) | non appliqué | **non appliqué** |
 
-**−4.** La journée du 2026-08-25 a livré sept migrations, un système de permissions et deux canaux
-Realtime. **Aucun de ces chantiers n'a regardé le bundle**, et le chemin critique a pris en un
-jour presque la moitié de ce qu'il avait pris en dix.
+**−4.** La journée du 2026-08-25 a livré neuf migrations, un système de permissions, deux canaux
+Realtime et une périodicité de facturation annuelle. **Aucun de ces chantiers n'a regardé le
+bundle**, et le chemin critique a pris en un jour la moitié de ce qu'il avait pris en dix.
 
 **La projection publiée hier est caduque.** Elle annonçait le franchissement du budget « autour de
 mi-septembre » sur la base de +0,6 kB/jour. Au rythme mesuré du 25, il reste **deux à trois
@@ -49,14 +49,14 @@ gardent les mesures antérieures pour rendre la dérive lisible :
 | `vendor-calendar` | @fullcalendar/* **+ `locales-all`** | 290 kB (85 kB) | 290 kB (85 kB) | 290 kB (85 kB) | **Lazy** (`/agenda` uniquement) |
 | `vendor-gsap` | gsap + plugins (+ `InertiaPlugin`) | 139 kB (55 kB) | 139 kB (55 kB) | 139 kB (55 kB) | **Lazy** (LandingPage uniquement) |
 | `vendor-ogl` | ogl · micro-runtime WebGL | 44 kB (13 kB) | 44 kB (13 kB) | 44 kB (12 kB) | **Lazy** (fond `LightRays` du hero entreprise) |
-| **`OrganizationPage`** | **tout le mode entreprise** | non listé | 265 kB (61 kB) | **279 kB (64 kB)** 🟠 | **Lazy** (`/entreprise`) |
+| **`OrganizationPage`** | **tout le mode entreprise** | non listé | 265 kB (61 kB) | **281 kB (64 kB)** 🟠 | **Lazy** (`/entreprise`) |
 | `TasksPage` | page Tâches | non listé | 130 kB (30 kB) | 129 kB (29 kB) | **Lazy** |
 | `TaskModal` | modal de tâche | non listé | 104 kB (24 kB) | 102 kB (22 kB) | **Lazy** |
 | `LandingPage` | shell + aiguillage + parcours perso | 90 kB (24 kB) | 81 kB (21 kB) | 82 kB (20 kB) | **Lazy** (`/`) |
 | `EnterpriseTrack` | les 10 sections du parcours entreprise | 51 kB (12 kB) | 44 kB (11 kB) | 48 kB (12 kB) | **Lazy** (à la bascule / `/entreprise-presentation`) |
 
 > 🟠 **Le warning Vite « chunks larger than 400 kB » est actif** (build du 2026-08-25) :
-> le chunk `index` est à **487 kB brut / 138,7 kB gzip**, et `vendor-charts` à 414 kB brut (lazy,
+> le chunk `index` est à **488 kB brut / 139,0 kB gzip**, et `vendor-charts` à 414 kB brut (lazy,
 > donc sans effet sur le critical path). La trajectoire du chunk `index` est le seul point qui
 > demande une décision : **124 kB (08-14) → 128 kB (08-15) → 134 kB (08-24) → 139 kB (08-25)**.
 > Les vendors, eux, n'ont pas bougé d'un octet : **la totalité de la hausse est du code
@@ -81,12 +81,12 @@ gardent les mesures antérieures pour rendre la dérive lisible :
 
 ## Budget bundle (objectif)
 
-- Chunk `index` : **< 150 kB gzip** (au 2026-08-25 : **138,7 kB**, **marge : 11,3 kB**, cf. la
+- Chunk `index` : **< 150 kB gzip** (au 2026-08-25 : **139,0 kB**, **marge : 11,0 kB**, cf. la
   trajectoire ci-dessus. C'est le poste à surveiller en priorité).
 
 > 🔴 **Ce budget n'est mesuré par aucune garde.** Tous les autres budgets du dépôt ont fini par
 > obtenir un cliquet (taille des fichiers, échelle typographique, z-index, feuilles), celui-ci
-> non, et c'est le seul qui ait reculé de 4,7 kB en une journée sans que rien ne le signale.
+> non, et c'est le seul qui ait reculé de 5 kB en une journée sans que rien ne le signale.
 > C'est exactement le motif documenté dans [`ARCHITECTURE.md`](./ARCHITECTURE.md) : *une règle
 > qu'aucun script ne mesure recule à chaque vague de features.* Un test qui lit la sortie de
 > `npm run build` et refuse une croissance nette du chunk `index` coûterait une demi-heure.
