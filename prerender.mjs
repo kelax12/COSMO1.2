@@ -457,10 +457,22 @@ const HOME_STATIC = `<h1>Cosmo – Gestionnaire de tâches, habitudes et OKR</h1
 
         <h2>À quoi ça ressemble</h2>
         <p>Trois écrans de l'application, en mode démo :</p>
+        <!-- loading=lazy n'est PAS une micro-optimisation ici, c'est le
+             correctif d'un vrai gaspillage. Ce bloc vit dans #seo-fallback,
+             qui est en display:none pour un navigateur : aucun visiteur n'a
+             jamais VU ces captures. Il les telechargeait quand meme, parce que
+             le scanner de prechargement lit le balisage avant le CSS. Mesure du
+             2026-08-25 : 790 ko d'images peintes nulle part, sur la page la
+             plus visitee du site.
+             Avec lazy, une image d'un sous-arbre display:none n'entre jamais
+             dans le viewport, donc n'est jamais demandee. Les crawlers sans JS,
+             eux, lisent toujours src et alt dans le balisage : le SEO ne perd
+             rien, et Google recommande explicitement cet attribut. -->
+
         <p>
-          <img src="/screenshots/dashboard.png" width="1280" height="800" alt="Tableau de bord Cosmo : tâches complétées, événements d'agenda, résultats clés atteints et habitudes du jour réunis sur un seul écran" />
-          <img src="/screenshots/taches.png" width="1280" height="800" alt="Gestionnaire de tâches Cosmo : listes d'accès rapide, filtres par priorité et catégorie, tâches en retard signalées" />
-          <img src="/screenshots/habitudes.png" width="1280" height="800" alt="Suivi d'habitudes Cosmo : tableau hebdomadaire des habitudes cochées avec série de jours consécutifs pour chacune" />
+          <img src="/screenshots/dashboard.webp" width="1280" height="800" loading="lazy" decoding="async" alt="Tableau de bord Cosmo : tâches complétées, événements d'agenda, résultats clés atteints et habitudes du jour réunis sur un seul écran" />
+          <img src="/screenshots/taches.webp" width="1280" height="800" loading="lazy" decoding="async" alt="Gestionnaire de tâches Cosmo : listes d'accès rapide, filtres par priorité et catégorie, tâches en retard signalées" />
+          <img src="/screenshots/habitudes.webp" width="1280" height="800" loading="lazy" decoding="async" alt="Suivi d'habitudes Cosmo : tableau hebdomadaire des habitudes cochées avec série de jours consécutifs pour chacune" />
         </p>
 
         <h2>Un tableau de bord qui relie les quatre</h2>

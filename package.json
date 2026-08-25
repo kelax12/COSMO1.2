@@ -29,7 +29,8 @@
     "test:e2e:report": "playwright show-report",
     "i18n:scan": "node scripts/i18n-scan.mjs",
     "i18n:namespaces": "node scripts/i18n-shell-namespaces.mjs",
-    "check:bundle": "node scripts/check-bundle-budget.mjs"
+    "check:bundle": "node scripts/check-bundle-budget.mjs",
+    "images:check": "node scripts/optimize-images.mjs --check"
   },
   "dependencies": {
     "@fullcalendar/core": "^6.1.10",

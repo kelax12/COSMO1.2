@@ -25,7 +25,7 @@ const UseCasePage: React.FC = () => {
       <header className="sticky top-0 z-50 bg-slate-900/80 backdrop-blur-xl border-b border-white/10">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors text-sm">
-            <img src="/logo.png" alt="Cosmo" className="w-7 h-7 rounded-lg object-contain" />
+            <img src="/logo-128.webp" alt="Cosmo" className="w-7 h-7 rounded-lg object-contain" />
             <span className="font-semibold text-white">Cosmo</span>
           </Link>
           <Link to="/signup" className="text-sm text-slate-400 hover:text-white transition-colors flex items-center gap-1.5">

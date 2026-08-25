@@ -22,7 +22,7 @@ performance va moins bien que la sécurité, ils disent où chaque domaine se si
 | [Mode entreprise](./archive/RAPPORT-MODE-ENTREPRISE-2026-08-12.md) | 74 | **80** | **+6** | Permissions par membre (mig. 115) et périodicité annuelle (mig. 123) ; le finding n°1 est toujours là le soir |
 | [Accessibilité](./ACCESSIBILITY.md) | 76 | **79** | **+3** | 2ᵉ gate a11y, sur les pages **publiques** cette fois |
 | [SEO](./SEO.md) | 73 | **73** | **0** | Aucun travail SEO : le seul levier restant est hors dépôt |
-| [Performance](./PERFORMANCE.md) | 68 | **82** | **+14** | Chemin critique 580 → **420 kB gzip** : catalogues i18n par page, et recharts sorti du préchargement |
+| [Performance](./PERFORMANCE.md) | 68 | **88** | **+20** | Page d'accueil **1 610 → 749 kB** : JS −160 kB, images 1 046 → 2,7 kB, polices −85 kB |
 
 ### Ce que ce tableau dit, au-delà des chiffres
 
@@ -102,7 +102,7 @@ testées** (`scripts/migration-guards.test.mjs`).
 | [`DEPLOYMENT.md`](./DEPLOYMENT.md) | Runbook deploy / rollback Vercel + Supabase, drill de restauration |
 | [`MOBILE.md`](./MOBILE.md) | Pages et composants mobiles, bottom-sheets, pièges iOS Safari · **note 72** |
 | [`UI-PATTERNS.md`](./UI-PATTERNS.md) | Listes, modals, tutoriels, onboarding, thèmes · **dette UI/UX remesurée le 2026-08-25, note 80** |
-| [`PERFORMANCE.md`](./PERFORMANCE.md) | `manualChunks`, lazy loading, pagination, budget bundle · **note 82**, budget gardé par `npm run check:bundle` |
+| [`PERFORMANCE.md`](./PERFORMANCE.md) | `manualChunks`, lazy loading, images et polices, budget bundle · **note 88**, gardé par `npm run check:bundle` |
 | [`ACCESSIBILITY.md`](./ACCESSIBILITY.md) | WCAG / EAA, aria, contraste, gates axe-core + Lighthouse · **note 79** |
 | [`SCALABILITY.md`](./SCALABILITY.md) | Montée en charge · **remesuré le 2026-08-25, note 84**, avec runbook reproductible |
 | [`SEO.md`](./SEO.md) | Prérendu, sitemap, hreflang, indexation par locale — **audit du 2026-08-14, données Search Console du 2026-08-19** + règles |

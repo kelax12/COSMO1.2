@@ -76,7 +76,7 @@ const GuidePage: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link to="/" className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors text-sm">
-              <img src="/logo.png" alt="Cosmo" className="w-7 h-7 rounded-lg object-contain" />
+              <img src="/logo-128.webp" alt="Cosmo" className="w-7 h-7 rounded-lg object-contain" />
               <span className="font-semibold text-white">Cosmo</span>
             </Link>
             <ChevronRight size={14} className="text-slate-600" />
