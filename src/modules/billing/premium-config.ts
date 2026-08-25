@@ -64,6 +64,51 @@ export const ENTERPRISE_PRICING_TIERS = [
  */
 export type OrgTierKey = (typeof ENTERPRISE_PRICING_TIERS)[number]['key'];
 
+// ─── Périodicité de facturation (2026-08-25) ─────────────────────────
+//
+// Chaque palier payant peut être réglé au mois ou à l'année. L'annuel N'A PAS
+// de grille propre : son montant est DÉRIVÉ du tarif mensuel par
+// `ENTERPRISE_YEARLY_DISCOUNT`. Une seconde liste de montants serait une
+// seconde occasion de diverger — c'est déjà ce qui a imposé
+// `org-tiers.parity.test.ts` entre le front et les Edge Functions.
+export type OrgBillingInterval = 'monthly' | 'yearly';
+
+/** Remise consentie contre un engagement annuel. 0.3 = −30 %. */
+export const ENTERPRISE_YEARLY_DISCOUNT = 0.3;
+
+/** Arrondi au centime — deux calculs identiques doivent rendre le même nombre. */
+const roundEur = (amount: number): number => Math.round(amount * 100) / 100;
+
+/**
+ * Tarif MENSUEL ÉQUIVALENT d'un engagement annuel (le mensuel moins 30 %).
+ *
+ * C'est ce montant-là que la grille affiche en gros quand « Annuel » est
+ * sélectionné : comparer un prix annuel à un prix mensuel côte à côte ne dit
+ * rien de l'économie réalisée.
+ */
+export function yearlyMonthlyEquivalentEur(priceEurPerMonth: number): number {
+  return roundEur(priceEurPerMonth * (1 - ENTERPRISE_YEARLY_DISCOUNT));
+}
+
+/**
+ * Montant réellement débité une fois par an.
+ *
+ * Dérivé de l'équivalent mensuel ARRONDI, pas du tarif brut : sinon le total
+ * annoncé peut différer d'un centime de « 12 × le prix affiché », et un client
+ * a raison de se fier à la multiplication qu'il fait de tête.
+ */
+export function yearlyTotalEur(priceEurPerMonth: number): number {
+  return roundEur(yearlyMonthlyEquivalentEur(priceEurPerMonth) * 12);
+}
+
+/** Le montant à mettre en avant pour un palier, selon la périodicité choisie. */
+export function displayedMonthlyEur(
+  priceEurPerMonth: number,
+  interval: OrgBillingInterval,
+): number {
+  return interval === 'yearly' ? yearlyMonthlyEquivalentEur(priceEurPerMonth) : priceEurPerMonth;
+}
+
 //  false → aucune limite appliquée ; la bannière informative s'affiche à
 //          partir de ORG_FREE_SEATS membres (préparation du marché), aucun CTA
 //          de paiement n'est monté.

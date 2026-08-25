@@ -1,6 +1,6 @@
 import { Check } from 'lucide-react';
-import { ENTERPRISE_PRICING_TIERS } from '@/modules/billing/premium-config';
-import type { OrgTierKey } from '@/modules/billing/premium-config';
+import { ENTERPRISE_PRICING_TIERS, displayedMonthlyEur, yearlyTotalEur } from '@/modules/billing/premium-config';
+import type { OrgBillingInterval, OrgTierKey } from '@/modules/billing/premium-config';
 import { ORG_TIER_LABEL_KEYS } from '@/modules/billing/org-tier-labels';
 import { formatCurrency } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
@@ -11,6 +11,12 @@ interface Props {
   /** Absent = grille purement informative (pas propriétaire, ou flag dormant). */
   onSelect?: (tier: OrgTierKey) => void;
   isPending?: boolean;
+  /**
+   * Périodicité affichée. Elle ne change QUE le montant : les bornes d'effectif
+   * et le quota de sièges sont portés par le palier seul, dans les deux cas.
+   * Absente = mensuel, la valeur qui existait avant le sélecteur.
+   */
+  interval?: OrgBillingInterval;
   /**
    * La facturation est-elle éteinte pour TOUT LE MONDE
    * (`ENTERPRISE_BILLING_ENFORCED === false`) ?
@@ -36,7 +42,13 @@ interface Props {
  * affiché en gros (l'ancien rendu) laisse deux montants contradictoires à
  * l'écran ; remplacer le prix lui-même est la seule version qui ne ment pas.
  */
-export function EnterpriseTierGrid({ currentTier, onSelect, isPending, dormant }: Props) {
+export function EnterpriseTierGrid({
+  currentTier,
+  onSelect,
+  isPending,
+  dormant,
+  interval = 'monthly',
+}: Props) {
   const { t } = useT('org');
   const { t: tc } = useT('common');
 
@@ -49,6 +61,10 @@ export function EnterpriseTierGrid({ currentTier, onSelect, isPending, dormant }
         // cas qui porte le prix barré, jamais le palier gratuit de base (rien
         // à comparer : il n'a jamais eu de prix payant).
         const isPromo = dormant && !isFree;
+        // Le gros montant est toujours un tarif MENSUEL : en annuel c'est
+        // l'équivalent mensuel remisé, et le débit réel passe sur la ligne du
+        // dessous. Afficher 168 € en gros à côté de 50 € ne se compare pas.
+        const monthlyShown = displayedMonthlyEur(tier.priceEurPerMonth, interval);
         const range =
           tier.maxMembers === null
             ? t('billing.rangeFrom', { min: tier.minMembers })
@@ -109,17 +125,21 @@ export function EnterpriseTierGrid({ currentTier, onSelect, isPending, dormant }
                     l'offre de lancement, comme sur la landing. */}
                 {isPromo && (
                   <s className="text-xs text-[rgb(var(--color-text-muted))] decoration-[rgb(var(--color-border-strong))]">
-                    {t('billing.insteadOf', { price: tier.priceEurPerMonth })}
+                    {t('billing.insteadOf', { price: monthlyShown })}
                   </s>
                 )}
               </>
             ) : (
               <>
                 <div className="text-2xl font-semibold text-[rgb(var(--color-text-primary))]">
-                  {formatCurrency(tier.priceEurPerMonth)}
+                  {formatCurrency(monthlyShown)}
                 </div>
                 <div className="text-xs text-[rgb(var(--color-text-secondary))]">
-                  {t('billing.perMonth')}
+                  {interval === 'yearly'
+                    ? t('billing.perMonthBilledYearly', {
+                        total: formatCurrency(yearlyTotalEur(tier.priceEurPerMonth)),
+                      })
+                    : t('billing.perMonth')}
                 </div>
               </>
             )}

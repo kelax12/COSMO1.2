@@ -14,7 +14,7 @@ import { useIsDemo } from '@/lib/app-mode.store';
 import { translator } from '@/i18n/useT';
 import { getOrgSubscription } from './org-billing.repository';
 import type { OrgSubscription } from './org-billing.types';
-import type { OrgTierKey } from './premium-config';
+import type { OrgBillingInterval, OrgTierKey } from './premium-config';
 
 export const orgBillingKeys = {
   all: ['org-billing'] as const,
@@ -54,8 +54,21 @@ async function redirectToStripe(
 
 export const useStartOrgCheckout = () =>
   useMutation({
-    mutationFn: ({ orgId, tierKey }: { orgId: string; tierKey: OrgTierKey }) =>
-      redirectToStripe('stripe-org-checkout', { orgId, tierKey }),
+    mutationFn: ({
+      orgId,
+      tierKey,
+      interval,
+    }: {
+      orgId: string;
+      tierKey: OrgTierKey;
+      /**
+       * Périodicité choisie. Le client n'envoie qu'un mot d'une liste fermée —
+       * jamais un montant, jamais un price ID : le serveur seul fait la
+       * conversion, donc personne ne peut se choisir un tarif. Absente =
+       * mensuel, comme avant l'existence du sélecteur.
+       */
+      interval?: OrgBillingInterval;
+    }) => redirectToStripe('stripe-org-checkout', { orgId, tierKey, interval }),
     onError: (err: Error) => {
       // `translator(ns).t(key)` — forme vérifiée dans src/i18n/useT.ts et
       // utilisée par src/modules/organizations/hooks.ts. Hors composant, on ne

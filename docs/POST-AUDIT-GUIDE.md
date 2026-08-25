@@ -266,14 +266,25 @@ ne partagent aucune table.
 
 ### 5.1 — Créer les prix et les coupons dans Stripe
 
-Quatre prix **récurrents mensuels en EUR**, un par palier payant :
+**HUIT** prix récurrents en EUR : un mensuel et un annuel par palier payant. L'annuel vaut le
+mensuel **moins 30 %**, appliqué sur les douze mois — c'est la remise consentie contre
+l'engagement (`ENTERPRISE_YEARLY_DISCOUNT`, 2026-08-25).
 
-| Palier | Membres | Montant |
-|---|---|---|
-| `t10` | 5 à 10 | 20 € |
-| `t20` | 10 à 20 | 50 € |
-| `t50` | 20 à 50 | 100 € |
-| `tmax` | 50 et plus | 200 € |
+| Palier | Membres | Mensuel | Annuel (équivalent / mois) | Annuel (débit réel) |
+|---|---|---|---|---|
+| `t10` | 5 à 10 | 20 € | 14 € | **168 €/an** |
+| `t20` | 10 à 20 | 50 € | 35 € | **420 €/an** |
+| `t50` | 20 à 50 | 100 € | 70 € | **840 €/an** |
+| `tmax` | 50 et plus | 200 € | 140 € | **1 680 €/an** |
+
+⚠️ Les prix annuels se créent avec un **intervalle de facturation `year`** et le **montant de la
+colonne « débit réel »**, pas l'équivalent mensuel. L'équivalent mensuel n'existe que dans
+l'affichage : comparer 420 € à 50 € ne dit rien de l'économie, comparer 35 € à 50 € la dit d'un
+coup d'œil.
+
+⚠️ Le **quota de sièges est identique** dans les deux périodicités : il est porté par le palier
+seul (`max_members`). Un client annuel n'achète pas plus de sièges, il achète le même palier moins
+cher contre un engagement. Ne jamais créer un « palier annuel » distinct côté Stripe.
 
 Puis les **promotion codes** voulus (montant ou %, durée, plafond d'usage, restriction produit).
 COSMO ne valide aucun code : le champ apparaît dans la page Stripe via `allow_promotion_codes`,
@@ -286,17 +297,29 @@ purement informatif. Aucun montant n'est recalculé côté COSMO.
 supabase secrets set STRIPE_ORG_PRICE_T10=price_... \
                      STRIPE_ORG_PRICE_T20=price_... \
                      STRIPE_ORG_PRICE_T50=price_... \
-                     STRIPE_ORG_PRICE_TMAX=price_...
+                     STRIPE_ORG_PRICE_TMAX=price_... \
+                     STRIPE_ORG_PRICE_T10_YEARLY=price_... \
+                     STRIPE_ORG_PRICE_T20_YEARLY=price_... \
+                     STRIPE_ORG_PRICE_T50_YEARLY=price_... \
+                     STRIPE_ORG_PRICE_TMAX_YEARLY=price_...
 ```
 
 Un secret manquant ne fait pas facturer le mauvais palier : `stripe-org-checkout` alerte via
 `opsAlert` et renvoie `tier_unavailable`. C'est voulu — échouer bruyamment plutôt que
 silencieusement.
 
+🔴 **Les huit secrets se posent ensemble.** Le sélecteur mensuel/annuel est monté sans condition
+d'environnement — le front ne peut pas lire les secrets Supabase. Un `*_YEARLY` manquant donne donc
+un bouton « Annuel » cliquable et un checkout qui échoue en `tier_unavailable`.
+`org-tiers.parity.test.ts` garantit que chaque palier payant DÉCLARE ses deux variables, jamais
+qu'elles sont renseignées en prod : ça, seule la pose des secrets le fait.
+
 ### 5.3 — Migration et déploiement
 
-Appliquer `supabase/migration/101_org_subscriptions.sql` selon la procédure du point 1
-(⚠️ **jamais** `supabase db push`). Puis :
+Appliquer `supabase/migration/101_org_subscriptions.sql` **et
+`supabase/migration/123_org_subscriptions_billing_interval.sql`** selon la procédure du point 1
+(⚠️ **jamais** `supabase db push`). La 123 ajoute `billing_interval`, purement descriptive : sans
+elle, le webhook écrit une colonne inexistante et l'upsert échoue à chaque event. Puis :
 
 ```bash
 supabase functions deploy stripe-org-checkout
