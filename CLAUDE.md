@@ -322,7 +322,7 @@ Garde-fous propres à cette zone :
 
 - ❌ **Ne jamais écrire une grille de tarifs annuels à la main.** Le montant annuel est DÉRIVÉ du
   mensuel, front et Deno, par la même formule. Deux grilles, c'est une seconde occasion d'annoncer
-  un prix et d'en facturer un autre — le risque qui a déjà imposé `org-tiers.parity.test.ts`.
+  un prix et d'en facturer un autre, le risque qui a déjà imposé `org-tiers.parity.test.ts`.
 - ❌ **Ne jamais faire dépendre le quota de sièges de la périodicité.** `max_members` est porté par
   le palier SEUL : un client annuel achète le même palier moins cher, pas plus de sièges. Un
   « palier annuel » distinct côté Stripe casserait `tierFromPriceId`, donc le portail.
@@ -501,8 +501,8 @@ Debug : `localStorage.removeItem('cosmo_onboarding_modules_done')` puis reload.
 
 Migrations dans `supabase/migration/*.sql`, convention `NNN_<feature>.sql`.
 **127 fichiers de migration, dernière = `123_org_subscriptions_billing_interval.sql`**
-(au 2026-08-25). ⚠️ La **123 n'est PAS encore appliquée en prod** — elle doit l'être AVANT le
-déploiement de `stripe-webhook`, qui écrit désormais `billing_interval`.
+(au 2026-08-25). La **123 a été appliquée en prod le 2026-08-25**, avant le déploiement de
+`stripe-webhook`, qui écrit désormais `billing_interval`.
 **Toutes appliquées en prod**, ledger relu en base le 2026-08-25, `115` → `121` comprises.
 
 > ⚠️ **Le ledger porte une entrée de plus que le dépôt** :

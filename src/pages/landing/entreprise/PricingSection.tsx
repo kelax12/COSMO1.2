@@ -1,6 +1,11 @@
 import React, { useId, useMemo, useState } from 'react';
 import { ArrowRight, Check, Users } from 'lucide-react';
-import { ENTERPRISE_PRICING_TIERS } from '@/modules/billing/premium-config';
+import {
+  ENTERPRISE_PRICING_TIERS,
+  displayedMonthlyEur,
+  yearlyTotalEur,
+} from '@/modules/billing/premium-config';
+import type { OrgBillingInterval } from '@/modules/billing/premium-config';
 import { ORG_TIER_LABEL_KEYS } from '@/modules/billing/org-tier-labels';
 import { useT } from '@/i18n/useT';
 import type { KeyOf } from '@/i18n/catalog';
@@ -20,6 +25,8 @@ const SLIDER_MAX = 80;
  * titre. Changer l'un sans l'autre ferait cohabiter deux prix à l'écran.
  */
 const SLIDER_DEFAULT = 10;
+
+const INTERVALS: OrgBillingInterval[] = ['monthly', 'yearly'];
 
 const INCLUDED: KeyOf<'landing'>[] = [
   'enterprise.pricing.i1',
@@ -64,8 +71,16 @@ const PricingSection: React.FC<{ onRegister: () => void }> = ({ onRegister }) =>
   const { t: tc } = useT('common');
   const sliderId = useId();
   const [members, setMembers] = useState(SLIDER_DEFAULT);
+  // Periodicite affichee. Le mensuel reste le defaut : c'est le tarif que le
+  // titre de la section annonce, et un visiteur doit retrouver a l'ecran le
+  // chiffre qu'il vient de lire.
+  const [billingInterval, setBillingInterval] = useState<OrgBillingInterval>('monthly');
 
   const activeTier = useMemo(() => tierFor(members), [members]);
+  // Le gros chiffre est TOUJOURS un tarif mensuel : en annuel c'est
+  // l'equivalent mensuel remise, et le debit reel est dit juste en dessous.
+  // Afficher 168 EUR la ou le palier voisin affiche 50 EUR ne se compare pas.
+  const activePrice = displayedMonthlyEur(activeTier.priceEurPerMonth, billingInterval);
 
   const tierLabel = (tier: Tier) =>
     tier.maxMembers === null
@@ -108,6 +123,48 @@ const PricingSection: React.FC<{ onRegister: () => void }> = ({ onRegister }) =>
             />
           </p>
         </header>
+
+        {/* ── Le selecteur de periodicite ──
+            Place AVANT le curseur, donc avant le premier prix lu : arriver
+            apres reviendrait a corriger un montant deja memorise, exactement la
+            raison qui met deja le badge d'offre en tete de section. */}
+        <div className="mb-6 flex flex-wrap items-center gap-4">
+          <div
+            role="radiogroup"
+            aria-label={t('enterprise.pricing.intervalAria')}
+            className="inline-flex items-center gap-1 rounded-full border border-white/[0.08] bg-[#0A0C11] p-1"
+          >
+            {INTERVALS.map((option) => {
+              const isSelected = billingInterval === option;
+              return (
+                <button
+                  key={option}
+                  type="button"
+                  role="radio"
+                  aria-checked={isSelected}
+                  onClick={() => setBillingInterval(option)}
+                  className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition-[background-color,color] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#08090C] ${
+                    isSelected ? 'bg-cyan-400/15 text-cyan-300' : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  {option === 'monthly'
+                    ? t('enterprise.pricing.intervalMonthly')
+                    : t('enterprise.pricing.intervalYearly')}
+                  {/* La remise reste affichee meme une fois l'annuel choisi :
+                      elle explique le prix montre, ce n'est pas qu'un appat. */}
+                  {option === 'yearly' && (
+                    <span className="rounded-full bg-[#F5B942]/15 px-2 py-0.5 font-mono text-caption tracking-[0.1em] text-[#F5B942]">
+                      {t('enterprise.pricing.intervalSave')}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+          {billingInterval === 'yearly' && (
+            <p className="text-sm text-slate-500">{t('enterprise.pricing.intervalYearlyNote')}</p>
+          )}
+        </div>
 
         {/* ── Le curseur : « combien êtes-vous ? » ── */}
         <div className="mb-10 rounded-2xl border border-white/[0.08] bg-[#0A0C11] p-6 sm:p-8">
@@ -154,7 +211,10 @@ const PricingSection: React.FC<{ onRegister: () => void }> = ({ onRegister }) =>
                 des valeurs intermédiaires (48 € avant de se poser sur 50 €), et
                 un prix faux, même pendant une seconde, n'est pas un détail. Le
                 changement est signalé par une pulsation de la couleur. */}
-            <div key={activeTier.minMembers} className="ent-price flex flex-col items-end">
+            <div
+              key={`${activeTier.minMembers}-${billingInterval}`}
+              className="ent-price flex flex-col items-end"
+            >
               {activeTier.priceEurPerMonth === 0 || ENTERPRISE_FREE_OFFER ? (
                 <>
                   <span className="text-4xl font-bold text-[#F5B942]">{t('enterprise.pricing.free')}</span>
@@ -164,18 +224,35 @@ const PricingSection: React.FC<{ onRegister: () => void }> = ({ onRegister }) =>
                       de toute façon. */}
                   {activeTier.priceEurPerMonth > 0 && (
                     <s className="mt-1 text-sm text-slate-500 decoration-slate-600">
-                      {t('enterprise.pricing.insteadOf', { price: activeTier.priceEurPerMonth })}
+                      {t(
+                        billingInterval === 'yearly'
+                          ? 'enterprise.pricing.insteadOfYearly'
+                          : 'enterprise.pricing.insteadOf',
+                        { price: activePrice },
+                      )}
                     </s>
                   )}
                 </>
               ) : (
-                <span className="flex items-baseline gap-1">
-                  <span className="text-4xl font-bold tabular-nums text-white">
-                    {activeTier.priceEurPerMonth}
+                <div className="flex flex-col items-end">
+                  <span className="flex items-baseline gap-1">
+                    <span className="text-4xl font-bold tabular-nums text-white">{activePrice}</span>
+                    <span className="text-3xl font-bold text-slate-500">€</span>
+                    <span className="ml-1 text-sm text-slate-500">
+                      {t('enterprise.pricing.perMonth')}
+                    </span>
                   </span>
-                  <span className="text-3xl font-bold text-slate-500">€</span>
-                  <span className="ml-1 text-sm text-slate-500">{t('enterprise.pricing.perMonth')}</span>
-                </span>
+                  {/* Le debit reel, dit sous le prix et jamais a sa place : un
+                      visiteur doit pouvoir verifier lui-meme que 14 x 12 font
+                      bien les 168 EUR qu'on lui prelevera. */}
+                  {billingInterval === 'yearly' && (
+                    <span className="mt-1 text-sm text-slate-500">
+                      {t('enterprise.pricing.billedYearly', {
+                        total: yearlyTotalEur(activeTier.priceEurPerMonth),
+                      })}
+                    </span>
+                  )}
+                </div>
               )}
             </div>
           </div>
@@ -185,6 +262,7 @@ const PricingSection: React.FC<{ onRegister: () => void }> = ({ onRegister }) =>
         <div className="mb-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
           {ENTERPRISE_PRICING_TIERS.map((tier) => {
             const isActive = tier.minMembers === activeTier.minMembers;
+            const price = displayedMonthlyEur(tier.priceEurPerMonth, billingInterval);
             return (
               <div
                 key={tier.minMembers}
@@ -212,18 +290,27 @@ const PricingSection: React.FC<{ onRegister: () => void }> = ({ onRegister }) =>
                     </span>
                     {tier.priceEurPerMonth > 0 && (
                       <s className="mt-1 text-xs text-slate-600 decoration-slate-700">
-                        {t('enterprise.pricing.insteadOfShort', { price: tier.priceEurPerMonth })}
+                        {t('enterprise.pricing.insteadOfShort', { price })}
                       </s>
                     )}
                   </>
                 ) : (
-                  <span className="flex items-baseline gap-0.5">
-                    <span className={`text-2xl font-bold tabular-nums ${isActive ? 'text-cyan-300' : 'text-white'}`}>
-                      {tier.priceEurPerMonth}
+                  <>
+                    <span className="flex items-baseline gap-0.5">
+                      <span className={`text-2xl font-bold tabular-nums ${isActive ? 'text-cyan-300' : 'text-white'}`}>
+                        {price}
+                      </span>
+                      <span className="text-xl font-bold text-slate-600">€</span>
+                      <span className="ml-1 text-xs text-slate-600">{t('enterprise.pricing.perMonth')}</span>
                     </span>
-                    <span className="text-xl font-bold text-slate-600">€</span>
-                    <span className="ml-1 text-xs text-slate-600">{t('enterprise.pricing.perMonth')}</span>
-                  </span>
+                    {billingInterval === 'yearly' && (
+                      <span className="mt-1 text-xs text-slate-600">
+                        {t('enterprise.pricing.billedYearly', {
+                          total: yearlyTotalEur(tier.priceEurPerMonth),
+                        })}
+                      </span>
+                    )}
+                  </>
                 )}
                 {isActive && (
                   <span className="mt-4 inline-flex w-fit rounded-full bg-cyan-400/15 px-2.5 py-1 font-mono text-caption uppercase tracking-[0.16em] text-cyan-300">
