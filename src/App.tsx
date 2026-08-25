@@ -12,6 +12,7 @@ import { routeSlug } from '@/i18n/routes';
 
 import { getLastVisitedPage } from '@/modules/ui-states';
 import { useSharedTasksRealtime } from '@/modules/tasks/useSharedTasksRealtime';
+import { useOrgInboxRealtime } from '@/modules/organizations/useOrgInboxRealtime';
 // Import `/react` (pas `/next` — réservé aux apps Next.js) : ce projet est
 // Vite + React Router, hébergé sur Vercel (cf. vercel.json).
 import { Analytics } from '@vercel/analytics/react';
@@ -211,6 +212,22 @@ const SharedTasksRealtime: React.FC = () => {
   return null;
 };
 
+/**
+ * Boîte de réception d'organisation en temps réel — même rôle et mêmes
+ * contraintes que `SharedTasksRealtime` : point d'ancrage de cycle de vie, sans
+ * rendu, monté UNE SEULE FOIS (un canal Realtime est un WebSocket).
+ *
+ * Remplace trois `refetchInterval` de 20 s montés en permanence par `InboxMenu`
+ * (invitations, avis de retrait, demande d'adhésion), soit 9 requêtes par
+ * minute et par utilisateur connecté avant toute interaction.
+ * Cf. `docs/SCALABILITY.md` §3 et mig. 118.
+ */
+const OrgInboxRealtime: React.FC = () => {
+  const { user, isDemo } = useAuth();
+  useOrgInboxRealtime(isDemo ? undefined : user?.id);
+  return null;
+};
+
 const AppRoutes = () => {
   // Locale servie pour ce montage. `basename` étant figé au montage du routeur,
   // elle ne change pas sans rechargement complet (cf. src/i18n/bootstrap.ts) —
@@ -319,6 +336,9 @@ const App: React.FC = () => {
                 `AppRoutes` reste HORS de ce boundary — c'est l'application. */}
             <AppErrorBoundary fallback={null}>
               <SharedTasksRealtime />
+            </AppErrorBoundary>
+            <AppErrorBoundary fallback={null}>
+              <OrgInboxRealtime />
             </AppErrorBoundary>
             <AppRoutes />
             <AppErrorBoundary fallback={null}>

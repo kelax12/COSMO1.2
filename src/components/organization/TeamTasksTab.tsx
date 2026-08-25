@@ -335,7 +335,7 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
               type="button"
               onClick={() => setSearchTerm('')}
               aria-label={t('projects.tasksTabClearSearch')}
-              className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center hover:bg-[rgb(var(--color-hover))]"
+              className="absolute right-2 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full flex items-center justify-center hover:bg-[rgb(var(--color-hover))]"
             >
               <X size={14} aria-hidden="true" />
             </button>

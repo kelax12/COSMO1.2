@@ -448,13 +448,15 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
 
   async getTaskDependencies(orgId: string): Promise<TeamTaskDependency[]> {
     if (!supabase) throw new Error('Supabase not configured');
+    // ⚡ RPC indexable (mig. 117), pas `.from(...)` : la policy delegue son
+    // perimetre a `team_tasks`, donc elle payait `can_access_team_project`
+    // (et sa CTE recursive) UNE FOIS PAR ARETE. Cf. SCALABILITY.md 2bis.
     const { data, error } = await supabase
-      .from('team_task_dependencies')
+      .rpc('get_my_team_task_dependencies', { p_org: orgId })
       .select('task_id, depends_on_id')
-      .eq('org_id', orgId)
       .limit(5000);
     if (error) throw normalizeApiError(error);
-    return (data as { task_id: string; depends_on_id: string }[]).map((r) => ({
+    return (data as unknown as { task_id: string; depends_on_id: string }[]).map((r) => ({
       taskId: r.task_id,
       dependsOnId: r.depends_on_id,
     }));

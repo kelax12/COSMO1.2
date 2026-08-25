@@ -83,7 +83,22 @@ personnel, et il est appliqué à toute la table à chaque lecture. Confirmation
 les compteurs cumulés : `organization_members` totalise **1 144 966 `seq_scan`** pour **11 lignes**
 — c'est la fréquence d'appel des helpers, pas un problème de plan.
 
-### 2bis. La mig. 108 étend le défaut à une table de plus (2026-08-24)
+### ✅ 2bis. `team_task_dependencies` — refermé (mig. 117, 2026-08-24)
+
+> Le trou laissé par la mig. 113 est comblé : `get_my_team_task_dependencies(p_org)`
+> réutilise `my_team_project_ids()` et joint sur `team_tasks.project_id`, donc le
+> sous-arbre managérial est évalué **une fois par organisation** au lieu d'une fois
+> par arête. Les trois policies restent en place, inchangées.
+>
+> ⚠️ La sémantique est reproduite à la lettre : la RPC exige de voir la tâche
+> **bloquée** (`task_id`), pas celle dont elle dépend. Ne pas « durcir » en exigeant
+> les deux — l'écran doit pouvoir montrer qu'une tâche visible dépend d'une tâche qui
+> ne l'est pas, sinon l'arête disparaît et le graphe ment sur l'ordonnancement. C'est
+> l'INSERT qui exige les deux, et lui n'a pas bougé.
+>
+> Chemin d'accès verrouillé par test (`team-projects/supabase.repository.test.ts`).
+
+### Le diagnostic d'origine
 
 `team_task_dependencies` (mig. `108`) délègue **volontairement** son périmètre à `team_tasks` :
 
@@ -165,7 +180,32 @@ d'organisation.
 
 ---
 
-## 4. 🟡 Payload des `getAll()` — dette identifiée en 2026-06, toujours ouverte
+## 4. ⚪️ Payload des `getAll()` — mesuré le 2026-08-24, et NE PAS le faire
+
+> **Verdict : le gain ne justifie pas le risque. Chiffres en prod, pas une estimation.**
+>
+> | Table | Lignes | Poids moyen / ligne | Ce que trimmer ferait gagner |
+> |---|---|---|---|
+> | `events` | 360 | 186 o | `description` = **4 146 o au TOTAL**, soit ~11 o/ligne — **6 %** du poids de la table |
+> | `habits` | 32 | 594 o | le gros du poids EST `completions`, indispensable au tableau |
+> | `okrs` | 14 | 786 o | le gros du poids EST `key_results`, indispensable à l'affichage |
+> | `categories` | 40 | 84 o | rien à retirer |
+> | `friends` | 11 | 121 o | rien à retirer |
+>
+> Le prérequis (faire pointer chaque modale sur un `getById`) coûterait un refactor par
+> module, avec un risque réel de vider des champs dans les modales — pour 6 % sur la
+> seule table où il y a quelque chose à gagner. **On ne le fait pas**, et c'est une
+> décision, pas un report.
+>
+> 🔴 **Le vrai point de rupture de payload est ailleurs, et il n'était dans aucun
+> audit** : `habits.completions` est un objet JSON qui grandit d'une entrée PAR JOUR
+> et PAR habitude, sans borne. Mesuré : **12,7 octets par jour** (1 538 o pour 121
+> jours). Projection à trois ans : ~14 ko par habitude, soit **~280 ko par lecture de
+> liste** pour 20 habitudes. C'est un problème de MODÈLE (sortir l'historique dans une
+> table dédiée, ou le borner à la fenêtre affichée), pas de `select`. À traiter avant
+> que les premiers comptes n'aient deux ans.
+
+### Le diagnostic d'origine
 
 Vérifié dans le code le 2026-08-14 :
 

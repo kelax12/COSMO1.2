@@ -67,7 +67,7 @@ const CookieBanner: React.FC = () => {
               </div>
               <button
                 onClick={handleRefuse}
-                className="w-7 h-7 rounded-full flex items-center justify-center bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-secondary))] transition-colors"
+                className="w-11 h-11 rounded-full flex items-center justify-center bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-secondary))] transition-colors"
                 aria-label="Fermer"
               >
                 <X size={14} />
@@ -110,7 +110,7 @@ const CookieBanner: React.FC = () => {
               <button
                 onClick={handleRefuse}
                 className="
-                  flex-1 h-[42px] rounded-xl
+                  flex-1 h-11 rounded-xl
                   bg-[rgb(var(--color-hover))]
                   text-[rgb(var(--color-text-secondary))]
                   hover:bg-[rgb(var(--color-border))]
@@ -123,7 +123,7 @@ const CookieBanner: React.FC = () => {
               <button
                 onClick={handleAccept}
                 className="
-                  flex-1 h-[42px] rounded-xl
+                  flex-1 h-11 rounded-xl
                   bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))]
                   text-[rgb(var(--color-accent-solid-foreground))]
                   text-[13px] font-semibold

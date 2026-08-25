@@ -40,7 +40,7 @@ export function OrgPlanChip({ orgId, active, onOpen }: Props) {
       aria-current={active ? 'page' : undefined}
       aria-label={t('billing.planAria', { plan: name })}
       title={t('billing.planHint')}
-      className={`group shrink-0 inline-flex items-center gap-2 h-9 px-2.5 sm:pr-2 rounded-xl border text-sm font-medium transition-colors ${
+      className={`group shrink-0 inline-flex items-center gap-2 h-11 px-2.5 sm:pr-2 rounded-xl border text-sm font-medium transition-colors ${
         active
           ? 'border-[rgb(var(--color-accent))] bg-[rgb(var(--color-accent)/0.1)] text-[rgb(var(--color-text-primary))]'
           : 'border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))]'

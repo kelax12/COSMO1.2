@@ -292,7 +292,7 @@ const MyWorkTab = ({ orgId, members, currentUserId }: MyWorkTabProps) => {
                         type="button"
                         onClick={() => toggleComplete(t)}
                         aria-label={tt('myWork.markDone', { name: t.name })}
-                        className="w-5 h-5 rounded-md border border-[rgb(var(--color-border))] hover:border-[rgb(var(--color-accent))] flex items-center justify-center shrink-0 transition-colors"
+                        className="w-6 h-6 rounded-md border border-[rgb(var(--color-border))] hover:border-[rgb(var(--color-accent))] flex items-center justify-center shrink-0 transition-colors"
                       >
                         {t.completed && <Check size={13} aria-hidden="true" />}
                       </button>
@@ -300,7 +300,7 @@ const MyWorkTab = ({ orgId, members, currentUserId }: MyWorkTabProps) => {
                       <button
                         type="button"
                         onClick={() => setEditingTask(t)}
-                        className="flex-1 min-w-0 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]/60 rounded-md"
+                        className="flex-1 min-w-0 min-h-8 flex flex-col justify-center text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]/60 rounded-md"
                       >
                         <span className="block text-sm text-[rgb(var(--color-text-primary))] truncate">{t.name}</span>
                       </button>

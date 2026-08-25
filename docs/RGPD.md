@@ -58,6 +58,13 @@ en place.
 > (`.or('user_id.eq.X,friend_user_id.eq.X')`), comme `friend_requests` et `shared_tasks`.
 > Garde de non-régression : `src/rgpd-erasure.guard.test.ts` (les trois tables symétriques).
 >
+> ✅ **Divergence dépôt ↔ prod refermée le 2026-08-24 (mig. 116).** La contrainte
+> passe de `ON DELETE SET NULL` à `ON DELETE CASCADE` en production, ce que le dépôt
+> déclarait depuis toujours. C'est de la **défense en profondeur** : la purge explicite
+> de `delete-account` reste le rempart principal, la FK couvre les suppressions qui ne
+> passent pas par la Edge Function (dashboard Supabase, script de maintenance).
+> Effet sur les données : aucun (11 lignes, 0 avec `friend_user_id IS NULL`).
+>
 > ⚠️ **Un détail de ce diagnostic était faux, et il aggravait le finding plutôt que l'inverse.**
 > Ce document affirmait « la table `friends` n'a aucune clé étrangère (vérifié : zéro FK) ».
 > Vérification sur `pg_constraint` en prod le 2026-08-24 : il y en a bien une,

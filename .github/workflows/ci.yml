@@ -228,3 +228,55 @@ jobs:
       - name: Stop Supabase stack
         if: ${{ always() }}
         run: supabase stop
+
+  # ──────────────────────────────────────────────────────────────────
+  # Lighthouse CI — LCP / TBT / CLS / a11y / SEO par route publique.
+  #
+  # Comblé le 2026-08-24. `docs/PERFORMANCE.md` listait « Lighthouse CI
+  # toujours absent » depuis l'audit perf du 2026-05-29 : AUCUN job ne mesurait
+  # les Core Web Vitals, alors que le budget bundle, lui, était surveillé. On
+  # gardait donc un oeil sur ce qu'on expédie et aucun sur ce que ça donne.
+  #
+  # Périmètre : les routes PRÉRENDUES uniquement. Les routes protégées
+  # demandent une session, donc un parcours de connexion — ce serait un job
+  # Playwright, pas Lighthouse.
+  #
+  # ⚠️ SEUILS PROVISOIRES, à resserrer après la PREMIÈRE mesure réelle.
+  # Ils n'ont pas pu être posés « au réel mesuré » comme le reste des budgets
+  # du dépôt : Lighthouse a besoin d'un Chrome exécutable, absent de la machine
+  # de développement. Ils sont donc prudents à dessein. Le jour où le premier
+  # run donne les vrais chiffres, RABAISSER `lighthouserc.json` juste en
+  # dessous — un budget très au-dessus du réel ne mesure rien.
+  #
+  # Bloquant sur a11y, SEO et CLS (des régressions franches, faciles à
+  # attribuer). Avertissement sur la performance : elle varie avec le runner,
+  # et une gate rouge en permanence finit ignorée — c'est la règle du dossier.
+  # ──────────────────────────────────────────────────────────────────
+  lighthouse:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - run: npm ci
+
+      # Le prérendu fait partie du build : sans lui, les routes publiques
+      # renvoient la coquille SPA et Lighthouse mesurerait une page vide.
+      - name: Build (avec prérendu)
+        run: npm run build
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+
+      - name: Lighthouse CI
+        run: npx --yes @lhci/cli@0.15.x autorun
+
+      - name: Upload Lighthouse reports
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: lighthouse
+          path: .lighthouseci/
+          retention-days: 7

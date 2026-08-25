@@ -111,7 +111,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                         }}
                         // Chips mobile : 40px de haut (assez pour le pouce,
                         // volontairement plus compactes que 44px sur demande).
-                        className={`shrink-0 whitespace-nowrap inline-flex items-center justify-center px-3.5 h-10 sm:h-auto sm:py-2 rounded-lg text-label sm:text-sm font-medium transition-all shadow-sm border ${
+                        className={`shrink-0 whitespace-nowrap inline-flex items-center justify-center px-3.5 h-11 sm:h-auto sm:py-2 rounded-lg text-label sm:text-sm font-medium transition-all shadow-sm border ${
                           !selectedListId
                             ? 'bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] border-[rgb(var(--color-accent-solid))] dark:bg-[rgb(var(--color-accent-solid))] dark:border-[rgb(var(--color-accent-solid))] shadow-md'
                             : 'bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] border-[rgb(var(--color-border))]'
@@ -165,7 +165,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
                           onClick={() => setSelectedListId(selectedListId === VIRTUAL_TODAY_ID ? null : VIRTUAL_TODAY_ID)}
-                          className={`shrink-0 whitespace-nowrap inline-flex items-center gap-2 px-3.5 h-10 sm:h-auto sm:py-2 rounded-lg text-label sm:text-sm font-medium transition-all shadow-sm border ${
+                          className={`shrink-0 whitespace-nowrap inline-flex items-center gap-2 px-3.5 h-11 sm:h-auto sm:py-2 rounded-lg text-label sm:text-sm font-medium transition-all shadow-sm border ${
                             selectedListId === VIRTUAL_TODAY_ID
                               ? 'bg-emerald-600 text-white border-emerald-700 dark:bg-emerald-500 shadow-md'
                               : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:hover:bg-emerald-900/50 dark:border-emerald-800'
@@ -357,7 +357,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                                 onPointerCancel={cancelChipLongPress}
                                 onPointerLeave={cancelChipLongPress}
                                 onContextMenu={(e) => { if (isMobile) e.preventDefault(); }}
-                                className={`flex items-center gap-2 px-3.5 h-10 sm:h-auto sm:py-2 rounded-lg text-label sm:text-sm font-medium transition-all border shadow-sm ${
+                                className={`flex items-center gap-2 px-3.5 h-11 sm:h-auto sm:py-2 rounded-lg text-label sm:text-sm font-medium transition-all border shadow-sm ${
                                   isSelected
                                     ? 'bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] border-[rgb(var(--color-accent-solid))] dark:bg-[rgb(var(--color-accent-solid))] dark:border-[rgb(var(--color-accent-solid))] shadow-md'
                                     : 'bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] border-[rgb(var(--color-border))]'
