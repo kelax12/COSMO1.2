@@ -3,6 +3,7 @@ import { useLocation } from 'react-router';
 import { Plus, Calendar, Grid3X3, List, TrendingUp, Share2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { PageHeading } from '@/components/ui/typography';
+import { MobileHeader } from '@/components/mobile';
 import { Button } from "@/components/ui/button";
 
 // Ordre : Tableau (défaut, plus dense) → Liste → Suivi global
@@ -110,8 +111,24 @@ const HabitsPage: React.FC = () => {
   return (
     <div className="min-h-[100dvh] p-4 md:p-8 pb-[calc(64px+env(safe-area-inset-bottom)+88px)] md:pb-8" style={{ backgroundColor: 'rgb(var(--color-background))' }}>
       <PullToRefreshIndicator pullY={pullY} isRefreshing={isRefreshing} threshold={threshold} />
+
+      {/* ── Mobile : en-tête canonique, partagé par toutes les pages ──
+          Le titre se compacte au scroll dans une barre collante. Le bloc
+          desktop ci-dessous est l'ancien rendu, inchangé et simplement masqué
+          sous `md`. Les deux ne sont PAS un compromis responsive : les faire
+          diverger explicitement est ce qui retire au mobile son allure de
+          « desktop rétréci ». Cf. docs/MOBILE.md. */}
+      <MobileHeader
+        title="Habitudes"
+        subtitle={
+          habits.length > 0
+            ? `Progression : ${getTodayCompletionRate()}% (${habits.filter(h => h.completions[new Date().toLocaleDateString('en-CA')]).length}/${habits.length})`
+            : 'Développez de bonnes habitudes au quotidien'
+        }
+      />
+
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 mb-8">
-        <div>
+        <div className="hidden md:block">
           <PageHeading variant="standard" className="mb-2">
             Habitudes
           </PageHeading>

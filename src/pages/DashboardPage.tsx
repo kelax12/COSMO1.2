@@ -2,6 +2,7 @@ import React, { useMemo, useState, Suspense } from 'react';
 import { Link } from 'react-router';
 import { X } from 'lucide-react';
 import { PageHeading } from '@/components/ui/typography';
+import { MobileHeader } from '@/components/mobile';
 import { useRevealVariants } from '@/components/mobile/mobile-motion';
 import { motion, useReducedMotion } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -342,9 +343,26 @@ const DashboardPage: React.FC = () => {
           <motion.div
             variants={itemVariants}
           >
+            {/* ── Mobile : en-tête canonique (cf. docs/MOBILE.md) ──
+                Le titre reprend la salutation, mais SANS l'effet de frappe :
+                une animation lettre par lettre dans une barre qui se compacte
+                au scroll n'a pas de sens, et le `truncate` la couperait en
+                plein milieu. Le résumé contextuel juste en dessous n'est PAS
+                passé en `subtitle` : il contient des liens cliquables, et un
+                `subtitle` disparaît quand l'en-tête se compacte. On perdrait
+                des points d'entrée au premier scroll. */}
+            <MobileHeader
+              title={
+                <>
+                  <span>{t('greeting')} </span>
+                  <span className="text-[rgb(var(--color-accent-solid))]">{displayUser.name}</span>
+                </>
+              }
+            />
+
             <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0">
-                <PageHeading variant="hero" className="mb-1 sm:mb-2 lg:mb-3">
+                <PageHeading variant="hero" className="mb-1 sm:mb-2 lg:mb-3 hidden md:block">
                   <span>{t('greeting')}</span>
                 {playTyping ? (
                   <TextType

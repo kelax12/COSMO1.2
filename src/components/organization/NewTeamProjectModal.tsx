@@ -89,10 +89,8 @@ const NewTeamProjectModal = ({ orgId, teams, members, defaultTeamId, onSubmit, o
         role="dialog"
         aria-label={t('project.newAria')}
       >
-        {/* Poignée mobile */}
-        <div className="sm:hidden flex justify-center pt-4 pb-2 shrink-0">
-          <div className="w-9 h-[5px] rounded-full bg-slate-300/70 dark:bg-slate-500/60" />
-        </div>
+        {/* Poignée de glissement RETIRÉE, pas oubliée : elle ne faisait rien, et le geste n'a pas sa place sur un formulaire (docs/MOBILE.md §3). */}
+        <div className="sm:hidden pt-3 shrink-0" aria-hidden="true" />
 
         {/* Header */}
         <div

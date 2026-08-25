@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { PageHeading } from '@/components/ui/typography';
+import { MobileHeader } from '@/components/mobile';
 import { Plus, Target, CalendarCheck, CheckCircle2 } from 'lucide-react';
 import WeeklyCheckinModal from '@/components/WeeklyCheckinModal';
 import { getColorHex } from '@/components/CategoryManager';
@@ -271,8 +272,13 @@ const OKRPage: React.FC = () => {
       className="min-h-[100dvh] p-4 sm:p-8 pb-[calc(64px+env(safe-area-inset-bottom)+88px)] md:pb-8 max-w-7xl mx-auto"
       style={{ backgroundColor: 'rgb(var(--color-background))' }}>
 
+      {/* ── Mobile : en-tête canonique (cf. docs/MOBILE.md) ──
+          Titre grand au repos, compacté au scroll. Le bloc desktop ci-dessous
+          est l'ancien rendu, masqué sous `md`. */}
+      <MobileHeader title={t('page.title')} subtitle={t('page.subtitle')} />
+
       <div className="mb-8 flex items-start justify-between gap-3">
-        <div className="min-w-0">
+        <div className="min-w-0 hidden md:block">
           <PageHeading variant="standard" className="mb-2">
             {t('page.title')}
           </PageHeading>

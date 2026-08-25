@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo, useCallback } from 'react';
 import { PageHeading } from '@/components/ui/typography';
+import { MobileHeader } from '@/components/mobile';
 import { BarChart3, Target, CheckSquare, Repeat, CalendarDays } from 'lucide-react';
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis, ReferenceLine } from 'recharts';
 import {
@@ -256,7 +257,12 @@ export default function StatisticsPage() {
 
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto pb-[calc(64px+env(safe-area-inset-bottom)+88px)] md:pb-8" style={{ backgroundColor: 'rgb(var(--color-background))' }}>
-      <div className="mb-8">
+      {/* ── Mobile : en-tête canonique (cf. docs/MOBILE.md) ──
+          Titre grand au repos, compacté au scroll. Le bloc desktop ci-dessous
+          est l'ancien rendu, masqué sous `md`. */}
+      <MobileHeader title={t('page.title')} subtitle={t('page.subtitle')} />
+
+      <div className="mb-8 hidden md:block">
         <PageHeading variant="standard" className="mb-2">{t('page.title')}</PageHeading>
         <p style={{ color: 'rgb(var(--color-text-secondary))' }}>{t('page.subtitle')}</p>
       </div>

@@ -22,9 +22,27 @@ placeholder quick-add mobile, libellé « 365 jours », marges `mb-1.5`, `data-t
 > page, 17 px pour le seul cas où le titre COHABITE avec une icône et des badges sur une ligne
 > (/entreprise, où c'est un nom d'organisation `truncate` — l'agrandir aggraverait le §2).
 >
-> **Ce qui n'a PAS été fait** : migrer les 6 pages vers `MobileHeader` et retirer les variantes.
-> C'est un choix de design (barre collante « large title » iOS), pas une correction — il change
-> le comportement de six pages et appartient à Axel.
+> **Migration des 6 pages faite le 2026-08-24** (arbitrage d'Axel). `/dashboard`, `/habits`,
+> `/okr`, `/statistics`, `/settings` et `/entreprise` montent désormais `MobileHeader` sur mobile,
+> avec le rendu desktop historique conservé et simplement masqué sous `md`. Les sept pages se
+> comportent donc pareil : titre grand au repos, compacté dans une barre collante au scroll.
+>
+> 🔴 **Et la migration a révélé que `MobileHeader` n'avait JAMAIS fonctionné.** Il écoutait
+> `window.scroll`, alors que `Layout.tsx` met tout le contenu dans un `<main class="flex-1
+> overflow-auto">` : c'est LUI qui scrolle, et l'événement `scroll` d'un conteneur ne remonte pas
+> jusqu'à `window`. Mesuré sur `/tasks` avant correctif : après 500 px de scroll, `window.scrollY`
+> valait **0**, le titre restait à 28 px et le fond du header restait transparent. Le composant
+> créé pour porter ce motif ne l'a jamais porté, sur la seule page qui l'utilisait.
+> Il remonte maintenant les ancêtres jusqu'au premier conteneur réellement scrollable, avec repli
+> sur `window` pour les pages hors Layout.
+>
+> Vérifié après correctif sur les 6 pages (viewport 375×812, mode démo) : un seul `h1` visible par
+> page, aucun débordement horizontal, et compaction 28 px → 17 px avec fond opaque au scroll.
+>
+> ⚠️ **Piège de mesure rencontré** : quand le panneau navigateur n'est pas affiché, la page ne
+> compose pas de frames et les **transitions CSS ne progressent pas**. `getComputedStyle` renvoie
+> alors la valeur de DÉPART, ici 28 px, ce qui fait conclure à tort que rien ne se passe. Neutraliser
+> la transition (`el.style.transition = 'none'`) avant de lire donne la vraie valeur.
 >
 > ⚠️ Cause racine trouvée au passage : `src/components/ui/typography.tsx` est **exclu du scan** de
 > `src/design-system.guard.test.ts` (qui ignore `ui/`, à cause de shadcn). Le fichier qui DÉFINIT

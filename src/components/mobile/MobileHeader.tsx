@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
 
 interface MobileHeaderProps {
-  title: string;
+  /** `ReactNode` et non `string` : le Dashboard y met une salutation animée. */
+  title: React.ReactNode;
   /** Ligne de contexte sous le titre — un compte, une date. Courte. */
   subtitle?: React.ReactNode;
   /** Actions à droite. Chaque enfant doit faire ≥ 44×44px (cf. TouchTarget). */
@@ -32,17 +33,46 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
   className,
 }) => {
   const [compact, setCompact] = useState(false);
+  const headerRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
+    // ⚠️ NE PAS revenir à `window.scrollY`. Ce composant a passé des semaines à
+    // ne jamais se compacter, sur la seule page qui l'utilisait.
+    //
+    // MESURÉ le 2026-08-24 (viewport 375×812, mode démo) : sur `/tasks`, après
+    // 500 px de scroll, le `h1` restait à 28 px, le fond du header restait
+    // transparent, et `window.scrollY` valait **0**. La fenêtre ne scrolle pas :
+    // `Layout.tsx` met tout le contenu dans un `<main class="flex-1
+    // overflow-auto">`, et c'est LUI qui scrolle. L'événement `scroll` d'un
+    // conteneur ne remonte pas jusqu'à `window`.
+    //
+    // On remonte donc les ancêtres jusqu'au premier conteneur réellement
+    // scrollable, avec repli sur `window` (pages hors Layout : onboarding,
+    // landing) pour que le composant reste utilisable partout.
+    const findScroller = (): HTMLElement | Window => {
+      let node = headerRef.current?.parentElement ?? null;
+      while (node) {
+        const overflowY = getComputedStyle(node).overflowY;
+        if (overflowY === 'auto' || overflowY === 'scroll') return node;
+        node = node.parentElement;
+      }
+      return window;
+    };
+
+    const scroller = findScroller();
+    const readTop = () =>
+      scroller === window ? window.scrollY : (scroller as HTMLElement).scrollTop;
+
     // `passive` : ce listener ne doit jamais retarder le scroll.
-    const onScroll = () => setCompact(window.scrollY > compactAt);
+    const onScroll = () => setCompact(readTop() > compactAt);
     onScroll();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
+    scroller.addEventListener('scroll', onScroll, { passive: true });
+    return () => scroller.removeEventListener('scroll', onScroll);
   }, [compactAt]);
 
   return (
     <header
+      ref={headerRef}
       className={cn(
         'sticky top-0 z-30 -mx-gutter px-gutter md:hidden',
         'transition-[padding,background-color,border-color] duration-200',

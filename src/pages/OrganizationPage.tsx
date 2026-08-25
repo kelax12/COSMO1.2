@@ -16,6 +16,7 @@ import { ENTERPRISE_BILLING_ENFORCED } from '@/modules/billing/premium-config';
 import { useOrgSubscription } from '@/modules/billing/org-billing.hooks';
 import { isQuotaReached, effectiveQuota } from '@/modules/billing/org-billing.logic';
 import { PageHeading } from '@/components/ui/typography';
+import { MobileHeader } from '@/components/mobile';
 import MemberDirectory from '@/components/organization/MemberDirectory';
 import InviteFriendsToOrg from '@/components/organization/InviteFriendsToOrg';
 import OrgJoinCodeCard from '@/components/organization/OrgJoinCodeCard';
@@ -186,8 +187,34 @@ const OrganizationPage = () => {
 
   return (
     <div className="max-w-[1600px] mx-auto px-4 sm:px-6 py-6">
-      {/* En-tête */}
-      <header className="flex flex-wrap items-center gap-3 mb-6">
+      {/* ── Mobile : en-tête canonique (cf. docs/MOBILE.md) ──
+          L'avatar de l'organisation n'y est PAS repris : une vignette de 48 px
+          dans une barre qui se compacte à 17 px ne tient pas, et la réduire
+          la rendrait illisible. Elle reste dans le bloc desktop. La pastille
+          de forfait non plus : elle a déjà sa logique de passage à la ligne
+          sur mobile, juste en dessous. */}
+      <MobileHeader
+        title={myOrg.name}
+        subtitle={`${tp('page.memberCount', members.length)}${myOrg.industry ? ` · ${myOrg.industry}` : ''}`}
+        actions={
+          <>
+            {isAdmin && (
+              <button
+                type="button"
+                onClick={() => setEditProfile(true)}
+                aria-label={t('page.editProfile')}
+                className="min-w-11 min-h-11 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-accent))] hover:bg-[rgb(var(--color-hover))] transition-colors shrink-0"
+              >
+                <Pencil size={18} aria-hidden="true" />
+              </button>
+            )}
+            <OrgNotificationsBell orgId={myOrg.id} members={members} />
+          </>
+        }
+      />
+
+      {/* En-tête desktop (rendu historique, inchangé) */}
+      <header className="hidden md:flex flex-wrap items-center gap-3 mb-6">
         <div className="w-12 h-12 rounded-2xl bg-[rgb(var(--color-hover))] border border-[rgb(var(--color-border))] flex items-center justify-center text-[rgb(var(--color-text-primary))] shrink-0 overflow-hidden">
           {myOrg.avatarUrl ? (
             <img src={myOrg.avatarUrl} alt="" className="w-full h-full object-cover" />
@@ -236,6 +263,20 @@ const OrganizationPage = () => {
             dans `org_notifications` sans qu'aucun ecran ne les lise. */}
         <OrgNotificationsBell orgId={myOrg.id} members={members} />
       </header>
+
+      {/* Forfait sur mobile : le header ci-dessus est masqué sous `md`, la
+          pastille y serait donc devenue inatteignable — or c'est le SEUL
+          point d'entrée vers la facturation, et seulement pour le
+          propriétaire. Elle est reprise ici, en pleine largeur. */}
+      {isOwner && (
+        <div className="md:hidden mb-4">
+          <OrgPlanChip
+            orgId={myOrg.id}
+            active={tab === 'billing'}
+            onOpen={() => setTab('billing')}
+          />
+        </div>
+      )}
 
       {editProfile && <OrgProfileSheet org={myOrg} onClose={() => setEditProfile(false)} />}
 
