@@ -17,7 +17,7 @@ répond à une seule question : **les invariants qu'on s'est donnés tiennent-il
 | Plus gros fichier | `PyramidTab` 1 506 | **`TaskTable` 1 124** (PyramidTab tombé à 1 045) |
 | Primitives livrées sans consommateur | 3 | **2** (`MobileHeader` passe de 2 à **8** consommateurs) |
 | Invariants **outillés** (une garde, pas un Markdown) | 6 | **6** |
-| Suite unitaire | 1 583 / 143, verte | **1 621 / 144, verte** |
+| Suite unitaire | 1 583 / 143, verte | **1 656 / 146, verte** |
 
 **+5.** Le cliquet de taille a joué deux fois en deux jours et le budget a baissé de 1 051 lignes
 sans qu'aucune fonctionnalité ne soit reportée : c'est la démonstration que la garde rend le
@@ -45,7 +45,7 @@ mais le cliquet les fait baisser) et la taille du chunk `index`
 | Les lectures de liste de `tasks` passent par `get_my_tasks()` | CLAUDE.md ⚡ | ✅ **Tenu.** Les 4 `.from('tasks')` de `supabase.repository.ts` restent `getById` (exception légitime), `insert`, `update`, `delete` |
 | Aucun import GSAP hors de la landing | CLAUDE.md | ✅ **Tenu.** 0 import direct de `'gsap'` |
 | `useAuth` vient de `@/modules/auth/AuthContext` | CLAUDE.md | ✅ **Tenu.** 0 import depuis `@/modules/user` |
-| Une seule policy PERMISSIVE par rôle + action | mig. 049 + `check:rls` | ✅ **Tenu.** **128** policies sur **79** migrations, 0 violation |
+| Une seule policy PERMISSIVE par rôle + action | mig. 049 + `check:rls` | ✅ **Tenu.** **128** policies sur **81** migrations, 0 violation |
 | La récurrence est générée côté serveur | mig. 086 | ✅ Tenu |
 | Les canaux Realtime sont montés dans `App.tsx`, une seule fois | CLAUDE.md 📡 | ✅ **Tenu.** 3 `.channel()` dans `src/`, les trois montés au niveau App (`shared_tasks`, `org-inbox` mig. 118, `friends-inbox` mig. 120) |
 | Toutes les tables `public` ont RLS activée | `SECURITY.md` | ✅ **Tenu**, vérifié en prod : 0 table avec `relrowsecurity = false` |
@@ -56,7 +56,7 @@ mais le cliquet les fait baisser) et la taille du chunk `index`
 | **Un droit entreprise se lit dans `permissions.ts`, jamais recalculé** | CLAUDE.md 🔐 + garde | ✅ **Tenu depuis le 2026-08-25** : une seule source de vérité cliente (`useMyOrgPermissions`), miroir du SQL, 205 tests |
 | **Aucune position d'arrivée portée par une animation de transform** | CLAUDE.md + garde | 🟠 **17 feuilles encore écrites à la main**, mais les 5 réellement cassées sont corrigées et un cliquet interdit toute nouvelle (cf. [`MOBILE.md`](./MOBILE.md) §1) |
 | **Aucun `refetchInterval` permanent** | CLAUDE.md 📡 | ✅ **Tenu au 2026-08-25, mais au deuxième essai.** Annoncé acquis le matin alors que 3 subsistaient ; corrigés l'après-midi. Décompte nominatif dans [`SCALABILITY.md`](./SCALABILITY.md) §3 |
-| Suite unitaire verte | `TESTING.md` | ✅ **1 621 / 1 621 au 2026-08-25** |
+| Suite unitaire verte | `TESTING.md` | ✅ **1 656 / 1 656 au 2026-08-25** |
 
 Les invariants qui portent la **sécurité** tiennent tous. Celui qui porte le **coût de
 lecture** aussi. Celui qui porte le **coût de sondage**, non (§7).

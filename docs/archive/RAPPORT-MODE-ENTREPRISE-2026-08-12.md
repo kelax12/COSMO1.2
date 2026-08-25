@@ -4,25 +4,33 @@
 > Le nom de fichier porte encore l'ancienne date — le contenu, lui, est vérifié au 24 août.
 > Sources vivantes : [`CLAUDE.md`](../../CLAUDE.md) · [`faille.md`](../../faille.md) · [`docs/`](../README.md).
 >
-> ### 🔄 Trois corrections datées du 2026-08-25, signalées en place dans le texte
+> ### 🔄 Corrections du 2026-08-25, signalées en place dans le texte
 >
-> Ce rapport a péri en moins de vingt-quatre heures sur son **finding n°1**. À relire dans cet
-> ordre :
+> Ce rapport a péri en moins de vingt-quatre heures sur son **finding n°1**, puis la correction a
+> péri en six heures de plus. À relire dans cet ordre :
 >
-> | § | Ce que le rapport dit | Ce qui est vrai au 2026-08-25 |
+> | § | Ce que le rapport dit | État vérifié le 2026-08-25 **au soir** |
 > |---|---|---|
-> | **§1 idée 1 · §4.15** | La facturation entreprise est **active** et bloque la croissance | 🟢 **DÉSACTIVÉE** : les deux drapeaux à `false`, tout est gratuit, sans plafond de sièges |
-> | **§1 idée 2 · §6.2** | Trois promesses fausses sur la landing | **Une seule** reste fausse (`projects.p3d`) ; les deux autres sont retombées avec la facturation |
-> | **§5** | « La prochaine migration libre est la 115 » | La `121` est appliquée ; la prochaine libre est la **`122`** |
+> | **§1 idée 1 · §4.15** | La facturation entreprise est **active** et bloque la croissance | 🔴 **Vrai à nouveau.** Le drapeau a fait `true → false → true` dans la journée. Les deux drapeaux sont à `true`, quota réellement appliqué, clé Stripe toujours de TEST |
+> | **§1 idée 2 · §6.2** | Trois promesses fausses sur la landing | 🔴 **Les trois sont fausses à nouveau** : les variantes « Gratuit » se retirent d'elles-mêmes quand la facturation revient, et les textes payants qui mentent reviennent avec |
+> | **§5** | « La prochaine migration libre est la 115 » | La `123` est appliquée ; la prochaine libre est la **`124`** |
 >
 > **+1 brique** depuis : les **permissions explicites par membre** (mig. 115), cf. §4.12.
+> **+1 option de facturation** : périodicité annuelle à −30 % (mig. 123), cf. §4.15.
 >
-> **Note produit du mode Entreprise : 74 → 81 / 100.** Ce qui monte : le trou d'autorisation le
-> plus béant du mode entreprise est bouché (n'importe quel membre pouvait créer et supprimer
-> n'importe quoi), et le finding n°1, vendre un blocage qu'on ne peut pas encaisser, a disparu
-> par la décision inverse. Ce qui plafonne n'a pas bougé d'un pouce : **5 visiteurs démo, 0
-> conversion, 0 inscription depuis le 21 juillet.** Un produit qui s'améliore devant une salle
-> vide reste un produit devant une salle vide.
+> ⚠️ **La leçon principale de ces corrections n'est pas une donnée, c'est une règle de lecture.**
+> Trois états de facturation en une journée, et à chaque fois un paragraphe qui affirmait l'état
+> du moment. **Ne jamais citer l'état de la facturation depuis ce document** : le lire dans
+> `src/modules/billing/premium-config.ts` et dans `billing_flags`, les deux ensemble.
+>
+> **Note produit du mode Entreprise : 74 → 80 / 100.** Ce qui monte : le trou d'autorisation le
+> plus béant est bouché (n'importe quel membre pouvait créer et supprimer n'importe quoi, mig.
+> 115), et la facturation gagne une périodicité annuelle dont le prix se **dérive** au lieu de se
+> configurer. Ce qui retient : le **finding n°1 est intact** au soir du 25, on bloque la
+> croissance de clients qui ne peuvent pas payer autrement qu'avec une carte de test. Et ce qui
+> plafonne n'a pas bougé d'un pouce : **5 visiteurs démo, 0 conversion, 0 inscription depuis le
+> 21 juillet.** Un produit qui s'améliore devant une salle vide reste un produit devant une salle
+> vide.
 
 # Le mode Entreprise, brique par brique — et comment le vendre
 
@@ -97,7 +105,7 @@ Le goulot d'étranglement a donc changé de place. Il n'est plus dans le message
 | Brique | 24 août | **25 août** |
 |---|---|---|
 | **Permissions par membre** | ❌ tout membre ayant accès à un projet peut créer et supprimer | ✅ **mig. 115** · 10 droits surchargeables + une portée d'assignation, depuis l'annuaire |
-| Facturation | **active**, 5 paliers | 🟢 **désactivée**, plomberie conservée (§4.15) |
+| Facturation | **active**, 5 paliers | 🔴 **coupée le matin, RÉACTIVÉE le soir** (§4.15), + périodicité annuelle à −30 % (mig. 123) |
 | Coût de lecture des dépendances | prédicat non indexable | ✅ mig. 117, RPC indexable |
 | Boîte de réception d'organisation | 3 sondages de 20 s | ✅ mig. 118, canal Realtime unique |
 
@@ -379,30 +387,37 @@ marketing, et des tips d'usage.
 - **Tips** : les mentions @ restent le déclencheur le plus utile au quotidien — en faire un réflexe
   d'équipe.
 
-### 4.15 Sièges & facturation · 🟢 **DÉSACTIVÉS** (mise à jour du 2026-08-25)
+### 4.15 Sièges & facturation · 🔴 **RÉACTIVÉS** (état vérifié le 2026-08-25 au soir)
 
-> ### ⚠️ Ce paragraphe a été écrit quelques heures avant la décision inverse
+> ### ⚠️ Ce drapeau a basculé DEUX FOIS dans la même journée. Vérifier avant de citer.
 >
-> **Vérifié en base et dans le code le 2026-08-25** : `ENTERPRISE_BILLING_ENFORCED = false`
-> **et** `billing_flags.enterprise_seat_limit = false` en production. Les deux drapeaux
-> ensemble, comme la règle l'exige.
+> | Moment du 2026-08-25 | `ENTERPRISE_BILLING_ENFORCED` | `billing_flags.enterprise_seat_limit` |
+> |---|---|---|
+> | matin (commit `d7d0ed7`) | `false` | `false` |
+> | soir (commit `0425044`) | **`true`** | **`true`** |
 >
-> **Tout est gratuit, sans plafond de sièges.** La micro-entreprise d'Axel n'existe pas encore :
-> COSMO ne peut légalement rien encaisser. La plomberie Stripe reste **entière et déployée**,
-> `stripe-org-checkout`, `stripe-org-portal`, les 4 `STRIPE_ORG_PRICE_*`, `org_subscriptions`
-> (mig. 101), `org_seats_allowed()` et le webhook redéployé le 2026-08-24. Réactiver = rebasculer
-> les deux drapeaux, rien à reconstruire.
+> **Vérifié en base et dans le code le 2026-08-25 au soir** : les deux drapeaux sont à `true`,
+> ensemble, comme la règle l'exige. Le quota de sièges est **réellement appliqué**
+> (`org_seats_allowed()`), et `org_subscriptions` compte **0 ligne**.
 >
-> **Conséquence commerciale immédiate, et elle est bonne** : deux des trois « promesses que le
-> produit ne tient plus » (§6.2) **sont retombées d'elles-mêmes**. Plus rien ne bloque la
-> croissance d'une organisation, donc « rien n'est bloqué » et « le forfait s'ajuste tout seul »
-> ne sont plus des mensonges, la landing affiche « Gratuit » sous un badge « Offre de
-> lancement », avec le tarif d'après visible barré.
+> 🔴 **Le finding n°1 de ce rapport est donc de retour, mot pour mot** : `STRIPE_SECRET_KEY` en
+> prod reste une **clé de test**. Le quota bloque pour de vrai, l'encaissement non. Une
+> organisation qui atteint 5 membres ne peut pas payer pour se débloquer autrement qu'avec une
+> carte de test.
 >
-> **Ce qui reste vrai du paragraphe ci-dessous** : la grille, le comportement au dépassement, et
-> le piège de la clé Stripe de test le jour de la réactivation.
+> ⚠️ **La leçon de méthode compte autant que le fait.** Un drapeau qui bascule deux fois en une
+> journée ne peut pas être documenté par une phrase d'état : ce paragraphe a affirmé
+> successivement « actifs », « désactivés », puis « réactivés » en douze heures. **Ne jamais citer
+> l'état de la facturation depuis ce document** ; le lire dans
+> `src/modules/billing/premium-config.ts` et dans `billing_flags`, les deux, à chaque fois.
+>
+> **Ajout du soir** : périodicité **mensuelle ou annuelle** (annuel = mensuel −30 %), colonne
+> `org_subscriptions.billing_interval` (mig. 123, appliquée en prod). Le price ID annuel se
+> **dérive** du mensuel côté Stripe, il ne se configure pas : aucun secret supplémentaire à poser.
+> Tant que les prix annuels n'existent pas côté Stripe, le checkout annuel répond
+> `yearly_unavailable` et la grille rebascule seule sur le mensuel.
 
-*Le prix suit la taille de l'organisation, le jour où la facturation sera rallumée.*
+*Le prix suit la taille de l'organisation, et depuis le 2026-08-25 au soir, il la contraint aussi.*
 
 - **Grille en vigueur** (source unique : `ENTERPRISE_PRICING_TIERS`) :
 
@@ -469,9 +484,9 @@ trigger et non dans l'interface.
 ⚠️ **Collision de numérotation à régler avant implémentation** : la spec réserve
 `113_team_task_review_flow.sql`, mais le numéro 113 a été pris entre-temps par
 `113_team_reads_indexable.sql`, déjà appliquée en prod. ~~La prochaine migration libre est la
-115.~~ **Au 2026-08-25, la dernière appliquée est la `121` : la prochaine libre est la `122`.**
-Ce paragraphe a périmé en vingt-quatre heures, *ne jamais réserver un numéro de migration dans
-une spec*, le prendre au moment de l'écrire.
+115.~~ **Au soir du 2026-08-25, la dernière appliquée est la `123` : la prochaine libre est la
+`124`.** Ce paragraphe a périmé deux fois en une journée, *ne jamais réserver un numéro de
+migration dans une spec*, le prendre au moment de l'écrire.
 
 **Valeur commerciale** : c'est la brique qui fait passer le produit de « suivi » à « validation »,
 et elle répond directement à une objection de dirigeant (« qui me dit que c'est vraiment fait ? »).
@@ -507,25 +522,33 @@ La première est une **survente** (on annonce ce qui n'existe plus). Les deux au
 elles décrivent l'inverse du comportement réel, et le prospect le découvrira au pire moment — celui
 où il essaie de faire grandir son équipe. **À corriger avant toute campagne d'acquisition.**
 
-> ### ✅ Mise à jour du 2026-08-25 · deux des trois sont retombées, une reste
+> ### 🔴 Mise à jour du 2026-08-25 au soir : les trois sont fausses à nouveau
 >
-> | Clé | État au 2026-08-25 |
-> |---|---|
-> | `enterprise.faq.a4` | ✅ **Vraie** : la facturation entreprise est désactivée (§4.15), plus rien ne bloque la croissance d'une organisation |
-> | `enterprise.pricing.autoAdjust` | ✅ **Vraie** pour la même raison, et la section tarifs affiche « Gratuit » sous un badge « Offre de lancement » |
-> | `enterprise.projects.p3d` | 🔴 **TOUJOURS FAUSSE** · labels et historique restent retirés de la modale, la landing continue de les annoncer |
+> | Clé | Matin (facturation coupée) | **Soir (facturation réactivée)** |
+> |---|---|---|
+> | `enterprise.faq.a4` | ✅ redevenue vraie | 🔴 **de nouveau fausse** |
+> | `enterprise.pricing.autoAdjust` | ✅ redevenue vraie | 🔴 **de nouveau fausse** |
+> | `enterprise.projects.p3d` | 🔴 fausse | 🔴 **toujours fausse** |
 >
-> ⚠️ **Attention au raisonnement.** Ces deux promesses ne sont pas devenues vraies parce qu'on les
-> a corrigées : elles le sont devenues parce que le **produit** a changé sous elles. Le jour où la
-> facturation sera rallumée, elles redeviendront fausses **sans qu'aucun texte n'ait bougé**. Les
-> variantes d'offre de lancement (`promo*` / `*Free`) sont prévues pour ça, elles **s'ajoutent**
-> aux textes payants au lieu de les remplacer, donc rebasculer le drapeau restitue la page
-> d'origine mot pour mot. Vérifier ces deux clés le jour de la réactivation.
+> ⚠️ **Ce paragraphe avait prédit exactement ça, et la prédiction s'est réalisée en six heures.**
+> Il disait : *« ces deux promesses ne sont pas devenues vraies parce qu'on les a corrigées, elles
+> le sont devenues parce que le produit a changé sous elles ; le jour où la facturation sera
+> rallumée, elles redeviendront fausses sans qu'aucun texte n'ait bougé. »* La facturation a été
+> rallumée le soir même (`ENTERPRISE_FREE_OFFER` se dérive de `ENTERPRISE_BILLING_ENFORCED`, donc
+> les variantes « Gratuit » se sont retirées toutes seules et les textes payants sont revenus,
+> mot pour mot, y compris les deux qui mentent).
 >
-> ⚠️ **Corollaire à ne pas oublier** : une page qui dit « gratuit » ne doit plus annoncer de
-> plafond nulle part. Quatre textes décrivaient une limite de sièges qui n'est plus appliquée
-> (`hero.reassurance`, `pricing.ctaNote`, `cta.note`, `faq.a4`/`a5`), tous ont leur variante.
-> Toute nouvelle phrase qui promet « jusqu'à 5 membres » doit en avoir une aussi.
+> **La conclusion opérationnelle est nette : ces deux textes doivent être RÉÉCRITS, pas attendus.**
+> Tant qu'ils décrivent un ajustement automatique que le produit ne fait pas, ils redeviennent
+> faux à chaque bascule du drapeau. Le comportement réel à écrire : *au-delà du palier, l'ajout de
+> membres est bloqué jusqu'à ce que le propriétaire passe au palier suivant ; aucun membre n'est
+> jamais retiré.* C'est vendable tel quel, et c'est vrai.
+>
+> ⚠️ **Corollaire, valable dans les deux sens** : une page qui dit « gratuit » ne doit annoncer de
+> plafond nulle part, et une page qui affiche des tarifs doit dire ce que fait le plafond. Les
+> quatre textes concernés (`hero.reassurance`, `pricing.ctaNote`, `cta.note`, `faq.a4`/`a5`) ont
+> chacun leur variante d'offre ; c'est le bon mécanisme, mais il ne corrige pas un texte faux, il
+> le met en réserve.
 >
 > **Reste donc UNE promesse à corriger** : `enterprise.projects.p3d`. C'est cinq minutes de
 > rédaction, et c'est le dernier écart entre ce que la vitrine annonce et ce que le produit fait.

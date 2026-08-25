@@ -18,11 +18,11 @@ performance va moins bien que la sécurité, ils disent où chaque domaine se si
 | [RGPD](./RGPD.md) | 78 | **84** | **+6** | FK d'effacement alignée en prod (mig. 116) ; portabilité préservée malgré la troncature |
 | [Sécurité](../faille.md) | 82 | **86** | **+4** | Une nouvelle surface d'autorisation livrée avec son test de base réelle (mig. 115) |
 | [Architecture](./ARCHITECTURE.md) | 74 | **79** | **+5** | Budget > 600 LOC : 12 503 → 11 452 lignes |
-| [Tests / CI](./TESTING.md) | 80 | **83** | **+3** | +38 tests, +21 E2E, 5ᵉ job CI, mais la couverture repasse au rouge |
-| [Mode entreprise](./archive/RAPPORT-MODE-ENTREPRISE-2026-08-12.md) | 74 | **81** | **+7** | Permissions par membre ; le finding n°1 disparaît avec la facturation |
+| [Tests / CI](./TESTING.md) | 80 | **83** | **+3** | +73 tests, +21 E2E, 5ᵉ job CI, mais la couverture repasse au rouge |
+| [Mode entreprise](./archive/RAPPORT-MODE-ENTREPRISE-2026-08-12.md) | 74 | **80** | **+6** | Permissions par membre (mig. 115) et périodicité annuelle (mig. 123) ; le finding n°1 est toujours là le soir |
 | [Accessibilité](./ACCESSIBILITY.md) | 76 | **79** | **+3** | 2ᵉ gate a11y, sur les pages **publiques** cette fois |
 | [SEO](./SEO.md) | 73 | **73** | **0** | Aucun travail SEO : le seul levier restant est hors dépôt |
-| [Performance](./PERFORMANCE.md) | 68 | **64** | **−4** | Le chunk `index` prend 4,7 kB gzip en **un** jour, marge 16 → 11,3 kB |
+| [Performance](./PERFORMANCE.md) | 68 | **64** | **−4** | Le chunk `index` prend 5 kB gzip en **un** jour, marge 16 → 11 kB |
 
 ### Ce que ce tableau dit, au-delà des chiffres
 
@@ -35,7 +35,7 @@ que les neuf autres :
   typographique, z-index, feuilles, couverture) ont tous tenu ou progressé. Ce n'est pas une
   coïncidence, c'est la thèse de fond de tout ce dossier : *une règle qu'aucun script ne mesure
   recule à chaque vague de features.*
-- **Tests à +3 seulement**, alors que la journée a ajouté 38 tests unitaires, 21 tests E2E et une
+- **Tests à +3 seulement**, alors que la journée a ajouté 73 tests unitaires, 21 tests E2E et une
   gate CI, parce que la couverture est repassée sous ses seuils. Le dénominateur a grossi plus
   vite que le numérateur : ~2 000 lignes d'interface non testées.
 
@@ -50,6 +50,18 @@ contre la doc :
   composant qui monte chaque hook prouve quelque chose.**
 - **`MobileHeader` n'avait jamais fonctionné** en un mois d'existence, sur la seule page qui
   l'utilisait. Un code sans consommateur n'est pas seulement inutile, il est **non éprouvé**.
+- **La facturation entreprise a basculé deux fois dans la journée** : `true` le matin, `false` à
+  midi, `true` le soir (commits `d7d0ed7` puis `0425044`), les deux drapeaux à chaque fois
+  ensemble, ce qui est la bonne pratique. Mais un état qui change trois fois en douze heures ne
+  peut pas être documenté par une phrase d'affirmation : le rapport entreprise l'a affirmé trois
+  fois, et s'est trompé deux fois. **L'état de la facturation se lit dans
+  `src/modules/billing/premium-config.ts` et dans `billing_flags`, jamais dans un document.**
+
+> 🔴 **Deux points bloquent un déploiement au soir du 2026-08-25**, et aucun n'est une faille :
+> `npm run test:coverage` est rouge (3 seuils, donc le job `lint-test-build` échoue), et la clé
+> Stripe de production reste une **clé de test** alors que le quota de sièges, lui, est réellement
+> appliqué depuis ce soir. Le détail est dans [`TESTING.md`](./TESTING.md) et
+> [`archive/RAPPORT-MODE-ENTREPRISE-2026-08-12.md`](./archive/RAPPORT-MODE-ENTREPRISE-2026-08-12.md) §4.15.
 
 ---
 
