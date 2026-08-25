@@ -131,8 +131,21 @@ export function EnterpriseTierGrid({
               </>
             ) : (
               <>
-                <div className="text-2xl font-semibold text-[rgb(var(--color-text-primary))]">
-                  {formatCurrency(monthlyShown)}
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl font-semibold text-[rgb(var(--color-text-primary))]">
+                    {formatCurrency(monthlyShown)}
+                  </span>
+                  {/* Répétée dans chaque carte, pas seulement dans le
+                      sélecteur : au moment où le regard est sur LE prix d'un
+                      palier précis, c'est là qu'il faut confirmer pourquoi il
+                      a baissé. Même ambre que « Gratuit » — c'est la couleur
+                      qui, dans cette grille, veut déjà dire « ce que l'offre
+                      te fait gagner ». */}
+                  {interval === 'yearly' && (
+                    <span className="text-xs font-semibold text-amber-600 dark:text-amber-400">
+                      {t('billing.intervalSave')}
+                    </span>
+                  )}
                 </div>
                 <div className="text-xs text-[rgb(var(--color-text-secondary))]">
                   {interval === 'yearly'
