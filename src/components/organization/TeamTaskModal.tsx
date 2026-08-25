@@ -375,7 +375,7 @@ const TeamTaskModal = ({
 
         {/* Header — sticky */}
         <div
-          className="flex justify-between items-center px-4 sm:px-6 py-[0.4332rem] sm:py-[0.5776rem] border-b gap-2 shrink-0"
+          className="flex justify-between items-center px-4 sm:px-6 py-[0.420204rem] sm:py-[0.560272rem] border-b gap-2 shrink-0"
           style={{ borderColor: 'rgb(var(--color-border))' }}
         >
           <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
