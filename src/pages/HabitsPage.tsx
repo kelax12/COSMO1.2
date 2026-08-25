@@ -37,6 +37,10 @@ import HabitsAdGate from '@/components/HabitsAdGate';
 // rendu canvas ne doit peser sur aucun écran — cf. docs/PERFORMANCE.md).
 const WeeklyRecapSheet = React.lazy(() => import('@/components/share/WeeklyRecapSheet'));
 
+// Masqué (pas supprimé) : repasser à true réaffiche le bouton sans rien
+// reconstruire — WeeklyRecapSheet, showRecap et l'import lazy restent intacts.
+const WEEKLY_RECAP_ENABLED = false;
+
 type ViewMode = 'list' | 'table' | 'global';
 
 const HabitsPage: React.FC = () => {
@@ -172,7 +176,7 @@ const HabitsPage: React.FC = () => {
             </div>
           )}
 
-          {habits.length > 0 && (
+          {WEEKLY_RECAP_ENABLED && habits.length > 0 && (
             <motion.button
               whileTap={{ scale: 0.95 }}
               onClick={() => setShowRecap(true)}
