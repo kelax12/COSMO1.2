@@ -1,5 +1,32 @@
 # Patterns UI — COSMO
 
+## Note UI / UX : 70 → **80 / 100** (2026-08-24 → 2026-08-25)
+
+| Finding de l'audit du 2026-08-14 | 08-24 | 08-25 |
+|---|---|---|
+| 1. Quatre tailles de titre de page | ✅ ramenées à deux | ✅ **+ 6 pages migrées** |
+| 2. Titres de tâches tronqués (12 sur `/tasks`) | ❌ ouvert | ✅ **12 → 2** (`line-clamp-2`) |
+| 3. Tableau Habitudes, colonne coupée | ❌ ouvert | ✅ **0 colonne coupée**, 375 px et 1 280 px |
+| 4. Échelle z-index incomplète | ✅ publiée + fermée par test | ✅ |
+| 5. Résidus de l'audit précédent | ✅ traités | ✅ |
+| 6. Cibles tactiles sous 44 px | ❌ 18 · 22 | ✅ **5 · 8**, les restantes conformes AA |
+
+**+10.** Les **six** findings de l'audit du 2026-08-14 sont refermés. C'est le seul document du
+dossier dont la liste d'origine est entièrement traitée.
+
+**Pourquoi 80 et pas 95.** Un audit qui referme tous ses findings ne prouve qu'une chose : que
+*ces* findings étaient les bons. Or celui-ci porte, de son propre aveu, sur ce qui est
+**mesurable**, géométrie, troncatures, tailles de cible, z-index, tokens, et pas sur
+l'esthétique ni l'équilibre visuel, faute de captures d'écran au moment de l'audit. Et le finding
+structurel qui explique la moitié de cette liste vit ailleurs : **deux langages visuels mobiles
+coexistent** (cf. [`MOBILE.md`](./MOBILE.md) §2, adhérence 13 %). Tant qu'il tient, cette liste se
+reconstituera.
+
+**Le geste qui ferait vraiment monter la note** est donc un audit visuel, captures, comparaison,
+jugement, et non une mesure de plus.
+
+---
+
 ## Dette UI/UX ouverte — audit du 2026-08-14
 
 **Méthode** : mesures DOM/CSS sur l'app en mode démo (`npm run dev`), viewports 375×812 et
@@ -189,7 +216,23 @@ vérifiée par un lint ne tient pas — même leçon que les invariants RLS et `
   `EventModalFormDesktop.tsx:342`. En thème sombre, le contraste **baisse** au survol.
   Ajouter `dark:hover:text-blue-300`. 10 min.
 
-### 🟡 6. Cibles tactiles sous 44 px
+### ✅ 6. Cibles tactiles sous 44 px · corrigées le 2026-08-24
+
+> **`/tasks` : 18 → 5. `/entreprise` : 22 → 8.** Croix des bannières 28 → 44, cloche de
+> notifications 36 → 44, boutons « Masquer » 24 → 44, chips de filtre 40 → 44 sur mobile (le
+> desktop garde sa densité), pastille de forfait 36 → 44, onglets d'organisation 42 → 44.
+>
+> Les restantes sont **conformes AA** : un lien inline dans une phrase (exempté), et des cibles
+> de 24 à 32 px délibérément laissées telles quelles, les cases à cocher des listes denses à
+> 24×24 parce que les lignes font 32 px (une cible de 44 déborderait de 6 px de chaque côté et
+> cocherait la mauvaise tâche), les boutons-titres à 32 px pour la même raison.
+>
+> 📏 **Ne pas « corriger » ces exceptions.** WCAG 2.1 AA n'exige pas 44×44, c'est 2.5.5, niveau
+> AAA. WCAG 2.2 ajoute 2.5.8 « Target Size (Minimum) » à **24×24** en AA. Les 44 px du projet sont
+> une règle **interne** (iOS HIG), plus stricte que la conformité. Détail et arbitrages :
+> [`ACCESSIBILITY.md`](./ACCESSIBILITY.md).
+
+### Le diagnostic d'origine
 
 18 sur `/tasks`, 22 sur `/entreprise`. Les plus petites sont des boutons icône seule :
 24×24 (« Masquer cette information »), 28×28 (« Modifier le profil »), 36×36 (notifications).

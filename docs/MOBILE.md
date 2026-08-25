@@ -1,5 +1,29 @@
 # Mobile-first — patterns et conventions
 
+## Note mobile / DA : 62 → **72 / 100** (2026-08-24 → 2026-08-25)
+
+| Ce qui compose la note | 08-24 | 08-25 |
+|---|---|---|
+| Feuilles cassées sous `prefers-reduced-motion` | 0 (corrigées le 24) | **0** |
+| Consommateurs de `MobileHeader` | 2 sur 7 pages | **8** |
+| Pages avec un titre mobile hors échelle | 6 | **0** |
+| Poignées de glissement qui ne font rien | 3 | **0** · retirées |
+| Adhérence à l'échelle typographique fermée | 169 / 1 656 = **10 %** | 243 / 1 927 = **13 %** |
+| Primitives à 0 consommateur | `MobileScreen`, `ListRow` | **inchangé** |
+
+**+10, le deuxième plus gros mouvement.** Le finding structurel de cet audit, « le design system
+mobile n'a jamais été adopté », a reculé pour la première fois depuis sa création en juillet :
+six pages migrées, et surtout **le composant qui portait la migration s'est révélé cassé depuis le
+début** (§2). Un mois de « il suffit de finir la migration » reposait sur une brique qui ne
+fonctionnait pas.
+
+**Ce qui plafonne la note :** l'adhérence typographique est passée de 10 % à 13 %, ce qui veut
+dire que **1 684 usages de Tailwind brut subsistent**, le chiffre absolu a même augmenté. Migrer
+les titres de page était le geste le plus visible, pas le plus large. Et il y a toujours deux
+langages visuels mobiles, pas un.
+
+---
+
 ## Audit mobile / direction artistique — 2026-08-14
 
 **Méthode** : mesures DOM/CSS sur l'app en mode démo (viewport 375×812) + comptage statique de
@@ -65,7 +89,41 @@ que sur l'opacité — ou déclarer le décalage d'entrée dans une variante neu
 `useReducedMotion()`. **Règle** : ne jamais faire dépendre une position d'arrivée d'une animation
 de transform.
 
-### 🟠 2. Le design system mobile n'a jamais été adopté
+### 🟠 2. Le design system mobile · adopté à moitié (remesuré le 2026-08-25)
+
+> ### ✅ La migration a repris, et elle a révélé que `MobileHeader` était cassé
+>
+> **Comptage au 2026-08-25**, après migration des six pages restantes :
+>
+> | Primitive | 08-14 | **08-25** |
+> |---|---|---|
+> | `MobileHeader` | 2 | **8** · `/dashboard`, `/habits`, `/okr`, `/statistics`, `/settings`, `/entreprise` + les deux d'origine |
+> | `MobileScreen` | 0 | **0** |
+> | `ListRow` | 0 | **0** |
+> | `TouchTarget` | 2 | 2 |
+> | `BottomSheet`, `Segmented`, `SectionHeader` | 2 chacun | inchangés |
+>
+> 🔴 **Et `MobileHeader` n'avait JAMAIS fonctionné.** Il écoutait `window.scroll`, alors que
+> `Layout.tsx` place tout le contenu dans un `<main class="flex-1 overflow-auto">` : c'est LUI qui
+> scrolle, et l'événement `scroll` d'un conteneur **ne remonte pas** jusqu'à `window`. Mesuré sur
+> `/tasks` avant correctif : après 500 px de scroll, `window.scrollY` valait **0**, le titre
+> restait à 28 px, le fond du header restait transparent. Le composant créé pour porter la
+> compaction au scroll ne l'a jamais portée, sur la seule page qui l'utilisait. Il remonte
+> désormais les ancêtres jusqu'au premier conteneur réellement scrollable, avec repli sur
+> `window` pour les pages hors `Layout`.
+>
+> **C'est l'argument le plus fort de cet audit contre le code sans consommateur** : deux
+> consommateurs, c'est assez pour croire qu'une brique marche, et pas assez pour s'en apercevoir
+> quand elle ne marche pas. Cf. [`ARCHITECTURE.md`](./ARCHITECTURE.md) §4.
+>
+> **Adhérence typographique, remesurée** : **243 usages de l'échelle fermée contre 1 684 de
+> Tailwind brut**, soit **13 %** (contre 10 % au 08-14). La proportion monte, le **stock aussi**
+> (1 487 → 1 684). Migrer les titres de page a traité le cas le plus visible, pas le plus
+> volumineux : le mode entreprise, qui n'a jamais été migré, continue de contourner l'échelle
+> badge par badge, c'est ce que la garde `design-system.guard.test.ts` attrape à répétition
+> (cf. [`TESTING.md`](./TESTING.md)).
+
+### Le diagnostic d'origine (2026-08-14)
 
 Les primitives de `src/components/mobile/` ont été créées en juillet 2026 pour unifier le rendu
 mobile. Comptage au 2026-08-14 :

@@ -17,7 +17,7 @@ Guide de travail dans ce dépôt. **Vérifié dans le code et contre la prod le 
 
 | Doc vivant | Quand la lire |
 |---|---|
-| [`docs/README.md`](./docs/README.md) | Carte complète : quel doc pour quelle zone |
+| [`docs/README.md`](./docs/README.md) | Carte complète + **tableau de bord des notes d'audit** (avant/après daté) |
 | [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) | Invariants du projet et leur état vérifié (audit 2026-08-14) |
 | [`docs/SECURITY.md`](./docs/SECURITY.md) | RLS, migrations SQL, repositories Supabase, Edge Functions, Stripe, CSP, secrets |
 | [`docs/MOBILE.md`](./docs/MOBILE.md) | Toute page/composant mobile, bottom-sheets, bug iOS Safari WebKit |
@@ -105,9 +105,13 @@ npm run build      # Build prod → dist/ (vite build + node prerender.mjs)
 npm run preview    # Prévisualiser le build
 npm run lint       # ESLint (doit retourner 0 erreur)
 npm run typecheck  # tsc -b (doit retourner 0 erreur)
-npm test           # Vitest (run once) — 1560 tests, ~3 min 10 s
+npm test           # Vitest (run once), 1621 tests / 144 fichiers, ~3 min 40 s (2026-08-25)
 npm run test:watch # Vitest en mode watch
-npm run test:coverage       # + couverture v8, seuils globaux et par fichier — ✅ VERTE (vérifié 2026-08-24)
+npm run test:coverage       # + couverture v8, seuils globaux et par fichier
+                            # 🔴 ROUGE au 2026-08-25 : 4 seuils manqués (lines 25,95 < 26 ·
+                            # functions 20,5 < 21 · statements 25,58 < 26 ·
+                            # supabase.repository.ts 63,71 < 65). Le job CI bloque.
+                            # ❌ NE PAS baisser les seuils. Voir docs/TESTING.md
 npm run validate:migrations # Garde statique sur supabase/migration/*.sql (CI)
 npm run check:rls           # Invariants RLS : auth.uid() wrappé, 1 seule policy PERMISSIVE,
                             # + toute fonction citée par une policy exécutable par authenticated (CI)
@@ -115,7 +119,7 @@ npm run check:drift         # Dérive repo ↔ prod (2 étapes : --print-sql pui
 npm run i18n:check          # Parité des clés fr ↔ en (CI, bloquant)
 npm run i18n:scan           # Chaînes en dur non externalisées
 npm run test:rls   # Tests d'intégration RLS (stack Supabase locale)
-npm run test:e2e   # Playwright — 41 tests × 2 projects (+ :ui, :report)
+npm run test:e2e   # Playwright, 62 tests × 2 projects = 124, 15 specs (+ :ui, :report)
 npm run cosmo      # CLI données réelles (cf. plus haut)
 ```
 
@@ -485,13 +489,15 @@ Debug : `localStorage.removeItem('cosmo_onboarding_modules_done')` puis reload.
 ## Base de données Supabase
 
 Migrations dans `supabase/migration/*.sql`, convention `NNN_<feature>.sql`.
-**119 fichiers de migration, dernière = `115_org_member_permissions.sql`** (au 2026-08-25,
-**à appliquer en prod**).
-**Toutes appliquées en prod** — ledger et droits d'exécution revérifiés en base le 2026-08-24
-après application des `111`→`114` (colonnes `team_projects.category_id` / `team_tasks.category_id`
-créées, job `cosmo-prune-declined-invitations` actif, `get_my_team_projects`/`get_my_team_tasks`
-exécutables par `authenticated` uniquement, rétention 400 j présente dans `touch_last_seen` /
-`record_demo_visit`).
+**125 fichiers de migration, dernière = `121_toggle_habit_bounded.sql`** (au 2026-08-25).
+**Toutes appliquées en prod**, ledger relu en base le 2026-08-25, `115` → `121` comprises.
+
+> ⚠️ **Le ledger porte une entrée de plus que le dépôt** :
+> `119b_habits_bounded_payload_future_guard`, appliquée en prod, sans fichier correspondant. Son
+> contenu a été relu et comparé au fichier `119` du dépôt : **identique**, le correctif a été
+> replié dans le fichier d'origine au lieu d'être versionné à part. Rejouer le dépôt sur base
+> vierge donne donc le même état final. **Règle : un correctif appliqué en prod se versionne sous
+> son propre numéro**, jamais par édition d'un fichier déjà appliqué.
 
 > ⚠️ Quatre migrations ne portent pas de fonctionnalité : elles **formalisent
 > l'existant**. `subscriptions`, trois colonnes et les privilèges par défaut du
@@ -634,6 +640,13 @@ La RPC renvoie `completions` **filtré aux 400 derniers jours**, ET quatre agré
 calculés **serveur sur l'historique entier** : `streak_current`, `streak_best`,
 `completions_total`, `first_completion_date`. C'est ce qui rend la troncature acceptable.
 
+- 🔴 **Ne jamais faire juger « aujourd'hui » par le serveur.** La base est en **UTC**, les clés
+  de `completions` sont écrites en date LOCALE (`toLocaleDateString('en-CA')`). Toute fonction qui
+  raisonne sur un jour prend `p_today` du client (`get_my_habits`, `toggle_habit_completion_v2`).
+  Utiliser `CURRENT_DATE` a produit une série affichée à **zéro** en Amérique du Nord entre 19 h
+  et minuit, et un compteur qui **baissait** en cochant entre 00 h et 02 h en France (mig. 119,
+  corrigé par la mig. 122). C'est la même classe de bug que celle éradiquée en juin 2026, revenue
+  par le SQL.
 - ❌ **Ne jamais dériver une série ou un total de `habit.completions`.** Utiliser
   `habitStreak(habit)` (`src/modules/habits/streak.ts`), `habit.completionsTotal` et
   `habit.firstCompletionDate`. Sur la fenêtre, un utilisateur assidu depuis trois ans
@@ -665,10 +678,24 @@ Trois canaux, tous montés **une seule fois** dans `App.tsx` :
 invitations et demandes d'adhésion d'organisation) et `useFriendsInboxRealtime` (mig. 120 :
 demandes d'amis reçues/envoyées, listes partagées).
 
-Ensemble, ils ont remplacé **six** sondages montés en permanence par `InboxMenu`, soit environ
-24 requêtes par minute et par utilisateur connecté avant toute interaction. **Il ne reste plus
-aucun `refetchInterval` permanent** : les six déclarations restantes sont soit conditionnelles
-(`live`, réservé aux écrans qui regardent la liste), soit gardées par le mode démo. Le `refetchInterval` de `useTasks` n'est plus qu'un filet
+Ensemble, ils ont remplacé **huit** sondages permanents, soit environ 30 requêtes par minute et
+par utilisateur connecté avant toute interaction.
+
+**Il reste QUATRE déclarations de `refetchInterval`, et aucune n'est permanente** (vérifié le
+2026-08-25) :
+
+| Où | Nature |
+|---|---|
+| `organizations/hooks.ts` · `useOrgMembers` | conditionnelle (`live`) |
+| `team-projects/hooks.ts` · `useTeamTasks` | conditionnelle (`live`) |
+| `team-okrs/hooks.ts` · `useTeamOKRs` | conditionnelle (`live`) |
+| `tasks/hooks.ts` · `useTasks` | filet à 5 min, et seulement si une collaboration est active |
+
+> ⚠️ **Compter les `refetchInterval` ne suffit pas : il faut qualifier chacun.** Une première
+> version de ce paragraphe annonçait « aucun permanent » alors que deux l'étaient encore, dont
+> `useOrgJoinRequests`, monté par `Layout` donc actif sur TOUTES les pages protégées pour tout
+> admin d'organisation. Un audit indépendant l'a trouvé. Le décompte ci-dessus est nominatif
+> exprès : un total ne prouve rien. Le `refetchInterval` de `useTasks` n'est plus qu'un filet
 de sécurité à 5 min.
 
 - ❌ Ne pas remonter la cadence du sondage : chaque tick est un `getAll()` complet. La version à

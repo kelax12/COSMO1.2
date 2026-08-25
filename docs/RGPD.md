@@ -1,8 +1,31 @@
 # RGPD — inventaire, droits des personnes et dette
 
-**Audit du 2026-08-14, inventaire complété le 2026-08-24** (trois tables entreprise ajoutées par
-les migrations 105/106/108). Premier audit dédié de ce domaine. Jusqu'ici, la conformité était
+**Audit du 2026-08-14, inventaire complété le 2026-08-24, revérifié le 2026-08-25** (mig. 116 et
+119 : effacement et portabilité). Premier audit dédié de ce domaine. Jusqu'ici, la conformité était
 traitée par fragments dans les audits sécurité. Mesuré sur le schéma de prod et le code.
+
+## Note RGPD : 78 → **84 / 100** (2026-08-24 → 2026-08-25)
+
+| Ce qui compose la note | 08-24 | 08-25 |
+|---|---|---|
+| Droit à l'effacement (art. 17) | ✅ code corrigé + garde | ✅ **+ FK alignée en base** (mig. 116) |
+| Divergence dépôt ↔ prod sur la sémantique d'effacement | ❌ ouverte (`SET NULL` vs `CASCADE`) | ✅ **refermée** |
+| Rétention des tables analytiques (art. 5.1.e) | ✅ mig. 114 | ✅ |
+| Droit à la portabilité (art. 20) | ✅ export CSV | ✅ **préservé** malgré la troncature du payload (mig. 119) |
+| Durées de conservation **publiées** | ❌ | ❌ **inchangé, c'est le point bloquant** |
+| Registre des traitements (art. 30) + DPA | ❌ | ❌ |
+
+**+6.** Deux gestes, tous deux techniques et tous deux du même genre : **faire que la base dise ce
+que le code promet**. La FK de `friends` déclarait `CASCADE` dans le dépôt et valait `SET NULL` en
+production, la ligne survivait à l'effacement, avec l'email et le nom en clair, désormais
+introuvable par identifiant. Et la borne posée sur `habits.completions` aurait tronqué l'export
+CSV, c'est-à-dire le support même du droit à la portabilité, si trois dérivations n'avaient pas été
+reprises en même temps (§4).
+
+**Ce qui plafonne la note n'a rien de technique et n'a pas bougé** : les durées de conservation ne
+sont **toujours pas publiées** dans la politique de confidentialité, alors que les trois valeurs
+sont désormais connues et appliquées en base (90 j / 400 j / 90 j). C'est trente minutes de
+rédaction, et c'est le seul point qui sépare le dossier d'une réponse tenable à un acheteur B2B.
 
 > Ce document décrit l'état technique. Il ne remplace pas un avis juridique, et la
 > [politique de confidentialité](../src/pages/PolitiqueConfidentialitePage.tsx) reste le document
@@ -156,9 +179,24 @@ C'est le chaînon manquant : le §3 (technique, 30 minutes) débloque le point 3
 2. ✅ **Rétention `user_activity_days` + `demo_devices` converties** (§3) — mig. 114,
    **appliquée en prod le 2026-08-24**. Débloque la publication des durées.
 3. 🟠 **Publier les durées** dans la politique de confidentialité : 90 j (visite démo non
-   convertie), 400 j (activité, visite démo convertie), 90 j (marqueurs Stripe). C'est le seul
-   point restant avant de pouvoir répondre à un acheteur B2B sur ce chapitre.
-4. 🟡 **Aligner la FK `friends_friend_user_id_fkey`** entre le dépôt (`CASCADE`) et la prod
-   (`SET NULL`) — cf. l'avertissement du §2. Le code ne dépend plus de la FK depuis le correctif,
-   mais la divergence rend le replay des migrations non fidèle.
+   convertie), 400 j (activité, visite démo convertie), 90 j (marqueurs Stripe). **C'est
+   désormais le SEUL point restant** avant de pouvoir répondre à un acheteur B2B sur ce
+   chapitre, et le seul du dossier qui n'attende plus rien d'autre que d'être écrit.
+4. ✅ **Aligner la FK `friends_friend_user_id_fkey`** entre le dépôt (`CASCADE`) et la prod
+   (`SET NULL`), **fait le 2026-08-25, mig. 116, appliquée et vérifiée en prod**. Effet sur les
+   données : aucun (11 lignes, 0 avec `friend_user_id IS NULL`). Le code ne dépendait plus de la
+   FK depuis le correctif de `delete-account` ; c'est le replay des migrations qui redevient
+   fidèle.
 5. Registre des traitements et DPA (§5) — quand une organisation cliente le demandera.
+
+> ✅ **Point de vigilance traité le 2026-08-25, la portabilité a failli être cassée par un
+> correctif de performance.** La mig. 119 borne `habits.completions` aux 400 derniers jours à la
+> lecture. L'export CSV (`src/lib/csv-export.ts`) comptait les complétions **en itérant sur ce
+> champ** : borné, il aurait exporté un total faux, en silence, sur le document même qui matérialise
+> le droit d'accès et de portabilité (art. 15 et 20). Il utilise désormais `completionsTotal`,
+> agrégat calculé serveur sur l'historique **entier**.
+>
+> **Règle qui en sort** : une optimisation de lecture doit énumérer ses consommateurs *avant*
+> d'être appliquée, et **tout export de données personnelles compte comme un consommateur
+> critique**. Un chiffre faux dans un export n'est pas un bug d'affichage : c'est une réponse
+> inexacte à l'exercice d'un droit.

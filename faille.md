@@ -6,23 +6,48 @@ et les **règles durables** tirées des audits.
 - Historique complet (preuve des corrections, audits datés 2026-04 → 2026-08, anciens ordres de
   priorité) : [`docs/archive/faille-historique.md`](./docs/archive/faille-historique.md) — **archive, non maintenue**.
 - Procédures et patterns : [`docs/SECURITY.md`](./docs/SECURITY.md).
-- Dernière vérification de ce fichier contre le code **et contre la prod** : **2026-08-24**.
+- Dernière vérification de ce fichier contre le code **et contre la prod** : **2026-08-25**.
 
 Légende : 🔴 bloquant · 🟠 important · 🟡 à planifier · ✅ corrigé
 
 ---
 
-## Gardes automatiques — état au 2026-08-24
+## Note de sécurité : 82 → **86 / 100** (2026-08-24 → 2026-08-25)
+
+| Ce qui compose la note | 08-24 | 08-25 |
+|---|---|---|
+| Findings High/Critical exploitables | 0 | 0 |
+| Findings ouverts dans le code | 0 (B-1/B-2/B-3 refermés) | 0 |
+| Bloquants restants, **hors dépôt** | A-9 (pas de PITR) + 5 réglages de console | **inchangés** |
+| Gardes automatiques vertes | 4 | **4** (+ périmètre élargi : 128 policies, 125 migrations) |
+| Nouvelle surface livrée **avec** son test de base réelle | · | ✅ `org_member_permissions` (mig. 115) + `e2e/rls/org-permissions.test.ts` |
+| Fonctions `anon`-exécutables | 2 (les deux volontaires) | 2 |
+
+**+4, et pas davantage.** Les six migrations du 2026-08-25 (`115` → `121`) n'ont ouvert aucune
+faille : la plus sensible, un système de permissions par membre, est arrivée avec sa policy, son
+trigger de garde en `SECURITY INVOKER`, ses `REVOKE`, et **337 lignes de test d'intégration contre
+une vraie base dans le même commit**. C'est la première fois qu'une brique entreprise fait ça, et
+c'est ce que la note récompense.
+
+Ce qui l'empêche de monter plus haut n'a pas bougé d'un pouce : **A-9** (plan Free, pas de PITR,
+restauration jamais testée) et les réglages de console. Ce sont les deux seules choses qui
+séparent « aucune faille connue » de « rattrapable en production », et aucune n'est du code.
+
+---
+
+## Gardes automatiques · état au 2026-08-25
 
 | Garde | Résultat |
 |---|---|
-| `npm run check:rls` | ✅ **120 policies sur 68 migrations, 0 violation** — + nouvelle règle 3 : toute fonction citée par une policy doit rester exécutable par `authenticated` |
-| `npm run validate:migrations` | ✅ **114 fichiers, 0 erreur, 6 avertissements** — 5 préexistants (doublons `000`/`007`/`010`, deux `FOR UPDATE` sans `WITH CHECK`) + 1 nouveau, informatif (mig. `110`, trigger de notification en `SECURITY DEFINER`, légitime) |
+| `npm run check:rls` | ✅ **128 policies sur 79 migrations, 0 violation** (120/68 au 08-24) · règle 3 comprise : toute fonction citée par une policy doit rester exécutable par `authenticated` |
+| `npm run validate:migrations` | ✅ **125 fichiers, 0 erreur, 6 avertissements**, les **mêmes** 6 qu'au 08-24 : 5 préexistants (doublons `000`/`007`/`010`, deux `FOR UPDATE` sans `WITH CHECK`) + 1 informatif (mig. `110`, trigger de notification en `SECURITY DEFINER`, légitime). Les sept migrations du 25 n'en ont ajouté aucun |
 | `npm run typecheck` · `npm run lint` | ✅ 0 erreur (27 warnings Fast-refresh tolérés) — + règle `no-restricted-imports` sur l'alias `@/` |
 | `npm run i18n:check` | ✅ 19 namespaces, 0 erreur |
-| Advisors Supabase (sécurité) | 5 INFO `rls_enabled_no_policy` (tables analytiques, **deny-all volontaire**), 1 WARN `auth_leaked_password_protection` (= A-10 ci-dessous), 48 WARN `authenticated_security_definer_function_executable`, **5** WARN `anon_security_definer_function_executable` (2 de plus qu'au 2026-08-14, cf. finding B-3) |
+| `npm test` | ✅ **1 621 tests / 144 fichiers**, tous verts (1 583 / 143 au 08-24) |
+| `npm run test:coverage` | 🔴 **ROUGE au 2026-08-25** · 4 seuils manqués de peu (lines 25,95 % < 26 · functions 20,5 % < 21 · statements 25,58 % < 26 · `supabase.repository.ts` 63,71 % < 65). Ce n'est **pas** une faille : c'est le job CI `lint-test-build` qui bloque. Cf. [`docs/TESTING.md`](./docs/TESTING.md) |
+| Advisors Supabase (sécurité) | 5 INFO `rls_enabled_no_policy` (tables analytiques, **deny-all volontaire**), 1 WARN `auth_leaked_password_protection` (= A-10 ci-dessous), 51 WARN `authenticated_security_definer_function_executable` (48 au 08-24 : les 3 nouvelles RPC de lecture), **2** WARN `anon_security_definer_function_executable`, les deux volontaires, aucun de plus après sept migrations |
 | Couverture RLS | ✅ **toutes** les tables `public` ont RLS activée (vérifié en prod : `relrowsecurity = false` sur 0 table) |
-| Migrations appliquées en prod | ✅ ledger à jour jusqu'à `110_comment_notifications` (appliqué et vérifié le 2026-08-24) |
+| Migrations appliquées en prod | ✅ ledger à jour jusqu'à `121_toggle_habit_bounded` (relu en base le 2026-08-25) |
 
 Les fonctions exécutables par `anon` étaient **cinq** au 2026-08-24. Deux le sont
 volontairement : `preview_share_link(uuid)` (aperçu d'un lien d'invitation avant connexion) et
@@ -36,8 +61,34 @@ retombera à deux dès qu'elle sera appliquée.
 
 ## État global
 
-**Aucun finding High ou Critical exploitable** (dernière passe complète : **2026-08-24**, contre
+**Aucun finding High ou Critical exploitable** (dernière passe complète : **2026-08-25**, contre
 la prod `ykeugqfgklejcdbrmawy`). Risque global : **faible**.
+
+### Ce que la vague du 2026-08-25 a changé (mig. `115` → `121`)
+
+- ✅ **`org_member_permissions` (mig. 115)**, dix droits surchargeables par membre. Nouvelle
+  surface d'autorisation, donc nouveau risque potentiel ; elle arrive avec sa policy, un trigger
+  de garde en `SECURITY INVOKER` (règle B-3 respectée dès le premier jet, pas après coup), les
+  `REVOKE` correspondants, et `e2e/rls/org-permissions.test.ts` contre une base réelle. Deux
+  invariants méritent d'être relus avant toute évolution : `assign_targets = NULL` (aucune
+  décision → tout le monde) et `{}` (personne) sont **opposés**, et **aucune ligne ne peut être
+  posée sur un admin**, sinon un admin se retire un droit et bloque son organisation sans chemin
+  de retour.
+- ✅ **`friends.friend_user_id` : `SET NULL` → `CASCADE` (mig. 116)**, la prod divergeait du
+  dépôt sur la sémantique d'effacement d'une table qui porte l'email et le nom d'un tiers. Défense
+  en profondeur : la purge explicite de `delete-account` reste le rempart principal. Détail :
+  [`docs/RGPD.md`](./docs/RGPD.md) §2.
+- ✅ **Trois RPC de lecture (`117`, `119`, `121`)**, toutes `REVOKE`-ées pour `anon`, exécutables
+  par `authenticated` seulement. L'advisor `anon_security_definer_function_executable` est resté à
+  **2** (les deux volontaires) après sept migrations : le durcissement de la mig. `109` tient.
+- ⚠️ **Une entrée de ledger sans fichier** : `119b_habits_bounded_payload_future_guard` est
+  appliquée en prod et n'existe pas dans `supabase/migration/`. Vérifié : son contenu est
+  **identique** à celui du fichier `119` du dépôt (le correctif a été replié dans le fichier
+  d'origine au lieu d'être versionné à part), donc rejouer le dépôt sur base vierge donne le
+  **même** état final. Dérive de forme, pas de fond, mais c'est exactement le motif que
+  [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) §5 a mis six semaines à voir la première fois.
+  **Règle : un correctif appliqué en prod se versionne sous son propre numéro, jamais par édition
+  du fichier déjà appliqué.**
 
 Trois choses ont changé depuis le 2026-08-14 :
 
@@ -209,14 +260,16 @@ Aucun ne bloque un déploiement ; tous sont des clics dans le Dashboard.
 
 ---
 
-## Ordre de priorité avant déploiement prod (à jour 2026-08-24)
+## Ordre de priorité avant déploiement prod (à jour 2026-08-25)
 
 Section référencée par [`CLAUDE.md`](./CLAUDE.md) — elle n'existait plus depuis la refonte
 documentaire du 2026-08-14, le lien pointait dans le vide. Restaurée ici.
 
 | # | Action | Nature | Qui | État |
 |---|---|---|---|---|
+| 0 | **`npm run test:coverage` est ROUGE** · 4 seuils manqués de 0,05 à 1,3 point. Le job CI `lint-test-build` bloque donc **tout déploiement**. Ce n'est pas une faille, c'est la porte d'entrée | 🔴 CI | · | ⏳ cf. [`docs/TESTING.md`](./docs/TESTING.md) |
 | 1 | Migrations `109`/`110` (B-1, B-2, B-3 + notifications de commentaire) | 🟠 sécurité + feature | — | ✅ **appliquées et vérifiées en prod le 2026-08-24** |
+| 1bis | Migrations `115` → `121` (permissions, FK RGPD, RPC indexables, Realtime, payload borné) | 🟠 sécurité + perf | · | ✅ **appliquées et vérifiées en prod le 2026-08-25** |
 | 2 | **Réglages de console Supabase** : A-10 (leaked password protection), MFA sur le compte admin, allowlist de redirection OAuth, secure email change | 🟠 clics Dashboard, ~30 min cumulés | **Axel** | ⏳ **en attente** |
 | 3 | **A-9 — plan Pro + PITR + drill de restauration** | 🔴 résilience, seul bloquant | **Axel** (compte, non scriptable) | ⏳ **en attente** |
 | 4 | Test de bout en bout de l'attribution `?ref=` (cf. [`docs/ACQUISITION.md`](./docs/ACQUISITION.md) §3) | 🟡 exige une vraie inscription | **Axel** | ⏳ **en attente** |
@@ -267,6 +320,14 @@ Ces règles ont chacune coûté un finding. Elles s'appliquent à tout nouveau c
 - **Un trigger `BEFORE` s'exécute avant le `WITH CHECK` de la RLS.** En `SECURITY DEFINER`, ses
   messages d'erreur deviennent un canal d'information sur des lignes qu'on n'a pas le droit de
   lire (B-3).
+- **Un correctif appliqué en prod se versionne sous son propre numéro**, jamais par édition du
+  fichier déjà appliqué. Sinon le ledger porte une version que le dépôt ne contient pas, et
+  personne ne le voit tant que rien ne rejoue les migrations à blanc (`119b`, 2026-08-25 : sans
+  gravité cette fois, le contenu était identique, mais c'est le mécanisme exact de la dérive
+  repo ↔ prod).
+- **Une nouvelle surface d'autorisation se livre avec son test contre une base réelle**, dans le
+  même commit. Une policy ne se prouve pas par relecture : `e2e/rls/org-permissions.test.ts`
+  (mig. `115`) est le modèle à suivre.
 
 ---
 
@@ -280,10 +341,18 @@ npm run check:rls             # invariants RLS (CI)
 npm run check:drift           # dérive repo ↔ prod, 2 étapes (cf. docs/DEPLOYMENT.md)
 ```
 
-Repo au 2026-08-24 : **118 fichiers, dernière = `114_analytics_retention.sql`**,
-**toutes appliquées en prod** — `111` → `114` déployées le 2026-08-24, après `109`/`110`.
+Repo au 2026-08-25 : **125 fichiers, dernière = `121_toggle_habit_bounded.sql`**,
+**toutes appliquées en prod**, `115` → `121` déployées le 2026-08-25, après `111` → `114`.
 
-Vérifié en base immédiatement après application :
+Vérifié en base le 2026-08-25 (`supabase_migrations.schema_migrations`) :
+- `115_org_member_permissions` → `121_toggle_habit_bounded` présentes, dans l'ordre.
+- ⚠️ Le ledger porte **une entrée de plus que le dépôt** :
+  `119b_habits_bounded_payload_future_guard`. Contenu relu et comparé au fichier `119` du dépôt :
+  **identique**. Cf. l'avertissement de l'État global.
+- Aucune migration en attente. `npm run check:drift` reste l'outil de référence avant tout
+  déploiement comportant une migration.
+
+Vérifié en base lors de la vague précédente (2026-08-24) :
 - `team_categories` existe, avec `team_projects.category_id` / `team_tasks.category_id` (111).
 - Le job `cosmo-prune-declined-invitations` est planifié et actif, `30 3 * * *` (112).
 - `get_my_team_projects` / `get_my_team_tasks` exécutables par `authenticated` uniquement (`anon`
@@ -295,8 +364,14 @@ Vérifié en base immédiatement après application :
 
 - `099` → `108` : **appliquées en prod** (ledger relu le 2026-08-24), y compris la `100` qui
   referme la fuite des helpers.
-- `109` (correctifs B-1/B-2/B-3) et `110` (notifications de commentaire) : **écrites, PAS
-  appliquées**. Elles portent leur propre bloc de vérification SQL en fin de fichier.
+- `109` (correctifs B-1/B-2/B-3) et `110` (notifications de commentaire) : **appliquées et
+  vérifiées en prod le 2026-08-24**. Elles portent leur propre bloc de vérification SQL en fin de
+  fichier.
+
+> ⚠️ Ces deux dernières lignes ont dit « écrites, PAS appliquées » pendant vingt-quatre heures
+> alors que le haut du même fichier disait le contraire, et vrai. Un document de sécurité qui se
+> contredit sur l'état de la production est pire qu'un document absent. **Relire ce bloc à chaque
+> application, pas seulement l'en-tête.**
 
 Procédure d'application, checklist de rédaction d'une migration et pattern RLS obligatoire :
 [`docs/SECURITY.md`](./docs/SECURITY.md). Réconciliation du ledger :
