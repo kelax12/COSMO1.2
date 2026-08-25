@@ -348,11 +348,16 @@ Garde-fous propres à cette zone :
   `billing_flags.enterprise_seat_limit = false` en prod — les **deux** ensemble, jamais l'un
   sans l'autre (cf. règle ci-dessous).
 - **La plomberie reste entière et déployée** : `stripe-org-checkout` / `stripe-org-portal`, les
-  8 `STRIPE_ORG_PRICE_*` en secrets (4 mensuels + 4 annuels), `org_subscriptions` (mig. 101), `org_seats_allowed()`, et
-  `stripe-webhook` — redéployée le 2026-08-24, car la version qui tournait en prod était
-  **antérieure au routage `org_id`** et aurait fait retomber une facture d'organisation sur
-  l'abonnement personnel du propriétaire. Réactiver = rebasculer les deux drapeaux, rien à
-  reconstruire.
+  `org_subscriptions` (mig. 101 + 123), `org_seats_allowed()`, et `stripe-webhook`. Les deux
+  fonctions qui portent la périodicité, `stripe-org-checkout` (v2) et `stripe-webhook` (v17), ont
+  été **redéployées en prod le 2026-08-25** et fument-testées (webhook : 400 « Invalid
+  signature » ; checkout : 401 JSON de la fonction elle-même, donc les modules `_shared` se
+  chargent). Réactiver = rebasculer les deux drapeaux, rien à reconstruire.
+- 🔴 **Les 4 secrets `STRIPE_ORG_PRICE_*_YEARLY` NE SONT PAS POSÉS** (au 2026-08-25) : les prix
+  annuels n'ont jamais été créés côté Stripe. Seuls les 4 mensuels existent. Un checkout annuel
+  répondrait donc `tier_unavailable`. Inoffensif tant que `ENTERPRISE_BILLING_ENFORCED = false`
+  (aucun CTA de paiement n'est monté), bloquant le jour de la réactivation. Montants à créer,
+  intervalle `year` : 168 / 420 / 840 / 1 680 €, jamais l'équivalent mensuel affiché.
 - 🔴 **Les deux drapeaux se déplacent ensemble.** Le flag TS ne masque que les CTA ; le blocage
   réel est `billing_flags.enterprise_seat_limit`. Serveur `true` + client `false` = un
   propriétaire se voit refuser une invitation (`seat_limit_reached`) sans qu'aucun écran ne lui
@@ -501,9 +506,9 @@ Debug : `localStorage.removeItem('cosmo_onboarding_modules_done')` puis reload.
 
 Migrations dans `supabase/migration/*.sql`, convention `NNN_<feature>.sql`.
 **127 fichiers de migration, dernière = `123_org_subscriptions_billing_interval.sql`**
-(au 2026-08-25). La **123 a été appliquée en prod le 2026-08-25**, avant le déploiement de
+(au 2026-08-25). La **123 a été appliquée en prod le 2026-08-25**, avant le redéploiement de
 `stripe-webhook`, qui écrit désormais `billing_interval`.
-**Toutes appliquées en prod**, ledger relu en base le 2026-08-25, `115` → `121` comprises.
+**Toutes appliquées en prod**, ledger relu en base le 2026-08-25, `115` → `123` comprises.
 
 > ⚠️ **Le ledger porte une entrée de plus que le dépôt** :
 > `119b_habits_bounded_payload_future_guard`, appliquée en prod, sans fichier correspondant. Son

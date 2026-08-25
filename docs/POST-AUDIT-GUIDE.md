@@ -328,6 +328,10 @@ supabase functions deploy stripe-org-portal
 supabase functions deploy stripe-webhook
 ```
 
+✅ **Fait le 2026-08-25** : `stripe-org-checkout` (v2) et `stripe-webhook` (v17) sont déployées
+avec la périodicité. `stripe-org-portal` n'a pas changé, sa v1 reste valide. Il ne reste que la
+création des prix annuels et la pose des 4 secrets `*_YEARLY` (§5.1 et §5.2).
+
 `supabase/config.toml` déclare déjà les deux nouvelles fonctions en `verify_jwt = true`.
 Ajouter à l'endpoint webhook, s'ils n'y sont pas : `checkout.session.completed`,
 `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.payment_succeeded`,
