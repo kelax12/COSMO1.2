@@ -9,6 +9,34 @@ s'est révélée fausse.
 Toutes les mesures de ce document sont **reproductibles** : les requêtes sont en
 [§10 Runbook](#10-runbook--refaire-cet-audit).
 
+## Note de scalabilité : 71 → **84 / 100** (2026-08-24 → 2026-08-25)
+
+| Ce qui compose la note | 08-24 | 08-25 |
+|---|---|---|
+| §2 Coût RLS des lectures entreprise | ✅ corrigé (mig. 113) | ✅ |
+| §2bis `team_task_dependencies` | ❌ ouvert, hérite du coût | ✅ **corrigé** (mig. 117) |
+| §3 Sondage périodique | ❌ 12 `refetchInterval`, ~24 req/min/onglet | ✅ **4, aucun permanent** (mig. 118 + 120, puis 2ᵉ passe) |
+| §4 Payload `habits.completions` | ❌ non borné, ~280 ko projetés à 3 ans | ✅ **borné** (mig. 119 + 121) |
+| §5 Pagination / hook mort | ❌ livré, 0 consommateur | ✅ **tranché** : supprimé, marche à suivre laissée |
+| §8 Plan Postgres | Free, pas de PITR | **inchangé** |
+
+**+13, le plus gros mouvement de tous les audits.** Quatre findings structurels sur cinq sont
+refermés en une journée, et tous les quatre par le même geste : **déplacer le calcul là où sont
+les données**, une RPC qui joint au lieu d'un prédicat par ligne, un agrégat serveur au lieu d'un
+transfert d'historique, un canal Realtime au lieu d'un tick.
+
+**Ce qui l'empêche d'aller plus haut, honnêtement :**
+
+1. **Rien n'a été mesuré à volume.** Les correctifs sont vérifiés en plan, en tests et en
+   décompte, **pas** contre une organisation de 50 personnes et 2 000 tâches. La projection du
+   §9 reste une projection, et c'est exactement le genre de confiance non vérifiée qui a laissé
+   passer un `Seq Scan` global pendant six semaines (§6).
+2. **Le §3 a été annoncé fermé une première fois alors qu'il ne l'était pas.** Il l'est
+   maintenant, mais au deuxième essai, et c'est un décompte à la main qui l'a rattrapé, pas une
+   garde. Tant qu'aucun script ne compte les `refetchInterval` inconditionnels, la troisième
+   occurrence est une question de temps.
+3. Le plan Free n'a pas bougé : c'est toujours le seul bloquant de résilience.
+
 ---
 
 ## 1. Volumétrie réelle (remesurée le 2026-08-24)
@@ -135,20 +163,63 @@ Les policies restent en place en défense en profondeur, comme pour `get_my_task
 
 ---
 
-## 3. ✅ Le sondage périodique — fermé le 2026-08-25
+## 3. ✅ Le sondage périodique · fermé le 2026-08-25, **au deuxième essai**
 
-> **Plus aucun `refetchInterval` permanent.** Les trois derniers (demandes
-> d'amis reçues et envoyées à 15 s, listes partagées à 20 s), montés en
-> permanence par `InboxMenu`, sont passés au Realtime (mig. 120,
-> `useFriendsInboxRealtime`). Deux tables suffisaient pour trois hooks :
-> `friend_requests` porte les demandes reçues ET envoyées.
+> ### ⚠️ La première annonce de fermeture était fausse. Elle a tenu quelques heures.
 >
-> Décompte final : **9 → 6 déclarations**, dont 2 conditionnelles (`live`,
-> réservées aux écrans qui regardent la liste) et 2 gardées par le mode démo.
-> Le module `friends` est à **zéro**.
+> La version écrite le matin du 2026-08-25 affirmait « **plus aucun `refetchInterval`
+> permanent** », et `CLAUDE.md` a repris la formule. **C'était faux : trois tournaient encore.**
+> La relecture de l'après-midi les a nommés un par un, et ils ont été corrigés dans la foulée,
+> `useOrgJoinRequests` et `usePendingSharedTasks` passent au canal Realtime, `useTeamOKRs` prend
+> l'option `live` comme ses deux voisins.
 >
-> Économie : ~15 requêtes par minute et par utilisateur connecté, avant toute
-> interaction.
+> **Décompte final, nominatif** : 4 déclarations, dont 3 conditionnelles (`useOrgMembers`,
+> `useTeamTasks`, `useTeamOKRs`, toutes en `live`) et 1 filet de sécurité à 5 min sur `useTasks`,
+> actif seulement si une collaboration est en cours.
+>
+> **La leçon vaut plus que le correctif, et elle est en deux temps.**
+>
+> 1. **Un total ne prouve rien ; seul un décompte nominatif prouve quelque chose.** « 9 → 6 » se
+>    lisait comme un progrès et cachait trois sondages permanents. Le tableau ci-dessous existe
+>    pour ça : il oblige à écrire, pour chaque déclaration, **qui la monte**.
+> 2. **`isDemo ? false : 20_000` n'est pas une garde.** Ces deux-là avaient été comptés comme
+>    « gardés par le mode démo ». C'est l'inverse : la condition retire le sondage du seul
+>    environnement qui ne paie rien, et le laisse en production, là où il coûte.
+>
+> Voici l'état qui a été trouvé, conservé parce qu'il explique le mécanisme :
+>
+> | Hook | Cadence | Monté par | Verdict |
+> |---|---|---|---|
+> | `useOrgMembers` | 20 s | `/entreprise` uniquement | ✅ conditionnel (`live`) |
+> | `useTeamProjects` | 20 s | `/entreprise` uniquement | ✅ conditionnel (`live`) |
+> | `useTasks` | 5 min | partout | ✅ filet de sécurité, et **seulement** si une collaboration est active |
+> | **`useTeamOKRs`** | **30 s** | **`CommandPalette`, monté dans `App.tsx`** | ❌ **permanent, sur TOUTES les pages** |
+> | **`usePendingSharedTasks`** | **20 s** | `InboxMenu` (`/dashboard`) et `TasksInboxMenu` (`/tasks`) | ❌ permanent sur les deux pages du socle |
+> | **`useOrgJoinRequests`** | **20 s** | `InboxMenu` + `use-org-notifications` | ❌ permanent, pour les admins d'organisation |
+>
+> **Le pire des trois était `useTeamOKRs`**, et il est de la même famille que le bug déjà corrigé
+> pour `useTeamTasks` : `CommandPalette` est monté **au niveau `App`** pour porter le raccourci
+> Ctrl/Cmd + K. Il appelait donc `useTeamOKRs(activeOrg?.id)` en permanence, palette **fermée**,
+> sur chaque écran. Tout membre d'une organisation payait **120 requêtes par heure d'onglet
+> ouvert** pour une liste que personne ne regardait.
+>
+> ⚠️ **Le motif est à retenir, parce qu'il s'est produit deux fois** : un composant monté au
+> niveau `App` pour un raccourci clavier **transforme n'importe quel hook qu'il appelle en coût
+> permanent, sur toutes les pages**. `CommandPalette` a déjà fait payer `useTeamTasks` de cette
+> façon, et a recommencé avec `useTeamOKRs`. Tout hook consommé par `CommandPalette` doit être
+> considéré comme monté partout.
+>
+> **Bilan chiffré** : de ~24 à **~0** requête par minute et par utilisateur avant interaction,
+> hors écrans qui regardent réellement une liste. Le module `friends` est à zéro.
+
+### Ce qui a été fait (2026-08-25, mig. 118 et 120)
+
+> Trois sondages d'organisation (mig. 118) puis trois sondages d'amis (mig. 120,
+> demandes reçues et envoyées à 15 s, listes partagées à 20 s), tous montés en
+> permanence par `InboxMenu`, sont passés au Realtime. Deux tables suffisaient
+> pour trois hooks : `friend_requests` porte les demandes reçues ET envoyées.
+>
+> Le module `friends` est à **zéro** `refetchInterval`.
 
 ### Le diagnostic d'origine
 
@@ -384,12 +455,19 @@ par utilisateur actif**.
 |---|---|
 | **×10 comptes perso** (270) | ✅ Sans modification. |
 | **×100 comptes perso** (2 700) | 🟡 Tient. Prévoir le pooling et surveiller le CPU DB. |
-| **Une organisation de 50 personnes, ~2 000 team_tasks** | 🔴 **Ne tient pas confortablement** — chaque lecture de liste paie ~420 ms de RLS (§2). C'est le scénario du plan d'acquisition B2B. |
-| **1 000 utilisateurs actifs simultanés** | 🔴 ~24 000 req/min de sondage seul (§3), chacune payant le coût RLS. |
+| **Une organisation de 50 personnes, ~2 000 team_tasks** | 🟡 **Débloqué en théorie, jamais mesuré** : les lectures passent par `get_my_team_tasks` / `get_my_team_projects` / `get_my_team_task_dependencies` (mig. 113 et 117), qui n'évaluent le sous-arbre managérial qu'une fois par organisation. Le ~420 ms projeté ne s'applique plus au chemin emprunté. **Mais aucune mesure n'a été faite à ce volume** : la prod compte 8 `team_tasks`. |
+| **1 000 utilisateurs actifs simultanés** | 🟡 Le sondage est tombé de ~24 à ~4 req/min/utilisateur (§3), soit ~4 000 req/min au lieu de 24 000. Reste `useTeamOKRs`, permanent sur toutes les pages pour tout membre d'organisation. |
 
-**Ordre de traitement recommandé** : §2 (RPC entreprise indexable) d'abord — c'est le seul finding
-qui bloque le cas d'usage que le produit cherche à vendre. Puis §3 (Realtime sur les hooks
-d'organisation). §4 et §5 restent de la dette confortable tant qu'on est à 289 lignes par compte.
+**Ordre de traitement recommandé, révisé le 2026-08-25**, les deux findings qui bloquaient le
+cas d'usage B2B (§2 et §2bis) sont refermés, le payload (§4) et le hook mort (§5) aussi. Il reste,
+par ordre décroissant de rapport valeur/effort :
+
+1. **`useTeamOKRs` en `live` conditionnel** (§3), ~15 minutes, supprime le dernier sondage
+   permanent monté à l'échelle de l'application.
+2. **Mesurer §2 à volume réel**, injecter ~2 000 `team_tasks` dans une organisation de test et
+   rejouer le runbook §10. Sans cette mesure, la correction est *crue*, pas *prouvée*, et c'est
+   précisément ce qui avait laissé passer le `Seq Scan` global pendant six semaines (§6).
+3. Les deux derniers sondages permanents vers le canal Realtime existant.
 
 ---
 

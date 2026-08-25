@@ -1,5 +1,56 @@
 # Tests — COSMO
 
+## Note de tests / CI : 80 → **83 / 100** (2026-08-24 → 2026-08-25)
+
+| Ce qui compose la note | 08-24 | 08-25 |
+|---|---|---|
+| Suite unitaire | 1 583 / 143 fichiers, verte | **1 621 / 144, verte** |
+| Tests E2E Playwright | 41 × 2 projects, 11 specs | **62 × 2 = 124, 15 specs** |
+| Tests d'intégration RLS (base réelle) | 5 fichiers | **6** · dont `org-permissions.test.ts`, 337 lignes |
+| Jobs CI | 4 | **5** (+ `lighthouse`) |
+| Gardes-cliquets | 6 | **6** |
+| `npm run test:coverage` | ✅ verte | 🔴 **ROUGE · 4 seuils manqués** |
+
+**+3 seulement, alors que la journée a ajouté 38 tests unitaires, 21 tests E2E et une gate CI.**
+La raison tient en une ligne : **la gate de couverture est repassée au rouge**, et c'est la porte
+d'entrée du déploiement.
+
+Ce qui monte la note est réel et important : pour la première fois, une brique entreprise
+(les permissions, mig. 115) est arrivée **avec son test d'intégration contre une vraie base dans
+le même commit**, 337 lignes qui vérifient la policy, pas la relecture de la policy. C'est le
+standard à tenir pour toute nouvelle surface d'autorisation.
+
+### 🔴 `npm run test:coverage` · rouge au 2026-08-25
+
+```
+lines      25,95 %  < 26 %      functions   20,50 %  < 21 %
+statements 25,58 %  < 26 %      src/modules/**/supabase.repository.ts  63,71 % < 65 %
+```
+
+**Ce n'est pas une régression de qualité, c'est une régression de RATIO**, et la nuance compte
+pour décider quoi faire. La couverture absolue n'a pas baissé : 38 tests ont été ajoutés. C'est le
+dénominateur qui a explosé. La journée a livré environ **2 000 lignes d'interface et de hooks non
+testés** (`MemberPermissionsSheet` 310, `PyramidNodeCard` 516, `useOrgInboxRealtime` 131,
+`useFriendsInboxRealtime` 123), pendant que les 205 tests de `permissions.ts` couvraient la partie
+**pure**, la seule facile à tester.
+
+**Conséquence opérationnelle : le job `lint-test-build` bloque, donc rien ne se déploie.**
+
+**Deux sorties, et une seule est acceptable.** Baisser les seuils de 0,05 point remettrait au vert
+en trente secondes, et viderait le cliquet de son sens, puisque c'est précisément son rôle
+d'attraper une vague de code non testé. La règle du fichier est que ces nombres **ne redescendent
+jamais**. La sortie est donc d'écrire les tests manquants, en commençant par la cible que la gate
+désigne elle-même : `src/modules/**/supabase.repository.ts` à 63,71 % pour un seuil de 65 %,
+c'est la frontière anti-mass-assignment, la seule de cette liste qui porte de la sécurité.
+
+> ⚠️ **Mesure prise sur un arbre de travail non vierge.** Au moment de la mesure, une session
+> concurrente modifiait `src/modules/habits/` (ajout de `p_today`, migration `122` non commitée),
+> ce qui rendait rouge un test de `habits/supabase.repository.test.ts`. Un test rouge sur douze ne
+> déplace pas un ratio de 0,5 point, donc le constat tient, mais **le remesurer sur un arbre
+> propre avant de conclure sur les chiffres exacts.**
+
+---
+
 > **Gates ajoutées le 2026-08-07** (audit architecture) :
 > - `npm run check:rls` — invariants RLS (`auth.uid()` wrappé, une seule policy
 >   PERMISSIVE par rôle+action). **Bloquant en CI.** Cliquet : n'audite que les
@@ -97,7 +148,12 @@
 >
 > ## Audit de couverture — 2026-08-14 (⚠️ PÉRIMÉ, cf. encadré)
 >
-> > ✅ **Résolu. Vérifié le 2026-08-24 : `npm run test:coverage` ne signale AUCUNE violation de
+> > 🔴 **Rouverte le 2026-08-25** : la gate est de nouveau rouge, pour une raison **différente**,
+> > non plus des seuils posés au-dessus du réel, mais une vague de code non testé qui a fait
+> > baisser le ratio sous des seuils, eux, correctement calibrés. Cf. l'encadré en tête de fichier.
+> > Le raisonnement ci-dessous reste valide et explique pourquoi on ne baisse PAS les seuils.
+>
+> > ✅ **Résolu au 2026-08-24 : `npm run test:coverage` ne signalait AUCUNE violation de
 > > seuil.** La section ci-dessous décrit l'état d'AVANT la recalibration du 2026-08-18
 > > (`functions` 45 → 21, `branches` 60 → 21, `lines`/`statements` 10 → 26, posés au réel mesuré).
 > > Elle est conservée pour le raisonnement — « un seuil au-dessus du mesuré ne protège de rien, il
@@ -188,14 +244,20 @@ npm run test:e2e:report  # rapport HTML
 **Avant le premier run** : `npx playwright install chromium webkit` (le project
 `mobile-safari` utilise WebKit).
 
-**41 tests × 2 projects = 82** (`chromium` = Desktop Chrome, `mobile-safari` =
-iPhone 12), répartis sur 11 specs (au 2026-08-14). Les 3 tests de
-`demo-touch-gestures.spec.ts` sont `skip` sur chromium (viewport ≥ 768 px).
-La CI ne joue que le project `chromium`.
+**62 tests × 2 projects = 124** (`chromium` = Desktop Chrome, `mobile-safari` =
+iPhone 12), répartis sur **15 specs** (au 2026-08-25 ; 41 × 2 sur 11 specs au
+2026-08-14). Les 3 tests de `demo-touch-gestures.spec.ts` sont `skip` sur
+chromium (viewport ≥ 768 px). La CI ne joue que le project `chromium`.
+
+Les 4 specs ajoutées couvrent le mode entreprise, arrivé jusque-là sans E2E :
+`demo-entreprise-dependencies` (9), `demo-entreprise-tasks-tab` (5),
+`demo-entreprise-session-fixes` (5), `demo-entreprise-okr-modal` (2).
 
 Les fichiers `e2e/rls/*.test.ts` ne sont **pas** des specs Playwright : ce sont
 des tests Vitest d'intégration (`npm run test:rls`, job CI `rls-integration`,
-stack Supabase locale).
+stack Supabase locale). Ils sont **6** au 2026-08-25 : `tasks`, `get-my-tasks`,
+`shared-tasks`, `org-helpers-not-exposed`, `org-subscriptions`, et
+`org-permissions` (mig. 115).
 
 **Architecture** :
 - `e2e/fixtures.ts` : fixture `demoPage`. Clean localStorage/cookies → pose
@@ -258,14 +320,22 @@ npx playwright test e2e/a11y-audit.spec.ts --project=chromium
   (roadmap A-7/A-8/A-10). Une régression `critical` casse donc la CI : c'est ce
   guard qui a détecté le `button-name` manquant sur l'avatar de `SettingsPage`.
 
-## CI (`.github/workflows/ci.yml`, 4 jobs)
+## CI (`.github/workflows/ci.yml`, 5 jobs)
 
 - `lint-test-build` — lint, `tsc -b`, `validate:migrations`, `check:rls`,
-  `i18n:check`, `test:coverage` (seuils par fichier), build
+  `i18n:check`, `test:coverage` (seuils par fichier), build.
+  🔴 **Rouge au 2026-08-25**, cf. l'encadré de couverture en tête de fichier.
 - `audit` — `npm audit --omit=dev --audit-level=high` (bloque sur CVE prod)
 - `e2e` — Playwright, project `chromium` uniquement
 - `rls-integration` — stack Supabase locale (`supabase start`), rejoue **toutes**
   les migrations sur base vierge (`scripts/apply-migrations.mjs`) puis `npm run test:rls`
+- `lighthouse` *(ajouté le 2026-08-25)*, `lighthouserc.json`, LCP / TBT / CLS / a11y / SEO sur
+  les 4 routes **prérendues** (`/`, `/guide`, `/blog`, `/pour-freelances`). Bloquant sur a11y,
+  SEO et CLS ; **avertissement** sur la performance, qui varie avec le runner.
+  ⚠️ **Seuils provisoires** : Lighthouse a besoin d'un Chrome exécutable, absent de la machine de
+  développement, ils n'ont donc pas pu être posés « au réel mesuré » comme tous les autres budgets
+  du dépôt. **À resserrer après le premier run réel**, un budget très au-dessus du réel ne mesure
+  rien.
 - `concurrency` annule les runs obsolètes, `permissions: contents:read`. Dépendances : `.github/dependabot.yml`.
 - Runbook deploy/rollback : [`DEPLOYMENT.md`](./DEPLOYMENT.md).
 
@@ -276,7 +346,7 @@ Avant `git push` sur `main` (qui déclenche le deploy Vercel) :
 1. ✅ `npm run lint` → **0 erreurs** (les warnings préexistants sont OK)
 2. ✅ `npm test` → **tous les tests unitaires Vitest passent** (bloquant CI)
 3. ✅ `npm run build` → succès. Aucun chunk first-paint > **150 kB gzip** (sauf `vendor-charts` lazy attendu).
-4. ✅ `npm run test:e2e` → **82 tests** (41 × 2 projects), 3 skip attendus
+4. ✅ `npm run test:e2e` → **124 tests** (62 × 2 projects), 3 skip attendus
    (gestes tactiles sur chromium). Port 3000 — vérifier qu'aucun dev server
    périmé ne le squatte (`reuseExistingServer`).
 5. ✅ **Smoke test mobile preview** 375×812 : login démo → Dashboard, créer/compléter une tâche (clic + swipe droit), navigation Tab bar, rien caché derrière la MobileTabBar.

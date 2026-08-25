@@ -1,37 +1,68 @@
 # Performance bundle — `vite.config.ts manualChunks`
 
+## Note de performance : 68 → **64 / 100** (2026-08-24 → 2026-08-25)
+
+**C'est le seul audit du dossier dont la note BAISSE, et c'est voulu.**
+
+| Ce qui compose la note | 08-24 | 08-25 |
+|---|---|---|
+| Chunk `index` (critical path) | 134 kB gzip | **138,7 kB gzip** |
+| Marge sur le budget de 150 kB | 16 kB | **11,3 kB** |
+| Vitesse de dérive mesurée | +0,6 kB / jour (10 j) | **+4,7 kB en UN jour** |
+| `OrganizationPage` | 61 kB gzip | **63,7 kB gzip** |
+| Lighthouse CI | câblé, seuils provisoires | **toujours provisoires, jamais exécuté au réel** |
+| Levier i18n identifié (~104 ko de JSON hors chemin critique) | non appliqué | **non appliqué** |
+
+**−4.** La journée du 2026-08-25 a livré sept migrations, un système de permissions et deux canaux
+Realtime. **Aucun de ces chantiers n'a regardé le bundle**, et le chemin critique a pris en un
+jour presque la moitié de ce qu'il avait pris en dix.
+
+**La projection publiée hier est caduque.** Elle annonçait le franchissement du budget « autour de
+mi-septembre » sur la base de +0,6 kB/jour. Au rythme mesuré du 25, il reste **deux à trois
+journées de travail de cette intensité** avant les 150 kB. Ce n'est pas une prévision : c'est la
+seule mesure dont on dispose, et elle dit que la marge se consomme par vagues de fonctionnalités,
+pas linéairement.
+
+**Sortie déjà écrite, plus bas** : rendre le catalogue `fr` paresseux par namespace rend ~104 ko
+de JSON brut au chemin critique, largement de quoi ramener la marge. C'est le chantier qui passe
+devant le reste dès la prochaine vague entreprise.
+
+---
+
 ## Vendor chunks isolés (commenter toute modif)
 
-**Tailles réelles, `npm run build` du 2026-08-24** (brut / gzip). La colonne « 08-15 » garde la
-mesure précédente pour rendre la dérive lisible :
+**Tailles réelles, `npm run build` du 2026-08-25** (brut / gzip). Les colonnes précédentes
+gardent les mesures antérieures pour rendre la dérive lisible :
 
-| Chunk | Contenu | 08-15 (gzip) | **08-24 (gzip)** | Quand chargé |
-|---|---|---|---|---|
-| `index` (app) | code applicatif partagé | 448 kB (128 kB) | **470 kB (134 kB)** 🟠 | Toujours |
-| `vendor-react` | react + react-dom + scheduler | 227 kB (72 kB) | 227 kB (72 kB) | Toujours |
-| `vendor-router` | react-router | 38 kB (14 kB) | 38 kB (14 kB) | Toujours (split pour parallel HTTP/2) |
-| `vendor-radix` | @radix-ui/* | 177 kB (51 kB) | 145 kB (45 kB) | Toujours |
-| `vendor-supabase` | @supabase/supabase-js | 191 kB (50 kB) | 215 kB (56 kB) | Toujours (extrait pour cache CDN) |
-| `vendor-sentry` | @sentry/react | 140 kB (47 kB) | 146 kB (49 kB) | Toujours (extrait pour cache CDN) |
-| `vendor-animation` | framer-motion | 146 kB (49 kB) | 148 kB (49 kB) | Toujours |
-| `vendor-utils` | date-fns + lucide-react | 71 kB (21 kB) | 70 kB (21 kB) | Toujours |
-| `vendor-query` | @tanstack/* | 55 kB (16 kB) | 60 kB (18 kB) | Toujours |
-| `vendor-charts` | **recharts + d3-* + victory-vendor** | 400 kB (116 kB) | 414 kB (118 kB) | **Lazy** (StatisticsPage, DashboardChart, GuidePage) |
-| `vendor-calendar` | @fullcalendar/* **+ `locales-all`** | 290 kB (85 kB) | 290 kB (85 kB) | **Lazy** (`/agenda` uniquement) |
-| `vendor-gsap` | gsap + plugins (+ `InertiaPlugin`) | 139 kB (55 kB) | 139 kB (55 kB) | **Lazy** (LandingPage uniquement) |
-| `vendor-ogl` | ogl — micro-runtime WebGL | 44 kB (13 kB) | 44 kB (13 kB) | **Lazy** (fond `LightRays` du hero entreprise) |
-| **`OrganizationPage`** | **tout le mode entreprise** | non listé | **265 kB (61 kB)** 🟠 | **Lazy** (`/entreprise`) |
-| `TasksPage` | page Tâches | non listé | 130 kB (30 kB) | **Lazy** |
-| `TaskModal` | modal de tâche | non listé | 104 kB (24 kB) | **Lazy** |
-| `LandingPage` | shell + aiguillage + parcours perso | 90 kB (24 kB) | 81 kB (21 kB) | **Lazy** (`/`) |
-| `EnterpriseTrack` | les 10 sections du parcours entreprise | 51 kB (12 kB) | 44 kB (11 kB) | **Lazy** (à la bascule / `/entreprise-presentation`) |
+| Chunk | Contenu | 08-15 (gzip) | 08-24 (gzip) | **08-25 (gzip)** | Quand chargé |
+|---|---|---|---|---|---|
+| `index` (app) | code applicatif partagé | 448 kB (128 kB) | 470 kB (134 kB) | **487 kB (139 kB)** 🟠 | Toujours |
+| `vendor-react` | react + react-dom + scheduler | 227 kB (72 kB) | 227 kB (72 kB) | 227 kB (72 kB) | Toujours |
+| `vendor-router` | react-router | 38 kB (14 kB) | 38 kB (14 kB) | 38 kB (13 kB) | Toujours (split pour parallel HTTP/2) |
+| `vendor-radix` | @radix-ui/* | 177 kB (51 kB) | 145 kB (45 kB) | 145 kB (45 kB) | Toujours |
+| `vendor-supabase` | @supabase/supabase-js | 191 kB (50 kB) | 215 kB (56 kB) | 215 kB (56 kB) | Toujours (extrait pour cache CDN) |
+| `vendor-sentry` | @sentry/react | 140 kB (47 kB) | 146 kB (49 kB) | 146 kB (49 kB) | Toujours (extrait pour cache CDN) |
+| `vendor-animation` | framer-motion | 146 kB (49 kB) | 148 kB (49 kB) | 148 kB (49 kB) | Toujours |
+| `vendor-utils` | date-fns + lucide-react | 71 kB (21 kB) | 70 kB (21 kB) | 71 kB (21 kB) | Toujours |
+| `vendor-query` | @tanstack/* | 55 kB (16 kB) | 60 kB (18 kB) | 60 kB (17 kB) | Toujours |
+| `vendor-charts` | **recharts + d3-* + victory-vendor** | 400 kB (116 kB) | 414 kB (118 kB) | 414 kB (118 kB) | **Lazy** (StatisticsPage, DashboardChart, GuidePage) |
+| `vendor-calendar` | @fullcalendar/* **+ `locales-all`** | 290 kB (85 kB) | 290 kB (85 kB) | 290 kB (85 kB) | **Lazy** (`/agenda` uniquement) |
+| `vendor-gsap` | gsap + plugins (+ `InertiaPlugin`) | 139 kB (55 kB) | 139 kB (55 kB) | 139 kB (55 kB) | **Lazy** (LandingPage uniquement) |
+| `vendor-ogl` | ogl · micro-runtime WebGL | 44 kB (13 kB) | 44 kB (13 kB) | 44 kB (12 kB) | **Lazy** (fond `LightRays` du hero entreprise) |
+| **`OrganizationPage`** | **tout le mode entreprise** | non listé | 265 kB (61 kB) | **279 kB (64 kB)** 🟠 | **Lazy** (`/entreprise`) |
+| `TasksPage` | page Tâches | non listé | 130 kB (30 kB) | 129 kB (29 kB) | **Lazy** |
+| `TaskModal` | modal de tâche | non listé | 104 kB (24 kB) | 102 kB (22 kB) | **Lazy** |
+| `LandingPage` | shell + aiguillage + parcours perso | 90 kB (24 kB) | 81 kB (21 kB) | 82 kB (20 kB) | **Lazy** (`/`) |
+| `EnterpriseTrack` | les 10 sections du parcours entreprise | 51 kB (12 kB) | 44 kB (11 kB) | 48 kB (12 kB) | **Lazy** (à la bascule / `/entreprise-presentation`) |
 
-> 🟠 **Le warning Vite « chunks larger than 400 kB » est actif** (build du 2026-08-24) :
-> le chunk `index` est à **470 kB brut / 134 kB gzip**, et `vendor-charts` à 414 kB brut (lazy,
+> 🟠 **Le warning Vite « chunks larger than 400 kB » est actif** (build du 2026-08-25) :
+> le chunk `index` est à **487 kB brut / 138,7 kB gzip**, et `vendor-charts` à 414 kB brut (lazy,
 > donc sans effet sur le critical path). La trajectoire du chunk `index` est le seul point qui
-> demande une décision : **124 kB (08-14) → 128 kB (08-15) → 134 kB (08-24)**, soit +10 kB gzip
-> en dix jours pour un budget de 150 kB. Au rythme actuel, le budget est franchi autour de
-> **mi-septembre 2026**. La hausse initiale depuis les 124 kB du 2026-08-14
+> demande une décision : **124 kB (08-14) → 128 kB (08-15) → 134 kB (08-24) → 139 kB (08-25)**.
+> Les vendors, eux, n'ont pas bougé d'un octet : **la totalité de la hausse est du code
+> applicatif**, le système de permissions (`permissions.ts`, `use-my-permissions.ts`,
+> `MemberPermissionsSheet`) et les deux hooks Realtime, tous partagés donc tous dans `index`.
+> La hausse initiale depuis les 124 kB du 2026-08-14
 > **ne vient pas du track entreprise** : vérifié par `grep` sur le chunk construit, aucun de ses
 > symboles (`gate-panel`, `pyramid-stage`, `ent-hero-line`) n'y figure — il vit dans
 > `LandingPage` et `EnterpriseTrack`, tous deux lazy. Sous le budget gzip (< 150 kB) mais la marge
@@ -50,8 +81,15 @@ mesure précédente pour rendre la dérive lisible :
 
 ## Budget bundle (objectif)
 
-- Chunk `index` : **< 150 kB gzip** (au 2026-08-24 : **134 kB** — **marge : 16 kB**, cf. la
+- Chunk `index` : **< 150 kB gzip** (au 2026-08-25 : **138,7 kB**, **marge : 11,3 kB**, cf. la
   trajectoire ci-dessus. C'est le poste à surveiller en priorité).
+
+> 🔴 **Ce budget n'est mesuré par aucune garde.** Tous les autres budgets du dépôt ont fini par
+> obtenir un cliquet (taille des fichiers, échelle typographique, z-index, feuilles), celui-ci
+> non, et c'est le seul qui ait reculé de 4,7 kB en une journée sans que rien ne le signale.
+> C'est exactement le motif documenté dans [`ARCHITECTURE.md`](./ARCHITECTURE.md) : *une règle
+> qu'aucun script ne mesure recule à chaque vague de features.* Un test qui lit la sortie de
+> `npm run build` et refuse une croissance nette du chunk `index` coûterait une demi-heure.
 
 > **Le levier est identifié et mesuré — il n'est PAS appliqué (2026-08-24).**
 > Le catalogue de référence `fr` est importé **statiquement** par `src/i18n/catalog.ts` : les
@@ -72,10 +110,11 @@ mesure précédente pour rendre la dérive lisible :
 > vérification visuelle sur les trois pages concernées.
 - Chaque chunk lazy : **< 80 kB gzip**. Exceptions documentées : `vendor-charts` (118 kB),
   `vendor-calendar` (85 kB), `vendor-gsap` (55 kB).
-  ⚠️ **`OrganizationPage` est à 61 kB gzip au 2026-08-24** : sous le budget, mais c'est de loin le
-  plus gros chunk de page, et il grossit à chaque vague entreprise. Il découle directement de la
-  dette « fichiers > 600 LOC » ([`ARCHITECTURE.md`](./ARCHITECTURE.md) §3) : `PyramidTab.tsx`
-  pèse à lui seul 1 505 lignes.
+  ⚠️ **`OrganizationPage` est à 63,7 kB gzip au 2026-08-25** (61 kB la veille) : toujours sous le
+  budget, mais c'est de loin le plus gros chunk de page, et il grossit à chaque vague entreprise.
+  Le découpage de `PyramidTab` (1 506 → 1 045 lignes) **n'a rien changé à son poids** : extraire
+  `PyramidNodeCard` déplace du code à l'intérieur du même chunk. Découper aide la maintenabilité ;
+  seul le `lazy` aide le bundle.
 
 > **`vendor-calendar` : 76 → 85 kB gzip (2026-08-02, i18n Agenda).** `AgendaPage`
 > importe `@fullcalendar/core/locales-all` (+9 kB gzip). Sans données de locale,
@@ -100,12 +139,14 @@ mesure précédente pour rendre la dérive lisible :
   Ils n'ont pas pu être posés « au réel mesuré » comme les autres budgets du dépôt :
   Lighthouse a besoin d'un Chrome exécutable, absent de la machine de développement.
   Un budget très au-dessus du réel ne mesure rien.
-- **`vendor-charts` reste le plus gros lazy** (116 kB gzip). Le grief d'origine (« chargé au scroll
+- **`vendor-charts` reste le plus gros lazy** (118 kB gzip). Le grief d'origine (« chargé au scroll
   de la landing ») est **caduc** : la landing n'importe plus Recharts. Une migration `visx`/`chart.js`
   n'a donc plus d'urgence.
-- **13 fichiers source dépassent 600 LOC**, le plus gros étant
-  `src/components/organization/PyramidTab.tsx` (1455 lignes). L'objectif « aucun fichier > 600 LOC »
-  du refactor de juin 2026 **n'est plus tenu** — impact surtout sur la maintenabilité et le chunk `index`.
+- **15 fichiers source dépassent 600 LOC** (2026-08-25), le plus gros étant désormais
+  `src/components/TaskTable.tsx` (1 124 lignes), et non plus `PyramidTab.tsx`, tombé à 1 045.
+  L'objectif « aucun fichier > 600 LOC » du refactor de juin 2026 n'est toujours pas tenu, mais le
+  budget baisse : 13 103 → 11 452 lignes en deux jours, cf.
+  [`ARCHITECTURE.md`](./ARCHITECTURE.md) §3.
 
 ## Limites de requêtes
 
@@ -116,11 +157,20 @@ mesure précédente pour rendre la dérive lisible :
 > Vaut pour `getAll`, `getByDate`, `getFiltered` **et** `getPage`.
 > Exception : `getById` (accès par clé primaire).
 
-> **🔴 Tables entreprise : prédicat RLS non indexable** (mesuré le 2026-08-14).
-> `team_tasks` / `team_projects` sont filtrées par `can_access_team_project(...)` — une fonction
-> appelée par ligne, donc `Seq Scan` obligatoire + CTE récursive à chaque ligne. **≈ 60× le coût
-> par ligne** du prédicat de `tasks`. Même classe de bug que celle corrigée par la mig. 085, pas
-> encore traitée. Mesures, projections et correctif : [`SCALABILITY.md`](./SCALABILITY.md) §2.
+> **⚡ Tables entreprise : passer par les RPC indexables** (mig. 113 et 117, appliquées en prod).
+> `team_tasks` / `team_projects` / `team_task_dependencies` sont filtrées par
+> `can_access_team_project(...)`, une fonction appelée par ligne, donc `Seq Scan` obligatoire +
+> CTE récursive à chaque ligne, **≈ 60× le coût par ligne** du prédicat de `tasks` (mesuré le
+> 2026-08-14). Les policies restent en place en défense en profondeur ; les lectures passent par
+> `get_my_team_tasks`, `get_my_team_projects` et `get_my_team_task_dependencies`, qui n'évaluent
+> le sous-arbre managérial **qu'une fois par organisation**. Chemin verrouillé par
+> `team-projects/supabase.repository.test.ts`. Détail : [`SCALABILITY.md`](./SCALABILITY.md) §2.
+
+> **📉 Habitudes : lire par `get_my_habits(p_days)`** (mig. 119, prod). `habits.completions`
+> gagnait 12,7 octets par jour et par habitude, **sans borne**. La RPC renvoie `completions`
+> filtré à la fenêtre ET quatre agrégats calculés serveur sur l'historique entier
+> (`streak_current`, `streak_best`, `completions_total`, `first_completion_date`), c'est ce qui
+> rend la troncature acceptable. **Ne jamais dériver une série ou un total de `completions`.**
 
 > **📡 Collaboration : Realtime, pas sondage** (mig. 089). Le `refetchInterval`
 > de 15 s sur `useTasks` coûtait ≈ 58 Mo/mois/utilisateur d'egress Supabase.

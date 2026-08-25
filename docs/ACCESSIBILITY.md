@@ -1,8 +1,34 @@
 # Accessibilité (a11y) — COSMO
 
 **Cibles** : WCAG 2.1 AA (obligation EAA — European Accessibility Act, applicable depuis le 28 juin 2025).
-**Outillage** : `e2e/a11y-audit.spec.ts` (axe-core, 11 routes, dumpe les violations par route).
-**Gate CI** : les violations `impact: 'critical'` sont **bloquantes** (`assertNoCritical`). `serious` / `moderate` / `minor` sont dumpées dans `test-results/a11y/<route>.json` mais non bloquantes.
+**Outillage** : `e2e/a11y-audit.spec.ts` (axe-core, 11 routes, dumpe les violations par route)
+**+ Lighthouse CI** (`lighthouserc.json`, job `lighthouse`) sur les 4 routes prérendues.
+**Gates CI** : les violations `impact: 'critical'` sont **bloquantes** (`assertNoCritical`). `serious` / `moderate` / `minor` sont dumpées dans `test-results/a11y/<route>.json` mais non bloquantes. Le score a11y de Lighthouse est **bloquant** sur `/`, `/guide`, `/blog`, `/pour-freelances`.
+
+## Note d'accessibilité : 76 → **79 / 100** (2026-08-24 → 2026-08-25)
+
+| Ce qui compose la note | 08-24 | 08-25 |
+|---|---|---|
+| Violations de contraste sur `/okr` | 27 → 4 (corrigé le jour même) | **4** |
+| Thèmes non conformes AA sur `--color-text-muted` | 3 sur 4 → 0 | **0** |
+| Cibles tactiles hors norme (`/tasks` · `/entreprise`) | 5 · 8 | **5 · 8** |
+| Findings A-1 → A-11 ouverts | 1 (A-8 résiduel, arbitrage produit) | **1** |
+| Gates automatiques a11y | 1 (axe-core, `critical`) | **2** (+ Lighthouse a11y bloquant sur les pages publiques) |
+| Audits jamais faits | agenda, modals, clavier, VoiceOver iOS | **inchangés** |
+
+**+3, et pas plus, parce que le gros du travail a été fait le 24, pas le 25.** Le seul apport
+propre du 2026-08-25 est une **seconde** gate : jusqu'ici, aucune vérification a11y automatique ne
+portait sur les pages **publiques**, celles qu'un prospect voit avant de créer un compte, et les
+seules soumises à l'EAA sans réserve.
+
+Ce qui plafonne la note tient en deux points, et aucun n'est technique :
+
+1. **Le bouton d'action principal est à 3,34** (blanc sur le bleu de marque), sous les 4,5 requis.
+   Le corriger demande d'assombrir la couleur de marque de 16 %, **arbitrage d'Axel**.
+2. **Quatre audits n'ont jamais été faits** : `/agenda` (FullCalendar), les modales (piège de
+   focus, Échap, `aria-modal`), la navigation clavier complète, et VoiceOver iOS sur un vrai
+   appareil. Tant qu'ils manquent, la note mesure ce qu'axe-core sait voir, pas la conformité.
+   *Un scan automatique couvre environ un tiers des critères WCAG ; le reste demande un humain.*
 
 ## ✅ A-8 et A-11 tranchés le 2026-08-24 (mesurés, pas estimés)
 
@@ -71,19 +97,25 @@ L'audit d'origine listait A-1 → A-11. Vérifié dans le code le **2026-08-14**
 |---|---|---|
 | A-1 → A-6 | Critical (aria-label, labels, `<main>`, `<th>` vides…) | ✅ Corrigés — codifiés en règles ci-dessous |
 | A-7 | `text-blue-100` sur `bg-blue-600` (4.23:1) | ✅ Corrigé — plus aucune occurrence dans `src/` |
-| A-8 | Pills OKR `text-*-600 / bg-*-100` sous 4.5:1 | ❓ **Non prouvé** — non vérifiable statiquement, à re-scanner |
+| A-8 | Pills OKR `text-*-600 / bg-*-100` sous 4.5:1 | ✅ **Tranché le 2026-08-24** : la cause n'était pas les pills mais le token `--color-text-muted` ; 27 → 4 violations. Résiduel : le bleu de marque à 3,34 (arbitrage produit, cf. plus haut) |
 | A-9 | `page-has-heading-one` (h1 animé en `opacity:0`) | ✅ Caduc — plus aucun `motion.h1` dans `src/pages/` |
 | A-10 | `CookieBanner` hors landmark | ✅ Corrigé — `motion.aside` + `aria-label` |
-| A-11 | `heading-order` OKR (`h3` après `h1`) | ❓ **Non prouvé** — marginal, déjà absent des scans suivants |
+| A-11 | `heading-order` OKR (`h3` après `h1`) | ✅ **Caduc, mesuré le 2026-08-24** · aucun saut de niveau > 1 sur `/okr` |
 
-**Cibles tactiles — mesuré le 2026-08-14** (viewport 375 px, mode démo) : 18 cibles sous 44×44 sur
-`/tasks`, 22 sur `/entreprise`. Les plus petites sont des boutons icône seule à **24×24**
-(« Masquer cette information »), 28×28 et 36×36 ; les chips de filtre sont à 40 px de haut.
-Détail et priorisation : [`UI-PATTERNS.md`](./UI-PATTERNS.md) §Dette UI/UX ouverte.
+**Il ne reste donc aucun finding « non prouvé » : les deux qui traînaient depuis mai ont été
+mesurés, pas estimés.** C'est la leçon de méthode de cette série : un finding qu'on n'a jamais
+mesuré n'est ni vrai ni faux, il est **inutilisable** : A-8 s'est révélé cinq fois plus large que
+son intitulé, A-11 purement caduc, et les deux avaient survécu trois mois côte à côte.
+
+**Cibles tactiles, corrigées le 2026-08-24, remesurées le 2026-08-25** : `/tasks` 18 → **5**,
+`/entreprise` 22 → **8**. Les restantes sont soit des liens inline dans une phrase (exemptés), soit
+des cibles de 24 à 32 px **conformes AA** (WCAG 2.5.8 exige 24×24, pas 44, cf. le rappel de seuil
+plus haut). Détail : [`UI-PATTERNS.md`](./UI-PATTERNS.md) §Dette UI/UX ouverte.
 
 Restent ouverts par ailleurs : audit dédié `/agenda` (FullCalendar, pattern ARIA non trivial),
 audit dédié modals (focus trap, ESC, `aria-modal`), audit clavier complet, VoiceOver iOS sur vrai device.
-Objectif de durcissement : passer la gate de `critical` à `serious` une fois A-8 tranché.
+Objectif de durcissement : **A-8 étant tranché, la gate peut désormais passer de `critical` à
+`serious`**, c'est le prochain geste, et il est bon marché.
 
 ## Règles
 

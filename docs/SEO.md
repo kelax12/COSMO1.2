@@ -13,6 +13,36 @@ cause n'est pas dans le dépôt.
 > liens et les Core Web Vitals terrain. Ces données vivent dans Search Console, Ahrefs et
 > PageSpeed Insights.
 
+## Note SEO : 73 → **73 / 100** · inchangée, et c'est le constat
+
+**Aucun travail SEO n'a eu lieu entre le 2026-08-24 et le 2026-08-25**, et la note ne bouge donc
+pas. C'est une information, pas un trou dans l'audit.
+
+| Ce qui compose la note | 08-24 | 08-25 |
+|---|---|---|
+| Technique (prérendu, sitemap, canonical, JSON-LD, `robots.txt`) | ✅ 24/24 pages propres | ✅ inchangé |
+| Profondeur éditoriale | 🟠 deux fois sous la cible (§3) | 🟠 inchangée |
+| Position moyenne Google, requêtes non-marque | **88** | non remesurée |
+| Clics non-marque | **0** | · |
+| Backlinks (le seul levier) | ❌ chantier manuel non entamé | ❌ **non entamé** |
+
+**La seule chose qui déplacerait cette note ne se trouve pas dans le dépôt.** Ce que le site
+**émet** est propre, c'est mesuré, page par page, et c'est ce que la note de 73 récompense. Ce
+qu'il **obtient** est nul, et la cause est l'autorité de domaine. Sept migrations et un système de
+permissions n'y changent rien, par construction.
+
+> ⚠️ **À ne pas confondre avec un audit « à jour ».** Une note qui ne bouge pas parce que rien n'a
+> été mesuré et une note qui ne bouge pas parce que rien n'a été fait sont deux états différents.
+> Ici c'est le second : la partie code a été vérifiée, la partie terrain (position, indexation)
+> date du **2026-08-19** et demande une relecture de Search Console, trente minutes, côté Axel.
+>
+> Une nouveauté du 2026-08-25 mérite d'être notée : le job CI `lighthouse` rend le score **SEO
+> bloquant** sur les 4 routes prérendues. C'est la première garde automatique côté SEO ; elle
+> protège l'acquis technique, elle ne crée pas d'audience.
+
+Le plan d'action reste [`ACQUISITION-BACKLINKS.md`](./ACQUISITION-BACKLINKS.md), intégralement
+manuel.
+
 ---
 
 ## 1. État technique — les findings de juillet sont fermés

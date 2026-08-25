@@ -1,19 +1,65 @@
 # Documentation COSMO — carte
 
-**Dernière revue de cohérence : 2026-08-24** — tous les documents vivants ci-dessous ont été
-confrontés au code de `main` **et à la prod** à cette date. Ont été remesurés à cette occasion :
-[`../faille.md`](../faille.md) (1 finding fermé, 3 ouverts), [`ARCHITECTURE.md`](./ARCHITECTURE.md),
-[`SECURITY.md`](./SECURITY.md), [`SCALABILITY.md`](./SCALABILITY.md),
-[`PERFORMANCE.md`](./PERFORMANCE.md) (build du jour), [`TESTING.md`](./TESTING.md) (suite rouge),
-[`ACQUISITION.md`](./ACQUISITION.md) et [`RGPD.md`](./RGPD.md).
+**Dernière revue de cohérence : 2026-08-25**, tous les documents notés ci-dessous ont été
+confrontés au code de `main`, au build du jour et à la prod à cette date.
 
-**Puis, le même jour, les correctifs** : la migration `109` referme les trois findings ouverts
-(B-1, B-2, B-3 — **écrite, pas encore appliquée en prod**), la suite unitaire repasse au vert, la
+## Tableau de bord des audits · avant / après (2026-08-24 → 2026-08-25)
+
+Chaque note est justifiée, critère par critère, en tête du document correspondant. Elles ne se
+comparent **pas entre elles** : un 64 en performance et un 86 en sécurité ne disent pas que la
+performance va moins bien que la sécurité, ils disent où chaque domaine se situe par rapport à
+**sa propre cible**.
+
+| Audit | 08-24 | 08-25 | Δ | Ce qui a bougé |
+|---|---|---|---|---|
+| [Scalabilité](./SCALABILITY.md) | 71 | **84** | **+13** | 4 findings structurels sur 5 refermés (mig. 117, 118, 119, 120, 121) |
+| [Mobile / DA](./MOBILE.md) | 62 | **72** | **+10** | `MobileHeader` migré sur 6 pages, et découvert cassé depuis sa création |
+| [UI / UX](./UI-PATTERNS.md) | 70 | **80** | **+10** | Les 6 findings de l'audit du 14 août sont refermés |
+| [RGPD](./RGPD.md) | 78 | **84** | **+6** | FK d'effacement alignée en prod (mig. 116) ; portabilité préservée malgré la troncature |
+| [Sécurité](../faille.md) | 82 | **86** | **+4** | Une nouvelle surface d'autorisation livrée avec son test de base réelle (mig. 115) |
+| [Architecture](./ARCHITECTURE.md) | 74 | **79** | **+5** | Budget > 600 LOC : 12 503 → 11 452 lignes |
+| [Tests / CI](./TESTING.md) | 80 | **83** | **+3** | +38 tests, +21 E2E, 5ᵉ job CI, mais la couverture repasse au rouge |
+| [Mode entreprise](./archive/RAPPORT-MODE-ENTREPRISE-2026-08-12.md) | 74 | **81** | **+7** | Permissions par membre ; le finding n°1 disparaît avec la facturation |
+| [Accessibilité](./ACCESSIBILITY.md) | 76 | **79** | **+3** | 2ᵉ gate a11y, sur les pages **publiques** cette fois |
+| [SEO](./SEO.md) | 73 | **73** | **0** | Aucun travail SEO : le seul levier restant est hors dépôt |
+| [Performance](./PERFORMANCE.md) | 68 | **64** | **−4** | Le chunk `index` prend 4,7 kB gzip en **un** jour, marge 16 → 11,3 kB |
+
+### Ce que ce tableau dit, au-delà des chiffres
+
+**Un audit dont toutes les notes montent est un audit qui se félicite.** Deux lignes valent plus
+que les neuf autres :
+
+- **Performance à −4.** Sept migrations et un système de permissions ont été livrés sans que
+  personne ne regarde le bundle. C'est le seul budget du dépôt qu'**aucune garde ne mesure**, et
+  c'est le seul qui ait reculé. Les cinq autres budgets outillés (taille des fichiers, échelle
+  typographique, z-index, feuilles, couverture) ont tous tenu ou progressé. Ce n'est pas une
+  coïncidence, c'est la thèse de fond de tout ce dossier : *une règle qu'aucun script ne mesure
+  recule à chaque vague de features.*
+- **Tests à +3 seulement**, alors que la journée a ajouté 38 tests unitaires, 21 tests E2E et une
+  gate CI, parce que la couverture est repassée sous ses seuils. Le dénominateur a grossi plus
+  vite que le numérateur : ~2 000 lignes d'interface non testées.
+
+Et deux constats de méthode, tous deux issus de vérifications faites **contre le code**, pas
+contre la doc :
+
+- **Trois `refetchInterval` permanents subsistaient** alors que `CLAUDE.md` et `SCALABILITY.md`
+  annonçaient le matin même qu'il n'en restait aucun. Trouvés par recomptage nominatif, corrigés
+  dans la journée. La cause de l'erreur est instructive : `isDemo ? false : 20_000` avait été lu
+  comme « gardé par le mode démo », alors que c'est l'inverse, le sondage est retiré du seul
+  environnement qui ne paie rien. **Un total ne prouve rien ; seul un décompte qui nomme le
+  composant qui monte chaque hook prouve quelque chose.**
+- **`MobileHeader` n'avait jamais fonctionné** en un mois d'existence, sur la seule page qui
+  l'utilisait. Un code sans consommateur n'est pas seulement inutile, il est **non éprouvé**.
+
+---
+
+**Correctifs de la veille (2026-08-24)** : la migration `109` referme les trois findings B-1, B-2,
+B-3, **appliquée et vérifiée en prod le jour même**. La suite unitaire repasse au vert, la
 convention d'alias `@/` devient une règle ESLint, et deux gardes de migration sont ajoutées **puis
-testées** (`scripts/migration-guards.test.mjs`). Les autres (`MOBILE`, `SEO`,
-`I18N`, `ACCESSIBILITY`, `UI-PATTERNS`, `DEPLOYMENT`, `POST-AUDIT-GUIDE`) portent encore la date de
-leur dernier audit propre : **ils n'ont pas été remesurés le 2026-08-24**, ne pas lire leur date
-comme une revérification.
+testées** (`scripts/migration-guards.test.mjs`).
+
+`I18N`, `DEPLOYMENT` et `POST-AUDIT-GUIDE` portent encore la date de leur dernier audit propre :
+**ils n'ont pas été remesurés**, ne pas lire leur date comme une revérification.
 
 ## Deux statuts, jamais à confondre
 
@@ -28,20 +74,20 @@ comme une revérification.
 |---|---|
 | [`../CLAUDE.md`](../CLAUDE.md) | Point d'entrée : stack, modules, conventions, garde-fous |
 | [`../faille.md`](../faille.md) | Sécurité : findings **ouverts**, priorités avant prod, règles durables |
-| [`ARCHITECTURE.md`](./ARCHITECTURE.md) | Invariants du projet et leur état vérifié — **audit du 2026-08-14** |
+| [`ARCHITECTURE.md`](./ARCHITECTURE.md) | Invariants du projet et leur état vérifié · **remesuré le 2026-08-25, note 79** |
 | [`SECURITY.md`](./SECURITY.md) | RLS, migrations SQL, repositories, Edge Functions, Stripe, CSP, secrets |
-| [`TESTING.md`](./TESTING.md) | Vitest, Playwright, a11y, i18n, CI, **checklist avant push prod** |
+| [`TESTING.md`](./TESTING.md) | Vitest, Playwright, a11y, i18n, CI, **checklist avant push prod** · 🔴 couverture rouge au 2026-08-25 |
 | [`DEPLOYMENT.md`](./DEPLOYMENT.md) | Runbook deploy / rollback Vercel + Supabase, drill de restauration |
-| [`MOBILE.md`](./MOBILE.md) | Pages et composants mobiles, bottom-sheets, pièges iOS Safari |
-| [`UI-PATTERNS.md`](./UI-PATTERNS.md) | Listes, modals, tutoriels, onboarding, thèmes — **+ dette UI/UX mesurée le 2026-08-14** |
-| [`PERFORMANCE.md`](./PERFORMANCE.md) | `manualChunks`, lazy loading, pagination, budget bundle |
-| [`ACCESSIBILITY.md`](./ACCESSIBILITY.md) | WCAG / EAA, aria, contraste, gate axe-core |
-| [`SCALABILITY.md`](./SCALABILITY.md) | Montée en charge — **audit remesuré le 2026-08-14**, avec runbook reproductible |
+| [`MOBILE.md`](./MOBILE.md) | Pages et composants mobiles, bottom-sheets, pièges iOS Safari · **note 72** |
+| [`UI-PATTERNS.md`](./UI-PATTERNS.md) | Listes, modals, tutoriels, onboarding, thèmes · **dette UI/UX remesurée le 2026-08-25, note 80** |
+| [`PERFORMANCE.md`](./PERFORMANCE.md) | `manualChunks`, lazy loading, pagination, budget bundle · **build du 2026-08-25, note 64 (en baisse)** |
+| [`ACCESSIBILITY.md`](./ACCESSIBILITY.md) | WCAG / EAA, aria, contraste, gates axe-core + Lighthouse · **note 79** |
+| [`SCALABILITY.md`](./SCALABILITY.md) | Montée en charge · **remesuré le 2026-08-25, note 84**, avec runbook reproductible |
 | [`SEO.md`](./SEO.md) | Prérendu, sitemap, hreflang, indexation par locale — **audit du 2026-08-14, données Search Console du 2026-08-19** + règles |
 | [`ACQUISITION-BACKLINKS.md`](./ACQUISITION-BACKLINKS.md) | 🔴 Le chantier qui débloque le SEO : kit de soumission annuaires, prêt à coller — **100 % manuel** |
 | [`ACQUISITION.md`](./ACQUISITION.md) | Attribution `?ref=`, funnel mesuré en prod, runbook — **audit du 2026-08-14** |
 | [`I18N.md`](./I18N.md) | Qualité réelle des traductions, périmètre bilingue — **audit du 2026-08-14** |
-| [`RGPD.md`](./RGPD.md) | Inventaire des données personnelles, droits, rétention — **audit du 2026-08-14** |
+| [`RGPD.md`](./RGPD.md) | Inventaire des données personnelles, droits, rétention · **remesuré le 2026-08-25, note 84** |
 | [`POST-AUDIT-GUIDE.md`](./POST-AUDIT-GUIDE.md) | Réactivation premium (`PREMIUM_ENFORCED`), finalisation Stripe |
 | [`COSMO-CLI.md`](./COSMO-CLI.md) | CLI d'accès aux données COSMO réelles (`scripts/cosmo/`) |
 | [`AGENT-AJOUTER-TACHE.md`](./AGENT-AJOUTER-TACHE.md) | Mémo court : ajouter une tâche dans le vrai compte |

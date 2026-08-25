@@ -1,34 +1,65 @@
 # Architecture — invariants, dette et vérification
 
-**Audit du 2026-08-14, invariants remesurés le 2026-08-24** (colonne « 2026-08-24 » du tableau
-§1). Mesuré contre le code de `main` et la prod. Remplace
+**Audit du 2026-08-14, invariants remesurés le 2026-08-24 puis le 2026-08-25** (colonne
+« 2026-08-25 » du tableau §1). Mesuré contre le code de `main` et la prod. Remplace
 [`archive/AUDIT-ARCHITECTURE-2026-08-07.md`](./archive/AUDIT-ARCHITECTURE-2026-08-07.md)
 (20 correctifs, note 60→79), 77 commits plus tôt.
 
 Ce document ne redécrit pas l'architecture — c'est le rôle de [`../CLAUDE.md`](../CLAUDE.md). Il
 répond à une seule question : **les invariants qu'on s'est donnés tiennent-ils encore ?**
 
+## Note d'architecture : 74 → **79 / 100** (2026-08-24 → 2026-08-25)
+
+| Ce qui compose la note | 08-24 | 08-25 |
+|---|---|---|
+| Invariants tenus | 10 / 13 | **12 / 14** |
+| Fichiers > 600 LOC | 16 · 12 503 lignes | **15 · 11 452 lignes** (−1 051) |
+| Plus gros fichier | `PyramidTab` 1 506 | **`TaskTable` 1 124** (PyramidTab tombé à 1 045) |
+| Primitives livrées sans consommateur | 3 | **2** (`MobileHeader` passe de 2 à **8** consommateurs) |
+| Invariants **outillés** (une garde, pas un Markdown) | 6 | **6** |
+| Suite unitaire | 1 583 / 143, verte | **1 621 / 144, verte** |
+
+**+5.** Le cliquet de taille a joué deux fois en deux jours et le budget a baissé de 1 051 lignes
+sans qu'aucune fonctionnalité ne soit reportée : c'est la démonstration que la garde rend le
+refactor moins cher que le contournement. Et pour la première fois, une primitive livrée puis
+abandonnée (§4) a été **adoptée** au lieu d'être supprimée.
+
+**Ce qui empêche de monter plus haut est un incident de méthode, pas un défaut de code.**
+`CLAUDE.md` a affirmé le matin du 2026-08-25 qu'il ne restait « aucun `refetchInterval`
+permanent », il en restait **trois**, dont un monté à l'échelle de l'application. Ils ont été
+trouvés par recomptage nominatif et corrigés dans la journée. L'invariant tient donc, mais il a
+été **déclaré acquis avant de l'être**, sur la règle la plus récemment écrite du dossier. C'est le
+motif de fond de cet audit, appliqué à lui-même : *une règle qu'aucun script ne mesure ne devient
+jamais un acquis, quelle que soit la conviction de celui qui l'écrit.*
+
+Les deux dettes que rien ne mesure encore restent donc les mêmes : les fichiers > 600 LOC (§3,
+mais le cliquet les fait baisser) et la taille du chunk `index`
+([`PERFORMANCE.md`](./PERFORMANCE.md), le seul budget sans garde, et le seul qui ait reculé).
+
 ---
 
 ## 1. Les invariants, vérifiés un par un
 
-| Invariant | Où il est écrit | État au 2026-08-24 |
+| Invariant | Où il est écrit | État au 2026-08-25 |
 |---|---|---|
 | Les lectures de liste de `tasks` passent par `get_my_tasks()` | CLAUDE.md ⚡ | ✅ **Tenu.** Les 4 `.from('tasks')` de `supabase.repository.ts` restent `getById` (exception légitime), `insert`, `update`, `delete` |
 | Aucun import GSAP hors de la landing | CLAUDE.md | ✅ **Tenu.** 0 import direct de `'gsap'` |
 | `useAuth` vient de `@/modules/auth/AuthContext` | CLAUDE.md | ✅ **Tenu.** 0 import depuis `@/modules/user` |
-| Une seule policy PERMISSIVE par rôle + action | mig. 049 + `check:rls` | ✅ **Tenu.** **120** policies sur **66** migrations, 0 violation |
+| Une seule policy PERMISSIVE par rôle + action | mig. 049 + `check:rls` | ✅ **Tenu.** **128** policies sur **79** migrations, 0 violation |
 | La récurrence est générée côté serveur | mig. 086 | ✅ Tenu |
-| Un seul canal Realtime, monté dans `App.tsx` | CLAUDE.md 📡 | ✅ Tenu (1 seul `.channel()` dans tout `src/`) |
-| Toutes les tables `public` ont RLS activée | `SECURITY.md` | ✅ **Tenu**, vérifié en prod le 2026-08-24 : 0 table avec `relrowsecurity = false` |
-| **Jamais de `supabase.from()` hors d'un repository** | `SCALABILITY.md` §5 + garde | ✅ **Tenu depuis le 2026-08-24** — 4 fichiers assainis (et non 1 : le comptage manuel avait raté les trois autres), invariant désormais **outillé** (§2) |
-| Imports toujours via l'alias `@/` | CLAUDE.md + ESLint | ✅ **Tenu depuis le 2026-08-24** — 74 imports relatifs réécrits, et la convention est désormais **outillée** (`no-restricted-imports`), donc elle ne peut plus se diluer en silence (§2) |
-| Aucun fichier source > 600 LOC | refactor de juin 2026 + cliquet | ❌ **Toujours violé — 16 fichiers** (17 le matin même), mais l'hémorragie est **arrêtée** et le budget a **baissé** : 13 103 → 12 503 lignes (§3) |
-| **Les lectures de liste entreprise passent par une RPC indexable** | CLAUDE.md ⚡ + test | ✅ **Tenu depuis le 2026-08-24** — `get_my_team_projects` / `get_my_team_tasks` (mig. 113). Verrouillé par `team-projects/supabase.repository.test.ts` |
+| Les canaux Realtime sont montés dans `App.tsx`, une seule fois | CLAUDE.md 📡 | ✅ **Tenu.** 3 `.channel()` dans `src/`, les trois montés au niveau App (`shared_tasks`, `org-inbox` mig. 118, `friends-inbox` mig. 120) |
+| Toutes les tables `public` ont RLS activée | `SECURITY.md` | ✅ **Tenu**, vérifié en prod : 0 table avec `relrowsecurity = false` |
+| **Jamais de `supabase.from()` hors d'un repository** | `SCALABILITY.md` §5 + garde | ✅ **Tenu** · invariant **outillé** (§2) |
+| Imports toujours via l'alias `@/` | CLAUDE.md + ESLint | ✅ **Tenu** · outillé par `no-restricted-imports` (§2) |
+| Aucun fichier source > 600 LOC | refactor de juin 2026 + cliquet | ❌ **Toujours violé · 15 fichiers**, mais le budget a **encore baissé** : 13 103 → 12 503 → **11 452** lignes (§3) |
+| **Les lectures de liste entreprise passent par une RPC indexable** | CLAUDE.md ⚡ + test | ✅ **Tenu** · `get_my_team_projects` / `get_my_team_tasks` (mig. 113), `get_my_team_task_dependencies` (mig. 117). Verrouillé par `team-projects/supabase.repository.test.ts` |
+| **Un droit entreprise se lit dans `permissions.ts`, jamais recalculé** | CLAUDE.md 🔐 + garde | ✅ **Tenu depuis le 2026-08-25** : une seule source de vérité cliente (`useMyOrgPermissions`), miroir du SQL, 205 tests |
 | **Aucune position d'arrivée portée par une animation de transform** | CLAUDE.md + garde | 🟠 **17 feuilles encore écrites à la main**, mais les 5 réellement cassées sont corrigées et un cliquet interdit toute nouvelle (cf. [`MOBILE.md`](./MOBILE.md) §1) |
-| Suite unitaire verte | `TESTING.md` | ✅ **1576/1576 au 2026-08-24** — après correctifs. Elle ne l'était PAS à l'ouverture de cette passe (cf. [`TESTING.md`](./TESTING.md)) |
+| **Aucun `refetchInterval` permanent** | CLAUDE.md 📡 | ✅ **Tenu au 2026-08-25, mais au deuxième essai.** Annoncé acquis le matin alors que 3 subsistaient ; corrigés l'après-midi. Décompte nominatif dans [`SCALABILITY.md`](./SCALABILITY.md) §3 |
+| Suite unitaire verte | `TESTING.md` | ✅ **1 621 / 1 621 au 2026-08-25** |
 
-Les invariants qui portent la **sécurité** et la **performance** tiennent tous.
+Les invariants qui portent la **sécurité** tiennent tous. Celui qui porte le **coût de
+lecture** aussi. Celui qui porte le **coût de sondage**, non (§7).
 
 Au 2026-08-24, deux des quatre violations sont refermées — et c'est le **même** geste qui les a
 refermées : leur donner un outil. La convention d'import est passée de 1 à 6 entorses en dix jours
@@ -85,9 +116,26 @@ Deux choix méritent d'être relus avant d'être « simplifiés » :
 `supabase.from(`. Les commentaires sont retirés avant la recherche — sans ça, la phrase qui
 explique la règle déclenchait la règle.
 
-## 3. 🟠 L'objectif « aucun fichier > 600 LOC » — 17 → 15 fichiers (2026-08-24)
+## 3. 🟠 L'objectif « aucun fichier > 600 LOC » · 17 → 15 fichiers, 13 103 → 11 452 lignes
 
-> **3ᵉ passe : le plus gros fichier du dépôt n'est plus `PyramidTab`.** Ses 385 lignes
+> **Remesuré le 2026-08-25 : 15 fichiers, 11 452 lignes.** Le budget a baissé de **1 651 lignes
+> en deux jours**, alors que ces deux jours ont livré sept migrations et un système de permissions
+> complet. C'est le résultat le plus net de tout cet audit : **le cliquet ne coûte pas de la
+> vitesse, il en achète.**
+>
+> Classement au 2026-08-25 : `TaskTable` 1 124 · `PyramidTab` 1 045 · `AgendaPage` 900 ·
+> `SettingsPage` 852 · `InboxMenu` 802 · `useTaskModal` 719 · `TasksPage` 712 ·
+> `team-projects/local.repository` 710 · `DesktopDetailsStep` 703 · `TaskModalMobileBody` 697 ·
+> `TeamTaskModal` 692 · `TeamTasksTab` 642 · `AuthContext` 626 · `TaskListsBar` 615 ·
+> `MobileShowcases` 613.
+>
+> ⚠️ **Le nouveau plus gros fichier est `TaskTable.tsx` (1 124), et il n'a pas bougé de la
+> journée.** Tant qu'on découpe l'entreprise, la dette du socle reste où elle est. La prochaine
+> coupe utile n'est plus dans `/entreprise`.
+
+### 3ᵉ passe (2026-08-24) : le plus gros fichier du dépôt n'est plus `PyramidTab`
+
+> Ses 385 lignes
 > de `NodeCard` (le rendu récursif d'une carte de l'organigramme) sont parties dans
 > `PyramidNodeCard.tsx` : **1 506 → 1 046**. Budget total : 11 915 → **11 454**.
 >
@@ -155,13 +203,28 @@ Le dépôt accumule des primitives et des hooks livrés puis jamais adoptés :
 | Élément | Consommateurs |
 |---|---|
 | ~~`useMessages` (`src/modules/user`)~~ | ✅ **supprimé le 2026-08-24** — avec `useUser`, `useWatchAd` et `useUpdateUserSettings` : tout le module sauf le type `User` |
+| ~~`useTasksInfinite`~~ | ✅ **supprimé le 2026-08-25** : la marche à suivre est restée en commentaire à sa place (cf. [`SCALABILITY.md`](./SCALABILITY.md) §5). `getPage()` est **conservé** : capacité d'interface implémentée et testée sur tous les modules |
+| **`MobileHeader`** | ✅ **2 → 8 le 2026-08-25** : les 6 pages migrées (cf. [`MOBILE.md`](./MOBILE.md) §2) |
 | `MobileScreen`, `ListRow` (`src/components/mobile`) | **0** (cf. [`MOBILE.md`](./MOBILE.md)) |
-| `useTasksInfinite` / `getPage` | **0** (cf. [`SCALABILITY.md`](./SCALABILITY.md) §5) |
-| `MobileHeader`, `TouchTarget`, `BottomSheet`, `Segmented` | 2 chacun |
+| `TouchTarget` | 2 |
+| `BottomSheet`, `Segmented` | 2 chacun, mais 16 fichiers importent une variante de feuille (cf. [`MOBILE.md`](./MOBILE.md) §3) |
 
 Ce n'est pas grave pris isolément, mais c'est un **motif** : on construit la brique générique, on
 migre la première page en vitrine, et la migration s'arrête là. Le coût n'est pas le code mort
 lui-même — c'est que la doc décrit alors une architecture qui n'existe pas.
+
+> ✅ **Le motif s'est inversé une fois, et il faut le noter parce que c'est la première.**
+> `MobileHeader` a été **adopté** (2 → 8 consommateurs) au lieu d'être supprimé, et la migration
+> a révélé que le composant **n'avait jamais fonctionné** sur la seule page qui l'utilisait
+> (il écoutait `window.scroll` alors que c'est le `<main overflow-auto>` de `Layout` qui scrolle).
+>
+> **La leçon dépasse ce composant.** Un code sans consommateur n'est pas seulement inutile : il
+> est **non éprouvé**. Personne ne peut dire s'il marche, parce que personne ne s'en sert. Le
+> réflexe « on le garde, ça resservira » suppose qu'il fonctionne ; ici, il ne fonctionnait pas,
+> et depuis un mois. Deux sorties seulement pour un code sans consommateur : **l'adopter ou le
+> supprimer.** Le garder, c'est accumuler du code dont on ignore l'état.
+>
+> ⚠️ `MobileScreen` et `ListRow` sont toujours à **0**, un mois après le constat.
 
 > ⚠️ La ligne `import { useMessages } from '@/modules/user'` de `CLAUDE.md` décrivait un hook que
 > personne n'appelait. Elle a survécu à la réécriture documentaire du 2026-08-14 parce que j'ai
