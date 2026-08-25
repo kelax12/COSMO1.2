@@ -100,8 +100,12 @@ const labelClass = 'block text-xs font-semibold uppercase tracking-wider mb-2';
 const labelStyle = { color: 'rgb(var(--color-text-secondary))' };
 // Tailles/traitement alignés sur le TaskModal personnel (DesktopDetailsStep) :
 // px-4 h-12, text-base, bordure hover/focus au lieu d'un ring.
+// Hauteur des champs — extraite pour que le groupe priorité (pas un input,
+// mais aligné visuellement à côté) reste toujours à la même taille sans
+// dupliquer la valeur à chaque réduction.
+const inputHeightClass = 'h-[2.626275rem]';
 const inputClass =
-  'w-full px-[0.9025rem] h-[2.7075rem] border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none hover:border-[rgb(var(--color-accent-solid-hover))] focus:border-[rgb(var(--color-accent-solid))] focus:border-2 transition-all text-[0.9025rem]';
+  `w-full px-[0.875425rem] ${inputHeightClass} border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none hover:border-[rgb(var(--color-accent-solid-hover))] focus:border-[rgb(var(--color-accent-solid))] focus:border-2 transition-all text-[0.875425rem]`;
 const inputStyle = { backgroundColor: 'rgb(var(--color-surface))', color: 'rgb(var(--color-text-primary))' };
 
 /**
@@ -371,7 +375,7 @@ const TeamTaskModal = ({
 
         {/* Header — sticky */}
         <div
-          className="flex justify-between items-center px-4 sm:px-6 py-[0.48rem] sm:py-[0.64rem] border-b gap-2 shrink-0"
+          className="flex justify-between items-center px-4 sm:px-6 py-[0.456rem] sm:py-[0.608rem] border-b gap-2 shrink-0"
           style={{ borderColor: 'rgb(var(--color-border))' }}
         >
           <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
@@ -432,7 +436,7 @@ const TeamTaskModal = ({
                 rows={3}
                 placeholder={t('taskModal.descriptionPlaceholder')}
                 expandedTitle={t('taskModal.description')}
-                className={`${inputClass} h-auto py-3 resize-y min-h-[68.59px]`}
+                className={`${inputClass} h-auto py-3 resize-y min-h-[66.5323px]`}
                 style={inputStyle}
               />
             </div>
@@ -501,7 +505,7 @@ const TeamTaskModal = ({
 
               <div>
                 <span className={labelClass} style={labelStyle}>{t('taskModal.priority')}</span>
-                <div className="flex gap-1.5 h-12 items-stretch" role="radiogroup" aria-label={t('taskModal.priority')}>
+                <div className={`flex gap-1.5 ${inputHeightClass} items-stretch`} role="radiogroup" aria-label={t('taskModal.priority')}>
                   {[1, 2, 3, 4, 5].map((p) => (
                     <button
                       key={p}
