@@ -67,6 +67,13 @@ export function mapHabitToDb(input: Partial<Habit>): HabitDbInput {
   if (input.estimatedTime !== undefined) result.estimated_time = input.estimatedTime;
   if (input.color !== undefined) result.color = input.color;
   if (input.icon !== undefined) result.icon = input.icon;
+  // 🔴 `completions` REMPLACE la colonne entière, elle ne la fusionne pas.
+  // Depuis la mig. 119, la map lue par le client est BORNÉE à une fenêtre :
+  // la renvoyer telle quelle DÉTRUIRAIT définitivement tout l'historique
+  // au-delà de la fenêtre. Aucun écran ne le fait aujourd'hui (`HabitModal`
+  // n'envoie que name / estimatedTime / color), et il ne faut pas commencer :
+  // la bascule d'un jour passe par `toggle_habit_completion_v2`, qui écrit
+  // une seule clé de façon atomique.
   if (input.completions !== undefined) result.completions = input.completions;
   return result;
 }

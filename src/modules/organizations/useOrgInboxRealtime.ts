@@ -51,7 +51,10 @@ import { orgNotificationKeys } from './notifications';
  * Abonne la session courante à sa boîte de réception d'organisation et invalide
  * les listes concernées à chaque changement. No-op en démo et sans Supabase.
  */
-export function useOrgInboxRealtime(userId: string | undefined): void {
+export function useOrgInboxRealtime(
+  userId: string | undefined,
+  activeOrgId?: string,
+): void {
   const queryClient = useQueryClient();
   const isDemo = useIsDemo();
 
@@ -74,6 +77,14 @@ export function useOrgInboxRealtime(userId: string | undefined): void {
     const invalidateJoinRequest = () => {
       queryClient.invalidateQueries({ queryKey: orgKeys.mySentRequest() });
       queryClient.invalidateQueries({ queryKey: orgKeys.mine() });
+    };
+    // Côté ADMIN : les demandes d'adhésion adressées à MON organisation.
+    // Sans cette écoute, `useOrgJoinRequests` gardait un sondage de 20 s monté
+    // par `Layout`, donc actif sur TOUTES les pages protégées pour tout admin
+    // d'organisation — le sondage le plus permanent de l'app.
+    const invalidateOrgJoinRequests = () => {
+      if (!activeOrgId) return;
+      queryClient.invalidateQueries({ queryKey: orgKeys.joinRequests(activeOrgId) });
     };
 
     // ⚠️ `subscribe()` construit un WebSocket, et le constructeur `WebSocket`
@@ -104,8 +115,20 @@ export function useOrgInboxRealtime(userId: string | undefined): void {
           'postgres_changes',
           { event: '*', schema: 'public', table: 'organization_join_requests', filter: `user_id=eq.${userId}` },
           invalidateJoinRequest,
-        )
-        .subscribe();
+        );
+
+      // Écoute admin, seulement s'il y a une organisation active. Le filtre
+      // porte sur `org_id` : la RLS de la table décide déjà si j'ai le droit
+      // de voir ces lignes, le filtre n'est qu'une réduction de bruit.
+      if (activeOrgId) {
+        channel = channel.on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'organization_join_requests', filter: `org_id=eq.${activeOrgId}` },
+          invalidateOrgJoinRequests,
+        );
+      }
+
+      channel.subscribe();
     } catch (err) {
       console.warn('[realtime] canal org indisponible, repli sur le retour d onglet', err);
       Sentry.captureException(err, {
@@ -127,5 +150,5 @@ export function useOrgInboxRealtime(userId: string | undefined): void {
         /* le socket n'a jamais existé — rien à libérer */
       }
     };
-  }, [userId, isDemo, queryClient]);
+  }, [userId, activeOrgId, isDemo, queryClient]);
 }

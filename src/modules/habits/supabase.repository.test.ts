@@ -42,9 +42,11 @@ describe('SupabaseHabitsRepository', () => {
     const result = await repo.fetchHabits();
 
     const args = supabaseMock.rpcCalls.find((c) => c.fn === 'get_my_habits')?.args as
-      | { p_days: number }
+      | { p_days: number; p_today?: string }
       | undefined;
     expect(args?.p_days).toBe(400);
+    // Même verrou que sur le toggle : sans `p_today`, série fausse hors UTC.
+    expect(args?.p_today).toBe(new Date().toLocaleDateString('en-CA'));
     // La fenetre ne doit jamais devenir illimitee par inadvertance.
     expect(args?.p_days).toBeLessThanOrEqual(3650);
 
@@ -131,12 +133,16 @@ describe('SupabaseHabitsRepository', () => {
     });
     const result = await repo.toggleCompletion('h1', '2026-06-10');
 
-    expect(supabaseMock.rpcCalls).toEqual([
-      {
-        fn: 'toggle_habit_completion_v2',
-        args: { p_habit_id: 'h1', p_date: '2026-06-10', p_days: 400 },
-      },
-    ]);
+    const call = supabaseMock.rpcCalls[0];
+    expect(supabaseMock.rpcCalls).toHaveLength(1);
+    expect(call.fn).toBe('toggle_habit_completion_v2');
+    expect(call.args).toMatchObject({ p_habit_id: 'h1', p_date: '2026-06-10', p_days: 400 });
+    // 🔴 `p_today` est la date LOCALE du client, et son absence est un BUG
+    // (mig. 122) : la base est en UTC, donc sans elle le serveur jugeait
+    // « aujourd'hui » à côté et renvoyait une série fausse hors UTC —
+    // zéro en Amérique le soir, un compteur qui baisse en France après minuit.
+    expect((call.args as { p_today?: string }).p_today)
+      .toBe(new Date().toLocaleDateString('en-CA'));
     expect(supabaseMock.queries).toHaveLength(0); // zéro SELECT/UPDATE direct
     expect(result.completions['2026-06-10']).toBe(true);
     // C'est ce champ qui permet au hook de se passer d'un refetch de liste.

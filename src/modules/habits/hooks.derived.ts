@@ -29,7 +29,7 @@ const completedDatesFromCompletions = (
 // STREAK CALCULATIONS
 // ═══════════════════════════════════════════════════════════════════
 
-// UNE seule logique de streak dans l'app : `modules/habits/streak.ts`, celle
+// UNE seule logique de streak CLIENT dans l'app (la source de verite est le serveur depuis la mig. 119, cf. `habitStreak`) : `modules/habits/streak.ts`, celle
 // de la page Habitudes (HabitCard / HabitTable). Ce fichier en portait une
 // SECONDE implémentation, subtilement différente ; ce n'est plus qu'un
 // adaptateur de forme (liste de dates → Record attendu par la canonique).
@@ -68,10 +68,14 @@ export const useHabitsWithStats = () => {
       const dates = completedDatesFromCompletions(habit.completions);
       return {
         ...habit,
-        currentStreak: calculateStreak(dates),
+        // Agregats SERVEUR d'abord (mig. 119) : `completions` est borne a une
+        // fenetre glissante, en deriver serie et total les plafonnerait.
+        // Les taux 7 et 30 jours restent calcules localement : leur fenetre
+        // est tres inferieure a la fenetre transferee, ils sont donc exacts.
+        currentStreak: habit.streakCurrent ?? calculateStreak(dates),
         completionRate7Days: calculateCompletionRate(dates, 7),
         completionRate30Days: calculateCompletionRate(dates, 30),
-        totalCompletions: dates.length,
+        totalCompletions: habit.completionsTotal ?? dates.length,
       };
     });
   }, [habits]);
@@ -107,15 +111,23 @@ export const useHabitStats = () => {
 
     const dateLists = habits.map((h) => completedDatesFromCompletions(h.completions));
 
+    // ⚠️ Les agrégats SERVEUR d'abord (mig. 119). `h.completions` est borné à
+    // une fenêtre glissante en mode Supabase : dériver série et total de cette
+    // fenêtre les plafonnerait silencieusement. Le repli couvre la démo et le
+    // repository local, qui ont toute la donnée.
+    const streaks = habits.map((h, i) => h.streakCurrent ?? calculateStreak(dateLists[i]));
+    const bests = habits.map((h, i) => h.streakBest ?? calculateStreak(dateLists[i]));
+
     const completedToday = dateLists.filter((dates) => dates.includes(today)).length;
-    const totalCompletions = dateLists.reduce((sum, dates) => sum + dates.length, 0);
+    const totalCompletions = habits.reduce(
+      (sum, h, i) => sum + (h.completionsTotal ?? dateLists[i].length),
+      0,
+    );
 
     const avgStreak =
-      total > 0
-        ? Math.round(dateLists.reduce((sum, dates) => sum + calculateStreak(dates), 0) / total)
-        : 0;
+      total > 0 ? Math.round(streaks.reduce((sum, n) => sum + n, 0) / total) : 0;
 
-    const longestStreak = dateLists.reduce((max, dates) => Math.max(max, calculateStreak(dates)), 0);
+    const longestStreak = bests.reduce((max, n) => Math.max(max, n), 0);
 
     const avgCompletionRate7Days =
       total > 0
@@ -164,7 +176,7 @@ export const useTodaysHabitStatus = () => {
         name: habit.name,
         color: habit.color,
         isCompletedToday: dates.includes(today),
-        currentStreak: calculateStreak(dates),
+        currentStreak: habit.streakCurrent ?? calculateStreak(dates),
       };
     });
   }, [habits]);

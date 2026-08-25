@@ -64,6 +64,10 @@ export function useSharedTasksRealtime(userId: string | undefined): void {
       // On importe la clé du module `friends` plutôt que d'ouvrir un second
       // canal : un canal Realtime est un WebSocket, pas un abonnement gratuit.
       queryClient.invalidateQueries({ queryKey: friendKeys.relatedTaskShares() });
+      // Même événement encore : une ligne de `shared_tasks` qui bouge change la
+      // liste des tâches REÇUES en attente (`usePendingSharedTasks`, montée par
+      // `InboxMenu`). C'était le dernier sondage permanent de l'app.
+      queryClient.invalidateQueries({ queryKey: taskKeys.pendingShared() });
     };
 
     // ⚠️ `subscribe()` construit un WebSocket, et le constructeur `WebSocket`

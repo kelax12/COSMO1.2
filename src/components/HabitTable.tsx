@@ -150,12 +150,25 @@ const HabitTable: React.FC = () => {
         }
       }
 
-      const completionDates = Object.keys(habit.completions);
-      if (completionDates.length > 0) {
-        const habitOldestDate = new Date(Math.min(...completionDates.map((date) => parseLocalDate(date).getTime())));
-        habitOldestDate.setHours(0, 0, 0, 0);
-        if (habitOldestDate < oldestDate) {
-          oldestDate = habitOldestDate;
+      // ⚠️ `firstCompletionDate` D'ABORD : depuis la mig. 119, `completions` est
+      // borné à une fenêtre glissante en mode Supabase. Remonter par ses clés
+      // ferait démarrer la période « Tout » à la fenêtre au lieu du vrai début.
+      // Le champ est calculé serveur sur l'historique entier. Le repli couvre
+      // la démo et le repository local, qui ont toute la donnée.
+      if (habit.firstCompletionDate) {
+        const firstDate = parseLocalDate(habit.firstCompletionDate);
+        firstDate.setHours(0, 0, 0, 0);
+        if (firstDate < oldestDate) {
+          oldestDate = firstDate;
+        }
+      } else {
+        const completionDates = Object.keys(habit.completions);
+        if (completionDates.length > 0) {
+          const habitOldestDate = new Date(Math.min(...completionDates.map((date) => parseLocalDate(date).getTime())));
+          habitOldestDate.setHours(0, 0, 0, 0);
+          if (habitOldestDate < oldestDate) {
+            oldestDate = habitOldestDate;
+          }
         }
       }
     });

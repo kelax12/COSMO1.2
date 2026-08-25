@@ -20,6 +20,22 @@ import { fetchAllPages, MAX_ROWS } from '@/lib/fetch-all-pages';
  */
 const HABIT_WINDOW_DAYS = 400;
 
+/**
+ * « Aujourd'hui » du point de vue de l'UTILISATEUR, au format `YYYY-MM-DD`.
+ *
+ * ⚠️ À passer à TOUTE fonction serveur qui juge une série ou une complétion.
+ *
+ * La base est en UTC, et les clés de `completions` sont écrites en date LOCALE
+ * (`toLocaleDateString('en-CA')`, même convention que `streak.ts` et que le
+ * `p_date` du toggle). Laisser le serveur décider avec `CURRENT_DATE` donnait
+ * un chiffre FAUX hors UTC, et c'est lui qui gagnait puisque `habitStreak()`
+ * préfère la valeur serveur :
+ *   • Amériques, de ~19 h à minuit local : série affichée à ZÉRO ;
+ *   • Europe, de 00 h à 02 h : cocher faisait BAISSER le compteur.
+ * Mesuré, puis corrigé par la mig. 122.
+ */
+const localToday = (): string => new Date().toLocaleDateString('en-CA');
+
 export class SupabaseHabitsRepository implements IHabitsRepository {
   async fetchHabits(): Promise<Habit[]> {
     // ⚡ Lecture via la RPC `get_my_habits()` et NON `.from('habits')` —
@@ -40,7 +56,7 @@ export class SupabaseHabitsRepository implements IHabitsRepository {
     // est bornée (l'export CSV lit toujours tout).
     const rows = await fetchAllPages(async (from, to) => {
       const { data, error } = await supabase
-        .rpc('get_my_habits', { p_days: HABIT_WINDOW_DAYS })
+        .rpc('get_my_habits', { p_days: HABIT_WINDOW_DAYS, p_today: localToday() })
         .select('*')
         .order('created_at', { ascending: false })
         .order('id', { ascending: false })
@@ -159,6 +175,7 @@ export class SupabaseHabitsRepository implements IHabitsRepository {
       p_habit_id: id,
       p_date: date,
       p_days: HABIT_WINDOW_DAYS,
+      p_today: localToday(),
     });
 
     if (error) throw normalizeApiError(error);

@@ -201,6 +201,13 @@ const HabitCard: React.FC<HabitCardProps> = React.memo(({ habit }) => {
     prev.habit.name === next.habit.name &&
     prev.habit.estimatedTime === next.habit.estimatedTime &&
     prev.habit.color === next.habit.color &&
+    // ⚠️ La série SERVEUR fait partie de ce qui est rendu (mig. 119) : sans
+    // elle ici, une correction venue du serveur pouvait être JETÉE quand la
+    // mise à jour optimiste produisait exactement le même JSON de complétions.
+    // La carte restait alors sur la valeur optimiste, et l'écart avec le
+    // tableau (qui, lui, re-rendait) devenait invisible à déboguer.
+    prev.habit.streakCurrent === next.habit.streakCurrent &&
+    prev.habit.completionsTotal === next.habit.completionsTotal &&
     JSON.stringify(prev.habit.completions) === JSON.stringify(next.habit.completions)
   );
 });
