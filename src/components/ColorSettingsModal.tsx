@@ -140,7 +140,7 @@ const ColorSettingsModal: React.FC<ColorSettingsModalProps> = ({ isOpen, onClose
             <motion.div style={{ width: handleBarWidth }} className="h-[5px] rounded-full bg-slate-300/70 dark:bg-slate-500/60" />
           </div>
 
-          <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-[rgb(var(--color-border))] shrink-0">
+          <div className="flex items-center justify-between px-4 sm:px-6 py-[0.420204rem] sm:py-[0.560272rem] border-b border-[rgb(var(--color-border))] shrink-0">
             <h2 className="text-base sm:text-xl font-medium text-[rgb(var(--color-text-primary))]">{t('colorModal.title')}</h2>
             <button
               onClick={onClose}
@@ -212,7 +212,7 @@ const ColorSettingsModal: React.FC<ColorSettingsModalProps> = ({ isOpen, onClose
             </div>
           </div>
 
-            <div className="px-4 sm:px-6 pt-3 pb-3 sm:pb-6 border-t border-[rgb(var(--color-border))] shrink-0 flex justify-center">
+            <div className="px-4 sm:px-6 pt-[0.6555rem] pb-[0.6555rem] sm:pb-[1.311rem] border-t border-[rgb(var(--color-border))] shrink-0 flex justify-center">
               <button
                 onClick={handleSave}
                 disabled={isSaving}
