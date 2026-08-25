@@ -82,7 +82,7 @@ const EventModalFormDesktop: React.FC<EventModalFormBodyProps> = ({
                   handleFieldChange("title", setTitle, e.target.value)
                 }
                 readOnly={lockedSet.has('title')}
-                className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))] focus:border-[rgb(var(--color-accent))] transition-colors ${
+                className={`w-full px-[0.875425rem] py-[0.546516rem] border rounded-lg focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))] focus:border-[rgb(var(--color-accent))] transition-colors ${
                   isInvalid('title')
                     ? 'border-red-400 dark:border-red-500'
                     : lockedSet.has('title')
@@ -127,7 +127,7 @@ const EventModalFormDesktop: React.FC<EventModalFormBodyProps> = ({
                   }}
                   disabled={lockedSet.has('startDate')}
                   placeholder={t('datePlaceholder')}
-                  className={`md:hidden w-full px-4 h-11 border rounded-lg text-sm transition-colors ${
+                  className={`md:hidden w-full px-[0.875425rem] h-[2.407419rem] border rounded-lg text-[0.765997rem] transition-colors ${
                     lockedSet.has('startDate')
                       ? 'cursor-not-allowed opacity-80 bg-slate-50 dark:bg-slate-800/60 border-[rgb(var(--color-border))]'
                       : isPrefilledMode && prefilledFields.has("startDate")
@@ -147,7 +147,7 @@ const EventModalFormDesktop: React.FC<EventModalFormBodyProps> = ({
                       <button
                         type="button"
                         disabled={lockedSet.has('startDate')}
-                        className={`w-full flex items-center justify-between px-4 py-2.5 border rounded-lg text-sm transition-colors ${
+                        className={`w-full flex items-center justify-between px-[0.875425rem] py-[0.546516rem] border rounded-lg text-[0.765997rem] transition-colors ${
                           isInvalid('date')
                             ? 'border-red-400 dark:border-red-500'
                             : lockedSet.has('startDate')
@@ -209,7 +209,7 @@ const EventModalFormDesktop: React.FC<EventModalFormBodyProps> = ({
                     type="time"
                     value={startTime}
                     onChange={(e) => handleFieldChange("startTime", setStartTime, e.target.value)}
-                    className="md:hidden w-full px-3 h-11 border rounded-lg text-sm"
+                    className="md:hidden w-full px-[0.656569rem] h-[2.407419rem] border rounded-lg text-[0.765997rem]"
                     style={{
                       color: "rgb(var(--color-text-primary))",
                       borderColor: isInvalid('startTime') ? '#ef4444' : "rgb(var(--color-border))",
@@ -218,7 +218,7 @@ const EventModalFormDesktop: React.FC<EventModalFormBodyProps> = ({
                   />
                   {/* Desktop : wrapper avec icône */}
                   <div
-                    className="hidden md:flex time-input-wrapper items-center gap-2 px-3 py-2.5 border rounded-lg"
+                    className="hidden md:flex time-input-wrapper items-center gap-2 px-[0.656569rem] py-[0.546516rem] border rounded-lg"
                     style={{ borderColor: isInvalid('startTime') ? '#ef4444' : "rgb(var(--color-border))", backgroundColor: "rgb(var(--color-surface))" }}
                   >
                     <Clock size={14} className="shrink-0" style={{ color: "rgb(var(--color-text-muted))" }} />
@@ -226,7 +226,7 @@ const EventModalFormDesktop: React.FC<EventModalFormBodyProps> = ({
                       type="time"
                       value={startTime}
                       onChange={(e) => handleFieldChange("startTime", setStartTime, e.target.value)}
-                      className="flex-1 bg-transparent text-sm outline-none focus:outline-none border-0 ring-0 shadow-none"
+                      className="flex-1 bg-transparent text-[0.765997rem] outline-none focus:outline-none border-0 ring-0 shadow-none"
                       style={{ color: "rgb(var(--color-text-primary))", outline: "none" }}
                     />
                   </div>
@@ -244,7 +244,7 @@ const EventModalFormDesktop: React.FC<EventModalFormBodyProps> = ({
                     type="time"
                     value={endTime}
                     onChange={(e) => handleFieldChange("endTime", setEndTime, e.target.value)}
-                    className="md:hidden w-full px-3 h-11 border rounded-lg text-sm"
+                    className="md:hidden w-full px-[0.656569rem] h-[2.407419rem] border rounded-lg text-[0.765997rem]"
                     style={{
                       color: "rgb(var(--color-text-primary))",
                       borderColor: isInvalid('endTime') ? '#ef4444' : "rgb(var(--color-border))",
@@ -253,7 +253,7 @@ const EventModalFormDesktop: React.FC<EventModalFormBodyProps> = ({
                   />
                   {/* Desktop : wrapper avec icône */}
                   <div
-                    className="hidden md:flex time-input-wrapper items-center gap-2 px-3 py-2.5 border rounded-lg"
+                    className="hidden md:flex time-input-wrapper items-center gap-2 px-[0.656569rem] py-[0.546516rem] border rounded-lg"
                     style={{ borderColor: isInvalid('endTime') ? '#ef4444' : "rgb(var(--color-border))", backgroundColor: "rgb(var(--color-surface))" }}
                   >
                     <Clock size={14} className="shrink-0" style={{ color: "rgb(var(--color-text-muted))" }} />
@@ -261,7 +261,7 @@ const EventModalFormDesktop: React.FC<EventModalFormBodyProps> = ({
                       type="time"
                       value={endTime}
                       onChange={(e) => handleFieldChange("endTime", setEndTime, e.target.value)}
-                      className="flex-1 bg-transparent text-sm outline-none focus:outline-none border-0 ring-0 shadow-none"
+                      className="flex-1 bg-transparent text-[0.765997rem] outline-none focus:outline-none border-0 ring-0 shadow-none"
                       style={{ color: "rgb(var(--color-text-primary))", outline: "none" }}
                     />
                   </div>
@@ -370,7 +370,7 @@ const EventModalFormDesktop: React.FC<EventModalFormBodyProps> = ({
                   }
                   rows={6}
                   autoFocus={!notes}
-                  className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))] focus:border-[rgb(var(--color-accent))] resize-none transition-colors text-sm ${
+                  className={`w-full px-[0.875425rem] py-[0.546516rem] border rounded-lg focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))] focus:border-[rgb(var(--color-accent))] resize-none transition-colors text-[0.765997rem] ${
                     isPrefilledMode && prefilledFields.has("notes")
                       ? "bg-blue-50/50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800"
                       : ""
