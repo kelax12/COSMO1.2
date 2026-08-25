@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { getDateLocale } from '@/i18n/format';
-import { Send, Trash2, MessageSquare } from 'lucide-react';
+import { Send, Trash2 } from 'lucide-react';
 import {
   useTeamTaskComments,
   useAddTeamTaskComment,
@@ -86,12 +86,12 @@ const TaskCommentsSection = ({ taskId, members, currentUserId, autoSubmitDraft, 
   };
 
   return (
-    <div className="flex flex-col h-full min-h-0 border-t pt-4 mt-5" style={{ borderColor: 'rgb(var(--color-border))' }}>
-      <h3 className="flex items-center gap-2 text-sm font-semibold mb-3 shrink-0" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-        <MessageSquare size={15} aria-hidden="true" />
+    <div className="flex flex-col h-full min-h-0 mt-5">
+      <h3 className="text-sm font-semibold mb-3 shrink-0" style={{ color: 'rgb(var(--color-text-secondary))' }}>
         Commentaires{comments.length > 0 ? ` (${comments.length})` : ''}
       </h3>
 
+      <div className="flex flex-col min-h-0 border-t pt-4" style={{ borderColor: 'rgb(var(--color-border))' }}>
       {/* Liste scrollable — hauteur de contenu par défaut (pas de flex-1 qui
           forcerait la zone à s'étirer et laisserait un vide sous « aucun
           commentaire »). Seule une vraie liste longue déclenche le scroll
@@ -118,7 +118,9 @@ const TaskCommentsSection = ({ taskId, members, currentUserId, autoSubmitDraft, 
           </button>
         </div>
       ) : comments.length === 0 ? (
-        <p className="text-xs py-1 mb-2" style={{ color: 'rgb(var(--color-text-muted))' }}>
+        // Espace agrandi de 10% (py-1 mb-2 → py-[0.275rem] mb-[0.55rem]) faute
+        // de liste : évite que la zone de conversation vide paraisse trop tassée.
+        <p className="text-xs py-[0.275rem] mb-[0.55rem]" style={{ color: 'rgb(var(--color-text-muted))' }}>
           {t('comments.empty')}
         </p>
       ) : (
@@ -214,6 +216,7 @@ const TaskCommentsSection = ({ taskId, members, currentUserId, autoSubmitDraft, 
             <Send size={16} aria-hidden="true" />
           </button>
         </div>
+      </div>
       </div>
     </div>
   );
