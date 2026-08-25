@@ -108,7 +108,11 @@ export const usePendingSharedTasks = () => {
     queryKey: taskKeys.pendingShared(),
     queryFn: () => repository.getPendingSharedTasks(),
     enabled: !isDemo,
-    refetchInterval: isDemo ? false : 20_000,
+    // Plus de sondage : `useSharedTasksRealtime` (App.tsx) écoute déjà
+    // `shared_tasks` dans les deux directions et invalide cette clé. Ce hook
+    // est monté par `InboxMenu`, il sondait donc en permanence — c'était le
+    // dernier `refetchInterval` inconditionnel de l'application.
+    staleTime: 1000 * 30,
     refetchOnWindowFocus: !isDemo,
   });
 };

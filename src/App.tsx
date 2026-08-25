@@ -21,7 +21,7 @@ import { Analytics } from '@vercel/analytics/react';
 // Providers
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { AuthProvider } from '@/modules/auth/AuthContext';
-import { ActiveOrgProvider } from '@/modules/organizations';
+import { ActiveOrgProvider, useActiveOrganization } from '@/modules/organizations';
 import { BillingProvider } from '@/modules/billing/billing.context';
 import { PREMIUM_ENFORCED } from '@/modules/billing/premium-config';
 import ProtectedRoute from '@/components/ProtectedRoute';
@@ -225,7 +225,10 @@ const SharedTasksRealtime: React.FC = () => {
  */
 const OrgInboxRealtime: React.FC = () => {
   const { user, isDemo } = useAuth();
-  useOrgInboxRealtime(isDemo ? undefined : user?.id);
+  // L'organisation active sert au filtre ADMIN (`org_id`) : sans elle, les
+  // demandes d'adhésion resteraient sondées sur toutes les pages.
+  const { activeOrg } = useActiveOrganization();
+  useOrgInboxRealtime(isDemo ? undefined : user?.id, isDemo ? undefined : activeOrg?.id);
   return null;
 };
 

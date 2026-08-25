@@ -191,9 +191,20 @@ export const useToggleHabitCompletion = () => {
     // l'historique : l'écriture reste correcte, seuls les agrégats sont
     // absents (les helpers retombent alors sur le calcul JS).
     onSuccess: (updated, { id }) => {
-      queryClient.setQueryData<Habit[]>(habitKeys.lists(), (old) =>
-        old?.map((habit) => (habit.id === id ? updated : habit)),
-      );
+      let written = false;
+      queryClient.setQueryData<Habit[]>(habitKeys.lists(), (old) => {
+        if (!old) return old;
+        written = true;
+        return old.map((habit) => (habit.id === id ? updated : habit));
+      });
+      // ⚠️ Filet indispensable. `setQueryData` n'écrit RIEN si le cache de
+      // liste est absent (première ouverture, erreur précédente, cache vidé) :
+      // sans cette invalidation, plus rien ne rafraîchissait la liste et la
+      // coche restait invisible. L'ancienne version invalidait toujours, donc
+      // ce cas était couvert par accident.
+      if (!written) {
+        queryClient.invalidateQueries({ queryKey: habitKeys.lists() });
+      }
       queryClient.invalidateQueries({ queryKey: habitKeys.detail(id) });
     },
 

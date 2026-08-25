@@ -79,8 +79,11 @@ export const useOrgJoinRequests = (orgId: string | undefined) => {
     queryKey: orgKeys.joinRequests(orgId ?? ''),
     queryFn: () => repository.getPendingJoinRequests(orgId as string),
     enabled: !!orgId,
-    // Collaboration sans realtime : même cadence que friends.
-    refetchInterval: 20_000,
+    // Plus de sondage : `useOrgInboxRealtime` (App.tsx, mig. 118) écoute
+    // `organization_join_requests` sur `org_id` quand une organisation est
+    // active. Ce hook est monté par `Layout` via `useOrgBadges`, donc il
+    // sondait sur TOUTES les pages protégées pour tout admin d'organisation.
+    staleTime: 1000 * 30,
     refetchOnWindowFocus: true,
   });
 };

@@ -130,7 +130,8 @@ const TeamOKRTab = ({ orgId }: TeamOKRTabProps) => {
   const { t } = useT('org');
   const [showCreate, setShowCreate] = useState(false);
   const [editingOKR, setEditingOKR] = useState<TeamOKR | null>(null);
-  const { data: okrs = [], isLoading } = useTeamOKRs(orgId);
+  // `live` : c'est l'écran où l'on regarde les OKR (cf. useTeamOKRs).
+  const { data: okrs = [], isLoading } = useTeamOKRs(orgId, { live: true });
   const { data: teams = [] } = useOrgTeams(orgId);
   const { data: categories = [] } = useOrgOKRCategories(orgId);
   const createCategory = useCreateOrgOKRCategory(orgId);

@@ -96,8 +96,16 @@ export function exportHabitsCSV(habits: Habit[]): void {
     // un export TRONQUÉ — inacceptable pour un export, qui est le support du
     // droit à la portabilité (RGPD art. 20). Le repli couvre la démo et le
     // repository local, où `completions` contient tout.
-    const completionsCount =
-      h.completionsTotal ?? Object.values(h.completions).filter(Boolean).length;
+    //
+    // ⚠️ Le repli applique les MÊMES exclusions que le SQL (clé au format
+    // `YYYY-MM-DD`, jour non futur) : sans ça, le même jeu de données donnait
+    // deux totaux différents entre la démo et la production, dans un export
+    // censé faire foi.
+    const today = new Date().toLocaleDateString('en-CA');
+    const localCount = Object.entries(h.completions).filter(
+      ([day, done]) => done && /^\d{4}-\d{2}-\d{2}$/.test(day) && day <= today,
+    ).length;
+    const completionsCount = h.completionsTotal ?? localCount;
     return [
       h.id,
       h.name,

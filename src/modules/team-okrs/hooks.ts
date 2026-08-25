@@ -18,13 +18,25 @@ import { translator } from '@/i18n/useT';
 
 const useRepo = () => getTeamOKRsRepository();
 
-export const useTeamOKRs = (orgId: string | undefined) => {
+/**
+ * OKR d'équipe.
+ *
+ * `live` distingue les deux usages, exactement comme `useTeamTasks` et
+ * `useOrgMembers` — et pour la même raison : ce hook est monté par
+ * `CommandPalette`, une surface PERMANENTE. Un `refetchInterval` inconditionnel
+ * faisait donc payer à tout membre d'une organisation une lecture org-wide
+ * toutes les 30 s, sur TOUTES les pages, sans que personne ne regarde les OKR.
+ */
+export const useTeamOKRs = (
+  orgId: string | undefined,
+  options?: { live?: boolean },
+) => {
   const repository = useRepo();
   return useQuery({
     queryKey: teamOkrKeys.list(orgId ?? ''),
     queryFn: () => repository.getAll(orgId as string),
     enabled: !!orgId,
-    refetchInterval: 30_000,
+    ...(options?.live ? { refetchInterval: 30_000 } : {}),
     staleTime: 1000 * 60 * 2,
     // Donnée partagée : au retour sur l'onglet, on resynchronise (reco #12).
     refetchOnWindowFocus: true,
