@@ -375,7 +375,7 @@ const TeamTaskModal = ({
 
         {/* Header — sticky */}
         <div
-          className="flex justify-between items-center px-4 sm:px-6 py-[0.456rem] sm:py-[0.608rem] border-b gap-2 shrink-0"
+          className="flex justify-between items-center px-4 sm:px-6 py-[0.4332rem] sm:py-[0.5776rem] border-b gap-2 shrink-0"
           style={{ borderColor: 'rgb(var(--color-border))' }}
         >
           <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
@@ -622,11 +622,11 @@ const TeamTaskModal = ({
 
         {/* Footer — mêmes boutons que TaskModal */}
         <div
-          className="px-4 sm:px-6 pt-[0.69rem] pb-[0.69rem] sm:pb-[0.92rem] border-t flex flex-col-reverse sm:flex-row sm:justify-between items-stretch sm:items-center gap-2 sm:gap-3 shrink-0"
+          className="px-4 sm:px-6 pt-[0.6555rem] pb-[0.6555rem] sm:pb-[0.874rem] border-t flex flex-col-reverse sm:flex-row sm:justify-between items-stretch sm:items-center gap-2 sm:gap-3 shrink-0"
           style={{
             borderColor: 'rgb(var(--color-border))',
             backgroundColor: 'rgb(var(--color-surface))',
-            paddingBottom: 'max(env(safe-area-inset-bottom), 0.69rem)',
+            paddingBottom: 'max(env(safe-area-inset-bottom), 0.6555rem)',
           }}
         >
           {!isCreating && task && onDelete ? (
