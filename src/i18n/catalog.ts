@@ -28,83 +28,100 @@
 // `CatalogShapes` est ce qui donne à `t()` ses clés typées. Aucune des deux ne
 // peut être dérivée du glob, dont le type est `Record<string, unknown>`.
 //
-// ─── Chargement : `fr` eager, le reste à la demande ───
+// ─── Chargement : deux namespaces eager, les 17 autres à la demande ───
 //
-// `fr` est dans le chunk d'entrée car il est le repli de TOUTES les locales :
-// il doit être là, synchroniquement, sinon une clé non traduite n'a rien sur
-// quoi retomber. Les autres langues sont chargées par `loadCatalogs()`, appelé
-// une fois par `src/main.tsx` avant le premier rendu.
+// Le repli `fr` doit être disponible SYNCHRONIQUEMENT, `t()` ne renvoie pas de
+// promesse, donc un namespace absent afficherait sa clé brute. Mais tous les
+// namespaces ne sont pas nécessaires au même moment : seuls `common` et
+// `errors` sont atteignables depuis le SHELL de l'application (mesuré par
+// `scripts/i18n-shell-namespaces.mjs`, verrouillé par
+// `src/i18n/lazy-namespaces.guard.test.ts`). Les 17 autres appartiennent à une
+// page lazy, et sont chargés en même temps QU'ELLE.
 //
-// Pourquoi pas tout en eager : le budget entry est de 150 kB gzip
-// (docs/PERFORMANCE.md) et l'entry pèse ~50 kB. Une app entièrement traduite
-// représente ~12 kB gzip de JSON par langue — à 3 langues, l'eager mettrait
-// 24 kB de catalogues QUE L'UTILISATEUR NE LIRA JAMAIS dans le critical path.
-// Le coût du lazy est nul en français (aucun fetch) et d'un petit chunk local
-// ailleurs.
+// Ce que ça change, mesuré (docs/PERFORMANCE.md) : le catalogue `fr` pesait
+// 178 ko bruts dans le chunk d'entrée, dont ~140 ko pour des pages que la
+// plupart des sessions n'ouvrent jamais (`org` 50 ko, `landing` 34 ko,
+// `guide` 14 ko…).
+//
+// ⚠️ **Le gate est au niveau de la ROUTE, pas du composant.** `lazyWithRetry`
+// (src/App.tsx) attend les namespaces déclarés AVANT de résoudre le module de
+// page : le `<Suspense>` qui enveloppe déjà chaque route couvre l'attente, donc
+// aucun rendu ne peut avoir lieu avec un catalogue manquant. Charger le
+// namespace DANS le composant produirait exactement le flash de clés brutes que
+// ce découpage doit éviter.
 
 import { DEFAULT_LOCALE, isLocale, type Locale } from './locale';
 import { lookup, type CatalogNode } from './translate';
 
-import frAdmin from '@/locales/fr/admin.json';
-import frAgenda from '@/locales/fr/agenda.json';
+// Les deux seuls catalogues du chunk d'entrée. Tout ajout ici doit être
+// justifié par la mesure du shell, pas par le confort.
 import frCommon from '@/locales/fr/common.json';
-import frDashboard from '@/locales/fr/dashboard.json';
 import frErrors from '@/locales/fr/errors.json';
-import frEventModal from '@/locales/fr/eventModal.json';
-import frGuide from '@/locales/fr/guide.json';
-import frHabits from '@/locales/fr/habits.json';
-import frInvite from '@/locales/fr/invite.json';
-import frLanding from '@/locales/fr/landing.json';
-import frOkr from '@/locales/fr/okr.json';
-import frOrg from '@/locales/fr/org.json';
-import frPremium from '@/locales/fr/premium.json';
-import frSeo from '@/locales/fr/seo.json';
-import frSettings from '@/locales/fr/settings.json';
-import frStatistics from '@/locales/fr/statistics.json';
-import frTaskModal from '@/locales/fr/taskModal.json';
-import frTasks from '@/locales/fr/tasks.json';
-import frTutorials from '@/locales/fr/tutorials.json';
+
+// Les autres formes sont référencées en position de TYPE uniquement
+// (`typeof import(...)`), ce qui est effacé à la compilation : le typage des
+// clés reste complet sans remettre un seul octet de JSON dans l'entrée.
+type Shape<P extends string> = P extends keyof FrModules ? FrModules[P] : never;
+interface FrModules {
+  admin: typeof import('@/locales/fr/admin.json');
+  agenda: typeof import('@/locales/fr/agenda.json');
+  dashboard: typeof import('@/locales/fr/dashboard.json');
+  eventModal: typeof import('@/locales/fr/eventModal.json');
+  guide: typeof import('@/locales/fr/guide.json');
+  habits: typeof import('@/locales/fr/habits.json');
+  invite: typeof import('@/locales/fr/invite.json');
+  landing: typeof import('@/locales/fr/landing.json');
+  okr: typeof import('@/locales/fr/okr.json');
+  org: typeof import('@/locales/fr/org.json');
+  premium: typeof import('@/locales/fr/premium.json');
+  seo: typeof import('@/locales/fr/seo.json');
+  settings: typeof import('@/locales/fr/settings.json');
+  statistics: typeof import('@/locales/fr/statistics.json');
+  taskModal: typeof import('@/locales/fr/taskModal.json');
+  tasks: typeof import('@/locales/fr/tasks.json');
+  tutorials: typeof import('@/locales/fr/tutorials.json');
+}
 
 /** Forme du catalogue de référence, par namespace — base du typage des clés. */
 interface CatalogShapes {
   /** Tableau de bord admin — KPI de croissance et d'activité. */
-  admin: typeof frAdmin;
+  admin: Shape<'admin'>;
   /** Agenda — calendrier, création rapide, revue de créneaux, récurrences. */
-  agenda: typeof frAgenda;
-  /** Chrome de l'app : navigation, actions, libellés partagés. */
+  agenda: Shape<'agenda'>;
+  /** Chrome de l'app : navigation, actions, libellés partagés. **Eager.** */
   common: typeof frCommon;
   /** Tableau de bord — salutation, résumé du jour, cartes de stats, sections. */
-  dashboard: typeof frDashboard;
-  /** Messages d'erreur — lus aussi par `normalizeApiError`. */
+  dashboard: Shape<'dashboard'>;
+  /** Messages d'erreur, lus aussi par `normalizeApiError`. **Eager.** */
   errors: typeof frErrors;
   /** Guide d'utilisation — sommaire, sections, étapes, encarts. */
-  guide: typeof frGuide;
+  guide: Shape<'guide'>;
   /** Modale d'événement — champs, récurrence, planification, calendrier. */
-  eventModal: typeof frEventModal;
+  eventModal: Shape<'eventModal'>;
   /** Habitudes — liste, tableau de suivi, modale, actions, mur-pub. */
-  habits: typeof frHabits;
+  habits: Shape<'habits'>;
   /** Page publique `/invite/:token` — contexte d'une invitation de partage. */
-  invite: typeof frInvite;
+  invite: Shape<'invite'>;
   /** OKR — page, cartes, catégories, modales, check-in hebdo. */
-  okr: typeof frOkr;
+  okr: Shape<'okr'>;
   /** Premium — page d'offre, mur de fonctionnalité, modale publicitaire. */
-  premium: typeof frPremium;
+  premium: Shape<'premium'>;
   /** Landing publique + pages marketing (à propos, cas d'usage, blog). */
-  landing: typeof frLanding;
+  landing: Shape<'landing'>;
   /** Mode entreprise — pyramide, équipes, projets, OKR d'équipe, invitations. */
-  org: typeof frOrg;
+  org: Shape<'org'>;
   /** Titres/descriptions des routes publiques — lu aussi par `prerender.mjs`. */
-  seo: typeof frSeo;
+  seo: Shape<'seo'>;
   /** Réglages — profil, sécurité, apparence, modules, données, aide. */
-  settings: typeof frSettings;
+  settings: Shape<'settings'>;
   /** Statistiques — sections, périodes, graphique, détails, heatmap. */
-  statistics: typeof frStatistics;
+  statistics: Shape<'statistics'>;
   /** Modale de tâche — champs, sections, feuilles d'action mobiles. */
-  taskModal: typeof frTaskModal;
+  taskModal: Shape<'taskModal'>;
   /** Page Tâches — en-tête, filtres, barre de listes, section équipe. */
-  tasks: typeof frTasks;
+  tasks: Shape<'tasks'>;
   /** Tutoriels par page — titres et descriptions des étapes. */
-  tutorials: typeof frTutorials;
+  tutorials: Shape<'tutorials'>;
 }
 
 /**
@@ -146,39 +163,46 @@ type Registry = Partial<Record<Locale, Partial<Record<Namespace, CatalogNode>>>>
 
 const registry: Registry = {};
 
+/**
+ * Namespaces présents dans le chunk d'entrée.
+ *
+ * La liste n'est pas un choix de confort : c'est le résultat de
+ * `node scripts/i18n-shell-namespaces.mjs`, qui parcourt le graphe d'imports
+ * STATIQUES depuis `App.tsx` et `main.tsx`. Tout ce qui rend avant qu'une route
+ * soit résolue doit être ici, sous peine d'afficher des clés brutes.
+ *
+ * 🔴 **Ne jamais en ajouter un « au cas où ».** `src/i18n/lazy-namespaces.guard.test.ts`
+ * échoue si un namespace eager n'est plus atteignable depuis le shell : la
+ * liste ne peut donc que refléter la mesure.
+ */
+export const EAGER_NAMESPACES = ['common', 'errors'] as const;
+
 // Le cast est sûr — un objet JSON importé EST un `CatalogNode`, mais TypeScript
 // en infère un type littéral plus étroit.
 registry[DEFAULT_LOCALE] = {
-  admin: frAdmin as CatalogNode,
-  agenda: frAgenda as CatalogNode,
   common: frCommon as CatalogNode,
-  dashboard: frDashboard as CatalogNode,
   errors: frErrors as CatalogNode,
-  eventModal: frEventModal as CatalogNode,
-  guide: frGuide as CatalogNode,
-  habits: frHabits as CatalogNode,
-  invite: frInvite as CatalogNode,
-  okr: frOkr as CatalogNode,
-  landing: frLanding as CatalogNode,
-  org: frOrg as CatalogNode,
-  premium: frPremium as CatalogNode,
-  seo: frSeo as CatalogNode,
-  settings: frSettings as CatalogNode,
-  statistics: frStatistics as CatalogNode,
-  taskModal: frTaskModal as CatalogNode,
-  tasks: frTasks as CatalogNode,
-  tutorials: frTutorials as CatalogNode,
 };
 
 /**
- * Namespaces réellement existants, dérivés du catalogue de référence.
+ * Namespaces réellement existants.
  *
- * Sert de whitelist au chargement : un fichier `src/locales/en/blog.json` sans
- * équivalent `fr` est ignoré plutôt qu'enregistré sous un namespace fantôme que
- * `t()` ne saurait pas typer. `npm run i18n:check` signale déjà ce cas comme
- * clé orpheline — ici on se contente de ne pas propager l'incohérence.
+ * Écrit à la main depuis que les catalogues `fr` ne sont plus tous importés
+ * statiquement : on ne peut plus le dériver du registre, qui ne contient au
+ * démarrage que les deux namespaces eager. `CatalogShapes` reste la source du
+ * TYPE, et l'annotation `readonly Namespace[]` fait échouer la compilation si
+ * un nom est mal orthographié. Le test de garde vérifie en plus que la liste
+ * couvre exactement les fichiers de `src/locales/fr/`.
+ *
+ * Sert aussi de whitelist au chargement : un fichier `src/locales/en/blog.json`
+ * sans équivalent `fr` est ignoré plutôt qu'enregistré sous un namespace
+ * fantôme que `t()` ne saurait pas typer.
  */
-const NAMESPACES = Object.keys(registry[DEFAULT_LOCALE] ?? {}) as Namespace[];
+const NAMESPACES: readonly Namespace[] = [
+  'admin', 'agenda', 'common', 'dashboard', 'errors', 'eventModal', 'guide',
+  'habits', 'invite', 'landing', 'okr', 'org', 'premium', 'seo', 'settings',
+  'statistics', 'taskModal', 'tasks', 'tutorials',
+];
 
 function isNamespace(value: string): value is Namespace {
   return (NAMESPACES as string[]).includes(value);
@@ -189,23 +213,27 @@ function isNamespace(value: string): value is Namespace {
 // ──────────────────────────────────────────────────────────────────
 
 /**
- * Catalogues à charger paresseusement — toutes les locales SAUF la référence.
+ * Catalogues à charger paresseusement, toutes les locales, `fr` compris.
  *
  * Le motif DOIT être un littéral : Vite l'analyse statiquement à la
- * compilation, il ne peut pas être construit à partir de `SUPPORTED_LOCALES`.
- * C'est sans conséquence — `*` couvre déjà toute locale à venir.
+ * compilation, il ne peut pas être construit à partir de `SUPPORTED_LOCALES`
+ * ni de `EAGER_NAMESPACES`. C'est sans conséquence, `*` couvre déjà toute
+ * locale à venir.
  *
- * L'exclusion `!../locales/fr/*` code en dur la locale de RÉFÉRENCE, pas une
- * langue de la liste : `fr` est importé statiquement plus haut (il est le
- * repli), et le laisser dans le glob le rendait à la fois statique et
- * dynamique — Rollup émettait alors un avertissement par namespace, et le
- * chargeur aurait ré-enregistré des catalogues déjà en mémoire. Ajouter une
- * langue ne touche jamais cette ligne ; seul un changement de `DEFAULT_LOCALE`
- * le ferait (et `catalog.test.ts` échouerait alors).
+ * Les DEUX exclusions sont les deux namespaces eager, et elles sont là pour une
+ * raison mécanique : un fichier à la fois importé statiquement et présent dans
+ * un glob dynamique fait émettre à Rollup un avertissement par namespace, et le
+ * chargeur ré-enregistrerait un catalogue déjà en mémoire. Elles doivent donc
+ * rester alignées sur `EAGER_NAMESPACES`, `catalog.test.ts` le vérifie.
+ *
+ * ⚠️ `fr` n'est plus exclu en bloc : c'est tout l'objet du découpage. Les 17
+ * namespaces de page vivent maintenant dans leur propre chunk, chargé par
+ * `ensureNamespaces()` en même temps que la page qui en a besoin.
  */
-const CATALOG_LOADERS = import.meta.glob(['../locales/*/*.json', '!../locales/fr/*.json'], {
-  import: 'default',
-}) as Record<string, () => Promise<CatalogNode>>;
+const CATALOG_LOADERS = import.meta.glob(
+  ['../locales/*/*.json', '!../locales/fr/common.json', '!../locales/fr/errors.json'],
+  { import: 'default' }
+) as Record<string, () => Promise<CatalogNode>>;
 
 /** `../locales/en/common.json` → `{ locale: 'en', namespace: 'common' }`. */
 function parseCatalogPath(path: string): { locale: Locale; namespace: Namespace } | null {
@@ -216,52 +244,105 @@ function parseCatalogPath(path: string): { locale: Locale; namespace: Namespace 
   return { locale, namespace };
 }
 
-/**
- * Chargements en cours ou terminés, par locale.
- *
- * On mémorise la PROMESSE et non un booléen : deux appels concurrents (le
- * bootstrap et un futur changement de langue à chaud) doivent partager le même
- * chargement, pas en déclencher deux.
- */
-const loading = new Map<Locale, Promise<void>>();
+/** Chargeurs du glob, indexés `locale/namespace`, calculé une fois. */
+const LOADERS_BY_KEY = new Map<string, () => Promise<CatalogNode>>();
+for (const [path, load] of Object.entries(CATALOG_LOADERS)) {
+  const parsed = parseCatalogPath(path);
+  if (parsed) LOADERS_BY_KEY.set(`${parsed.locale}/${parsed.namespace}`, load);
+}
 
 /**
- * Charge et enregistre tous les catalogues d'une locale.
+ * Chargements en cours ou terminés, par couple locale + namespace.
  *
- * Résout immédiatement pour `DEFAULT_LOCALE` (déjà en mémoire) et pour toute
- * locale sans fichier — dans ce dernier cas l'app rend intégralement via le
- * repli `fr`, ce qui est exactement le comportement voulu pendant qu'une
+ * On mémorise la PROMESSE et non un booléen : deux routes qui demandent le même
+ * namespace en même temps (une navigation rapide, un préchargement au survol)
+ * doivent partager le même chargement, pas en déclencher deux.
+ */
+const loading = new Map<string, Promise<void>>();
+
+/** Charge un couple (locale, namespace), au plus une fois. */
+function loadOne(locale: Locale, namespace: Namespace): Promise<void> {
+  const key = `${locale}/${namespace}`;
+  const pending = loading.get(key);
+  if (pending) return pending;
+
+  const load = LOADERS_BY_KEY.get(key);
+  // Pas de fichier pour ce couple : ce n'est pas une erreur. En `fr` c'est un
+  // namespace eager (déjà en mémoire) ; ailleurs c'est une traduction pas
+  // encore écrite, et le repli `fr` couvre l'écran.
+  if (!load) {
+    const resolved = Promise.resolve();
+    loading.set(key, resolved);
+    return resolved;
+  }
+
+  const task = load()
+    .then((catalog) => {
+      registerCatalog(locale, namespace, catalog);
+    })
+    .catch(() => {
+      // Un catalogue illisible ne doit pas empêcher l'app de démarrer : le
+      // repli `fr` couvre le namespace manquant. Silencieux côté client,
+      // attrapé côté CI par `npm run i18n:check` (JSON invalide = erreur).
+      //
+      // ⚠️ On ne retire PAS l'entrée du cache : réessayer à chaque rendu
+      // transformerait un fichier cassé en boucle de requêtes.
+    });
+
+  loading.set(key, task);
+  return task;
+}
+
+/**
+ * Garantit que les namespaces demandés sont en mémoire, dans la locale active
+ * ET dans `fr` (le repli).
+ *
+ * ⚠️ **À appeler AVANT le rendu, jamais pendant.** Le point d'appel prévu est
+ * `lazyWithRetry` (src/App.tsx) : la promesse est attendue par le `<Suspense>`
+ * qui enveloppe déjà chaque route, donc l'utilisateur voit le fallback de
+ * chargement habituel, jamais une clé brute. Appeler cette fonction depuis un
+ * `useEffect` de composant produirait exactement le flash qu'on veut éviter.
+ */
+export function ensureNamespaces(
+  namespaces: readonly Namespace[],
+  locale: Locale
+): Promise<void> {
+  const wanted = namespaces.filter((ns) => !(EAGER_NAMESPACES as readonly string[]).includes(ns));
+  if (wanted.length === 0) return Promise.resolve();
+
+  const tasks: Promise<void>[] = [];
+  for (const ns of wanted) {
+    // Le repli `fr` d'abord : c'est lui qui garantit qu'une clé non traduite
+    // s'affiche quand même. Sans lui, ouvrir une page en `en` avec une
+    // traduction partielle montrerait la clé.
+    tasks.push(loadOne(DEFAULT_LOCALE, ns));
+    if (locale !== DEFAULT_LOCALE) tasks.push(loadOne(locale, ns));
+  }
+  return Promise.all(tasks).then(() => undefined);
+}
+
+/**
+ * Charge les catalogues nécessaires au DÉMARRAGE pour une locale.
+ *
+ * Ne concerne plus que les namespaces eager : les autres arrivent avec leur
+ * page. Résout immédiatement pour `DEFAULT_LOCALE` (déjà en mémoire) et pour
+ * toute locale sans fichier, dans ce dernier cas l'app rend intégralement via
+ * le repli `fr`, ce qui est exactement le comportement voulu pendant qu'une
  * traduction est en cours d'écriture.
  */
 export function loadCatalogs(locale: Locale): Promise<void> {
   if (locale === DEFAULT_LOCALE) return Promise.resolve();
-
-  const pending = loading.get(locale);
-  if (pending) return pending;
-
-  type Entry = {
-    parsed: { locale: Locale; namespace: Namespace };
-    load: () => Promise<CatalogNode>;
-  };
-
-  const entries = Object.entries(CATALOG_LOADERS)
-    .map(([path, load]) => ({ parsed: parseCatalogPath(path), load }))
-    .filter((entry): entry is Entry => entry.parsed !== null && entry.parsed.locale === locale);
-
-  const task = Promise.all(
-    entries.map(async ({ parsed, load }) => {
-      try {
-        registerCatalog(parsed.locale, parsed.namespace, await load());
-      } catch {
-        // Un catalogue illisible ne doit pas empêcher l'app de démarrer : le
-        // repli `fr` couvre le namespace manquant. Silencieux côté client,
-        // attrapé côté CI par `npm run i18n:check` (JSON invalide = erreur).
-      }
-    })
+  return Promise.all(
+    EAGER_NAMESPACES.map((ns) => loadOne(locale, ns))
   ).then(() => undefined);
+}
 
-  loading.set(locale, task);
-  return task;
+/**
+ * Chargeurs disponibles, exposé pour les tests de garde, qui vérifient que le
+ * glob couvre bien tous les couples (locale, namespace) attendus.
+ */
+export function listLoaderKeys(): readonly string[] {
+  return [...LOADERS_BY_KEY.keys()];
 }
 
 /** Catalogue chargé pour cette locale et ce namespace, `null` si absent. */
@@ -296,22 +377,11 @@ export function listNamespaces(): readonly Namespace[] {
   return NAMESPACES;
 }
 
-/**
- * Locales réellement couvertes par le chargement paresseux.
- *
- * Exposé pour que `catalog.test.ts` puisse vérifier que l'exclusion codée dans
- * le motif du glob correspond bien à `DEFAULT_LOCALE`. Sans ce garde-fou, un
- * changement de locale de référence laisserait l'ancienne en double (statique
- * + dynamique) et la nouvelle sans chargeur — deux bugs silencieux.
- */
-export function listLazyLocales(): readonly Locale[] {
-  const found = new Set<Locale>();
-  for (const path of Object.keys(CATALOG_LOADERS)) {
-    const parsed = parseCatalogPath(path);
-    if (parsed) found.add(parsed.locale);
-  }
-  return [...found];
-}
+// `listLazyLocales()` a été supprimée le 2026-08-25 : elle n'existait que pour
+// vérifier que `fr` était EXCLU du glob, ce qui n'est plus vrai depuis que les
+// 17 namespaces de page y sont entrés. `listLoaderKeys()` la remplace et
+// vérifie plus : la présence d'un chargeur pour chaque couple attendu, ET son
+// absence pour les deux namespaces eager.
 
 /**
  * Résout une clé avec repli, mais retourne `null` si elle n'existe nulle part

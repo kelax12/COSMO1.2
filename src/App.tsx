@@ -7,7 +7,8 @@ import { Toaster } from 'sonner';
 import { MotionConfig } from 'framer-motion';
 import { installMobileFocusRecovery } from '@/lib/mobileFocus';
 import { isTimeoutError } from '@/lib/withTimeout';
-import { useLocale } from '@/i18n/store';
+import { useLocale, localeStore } from '@/i18n/store';
+import { ensureNamespaces, type Namespace } from '@/i18n/catalog';
 import { routeSlug } from '@/i18n/routes';
 
 import { getLastVisitedPage } from '@/modules/ui-states';
@@ -38,14 +39,39 @@ const CommandPalette = lazy(() => import('@/components/CommandPalette'));
 // (cas après déploiement : le vieux index.html du navigateur référence
 // des chunks qui n'existent plus sur le CDN). On retry une fois, puis
 // on force un reload pour récupérer un index.html frais.
+//
+// ── Second rôle : les catalogues i18n de la page ──
+//
+// Seuls `common` et `errors` sont dans le chunk d'entrée (cf.
+// `src/i18n/catalog.ts`). Les 17 autres namespaces voyagent avec la page qui
+// les utilise, et sont attendus ICI, avant que le module de page ne résolve.
+//
+// 🔴 **C'est le seul endroit où ces catalogues doivent être attendus.** Le
+// `<Suspense>` qui enveloppe déjà chaque route couvre l'attente : l'utilisateur
+// voit son fallback de chargement habituel. Déplacer ce chargement dans un
+// `useEffect` de composant ferait rendre l'écran AVANT le catalogue, donc
+// afficherait des clés brutes (`org.project.name`) pendant une frame.
+//
+// Les deux chargements partent EN PARALLÈLE (`Promise.all`) : le catalogue ne
+// s'ajoute pas au temps de chargement de la page, il s'y superpose.
+//
+// La liste déclarée doit couvrir tout le SOUS-ARBRE de la page, pas seulement
+// son fichier. Elle n'est pas maintenue à la main : `npm run i18n:namespaces`
+// la calcule depuis le graphe d'imports, et
+// `src/i18n/lazy-namespaces.guard.test.ts` échoue si une déclaration est
+// incomplète.
 // ──────────────────────────────────────────────────────────────────
 const lazyWithRetry = <T extends React.ComponentType<Record<string, never>>>(
-  factory: () => Promise<{ default: T }>
+  factory: () => Promise<{ default: T }>,
+  namespaces: readonly Namespace[] = []
 ) =>
   lazy(async () => {
     const STORAGE_KEY = 'cosmo:chunk-reload-attempt';
     try {
-      const mod = await factory();
+      const [mod] = await Promise.all([
+        factory(),
+        ensureNamespaces(namespaces, localeStore.locale),
+      ]);
       sessionStorage.removeItem(STORAGE_KEY);
       return mod;
     } catch (err) {
@@ -65,37 +91,42 @@ const lazyWithRetry = <T extends React.ComponentType<Record<string, never>>>(
     }
   });
 
-// Lazy load pages for code splitting
-const LandingPage = lazyWithRetry(() => import('@/pages/LandingPage'));
-const LoginPage = lazyWithRetry(() => import('@/pages/LoginPage'));
-const SignupPage = lazyWithRetry(() => import('@/pages/SignupPage'));
-const ForgotPasswordPage = lazyWithRetry(() => import('@/pages/ForgotPasswordPage'));
-const ResetPasswordPage = lazyWithRetry(() => import('@/pages/ResetPasswordPage'));
-const DashboardPage = lazyWithRetry(() => import('@/pages/DashboardPage'));
-const TasksPage = lazyWithRetry(() => import('@/pages/TasksPage'));
-const AgendaPage = lazyWithRetry(() => import('@/pages/AgendaPage'));
-const HabitsPage = lazyWithRetry(() => import('@/pages/HabitsPage'));
-const OKRPage = lazyWithRetry(() => import('@/pages/OKRPage'));
-const StatisticsPage = lazyWithRetry(() => import('@/pages/StatisticsPage'));
-const SettingsPage = lazyWithRetry(() => import('@/pages/SettingsPage'));
-const PremiumPage = lazyWithRetry(() => import('@/pages/PremiumPage'));
-const GuidePage = lazyWithRetry(() => import('@/pages/GuidePage'));
-const MentionsLegalesPage = lazyWithRetry(() => import('@/pages/MentionsLegalesPage'));
-const PolitiqueConfidentialitePage = lazyWithRetry(() => import('@/pages/PolitiqueConfidentialitePage'));
-const CGUPage = lazyWithRetry(() => import('@/pages/CGUPage'));
-const InvitePage = lazyWithRetry(() => import('@/pages/InvitePage'));
-const AdminPage = lazyWithRetry(() => import('@/pages/AdminPage'));
-const OrganizationOnboardingPage = lazyWithRetry(() => import('@/pages/OrganizationOnboardingPage'));
-const OrganizationPage = lazyWithRetry(() => import('@/pages/OrganizationPage'));
-const ClaimOrgInvitePage = lazyWithRetry(() => import('@/pages/ClaimOrgInvitePage'));
-const NotFoundPage = lazyWithRetry(() => import('@/pages/NotFoundPage'));
-const BlogIndexPage = lazyWithRetry(() => import('@/pages/BlogIndexPage'));
-const BlogArticlePage = lazyWithRetry(() => import('@/pages/BlogArticlePage'));
-const AProposPage = lazyWithRetry(() => import('@/pages/AProposPage'));
-const UseCasePage = lazyWithRetry(() => import('@/pages/UseCasePage'));
+// Lazy load pages for code splitting.
+//
+// Le second argument est la liste des catalogues i18n du SOUS-ARBRE de la page.
+// Régénérer après tout déplacement de composant : `npm run i18n:namespaces`.
+const LandingPage = lazyWithRetry(() => import('@/pages/LandingPage'), ['landing', 'seo']);
+const LoginPage = lazyWithRetry(() => import('@/pages/LoginPage'), ['seo']);
+const SignupPage = lazyWithRetry(() => import('@/pages/SignupPage'), ['seo']);
+const ForgotPasswordPage = lazyWithRetry(() => import('@/pages/ForgotPasswordPage'), ['seo']);
+const ResetPasswordPage = lazyWithRetry(() => import('@/pages/ResetPasswordPage'), ['seo']);
+const DashboardPage = lazyWithRetry(() => import('@/pages/DashboardPage'), ['dashboard', 'eventModal', 'okr', 'org', 'taskModal', 'tasks']);
+const TasksPage = lazyWithRetry(() => import('@/pages/TasksPage'), ['eventModal', 'org', 'taskModal', 'tasks', 'tutorials']);
+const AgendaPage = lazyWithRetry(() => import('@/pages/AgendaPage'), ['agenda', 'eventModal', 'org', 'taskModal', 'tasks', 'tutorials']);
+const HabitsPage = lazyWithRetry(() => import('@/pages/HabitsPage'), ['eventModal', 'habits', 'premium', 'tasks', 'tutorials']);
+const OKRPage = lazyWithRetry(() => import('@/pages/OKRPage'), ['eventModal', 'okr', 'taskModal', 'tasks', 'tutorials']);
+const StatisticsPage = lazyWithRetry(() => import('@/pages/StatisticsPage'), ['dashboard', 'premium', 'statistics']);
+const SettingsPage = lazyWithRetry(() => import('@/pages/SettingsPage'), ['org', 'settings']);
+const PremiumPage = lazyWithRetry(() => import('@/pages/PremiumPage'), ['premium']);
+const GuidePage = lazyWithRetry(() => import('@/pages/GuidePage'), ['guide', 'seo']);
+const MentionsLegalesPage = lazyWithRetry(() => import('@/pages/MentionsLegalesPage'), ['seo']);
+const PolitiqueConfidentialitePage = lazyWithRetry(() => import('@/pages/PolitiqueConfidentialitePage'), ['seo']);
+const CGUPage = lazyWithRetry(() => import('@/pages/CGUPage'), ['seo']);
+const InvitePage = lazyWithRetry(() => import('@/pages/InvitePage'), ['invite']);
+const AdminPage = lazyWithRetry(() => import('@/pages/AdminPage'), ['admin']);
+const OrganizationOnboardingPage = lazyWithRetry(() => import('@/pages/OrganizationOnboardingPage'), ['org']);
+const OrganizationPage = lazyWithRetry(() => import('@/pages/OrganizationPage'), ['eventModal', 'okr', 'org', 'tasks']);
+const ClaimOrgInvitePage = lazyWithRetry(() => import('@/pages/ClaimOrgInvitePage'), ['org']);
+const NotFoundPage = lazyWithRetry(() => import('@/pages/NotFoundPage'), ['seo']);
+const BlogIndexPage = lazyWithRetry(() => import('@/pages/BlogIndexPage'), ['landing', 'seo']);
+const BlogArticlePage = lazyWithRetry(() => import('@/pages/BlogArticlePage'), ['landing', 'seo']);
+const AProposPage = lazyWithRetry(() => import('@/pages/AProposPage'), ['landing', 'seo']);
+const UseCasePage = lazyWithRetry(() => import('@/pages/UseCasePage'), ['landing', 'seo']);
 
-// Lazy load Layout
-const Layout = lazyWithRetry(() => import('@/components/Layout'));
+// Lazy load Layout. Il enveloppe TOUTES les routes protégées : son `org` est
+// donc chargé une seule fois pour toute la session connectée, et les pages
+// qu'il contient le retrouvent déjà en mémoire.
+const Layout = lazyWithRetry(() => import('@/components/Layout'), ['org', 'tasks']);
 
 // Query client config optimized
 const queryClient = new QueryClient({

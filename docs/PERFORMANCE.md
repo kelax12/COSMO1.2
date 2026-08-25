@@ -1,31 +1,62 @@
 # Performance bundle — `vite.config.ts manualChunks`
 
-## Note de performance : 68 → **64 / 100** (2026-08-24 → 2026-08-25)
+## Note de performance : 68 → 64 → **82 / 100** (2026-08-24 → 2026-08-25 soir)
 
-**C'est le seul audit du dossier dont la note BAISSE, et c'est voulu.**
+| Ce qui compose la note | 08-24 | 08-25 (16 h) | **08-25 (fin)** |
+|---|---|---|---|
+| Chunk `index` (critical path) | 134 kB gzip | 139,0 kB gzip | **87,2 kB gzip** |
+| Marge sur le budget de 150 kB | 16 kB | 11,0 kB | **62,8 kB** |
+| **Chemin critique TOTAL** (entrée + preloads) | non mesuré | **580,5 kB gzip** | **420,1 kB gzip** |
+| `vendor-charts` préchargé pour TOUS les visiteurs | oui, invisible | oui, invisible | **non** |
+| Garde automatique sur le budget | ❌ aucune | ❌ aucune | ✅ `npm run check:bundle`, bloquante en CI |
+| Levier i18n (~104 ko de JSON hors chemin critique) | non appliqué | non appliqué | ✅ **appliqué** |
+| Lighthouse CI | câblé, seuils provisoires | idem | idem |
 
-| Ce qui compose la note | 08-24 | 08-25 |
-|---|---|---|
-| Chunk `index` (critical path) | 134 kB gzip | **139,0 kB gzip** |
-| Marge sur le budget de 150 kB | 16 kB | **11,0 kB** |
-| Vitesse de dérive mesurée | +0,6 kB / jour (10 j) | **+5,0 kB en UN jour** |
-| `OrganizationPage` | 61 kB gzip | **64,2 kB gzip** |
-| Lighthouse CI | câblé, seuils provisoires | **toujours provisoires, jamais exécuté au réel** |
-| Levier i18n identifié (~104 ko de JSON hors chemin critique) | non appliqué | **non appliqué** |
+**+18 en fin de journée, après être descendu à 64.** Le chemin critique perd **160 kB gzip
+(−27,6 %)**, et le budget qui n'était mesuré par rien devient une gate CI.
 
-**−4.** La journée du 2026-08-25 a livré neuf migrations, un système de permissions, deux canaux
-Realtime et une périodicité de facturation annuelle. **Aucun de ces chantiers n'a regardé le
-bundle**, et le chemin critique a pris en un jour la moitié de ce qu'il avait pris en dix.
+### Ce qui a produit le gain, dans l'ordre
 
-**La projection publiée hier est caduque.** Elle annonçait le franchissement du budget « autour de
-mi-septembre » sur la base de +0,6 kB/jour. Au rythme mesuré du 25, il reste **deux à trois
-journées de travail de cette intensité** avant les 150 kB. Ce n'est pas une prévision : c'est la
-seule mesure dont on dispose, et elle dit que la marge se consomme par vagues de fonctionnalités,
-pas linéairement.
+1. **Les catalogues i18n suivent leur page** (−42,9 kB gzip sur l'entrée, 139,0 → 96,1).
+   Le catalogue `fr` était importé statiquement dans son intégralité : 178 ko de JSON brut dans le
+   chunk d'entrée, dont `org` 50 ko, `landing` 34 ko et `guide` 14 ko, des pages que la plupart
+   des sessions n'ouvrent jamais. Seuls `common` et `errors` restent eager ; les 17 autres sont
+   chargés par le gate de route.
+2. **`clsx` sortait `vendor-charts` du lazy** (−8,9 kB sur l'entrée, et surtout **−117,5 kB de
+   préchargement pour tout visiteur**). Détail ci-dessous : c'est le finding le plus rentable du
+   fichier, et il était invisible.
 
-**Sortie déjà écrite, plus bas** : rendre le catalogue `fr` paresseux par namespace rend ~104 ko
-de JSON brut au chemin critique, largement de quoi ramener la marge. C'est le chantier qui passe
-devant le reste dès la prochaine vague entreprise.
+### 🔴 Le finding qui ne se voyait pas : recharts était sur le chemin critique
+
+Ce document affirmait depuis des semaines que `vendor-charts` était **lazy**. Il ne l'était pas.
+
+`dist/index.html` portait `<link rel="modulepreload" href="…/vendor-charts-….js">`, donc
+**117,5 kB gzip de recharts + d3 étaient téléchargés par chaque visiteur**, sur la landing, sur
+`/login`, partout —, sans jamais être exécutés hors des trois écrans qui font des graphiques.
+
+**La cause tient en une ligne de `manualChunks`.** `cn()` (`src/lib/utils.ts`) appelle `clsx`,
+donc `clsx` est dans le graphe de l'entrée. Mais recharts importe `clsx` lui aussi, et un module
+partagé entre l'entrée et un **chunk manuel** est absorbé par le chunk manuel. `clsx` atterrissait
+donc dans `vendor-charts`, ce qui en faisait un import **statique** de l'entrée, ce qui déclenchait
+le `modulepreload`. Une fonction utilitaire de 500 octets traînait 117 kB derrière elle.
+
+**Correctif** : assigner explicitement `clsx`, `tailwind-merge` et `class-variance-authority` à
+`vendor-utils`. Trois lignes.
+
+> ⚠️ **La leçon vaut plus que le correctif.** Cette phrase, « `vendor-charts` est lazy », était
+> écrite ici, relue plusieurs fois, et fausse. Personne ne l'a vue parce que **le tableau des
+> chunks mesure les tailles, pas le graphe de chargement**. Un chunk peut être « lazy » au sens de
+> Rollup et préchargé au sens du navigateur. Vérifier `dist/index.html`, pas seulement `dist/assets`.
+
+### Ce qui plafonne encore à 82
+
+- **Les seuils Lighthouse restent provisoires**, jamais posés au réel : la moitié de la mesure
+  côté navigateur (LCP, TBT, CLS) n'est donc toujours pas gardée.
+- **`vendor-sentry` (49,2 kB gzip) reste sur le chemin critique.** Le différer est techniquement
+  simple, mais ce n'est pas un arbitrage de performance : ça revient à ne plus capturer les
+  erreurs du démarrage, celles qui blanchissent l'écran. **Non fait volontairement**, à trancher.
+- **Rien n'est mesuré côté terrain.** Tous les chiffres ci-dessus sont des octets, pas des
+  millisecondes chez un utilisateur.
 
 ---
 
@@ -34,39 +65,48 @@ devant le reste dès la prochaine vague entreprise.
 **Tailles réelles, `npm run build` du 2026-08-25** (brut / gzip). Les colonnes précédentes
 gardent les mesures antérieures pour rendre la dérive lisible :
 
-| Chunk | Contenu | 08-15 (gzip) | 08-24 (gzip) | **08-25 (gzip)** | Quand chargé |
+| Chunk | Contenu | 08-24 (gzip) | 08-25 midi | **08-25 soir** | Quand chargé |
 |---|---|---|---|---|---|
-| `index` (app) | code applicatif partagé | 448 kB (128 kB) | 470 kB (134 kB) | **487 kB (139 kB)** 🟠 | Toujours |
+| `index` (app) | code applicatif partagé | 470 kB (134 kB) | 487 kB (139 kB) | **327 kB (87 kB)** ✅ | Toujours |
 | `vendor-react` | react + react-dom + scheduler | 227 kB (72 kB) | 227 kB (72 kB) | 227 kB (72 kB) | Toujours |
-| `vendor-router` | react-router | 38 kB (14 kB) | 38 kB (14 kB) | 38 kB (13 kB) | Toujours (split pour parallel HTTP/2) |
-| `vendor-radix` | @radix-ui/* | 177 kB (51 kB) | 145 kB (45 kB) | 145 kB (45 kB) | Toujours |
-| `vendor-supabase` | @supabase/supabase-js | 191 kB (50 kB) | 215 kB (56 kB) | 215 kB (56 kB) | Toujours (extrait pour cache CDN) |
-| `vendor-sentry` | @sentry/react | 140 kB (47 kB) | 146 kB (49 kB) | 146 kB (49 kB) | Toujours (extrait pour cache CDN) |
-| `vendor-animation` | framer-motion | 146 kB (49 kB) | 148 kB (49 kB) | 148 kB (49 kB) | Toujours |
-| `vendor-utils` | date-fns + lucide-react | 71 kB (21 kB) | 70 kB (21 kB) | 71 kB (21 kB) | Toujours |
-| `vendor-query` | @tanstack/* | 55 kB (16 kB) | 60 kB (18 kB) | 60 kB (17 kB) | Toujours |
-| `vendor-charts` | **recharts + d3-* + victory-vendor** | 400 kB (116 kB) | 414 kB (118 kB) | 414 kB (118 kB) | **Lazy** (StatisticsPage, DashboardChart, GuidePage) |
+| `vendor-router` | react-router | 38 kB (14 kB) | 38 kB (13 kB) | 38 kB (14 kB) | Toujours (split pour parallel HTTP/2) |
+| `vendor-radix` | @radix-ui/* | 145 kB (45 kB) | 145 kB (45 kB) | 145 kB (45 kB) | Toujours |
+| `vendor-supabase` | @supabase/supabase-js | 215 kB (56 kB) | 215 kB (56 kB) | 215 kB (56 kB) | Toujours (extrait pour cache CDN) |
+| `vendor-sentry` | @sentry/react | 146 kB (49 kB) | 146 kB (49 kB) | 146 kB (49 kB) | Toujours (extrait pour cache CDN) |
+| `vendor-animation` | framer-motion | 148 kB (49 kB) | 148 kB (49 kB) | 148 kB (49 kB) | Toujours |
+| `vendor-utils` | date-fns + lucide-react **+ clsx / tailwind-merge / cva** | 70 kB (21 kB) | 71 kB (21 kB) | **100 kB (30 kB)** | Toujours |
+| `vendor-query` | @tanstack/* | 60 kB (18 kB) | 60 kB (17 kB) | 60 kB (18 kB) | Toujours |
+| `vendor-charts` | **recharts + d3-* + victory-vendor** | 414 kB (118 kB) | 414 kB (118 kB) | 414 kB (118 kB) | **Lazy · et VRAIMENT lazy depuis le 2026-08-25 soir** (StatisticsPage, DashboardChart, GuidePage) |
+| **catalogues i18n** | un chunk par namespace et par langue | dans `index` | dans `index` | **`org` 14 kB · `landing` 10 kB · `guide` 4 kB · `tasks` 3 kB · les 13 autres < 2 kB** | **Lazy** (avec la page qui les utilise) |
 | `vendor-calendar` | @fullcalendar/* **+ `locales-all`** | 290 kB (85 kB) | 290 kB (85 kB) | 290 kB (85 kB) | **Lazy** (`/agenda` uniquement) |
 | `vendor-gsap` | gsap + plugins (+ `InertiaPlugin`) | 139 kB (55 kB) | 139 kB (55 kB) | 139 kB (55 kB) | **Lazy** (LandingPage uniquement) |
 | `vendor-ogl` | ogl · micro-runtime WebGL | 44 kB (13 kB) | 44 kB (13 kB) | 44 kB (12 kB) | **Lazy** (fond `LightRays` du hero entreprise) |
-| **`OrganizationPage`** | **tout le mode entreprise** | non listé | 265 kB (61 kB) | **281 kB (64 kB)** 🟠 | **Lazy** (`/entreprise`) |
-| `TasksPage` | page Tâches | non listé | 130 kB (30 kB) | 129 kB (29 kB) | **Lazy** |
-| `TaskModal` | modal de tâche | non listé | 104 kB (24 kB) | 102 kB (22 kB) | **Lazy** |
-| `LandingPage` | shell + aiguillage + parcours perso | 90 kB (24 kB) | 81 kB (21 kB) | 82 kB (20 kB) | **Lazy** (`/`) |
-| `EnterpriseTrack` | les 10 sections du parcours entreprise | 51 kB (12 kB) | 44 kB (11 kB) | 48 kB (12 kB) | **Lazy** (à la bascule / `/entreprise-presentation`) |
+| **`OrganizationPage`** | **tout le mode entreprise** | 265 kB (61 kB) | 281 kB (64 kB) | 281 kB (64 kB) 🟠 | **Lazy** (`/entreprise`) |
+| `TasksPage` | page Tâches | 130 kB (30 kB) | 129 kB (29 kB) | 129 kB (30 kB) | **Lazy** |
+| `TaskModal` | modal de tâche | 104 kB (24 kB) | 102 kB (22 kB) | 102 kB (23 kB) | **Lazy** |
+| `LandingPage` | shell + aiguillage + parcours perso | 81 kB (21 kB) | 82 kB (20 kB) | 82 kB (21 kB) | **Lazy** (`/`) |
+| `EnterpriseTrack` | les 10 sections du parcours entreprise | 44 kB (11 kB) | 48 kB (12 kB) | 49 kB (12 kB) | **Lazy** (à la bascule / `/entreprise-presentation`) |
 
-> 🟠 **Le warning Vite « chunks larger than 400 kB » est actif** (build du 2026-08-25) :
-> le chunk `index` est à **488 kB brut / 139,0 kB gzip**, et `vendor-charts` à 414 kB brut (lazy,
-> donc sans effet sur le critical path). La trajectoire du chunk `index` est le seul point qui
-> demande une décision : **124 kB (08-14) → 128 kB (08-15) → 134 kB (08-24) → 139 kB (08-25)**.
-> Les vendors, eux, n'ont pas bougé d'un octet : **la totalité de la hausse est du code
-> applicatif**, le système de permissions (`permissions.ts`, `use-my-permissions.ts`,
-> `MemberPermissionsSheet`) et les deux hooks Realtime, tous partagés donc tous dans `index`.
-> La hausse initiale depuis les 124 kB du 2026-08-14
-> **ne vient pas du track entreprise** : vérifié par `grep` sur le chunk construit, aucun de ses
-> symboles (`gate-panel`, `pyramid-stage`, `ent-hero-line`) n'y figure — il vit dans
-> `LandingPage` et `EnterpriseTrack`, tous deux lazy. Sous le budget gzip (< 150 kB) mais la marge
-> s'est réduite — c'est le poste à surveiller, pas les vendors.
+**Chemin critique réel**, l'entrée PLUS tout ce que `dist/index.html` précharge, c'est-à-dire ce
+que télécharge un visiteur qui arrive et repart :
+
+| | 08-25 midi | **08-25 soir** |
+|---|---|---|
+| Chunks préchargés | 10 | **9** |
+| Total gzip | **580,5 kB** | **420,1 kB** (−27,6 %) |
+
+C'est CE chiffre qu'il faut regarder, pas la seule taille de `index` : c'est lui qui a caché
+117 kB de recharts pendant des semaines.
+
+> 🟠 **Le warning Vite « chunks larger than 400 kB » reste actif**, mais il ne concerne plus le
+> chemin critique : le seul chunk au-dessus de 400 ko bruts est `vendor-charts` (414 ko), désormais
+> réellement lazy. Le chunk `index` est retombé à **327 ko bruts / 87 ko gzip**.
+>
+> Trajectoire du chunk d'entrée : **124 kB (08-14) → 128 (08-15) → 134 (08-24) → 139 (08-25 midi)
+> → 87 (08-25 soir)**. Les quatre premières valeurs montaient parce que rien ne les mesurait ; la
+> cinquième descend parce qu'on a enfin regardé *ce qui* était dedans plutôt que *combien* il
+> pesait.
+>
 > Recharts n'est **plus** importé par la landing (`AppWindowShowcase` l'exclut volontairement du
 > hero) : `StatsShowcase` ne vit plus que dans `GuidePage`, en `React.lazy`.
 
@@ -81,36 +121,48 @@ gardent les mesures antérieures pour rendre la dérive lisible :
 
 ## Budget bundle (objectif)
 
-- Chunk `index` : **< 150 kB gzip** (au 2026-08-25 : **139,0 kB**, **marge : 11,0 kB**, cf. la
-  trajectoire ci-dessus. C'est le poste à surveiller en priorité).
+- Chunk `index` : **< 150 kB gzip** (au 2026-08-25 soir : **87,2 kB**, **marge : 62,8 kB**).
+- **Cliquet** : `npm run check:bundle` refuse un chunk d'entrée au-dessus de **92 kB gzip**, soit
+  ~5 % au-dessus du mesuré. Bloquant dans le job CI `lint-test-build`, juste après le build.
 
-> 🔴 **Ce budget n'est mesuré par aucune garde.** Tous les autres budgets du dépôt ont fini par
-> obtenir un cliquet (taille des fichiers, échelle typographique, z-index, feuilles), celui-ci
-> non, et c'est le seul qui ait reculé de 5 kB en une journée sans que rien ne le signale.
-> C'est exactement le motif documenté dans [`ARCHITECTURE.md`](./ARCHITECTURE.md) : *une règle
-> qu'aucun script ne mesure recule à chaque vague de features.* Un test qui lit la sortie de
-> `npm run build` et refuse une croissance nette du chunk `index` coûterait une demi-heure.
+> ✅ **Ce budget a enfin sa garde (2026-08-25).** Il était le seul du dépôt à n'être mesuré par
+> aucun script, et le seul à avoir reculé sans que personne le voie : +5 kB gzip en une journée,
+> pour une marge de 11 kB. `scripts/check-bundle-budget.mjs` lit le build RÉEL, les tailles gzip
+> de `dist/assets`, et surtout **le chunk d'entrée déclaré dans `dist/index.html`**, pas le
+> premier `index-*.js` venu.
+>
+> 🔴 **Ne jamais remonter un plafond pour faire passer la CI.** Même règle que
+> `vitest.config.ts` : un plafond ne descend que quand la mesure descend.
 
-> **Le levier est identifié et mesuré — il n'est PAS appliqué (2026-08-24).**
-> Le catalogue de référence `fr` est importé **statiquement** par `src/i18n/catalog.ts` : les
-> 19 namespaces, soit **208 ko de JSON brut**, partent dans le chunk `index`. (`en` est déjà
-> paresseux via `import.meta.glob` — ce point-là est propre.)
+> ✅ **Le levier i18n est APPLIQUÉ (2026-08-25 soir).** Le catalogue `fr` était importé
+> **statiquement** en entier par `src/i18n/catalog.ts` : 19 namespaces, **178 ko de JSON brut**
+> dans le chunk `index`, dont `org` 50 ko, `landing` 34 ko, `guide` 14 ko, `tutorials` 8 ko, des
+> pages que la plupart des sessions n'ouvrent jamais.
 >
-> Or la moitié de ce poids n'a rien à faire sur le chemin critique :
-> `org.json` **48 ko** (page Entreprise, lazy), `landing.json` **32 ko** (landing, lazy),
-> `guide.json` **16 ko** (GuidePage, lazy), `tutorials.json` **8 ko** → **~104 ko de JSON brut**
-> chargés sur chaque écran de l'app connectée pour des pages qu'on n'ouvrira peut-être jamais.
+> **Ce qui a été fait, et pourquoi c'est sûr.** Seuls `common` et `errors` restent eager. Le choix
+> n'est pas arbitraire : `scripts/i18n-shell-namespaces.mjs` parcourt le graphe d'imports
+> statiques depuis `App.tsx` et `main.tsx` et dit exactement ce que le SHELL rend avant qu'une
+> route soit résolue. Les 17 autres sont attendus par `lazyWithRetry` (src/App.tsx), donc par le
+> `<Suspense>` qui enveloppe déjà chaque route.
 >
-> ⚠️ **Ne pas le faire naïvement.** L'import statique de `fr` est ce qui rend le repli
-> **synchrone** : `t()` ne renvoie jamais de promesse. Rendre ces namespaces paresseux sans
-> rendre le montage des pages concernées conscient du chargement produirait un flash de clés
-> brutes (`org.project.name` à l'écran) — un bug bien plus visible que 100 ko d'avance.
-> Le chantier est donc : catalogue paresseux **par namespace** + attente dans le `Suspense` qui
-> enveloppe déjà chaque page lazy. À faire quand la marge de 16 ko sera consommée, avec
-> vérification visuelle sur les trois pages concernées.
+> ⚠️ **Le risque était réel et il est traité par une garde, pas par la vigilance.** Rendre un
+> namespace paresseux sans attendre son chargement affiche `org.project.name` à l'écran pendant
+> une frame. `src/i18n/lazy-namespaces.guard.test.ts` échoue si une route déclare moins de
+> namespaces que son sous-arbre n'en utilise, sous-arbre calculé en traversant AUSSI les `lazy()`
+> imbriqués, parce qu'un composant chargé paresseusement dans une page rend quand même sous le
+> même toit.
+>
+> **Vérifié dans le navigateur sur le build de production**, pas seulement en test : 10 routes en
+> `fr` et 5 en `en`, balayage du DOM et des attributs `aria-label` / `title` / `placeholder` à la
+> recherche du motif `namespace.clé`. **Zéro occurrence.**
+>
+> ⚠️ Un test de composant qui monte directement un composant utilisant un namespace non-eager doit
+> désormais faire `await ensureNamespaces(['org'], 'fr')` dans un `beforeAll`, sinon il assertera
+> sur des clés brutes. Exemple : `EnterpriseTierGrid.test.tsx`.
+
 - Chaque chunk lazy : **< 80 kB gzip**. Exceptions documentées : `vendor-charts` (118 kB),
   `vendor-calendar` (85 kB), `vendor-gsap` (55 kB).
-  ⚠️ **`OrganizationPage` est à 63,7 kB gzip au 2026-08-25** (61 kB la veille) : toujours sous le
+  ⚠️ **`OrganizationPage` est à 64,2 kB gzip au 2026-08-25** (61 kB la veille) : toujours sous le
   budget, mais c'est de loin le plus gros chunk de page, et il grossit à chaque vague entreprise.
   Le découpage de `PyramidTab` (1 506 → 1 045 lignes) **n'a rien changé à son poids** : extraire
   `PyramidNodeCard` déplace du code à l'intérieur du même chunk. Découper aide la maintenabilité ;

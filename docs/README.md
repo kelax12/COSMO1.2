@@ -22,19 +22,22 @@ performance va moins bien que la sécurité, ils disent où chaque domaine se si
 | [Mode entreprise](./archive/RAPPORT-MODE-ENTREPRISE-2026-08-12.md) | 74 | **80** | **+6** | Permissions par membre (mig. 115) et périodicité annuelle (mig. 123) ; le finding n°1 est toujours là le soir |
 | [Accessibilité](./ACCESSIBILITY.md) | 76 | **79** | **+3** | 2ᵉ gate a11y, sur les pages **publiques** cette fois |
 | [SEO](./SEO.md) | 73 | **73** | **0** | Aucun travail SEO : le seul levier restant est hors dépôt |
-| [Performance](./PERFORMANCE.md) | 68 | **64** | **−4** | Le chunk `index` prend 5 kB gzip en **un** jour, marge 16 → 11 kB |
+| [Performance](./PERFORMANCE.md) | 68 | **82** | **+14** | Chemin critique 580 → **420 kB gzip** : catalogues i18n par page, et recharts sorti du préchargement |
 
 ### Ce que ce tableau dit, au-delà des chiffres
 
 **Un audit dont toutes les notes montent est un audit qui se félicite.** Deux lignes valent plus
 que les neuf autres :
 
-- **Performance à −4.** Sept migrations et un système de permissions ont été livrés sans que
-  personne ne regarde le bundle. C'est le seul budget du dépôt qu'**aucune garde ne mesure**, et
-  c'est le seul qui ait reculé. Les cinq autres budgets outillés (taille des fichiers, échelle
-  typographique, z-index, feuilles, couverture) ont tous tenu ou progressé. Ce n'est pas une
-  coïncidence, c'est la thèse de fond de tout ce dossier : *une règle qu'aucun script ne mesure
-  recule à chaque vague de features.*
+- **Performance, de −4 à +14 dans la même journée.** À 16 h la note tombait à 64 : sept
+  migrations et un système de permissions livrés sans que personne ne regarde le bundle, sur le
+  seul budget du dépôt qu'aucune garde ne mesurait. Le soir, le chemin critique passe de
+  **580 à 420 kB gzip** (−27,6 %) et le budget devient une gate CI. Les deux leviers :
+  les catalogues i18n voyagent avec leur page, et **recharts était préchargé pour tous les
+  visiteurs** à cause d'une ligne de `manualChunks`, 117 kB gzip que ce dossier décrivait comme
+  « lazy » depuis des semaines. Ce n'est pas une coïncidence si le seul budget non outillé est
+  celui qui cachait une erreur : *une règle qu'aucun script ne mesure recule à chaque vague de
+  features.*
 - **Tests, de +3 à +8 en fin de journée.** À 16 h la note ne montait que de 3 malgré 73 tests
   ajoutés : la couverture était repassée sous ses seuils, le dénominateur ayant grossi plus vite
   que le numérateur (~2 000 lignes d'interface non testées). La gate a été refermée le soir par
@@ -99,7 +102,7 @@ testées** (`scripts/migration-guards.test.mjs`).
 | [`DEPLOYMENT.md`](./DEPLOYMENT.md) | Runbook deploy / rollback Vercel + Supabase, drill de restauration |
 | [`MOBILE.md`](./MOBILE.md) | Pages et composants mobiles, bottom-sheets, pièges iOS Safari · **note 72** |
 | [`UI-PATTERNS.md`](./UI-PATTERNS.md) | Listes, modals, tutoriels, onboarding, thèmes · **dette UI/UX remesurée le 2026-08-25, note 80** |
-| [`PERFORMANCE.md`](./PERFORMANCE.md) | `manualChunks`, lazy loading, pagination, budget bundle · **build du 2026-08-25, note 64 (en baisse)** |
+| [`PERFORMANCE.md`](./PERFORMANCE.md) | `manualChunks`, lazy loading, pagination, budget bundle · **note 82**, budget gardé par `npm run check:bundle` |
 | [`ACCESSIBILITY.md`](./ACCESSIBILITY.md) | WCAG / EAA, aria, contraste, gates axe-core + Lighthouse · **note 79** |
 | [`SCALABILITY.md`](./SCALABILITY.md) | Montée en charge · **remesuré le 2026-08-25, note 84**, avec runbook reproductible |
 | [`SEO.md`](./SEO.md) | Prérendu, sitemap, hreflang, indexation par locale — **audit du 2026-08-14, données Search Console du 2026-08-19** + règles |
