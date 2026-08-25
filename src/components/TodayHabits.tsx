@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router';
 import { Clock, Check, ChevronDown, ChevronUp } from 'lucide-react';
 
 import { useHabits, useToggleHabitCompletion } from '@/modules/habits';
-import { calculateStreak } from '@/modules/habits/streak';
+import { habitStreak } from '@/modules/habits/streak';
 import { useT } from '@/i18n/useT';
 
 // Hauteur approximative d'une carte habitude (p-4 + contenu + gap)
@@ -128,7 +128,7 @@ const TodayHabits: React.FC = () => {
                         (`Object.values(completions).filter(Boolean).length`)
                         était le TOTAL de complétions, donc il ne retombait
                         jamais à zéro après un jour manqué. */}
-                    <span>{tp('habits.streak', calculateStreak(habit.completions))}</span>
+                    <span>{tp('habits.streak', habitStreak(habit))}</span>
                   </div>
                 </div>
               </div>

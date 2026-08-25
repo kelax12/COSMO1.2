@@ -7,6 +7,7 @@ import { withTimeout } from '@/lib/withTimeout';
 import { IHabitsRepository } from './repository';
 import { Habit, CreateHabitInput, UpdateHabitInput } from './types';
 import { habitKeys } from './constants';
+import { calculateStreak } from './streak';
 import { translator } from '@/i18n/useT';
 import { recordDemoCreationIfDemo } from '@/lib/demo-engagement';
 
@@ -153,14 +154,29 @@ export const useToggleHabitCompletion = () => {
       const previousHabits = queryClient.getQueryData<Habit[]>(habitKeys.lists());
       if (previousHabits) {
         queryClient.setQueryData<Habit[]>(habitKeys.lists(), (old) =>
-          old?.map((habit) =>
-            habit.id === id
-              ? {
-                  ...habit,
-                  completions: { ...habit.completions, [date]: !habit.completions[date] },
-                }
-              : habit
-          )
+          old?.map((habit) => {
+            if (habit.id !== id) return habit;
+            const completions = { ...habit.completions, [date]: !habit.completions[date] };
+            return {
+              ...habit,
+              completions,
+              // ⚠️ La série DOIT être recalculée ici, sinon elle ne bouge pas
+              // au clic. Depuis la mig. 119 elle vient du serveur
+              // (`streakCurrent`) : garder l'ancienne valeur afficherait un
+              // compteur figé jusqu'au refetch, alors que c'est précisément
+              // le retour visuel qu'on attend en cochant.
+              //
+              // Le recalcul porte sur la FENÊTRE (400 j) et non sur
+              // l'historique complet : exact pour toute série de moins de
+              // 400 jours consécutifs, et de toute façon corrigé par le
+              // refetch de `onSuccess` juste après.
+              streakCurrent: calculateStreak(completions),
+              completionsTotal:
+                habit.completionsTotal === undefined
+                  ? undefined
+                  : habit.completionsTotal + (completions[date] ? 1 : -1),
+            };
+          })
         );
       }
       return { previousHabits };

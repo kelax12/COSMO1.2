@@ -23,18 +23,61 @@ const VALID_ISO = '2026-01-01T00:00:00.000Z';
 beforeEach(() => supabaseMock.reset());
 
 describe('SupabaseHabitsRepository', () => {
-  it('fetchHabits: paginates via range with stable id tiebreak ordering', async () => {
-    supabaseMock.queueTable('habits', { data: [row] });
+  // ⚠️ Verrou de CHEMIN D'ACCES (mig. 119). `habits.completions` gagnait une
+  // entree PAR JOUR et par habitude, sans borne : 12,7 o/jour mesures, soit
+  // ~280 ko par lecture de liste a trois ans pour 20 habitudes. La RPC borne
+  // la fenetre ET renvoie les agregats calcules sur l'historique complet.
+  // Un retour a `.from('habits')` reintroduirait la croissance sans borne,
+  // sans aucun symptome avant que les comptes n'aient un an.
+  it('fetchHabits: passe par la RPC bornee get_my_habits (pas de SELECT direct)', async () => {
+    supabaseMock.queueRpc('get_my_habits', { data: [row] });
+    await repo.fetchHabits();
+
+    expect(supabaseMock.rpcCalls.map((c) => c.fn)).toContain('get_my_habits');
+    expect(supabaseMock.queries.filter((q) => q.table === 'habits')).toHaveLength(0);
+  });
+
+  it('fetchHabits: demande une fenetre bornee et garde le tri stable', async () => {
+    supabaseMock.queueRpc('get_my_habits', { data: [row] });
     const result = await repo.fetchHabits();
 
-    const orders = supabaseMock.callsFor('habits').filter((c) => c.method === 'order');
+    const args = supabaseMock.rpcCalls.find((c) => c.fn === 'get_my_habits')?.args as
+      | { p_days: number }
+      | undefined;
+    expect(args?.p_days).toBe(400);
+    // La fenetre ne doit jamais devenir illimitee par inadvertance.
+    expect(args?.p_days).toBeLessThanOrEqual(3650);
+
+    const orders = supabaseMock.callsFor('get_my_habits').filter((c) => c.method === 'order');
     expect(orders.map((c) => c.args)).toEqual([
       ['created_at', { ascending: false }],
       ['id', { ascending: false }],
     ]);
-    expect(supabaseMock.argsOf('habits', 'range')).toEqual([0, 999]);
+    expect(supabaseMock.argsOf('get_my_habits', 'range')).toEqual([0, 999]);
     expect(result[0].id).toBe('h1');
     expect(result[0].name).toBe('Lire');
+  });
+
+  it('fetchHabits: expose les agregats calcules serveur', async () => {
+    supabaseMock.queueRpc('get_my_habits', {
+      data: [{
+        ...row,
+        streak_current: 137,
+        streak_best: 200,
+        completions_total: 900,
+        first_completion_date: '2024-01-15',
+        window_days: 400,
+      }],
+    });
+    const [habit] = await repo.fetchHabits();
+
+    // Ces quatre champs sont ce qui rend la troncature acceptable : sans eux,
+    // un utilisateur assidu depuis trois ans verrait sa serie plafonner a 400.
+    expect(habit.streakCurrent).toBe(137);
+    expect(habit.streakBest).toBe(200);
+    expect(habit.completionsTotal).toBe(900);
+    expect(habit.firstCompletionDate).toBe('2024-01-15');
+    expect(habit.completionsWindowDays).toBe(400);
   });
 
   it('getPage without cursor: never emits a .or() filter', async () => {

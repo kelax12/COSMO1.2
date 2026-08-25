@@ -22,3 +22,26 @@ export function calculateStreak(
   }
   return streak;
 }
+
+/**
+ * Série d'une habitude, en préférant le chiffre calculé par le serveur.
+ *
+ * ⚠️ **Utiliser CECI et non `calculateStreak(habit.completions)` partout où on
+ * dispose de l'objet `Habit` complet.**
+ *
+ * Depuis la mig. 119, `habit.completions` est BORNÉ à une fenêtre glissante en
+ * mode Supabase (400 jours par défaut) : la colonne gagnait une entrée par jour
+ * et par habitude, sans fin. Calculer la série sur cette fenêtre plafonnerait
+ * silencieusement à 400 le compteur d'un utilisateur assidu depuis trois ans —
+ * un chiffre FAUX, affiché comme s'il était juste.
+ *
+ * `streakCurrent` est calculé côté serveur sur l'historique ENTIER. Le repli
+ * sur le calcul JS couvre le mode démo et le repository local, où `completions`
+ * contient effectivement tout.
+ */
+export function habitStreak(
+  habit: { completions: Record<string, boolean>; streakCurrent?: number },
+  now: Date = new Date(),
+): number {
+  return habit.streakCurrent ?? calculateStreak(habit.completions, now);
+}

@@ -48,11 +48,25 @@ const HabitGlobalTracking: React.FC = () => {
       }
       // Une complétion peut être antérieure à la création (un jour passé peut
       // être coché librement) — la fenêtre « Tout » doit alors remonter jusqu'à elle.
-      Object.keys(h.completions).forEach((dateStr) => {
+      //
+      // ⚠️ `firstCompletionDate` d'abord : depuis la mig. 119, `h.completions`
+      // est borné à une fenêtre glissante en mode Supabase, et remonter par ses
+      // clés ferait démarrer « Tout » à la fenêtre au lieu du vrai début.
+      // Le champ est calculé serveur sur l'historique entier.
+      const parseDay = (dateStr: string) => {
         const [y, m, dd] = dateStr.split('-').map(Number);
-        const d = new Date(y, m - 1, dd);
+        return new Date(y, m - 1, dd);
+      };
+      if (h.firstCompletionDate) {
+        const d = parseDay(h.firstCompletionDate);
+        d.setHours(0, 0, 0, 0);
         if (d < oldest) oldest = d;
-      });
+      } else {
+        Object.keys(h.completions).forEach((dateStr) => {
+          const d = parseDay(dateStr);
+          if (d < oldest) oldest = d;
+        });
+      }
     });
     const sevenAgo = new Date();
     sevenAgo.setDate(sevenAgo.getDate() - 7);
