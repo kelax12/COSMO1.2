@@ -179,7 +179,17 @@ lui-même — c'est que la doc décrit alors une architecture qui n'existe pas.
 > La mutation est remontée dans `AuthContext` (`updateDemoProfile`), la partie pure est isolée et
 > testée (`src/modules/auth/demo-profile.ts` + 10 tests), et le reste du module a été supprimé.
 
-## 5. 🔴 Dérive repo ↔ prod
+## 5. ✅ Dérive repo ↔ prod — refermée
+
+> **Vérifié en base le 2026-08-25 : la mig. `099` est appliquée**, ainsi que toutes les
+> suivantes jusqu'à la `119`. Le ledger et le dépôt sont alignés, il ne reste aucune
+> migration en attente.
+>
+> ⚠️ Ce paragraphe est resté marqué 🔴 pendant que le problème était déjà réglé. C'est le
+> défaut classique d'un audit qu'on corrige sans rouvrir : **le titre survit au finding**.
+> Avant de citer un marqueur de ce fichier, revérifier le fait.
+
+### Le diagnostic d'origine
 
 La migration **`099_admin_stats_v3.sql` n'est pas appliquée** en prod (dernière appliquée : `098`,
 vérifié dans `supabase_migrations.schema_migrations`). Conséquence fonctionnelle détaillée dans
