@@ -740,7 +740,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
               type="button"
               onClick={dismissSwipeHint}
               aria-label="Masquer l'astuce"
-              className="shrink-0 w-7 h-7 flex items-center justify-center rounded-md hover:bg-[rgb(var(--color-surface))]"
+              className="shrink-0 w-11 h-11 flex items-center justify-center rounded-md hover:bg-[rgb(var(--color-surface))]"
               style={{ color: 'rgb(var(--color-text-muted))' }}
             >
               <X size={14} />

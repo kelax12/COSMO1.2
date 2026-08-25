@@ -255,3 +255,33 @@ describe('SupabaseTeamProjectsRepository — tâches', () => {
     await expect(repo.deleteTask('tk1')).rejects.toBeTruthy();
   });
 });
+
+describe('SupabaseTeamProjectsRepository — dépendances de tâches', () => {
+  // Troisieme verrou de chemin d'acces de ce fichier (apres projets et taches).
+  // La policy `team_task_dependencies_select` delegue son perimetre a
+  // `team_tasks` : elle payait donc `can_access_team_project`, et sa CTE
+  // recursive, UNE FOIS PAR ARETE. Invisible aujourd'hui (0 ligne), couteux
+  // des que le graphe de dependances porte du volume. Cf. mig. 117.
+  it('getTaskDependencies: passe par la RPC indexable (pas de SELECT direct)', async () => {
+    supabaseMock.queueRpc('get_my_team_task_dependencies', {
+      data: [{ task_id: 'tk1', depends_on_id: 'tk2' }],
+    });
+    const result = await repo.getTaskDependencies('org1');
+
+    expect(supabaseMock.rpcCalls.map((c) => c.fn)).toContain('get_my_team_task_dependencies');
+    expect(supabaseMock.queries.filter((q) => q.table === 'team_task_dependencies')).toHaveLength(0);
+    expect(result).toEqual([{ taskId: 'tk1', dependsOnId: 'tk2' }]);
+  });
+
+  it('getTaskDependencies: org_id est un argument de RPC, plus un filtre eq', async () => {
+    supabaseMock.queueRpc('get_my_team_task_dependencies', { data: [] });
+    await repo.getTaskDependencies('org1');
+
+    expect(supabaseMock.rpcCalls.find((c) => c.fn === 'get_my_team_task_dependencies')?.args)
+      .toEqual({ p_org: 'org1' });
+    const eqCalls = supabaseMock
+      .callsFor('get_my_team_task_dependencies')
+      .filter((c) => c.method === 'eq');
+    expect(eqCalls).toEqual([]);
+  });
+});

@@ -561,9 +561,10 @@ utiliser d'index** — donc `Seq Scan` de toute la table et une CTE récursive (
 `tasks`.
 
 ```typescript
-supabase.from('team_tasks').select(...)                          // ❌ Seq Scan + CTE par ligne
-supabase.rpc('get_my_team_tasks',    { p_org: orgId })           // ✅ mig. 113
-supabase.rpc('get_my_team_projects', { p_org: orgId })           // ✅ mig. 113
+supabase.from('team_tasks').select(...)                                // ❌ Seq Scan + CTE par ligne
+supabase.rpc('get_my_team_tasks',             { p_org: orgId })        // ✅ mig. 113
+supabase.rpc('get_my_team_projects',          { p_org: orgId })        // ✅ mig. 113
+supabase.rpc('get_my_team_task_dependencies', { p_org: orgId })        // ✅ mig. 117
 ```
 
 - Le périmètre vient de `auth.uid()` seul : **`p_org` est un filtre, pas une portée.** Forger un
@@ -578,9 +579,10 @@ supabase.rpc('get_my_team_projects', { p_org: orgId })           // ✅ mig. 113
   un retour à `.from('team_tasks')` échoue en CI.
 
 > ⚠️ **Ne pas ajouter de nouvelle table entreprise sur le modèle prédicat-fonction.** Exprimer
-> l'appartenance en **jointure indexable** dans une RPC. `team_task_dependencies` (mig. 108)
-> délègue son périmètre à `team_tasks` et hérite donc du coût — à couvrir le jour où elle porte
-> du volume. Détail et projections : [`docs/SCALABILITY.md`](./docs/SCALABILITY.md) §2.
+> l'appartenance en **jointure indexable** dans une RPC, en réutilisant `my_team_project_ids()`
+> plutôt qu'en déléguant à `team_tasks` : c'est la délégation qui a fait hériter
+> `team_task_dependencies` du coût qu'on venait d'éliminer (mig. 108, refermé par la mig. 117).
+> Détail et projections : [`docs/SCALABILITY.md`](./docs/SCALABILITY.md) §2.
 
 ## 🔐 Permissions entreprise — surcharge, jamais remplacement (mig. 115)
 
@@ -632,7 +634,10 @@ au client**. Elle est atomique (même transaction que la bascule) et idempotente
 ## 📡 Synchronisation de la collaboration — Realtime, pas sondage
 
 `useSharedTasksRealtime` (monté **une seule fois** dans `App.tsx`) écoute `shared_tasks` et
-invalide la liste au moment du partage. Le `refetchInterval` de `useTasks` n'est plus qu'un filet
+invalide la liste au moment du partage. `useOrgInboxRealtime` (mig. 118, monté au même endroit)
+fait de même pour la boîte de réception d'organisation : il a remplacé **trois** sondages de 20 s
+montés en permanence par `InboxMenu`, soit 9 requêtes/minute et par utilisateur connecté avant
+toute interaction. Le `refetchInterval` de `useTasks` n'est plus qu'un filet
 de sécurité à 5 min.
 
 - ❌ Ne pas remonter la cadence du sondage : chaque tick est un `getAll()` complet. La version à

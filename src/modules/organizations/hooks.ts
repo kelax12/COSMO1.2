@@ -90,7 +90,13 @@ export const useMySentJoinRequest = () => {
   return useQuery({
     queryKey: orgKeys.mySentRequest(),
     queryFn: () => repository.getMySentJoinRequest(),
-    refetchInterval: 20_000,
+    // Plus de sondage : `useOrgInboxRealtime` (monté une seule fois dans
+    // `App.tsx`, mig. 118) écoute la table et invalide cette clé. Le sondage à
+    // 20 s rejouait la requête 180 fois par heure d'onglet ouvert pour
+    // apprendre qu'il n'y avait rien de neuf, sur une surface montée en
+    // PERMANENCE (`InboxMenu`). `refetchOnWindowFocus` reste le filet quand le
+    // WebSocket est indisponible (navigation privée, anti-pistage strict).
+    staleTime: 1000 * 30,
     refetchOnWindowFocus: true,
   });
 };
@@ -98,16 +104,21 @@ export const useMySentJoinRequest = () => {
 /**
  * Invitations d entreprise recues et non traitees.
  *
- * Meme cadence que les autres surfaces de la boite de reception (20 s +
- * refetch au retour d onglet) : une invitation doit apparaitre sans que le
- * destinataire ait a recharger.
+ * Temps reel (mig. 118) : une invitation apparait sans que le destinataire ait
+ * a recharger, et sans sondage. Repli sur le retour d onglet.
  */
 export const useMyOrgInvitations = () => {
   const repository = useOrgRepository();
   return useQuery({
     queryKey: orgKeys.myInvitations(),
     queryFn: () => repository.getMyOrgInvitations(),
-    refetchInterval: 20_000,
+    // Plus de sondage : `useOrgInboxRealtime` (monté une seule fois dans
+    // `App.tsx`, mig. 118) écoute la table et invalide cette clé. Le sondage à
+    // 20 s rejouait la requête 180 fois par heure d'onglet ouvert pour
+    // apprendre qu'il n'y avait rien de neuf, sur une surface montée en
+    // PERMANENCE (`InboxMenu`). `refetchOnWindowFocus` reste le filet quand le
+    // WebSocket est indisponible (navigation privée, anti-pistage strict).
+    staleTime: 1000 * 30,
     refetchOnWindowFocus: true,
   });
 };
@@ -115,15 +126,21 @@ export const useMyOrgInvitations = () => {
 /**
  * Retraits d'entreprise non acquittes.
  *
- * Meme cadence que le reste de la boite de reception. Pas de garde `enabled` :
- * en demo le repository local renvoie [] sans requete reseau.
+ * Temps reel (mig. 118), comme le reste de la boite de reception. Pas de garde
+ * `enabled` : en demo le repository local renvoie [] sans requete reseau.
  */
 export const useMyOrgRemovalNotices = () => {
   const repository = useOrgRepository();
   return useQuery({
     queryKey: orgKeys.myRemovalNotices(),
     queryFn: () => repository.getMyOrgRemovalNotices(),
-    refetchInterval: 20_000,
+    // Plus de sondage : `useOrgInboxRealtime` (monté une seule fois dans
+    // `App.tsx`, mig. 118) écoute la table et invalide cette clé. Le sondage à
+    // 20 s rejouait la requête 180 fois par heure d'onglet ouvert pour
+    // apprendre qu'il n'y avait rien de neuf, sur une surface montée en
+    // PERMANENCE (`InboxMenu`). `refetchOnWindowFocus` reste le filet quand le
+    // WebSocket est indisponible (navigation privée, anti-pistage strict).
+    staleTime: 1000 * 30,
     refetchOnWindowFocus: true,
   });
 };

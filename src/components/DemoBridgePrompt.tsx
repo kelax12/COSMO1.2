@@ -58,7 +58,7 @@ const DemoBridgePrompt: React.FC = () => {
                 // deux contrôles au même nom rendent la carte illisible pour un
                 // lecteur d'écran (et pour un test qui cible le libellé).
                 aria-label={t('demoBridge.dismiss')}
-                className="w-7 h-7 shrink-0 rounded-full flex items-center justify-center bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-secondary))] transition-colors"
+                className="w-11 h-11 shrink-0 rounded-full flex items-center justify-center bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-secondary))] transition-colors"
               >
                 <X size={14} aria-hidden="true" />
               </button>
@@ -79,14 +79,14 @@ const DemoBridgePrompt: React.FC = () => {
                 <button
                   type="button"
                   onClick={handleSignup}
-                  className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-[rgb(var(--color-accent-solid-foreground))] bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] transition-colors"
+                  className="flex-1 min-h-11 py-2.5 rounded-xl text-sm font-semibold text-[rgb(var(--color-accent-solid-foreground))] bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] transition-colors"
                 >
                   {t('demoBridge.cta')}
                 </button>
                 <button
                   type="button"
                   onClick={snooze}
-                  className="px-3 py-2.5 rounded-xl text-sm font-medium text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] transition-colors"
+                  className="px-3 min-h-11 py-2.5 rounded-xl text-sm font-medium text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] transition-colors"
                 >
                   {t('demoBridge.later')}
                 </button>

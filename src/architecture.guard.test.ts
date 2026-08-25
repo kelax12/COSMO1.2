@@ -112,7 +112,7 @@ const MAX_FILE_LOC = 600;
  * doit que RÉTRÉCIR. Y ajouter un fichier est un aveu, pas une solution.
  */
 const KNOWN_OVERSIZED = new Set([
-  'src/components/organization/PyramidTab.tsx', // 1505 — le pire, à découper en premier
+  'src/components/organization/PyramidTab.tsx', // 1046 (etait 1506 — NodeCard extrait le 2026-08-24)
   'src/components/TaskTable.tsx', // 1124
   'src/pages/AgendaPage.tsx', // 900
   'src/pages/SettingsPage.tsx', // 850
@@ -154,7 +154,19 @@ const KNOWN_OVERSIZED = new Set([
  * Ne doit JAMAIS monter. Un découpage la fait baisser — baisser aussi ce
  * nombre le jour où c'est fait, sinon le cliquet reprend du mou.
  */
-const OVERSIZED_BUDGET = 11915;
+/**
+ * 2026-08-24 (3e passe) : 11 915 -> 11 454, et le plus gros fichier du depot n'est
+ * plus PyramidTab. Ses 385 lignes de `NodeCard` (le rendu recursif d'une carte)
+ * sont parties dans `PyramidNodeCard.tsx` : 1 506 -> 1 046.
+ *
+ * La coupe suit une frontiere reelle, pas un compte de lignes : d'un cote le rendu
+ * D'UNE carte, de l'autre l'orchestration de l'arbre (recherche, repli,
+ * glisser-deposer, sheets). Aucune logique n'a change.
+ *
+ * PyramidTab reste hors budget a 1 046 : le decoupage n'est pas fini, il est
+ * commence. La suite naturelle est d'extraire le glisser-deposer dans un hook.
+ */
+const OVERSIZED_BUDGET = 11454;
 
 const loc = (file: string) => readFileSync(file, 'utf8').split('\n').length;
 

@@ -119,3 +119,6 @@ visual-audit-*/
 
 # Cache de l outil graphify (AST, index, rapports générés — pas du code)
 graphify-out/
+
+# Rapports Lighthouse CI (regeneres a chaque run)
+.lighthouseci/

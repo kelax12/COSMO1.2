@@ -293,7 +293,7 @@ const OrganizationPage = () => {
             type="button"
             onClick={dismissLaunchBanner}
             aria-label={t('page.hideInfo')}
-            className="shrink-0 w-6 h-6 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-surface))] transition-colors"
+            className="shrink-0 w-11 h-11 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-surface))] transition-colors"
           >
             <X size={14} aria-hidden="true" />
           </button>
@@ -316,7 +316,7 @@ const OrganizationPage = () => {
               type="button"
               onClick={dismissSeatsBanner}
               aria-label={t('page.hideInfo')}
-              className="shrink-0 w-6 h-6 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-surface))] transition-colors"
+              className="shrink-0 w-11 h-11 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-surface))] transition-colors"
             >
               <X size={14} aria-hidden="true" />
             </button>
@@ -336,7 +336,7 @@ const OrganizationPage = () => {
               type="button"
               onClick={() => setTab(id)}
               aria-current={tab === id ? 'page' : undefined}
-              className={`inline-flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 -mb-px whitespace-nowrap transition-colors ${
+              className={`inline-flex items-center gap-1.5 px-4 min-h-11 py-2.5 text-sm font-medium border-b-2 -mb-px whitespace-nowrap transition-colors ${
                 tab === id
                   ? 'border-[rgb(var(--color-accent))] text-[rgb(var(--color-text-primary))]'
                   : 'border-transparent text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-secondary))]'

@@ -59,7 +59,7 @@ const TeamTaskRow = ({
         onClick={() => onToggleComplete(task)}
         aria-label={task.completed ? t('projects.markIncomplete') : t('projects.markComplete')}
         aria-pressed={task.completed}
-        className={`w-5 h-5 rounded-md border flex items-center justify-center shrink-0 transition-colors ${
+        className={`w-6 h-6 rounded-md border flex items-center justify-center shrink-0 transition-colors ${
           task.completed
             ? 'bg-indigo-600 border-indigo-600 text-white'
             : 'border-[rgb(var(--color-border))] hover:border-indigo-500'
@@ -79,7 +79,7 @@ const TeamTaskRow = ({
       <button
         type="button"
         onClick={() => onOpen(task)}
-        className="flex-1 min-w-0 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/60 rounded-md"
+        className="flex-1 min-w-0 min-h-8 flex flex-col justify-center text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/60 rounded-md"
         aria-label={t('projects.editTaskAria', { name: task.name })}
       >
         <span className={`block text-sm truncate ${task.completed ? 'line-through text-[rgb(var(--color-text-muted))]' : 'text-[rgb(var(--color-text-primary))]'}`}>

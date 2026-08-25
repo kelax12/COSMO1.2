@@ -90,7 +90,16 @@ mesure précédente pour rendre la dérive lisible :
 
 ## Résiduels connus (audit perf du 2026-05-29, revérifiés le 2026-08-14)
 
-- **Lighthouse CI toujours absent** — aucun job ne mesure LCP/TBT/CLS par route. Reste à câbler.
+- ✅ **Lighthouse CI câblé le 2026-08-24** (`lighthouserc.json` + job `lighthouse` dans
+  `.github/workflows/ci.yml`). Mesure LCP / TBT / CLS / a11y / SEO sur les 4 routes
+  **prérendues** (`/`, `/guide`, `/blog`, `/pour-freelances`) ; les routes protégées
+  demandent une session, donc un job Playwright, pas Lighthouse.
+  Bloquant sur a11y, SEO et CLS ; avertissement sur la performance, qui varie avec le
+  runner — une gate rouge en permanence finit ignorée.
+  ⚠️ **Les seuils sont PROVISOIRES et doivent être resserrés après le premier run.**
+  Ils n'ont pas pu être posés « au réel mesuré » comme les autres budgets du dépôt :
+  Lighthouse a besoin d'un Chrome exécutable, absent de la machine de développement.
+  Un budget très au-dessus du réel ne mesure rien.
 - **`vendor-charts` reste le plus gros lazy** (116 kB gzip). Le grief d'origine (« chargé au scroll
   de la landing ») est **caduc** : la landing n'importe plus Recharts. Une migration `visx`/`chart.js`
   n'a donc plus d'urgence.

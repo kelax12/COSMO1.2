@@ -106,7 +106,7 @@ const OrgNotificationsBell = ({ orgId, members }: OrgNotificationsBellProps) => 
         onClick={toggle}
         aria-expanded={open}
         aria-label={unread > 0 ? tp('notifications.bellUnread', unread) : t('notifications.bell')}
-        className="relative w-9 h-9 rounded-xl flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] transition-colors"
+        className="relative w-11 h-11 rounded-xl flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] transition-colors"
       >
         <Bell size={18} aria-hidden="true" />
         {unread > 0 && (

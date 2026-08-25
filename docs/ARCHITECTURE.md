@@ -85,7 +85,22 @@ Deux choix méritent d'être relus avant d'être « simplifiés » :
 `supabase.from(`. Les commentaires sont retirés avant la recherche — sans ça, la phrase qui
 explique la règle déclenchait la règle.
 
-## 3. 🟠 L'objectif « aucun fichier > 600 LOC » — 17 → 16 fichiers (2026-08-24)
+## 3. 🟠 L'objectif « aucun fichier > 600 LOC » — 17 → 15 fichiers (2026-08-24)
+
+> **3ᵉ passe : le plus gros fichier du dépôt n'est plus `PyramidTab`.** Ses 385 lignes
+> de `NodeCard` (le rendu récursif d'une carte de l'organigramme) sont parties dans
+> `PyramidNodeCard.tsx` : **1 506 → 1 046**. Budget total : 11 915 → **11 454**.
+>
+> La coupe suit une frontière réelle, pas un compte de lignes : d'un côté le rendu
+> D'UNE carte, de l'autre l'orchestration de l'arbre (recherche, repli,
+> glisser-déposer, sheets). Aucune logique n'a changé, et la pyramide a été vérifiée
+> dans le navigateur après extraction (6 membres, pastilles d'équipe, non-placés).
+>
+> ⚠️ **Le découpage n'est pas fini, il est commencé.** `PyramidTab` reste hors budget
+> à 1 046 lignes. La suite naturelle est d'extraire le glisser-déposer dans un hook —
+> c'est la moitié de ce qui reste, et la seule partie qui décide vraiment quelque chose.
+
+### Historique
 
 > **Le cliquet a servi le jour même.** Le correctif de scalabilité (mig. 113) ajoutait du
 > commentaire à `team-projects/supabase.repository.ts` (601 lignes, donc dans la liste) : le
