@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X, AlertCircle, Trash2, Loader2, ChevronRight, Check, MessageSquare, Send } from 'lucide-react';
+import { X, AlertCircle, Trash2, Loader2, ChevronRight, Check, Send } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { useMyOrgPermissions } from '@/modules/organizations';
@@ -39,12 +39,11 @@ const PreCreateCommentComposer = ({ onSubmit, pending }: { onSubmit: (body: stri
   };
 
   return (
-    <div className="flex flex-col h-full min-h-0 border-t pt-4 mt-5" style={{ borderColor: 'rgb(var(--color-border))' }}>
-      <h3 className="flex items-center gap-2 text-sm font-semibold mb-3 shrink-0" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-        <MessageSquare size={15} aria-hidden="true" />
+    <div className="flex flex-col h-full min-h-0 mt-5">
+      <h3 className="text-sm font-semibold mb-3 shrink-0" style={{ color: 'rgb(var(--color-text-secondary))' }}>
         Commentaires
       </h3>
-      <div className="flex items-end gap-2">
+      <div className="flex items-end gap-2 border-t pt-4" style={{ borderColor: 'rgb(var(--color-border))' }}>
         <textarea
           value={body}
           onChange={(e) => setBody(e.target.value)}
