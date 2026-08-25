@@ -43,8 +43,8 @@ séparent « aucune faille connue » de « rattrapable en production », et aucu
 | `npm run validate:migrations` | ✅ **127 fichiers, 0 erreur, 6 avertissements**, les **mêmes** 6 qu'au 08-24 : 5 préexistants (doublons `000`/`007`/`010`, deux `FOR UPDATE` sans `WITH CHECK`) + 1 informatif (mig. `110`, trigger de notification en `SECURITY DEFINER`, légitime). Les sept migrations du 25 n'en ont ajouté aucun |
 | `npm run typecheck` · `npm run lint` | ✅ 0 erreur (27 warnings Fast-refresh tolérés) — + règle `no-restricted-imports` sur l'alias `@/` |
 | `npm run i18n:check` | ✅ 19 namespaces, 0 erreur |
-| `npm test` | ✅ **1 656 tests / 146 fichiers**, tous verts (1 583 / 143 au 08-24) |
-| `npm run test:coverage` | 🔴 **ROUGE au 2026-08-25 au soir** · 3 seuils manqués de peu (functions 20,65 % < 21 · statements 25,65 % < 26 · `supabase.repository.ts` 63,74 % < 65), mesurés suite entièrement verte. `lines` est repassé au vert dans la soirée (26,02 %). Ce n'est **pas** une faille : c'est le job CI `lint-test-build` qui bloque. Cf. [`docs/TESTING.md`](./docs/TESTING.md) |
+| `npm test` | ✅ **1 736 tests / 151 fichiers**, tous verts (1 583 / 143 au 08-24) |
+| `npm run test:coverage` | ✅ **VERTE au 2026-08-25 en fin de journée** (26,96 L / 26,65 S / 21,32 F / 22,75 B). Elle était rouge sur 3 seuils quelques heures plus tôt : refermée par **115 tests de repository**, sans qu'aucun seuil ne soit baissé, et les seuils du glob `supabase.repository.ts` ont été **remontés** (65 → 74 statements). Cf. [`docs/TESTING.md`](./docs/TESTING.md) |
 | Advisors Supabase (sécurité) | 5 INFO `rls_enabled_no_policy` (tables analytiques, **deny-all volontaire**), 1 WARN `auth_leaked_password_protection` (= A-10 ci-dessous), 51 WARN `authenticated_security_definer_function_executable` (48 au 08-24 : les 3 nouvelles RPC de lecture), **2** WARN `anon_security_definer_function_executable`, les deux volontaires, aucun de plus après sept migrations |
 | Couverture RLS | ✅ **toutes** les tables `public` ont RLS activée (vérifié en prod : `relrowsecurity = false` sur 0 table) |
 | Migrations appliquées en prod | ✅ ledger à jour jusqu'à `123_org_subscriptions_billing_interval` (relu en base le 2026-08-25 au soir) |
@@ -267,7 +267,7 @@ documentaire du 2026-08-14, le lien pointait dans le vide. Restaurée ici.
 
 | # | Action | Nature | Qui | État |
 |---|---|---|---|---|
-| 0 | **`npm run test:coverage` est ROUGE** · 3 seuils manqués de 0,35 à 1,3 point. Le job CI `lint-test-build` bloque donc **tout déploiement**. Ce n'est pas une faille, c'est la porte d'entrée | 🔴 CI | · | ⏳ cf. [`docs/TESTING.md`](./docs/TESTING.md) |
+| 0 | **`npm run test:coverage`** bloquait tout déploiement (3 seuils manqués). 115 tests de repository ajoutés, seuils du glob remontés | 🔴 CI | · | ✅ **verte au 2026-08-25 en fin de journée**, cf. [`docs/TESTING.md`](./docs/TESTING.md) |
 | 1 | Migrations `109`/`110` (B-1, B-2, B-3 + notifications de commentaire) | 🟠 sécurité + feature | — | ✅ **appliquées et vérifiées en prod le 2026-08-24** |
 | 1bis | Migrations `115` → `123` (permissions, FK RGPD, RPC indexables, Realtime, payload borné, fuseau des habitudes, périodicité de facturation) | 🟠 sécurité + perf | · | ✅ **appliquées et vérifiées en prod le 2026-08-25** |
 | 2 | **Réglages de console Supabase** : A-10 (leaked password protection), MFA sur le compte admin, allowlist de redirection OAuth, secure email change | 🟠 clics Dashboard, ~30 min cumulés | **Axel** | ⏳ **en attente** |
