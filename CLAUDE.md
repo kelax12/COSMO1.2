@@ -302,6 +302,11 @@ les deux ne partagent aucune colonne.
   `stripe-org-checkout` / `stripe-org-portal`. Le front ne fait que masquer un onglet.
 - Coupons : **promotion codes Stripe natifs** (`allow_promotion_codes`). COSMO ne valide aucun
   code et ne recalcule aucun montant — donc aucune surface de brute-force côté COSMO.
+- **Périodicité mensuelle ou annuelle** (2026-08-25), sélecteur dans `/entreprise?tab=billing`.
+  L'annuel vaut le mensuel **moins 30 %** (`ENTERPRISE_YEARLY_DISCOUNT`) : 14/35/70/140 € par mois
+  en équivalent, débités 168/420/840/1 680 € une fois par an. Huit price IDs Stripe au total
+  (`STRIPE_ORG_PRICE_*` et `STRIPE_ORG_PRICE_*_YEARLY`). La colonne descriptive
+  `org_subscriptions.billing_interval` (mig. **123**) dit laquelle est facturée.
 - Le quota réel est `org_seats_allowed()` (mig. 101), déjà appelé par `claim_org_invite` et
   `respond_join_request`. Un abonnement `past_due` ou `cancelled` retombe au palier gratuit
   **sans jamais retirer de membre** : on bloque la croissance, on ne retire rien.
@@ -315,10 +320,16 @@ les deux ne partagent aucune colonne.
 
 Garde-fous propres à cette zone :
 
-- ❌ **Ne jamais dériver le palier des metadata Stripe.** Un changement de palier fait depuis le
-  Billing Portal ne repasse pas par notre checkout : le palier se redérive du **price ID**
-  (`tierFromPriceId`, `supabase/functions/_shared/org-tiers.ts`). Sans ça, un client paie 100 €
-  et reste bloqué au quota de 20 sièges.
+- ❌ **Ne jamais écrire une grille de tarifs annuels à la main.** Le montant annuel est DÉRIVÉ du
+  mensuel, front et Deno, par la même formule. Deux grilles, c'est une seconde occasion d'annoncer
+  un prix et d'en facturer un autre — le risque qui a déjà imposé `org-tiers.parity.test.ts`.
+- ❌ **Ne jamais faire dépendre le quota de sièges de la périodicité.** `max_members` est porté par
+  le palier SEUL : un client annuel achète le même palier moins cher, pas plus de sièges. Un
+  « palier annuel » distinct côté Stripe casserait `tierFromPriceId`, donc le portail.
+- ❌ **Ne jamais dériver le palier des metadata Stripe.** Un changement de palier OU DE PÉRIODICITÉ
+  fait depuis le Billing Portal ne repasse pas par notre checkout : les deux se redérivent du
+  **price ID** (`tierFromPriceId`, `supabase/functions/_shared/org-tiers.ts`, qui rend le palier ET
+  la périodicité). Sans ça, un client paie 100 € et reste bloqué au quota de 20 sièges.
 - ❌ **Ne jamais laisser un event d'organisation retomber sur la branche particulier.** Le
   customer Stripe d'une org porte `org_owner_uid` (jamais `supabase_uid`) et
   `getUidFromCustomer` refuse tout customer portant `org_id` — sinon la facture d'une entreprise
@@ -337,7 +348,7 @@ Garde-fous propres à cette zone :
   `billing_flags.enterprise_seat_limit = false` en prod — les **deux** ensemble, jamais l'un
   sans l'autre (cf. règle ci-dessous).
 - **La plomberie reste entière et déployée** : `stripe-org-checkout` / `stripe-org-portal`, les
-  4 `STRIPE_ORG_PRICE_*` en secrets, `org_subscriptions` (mig. 101), `org_seats_allowed()`, et
+  8 `STRIPE_ORG_PRICE_*` en secrets (4 mensuels + 4 annuels), `org_subscriptions` (mig. 101), `org_seats_allowed()`, et
   `stripe-webhook` — redéployée le 2026-08-24, car la version qui tournait en prod était
   **antérieure au routage `org_id`** et aurait fait retomber une facture d'organisation sur
   l'abonnement personnel du propriétaire. Réactiver = rebasculer les deux drapeaux, rien à
@@ -349,9 +360,9 @@ Garde-fous propres à cette zone :
 - 🔴 **Le jour de la réactivation : la grille branchée est celle du SANDBOX DE TEST.** `STRIPE_SECRET_KEY` en prod est une
   clé de test — les customers des vrais utilisateurs vivent dans le compte « Environnement de
   test COSMO », le compte live est vide. Un checkout n'accepte donc que des **cartes de test**
-  : le quota de sièges est réel, l'encaissement ne l'est pas. Passage en live = recréer les 4
-  prix sur le compte live, réenregistrer un endpoint webhook live (mêmes 5 events), puis
-  remplacer `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` et les 4 `STRIPE_ORG_PRICE_*`.
+  : le quota de sièges est réel, l'encaissement ne l'est pas. Passage en live = recréer les 8
+  prix sur le compte live (4 mensuels + 4 annuels), réenregistrer un endpoint webhook live (mêmes 5 events), puis
+  remplacer `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` et les 8 `STRIPE_ORG_PRICE_*`.
 - ⚠️ `APP_URL` vaut `https://thecosmo.app` et **est la seule origine CORS autorisée** par les
   deux Edge Functions org : le checkout entreprise **ne peut pas être testé depuis
   `localhost:5173`**. Tester depuis la prod, ou changer `APP_URL` le temps du test.
@@ -489,7 +500,9 @@ Debug : `localStorage.removeItem('cosmo_onboarding_modules_done')` puis reload.
 ## Base de données Supabase
 
 Migrations dans `supabase/migration/*.sql`, convention `NNN_<feature>.sql`.
-**125 fichiers de migration, dernière = `121_toggle_habit_bounded.sql`** (au 2026-08-25).
+**127 fichiers de migration, dernière = `123_org_subscriptions_billing_interval.sql`**
+(au 2026-08-25). ⚠️ La **123 n'est PAS encore appliquée en prod** — elle doit l'être AVANT le
+déploiement de `stripe-webhook`, qui écrit désormais `billing_interval`.
 **Toutes appliquées en prod**, ledger relu en base le 2026-08-25, `115` → `121` comprises.
 
 > ⚠️ **Le ledger porte une entrée de plus que le dépôt** :

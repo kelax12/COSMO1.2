@@ -17,6 +17,7 @@ import Stripe from 'npm:stripe@14.21.0'
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { opsAlert } from '../_shared/alert.ts'
 import { priceIdForTier, tierByKey, FREE_TIER_MAX_MEMBERS } from '../_shared/org-tiers.ts'
+import type { OrgBillingInterval } from '../_shared/org-tiers.ts'
 
 const APP_URL = Deno.env.get('APP_URL') ?? 'http://localhost:5173'
 const ALLOWED_ORIGINS = new Set([APP_URL])
@@ -56,10 +57,18 @@ Deno.serve(async (req) => {
     const { data: { user }, error: authError } = await supabaseUser.auth.getUser()
     if (authError || !user) return json({ error: 'Unauthorized' }, 401)
 
-    const { orgId, tierKey } = await req.json().catch(() => ({}))
+    const { orgId, tierKey, interval } = await req.json().catch(() => ({}))
     if (typeof orgId !== 'string' || typeof tierKey !== 'string') {
       return json({ error: 'bad_request' }, 400)
     }
+
+    // Périodicité : le client n'envoie qu'un mot d'une liste fermée, jamais un
+    // montant ni un price ID. Absente = mensuel, pour que les appels écrits
+    // avant l'annuel continuent de marcher à l'identique.
+    if (interval !== undefined && interval !== 'monthly' && interval !== 'yearly') {
+      return json({ error: 'bad_request' }, 400)
+    }
+    const billingInterval: OrgBillingInterval = interval === 'yearly' ? 'yearly' : 'monthly'
 
     const tier = tierByKey(tierKey)
     if (!tier || tier.key === 'free') {
@@ -152,11 +161,16 @@ Deno.serve(async (req) => {
       }
     }
 
-    const priceId = priceIdForTier(tier.key, (name) => Deno.env.get(name))
+    const priceId = priceIdForTier(tier.key, (name) => Deno.env.get(name), billingInterval)
     if (!priceId) {
       // Secret non configuré : échouer bruyamment plutôt que de créer une
-      // session vide ou de facturer le mauvais palier.
-      await opsAlert('stripe-org-checkout', `price id manquant pour le palier ${tier.key}`)
+      // session vide ou de facturer le mauvais palier. Le cas le plus probable
+      // le jour de l'activation de l'annuel est un `STRIPE_ORG_PRICE_*_YEARLY`
+      // manquant — d'où la périodicité dans l'alerte.
+      await opsAlert(
+        'stripe-org-checkout',
+        `price id manquant pour le palier ${tier.key} (${billingInterval})`,
+      )
       return json({ error: 'tier_unavailable' }, 500)
     }
 
@@ -170,12 +184,15 @@ Deno.serve(async (req) => {
         allow_promotion_codes: true,
         success_url: `${APP_URL}/entreprise?tab=billing&checkout=success`,
         cancel_url: `${APP_URL}/entreprise?tab=billing&checkout=cancelled`,
-        metadata: { org_id: orgId, tier_key: tier.key },
+        metadata: { org_id: orgId, tier_key: tier.key, billing_interval: billingInterval },
         subscription_data: {
-          metadata: { org_id: orgId, tier_key: tier.key },
+          metadata: { org_id: orgId, tier_key: tier.key, billing_interval: billingInterval },
         },
       },
-      { idempotencyKey: `org-checkout:${orgId}:${tier.key}:${dayKey}` },
+      // La périodicité entre dans la clé d'idempotence : sans elle, un
+      // propriétaire qui abandonne un checkout mensuel puis en relance un
+      // annuel le même jour se verrait resservir la session mensuelle.
+      { idempotencyKey: `org-checkout:${orgId}:${tier.key}:${billingInterval}:${dayKey}` },
     )
 
     return json({ url: session.url })

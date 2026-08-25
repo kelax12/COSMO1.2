@@ -1,14 +1,16 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { toast } from 'sonner';
 import { ArrowLeft, CreditCard } from 'lucide-react';
 import { useT } from '@/i18n/useT';
 import { formatDate } from '@/i18n/format';
 import { ENTERPRISE_BILLING_ENFORCED } from '@/modules/billing/premium-config';
+import type { OrgBillingInterval } from '@/modules/billing/premium-config';
 import { useOrgSubscription, useStartOrgCheckout, useOpenOrgPortal } from '@/modules/billing/org-billing.hooks';
 import { effectiveQuota, effectiveTierKey } from '@/modules/billing/org-billing.logic';
 import { ORG_TIER_LABEL_KEYS } from '@/modules/billing/org-tier-labels';
 import { EnterpriseTierGrid } from './EnterpriseTierGrid';
+import { BillingIntervalToggle } from './BillingIntervalToggle';
 
 interface Props {
   orgId: string;
@@ -33,6 +35,11 @@ export function OrgBillingTab({ orgId, isOwner, memberCount, onBack }: Props) {
   const { data: subscription } = useOrgSubscription(orgId);
   const checkout = useStartOrgCheckout();
   const portal = useOpenOrgPortal();
+  // Périodicité affichée dans la grille. État LOCAL, jamais persisté : c'est
+  // une question posée avant l'achat, pas une préférence de l'utilisateur. La
+  // périodicité qui compte après coup est celle de l'abonnement, et elle vient
+  // de Stripe via le webhook (`subscription.billingInterval`).
+  const [billingInterval, setBillingInterval] = useState<OrgBillingInterval>('monthly');
 
   // Retour de Stripe : on consomme le paramètre pour qu'un rafraîchissement ne
   // rejoue pas le toast.
@@ -89,6 +96,18 @@ export function OrgBillingTab({ orgId, isOwner, memberCount, onBack }: Props) {
             {t('billing.renewsOn', { date: formatDate(new Date(subscription.currentPeriodEnd)) })}
           </p>
         )}
+        {/* La périodicité est dite explicitement : « Renouvellement le 12
+            septembre » seul ne distingue pas un mois d'un an, et c'est
+            exactement l'information qu'un propriétaire vient chercher ici.
+            Elle n'est montrée que sur un abonnement réellement facturé — le
+            palier gratuit n'a pas de périodicité. */}
+        {subscription?.status === 'active' && subscription.tierKey !== 'free' && (
+          <p className="text-sm text-[rgb(var(--color-text-secondary))]">
+            {subscription.billingInterval === 'yearly'
+              ? t('billing.billedYearly')
+              : t('billing.billedMonthly')}
+          </p>
+        )}
         {subscription?.status === 'past_due' && (
           <p className="text-sm text-[rgb(var(--color-text-primary))]">{t('billing.statusPastDue')}</p>
         )}
@@ -102,26 +121,56 @@ export function OrgBillingTab({ orgId, isOwner, memberCount, onBack }: Props) {
         )}
       </section>
 
-      {!ENTERPRISE_BILLING_ENFORCED && (
+      {/* Une seule rangée au-dessus de la grille : le statut de l'offre à
+          gauche, le sélecteur de périodicité à droite. Les deux commentent le
+          même objet — les montants juste en dessous — donc les séparer en deux
+          blocs empilés éloignerait le sélecteur de ce qu'il pilote. */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2">
-          {/* Même badge que la landing entreprise (`PricingSection.tsx`) :
-              annoncer la nature temporaire de l'offre AVANT le premier prix
-              barré, pas seulement dans la phrase qui suit. */}
-          <span className="inline-flex w-fit items-center rounded-full bg-amber-100 dark:bg-amber-900/40 px-2.5 py-1 text-caption font-semibold uppercase tracking-wide text-amber-600 dark:text-amber-400">
-            {t('billing.promoBadge')}
-          </span>
-          <p className="text-sm text-[rgb(var(--color-text-secondary))]">{t('billing.dormant')}</p>
+          {!ENTERPRISE_BILLING_ENFORCED && (
+            <>
+              {/* Même badge que la landing entreprise (`PricingSection.tsx`) :
+                  annoncer la nature temporaire de l'offre AVANT le premier prix
+                  barré, pas seulement dans la phrase qui suit. */}
+              <span className="inline-flex w-fit items-center rounded-full bg-amber-100 dark:bg-amber-900/40 px-2.5 py-1 text-caption font-semibold uppercase tracking-wide text-amber-600 dark:text-amber-400">
+                {t('billing.promoBadge')}
+              </span>
+              <p className="text-sm text-[rgb(var(--color-text-secondary))]">
+                {t('billing.dormant')}
+              </p>
+            </>
+          )}
+          {ENTERPRISE_BILLING_ENFORCED && !isOwner && (
+            <p className="text-sm text-[rgb(var(--color-text-secondary))]">
+              {t('billing.ownerOnly')}
+            </p>
+          )}
         </div>
-      )}
-      {ENTERPRISE_BILLING_ENFORCED && !isOwner && (
-        <p className="text-sm text-[rgb(var(--color-text-secondary))]">{t('billing.ownerOnly')}</p>
+
+        {/* Monté même quand la facturation dort : le sélecteur informe alors du
+            tarif qui s'appliquera après l'offre de lancement, exactement comme
+            la grille barrée qu'il pilote. Il ne déclenche aucun paiement — ça,
+            c'est le CTA de chaque palier, monté sous la seule condition
+            `ENTERPRISE_BILLING_ENFORCED`. */}
+        <BillingIntervalToggle
+          value={billingInterval}
+          onChange={setBillingInterval}
+          disabled={checkout.isPending}
+        />
+      </div>
+
+      {billingInterval === 'yearly' && (
+        <p className="-mt-3 text-xs text-[rgb(var(--color-text-secondary))]">
+          {t('billing.intervalYearlyHint')}
+        </p>
       )}
 
       <EnterpriseTierGrid
         currentTier={subscription?.tierKey}
-        onSelect={canPay ? (tierKey) => checkout.mutate({ orgId, tierKey }) : undefined}
+        onSelect={canPay ? (tierKey) => checkout.mutate({ orgId, tierKey, interval: billingInterval }) : undefined}
         isPending={checkout.isPending}
         dormant={!ENTERPRISE_BILLING_ENFORCED}
+        interval={billingInterval}
       />
 
       {canPay && subscription && (

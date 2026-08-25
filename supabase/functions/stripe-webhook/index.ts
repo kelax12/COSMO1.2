@@ -513,7 +513,11 @@ async function applyOrgSubscription(
   if (intent === 'skip') return
 
   const priceId = subscription.items.data[0]?.price?.id ?? ''
-  const tier = tierFromPriceId(priceId, env)
+  // Rend le palier ET la périodicité : les deux se changent depuis le Billing
+  // Portal sans repasser par notre checkout, donc les deux se redérivent du
+  // price ID et jamais des metadata.
+  const match = tierFromPriceId(priceId, env)
+  const tier = match?.tier
 
   if (intent === 'active' && !tier) {
     // Price inconnu (palier retiré côté Stripe, secret `STRIPE_ORG_PRICE_*`
@@ -547,13 +551,17 @@ async function applyOrgSubscription(
   // technique que `premium_tokens` côté particulier). C'est le cœur du cas
   // `past_due` : palier, quota et fin de période sont PRÉSERVÉS pendant les
   // relances, pour être restaurés intacts au paiement rattrapé.
-  if (intent === 'active' && tier) {
-    payload.tier_key = tier.key
-    payload.max_members = tier.maxMembers
+  if (intent === 'active' && match) {
+    payload.tier_key = match.tier.key
+    payload.max_members = match.tier.maxMembers
+    payload.billing_interval = match.interval
     payload.current_period_end = new Date(subscription.current_period_end * 1000).toISOString()
   } else if (intent === 'cancelled') {
     payload.tier_key = 'free'
     payload.max_members = FREE_TIER_MAX_MEMBERS
+    // La périodicité N'EST PAS remise à 'monthly' : le palier gratuit n'est pas
+    // facturé, donc écrire une périodicité dessus serait inventer une
+    // information. On laisse la dernière connue, comme pour `past_due`.
     payload.current_period_end = null
   }
 

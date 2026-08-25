@@ -13,6 +13,7 @@ const sub = (over: Partial<OrgSubscription> = {}): OrgSubscription => ({
   tierKey: 't20',
   maxMembers: 20,
   status: 'active',
+  billingInterval: 'monthly',
   currentPeriodEnd: '2026-09-16T00:00:00.000Z',
   discountCode: null,
   ...over,
