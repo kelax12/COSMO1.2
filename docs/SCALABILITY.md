@@ -135,7 +135,22 @@ Les policies restent en place en défense en profondeur, comme pour `get_my_task
 
 ---
 
-## 3. 🟠 Le sondage périodique — recompté et réduit le 2026-08-24
+## 3. ✅ Le sondage périodique — fermé le 2026-08-25
+
+> **Plus aucun `refetchInterval` permanent.** Les trois derniers (demandes
+> d'amis reçues et envoyées à 15 s, listes partagées à 20 s), montés en
+> permanence par `InboxMenu`, sont passés au Realtime (mig. 120,
+> `useFriendsInboxRealtime`). Deux tables suffisaient pour trois hooks :
+> `friend_requests` porte les demandes reçues ET envoyées.
+>
+> Décompte final : **9 → 6 déclarations**, dont 2 conditionnelles (`live`,
+> réservées aux écrans qui regardent la liste) et 2 gardées par le mode démo.
+> Le module `friends` est à **zéro**.
+>
+> Économie : ~15 requêtes par minute et par utilisateur connecté, avant toute
+> interaction.
+
+### Le diagnostic d'origine
 
 > **Le comptage de ce document était périmé : 12 `refetchInterval`, pas 8.** La vague entreprise
 > en avait ajouté quatre depuis. Trois choses ont changé :
@@ -242,7 +257,25 @@ Le prérequis reste le même : faire pointer chaque modale sur un hook `getById`
 
 ---
 
-## 5. 🟡 Pagination UI — toujours non câblée
+## 5. ⚪️ Pagination UI — tranchée le 2026-08-25 : le hook mort est supprimé
+
+> `useTasksInfinite` était livré depuis des mois avec **zéro consommateur**. Il
+> a été supprimé, avec la marche à suivre laissée en commentaire à sa place.
+>
+> **Ce n'était pas le hook qui manquait, c'était le prérequis.** `TasksPage`
+> calcule ses compteurs par chip, ses smart lists et son tri EN MÉMOIRE sur le
+> dataset complet. Paginer sans pousser filtres, tri et comptage côté SQL
+> donnerait des compteurs FAUX et des smart lists incomplètes : un bug bien
+> pire que le payload visé.
+>
+> L'ordre de travail, le jour où le volume le justifie : (1) une RPC
+> d'agrégats, (2) filtres et tri côté serveur, (3) alors seulement la
+> pagination. Marge actuelle : plafond 5 000, maximum observé 289, facteur ×17.
+>
+> `getPage()` est CONSERVÉ sur les repositories : ce n'est pas du code mort
+> mais une capacité d'interface implémentée et testée sur tous les modules.
+
+### Le diagnostic d'origine
 
 `useTasksInfinite` / `getPage` existent et ne sont consommés par **aucune page** (vérifié :
 zéro occurrence dans `src/**/*.tsx`). Le plafond reste `MAX_ROWS = 5000` par compte, pour un

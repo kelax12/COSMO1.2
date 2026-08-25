@@ -42,7 +42,6 @@ export {
   useDeleteTask,
   useToggleTaskComplete,
   useToggleTaskBookmark,
-  useTasksInfinite,
 } from './hooks';
 
 // ═══════════════════════════════════════════════════════════════════

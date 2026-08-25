@@ -660,17 +660,25 @@ au client**. Elle est atomique (même transaction que la bascule) et idempotente
 
 ## 📡 Synchronisation de la collaboration — Realtime, pas sondage
 
-`useSharedTasksRealtime` (monté **une seule fois** dans `App.tsx`) écoute `shared_tasks` et
-invalide la liste au moment du partage. `useOrgInboxRealtime` (mig. 118, monté au même endroit)
-fait de même pour la boîte de réception d'organisation : il a remplacé **trois** sondages de 20 s
-montés en permanence par `InboxMenu`, soit 9 requêtes/minute et par utilisateur connecté avant
-toute interaction. Le `refetchInterval` de `useTasks` n'est plus qu'un filet
+Trois canaux, tous montés **une seule fois** dans `App.tsx` :
+`useSharedTasksRealtime` (`shared_tasks`), `useOrgInboxRealtime` (mig. 118 : notifications,
+invitations et demandes d'adhésion d'organisation) et `useFriendsInboxRealtime` (mig. 120 :
+demandes d'amis reçues/envoyées, listes partagées).
+
+Ensemble, ils ont remplacé **six** sondages montés en permanence par `InboxMenu`, soit environ
+24 requêtes par minute et par utilisateur connecté avant toute interaction. **Il ne reste plus
+aucun `refetchInterval` permanent** : les six déclarations restantes sont soit conditionnelles
+(`live`, réservé aux écrans qui regardent la liste), soit gardées par le mode démo. Le `refetchInterval` de `useTasks` n'est plus qu'un filet
 de sécurité à 5 min.
 
 - ❌ Ne pas remonter la cadence du sondage : chaque tick est un `getAll()` complet. La version à
   15 s coûtait ≈ 58 Mo/mois/utilisateur d'egress.
 - ❌ Ne pas monter le canal Realtime dans un composant de page : c'est un WebSocket, il s'en
   ouvrirait un par écran affiché.
+- ❌ **Ne pas rajouter un `refetchInterval` « juste pour être sûr ».** Chaque tick est une requête
+  pour tout le monde, en permanence. Si une donnée doit se rafraîchir toute seule, elle passe par
+  Realtime (publication `supabase_realtime` + `REPLICA IDENTITY FULL`) ; sinon
+  `refetchOnWindowFocus` suffit.
 - ⚠️ Toute nouvelle table écoutée en Realtime doit être ajoutée à la publication
   `supabase_realtime` **et** passée en `REPLICA IDENTITY FULL` (sinon les DELETE ne portent que
   la clé primaire et les filtres client ne matchent jamais) — cf. mig. 087.

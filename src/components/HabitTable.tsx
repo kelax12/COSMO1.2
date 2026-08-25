@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useLayoutEffect } from 'react';
 import { Flame, CheckCircle, Circle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useHabits, useToggleHabitCompletion } from '@/modules/habits';
 import { useT } from '@/i18n/useT';
@@ -25,10 +25,102 @@ const HabitTable: React.FC = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollLeft = scrollContainerRef.current.scrollWidth;
-    }
+  // Colonnes de jour ÉLASTIQUES, puis cadrage sur aujourd'hui.
+  //
+  // ⚠️ LE PROBLÈME N'A JAMAIS ÉTÉ LE SCROLL-SNAP (audit UI §3). Il est
+  // ARITHMÉTIQUE : la largeur disponible (334 px − 143 de colonne collante
+  // = 191 px) n'est pas un multiple de la largeur de colonne (52 px), soit
+  // 3,67 colonnes. Il restait donc TOUJOURS une colonne coupée, quelle que
+  // soit la position de scroll — mesuré : « dim. 9 » visible sur 30 px de 52.
+  // Le correctif de juillet a ajouté `snap-x` par-dessus ; il ne pouvait pas
+  // marcher, parce qu'aucune position ne satisfaisait la contrainte.
+  //
+  // On calcule donc une largeur telle qu'un nombre ENTIER de colonnes tienne :
+  //   n        = round(disponible / largeurIdéale)   (au moins 1)
+  //   largeur  = disponible / n                      (fractionnaire, c'est OK)
+  //
+  // La propriété qui rend le cadrage correct : `scrollMax = total − disponible
+  // = (jours − n) × largeur`, donc un MULTIPLE de la largeur de colonne. Se
+  // caler au maximum tombe alors exactement sur une frontière.
+  useLayoutEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const applyElasticWidth = () => {
+      // La zone réellement occupée par les jours, c'est la largeur visible
+      // MOINS la colonne collante (à gauche) et MOINS la colonne « série » (à
+      // droite). Oublier la seconde décalait le calcul de sa largeur exacte et
+      // laissait une colonne coupée malgré une arithmétique par ailleurs juste.
+      const sticky = container.querySelector<HTMLElement>('[data-sticky-col]');
+      const streak = container.querySelector<HTMLElement>('[data-streak-col]');
+      const stickyWidth = sticky ? sticky.getBoundingClientRect().width : 0;
+      const streakWidth = streak ? streak.getBoundingClientRect().width : 0;
+      const available = container.clientWidth - stickyWidth - streakWidth;
+      if (available <= 0) return;
+
+      // ⚠️ On ÉLARGIT, on ne rétrécit jamais. Le contenu d'une cellule
+      // (« jeu. » + le quantième + padding) impose une largeur plancher que
+      // l'algorithme de table respecte quoi qu'on écrive : demander moins que
+      // ce minimum est ignoré en silence, et la colonne repart en morceau.
+      // On mesure donc la largeur NATURELLE, puis on prend le plus grand
+      // nombre de colonnes qui tient, et on répartit le reste entre elles.
+      const first = container.querySelector<HTMLElement>('[data-day-cell]');
+      if (!first) return;
+      container.style.removeProperty('--habit-day-col');
+      const natural = first.getBoundingClientRect().width;
+      if (natural <= 0) return;
+
+      const columns = Math.max(1, Math.floor(available / natural));
+      container.style.setProperty('--habit-day-col', `${available / columns}px`);
+
+      // Cadrage sur aujourd'hui (dernière colonne), PUIS alignement.
+      //
+      // ⚠️ L'arithmétique a priori ne suffit pas : appliquer la largeur fait
+      // re-répartir la table (`w-full`), donc les mesures prises AVANT ne
+      // valent plus APRÈS. On se cale donc sur une frontière RÉELLE, mesurée
+      // une fois la nouvelle largeur en place.
+      container.scrollLeft = container.scrollWidth - container.clientWidth;
+
+      const maxScroll = container.scrollWidth - container.clientWidth;
+      const containerLeft = container.getBoundingClientRect().left;
+      const cells = Array.from(container.querySelectorAll<HTMLElement>('[data-day-cell]'));
+
+      // ⚠️ Position mesurée, PAS `offsetLeft` : celui-ci est relatif à
+      // l'`offsetParent`, qui n'est pas forcément ce conteneur. Le calcul
+      // paraissait juste et retombait systématiquement sur le maximum.
+      //
+      // Offsets de scroll qui posent une colonne JUSTE APRÈS la colonne
+      // collante. On prend le plus grand qui ne dépasse pas le maximum : la
+      // colonne de gauche est alors entière, et on recule d'au plus une
+      // largeur de colonne par rapport à aujourd'hui.
+      const aligned = cells
+        .map((cell) => {
+          const inContent = cell.getBoundingClientRect().left - containerLeft + container.scrollLeft;
+          return Math.round(inContent - stickyWidth);
+        })
+        .filter((offset) => offset >= 0 && offset <= maxScroll);
+      if (aligned.length > 0) {
+        container.scrollLeft = Math.max(...aligned);
+      }
+    };
+
+    applyElasticWidth();
+
+    // Pas de `ResizeObserver` ici, et c'est un choix APRÈS ESSAI.
+    //
+    // `applyElasticWidth` modifie la largeur des colonnes, donc l'observateur
+    // se rappelle lui-même. Deux gardes ont été essayées et mesurées :
+    // comparer `clientWidth` (trop restrictif : plus aucun recalcul quand
+    // c'est le CONTENU qui change) puis un drapeau de ré-entrance (le cadrage
+    // se perdait au redimensionnement, toutes les colonnes finissaient
+    // masquées). Aucune des deux n'était déterministe.
+    //
+    // Le recalcul est donc déclenché par les dépendances de cet effet, qui
+    // couvrent les cas réels : montage, changement de période, changement du
+    // jeu d'habitudes. Un redimensionnement de fenêtre reste possible sans
+    // recalcul immédiat — c'est le compromis assumé, et il se corrige au
+    // prochain rendu. Mieux vaut un cadrage juste dans 99 % des cas qu'un
+    // observateur qui se bat contre lui-même.
   }, [period, habits]);
 
   const parseLocalDate = (dateStr: string) => {
@@ -280,15 +372,20 @@ const HabitTable: React.FC = () => {
               borderColor: 'rgb(var(--table-border))'
             }}>
             <tr>
-                <th className="text-left p-3 md:p-4 font-semibold sticky left-0 z-20 min-w-[140px] md:min-w-[250px] border-r transition-colors shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]" style={{
+                <th data-sticky-col className="text-left p-3 md:p-4 font-semibold sticky left-0 z-20 min-w-[140px] md:min-w-[250px] border-r transition-colors shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]" style={{
                     color: 'rgb(var(--table-header-text))',
                     backgroundColor: 'rgb(var(--table-header-bg))',
                     borderColor: 'rgb(var(--table-border))'
                   }}>
                   Habitude
                 </th>
+                  {/* Largeur ELASTIQUE (`w-auto` + `min-w`) et non fixe.
+                      L'ancienne largeur de 40 px ne divisait pas la place
+                      disponible (334 - 143 de colonne collante = 191 px, soit
+                      3,67 colonnes) : il restait toujours une colonne coupee,
+                      et le scroll-snap n'y pouvait rien. */}
                   {days.map((day) =>
-                  <th key={day.date} className="text-center p-2 font-medium min-w-[40px] md:min-w-[50px] snap-start transition-colors" style={{ color: 'rgb(var(--table-header-text))' }}>
+                  <th key={day.date} data-day-cell className="text-center p-2 font-medium snap-start transition-colors" style={{ color: 'rgb(var(--table-header-text))', width: 'var(--habit-day-col, 44px)', minWidth: 'var(--habit-day-col, 44px)' }}>
                     <div className="text-caption md:text-xs mb-1" style={{ color: 'rgb(var(--color-text-secondary))' }}>{day.dayName}</div>
                     <div className={`text-xs md:text-sm ${day.isToday ? 'font-bold' : ''}`} style={{
                       color: day.isToday ? 'rgb(var(--color-accent))' : 'rgb(var(--table-header-text))'
@@ -300,7 +397,7 @@ const HabitTable: React.FC = () => {
                     }
                   </th>
                   )}
-                  <th className="text-center p-3 md:p-4 font-semibold min-w-[60px] md:min-w-[80px] transition-colors border-l" style={{ 
+                  <th data-streak-col className="text-center p-3 md:p-4 font-semibold min-w-[60px] md:min-w-[80px] transition-colors border-l" style={{ 
                     color: 'rgb(var(--table-header-text))',
                     borderColor: 'rgb(var(--table-border))'
                   }}>

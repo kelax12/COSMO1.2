@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { showUndoToast } from '@/lib/undo-toast';
 import { getTasksRepository } from '@/lib/repository.factory';
@@ -9,7 +9,6 @@ import { ITasksRepository } from './repository';
 import { Task, CreateTaskInput, UpdateTaskInput, TaskFilters } from './types';
 import { nextOccurrenceDeadline } from './recurrence';
 import { taskKeys } from './constants';
-import { PaginationParams } from '@/lib/pagination.types';
 import { validateOrThrow } from '@/lib/validation/validate';
 import { createTaskSchema, updateTaskSchema } from './task.schema';
 import { translator } from '@/i18n/useT';
@@ -482,29 +481,33 @@ export const useToggleTaskBookmark = () => {
   });
 };
 
-/**
- * Hook de pagination infinie pour les tâches
- * Utilise cursor-based pagination pour des performances optimales
- */
-export const useTasksInfinite = (pageSize = 50) => {
-  const repository = useTasksRepository();
-
-  type PageCursor = { cursor: string; cursorDate: string };
-
-  return useInfiniteQuery({
-    queryKey: [...taskKeys.all, 'infinite', pageSize],
-    queryFn: ({ pageParam }) => {
-      const params: PaginationParams = { limit: pageSize };
-      if (pageParam) {
-        params.cursor = pageParam.cursor;
-        params.cursorDate = pageParam.cursorDate;
-      }
-      return repository.getPage(params);
-    },
-    initialPageParam: null as PageCursor | null,
-    getNextPageParam: (lastPage): PageCursor | undefined => {
-      if (!lastPage.hasMore || !lastPage.nextCursor || !lastPage.nextCursorDate) return undefined;
-      return { cursor: lastPage.nextCursor, cursorDate: lastPage.nextCursorDate };
-    },
-  });
-};
+// ═══════════════════════════════════════════════════════════════════
+// `useTasksInfinite` a été SUPPRIMÉ le 2026-08-25. Ne pas le recréer sans
+// avoir d'abord réglé ce qui suit.
+//
+// Il était livré depuis des mois avec ZÉRO consommateur (vérifié : aucune
+// occurrence hors sa propre définition et le barrel). C'est le motif que
+// `docs/ARCHITECTURE.md` §4 documente : on construit la brique générique, on
+// ne migre jamais l'écran, et la doc finit par décrire une architecture qui
+// n'existe pas.
+//
+// ⚠️ CE N'EST PAS LE HOOK QUI MANQUAIT, C'EST LE PRÉREQUIS.
+// `TasksPage` calcule ses compteurs par chip, ses smart lists (`overdue` /
+// `this-week` / `high-priority`) et son tri EN MÉMOIRE, sur le dataset
+// complet. Paginer sans pousser filtres, tri et comptage côté SQL donnerait
+// des compteurs FAUX et des smart lists incomplètes — un bug bien pire que le
+// payload qu'on cherchait à réduire.
+//
+// L'ordre de travail, le jour où le volume le justifie :
+//   1. une RPC d'agrégats (compteurs par chip, calculés en SQL) ;
+//   2. filtres et tri poussés côté serveur ;
+//   3. alors seulement, la pagination de la liste.
+//
+// Marge actuelle : plafond `MAX_ROWS` = 5 000 par compte, maximum observé en
+// prod = 289 tâches. Facteur ×17. Le rendu est déjà virtualisé au-delà de
+// 50 items — l'affichage n'a jamais été le problème.
+//
+// `getPage()` est CONSERVÉ sur le repository : ce n'est pas du code mort mais
+// une capacité d'interface, implémentée et testée sur tous les modules
+// (tasks, events, habits, okrs…). C'est la brique de l'étape 3.
+// ═══════════════════════════════════════════════════════════════════

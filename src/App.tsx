@@ -13,6 +13,7 @@ import { routeSlug } from '@/i18n/routes';
 import { getLastVisitedPage } from '@/modules/ui-states';
 import { useSharedTasksRealtime } from '@/modules/tasks/useSharedTasksRealtime';
 import { useOrgInboxRealtime } from '@/modules/organizations/useOrgInboxRealtime';
+import { useFriendsInboxRealtime } from '@/modules/friends/useFriendsInboxRealtime';
 // Import `/react` (pas `/next` — réservé aux apps Next.js) : ce projet est
 // Vite + React Router, hébergé sur Vercel (cf. vercel.json).
 import { Analytics } from '@vercel/analytics/react';
@@ -228,6 +229,20 @@ const OrgInboxRealtime: React.FC = () => {
   return null;
 };
 
+/**
+ * Demandes d'amis et listes partagées en temps réel — mêmes contraintes que
+ * les deux hooks ci-dessus : point d'ancrage sans rendu, monté UNE SEULE FOIS.
+ *
+ * Remplace les trois DERNIERS `refetchInterval` permanents (15 s ×2, 20 s),
+ * soit ~15 requêtes par minute et par utilisateur connecté avant toute
+ * interaction. Cf. `docs/SCALABILITY.md` §3 et mig. 120.
+ */
+const FriendsInboxRealtime: React.FC = () => {
+  const { user, isDemo } = useAuth();
+  useFriendsInboxRealtime(isDemo ? undefined : user?.id);
+  return null;
+};
+
 const AppRoutes = () => {
   // Locale servie pour ce montage. `basename` étant figé au montage du routeur,
   // elle ne change pas sans rechargement complet (cf. src/i18n/bootstrap.ts) —
@@ -339,6 +354,9 @@ const App: React.FC = () => {
             </AppErrorBoundary>
             <AppErrorBoundary fallback={null}>
               <OrgInboxRealtime />
+            </AppErrorBoundary>
+            <AppErrorBoundary fallback={null}>
+              <FriendsInboxRealtime />
             </AppErrorBoundary>
             <AppRoutes />
             <AppErrorBoundary fallback={null}>

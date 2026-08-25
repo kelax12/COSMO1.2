@@ -124,15 +124,31 @@ describe('SupabaseHabitsRepository', () => {
     expect(await repo.getById('missing')).toBeNull();
   });
 
-  it('toggleCompletion: goes through the atomic RPC (TOCTOU-1), not a read-then-write', async () => {
-    supabaseMock.queueRpc('toggle_habit_completion', { data: { ...row, completions: { '2026-06-10': true } } });
+  it('toggleCompletion: passe par la RPC atomique BORNEE (TOCTOU-1 + mig. 121)', async () => {
+    // `RETURNS TABLE` -> PostgREST renvoie un TABLEAU, la v1 renvoyait un objet.
+    supabaseMock.queueRpc('toggle_habit_completion_v2', {
+      data: [{ ...row, completions: { '2026-06-10': true }, streak_current: 7, window_days: 400 }],
+    });
     const result = await repo.toggleCompletion('h1', '2026-06-10');
 
     expect(supabaseMock.rpcCalls).toEqual([
-      { fn: 'toggle_habit_completion', args: { p_habit_id: 'h1', p_date: '2026-06-10' } },
+      {
+        fn: 'toggle_habit_completion_v2',
+        args: { p_habit_id: 'h1', p_date: '2026-06-10', p_days: 400 },
+      },
     ]);
     expect(supabaseMock.queries).toHaveLength(0); // zéro SELECT/UPDATE direct
     expect(result.completions['2026-06-10']).toBe(true);
+    // C'est ce champ qui permet au hook de se passer d'un refetch de liste.
+    expect(result.streakCurrent).toBe(7);
+  });
+
+  it('toggleCompletion: leve si la RPC ne renvoie aucune ligne', async () => {
+    // `RETURNS TABLE` peut renvoyer zéro ligne (habitude supprimée entre-temps).
+    // Sans cette garde, `mapHabitFromDb(undefined)` planterait sur une lecture
+    // de propriété, loin de la cause.
+    supabaseMock.queueRpc('toggle_habit_completion_v2', { data: [] });
+    await expect(repo.toggleCompletion('h1', '2026-06-10')).rejects.toBeTruthy();
   });
 
   it('deleteHabit: surfaces normalized error on failure', async () => {

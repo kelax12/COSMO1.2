@@ -46,8 +46,14 @@ export const useFriendRequests = () => {
   return useQuery({
     queryKey: friendKeys.requests(),
     queryFn: () => repository.getPendingRequests(),
-    refetchInterval: 15000, // polling toutes les 15s pour recevoir les demandes en temps réel
-    staleTime: 1000 * 60 * 2, // 2 minutes — doit rester réactif (notifications)
+    // Plus de sondage : `useFriendsInboxRealtime` (monté une seule fois dans
+    // `App.tsx`, mig. 120) écoute la table et invalide cette clé. Ce hook est
+    // monté en PERMANENCE par `InboxMenu` : le sondage rejouait la requête
+    // 240 fois par heure d'onglet ouvert pour apprendre qu'il n'y avait rien
+    // de neuf. `refetchOnWindowFocus` reste le filet quand le WebSocket est
+    // indisponible (navigation privée, anti-pistage strict).
+    staleTime: 1000 * 30,
+    refetchOnWindowFocus: true,
   });
 };
 
@@ -56,8 +62,14 @@ export const useSentFriendRequests = () => {
   return useQuery({
     queryKey: friendKeys.sentRequests(),
     queryFn: () => repository.getSentRequests(),
-    refetchInterval: 15000,
-    staleTime: 1000 * 60 * 2, // 2 minutes — doit rester réactif (notifications)
+    // Plus de sondage : `useFriendsInboxRealtime` (monté une seule fois dans
+    // `App.tsx`, mig. 120) écoute la table et invalide cette clé. Ce hook est
+    // monté en PERMANENCE par `InboxMenu` : le sondage rejouait la requête
+    // 240 fois par heure d'onglet ouvert pour apprendre qu'il n'y avait rien
+    // de neuf. `refetchOnWindowFocus` reste le filet quand le WebSocket est
+    // indisponible (navigation privée, anti-pistage strict).
+    staleTime: 1000 * 30,
+    refetchOnWindowFocus: true,
   });
 };
 
@@ -274,8 +286,13 @@ export const useIncomingSharedLists = () => {
   return useQuery({
     queryKey: friendKeys.incomingSharedLists(),
     queryFn: () => repository.getIncomingSharedLists(),
-    // Même cadence que useRelatedTaskShares : collaboration sans realtime.
-    refetchInterval: 20_000,
+    // Plus de sondage : `useFriendsInboxRealtime` (monté une seule fois dans
+    // `App.tsx`, mig. 120) écoute la table et invalide cette clé. Ce hook est
+    // monté en PERMANENCE par `InboxMenu` : le sondage rejouait la requête
+    // 240 fois par heure d'onglet ouvert pour apprendre qu'il n'y avait rien
+    // de neuf. `refetchOnWindowFocus` reste le filet quand le WebSocket est
+    // indisponible (navigation privée, anti-pistage strict).
+    staleTime: 1000 * 30,
     refetchOnWindowFocus: true,
   });
 };
