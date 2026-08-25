@@ -267,7 +267,7 @@ ne partagent aucune table.
 ### 5.1 — Créer les prix et les coupons dans Stripe
 
 **HUIT** prix récurrents en EUR : un mensuel et un annuel par palier payant. L'annuel vaut le
-mensuel **moins 30 %**, appliqué sur les douze mois — c'est la remise consentie contre
+mensuel **moins 30 %**, appliqué sur les douze mois. C'est la remise consentie contre
 l'engagement (`ENTERPRISE_YEARLY_DISCOUNT`, 2026-08-25).
 
 | Palier | Membres | Mensuel | Annuel (équivalent / mois) | Annuel (débit réel) |
@@ -309,7 +309,7 @@ Un secret manquant ne fait pas facturer le mauvais palier : `stripe-org-checkout
 silencieusement.
 
 🔴 **Les huit secrets se posent ensemble.** Le sélecteur mensuel/annuel est monté sans condition
-d'environnement — le front ne peut pas lire les secrets Supabase. Un `*_YEARLY` manquant donne donc
+d'environnement : le front ne peut pas lire les secrets Supabase. Un `*_YEARLY` manquant donne donc
 un bouton « Annuel » cliquable et un checkout qui échoue en `tier_unavailable`.
 `org-tiers.parity.test.ts` garantit que chaque palier payant DÉCLARE ses deux variables, jamais
 qu'elles sont renseignées en prod : ça, seule la pose des secrets le fait.
@@ -319,7 +319,8 @@ qu'elles sont renseignées en prod : ça, seule la pose des secrets le fait.
 Appliquer `supabase/migration/101_org_subscriptions.sql` **et
 `supabase/migration/123_org_subscriptions_billing_interval.sql`** selon la procédure du point 1
 (⚠️ **jamais** `supabase db push`). La 123 ajoute `billing_interval`, purement descriptive : sans
-elle, le webhook écrit une colonne inexistante et l'upsert échoue à chaque event. Puis :
+elle, le webhook écrit une colonne inexistante et l'upsert échoue à chaque event. **Les deux sont
+appliquées en prod au 2026-08-25.** Puis :
 
 ```bash
 supabase functions deploy stripe-org-checkout
