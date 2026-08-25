@@ -13,7 +13,7 @@ const LandingFooter: React.FC = () => {
             <div className="flex flex-col items-center md:items-start gap-2">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 overflow-hidden rounded-xl flex items-center justify-center">
-                  <img src="/logo.png" alt="Logo Cosmo" width="36" height="36" className="w-full h-full object-contain" />
+                  <img src="/logo-128.webp" alt="Logo Cosmo" width="36" height="36" className="w-full h-full object-contain" />
                 </div>
                 <span className="text-lg font-bold text-white">Cosmo</span>
                 <span className="text-slate-600 hidden sm:inline">·</span>

@@ -211,7 +211,7 @@ const LandingPage: React.FC = () => {
             >
               <div className="relative">
                 <div className="w-9 h-9 overflow-hidden rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/25 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-[10deg]">
-                  <img src="/logo.png" alt="Logo Cosmo" width="36" height="36" className="w-full h-full object-contain bg-white/10" />
+                  <img src="/logo-128.webp" alt="Logo Cosmo" width="36" height="36" className="w-full h-full object-contain bg-white/10" />
                 </div>
                 <div
                   className={`absolute inset-0 rounded-xl blur-lg opacity-40 group-hover:opacity-70 transition-opacity ${

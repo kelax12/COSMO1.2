@@ -5,7 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 
     <!-- Icons & PWA -->
-    <link rel="icon" type="image/png" href="/logo.png" />
+    <!-- Favicon 64 px (5 ko) et non le logo 512 (255 ko) : `rel="icon"` est
+         telecharge a CHAQUE page. L'apple-touch-icon, lui, n'est lu que lors
+         d'un ajout a l'ecran d'accueil, il peut rester en pleine taille. -->
+    <link rel="icon" type="image/png" sizes="64x64" href="/favicon-64.png" />
     <link rel="apple-touch-icon" sizes="512x512" href="/logo.png" />
     <link rel="manifest" href="/manifest.json" />
     <!-- Mobile (<768px) démarre toujours en thème Noir (palette GitHub), cf.
@@ -110,9 +113,9 @@
       "applicationSubCategory": "Task Management",
       "operatingSystem": "Web, iOS, Android",
       "screenshot": [
-        "https://thecosmo.app/screenshots/dashboard.png",
-        "https://thecosmo.app/screenshots/taches.png",
-        "https://thecosmo.app/screenshots/habitudes.png"
+        "https://thecosmo.app/screenshots/dashboard.webp",
+        "https://thecosmo.app/screenshots/taches.webp",
+        "https://thecosmo.app/screenshots/habitudes.webp"
       ],
       "description": "Application de productivité tout-en-un : gestion de tâches avec priorités, suivi d'habitudes avec heatmap, agenda avec time-blocking, OKR (Objectives & Key Results) et statistiques multi-modules.",
       "inLanguage": "fr-FR",

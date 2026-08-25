@@ -1,19 +1,25 @@
 # Performance bundle — `vite.config.ts manualChunks`
 
-## Note de performance : 68 → 64 → **82 / 100** (2026-08-24 → 2026-08-25 soir)
+## Note de performance : 68 → 64 → **88 / 100** (2026-08-24 → 2026-08-25 soir)
 
 | Ce qui compose la note | 08-24 | 08-25 (16 h) | **08-25 (fin)** |
 |---|---|---|---|
 | Chunk `index` (critical path) | 134 kB gzip | 139,0 kB gzip | **87,2 kB gzip** |
 | Marge sur le budget de 150 kB | 16 kB | 11,0 kB | **62,8 kB** |
-| **Chemin critique TOTAL** (entrée + preloads) | non mesuré | **580,5 kB gzip** | **420,1 kB gzip** |
+| **Chemin critique JS** (entrée + preloads) | non mesuré | **580,5 kB gzip** | **420,1 kB gzip** |
 | `vendor-charts` préchargé pour TOUS les visiteurs | oui, invisible | oui, invisible | **non** |
+| **Images servies sur `/`** | **1 046 kB** | 1 046 kB | **2,7 kB** |
+| **Polices servies** | 133 kB | 133 kB | **48 kB** |
+| **Poids total de la page d'accueil** | ~1 610 kB | ~1 610 kB | **749 kB** |
 | Garde automatique sur le budget | ❌ aucune | ❌ aucune | ✅ `npm run check:bundle`, bloquante en CI |
 | Levier i18n (~104 ko de JSON hors chemin critique) | non appliqué | non appliqué | ✅ **appliqué** |
 | Lighthouse CI | câblé, seuils provisoires | idem | idem |
 
-**+18 en fin de journée, après être descendu à 64.** Le chemin critique perd **160 kB gzip
-(−27,6 %)**, et le budget qui n'était mesuré par rien devient une gate CI.
+**+24 en fin de journée, après être descendu à 64.** La page d'accueil passe de **~1,6 Mo à
+749 ko** : le JavaScript perd 160 ko gzip, et les images passent de 1 046 ko à 2,7 ko.
+
+Le plus instructif est la proportion : après une journée entière passée sur le JavaScript, **le
+poste le plus lourd restait les images**, et personne ne l'avait jamais pesé.
 
 ### Ce qui a produit le gain, dans l'ordre
 
@@ -109,6 +115,69 @@ C'est CE chiffre qu'il faut regarder, pas la seule taille de `index` : c'est lui
 >
 > Recharts n'est **plus** importé par la landing (`AppWindowShowcase` l'exclut volontairement du
 > hero) : `StatsShowcase` ne vit plus que dans `GuidePage`, en `React.lazy`.
+
+## Images et polices, le poste qu'on n'avait jamais pesé
+
+**Tout ce qui précède parle de JavaScript. Ce n'était pas le plus lourd.**
+
+Le 2026-08-25 au soir, le chemin critique JS pesait 420 ko gzip, et la page
+d'accueil servait **1 046 ko d'images et 133 ko de polices** aux mêmes
+visiteurs. Trois gaspillages, tous invisibles à la lecture du code :
+
+| Ce qui était servi | Poids | Pourquoi c'était du gaspillage |
+|---|---|---|
+| `logo.png` | **255 ko** | 584 px de côté pour un affichage à 28-40 px, et chargé deux fois plutôt qu'une (`<img>` de l'en-tête ET `rel="icon"`) |
+| 3 captures de la landing, en PNG | **790 ko** | Elles vivent dans `#seo-fallback`, qui est en `display:none`. **Aucun visiteur ne les a jamais vues.** Le scanner de préchargement les téléchargeait quand même, parce qu'il lit le balisage avant le CSS |
+| `inter-var-latin-ext.woff2` | **85 ko** | Téléchargé à cause d'UN caractère, le « œ » de « coup d'œil » |
+
+### Le « œ » à 85 ko
+
+Les deux `@font-face` d'Inter se **chevauchent** sur `U+0152-0153` (Œ œ) : la
+plage latin les liste explicitement, la plage latin-ext les contient dans son
+intervalle `U+0100-02BA`. Quand un caractère est couvert deux fois dans la même
+famille, **c'est la dernière déclaration qui gagne**. Latin-ext était déclaré
+en second : un seul « œ » suffisait à faire venir 85 ko de glyphes
+d'Europe centrale sur chaque page d'un site français.
+
+**Correctif : intervertir les deux blocs.** C'est exactement l'ordre qu'utilise
+la feuille de style de Google Fonts, et pour cette raison précise. Vérifié dans
+le navigateur avant de conclure : le subset latin **contient** la ligature œ
+(largeur mesurée 16 px contre 8,8 px pour une police de secours), donc le rendu
+est identique au pixel près.
+
+### Résultat mesuré sur `/`
+
+| | avant | après |
+|---|---|---|
+| Images | 1 046 ko | **2,7 ko** |
+| Polices | 133 ko | **48 ko** |
+| Total de la page | ~1 610 ko | **749 ko** (−53 %) |
+
+Aucune image n'a été redimensionnée en dessous de sa taille d'affichage, aucun
+cadrage n'a changé, aucune balise n'a bougé de place. Les captures restent en
+2560 × 1600 pour un affichage en 1280 × 800, c'est-à-dire exactement ce qu'un
+écran retina consomme.
+
+### Règles qui en sortent
+
+- ❌ **Ne jamais servir une image sans regarder sa taille d'affichage.** Un
+  facteur 2 est du retina ; un facteur 15, comme le logo, est un oubli.
+- ❌ **Ne jamais mettre une `<img>` sans `loading="lazy"` dans un bloc masqué.**
+  `display:none` n'empêche PAS le téléchargement. C'est contre-intuitif et ça a
+  coûté 790 ko par visite pendant des mois.
+- ⚠️ **Deux `unicode-range` qui se chevauchent se départagent par l'ordre de
+  déclaration.** Le subset le plus large se déclare en PREMIER.
+- ✅ Les captures du parcours entreprise étaient déjà en WebP et déjà `lazy`
+  (`AppShot.tsx`). Le motif existait dans le dépôt ; il n'avait simplement
+  jamais été appliqué à la landing perso.
+- ⚪️ **`og-card.png` (504 ko) est laissé tel quel, et c'est une décision.** Elle
+  n'est chargée par aucun visiteur, seulement par les robots des réseaux
+  sociaux quand un lien est partagé. La recompresser ferait gagner de la bande
+  passante de crawl et risquerait de dégrader l'aperçu de partage, qui est la
+  première impression du produit. Mauvais échange.
+
+Réencodage reproductible : `npm run images:check` (mesure) puis
+`node scripts/optimize-images.mjs`.
 
 ## Règles non négociables
 
