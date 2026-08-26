@@ -863,6 +863,7 @@
     "perMonth": "per month",
     "vatIncluded": "All prices shown include VAT.",
     "withdrawalLegend": "Before you pay",
+    "precontractual": "Open-ended subscription, prices include VAT, renewed automatically at each term until cancelled. Cancel any time from this screen, no reason or fee required.",
     "withdrawalImmediate": "I ask for the subscription to start immediately, without waiting for the 14-day withdrawal period.",
     "withdrawalWaiver": "I acknowledge that by starting immediately, I waive my 14-day right of withdrawal once the service has been fully supplied.",
     "withdrawalHint": "Both confirmations are required to continue.",

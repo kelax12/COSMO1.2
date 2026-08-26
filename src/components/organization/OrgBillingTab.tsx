@@ -192,6 +192,17 @@ export function OrgBillingTab({ orgId, isOwner, memberCount, onBack }: Props) {
           <legend className="px-1 text-xs font-semibold text-[rgb(var(--color-text-secondary))]">
             {t('billing.withdrawalLegend')}
           </legend>
+          {/* Information precontractuelle (Conso. art. L111-1) — les
+              caracteristiques essentielles doivent etre portees a la
+              connaissance du consommateur AVANT qu il ne s engage, pas
+              seulement dans les CGU qu il n ouvrira pas. Trois faits
+              suffisent ici et ce sont ceux qui surprennent : le prix est
+              TTC, l abonnement se reconduit seul, et il se resilie sans
+              motif. Le montant exact, lui, est affiche par la carte que
+              l utilisateur choisit juste en dessous. */}
+          <p className="text-xs text-[rgb(var(--color-text-secondary))]">
+            {t('billing.precontractual')}
+          </p>
           <label className="flex items-start gap-2 text-xs text-[rgb(var(--color-text-secondary))]">
             <input
               type="checkbox"
