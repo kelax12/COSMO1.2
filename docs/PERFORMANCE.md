@@ -21,6 +21,25 @@
 Le plus instructif est la proportion : après une journée entière passée sur le JavaScript, **le
 poste le plus lourd restait les images**, et personne ne l'avait jamais pesé.
 
+### 2026-08-26 · ce qui a été mesuré depuis, et pourquoi la note ne bouge pas
+
+La note ci-dessus mesure **le poids envoyé au navigateur**. La journée du 2026-08-26 a mesuré un
+autre axe, jamais chiffré jusque-là : **ce que l'application demande au serveur une fois
+chargée**. Rien n'a changé dans le bundle, donc la note reste à 88, mais trois chiffres sont
+désormais connus et ils vivent dans les sections
+[Ce que coûte une ouverture d'application](#ce-que-coûte-une-ouverture-dapplication) et
+[Limites de requêtes](#limites-de-requêtes) :
+
+| Ce qui a été mesuré | Résultat | Statut |
+|---|---|---|
+| Requêtes REST à l'ouverture du tableau de bord | **32**, toutes distinctes | ⚪️ mesuré, non optimisé |
+| Part du trafic Supabase du jour venant d'onglets non rechargés | **91,5 %** | 🔴 aucun mécanisme de mise à jour |
+| Lecture d'agenda hiérarchique (`events`) | **17,19 ms → 0,61 ms** | ✅ mig. `128`, écrite, **non appliquée** |
+
+⚠️ **Une note de performance front ne dit rien du coût serveur.** Les deux axes ont été confondus
+jusqu'ici : le bundle a été divisé par deux le 2026-08-25 alors que l'ouverture coûtait déjà
+32 requêtes, et personne ne le savait.
+
 ### Ce qui a produit le gain, dans l'ordre
 
 1. **Les catalogues i18n suivent leur page** (−42,9 kB gzip sur l'entrée, 139,0 → 96,1).
@@ -269,6 +288,53 @@ Réencodage reproductible : `npm run images:check` (mesure) puis
   budget baisse : 13 103 → 11 452 lignes en deux jours, cf.
   [`ARCHITECTURE.md`](./ARCHITECTURE.md) §3.
 
+## Ce que coûte une ouverture d'application
+
+**32 requêtes REST, mesurées le 2026-08-26** sur les `edge_logs` de production, pour une session
+réelle du bundle courant arrivant à froid sur `/dashboard`. Toutes distinctes : React Query
+dédoublonne correctement, il n'y a pas de requête émise deux fois.
+
+| Ce qui les émet | Requêtes | Payées par |
+|---|---|---|
+| Données du tableau de bord (tâches, catégories, listes, agenda, habitudes, OKR, KR) | 9 | tout le monde |
+| Collaboration (amis, demandes, tâches et listes partagées, liens) | 6 | tout le monde |
+| Mode entreprise (org, membres, adhésions, notifications, invitations, projets, tâches d'équipe) | 8 | **membres d'une org seulement** |
+| Session et profil (profil, abonnement, `touch_last_seen`) | 3 | tout le monde |
+
+Ce n'est pas absurde pour sept domaines métier affichés, et ces requêtes partent en parallèle sur
+HTTP/2, pas en série. Mais **c'est le multiplicateur de charge du produit** : 100 arrivées
+simultanées valent 3 200 requêtes. C'est ce nombre qu'il faut surveiller avant un pic
+d'acquisition, bien avant le coût unitaire de chacune.
+
+⚪️ **Piste identifiée, non engagée** : les 8 requêtes du mode entreprise sont montées par
+`Layout`, donc sur **toutes** les pages protégées, y compris quand aucun écran entreprise n'est
+affiché. Elles ne servent qu'à peindre une pastille de notification. Une RPC d'agrégat
+ramènerait l'ouverture à 25 requêtes pour un membre d'organisation, sans rien changer à l'écran.
+
+### 🔴 Le correctif que personne ne reçoit : les onglets jamais rechargés
+
+**91,5 % du trafic Supabase du 2026-08-26 est venu de DEUX onglets** qui exécutaient encore le
+bundle d'avant la suppression des sondes (2026-08-25). Ventilation par session, sur les 18 408
+requêtes `/rest/v1/*` de la journée :
+
+| Session | Requêtes / 24 h | dont `friend_requests` | Verdict |
+|---|---|---|---|
+| `051be163` | 10 835 | 6 151 | ancien bundle, **sonde toutes les 16 à 20 s** |
+| `dc812ab1` | 6 002 | 2 044 | ancien bundle, **sonde** |
+| `7aa61ad2` | 1 185 | 52 | bundle courant, **aucune sonde** |
+
+La session propre est restée ouverte **douze heures** pour 52 lectures de `friend_requests`, soit
+4 par heure, toutes attribuables à des changements d'écran. Le code livré est propre. **Ce qui
+tourne encore, c'est du code d'avant.**
+
+Une SPA ne recharge pas son bundle toute seule : un onglet laissé ouvert exécute indéfiniment la
+version qu'il a téléchargée. Conséquence produit, contre-intuitive : **un gain de performance
+n'atteint que les utilisateurs qui rouvrent l'application**, et les plus assidus, ceux qui ne
+ferment jamais l'onglet, sont les derniers servis et les plus coûteux.
+
+⚪️ **Reste ouvert** : COSMO n'a aucun mécanisme pour signaler à un onglet ouvert qu'une nouvelle
+version existe. C'est le chantier qui transformerait tout correctif client en gain réel.
+
 ## Limites de requêtes
 
 > **⚡ `tasks` : lire via `get_my_tasks()`, jamais `.from('tasks')`** (mig. 085,
@@ -286,6 +352,19 @@ Réencodage reproductible : `npm run images:check` (mesure) puis
 > `get_my_team_tasks`, `get_my_team_projects` et `get_my_team_task_dependencies`, qui n'évaluent
 > le sous-arbre managérial **qu'une fois par organisation**. Chemin verrouillé par
 > `team-projects/supabase.repository.test.ts`. Détail : [`SCALABILITY.md`](./SCALABILITY.md) §2.
+
+
+> **⚡ `events` : ne jamais faire juger une ligne par une fonction** (mig. `128`, écrite, **non
+> appliquée**). La policy de lecture appelait `manages_user(user_id)`, une fonction **sur une
+> colonne**, donc rappelée pour chaque ligne examinée, chaque appel joignant deux fois
+> `organization_members` puis évaluant la CTE récursive `get_subtree`. Mesuré en prod le
+> 2026-08-26, plan chauffé, lecture de l'agenda d'un membre non géré : **17,19 ms → 0,61 ms**, et
+> le plan passe de `Rows Removed by Filter: 128` à un BitmapOr de deux Index Scan, donc **zéro
+> ligne remontée du tas pour être jetée**. Lire son propre agenda ne changeait rien (0,25 ms) : la
+> branche « own » court-circuitait déjà le `OR`. Le correctif est `my_managed_user_ids()`, sans
+> argument, donc hissée en InitPlan et évaluée une fois par requête. Troisième occurrence de la
+> classe, après `tasks` (085) et `team_tasks` (113, 117). Garde :
+> `scripts/migration-guards.test.mjs`. Détail : [`SCALABILITY.md`](./SCALABILITY.md) §2ter.
 
 > **📉 Habitudes : lire par `get_my_habits(p_days)`** (mig. 119, prod). `habits.completions`
 > gagnait 12,7 octets par jour et par habitude, **sans borne**. La RPC renvoie `completions`
@@ -318,6 +397,9 @@ Les `getAll()` à fort volume (**tasks, events, habits, okrs**) utilisent l'auto
 - ❌ Ajouter une dépendance > 50 kB minified sans règle `manualChunks`.
 - ❌ Importer `* as locales` de `date-fns/locale` ou `* as Icons` de `lucide-react` — casse le tree-shaking.
 - ❌ Monter un composant gros au niveau App qui ne s'affiche qu'après un geste — il doit être `lazy` + Suspense.
+- ❌ Écrire un prédicat de policy RLS qui appelle une fonction **sur une colonne** (`fn(user_id)`). Il est rappelé pour chaque ligne examinée et rend l'index inutilisable. Un helper sans argument, dont le périmètre vient de `auth.uid()` seul, est hissé en InitPlan et évalué une fois par requête. Trois occurrences déjà : `tasks` (085), `team_tasks` (113, 117), `events` (128).
+- ❌ **Valider un correctif de performance CLIENT sur un compteur agrégé de Postgres** (`pg_stat_user_tables`, `pg_stat_statements`). Ils cumulent depuis la création de la base et mélangent les anciens et les nouveaux clients : ils donneront tort au correctif pendant des jours. Ventiler les `edge_logs` par `request.sb.jwt.authorization.payload.session_id`, une seule session du bundle courant suffit à trancher.
+- ❌ Conclure quoi que ce soit d'un total cumulé. Seul un **delta entre deux instants**, mesuré au repos, donne un débit. `organization_members` affichait 2 440 047 balayages pour 11 lignes et n'en prenait **aucun** sur une fenêtre de 285 s au repos.
 
 ## Optimisations 2026-07-16 (issues de l'audit technique 2026-07-15)
 

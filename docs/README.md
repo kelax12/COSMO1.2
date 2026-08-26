@@ -24,6 +24,19 @@ performance va moins bien que la sécurité, ils disent où chaque domaine se si
 | [SEO](./SEO.md) | 73 | **73** | **0** | Aucun travail SEO : le seul levier restant est hors dépôt |
 | [Performance](./PERFORMANCE.md) | 68 | **88** | **+20** | Page d'accueil **1 610 → 749 kB** : JS −160 kB, images 1 046 → 2,7 kB, polices −85 kB |
 
+> **2026-08-26 · les notes ne bougent pas, et c'est le résultat.** La journée a mesuré un axe que
+> ce tableau ne couvrait pas : **le coût serveur d'une session**, distinct du poids envoyé au
+> navigateur. Trois chiffres nouveaux, aucun point gagné, parce que rien n'est encore appliqué en
+> prod : l'ouverture du tableau de bord coûte **32 requêtes REST** ; **91,5 % du trafic Supabase
+> du jour venait de deux onglets jamais rechargés**, donc d'un bundle périmé ; et la lecture
+> d'agenda hiérarchique passe de **17,19 ms à 0,61 ms** avec la mig. `128`, **écrite mais non
+> appliquée**. Détail dans [`PERFORMANCE.md`](./PERFORMANCE.md) et
+> [`SCALABILITY.md`](./SCALABILITY.md) §2ter et §3.
+>
+> ⚠️ La leçon de méthode vaut plus que les trois chiffres : **une note de performance front ne dit
+> rien du coût serveur**, et un compteur Postgres cumulé ne dit rien du débit courant. Les deux
+> ont été confondus jusqu'ici.
+
 ### Ce que ce tableau dit, au-delà des chiffres
 
 **Un audit dont toutes les notes montent est un audit qui se félicite.** Deux lignes valent plus
@@ -103,7 +116,7 @@ testées** (`scripts/migration-guards.test.mjs`).
 | [`DEPLOYMENT.md`](./DEPLOYMENT.md) | Runbook deploy / rollback Vercel + Supabase, drill de restauration |
 | [`MOBILE.md`](./MOBILE.md) | Pages et composants mobiles, bottom-sheets, pièges iOS Safari · **note 72** |
 | [`UI-PATTERNS.md`](./UI-PATTERNS.md) | Listes, modals, tutoriels, onboarding, thèmes · **dette UI/UX remesurée le 2026-08-25, note 80** |
-| [`PERFORMANCE.md`](./PERFORMANCE.md) | `manualChunks`, lazy loading, images et polices, budget bundle · **note 88**, gardé par `npm run check:bundle` |
+| [`PERFORMANCE.md`](./PERFORMANCE.md) | `manualChunks`, lazy loading, images et polices, budget bundle · **note 88**, gardé par `npm run check:bundle` · et depuis le 2026-08-26 **le coût serveur d'une ouverture de session**, 32 requêtes REST |
 | [`ACCESSIBILITY.md`](./ACCESSIBILITY.md) | WCAG / EAA, aria, contraste, gates axe-core + Lighthouse · **note 79** |
 | [`SCALABILITY.md`](./SCALABILITY.md) | Montée en charge · **remesuré le 2026-08-25, note 84**, avec runbook reproductible |
 | [`SEO.md`](./SEO.md) | Prérendu, sitemap, hreflang, indexation par locale — **audit du 2026-08-14, données Search Console du 2026-08-19** + règles |
