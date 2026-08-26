@@ -53,8 +53,28 @@ export default defineConfig({
               id.includes('node_modules/scheduler')) {
             return 'vendor-react';
           }
+          // ⚠️ PAS de chunk `vendor-radix`, et c'est délibéré.
+          //
+          // Regrouper les 20+ primitives Radix dans un chunk unique en faisait
+          // un import STATIQUE de l'entrée dès qu'UNE seule était utilisée par
+          // le shell (`TooltipProvider`, monté dans `App.tsx`). Vite préchargeait
+          // alors les 45 ko du lot pour tout visiteur, y compris les 90 % de
+          // primitives qui ne servent que dans une modale de page lazy.
+          //
+          // En laissant Rollup décider, chaque primitive part avec la page qui
+          // l'utilise, et seules celles du shell restent dans l'entrée.
+          //
+          // Mesuré le 2026-08-26 : chemin critique 420,3 → 393,9 ko gzip
+          // (−26,4 ko pour TOUT visiteur), contre +5,5 ko de duplication
+          // répartie sur l'ensemble des chunks de page. On échange 5 ko payés
+          // par quelques-uns contre 26 ko payés par tout le monde.
+          //
+          // 🔴 Ne pas « réoptimiser » en recréant un chunk Radix : ce serait
+          // refaire exactement le bug. `npm run check:bundle` mesure désormais
+          // le chemin critique COMPLET, pas la seule taille de l'entrée, donc
+          // la régression serait attrapée.
           if (id.includes('node_modules/@radix-ui')) {
-            return 'vendor-radix';
+            return undefined;
           }
           if (id.includes('node_modules/@fullcalendar')) {
             return 'vendor-calendar';
