@@ -110,6 +110,8 @@ testées** (`scripts/migration-guards.test.mjs`).
 | [`ACQUISITION.md`](./ACQUISITION.md) | Attribution `?ref=`, funnel mesuré en prod, runbook — **audit du 2026-08-14** |
 | [`I18N.md`](./I18N.md) | Qualité réelle des traductions, périmètre bilingue — **audit du 2026-08-14** |
 | [`RGPD.md`](./RGPD.md) | Inventaire des données personnelles, droits, rétention · **remesuré le 2026-08-25, note 84** |
+| [`LEGAL.md`](./LEGAL.md) | Obligations légales du fondateur : statut, TVA, droit de la consommation, marque, sous-traitants · **créé le 2026-08-26**, non noté (ce n'est pas un audit) |
+| [`STRIPE-LIVE.md`](./STRIPE-LIVE.md) | Compte Stripe live : les 8 prix et le `tax_behavior` définitif · **créé le 2026-08-26** |
 | [`POST-AUDIT-GUIDE.md`](./POST-AUDIT-GUIDE.md) | Réactivation premium (`PREMIUM_ENFORCED`), finalisation Stripe |
 | [`COSMO-CLI.md`](./COSMO-CLI.md) | CLI d'accès aux données COSMO réelles (`scripts/cosmo/`) |
 | [`AGENT-AJOUTER-TACHE.md`](./AGENT-AJOUTER-TACHE.md) | Mémo court : ajouter une tâche dans le vrai compte |
