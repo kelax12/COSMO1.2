@@ -12,7 +12,7 @@
 · [Actif aujourd'hui](#1-actif-aujourdhui-sans-structure) · [À la création](#2-à-la-création-de-la-structure)
 · [Au premier euro](#3-au-premier-euro-encaissé) · [Droit de la consommation](#4-droit-de-la-consommation)
 · [Produit et marque](#5-produit-marque-et-dépendances) · [Sous-traitants](#6-sous-traitants-et-transferts)
-· [Garde-fous](#-garde-fous-techniques) · [Décisions ouvertes](#décisions-encore-ouvertes)
+· [Garde-fous](#-garde-fous-techniques) · [Annexe art. 32](#annexe--mesures-techniques-et-organisationnelles-art-32) · [Décisions ouvertes](#décisions-encore-ouvertes)
 
 ---
 
@@ -73,7 +73,7 @@ limité. Ce n'est pas la même dépense qu'une mission annuelle.
 | A6 | Transferts hors UE (chap. V) | 🟡 | ✅ Supabase en `eu-west-1`, donc dans l'Union. ❌ Vercel et Sentry sont américains : mécanisme de transfert à documenter. |
 | A7 | Notification de violation sous 72 h (art. 33) | ❌ | Aucune procédure écrite. À rédiger à froid, le délai ne permet pas d'improviser. |
 | A8 | Droits des personnes (art. 15 à 22) | 🟡 | ✅ Export CSV (`src/lib/csv-export.ts`, portabilité) et suppression de compte (Edge Function `delete-account`) existent. À vérifier que l'export couvre **toutes** les tables et à documenter le délai de réponse d'un mois. |
-| A9 | Sécurité du traitement (art. 32) | 🟡 | RLS, CSP, en-têtes Vercel et scrubbing Sentry sont en place et sérieux. Manque la formalisation écrite des mesures, qui est ce qu'on présente en contrôle. |
+| A9 | Sécurité du traitement (art. 32) | ✅ | Mesures formalisées en [annexe](#annexe--mesures-techniques-et-organisationnelles-art-32), limites comprises. Vérifiées dans `vercel.json`, `src/main.tsx` et les migrations. Formalisé le 2026-08-26. |
 | A10 | Analyse d'impact (art. 35) | ⬜ | Probablement non requise pour ce traitement. À confirmer, et à réexaminer si des agents IA traitent du contenu utilisateur. |
 
 ### B. Structure juridique — **se déclenche à la création**
@@ -122,10 +122,10 @@ Par l'effet de la décision structurante ci-dessous : aucun client n'est vérifi
 | E2 | Information précontractuelle | ❌ | Caractéristiques essentielles, prix TTC, durée, reconduction, à présenter avant la validation. |
 | E3 | Rétractation 14 jours et double consentement | 🟡 | 🔴 Les CGU **accordent déjà** 14 jours de rétractation, sans mécanisme de renonciation. Tu dois donc rembourser sur demande. Pour l'écarter légalement il faut les deux cases dans le tunnel : accord exprès à l'exécution immédiate **et** renonciation explicite. |
 | E4 | Médiateur de la consommation | ❌ | Adhésion **payante et obligatoire**, coordonnées à publier dans les CGV et sur le site. Oubli classique, sanctionné par la DGCCRF. |
-| E5 | Résiliation en ligne (L215-1-1) | 🟡 | `stripe-org-portal` permet la résiliation depuis l'app, et les CGU l'annoncent. **À tester réellement de bout en bout** avant de le déclarer bon. |
+| E5 | Résiliation en ligne (L215-1-1) | ❌ | 🔴 **Dégradé de 🟡 à ❌ le 2026-08-26 après vérification.** `/v1/billing_portal/configurations` renvoie **vide sur les DEUX comptes**, test et live : le portail client n'a jamais été configuré. `stripe-org-portal` ne passe aucun `configuration`, il compte donc sur un défaut inexistant, et Stripe refuse de créer la session tant que les réglages n'ont pas été enregistrés au Dashboard. La fonction porte d'ailleurs déjà l'alerte « customer cannot manage or cancel ». **Le bouton existe, la résiliation ne marche pas.** Correctif : Dashboard Stripe → Settings → Billing → Customer portal, activer l'annulation d'abonnement, enregistrer, sur les deux comptes. Non faisable par API depuis ici. |
 | E6 | Information de reconduction tacite | ❌ | 🔴 Déclenchée par la facturation **annuelle** livrée le 2026-08-25. Aucun envoi automatisé. |
 | E7 | Affichage des prix TTC | ✅ | Les 8 prix live sont en `tax_behavior: inclusive`, et la mention « Tous les prix sont affichés TTC » est rendue sous la grille publique (`PricingSection.tsx`) **et** sous la grille produit (`OrgBillingTab.tsx`), en fr et en en. Corrigé le 2026-08-26. |
-| E8 | Bouton de commande explicite | 🟡 | Stripe Checkout est en principe conforme. À vérifier sur le tunnel réel : « Valider » seul rend le contrat inopposable. |
+| E8 | Bouton de commande explicite | 🟡 | `custom_text.submit.message` ajouté dans `stripe-org-checkout` le 2026-08-26 : « commande avec obligation de paiement », reconduction et résiliation annoncées avant le clic. `submit_type` n'existe pas en `mode: 'subscription'`, le libellé du bouton Stripe n'est donc pas réécrivable. ⚠️ **Passe au vert au redéploiement de la fonction**, la prod tourne encore sur l'ancienne version. |
 | E9 | Garantie de conformité du service numérique | 🟡 | À auditer contre les promesses de la landing : une fonctionnalité annoncée et non livrée devient un défaut opposable. |
 
 ### F. Produit, marque et dépendances
@@ -143,12 +143,12 @@ Par l'effet de la décision structurante ci-dessous : aucun client n'est vérifi
 
 | Statut | Nombre |
 |---|---|
-| ✅ Bon | 1 |
-| 🟡 Partiellement bon | 12 |
-| ❌ À faire | 26 |
+| ✅ Bon | 2 |
+| 🟡 Partiellement bon | 10 |
+| ❌ À faire | 27 |
 | ⬜ Sans objet aujourd'hui | 6 |
 
-Une seule ligne est pleinement verte, mais **douze sont à moitié faites** : les pages
+Deux lignes sont pleinement vertes, et **dix à moitié faites** : les pages
 légales existent, l'export et la suppression de compte fonctionnent, la sécurité technique est
 sérieuse, la base est dans l'Union et le réglage TTC est correct. L'essentiel du reste ne peut
 pas passer au vert avant l'immatriculation, qui est le vrai verrou.
@@ -351,6 +351,51 @@ S'applique **à toute l'offre**, par l'effet de la décision structurante.
   journal inaltérable.
 - ❌ **Ne pas promettre sur la landing une fonctionnalité non livrée** : c'est un défaut de
   conformité opposable par un consommateur.
+
+---
+
+## Annexe — mesures techniques et organisationnelles (art. 32)
+
+> Pièce prévue par l'article 32 du RGPD, réclamée en contrôle CNIL et dans les questionnaires
+> d'achat B2B. Chaque ligne est vérifiée dans le code au 2026-08-26, avec sa source. Le détail
+> d'implémentation vit dans [`SECURITY.md`](./SECURITY.md), qui n'est pas dupliqué ici.
+
+### Mesures en place
+
+| Mesure | Mise en œuvre vérifiée | Source |
+|---|---|---|
+| Chiffrement en transit | HSTS `max-age=63072000`, `includeSubDomains`, `preload`. Aucun accès en clair. | `vercel.json` |
+| Localisation des données | Supabase `eu-west-1` (Irlande). Aucun transfert hors UE pour la base. | console Supabase |
+| Cloisonnement par utilisateur | RLS activée sur **toutes** les tables, une seule policy permissive par rôle et action (mig. 049). Isolation prouvée par test d'intégration. | `supabase/migration/`, `e2e/rls/` |
+| Contrôle d'accès | Supabase Auth. `ProtectedRoute` est une défense en profondeur, **la frontière est la RLS**, jamais le client. | `src/App.tsx` |
+| Moindre privilège | `service_role` jamais exposé au navigateur. Les helpers sensibles ont `EXECUTE` révoqué à `authenticated` (mig. 100). | `.env.example`, migrations |
+| Maîtrise des écritures | Whitelist `mapToDb` côté repository, validation `zod` en garde UX. La whitelist est la barrière, pas `zod`. | `src/lib/validation/` |
+| Anti-XSS et injection de contenu | CSP stricte : `default-src 'self'`, `object-src 'none'`, `base-uri 'self'`, `form-action 'self'`, `frame-ancestors 'none'`. | `vercel.json` |
+| Anti-clickjacking | `X-Frame-Options: DENY` **et** `frame-ancestors 'none'`. | `vercel.json` |
+| Durcissement navigateur | `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy` fermant caméra, micro et géolocalisation. | `vercel.json` |
+| Minimisation dans le monitoring | `sendDefaultPii: false`, et `beforeSend` retire emails et UUID des messages, des exceptions **et** des breadcrumbs avant émission. | `src/main.tsx` |
+| Réduction de surface tierce | Un seul script tiers sur l'origine, et il n'est chargé **que hors session** pour qu'aucun jeton ne soit exposable. | `src/lib/audience.ts` |
+| Traçabilité des versions | `release` Sentry = SHA du commit, donc toute erreur est attribuable à un déploiement. | `src/main.tsx` |
+| Contrôle continu | Gates CI bloquantes : `check:rls` (invariants RLS), `validate:migrations`, `test:rls`, `i18n:check`, `check:bundle`. | `package.json` |
+| Effacement | Edge Function `delete-account`, et export CSV au titre de la portabilité. | `supabase/functions/delete-account`, `src/lib/csv-export.ts` |
+
+### Limites assumées
+
+Un document article 32 qui ne recense que ses forces ne vaut rien en contrôle. Les suivantes
+sont connues et documentées dans le code :
+
+1. **Fenêtre du script de mesure d'audience.** Un visiteur qui se connecte sans recharger la
+   page conserve, pour la durée de l'onglet, un script tiers déjà évalué. On ne décharge pas du
+   JavaScript exécuté. Fenêtre étroite mais réelle, décrite dans `src/lib/audience.ts`.
+2. **`style-src 'unsafe-inline'`** reste nécessaire à la chaîne de styles. C'est un
+   assouplissement conscient de la CSP.
+3. **La CSP autorise les domaines publicitaires Google.** Aucun n'est chargé aujourd'hui,
+   `AdModal` injectant le script à la demande et `PREMIUM_ENFORCED` valant `false`. 🔴 **Le jour
+   où ce drapeau passe à `true`, de la publicité se charge, et la publicité n'est JAMAIS
+   exemptée de consentement** : voir la ligne A4.
+4. **Aucun exercice de restauration n'a été conduit.** Les sauvegardes dépendent du plan
+   Supabase souscrit ; leur existence et leur délai de restauration restent à vérifier.
+5. **Pas de journal d'accès applicatif** distinct des logs d'infrastructure.
 
 ---
 
