@@ -13,7 +13,7 @@
 // ═══════════════════════════════════════════════════════════════════
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync, readdirSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 
@@ -167,5 +167,57 @@ REVOKE ALL ON FUNCTION public.notify_thing() FROM PUBLIC, anon, authenticated;`,
   it("ne juge PAS les migrations antérieures au cliquet (plancher 109)", () => {
     write('108_thing.sql', TRIGGER_FN());
     expect(run(VALIDATE).code).toBe(0);
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════
+// Chemin d'accès `events` : la RLS hiérarchique reste INDEXABLE (mig. 128)
+//
+// Troisième occurrence, après `tasks` (mig. 085) et `team_tasks` (mig. 113),
+// du même défaut : une policy qui appelle une fonction SUR UNE COLONNE la
+// rappelle pour chaque ligne examinée, et perd l'index. Mesuré en prod le
+// 2026-08-26 : 17,19 ms → 0,61 ms sur la lecture d'un agenda non géré.
+//
+// Ce test lit les VRAIES migrations et juge l'ÉTAT FINAL de la policy, comme
+// le fait check-rls-advisors : une migration ultérieure peut la redéfinir.
+// Il échoue si quelqu'un ré-introduit `manages_user(user_id)` dans le
+// prédicat de lecture, ce que rien d'autre n'attraperait.
+// ═══════════════════════════════════════════════════════════════════
+describe('events, le prédicat de lecture reste hissable en InitPlan (mig. 128)', () => {
+  const finalReadPolicy = () => {
+    const dirReal = resolve(ROOT, 'supabase/migration');
+    const files = readdirSync(dirReal).filter((f) => f.endsWith('.sql')).sort();
+    let last = null;
+    for (const f of files) {
+      const sql = readFileSync(join(dirReal, f), 'utf8');
+      // Toutes les policies SELECT posées sur `events` par ce fichier.
+      const re = /CREATE\s+POLICY\s+"([^"]+)"\s+ON\s+public\.events\s+FOR\s+SELECT\s+USING\s*\(([\s\S]*?)\n\s*\);/gi;
+      let m;
+      while ((m = re.exec(sql)) !== null) last = { file: f, name: m[1], using: m[2] };
+    }
+    return last;
+  };
+
+  it('la dernière policy SELECT de `events` existe et est bien trouvée', () => {
+    const p = finalReadPolicy();
+    expect(p, 'aucune CREATE POLICY ... ON public.events FOR SELECT trouvée').not.toBeNull();
+    expect(p.file).toBe('128_events_managed_ids_indexable.sql');
+  });
+
+  it("n'appelle plus de fonction sur la COLONNE `user_id` (coût par ligne)", () => {
+    const { using } = finalReadPolicy();
+    expect(using).not.toMatch(/manages_user\s*\(\s*user_id\s*\)/i);
+  });
+
+  it('compare `user_id` à un ensemble calculé une fois par requête', () => {
+    const { using } = finalReadPolicy();
+    expect(using).toMatch(/user_id\s*=\s*ANY\s*\(\s*public\.my_managed_user_ids\(\)\s*\)/i);
+  });
+
+  it('`my_managed_user_ids` reste exécutable par `authenticated` (mig. 107, B-1)', () => {
+    const sql = readFileSync(
+      resolve(ROOT, 'supabase/migration/128_events_managed_ids_indexable.sql'), 'utf8');
+    expect(sql).toMatch(
+      /GRANT\s+EXECUTE\s+ON\s+FUNCTION\s+public\.my_managed_user_ids\(\)\s+TO\s+authenticated/i);
   });
 });

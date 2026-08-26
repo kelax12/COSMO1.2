@@ -126,6 +126,52 @@ les compteurs cumulés : `organization_members` totalise **1 144 966 `seq_scan`*
 >
 > Chemin d'accès verrouillé par test (`team-projects/supabase.repository.test.ts`).
 
+### ✅ 2ter. `events`, troisième occurrence, refermée (mig. 128, 2026-08-26)
+
+> **Le même défaut, une troisième fois, et cette fois hors du mode entreprise.** La policy de
+> lecture d'`events` (mig. 084) dit :
+>
+> ```sql
+> USING ((SELECT auth.uid()) = user_id OR (manages_user(user_id) AND NOT is_private))
+> ```
+>
+> `manages_user(user_id)` dépend de la ligne : Postgres l'appelle **une fois par ligne examinée**,
+> et chaque appel joint deux fois `organization_members` puis évalue la CTE récursive
+> `get_subtree`. Le coût d'une lecture d'agenda croît donc avec le produit « lignes lues ×
+> adhésions de TOUTE la plateforme », pas avec le volume de l'utilisateur.
+>
+> **Mesuré en prod le 2026-08-26**, plan chauffé, rôle `authenticated`, lecture de l'agenda d'un
+> membre NON géré (128 lignes examinées, 0 rendue) :
+>
+> | | Avant | Après |
+> |---|---|---|
+> | Temps d'exécution | **17,19 ms** | **0,61 ms** |
+> | Plan | Bitmap Heap Scan, `Rows Removed by Filter: 128` | BitmapOr de deux Index Scan |
+> | Lignes remontées du tas pour être jetées | 128 | 0 |
+>
+> Lire son PROPRE agenda ne changeait déjà rien (0,25 ms) : la branche « own » court-circuite le
+> `OR`. C'est la vue hiérarchique, et elle seule, qui payait.
+>
+> **Le correctif est le même que 113 et 117, exprimé en une ligne** : `my_managed_user_ids()` ne
+> prend aucun argument, donc n'est pas fonction de la ligne, donc Postgres la hisse en InitPlan et
+> l'évalue **une fois par requête**. Effet recherché en prime : `user_id = ANY (…)` est une
+> condition d'**index**, pas un filtre, une ligne qui sera rejetée n'est plus lue.
+>
+> **Parité vérifiée en prod AVANT d'écrire la migration**, pas après : (1) le booléen
+> `manages_user(cible)` contre `cible = ANY(my_managed_user_ids())` pour chaque couple
+> (acteur, cible) de `organization_members`, zéro divergence ; (2) l'ensemble des `events.id`
+> visibles sous l'ancien et le nouveau prédicat, pour **chaque** compte de `auth.users`,
+> identiques. Une policy est une frontière de sécurité : la réécrire « plus vite » sans prouver
+> qu'elle rend les mêmes lignes, c'est déplacer un risque de perf vers un risque de fuite.
+>
+> Chemin d'accès verrouillé par test (`scripts/migration-guards.test.mjs`), et la garde a été vue
+> **rouge** sur la régression qu'elle prétend attraper avant d'être committée.
+>
+> ⚠️ Le compteur cumulé de `organization_members` (2 440 047 `seq_scan` pour 11 lignes au
+> 2026-08-26) **ne mesure pas ce défaut aujourd'hui** : sur une fenêtre au repos de 5 minutes il
+> a bougé de **zéro**. Un total cumulé depuis la création de la base ne dit rien du débit courant ;
+> seul un delta entre deux instants répond. La dette était réelle, elle était **dormante**.
+
 ### Le diagnostic d'origine
 
 `team_task_dependencies` (mig. `108`) délègue **volontairement** son périmètre à `team_tasks` :
@@ -212,6 +258,69 @@ Les policies restent en place en défense en profondeur, comme pour `get_my_task
 > **Bilan chiffré** : de ~24 à **~0** requête par minute et par utilisateur avant interaction,
 > hors écrans qui regardent réellement une liste. Le module `friends` est à zéro.
 
+### ✅ Contre-mesure indépendante, 2026-08-26 : oui, éteintes. Et ce que ça révèle.
+
+> Le doute était légitime : les compteurs cumulés de `friend_requests` (269 682 `seq_scan` pour
+> 11 lignes) et `shared_tasks` (158 356 pour 3 lignes) restaient énormes le lendemain du
+> correctif. **Un compteur cumulé depuis la création de la base ne dit rien du débit courant.**
+> La question ne se tranche que par un delta.
+>
+> Mesure faite sur les `edge_logs` de la journée du 2026-08-26 (18 408 requêtes `/rest/v1/*`),
+> ventilées par **session** plutôt que par table, ce qui est le seul découpage qui sépare un
+> client d'un autre :
+>
+> | Session | Requêtes / 24 h | dont `friend_requests` | Fenêtre | Verdict |
+> |---|---|---|---|---|
+> | `051be163` | 10 835 | 6 151 | 00:00 · 22:57 | ancien bundle, **sonde** |
+> | `dc812ab1` | 6 002 | 2 044 | 09:27 · 22:22 | ancien bundle, **sonde** |
+> | `7aa61ad2` | 1 185 | 52 | 10:17 · 22:10 | bundle courant, **aucune sonde** |
+>
+> La session `7aa61ad2` est restée ouverte **douze heures** et n'a émis que 52 lectures de
+> `friend_requests`, soit 4 par heure, toutes attribuables à des changements d'écran. Les deux
+> autres tapent toutes les 16 à 20 secondes, exactement aux cadences supprimées. **Le code livré
+> est propre ; ce qui tourne encore, c'est du code d'avant.**
+>
+> ### Ce que ça révèle, et qui vaut plus que le correctif
+>
+> **91,5 % du trafic Supabase de la journée vient de deux onglets qui n'ont jamais été
+> rechargés.** Une SPA ne recharge pas son bundle toute seule : un onglet laissé ouvert exécute
+> indéfiniment la version qu'il a téléchargée. Un correctif de performance déployé n'atteint donc
+> **que les utilisateurs qui rouvrent l'application**, et les plus assidus, ceux qui laissent
+> l'onglet ouvert, sont précisément les derniers servis, et les plus coûteux.
+>
+> Corollaire de méthode : après un correctif côté client, **ne jamais valider sur les compteurs
+> agrégés de la base**. Ils mélangent les anciens et les nouveaux clients, et donneront tort au
+> correctif pendant des jours. Ventiler par session.
+>
+> ⚪️ **Reste ouvert** : COSMO n'a aucun mécanisme pour dire à un onglet ouvert qu'une nouvelle
+> version existe. C'est le chantier qui transformerait ce correctif en gain réel pour tout le
+> monde, pas seulement pour ceux qui rechargent.
+### ⚪️ Combien de requêtes à l'ouverture du tableau de bord ? **32.** (mesuré 2026-08-26)
+
+> Compte réel, pas estimé : une session unique du bundle courant (`7aa61ad2`), arrivée à froid
+> sur `/dashboard`, émet **32 requêtes REST en 25 secondes**, toutes distinctes (aucun doublon,
+> React Query dédoublonne correctement), sur 26 points d'entrée. Ventilation :
+>
+> | Ce qui les émet | Requêtes | Payées par |
+> |---|---|---|
+> | Données du tableau de bord (tâches, catégories, listes, agenda, habitudes, OKR, KR) | 9 | tout le monde |
+> | Collaboration (amis, demandes, tâches et listes partagées, liens) | 6 | tout le monde |
+> | Mode entreprise (org, membres, adhésions, notifications, invitations, projets, tâches d'équipe) | 8 | **membres d'une org seulement** |
+> | Session et profil (profil, abonnement, `touch_last_seen`) | 3 | tout le monde |
+>
+> Deux lectures possibles de ce chiffre, et il faut les tenir ensemble :
+>
+> - **Ce n'est pas absurde.** Le socle affiche sept domaines métier ; 32 requêtes parallèles sur
+>   HTTP/2 ne coûtent pas 32 allers-retours en série. Un utilisateur sans organisation en économise
+>   déjà 8.
+> - **Ça plafonne la concurrence.** 32 requêtes par ouverture, c'est le multiplicateur qui
+>   transforme 100 arrivées simultanées en 3 200 requêtes. C'est le nombre à surveiller le jour
+>   d'un pic d'acquisition, bien avant le coût unitaire de chacune.
+>
+> ⚪️ Piste non tranchée : les 8 requêtes du mode entreprise sont montées par `Layout`, donc sur
+> **toutes** les pages protégées, y compris quand aucun écran entreprise n'est affiché. Elles ne
+> servent qu'à peindre un badge de notification. Les regrouper en une seule RPC d'agrégat
+> ramènerait l'ouverture à 25 requêtes pour un membre d'organisation, sans rien changer à l'écran.
 ### Ce qui a été fait (2026-08-25, mig. 118 et 120)
 
 > Trois sondages d'organisation (mig. 118) puis trois sondages d'amis (mig. 120,
