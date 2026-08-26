@@ -213,6 +213,36 @@ Deno.serve(async (req) => {
         subscription_data: {
           metadata: { org_id: orgId, tier_key: tier.key, billing_interval: billingInterval },
         },
+        // ── Bouton de commande sans ambiguïté (Code de la consommation
+        // art. L221-14) ────────────────────────────────────────────────
+        //
+        // Le consommateur doit comprendre, AU MOMENT DE VALIDER, que le clic
+        // l'oblige à payer. La formule de référence est « commande avec
+        // obligation de paiement » ; un libellé qui ne la vaut pas rend le
+        // contrat inopposable, donc le paiement contestable.
+        //
+        // Pourquoi `custom_text` et pas `submit_type` : `submit_type` n'existe
+        // PAS en `mode: 'subscription'`. Le bouton de Stripe y est figé (« S'abonner »),
+        // et il est le seul élément qu'on ne peut pas réécrire. On rend donc
+        // l'engagement explicite juste au-dessus, là où le regard se pose avant
+        // le clic.
+        //
+        // La règle ne s'applique ici QUE parce que rien ne vérifie qu'un
+        // acheteur est un professionnel : tout acheteur peut être un
+        // consommateur. Décision assumée du 2026-08-26, cf. docs/LEGAL.md.
+        //
+        // ❌ Ne pas traduire ce texte côté COSMO : Stripe rend la page dans la
+        // langue du navigateur, et un texte figé en français sur une page
+        // anglaise serait pire que pas de texte. Le passage au bilingue suppose
+        // de propager la locale de l'appelant, pas de coder une chaîne en dur.
+        custom_text: {
+          submit: {
+            message:
+              'En validant, vous passez une commande avec obligation de paiement : '
+              + "l'abonnement est payant et reconduit automatiquement jusqu'à sa résiliation, "
+              + "possible à tout moment depuis votre espace entreprise.",
+          },
+        },
       },
       // La périodicité entre dans la clé d'idempotence : sans elle, un
       // propriétaire qui abandonne un checkout mensuel puis en relance un
