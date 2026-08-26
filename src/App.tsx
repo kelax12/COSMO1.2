@@ -18,6 +18,7 @@ import { useFriendsInboxRealtime } from '@/modules/friends/useFriendsInboxRealti
 // Import `/react` (pas `/next` — réservé aux apps Next.js) : ce projet est
 // Vite + React Router, hébergé sur Vercel (cf. vercel.json).
 import { Analytics } from '@vercel/analytics/react';
+import { useCookieConsent } from '@/lib/use-cookie-consent';
 
 // Providers
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -351,6 +352,22 @@ const AppRoutes = () => {
   );
 };
 
+/**
+ * Mesure d'audience Vercel — montée UNIQUEMENT après acceptation explicite.
+ *
+ * `<Analytics />` était monté inconditionnellement, alors que le bandeau
+ * proposait de refuser. C'est le même manquement que celui corrigé dans
+ * `src/lib/audience.ts` : deux traceurs, une seule promesse, non tenue.
+ *
+ * Le composant réagit au store, donc accepter le monte sans rechargement.
+ * Refuser ne le monte jamais : on ne charge pas pour démonter ensuite, car on
+ * ne décharge pas du JavaScript déjà évalué.
+ */
+function ConsentedAnalytics() {
+  const consent = useCookieConsent();
+  return consent === 'accepted' ? <Analytics /> : null;
+}
+
 const App: React.FC = () => {
   return (
     <QueryClientProvider client={queryClient}>
@@ -410,7 +427,7 @@ const App: React.FC = () => {
                 <CommandPalette />
               </Suspense>
             </AppErrorBoundary>
-            <Analytics />
+            <ConsentedAnalytics />
             </MotionConfig>
           </TooltipProvider>
         </BillingProvider>

@@ -26,6 +26,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { ALL_LOCALES } from '@/i18n/locale';
+import { hasConsented } from './cookie-consent';
 
 export const AUDIENCE_SCRIPT_SRC = 'https://www.vesk.dev/a.js';
 export const AUDIENCE_SITE_KEY = '676bad26713b4578aa3e002fd59ebba7';
@@ -81,12 +82,28 @@ export function hasPersistedSession(storage: Pick<Storage, 'key' | 'length'>): b
   return false;
 }
 
-/** Décision complète : charge-t-on le script de mesure ? */
+/**
+ * Décision complète : charge-t-on le script de mesure ?
+ *
+ * TROIS conditions cumulatives, dont la première est juridique et les deux
+ * autres techniques :
+ *   1. l'utilisateur a explicitement ACCEPTÉ les traceurs (art. 82 loi I&L) ;
+ *   2. on est sur une page publique ;
+ *   3. aucune session n'est persistée.
+ *
+ * L'ordre compte pour la lecture, pas pour l'exécution : le consentement est
+ * cité en premier parce qu'il prime. Sans réponse de l'utilisateur, `null`
+ * n'est PAS une acceptation tacite, donc rien ne se charge.
+ */
 export function shouldLoadAudienceScript(input: {
   pathname: string;
-  storage: Pick<Storage, 'key' | 'length'>;
+  storage: Pick<Storage, 'key' | 'length' | 'getItem'>;
 }): boolean {
-  return isPublicPath(input.pathname) && !hasPersistedSession(input.storage);
+  return (
+    hasConsented(input.storage)
+    && isPublicPath(input.pathname)
+    && !hasPersistedSession(input.storage)
+  );
 }
 
 /**
@@ -95,7 +112,7 @@ export function shouldLoadAudienceScript(input: {
  */
 export function mountAudienceScript(
   doc: Document,
-  input: { pathname: string; storage: Pick<Storage, 'key' | 'length'> },
+  input: { pathname: string; storage: Pick<Storage, 'key' | 'length' | 'getItem'> },
 ): boolean {
   if (!shouldLoadAudienceScript(input)) return false;
   if (doc.querySelector(`script[src="${AUDIENCE_SCRIPT_SRC}"]`)) return false;

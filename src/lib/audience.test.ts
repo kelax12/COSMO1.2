@@ -6,10 +6,31 @@ import {
   shouldLoadAudienceScript, mountAudienceScript,
 } from './audience';
 
-/** Faux localStorage minimal — on n'expose que ce que le module lit. */
-const storageWith = (...keys: string[]): Pick<Storage, 'key' | 'length'> => ({
+/**
+ * Faux localStorage minimal — on n'expose que ce que le module lit.
+ *
+ * `getItem` sert au consentement aux traceurs : depuis qu'il conditionne le
+ * chargement, le module lit une valeur en plus des noms de clés. Le défaut est
+ * « accepté », pour que les tests d'aiguillage historiques (page publique,
+ * session persistée) continuent de mesurer CE QU'ILS mesurent et pas le
+ * consentement. Le consentement a ses propres tests, plus bas.
+ */
+const storageWith = (
+  ...keys: string[]
+): Pick<Storage, 'key' | 'length' | 'getItem'> => ({
   length: keys.length,
   key: (i: number) => keys[i] ?? null,
+  getItem: (k: string) => (k === 'cosmo_cookie_consent' ? 'accepted' : null),
+});
+
+/** Même faux stockage, mais avec une réponse de consentement choisie. */
+const storageWithConsent = (
+  consent: string | null,
+  ...keys: string[]
+): Pick<Storage, 'key' | 'length' | 'getItem'> => ({
+  length: keys.length,
+  key: (i: number) => keys[i] ?? null,
+  getItem: (k: string) => (k === 'cosmo_cookie_consent' ? consent : null),
 });
 
 const NO_SESSION = storageWith('cosmo_locale', 'cosmo_active_modules');
@@ -111,5 +132,39 @@ describe('mountAudienceScript', () => {
     mountAudienceScript(document, { pathname: '/', storage: NO_SESSION });
     expect(mountAudienceScript(document, { pathname: '/', storage: NO_SESSION })).toBe(false);
     expect(document.head.querySelectorAll('script')).toHaveLength(1);
+  });
+});
+
+describe('consentement aux traceurs', () => {
+  beforeEach(() => {
+    document.head.querySelectorAll('script').forEach((n) => n.remove());
+  });
+
+  it('ne charge RIEN tant que l utilisateur n a pas repondu', () => {
+    // `null` n'est pas une acceptation tacite : c'est tout l'enjeu de A4.
+    const storage = storageWithConsent(null, 'cosmo_locale');
+    expect(shouldLoadAudienceScript({ pathname: '/', storage })).toBe(false);
+  });
+
+  it('ne charge RIEN si l utilisateur a refuse', () => {
+    const storage = storageWithConsent('refused', 'cosmo_locale');
+    expect(shouldLoadAudienceScript({ pathname: '/', storage })).toBe(false);
+  });
+
+  it('charge apres acceptation explicite, sur page publique et hors session', () => {
+    const storage = storageWithConsent('accepted', 'cosmo_locale');
+    expect(shouldLoadAudienceScript({ pathname: '/', storage })).toBe(true);
+  });
+
+  it('le refus prime sur toutes les autres conditions reunies', () => {
+    // Page publique + aucune session : tout serait vert SAUF le consentement.
+    const storage = storageWithConsent('refused', 'cosmo_locale');
+    expect(mountAudienceScript(document, { pathname: '/blog', storage })).toBe(false);
+    expect(document.querySelector(`script[src="${AUDIENCE_SCRIPT_SRC}"]`)).toBeNull();
+  });
+
+  it('une valeur inattendue vaut absence de reponse, donc aucun chargement', () => {
+    const storage = storageWithConsent('peut-etre', 'cosmo_locale');
+    expect(shouldLoadAudienceScript({ pathname: '/', storage })).toBe(false);
   });
 });
