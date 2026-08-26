@@ -157,5 +157,5 @@ export function displayedMonthlyEur(
 // live est vide). Passer en live = recréer les 4 prix sur le compte live,
 // réenregistrer un endpoint webhook live, puis remplacer STRIPE_SECRET_KEY /
 // STRIPE_WEBHOOK_SECRET / les 4 STRIPE_ORG_PRICE_*.
-export const ENTERPRISE_BILLING_ENFORCED = true;
+export const ENTERPRISE_BILLING_ENFORCED = false;
 export const ORG_FREE_SEATS = 5;
