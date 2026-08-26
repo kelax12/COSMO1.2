@@ -141,17 +141,36 @@ Par l'effet de la décision structurante ci-dessous : aucun client n'est vérifi
 
 ### Où en es-tu
 
+> Recompté ligne à ligne dans ce fichier le **2026-08-26 en fin de journée**, pas additionné de
+> tête. Les décomptes précédents étaient faux de deux colonnes : ne jamais reporter un total,
+> toujours le recompter.
+
 | Statut | Nombre |
 |---|---|
-| ✅ Bon | 6 |
-| 🟡 Partiellement bon | 6 |
-| ❌ À faire | 27 |
-| ⬜ Sans objet aujourd'hui | 6 |
+| ✅ Bon | **6** |
+| 🟡 Partiellement bon | **6** |
+| ❌ À faire | **29** |
+| ⬜ Sans objet aujourd'hui | **5** |
+| **Total** | **46** |
 
-Six lignes sont pleinement vertes, et **six à moitié faites** : les pages
-légales existent, l'export et la suppression de compte fonctionnent, la sécurité technique est
-sérieuse, la base est dans l'Union et le réglage TTC est correct. L'essentiel du reste ne peut
-pas passer au vert avant l'immatriculation, qui est le vrai verrou.
+**Passées au vert le 2026-08-26** : A2 (politique complétée), A4 (le bandeau applique enfin le
+choix qu'il propose), A8 (export étendu au profil, aux catégories et aux listes), A9 (annexe
+art. 32), E3 (double consentement de rétractation), E7 (mention TTC).
+
+**Les six lignes jaunes restantes ne dépendent plus de développement**, et c'est l'information
+utile de ce tableau :
+
+| Ligne | Ce qui manque, et ce n'est pas du code |
+|---|---|
+| A3 · Mentions légales | Un SIREN. Rien d'autre. |
+| A6 · Transferts hors UE | Des DPA qui se signent en tant qu'entreprise. Dépend de A5, donc de B2. |
+| E1 · CGV | Les coordonnées d'un médiateur (E4, adhésion payante) et une relecture juridique. |
+| E8 · Bouton de commande | Le code est écrit et commité. Il manque `npx supabase functions deploy stripe-org-checkout`. |
+| E9 · Garantie de conformité | Deux promesses de la landing dépendent de E5. Le correctif est un réglage du Dashboard Stripe. |
+| F4 · Accessibilité | Un effectif et un chiffre d'affaires pour qualifier l'exemption microentreprise. |
+
+Autrement dit : **quatre des six attendent l'immatriculation, deux attendent un geste manuel de
+deux minutes.** Le verrou n'est plus technique.
 
 ---
 
