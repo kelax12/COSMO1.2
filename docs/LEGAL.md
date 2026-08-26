@@ -118,9 +118,9 @@ Par l'effet de la décision structurante ci-dessous : aucun client n'est vérifi
 
 | # | Obligation | Statut | Ce qui manque exactement |
 |---|---|:--:|---|
-| E1 | CGV communiquées avant le contrat | 🟡 | `CGUPage.tsx` a une section « 5. Abonnement Premium » qui couvre Stripe, la reconduction et la rétractation. Mais elle décrit une offre **premium particulier** qui n'est pas l'offre vendue, et ne couvre ni les paliers entreprise, ni le médiateur, ni les modalités de remboursement. À reprendre. |
+| E1 | CGV communiquées avant le contrat | 🟡 | Section 5 réécrite le 2026-08-26 : elle décrit enfin **l'offre réellement vendue** (forfaits entreprise et non un « premium » inexistant), l'affichage TTC, la reconduction, la résiliation et le retour au forfait gratuit sans retrait de membre. Section 5 bis ajoutée pour la rétractation. ❌ Reste : les coordonnées du **médiateur** (dépend de E4, adhésion payante non souscrite) et une relecture juridique. |
 | E2 | Information précontractuelle | ❌ | Caractéristiques essentielles, prix TTC, durée, reconduction, à présenter avant la validation. |
-| E3 | Rétractation 14 jours et double consentement | 🟡 | 🔴 Les CGU **accordent déjà** 14 jours de rétractation, sans mécanisme de renonciation. Tu dois donc rembourser sur demande. Pour l'écarter légalement il faut les deux cases dans le tunnel : accord exprès à l'exécution immédiate **et** renonciation explicite. |
+| E3 | Rétractation 14 jours et double consentement | ✅ | Implémenté le 2026-08-26 dans `OrgBillingTab` : **deux cases distinctes**, jamais pré-cochées, demande expresse d'exécution immédiate **et** reconnaissance de renonciation. Sans les deux, `onSelect` n'est pas monté, donc aucun paiement ne peut être engagé. Recueilli côté COSMO et non via `consent_collection` de Stripe, qui exige une URL de CGV au Dashboard dont l'absence ferait **échouer** la création de session. CGU alignées (section 5 bis). |
 | E4 | Médiateur de la consommation | ❌ | Adhésion **payante et obligatoire**, coordonnées à publier dans les CGV et sur le site. Oubli classique, sanctionné par la DGCCRF. |
 | E5 | Résiliation en ligne (L215-1-1) | ❌ | 🔴 **Dégradé de 🟡 à ❌ le 2026-08-26 après vérification.** `/v1/billing_portal/configurations` renvoie **vide sur les DEUX comptes**, test et live : le portail client n'a jamais été configuré. `stripe-org-portal` ne passe aucun `configuration`, il compte donc sur un défaut inexistant, et Stripe refuse de créer la session tant que les réglages n'ont pas été enregistrés au Dashboard. La fonction porte d'ailleurs déjà l'alerte « customer cannot manage or cancel ». **Le bouton existe, la résiliation ne marche pas.** Correctif : Dashboard Stripe → Settings → Billing → Customer portal, activer l'annulation d'abonnement, enregistrer, sur les deux comptes. Non faisable par API depuis ici. |
 | E6 | Information de reconduction tacite | ❌ | 🔴 Déclenchée par la facturation **annuelle** livrée le 2026-08-25. Aucun envoi automatisé. |
@@ -143,12 +143,12 @@ Par l'effet de la décision structurante ci-dessous : aucun client n'est vérifi
 
 | Statut | Nombre |
 |---|---|
-| ✅ Bon | 5 |
-| 🟡 Partiellement bon | 7 |
+| ✅ Bon | 6 |
+| 🟡 Partiellement bon | 6 |
 | ❌ À faire | 27 |
 | ⬜ Sans objet aujourd'hui | 6 |
 
-Cinq lignes sont pleinement vertes, et **sept à moitié faites** : les pages
+Six lignes sont pleinement vertes, et **six à moitié faites** : les pages
 légales existent, l'export et la suppression de compte fonctionnent, la sécurité technique est
 sérieuse, la base est dans l'Union et le réglage TTC est correct. L'essentiel du reste ne peut
 pas passer au vert avant l'immatriculation, qui est le vrai verrou.
