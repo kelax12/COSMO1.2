@@ -126,7 +126,7 @@ les compteurs cumulés : `organization_members` totalise **1 144 966 `seq_scan`*
 >
 > Chemin d'accès verrouillé par test (`team-projects/supabase.repository.test.ts`).
 
-### ✅ 2ter. `events`, troisième occurrence, refermée (mig. 128, 2026-08-26)
+### ✅ 2ter. `events`, troisième occurrence, refermée (mig. 128, appliquée en prod le 2026-08-27)
 
 > **Le même défaut, une troisième fois, et cette fois hors du mode entreprise.** La policy de
 > lecture d'`events` (mig. 084) dit :

@@ -34,7 +34,8 @@ désormais connus et ils vivent dans les sections
 |---|---|---|
 | Requêtes REST à l'ouverture du tableau de bord | **32**, toutes distinctes | ⚪️ mesuré, non optimisé |
 | Part du trafic Supabase du jour venant d'onglets non rechargés | **91,5 %** | 🔴 aucun mécanisme de mise à jour |
-| Lecture d'agenda hiérarchique (`events`) | **17,19 ms → 0,61 ms** | ✅ mig. `128`, écrite, **non appliquée** |
+| Lecture d'agenda hiérarchique (`events`) | **17,19 ms → 0,61 ms** | ✅ mig. `128`, **appliquée en prod le 2026-08-27** |
+| Statistiques, 32 plages (`get_work_time_stats`) | **854 ms → 12,0 ms**, 21 762 → 23 blocs lus | ✅ mig. `127`, **appliquée en prod le 2026-08-27** |
 
 ⚠️ **Une note de performance front ne dit rien du coût serveur.** Les deux axes ont été confondus
 jusqu'ici : le bundle a été divisé par deux le 2026-08-25 alors que l'ouverture coûtait déjà
@@ -354,8 +355,8 @@ version existe. C'est le chantier qui transformerait tout correctif client en ga
 > `team-projects/supabase.repository.test.ts`. Détail : [`SCALABILITY.md`](./SCALABILITY.md) §2.
 
 
-> **⚡ `events` : ne jamais faire juger une ligne par une fonction** (mig. `128`, écrite, **non
-> appliquée**). La policy de lecture appelait `manages_user(user_id)`, une fonction **sur une
+> **⚡ `events` : ne jamais faire juger une ligne par une fonction** (mig. `128`, **appliquée en
+> prod le 2026-08-27**). La policy de lecture appelait `manages_user(user_id)`, une fonction **sur une
 > colonne**, donc rappelée pour chaque ligne examinée, chaque appel joignant deux fois
 > `organization_members` puis évaluant la CTE récursive `get_subtree`. Mesuré en prod le
 > 2026-08-26, plan chauffé, lecture de l'agenda d'un membre non géré : **17,19 ms → 0,61 ms**, et
