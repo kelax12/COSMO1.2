@@ -8,7 +8,7 @@
 > phrase ici ne protège en cas de contrôle. Les points marqués ⚠️ portaient, à cette date, sur
 > des textes déjà modifiés au moins une fois : ils se revérifient à la source.
 
-**Plan** : [État des lieux](#état-des-lieux-au-2026-08-26) · [**Tableau de conformité**](#-tableau-de-conformité) · [La décision structurante](#-la-décision-structurante--tout-client-est-un-consommateur)
+**Plan** : [État des lieux](#état-des-lieux-au-2026-08-26) · [**Tableau de conformité**](#-tableau-de-conformité) · [État d'alerte](#-état-dalerte-au-2026-08-26--la-chaîne-de-paiement-est-armée) · [La décision structurante](#-la-décision-structurante--tout-client-est-un-consommateur)
 · [Actif aujourd'hui](#1-actif-aujourdhui-sans-structure) · [À la création](#2-à-la-création-de-la-structure)
 · [Au premier euro](#3-au-premier-euro-encaissé) · [Droit de la consommation](#4-droit-de-la-consommation)
 · [Produit et marque](#5-produit-marque-et-dépendances) · [Sous-traitants](#6-sous-traitants-et-transferts)
@@ -126,7 +126,7 @@ Par l'effet de la décision structurante ci-dessous : aucun client n'est vérifi
 | E6 | Information de reconduction tacite | ❌ | 🔴 Déclenchée par la facturation **annuelle** livrée le 2026-08-25. Aucun envoi automatisé. |
 | E7 | Affichage des prix TTC | ✅ | Les 8 prix live sont en `tax_behavior: inclusive`, et la mention « Tous les prix sont affichés TTC » est rendue sous la grille publique (`PricingSection.tsx`) **et** sous la grille produit (`OrgBillingTab.tsx`), en fr et en en. Corrigé le 2026-08-26. |
 | E8 | Bouton de commande explicite | 🟡 | `custom_text.submit.message` ajouté dans `stripe-org-checkout` le 2026-08-26 : « commande avec obligation de paiement », reconduction et résiliation annoncées avant le clic. `submit_type` n'existe pas en `mode: 'subscription'`, le libellé du bouton Stripe n'est donc pas réécrivable. ⚠️ **Passe au vert au redéploiement de la fonction**, la prod tourne encore sur l'ancienne version. |
-| E9 | Garantie de conformité du service numérique | 🟡 | À auditer contre les promesses de la landing : une fonctionnalité annoncée et non livrée devient un défaut opposable. |
+| E9 | Garantie de conformité du service numérique | 🟡 | Audit fait le 2026-08-26 sur les 216 chaînes du parcours entreprise. **Bonne nouvelle** : aucune intégration inexistante n'est promise (ni SSO, ni API, ni Slack), et les réponses de la FAQ sur le cloisonnement et le non-retrait de membres sont exactes. **Deux promesses non tenues** : `pricing.i5` « résiliable à tout moment » et `hero.reassurance` « réversible à tout moment », alors que la résiliation ne fonctionne pas (E5). Le correctif est E5, pas un retrait de la phrase. |
 
 ### F. Produit, marque et dépendances
 
@@ -152,6 +152,41 @@ Six lignes sont pleinement vertes, et **six à moitié faites** : les pages
 légales existent, l'export et la suppression de compte fonctionnent, la sécurité technique est
 sérieuse, la base est dans l'Union et le réglage TTC est correct. L'essentiel du reste ne peut
 pas passer au vert avant l'immatriculation, qui est le vrai verrou.
+
+---
+
+## 🔴 État d'alerte au 2026-08-26 : la chaîne de paiement est ARMÉE
+
+Vérifié en base et dans le code le même jour, pas déduit :
+
+| Vérification | Valeur réelle |
+|---|---|
+| `ENTERPRISE_BILLING_ENFORCED` (client) | **`true`** |
+| `billing_flags.enterprise_seat_limit` (serveur) | **`true`** |
+| `STRIPE_SECRET_KEY` en prod | clé de **TEST** |
+| Configuration du portail de résiliation | **absente**, sur les deux comptes |
+| Organisations | 4, dont **1 déjà au plafond** |
+| Abonnements souscrits | **0** |
+
+**Le parcours réel d'un client aujourd'hui :** son organisation atteint cinq membres, l'invitation
+suivante est refusée par `org_seats_allowed`, l'écran lui propose de payer, il clique, arrive sur
+un Stripe Checkout en **mode test**, et sa vraie carte est refusée. Il ne peut ni grandir, ni
+payer. Et s'il voulait partir, la résiliation échouerait aussi.
+
+Une seule organisation est concernée à cette date, mais le chemin est ouvert pour toutes.
+
+**Trois issues, à choisir en connaissance de cause :**
+
+1. **Repasser `ENTERPRISE_BILLING_ENFORCED` à `false` et le drapeau serveur à `false`** en attendant
+   l'immatriculation. Les deux se déplacent ENSEMBLE, jamais l'un sans l'autre. C'est le retour
+   à l'état sûr, et c'est réversible en deux minutes.
+2. **Configurer le portail Stripe** pour qu'au moins la résiliation fonctionne, en acceptant que
+   le paiement reste en mode test.
+3. **Immatriculer, passer Stripe en live**, et tout devient cohérent.
+
+> ⚠️ Aucune de ces issues n'est urgente au sens du risque juridique : **aucun euro n'est encaissé**,
+> donc il n'y a ni travail dissimulé ni TVA due. Le problème est d'abord une impasse produit pour
+> le client qui essaie de payer, et une promesse de résiliation non tenue.
 
 ---
 
