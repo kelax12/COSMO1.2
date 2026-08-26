@@ -11,6 +11,8 @@ import type { Task } from '@/modules/tasks';
 import type { Habit } from '@/modules/habits';
 import type { CalendarEvent } from '@/modules/events';
 import type { OKR } from '@/modules/okrs';
+import type { Category } from '@/modules/categories';
+import type { TaskList } from '@/modules/lists';
 
 /**
  * Échappe une valeur pour CSV : entoure de guillemets si contient virgule,
@@ -177,17 +179,86 @@ export function exportOKRsCSV(okrs: OKR[]): void {
 }
 
 /**
- * Export combiné — déclenche les 4 téléchargements en séquence (Safari refuse
+ * Profil — identité et préférences fournies par la personne.
+ *
+ * Absent de l'export jusqu'au 2026-08-26, alors que c'est la donnée la plus
+ * évidemment « fournie par la personne concernée » au sens de l'article 20 :
+ * son nom et son adresse. Un export qui livre les tâches mais pas l'identité
+ * de leur auteur est incomplet.
+ *
+ * ❌ Ne jamais exporter l'URL de l'avatar : c'est une URL de stockage signée
+ *    ou publique, pas une donnée que la personne a fournie. On indique sa
+ *    PRÉSENCE, ce qui suffit à savoir qu'il faut la réclamer.
+ */
+export function exportProfileCSV(profile: {
+  id: string;
+  name: string;
+  email: string;
+  avatar?: string;
+  autoValidation?: boolean;
+}): void {
+  const headers = ['Champ', 'Valeur'];
+  const rows: unknown[][] = [
+    ['Identifiant', profile.id],
+    ['Nom', profile.name],
+    ['Email', profile.email],
+    ['Avatar', profile.avatar ? 'oui' : 'non'],
+    ['Validation automatique', profile.autoValidation ? 'oui' : 'non'],
+  ];
+  download(`cosmo-profil-${todayStr()}.csv`, rowsToCSV(headers, rows));
+}
+
+/** Catégories — créées par la personne, donc portables. */
+export function exportCategoriesCSV(categories: Category[]): void {
+  const headers = ['Id', 'Nom', 'Couleur'];
+  const rows = categories.map((c) => [c.id, c.name, c.color]);
+  download(`cosmo-categories-${todayStr()}.csv`, rowsToCSV(headers, rows));
+}
+
+/**
+ * Listes — y compris les listes intelligentes.
+ *
+ * `taskIds` est exporté en COMPTE et non en liste d'identifiants : le
+ * rattachement d'une tâche à une liste est déjà porté par l'export des tâches,
+ * et recopier des centaines d'identifiants dans une cellule rendrait le
+ * fichier illisible sans rien ajouter.
+ */
+export function exportListsCSV(lists: TaskList[]): void {
+  const headers = ['Id', 'Nom', 'Couleur', 'Type', 'Regle intelligente', 'Nombre de taches'];
+  const rows = lists.map((l) => [
+    l.id,
+    l.name,
+    l.color,
+    l.type ?? 'manual',
+    l.smartRule ?? '',
+    l.taskIds?.length ?? 0,
+  ]);
+  download(`cosmo-listes-${todayStr()}.csv`, rowsToCSV(headers, rows));
+}
+
+/**
+ * Export combiné — déclenche les téléchargements en séquence (Safari refuse
  * souvent plusieurs `.click()` simultanés, on les espace de 150 ms).
+ *
+ * ⚠️ Sept fichiers depuis le 2026-08-26, contre quatre avant : profil,
+ * catégories et listes manquaient. Toute nouvelle donnée SAISIE par
+ * l'utilisateur doit rejoindre cette fonction, sinon l'export cesse
+ * silencieusement d'être complet et la portabilité devient un mensonge.
  */
 export function exportAllCSV(data: {
   tasks: Task[];
   habits: Habit[];
   events: CalendarEvent[];
   okrs: OKR[];
+  categories: Category[];
+  lists: TaskList[];
+  profile: { id: string; name: string; email: string; avatar?: string; autoValidation?: boolean };
 }): void {
   exportTasksCSV(data.tasks);
   setTimeout(() => exportHabitsCSV(data.habits), 150);
   setTimeout(() => exportEventsCSV(data.events), 300);
   setTimeout(() => exportOKRsCSV(data.okrs), 450);
+  setTimeout(() => exportCategoriesCSV(data.categories), 600);
+  setTimeout(() => exportListsCSV(data.lists), 750);
+  setTimeout(() => exportProfileCSV(data.profile), 900);
 }

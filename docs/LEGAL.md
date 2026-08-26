@@ -66,13 +66,13 @@ limité. Ce n'est pas la même dépense qu'une mission annuelle.
 | # | Obligation | Statut | Ce qui manque exactement |
 |---|---|:--:|---|
 | A1 | Registre des activités de traitement (art. 30) | ❌ | Aucun document au format attendu. `docs/RGPD.md` est un doc technique, pas un registre. |
-| A2 | Politique de confidentialité (art. 12 à 14) | 🟡 | `PolitiqueConfidentialitePage.tsx` existe et liste les droits. À auditer contre les 12 mentions, notamment bases légales, durées et transferts. |
+| A2 | Politique de confidentialité (art. 12 à 14) | ✅ | Complétée le 2026-08-26. Trois trous comblés : **Sentry et Vercel Analytics** étaient absents de la liste des sous-traitants, une section **7 bis sur les transferts hors UE** manquait entièrement (art. 13.1.f), et la section Cookies affirmait que Vesk ne requiert pas de consentement, phrase devenue **fausse** depuis A4. Délai de réponse aligné sur « un mois » (art. 12) au lieu de 30 jours. |
 | A3 | Mentions légales (LCEN art. 6-III) | 🟡 | `MentionsLegalesPage.tsx` existe, avec email éditeur et les deux hébergeurs. Manque l'identité complète, à ajouter **après immatriculation** (dénomination, SIREN, RCS, TVA, directeur de publication). |
 | A4 | Consentement aux traceurs (art. 82) | ✅ | Corrigé le 2026-08-26. Un store unique (`src/lib/cookie-consent.ts`) conditionne les **trois** surfaces : le script Vesk (`audience.ts`), `<Analytics />` de Vercel (`App.tsx`) et le bandeau. Rien ne se charge tant que la réponse n'est pas donnée, `null` n'étant pas une acceptation tacite ; accepter monte la mesure sans rechargement ; refuser ne la monte jamais. 5 tests dédiés. |
 | A5 | Contrats de sous-traitance (art. 28) | ❌ | Aucun DPA collecté ni archivé. Voir §6 pour la liste. |
-| A6 | Transferts hors UE (chap. V) | 🟡 | ✅ Supabase en `eu-west-1`, donc dans l'Union. ❌ Vercel et Sentry sont américains : mécanisme de transfert à documenter. |
+| A6 | Transferts hors UE (chap. V) | 🟡 | ✅ Supabase en `eu-west-1`, donc dans l'Union, et l'**information** due à la personne est faite (section 7 bis de la politique, art. 13.1.f). ❌ Reste la **preuve contractuelle** : les clauses types vivent dans les DPA de Vercel et Sentry, qu'il faut accepter et archiver en tant qu'entreprise. Dépend donc de A5, donc de l'immatriculation. |
 | A7 | Notification de violation sous 72 h (art. 33) | ❌ | Aucune procédure écrite. À rédiger à froid, le délai ne permet pas d'improviser. |
-| A8 | Droits des personnes (art. 15 à 22) | 🟡 | ✅ Export CSV (`src/lib/csv-export.ts`, portabilité) et suppression de compte (Edge Function `delete-account`) existent. À vérifier que l'export couvre **toutes** les tables et à documenter le délai de réponse d'un mois. |
+| A8 | Droits des personnes (art. 15 à 22) | ✅ | Complété le 2026-08-26. L'export ne couvrait que tâches, habitudes, événements et OKR : **profil, catégories et listes manquaient**, alors que le nom et l'adresse sont les données les plus évidemment « fournies par la personne ». Sept fichiers désormais, et le périmètre exact est annoncé dans la politique. Effacement par `delete-account`. Délai d'un mois documenté, prolongation de deux mois prévue. |
 | A9 | Sécurité du traitement (art. 32) | ✅ | Mesures formalisées en [annexe](#annexe--mesures-techniques-et-organisationnelles-art-32), limites comprises. Vérifiées dans `vercel.json`, `src/main.tsx` et les migrations. Formalisé le 2026-08-26. |
 | A10 | Analyse d'impact (art. 35) | ⬜ | Probablement non requise pour ce traitement. À confirmer, et à réexaminer si des agents IA traitent du contenu utilisateur. |
 
@@ -143,12 +143,12 @@ Par l'effet de la décision structurante ci-dessous : aucun client n'est vérifi
 
 | Statut | Nombre |
 |---|---|
-| ✅ Bon | 3 |
-| 🟡 Partiellement bon | 9 |
+| ✅ Bon | 5 |
+| 🟡 Partiellement bon | 7 |
 | ❌ À faire | 27 |
 | ⬜ Sans objet aujourd'hui | 6 |
 
-Trois lignes sont pleinement vertes, et **neuf à moitié faites** : les pages
+Cinq lignes sont pleinement vertes, et **sept à moitié faites** : les pages
 légales existent, l'export et la suppression de compte fonctionnent, la sécurité technique est
 sérieuse, la base est dans l'Union et le réglage TTC est correct. L'essentiel du reste ne peut
 pas passer au vert avant l'immatriculation, qui est le vrai verrou.

@@ -9,11 +9,17 @@ import { useTasks } from '@/modules/tasks';
 import { useHabits } from '@/modules/habits';
 import { useEvents } from '@/modules/events';
 import { useOkrs } from '@/modules/okrs';
+import { useCategories } from '@/modules/categories';
+import { useLists } from '@/modules/lists';
+import { useAuth } from '@/modules/auth/AuthContext';
 import {
   exportTasksCSV,
   exportHabitsCSV,
   exportEventsCSV,
   exportOKRsCSV,
+  exportCategoriesCSV,
+  exportListsCSV,
+  exportProfileCSV,
   exportAllCSV,
 } from '@/lib/csv-export';
 import { toast } from 'sonner';
@@ -25,18 +31,40 @@ export function DataTab() {
   const { data: habits = [] } = useHabits();
   const { data: events = [] } = useEvents();
   const { data: okrs = [] } = useOkrs();
+  const { data: categories = [] } = useCategories();
+  const { data: lists = [] } = useLists();
+  const { user } = useAuth();
+
+  // Profil exporte au titre de l'article 20 : le nom et l'adresse sont les
+  // donnees les plus evidemment « fournies par la personne concernee ». Le
+  // repli sur des chaines vides couvre le rendu avant resolution de la session,
+  // jamais un cas nominal — DataTab vit derriere ProtectedRoute.
+  const profile = {
+    id: user?.id ?? '',
+    name: user?.name ?? '',
+    email: user?.email ?? '',
+    avatar: user?.avatar,
+    autoValidation: user?.autoValidation,
+  };
 
   const exports: { label: string; icon: React.ElementType; count: number; run: () => void }[] = [
     { label: t('data.tasks'), icon: FileSpreadsheet, count: tasks.length, run: () => { exportTasksCSV(tasks); toast.success(t('data.tasksExported', { count: tasks.length })); } },
     { label: t('data.habits'), icon: FileSpreadsheet, count: habits.length, run: () => { exportHabitsCSV(habits); toast.success(t('data.habitsExported', { count: habits.length })); } },
     { label: t('data.events'), icon: FileSpreadsheet, count: events.length, run: () => { exportEventsCSV(events); toast.success(t('data.eventsExported', { count: events.length })); } },
     { label: t('data.okrs'), icon: FileSpreadsheet, count: okrs.length, run: () => { exportOKRsCSV(okrs); toast.success(t('data.okrsExported', { count: okrs.length })); } },
+    { label: t('data.categories'), icon: FileSpreadsheet, count: categories.length, run: () => { exportCategoriesCSV(categories); toast.success(t('data.categoriesExported', { count: categories.length })); } },
+    { label: t('data.lists'), icon: FileSpreadsheet, count: lists.length, run: () => { exportListsCSV(lists); toast.success(t('data.listsExported', { count: lists.length })); } },
+    { label: t('data.profile'), icon: FileSpreadsheet, count: 1, run: () => { exportProfileCSV(profile); toast.success(t('data.profileExported')); } },
   ];
 
   const handleExportAll = () => {
-    exportAllCSV({ tasks, habits, events, okrs });
+    exportAllCSV({ tasks, habits, events, okrs, categories, lists, profile });
     toast.success(t('data.exportingAll'), {
-      description: t('data.exportingAllHint', { count: tasks.length + habits.length + events.length + okrs.length }),
+      description: t('data.exportingAllHint', {
+        count:
+          tasks.length + habits.length + events.length + okrs.length
+          + categories.length + lists.length,
+      }),
     });
   };
 
