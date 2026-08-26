@@ -84,6 +84,11 @@ Deno.serve(async (req) => {
       case 'invoice.payment_succeeded': {
         const invoice = event.data.object as Stripe.Invoice
         const orgId = await orgIdFromInvoice(invoice)
+        // Journal AVANT les handlers métier : `org_subscriptions` est muté en
+        // place, donc si l'écriture métier échoue à mi-chemin, on veut quand
+        // même la trace de l'encaissement. Une ligne journalisée sans état
+        // produit à jour se rattrape ; l'inverse, non.
+        await recordPayment(event, invoice, orgId)
         if (orgId) await handleOrgInvoicePaid(orgId, invoice)
         else await handleInvoicePaymentSucceeded(invoice)
         break
@@ -91,6 +96,10 @@ Deno.serve(async (req) => {
       case 'invoice.payment_failed': {
         const invoice = event.data.object as Stripe.Invoice
         const orgId = await orgIdFromInvoice(invoice)
+        // Un échec de paiement est un mouvement, pas un non-événement : il
+        // explique un trou dans la séquence des encaissements. Un journal qui
+        // ne montre que les succès se lit mal en contrôle.
+        await recordPayment(event, invoice, orgId)
         if (orgId) await handleOrgInvoiceFailed(orgId, invoice)
         else await handleInvoicePaymentFailed(invoice)
         break
@@ -191,6 +200,75 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
       stripe_subscription_id: subscription.id,
     })
     .eq('user_id', uid)
+}
+
+/**
+ * Journal d'encaissement inaltérable (mig. 125, CGI art. 286-I-3° bis).
+ *
+ * Écrit UNE ligne append-only par mouvement de paiement. La table refuse tout
+ * UPDATE et tout DELETE par trigger, y compris venant d'ici : `service_role`
+ * contourne la RLS mais pas les triggers. Le hash de chaînage est posé côté
+ * base, jamais par ce code — sinon le sceau vaudrait ce que vaut le client.
+ *
+ * ❌ Ne JAMAIS faire échouer le webhook si le journal échoue. Stripe
+ *    rejouerait l'événement, les handlers métier tourneraient une seconde
+ *    fois, et l'idempotence de `stripe_event_id` rejetterait le doublon de
+ *    journal : on aurait perdu la trace ET rejoué le métier. On alerte, on
+ *    continue. Un trou dans le journal est visible ; un webhook en échec
+ *    permanent est une perte de revenu silencieuse.
+ *
+ * ❌ Ne JAMAIS y stocker l'objet Stripe entier : il porte des données de carte.
+ */
+async function recordPayment(
+  event: Stripe.Event,
+  invoice: Stripe.Invoice,
+  orgId: string | null,
+) {
+  try {
+    // Le montant qui compte est celui réellement payé pour un succès, et le
+    // montant dû pour un échec : `amount_paid` vaut 0 sur un échec, ce qui
+    // rendrait la ligne illisible.
+    const succeeded = event.type === 'invoice.payment_succeeded'
+    const amount = succeeded
+      ? (invoice.amount_paid ?? 0)
+      : (invoice.amount_due ?? 0)
+
+    // Un abonnement particulier n'a pas d'org : on remonte l'uid par le
+    // customer, en réutilisant la garde qui refuse un customer d'organisation.
+    const userId = orgId ? null : await getUidFromCustomer(invoice.customer as string)
+
+    const { error } = await supabaseAdmin.from('payment_records').insert({
+      stripe_event_id: event.id,
+      event_type: event.type,
+      stripe_invoice_id: invoice.id ?? null,
+      stripe_customer_id: (invoice.customer as string) ?? null,
+      org_id: orgId,
+      user_id: userId,
+      amount_cents: amount,
+      currency: (invoice.currency ?? 'eur').toLowerCase(),
+      occurred_at: new Date(event.created * 1000).toISOString(),
+      payload: {
+        number: invoice.number ?? null,
+        billing_reason: invoice.billing_reason ?? null,
+        subscription: (invoice.subscription as string) ?? null,
+        hosted_invoice_url: invoice.hosted_invoice_url ?? null,
+      },
+    })
+
+    // 23505 = rejeu du même event. C'est l'idempotence qui fonctionne, pas
+    // une erreur : la ligne d'origine est déjà scellée dans la chaîne.
+    const code = (error as { code?: string } | null)?.code
+    if (error && code !== '23505') {
+      console.error('payment_records insert error:', error)
+      await opsAlert(
+        'stripe-webhook',
+        `journal d encaissement NON ecrit pour l event ${event.id} (code ${code ?? 'inconnu'}) — trou dans le journal fiscal`,
+      )
+    }
+  } catch (err) {
+    console.error('recordPayment failed:', err)
+    await opsAlert('stripe-webhook', `recordPayment a leve pour l event ${event.id} — trou dans le journal fiscal`)
+  }
 }
 
 async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {

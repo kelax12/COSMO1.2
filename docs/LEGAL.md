@@ -80,36 +80,29 @@ limité. Ce n'est pas la même dépense qu'une mission annuelle.
 
 | # | Obligation | Statut | Ce qui manque exactement |
 |---|---|:--:|---|
-| B1 | Choix de la forme juridique | ❌ | Non arbitré. Décision la plus lourde du document. |
-| B2 | Immatriculation au guichet unique INPI | ❌ | Aucun SIREN. **Bloquant absolu de tout encaissement.** |
+| B1 | Choix de la forme juridique | 🟡 | **Micro-entreprise**, arbitré par Axel le 2026-08-26. Reste l'immatriculation elle-même (B2). Conséquences : franchise en base par défaut (C1), livre des recettes seul (C11), affiliation travailleur indépendant (D1). || B2 | Immatriculation au guichet unique INPI | ❌ | Aucun SIREN. **Bloquant absolu de tout encaissement.** |
 | B3 | Compte bancaire dédié | ❌ | Obligatoire pour une société ; en micro, au-delà de 10 000 € deux années de suite. |
 | B4 | Déclaration CFE initiale | ❌ | À déposer avant le 31 décembre de l'année de création. Exonération la 1re année mais **la déclaration reste due**. |
-| B5 | Domiciliation | ❌ | Le domicile personnel est écarté. Modalité de remplacement non choisie. |
-| B6 | Assurance RC professionnelle | ❌ | Pas obligatoire légalement, mais exigée contractuellement par les acheteurs entreprise. |
+| B5 | Domiciliation | 🟡 | **Société de domiciliation**, arbitré par Axel le 2026-08-26. Le domicile personnel est écarté, ce qui garde l'adresse privée hors du registre. Reste à choisir le prestataire et à signer. || B6 | Assurance RC professionnelle | ❌ | Pas obligatoire légalement, mais exigée contractuellement par les acheteurs entreprise. |
 
 ### C. Fiscal et facturation — **se déclenche au premier euro**
 
 | # | Obligation | Statut | Ce qui manque exactement |
 |---|---|:--:|---|
-| C1 | Régime de TVA à déterminer | ❌ | ⚠️ Seuils services 37 500 € et 41 250 €, réforme du seuil unique votée puis suspendue. À revérifier à la date de création. |
-| C2 | Numéro de TVA intracommunautaire | ❌ | Nécessaire **même en franchise en base**, à cause de C3. |
+| C1 | Régime de TVA à déterminer | 🟡 | **Franchise en base**, conséquence directe du choix micro-entreprise. Mention « TVA non applicable, art. 293 B du CGI » due sur chaque facture (C4). ⚠️ Seuils services 37 500 € et 41 250 €, réforme du seuil unique votée puis suspendue : à revérifier à la date d'immatriculation. || C2 | Numéro de TVA intracommunautaire | ❌ | Nécessaire **même en franchise en base**, à cause de C3. |
 | C3 | Autoliquidation de la TVA sur les achats étrangers | ❌ | 🔴 Due dès aujourd'hui si la structure existait : Supabase, Vercel, Sentry et les frais Stripe sont tous étrangers. **Stripe Tax ne couvre pas ce point**, il ne connaît que les ventes. Règle la plus souvent ignorée. |
 | C4 | Mention « TVA non applicable, art. 293 B du CGI » | ❌ | À configurer dans les factures Stripe tant que la franchise s'applique. Pas posé par défaut. |
 | C5 | Mentions obligatoires des factures | ❌ | Le modèle Stripe n'est pas configuré pour la France. À auditer contre L441-9 et 242 nonies A. |
 | C6 | Numérotation chronologique continue | ❌ | À vérifier côté Stripe : aucune rupture de séquence ne doit être possible. |
 | C7 | Facturation électronique | ❌ | ⚠️ Calendrier décalé plusieurs fois. Chantier plus lourd que C9. |
 | C8 | Guichet OSS (ventes B2C dans l'UE) | ⬜ | Sans objet tant que le marché reste français. Se déclenche au-delà de 10 000 € de ventes numériques à des consommateurs européens. |
-| C9 | Conformité du logiciel d'encaissement | ❌ | Aucun journal inaltérable : `org_subscriptions` est **muté en place** par le webhook, `processed_stripe_events` n'est qu'une déduplication technique. ⚠️ Trancher d'abord si la franchise en base est visée : la réponse vaut 2 à 4 jours de développement. |
-| C10 | Conservation des pièces | ❌ | 10 ans comptable, 6 ans fiscal. Aucune purge, RGPD comprise, ne doit les atteindre. |
-| C11 | Comptabilité (livre des recettes ou complète) | ❌ | Selon la forme retenue en B1. |
-| C12 | Déclarations fiscales annuelles | ❌ | Selon la forme retenue en B1. |
+| C9 | Conformité du logiciel d'encaissement | ✅ | Journal append-only livré le 2026-08-26 (**mig. 125, appliquée en prod**). **I** : trigger `BEFORE UPDATE OR DELETE` qui lève, choisi plutôt que la RLS parce que `service_role` contourne la RLS mais pas les triggers. **S** : chaînage de hash SHA-256, `verify_payment_chain()` détecte toute altération. **C** : aucune purge possible par construction. **A** : `seal_payment_period()` fige un total mensuel, et refuse le mois en cours. Webhook câblé et redéployé. Prouvé en transaction annulée : UPDATE bloqué, DELETE bloqué, rejeu bloqué, falsification détectée. || C10 | Conservation des pièces | ✅ | Garantie **par construction** depuis la mig. 125 : le journal n'accepte ni UPDATE ni DELETE, donc aucune purge ne peut l'atteindre, RGPD comprise. La migration porte le garde-fou explicite : le droit à l'effacement cède devant l'obligation de conservation (RGPD art. 17.3.b), une purge de compte doit **anonymiser** `user_id`, jamais supprimer la ligne. || C11 | Comptabilité (livre des recettes ou complète) | 🟡 | **Livre des recettes** seul, conséquence du régime micro. Le journal d'encaissement (C9) en fournit désormais la matière, horodatée et scellée. Reste à tenir le registre lui-même après immatriculation. || C12 | Déclarations fiscales annuelles | ❌ | Selon la forme retenue en B1. |
 
 ### D. Social — **se déclenche à la création, puis à l'embauche**
 
 | # | Obligation | Statut | Ce qui manque exactement |
 |---|---|:--:|---|
-| D1 | Affiliation sociale du dirigeant | ❌ | Indépendant ou assimilé salarié selon B1. Écart de plusieurs milliers d'euros par an. |
-| D2 | Déclarations et cotisations URSSAF | ❌ | Dues même sans rémunération dans certains cas. |
+| D1 | Affiliation sociale du dirigeant | 🟡 | **Travailleur indépendant**, conséquence du régime micro. Cotisations en pourcentage du chiffre d'affaires encaissé, déclarées mensuellement ou trimestriellement. Effectif à l'immatriculation. || D2 | Déclarations et cotisations URSSAF | ❌ | Dues même sans rémunération dans certains cas. |
 | D3 | Obligations d'employeur | ⬜ | Aucun salarié. Se déclenche au premier : DPAE, convention collective, DUERP, mutuelle, santé au travail, DSN, registre du personnel. |
 
 ### E. Droit de la consommation — **s'applique à TOUTE l'offre**
