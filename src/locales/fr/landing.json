@@ -445,6 +445,7 @@
       "sliderAria": "Nombre de membres de votre organisation",
       "membersUnit": "membres",
       "perMonth": "/ mois",
+      "vatIncluded": "Tous les prix sont affichés TTC.",
       "intervalAria": "Périodicité de facturation",
       "intervalMonthly": "Mensuel",
       "intervalYearly": "Annuel",

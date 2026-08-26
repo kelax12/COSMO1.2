@@ -861,6 +861,7 @@
     "rangeUpTo": "{{min}} to {{max}} members",
     "rangeFrom": "{{min}} members and up",
     "perMonth": "per month",
+    "vatIncluded": "All prices shown include VAT.",
     "intervalLegend": "Billing period",
     "intervalMonthly": "Monthly",
     "intervalYearly": "Yearly",

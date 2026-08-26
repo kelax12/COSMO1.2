@@ -189,6 +189,17 @@ export function OrgBillingTab({ orgId, isOwner, memberCount, onBack }: Props) {
         interval={billingInterval}
       />
 
+      {/* Affichage TTC — obligation d'affichage au consommateur (Code de la
+          consommation art. L112-1). Rien ne vérifie qu'un acheteur est un
+          professionnel, donc tout acheteur peut en être un et la règle
+          s'applique à toute l'offre. La mention vit ICI et non dans
+          `EnterpriseTierGrid` : elle porte sur la grille entière, pas sur une
+          carte, et la grille est un conteneur de mise en page dont la racine ne
+          doit pas gagner de frère. Voir docs/LEGAL.md ligne E7. */}
+      <p className="text-xs text-[rgb(var(--color-text-secondary))]">
+        {t('billing.vatIncluded')}
+      </p>
+
       {canPay && subscription && (
         <div className="flex flex-col gap-1">
           <button

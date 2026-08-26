@@ -896,6 +896,7 @@
     "rangeUpTo": "{{min}} à {{max}} membres",
     "rangeFrom": "{{min}} membres et plus",
     "perMonth": "par mois",
+    "vatIncluded": "Tous les prix sont affichés TTC.",
     "intervalLegend": "Périodicité de facturation",
     "intervalMonthly": "Mensuel",
     "intervalYearly": "Annuel",
