@@ -4,10 +4,12 @@ import { Cookie, X, ShieldCheck } from 'lucide-react';
 import { Link } from 'react-router';
 import { useT } from '@/i18n/useT';
 import { useSlideUpEntrance } from '@/lib/motion-safe';
-
-type CookieConsent = 'accepted' | 'refused' | null;
-
-const STORAGE_KEY = 'cosmo_cookie_consent';
+import {
+  readConsent,
+  setConsent as persistConsent,
+  type CookieConsent,
+} from '@/lib/cookie-consent';
+import { mountAudienceScript } from '@/lib/audience';
 
 const CookieBanner: React.FC = () => {
   const { t } = useT('common');
@@ -16,7 +18,7 @@ const CookieBanner: React.FC = () => {
   const entrance = useSlideUpEntrance();
 
   useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY) as CookieConsent;
+    const stored = readConsent();
     if (!stored) {
       const timer = setTimeout(() => setVisible(true), 1200);
       return () => clearTimeout(timer);
@@ -25,15 +27,28 @@ const CookieBanner: React.FC = () => {
   }, []);
 
   const handleAccept = () => {
-    localStorage.setItem(STORAGE_KEY, 'accepted');
+    persistConsent('accepted');
     setConsent('accepted');
     setVisible(false);
+    // Monte MAINTENANT ce qui n'avait pas pu l'être au démarrage. Sans cet
+    // appel, accepter ne produirait aucune mesure avant le prochain
+    // rechargement — l'utilisateur dirait oui, et il ne se passerait rien.
+    try {
+      mountAudienceScript(document, {
+        pathname: window.location.pathname,
+        storage: window.localStorage,
+      });
+    } catch { /* la mesure ne doit jamais casser un clic de l'utilisateur */ }
   };
 
   const handleRefuse = () => {
-    localStorage.setItem(STORAGE_KEY, 'refused');
+    persistConsent('refused');
     setConsent('refused');
     setVisible(false);
+    // Rien à démonter : le script n'a jamais été injecté, faute de
+    // consentement au démarrage. C'est tout l'intérêt de ne charger qu'après
+    // acceptation plutôt que de charger puis regretter — on ne décharge pas
+    // du JavaScript déjà évalué.
   };
 
   if (consent !== null) return null;

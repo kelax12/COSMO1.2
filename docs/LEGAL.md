@@ -68,7 +68,7 @@ limité. Ce n'est pas la même dépense qu'une mission annuelle.
 | A1 | Registre des activités de traitement (art. 30) | ❌ | Aucun document au format attendu. `docs/RGPD.md` est un doc technique, pas un registre. |
 | A2 | Politique de confidentialité (art. 12 à 14) | 🟡 | `PolitiqueConfidentialitePage.tsx` existe et liste les droits. À auditer contre les 12 mentions, notamment bases légales, durées et transferts. |
 | A3 | Mentions légales (LCEN art. 6-III) | 🟡 | `MentionsLegalesPage.tsx` existe, avec email éditeur et les deux hébergeurs. Manque l'identité complète, à ajouter **après immatriculation** (dénomination, SIREN, RCS, TVA, directeur de publication). |
-| A4 | Consentement aux traceurs (art. 82) | 🟡 | 🔴 **Le bandeau ne conditionne rien.** `CookieBanner.tsx` écrit `cosmo_cookie_consent`, mais ni Vesk (`src/lib/audience.ts`) ni Vercel Analytics (`App.tsx`) ne lisent cette clé. Refuser ne change rien. Les deux sont sans cookie et **peuvent** relever de l'exemption CNIL de mesure d'audience : soit on le confirme et le bandeau doit cesser de promettre un choix qu'il n'applique pas, soit on conditionne réellement le chargement. |
+| A4 | Consentement aux traceurs (art. 82) | ✅ | Corrigé le 2026-08-26. Un store unique (`src/lib/cookie-consent.ts`) conditionne les **trois** surfaces : le script Vesk (`audience.ts`), `<Analytics />` de Vercel (`App.tsx`) et le bandeau. Rien ne se charge tant que la réponse n'est pas donnée, `null` n'étant pas une acceptation tacite ; accepter monte la mesure sans rechargement ; refuser ne la monte jamais. 5 tests dédiés. |
 | A5 | Contrats de sous-traitance (art. 28) | ❌ | Aucun DPA collecté ni archivé. Voir §6 pour la liste. |
 | A6 | Transferts hors UE (chap. V) | 🟡 | ✅ Supabase en `eu-west-1`, donc dans l'Union. ❌ Vercel et Sentry sont américains : mécanisme de transfert à documenter. |
 | A7 | Notification de violation sous 72 h (art. 33) | ❌ | Aucune procédure écrite. À rédiger à froid, le délai ne permet pas d'improviser. |
@@ -143,12 +143,12 @@ Par l'effet de la décision structurante ci-dessous : aucun client n'est vérifi
 
 | Statut | Nombre |
 |---|---|
-| ✅ Bon | 2 |
-| 🟡 Partiellement bon | 10 |
+| ✅ Bon | 3 |
+| 🟡 Partiellement bon | 9 |
 | ❌ À faire | 27 |
 | ⬜ Sans objet aujourd'hui | 6 |
 
-Deux lignes sont pleinement vertes, et **dix à moitié faites** : les pages
+Trois lignes sont pleinement vertes, et **neuf à moitié faites** : les pages
 légales existent, l'export et la suppression de compte fonctionnent, la sécurité technique est
 sérieuse, la base est dans l'Union et le réglage TTC est correct. L'essentiel du reste ne peut
 pas passer au vert avant l'immatriculation, qui est le vrai verrou.
