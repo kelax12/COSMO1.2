@@ -12,7 +12,7 @@
 · [Actif aujourd'hui](#1-actif-aujourdhui-sans-structure) · [À la création](#2-à-la-création-de-la-structure)
 · [Au premier euro](#3-au-premier-euro-encaissé) · [Droit de la consommation](#4-droit-de-la-consommation)
 · [Produit et marque](#5-produit-marque-et-dépendances) · [Sous-traitants](#6-sous-traitants-et-transferts)
-· [Garde-fous](#-garde-fous-techniques) · [Annexe art. 32](#annexe--mesures-techniques-et-organisationnelles-art-32) · [Décisions ouvertes](#décisions-encore-ouvertes)
+· [Garde-fous](#-garde-fous-techniques) · [**Ce sur quoi tu es engagé**](#-ce-sur-quoi-tu-es-engagé) · [Annexe art. 32](#annexe--mesures-techniques-et-organisationnelles-art-32) · [Décisions ouvertes](#décisions-encore-ouvertes)
 
 ---
 
@@ -447,6 +447,52 @@ sont connues et documentées dans le code :
 4. **Aucun exercice de restauration n'a été conduit.** Les sauvegardes dépendent du plan
    Supabase souscrit ; leur existence et leur délai de restauration restent à vérifier.
 5. **Pas de journal d'accès applicatif** distinct des logs d'infrastructure.
+
+---
+
+## 📜 Ce sur quoi tu es engagé
+
+Chaque ligne passée au vert est une **promesse tenue publiquement**. Une promesse tenue engage
+plus qu'un flou : elle est vérifiable par un client, opposable par un contrôleur. Ce tableau
+existe pour qu'aucun de ces engagements ne soit découvert le jour où il est invoqué.
+
+### Engagements permanents, qui ne s'arrêtent jamais
+
+| Engagement | Ce que ça t'oblige à faire | Si tu ne le fais pas |
+|---|---|---|
+| **Répondre aux demandes RGPD en un mois** | Surveiller la boîte de contact. Le délai court dès la réception, pas dès que tu la lis. | Manquement caractérisé, et la personne peut saisir la CNIL |
+| **Notifier une violation en 72 heures** | Le compte à rebours démarre à la **prise de connaissance**, week-end compris. | Sanction distincte de la violation elle-même |
+| **Tenir le registre des violations** | Y consigner **aussi** celles que tu décides de ne pas notifier, avec la justification. | Une absence non documentée est indistinguable d'un manquement |
+| **Maintenir les mesures de sécurité déclarées** | HSTS, CSP stricte, RLS sur toutes les tables, scrubbing Sentry. Les assouplir sans mettre à jour l'annexe retourne le document contre toi. | Le document art. 32 devient une preuve à charge |
+| **Ne charger aucun traceur sans consentement** | Tout nouvel outil de mesure ou de publicité passe par le store de consentement. | Le bandeau redevient mensonger, ce qui est pire que son absence |
+| **Purger les comptes clos sous 90 jours** | C'est la durée que la politique annonce désormais. | Conservation excessive, et contradiction avec ta propre politique |
+| **Faire entrer toute nouvelle donnée saisie dans l'export** | Sept fichiers aujourd'hui. Une nouvelle table utilisateur non exportée rend la portabilité fausse. | La portabilité devient une promesse creuse |
+| **Conserver le journal d'encaissement dix ans** | Aucune suppression, jamais. Une purge de compte **anonymise** `user_id`. | Perte d'une pièce comptable obligatoire |
+
+### Engagements envers tes clients, dès le premier paiement
+
+| Engagement | Ce que ça t'oblige à faire | Coût si tu l'oublies |
+|---|---|---|
+| **Le prix affiché est le prix payé** | `tax_behavior: inclusive` est **définitif** chez Stripe. Le jour de l'assujettissement TVA, 20 € TTC ne te rapportent plus que 16,67 €. | **−17 % de marge**, sans pouvoir augmenter les abonnés existants sans préavis |
+| **Rembourser sous 14 jours** si les deux cases ne sont pas cochées | Le double consentement est ta seule porte de sortie, et il est facultatif par construction. | Remboursement dû sur simple demande |
+| **Résilier depuis l'application, sans motif ni frais** | Promis dans les CGU, sur la landing, et dans l'écran de paiement. 🔴 **Ne fonctionne pas aujourd'hui** (E5). | Manquement à L215-1-1, et un client qui ne peut pas partir |
+| **Informer avant chaque reconduction annuelle** | 🔴 **Pas encore fait** (E6). Déclenché par la facturation annuelle. | Le client peut résilier à tout moment sans frais |
+| **Ne jamais retirer un membre** en cas de baisse de palier | Annoncé en FAQ. Le code le respecte déjà : on bloque la croissance, on ne retire rien. | Contradiction directe avec une promesse écrite |
+| **Livrer ce que la landing annonce** | Une fonctionnalité promise et non livrée est un défaut de conformité opposable. | Réduction de prix ou résolution du contrat |
+
+### Engagements qui découlent de tes décisions du 2026-08-26
+
+| Décision | Ce qu'elle engage |
+|---|---|
+| **Un particulier peut acheter** | Tout le droit de la consommation s'applique à toute l'offre. Y compris l'adhésion **payante** à un médiateur, avant le premier client. |
+| **Micro-entreprise** | Franchise en base par défaut, livre des recettes, affiliation travailleur indépendant. Et l'**autoliquidation de la TVA sur tes achats étrangers**, due même en franchise. |
+| **Société de domiciliation** | Un coût mensuel récurrent, en échange de quoi ton adresse personnelle reste hors du registre public. |
+| **Journal d'encaissement construit** | Tu peux signer l'attestation individuelle **honnêtement**. C'était impossible ce matin. |
+
+> 🔴 **Les deux engagements actuellement non tenus sont E5 et E6.** Le premier se répare en deux
+> minutes au Dashboard Stripe, le second demande un envoi d'emails que COSMO ne sait pas encore
+> faire. Tant qu'ils ne le sont pas, la landing et les CGU promettent quelque chose que le
+> produit ne délivre pas.
 
 ---
 
