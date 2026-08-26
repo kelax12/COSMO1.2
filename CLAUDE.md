@@ -548,10 +548,12 @@ Debug : `localStorage.removeItem('cosmo_onboarding_modules_done')` puis reload.
 ## Base de données Supabase
 
 Migrations dans `supabase/migration/*.sql`, convention `NNN_<feature>.sql`.
-**130 fichiers de migration, dernière = `126_renewal_notices.sql`**
-(au 2026-08-25). La **123 a été appliquée en prod le 2026-08-25**, avant le redéploiement de
-`stripe-webhook`, qui écrit désormais `billing_interval`.
-**Toutes appliquées en prod**, ledger relu en base le 2026-08-25, `115` → `123` comprises.
+**132 fichiers de migration, dernière = `128_events_managed_ids_indexable.sql`** (au 2026-08-26).
+🔴 **Deux migrations écrites, AUCUNE appliquée** : la `127` (`get_work_time_stats` en une seule
+passe) et la `128` (RLS `events` indexable). À appliquer dans l’ordre, la `127` en priorité.
+**Tout le reste est en prod**, ledger relu en base le 2026-08-26 : `126_renewal_notices` est la
+dernière appliquée. La `123` l’a été avant le redéploiement de `stripe-webhook`, qui écrit
+désormais `billing_interval`.
 
 > ⚠️ **Le ledger porte une entrée de plus que le dépôt** :
 > `119b_habits_bounded_payload_future_guard`, appliquée en prod, sans fichier correspondant. Son
@@ -650,6 +652,37 @@ supabase.rpc('get_my_team_task_dependencies', { p_org: orgId })        // ✅ mi
 > plutôt qu'en déléguant à `team_tasks` : c'est la délégation qui a fait hériter
 > `team_task_dependencies` du coût qu'on venait d'éliminer (mig. 108, refermé par la mig. 117).
 > Détail et projections : [`docs/SCALABILITY.md`](./docs/SCALABILITY.md) §2.
+
+### ⚡ `events` : un ensemble calculé une fois, jamais une fonction par ligne (mig. 128)
+
+Troisième occurrence de la même classe, la première hors du mode entreprise. La policy de lecture
+d'`events` appelait `manages_user(user_id)`, donc une fonction **sur une colonne**, donc un appel
+par ligne examinée, chacun joignant deux fois `organization_members` puis évaluant `get_subtree`.
+
+```sql
+-- ❌ dépend de la ligne : rappelée pour chaque ligne, index inutilisable
+USING ((SELECT auth.uid()) = user_id OR (manages_user(user_id) AND NOT is_private))
+-- ✅ ne dépend PAS de la ligne : hissée en InitPlan, et devient condition d'index
+USING ((SELECT auth.uid()) = user_id
+       OR (NOT is_private AND user_id = ANY (public.my_managed_user_ids())))
+```
+
+Mesuré en prod le 2026-08-26, lecture de l'agenda d'un membre non géré : **17,19 ms → 0,61 ms**,
+et zéro ligne remontée du tas pour être rejetée ensuite (`Rows Removed by Filter: 128` → BitmapOr
+de deux Index Scan). Lire son propre agenda ne changeait rien et ne change rien : la branche
+« own » court-circuitait déjà le `OR`.
+
+- ❌ **Ne jamais faire dépendre un prédicat de policy d'un argument pris dans la ligne.** La règle
+  couvre `tasks` (085), `team_tasks` / `team_projects` (113), `team_task_dependencies` (117) et
+  maintenant `events` (128). Un helper sans argument, dont le périmètre vient de `auth.uid()`
+  seul, est évalué une fois par requête, exactement comme `(SELECT auth.uid())` depuis la 043.
+- 🔴 **Une policy réécrite « pour aller plus vite » se prouve AVANT d'être écrite.** Pour la 128 :
+  parité booléenne sur chaque couple (acteur, cible) de `organization_members`, puis égalité de
+  l'ensemble des `events.id` visibles pour **chaque** compte de `auth.users`. C'est une frontière
+  de sécurité, pas un plan d'exécution.
+- ⚠️ `manages_user` survit, redéfinie **en fonction** de `my_managed_user_ids()` : deux
+  définitions concurrentes de « qui je gère » finiraient par diverger.
+- Garde : `scripts/migration-guards.test.mjs`, vue rouge sur la régression avant d'être committée.
 
 ## 🔐 Permissions entreprise — surcharge, jamais remplacement (mig. 115)
 
