@@ -65,12 +65,14 @@ limité. Ce n'est pas la même dépense qu'une mission annuelle.
 
 | # | Obligation | Statut | Ce qui manque exactement |
 |---|---|:--:|---|
-| A1 | Registre des activités de traitement (art. 30) | ✅ | [`RGPD-REGISTRE.md`](./RGPD-REGISTRE.md), établi le 2026-08-26. **Dix traitements** organisés par finalité comme l'exige l'article, pas par table, sur les 47 tables applicatives réellement présentes en base. Chacun porte sa base légale, ses destinataires, sa durée et son cloisonnement. Il manque les DPA (A5), et le registre le dit. || A2 | Politique de confidentialité (art. 12 à 14) | ✅ | Complétée le 2026-08-26. Trois trous comblés : **Sentry et Vercel Analytics** étaient absents de la liste des sous-traitants, une section **7 bis sur les transferts hors UE** manquait entièrement (art. 13.1.f), et la section Cookies affirmait que Vesk ne requiert pas de consentement, phrase devenue **fausse** depuis A4. Délai de réponse aligné sur « un mois » (art. 12) au lieu de 30 jours. |
+| A1 | Registre des activités de traitement (art. 30) | ✅ | [`RGPD-REGISTRE.md`](./RGPD-REGISTRE.md), établi le 2026-08-26. **Dix traitements** organisés par finalité comme l'exige l'article, pas par table, sur les 47 tables applicatives réellement présentes en base. Chacun porte sa base légale, ses destinataires, sa durée et son cloisonnement. Il manque les DPA (A5), et le registre le dit. |
+| A2 | Politique de confidentialité (art. 12 à 14) | ✅ | Complétée le 2026-08-26. Trois trous comblés : **Sentry et Vercel Analytics** étaient absents de la liste des sous-traitants, une section **7 bis sur les transferts hors UE** manquait entièrement (art. 13.1.f), et la section Cookies affirmait que Vesk ne requiert pas de consentement, phrase devenue **fausse** depuis A4. Délai de réponse aligné sur « un mois » (art. 12) au lieu de 30 jours. |
 | A3 | Mentions légales (LCEN art. 6-III) | 🟡 | `MentionsLegalesPage.tsx` existe, avec email éditeur et les deux hébergeurs. Manque l'identité complète, à ajouter **après immatriculation** (dénomination, SIREN, RCS, TVA, directeur de publication). |
 | A4 | Consentement aux traceurs (art. 82) | ✅ | Corrigé le 2026-08-26. Un store unique (`src/lib/cookie-consent.ts`) conditionne les **trois** surfaces : le script Vesk (`audience.ts`), `<Analytics />` de Vercel (`App.tsx`) et le bandeau. Rien ne se charge tant que la réponse n'est pas donnée, `null` n'étant pas une acceptation tacite ; accepter monte la mesure sans rechargement ; refuser ne la monte jamais. 5 tests dédiés. |
 | A5 | Contrats de sous-traitance (art. 28) | ❌ | Aucun DPA collecté ni archivé. Voir §6 pour la liste. |
 | A6 | Transferts hors UE (chap. V) | 🟡 | ✅ Supabase en `eu-west-1`, donc dans l'Union, et l'**information** due à la personne est faite (section 7 bis de la politique, art. 13.1.f). ❌ Reste la **preuve contractuelle** : les clauses types vivent dans les DPA de Vercel et Sentry, qu'il faut accepter et archiver en tant qu'entreprise. Dépend donc de A5, donc de l'immatriculation. |
-| A7 | Notification de violation sous 72 h (art. 33) | ✅ | [`RGPD-VIOLATION.md`](./RGPD-VIOLATION.md), rédigée **à froid** le 2026-08-26. Qualification des trois types d'atteinte, six heures de marche à suivre, arbre de décision de notification, sources à consulter, et registre des violations (obligatoire même sans notification, art. 33.5). Recense trois manques réels : pas d'astreinte, pas d'exercice de restauration, pas de DPA pour être alerté d'une violation chez un sous-traitant. || A8 | Droits des personnes (art. 15 à 22) | ✅ | Complété le 2026-08-26. L'export ne couvrait que tâches, habitudes, événements et OKR : **profil, catégories et listes manquaient**, alors que le nom et l'adresse sont les données les plus évidemment « fournies par la personne ». Sept fichiers désormais, et le périmètre exact est annoncé dans la politique. Effacement par `delete-account`. Délai d'un mois documenté, prolongation de deux mois prévue. |
+| A7 | Notification de violation sous 72 h (art. 33) | ✅ | [`RGPD-VIOLATION.md`](./RGPD-VIOLATION.md), rédigée **à froid** le 2026-08-26. Qualification des trois types d'atteinte, six heures de marche à suivre, arbre de décision de notification, sources à consulter, et registre des violations (obligatoire même sans notification, art. 33.5). Recense trois manques réels : pas d'astreinte, pas d'exercice de restauration, pas de DPA pour être alerté d'une violation chez un sous-traitant. |
+| A8 | Droits des personnes (art. 15 à 22) | ✅ | Complété le 2026-08-26. L'export ne couvrait que tâches, habitudes, événements et OKR : **profil, catégories et listes manquaient**, alors que le nom et l'adresse sont les données les plus évidemment « fournies par la personne ». Sept fichiers désormais, et le périmètre exact est annoncé dans la politique. Effacement par `delete-account`. Délai d'un mois documenté, prolongation de deux mois prévue. |
 | A9 | Sécurité du traitement (art. 32) | ✅ | Mesures formalisées en [annexe](#annexe--mesures-techniques-et-organisationnelles-art-32), limites comprises. Vérifiées dans `vercel.json`, `src/main.tsx` et les migrations. Formalisé le 2026-08-26. |
 | A10 | Analyse d'impact (art. 35) | ⬜ | Probablement non requise pour ce traitement. À confirmer, et à réexaminer si des agents IA traitent du contenu utilisateur. |
 
@@ -78,29 +80,36 @@ limité. Ce n'est pas la même dépense qu'une mission annuelle.
 
 | # | Obligation | Statut | Ce qui manque exactement |
 |---|---|:--:|---|
-| B1 | Choix de la forme juridique | 🟡 | **Micro-entreprise**, arbitré par Axel le 2026-08-26. Reste l'immatriculation elle-même (B2). Conséquences : franchise en base par défaut (C1), livre des recettes seul (C11), affiliation travailleur indépendant (D1). || B2 | Immatriculation au guichet unique INPI | ❌ | Aucun SIREN. **Bloquant absolu de tout encaissement.** |
+| B1 | Choix de la forme juridique | 🟡 | **Micro-entreprise**, arbitré par Axel le 2026-08-26. Reste l'immatriculation elle-même (B2). Conséquences : franchise en base par défaut (C1), livre des recettes seul (C11), affiliation travailleur indépendant (D1). |
+| B2 | Immatriculation au guichet unique INPI | ❌ | Aucun SIREN. **Bloquant absolu de tout encaissement.** |
 | B3 | Compte bancaire dédié | ❌ | Obligatoire pour une société ; en micro, au-delà de 10 000 € deux années de suite. |
 | B4 | Déclaration CFE initiale | ❌ | À déposer avant le 31 décembre de l'année de création. Exonération la 1re année mais **la déclaration reste due**. |
-| B5 | Domiciliation | 🟡 | **Société de domiciliation**, arbitré par Axel le 2026-08-26. Le domicile personnel est écarté, ce qui garde l'adresse privée hors du registre. Reste à choisir le prestataire et à signer. || B6 | Assurance RC professionnelle | ❌ | Pas obligatoire légalement, mais exigée contractuellement par les acheteurs entreprise. |
+| B5 | Domiciliation | 🟡 | **Société de domiciliation**, arbitré par Axel le 2026-08-26. Le domicile personnel est écarté, ce qui garde l'adresse privée hors du registre. Reste à choisir le prestataire et à signer. |
+| B6 | Assurance RC professionnelle | ❌ | Pas obligatoire légalement, mais exigée contractuellement par les acheteurs entreprise. |
 
 ### C. Fiscal et facturation — **se déclenche au premier euro**
 
 | # | Obligation | Statut | Ce qui manque exactement |
 |---|---|:--:|---|
-| C1 | Régime de TVA à déterminer | 🟡 | **Franchise en base**, conséquence directe du choix micro-entreprise. Mention « TVA non applicable, art. 293 B du CGI » due sur chaque facture (C4). ⚠️ Seuils services 37 500 € et 41 250 €, réforme du seuil unique votée puis suspendue : à revérifier à la date d'immatriculation. || C2 | Numéro de TVA intracommunautaire | ❌ | Nécessaire **même en franchise en base**, à cause de C3. |
+| C1 | Régime de TVA à déterminer | 🟡 | **Franchise en base**, conséquence directe du choix micro-entreprise. Mention « TVA non applicable, art. 293 B du CGI » due sur chaque facture (C4). ⚠️ Seuils services 37 500 € et 41 250 €, réforme du seuil unique votée puis suspendue : à revérifier à la date d'immatriculation. |
+| C2 | Numéro de TVA intracommunautaire | ❌ | Nécessaire **même en franchise en base**, à cause de C3. |
 | C3 | Autoliquidation de la TVA sur les achats étrangers | ❌ | 🔴 Due dès aujourd'hui si la structure existait : Supabase, Vercel, Sentry et les frais Stripe sont tous étrangers. **Stripe Tax ne couvre pas ce point**, il ne connaît que les ventes. Règle la plus souvent ignorée. |
 | C4 | Mention « TVA non applicable, art. 293 B du CGI » | ❌ | À configurer dans les factures Stripe tant que la franchise s'applique. Pas posé par défaut. |
 | C5 | Mentions obligatoires des factures | ❌ | Le modèle Stripe n'est pas configuré pour la France. À auditer contre L441-9 et 242 nonies A. |
 | C6 | Numérotation chronologique continue | ❌ | À vérifier côté Stripe : aucune rupture de séquence ne doit être possible. |
 | C7 | Facturation électronique | ❌ | ⚠️ Calendrier décalé plusieurs fois. Chantier plus lourd que C9. |
 | C8 | Guichet OSS (ventes B2C dans l'UE) | ⬜ | Sans objet tant que le marché reste français. Se déclenche au-delà de 10 000 € de ventes numériques à des consommateurs européens. |
-| C9 | Conformité du logiciel d'encaissement | ✅ | Journal append-only livré le 2026-08-26 (**mig. 125, appliquée en prod**). **I** : trigger `BEFORE UPDATE OR DELETE` qui lève, choisi plutôt que la RLS parce que `service_role` contourne la RLS mais pas les triggers. **S** : chaînage de hash SHA-256, `verify_payment_chain()` détecte toute altération. **C** : aucune purge possible par construction. **A** : `seal_payment_period()` fige un total mensuel, et refuse le mois en cours. Webhook câblé et redéployé. Prouvé en transaction annulée : UPDATE bloqué, DELETE bloqué, rejeu bloqué, falsification détectée. || C10 | Conservation des pièces | ✅ | Garantie **par construction** depuis la mig. 125 : le journal n'accepte ni UPDATE ni DELETE, donc aucune purge ne peut l'atteindre, RGPD comprise. La migration porte le garde-fou explicite : le droit à l'effacement cède devant l'obligation de conservation (RGPD art. 17.3.b), une purge de compte doit **anonymiser** `user_id`, jamais supprimer la ligne. || C11 | Comptabilité (livre des recettes ou complète) | 🟡 | **Livre des recettes** seul, conséquence du régime micro. Le journal d'encaissement (C9) en fournit désormais la matière, horodatée et scellée. Reste à tenir le registre lui-même après immatriculation. || C12 | Déclarations fiscales annuelles | ❌ | Selon la forme retenue en B1. |
+| C9 | Conformité du logiciel d'encaissement | ✅ | Journal append-only livré le 2026-08-26 (**mig. 125, appliquée en prod**). **I** : trigger `BEFORE UPDATE OR DELETE` qui lève, choisi plutôt que la RLS parce que `service_role` contourne la RLS mais pas les triggers. **S** : chaînage de hash SHA-256, `verify_payment_chain()` détecte toute altération. **C** : aucune purge possible par construction. **A** : `seal_payment_period()` fige un total mensuel, et refuse le mois en cours. Webhook câblé et redéployé. Prouvé en transaction annulée : UPDATE bloqué, DELETE bloqué, rejeu bloqué, falsification détectée. |
+| C10 | Conservation des pièces | ✅ | Garantie **par construction** depuis la mig. 125 : le journal n'accepte ni UPDATE ni DELETE, donc aucune purge ne peut l'atteindre, RGPD comprise. La migration porte le garde-fou explicite : le droit à l'effacement cède devant l'obligation de conservation (RGPD art. 17.3.b), une purge de compte doit **anonymiser** `user_id`, jamais supprimer la ligne. |
+| C11 | Comptabilité (livre des recettes ou complète) | 🟡 | **Livre des recettes** seul, conséquence du régime micro. Le journal d'encaissement (C9) en fournit désormais la matière, horodatée et scellée. Reste à tenir le registre lui-même après immatriculation. |
+| C12 | Déclarations fiscales annuelles | ❌ | Selon la forme retenue en B1. |
 
 ### D. Social — **se déclenche à la création, puis à l'embauche**
 
 | # | Obligation | Statut | Ce qui manque exactement |
 |---|---|:--:|---|
-| D1 | Affiliation sociale du dirigeant | 🟡 | **Travailleur indépendant**, conséquence du régime micro. Cotisations en pourcentage du chiffre d'affaires encaissé, déclarées mensuellement ou trimestriellement. Effectif à l'immatriculation. || D2 | Déclarations et cotisations URSSAF | ❌ | Dues même sans rémunération dans certains cas. |
+| D1 | Affiliation sociale du dirigeant | 🟡 | **Travailleur indépendant**, conséquence du régime micro. Cotisations en pourcentage du chiffre d'affaires encaissé, déclarées mensuellement ou trimestriellement. Effectif à l'immatriculation. |
+| D2 | Déclarations et cotisations URSSAF | ❌ | Dues même sans rémunération dans certains cas. |
 | D3 | Obligations d'employeur | ⬜ | Aucun salarié. Se déclenche au premier : DPAE, convention collective, DUERP, mutuelle, santé au travail, DSN, registre du personnel. |
 
 ### E. Droit de la consommation — **s'applique à TOUTE l'offre**
@@ -110,7 +119,8 @@ Par l'effet de la décision structurante ci-dessous : aucun client n'est vérifi
 | # | Obligation | Statut | Ce qui manque exactement |
 |---|---|:--:|---|
 | E1 | CGV communiquées avant le contrat | 🟡 | Section 5 réécrite le 2026-08-26 : elle décrit enfin **l'offre réellement vendue** (forfaits entreprise et non un « premium » inexistant), l'affichage TTC, la reconduction, la résiliation et le retour au forfait gratuit sans retrait de membre. Section 5 bis ajoutée pour la rétractation. ❌ Reste : les coordonnées du **médiateur** (dépend de E4, adhésion payante non souscrite) et une relecture juridique. |
-| E2 | Information précontractuelle | ✅ | Ajoutée le 2026-08-26 au-dessus des cases de consentement, là où le regard se pose avant l'engagement, et non seulement dans des CGU que personne n'ouvre : durée indéterminée, prix TTC, reconduction automatique, résiliation sans motif ni frais. Le montant exact est porté par la carte de palier juste en dessous. || E3 | Rétractation 14 jours et double consentement | ✅ | Implémenté le 2026-08-26 dans `OrgBillingTab` : **deux cases distinctes**, jamais pré-cochées, demande expresse d'exécution immédiate **et** reconnaissance de renonciation. Sans les deux, `onSelect` n'est pas monté, donc aucun paiement ne peut être engagé. Recueilli côté COSMO et non via `consent_collection` de Stripe, qui exige une URL de CGV au Dashboard dont l'absence ferait **échouer** la création de session. CGU alignées (section 5 bis). |
+| E2 | Information précontractuelle | ✅ | Ajoutée le 2026-08-26 au-dessus des cases de consentement, là où le regard se pose avant l'engagement, et non seulement dans des CGU que personne n'ouvre : durée indéterminée, prix TTC, reconduction automatique, résiliation sans motif ni frais. Le montant exact est porté par la carte de palier juste en dessous. |
+| E3 | Rétractation 14 jours et double consentement | ✅ | Implémenté le 2026-08-26 dans `OrgBillingTab` : **deux cases distinctes**, jamais pré-cochées, demande expresse d'exécution immédiate **et** reconnaissance de renonciation. Sans les deux, `onSelect` n'est pas monté, donc aucun paiement ne peut être engagé. Recueilli côté COSMO et non via `consent_collection` de Stripe, qui exige une URL de CGV au Dashboard dont l'absence ferait **échouer** la création de session. CGU alignées (section 5 bis). |
 | E4 | Médiateur de la consommation | ❌ | Adhésion **payante et obligatoire**, coordonnées à publier dans les CGV et sur le site. Oubli classique, sanctionné par la DGCCRF. |
 | E5 | Résiliation en ligne (L215-1-1) | ❌ | 🔴 **Dégradé de 🟡 à ❌ le 2026-08-26 après vérification.** `/v1/billing_portal/configurations` renvoie **vide sur les DEUX comptes**, test et live : le portail client n'a jamais été configuré. `stripe-org-portal` ne passe aucun `configuration`, il compte donc sur un défaut inexistant, et Stripe refuse de créer la session tant que les réglages n'ont pas été enregistrés au Dashboard. La fonction porte d'ailleurs déjà l'alerte « customer cannot manage or cancel ». **Le bouton existe, la résiliation ne marche pas.** Correctif : Dashboard Stripe → Settings → Billing → Customer portal, activer l'annulation d'abonnement, enregistrer, sur les deux comptes. Non faisable par API depuis ici. |
 | E6 | Information de reconduction tacite | ❌ | 🔴 Déclenchée par la facturation **annuelle** livrée le 2026-08-25. Aucun envoi automatisé. |
@@ -122,43 +132,42 @@ Par l'effet de la décision structurante ci-dessous : aucun client n'est vérifi
 
 | # | Obligation | Statut | Ce qui manque exactement |
 |---|---|:--:|---|
-| F1 | Recherche d'antériorité sur le nom | ❌ | Non faite, et **je ne peux pas la faire** : `data.inpi.fr` est une application JavaScript non interrogeable ici, et une recherche fiable couvre INPI **et** EUIPO, une marque de l'Union bloquant un dépôt français. Procédure : chercher « COSMO » sur `data.inpi.fr` puis sur `euipo.europa.eu`, en **classe 9** (logiciel téléchargeable) et **classe 42** (SaaS), qui sont les deux classes de ton activité. Nom très générique, donc antériorités quasi certaines : l'enjeu réel n'est pas « existe-t-il une marque COSMO » mais « une marque COSMO couvre-t-elle le logiciel ». Un conseil en propriété industrielle tranche cela en une consultation. || F2 | Dépôt de marque INPI | ❌ | Pas obligatoire, mais sans dépôt aucun droit exclusif sur le nom. Dépend de F1. |
-| F3 | Conformité des licences open source | ✅ | Inventaire du 2026-08-26 sur **644 paquets** : 548 MIT, 36 ISC, 23 Apache-2.0, 25 BSD, toutes permissives. **Aucune licence à réciprocité forte** (ni GPL, ni AGPL, ni SSPL), et **aucune licence non déclarée**. Les MPL-2.0 (`axe-core`) et CC-BY-4.0 (`caniuse-lite`) sont des dépendances de build ou de test, non embarquées. GSAP a sa propre licence : vérifiée à la source, **libre d'usage commercial, plugins `SplitText`, `ScrambleText` et `Inertia` compris, sans attribution obligatoire**, la seule interdiction visant les outils d'animation sans code concurrents de Webflow. || F4 | Accessibilité (législation européenne) | 🟡 | Un travail a été engagé côté produit (`docs/ACCESSIBILITY.md`). ⚠️ Exemption microentreprise à vérifier, et seuil à surveiller. Demandé par les acheteurs B2B de toute façon. |
+| F1 | Recherche d'antériorité sur le nom | ❌ | Non faite, et **je ne peux pas la faire** : `data.inpi.fr` est une application JavaScript non interrogeable ici, et une recherche fiable couvre INPI **et** EUIPO, une marque de l'Union bloquant un dépôt français. Procédure : chercher « COSMO » sur `data.inpi.fr` puis sur `euipo.europa.eu`, en **classe 9** (logiciel téléchargeable) et **classe 42** (SaaS), qui sont les deux classes de ton activité. Nom très générique, donc antériorités quasi certaines : l'enjeu réel n'est pas « existe-t-il une marque COSMO » mais « une marque COSMO couvre-t-elle le logiciel ». Un conseil en propriété industrielle tranche cela en une consultation. |
+| F2 | Dépôt de marque INPI | ❌ | Pas obligatoire, mais sans dépôt aucun droit exclusif sur le nom. Dépend de F1. |
+| F3 | Conformité des licences open source | ✅ | Inventaire du 2026-08-26 sur **644 paquets** : 548 MIT, 36 ISC, 23 Apache-2.0, 25 BSD, toutes permissives. **Aucune licence à réciprocité forte** (ni GPL, ni AGPL, ni SSPL), et **aucune licence non déclarée**. Les MPL-2.0 (`axe-core`) et CC-BY-4.0 (`caniuse-lite`) sont des dépendances de build ou de test, non embarquées. GSAP a sa propre licence : vérifiée à la source, **libre d'usage commercial, plugins `SplitText`, `ScrambleText` et `Inertia` compris, sans attribution obligatoire**, la seule interdiction visant les outils d'animation sans code concurrents de Webflow. |
+| F4 | Accessibilité (législation européenne) | 🟡 | Un travail a été engagé côté produit (`docs/ACCESSIBILITY.md`). ⚠️ Exemption microentreprise à vérifier, et seuil à surveiller. Demandé par les acheteurs B2B de toute façon. |
 | F5 | Transparence des systèmes d'IA | ⬜ | ⚠️ Se déclenche si la direction produit vers des agents IA se concrétise. À prévoir dès la conception. |
 | F6 | Obligations liées au partage entre utilisateurs | ⬜ | Micro et petites entreprises largement exemptées, mais pas de tout. Qualification à faire. |
 
 ### Où en es-tu
 
-> Recompté ligne à ligne dans ce fichier le **2026-08-26 en fin de journée**, pas additionné de
-> tête. Les décomptes précédents étaient faux de deux colonnes : ne jamais reporter un total,
-> toujours le recompter.
+> Recompté **par script** dans ce fichier le 2026-08-26 en fin de journée, avec vérification que
+> le total correspond aux lignes et qu'aucun identifiant n'est en double. Les décomptes tenus à
+> la main ont été faux deux fois, dont une où douze lignes étaient devenues invisibles pour
+> s'être collées à la ligne précédente. **Ne jamais reporter un total, toujours le recompter.**
 
 | Statut | Nombre |
 |---|---|
-| ✅ Bon | **6** |
-| 🟡 Partiellement bon | **6** |
-| ❌ À faire | **29** |
+| ✅ Bon | **12** |
+| 🟡 Partiellement bon | **11** |
+| ❌ À faire | **18** |
 | ⬜ Sans objet aujourd'hui | **5** |
 | **Total** | **46** |
 
-**Passées au vert le 2026-08-26** : A2 (politique complétée), A4 (le bandeau applique enfin le
-choix qu'il propose), A8 (export étendu au profil, aux catégories et aux listes), A9 (annexe
-art. 32), E3 (double consentement de rétractation), E7 (mention TTC).
+**Point de départ le matin du 2026-08-26 : 0 vert.** Sont passées au vert dans la journée :
+A1, A2, A4, A7, A8, A9, C9, C10, E2, E3, E7, F3.
 
-**Les six lignes jaunes restantes ne dépendent plus de développement**, et c'est l'information
-utile de ce tableau :
+**Les 18 lignes rouges se répartissent en trois familles**, et une seule dépend encore de moi :
 
-| Ligne | Ce qui manque, et ce n'est pas du code |
-|---|---|
-| A3 · Mentions légales | Un SIREN. Rien d'autre. |
-| A6 · Transferts hors UE | Des DPA qui se signent en tant qu'entreprise. Dépend de A5, donc de B2. |
-| E1 · CGV | Les coordonnées d'un médiateur (E4, adhésion payante) et une relecture juridique. |
-| E8 · Bouton de commande | Le code est écrit et commité. Il manque `npx supabase functions deploy stripe-org-checkout`. |
-| E9 · Garantie de conformité | Deux promesses de la landing dépendent de E5. Le correctif est un réglage du Dashboard Stripe. |
-| F4 · Accessibilité | Un effectif et un chiffre d'affaires pour qualifier l'exemption microentreprise. |
+| Famille | Lignes | Qui agit |
+|---|---|---|
+| Actes juridiques ou administratifs | A5, B2, B3, B4, B6, C2, C3, C12, D2, E4, F1, F2 | **Axel seul.** Immatriculer, ouvrir un compte, adhérer, signer, déposer. Aucun code n'y change rien. |
+| Réglages hors dépôt | C4, C5, C6, E5 | **Axel**, depuis le Dashboard Stripe. Deux minutes chacun, mais C4 à C6 supposent d'être immatriculé pour ne pas afficher une mention fausse. |
+| Développement restant | E6, C7 | Reconduction tacite (suppose un envoi d'emails, absent aujourd'hui) et facturation électronique (suppose une plateforme agréée). |
 
-Autrement dit : **quatre des six attendent l'immatriculation, deux attendent un geste manuel de
-deux minutes.** Le verrou n'est plus technique.
+**Les 11 lignes jaunes n'attendent aucun développement** : quatre sont des décisions déjà prises
+qui attendent leur exécution (B1, B5, C1, C11, D1), et les autres attendent le SIREN, un
+médiateur, ou un déploiement.
 
 ---
 
