@@ -28,6 +28,8 @@ Guide de travail dans ce dépôt. **Vérifié dans le code et contre la prod le 
 | [`docs/I18N.md`](./docs/I18N.md) | Qualité des traductions, périmètre réellement bilingue |
 | [`docs/RGPD.md`](./docs/RGPD.md) | Données personnelles, effacement, rétention, conformité B2B |
 | [`docs/LEGAL.md`](./docs/LEGAL.md) | **Obligations légales** : statut juridique, TVA, droit de la consommation, marque, sous-traitants. Tout client est un consommateur (décision 2026-08-26) |
+| [`docs/RGPD-REGISTRE.md`](./docs/RGPD-REGISTRE.md) | **Registre art. 30** : dix traitements, base légale, destinataires, durées. Pièce à produire en contrôle CNIL ou en due diligence |
+| [`docs/RGPD-VIOLATION.md`](./docs/RGPD-VIOLATION.md) | **Procédure 72 h** : qualification, marche à suivre, arbre de notification, registre des violations |
 | [`docs/STRIPE-LIVE.md`](./docs/STRIPE-LIVE.md) | Compte Stripe **live** : les 8 prix, `tax_behavior: inclusive` définitif, ce qui reste avant d'encaisser |
 | [`docs/ACCESSIBILITY.md`](./docs/ACCESSIBILITY.md) | a11y WCAG/EAA, aria, contraste |
 | [`docs/TESTING.md`](./docs/TESTING.md) | Vitest, Playwright, a11y, i18n, CI, **checklist avant push prod** |
@@ -120,6 +122,10 @@ npm run check:rls           # Invariants RLS : auth.uid() wrappé, 1 seule polic
                             # + toute fonction citée par une policy exécutable par authenticated (CI)
 npm run check:drift         # Dérive repo ↔ prod (2 étapes : --print-sql puis <introspection.json>)
 npm run i18n:check          # Parité des clés fr ↔ en (CI, bloquant)
+npm run check:legal         # Cohérence du tableau de conformité de docs/LEGAL.md :
+                            # lignes collées, identifiants en double, et surtout que la
+                            # synthèse corresponde aux lignes. Ce total a été faux TROIS
+                            # fois le 2026-08-26, toujours pour l'avoir additionné de tête.
 npm run i18n:scan           # Chaînes en dur non externalisées
 npm run i18n:namespaces     # Quels catalogues le SHELL rend (donc eager) ; --pages
                             # donne la liste à déclarer par route dans App.tsx
@@ -360,10 +366,15 @@ Garde-fous propres à cette zone :
   dire le même mot pour le même palier, comme ils annoncent déjà le même montant. Le mapping
   palier → clé est `src/modules/billing/org-tier-labels.ts` (`Record<OrgTierKey, …>`, donc un
   palier ajouté sans nom ne compile pas).
-- 🔴 **ACTIVÉ le 2026-08-25** (demande Axel). `ENTERPRISE_BILLING_ENFORCED = true` **et**
-  `billing_flags.enterprise_seat_limit = true` en prod, basculés ensemble le même jour. Les CTA
-  de paiement sont montés, la landing entreprise réaffiche ses tarifs, et le quota de sièges est
-  réellement appliqué : vérifié en base, `org_seats_allowed()` renvoie `false` pour la seule
+- 🔴 **DÉSARMÉ le 2026-08-26** (mig. `124` appliquée en prod). `ENTERPRISE_BILLING_ENFORCED = false`
+  **et** `billing_flags.enterprise_seat_limit = false`, rebasculés ensemble. **Pourquoi** : les
+  deux étaient à `true` avec une clé Stripe de TEST, et une organisation sur quatre était déjà au
+  plafond. Son parcours : invitation refusée, écran qui propose de payer, clic, checkout en mode
+  test, vraie carte refusée. Ni grandir, ni payer, ni résilier. Impasse produit, pas risque
+  juridique — aucun euro n'étant encaissé, ni travail dissimulé ni TVA due.
+  Réarmement : les deux drapeaux, **après** immatriculation et passage de Stripe en compte live.
+  Contexte du 2026-08-25 conservé ci-dessous pour mémoire, il décrivait l'état activé où
+  `org_seats_allowed()` renvoyait `false` pour la seule
   organisation qui dépasse le palier gratuit. Aucun membre n'est retiré, c'est la croissance qui
   est bloquée.
 - 🔴 **Deux réserves restent ouvertes à cette date :**
@@ -380,11 +391,16 @@ Garde-fous propres à cette zone :
   été **redéployées en prod le 2026-08-25** et fument-testées (webhook : 400 « Invalid
   signature » ; checkout : 401 JSON de la fonction elle-même, donc les modules `_shared` se
   chargent). Réactiver = rebasculer les deux drapeaux, rien à reconstruire.
-- 🔴 **Les 4 secrets `STRIPE_ORG_PRICE_*_YEARLY` NE SONT PAS POSÉS** (au 2026-08-25) : les prix
-  annuels n'ont jamais été créés côté Stripe. Seuls les 4 mensuels existent. Un checkout annuel
-  répondrait donc `tier_unavailable`. Inoffensif tant que `ENTERPRISE_BILLING_ENFORCED = false`
-  (aucun CTA de paiement n'est monté), bloquant le jour de la réactivation. Montants à créer,
-  intervalle `year` : 168 / 420 / 840 / 1 680 €, jamais l'équivalent mensuel affiché.
+- ⚠️ **Corrigé le 2026-08-26 : les 4 prix ANNUELS existent bel et bien** dans le compte de test
+  (168 / 420 / 840 / 1 680 €), contrairement à ce que ce fichier affirmait depuis le 2026-08-25.
+  Vérifié par API, pas déduit. La dérivation `resolveYearlyPriceId` n'a donc pas besoin des
+  secrets `STRIPE_ORG_PRICE_*_YEARLY`.
+- 🔴 **Le compte Stripe LIVE est désormais équipé** (2026-08-26) : 4 produits et 8 prix créés,
+  tous en `tax_behavior: inclusive`, réglage **DÉFINITIF** chez Stripe. Les 8 prix du compte de
+  TEST restent sur `unspecified`, valeur à ne jamais reproduire. Détail et identifiants :
+  [`docs/STRIPE-LIVE.md`](./docs/STRIPE-LIVE.md).
+  ❌ **Ne jamais créer un prix Stripe sans `tax_behavior` explicite** : il ne se modifie plus, il
+  faut créer un nouveau prix et migrer les abonnements.
 - 🔴 **Les deux drapeaux se déplacent ensemble.** Le flag TS ne masque que les CTA ; le blocage
   réel est `billing_flags.enterprise_seat_limit`. Serveur `true` + client `false` = un
   propriétaire se voit refuser une invitation (`seat_limit_reached`) sans qu'aucun écran ne lui
@@ -532,7 +548,7 @@ Debug : `localStorage.removeItem('cosmo_onboarding_modules_done')` puis reload.
 ## Base de données Supabase
 
 Migrations dans `supabase/migration/*.sql`, convention `NNN_<feature>.sql`.
-**127 fichiers de migration, dernière = `123_org_subscriptions_billing_interval.sql`**
+**130 fichiers de migration, dernière = `126_renewal_notices.sql`**
 (au 2026-08-25). La **123 a été appliquée en prod le 2026-08-25**, avant le redéploiement de
 `stripe-webhook`, qui écrit désormais `billing_interval`.
 **Toutes appliquées en prod**, ledger relu en base le 2026-08-25, `115` → `123` comprises.
@@ -904,6 +920,26 @@ Codes entre parenthèses = bugs historiques ayant motivé la règle.
 - ❌ Insérer N lignes dans `kr_completions` depuis un `count` client non clampé — cap 100/write (B18)
 - ❌ `JSON.parse(localStorage.getItem(...))` sans `try/catch` — utiliser `safeParse<T>` (B14)
 - ❌ Réintroduire des gates `isPremium()` sur le partage de tâches / la collaboration
+
+### Journal fiscal et consentement (2026-08-26)
+
+- ❌ **Ne JAMAIS ajouter de policy UPDATE ou DELETE sur `payment_records` ou `payment_closures`,
+  ni les inclure dans une purge.** C'est le journal d'encaissement inaltérable (mig. `125`,
+  CGI art. 286-I-3° bis). L'immuabilité est portée par un **trigger**, pas par la RLS, parce que
+  `service_role` contourne la RLS mais pas les triggers. Une purge RGPD doit **anonymiser**
+  `user_id`, jamais supprimer la ligne : l'obligation de conservation prime (RGPD art. 17.3.b).
+  Une erreur se corrige par une ligne compensatoire, comme en comptabilité.
+- ❌ **Ne jamais lire `cosmo_cookie_consent` directement.** Passer par
+  `src/lib/cookie-consent.ts`, et par `useCookieConsent()` dans React. La dispersion est
+  exactement ce qui a permis au bandeau de proposer un choix qu'aucune ligne de code
+  n'appliquait. **Tout nouveau traceur doit être conditionné** : `null` n'est pas une
+  acceptation tacite.
+- ❌ **Ne jamais rendre une garde conditionnelle à la présence de son propre secret.**
+  `if (SECRET && header !== SECRET)` laisse passer tout le monde tant que le secret n'est pas
+  posé : on ne se protège que quand on est déjà protégé. Bug introduit puis corrigé le
+  2026-08-26 dans `renewal-notice`.
+- ⚠️ **`renewal_notices` est une PREUVE**, pas un cache. Ne jamais la purger : c'est ce qu'on
+  produit si un client conteste une reconduction (Conso. art. L215-1).
 
 ### Sécurité & env
 
