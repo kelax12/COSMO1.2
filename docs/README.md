@@ -64,11 +64,12 @@ contre la doc :
   fois, et s'est trompé deux fois. **L'état de la facturation se lit dans
   `src/modules/billing/premium-config.ts` et dans `billing_flags`, jamais dans un document.**
 
-> 🔴 **Un seul point bloque encore, en fin de journée du 2026-08-25, et ce n'est pas une faille :**
-> la clé Stripe de production reste une **clé de test** alors que le quota de sièges, lui, est
-> réellement appliqué depuis ce soir. Un client bloqué à 5 membres ne peut pas payer pour se
-> débloquer. Détail :
-> [`archive/RAPPORT-MODE-ENTREPRISE-2026-08-12.md`](./archive/RAPPORT-MODE-ENTREPRISE-2026-08-12.md) §4.15.
+> ✅ **Refermé le 2026-08-26.** Ce point n'était pas theorique : mesuré en base, **une
+> organisation sur quatre était déjà au plafond**, donc réellement dans l'impasse décrite ici.
+> Les deux drapeaux sont repassés à `false` ensemble (mig. `124` appliquée en prod, et
+> `ENTERPRISE_BILLING_ENFORCED = false`). Plus de quota appliqué, plus de CTA de paiement, et la
+> croissance est débloquée. Réarmement = les deux drapeaux, après immatriculation et passage de
+> Stripe en compte live. Détail : [`LEGAL.md`](./LEGAL.md).
 >
 > ✅ **Le second point est levé** : `npm run test:coverage` bloquait la CI en milieu de journée,
 > il est vert depuis la campagne de tests du soir. Détail dans [`TESTING.md`](./TESTING.md).
@@ -110,6 +111,8 @@ testées** (`scripts/migration-guards.test.mjs`).
 | [`ACQUISITION.md`](./ACQUISITION.md) | Attribution `?ref=`, funnel mesuré en prod, runbook — **audit du 2026-08-14** |
 | [`I18N.md`](./I18N.md) | Qualité réelle des traductions, périmètre bilingue — **audit du 2026-08-14** |
 | [`RGPD.md`](./RGPD.md) | Inventaire des données personnelles, droits, rétention · **remesuré le 2026-08-25, note 84** |
+| [`RGPD-REGISTRE.md`](./RGPD-REGISTRE.md) | Registre des activites de traitement (RGPD art. 30) · **cree le 2026-08-26** |
+| [`RGPD-VIOLATION.md`](./RGPD-VIOLATION.md) | Procedure de violation de donnees sous 72 h (RGPD art. 33-34) · **cree le 2026-08-26** |
 | [`LEGAL.md`](./LEGAL.md) | Obligations légales du fondateur : statut, TVA, droit de la consommation, marque, sous-traitants · **créé le 2026-08-26**, non noté (ce n'est pas un audit) |
 | [`STRIPE-LIVE.md`](./STRIPE-LIVE.md) | Compte Stripe live : les 8 prix et le `tax_behavior` définitif · **créé le 2026-08-26** |
 | [`POST-AUDIT-GUIDE.md`](./POST-AUDIT-GUIDE.md) | Réactivation premium (`PREMIUM_ENFORCED`), finalisation Stripe |
