@@ -40,3 +40,11 @@ verify_jwt = true
 # JWT, jamais par le corps de la requête.
 [functions.report-bug]
 verify_jwt = true
+
+# renewal-notice n est appelee par AUCUN utilisateur : c est un travail
+# quotidien declenche par la CI. Elle n a donc pas de JWT a verifier, et son
+# autorisation repose sur le secret partage CRON_SECRET, verifie dans le corps
+# de la fonction. Sans cette ligne, la CI recevrait un 401 de la plateforme
+# avant meme d atteindre le code.
+[functions.renewal-notice]
+verify_jwt = false

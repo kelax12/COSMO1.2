@@ -1,0 +1,44 @@
+# ═══════════════════════════════════════════════════════════════════
+# Avis de reconduction tacite — obligation quotidienne (Conso. L215-1)
+#
+# Declenche l Edge Function `renewal-notice`, qui previent les clients dont
+# l abonnement ANNUEL se reconduit dans 30 a 60 jours.
+#
+# Pourquoi la CI et pas pg_cron : appeler une Edge Function depuis Postgres
+# exigerait l extension pg_net, non installee. Un workflow planifie fait le
+# meme travail sans ajouter de dependance en base.
+#
+# ⚠️ Ne PAS supprimer ce workflow en croyant nettoyer : son absence ne casse
+# rien de visible, elle fait juste que les avis cessent de partir. Et un avis
+# non envoye rend l abonnement resiliable a tout moment, remboursement compris.
+# ═══════════════════════════════════════════════════════════════════
+name: renewal-notice
+
+on:
+  schedule:
+    # 07:12 UTC, tous les jours. Heure decalee des autres crons du depot pour
+    # ne pas empiler les executions sur la meme minute.
+    - cron: '12 7 * * *'
+  workflow_dispatch:
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Declencher les avis de reconduction
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$CRON_SECRET" ]; then
+            echo "::warning::SUPABASE_URL ou CRON_SECRET absent — aucun avis declenche."
+            exit 0
+          fi
+          code=$(curl -s -o /tmp/out.json -w '%{http_code}' -X POST \
+            "$SUPABASE_URL/functions/v1/renewal-notice" \
+            -H "x-cron-secret: $CRON_SECRET")
+          echo "HTTP $code"; cat /tmp/out.json; echo
+          # Un echec doit etre VISIBLE : l obligation est quotidienne, et un
+          # workflow vert sur une fonction en erreur ferait passer un
+          # manquement pour un jour normal.
+          [ "$code" = "200" ]
