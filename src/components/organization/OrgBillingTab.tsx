@@ -41,6 +41,26 @@ export function OrgBillingTab({ orgId, isOwner, memberCount, onBack }: Props) {
   // de Stripe via le webhook (`subscription.billingInterval`).
   const [billingInterval, setBillingInterval] = useState<OrgBillingInterval>('monthly');
 
+  // ── Renonciation au droit de rétractation (Conso. art. L221-28, 13°) ──
+  //
+  // Un service numérique fourni immédiatement échappe aux 14 jours de
+  // rétractation SEULEMENT si le client a donné son accord exprès à
+  // l'exécution immédiate ET reconnu explicitement renoncer à son droit.
+  // DEUX manifestations distinctes, pas une : une seule case couvrant les deux
+  // ne vaut pas accord exprès.
+  //
+  // Le recueil se fait ICI et non dans Stripe Checkout : `consent_collection`
+  // exige une URL de conditions générales configurée au Dashboard, absente
+  // aujourd'hui, et son activation ferait ÉCHOUER la création de session. Le
+  // faire côté COSMO ne dépend d'aucun réglage externe et nous laisse la preuve.
+  //
+  // ❌ Ne jamais pré-cocher ces cases, ni les fusionner : un consentement
+  //    pré-coché n'est pas un consentement, et c'est précisément ce que le
+  //    texte vise.
+  const [immediateExecution, setImmediateExecution] = useState(false);
+  const [waivesWithdrawal, setWaivesWithdrawal] = useState(false);
+  const withdrawalConsentGiven = immediateExecution && waivesWithdrawal;
+
   // Retour de Stripe : on consomme le paramètre pour qu'un rafraîchissement ne
   // rejoue pas le toast.
   const checkoutResult = searchParams.get('checkout');
@@ -165,10 +185,43 @@ export function OrgBillingTab({ orgId, isOwner, memberCount, onBack }: Props) {
         </p>
       )}
 
+      {/* Double consentement — monté seulement quand un paiement est réellement
+          possible. Inutile d'imposer des cases à qui ne peut pas payer. */}
+      {canPay && (
+        <fieldset className="flex flex-col gap-2 rounded-lg border border-[rgb(var(--color-border))] p-3">
+          <legend className="px-1 text-xs font-semibold text-[rgb(var(--color-text-secondary))]">
+            {t('billing.withdrawalLegend')}
+          </legend>
+          <label className="flex items-start gap-2 text-xs text-[rgb(var(--color-text-secondary))]">
+            <input
+              type="checkbox"
+              checked={immediateExecution}
+              onChange={(e) => setImmediateExecution(e.target.checked)}
+              className="mt-0.5 shrink-0"
+            />
+            <span>{t('billing.withdrawalImmediate')}</span>
+          </label>
+          <label className="flex items-start gap-2 text-xs text-[rgb(var(--color-text-secondary))]">
+            <input
+              type="checkbox"
+              checked={waivesWithdrawal}
+              onChange={(e) => setWaivesWithdrawal(e.target.checked)}
+              className="mt-0.5 shrink-0"
+            />
+            <span>{t('billing.withdrawalWaiver')}</span>
+          </label>
+          {!withdrawalConsentGiven && (
+            <p className="text-xs text-[rgb(var(--color-text-secondary))]">
+              {t('billing.withdrawalHint')}
+            </p>
+          )}
+        </fieldset>
+      )}
+
       <EnterpriseTierGrid
         currentTier={subscription?.tierKey}
         onSelect={
-          canPay
+          canPay && withdrawalConsentGiven
             ? (tierKey) =>
                 checkout.mutate(
                   { orgId, tierKey, interval: billingInterval },

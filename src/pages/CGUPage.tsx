@@ -74,16 +74,45 @@ const CGUPage: React.FC = () => {
           </ul>
         </Section>
 
-        <Section title="5. Abonnement Premium">
+        <Section title="5. Abonnement payant">
           <p>
-            Certaines fonctionnalités avancées sont accessibles via un abonnement Premium. Les tarifs et modalités sont présentés dans l'application.
+            L'espace entreprise de Cosmo est proposé en plusieurs forfaits, dont un forfait gratuit.
+            Les forfaits payants se distinguent par le nombre de membres autorisés dans
+            l'organisation. Les tarifs en vigueur sont affichés dans l'application et sur la page
+            de présentation.
           </p>
           <ul className="list-disc list-inside space-y-1 mt-2">
-            <li>Le paiement est traité de manière sécurisée via <strong className="text-white">Stripe</strong></li>
-            <li>L'abonnement est renouvelé automatiquement selon la période choisie (mensuelle ou annuelle)</li>
-            <li>Vous pouvez annuler votre abonnement à tout moment depuis les paramètres de votre compte</li>
-            <li>Conformément à la législation française, vous disposez d'un droit de rétractation de 14 jours après la souscription initiale</li>
+            <li><strong className="text-white">Tous les prix sont indiqués TTC</strong> : le montant affiché est le montant débité</li>
+            <li>Le paiement est traité de manière sécurisée via <strong className="text-white">Stripe</strong>. Cosmo n'a jamais accès à vos coordonnées bancaires</li>
+            <li>L'abonnement est souscrit par le propriétaire de l'organisation, pour l'organisation entière</li>
+            <li>Il est renouvelé automatiquement selon la périodicité choisie, mensuelle ou annuelle, jusqu'à sa résiliation</li>
+            <li>Vous pouvez le résilier <strong className="text-white">à tout moment</strong> depuis votre espace entreprise, en un nombre minimal d'étapes. La résiliation prend effet à la fin de la période déjà payée</li>
+            <li>Si votre abonnement cesse d'être actif, votre organisation revient au forfait gratuit. <strong className="text-white">Aucun membre n'est jamais retiré</strong> : seule la possibilité d'en ajouter est suspendue</li>
           </ul>
+        </Section>
+
+        <Section title="5 bis. Droit de rétractation">
+          <p>
+            Si vous souscrivez en qualité de consommateur, vous disposez d'un délai de{' '}
+            <strong className="text-white">quatorze jours</strong> à compter de la souscription pour
+            vous rétracter, sans avoir à motiver votre décision.
+          </p>
+          <p className="mt-2">
+            L'abonnement portant sur un service numérique fourni immédiatement, la loi vous permet
+            de demander son exécution sans attendre la fin de ce délai. Dans ce cas, le tunnel de
+            paiement vous demande deux confirmations distinctes : votre{' '}
+            <strong className="text-white">demande expresse d'exécution immédiate</strong>, et votre{' '}
+            <strong className="text-white">reconnaissance de renoncer</strong> à votre droit de
+            rétractation une fois le service pleinement fourni. Ces deux cases ne sont jamais
+            pré-cochées, et le paiement ne peut être engagé sans elles.
+          </p>
+          <p className="mt-2">
+            Si vous ne donnez pas ces confirmations, vous conservez l'intégralité de votre délai de
+            quatorze jours. Pour exercer votre rétractation, il suffit de nous écrire à{' '}
+            <a href="mailto:axellongattepro@gmail.com" className="text-blue-400 hover:underline">axellongattepro@gmail.com</a>{' '}
+            en indiquant votre demande. Le remboursement intervient au plus tard quatorze jours après
+            réception de celle-ci.
+          </p>
         </Section>
 
         <Section title="6. Propriété des données">
