@@ -8,7 +8,7 @@
 > phrase ici ne protège en cas de contrôle. Les points marqués ⚠️ portaient, à cette date, sur
 > des textes déjà modifiés au moins une fois : ils se revérifient à la source.
 
-**Plan** : [État des lieux](#état-des-lieux-au-2026-08-26) · [La décision structurante](#-la-décision-structurante--tout-client-est-un-consommateur)
+**Plan** : [État des lieux](#état-des-lieux-au-2026-08-26) · [**Tableau de conformité**](#-tableau-de-conformité) · [La décision structurante](#-la-décision-structurante--tout-client-est-un-consommateur)
 · [Actif aujourd'hui](#1-actif-aujourdhui-sans-structure) · [À la création](#2-à-la-création-de-la-structure)
 · [Au premier euro](#3-au-premier-euro-encaissé) · [Droit de la consommation](#4-droit-de-la-consommation)
 · [Produit et marque](#5-produit-marque-et-dépendances) · [Sous-traitants](#6-sous-traitants-et-transferts)
@@ -47,6 +47,111 @@ fait porter un risque réel et non évident :
 
 Un rendez-vous ponctuel de cadrage, sans mission de suivi, couvre ces trois points pour un coût
 limité. Ce n'est pas la même dépense qu'une mission annuelle.
+
+---
+
+## 📋 Tableau de conformité
+
+**Légende** : ✅ bon · 🟡 partiellement bon · ❌ à faire · ⬜ sans objet aujourd'hui
+
+> ⚠️ **Ce tableau au vert ne vaut pas conformité.** Il est établi par un assistant, contre
+> l'état du code à une date. Trois raisons pour lesquelles « tout vert » ne veut pas dire
+> « en règle » : certaines lignes exigent un jugement professionnel que je ne peux pas rendre
+> (§ franchise en base et logiciel d'encaissement), les textes bougent, et un contrôleur
+> apprécie la situation réelle. Le tableau sert à ne rien oublier et à mesurer l'avancement,
+> pas à délivrer un quitus.
+
+### A. Données personnelles — **actif dès aujourd'hui**, sans structure
+
+| # | Obligation | Statut | Ce qui manque exactement |
+|---|---|:--:|---|
+| A1 | Registre des activités de traitement (art. 30) | ❌ | Aucun document au format attendu. `docs/RGPD.md` est un doc technique, pas un registre. |
+| A2 | Politique de confidentialité (art. 12 à 14) | 🟡 | `PolitiqueConfidentialitePage.tsx` existe et liste les droits. À auditer contre les 12 mentions, notamment bases légales, durées et transferts. |
+| A3 | Mentions légales (LCEN art. 6-III) | 🟡 | `MentionsLegalesPage.tsx` existe, avec email éditeur et les deux hébergeurs. Manque l'identité complète, à ajouter **après immatriculation** (dénomination, SIREN, RCS, TVA, directeur de publication). |
+| A4 | Consentement aux traceurs (art. 82) | 🟡 | 🔴 **Le bandeau ne conditionne rien.** `CookieBanner.tsx` écrit `cosmo_cookie_consent`, mais ni Vesk (`src/lib/audience.ts`) ni Vercel Analytics (`App.tsx`) ne lisent cette clé. Refuser ne change rien. Les deux sont sans cookie et **peuvent** relever de l'exemption CNIL de mesure d'audience : soit on le confirme et le bandeau doit cesser de promettre un choix qu'il n'applique pas, soit on conditionne réellement le chargement. |
+| A5 | Contrats de sous-traitance (art. 28) | ❌ | Aucun DPA collecté ni archivé. Voir §6 pour la liste. |
+| A6 | Transferts hors UE (chap. V) | 🟡 | ✅ Supabase en `eu-west-1`, donc dans l'Union. ❌ Vercel et Sentry sont américains : mécanisme de transfert à documenter. |
+| A7 | Notification de violation sous 72 h (art. 33) | ❌ | Aucune procédure écrite. À rédiger à froid, le délai ne permet pas d'improviser. |
+| A8 | Droits des personnes (art. 15 à 22) | 🟡 | ✅ Export CSV (`src/lib/csv-export.ts`, portabilité) et suppression de compte (Edge Function `delete-account`) existent. À vérifier que l'export couvre **toutes** les tables et à documenter le délai de réponse d'un mois. |
+| A9 | Sécurité du traitement (art. 32) | 🟡 | RLS, CSP, en-têtes Vercel et scrubbing Sentry sont en place et sérieux. Manque la formalisation écrite des mesures, qui est ce qu'on présente en contrôle. |
+| A10 | Analyse d'impact (art. 35) | ⬜ | Probablement non requise pour ce traitement. À confirmer, et à réexaminer si des agents IA traitent du contenu utilisateur. |
+
+### B. Structure juridique — **se déclenche à la création**
+
+| # | Obligation | Statut | Ce qui manque exactement |
+|---|---|:--:|---|
+| B1 | Choix de la forme juridique | ❌ | Non arbitré. Décision la plus lourde du document. |
+| B2 | Immatriculation au guichet unique INPI | ❌ | Aucun SIREN. **Bloquant absolu de tout encaissement.** |
+| B3 | Compte bancaire dédié | ❌ | Obligatoire pour une société ; en micro, au-delà de 10 000 € deux années de suite. |
+| B4 | Déclaration CFE initiale | ❌ | À déposer avant le 31 décembre de l'année de création. Exonération la 1re année mais **la déclaration reste due**. |
+| B5 | Domiciliation | ❌ | Le domicile personnel est écarté. Modalité de remplacement non choisie. |
+| B6 | Assurance RC professionnelle | ❌ | Pas obligatoire légalement, mais exigée contractuellement par les acheteurs entreprise. |
+
+### C. Fiscal et facturation — **se déclenche au premier euro**
+
+| # | Obligation | Statut | Ce qui manque exactement |
+|---|---|:--:|---|
+| C1 | Régime de TVA à déterminer | ❌ | ⚠️ Seuils services 37 500 € et 41 250 €, réforme du seuil unique votée puis suspendue. À revérifier à la date de création. |
+| C2 | Numéro de TVA intracommunautaire | ❌ | Nécessaire **même en franchise en base**, à cause de C3. |
+| C3 | Autoliquidation de la TVA sur les achats étrangers | ❌ | 🔴 Due dès aujourd'hui si la structure existait : Supabase, Vercel, Sentry et les frais Stripe sont tous étrangers. **Stripe Tax ne couvre pas ce point**, il ne connaît que les ventes. Règle la plus souvent ignorée. |
+| C4 | Mention « TVA non applicable, art. 293 B du CGI » | ❌ | À configurer dans les factures Stripe tant que la franchise s'applique. Pas posé par défaut. |
+| C5 | Mentions obligatoires des factures | ❌ | Le modèle Stripe n'est pas configuré pour la France. À auditer contre L441-9 et 242 nonies A. |
+| C6 | Numérotation chronologique continue | ❌ | À vérifier côté Stripe : aucune rupture de séquence ne doit être possible. |
+| C7 | Facturation électronique | ❌ | ⚠️ Calendrier décalé plusieurs fois. Chantier plus lourd que C9. |
+| C8 | Guichet OSS (ventes B2C dans l'UE) | ⬜ | Sans objet tant que le marché reste français. Se déclenche au-delà de 10 000 € de ventes numériques à des consommateurs européens. |
+| C9 | Conformité du logiciel d'encaissement | ❌ | Aucun journal inaltérable : `org_subscriptions` est **muté en place** par le webhook, `processed_stripe_events` n'est qu'une déduplication technique. ⚠️ Trancher d'abord si la franchise en base est visée : la réponse vaut 2 à 4 jours de développement. |
+| C10 | Conservation des pièces | ❌ | 10 ans comptable, 6 ans fiscal. Aucune purge, RGPD comprise, ne doit les atteindre. |
+| C11 | Comptabilité (livre des recettes ou complète) | ❌ | Selon la forme retenue en B1. |
+| C12 | Déclarations fiscales annuelles | ❌ | Selon la forme retenue en B1. |
+
+### D. Social — **se déclenche à la création, puis à l'embauche**
+
+| # | Obligation | Statut | Ce qui manque exactement |
+|---|---|:--:|---|
+| D1 | Affiliation sociale du dirigeant | ❌ | Indépendant ou assimilé salarié selon B1. Écart de plusieurs milliers d'euros par an. |
+| D2 | Déclarations et cotisations URSSAF | ❌ | Dues même sans rémunération dans certains cas. |
+| D3 | Obligations d'employeur | ⬜ | Aucun salarié. Se déclenche au premier : DPAE, convention collective, DUERP, mutuelle, santé au travail, DSN, registre du personnel. |
+
+### E. Droit de la consommation — **s'applique à TOUTE l'offre**
+
+Par l'effet de la décision structurante ci-dessous : aucun client n'est vérifié comme professionnel.
+
+| # | Obligation | Statut | Ce qui manque exactement |
+|---|---|:--:|---|
+| E1 | CGV communiquées avant le contrat | 🟡 | `CGUPage.tsx` a une section « 5. Abonnement Premium » qui couvre Stripe, la reconduction et la rétractation. Mais elle décrit une offre **premium particulier** qui n'est pas l'offre vendue, et ne couvre ni les paliers entreprise, ni le médiateur, ni les modalités de remboursement. À reprendre. |
+| E2 | Information précontractuelle | ❌ | Caractéristiques essentielles, prix TTC, durée, reconduction, à présenter avant la validation. |
+| E3 | Rétractation 14 jours et double consentement | 🟡 | 🔴 Les CGU **accordent déjà** 14 jours de rétractation, sans mécanisme de renonciation. Tu dois donc rembourser sur demande. Pour l'écarter légalement il faut les deux cases dans le tunnel : accord exprès à l'exécution immédiate **et** renonciation explicite. |
+| E4 | Médiateur de la consommation | ❌ | Adhésion **payante et obligatoire**, coordonnées à publier dans les CGV et sur le site. Oubli classique, sanctionné par la DGCCRF. |
+| E5 | Résiliation en ligne (L215-1-1) | 🟡 | `stripe-org-portal` permet la résiliation depuis l'app, et les CGU l'annoncent. **À tester réellement de bout en bout** avant de le déclarer bon. |
+| E6 | Information de reconduction tacite | ❌ | 🔴 Déclenchée par la facturation **annuelle** livrée le 2026-08-25. Aucun envoi automatisé. |
+| E7 | Affichage des prix TTC | 🟡 | ✅ Les 8 prix live sont en `tax_behavior: inclusive`, ce qui est cohérent. ❌ Mais **aucune mention TTC n'est affichée** dans la grille tarifaire ni dans les catalogues. |
+| E8 | Bouton de commande explicite | 🟡 | Stripe Checkout est en principe conforme. À vérifier sur le tunnel réel : « Valider » seul rend le contrat inopposable. |
+| E9 | Garantie de conformité du service numérique | 🟡 | À auditer contre les promesses de la landing : une fonctionnalité annoncée et non livrée devient un défaut opposable. |
+
+### F. Produit, marque et dépendances
+
+| # | Obligation | Statut | Ce qui manque exactement |
+|---|---|:--:|---|
+| F1 | Recherche d'antériorité sur le nom | ❌ | 🔴 **Jamais faite.** Nom court et générique, risque élevé. Meilleur rapport coût sur risque du document : à faire avant d'investir davantage en acquisition. |
+| F2 | Dépôt de marque INPI | ❌ | Pas obligatoire, mais sans dépôt aucun droit exclusif sur le nom. Dépend de F1. |
+| F3 | Conformité des licences open source | ❌ | Inventaire à produire, attributions à publier, absence de licence à réciprocité forte à vérifier. |
+| F4 | Accessibilité (législation européenne) | 🟡 | Un travail a été engagé côté produit (`docs/ACCESSIBILITY.md`). ⚠️ Exemption microentreprise à vérifier, et seuil à surveiller. Demandé par les acheteurs B2B de toute façon. |
+| F5 | Transparence des systèmes d'IA | ⬜ | ⚠️ Se déclenche si la direction produit vers des agents IA se concrétise. À prévoir dès la conception. |
+| F6 | Obligations liées au partage entre utilisateurs | ⬜ | Micro et petites entreprises largement exemptées, mais pas de tout. Qualification à faire. |
+
+### Où en es-tu
+
+| Statut | Nombre |
+|---|---|
+| ✅ Bon | 0 |
+| 🟡 Partiellement bon | 13 |
+| ❌ À faire | 26 |
+| ⬜ Sans objet aujourd'hui | 6 |
+
+Aucune ligne n'est pleinement verte, mais **treize sont déjà à moitié faites** : les pages
+légales existent, l'export et la suppression de compte fonctionnent, la sécurité technique est
+sérieuse, la base est dans l'Union et le réglage TTC est correct. L'essentiel du reste ne peut
+pas passer au vert avant l'immatriculation, qui est le vrai verrou.
 
 ---
 
