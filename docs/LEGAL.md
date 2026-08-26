@@ -124,7 +124,7 @@ Par l'effet de la décision structurante ci-dessous : aucun client n'est vérifi
 | E4 | Médiateur de la consommation | ❌ | Adhésion **payante et obligatoire**, coordonnées à publier dans les CGV et sur le site. Oubli classique, sanctionné par la DGCCRF. |
 | E5 | Résiliation en ligne (L215-1-1) | 🟡 | `stripe-org-portal` permet la résiliation depuis l'app, et les CGU l'annoncent. **À tester réellement de bout en bout** avant de le déclarer bon. |
 | E6 | Information de reconduction tacite | ❌ | 🔴 Déclenchée par la facturation **annuelle** livrée le 2026-08-25. Aucun envoi automatisé. |
-| E7 | Affichage des prix TTC | 🟡 | ✅ Les 8 prix live sont en `tax_behavior: inclusive`, ce qui est cohérent. ❌ Mais **aucune mention TTC n'est affichée** dans la grille tarifaire ni dans les catalogues. |
+| E7 | Affichage des prix TTC | ✅ | Les 8 prix live sont en `tax_behavior: inclusive`, et la mention « Tous les prix sont affichés TTC » est rendue sous la grille publique (`PricingSection.tsx`) **et** sous la grille produit (`OrgBillingTab.tsx`), en fr et en en. Corrigé le 2026-08-26. |
 | E8 | Bouton de commande explicite | 🟡 | Stripe Checkout est en principe conforme. À vérifier sur le tunnel réel : « Valider » seul rend le contrat inopposable. |
 | E9 | Garantie de conformité du service numérique | 🟡 | À auditer contre les promesses de la landing : une fonctionnalité annoncée et non livrée devient un défaut opposable. |
 
@@ -143,12 +143,12 @@ Par l'effet de la décision structurante ci-dessous : aucun client n'est vérifi
 
 | Statut | Nombre |
 |---|---|
-| ✅ Bon | 0 |
-| 🟡 Partiellement bon | 13 |
+| ✅ Bon | 1 |
+| 🟡 Partiellement bon | 12 |
 | ❌ À faire | 26 |
 | ⬜ Sans objet aujourd'hui | 6 |
 
-Aucune ligne n'est pleinement verte, mais **treize sont déjà à moitié faites** : les pages
+Une seule ligne est pleinement verte, mais **douze sont à moitié faites** : les pages
 légales existent, l'export et la suppression de compte fonctionnent, la sécurité technique est
 sérieuse, la base est dans l'Union et le réglage TTC est correct. L'essentiel du reste ne peut
 pas passer au vert avant l'immatriculation, qui est le vrai verrou.

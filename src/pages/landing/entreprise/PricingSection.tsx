@@ -164,6 +164,12 @@ const PricingSection: React.FC<{ onRegister: () => void }> = ({ onRegister }) =>
           {billingInterval === 'yearly' && (
             <p className="text-sm text-slate-500">{t('enterprise.pricing.intervalYearlyNote')}</p>
           )}
+          {/* Affichage TTC — obligation d'affichage au consommateur (Code de la
+              consommation art. L112-1), et pas une coquetterie : rien ne vérifie
+              qu'un acheteur est un professionnel, donc tout acheteur peut en être
+              un. Cohérent avec `tax_behavior: inclusive` posé sur les 8 prix
+              Stripe live, qui est DÉFINITIF. Voir docs/LEGAL.md ligne E7. */}
+          <p className="text-sm text-slate-500">{t('enterprise.pricing.vatIncluded')}</p>
         </div>
 
         {/* ── Le curseur : « combien êtes-vous ? » ── */}

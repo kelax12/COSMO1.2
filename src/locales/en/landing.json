@@ -445,6 +445,7 @@
       "sliderAria": "Number of members in your organisation",
       "membersUnit": "members",
       "perMonth": "/ month",
+      "vatIncluded": "All prices shown include VAT.",
       "intervalAria": "Billing period",
       "intervalMonthly": "Monthly",
       "intervalYearly": "Yearly",
