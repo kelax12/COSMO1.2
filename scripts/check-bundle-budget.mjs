@@ -30,21 +30,36 @@ const ASSETS = join(ROOT, 'dist', 'assets');
 /**
  * Plafonds en OCTETS GZIP, posés au-dessus du mesuré avec une marge courte.
  *
- * `entry` est le seul qui compte vraiment : c'est le JavaScript que tout
- * visiteur télécharge, y compris celui qui rebondit. Les chunks lazy ne sont
- * payés que par ceux qui ouvrent l'écran correspondant.
+ * `critical` est celui qui compte : c'est le JavaScript que tout visiteur
+ * télécharge, y compris celui qui rebondit. Les chunks lazy ne sont payés que
+ * par ceux qui ouvrent l'écran correspondant.
  */
 const BUDGETS = {
-  // Mesuré 87 216 o le 2026-08-25, contre 138 987 o le matin même : découpage
-  // des catalogues i18n par page, puis sortie de `clsx` du chunk
-  // `vendor-charts`. Plafond posé ~5 % au-dessus.
+  // ── LE budget qui compte ──
   //
-  // Le budget PRODUIT reste 150 000 o (docs/PERFORMANCE.md) : c'est la limite
-  // au-delà de laquelle le premier rendu devient perceptiblement lent sur un
-  // mobile de milieu de gamme. Ce cliquet est plus strict exprès, il défend la
-  // marge qu'on vient de gagner au lieu d'attendre qu'elle soit consommée.
-  entry: 92_000,
-  // Le plus gros chunk de page. `OrganizationPage` mesure 64 169 o.
+  // Somme gzip du chunk d'entrée ET de tout ce que `dist/index.html` précharge.
+  // C'est ce qu'un visiteur télécharge avant de voir quoi que ce soit, y compris
+  // celui qui arrive sur la landing et repart.
+  //
+  // Mesuré 393 850 o le 2026-08-26. Plafond ~1,5 % au-dessus.
+  //
+  // ⚠️ Ce budget a REMPLACÉ « taille du chunk d'entrée » comme mesure
+  // principale, et le remplacement vient d'une erreur réelle : en sortant les
+  // primitives Radix de leur chunk groupé, l'entrée a GROSSI de 19 ko pendant
+  // que le chemin critique MAIGRISSAIT de 26 ko. L'ancienne mesure aurait
+  // refusé une amélioration. Une garde qui mesure le mauvais nombre est pire
+  // qu'une garde absente : elle donne tort à la bonne décision.
+  critical: 400_000,
+
+  // Mesure secondaire, conservée pour attraper le cas inverse : une entrée qui
+  // enfle sans que le nombre de préchargements bouge. Le plafond est passé de
+  // 92 à 112 ko le 2026-08-26, et c'est la SEULE fois où remonter un plafond
+  // est la bonne réponse : l'entrée a absorbé du code qui était préchargé à
+  // côté, donc le total a baissé. Vérifier `critical` avant de toucher à
+  // celui-ci.
+  entry: 112_000,
+
+  // Le plus gros chunk de page. `OrganizationPage` mesure ~64 ko.
   page: 70_000,
 };
 
@@ -98,15 +113,48 @@ const entry = entryMatch ? measured.find((m) => m.name === entryMatch[1]) : null
 const errors = [];
 const report = [];
 
+// Le chemin critique = l'entrée PLUS tout ce que le HTML précharge. On le lit
+// dans `dist/index.html` plutôt que de le déduire des noms de fichiers : c'est
+// le navigateur qui décide de ce qu'il télécharge, pas nos conventions de
+// nommage. C'est exactement ce qui avait laissé passer `vendor-charts`, un
+// chunk « lazy » de 117 ko préchargé pour tout le monde.
+const preloaded = [
+  ...html.matchAll(/<link[^>]+rel="modulepreload"[^>]+href="\/assets\/([^"]+)"/g),
+].map((m) => m[1]);
+
+const criticalNames = new Set(entry ? [entry.name, ...preloaded] : preloaded);
+const critical = measured
+  .filter((m) => criticalNames.has(m.name))
+  .sort((a, b) => b.gzip - a.gzip);
+const criticalTotal = critical.reduce((s, m) => s + m.gzip, 0);
+
 if (!entry) {
-  errors.push("Chunk d'entrée introuvable dans dist/index.html, le contrôle ne mesure rien.");
-} else {
-  report.push(`entry  ${entry.name}  ${KB(entry.gzip)}  (plafond ${KB(BUDGETS.entry)})`);
+  errors.push("Chunk d'entrée introuvable dans dist/index.html — le contrôle ne mesure rien.");
+}
+
+report.push(
+  `critique  ${String(critical.length).padStart(2)} chunks  ${KB(criticalTotal).padStart(9)}  (plafond ${KB(BUDGETS.critical)})`
+);
+for (const m of critical) report.push(`   ${KB(m.gzip).padStart(9)}  ${m.base}`);
+
+if (criticalTotal > BUDGETS.critical) {
+  errors.push(
+    [
+      `Chemin critique : ${KB(criticalTotal)} > ${KB(BUDGETS.critical)}.`,
+      `  C'est ce que TOUT visiteur télécharge avant de voir la page.`,
+      ...critical.map((m) => `    ${KB(m.gzip).padStart(9)}  ${m.base}`),
+      `  Leviers dans docs/PERFORMANCE.md. Ne pas remonter le plafond.`,
+    ].join('\n')
+  );
+}
+
+if (entry) {
+  report.push(`entrée    ${KB(entry.gzip).padStart(9)}  (plafond ${KB(BUDGETS.entry)})`);
   if (entry.gzip > BUDGETS.entry) {
     errors.push(
       `Chunk d'entrée : ${KB(entry.gzip)} > ${KB(BUDGETS.entry)}.\n` +
-        `  C'est le JavaScript que TOUT visiteur télécharge.\n` +
-        `  Leviers dans docs/PERFORMANCE.md, ne pas remonter le plafond.`
+        `  Vérifier d'abord \`critique\` ci-dessus : si le total a baissé, c'est\n` +
+        `  que du code préchargé à côté a été absorbé, et c'est une bonne nouvelle.`
     );
   }
 }
