@@ -113,13 +113,35 @@ const PolitiqueConfidentialitePage: React.FC = () => {
         <Section title="7. Partage des données">
           <p>Vos données peuvent transiter via les sous-traitants suivants :</p>
           <ul className="list-disc list-inside space-y-2 mt-2">
-            <li><strong className="text-white">Supabase</strong> : base de données et authentification (serveurs en UE disponibles)</li>
-            <li><strong className="text-white">Vercel</strong> : hébergement du frontend (CDN mondial)</li>
+            <li><strong className="text-white">Supabase</strong> : base de données et authentification. Vos données sont hébergées dans la région <strong className="text-white">eu-west-1 (Irlande)</strong>, donc dans l'Union européenne</li>
+            <li><strong className="text-white">Vercel</strong> : hébergement du site. Traite les données de connexion (adresse IP, journaux techniques)</li>
+            <li><strong className="text-white">Vercel Analytics</strong> : mesure d'audience sans cookie, chargée uniquement si vous l'acceptez</li>
+            <li><strong className="text-white">Sentry</strong> : détection des erreurs techniques. Les adresses email et les identifiants sont retirés automatiquement avant l'envoi</li>
             <li><strong className="text-white">Stripe</strong> : traitement sécurisé des paiements</li>
             <li><strong className="text-white">Google</strong> : uniquement si vous utilisez la connexion Google OAuth</li>
-            <li><strong className="text-white">Vesk</strong> : mesure d'audience sans cookie (adresse de la page, page référente, adresse IP, navigateur)</li>
+            <li><strong className="text-white">Vesk</strong> : mesure d'audience sans cookie (adresse de la page, page référente, adresse IP, navigateur), chargée uniquement si vous l'acceptez</li>
           </ul>
           <p className="mt-3">Aucune donnée n'est vendue à des tiers. Aucun partage à des fins publicitaires ou marketing.</p>
+        </Section>
+
+        <Section title="7 bis. Transferts hors de l'Union européenne">
+          <p>
+            Votre base de données est hébergée en Irlande, donc au sein de l'Union européenne, et
+            n'en sort pas.
+          </p>
+          <p className="mt-2">
+            En revanche, <strong className="text-white">Vercel</strong> et{' '}
+            <strong className="text-white">Sentry</strong> sont des sociétés établies aux
+            États-Unis. Les données techniques qu'elles traitent pour notre compte (adresse IP,
+            journaux de connexion, rapports d'erreur expurgés) peuvent donc faire l'objet d'un
+            transfert hors de l'Union. Ces transferts sont encadrés par les clauses
+            contractuelles types de la Commission européenne ou par un mécanisme d'adéquation
+            équivalent, prévus aux articles 45 et 46 du RGPD.
+          </p>
+          <p className="mt-2">
+            Vous pouvez nous demander une copie des garanties applicables à l'adresse indiquée
+            ci-dessous.
+          </p>
         </Section>
 
         <Section title="8. Vos droits (RGPD)">
@@ -132,7 +154,17 @@ const PolitiqueConfidentialitePage: React.FC = () => {
             <li><strong className="text-white">Droit d'opposition</strong> : s'opposer à certains traitements</li>
             <li><strong className="text-white">Droit à la limitation</strong> : restreindre le traitement dans certains cas</li>
           </ul>
-          <p className="mt-3">Pour exercer ces droits : <a href="mailto:axellongattepro@gmail.com" className="text-blue-400 hover:underline">axellongattepro@gmail.com</a>. Réponse sous 30 jours.</p>
+          <p className="mt-3">
+            La portabilité s'exerce directement depuis <strong className="text-white">Paramètres, onglet Mes données</strong> :
+            l'export couvre vos tâches, habitudes, événements, OKR, catégories, listes et votre profil,
+            au format CSV.
+          </p>
+          <p className="mt-2">
+            Pour tout autre droit : <a href="mailto:axellongattepro@gmail.com" className="text-blue-400 hover:underline">axellongattepro@gmail.com</a>.
+            Nous répondons dans un délai d'<strong className="text-white">un mois</strong> à compter de la réception
+            de votre demande, conformément à l'article 12 du RGPD. Ce délai peut être prolongé de deux mois
+            en cas de demande complexe, auquel cas nous vous en informons dans le mois.
+          </p>
           <p className="mt-2">Vous pouvez également saisir la <strong className="text-white">CNIL</strong> : <a href="https://www.cnil.fr" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">www.cnil.fr</a></p>
         </Section>
 
@@ -150,9 +182,15 @@ const PolitiqueConfidentialitePage: React.FC = () => {
             <li>Choix du consentement cookie stocké en localStorage</li>
           </ul>
           <p className="mt-2 text-slate-400 text-sm">
-            Aucun cookie publicitaire ou de tracking tiers n'est déposé sur votre appareil. Notre outil de mesure
-            d'audience (Vesk) fonctionne sans cookie et n'écrit rien sur votre appareil : il ne nécessite donc pas votre
-            consentement préalable au titre de l'article 82 de la loi Informatique et Libertés.
+            Aucun cookie publicitaire ou de tracking tiers n'est déposé sur votre appareil.
+          </p>
+          <p className="mt-2 text-slate-400 text-sm">
+            Nos deux outils de mesure d'audience (Vesk et Vercel Analytics) fonctionnent sans cookie.
+            Nous avons néanmoins choisi de les soumettre à votre consentement :{' '}
+            <strong className="text-white">ils ne sont chargés que si vous cliquez sur « Accepter »</strong>{' '}
+            dans le bandeau. Tant que vous n'avez pas répondu, rien n'est chargé, et si vous refusez,
+            ils ne le sont jamais. Votre choix est conservé sur votre appareil et vous pouvez en changer
+            en effaçant les données du site.
           </p>
         </Section>
 
