@@ -898,6 +898,7 @@
     "perMonth": "par mois",
     "vatIncluded": "Tous les prix sont affichés TTC.",
     "withdrawalLegend": "Avant de payer",
+    "precontractual": "Abonnement à durée indéterminée, prix TTC, reconduit automatiquement à chaque échéance jusqu'à résiliation. Résiliable à tout moment depuis cet écran, sans motif ni frais.",
     "withdrawalImmediate": "Je demande que l'abonnement démarre immédiatement, sans attendre le délai de rétractation de 14 jours.",
     "withdrawalWaiver": "Je reconnais qu'en démarrant immédiatement, je renonce à mon droit de rétractation de 14 jours une fois le service pleinement fourni.",
     "withdrawalHint": "Ces deux confirmations sont nécessaires pour continuer.",
