@@ -549,8 +549,11 @@ Debug : `localStorage.removeItem('cosmo_onboarding_modules_done')` puis reload.
 
 Migrations dans `supabase/migration/*.sql`, convention `NNN_<feature>.sql`.
 **132 fichiers de migration, dernière = `128_events_managed_ids_indexable.sql`** (au 2026-08-26).
-🔴 **Deux migrations écrites, AUCUNE appliquée** : la `127` (`get_work_time_stats` en une seule
-passe) et la `128` (RLS `events` indexable). À appliquer dans l’ordre, la `127` en priorité.
+✅ **La `127` et la `128` ont été appliquées en prod le 2026-08-27**, dans cet ordre, chacune
+vérifiée après coup : la `127` rend un résultat identique pour les 18 comptes qui ont des données
+(comparaison par empreinte, prise avant application), la `128` laisse **une seule policy
+PERMISSIVE** sur `events`, et un manager voit toujours exactement les 30 événements non privés de
+son subordonné, zéro de celui qu’il ne gère pas.
 **Tout le reste est en prod**, ledger relu en base le 2026-08-26 : `126_renewal_notices` est la
 dernière appliquée. La `123` l’a été avant le redéploiement de `stripe-webhook`, qui écrit
 désormais `billing_interval`.

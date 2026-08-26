@@ -26,12 +26,13 @@ performance va moins bien que la sécurité, ils disent où chaque domaine se si
 
 > **2026-08-26 · les notes ne bougent pas, et c'est le résultat.** La journée a mesuré un axe que
 > ce tableau ne couvrait pas : **le coût serveur d'une session**, distinct du poids envoyé au
-> navigateur. Trois chiffres nouveaux, aucun point gagné, parce que rien n'est encore appliqué en
-> prod : l'ouverture du tableau de bord coûte **32 requêtes REST** ; **91,5 % du trafic Supabase
-> du jour venait de deux onglets jamais rechargés**, donc d'un bundle périmé ; et la lecture
-> d'agenda hiérarchique passe de **17,19 ms à 0,61 ms** avec la mig. `128`, **écrite mais non
-> appliquée**. Détail dans [`PERFORMANCE.md`](./PERFORMANCE.md) et
-> [`SCALABILITY.md`](./SCALABILITY.md) §2ter et §3.
+> navigateur. L'ouverture du tableau de bord coûte **32 requêtes REST**, et **91,5 % du trafic
+> Supabase du jour venait de deux onglets jamais rechargés**, donc d'un bundle périmé : ces deux
+> chiffres restent entiers, rien ne les a encore corrigés. Deux migrations ont en revanche été
+> **appliquées en prod le 2026-08-27** : la `127` ramène la page Statistiques de **854 ms à
+> 12,0 ms** sur 32 plages, et la `128` la lecture d'agenda hiérarchique de **17,19 ms à 0,61 ms**.
+> Aucun point n'est encore attribué : une note se remesure, elle ne s'estime pas. Détail dans
+> [`PERFORMANCE.md`](./PERFORMANCE.md) et [`SCALABILITY.md`](./SCALABILITY.md) §2ter et §3.
 >
 > ⚠️ La leçon de méthode vaut plus que les trois chiffres : **une note de performance front ne dit
 > rien du coût serveur**, et un compteur Postgres cumulé ne dit rien du débit courant. Les deux
