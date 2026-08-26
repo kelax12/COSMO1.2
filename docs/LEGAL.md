@@ -149,21 +149,21 @@ Par l'effet de la décision structurante ci-dessous : aucun client n'est vérifi
 | Statut | Nombre |
 |---|---|
 | ✅ Bon | **12** |
-| 🟡 Partiellement bon | **11** |
-| ❌ À faire | **18** |
+| 🟡 Partiellement bon | **12** |
+| ❌ À faire | **17** |
 | ⬜ Sans objet aujourd'hui | **5** |
 | **Total** | **46** |
 
 **Point de départ le matin du 2026-08-26 : 0 vert.** Sont passées au vert dans la journée :
 A1, A2, A4, A7, A8, A9, C9, C10, E2, E3, E7, F3.
 
-**Les 18 lignes rouges se répartissent en trois familles**, et une seule dépend encore de moi :
+**Les 17 lignes rouges se répartissent en trois familles**, et une seule dépend encore de moi :
 
 | Famille | Lignes | Qui agit |
 |---|---|---|
 | Actes juridiques ou administratifs | A5, B2, B3, B4, B6, C2, C3, C12, D2, E4, F1, F2 | **Axel seul.** Immatriculer, ouvrir un compte, adhérer, signer, déposer. Aucun code n'y change rien. |
 | Réglages hors dépôt | C4, C5, C6, E5 | **Axel**, depuis le Dashboard Stripe. Deux minutes chacun, mais C4 à C6 supposent d'être immatriculé pour ne pas afficher une mention fausse. |
-| Développement restant | E6, C7 | Reconduction tacite (suppose un envoi d'emails, absent aujourd'hui) et facturation électronique (suppose une plateforme agréée). |
+| Développement restant | C7 | Facturation électronique, qui suppose une plateforme agréée. **E6 est sortie de cette colonne** : construite et déployée le 2026-08-26, elle n'attend plus que trois secrets. |
 
 **Les 11 lignes jaunes n'attendent aucun développement** : quatre sont des décisions déjà prises
 qui attendent leur exécution (B1, B5, C1, C11, D1), et les autres attendent le SIREN, un
