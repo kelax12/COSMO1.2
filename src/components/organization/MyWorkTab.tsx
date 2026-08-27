@@ -15,6 +15,7 @@ import {
 import { useTeamOKRs } from '@/modules/team-okrs';
 import { useOrgTeams } from '@/modules/org-teams';
 import { useUpcomingEvents, type CalendarEvent } from '@/modules/events';
+import { groupEventsByDay } from './agenda-events.helpers';
 import type { OrgMember } from '@/modules/organizations';
 import {
   projectColor, PRIORITY_META, sortOpenTasks, sumEstimatedTime, formatDuration,
@@ -114,39 +115,57 @@ const NewcomerHints = () => {
  * `events`), pas les échéances de tâches d'équipe : celles-ci vivent dans la
  * frise « Prochains événements d'entreprise » plus bas. Occupe la colonne
  * droite laissée vacante par le retrait de « Mes échéances ».
+ *
+ * Rendu groupé par jour (concept B) : un en-tête « Aujourd'hui » ou
+ * « jeudi 4 sept. » sépare les jours, l'heure passe en colonne fixe à
+ * gauche. Utile dès que plusieurs événements tombent le même jour, ce que la
+ * liste plate précédente ne distinguait pas visuellement.
  */
 const AgendaEventsCard = ({ events }: { events: CalendarEvent[] }) => {
   const { t } = useT('org');
+  const groups = groupEventsByDay(events);
   return (
     <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4">
       <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))] mb-3">
         {t('myWork.agendaSection')}
       </h3>
-      {events.length === 0 ? (
+      {groups.length === 0 ? (
         <p className="text-xs text-[rgb(var(--color-text-muted))] py-4 text-center">{t('myWork.agendaEmpty')}</p>
       ) : (
-        <ul className="space-y-1.5">
-          {events.map((e) => {
-            const start = parseISO(e.start);
-            return (
-              <li key={e.id} className="flex items-center gap-3 p-2 rounded-xl border border-[rgb(var(--color-border))]">
-                <div className="flex flex-col items-center justify-center w-10 shrink-0 text-[rgb(var(--color-text-secondary))]">
-                  <span className="text-sm font-bold leading-none">{format(start, 'd', { locale: getDateLocale() })}</span>
-                  <span className="text-[10px] uppercase">{format(start, 'MMM', { locale: getDateLocale() })}</span>
-                </div>
-                <span
-                  className="w-1.5 h-1.5 rounded-full shrink-0"
-                  style={{ backgroundColor: e.color || 'rgb(var(--color-accent))' }}
-                  aria-hidden="true"
-                />
-                <span className="text-sm text-[rgb(var(--color-text-primary))] flex-1 truncate">{e.title}</span>
-                <span className="text-[10px] text-[rgb(var(--color-text-muted))] shrink-0">
-                  {format(start, 'HH:mm', { locale: getDateLocale() })}
-                </span>
-              </li>
-            );
-          })}
-        </ul>
+        <div className="space-y-3">
+          {groups.map((group) => (
+            <div key={group.dayKey}>
+              <div className={`text-[11px] font-semibold uppercase tracking-wide mb-1.5 ${
+                group.isToday ? 'text-[rgb(var(--color-accent))]' : 'text-[rgb(var(--color-text-muted))]'
+              }`}
+              >
+                {group.isToday ? (
+                  t('myWork.agendaToday')
+                ) : (
+                  <span className="capitalize">{format(group.date, 'EEEE d MMM', { locale: getDateLocale() })}</span>
+                )}
+              </div>
+              <ul className="space-y-1">
+                {group.events.map((e) => {
+                  const start = parseISO(e.start);
+                  return (
+                    <li key={e.id} className="flex items-center gap-2 py-1 px-2 rounded-lg bg-[rgb(var(--color-hover))]">
+                      <span className="text-xs font-semibold text-[rgb(var(--color-text-secondary))] w-11 shrink-0">
+                        {format(start, 'HH:mm', { locale: getDateLocale() })}
+                      </span>
+                      <span
+                        className="w-1.5 h-1.5 rounded-full shrink-0"
+                        style={{ backgroundColor: e.color || 'rgb(var(--color-accent))' }}
+                        aria-hidden="true"
+                      />
+                      <span className="text-sm text-[rgb(var(--color-text-primary))] flex-1 truncate">{e.title}</span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );

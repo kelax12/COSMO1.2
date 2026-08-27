@@ -222,7 +222,8 @@
     "orgEventsCount_many": "{{count}} upcoming",
     "orgEventsCount_other": "{{count}} upcoming",
     "agendaSection": "My agenda",
-    "agendaEmpty": "No upcoming events."
+    "agendaEmpty": "No upcoming events.",
+    "agendaToday": "Today"
   },
   "okrModal": {
     "edit": "Edit objective",
