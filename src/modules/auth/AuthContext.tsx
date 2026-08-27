@@ -118,7 +118,7 @@ type AuthContextType = {
   isLoading: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   loginDemo: () => void;
-  register: (name: string, email: string, password: string, accountType?: AccountType) => Promise<{ success: boolean; error?: string }>;
+  register: (name: string, email: string, password: string, accountType?: AccountType) => Promise<{ success: boolean; error?: string; needsEmailConfirmation?: boolean }>;
   loginWithGoogle: () => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   /**
@@ -498,7 +498,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // étant contrôlée par le client.
     const firstTouch = readFirstTouch();
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email: cleanEmail,
         password,
         options: {
@@ -517,7 +517,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         },
       });
       if (error) return { success: false, error: safeAuthError(error, AUTH_REGISTER_GENERIC) };
-      return { success: true };
+      return { success: true, needsEmailConfirmation: !data.session }; // pas de session = confirmation exigée
     } catch {
       return { success: false, error: 'Une erreur est survenue' };
     }

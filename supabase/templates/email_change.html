@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="fr">
+  <body style="margin:0;padding:0;background:#f4f5f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f5f7;padding:32px 16px;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border:1px solid #e5e7eb;border-radius:16px;padding:32px;">
+            <tr>
+              <td style="font-size:18px;font-weight:700;color:#111827;padding-bottom:20px;">COSMO</td>
+            </tr>
+            <tr>
+              <td style="font-size:20px;font-weight:700;color:#111827;padding-bottom:12px;">Confirmez votre nouvelle adresse email</td>
+            </tr>
+            <tr>
+              <td style="font-size:15px;line-height:1.6;color:#374151;padding-bottom:24px;">Une demande de changement d'adresse a été faite sur votre compte COSMO, de <strong>{{ .Email }}</strong> vers <strong>{{ .NewEmail }}</strong>.</td>
+            </tr>
+            <tr>
+              <td style="padding-bottom:24px;">
+                <a href="{{ .ConfirmationURL }}" style="display:inline-block;background:#2563eb;color:#ffffff;font-size:15px;font-weight:600;text-decoration:none;padding:12px 24px;border-radius:10px;">Confirmer le changement</a>
+              </td>
+            </tr>
+            <tr>
+              <td style="font-size:13px;line-height:1.6;color:#6b7280;padding-bottom:24px;">
+                Si le bouton ne fonctionne pas, copiez ce lien dans votre navigateur :<br />
+                <a href="{{ .ConfirmationURL }}" style="color:#2563eb;word-break:break-all;">{{ .ConfirmationURL }}</a>
+              </td>
+            </tr>
+            <tr>
+              <td style="font-size:13px;line-height:1.6;color:#6b7280;border-top:1px solid #e5e7eb;padding-top:20px;">Ce lien expire dans 24 heures. Tant que la confirmation n'est pas faite, votre ancienne adresse reste celle du compte. Vous n'êtes pas à l'origine de cette demande ? Ignorez cet email, rien ne sera modifié.</td>
+            </tr>
+          </table>
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;">
+            <tr>
+              <td align="center" style="font-size:12px;color:#9ca3af;padding-top:16px;">
+                COSMO &middot; <a href="{{ .SiteURL }}" style="color:#9ca3af;">thecosmo.app</a>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
