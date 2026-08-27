@@ -35,9 +35,22 @@ function readStoredActiveOrg(): StoredActiveOrg | null {
 
 function writeStoredActiveOrg(value: StoredActiveOrg): void {
   try {
-    localStorage.setItem(ACTIVE_ORG_STORAGE_KEY, JSON.stringify(value));
+    const raw = localStorage.getItem(ACTIVE_ORG_STORAGE_KEY);
+    const next = JSON.stringify(value);
+    // Écriture idempotente : ce helper est désormais appelé depuis un effet à
+    // chaque résolution de l'organisation active, pas seulement sur un
+    // changement explicite.
+    if (raw !== next) localStorage.setItem(ACTIVE_ORG_STORAGE_KEY, next);
   } catch {
     // localStorage plein — préférence non persistée, sans gravité.
+  }
+}
+
+function clearStoredActiveOrg(): void {
+  try {
+    localStorage.removeItem(ACTIVE_ORG_STORAGE_KEY);
+  } catch {
+    // no-op
   }
 }
 
@@ -49,6 +62,25 @@ interface ActiveOrgContextType {
   /** Change l'organisation active (persisté par utilisateur). */
   setActiveOrgId: (orgId: string) => void;
   isLoading: boolean;
+  /**
+   * « Cet appareil a déjà vu cet utilisateur dans une organisation. »
+   *
+   * Sert UNIQUEMENT à réserver la place de l'entrée « Entreprise » dans les
+   * barres de navigation pendant que la requête vole. Sans ça, la barre
+   * latérale se peignait sans elle, puis la faisait apparaître : tout ce qui
+   * suit (« Créer / rejoindre », la section AUTRE, les Paramètres) sautait
+   * d'une ligne à chaque chargement de page. Sur mobile c'était pire — un
+   * onglet changeait d'identité sous le doigt, « Habitudes » devenant
+   * « Entreprise ».
+   *
+   * ⚠️ C'est un INDICE D'AFFICHAGE, jamais une autorisation. Il ne débloque
+   * aucune donnée : la route `/entreprise` redirige toujours vers le dashboard
+   * si `activeOrg` est nul une fois la requête résolue, et toute lecture reste
+   * gouvernée par la RLS. Le pire cas est une entrée de nav affichée une
+   * seconde de trop chez quelqu'un qui vient de quitter sa dernière
+   * organisation depuis un autre appareil.
+   */
+  wasOrgMember: boolean;
 }
 
 const ActiveOrgContext = createContext<ActiveOrgContextType | undefined>(undefined);
@@ -70,10 +102,31 @@ export const ActiveOrgProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   }, [user?.id, user]);
 
+  // Lu UNE fois au montage : c'est justement la valeur d'avant la requête.
+  // La relire plus tard reviendrait à lire ce qu'on vient d'écrire.
+  const [wasOrgMember] = useState<boolean>(() => {
+    const stored = readStoredActiveOrg();
+    return !!stored && (!user || stored.userId === user.id);
+  });
+
   const activeOrg = useMemo(() => {
     if (organizations.length === 0) return null;
     return organizations.find((o) => o.id === preferredOrgId) ?? organizations[0];
   }, [organizations, preferredOrgId]);
+
+  // L'indice n'existait que si l'utilisateur avait CHANGÉ d'organisation à la
+  // main : `setActiveOrgId` était le seul à écrire, et le repli « première de
+  // la liste » n'écrivait rien. Autrement dit il manquait exactement chez ceux
+  // qui n'ont qu'une organisation, c'est-à-dire presque tout le monde.
+  // On le pose donc dès qu'une organisation active est résolue, et on l'efface
+  // quand la requête a répondu qu'il n'y en a aucune — sinon un ancien membre
+  // verrait l'entreprise clignoter dans sa nav à chaque chargement, pour
+  // toujours.
+  useEffect(() => {
+    if (!user) return;
+    if (activeOrg) writeStoredActiveOrg({ userId: user.id, orgId: activeOrg.id });
+    else if (!isLoading) clearStoredActiveOrg();
+  }, [user, activeOrg, isLoading]);
 
   const setActiveOrgId = (orgId: string) => {
     setPreferredOrgId(orgId);
@@ -81,10 +134,10 @@ export const ActiveOrgProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   };
 
   const value = useMemo(
-    () => ({ organizations, activeOrg, setActiveOrgId, isLoading }),
+    () => ({ organizations, activeOrg, setActiveOrgId, isLoading, wasOrgMember }),
     // setActiveOrgId stable par render — dépendances sur les données.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [organizations, activeOrg, isLoading, user?.id],
+    [organizations, activeOrg, isLoading, user?.id, wasOrgMember],
   );
 
   return <ActiveOrgContext.Provider value={value}>{children}</ActiveOrgContext.Provider>;

@@ -227,7 +227,14 @@ const Layout: React.FC = () => {
   const pendingRequestCount = usePendingRequestCount();
   const orgNotificationCount = useOrgNotificationCount();
   // Entrée « Entreprise » visible uniquement pour les membres d'une organisation.
-  const { activeOrg: myOrg, organizations, setActiveOrgId } = useActiveOrganization();
+  const { activeOrg: myOrg, organizations, setActiveOrgId, isLoading: orgLoading, wasOrgMember } =
+    useActiveOrganization();
+  // Place RÉSERVÉE pendant que la requête vole, si cet appareil a déjà vu cet
+  // utilisateur dans une organisation. Sans ça, la barre se peignait sans
+  // l'entrée puis la faisait apparaître, et tout ce qui suit sautait d'une
+  // ligne à chaque chargement de page. L'indice ne débloque rien : la route
+  // redirige toujours si `activeOrg` est nul une fois la requête résolue.
+  const showOrgEntry = !!myOrg || (orgLoading && wasOrgMember);
   const navigate = useNavigate();
   // Compteur de tâches restantes aujourd'hui (#49) — badge neutre sur l'item
   // Tâches. La disparition du badge (0 restant) est la récompense.
@@ -314,7 +321,7 @@ const NavItems = () =>
       <NavItemLink to="/statistics" label={t('nav.statistics')} icon={<BarChart2 size={20} aria-hidden="true" />}
           hoverColor="#8b5cf6" collapsed={isCollapsed} />
 
-      {myOrg && (
+      {showOrgEntry && (
         <NavItemLink to="/entreprise" label={t('nav.enterprise')} icon={<Building2 size={20} aria-hidden="true" />}
           hoverColor="#6366f1" collapsed={isCollapsed}
           badge={orgNotificationCount}

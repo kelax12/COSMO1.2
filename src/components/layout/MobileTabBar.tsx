@@ -68,9 +68,14 @@ const MobileTabBar: React.FC = () => {
   const pendingRequestCount = usePendingRequestCount();
   // Badge neutre « tâches restantes aujourd'hui » sur l'onglet Tâches (#49).
   const { data: allTasks = [] } = useTasks();
-  const { activeOrg } = useActiveOrganization();
+  const { activeOrg, isLoading: orgLoading, wasOrgMember } = useActiveOrganization();
   const orgNotificationCount = useOrgNotificationCount();
-  const tabs = activeOrg
+  // `wasOrgMember` : la barre du bas ne doit pas changer d'identité sous le
+  // doigt. Sans l'indice, elle affichait « Habitudes » le temps de la requête,
+  // puis la remplaçait par « Entreprise » — un onglet qui bouge pendant qu'on
+  // le vise est pire qu'un onglet qui manque.
+  const showOrgTab = !!activeOrg || (orgLoading && wasOrgMember);
+  const tabs = showOrgTab
     ? [...TABS.filter((tab) => tab.to !== '/habits'), ENTERPRISE_TAB]
     : TABS;
   const todayStr = new Date().toLocaleDateString('en-CA');
