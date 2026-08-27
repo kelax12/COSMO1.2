@@ -33,32 +33,48 @@ const inviteRow = {
 beforeEach(() => supabaseMock.reset());
 
 describe('SupabaseOrganizationsRepository — lecture', () => {
-  it('getMyOrganizations: memberships (scopés user_id) puis orgs par in(id), avec myRole', async () => {
-    supabaseMock.queueTable('organization_members', { data: [{ org_id: 'org1', role: 'admin' }] });
-    supabaseMock.queueTable('organizations', { data: [orgRow] });
+  it('getMyOrganizations: UNE seule requête, memberships scopés user_id avec org jointe', async () => {
+    supabaseMock.queueTable('organization_members', { data: [{ role: 'admin', organizations: orgRow }] });
 
     const result = await repo.getMyOrganizations();
 
-    expect(supabaseMock.argsOf('organization_members', 'select')).toEqual(['org_id, role']);
+    expect(supabaseMock.argsOf('organization_members', 'select')).toEqual(['role, organizations(*)']);
     expect(supabaseMock.argsOf('organization_members', 'eq')).toEqual(['user_id', supabaseMock.user?.id]);
     expect(supabaseMock.argsOf('organization_members', 'limit')).toEqual([50]);
-    expect(supabaseMock.argsOf('organizations', 'in')).toEqual(['id', ['org1']]);
+    // Le coeur du correctif : plus de second aller-retour sur `organizations`,
+    // qui ne pouvait même pas partir avant le retour du premier.
+    expect(supabaseMock.queries).toHaveLength(1);
     expect(result).toEqual([{
       id: 'org1', name: 'ACME', joinCode: 'ABC123', ownerId: 'u1',
       createdAt: orgRow.created_at, description: 'desc', industry: 'tech', myRole: 'admin',
     }]);
   });
 
+  it('getMyOrganizations: trie par createdAt et écarte une org illisible (jointure nulle)', async () => {
+    supabaseMock.queueTable('organization_members', { data: [
+      { role: 'member', organizations: { ...orgRow, id: 'org2', created_at: '2026-07-05T10:00:00.000Z' } },
+      { role: 'admin', organizations: orgRow },
+      // La RLS d'`organizations` peut masquer la ligne jointe : elle revient à
+      // null, et l'org doit disparaître au lieu de faire planter le mapping.
+      { role: 'member', organizations: null },
+    ] });
+
+    const result = await repo.getMyOrganizations();
+
+    expect(result.map((o) => o.id)).toEqual(['org1', 'org2']);
+  });
+
   it('getMyOrganizations: rôle inconnu → fallback "member" ; description/industry null → undefined', async () => {
-    supabaseMock.queueTable('organization_members', { data: [{ org_id: 'org1', role: 'member' }] });
-    supabaseMock.queueTable('organizations', { data: [{ ...orgRow, id: 'org1', description: null, industry: null }] });
+    supabaseMock.queueTable('organization_members', { data: [
+      { role: 'inconnu', organizations: { ...orgRow, id: 'org1', description: null, industry: null } },
+    ] });
     const [org] = await repo.getMyOrganizations();
-    expect(org.myRole).toBe('member');
+    expect(org.myRole).toBe('inconnu');
     expect(org.description).toBeUndefined();
     expect(org.industry).toBeUndefined();
   });
 
-  it('getMyOrganizations: [] sans requête orgs si aucun membership ; [] si non authentifié', async () => {
+  it('getMyOrganizations: [] si aucun membership ; [] et AUCUNE requête si non authentifié', async () => {
     supabaseMock.queueTable('organization_members', { data: [] });
     expect(await repo.getMyOrganizations()).toEqual([]);
     expect(supabaseMock.queries.filter((q) => q.table === 'organizations')).toHaveLength(0);
@@ -69,13 +85,8 @@ describe('SupabaseOrganizationsRepository — lecture', () => {
     expect(supabaseMock.queries).toHaveLength(0);
   });
 
-  it('getMyOrganizations: normalise les erreurs DB (memberships et orgs)', async () => {
+  it('getMyOrganizations: normalise erreur DB de la requete jointe', async () => {
     supabaseMock.queueTable('organization_members', { data: null, error: { message: 'boom', code: '42P01' } });
-    await expect(repo.getMyOrganizations()).rejects.toBeTruthy();
-
-    supabaseMock.reset();
-    supabaseMock.queueTable('organization_members', { data: [{ org_id: 'org1', role: 'member' }] });
-    supabaseMock.queueTable('organizations', { data: null, error: { message: 'boom', code: '42P01' } });
     await expect(repo.getMyOrganizations()).rejects.toBeTruthy();
   });
 

@@ -32,7 +32,7 @@ désormais connus et ils vivent dans les sections
 
 | Ce qui a été mesuré | Résultat | Statut |
 |---|---|---|
-| Requêtes REST à l'ouverture du tableau de bord | **32**, toutes distinctes | ⚪️ mesuré, non optimisé |
+| Requêtes REST au chargement de l'application | **29 → 25** | ✅ 4 retirées le 2026-08-27, sans migration |
 | Part du trafic Supabase du jour venant d'onglets non rechargés | **91,5 %** | 🔴 aucun mécanisme de mise à jour |
 | Lecture d'agenda hiérarchique (`events`) | **17,19 ms → 0,61 ms** | ✅ mig. `128`, **appliquée en prod le 2026-08-27** |
 | Statistiques, 32 plages (`get_work_time_stats`) | **854 ms → 12,0 ms**, 21 762 → 23 blocs lus | ✅ mig. `127`, **appliquée en prod le 2026-08-27** |
@@ -291,26 +291,66 @@ Réencodage reproductible : `npm run images:check` (mesure) puis
 
 ## Ce que coûte une ouverture d'application
 
-**32 requêtes REST, mesurées le 2026-08-26** sur les `edge_logs` de production, pour une session
-réelle du bundle courant arrivant à froid sur `/dashboard`. Toutes distinctes : React Query
-dédoublonne correctement, il n'y a pas de requête émise deux fois.
+**29 requêtes REST au chargement, ramenées à 25 le 2026-08-27.** Le compte vient des
+`edge_logs` de production, sur une session réelle du bundle courant arrivant à froid sur
+`/dashboard`.
 
-| Ce qui les émet | Requêtes | Payées par |
-|---|---|---|
-| Données du tableau de bord (tâches, catégories, listes, agenda, habitudes, OKR, KR) | 9 | tout le monde |
-| Collaboration (amis, demandes, tâches et listes partagées, liens) | 6 | tout le monde |
-| Mode entreprise (org, membres, adhésions, notifications, invitations, projets, tâches d'équipe) | 8 | **membres d'une org seulement** |
-| Session et profil (profil, abonnement, `touch_last_seen`) | 3 | tout le monde |
+⚠️ **Correction d'un chiffre annoncé la veille.** La trace de 25 secondes contient 32 requêtes,
+et elles ont d'abord été comptées comme étant toutes celles du chargement. Trois d'entre elles
+portent en fait un identifiant de tâche précis (`tasks?id=eq.…`, `shared_tasks?task_id=eq.…`,
+`share_links?task_id=eq.…`) : c'est une fiche que l'utilisateur a ouverte juste après. Le
+chargement lui-même en coûtait **29**. Une fenêtre de temps n'est pas un événement.
+
+| Ce qui les émet | Avant | Après | Payées par |
+|---|---|---|---|
+| Données du tableau de bord (tâches, catégories, listes, agenda, habitudes, OKR, KR) | 9 | **7** | tout le monde |
+| Collaboration (amis, profils, demandes reçues et émises, tâches et listes partagées) | 8 | **7** | tout le monde |
+| Mode entreprise (org, membres, adhésions, notifications, invitations, projets, tâches d'équipe) | 9 | **8** | **membres d'une org seulement** |
+| Session et abonnement (`touch_last_seen`, `subscriptions`, profil) | 3 | 3 | tout le monde |
+| **Total** | **29** | **25** | |
 
 Ce n'est pas absurde pour sept domaines métier affichés, et ces requêtes partent en parallèle sur
 HTTP/2, pas en série. Mais **c'est le multiplicateur de charge du produit** : 100 arrivées
-simultanées valent 3 200 requêtes. C'est ce nombre qu'il faut surveiller avant un pic
-d'acquisition, bien avant le coût unitaire de chacune.
+simultanées valaient 2 900 requêtes, elles en valent 2 500. C'est ce nombre qu'il faut surveiller
+avant un pic d'acquisition, bien avant le coût unitaire de chacune.
 
-⚪️ **Piste identifiée, non engagée** : les 8 requêtes du mode entreprise sont montées par
-`Layout`, donc sur **toutes** les pages protégées, y compris quand aucun écran entreprise n'est
-affiché. Elles ne servent qu'à peindre une pastille de notification. Une RPC d'agrégat
-ramènerait l'ouverture à 25 requêtes pour un membre d'organisation, sans rien changer à l'écran.
+### Les 4 requêtes retirées, et pourquoi elles existaient
+
+Aucune migration, aucun changement d'écran, aucune donnée affichée en moins. Les quatre venaient
+du même travers : **une donnée déjà chargée, redemandée sous un autre angle.**
+
+1. **`okrs?completed=eq.false` et le `key_results` qui suivait (−2).** `useWeeklyCheckin()` est
+   monté par le tableau de bord à chaque ouverture et ne se sert de cette liste que pour tester
+   `length > 0`, un lundi ou un mardi. Elle passait par une clé React Query distincte, donc une
+   requête réseau, et le repository enchaînait un second appel pour hydrater les `key_results`
+   des OKR qu'il venait de lire. `completed` est une colonne déjà présente sur chaque OKR chargé
+   par `useOkrs()` : le filtre se fait en mémoire, sur quelques dizaines d'éléments.
+2. **`shared_tasks?shared_by=eq.moi` (−1).** Deux lectures de la même table cohabitaient :
+   `mine` (`shared_by = moi`) et `related` (`shared_by = moi OR friend_id = moi`). La seconde
+   contient déjà la première en entier, et sélectionne toutes ses colonnes. C'était une requête
+   pour un sous-ensemble de l'autre. Effet de bord bienvenu : les badges d'avatars suivent
+   désormais le canal Realtime, qui n'invalidait que la clé `related`.
+3. **`organizations?id=in.(…)` (−1).** `getMyOrganizations` lisait les adhésions, **puis**
+   les organisations avec un `in(...)` bâti sur le premier résultat : deux allers-retours
+   **séquentiels**, le second ne pouvant même pas partir avant le retour du premier. La jointure
+   PostgREST sur la clé étrangère `organization_members.org_id` fait les deux en une requête. La
+   RLS ne change pas : la ligne jointe est filtrée par sa propre policy, et une organisation
+   illisible revient à `null`, écartée côté client.
+
+Les trois sont verrouillées par des tests qui échouent si on les rebranche
+(`okrs/hooks.test.tsx`, `friends/hooks.test.tsx`, `organizations/supabase.repository.test.ts`),
+et chaque garde a été vue **rouge** sur la régression qu'elle prétend attraper.
+
+⚪️ **Piste identifiée, non engagée** : les 8 requêtes restantes du mode entreprise sont montées
+par `Layout`, donc sur **toutes** les pages protégées, y compris quand aucun écran entreprise
+n'est affiché. Elles ne servent qu'à peindre une pastille de notification, et l'une d'elles lit
+jusqu'à 1 000 tâches d'équipe pour en faire un nombre. Une RPC d'agrégat ramènerait l'ouverture à
+**environ 20 requêtes** pour un membre d'organisation, sans rien changer à l'écran. C'est le
+prochain palier, et il demande une migration.
+
+⚪️ **Deuxième piste** : `friends` puis `profiles?email=in.(…)`, et `friend_requests` en deux
+requêtes (reçues, émises). La première paire ne peut pas devenir une jointure PostgREST, il n'y a
+pas de clé étrangère entre `friends.email` et `profiles.email`.
 
 ### 🔴 Le correctif que personne ne reçoit : les onglets jamais rechargés
 
@@ -398,6 +438,8 @@ Les `getAll()` à fort volume (**tasks, events, habits, okrs**) utilisent l'auto
 - ❌ Ajouter une dépendance > 50 kB minified sans règle `manualChunks`.
 - ❌ Importer `* as locales` de `date-fns/locale` ou `* as Icons` de `lucide-react` — casse le tree-shaking.
 - ❌ Monter un composant gros au niveau App qui ne s'affiche qu'après un geste — il doit être `lazy` + Suspense.
+- ❌ Créer une clé React Query distincte pour un **filtre** d'une liste déjà chargée. Une clé de plus est une requête de plus, et sur Supabase le repository enchaîne souvent une seconde lecture pour hydrater ce qu'il vient de lire : deux requêtes pour un `filter()`. Dériver avec `useMemo` depuis le hook de base. Cas réels : `useActiveOkrs` (2 requêtes par ouverture, pour tester `length > 0`) et `useSharesByTask` (un sous-ensemble strict d'une lecture déjà faite).
+- ❌ Lire une table, **puis** une seconde avec un `in(...)` bâti sur le premier résultat. Ce sont deux allers-retours séquentiels, le second ne pouvant pas partir avant le retour du premier. Quand une clé étrangère existe, la jointure PostgREST (`select=col, autre_table(*)`) fait les deux en une requête, sans changer la RLS : la ligne jointe reste filtrée par sa propre policy.
 - ❌ Écrire un prédicat de policy RLS qui appelle une fonction **sur une colonne** (`fn(user_id)`). Il est rappelé pour chaque ligne examinée et rend l'index inutilisable. Un helper sans argument, dont le périmètre vient de `auth.uid()` seul, est hissé en InitPlan et évalué une fois par requête. Trois occurrences déjà : `tasks` (085), `team_tasks` (113, 117), `events` (128).
 - ❌ **Valider un correctif de performance CLIENT sur un compteur agrégé de Postgres** (`pg_stat_user_tables`, `pg_stat_statements`). Ils cumulent depuis la création de la base et mélangent les anciens et les nouveaux clients : ils donneront tort au correctif pendant des jours. Ventiler les `edge_logs` par `request.sb.jwt.authorization.payload.session_id`, une seule session du bundle courant suffit à trancher.
 - ❌ Conclure quoi que ce soit d'un total cumulé. Seul un **delta entre deux instants**, mesuré au repos, donne un débit. `organization_members` affichait 2 440 047 balayages pour 11 lignes et n'en prenait **aucun** sur une fenêtre de 285 s au repos.

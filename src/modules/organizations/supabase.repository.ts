@@ -70,27 +70,33 @@ export class SupabaseOrganizationsRepository implements IOrganizationsRepository
     if (!uid) return [];
 
     // Mes memberships donnent orgs + rôles (RLS : je ne vois que mes orgs).
+    //
+    // ⚠️ UNE seule requête, via la jointure PostgREST sur la clé étrangère
+    // `organization_members.org_id -> organizations.id`. La version d'avant
+    // lisait les memberships, PUIS les organisations avec un `in(...)` bâti sur
+    // le premier résultat : deux allers-retours SÉQUENTIELS, le second ne
+    // pouvant même pas partir avant que le premier soit revenu. Ce hook est
+    // monté par `Layout`, donc sur toutes les pages protégées.
+    //
+    // La RLS ne change pas : la ligne `organizations` embarquée est filtrée par
+    // sa propre policy, exactement comme quand elle était lue à part. Une org
+    // illisible revient à `null` et est écartée ci-dessous, ce qui reproduit le
+    // comportement précédent (elle était simplement absente du second lot).
     const { data: memberships, error: mErr } = await supabase
       .from('organization_members')
-      .select('org_id, role')
+      .select('role, organizations(*)')
       .eq('user_id', uid)
       .limit(50);
     if (mErr) throw normalizeApiError(mErr);
-    const rows = (memberships ?? []) as { org_id: string; role: OrgRole }[];
-    if (rows.length === 0) return [];
 
-    const { data: orgRows, error: oErr } = await supabase
-      .from('organizations')
-      .select('*')
-      .in('id', rows.map((r) => r.org_id))
-      .order('created_at', { ascending: true });
-    if (oErr) throw normalizeApiError(oErr);
-
-    const roleByOrg = new Map(rows.map((r) => [r.org_id, r.role]));
-    return ((orgRows ?? []) as OrgRow[]).map((row) => ({
-      ...this.mapOrg(row),
-      myRole: roleByOrg.get(row.id) ?? 'member',
-    }));
+    type JoinedRow = { role: OrgRole; organizations: OrgRow | null };
+    return ((memberships ?? []) as unknown as JoinedRow[])
+      .filter((r): r is JoinedRow & { organizations: OrgRow } => r.organizations != null)
+      .map((r) => ({ ...this.mapOrg(r.organizations), myRole: r.role ?? 'member' }))
+      // Le tri portait sur `organizations.created_at` : un `order` sur une
+      // table embarquée trierait les lignes DANS chaque parent (il y en a une),
+      // pas la liste. Il se fait donc ici, sur au plus 50 éléments.
+      .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
   }
 
   async getMembers(orgId: string): Promise<OrgMember[]> {

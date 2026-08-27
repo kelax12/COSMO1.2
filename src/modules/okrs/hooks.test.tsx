@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 const fakeRepo = {
   getAll: vi.fn(),
+  getFiltered: vi.fn(),
   create: vi.fn(),
   delete: vi.fn(),
   updateKeyResult: vi.fn(),
@@ -21,7 +22,9 @@ vi.mock('@/lib/app-mode.store', () => ({
 }));
 vi.mock('sonner', () => ({ toast: { error: vi.fn(), success: vi.fn(), warning: vi.fn() } }));
 
-import { useOkrs, useCreateOkr, useDeleteOkr, useUpdateKeyResult } from './hooks';
+import {
+  useOkrs, useActiveOkrs, useCompletedOkrs, useCreateOkr, useDeleteOkr, useUpdateKeyResult,
+} from './hooks';
 import type { OKR } from './types';
 
 const okr: OKR = {
@@ -107,5 +110,41 @@ describe('useDeleteOkr', () => {
       await result.current.mutateAsync('o1');
     });
     expect(fakeRepo.delete).toHaveBeenCalledWith('o1');
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════
+// OKR actifs / terminés : dérivés, jamais refetchés
+//
+// `useWeeklyCheckin()` est monté par le tableau de bord à CHAQUE ouverture et
+// ne se sert de cette liste que pour tester `length > 0`, un lundi ou un mardi.
+// Quand elle passait par `useFilteredOkrs`, cela coûtait DEUX requêtes de plus
+// tous les jours : `okrs`, puis `key_results` pour hydrater ce qu'on venait
+// de lire. Ces tests échouent si quelqu'un les rebranche sur le réseau.
+// ═══════════════════════════════════════════════════════════════════
+describe('useActiveOkrs / useCompletedOkrs', () => {
+  const fini: OKR = { ...okr, id: 'o2', title: 'Fini', completed: true };
+
+  it('filtrent en mémoire SANS seconde requête', async () => {
+    fakeRepo.getAll.mockResolvedValue([okr, fini]);
+    const { wrapper } = makeWrapper();
+    const { result } = renderHook(
+      () => ({ tous: useOkrs(), actifs: useActiveOkrs(), finis: useCompletedOkrs() }),
+      { wrapper },
+    );
+    await waitFor(() => expect(result.current.tous.isSuccess).toBe(true));
+
+    expect(result.current.actifs.data.map((o) => o.id)).toEqual(['o1']);
+    expect(result.current.finis.data.map((o) => o.id)).toEqual(['o2']);
+    // Une seule lecture pour les trois hooks, et jamais le chemin filtré.
+    expect(fakeRepo.getAll).toHaveBeenCalledTimes(1);
+    expect(fakeRepo.getFiltered).not.toHaveBeenCalled();
+  });
+
+  it('rendent [] tant que la liste n’est pas chargée, sans planter', () => {
+    fakeRepo.getAll.mockReturnValue(new Promise(() => {}));
+    const { wrapper } = makeWrapper();
+    const { result } = renderHook(() => useActiveOkrs(), { wrapper });
+    expect(result.current.data).toEqual([]);
   });
 });
