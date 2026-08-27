@@ -1,6 +1,5 @@
 import React, { useMemo, useRef, useState } from 'react';
 import { ListTodo, CalendarDays, TrendingUp } from 'lucide-react';
-import { toast } from 'sonner';
 import { gsap, useGSAP } from '@/lib/gsap';
 import { useT } from '@/i18n/useT';
 import type { KeyOf } from '@/i18n/catalog';
@@ -12,6 +11,16 @@ import {
   DropdownMenuLabel,
   DropdownMenuItem,
 } from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from '@/components/ui/alert-dialog';
 import { PYRAMID_NODES, pyramidTree, subtreeOf, SHOTS, type PyramidNode } from './data';
 import AppShot from './AppShot';
 import StepSection from './StepSection';
@@ -82,6 +91,14 @@ const PyramidSection: React.FC<PyramidSectionProps> = ({ onMemberDemo }) => {
   const rootRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
   const [focusedId, setFocusedId] = useState<string | null>(null);
+  // Confirmation à friction avant d'ouvrir la démo : un clic sur une option du
+  // menu ne navigue plus tout seul, il pose une demande que ce dialogue seul
+  // peut valider ou annuler.
+  const [pendingDemo, setPendingDemo] = useState<{
+    name: string;
+    demoUserId: string;
+    tab: PyramidMemberTab;
+  } | null>(null);
 
   const links = useMemo(
     () =>
@@ -203,7 +220,7 @@ const PyramidSection: React.FC<PyramidSectionProps> = ({ onMemberDemo }) => {
                     roleLabel={t(node.roleKey)}
                     onEnter={() => setFocusedId(node.id)}
                     onLeave={() => setFocusedId(null)}
-                    onMemberDemo={onMemberDemo}
+                    onRequestDemo={(tab) => setPendingDemo({ name: node.name, demoUserId: node.demoUserId, tab })}
                   />
                 </li>
               ))}
@@ -260,7 +277,7 @@ const PyramidSection: React.FC<PyramidSectionProps> = ({ onMemberDemo }) => {
                   roleLabel={t(node.roleKey)}
                   onEnter={() => setFocusedId(node.id)}
                   onLeave={() => setFocusedId(null)}
-                  onMemberDemo={onMemberDemo}
+                  onRequestDemo={(tab) => setPendingDemo({ name: node.name, demoUserId: node.demoUserId, tab })}
                 />
               ))}
             </div>
@@ -307,6 +324,36 @@ const PyramidSection: React.FC<PyramidSectionProps> = ({ onMemberDemo }) => {
           />
         </div>
       </div>
+
+      {/* Confirmation à friction : un clic sur une option du menu carte ne
+          navigue plus tout seul (l'ancien comportement faisait quitter la
+          landing sans prévenir). Le visiteur doit choisir explicitement. */}
+      <AlertDialog open={pendingDemo !== null} onOpenChange={(open) => !open && setPendingDemo(null)}>
+        <AlertDialogContent className="border-white/[0.1] bg-[#12161D] text-white sm:max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white">
+              {t('enterprise.pyramid.demoPromptTitle')}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-slate-400">
+              {pendingDemo && t(DEMO_PROMPT_KEY[pendingDemo.tab], { name: pendingDemo.name })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="border-white/[0.12] bg-transparent text-slate-300 hover:bg-white/[0.06] hover:text-white">
+              {t('enterprise.pyramid.demoPromptCancel')}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-cyan-400 text-[#08090C] hover:bg-cyan-300"
+              onClick={() => {
+                if (pendingDemo) onMemberDemo(pendingDemo.demoUserId, pendingDemo.tab);
+                setPendingDemo(null);
+              }}
+            >
+              {t('enterprise.pyramid.demoPromptConfirm')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </StepSection>
   );
 };
@@ -320,8 +367,8 @@ interface PyramidCardProps {
   roleLabel: string;
   onEnter: () => void;
   onLeave: () => void;
-  /** Ouvre la démo puis la fiche de CE membre, sur l'onglet demandé. */
-  onMemberDemo: (demoUserId: string, tab: PyramidMemberTab) => void;
+  /** Demande confirmation avant d'ouvrir la démo sur la fiche de CE membre. */
+  onRequestDemo: (tab: PyramidMemberTab) => void;
 }
 
 /**
@@ -342,22 +389,9 @@ const PyramidCard: React.FC<PyramidCardProps> = ({
   roleLabel,
   onEnter,
   onLeave,
-  onMemberDemo,
+  onRequestDemo,
 }) => {
   const { t } = useT('landing');
-
-  // Un clic n'ouvre plus la démo directement : ça faisait perdre le visiteur
-  // de la landing sans prévenir. On lui propose plutôt d'ouvrir la démo,
-  // depuis la page où il est, et c'est son clic sur l'action du toast qui
-  // déclenche réellement `onMemberDemo`.
-  const promptDemo = (tab: PyramidMemberTab) => {
-    toast(t(DEMO_PROMPT_KEY[tab], { name: node.name }), {
-      action: {
-        label: t('enterprise.pyramid.demoPromptAction'),
-        onClick: () => onMemberDemo(node.demoUserId, tab),
-      },
-    });
-  };
 
   const button = (
     <button
@@ -412,21 +446,21 @@ const PyramidCard: React.FC<PyramidCardProps> = ({
           {t('enterprise.pyramid.menuLabel', { name: node.name })}
         </DropdownMenuLabel>
         <DropdownMenuItem
-          onClick={() => promptDemo('tasks')}
+          onClick={() => onRequestDemo('tasks')}
           className="text-slate-200 focus:bg-cyan-400/10 focus:text-cyan-100"
         >
           <ListTodo size={14} className="text-cyan-300" aria-hidden="true" />
           {t('enterprise.pyramid.menuTasks')}
         </DropdownMenuItem>
         <DropdownMenuItem
-          onClick={() => promptDemo('agenda')}
+          onClick={() => onRequestDemo('agenda')}
           className="text-slate-200 focus:bg-cyan-400/10 focus:text-cyan-100"
         >
           <CalendarDays size={14} className="text-cyan-300" aria-hidden="true" />
           {t('enterprise.pyramid.menuAgenda')}
         </DropdownMenuItem>
         <DropdownMenuItem
-          onClick={() => promptDemo('contribution')}
+          onClick={() => onRequestDemo('contribution')}
           className="text-slate-200 focus:bg-cyan-400/10 focus:text-cyan-100"
         >
           <TrendingUp size={14} className="text-cyan-300" aria-hidden="true" />
