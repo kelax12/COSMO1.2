@@ -205,7 +205,8 @@
     "overdueShort": "En retard",
     "okrProgressTitle": "Avancement des OKR",
     "overdueByMember": "Retards par membre",
-    "csvProject": "Projet"
+    "csvProject": "Projet",
+    "loading": "Chargement des statistiques…"
   },
   "myWork": {
     "upToDate": "À jour",
@@ -236,7 +237,8 @@
     "orgEventsCount_other": "{{count}} à venir",
     "agendaSection": "Mon agenda",
     "agendaEmpty": "Aucun événement à venir.",
-    "agendaToday": "Aujourd'hui"
+    "agendaToday": "Aujourd'hui",
+    "loading": "Chargement de votre travail…"
   },
   "okrModal": {
     "edit": "Modifier l'objectif",
@@ -426,7 +428,8 @@
     "tasksTabStatusUnassigned": "Non attribué",
     "tasksTabStatusAria": "Changer le statut de {{name}}",
     "tasksTabAssignAction": "Attribuer à quelqu'un",
-    "tasksTabScheduleAction": "Assigner l'événement"
+    "tasksTabScheduleAction": "Assigner l'événement",
+    "tasksTabLoading": "Chargement des tâches…"
   },
   "insights": {
     "taskDeleted": "Tâche supprimée",
