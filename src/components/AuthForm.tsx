@@ -37,7 +37,7 @@ const STRENGTH_LABELS = ['', 'Faible', 'Correct', 'Fort'] as const;
 const STRENGTH_COLORS = ['transparent', '#ef4444', '#eab308', '#22c55e'] as const;
 
 const inputClasses =
-  'w-full bg-[rgb(var(--color-hover))] border border-[rgb(var(--color-border))] rounded-xl pl-9 pr-4 py-3 text-sm text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-muted))] focus:outline-none focus:ring-2 focus:ring-blue-500/40 transition-all';
+  'w-full bg-[rgb(var(--color-hover))] border border-[rgb(var(--color-border))] rounded-xl pl-9 pr-4 py-3 sm:py-2.5 text-sm text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-muted))] focus:outline-none focus:ring-2 focus:ring-blue-500/40 transition-all';
 
 /**
  * Formulaire d'authentification partagé entre `LoginModal` (bottom-sheet) et
@@ -159,16 +159,16 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onSwitchMode, onSuccess, head
 
   return (
     <>
-      <div className="text-center mb-8">
-        <Heading className="text-3xl font-bold text-[rgb(var(--color-text-primary))] mb-2">
+      <div className="text-center mb-4">
+        <Heading className="text-2xl sm:text-3xl font-bold text-[rgb(var(--color-text-primary))] mb-1.5">
           {mode === 'login' ? t('auth.welcomeBack') : t('auth.joinCosmo')}
         </Heading>
-        <p className="text-[rgb(var(--color-text-secondary))]">
+        <p className="text-sm text-[rgb(var(--color-text-secondary))]">
           {mode === 'login' ? t('auth.loginSubtitle') : t('auth.registerSubtitle')}
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-3">
         {/* Google seul, pleine largeur (Apple retiré tant que le flow n'existe pas) */}
         <button
           type="button"
@@ -206,15 +206,17 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onSwitchMode, onSuccess, head
                     type="button"
                     onClick={() => setAccountType(value)}
                     aria-pressed={selected}
-                    className={`flex flex-col items-start gap-1 rounded-xl border p-3 text-left transition-all ${
+                    className={`flex items-center gap-2.5 rounded-xl border p-2.5 text-left transition-all ${
                       selected
                         ? 'border-[rgb(var(--color-accent-solid))] bg-[rgb(var(--color-accent-solid))]/10 ring-2 ring-blue-500/40'
                         : 'border-[rgb(var(--color-border))] bg-[rgb(var(--color-hover))] hover:border-[rgb(var(--color-text-muted))]'
                     }`}
                   >
-                    <Icon size={18} className={selected ? 'text-blue-400' : 'text-[rgb(var(--color-text-muted))]'} aria-hidden="true" />
-                    <span className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">{label}</span>
-                    <span className="text-[11px] text-[rgb(var(--color-text-muted))]">{desc}</span>
+                    <Icon size={18} className={`shrink-0 ${selected ? 'text-blue-400' : 'text-[rgb(var(--color-text-muted))]'}`} aria-hidden="true" />
+                    <span className="min-w-0">
+                      <span className="block text-sm font-semibold text-[rgb(var(--color-text-primary))]">{label}</span>
+                      <span className="block text-[11px] text-[rgb(var(--color-text-muted))]">{desc}</span>
+                    </span>
                   </button>
                 );
               })}
@@ -307,15 +309,17 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onSwitchMode, onSuccess, head
             </button>
           </div>
           {mode === 'register' && (
-            <div id="auth-password-help" className="mt-1.5">
+            <div id="auth-password-help" className="mt-1.5 flex items-center gap-3">
               {passwordError ? (
-                <p className="text-xs text-red-400" role="alert">{passwordError}</p>
+                <p className="text-xs text-red-400 flex-1" role="alert">{passwordError}</p>
               ) : (
-                <p className="text-xs text-[rgb(var(--color-text-muted))]">{t('auth.minChars', { count: MIN_PASSWORD_LENGTH })}</p>
+                <p className="text-xs text-[rgb(var(--color-text-muted))] flex-1">{t('auth.minChars', { count: MIN_PASSWORD_LENGTH })}</p>
               )}
+              {/* Jauge sur la MÊME ligne que l'aide : sinon elle ajoute un cran de
+                  hauteur dès la première frappe et rend le modal scrollable. */}
               {formData.password.length > 0 && (
-                <div className="mt-1.5 flex items-center gap-2" aria-hidden="true">
-                  <div className="flex gap-1 flex-1">
+                <div className="flex items-center gap-2 shrink-0" aria-hidden="true">
+                  <div className="flex gap-1 w-16">
                     {[1, 2, 3].map((i) => (
                       <div
                         key={i}
@@ -346,7 +350,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onSwitchMode, onSuccess, head
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full py-3 rounded-xl text-sm font-semibold text-[rgb(var(--color-accent-solid-foreground))] bg-[rgb(var(--color-accent-solid))] to-purple-600 hover:bg-[rgb(var(--color-accent-solid-hover))] hover:to-purple-500 disabled:opacity-60 transition-all shadow-lg shadow-blue-500/20 mt-2"
+          className="w-full py-3 rounded-xl text-sm font-semibold text-[rgb(var(--color-accent-solid-foreground))] bg-[rgb(var(--color-accent-solid))] to-purple-600 hover:bg-[rgb(var(--color-accent-solid-hover))] hover:to-purple-500 disabled:opacity-60 transition-all shadow-lg shadow-blue-500/20 mt-1"
         >
           {isLoading
             ? slowHint
@@ -366,14 +370,14 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onSwitchMode, onSuccess, head
         )}
       </form>
 
-      <div className="mt-6 pt-6 border-t border-[rgb(var(--color-border))] text-center">
+      <div className="mt-4 pt-4 border-t border-[rgb(var(--color-border))] text-center">
         <p className="text-sm text-[rgb(var(--color-text-secondary))]">
           {mode === 'login' ? t('auth.noAccount') : t('auth.haveAccount')}
         </p>
         <button
           type="button"
           onClick={() => onSwitchMode(mode === 'login' ? 'register' : 'login')}
-          className="mt-2 text-sm font-semibold text-blue-400 hover:text-blue-300 transition-colors underline underline-offset-2"
+          className="mt-1 text-sm font-semibold text-blue-400 hover:text-blue-300 transition-colors underline underline-offset-2"
         >
           {mode === 'login' ? t('auth.createOne') : t('auth.signIn')}
         </button>
