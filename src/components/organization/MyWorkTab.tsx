@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router';
 import { format, parseISO, isPast, isToday } from 'date-fns';
 import { getDateLocale } from '@/i18n/format';
 import {
-  ListTodo, AlertTriangle, CalendarDays, Check, CircleCheck, ChevronRight,
+  ListTodo, CalendarDays, Check, CircleCheck, ChevronRight,
 } from 'lucide-react';
 import {
   useTeamProjects,
@@ -260,7 +260,7 @@ const MyWorkTab = ({ orgId, members, currentUserId }: MyWorkTabProps) => {
           </p>
         </div>
       ) : (
-        <div className="grid lg:grid-cols-2 gap-5 items-start">
+        <div className="space-y-5">
           {/* Mes tâches */}
           <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4">
             <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))] mb-3">
@@ -315,47 +315,16 @@ const MyWorkTab = ({ orgId, members, currentUserId }: MyWorkTabProps) => {
             )}
           </div>
 
-          {/* Mes échéances (agenda entreprise) */}
-          <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4">
-            <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))] mb-3">
-              {t('myWork.myDeadlines', { count: scheduled.length })}
-            </h3>
-            {scheduled.length === 0 ? (
-              <p className="text-xs text-[rgb(var(--color-text-muted))] py-4 text-center">{t('myWork.noDeadline')}</p>
-            ) : (
-              <ul className="space-y-1.5">
-                {scheduled.map((t) => {
-                  const late = isOverdue(t);
-                  const d = parseISO(t.deadline!);
-                  const today = isToday(d);
-                  return (
-                    <li
-                      key={t.id}
-                      className={`flex items-center gap-3 p-2 rounded-xl border ${
-                        late ? 'border-red-300/60 bg-red-50/40 dark:bg-red-900/10' : 'border-[rgb(var(--color-border))]'
-                      }`}
-                    >
-                      <div className={`flex flex-col items-center justify-center w-10 shrink-0 ${late ? 'text-red-500' : today ? 'text-[rgb(var(--color-accent))]' : 'text-[rgb(var(--color-text-secondary))]'}`}>
-                        <span className="text-sm font-bold leading-none">{format(d, 'd', { locale: getDateLocale() })}</span>
-                        <span className="text-[10px] uppercase">{format(d, 'MMM', { locale: getDateLocale() })}</span>
-                      </div>
-                      <span className="text-sm text-[rgb(var(--color-text-primary))] flex-1 truncate">{t.name}</span>
-                      {late && <AlertTriangle size={14} className="text-red-500 shrink-0" aria-hidden="true" />}
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </div>
         </div>
       )}
 
+      {/* Prochains événements de l'entreprise (reco #2) — visibles par tous,
+          même sans tâche assignée. Remplace « Mes échéances », qui répétait en
+          liste les dates déjà portées par la carte de synthèse ci-dessus. */}
+      <OrgEventsTimeline events={orgEvents} />
+
       {/* Activité de l'équipe (reco #11) — dérivée des tâches, 14 derniers jours. */}
       <TeamActivityFeed tasks={tasks} projects={projects} members={members} />
-
-      {/* Prochains événements de l'entreprise (reco #2) — visibles par tous,
-          même sans tâche assignée. */}
-      <OrgEventsTimeline events={orgEvents} />
 
       {editingTask && (
         <TeamTaskModal

@@ -209,8 +209,6 @@
     "emptyHint": "Team tasks assigned to you (or that you assign yourself from the Projects tab) will show up here.",
     "allDone": "All done 🎉",
     "markDone": "Mark “{{name}}” as done",
-    "myDeadlines": "My due dates ({{count}})",
-    "noDeadline": "No dated due date.",
     "stepInvite": "Invite members",
     "myTasksSection": "My tasks ({{count}})",
     "stepTeam": "Create a first team",
