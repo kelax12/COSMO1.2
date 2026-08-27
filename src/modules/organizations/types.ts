@@ -192,3 +192,23 @@ export interface OrgJoinRequest {
    *  au moment de l'envoi (non re-lisible ensuite : RLS membres-only). */
   orgName?: string;
 }
+
+/**
+ * Boite de reception d'entreprise, telle que la rend `get_my_org_inbox()`
+ * (mig. 129) : ce que cinq requetes distinctes lisaient a chaque ouverture de
+ * l'application, sur toutes les pages protegees.
+ *
+ * `joinRequests` et `notifications` couvrent TOUTES mes organisations, pas
+ * seulement l'active : c'est ce qui permet a la lecture de partir sans
+ * attendre que l'organisation active soit resolue. Le filtrage par
+ * organisation se fait cote client, sur une liste deja bornee par la RPC.
+ */
+export interface OrgInbox {
+  invitations: OrgInvitation[];
+  removalNotices: OrgRemovalNotice[];
+  /** Ma demande d'adhesion en attente, ou null. */
+  myJoinRequest: OrgJoinRequest | null;
+  /** Vue ADMIN : les demandes adressees aux organisations que j'administre. */
+  joinRequests: OrgJoinRequest[];
+  notifications: import('./notifications').OrgNotification[];
+}

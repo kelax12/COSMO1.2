@@ -6,11 +6,13 @@
 // d'ecriture n'est donc exposee ici — ce n'est pas un oubli.
 // ═══════════════════════════════════════════════════════════════════
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMemo } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useOrgInbox } from './inbox';
+import { orgKeys } from './constants';
 import { appModeStore } from '@/lib/app-mode.store';
 import { ORG_NOTIFICATIONS_STORAGE_KEY } from './constants';
 import {
-  fetchOrgNotificationRows,
   markOrgNotificationsRead,
   markTaskNotificationsRead,
 } from './notifications.repository';
@@ -36,26 +38,6 @@ export interface OrgNotification {
   readAt: string | null;
   createdAt: string;
 }
-
-interface NotificationRow {
-  id: string;
-  org_id: string;
-  actor_id: string | null;
-  kind: string;
-  task_id: string | null;
-  read_at: string | null;
-  created_at: string;
-}
-
-const mapNotification = (r: NotificationRow): OrgNotification => ({
-  id: r.id,
-  orgId: r.org_id,
-  actorId: r.actor_id,
-  kind: r.kind as OrgNotificationKind,
-  taskId: r.task_id,
-  readAt: r.read_at,
-  createdAt: r.created_at,
-});
 
 export const orgNotificationKeys = {
   all: ['org-notifications'] as const,
@@ -85,7 +67,7 @@ const DEMO_NOTIFICATIONS: OrgNotification[] = [
 ];
 
 /** Lecture protégée du localStorage (règle B14 : jamais de JSON.parse nu). */
-const readDemoNotifications = (): OrgNotification[] => {
+export const readDemoNotifications = (): OrgNotification[] => {
   const raw = localStorage.getItem(ORG_NOTIFICATIONS_STORAGE_KEY);
   if (raw) {
     try {
@@ -106,21 +88,26 @@ const readDemoNotifications = (): OrgNotification[] => {
  * localStorage, seedées au premier accès et bornées à l'org demandée — même
  * contrat de filtrage qu'en production.
  */
-export const useOrgNotifications = (orgId: string | undefined) =>
-  useQuery({
-    queryKey: orgNotificationKeys.list(orgId ?? ''),
-    queryFn: async (): Promise<OrgNotification[]> => {
-      if (appModeStore.isDemo) {
-        return readDemoNotifications()
-          .filter((n) => n.orgId === orgId)
-          .sort((a, b) => (a.createdAt > b.createdAt ? -1 : 1));
-      }
-      const rows = await fetchOrgNotificationRows(orgId as string);
-      return (rows as NotificationRow[]).map(mapNotification);
-    },
-    enabled: !!orgId,
-    staleTime: 1000 * 30,
-  });
+/**
+ * Notifications de l'organisation demandee, DERIVEES de la boite de reception
+ * (mig. 129) : elles arrivaient auparavant par une requete a elles seules,
+ * emise par `Layout` sur toutes les pages protegees pour peindre une pastille.
+ *
+ * ❌ Ne pas lui redonner une cle React Query : ce serait une requete de plus.
+ * La RPC borne deja la lecture a 50 notifications PAR organisation, comme le
+ * faisait la requete d'origine.
+ *
+ * En demo il n'y a pas de base : `getMyOrgInbox()` du repository local va
+ * chercher les memes seeds localStorage, avec le meme contrat de filtrage.
+ */
+export const useOrgNotifications = (orgId: string | undefined) => {
+  const { data, ...rest } = useOrgInbox();
+  const notifications = useMemo(
+    () => (orgId ? (data?.notifications ?? []).filter((n) => n.orgId === orgId) : []),
+    [data, orgId],
+  );
+  return { ...rest, data: notifications };
+};
 
 /** Marque tout comme lu. Un seul UPDATE plutôt qu'un par ligne. */
 export const useMarkNotificationsRead = (orgId: string) => {
@@ -140,7 +127,7 @@ export const useMarkNotificationsRead = (orgId: string) => {
       await markOrgNotificationsRead(orgId);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: orgNotificationKeys.list(orgId) });
+      queryClient.invalidateQueries({ queryKey: orgKeys.inbox() });
     },
   });
 };
@@ -166,7 +153,7 @@ export const useMarkTaskNotificationsRead = (orgId: string) => {
       await markTaskNotificationsRead(orgId, taskId);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: orgNotificationKeys.list(orgId) });
+      queryClient.invalidateQueries({ queryKey: orgKeys.inbox() });
     },
   });
 };

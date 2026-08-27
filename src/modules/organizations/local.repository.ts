@@ -10,7 +10,8 @@
 // Seeds rechargées à chaque loginDemo() (sweep cosmo_* de clearDemoStorage).
 
 import { IOrganizationsRepository } from './repository';
-import { MyOrganization, Organization, OrgMember, OrgJoinRequest, OrgRole, UpdateOrganizationInput, OrgInviteLink, OrgInvitation, OrgRemovalNotice } from './types';
+import { MyOrganization, Organization, OrgMember, OrgJoinRequest, OrgRole, UpdateOrganizationInput, OrgInviteLink, OrgInvitation, OrgRemovalNotice, OrgInbox } from './types';
+import { readDemoNotifications } from './notifications';
 import {
   ORGS_STORAGE_KEY,
   ORG_MEMBERS_STORAGE_KEY,
@@ -176,6 +177,23 @@ export class LocalStorageOrganizationsRepository implements IOrganizationsReposi
 
   async getMySentJoinRequest(): Promise<OrgJoinRequest | null> {
     return this.getRequestsArray().find((r) => r.userId === DEMO_USER_ID && r.status === 'pending') ?? null;
+  }
+
+  /**
+   * En demo il n'y a aucune requete a economiser : on rappelle les methodes
+   * unitaires. Ce qui compte est que la FORME rendue soit la meme qu'en prod,
+   * sans quoi les selecteurs qui la decoupent divergeraient entre les deux
+   * modes. Les notifications ne passent pas par ici : elles ont leur propre
+   * source localStorage (`notifications.ts`), relue ici telle quelle.
+   */
+  async getMyOrgInbox(): Promise<OrgInbox> {
+    const [invitations, removalNotices, myJoinRequest] = await Promise.all([
+      this.getMyOrgInvitations(),
+      this.getMyOrgRemovalNotices(),
+      this.getMySentJoinRequest(),
+    ]);
+    const joinRequests = this.getRequestsArray().filter((r) => r.status === 'pending');
+    return { invitations, removalNotices, myJoinRequest, joinRequests, notifications: readDemoNotifications() };
   }
 
   // ─── Write ─────────────────────────────────────────────────────────

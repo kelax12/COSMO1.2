@@ -33,6 +33,14 @@ export const orgKeys = {
   myRemovalNotices: () => [...orgKeys.all, 'myRemovalNotices'] as const,
   /** Amis que j'ai invités dans cette org, invitation encore en attente. */
   pendingSentInvitations: (orgId: string) => [...orgKeys.all, 'pendingSentInvitations', orgId] as const,
+  /**
+   * Boite de reception d'entreprise, EN UNE SEULE CLE (mig. 129).
+   *
+   * Pas d'`orgId` : la RPC `get_my_org_inbox()` ne prend aucun parametre, son
+   * perimetre vient de `auth.uid()` seul. La clef devait donc etre globale,
+   * sans quoi changer d'organisation active aurait relance la lecture.
+   */
+  inbox: () => [...orgKeys.all, 'inbox'] as const,
   /** Surcharges de permissions posées dans cette org (mig. 115). */
   permissions: (orgId: string) => [...orgKeys.all, 'permissions', orgId] as const,
 };

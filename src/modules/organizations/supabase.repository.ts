@@ -13,7 +13,8 @@ import { supabase } from '@/lib/supabase';
 import { getCurrentUserId } from '@/lib/auth-user';
 import { normalizeApiError } from '@/lib/normalizeApiError';
 import { IOrganizationsRepository } from './repository';
-import { MyOrganization, Organization, OrgMember, OrgJoinRequest, OrgRole, UpdateOrganizationInput, OrgInviteLink, OrgInvitation, OrgRemovalNotice } from './types';
+import { MyOrganization, Organization, OrgMember, OrgJoinRequest, OrgRole, UpdateOrganizationInput, OrgInviteLink, OrgInvitation, OrgRemovalNotice, OrgInbox } from './types';
+import { mapOrgInbox, type OrgInboxRow } from './inbox.repository';
 import {
   ORG_PERMISSION_KEYS,
   type OrgAssignTarget,
@@ -199,6 +200,29 @@ export class SupabaseOrganizationsRepository implements IOrganizationsRepository
       requestedAt: r.requested_at,
       status: 'pending',
     };
+  }
+
+  /**
+   * Les CINQ lectures de la boite de reception en UNE requete (mig. 129).
+   *
+   * ❌ Ne pas revenir aux appels unitaires depuis un ecran monte en
+   * permanence. `Layout` monte `useOrgBadges`, donc ces lectures partaient sur
+   * TOUTES les pages protegees, pour peindre une pastille : invitations,
+   * avis de retrait, ma demande d'adhesion, demandes recues cote admin,
+   * notifications, plus un sixieme appel conditionnel a `profiles` pour nommer
+   * les demandeurs.
+   *
+   * La RPC est `SECURITY INVOKER` : elle n'ouvre aucun acces nouveau, la RLS
+   * de l'appelant s'applique comme quand le client lisait les tables lui-meme,
+   * et les deux sections privilegiees delegent aux fonctions DEFINER
+   * existantes. Elle ne prend aucun parametre, donc elle part immediatement,
+   * sans attendre que l'organisation active soit resolue.
+   */
+  async getMyOrgInbox(): Promise<OrgInbox> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const { data, error } = await supabase.rpc('get_my_org_inbox');
+    if (error) throw normalizeApiError(error);
+    return mapOrgInbox((data ?? {}) as OrgInboxRow);
   }
 
   // ─── Write (RPC only) ──────────────────────────────────────────────

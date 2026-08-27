@@ -35,14 +35,17 @@ performance va moins bien que la sécurité, ils disent où chaque domaine se si
 > Aucun point n'est encore attribué : une note se remesure, elle ne s'estime pas. Détail dans
 > [`PERFORMANCE.md`](./PERFORMANCE.md) et [`SCALABILITY.md`](./SCALABILITY.md) §2ter et §3.
 >
-> **2026-08-27 · l'ouverture de l'application passe de 29 à 25 requêtes**, sans migration et sans
-> rien retirer de l'écran : un filtre d'OKR et un sous-ensemble de partages qui repartaient en
-> réseau au lieu d'être dérivés de listes déjà chargées, et une lecture d'organisations en deux
-> allers-retours séquentiels devenue une jointure PostgREST. Les trois sont verrouillées par des
-> gardes vues rouges avant d'être committées. Correction au passage : **le chargement en coûtait
+> **2026-08-27 · l'ouverture de l'application passe de 29 à 21 requêtes.** D'abord sans
+> migration : un filtre d'OKR et un sous-ensemble de partages qui repartaient en réseau au lieu
+> d'être dérivés de listes déjà chargées, et une lecture d'organisations en deux allers-retours
+> séquentiels devenue une jointure PostgREST. Puis avec la mig. `129`, appliquée en prod : la
+> boîte de réception d'entreprise passe de **cinq lectures à une**. Elle est `SECURITY INVOKER`,
+> donc elle n'ouvre aucun accès nouveau, et un membre simple continue de ne voir aucune des
+> demandes d'adhésion réservées aux admins, vérifié en base après application. Les quatre
+> correctifs sont verrouillés par des gardes vues rouges avant d'être committées. Correction au passage : **le chargement en coûtait
 > 29, pas 32** ; trois requêtes de la trace de la veille venaient d'une fiche de tâche ouverte
-> juste après. Reste le palier suivant, les 8 requêtes du mode entreprise montées par `Layout`
-> pour peindre une pastille, qui demandent une RPC d'agrégat.
+> juste après. Reste, non engagé, le comptage du badge qui lit jusqu'à 1 000 tâches d'équipe
+> pour en faire un nombre.
 >
 > ⚠️ La leçon de méthode vaut plus que les trois chiffres : **une note de performance front ne dit
 > rien du coût serveur**, et un compteur Postgres cumulé ne dit rien du débit courant. Les deux
