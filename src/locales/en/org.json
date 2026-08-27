@@ -22,7 +22,8 @@
     "badgePreviewProjects": "Tasks assigned to you",
     "badgePreviewMembers": "Pending join requests",
     "badgePreviewMore_one": "and {{count}} more",
-    "badgePreviewMore_other": "and {{count}} more"
+    "badgePreviewMore_other": "and {{count}} more",
+    "tabLoading": "Loading tab…"
   },
   "onboarding": {
     "intro": "Create your company or join one to collaborate with your team.",
