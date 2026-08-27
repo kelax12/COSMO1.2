@@ -17,9 +17,13 @@ import { MemoryRouter } from 'react-router';
 import { ensureNamespaces } from '@/i18n/catalog';
 
 let activeOrg: { id: string } | null = null;
+let orgLoading = false;
+let wasOrgMember = false;
 
 vi.mock('@/modules/organizations', () => ({
-  useActiveOrganization: () => ({ activeOrg, organizations: [], setActiveOrgId: vi.fn(), isLoading: false }),
+  useActiveOrganization: () => ({
+    activeOrg, organizations: [], setActiveOrgId: vi.fn(), isLoading: orgLoading, wasOrgMember,
+  }),
 }));
 vi.mock('@/lib/hooks/use-org-notifications', () => ({ useOrgNotificationCount: () => 0 }));
 vi.mock('@/modules/friends', () => ({ usePendingRequestCount: () => 0 }));
@@ -39,6 +43,8 @@ describe('MobileTabBar — place de l’espace entreprise', () => {
 
   beforeEach(() => {
     activeOrg = null;
+    orgLoading = false;
+    wasOrgMember = false;
   });
 
   it('sans organisation : les 4 onglets d’origine, pas d’Entreprise', () => {
@@ -64,6 +70,38 @@ describe('MobileTabBar — place de l’espace entreprise', () => {
     // pas une préférence : au-delà, les libellés se tronquent.
     expect(screen.getAllByRole('link')).toHaveLength(4);
     expect(screen.getAllByRole('listitem')).toHaveLength(5);
+  });
+
+  // ── F3 : la barre ne change pas d'identité sous le doigt ────────────
+  //
+  // Ces deux cas sont l'ETAT TRANSITOIRE, celui qu'on ne voit pas en
+  // regardant un écran fini : la requête d'organisations n'a pas encore
+  // répondu. C'est là que « Habitudes » se transformait en « Entreprise ».
+
+  it('chargement, membre connu de l’appareil : Entreprise est DÉJÀ là', () => {
+    orgLoading = true;
+    wasOrgMember = true;
+    render(<MemoryRouter><MobileTabBar /></MemoryRouter>);
+    const found = labels();
+    expect(found.some((l) => /Entreprise/.test(l))).toBe(true);
+    expect(found.some((l) => /Habitudes/.test(l))).toBe(false);
+  });
+
+  it('chargement, appareil qui n’a jamais vu d’organisation : pas d’onglet fantôme', () => {
+    orgLoading = true;
+    wasOrgMember = false;
+    render(<MemoryRouter><MobileTabBar /></MemoryRouter>);
+    const found = labels();
+    expect(found.some((l) => /Entreprise/.test(l))).toBe(false);
+    expect(found.some((l) => /Habitudes/.test(l))).toBe(true);
+  });
+
+  it('requête résolue SANS organisation : l’indice ne survit pas à la vérité', () => {
+    orgLoading = false;
+    wasOrgMember = true;
+    activeOrg = null;
+    render(<MemoryRouter><MobileTabBar /></MemoryRouter>);
+    expect(labels().some((l) => /Entreprise/.test(l))).toBe(false);
   });
 
   it('/entreprise pointe bien vers la page, pas vers un menu', () => {
