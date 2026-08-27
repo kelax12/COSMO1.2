@@ -39,6 +39,7 @@ export {
   useEvent,
   useEventsByTask,
   useMemberEventsWindow,
+  useUpcomingEvents,
 } from './hooks';
 
 // ═══════════════════════════════════════════════════════════════════

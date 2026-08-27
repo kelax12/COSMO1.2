@@ -233,7 +233,9 @@
     "orgEvents": "Mes prochains événements d'entreprise",
     "orgEventsCount_one": "{{count}} à venir",
     "orgEventsCount_many": "{{count}} d'événements à venir",
-    "orgEventsCount_other": "{{count}} à venir"
+    "orgEventsCount_other": "{{count}} à venir",
+    "agendaSection": "Mon agenda",
+    "agendaEmpty": "Aucun événement à venir."
   },
   "okrModal": {
     "edit": "Modifier l'objectif",
