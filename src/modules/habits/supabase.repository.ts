@@ -69,6 +69,20 @@ export class SupabaseHabitsRepository implements IHabitsRepository {
     return warnIfTruncated(rows, MAX_ROWS, 'habits').map(mapHabitFromDb);
   }
 
+  /**
+   * ⚠️ PIÈGE DE PAYLOAD, à lire avant de brancher cette méthode.
+   *
+   * Elle lit `.from('habits').select('*')`, donc `completions` ENTIER — la
+   * chose exacte que `fetchHabits` ci-dessus évite via `get_my_habits`
+   * (mig. 119, ~280 ko par ouverture pour 20 habitudes à trois ans). Elle ne
+   * renvoie pas non plus les quatre agrégats calculés serveur, donc une série
+   * dérivée d'ici plafonnerait à la fenêtre affichée.
+   *
+   * Aucun appelant aujourd'hui : c'est une capacité d'interface, gardée
+   * volontairement comme sur les autres modules (cf. la note de
+   * `modules/tasks/hooks.ts`, étape 3 de la pagination). La brancher telle
+   * quelle rouvrirait la mig. 119 : il faudra d'abord une RPC paginée bornée.
+   */
   async getPage(params: PaginationParams = {}): Promise<PaginatedResult<Habit>> {
     if (!supabase) throw new Error('Supabase not configured');
 

@@ -49,11 +49,27 @@ export const useTeamProjects = (orgId: string | undefined) => {
  * Le cache étant partagé (même `queryKey`), il suffit qu'UN observateur demande
  * `live` pour que la donnée reste fraîche pour tous les autres montés en même
  * temps : le sondage suit donc l'écran affiché, pas le nombre de consommateurs.
+ *
+ * `background` est le symétrique de `live`, pour l'usage inverse : un
+ * consommateur qui n'AFFICHE pas la liste et n'en dérive qu'un compteur.
+ * Il en existe un seul, mais c'est le pire possible — `useOrgBadges`, monté par
+ * `Layout`, donc sur TOUTES les pages protégées, pour tout membre d'une
+ * organisation. Avec la politique par défaut, chaque retour d'onglet et chaque
+ * navigation espacée de plus de 30 s relançait la lecture la plus chère du
+ * produit (`get_my_team_tasks`, cf. SCALABILITY.md §2) pour repeindre une
+ * pastille. Le compteur ne perd rien à attendre : sa source qui fait autorité
+ * est la boîte de réception (`unreadNotifications`), tenue à jour en Realtime
+ * par `useOrgInboxRealtime` ; les tâches ne servent que de filet pour les
+ * organisations d'avant la mig. 095.
+ *
+ * ⚠️ `background` n'éteint rien pour les autres : `staleTime` et
+ * `refetchOnWindowFocus` sont PAR OBSERVATEUR. Sur /entreprise, les écrans qui
+ * regardent la liste gardent leur politique, et c'est la leur qui déclenche.
  */
 export const useTeamTasks = (
   orgId: string | undefined,
   filters?: TeamTaskFilters,
-  options?: { live?: boolean },
+  options?: { live?: boolean; background?: boolean },
 ) => {
   const repository = useRepo();
   return useQuery({
@@ -62,9 +78,9 @@ export const useTeamTasks = (
     queryKey: teamProjectKeys.tasks(orgId ?? ''),
     queryFn: () => repository.getTasks(orgId as string),
     enabled: !!orgId,
-    staleTime: 1000 * 30,
+    staleTime: options?.background ? 1000 * 60 * 5 : 1000 * 30,
     ...(options?.live ? { refetchInterval: 20_000 } : {}),
-    refetchOnWindowFocus: true,
+    refetchOnWindowFocus: !options?.background,
     select: filters
       ? (tasks) =>
           tasks.filter((tk) => {

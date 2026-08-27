@@ -46,7 +46,10 @@ export function useOrgBadges(): OrgBadges {
   const isAdmin = activeOrg?.myRole === 'admin';
   // Requêtes no-op (enabled: !!orgId) hors entreprise / hors admin.
   const { data: requests = [] } = useOrgJoinRequests(isAdmin ? activeOrg?.id : undefined);
-  const { data: tasks = [] } = useTeamTasks(activeOrg?.id);
+  // `background` : ce hook est monté par `Layout`, donc sur toutes les pages
+  // protégées. Il ne rend pas la liste, il en dérive un chiffre — voir la
+  // justification complète sur `useTeamTasks`.
+  const { data: tasks = [] } = useTeamTasks(activeOrg?.id, undefined, { background: true });
   const { data: notifications = [] } = useOrgNotifications(activeOrg?.id);
 
   return useMemo(() => {

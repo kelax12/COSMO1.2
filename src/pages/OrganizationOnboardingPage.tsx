@@ -57,7 +57,9 @@ const OrganizationOnboardingPage = () => {
             <button
               type="button"
               onClick={() => navigate('/entreprise')}
-              className="w-full py-3 rounded-xl text-sm font-semibold text-[rgb(var(--color-accent-solid-foreground))] bg-[rgb(var(--color-accent-solid))] to-indigo-600 hover:bg-[rgb(var(--color-accent-solid-hover))] hover:to-indigo-500 transition-all shadow-lg shadow-blue-500/20 inline-flex items-center justify-center gap-2"
+              // `to-indigo-*` retirés : sans `bg-gradient-*` sur le même
+              // élément, ils ne posaient qu'une variable que rien ne lit.
+              className="w-full py-3 rounded-xl text-sm font-semibold text-[rgb(var(--color-accent-solid-foreground))] bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] transition-all shadow-lg shadow-blue-500/20 inline-flex items-center justify-center gap-2"
             >
               {t('onboarding.goToOrg')} <ArrowRight size={16} aria-hidden="true" />
             </button>
