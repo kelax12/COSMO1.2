@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router';
-import { Mail, Lock, User, Eye, EyeOff, AlertCircle, UserRound, Building2 } from 'lucide-react';
+import { Mail, Lock, User, Eye, EyeOff, AlertCircle, UserRound, Building2, MailCheck } from 'lucide-react';
 import { useAuth, type AccountType } from '@/modules/auth/AuthContext';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
 import { MIN_PASSWORD_LENGTH, passwordStrength } from '@/lib/password-policy';
@@ -61,6 +61,17 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onSwitchMode, onSuccess, head
   const [passwordError, setPasswordError] = useState<string | null>(null);
   // Après ~4 s d'attente, le libellé du bouton précise que ça prend du temps.
   const [slowHint, setSlowHint] = useState(false);
+  // Inscription acceptée SANS session ouverte : le projet Supabase exige une
+  // confirmation d'email. Porte l'adresse à afficher, `null` sinon.
+  //
+  // ⚠️ Inerte tant que les confirmations sont désactivées sur le projet — et
+  // elles le sont au 2026-08-27 (mesuré : `confirmation_sent_at` renseigné sur
+  // 1 compte sur 28, délai création → confirmation de 15 ms). Ce chemin existe
+  // pour que les activer ne casse rien : sans lui, `signUp` renvoie
+  // `session: null`, l'écran navigue quand même vers `/dashboard`, et
+  // `ProtectedRoute` renvoie l'inscrit sur `/login` sans un mot d'explication.
+  // Cf. docs/DEPLOYMENT.md §2ter.
+  const [pendingConfirmation, setPendingConfirmation] = useState<string | null>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
   const { login, loginDemo, register, loginWithGoogle } = useAuth();
 
@@ -68,6 +79,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onSwitchMode, onSuccess, head
   useEffect(() => {
     setFormError(null);
     setPasswordError(null);
+    setPendingConfirmation(null);
   }, [mode]);
 
   const validatePassword = (pwd: string): string | null => {
@@ -113,7 +125,10 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onSwitchMode, onSuccess, head
       } else {
         const result = await withTimeout(register(formData.name, formData.email, formData.password, accountType));
         if (result.success) {
-          onSuccess(accountType);
+          // Compte créé mais aucune session : on ne navigue pas vers un écran
+          // protégé qui rejetterait l'inscrit. On lui dit quoi faire.
+          if (result.needsEmailConfirmation) setPendingConfirmation(formData.email);
+          else onSuccess(accountType);
         } else {
           setFormError(result.error || t('auth.registerError'));
         }
@@ -156,6 +171,32 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onSwitchMode, onSuccess, head
   };
 
   const strength = passwordStrength(formData.password);
+
+  // Même forme que l'écran « Email envoyé » de ForgotPasswordPage : une seule
+  // grammaire pour « on t'a écrit, va voir ta boîte ».
+  if (pendingConfirmation) {
+    return (
+      <div className="text-center" role="status">
+        <div className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-green-500/10 flex items-center justify-center">
+          <MailCheck size={28} className="text-green-500" aria-hidden="true" />
+        </div>
+        <Heading className="text-2xl font-bold text-[rgb(var(--color-text-primary))] mb-2">
+          {t('auth.confirmTitle')}
+        </Heading>
+        <p className="text-sm text-[rgb(var(--color-text-secondary))]">
+          {t('auth.confirmBody', { email: pendingConfirmation })}
+        </p>
+        <p className="mt-2 text-sm text-[rgb(var(--color-text-muted))]">{t('auth.confirmSpam')}</p>
+        <button
+          type="button"
+          onClick={() => onSwitchMode('login')}
+          className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-blue-400 hover:text-blue-300 transition-colors"
+        >
+          {t('auth.backToLogin')}
+        </button>
+      </div>
+    );
+  }
 
   return (
     <>

@@ -146,6 +146,98 @@ l'utilisateur, et son identité vient du JWT, jamais du corps de la requête.
 
 ---
 
+## 2ter. Emails d'authentification (Supabase Auth) — **non configurés au 2026-08-27**
+
+> 🔴 **Ce sont les emails que Supabase envoie AUX UTILISATEURS**, pas ceux qu'envoient les Edge
+> Functions. Les deux passent par Resend, mais ce sont deux chemins distincts, avec deux
+> configurations distinctes : `report-bug` et `renewal-notice` appellent l'API Resend depuis du
+> code que nous écrivons ; GoTrue, lui, envoie en **SMTP** depuis un serveur que nous ne
+> contrôlons pas. Poser `RESEND_API_KEY` ne configure QUE le premier.
+
+### Ce qui est vrai aujourd'hui — mesuré, pas supposé
+
+| Fait | Mesure du 2026-08-27 |
+|---|---|
+| **Aucun SMTP applicatif n'est configuré.** GoTrue utilise donc l'expéditeur intégré de Supabase, plafonné à quelques envois par heure et explicitement présenté par Supabase comme non destiné à la production | Zéro occurrence de « SMTP » dans le dépôt et la doc |
+| **Les confirmations d'inscription sont DÉSACTIVÉES** | 28 comptes, `confirmation_sent_at` renseigné sur **1** seul, délai création → confirmation de **15 ms** au minimum et < 10 min sur 27 comptes : c'est de l'auto-confirmation, pas un clic |
+| **Les réinitialisations de mot de passe, elles, partent bien** par cet expéditeur | `recovery_sent_at` renseigné sur **3** comptes |
+| **Le domaine n'est pas vérifié chez Resend** | `resend._domainkey.thecosmo.app` → **absent** |
+| Le domaine reçoit du courrier chez IONOS | `MX` → `mx00/mx01.ionos.fr`, `SPF` → `include:_spf-eu.ionos.com`, `_dmarc` → CNAME vers `dmarc.ionos.fr` (`p=none`) |
+
+**Les deux conséquences, dans l'ordre de gravité :**
+
+1. **Personne ne vérifie qu'une adresse d'inscription existe.** N'importe qui peut créer un compte
+   avec l'adresse d'un tiers, et une faute de frappe crée un compte définitivement injoignable —
+   sans email valide, la réinitialisation de mot de passe ne peut plus rien pour lui.
+2. **On ne peut pas corriger le point 1 sans SMTP.** Activer les confirmations aujourd'hui ferait
+   passer chaque inscription par un expéditeur plafonné : au-delà de quelques inscriptions par
+   heure, GoTrue répond `over_email_send_rate_limit`, que l'application traduit par
+   « **Trop de tentatives. Réessayez dans quelques minutes.** » (`safeAuthError`). Le message est
+   exact du point de vue du serveur et **trompeur** du point de vue de l'inscrit : il n'a rien
+   fait de trop, c'est le quota du projet — éventuellement consommé par quelqu'un d'autre — qui
+   est épuisé. Il réessaie, échoue encore, et part.
+
+⚠️ **C'est un mode de défaillance corrélé** : il ne se déclenche que sous trafic, c'est-à-dire
+exactement le jour d'une campagne, et il ressemble à « la campagne n'a pas converti ».
+
+### Mise en service — l'ordre compte
+
+**Le SMTP d'abord, les confirmations ensuite.** Inverser les deux, c'est ouvrir l'inscription sur
+un expéditeur plafonné.
+
+1. **Créer le sous-domaine d'envoi chez Resend** — `send.thecosmo.app`, **pas** `thecosmo.app`.
+   C'est le point technique de cette procédure : la racine porte déjà les MX et le SPF d'IONOS,
+   qui servent la boîte `contact@thecosmo.app`. Un sous-domaine d'envoi donne à Resend son propre
+   `MX` et son propre SPF de *Return-Path* **sans toucher** à ce qui reçoit. Resend dicte les
+   trois enregistrements à poser (`MX`, `TXT` SPF, `TXT` DKIM `resend._domainkey`).
+   ⚠️ Ne pas remplacer le SPF de la racine par celui de Resend : le courrier entrant continuerait
+   d'arriver, mais IONOS cesserait d'être autorisé à émettre.
+2. **Attendre la validation** dans Resend (les trois enregistrements au vert). Vérifier depuis
+   ici : `npm run check:mail`.
+3. **Créer une clé SMTP** dans Resend (Settings → SMTP). Hôte `smtp.resend.com`, port `465`,
+   utilisateur `resend`, mot de passe = la clé.
+4. **Poser le SMTP dans Supabase** : Dashboard → Project Settings → Authentication → SMTP Settings.
+   Expéditeur : `COSMO <bonjour@send.thecosmo.app>`. Activer.
+5. **Relever la limite d'envoi** : Authentication → Rate Limits → *Emails per hour*. Le défaut est
+   celui de l'expéditeur intégré et **ne bouge pas tout seul** quand on branche un SMTP : sans ce
+   réglage, on paie un SMTP et on garde le plafond qu'on voulait fuir.
+6. **Coller les quatre gabarits** de [`supabase/templates/`](../supabase/templates/) dans
+   Authentication → Emails. Ils ne se déploient pas depuis le dépôt, cf. le README du dossier.
+7. **Seulement maintenant**, activer *Confirm email* (Authentication → Providers → Email).
+   Le front est déjà prêt : `register()` rapporte `needsEmailConfirmation` quand `signUp` ne
+   renvoie pas de session, et `AuthForm` affiche « Vérifiez votre boîte mail » au lieu de pousser
+   l'inscrit vers un écran protégé qui le rejetterait. Verrouillé par
+   `src/components/AuthForm.confirmation.test.tsx`, **avec son témoin**.
+
+### Vérification — quatre gestes, aucun n'est facultatif
+
+```bash
+npm run check:mail          # DNS : MX, SPF, DKIM Resend, DMARC
+```
+
+1. `npm run check:mail` sort **0**.
+2. Créer un compte jetable sur la prod : l'email arrive **en moins d'une minute**, depuis
+   `@send.thecosmo.app`, et **hors dossier indésirables sur Gmail ET sur Outlook** — deux
+   fournisseurs, parce qu'ils ne jugent pas de la même façon.
+3. Demander une réinitialisation de mot de passe sur ce compte : même vérification.
+4. Supprimer le compte jetable par le bouton de suppression de compte. Ça teste au passage
+   `delete-account`, donc le droit à l'effacement, en conditions réelles.
+
+> ⚠️ **Ne pas valider la délivrabilité sur une seule boîte, et surtout pas sur une adresse du
+> domaine.** Un email envoyé depuis `thecosmo.app` vers une boîte `thecosmo.app` ne traverse
+> aucun filtre anti-spam : il prouve que le SMTP répond, pas qu'un inconnu recevra quoi que ce
+> soit.
+
+### Passer DMARC en quarantaine, plus tard
+
+`_dmarc.thecosmo.app` est aujourd'hui un **CNAME vers IONOS** qui publie `p=none` : le domaine est
+surveillé, rien n'est rejeté. C'est le bon réglage pour démarrer. Le durcir (`p=quarantine`) exige
+de retirer ce CNAME pour poser un enregistrement propre, donc de reprendre à sa charge ce qu'IONOS
+gère — à faire **après** avoir constaté plusieurs semaines d'envois alignés, jamais en même temps
+que la mise en service.
+
+---
+
 ## 2. Appliquer une migration de base de données
 
 ⚠️ **Les migrations ne sont PAS appliquées par le déploiement Vercel.** Elles
