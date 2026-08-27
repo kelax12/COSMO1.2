@@ -18,6 +18,7 @@ import {
 import TeamWorkloadCard from './TeamWorkloadCard';
 import WeeklyReviewSheet from './WeeklyReviewSheet';
 import { buildOrgLink } from './deep-link.helpers';
+import { TeamOverviewSkeleton } from './OrgLoadingSkeletons';
 import { useT } from '@/i18n/useT';
 
 interface TeamOverviewTabProps {
@@ -78,9 +79,10 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
   // traduits, une constante de module les figerait au premier import.
   const velocityConfig = { completed: { label: t('overview.completed'), color: velocityColor } } satisfies ChartConfig;
   const trendConfig = { rate: { label: t('overview.completionRate'), color: trendColor } } satisfies ChartConfig;
-  const { data: allTasks = [] } = useTeamTasks(orgId);
-  const { data: projects = [] } = useTeamProjects(orgId);
-  const { data: allOkrs = [] } = useTeamOKRs(orgId);
+  const { data: allTasks = [], isLoading: loadingTasks } = useTeamTasks(orgId);
+  const { data: projects = [], isLoading: loadingProjects } = useTeamProjects(orgId);
+  const { data: allOkrs = [], isLoading: loadingOkrs } = useTeamOKRs(orgId);
+  const isLoading = loadingTasks || loadingProjects || loadingOkrs;
   const [period, setPeriod] = useState<StatsPeriod>('30');
   const [reviewOpen, setReviewOpen] = useState(false);
   const navigate = useNavigate();
@@ -215,6 +217,14 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
         </div>
       </div>
 
+      {/* Le sélecteur de période reste utilisable pendant le chargement ; tout
+          ce qui porte un CHIFFRE attend. C'est l'onglet où le zéro faux coûte
+          le plus cher : un manager y voyait son équipe à 0 tâche / 0 % avant de
+          la voir à ses vrais chiffres. */}
+      {isLoading ? (
+        <TeamOverviewSkeleton label={t('overview.loading')} />
+      ) : (
+      <>
       {/* Carte de synthèse « progress-first » */}
       <WorkSummaryCard
         title={tp('summary.taskTotal', summary.total, { period: periodHint })}
@@ -390,6 +400,9 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
             </ul>
           </div>
         </div>
+      )}
+
+      </>
       )}
 
       {reviewOpen && (

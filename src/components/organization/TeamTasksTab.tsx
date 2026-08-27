@@ -23,6 +23,7 @@ import TeamTaskModal from './TeamTaskModal';
 import AssignMembersDialog from './AssignMembersDialog';
 import AssignEventDialog from './AssignEventDialog';
 import MemberAvatar from './MemberAvatar';
+import { TeamTasksSkeleton } from './OrgLoadingSkeletons';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { useT } from '@/i18n/useT';
 
@@ -71,9 +72,10 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
   const { can, canAssign } = useMyOrgPermissions(orgId);
   const { t, tp } = useT('org');
   const { user } = useAuth();
-  const { data: allProjects = [] } = useTeamProjects(orgId);
+  const { data: allProjects = [], isLoading: loadingProjects } = useTeamProjects(orgId);
   // `live` : c'est l'écran où l'on regarde la liste arriver (cf. useTeamTasks).
-  const { data: tasks = [] } = useTeamTasks(orgId, undefined, { live: true });
+  const { data: tasks = [], isLoading: loadingTasks } = useTeamTasks(orgId, undefined, { live: true });
+  const isLoading = loadingProjects || loadingTasks;
   const createTask = useCreateTeamTask(orgId);
   const updateTask = useUpdateTeamTask(orgId);
   const deleteTask = useDeleteTeamTask(orgId);
@@ -403,7 +405,9 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
           </button>
         ))}
 
-        {hasActiveFilter && (
+        {/* `!isLoading` : « 0 sur 0 affichées » est un chiffre, donc une
+            affirmation. Tant que rien n'est arrivé, on n'en fait aucune. */}
+        {hasActiveFilter && !isLoading && (
           <span className="text-xs text-[rgb(var(--color-text-muted))]">
             {tp('projects.tasksTabShown', sortedTasks.length, { total: tasks.length })}
           </span>
@@ -411,7 +415,12 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
       </div>
 
       {/* Table */}
-      {projects.length === 0 ? (
+      {/* Premier chargement d'abord : `projects.length === 0` est vrai tant que
+          la requête n'a pas répondu, et l'écran conseillait alors de « créer un
+          projet » à une organisation qui en a douze. */}
+      {isLoading ? (
+        <TeamTasksSkeleton label={t('projects.tasksTabLoading')} />
+      ) : projects.length === 0 ? (
         <p className="text-sm text-[rgb(var(--color-text-muted))] py-10 text-center">
           {t('projects.tasksTabNoProject')}
         </p>

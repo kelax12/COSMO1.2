@@ -23,6 +23,7 @@ import {
 import WorkSummaryCard from './WorkSummaryCard';
 import TeamTaskModal from './TeamTaskModal';
 import TeamActivityFeed from './TeamActivityFeed';
+import { MyWorkSkeleton } from './OrgLoadingSkeletons';
 import OrgEventsTimeline from './OrgEventsTimeline';
 import { buildOrgEvents } from './org-events.helpers';
 import { useT } from '@/i18n/useT';
@@ -216,11 +217,11 @@ const MyWorkTab = ({ orgId, members, currentUserId }: MyWorkTabProps) => {
   // désigne la tâche.
   const { t, tp } = useT('org');
   const tt = t;
-  const { data: projects = [] } = useTeamProjects(orgId);
+  const { data: projects = [], isLoading: loadingProjects } = useTeamProjects(orgId);
   // `live` : onglet de travail quotidien, on y attend l'arrivée d'une tâche.
-  const { data: tasks = [] } = useTeamTasks(orgId, undefined, { live: true });
-  const { data: okrs = [] } = useTeamOKRs(orgId);
-  const { data: teams = [] } = useOrgTeams(orgId);
+  const { data: tasks = [], isLoading: loadingTasks } = useTeamTasks(orgId, undefined, { live: true });
+  const { data: okrs = [], isLoading: loadingOkrs } = useTeamOKRs(orgId);
+  const { data: teams = [], isLoading: loadingTeams } = useOrgTeams(orgId);
   const upcomingEvents = useUpcomingEvents(5);
   const updateTask = useUpdateTeamTask(orgId);
   const [editingTask, setEditingTask] = useState<TeamTask | null>(null);
@@ -296,6 +297,15 @@ const MyWorkTab = ({ orgId, members, currentUserId }: MyWorkTabProps) => {
     updateTask.mutate({ taskId: task.id, input: { completed: !task.completed } });
   const modalUpdate = (taskId: string, input: UpdateTeamTaskInput) =>
     updateTask.mutateAsync({ taskId, input });
+
+  // Premier chargement : ne RIEN affirmer. Sans ce garde, l'écran annonçait
+  // « Aucune tâche pour l'instant » et une synthèse à 0 % le temps du fetch,
+  // et la checklist de démarrage montrait ses 5 étapes non faites à un admin
+  // qui les avait toutes faites. Les quatre requêtes comptent : chacune
+  // alimente un chiffre visible ici.
+  if (loadingProjects || loadingTasks || loadingOkrs || loadingTeams) {
+    return <MyWorkSkeleton label={t('myWork.loading')} />;
+  }
 
   return (
     <div className="space-y-5">

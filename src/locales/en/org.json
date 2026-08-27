@@ -193,7 +193,8 @@
     "overdueShort": "Overdue",
     "okrProgressTitle": "OKR progress",
     "overdueByMember": "Overdue by member",
-    "csvProject": "Project"
+    "csvProject": "Project",
+    "loading": "Loading statistics…"
   },
   "myWork": {
     "upToDate": "Up to date",
@@ -223,7 +224,8 @@
     "orgEventsCount_other": "{{count}} upcoming",
     "agendaSection": "My agenda",
     "agendaEmpty": "No upcoming events.",
-    "agendaToday": "Today"
+    "agendaToday": "Today",
+    "loading": "Loading your work…"
   },
   "okrModal": {
     "edit": "Edit objective",
@@ -404,7 +406,8 @@
     "tasksTabStatusUnassigned": "Unassigned",
     "tasksTabStatusAria": "Change status of {{name}}",
     "tasksTabAssignAction": "Assign to someone",
-    "tasksTabScheduleAction": "Schedule event"
+    "tasksTabScheduleAction": "Schedule event",
+    "tasksTabLoading": "Loading tasks…"
   },
   "insights": {
     "taskDeleted": "Task deleted",
