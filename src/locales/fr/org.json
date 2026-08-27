@@ -222,8 +222,6 @@
     "emptyHint": "Les tâches d'équipe qui vous seront attribuées (ou que vous vous attribuez depuis l'onglet Projets) apparaîtront ici.",
     "allDone": "Tout est terminé 🎉",
     "markDone": "Marquer « {{name}} » comme terminée",
-    "myDeadlines": "Mes échéances ({{count}})",
-    "noDeadline": "Aucune échéance datée.",
     "stepInvite": "Inviter des membres",
     "myTasksSection": "Mes tâches ({{count}})",
     "stepTeam": "Créer une première équipe",
