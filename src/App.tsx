@@ -7,9 +7,13 @@ import { Toaster } from 'sonner';
 import { MotionConfig } from 'framer-motion';
 import { installMobileFocusRecovery } from '@/lib/mobileFocus';
 import { isTimeoutError } from '@/lib/withTimeout';
-import { useLocale, localeStore } from '@/i18n/store';
-import { ensureNamespaces, type Namespace } from '@/i18n/catalog';
+import { useLocale } from '@/i18n/store';
 import { routeSlug } from '@/i18n/routes';
+// Extrait de ce fichier vers `@/lib/lazy-with-retry` pour que les onglets de
+// /entreprise puissent s'en servir aussi. ⚠️ `lazy-namespaces.guard.test.ts`
+// lit les appels `lazyWithRetry` D'ICI : les listes de catalogues ci-dessous
+// restent la source de vérité par route.
+import { lazyWithRetry } from '@/lib/lazy-with-retry';
 
 import { getLastVisitedPage } from '@/modules/ui-states';
 import { useSharedTasksRealtime } from '@/modules/tasks/useSharedTasksRealtime';
@@ -34,63 +38,6 @@ import ShareInviteClaimer from '@/components/ShareInviteClaimer';
 // land in the entry chunk. Suspense fallback is null because the palette
 // itself is invisible until opened.
 const CommandPalette = lazy(() => import('@/components/CommandPalette'));
-
-// ──────────────────────────────────────────────────────────────────
-// Lazy import wrapper — recharge la page si un chunk est obsolète
-// (cas après déploiement : le vieux index.html du navigateur référence
-// des chunks qui n'existent plus sur le CDN). On retry une fois, puis
-// on force un reload pour récupérer un index.html frais.
-//
-// ── Second rôle : les catalogues i18n de la page ──
-//
-// Seuls `common` et `errors` sont dans le chunk d'entrée (cf.
-// `src/i18n/catalog.ts`). Les 17 autres namespaces voyagent avec la page qui
-// les utilise, et sont attendus ICI, avant que le module de page ne résolve.
-//
-// 🔴 **C'est le seul endroit où ces catalogues doivent être attendus.** Le
-// `<Suspense>` qui enveloppe déjà chaque route couvre l'attente : l'utilisateur
-// voit son fallback de chargement habituel. Déplacer ce chargement dans un
-// `useEffect` de composant ferait rendre l'écran AVANT le catalogue, donc
-// afficherait des clés brutes (`org.project.name`) pendant une frame.
-//
-// Les deux chargements partent EN PARALLÈLE (`Promise.all`) : le catalogue ne
-// s'ajoute pas au temps de chargement de la page, il s'y superpose.
-//
-// La liste déclarée doit couvrir tout le SOUS-ARBRE de la page, pas seulement
-// son fichier. Elle n'est pas maintenue à la main : `npm run i18n:namespaces`
-// la calcule depuis le graphe d'imports, et
-// `src/i18n/lazy-namespaces.guard.test.ts` échoue si une déclaration est
-// incomplète.
-// ──────────────────────────────────────────────────────────────────
-const lazyWithRetry = <T extends React.ComponentType<Record<string, never>>>(
-  factory: () => Promise<{ default: T }>,
-  namespaces: readonly Namespace[] = []
-) =>
-  lazy(async () => {
-    const STORAGE_KEY = 'cosmo:chunk-reload-attempt';
-    try {
-      const [mod] = await Promise.all([
-        factory(),
-        ensureNamespaces(namespaces, localeStore.locale),
-      ]);
-      sessionStorage.removeItem(STORAGE_KEY);
-      return mod;
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      const isChunkError =
-        message.includes('Failed to fetch dynamically imported module') ||
-        message.includes('Importing a module script failed') ||
-        message.includes('error loading dynamically imported module');
-
-      if (isChunkError && !sessionStorage.getItem(STORAGE_KEY)) {
-        sessionStorage.setItem(STORAGE_KEY, '1');
-        window.location.reload();
-        // Promise jamais résolue : la page va recharger
-        return new Promise<{ default: T }>(() => {});
-      }
-      throw err;
-    }
-  });
 
 // Lazy load pages for code splitting.
 //

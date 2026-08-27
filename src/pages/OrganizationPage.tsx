@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { Navigate, useSearchParams } from 'react-router';
 import { markOrgSeen, useOrgBadges } from '@/lib/hooks/use-org-notifications';
 import { LayoutDashboard, Users, FolderKanban, Target, LogOut, Building2, Pencil, Network, Trash2, BarChart3, X, ArrowRightLeft, ListTodo } from 'lucide-react';
@@ -17,27 +17,51 @@ import { useOrgSubscription } from '@/modules/billing/org-billing.hooks';
 import { isQuotaReached, effectiveQuota } from '@/modules/billing/org-billing.logic';
 import { PageHeading } from '@/components/ui/typography';
 import { MobileHeader } from '@/components/mobile';
-import MemberDirectory from '@/components/organization/MemberDirectory';
-import InviteFriendsToOrg from '@/components/organization/InviteFriendsToOrg';
-import OrgJoinCodeCard from '@/components/organization/OrgJoinCodeCard';
-import OrgInviteLinkCard from '@/components/organization/OrgInviteLinkCard';
-import OrgProfileSheet from '@/components/organization/OrgProfileSheet';
-import DeleteOrganizationDialog from '@/components/organization/DeleteOrganizationDialog';
-import PyramidTab from '@/components/organization/PyramidTab';
-import TeamProjectsTab from '@/components/organization/TeamProjectsTab';
-import TeamTasksTab from '@/components/organization/TeamTasksTab';
-import TeamsSection from '@/components/organization/TeamsSection';
-import TeamOKRTab from '@/components/organization/TeamOKRTab';
-import TeamOverviewTab from '@/components/organization/TeamOverviewTab';
 import OrgNotificationsBell from '@/components/organization/OrgNotificationsBell';
 import OrgTabBadge from '@/components/organization/OrgTabBadge';
 import MyWorkTab from '@/components/organization/MyWorkTab';
-import OrgBillingTab from '@/components/organization/OrgBillingTab';
 import OrgPlanChip from '@/components/organization/OrgPlanChip';
-import ConfirmLeaveOrgDialog from '@/components/organization/ConfirmLeaveOrgDialog';
-import TransferOwnershipDialog from '@/components/organization/TransferOwnershipDialog';
+import { MyWorkSkeleton, TeamTasksSkeleton, TeamOverviewSkeleton, OrgTabSkeleton } from '@/components/organization/OrgLoadingSkeletons';
+import { lazyWithRetry } from '@/lib/lazy-with-retry';
 import { useT } from '@/i18n/useT';
 import type { KeyOf } from '@/i18n/catalog';
+
+// ── Onglets chargés à la demande ──────────────────────────────────
+//
+// Tout /entreprise tenait dans UN chunk de 280 ko bruts (64 ko gzip), le 4e du
+// build, plus lourd que `vendor-react`. Ouvrir l'Aperçu téléchargeait donc
+// aussi la pyramide, le kanban, la frise et les graphiques des statistiques,
+// que la plupart des visites n'ouvrent jamais.
+//
+// `MyWorkTab` reste EAGER : c'est l'onglet par défaut, le rendre paresseux
+// remplacerait l'écran d'arrivée par un squelette à chaque ouverture, pour
+// n'économiser que ce qu'on va charger dans la seconde.
+//
+// ⚠️ Second argument à `lazyWithRetry` volontairement vide : les catalogues de
+// cette page sont déclarés par sa ROUTE (`App.tsx`, ligne `OrganizationPage`),
+// et `lazy-namespaces.guard.test.ts` ne lit que celles-là. Un catalogue demandé
+// ici et absent là-bas ne serait garanti par rien.
+const PyramidTab = lazyWithRetry(() => import('@/components/organization/PyramidTab'));
+const TeamProjectsTab = lazyWithRetry(() => import('@/components/organization/TeamProjectsTab'));
+const TeamTasksTab = lazyWithRetry(() => import('@/components/organization/TeamTasksTab'));
+const TeamOKRTab = lazyWithRetry(() => import('@/components/organization/TeamOKRTab'));
+const TeamOverviewTab = lazyWithRetry(() => import('@/components/organization/TeamOverviewTab'));
+const OrgBillingTab = lazyWithRetry(() => import('@/components/organization/OrgBillingTab'));
+
+// Onglet Membres : trois cartes d'invitation, l'annuaire et les équipes. Rendu
+// seulement sur cet onglet, donc jamais téléchargé par qui ne l'ouvre pas.
+const MemberDirectory = lazyWithRetry(() => import('@/components/organization/MemberDirectory'));
+const TeamsSection = lazyWithRetry(() => import('@/components/organization/TeamsSection'));
+const InviteFriendsToOrg = lazyWithRetry(() => import('@/components/organization/InviteFriendsToOrg'));
+const OrgJoinCodeCard = lazyWithRetry(() => import('@/components/organization/OrgJoinCodeCard'));
+const OrgInviteLinkCard = lazyWithRetry(() => import('@/components/organization/OrgInviteLinkCard'));
+
+// Feuilles et dialogues : montés derrière un `&&`, donc déjà conditionnels au
+// rendu. Ils ne l'étaient pas au TÉLÉCHARGEMENT.
+const OrgProfileSheet = lazyWithRetry(() => import('@/components/organization/OrgProfileSheet'));
+const DeleteOrganizationDialog = lazyWithRetry(() => import('@/components/organization/DeleteOrganizationDialog'));
+const ConfirmLeaveOrgDialog = lazyWithRetry(() => import('@/components/organization/ConfirmLeaveOrgDialog'));
+const TransferOwnershipDialog = lazyWithRetry(() => import('@/components/organization/TransferOwnershipDialog'));
 
 type OrgTab = 'overview' | 'pyramid' | 'tasks' | 'projects' | 'okr' | 'stats' | 'members' | 'billing';
 
@@ -75,6 +99,20 @@ const TABS: {
 // reste une valeur d'URL valide — les Edge Functions Stripe renvoient sur
 // `/entreprise?tab=billing`, l'oublier ferait atterrir un paiement sur l'aperçu.
 const TAB_IDS: readonly string[] = [...TABS.map((t) => t.id), 'billing'];
+
+/**
+ * Squelette d'attente d'un onglet dont le chunk est encore en vol.
+ *
+ * Trois onglets ont déjà un squelette dédié pour leur chargement de DONNÉES :
+ * on réutilise le même ici, pour que l'attente du CODE et celle de la donnée
+ * se ressemblent au lieu de s'enchaîner en deux formes différentes.
+ */
+const tabFallback = (tab: OrgTab, t: (key: KeyOf<'org'>) => string) => {
+  if (tab === 'overview') return <MyWorkSkeleton label={t('myWork.loading')} />;
+  if (tab === 'tasks') return <TeamTasksSkeleton label={t('projects.tasksTabLoading')} />;
+  if (tab === 'stats') return <TeamOverviewSkeleton label={t('overview.loading')} />;
+  return <OrgTabSkeleton label={t('page.tabLoading')} />;
+};
 
 /** Bannière sièges : dismiss persistant par org (informative, freemium dormant). */
 const seatsBannerKey = (orgId: string) => `cosmo_org_seats_banner_dismissed_${orgId}`;
@@ -278,8 +316,6 @@ const OrganizationPage = () => {
         </div>
       )}
 
-      {editProfile && <OrgProfileSheet org={myOrg} onClose={() => setEditProfile(false)} />}
-
       {/* Bannière lancement — gratuit pour tout le monde jusqu'au 1er août,
           quel que soit le nombre de membres. Se masque d'elle-même après
           cette date (et reste dismissible avant). */}
@@ -357,6 +393,12 @@ const OrganizationPage = () => {
       </div>
 
       {/* Contenu */}
+      {/* Une seule frontière Suspense pour tout le contenu : les onglets sont
+          exclusifs, et le fallback est choisi d'après l'onglet demandé — celui
+          de l'onglet Tâches ressemble à sa table, celui des Statistiques à ses
+          tuiles. Un fallback générique pour tous aurait fait clignoter une
+          forme qui n'est pas celle qui arrive. */}
+      <Suspense fallback={tabFallback(tab, t)}>
       {tab === 'overview' && <MyWorkTab orgId={myOrg.id} members={members} currentUserId={user?.id} />}
       {tab === 'stats' && isManager && (
         <TeamOverviewTab orgId={myOrg.id} members={members} isAdmin={isAdmin} currentUserId={user?.id} />
@@ -480,6 +522,14 @@ const OrganizationPage = () => {
           )}
         </div>
       )}
+      </Suspense>
+
+      {/* Feuilles et dialogues : leur propre frontière, avec un fallback nul.
+          Ils s'ouvrent par-dessus l'écran ; y poser un squelette ferait
+          clignoter une carte fantôme au milieu de la page pendant que le
+          chunk arrive. */}
+      <Suspense fallback={null}>
+      {editProfile && <OrgProfileSheet org={myOrg} onClose={() => setEditProfile(false)} />}
 
       {transferring && (
         <TransferOwnershipDialog
@@ -518,6 +568,7 @@ const OrganizationPage = () => {
           onCancel={() => setConfirmingDelete(false)}
         />
       )}
+      </Suspense>
     </div>
   );
 };

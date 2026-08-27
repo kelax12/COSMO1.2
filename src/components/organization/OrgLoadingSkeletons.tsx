@@ -89,6 +89,28 @@ export function TeamTasksSkeleton({ label }: { label: string }) {
   );
 }
 
+/**
+ * Attente d'un onglet dont le code n'est pas encore arrivé (fallback Suspense
+ * des onglets chargés à la demande, cf. `OrganizationPage`). Volontairement
+ * neutre : on ne sait pas encore quelle forme aura l'écran, on n'en promet
+ * donc aucune.
+ */
+export function OrgTabSkeleton({ label }: { label: string }) {
+  return (
+    <div className="space-y-4" role="status" aria-label={label}>
+      <div className="flex gap-2">
+        <Bar className="h-9 w-28 rounded-lg" />
+        <Bar className="h-9 w-28 rounded-lg" />
+        <Bar className="h-9 w-20 rounded-lg" />
+      </div>
+      <Card>
+        <Bar className="h-4 w-40 mb-4" />
+        <RowList count={5} />
+      </Card>
+    </div>
+  );
+}
+
 /** Onglet Statistiques : les tuiles de chiffres, puis les graphiques. */
 export function TeamOverviewSkeleton({ label }: { label: string }) {
   return (

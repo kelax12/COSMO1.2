@@ -26,7 +26,8 @@
     "badgePreviewMembers": "Demandes d'adhésion en attente",
     "badgePreviewMore_one": "et {{count}} autre",
     "badgePreviewMore_other": "et {{count}} autres",
-    "badgePreviewMore_many": "et {{count}} d'autres"
+    "badgePreviewMore_many": "et {{count}} d'autres",
+    "tabLoading": "Chargement de l’onglet…"
   },
   "onboarding": {
     "intro": "Créez votre entreprise ou rejoignez-en une pour collaborer avec votre équipe.",
