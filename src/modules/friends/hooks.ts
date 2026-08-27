@@ -9,11 +9,11 @@ import type {
   FriendRequestInput,
   ShareTaskInput,
   PendingFriendRequest,
-  TaskShare,
   ShareListInput,
   SharedListGrant,
 } from './types';
 import { friendKeys } from './constants';
+import { useAuth } from '@/modules/auth/AuthContext';
 import { translator } from '@/i18n/useT';
 
 // ═══════════════════════════════════════════════════════════════════
@@ -87,6 +87,12 @@ export const useTaskShares = (taskId: string | undefined) => {
   });
 };
 
+/**
+ * ⚠️ Plus aucun écran ne monte ce hook : `useSharesByTask` dérive désormais de
+ * `useRelatedTaskShares`, qui lit la même table en couvrant strictement le
+ * même périmètre. Le garder revient à garder une seconde requête à portée de
+ * main ; le rebrancher rétablirait celle qu'on vient de retirer.
+ */
 export const useMyTaskShares = () => {
   const repository = useFriendsRepository();
   return useQuery({
@@ -377,18 +383,36 @@ export const usePendingRequestCount = () => {
   );
 };
 
-/** Map of taskId -> friendIds shared with, for list-view avatar badges. */
+/**
+ * Map taskId -> friendIds avec qui JE l'ai partagée (badges d'avatars des vues
+ * liste), DÉRIVÉE de `useRelatedTaskShares()`.
+ *
+ * ❌ Ne pas la rebrancher sur `useMyTaskShares()`. Les deux lisent la MÊME
+ * table : `related` filtre `shared_by = moi OR friend_id = moi`, donc il
+ * contient déjà, en entier, ce que `mine` (`shared_by = moi`) renvoie, et il
+ * sélectionne toutes ses colonnes. C'était une seconde requête pour un
+ * sous-ensemble de la première, et les deux partaient à chaque ouverture.
+ *
+ * Effet de bord bienvenu : cette carte suit désormais le canal Realtime, qui
+ * n'invalidait que la clé `related` (`useSharedTasksRealtime`).
+ *
+ * L'identité vient de `useAuth`, jamais d'une prop : un appelant qui oublie de
+ * la passer viderait les badges en silence, ce qui ne ressemble pas à un bug.
+ */
 export const useSharesByTask = (): Map<string, string[]> => {
-  const { data: shares = [] } = useMyTaskShares();
+  const { user } = useAuth();
+  const { data: shares = [] } = useRelatedTaskShares();
   return useMemo(() => {
     const m = new Map<string, string[]>();
-    for (const s of shares as TaskShare[]) {
+    if (!user?.id) return m;
+    for (const s of shares) {
+      if (s.sharedBy !== user.id) continue;
       const arr = m.get(s.taskId) ?? [];
       arr.push(s.friendId);
       m.set(s.taskId, arr);
     }
     return m;
-  }, [shares]);
+  }, [shares, user?.id]);
 };
 
 /**
