@@ -14,6 +14,7 @@ import {
 } from '@/modules/team-projects';
 import { useTeamOKRs } from '@/modules/team-okrs';
 import { useOrgTeams } from '@/modules/org-teams';
+import { useUpcomingEvents, type CalendarEvent } from '@/modules/events';
 import type { OrgMember } from '@/modules/organizations';
 import {
   projectColor, PRIORITY_META, sortOpenTasks, sumEstimatedTime, formatDuration,
@@ -108,6 +109,49 @@ const NewcomerHints = () => {
   );
 };
 
+/**
+ * Mon agenda — événements à venir de MON calendrier personnel (module
+ * `events`), pas les échéances de tâches d'équipe : celles-ci vivent dans la
+ * frise « Prochains événements d'entreprise » plus bas. Occupe la colonne
+ * droite laissée vacante par le retrait de « Mes échéances ».
+ */
+const AgendaEventsCard = ({ events }: { events: CalendarEvent[] }) => {
+  const { t } = useT('org');
+  return (
+    <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4">
+      <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))] mb-3">
+        {t('myWork.agendaSection')}
+      </h3>
+      {events.length === 0 ? (
+        <p className="text-xs text-[rgb(var(--color-text-muted))] py-4 text-center">{t('myWork.agendaEmpty')}</p>
+      ) : (
+        <ul className="space-y-1.5">
+          {events.map((e) => {
+            const start = parseISO(e.start);
+            return (
+              <li key={e.id} className="flex items-center gap-3 p-2 rounded-xl border border-[rgb(var(--color-border))]">
+                <div className="flex flex-col items-center justify-center w-10 shrink-0 text-[rgb(var(--color-text-secondary))]">
+                  <span className="text-sm font-bold leading-none">{format(start, 'd', { locale: getDateLocale() })}</span>
+                  <span className="text-[10px] uppercase">{format(start, 'MMM', { locale: getDateLocale() })}</span>
+                </div>
+                <span
+                  className="w-1.5 h-1.5 rounded-full shrink-0"
+                  style={{ backgroundColor: e.color || 'rgb(var(--color-accent))' }}
+                  aria-hidden="true"
+                />
+                <span className="text-sm text-[rgb(var(--color-text-primary))] flex-1 truncate">{e.title}</span>
+                <span className="text-[10px] text-[rgb(var(--color-text-muted))] shrink-0">
+                  {format(start, 'HH:mm', { locale: getDateLocale() })}
+                </span>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
+  );
+};
+
 const StartChecklist = ({ steps }: { steps: StartStep[] }) => {
   const { t } = useT('org');
   const navigate = useNavigate();
@@ -158,6 +202,7 @@ const MyWorkTab = ({ orgId, members, currentUserId }: MyWorkTabProps) => {
   const { data: tasks = [] } = useTeamTasks(orgId, undefined, { live: true });
   const { data: okrs = [] } = useTeamOKRs(orgId);
   const { data: teams = [] } = useOrgTeams(orgId);
+  const upcomingEvents = useUpcomingEvents(5);
   const updateTask = useUpdateTeamTask(orgId);
   const [editingTask, setEditingTask] = useState<TeamTask | null>(null);
 
@@ -260,7 +305,7 @@ const MyWorkTab = ({ orgId, members, currentUserId }: MyWorkTabProps) => {
           </p>
         </div>
       ) : (
-        <div className="space-y-5">
+        <div className="grid lg:grid-cols-2 gap-5 items-start">
           {/* Mes tâches */}
           <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4">
             <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))] mb-3">
@@ -315,16 +360,17 @@ const MyWorkTab = ({ orgId, members, currentUserId }: MyWorkTabProps) => {
             )}
           </div>
 
+          {/* Mon agenda — espace laissé par le retrait de « Mes échéances ». */}
+          <AgendaEventsCard events={upcomingEvents} />
         </div>
       )}
 
-      {/* Prochains événements de l'entreprise (reco #2) — visibles par tous,
-          même sans tâche assignée. Remplace « Mes échéances », qui répétait en
-          liste les dates déjà portées par la carte de synthèse ci-dessus. */}
-      <OrgEventsTimeline events={orgEvents} />
-
       {/* Activité de l'équipe (reco #11) — dérivée des tâches, 14 derniers jours. */}
       <TeamActivityFeed tasks={tasks} projects={projects} members={members} />
+
+      {/* Prochains événements de l'entreprise (reco #2) — visibles par tous,
+          même sans tâche assignée. */}
+      <OrgEventsTimeline events={orgEvents} />
 
       {editingTask && (
         <TeamTaskModal
