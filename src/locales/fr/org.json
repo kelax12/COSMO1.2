@@ -226,13 +226,16 @@
     "noDeadline": "Aucune échéance datée.",
     "stepInvite": "Inviter des membres",
     "myTasksSection": "Mes tâches ({{count}})",
-    "orgDeadlines": "Prochaines échéances de l'entreprise",
     "stepTeam": "Créer une première équipe",
     "welcomeTitle": "Bienvenue dans l'espace de votre entreprise",
     "welcomeIntro": "Rien ne vous est encore assigné. En attendant, voici par où commencer.",
     "hintProjects": "Voir les projets de l'équipe",
     "hintMembers": "Découvrir qui fait quoi dans l'annuaire",
-    "hintOkr": "Suivre les objectifs de votre équipe"
+    "hintOkr": "Suivre les objectifs de votre équipe",
+    "orgEvents": "Mes prochains événements d'entreprise",
+    "orgEventsCount_one": "{{count}} à venir",
+    "orgEventsCount_many": "{{count}} d'événements à venir",
+    "orgEventsCount_other": "{{count}} à venir"
   },
   "okrModal": {
     "edit": "Modifier l'objectif",
