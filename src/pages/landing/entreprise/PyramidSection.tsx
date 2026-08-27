@@ -1,5 +1,6 @@
 import React, { useMemo, useRef, useState } from 'react';
 import { ListTodo, CalendarDays, TrendingUp } from 'lucide-react';
+import { toast } from 'sonner';
 import { gsap, useGSAP } from '@/lib/gsap';
 import { useT } from '@/i18n/useT';
 import type { KeyOf } from '@/i18n/catalog';
@@ -42,6 +43,13 @@ const PYRAMID_BENEFITS: { titleKey: KeyOf<'landing'>; bodyKey: KeyOf<'landing'> 
 
 /** Demi-hauteur d'une carte, en % du cadre — sert à accrocher les liens. */
 const CARD_HALF_H = 7;
+
+/** Message affiché en attente de confirmation, par onglet demandé. */
+const DEMO_PROMPT_KEY: Record<PyramidMemberTab, KeyOf<'landing'>> = {
+  tasks: 'enterprise.pyramid.demoPromptTasks',
+  agenda: 'enterprise.pyramid.demoPromptAgenda',
+  contribution: 'enterprise.pyramid.demoPromptContribution',
+};
 
 /**
  * Lien parent → enfant, en coude à angle droit — c'est le tracé qu'utilise
@@ -338,6 +346,19 @@ const PyramidCard: React.FC<PyramidCardProps> = ({
 }) => {
   const { t } = useT('landing');
 
+  // Un clic n'ouvre plus la démo directement : ça faisait perdre le visiteur
+  // de la landing sans prévenir. On lui propose plutôt d'ouvrir la démo,
+  // depuis la page où il est, et c'est son clic sur l'action du toast qui
+  // déclenche réellement `onMemberDemo`.
+  const promptDemo = (tab: PyramidMemberTab) => {
+    toast(t(DEMO_PROMPT_KEY[tab], { name: node.name }), {
+      action: {
+        label: t('enterprise.pyramid.demoPromptAction'),
+        onClick: () => onMemberDemo(node.demoUserId, tab),
+      },
+    });
+  };
+
   const button = (
     <button
       type="button"
@@ -391,21 +412,21 @@ const PyramidCard: React.FC<PyramidCardProps> = ({
           {t('enterprise.pyramid.menuLabel', { name: node.name })}
         </DropdownMenuLabel>
         <DropdownMenuItem
-          onClick={() => onMemberDemo(node.demoUserId, 'tasks')}
+          onClick={() => promptDemo('tasks')}
           className="text-slate-200 focus:bg-cyan-400/10 focus:text-cyan-100"
         >
           <ListTodo size={14} className="text-cyan-300" aria-hidden="true" />
           {t('enterprise.pyramid.menuTasks')}
         </DropdownMenuItem>
         <DropdownMenuItem
-          onClick={() => onMemberDemo(node.demoUserId, 'agenda')}
+          onClick={() => promptDemo('agenda')}
           className="text-slate-200 focus:bg-cyan-400/10 focus:text-cyan-100"
         >
           <CalendarDays size={14} className="text-cyan-300" aria-hidden="true" />
           {t('enterprise.pyramid.menuAgenda')}
         </DropdownMenuItem>
         <DropdownMenuItem
-          onClick={() => onMemberDemo(node.demoUserId, 'contribution')}
+          onClick={() => promptDemo('contribution')}
           className="text-slate-200 focus:bg-cyan-400/10 focus:text-cyan-100"
         >
           <TrendingUp size={14} className="text-cyan-300" aria-hidden="true" />
