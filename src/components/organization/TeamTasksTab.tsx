@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Search, X, ArrowUpDown, ChevronDown, Plus, Pencil, Trash2, MoreHorizontal, UserPlus, CalendarPlus, MessageSquare } from 'lucide-react';
+import { X, Plus, Pencil, Trash2, MoreHorizontal, UserPlus, CalendarPlus, MessageSquare } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -24,6 +24,7 @@ import AssignMembersDialog from './AssignMembersDialog';
 import AssignEventDialog from './AssignEventDialog';
 import MemberAvatar from './MemberAvatar';
 import { TeamTasksSkeleton } from './OrgLoadingSkeletons';
+import TeamTasksToolbar, { type SortField } from './TeamTasksToolbar';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { useT } from '@/i18n/useT';
 
@@ -37,8 +38,6 @@ interface TeamTasksTabProps {
   /** Admin : agenda de tout le monde consultable dans « Assigner l'événement » ; sinon soi + son sous-arbre. */
   isAdmin: boolean;
 }
-
-type SortField = 'priority' | 'deadline' | 'name' | 'estimatedTime' | 'project';
 
 /** Sans accents/casse — même normalisation que MemberDirectory. */
 const normalize = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
@@ -319,100 +318,23 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
         </div>
       )}
 
-      {/* Recherche + tri + nouvelle tâche */}
-      <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-        <div className="relative flex-1 min-w-[150px]">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[rgb(var(--color-text-muted))]" aria-hidden="true" />
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder={t('projects.tasksTabSearchPlaceholder')}
-            aria-label={t('projects.tasksTabSearchAria')}
-            className="w-full pl-9 pr-9 py-2.5 border rounded-xl focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))] transition-all shadow-sm text-sm"
-            style={{ backgroundColor: 'rgb(var(--color-surface))', borderColor: 'rgb(var(--color-border))', color: 'rgb(var(--color-text-primary))' }}
-          />
-          {searchTerm && (
-            <button
-              type="button"
-              onClick={() => setSearchTerm('')}
-              aria-label={t('projects.tasksTabClearSearch')}
-              className="absolute right-2 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full flex items-center justify-center hover:bg-[rgb(var(--color-hover))]"
-            >
-              <X size={14} aria-hidden="true" />
-            </button>
-          )}
-        </div>
-
-        <div className="relative w-44 shrink-0">
-          <select
-            value={sortField}
-            onChange={(e) => setSortField(e.target.value as SortField)}
-            aria-label={t('projects.tasksTabSortAria')}
-            className="w-full appearance-none border rounded-lg pl-3 pr-16 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))] transition-all cursor-pointer shadow-sm"
-            style={{ backgroundColor: 'rgb(var(--color-surface))', borderColor: 'rgb(var(--color-border))', color: 'rgb(var(--color-text-primary))' }}
-          >
-            <option value="priority">{t('projects.tasksTabSortPriority')}</option>
-            <option value="deadline">{t('projects.tasksTabSortDeadline')}</option>
-            <option value="name">{t('projects.tasksTabSortName')}</option>
-            <option value="estimatedTime">{t('projects.tasksTabSortDuration')}</option>
-            <option value="project">{t('projects.tasksTabSortProject')}</option>
-          </select>
-          <div className="pointer-events-none absolute inset-y-0 right-9 flex items-center" style={{ color: 'rgb(var(--color-text-muted))' }}>
-            <ChevronDown size={16} aria-hidden="true" />
-          </div>
-          <button
-            type="button"
-            onClick={() => setSortDirection((d) => (d === 'asc' ? 'desc' : 'asc'))}
-            aria-label={sortDirection === 'asc' ? t('projects.tasksTabSortAsc') : t('projects.tasksTabSortDesc')}
-            title={sortDirection === 'asc' ? t('projects.tasksTabSortAsc') : t('projects.tasksTabSortDesc')}
-            className="absolute inset-y-0 right-1 my-auto z-10 flex h-7 w-7 items-center justify-center rounded-md transition-colors hover:bg-[rgb(var(--color-hover))]"
-            style={{ color: sortDirection === 'desc' ? 'rgb(var(--color-accent))' : 'rgb(var(--color-text-muted))' }}
-          >
-            <ArrowUpDown size={15} aria-hidden="true" />
-          </button>
-        </div>
-
-        <button
-          type="button"
-          onClick={() => setTaskModal({ mode: 'create' })}
-          disabled={projects.length === 0 || !can['task.create']}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-bold shadow-lg shadow-blue-500/25 transition-all hover:scale-[1.02] active:scale-95 bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] hover:bg-[rgb(var(--color-accent-solid-hover))] disabled:opacity-40 disabled:hover:scale-100"
-        >
-          <Plus size={18} aria-hidden="true" />
-          {t('projects.tasksTabNewTask')}
-        </button>
-      </div>
-
-      {/* Filtres de statut — pastilles cliquables, même sémantique que les
-          pastilles de synthèse de l'onglet Projets (filterByStatus). */}
-      <div className="flex items-center gap-2 flex-wrap">
-        {(['open', 'overdue', 'doneThisWeek', 'all'] as TaskStatusFilter[]).map((f) => (
-          <button
-            key={f}
-            type="button"
-            onClick={() => setStatusFilter(f)}
-            className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
-              statusFilter === f
-                ? 'bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] border-[rgb(var(--color-accent-solid))]'
-                : 'bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] border-[rgb(var(--color-border))]'
-            }`}
-          >
-            {f === 'open' ? t('projects.tasksTabFilterOpen')
-              : f === 'overdue' ? t('projects.tasksTabFilterOverdue')
-              : f === 'doneThisWeek' ? t('projects.tasksTabFilterDone')
-              : t('projects.tasksTabFilterAll')}
-          </button>
-        ))}
-
-        {/* `!isLoading` : « 0 sur 0 affichées » est un chiffre, donc une
-            affirmation. Tant que rien n'est arrivé, on n'en fait aucune. */}
-        {hasActiveFilter && !isLoading && (
-          <span className="text-xs text-[rgb(var(--color-text-muted))]">
-            {tp('projects.tasksTabShown', sortedTasks.length, { total: tasks.length })}
-          </span>
-        )}
-      </div>
+      <TeamTasksToolbar
+        searchTerm={searchTerm}
+        onSearchTerm={setSearchTerm}
+        sortField={sortField}
+        onSortField={setSortField}
+        sortDirection={sortDirection}
+        onToggleSortDirection={() => setSortDirection((d) => (d === 'asc' ? 'desc' : 'asc'))}
+        statusFilter={statusFilter}
+        onStatusFilter={setStatusFilter}
+        canCreate={projects.length > 0 && can['task.create']}
+        onCreate={() => setTaskModal({ mode: 'create' })}
+        // `!isLoading` : « 0 sur 0 affichées » est un chiffre, donc une
+        // affirmation. Tant que rien n'est arrivé, on n'en fait aucune.
+        shownLabel={hasActiveFilter && !isLoading
+          ? tp('projects.tasksTabShown', sortedTasks.length, { total: tasks.length })
+          : null}
+      />
 
       {/* Table */}
       {/* Premier chargement d'abord : `projects.length === 0` est vrai tant que

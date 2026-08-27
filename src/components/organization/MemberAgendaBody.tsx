@@ -367,7 +367,7 @@ export const MemberAgendaBody = ({ member, onlyTaskId }: MemberAgendaBodyProps) 
                       data-task={JSON.stringify({ id: task.id, name: task.name, projectId: task.projectId, estimatedTime: task.estimatedTime, priority: task.priority })}
                     >
                       <div className="flex items-center gap-2">
-                        <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${priority.dot}`} title={priority.label} aria-hidden="true" />
+                        <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${priority.dot}`} role="img" aria-label={priority.label} title={priority.label} />
                         <span className="text-sm font-medium text-[rgb(var(--color-text-primary))] truncate">{task.name}</span>
                       </div>
                       <div className="flex items-center gap-2 mt-1 text-[11px] text-[rgb(var(--color-text-muted))]">

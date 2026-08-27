@@ -219,7 +219,7 @@
     "hintProjects": "See the team's projects",
     "hintMembers": "Find out who does what in the directory",
     "hintOkr": "Follow your team's objectives",
-    "orgEvents": "My upcoming company events",
+    "orgEvents": "Upcoming company events",
     "orgEventsCount_one": "{{count}} upcoming",
     "orgEventsCount_many": "{{count}} upcoming",
     "orgEventsCount_other": "{{count}} upcoming",
@@ -784,7 +784,8 @@
     "save": "Save",
     "saving": "Saving…",
     "unreadComments_one": "{{count}} unread comment",
-    "unreadComments_other": "{{count}} unread comments"
+    "unreadComments_other": "{{count}} unread comments",
+    "backToChoice": "Back"
   },
   "tabs": {
     "overview": "Overview",

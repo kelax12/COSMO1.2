@@ -180,7 +180,7 @@ const CreateOrJoinOrganization: React.FC<CreateOrJoinOrganizationProps> = ({ onC
         onClick={() => setMode('choice')}
         className="inline-flex items-center gap-1.5 text-sm text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))] transition-colors"
       >
-        <ArrowLeft size={15} aria-hidden="true" /> Retour
+        <ArrowLeft size={15} aria-hidden="true" /> {t('common.backToChoice')}
       </button>
 
       {mode === 'create' ? (

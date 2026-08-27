@@ -123,7 +123,6 @@ const KNOWN_OVERSIZED = new Set([
   'src/components/task-modal/DesktopDetailsStep.tsx', // 703
   'src/components/task-modal/TaskModalMobileBody.tsx', // 698
   'src/components/organization/TeamTaskModal.tsx', // 685
-  'src/components/organization/TeamTasksTab.tsx', // 633
   'src/modules/auth/AuthContext.tsx', // 626
   'src/pages/tasks/TaskListsBar.tsx', // 615
   'src/modules/friends/supabase.repository.ts', // 601
@@ -165,8 +164,18 @@ const KNOWN_OVERSIZED = new Set([
  *
  * PyramidTab reste hors budget a 1 046 : le decoupage n'est pas fini, il est
  * commence. La suite naturelle est d'extraire le glisser-deposer dans un hook.
+ *
+ * 2026-08-27 (4e passe) : 11 454 -> 10 811, 15 fichiers -> 14.
+ * `TeamTasksTab.tsx` sort de la liste (651 -> 573) par extraction de
+ * `TeamTasksToolbar.tsx` (recherche, tri, creation, filtres de statut).
+ *
+ * Et c'est encore le cliquet qui l'a impose, pour la quatrieme fois : le
+ * correctif d'etat de chargement ajoutait 9 lignes a ce fichier deja hors
+ * budget, le total est passe a 11 463, la garde a refuse. La decoupe a suivi.
+ * La barre d'outils extraite est purement presentationnelle — aucun etat de
+ * filtre n'a bouge, il reste dans l'onglet qui sait ce qu'il filtre.
  */
-const OVERSIZED_BUDGET = 11454;
+const OVERSIZED_BUDGET = 10811;
 
 const loc = (file: string) => readFileSync(file, 'utf8').split('\n').length;
 

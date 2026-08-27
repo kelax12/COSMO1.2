@@ -227,7 +227,7 @@ const TeamProjectsKanban = ({ projects, tasks, members, onSetAssignees, onOpenTa
                   >
                     <p className="text-sm text-[rgb(var(--color-text-primary))] line-clamp-2">{task.name}</p>
                     <div className="flex items-center gap-2 mt-1.5">
-                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${priority.dot}`} title={priority.label} aria-hidden="true" />
+                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${priority.dot}`} role="img" aria-label={priority.label} title={priority.label} />
                       {project && pColor && (
                         <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full truncate ${pColor.soft}`}>
                           {project.name}

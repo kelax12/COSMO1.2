@@ -105,7 +105,13 @@ const EXCLUDED_DIRS = new Set(['ui', 'showcase']);
 // `text-caption`. C'est la deuxieme fois en une journee que cette garde
 // attrape la meme chose au meme endroit : le mode entreprise n'a jamais ete
 // migre sur l'echelle typographique, il la contourne badge par badge.
-const ARBITRARY_BUDGET = 199;
+// 2026-08-27 : 202 -> 196, et sous-11px 79 -> 75. Les 6 tailles arbitraires
+// d'`OrgEventsTimeline` (frise de l'Apercu, arrivee le 2026-08-26) passent sur
+// `text-caption`. Elles avaient fait franchir le budget de 3 sans que personne
+// ne le voie : la garde etait rouge depuis la veille.
+// ⚠️ Les quatre `text-[10px]` passent donc de 10 a 11 px. Changement voulu :
+// 11 px EST le plancher lisible de l'echelle, c'est tout l'objet de ce budget.
+const ARBITRARY_BUDGET = 196;
 
 /** `text-[10px]` → capture "10". Ignore rem/%/var — seul le px pose problème. */
 const ARBITRARY_TEXT_SIZE = /text-\[(\d+(?:\.\d+)?)px\]/g;
@@ -159,7 +165,7 @@ describe('design system mobile — échelle typographique', () => {
     // Le plancher bas s'applique même hors zone migrée : personne ne doit
     // AJOUTER un nouveau text-[8px]. Les occurrences historiques sont listées
     // ici — cette liste ne doit que rétrécir.
-    const KNOWN_SUB_11PX = 79;
+    const KNOWN_SUB_11PX = 75;
 
     const count = files.reduce(
       (sum, file) =>

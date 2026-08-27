@@ -46,7 +46,7 @@ const Caption = ({ event }: { event: PlacedOrgEvent }) => {
   const tone = TONE[event.urgency];
   return (
     <>
-      <span className={`text-[11px] font-semibold leading-none ${tone.text}`}>{dayLabel(event.date)}</span>
+      <span className={`text-caption font-semibold leading-none ${tone.text}`}>{dayLabel(event.date)}</span>
       <span className="text-xs text-[rgb(var(--color-text-primary))] text-center leading-snug line-clamp-2">
         {event.name}
       </span>
@@ -106,11 +106,11 @@ const OrgEventsTimeline = ({ events }: OrgEventsTimelineProps) => {
                   </>
                 )}
                 {e.kind === 'okr' ? (
-                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-[rgb(var(--color-text-muted))]">
+                  <span className="inline-flex items-center gap-1 text-caption font-semibold text-[rgb(var(--color-text-muted))]">
                     <Target size={10} aria-hidden="true" /> OKR
                   </span>
                 ) : e.projectName ? (
-                  <span className="text-[10px] text-[rgb(var(--color-text-muted))] truncate max-w-full">
+                  <span className="text-caption text-[rgb(var(--color-text-muted))] truncate max-w-full">
                     {e.projectName}
                   </span>
                 ) : null}
@@ -129,15 +129,15 @@ const OrgEventsTimeline = ({ events }: OrgEventsTimelineProps) => {
             </span>
             <div className="min-w-0 flex-1">
               <div className="flex items-baseline gap-2">
-                <span className={`text-[11px] font-semibold shrink-0 ${TONE[e.urgency].text}`}>{dayLabel(e.date)}</span>
+                <span className={`text-caption font-semibold shrink-0 ${TONE[e.urgency].text}`}>{dayLabel(e.date)}</span>
                 <span className="text-sm text-[rgb(var(--color-text-primary))] truncate">{e.name}</span>
               </div>
               {e.kind === 'okr' ? (
-                <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-[rgb(var(--color-text-muted))]">
+                <span className="inline-flex items-center gap-1 text-caption font-semibold text-[rgb(var(--color-text-muted))]">
                   <Target size={10} aria-hidden="true" /> OKR
                 </span>
               ) : e.projectName ? (
-                <span className="text-[10px] text-[rgb(var(--color-text-muted))]">{e.projectName}</span>
+                <span className="text-caption text-[rgb(var(--color-text-muted))]">{e.projectName}</span>
               ) : null}
             </div>
           </li>
