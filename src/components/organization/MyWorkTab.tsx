@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router';
 import { format, parseISO, isPast, isToday } from 'date-fns';
 import { getDateLocale } from '@/i18n/format';
 import {
-  ListTodo, AlertTriangle, CalendarDays, Check, Target, CircleCheck, ChevronRight,
+  ListTodo, AlertTriangle, CalendarDays, Check, CircleCheck, ChevronRight,
 } from 'lucide-react';
 import {
   useTeamProjects,
@@ -21,6 +21,8 @@ import {
 import WorkSummaryCard from './WorkSummaryCard';
 import TeamTaskModal from './TeamTaskModal';
 import TeamActivityFeed from './TeamActivityFeed';
+import OrgEventsTimeline from './OrgEventsTimeline';
+import { buildOrgEvents } from './org-events.helpers';
 import { useT } from '@/i18n/useT';
 
 interface MyWorkTabProps {
@@ -189,27 +191,19 @@ const MyWorkTab = ({ orgId, members, currentUserId }: MyWorkTabProps) => {
 
   const projectById = useMemo(() => new Map(projects.map((p) => [p.id, p])), [projects]);
 
-  // Prochaines échéances de l'ENTREPRISE (reco #2, Option A) : deadlines des
-  // tâches d'équipe ouvertes (tous assignés) + échéances des OKR, à venir,
-  // triées, 6 max. Zéro modèle d'événement partagé nécessaire.
-  const orgDeadlines = useMemo(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const items: { id: string; date: Date; name: string; kind: 'task' | 'okr'; projectName?: string }[] = [];
-    for (const t of tasks) {
-      if (t.completed || !t.deadline || !activeProjectIds.has(t.projectId)) continue;
-      const d = parseISO(t.deadline);
-      if (Number.isNaN(d.getTime()) || d < today) continue;
-      items.push({ id: `task-${t.id}`, date: d, name: t.name, kind: 'task', projectName: projectById.get(t.projectId)?.name });
-    }
-    for (const o of okrs) {
-      if (!o.endDate) continue;
-      const d = parseISO(o.endDate);
-      if (Number.isNaN(d.getTime()) || d < today) continue;
-      items.push({ id: `okr-${o.id}`, date: d, name: o.title, kind: 'okr' });
-    }
-    return items.sort((a, b) => a.date.getTime() - b.date.getTime()).slice(0, 6);
-  }, [tasks, okrs, activeProjectIds, projectById]);
+  // Prochains événements de l'ENTREPRISE : deadlines des tâches d'équipe
+  // ouvertes (tous assignés) + échéances des OKR, à venir, 6 max. Zéro modèle
+  // d'événement partagé nécessaire. Le rendu est une frise chronologique
+  // (OrgEventsTimeline), pas une liste : l'écart entre deux échéances se voit.
+  const orgEvents = useMemo(
+    () => buildOrgEvents(
+      tasks,
+      okrs,
+      activeProjectIds,
+      new Map(projects.map((p) => [p.id, p.name])),
+    ),
+    [tasks, okrs, activeProjectIds, projects],
+  );
 
   // Checklist de démarrage (reco #3) — admins uniquement, masquée dès que
   // toutes les étapes sont faites.
@@ -359,35 +353,9 @@ const MyWorkTab = ({ orgId, members, currentUserId }: MyWorkTabProps) => {
       {/* Activité de l'équipe (reco #11) — dérivée des tâches, 14 derniers jours. */}
       <TeamActivityFeed tasks={tasks} projects={projects} members={members} />
 
-      {/* Prochaines échéances de l'entreprise (reco #2) — visibles par tous,
+      {/* Prochains événements de l'entreprise (reco #2) — visibles par tous,
           même sans tâche assignée. */}
-      {orgDeadlines.length > 0 && (
-        <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4">
-          <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))] mb-3">
-            {t('myWork.orgDeadlines')}
-          </h3>
-          <ul className="space-y-1.5">
-            {orgDeadlines.map((item) => (
-              <li key={item.id} className="flex items-center gap-3 p-2 rounded-xl border border-[rgb(var(--color-border))]">
-                <div className="flex flex-col items-center justify-center w-10 shrink-0 text-[rgb(var(--color-text-secondary))]">
-                  <span className="text-sm font-bold leading-none">{format(item.date, 'd', { locale: getDateLocale() })}</span>
-                  <span className="text-[10px] uppercase">{format(item.date, 'MMM', { locale: getDateLocale() })}</span>
-                </div>
-                <span className="text-sm text-[rgb(var(--color-text-primary))] flex-1 truncate">{item.name}</span>
-                {item.kind === 'okr' ? (
-                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full shrink-0 bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-secondary))]">
-                    <Target size={10} aria-hidden="true" /> OKR
-                  </span>
-                ) : item.projectName ? (
-                  <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full shrink-0 truncate max-w-[110px] bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-secondary))]">
-                    {item.projectName}
-                  </span>
-                ) : null}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+      <OrgEventsTimeline events={orgEvents} />
 
       {editingTask && (
         <TeamTaskModal

@@ -213,13 +213,16 @@
     "noDeadline": "No dated due date.",
     "stepInvite": "Invite members",
     "myTasksSection": "My tasks ({{count}})",
-    "orgDeadlines": "Upcoming company deadlines",
     "stepTeam": "Create a first team",
     "welcomeTitle": "Welcome to your company workspace",
     "welcomeIntro": "Nothing is assigned to you yet. In the meantime, here is where to start.",
     "hintProjects": "See the team's projects",
     "hintMembers": "Find out who does what in the directory",
-    "hintOkr": "Follow your team's objectives"
+    "hintOkr": "Follow your team's objectives",
+    "orgEvents": "My upcoming company events",
+    "orgEventsCount_one": "{{count}} upcoming",
+    "orgEventsCount_many": "{{count}} upcoming",
+    "orgEventsCount_other": "{{count}} upcoming"
   },
   "okrModal": {
     "edit": "Edit objective",
