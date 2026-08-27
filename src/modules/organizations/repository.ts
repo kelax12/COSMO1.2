@@ -2,7 +2,7 @@
 // ORGANIZATIONS MODULE - Repository Interface
 // ═══════════════════════════════════════════════════════════════════
 
-import { MyOrganization, Organization, OrgMember, OrgJoinRequest, OrgRole, UpdateOrganizationInput, OrgInviteLink, OrgInvitation, OrgRemovalNotice } from './types';
+import { MyOrganization, Organization, OrgMember, OrgJoinRequest, OrgRole, UpdateOrganizationInput, OrgInviteLink, OrgInvitation, OrgRemovalNotice, OrgInbox } from './types';
 import type { OrgMemberPermissions, SetOrgPermissionsInput } from './permissions';
 
 export interface IOrganizationsRepository {
@@ -17,6 +17,14 @@ export interface IOrganizationsRepository {
   getPendingJoinRequests(orgId: string): Promise<OrgJoinRequest[]>;
   /** La demande envoyée par l'utilisateur courant, s'il en a une (0..1). */
   getMySentJoinRequest(): Promise<OrgJoinRequest | null>;
+  /**
+   * Les CINQ lectures de la boite de reception en une seule (mig. 129).
+   *
+   * Les methodes unitaires ci-dessus restent le contrat : celle-ci ne
+   * remplace rien, elle regroupe. En demo elle les rappelle simplement, il
+   * n'y a pas de reseau a economiser.
+   */
+  getMyOrgInbox(): Promise<OrgInbox>;
 
   // Write operations (prod : RPC SECURITY DEFINER uniquement)
   /** Crée l'org (code généré serveur) et fait de l'appelant l'admin. */

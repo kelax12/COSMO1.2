@@ -21,25 +21,6 @@ import { supabase } from '@/lib/supabase';
 import { normalizeApiError } from '@/lib/normalizeApiError';
 
 /**
- * Les 50 notifications les plus récentes de l'organisation, pour l'utilisateur
- * courant (la RLS fait le filtrage par personne — on ne le refait pas ici).
- *
- * L'ordre reprend celui de l'index `(user_id, created_at DESC)` : trier
- * autrement forcerait un tri en mémoire sur chaque ouverture de la cloche.
- */
-export async function fetchOrgNotificationRows(orgId: string): Promise<unknown[]> {
-  if (!supabase) return [];
-  const { data, error } = await supabase
-    .from('org_notifications')
-    .select('*')
-    .eq('org_id', orgId)
-    .order('created_at', { ascending: false })
-    .limit(50);
-  if (error) throw normalizeApiError(error);
-  return (data ?? []) as unknown[];
-}
-
-/**
  * Marque toutes les notifications non lues de l'organisation comme lues.
  *
  * `.is('read_at', null)` n'est pas une optimisation : sans ce filtre, chaque

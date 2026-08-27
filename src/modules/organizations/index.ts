@@ -103,3 +103,6 @@ export {
   orgNotificationKeys,
 } from './notifications';
 export type { OrgNotification, OrgNotificationKind } from './notifications';
+
+export { useOrgInbox } from './inbox';
+export { mapOrgInbox, type OrgInboxRow } from './inbox.repository';

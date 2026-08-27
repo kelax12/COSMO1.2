@@ -32,7 +32,7 @@ désormais connus et ils vivent dans les sections
 
 | Ce qui a été mesuré | Résultat | Statut |
 |---|---|---|
-| Requêtes REST au chargement de l'application | **29 → 25** | ✅ 4 retirées le 2026-08-27, sans migration |
+| Requêtes REST au chargement de l'application | **29 → 21** | ✅ 8 retirées le 2026-08-27 (4 sans migration, 4 par la mig. 129) |
 | Part du trafic Supabase du jour venant d'onglets non rechargés | **91,5 %** | 🔴 aucun mécanisme de mise à jour |
 | Lecture d'agenda hiérarchique (`events`) | **17,19 ms → 0,61 ms** | ✅ mig. `128`, **appliquée en prod le 2026-08-27** |
 | Statistiques, 32 plages (`get_work_time_stats`) | **854 ms → 12,0 ms**, 21 762 → 23 blocs lus | ✅ mig. `127`, **appliquée en prod le 2026-08-27** |
@@ -291,7 +291,7 @@ Réencodage reproductible : `npm run images:check` (mesure) puis
 
 ## Ce que coûte une ouverture d'application
 
-**29 requêtes REST au chargement, ramenées à 25 le 2026-08-27.** Le compte vient des
+**29 requêtes REST au chargement, ramenées à 21 le 2026-08-27.** Le compte vient des
 `edge_logs` de production, sur une session réelle du bundle courant arrivant à froid sur
 `/dashboard`.
 
@@ -305,16 +305,16 @@ chargement lui-même en coûtait **29**. Une fenêtre de temps n'est pas un év�
 |---|---|---|---|
 | Données du tableau de bord (tâches, catégories, listes, agenda, habitudes, OKR, KR) | 9 | **7** | tout le monde |
 | Collaboration (amis, profils, demandes reçues et émises, tâches et listes partagées) | 8 | **7** | tout le monde |
-| Mode entreprise (org, membres, adhésions, notifications, invitations, projets, tâches d'équipe) | 9 | **8** | **membres d'une org seulement** |
+| Mode entreprise (org, membres, adhésions, notifications, invitations, projets, tâches d'équipe) | 9 | **4** | **membres d'une org seulement** |
 | Session et abonnement (`touch_last_seen`, `subscriptions`, profil) | 3 | 3 | tout le monde |
-| **Total** | **29** | **25** | |
+| **Total** | **29** | **21** | |
 
 Ce n'est pas absurde pour sept domaines métier affichés, et ces requêtes partent en parallèle sur
 HTTP/2, pas en série. Mais **c'est le multiplicateur de charge du produit** : 100 arrivées
-simultanées valaient 2 900 requêtes, elles en valent 2 500. C'est ce nombre qu'il faut surveiller
+simultanées valaient 2 900 requêtes, elles en valent 2 100. C'est ce nombre qu'il faut surveiller
 avant un pic d'acquisition, bien avant le coût unitaire de chacune.
 
-### Les 4 requêtes retirées, et pourquoi elles existaient
+### Les 4 premières requêtes retirées, et pourquoi elles existaient
 
 Aucune migration, aucun changement d'écran, aucune donnée affichée en moins. Les quatre venaient
 du même travers : **une donnée déjà chargée, redemandée sous un autre angle.**
@@ -341,12 +341,60 @@ Les trois sont verrouillées par des tests qui échouent si on les rebranche
 (`okrs/hooks.test.tsx`, `friends/hooks.test.tsx`, `organizations/supabase.repository.test.ts`),
 et chaque garde a été vue **rouge** sur la régression qu'elle prétend attraper.
 
-⚪️ **Piste identifiée, non engagée** : les 8 requêtes restantes du mode entreprise sont montées
-par `Layout`, donc sur **toutes** les pages protégées, y compris quand aucun écran entreprise
-n'est affiché. Elles ne servent qu'à peindre une pastille de notification, et l'une d'elles lit
-jusqu'à 1 000 tâches d'équipe pour en faire un nombre. Une RPC d'agrégat ramènerait l'ouverture à
-**environ 20 requêtes** pour un membre d'organisation, sans rien changer à l'écran. C'est le
-prochain palier, et il demande une migration.
+### La boîte de réception d'entreprise : 5 requêtes en 1 (mig. `129`)
+
+Le palier suivant, et le plus gros. Cinq lectures partaient à chaque ouverture,
+sur **toutes** les pages protégées, parce que `Layout` monte `useOrgBadges` pour peindre une
+pastille de notification :
+
+| Ce qui partait | Ce que ça servait à afficher |
+|---|---|
+| `rpc/get_my_org_invitations` | la boîte de réception |
+| `rpc/get_my_org_removal_notices` | la boîte de réception |
+| `organization_join_requests?user_id=eq.moi` | ma demande d'adhésion en attente |
+| `organization_join_requests?org_id=eq.X` | les demandes reçues, vue admin |
+| `org_notifications?org_id=eq.X` | la pastille |
+| `profiles?id=in.(…)` *(conditionnelle)* | nommer les demandeurs |
+
+`get_my_org_inbox()` les rend ensemble, en un objet JSON. Les cinq hooks gardent leur nom, leur
+signature et leur forme de retour : ils deviennent des sélecteurs `useMemo` sur une lecture unique.
+Aucun écran n'a changé.
+
+**Deux décisions de conception valent d'être retenues.**
+
+**1. Aucun paramètre, et c'est le point.** Le périmètre vient de `auth.uid()` seul, comme
+`get_my_tasks` (mig. 085). Prendre un `p_org` aurait obligé le client à attendre que
+l'organisation active soit résolue avant de partir : on aurait échangé quatre requêtes contre du
+**délai**, en sérialisant ce qui partait en parallèle. La fonction rend donc les sections par
+organisation pour toutes mes organisations, et le client filtre.
+
+**2. `SECURITY INVOKER`, volontairement.** 🔴 Agréger cinq lectures dans une fonction
+`SECURITY DEFINER` reviendrait à réécrire cinq autorisations à la main, dans une fonction qui
+contourne la RLS. C'est exactement là qu'une agrégation « de performance » devient une fuite. Ici,
+les deux sections qui ont besoin de privilèges élevés ne sont pas réécrites, elles **appellent les
+fonctions `DEFINER` existantes**, inchangées ; les trois autres lisent leurs tables en direct, donc
+sous la RLS de l'appelant. La fonction n'ouvre **aucun accès nouveau**, et si une policy change
+demain, elle suit.
+
+**Vérifié en prod après application**, sur des demandes d'adhésion posées en transaction annulée
+pour que la section admin ne soit pas jugée sur du vide :
+
+| Compte | Demandes vues | Notifications | Invitations |
+|---|---|---|---|
+| admin de l'org | 2 | 0 | 0 |
+| **membre simple de la même org** | **0** | 0 | 1 |
+| non-membre | 0 | 20 | 0 |
+
+Parité prouvée avant application, pour **chaque** compte de `auth.users`, section par section,
+contre les requêtes que le client émettait.
+
+⚠️ Les bornes sont appliquées **par organisation** (window function), pas globalement : 200
+demandes, 50 notifications. Sans cela, un compte membre de trois organisations verrait la
+troisième tronquée par les deux premières, et ça ne se serait vu que chez lui.
+
+❌ Ne pas réintroduire une invalidation par section dans `useOrgInboxRealtime` : ces clés ne
+portent plus de donnée, l'écran cesserait de se rafraîchir **en silence**. Garde :
+`organizations/inbox.hooks.test.tsx`, vue rouge avant d'être committée.
 
 ⚪️ **Deuxième piste** : `friends` puis `profiles?email=in.(…)`, et `friend_requests` en deux
 requêtes (reçues, émises). La première paire ne peut pas devenir une jointure PostgREST, il n'y a

@@ -2,12 +2,14 @@
 // ORGANIZATIONS MODULE - React Query hooks
 // ═══════════════════════════════════════════════════════════════════
 
+import { useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { getOrganizationsRepository } from '@/lib/repository.factory';
 import { validateOrThrow } from '@/lib/validation/validate';
 import { createOrganizationSchema, joinCodeSchema } from './organization.schema';
 import { orgKeys } from './constants';
+import { useOrgInbox } from './inbox';
 import type { OrgRole } from './types';
 import type { SetOrgPermissionsInput } from './permissions';
 import { translator } from '@/i18n/useT';
@@ -73,79 +75,39 @@ export const useOrgMembers = (
   });
 };
 
+/** Demandes d'adhesion en attente pour cette org (vue admin). */
 export const useOrgJoinRequests = (orgId: string | undefined) => {
-  const repository = useOrgRepository();
-  return useQuery({
-    queryKey: orgKeys.joinRequests(orgId ?? ''),
-    queryFn: () => repository.getPendingJoinRequests(orgId as string),
-    enabled: !!orgId,
-    // Plus de sondage : `useOrgInboxRealtime` (App.tsx, mig. 118) écoute
-    // `organization_join_requests` sur `org_id` quand une organisation est
-    // active. Ce hook est monté par `Layout` via `useOrgBadges`, donc il
-    // sondait sur TOUTES les pages protégées pour tout admin d'organisation.
-    staleTime: 1000 * 30,
-    refetchOnWindowFocus: true,
-  });
+  const { data, ...rest } = useOrgInbox();
+  const filtered = useMemo(
+    () => (data?.joinRequests ?? []).filter((r) => r.orgId === orgId),
+    [data, orgId],
+  );
+  return { ...rest, data: orgId ? filtered : [] };
 };
 
+/** Ma demande d'adhesion en attente, ou null. */
 export const useMySentJoinRequest = () => {
-  const repository = useOrgRepository();
-  return useQuery({
-    queryKey: orgKeys.mySentRequest(),
-    queryFn: () => repository.getMySentJoinRequest(),
-    // Plus de sondage : `useOrgInboxRealtime` (monté une seule fois dans
-    // `App.tsx`, mig. 118) écoute la table et invalide cette clé. Le sondage à
-    // 20 s rejouait la requête 180 fois par heure d'onglet ouvert pour
-    // apprendre qu'il n'y avait rien de neuf, sur une surface montée en
-    // PERMANENCE (`InboxMenu`). `refetchOnWindowFocus` reste le filet quand le
-    // WebSocket est indisponible (navigation privée, anti-pistage strict).
-    staleTime: 1000 * 30,
-    refetchOnWindowFocus: true,
-  });
+  const { data, ...rest } = useOrgInbox();
+  return { ...rest, data: data?.myJoinRequest ?? null };
 };
 
 /**
  * Invitations d entreprise recues et non traitees.
  *
  * Temps reel (mig. 118) : une invitation apparait sans que le destinataire ait
- * a recharger, et sans sondage. Repli sur le retour d onglet.
+ * a recharger, et sans sondage.
  */
 export const useMyOrgInvitations = () => {
-  const repository = useOrgRepository();
-  return useQuery({
-    queryKey: orgKeys.myInvitations(),
-    queryFn: () => repository.getMyOrgInvitations(),
-    // Plus de sondage : `useOrgInboxRealtime` (monté une seule fois dans
-    // `App.tsx`, mig. 118) écoute la table et invalide cette clé. Le sondage à
-    // 20 s rejouait la requête 180 fois par heure d'onglet ouvert pour
-    // apprendre qu'il n'y avait rien de neuf, sur une surface montée en
-    // PERMANENCE (`InboxMenu`). `refetchOnWindowFocus` reste le filet quand le
-    // WebSocket est indisponible (navigation privée, anti-pistage strict).
-    staleTime: 1000 * 30,
-    refetchOnWindowFocus: true,
-  });
+  const { data, ...rest } = useOrgInbox();
+  const invitations = useMemo(() => data?.invitations ?? [], [data]);
+  return { ...rest, data: invitations };
 };
 
-/**
- * Retraits d'entreprise non acquittes.
- *
- * Temps reel (mig. 118), comme le reste de la boite de reception. Pas de garde
- * `enabled` : en demo le repository local renvoie [] sans requete reseau.
- */
+/** Retraits d'entreprise non acquittes. */
 export const useMyOrgRemovalNotices = () => {
-  const repository = useOrgRepository();
-  return useQuery({
-    queryKey: orgKeys.myRemovalNotices(),
-    queryFn: () => repository.getMyOrgRemovalNotices(),
-    // Plus de sondage : `useOrgInboxRealtime` (monté une seule fois dans
-    // `App.tsx`, mig. 118) écoute la table et invalide cette clé. Le sondage à
-    // 20 s rejouait la requête 180 fois par heure d'onglet ouvert pour
-    // apprendre qu'il n'y avait rien de neuf, sur une surface montée en
-    // PERMANENCE (`InboxMenu`). `refetchOnWindowFocus` reste le filet quand le
-    // WebSocket est indisponible (navigation privée, anti-pistage strict).
-    staleTime: 1000 * 30,
-    refetchOnWindowFocus: true,
-  });
+  const { data, ...rest } = useOrgInbox();
+  const notices = useMemo(() => data?.removalNotices ?? [], [data]);
+  return { ...rest, data: notices };
 };
 
 export const useDismissOrgRemovalNotice = () => {
@@ -154,7 +116,7 @@ export const useDismissOrgRemovalNotice = () => {
   return useMutation({
     mutationFn: (noticeId: string) => repository.dismissOrgRemovalNotice(noticeId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: orgKeys.myRemovalNotices() });
+      queryClient.invalidateQueries({ queryKey: orgKeys.inbox() });
     },
     onError: (error: Error) => {
       toast.error(error.message);
@@ -243,7 +205,7 @@ export const useRequestJoinOrganization = () => {
     },
     onSuccess: (result) => {
       toast.success(translator('errors').t('success.joinRequestSent', { org: result.orgName || translator('errors').t('success.theCompany') }));
-      queryClient.invalidateQueries({ queryKey: orgKeys.mySentRequest() });
+      queryClient.invalidateQueries({ queryKey: orgKeys.inbox() });
     },
     onError: (error: Error) => {
       toast.error(`Impossible de rejoindre l'entreprise : ${error.message}`);
@@ -273,7 +235,7 @@ export const useCancelJoinRequest = () => {
   return useMutation({
     mutationFn: (requestId: string) => repository.cancelJoinRequest(requestId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: orgKeys.mySentRequest() });
+      queryClient.invalidateQueries({ queryKey: orgKeys.inbox() });
     },
     onError: (error: Error) => {
       toast.error(`Impossible d'annuler la demande : ${error.message}`);

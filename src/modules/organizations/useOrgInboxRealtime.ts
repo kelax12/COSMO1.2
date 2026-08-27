@@ -45,7 +45,6 @@ import * as Sentry from '@sentry/react';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { useIsDemo } from '@/lib/app-mode.store';
 import { orgKeys } from './constants';
-import { orgNotificationKeys } from './notifications';
 
 /**
  * Abonne la session courante à sa boîte de réception d'organisation et invalide
@@ -61,31 +60,33 @@ export function useOrgInboxRealtime(
   useEffect(() => {
     if (isDemo || !isSupabaseConfigured || !userId) return;
 
-    const invalidateNotifications = () => {
-      // `orgNotificationKeys.all` et non `.list(orgId)` : ce hook est monté
-      // au-dessus de toute notion d'organisation active, et un utilisateur
-      // peut appartenir à plusieurs. Invalider la racine couvre les deux.
-      queryClient.invalidateQueries({ queryKey: orgNotificationKeys.all });
-      queryClient.invalidateQueries({ queryKey: orgKeys.myRemovalNotices() });
+    // Depuis la mig. 129, les CINQ sections de la boite de reception viennent
+    // d'une seule lecture : notifications, avis de retrait, invitations, ma
+    // demande d'adhesion et les demandes recues cote admin. Il n'y a donc plus
+    // qu'une cle a invalider, et elle ne depend d'aucune organisation.
+    //
+    // ❌ Ne pas reintroduire une invalidation par section : elles pointeraient
+    // des cles qui ne portent plus de donnee, et l'ecran ne se rafraichirait
+    // plus du tout, en silence.
+    const invalidateInbox = () => {
+      queryClient.invalidateQueries({ queryKey: orgKeys.inbox() });
     };
+    const invalidateNotifications = invalidateInbox;
     const invalidateInvitations = () => {
-      queryClient.invalidateQueries({ queryKey: orgKeys.myInvitations() });
+      invalidateInbox();
       // Une invitation acceptée me fait entrer dans une organisation : la
       // liste de MES organisations change, et avec elle l'onglet Entreprise.
       queryClient.invalidateQueries({ queryKey: orgKeys.mine() });
     };
     const invalidateJoinRequest = () => {
-      queryClient.invalidateQueries({ queryKey: orgKeys.mySentRequest() });
+      invalidateInbox();
       queryClient.invalidateQueries({ queryKey: orgKeys.mine() });
     };
     // Côté ADMIN : les demandes d'adhésion adressées à MON organisation.
     // Sans cette écoute, `useOrgJoinRequests` gardait un sondage de 20 s monté
     // par `Layout`, donc actif sur TOUTES les pages protégées pour tout admin
     // d'organisation — le sondage le plus permanent de l'app.
-    const invalidateOrgJoinRequests = () => {
-      if (!activeOrgId) return;
-      queryClient.invalidateQueries({ queryKey: orgKeys.joinRequests(activeOrgId) });
-    };
+    const invalidateOrgJoinRequests = invalidateInbox;
 
     // ⚠️ `subscribe()` construit un WebSocket, et le constructeur `WebSocket`
     // LÈVE de façon SYNCHRONE dans les navigateurs qui les bloquent

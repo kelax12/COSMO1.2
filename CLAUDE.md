@@ -109,12 +109,12 @@ npm run build      # Build prod → dist/ (vite build + node prerender.mjs)
 npm run preview    # Prévisualiser le build
 npm run lint       # ESLint (doit retourner 0 erreur)
 npm run typecheck  # tsc -b (doit retourner 0 erreur)
-npm test           # Vitest (run once), 1766 tests / 153 fichiers, ~3 min (2026-08-27)
+npm test           # Vitest (run once), 1770 tests / 154 fichiers, ~3 min (2026-08-27)
 npm run test:watch # Vitest en mode watch
 npm run test:coverage       # + couverture v8, seuils globaux et par fichier
-                            # ✅ VERTE au 2026-08-27 : 27,11 L · 26,79 S · 21,51 F · 22,80 B
+                            # ✅ VERTE au 2026-08-27 : 27,20 L · 26,88 S · 21,69 F · 22,86 B
                             # ❌ NE JAMAIS baisser un seuil pour repasser au vert.
-                            # Marge la plus serree : functions, 0,51 pt (~33 fonctions).
+                            # Marge la plus serree : functions, 0,69 pt (~44 fonctions).
                             # Voir docs/TESTING.md
 npm run validate:migrations # Garde statique sur supabase/migration/*.sql (CI)
 npm run check:rls           # Invariants RLS : auth.uid() wrappé, 1 seule policy PERMISSIVE,
@@ -547,14 +547,15 @@ Debug : `localStorage.removeItem('cosmo_onboarding_modules_done')` puis reload.
 ## Base de données Supabase
 
 Migrations dans `supabase/migration/*.sql`, convention `NNN_<feature>.sql`.
-**132 fichiers de migration, dernière = `128_events_managed_ids_indexable.sql`** (au 2026-08-26).
-✅ **La `127` et la `128` ont été appliquées en prod le 2026-08-27**, dans cet ordre, chacune
+**133 fichiers de migration, dernière = `129_org_inbox_single_read.sql`** (au 2026-08-27).
+✅ **Les `127`, `128` et `129` ont été appliquées en prod le 2026-08-27**, dans cet ordre, chacune
 vérifiée après coup : la `127` rend un résultat identique pour les 18 comptes qui ont des données
 (comparaison par empreinte, prise avant application), la `128` laisse **une seule policy
 PERMISSIVE** sur `events`, et un manager voit toujours exactement les 30 événements non privés de
-son subordonné, zéro de celui qu’il ne gère pas.
-**Tout le reste est en prod**, ledger relu en base le 2026-08-26 : `126_renewal_notices` est la
-dernière appliquée. La `123` l’a été avant le redéploiement de `stripe-webhook`, qui écrit
+son subordonné, zéro de celui qu’il ne gère pas ; la `129` est `SECURITY INVOKER` et un membre
+simple ne voit toujours aucune des demandes d’adhésion réservées aux admins.
+**Tout le reste est en prod**, ledger relu en base le 2026-08-27 : la `129` est la dernière
+appliquée. La `123` l’a été avant le redéploiement de `stripe-webhook`, qui écrit
 désormais `billing_interval`.
 
 > ⚠️ **Le ledger porte une entrée de plus que le dépôt** :
@@ -685,6 +686,32 @@ de deux Index Scan). Lire son propre agenda ne changeait rien et ne change rien 
 - ⚠️ `manages_user` survit, redéfinie **en fonction** de `my_managed_user_ids()` : deux
   définitions concurrentes de « qui je gère » finiraient par diverger.
 - Garde : `scripts/migration-guards.test.mjs`, vue rouge sur la régression avant d'être committée.
+
+### 📬 Agréger des lectures, oui. Agréger des AUTORISATIONS, jamais (mig. 129)
+
+`get_my_org_inbox()` remplace **cinq** lectures qui partaient à chaque ouverture de
+l'application, sur toutes les pages protégées, parce que `Layout` monte `useOrgBadges` pour
+peindre une pastille : invitations, avis de retrait, ma demande d'adhésion, demandes reçues côté
+admin, notifications, plus un sixième appel conditionnel à `profiles`.
+
+- 🔴 **Une RPC d'agrégat est `SECURITY INVOKER`.** En `DEFINER`, agréger cinq lectures revient à
+  réécrire cinq autorisations à la main dans une fonction qui contourne la RLS : c'est là qu'une
+  agrégation « de performance » devient une fuite. Les deux sections qui ont besoin de privilèges
+  élevés ne sont pas réécrites, elles **appellent** les fonctions `DEFINER` existantes
+  (`get_my_org_invitations`, `get_my_org_removal_notices`), inchangées.
+- ❌ **Ne jamais lui donner un `p_org`.** Le périmètre vient de `auth.uid()` seul, comme
+  `get_my_tasks`. Un paramètre d'organisation forcerait le client à attendre que l'organisation
+  active soit résolue : on échangerait quatre requêtes contre du délai, en sérialisant ce qui
+  partait en parallèle. Les sections par organisation couvrent TOUTES mes organisations, le
+  client filtre.
+- ❌ **Ne jamais borner globalement.** 200 demandes et 50 notifications, **par organisation**
+  (window function). Une borne globale tronquerait la troisième organisation d'un compte avec les
+  lignes des deux premières, et ça ne se verrait que chez lui.
+- ❌ **Ne jamais réintroduire une invalidation par section** dans `useOrgInboxRealtime` : ces clés
+  ne portent plus de donnée, l'écran cesserait de se rafraîchir **en silence**. Une seule clé,
+  `orgKeys.inbox()`.
+- Les cinq hooks gardent leur nom et leur forme de retour : ce sont des sélecteurs `useMemo`.
+  Garde : `src/modules/organizations/inbox.hooks.test.tsx`.
 
 ## 🔐 Permissions entreprise — surcharge, jamais remplacement (mig. 115)
 
