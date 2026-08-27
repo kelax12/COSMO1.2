@@ -2,11 +2,19 @@
 // ORGANIZATIONS MODULE - LocalStorage Repository (mode démo)
 // ═══════════════════════════════════════════════════════════════════
 //
-// Multi-org (v2) : deux entreprises fictives seedées au premier accès —
-//   • « Nova Studio »  : l'utilisateur démo est ADMIN (6 membres, 1 demande
-//     d'adhésion en attente pour tester l'inbox).
-//   • « Atelier Lune » : l'utilisateur démo est MEMBRE simple (vue non-admin
-//     + démonstration du switcher d'organisation).
+// UNE entreprise fictive seedée au premier accès — « Nova Studio », où
+// l'utilisateur démo est ADMIN (6 membres, 1 demande d'adhésion en attente
+// pour tester l'inbox).
+//
+// ⚠️ Une SEULE, volontairement (2026-08-27). Une seconde organisation
+// (« Atelier Lune ») existait pour montrer la vue non-admin et le switcher.
+// Elle coûtait plus qu'elle ne montrait : au-delà d'une organisation,
+// `Layout` remplace le lien de navigation par un `<div role="button">` qui
+// ouvre un menu, donc la démo perdait le clic milieu, l'ouverture en nouvel
+// onglet, et demandait un clic de plus pour entrer dans l'espace entreprise.
+// La couverture non-admin qu'elle portait n'est pas perdue : les tests la
+// reconstituent eux-mêmes (`local.repository.test.ts`, `seedSecondOrg`).
+//
 // Seeds rechargées à chaque loginDemo() (sweep cosmo_* de clearDemoStorage).
 
 import { IOrganizationsRepository } from './repository';
@@ -24,7 +32,6 @@ import { isEnglishSeed, localizeSeed } from '@/lib/seed-i18n';
 
 const DEMO_USER_ID = 'demo-user';
 export const DEMO_ORG_ID = 'org-demo-1';
-export const DEMO_ORG_2_ID = 'org-demo-2';
 
 const HOUR = 60 * 60 * 1000;
 const DAY = 24 * HOUR;
@@ -56,15 +63,6 @@ const DEMO_ORGS: Organization[] = [
     description: 'Studio de création digitale : sites, apps et identités de marque.',
     industry: 'Design & Tech',
   },
-  {
-    id: DEMO_ORG_2_ID,
-    name: 'Atelier Lune',
-    joinCode: 'COSMO-LUNE77',
-    ownerId: 'user-nina',
-    createdAt: new Date(Date.now() - 45 * DAY).toISOString(),
-    description: 'Collectif d\'artisans céramistes.',
-    industry: 'Artisanat',
-  },
 ];
 
 // Pyramide Nova Studio (v2) — arbre N+1 :
@@ -82,10 +80,6 @@ const DEMO_MEMBERS: OrgMember[] = [
   { orgId: DEMO_ORG_ID, userId: 'friend-3', role: 'member', managerId: 'friend-1', joinedAt: new Date(Date.now() - 60 * DAY).toISOString(), displayName: 'Sophie Bernard', email: 'sophie.bernard@email.com' },
   { orgId: DEMO_ORG_ID, userId: 'user-lucas', role: 'member', managerId: DEMO_USER_ID, joinedAt: new Date(Date.now() - 45 * DAY).toISOString(), displayName: 'Lucas Moreau', email: 'lucas.moreau@email.com' },
   { orgId: DEMO_ORG_ID, userId: 'user-camille', role: 'member', managerId: null, joinedAt: new Date(Date.now() - 30 * DAY).toISOString(), displayName: 'Camille Richard', email: 'camille.richard@email.com' },
-  // ── Atelier Lune (demo-user membre simple, sous Nina) ──
-  { orgId: DEMO_ORG_2_ID, userId: 'user-nina', role: 'admin', managerId: null, joinedAt: new Date(Date.now() - 45 * DAY).toISOString(), displayName: 'Nina Rousseau', email: 'nina.rousseau@email.com' },
-  { orgId: DEMO_ORG_2_ID, userId: DEMO_USER_ID, role: 'member', managerId: 'user-nina', joinedAt: new Date(Date.now() - 20 * DAY).toISOString(), displayName: 'Vous', email: 'demo@cosmo.app' },
-  { orgId: DEMO_ORG_2_ID, userId: 'user-theo', role: 'member', managerId: 'user-nina', joinedAt: new Date(Date.now() - 15 * DAY).toISOString(), displayName: 'Théo Garnier', email: 'theo.garnier@email.com' },
 ];
 
 const DEMO_JOIN_REQUESTS: OrgJoinRequest[] = [
@@ -102,12 +96,10 @@ const DEMO_JOIN_REQUESTS: OrgJoinRequest[] = [
   },
 ];
 
-// Overlay anglais — cf. src/lib/seed-i18n.ts. Les noms propres (« Nova
-// Studio », « Atelier Lune ») ne sont pas traduits : ce sont des marques, pas
-// des mots de la langue.
+// Overlay anglais — cf. src/lib/seed-i18n.ts. Le nom propre « Nova Studio »
+// n'est pas traduit : c'est une marque, pas un mot de la langue.
 const DEMO_ORGS_EN: Record<string, Partial<Organization>> = {
   [DEMO_ORG_ID]: { description: 'Digital creative studio: websites, apps and brand identities.' },
-  [DEMO_ORG_2_ID]: { description: 'Collective of ceramic artisans.', industry: 'Crafts' },
 };
 
 // Lecture défensive : clone des seeds (faille B12), JSON.parse protégé (B14).

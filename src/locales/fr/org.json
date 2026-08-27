@@ -232,7 +232,7 @@
     "hintProjects": "Voir les projets de l'équipe",
     "hintMembers": "Découvrir qui fait quoi dans l'annuaire",
     "hintOkr": "Suivre les objectifs de votre équipe",
-    "orgEvents": "Mes prochains événements d'entreprise",
+    "orgEvents": "Prochains événements de l’entreprise",
     "orgEventsCount_one": "{{count}} à venir",
     "orgEventsCount_many": "{{count}} d'événements à venir",
     "orgEventsCount_other": "{{count}} à venir",
@@ -817,7 +817,8 @@
     "saving": "Enregistrement…",
     "unreadComments_one": "{{count}} commentaire non lu",
     "unreadComments_many": "{{count}} de commentaires non lus",
-    "unreadComments_other": "{{count}} commentaires non lus"
+    "unreadComments_other": "{{count}} commentaires non lus",
+    "backToChoice": "Retour"
   },
   "tabs": {
     "overview": "Aperçu",

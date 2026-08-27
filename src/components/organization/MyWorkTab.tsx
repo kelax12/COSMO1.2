@@ -55,10 +55,18 @@ const NextDeadline = ({ task }: { task: TeamTask | null }) => {
   const late = isOverdue(task);
   return (
     <div className="flex flex-col items-center max-w-[130px]">
-      <div className={`flex flex-col items-center leading-none ${late ? 'text-red-500' : 'text-[rgb(var(--color-accent))]'}`}>
-        <span className="text-xl font-bold">{format(d, 'd', { locale: getDateLocale() })}</span>
-        <span className="text-[10px] uppercase mt-0.5">{format(d, 'MMM', { locale: getDateLocale() })}</span>
-      </div>
+      {/* Jour et mois sont empilés visuellement, donc collés dans le
+          `textContent` : « 25août ». Un lecteur d'écran lisait ce mot-là.
+          La date complète passe en `sr-only`, les deux fragments visuels
+          sortent de l'arbre d'accessibilité. */}
+      <time
+        dateTime={task.deadline}
+        className={`flex flex-col items-center leading-none ${late ? 'text-red-500' : 'text-[rgb(var(--color-accent))]'}`}
+      >
+        <span className="sr-only">{format(d, 'd MMMM yyyy', { locale: getDateLocale() })}</span>
+        <span className="text-xl font-bold" aria-hidden="true">{format(d, 'd', { locale: getDateLocale() })}</span>
+        <span className="text-[10px] uppercase mt-0.5" aria-hidden="true">{format(d, 'MMM', { locale: getDateLocale() })}</span>
+      </time>
       <span className="text-xs text-[rgb(var(--color-text-primary))] mt-2 text-center truncate max-w-full">{task.name}</span>
       <span className="text-xs text-[rgb(var(--color-text-secondary))] mt-0.5">{t('myWork.nextDeadline')}</span>
     </div>
@@ -340,9 +348,14 @@ const MyWorkTab = ({ orgId, members, currentUserId }: MyWorkTabProps) => {
             <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))] mb-3">
               {t('myWork.myTasksSection', { count: open.length })}
               {myEstimated > 0 && (
-                <span className="ml-2 font-normal text-[rgb(var(--color-text-muted))]">
-                  · {formatDuration(myEstimated)}
-                </span>
+                // `{' '}` : le `ml-2` sépare visuellement mais pas dans le
+                // `textContent`, qui donnait « Mes tâches (3)· 1 h 45 ».
+                <>
+                  {' '}
+                  <span className="ml-2 font-normal text-[rgb(var(--color-text-muted))]">
+                    · {formatDuration(myEstimated)}
+                  </span>
+                </>
               )}
             </h3>
             {open.length === 0 ? (
@@ -364,7 +377,7 @@ const MyWorkTab = ({ orgId, members, currentUserId }: MyWorkTabProps) => {
                       >
                         {t.completed && <Check size={13} aria-hidden="true" />}
                       </button>
-                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${priority.dot}`} title={priority.label} aria-hidden="true" />
+                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${priority.dot}`} role="img" aria-label={priority.label} title={priority.label} />
                       <button
                         type="button"
                         onClick={() => setEditingTask(t)}
