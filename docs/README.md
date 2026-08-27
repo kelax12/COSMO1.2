@@ -19,10 +19,10 @@ performance va moins bien que la sécurité, ils disent où chaque domaine se si
 | [Sécurité](../faille.md) | 82 | **86** | **+4** | Une nouvelle surface d'autorisation livrée avec son test de base réelle (mig. 115) |
 | [Architecture](./ARCHITECTURE.md) | 74 | **79** | **+5** | Budget > 600 LOC : 12 503 → 11 452 lignes |
 | [Tests / CI](./TESTING.md) | 80 | **88** | **+8** | +188 tests, +21 E2E, 5ᵉ job CI ; couverture repassée au rouge puis **refermée sans baisser un seuil** |
-| [Mode entreprise](./archive/RAPPORT-MODE-ENTREPRISE-2026-08-12.md) | 74 | **80** | **+6** | Permissions par membre (mig. 115) et périodicité annuelle (mig. 123) ; le finding n°1 est toujours là le soir |
+| [Mode entreprise](./archive/RAPPORT-MODE-ENTREPRISE-2026-08-12.md) | 74 | **84** | **+10** | Aperçu refondu (la même tâche s'affichait 4 fois), 3 onglets n'affichent plus de zéros faux au chargement, page 5× plus légère à ouvrir. Restent la barre d'onglets mobile et les 2 grammaires de filtre |
 | [Accessibilité](./ACCESSIBILITY.md) | 76 | **79** | **+3** | 2ᵉ gate a11y, sur les pages **publiques** cette fois |
 | [SEO](./SEO.md) | 73 | **73** | **0** | Aucun travail SEO : le seul levier restant est hors dépôt |
-| [Performance](./PERFORMANCE.md) | 68 | **88** | **+20** | Page d'accueil **1 610 → 749 kB** : JS −160 kB, images 1 046 → 2,7 kB, polices −85 kB |
+| [Performance](./PERFORMANCE.md) | 68 | **91** | **+23** | Ouvrir `/entreprise` : **64,1 → 12,2 kB gzip** ; plus de lecture org-wide des tâches au retour d'onglet. Retenu par le chunk d'entrée, **87,2 → 106,9 kB en deux jours** |
 
 > **2026-08-26 · les notes ne bougent pas, et c'est le résultat.** La journée a mesuré un axe que
 > ce tableau ne couvrait pas : **le coût serveur d'une session**, distinct du poids envoyé au
@@ -50,6 +50,19 @@ performance va moins bien que la sécurité, ils disent où chaque domaine se si
 > ⚠️ La leçon de méthode vaut plus que les trois chiffres : **une note de performance front ne dit
 > rien du coût serveur**, et un compteur Postgres cumulé ne dit rien du débit courant. Les deux
 > ont été confondus jusqu'ici.
+>
+> **2026-08-27 (soir) · le badge cesse de recharger, et `/entreprise` s'ouvre 5× plus léger.**
+> Le comptage du badge, laissé « non engagé » le matin, l'est maintenant à moitié : il lit
+> toujours les tâches d'équipe, mais il ne les **recharge** plus. Monté par `Layout`, donc sur
+> toutes les pages protégées, il montait `useTeamTasks` avec 30 s de fraîcheur et un refetch au
+> retour d'onglet, alors qu'il n'affiche pas la liste. `useTeamTasks` gagne `background`,
+> symétrique de `live`. ⚠️ **Gain non chiffré** : le mode démo est en `localStorage`, il n'y a
+> aucune requête à compter ; à confirmer dans les `edge_logs` d'une vraie session.
+> Côté poids, ouvrir `/entreprise` passe de **64,1 à 12,2 kB gzip** (les six onglets non-défaut,
+> les blocs de l'onglet Membres et les dialogues sont paresseux). La contrepartie est inscrite
+> dans [`PERFORMANCE.md`](./PERFORMANCE.md) : qui ouvre les sept onglets paie 9 kB gzip de plus.
+> Et une dérive est enfin notée, celle que personne n'avait vue : **le chunk d'entrée est passé de
+> 87,2 à 106,9 kB en deux jours**, avec un plafond relevé de 92 à 112 kB pour l'absorber.
 
 ### Ce que ce tableau dit, au-delà des chiffres
 
