@@ -1,25 +1,79 @@
 # Performance bundle — `vite.config.ts manualChunks`
 
-## Note de performance : 68 → 64 → **88 / 100** (2026-08-24 → 2026-08-25 soir)
+## Note de performance : 68 → 64 → 88 → **91 / 100** (2026-08-24 → 2026-08-27)
 
-| Ce qui compose la note | 08-24 | 08-25 (16 h) | **08-25 (fin)** |
-|---|---|---|---|
-| Chunk `index` (critical path) | 134 kB gzip | 139,0 kB gzip | **87,2 kB gzip** |
-| Marge sur le budget de 150 kB | 16 kB | 11,0 kB | **62,8 kB** |
-| **Chemin critique JS** (entrée + preloads) | non mesuré | **580,5 kB gzip** | **420,1 kB gzip** |
-| `vendor-charts` préchargé pour TOUS les visiteurs | oui, invisible | oui, invisible | **non** |
-| **Images servies sur `/`** | **1 046 kB** | 1 046 kB | **2,7 kB** |
-| **Polices servies** | 133 kB | 133 kB | **48 kB** |
-| **Poids total de la page d'accueil** | ~1 610 kB | ~1 610 kB | **749 kB** |
-| Garde automatique sur le budget | ❌ aucune | ❌ aucune | ✅ `npm run check:bundle`, bloquante en CI |
-| Levier i18n (~104 ko de JSON hors chemin critique) | non appliqué | non appliqué | ✅ **appliqué** |
-| Lighthouse CI | câblé, seuils provisoires | idem | idem |
+| Ce qui compose la note | 08-24 | 08-25 (16 h) | 08-25 (fin) | **08-27** |
+|---|---|---|---|---|
+| Chunk `index` (critical path) | 134 kB gzip | 139,0 kB gzip | 87,2 kB gzip | 🔴 **106,9 kB gzip** |
+| Plafond du chunk d'entrée | aucun | aucun | 92 kB | 🔴 **112 kB** (relevé le 08-26) |
+| **Chemin critique JS** (entrée + preloads) | non mesuré | 580,5 kB gzip | 420,1 kB gzip | **395,7 kB gzip** (plafond 400) |
+| `vendor-charts` préchargé pour TOUS les visiteurs | oui, invisible | oui, invisible | non | non |
+| **Ouvrir `/entreprise`** | 64,1 kB gzip | 64,1 kB gzip | 64,1 kB gzip | ✅ **12,2 kB gzip** |
+| Lecture org-wide des tâches d'équipe au retour d'onglet | oui, depuis toute page | idem | idem | ✅ **non** |
+| **Images servies sur `/`** | **1 046 kB** | 1 046 kB | **2,7 kB** | 2,7 kB |
+| **Polices servies** | 133 kB | 133 kB | **48 kB** | 48 kB |
+| Garde automatique sur le budget | ❌ aucune | ❌ aucune | ✅ `npm run check:bundle`, bloquante en CI | ✅ idem |
+| Levier i18n (~104 ko de JSON hors chemin critique) | non appliqué | non appliqué | ✅ **appliqué** | ✅ appliqué |
+| Lighthouse CI | câblé, seuils provisoires | idem | idem | idem |
+| Mesure côté terrain (ms chez un utilisateur) | ❌ | ❌ | ❌ | ❌ |
 
 **+24 en fin de journée, après être descendu à 64.** La page d'accueil passe de **~1,6 Mo à
 749 ko** : le JavaScript perd 160 ko gzip, et les images passent de 1 046 ko à 2,7 ko.
 
 Le plus instructif est la proportion : après une journée entière passée sur le JavaScript, **le
 poste le plus lourd restait les images**, et personne ne l'avait jamais pesé.
+
+### 2026-08-27 · +3, tirés d'une seule page, et une dérive à inscrire
+
+**Le gain.** `/entreprise` tenait dans un chunk unique de **279,0 ko bruts / 64,1 ko gzip**, le
+4ᵉ du build, plus lourd que `vendor-react`. Ouvrir l'Aperçu téléchargeait donc aussi la pyramide,
+le kanban, la frise des projets et les graphiques des statistiques, que la plupart des visites
+n'ouvrent jamais. Les six onglets non-défaut, les cinq blocs de l'onglet Membres et les quatre
+dialogues sont passés en import paresseux.
+
+| Mesuré sur le build réel | Avant | Après |
+|---|---|---|
+| **Ouvrir `/entreprise`** | 279,0 ko bruts · **64,1 ko gzip** | 44,3 ko bruts · **12,2 ko gzip** |
+| Ouvrir les 7 onglets **et** tous les dialogues | 279,0 ko bruts · 64,1 ko gzip | 257,1 ko bruts · **73,2 ko gzip** |
+| Chunks du build | 160 · 1 242,3 ko gzip | 185 · 1 267,7 ko gzip |
+
+⚠️ **Le découpage n'est pas gratuit et la ligne 2 le dit.** Qui ouvre TOUT paie 9 ko gzip de plus,
+gzip compressant mieux un gros fichier que seize petits. Le compromis est assumé : le cas courant
+coûte 5 fois moins, et c'est le premier écran qui décide de la perception. Ne pas découper plus
+finement sans remesurer cette ligne-là, pas seulement la première.
+
+`MyWorkTab` reste **eager** : c'est l'onglet par défaut, le rendre paresseux remplacerait l'écran
+d'arrivée par un squelette à chaque ouverture pour n'économiser que ce qu'on va charger dans la
+seconde. `lazyWithRetry` est sorti de `src/App.tsx` vers `src/lib/lazy-with-retry.ts` pour être
+utilisable à l'intérieur d'une page ; la logique n'a pas changé, seul le type s'est ouvert aux
+composants à props.
+
+**Côté serveur, une lecture permanente en moins.** `useOrgBadges` est monté par `Layout`, donc sur
+TOUTES les pages protégées, pour tout membre d'une organisation. Il montait `useTeamTasks` avec la
+politique par défaut du hook — `staleTime` 30 s et `refetchOnWindowFocus` — alors qu'il n'affiche
+pas la liste, il en dérive un chiffre. Chaque retour d'onglet et chaque navigation espacée de plus
+de 30 s relançait donc `get_my_team_tasks`, la lecture la plus chère du produit
+([SCALABILITY.md](./SCALABILITY.md) §2), pour repeindre une pastille. `useTeamTasks` gagne
+`background`, symétrique de `live` : 5 min de fraîcheur et pas de refetch au retour d'onglet.
+
+> ⚠️ **Gain non chiffré, volontairement.** Le mode démo est en `localStorage` : aucune requête à
+> compter. Le raisonnement s'appuie sur la sémantique de React Query (`staleTime` et
+> `refetchOnWindowFocus` sont **par observateur**), pas sur une mesure d'egress. À vérifier dans
+> les `edge_logs` d'une vraie session, comme
+> [le correctif des onglets zombies](#-le-correctif-que-personne-ne-reçoit--les-onglets-jamais-rechargés).
+
+**La dérive qu'il faut inscrire, sinon elle disparaît.** Le chunk d'entrée mesurait **87,2 ko
+gzip** le 2026-08-25 au soir. Il est à **106,9 ko** aujourd'hui, soit **+19,7 ko en deux jours**,
+sans qu'aucune passe ne l'ait noté, et le plafond est passé de 92 à 112 ko le 2026-08-26 pour
+l'absorber. C'est la seule remontée de plafond du dépôt, et elle est documentée dans
+`scripts/check-bundle-budget.mjs` — mais un plafond relevé une fois est un plafond qu'on relèvera
+deux fois. **C'est ce point qui empêche la note d'aller plus haut que 91**, pas le travail de la
+journée.
+
+| Chemin critique au 2026-08-27 | Valeur | Plafond |
+|---|---|---|
+| 8 chunks | 395,7 ko gzip | 400,0 ko |
+| Chunk d'entrée | **106,9 ko gzip** | 112,0 ko (relevé de 92 le 08-26) |
 
 ### 2026-08-26 · ce qui a été mesuré depuis, et pourquoi la note ne bouge pas
 
@@ -74,7 +128,11 @@ le `modulepreload`. Une fonction utilitaire de 500 octets traînait 117 kB derri
 > chunks mesure les tailles, pas le graphe de chargement**. Un chunk peut être « lazy » au sens de
 > Rollup et préchargé au sens du navigateur. Vérifier `dist/index.html`, pas seulement `dist/assets`.
 
-### Ce qui plafonne encore à 82
+### Ce qui plafonne encore à 91
+
+- 🔴 **Le chunk d'entrée a dérivé de 19,7 ko en deux jours** (87,2 → 106,9), et le plafond a été
+  relevé de 92 à 112 ko pour l'absorber. C'est le seul plafond du dépôt qu'on ait jamais remonté.
+  Tant que la marge se regagne en relevant la barre, le budget ne garde plus rien.
 
 - **Les seuils Lighthouse restent provisoires**, jamais posés au réel : la moitié de la mesure
   côté navigateur (LCP, TBT, CLS) n'est donc toujours pas gardée.
@@ -210,9 +268,13 @@ Réencodage reproductible : `npm run images:check` (mesure) puis
 
 ## Budget bundle (objectif)
 
-- Chunk `index` : **< 150 kB gzip** (au 2026-08-25 soir : **87,2 kB**, **marge : 62,8 kB**).
-- **Cliquet** : `npm run check:bundle` refuse un chunk d'entrée au-dessus de **92 kB gzip**, soit
-  ~5 % au-dessus du mesuré. Bloquant dans le job CI `lint-test-build`, juste après le build.
+- Chunk `index` : au 2026-08-27, **106,9 kB gzip** (2026-08-25 soir : 87,2 kB).
+- **Cliquet** : `npm run check:bundle` refuse un chunk d'entrée au-dessus de **112 kB gzip** et un
+  chemin critique au-dessus de **400 kB gzip**. Bloquant dans le job CI `lint-test-build`, juste
+  après le build.
+- 🔴 **Le plafond d'entrée est passé de 92 à 112 kB le 2026-08-26**, seule remontée de plafond du
+  dépôt, justifiée en commentaire dans `scripts/check-bundle-budget.mjs`. Une seconde remontée
+  ferait du budget une formalité : la marge se regagne en descendant la mesure.
 
 > ✅ **Ce budget a enfin sa garde (2026-08-25).** Il était le seul du dépôt à n'être mesuré par
 > aucun script, et le seul à avoir reculé sans que personne le voie : +5 kB gzip en une journée,
