@@ -924,3 +924,8 @@ zod à tout fichier important le barrel pour une autre raison.
 - **T-25** (barre d'onglets entreprise sur mobile) et **T-31** (procédure de support) restent
   ouverts.
 - **T-21 (vague 2)** : annuaires, hors dépôt.
+
+> ✅ **T-48 confirmé VERT en CI**, pas seulement en local : sur le run de `9d8222e`, le job `e2e`
+> conclut `success`. La CI de `main` passe de **trois** jobs rouges à **deux** (`rls-integration`,
+> `lighthouse`), `lint-test-build` et `audit` restant verts. Un correctif de test se vérifie là où
+> le test tourne pour de vrai, pas sur la machine qui l'a écrit.
