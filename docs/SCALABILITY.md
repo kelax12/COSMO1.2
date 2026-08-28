@@ -557,7 +557,7 @@ Aucun advisor `multiple_permissive_policies` ni `auth_rls_initplan` : les acquis
 | Item | État | Action |
 |---|---|---|
 | **Plan Postgres** | Free — **bloquant A-9** (pas de PITR, restauration jamais testée) | Passer en Pro, cf. [`../faille.md`](../faille.md) |
-| **Connection pooling** | Non vérifié depuis ce dépôt | Confirmer que la prod utilise l'URL pooler (PgBouncer 6543, mode transaction) — d'autant plus important vu §6 |
+| **Connection pooling** | ✅ **Vérifié le 2026-08-28 — et la question ne se posait pas comme on croyait** | **L'application n'ouvre AUCUNE connexion Postgres.** Mesuré dans `pg_stat_activity` : les 11 connexions applicatives viennent toutes de **PostgREST** (rôle `authenticator`), qui tient son propre pool derrière HTTPS. Leur nombre ne dépend donc pas du nombre d'utilisateurs connectés. Marge : **14 connexions sur 60**, dont une seule active. Le pooler ne concerne que les accès DIRECTS — `npm run test:rls`, l'application des migrations, un futur worker — jamais le chemin de l'app. Le frein de montée en charge n'est pas le nombre de connexions, c'est le pool PostgREST et le CPU de la base |
 | **Read replicas** | Non activées (plan) | À ×100 utilisateurs actifs. L'app est déjà compatible : lectures et écritures sont séparées dans les repos |
 | **CDN** | ✅ OK | Assets Vercel immuables (`max-age=31536000`) |
 | **Cache serveur (Redis)** | ❄️ YAGNI | React Query couvre le cache client ; aucun besoin mesuré |
