@@ -14,12 +14,10 @@ export type {
 
 export { teamOkrKeys, TEAM_OKRS_STORAGE_KEY } from './constants';
 
-export {
-  createTeamOKRSchema,
-  createTeamKRSchema,
-  updateTeamOKRSchema,
-  updateTeamKRSchema,
-} from './team-okr.schema';
+// ─── Validation ──────────────────────────────────────────────────────
+// Les schémas ne sont PLUS réexportés ici : ils importent zod, et un barrel qui
+// les porte rattache zod à tout fichier l'important pour une autre raison. Ils
+// se chargent à la demande via `@/lib/validation/lazy` (cf. son en-tête).
 
 export type { ITeamOKRsRepository } from './repository';
 export { LocalStorageTeamOKRsRepository } from './local.repository';

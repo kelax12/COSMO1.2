@@ -49,7 +49,15 @@ const BUDGETS = {
   // que le chemin critique MAIGRISSAIT de 26 ko. L'ancienne mesure aurait
   // refusé une amélioration. Une garde qui mesure le mauvais nombre est pire
   // qu'une garde absente : elle donne tort à la bonne décision.
-  critical: 400_000,
+  // 2026-08-28 : 393 850 → **373 043 o** (364,3 ko). Deux leviers, tous deux
+  // payés par TOUS les visiteurs :
+  //   • zod (131,8 ko bruts) sort de l'entrée — garde UX chargée à la première
+  //     écriture, pas à l'ouverture (`src/lib/validation/lazy.ts`) ;
+  //   • le `<TooltipProvider>` d'`App.tsx` était REDONDANT (le composant
+  //     `Tooltip` fournit déjà le sien) et traînait `@radix-ui/react-tooltip`
+  //     + tout `floating-ui`, 113 ko bruts, pour un seul consommateur lazy.
+  // Plafond reposé ~1,6 % au-dessus du mesuré.
+  critical: 379_000,
 
   // Mesure secondaire, conservée pour attraper le cas inverse : une entrée qui
   // enfle sans que le nombre de préchargements bouge. Le plafond est passé de
@@ -57,7 +65,14 @@ const BUDGETS = {
   // est la bonne réponse : l'entrée a absorbé du code qui était préchargé à
   // côté, donc le total a baissé. Vérifier `critical` avant de toucher à
   // celui-ci.
-  entry: 112_000,
+  // 2026-08-28 : 106,9 → **77 312 o** (75,5 ko), et le plafond REDESCEND de
+  // 112 000 à 79 000. C'est le remboursement de la seule fois où ce dépôt a
+  // relevé un plafond pour absorber une dérive — le cliquet joue dans les deux
+  // sens, il attrape la dette PUIS enregistre son remboursement.
+  //
+  // 🔴 Toujours vérifier `critical` avant de toucher à celui-ci : sortir un
+  // module de l'entrée sans le sortir du chemin critique ne gagne rien.
+  entry: 79_000,
 
   // Le plus gros chunk de page. `OrganizationPage` mesure ~64 ko.
   page: 70_000,

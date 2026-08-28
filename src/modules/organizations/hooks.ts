@@ -6,8 +6,7 @@ import { useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { getOrganizationsRepository } from '@/lib/repository.factory';
-import { validateOrThrow } from '@/lib/validation/validate';
-import { createOrganizationSchema, joinCodeSchema } from './organization.schema';
+import { validateAsync } from '@/lib/validation/lazy';
 import { orgKeys } from './constants';
 import { useOrgInbox } from './inbox';
 import type { OrgRole } from './types';
@@ -181,8 +180,8 @@ export const useCreateOrganization = () => {
   const queryClient = useQueryClient();
   const repository = useOrgRepository();
   return useMutation({
-    mutationFn: (name: string) => {
-      const { name: valid } = validateOrThrow(createOrganizationSchema, { name });
+    mutationFn: async (name: string) => {
+      const { name: valid } = await validateAsync('org.create', { name });
       return repository.createOrganization(valid);
     },
     onSuccess: () => {
@@ -199,8 +198,8 @@ export const useRequestJoinOrganization = () => {
   const queryClient = useQueryClient();
   const repository = useOrgRepository();
   return useMutation({
-    mutationFn: (code: string) => {
-      const { code: valid } = validateOrThrow(joinCodeSchema, { code });
+    mutationFn: async (code: string) => {
+      const { code: valid } = await validateAsync('org.joinCode', { code });
       return repository.requestJoin(valid);
     },
     onSuccess: (result) => {

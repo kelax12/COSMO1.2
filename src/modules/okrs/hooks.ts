@@ -11,8 +11,7 @@ import { IOKRsRepository } from './repository';
 import { OKR, CreateOKRInput, UpdateOKRInput, UpdateKeyResultInput, OKRFilters } from './types';
 import { okrsKeys } from './constants';
 import { krCompletionKeys } from '@/modules/kr-completions/constants';
-import { validateOrThrow } from '@/lib/validation/validate';
-import { createOKRSchema, updateOKRSchema } from './okr.schema';
+import { validateAsync } from '@/lib/validation/lazy';
 import { translator } from '@/i18n/useT';
 import { recordDemoCreationIfDemo } from '@/lib/demo-engagement';
 
@@ -139,8 +138,8 @@ export const useCreateOkr = () => {
   const repository = useOKRsRepository();
 
   return useMutation({
-    mutationFn: (input: CreateOKRInput) => {
-      validateOrThrow(createOKRSchema, input);
+    mutationFn: async (input: CreateOKRInput) => {
+      await validateAsync('okr.create', input);
       return repository.create(input);
     },
     onSuccess: () => {
@@ -162,8 +161,8 @@ export const useUpdateOkr = () => {
   const repository = useOKRsRepository();
 
   return useMutation({
-    mutationFn: ({ id, updates }: { id: string; updates: UpdateOKRInput }) => {
-      validateOrThrow(updateOKRSchema, updates);
+    mutationFn: async ({ id, updates }: { id: string; updates: UpdateOKRInput }) => {
+      await validateAsync('okr.update', updates);
       return repository.update(id, updates);
     },
 
