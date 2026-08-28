@@ -605,18 +605,70 @@ par utilisateur actif**.
 |---|---|
 | **×10 comptes perso** (270) | ✅ Sans modification. |
 | **×100 comptes perso** (2 700) | 🟡 Tient. Prévoir le pooling et surveiller le CPU DB. |
-| **Une organisation de 50 personnes, ~2 000 team_tasks** | 🟡 **Débloqué en théorie, jamais mesuré** : les lectures passent par `get_my_team_tasks` / `get_my_team_projects` / `get_my_team_task_dependencies` (mig. 113 et 117), qui n'évaluent le sous-arbre managérial qu'une fois par organisation. Le ~420 ms projeté ne s'applique plus au chemin emprunté. **Mais aucune mesure n'a été faite à ce volume** : la prod compte 8 `team_tasks`. |
+| **Une organisation de 50 personnes, ~2 000 team_tasks** | 🟡 **Coût par ligne mesuré le 2026-08-28 (§9bis), plan à volume toujours non vérifié** : les lectures passent par `get_my_team_tasks` / `get_my_team_projects` / `get_my_team_task_dependencies` (mig. 113 et 117), qui n'évaluent le sous-arbre managérial qu'une fois par organisation. Le ~420 ms projeté ne s'applique plus au chemin emprunté. **Mais aucune mesure n'a été faite à ce volume** : la prod compte 8 `team_tasks`. |
 | **1 000 utilisateurs actifs simultanés** | 🟡 Le sondage est tombé de ~24 à ~4 req/min/utilisateur (§3), soit ~4 000 req/min au lieu de 24 000. Reste `useTeamOKRs`, permanent sur toutes les pages pour tout membre d'organisation. |
 
-**Ordre de traitement recommandé, révisé le 2026-08-25**, les deux findings qui bloquaient le
+### 9bis. Mesuré le 2026-08-28 — ce qui est prouvé, et ce qui ne l'est toujours pas
+
+Le §2 ne pouvait pas être mesuré comme prévu : injecter 2 000 `team_tasks` demanderait d'**écrire
+en production**, ce que ce dépôt interdit. Ce qui a été fait à la place : mesurer le **coût par
+ligne**, puisque c'est lui — et lui seul, dit le §10 — qui se projette linéairement. Toutes les
+mesures sous le rôle `authenticated` réel, plan chauffé, transaction annulée.
+
+| Chemin | Lignes balayées | Buffers | Buffers / ligne |
+|---|---|---|---|
+| `team_tasks` en direct, **une** organisation | 6 | 20 | **3,33** |
+| `tasks` en direct, table entière | 717 | 44 | **0,061** |
+
+**Le rapport est de 54×**, et c'est le résultat le plus utile de cette mesure : l'audit du
+2026-08-14 avait établi « ≈ 60× le coût par ligne du prédicat de `tasks` » par une autre méthode,
+sur une autre journée. **Deux mesures indépendantes, deux semaines d'écart, même ordre de
+grandeur.** Le chiffre qui justifie les migrations 113 et 117 tient.
+
+**La cause est visible dans le plan, à n'importe quel volume** — c'est pourquoi elle n'a pas
+besoin de 2 000 lignes pour être établie : le chemin direct sur `team_tasks` porte
+`Filter: can_access_team_project(project_id)`, **un appel de fonction par ligne examinée**, tandis
+que le prédicat de `tasks` est entièrement hissé (`InitPlan` + `hashed SubPlan`), donc évalué une
+fois par requête.
+
+**Projection, au ratio mesuré** : 2 000 `team_tasks` lues par le chemin direct ≈ **6 700 buffers**,
+soit ~52 Mo de trafic de buffers pour une ouverture d'écran. Par la RPC, le sous-arbre est évalué
+une fois et le coût retombe sur la lecture des lignes.
+
+> 🔴 **LE PIÈGE, et il faut le lire avant de « re-optimiser ».** À volume actuel, mesurer en
+> **millisecondes** donne la réponse INVERSE de la bonne :
+>
+> | | Buffers | Temps |
+> |---|---|---|
+> | `select * from tasks` (direct, 717 lignes) | 44 | **0,219 ms** |
+> | `get_my_tasks()` (le chemin imposé) | **30** | 1,739 ms |
+>
+> La RPC lit **moins de buffers** — l'index fait son travail — et elle est **8× plus lente en
+> temps**, parce qu'à 717 lignes tenant en cache, le coût fixe d'un appel de fonction domine tout.
+> Quelqu'un qui chronomètre aujourd'hui conclurait qu'il faut revenir à `.from('tasks')`, et il
+> aurait tort : le coût du chemin direct croît avec **la table entière, tous comptes confondus**,
+> celui de la RPC avec **les seules lignes de l'appelant**. À 7 millions de lignes, le premier
+> demande ~427 000 buffers par lecture, le second reste à quelques dizaines.
+>
+> **La règle du §10 — se fier au ratio buffers/ligne, jamais au chronomètre — n'est pas un détail
+> de méthode : c'est la seule lecture qui ne se retourne pas contre elle-même à petit volume.**
+
+**Ce qui reste NON prouvé, et qu'aucune astuce ne remplace** : le comportement du **planificateur**
+à volume. Un basculement de plan (index → seq, hash → nested loop) ne se déduit pas d'un ratio, et
+la prod ne compte que 10 `team_tasks`. Cette vérification-là demande vraiment un jeu de données —
+sur une **branche** Supabase ou une stack locale, jamais en production.
+
+---
+
+**Ordre de traitement recommandé, révisé le 2026-08-28.** Les deux findings qui bloquaient le
 cas d'usage B2B (§2 et §2bis) sont refermés, le payload (§4) et le hook mort (§5) aussi. Il reste,
 par ordre décroissant de rapport valeur/effort :
 
-1. **`useTeamOKRs` en `live` conditionnel** (§3), ~15 minutes, supprime le dernier sondage
-   permanent monté à l'échelle de l'application.
-2. **Mesurer §2 à volume réel**, injecter ~2 000 `team_tasks` dans une organisation de test et
-   rejouer le runbook §10. Sans cette mesure, la correction est *crue*, pas *prouvée*, et c'est
-   précisément ce qui avait laissé passer le `Seq Scan` global pendant six semaines (§6).
+1. ✅ **`useTeamOKRs` en `live` conditionnel** — **déjà fait**, vérifié le 2026-08-27 :
+   `team-okrs/hooks.ts` porte `...(options?.live ? { refetchInterval: 30_000 } : {})`.
+2. 🟡 **Mesurer §2 à volume réel.** Le coût par ligne est mesuré (§9bis) et confirme l'audit du
+   14 août. **Reste le comportement du planificateur**, qui exige un vrai jeu de données sur une
+   branche ou une stack locale.
 3. Les deux derniers sondages permanents vers le canal Realtime existant.
 
 ---
