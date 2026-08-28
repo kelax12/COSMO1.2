@@ -1,7 +1,7 @@
 # Roadmap 60 jours — du lancement à 10 000 utilisateurs
 
-**Établie le 2026-08-27.** Source de vérité unique du travail des 60 prochains jours
-(2026-08-28 → 2026-10-26). Elle **consolide** les dix audits vivants du dépôt, les confronte au
+**Établie le 2026-08-27, consolidée le 2026-08-28.** Source de vérité unique du travail des
+60 prochains jours (2026-08-28 → 2026-10-26). Elle **consolide** les dix audits vivants du dépôt, les confronte au
 code de `main` et à la production `ykeugqfgklejcdbrmawy`, et ne garde que ce qui reste à faire.
 
 > **Ce document ne remplace aucun audit.** `faille.md` reste la source de vérité sécurité,
@@ -12,6 +12,40 @@ code de `main` et à la production `ykeugqfgklejcdbrmawy`, et ne garde que ce qu
 > **Règle d'entretien** : cocher une tâche ici au moment où son critère « Done » est vérifié, pas
 > quand le code est écrit. Une migration écrite n'est pas une migration appliquée — c'est la
 > leçon du 2026-08-27, elle vaut pour toute cette roadmap.
+>
+> **Une tâche faite n'est jamais retirée** : elle est cochée dans les tableaux du §1, sortie de la
+> file d'exécution du §2, et racontée au §11. Le fil de ce qui s'est passé compte autant que la
+> liste de ce qui reste — c'est lui qui empêche de refaire un travail déjà fait, ou de croire fait
+> un travail seulement écrit.
+
+---
+
+## État au 2026-08-28 (fin de journée)
+
+**51 tâches** (les 47 d'origine, plus `T-04b`, et `T-48` à `T-50` nées de l'état réel de la CI).
+Recompté par script sur les tableaux du §1, jamais de tête.
+
+| | Nombre | Lesquelles |
+|---|---|---|
+| ✅ **Fait et vérifié** | **11** | T-11 · T-16 · T-19 · T-20 · T-24 · T-26 · T-29 · T-30 · T-42 · T-44 · T-48 |
+| 🟡 Partiel | 2 | **T-14** (code livré, inerte : deux réglages restants) · **T-23** (l'instrumentation existait déjà, la correction attend une décision) |
+| ⚪ Clos sans suite | 1 | T-27 (arbitrage rendu) |
+| ⬜ Ouvert | **37** | dont **T-49** et **T-50**, les deux jobs CI encore rouges |
+
+### Qui bloque quoi — la seule ventilation qui compte
+
+| Qui | Nombre | Nature |
+|---|---|---|
+| **Axel seul** | **25** | Consoles (Supabase, Vercel, Resend, Cloudflare, GitHub, Stripe), actes administratifs, soumissions d'annuaires. Aucun n'est atteignable depuis le dépôt |
+| **Axel puis moi** | 3 | T-12, T-38, T-39 — un secret ou un drapeau à poser, puis je déploie ou je vérifie |
+| **Moi, sans rien attendre** | **4** | T-25 (barre d'onglets mobile) · T-31 (procédure de support) · T-45 (`TaskTable`) · T-46 (`pg_dump` mensuel) |
+| **Bloqué sur un outil absent** | 3 | T-49 (Docker), T-50 + T-28 (log du run CI → `gh auth login`) |
+| **Attend une décision produit** | 2 | T-23 (premier écran après inscription) · T-47 (`vendor-sentry`) |
+
+> 🔴 **Le fait le plus important de la journée n'était dans aucune tâche** : la CI est rouge sur
+> `main` depuis au moins le 2026-08-24, et l'issue #44 accumulait **90 commentaires** d'alerte que
+> personne n'ouvrait. Un des trois jobs est réparé (`e2e`), deux restent. La CI verte étant une
+> condition du GO, c'est du travail de lancement, pas de l'entretien.
 
 ---
 
@@ -55,7 +89,7 @@ Quatre angles morts, dont un est le plus gros risque de lancement du dossier.
 
 ---
 
-## 1. Liste consolidée — 47 tâches, chacune une seule fois
+## 1. Liste consolidée — 51 tâches, chacune une seule fois
 
 Priorité : **P0** bloque le lancement · **P1** risque important · **P2** rapidement après ·
 **P3** optimisation · **P4** nice to have.
@@ -135,45 +169,59 @@ Piste : **A** = agent backend/infra/sécu · **B** = agent front/UX/tests · **X
 
 ---
 
-## 2. Ordre d'exécution — la file unique
+## 2. Ordre d'exécution — ce qu'il reste, dans l'ordre
 
-Chaque numéro est un point de reprise. Ce qui est sur la même ligne est parallélisable.
+> **Réécrit le 2026-08-28.** Les onze tâches fermées sont sorties de cette file ; elles restent
+> cochées dans les tableaux du §1 et racontées au §11. Une file d'exécution qui garde ses lignes
+> barrées cesse d'être une file.
+
+### 🔴 Ce qui bloque le GO — presque tout tient dans une session de consoles
 
 ```
- 1. T-19  committer le travail en cours          (X, XS)  — rien d'autre ne part tant que main ment
- 2. T-01  Supabase Pro + PITR                    (X, XS)
- 3. T-05 · T-06 · T-07 · T-08 · T-09             (X, 4×XS) — les 5 réglages de console, en une session
- 4. T-16  vérifier VITE_SENTRY_DSN               (X, XS)
- 5. T-13  OPS_ALERT_WEBHOOK_URL                  (X, XS)
- 6. T-10  appliquer la mig. 130      ‖  T-03  SMTP Auth + domaine vérifié     (X)
- 7. T-11  check:drift                ‖  T-12  déployer report-bug            (A)
- 8. T-02  drill de restauration chronométré      (X + A, M)
- 9. T-04  templates Auth traduits     ‖  T-14  CAPTCHA                        (B ‖ A)
-10. T-20  audit des deux drapeaux de facturation (A, XS)
-11. T-15  valider la chaîne ?ref= de bout en bout (X, S)
-        ── ▲ GO / NO-GO DE LANCEMENT ▲ ──
-12. T-17 sonde uptime  ‖  T-18 supprimer tmp-org-price-setup  ‖  T-22 GSC + Ahrefs   (X)
-13. T-21  soumissions annuaires, par vagues de 5              (X, en fond sur 3 semaines)
-14. T-23  activation : instrumenter puis corriger             (B, L)
-15. T-30 durées de conservation  ‖  T-28 seuils Lighthouse    (B ‖ A)
-16. T-29 chunk d'entrée sous 92 ko  ‖  T-24 détection de nouvelle version   (B)
-17. T-31  procédure de support                                (X)
-18. T-25 barre d'onglets mobile  ‖  T-41 mesure à volume  ‖  T-42 pooler   (B ‖ A ‖ A)
-19. T-32  immatriculation  ‖  T-33 domiciliation  ‖  T-44 antériorité marque (X)
-20. T-35 portail Stripe  ‖  T-34 médiateur                    (X)
-21. T-36  Stripe en compte live                               (X + A, M)
-22. T-37  mentions légales + factures conformes               (X + B)
-23. T-38  réarmer les deux drapeaux ENSEMBLE                  (A, XS)
-24. T-39  recette de paiement avec une vraie carte            (X + A, M)
-25. T-40 CRON_SECRET  ‖  T-43 DPA  ‖  T-26 grammaires de filtre  ‖  T-27 frise
-26. T-45 TaskTable  ‖  T-46 pg_dump mensuel  ‖  T-47 décision vendor-sentry
+ 1. T-01  Supabase Pro + PITR                          (X, XS)
+ 2. T-05 · T-06 · T-07 · T-08 · T-09                   (X, 5×XS) — les 5 reglages, en une fois
+ 3. T-13  OPS_ALERT_WEBHOOK_URL                        (X, XS)
+ 4. T-03  SMTP Auth : sous-domaine send.thecosmo.app   (X, M)   ⟵ le noeud : bloque 4, 4b et 12
+ 5. T-10  appliquer la mig. 130      ‖  T-18 supprimer tmp-org-price-setup   (X)
+ 6. T-02  drill de restauration chronometre            (X + A, M)   dep. 1
+ 7. T-04 gabarits  →  T-04b activer Confirm email      (X, 2×XS)     dep. 4
+ 8. T-12  deployer report-bug                          (A, XS)       dep. 4
+ 9. T-14  les 2 cles Turnstile, DANS L ORDRE           (X, XS)       cf. DEPLOYMENT §2quater
+10. T-15  valider la chaine ?ref= sur un compte reel   (X, S)        dep. 4
+11. T-17  sonde de disponibilite externe               (X, XS)
+        ── ▲ GO / NO-GO ▲ ──
 ```
 
-**Pourquoi cet ordre.** Les onze premières lignes sont toutes des tâches à effort XS ou S qui
-ferment chacune un mode de défaillance silencieux — c'est-à-dire un problème qui ne se manifeste
-qu'une fois qu'il y a des utilisateurs, quand il coûte le plus cher. Aucune ne demande de
-développement. Le lancement n'attend pas du code, il attend une douzaine de clics et une
-vérification.
+### 🟠 Puis, en parallèle : la CI, l'acquisition, le produit
+
+```
+12. T-49  rls-integration (Docker)   ‖  T-50 lighthouse (gh auth) → puis T-28   (A ‖ X+A)
+13. T-22  etat des lieux GSC + Ahrefs        ‖  T-21 annuaires, par vagues de 5  (X)
+14. T-23  premier ecran apres inscription    ⟵ ATTEND UNE DECISION, pas du code  (X puis B)
+15. T-25 barre d onglets mobile  ‖  T-31 procedure de support   (B ‖ X)
+```
+
+### 🟢 Enfin : encaisser, puis rembourser la dette
+
+```
+16. T-33 domiciliation  →  T-32 IMMATRICULATION INPI    (X)  ⟵ delai incompressible
+17. T-35 portail Stripe  ‖  T-34 mediateur  ‖  T-43 DPA  (X)
+18. T-36  Stripe en compte live                          (X + A, M)   dep. 16
+19. T-37  mentions legales + factures conformes          (X + B)      dep. 16
+20. T-38  rearmer les DEUX drapeaux ensemble             (A, XS)      dep. 17,18,19
+21. T-39  recette de paiement, vraie carte  →  T-40 CRON_SECRET      (X + A)
+22. T-41 mesure a volume  ‖  T-45 TaskTable  ‖  T-46 pg_dump  ‖  T-47 decision sentry
+```
+
+**Deux choses à retenir de cet ordre.**
+
+1. **Le GO n'attend plus une seule ligne de code.** Onze entrées, presque toutes en XS, toutes
+   dans une console. Ce qui pouvait être préparé en amont l'a été : runbooks, gabarits d'email,
+   front prêt pour la confirmation d'adresse, Turnstile câblé mais inerte, gardes `check:mail` et
+   `check:bundle`.
+2. **T-32 est la seule tâche dont le calendrier ne dépend pas de nous.** Entre le dépôt au guichet
+   INPI et le SIREN il s'écoule plusieurs semaines, et rien de la ligne 18 à 21 ne peut commencer
+   avant. Déposé après la semaine 7, l'encaissement sort des 60 jours.
 
 ---
 
@@ -390,10 +438,12 @@ question redevient « à quelle vitesse peut-on avancer », donc la dette du soc
 
 Peut travailler sans jamais toucher un composant React.
 
-T-11 (check:drift) · T-12 (déployer `report-bug`) · T-14 côté Supabase Auth ·
-T-20 (audit des drapeaux) · T-28 (seuils Lighthouse) · T-36 côté secrets et Edge Functions ·
-T-38 (drapeau serveur) · T-41 (mesure à volume) · T-42 (pooler) · T-46 (`pg_dump`) ·
+**Reste** : T-12 (déployer `report-bug`, après le secret) · T-36 côté secrets et Edge Functions ·
+T-38 (drapeau serveur) · T-39 (recette de paiement) · T-41 (mesure à volume) · T-46 (`pg_dump`) ·
+**T-49** (`rls-integration`, exige Docker) · T-28 (seuils Lighthouse, derrière T-50) ·
 vérification de T-10 et de T-02.
+
+✅ *Faits* : T-11, T-20, T-42.
 
 **Contrainte permanente** : l'agent A ne **jamais** écrire en base par le MCP Supabase — lecture
 seulement. Les migrations sont appliquées par Axel, vérifiées par l'agent.
@@ -402,10 +452,15 @@ seulement. Les migrations sont appliquées par Axel, vérifiées par l'agent.
 
 Peut travailler sans jamais toucher une migration.
 
-T-04 (templates Auth) · T-14 côté formulaire · T-23 (activation, mesure puis correction) ·
-T-24 (détection de nouvelle version) · T-25 (barre d'onglets mobile) · T-26 (grammaires de
-filtre) · T-27 (frise) · T-29 (chunk d'entrée) · T-30 (durées de conservation) · T-37 côté
-mentions légales · T-45 (`TaskTable`).
+**Reste** : T-23 (correction de l'activation, **dès que la direction produit est donnée**) ·
+T-25 (barre d'onglets mobile) · T-37 côté mentions légales · T-45 (`TaskTable`).
+
+✅ *Faits* : T-14 côté formulaire, T-24, T-26, T-29, T-30, T-48. ⚪ T-27 clos sans suite.
+
+> ⚠️ **La piste B est presque vide, et ce n'est pas une bonne nouvelle** : il ne reste que quatre
+> lignes, dont une bloquée sur une décision. Tout le chemin critique du lancement est passé côté
+> Axel. Mettre un second agent sur du frontend maintenant produirait du travail qui n'avance pas
+> le GO.
 
 ### AXEL — tout ce qui exige un humain, un compte ou une signature
 
@@ -437,11 +492,13 @@ mentions légales · T-45 (`TaskTable`).
 | # | Condition | Vérification |
 |---|---|---|
 | 1 | **PITR actif et restauration testée** (T-01, T-02) | Le chronomètre du drill est écrit dans `DEPLOYMENT.md` |
-| 2 | **Emails d'authentification servis par un SMTP applicatif**, puis confirmation d'adresse activée (T-03, T-04b) | `npm run check:mail` sort 0, et une inscription de test reçoit sa confirmation hors spam sur deux fournisseurs |
+| 🔴 2 | **Emails d'authentification servis par un SMTP applicatif**, puis confirmation d'adresse activée (T-03, T-04b) — **le plus contraignant, il bloque aussi T-04, T-12 et T-15** | `npm run check:mail` sort 0, et une inscription de test reçoit sa confirmation hors spam sur deux fournisseurs |
 | 3 | **Protection contre les mots de passe compromis + MFA admin** (T-05, T-06) | L'advisor correspondant a disparu ; la connexion admin demande un TOTP |
 | 4 | **Chaîne `?ref=` prouvée de bout en bout** (T-15) | `acquisition_source` renseignée sur un compte réel créé pour l'occasion |
-| 5 | **Les deux drapeaux de facturation à `false`, vérifiés séparément** (T-20) | Lecture du code **et** requête en base, datées |
-| 6 | **Alerte opérationnelle branchée** (T-13, T-16) | Un incident simulé arrive dans le canal et dans Sentry |
+| ✅ 5 | ~~Les deux drapeaux de facturation à `false`, vérifiés séparément~~ (T-20) | **Levé le 2026-08-28** : `premium-config.ts` et `billing_flags` lus séparément, tous deux `false` |
+| 🟡 6 | **Alerte opérationnelle branchée** (T-13, T-16) | ✅ **T-16 levé** : le DSN Sentry est bien inliné dans le bundle servi en production. ⬜ Reste T-13, le webhook d'alerte |
+
+| 🔴 7 | **Les cinq jobs CI verts sur `main`** (T-49, T-50) | **Ajouté le 2026-08-28**, parce que la condition existait au §GO sans figurer ici — et qu'elle était fausse depuis quatre jours sans que personne le voie. `e2e` est réparé ; `rls-integration` et `lighthouse` restent rouges |
 
 ### 🟠 Risques acceptables au lancement — assumés, à ne pas confondre avec « réglés »
 
@@ -451,17 +508,24 @@ mentions légales · T-45 (`TaskTable`).
 | **`report-bug` non déployé** si T-12 glisse | Le repli `mailto` fonctionne, l'utilisateur n'est jamais dans une impasse | Au premier utilisateur qui n'écrit pas parce qu'il a vu un message d'erreur |
 | **Position 88 en SEO, 0 domaine référent** | C'est un état de départ, pas un défaut. La correction est manuelle et longue | Jamais bloquant, mais rien ne s'améliore sans T-21 |
 | **Jamais mesuré à volume** (`team_tasks`) | 4 organisations, 8 tâches d'équipe en prod | À la première organisation de plus de 20 personnes — T-41 |
-| **14 fichiers > 600 lignes** | Le cliquet empêche la croissance nette, le budget baisse à chaque passe | Jamais un bloquant produit, seulement un coût de vitesse |
+| **13 fichiers > 600 lignes** (14 la veille) | Le cliquet empêche la croissance nette, et il a fait sortir `AuthContext` du budget le 2026-08-28 — première coupe dans le socle et non dans `/entreprise` | Jamais un bloquant produit, seulement un coût de vitesse |
 | **`en` servie mais non indexable** | Choix délibéré : le contenu des pages est en français | Quand le contenu sera traduit |
-| **Onglets périmés** (T-24) | 28 comptes, l'effet est mesurable mais pas coûteux | À 100 utilisateurs actifs |
+| ~~**Onglets périmés**~~ (T-24) | ✅ **Levé le 2026-08-28** : un onglet resté ouvert sur un vieux build propose de recharger. Vérifié en production | — |
 | **CVE dev-only et `GHSA-qwww-vcr4-c8h2`** | Inapplicables à une SPA Vite sans RSC, verrouillé par `no-open-redirect.test.ts` | À la migration React 19 |
+| **Le nom « COSMO » n'est pas libre** en classes 9 et 42 | 11 marques actives, dont une d'un éditeur de logiciel (T-44). Ça ne bloque pas un lancement, ça bloque un DÉPÔT — et ça crée un risque d'opposition | Dès que l'acquisition rend le nom coûteux à changer. Consultation de conseil en PI |
 
 ### 🟢 GO — conditions minimales
 
-Les six NO-GO levés, les quatre gardes CI vertes sur `main`
+Les sept NO-GO levés — **deux le sont, cinq restent** — les **cinq** jobs CI verts sur `main`
 (`lint-test-build`, `audit`, `e2e`, `rls-integration`, `lighthouse`), `check:drift` à zéro, et
-`git status` propre. **C'est tout.** Le produit est techniquement au-dessus de ce que son trafic
-exige ; ce qui manque au lancement n'est pas du code.
+`git status` propre.
+
+> ⚠️ La version du 2026-08-27 écrivait « les quatre gardes CI » en en listant cinq, et personne
+> ne les avait regardées : trois étaient rouges. Un décompte faux dans la condition de GO
+> elle-même — c'est exactement le motif que ce dossier documente depuis le début.
+
+**C'est tout.** Le produit est techniquement au-dessus de ce que son trafic exige ; ce qui manque
+au lancement n'est toujours pas du code.
 
 ---
 
@@ -516,19 +580,17 @@ exige ; ce qui manque au lancement n'est pas du code.
 
 ## 7. Quick wins — à intercaler entre deux tâches lourdes
 
-Effort minimal, impact réel, risque nul.
+Effort minimal, impact réel, risque nul. **Cinq des neuf de la liste du 2026-08-27 sont faits**
+(T-11, T-16, T-19, T-30, T-42) ; ils sont sortis d'ici et cochés au §1.
 
 | Tâche | Effort | Gain |
 |---|---|---|
-| **T-06** — MFA sur le compte admin | 5 min | Le meilleur rapport effort/risque de tout le dossier sécurité |
-| **T-05** — leaked password protection | 2 min | Ferme le seul WARN d'authentification remonté par les advisors |
+| **T-06** — MFA sur le compte admin | 5 min | Le meilleur rapport effort/risque de tout le dossier sécurité, et c'est `faille.md` qui l'écrit |
+| **T-05** — leaked password protection | 2 min | Ferme le seul WARN d'authentification remonté par les advisors, encore présent le 2026-08-28 |
 | **T-13** — `OPS_ALERT_WEBHOOK_URL` | 5 min | Transforme un no-op silencieux en alerte réelle sur les échecs Stripe et RGPD |
-| **T-18** — supprimer `tmp-org-price-setup` | 2 min | Retire un artefact non versionné de la surface exposée |
-| **T-19** — committer le travail en cours | 10 min | Trois tests et douze docs vérifiés qui n'existent pas tant qu'ils ne sont pas dans `main` |
-| **T-30** — publier les durées de conservation | 20 min | Débloque la seule ligne RGPD qui n'attend plus que d'être écrite |
-| **T-11** — `check:drift` après la 130 | 10 min | Le geste qui a manqué pendant six semaines la première fois |
-| **T-42** — vérifier l'URL du pooler | 15 min | Écarte ou confirme un plafond de connexions qu'on découvrirait sous charge |
-| **T-16** — vérifier `VITE_SENTRY_DSN` | 10 min | Sans lui, le monitoring est éteint sans que rien ne le dise |
+| **T-18** — supprimer `tmp-org-price-setup` | 2 min | Retire un artefact non versionné de la surface exposée en production |
+| **T-10** — appliquer la mig. 130 | 5 min | Le correctif est écrit, testé dans cinq rôles, et **ne protège personne tant qu'il n'est pas appliqué** |
+| **T-50** — `gh auth login` puis lire le log | 15 min | Débloque à lui seul le dernier job CI non diagnostiqué, **et** T-28 derrière |
 
 ---
 
@@ -555,40 +617,52 @@ Section obligatoire, et la plus utile de ce document.
 
 ---
 
-## 9. Score de maturité au 2026-08-27
+## 9. Score de maturité au 2026-08-28
 
-### Lancement production — **7 / 10**
+> Les notes du 2026-08-27 sont conservées entre parenthèses. **Trois bougent d'un point, une ne
+> bouge pas** — et l'absence de mouvement est aussi informative que le reste : rien de ce qui
+> bloque le palier 10 000 n'a été touché, parce que rien de ce qui le bloque n'est du code.
 
-Le code est prêt bien au-delà de ce que le trafic exige : 1 802 tests verts, cinq jobs CI dont un
-qui rejoue toutes les migrations sur base vierge, RLS sur toutes les tables, aucun finding
-exploitable, CSP stricte, budget de bundle gardé. Ce qui manque n'est pas du code : PITR absent,
-emails d'authentification servis par l'expéditeur de secours de Supabase, canal de support non
-déployé, chaîne d'attribution jamais éprouvée.
+### Lancement production — **7,5 / 10** (7)
 
-### 100 utilisateurs — **6 / 10**
+1 833 tests verts, RLS sur toutes les tables, aucun finding exploitable, CSP stricte, chemin
+critique passé de 393,9 à **364,3 ko** pour tout visiteur. Le demi-point vient de trois modes de
+défaillance silencieux fermés dans la journée : les onglets périmés (T-24), le monitoring dont
+personne n'avait vérifié qu'il était branché (T-16), et le job `e2e` (T-48).
 
-Techniquement confortable. Le frein est produit : **0 compte actif sur 7 jours pour 28 comptes**.
-Le produit n'a pas encore prouvé qu'il retient quelqu'un. S'y ajoutent l'absence de surveillance
-de disponibilité, de protection anti-bot et de procédure de support.
+**Ce qui retient encore** : PITR absent, SMTP d'authentification non configuré, `report-bug` non
+déployée, chaîne `?ref=` jamais éprouvée — et **deux jobs CI rouges**, ce qu'on ignorait la veille.
 
-### 1 000 utilisateurs — **5 / 10**
+### 100 utilisateurs — **6,5 / 10** (6)
 
-Les corrections de scalabilité sont réelles et bien conçues (085, 113, 117, 119, 128, 129), mais
-**aucune n'a été mesurée à volume** : la prod compte 8 tâches d'équipe. Le pooler n'est pas
-confirmé. Les onglets périmés font que les gains n'atteignent pas les utilisateurs les plus
-assidus. Et le support repose entièrement sur une personne.
+Le chiffre de la veille était mal lu. « 0 actif sur 7 jours » décrivait l'activité *récente* :
+en réalité **18 comptes sur 28 ont créé des tâches, 11 en ont au moins cinq**. Le produit sert.
+Le vrai défaut est qu'**un inscrit sur deux ne revient jamais** après sa session d'inscription —
+et ça n'appelle pas les mêmes correctifs.
 
-### 10 000 utilisateurs — **3 / 10**
+**Ce qui retient** : pas de surveillance de disponibilité, pas de protection anti-bot **active**
+(le code est là, les clés non), pas de procédure de support.
 
-Ce n'est pas une note technique. **Il n'existe aujourd'hui aucun moyen légal d'encaisser un
-euro** : pas de structure, Stripe en compte de test, portail de résiliation non configuré,
-médiateur non souscrit. Sans revenu, la question des 10 000 utilisateurs ne se pose pas. À quoi
-s'ajoutent l'absence d'astreinte, de plan de sortie fournisseur éprouvé, et de mesure de coût par
-utilisateur actif.
+### 1 000 utilisateurs — **5,5 / 10** (5)
 
-**Ce qui empêche le 10/10, en une phrase par axe** : la production n'est pas rattrapable
-(PITR), l'inscription n'est pas éprouvée (SMTP), le produit n'est pas retenu (activation), la
-scalabilité n'est pas mesurée (volume), et le business n'est pas légal (immatriculation).
+Deux inconnues levées : les onglets périmés reçoivent maintenant les correctifs, et le pooler
+**n'était pas le sujet** — l'application n'ouvre aucune connexion Postgres, 14 sur 60 sont
+utilisées et 11 appartiennent à PostgREST.
+
+**Ce qui retient, inchangé** : rien n'a été mesuré à volume (la prod compte 8 tâches d'équipe), et
+le support repose entièrement sur une personne.
+
+### 10 000 utilisateurs — **3 / 10** (3, inchangé)
+
+**Aucun moyen légal d'encaisser un euro** : pas de structure, Stripe en compte de test, portail de
+résiliation non configuré, médiateur non souscrit. Sans revenu, la question ne se pose pas. S'y
+ajoute désormais un fait connu qui ne l'était pas : **le nom n'est pas libre** en classes 9 et 42.
+
+> **Ce qui empêche le 10/10, en une phrase par axe** — la formulation de la veille tient mot pour
+> mot, et c'est le point : la production n'est pas rattrapable (PITR), l'inscription n'est pas
+> éprouvée (SMTP), le produit n'est pas retenu (activation), la scalabilité n'est pas mesurée
+> (volume), le business n'est pas légal (immatriculation). **Une journée entière de travail
+> technique n'a déplacé aucun de ces cinq verrous, parce qu'aucun n'est technique.**
 
 ---
 
@@ -597,31 +671,46 @@ scalabilité n'est pas mesurée (volume), et le business n'est pas légal (immat
 ### Aujourd'hui
 
 **Un produit d'ingénierie remarquable, et une entreprise qui n'existe pas encore.** Le dépôt est
-plus rigoureux que la majorité des SaaS financés : gardes automatiques qui refusent la
-régression, migrations testées sur base vierge, sécurité auditée à 86/100, documentation qui se
-corrige elle-même. En face : 28 comptes, 0 actif à 7 jours, 0 € de revenu, 0 domaine référent,
-aucune structure juridique. **Le goulot n'est pas technique depuis un moment déjà.**
+plus rigoureux que la majorité des SaaS financés : gardes automatiques qui refusent la régression,
+migrations testées sur base vierge, sécurité auditée à 86/100, documentation qui se corrige
+elle-même. En face : 28 comptes, **un inscrit sur deux qui ne revient jamais**, 0 € de revenu,
+0 domaine référent, aucune structure juridique, et un nom déjà déposé par onze titulaires dans ses
+propres classes. **Le goulot n'est pas technique depuis un moment déjà.**
 
-### Pour lancer — les 8 choses qui comptent
+> ⚠️ **Mise à jour du 2026-08-28, et c'est la correction la plus utile de la journée.** Ce
+> paragraphe disait « 0 actif à 7 jours ». C'était une mauvaise lecture d'un chiffre juste : il
+> décrivait l'activité *récente*, pas l'usage. **18 comptes sur 28 ont créé des tâches, 11 en ont
+> au moins cinq.** Le produit sert à quelque chose. Ce qui ne marche pas, c'est le RETOUR — et un
+> problème de rétention n'appelle pas les mêmes correctifs qu'un produit que personne n'utilise.
 
-1. Supabase Pro + PITR + drill de restauration chronométré (T-01, T-02)
-2. SMTP applicatif, puis vérification d'adresse à l'inscription (T-03, T-04b) — **l'angle mort le
-   plus coûteux**. Préparé côté dépôt : runbook, gabarits, front et garde `npm run check:mail`
-3. Les cinq réglages de console Supabase et GitHub (T-05 à T-09)
-4. Migration 130 appliquée, test RLS au vert (T-10, T-11)
-5. `report-bug` déployé (T-12)
-6. Alerte opérationnelle et Sentry vérifiés (T-13, T-16)
-7. CAPTCHA sur l'inscription (T-14)
-8. Chaîne `?ref=` prouvée sur un compte réel (T-15)
+### Pour lancer — ce qui reste
 
-Aucune de ces huit tâches n'est du développement. Sept sont des XS.
+| # | Quoi | État au 2026-08-28 |
+|---|---|---|
+| 1 | Supabase Pro + PITR + drill chronométré (T-01, T-02) | ⬜ |
+| 2 | **SMTP applicatif, puis vérification d'adresse** (T-03, T-04b) | ⬜ **le nœud** : il bloque aussi T-04, T-12 et T-15. Préparé côté dépôt : runbook, gabarits, front, garde `npm run check:mail` |
+| 3 | Les cinq réglages de console Supabase et GitHub (T-05 à T-09) | ⬜ |
+| 4 | Migration 130 appliquée (T-10) | ⬜ · ✅ `check:drift` déjà joué (T-11) |
+| 5 | `report-bug` déployée (T-12) | ⬜ dépend du 2 |
+| 6 | Alerte opérationnelle et Sentry (T-13, T-16) | 🟡 **Sentry vérifié**, webhook restant |
+| 7 | Les deux clés Turnstile (T-14) | 🟡 **code livré et inerte**, deux réglages restants |
+| 8 | Chaîne `?ref=` prouvée sur un compte réel (T-15) | ⬜ dépend du 2 |
+| 9 | **Les cinq jobs CI verts** (T-49, T-50) | 🟡 `e2e` réparé, deux jobs restants |
+
+**Aucune de ces lignes n'est du développement**, sauf la 9. Le lancement attend une session de
+consoles et une vérification.
 
 ### Dans les 30 prochains jours
 
-Lancer, puis **regarder**. Les soumissions d'annuaires (T-21) démarrent en semaine 3 et ne
-s'arrêtent plus : c'est le seul levier SEO. En parallèle, mesurer puis corriger l'activation
-(T-23), parce qu'acquérir sans retenir coûte de l'argent sans rien construire. Et déposer
-l'immatriculation en semaine 5, à cause de son délai administratif.
+Lancer, puis **regarder**. Les soumissions d'annuaires (T-21) démarrent dès que le GO est levé et
+ne s'arrêtent plus : c'est le seul levier SEO. En parallèle, **corriger** l'activation (T-23) —
+la mesure existe déjà dans `/admin`, c'est la décision produit qui manque : que doit-il se passer
+dans les 60 premières secondes d'un nouveau compte ? Et déposer l'immatriculation (T-32) **au plus
+tard en semaine 7**, sinon l'encaissement sort des 60 jours.
+
+Deux dettes techniques à refermer dans la même fenêtre, parce qu'elles rendent muettes des gardes
+qu'on croit actives : les **deux jobs CI rouges** (T-49, T-50) et le **conseil en PI sur le nom**
+(T-44), avant que l'acquisition ne rende un changement de nom coûteux.
 
 ### Dans les 60 prochains jours — l'état à viser
 
