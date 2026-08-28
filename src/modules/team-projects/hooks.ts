@@ -5,8 +5,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { getTeamProjectsRepository } from '@/lib/repository.factory';
-import { validateOrThrow } from '@/lib/validation/validate';
-import { createTeamProjectSchema, updateTeamProjectSchema, createTeamTaskSchema, updateTeamTaskSchema } from './team-task.schema';
+import { validateAsync } from '@/lib/validation/lazy';
 import { teamProjectKeys } from './constants';
 import type { UpdateTeamSubtaskInput, CreateTeamLabelInput, UpdateTeamLabelInput } from './types';
 import type { CreateTeamProjectInput, UpdateTeamProjectInput, CreateTeamTaskInput, UpdateTeamTaskInput, TeamTaskFilters } from './types';
@@ -99,8 +98,8 @@ export const useCreateTeamProject = (orgId: string) => {
   const queryClient = useQueryClient();
   const repository = useRepo();
   return useMutation({
-    mutationFn: (input: CreateTeamProjectInput) => {
-      const valid = validateOrThrow(createTeamProjectSchema, input);
+    mutationFn: async (input: CreateTeamProjectInput) => {
+      const valid = await validateAsync('teamProject.create', input);
       return repository.createProject(orgId, valid);
     },
     onSuccess: () => {
@@ -115,8 +114,8 @@ export const useUpdateTeamProject = (orgId: string) => {
   const queryClient = useQueryClient();
   const repository = useRepo();
   return useMutation({
-    mutationFn: ({ projectId, input }: { projectId: string; input: UpdateTeamProjectInput }) => {
-      const valid = validateOrThrow(updateTeamProjectSchema, input);
+    mutationFn: async ({ projectId, input }: { projectId: string; input: UpdateTeamProjectInput }) => {
+      const valid = await validateAsync('teamProject.update', input);
       return repository.updateProject(projectId, valid as UpdateTeamProjectInput);
     },
     onSuccess: (_project, { input }) => {
@@ -146,8 +145,8 @@ export const useCreateTeamTask = (orgId: string) => {
   const queryClient = useQueryClient();
   const repository = useRepo();
   return useMutation({
-    mutationFn: (input: CreateTeamTaskInput) => {
-      const valid = validateOrThrow(createTeamTaskSchema, input);
+    mutationFn: async (input: CreateTeamTaskInput) => {
+      const valid = await validateAsync('teamTask.create', input);
       return repository.createTask(orgId, valid as CreateTeamTaskInput);
     },
     onSuccess: () => {
@@ -161,8 +160,8 @@ export const useUpdateTeamTask = (orgId: string) => {
   const queryClient = useQueryClient();
   const repository = useRepo();
   return useMutation({
-    mutationFn: ({ taskId, input }: { taskId: string; input: UpdateTeamTaskInput }) => {
-      const valid = validateOrThrow(updateTeamTaskSchema, input);
+    mutationFn: async ({ taskId, input }: { taskId: string; input: UpdateTeamTaskInput }) => {
+      const valid = await validateAsync('teamTask.update', input);
       return repository.updateTask(taskId, valid as UpdateTeamTaskInput);
     },
     onSuccess: () => {

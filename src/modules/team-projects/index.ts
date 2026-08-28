@@ -31,12 +31,10 @@ export {
   TEAM_TASKS_STORAGE_KEY,
 } from './constants';
 
-export {
-  createTeamProjectSchema,
-  updateTeamProjectSchema,
-  createTeamTaskSchema,
-  updateTeamTaskSchema,
-} from './team-task.schema';
+// ─── Validation ──────────────────────────────────────────────────────
+// Les schémas ne sont PLUS réexportés ici : ils importent zod, et un barrel qui
+// les porte rattache zod à tout fichier l'important pour une autre raison. Ils
+// se chargent à la demande via `@/lib/validation/lazy` (cf. son en-tête).
 
 export type { ITeamProjectsRepository } from './repository';
 export { LocalStorageTeamProjectsRepository } from './local.repository';

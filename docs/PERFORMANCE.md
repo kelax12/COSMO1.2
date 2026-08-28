@@ -158,9 +158,26 @@ le `modulepreload`. Une fonction utilitaire de 500 octets traînait 117 kB derri
 
 ### Ce qui plafonne encore à 91
 
-- 🔴 **Le chunk d'entrée a dérivé de 19,7 ko en deux jours** (87,2 → 106,9), et le plafond a été
-  relevé de 92 à 112 ko pour l'absorber. C'est le seul plafond du dépôt qu'on ait jamais remonté.
-  Tant que la marge se regagne en relevant la barre, le budget ne garde plus rien.
+- ✅ **Refermé le 2026-08-28 : le chunk d'entrée passe de 106,9 à 75,5 ko gzip**, et le plafond
+  REDESCEND de 112 000 à 79 000 o. Le chemin critique, la mesure qui compte, tombe de 393,9 à
+  **364,3 ko** — pour tout visiteur, y compris celui qui rebondit.
+
+  Deux leviers, trouvés en écrivant l'outil qui manquait (`npm run analyze:entry`, qui dit enfin
+  ce que l'entrée CONTIENT et pas seulement combien elle pèse) :
+
+  1. **`zod` (131,8 ko bruts) n'a rien à faire à l'ouverture.** C'est une garde UX, explicitement
+     pas la frontière de sécurité, et ses 17 points d'appel sont tous dans une `mutationFn`, donc
+     déjà asynchrones et derrière un geste. Elle se charge désormais à la première écriture
+     (`src/lib/validation/lazy.ts`). Les trois barrels qui réexportaient des schémas sans aucun
+     consommateur ont été nettoyés : un export mort suffisait à rattacher zod à tout fichier
+     important le barrel pour une autre raison.
+  2. **Le `<TooltipProvider>` d'`App.tsx` était REDONDANT.** Le composant `Tooltip` de
+     `ui/tooltip.tsx` fournit déjà le sien, avec le même `delayDuration`. Celui du shell traînait
+     `@radix-ui/react-tooltip` **et tout `floating-ui`** — 113 ko bruts — pour **un seul**
+     consommateur réel, `OrgTabBadge`, déjà dans un chunk lazy.
+
+  ⚠️ La leçon est celle de recharts, à l'identique : *le plus gros poste du chemin critique était
+  là par accident, et personne ne pouvait le nommer faute d'outil pour regarder dedans.*
 
 - **Les seuils Lighthouse restent provisoires**, jamais posés au réel : la moitié de la mesure
   côté navigateur (LCP, TBT, CLS) n'est donc toujours pas gardée.

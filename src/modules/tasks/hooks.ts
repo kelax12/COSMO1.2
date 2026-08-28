@@ -9,8 +9,7 @@ import { ITasksRepository } from './repository';
 import { Task, CreateTaskInput, UpdateTaskInput, TaskFilters } from './types';
 import { nextOccurrenceDeadline } from './recurrence';
 import { taskKeys } from './constants';
-import { validateOrThrow } from '@/lib/validation/validate';
-import { createTaskSchema, updateTaskSchema } from './task.schema';
+import { validateAsync } from '@/lib/validation/lazy';
 import { translator } from '@/i18n/useT';
 import { recordDemoCreationIfDemo } from '@/lib/demo-engagement';
 
@@ -208,9 +207,9 @@ export const useCreateTask = () => {
   const repository = useTasksRepository();
 
   return useMutation({
-    mutationFn: (input: CreateTaskInput) => {
+    mutationFn: async (input: CreateTaskInput) => {
       // Garde UX : message FR lisible avant l'appel réseau (cf. lib/validation).
-      validateOrThrow(createTaskSchema, input);
+      await validateAsync('task.create', input);
       return repository.create(input);
     },
     onSuccess: (newTask) => {
@@ -241,8 +240,8 @@ export const useUpdateTask = () => {
   const repository = useTasksRepository();
 
   return useMutation({
-    mutationFn: ({ id, updates }: { id: string; updates: UpdateTaskInput }) => {
-      validateOrThrow(updateTaskSchema, updates);
+    mutationFn: async ({ id, updates }: { id: string; updates: UpdateTaskInput }) => {
+      await validateAsync('task.update', updates);
       return repository.update(id, updates);
     },
 

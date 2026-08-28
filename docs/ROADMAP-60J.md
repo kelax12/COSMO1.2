@@ -103,7 +103,7 @@ Piste : **A** = agent backend/infra/sécu · **B** = agent front/UX/tests · **X
 | T-26 | UX / Produit | Unifier les deux grammaires de filtre entre les onglets « Tâches » et « Projets » | Même donnée, deux façons de la filtrer. Second P1 de la même critique | P2 | M | — | B | S5 |
 | ⚪ T-27 | UX / Produit | **CLOS sans changement** (arbitrage Axel, 2026-08-28) : la répétition est assumée, le titre était déjà corrigé. `buildOrgEvents` : exclure `currentUserId` de la frise « entreprise », et corriger le titre contradictoire | La frise répète les tâches déjà affichées juste au-dessus | P3 | S | — | B | S5 |
 | T-28 | Performance | Resserrer les seuils Lighthouse après le premier run réel en CI | Ils sont provisoires et posés au-dessus du réel : un budget très au-dessus du réel ne mesure rien | P2 | S | — | A | S3 |
-| T-29 | Performance | Ramener le chunk d'entrée sous 92 ko gzip et **redescendre le plafond** de `check:bundle` | 87,2 → 106,9 ko en deux jours, plafond relevé de 92 à 112 pour l'absorber. C'est le seul plafond du dépôt qu'on ait jamais remonté ; tant que la marge se regagne en relevant la barre, le budget ne garde plus rien | P2 | M | — | B | S4 |
+| ✅ T-29 | Performance | Ramener le chunk d'entrée sous 92 ko gzip et **redescendre le plafond** de `check:bundle` | 87,2 → 106,9 ko en deux jours, plafond relevé de 92 à 112 pour l'absorber. C'est le seul plafond du dépôt qu'on ait jamais remonté ; tant que la marge se regagne en relevant la barre, le budget ne garde plus rien | P2 | M | — | B | S4 |
 | ✅ T-30 | Legal | Publier les durées de conservation dans la politique de confidentialité (90 j visite démo, 400 j activité et démo convertie, 90 j marqueurs Stripe) | Dernier point du dossier RGPD qui n'attend plus rien d'autre que d'être écrit, et il débloque la réponse à un acheteur B2B | P2 | XS | — | B | S3 |
 | T-31 | Support | Écrire la procédure de support : qui répond, sous quel délai, où arrivent les signalements, gabarit de réponse | À 100 utilisateurs le support devient réel. Un canal sans procédure devient un canal ignoré | P2 | S | T-12 | X | S4 |
 
@@ -291,7 +291,7 @@ sans corriger ces deux points revient à remplir un seau percé.
 - [x] ✅ **T-24** — détection de nouvelle version · P2 · M · B
   **Done** : un onglet ouvert sur l'ancien build affiche l'invitation à recharger en moins de
   5 minutes après un déploiement ; vérifié dans deux onglets réels, pas en test unitaire seul.
-- [ ] **T-29** — chunk d'entrée sous 92 ko gzip · P2 · M · B
+- [x] ✅ **T-29** — chunk d'entrée sous 92 ko gzip · P2 · M · B
   **Done** : `npm run check:bundle` est vert **avec le plafond redescendu à 92 000**. Un plafond
   qu'on ne redescend pas n'est pas un budget.
 - [ ] **T-25** — barre d'onglets entreprise sur mobile · P2 · M · B
@@ -867,3 +867,60 @@ GitHub (`gh auth login`).
   **par cohorte**, et `/admin` les affiche — la chaîne RPC → repository → types → page est
   complète. *Vérifier qu'une capacité existe avant de la reconstruire*, c'est la version
   symétrique de la règle déjà écrite dans `ARCHITECTURE.md` §4.
+
+### 2026-08-28 (semaine 4) — T-29 : le chemin critique perd 29,6 ko pour tout le monde
+
+| Mesure | Avant | Après |
+|---|---|---|
+| Chemin critique (**la mesure qui compte**) | 393,9 ko | **364,3 ko** |
+| Chunk d'entrée | 106,9 ko | **75,5 ko** |
+| Plafond `critical` | 400 000 o | **379 000 o** |
+| Plafond `entry` | 112 000 o | **79 000 o** |
+
+**Le plafond redescend, et c'est la moitié de la tâche.** Le 2026-08-26 il avait été relevé de 92
+à 112 ko pour absorber une dérive — la seule fois où ce dépôt a remonté un plafond. C'est
+remboursé : le cliquet joue dans les deux sens, il attrape la dette puis enregistre son
+remboursement.
+
+#### L'outil d'abord, la correction ensuite
+
+`check:bundle` disait QUE le budget dérivait, jamais D'OÙ. La dérive de 19,7 ko en deux jours
+n'avait donc pas de coupable nommable, et un budget qu'on ne sait pas expliquer finit toujours par
+être relevé. `npm run analyze:entry` rejoue le build et imprime le contenu de l'entrée, par
+origine puis par module. Les deux leviers se lisaient en une capture :
+
+1. **`zod`, 131,8 ko bruts, le plus gros module non-React que tout visiteur téléchargeait** — y
+   compris celui qui arrive sur la landing et repart sans rien créer. C'est une garde UX,
+   explicitement pas la frontière de sécurité, et ses 17 points d'appel sont tous dans une
+   `mutationFn` : déjà asynchrones, déjà derrière un geste. Elle se charge maintenant à la
+   première écriture (`src/lib/validation/lazy.ts`).
+2. **Le `<TooltipProvider>` d'`App.tsx` était redondant.** Le composant `Tooltip` fournit déjà le
+   sien, avec le même `delayDuration`. Celui du shell traînait `@radix-ui/react-tooltip` et **tout
+   `floating-ui`**, 113 ko bruts, pour **un seul** consommateur réel — `OrgTabBadge`, dans un
+   chunk déjà lazy.
+
+> ⚠️ **C'est l'histoire de recharts, à l'identique** : le plus gros poste du chemin critique était
+> là par accident, décrit comme « lazy » dans la doc, et personne ne pouvait le nommer faute d'un
+> outil pour regarder dedans. *Un budget sans outil de décomposition n'est pas un budget, c'est un
+> plafond qu'on relèvera.*
+
+#### Ce que la paresse introduit comme risque, et comment il est fermé
+
+Un import dynamique vers un export inexistant **compile parfaitement** et résout `undefined` :
+`import('…').then(m => m.createTaskShema)` ne se verrait qu'au moment où un utilisateur enregistre.
+Le registre est donc parcouru en entier par un test qui exige qu'un vrai schéma réponde pour
+**chacune des 13 clés**. Vérifié rouge en cassant une clé : le test nomme la clé fautive.
+
+Trois nettoyages au passage : les barrels `organizations`, `team-okrs` et `team-projects`
+réexportaient des schémas **sans aucun consommateur** — un export mort qui suffisait à rattacher
+zod à tout fichier important le barrel pour une autre raison.
+
+#### Semaine 4 — le reste
+
+- **T-24** : déjà fermé le 2026-08-28 (matin), vérifié en production.
+- **T-23 (correction)** : toujours en attente d'une direction produit. La mesure existe et est
+  déjà dans `/admin` ; ce qui manque est la décision sur ce que doit faire le premier écran après
+  inscription.
+- **T-25** (barre d'onglets entreprise sur mobile) et **T-31** (procédure de support) restent
+  ouverts.
+- **T-21 (vague 2)** : annuaires, hors dépôt.

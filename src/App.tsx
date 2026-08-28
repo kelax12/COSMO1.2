@@ -25,7 +25,6 @@ import { Analytics } from '@vercel/analytics/react';
 import { useCookieConsent } from '@/lib/use-cookie-consent';
 
 // Providers
-import { TooltipProvider } from '@/components/ui/tooltip';
 import { AuthProvider } from '@/modules/auth/AuthContext';
 import { ActiveOrgProvider, useActiveOrganization } from '@/modules/organizations';
 import { BillingProvider } from '@/modules/billing/billing.context';
@@ -322,7 +321,16 @@ const App: React.FC = () => {
       <AuthProvider>
         <ActiveOrgProvider>
         <BillingProvider>
-          <TooltipProvider>
+          {/* ⚠️ Plus de <TooltipProvider> ici, et ce n'est PAS un oubli.
+              Le composant `Tooltip` de `ui/tooltip.tsx` fournit déjà son propre
+              provider (motif shadcn v4), avec le MÊME `delayDuration = 0` :
+              celui-ci était redondant, et il traînait tout `@radix-ui/react-tooltip`
+              + `floating-ui` — 113 ko bruts — dans le chunk d'entrée, pour un
+              seul consommateur réel (`OrgTabBadge`, dans l'espace entreprise,
+              déjà lazy).
+              🔴 Ne pas le remettre « par sécurité » : un tooltip sans provider
+              lève à l'affichage, ça se voit tout de suite. */}
+          <>
             {/* reducedMotion="user" : respecte `prefers-reduced-motion` du système
                 pour TOUTES les animations Framer Motion (transforms réduits, pas
                 de mouvement décoratif). Exigence WCAG 2.3.3 / EAA. */}
@@ -382,7 +390,7 @@ const App: React.FC = () => {
             </AppErrorBoundary>
             <ConsentedAnalytics />
             </MotionConfig>
-          </TooltipProvider>
+          </>
         </BillingProvider>
         </ActiveOrgProvider>
       </AuthProvider>

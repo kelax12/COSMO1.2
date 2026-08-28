@@ -5,8 +5,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { getTeamOKRsRepository } from '@/lib/repository.factory';
-import { validateOrThrow } from '@/lib/validation/validate';
-import { createTeamOKRSchema, updateTeamOKRSchema, updateTeamKRSchema } from './team-okr.schema';
+import { validateAsync } from '@/lib/validation/lazy';
 import { teamOkrKeys } from './constants';
 import type {
   CreateTeamOKRInput,
@@ -47,8 +46,8 @@ export const useCreateTeamOKR = (orgId: string) => {
   const queryClient = useQueryClient();
   const repository = useRepo();
   return useMutation({
-    mutationFn: (input: CreateTeamOKRInput) => {
-      const valid = validateOrThrow(createTeamOKRSchema, input);
+    mutationFn: async (input: CreateTeamOKRInput) => {
+      const valid = await validateAsync('teamOkr.create', input);
       return repository.create(orgId, valid as CreateTeamOKRInput);
     },
     onSuccess: () => {
@@ -63,8 +62,8 @@ export const useUpdateTeamOKR = (orgId: string) => {
   const queryClient = useQueryClient();
   const repository = useRepo();
   return useMutation({
-    mutationFn: ({ okrId, input }: { okrId: string; input: UpdateTeamOKRInput }) => {
-      const valid = validateOrThrow(updateTeamOKRSchema, input);
+    mutationFn: async ({ okrId, input }: { okrId: string; input: UpdateTeamOKRInput }) => {
+      const valid = await validateAsync('teamOkr.update', input);
       return repository.update(okrId, valid as UpdateTeamOKRInput);
     },
     onSuccess: () => {
@@ -92,7 +91,7 @@ export const useEditTeamOKR = (orgId: string) => {
       meta: UpdateTeamOKRInput;
       keyResults: SyncTeamKRInput[];
     }) => {
-      const validMeta = validateOrThrow(updateTeamOKRSchema, meta);
+      const validMeta = await validateAsync('teamOkr.update', meta);
       await repository.update(okrId, validMeta as UpdateTeamOKRInput);
       await repository.syncKeyResults(okrId, orgId, keyResults);
     },
@@ -142,8 +141,8 @@ export const useUpdateTeamKR = (orgId: string) => {
   const queryClient = useQueryClient();
   const repository = useRepo();
   return useMutation({
-    mutationFn: ({ krId, input }: { krId: string; input: UpdateTeamKRInput }) => {
-      const valid = validateOrThrow(updateTeamKRSchema, input);
+    mutationFn: async ({ krId, input }: { krId: string; input: UpdateTeamKRInput }) => {
+      const valid = await validateAsync('teamKr.update', input);
       return repository.updateKeyResult(krId, valid as UpdateTeamKRInput);
     },
     onSuccess: () => {

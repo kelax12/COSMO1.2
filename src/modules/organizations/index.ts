@@ -51,11 +51,9 @@ export {
 export { ActiveOrgProvider, useActiveOrganization } from './ActiveOrgContext';
 
 // ─── Validation ──────────────────────────────────────────────────────
-export {
-  createOrganizationSchema,
-  joinCodeSchema,
-  JOIN_CODE_REGEX,
-} from './organization.schema';
+// Les schémas ne sont PLUS réexportés ici : ils importent zod, et un barrel qui
+// les porte rattache zod à tout fichier l'important pour une autre raison. Ils
+// se chargent à la demande via `@/lib/validation/lazy` (cf. son en-tête).
 
 // ─── Repository ──────────────────────────────────────────────────────
 export type { IOrganizationsRepository } from './repository';

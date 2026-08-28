@@ -30,6 +30,7 @@
     "i18n:scan": "node scripts/i18n-scan.mjs",
     "i18n:namespaces": "node scripts/i18n-shell-namespaces.mjs",
     "check:bundle": "node scripts/check-bundle-budget.mjs",
+    "analyze:entry": "node scripts/analyze-entry.mjs",
     "images:check": "node scripts/optimize-images.mjs --check",
     "check:legal": "node scripts/check-legal-table.mjs",
     "check:mail": "node scripts/check-auth-email.mjs"
