@@ -121,9 +121,9 @@ Piste : **A** = agent backend/infra/sécu · **B** = agent front/UX/tests · **X
 | T-39 | Paiement | Recette de bout en bout avec une **vraie carte** : souscription mensuelle, changement de palier depuis le portail, résiliation, vérification de `org_subscriptions` et du journal `payment_records` | Le webhook et le checkout n'ont jamais traité un paiement réel. Le seul endroit où COSMO choisit un prix au lieu de se le faire désigner est la résolution annuelle | P1 | M | T-38 | X + A | S7 |
 | T-40 | Emails | Poser `CRON_SECRET` (Supabase **et** GitHub) pour armer les avis de reconduction tacite | E6. Un avis non envoyé rend l'abonnement résiliable à tout moment, remboursement compris. Sans objet tant qu'aucun abonnement annuel n'existe, donc juste après T-39 | P2 | XS | T-39 | X | S7 |
 | T-41 | Scalabilité | Mesurer à volume réel : injecter ~2 000 `team_tasks` dans une organisation de test de 50 membres et rejouer le runbook `SCALABILITY.md` §10 | Les correctifs 113/117/128 sont vérifiés en plan et en test, **jamais contre du volume**. C'est exactement la confiance non vérifiée qui a laissé passer un `Seq Scan` global pendant six semaines | P2 | M | — | A | S6 |
-| T-42 | Infrastructure | Confirmer que la prod utilise l'URL du pooler (PgBouncer 6543, mode transaction) | Jamais vérifié depuis le dépôt, et d'autant plus important vu le coût par ligne des prédicats RLS | P2 | XS | — | A | S5 |
+| ✅ T-42 | Infrastructure | Confirmer que la prod utilise l'URL du pooler (PgBouncer 6543, mode transaction) | Jamais vérifié depuis le dépôt, et d'autant plus important vu le coût par ligne des prédicats RLS | P2 | XS | — | A | S5 |
 | T-43 | Legal | Collecter et archiver les DPA des sous-traitants (Supabase, Vercel, Sentry, Stripe, Resend) | A5 et A6. Chaînon obligatoire pour vendre à une entreprise, et il ne s'obtient qu'en tant qu'entreprise | P2 | M | T-32 | X | S7 |
-| T-44 | Legal | Recherche d'antériorité « COSMO » sur `data.inpi.fr` **et** `euipo.europa.eu`, classes 9 et 42 | Nom très générique, antériorités quasi certaines. La question n'est pas « existe-t-il une marque COSMO » mais « une marque COSMO couvre-t-elle le logiciel ». Se lancer sans le savoir, c'est risquer de devoir renommer après acquisition | P2 | S | — | X | S6 |
+| ✅ T-44 | Legal | Recherche d'antériorité « COSMO » sur `data.inpi.fr` **et** `euipo.europa.eu`, classes 9 et 42 | Nom très générique, antériorités quasi certaines. La question n'est pas « existe-t-il une marque COSMO » mais « une marque COSMO couvre-t-elle le logiciel ». Se lancer sans le savoir, c'est risquer de devoir renommer après acquisition | P2 | S | — | X | S6 |
 
 ### PHASE 4 — 1 000 → 10 000 utilisateurs
 
@@ -315,10 +315,10 @@ ces 60 jours. C'est la seule tâche de la roadmap dont le délai ne dépend pas 
 - [ ] **T-32** — déposer l'immatriculation au guichet unique INPI · P1 · M · X
   **Done** : dossier déposé, numéro de suivi conservé. Le SIREN arrivera plus tard, ce n'est pas
   le critère.
-- [ ] **T-44** — recherche d'antériorité « COSMO » · P2 · S · X
+- [x] ✅ **T-44** — recherche d'antériorité « COSMO » · P2 · S · **faite via TMview**
   **Done** : les résultats INPI et EUIPO en classes 9 et 42 sont copiés dans `LEGAL.md` §F1, avec
   une conclusion écrite : on garde le nom, ou on consulte un conseil.
-- [ ] **T-42** — vérifier l'URL du pooler en prod · P2 · XS · A
+- [x] ✅ **T-42** — vérifier l'URL du pooler en prod · P2 · XS · A
 - [ ] **T-21 (vague 3)** — annuaires 13 à 20 · X
 - [ ] **T-26** — unifier les grammaires de filtre · P2 · M · B
 
@@ -929,3 +929,51 @@ zod à tout fichier important le barrel pour une autre raison.
 > conclut `success`. La CI de `main` passe de **trois** jobs rouges à **deux** (`rls-integration`,
 > `lighthouse`), `lint-test-build` et `audit` restant verts. Un correctif de test se vérifie là où
 > le test tourne pour de vrai, pas sur la machine qui l'a écrit.
+
+### 2026-08-28 (semaine 5) — deux questions ouvertes depuis des semaines, tranchées par la mesure
+
+#### ✅ T-44 — la marque : la réponse est « oui, plusieurs, et en vigueur »
+
+`LEGAL.md` portait cette ligne en ❌ avec la mention « **je ne peux pas la faire** :
+`data.inpi.fr` est une application JavaScript non interrogeable ici ». C'était vrai au moment où
+ça a été écrit, et ça ne l'est plus : **TMview** (portail de l'EUIPO) agrège INPI-France **et**
+EUIPO, soit exactement les deux registres que la ligne exigeait, en une seule requête.
+
+536 résultats balayés pour `COSMO` en offices FR + EM, classes 9 et 42. **21 portent le nom
+exactement `COSMO`, dont 11 sont ACTIVES** : 4 en classe 42, 8 en classe 9.
+
+Les deux plus proches de l'activité : **TANAZA S.p.A.** (EM, 2020, classe 9 seule — éditeur de
+logiciel en nuage) et **ISTITUTO VENETO DI TERAPIA FAMIGLIARE** (EM, 2024, classes 9 **et** 42,
+dépôt récent et très large). Tableau complet et méthode reproductible dans
+[`LEGAL.md`](./LEGAL.md) §5.
+
+> ⚠️ **Ce que ce relevé n'est pas.** TMview avertit lui-même que ses données n'ont **aucun effet
+> juridique**. Rien ici ne dit que COSMO ne peut pas être utilisé — l'appréciation d'un risque de
+> confusion dépend des produits visés, de la notoriété et de la similarité d'ensemble. Ce qui est
+> établi, c'est que **le terrain est occupé dans les deux classes**. La suite est une consultation
+> de conseil en PI, désormais avec un dossier au lieu d'une page blanche.
+>
+> `LEGAL.md` passe de 17 à **16 lignes rouges** ; F1 devient 🟡. Le total est revérifié par
+> `npm run check:legal`, pas additionné de tête.
+
+#### ✅ T-42 — le pooler : la question ne se posait pas comme on croyait
+
+`SCALABILITY.md` §8 demandait de « confirmer que la prod utilise l'URL pooler ». Mesuré dans
+`pg_stat_activity` : **l'application n'ouvre aucune connexion Postgres.** Les 11 connexions
+applicatives viennent toutes de **PostgREST** (rôle `authenticator`), qui tient son propre pool
+derrière HTTPS — leur nombre **ne dépend pas** du nombre d'utilisateurs connectés.
+
+**14 connexions sur 60**, une seule active. Le pooler ne concerne que les accès DIRECTS
+(`npm run test:rls`, l'application des migrations, un futur worker), jamais le chemin de l'app.
+Le frein de montée en charge n'est donc pas le nombre de connexions : c'est le pool PostgREST et
+le CPU de la base.
+
+> ⚠️ Une inquiétude portée pendant deux semaines dans un audit, levée en une requête — parce que
+> personne n'avait regardé QUI se connecte. Le pendant exact de la CI rouge d'hier.
+
+#### Semaine 5 — le reste
+
+**T-32** (immatriculation INPI) et **T-33** (domiciliation) sont des actes administratifs, et le
+premier a un délai incompressible : c'est la seule tâche de cette roadmap dont le calendrier ne
+dépend pas de nous. **T-21 vague 3** (annuaires) est manuel. **T-26** (unifier les deux
+grammaires de filtre entre « Tâches » et « Projets ») reste ouvert.

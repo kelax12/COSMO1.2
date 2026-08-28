@@ -132,7 +132,7 @@ Par l'effet de la décision structurante ci-dessous : aucun client n'est vérifi
 
 | # | Obligation | Statut | Ce qui manque exactement |
 |---|---|:--:|---|
-| F1 | Recherche d'antériorité sur le nom | ❌ | Non faite, et **je ne peux pas la faire** : `data.inpi.fr` est une application JavaScript non interrogeable ici, et une recherche fiable couvre INPI **et** EUIPO, une marque de l'Union bloquant un dépôt français. Procédure : chercher « COSMO » sur `data.inpi.fr` puis sur `euipo.europa.eu`, en **classe 9** (logiciel téléchargeable) et **classe 42** (SaaS), qui sont les deux classes de ton activité. Nom très générique, donc antériorités quasi certaines : l'enjeu réel n'est pas « existe-t-il une marque COSMO » mais « une marque COSMO couvre-t-elle le logiciel ». Un conseil en propriété industrielle tranche cela en une consultation. |
+| F1 | Recherche d'antériorité sur le nom | 🟡 | **Faite le 2026-08-28 via TMview** (portail EUIPO qui agrège INPI-FR **et** EUIPO, exactement les deux registres que cette ligne exigeait). Périmètre : marques verbales `COSMO` exactes, offices **FR** et **EM**, **classes 9 et 42**. Résultat : **11 marques `COSMO` ACTIVES**, dont **4 en classe 42** (Cosmo Technologies ×2, ISTITUTO VENETO DI TERAPIA FAMIGLIARE, COSMO PHARMACEUTICALS) et **8 en classe 9** (dont **TANAZA S.p.A.**, éditeur de logiciel en nuage, et Hearst Communications). La question que posait cette ligne — « une marque COSMO couvre-t-elle le logiciel ? » — a donc une réponse : **oui, plusieurs, et en vigueur dans l'Union**. Détail et méthode en §7. ❌ Reste : l'arbitrage, qui n'est pas technique. TMview avertit lui-même que ses données **n'ont aucun effet juridique** ; seul un conseil en propriété industrielle peut dire si ces antériorités bloquent un dépôt ou un usage. |
 | F2 | Dépôt de marque INPI | ❌ | Pas obligatoire, mais sans dépôt aucun droit exclusif sur le nom. Dépend de F1. |
 | F3 | Conformité des licences open source | ✅ | Inventaire du 2026-08-26 sur **644 paquets** : 548 MIT, 36 ISC, 23 Apache-2.0, 25 BSD, toutes permissives. **Aucune licence à réciprocité forte** (ni GPL, ni AGPL, ni SSPL), et **aucune licence non déclarée**. Les MPL-2.0 (`axe-core`) et CC-BY-4.0 (`caniuse-lite`) sont des dépendances de build ou de test, non embarquées. GSAP a sa propre licence : vérifiée à la source, **libre d'usage commercial, plugins `SplitText`, `ScrambleText` et `Inertia` compris, sans attribution obligatoire**, la seule interdiction visant les outils d'animation sans code concurrents de Webflow. |
 | F4 | Accessibilité (législation européenne) | 🟡 | Un travail a été engagé côté produit (`docs/ACCESSIBILITY.md`). ⚠️ Exemption microentreprise à vérifier, et seuil à surveiller. Demandé par les acheteurs B2B de toute façon. |
@@ -149,19 +149,19 @@ Par l'effet de la décision structurante ci-dessous : aucun client n'est vérifi
 | Statut | Nombre |
 |---|---|
 | ✅ Bon | **12** |
-| 🟡 Partiellement bon | **12** |
-| ❌ À faire | **17** |
+| 🟡 Partiellement bon | **13** |
+| ❌ À faire | **16** |
 | ⬜ Sans objet aujourd'hui | **5** |
 | **Total** | **46** |
 
 **Point de départ le matin du 2026-08-26 : 0 vert.** Sont passées au vert dans la journée :
 A1, A2, A4, A7, A8, A9, C9, C10, E2, E3, E7, F3.
 
-**Les 17 lignes rouges se répartissent en trois familles**, et une seule dépend encore de moi :
+**Les 16 lignes rouges se répartissent en trois familles**, et une seule dépend encore de moi :
 
 | Famille | Lignes | Qui agit |
 |---|---|---|
-| Actes juridiques ou administratifs | A5, B2, B3, B4, B6, C2, C3, C12, D2, E4, F1, F2 | **Axel seul.** Immatriculer, ouvrir un compte, adhérer, signer, déposer. Aucun code n'y change rien. |
+| Actes juridiques ou administratifs | A5, B2, B3, B4, B6, C2, C3, C12, D2, E4, F2 | **Axel seul.** Immatriculer, ouvrir un compte, adhérer, signer, déposer. Aucun code n'y change rien. |
 | Réglages hors dépôt | C4, C5, C6, E5 | **Axel**, depuis le Dashboard Stripe. Deux minutes chacun, mais C4 à C6 supposent d'être immatriculé pour ne pas afficher une mention fausse. |
 | Développement restant | C7 | Facturation électronique, qui suppose une plateforme agréée. **E6 est sortie de cette colonne** : construite et déployée le 2026-08-26, elle n'attend plus que trois secrets. |
 
@@ -356,10 +356,63 @@ S'applique **à toute l'offre**, par l'effet de la décision structurante.
 
 ## 5. Produit, marque et dépendances
 
-- 🔴 **Marque « COSMO » : aucune recherche d'antériorité n'a jamais été faite.** Nom court et
-  très générique, donc risque d'antériorité élevé. Se voir opposer une marque après le lancement
-  oblige à renommer le produit, le domaine et toute la communication. **À faire avant d'investir
-  davantage en acquisition**, c'est le meilleur rapport coût sur risque de tout ce document.
+### Marque « COSMO » — recherche d'antériorité faite le 2026-08-28
+
+> ⚠️ **Ce n'est pas un avis juridique, et la source le dit elle-même.** TMview précise que ses
+> données « ne constituent pas des registres officiels » et **n'ont aucun effet juridique**. Ce
+> qui suit est un relevé factuel, destiné à ce qu'un conseil en propriété industrielle parte d'un
+> dossier au lieu d'une page blanche.
+
+**Méthode.** Interrogation de **TMview** (portail de l'EUIPO qui agrège 142 millions de marques,
+INPI-France **et** EUIPO compris — c'est-à-dire exactement les deux registres que cette ligne
+exigeait, en une seule requête). Périmètre : nom de marque contenant `COSMO`, offices **FR** et
+**EM**, **classes 9** (logiciel téléchargeable) **et 42** (logiciel en tant que service). 536
+résultats balayés, dont **21 portent le nom exactement `COSMO`**.
+
+**Résultat : 11 marques `COSMO` exactes et ACTIVES** (enregistrées ou déposées).
+
+| Classe | Titulaire | Office | Dépôt | Classes couvertes |
+|---|---|---|---|---|
+| **42** | Cosmo Technologies Limited | EM | 2022 | 5, 10, 42 |
+| **42** | Cosmo Technologies Limited | EM | 2022 | 5, 10, 42 |
+| **42** | ISTITUTO VENETO DI TERAPIA FAMIGLIARE SRL | EM | 2024 | 9, 16, 35, 41, **42**, 44 |
+| **42** | COSMO PHARMACEUTICALS SPA | EM | 2012 | 5, 10, 42 |
+| **9** | TANAZA S.p.A. | EM | 2020 | 9 |
+| **9** | Cosmo Beheer B.V. | EM | 2016 | 9, 16, 35, 41 |
+| **9** | Hearst Communications, Inc. | EM | 2006 | 9, 16, 41 |
+| **9** | Halfords Limited | EM | 2010 | 9, 12, 28 |
+| **9** | ten Haaft GmbH | EM | 2006 | 9 |
+| **9** | GC Großhandels Contor GmbH | EM | 2008 | 6, 7, 9, 11, 17, 19, 37 |
+| **9** | PIP GLOBAL SAFETY FRANCE SAS | **FR** | 1988 | 9 |
+
+**Ce que ça répond.** La question posée par ce document était : *« l'enjeu réel n'est pas
+"existe-t-il une marque COSMO" mais "une marque COSMO couvre-t-elle le logiciel" »*. La réponse
+est **oui, plusieurs, et en vigueur dans l'Union**.
+
+**Les deux lignes à regarder en premier**, parce qu'elles sont les plus proches de l'activité :
+
+- **TANAZA S.p.A.** (EM, 2020, **classe 9 seule**) : éditeur de logiciel en nuage. C'est
+  l'antériorité la plus proche du produit.
+- **ISTITUTO VENETO DI TERAPIA FAMIGLIARE** (EM, 2024, **9 et 42**) : dépôt récent et très large,
+  qui couvre les deux classes visées d'un coup.
+
+Les trois marques pharmaceutiques (Cosmo Technologies, COSMO PHARMACEUTICALS) occupent la
+classe 42 mais dans un secteur éloigné — c'est précisément le genre de nuance qu'un conseil
+tranche, et pas ce document.
+
+**Ce que ça ne dit pas, et qu'il ne faut pas déduire.** Rien ici ne dit que COSMO ne peut pas être
+utilisé : l'appréciation d'un risque de confusion dépend des produits réellement visés, de la
+notoriété et de la similarité d'ensemble. Ce relevé dit seulement que **le terrain est occupé
+dans les deux classes**, donc qu'un dépôt à l'identique se heurterait très probablement à un
+refus ou à une opposition, et qu'un usage n'est pas à l'abri d'une contestation.
+
+**Suite à donner** : une consultation de conseil en PI, dossier en main. **Avant d'investir
+davantage en acquisition** — se voir opposer une marque après le lancement oblige à renommer le
+produit, le domaine et toute la communication.
+
+**Reproduire ce relevé** : `https://www.tmdn.org/tmview/`, recherche `COSMO`, filtres Offices
+`FR` + `EM` et Produits/Services `9` + `42`, puis ne retenir que les noms exactement `COSMO` dont
+le statut est « Enregistrée » ou « Déposée ».
 - **Licences open source** des dépendances : inventaire à produire, attribution à publier, et
   vérification qu'aucune licence à réciprocité forte n'est embarquée dans un produit
   propriétaire.
