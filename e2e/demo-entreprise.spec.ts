@@ -26,7 +26,7 @@ const orgTab = (page: Page, label: RegExp) =>
 test.describe('Espace entreprise (démo)', () => {
   test.describe.configure({ timeout: 120_000 });
 
-  test('Aperçu : synthèse, activité et échéances entreprise', async ({ demoPage: page }) => {
+  test('Aperçu : synthèse, activité et prochains événements', async ({ demoPage: page }) => {
     await navTo(page, /entreprise/i, /\/entreprise/);
 
     // Header org + onglets
@@ -35,7 +35,17 @@ test.describe('Espace entreprise (démo)', () => {
 
     // Sections de l'Aperçu (reco #2 + #11)
     await expect(page.getByRole('heading', { name: /activité de l'équipe/i })).toBeVisible();
-    await expect(page.getByRole('heading', { name: /échéances de l'entreprise/i })).toBeVisible();
+    // Renommé le 2026-08-27 : la liste « Mes échéances » a été remplacée par la
+    // frise « Prochains événements de l'entreprise » (commits ce8ac2c, e6a873a).
+    // Ce test n'a pas suivi, et le job e2e est rouge sur `main` depuis.
+    //
+    // ⚠️ La classe [’'] n'est pas de la prudence décorative : le catalogue écrit
+    // « l’entreprise » avec l'apostrophe TYPOGRAPHIQUE (U+2019). Une regex avec
+    // l'apostrophe droite ne matcherait jamais, et l'échec ressemblerait à une
+    // section absente — c'est-à-dire à un bug produit qui n'existe pas.
+    await expect(
+      page.getByRole('heading', { name: /prochains événements de l[’']entreprise/i }),
+    ).toBeVisible();
 
     await expect(page.locator('[data-sonner-toast][data-type="error"]')).toHaveCount(0);
   });

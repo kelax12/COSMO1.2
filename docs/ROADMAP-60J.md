@@ -66,6 +66,9 @@ Piste : **A** = agent backend/infra/sécu · **B** = agent front/UX/tests · **X
 
 | ID | Cat. | Tâche | Pourquoi | P | Effort | Dép. | Piste | Deadline |
 |---|---|---|---|---|---|---|---|---|
+| ✅ T-48 | Tests / QA | **Job CI `e2e` rouge** : l'Aperçu entreprise a été renommé le 2026-08-27, le test cherchait encore l'ancien titre | La CI verte est une condition du GO. Rouge depuis 4 jours, personne n'a regardé | P1 | XS | — | B | S3 |
+| 🔴 T-49 | Tests / QA | **Job CI `rls-integration` rouge** : 4 cas de `org-permissions.test.ts` échouent sur base VIERGE, alors que la même logique est correcte en production (vérifié sous le rôle réel) | Écart entre le dépôt rejoué et la prod. Ce n'est pas une faille — c'est le dépôt qui ne reconstruit pas la base qu'il décrit | P1 | M | stack Supabase locale (Docker) | A | S3 |
+| 🔴 T-50 | Tests / QA | **Job CI `lighthouse` rouge** : la phase `collect` échoue, aucun rapport produit. Non reproductible ici (Chrome absent, `spawn UNKNOWN` sous Windows) | Idem : gate du GO. Demande la lecture du log du run, donc une authentification GitHub | P2 | S | `gh auth login` | X + A | S3 |
 | T-01 | Infrastructure | Passer Supabase en plan Pro et activer le PITR | A-9, seul bloquant de résilience du dossier. Aujourd'hui une erreur en prod n'est pas rattrapable, RPO jusqu'à 24 h | P0 | XS | — | X | S1 |
 | T-02 | Fiabilité | Exécuter le drill de restauration de `DEPLOYMENT.md` §7 vers un projet jetable, chronométré | Un backup non testé n'est pas un backup. RTO actuel : inconnu | P0 | M | T-01 | X + A | S1 |
 | T-03 | Emails | Configurer un SMTP applicatif (Resend) pour **Supabase Auth** : sous-domaine d'envoi `send.thecosmo.app` vérifié, clé SMTP posée dans Supabase, limite d'envoi horaire relevée | AM-1. Sans lui l'inscription casse dès la première vague de trafic. ⚠️ Le sous-domaine est obligatoire : la racine porte les MX et le SPF d'IONOS qui servent `contact@` | P0 | M | — | **X** (préparé : runbook, gabarits, garde) | S1 |
@@ -94,7 +97,7 @@ Piste : **A** = agent backend/infra/sécu · **B** = agent front/UX/tests · **X
 |---|---|---|---|---|---|---|---|---|
 | T-21 | Acquisition | Soumettre COSMO aux 20 premiers annuaires de `ACQUISITION-BACKLINKS.md`, dans l'ordre donné, et tenir le tableau de suivi | **Le seul levier qui débloque le SEO.** Position 88 sur les requêtes non-marque = 0 domaine référent. Aucun contenu ne compensera | P1 | XL | — | X | S3-S5 |
 | T-22 | SEO | Relever dans Search Console : type de propriété (domaine ou préfixe), nombre de pages réellement indexées, et connecter Ahrefs Webmaster Tools pour compter les domaines référents | On pilote le SEO sans savoir combien de pages sont indexées. 13 impressions pour 20 URLs laisse l'hypothèse ouverte | P1 | S | — | X | S3 |
-| 🟡 T-23 | UX / Produit | **Mesure faite le 2026-08-28** (cf. §11). Reste la correction. Instrumenter et corriger l'activation : **0 compte actif sur 7 jours** pour 28 comptes. Identifier le décrochage (première tâche créée ? deuxième session ?) et traiter le premier écran après inscription | Le vrai problème produit du dossier. Acquérir des utilisateurs qui ne reviennent pas est un coût, pas un progrès | P1 | L | T-15 | B | S3-S4 |
+| 🟡 T-23 | UX / Produit | ⚠️ **L'instrumentation EXISTAIT DÉJÀ** (`get_admin_stats` v3 → `/admin` : activation 24 h, activation 48 h par canal, rétention J+7 par cohorte). Reste la correction seule. Instrumenter et corriger l'activation : **0 compte actif sur 7 jours** pour 28 comptes. Identifier le décrochage (première tâche créée ? deuxième session ?) et traiter le premier écran après inscription | Le vrai problème produit du dossier. Acquérir des utilisateurs qui ne reviennent pas est un coût, pas un progrès | P1 | L | T-15 | B | S3-S4 |
 | ✅ T-24 | Fiabilité | Détection de nouvelle version pour les onglets jamais rechargés (bannière « une mise à jour est disponible ») | **91,5 % du trafic Supabase du 2026-08-26 venait de deux onglets exécutant un bundle périmé.** Sans ce mécanisme, tout correctif client n'atteint que ceux qui rouvrent l'application, et les utilisateurs les plus assidus sont les plus coûteux | P2 | M | — | B | S4 |
 | T-25 | UX / Produit | Barre d'onglets entreprise sur mobile : 4 destinations sur 7 hors écran, aucun indice de continuation | P1 de la critique UI du 2026-08-27. Le mode entreprise est l'offre qui se vend | P2 | M | — | B | S4 |
 | T-26 | UX / Produit | Unifier les deux grammaires de filtre entre les onglets « Tâches » et « Projets » | Même donnée, deux façons de la filtrer. Second P1 de la même critique | P2 | M | — | B | S5 |
@@ -788,3 +791,79 @@ fichiers hors budget** — le budget tombe de 10 811 à **10 185**, et le fichie
 > `SettingsPage` 852 · `InboxMenu` 802 · `useTaskModal` 719 · `TasksPage` 712 ·
 > `team-projects/local.repository` 710 · `DesktopDetailsStep` 703 · `TaskModalMobileBody` 697 ·
 > `TeamTaskModal` 692 · `TaskListsBar` 615 · `friends/supabase.repository` 601. **Treize fichiers.**
+
+### 2026-08-28 (semaine 3) — la CI est rouge sur `main` depuis quatre jours
+
+C'est le résultat de la journée, et il ne vient pas d'une tâche de la roadmap : il vient d'avoir
+regardé l'état réel de la CI au lieu de la croire verte.
+
+| Fait | Preuve |
+|---|---|
+| **Aucun run CI complètement vert sur `main` dans les 100 derniers** | API GitHub, remonte au moins au 2026-08-24 |
+| Trois jobs sur cinq échouent : `e2e`, `rls-integration`, `lighthouse` | `lint-test-build` et `audit` passent |
+| **Le même triplet échoue AVANT et APRÈS mes commits** | Comparaison job par job entre `f32d080` et `b2f2294` — je n'ai rien cassé, et je ne l'affirme pas, je le montre |
+| **L'issue #44 « CI en echec sur main » est ouverte depuis le 2026-08-23, avec 90 commentaires** | L'alerte fonctionne parfaitement. Personne n'a réagi |
+
+> 🔴 **La leçon est déjà écrite dans ce dépôt, et elle vient de se rejouer.** L'en-tête de
+> `ci-alert.yml` dit : « une garde rouge est une garde muette : elle ne protège plus de rien, et
+> elle rend inaudibles les autres gardes du même job. » Le workflow a été construit exactement
+> pour ça, il a fait son travail 90 fois, et le signal est devenu du bruit. **Le problème n'était
+> pas l'absence d'alerte, c'était l'absence de lecture.**
+>
+> ⚠️ Corollaire de méthode : les gardes citées comme « vertes » dans les audits sont les gardes
+> **locales** (`typecheck`, `lint`, `check:rls`, `i18n:check`, `test`), toutes rejouables à la
+> main. Personne ne vérifiait les jobs **CI**, qui sont un ensemble différent. Un décompte de
+> gardes vertes qui ne nomme pas lesquelles ne prouve rien — c'est la même erreur que celle des
+> `refetchInterval` du 2026-08-25.
+
+#### ✅ T-48 — le job `e2e` est réparé
+
+Un seul test échouait, reproduit en local : `demo-entreprise.spec.ts › Aperçu`. La liste
+« Mes échéances » a été remplacée le 2026-08-27 par la frise « Prochains événements de
+l'entreprise » (commits `ce8ac2c`, `e6a873a`) et **le test n'a pas suivi**. Suite complète après
+correctif : **62 passés, 3 ignorés, 0 échec.**
+
+> ⚠️ Le correctif embarque un piège qui aurait pu se reproduire : le catalogue écrit
+> « l’entreprise » avec l'apostrophe **typographique** (U+2019). Une regex avec l'apostrophe
+> droite ne matche jamais, et l'échec ressemble alors à une section absente — c'est-à-dire à un
+> bug produit qui n'existe pas. La classe `[’']` est là pour ça, pas par décoration.
+
+#### 🔴 T-49 — `rls-integration` : ce n'est PAS une faille de production
+
+Quatre cas de `org-permissions.test.ts` (mig. 115) échouent sur base vierge, tous avec la même
+racine : `chef`, membre non-admin avec un subordonné, n'est pas reconnu comme manager, donc ne
+peut ni créer un projet ni déléguer un droit.
+
+**Vérifié en production, sous le rôle réel** (transaction annulée, lecture seule) : pour un membre
+non-admin ayant un subordonné, `is_org_manager` renvoie **`true`** et
+`my_org_perm(org, 'project.create')` renvoie **`true`**. La production est correcte.
+
+L'écart est donc entre **le dépôt rejoué sur base vierge** et la production — la même famille que
+la dérive documentée dans `ARCHITECTURE.md` §5, dans l'autre sens. Diagnostiquer plus loin exige
+la stack Supabase locale (Docker), que je n'ai pas ici.
+
+> ⚠️ **Conséquence à énoncer clairement** : `faille.md` porte au crédit de la mig. 115 d'être
+> arrivée « avec 337 lignes de test d'intégration contre une vraie base dans le même commit ». Le
+> test existe, il est bon, et **il n'a jamais été vert en CI**. Un test rouge qu'on n'ouvre pas ne
+> vaut pas mieux qu'un test absent : il coûte en plus la confiance qu'on lui accorde.
+
+#### 🔴 T-50 — `lighthouse` : non diagnosticable d'ici
+
+La phase `collect` échoue avant de produire le moindre rapport (`.lighthouseci/` vide à l'upload),
+ce n'est donc pas un seuil trop strict — **T-28 n'est pas la cause**. Non reproductible sur cette
+machine : Lighthouse a besoin d'un Chrome, et l'essai avec le Chromium de Playwright meurt sur un
+`spawn UNKNOWN` propre à Windows. Le log du run est nécessaire, et il exige une authentification
+GitHub (`gh auth login`).
+
+#### Ce que la semaine 3 a donné par ailleurs
+
+- **T-22, moitié technique : saine.** `robots.txt` conforme, `sitemap.xml` à 20 URLs, `lastmod`
+  portant de vraies dates de contenu et non celle du build. Le sitemap servi en production est
+  **identique** à celui que produit le build courant. La moitié terrain (type de propriété GSC,
+  pages indexées, domaines référents) demande tes comptes.
+- **T-23 : correction d'une affirmation d'hier.** J'avais mesuré l'activation à la main en la
+  présentant comme le premier volet de la tâche. C'était inutile : `get_admin_stats` v3 calcule
+  déjà l'activation à 24 h, l'activation à 48 h **par canal d'acquisition** et la rétention J+7
+  **par cohorte**, et `/admin` les affiche — la chaîne RPC → repository → types → page est
+  complète. *Vérifier qu'une capacité existe avant de la reconstruire*, c'est la version
+  symétrique de la règle déjà écrite dans `ARCHITECTURE.md` §4.
