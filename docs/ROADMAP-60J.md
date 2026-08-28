@@ -82,10 +82,10 @@ Piste : **A** = agent backend/infra/sécu · **B** = agent front/UX/tests · **X
 | T-13 | Monitoring | Poser `OPS_ALERT_WEBHOOK_URL` (webhook Slack ou Discord) | `alert.ts` est un no-op silencieux aujourd'hui : un webhook Stripe en échec ou une purge RGPD avortée ne réveillent personne | P1 | XS | — | X | S1 |
 | T-14 | Sécurité | Activer un CAPTCHA (Cloudflare Turnstile) sur inscription et reset de mot de passe | AM-3. Se pose côté Supabase Auth + un champ dans le formulaire | P1 | S | T-03 | A + B | S2 |
 | T-15 | Analytics | Valider la chaîne `?ref=` de bout en bout : ouvrir `https://thecosmo.app/?ref=test_manuel`, créer un compte jetable, vérifier `profiles.acquisition_source = 'test_manuel'`, puis supprimer le compte | 28 comptes, **0** avec une source. On ne sait toujours pas si la chaîne marche ou si personne n'est passé par un `?ref=`. Lancer une campagne sur une chaîne jamais validée est le gaspillage le plus cher possible | P0 | S | T-03 | X | S2 |
-| T-16 | Monitoring | Vérifier que `VITE_SENTRY_DSN` est bien posé sur Vercel et qu'une erreur de test remonte | Le monitoring est désactivé en silence si la variable manque. Jamais vérifié depuis le dépôt | P1 | XS | — | X | S1 |
+| ✅ T-16 | Monitoring | Vérifier que `VITE_SENTRY_DSN` est bien posé sur Vercel et qu'une erreur de test remonte | Le monitoring est désactivé en silence si la variable manque. Jamais vérifié depuis le dépôt | P1 | XS | — | X | S1 |
 | T-17 | Monitoring | Brancher une sonde de disponibilité externe (UptimeRobot / Better Stack, palier gratuit) sur `/` et sur `auth/v1/health` | AM-4 | P2 | XS | — | X | S2 |
 | T-18 | DevOps | Supprimer la fonction `tmp-org-price-setup` depuis le dashboard Supabase | AM-5, artefact non versionné dans la surface exposée | P3 | XS | — | X | S2 |
-| T-19 | Tests | Committer les trois fichiers non suivis (`e2e/rls/org-invitations.test.ts`, `e2e/reduced-motion-sheets.spec.ts`, `src/modules/team-projects/hooks.background.test.tsx`) et les 12 docs modifiés | Du travail vérifié qui n'est pas dans `main` n'existe pas, et une autre session peut l'emporter dans son propre commit | P1 | XS | — | X | S1 |
+| ✅ T-19 | Tests | Committer les trois fichiers non suivis (`e2e/rls/org-invitations.test.ts`, `e2e/reduced-motion-sheets.spec.ts`, `src/modules/team-projects/hooks.background.test.tsx`) et les 12 docs modifiés | Du travail vérifié qui n'est pas dans `main` n'existe pas, et une autre session peut l'emporter dans son propre commit | P1 | XS | — | X | S1 |
 | ✅ T-20 | UX / Produit | Passer les deux drapeaux de facturation en revue **avant** d'ouvrir l'acquisition et confirmer qu'ils sont bien à `false` des deux côtés (`ENTERPRISE_BILLING_ENFORCED` + `billing_flags.enterprise_seat_limit`) | Ils ont basculé trois fois en douze heures le 2026-08-25. L'état se lit dans le code et en base, jamais dans un document | P0 | XS | — | A | S2 |
 
 ### PHASE 2 — 0 → 100 utilisateurs
@@ -185,7 +185,7 @@ quelqu'un.
 (pas de PITR), et une Edge Function qui échoue ne prévient personne. Tout ce qui suit dans cette
 roadmap suppose qu'on puisse se tromper sans tout perdre.
 
-- [ ] **T-19** — committer les trois tests non suivis et les douze docs modifiés · P1 · XS · X
+- [x] ✅ **T-19** — committer les trois tests non suivis et les douze docs modifiés · P1 · XS · X
   **Done** : `git status` propre, CI verte sur `main`.
 - [ ] **T-01** — Supabase plan Pro + PITR activé · P0 · XS · X
   **Done** : Dashboard → Database → Backups affiche une fenêtre PITR non nulle.
@@ -197,7 +197,7 @@ roadmap suppose qu'on puisse se tromper sans tout perdre.
   **Done** : `get_advisors(security)` ne remonte plus `auth_leaked_password_protection`, la
   connexion admin demande un code TOTP, l'allowlist de redirection ne contient aucun wildcard,
   le secret scanning est actif sur le dépôt.
-- [ ] **T-16** — vérifier `VITE_SENTRY_DSN` sur Vercel · P1 · XS · X
+- [x] ✅ **T-16** — vérifier `VITE_SENTRY_DSN` sur Vercel · P1 · XS · X
   **Done** : une erreur déclenchée volontairement en prod apparaît dans Sentry sous 2 minutes.
 - [ ] **T-13** — poser `OPS_ALERT_WEBHOOK_URL` · P1 · XS · X
   **Done** : un POST manuel sur le webhook arrive dans le canal.
@@ -729,3 +729,27 @@ mènent à des produits différents.
 Une troisième voie existe, plus chère : garder tout et **marquer** les événements qui me sont
 assignés. Trancher demande de savoir à quoi sert cette carte — un rappel personnel, ou une vue
 d'ensemble de l'organisation. C'est une question produit, pas une question de code.
+
+### 2026-08-28 (suite) — semaine 1 parcourue dans l'ordre
+
+| Tâche | Résultat |
+|---|---|
+| ✅ **T-19** | Le travail vérifié du 2026-08-27 est sur `main` (`d4f1a58`) : 12 documents, 3 tests, 2 correctifs source. Le spec e2e non suivi a été **rejoué avant** d'être commité — 3/3 verts sur chromium, témoin compris. On ne pose pas un spec e2e sur `main` sans l'avoir vu passer. Reste hors index, volontairement : `.claude/settings.local.json`, `supabase/.temp/cli-latest` (suivi à tort) et `.impeccable/` |
+| ✅ **T-16** | `VITE_SENTRY_DSN` **est bien posé sur Vercel**, prouvé sans accès à la console : le DSN est inliné dans le bundle servi en production (`/assets/index-*.js`). C'est une variable `VITE_`, donc compilée au build — son absence serait visible de la même façon. Le monitoring n'est donc pas éteint en silence. ⚠️ Ce qui n'est PAS vérifié : qu'une erreur remonte effectivement jusqu'au tableau de bord Sentry. Ça demande la console, côté Axel, et une erreur déclenchée volontairement |
+| ✅ **T-24, vérifié en PRODUCTION** | Le mécanisme est complet et cohérent en ligne : le bundle servi porte `a516b5c`, `/version.json` renvoie `{"release":"a516b5c"}`, en `Cache-Control: public, max-age=0, must-revalidate`. La réécriture SPA ne l'avale pas — c'était le risque réel, tout ce qui n'est pas `/assets`, `/fonts` ou `/screenshots` est réécrit vers `index.html`, et Vercel ne consulte les réécritures qu'après le système de fichiers. Les deux valeurs étant identiques, **aucun bandeau ne s'affiche, et c'est le bon résultat** |
+
+> ⚠️ **Ce qui reste à prouver sur T-24 ne peut l'être qu'au prochain déploiement** : qu'un onglet
+> resté ouvert sur `a516b5c` affiche bien l'invitation quand un build plus récent est servi. Test
+> gratuit et concret : laisser un onglet ouvert sur la production, pousser le commit suivant,
+> revenir sur l'onglet. Le bandeau doit apparaître dans la demi-heure — l'étranglement est à
+> 30 minutes, pas à l'instant.
+
+#### Semaine 1 — ce qui reste, et c'est entièrement hors du dépôt
+
+T-01 (plan Pro + PITR), T-02 (drill de restauration), T-03 (SMTP applicatif), T-05 à T-09 (les
+cinq réglages de console), T-10 (appliquer la mig. 130) et T-13 (webhook d'alerte) sont des clics
+dans les consoles Supabase, Vercel, Resend et GitHub. Aucun n'est atteignable depuis le dépôt, et
+tout ce qui pouvait être préparé en amont l'est : runbook, gabarits d'email, front prêt pour la
+confirmation d'adresse, garde `check:mail`.
+
+**La semaine 1 n'attend plus une seule ligne de code.**
