@@ -100,7 +100,7 @@ Piste : **A** = agent backend/infra/sécu · **B** = agent front/UX/tests · **X
 | 🟡 T-23 | UX / Produit | ⚠️ **L'instrumentation EXISTAIT DÉJÀ** (`get_admin_stats` v3 → `/admin` : activation 24 h, activation 48 h par canal, rétention J+7 par cohorte). Reste la correction seule. Instrumenter et corriger l'activation : **0 compte actif sur 7 jours** pour 28 comptes. Identifier le décrochage (première tâche créée ? deuxième session ?) et traiter le premier écran après inscription | Le vrai problème produit du dossier. Acquérir des utilisateurs qui ne reviennent pas est un coût, pas un progrès | P1 | L | T-15 | B | S3-S4 |
 | ✅ T-24 | Fiabilité | Détection de nouvelle version pour les onglets jamais rechargés (bannière « une mise à jour est disponible ») | **91,5 % du trafic Supabase du 2026-08-26 venait de deux onglets exécutant un bundle périmé.** Sans ce mécanisme, tout correctif client n'atteint que ceux qui rouvrent l'application, et les utilisateurs les plus assidus sont les plus coûteux | P2 | M | — | B | S4 |
 | T-25 | UX / Produit | Barre d'onglets entreprise sur mobile : 4 destinations sur 7 hors écran, aucun indice de continuation | P1 de la critique UI du 2026-08-27. Le mode entreprise est l'offre qui se vend | P2 | M | — | B | S4 |
-| T-26 | UX / Produit | Unifier les deux grammaires de filtre entre les onglets « Tâches » et « Projets » | Même donnée, deux façons de la filtrer. Second P1 de la même critique | P2 | M | — | B | S5 |
+| ✅ T-26 | UX / Produit | Unifier les deux grammaires de filtre entre les onglets « Tâches » et « Projets » | Même donnée, deux façons de la filtrer. Second P1 de la même critique | P2 | M | — | B | S5 |
 | ⚪ T-27 | UX / Produit | **CLOS sans changement** (arbitrage Axel, 2026-08-28) : la répétition est assumée, le titre était déjà corrigé. `buildOrgEvents` : exclure `currentUserId` de la frise « entreprise », et corriger le titre contradictoire | La frise répète les tâches déjà affichées juste au-dessus | P3 | S | — | B | S5 |
 | T-28 | Performance | Resserrer les seuils Lighthouse après le premier run réel en CI | Ils sont provisoires et posés au-dessus du réel : un budget très au-dessus du réel ne mesure rien | P2 | S | — | A | S3 |
 | ✅ T-29 | Performance | Ramener le chunk d'entrée sous 92 ko gzip et **redescendre le plafond** de `check:bundle` | 87,2 → 106,9 ko en deux jours, plafond relevé de 92 à 112 pour l'absorber. C'est le seul plafond du dépôt qu'on ait jamais remonté ; tant que la marge se regagne en relevant la barre, le budget ne garde plus rien | P2 | M | — | B | S4 |
@@ -320,7 +320,7 @@ ces 60 jours. C'est la seule tâche de la roadmap dont le délai ne dépend pas 
   une conclusion écrite : on garde le nom, ou on consulte un conseil.
 - [x] ✅ **T-42** — vérifier l'URL du pooler en prod · P2 · XS · A
 - [ ] **T-21 (vague 3)** — annuaires 13 à 20 · X
-- [ ] **T-26** — unifier les grammaires de filtre · P2 · M · B
+- [x] ✅ **T-26** — unifier les grammaires de filtre · P2 · M · B
 
 ### SEMAINE 6 — 2 → 8 octobre · **Rendre la chaîne de paiement réelle**
 
@@ -977,3 +977,20 @@ le CPU de la base.
 premier a un délai incompressible : c'est la seule tâche de cette roadmap dont le calendrier ne
 dépend pas de nous. **T-21 vague 3** (annuaires) est manuel. **T-26** (unifier les deux
 grammaires de filtre entre « Tâches » et « Projets ») reste ouvert.
+
+#### ✅ T-26 — les deux grammaires de filtre n'en font plus qu'une
+
+Le finding disait « deux grammaires de filtre pour la même donnée ». En regardant, la donnée, le
+type (`TaskStatusFilter`) et le helper (`filterByStatus`) étaient **déjà partagés** : ce qui
+divergeait tenait à un seul geste, le clic sur une pastille **déjà active**. L'onglet Projets la
+désactive et revient à « Tout » ; l'onglet Tâches ne faisait rien. Même écran, même objet, deux
+réponses au même geste.
+
+L'onglet Tâches adopte donc le geste de l'onglet Projets. **La pastille « Tout » est conservée**,
+et ce n'est pas une redondance : elle reste la seule affordance *visible* pour revenir à
+l'ensemble. On ajoute un geste, on n'en retire aucun.
+
+> ⚠️ Le témoin du test est plus important que le cas nominal : sans lui, on pourrait « unifier »
+> en faisant basculer **aussi** la pastille « Tout » sur elle-même, ce qui la rendrait inerte au
+> clic et supprimerait la sortie explicite. *Unifier un geste ne doit pas coûter une sortie.*
+> Vu rouge sans le correctif, sur le seul cas attendu.

@@ -117,14 +117,27 @@ const TeamTasksToolbar = ({
         </button>
       </div>
 
-      {/* Filtres de statut — pastilles cliquables, même sémantique que les
-          pastilles de synthèse de l'onglet Projets (filterByStatus). */}
+      {/* Filtres de statut — même sémantique ET, depuis le 2026-08-28, même
+          GESTE que les pastilles de synthèse de l'onglet Projets.
+          
+          Les deux onglets filtraient déjà la même donnée avec le même type
+          (`TaskStatusFilter`) et le même helper (`filterByStatus`) ; ce qui
+          divergeait, c'était le clic sur une pastille DÉJÀ active — côté
+          Projets il la désactive, ici il ne faisait rien. Même écran, même
+          objet, deux réponses au même geste : c'est le finding « deux
+          grammaires de filtre » de la critique UI du 2026-08-27.
+          
+          ⚠️ La pastille « Tout » est CONSERVÉE, et ce n'est pas une
+          redondance : elle est la seule affordance visible pour revenir à
+          l'ensemble. Un utilisateur qui ne devine pas qu'on peut re-cliquer
+          garde un chemin explicite — on ajoute un geste, on n'en retire
+          aucun. */}
       <div className="flex items-center gap-2 flex-wrap">
         {(['open', 'overdue', 'doneThisWeek', 'all'] as TaskStatusFilter[]).map((f) => (
           <button
             key={f}
             type="button"
-            onClick={() => onStatusFilter(f)}
+            onClick={() => onStatusFilter(statusFilter === f && f !== 'all' ? 'all' : f)}
             aria-pressed={statusFilter === f}
             className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
               statusFilter === f
