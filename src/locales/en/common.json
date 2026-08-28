@@ -295,5 +295,10 @@
       "description": "The description must be between {{min}} and {{max}} characters.",
       "attachment": "Attachment rejected: image, PDF or text, {{max}} MB max."
     }
+  },
+  "appVersion": {
+    "available": "A new version of COSMO is available.",
+    "reload": "Reload",
+    "dismiss": "Later"
   }
 }

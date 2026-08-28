@@ -3,14 +3,43 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
 
+// Écrit `dist/version.json` avec le même identifiant de build que celui compilé
+// dans le bundle (`__APP_RELEASE__`). C'est le seul moyen pour un onglet resté
+// ouvert de savoir qu'il exécute du code périmé : une SPA ne recharge jamais
+// son bundle toute seule.
+//
+// POURQUOI ÇA COMPTE ICI : le 2026-08-26, 91,5 % du trafic Supabase de la
+// journée venait de DEUX onglets qui exécutaient encore le bundle d'avant la
+// suppression des sondes. Un correctif de performance n'atteint que ceux qui
+// rouvrent l'application — et les utilisateurs les plus assidus, ceux qui ne
+// ferment jamais l'onglet, sont les derniers servis et les plus coûteux.
+//
+// Le fichier n'est PAS servi depuis /assets : il ne doit pas hériter du
+// `max-age=31536000, immutable`, sans quoi il annoncerait éternellement la
+// version du jour du déploiement. Cf. l'en-tête dédié dans `vercel.json`.
+const emitVersionFile = (release: string) => ({
+  name: 'cosmo-emit-version',
+  apply: 'build' as const,
+  generateBundle(this: { emitFile: (f: { type: 'asset'; fileName: string; source: string }) => void }) {
+    this.emitFile({
+      type: 'asset',
+      fileName: 'version.json',
+      source: JSON.stringify({ release }),
+    });
+  },
+});
+
+const APP_RELEASE = (process.env.VERCEL_GIT_COMMIT_SHA ?? '').slice(0, 7) || 'dev';
+
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), emitVersionFile(APP_RELEASE)],
   // Release injecté au build pour Sentry (observabilité). Vercel expose
   // VERCEL_GIT_COMMIT_SHA ; fallback 'dev' en local. Statique → tree-shaké.
   define: {
-    __APP_RELEASE__: JSON.stringify(
-      (process.env.VERCEL_GIT_COMMIT_SHA ?? '').slice(0, 7) || 'dev',
-    ),
+    // ⚠️ MÊME valeur que celle écrite dans `version.json` par le plugin
+    // ci-dessus : c'est la comparaison des deux qui détecte un onglet périmé.
+    // Deux sources distinctes ne se compareraient jamais qu'à elles-mêmes.
+    __APP_RELEASE__: JSON.stringify(APP_RELEASE),
   },
   server: {
     // Bind to all interfaces only when explicitly requested (mobile testing).

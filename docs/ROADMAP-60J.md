@@ -77,7 +77,7 @@ Piste : **A** = agent backend/infra/sécu · **B** = agent front/UX/tests · **X
 | T-08 | Sécurité | Activer « Secure email change » (confirmation sur les deux adresses) | Prise de contrôle de compte par changement d'email | P1 | XS | — | X | S1 |
 | T-09 | Sécurité | Activer le secret scanning GitHub + vérifier la non-réutilisation du mot de passe `DATABASE_URL` historique | Le dépôt est **public** | P1 | XS | — | X | S1 |
 | T-10 | Base de données | Appliquer la **mig. 130** en prod, puis `npm run test:rls` doit passer au vert | G-1 : tout membre lit aujourd'hui les invitations refusées de ses collègues. Le test est rouge tant que la migration n'est pas passée, c'est ce qui distingue « écrite » de « en vigueur » | P1 | XS | — | X applique / A vérifie | S1 |
-| T-11 | Base de données | `npm run check:drift` après la 130, et consigner le résultat | Après chaque migration appliquée, sans exception | P1 | XS | T-10 | A | S1 |
+| ✅ T-11 | Base de données | `npm run check:drift` après la 130, et consigner le résultat | Après chaque migration appliquée, sans exception | P1 | XS | T-10 | A | S1 |
 | T-12 | Support | Déployer `report-bug` + poser `RESEND_API_KEY` dans les secrets Supabase | AM-2. Seul canal de support du produit | P1 | XS | T-03 | A | S1 |
 | T-13 | Monitoring | Poser `OPS_ALERT_WEBHOOK_URL` (webhook Slack ou Discord) | `alert.ts` est un no-op silencieux aujourd'hui : un webhook Stripe en échec ou une purge RGPD avortée ne réveillent personne | P1 | XS | — | X | S1 |
 | T-14 | Sécurité | Activer un CAPTCHA (Cloudflare Turnstile) sur inscription et reset de mot de passe | AM-3. Se pose côté Supabase Auth + un champ dans le formulaire | P1 | S | T-03 | A + B | S2 |
@@ -86,7 +86,7 @@ Piste : **A** = agent backend/infra/sécu · **B** = agent front/UX/tests · **X
 | T-17 | Monitoring | Brancher une sonde de disponibilité externe (UptimeRobot / Better Stack, palier gratuit) sur `/` et sur `auth/v1/health` | AM-4 | P2 | XS | — | X | S2 |
 | T-18 | DevOps | Supprimer la fonction `tmp-org-price-setup` depuis le dashboard Supabase | AM-5, artefact non versionné dans la surface exposée | P3 | XS | — | X | S2 |
 | T-19 | Tests | Committer les trois fichiers non suivis (`e2e/rls/org-invitations.test.ts`, `e2e/reduced-motion-sheets.spec.ts`, `src/modules/team-projects/hooks.background.test.tsx`) et les 12 docs modifiés | Du travail vérifié qui n'est pas dans `main` n'existe pas, et une autre session peut l'emporter dans son propre commit | P1 | XS | — | X | S1 |
-| T-20 | UX / Produit | Passer les deux drapeaux de facturation en revue **avant** d'ouvrir l'acquisition et confirmer qu'ils sont bien à `false` des deux côtés (`ENTERPRISE_BILLING_ENFORCED` + `billing_flags.enterprise_seat_limit`) | Ils ont basculé trois fois en douze heures le 2026-08-25. L'état se lit dans le code et en base, jamais dans un document | P0 | XS | — | A | S2 |
+| ✅ T-20 | UX / Produit | Passer les deux drapeaux de facturation en revue **avant** d'ouvrir l'acquisition et confirmer qu'ils sont bien à `false` des deux côtés (`ENTERPRISE_BILLING_ENFORCED` + `billing_flags.enterprise_seat_limit`) | Ils ont basculé trois fois en douze heures le 2026-08-25. L'état se lit dans le code et en base, jamais dans un document | P0 | XS | — | A | S2 |
 
 ### PHASE 2 — 0 → 100 utilisateurs
 
@@ -94,14 +94,14 @@ Piste : **A** = agent backend/infra/sécu · **B** = agent front/UX/tests · **X
 |---|---|---|---|---|---|---|---|---|
 | T-21 | Acquisition | Soumettre COSMO aux 20 premiers annuaires de `ACQUISITION-BACKLINKS.md`, dans l'ordre donné, et tenir le tableau de suivi | **Le seul levier qui débloque le SEO.** Position 88 sur les requêtes non-marque = 0 domaine référent. Aucun contenu ne compensera | P1 | XL | — | X | S3-S5 |
 | T-22 | SEO | Relever dans Search Console : type de propriété (domaine ou préfixe), nombre de pages réellement indexées, et connecter Ahrefs Webmaster Tools pour compter les domaines référents | On pilote le SEO sans savoir combien de pages sont indexées. 13 impressions pour 20 URLs laisse l'hypothèse ouverte | P1 | S | — | X | S3 |
-| T-23 | UX / Produit | Instrumenter et corriger l'activation : **0 compte actif sur 7 jours** pour 28 comptes. Identifier le décrochage (première tâche créée ? deuxième session ?) et traiter le premier écran après inscription | Le vrai problème produit du dossier. Acquérir des utilisateurs qui ne reviennent pas est un coût, pas un progrès | P1 | L | T-15 | B | S3-S4 |
-| T-24 | Fiabilité | Détection de nouvelle version pour les onglets jamais rechargés (bannière « une mise à jour est disponible ») | **91,5 % du trafic Supabase du 2026-08-26 venait de deux onglets exécutant un bundle périmé.** Sans ce mécanisme, tout correctif client n'atteint que ceux qui rouvrent l'application, et les utilisateurs les plus assidus sont les plus coûteux | P2 | M | — | B | S4 |
+| 🟡 T-23 | UX / Produit | **Mesure faite le 2026-08-28** (cf. §11). Reste la correction. Instrumenter et corriger l'activation : **0 compte actif sur 7 jours** pour 28 comptes. Identifier le décrochage (première tâche créée ? deuxième session ?) et traiter le premier écran après inscription | Le vrai problème produit du dossier. Acquérir des utilisateurs qui ne reviennent pas est un coût, pas un progrès | P1 | L | T-15 | B | S3-S4 |
+| ✅ T-24 | Fiabilité | Détection de nouvelle version pour les onglets jamais rechargés (bannière « une mise à jour est disponible ») | **91,5 % du trafic Supabase du 2026-08-26 venait de deux onglets exécutant un bundle périmé.** Sans ce mécanisme, tout correctif client n'atteint que ceux qui rouvrent l'application, et les utilisateurs les plus assidus sont les plus coûteux | P2 | M | — | B | S4 |
 | T-25 | UX / Produit | Barre d'onglets entreprise sur mobile : 4 destinations sur 7 hors écran, aucun indice de continuation | P1 de la critique UI du 2026-08-27. Le mode entreprise est l'offre qui se vend | P2 | M | — | B | S4 |
 | T-26 | UX / Produit | Unifier les deux grammaires de filtre entre les onglets « Tâches » et « Projets » | Même donnée, deux façons de la filtrer. Second P1 de la même critique | P2 | M | — | B | S5 |
 | T-27 | UX / Produit | `buildOrgEvents` : exclure `currentUserId` de la frise « entreprise », et corriger le titre contradictoire | La frise répète les tâches déjà affichées juste au-dessus | P3 | S | — | B | S5 |
 | T-28 | Performance | Resserrer les seuils Lighthouse après le premier run réel en CI | Ils sont provisoires et posés au-dessus du réel : un budget très au-dessus du réel ne mesure rien | P2 | S | — | A | S3 |
 | T-29 | Performance | Ramener le chunk d'entrée sous 92 ko gzip et **redescendre le plafond** de `check:bundle` | 87,2 → 106,9 ko en deux jours, plafond relevé de 92 à 112 pour l'absorber. C'est le seul plafond du dépôt qu'on ait jamais remonté ; tant que la marge se regagne en relevant la barre, le budget ne garde plus rien | P2 | M | — | B | S4 |
-| T-30 | Legal | Publier les durées de conservation dans la politique de confidentialité (90 j visite démo, 400 j activité et démo convertie, 90 j marqueurs Stripe) | Dernier point du dossier RGPD qui n'attend plus rien d'autre que d'être écrit, et il débloque la réponse à un acheteur B2B | P2 | XS | — | B | S3 |
+| ✅ T-30 | Legal | Publier les durées de conservation dans la politique de confidentialité (90 j visite démo, 400 j activité et démo convertie, 90 j marqueurs Stripe) | Dernier point du dossier RGPD qui n'attend plus rien d'autre que d'être écrit, et il débloque la réponse à un acheteur B2B | P2 | XS | — | B | S3 |
 | T-31 | Support | Écrire la procédure de support : qui répond, sous quel délai, où arrivent les signalements, gabarit de réponse | À 100 utilisateurs le support devient réel. Un canal sans procédure devient un canal ignoré | P2 | S | T-12 | X | S4 |
 
 ### PHASE 3 — 100 → 1 000 utilisateurs
@@ -201,7 +201,7 @@ roadmap suppose qu'on puisse se tromper sans tout perdre.
   **Done** : une erreur déclenchée volontairement en prod apparaît dans Sentry sous 2 minutes.
 - [ ] **T-13** — poser `OPS_ALERT_WEBHOOK_URL` · P1 · XS · X
   **Done** : un POST manuel sur le webhook arrive dans le canal.
-- [ ] **T-10 / T-11** — appliquer la mig. 130, puis `check:drift` · P1 · XS · X applique, A vérifie
+- [~] **T-10 / T-11** — appliquer la mig. 130, puis `check:drift` · P1 · XS · X applique, A vérifie
   **Done** : `e2e/rls/org-invitations.test.ts` **passe au vert** (il est rouge aujourd'hui, c'est
   le signal), le ledger affiche `130`, `check:drift` sort 0.
 - [ ] **T-03** — SMTP Auth via Resend, sous-domaine d'envoi vérifié · P0 · M · X
@@ -233,7 +233,7 @@ en bout côté attribution.
   **Done** : une inscription sans jeton de challenge est refusée côté Supabase (pas seulement
   masquée côté client) ; le parcours démo → inscription reste franchissable en un essai ; un test
   E2E couvre le cas nominal.
-- [ ] **T-20** — audit des deux drapeaux de facturation · P0 · XS · A
+- [x] ✅ **T-20** — audit des deux drapeaux de facturation · P0 · XS · A
   **Done** : `ENTERPRISE_BILLING_ENFORCED` lu dans `premium-config.ts` **et**
   `billing_flags.enterprise_seat_limit` lu en base sont tous deux `false`, avec la requête et sa
   date citées dans le commit. Jamais depuis un document.
@@ -262,11 +262,11 @@ référents est franchi. Rien d'autre ne le remplace.
   indexées, domaines référents.
 - [ ] **T-21 (vague 1)** — les 5 premiers annuaires de `ACQUISITION-BACKLINKS.md` · P1 · X
   **Done** : 5 lignes remplies dans le tableau de suivi, avec la date de soumission et le statut.
-- [ ] **T-23 (mesure)** — instrumenter l'activation · P1 · B
+- [x] ✅ **T-23 (mesure)** — instrumenter l'activation · P1 · B
   **Done** : on peut répondre par une requête à « combien de comptes créent une tâche le jour de
   leur inscription » et « combien reviennent le lendemain ». La correction vient après la mesure,
   pas avant.
-- [ ] **T-30** — publier les durées de conservation · P2 · XS · B
+- [x] ✅ **T-30** — publier les durées de conservation · P2 · XS · B
   **Done** : les trois durées sont dans la politique de confidentialité, et `RGPD.md` §6 passe le
   point 3 au vert.
 - [ ] **T-28** — resserrer les seuils Lighthouse · P2 · S · A
@@ -285,7 +285,7 @@ sans corriger ces deux points revient à remplir un seau percé.
 - [ ] **T-23 (correction)** — traiter le premier écran après inscription · P1 · L · B
   **Done** : une action utile est faite par un nouveau compte dans les 60 premières secondes dans
   le parcours de recette, et la mesure de la semaine 3 est rejouée deux semaines plus tard.
-- [ ] **T-24** — détection de nouvelle version · P2 · M · B
+- [x] ✅ **T-24** — détection de nouvelle version · P2 · M · B
   **Done** : un onglet ouvert sur l'ancien build affiche l'invitation à recharger en moins de
   5 minutes après un déploiement ; vérifié dans deux onglets réels, pas en test unitaire seul.
 - [ ] **T-29** — chunk d'entrée sous 92 ko gzip · P2 · M · B
@@ -658,3 +658,74 @@ rapport effort/risque du dossier — c'est `faille.md` qui l'écrit, et c'est to
 
 **Et le quick win le plus rentable à moyen terme** : les soumissions d'annuaires (T-21). Zéro
 euro, zéro ligne de code, et c'est la seule chose qui déplace une position 88.
+
+---
+
+## 11. Journal d'exécution
+
+Une ligne par session. **On coche quand le critère « Done » est vérifié, pas quand le code est
+écrit.** Les tâches cochées restent dans les tableaux ci-dessus : le fil se perd si on les retire.
+
+### 2026-08-28 — 5 tâches fermées, 1 mesurée à moitié, 1 arbitrage rendu à Axel
+
+| Tâche | Résultat |
+|---|---|
+| ✅ **T-20** | Les deux drapeaux sont à `false`, **vérifiés séparément** : `premium-config.ts` lignes 14 et 160 pour le client, `select key, enabled from billing_flags` pour le serveur (`enterprise_seat_limit` → `false`). Jamais depuis un document, c'est la règle posée après les trois bascules du 2026-08-25 |
+| ✅ **T-11** | `check:drift` joué contre la prod : **aucun objet attendu ne manque**, 48 tables, 112 fonctions, 137 policies. ⚠️ Joué AVANT la mig. 130, il ne la couvre donc pas — la 130 remplace une policy de même nom, et cette garde compare des noms, pas des définitions. À rejouer après application, sans en attendre un signal sur ce point précis |
+| ✅ **T-30** | Les trois durées mesurées sont publiées dans la politique de confidentialité (90 j visite démo non convertie, 400 j activité et démo convertie, 90 j marqueurs Stripe), avec la mention que le journal d'encaissement est anonymisé et non supprimé. Débloque le dernier point RGPD en attente d'un acheteur B2B |
+| ✅ **T-24** | Un onglet resté ouvert sur un bundle périmé propose de recharger. `version.json` est émis au build avec le **même** identifiant que celui compilé dans le bundle, revalidé à chaque lecture (`vercel.json`). Déclenché au retour d'onglet, **étranglé à une fois par demi-heure**, jamais un minuteur permanent. Propose, ne recharge jamais d'autorité : un onglet ouvert contient souvent une saisie en cours |
+| 🟡 **T-23** | **Mesure faite, correction non engagée.** Voir le tableau ci-dessous |
+| ⏸️ **T-27** | **Rendu à Axel, ce n'est pas une décision technique.** Voir plus bas |
+
+#### La ligne de base d'activation (T-23, mesurée en prod le 2026-08-28)
+
+| Indicateur | Valeur | Lecture |
+|---|---|---|
+| Comptes | 28 | · |
+| Ont créé au moins une tâche | **18** (64 %) | Plus d'un tiers des inscrits n'ont jamais rien créé |
+| En ont créé une le jour même | **12** (43 %) | · |
+| Ont au moins 5 tâches | **11** (39 %) | Le seuil au-delà duquel un compte ressemble à un usage réel |
+| Revenus après J+1 | **13** (46 %) | · |
+| **Ne sont jamais revenus** après leur session d'inscription | **14** (50 %) | **Le chiffre qui compte** |
+
+> ⚠️ **Ceci corrige une lecture répétée dans les audits.** « 0 compte actif sur 7 jours » décrivait
+> l'activité *récente*, et se lisait comme « personne n'a jamais rien fait ». C'est faux :
+> 18 comptes sur 28 ont créé des tâches, 11 en ont au moins cinq. Le vrai défaut n'est pas que le
+> produit ne serve à personne, c'est qu'**un inscrit sur deux ne revient jamais**. Ce n'est pas le
+> même problème et ça n'appelle pas les mêmes corrections : le premier écran après inscription,
+> pas la découverte des fonctionnalités.
+>
+> ⚠️ **28 comptes, dont des comptes de test.** Ces pourcentages donnent une direction, pas une
+> mesure. À rejouer au-delà de 100 comptes réels avant d'en tirer une conclusion produit.
+
+#### Défaut trouvé dans une garde, en l'exécutant (hors roadmap)
+
+`check:drift` annonçait `get_my_habits` et `toggle_habit_completion_v2` comme **« EN TROP en prod,
+héritage dashboard »** alors que les deux sont versionnées depuis les migrations 119 et 121.
+
+Cause : le motif normal d'un changement de signature — créer la nouvelle, supprimer l'ancienne —
+quand le `DROP FUNCTION nom(args)` arrive plus bas dans le même fichier (mig. 122 : `CREATE` aux
+lignes 55 et 159, `DROP` aux lignes 279 et 280). Le parseur, aveugle aux signatures, retirait alors
+le nom de l'ensemble attendu.
+
+🔴 **Le symptôme était bénin, le défaut ne l'est pas : il faisait échouer la garde dans le sens
+rassurant.** Si l'une de ces deux fonctions avait réellement manqué en production, le script ne
+l'aurait pas signalée — il ne l'attendait plus. Corrigé, et verrouillé par trois tests dans
+`scripts/migration-guards.test.mjs`, dont un **témoin** qui vérifie qu'une fonction réellement
+absente est toujours détectée : sans lui, un parseur qui n'oublierait jamais rien passerait aussi.
+
+#### L'arbitrage rendu à Axel (T-27)
+
+Le titre incriminé par la critique UI est **déjà corrigé** : la carte dit « Prochains événements de
+**l'entreprise** », vérifié dans `src/locales/fr/org.json`. Reste la seconde moitié du finding,
+exclure mes propres tâches de la frise, et **je ne la prends pas seul** : les deux lectures
+mènent à des produits différents.
+
+- **Exclure** supprime la répétition avec la liste juste au-dessus — mais une frise intitulée
+  « de l'entreprise » qui omet certaines échéances **devient fausse**, et le pire cas est celui où
+  la prochaine échéance de l'entreprise est la mienne : la frise annoncerait alors autre chose.
+- **Garder** assume la répétition, qui est le grief d'origine.
+
+Une troisième voie existe, plus chère : garder tout et **marquer** les événements qui me sont
+assignés. Trancher demande de savoir à quoi sert cette carte — un rappel personnel, ou une vue
+d'ensemble de l'organisation. C'est une question produit, pas une question de code.
