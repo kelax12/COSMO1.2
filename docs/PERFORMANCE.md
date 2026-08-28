@@ -23,6 +23,21 @@
 Le plus instructif est la proportion : après une journée entière passée sur le JavaScript, **le
 poste le plus lourd restait les images**, et personne ne l'avait jamais pesé.
 
+### 2026-08-27 (soir) · note inchangée à 91, et pourquoi
+
+Les deux derniers commits de la journée (`180fba1`, découpage de `TeamTasksTab` et correctifs
+d'accessibilité ; `f32d080`, réservation de l'entrée de navigation) **ne touchent pas au budget** :
+`npm run check:bundle` est vert avant comme après, et aucune des deux mesures du tableau ci-dessus
+n'a été refaite. Le chunk d'entrée reste à **106,9 ko gzip** pour un plafond de 112, c'est-à-dire
+que la dérive inscrite plus bas n'a **pas** été remboursée.
+
+⚠️ Un correctif de **stabilité visuelle** est arrivé ce soir-là (la barre latérale ne se
+réordonnait plus après la réponse réseau) : il appartient à l'expérience perçue, pas à ce
+document, et **son gain n'est pas mesurable en CLS** dans les conditions disponibles (mesuré à 0
+avant comme après, en mode démo, où la lecture est synchrone). Il est décrit dans
+[`UI-PATTERNS.md`](./UI-PATTERNS.md) et [`MOBILE.md`](./MOBILE.md). *Ne pas le compter comme un
+gain de performance : rien n'a été pesé.*
+
 ### 2026-08-27 · +3, tirés d'une seule page, et une dérive à inscrire
 
 **Le gain.** `/entreprise` tenait dans un chunk unique de **279,0 ko bruts / 64,1 ko gzip**, le
@@ -56,11 +71,24 @@ de 30 s relançait donc `get_my_team_tasks`, la lecture la plus chère du produi
 ([SCALABILITY.md](./SCALABILITY.md) §2), pour repeindre une pastille. `useTeamTasks` gagne
 `background`, symétrique de `live` : 5 min de fraîcheur et pas de refetch au retour d'onglet.
 
-> ⚠️ **Gain non chiffré, volontairement.** Le mode démo est en `localStorage` : aucune requête à
-> compter. Le raisonnement s'appuie sur la sémantique de React Query (`staleTime` et
-> `refetchOnWindowFocus` sont **par observateur**), pas sur une mesure d'egress. À vérifier dans
-> les `edge_logs` d'une vraie session, comme
+> ⚠️ **Gain toujours non chiffré en requêtes**, et il le restera jusqu'au déploiement : le mode
+> démo est en `localStorage`, il n'y a aucune requête à compter, et les `edge_logs` ne peuvent
+> montrer un « après » d'un correctif qui n'est pas encore en production. À ventiler par session
+> le jour du déploiement, comme
 > [le correctif des onglets zombies](#-le-correctif-que-personne-ne-reçoit--les-onglets-jamais-rechargés).
+>
+> ✅ **Mais le COMPORTEMENT dont ce gain découle est désormais vérifié** (2026-08-27, soir) :
+> `src/modules/team-projects/hooks.background.test.tsx` compte les appels au repository. Avec
+> `background`, un retour d'onglet horloge avancée n'en déclenche **aucun** ; sans lui, le **même**
+> retour d'onglet en déclenche un.
+>
+> 🔴 **Le témoin négatif EST le test.** Une première version périmait la donnée par
+> `invalidateQueries` : elle prouvait que l'invalidation marche, pas que le retour d'onglet
+> déclenche quoi que ce soit dans ce harnais. Le test principal aurait alors constaté l'absence
+> d'un rechargement que rien ne demandait, et serait passé au vert pour rien. Un troisième cas
+> monte les deux observateurs sur la même clé et vérifie que `background` **ne gèle pas** l'écran
+> qui, lui, affiche la liste. Un chiffre d'egress viendra confirmer une mécanique déjà prouvée ;
+> il ne la remplace pas.
 
 **La dérive qu'il faut inscrire, sinon elle disparaît.** Le chunk d'entrée mesurait **87,2 ko
 gzip** le 2026-08-25 au soir. Il est à **106,9 ko** aujourd'hui, soit **+19,7 ko en deux jours**,

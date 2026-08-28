@@ -276,10 +276,21 @@ describe('design system — échelle z-index', () => {
 //
 // FORME : CLIQUET. Les fichiers ci-dessous portent encore un `y: '100%'` écrit
 // à la main. Tous ne sont pas cassés — un `initial` qui contient AUSSI une clé
-// non-transform se résout correctement (vérifié sur `WeeklyCheckinModal`, qui
-// s'ouvre bien). Les rendre tous rouges d'un coup produirait une gate rouge en
-// permanence, donc ignorée. La liste ne peut que RÉTRÉCIR : aucun nouveau
-// fichier ne doit y entrer, et `useSheetMotion()` est le chemin par défaut.
+// non-transform se résout correctement. Les rendre tous rouges d'un coup
+// produirait une gate rouge en permanence, donc ignorée. La liste ne peut que
+// RÉTRÉCIR : aucun nouveau fichier ne doit y entrer, et `useSheetMotion()` est
+// le chemin par défaut.
+//
+// ✅ 2026-08-27 : cette phrase « tous ne sont pas cassés » n'était appuyée que
+// sur UNE feuille regardée à l'œil. Elle est maintenant MESURÉE, dans un
+// navigateur qui composite et sous `reducedMotion: 'reduce'` réellement émulé :
+// `e2e/reduced-motion-sheets.spec.ts`. Deux des feuilles ci-dessous s'ouvrent
+// bien, et `LoginModal` REMISE dans sa forme d'avant migration s'ouvrait bien
+// elle aussi — le commit `a1debe3` avait donc affirmé un bug qui n'existait pas.
+//
+// ⚠️ CE FICHIER-CI NE PEUT PAS TRANCHER LA QUESTION. Il compte des chaînes de
+// caractères ; il ne sait pas si une feuille s'ouvre. Ne jamais lui faire dire
+// qu'une feuille fonctionne : c'est le rôle du spec Playwright ci-dessus.
 const KNOWN_HANDROLLED_SHEETS = new Set([
   'src/components/AdModal.tsx',
   'src/components/ColorSettingsModal.tsx',

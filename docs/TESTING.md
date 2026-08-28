@@ -1,16 +1,17 @@
 # Tests — COSMO
 
-## Note de tests / CI : 80 → 83 → **88 / 100** (2026-08-24 → 2026-08-25 soir)
+## Note de tests / CI : 80 → 83 → 88 → **89 / 100** (2026-08-24 → 2026-08-25 soir → 2026-08-27 soir)
 
-| Ce qui compose la note | 08-24 | 08-25 (16 h) | **08-25 (fin)** |
-|---|---|---|---|
-| Suite unitaire | 1 583 / 143, verte | 1 656 / 146, verte | **1 736 / 151, verte** |
-| Tests E2E Playwright | 41 × 2, 11 specs | **62 × 2 = 124, 15 specs** | inchangé |
-| Tests d'intégration RLS (base réelle) | 5 fichiers | **6** · dont `org-permissions.test.ts` | inchangé |
-| Jobs CI | 4 | **5** (+ `lighthouse`) | inchangé |
-| Gardes-cliquets | 6 | 6 | 6 |
-| `npm run test:coverage` | ✅ verte | 🔴 **ROUGE**, 3 seuils | ✅ **VERTE**, `exit 0` |
-| Glob `supabase.repository.ts` (statements) | — | 63,74 % (seuil 65) | **76,79 %** (seuil remonté à 74) |
+| Ce qui compose la note | 08-24 | 08-25 (16 h) | **08-25 (fin)** | **08-27** |
+|---|---|---|---|---|
+| Suite unitaire | 1 583 / 143, verte | 1 656 / 146, verte | **1 736 / 151, verte** | **1 802 / 159, verte** |
+| Tests E2E Playwright | 41 × 2, 11 specs | **62 × 2 = 124, 15 specs** | inchangé | **16 specs** · +`reduced-motion-sheets` (3 cas, chromium) |
+| Tests d'intégration RLS (base réelle) | 5 fichiers | **6** · dont `org-permissions.test.ts` | inchangé | **7** · `org-invitations.test.ts` couvre la mig. 130 |
+| Jobs CI | 4 | **5** (+ `lighthouse`) | inchangé | 5 |
+| Gardes-cliquets | 6 | 6 | 6 | **7** · le mouvement réduit est mesuré, plus seulement gardé statiquement |
+| `npm run test:coverage` | ✅ verte | 🔴 **ROUGE**, 3 seuils | ✅ **VERTE**, `exit 0` | ✅ **VERTE**, relancée le soir · `exit 0` |
+| Couverture · statements / functions | · | sous les seuils | 27,20 / 21,69 | **28,15 / 22,78** |
+| Glob `supabase.repository.ts` (statements) | · | 63,74 % (seuil 65) | **76,79 %** (seuil remonté à 74) | non remesuré |
 
 **+5 après la campagne de tests du soir.** La gate de couverture est repassée au vert **sans
 qu'aucun seuil ne soit baissé**, ce qui était la seule sortie acceptable : 115 tests ajoutés, tous
@@ -24,15 +25,82 @@ Ce qui monte la note tient en deux points, et le second compte plus que le premi
    sans test fera désormais tomber cette gate **bien avant** de bouger le plancher global : elle
    mord sur 1 663 statements, pas sur 21 557.
 
-**Ce qui plafonne à 88, et pas plus haut** : la couverture absolue reste à ~27 %, les seuils
-Lighthouse sont toujours provisoires, et la marge du plancher global `functions` n'est que de
-**0,32 point, soit une vingtaine de fonctions**, l'équivalent d'UN composant d'interface un peu
-gros. Le piège est désamorcé, il n'est pas démonté.
+**Ce qui plafonne à 89, et pas plus haut** : la couverture absolue reste sous les 30 %, et les
+seuils Lighthouse sont toujours provisoires.
+
+### 2026-08-27 (soir) · +1, et la marge du plancher `functions` a doublé
+
+**La gate de couverture avait été laissée non relancée**, alors que la journée avait livré
+plusieurs centaines de lignes d'interface et que la marge du plancher `functions` n'était que de
+**0,32 point**. C'était le scénario exact qui l'avait fait tomber le 2026-08-25 : le dénominateur
+grossit plus vite que le numérateur, et personne ne regarde. Relancée : **verte, `exit 0`**,
+1 802 tests sur 159 fichiers, et les quatre indicateurs **montent** par rapport au 08-25.
+
+| | 08-25 (fin) | **08-27 (soir)** | Δ |
+|---|---|---|---|
+| Statements | 27,20 % | **28,15 %** | +0,95 |
+| Branches | 22,86 % | **23,59 %** | +0,73 |
+| Functions | 21,69 % | **22,78 %** | +1,09 |
+| Lines | 27,20 % | **28,48 %** | +1,28 |
+
+⚠️ **Ne pas lire ça comme « la vague de features était bien testée ».** Ce que ça dit est plus
+étroit : elle n'a pas dégradé les ratios. La marge du plancher `functions` passe de 0,32 à environ
+1,4 point, ce qui achète du temps, pas une garantie.
+
+**+1 seulement, et le point ne vient pas de la couverture.** Il vient de la nature de deux tests
+ajoutés le soir, tous deux construits autour d'un **témoin** :
+- `e2e/reduced-motion-sheets.spec.ts` mesure qu'une feuille s'ouvre réellement sous
+  `prefers-reduced-motion`, ce qu'aucune garde statique ne peut voir. Il refuse de conclure si son
+  propre harnais ne peint pas, et il embarque une feuille de contrôle : si elle échoue aussi, le
+  verdict est « le harnais ment », pas « le produit est cassé ». Les deux erreurs de mesure de la
+  journée venaient précisément de conclusions sans témoin (cf. [`MOBILE.md`](./MOBILE.md) §1bis).
+- `src/modules/team-projects/hooks.background.test.tsx` prouve un gain de performance par le
+  comptage des appels, avec un **témoin négatif qui emprunte exactement le même chemin** que le
+  cas testé. Sans lui, le test aurait constaté l'absence d'un rechargement que rien ne demandait.
+
+C'est la leçon à retenir de la journée : **un test sans témoin peut passer au vert pour la mauvaise
+raison**, et il est alors pire qu'absent, puisqu'il rassure.
 
 Et l'acquis du milieu de journée tient toujours : pour la première fois, une brique entreprise
 (les permissions, mig. 115) est arrivée **avec son test d'intégration contre une vraie base dans
 le même commit**, 337 lignes qui vérifient la policy, pas la relecture de la policy. C'est le
 standard à tenir pour toute nouvelle surface d'autorisation.
+
+### 2026-08-27 · +66 tests, et la note ne bouge PAS
+
+**Note inchangée à 88, délibérément.** Six fichiers de test sont arrivés (`inbox.hooks`,
+`org-loading-states`, `agenda-events.helpers`, `org-events.helpers`, `MobileTabBar`,
+`ActiveOrgContext`) et la suite passe de 1 736 / 151 à **1 802 / 159, verte**. Mais :
+
+1. **`npm run test:coverage` n'a pas été relancée de la journée.** Or la journée a livré
+   plusieurs centaines de lignes d'interface (frise, squelettes, barre d'outils extraite,
+   contexte d'organisation). Le dénominateur a grossi et le numérateur aussi, dans des
+   proportions **inconnues**. La marge du plancher global `functions` était de **0,32 point** le
+   25 au soir. Tant que la commande n'a pas tourné, personne ne peut dire de quel côté on est,
+   et un compte de tests n'est pas une couverture.
+2. Aucune nouvelle gate, aucun nouveau job, aucun test d'intégration RLS : la **mig. 130** est
+   écrite sans test de base réelle, alors que le standard posé le 2026-08-25 est
+   « toute nouvelle surface d'autorisation arrive avec son test contre une vraie base ». Ici
+   c'est un **rétrécissement** de policy, pas une nouvelle surface, mais le principe vaut :
+   personne n'a prouvé en base qu'un membre simple ne lit plus rien.
+
+**Ce que la journée prouve en revanche, et qui vaut plus qu'un point de note : le cliquet
+d'architecture a attrapé une régression que son auteur niait.** Le correctif d'états de
+chargement ajoutait 9 lignes à `TeamTasksTab.tsx`, `architecture.guard` est passée au rouge
+(11 463 pour un plafond à 11 454), et elle a été déclarée **deux fois** « antérieure à ce
+travail », sur la foi d'un `git stash` pris après le commit fautif. La vérification correcte,
+restaurer `src/` à `4b91816`, la montre **verte** avant.
+
+> ⚠️ **Une garde rouge est coupable jusqu'à preuve du contraire, et la preuve se prend à un commit
+> nommé, jamais dans un stash.** C'est la deuxième fois en trois jours qu'une affirmation
+> confiante sur un « avant » se révèle fausse (cf. les `refetchInterval` du 08-25). Les deux ont
+> été rattrapées par une mesure, aucune par une relecture.
+
+> ✅ **Deux tests de la journée ont été vérifiés en les faisant tomber**, ce qui est la règle
+> maison et pas un supplément : `org-loading-states.test.tsx` en neutralisant le garde de
+> l'Aperçu, et `ActiveOrgContext.test.tsx` en neutralisant tour à tour la **lecture** puis
+> l'**écriture** de l'indice `wasOrgMember` (2 puis 1 test au rouge). Un test qu'on n'a jamais vu
+> rouge ne prouve rien.
 
 ### ✅ `npm run test:coverage` · verte au 2026-08-25 (fin de journée)
 

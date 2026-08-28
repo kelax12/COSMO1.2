@@ -9,7 +9,16 @@ s'est révélée fausse.
 Toutes les mesures de ce document sont **reproductibles** : les requêtes sont en
 [§10 Runbook](#10-runbook--refaire-cet-audit).
 
-## Note de scalabilité : 71 → **84 / 100** (2026-08-24 → 2026-08-25)
+## Note de scalabilité : 71 → **84 / 100** (2026-08-24 → 2026-08-25) · **inchangée au 2026-08-27**
+
+> **2026-08-27 · note inchangée, un finding rouvre sous une autre forme.** La pastille de
+> navigation rechargeait `get_my_team_tasks` à chaque retour d'onglet, depuis toutes les pages
+> protégées, sans qu'aucun `refetchInterval` ne soit en cause : c'est la **politique de fraîcheur
+> par défaut** d'un hook de liste monté par `Layout` qui coûtait. Corrigé le jour même
+> (§3, « le sondage était éteint, la relecture ne l'était pas »), mais **le gain n'est pas
+> mesuré** : le mode démo n'émet aucune requête, la confirmation viendra des `edge_logs` d'une
+> vraie session. Un correctif non mesuré ne rapporte pas de point ici, c'est la règle du §1 de
+> cette note (« rien n'a été mesuré à volume »).
 
 | Ce qui compose la note | 08-24 | 08-25 |
 |---|---|---|
@@ -257,6 +266,38 @@ Les policies restent en place en défense en profondeur, comme pour `get_my_task
 >
 > **Bilan chiffré** : de ~24 à **~0** requête par minute et par utilisateur avant interaction,
 > hors écrans qui regardent réellement une liste. Le module `friends` est à zéro.
+
+### 🟠 2026-08-27 · le sondage était éteint, la RELECTURE ne l'était pas
+
+> Troisième forme du même motif, et elle échappe entièrement au décompte des `refetchInterval`.
+> `useOrgBadges` est monté par `Layout`, donc **sur toutes les pages protégées**, pour tout membre
+> d'une organisation. Il montait `useTeamTasks` avec la politique **par défaut** du hook,
+> `staleTime` 30 s et `refetchOnWindowFocus`, alors qu'il n'affiche pas la liste : il en dérive un
+> chiffre pour peindre une pastille.
+>
+> Conséquence : **chaque retour d'onglet**, et chaque navigation espacée de plus de 30 s,
+> relançait `get_my_team_tasks` depuis n'importe quelle page. C'est-à-dire la lecture la plus
+> chère du produit (§2 et mig. 113), pour un nombre.
+>
+> **Correctif (commit `73f6734`)** : `useTeamTasks` gagne l'option `background`, symétrique de
+> `live` (`staleTime` 5 min, pas de refetch au retour d'onglet). Rien ne change sur `/entreprise` :
+> `staleTime` et `refetchOnWindowFocus` sont **par observateur**, donc l'écran qui regarde
+> réellement la liste garde la sienne, et c'est la sienne qui déclenche. Le compteur ne perd rien,
+> sa source qui fait autorité est la boîte de réception, tenue à jour en Realtime
+> (`useOrgInboxRealtime`) ; les tâches ne sont qu'un filet pour les organisations d'avant la
+> mig. 095.
+>
+> ⚠️ **Gain non chiffré, et il ne le sera pas depuis la démo** : le mode démo lit `localStorage`,
+> il n'y a **aucune requête à compter**. À confirmer dans les `edge_logs` d'une vraie session.
+> Aucun point n'est attribué pour un gain non mesuré, c'est pourquoi la note de ce document ne
+> bouge pas.
+>
+> 🔴 **Ce que ça dit du §3 tout entier.** Le décompte nominatif des `refetchInterval` était juste,
+> et il ne voyait quand même pas ce coût-là : **la politique de fraîcheur par défaut d'un hook
+> monté à l'échelle de l'application est un sondage qui ne dit pas son nom.** La bonne question
+> n'est pas « combien de `refetchInterval` restent », mais **« quels hooks de liste sont montés
+> par `Layout`, `App` ou `CommandPalette`, et avec quel `staleTime` »**. C'est la troisième fois
+> que ce trio produit un coût permanent (`useTeamTasks`, puis `useTeamOKRs`, puis `useOrgBadges`).
 
 ### ✅ Contre-mesure indépendante, 2026-08-26 : oui, éteintes. Et ce que ça révèle.
 

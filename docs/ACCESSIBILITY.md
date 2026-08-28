@@ -5,16 +5,43 @@
 **+ Lighthouse CI** (`lighthouserc.json`, job `lighthouse`) sur les 4 routes prérendues.
 **Gates CI** : les violations `impact: 'critical'` sont **bloquantes** (`assertNoCritical`). `serious` / `moderate` / `minor` sont dumpées dans `test-results/a11y/<route>.json` mais non bloquantes. Le score a11y de Lighthouse est **bloquant** sur `/`, `/guide`, `/blog`, `/pour-freelances`.
 
-## Note d'accessibilité : 76 → **79 / 100** (2026-08-24 → 2026-08-25)
+## Note d'accessibilité : 76 → 79 → **80 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27)
 
-| Ce qui compose la note | 08-24 | 08-25 |
+| Ce qui compose la note | 08-24 | 08-25 | **08-27** |
+|---|---|---|---|
+| Violations de contraste sur `/okr` | 27 → 4 (corrigé le jour même) | **4** | 4, non remesuré |
+| Thèmes non conformes AA sur `--color-text-muted` | 3 sur 4 → 0 | **0** | 0 |
+| Cibles tactiles hors norme (`/tasks` · `/entreprise`) | 5 · 8 | **5 · 8** | non remesuré |
+| Findings A-1 → A-11 ouverts | 1 (A-8 résiduel, arbitrage produit) | **1** | **1**, inchangé |
+| Gates automatiques a11y | 1 (axe-core, `critical`) | **2** (+ Lighthouse a11y bloquant sur les pages publiques) | 2 |
+| Audits jamais faits | agenda, modals, clavier, VoiceOver iOS | **inchangés** | **inchangés** |
+| Défauts de nom accessible corrigés hors axe-core | · | · | **3** (D4, D5, E2, cf. §2026-08-27) |
+| Libellés sous le plancher de 11 px | 79 | 79 | **75** |
+
+### 2026-08-27 · +1, et le point est ailleurs que dans les gates
+
+**Trois défauts corrigés, aucun n'était visible par axe-core**, ce qui est exactement le tiers de
+WCAG qu'un scan automatique ne couvre pas. Ils viennent d'une relecture manuelle du mode
+entreprise (commit `180fba1`) :
+
+| # | Ce que le lecteur d'écran disait | Correctif |
 |---|---|---|
-| Violations de contraste sur `/okr` | 27 → 4 (corrigé le jour même) | **4** |
-| Thèmes non conformes AA sur `--color-text-muted` | 3 sur 4 → 0 | **0** |
-| Cibles tactiles hors norme (`/tasks` · `/entreprise`) | 5 · 8 | **5 · 8** |
-| Findings A-1 → A-11 ouverts | 1 (A-8 résiduel, arbitrage produit) | **1** |
-| Gates automatiques a11y | 1 (axe-core, `critical`) | **2** (+ Lighthouse a11y bloquant sur les pages publiques) |
-| Audits jamais faits | agenda, modals, clavier, VoiceOver iOS | **inchangés** |
+| **D4** | La pastille de date de la frise se lisait **« 27août »** : deux fragments visuels collés, sans espace ni contexte d'année | Date complète en `sr-only`, fragments visuels en `aria-hidden`, plus un `<time dateTime>` lisible par la machine |
+| **D5** | « Mes tâches (3)· 1 h 45 » : le `ml-2` séparait le **visuel**, pas le **nom accessible** | Séparateur porté par le texte, « (3) · 1 h 45 » |
+| **E2** | La pastille de priorité n'était portée que par `title=`, **invisible au clavier et au toucher** | `role="img"` + `aria-label`, 4 fichiers |
+
+Et une conséquence indirecte de la garde design-system (finding F1) : **quatre libellés de la
+frise passent de 10 à 11 px**, le plancher lisible de l'échelle fermée. Le stock de tailles sous
+11 px descend de **79 à 75**, mesuré par `src/design-system.guard.test.ts`, pas estimé.
+
+**Pourquoi +1 et pas plus.** Les deux plafonds de la note n'ont pas bougé d'un pouce : le bouton
+d'action principal est toujours à **3,34** (arbitrage d'Axel), et les **quatre audits jamais
+faits** le sont toujours. Ce qui monte, c'est une classe de défaut que les gates ne verront jamais
+et qu'il a fallu lire à la main.
+
+> ⚠️ **La leçon vaut pour toute la zone entreprise** : `title=` n'est pas un nom accessible, et un
+> texte découpé en fragments visuels se lit **collé**. Les deux se voient à la relecture, jamais
+> dans une gate verte. La règle correspondante est ajoutée en bas de ce document.
 
 **+3, et pas plus, parce que le gros du travail a été fait le 24, pas le 25.** Le seul apport
 propre du 2026-08-25 est une **seconde** gate : jusqu'ici, aucune vérification a11y automatique ne
@@ -133,6 +160,8 @@ Objectif de durcissement : **A-8 étant tranché, la gate peut désormais passer
 - ❌ **Pas de changement de contenu sans annonce** — `role="status"` ou `aria-live="polite"`.
 - ❌ **Pas de couleur seule pour transmettre l'information** — toujours doubler avec une icône, du texte, ou un état.
 - ❌ **Pas de `motion.h1 initial={{opacity:0}}`** sans aussi laisser un h1 statique présent — axe flag `page-has-heading-one`.
+- ✅ **Un texte découpé en fragments visuels doit avoir un nom accessible ENTIER** (2026-08-27, D4/D5) : mettre la phrase complète en `sr-only`, passer les fragments en `aria-hidden`, et pour une date ajouter un `<time dateTime>`. Sans ça, « 27 » + « août » empilés se lisent « 27août », et un espacement obtenu par `ml-2` n'existe pas pour un lecteur d'écran.
+- ✅ **Une pastille purement visuelle qui porte une information est `role="img"` + `aria-label`** (2026-08-27, E2). `title=` seul ne se voit ni au clavier ni au toucher, et ne remplace pas un nom accessible.
 
 ## Ne jamais faire — Accessibilité
 

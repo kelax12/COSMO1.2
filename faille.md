@@ -7,21 +7,25 @@ et les **règles durables** tirées des audits.
   priorité) : [`docs/archive/faille-historique.md`](./docs/archive/faille-historique.md) — **archive, non maintenue**.
 - Procédures et patterns : [`docs/SECURITY.md`](./docs/SECURITY.md).
 - Dernière vérification de ce fichier contre le code **et contre la prod** : **2026-08-25**.
+  Relu contre le code de `main` le **2026-08-27** (ajout du finding G-1, mig. `130`). ⚠️ Les
+  chiffres de production de ce fichier (advisors, policies en base) datent toujours du 08-25 :
+  aucune requête n'a été passée en prod le 27.
 
 Légende : 🔴 bloquant · 🟠 important · 🟡 à planifier · ✅ corrigé
 
 ---
 
-## Note de sécurité : 82 → **86 / 100** (2026-08-24 → 2026-08-25)
+## Note de sécurité : 82 → **86 / 100** (2026-08-24 → 2026-08-25) · **inchangée au 2026-08-27**
 
-| Ce qui compose la note | 08-24 | 08-25 |
-|---|---|---|
-| Findings High/Critical exploitables | 0 | 0 |
-| Findings ouverts dans le code | 0 (B-1/B-2/B-3 refermés) | 0 |
-| Bloquants restants, **hors dépôt** | A-9 (pas de PITR) + 5 réglages de console | **inchangés** |
-| Gardes automatiques vertes | 4 | **4** (+ périmètre élargi : 128 policies, 127 migrations) |
-| Nouvelle surface livrée **avec** son test de base réelle | · | ✅ `org_member_permissions` (mig. 115) + `e2e/rls/org-permissions.test.ts` |
-| Fonctions `anon`-exécutables | 2 (les deux volontaires) | 2 |
+| Ce qui compose la note | 08-24 | 08-25 | **08-27** |
+|---|---|---|---|
+| Findings High/Critical exploitables | 0 | 0 | 0 |
+| Findings ouverts dans le code | 0 (B-1/B-2/B-3 refermés) | 0 | 0 |
+| Findings ouverts **en production** | 0 | 0 | 🟠 **1** · G-1, correctif écrit et **non appliqué** (mig. 130) |
+| Bloquants restants, **hors dépôt** | A-9 (pas de PITR) + 5 réglages de console | **inchangés** | **inchangés** |
+| Gardes automatiques vertes | 4 | **4** (+ périmètre élargi : 128 policies, 127 migrations) | **4** · `check:rls` 0 violation, `validate:migrations` 0 erreur avec la mig. 130 |
+| Nouvelle surface livrée **avec** son test de base réelle | · | ✅ `org_member_permissions` (mig. 115) + `e2e/rls/org-permissions.test.ts` | ⚪️ sans objet, aucune nouvelle surface |
+| Fonctions `anon`-exécutables | 2 (les deux volontaires) | 2 | 2, non remesuré |
 
 **+4, et pas davantage.** Les neuf migrations du 2026-08-25 (`115` → `123`) n'ont ouvert aucune
 faille : la plus sensible, un système de permissions par membre, est arrivée avec sa policy, son
@@ -32,6 +36,31 @@ c'est ce que la note récompense.
 Ce qui l'empêche de monter plus haut n'a pas bougé d'un pouce : **A-9** (plan Free, pas de PITR,
 restauration jamais testée) et les réglages de console. Ce sont les deux seules choses qui
 séparent « aucune faille connue » de « rattrapable en production », et aucune n'est du code.
+
+### 2026-08-27 · note inchangée, et c'est le bon résultat
+
+**Rien n'a changé en production.** Un finding de minimisation connu depuis le 2026-08-24 (noté
+alors sous B-2, « reste ouvert, non traité ») a reçu son correctif dans le dépôt, la **mig. 130**,
+qui **n'est pas appliquée**. Écrire une migration ne referme rien : tant qu'elle n'est pas passée
+en base, l'état de la prod est exactement celui du 25. La note ne peut donc pas monter, et elle ne
+baisse pas non plus, le finding n'étant pas nouveau.
+
+Deux points de vigilance sont apparus par ailleurs, tous deux vérifiés et **sans impact
+d'autorisation** :
+
+- **`wasOrgMember` (commit `f32d080`) est un INDICE D'AFFICHAGE persisté, jamais une
+  autorisation.** Il réserve la place de l'entrée « Entreprise » dans la navigation pendant que la
+  requête vole, à partir de la préférence d'organisation déjà stockée sur l'appareil. Il ne
+  débloque aucune donnée : `/entreprise` redirige toujours vers le tableau de bord si `activeOrg`
+  est nul une fois la requête résolue, et toute lecture reste gouvernée par la RLS. **Pire cas :
+  une entrée de navigation affichée une seconde de trop** chez quelqu'un qui vient de quitter sa
+  dernière organisation depuis un autre appareil. L'indice est effacé dès que la requête répond
+  « aucune organisation », et il ne traverse pas un changement de compte (vérifié par test).
+- **Le seed de démo passe de deux organisations à une seule** (`180fba1`). Effet de bord voulu :
+  sous une seule organisation la navigation redevient un vrai `<a href="/entreprise">` au lieu
+  d'un menu. La couverture des **refus non-admin**, qui dépendait de la seconde organisation, a
+  été reconstituée dans les tests (`seedSecondOrg`), **pas supprimée** : c'est la seule condition
+  qui rendait ce retrait acceptable.
 
 ---
 
@@ -173,6 +202,67 @@ signature inchangée.
 > ⚠️ **Reste ouvert, non traité** : `org_invitations_select` laisse tout membre lire l'`invitee_id`
 > de toutes les invitations, **y compris refusées**, sans date de péremption. Ce ne sont que des
 > UUID, mais c'est une trace persistante d'un refus. Cf. [`docs/RGPD.md`](./docs/RGPD.md) §1.
+>
+> 🟠 **Suivi le 2026-08-27 : ce point devient le finding G-1**, correctif écrit (mig. `130`),
+> **non appliqué en production**. Détail ci-dessous.
+
+## 🟠 G-1 · `org_invitations_select` · correctif ÉCRIT, mig. `130` NON APPLIQUÉE
+
+**Ce que c'est.** La policy posée par la mig. `105` est
+`(auth.uid() = invitee_id) OR is_org_member(org_id)` : **tout membre** de l'organisation lit
+l'`invitee_id` de **toutes** les invitations émises en son nom, y compris celles qui ont été
+**refusées**. Autrement dit, « telle personne a refusé de rejoindre cette entreprise » est lisible
+par n'importe quel collègue, alors que ni l'inviteur ni le destinataire ne le lui ont partagé.
+
+**Ce n'est pas une élévation de privilège.** Ce ne sont que des UUID : ni email ni nom, la policy
+de `profiles` tient toujours la frontière. C'est un défaut de **minimisation** (RGPD art. 5.1.c),
+sur une donnée qui est une décision individuelle rattachée à une personne identifiable par
+jointure.
+
+**Ce qui avait déjà été fait, et ce qui restait.** La mig. `112` a traité la **péremption** (les
+refus de plus de 30 jours sont purgés par `pg_cron`). Elle n'a pas touché au **périmètre** de
+lecture : pendant ces 30 jours, et pour toute invitation en attente, toute l'organisation lit la
+ligne. *Une purge n'est pas un contrôle d'accès.*
+
+**Correctif (mig. `130`)** : lecture restreinte à trois personnes, le **destinataire**,
+l'**inviteur** (il doit voir « en attente » pour ne pas réinviter) et un **admin** de
+l'organisation. Une seule policy PERMISSIVE, le `OR` existant est élargi (invariant mig. 049).
+
+**Impact client : nul.** La seule lecture directe de cette table côté application est
+`getPendingSentInvitationIds`, qui filtre déjà `inviter_id = auth.uid()`. La boîte de réception du
+destinataire passe par `get_my_org_invitations`, une fonction `SECURITY DEFINER` que cette policy
+ne gouverne pas.
+
+| État | Détail |
+|---|---|
+| Dépôt | ✅ `supabase/migration/130_org_invitations_select_narrowed.sql`, `check:rls` et `validate:migrations` verts |
+| **Production** | 🟠 **NON APPLIQUÉE au 2026-08-27** |
+| Test de base réelle | ✅ `e2e/rls/org-invitations.test.ts` (2026-08-27, soir) · sept cas joués dans **cinq rôles réels** sur la stack Supabase, plus le rôle `anon` |
+| Réversibilité | rejouer le bloc `CREATE POLICY` de la mig. `105` |
+
+**Ce que le test ajoute, et pourquoi le commentaire ne suffisait pas.** La migration portait en
+pied de fichier une « vérification après application » : trois requêtes à jouer à la main dans
+trois rôles. *Un commentaire n'est pas une vérification.* Tant que personne ne les joue, la
+migration ne repose que sur une relecture de son propre `USING`, ce qui est exactement la manière
+dont B-1 (mig. `107`) est passée : le SQL avait l'air juste.
+
+Le test couvre les trois qui **doivent** voir (destinataire, inviteur, admin), celui qui ne doit
+**rien** voir (un membre simple, sur l'invitation en attente **et** sur le refus d'un tiers, la
+donnée personnelle en cause), et le rôle `anon`.
+
+> ⚠️ **Un cas est un contre-exemple délibéré** : `etranger` est le destinataire de l'invitation
+> refusée. Le test exige qu'il voie **la sienne, et rien d'autre**. Un fichier qui n'attendrait que
+> des listes vides passerait aussi bien avec une policy qui n'autorise plus personne : il
+> vérifierait qu'on ne fuit rien, pas que le produit marche encore.
+>
+> 🔴 **Ce test est ROUGE tant que la migration n'est pas appliquée**, et seulement sur le cas du
+> membre simple. C'est voulu : c'est ce qui distingue « écrite » de « en vigueur ». Il tourne avec
+> `npm run test:rls`, qui exige une stack Supabase locale, donc en CI (job `rls-integration`).
+
+⚠️ `is_org_admin(org_id)` **dépend de la ligne**, contrairement aux deux autres branches. C'est
+assumé et documenté dans la migration : `org_invitations` compte des dizaines de lignes par
+organisation, pas des milliers. **Ne pas généraliser ce motif à une table volumineuse**, cf. les
+mig. `085` / `113` / `128`.
 
 ## ✅ B-3 · refermé (mig. 109, appliquée en prod le 2026-08-24)
 
@@ -211,6 +301,47 @@ isolément, pour qu'une migration puisse réparer l'oubli d'une précédente.
 > schéma, `REVOKE` hors du jeu de migrations). C'est la limite que `check-rls-advisors.mjs`
 > documentait déjà : *un modèle statique de l'historique complet est faux*. Une gate rouge en
 > permanence finit ignorée — le remède aurait été pire que le mal.
+
+---
+
+## 🟠 G-2 · aucune vérification de l'adresse email à l'inscription (2026-08-27)
+
+**Mesuré en base, pas déduit.** Sur les 28 comptes : `confirmation_sent_at` est renseigné sur
+**un seul**, et le délai entre `created_at` et `email_confirmed_at` descend à **15 millisecondes**
+(< 10 min sur 27 comptes). Ce n'est pas quelqu'un qui clique vite, c'est de l'auto-confirmation :
+**les confirmations d'inscription sont désactivées** sur le projet.
+
+**Ce que ça ouvre.** N'importe qui peut créer un compte portant l'adresse d'un tiers — COSMO
+traite alors la donnée personnelle de quelqu'un qui n'a rien demandé, et l'adresse est ensuite
+inutilisable par son propriétaire légitime. Symétriquement, une faute de frappe crée un compte
+**définitivement injoignable** : sans adresse valide, la réinitialisation de mot de passe ne peut
+plus rien pour lui.
+
+**Ce n'est pas une élévation de privilège** : l'inscrit contrôle son propre compte, pas celui d'un
+autre, et le tiers ne reçoit rien (aucun email ne part). C'est un défaut de **vérification
+d'identité déclarative**, avec un versant RGPD (base légale du traitement d'une adresse fournie
+par un tiers).
+
+**Pourquoi ça n'a pas été corrigé en le lisant.** Activer les confirmations sans SMTP applicatif
+est **pire** que le défaut : chaque inscription partirait par l'expéditeur intégré de Supabase,
+plafonné à quelques envois par heure. GoTrue répond alors `over_email_send_rate_limit`, que
+`safeAuthError` traduit par « Trop de tentatives. Réessayez dans quelques minutes. » — exact côté
+serveur, **trompeur** côté inscrit, qui n'a rien fait de trop et repart. Les deux gestes ne se
+séparent pas.
+
+| État | Détail |
+|---|---|
+| Front | ✅ **Prêt** : `register()` rapporte `needsEmailConfirmation` quand `signUp` ne renvoie pas de session, et `AuthForm` affiche « Vérifiez votre boîte mail » au lieu de pousser l'inscrit vers un écran protégé qui le rejetterait. Verrouillé par `src/components/AuthForm.confirmation.test.tsx`, **vu rouge** sans le correctif (2 cas sur 3), avec un **témoin** pour le régime actuel |
+| Gabarits | ✅ Écrits et versionnés (`supabase/templates/`, quatre emails, en français) |
+| Garde | ✅ `npm run check:mail` — **rouge aujourd'hui**, 3 contrôles DNS en échec |
+| **Production** | 🟠 **Rien n'est changé.** Le SMTP et le réglage vivent dans deux consoles, hors dépôt |
+| Marche à suivre | [`docs/DEPLOYMENT.md`](./docs/DEPLOYMENT.md) §2ter — **le SMTP d'abord, les confirmations ensuite** |
+
+> ⚠️ **Le sous-domaine d'envoi n'est pas un détail de confort.** La racine `thecosmo.app` porte
+> déjà les MX et le SPF d'IONOS, qui servent `contact@thecosmo.app`. Vérifier la racine chez
+> Resend et remplacer son SPF couperait l'émission légitime d'IONOS. C'est `send.thecosmo.app`
+> qui se vérifie, et la racine ne bouge pas — `check:mail` contrôle les deux, précisément pour
+> attraper cette erreur-là.
 
 ---
 
@@ -260,7 +391,7 @@ Aucun ne bloque un déploiement ; tous sont des clics dans le Dashboard.
 
 ---
 
-## Ordre de priorité avant déploiement prod (à jour 2026-08-25)
+## Ordre de priorité avant déploiement prod (à jour 2026-08-27)
 
 Section référencée par [`CLAUDE.md`](./CLAUDE.md) — elle n'existait plus depuis la refonte
 documentaire du 2026-08-14, le lien pointait dans le vide. Restaurée ici.
@@ -270,6 +401,8 @@ documentaire du 2026-08-14, le lien pointait dans le vide. Restaurée ici.
 | 0 | **`npm run test:coverage`** bloquait tout déploiement (3 seuils manqués). 115 tests de repository ajoutés, seuils du glob remontés | 🔴 CI | · | ✅ **verte au 2026-08-25 en fin de journée**, cf. [`docs/TESTING.md`](./docs/TESTING.md) |
 | 1 | Migrations `109`/`110` (B-1, B-2, B-3 + notifications de commentaire) | 🟠 sécurité + feature | — | ✅ **appliquées et vérifiées en prod le 2026-08-24** |
 | 1bis | Migrations `115` → `123` (permissions, FK RGPD, RPC indexables, Realtime, payload borné, fuseau des habitudes, périodicité de facturation) | 🟠 sécurité + perf | · | ✅ **appliquées et vérifiées en prod le 2026-08-25** |
+| 1ter | **Migration `130`** (G-1 · lecture d'`org_invitations` restreinte au destinataire, à l'inviteur et aux admins) | 🟠 minimisation RGPD | **Axel** applique, Claude vérifie | 🟠 **écrite le 2026-08-27, NON APPLIQUÉE** · la vérification n'est plus un commentaire : `e2e/rls/org-invitations.test.ts` la joue dans cinq rôles, et reste rouge jusqu'à l'application |
+| 1quater | **G-2 — SMTP applicatif pour Auth, PUIS confirmation d'email** ([`docs/DEPLOYMENT.md`](./docs/DEPLOYMENT.md) §2ter) | 🟠 vérification d'identité + délivrabilité | **Axel** (deux consoles, non scriptable) | 🟠 **front, gabarits et garde livrés le 2026-08-27 · production inchangée.** `npm run check:mail` est rouge jusqu'à la mise en service |
 | 2 | **Réglages de console Supabase** : A-10 (leaked password protection), MFA sur le compte admin, allowlist de redirection OAuth, secure email change | 🟠 clics Dashboard, ~30 min cumulés | **Axel** | ⏳ **en attente** |
 | 3 | **A-9 — plan Pro + PITR + drill de restauration** | 🔴 résilience, seul bloquant | **Axel** (compte, non scriptable) | ⏳ **en attente** |
 | 4 | Test de bout en bout de l'attribution `?ref=` (cf. [`docs/ACQUISITION.md`](./docs/ACQUISITION.md) §3) | 🟡 exige une vraie inscription | **Axel** | ⏳ **en attente** |
@@ -285,6 +418,23 @@ rouge n'est pas une garde, d'où `scripts/migration-guards.test.mjs`.
 ## Règles durables issues des audits
 
 Ces règles ont chacune coûté un finding. Elles s'appliquent à tout nouveau code.
+
+- **Un réglage qui vit dans une console d'éditeur n'est vérifié par personne** (G-2, 2026-08-27).
+  Le dépôt gouverne son code, ses migrations et ses secrets — mais ni les réglages
+  d'authentification Supabase, ni la zone DNS. Six semaines d'audits n'ont pas vu que les
+  confirmations d'inscription étaient désactivées, parce qu'**aucune de ces surfaces n'apparaît
+  dans un `grep`**. À chaque fois qu'un comportement du produit dépend d'un réglage hors dépôt,
+  écrire le script qui va le lire là où il vit : `check:mail` interroge le DNS, comme
+  `check:drift` interroge la base. Sinon la doc décrit une intention, jamais un état.
+- **Une purge n'est pas un contrôle d'accès** (G-1, 2026-08-27). La mig. `112` faisait expirer les
+  refus d'invitation au bout de 30 jours ; pendant ces 30 jours toute l'organisation les lisait.
+  Borner la **durée** d'une donnée et borner son **public** sont deux gestes distincts, et le
+  premier donne l'illusion d'avoir fait le second.
+- **Un indice d'affichage persisté n'est jamais une autorisation** (2026-08-27, `wasOrgMember`).
+  Un drapeau posé dans `localStorage` pour réserver la place d'une entrée de navigation doit
+  rester **sans effet sur la donnée** : l'écran cible redirige toujours quand la vérité arrive, et
+  la RLS gouverne toujours la lecture. Le jour où un tel indice décide d'un affichage de contenu,
+  il devient une décision d'accès prise côté client.
 
 - **La RLS dit ce qu'on a le DROIT de lire, jamais ce qu'on VEUT compter.** Une fonction de calcul
   métier doit filtrer explicitement (`user_id = auth.uid()`), sinon son périmètre change au gré
