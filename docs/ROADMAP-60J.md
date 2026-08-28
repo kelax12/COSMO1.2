@@ -154,7 +154,7 @@ Piste : **A** = agent backend/infra/sécu · **B** = agent front/UX/tests · **X
 | T-38 | Paiement | Réarmer la facturation : `ENTERPRISE_BILLING_ENFORCED = true` **et** `billing_flags.enterprise_seat_limit = true`, dans le même déploiement | Les deux drapeaux se déplacent ensemble. Serveur seul = impasse client, client seul = on encaisse sans rien débloquer | P1 | XS | T-35, T-36, T-37 | A | S7 |
 | T-39 | Paiement | Recette de bout en bout avec une **vraie carte** : souscription mensuelle, changement de palier depuis le portail, résiliation, vérification de `org_subscriptions` et du journal `payment_records` | Le webhook et le checkout n'ont jamais traité un paiement réel. Le seul endroit où COSMO choisit un prix au lieu de se le faire désigner est la résolution annuelle | P1 | M | T-38 | X + A | S7 |
 | T-40 | Emails | Poser `CRON_SECRET` (Supabase **et** GitHub) pour armer les avis de reconduction tacite | E6. Un avis non envoyé rend l'abonnement résiliable à tout moment, remboursement compris. Sans objet tant qu'aucun abonnement annuel n'existe, donc juste après T-39 | P2 | XS | T-39 | X | S7 |
-| T-41 | Scalabilité | Mesurer à volume réel : injecter ~2 000 `team_tasks` dans une organisation de test de 50 membres et rejouer le runbook `SCALABILITY.md` §10 | Les correctifs 113/117/128 sont vérifiés en plan et en test, **jamais contre du volume**. C'est exactement la confiance non vérifiée qui a laissé passer un `Seq Scan` global pendant six semaines | P2 | M | — | A | S6 |
+| 🟡 T-41 | Scalabilité | **Coût par ligne mesuré le 2026-08-28** (SCALABILITY §9bis), le rapport de 54× confirme l'audit du 14 août. Reste le comportement du planificateur, qui exige un vrai jeu de données. Mesurer à volume réel : injecter ~2 000 `team_tasks` dans une organisation de test de 50 membres et rejouer le runbook `SCALABILITY.md` §10 | Les correctifs 113/117/128 sont vérifiés en plan et en test, **jamais contre du volume**. C'est exactement la confiance non vérifiée qui a laissé passer un `Seq Scan` global pendant six semaines | P2 | M | — | A | S6 |
 | ✅ T-42 | Infrastructure | Confirmer que la prod utilise l'URL du pooler (PgBouncer 6543, mode transaction) | Jamais vérifié depuis le dépôt, et d'autant plus important vu le coût par ligne des prédicats RLS | P2 | XS | — | A | S5 |
 | T-43 | Legal | Collecter et archiver les DPA des sous-traitants (Supabase, Vercel, Sentry, Stripe, Resend) | A5 et A6. Chaînon obligatoire pour vendre à une entreprise, et il ne s'obtient qu'en tant qu'entreprise | P2 | M | T-32 | X | S7 |
 | ✅ T-44 | Legal | Recherche d'antériorité « COSMO » sur `data.inpi.fr` **et** `euipo.europa.eu`, classes 9 et 42 | Nom très générique, antériorités quasi certaines. La question n'est pas « existe-t-il une marque COSMO » mais « une marque COSMO couvre-t-elle le logiciel ». Se lancer sans le savoir, c'est risquer de devoir renommer après acquisition | P2 | S | — | X | S6 |
@@ -388,7 +388,7 @@ facture. Préparer maintenant évite de tout découvrir le jour de la bascule.
   webhook live est enregistré avec les 5 mêmes events, `STRIPE_SECRET_KEY` et
   `STRIPE_WEBHOOK_SECRET` sont remplacés, et un appel de fumée au webhook répond
   « Invalid signature » (donc la fonction tourne et vérifie).
-- [ ] **T-41** — mesure de scalabilité à volume réel · P2 · M · A
+- [~] 🟡 **T-41** — mesure de scalabilité à volume réel · P2 · M · A · **coût par ligne mesuré, plan à volume non**
   **Done** : `EXPLAIN (analyze, buffers)` à chaud sur une organisation de 50 membres et
   ~2 000 `team_tasks`, ratio buffers / lignes scannées inscrit dans `SCALABILITY.md` §9 en
   remplacement de la projection.
@@ -1083,3 +1083,41 @@ l'ensemble. On ajoute un geste, on n'en retire aucun.
 > en faisant basculer **aussi** la pastille « Tout » sur elle-même, ce qui la rendrait inerte au
 > clic et supprimerait la sortie explicite. *Unifier un geste ne doit pas coûter une sortie.*
 > Vu rouge sans le correctif, sur le seul cas attendu.
+
+### 2026-08-28 (semaine 6) — T-41 : le ratio se mesure, le planificateur non
+
+T-34, T-35 et T-36 sont des adhésions et des consoles. Reste T-41, et il demandait d'injecter
+2 000 `team_tasks` en production — ce que ce dépôt interdit. Fait à la place ce que le runbook §10
+désigne lui-même comme la seule grandeur qui se projette : **le coût par ligne**.
+
+| Chemin | Lignes balayées | Buffers | Buffers / ligne |
+|---|---|---|---|
+| `team_tasks` en direct, une organisation | 6 | 20 | **3,33** |
+| `tasks` en direct, table entière | 717 | 44 | **0,061** |
+
+**Rapport : 54×.** L'audit du 2026-08-14 avait établi « ≈ 60× » par une autre méthode, deux
+semaines plus tôt. **Deux mesures indépendantes, même ordre de grandeur** : le chiffre qui
+justifie les migrations 113 et 117 tient.
+
+La cause est **structurelle et visible dans le plan**, donc établie à n'importe quel volume : le
+chemin direct sur `team_tasks` porte `Filter: can_access_team_project(project_id)`, un appel de
+fonction **par ligne examinée**, là où le prédicat de `tasks` est entièrement hissé en `InitPlan`.
+
+> 🔴 **Le piège découvert au passage, et il valait le détour.** À volume actuel, mesurer en
+> **millisecondes** donne la réponse **inverse** de la bonne : `select * from tasks` répond en
+> 0,219 ms, `get_my_tasks()` en 1,739 ms — huit fois plus lent, alors qu'elle lit **moins** de
+> buffers (30 contre 44). À 717 lignes tenant en cache, le coût fixe de l'appel de fonction domine
+> tout. Quelqu'un qui chronomètre aujourd'hui conclurait qu'il faut revenir à `.from('tasks')`, et
+> il aurait tort : le coût du chemin direct croît avec **la table entière, tous comptes
+> confondus** ; celui de la RPC, avec **les seules lignes de l'appelant**. À 7 millions de lignes,
+> le premier demande ~427 000 buffers par lecture.
+>
+> C'est écrit dans `SCALABILITY.md` §9bis parce que c'est exactement le genre de mesure qui, prise
+> au sérieux sans son contexte, ferait annuler une bonne décision.
+
+**Ce qui reste non prouvé** : le comportement du **planificateur** à volume — un basculement de
+plan ne se déduit pas d'un ratio. Cette vérification demande un vrai jeu de données, sur une
+**branche Supabase ou une stack locale, jamais en production**.
+
+Corrigé au passage dans `SCALABILITY.md` §9 : l'item 1 de l'ordre de traitement (« `useTeamOKRs`
+en `live` conditionnel, ~15 minutes ») était **déjà fait**, et le document le demandait encore.
