@@ -5,6 +5,8 @@ import { useAuth, type AccountType } from '@/modules/auth/AuthContext';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
 import { MIN_PASSWORD_LENGTH, passwordStrength } from '@/lib/password-policy';
 import { useT } from '@/i18n/useT';
+import TurnstileWidget from '@/components/TurnstileWidget';
+import { resetTurnstile } from '@/lib/turnstile';
 
 const GoogleIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -72,6 +74,9 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onSwitchMode, onSuccess, head
   // `ProtectedRoute` renvoie l'inscrit sur `/login` sans un mot d'explication.
   // Cf. docs/DEPLOYMENT.md §2ter.
   const [pendingConfirmation, setPendingConfirmation] = useState<string | null>(null);
+  // Jeton anti-robot. Reste `undefined` tant que Turnstile n'est pas configuré :
+  // Supabase ignore alors la clé, et rien ne change. Cf. `@/lib/turnstile`.
+  const [captchaToken, setCaptchaToken] = useState<string | undefined>(undefined);
   const passwordRef = useRef<HTMLInputElement>(null);
   const { login, loginDemo, register, loginWithGoogle } = useAuth();
 
@@ -112,7 +117,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onSwitchMode, onSuccess, head
 
     try {
       if (mode === 'login') {
-        const result = await withTimeout(login(formData.email, formData.password));
+        const result = await withTimeout(login(formData.email, formData.password, captchaToken));
         if (result.success) {
           onSuccess();
         } else if (result.error?.includes('Invalid login credentials')) {
@@ -123,7 +128,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onSwitchMode, onSuccess, head
           setFormError(result.error || t('auth.loginError'));
         }
       } else {
-        const result = await withTimeout(register(formData.name, formData.email, formData.password, accountType));
+        const result = await withTimeout(register(formData.name, formData.email, formData.password, accountType, captchaToken));
         if (result.success) {
           // Compte créé mais aucune session : on ne navigue pas vers un écran
           // protégé qui rejetterait l'inscrit. On lui dit quoi faire.
@@ -136,6 +141,11 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onSwitchMode, onSuccess, head
     } catch (error) {
       setFormError(error instanceof Error ? error.message : t('auth.genericError'));
     } finally {
+      // Le jeton est a usage unique : sans ce rearmement, la tentative suivante
+      // echouerait pour une raison qui n a rien a voir avec ce que
+      // l utilisateur vient de corriger.
+      setCaptchaToken(undefined);
+      resetTurnstile();
       clearTimeout(slowTimer);
       setSlowHint(false);
       setIsLoading(false);
@@ -377,6 +387,11 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onSwitchMode, onSuccess, head
             </div>
           )}
         </div>
+
+        {/* Vérification anti-robot. Ne rend rien tant que Turnstile n'est pas
+            configuré (`VITE_TURNSTILE_SITE_KEY`), donc aucun script tiers n'est
+            chargé et le parcours est inchangé. */}
+        <TurnstileWidget onToken={(token) => setCaptchaToken(token ?? undefined)} />
 
         {formError && (
           <div

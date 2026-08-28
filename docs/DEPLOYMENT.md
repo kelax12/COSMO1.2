@@ -238,6 +238,59 @@ que la mise en service.
 
 ---
 
+## 2quater. Protection anti-robot (Cloudflare Turnstile) — **inerte au 2026-08-28**
+
+Le code est livré et **ne fait rien** tant que deux réglages ne sont pas posés, dans cet ordre.
+Fournisseur arbitré par Axel le 2026-08-28 : **Turnstile**, moins intrusif que hCaptcha sur un
+entonnoir d'inscription déjà fragile.
+
+### Pourquoi, et pourquoi c'est lié aux emails
+
+Le risque n'est pas le faux compte, c'est le **quota d'envoi**. Une vague de robots vide le
+plafond d'emails du projet, et les inscriptions légitimes échouent alors avec « Trop de
+tentatives » sans que personne ne comprenne pourquoi. C'est le même mode de défaillance que §2ter,
+et les deux se corrigent ensemble ou pas du tout.
+
+### Mise en service — l'ordre est impératif
+
+1. **Créer un widget Turnstile** sur le compte Cloudflare (mode *Managed*). Il produit une clé
+   **publique** (site key) et une clé **secrète**.
+2. **Poser `VITE_TURNSTILE_SITE_KEY`** dans les variables Vercel, puis **redéployer**. À partir de
+   là le widget s'affiche et produit des jetons, que le serveur **ignore encore**. Rien ne casse.
+3. **Seulement ensuite**, activer côté Supabase : Authentication → Attack Protection → *Enable
+   CAPTCHA protection*, fournisseur Turnstile, avec la clé **secrète**.
+
+> 🔴 **Inverser 2 et 3 rend l'inscription ET la connexion impossibles pour tout le monde**, parce
+> que GoTrue exigerait un jeton que personne n'envoie encore. C'est une panne totale de
+> l'authentification, pas une dégradation.
+
+### 🔴 Activer le CAPTCHA cassera `npm run cosmo:login`
+
+La protection Supabase couvre aussi `signInWithOtp`, qu'utilise le **CLI agent**
+(`scripts/cosmo/login.mjs`). Un script Node ne peut pas résoudre un challenge : la connexion du
+CLI échouera, et avec elle tout accès agent aux données réelles.
+
+**À savoir avant de basculer le réglage, pas à découvrir le jour où le CLI s'arrête.** Il n'y a pas
+de contournement propre côté client ; les sorties sont de garder une session CLI valide (elle
+survit à l'activation, seule la *reconnexion* casse), ou d'accepter que le CLI se reconnecte
+depuis un navigateur.
+
+### Ce que le code fait déjà
+
+- `src/lib/turnstile.ts` — **aucun script tiers n'est chargé** tant que la clé publique est
+  absente. Vérifié par test : un visiteur ne paie aujourd'hui aucune requête vers Cloudflare.
+- Le jeton est joint à `signUp`, `signInWithPassword` **et** `resetPasswordForEmail` — les trois
+  points d'entrée que Supabase protège. En oublier un le rendrait inutilisable après activation.
+- Le jeton est **à usage unique** : il est réarmé après chaque tentative, sinon la deuxième
+  échouerait pour une raison sans rapport avec ce que l'utilisateur vient de corriger.
+- Un échec de chargement (extension, réseau filtrant, panne Cloudflare) **ne bloque pas** le
+  formulaire : on laisse soumettre, et c'est le serveur qui tranche. Un CAPTCHA injoignable ne doit
+  jamais devenir une porte fermée.
+- `captcha_failed` est traduit dans `src/modules/auth/auth-errors.ts`.
+- CSP : `challenges.cloudflare.com` est autorisé en `script-src`, `connect-src` et `frame-src`.
+
+---
+
 ## 2. Appliquer une migration de base de données
 
 ⚠️ **Les migrations ne sont PAS appliquées par le déploiement Vercel.** Elles

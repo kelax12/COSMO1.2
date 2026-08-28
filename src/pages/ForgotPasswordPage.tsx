@@ -4,6 +4,8 @@ import { Mail, AlertCircle, CheckCircle2, ArrowLeft } from 'lucide-react';
 import { useSeoMeta } from '@/lib/useSeoMeta';
 import { supabase } from '@/lib/supabase';
 import { sanitizeEmail, isValidEmail } from '@/lib/email';
+import TurnstileWidget from '@/components/TurnstileWidget';
+import { resetTurnstile } from '@/lib/turnstile';
 import Logo from '@/components/Logo';
 import { useT } from '@/i18n/useT';
 
@@ -24,6 +26,9 @@ const ForgotPasswordPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Reste `undefined` tant que Turnstile n'est pas configure : Supabase ignore
+  // alors la cle, le parcours est inchange. Cf. `@/lib/turnstile`.
+  const [captchaToken, setCaptchaToken] = useState<string | undefined>(undefined);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,6 +42,7 @@ const ForgotPasswordPage = () => {
     try {
       const { error: resetError } = await supabase.auth.resetPasswordForEmail(clean, {
         redirectTo: `${window.location.origin}/reset-password`,
+        captchaToken,
       });
       if (resetError) {
         setError(t('auth.sendFailed'));
@@ -47,6 +53,9 @@ const ForgotPasswordPage = () => {
       setError(t('auth.genericError'));
     } finally {
       setIsLoading(false);
+      // Jeton a usage unique — cf. `@/lib/turnstile`.
+      setCaptchaToken(undefined);
+      resetTurnstile();
     }
   };
 
@@ -104,6 +113,12 @@ const ForgotPasswordPage = () => {
                   />
                 </div>
               </div>
+              {/* Verification anti-robot — ne rend rien tant que Turnstile
+                  n'est pas configure. La reinitialisation de mot de passe est,
+                  avec l'inscription, l'autre point d'entree qui declenche un
+                  envoi d'email : la proteger sans proteger celle-ci laisserait
+                  la porte ouverte sur le meme quota. */}
+              <TurnstileWidget onToken={(token) => setCaptchaToken(token ?? undefined)} />
               {error && (
                 <div role="alert" className="flex items-start gap-2 px-3 py-2.5 rounded-xl bg-red-500/10 border border-red-500/30 text-sm text-red-400">
                   <AlertCircle size={16} className="shrink-0 mt-0.5" aria-hidden="true" />
