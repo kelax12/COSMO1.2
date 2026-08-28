@@ -123,7 +123,6 @@ const KNOWN_OVERSIZED = new Set([
   'src/components/task-modal/DesktopDetailsStep.tsx', // 703
   'src/components/task-modal/TaskModalMobileBody.tsx', // 698
   'src/components/organization/TeamTaskModal.tsx', // 685
-  'src/modules/auth/AuthContext.tsx', // 626
   'src/pages/tasks/TaskListsBar.tsx', // 615
   'src/modules/friends/supabase.repository.ts', // 601
 ]);
@@ -175,7 +174,7 @@ const KNOWN_OVERSIZED = new Set([
  * La barre d'outils extraite est purement presentationnelle — aucun etat de
  * filtre n'a bouge, il reste dans l'onglet qui sait ce qu'il filtre.
  */
-const OVERSIZED_BUDGET = 10811;
+const OVERSIZED_BUDGET = 10185;
 
 const loc = (file: string) => readFileSync(file, 'utf8').split('\n').length;
 

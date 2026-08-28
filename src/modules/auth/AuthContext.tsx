@@ -16,6 +16,7 @@ import {
   persistDemoProfile,
   type DemoProfilePatch,
 } from './demo-profile';
+import { AUTH_LOGIN_GENERIC, AUTH_REGISTER_GENERIC, safeAuthError } from './auth-errors';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import * as Sentry from '@sentry/react';
 import { toast } from 'sonner';
@@ -116,9 +117,9 @@ type AuthContextType = {
   isAuthenticated: boolean;
   isDemo: boolean;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  login: (email: string, password: string, captchaToken?: string) => Promise<{ success: boolean; error?: string }>;
   loginDemo: () => void;
-  register: (name: string, email: string, password: string, accountType?: AccountType) => Promise<{ success: boolean; error?: string; needsEmailConfirmation?: boolean }>;
+  register: (name: string, email: string, password: string, accountType?: AccountType, captchaToken?: string) => Promise<{ success: boolean; error?: string; needsEmailConfirmation?: boolean }>;
   loginWithGoogle: () => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   /**
@@ -126,43 +127,6 @@ type AuthContextType = {
    * vrai compte passe par `supabase.auth.updateUser`, jamais par le client.
    */
   updateDemoProfile: (patch: DemoProfilePatch) => void;
-};
-
-// ═══════════════════════════════════════════════════════════════════
-// AUD-05 — Ne jamais renvoyer `error.message` brut à l'UI
-//
-// `login` et `register` étaient les deux derniers chemins à échapper à la
-// règle V7/N1 appliquée partout ailleurs via `normalizeApiError`. Le cas qui
-// compte est `signUp` sur une adresse déjà enregistrée : Supabase répond
-// « User already registered » (code `user_already_exists`), ce qui transforme
-// le formulaire d'inscription en oracle d'existence de compte — de quoi
-// vérifier en masse quelles adresses d'une fuite tierce ont un compte COSMO,
-// puis cibler le credential stuffing.
-//
-// Contrat : seuls des codes explicitement whitelistés produisent un message
-// spécifique ; tout le reste retombe sur un texte générique identique.
-// ═══════════════════════════════════════════════════════════════════
-
-const AUTH_LOGIN_GENERIC = 'Email ou mot de passe incorrect.';
-const AUTH_REGISTER_GENERIC =
-  "Impossible de finaliser l'inscription. Vérifiez vos informations et réessayez.";
-
-type SupabaseAuthErrorLike = { code?: string; status?: number; message?: string };
-
-const safeAuthError = (error: SupabaseAuthErrorLike, fallback: string): string => {
-  // Loggé pour l'ops (droppé du bundle prod par esbuild, remonté par Sentry).
-  console.error('[auth]', error.code ?? error.status ?? 'unknown', error.message);
-  const code = error.code;
-  if (code === 'over_email_send_rate_limit' || code === 'over_request_rate_limit' || error.status === 429) {
-    return 'Trop de tentatives. Réessayez dans quelques minutes.';
-  }
-  if (code === 'weak_password') {
-    return 'Mot de passe trop faible. Choisissez-en un plus long et plus varié.';
-  }
-  if (code === 'email_address_invalid') {
-    return "Cette adresse email n'est pas valide.";
-  }
-  return fallback;
 };
 
 /**
@@ -460,13 +424,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     queryClient.clear();
   };
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string, captchaToken?: string) => {
     if (!isSupabaseConfigured) {
       return { success: false, error: 'Supabase non configuré. Vérifiez les variables d\'environnement.' };
     }
     exitDemoIfActive();
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { error } = await supabase.auth.signInWithPassword({ email, password, options: { captchaToken } });
       if (error) return { success: false, error: safeAuthError(error, AUTH_LOGIN_GENERIC) };
       return { success: true };
     } catch {
@@ -474,7 +438,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const register = async (name: string, email: string, password: string, accountType: AccountType = 'personal') => {
+  const register = async (name: string, email: string, password: string, accountType: AccountType = 'personal', captchaToken?: string) => {
     if (!isSupabaseConfigured) {
       return { success: false, error: 'Supabase non configuré. Vérifiez les variables d\'environnement.' };
     }
@@ -502,6 +466,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         email: cleanEmail,
         password,
         options: {
+          captchaToken,
           data: {
             name: name,
             // Lu par le trigger handle_new_user_profile (mig. 060) avec garde

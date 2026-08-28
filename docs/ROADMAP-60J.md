@@ -80,7 +80,7 @@ Piste : **A** = agent backend/infra/sécu · **B** = agent front/UX/tests · **X
 | ✅ T-11 | Base de données | `npm run check:drift` après la 130, et consigner le résultat | Après chaque migration appliquée, sans exception | P1 | XS | T-10 | A | S1 |
 | T-12 | Support | Déployer `report-bug` + poser `RESEND_API_KEY` dans les secrets Supabase | AM-2. Seul canal de support du produit | P1 | XS | T-03 | A | S1 |
 | T-13 | Monitoring | Poser `OPS_ALERT_WEBHOOK_URL` (webhook Slack ou Discord) | `alert.ts` est un no-op silencieux aujourd'hui : un webhook Stripe en échec ou une purge RGPD avortée ne réveillent personne | P1 | XS | — | X | S1 |
-| T-14 | Sécurité | Activer un CAPTCHA (Cloudflare Turnstile) sur inscription et reset de mot de passe | AM-3. Se pose côté Supabase Auth + un champ dans le formulaire | P1 | S | T-03 | A + B | S2 |
+| 🟡 T-14 | Sécurité | **Code livré le 2026-08-28, inerte.** Reste : créer le widget Cloudflare, poser `VITE_TURNSTILE_SITE_KEY`, puis activer côté Supabase. Activer un CAPTCHA (Cloudflare Turnstile) sur inscription et reset de mot de passe | AM-3. Se pose côté Supabase Auth + un champ dans le formulaire | P1 | S | T-03 | A + B | S2 |
 | T-15 | Analytics | Valider la chaîne `?ref=` de bout en bout : ouvrir `https://thecosmo.app/?ref=test_manuel`, créer un compte jetable, vérifier `profiles.acquisition_source = 'test_manuel'`, puis supprimer le compte | 28 comptes, **0** avec une source. On ne sait toujours pas si la chaîne marche ou si personne n'est passé par un `?ref=`. Lancer une campagne sur une chaîne jamais validée est le gaspillage le plus cher possible | P0 | S | T-03 | X | S2 |
 | ✅ T-16 | Monitoring | Vérifier que `VITE_SENTRY_DSN` est bien posé sur Vercel et qu'une erreur de test remonte | Le monitoring est désactivé en silence si la variable manque. Jamais vérifié depuis le dépôt | P1 | XS | — | X | S1 |
 | T-17 | Monitoring | Brancher une sonde de disponibilité externe (UptimeRobot / Better Stack, palier gratuit) sur `/` et sur `auth/v1/health` | AM-4 | P2 | XS | — | X | S2 |
@@ -98,7 +98,7 @@ Piste : **A** = agent backend/infra/sécu · **B** = agent front/UX/tests · **X
 | ✅ T-24 | Fiabilité | Détection de nouvelle version pour les onglets jamais rechargés (bannière « une mise à jour est disponible ») | **91,5 % du trafic Supabase du 2026-08-26 venait de deux onglets exécutant un bundle périmé.** Sans ce mécanisme, tout correctif client n'atteint que ceux qui rouvrent l'application, et les utilisateurs les plus assidus sont les plus coûteux | P2 | M | — | B | S4 |
 | T-25 | UX / Produit | Barre d'onglets entreprise sur mobile : 4 destinations sur 7 hors écran, aucun indice de continuation | P1 de la critique UI du 2026-08-27. Le mode entreprise est l'offre qui se vend | P2 | M | — | B | S4 |
 | T-26 | UX / Produit | Unifier les deux grammaires de filtre entre les onglets « Tâches » et « Projets » | Même donnée, deux façons de la filtrer. Second P1 de la même critique | P2 | M | — | B | S5 |
-| T-27 | UX / Produit | `buildOrgEvents` : exclure `currentUserId` de la frise « entreprise », et corriger le titre contradictoire | La frise répète les tâches déjà affichées juste au-dessus | P3 | S | — | B | S5 |
+| ⚪ T-27 | UX / Produit | **CLOS sans changement** (arbitrage Axel, 2026-08-28) : la répétition est assumée, le titre était déjà corrigé. `buildOrgEvents` : exclure `currentUserId` de la frise « entreprise », et corriger le titre contradictoire | La frise répète les tâches déjà affichées juste au-dessus | P3 | S | — | B | S5 |
 | T-28 | Performance | Resserrer les seuils Lighthouse après le premier run réel en CI | Ils sont provisoires et posés au-dessus du réel : un budget très au-dessus du réel ne mesure rien | P2 | S | — | A | S3 |
 | T-29 | Performance | Ramener le chunk d'entrée sous 92 ko gzip et **redescendre le plafond** de `check:bundle` | 87,2 → 106,9 ko en deux jours, plafond relevé de 92 à 112 pour l'absorber. C'est le seul plafond du dépôt qu'on ait jamais remonté ; tant que la marge se regagne en relevant la barre, le budget ne garde plus rien | P2 | M | — | B | S4 |
 | ✅ T-30 | Legal | Publier les durées de conservation dans la politique de confidentialité (90 j visite démo, 400 j activité et démo convertie, 90 j marqueurs Stripe) | Dernier point du dossier RGPD qui n'attend plus rien d'autre que d'être écrit, et il débloque la réponse à un acheteur B2B | P2 | XS | — | B | S3 |
@@ -229,7 +229,7 @@ en bout côté attribution.
   n'ouvre plus de session et affiche « Vérifiez votre boîte mail » ; le lien reçu active bien le
   compte. **Dans cet ordre** : activer les confirmations avant d'avoir le SMTP, c'est ouvrir
   l'inscription sur un expéditeur plafonné.
-- [ ] **T-14** — Turnstile sur inscription et reset · P1 · S · A + B
+- [~] 🟡 **T-14** — Turnstile sur inscription et reset · P1 · S · **code livré, deux réglages restants**
   **Done** : une inscription sans jeton de challenge est refusée côté Supabase (pas seulement
   masquée côté client) ; le parcours démo → inscription reste franchissable en un essai ; un test
   E2E couvre le cas nominal.
@@ -753,3 +753,38 @@ tout ce qui pouvait être préparé en amont l'est : runbook, gabarits d'email, 
 confirmation d'adresse, garde `check:mail`.
 
 **La semaine 1 n'attend plus une seule ligne de code.**
+
+### 2026-08-28 (fin) — semaine 2 entamée : T-14 livré inerte, T-27 clos
+
+| Tâche | Résultat |
+|---|---|
+| 🟡 **T-14** | **Cloudflare Turnstile câblé, et volontairement inerte.** Aucun script tiers n'est chargé tant que `VITE_TURNSTILE_SITE_KEY` est absente — vérifié par test, c'est le témoin du fichier. Le jeton est joint aux **trois** points d'entrée que Supabase protège : `signUp`, `signInWithPassword` et `resetPasswordForEmail`. En oublier un rendrait l'authentification inutilisable le jour de l'activation |
+| ⚪ **T-27** | **Clos sans changement**, arbitrage rendu par Axel : la répétition est assumée. Le titre incriminé était déjà corrigé |
+
+> 🔴 **Deux avertissements à lire AVANT de toucher au réglage Supabase**, tous deux dans
+> `DEPLOYMENT.md` §2quater :
+>
+> 1. **L'ordre est impératif.** Poser la clé publique et redéployer *d'abord*, activer côté
+>    Supabase *ensuite*. Inversé, GoTrue exige un jeton que personne n'envoie encore : inscription
+>    **et** connexion tombent pour tout le monde. Ce n'est pas une dégradation, c'est une panne
+>    totale de l'authentification.
+> 2. **Activer le CAPTCHA cassera `npm run cosmo:login`.** La protection couvre aussi
+>    `signInWithOtp`, qu'utilise le CLI agent, et un script Node ne peut pas résoudre un challenge.
+>    Une session CLI déjà ouverte survit ; c'est la *reconnexion* qui casse.
+
+#### Le cliquet de taille a joué une cinquième fois
+
+Le cas captcha demandait quatre lignes dans `safeAuthError`, or `AuthContext.tsx` était à
+626 lignes pour un budget qui n'avait plus **qu'une seule ligne de marge**. La garde a donc imposé
+la découpe plutôt que le contournement, exactement comme les quatre fois précédentes.
+
+`src/modules/auth/auth-errors.ts` sort la traduction d'erreurs du provider : une fonction pure,
+testable sans React ni Supabase. **`AuthContext` passe de 626 à 591 lignes et QUITTE la liste des
+fichiers hors budget** — le budget tombe de 10 811 à **10 185**, et le fichier est retiré de
+`KNOWN_OVERSIZED`. C'est la première fois qu'une coupe fait sortir un fichier du socle et non de
+`/entreprise`.
+
+> Le classement change en conséquence : `TaskTable` 1 124 · `PyramidTab` 1 045 · `AgendaPage` 900 ·
+> `SettingsPage` 852 · `InboxMenu` 802 · `useTaskModal` 719 · `TasksPage` 712 ·
+> `team-projects/local.repository` 710 · `DesktopDetailsStep` 703 · `TaskModalMobileBody` 697 ·
+> `TeamTaskModal` 692 · `TaskListsBar` 615 · `friends/supabase.repository` 601. **Treize fichiers.**
