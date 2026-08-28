@@ -167,19 +167,22 @@ export function OrgBillingTab({ orgId, isOwner, memberCount, onBack }: Props) {
           )}
         </div>
 
-        {/* Monté même quand la facturation dort : le sélecteur informe alors du
-            tarif qui s'appliquera après l'offre de lancement, exactement comme
-            la grille barrée qu'il pilote. Il ne déclenche aucun paiement — ça,
-            c'est le CTA de chaque palier, monté sous la seule condition
-            `ENTERPRISE_BILLING_ENFORCED`. */}
-        <BillingIntervalToggle
-          value={billingInterval}
-          onChange={setBillingInterval}
-          disabled={checkout.isPending}
-        />
+        {/* Masqué tant que la facturation dort : afficher un choix annuel sur
+            une offre gratuite reviendrait à laisser croire qu'on peut figer un
+            tarif réduit avant même que la facturation existe. La feature
+            n'est pas supprimée : `billingInterval` reste utilisable, il ne
+            reste juste plus qu'à la valeur par défaut `monthly` tant que le
+            flag est bas. */}
+        {ENTERPRISE_BILLING_ENFORCED && (
+          <BillingIntervalToggle
+            value={billingInterval}
+            onChange={setBillingInterval}
+            disabled={checkout.isPending}
+          />
+        )}
       </div>
 
-      {billingInterval === 'yearly' && (
+      {ENTERPRISE_BILLING_ENFORCED && billingInterval === 'yearly' && (
         <p className="-mt-3 text-xs text-[rgb(var(--color-text-secondary))]">
           {t('billing.intervalYearlyHint')}
         </p>

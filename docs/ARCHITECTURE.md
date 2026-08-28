@@ -1,23 +1,44 @@
 # Architecture — invariants, dette et vérification
 
 **Audit du 2026-08-14, invariants remesurés le 2026-08-24 puis le 2026-08-25** (colonne
-« 2026-08-25 » du tableau §1). Mesuré contre le code de `main` et la prod. Remplace
+« 2026-08-25 » du tableau §1), **budget de taille et suite unitaire remesurés le 2026-08-27**
+(§3, 4ᵉ passe du cliquet). Le reste du tableau §1 n'a **pas** été revérifié le 27, sa colonne le
+dit ligne par ligne. Mesuré contre le code de `main` et la prod. Remplace
 [`archive/AUDIT-ARCHITECTURE-2026-08-07.md`](./archive/AUDIT-ARCHITECTURE-2026-08-07.md)
 (20 correctifs, note 60→79), 77 commits plus tôt.
 
 Ce document ne redécrit pas l'architecture — c'est le rôle de [`../CLAUDE.md`](../CLAUDE.md). Il
 répond à une seule question : **les invariants qu'on s'est donnés tiennent-ils encore ?**
 
-## Note d'architecture : 74 → **79 / 100** (2026-08-24 → 2026-08-25)
+## Note d'architecture : 74 → 79 → **81 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27)
 
-| Ce qui compose la note | 08-24 | 08-25 |
-|---|---|---|
-| Invariants tenus | 10 / 13 | **12 / 14** |
-| Fichiers > 600 LOC | 16 · 12 503 lignes | **15 · 11 452 lignes** (−1 051) |
-| Plus gros fichier | `PyramidTab` 1 506 | **`TaskTable` 1 124** (PyramidTab tombé à 1 045) |
-| Primitives livrées sans consommateur | 3 | **2** (`MobileHeader` passe de 2 à **8** consommateurs) |
-| Invariants **outillés** (une garde, pas un Markdown) | 6 | **6** |
-| Suite unitaire | 1 583 / 143, verte | **1 736 / 151, verte** |
+| Ce qui compose la note | 08-24 | 08-25 | **08-27** |
+|---|---|---|---|
+| Invariants tenus | 10 / 13 | **12 / 14** | **12 / 14**, inchangé |
+| Fichiers > 600 LOC | 16 · 12 503 lignes | 15 · 11 452 lignes (−1 051) | **14 · budget de garde 10 811** (−643) |
+| Plus gros fichier | `PyramidTab` 1 506 | **`TaskTable` 1 124** (PyramidTab tombé à 1 045) | `TaskTable` **1 124**, inchangé |
+| Primitives livrées sans consommateur | 3 | **2** (`MobileHeader` passe de 2 à **8** consommateurs) | 2, non remesuré |
+| Invariants **outillés** (une garde, pas un Markdown) | 6 | 6 | 6 |
+| Suite unitaire | 1 583 / 143, verte | 1 736 / 151, verte | **1 802 / 159, verte** |
+
+### 2026-08-27 · +2, et un seul critère les porte
+
+**Deux critères bougent, les quatre autres sont explicitement inchangés** (colonne ci-dessus) :
+le budget de taille, quatrième passe du cliquet, et la suite unitaire, +66 tests. Rien d'autre
+n'a été remesuré ce jour-là, et rien d'autre ne prend de point.
+
+**Ce qui vaut plus que les deux points : le cliquet a attrapé une régression que son auteur
+niait.** Le correctif d'états de chargement (`1d98f93`) ajoutait 9 lignes à `TeamTasksTab.tsx`,
+déjà hors budget : le total est passé à 11 463 pour un plafond à 11 454, et la garde
+`architecture.guard` est passée au rouge. Elle a été déclarée **deux fois** « antérieure à ce
+travail », sur la foi d'un `git stash` pris à un moment où le commit fautif était déjà en place.
+La vérification correcte, restaurer `src/` à `4b91816` et relancer, montre la garde **verte**
+avant. Le commit `180fba1` porte cette correction en tête de son propre message.
+
+> ⚠️ **La leçon est méthodologique, et elle est la même que celle du 2026-08-25 sur les
+> `refetchInterval`** : un « avant » ne se lit pas dans un stash, il se reconstruit à un commit
+> nommé. Une garde rouge est coupable jusqu'à preuve du contraire, et la preuve est une mesure au
+> commit précédent, pas un souvenir de l'état de l'arbre de travail.
 
 **+5.** Le cliquet de taille a joué deux fois en deux jours et le budget a baissé de 1 051 lignes
 sans qu'aucune fonctionnalité ne soit reportée : c'est la démonstration que la garde rend le
@@ -51,12 +72,12 @@ mais le cliquet les fait baisser) et la taille du chunk `index`
 | Toutes les tables `public` ont RLS activée | `SECURITY.md` | ✅ **Tenu**, vérifié en prod : 0 table avec `relrowsecurity = false` |
 | **Jamais de `supabase.from()` hors d'un repository** | `SCALABILITY.md` §5 + garde | ✅ **Tenu** · invariant **outillé** (§2) |
 | Imports toujours via l'alias `@/` | CLAUDE.md + ESLint | ✅ **Tenu** · outillé par `no-restricted-imports` (§2) |
-| Aucun fichier source > 600 LOC | refactor de juin 2026 + cliquet | ❌ **Toujours violé · 15 fichiers**, mais le budget a **encore baissé** : 13 103 → 12 503 → **11 452** lignes (§3) |
+| Aucun fichier source > 600 LOC | refactor de juin 2026 + cliquet | ❌ **Toujours violé · 14 fichiers au 2026-08-27**, mais le budget a **encore baissé** : 13 103 → 12 503 → 11 452 → **10 811** (§3) |
 | **Les lectures de liste entreprise passent par une RPC indexable** | CLAUDE.md ⚡ + test | ✅ **Tenu** · `get_my_team_projects` / `get_my_team_tasks` (mig. 113), `get_my_team_task_dependencies` (mig. 117). Verrouillé par `team-projects/supabase.repository.test.ts` |
 | **Un droit entreprise se lit dans `permissions.ts`, jamais recalculé** | CLAUDE.md 🔐 + garde | ✅ **Tenu depuis le 2026-08-25** : une seule source de vérité cliente (`useMyOrgPermissions`), miroir du SQL, 205 tests |
 | **Aucune position d'arrivée portée par une animation de transform** | CLAUDE.md + garde | 🟠 **17 feuilles encore écrites à la main**, mais les 5 réellement cassées sont corrigées et un cliquet interdit toute nouvelle (cf. [`MOBILE.md`](./MOBILE.md) §1) |
 | **Aucun `refetchInterval` permanent** | CLAUDE.md 📡 | ✅ **Tenu au 2026-08-25, mais au deuxième essai.** Annoncé acquis le matin alors que 3 subsistaient ; corrigés l'après-midi. Décompte nominatif dans [`SCALABILITY.md`](./SCALABILITY.md) §3 |
-| Suite unitaire verte | `TESTING.md` | ✅ **1 736 / 1 736 au 2026-08-25** |
+| Suite unitaire verte | `TESTING.md` | ✅ **1 802 / 1 802 au 2026-08-27** (1 736 au 08-25) |
 
 Les invariants qui portent la **sécurité** tiennent tous. Celui qui porte le **coût de
 lecture** aussi. Celui qui porte le **coût de sondage**, non (§7).
@@ -116,7 +137,7 @@ Deux choix méritent d'être relus avant d'être « simplifiés » :
 `supabase.from(`. Les commentaires sont retirés avant la recherche — sans ça, la phrase qui
 explique la règle déclenchait la règle.
 
-## 3. 🟠 L'objectif « aucun fichier > 600 LOC » · 17 → 15 fichiers, 13 103 → 11 452 lignes
+## 3. 🟠 L'objectif « aucun fichier > 600 LOC » · 17 → 14 fichiers, 13 103 → 10 811 lignes
 
 > **Remesuré le 2026-08-25 : 15 fichiers, 11 452 lignes.** Le budget a baissé de **1 651 lignes
 > en deux jours**, alors que ces deux jours ont livré sept migrations et un système de permissions
@@ -132,6 +153,30 @@ explique la règle déclenchait la règle.
 > ⚠️ **Le nouveau plus gros fichier est `TaskTable.tsx` (1 124), et il n'a pas bougé de la
 > journée.** Tant qu'on découpe l'entreprise, la dette du socle reste où elle est. La prochaine
 > coupe utile n'est plus dans `/entreprise`.
+
+### 4ᵉ passe (2026-08-27) : `TeamTasksTab` sort de la liste, et c'est la garde qui l'a imposé
+
+> **14 fichiers, budget de garde 11 454 → 10 811.** `TeamTasksTab.tsx` passe de **651 à 573**
+> lignes par extraction de `TeamTasksToolbar.tsx` (recherche, tri, création, filtres de statut),
+> composant **purement présentationnel** : aucun état de filtre n'a bougé, il reste dans l'onglet
+> qui sait ce qu'il filtre.
+>
+> **Le déclencheur n'est pas une intention de refactor.** Le correctif d'états de chargement
+> (`1d98f93`) ajoutait 9 lignes à ce fichier déjà hors budget, le total passait à 11 463, la garde
+> a refusé. La découpe a suivi. C'est la **quatrième** fois de suite que la séquence est
+> identique : une feature ajoute quelques lignes à un gros fichier, le cliquet refuse la
+> croissance nette, un découpage réel se fait. La garde ne demande jamais de refactor, elle rend
+> le refactor moins cher que le contournement.
+>
+> Classement au 2026-08-27, mesuré : `TaskTable` 1 124 · `PyramidTab` 1 045 · `AgendaPage` 900 ·
+> `SettingsPage` 852 · `InboxMenu` 802 · `useTaskModal` 719 · `TasksPage` 712 ·
+> `team-projects/local.repository` 710 · `DesktopDetailsStep` 703 · `TaskModalMobileBody` 697 ·
+> `TeamTaskModal` 692 · `AuthContext` 626 · `TaskListsBar` 615 · `friends/supabase.repository` 600.
+>
+> ⚠️ **`TaskTable.tsx` (1 124) n'a toujours pas bougé**, troisième journée consécutive. Les quatre
+> passes du cliquet ont toutes porté sur `/entreprise`, parce que c'est là que le travail a lieu.
+> **La dette du socle ne baisse pas toute seule** : le cliquet empêche la croissance, il ne
+> désigne pas la prochaine coupe utile. Celle-ci reste `TaskTable`.
 
 ### 3ᵉ passe (2026-08-24) : le plus gros fichier du dépôt n'est plus `PyramidTab`
 
@@ -225,6 +270,14 @@ lui-même — c'est que la doc décrit alors une architecture qui n'existe pas.
 > supprimer.** Le garder, c'est accumuler du code dont on ignore l'état.
 >
 > ⚠️ `MobileScreen` et `ListRow` sont toujours à **0**, un mois après le constat.
+
+> **2026-08-27 · une troisième forme du motif, plus discrète : le hook existant mais non exporté.**
+> `useUpcomingEvents` (module `events`) était écrit, testé par son module, et **absent du barrel**.
+> La carte « Mon agenda » de l'aperçu entreprise (`3fbe2dc`) n'a eu qu'à l'exporter pour s'en
+> servir. Ce n'est pas du code mort au sens des lignes ci-dessus, c'est du code **inatteignable
+> depuis les zones qui en ont besoin**, et l'effet pratique est le même : la fonctionnalité se
+> réécrit ailleurs, ou ne se fait pas. À surveiller à l'ajout d'un hook, la question n'est pas
+> « existe-t-il ? » mais « une autre zone peut-elle l'importer ? ».
 
 > ⚠️ La ligne `import { useMessages } from '@/modules/user'` de `CLAUDE.md` décrivait un hook que
 > personne n'appelait. Elle a survécu à la réécriture documentaire du 2026-08-14 parce que j'ai

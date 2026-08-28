@@ -15,6 +15,14 @@ cause n'est pas dans le dépôt.
 
 ## Note SEO : 73 → **73 / 100** · inchangée, et c'est le constat
 
+> **2026-08-27 · toujours 73, pour la même raison.** Les dix-neuf commits de la journée sont tous
+> dans le produit connecté (mode entreprise, navigation, accessibilité) ou sur la landing **derrière le
+> clic** (confirmation de démo, popup d'inscription). Aucun n'ajoute de contenu indexable, aucun
+> ne touche au prérendu, au `sitemap.xml`, aux canonicals ni aux `hreflang`. La position moyenne
+> et les clics non-marque **n'ont pas été remesurés** depuis le 2026-08-19 : ces chiffres vivent
+> dans Search Console, pas dans le dépôt. Le seul levier reste
+> [`ACQUISITION-BACKLINKS.md`](./ACQUISITION-BACKLINKS.md), intégralement manuel.
+
 **Aucun travail SEO n'a eu lieu entre le 2026-08-24 et le 2026-08-25**, et la note ne bouge donc
 pas. C'est une information, pas un trou dans l'audit.
 

@@ -1,15 +1,101 @@
 # Mobile-first — patterns et conventions
 
-## Note mobile / DA : 62 → **72 / 100** (2026-08-24 → 2026-08-25)
+## Note mobile / DA : 62 → 72 → **74 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27)
 
-| Ce qui compose la note | 08-24 | 08-25 |
-|---|---|---|
-| Feuilles cassées sous `prefers-reduced-motion` | 0 (corrigées le 24) | **0** |
-| Consommateurs de `MobileHeader` | 2 sur 7 pages | **8** |
-| Pages avec un titre mobile hors échelle | 6 | **0** |
-| Poignées de glissement qui ne font rien | 3 | **0** · retirées |
-| Adhérence à l'échelle typographique fermée | 169 / 1 656 = **10 %** | 243 / 1 927 = **13 %** |
-| Primitives à 0 consommateur | `MobileScreen`, `ListRow` | **inchangé** |
+| Ce qui compose la note | 08-24 | 08-25 | **08-27** |
+|---|---|---|---|
+| Feuilles cassées sous `prefers-reduced-motion` | 0 (corrigées le 24) | **0** | **0**, et pour la première fois **mesuré** sur 3 feuilles (cf. §1bis) |
+| Consommateurs de `MobileHeader` | 2 sur 7 pages | **8** | 8, non remesuré |
+| Pages avec un titre mobile hors échelle | 6 | **0** | 0 |
+| Poignées de glissement qui ne font rien | 3 | **0** · retirées | 0 |
+| Adhérence à l'échelle typographique fermée | 169 / 1 656 = **10 %** | 243 / 1 927 = **13 %** | **non remesurée** · le stock de tailles arbitraires passe de 202 à **196** |
+| Libellés sous le plancher de 11 px | · | 79 | **75** |
+| Niveau de navigation de l'espace entreprise | 3ᵉ (Plus → feuille → Entreprise) | 3ᵉ | ✅ **1ᵉʳ** · onglet de la barre du bas |
+| Primitives à 0 consommateur | `MobileScreen`, `ListRow` | **inchangé** | inchangé |
+
+### 2026-08-27 · +2, un point de navigation et une rétractation
+
+> **Note inchangée à 74 après la rétractation du soir** (§1bis). Le +2 était porté par B2 et F3,
+> deux points de navigation mesurés ; la « rechute » annoncée le matin n'a jamais existé. Une
+> feuille qu'on croyait cassée puis qui ne l'est pas ne rend aucun point : elle en avait été
+> retirée zéro, la ligne du tableau valant déjà 0.
+
+**B2 · « Entreprise » entre dans la barre d'onglets, et REMPLACE « Habitudes ».** L'espace
+collaboratif était au **troisième** niveau de navigation sur mobile (Plus → feuille →
+Entreprise), alors que c'est la seule zone multi-utilisateurs du produit.
+
+Le remplacement plutôt que l'ajout est **mesuré, pas supposé** : à 375 px la barre porte 5
+éléments de **75 × 64 px**. Un sixième les ramène à ~62 px et tronque les libellés. « Habitudes »
+est un module **optionnel** (`RequireModule`), donc déjà absent pour une partie des comptes, et il
+reste listé dans « Plus » ; l'onglet n'apparaît que pour un membre d'une organisation.
+Vérifié dans le navigateur sur le build de production, démo neuve : 5 éléments de 75 × 64.
+
+**F3 · l'onglet ne change plus d'identité pendant le chargement** (commit `f32d080`). L'entrée
+entreprise était montée sur `{myOrg && …}` : la barre du bas affichait « Habitudes » le temps de
+la requête d'organisations, puis la remplaçait par « Entreprise ». *Un onglet qui change
+d'identité pendant qu'on le vise est pire qu'un onglet qui manque*, et sur mobile la cible est
+tactile, donc le doigt est déjà parti. Correctif : `ActiveOrgContext` expose `wasOrgMember`, lu
+une fois au montage depuis la préférence d'organisation déjà persistée, et les deux barres
+réservent la place tant que la requête vole.
+
+> ⚠️ **Honnêteté sur la mesure de F3** : le décalage **n'est pas reproductible en mode démo**, le
+> repository local lisant `localStorage` de façon synchrone. CLS mesuré à **0 avant comme après**,
+> indice posé comme effacé : cela prouve l'absence de régression, **pas** la présence d'un gain.
+> La preuve du correctif est dans les tests, qui exercent l'état transitoire directement
+> (`ActiveOrgContext.test.tsx`, 5 cas, + 3 sur `MobileTabBar`), eux-mêmes vérifiés en neutralisant
+> tour à tour la lecture puis l'écriture de l'indice. Aucun point n'est attribué pour un gain non
+> mesuré.
+
+### 1bis. La feuille « cassée » ne l'était pas · rétractation mesurée (2026-08-27, soir)
+
+`LoginModal` écrivait son mouvement de feuille à la main (`initial={{ y: '100%', opacity: 0 }}`)
+et est passé par `useSheetMotion()` (commit `a1debe3`). **La migration reste juste** : c'est la
+convention du dossier, et un chemin par défaut vaut mieux que dix-sept variantes.
+
+🔴 **En revanche la justification était fausse, et elle est rétractée ici.** Le commit affirmait
+que « sous `prefers-reduced-motion` la valeur initiale reste appliquée et le modal s'ouvrait
+entièrement hors écran ». Ce n'était pas une mesure, c'était une déduction depuis la règle.
+L'expérience a été faite le soir même : `LoginModal` **remis dans sa forme exacte d'avant le
+correctif**, puis ouvert sous `reducedMotion: 'reduce'` réellement émulé, dans un navigateur qui
+composite. Résultat : **il s'ouvre normalement**, opacité 1, entièrement à l'écran.
+
+La raison tient à la forme de l'`initial`, et c'est ce que le cliquet de
+`src/design-system.guard.test.ts` disait déjà : un `initial` **mixte**, qui contient une clé
+non-transform (`opacity`) à côté du `y`, se résout ; c'est l'`initial` **transform seul** de
+`MobileMoreSheet` qui restait coincé le 2026-08-24. Les dix-sept feuilles écrites à la main sont
+toutes mixtes.
+
+> ⚠️ **Et une mesure de la même journée avait été fausse aussi, dans l'autre sens.** Une première
+> tentative, faite dans un panneau navigateur **non affiché**, avait conclu que `HabitModal`
+> s'ouvrait à `opacity: 0` et 379 px trop bas. C'était un artefact : dans un onglet
+> `document.visibilityState === 'hidden'`, `requestAnimationFrame` ne tourne pas et **tout** reste
+> sur `initial`, y compris le voile d'une feuille saine. Le harnais gelait la page et rendait un
+> rapport parfaitement convaincant.
+>
+> Les deux erreurs de la journée, celle du commit et celle-ci, sont la même : **conclure sans
+> témoin**. D'où la forme du test qui referme le sujet.
+
+Au passage, la popup d'inscription **tient sans scroll** : largeur desktop 28rem → 33,6rem et
+formulaire resserré. Mesuré dans le navigateur, viewport 1000 × 760, inscription, mot de passe
+saisi : `scrollHeight` **699 → 675 = clientHeight**, le bouton « Se connecter » finit à 691 px
+pour 760 px de hauteur. Mobile 375 × 812 : **694 = clientHeight**.
+
+> ✅ **La ligne « 0 feuille cassée » cesse d'être une présomption** (2026-08-27, soir).
+> `e2e/reduced-motion-sheets.spec.ts` ouvre des feuilles sous `reducedMotion: 'reduce'` réellement
+> émulé et **mesure** l'état peint : opacité calculée, et hauteur effectivement dans le viewport.
+> Ni `toBeVisible()` ni une garde statique ne voient ces deux défauts, l'un considérant visible un
+> élément à `opacity: 0`, l'autre ne comptant que des chaînes dans des fichiers.
+>
+> Le fichier porte **deux protections contre lui-même**, parce que les deux erreurs de la journée
+> venaient du harnais et pas du produit :
+> 1. il refuse de tourner si la page se déclare `hidden` (l'artefact de l'onglet non composité) ;
+> 2. il embarque un **témoin positif** ; si la feuille de contrôle ne s'ouvre pas non plus, le
+>    verdict n'est pas « le produit est cassé » mais « le harnais ment », et le message le dit.
+>
+> ⚠️ **Périmètre honnête : 2 feuilles écrites à la main sur 16**, plus le témoin. `HabitModal` et
+> `CompletedOKRsModal` s'ouvrent, mesurées. Les 14 autres partagent le même `initial` mixte au
+> caractère près, ce qui rend leur bon fonctionnement très probable, **mais probable n'est pas
+> mesuré** : les ajouter au fichier est la dette ouverte de ce point.
 
 **+10, le deuxième plus gros mouvement.** Le finding structurel de cet audit, « le design system
 mobile n'a jamais été adopté », a reculé pour la première fois depuis sa création en juillet :

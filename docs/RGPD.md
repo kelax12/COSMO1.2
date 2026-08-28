@@ -4,7 +4,14 @@
 119 : effacement et portabilité). Premier audit dédié de ce domaine. Jusqu'ici, la conformité était
 traitée par fragments dans les audits sécurité. Mesuré sur le schéma de prod et le code.
 
-## Note RGPD : 78 → **84 / 100** (2026-08-24 → 2026-08-25)
+## Note RGPD : 78 → **84 / 100** (2026-08-24 → 2026-08-25) · **inchangée au 2026-08-27**
+
+> **2026-08-27 · note inchangée, et le tableau ci-dessous non plus.** Un seul mouvement dans le
+> périmètre RGPD ce jour-là : la mig. `130` (minimisation de `org_invitations`, art. 5.1.c) est
+> **écrite dans le dépôt et non appliquée en production**. Une migration non appliquée ne referme
+> rien, donc rien ne bouge. Le point bloquant reste le même qu'au 25, et il n'est toujours pas
+> technique : **les durées de conservation ne sont pas publiées** dans la politique de
+> confidentialité. Détail : §1 et finding G-1 de [`../faille.md`](../faille.md).
 
 | Ce qui compose la note | 08-24 | 08-25 |
 |---|---|---|
@@ -67,6 +74,17 @@ rédaction, et c'est le seul point qui sépare le dossier d'une réponse tenable
 > une date de péremption* (A-11). Piste minimale : purger les lignes `declined_at IS NOT NULL` de
 > plus de 30 jours, comme `processed_stripe_events`. Cf. finding B-2 de
 > [`../faille.md`](../faille.md).
+>
+> 🟠 **2026-08-27 · la moitié manquante est écrite, pas appliquée (mig. `130`).** La purge traitait
+> la **durée**, pas le **public** : pendant les 30 jours de rétention, et pour toute invitation en
+> attente, l'organisation entière lit la ligne. La mig. `130` restreint la lecture au
+> destinataire, à l'inviteur et aux admins (minimisation, **art. 5.1.c**). Elle est dans le dépôt
+> et **n'a pas été appliquée en production** au 2026-08-27 : ce point reste donc **ouvert en
+> prod**. Suivi complet : finding G-1 de [`../faille.md`](../faille.md).
+>
+> ⚠️ Leçon à garder au-delà de cette table : *borner la durée de vie d'une donnée personnelle et
+> borner son public sont deux gestes distincts.* Le premier a été fait le 24 et a donné, trois
+> jours durant, le sentiment que le sujet était traité.
 
 **Hébergement** : Supabase, région **eu-west-1 (Irlande)** — dans l'UE, pas de transfert hors UE
 au niveau base. Sous-traitants : Supabase (hébergement), Vercel (diffusion), Sentry (erreurs),

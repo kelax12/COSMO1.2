@@ -1,7 +1,12 @@
 # Documentation COSMO — carte
 
-**Dernière revue de cohérence : 2026-08-25**, tous les documents notés ci-dessous ont été
+**Dernière revue de cohérence complète : 2026-08-25**, tous les documents notés ci-dessous ont été
 confrontés au code de `main`, au build du jour et à la prod à cette date.
+
+**Passe partielle du 2026-08-27** (fin de journée) : les dix audits notés ont été relus contre le
+code de `main` et les dix-neuf commits du jour. Les mesures **contre la production** n'ont pas été
+refaites ce jour-là, sauf celles inscrites dans les commits eux-mêmes. Détail dans le second
+tableau ci-dessous.
 
 ## Tableau de bord des audits · avant / après (2026-08-24 → 2026-08-25)
 
@@ -63,6 +68,71 @@ performance va moins bien que la sécurité, ils disent où chaque domaine se si
 > dans [`PERFORMANCE.md`](./PERFORMANCE.md) : qui ouvre les sept onglets paie 9 kB gzip de plus.
 > Et une dérive est enfin notée, celle que personne n'avait vue : **le chunk d'entrée est passé de
 > 87,2 à 106,9 kB en deux jours**, avec un plafond relevé de 92 à 112 kB pour l'absorber.
+
+## Mise à jour du 2026-08-27 (fin de journée) · seuls les audits qui ont bougé
+
+Ce second tableau **complète** celui du dessus, il ne le remplace pas. Les audits absents de cette
+liste n'ont pas été remesurés ce jour-là et gardent leur note du 2026-08-25.
+
+| Audit | 08-25 | **08-27** | Δ | Ce qui a bougé |
+|---|---|---|---|---|
+| [Performance](./PERFORMANCE.md) | 88 | **91** | +3 | Ouvrir `/entreprise` : 64,1 → **12,2 kB gzip**. Retenu par le chunk d'entrée, 87,2 → **106,9 kB** |
+| [UI / UX](./UI-PATTERNS.md) | 80 | **82** | +2 | Trois écrans n'annoncent plus de zéros faux pendant le chargement, la nav ne se réordonne plus, deux clics n'emportent plus le visiteur hors de la landing |
+| [Architecture](./ARCHITECTURE.md) | 79 | **81** | +2 | 4ᵉ passe du cliquet : 15 → **14 fichiers**, budget 11 452 → **10 811**. Suite 1 736 → **1 802** |
+| [Mobile / DA](./MOBILE.md) | 72 | **74** | +2 | L'espace entreprise passe du 3ᵉ au **1ᵉʳ** niveau de navigation mobile. ⚠️ La « feuille cassée » annoncée le matin est **rétractée le soir**, mesure à l'appui |
+| [Accessibilité](./ACCESSIBILITY.md) | 79 | **80** | +1 | Trois défauts de nom accessible qu'**axe-core ne voit pas** (« 27août », « (3)· 1 h 45 », pastille en `title` seul) |
+| [Tests / CI](./TESTING.md) | 88 | **89** | +1 | +66 tests, puis le soir : couverture **relancée et verte** (4 indicateurs en hausse), 7ᵉ cliquet, et 2 tests bâtis autour d'un **témoin** |
+| [Sécurité](../faille.md) | 86 | **86** | 0 | Le finding G-1 reçoit son correctif (mig. `130`), **non appliqué en prod**, donc rien n'est refermé. Il reçoit en revanche son **test de base réelle** (5 rôles), qui reste rouge jusqu'à l'application |
+| [Scalabilité](./SCALABILITY.md) | 84 | **84** | 0 | La pastille de nav rechargeait la lecture la plus chère du produit à chaque retour d'onglet. Corrigé ; **gain toujours non chiffré en requêtes**, mais le comportement est désormais prouvé par comptage d'appels |
+| [RGPD](./RGPD.md) | 84 | **84** | 0 | Idem G-1 : minimisation d'`org_invitations` écrite, non appliquée |
+| [SEO](./SEO.md) | 73 | **73** | 0 | Aucun contenu indexable produit, terrain non remesuré depuis le 08-19 |
+| Mode entreprise · relecture UI/UX indépendante | 19 / 40 | **24 / 40** | +5 | Trois passages le même jour sur les dix heuristiques de Nielsen. Montent : visibilité de l'état système (1 → 3), esthétique et minimalisme (1 → 3), prévention des erreurs (2 → 3). Restent à 2 : contrôle et liberté, cohérence des filtres, reconnaissance, flexibilité, récupération d'erreur, aide |
+
+> **Six notes montent, de 3 points au plus ; quatre ne bougent pas.** C'est volontaire et c'est le
+> point de la journée : des correctifs réels n'ont rapporté **aucun** point, chacun pour une raison
+> nommée. La mig. `130` n'est pas appliquée. Le gain de la pastille de nav n'est pas chiffrable
+> avant déploiement. *Un correctif dont on ne peut pas montrer le gain n'est pas un point de note,
+> c'est une dette de mesure.*
+>
+> ### Reprise du soir · trois dettes de mesure sur quatre remboursées
+>
+> Les quatre points « non mesurés » du matin ont été repris le soir même. Trois sont réglés, un
+> ne peut pas l'être, et **la reprise a corrigé une conclusion du matin plutôt que la confirmer** :
+>
+> | Dette du matin | Ce qu'a donné la reprise |
+> |---|---|
+> | `test:coverage` non relancée | ✅ **Relancée, verte**, 1 802 tests. Les 4 indicateurs montent (statements 27,20 → **28,15**), la marge du plancher `functions` passe de 0,32 à ~1,4 point |
+> | Mig. `130` sans test de base réelle | ✅ `e2e/rls/org-invitations.test.ts`, **5 rôles**. La migration reste à appliquer : le test est rouge d'ici là, et c'est ce qui distingue « écrite » de « en vigueur » |
+> | Gain de la pastille de nav non chiffré | 🟡 **Toujours non chiffré en requêtes** (rien à compter en démo, et pas d'« après » dans les `edge_logs` d'un correctif non déployé), mais le **comportement** est prouvé par comptage d'appels, avec témoin négatif |
+> | « Une feuille cassée sous `prefers-reduced-motion` » | 🔴 **RÉTRACTÉ. Elle ne l'était pas.** `LoginModal` remise dans sa forme exacte d'avant correctif s'ouvre normalement sous `reducedMotion: 'reduce'` réellement émulé |
+>
+> 🔴 **La rétractation est la vraie leçon, et elle vaut pour les deux camps.** Le matin, un commit
+> a affirmé un bug par **déduction depuis une règle**, sans l'ouvrir. Le soir, une première
+> contre-mesure a affirmé l'inverse, en masse, depuis un **panneau navigateur non affiché** : dans
+> un onglet caché `requestAnimationFrame` ne tourne pas, tout reste sur sa valeur initiale, et le
+> harnais rend un rapport « tout est cassé » parfaitement convaincant. Les deux erreurs ont la même
+> forme : **conclure sans témoin**. Le test qui referme le sujet en embarque un, et refuse de
+> conclure si sa propre page ne peint pas.
+>
+> ⚠️ **Deux leçons de méthode, et la première est un aveu.**
+>
+> - **Une garde CI rouge a été déclarée deux fois « antérieure à mon travail », et c'était faux.**
+>   `architecture.guard` était **verte** au commit précédent ; les 9 lignes ajoutées à
+>   `TeamTasksTab` par le correctif d'états de chargement l'avaient cassée. L'erreur vient d'un
+>   `git stash` pris à un moment où le commit fautif était déjà en place, c'est-à-dire d'un
+>   « avant » qui n'en était pas un. **Un « avant » se reconstruit à un commit nommé, jamais dans
+>   un arbre de travail.** C'est la deuxième fois en trois jours qu'une affirmation confiante sur
+>   un état antérieur se révèle fausse, après les `refetchInterval` du 08-25.
+> - **Un finding a été retiré parce qu'il était un artefact de mesure.** L'entrée « Entreprise »
+>   avait été déclarée absente de la navigation ; elle était là, rendue en `<div role="button">`
+>   quand le compte a plusieurs organisations, et les sélecteurs ne cherchaient que `button` et
+>   `a`. Axel avait raison de dire « quand je teste, tout marche ». **Un outil de mesure qui ne
+>   voit pas une chose ne prouve pas qu'elle est absente.**
+>
+> ⚠️ **Une migration écrite n'est pas une migration appliquée.** La `130` est dans le dépôt,
+> vérifiée par `check:rls` et `validate:migrations`, et **la production est inchangée**. Elle
+> figure à ce titre dans l'ordre de priorité de [`../faille.md`](../faille.md), pas dans les
+> findings refermés.
 
 ### Ce que ce tableau dit, au-delà des chiffres
 
@@ -137,20 +207,20 @@ testées** (`scripts/migration-guards.test.mjs`).
 |---|---|
 | [`../CLAUDE.md`](../CLAUDE.md) | Point d'entrée : stack, modules, conventions, garde-fous |
 | [`../faille.md`](../faille.md) | Sécurité : findings **ouverts**, priorités avant prod, règles durables |
-| [`ARCHITECTURE.md`](./ARCHITECTURE.md) | Invariants du projet et leur état vérifié · **remesuré le 2026-08-25, note 79** |
+| [`ARCHITECTURE.md`](./ARCHITECTURE.md) | Invariants du projet et leur état vérifié · remesuré le 2026-08-25, **note 81 au 2026-08-27** |
 | [`SECURITY.md`](./SECURITY.md) | RLS, migrations SQL, repositories, Edge Functions, Stripe, CSP, secrets |
-| [`TESTING.md`](./TESTING.md) | Vitest, Playwright, a11y, i18n, CI, **checklist avant push prod** · **note 88**, couverture verte au 2026-08-25 |
+| [`TESTING.md`](./TESTING.md) | Vitest, Playwright, a11y, i18n, CI, **checklist avant push prod** · **note 88**, inchangée au 2026-08-27 · couverture verte au 2026-08-25, **non relancée depuis** |
 | [`DEPLOYMENT.md`](./DEPLOYMENT.md) | Runbook deploy / rollback Vercel + Supabase, drill de restauration |
-| [`MOBILE.md`](./MOBILE.md) | Pages et composants mobiles, bottom-sheets, pièges iOS Safari · **note 72** |
-| [`UI-PATTERNS.md`](./UI-PATTERNS.md) | Listes, modals, tutoriels, onboarding, thèmes · **dette UI/UX remesurée le 2026-08-25, note 80** |
-| [`PERFORMANCE.md`](./PERFORMANCE.md) | `manualChunks`, lazy loading, images et polices, budget bundle · **note 88**, gardé par `npm run check:bundle` · et depuis le 2026-08-26 **le coût serveur d'une ouverture de session**, 32 requêtes REST |
-| [`ACCESSIBILITY.md`](./ACCESSIBILITY.md) | WCAG / EAA, aria, contraste, gates axe-core + Lighthouse · **note 79** |
-| [`SCALABILITY.md`](./SCALABILITY.md) | Montée en charge · **remesuré le 2026-08-25, note 84**, avec runbook reproductible |
+| [`MOBILE.md`](./MOBILE.md) | Pages et composants mobiles, bottom-sheets, pièges iOS Safari · **note 74 au 2026-08-27** |
+| [`UI-PATTERNS.md`](./UI-PATTERNS.md) | Listes, modals, tutoriels, onboarding, thèmes · dette UI/UX remesurée le 2026-08-25, **note 82 au 2026-08-27** |
+| [`PERFORMANCE.md`](./PERFORMANCE.md) | `manualChunks`, lazy loading, images et polices, budget bundle · **note 91 au 2026-08-27**, gardé par `npm run check:bundle` · et depuis le 2026-08-26 **le coût serveur d'une ouverture de session**, ramené de 29 à 21 requêtes REST |
+| [`ACCESSIBILITY.md`](./ACCESSIBILITY.md) | WCAG / EAA, aria, contraste, gates axe-core + Lighthouse · **note 80 au 2026-08-27** |
+| [`SCALABILITY.md`](./SCALABILITY.md) | Montée en charge · **remesuré le 2026-08-25, note 84** (inchangée au 2026-08-27), avec runbook reproductible |
 | [`SEO.md`](./SEO.md) | Prérendu, sitemap, hreflang, indexation par locale — **audit du 2026-08-14, données Search Console du 2026-08-19** + règles |
 | [`ACQUISITION-BACKLINKS.md`](./ACQUISITION-BACKLINKS.md) | 🔴 Le chantier qui débloque le SEO : kit de soumission annuaires, prêt à coller — **100 % manuel** |
 | [`ACQUISITION.md`](./ACQUISITION.md) | Attribution `?ref=`, funnel mesuré en prod, runbook — **audit du 2026-08-14** |
 | [`I18N.md`](./I18N.md) | Qualité réelle des traductions, périmètre bilingue — **audit du 2026-08-14** |
-| [`RGPD.md`](./RGPD.md) | Inventaire des données personnelles, droits, rétention · **remesuré le 2026-08-25, note 84** |
+| [`RGPD.md`](./RGPD.md) | Inventaire des données personnelles, droits, rétention · **remesuré le 2026-08-25, note 84** (inchangée au 2026-08-27) |
 | [`RGPD-REGISTRE.md`](./RGPD-REGISTRE.md) | Registre des activites de traitement (RGPD art. 30) · **cree le 2026-08-26** |
 | [`RGPD-VIOLATION.md`](./RGPD-VIOLATION.md) | Procedure de violation de donnees sous 72 h (RGPD art. 33-34) · **cree le 2026-08-26** |
 | [`LEGAL.md`](./LEGAL.md) | Obligations légales du fondateur : statut, TVA, droit de la consommation, marque, sous-traitants · **créé le 2026-08-26**, non noté (ce n'est pas un audit) |

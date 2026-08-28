@@ -1,15 +1,79 @@
 # Patterns UI — COSMO
 
-## Note UI / UX : 70 → **80 / 100** (2026-08-24 → 2026-08-25)
+## Note UI / UX : 70 → 80 → **82 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27)
 
-| Finding de l'audit du 2026-08-14 | 08-24 | 08-25 |
-|---|---|---|
-| 1. Quatre tailles de titre de page | ✅ ramenées à deux | ✅ **+ 6 pages migrées** |
-| 2. Titres de tâches tronqués (12 sur `/tasks`) | ❌ ouvert | ✅ **12 → 2** (`line-clamp-2`) |
-| 3. Tableau Habitudes, colonne coupée | ❌ ouvert | ✅ **0 colonne coupée**, 375 px et 1 280 px |
-| 4. Échelle z-index incomplète | ✅ publiée + fermée par test | ✅ |
-| 5. Résidus de l'audit précédent | ✅ traités | ✅ |
-| 6. Cibles tactiles sous 44 px | ❌ 18 · 22 | ✅ **5 · 8**, les restantes conformes AA |
+| Finding de l'audit du 2026-08-14 | 08-24 | 08-25 | **08-27** |
+|---|---|---|---|
+| 1. Quatre tailles de titre de page | ✅ ramenées à deux | ✅ **+ 6 pages migrées** | ✅ |
+| 2. Titres de tâches tronqués (12 sur `/tasks`) | ❌ ouvert | ✅ **12 → 2** (`line-clamp-2`) | ✅ |
+| 3. Tableau Habitudes, colonne coupée | ❌ ouvert | ✅ **0 colonne coupée**, 375 px et 1 280 px | ✅ |
+| 4. Échelle z-index incomplète | ✅ publiée + fermée par test | ✅ | ✅ |
+| 5. Résidus de l'audit précédent | ✅ traités | ✅ | ✅ |
+| 6. Cibles tactiles sous 44 px | ❌ 18 · 22 | ✅ **5 · 8**, les restantes conformes AA | non remesuré |
+| 7. Écrans qui affichent un état vide pendant le chargement | ❌ 3 onglets entreprise | ❌ | ✅ **0**, squelettes + test |
+| 8. Barre de navigation qui se réordonne après la réponse réseau | ❌ | ❌ | ✅ **corrigée** (F3) |
+| 9. Clic qui emporte le visiteur hors de la landing sans prévenir | ❌ 2 chemins | ❌ | ✅ **0** |
+
+### 2026-08-27 · +2, sur une classe de défaut que la liste de 2026-08-14 ne voyait pas
+
+**Trois findings nouveaux, tous de la même famille : l'interface affirmait quelque chose qu'elle
+ne savait pas encore, ou faisait quelque chose que personne n'avait demandé.** Ils n'étaient pas
+dans l'audit d'origine parce que celui-ci mesurait de la **géométrie**, et que ces trois-là ne se
+voient que **dans le temps** : pendant un chargement, pendant une réponse réseau, après un clic.
+
+**7 · Trois écrans annonçaient des zéros faux** (commit `1d98f93`). `MyWorkTab`, `TeamTasksTab` et
+`TeamOverviewTab` déstructuraient `const { data = [] }` sans jamais lire `isLoading` : pendant le
+premier fetch ils rendaient leur état **vide** comme une vérité. « Aucune tâche pour l'instant »
+sur l'Aperçu, « Créez d'abord un projet » à une organisation qui en a douze, et un tableau de bord
+annonçant **0 tâche / 0 %** à un manager avant d'afficher ses vrais chiffres.
+
+- *Un zéro faux coûte plus cher qu'une attente : c'est l'image dont on se souvient.*
+- La garde est posée **au bon niveau** : sur Statistiques le sélecteur de période reste utilisable,
+  seuls les chiffres attendent. Le compteur « x sur y affichées » attend aussi, « 0 sur 0 » étant
+  une affirmation.
+- Squelettes en gris neutre (`--color-hover`) et **non** `bg-accent`, qui vaut un bleu vif dans
+  3 thèmes sur 4.
+- Verrouillé par `org-loading-states.test.tsx` (4 cas), lui-même vérifié en neutralisant le garde
+  de l'Aperçu, il tombe bien au rouge.
+
+**8 · La navigation se réordonnait après coup** (commit `f32d080`). L'entrée « Entreprise » était
+montée sur `{myOrg && …}` : la barre latérale se peignait sans elle, puis la faisait apparaître,
+et tout ce qui suit, « Créer / rejoindre », la section AUTRE, les Paramètres, sautait d'une ligne
+à chaque chargement de page. Le correctif réserve la place à partir d'un indice d'affichage
+persisté (`wasOrgMember`). ⚠️ Le gain **n'est pas mesuré en CLS**, cf.
+[`MOBILE.md`](./MOBILE.md) §2026-08-27 : la preuve est dans les tests d'état transitoire.
+
+**9 · Deux clics emportaient le visiteur hors de la landing.** Depuis le menu d'une carte membre
+de la pyramide entreprise, « Voir ses tâches » ouvrait **directement** la démo (commit `c21754d`,
+remplacé par une proposition explicite), et la confirmation qui a suivi était un toast
+*dismissible*, donc contournable : elle devient une `AlertDialog` modale qui bloque l'interaction
+tant que le visiteur n'a pas choisi (commit `722aba1`). **Règle qui en sort : un changement de
+contexte irréversible se confirme dans un dialogue bloquant, jamais dans un toast.**
+
+**Aperçu entreprise, refonte assumée en quatre commits** (`e6a873a` → `4b91816`) : la liste
+« Prochaines échéances » devient une **frise chronologique** dont l'abscisse porte le temps, donc
+un paquet d'échéances collées se voit ; « Mes échéances » disparaît, elle relistait en texte des
+dates déjà portées par la carte de synthèse juste au-dessus ; « Mon agenda » prend sa demi-colonne
+et se **groupe par jour**, en date locale comme les habitudes et les échéances. Sous `sm`, la
+frise bascule en rail vertical, six libellés côte à côte sur 375 px se chevauchant quoi qu'on
+fasse. Aucune position ne dépend d'une animation, `prefers-reduced-motion` ne change rien au
+rendu.
+
+**Pourquoi +2 et pas +5.** La relecture indépendante de la zone entreprise donne
+**19 → 22 → 24 / 40** sur les dix heuristiques de Nielsen en trois passages le 2026-08-27, donc
+une **majorité de critères encore sous la moyenne**. Quatre findings restent ouverts, et aucun
+n'est cosmétique :
+
+- 🟠 **P1 · deux grammaires de filtre pour la même donnée** entre les onglets « Tâches » et
+  « Projets ». Ouvert depuis le premier passage, non traité.
+- 🟠 **P1 · 4 destinations sur 7 hors écran** dans la barre d'onglets de `/entreprise` (335 px de
+  barre pour 832 px de contenu, `hide-scrollbar`, aucun indice de continuation). La moitié
+  mobile du problème est réglée, `/entreprise` n'étant plus dans « Plus » ; la barre d'onglets
+  **interne**, elle, n'a pas bougé.
+- 🟡 **P2 · la frise entreprise répète les tâches qui me sont assignées** (`buildOrgEvents`
+  n'exclut pas `currentUserId`).
+- 🟡 **P2 · deux compteurs de notifications affichent 4 et 3 sous la même étiquette.**
+- ⚪️ **Aucun état d'erreur éprouvé** dans la zone : les squelettes traitent l'attente, pas l'échec.
 
 **+10.** Les **six** findings de l'audit du 2026-08-14 sont refermés. C'est le seul document du
 dossier dont la liste d'origine est entièrement traitée.
@@ -454,6 +518,9 @@ Toute nouvelle modif doit s'ajouter dans cette table.
 - ❌ Réintroduire la section « Aperçu » dans EventModal
 - ❌ Forcer `showDescription = true` au mount par défaut
 - ❌ Ajouter un champ à `lockedFields` sans gérer le visuel `disabled`/`readOnly` + style locked
+- ❌ **Déstructurer `const { data = [] } = useX()` sans lire `isLoading`** quand la valeur alimente un chiffre, un compteur ou un état vide visible (2026-08-27, finding 7). Le tableau vide par défaut se rend comme une **affirmation** : « 0 tâche », « aucun projet ». Rendre un squelette (`src/components/skeletons`, `OrgLoadingSkeletons`), en gris neutre `--color-hover` et **jamais** `bg-accent`, qui vaut un bleu vif dans 3 thèmes sur 4
+- ❌ **Confirmer un changement de contexte irréversible par un toast** (2026-08-27, finding 9) : il est *dismissible*, donc contournable. Un départ hors de la page, une perte de saisie, une navigation qui remplace l'écran se confirment dans un dialogue **bloquant** (`AlertDialog`)
+- ❌ **Monter une entrée de navigation sur `{data && …}`** (2026-08-27, finding 8) : la barre se peint sans elle, puis la fait apparaître, et tout ce qui suit saute d'une ligne. Réserver la place à partir d'un indice persisté, et ne jamais confondre cet indice avec une autorisation (cf. [`../faille.md`](../faille.md))
 
 ### 📋 Listes & SmartListMenu
 - ❌ Popover positionné en `absolute` dans une barre `overflow-x-auto` — utiliser `createPortal` + `position: fixed`

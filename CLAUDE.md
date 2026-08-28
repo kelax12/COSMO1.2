@@ -109,12 +109,14 @@ npm run build      # Build prod → dist/ (vite build + node prerender.mjs)
 npm run preview    # Prévisualiser le build
 npm run lint       # ESLint (doit retourner 0 erreur)
 npm run typecheck  # tsc -b (doit retourner 0 erreur)
-npm test           # Vitest (run once), 1770 tests / 154 fichiers, ~3 min (2026-08-27)
+npm test           # Vitest (run once), 1802 tests / 159 fichiers, ~3,5 min (2026-08-27 soir)
 npm run test:watch # Vitest en mode watch
 npm run test:coverage       # + couverture v8, seuils globaux et par fichier
-                            # ✅ VERTE au 2026-08-27 : 27,20 L · 26,88 S · 21,69 F · 22,86 B
+                            # ✅ VERTE au 2026-08-27 (soir) : 28,48 L · 28,15 S · 22,78 F · 23,59 B
                             # ❌ NE JAMAIS baisser un seuil pour repasser au vert.
-                            # Marge la plus serree : functions, 0,69 pt (~44 fonctions).
+                            # Marge la plus serree : functions, ~1,4 pt. Elle etait tombee a
+                            # 0,32 pt le 2026-08-25 : la relancer APRES chaque vague de
+                            # features, pas seulement quand on y pense.
                             # Voir docs/TESTING.md
 npm run validate:migrations # Garde statique sur supabase/migration/*.sql (CI)
 npm run check:rls           # Invariants RLS : auth.uid() wrappé, 1 seule policy PERMISSIVE,
@@ -125,6 +127,12 @@ npm run check:legal         # Cohérence du tableau de conformité de docs/LEGAL
                             # lignes collées, identifiants en double, et surtout que la
                             # synthèse corresponde aux lignes. Ce total a été faux TROIS
                             # fois le 2026-08-26, toujours pour l'avoir additionné de tête.
+npm run check:mail          # Délivrabilité des emails Auth : MX, SPF, DKIM Resend, DMARC.
+                            # 🔴 ROUGE au 2026-08-27 : aucun SMTP applicatif n'est configuré,
+                            # et les confirmations d'inscription sont désactivées (mesuré en
+                            # base : `confirmation_sent_at` sur 1 compte / 28). Mise en service
+                            # et ordre des opérations : docs/DEPLOYMENT.md §2ter.
+                            # PAS une gate CI — dépend d'un état DNS externe.
 npm run i18n:scan           # Chaînes en dur non externalisées
 npm run i18n:namespaces     # Quels catalogues le SHELL rend (donc eager) ; --pages
                             # donne la liste à déclarer par route dans App.tsx
