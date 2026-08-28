@@ -32,6 +32,7 @@ import { BillingProvider } from '@/modules/billing/billing.context';
 import { PREMIUM_ENFORCED } from '@/modules/billing/premium-config';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import CookieBanner from '@/components/CookieBanner';
+import NewVersionBanner from '@/components/NewVersionBanner';
 import ShareInviteClaimer from '@/components/ShareInviteClaimer';
 // Audit perf 2026-05-29 — CommandPalette only renders on Ctrl/Cmd+K. Lazy-load
 // it so its imports (framer-motion subset, lucide icons, fuzzy search) don't
@@ -359,6 +360,11 @@ const App: React.FC = () => {
             <AppRoutes />
             <AppErrorBoundary fallback={null}>
               <CookieBanner />
+              {/* Onglet resté ouvert sur un bundle périmé — 91,5 % du trafic
+                  Supabase du 2026-08-26 venait de deux onglets dans ce cas.
+                  Monté ici, une seule fois : c'est une propriété de
+                  l'application, pas d'un écran. */}
+              <NewVersionBanner />
               {/* Popup d'invitation de partage — niveau App pour survivre aux
                   changements de route (claim après login OU fin d'inscription). */}
               <ShareInviteClaimer />

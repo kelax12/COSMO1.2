@@ -299,5 +299,10 @@
       "description": "La description doit faire entre {{min}} et {{max}} caractères.",
       "attachment": "Pièce jointe refusée : image, PDF ou texte, {{max}} Mo maximum."
     }
+  },
+  "appVersion": {
+    "available": "Une nouvelle version de COSMO est disponible.",
+    "reload": "Recharger",
+    "dismiss": "Plus tard"
   }
 }

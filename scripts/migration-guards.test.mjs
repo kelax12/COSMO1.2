@@ -221,3 +221,76 @@ describe('events, le prédicat de lecture reste hissable en InitPlan (mig. 128)'
       /GRANT\s+EXECUTE\s+ON\s+FUNCTION\s+public\.my_managed_user_ids\(\)\s+TO\s+authenticated/i);
   });
 });
+
+// ══════════════════════════════════════════════════════════════════════
+// check-prod-drift — un DROP de SURCHARGE n'efface pas le nom attendu
+//
+// Trouvé le 2026-08-28 en exécutant la garde contre la prod : `get_my_habits`
+// et `toggle_habit_completion_v2` étaient annoncées « EN TROP en prod, héritage
+// dashboard » alors qu'elles sont versionnées depuis les migrations 119 et 121.
+//
+// La cause est le motif normal d'un changement de signature — CREATE la
+// nouvelle, DROP l'ancienne — quand le DROP arrive en fin de fichier
+// (mig. 122 : CREATE lignes 55 et 159, DROP lignes 279 et 280). Le parseur
+// retirait alors le nom de l'ensemble attendu.
+//
+// 🔴 Le symptôme était bénin, le défaut ne l'est pas : il fait échouer la garde
+// dans le sens RASSURANT. Si l'une de ces deux fonctions avait réellement
+// manqué en production, le script ne l'aurait pas signalée — il ne l'attendait
+// plus. C'est exactement la même classe que les faux positifs de
+// `check-rls-advisors` : une garde qui mesure le mauvais ensemble apprend à
+// ignorer sa propre sortie.
+// ══════════════════════════════════════════════════════════════════════
+describe('check-prod-drift — le DROP d\'une surcharge ne fait pas oublier la fonction', { timeout: 30_000 }, () => {
+  const DRIFT = resolve(ROOT, 'scripts/check-prod-drift.mjs');
+
+  const introspection = (functions) =>
+    JSON.stringify({ tables: [], functions, triggers: [], policies: [] });
+
+  const runDrift = (functionsInProd) => {
+    const file = join(dir, 'introspection.json');
+    writeFileSync(file, introspection(functionsInProd), 'utf8');
+    // Ce script-ci résout ses migrations depuis SON emplacement, pas depuis
+    // `cwd` — le `cwd: dir` des autres gardes ne l'isole donc pas. D'où la
+    // variable d'environnement, seule porte prévue pour les tests.
+    const r = spawnSync(process.execPath, [DRIFT, file], {
+      cwd: dir,
+      encoding: 'utf8',
+      env: { ...process.env, COSMO_MIGRATION_DIR: join(dir, 'supabase', 'migration') },
+    });
+    return { code: r.status, out: `${r.stdout}${r.stderr}` };
+  };
+
+  // Le motif exact de la mig. 122 : on crée la nouvelle signature, puis on
+  // supprime l'ancienne, plus bas dans le MÊME fichier.
+  const RESIGNATURE = `
+CREATE OR REPLACE FUNCTION public.get_my_habits(p_days INTEGER, p_today DATE)
+RETURNS TABLE (id uuid) LANGUAGE sql AS $$ SELECT gen_random_uuid(); $$;
+
+DROP FUNCTION IF EXISTS public.get_my_habits(INTEGER);
+`;
+
+  it('attend toujours la fonction en prod après un DROP signé', () => {
+    write('119_creation.sql', RESIGNATURE);
+    const { code, out } = runDrift(['get_my_habits']);
+    expect(out).not.toMatch(/EN TROP/);
+    expect(code).toBe(0);
+  });
+
+  // TÉMOIN — c'est le test qui compte. Sans lui, un parseur qui n'oublierait
+  // JAMAIS rien passerait aussi le cas ci-dessus, en cessant de détecter les
+  // fonctions réellement absentes de la production.
+  it('SIGNALE la fonction si elle manque réellement en prod', () => {
+    write('119_creation.sql', RESIGNATURE);
+    const { code, out } = runDrift([]);
+    expect(out).toMatch(/get_my_habits/);
+    expect(code).not.toBe(0);
+  });
+
+  it('un DROP NON signé reste une suppression franche', () => {
+    write('119_creation.sql', RESIGNATURE);
+    write('120_suppression.sql', 'DROP FUNCTION IF EXISTS public.get_my_habits;');
+    const { out } = runDrift(['get_my_habits']);
+    expect(out).toMatch(/EN TROP/);
+  });
+});

@@ -28,7 +28,15 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const MIGRATION_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', 'supabase', 'migration');
+// Résolu depuis l'emplacement du SCRIPT, pas depuis `cwd` : la garde doit lire
+// les migrations du dépôt d'où qu'on la lance.
+// `COSMO_MIGRATION_DIR` n'existe que pour les tests de garde
+// (`scripts/migration-guards.test.mjs`), qui doivent pouvoir lui soumettre un
+// jeu de migrations minimal. Sans cette porte, la garde ne serait vérifiable
+// que contre le dépôt entier, donc pas vérifiable du tout.
+const MIGRATION_DIR =
+  process.env.COSMO_MIGRATION_DIR ??
+  join(dirname(fileURLToPath(import.meta.url)), '..', 'supabase', 'migration');
 
 // Objets présents en prod AVANT le versionnement des migrations (créés via
 // dashboard, jamais re-déclarés dans un fichier). Connus et assumés — ne pas
@@ -105,6 +113,31 @@ function parseExpected() {
       // Retire les commentaires pour ne pas matcher du SQL documenté
       .replace(/--[^\n]*/g, '');
 
+    // ── Surcharges : un DROP signé ne supprime pas le NOM ──────────────
+    //
+    // L'introspection ne rend que `proname` : elle ne connaît pas les
+    // signatures. Or le motif normal d'une migration qui change la signature
+    // d'une fonction est « CREATE la nouvelle, puis DROP l'ancienne » — et le
+    // DROP arrive souvent APRÈS, en fin de fichier (mig. 122, lignes 55/159
+    // pour les CREATE, 279/280 pour les DROP). Traité naïvement, ce DROP
+    // effaçait le nom de l'ensemble attendu.
+    //
+    // Le symptôme était trompeur : `get_my_habits` et
+    // `toggle_habit_completion_v2` étaient annoncées « EN TROP en prod,
+    // héritage dashboard » alors qu'elles sont dans le dépôt depuis les
+    // migrations 119 et 121. Le vrai danger est l'autre sens : si l'une des
+    // deux avait réellement MANQUÉ en prod, la garde ne l'aurait pas signalé,
+    // parce qu'elle ne l'attendait plus. **Une garde qui oublie ce qu'elle
+    // doit vérifier ne protège de rien**, et celle-ci s'est trompée dans le
+    // sens rassurant.
+    //
+    // Règle : un `DROP FUNCTION nom(args)` ne retire le nom que si le fichier
+    // ne crée aucune fonction de ce nom. Un DROP sans parenthèses reste une
+    // suppression franche.
+    const createdHere = new Set(
+      [...sql.matchAll(/create\s+(?:or\s+replace\s+)?function\s+([\w."]+)\s*\(/gi)].map((m) => norm(m[1])),
+    );
+
     // L'ordre intra-fichier compte (DROP IF EXISTS puis CREATE) : on traite
     // les statements séquentiellement.
     for (const stmt of sql.split(';')) {
@@ -115,8 +148,11 @@ function parseExpected() {
         expected.tables.delete(norm(m[1]));
       } else if ((m = stmt.match(/create\s+(?:or\s+replace\s+)?function\s+([\w."]+)\s*\(/i))) {
         expected.functions.add(norm(m[1]));
-      } else if ((m = stmt.match(/drop\s+function\s+(?:if\s+exists\s+)?([\w."]+)/i))) {
-        expected.functions.delete(norm(m[1]));
+      } else if ((m = stmt.match(/drop\s+function\s+(?:if\s+exists\s+)?([\w."]+)\s*(\()?/i))) {
+        // Un DROP SIGNÉ dans un fichier qui crée le même nom vise une ancienne
+        // surcharge, pas la fonction. Cf. le bloc `createdHere` ci-dessus.
+        const name = norm(m[1]);
+        if (!(m[2] && createdHere.has(name))) expected.functions.delete(name);
       } else if ((m = stmt.match(/create\s+trigger\s+([\w."]+)/i))) {
         expected.triggers.add(norm(m[1]));
       } else if ((m = stmt.match(/drop\s+trigger\s+(?:if\s+exists\s+)?([\w."]+)/i))) {

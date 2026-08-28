@@ -30,7 +30,7 @@ const PolitiqueConfidentialitePage: React.FC = () => {
         </button>
 
         <h1 className="text-3xl sm:text-4xl font-bold mb-2 text-white">Politique de confidentialité</h1>
-        <p className="text-slate-400 mb-10">Dernière mise à jour : 26 avril 2026</p>
+        <p className="text-slate-400 mb-10">Dernière mise à jour : 28 août 2026</p>
 
         <Section title="1. Responsable du traitement">
           <p>
@@ -105,9 +105,18 @@ const PolitiqueConfidentialitePage: React.FC = () => {
         <Section title="6. Durée de conservation">
           <ul className="list-disc list-inside space-y-1">
             <li>Données de compte et de contenu : conservées pendant toute la durée d'activité du compte, puis supprimées définitivement sous 90 jours après clôture</li>
-<li>Tokens de session : expiration automatique selon la configuration Supabase</li>
+            <li>Tokens de session : expiration automatique selon la configuration Supabase</li>
+            <li><strong className="text-white">Visite de la démonstration</strong> (identifiant d'appareil, posé avant toute création de compte) : <strong className="text-white">90 jours</strong> si la visite ne débouche pas sur une inscription, <strong className="text-white">400 jours</strong> si elle y aboutit</li>
+            <li><strong className="text-white">Jours d'activité</strong> (dates de connexion, utilisées pour les statistiques d'usage) : <strong className="text-white">400 jours</strong></li>
+            <li><strong className="text-white">Marqueurs techniques de paiement</strong> (identifiants d'événements Stripe déjà traités, servant à ne pas facturer deux fois) : <strong className="text-white">90 jours</strong></li>
             <li>Données de paiement : conservées selon les obligations légales (10 ans pour la comptabilité)</li>
           </ul>
+          <p className="mt-3 text-slate-400 text-sm">
+            Ces durées sont appliquées automatiquement par la base de données, sans intervention
+            manuelle. Le journal d'encaissement fait exception : la loi fiscale impose sa
+            conservation, il ne peut donc pas être effacé. Une demande de suppression de compte y
+            rend les lignes anonymes plutôt que de les supprimer.
+          </p>
         </Section>
 
         <Section title="7. Partage des données">
