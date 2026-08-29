@@ -52,10 +52,16 @@ dépôt les ignorait donc, exactement le cas que T-19 avait déjà eu à traiter
 > écrire ce qu'on veut. Le blocage n'était pas un outil manquant, c'était une sortie qu'on n'avait
 > pas rendue lisible.
 
-> 🔴 **Le fait le plus important de la journée n'était dans aucune tâche** : la CI est rouge sur
+> 🔴 **Le fait le plus important du 2026-08-28 n'était dans aucune tâche** : la CI était rouge sur
 > `main` depuis au moins le 2026-08-24, et l'issue #44 accumulait **90 commentaires** d'alerte que
-> personne n'ouvrait. Un des trois jobs est réparé (`e2e`), deux restent. La CI verte étant une
-> condition du GO, c'est du travail de lancement, pas de l'entretien.
+> personne n'ouvrait. La CI verte étant une condition du GO, c'était du travail de lancement, pas
+> de l'entretien.
+>
+> ✅ **Au 2026-08-29 : quatre jobs sur cinq sont verts** (`lint-test-build`, `audit`, `e2e`,
+> `lighthouse`). Le cinquième, `rls-integration`, a livré sa cause principale, un test qui
+> n'éprouvait pas le chemin du produit, et reste rouge sur un mode de défaillance différent,
+> désormais instrumenté. Trois des cinq réparations ont consisté à rendre un job **lisible**,
+> pas à corriger le produit.
 
 ---
 
@@ -206,7 +212,8 @@ Piste : **A** = agent backend/infra/sécu · **B** = agent front/UX/tests · **X
 ### 🟠 Puis, en parallèle : la CI, l'acquisition, le produit
 
 ```
-12. T-49  rls-integration (Docker)   ‖  T-50 lighthouse (gh auth) → puis T-28   (A ‖ X+A)
+12. ~~T-50 lighthouse~~ ✅  →  ~~T-28 seuils sur le reel~~ ✅   ‖   T-49 : cause trouvee et
+    mesuree, job encore rouge sur un autre mode de defaillance                     (A)
 13. T-22  etat des lieux GSC + Ahrefs        ‖  T-21 annuaires, par vagues de 5  (X)
 14. T-23  premier ecran apres inscription    ⟵ ATTEND UNE DECISION, pas du code  (X puis B)
 15. ~~T-25 barre d onglets mobile~~  ‖  ~~T-31 procedure de support~~   FAITS le 29/08
@@ -221,7 +228,8 @@ Piste : **A** = agent backend/infra/sécu · **B** = agent front/UX/tests · **X
 19. T-37  mentions legales + factures conformes          (X + B)      dep. 16
 20. T-38  rearmer les DEUX drapeaux ensemble             (A, XS)      dep. 17,18,19
 21. T-39  recette de paiement, vraie carte  →  T-40 CRON_SECRET      (X + A)
-22. T-41 mesure a volume  ‖  T-45 TaskTable  ‖  T-46 pg_dump  ‖  T-47 decision sentry
+22. T-41 mesure a volume  ‖  ~~T-45 TaskTable~~ ✅  ‖  T-46 pg_dump (secret)  ‖  T-47 sentry
+23. T-51  la landing a 55 de performance, mesuree quatre fois                      (B)
 ```
 
 **Deux choses à retenir de cet ordre.**
