@@ -9,7 +9,18 @@ import { useT } from '@/i18n/useT';
 // Contenu dans src/content/use-cases.mjs — même pattern que le blog.
 const UseCasePage: React.FC = () => {
   const { t } = useT('landing');
-  const slug = useLocation().pathname.replace(/^\//, '');
+  // ⚠️ La barre FINALE se retire aussi, et ce n'est pas de la coquetterie.
+  // React Router fait bien correspondre `/pour-freelances/` à la route
+  // `/pour-freelances` : la page se monte. C'est ICI que la page se perdait,
+  // en cherchant la fiche du slug « pour-freelances/ », qui n'existe pas, puis
+  // en renvoyant vers l'accueil. Mesuré en production le 2026-08-29 :
+  // `thecosmo.app/pour-freelances/` affichait la page d'accueil.
+  //
+  // Le cas n'est pas théorique : les annuaires normalisent presque tous les URL
+  // avec une barre finale, et c'est précisément le canal d'acquisition qu'on
+  // s'apprête à ouvrir (T-21). Un backlink obtenu à la main aurait envoyé son
+  // visiteur ailleurs que sur la page qui le concerne.
+  const slug = useLocation().pathname.replace(/^\//, '').replace(/\/$/, '');
   const useCase = getUseCase(slug);
 
   useSeoMeta({
