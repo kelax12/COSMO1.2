@@ -225,6 +225,7 @@ testées** (`scripts/migration-guards.test.mjs`).
 | [`RGPD-VIOLATION.md`](./RGPD-VIOLATION.md) | Procedure de violation de donnees sous 72 h (RGPD art. 33-34) · **cree le 2026-08-26** |
 | [`LEGAL.md`](./LEGAL.md) | Obligations légales du fondateur : statut, TVA, droit de la consommation, marque, sous-traitants · **créé le 2026-08-26**, non noté (ce n'est pas un audit) |
 | [`STRIPE-LIVE.md`](./STRIPE-LIVE.md) | Compte Stripe live : les 8 prix et le `tax_behavior` définitif · **créé le 2026-08-26** |
+| [`SUPPORT.md`](./SUPPORT.md) | Procédure de support : qui répond, sous quel délai, par quel canal, et quand ça devient un incident · **créé le 2026-08-28** |
 | [`POST-AUDIT-GUIDE.md`](./POST-AUDIT-GUIDE.md) | Réactivation premium (`PREMIUM_ENFORCED`), finalisation Stripe |
 | [`COSMO-CLI.md`](./COSMO-CLI.md) | CLI d'accès aux données COSMO réelles (`scripts/cosmo/`) |
 | [`AGENT-AJOUTER-TACHE.md`](./AGENT-AJOUTER-TACHE.md) | Mémo court : ajouter une tâche dans le vrai compte |
