@@ -68,14 +68,37 @@ jobs:
       # La version de pg_dump doit etre >= celle du serveur, sinon il refuse de
       # tourner. Le paquet de base d'ubuntu-latest retarde souvent d'une
       # majeure : on installe explicitement le client PostgreSQL 17.
+      #
+      # 🔴 INSTALLER NE SUFFIT PAS, mesure le 2026-08-29 : le paquet 17 se pose
+      # A COTE du client 16 preinstalle sur le runner, et c'est le 16 qui gagne
+      # dans le PATH. Le run echouait alors sur « aborting because of server
+      # version mismatch : server 17.6, pg_dump 16.15 » APRES une connexion
+      # reussie — donc tres tard, et en accusant la base. On impose donc le
+      # chemin absolu du binaire 17, et on VERIFIE que c'est bien lui qui
+      # repond avant d'aller plus loin.
       - name: Installer pg_dump 17
         if: steps.guard.outputs.ready == 'true'
         run: |
+          set -euo pipefail
           sudo sh -c 'echo "deb https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
           curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/pgdg.gpg
           sudo apt-get update -qq
           sudo apt-get install -y -qq postgresql-client-17
-          pg_dump --version
+
+          BIN=/usr/lib/postgresql/17/bin
+          if [ ! -x "$BIN/pg_dump" ]; then
+            echo "::error::postgresql-client-17 installe mais $BIN/pg_dump est absent."
+            exit 1
+          fi
+          # Prioritaire pour toutes les etapes suivantes.
+          echo "$BIN" >> "$GITHUB_PATH"
+
+          echo "pg_dump du PATH actuel : $(pg_dump --version)"
+          echo "pg_dump impose         : $($BIN/pg_dump --version)"
+          "$BIN/pg_dump" --version | grep -q ' 17\.' || {
+            echo "::error::Le binaire impose n'est pas en version 17."
+            exit 1
+          }
 
       # Diagnostic AVANT la connexion. Le 2026-08-29, un run a echoue sur
       # « password authentication failed for user "postgres" » : l'erreur
@@ -135,7 +158,9 @@ jobs:
           # --no-owner : le dump se rejoue sur une instance dont les roles
           #   different, ce qui est precisement le cas d'un changement de
           #   fournisseur.
-          pg_dump "$DB_URL" --no-owner --format=custom -f "$NOM"
+          # Chemin absolu : `pg_dump` tout court resoudrait vers le client 16.
+          echo "Version utilisee : $(/usr/lib/postgresql/17/bin/pg_dump --version)"
+          /usr/lib/postgresql/17/bin/pg_dump "$DB_URL" --no-owner --format=custom -f "$NOM"
           ls -lh "$NOM"
           echo "NOM=$NOM" >> "$GITHUB_ENV"
 
@@ -152,7 +177,7 @@ jobs:
             exit 1
           fi
           # `pg_restore --list` relit l'en-tete : un fichier tronque echoue ici.
-          pg_restore --list "$NOM" | head -5
+          /usr/lib/postgresql/17/bin/pg_restore --list "$NOM" | head -5
 
       - name: Deposer l'artefact
         if: steps.guard.outputs.ready == 'true'
