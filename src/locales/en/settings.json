@@ -50,7 +50,7 @@
   },
   "security": {
     "heading": "Change your password",
-    "hint": "At least 8 characters. Mix letters, numbers and symbols.",
+    "hint": "At least 12 characters. Mix letters, numbers and symbols.",
     "updating": "Updating…",
     "update": "Update",
     "tooShort": "Your password must be at least {{count}} characters long",
