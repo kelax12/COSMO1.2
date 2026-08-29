@@ -498,7 +498,7 @@ T-25 (barre d'onglets mobile) · T-37 côté mentions légales · T-45 (`TaskTab
 | ✅ 5 | ~~Les deux drapeaux de facturation à `false`, vérifiés séparément~~ (T-20) | **Levé le 2026-08-28** : `premium-config.ts` et `billing_flags` lus séparément, tous deux `false` |
 | 🟡 6 | **Alerte opérationnelle branchée** (T-13, T-16) | ✅ **T-16 levé** : le DSN Sentry est bien inliné dans le bundle servi en production. ⬜ Reste T-13, le webhook d'alerte |
 
-| 🔴 7 | **Les cinq jobs CI verts sur `main`** (T-49, T-50) | **Ajouté le 2026-08-28**, parce que la condition existait au §GO sans figurer ici — et qu'elle était fausse depuis quatre jours sans que personne le voie. `e2e` est réparé ; `rls-integration` et `lighthouse` restent rouges |
+| 🔴 7 | **Les cinq jobs CI verts sur `main`** (T-49, T-50) | **Ajouté le 2026-08-28**, parce que la condition existait au §GO sans figurer ici — et qu'elle était fausse depuis quatre jours sans que personne le voie. `e2e` est réparé ; `rls-integration` et `lighthouse` restent rouges. ⚠️ **Corrigé le 2026-08-29** : sur le run de `076b1d1`, ils étaient **trois**, pas deux — `lint-test-build` échouait à l'étape `tsc -b`, cassé par le commit de T-26 lui-même. Correctif `6d694bf`, à reconfirmer sur le prochain run |
 
 ### 🟠 Risques acceptables au lancement — assumés, à ne pas confondre avec « réglés »
 
@@ -1121,3 +1121,46 @@ plan ne se déduit pas d'un ratio. Cette vérification demande un vrai jeu de do
 
 Corrigé au passage dans `SCALABILITY.md` §9 : l'item 1 de l'ordre de traitement (« `useTeamOKRs`
 en `live` conditionnel, ~15 minutes ») était **déjà fait**, et le document le demandait encore.
+
+### 2026-08-29 — relecture des onze tâches cochées : dix tiennent, une avait cassé la CI
+
+Passe de contrôle demandée : reprendre chaque ligne déclarée faite et la **revérifier à la
+source**, sans faire confiance au tableau. Une seule régression trouvée, et elle avait été
+introduite par le commit d'une tâche cochée le jour même.
+
+| Tâche | Comment elle a été revérifiée | Verdict |
+|---|---|---|
+| ✅ T-11 | Introspection prod rejouée : **48 tables, 112 fonctions**, dernière migration appliquée `20260827081458` (donc la 130 toujours pas passée, cohérent avec T-10 ouvert). Ni les migrations ni `check-prod-drift.mjs` n'ont bougé depuis le run du 2026-08-28 : le résultat est nécessairement le même | tient |
+| ✅ T-16 | `assets/index-CeOZB_67.js` servi par la prod contient bien le DSN `ingest.de.sentry.io` | tient |
+| ✅ T-19 | Les trois fichiers cités sont suivis par git. Ce qui reste hors index appartient à une session voisine (`OrgTabsBar`, `docs/SUPPORT.md`, `db-backup.yml`), pas au périmètre de T-19 | tient |
+| ✅ T-20 | `premium-config.ts:160` → `false` **et** `select key, enabled from billing_flags` → `enterprise_seat_limit = false`. Relus séparément, comme l'exige la règle | tient |
+| ✅ T-24 | `/version.json` renvoie `{"release":"076b1d1"}` en `max-age=0, must-revalidate`, et le bundle servi porte le **même** `release:"076b1d1"`. Les deux valeurs restent alignées après le déploiement suivant : le mécanisme n'a pas dérivé | tient |
+| 🔴 ✅ T-26 | Le comportement est bon (3/3 sur `TeamTasksToolbar.filter.test.tsx`), **le commit ne compilait pas** | régression, corrigée |
+| ✅ T-29 | Build complet rejoué : chemin critique **364,4 ko** (plafond 379), entrée **75,5 ko** (plafond 79). Les plafonds sont bien redescendus dans le dépôt | tient |
+| ✅ T-30 | Les trois durées sont dans `PolitiqueConfidentialitePage.tsx` §6, avec la mention d'anonymisation du journal d'encaissement | tient |
+| ✅ T-42 | `pg_stat_activity` relu : 11 connexions `authenticator`/postgrest, **aucune connexion applicative directe**. La conclusion du 2026-08-28 tient | tient |
+| ✅ T-44 | `LEGAL.md` porte le relevé TMview (11 marques actives, tableau et méthode reproductible), F1 en 🟡, et `npm run check:legal` valide la cohérence du tableau — 16 lignes rouges, comme annoncé | tient |
+| ✅ T-48 | Pas seulement en local : sur le run CI de `076b1d1`, le job `e2e` conclut **`success`** | tient |
+
+#### 🔴 La régression : T-26 a livré un test qui ne compile pas, et la garde ne l'a pas vu
+
+`f538bc3` annonce « typecheck 0 » dans son message. C'est faux : le test passe à
+`TeamTasksToolbar` les **anciens** noms de props (`search`, `onSearch`, `sort`, `onSort`), là où le
+composant attend `searchTerm` / `onSearchTerm` / `sortField` / `onSortField` / `sortDirection` /
+`onToggleSortDirection`.
+
+> ⚠️ **Pourquoi ça a échappé à tout le monde, et c'est le vrai enseignement.** Le test **passe**
+> en vitest : React ignore les props inconnues, et le cas testé — le clic sur une pastille déjà
+> active — n'exerce jamais les valeurs manquantes. Seul `tsc -b` tombe. Une suite verte ne dit
+> rien du typecheck, et un message de commit qui cite une garde n'est pas la garde.
+
+Constaté **dans la CI, pas déduit** : sur le run de `076b1d1`, `lint-test-build` échoue à l'étape
+« Type-check (tsc -b) ». La CI de `main` était donc à **trois** jobs rouges, pas deux — et le
+troisième venait d'être créé par le correctif d'une tâche cochée le jour même. Corrigé par
+`6d694bf` : `tsc -b` sort 0, 3/3 sur le fichier, **1 833/1 833** sur la suite, lint 0 erreur,
+`check:rls`, `i18n:check`, `check:legal` et `validate:migrations` verts.
+
+> 🔴 **Règle qui manquait à ce dépôt, et qui vient de coûter un job CI** : *une tâche n'est
+> vérifiée que si la garde a été rejouée APRÈS la dernière édition du fichier.* Rejouer avant
+> l'ultime retouche, puis citer le résultat dans le message de commit, produit exactement la
+> confiance non fondée que cette roadmap documente depuis le début — cette fois contre elle-même.
