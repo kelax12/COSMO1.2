@@ -19,6 +19,7 @@ import { PageHeading } from '@/components/ui/typography';
 import { MobileHeader } from '@/components/mobile';
 import OrgNotificationsBell from '@/components/organization/OrgNotificationsBell';
 import OrgTabBadge from '@/components/organization/OrgTabBadge';
+import OrgTabsBar from '@/components/organization/OrgTabsBar';
 import MyWorkTab from '@/components/organization/MyWorkTab';
 import OrgPlanChip from '@/components/organization/OrgPlanChip';
 import { MyWorkSkeleton, TeamTasksSkeleton, TeamOverviewSkeleton, OrgTabSkeleton } from '@/components/organization/OrgLoadingSkeletons';
@@ -360,37 +361,32 @@ const OrganizationPage = () => {
         </div>
       )}
 
-      {/* Onglets */}
-      <div className="flex gap-1 border-b border-[rgb(var(--color-border))] mb-6 pb-0.5 overflow-x-auto hide-scrollbar">
-        {TABS.filter((tab) => !tab.managerOnly || isManager).map(({ id, labelKey, Icon }) => {
+      {/* Onglets — la barre vit dans `OrgTabsBar` : elle porte son propre
+          comportement de défilement (onglet actif ramené dans le champ,
+          dégradés de continuation), et sept destinations dans 375 px n'est pas
+          un problème de page. */}
+      <OrgTabsBar
+        activeId={tab}
+        onSelect={(id) => setTab(id as OrgTab)}
+        items={TABS.filter((item) => !item.managerOnly || isManager).map(({ id, labelKey, Icon }) => {
           // Seuls Projets (tâches nouvellement assignées) et Membres (demandes
           // d'adhésion en attente) portent un compteur.
           const badge = id === 'projects' ? badges.projects : id === 'members' ? badges.members : 0;
-          return (
-            <button
-              key={id}
-              type="button"
-              onClick={() => setTab(id)}
-              aria-current={tab === id ? 'page' : undefined}
-              className={`inline-flex items-center gap-1.5 px-4 min-h-11 py-2.5 text-sm font-medium border-b-2 -mb-px whitespace-nowrap transition-colors ${
-                tab === id
-                  ? 'border-[rgb(var(--color-accent))] text-[rgb(var(--color-text-primary))]'
-                  : 'border-transparent text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-secondary))]'
-              }`}
-            >
-              <Icon size={16} aria-hidden="true" /> {t(labelKey)}
-              {badge > 0 && (
-                <OrgTabBadge
-                  count={badge}
-                  items={id === 'projects' ? badges.projectItems : badges.memberItems}
-                  title={t(id === 'projects' ? 'page.badgePreviewProjects' : 'page.badgePreviewMembers')}
-                  ariaLabel={tp('page.badgeCount', badge)}
-                />
-              )}
-            </button>
-          );
+          return {
+            id,
+            label: t(labelKey),
+            Icon,
+            badge: badge > 0 ? (
+              <OrgTabBadge
+                count={badge}
+                items={id === 'projects' ? badges.projectItems : badges.memberItems}
+                title={t(id === 'projects' ? 'page.badgePreviewProjects' : 'page.badgePreviewMembers')}
+                ariaLabel={tp('page.badgeCount', badge)}
+              />
+            ) : undefined,
+          };
         })}
-      </div>
+      />
 
       {/* Contenu */}
       {/* Une seule frontière Suspense pour tout le contenu : les onglets sont
