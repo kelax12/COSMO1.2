@@ -113,7 +113,7 @@ const MAX_FILE_LOC = 600;
  */
 const KNOWN_OVERSIZED = new Set([
   'src/components/organization/PyramidTab.tsx', // 1046 (etait 1506 — NodeCard extrait le 2026-08-24)
-  'src/components/TaskTable.tsx', // 1124
+  'src/components/TaskTable.tsx', // 890 (etait 1124 — filtres rapides et barre d'actions groupees extraits le 2026-08-29)
   'src/pages/AgendaPage.tsx', // 900
   'src/pages/SettingsPage.tsx', // 850
   'src/components/InboxMenu.tsx', // 802
@@ -174,7 +174,24 @@ const KNOWN_OVERSIZED = new Set([
  * La barre d'outils extraite est purement presentationnelle — aucun etat de
  * filtre n'a bouge, il reste dans l'onglet qui sait ce qu'il filtre.
  */
-const OVERSIZED_BUDGET = 10185;
+/**
+ * 2026-08-29 (5e passe, T-45) : 10 185 -> 9 949, et le plus gros fichier du depot
+ * n'est plus `TaskTable` : 1 124 -> 890, sous la barre des 900.
+ *
+ * Deux extractions, deux frontieres reelles : `TaskQuickFilters` (les cinq
+ * pastilles et la portee perso / entreprise) et `TaskBulkActionsBar` (la barre du
+ * mode selection). Aucune des deux ne connait une tache : elles recoivent un
+ * nombre, des libelles, et rappellent. Toute la logique metier reste dans
+ * `TaskTable`, seul a savoir ce qui est selectionne.
+ *
+ * ⚠️ Difference avec les quatre passes precedentes : celle-ci n'a PAS ete imposee
+ * par le cliquet. C'est une coupe volontaire, la seule que la roadmap prevoyait
+ * (T-45), et elle emporte un vrai defaut au passage : l'etat du menu « ... »
+ * vivait dans `TaskTable`, ce qui obligeait cinq gestionnaires metier a le
+ * refermer a la main. Il vit maintenant dans la barre, qui disparait avec le mode
+ * selection : il n'y a plus rien a remettre a zero, donc plus d'oubli possible.
+ */
+const OVERSIZED_BUDGET = 9949;
 
 const loc = (file: string) => readFileSync(file, 'utf8').split('\n').length;
 
