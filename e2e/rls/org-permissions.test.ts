@@ -62,6 +62,43 @@ describe('RLS — org_member_permissions (mig. 115)', () => {
       .single();
     if (projectError) throw projectError;
     projectId = project.id as string;
+
+    // ── Le décor est-il vraiment celui qu'on croit ? ──────────────────
+    //
+    // ⚠️ Ces quatre vérifications ne testent RIEN du produit : elles décrivent
+    // l'état sur lequel tout le fichier repose. Elles existent parce que ce
+    // job a échoué pendant des semaines avec « new row violates row-level
+    // security policy », un message qui dit qu'une policy a refusé et jamais
+    // POURQUOI. Sans elles, un décor faux (rôle non enregistré, `manager_id`
+    // perdu, `auth.uid()` absent des fonctions SECURITY DEFINER) se déguise en
+    // régression de sécurité, et on cherche le défaut là où il n'est pas.
+    //
+    // Les deux dernières interrogent le SERVEUR sous le JWT de l'utilisateur :
+    // c'est la seule façon de distinguer « la base ne me reconnaît pas comme
+    // admin » de « la policy m'a refusé pour une autre raison ».
+    const { data: rows } = await admin
+      .from('organization_members')
+      .select('user_id, role, manager_id')
+      .eq('org_id', orgId);
+    const decor = Object.fromEntries(
+      (rows ?? []).map((r) => [
+        r.user_id === patron.id ? 'patron' : r.user_id === chef.id ? 'chef' : 'stagiaire',
+        { role: r.role, manager: r.manager_id === chef.id ? 'chef' : r.manager_id === patron.id ? 'patron' : r.manager_id },
+      ]),
+    );
+    expect(decor, 'les trois adhésions doivent être enregistrées telles quelles').toEqual({
+      patron: { role: 'admin', manager: null },
+      chef: { role: 'member', manager: 'patron' },
+      stagiaire: { role: 'member', manager: 'chef' },
+    });
+
+    const { data: patronAdmin, error: patronAdminError } = await patron.client.rpc('is_org_admin', { p_org: orgId });
+    expect(patronAdminError).toBeNull();
+    expect(patronAdmin, 'la base doit reconnaître `patron` comme admin de son organisation').toBe(true);
+
+    const { data: chefManager, error: chefManagerError } = await chef.client.rpc('is_org_manager', { p_org: orgId });
+    expect(chefManagerError).toBeNull();
+    expect(chefManager, 'la base doit dériver `chef` comme manager, il a un subordonné').toBe(true);
   });
 
   afterAll(async () => {
@@ -119,7 +156,7 @@ describe('RLS — org_member_permissions (mig. 115)', () => {
     });
 
     it('accorder `project.create` à un membre simple le laisse créer', async () => {
-      const { error: grantError } = await admin
+      const { error: grantError } = await patron.client
         .from('org_member_permissions')
         .upsert({ org_id: orgId, user_id: stagiaire.id, can_create_project: true });
       expect(grantError).toBeNull();
@@ -135,7 +172,7 @@ describe('RLS — org_member_permissions (mig. 115)', () => {
     });
 
     it('retirer `task.create` à un membre bloque la création de tâche', async () => {
-      await admin
+      await patron.client
         .from('org_member_permissions')
         .upsert({ org_id: orgId, user_id: stagiaire.id, can_create_task: false });
 
@@ -153,7 +190,7 @@ describe('RLS — org_member_permissions (mig. 115)', () => {
     });
 
     it('une portée `{self}` autorise soi-même et refuse un collègue', async () => {
-      await admin.from('org_member_permissions').upsert({
+      await patron.client.from('org_member_permissions').upsert({
         org_id: orgId,
         user_id: stagiaire.id,
         can_create_task: true,
@@ -198,7 +235,7 @@ describe('RLS — org_member_permissions (mig. 115)', () => {
     });
 
     it('une portée vide ne laisse assigner à personne, pas même à soi', async () => {
-      await admin.from('org_member_permissions').upsert({
+      await patron.client.from('org_member_permissions').upsert({
         org_id: orgId,
         user_id: stagiaire.id,
         can_create_task: true,
@@ -222,7 +259,7 @@ describe('RLS — org_member_permissions (mig. 115)', () => {
     it('un admin garde tous ses droits même surchargé à false', async () => {
       // La garde refuse la ligne : un admin détient tout par construction, et
       // une ligne le visant serait un réglage affiché sans effet réel.
-      const { error: guardError } = await admin
+      const { error: guardError } = await patron.client
         .from('org_member_permissions')
         .upsert({ org_id: orgId, user_id: patron.id, can_create_project: false });
       expect(guardError).not.toBeNull();
@@ -265,7 +302,7 @@ describe('RLS — org_member_permissions (mig. 115)', () => {
 
     it('un manager n’accorde pas un droit qu’il n’a pas lui-même', async () => {
       // On retire d'abord `project.create` au chef, puis il tente de le donner.
-      await admin
+      await patron.client
         .from('org_member_permissions')
         .upsert({ org_id: orgId, user_id: chef.id, can_create_project: false });
 
@@ -291,7 +328,7 @@ describe('RLS — org_member_permissions (mig. 115)', () => {
 
   describe('isolation', () => {
     it('un utilisateur extérieur ne lit aucune permission', async () => {
-      await admin
+      await patron.client
         .from('org_member_permissions')
         .upsert({ org_id: orgId, user_id: stagiaire.id, can_create_task: false });
 
