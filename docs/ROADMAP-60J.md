@@ -1314,3 +1314,23 @@ qui n'existe pas. Une ligne qui retirait la barre du début et pas celle de la f
 Correctif et test témoin livrés. **Prédiction vérifiable au prochain run** : le job doit
 maintenant rapporter `/pour-freelances/` à la place de `/en/`. Si `/en/` revient, la cause du
 choix des URL est ailleurs et reste à trouver.
+
+#### ✅ Prédiction vérifiée, et la dernière inconnue de la mesure levée
+
+Run de `155f103` : le job rapporte **`/pour-freelances/` perf 97 · a11y 99 · seo 100**, à la place
+de `/en/`. Le correctif de la barre finale tient, et il tient pour la raison annoncée.
+
+Reste une ligne qui ne correspond pas à la configuration : la racine `/` est rapportée comme
+`/en/`. Explication trouvée dans le code plutôt que devinée : `detectLocale()` lit
+`navigator.languages` (`src/i18n/locale.ts`), Chrome annonce `en-US`, et la détection redirige la
+racine. **Les scores de landing cités jusqu'ici, perf 53 à 60 et TBT jusqu'à 2,3 s, sont donc ceux
+de la version anglaise.** `--lang` fixe la langue de l'interface de Chrome, pas ce que la page
+voit : c'est `--accept-lang` qui pilote `navigator.languages`, et c'est lui qui manquait.
+
+> ⚠️ **Deux fois de suite, la même erreur de méthode évitée de justesse** : j'ai d'abord annoncé
+> `--lang` comme un correctif, puis constaté qu'il n'avait rien changé. Cette fois le drapeau est
+> choisi en lisant la fonction qui décide, pas en supposant ce qu'elle lit. La prédiction reste
+> écrite : au prochain run, la première ligne doit dire `/` et non `/en/`.
+
+**État CI après cette journée : un seul job rouge sur `main`**, `rls-integration` (T-49).
+`lint-test-build`, `audit`, `e2e` et `lighthouse` sont verts.
