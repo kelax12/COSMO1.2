@@ -37,13 +37,14 @@ Légende : 🔴 bloquant · 🟠 important · 🟡 à planifier · ✅ corrigé
 > avait déjà été versé. *Une note qui récompense une garde doit d'abord vérifier que la garde
 > tourne.*
 >
-> G-1 reste ouvert en production : la mig. `130` est écrite, testée, et **toujours pas appliquée**.
+> ~~G-1 reste ouvert en production~~ → ✅ **G-1 est REFERMÉ le 2026-08-29** : mig. `130` appliquée en
+> production et vérifiée en base, pas sur parole (voir la section G-1).
 
 | Ce qui compose la note | 08-24 | 08-25 | **08-27** |
 |---|---|---|---|
 | Findings High/Critical exploitables | 0 | 0 | 0 |
 | Findings ouverts dans le code | 0 (B-1/B-2/B-3 refermés) | 0 | 0 |
-| Findings ouverts **en production** | 0 | 0 | 🟠 **1** · G-1, correctif écrit et **non appliqué** (mig. 130) |
+| Findings ouverts **en production** | 0 | 0 | ~~🟠 1 · G-1~~ → **0 au 2026-08-29**, mig. 130 appliquée et vérifiée |
 | Bloquants restants, **hors dépôt** | A-9 (pas de PITR) + 5 réglages de console | **inchangés** | **inchangés** |
 | Gardes automatiques vertes | 4 | **4** (+ périmètre élargi : 128 policies, 127 migrations) | **4** · `check:rls` 0 violation, `validate:migrations` 0 erreur avec la mig. 130 |
 | Nouvelle surface livrée **avec** son test de base réelle | · | ✅ `org_member_permissions` (mig. 115) + `e2e/rls/org-permissions.test.ts` | ⚪️ sans objet, aucune nouvelle surface |
@@ -228,7 +229,7 @@ signature inchangée.
 > 🟠 **Suivi le 2026-08-27 : ce point devient le finding G-1**, correctif écrit (mig. `130`),
 > **non appliqué en production**. Détail ci-dessous.
 
-## 🟠 G-1 · `org_invitations_select` · correctif ÉCRIT, mig. `130` NON APPLIQUÉE
+## ✅ G-1 · `org_invitations_select` · REFERMÉ le 2026-08-29, mig. `130` appliquée
 
 **Ce que c'est.** La policy posée par la mig. `105` est
 `(auth.uid() = invitee_id) OR is_org_member(org_id)` : **tout membre** de l'organisation lit
@@ -258,7 +259,7 @@ ne gouverne pas.
 | État | Détail |
 |---|---|
 | Dépôt | ✅ `supabase/migration/130_org_invitations_select_narrowed.sql`, `check:rls` et `validate:migrations` verts |
-| **Production** | 🟠 **NON APPLIQUÉE au 2026-08-27** |
+| **Production** | ✅ **APPLIQUÉE le 2026-08-29**, ledger `org_invitations_select_narrowed`. Vérifié en base : une seule policy PERMISSIVE en SELECT ; un membre simple de l'organisation qui porte l'invitation lit **0 ligne** (avant : toutes), témoin sur un second membre simple à 0 ; l'inviteur, le destinataire et l'admin lisent **2 lignes**, inchangé. `check:drift` derrière : aucun objet attendu ne manque |
 | Test de base réelle | ✅ `e2e/rls/org-invitations.test.ts` (2026-08-27, soir) · sept cas joués dans **cinq rôles réels** sur la stack Supabase, plus le rôle `anon` |
 | Réversibilité | rejouer le bloc `CREATE POLICY` de la mig. `105` |
 
@@ -423,7 +424,7 @@ documentaire du 2026-08-14, le lien pointait dans le vide. Restaurée ici.
 | 0 | **`npm run test:coverage`** bloquait tout déploiement (3 seuils manqués). 115 tests de repository ajoutés, seuils du glob remontés | 🔴 CI | · | ✅ **verte au 2026-08-25 en fin de journée**, cf. [`docs/TESTING.md`](./docs/TESTING.md) |
 | 1 | Migrations `109`/`110` (B-1, B-2, B-3 + notifications de commentaire) | 🟠 sécurité + feature | — | ✅ **appliquées et vérifiées en prod le 2026-08-24** |
 | 1bis | Migrations `115` → `123` (permissions, FK RGPD, RPC indexables, Realtime, payload borné, fuseau des habitudes, périodicité de facturation) | 🟠 sécurité + perf | · | ✅ **appliquées et vérifiées en prod le 2026-08-25** |
-| 1ter | **Migration `130`** (G-1 · lecture d'`org_invitations` restreinte au destinataire, à l'inviteur et aux admins) | 🟠 minimisation RGPD | **Axel** applique, Claude vérifie | 🟠 **écrite le 2026-08-27, NON APPLIQUÉE** · la vérification n'est plus un commentaire : `e2e/rls/org-invitations.test.ts` la joue dans cinq rôles, et reste rouge jusqu'à l'application |
+| 1ter | **Migration `130`** (G-1 · lecture d'`org_invitations` restreinte au destinataire, à l'inviteur et aux admins) | 🟠 minimisation RGPD | Claude applique et vérifie, sur demande d'Axel | ✅ **appliquée et vérifiée en prod le 2026-08-29** · parité mesurée acteur par acteur sur les données réelles, `check:drift` propre derrière |
 | 1quater | **G-2 — SMTP applicatif pour Auth, PUIS confirmation d'email** ([`docs/DEPLOYMENT.md`](./docs/DEPLOYMENT.md) §2ter) | 🟠 vérification d'identité + délivrabilité | **Axel** (deux consoles, non scriptable) | 🟠 **front, gabarits et garde livrés le 2026-08-27 · production inchangée.** `npm run check:mail` est rouge jusqu'à la mise en service |
 | 2 | **Réglages de console Supabase** : A-10 (leaked password protection), MFA sur le compte admin, allowlist de redirection OAuth, secure email change | 🟠 clics Dashboard, ~30 min cumulés | **Axel** | ⏳ **en attente** |
 | 3 | **A-9 — plan Pro + PITR + drill de restauration** | 🔴 résilience, seul bloquant | **Axel** (compte, non scriptable) | ⏳ **en attente** |
