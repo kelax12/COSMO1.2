@@ -211,6 +211,14 @@ jobs:
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
           exit 1
+      # Décrit l'état RLS réellement obtenu par le replay, en annotations. Le
+      # job échoue depuis des semaines sur un message qui dit qu'une policy a
+      # refusé sans dire laquelle, alors que les deux moitiés du prédicat sont
+      # vraies quand on les évalue séparément. Ce que le dépôt DÉCRIT a été
+      # compare a la prod ; il reste a voir ce que la base CONTIENT.
+      - name: Etat RLS de la base fraiche
+        run: node scripts/diagnose-rls-state.mjs
+
       - name: Run RLS integration tests
         run: |
           set -o pipefail
