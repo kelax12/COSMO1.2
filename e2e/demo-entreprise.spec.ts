@@ -110,3 +110,87 @@ test.describe('Espace entreprise (démo)', () => {
     await expect(page.locator('[data-sonner-toast][data-type="error"]')).toHaveCount(0);
   });
 });
+
+// ═══════════════════════════════════════════════════════════════════
+// Barre d'onglets sur petit écran — finding P1 du 2026-08-27.
+//
+// Mesuré à 375 px : le rail fait **832 px pour 335 visibles**, soit QUATRE
+// destinations sur sept hors champ, dans un conteneur `hide-scrollbar` — donc
+// sans barre de défilement ni le moindre indice qu'il y a autre chose.
+//
+// Le cas qui comptait le plus n'était pas le confort mais un vrai défaut :
+// ouvrir un lien profond `?tab=members` laissait l'onglet ACTIF hors de l'écran.
+// L'utilisateur voyait le contenu de Membres avec « Aperçu » comme seul onglet
+// visible, sans pouvoir dire lequel était coché.
+//
+// ⚠️ Ce test vit en e2e et pas en unitaire, et ce n'est pas un choix de
+// commodité : jsdom ne calcule aucune mise en page — `scrollWidth`,
+// `clientWidth` et `offsetLeft` y valent 0. Un test jsdom passerait quoi qu'il
+// arrive, y compris avec le bug. **Un test qui ne peut pas échouer n'est pas un
+// test.**
+// ═══════════════════════════════════════════════════════════════════
+test.describe('Espace entreprise — navigation sur petit écran', () => {
+  test("un lien profond laisse l'onglet actif dans le champ", async ({ demoPage: page }) => {
+    await page.setViewportSize({ width: 375, height: 812 });
+    await page.goto('/entreprise?tab=members');
+
+    const bar = page.locator('[data-org-tabs]');
+    await expect(bar).toBeVisible({ timeout: 20_000 });
+
+    // On attend que le rail déborde réellement : sans ça, le test ne vérifierait
+    // rien sur un écran où tout tient.
+    await expect
+      .poll(async () => bar.evaluate((el) => el.scrollWidth - el.clientWidth), { timeout: 15_000 })
+      .toBeGreaterThan(0);
+
+    // D'abord : le bon onglet est-il actif ? Sans cette étape, un échec du
+    // `poll` suivant ne dit pas s'il s'agit du défilement ou d'un lien profond
+    // qui n'a pas pris — deux causes opposées derrière la même ligne rouge.
+    await expect
+      .poll(async () => bar.evaluate((el) => el.querySelector('[data-active="true"]')?.textContent?.trim() ?? ''), {
+        timeout: 15_000,
+      })
+      .toMatch(/membres/i);
+
+    // Le centrage se rejoue quand une pastille de compteur arrive et élargit le
+    // rail — c'est le decalage de 8 px trouvé en mesurant, d'où le `poll`.
+    // ⚠️ On sonde un OBJET, pas un booléen : un `false` qui expire ne dit rien,
+    // alors que ces cinq nombres désignent la cause en une lecture.
+    await expect
+      .poll(
+        async () =>
+          bar.evaluate((el) => {
+            const actif = el.querySelector<HTMLElement>('[data-active="true"]');
+            return JSON.stringify({
+              actif: actif?.textContent?.trim().slice(0, 14) ?? null,
+              scrollLeft: Math.round(el.scrollLeft),
+              scrollMax: el.scrollWidth - el.clientWidth,
+              gauche: actif?.offsetLeft ?? -1,
+              droite: (actif?.offsetLeft ?? 0) + (actif?.offsetWidth ?? 0),
+              fenetre: Math.round(el.scrollLeft) + el.clientWidth,
+              visible: !!actif
+                && actif.offsetLeft >= el.scrollLeft - 1
+                && actif.offsetLeft + actif.offsetWidth <= el.scrollLeft + el.clientWidth + 1,
+            });
+          }),
+        { timeout: 15_000 },
+      )
+      .toContain('"visible":true');
+  });
+
+  test('les dégradés de bord disent où il reste des onglets', async ({ demoPage: page }) => {
+    await page.setViewportSize({ width: 375, height: 812 });
+    await page.goto('/entreprise?tab=overview');
+
+    const bar = page.locator('[data-org-tabs]');
+    await expect(bar).toBeVisible({ timeout: 20_000 });
+
+    // Sur le premier onglet : rien à gauche, tout à droite.
+    const etat = await bar.evaluate((el) => ({
+      gauche: el.scrollLeft > 1,
+      droite: el.scrollLeft + el.clientWidth < el.scrollWidth - 1,
+    }));
+    expect(etat.gauche).toBe(false);
+    expect(etat.droite).toBe(true);
+  });
+});
