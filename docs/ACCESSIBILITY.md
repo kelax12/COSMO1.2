@@ -5,7 +5,22 @@
 **+ Lighthouse CI** (`lighthouserc.json`, job `lighthouse`) sur les 4 routes prérendues.
 **Gates CI** : les violations `impact: 'critical'` sont **bloquantes** (`assertNoCritical`). `serious` / `moderate` / `minor` sont dumpées dans `test-results/a11y/<route>.json` mais non bloquantes. Le score a11y de Lighthouse est **bloquant** sur `/`, `/guide`, `/blog`, `/pour-freelances`.
 
-## Note d'accessibilité : 76 → 79 → **80 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27)
+## Note d'accessibilité : 76 → 79 → 80 → **81 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29)
+
+> ### 2026-08-29 · +1, la gate Lighthouse mesure enfin, et elle bloque
+>
+> Le job `lighthouse` n'avait **jamais produit un rapport** depuis son ajout le 2026-08-24 : Chrome
+> ne démarrait pas. Il tourne, et l'accessibilité des pages publiques est désormais mesurée à
+> chaque push : `/` **93 à 97**, `/guide/` **96**, `/blog/` et `/pour-freelances/` **99**.
+>
+> Le seuil est **bloquant** à 0,90. Il avait d'abord été posé à 0,92, au plus près du mesuré, puis
+> **redescendu le jour même** : la même page, sur le même build, donne 93 puis 97 entre deux
+> passes. Un seuil à l'intérieur du bruit de mesure transforme la gate en pile ou face, et la
+> première rougeur qui n'est pas une régression apprend à l'ignorer.
+>
+> ⚠️ **Le point n'est pas gagné sur un correctif** : aucun défaut d'accessibilité n'a été corrigé
+> ces deux jours. Il est gagné parce qu'une régression franche sur les quatre pages publiques ne
+> peut plus passer inaperçue. L'écart de 4 points entre deux passes reste, lui, inexpliqué.
 
 | Ce qui compose la note | 08-24 | 08-25 | **08-27** |
 |---|---|---|---|

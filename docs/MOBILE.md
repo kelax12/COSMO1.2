@@ -1,6 +1,26 @@
 # Mobile-first — patterns et conventions
 
-## Note mobile / DA : 62 → 72 → **74 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27)
+## Note mobile / DA : 62 → 72 → 74 → **76 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29)
+
+> ### 2026-08-29 · +2, sept onglets qui tenaient dans 335 px visibles
+>
+> Mesuré à 375 px : le rail de l'espace entreprise fait **832 px pour 335 visibles**, soit quatre
+> destinations sur sept hors champ, dans un conteneur `hide-scrollbar`, donc sans barre de
+> défilement ni le moindre indice qu'il y a autre chose.
+>
+> Le défaut qui comptait n'était pas le confort : ouvrir un lien profond `?tab=members` laissait
+> l'onglet **actif** hors de l'écran. L'utilisateur voyait le contenu de Membres avec « Aperçu »
+> comme seul onglet visible, sans pouvoir dire où il se trouvait.
+>
+> `OrgTabsBar` ramène l'onglet actif dans le champ et pose des dégradés de continuation. Deux
+> mesures ont été nécessaires pour le faire tenir : la `ResizeObserver` observe le conteneur **et**
+> le rail, parce que la boîte du conteneur ne bouge pas quand son contenu s'élargit (l'arrivée
+> d'une pastille de compteur décalait l'onglet actif de 27 px hors champ, ce qui se lisait comme
+> de la flakiness) ; et le premier positionnement est **instantané**, parce qu'un
+> `behavior: smooth` est annulable et s'arrête en chemin.
+>
+> Vérifié dans le navigateur et par deux tests Playwright, **avec témoin** : les deux échouent
+> contre l'ancienne barre.
 
 | Ce qui compose la note | 08-24 | 08-25 | **08-27** |
 |---|---|---|---|

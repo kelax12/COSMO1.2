@@ -9,7 +9,26 @@ s'est révélée fausse.
 Toutes les mesures de ce document sont **reproductibles** : les requêtes sont en
 [§10 Runbook](#10-runbook--refaire-cet-audit).
 
-## Note de scalabilité : 71 → **84 / 100** (2026-08-24 → 2026-08-25) · **inchangée au 2026-08-27**
+## Note de scalabilité : 71 → 84 → **86 / 100** (2026-08-24 → 2026-08-25 → 2026-08-29) · inchangée au 2026-08-27
+
+> ### 2026-08-29 · +2, deux inconnues portées depuis des semaines sont levées
+>
+> **Le coût par ligne est mesuré, plus projeté.** Le chemin direct sur `team_tasks` coûte
+> **3,33 buffers par ligne**, celui de `tasks` **0,061** : un rapport de **54×**. L'audit du
+> 2026-08-14 avait établi « ≈ 60× » par une autre méthode, deux semaines plus tôt. Deux mesures
+> indépendantes, même ordre de grandeur : le chiffre qui justifie les migrations 113 et 117 tient.
+>
+> **Le pooler n'était pas le sujet.** `SCALABILITY.md` demandait depuis deux semaines de confirmer
+> que la production utilise l'URL du pooler. Mesuré dans `pg_stat_activity` : l'application
+> **n'ouvre aucune connexion Postgres**. Les 11 connexions applicatives viennent toutes de
+> PostgREST, qui tient son propre pool, et leur nombre ne dépend pas du nombre d'utilisateurs
+> connectés. 14 sur 60, une seule active. Le frein de montée en charge est le pool PostgREST et le
+> CPU de la base, pas le nombre de connexions.
+>
+> 🔴 **Ce qui plafonne à 86, et n'a pas bougé** : rien n'a été mesuré à VOLUME. La production
+> compte 8 tâches d'équipe. Un basculement de plan ne se déduit pas d'un ratio, et cette
+> vérification demande un vrai jeu de données sur une branche ou une stack locale, jamais en
+> production. C'est T-41, toujours à moitié faite.
 
 > **2026-08-27 · note inchangée, un finding rouvre sous une autre forme.** La pastille de
 > navigation rechargeait `get_my_team_tasks` à chaque retour d'onglet, depuis toutes les pages

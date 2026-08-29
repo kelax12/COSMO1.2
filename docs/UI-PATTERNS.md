@@ -1,6 +1,25 @@
 # Patterns UI — COSMO
 
-## Note UI / UX : 70 → 80 → **82 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27)
+## Note UI / UX : 70 → 80 → 82 → **84 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29)
+
+> ### 2026-08-29 · +2, deux P1 de la critique du 2026-08-27 fermés
+>
+> **Une seule grammaire de filtre.** Les onglets « Tâches » et « Projets » partageaient déjà la
+> donnée, le type et le helper : ce qui divergeait tenait à un seul geste, le clic sur une pastille
+> **déjà active**. Projets la désactivait et revenait à « Tout », Tâches ne faisait rien. Même
+> écran, même objet, deux réponses au même geste. La pastille « Tout » est **conservée** : elle
+> reste la seule affordance visible pour revenir à l'ensemble. On ajoute un geste, on n'en retire
+> aucun.
+>
+> **Sept onglets atteignables sur 375 px** (détail dans [`MOBILE.md`](./MOBILE.md)).
+>
+> **Un onglet resté ouvert cesse d'exécuter un bundle périmé.** 91,5 % du trafic Supabase du
+> 2026-08-26 venait de deux onglets exécutant un vieux build. La bannière propose, elle ne recharge
+> jamais d'autorité : un onglet ouvert contient souvent une saisie en cours. Vérifié en production.
+>
+> ⚪ **Un finding clos sans changement** : la répétition entre la frise « Prochains événements » et
+> la liste au-dessus est assumée, arbitrage rendu. Une frise intitulée « de l'entreprise » qui
+> omettrait certaines échéances deviendrait fausse.
 
 | Finding de l'audit du 2026-08-14 | 08-24 | 08-25 | **08-27** |
 |---|---|---|---|
