@@ -20,10 +20,19 @@ import {
   StatsMobileShowcase,
 } from '@/components/showcase/MobileShowcases';
 import { useT } from '@/i18n/useT';
+import WhenVisible from '@/components/showcase/WhenVisible';
 
 // Audit perf 2026-05-29 — StatsShowcase pulls Recharts (≈ 320 kB). Landing
 // page should never block on it: lazy-load with a lightweight skeleton so
 // the page renders instantly and the chart streams in once Recharts arrives.
+//
+// ⚠️ **Corrigé le 2026-08-29, et l'intention d'origine n'était pas tenue.**
+// `lazy()` découpe le code, il ne le diffère pas : ce composant était rendu
+// immédiatement, donc son import partait au chargement de la page. Mesuré :
+// `vendor-charts` (413 ko bruts, recharts + d3) était téléchargé sur `/`, alors
+// que `PERFORMANCE.md` le décrivait comme « réellement lazy ». D'où
+// `WhenVisible` : le panneau Statistiques est le cinquième d'une section
+// défilante, la plupart des visiteurs ne l'atteignent jamais.
 const StatsShowcase = lazy(() => import('@/components/showcase/StatsShowcase'));
 const ShowcaseSkeleton = () => (
   <div className="w-full rounded-2xl bg-slate-800/80 border border-white/10 shadow-2xl p-5 h-[340px] animate-pulse" />
@@ -169,10 +178,12 @@ const FEATURES: Feature[] = [
     ],
     cta: 'Voir mes stats',
     Desktop: () => (
-      <Suspense fallback={<ShowcaseSkeleton />}>
-        <StatsShowcase />
-        <RefreshScrollTriggerOnMount />
-      </Suspense>
+      <WhenVisible fallback={<ShowcaseSkeleton />}>
+        <Suspense fallback={<ShowcaseSkeleton />}>
+          <StatsShowcase />
+          <RefreshScrollTriggerOnMount />
+        </Suspense>
+      </WhenVisible>
     ),
     Mobile: StatsMobileShowcase,
   },
