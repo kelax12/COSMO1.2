@@ -306,10 +306,38 @@ jobs:
       # rendu ce job indiagnosticable depuis son ajout le 2026-08-24, et ce qui a
       # fait porter la tache T-50 sur un `gh auth login` au lieu d'un correctif.
       # Meme dispositif que le replay de migrations, pour la meme raison.
-      - name: Lighthouse CI
+      # ⚠️ `autorun` enchaine collect → assert → upload, donc une assertion
+      # rouge empeche l upload : le job qui MESURE ne rend alors AUCUN chiffre,
+      # exactement quand on en a besoin. Les trois phases sont donc separees,
+      # et le releve des scores tourne en `always()`. Sans ca, T-28 (resserrer
+      # les seuils sur le reel) ne peut jamais lire le reel.
+      - name: Lighthouse collect
         run: |
           set -o pipefail
-          if npx --yes @lhci/cli@0.15.x autorun 2>&1 | tee lhci.log; then exit 0; fi
+          npx --yes @lhci/cli@0.15.x collect 2>&1 | tee lhci.log
+
+      - name: Scores mesures
+        if: ${{ !cancelled() }}
+        run: |
+          node -e '
+            const fs = require("fs");
+            const d = ".lighthouseci";
+            if (!fs.existsSync(d)) { console.log("::warning title=lhci::aucun rapport produit"); process.exit(0); }
+            const lignes = [];
+            for (const f of fs.readdirSync(d).filter((f) => f.startsWith("lhr-") && f.endsWith(".json"))) {
+              const r = JSON.parse(fs.readFileSync(`${d}/${f}`, "utf8"));
+              const c = r.categories;
+              const n = (k) => (c[k] ? Math.round(c[k].score * 100) : "-");
+              lignes.push(`${r.finalDisplayedUrl} perf=${n("performance")} a11y=${n("accessibility")} bp=${n("best-practices")} seo=${n("seo")} lcp=${Math.round(r.audits["largest-contentful-paint"].numericValue)}ms tbt=${Math.round(r.audits["total-blocking-time"].numericValue)}ms cls=${r.audits["cumulative-layout-shift"].numericValue}`);
+            }
+            for (const l of lignes) console.log(`::notice title=lhci-score::${l}`);
+            fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `### Scores Lighthouse\n\n\`\`\`\n${lignes.join("\n")}\n\`\`\`\n`);
+          '
+
+      - name: Lighthouse assert
+        run: |
+          set -o pipefail
+          if npx --yes @lhci/cli@0.15.x assert 2>&1 | tee -a lhci.log; then exit 0; fi
           {
             echo '### ✖ Lighthouse CI : echec'
             echo ''
