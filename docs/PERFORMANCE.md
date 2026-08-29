@@ -162,7 +162,7 @@ Le finding ci-dessus a retiré le `modulepreload`. Mesuré dans le navigateur tr
 tard, requêtes réseau à l'appui : **`vendor-charts` partait toujours au chargement de la landing**,
 413 ko bruts. Plus par préchargement, cette fois, mais par rendu.
 
-`FeaturesSection` déclare `const StatsShowcase = lazy(() => import(...))` — et le rend
+`FeaturesSection` déclare `const StatsShowcase = lazy(() => import(...))`, et le rend
 **immédiatement**, dans la liste des cinq panneaux. Or `React.lazy` **découpe** le code, il ne le
 **diffère** pas : un composant `lazy` monté tout de suite déclenche son import tout de suite. Le
 chunk part au chargement de la page, comme s'il était statique, à un aller-retour près.
