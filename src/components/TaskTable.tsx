@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router';
-import { Bookmark, BookmarkCheck, CheckCircle2, CheckSquare, AlertTriangle, Users, X, Trash2, ListPlus, MoreHorizontal, Tag, CalendarClock, ArrowLeft, Lightbulb } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { AlertTriangle, Lightbulb, Trash2, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useBilling } from '@/modules/billing/billing.context';
 import TaskModal from './TaskModal';
@@ -9,6 +8,8 @@ import BulkAddToListModal from './add-to-list/BulkAddToListModal';
 import ScheduleEventModal from './ScheduleEventModal';
 import AddToListModal from './AddToListModal';
 import { VirtualizedTaskList, TaskRow, type UnifiedTaskRow } from './task-table/list';
+import TaskQuickFilters from './task-table/TaskQuickFilters';
+import TaskBulkActionsBar from './task-table/TaskBulkActionsBar';
 import { TeamTaskRowLite } from './task-table/TeamTaskRowLite';
 import TeamTaskModal from './organization/TeamTaskModal';
 import { myAssignedTasks } from './organization/team-projects.helpers';
@@ -81,7 +82,6 @@ const TaskTable: React.FC<TaskTableProps> = ({
   searchTerm = '',
 }) => {
   const { t, tp } = useT('tasks');
-  const { t: tCommon } = useT('common');
   // ═══════════════════════════════════════════════════════════════════
   // TASKS - Depuis le module tasks (MIGRÉ)
   // ═══════════════════════════════════════════════════════════════════
@@ -169,12 +169,10 @@ const TaskTable: React.FC<TaskTableProps> = ({
     setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
   }, []);
 
-  // Menu « ⋯ » de la barre d'actions groupées : actions supplémentaires
-  // (modifier la catégorie / la deadline des tâches sélectionnées).
-  const [bulkMenuOpen, setBulkMenuOpen] = useState(false);
-  const [bulkMenuView, setBulkMenuView] = useState<'root' | 'category'>('root');
-
-  const exitSelectMode = () => { setSelectMode(false); setSelectedIds([]); setBulkMenuOpen(false); };
+  // ⚠️ Plus de `setBulkMenuOpen(false)` ici : l'état du menu « ⋯ » vit dans
+  // `TaskBulkActionsBar`, qui se ferme lui-même et disparaît avec le mode
+  // sélection. Cinq gestionnaires métier n'ont plus à connaître un menu.
+  const exitSelectMode = () => { setSelectMode(false); setSelectedIds([]); };
   const [activeQuickFilter, setActiveQuickFilter] = useState<'none' | 'bookmarked' | 'completed' | 'overdue' | 'collaboration'>('none');
 
   const toggleQuickFilter = (filter: 'bookmarked' | 'completed' | 'overdue' | 'collaboration') => {
@@ -487,20 +485,6 @@ const TaskTable: React.FC<TaskTableProps> = ({
     exitSelectMode();
   };
 
-  // Input date natif hors du menu (même pattern que le snooze : le menu se
-  // ferme au clic, l'input doit survivre à la fermeture pour showPicker()).
-  const bulkDateInputRef = useRef<HTMLInputElement>(null);
-  const openBulkDatePicker = () => {
-    setBulkMenuOpen(false);
-    const input = bulkDateInputRef.current;
-    if (!input) return;
-    if (typeof input.showPicker === 'function') {
-      try { input.showPicker(); return; } catch { /* fallback below */ }
-    }
-    input.click();
-  };
-
-
 
   // Le mode sélection (#10) réutilise le rendu checkbox du mode addToList.
   const effectiveAddToListMode = addToListMode || selectMode;
@@ -512,86 +496,17 @@ const TaskTable: React.FC<TaskTableProps> = ({
       {/* Tâches/listes partagées en attente : plus de bandeaux inline ici,
           regroupées dans TasksInboxMenu (en-tête, mobile ET desktop) — pour
           laisser toute la largeur au tableau. */}
-      <div className={`${showQuickFilters ? 'flex' : 'hidden'} md:flex flex-col gap-4 mb-6`}>
-        <div className="flex flex-wrap items-center gap-2">
-          <Button
-            variant="outline"
-            onClick={() => toggleQuickFilter('bookmarked')}
-            className={`flex items-center gap-2 ${activeQuickFilter === 'bookmarked' ? '!bg-[rgb(var(--color-accent-solid))] hover:!bg-[rgb(var(--color-accent-solid-hover))] !text-[rgb(var(--color-accent-solid-foreground))] !border-[rgb(var(--color-accent-solid))]' : ''}`}
-          >
-            {activeQuickFilter === 'bookmarked' ? <BookmarkCheck size={20} data-icon="inline-start" /> : <Bookmark size={20} data-icon="inline-start" />}
-            <span className="hidden sm:inline">{activeQuickFilter === 'bookmarked' ? tCommon('actions.all') : t('table.quickFilter.bookmarked')}</span>
-            <span className="sm:hidden">{t('table.quickFilter.bookmarked')}</span>
-          </Button>
-
-          <Button
-            variant="outline"
-            onClick={() => toggleQuickFilter('completed')}
-            className={`flex items-center gap-2 ${activeQuickFilter === 'completed' ? '!bg-[rgb(var(--color-accent-solid))] hover:!bg-[rgb(var(--color-accent-solid-hover))] !text-[rgb(var(--color-accent-solid-foreground))] !border-[rgb(var(--color-accent-solid))]' : ''}`}
-          >
-            <CheckCircle2 size={20} data-icon="inline-start" />
-            <span className="hidden sm:inline">{t('table.quickFilter.completed')}</span>
-            <span className="sm:hidden">{t('table.quickFilter.completedShort')}</span>
-          </Button>
-
-          <Button
-            variant="outline"
-            onClick={() => toggleQuickFilter('overdue')}
-            className={`flex items-center gap-2 ${activeQuickFilter === 'overdue' ? '!bg-[rgb(var(--color-accent-solid))] hover:!bg-[rgb(var(--color-accent-solid-hover))] !text-[rgb(var(--color-accent-solid-foreground))] !border-[rgb(var(--color-accent-solid))]' : ''}`}
-          >
-            <AlertTriangle size={20} data-icon="inline-start" />
-            <span className="hidden sm:inline">{t('table.quickFilter.overdue')}</span>
-            <span className="sm:hidden">{t('table.quickFilter.overdue')}</span>
-          </Button>
-
-          <Button
-            variant="outline"
-            onClick={() => toggleQuickFilter('collaboration')}
-            className={`flex items-center gap-2 ${activeQuickFilter === 'collaboration' ? '!bg-[rgb(var(--color-accent-solid))] hover:!bg-[rgb(var(--color-accent-solid-hover))] !text-[rgb(var(--color-accent-solid-foreground))] !border-[rgb(var(--color-accent-solid))]' : ''}`}
-          >
-            <Users size={20} data-icon="inline-start" />
-            <span className="hidden sm:inline">{t('table.quickFilter.collaboration')}</span>
-            <span className="sm:hidden">{t('table.quickFilter.collaborationShort')}</span>
-          </Button>
-
-          {!addToListMode && (
-            <Button
-              variant="outline"
-              onClick={() => selectMode ? exitSelectMode() : setSelectMode(true)}
-              className={`flex items-center gap-2 ${selectMode ? '!bg-[rgb(var(--color-accent-solid))] hover:!bg-[rgb(var(--color-accent-solid-hover))] !text-[rgb(var(--color-accent-solid-foreground))] !border-[rgb(var(--color-accent-solid))]' : ''}`}
-            >
-              <CheckSquare size={20} data-icon="inline-start" />
-              <span>{selectMode ? t('table.cancelSelect') : t('table.select')}</span>
-            </Button>
-          )}
-
-          {/* Tout / Perso / Entreprise — visible seulement avec une org active,
-              sinon aucune tâche d'équipe ne peut jamais apparaître ici. */}
-          {orgId && (
-            <div
-              role="group"
-              aria-label={t('table.quickFilter.scopeAria')}
-              className="inline-flex items-center rounded-lg border border-[rgb(var(--color-border))] p-0.5"
-            >
-              {(['all', 'perso', 'entreprise'] as const).map((scope) => (
-                <button
-                  key={scope}
-                  type="button"
-                  onClick={() => setScopeFilter(scope)}
-                  aria-pressed={scopeFilter === scope}
-                  className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                    scopeFilter === scope
-                      ? '!bg-[rgb(var(--color-accent-solid))] !text-[rgb(var(--color-accent-solid-foreground))]'
-                      : 'text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]'
-                  }`}
-                >
-                  {t(`table.quickFilter.scope${scope === 'all' ? 'All' : scope === 'perso' ? 'Perso' : 'Entreprise'}`)}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
+      <TaskQuickFilters
+        visible={showQuickFilters}
+        active={activeQuickFilter}
+        onToggle={toggleQuickFilter}
+        addToListMode={addToListMode}
+        selectMode={selectMode}
+        onToggleSelectMode={() => (selectMode ? exitSelectMode() : setSelectMode(true))}
+        orgId={orgId}
+        scope={scopeFilter}
+        onScope={setScopeFilter}
+      />
 
       {/* Bandeau « En retard » (#9) : visible dès qu'une tâche a dépassé sa
           deadline — replanification groupée en un clic. */}
@@ -797,167 +712,17 @@ const TaskTable: React.FC<TaskTableProps> = ({
         </div>
       )}
 
-      {/* Barre d'actions groupées du mode sélection (#10) */}
-      <AnimatePresence>
-        {selectMode && (
-          <motion.div
-            initial={{ y: 80, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 80, opacity: 0 }}
-            transition={{ type: 'spring', damping: 28, stiffness: 320 }}
-            className="fixed left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-4 py-3 rounded-2xl border shadow-2xl"
-            style={{
-              bottom: 'calc(env(safe-area-inset-bottom) + 84px)',
-              backgroundColor: 'rgb(var(--color-surface))',
-              borderColor: 'rgb(var(--color-border))',
-            }}
-          >
-            <span className="text-sm font-semibold whitespace-nowrap" style={{ color: 'rgb(var(--color-text-primary))' }}>
-              {tp('table.selected', selectedIds.length)}
-            </span>
-            <Button size="sm" onClick={bulkComplete} disabled={selectedIds.length === 0} className="bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))]">
-              <CheckCircle2 size={16} data-icon="inline-start" />
-              <span className="hidden sm:inline">{t('table.complete')}</span>
-            </Button>
-            {/* Ouvre le modal d'ajout à une liste (#23) — toujours cliquable,
-                même sans liste manuelle (le modal permet d'en créer une). */}
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={selectedIds.length === 0}
-              onClick={() => { setBulkModalCount(selectedIds.length); setShowBulkListModal(true); }}
-            >
-              <ListPlus size={16} data-icon="inline-start" />
-              <span className="hidden sm:inline">{t('table.list')}</span>
-            </Button>
-            <Button size="sm" variant="outline" onClick={() => setShowBulkDeleteConfirm(true)} disabled={selectedIds.length === 0} className="!text-red-500 hover:!bg-red-500/10">
-              <Trash2 size={16} data-icon="inline-start" />
-              <span className="hidden sm:inline">{t('table.delete')}</span>
-            </Button>
-            {/* « ⋯ » — actions supplémentaires : catégorie / deadline */}
-            <div className="relative">
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={selectedIds.length === 0}
-                onClick={() => { setBulkMenuView('root'); setBulkMenuOpen(v => !v); }}
-                aria-label="Plus d'actions"
-                aria-haspopup="menu"
-                aria-expanded={bulkMenuOpen}
-              >
-                <MoreHorizontal size={16} />
-              </Button>
-              <AnimatePresence>
-                {bulkMenuOpen && (
-                  <>
-                    {/* Backdrop invisible : ferme le menu au clic en dehors */}
-                    <div className="fixed inset-0 z-[60]" onClick={() => setBulkMenuOpen(false)} aria-hidden="true" />
-                    <motion.div
-                      initial={{ opacity: 0, y: 6, scale: 0.97 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 6, scale: 0.97 }}
-                      transition={{ duration: 0.12 }}
-                      className="absolute bottom-full mb-2 right-0 z-[70] w-60 rounded-xl border shadow-2xl overflow-hidden"
-                      style={{
-                        backgroundColor: 'rgb(var(--color-surface))',
-                        borderColor: 'rgb(var(--color-border))',
-                      }}
-                      role="menu"
-                      aria-label={t('table.moreActions')}
-                    >
-                      {bulkMenuView === 'root' ? (
-                        <>
-                          <button
-                            type="button"
-                            role="menuitem"
-                            onClick={() => setBulkMenuView('category')}
-                            className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-left hover:bg-[rgb(var(--color-hover))] transition-colors"
-                            style={{ color: 'rgb(var(--color-text-primary))' }}
-                          >
-                            <Tag size={15} style={{ color: 'rgb(var(--color-text-secondary))' }} aria-hidden="true" />
-                            {t('table.editCategory')}
-                          </button>
-                          <div className="h-px" style={{ backgroundColor: 'rgb(var(--color-border))' }} />
-                          <button
-                            type="button"
-                            role="menuitem"
-                            onClick={openBulkDatePicker}
-                            className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-left hover:bg-[rgb(var(--color-hover))] transition-colors"
-                            style={{ color: 'rgb(var(--color-text-primary))' }}
-                          >
-                            <CalendarClock size={15} style={{ color: 'rgb(var(--color-text-secondary))' }} aria-hidden="true" />
-                            Modifier la deadline
-                          </button>
-                        </>
-                      ) : (
-                        <>
-                          <button
-                            type="button"
-                            onClick={() => setBulkMenuView('root')}
-                            className="w-full flex items-center gap-2 px-3.5 py-2 text-xs font-semibold uppercase tracking-wide hover:bg-[rgb(var(--color-hover))] transition-colors"
-                            style={{ color: 'rgb(var(--color-text-muted))' }}
-                            aria-label="Retour aux actions"
-                          >
-                            <ArrowLeft size={13} aria-hidden="true" /> {t('table.categoryBack')}
-                          </button>
-                          <div className="h-px" style={{ backgroundColor: 'rgb(var(--color-border))' }} />
-                          <div className="max-h-56 overflow-y-auto">
-                            {categories.length === 0 ? (
-                              <p className="px-3.5 py-3 text-sm" style={{ color: 'rgb(var(--color-text-muted))' }}>
-                                {t('table.noCategory')}
-                              </p>
-                            ) : (
-                              categories.map((cat) => (
-                                <button
-                                  key={cat.id}
-                                  type="button"
-                                  role="menuitem"
-                                  onClick={() => bulkSetCategory(cat.id, cat.name)}
-                                  className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-left hover:bg-[rgb(var(--color-hover))] transition-colors"
-                                  style={{ color: 'rgb(var(--color-text-primary))' }}
-                                >
-                                  <span
-                                    className="w-3 h-3 rounded-full shrink-0"
-                                    style={{ backgroundColor: cat.color }}
-                                    aria-hidden="true"
-                                  />
-                                  <span className="truncate">{cat.name}</span>
-                                </button>
-                              ))
-                            )}
-                          </div>
-                        </>
-                      )}
-                    </motion.div>
-                  </>
-                )}
-              </AnimatePresence>
-              {/* Input date natif — survit à la fermeture du menu (showPicker) */}
-              <input
-                ref={bulkDateInputRef}
-                type="date"
-                onChange={(e) => {
-                  if (!e.target.value) return;
-                  bulkSetDeadline(e.target.value);
-                  e.target.value = '';
-                }}
-                aria-label={t('table.newDeadline')}
-                tabIndex={-1}
-                className="absolute w-px h-px p-0 opacity-0 pointer-events-none"
-              />
-            </div>
-            <button
-              type="button"
-              onClick={exitSelectMode}
-              aria-label={t('table.exitSelection')}
-              className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[rgb(var(--color-hover))] transition-colors"
-              style={{ color: 'rgb(var(--color-text-muted))' }}
-            >
-              <X size={16} />
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <TaskBulkActionsBar
+        open={selectMode}
+        count={selectedIds.length}
+        categories={categories}
+        onComplete={bulkComplete}
+        onAddToList={() => { setBulkModalCount(selectedIds.length); setShowBulkListModal(true); }}
+        onDelete={() => setShowBulkDeleteConfirm(true)}
+        onSetCategory={bulkSetCategory}
+        onSetDeadline={bulkSetDeadline}
+        onExit={exitSelectMode}
+      />
 
       {/* Modal d'ajout groupé à une liste (#23) */}
       <BulkAddToListModal
