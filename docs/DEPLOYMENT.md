@@ -428,13 +428,30 @@ PITR seulement à partir du plan Pro + add-on). **Aucune restauration n'a encore
 - [ ] Chronométrer (objectif RTO < 2 h) et noter la date du drill ici.
 - [ ] Supprimer le projet jetable.
 
-### Export hors-fournisseur (complément au backup Supabase)
+### Export hors-fournisseur — automatisé le 2026-08-28
+
+`.github/workflows/db-backup.yml`, le **1er de chaque mois**. Il produit un dump `pg_dump` au
+format custom, vérifie qu'il n'est ni vide ni tronqué (`pg_restore --list`), et le dépose en
+artefact avec **30 jours de rétention**.
+
+**Mise en service** : poser le secret GitHub `SUPABASE_DB_URL` (Dashboard → Settings → Database →
+Connection string, mode « session »). Sans lui le job s'arrête en **avertissement**, pas en échec —
+une CI rouge en permanence finit ignorée, règle déjà appliquée à `renewal-notice`.
+
+> ⚠️ **Ce n'est PAS un remplacement du PITR.** Un dump mensuel a un RPO de trente jours : il sert
+> à ne pas TOUT perdre, pas à revenir à hier. Ce qu'il couvre et que le PITR ne couvre pas, c'est
+> la perte du **compte** — suspension, litige, ou décision de partir. Les deux répondent à des
+> risques différents, aucun ne dispense de l'autre.
+>
+> 🔴 **L'artefact contient des données personnelles** (noms, emails, contenu des tâches). Le dépôt
+> est public, mais les artefacts d'un run exigent une authentification. Ne **jamais** committer un
+> dump. Pour une vraie copie longue durée, le télécharger et le garder sur un disque chiffré :
+> GitHub n'est pas un coffre.
+
+Manuellement, si besoin :
 ```bash
-# Dump logique complet (schéma + données), stockable hors Supabase :
 pg_dump "$SUPABASE_DB_URL" --no-owner --format=custom -f cosmo-$(date +%F).dump
 ```
-À automatiser (cron mensuel) si le produit dépasse le stade early — voir aussi
-`docs/SCALABILITY.md §6` (plan de sortie fournisseur).
 
 ## 8. Alerting backend (Edge Functions)
 

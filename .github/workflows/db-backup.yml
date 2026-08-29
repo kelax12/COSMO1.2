@@ -1,0 +1,110 @@
+# ══════════════════════════════════════════════════════════════════
+# Export mensuel de la base, HORS du fournisseur.
+#
+# POURQUOI, alors que Supabase sauvegarde déjà : parce que les sauvegardes de
+# Supabase vivent chez Supabase. Elles couvrent la panne et l'erreur de
+# manipulation ; elles ne couvrent pas la perte du COMPTE — suspension,
+# facturation impayée, litige, ou simplement l'envie de partir. C'est le « plan
+# de sortie fournisseur » de docs/SCALABILITY.md, et il ne vaut que s'il est
+# automatique : un export qu'on lance à la main n'est jamais à jour le jour où
+# on en a besoin.
+#
+# ⚠️ CE N'EST PAS UN REMPLACEMENT DU PITR (T-01). Un dump mensuel a un RPO de
+# trente jours : il sert à ne pas TOUT perdre, pas à revenir à hier. Les deux
+# répondent à des risques différents et aucun ne dispense de l'autre.
+#
+# 🔴 L'ARTEFACT CONTIENT DES DONNÉES PERSONNELLES — noms, adresses email,
+# contenu des tâches. Trois conséquences, toutes appliquées ci-dessous :
+#   • rétention courte (30 jours), alignée sur la fréquence : il n'y a jamais
+#     de raison de garder deux exports d'affilée ;
+#   • le dépôt est PUBLIC, mais les artefacts d'un run ne le sont pas — ils
+#     exigent une authentification. Ne JAMAIS committer le dump ;
+#   • à télécharger puis à conserver ailleurs (disque chiffré) si on veut une
+#     vraie copie longue durée. GitHub n'est pas un coffre.
+#
+# MISE EN SERVICE : poser le secret `SUPABASE_DB_URL` (Dashboard → Settings →
+# Database → Connection string, en mode « session »). Sans lui le job
+# s'arrête proprement en avertissement, il n'échoue pas — une CI rouge en
+# permanence finit ignorée, c'est la règle déjà écrite pour `renewal-notice`.
+# ══════════════════════════════════════════════════════════════════
+name: db-backup
+
+on:
+  schedule:
+    # 04:26 UTC le 1er de chaque mois. Heure décalée des autres crons du dépôt
+    # pour ne pas empiler les exécutions sur la même minute.
+    - cron: '26 4 1 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  dump:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verifier le secret
+        id: guard
+        env:
+          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          if [ -z "$DB_URL" ]; then
+            echo "::warning::SUPABASE_DB_URL absent — aucun export produit. Cf. l'en-tete de ce workflow."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      # La version de pg_dump doit etre >= celle du serveur, sinon il refuse de
+      # tourner. Le paquet de base d'ubuntu-latest retarde souvent d'une
+      # majeure : on installe explicitement le client PostgreSQL 17.
+      - name: Installer pg_dump 17
+        if: steps.guard.outputs.ready == 'true'
+        run: |
+          sudo sh -c 'echo "deb https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+          curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/pgdg.gpg
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client-17
+          pg_dump --version
+
+      - name: Exporter la base
+        if: steps.guard.outputs.ready == 'true'
+        env:
+          # Passe par l'environnement : une URL en argument apparaitrait dans
+          # la liste des process de la machine.
+          PGCONNECT_TIMEOUT: '30'
+          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          set -o pipefail
+          NOM="cosmo-$(date -u +%Y-%m-%d).dump"
+          # --format=custom : compresse, et se restaure table par table.
+          # --no-owner : le dump se rejoue sur une instance dont les roles
+          #   different, ce qui est precisement le cas d'un changement de
+          #   fournisseur.
+          pg_dump "$DB_URL" --no-owner --format=custom -f "$NOM"
+          ls -lh "$NOM"
+          echo "NOM=$NOM" >> "$GITHUB_ENV"
+
+      # Verification minimale : un fichier de 0 octet est un echec silencieux,
+      # et c'est exactement le mode de defaillance d'une sauvegarde — on ne
+      # s'en apercoit que le jour ou on en a besoin.
+      - name: Verifier que le dump n'est pas vide
+        if: steps.guard.outputs.ready == 'true'
+        run: |
+          TAILLE=$(stat -c%s "$NOM")
+          echo "Taille : $TAILLE octets"
+          if [ "$TAILLE" -lt 100000 ]; then
+            echo "::error::Dump suspect ($TAILLE octets). La base fait plusieurs Mo — un fichier aussi petit signale un echec."
+            exit 1
+          fi
+          # `pg_restore --list` relit l'en-tete : un fichier tronque echoue ici.
+          pg_restore --list "$NOM" | head -5
+
+      - name: Deposer l'artefact
+        if: steps.guard.outputs.ready == 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: db-dump
+          path: ${{ env.NOM }}
+          retention-days: 30
+          if-no-files-found: error
