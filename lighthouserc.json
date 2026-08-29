@@ -11,7 +11,7 @@
       ],
       "settings": {
         "preset": "desktop",
-        "chromeFlags": "--no-sandbox --disable-dev-shm-usage --lang=fr-FR"
+        "chromeFlags": "--no-sandbox --disable-dev-shm-usage --lang=fr-FR --accept-lang=fr-FR"
       }
     },
     "assert": {
