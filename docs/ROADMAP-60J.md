@@ -20,27 +20,37 @@ code de `main` et à la production `ykeugqfgklejcdbrmawy`, et ne garde que ce qu
 
 ---
 
-## État au 2026-08-28 (fin de journée)
+## État au 2026-08-29 (fin de journée)
 
-**51 tâches** (les 47 d'origine, plus `T-04b`, et `T-48` à `T-50` nées de l'état réel de la CI).
-Recompté par script sur les tableaux du §1, jamais de tête.
+**52 tâches** (les 47 d'origine, plus `T-04b`, `T-48` à `T-50` nées de l'état réel de la CI, et
+`T-51` née d'une mesure). Recompté **par script** sur les tableaux du §1, jamais de tête, et la
+règle vaut plus que jamais : un décompte lu dans une liste plafonnée n'est pas un décompte.
 
 | | Nombre | Lesquelles |
 |---|---|---|
-| ✅ **Fait et vérifié** | **11** | T-11 · T-16 · T-19 · T-20 · T-24 · T-26 · T-29 · T-30 · T-42 · T-44 · T-48 |
-| 🟡 Partiel | 2 | **T-14** (code livré, inerte : deux réglages restants) · **T-23** (l'instrumentation existait déjà, la correction attend une décision) |
+| ✅ **Fait et vérifié** | **16** | T-11 · T-16 · T-19 · T-20 · T-24 · **T-25** · T-26 · **T-28** · T-29 · T-30 · **T-31** · T-42 · T-44 · **T-45** · T-48 · **T-50** |
+| 🟡 Partiel | 5 | **T-14** (code livré, deux clés à poser) · **T-23** (mesure faite, correction en attente d'une décision) · **T-41** (coût par ligne mesuré, plan à volume non) · **T-46** (workflow livré, secret à poser) · **T-49** (cause trouvée et mesurée, job encore rouge) |
 | ⚪ Clos sans suite | 1 | T-27 (arbitrage rendu) |
-| ⬜ Ouvert | **37** | dont **T-49** et **T-50**, les deux jobs CI encore rouges |
+| ⬜ Ouvert | **30** | dont aucun n'est du développement, sauf T-51 |
+
+**Cinq tâches fermées le 2026-08-29** (T-25, T-28, T-31, T-45, T-50), plus la cause de T-49
+trouvée. Trois d'entre elles étaient **écrites depuis la veille et jamais posées sur `main`** : le
+dépôt les ignorait donc, exactement le cas que T-19 avait déjà eu à traiter.
 
 ### Qui bloque quoi — la seule ventilation qui compte
 
 | Qui | Nombre | Nature |
 |---|---|---|
 | **Axel seul** | **25** | Consoles (Supabase, Vercel, Resend, Cloudflare, GitHub, Stripe), actes administratifs, soumissions d'annuaires. Aucun n'est atteignable depuis le dépôt |
-| **Axel puis moi** | 3 | T-12, T-38, T-39 — un secret ou un drapeau à poser, puis je déploie ou je vérifie |
-| **Moi, sans rien attendre** | **1** | T-45 (`TaskTable`). T-25, T-31 et T-46 ont été livrés et commités le 2026-08-29 : ils étaient écrits depuis la veille et **jamais posés sur `main`** |
-| **Bloqué sur un outil absent** | 3 | T-49 (Docker), T-50 + T-28 (log du run CI → `gh auth login`) |
+| **Axel puis moi** | 3 | T-12, T-38, T-39 : un secret ou un drapeau à poser, puis je déploie ou je vérifie |
+| **Moi, sans rien attendre** | **2** | T-49 (nommer la dernière cause du job rouge) · T-51 (performance de la landing) |
 | **Attend une décision produit** | 2 | T-23 (premier écran après inscription) · T-47 (`vendor-sentry`) |
+
+> ✅ **La ligne « bloqué sur un outil absent » a disparu, et c'est le résultat de méthode de la
+> journée.** T-49 et T-50 y figuraient, l'une pour Docker et l'autre pour `gh auth login`. Aucune
+> des deux ne l'exigeait : les **annotations** d'un run GitHub sont publiques, et un job peut y
+> écrire ce qu'on veut. Le blocage n'était pas un outil manquant, c'était une sortie qu'on n'avait
+> pas rendue lisible.
 
 > 🔴 **Le fait le plus important de la journée n'était dans aucune tâche** : la CI est rouge sur
 > `main` depuis au moins le 2026-08-24, et l'issue #44 accumulait **90 commentaires** d'alerte que
