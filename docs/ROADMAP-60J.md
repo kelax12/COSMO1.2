@@ -129,7 +129,7 @@ Piste : **A** = agent backend/infra/sécu · **B** = agent front/UX/tests · **X
 | T-07 | Sécurité | Vérifier l'allowlist de redirection OAuth (aucun wildcard large) | Un wildcard trop large annule une partie du bénéfice de PKCE | P1 | XS | — | X | S1 |
 | T-08 | Sécurité | Activer « Secure email change » (confirmation sur les deux adresses) | Prise de contrôle de compte par changement d'email | P1 | XS | — | X | S1 |
 | T-09 | Sécurité | Activer le secret scanning GitHub + vérifier la non-réutilisation du mot de passe `DATABASE_URL` historique | Le dépôt est **public** | P1 | XS | — | X | S1 |
-| T-10 | Base de données | Appliquer la **mig. 130** en prod, puis `npm run test:rls` doit passer au vert | G-1 : tout membre lit aujourd'hui les invitations refusées de ses collègues. Le test est rouge tant que la migration n'est pas passée, c'est ce qui distingue « écrite » de « en vigueur » | P1 | XS | — | X applique / A vérifie | S1 |
+| T-10 | Base de données | Appliquer la **mig. 130** en prod, puis vérifier **en base** avec la requête inscrite au pied du fichier de migration | G-1 : tout membre lit aujourd'hui les invitations refusées de ses collègues. ⚠️ **Corrigé le 2026-08-29** : `npm run test:rls` ne prouve RIEN sur la prod, il tourne contre une base vierge où la 130 est toujours appliquée. Son rouge venait d'une colonne `status` inventée par le test, pas d'une migration manquante | P1 | XS | — | X applique / A vérifie | S1 |
 | ✅ T-11 | Base de données | `npm run check:drift` après la 130, et consigner le résultat | Après chaque migration appliquée, sans exception | P1 | XS | T-10 | A | S1 |
 | T-12 | Support | Déployer `report-bug` + poser `RESEND_API_KEY` dans les secrets Supabase | AM-2. Seul canal de support du produit | P1 | XS | T-03 | A | S1 |
 | T-13 | Monitoring | Poser `OPS_ALERT_WEBHOOK_URL` (webhook Slack ou Discord) | `alert.ts` est un no-op silencieux aujourd'hui : un webhook Stripe en échec ou une purge RGPD avortée ne réveillent personne | P1 | XS | — | X | S1 |
@@ -271,9 +271,12 @@ roadmap suppose qu'on puisse se tromper sans tout perdre.
   **Done** : une erreur déclenchée volontairement en prod apparaît dans Sentry sous 2 minutes.
 - [ ] **T-13** — poser `OPS_ALERT_WEBHOOK_URL` · P1 · XS · X
   **Done** : un POST manuel sur le webhook arrive dans le canal.
-- [~] **T-10 / T-11** — appliquer la mig. 130, puis `check:drift` · P1 · XS · X applique, A vérifie
-  **Done** : `e2e/rls/org-invitations.test.ts` **passe au vert** (il est rouge aujourd'hui, c'est
-  le signal), le ledger affiche `130`, `check:drift` sort 0.
+- [~] **T-10 / T-11** · appliquer la mig. 130, puis `check:drift` · P1 · XS · X applique, A vérifie
+  **Done** : le ledger affiche `130`, `check:drift` sort 0, et surtout la requête de vérification
+  du pied de la migration renvoie **0** pour un membre simple.
+  ⚠️ **Ne pas attendre de signal du test d'intégration** : il tourne sur une base vierge, où la 130
+  est appliquée quoi qu'il arrive. Son rouge du 2026-08-28 venait d'une colonne `status` que le
+  test inventait, pas de la production.
 - [ ] **T-03** — SMTP Auth via Resend, sous-domaine d'envoi vérifié · P0 · M · X
   Procédure pas à pas : [`DEPLOYMENT.md` §2ter](./DEPLOYMENT.md). Gabarits prêts dans
   `supabase/templates/`.

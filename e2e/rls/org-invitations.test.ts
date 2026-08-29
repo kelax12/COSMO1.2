@@ -71,16 +71,24 @@ describe('RLS — org_invitations (mig. 130)', () => {
     // Une invitation EN ATTENTE et une REFUSÉE : la seconde est le cas qui
     // motive la migration, une décision individuelle qui n'a aucune raison
     // d'être lisible par les collègues.
+    //
+    // ⚠️ `org_invitations` n'a PAS de colonne `status` : l'état se lit dans
+    // `accepted_at` et `declined_at`, tous deux NULL tant que l'invitation est
+    // en attente. La première version de ce fichier écrivait `status`, une
+    // colonne qui n'existe ni en production ni dans aucune migration — elle ne
+    // pouvait donc passer nulle part, et la roadmap lisait son échec comme le
+    // signal « la mig. 130 n'est pas appliquée ». Un test faux qui échoue pour
+    // la mauvaise raison est pire qu'un test absent : il fabrique une preuve.
     const { data: rows, error: inviteError } = await admin
       .from('org_invitations')
       .insert([
-        { org_id: orgId, inviter_id: inviteur.id, invitee_id: invite.id, status: 'pending' },
-        { org_id: orgId, inviter_id: inviteur.id, invitee_id: etranger.id, status: 'refused' },
+        { org_id: orgId, inviter_id: inviteur.id, invitee_id: invite.id },
+        { org_id: orgId, inviter_id: inviteur.id, invitee_id: etranger.id, declined_at: new Date().toISOString() },
       ])
-      .select('id, status');
+      .select('id, invitee_id, declined_at');
     if (inviteError) throw inviteError;
-    invitationId = rows!.find((r) => r.status === 'pending')!.id as string;
-    refusedId = rows!.find((r) => r.status === 'refused')!.id as string;
+    invitationId = rows!.find((r) => r.declined_at === null)!.id as string;
+    refusedId = rows!.find((r) => r.declined_at !== null)!.id as string;
   });
 
   afterAll(async () => {
