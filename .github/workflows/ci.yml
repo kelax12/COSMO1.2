@@ -239,6 +239,15 @@ jobs:
             docker ps --filter name=supabase_db --format '{{.Names}}' | head -1               | xargs -r -I{} docker logs --tail 200 {} 2>&1               | grep -iE 'error|fatal|exception' | tail -n 30
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
+          # ⚠️ Le resume de job ne se lit QUE dans l interface, connecte. Vitest
+          # annote chaque test en echec, mais une sortie non nulle SANS test en
+          # echec (crash a l import, rejet non gere, hook casse) ne produit
+          # alors AUCUNE annotation : le job est rouge et muet. Mesure le
+          # 2026-08-29, run #896. On emet donc la fin du journal, en une seule
+          # annotation — GitHub en plafonne le NOMBRE a dix par etape, jamais la
+          # longueur.
+          TAIL=$(tail -n 25 rls.log | sed 's/%/%25/g; s/\r//g' | awk '{printf "%s%%0A", $0}')
+          echo "::error title=rls-tail::${TAIL}"
           exit 1
       - name: Stop Supabase stack
         if: ${{ always() }}

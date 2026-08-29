@@ -101,7 +101,7 @@ Piste : **A** = agent backend/infra/sécu · **B** = agent front/UX/tests · **X
 | ID | Cat. | Tâche | Pourquoi | P | Effort | Dép. | Piste | Deadline |
 |---|---|---|---|---|---|---|---|---|
 | ✅ T-48 | Tests / QA | **Job CI `e2e` rouge** : l'Aperçu entreprise a été renommé le 2026-08-27, le test cherchait encore l'ancien titre | La CI verte est une condition du GO. Rouge depuis 4 jours, personne n'a regardé | P1 | XS | — | B | S3 |
-| 🔴 T-49 | Tests / QA | **Job CI `rls-integration` rouge** : 4 cas de `org-permissions.test.ts` échouent sur base VIERGE, alors que la même logique est correcte en production (vérifié sous le rôle réel) | Écart entre le dépôt rejoué et la prod. Ce n'est pas une faille — c'est le dépôt qui ne reconstruit pas la base qu'il décrit | P1 | M | stack Supabase locale (Docker) | A | S3 |
+| 🟡 T-49 | Tests / QA | **Job CI `rls-integration`** : ~~4 cas échouent sur base vierge alors que la logique est correcte en prod~~. **Cause trouvée et mesurée le 2026-08-29** : le test appelait `.insert(...).select()`, donc une RELECTURE soumise à `can_access_team_project(id)`, qui cherche en table une ligne pas encore visible. Ni la base ni les migrations n'étaient en cause. Le job reste rouge pour une cause non encore nommée, désormais instrumentée | ~~Écart dépôt rejoué / prod~~ · Le vrai enseignement : **le test n'éprouvait pas le chemin du produit**, que `createProject` documente depuis le bug #9 | P1 | M | ~~Docker~~ | A | S3 |
 | ✅ T-50 | Tests / QA | **Job CI `lighthouse`** : deux causes, trouvées sans `gh auth login`. (1) le bac à sable de Chrome, qu'Ubuntu 24.04 empêche de démarrer → `--no-sandbox` ; (2) Lighthouse mesurait `/guide/index.html`, une URL que le routeur ne connaît pas, donc la page 404 de la SPA, marquée `noindex` : SEO 0,66 au lieu de 1,00 | Idem : gate du GO. ~~Demande la lecture du log du run~~ — les **annotations** d'un run sont publiques, elles, et elles ont suffi | P2 | S | — | A | S3 |
 | T-01 | Infrastructure | Passer Supabase en plan Pro et activer le PITR | A-9, seul bloquant de résilience du dossier. Aujourd'hui une erreur en prod n'est pas rattrapable, RPO jusqu'à 24 h | P0 | XS | — | X | S1 |
 | T-02 | Fiabilité | Exécuter le drill de restauration de `DEPLOYMENT.md` §7 vers un projet jetable, chronométré | Un backup non testé n'est pas un backup. RTO actuel : inconnu | P0 | M | T-01 | X + A | S1 |
@@ -500,7 +500,7 @@ T-25 (barre d'onglets mobile) · T-37 côté mentions légales · T-45 (`TaskTab
 | ✅ 5 | ~~Les deux drapeaux de facturation à `false`, vérifiés séparément~~ (T-20) | **Levé le 2026-08-28** : `premium-config.ts` et `billing_flags` lus séparément, tous deux `false` |
 | 🟡 6 | **Alerte opérationnelle branchée** (T-13, T-16) | ✅ **T-16 levé** : le DSN Sentry est bien inliné dans le bundle servi en production. ⬜ Reste T-13, le webhook d'alerte |
 
-| 🔴 7 | **Les cinq jobs CI verts sur `main`** (T-49, T-50) | **Ajouté le 2026-08-28**, parce que la condition existait au §GO sans figurer ici — et qu'elle était fausse depuis quatre jours sans que personne le voie. `e2e` est réparé ; `rls-integration` et `lighthouse` restent rouges. ⚠️ **Corrigé le 2026-08-29** : sur le run de `076b1d1`, ils étaient **trois**, pas deux : `lint-test-build` échouait à l'étape `tsc -b`, cassé par le commit de T-26 lui-même. Correctif `6d694bf`, **confirmé vert en CI** sur le run de `5e2ae51` : `lint-test-build`, `e2e` et `audit` en `success`, restent `rls-integration` (T-49) et `lighthouse` (T-50) |
+| 🔴 7 | **Les cinq jobs CI verts sur `main`** (T-49, T-50) | **Ajouté le 2026-08-28**, parce que la condition existait au §GO sans figurer ici — et qu'elle était fausse depuis quatre jours sans que personne le voie. `e2e` est réparé ; `rls-integration` et `lighthouse` restent rouges. ⚠️ **Corrigé le 2026-08-29** : sur le run de `076b1d1`, ils étaient **trois**, pas deux : `lint-test-build` échouait à l'étape `tsc -b`, cassé par le commit de T-26 lui-même. Correctif `6d694bf`, **confirmé vert en CI** sur le run de `5e2ae51`. ✅ **Au 2026-08-29 en fin de journée : quatre jobs sur cinq verts** (`lint-test-build`, `audit`, `e2e`, `lighthouse`). Seul `rls-integration` reste rouge |
 
 ### 🟠 Risques acceptables au lancement — assumés, à ne pas confondre avec « réglés »
 
@@ -697,7 +697,7 @@ propres classes. **Le goulot n'est pas technique depuis un moment déjà.**
 | 6 | Alerte opérationnelle et Sentry (T-13, T-16) | 🟡 **Sentry vérifié**, webhook restant |
 | 7 | Les deux clés Turnstile (T-14) | 🟡 **code livré et inerte**, deux réglages restants |
 | 8 | Chaîne `?ref=` prouvée sur un compte réel (T-15) | ⬜ dépend du 2 |
-| 9 | **Les cinq jobs CI verts** (T-49, T-50) | 🟡 `e2e` réparé, deux jobs restants |
+| 9 | **Les cinq jobs CI verts** (T-49, T-50) | 🟡 **4 sur 5** au 2026-08-29 : `e2e`, `lighthouse`, `lint-test-build` et `audit` verts. Reste `rls-integration` |
 
 **Aucune de ces lignes n'est du développement**, sauf la 9. Le lancement attend une session de
 consoles et une vérification.
@@ -1369,3 +1369,59 @@ seule à charger GSAP et ses animations.
 il ne mesurait rien du tout. C'est la première chose que voit un visiteur venu d'un annuaire, donc
 le premier écran du seul canal d'acquisition ouvert dans ces 60 jours. Inscrit en P3, semaine 8 :
 c'est réel, ce n'est pas bloquant pour le GO.
+
+### 2026-08-29 (fin) · T-49 : la cause est trouvée, et elle n'était pas où trois semaines l'avaient cherchée
+
+**Le rejeu a tranché.** Le script `scripts/diagnose-rls-state.mjs` rejoue le cas exact sur la base
+fraîche, sans l'application : rôle `authenticated`, `auth.uid()` forgé comme le fait PostgREST, et
+la même insertion sous trois formes. Mesuré en CI :
+
+```
+rejeu : auth.uid()=1111…  is_org_admin=true  my_org_perm=true
+rejeu nue           : ACCEPTE
+rejeu returning     : REFUSE 42501 new row violates row-level security policy
+rejeu cte-postgrest : REFUSE 42501 new row violates row-level security policy
+```
+
+**La base est correcte, le replay des migrations aussi.** Ce qui refuse, c'est la **relecture**.
+
+`.insert(...).select()` demande à PostgREST la représentation de la ligne écrite, donc une lecture
+soumise à la policy de SELECT : `can_access_team_project(id)`, une fonction qui va rechercher cette
+ligne **dans la table**. Une ligne insérée dans la même commande n'y est pas encore visible. La
+relecture échoue, et PostgREST rend l'erreur RLS de l'insertion. **Le message accuse l'écriture,
+le refus vient de la relecture.**
+
+> 🔴 **Et l'application le savait déjà.** `createProject` génère l'id côté client et n'appelle
+> jamais `.select()`, avec le commentaire qui l'explique, daté du bug #9
+> (`src/modules/team-projects/supabase.repository.ts`). **Le test n'éprouvait donc pas le chemin
+> du produit** : il exerçait une forme d'appel que l'application n'utilise nulle part, et son échec
+> ne disait rien de la sécurité. C'est le pire état possible pour une garde : rouge, alarmante, et
+> sans rapport avec ce qu'elle prétend protéger. `faille.md` portait pourtant ce test au crédit de
+> la migration 115.
+
+Ce qui a été éliminé en chemin, et qui vaut d'être noté parce que **rien de tout ça n'était en
+cause** : les définitions SQL (comparées une à une contre la production), le décor sur base vierge
+(vérifié par le test lui-même), les deux moitiés du `WITH CHECK` (vraies séparément), les
+privilèges de table, les propriétaires de fonctions, les `DEFAULT` de colonnes et les triggers.
+
+#### Deux leçons de méthode, et la seconde a coûté un run
+
+1. **Décrire atteint une limite ; rejouer tranche.** Comparer des définitions a éliminé des
+   hypothèses pendant trois semaines sans en confirmer une seule. Une reproduction de vingt
+   lignes, dans une transaction annulée, a donné la réponse au premier essai.
+2. **GitHub plafonne les annotations à DIX par étape, silencieusement.** La première version du
+   diagnostic en émettait seize, une par ligne : les six coupées étaient exactement celles qu'on
+   allait chercher. Corollaire à retenir pour ce dossier : les décomptes « 4 cas » puis « 3 cas »
+   en échec étaient peut-être tronqués eux aussi. **Un total lu dans une liste plafonnée n'est pas
+   un total.**
+
+#### Ce qui reste, dit sans l'enjoliver
+
+Le job **est toujours rouge**, et cette fois **sans aucune annotation de test** : la sortie est non
+nulle alors qu'aucun cas n'échoue nominalement. C'est un autre mode de défaillance (crash à
+l'import, rejet non géré, hook cassé), et il était invisible parce que l'étape n'écrivait sa fin de
+journal que dans le résumé de job, lisible seulement dans l'interface. Elle l'émet désormais aussi
+en annotation, comme le job `lighthouse`.
+
+**État CI au 2026-08-29 : quatre jobs verts sur cinq.** `lint-test-build`, `audit`, `e2e` et
+`lighthouse` passent ; `rls-integration` reste rouge, pour une cause qui se nommera au prochain run.
