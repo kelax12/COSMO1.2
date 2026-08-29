@@ -20,48 +20,58 @@ code de `main` et à la production `ykeugqfgklejcdbrmawy`, et ne garde que ce qu
 
 ---
 
-## État au 2026-08-29 (fin de journée)
+## État au 2026-08-30 (nuit) — la session la plus chargée du dossier
 
-**52 tâches** (les 47 d'origine, plus `T-04b`, `T-48` à `T-50` nées de l'état réel de la CI, et
-`T-51` née d'une mesure). Recompté **par script** sur les tableaux du §1, jamais de tête, et la
-règle vaut plus que jamais : un décompte lu dans une liste plafonnée n'est pas un décompte.
+**52 tâches.** Recompté **par script** sur les tableaux du §1, jamais de tête.
 
 | | Nombre | Lesquelles |
 |---|---|---|
-| ✅ **Fait et vérifié** | **17** | T-11 · T-16 · T-19 · T-20 · T-24 · **T-25** · T-26 · **T-28** · T-29 · T-30 · **T-31** · T-42 · T-44 · **T-45** · T-48 · **T-49** · **T-50** |
-| 🟡 Partiel | 4 | **T-14** (code livré, deux clés à poser) · **T-23** (mesure faite, correction en attente d'une décision) · **T-41** (coût par ligne mesuré, plan à volume non) · **T-46** (workflow livré, secret à poser) |
-| ⚪ Clos sans suite | 1 | T-27 (arbitrage rendu) |
-| ⬜ Ouvert | **30** | dont aucun n'est du développement, sauf T-51 |
+| ✅ **Fait et vérifié** | **26** | T-03 · T-04 · T-07 · T-08 · T-10 · T-11 · T-12 · T-13 · T-16 · T-18 · T-19 · T-20 · T-24 · T-25 · T-26 · T-28 · T-29 · T-30 · T-31 · T-42 · T-44 · T-45 · **T-46** · T-48 · T-49 · T-50 |
+| 🟡 Partiel | 6 | T-05 · T-06 (moitiés bloquées par le plan Free ou par du code) · T-14 · T-23 · T-41 · T-51 |
+| ⚪ Clos sans suite | 3 | **T-01** (plan Free assumé) · **T-04b** (friction refusée) · T-27 |
+| ⬜ Ouvert | **17** | dont un seul développement, T-51 |
 
-**Six tâches fermées le 2026-08-29** (T-25, T-28, T-31, T-45, T-49, T-50), et pour la première
-fois depuis au moins le 2026-08-24, **les cinq jobs CI sont verts sur `main`**. Trois d'entre elles étaient **écrites depuis la veille et jamais posées sur `main`** : le
-dépôt les ignorait donc, exactement le cas que T-19 avait déjà eu à traiter.
+**Onze tâches fermées dans la soirée du 2026-08-29** : T-03, T-04, T-07, T-08, T-10, T-12, T-13,
+T-18, T-46, plus les moitiés accessibles de T-05 et T-06. Deux décisions structurantes rendues, et
+**trois des cinq angles morts définitivement refermés**.
 
-### Qui bloque quoi — la seule ventilation qui compte
+### Les trois faits qui comptent
+
+1. **AM-1 est traité pour sa moitié technique.** Le SMTP applicatif est en service :
+   `send.thecosmo.app` vérifié chez Resend, DKIM, SPF et MX du Return-Path posés chez IONOS,
+   expéditeur `thecosmo@send.thecosmo.app`, limite d'envoi relevée, quatre gabarits français en
+   production, email de réinitialisation reçu. **`npm run check:mail` est vert pour la première
+   fois depuis sa création.** La moitié « vérification d'identité » reste ouverte **par décision**
+   (T-04b), pas par oubli.
+2. **Il existe enfin une sauvegarde.** Elle n'a jamais existé jusqu'à cette nuit : le plan Free
+   n'en fournit aucune, et T-01 vient d'être écarté. Le dump quotidien est donc la seule copie de
+   la base, ce qui l'a fait passer de P3 à P0 dans la même journée où on l'a fermé.
+3. **Plus aucun finding ouvert en production dans `faille.md`.** G-1 est refermé, mig. 130
+   appliquée et prouvée acteur par acteur sur les données réelles.
+
+### Deux décisions d'Axel, à lire comme des choix et non comme des retards
+
+| Décision | Motif | Ce qui la compense | Ce qui doit la rouvrir |
+|---|---|---|---|
+| **Rester en plan Supabase Free** (T-01) | 125 $/mois pour 19 Mo de base et 28 comptes | T-46 passé en quotidien, seule sauvegarde | Egress > 3 Go/mois sur 5, ou le premier client payant |
+| **Ne pas activer la confirmation d'adresse** (T-04b) | Friction à l'inscription, sur un produit dont le problème mesuré est l'activation | Rien à ce jour. Une garde anti-faute-de-frappe sur le domaine reste proposée | Un compte injoignable au support, une inscription avec l'adresse d'un tiers, ou le premier client payant |
+
+### Qui bloque quoi
 
 | Qui | Nombre | Nature |
 |---|---|---|
-| **Axel seul** | **25** | Consoles (Supabase, Vercel, Resend, Cloudflare, GitHub, Stripe), actes administratifs, soumissions d'annuaires. Aucun n'est atteignable depuis le dépôt |
-| **Axel puis moi** | 3 | T-12, T-38, T-39 : un secret ou un drapeau à poser, puis je déploie ou je vérifie |
-| **Moi, sans rien attendre** | **1** | T-51 (performance de la landing) |
-| **Attend une décision produit** | 2 | T-23 (premier écran après inscription) · T-47 (`vendor-sentry`) |
+| **Axel seul** | 13 | Cloudflare, Search Console, annuaires, INPI, Stripe, actes administratifs |
+| **Axel puis moi** | 3 | T-38, T-39, T-02 : un drapeau ou un secret, puis je vérifie |
+| **Moi, sans rien attendre** | 1 | T-51 (performance de la landing) |
+| **Attend une décision produit** | 2 | T-23 · T-47 |
 
-> ✅ **La ligne « bloqué sur un outil absent » a disparu, et c'est le résultat de méthode de la
-> journée.** T-49 et T-50 y figuraient, l'une pour Docker et l'autre pour `gh auth login`. Aucune
-> des deux ne l'exigeait : les **annotations** d'un run GitHub sont publiques, et un job peut y
-> écrire ce qu'on veut. Le blocage n'était pas un outil manquant, c'était une sortie qu'on n'avait
-> pas rendue lisible.
-
-> 🔴 **Le fait le plus important du 2026-08-28 n'était dans aucune tâche** : la CI était rouge sur
-> `main` depuis au moins le 2026-08-24, et l'issue #44 accumulait **90 commentaires** d'alerte que
-> personne n'ouvrait. La CI verte étant une condition du GO, c'était du travail de lancement, pas
-> de l'entretien.
->
-> ✅ **Au 2026-08-29 : quatre jobs sur cinq sont verts** (`lint-test-build`, `audit`, `e2e`,
-> `lighthouse`). Le cinquième, `rls-integration`, a livré sa cause principale, un test qui
-> n'éprouvait pas le chemin du produit, et reste rouge sur un mode de défaillance différent,
-> désormais instrumenté. Trois des cinq réparations ont consisté à rendre un job **lisible**,
-> pas à corriger le produit.
+> 🔴 **Ce que cette soirée a coûté et pourquoi le noter** : trois échecs successifs sur la seule
+> sauvegarde, chacun avec une cause différente et un message d'erreur qui désignait le mauvais
+> coupable. « password authentication failed » alors que l'identité était fausse ; « server
+> version mismatch » alors que le paquet était bien installé mais pas celui utilisé ; un run vert
+> qui rejouait l'ancien fichier. Les trois sont désormais **détectées et nommées par le workflow
+> lui-même**, avant la connexion. Une erreur qui accuse le mauvais champ coûte plus cher qu'une
+> erreur muette, parce qu'on cherche au mauvais endroit avec conviction.
 
 ---
 
@@ -125,8 +135,8 @@ Piste : **A** = agent backend/infra/sécu · **B** = agent front/UX/tests · **X
 | ✅ T-48 | Tests / QA | **Job CI `e2e` rouge** : l'Aperçu entreprise a été renommé le 2026-08-27, le test cherchait encore l'ancien titre | La CI verte est une condition du GO. Rouge depuis 4 jours, personne n'a regardé | P1 | XS | — | B | S3 |
 | ✅ T-49 | Tests / QA | **Job CI `rls-integration` VERT le 2026-08-29** : ~~4 cas échouent sur base vierge alors que la logique est correcte en prod~~. **Cause trouvée et mesurée le 2026-08-29** : le test appelait `.insert(...).select()`, donc une RELECTURE soumise à `can_access_team_project(id)`, qui cherche en table une ligne pas encore visible. Ni la base ni les migrations n'étaient en cause. Une seconde cause, indépendante, attendait derrière : `org-invitations.test.ts` écrivait une colonne `status` qui n'existe pas. Les deux corrigées, **le job passe** | ~~Écart dépôt rejoué / prod~~ · Le vrai enseignement : **le test n'éprouvait pas le chemin du produit**, que `createProject` documente depuis le bug #9 | P1 | M | ~~Docker~~ | A | S3 |
 | ✅ T-50 | Tests / QA | **Job CI `lighthouse`** : deux causes, trouvées sans `gh auth login`. (1) le bac à sable de Chrome, qu'Ubuntu 24.04 empêche de démarrer → `--no-sandbox` ; (2) Lighthouse mesurait `/guide/index.html`, une URL que le routeur ne connaît pas, donc la page 404 de la SPA, marquée `noindex` : SEO 0,66 au lieu de 1,00 | Idem : gate du GO. ~~Demande la lecture du log du run~~ — les **annotations** d'un run sont publiques, elles, et elles ont suffi | P2 | S | — | A | S3 |
-| T-01 | Infrastructure | Passer Supabase en plan Pro et activer le PITR | A-9, seul bloquant de résilience du dossier. Aujourd'hui une erreur en prod n'est pas rattrapable, RPO jusqu'à 24 h | P0 | XS | — | X | S1 |
-| T-02 | Fiabilité | Exécuter le drill de restauration de `DEPLOYMENT.md` §7 vers un projet jetable, chronométré | Un backup non testé n'est pas un backup. RTO actuel : inconnu | P0 | M | T-01 | X + A | S1 |
+| ⚪ T-01 | Infrastructure | **ÉCARTÉ SCIEMMENT — décision d'Axel du 2026-08-29 : on reste en plan Free le plus longtemps possible.** Mesuré avant de trancher : Pro = 25 $/mois, **PITR = 100 $/mois de plus**, pour une base de 19 Mo dont ~2,5 Mo de données réelles et 28 comptes. La dépense n'est pas justifiée à ce volume. **Compensation posée le soir même : T-46 passe en quotidien et devient la SEULE sauvegarde** (le Free n'en offre aucune). Ce qui reste non couvert et doit être dit : pas de restauration en un clic, pas de point-dans-le-temps, RPO de 24 h, aucun SLA, logs conservés 24 h. **Seuils de réouverture** : egress > 3 Go/mois sur les 5 Go inclus, ou le premier client payant | ~~P0~~ | XS | — | X | ~~S1~~ |
+| T-02 | Fiabilité | **Reformulé le 2026-08-29** : le drill ne restaure plus un PITR (écarté, cf. T-01) mais **le dump quotidien** de T-46, vers un projet jetable, chronométré. ⚠️ Le plan Free plafonne à **2 projets actifs** : le jetable se supprime juste après. Un backup non testé n'est pas un backup, et il l'est d'autant moins qu'il est désormais le seul | **P0** | M | ~~T-01~~ T-46 | X + A | S2 |
 | ✅ T-03 | Emails | ~~Configurer un SMTP applicatif (Resend) pour **Supabase Auth**~~ **FAIT le 2026-08-29**, `check:mail` vert (DKIM, SPF et MX du Return-Path sur `send.send.thecosmo.app`), email reçu depuis `noreply@send.thecosmo.app`, limite d'envoi portée à 100/h. Configurer un SMTP applicatif (Resend) pour **Supabase Auth** : sous-domaine d'envoi `send.thecosmo.app` vérifié, clé SMTP posée dans Supabase, limite d'envoi horaire relevée | AM-1. Sans lui l'inscription casse dès la première vague de trafic. ⚠️ Le sous-domaine est obligatoire : la racine porte les MX et le SPF d'IONOS qui servent `contact@` | P0 | M | — | **X** (préparé : runbook, gabarits, garde) | S1 |
 | ✅ T-04 | Emails | ~~Coller les 4 gabarits d'email dans le Dashboard~~ **fait le 2026-08-29** | ✅ **Écrits** (`supabase/templates/`, en français). Ils ne se déploient pas depuis le dépôt : `config push` n'est pas le workflow de ce projet | P1 | XS | T-03 | X | S2 |
 | ⚪ T-04b | Sécurité | **CLOS SANS CHANGEMENT — décision d'Axel du 2026-08-29 : trop de friction à l'inscription**, sur un produit dont le problème mesuré est l'activation. Risque accepté, pas oublié : détail, conditions de réouverture et état du front dans `faille.md` § G-2. ~~Activer *Confirm email*~~ | Ferme la porte à l'inscription avec l'adresse d'un tiers et aux comptes injoignables. ✅ Le front est prêt : `AuthForm` affiche « Vérifiez votre boîte mail » au lieu de pousser l'inscrit vers un écran protégé qui le rejetterait | P1 | XS | T-03, T-04 | X | S2 |
@@ -186,7 +196,7 @@ Piste : **A** = agent backend/infra/sécu · **B** = agent front/UX/tests · **X
 | ID | Cat. | Tâche | Pourquoi | P | Effort | Dép. | Piste | Deadline |
 |---|---|---|---|---|---|---|---|---|
 | ✅ T-45 | Dette technique | Découper `TaskTable.tsx` (1 124 lignes, plus gros fichier du dépôt, immobile depuis trois jours). **Fait le 2026-08-29 : 1 124 → 890** | Les quatre passes du cliquet ont toutes porté sur `/entreprise`, parce que c'est là qu'a lieu le travail. La dette du socle ne baisse pas toute seule | P3 | L | — | B | S8 |
-| 🔴 T-46 | Fiabilité | ~~`pg_dump` mensuel~~ → **QUOTIDIEN le 2026-08-29**, et **remonté de P3 à P0**. La décision de rester en plan Free (donc sans T-01, donc sans aucune sauvegarde Supabase) fait de ce dump **la seule copie de la base qui existe**. Toujours inerte : sans le secret `SUPABASE_DB_URL` le job s'arrête en avertissement | ~~Complément du PITR~~ · Il n'y a plus rien à compléter : c'est la sauvegarde | **P0** | S | ~~T-01~~ | A livré / **X pose le secret** | S1 |
+| ✅ T-46 | Fiabilité | **FERMÉ le 2026-08-29 (soir) : la sauvegarde EXISTE et tourne.** Secret posé, run vert, artefact `db-dump` de **385 ko** produit et téléchargeable, rétention 30 jours, prochain passage automatique à 04:26 UTC. Trois échecs successifs ont livré trois causes réelles, toutes refermées dans le workflow : identité du pooler (`postgres.<ref>`, absente), client PostgreSQL 16 utilisé face à un serveur 17, et un `Re-run` qui rejouait l'ancien fichier. ~~`pg_dump` mensuel~~ → **QUOTIDIEN**, et **remonté de P3 à P0**. La décision de rester en plan Free (donc sans T-01, donc sans aucune sauvegarde Supabase) fait de ce dump **la seule copie de la base qui existe**. Toujours inerte : sans le secret `SUPABASE_DB_URL` le job s'arrête en avertissement | ~~Complément du PITR~~ · Il n'y a plus rien à compléter : c'est la sauvegarde | **P0** | S | ~~T-01~~ | A livré / **X pose le secret** | S1 |
 | 🟡 T-51 | Performance | **Premier levier livré le 2026-08-29 : 407 ko de moins au chargement** (recharts n'arrive plus qu'à l'approche de sa section), LCP 3,3 → 2,7 s, TTI 3,4 → 2,8 s en mesure locale. **Landing : 55 de performance et jusqu'à 1,5 s de blocage du fil principal.** Mesuré en CI le 2026-08-29, quatre fois, sur la version française. Le blog et le guide sont à 96-97 sur le même build : ce n'est pas le socle, c'est la page | La landing est la première chose que voit un visiteur d'annuaire, et c'est la seule page lente du site. Ouvrir l'acquisition sur elle, c'est payer un clic pour une page qui rame | P3 | M | — | B | S8 |
 | T-47 | Performance | Trancher `vendor-sentry` (49,2 ko gzip) sur le chemin critique | Ce n'est **pas** un arbitrage de performance : le différer revient à ne plus capturer les erreurs de démarrage, celles qui blanchissent l'écran. Décision produit, pas optimisation | P3 | S | — | X décide | S8 |
 
@@ -198,31 +208,30 @@ Piste : **A** = agent backend/infra/sécu · **B** = agent front/UX/tests · **X
 > cochées dans les tableaux du §1 et racontées au §11. Une file d'exécution qui garde ses lignes
 > barrées cesse d'être une file.
 
-### 🔴 Ce qui bloque le GO — presque tout tient dans une session de consoles
+### 🔴 Ce qui bloque le GO — il reste QUATRE entrées
 
 ```
- 1. T-01  Supabase Pro + PITR                          (X, XS)
- 2. T-05 · T-06 · T-07 · T-08 · T-09                   (X, 5×XS) — les 5 reglages, en une fois
- 3. T-13  OPS_ALERT_WEBHOOK_URL                        (X, XS)
- 4. T-03  SMTP Auth : sous-domaine send.thecosmo.app   (X, M)   ⟵ le noeud : bloque 4, 4b et 12
- 5. T-10  appliquer la mig. 130      ‖  T-18 supprimer tmp-org-price-setup   (X)
- 6. T-02  drill de restauration chronometre            (X + A, M)   dep. 1
- 7. T-04 gabarits  →  T-04b activer Confirm email      (X, 2×XS)     dep. 4
- 8. T-12  deployer report-bug                          (A, XS)       dep. 4
- 9. T-14  les 2 cles Turnstile, DANS L ORDRE           (X, XS)       cf. DEPLOYMENT §2quater
-10. T-15  valider la chaine ?ref= sur un compte reel   (X, S)        dep. 4
-11. T-17  sonde de disponibilite externe               (X, XS)
+ 1. T-14  les 2 cles Turnstile, DANS L ORDRE          (X, XS)  cf. DEPLOYMENT §2quater
+          site key sur Vercel + redeploiement D ABORD, activation Supabase ENSUITE.
+          L inverse rend l inscription impossible pour tout le monde.
+ 2. T-15  valider la chaine ?ref= sur un compte reel   (X, S)
+ 3. T-17  sonde de disponibilite externe               (X, XS)  palliatif deja en place
+ 4. T-02  drill de restauration du DUMP, chronometre   (X + A, M)  dep. T-46
         ── ▲ GO / NO-GO ▲ ──
 ```
+
+> **Sept entrees ont quitte cette file dans la soiree du 2026-08-29** : T-01 (ecarte), T-03, T-04,
+> T-04b (ecarte), T-10, T-12, T-13, T-18. Ce qui reste ne demande plus une seule ligne de code, et
+> **plus aucune ne depend d une autre**, sauf T-02 qui attend la sauvegarde, laquelle existe
+> desormais.
 
 ### 🟠 Puis, en parallèle : la CI, l'acquisition, le produit
 
 ```
-12. ~~T-50 lighthouse~~ ✅  →  ~~T-28 seuils sur le reel~~ ✅   ‖   T-49 : cause trouvee et
-    mesuree, job encore rouge sur un autre mode de defaillance                     (A)
-13. T-22  etat des lieux GSC + Ahrefs        ‖  T-21 annuaires, par vagues de 5  (X)
-14. T-23  premier ecran apres inscription    ⟵ ATTEND UNE DECISION, pas du code  (X puis B)
-15. ~~T-25 barre d onglets mobile~~  ‖  ~~T-31 procedure de support~~   FAITS le 29/08
+ 5. T-09  secret scanning GitHub                       (X, XS)
+ 6. T-22  etat des lieux GSC + Ahrefs   ‖  T-21 annuaires, par vagues de 5   (X)
+ 7. T-23  premier ecran apres inscription  ⟵ ATTEND UNE DECISION, pas du code (X puis B)
+ 8. T-51  la landing a 55 de performance, mesuree quatre fois                (B)
 ```
 
 ### 🟢 Enfin : encaisser, puis rembourser la dette
@@ -263,34 +272,34 @@ roadmap suppose qu'on puisse se tromper sans tout perdre.
 
 - [x] ✅ **T-19** — committer les trois tests non suivis et les douze docs modifiés · P1 · XS · X
   **Done** : `git status` propre, CI verte sur `main`.
-- [ ] **T-01** — Supabase plan Pro + PITR activé · P0 · XS · X
-  **Done** : Dashboard → Database → Backups affiche une fenêtre PITR non nulle.
-- [ ] **T-02** — drill de restauration vers un projet jetable · P0 · M · X + A · dép. T-01
+- [⚪] **T-01** — ~~Supabase plan Pro + PITR~~ **ÉCARTÉ le 2026-08-29** : on reste en Free (25 $ + 100 $/mois non justifiés pour 19 Mo et 28 comptes). **Compensé par T-46 en quotidien**, désormais la seule sauvegarde. Seuils de réouverture : egress > 3 Go/mois, ou premier client payant.
+- [ ] **T-02** — drill de restauration **du dump quotidien** vers un projet jetable · P0 · M · X + A · dép. **T-46**
   **Done** : la date, la durée mesurée et le RTO constaté sont inscrits dans `DEPLOYMENT.md` §7 ;
   un login réel et une création de tâche ont été faits sur le projet restauré ; le projet jetable
   est supprimé. Un drill dont on ne peut pas citer le chronomètre n'a pas eu lieu.
-- [ ] **T-05 à T-09** — les cinq réglages de console Supabase et GitHub · P0/P1 · 5×XS · X
-  **Done** : `get_advisors(security)` ne remonte plus `auth_leaked_password_protection`, la
-  connexion admin demande un code TOTP, l'allowlist de redirection ne contient aucun wildcard,
-  le secret scanning est actif sur le dépôt.
+- [~] **T-05 à T-09** — les réglages de console · P0/P1 · X
+  ✅ **Faits le 2026-08-29** : longueur minimale 12 (alignée sur le code, et l'aide des Réglages qui annonçait encore 8 a été corrigée), *Secure email change*, allowlist de redirection relue (**`/reset-password` y manquait**, ajouté), 2FA sur le compte Supabase.
+  ⬜ **Reste T-09** : secret scanning GitHub.
+  ❌ **Hors de portée en plan Free** : `auth_leaked_password_protection` est réservée au plan Pro. L'advisor restera rouge, ce n'est pas un oubli.
+  ⚠️ **T-06 n'était pas la tâche qu'elle annonçait** : la 2FA du compte Supabase est faite, mais protéger `/admin` demande du **code** (l'app n'a ni enrôlement MFA ni garde `aal2`).
 - [x] ✅ **T-16** — vérifier `VITE_SENTRY_DSN` sur Vercel · P1 · XS · X
   **Done** : une erreur déclenchée volontairement en prod apparaît dans Sentry sous 2 minutes.
-- [ ] **T-13** — poser `OPS_ALERT_WEBHOOK_URL` · P1 · XS · X
-  **Done** : un POST manuel sur le webhook arrive dans le canal.
-- [~] **T-10 / T-11** · appliquer la mig. 130, puis `check:drift` · P1 · XS · X applique, A vérifie
+- [x] ✅ **T-13** — `OPS_ALERT_WEBHOOK_URL` posé le 2026-08-29 (Discord)
+  **Done** : prouvé par un appel réel à `renewal-notice` en production, qui échoue en fermé faute de `CRON_SECRET` et a fait partir l'alerte dans le canal. Pas un POST manuel : le vrai chemin du code.
+- [x] ✅ **T-10 / T-11** · mig. 130 appliquée et vérifiée le 2026-08-29, `check:drift` propre derrière · P1 · XS
   **Done** : le ledger affiche `130`, `check:drift` sort 0, et surtout la requête de vérification
   du pied de la migration renvoie **0** pour un membre simple.
   ⚠️ **Ne pas attendre de signal du test d'intégration** : il tourne sur une base vierge, où la 130
   est appliquée quoi qu'il arrive. Son rouge du 2026-08-28 venait d'une colonne `status` que le
   test inventait, pas de la production.
-- [ ] **T-03** — SMTP Auth via Resend, sous-domaine d'envoi vérifié · P0 · M · X
+- [x] ✅ **T-03** — SMTP Auth via Resend **EN SERVICE le 2026-08-29** · P0 · M · X
   Procédure pas à pas : [`DEPLOYMENT.md` §2ter](./DEPLOYMENT.md). Gabarits prêts dans
   `supabase/templates/`.
   **Done** : `npm run check:mail` sort **0** (il sort 1 aujourd'hui, trois contrôles en échec) ;
   une inscription de test reçoit son email en moins d'une minute, depuis `@send.thecosmo.app`,
   **hors dossier indésirables sur Gmail ET sur Outlook** ; la limite *Emails per hour* a été
   relevée — elle ne bouge pas toute seule quand on branche un SMTP.
-- [ ] **T-12** — déployer `report-bug` + `RESEND_API_KEY` · P1 · XS · A · dép. T-03
+- [x] ✅ **T-12** — `report-bug` déployée et **fonctionnelle** le 2026-08-29 · P1 · XS · A
   **Done** : `list_edge_functions` liste `report-bug` ; un signalement envoyé depuis la prod
   arrive sur `contact@thecosmo.app` **sans** que le repli `mailto` s'affiche.
 
@@ -303,7 +312,7 @@ mesurable.
 utilisateur. Elle n'a jamais été éprouvée sous volume, ni protégée des bots, ni vérifiée de bout
 en bout côté attribution.
 
-- [ ] **T-04 / T-04b** — coller les 4 gabarits, puis activer *Confirm email* · P1 · 2×XS · X
+- [x] ✅ **T-04** gabarits collés le 2026-08-29 · [⚪] **T-04b** *Confirm email* **écarté** (friction assumée, cf. `faille.md` § G-2)
   **Done** : les quatre emails reçus sont ceux de `supabase/templates/` ; une inscription de test
   n'ouvre plus de session et affiche « Vérifiez votre boîte mail » ; le lien reçu active bien le
   compte. **Dans cet ordre** : activer les confirmations avant d'avoir le SMTP, c'est ouvrir
@@ -323,8 +332,7 @@ en bout côté attribution.
 - [ ] **T-17** — sonde de disponibilité externe · P2 · XS · X
   **Done** : une alerte arrive sur le même canal que `OPS_ALERT_WEBHOOK_URL` quand la sonde est
   volontairement pointée sur une URL invalide.
-- [ ] **T-18** — supprimer `tmp-org-price-setup` · P3 · XS · X
-  **Done** : elle n'apparaît plus dans `list_edge_functions`.
+- [x] ✅ **T-18** — supprimée le 2026-08-29. **Done** : 7 fonctions en prod, elle n'y est plus, l'appel rend `404` (avant : `410`).
 
 > 🚦 **Fin de semaine 2 : passage du GO / NO-GO du §5.**
 
@@ -520,12 +528,12 @@ T-25 (barre d'onglets mobile) · T-37 côté mentions légales · T-45 (`TaskTab
 
 | # | Condition | Vérification |
 |---|---|---|
-| 1 | **PITR actif et restauration testée** (T-01, T-02) | Le chronomètre du drill est écrit dans `DEPLOYMENT.md` |
-| 🔴 2 | **Emails d'authentification servis par un SMTP applicatif**, puis confirmation d'adresse activée (T-03, T-04b) — **le plus contraignant, il bloque aussi T-04, T-12 et T-15** | `npm run check:mail` sort 0, et une inscription de test reçoit sa confirmation hors spam sur deux fournisseurs |
-| 3 | **Protection contre les mots de passe compromis + MFA admin** (T-05, T-06) | L'advisor correspondant a disparu ; la connexion admin demande un TOTP |
+| 🟡 1 | ~~**PITR actif**~~ **→ condition RÉÉCRITE le 2026-08-29**, le PITR ayant été écarté (T-01, plan Free). Elle devient : **une sauvegarde existe ET a été restaurée une fois** (T-46, T-02) | ✅ La sauvegarde existe : artefact de 385 ko, quotidien. ⬜ Reste le drill, dont le chronomètre doit être écrit dans `DEPLOYMENT.md` §7 |
+| ✅ 2 | ~~**Emails d'authentification servis par un SMTP applicatif**~~ **LEVÉ le 2026-08-29** : `npm run check:mail` sort **0**, un email de réinitialisation est reçu depuis `thecosmo@send.thecosmo.app` hors indésirables. ⚠️ La **confirmation d'adresse** ne fait plus partie de la condition : elle est **écartée par décision** (T-04b), pas oubliée | `check:mail` vert, email reçu |
+| 🟡 3 | **Réécrite le 2026-08-29, l'ancienne était inatteignable.** ~~Protection contre les mots de passe compromis~~ : ❌ **réservée au plan Pro**, donc hors de portée tant qu'on reste en Free ; l'advisor restera rouge. ~~MFA admin~~ : ✅ 2FA posée sur le compte Supabase, mais protéger `/admin` demande du **code** que l'app n'a pas. Ce qui reste opposable : **longueur minimale 12**, posée | Longueur 12 côté serveur, 2FA active sur le compte Supabase |
 | 4 | **Chaîne `?ref=` prouvée de bout en bout** (T-15) | `acquisition_source` renseignée sur un compte réel créé pour l'occasion |
 | ✅ 5 | ~~Les deux drapeaux de facturation à `false`, vérifiés séparément~~ (T-20) | **Levé le 2026-08-28** : `premium-config.ts` et `billing_flags` lus séparément, tous deux `false` |
-| 🟡 6 | **Alerte opérationnelle branchée** (T-13, T-16) | ✅ **T-16 levé** : le DSN Sentry est bien inliné dans le bundle servi en production. ⬜ Reste T-13, le webhook d'alerte |
+| ✅ 6 | ~~**Alerte opérationnelle branchée**~~ **LEVÉ le 2026-08-29** : Sentry en production (T-16) **et** `OPS_ALERT_WEBHOOK_URL` posé, prouvé par une alerte réelle partie d'un appel à `renewal-notice` (T-13). S'ajoute la sonde de disponibilité `uptime.yml`, qui ouvre une issue GitHub en cas de panne | Alerte reçue dans le canal |
 
 | ✅ 7 | ~~**Les cinq jobs CI verts sur `main`**~~ (T-49, T-50) | **LEVÉ le 2026-08-29**, run de `493ccaf` : `lint-test-build`, `audit`, `e2e`, `rls-integration` et `lighthouse` tous en `success`. Premier run entièrement vert depuis au moins le 2026-08-24. Historique : **Ajouté le 2026-08-28**, parce que la condition existait au §GO sans figurer ici — et qu'elle était fausse depuis quatre jours sans que personne le voie. `e2e` est réparé ; `rls-integration` et `lighthouse` restent rouges. ⚠️ **Corrigé le 2026-08-29** : sur le run de `076b1d1`, ils étaient **trois**, pas deux : `lint-test-build` échouait à l'étape `tsc -b`, cassé par le commit de T-26 lui-même. Correctif `6d694bf`, **confirmé vert en CI** sur le run de `5e2ae51`. ✅ **Au 2026-08-29 en fin de journée : quatre jobs sur cinq verts** (`lint-test-build`, `audit`, `e2e`, `lighthouse`). Seul `rls-integration` reste rouge |
 
@@ -534,7 +542,9 @@ T-25 (barre d'onglets mobile) · T-37 côté mentions légales · T-45 (`TaskTab
 | Risque | Pourquoi il est acceptable maintenant | Quand il cesse de l'être |
 |---|---|---|
 | **Aucune monétisation active** (les deux drapeaux à `false`, Stripe en test) | Sans SIREN, encaisser serait du travail dissimulé. Le produit est gratuit et le dit | Dès le SIREN — T-38 |
-| **`report-bug` non déployé** si T-12 glisse | Le repli `mailto` fonctionne, l'utilisateur n'est jamais dans une impasse | Au premier utilisateur qui n'écrit pas parce qu'il a vu un message d'erreur |
+| **Aucune vérification d'adresse à l'inscription** (T-04b écarté) | Décision d'Axel du 2026-08-29 : la friction coûte des inscrits de façon certaine, le risque est probabiliste. Le SMTP étant en service, l'interrupteur reste à un clic | Un compte injoignable au support, une inscription avec l'adresse d'un tiers, ou le premier client payant |
+| **Plan Supabase Free : aucune sauvegarde native, aucun SLA, logs 24 h** (T-01 écarté) | 125 $/mois ne se justifient pas pour 19 Mo et 28 comptes. Le dump quotidien couvre la perte totale, pas le retour à hier | Egress > 3 Go/mois sur les 5 inclus, ou le premier client payant |
+| ~~**`report-bug` non déployé**~~ | ✅ **Levé le 2026-08-29** : déployée, secrets posés, et un signalement de test réellement reçu sur `contact@thecosmo.app` | — |
 | **Position 88 en SEO, 0 domaine référent** | C'est un état de départ, pas un défaut. La correction est manuelle et longue | Jamais bloquant, mais rien ne s'améliore sans T-21 |
 | **Jamais mesuré à volume** (`team_tasks`) | 4 organisations, 8 tâches d'équipe en prod | À la première organisation de plus de 20 personnes — T-41 |
 | **13 fichiers > 600 lignes** (14 la veille) | Le cliquet empêche la croissance nette, et il a fait sortir `AuthContext` du budget le 2026-08-28 — première coupe dans le socle et non dans `/entreprise` | Jamais un bloquant produit, seulement un coût de vitesse |
@@ -607,19 +617,16 @@ au lancement n'est toujours pas du code.
 
 ---
 
-## 7. Quick wins — à intercaler entre deux tâches lourdes
+## 7. Quick wins — la liste est VIDE
 
-Effort minimal, impact réel, risque nul. **Cinq des neuf de la liste du 2026-08-27 sont faits**
-(T-11, T-16, T-19, T-30, T-42) ; ils sont sortis d'ici et cochés au §1.
+**Les neuf de la liste du 2026-08-27 sont tous faits** (T-05, T-06, T-10, T-11, T-13, T-16, T-18,
+T-19, T-30, T-42, T-50). Ils sont cochés au §1 et racontés au §11.
 
-| Tâche | Effort | Gain |
-|---|---|---|
-| **T-06** — MFA sur le compte admin | 5 min | Le meilleur rapport effort/risque de tout le dossier sécurité, et c'est `faille.md` qui l'écrit |
-| **T-05** — leaked password protection | 2 min | Ferme le seul WARN d'authentification remonté par les advisors, encore présent le 2026-08-28 |
-| **T-13** — `OPS_ALERT_WEBHOOK_URL` | 5 min | Transforme un no-op silencieux en alerte réelle sur les échecs Stripe et RGPD |
-| **T-18** — supprimer `tmp-org-price-setup` | 2 min | Retire un artefact non versionné de la surface exposée en production |
-| **T-10** — appliquer la mig. 130 | 5 min | Le correctif est écrit, testé dans cinq rôles, et **ne protège personne tant qu'il n'est pas appliqué** |
-| **T-50** — `gh auth login` puis lire le log | 15 min | Débloque à lui seul le dernier job CI non diagnostiqué, **et** T-28 derrière |
+> Ce que cette section rappelle, maintenant qu'elle est vide : **il n'y a plus de tâche courte qui
+> réduise un risque.** Ce qui reste avant le GO se compte en heures d'Axel dans des consoles
+> tierces (Cloudflare, Search Console, annuaires) ou en actes administratifs à délai
+> incompressible (INPI). Une liste de quick wins vide n'est pas une bonne nouvelle en soi : elle
+> dit seulement qu'on a fini le facile.
 
 ---
 
@@ -786,6 +793,47 @@ euro, zéro ligne de code, et c'est la seule chose qui déplace une position 88.
 
 Une ligne par session. **On coche quand le critère « Done » est vérifié, pas quand le code est
 écrit.** Les tâches cochées restent dans les tableaux ci-dessus : le fil se perd si on les retire.
+
+### 2026-08-29 (soir) — 11 tâches fermées, 2 décisions rendues, 3 angles morts refermés
+
+La session la plus dense du dossier. Tout ce qui suit a été **vérifié en production**, jamais sur
+déclaration, sauf les réglages du dashboard Auth qui ne sont lisibles de nulle part et sont
+marqués « déclarés ».
+
+| Tâche | Résultat |
+|---|---|
+| ✅ **T-03** | SMTP applicatif en service. `send.thecosmo.app` vérifié chez Resend ; DKIM sur `resend._domainkey.send`, MX et SPF du Return-Path sur **`send.send.thecosmo.app`** chez IONOS ; expéditeur `thecosmo@send.thecosmo.app` ; limite d'envoi portée à 100/h. **`npm run check:mail` vert pour la première fois.** Un email de réinitialisation a été reçu, hors indésirables |
+| ✅ **T-04** | Les quatre gabarits français collés en production, à la place des gabarits anglais signés Supabase |
+| ⚪ **T-04b** | **Écarté par Axel** : trop de friction à l'inscription. Risque accepté et documenté dans `faille.md` § G-2, avec ses trois conditions de réouverture |
+| ✅ **T-05** (moitié) | Longueur minimale portée à 12, alignée sur `MIN_PASSWORD_LENGTH`. **L'aide affichée dans les Réglages annonçait encore 8**, en fr comme en en : un utilisateur qui la suivait se faisait refuser sa saisie. Corrigé. La constante avait été centralisée, pas le texte |
+| ✅ **T-06** (moitié) | 2FA posée sur le **compte Supabase**. L'autre moitié, protéger `/admin`, s'est révélée être du **développement** et non un réglage : `grep -i "mfa\|totp\|aal2"` sur `src/` ne rend rien |
+| ✅ **T-07** | Allowlist de redirection relue. **`/reset-password` n'y était pas** alors que `ForgotPasswordPage` le demande : les réinitialisations retombaient sur la Site URL. Ajouté. Les deux jokers Vercel sont conservés sciemment, `flowType: 'pkce'` rendant le code inexploitable depuis une autre origine |
+| ✅ **T-08** | *Secure email change* activé |
+| ✅ **T-10 / T-11** | Mig. 130 appliquée. Prouvée acteur par acteur sur les données réelles : membre simple **0 ligne** (avant : toutes), témoin sur un second membre à 0, inviteur/destinataire/admin à 2, inchangé. Une seule policy PERMISSIVE. `check:drift` propre derrière. **G-1 refermé : plus aucun finding ouvert en production** |
+| ✅ **T-12** | `report-bug` déployée (elle ne l'était pas, malgré deux documents qui l'affirmaient), puis secrets posés, puis **envoi réel réussi** : un signalement de test accepté par Resend et reçu sur `contact@thecosmo.app` |
+| ✅ **T-13** | `OPS_ALERT_WEBHOOK_URL` posé. Prouvé par le vrai chemin du code, pas par un POST manuel |
+| ✅ **T-18** | `tmp-org-price-setup` supprimée. 7 fonctions en prod, l'appel rend `404` |
+| ✅ **T-46** | **Il existe une sauvegarde.** Passée en quotidien, remontée de P3 à P0, secret posé, artefact de 385 ko produit |
+| ⚪ **T-01** | **Écarté par Axel** : plan Free conservé. 125 $/mois ne se justifient pas pour 19 Mo et 28 comptes |
+
+**Livré côté dépôt** : sonde de disponibilité `uptime.yml` (AM-4 à moitié refermé), diagnostic de
+chaîne de connexion dans `db-backup.yml`, correction de `check:mail` qui cherchait le Return-Path
+au mauvais endroit, correction de l'aide de mot de passe en fr et en en, et le runbook §2ter
+réécrit avec les enregistrements DNS exacts à poser chez IONOS.
+
+#### Les quatre leçons de la soirée
+
+1. **Un message d'erreur qui désigne le mauvais coupable coûte plus cher qu'un silence.**
+   « password authentication failed » alors que l'identité était fausse, « server version
+   mismatch » alors que le bon paquet était installé mais pas utilisé. Les deux sont désormais
+   détectées **par nom** avant la connexion.
+2. **Une garde qui crie au loup sur du travail juste s'ignore en trois jours.** `check:mail`
+   cherchait le MX et le SPF sur le domaine d'envoi ; Resend les place sur `send.<domaine>`. Elle
+   aurait affiché deux échecs sur une configuration parfaite.
+3. **Centraliser une constante ne centralise pas les phrases qui la citent.** `MIN_PASSWORD_LENGTH`
+   valait 12 partout dans le code, et l'écran disait 8.
+4. **`Re-run` ne relit jamais le fichier de workflow.** Sept tentatives ont rejoué la version
+   buguée avant qu'on s'en aperçoive.
 
 ### 2026-08-28 — 5 tâches fermées, 1 mesurée à moitié, 1 arbitrage rendu à Axel
 
