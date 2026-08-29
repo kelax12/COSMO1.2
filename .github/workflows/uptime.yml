@@ -1,0 +1,163 @@
+# ══════════════════════════════════════════════════════════════════
+# Sonde de disponibilite de la production (AM-4 de docs/ROADMAP-60J.md).
+#
+# POURQUOI : personne n'etait prevenu si `thecosmo.app` ou l'API Supabase
+# tombait. `OPS_ALERT_WEBHOOK_URL` n'est pas pose, donc `alert.ts` est un no-op
+# silencieux, et il ne couvrirait de toute facon que les Edge Functions, pas le
+# site. A 28 comptes une panne passait inapercue ; a 100, elle se decouvre par
+# un utilisateur, c'est-a-dire trop tard.
+#
+# CE QUE CA VAUT, ET CE QUE CA NE VAUT PAS. Le cron de GitHub Actions n'est pas
+# ponctuel : il est mis en file d'attente et peut deriver de plusieurs dizaines
+# de minutes, voire sauter une execution aux heures chargees. La granularite
+# reelle est donc « prevenu dans l'heure », pas « prevenu en trois minutes ».
+# 🔴 Ce n'est PAS un substitut a une sonde externe (T-17, UptimeRobot ou Better
+# Stack, palier gratuit) : une sonde hebergee chez un tiers survit a une panne
+# de GitHub, celle-ci non. C'est le passage de « personne n'est prevenu » a
+# « quelqu'un est prevenu », en attendant.
+#
+# CE QUE CA FAIT EN CAS DE PANNE : ouvre une issue GitHub, donc un mail, on est
+# abonne d'office a son propre depot. Meme mecanique que `ci-alert.yml`, meme
+# raison : un resultat affiche sur une page que personne n'ouvre n'est pas une
+# alerte. L'issue se referme TOUTE SEULE au retour du vert, ce qui rearme
+# l'alerte sans geste manuel.
+#
+# Aucun service externe, aucun compte a creer. Le seul secret utilise,
+# `SUPABASE_URL`, existe deja pour `renewal-notice`.
+# ══════════════════════════════════════════════════════════════════
+name: Uptime
+
+on:
+  schedule:
+    # Deux fois par heure, aux minutes 17 et 47. Decalees des autres crons du
+    # depot pour ne pas empiler les executions sur la meme minute.
+    - cron: '17,47 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+# Une panne dure plus longtemps qu'un run : deux sondes simultanees ouvriraient
+# deux fois la meme issue.
+concurrency:
+  group: uptime
+  cancel-in-progress: false
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Sonder la production
+        id: probe
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+        run: |
+          set -uo pipefail
+          PANNES=""
+
+          # ── 1. Le site ──────────────────────────────────────────────
+          # Un code 200 ne suffit PAS : Vercel sert la SPA sur toutes les URLs,
+          # et une page d'erreur repond 200 comme le reste. On verifie donc que
+          # le corps contient bien la page prerendue, ce qui distingue « le site
+          # repond » de « le site fonctionne ».
+          CODE_APP=$(curl -sS --max-time 20 --retry 2 --retry-delay 5 \
+            -o /tmp/app.html -w '%{http_code}' https://thecosmo.app/ || echo 000)
+          # `--retry` fait ecrire le code une fois PAR tentative : trois echecs
+          # donnent « 000000000 ». On ne garde que la derniere, la seule qui
+          # decrit l'etat final.
+          CODE_APP=${CODE_APP: -3}
+          echo "app : HTTP $CODE_APP"
+          if [ "$CODE_APP" != "200" ]; then
+            PANNES="$PANNES\n- **Site** \`https://thecosmo.app/\` : HTTP \`$CODE_APP\`"
+          elif ! grep -qi 'cosmo' /tmp/app.html; then
+            PANNES="$PANNES\n- **Site** : HTTP 200 mais la page ne contient plus le contenu prerendu (page d'erreur servie a la place ?)"
+          fi
+
+          # ── 2. L'API d'authentification ─────────────────────────────
+          # Sans `apikey`, GoTrue repond 401 : c'est une PREUVE DE VIE, pas une
+          # panne. Le secret n'est donc volontairement pas requis ici, et on
+          # n'expose aucune cle dans un depot public. Ce qui signale une panne,
+          # c'est un 5xx, un 000 (injoignable) ou la page « projet en pause ».
+          if [ -z "${SUPABASE_URL:-}" ]; then
+            echo "::warning::SUPABASE_URL absent : l'API Supabase n'a pas ete sondee. Poser le secret pour couvrir la moitie backend."
+          else
+            CODE_AUTH=$(curl -sS --max-time 20 --retry 2 --retry-delay 5 \
+              -o /dev/null -w '%{http_code}' "$SUPABASE_URL/auth/v1/health" || echo 000)
+            CODE_AUTH=${CODE_AUTH: -3}
+            echo "auth : HTTP $CODE_AUTH"
+            case "$CODE_AUTH" in
+              200|401) ;;
+              *) PANNES="$PANNES\n- **API Auth** \`$SUPABASE_URL/auth/v1/health\` : HTTP \`$CODE_AUTH\` (attendu 200 ou 401)" ;;
+            esac
+          fi
+
+          if [ -n "$PANNES" ]; then
+            {
+              echo 'pannes<<FIN'
+              printf '%b\n' "$PANNES"
+              echo 'FIN'
+            } >> "$GITHUB_OUTPUT"
+            echo "down=true" >> "$GITHUB_OUTPUT"
+            echo "::error::Production injoignable ou degradee."
+          else
+            echo "down=false" >> "$GITHUB_OUTPUT"
+            echo "Production en ligne."
+          fi
+
+      - name: Ouvrir ou mettre a jour l'issue « prod injoignable »
+        if: steps.probe.outputs.down == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          PANNES: ${{ steps.probe.outputs.pannes }}
+        run: |
+          set -euo pipefail
+          gh label create uptime-red --repo "$REPO" --color b60205 \
+            --description "Production injoignable" 2>/dev/null || true
+
+          QUAND=$(date -u '+%Y-%m-%d %H:%M UTC')
+          # printf plutot qu'un heredoc : dans un `run:` indente, le marqueur de
+          # fin devrait etre en debut de ligne, ce que l'indentation YAML
+          # interdit.
+          BODY=$(printf '%s\n' \
+            "Sonde du $QUAND :" \
+            "$PANNES" \
+            "" \
+            "- Run : $RUN_URL" \
+            "" \
+            "Verifier dans l'ordre : statut Vercel, statut du projet Supabase" \
+            "(un projet en pause repond, mais pas ce qu'on attend), puis les" \
+            "logs de la fonction concernee." \
+            "" \
+            "Cette issue se met a jour a chaque sonde en echec et **se referme" \
+            "seule** au retour du vert. Ne pas la fermer a la main : sa" \
+            "fermeture est le signal de retablissement.")
+
+          EXISTING=$(gh issue list --repo "$REPO" --state open --label uptime-red \
+                       --limit 1 --json number --jq '.[0].number // empty')
+          if [ -n "$EXISTING" ]; then
+            gh issue comment "$EXISTING" --repo "$REPO" --body "$BODY"
+          else
+            gh issue create --repo "$REPO" --title "Production injoignable" \
+              --label uptime-red --body "$BODY"
+          fi
+
+      # Refermer automatiquement, sinon la premiere panne rendrait la sonde
+      # muette pour toutes les suivantes : l'issue resterait ouverte et les
+      # echecs suivants ne seraient plus que des commentaires sur un incident
+      # que tout le monde croit clos.
+      - name: Refermer l'issue si la prod est revenue
+        if: steps.probe.outputs.down == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          EXISTING=$(gh issue list --repo "$REPO" --state open --label uptime-red \
+                       --limit 1 --json number --jq '.[0].number // empty')
+          if [ -n "$EXISTING" ]; then
+            gh issue close "$EXISTING" --repo "$REPO" \
+              --comment "Retabli : la sonde du $(date -u '+%Y-%m-%d %H:%M UTC') repond normalement."
+          fi

@@ -134,6 +134,13 @@ supabase secrets set BUG_REPORT_FROM="Cosmo <bug@thecosmo.app>"
 
 3. Déployer : `supabase functions deploy report-bug`
 
+> ✅ **Déployée en production le 2026-08-29** (version 1, `verify_jwt` actif), après six
+> jours où `SECURITY.md` et ce fichier la décrivaient comme livrée sans qu'elle le soit.
+> Fumée passée en prod : `POST` sans corps → `503 mail_not_configured`, `GET` → `405`,
+> sans JWT → `401` du gateway. **Les secrets ne sont toujours pas posés**, donc le repli
+> `mailto` est ce que voit un utilisateur aujourd'hui. L'étape 1 ci-dessus dépend du même
+> domaine vérifié que §2ter : les deux se débloquent ensemble.
+
 **Tant que `RESEND_API_KEY` est absente**, la fonction répond `503
 mail_not_configured` — et c'est un état prévu, pas une panne : le formulaire
 affiche alors « écrivez-nous directement à contact@thecosmo.app » avec un lien
@@ -146,7 +153,7 @@ l'utilisateur, et son identité vient du JWT, jamais du corps de la requête.
 
 ---
 
-## 2ter. Emails d'authentification (Supabase Auth) — **non configurés au 2026-08-27**
+## 2ter. Emails d'authentification (Supabase Auth) — **non configurés, re-mesuré le 2026-08-29**
 
 > 🔴 **Ce sont les emails que Supabase envoie AUX UTILISATEURS**, pas ceux qu'envoient les Edge
 > Functions. Les deux passent par Resend, mais ce sont deux chemins distincts, avec deux
@@ -156,7 +163,13 @@ l'utilisateur, et son identité vient du JWT, jamais du corps de la requête.
 
 ### Ce qui est vrai aujourd'hui — mesuré, pas supposé
 
-| Fait | Mesure du 2026-08-27 |
+> **Re-mesuré le 2026-08-29** : rien n'a changé. Même `28 / 1 / 3` en base, même DKIM absent.
+> Le sous-domaine d'envoi `send.thecosmo.app` **n'existe pas encore du tout** : ni `MX`, ni `SPF`,
+> ni `DKIM`, donc les trois `FAIL` de `npm run check:mail` sont **le même fait**, pas trois
+> problèmes. La dernière inscription en prod date du 2026-08-21 : le compteur n'a pas bougé parce
+> que personne ne s'est inscrit, pas parce que quelque chose a été réparé.
+
+| Fait | Mesure du 2026-08-27, inchangée au 2026-08-29 |
 |---|---|
 | **Aucun SMTP applicatif n'est configuré.** GoTrue utilise donc l'expéditeur intégré de Supabase, plafonné à quelques envois par heure et explicitement présenté par Supabase comme non destiné à la production | Zéro occurrence de « SMTP » dans le dépôt et la doc |
 | **Les confirmations d'inscription sont DÉSACTIVÉES** | 28 comptes, `confirmation_sent_at` renseigné sur **1** seul, délai création → confirmation de **15 ms** au minimum et < 10 min sur 27 comptes : c'est de l'auto-confirmation, pas un clic |
@@ -188,10 +201,27 @@ un expéditeur plafonné.
 1. **Créer le sous-domaine d'envoi chez Resend** — `send.thecosmo.app`, **pas** `thecosmo.app`.
    C'est le point technique de cette procédure : la racine porte déjà les MX et le SPF d'IONOS,
    qui servent la boîte `contact@thecosmo.app`. Un sous-domaine d'envoi donne à Resend son propre
-   `MX` et son propre SPF de *Return-Path* **sans toucher** à ce qui reçoit. Resend dicte les
-   trois enregistrements à poser (`MX`, `TXT` SPF, `TXT` DKIM `resend._domainkey`).
+   `MX` et son propre SPF de *Return-Path* **sans toucher** à ce qui reçoit.
    ⚠️ Ne pas remplacer le SPF de la racine par celui de Resend : le courrier entrant continuerait
    d'arriver, mais IONOS cesserait d'être autorisé à émettre.
+
+   **Les trois enregistrements à créer, tels que la console IONOS les demande** (Domaines & SSL →
+   `thecosmo.app` → DNS → Ajouter un enregistrement). Resend affiche les mêmes en écriture
+   absolue ; c'est la traduction qui fait perdre du temps, pas la décision :
+
+   | Type | Champ « Nom d'hôte » chez IONOS | Valeur | D'où vient la valeur |
+   |---|---|---|---|
+   | `MX` | `send` | `feedback-smtp.<région>.amazonses.com`, priorité `10` | **Recopier depuis Resend.** La région dépend du compte (`eu-west-1` pour un compte européen). Ne pas la deviner |
+   | `TXT` | `send` | `v=spf1 include:amazonses.com ~all` | Dicté par Resend, identique pour tous les comptes |
+   | `TXT` | `resend._domainkey.send` | `p=MIGfMA0GCSq...` (clé publique longue) | **Propre à ce domaine, uniquement lisible dans Resend.** Aucun moyen de la reconstituer |
+
+   🔴 **IONOS ajoute le domaine tout seul.** Saisir `send`, jamais `send.thecosmo.app` : la
+   seconde forme crée `send.thecosmo.app.thecosmo.app`, qui ne résout nulle part et donne
+   exactement la même sortie `check:mail` qu'un enregistrement oublié. Même piège pour le DKIM :
+   `resend._domainkey.send`, sans le domaine.
+
+   ⚠️ Ces trois lignes se posent **ensemble**. Un domaine à moitié vérifié chez Resend n'envoie
+   rien du tout : ce n'est pas dégradé, c'est bloqué.
 2. **Attendre la validation** dans Resend (les trois enregistrements au vert). Vérifier depuis
    ici : `npm run check:mail`.
 3. **Créer une clé SMTP** dans Resend (Settings → SMTP). Hôte `smtp.resend.com`, port `465`,
@@ -471,3 +501,28 @@ supabase secrets set OPS_ALERT_WEBHOOK_URL=https://hooks.slack.com/services/…
 2026-06-10) : `supabase secrets set APP_URL=https://<domaine-prod>` d'abord —
 sans lui l'allowlist CORS ne contient que localhost et le bouton « Supprimer le
 compte » échoue au lieu de tomber sur le fallback email.
+
+---
+
+## 9. Sonde de disponibilité (`.github/workflows/uptime.yml`) — depuis le 2026-08-29
+
+Le §8 alerte sur une Edge Function qui échoue. Il ne dit rien du cas où **plus rien ne
+répond** : jusqu'au 2026-08-29, une panne du site ou du projet Supabase ne prévenait
+personne, et se serait découverte par un utilisateur.
+
+- **Ce qu'elle sonde**, deux fois par heure : `https://thecosmo.app/` (HTTP 200 **et** contenu
+  prérendu présent, parce que Vercel sert la SPA sur toutes les URLs et qu'une page d'erreur
+  répond 200 comme le reste), et `$SUPABASE_URL/auth/v1/health`. Sur ce second point, **401 est
+  une preuve de vie** : sans `apikey`, GoTrue répond 401 quand il va bien. Ce qui signale une
+  panne est un 5xx ou un 000.
+- **Ce qu'elle fait** en cas d'échec : ouvre une issue `uptime-red`, donc un mail. Elle se
+  **referme seule** au retour du vert, ce qui réarme l'alerte sans geste manuel. Même mécanique
+  que `ci-alert.yml`, même raison.
+- **Secret** : `SUPABASE_URL` uniquement, déjà posé pour `renewal-notice`. Sans lui, seule la
+  moitié site est sondée, avec un avertissement, jamais un échec.
+
+🔴 **Ce n'est PAS la sonde externe de T-17.** Le cron de GitHub Actions est mis en file
+d'attente : il dérive de dizaines de minutes et peut sauter une exécution. Surtout, une sonde
+hébergée chez GitHub ne détecte pas une panne de GitHub. La granularité réelle est « prévenu
+dans l'heure ». C'est le passage de « personne n'est prévenu » à « quelqu'un est prévenu », pas
+la fin du sujet.
