@@ -77,6 +77,50 @@ jobs:
           sudo apt-get install -y -qq postgresql-client-17
           pg_dump --version
 
+      # Diagnostic AVANT la connexion. Le 2026-08-29, un run a echoue sur
+      # « password authentication failed for user "postgres" » : l'erreur
+      # annoncait un probleme de mot de passe alors que c'etait l'IDENTITE qui
+      # etait fausse — le pooler exige `postgres.<ref>`, et sans le suffixe il
+      # cherche un utilisateur qui n'existe pas. Une heure perdue a soupconner
+      # le mot de passe.
+      #
+      # 🔴 Ce qui est imprime ne contient JAMAIS le mot de passe, seulement sa
+      # LONGUEUR et le fait qu'il soit ou non deja encode en pourcentage. Le
+      # reste (utilisateur, hote, port, base) n'est pas secret : la reference du
+      # projet est publique, elle est dans le bundle du site.
+      - name: Diagnostiquer la chaine (sans le mot de passe)
+        if: steps.guard.outputs.ready == 'true'
+        env:
+          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          python3 - <<'EOF'
+          import os, sys
+          from urllib.parse import urlsplit, unquote
+          u = urlsplit(os.environ['DB_URL'].strip())
+          pwd = u.password or ''
+          print(f"schema     : {u.scheme}")
+          print(f"utilisateur: {u.username}")
+          print(f"hote       : {u.hostname}")
+          print(f"port       : {u.port}")
+          print(f"base       : {u.path.lstrip('/')}")
+          print(f"mot de passe: {len(pwd)} caracteres"
+                + (" (contient un encodage %XX)" if '%' in (u.password or '') else ""))
+          ok = True
+          if not (u.username or '').startswith('postgres.'):
+              print("::error::L'utilisateur doit etre `postgres.<ref-du-projet>` sur le pooler. "
+                    "Sans le suffixe, le serveur repond « password authentication failed » "
+                    "alors que le mot de passe n'est pas en cause.")
+              ok = False
+          if u.port == 6543:
+              print("::error::Port 6543 = pooler en mode TRANSACTION. pg_dump exige le mode "
+                    "SESSION (port 5432).")
+              ok = False
+          if not pwd:
+              print("::error::Aucun mot de passe dans la chaine.")
+              ok = False
+          sys.exit(0 if ok else 1)
+          EOF
+
       - name: Exporter la base
         if: steps.guard.outputs.ready == 'true'
         env:
