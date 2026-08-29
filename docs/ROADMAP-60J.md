@@ -28,13 +28,13 @@ règle vaut plus que jamais : un décompte lu dans une liste plafonnée n'est pa
 
 | | Nombre | Lesquelles |
 |---|---|---|
-| ✅ **Fait et vérifié** | **16** | T-11 · T-16 · T-19 · T-20 · T-24 · **T-25** · T-26 · **T-28** · T-29 · T-30 · **T-31** · T-42 · T-44 · **T-45** · T-48 · **T-50** |
-| 🟡 Partiel | 5 | **T-14** (code livré, deux clés à poser) · **T-23** (mesure faite, correction en attente d'une décision) · **T-41** (coût par ligne mesuré, plan à volume non) · **T-46** (workflow livré, secret à poser) · **T-49** (cause trouvée et mesurée, job encore rouge) |
+| ✅ **Fait et vérifié** | **17** | T-11 · T-16 · T-19 · T-20 · T-24 · **T-25** · T-26 · **T-28** · T-29 · T-30 · **T-31** · T-42 · T-44 · **T-45** · T-48 · **T-49** · **T-50** |
+| 🟡 Partiel | 4 | **T-14** (code livré, deux clés à poser) · **T-23** (mesure faite, correction en attente d'une décision) · **T-41** (coût par ligne mesuré, plan à volume non) · **T-46** (workflow livré, secret à poser) |
 | ⚪ Clos sans suite | 1 | T-27 (arbitrage rendu) |
 | ⬜ Ouvert | **30** | dont aucun n'est du développement, sauf T-51 |
 
-**Cinq tâches fermées le 2026-08-29** (T-25, T-28, T-31, T-45, T-50), plus la cause de T-49
-trouvée. Trois d'entre elles étaient **écrites depuis la veille et jamais posées sur `main`** : le
+**Six tâches fermées le 2026-08-29** (T-25, T-28, T-31, T-45, T-49, T-50), et pour la première
+fois depuis au moins le 2026-08-24, **les cinq jobs CI sont verts sur `main`**. Trois d'entre elles étaient **écrites depuis la veille et jamais posées sur `main`** : le
 dépôt les ignorait donc, exactement le cas que T-19 avait déjà eu à traiter.
 
 ### Qui bloque quoi — la seule ventilation qui compte
@@ -43,7 +43,7 @@ dépôt les ignorait donc, exactement le cas que T-19 avait déjà eu à traiter
 |---|---|---|
 | **Axel seul** | **25** | Consoles (Supabase, Vercel, Resend, Cloudflare, GitHub, Stripe), actes administratifs, soumissions d'annuaires. Aucun n'est atteignable depuis le dépôt |
 | **Axel puis moi** | 3 | T-12, T-38, T-39 : un secret ou un drapeau à poser, puis je déploie ou je vérifie |
-| **Moi, sans rien attendre** | **2** | T-49 (nommer la dernière cause du job rouge) · T-51 (performance de la landing) |
+| **Moi, sans rien attendre** | **1** | T-51 (performance de la landing) |
 | **Attend une décision produit** | 2 | T-23 (premier écran après inscription) · T-47 (`vendor-sentry`) |
 
 > ✅ **La ligne « bloqué sur un outil absent » a disparu, et c'est le résultat de méthode de la
@@ -117,7 +117,7 @@ Piste : **A** = agent backend/infra/sécu · **B** = agent front/UX/tests · **X
 | ID | Cat. | Tâche | Pourquoi | P | Effort | Dép. | Piste | Deadline |
 |---|---|---|---|---|---|---|---|---|
 | ✅ T-48 | Tests / QA | **Job CI `e2e` rouge** : l'Aperçu entreprise a été renommé le 2026-08-27, le test cherchait encore l'ancien titre | La CI verte est une condition du GO. Rouge depuis 4 jours, personne n'a regardé | P1 | XS | — | B | S3 |
-| 🟡 T-49 | Tests / QA | **Job CI `rls-integration`** : ~~4 cas échouent sur base vierge alors que la logique est correcte en prod~~. **Cause trouvée et mesurée le 2026-08-29** : le test appelait `.insert(...).select()`, donc une RELECTURE soumise à `can_access_team_project(id)`, qui cherche en table une ligne pas encore visible. Ni la base ni les migrations n'étaient en cause. Le job reste rouge pour une cause non encore nommée, désormais instrumentée | ~~Écart dépôt rejoué / prod~~ · Le vrai enseignement : **le test n'éprouvait pas le chemin du produit**, que `createProject` documente depuis le bug #9 | P1 | M | ~~Docker~~ | A | S3 |
+| ✅ T-49 | Tests / QA | **Job CI `rls-integration` VERT le 2026-08-29** : ~~4 cas échouent sur base vierge alors que la logique est correcte en prod~~. **Cause trouvée et mesurée le 2026-08-29** : le test appelait `.insert(...).select()`, donc une RELECTURE soumise à `can_access_team_project(id)`, qui cherche en table une ligne pas encore visible. Ni la base ni les migrations n'étaient en cause. Une seconde cause, indépendante, attendait derrière : `org-invitations.test.ts` écrivait une colonne `status` qui n'existe pas. Les deux corrigées, **le job passe** | ~~Écart dépôt rejoué / prod~~ · Le vrai enseignement : **le test n'éprouvait pas le chemin du produit**, que `createProject` documente depuis le bug #9 | P1 | M | ~~Docker~~ | A | S3 |
 | ✅ T-50 | Tests / QA | **Job CI `lighthouse`** : deux causes, trouvées sans `gh auth login`. (1) le bac à sable de Chrome, qu'Ubuntu 24.04 empêche de démarrer → `--no-sandbox` ; (2) Lighthouse mesurait `/guide/index.html`, une URL que le routeur ne connaît pas, donc la page 404 de la SPA, marquée `noindex` : SEO 0,66 au lieu de 1,00 | Idem : gate du GO. ~~Demande la lecture du log du run~~ — les **annotations** d'un run sont publiques, elles, et elles ont suffi | P2 | S | — | A | S3 |
 | T-01 | Infrastructure | Passer Supabase en plan Pro et activer le PITR | A-9, seul bloquant de résilience du dossier. Aujourd'hui une erreur en prod n'est pas rattrapable, RPO jusqu'à 24 h | P0 | XS | — | X | S1 |
 | T-02 | Fiabilité | Exécuter le drill de restauration de `DEPLOYMENT.md` §7 vers un projet jetable, chronométré | Un backup non testé n'est pas un backup. RTO actuel : inconnu | P0 | M | T-01 | X + A | S1 |
@@ -521,7 +521,7 @@ T-25 (barre d'onglets mobile) · T-37 côté mentions légales · T-45 (`TaskTab
 | ✅ 5 | ~~Les deux drapeaux de facturation à `false`, vérifiés séparément~~ (T-20) | **Levé le 2026-08-28** : `premium-config.ts` et `billing_flags` lus séparément, tous deux `false` |
 | 🟡 6 | **Alerte opérationnelle branchée** (T-13, T-16) | ✅ **T-16 levé** : le DSN Sentry est bien inliné dans le bundle servi en production. ⬜ Reste T-13, le webhook d'alerte |
 
-| 🔴 7 | **Les cinq jobs CI verts sur `main`** (T-49, T-50) | **Ajouté le 2026-08-28**, parce que la condition existait au §GO sans figurer ici — et qu'elle était fausse depuis quatre jours sans que personne le voie. `e2e` est réparé ; `rls-integration` et `lighthouse` restent rouges. ⚠️ **Corrigé le 2026-08-29** : sur le run de `076b1d1`, ils étaient **trois**, pas deux : `lint-test-build` échouait à l'étape `tsc -b`, cassé par le commit de T-26 lui-même. Correctif `6d694bf`, **confirmé vert en CI** sur le run de `5e2ae51`. ✅ **Au 2026-08-29 en fin de journée : quatre jobs sur cinq verts** (`lint-test-build`, `audit`, `e2e`, `lighthouse`). Seul `rls-integration` reste rouge |
+| ✅ 7 | ~~**Les cinq jobs CI verts sur `main`**~~ (T-49, T-50) | **LEVÉ le 2026-08-29**, run de `493ccaf` : `lint-test-build`, `audit`, `e2e`, `rls-integration` et `lighthouse` tous en `success`. Premier run entièrement vert depuis au moins le 2026-08-24. Historique : **Ajouté le 2026-08-28**, parce que la condition existait au §GO sans figurer ici — et qu'elle était fausse depuis quatre jours sans que personne le voie. `e2e` est réparé ; `rls-integration` et `lighthouse` restent rouges. ⚠️ **Corrigé le 2026-08-29** : sur le run de `076b1d1`, ils étaient **trois**, pas deux : `lint-test-build` échouait à l'étape `tsc -b`, cassé par le commit de T-26 lui-même. Correctif `6d694bf`, **confirmé vert en CI** sur le run de `5e2ae51`. ✅ **Au 2026-08-29 en fin de journée : quatre jobs sur cinq verts** (`lint-test-build`, `audit`, `e2e`, `lighthouse`). Seul `rls-integration` reste rouge |
 
 ### 🟠 Risques acceptables au lancement — assumés, à ne pas confondre avec « réglés »
 
@@ -718,7 +718,7 @@ propres classes. **Le goulot n'est pas technique depuis un moment déjà.**
 | 6 | Alerte opérationnelle et Sentry (T-13, T-16) | 🟡 **Sentry vérifié**, webhook restant |
 | 7 | Les deux clés Turnstile (T-14) | 🟡 **code livré et inerte**, deux réglages restants |
 | 8 | Chaîne `?ref=` prouvée sur un compte réel (T-15) | ⬜ dépend du 2 |
-| 9 | **Les cinq jobs CI verts** (T-49, T-50) | 🟡 **4 sur 5** au 2026-08-29 : `e2e`, `lighthouse`, `lint-test-build` et `audit` verts. Reste `rls-integration` |
+| 9 | ~~Les cinq jobs CI verts~~ (T-49, T-50) | ✅ **Levé le 2026-08-29** : les cinq en `success` sur le run de `493ccaf` |
 
 **Aucune de ces lignes n'est du développement**, sauf la 9. Le lancement attend une session de
 consoles et une vérification.
@@ -1446,3 +1446,42 @@ en annotation, comme le job `lighthouse`.
 
 **État CI au 2026-08-29 : quatre jobs verts sur cinq.** `lint-test-build`, `audit`, `e2e` et
 `lighthouse` passent ; `rls-integration` reste rouge, pour une cause qui se nommera au prochain run.
+
+### 🟢 2026-08-29, fin · les cinq jobs CI sont verts sur `main`
+
+```
+lint-test-build -> success
+audit           -> success
+e2e             -> success
+rls-integration -> success
+lighthouse      -> success
+```
+
+Run de `493ccaf`. **Premier run entièrement vert depuis au moins le 2026-08-24**, et la condition
+n° 7 du GO tombe. `rls-integration`, lui, n'avait **jamais** été vert depuis sa création le
+2026-06-21.
+
+#### Ce qui bloquait vraiment, job par job
+
+| Job | Ce qu'on croyait | Ce que c'était |
+|---|---|---|
+| `lint-test-build` | vert | rouge depuis le commit de T-26 : un test passait des props inexistantes, invisible en vitest, fatal à `tsc -b` |
+| `e2e` | rouge sur un bug produit | un titre renommé la veille, le test non suivi |
+| `lighthouse` | seuils trop stricts | Chrome refusait de démarrer (bac à sable), puis la config mesurait une page 404 |
+| `rls-integration` | une faille de RLS, ou une dérive dépôt / prod | **deux tests faux**, dans deux fichiers : `.insert().select()` que le produit n'utilise pas, et une colonne `status` qui n'existe nulle part |
+
+> 🔴 **Aucun des cinq jobs n'était rouge à cause du produit.** Cinq gardes en échec, cinq causes
+> dans les gardes elles-mêmes. C'est rassurant sur le code et inquiétant sur la méthode : une garde
+> qu'on n'exécute pas avant de la commiter n'est pas une garde, c'est une déclaration d'intention.
+> Deux des quatre correctifs de la journée portent sur des fichiers **posés sur `main` sans avoir
+> jamais tourné**, faute de Docker sur la machine qui les écrivait.
+>
+> La leçon utile n'est pas « avoir Docker ». C'est : **si une garde ne peut pas être exécutée
+> localement, elle doit être exécutée en CI AVANT d'être invoquée comme preuve**, et son premier
+> run doit être regardé, ce que trois semaines de rouge montrent qu'on ne faisait pas.
+
+#### Ce qui reste vrai malgré ce vert
+
+Le GO reste bloqué par six conditions, et **aucune n'est du code** : PITR et drill de restauration,
+SMTP applicatif puis vérification d'adresse, les cinq réglages de console, la migration 130
+appliquée, le webhook d'alerte, et la chaîne `?ref=` prouvée sur un compte réel.
