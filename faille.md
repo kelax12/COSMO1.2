@@ -329,6 +329,26 @@ isolément, pour qu'une migration puisse réparer l'oubli d'une précédente.
 
 ## 🟠 G-2 · aucune vérification de l'adresse email à l'inscription (2026-08-27)
 
+> **DÉCISION D'AXEL, 2026-08-29 : la confirmation d'adresse NE SERA PAS activée pour l'instant.**
+> Motif : la friction à l'inscription, sur un produit dont le problème mesuré est l'activation
+> (0 compte actif sur 7 jours pour 28 comptes). Chaque étape entre « je veux essayer » et
+> « j'utilise » coûte des inscrits, et ce coût-là est certain, quand le risque ci-dessous est
+> probabiliste.
+>
+> **Ce n'est donc plus une tâche en attente, c'est un risque accepté**, et il doit être lu comme
+> tel : la moitié « délivrabilité » de G-2 est traitée (SMTP Resend en service le 2026-08-29,
+> `npm run check:mail` vert pour la première fois), la moitié « vérification d'identité » reste
+> ouverte **par choix**.
+>
+> Ce que la décision NE change pas : l'interrupteur reste à un clic, le front est prêt
+> (`AuthForm` affiche « Vérifiez votre boîte mail », verrouillé par test), et les quatre gabarits
+> sont posés en production. Réactivable à tout moment, sans développement.
+>
+> ⚠️ **À rouvrir si l'un de ces trois faits apparaît** : un compte injoignable signalé au support,
+> une inscription avec l'adresse d'un tiers, ou l'arrivée du premier client payant (un compte qui
+> paie et qu'on ne peut pas joindre est un litige, plus un désagrément).
+
+
 **Mesuré en base, pas déduit.** Sur les 28 comptes : `confirmation_sent_at` est renseigné sur
 **un seul**, et le délai entre `created_at` et `email_confirmed_at` descend à **15 millisecondes**
 (< 10 min sur 27 comptes). Ce n'est pas quelqu'un qui clique vite, c'est de l'auto-confirmation :
@@ -425,7 +445,7 @@ documentaire du 2026-08-14, le lien pointait dans le vide. Restaurée ici.
 | 1 | Migrations `109`/`110` (B-1, B-2, B-3 + notifications de commentaire) | 🟠 sécurité + feature | — | ✅ **appliquées et vérifiées en prod le 2026-08-24** |
 | 1bis | Migrations `115` → `123` (permissions, FK RGPD, RPC indexables, Realtime, payload borné, fuseau des habitudes, périodicité de facturation) | 🟠 sécurité + perf | · | ✅ **appliquées et vérifiées en prod le 2026-08-25** |
 | 1ter | **Migration `130`** (G-1 · lecture d'`org_invitations` restreinte au destinataire, à l'inviteur et aux admins) | 🟠 minimisation RGPD | Claude applique et vérifie, sur demande d'Axel | ✅ **appliquée et vérifiée en prod le 2026-08-29** · parité mesurée acteur par acteur sur les données réelles, `check:drift` propre derrière |
-| 1quater | **G-2 — SMTP applicatif pour Auth, PUIS confirmation d'email** ([`docs/DEPLOYMENT.md`](./docs/DEPLOYMENT.md) §2ter) | 🟠 vérification d'identité + délivrabilité | **Axel** (deux consoles, non scriptable) | 🟠 **front, gabarits et garde livrés le 2026-08-27 · production inchangée.** `npm run check:mail` est rouge jusqu'à la mise en service |
+| 1quater | **G-2 — SMTP applicatif pour Auth** ([`docs/DEPLOYMENT.md`](./docs/DEPLOYMENT.md) §2ter) | 🟠 délivrabilité | Axel (deux consoles, non scriptable) | ✅ **EN SERVICE le 2026-08-29** · domaine `send.thecosmo.app` vérifié chez Resend, SMTP posé, limite d'envoi relevée, 4 gabarits collés, email de réinitialisation reçu depuis `noreply@send.thecosmo.app`. `npm run check:mail` **vert pour la première fois**. ⚠️ La confirmation d'adresse reste **volontairement désactivée** (décision d'Axel, cf. section G-2) |
 | 2 | **Réglages de console Supabase** : A-10 (leaked password protection), MFA sur le compte admin, allowlist de redirection OAuth, secure email change | 🟠 clics Dashboard, ~30 min cumulés | **Axel** | ⏳ **en attente** |
 | 3 | **A-9 — plan Pro + PITR + drill de restauration** | 🔴 résilience, seul bloquant | **Axel** (compte, non scriptable) | ⏳ **en attente** |
 | 4 | Test de bout en bout de l'attribution `?ref=` (cf. [`docs/ACQUISITION.md`](./docs/ACQUISITION.md) §3) | 🟡 exige une vraie inscription | **Axel** | ⏳ **en attente** |
