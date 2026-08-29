@@ -1,5 +1,5 @@
 # ══════════════════════════════════════════════════════════════════
-# Export mensuel de la base, HORS du fournisseur.
+# Export QUOTIDIEN de la base, HORS du fournisseur.
 #
 # POURQUOI, alors que Supabase sauvegarde déjà : parce que les sauvegardes de
 # Supabase vivent chez Supabase. Elles couvrent la panne et l'erreur de
@@ -9,14 +9,24 @@
 # automatique : un export qu'on lance à la main n'est jamais à jour le jour où
 # on en a besoin.
 #
-# ⚠️ CE N'EST PAS UN REMPLACEMENT DU PITR (T-01). Un dump mensuel a un RPO de
-# trente jours : il sert à ne pas TOUT perdre, pas à revenir à hier. Les deux
-# répondent à des risques différents et aucun ne dispense de l'autre.
+# 🔴 PASSÉ EN QUOTIDIEN LE 2026-08-29, et la raison a changé. Tant qu'un plan
+# Pro était prévu, ce dump complétait le PITR et un rythme mensuel suffisait.
+# La décision de RESTER EN PLAN FREE le rend seul de son espèce : le Free
+# n'offre AUCUNE sauvegarde, donc ce fichier est la seule copie qui existe.
+# Un RPO de trente jours n'est pas acceptable pour une copie unique ; à un jour,
+# il vaut ce que Supabase inclut dans son plan Pro, moins la restauration en un
+# clic et moins le point-in-time.
+#
+# Le coût est mesuré, pas supposé : la base fait 19 Mo dont ~2,5 Mo de données
+# réelles, et `--format=custom` compresse. Un dump quotidien pèse donc une
+# fraction de pour-cent du quota d'egress de 5 Go/mois. ⚠️ À re-mesurer si la
+# base grossit d'un ordre de grandeur : ce workflow consomme le quota qui, lui,
+# est la vraie limite du plan Free.
 #
 # 🔴 L'ARTEFACT CONTIENT DES DONNÉES PERSONNELLES — noms, adresses email,
 # contenu des tâches. Trois conséquences, toutes appliquées ci-dessous :
-#   • rétention courte (30 jours), alignée sur la fréquence : il n'y a jamais
-#     de raison de garder deux exports d'affilée ;
+#   • rétention courte (30 jours), qui donne trente points de restauration
+#     glissants depuis le passage en quotidien ;
 #   • le dépôt est PUBLIC, mais les artefacts d'un run ne le sont pas — ils
 #     exigent une authentification. Ne JAMAIS committer le dump ;
 #   • à télécharger puis à conserver ailleurs (disque chiffré) si on veut une
@@ -31,9 +41,9 @@ name: db-backup
 
 on:
   schedule:
-    # 04:26 UTC le 1er de chaque mois. Heure décalée des autres crons du dépôt
-    # pour ne pas empiler les exécutions sur la même minute.
-    - cron: '26 4 1 * *'
+    # 04:26 UTC tous les jours. Heure décalée des autres crons du dépôt pour ne
+    # pas empiler les exécutions sur la même minute.
+    - cron: '26 4 * * *'
   workflow_dispatch:
 
 permissions:
