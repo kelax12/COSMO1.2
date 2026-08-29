@@ -156,6 +156,40 @@ le `modulepreload`. Une fonction utilitaire de 500 octets traînait 117 kB derri
 > chunks mesure les tailles, pas le graphe de chargement**. Un chunk peut être « lazy » au sens de
 > Rollup et préchargé au sens du navigateur. Vérifier `dist/index.html`, pas seulement `dist/assets`.
 
+### 🔴 La MÊME affirmation, fausse une seconde fois, pour une autre raison (2026-08-29)
+
+Le finding ci-dessus a retiré le `modulepreload`. Mesuré dans le navigateur trois semaines plus
+tard, requêtes réseau à l'appui : **`vendor-charts` partait toujours au chargement de la landing**,
+413 ko bruts. Plus par préchargement, cette fois, mais par rendu.
+
+`FeaturesSection` déclare `const StatsShowcase = lazy(() => import(...))` — et le rend
+**immédiatement**, dans la liste des cinq panneaux. Or `React.lazy` **découpe** le code, il ne le
+**diffère** pas : un composant `lazy` monté tout de suite déclenche son import tout de suite. Le
+chunk part au chargement de la page, comme s'il était statique, à un aller-retour près.
+
+**Correctif** : `src/components/showcase/WhenVisible.tsx`, un `IntersectionObserver` avec 600 px de
+marge, qui ne monte le panneau qu'à son approche. Le repli, sans `IntersectionObserver`, rend le
+contenu plutôt que rien : une optimisation ne doit jamais pouvoir faire disparaître du contenu.
+
+| Landing, même machine, même serveur statique | avant | après |
+|---|---|---|
+| octets au chargement | 2 530 ko | **2 123 ko** |
+| LCP | 3,3 s | **2,7 s** |
+| TTI | 3,4 s | **2,8 s** |
+| performance Lighthouse | 63 | 65 |
+
+Les deux moitiés vérifiées dans le navigateur : le chunk n'est **pas** demandé au chargement, et il
+l'est bien quand on fait défiler vers la section, où le graphique s'affiche.
+
+> ⚠️ **La leçon complète la précédente, et elle est plus gênante.** La première fois, la phrase
+> « `vendor-charts` est lazy » était fausse et se prouvait dans `dist/index.html`. La seconde fois,
+> elle était fausse **alors que `dist/index.html` était propre** : ni le tableau des chunks, ni le
+> graphe de préchargement ne la contredisaient. Seule la **liste des requêtes réelles** d'un
+> chargement de page la contredisait.
+>
+> *Un chunk peut être lazy pour Rollup, absent du préchargement, et téléchargé quand même.* La
+> seule preuve qui vaut est ce que le navigateur demande.
+
 ### Ce qui plafonne encore à 91
 
 - ✅ **Refermé le 2026-08-28 : le chunk d'entrée passe de 106,9 à 75,5 ko gzip**, et le plafond
