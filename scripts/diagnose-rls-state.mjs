@@ -171,14 +171,39 @@ try {
     );
     annotate(`rejeu: auth.uid()=${vu[0].uid} is_org_admin=${vu[0].admin} my_org_perm=${vu[0].perm}`);
 
-    try {
-      await client.query(
-        `INSERT INTO public.team_projects (org_id, name, created_by) VALUES ($1, 'diag', $2)`,
-        [orgId, uid],
-      );
-      annotate('rejeu: INSERT team_projects ACCEPTE');
-    } catch (e) {
-      annotate(`rejeu: INSERT team_projects REFUSE ${e.code} ${e.message}`);
+    // Trois FORMES de la même insertion, et c'est tout l'intérêt du rejeu.
+    //
+    // La forme nue passe déjà (mesuré). Or le harnais, lui, écrit
+    // `.insert(...).select('id')`, ce que supabase-js traduit par
+    // `Prefer: return=representation` — et PostgREST enveloppe alors
+    // l'insertion dans une CTE dont il relit le résultat. Si le refus ne
+    // survient QUE dans cette forme, le défaut n'est ni dans la policy ni dans
+    // les droits : il est dans la relecture de la ligne qu'on vient d'écrire,
+    // par une policy de SELECT qui va rechercher cette ligne DANS la table
+    // (`can_access_team_project(id)`) alors qu'elle n'y est pas encore visible.
+    //
+    // Chaque forme est isolée dans son propre point de sauvegarde : une erreur
+    // avorte la transaction, et sans ça la première ferait échouer les
+    // suivantes en donnant l'illusion qu'elles échouent aussi.
+    const formes = [
+      ['nue', `INSERT INTO public.team_projects (org_id, name, created_by) VALUES ($1, 'diag', $2)`],
+      ['returning', `INSERT INTO public.team_projects (org_id, name, created_by) VALUES ($1, 'diag', $2) RETURNING id`],
+      [
+        'cte-postgrest',
+        `WITH pgrst_source AS (
+           INSERT INTO public.team_projects (org_id, name, created_by) VALUES ($1, 'diag', $2) RETURNING *
+         ) SELECT id FROM pgrst_source`,
+      ],
+    ];
+    for (const [nom, sql] of formes) {
+      await client.query('SAVEPOINT f');
+      try {
+        await client.query(sql, [orgId, uid]);
+        annotate(`rejeu ${nom}: ACCEPTE`);
+      } catch (e) {
+        annotate(`rejeu ${nom}: REFUSE ${e.code} ${e.message}`);
+      }
+      await client.query('ROLLBACK TO SAVEPOINT f');
     }
   } catch (e) {
     annotate(`rejeu impossible (${e.code ?? '-'}) ${e.message}`);
