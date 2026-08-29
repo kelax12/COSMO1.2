@@ -50,7 +50,7 @@
   },
   "security": {
     "heading": "Changer le mot de passe",
-    "hint": "Minimum 8 caractères. Utilisez un mélange de lettres, chiffres et symboles.",
+    "hint": "Minimum 12 caractères. Utilisez un mélange de lettres, chiffres et symboles.",
     "updating": "Mise à jour…",
     "update": "Mettre à jour",
     "tooShort": "Le mot de passe doit contenir au moins {{count}} caractères",
