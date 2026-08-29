@@ -236,7 +236,12 @@ un expéditeur plafonné.
 3. **Créer une clé SMTP** dans Resend (Settings → SMTP). Hôte `smtp.resend.com`, port `465`,
    utilisateur `resend`, mot de passe = la clé.
 4. **Poser le SMTP dans Supabase** : Dashboard → Project Settings → Authentication → SMTP Settings.
-   Expéditeur : `COSMO <bonjour@send.thecosmo.app>`. Activer.
+   Expéditeur **en service depuis le 2026-08-29** : `COSMO <thecosmo@send.thecosmo.app>`.
+   La partie locale est libre ; le domaine, lui, doit être celui vérifié chez Resend, sans quoi
+   l'envoi est refusé. ⚠️ Cette adresse ne reçoit rien : les réponses des utilisateurs vont sur
+   `contact@thecosmo.app`, qui vit chez IONOS. Les Edge Functions doivent porter le **même**
+   expéditeur (`BUG_REPORT_FROM`), leur valeur par défaut `bug@thecosmo.app` étant sur un
+   domaine que Resend ne signera jamais.
 5. **Relever la limite d'envoi** : Authentication → Rate Limits → *Emails per hour*. Le défaut est
    celui de l'expéditeur intégré et **ne bouge pas tout seul** quand on branche un SMTP : sans ce
    réglage, on paie un SMTP et on garde le plafond qu'on voulait fuir.
