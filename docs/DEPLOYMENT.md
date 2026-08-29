@@ -211,9 +211,18 @@ un expéditeur plafonné.
 
    | Type | Champ « Nom d'hôte » chez IONOS | Valeur | D'où vient la valeur |
    |---|---|---|---|
-   | `MX` | `send` | `feedback-smtp.<région>.amazonses.com`, priorité `10` | **Recopier depuis Resend.** La région dépend du compte (`eu-west-1` pour un compte européen). Ne pas la deviner |
-   | `TXT` | `send` | `v=spf1 include:amazonses.com ~all` | Dicté par Resend, identique pour tous les comptes |
+   | `MX` | **`send.send`** | `feedback-smtp.eu-west-1.amazonses.com`, priorité `10` | Recopier depuis Resend (région lue dans la console, pas devinée) |
+   | `TXT` | **`send.send`** | `v=spf1 include:amazonses.com ~all` | Dicté par Resend, identique pour tous les comptes |
    | `TXT` | `resend._domainkey.send` | `p=MIGfMA0GCSq...` (clé publique longue) | **Propre à ce domaine, uniquement lisible dans Resend.** Aucun moyen de la reconstituer |
+
+   🔴 **`send.send`, ce n'est pas une faute de frappe.** Le Return-Path de Resend vit sur un
+   sous-domaine `send.` **du domaine d'envoi** : domaine `send.thecosmo.app` → rebonds sur
+   `send.send.thecosmo.app`. Seul le DKIM se pose sur le domaine d'envoi lui-même. La console
+   Resend affiche déjà les noms **relatifs à `thecosmo.app`**, donc ils se recopient tels quels
+   chez IONOS, sans rien retirer.
+   ⚠️ `npm run check:mail` cherchait le MX et le SPF sur le domaine d'envoi : il aurait affiché
+   deux échecs sur une configuration correcte. Corrigé le 2026-08-29, il interroge les deux
+   emplacements.
 
    🔴 **IONOS ajoute le domaine tout seul.** Saisir `send`, jamais `send.thecosmo.app` : la
    seconde forme crée `send.thecosmo.app.thecosmo.app`, qui ne résout nulle part et donne

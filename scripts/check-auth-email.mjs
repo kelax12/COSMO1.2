@@ -78,9 +78,28 @@ const rootMx = await mx(ROOT);
 const rootTxt = await txt(ROOT);
 const rootSpf = rootTxt.find((r) => r.startsWith('v=spf1'));
 
-const sendMx = await mx(SEND);
-const sendTxt = await txt(SEND);
-const sendSpf = sendTxt.find((r) => r.startsWith('v=spf1'));
+// 🔴 Le Return-Path ne vit PAS sur le domaine d'envoi, mais sur un sous-domaine
+// `send.` de celui-ci. Constaté dans la console Resend le 2026-08-29 : pour un
+// domaine `send.thecosmo.app`, elle réclame le MX et le SPF sur
+// `send.send.thecosmo.app`. Cette version du script les cherchait sur le domaine
+// d'envoi lui-même et aurait donc affiché DEUX ÉCHECS sur une configuration
+// parfaitement correcte — le meilleur moyen d'apprendre à ignorer sa propre
+// garde. On interroge les deux emplacements et on accepte l'un ou l'autre :
+// Resend a déjà changé de topologie une fois.
+const BOUNCE = `send.${SEND}`;
+
+const bounceMx = await mx(BOUNCE);
+const bounceTxt = await txt(BOUNCE);
+const bounceSpf = bounceTxt.find((r) => r.startsWith('v=spf1'));
+
+const sendMxDirect = await mx(SEND);
+const sendTxtDirect = await txt(SEND);
+const sendSpfDirect = sendTxtDirect.find((r) => r.startsWith('v=spf1'));
+
+const sendMx = bounceMx.length ? bounceMx : sendMxDirect;
+const sendSpf = bounceSpf ?? sendSpfDirect;
+const spfWhere = bounceSpf ? BOUNCE : SEND;
+const mxWhere = bounceMx.length ? BOUNCE : SEND;
 
 // Le sélecteur Resend est `resend._domainkey`. Sur le sous-domaine d'envoi si
 // c'est un sous-domaine qui est vérifié, sur la racine sinon — on tolère les
@@ -99,12 +118,19 @@ check(
   dkim.length > 0,
   dkim.length ? `présent sur ${dkimSend.length ? SEND : ROOT}` : 'ABSENT — le domaine n’est pas vérifié chez Resend',
 );
-check('error', `SPF du domaine d’envoi (${SEND})`, Boolean(sendSpf), sendSpf ?? 'ABSENT');
 check(
   'error',
-  `MX du domaine d’envoi (${SEND})`,
+  `SPF du Return-Path (${BOUNCE})`,
+  Boolean(sendSpf),
+  sendSpf ? `${sendSpf}  [sur ${spfWhere}]` : `ABSENT sur ${BOUNCE} comme sur ${SEND}`,
+);
+check(
+  'error',
+  `MX du Return-Path (${BOUNCE})`,
   sendMx.length > 0,
-  sendMx.join(', ') || 'ABSENT — Resend ne peut pas recevoir les rebonds (Return-Path)',
+  sendMx.length
+    ? `${sendMx.join(', ')}  [sur ${mxWhere}]`
+    : `ABSENT sur ${BOUNCE} comme sur ${SEND} — Resend ne peut pas recevoir les rebonds`,
 );
 
 // ── Ce qui ne doit pas AVOIR ÉTÉ CASSÉ : la racine ────────────────────
