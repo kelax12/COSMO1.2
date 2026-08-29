@@ -498,7 +498,7 @@ T-25 (barre d'onglets mobile) · T-37 côté mentions légales · T-45 (`TaskTab
 | ✅ 5 | ~~Les deux drapeaux de facturation à `false`, vérifiés séparément~~ (T-20) | **Levé le 2026-08-28** : `premium-config.ts` et `billing_flags` lus séparément, tous deux `false` |
 | 🟡 6 | **Alerte opérationnelle branchée** (T-13, T-16) | ✅ **T-16 levé** : le DSN Sentry est bien inliné dans le bundle servi en production. ⬜ Reste T-13, le webhook d'alerte |
 
-| 🔴 7 | **Les cinq jobs CI verts sur `main`** (T-49, T-50) | **Ajouté le 2026-08-28**, parce que la condition existait au §GO sans figurer ici — et qu'elle était fausse depuis quatre jours sans que personne le voie. `e2e` est réparé ; `rls-integration` et `lighthouse` restent rouges. ⚠️ **Corrigé le 2026-08-29** : sur le run de `076b1d1`, ils étaient **trois**, pas deux : `lint-test-build` échouait à l'étape `tsc -b`, cassé par le commit de T-26 lui-même. Correctif `6d694bf`, à reconfirmer sur le prochain run |
+| 🔴 7 | **Les cinq jobs CI verts sur `main`** (T-49, T-50) | **Ajouté le 2026-08-28**, parce que la condition existait au §GO sans figurer ici — et qu'elle était fausse depuis quatre jours sans que personne le voie. `e2e` est réparé ; `rls-integration` et `lighthouse` restent rouges. ⚠️ **Corrigé le 2026-08-29** : sur le run de `076b1d1`, ils étaient **trois**, pas deux : `lint-test-build` échouait à l'étape `tsc -b`, cassé par le commit de T-26 lui-même. Correctif `6d694bf`, **confirmé vert en CI** sur le run de `5e2ae51` : `lint-test-build`, `e2e` et `audit` en `success`, restent `rls-integration` (T-49) et `lighthouse` (T-50) |
 
 ### 🟠 Risques acceptables au lancement — assumés, à ne pas confondre avec « réglés »
 
@@ -1157,7 +1157,8 @@ composant attend `searchTerm` / `onSearchTerm` / `sortField` / `onSortField` / `
 Constaté **dans la CI, pas déduit** : sur le run de `076b1d1`, `lint-test-build` échoue à l'étape
 « Type-check (tsc -b) ». La CI de `main` était donc à **trois** jobs rouges, pas deux, et le
 troisième venait d'être créé par le correctif d'une tâche cochée le jour même. Corrigé par
-`6d694bf` : `tsc -b` sort 0, 3/3 sur le fichier, **1 833/1 833** sur la suite, lint 0 erreur,
+`6d694bf`, et **confirmé vert en CI** sur le run de `5e2ae51`, pas seulement sur la machine qui
+l'a écrit : `tsc -b` sort 0, 3/3 sur le fichier, **1 833/1 833** sur la suite, lint 0 erreur,
 `check:rls`, `i18n:check`, `check:legal` et `validate:migrations` verts.
 
 > 🔴 **Règle qui manquait à ce dépôt, et qui vient de coûter un job CI** : *une tâche n'est
