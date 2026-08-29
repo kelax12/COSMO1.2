@@ -21,10 +21,12 @@ const renderToolbar = (statusFilter: 'open' | 'overdue' | 'doneThisWeek' | 'all'
   const onStatusFilter = vi.fn();
   render(
     <TeamTasksToolbar
-      search=""
-      onSearch={() => {}}
-      sort="deadline"
-      onSort={() => {}}
+      searchTerm=""
+      onSearchTerm={() => {}}
+      sortField="deadline"
+      onSortField={() => {}}
+      sortDirection="asc"
+      onToggleSortDirection={() => {}}
       statusFilter={statusFilter}
       onStatusFilter={onStatusFilter}
       canCreate={false}
