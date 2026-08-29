@@ -110,15 +110,31 @@ describe('RLS — org_member_permissions (mig. 115)', () => {
 
   describe('sans aucune surcharge', () => {
     it('un manager crée un projet', async () => {
-      // ── Les deux moitiés du WITH CHECK, isolées ───────────────────────
+      // ── Pourquoi ce test n'utilise PAS `.select()` après l'insertion ──
       //
-      // La policy d'insertion vaut
-      // `my_org_perm(org_id, 'project.create') AND created_by = auth.uid()`.
-      // Un refus renvoie « new row violates row-level security policy » sans
-      // jamais dire LAQUELLE des deux moitiés a dit non — et les deux mènent à
-      // des diagnostics opposés : un droit mal dérivé côté base, ou une
-      // identité de session qui n'est pas celle qu'on croit. On les sépare donc
-      // ici, une fois, dans le premier test qui insère.
+      // Il l'utilisait, et c'est ce qui l'a fait échouer pendant des semaines
+      // avec « new row violates row-level security policy ». Le message accuse
+      // l'ÉCRITURE ; le refus venait de la RELECTURE.
+      //
+      // `.insert(...).select()` demande à PostgREST la représentation de la
+      // ligne écrite, donc une lecture soumise à la policy de SELECT, qui vaut
+      // `can_access_team_project(id)` — une fonction qui va rechercher cette
+      // ligne DANS la table. Une ligne qu'on vient d'insérer dans la même
+      // commande n'y est pas encore visible : la relecture échoue, et PostgREST
+      // rend l'erreur RLS de l'insertion.
+      //
+      // 🔴 L'application le sait depuis le bug #9 et fait exactement ça :
+      // `createProject` génère l'id côté client et n'appelle jamais `.select()`
+      // (`src/modules/team-projects/supabase.repository.ts`). **Le test ne
+      // reproduisait donc pas le chemin du produit** : il testait une forme
+      // d'appel que l'application n'utilise nulle part, et son échec ne disait
+      // rien de la sécurité. On relit la ligne séparément, sous `admin`, ce qui
+      // vérifie en plus qu'elle existe vraiment — « pas d'erreur » n'est pas
+      // « écrit ».
+      //
+      // Les deux moitiés du WITH CHECK restent vérifiées séparément juste en
+      // dessous : c'est ce qui a permis d'écarter la piste du droit mal dérivé,
+      // et ça garde sa valeur le jour où ce test redeviendra rouge.
       const { data: perm } = await chef.client.rpc('my_org_perm', {
         p_org: orgId,
         p_key: 'project.create',
@@ -128,22 +144,21 @@ describe('RLS — org_member_permissions (mig. 115)', () => {
       const { data: session } = await chef.client.auth.getUser();
       expect(session.user?.id, "l'identité du JWT doit être celle qu'on écrit dans created_by").toBe(chef.id);
 
-      const { data, error } = await chef.client
+      const id = crypto.randomUUID();
+      const { error } = await chef.client
         .from('team_projects')
-        .insert({ org_id: orgId, name: 'Projet du chef', created_by: chef.id })
-        .select('id')
-        .single();
+        .insert({ id, org_id: orgId, name: 'Projet du chef', created_by: chef.id });
 
       expect(error).toBeNull();
-      expect(data?.id).toBeTruthy();
-      await admin.from('team_projects').delete().eq('id', data!.id as string);
+      const { data: relu } = await admin.from('team_projects').select('id').eq('id', id).maybeSingle();
+      expect(relu?.id, 'la ligne doit exister en base, pas seulement ne pas avoir erreur').toBe(id);
+      await admin.from('team_projects').delete().eq('id', id);
     });
 
     it('un membre simple ne crée PAS de projet', async () => {
       const { error } = await stagiaire.client
         .from('team_projects')
-        .insert({ org_id: orgId, name: 'Projet interdit', created_by: stagiaire.id })
-        .select('id');
+        .insert({ org_id: orgId, name: 'Projet interdit', created_by: stagiaire.id });
 
       expect(error).not.toBeNull();
     });
@@ -179,14 +194,13 @@ describe('RLS — org_member_permissions (mig. 115)', () => {
         .upsert({ org_id: orgId, user_id: stagiaire.id, can_create_project: true });
       expect(grantError).toBeNull();
 
-      const { data, error } = await stagiaire.client
+      const id = crypto.randomUUID();
+      const { error } = await stagiaire.client
         .from('team_projects')
-        .insert({ org_id: orgId, name: 'Projet accordé', created_by: stagiaire.id })
-        .select('id')
-        .single();
+        .insert({ id, org_id: orgId, name: 'Projet accordé', created_by: stagiaire.id });
 
       expect(error).toBeNull();
-      await admin.from('team_projects').delete().eq('id', data!.id as string);
+      await admin.from('team_projects').delete().eq('id', id);
     });
 
     it('retirer `task.create` à un membre bloque la création de tâche', async () => {
@@ -282,13 +296,12 @@ describe('RLS — org_member_permissions (mig. 115)', () => {
         .upsert({ org_id: orgId, user_id: patron.id, can_create_project: false });
       expect(guardError).not.toBeNull();
 
-      const { data, error } = await patron.client
+      const id = crypto.randomUUID();
+      const { error } = await patron.client
         .from('team_projects')
-        .insert({ org_id: orgId, name: 'Projet du patron', created_by: patron.id })
-        .select('id')
-        .single();
+        .insert({ id, org_id: orgId, name: 'Projet du patron', created_by: patron.id });
       expect(error).toBeNull();
-      await admin.from('team_projects').delete().eq('id', data!.id as string);
+      await admin.from('team_projects').delete().eq('id', id);
     });
   });
 
