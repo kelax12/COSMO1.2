@@ -10,7 +10,23 @@ dit ligne par ligne. Mesuré contre le code de `main` et la prod. Remplace
 Ce document ne redécrit pas l'architecture — c'est le rôle de [`../CLAUDE.md`](../CLAUDE.md). Il
 répond à une seule question : **les invariants qu'on s'est donnés tiennent-ils encore ?**
 
-## Note d'architecture : 74 → 79 → **81 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27)
+## Note d'architecture : 74 → 79 → 81 → **83 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29)
+
+> ### 2026-08-29 · +2, la première coupe volontaire du socle
+>
+> | | 08-27 | **08-29** |
+> |---|---|---|
+> | Fichiers hors budget | 14 | **13** |
+> | Budget du cliquet | 10 811 | **9 949** |
+> | Plus gros fichier | `TaskTable` 1 124 | `PyramidTab` 1 046 · `TaskTable` **890** |
+>
+> Les quatre passes précédentes du cliquet avaient toutes été **imposées** par la garde, et toutes
+> portaient sur `/entreprise`, parce que c'est là qu'avait lieu le travail. Celle-ci est la
+> première coupe volontaire, et elle porte sur le socle.
+>
+> La frontière est réelle, pas un compte de lignes : `TaskQuickFilters` et `TaskBulkActionsBar` ne
+> connaissent **aucune tâche**. Un vrai défaut part avec : l'état du menu « ⋯ » vivait dans
+> `TaskTable`, ce qui obligeait **cinq** gestionnaires métier à le refermer à la main.
 
 | Ce qui compose la note | 08-24 | 08-25 | **08-27** |
 |---|---|---|---|

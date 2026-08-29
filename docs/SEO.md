@@ -13,7 +13,28 @@ cause n'est pas dans le dépôt.
 > liens et les Core Web Vitals terrain. Ces données vivent dans Search Console, Ahrefs et
 > PageSpeed Insights.
 
-## Note SEO : 73 → **73 / 100** · inchangée, et c'est le constat
+## Note SEO : 73 → 73 → **75 / 100** (2026-08-25 → 2026-08-27 → 2026-08-29)
+
+> ### 2026-08-29 · +2, et le gain vient d'un défaut trouvé, pas d'un contenu écrit
+>
+> **Une barre finale renvoyait quatre pages vers l'accueil.** Vérifié en production, pas déduit :
+> `thecosmo.app/pour-freelances/` servait le fichier prérendu, puis l'application redirigeait vers
+> `/`. Le visiteur atterrissait sur la page d'accueil, sans erreur, sans 404, sans trace. Quatre
+> pages concernées : freelances, étudiants, managers, équipes.
+>
+> 🔴 **Pourquoi ça vaut deux points maintenant et pas dans six mois** : les annuaires normalisent
+> presque tous les URL avec une barre finale, et leurs soumissions (T-21) sont **le seul levier
+> d'acquisition** de ces 60 jours. Chaque backlink obtenu à la main aurait envoyé son visiteur
+> ailleurs que sur la page qui le concerne.
+>
+> Second acquis, plus discret : les pages prérendues sont désormais **mesurées** en CI, et elles
+> sortent à **100 de SEO** (`/`, `/blog/`, `/guide/`, `/pour-freelances/`). Le job Lighthouse
+> mesurait jusqu'ici la page 404 de la SPA, qui se marque `noindex` : il annonçait 0,66 sur des
+> pages dont le fichier prérendu porte `index, follow`.
+>
+> **Ce qui ne bouge pas, et qui décide de la note** : toujours aucun domaine référent, et la
+> position moyenne n'a pas été remesurée depuis le 2026-08-19. Le facteur limitant reste
+> l'autorité de domaine, pas le contenu ni la technique.
 
 > **2026-08-27 · toujours 73, pour la même raison.** Les dix-neuf commits de la journée sont tous
 > dans le produit connecté (mode entreprise, navigation, accessibilité) ou sur la landing **derrière le

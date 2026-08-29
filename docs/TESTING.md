@@ -1,6 +1,31 @@
 # Tests — COSMO
 
-## Note de tests / CI : 80 → 83 → 88 → **89 / 100** (2026-08-24 → 2026-08-25 soir → 2026-08-27 soir)
+## Note de tests / CI : 80 → 83 → 88 → 89 → **93 / 100** (2026-08-24 → 2026-08-25 soir → 2026-08-27 soir → 2026-08-29)
+
+> ### 2026-08-29 · +4, et le gain n'est pas un test de plus
+>
+> **Les cinq jobs CI sont verts sur `main` pour la première fois** (run de `493ccaf`), et
+> `rls-integration` **ne l'avait jamais été depuis sa création** le 2026-06-21. C'est le point qui
+> vaut les quatre points : la gate de déploiement mesure enfin quelque chose.
+>
+> | | 08-27 | **08-29** |
+> |---|---|---|
+> | Suite unitaire | 1 802 / 159, verte | **1 836 / 166, verte** |
+> | Jobs CI verts sur `main` | **2 sur 5** | **5 sur 5** |
+> | Couverture · statements / functions | 28,15 / 22,78 | **28,81 / 23,41** |
+> | Couverture · branches / lines | 23,59 / 28,48 | **24,17 / 29,17** |
+> | Fichiers d'intégration RLS verts | 6 sur 7 | **7 sur 7** |
+>
+> 🔴 **Ce qui empêche d'aller plus haut, et c'est un constat sur la méthode, pas sur le nombre de
+> tests.** Aucun des cinq jobs n'était rouge à cause du produit. Cinq gardes en échec, cinq causes
+> **dans les gardes elles-mêmes** : un test aux props inexistantes (vert en vitest, fatal à
+> `tsc -b`), un titre renommé sans son test, Chrome qui ne démarrait pas, et **deux tests faux**
+> dans le harnais RLS, dont un qui inventait une colonne `status` inexistante et un autre qui
+> éprouvait une forme d'appel que l'application n'utilise nulle part.
+>
+> Deux de ces fichiers avaient été posés sur `main` **sans avoir jamais tourné**. La règle qui
+> manquait est écrite ici : *une garde qui ne peut pas être exécutée localement doit l'être en CI
+> avant d'être invoquée comme preuve, et son premier run doit être regardé.*
 
 | Ce qui compose la note | 08-24 | 08-25 (16 h) | **08-25 (fin)** | **08-27** |
 |---|---|---|---|---|

@@ -15,7 +15,29 @@ Légende : 🔴 bloquant · 🟠 important · 🟡 à planifier · ✅ corrigé
 
 ---
 
-## Note de sécurité : 82 → **86 / 100** (2026-08-24 → 2026-08-25) · **inchangée au 2026-08-27**
+## Note de sécurité : 82 → 86 → **86 / 100** (2026-08-24 → 2026-08-25) · **inchangée au 2026-08-27 et au 2026-08-29**
+
+> ### 🔴 2026-08-29 · la note ne bouge pas, mais une de ses justifications était fausse
+>
+> Le +4 du 2026-08-25 était en partie porté par cette phrase, écrite plus bas : la mig. 115 est
+> arrivée avec « **337 lignes de test d'intégration contre une vraie base dans le même commit** ».
+> Le test existe, il est bon, et **il n'avait jamais été vert en CI** : le job `rls-integration`
+> échouait dessus depuis sa création. Un test rouge qu'on n'ouvre pas ne vaut pas mieux qu'un test
+> absent, et il coûte en plus la confiance qu'on lui accorde.
+>
+> **Ce que le test reprochait n'était pas la base.** Rejeu mesuré sur base vierge, sous le rôle
+> `authenticated` avec un `auth.uid()` forgé : `is_org_admin` vrai, `my_org_perm` vrai, insertion
+> **acceptée**. Le refus venait de la RELECTURE demandée par `.insert().select()`, soumise à
+> `can_access_team_project(id)`, qui cherche en table une ligne pas encore visible. Le test
+> éprouvait une forme d'appel que l'application n'utilise nulle part, et que `createProject`
+> documente comme telle depuis le bug #9.
+>
+> **Depuis le 2026-08-29, le test passe** : la justification est enfin vraie. La note ne monte pas
+> pour autant, parce qu'aucune protection nouvelle n'a été mise en vigueur, et parce que le crédit
+> avait déjà été versé. *Une note qui récompense une garde doit d'abord vérifier que la garde
+> tourne.*
+>
+> G-1 reste ouvert en production : la mig. `130` est écrite, testée, et **toujours pas appliquée**.
 
 | Ce qui compose la note | 08-24 | 08-25 | **08-27** |
 |---|---|---|---|

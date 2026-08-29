@@ -4,7 +4,23 @@
 119 : effacement et portabilité). Premier audit dédié de ce domaine. Jusqu'ici, la conformité était
 traitée par fragments dans les audits sécurité. Mesuré sur le schéma de prod et le code.
 
-## Note RGPD : 78 → **84 / 100** (2026-08-24 → 2026-08-25) · **inchangée au 2026-08-27**
+## Note RGPD : 78 → 84 → **86 / 100** (2026-08-24 → 2026-08-25 → 2026-08-29) · inchangée au 2026-08-27
+
+> ### 2026-08-29 · +2, les durées de conservation sont publiées
+>
+> Les trois durées mesurées sont désormais **dans la politique de confidentialité**, à la portée du
+> lecteur et plus seulement dans le dépôt : 90 jours pour une visite de démonstration non
+> convertie, 400 jours pour les jours d'activité et une démonstration convertie, 90 jours pour les
+> marqueurs techniques de paiement. La mention que le journal d'encaissement est **anonymisé et non
+> supprimé** y figure aussi, ce qui est la seule formulation exacte : l'obligation de conservation
+> fiscale prime sur l'effacement (RGPD art. 17.3.b).
+>
+> C'était le dernier point du dossier qui n'attendait rien d'autre que d'être écrit, et il débloque
+> la réponse à un acheteur B2B.
+>
+> ⚠️ **Ce qui reste, et qui ne s'obtient qu'en tant qu'entreprise** : les DPA des sous-traitants
+> (Supabase, Vercel, Sentry, Stripe, Resend) ne sont ni collectés ni archivés, et G-1
+> (minimisation d'`org_invitations`, mig. 130) est écrit mais **non appliqué en production**.
 
 > **2026-08-27 · note inchangée, et le tableau ci-dessous non plus.** Un seul mouvement dans le
 > périmètre RGPD ce jour-là : la mig. `130` (minimisation de `org_invitations`, art. 5.1.c) est

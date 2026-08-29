@@ -1,6 +1,23 @@
 # Performance bundle — `vite.config.ts manualChunks`
 
-## Note de performance : 68 → 64 → 88 → **91 / 100** (2026-08-24 → 2026-08-27)
+## Note de performance : 68 → 64 → 88 → 91 → **94 / 100** (2026-08-24 → 2026-08-27 → 2026-08-29)
+
+> ### 2026-08-29 · +3, et la mesure existe enfin
+>
+> | | 08-27 | **08-29** |
+> |---|---|---|
+> | Chunk d'entrée | 106,9 ko | **75,5 ko** (plafond redescendu 112 000 → 79 000) |
+> | Chemin critique | 393,9 ko | **364,3 ko** |
+> | Octets au chargement de la landing | 2 530 ko bruts | **2 123 ko** · recharts n'arrive plus qu'à l'approche |
+> | Job `lighthouse` | rouge depuis sa création | **vert**, seuils posés sur le premier run réel |
+>
+> Deux points viennent du poids, un vient du fait qu'**on mesure enfin**. Le job Lighthouse
+> n'avait jamais produit un rapport : Chrome ne démarrait pas, puis la configuration mesurait la
+> page 404 de la SPA au lieu des pages prérendues.
+>
+> 🔴 **Ce qui plafonne à 94, et c'est nommé** : la landing est à **55 de performance** avec jusqu'à
+> 1,5 s de blocage du fil principal, quand le blog et le guide sont à 96-97 **sur le même build**.
+> Suivi en T-51.
 
 | Ce qui compose la note | 08-24 | 08-25 (16 h) | 08-25 (fin) | **08-27** |
 |---|---|---|---|---|
