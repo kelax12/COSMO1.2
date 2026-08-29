@@ -277,8 +277,56 @@ jobs:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
 
+      # Quel Chrome, et existe-t-il ? Une phase `collect` qui ne produit AUCUN
+      # rapport echoue le plus souvent avant d'ouvrir un navigateur, et la
+      # difference entre « Chrome absent » et « Chrome refuse de demarrer » ne
+      # se devine pas depuis l'exterieur. Trois lignes dans le resume valent
+      # mieux qu'une hypothese.
+      - name: Chrome disponible ?
+        run: |
+          VU=""
+          for BIN in google-chrome google-chrome-stable chromium chromium-browser; do
+            P=$(command -v "$BIN" 2>/dev/null) && VU="$VU $BIN=$("$BIN" --version 2>&1 | head -1)"
+          done
+          echo "::notice title=chrome::${VU:-aucun binaire Chrome trouve} | CHROME_PATH=${CHROME_PATH:-vide}"
+          {
+            echo '### Chrome vu par le job lighthouse'
+            echo ''
+            echo '```'
+            for BIN in google-chrome google-chrome-stable chromium chromium-browser; do
+              P=$(command -v "$BIN" 2>/dev/null) && echo "$BIN -> $P ($("$BIN" --version 2>&1 | head -1))"
+            done
+            echo "CHROME_PATH=${CHROME_PATH:-<vide>}"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # ⚠️ Le log d'un run exige une authentification, meme sur un depot public,
+      # et le RESUME du job ne l'exige pas. Sans ce report, un echec ici n'affiche
+      # que « Process completed with exit code 1 » : c'est exactement ce qui a
+      # rendu ce job indiagnosticable depuis son ajout le 2026-08-24, et ce qui a
+      # fait porter la tache T-50 sur un `gh auth login` au lieu d'un correctif.
+      # Meme dispositif que le replay de migrations, pour la meme raison.
       - name: Lighthouse CI
-        run: npx --yes @lhci/cli@0.15.x autorun
+        run: |
+          set -o pipefail
+          if npx --yes @lhci/cli@0.15.x autorun 2>&1 | tee lhci.log; then exit 0; fi
+          {
+            echo '### ✖ Lighthouse CI : echec'
+            echo ''
+            echo '```'
+            tail -n 80 lhci.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          # ⚠️ Le resume de job n'est PAS expose par l'API : il se lit dans
+          # l'interface, donc par un humain connecte. Les ANNOTATIONS, elles, se
+          # lisent sans authentification sur un depot public. On emet donc les
+          # dernieres lignes en annotation : c'est la seule forme de diagnostic
+          # qu'un agent sans compte GitHub puisse relire.
+          tail -n 25 lhci.log | while IFS= read -r LIGNE; do
+            case "$LIGNE" in *LH:status*) continue;; esac
+            echo "::error title=lhci::${LIGNE}"
+          done
+          exit 1
 
       - name: Upload Lighthouse reports
         if: ${{ !cancelled() }}
