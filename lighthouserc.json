@@ -4,10 +4,10 @@
       "staticDistDir": "dist",
       "numberOfRuns": 2,
       "url": [
-        "http://localhost/index.html",
-        "http://localhost/guide/index.html",
-        "http://localhost/blog/index.html",
-        "http://localhost/pour-freelances/index.html"
+        "http://localhost/",
+        "http://localhost/guide/",
+        "http://localhost/blog/",
+        "http://localhost/pour-freelances/"
       ],
       "settings": {
         "preset": "desktop",
