@@ -1275,3 +1275,42 @@ sont désormais séparées dans le test : au prochain run, l'annotation nommera 
 > Supabase locale, donc Docker, absent de cette machine. Dit tel quel dans les deux messages de
 > commit. Le job étant déjà rouge, ils ne peuvent pas le rendre plus rouge, et ils le rendent
 > lisible.
+
+#### ✅ Confirmation, et une correction de ma propre affirmation
+
+Le run de `ac139a0` conclut **`lighthouse` en `success`** avec les seuils resserrés, et
+`lint-test-build`, `e2e`, `audit` verts. **Un seul job reste rouge sur `main` : `rls-integration`.**
+
+| Page | perf | a11y | best-practices | seo |
+|---|---|---|---|---|
+| `/` | 60 | 97 | 100 | 100 |
+| `/blog/` | 97 | 99 | 100 | 100 |
+| `/guide/` | 96 | 96 | 100 | 100 |
+| `/en/` | 54 | 93 | 100 | 92 |
+
+> ⚠️ **Ce que j'ai écrit plus haut sur `--lang=fr-FR` était trop affirmatif.** Je l'ai présenté
+> comme la correction d'une page mesurée en anglais. Le run suivant mesure toujours `/en/` et
+> jamais `/pour-freelances/` : le drapeau n'a pas fait ce que j'annonçais. La vraie cause était
+> ailleurs, et elle est ci-dessous.
+
+#### 🔴 Trouvé en mesurant autre chose : une barre finale perdait quatre pages
+
+`https://thecosmo.app/pour-freelances/` sert le fichier prérendu, puis **l'application renvoie
+vers l'accueil**. Vérifié en production, pas déduit. Sans la barre finale, la page s'affiche.
+
+Ce n'est pas le routeur : React Router fait bien correspondre `/pour-freelances/` à la route, la
+page se **monte**. Elle se perd ensuite seule, en cherchant la fiche du slug « pour-freelances/ »
+qui n'existe pas. Une ligne qui retirait la barre du début et pas celle de la fin.
+
+> 🔴 **Pourquoi ça compte cette semaine précisément** : les annuaires normalisent presque tous les
+> URL avec une barre finale, et leurs soumissions (T-21) sont le seul levier d'acquisition de ces
+> 60 jours. Chaque backlink obtenu à la main aurait envoyé son visiteur sur l'accueil au lieu de
+> la page qui le concerne, **sans erreur, sans 404, sans trace**. Quatre pages : freelances,
+> étudiants, managers, équipes.
+>
+> Personne ne cherchait ce défaut. Il est tombé parce qu'une gate s'est mise à mesurer pour de
+> vrai : Lighthouse visait `/pour-freelances/` et rapportait la page d'accueil.
+
+Correctif et test témoin livrés. **Prédiction vérifiable au prochain run** : le job doit
+maintenant rapporter `/pour-freelances/` à la place de `/en/`. Si `/en/` revient, la cause du
+choix des URL est ailleurs et reste à trouver.
