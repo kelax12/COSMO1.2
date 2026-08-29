@@ -38,7 +38,7 @@ Recompté par script sur les tableaux du §1, jamais de tête.
 |---|---|---|
 | **Axel seul** | **25** | Consoles (Supabase, Vercel, Resend, Cloudflare, GitHub, Stripe), actes administratifs, soumissions d'annuaires. Aucun n'est atteignable depuis le dépôt |
 | **Axel puis moi** | 3 | T-12, T-38, T-39 — un secret ou un drapeau à poser, puis je déploie ou je vérifie |
-| **Moi, sans rien attendre** | **4** | T-25 (barre d'onglets mobile) · T-31 (procédure de support) · T-45 (`TaskTable`) · T-46 (`pg_dump` mensuel) |
+| **Moi, sans rien attendre** | **1** | T-45 (`TaskTable`). T-25, T-31 et T-46 ont été livrés et commités le 2026-08-29 : ils étaient écrits depuis la veille et **jamais posés sur `main`** |
 | **Bloqué sur un outil absent** | 3 | T-49 (Docker), T-50 + T-28 (log du run CI → `gh auth login`) |
 | **Attend une décision produit** | 2 | T-23 (premier écran après inscription) · T-47 (`vendor-sentry`) |
 
@@ -102,7 +102,7 @@ Piste : **A** = agent backend/infra/sécu · **B** = agent front/UX/tests · **X
 |---|---|---|---|---|---|---|---|---|
 | ✅ T-48 | Tests / QA | **Job CI `e2e` rouge** : l'Aperçu entreprise a été renommé le 2026-08-27, le test cherchait encore l'ancien titre | La CI verte est une condition du GO. Rouge depuis 4 jours, personne n'a regardé | P1 | XS | — | B | S3 |
 | 🔴 T-49 | Tests / QA | **Job CI `rls-integration` rouge** : 4 cas de `org-permissions.test.ts` échouent sur base VIERGE, alors que la même logique est correcte en production (vérifié sous le rôle réel) | Écart entre le dépôt rejoué et la prod. Ce n'est pas une faille — c'est le dépôt qui ne reconstruit pas la base qu'il décrit | P1 | M | stack Supabase locale (Docker) | A | S3 |
-| 🔴 T-50 | Tests / QA | **Job CI `lighthouse` rouge** : la phase `collect` échoue, aucun rapport produit. Non reproductible ici (Chrome absent, `spawn UNKNOWN` sous Windows) | Idem : gate du GO. Demande la lecture du log du run, donc une authentification GitHub | P2 | S | `gh auth login` | X + A | S3 |
+| ✅ T-50 | Tests / QA | **Job CI `lighthouse`** : deux causes, trouvées sans `gh auth login`. (1) le bac à sable de Chrome, qu'Ubuntu 24.04 empêche de démarrer → `--no-sandbox` ; (2) Lighthouse mesurait `/guide/index.html`, une URL que le routeur ne connaît pas, donc la page 404 de la SPA, marquée `noindex` : SEO 0,66 au lieu de 1,00 | Idem : gate du GO. ~~Demande la lecture du log du run~~ — les **annotations** d'un run sont publiques, elles, et elles ont suffi | P2 | S | — | A | S3 |
 | T-01 | Infrastructure | Passer Supabase en plan Pro et activer le PITR | A-9, seul bloquant de résilience du dossier. Aujourd'hui une erreur en prod n'est pas rattrapable, RPO jusqu'à 24 h | P0 | XS | — | X | S1 |
 | T-02 | Fiabilité | Exécuter le drill de restauration de `DEPLOYMENT.md` §7 vers un projet jetable, chronométré | Un backup non testé n'est pas un backup. RTO actuel : inconnu | P0 | M | T-01 | X + A | S1 |
 | T-03 | Emails | Configurer un SMTP applicatif (Resend) pour **Supabase Auth** : sous-domaine d'envoi `send.thecosmo.app` vérifié, clé SMTP posée dans Supabase, limite d'envoi horaire relevée | AM-1. Sans lui l'inscription casse dès la première vague de trafic. ⚠️ Le sous-domaine est obligatoire : la racine porte les MX et le SPF d'IONOS qui servent `contact@` | P0 | M | — | **X** (préparé : runbook, gabarits, garde) | S1 |
@@ -133,13 +133,13 @@ Piste : **A** = agent backend/infra/sécu · **B** = agent front/UX/tests · **X
 | T-22 | SEO | Relever dans Search Console : type de propriété (domaine ou préfixe), nombre de pages réellement indexées, et connecter Ahrefs Webmaster Tools pour compter les domaines référents | On pilote le SEO sans savoir combien de pages sont indexées. 13 impressions pour 20 URLs laisse l'hypothèse ouverte | P1 | S | — | X | S3 |
 | 🟡 T-23 | UX / Produit | ⚠️ **L'instrumentation EXISTAIT DÉJÀ** (`get_admin_stats` v3 → `/admin` : activation 24 h, activation 48 h par canal, rétention J+7 par cohorte). Reste la correction seule. Instrumenter et corriger l'activation : **0 compte actif sur 7 jours** pour 28 comptes. Identifier le décrochage (première tâche créée ? deuxième session ?) et traiter le premier écran après inscription | Le vrai problème produit du dossier. Acquérir des utilisateurs qui ne reviennent pas est un coût, pas un progrès | P1 | L | T-15 | B | S3-S4 |
 | ✅ T-24 | Fiabilité | Détection de nouvelle version pour les onglets jamais rechargés (bannière « une mise à jour est disponible ») | **91,5 % du trafic Supabase du 2026-08-26 venait de deux onglets exécutant un bundle périmé.** Sans ce mécanisme, tout correctif client n'atteint que ceux qui rouvrent l'application, et les utilisateurs les plus assidus sont les plus coûteux | P2 | M | — | B | S4 |
-| T-25 | UX / Produit | Barre d'onglets entreprise sur mobile : 4 destinations sur 7 hors écran, aucun indice de continuation | P1 de la critique UI du 2026-08-27. Le mode entreprise est l'offre qui se vend | P2 | M | — | B | S4 |
+| ✅ T-25 | UX / Produit | Barre d'onglets entreprise sur mobile : 4 destinations sur 7 hors écran, aucun indice de continuation | P1 de la critique UI du 2026-08-27. Le mode entreprise est l'offre qui se vend | P2 | M | — | B | S4 |
 | ✅ T-26 | UX / Produit | Unifier les deux grammaires de filtre entre les onglets « Tâches » et « Projets » | Même donnée, deux façons de la filtrer. Second P1 de la même critique | P2 | M | — | B | S5 |
 | ⚪ T-27 | UX / Produit | **CLOS sans changement** (arbitrage Axel, 2026-08-28) : la répétition est assumée, le titre était déjà corrigé. `buildOrgEvents` : exclure `currentUserId` de la frise « entreprise », et corriger le titre contradictoire | La frise répète les tâches déjà affichées juste au-dessus | P3 | S | — | B | S5 |
-| T-28 | Performance | Resserrer les seuils Lighthouse après le premier run réel en CI | Ils sont provisoires et posés au-dessus du réel : un budget très au-dessus du réel ne mesure rien | P2 | S | — | A | S3 |
+| ✅ T-28 | Performance | Resserrer les seuils Lighthouse après le premier run réel en CI. **Fait le 2026-08-29**, le run existe enfin | Ils sont provisoires et posés au-dessus du réel : un budget très au-dessus du réel ne mesure rien | P2 | S | — | A | S3 |
 | ✅ T-29 | Performance | Ramener le chunk d'entrée sous 92 ko gzip et **redescendre le plafond** de `check:bundle` | 87,2 → 106,9 ko en deux jours, plafond relevé de 92 à 112 pour l'absorber. C'est le seul plafond du dépôt qu'on ait jamais remonté ; tant que la marge se regagne en relevant la barre, le budget ne garde plus rien | P2 | M | — | B | S4 |
 | ✅ T-30 | Legal | Publier les durées de conservation dans la politique de confidentialité (90 j visite démo, 400 j activité et démo convertie, 90 j marqueurs Stripe) | Dernier point du dossier RGPD qui n'attend plus rien d'autre que d'être écrit, et il débloque la réponse à un acheteur B2B | P2 | XS | — | B | S3 |
-| T-31 | Support | Écrire la procédure de support : qui répond, sous quel délai, où arrivent les signalements, gabarit de réponse | À 100 utilisateurs le support devient réel. Un canal sans procédure devient un canal ignoré | P2 | S | T-12 | X | S4 |
+| ✅ T-31 | Support | Écrire la procédure de support : qui répond, sous quel délai, où arrivent les signalements, gabarit de réponse | À 100 utilisateurs le support devient réel. Un canal sans procédure devient un canal ignoré | P2 | S | T-12 | X | S4 |
 
 ### PHASE 3 — 100 → 1 000 utilisateurs
 
@@ -163,8 +163,8 @@ Piste : **A** = agent backend/infra/sécu · **B** = agent front/UX/tests · **X
 
 | ID | Cat. | Tâche | Pourquoi | P | Effort | Dép. | Piste | Deadline |
 |---|---|---|---|---|---|---|---|---|
-| T-45 | Dette technique | Découper `TaskTable.tsx` (1 124 lignes, plus gros fichier du dépôt, immobile depuis trois jours) | Les quatre passes du cliquet ont toutes porté sur `/entreprise`, parce que c'est là qu'a lieu le travail. La dette du socle ne baisse pas toute seule | P3 | L | — | B | S8 |
-| T-46 | Fiabilité | Automatiser un `pg_dump` mensuel stocké hors Supabase | Plan de sortie fournisseur. Complément du PITR, pas un substitut | P3 | S | T-01 | A | S8 |
+| ✅ T-45 | Dette technique | Découper `TaskTable.tsx` (1 124 lignes, plus gros fichier du dépôt, immobile depuis trois jours). **Fait le 2026-08-29 : 1 124 → 890** | Les quatre passes du cliquet ont toutes porté sur `/entreprise`, parce que c'est là qu'a lieu le travail. La dette du socle ne baisse pas toute seule | P3 | L | — | B | S8 |
+| 🟡 T-46 | Fiabilité | Automatiser un `pg_dump` mensuel stocké hors Supabase. **Workflow livré le 2026-08-29, inerte** : sans le secret `SUPABASE_DB_URL` il s'arrête en avertissement | Plan de sortie fournisseur. Complément du PITR, pas un substitut | P3 | S | T-01 | A | S8 |
 | T-47 | Performance | Trancher `vendor-sentry` (49,2 ko gzip) sur le chemin critique | Ce n'est **pas** un arbitrage de performance : le différer revient à ne plus capturer les erreurs de démarrage, celles qui blanchissent l'écran. Décision produit, pas optimisation | P3 | S | — | X décide | S8 |
 
 ---
@@ -198,7 +198,7 @@ Piste : **A** = agent backend/infra/sécu · **B** = agent front/UX/tests · **X
 12. T-49  rls-integration (Docker)   ‖  T-50 lighthouse (gh auth) → puis T-28   (A ‖ X+A)
 13. T-22  etat des lieux GSC + Ahrefs        ‖  T-21 annuaires, par vagues de 5  (X)
 14. T-23  premier ecran apres inscription    ⟵ ATTEND UNE DECISION, pas du code  (X puis B)
-15. T-25 barre d onglets mobile  ‖  T-31 procedure de support   (B ‖ X)
+15. ~~T-25 barre d onglets mobile~~  ‖  ~~T-31 procedure de support~~   FAITS le 29/08
 ```
 
 ### 🟢 Enfin : encaisser, puis rembourser la dette
@@ -320,7 +320,7 @@ référents est franchi. Rien d'autre ne le remplace.
 - [x] ✅ **T-30** — publier les durées de conservation · P2 · XS · B
   **Done** : les trois durées sont dans la politique de confidentialité, et `RGPD.md` §6 passe le
   point 3 au vert.
-- [ ] **T-28** — resserrer les seuils Lighthouse · P2 · S · A
+- [x] ✅ **T-28** · resserrer les seuils Lighthouse · P2 · S · A
   **Done** : chaque seuil est posé juste au-dessus de la valeur du premier run réel, et le job
   reste vert.
 
@@ -342,10 +342,11 @@ sans corriger ces deux points revient à remplir un seau percé.
 - [x] ✅ **T-29** — chunk d'entrée sous 92 ko gzip · P2 · M · B
   **Done** : `npm run check:bundle` est vert **avec le plafond redescendu à 92 000**. Un plafond
   qu'on ne redescend pas n'est pas un budget.
-- [ ] **T-25** — barre d'onglets entreprise sur mobile · P2 · M · B
+- [x] ✅ **T-25** · barre d'onglets entreprise sur mobile · P2 · M · B
+  **Done** : à 375 px, l'onglet actif d'un lien profond `?tab=members` est ramené dans le champ et des dégradés disent qu'il reste des onglets. Vérifié dans le navigateur par deux tests Playwright, **témoin exécuté** : les deux échouent contre l'ancienne barre.
   **Done** : les 7 destinations sont atteignables sans connaissance préalable sur un écran de
   375 px, vérifié dans le navigateur, pas déduit d'une règle.
-- [ ] **T-31** — procédure de support écrite · P2 · S · X
+- [x] ✅ **T-31** · procédure de support écrite · P2 · S · X
   **Done** : un document d'une page dit qui répond, sous quel délai, et où arrivent les
   signalements.
 - [ ] **T-21 (vague 2)** — annuaires 6 à 12 · X
@@ -421,10 +422,10 @@ drapeaux ne bougent qu'ici, et ensemble.
 **Pourquoi cette semaine** : une fois la boucle acquisition → produit → encaissement bouclée, la
 question redevient « à quelle vitesse peut-on avancer », donc la dette du socle.
 
-- [ ] **T-45** — découper `TaskTable.tsx` · P3 · L · B
+- [x] ✅ **T-45** · découper `TaskTable.tsx` · P3 · L · B
   **Done** : plus aucun fichier au-dessus de 900 lignes, et le budget de `architecture.guard`
   redescendu d'autant. Le cliquet ne descend que quand la mesure descend.
-- [ ] **T-46** — `pg_dump` mensuel hors fournisseur · P3 · S · A
+- [~] 🟡 **T-46** · `pg_dump` mensuel hors fournisseur · P3 · S · A · **workflow livré, secret restant**
 - [ ] **T-47** — trancher `vendor-sentry` · P3 · S · X décide
 - [ ] **Revue de fin de cycle** : remesurer les dix notes d'audit, mettre à jour
   `docs/README.md`, archiver cette roadmap et en écrire une nouvelle. Une roadmap ne se met pas à
@@ -1165,3 +1166,112 @@ l'a écrit : `tsc -b` sort 0, 3/3 sur le fichier, **1 833/1 833** sur la suite, 
 > vérifiée que si la garde a été rejouée APRÈS la dernière édition du fichier.* Rejouer avant
 > l'ultime retouche, puis citer le résultat dans le message de commit, produit exactement la
 > confiance non fondée que cette roadmap documente depuis le début, cette fois contre elle-même.
+
+### 2026-08-29 (suite) · six tâches fermées, et la CI cesse d'être muette
+
+Journée d'exécution, pas de mesure. Six lignes fermées, dont trois qui étaient **écrites depuis
+la veille et jamais posées sur `main`** : le dépôt les ignorait donc, exactement le cas que T-19
+avait déjà eu à traiter.
+
+| Tâche | Résultat |
+|---|---|
+| ✅ **T-25** | Barre d'onglets entreprise sur mobile. À 375 px, sept destinations dans 335 px visibles : l'onglet actif d'un lien profond `?tab=members` est ramené dans le champ, et des dégradés de bord disent qu'il reste des onglets. **Témoin exécuté** : les deux tests Playwright échouent contre l'ancienne barre inline, passent contre la nouvelle. Suite entreprise : 6/6 |
+| ✅ **T-31** | `docs/SUPPORT.md` : par où arrivent les demandes, qui répond, sous quels délais, ce qu'on vérifie avant de répondre, et à partir de quand ce n'est plus du support mais un incident. Les deux délais qui ne sont pas des conventions y sont nommés : la demande RGPD (un mois, art. 12) et la perte de données (l'incident s'ouvre avant la réponse) |
+| 🟡 **T-46** | Export mensuel `pg_dump` hors fournisseur, en workflow. Il **vérifie ce qu'il produit** (taille plancher, puis `pg_restore --list`, parce qu'un fichier vide est le mode de défaillance classique d'une sauvegarde), et sans le secret `SUPABASE_DB_URL` il s'arrête en avertissement plutôt qu'en échec. Reste le secret, côté Axel |
+| ✅ **T-50** | Le job `lighthouse` mesure enfin. Deux causes, aucune n'exigeait `gh auth login` |
+| ✅ **T-28** | Seuils posés sur le premier run réel, dans les deux sens |
+| ✅ **T-45** | `TaskTable` : 1 124 → 890 lignes, budget du cliquet 10 185 → 9 949 |
+| 🟡 **T-49** | Une cause certaine corrigée, le reste instrumenté pour se nommer au prochain run |
+
+#### 🔑 Le déblocage de la journée : les annotations d'un run sont publiques
+
+T-50 était classée « bloquée sur un outil absent », parce que le log d'un run exige une
+authentification GitHub même sur un dépôt public. C'est vrai du **log** et du **résumé de job**.
+Ça ne l'est pas des **annotations** : `GET /repos/:o/:r/check-runs/:id/annotations` répond sans
+jeton. Elles portent déjà les échecs de vitest, et un job peut y écrire ce qu'il veut avec
+`::error::` ou `::notice::`.
+
+Conséquence immédiate, et elle vaut au-delà de ces deux tâches : **un agent sans compte GitHub
+peut lire ce que la CI a trouvé.** Les deux jobs rouges du dossier ont été diagnostiqués dans la
+foulée, sans jamais ouvrir l'interface.
+
+#### ✅ T-50 · deux causes, dont une qui accusait un défaut inexistant
+
+1. **Chrome ne démarrait pas.** Le runner en a pourtant trois (Chrome 151 et Chromium), ce que le
+   job dit maintenant lui-même dans une annotation. Ubuntu 24.04 restreint les espaces de noms non
+   privilégiés, donc le bac à sable de Chrome : `--no-sandbox --disable-dev-shm-usage`.
+2. **Lighthouse mesurait la page « introuvable » de quatre pages qui existent.** La configuration
+   visait `/guide/index.html` ; le routeur ne connaît pas cette forme, la SPA rend donc sa 404, et
+   la 404 se marque `noindex`, ce qu'on lui demande. D'où `categories.seo` à **0,66**, sur une
+   page dont le fichier prérendu porte `index, follow`. Mesuré des deux côtés, même build :
+   `/guide/index.html` = 0,66 · `/guide/` = **1,00**.
+
+> 🔴 **Une gate rouge qui pointe un défaut inexistant est pire qu'une gate absente** : elle
+> apprend à ignorer sa propre sortie. C'est la même leçon que les 90 commentaires de l'issue #44,
+> par un autre chemin.
+
+Deuxième correctif structurel : `autorun` enchaîne collect → assert → upload, donc **une
+assertion rouge empêchait l'upload**, et le job qui mesure ne rendait aucun chiffre précisément
+quand on en avait besoin. Les trois phases sont séparées, et le relevé des scores tourne en
+`always()`, en annotation publique.
+
+#### ✅ T-28 · les seuils descendent, et deux montent
+
+Premier run réel (deux passes par page, valeur la plus basse retenue) :
+
+| Page | perf | a11y | best-practices | seo | LCP | TBT |
+|---|---|---|---|---|---|---|
+| `/` | **55** | 93 | 100 | 100 | 1 483 ms | **1 068 ms** |
+| `/blog/` | 97 | 99 | 100 | 100 | 1 149 ms | 0 ms |
+| `/guide/` | 96 | 96 | 100 | 100 | 1 229 ms | 0 ms |
+| `/en/` | 53 | 93 | 100 | 92 | 1 506 ms | 1 116 ms |
+
+Les seuils bloquants ne portent que sur des mesures **déterministes** : a11y 0,92 · seo 0,92 ·
+best-practices 0,97 · CLS 0,02. Ceux qui varient avec le runner restent en avertissement.
+
+> ⚠️ **Deux seuils ont été DESSERRÉS, et c'est délibéré** : performance (0,80 → 0,50) et TBT
+> (300 ms → 1 700 ms) étaient posés **sous** le réel, donc en avertissement permanent. Un budget
+> qu'on ne peut pas tenir ne mesure rien non plus. Ils deviennent un cliquet à la valeur réelle.
+> Le vrai sujet reste entier et il est nommé : **la landing est à 55 de performance avec plus
+> d'une seconde de blocage du fil principal**, quand le guide et le blog sont à 96. C'est une
+> tâche produit, pas un seuil.
+>
+> Corrigé au passage, et c'est le même piège que dans `playwright.config.ts` : Lighthouse
+> annonçait `en-US`, la racine redirigeait vers `/en/`, et le job mesurait l'anglais en croyant
+> mesurer `/pour-freelances/`. Chrome reçoit désormais `--lang=fr-FR`.
+
+#### ✅ T-45 · la première coupe volontaire du socle
+
+`TaskTable` : **1 124 → 890 lignes**, budget du cliquet **10 185 → 9 949**. Deux extractions,
+`TaskQuickFilters` et `TaskBulkActionsBar` ; aucune des deux ne connaît une tâche. Un vrai défaut
+part avec : l'état du menu « ⋯ » vivait dans `TaskTable`, ce qui obligeait **cinq** gestionnaires
+métier à le refermer à la main. Il vit maintenant dans la barre, qui disparaît avec le mode
+sélection.
+
+Vérifié **dans le navigateur**, parce qu'aucun test ne couvre cette barre : mode sélection, une
+tâche cochée, menu « ⋯ », sous-menu Catégorie, catégorie appliquée, sortie automatique du mode,
+zéro erreur console. Plus 1 833/1 833 et les quatre specs e2e du parcours tâches.
+
+#### 🟡 T-49 · une cause certaine, et une question mieux posée
+
+**Corrigé** : le test posait les lignes de permissions sous `service_role`, qui contourne la RLS
+mais **pas les triggers**. La garde de plafond s'exécutait donc avec `auth.uid()` NULL et refusait
+par « cannot grant a permission you do not hold ». Le décor passe par un admin réel.
+
+**Éliminé, par comparaison une à une contre la production via l'API** : `is_org_admin`,
+`is_org_member`, `is_org_manager`, `has_subordinates`, `my_org_perm`,
+`enforce_org_permission_ceiling` et la policy `team_projects_insert` sont **identiques** entre le
+dépôt et la prod.
+
+**Éliminé aussi, par la mesure du run suivant** : les vérifications de décor ajoutées au
+`beforeAll` sont passées. Sur base vierge, la base reconnaît bien le patron comme admin et le chef
+comme manager. Le décor n'est pas faux.
+
+Restent trois échecs, tous sur `team_projects` en INSERT, par trois utilisateurs dont un admin.
+La policy est une conjonction, et Postgres ne dit jamais laquelle des deux moitiés a refusé. Elles
+sont désormais séparées dans le test : au prochain run, l'annotation nommera la moitié fautive.
+
+> ⚠️ Deux commits de cette tâche n'ont **pas** pu être exécutés ici : le harnais demande une stack
+> Supabase locale, donc Docker, absent de cette machine. Dit tel quel dans les deux messages de
+> commit. Le job étant déjà rouge, ils ne peuvent pas le rendre plus rouge, et ils le rendent
+> lisible.
