@@ -110,6 +110,24 @@ describe('RLS — org_member_permissions (mig. 115)', () => {
 
   describe('sans aucune surcharge', () => {
     it('un manager crée un projet', async () => {
+      // ── Les deux moitiés du WITH CHECK, isolées ───────────────────────
+      //
+      // La policy d'insertion vaut
+      // `my_org_perm(org_id, 'project.create') AND created_by = auth.uid()`.
+      // Un refus renvoie « new row violates row-level security policy » sans
+      // jamais dire LAQUELLE des deux moitiés a dit non — et les deux mènent à
+      // des diagnostics opposés : un droit mal dérivé côté base, ou une
+      // identité de session qui n'est pas celle qu'on croit. On les sépare donc
+      // ici, une fois, dans le premier test qui insère.
+      const { data: perm } = await chef.client.rpc('my_org_perm', {
+        p_org: orgId,
+        p_key: 'project.create',
+      });
+      expect(perm, '`chef` a un subordonné : la base doit lui accorder project.create').toBe(true);
+
+      const { data: session } = await chef.client.auth.getUser();
+      expect(session.user?.id, "l'identité du JWT doit être celle qu'on écrit dans created_by").toBe(chef.id);
+
       const { data, error } = await chef.client
         .from('team_projects')
         .insert({ org_id: orgId, name: 'Projet du chef', created_by: chef.id })
