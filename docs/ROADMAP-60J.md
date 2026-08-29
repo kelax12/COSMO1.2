@@ -165,6 +165,7 @@ Piste : **A** = agent backend/infra/sécu · **B** = agent front/UX/tests · **X
 |---|---|---|---|---|---|---|---|---|
 | ✅ T-45 | Dette technique | Découper `TaskTable.tsx` (1 124 lignes, plus gros fichier du dépôt, immobile depuis trois jours). **Fait le 2026-08-29 : 1 124 → 890** | Les quatre passes du cliquet ont toutes porté sur `/entreprise`, parce que c'est là qu'a lieu le travail. La dette du socle ne baisse pas toute seule | P3 | L | — | B | S8 |
 | 🟡 T-46 | Fiabilité | Automatiser un `pg_dump` mensuel stocké hors Supabase. **Workflow livré le 2026-08-29, inerte** : sans le secret `SUPABASE_DB_URL` il s'arrête en avertissement | Plan de sortie fournisseur. Complément du PITR, pas un substitut | P3 | S | T-01 | A | S8 |
+| T-51 | Performance | **Landing : 55 de performance et jusqu'à 1,5 s de blocage du fil principal.** Mesuré en CI le 2026-08-29, quatre fois, sur la version française. Le blog et le guide sont à 96-97 sur le même build : ce n'est pas le socle, c'est la page | La landing est la première chose que voit un visiteur d'annuaire, et c'est la seule page lente du site. Ouvrir l'acquisition sur elle, c'est payer un clic pour une page qui rame | P3 | M | — | B | S8 |
 | T-47 | Performance | Trancher `vendor-sentry` (49,2 ko gzip) sur le chemin critique | Ce n'est **pas** un arbitrage de performance : le différer revient à ne plus capturer les erreurs de démarrage, celles qui blanchissent l'écran. Décision produit, pas optimisation | P3 | S | — | X décide | S8 |
 
 ---
@@ -1334,3 +1335,37 @@ voit : c'est `--accept-lang` qui pilote `navigator.languages`, et c'est lui qui 
 
 **État CI après cette journée : un seul job rouge sur `main`**, `rls-integration` (T-49).
 `lint-test-build`, `audit`, `e2e` et `lighthouse` sont verts.
+
+#### ✅ Seconde prédiction vérifiée, et un seuil que je viens de mal poser
+
+Run de `a46cdd0` : la racine est mesurée comme **`/`**, plus comme `/en/`. `--accept-lang` fait ce
+que `--lang` ne faisait pas, et le drapeau avait été choisi en lisant `detectLocale()` plutôt qu'en
+supposant. Les quatre URL configurées sont enfin celles qui sont mesurées, en français.
+
+| Page | perf | a11y | seo | TBT |
+|---|---|---|---|---|
+| `/pour-freelances/` | 97 | 99 | 100 | 0 ms |
+| `/blog/` | 97 | 99 | 100 | 0 ms |
+| `/guide/` | 96 | 96 | 100 | 0 ms |
+| **`/`** (landing FR) | **55** | 93 puis **97** | 100 | 934 puis **1 521 ms** |
+
+> ⚠️ **Le seuil d'accessibilité que j'ai posé ce matin est mauvais, et c'est la mesure qui le
+> dit.** La même page, le même build, deux passes : **93 puis 97**. Quatre points d'écart. Un
+> seuil bloquant à 0,92 se trouve donc *à l'intérieur du bruit* : il transforme la gate en pile ou
+> face, et la première rougeur qui n'est pas une régression apprendra à ignorer le job. Il
+> redescend à 0,90. Les trois autres seuils bloquants restent posés au réel, parce qu'eux ne
+> bougent pas d'une passe à l'autre.
+>
+> L'écart lui-même est une information qu'on ne suivra pas aujourd'hui : quelque chose se rend
+> différemment d'une passe à l'autre sur la landing, et fait varier son score.
+
+#### 🆕 T-51 · la landing est la seule page lente du site
+
+Elle est à **55 de performance** avec jusqu'à **1,5 s de blocage du fil principal**, quand le blog
+et le guide sont à 96-97 **sur le même build**. Ce n'est donc pas le socle, c'est cette page — la
+seule à charger GSAP et ses animations.
+
+Ça n'a pas pu être vu plus tôt : jusqu'à ce matin le job mesurait la version anglaise, et avant ça
+il ne mesurait rien du tout. C'est la première chose que voit un visiteur venu d'un annuaire, donc
+le premier écran du seul canal d'acquisition ouvert dans ces 60 jours. Inscrit en P3, semaine 8 :
+c'est réel, ce n'est pas bloquant pour le GO.
