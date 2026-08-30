@@ -273,9 +273,9 @@ export const MemberAgendaBody = ({ member, onlyTaskId }: MemberAgendaBodyProps) 
           onClick={() => setShowTasks((v) => !v)}
           className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium border shadow-sm transition-all shrink-0"
           style={{
-            backgroundColor: showTasks ? 'rgb(var(--color-accent))' : 'rgb(var(--color-chip-bg))',
-            borderColor: showTasks ? 'rgb(var(--color-accent))' : 'rgb(var(--color-chip-border))',
-            color: showTasks ? 'white' : 'rgb(var(--color-text-primary))',
+            backgroundColor: showTasks ? 'rgb(var(--color-accent-solid))' : 'rgb(var(--color-chip-bg))',
+            borderColor: showTasks ? 'rgb(var(--color-accent-solid))' : 'rgb(var(--color-chip-border))',
+            color: showTasks ? 'rgb(var(--color-accent-solid-foreground))' : 'rgb(var(--color-text-primary))',
           }}
         >
           <ListChecks size={16} aria-hidden="true" /> {t('agendaSheet.tasksTitle')}

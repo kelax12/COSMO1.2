@@ -10,10 +10,13 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
 } from '@/components/ui/dropdown-menu';
 import {
   useRemoveMember,
   useSetMemberManager,
+  useSetMemberRole,
   useOrgMemberPermissions,
   useSetMemberPermissions,
   useMyOrgPermissions,
@@ -22,6 +25,7 @@ import {
   isManagerOf,
   subtreeOf,
   type OrgMember,
+  type OrgRole,
 } from '@/modules/organizations';
 import { useOrgTeams, useOrgTeamMembers, type OrgTeam } from '@/modules/org-teams';
 import {
@@ -85,6 +89,7 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin }: Me
   const { t } = useT('org');
   const removeMutation = useRemoveMember();
   const setManager = useSetMemberManager();
+  const setRole = useSetMemberRole();
   const { data: orgPermissions = [] } = useOrgMemberPermissions(orgId);
   const setPermissions = useSetMemberPermissions();
   const myPermissions = useMyOrgPermissions(orgId);
@@ -272,9 +277,43 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin }: Me
                   )}
                 </div>
 
-                <RoleBadge
-                  kind={m.role === 'admin' ? 'admin' : isManagerOf(members, m.userId) ? 'manager' : 'member'}
-                />
+                {isAdmin && !isSelf ? (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger
+                      className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                      aria-label={t('directory.changeRoleAria', { name: m.displayName })}
+                    >
+                      <RoleBadge
+                        kind={m.role === 'admin' ? 'admin' : isManagerOf(members, m.userId) ? 'manager' : 'member'}
+                      />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48">
+                      <DropdownMenuRadioGroup
+                        value={m.role}
+                        onValueChange={(value) => {
+                          if (value === m.role) return;
+                          setRole.mutate({ orgId, userId: m.userId, role: value as OrgRole });
+                        }}
+                      >
+                        <DropdownMenuRadioItem value="admin">{t('roles.admin')}</DropdownMenuRadioItem>
+                        <DropdownMenuRadioItem value="member">{t('roles.member')}</DropdownMenuRadioItem>
+                      </DropdownMenuRadioGroup>
+                      {canEditPermissionsOf({ actorId: currentUserId, actorIsAdmin: isAdmin, target: m, members }) && (
+                        <>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => setEditingPerms(m)}>
+                            <ShieldCheck size={14} aria-hidden="true" />
+                            {t('directory.customizeRole')}
+                          </DropdownMenuItem>
+                        </>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                ) : (
+                  <RoleBadge
+                    kind={m.role === 'admin' ? 'admin' : isManagerOf(members, m.userId) ? 'manager' : 'member'}
+                  />
+                )}
 
                 {isAbove(m) && (
                   <DropdownMenu>
