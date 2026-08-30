@@ -308,6 +308,15 @@ const TaskTable: React.FC<TaskTableProps> = ({
     };
 
     return [...rows].sort((a, b) => {
+      if (localSortField === 'priority') {
+        // Une tâche sans priorité (0) est la MOINS prioritaire, quel que soit
+        // le sens de tri — même règle que compareTasks (task-filtering.ts).
+        const aNone = a.task.priority === 0;
+        const bNone = b.task.priority === 0;
+        if (aNone && bNone) return 0;
+        if (aNone) return 1;
+        if (bNone) return -1;
+      }
       const va = sortValue(a);
       const vb = sortValue(b);
       const comparison = typeof va === 'string' && typeof vb === 'string'
