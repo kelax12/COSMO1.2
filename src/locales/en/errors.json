@@ -103,7 +103,8 @@
     "createOkr": "Couldn't create the OKR: {{message}}",
     "createList": "Couldn't create the list: {{message}}",
     "addTaskToList": "Couldn't add the task to the list: {{message}}",
-    "updatePermissions": "Could not update permissions: {{message}}"
+    "updatePermissions": "Could not update permissions: {{message}}",
+    "taskDependency": "Dependency refused: {{message}}"
   },
   "success": {
     "orgCreated": "Company created",

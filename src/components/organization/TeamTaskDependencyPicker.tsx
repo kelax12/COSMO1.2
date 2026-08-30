@@ -21,7 +21,7 @@ import {
   dependencyCandidates,
   dependencyEdge,
   type DependencyDirection,
-} from './dependency-graph.helpers';
+} from '@/lib/dependency-graph';
 import { useT } from '@/i18n/useT';
 
 interface TeamTaskDependencyPickerProps {
@@ -93,7 +93,18 @@ const TeamTaskDependencyPicker = ({
   }
 
   const candidates = useMemo(
-    () => dependencyCandidates({ tasks, dependencies, task, direction, query }),
+    () =>
+      dependencyCandidates({
+        tasks,
+        dependencies,
+        task,
+        direction,
+        query,
+        // Le périmètre est le PROJET, parce que c'est ce que la base accepte
+        // (mig. 108). Proposer une tâche d'un autre projet reviendrait à
+        // promettre un lien que le serveur refusera.
+        inScope: (x) => x.projectId === task.projectId,
+      }),
     [tasks, dependencies, task, direction, query],
   );
 

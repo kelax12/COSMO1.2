@@ -3,26 +3,25 @@ import {
   dependencyCandidates,
   dependencyEdge,
   reachableSets,
-} from './dependency-graph.helpers';
-import type { TeamTask, TeamTaskDependency } from '@/modules/team-projects';
+  type DependencyEdge,
+  type DependencyNode,
+} from './dependency-graph';
 
-const task = (id: string, over: Partial<TeamTask> = {}): TeamTask => ({
+interface Node extends DependencyNode {
+  projectId: string;
+}
+
+const task = (id: string, over: Partial<Node> = {}): Node => ({
   id,
-  orgId: 'org-1',
-  projectId: 'proj-1',
   name: id,
-  priority: 3,
-  assigneeIds: [],
-  createdBy: 'u1',
   completed: false,
-  status: 'todo',
-  createdAt: '2026-01-01T00:00:00.000Z',
-  updatedAt: '2026-01-01T00:00:00.000Z',
+  priority: 3,
+  projectId: 'proj-1',
   ...over,
 });
 
 /** `a` est bloquée par `b`. */
-const dep = (a: string, b: string): TeamTaskDependency => ({ taskId: a, dependsOnId: b });
+const dep = (a: string, b: string): DependencyEdge => ({ taskId: a, dependsOnId: b });
 
 describe('reachableSets', () => {
   it('remonte les bloqueurs transitifs et les bloquées transitives', () => {
@@ -49,21 +48,32 @@ describe('reachableSets', () => {
 describe('dependencyCandidates', () => {
   const tasks = [task('a'), task('b'), task('c'), task('z', { projectId: 'proj-2' })];
 
-  it('exclut la tâche elle-même et les autres projets', () => {
+  it('exclut la tâche elle-même, et respecte le périmètre quand il est fourni', () => {
+    const rows = dependencyCandidates({
+      tasks,
+      dependencies: [],
+      task: tasks[0],
+      direction: 'blockedBy',
+      inScope: (x) => x.projectId === tasks[0].projectId,
+    });
+    expect(rows.map((r) => r.task.id).sort()).toEqual(['b', 'c']);
+  });
+
+  it('sans périmètre, ne retire que la tâche elle-même', () => {
     const rows = dependencyCandidates({
       tasks,
       dependencies: [],
       task: tasks[0],
       direction: 'blockedBy',
     });
-    expect(rows.map((r) => r.task.id).sort()).toEqual(['b', 'c']);
+    expect(rows.map((r) => r.task.id).sort()).toEqual(['b', 'c', 'z']);
   });
 
   it('marque un lien déjà posé, dans les deux sens', () => {
     const rows = dependencyCandidates({
-      tasks,
+      tasks: [task('a'), task('b'), task('c')],
       dependencies: [dep('a', 'b'), dep('c', 'a')],
-      task: tasks[0],
+      task: task('a'),
       direction: 'blockedBy',
     });
     expect(rows.every((r) => r.alreadyLinked)).toBe(true);
@@ -71,16 +81,14 @@ describe('dependencyCandidates', () => {
   });
 
   it('refuse un cycle indirect dans le sens « bloquée par »', () => {
-    // b dépend déjà de a : rendre a dépendante de b fermerait la boucle.
+    // b dépend déjà de a : lien direct, donc signalé comme doublon.
     const rows = dependencyCandidates({
       tasks: [task('a'), task('b'), task('c')],
       dependencies: [dep('b', 'a')],
       task: task('a'),
       direction: 'blockedBy',
     });
-    const b = rows.find((r) => r.task.id === 'b');
-    // Lien direct existant, donc signalé comme doublon avant le cycle.
-    expect(b?.selectable).toBe(false);
+    expect(rows.find((r) => r.task.id === 'b')?.selectable).toBe(false);
 
     // Chaîne plus longue : c dépend de b qui dépend de a.
     const longer = dependencyCandidates({
@@ -118,12 +126,7 @@ describe('dependencyCandidates', () => {
 
   it('classe les sélectionnables avant les autres, et les ouvertes avant les terminées', () => {
     const rows = dependencyCandidates({
-      tasks: [
-        task('a'),
-        task('done', { completed: true }),
-        task('open'),
-        task('linked'),
-      ],
+      tasks: [task('a'), task('done', { completed: true }), task('open'), task('linked')],
       dependencies: [dep('a', 'linked')],
       task: task('a'),
       direction: 'blockedBy',

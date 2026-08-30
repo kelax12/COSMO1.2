@@ -41,6 +41,16 @@ export interface Task {
   userId?: string;
 }
 
+/**
+ * Arête du graphe de dépendances personnel (mig. 132) : `taskId` est bloquée
+ * par `dependsOnId`. Même forme que `TeamTaskDependency` — les deux graphes
+ * partagent leurs helpers de parcours (`@/lib/dependency-graph`).
+ */
+export interface TaskDependency {
+  taskId: string;
+  dependsOnId: string;
+}
+
 export type CreateTaskInput = Omit<Task, 'id' | 'createdAt'>;
 
 export type UpdateTaskInput = Partial<Omit<Task, 'id' | 'createdAt'>>;

@@ -1,4 +1,4 @@
-import { Task, CreateTaskInput, UpdateTaskInput, TaskFilters } from './types';
+import { Task, CreateTaskInput, UpdateTaskInput, TaskFilters, TaskDependency } from './types';
 import { PaginationParams, PaginatedResult } from '@/lib/pagination.types';
 
 /**
@@ -98,4 +98,23 @@ export interface ITasksRepository {
    * Fetch a page of tasks (cursor-based pagination)
    */
   getPage(params?: PaginationParams): Promise<PaginatedResult<Task>>;
+
+  // ═══════════════════════════════════════════════════════════════════
+  // DÉPENDANCES (mig. 132)
+  // ═══════════════════════════════════════════════════════════════════
+
+  /**
+   * Tout le graphe de dépendances du compte, en une lecture.
+   *
+   * Pas de variante « par tâche » : un modal affiche les DEUX sens, donc des
+   * arêtes qui ne portent pas son id, et les charger tâche par tâche
+   * relancerait la même requête à chaque ouverture.
+   */
+  getDependencies(): Promise<TaskDependency[]>;
+
+  /** Ajoute « `taskId` est bloquée par `dependsOnId` ». */
+  addDependency(taskId: string, dependsOnId: string): Promise<void>;
+
+  /** Retire l'arête exacte. Retirer une arête absente n'est pas une erreur. */
+  removeDependency(taskId: string, dependsOnId: string): Promise<void>;
 }
