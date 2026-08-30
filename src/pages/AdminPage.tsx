@@ -22,6 +22,7 @@ import {
 } from '@/modules/admin';
 import type { AdminChartPoint, LabeledValue } from './admin/AdminCharts';
 import { useT } from '@/i18n/useT';
+import { AdminMfaGate } from '@/components/admin/AdminMfaGate';
 
 // Règle P-2 : recharts (vendor-charts) chargé uniquement quand un admin
 // ouvre effectivement la page.
@@ -118,7 +119,7 @@ const ChartCard: React.FC<{ title: string; note?: string; children: React.ReactN
   </div>
 );
 
-const AdminPage: React.FC = () => {
+const AdminDashboard: React.FC = () => {
   const { t } = useT('admin');
   const { isDemo } = useAuth();
   const { data, isLoading, error } = useAdminStats();
@@ -415,5 +416,20 @@ const AdminPage: React.FC = () => {
     </div>
   );
 };
+
+/**
+ * `/admin` derrière la garde à double facteur (T-06 (b), mig. 131).
+ *
+ * L'ordre compte : `AdminMfaGate` ne monte le tableau de bord qu'une fois la
+ * session en `aal2`, donc `get_admin_stats()` n'est jamais appelée pour rien,
+ * et un admin sans second facteur voit un écran d'enrôlement au lieu d'une
+ * redirection silencieuse. La garde reste côté serveur : cet ordre n'est que
+ * de l'UX, exactement comme le `Navigate` ci-dessus.
+ */
+const AdminPage: React.FC = () => (
+  <AdminMfaGate>
+    <AdminDashboard />
+  </AdminMfaGate>
+);
 
 export default AdminPage;

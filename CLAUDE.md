@@ -555,7 +555,11 @@ Debug : `localStorage.removeItem('cosmo_onboarding_modules_done')` puis reload.
 ## Base de données Supabase
 
 Migrations dans `supabase/migration/*.sql`, convention `NNN_<feature>.sql`.
-**133 fichiers de migration, dernière = `129_org_inbox_single_read.sql`** (au 2026-08-27).
+**135 fichiers de migration, dernière = `131_admin_requires_aal2.sql`** (au 2026-08-30).
+🔴 **La `131` n'est PAS appliquée** : elle exige une session `aal2` pour `/admin` (T-06 (b)).
+Ordre : déployer le front, **enrôler**, puis appliquer. Dans ce sens il n'y a aucune fenêtre ;
+dans l'autre, `/admin` ne rend plus de statistiques jusqu'au premier code vérifié. ✅ La `130` a été appliquée
+le 2026-08-29, vérifiée acteur par acteur (membre simple : 0 ligne).
 ✅ **Les `127`, `128` et `129` ont été appliquées en prod le 2026-08-27**, dans cet ordre, chacune
 vérifiée après coup : la `127` rend un résultat identique pour les 18 comptes qui ont des données
 (comparaison par empreinte, prise avant application), la `128` laisse **une seule policy
@@ -1022,6 +1026,13 @@ Codes entre parenthèses = bugs historiques ayant motivé la règle.
   une policy, utiliser `is_above(org_id, user_id)` ou `i_have_subordinates(org_id)`. À l'intérieur
   d'une fonction `SECURITY DEFINER`, les helpers restent appelables (rôle = propriétaire).
   Régression en cours en prod : mig. `107`, finding B-1 de [`faille.md`](./faille.md).
+- ❌ **Garder une surface admin par `admin_allowlisted()`.** Depuis la mig. `131`, deux fonctions
+  répondent à deux questions différentes : `admin_allowlisted()` dit « ce compte est admin »
+  (AFFICHAGE, ignore volontairement le niveau d'assurance, sinon l'écran d'enrôlement TOTP
+  devient inatteignable) et `is_admin()` dit « cette requête est autorisée » (GARDE : allowlist
+  ET `auth.jwt() ->> 'aal' = 'aal2'`). Les intervertir annule la migration. Et ne jamais tester
+  « ce compte a activé la 2FA » : `aal2` porte sur la SESSION, or c'est précisément la session
+  ouverte avec un mot de passe volé qu'il faut refuser. Détail : `docs/SECURITY.md`.
 - ❌ **Une fonction de trigger en `SECURITY DEFINER`.** Une garde doit être `SECURITY INVOKER`
   (défaut) et `REVOKE`-ée pour `anon` (mig. `064b` / `094b`). Un trigger `BEFORE` s'exécutant
   **avant** le `WITH CHECK` de la RLS, en DEFINER ses messages d'erreur deviennent un oracle sur

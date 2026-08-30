@@ -74,7 +74,7 @@ les porte, jamais ici.
 | ✅ T-04 | Emails | ~~Coller les 4 gabarits d'email dans le Dashboard~~ **fait le 2026-08-29** | ✅ **Écrits** (`supabase/templates/`, en français). Ils ne se déploient pas depuis le dépôt : `config push` n'est pas le workflow de ce projet | P1 | XS | T-03 | X | S2 |
 | ⚪ T-04b | Sécurité | **CLOS SANS CHANGEMENT — décision d'Axel du 2026-08-29 : trop de friction à l'inscription**, sur un produit dont le problème mesuré est l'activation. Risque accepté, pas oublié : détail, conditions de réouverture et état du front dans `faille.md` § G-2. ~~Activer *Confirm email*~~ | Ferme la porte à l'inscription avec l'adresse d'un tiers et aux comptes injoignables. ✅ Le front est prêt : `AuthForm` affiche « Vérifiez votre boîte mail » au lieu de pousser l'inscrit vers un écran protégé qui le rejetterait | P1 | XS | T-03, T-04 | X | S2 |
 | 🟡 T-05 | Sécurité | **Minimum 12 caractères posé le 2026-08-29** (déclaré : aucun réglage Auth n'est lisible depuis le dépôt). Aligné sur `MIN_PASSWORD_LENGTH`, et l'aide des Réglages, restée à 8 en fr comme en en, a été corrigée dans la foulée : la constante avait été centralisée, pas le TEXTE. **Coupée en deux le 2026-08-29.** Minimum 12 caractères : faisable, à faire. « Leaked password protection » : 🔴 **réservée au plan Pro** (« available on the Pro Plan and above »), donc **hors de portée tant qu'on reste en Free** ; l'advisor restera rouge et ce n'est pas un oubli | A-10, encore ouvert : l'advisor `auth_leaked_password_protection` est toujours remonté par la prod le 2026-08-27 | P0 | XS | — | X | S1 |
-| 🟡 T-06 | Sécurité | **Coupée en deux le 2026-08-29, l'énoncé était faux.** (a) ✅ **2FA posée sur le compte Supabase d'Axel le 2026-08-29** (application d'authentification ; cette page n'offre aucun code de récupération, la clé d'amorçage EST la sauvegarde). Protège la console et la base. (b) MFA sur le **compte applicatif** `axellongatte2@gmail.com` : ❌ **pas un réglage**. `grep -i mfa\|totp\|aal2` sur `src/` ne rend RIEN : l'app n'a ni écran d'enrôlement, ni défi, ni garde `aal2`. Activer le facteur TOTP côté projet n'ouvre que l'API. La partie (b) est un développement (écran d'enrôlement + gate `/admin` + vérification serveur dans `get_admin_stats`), pas un XS | `/admin` expose toute la volumétrie business et n'est protégé que par un mot de passe | P0 | (a) XS · (b) M | — | (a) X · (b) A + B | S1 |
+| 🟡 T-06 | Sécurité | **Coupée en deux le 2026-08-29, l'énoncé était faux.** (a) ✅ **2FA posée sur le compte Supabase d'Axel le 2026-08-29** (application d'authentification ; cette page n'offre aucun code de récupération, la clé d'amorçage EST la sauvegarde). Protège la console et la base. (b) **Code livré le 2026-08-30, en attente de la mig. `131`.** `is_admin()` exige désormais `admin_allowlisted()` ET une session `aal2`, et `/admin` monte un écran d'enrôlement TOTP puis un défi (`AdminMfaGate`). Ce qui ferme la tâche, et rien d'autre, **dans cet ordre** : déployer le front, enrôler un authentificateur, appliquer la `131`, puis vérifier que `/admin` rend ses chiffres. Dans ce sens, aucune fenêtre d'indisponibilité. | `/admin` expose toute la volumétrie business et n'est protégé que par un mot de passe | P0 | (a) XS · (b) M | — | (a) X · (b) A + B | S1 |
 | ✅ T-07 | Sécurité | ~~Vérifier l'allowlist de redirection OAuth~~ **fait le 2026-08-29**. Deux jokers `cosmoapp-*-…vercel.app` conservés sciemment : le suffixe appartient au compte Vercel d'Axel, et `flowType: 'pkce'` rend le `code` inexploitable par une autre origine. **Un manque a été trouvé au passage** : `/reset-password` n'était PAS dans la liste alors que `ForgotPasswordPage` le demande, donc les resets retombaient sur la Site URL. Ajouté | Un wildcard trop large annule une partie du bénéfice de PKCE | P1 | XS | — | X | S1 |
 | ✅ T-08 | Sécurité | ~~Activer « Secure email change »~~ **fait le 2026-08-29** (déclaré). Le réglage vit dans le fournisseur **Email** de *Sign In / Providers*, pas dans le bloc *User Signups* | Prise de contrôle de compte par changement d'email | P1 | XS | — | X | S1 |
 | T-09 | Sécurité | Activer le secret scanning GitHub + vérifier la non-réutilisation du mot de passe `DATABASE_URL` historique | Le dépôt est **public** | P1 | XS | — | X | S1 |
@@ -158,7 +158,7 @@ roadmap suppose qu'on puisse se tromper sans tout perdre.
   le dépôt. L'allowlist de redirection doit contenir **toutes** les pages qui la demandent,
   `/reset-password` comprise.
   ❌ **Hors de portée en plan Free** : `auth_leaked_password_protection` est réservée au plan Pro. L'advisor restera rouge, ce n'est pas un oubli.
-  ⚠️ **T-06 n'était pas la tâche qu'elle annonçait** : la 2FA du compte Supabase est faite, mais protéger `/admin` demande du **code** (l'app n'a ni enrôlement MFA ni garde `aal2`).
+  ⚠️ **La moitié (b) de T-06 est du code, pas un réglage** : livrée le 2026-08-30, elle attend l'application de la mig. `131` puis un enrôlement.
 - [x] **T-16** — vérifier `VITE_SENTRY_DSN` sur Vercel · P1 · XS · X
   **Done** : une erreur déclenchée volontairement en prod apparaît dans Sentry sous 2 minutes.
 - [x] **T-13** — poser `OPS_ALERT_WEBHOOK_URL` · P1 · XS · X
@@ -502,6 +502,65 @@ questions à reposer le jour venu.
 Une session par entrée, la plus récente en tête de sa journée. **On coche quand le critère
 « Done » est vérifié, pas quand le code est écrit.** Les statuts vivent au §1 ; ici on raconte
 comment on y est arrivé, et surtout ce qu'on a cru à tort en chemin.
+
+### 2026-08-30 — T-06 (b) : `/admin` derrière un second facteur, et la roadmap dédoublonnée
+
+**Mesure d'abord.** Rien de ce qui est visible depuis le dépôt n'avait bougé depuis la veille :
+aucun script Cloudflare sur `https://thecosmo.app/signup` (T-14 attend toujours ses deux clés),
+`acquisition_source` toujours renseignée sur **0 profil sur 28** (T-15), les deux drapeaux de
+facturation à `false`, `org_subscriptions` et `payment_records` vides, advisors sécurité
+identiques. Ce qui a avancé la veille l'a été dans des consoles, et n'y laisse aucune trace.
+
+#### ✅ Le document se contredisait lui-même
+
+`ROADMAP-60J.md` portait l'état de chaque tâche dans **sept sections à la fois** : T-01 y
+apparaissait 14 fois, T-13 onze. Les copies avaient divergé, et rien ne disait laquelle faisait
+foi : T-13 était « fait le 2026-08-29 » au tableau de bord, au §1, à la semaine 1 et au journal,
+et « webhook restant » au résumé exécutif. Le fichier passe de 1 541 à 1 250 lignes et de 11
+sections à 6. Une seule table porte un statut, et son décompte est recompté par script, collé à sa
+source. Ce qui a été gardé bien que non demandé l'a été pour une raison précise : les décisions
+assumées et leurs seuils de réouverture, les interdits des 60 jours, les checkpoints par palier.
+Aucun ne se déduit de la liste des tâches.
+
+#### ✅ T-06 (b) — la 2FA de la console ne protégeait pas l'application
+
+La 2FA posée la veille protège la **console Supabase**. `get_admin_stats()`, elle, n'exigeait
+qu'une session valide d'un compte présent dans `admin_users` : un mot de passe volé rendait
+lisible toute la volumétrie business du produit.
+
+**Mig. `131`** sépare deux questions qui portaient le même nom :
+
+| Fonction | Répond à | Rôle |
+|---|---|---|
+| `admin_allowlisted()` | « ce compte est-il admin ? » | affichage, ignore la session **exprès** |
+| `is_admin()` | « cette requête est-elle autorisée ? » | garde : allowlist **et** `aal2` |
+
+`is_admin()` garde son nom et sa signature : `get_admin_stats()` l'appelle déjà et n'a pas été
+touchée. Réécrire ses 200 lignes pour y insérer deux lignes de garde aurait ajouté un risque de
+transcription sur la fonction la plus longue du dépôt, pour un gain nul.
+
+**Trois choix qui méritent d'être écrits, parce qu'ils étaient tentants dans l'autre sens :**
+
+1. **`aal2` porte sur la SESSION, pas sur le compte.** Tester « ce compte a activé la 2FA »
+   aurait laissé passer exactement le cas qu'on veut refuser : une session ouverte avec un mot de
+   passe volé sur un compte pourtant enrôlé.
+2. **L'écran d'enrôlement ne dépend pas de la garde.** S'il en dépendait, appliquer la migration
+   enfermerait l'admin dehors sans chemin de retour. C'est pour ça que `admin_allowlisted()`
+   ignore volontairement le niveau d'assurance, et c'est pour ça qu'elle ne doit jamais servir de
+   garde.
+3. **Le QR passe par une balise `<img>` sur une `data:` URI**, jamais par
+   `dangerouslySetInnerHTML`. Un SVG inline exécute ses scripts, un SVG chargé comme image ne le
+   peut pas. Le SVG vient de notre propre GoTrue, et ce n'est pas une raison suffisante.
+
+**Témoin exécuté** : en affaiblissant la garde (`challenge` rendant le tableau de bord), le test
+du défi échoue ; restaurée, les 18 tests passent. Un test qui passe du premier coup sans avoir
+jamais échoué ne prouve rien.
+
+**Ce qui n'est PAS prouvé, et ne le sera pas d'ici** : la migration n'est pas appliquée, aucun
+authentificateur n'est enrôlé. Tant que ces deux gestes ne sont pas faits, T-06 reste 🟡. Le
+téléphone perdu ne verrouille rien : `DELETE FROM auth.mfa_factors WHERE user_id = '<uid>'` depuis
+le SQL editor ramène la session en `aal1` et fait reparaître l'écran d'enrôlement. Il n'y a donc
+pas de codes de récupération à conserver.
 
 ### 2026-08-29 (soir) — 11 tâches fermées, 2 décisions rendues, 3 angles morts refermés
 

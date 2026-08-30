@@ -50,5 +50,19 @@
   "signupsCol": "Sign-ups",
   "shareCol": "Share",
   "activation48hCol": "48h activation",
-  "retentionD7Col": "D+7 retention"
+  "retentionD7Col": "D+7 retention",
+  "mfa": {
+    "enrolTitle": "Turn on two-factor",
+    "enrolHint": "This page exposes the product's full volumetrics. It requires an authenticator app on top of your password.",
+    "enrolStart": "Generate a QR code",
+    "enrolConfirm": "Turn on",
+    "enrolFailed": "Setup did not complete. Try again in a moment.",
+    "qrAlt": "QR code to scan with your authenticator app",
+    "manualEntry": "If the QR code will not scan, enter this key:",
+    "challengeTitle": "Verification code",
+    "challengeHint": "Open your authenticator app and enter the six-digit code it shows.",
+    "codeLabel": "Six-digit code",
+    "verify": "Verify",
+    "codeRejected": "Code rejected. Check your phone's clock, then try again."
+  }
 }

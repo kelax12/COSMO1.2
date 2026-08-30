@@ -113,6 +113,40 @@ Pour toute requête `subscriptions` (et tables sensibles à la propriété) :
 - ❌ **Ne jamais** lire `premiumTokens` ou état premium depuis `localStorage` ou `user_metadata` (faille N5/N6)
 - ❌ **Ne jamais** ré-exposer `isPremium` dans `AuthContext` — un seul hook fait foi : `useBilling`
 
+### `/admin` — allowlist ET second facteur (mig. 131)
+
+`/admin` rend toute la volumétrie business du produit : comptes, canaux
+d'acquisition, rétention, organisations. Depuis la mig. 131, l'appartenance à
+`admin_users` ne suffit plus, la **session** doit avoir présenté un second
+facteur.
+
+Deux fonctions, et il ne faut jamais les intervertir :
+
+| Fonction | Répond à | Usage |
+|---|---|---|
+| `public.admin_allowlisted()` | « ce compte est-il admin ? » | AFFICHAGE : entrée « Stats COSMO » dans les Réglages, écran d'enrôlement TOTP |
+| `public.is_admin()` | « cette requête est-elle autorisée ? » | GARDE : appelée par `get_admin_stats()`, exige `admin_allowlisted()` **ET** `auth.jwt() ->> 'aal' = 'aal2'` |
+
+- ❌ **Ne jamais garder une surface admin par `admin_allowlisted()`.** Elle ignore
+  volontairement le niveau d'assurance de la session : c'est ce qui rend l'écran
+  d'enrôlement atteignable avant tout second facteur. L'utiliser comme garde
+  annulerait la migration.
+- ❌ **Ne jamais tester « ce compte a activé la 2FA ».** `aal2` dit que **cette
+  session** a présenté le facteur. Un mot de passe volé ouvre une session `aal1`
+  sur un compte pourtant enrôlé : c'est exactement le cas que la garde doit
+  refuser. La claim est posée par GoTrue, jamais par le client.
+- ❌ **Ne jamais relâcher sur une claim absente** : `COALESCE(..., 'aal1')`. Un
+  jeton sans `aal` est traité comme un facteur unique.
+- ⚠️ Le QR d'enrôlement est rendu par une balise `<img>` sur une `data:` URI,
+  **jamais** par `dangerouslySetInnerHTML` : un SVG inline exécute ses scripts,
+  un SVG chargé comme image ne le peut pas. La source est notre propre GoTrue,
+  et ce n'est pas une raison suffisante.
+- 🔑 **Téléphone perdu** : `DELETE FROM auth.mfa_factors WHERE user_id = '<uid>';`
+  depuis le SQL editor (rôle `service_role`, qui ne passe par aucune de ces
+  fonctions). La session redevient `aal1` et l'écran d'enrôlement reparaît. Il
+  n'y a donc pas de verrouillage définitif, donc pas de codes de récupération à
+  stocker quelque part.
+
 ### Uploads de fichiers (avatars, etc.)
 
 Pour tout `<input type="file">` :
@@ -272,6 +306,7 @@ Variables sensibles **jamais côté client** : `SUPABASE_SERVICE_ROLE_KEY`, `STR
 - ❌ Échapper les guillemets dans les `CREATE POLICY` SQL (`\"...\"` casse Postgres)
 - ❌ Lire `premiumTokens` ou identité depuis `localStorage` / `user_metadata` — source unique = `subscriptions` via `useBilling()` (N5, N6)
 - ❌ Écrire l'état premium dans `localStorage` (utiliser Supabase `subscriptions`)
+- ❌ Garder une surface admin par `admin_allowlisted()` au lieu de `is_admin()` — la première ignore le niveau d'assurance de la session, exprès (mig. 131)
 - ❌ Insérer dans `friends` / `shared_tasks` sans vérifier le lien d'amitié côté SQL (V12, V13)
 - ❌ Ne supprimer qu'un côté d'une amitié — `accept_friend_request` insère 2 lignes, `removeFriend` doit en supprimer 2 (B15)
 - ❌ Appeler `supabase.auth.updateUser({ password })` sans réauthentification via `signInWithPassword` (B8)
