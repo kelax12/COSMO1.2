@@ -581,11 +581,16 @@ Debug : `localStorage.removeItem('cosmo_onboarding_modules_done')` puis reload.
 
 Migrations dans `supabase/migration/*.sql`, convention `NNN_<feature>.sql`.
 **136 fichiers de migration, dernière = `132_task_dependencies.sql`** (au 2026-08-30).
-🔴 **La `132` n'est PAS appliquée** : dépendances entre tâches PERSONNELLES, jumelle de la
-`108`. Elle doit l'être **AVANT** de déployer le front, qui lit déjà `task_dependencies` —
-sans elle, la section Dépendances du modal de tâche renvoie une erreur de table inconnue.
-Elle ne modifie aucune table existante : une base sans elle se comporte exactement comme
-avant, ce qui rend le déploiement réversible.
+Ledger prod relu le 2026-08-30 : la `132` est la dernière appliquée, la `131` reste en attente.
+✅ **La `132` a été appliquée en prod le 2026-08-30** (dépendances entre tâches PERSONNELLES,
+jumelle de la `108`), et vérifiée invariant par invariant plutôt que sur un « success » :
+`user_id` bien redérivé alors qu'on envoyait exprès celui d'un autre compte, doublon refusé
+par la PK (23505), auto-dépendance et cycles direct **et indirect à trois maillons** refusés,
+arête inter-comptes refusée, tâche inexistante refusée, `ON DELETE CASCADE` vérifié (2 arêtes
+→ 0). Isolation mesurée acteur par acteur : le propriétaire voit son arête, un autre compte
+en voit **zéro**, et son insertion est refusée. Tests joués dans une transaction annulée par
+un `RAISE` final — la table est restée à 0 ligne. Zéro advisor de sécurité sur cette table.
+Elle n'a modifié aucune table existante.
 🔴 **La `131` n'est PAS appliquée** : elle exige une session `aal2` pour `/admin` (T-06 (b)).
 Ordre : déployer le front, **enrôler**, puis appliquer. Dans ce sens il n'y a aucune fenêtre ;
 dans l'autre, `/admin` ne rend plus de statistiques jusqu'au premier code vérifié. ✅ La `130` a été appliquée
