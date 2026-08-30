@@ -580,7 +580,12 @@ Debug : `localStorage.removeItem('cosmo_onboarding_modules_done')` puis reload.
 ## Base de données Supabase
 
 Migrations dans `supabase/migration/*.sql`, convention `NNN_<feature>.sql`.
-**135 fichiers de migration, dernière = `131_admin_requires_aal2.sql`** (au 2026-08-30).
+**136 fichiers de migration, dernière = `132_task_dependencies.sql`** (au 2026-08-30).
+🔴 **La `132` n'est PAS appliquée** : dépendances entre tâches PERSONNELLES, jumelle de la
+`108`. Elle doit l'être **AVANT** de déployer le front, qui lit déjà `task_dependencies` —
+sans elle, la section Dépendances du modal de tâche renvoie une erreur de table inconnue.
+Elle ne modifie aucune table existante : une base sans elle se comporte exactement comme
+avant, ce qui rend le déploiement réversible.
 🔴 **La `131` n'est PAS appliquée** : elle exige une session `aal2` pour `/admin` (T-06 (b)).
 Ordre : déployer le front, **enrôler**, puis appliquer. Dans ce sens il n'y a aucune fenêtre ;
 dans l'autre, `/admin` ne rend plus de statistiques jusqu'au premier code vérifié. ✅ La `130` a été appliquée
@@ -660,6 +665,15 @@ supabase.rpc('get_my_tasks').select(...)    // ✅ Index Scan (mig. 085)
 `get_my_tasks()` ne prend **aucun paramètre** : son périmètre vient de `auth.uid()` seul. Les
 policies RLS restent en place (défense en profondeur) ; l'isolation est prouvée par
 `e2e/rls/get-my-tasks.test.ts`. Exception légitime : `getById` (accès par clé primaire).
+
+> ⚠️ **`task_dependencies` (mig. 132) se lit en direct, et c'est voulu.** Sa policy est
+> `(SELECT auth.uid()) = user_id`, pas un `EXISTS` sur `tasks` : le périmètre est porté par une
+> colonne dénormalisée (redérivée par trigger, jamais envoyée par le client), donc indexable dès
+> le premier jour. Déléguer à `tasks` aurait payé le `OR` ci-dessus **par arête** — l'erreur que
+> la mig. 117 a dû rattraper côté entreprise. Second motif, suffisant à lui seul : une tâche
+> personnelle peut être **partagée**, et déléguer à « les tâches que je vois » ferait entrer dans
+> le graphe des arêtes entre deux tâches d'un autre compte. Le graphe personnel est celui de son
+> propriétaire ; la version partagée du graphe, c'est le mode entreprise.
 
 ### ⚡ Tables entreprise — même règle, même correctif (mig. 113)
 
