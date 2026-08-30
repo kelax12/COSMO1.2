@@ -1,4 +1,4 @@
-export { useAdminStats, useIsAdmin } from './hooks';
+export { useAdminStats, useIsAdmin, useAdminGate } from './hooks';
 export { adminKeys, ACQUISITION_GOALS } from './constants';
 export { AdminForbiddenError } from './repository';
 export {

@@ -173,14 +173,26 @@ export async function fetchAdminStats(): Promise<AdminStats> {
 }
 
 /**
- * Statut admin de l'utilisateur courant (RPC is_admin, mig. 056).
+ * Ce compte est-il dans l'allowlist admin (RPC admin_allowlisted, mig. 131) ?
+ *
+ * Question d'AFFICHAGE, pas une garde : elle ignore volontairement le niveau
+ * d'assurance de la session, sinon l'écran d'enrôlement TOTP deviendrait
+ * inatteignable pour un admin qui n'a pas encore de second facteur. La garde
+ * réelle est `is_admin()`, appelée par `get_admin_stats()` côté serveur.
+ *
+ * Repli sur `is_admin` tant que la mig. 131 n'est pas appliquée, pour que
+ * l'ordre entre le déploiement du front et la migration n'ait pas d'importance.
+ * Ce repli ne relâche aucune garde : les deux RPC ne décident que d'un
+ * affichage, et `is_admin` est la plus stricte des deux.
+ *
  * Ne doit JAMAIS bloquer l'UI : toute erreur ⇒ false silencieux.
  */
 export async function fetchIsAdmin(): Promise<boolean> {
   try {
-    const { data, error } = await supabase.rpc('is_admin');
-    if (error) return false;
-    return data === true;
+    const { data, error } = await supabase.rpc('admin_allowlisted');
+    if (!error) return data === true;
+    const legacy = await supabase.rpc('is_admin');
+    return !legacy.error && legacy.data === true;
   } catch {
     return false;
   }

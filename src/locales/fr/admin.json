@@ -50,5 +50,19 @@
   "signupsCol": "Inscriptions",
   "shareCol": "Part",
   "activation48hCol": "Activation 48 h",
-  "retentionD7Col": "Rétention J+7"
+  "retentionD7Col": "Rétention J+7",
+  "mfa": {
+    "enrolTitle": "Activer le second facteur",
+    "enrolHint": "Cette page expose toute la volumétrie du produit. Elle demande une application d'authentification, en plus du mot de passe.",
+    "enrolStart": "Générer un code QR",
+    "enrolConfirm": "Activer",
+    "enrolFailed": "L'activation n'a pas abouti. Réessayez dans un instant.",
+    "qrAlt": "Code QR à scanner avec votre application d'authentification",
+    "manualEntry": "Si le code QR ne passe pas, saisissez cette clé :",
+    "challengeTitle": "Code de vérification",
+    "challengeHint": "Ouvrez votre application d'authentification et saisissez le code à six chiffres affiché.",
+    "codeLabel": "Code à six chiffres",
+    "verify": "Vérifier",
+    "codeRejected": "Code refusé. Vérifiez l'heure de votre téléphone, puis réessayez."
+  }
 }

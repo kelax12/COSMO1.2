@@ -335,6 +335,48 @@ depuis un navigateur.
 
 ---
 
+## 2quinquies. Second facteur sur `/admin` — **livré le 2026-08-30, mig. `131` non appliquée**
+
+`/admin` rend toute la volumétrie business du produit. Depuis T-06 (b), la garde serveur
+`public.is_admin()` exige que la **session** ait présenté un second facteur (`aal2`), pas
+seulement que le compte figure dans `admin_users`.
+
+### Mise en service — l'ordre évite toute coupure
+
+1. **Déployer le front.** `/admin` affiche alors un écran d'enrôlement : bouton, QR code, et une
+   clé en clair si le QR ne passe pas.
+2. **Enrôler un authentificateur** (Google Authenticator, Aegis, 1Password, Bitwarden…) et saisir
+   le code à six chiffres. La session passe en `aal2` et les statistiques s'affichent.
+3. **Appliquer la migration `131`.** Rien ne change à l'écran : la session est déjà `aal2`.
+
+Fait dans l'autre sens, rien n'est cassé, mais `/admin` ne rend plus de statistiques entre
+l'application de la migration et le premier code vérifié. L'écran d'enrôlement, lui, reste
+atteignable : il ne dépend ni de la migration ni de `is_admin()`.
+
+### Vérification
+
+```sql
+-- Depuis l'application, connecté en admin, APRÈS enrôlement :
+SELECT auth.jwt() ->> 'aal';   -- attendu : 'aal2'
+SELECT public.is_admin();      -- attendu : true
+```
+
+Et le contrôle qui prouve vraiment la garde : se déconnecter, se reconnecter par mot de passe
+seul, s'arrêter avant de saisir le code. `/admin` doit demander le code et **ne rien afficher**.
+
+### 🔑 Téléphone perdu
+
+Aucun verrouillage définitif, donc aucun code de récupération à conserver :
+
+```sql
+-- SQL editor Supabase (rôle service_role, hors de portée de la garde)
+DELETE FROM auth.mfa_factors WHERE user_id = '<uid>';
+```
+
+La session retombe en `aal1` et l'écran d'enrôlement reparaît au prochain passage sur `/admin`.
+
+---
+
 ## 2. Appliquer une migration de base de données
 
 ⚠️ **Les migrations ne sont PAS appliquées par le déploiement Vercel.** Elles
