@@ -155,6 +155,60 @@ const PageWithSuspense: React.FC<{ children: React.ReactNode }> = ({ children })
 const RESUMABLE_PAGES = ['/dashboard', '/tasks', '/agenda', '/habits', '/okr', '/statistics', '/settings', '/entreprise'];
 
 /**
+ * Squelette de la landing — le fallback qu'elle mérite.
+ *
+ * MESURÉ LE 2026-08-30, à 4x de bridage CPU : pendant ~2 s, `/` affichait un
+ * écran BLANC avec un spinner, puis la landing sombre apparaissait d'un coup,
+ * son animation d'entrée déjà terminée. Le fallback par défaut (`PageLoader`)
+ * est un spinner sur le fond de l'APPLICATION, qui suit le thème et se trouve
+ * donc être clair, alors que la landing est sombre par construction.
+ *
+ * Ce squelette ne cherche pas à faire patienter : il occupe exactement la
+ * place du hero, dans ses couleurs, pour que l'arrivée du vrai contenu soit
+ * une continuité et non un flash. Aucune animation ici — un squelette qui
+ * pulse sur une page qui va elle-même s'animer fait deux mouvements
+ * concurrents.
+ *
+ * Il est volontairement écrit en primitives (des `div`) et vit dans le chunk
+ * d'entrée : il doit s'afficher AVANT que quoi que ce soit d'autre ne charge.
+ */
+const LandingSkeleton = () => (
+  <div
+    className="min-h-[100dvh] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900"
+    aria-hidden="true"
+  >
+    <div className="mx-auto max-w-5xl px-4 pt-6">
+      <div className="h-14 rounded-2xl bg-white/[0.04]" />
+    </div>
+    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-10 lg:pt-16">
+      <div className="grid lg:grid-cols-2 gap-12 lg:gap-8 items-center">
+        <div className="space-y-4">
+          <div className="h-12 lg:h-16 w-11/12 rounded-xl bg-white/[0.06]" />
+          <div className="h-12 lg:h-16 w-10/12 rounded-xl bg-white/[0.06]" />
+          <div className="h-12 lg:h-16 w-8/12 rounded-xl bg-blue-500/10" />
+          <div className="pt-6 space-y-2.5">
+            <div className="h-4 w-11/12 rounded bg-white/[0.04]" />
+            <div className="h-4 w-9/12 rounded bg-white/[0.04]" />
+          </div>
+          <div className="pt-6 flex gap-3.5">
+            <div className="h-14 w-52 rounded-2xl bg-blue-500/20" />
+            <div className="h-14 w-48 rounded-2xl bg-white/[0.05]" />
+          </div>
+        </div>
+        <div className="hidden lg:block">
+          <div className="mb-3 flex justify-center gap-2.5">
+            {[0, 1, 2, 3].map((i) => (
+              <div key={i} className="h-7 w-24 rounded-full bg-white/[0.05]" />
+            ))}
+          </div>
+          <div className="h-[26rem] rounded-2xl bg-white/[0.04]" />
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
+/**
  * Racine publique — la landing, servie sur deux chemins.
  *
  * `/` sert le parcours perso, `/entreprise-presentation` le parcours
@@ -173,7 +227,14 @@ const RootRoute = () => {
     const target = last && RESUMABLE_PAGES.includes(last) ? last : '/dashboard';
     return <Navigate to={target} replace />;
   }
-  return <PageWithSuspense><LandingPage /></PageWithSuspense>;
+  // Fallback dédié : la landing est sombre, le fallback par défaut est clair.
+  return (
+    <AppErrorBoundary>
+      <Suspense fallback={<LandingSkeleton />}>
+        <LandingPage />
+      </Suspense>
+    </AppErrorBoundary>
+  );
 };
 
 /**
