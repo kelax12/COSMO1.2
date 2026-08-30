@@ -168,3 +168,66 @@ describe('récurrence : génération de l\'occurrence suivante', () => {
     expect(survivor!.recurrenceParentId).toBeUndefined();
   });
 });
+
+// ═══════════════════════════════════════════════════════════════════
+// Dépendances (mig. 132) — parité démo / production
+//
+// Les invariants sont tenus par des TRIGGERS en production. Le mode démo n'en
+// a pas : s'ils ne sont pas reproduits ici, la démo laisse construire un
+// graphe que la production refuserait, et le bug ne se voit qu'à la
+// conversion en compte réel.
+// ═══════════════════════════════════════════════════════════════════
+
+describe('dépendances', () => {
+  it('ajoute une arête, la relit, et ignore un doublon', async () => {
+    await repo.getAll();
+    expect(await repo.getDependencies()).toEqual([]);
+
+    await repo.addDependency('t013', 't002');
+    await repo.addDependency('t013', 't002');
+
+    expect(await repo.getDependencies()).toEqual([{ taskId: 't013', dependsOnId: 't002' }]);
+  });
+
+  it('refuse une tâche qui dépendrait d elle-même', async () => {
+    await repo.getAll();
+    await expect(repo.addDependency('t013', 't013')).rejects.toThrow(/itself/i);
+  });
+
+  it('refuse une arête vers une tâche inexistante', async () => {
+    await repo.getAll();
+    await expect(repo.addDependency('t013', 'absente')).rejects.toThrow(/must exist/i);
+  });
+
+  it('refuse un cycle INDIRECT, comme le trigger', async () => {
+    await repo.getAll();
+    // t013 ← t002 ← t003 : rendre t013 dépendante de t003 referme la boucle.
+    await repo.addDependency('t002', 't013');
+    await repo.addDependency('t003', 't002');
+    await expect(repo.addDependency('t013', 't003')).rejects.toThrow(/cycle/i);
+    expect(await repo.getDependencies()).toHaveLength(2);
+  });
+
+  it('retire une arête, et ne se plaint pas d une arête absente', async () => {
+    await repo.getAll();
+    await repo.addDependency('t013', 't002');
+    await repo.removeDependency('t013', 't002');
+    await repo.removeDependency('t013', 't002');
+    expect(await repo.getDependencies()).toEqual([]);
+  });
+
+  it('supprimer une tâche emporte ses arêtes (parité ON DELETE CASCADE)', async () => {
+    await repo.getAll();
+    await repo.addDependency('t013', 't002');
+    await repo.addDependency('t003', 't013');
+
+    await repo.delete('t013');
+
+    expect(await repo.getDependencies()).toEqual([]);
+  });
+
+  it('repart d un graphe vide si le stockage est corrompu (B14)', async () => {
+    localStorage.setItem('cosmo_demo_task_dependencies', '{pas du json');
+    expect(await repo.getDependencies()).toEqual([]);
+  });
+});

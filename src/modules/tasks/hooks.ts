@@ -6,7 +6,7 @@ import { getTasksRepository } from '@/lib/repository.factory';
 import { useIsDemo } from '@/lib/app-mode.store';
 import { withTimeout } from '@/lib/withTimeout';
 import { ITasksRepository } from './repository';
-import { Task, CreateTaskInput, UpdateTaskInput, TaskFilters } from './types';
+import { Task, CreateTaskInput, UpdateTaskInput, TaskFilters, TaskDependency } from './types';
 import { nextOccurrenceDeadline } from './recurrence';
 import { taskKeys } from './constants';
 import { validateAsync } from '@/lib/validation/lazy';
@@ -514,3 +514,57 @@ export const useToggleTaskBookmark = () => {
 // une capacité d'interface, implémentée et testée sur tous les modules
 // (tasks, events, habits, okrs…). C'est la brique de l'étape 3.
 // ═══════════════════════════════════════════════════════════════════
+
+// ═══════════════════════════════════════════════════════════════════
+// DÉPENDANCES (mig. 132)
+// ═══════════════════════════════════════════════════════════════════
+
+/**
+ * Tout le graphe de dépendances du compte, en une requête.
+ *
+ * `enabled` parce que ce hook est monté par le modal de tâche : le charger
+ * depuis la page Tâches ferait payer le graphe à des écrans qui ne
+ * l'affichent jamais.
+ */
+export const useTaskDependencies = (options?: { enabled?: boolean }) => {
+  const repository = useTasksRepository();
+  return useQuery<TaskDependency[]>({
+    queryKey: taskKeys.dependencies(),
+    queryFn: () => repository.getDependencies(),
+    enabled: options?.enabled ?? true,
+    staleTime: 1000 * 30,
+  });
+};
+
+/**
+ * Le refus le plus courant est un CYCLE, rejeté par le trigger (mig. 132).
+ * On remonte le message tel quel plutôt qu'un « une erreur est survenue » :
+ * l'utilisateur peut agir sur un cycle, pas sur une erreur anonyme.
+ */
+export const useAddTaskDependency = () => {
+  const queryClient = useQueryClient();
+  const repository = useTasksRepository();
+  return useMutation({
+    mutationFn: ({ taskId, dependsOnId }: TaskDependency) =>
+      repository.addDependency(taskId, dependsOnId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: taskKeys.dependencies() });
+    },
+    onError: (error: Error) =>
+      toast.error(translator('errors').t('mutation.taskDependency', { message: error.message })),
+  });
+};
+
+export const useRemoveTaskDependency = () => {
+  const queryClient = useQueryClient();
+  const repository = useTasksRepository();
+  return useMutation({
+    mutationFn: ({ taskId, dependsOnId }: TaskDependency) =>
+      repository.removeDependency(taskId, dependsOnId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: taskKeys.dependencies() });
+    },
+    onError: (error: Error) =>
+      toast.error(translator('errors').t('mutation.taskDependency', { message: error.message })),
+  });
+};

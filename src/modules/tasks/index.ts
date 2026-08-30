@@ -3,13 +3,13 @@
 // ═══════════════════════════════════════════════════════════════════
 
 // Types
-export type { Task, Subtask, CreateTaskInput, UpdateTaskInput, TaskFilters, TaskStatus, TaskRecurrence } from './types';
+export type { Task, Subtask, TaskDependency, CreateTaskInput, UpdateTaskInput, TaskFilters, TaskStatus, TaskRecurrence } from './types';
 
 // Récurrence (#26) — helpers purs
 export { nextOccurrenceDeadline, buildNextOccurrence } from './recurrence';
 
 // Constants
-export { taskKeys, TASKS_STORAGE_KEY } from './constants';
+export { taskKeys, TASKS_STORAGE_KEY, TASK_DEPENDENCIES_STORAGE_KEY } from './constants';
 
 // Repository interface
 export type { ITasksRepository } from './repository';
@@ -31,6 +31,7 @@ export {
   usePendingTasks,
   useBookmarkedTasks,
   useCompletedTasks,
+  useTaskDependencies,
 } from './hooks';
 
 // ═══════════════════════════════════════════════════════════════════
@@ -42,6 +43,8 @@ export {
   useDeleteTask,
   useToggleTaskComplete,
   useToggleTaskBookmark,
+  useAddTaskDependency,
+  useRemoveTaskDependency,
 } from './hooks';
 
 // ═══════════════════════════════════════════════════════════════════

@@ -103,7 +103,8 @@
     "createOkr": "Impossible de créer l'OKR : {{message}}",
     "createList": "Impossible de créer la liste : {{message}}",
     "addTaskToList": "Impossible d'ajouter la tâche à la liste : {{message}}",
-    "updatePermissions": "Impossible de mettre à jour les permissions : {{message}}"
+    "updatePermissions": "Impossible de mettre à jour les permissions : {{message}}",
+    "taskDependency": "Dépendance impossible : {{message}}"
   },
   "success": {
     "orgCreated": "Entreprise créée",

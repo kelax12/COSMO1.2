@@ -2,7 +2,7 @@ import { supabase } from '@/lib/supabase';
 import { getCurrentUser } from '@/lib/auth-user';
 import { normalizeApiError } from '@/lib/normalizeApiError';
 import { ITasksRepository, ToggleCompleteResult } from './repository';
-import { Task, CreateTaskInput, UpdateTaskInput, TaskFilters } from './types';
+import { Task, CreateTaskInput, UpdateTaskInput, TaskFilters, TaskDependency } from './types';
 import { TaskRow, TaskDbInput, mapTaskFromDb, mapTaskToDb } from './mappers';
 import { PaginationParams, PaginatedResult, DEFAULT_PAGE_SIZE, assertValidCursor } from '@/lib/pagination.types';
 import { warnIfTruncated } from '@/lib/pagination.warning';
@@ -315,4 +315,58 @@ export class SupabaseTasksRepository implements ITasksRepository {
     return mapTaskFromDb(data as TaskRow);
   }
 
+  // ═══════════════════════════════════════════════════════════════════
+  // DÉPENDANCES (mig. 132)
+  // ═══════════════════════════════════════════════════════════════════
+
+  /**
+   * Lecture directe de la table, sans RPC de contournement — c'est ici la
+   * bonne réponse, pas un oubli.
+   *
+   * La mig. 132 a délibérément DÉNORMALISÉ `user_id` sur l'arête plutôt que
+   * de déléguer le périmètre à `tasks` : la policy est donc
+   * `(SELECT auth.uid()) = user_id`, un prédicat qui ne dépend pas de la
+   * ligne, hissé en InitPlan et servi par `idx_task_dependencies_user`. C'est
+   * exactement ce que `get_my_tasks()` (mig. 085) doit reconstruire pour
+   * `tasks`, dont la policy est un OR non indexable.
+   */
+  async getDependencies(): Promise<TaskDependency[]> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const { data, error } = await supabase
+      .from('task_dependencies')
+      .select('task_id,depends_on_id');
+
+    if (error) throw normalizeApiError(error);
+    return (data || []).map((row) => ({
+      taskId: (row as { task_id: string }).task_id,
+      dependsOnId: (row as { depends_on_id: string }).depends_on_id,
+    }));
+  }
+
+  /**
+   * `user_id` n'est PAS envoyé : le trigger `validate_task_dependency` le
+   * redérive du propriétaire de la tâche bloquée, et la policy vérifie
+   * ensuite que c'est bien l'appelant. L'émettre depuis le client ouvrirait
+   * la porte au mass-assignment que ce trigger existe précisément pour
+   * fermer.
+   */
+  async addDependency(taskId: string, dependsOnId: string): Promise<void> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const { error } = await supabase
+      .from('task_dependencies')
+      .insert([{ task_id: taskId, depends_on_id: dependsOnId }]);
+
+    if (error) throw normalizeApiError(error);
+  }
+
+  async removeDependency(taskId: string, dependsOnId: string): Promise<void> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const { error } = await supabase
+      .from('task_dependencies')
+      .delete()
+      .eq('task_id', taskId)
+      .eq('depends_on_id', dependsOnId);
+
+    if (error) throw normalizeApiError(error);
+  }
 }

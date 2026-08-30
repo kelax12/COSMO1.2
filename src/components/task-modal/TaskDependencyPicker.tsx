@@ -11,12 +11,11 @@ import {
 import { Button } from '@/components/ui/button';
 import {
   useAddTaskDependency,
-  useCreateTeamTask,
-  type TeamTask,
-  type TeamTaskDependency,
-} from '@/modules/team-projects';
-import { useMyOrgPermissions } from '@/modules/organizations';
-import { PRIORITY_META } from './team-projects.helpers';
+  useCreateTask,
+  type Task,
+  type TaskDependency,
+} from '@/modules/tasks';
+import { useCategories } from '@/modules/categories';
 import {
   dependencyCandidates,
   dependencyEdge,
@@ -24,43 +23,53 @@ import {
 } from '@/lib/dependency-graph';
 import { useT } from '@/i18n/useT';
 
-interface TeamTaskDependencyPickerProps {
+interface TaskDependencyPickerProps {
   open: boolean;
   onClose: () => void;
   /** Tâche ouverte — celle dont on complète le graphe. */
-  task: TeamTask;
-  /** Toutes les tâches de l'organisation (filtrées ici au projet). */
-  tasks: TeamTask[];
-  dependencies: TeamTaskDependency[];
+  task: Task;
+  /** Toutes mes tâches. */
+  tasks: Task[];
+  dependencies: TaskDependency[];
 }
 
 type Mode = 'pick' | 'create';
 
 const PRIORITIES = [1, 2, 3, 4, 5];
 
+const PRIORITY_DOT: Record<number, string> = {
+  1: 'bg-red-500',
+  2: 'bg-orange-500',
+  3: 'bg-blue-500',
+  4: 'bg-sky-400',
+  5: 'bg-slate-400',
+};
+
 /**
- * Popup d'ajout de dépendance : choisir une tâche existante du projet, ou en
- * créer une à la volée.
+ * Popup d'ajout de dépendance côté tâches personnelles : choisir une tâche
+ * existante, ou en créer une à la volée.
  *
- * Pourquoi une modale plutôt qu'un menu déroulant : le menu précédent était
- * portalisé à `z-50` alors que `TeamTaskModal` monte à `z-[9999]` — il
- * s'ouvrait réellement, mais DERRIÈRE la modale, donc invisible. Le bouton
- * paraissait mort. Même remède que `DescriptionField` : overlay ET contenu
- * relevés à `z-[10000]`.
+ * Jumelle de `organization/TeamTaskDependencyPicker`, et volontairement pas
+ * factorisée avec elle : les deux ne partagent ni le type de tâche, ni la
+ * règle de périmètre (projet contre compte), ni les champs de création
+ * (assignés et projet d'un côté, catégorie de l'autre). Ce qu'elles partagent
+ * vraiment — le parcours du graphe et le calcul des candidats — est extrait
+ * dans `@/lib/dependency-graph`, et c'est la seule partie où une divergence
+ * serait un bug plutôt qu'une différence de produit.
  *
- * Le deuxième chemin (créer) n'est pas un confort : au moment où on décrit ce
+ * Le second chemin (créer) n'est pas un confort : au moment où on décrit ce
  * qui bloque une tâche, la tâche bloquante n'existe souvent pas encore. Sans
- * lui, il fallait fermer, créer, rouvrir, retrouver — et on ne le faisait pas.
+ * lui, il faudrait fermer, créer, rouvrir, retrouver — et on ne le ferait pas.
  */
-const TeamTaskDependencyPicker = ({
+const TaskDependencyPicker = ({
   open,
   onClose,
   task,
   tasks,
   dependencies,
-}: TeamTaskDependencyPickerProps) => {
-  const { t, tp } = useT('org');
-  const { can } = useMyOrgPermissions(task.orgId);
+}: TaskDependencyPickerProps) => {
+  const { t, tp } = useT('tasks');
+  const { data: categories = [] } = useCategories();
 
   const [mode, setMode] = useState<Mode>('pick');
   const [direction, setDirection] = useState<DependencyDirection>('blockedBy');
@@ -69,11 +78,12 @@ const TeamTaskDependencyPicker = ({
   const [newName, setNewName] = useState('');
   const [newPriority, setNewPriority] = useState(3);
   const [newDeadline, setNewDeadline] = useState('');
+  const [newCategory, setNewCategory] = useState(task.category ?? '');
   const [busy, setBusy] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
 
-  const addDependency = useAddTaskDependency(task.orgId);
-  const createTask = useCreateTeamTask(task.orgId);
+  const addDependency = useAddTaskDependency();
+  const createTask = useCreateTask();
 
   // Chaque ouverture repart d'un état neuf, sans useEffect : garder la
   // sélection d'une session précédente ferait ajouter des liens qu'on croyait
@@ -89,29 +99,21 @@ const TeamTaskDependencyPicker = ({
       setNewName('');
       setNewPriority(3);
       setNewDeadline('');
+      // La tâche bloquante appartient presque toujours au même sujet : la
+      // catégorie de la tâche ouverte est le défaut qui demande le moins de
+      // corrections.
+      setNewCategory(task.category ?? '');
     }
   }
 
   const candidates = useMemo(
-    () =>
-      dependencyCandidates({
-        tasks,
-        dependencies,
-        task,
-        direction,
-        query,
-        // Le périmètre est le PROJET, parce que c'est ce que la base accepte
-        // (mig. 108). Proposer une tâche d'un autre projet reviendrait à
-        // promettre un lien que le serveur refusera.
-        inScope: (x) => x.projectId === task.projectId,
-      }),
+    // Aucun `inScope` : le périmètre autorisé par la mig. 132 est le COMPTE,
+    // et `tasks` ne contient déjà que les tâches du compte.
+    () => dependencyCandidates({ tasks, dependencies, task, direction, query }),
     [tasks, dependencies, task, direction, query],
   );
 
-  const hasAnyInProject = useMemo(
-    () => tasks.some((x) => x.id !== task.id && x.projectId === task.projectId),
-    [tasks, task.id, task.projectId],
-  );
+  const hasAnyOther = tasks.some((x) => x.id !== task.id);
 
   const toggle = (id: string) =>
     setSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
@@ -142,7 +144,7 @@ const TeamTaskDependencyPicker = ({
       }
     }
     setBusy(false);
-    if (added > 0) closeAfter(tp('projects.dependencyAdded', added, { count: added }));
+    if (added > 0) closeAfter(tp('dependencies.added', added, { count: added }));
   };
 
   const submitCreated = async () => {
@@ -151,14 +153,17 @@ const TeamTaskDependencyPicker = ({
     setBusy(true);
     try {
       const created = await createTask.mutateAsync({
-        projectId: task.projectId,
         name,
         priority: newPriority,
-        ...(newDeadline ? { deadline: newDeadline } : {}),
+        category: newCategory,
+        deadline: newDeadline,
+        estimatedTime: 0,
+        bookmarked: false,
+        completed: false,
       });
       await addDependency.mutateAsync(dependencyEdge(task.id, created.id, direction));
       setBusy(false);
-      closeAfter(t('projects.dependencyCreatedAndLinked'));
+      closeAfter(t('dependencies.createdAndLinked'));
     } catch {
       // Les deux mutations affichent déjà leur propre message. La modale
       // reste ouverte, la saisie intacte : on ne fait pas retaper.
@@ -168,8 +173,8 @@ const TeamTaskDependencyPicker = ({
 
   const directionHelp =
     direction === 'blockedBy'
-      ? t('projects.dependencyHelpBlockedBy')
-      : t('projects.dependencyHelpBlocks');
+      ? t('dependencies.helpBlockedBy')
+      : t('dependencies.helpBlocks');
 
   const directionTab = (value: DependencyDirection, label: string) => (
     <button
@@ -187,12 +192,24 @@ const TeamTaskDependencyPicker = ({
     </button>
   );
 
+  const fieldClass =
+    'no-input-chrome w-full px-3 h-10 text-sm rounded-lg border focus:outline-none focus:border-[rgb(var(--color-accent-solid))] transition-colors';
+  const fieldStyle = {
+    borderColor: 'rgb(var(--color-border))',
+    backgroundColor: 'rgb(var(--color-background))',
+    color: 'rgb(var(--color-text-primary))',
+  };
+  const legendClass = 'block text-xs font-semibold uppercase tracking-wider mb-2';
+  const legendStyle = { color: 'rgb(var(--color-text-secondary))' };
+
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o && !busy) onClose(); }}>
       <DialogContent
         showCloseButton={false}
-        // z-[10000] sur l'overlay ET le contenu : cette popup s'ouvre depuis
-        // TeamTaskModal (hors Radix, z-[9999]). Sans ça elle est invisible.
+        // z-[10000] sur l'overlay ET le contenu : cette popup s'ouvre par
+        // dessus le modal de tâche, lui-même un Dialog Radix. Sans ça, elle
+        // s'ouvrirait derrière — c'est exactement le bug qui rendait le bouton
+        // « Ajouter une dépendance » inerte côté entreprise.
         overlayClassName="z-[10000]"
         className="z-[10000] max-w-[calc(100%-1.5rem)] sm:max-w-lg w-full p-0 gap-0 flex flex-col overflow-hidden max-h-[85vh] border-[rgb(var(--color-border))]"
         style={{ backgroundColor: 'rgb(var(--color-surface))' }}
@@ -201,31 +218,43 @@ const TeamTaskDependencyPicker = ({
           searchRef.current?.focus();
         }}
       >
-        <DialogHeader className="px-5 py-4 border-b shrink-0 space-y-1" style={{ borderColor: 'rgb(var(--color-border))' }}>
+        <DialogHeader
+          className="px-5 py-4 border-b shrink-0 space-y-1"
+          style={{ borderColor: 'rgb(var(--color-border))' }}
+        >
           <div className="flex items-center justify-between gap-3">
-            <DialogTitle className="text-base font-semibold flex items-center gap-2" style={{ color: 'rgb(var(--color-text-primary))' }}>
+            <DialogTitle
+              className="text-base font-semibold flex items-center gap-2"
+              style={{ color: 'rgb(var(--color-text-primary))' }}
+            >
               <Link2 size={16} aria-hidden="true" />
-              {t('projects.addDependency')}
+              {t('dependencies.add')}
             </DialogTitle>
             <button
               type="button"
               onClick={onClose}
-              aria-label={t('common.close')}
+              aria-label={t('dependencies.close')}
               className="p-2 -mr-2 rounded-lg transition-colors hover:bg-[rgb(var(--color-hover))]"
               style={{ color: 'rgb(var(--color-text-secondary))' }}
             >
               <X size={18} aria-hidden="true" />
             </button>
           </div>
-          <DialogDescription className="text-xs text-left" style={{ color: 'rgb(var(--color-text-muted))' }}>
+          <DialogDescription
+            className="text-xs text-left"
+            style={{ color: 'rgb(var(--color-text-muted))' }}
+          >
             {task.name}
           </DialogDescription>
         </DialogHeader>
 
         <div className="px-5 pt-4 shrink-0">
-          <div className="flex gap-1 p-1 rounded-xl" style={{ backgroundColor: 'rgb(var(--color-background))' }}>
-            {directionTab('blockedBy', t('projects.blockedBy'))}
-            {directionTab('blocks', t('projects.blocks'))}
+          <div
+            className="flex gap-1 p-1 rounded-xl"
+            style={{ backgroundColor: 'rgb(var(--color-background))' }}
+          >
+            {directionTab('blockedBy', t('dependencies.blockedBy'))}
+            {directionTab('blocks', t('dependencies.blocks'))}
           </div>
           <p className="mt-2 text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
             {directionHelp}
@@ -246,24 +275,21 @@ const TeamTaskDependencyPicker = ({
                   type="text"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder={t('projects.dependencySearchPlaceholder')}
-                  aria-label={t('projects.dependencySearchPlaceholder')}
-                  className="w-full pl-9 pr-3 h-10 text-sm rounded-lg border focus:outline-none focus:border-[rgb(var(--color-accent-solid))] transition-colors"
-                  style={{
-                    borderColor: 'rgb(var(--color-border))',
-                    backgroundColor: 'rgb(var(--color-background))',
-                    color: 'rgb(var(--color-text-primary))',
-                  }}
+                  placeholder={t('dependencies.searchPlaceholder')}
+                  aria-label={t('dependencies.searchPlaceholder')}
+                  className={`${fieldClass} pl-9`}
+                  style={fieldStyle}
                 />
               </div>
             </div>
 
             <div className="flex-1 min-h-0 overflow-y-auto px-5 py-3">
               {candidates.length === 0 ? (
-                <p className="py-6 text-center text-sm" style={{ color: 'rgb(var(--color-text-muted))' }}>
-                  {hasAnyInProject
-                    ? t('projects.dependencyNoMatch')
-                    : t('projects.dependencyNoCandidate')}
+                <p
+                  className="py-6 text-center text-sm"
+                  style={{ color: 'rgb(var(--color-text-muted))' }}
+                >
+                  {hasAnyOther ? t('dependencies.noMatch') : t('dependencies.noCandidate')}
                 </p>
               ) : (
                 <ul className="space-y-1">
@@ -293,7 +319,9 @@ const TeamTaskDependencyPicker = ({
                             {checked && <Check size={12} />}
                           </span>
                           <span
-                            className={`w-1.5 h-1.5 rounded-full shrink-0 ${PRIORITY_META[item.priority]?.dot ?? 'bg-slate-400'}`}
+                            className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                              PRIORITY_DOT[item.priority] ?? 'bg-slate-400'
+                            }`}
                             aria-hidden="true"
                           />
                           <span
@@ -309,8 +337,8 @@ const TeamTaskDependencyPicker = ({
                           {(alreadyLinked || wouldCycle) && (
                             <span className="shrink-0 text-[0.6875rem] font-semibold px-1.5 py-0.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400">
                               {alreadyLinked
-                                ? t('projects.dependencyAlreadyLinked')
-                                : t('projects.dependencyWouldCycle')}
+                                ? t('dependencies.alreadyLinked')
+                                : t('dependencies.wouldCycle')}
                             </span>
                           )}
                         </button>
@@ -325,22 +353,20 @@ const TeamTaskDependencyPicker = ({
               className="px-5 py-3 border-t flex items-center gap-2 shrink-0"
               style={{ borderColor: 'rgb(var(--color-border))' }}
             >
-              {can['task.create'] && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setNewName(query.trim());
-                    setMode('create');
-                  }}
-                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-[rgb(var(--color-accent-solid))] hover:opacity-80 transition-opacity"
-                >
-                  <Plus size={14} aria-hidden="true" />
-                  {t('projects.dependencyCreateNew')}
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={() => {
+                  setNewName(query.trim());
+                  setMode('create');
+                }}
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-[rgb(var(--color-accent-solid))] hover:opacity-80 transition-opacity"
+              >
+                <Plus size={14} aria-hidden="true" />
+                {t('dependencies.createNew')}
+              </button>
               <div className="flex-1" />
               <Button type="button" variant="outline" size="sm" onClick={onClose} disabled={busy}>
-                {t('common.cancel')}
+                {t('dependencies.cancel')}
               </Button>
               <Button
                 type="button"
@@ -351,8 +377,8 @@ const TeamTaskDependencyPicker = ({
               >
                 {busy && <Loader2 size={14} className="animate-spin mr-1.5" aria-hidden="true" />}
                 {selected.length > 0
-                  ? tp('projects.dependencyAddCount', selected.length, { count: selected.length })
-                  : t('projects.dependencyAddEmpty')}
+                  ? tp('dependencies.addCount', selected.length, { count: selected.length })
+                  : t('dependencies.addEmpty')}
               </Button>
             </div>
           </>
@@ -360,42 +386,35 @@ const TeamTaskDependencyPicker = ({
           <>
             <div className="flex-1 min-h-0 overflow-y-auto px-5 py-4 space-y-4">
               <div>
-                <label
-                  htmlFor="dep-new-name"
-                  className="block text-xs font-semibold uppercase tracking-wider mb-2"
-                  style={{ color: 'rgb(var(--color-text-secondary))' }}
-                >
-                  {t('projects.dependencyCreateName')}
+                <label htmlFor="task-dep-new-name" className={legendClass} style={legendStyle}>
+                  {t('dependencies.createName')}
                 </label>
                 <input
-                  id="dep-new-name"
+                  id="task-dep-new-name"
                   autoFocus
                   type="text"
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
+                      // Le modal de tâche parent valide sur Entrée : sans
+                      // stopPropagation, créer la dépendance enregistrerait et
+                      // fermerait la tâche entière.
                       e.preventDefault();
+                      e.stopPropagation();
                       void submitCreated();
                     }
                   }}
                   maxLength={200}
-                  placeholder={t('projects.dependencyCreatePlaceholder')}
-                  className="w-full px-3 h-10 text-sm rounded-lg border focus:outline-none focus:border-[rgb(var(--color-accent-solid))] transition-colors"
-                  style={{
-                    borderColor: 'rgb(var(--color-border))',
-                    backgroundColor: 'rgb(var(--color-background))',
-                    color: 'rgb(var(--color-text-primary))',
-                  }}
+                  placeholder={t('dependencies.createPlaceholder')}
+                  className={fieldClass}
+                  style={fieldStyle}
                 />
               </div>
 
               <div>
-                <span
-                  className="block text-xs font-semibold uppercase tracking-wider mb-2"
-                  style={{ color: 'rgb(var(--color-text-secondary))' }}
-                >
-                  {t('projects.dependencyPriority')}
+                <span className={legendClass} style={legendStyle}>
+                  {t('dependencies.priority')}
                 </span>
                 <div className="flex gap-1.5">
                   {PRIORITIES.map((p) => (
@@ -404,7 +423,6 @@ const TeamTaskDependencyPicker = ({
                       type="button"
                       onClick={() => setNewPriority(p)}
                       aria-pressed={newPriority === p}
-                      aria-label={PRIORITY_META[p].label}
                       className={`flex-1 h-9 rounded-lg border text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors ${
                         newPriority === p
                           ? 'border-[rgb(var(--color-accent-solid))] bg-[rgb(var(--color-accent-solid))]/10'
@@ -412,37 +430,61 @@ const TeamTaskDependencyPicker = ({
                       }`}
                       style={{ color: 'rgb(var(--color-text-primary))' }}
                     >
-                      <span className={`w-1.5 h-1.5 rounded-full ${PRIORITY_META[p].dot}`} aria-hidden="true" />
+                      <span
+                        className={`w-1.5 h-1.5 rounded-full ${PRIORITY_DOT[p]}`}
+                        aria-hidden="true"
+                      />
                       P{p}
                     </button>
                   ))}
                 </div>
               </div>
 
-              <div>
-                <label
-                  htmlFor="dep-new-deadline"
-                  className="block text-xs font-semibold uppercase tracking-wider mb-2"
-                  style={{ color: 'rgb(var(--color-text-secondary))' }}
-                >
-                  {t('projects.dependencyDeadline')}
-                </label>
-                <input
-                  id="dep-new-deadline"
-                  type="date"
-                  value={newDeadline}
-                  onChange={(e) => setNewDeadline(e.target.value)}
-                  className="w-full px-3 h-10 text-sm rounded-lg border focus:outline-none focus:border-[rgb(var(--color-accent-solid))] transition-colors"
-                  style={{
-                    borderColor: 'rgb(var(--color-border))',
-                    backgroundColor: 'rgb(var(--color-background))',
-                    color: 'rgb(var(--color-text-primary))',
-                  }}
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label
+                    htmlFor="task-dep-new-deadline"
+                    className={legendClass}
+                    style={legendStyle}
+                  >
+                    {t('dependencies.deadline')}
+                  </label>
+                  <input
+                    id="task-dep-new-deadline"
+                    type="date"
+                    value={newDeadline}
+                    onChange={(e) => setNewDeadline(e.target.value)}
+                    className={fieldClass}
+                    style={fieldStyle}
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="task-dep-new-category"
+                    className={legendClass}
+                    style={legendStyle}
+                  >
+                    {t('dependencies.category')}
+                  </label>
+                  <select
+                    id="task-dep-new-category"
+                    value={newCategory}
+                    onChange={(e) => setNewCategory(e.target.value)}
+                    className={fieldClass}
+                    style={fieldStyle}
+                  >
+                    <option value="">—</option>
+                    {categories.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
               <p className="text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
-                {t('projects.dependencyCreateNote')}
+                {t('dependencies.createNote')}
               </p>
             </div>
 
@@ -456,7 +498,7 @@ const TeamTaskDependencyPicker = ({
                 className="text-xs font-semibold transition-colors hover:opacity-80"
                 style={{ color: 'rgb(var(--color-text-secondary))' }}
               >
-                {t('projects.dependencyBackToList')}
+                {t('dependencies.backToList')}
               </button>
               <div className="flex-1" />
               <Button
@@ -467,7 +509,7 @@ const TeamTaskDependencyPicker = ({
                 className="!bg-[rgb(var(--color-accent-solid))] hover:!bg-[rgb(var(--color-accent-solid-hover))] !text-[rgb(var(--color-accent-solid-foreground))] !border-0"
               >
                 {busy && <Loader2 size={14} className="animate-spin mr-1.5" aria-hidden="true" />}
-                {t('projects.dependencyCreateSubmit')}
+                {t('dependencies.createSubmit')}
               </Button>
             </div>
           </>
@@ -477,4 +519,4 @@ const TeamTaskDependencyPicker = ({
   );
 };
 
-export default TeamTaskDependencyPicker;
+export default TaskDependencyPicker;

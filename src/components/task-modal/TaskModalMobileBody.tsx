@@ -21,6 +21,7 @@ import ShareLinkField from '@/components/ShareLinkField';
 import { SectionTitle, SectionCard, CellSeparator, Cell } from './primitives';
 import { buildDatePresets } from '@/lib/date-presets';
 import SubtaskChecklist from './SubtaskChecklist';
+import TaskDependenciesSection from './TaskDependenciesSection';
 import DescriptionField from '@/components/DescriptionField';
 import { PRIORITY_OPTIONS, priorityColor } from './constants';
 import { useT } from '@/i18n/useT';
@@ -419,6 +420,17 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
                 </div>
               </SectionCard>
             </>
+          )}
+
+          {/* ── Section DÉPENDANCES (mig. 132) — édition seulement : une arête
+                référence deux tâches, la seconde n'existe pas encore tant
+                qu'on est en création. ── */}
+          {!isCreating && taskId && (
+            <SectionCard>
+              <div className="px-4 py-3">
+                <TaskDependenciesSection taskId={taskId} />
+              </div>
+            </SectionCard>
           )}
 
           {/* ── Section COLLABORATION ── */}

@@ -1,23 +1,45 @@
 // ═══════════════════════════════════════════════════════════════════
-// Graphe de dépendances d'un projet d'équipe — parcours et candidats
+// Graphe de dépendances — parcours et candidats à l'ajout
 //
 // Une arête `{ taskId, dependsOnId }` se lit « taskId est bloquée par
-// dependsOnId » (mig. 108). Deux questions se posent au moment d'AJOUTER une
-// arête, et une seule est traitée par la base :
+// dependsOnId ». Deux questions se posent au moment d'AJOUTER une arête, et
+// les deux sont tenues par la base :
 //
-//   1. « le lien existe-t-il déjà ? » — contrainte d'unicité ;
+//   1. « le lien existe-t-il déjà ? » — clé primaire ;
 //   2. « ce lien crée-t-il un cycle ? » — trigger, message clair.
 //
 // Le trigger reste la seule autorité. Ce fichier ne le double pas : il évite
-// simplement de PROPOSER un choix qui sera refusé. Le graphe complet du projet
-// est déjà chargé côté client (`useTeamTaskDependencies`), donc le calcul est
-// local et sans requête.
+// simplement de PROPOSER un choix qui sera refusé. Le graphe complet est déjà
+// chargé côté client, donc le calcul est local et sans requête.
+//
+// POURQUOI DANS `lib/` ET NON DANS UN MODULE. Deux graphes distincts s'en
+// servent — les tâches d'équipe (mig. 108) et les tâches personnelles
+// (mig. 132) — avec deux types de tâche et deux règles de périmètre. La
+// logique de parcours, elle, est la même ; l'écrire deux fois, c'est se
+// donner deux occasions de rater une inversion de sens.
 // ═══════════════════════════════════════════════════════════════════
-
-import type { TeamTask, TeamTaskDependency } from '@/modules/team-projects';
 
 /** Sens de l'arête à créer, du point de vue de la tâche ouverte. */
 export type DependencyDirection = 'blockedBy' | 'blocks';
+
+/** Arête orientée : `taskId` est bloquée par `dependsOnId`. */
+export interface DependencyEdge {
+  taskId: string;
+  dependsOnId: string;
+}
+
+/**
+ * Ce que le graphe a besoin de savoir d'une tâche, quel que soit son module.
+ * Volontairement minimal : tout champ ajouté ici devrait exister des deux
+ * côtés, et ce n'est le cas d'aucun autre.
+ */
+export interface DependencyNode {
+  id: string;
+  name: string;
+  completed: boolean;
+  priority: number;
+  deadline?: string;
+}
 
 export interface ReachableSets {
   /** Tout ce dont `rootId` dépend, directement ou non (ses bloqueurs). */
@@ -34,7 +56,7 @@ export interface ReachableSets {
  * alors que c'est un cas distinct, refusé pour une autre raison.
  */
 export function reachableSets(
-  dependencies: TeamTaskDependency[],
+  dependencies: DependencyEdge[],
   rootId: string,
 ): ReachableSets {
   const blockersOf = new Map<string, string[]>();
@@ -70,23 +92,29 @@ export function reachableSets(
 }
 
 /** Une tâche proposable, avec la raison qui l'empêcherait d'être liée. */
-export interface DependencyCandidate {
-  task: TeamTask;
+export interface DependencyCandidate<T extends DependencyNode> {
+  task: T;
   /** Lien déjà présent, dans un sens ou dans l'autre. */
   alreadyLinked: boolean;
-  /** L'ajouter fermerait une boucle — le trigger le refuserait (mig. 108). */
+  /** L'ajouter fermerait une boucle — le trigger le refuserait. */
   wouldCycle: boolean;
   /** Sélectionnable : ni doublon, ni cycle. */
   selectable: boolean;
 }
 
-export interface CandidateOptions {
-  tasks: TeamTask[];
-  dependencies: TeamTaskDependency[];
-  task: TeamTask;
+export interface CandidateOptions<T extends DependencyNode> {
+  tasks: T[];
+  dependencies: DependencyEdge[];
+  task: T;
   direction: DependencyDirection;
   /** Filtre texte, déjà saisi par l'utilisateur (comparaison insensible). */
   query?: string;
+  /**
+   * Périmètre autorisé par la base. Côté équipe c'est le projet (mig. 108),
+   * côté personnel il n'y en a pas d'autre que le compte, déjà garanti par la
+   * liste passée. Défaut : tout candidat est dans le périmètre.
+   */
+  inScope?: (candidate: T) => boolean;
 }
 
 const normalize = (value: string): string =>
@@ -99,23 +127,20 @@ const normalize = (value: string): string =>
 
 /**
  * Candidats à l'ajout, ordonnés : sélectionnables d'abord, ouvertes avant
- * terminées, puis dans l'ordre d'affichage habituel du projet.
- *
- * Le périmètre est le PROJET, parce que c'est ce que la base accepte (mig.
- * 108). Proposer une tâche d'un autre projet reviendrait à promettre un lien
- * que le serveur refusera.
+ * terminées, puis par échéance, priorité, nom.
  *
  * Les tâches non liables ne sont pas retirées mais DÉSACTIVÉES : « je ne la
  * vois pas » et « je ne peux pas la choisir, et voici pourquoi » sont deux
  * expériences très différentes quand on cherche une tâche qu'on sait exister.
  */
-export function dependencyCandidates({
+export function dependencyCandidates<T extends DependencyNode>({
   tasks,
   dependencies,
   task,
   direction,
   query = '',
-}: CandidateOptions): DependencyCandidate[] {
+  inScope,
+}: CandidateOptions<T>): DependencyCandidate<T>[] {
   const { upstream, downstream } = reachableSets(dependencies, task.id);
 
   const direct = new Set(
@@ -127,9 +152,9 @@ export function dependencyCandidates({
   const needle = normalize(query.trim());
 
   const rows = tasks
-    .filter((x) => x.id !== task.id && x.projectId === task.projectId)
+    .filter((x) => x.id !== task.id && (inScope ? inScope(x) : true))
     .filter((x) => (needle ? normalize(x.name).includes(needle) : true))
-    .map<DependencyCandidate>((x) => {
+    .map<DependencyCandidate<T>>((x) => {
       const alreadyLinked = direct.has(x.id);
       const wouldCycle =
         !alreadyLinked &&
@@ -164,7 +189,7 @@ export const dependencyEdge = (
   taskId: string,
   otherId: string,
   direction: DependencyDirection,
-): { taskId: string; dependsOnId: string } =>
+): DependencyEdge =>
   direction === 'blockedBy'
     ? { taskId, dependsOnId: otherId }
     : { taskId: otherId, dependsOnId: taskId };

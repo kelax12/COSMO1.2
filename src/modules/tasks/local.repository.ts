@@ -1,7 +1,9 @@
 import { ITasksRepository, ToggleCompleteResult } from './repository';
-import { Task, CreateTaskInput, UpdateTaskInput, TaskFilters } from './types';
+import { Task, CreateTaskInput, UpdateTaskInput, TaskFilters, TaskDependency } from './types';
 import { PaginationParams, PaginatedResult, DEFAULT_PAGE_SIZE } from '@/lib/pagination.types';
 import { localizeSeed } from '@/lib/seed-i18n';
+import { reachableSets } from '@/lib/dependency-graph';
+import { TASK_DEPENDENCIES_STORAGE_KEY } from './constants';
 const STORAGE_KEY = 'cosmo_demo_tasks';
 
 // Helper pour générer des dates
@@ -224,6 +226,11 @@ export class LocalStorageTasksRepository implements ITasksRepository {
     }
     
     this.saveTasks(filtered);
+    // Parité avec le `ON DELETE CASCADE` de la mig. 132 : sans ça, une arête
+    // survit à sa tâche et le graphe compte une dépendance qui n'existe plus.
+    const deps = this.getDependencyEdges();
+    const kept = deps.filter(d => d.taskId !== id && d.dependsOnId !== id);
+    if (kept.length !== deps.length) this.saveDependencyEdges(kept);
   }
 
   /**
@@ -337,5 +344,61 @@ export class LocalStorageTasksRepository implements ITasksRepository {
       nextCursor: hasMore ? items[items.length - 1]?.id ?? null : null,
       nextCursorDate: null,
     };
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // DÉPENDANCES (parité avec la mig. 132)
+  // ═══════════════════════════════════════════════════════════════════
+  //
+  // ⚠️ PARITÉ OBLIGATOIRE avec les triggers `validate_task_dependency` et
+  // `prevent_task_dependency_cycle` — même règle que `recordKRCompletion`
+  // (cf. CLAUDE.md) : un invariant qui n'existe que d'un côté diverge en
+  // silence, et c'est le mode démo qui laisse alors créer un graphe que la
+  // production refuserait.
+
+  private getDependencyEdges(): TaskDependency[] {
+    const raw = localStorage.getItem(TASK_DEPENDENCIES_STORAGE_KEY);
+    if (!raw) return [];
+    try {
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? (parsed as TaskDependency[]) : [];
+    } catch {
+      // Donnée corrompue : on repart d'un graphe vide plutôt que de faire
+      // planter toute la page Tâches (garde-fou B14).
+      return [];
+    }
+  }
+
+  private saveDependencyEdges(edges: TaskDependency[]): void {
+    localStorage.setItem(TASK_DEPENDENCIES_STORAGE_KEY, JSON.stringify(edges));
+  }
+
+  async getDependencies(): Promise<TaskDependency[]> {
+    return this.getDependencyEdges();
+  }
+
+  async addDependency(taskId: string, dependsOnId: string): Promise<void> {
+    if (taskId === dependsOnId) {
+      throw new Error('A task cannot depend on itself');
+    }
+    const tasks = this.getTasks();
+    if (!tasks.some(t => t.id === taskId) || !tasks.some(t => t.id === dependsOnId)) {
+      throw new Error('Both tasks must exist');
+    }
+    const edges = this.getDependencyEdges();
+    if (edges.some(d => d.taskId === taskId && d.dependsOnId === dependsOnId)) return;
+    // Le cycle se teste depuis la BLOQUANTE : si elle dépend déjà, même
+    // indirectement, de la bloquée, l'arête refermerait la boucle.
+    if (reachableSets(edges, dependsOnId).upstream.has(taskId)) {
+      throw new Error('This dependency would create a cycle');
+    }
+    this.saveDependencyEdges([...edges, { taskId, dependsOnId }]);
+  }
+
+  async removeDependency(taskId: string, dependsOnId: string): Promise<void> {
+    const edges = this.getDependencyEdges();
+    this.saveDependencyEdges(
+      edges.filter(d => !(d.taskId === taskId && d.dependsOnId === dependsOnId)),
+    );
   }
 }

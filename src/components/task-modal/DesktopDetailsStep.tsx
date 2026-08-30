@@ -18,6 +18,7 @@ import {
 import { DatePicker } from '@/components/ui/date-picker';
 import AddCategoryButton from '@/components/AddCategoryButton';
 import SubtaskChecklist from './SubtaskChecklist';
+import TaskDependenciesSection from './TaskDependenciesSection';
 import DescriptionField from '@/components/DescriptionField';
 import type { useCreateCategory } from '@/modules/categories';
 import type { useCreateList } from '@/modules/lists';
@@ -478,6 +479,11 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                       onChange={(subtasks) => setFormData(prev => ({ ...prev, subtasks }))}
                     />
                   )}
+
+                  {/* Dépendances (mig. 132) — édition seulement : une arête
+                      référence deux tâches, la seconde n'existe pas encore
+                      tant qu'on est en création. */}
+                  {!isCreating && task && <TaskDependenciesSection taskId={task.id} />}
 
                   {/* Description — masquée par défaut pour épurer l'UI (même
                       système que EventModal, cf. docs/UI-PATTERNS.md). Visible
