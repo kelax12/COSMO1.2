@@ -54,17 +54,19 @@ export function DatePicker({
           className={cn(
             buttonVariants({ variant: "outline" }),
             "w-full justify-between font-normal",
-            !selectedDate && "text-muted-foreground",
             className
           )}
-          style={{ backgroundColor: 'rgb(var(--color-surface))' }}
+          style={{
+            backgroundColor: 'rgb(var(--color-surface))',
+            color: selectedDate ? 'rgb(var(--color-text-primary))' : 'rgb(var(--color-text-muted))',
+          }}
         >
           <span>
             {selectedDate
               ? format(selectedDate, displayFormat, { locale: getDateLocale() })
               : placeholder}
           </span>
-          <CalendarIcon size={16} />
+          <CalendarIcon size={16} className="shrink-0" style={{ color: 'rgb(var(--color-text-muted))' }} />
         </button>
       </PopoverTrigger>
 
