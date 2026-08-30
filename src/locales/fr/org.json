@@ -487,6 +487,7 @@
     "teamProject": "Projet d'équipe",
     "priority": "Priorité",
     "deadline": "Échéance",
+    "deadlinePlaceholder": "Sélectionner une date",
     "estimatedTime": "Temps estimé (min)",
     "creating": "Création...",
     "saving": "Sauvegarde...",

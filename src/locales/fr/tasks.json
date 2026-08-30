@@ -91,6 +91,7 @@
     "select": "Sélectionner",
     "cancelSelect": "Annuler",
     "rescheduleAll": "Replanifier toutes les tâches en retard à une date précise",
+    "pickADate": "Choisir une date…",
     "colComplete": "Compléter",
     "colCategoryColor": "Catégorie (couleur)",
     "colCategory": "Catégorie",

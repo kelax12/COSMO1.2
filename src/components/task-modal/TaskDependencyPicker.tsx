@@ -21,6 +21,7 @@ import {
   dependencyEdge,
   type DependencyDirection,
 } from '@/lib/dependency-graph';
+import { DatePicker } from '@/components/ui/date-picker';
 import { useT } from '@/i18n/useT';
 
 interface TaskDependencyPickerProps {
@@ -449,13 +450,16 @@ const TaskDependencyPicker = ({
                   >
                     {t('dependencies.deadline')}
                   </label>
-                  <input
+                  {/* Calendrier COSMO, jamais le picker natif : il ignore le
+                      thème et la locale de l'app. */}
+                  <DatePicker
                     id="task-dep-new-deadline"
-                    type="date"
                     value={newDeadline}
-                    onChange={(e) => setNewDeadline(e.target.value)}
-                    className={fieldClass}
-                    style={fieldStyle}
+                    onChange={setNewDeadline}
+                    className="h-10"
+                    // Cette popup monte déjà à z-[10000] : le calendrier
+                    // qu'elle ouvre a besoin du cran au-dessus.
+                    popoverClassName="z-[10001]"
                   />
                 </div>
                 <div>

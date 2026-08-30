@@ -230,6 +230,9 @@ const Z_LADDER = new Set([
   250, 300,         // interstitiels au-dessus des surfaces système
   500,              // tutoriel de page — au-dessus de tout le chrome
   9999, 10000,      // createPortal + fixed (feuille, puis popover dans la feuille)
+  10001,            // popover dans une popup elle-même à 10000 (calendrier des
+                    // popups de dépendances) — troisième étage réel du portail,
+                    // ajouté le 2026-08-30 avec sa justification d'ordre.
 ]);
 
 const ARBITRARY_Z = /z-\[(\d+)\]/g;

@@ -465,6 +465,7 @@
     "teamProject": "Team project",
     "priority": "Priority",
     "deadline": "Due date",
+    "deadlinePlaceholder": "Pick a date",
     "estimatedTime": "Estimated time (min)",
     "creating": "Creating...",
     "saving": "Saving...",

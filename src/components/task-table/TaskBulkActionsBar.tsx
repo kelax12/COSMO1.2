@@ -1,7 +1,9 @@
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle2, Trash2, ListPlus, MoreHorizontal, Tag, CalendarClock, ArrowLeft, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { DateCalendarPanel, DATE_PANEL_CLASS } from '@/components/ui/date-picker';
 import { useT } from '@/i18n/useT';
 
 interface CategoryOption {
@@ -60,18 +62,14 @@ const TaskBulkActionsBar: React.FC<Props> = ({
   const { t, tp } = useT('tasks');
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuView, setMenuView] = useState<'root' | 'category'>('root');
-  // Input date natif hors du menu (même pattern que le snooze : le menu se
-  // ferme au clic, l'input doit survivre à la fermeture pour showPicker()).
-  const dateInputRef = useRef<HTMLInputElement>(null);
+  // Calendrier COSMO hors du menu (même contrainte que le snooze : le menu se
+  // ferme au clic, l'ancre doit survivre à sa fermeture). Il remplace l'input
+  // natif, qui ouvrait le calendrier du navigateur — hors thème, hors locale.
+  const [calendarOpen, setCalendarOpen] = useState(false);
 
   const openDatePicker = () => {
     setMenuOpen(false);
-    const input = dateInputRef.current;
-    if (!input) return;
-    if (typeof input.showPicker === 'function') {
-      try { input.showPicker(); return; } catch { /* fallback below */ }
-    }
-    input.click();
+    setCalendarOpen(true);
   };
 
   return (
@@ -204,19 +202,33 @@ const TaskBulkActionsBar: React.FC<Props> = ({
                 </>
               )}
             </AnimatePresence>
-            {/* Input date natif — survit à la fermeture du menu (showPicker) */}
-            <input
-              ref={dateInputRef}
-              type="date"
-              onChange={(e) => {
-                if (!e.target.value) return;
-                onSetDeadline(e.target.value);
-                e.target.value = '';
-              }}
-              aria-label={t('table.newDeadline')}
-              tabIndex={-1}
-              className="absolute w-px h-px p-0 opacity-0 pointer-events-none"
-            />
+            {/* Calendrier COSMO — survit à la fermeture du menu, comme l'input
+                natif qu'il remplace. L'ancre est invisible : aucun champ de
+                date n'est affiché, c'est l'entrée de menu qui ouvre. */}
+            <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+              <PopoverTrigger asChild>
+                {/* Ancre calée sur le bouton du menu (le conteneur est déjà
+                    `relative`). `pointer-events-none` pour ne jamais lui voler
+                    un clic. */}
+                <span aria-hidden="true" className="absolute inset-0 pointer-events-none" />
+              </PopoverTrigger>
+              <PopoverContent
+                className={`${DATE_PANEL_CLASS} z-[100]`}
+                align="start"
+                collisionPadding={16}
+                sideOffset={8}
+                aria-label={t('table.newDeadline')}
+              >
+                <DateCalendarPanel
+                  allowClear={false}
+                  onSelect={(date) => {
+                    if (!date) return;
+                    onSetDeadline(date);
+                    setCalendarOpen(false);
+                  }}
+                />
+              </PopoverContent>
+            </Popover>
           </div>
           <button
             type="button"
