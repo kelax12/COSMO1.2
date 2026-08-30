@@ -495,28 +495,63 @@ passer par `apply_migration` (MCP) ou le SQL editor avec le fichier versionné.
 
 ## 7. Backup & Disaster Recovery (runbook)
 
-**État** : backups automatiques Supabase quotidiens (rétention selon plan ;
-PITR seulement à partir du plan Pro + add-on). **Aucune restauration n'a encore
-été testée** — un backup non testé n'est pas un backup.
+**État au 2026-08-30, et il faut le lire sans l'adoucir** : le plan Free n'offre **aucune
+sauvegarde native**, et le PITR a été écarté avec le plan Pro (T-01). La seule copie de la base
+qui existe est le dump quotidien de `.github/workflows/db-backup.yml`. **Aucune restauration n'a
+encore été testée** : un backup non testé n'est pas un backup, et il l'est d'autant moins qu'il
+est seul.
 
-### Restauration (procédure)
-1. `Dashboard → Database → Backups` → choisir le snapshot → **Restore**
-   (⚠️ écrase l'instance ; pour un test, restaurer vers un **nouveau projet**).
-2. Vérifier post-restore : `select count(*) from tasks;` + spot-check RLS
-   (`select * from subscriptions` avec un JWT user → ne doit voir que sa ligne).
-3. Re-pointer le front si projet différent : Vercel env `VITE_SUPABASE_URL` /
-   `VITE_SUPABASE_ANON_KEY` + redeploy.
-4. Redéployer les Edge Functions + `supabase secrets set …` sur le nouveau ref.
+### Restauration réelle (sinistre)
+1. Créer un projet Supabase neuf, récupérer sa chaîne de connexion en mode **session**.
+2. Restaurer le dernier dump :
+   `pg_restore --no-owner --no-privileges --dbname "<url>" cosmo-<date>.dump`
+   (client PostgreSQL **17** obligatoire, cf. le piège de version plus bas).
+3. Re-pointer le front : Vercel `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY`, puis redéployer.
+4. Redéployer les Edge Functions et reposer les secrets sur le nouveau ref : **le dump ne les
+   contient pas**. C'est la partie que personne n'anticipe le jour J.
 
-### Drill trimestriel (à planifier — non fait à ce jour)
-- [ ] Restaurer le dernier backup vers un projet jetable.
-- [ ] Dérouler les vérifs du §2 ci-dessus + login réel + création d'une tâche.
-- [ ] Chronométrer (objectif RTO < 2 h) et noter la date du drill ici.
-- [ ] Supprimer le projet jetable.
+### Drill — `.github/workflows/restore-drill.yml` (livré le 2026-08-30, jamais exécuté)
+
+Le drill tourne **dans GitHub Actions**, pas sur un poste : c'est là que vivent déjà le dump et un
+client PostgreSQL 17, et le chronomètre y devient une mesure machine. Il restaure, mesure, puis
+juge sur ce qui compte vraiment.
+
+| Ce qu'il vérifie | Pourquoi |
+|---|---|
+| `pg_restore --list` | un fichier tronqué échoue à l'en-tête, pas au milieu |
+| durée de la restauration | c'est le RTO, la seule raison de faire un drill |
+| volumes par table | des lignes sont revenues |
+| **0 table publique sans RLS**, et > 50 policies | une restauration qui rend les données mais perd l'isolation est une fuite totale, invisible sur un compteur de volume |
+| **un utilisateur ne voit que ses tâches** | l'isolation est *effective*, pas seulement déclarée : on se place dans le rôle `authenticated` avec ses claims, `postgres` contournant la RLS |
+
+**Marche à suivre** (et à défaire juste après) :
+
+1. créer un projet Supabase jetable. ⚠️ Le plan Free plafonne à **2 projets actifs** : il faudra le
+   supprimer, pas l'oublier ;
+2. poser sa chaîne de connexion en mode session dans le secret de dépôt `DRILL_DB_URL` ;
+3. Actions → **restore-drill** → *Run workflow*, en tapant `RESTAURER` ;
+4. reporter le tableau du résumé de job ci-dessous, avec sa date ;
+5. **supprimer le projet jetable ET le secret `DRILL_DB_URL`.**
+
+> 🔴 **Trois gardes s'exécutent avant la moindre connexion** : la confirmation tapée, le refus
+> catégorique si l'URL désigne le projet de production (par l'hôte **ou** par l'utilisateur), et
+> l'obligation d'une chaîne en mode session. Testées sur cinq cibles, dont deux formes de l'URL de
+> production. Un drill qui se trompe de cible ne perd pas un projet jetable, il perd la seule base
+> qui existe.
+
+**Ce que le workflow ne prouve pas**, et qui reste un geste humain : pointer l'application sur le
+projet restauré, se connecter, créer une tâche. Un `select` réussi ne dit rien du parcours réel.
+
+**Résultat du dernier drill** : ⬜ jamais exécuté. Objectif RTO < 2 h.
+
+| Date | Run db-backup | Durée | Tables sans RLS | Policies | Tâches visibles / total |
+|---|---|---|---|---|---|
+| ⬜ | | | | | |
 
 ### Export hors-fournisseur — automatisé le 2026-08-28
 
-`.github/workflows/db-backup.yml`, le **1er de chaque mois**. Il produit un dump `pg_dump` au
+`.github/workflows/db-backup.yml`, **tous les jours à 04:26 UTC** (mensuel jusqu'au 2026-08-29,
+passé en quotidien le jour où il est devenu la seule sauvegarde). Il produit un dump `pg_dump` au
 format custom, vérifie qu'il n'est ni vide ni tronqué (`pg_restore --list`), et le dépose en
 artefact avec **30 jours de rétention**.
 
@@ -524,8 +559,8 @@ artefact avec **30 jours de rétention**.
 Connection string, mode « session »). Sans lui le job s'arrête en **avertissement**, pas en échec —
 une CI rouge en permanence finit ignorée, règle déjà appliquée à `renewal-notice`.
 
-> ⚠️ **Ce n'est PAS un remplacement du PITR.** Un dump mensuel a un RPO de trente jours : il sert
-> à ne pas TOUT perdre, pas à revenir à hier. Ce qu'il couvre et que le PITR ne couvre pas, c'est
+> ⚠️ **Ce n'est PAS l'équivalent d'un PITR.** Un dump quotidien a un RPO de 24 h : il sert à ne
+> pas TOUT perdre, pas à revenir à l'état d'il y a une heure, et il ne se restaure pas en un clic. Ce qu'il couvre et que le PITR ne couvre pas, c'est
 > la perte du **compte** — suspension, litige, ou décision de partir. Les deux répondent à des
 > risques différents, aucun ne dispense de l'autre.
 >
