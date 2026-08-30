@@ -95,7 +95,7 @@ Deux chiffres suffisent à ce stade, à relever au même moment que les autres :
   n'est pas la procédure qu'il faut réécrire, c'est le temps qu'il faut y consacrer.
 
 > Ces chiffres ne sont **pas** instrumentés : il n'existe aucun outil de ticketing, et en installer
-> un aujourd'hui serait du sur-engineering — cf. `ROADMAP-60J.md` §8. Un décompte à la main dans la
+> un aujourd'hui serait du sur-engineering — cf. `ROADMAP-60J.md` §4. Un décompte à la main dans la
 > boîte mail suffit tant que le volume tient sur une main.
 
 ## 8. Ce qu'il faudra ajouter, et quand
