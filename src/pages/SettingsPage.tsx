@@ -749,8 +749,8 @@ const SettingsPage: React.FC = () => {
               {/* support card */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))]">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-gradient-to-br bg-[rgb(var(--color-accent-solid))] to-violet-600 flex items-center justify-center shrink-0">
-                    <HelpCircle size={15} className="text-white" />
+                  <div className="w-9 h-9 rounded-xl bg-[rgb(var(--color-accent-solid))] flex items-center justify-center shrink-0">
+                    <HelpCircle size={15} className="text-[rgb(var(--color-accent-solid-foreground))]" />
                   </div>
                   <div>
                     <p className="text-sm font-bold text-[rgb(var(--color-text-primary))]">{t('help.supportTitle')}</p>
