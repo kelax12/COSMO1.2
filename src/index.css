@@ -591,12 +591,21 @@ body {
       -webkit-appearance: none;
     }
 
-    /* Icône native (calendrier/horloge) des inputs date/time — sombre par
-       défaut dans le navigateur, donc invisible sur fond sombre. Inversée en
-       dark (hors wrapper ci-dessus, où elle est masquée). */
+    /* Icône native (calendrier/horloge) des inputs date/time/datetime-local.
+       ❌ NE PAS y remettre `filter: invert(1)`.
+       Cette inversion datait d'avant `color-scheme` (cf. `:root` en haut de ce
+       fichier). Depuis que `.dark` pose `color-scheme: dark`, le navigateur
+       dessine DÉJÀ l'icône en clair — l'inversion la repeignait donc en NOIR
+       sur fond noir, produisant exactement le défaut qu'elle prétendait
+       corriger. Mesuré côte à côte dans le navigateur le 2026-08-30 : sans
+       filtre l'icône est blanche et lisible, avec filtre elle est noire.
+       `color-scheme` suffit, et couvre tous les types de sélecteur natif d'un
+       coup. Seul reste utile ici le curseur. */
     .dark input[type="date"]::-webkit-calendar-picker-indicator,
-    .dark input[type="time"]::-webkit-calendar-picker-indicator {
-      filter: invert(1) brightness(1.4);
+    .dark input[type="time"]::-webkit-calendar-picker-indicator,
+    .dark input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+    .dark input[type="month"]::-webkit-calendar-picker-indicator,
+    .dark input[type="week"]::-webkit-calendar-picker-indicator {
       cursor: pointer;
     }
 
