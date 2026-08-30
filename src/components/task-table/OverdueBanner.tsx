@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { AlertTriangle } from 'lucide-react';
 import {
   DropdownMenu,
@@ -6,7 +6,6 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from '@/components/ui/dropdown-menu';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { DateCalendarPanel, DATE_PANEL_CLASS } from '@/components/ui/date-picker';
 import { useT } from '@/i18n/useT';
 
@@ -35,17 +34,21 @@ interface OverdueBannerProps {
 const OverdueBanner = ({ count, options, onSnoozeAll }: OverdueBannerProps) => {
   const { t, tp } = useT('tasks');
 
-  // Le calendrier vit HORS du menu : le menu Radix se ferme au clic, l'ancre
-  // doit survivre à sa fermeture.
+  // « Choisir une date… » REMPLACE le contenu du menu par le calendrier, au
+  // lieu d'ouvrir une seconde couche par-dessus.
   //
-  // ⚠️ L'ouverture est différée à la fermeture EFFECTIVE du menu. Ouvrir dans
-  // le `onClick` de l'entrée marche une fraction de seconde puis échoue : en se
-  // fermant, le menu rend le focus à son déclencheur, et ce focus sortant est
-  // capté par le `DismissableLayer` du popover, qui se referme aussitôt.
-  // Mesuré dans le navigateur : le calendrier se montait bien, puis
-  // disparaissait dans la même frappe.
-  const [calendarOpen, setCalendarOpen] = useState(false);
-  const calendarPending = useRef(false);
+  // ⚠️ Ne pas revenir à un popover séparé. Deux variantes ont été mesurées
+  // cassées dans le navigateur avant celle-ci :
+  //   1. ouvrir le popover dans le `onClick` de l'entrée → il se montait puis
+  //      disparaissait dans la même frappe (en se fermant, le menu rend le
+  //      focus à son déclencheur, et ce focus sortant est capté par le
+  //      `DismissableLayer` du popover) ;
+  //   2. l'ouvrir dans `onCloseAutoFocus` → il ne se montait plus DU TOUT
+  //      (vérifié au MutationObserver : aucun mount).
+  // Une seule couche supprime la course au focus, l'ancrage invisible et la
+  // question du z-index d'un coup.
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [showCalendar, setShowCalendar] = useState(false);
 
   return (
     <div className="flex flex-wrap items-center gap-3 mb-4 px-4 py-3 rounded-xl border border-red-200 dark:border-red-500/30 bg-red-50 dark:bg-red-500/10">
@@ -54,55 +57,29 @@ const OverdueBanner = ({ count, options, onSnoozeAll }: OverdueBannerProps) => {
         {tp('table.overdueCount', count)}
       </span>
 
-      {/* `relative` : c'est l'ancre du calendrier qui se positionne dessus.
-          Sans lui, l'ancre remonte au prochain parent positionné et le
-          calendrier s'ouvre en bas de page, hors écran — il était bien monté,
-          simplement invisible. */}
-      <div className="relative">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button
-              type="button"
-              className="px-3 min-h-touch sm:min-h-0 sm:py-1.5 rounded-lg text-label sm:text-sm font-semibold bg-red-600 hover:bg-red-700 text-white transition-colors"
-            >
-              {t('table.rescheduleAllBtn')}
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            align="end"
-            onCloseAutoFocus={(e) => {
-              if (!calendarPending.current) return;
-              calendarPending.current = false;
-              // Sans ça, le focus rendu au déclencheur congédie le popover.
-              e.preventDefault();
-              setCalendarOpen(true);
-            }}
+      <DropdownMenu
+        open={menuOpen}
+        onOpenChange={(open) => {
+          setMenuOpen(open);
+          // Rouvrir le menu doit repartir de la liste, jamais du calendrier
+          // laissé ouvert la fois d'avant.
+          if (!open) setShowCalendar(false);
+        }}
+      >
+        <DropdownMenuTrigger asChild>
+          <button
+            type="button"
+            className="px-3 min-h-touch sm:min-h-0 sm:py-1.5 rounded-lg text-label sm:text-sm font-semibold bg-red-600 hover:bg-red-700 text-white transition-colors"
           >
-            {options.map((opt) => (
-              <DropdownMenuItem key={opt.id} onClick={() => onSnoozeAll(opt.deadline)}>
-                {opt.label}
-              </DropdownMenuItem>
-            ))}
-            <DropdownMenuItem onClick={() => { calendarPending.current = true; }}>
-              {t('table.pickADate')}
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-
-        <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
-          {/* Ancre invisible, calée sur le bouton : le calendrier s'ouvre sous
-              lui alors qu'aucun champ de date n'est affiché.
-              `pointer-events-none` pour ne jamais lui voler un clic. */}
-          <PopoverTrigger asChild>
-            <span aria-hidden="true" className="absolute inset-0 pointer-events-none" />
-          </PopoverTrigger>
-          <PopoverContent
-            className={`${DATE_PANEL_CLASS} z-[100]`}
-            align="end"
-            collisionPadding={16}
-            sideOffset={8}
-            aria-label={t('table.rescheduleAll')}
-          >
+            {t('table.rescheduleAllBtn')}
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent
+          align="end"
+          className={showCalendar ? `${DATE_PANEL_CLASS} p-0` : undefined}
+          aria-label={showCalendar ? t('table.rescheduleAll') : undefined}
+        >
+          {showCalendar ? (
             <DateCalendarPanel
               // `minDate` reprend l'attribut `min` de l'ancien input natif :
               // reporter une tâche en retard vers hier n'a pas de sens.
@@ -111,12 +88,25 @@ const OverdueBanner = ({ count, options, onSnoozeAll }: OverdueBannerProps) => {
               onSelect={(date) => {
                 if (!date) return;
                 onSnoozeAll(date);
-                setCalendarOpen(false);
+                setMenuOpen(false);
               }}
             />
-          </PopoverContent>
-        </Popover>
-      </div>
+          ) : (
+            <>
+              {options.map((opt) => (
+                <DropdownMenuItem key={opt.id} onClick={() => onSnoozeAll(opt.deadline)}>
+                  {opt.label}
+                </DropdownMenuItem>
+              ))}
+              {/* `preventDefault` : sans lui Radix referme le menu, alors
+                  qu'on veut justement y afficher le calendrier. */}
+              <DropdownMenuItem onSelect={(e) => { e.preventDefault(); setShowCalendar(true); }}>
+                {t('table.pickADate')}
+              </DropdownMenuItem>
+            </>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 };
