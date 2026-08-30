@@ -49,7 +49,6 @@ import SyncStatusIndicator from './SyncStatusIndicator';
 // Quick-add global — lazy : ne se charge qu'au premier rendu du Layout.
 const QuickAddBar = lazy(() => import('./QuickAddBar'));
 // Rappel habitudes du soir (#24) — lazy également.
-const HabitEveningReminder = lazy(() => import('./HabitEveningReminder'));
 // Aide raccourcis clavier (#48) — touche « ? ».
 const ShortcutsHelp = lazy(() => import('./ShortcutsHelp'));
 // Tâches d'exemple au premier login (#49) — headless.
@@ -466,10 +465,6 @@ const NavItems = () =>
           className="flex-1 overflow-auto pb-20"
           style={{ backgroundColor: 'rgb(var(--color-background))' }}
         >
-          {/* Rappel habitudes de fin de journée (#24) — opt-in dans Réglages */}
-          <Suspense fallback={null}>
-            <HabitEveningReminder />
-          </Suspense>
           <Outlet />
         </main>
         {/* FAB de capture rapide global (#43) — au-dessus de la tab bar, sur
@@ -516,7 +511,7 @@ const NavItems = () =>
           variant="ghost"
           size="icon"
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="absolute -right-3 top-1/2 -translate-y-1/2 bg-white dark:bg-zinc-800 border rounded-full shadow-sm hover:shadow-md z-50 md:opacity-40 md:group-hover:opacity-100 opacity-100 hover:text-blue-500 hover:border-[rgb(var(--color-accent-solid-hover))] transition-opacity"
+          className="absolute -right-3 top-1/2 -translate-y-1/2 bg-[rgb(var(--color-surface))] border rounded-full shadow-sm hover:shadow-md z-50 md:opacity-40 md:group-hover:opacity-100 opacity-100 hover:text-[rgb(var(--color-accent-solid))] hover:border-[rgb(var(--color-accent-solid-hover))] transition-opacity"
           style={{ borderColor: 'rgb(var(--nav-border))' }}
           title={t('nav.sidebar.toggleTitle')}
           aria-label={isCollapsed ? t('nav.sidebar.expand') : t('nav.sidebar.collapse')}
@@ -529,8 +524,9 @@ const NavItems = () =>
             <Logo showText={!isCollapsed} />
           </div>
 
-            {/* Thème + Recherche (loupe juste en dessous) */}
-            <div className="mt-6 flex flex-col items-center gap-3 w-full">
+            {/* Thème + Recherche : côte à côte quand la nav est ouverte,
+                empilés (repliés au centre) quand elle est réduite. */}
+            <div className={`mt-6 flex items-center gap-3 w-full ${isCollapsed ? 'flex-col' : 'flex-row justify-center'}`}>
               <ThemeToggle />
               {/* Raccourci Ctrl/Cmd+K : masqué sous `lg`. C'est une affordance
                   purement clavier — elle n'a aucun sens sur un écran tactile,
@@ -574,10 +570,6 @@ const NavItems = () =>
           className="flex-1 overflow-auto relative"
           style={{ backgroundColor: 'rgb(var(--color-background))' }}>
 
-          {/* Rappel habitudes de fin de journée (#24) — opt-in dans Réglages */}
-          <Suspense fallback={null}>
-            <HabitEveningReminder />
-          </Suspense>
           <Outlet />
         </main>
       </div>

@@ -86,9 +86,9 @@ const TeamsSection = ({ orgId, members, currentUserId, isAdmin, canCreateTeam }:
           <button
             type="button"
             onClick={() => setShowNewTeam(true)}
-            className="inline-flex items-center gap-1 text-xs font-semibold text-blue-500 hover:text-blue-600 transition-colors"
+            className="inline-flex items-center gap-1 text-sm font-semibold text-blue-500 hover:text-blue-600 transition-colors"
           >
-            <Plus size={13} aria-hidden="true" /> {t('team.add')}
+            <Plus size={14} aria-hidden="true" /> {t('team.add')}
           </button>
         )}
       </div>

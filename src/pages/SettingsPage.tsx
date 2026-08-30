@@ -8,7 +8,6 @@ import {
 import { useTimezonePref, clampOffsetHours } from '@/lib/timezone';
 import { ShortcutsList } from '@/components/keyboard-shortcuts';
 import { useIsAdmin } from '@/modules/admin';
-import { useHabitReminderPref } from '@/modules/ui-states';
 import { useNavigate } from 'react-router';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { mirrorAvatarToProfile } from '@/modules/user/profile.repository';
@@ -50,8 +49,6 @@ import { MobileHeader } from '@/components/mobile';
 
 /* ─── main component ───────────────────────────────────────────── */
 const SettingsPage: React.FC = () => {
-  const { habitReminderEnabled, setHabitReminderEnabled } = useHabitReminderPref();
-
   // `tCommon` et non `t` : le reste de cette page n'est pas encore extrait,
   // le nom explicite évite toute ambiguïté quand elle le sera.
   const { t: tCommon } = useT('common');
@@ -670,30 +667,6 @@ const SettingsPage: React.FC = () => {
                     <p className="text-caption text-[rgb(var(--color-text-secondary))] mt-0.5">{user?.email?.endsWith('@thecosmo.app') ? t('appearance.themeListTest') : t('appearance.themeList')}</p>
                   </div>
                   <ThemeToggle showLabel />
-                </div>
-
-                {/* Rappel habitudes du soir (#24) — opt-in */}
-                <div style={{ minHeight: '72px' }}
-                  className="mt-3 flex items-center justify-between px-4 py-3.5 bg-[rgb(var(--color-background))] border border-[rgb(var(--color-border))] rounded-xl hover:border-[rgb(var(--color-accent))]/40 transition-colors">
-                  <div>
-                    <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">{t('appearance.eveningReminder')}</p>
-                    <p className="text-caption text-[rgb(var(--color-text-secondary))] mt-0.5">{t('appearance.eveningReminderHint')}</p>
-                  </div>
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked={habitReminderEnabled}
-                    aria-label="Activer le rappel habitudes du soir"
-                    onClick={() => setHabitReminderEnabled(!habitReminderEnabled)}
-                    className={`relative w-[51px] h-[31px] rounded-full transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
-                      habitReminderEnabled ? 'bg-[rgb(var(--color-accent-solid))]' : 'bg-gray-200 dark:bg-gray-700'
-                    }`}
-                  >
-                    <span
-                      className="absolute top-[2px] w-[27px] h-[27px] rounded-full bg-white shadow-md transition-all duration-200"
-                      style={{ left: habitReminderEnabled ? 'calc(100% - 29px)' : '2px' }}
-                    />
-                  </button>
                 </div>
               </SectionCard>
 

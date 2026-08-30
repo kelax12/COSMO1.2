@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Search, Clock, Bookmark, Filter, X, CheckCircle2, Info, ChevronDown, Pencil, Trash2, CalendarX, MoreHorizontal, Copy, Lightbulb } from 'lucide-react';
+import { Search, Clock, Bookmark, Filter, X, CheckCircle2, Info, ChevronDown, Pencil, Trash2, CalendarX, MoreHorizontal, Copy, Lightbulb, Plus } from 'lucide-react';
 import TaskModal from './TaskModal';
 import CollaboratorAvatars from './CollaboratorAvatars';
 import { showUndoToast } from '@/lib/undo-toast';
@@ -83,6 +83,7 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
     try { localStorage.setItem(TUTORIAL_KEY, next ? '1' : '0'); } catch { /* ignore */ }
   }, []);
   const [selectedTaskForModal, setSelectedTaskForModal] = useState<Task | null>(null);
+  const [showCreateTask, setShowCreateTask] = useState(false);
 
   // ── Menu contextuel (long-press mobile / maintien-clic desktop) ──────────
   const [contextMenu, setContextMenu] = useState<{ task: Task; x: number; y: number } | null>(null);
@@ -208,16 +209,28 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
       <div className="p-4 border-b" style={{ borderColor: 'rgb(var(--nav-border))' }}>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold" style={{ color: 'rgb(var(--color-text-primary))' }}>{t('sidebar.title')}</h2>
-          {onClose && (
+          <div className="flex items-center gap-1">
             <button
-              onClick={onClose}
-              aria-label={t('sidebar.close')}
-              className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              type="button"
+              onClick={() => setShowCreateTask(true)}
+              aria-label={t('sidebar.addTask')}
+              title={t('sidebar.addTask')}
+              className="p-1 rounded-md hover:bg-[rgb(var(--color-hover))] transition-colors"
               style={{ color: 'rgb(var(--color-text-secondary))' }}
             >
-              <X size={20} aria-hidden="true" />
+              <Plus size={20} aria-hidden="true" />
             </button>
-          )}
+            {onClose && (
+              <button
+                onClick={onClose}
+                aria-label={t('sidebar.close')}
+                className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                style={{ color: 'rgb(var(--color-text-secondary))' }}
+              >
+                <X size={20} aria-hidden="true" />
+              </button>
+            )}
+          </div>
         </div>
         
         {/* Search */}
@@ -533,6 +546,12 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
             onClose={() => setSelectedTaskForModal(null)}
           />
         )}
+
+        <TaskModal
+          isOpen={showCreateTask}
+          onClose={() => setShowCreateTask(false)}
+          isCreating={true}
+        />
       </div>
     );
   };
