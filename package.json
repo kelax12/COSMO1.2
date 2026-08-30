@@ -29,6 +29,7 @@
     "test:e2e:report": "playwright show-report",
     "i18n:scan": "node scripts/i18n-scan.mjs",
     "i18n:namespaces": "node scripts/i18n-shell-namespaces.mjs",
+    "profile:landing": "node scripts/profile-landing.mjs",
     "check:bundle": "node scripts/check-bundle-budget.mjs",
     "analyze:entry": "node scripts/analyze-entry.mjs",
     "images:check": "node scripts/optimize-images.mjs --check",

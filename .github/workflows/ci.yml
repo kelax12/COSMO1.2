@@ -351,6 +351,37 @@ jobs:
             fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `### Scores Lighthouse\n\n\`\`\`\n${lignes.join("\n")}\n\`\`\`\n`);
           '
 
+      # T-51 : un SCORE dit qu'une page est lente, jamais ce qui la ralentit.
+      # Mesure du 2026-08-30 : sur un poste de developpement, la landing (55 en
+      # CI) et le guide (96 en CI) rendent le MEME score, parce que la charge de
+      # la machine domine tout. L'ecart ne se reproduit que sur ce runner, donc
+      # c'est ici, et nulle part ailleurs, qu'il faut lire l'attribution.
+      #
+      # `NL` plutot qu'une sequence d'echappement : ce bloc traverse YAML puis
+      # le shell avant d'atteindre node, et un antislash n'y survit pas toujours.
+      - name: Repartition du fil principal
+        if: ${{ !cancelled() }}
+        run: |
+          node -e '
+            const fs = require("fs");
+            const NL = String.fromCharCode(10);
+            const d = ".lighthouseci";
+            if (!fs.existsSync(d)) process.exit(0);
+            const bloc = ["### Ou passe le fil principal", ""];
+            const notes = [];
+            for (const f of fs.readdirSync(d).filter((x) => x.startsWith("lhr-") && x.endsWith(".json"))) {
+              const r = JSON.parse(fs.readFileSync(d + "/" + f, "utf8"));
+              const boot = (r.audits["bootup-time"].details?.items ?? []).slice(0, 6)
+                .map((i) => (String(i.url).split("/").pop() || "(document)") + " " + Math.round(i.total) + "ms");
+              const fil = (r.audits["mainthread-work-breakdown"].details?.items ?? [])
+                .map((i) => i.groupLabel + " " + Math.round(i.duration) + "ms");
+              bloc.push("**" + r.finalDisplayedUrl + "**", "", "- bootup : " + boot.join(" · "), "- fil : " + fil.join(" · "), "");
+              notes.push(r.finalDisplayedUrl + " | " + boot.slice(0, 3).join(" · "));
+            }
+            for (const n of notes.slice(0, 8)) console.log("::notice title=lhci-bootup::" + n);
+            fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, bloc.join(NL) + NL);
+          '
+
       - name: Lighthouse assert
         run: |
           set -o pipefail
