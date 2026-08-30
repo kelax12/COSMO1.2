@@ -78,8 +78,6 @@
     "heading": "Thème de l'interface",
     "hint": "Choisissez l'apparence qui vous convient le mieux.",
     "displayMode": "Mode d'affichage",
-    "eveningReminder": "Rappel habitudes du soir",
-    "eveningReminderHint": "Après 18 h, un bandeau signale les habitudes non cochées",
     "shortcuts": "Raccourcis clavier",
     "shortcutsHint": "Aussi accessibles à tout moment avec la touche",
     "themeListTest": "Clair · Sombre · Noir · Test",

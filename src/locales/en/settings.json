@@ -78,8 +78,6 @@
     "heading": "Interface theme",
     "hint": "Choose the look that suits you best.",
     "displayMode": "Display mode",
-    "eveningReminder": "Evening habit reminder",
-    "eveningReminderHint": "After 6pm, a banner flags the habits you haven't ticked",
     "shortcuts": "Keyboard shortcuts",
     "shortcutsHint": "Also available at any time with the key",
     "themeListTest": "Light · Dark · Black · Test",

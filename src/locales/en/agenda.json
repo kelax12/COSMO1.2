@@ -48,6 +48,7 @@
   },
   "sidebar": {
     "title": "Available tasks",
+    "addTask": "Add a task",
     "close": "Close the task panel",
     "search": "Search a task...",
     "filterCategory": "Filter by category",

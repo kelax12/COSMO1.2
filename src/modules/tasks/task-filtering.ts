@@ -53,6 +53,13 @@ export function compareTasks(
     if (sortField === 'name') {
       comparison = a.name.localeCompare(b.name);
     } else if (sortField === 'priority') {
+      // Une tâche sans priorité (0) est la MOINS prioritaire, quel que soit le
+      // sens de tri choisi — jamais mise en avant faute de valeur renseignée.
+      const aNone = a.priority === 0;
+      const bNone = b.priority === 0;
+      if (aNone && bNone) return 0;
+      if (aNone) return 1;
+      if (bNone) return -1;
       comparison = a.priority - b.priority;
     } else if (sortField === 'deadline') {
       comparison = new Date(a.deadline).getTime() - new Date(b.deadline).getTime();

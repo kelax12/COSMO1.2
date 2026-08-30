@@ -87,7 +87,7 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
         <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
           {/* Search Bar — flexible : absorbe l'espace restant et repousse les contrôles à droite */}
           <div className="relative flex-1 min-w-[150px]">
-            <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" aria-hidden="true" />
+            <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2" style={{ color: 'rgb(var(--color-text-muted))' }} aria-hidden="true" />
             <input
               id="search-tasks-main"
               type="text"

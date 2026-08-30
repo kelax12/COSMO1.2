@@ -49,6 +49,7 @@
   },
   "sidebar": {
     "title": "Tâches disponibles",
+    "addTask": "Ajouter une tâche",
     "close": "Fermer le panneau des tâches",
     "search": "Rechercher une tâche...",
     "filterCategory": "Filtrer par catégorie",
