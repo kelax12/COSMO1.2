@@ -560,6 +560,35 @@ visible et immobile sous `prefers-reduced-motion`, et les quatre puces passent e
 **Une garde a fait son travail** : `text-[11px]` sur les puces mobiles a fait échouer le cliquet
 des tailles arbitraires (197 > 196). Remplacé par l'échelle fermée, pas par un budget relevé.
 
+#### 🐞 La transition Tâches → Agenda : trois diapositives empilées, dont une bloquée
+
+Axel précise que c'est la transition entre le tableau des tâches et l'agenda qui bugue. Relevé
+dans le DOM sur la vraie page, échantillon toutes les 90 ms :
+
+| Ce qui a été mesuré | Avant | Après |
+|---|---|---|
+| Diapositives simultanées dans la scène | jusqu'à **3** (6 couches) | **1**, structurellement |
+| Diapositive bloquée à mi-opacité | oui, `opacity: 0.47` pendant > 1 s | aucune |
+| Contradiction barre d'adresse ↔ contenu | ~500 ms à chaque rotation | ≤ 100 ms |
+
+**Ce qui se passait.** Deux effets lourds alternés (cube 3D, puis « portail » : entrée à
+`scale(0.18)` avec `blur(10px)`, sortie à `scale(2.4)`), joués en `mode="sync"` avec des
+**ressorts**. Un ressort met plus d'une seconde à se poser, la rotation tombe toutes les 2,5 s, et
+les sorties se chevauchaient. Une diapositive restait carrément coincée à 47 % d'opacité par
+dessus la suivante : deux vues superposées en permanence. Et pendant ce temps, la barre d'adresse
+annonçait déjà `cosmo.app/agenda` au-dessus du tableau des tâches.
+
+**La correction n'est pas un réglage de durée, c'est une garantie.** En `mode="wait"`, il n'y a
+jamais plus d'une diapositive à l'écran : la sortie se termine avant que l'entrée commence, donc
+rien ne peut s'empiler ni rester coincé. Deux tweens de 260 et 380 ms, soit 640 ms, très en
+dessous des 2 500 ms de rotation. Et la barre d'adresse, l'étiquette et la puce du hero suivent
+désormais une clé **annoncée**, basculée par `onExitComplete`, c'est-à-dire à l'instant exact où
+la nouvelle vue entre.
+
+**Au passage, l'effet raconte enfin la bonne chose.** Un cube 3D dit « quatre objets différents ».
+Un changement d'onglet dit « la même application, un autre module » — ce qui est précisément le
+message du hero.
+
 #### 🔬 T-02 — le drill se fait dans Actions, pas sur le poste
 
 Le poste n'a ni client PostgreSQL ni Docker ; le runner sait déjà installer le client 17, et le
