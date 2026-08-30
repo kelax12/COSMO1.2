@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router';
-import { AlertTriangle, Lightbulb, Trash2, X } from 'lucide-react';
+import { Lightbulb, Trash2, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useBilling } from '@/modules/billing/billing.context';
 import TaskModal from './TaskModal';
@@ -9,6 +9,7 @@ import ScheduleEventModal from './ScheduleEventModal';
 import AddToListModal from './AddToListModal';
 import { VirtualizedTaskList, TaskRow, type UnifiedTaskRow } from './task-table/list';
 import TaskQuickFilters from './task-table/TaskQuickFilters';
+import OverdueBanner from './task-table/OverdueBanner';
 import TaskBulkActionsBar from './task-table/TaskBulkActionsBar';
 import { TeamTaskRowLite } from './task-table/TeamTaskRowLite';
 import TeamTaskModal from './organization/TeamTaskModal';
@@ -35,12 +36,6 @@ import { usePriorityRange } from '@/modules/ui-states';
 import { filterAndSortTasks } from '@/modules/tasks/task-filtering';
 import { getSnoozeOptions } from '@/modules/tasks/snooze';
 import { isTaskOverdue } from './task-table/helpers';
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-} from '@/components/ui/dropdown-menu';
 import { useLists, useAddTaskToList } from '@/modules/lists';
 import { useCategories } from '@/modules/categories';
 import { useFriends, useCollaboratorsByTask, usePendingCollaboratorTaskIds, useUnshareTask } from '@/modules/friends';
@@ -420,17 +415,6 @@ const TaskTable: React.FC<TaskTableProps> = ({
     toast.success(tp('toast.rescheduled', overdueTasks.length));
   };
 
-  // « Choisir une date… » : input date natif hors du menu (le menu Radix se
-  // ferme au clic, l'input doit donc survivre à la fermeture).
-  const snoozeDateInputRef = useRef<HTMLInputElement>(null);
-  const openSnoozeDatePicker = () => {
-    const input = snoozeDateInputRef.current;
-    if (!input) return;
-    if (typeof input.showPicker === 'function') {
-      try { input.showPicker(); return; } catch { /* fallback below */ }
-    }
-    input.click();
-  };
 
   // ── Actions groupées du mode sélection (#10) ──
   const bulkComplete = () => {
@@ -520,45 +504,11 @@ const TaskTable: React.FC<TaskTableProps> = ({
       {/* Bandeau « En retard » (#9) : visible dès qu'une tâche a dépassé sa
           deadline — replanification groupée en un clic. */}
       {!addToListMode && !showCompleted && activeQuickFilter === 'none' && overdueTasks.length > 0 && (
-        <div className="flex flex-wrap items-center gap-3 mb-4 px-4 py-3 rounded-xl border border-red-200 dark:border-red-500/30 bg-red-50 dark:bg-red-500/10">
-          <AlertTriangle size={18} className="text-red-500 shrink-0" aria-hidden="true" />
-          <span className="flex-1 text-label sm:text-sm font-medium text-red-700 dark:text-red-300">
-            {tp('table.overdueCount', overdueTasks.length)}
-          </span>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                type="button"
-                className="px-3 min-h-touch sm:min-h-0 sm:py-1.5 rounded-lg text-label sm:text-sm font-semibold bg-red-600 hover:bg-red-700 text-white transition-colors"
-              >
-                {t('table.rescheduleAllBtn')}
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {getSnoozeOptions().map((opt) => (
-                <DropdownMenuItem key={opt.id} onClick={() => handleSnoozeAllOverdue(opt.deadline)}>
-                  {opt.label}
-                </DropdownMenuItem>
-              ))}
-              <DropdownMenuItem onClick={openSnoozeDatePicker}>
-                Choisir une date…
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <input
-            ref={snoozeDateInputRef}
-            type="date"
-            min={new Date().toLocaleDateString('en-CA')}
-            onChange={(e) => {
-              if (!e.target.value) return;
-              handleSnoozeAllOverdue(e.target.value);
-              e.target.value = '';
-            }}
-            aria-label={t('table.rescheduleAll')}
-            tabIndex={-1}
-            className="absolute w-px h-px p-0 opacity-0 pointer-events-none"
-          />
-        </div>
+        <OverdueBanner
+          count={overdueTasks.length}
+          options={getSnoozeOptions()}
+          onSnoozeAll={handleSnoozeAllOverdue}
+        />
       )}
 
       {/* Desktop View (Table) */}

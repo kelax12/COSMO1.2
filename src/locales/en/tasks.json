@@ -88,6 +88,7 @@
     "select": "Select",
     "cancelSelect": "Cancel",
     "rescheduleAll": "Reschedule every overdue task to a specific date",
+    "pickADate": "Pick a date…",
     "colComplete": "Complete",
     "colCategoryColor": "Category (colour)",
     "colCategory": "Category",

@@ -9,6 +9,7 @@ import type { TeamProject, TeamTask, CreateTeamTaskInput, UpdateTeamTaskInput } 
 import { useCreateTeamProject } from '@/modules/team-projects';
 import { PRIORITY_META, projectColor } from './team-projects.helpers';
 import AddCategoryButton from '@/components/AddCategoryButton';
+import { DatePicker } from '@/components/ui/date-picker';
 import DescriptionField from '@/components/DescriptionField';
 import MemberAvatar from './MemberAvatar';
 import TaskCommentsSection from './TaskCommentsSection';
@@ -525,13 +526,18 @@ const TeamTaskModal = ({
 
               <div>
                 <label htmlFor="team-task-deadline" className={labelClass} style={labelStyle}>{t('taskModal.deadline')}</label>
-                <input
+                {/* Calendrier COSMO, jamais le picker natif du navigateur : il
+                    ignore le thème, la locale de l'app et les presets. */}
+                <DatePicker
                   id="team-task-deadline"
-                  type="date"
                   value={deadline}
-                  onChange={(e) => setDeadline(e.target.value)}
-                  className={`${inputClass} appearance-none`}
-                  style={inputStyle}
+                  onChange={setDeadline}
+                  placeholder={t('taskModal.deadlinePlaceholder')}
+                  className={inputHeightClass}
+                  // Cette modale monte à z-[9999] : au z-[100] par défaut, le
+                  // calendrier s'ouvrirait derrière elle. `z-[10000]` est le
+                  // cran « popover DANS une feuille portalisée ».
+                  popoverClassName="z-[10000]"
                 />
               </div>
 

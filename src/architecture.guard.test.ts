@@ -191,7 +191,11 @@ const KNOWN_OVERSIZED = new Set([
  * refermer a la main. Il vit maintenant dans la barre, qui disparait avec le mode
  * selection : il n'y a plus rien a remettre a zero, donc plus d'oubli possible.
  */
-const OVERSIZED_BUDGET = 9949;
+// 2026-08-30 : 9949 → 9905. Le remplacement du picker de date natif par le
+// calendrier COSMO ajoutait ~35 lignes à `TaskTable` ; le bandeau « En retard »
+// a été extrait dans `task-table/OverdueBanner.tsx` à cette occasion. Le
+// cliquet se resserre comme le demande le message d'échec de ce test.
+const OVERSIZED_BUDGET = 9905;
 
 const loc = (file: string) => readFileSync(file, 'utf8').split('\n').length;
 

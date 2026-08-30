@@ -506,7 +506,7 @@ Paliers en usage — **choisir dans cette table**, ne pas inventer de nouvelle v
 | `z-[190]` `z-[200]` | Surfaces système : bannières, CommandPalette, PremiumGateModal | `DemoBridgePrompt` 190, `CookieBanner` 200 |
 | `z-[250]` `z-[300]` | Interstitiels AU-DESSUS des surfaces système | `ShareInviteClaimer`, `AdModal` |
 | `z-[500]` | Tutoriel de page — au-dessus de tout le chrome | `PageTutorial` |
-| `z-[9999]` `z-[10000]` | `createPortal` + `position: fixed` (10000 = popover DANS une feuille portalisée) | SmartListMenu, `AssigneesPicker` |
+| `z-[9999]` `z-[10000]` `z-[10001]` | `createPortal` + `position: fixed`. Trois étages réels : la feuille (9999), un popover DANS la feuille (10000), et un popover dans une popup elle-même montée à 10000 (10001) | SmartListMenu, `AssigneesPicker`, calendrier des popups de dépendances |
 
 > 🔒 **Liste fermée, vérifiée par `src/design-system.guard.test.ts`.** Toute valeur `z-[…]` hors
 > de ces crans échoue en CI. Ajouter un cran est permis — il faut le poser ici ET dans le test, en

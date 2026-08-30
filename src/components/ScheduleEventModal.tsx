@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { DatePicker } from '@/components/ui/date-picker';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useCreateEvent, type CreateEventInput } from '@/modules/events';
@@ -122,11 +123,14 @@ export default function ScheduleEventModal({ open, onOpenChange, task }: Schedul
           </div>
           <div className="grid gap-2">
             <Label htmlFor="schedule-event-date">{t('schedule.date')}</Label>
-            <Input
+            {/* Calendrier COSMO, jamais le picker natif du navigateur : il
+                ignore le thème, la locale de l'app et les presets. */}
+            <DatePicker
               id="schedule-event-date"
-              type="date"
               value={date}
-              onChange={(e) => setDate(e.target.value)}
+              onChange={setDate}
+              placeholder={t('datePlaceholder')}
+              allowClear={false}
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
