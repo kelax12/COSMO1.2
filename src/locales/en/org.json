@@ -614,7 +614,9 @@
     "seeTasks": "See their tasks",
     "seeAgenda": "See their calendar",
     "seeContribution": "See their contribution",
-    "removeFromOrg": "Remove from organization"
+    "removeFromOrg": "Remove from organization",
+    "changeRoleAria": "Change {{name}}'s role",
+    "customizeRole": "Customize…"
   },
   "member": {
     "detach": "Detach (unplaced)",

@@ -643,7 +643,9 @@
     "seeTasks": "Voir ses tâches",
     "seeAgenda": "Voir son agenda",
     "seeContribution": "Voir sa contribution",
-    "removeFromOrg": "Retirer de l'entreprise"
+    "removeFromOrg": "Retirer de l'entreprise",
+    "changeRoleAria": "Modifier le rôle de {{name}}",
+    "customizeRole": "Personnaliser…"
   },
   "member": {
     "detach": "Détacher (non placé)",
