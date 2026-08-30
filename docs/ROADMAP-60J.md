@@ -1,132 +1,65 @@
 # Roadmap 60 jours — du lancement à 10 000 utilisateurs
 
-**Établie le 2026-08-27, consolidée le 2026-08-28.** Source de vérité unique du travail des
-60 prochains jours (2026-08-28 → 2026-10-26). Elle **consolide** les dix audits vivants du dépôt, les confronte au
-code de `main` et à la production `ykeugqfgklejcdbrmawy`, et ne garde que ce qui reste à faire.
+**Établie le 2026-08-27, consolidée le 2026-08-28, dédoublonnée le 2026-08-30.** Source de vérité
+unique du travail des 60 prochains jours (2026-08-28 → 2026-10-26). Elle consolide les dix audits
+vivants du dépôt, les confronte au code de `main` et à la production `ykeugqfgklejcdbrmawy`, et ne
+garde que ce qui reste à faire.
 
 > **Ce document ne remplace aucun audit.** `faille.md` reste la source de vérité sécurité,
 > `docs/LEGAL.md` la source de vérité juridique. Cette roadmap dit **quoi faire, dans quel ordre,
 > par qui**. Quand un audit et cette roadmap se contredisent sur un *fait*, l'audit gagne ; sur
 > une *priorité*, cette roadmap gagne.
->
-> **Règle d'entretien** : cocher une tâche ici au moment où son critère « Done » est vérifié, pas
-> quand le code est écrit. Une migration écrite n'est pas une migration appliquée — c'est la
-> leçon du 2026-08-27, elle vaut pour toute cette roadmap.
->
-> **Une tâche faite n'est jamais retirée** : elle est cochée dans les tableaux du §1, sortie de la
-> file d'exécution du §2, et racontée au §11. Le fil de ce qui s'est passé compte autant que la
-> liste de ce qui reste — c'est lui qui empêche de refaire un travail déjà fait, ou de croire fait
-> un travail seulement écrit.
+
+### Règles d'entretien
+
+1. 🔴 **Un seul endroit porte l'état d'une tâche : le tableau du §1.** Le §2 porte le calendrier et
+   une case cochée, jamais une date ni un récit ; le §3 des décisions, le §4 des interdits, le §6
+   le journal daté. En cas de contradiction, **le §1 gagne**. C'est la correction du 2026-08-30 :
+   sept sections portaient un statut pour la même tâche, elles avaient divergé, et rien ne disait
+   laquelle faisait foi (T-13 était « fait » dans quatre sections et « restant » dans une
+   cinquième).
+2. **On coche au moment où le critère « Done » est vérifié**, pas quand le code est écrit. Une
+   migration écrite n'est pas une migration appliquée : c'est la leçon du 2026-08-27, elle vaut
+   pour toute cette roadmap.
+3. **Une tâche faite n'est jamais retirée** : elle est cochée au §1 et racontée au §6. Le fil de ce
+   qui s'est passé compte autant que la liste de ce qui reste, c'est lui qui empêche de refaire un
+   travail déjà fait ou de croire fait un travail seulement écrit.
+4. **Recompter par script, jamais de tête.** Trois erreurs de comptage documentées en trois jours
+   dans ce dépôt. Un total ne prouve rien.
 
 ---
 
-## État au 2026-08-30 (nuit) — la session la plus chargée du dossier
+## 1. Tableau récapitulatif — 52 tâches, la seule table qui porte un statut
 
-**52 tâches.** Recompté **par script** sur les tableaux du §1, jamais de tête.
+**Décompte au 2026-08-30**, recompté **par script** sur les tableaux ci-dessous, jamais de tête.
 
 | | Nombre | Lesquelles |
 |---|---|---|
-| ✅ **Fait et vérifié** | **26** | T-03 · T-04 · T-07 · T-08 · T-10 · T-11 · T-12 · T-13 · T-16 · T-18 · T-19 · T-20 · T-24 · T-25 · T-26 · T-28 · T-29 · T-30 · T-31 · T-42 · T-44 · T-45 · **T-46** · T-48 · T-49 · T-50 |
-| 🟡 Partiel | 6 | T-05 · T-06 (moitiés bloquées par le plan Free ou par du code) · T-14 · T-23 · T-41 · T-51 |
-| ⚪ Clos sans suite | 3 | **T-01** (plan Free assumé) · **T-04b** (friction refusée) · T-27 |
-| ⬜ Ouvert | **17** | dont un seul développement, T-51 |
+| ✅ Fait et vérifié | **26** | T-03 · T-04 · T-07 · T-08 · T-10 · T-11 · T-12 · T-13 · T-16 · T-18 · T-19 · T-20 · T-24 · T-25 · T-26 · T-28 · T-29 · T-30 · T-31 · T-42 · T-44 · T-45 · T-46 · T-48 · T-49 · T-50 |
+| 🟡 Partiel | 6 | T-05 · T-06 · T-14 · T-23 · T-41 · T-51 |
+| ⚪ Clos sans suite | 3 | T-01 · T-04b · T-27 |
+| ⬜ Ouvert | **17** | T-02 · T-09 · T-15 · T-17 · T-21 · T-22 · T-32 · T-33 · T-34 · T-35 · T-36 · T-37 · T-38 · T-39 · T-40 · T-43 · T-47 |
 
-**Onze tâches fermées dans la soirée du 2026-08-29** : T-03, T-04, T-07, T-08, T-10, T-12, T-13,
-T-18, T-46, plus les moitiés accessibles de T-05 et T-06. Deux décisions structurantes rendues, et
-**trois des cinq angles morts définitivement refermés**.
-
-### Les trois faits qui comptent
-
-1. **AM-1 est traité pour sa moitié technique.** Le SMTP applicatif est en service :
-   `send.thecosmo.app` vérifié chez Resend, DKIM, SPF et MX du Return-Path posés chez IONOS,
-   expéditeur `thecosmo@send.thecosmo.app`, limite d'envoi relevée, quatre gabarits français en
-   production, email de réinitialisation reçu. **`npm run check:mail` est vert pour la première
-   fois depuis sa création.** La moitié « vérification d'identité » reste ouverte **par décision**
-   (T-04b), pas par oubli.
-2. **Il existe enfin une sauvegarde.** Elle n'a jamais existé jusqu'à cette nuit : le plan Free
-   n'en fournit aucune, et T-01 vient d'être écarté. Le dump quotidien est donc la seule copie de
-   la base, ce qui l'a fait passer de P3 à P0 dans la même journée où on l'a fermé.
-3. **Plus aucun finding ouvert en production dans `faille.md`.** G-1 est refermé, mig. 130
-   appliquée et prouvée acteur par acteur sur les données réelles.
-
-### Deux décisions d'Axel, à lire comme des choix et non comme des retards
-
-| Décision | Motif | Ce qui la compense | Ce qui doit la rouvrir |
-|---|---|---|---|
-| **Rester en plan Supabase Free** (T-01) | 125 $/mois pour 19 Mo de base et 28 comptes | T-46 passé en quotidien, seule sauvegarde | Egress > 3 Go/mois sur 5, ou le premier client payant |
-| **Ne pas activer la confirmation d'adresse** (T-04b) | Friction à l'inscription, sur un produit dont le problème mesuré est l'activation | Rien à ce jour. Une garde anti-faute-de-frappe sur le domaine reste proposée | Un compte injoignable au support, une inscription avec l'adresse d'un tiers, ou le premier client payant |
-
-### Qui bloque quoi
-
-| Qui | Nombre | Nature |
-|---|---|---|
-| **Axel seul** | 13 | Cloudflare, Search Console, annuaires, INPI, Stripe, actes administratifs |
-| **Axel puis moi** | 3 | T-38, T-39, T-02 : un drapeau ou un secret, puis je vérifie |
-| **Moi, sans rien attendre** | 1 | T-51 (performance de la landing) |
-| **Attend une décision produit** | 2 | T-23 · T-47 |
-
-> 🔴 **Ce que cette soirée a coûté et pourquoi le noter** : trois échecs successifs sur la seule
-> sauvegarde, chacun avec une cause différente et un message d'erreur qui désignait le mauvais
-> coupable. « password authentication failed » alors que l'identité était fausse ; « server
-> version mismatch » alors que le paquet était bien installé mais pas celui utilisé ; un run vert
-> qui rejouait l'ancien fichier. Les trois sont désormais **détectées et nommées par le workflow
-> lui-même**, avant la connexion. Une erreur qui accuse le mauvais champ coûte plus cher qu'une
-> erreur muette, parce qu'on cherche au mauvais endroit avec conviction.
-
----
-
-## 0. Ce que la confrontation au code a changé
-
-Trois catégories de résultats, et la troisième est celle qui compte.
-
-### Ce qui était annoncé « à faire » et qui est FAIT
-
-| Recommandation d'audit | Réalité vérifiée |
-|---|---|
-| `SCALABILITY.md` §9 : « `useTeamOKRs` en `live` conditionnel, ~15 min » | ✅ **Déjà fait.** `team-okrs/hooks.ts:39` porte `...(options?.live ? { refetchInterval: 30_000 } : {})`. Les 4 `refetchInterval` restants sont tous conditionnels, vérifié par grep nominatif |
-| `ACQUISITION.md` §7.1 : « appliquer la mig. 099 » | ✅ Appliquée en prod le 2026-08-23 |
-| `ARCHITECTURE.md` §5 : dérive repo ↔ prod | ✅ Refermée, seule la `130` est en attente |
-| `RGPD.md` §3 : rétention des tables analytiques | ✅ mig. 114 en prod |
-| `POST-AUDIT-GUIDE.md` point 4 : harnais RLS d'intégration en CI | ✅ Job `rls-integration`, 8 fichiers dans `e2e/rls/` |
-| `docs/TESTING.md` : couverture rouge | ✅ Verte au 2026-08-27 soir, 1 802 tests, seuils jamais baissés |
-
-### Ce qui est OBSOLÈTE et qu'il ne faut pas faire
-
-| Recommandation | Pourquoi elle tombe |
-|---|---|
-| `SEO.md` §3 : « approfondir les 5 articles les plus courts » | **Renversée par le §4 du même document.** Un article de 2 000 mots en position 88 reste en position 88. Le facteur limitant est l'autorité de domaine, pas la longueur |
-| `PERFORMANCE.md` : « migrer `vendor-charts` vers visx / chart.js » | Caduc : la landing n'importe plus Recharts, le chunk est réellement lazy |
-| `SCALABILITY.md` §7 : supprimer les 43 index inutilisés | Décision déjà prise : on ne supprime rien. 18 Mo de base, coût d'écriture négligeable |
-| `npm audit fix` sur `react-router` | **Piège actif.** Il propose 7.11.0, qui réintroduit l'open redirect `GHSA-wrjc-x8rr-h8h6`. La sortie est React 19 + router 8, en PR dédiée, hors de ces 60 jours |
-| Redis / file d'attente / read replicas | YAGNI à 10 000 utilisateurs. Voir §14 |
-| `ACQUISITION.md` §4 : travailler la boucle de partage | Explicitement écarté par l'audit lui-même : il n'y a personne pour partager |
-
-### Ce que les audits ont MANQUÉ — vérifié en production le 2026-08-27
-
-Quatre angles morts, dont un est le plus gros risque de lancement du dossier.
-
-> **Repassés en revue en production le 2026-08-29.** AM-2 est fermé, AM-4 à moitié. AM-1,
-> AM-3 et AM-5 sont **strictement inchangés** : `check:mail` sort les mêmes trois échecs,
-> la base rend le même `28 / 1 / 3`, et `https://thecosmo.app/signup` ne charge toujours
-> aucun script Cloudflare. Le compteur d'inscriptions n'a pas bougé parce que la dernière
-> inscription date du 2026-08-21, pas parce que quelque chose a été réparé.
-
-| # | Angle mort | Preuve | Gravité |
-|---|---|---|---|
-| **AM-1** | **Aucun SMTP applicatif pour Supabase Auth, ET aucune vérification d'adresse à l'inscription.** Les deux se tiennent : les confirmations sont désactivées, donc n'importe qui peut s'inscrire avec l'adresse d'un tiers et une faute de frappe crée un compte injoignable à vie ; et on ne peut pas les activer, parce que chaque inscription passerait alors par l'expéditeur intégré de Supabase, plafonné à quelques envois par heure | `grep -rin "smtp"` → 0 résultat hors Resend (qui ne sert QUE `report-bug` et `renewal-notice`, jamais Auth). En base : 28 comptes, `confirmation_sent_at` renseigné sur **1**, délai création → confirmation de **15 ms** ; `recovery_sent_at` sur **3**, donc les resets de mot de passe partent bien par cet expéditeur. DNS : `resend._domainkey` **absent**, le domaine n'est pas vérifié chez Resend | 🔴 **P0.** Mode de défaillance **corrélé au trafic** : il ne se déclenche que le jour d'une campagne, et il ressemble à « la campagne n'a pas converti ». GoTrue répond `over_email_send_rate_limit`, que l'app traduit par « Trop de tentatives » — exact côté serveur, **trompeur** côté inscrit, qui n'a rien fait de trop |
-| ✅ **AM-2** | **FERMÉ.** ~~**La fonction `report-bug` n'est PAS déployée en production.**~~ **DÉPLOYÉE ET FONCTIONNELLE le 2026-08-29**, envoi réel vérifié (version 1, `verify_jwt` actif). Fumée passée en prod : `POST` sans corps renvoie `503 mail_not_configured`, `GET` renvoie `405`, sans JWT le gateway renvoie `401`. Les trois prouvent que les modules chargent, `_shared/alert.ts` compris. ⚠️ **Elle ne peut pas encore envoyer** : `RESEND_API_KEY` n'est pas posée, et le domaine n'est pas vérifié chez Resend (AM-1). Le 503 est la réponse PRÉVUE dans ce cas, et `BugReportModal` bascule sur le `mailto` : le signalement n'affiche plus d'erreur d'appel, il propose un repli assumé. Reste le secret, puis un vrai envoi. **La fonction est en prod mais PAS dans un dépôt qui la décrit comme déployée par hasard** Elle existe dans le dépôt, `BugReportModal` l'invoque, `SECURITY.md` et `DEPLOYMENT.md` la décrivent comme livrée | `list_edge_functions` en prod : 7 fonctions, `report-bug` n'y est pas | 🟠 **P1.** Le repli `mailto` évite l'impasse, mais chaque signalement affiche d'abord une erreur. C'est le seul canal de support du produit, à l'instant où on va en avoir besoin |
-| **AM-3** | **Aucune protection anti-bot sur l'inscription.** Ni CAPTCHA, ni Turnstile, ni hCaptcha, nulle part | `grep -rin "captcha\|turnstile"` → 0 résultat | 🟠 **P1.** Couplé à AM-1 : une vague de bots vide le quota d'emails et rend les inscriptions légitimes impossibles. Les deux se corrigent ensemble ou pas du tout |
-| 🟡 **AM-4** | **À moitié fermé le 2026-08-29** : `.github/workflows/uptime.yml` sonde `https://thecosmo.app/` et `$SUPABASE_URL/auth/v1/health` deux fois par heure, et ouvre une issue GitHub (donc un mail) en cas de panne, refermée seule au retour du vert. 🔴 **Ce n'est pas T-17** : le cron d'Actions dérive de plusieurs dizaines de minutes et ne survit pas à une panne de GitHub. La sonde externe reste à brancher. ~~Aucune surveillance de disponibilité.~~ Personne n'est prévenu si `thecosmo.app` ou l'API Supabase tombe. `OPS_ALERT_WEBHOOK_URL` n'est pas posé, donc `alert.ts` est un no-op silencieux | `grep -rin "uptime\|statuspage"` → 0 résultat | 🟠 **P2.** Acceptable à 28 comptes, plus du tout à 100 |
-| ✅ **AM-5** | **FERMÉ le 2026-08-29.** ~~`tmp-org-price-setup`, fonction temporaire **encore déployée en production**, absente du dépôt.~~ Neutralisée (répond 410, aucun secret), donc sans risque, mais c'est un artefact non versionné dans la surface exposée | `get_edge_function` | ⚪ **P3**, quick win de 2 minutes |
-
----
-
-## 1. Liste consolidée — 51 tâches, chacune une seule fois
+> Ce décompte est le seul résumé du document, et il vit **collé à sa source**. La version
+> précédente le tenait 500 lignes plus haut, dans une section qui avait cessé d'être mise à jour :
+> c'est ainsi qu'une tâche pouvait être « faite » ici et « restante » ailleurs.
 
 Priorité : **P0** bloque le lancement · **P1** risque important · **P2** rapidement après ·
 **P3** optimisation · **P4** nice to have.
 Effort : **XS** <1 h · **S** 1-3 h · **M** 3-8 h · **L** 1-2 j · **XL** 3-5 j · **XXL** >5 j.
 Piste : **A** = agent backend/infra/sécu · **B** = agent front/UX/tests · **X** = Axel seul.
+
+**Angles morts** cités par la colonne « Pourquoi ». Ce sont les cinq trous trouvés en production
+le 2026-08-27, que les dix audits vivants avaient tous manqués. Leur état se lit sur la tâche qui
+les porte, jamais ici.
+
+| # | Ce que c'est | Tâche qui le referme |
+|---|---|---|
+| AM-1 | Aucun SMTP applicatif pour Supabase Auth, et aucune vérification d'adresse à l'inscription | T-03, T-04b |
+| AM-2 | La fonction `report-bug`, seul canal de support, n'était pas déployée en production | T-12 |
+| AM-3 | Aucune protection anti-bot sur l'inscription | T-14 |
+| AM-4 | Aucune surveillance de disponibilité : personne n'est prévenu si le site tombe | T-17 |
+| AM-5 | `tmp-org-price-setup`, fonction temporaire déployée et absente du dépôt | T-18 |
 
 ### PHASE 1 — Avant d'ouvrir l'acquisition
 
@@ -202,64 +135,7 @@ Piste : **A** = agent backend/infra/sécu · **B** = agent front/UX/tests · **X
 
 ---
 
-## 2. Ordre d'exécution — ce qu'il reste, dans l'ordre
-
-> **Réécrit le 2026-08-28.** Les onze tâches fermées sont sorties de cette file ; elles restent
-> cochées dans les tableaux du §1 et racontées au §11. Une file d'exécution qui garde ses lignes
-> barrées cesse d'être une file.
-
-### 🔴 Ce qui bloque le GO — il reste QUATRE entrées
-
-```
- 1. T-14  les 2 cles Turnstile, DANS L ORDRE          (X, XS)  cf. DEPLOYMENT §2quater
-          site key sur Vercel + redeploiement D ABORD, activation Supabase ENSUITE.
-          L inverse rend l inscription impossible pour tout le monde.
- 2. T-15  valider la chaine ?ref= sur un compte reel   (X, S)
- 3. T-17  sonde de disponibilite externe               (X, XS)  palliatif deja en place
- 4. T-02  drill de restauration du DUMP, chronometre   (X + A, M)  dep. T-46
-        ── ▲ GO / NO-GO ▲ ──
-```
-
-> **Sept entrees ont quitte cette file dans la soiree du 2026-08-29** : T-01 (ecarte), T-03, T-04,
-> T-04b (ecarte), T-10, T-12, T-13, T-18. Ce qui reste ne demande plus une seule ligne de code, et
-> **plus aucune ne depend d une autre**, sauf T-02 qui attend la sauvegarde, laquelle existe
-> desormais.
-
-### 🟠 Puis, en parallèle : la CI, l'acquisition, le produit
-
-```
- 5. T-09  secret scanning GitHub                       (X, XS)
- 6. T-22  etat des lieux GSC + Ahrefs   ‖  T-21 annuaires, par vagues de 5   (X)
- 7. T-23  premier ecran apres inscription  ⟵ ATTEND UNE DECISION, pas du code (X puis B)
- 8. T-51  la landing a 55 de performance, mesuree quatre fois                (B)
-```
-
-### 🟢 Enfin : encaisser, puis rembourser la dette
-
-```
-16. T-33 domiciliation  →  T-32 IMMATRICULATION INPI    (X)  ⟵ delai incompressible
-17. T-35 portail Stripe  ‖  T-34 mediateur  ‖  T-43 DPA  (X)
-18. T-36  Stripe en compte live                          (X + A, M)   dep. 16
-19. T-37  mentions legales + factures conformes          (X + B)      dep. 16
-20. T-38  rearmer les DEUX drapeaux ensemble             (A, XS)      dep. 17,18,19
-21. T-39  recette de paiement, vraie carte  →  T-40 CRON_SECRET      (X + A)
-22. T-41 mesure a volume  ‖  ~~T-45 TaskTable~~ ✅  ‖  T-46 pg_dump (secret)  ‖  T-47 sentry
-23. T-51  la landing a 55 de performance, mesuree quatre fois                      (B)
-```
-
-**Deux choses à retenir de cet ordre.**
-
-1. **Le GO n'attend plus une seule ligne de code.** Onze entrées, presque toutes en XS, toutes
-   dans une console. Ce qui pouvait être préparé en amont l'a été : runbooks, gabarits d'email,
-   front prêt pour la confirmation d'adresse, Turnstile câblé mais inerte, gardes `check:mail` et
-   `check:bundle`.
-2. **T-32 est la seule tâche dont le calendrier ne dépend pas de nous.** Entre le dépôt au guichet
-   INPI et le SIREN il s'écoule plusieurs semaines, et rien de la ligne 18 à 21 ne peut commencer
-   avant. Déposé après la semaine 7, l'encaissement sort des 60 jours.
-
----
-
-## 3. Roadmap semaine par semaine
+## 2. Roadmap semaine par semaine
 
 ### SEMAINE 1 — 28 août → 3 septembre · **Rendre la production rattrapable**
 
@@ -270,36 +146,37 @@ quelqu'un.
 (pas de PITR), et une Edge Function qui échoue ne prévient personne. Tout ce qui suit dans cette
 roadmap suppose qu'on puisse se tromper sans tout perdre.
 
-- [x] ✅ **T-19** — committer les trois tests non suivis et les douze docs modifiés · P1 · XS · X
+- [x] **T-19** — committer les trois tests non suivis et les douze docs modifiés · P1 · XS · X
   **Done** : `git status` propre, CI verte sur `main`.
-- [⚪] **T-01** — ~~Supabase plan Pro + PITR~~ **ÉCARTÉ le 2026-08-29** : on reste en Free (25 $ + 100 $/mois non justifiés pour 19 Mo et 28 comptes). **Compensé par T-46 en quotidien**, désormais la seule sauvegarde. Seuils de réouverture : egress > 3 Go/mois, ou premier client payant.
+- [⚪] **T-01** — Supabase plan Pro + PITR · P0 · XS · X · écarté ; motif, compensation et seuils de réouverture au §3.
 - [ ] **T-02** — drill de restauration **du dump quotidien** vers un projet jetable · P0 · M · X + A · dép. **T-46**
   **Done** : la date, la durée mesurée et le RTO constaté sont inscrits dans `DEPLOYMENT.md` §7 ;
   un login réel et une création de tâche ont été faits sur le projet restauré ; le projet jetable
   est supprimé. Un drill dont on ne peut pas citer le chronomètre n'a pas eu lieu.
 - [~] **T-05 à T-09** — les réglages de console · P0/P1 · X
-  ✅ **Faits le 2026-08-29** : longueur minimale 12 (alignée sur le code, et l'aide des Réglages qui annonçait encore 8 a été corrigée), *Secure email change*, allowlist de redirection relue (**`/reset-password` y manquait**, ajouté), 2FA sur le compte Supabase.
-  ⬜ **Reste T-09** : secret scanning GitHub.
+  **Done** : chaque réglage est relu dans la console et recopié ici, aucun n'étant lisible depuis
+  le dépôt. L'allowlist de redirection doit contenir **toutes** les pages qui la demandent,
+  `/reset-password` comprise.
   ❌ **Hors de portée en plan Free** : `auth_leaked_password_protection` est réservée au plan Pro. L'advisor restera rouge, ce n'est pas un oubli.
   ⚠️ **T-06 n'était pas la tâche qu'elle annonçait** : la 2FA du compte Supabase est faite, mais protéger `/admin` demande du **code** (l'app n'a ni enrôlement MFA ni garde `aal2`).
-- [x] ✅ **T-16** — vérifier `VITE_SENTRY_DSN` sur Vercel · P1 · XS · X
+- [x] **T-16** — vérifier `VITE_SENTRY_DSN` sur Vercel · P1 · XS · X
   **Done** : une erreur déclenchée volontairement en prod apparaît dans Sentry sous 2 minutes.
-- [x] ✅ **T-13** — `OPS_ALERT_WEBHOOK_URL` posé le 2026-08-29 (Discord)
+- [x] **T-13** — poser `OPS_ALERT_WEBHOOK_URL` · P1 · XS · X
   **Done** : prouvé par un appel réel à `renewal-notice` en production, qui échoue en fermé faute de `CRON_SECRET` et a fait partir l'alerte dans le canal. Pas un POST manuel : le vrai chemin du code.
-- [x] ✅ **T-10 / T-11** · mig. 130 appliquée et vérifiée le 2026-08-29, `check:drift` propre derrière · P1 · XS
+- [x] **T-10 / T-11** — appliquer la mig. 130, puis `check:drift` · P1 · XS · X applique / A vérifie
   **Done** : le ledger affiche `130`, `check:drift` sort 0, et surtout la requête de vérification
   du pied de la migration renvoie **0** pour un membre simple.
   ⚠️ **Ne pas attendre de signal du test d'intégration** : il tourne sur une base vierge, où la 130
   est appliquée quoi qu'il arrive. Son rouge du 2026-08-28 venait d'une colonne `status` que le
   test inventait, pas de la production.
-- [x] ✅ **T-03** — SMTP Auth via Resend **EN SERVICE le 2026-08-29** · P0 · M · X
+- [x] **T-03** — SMTP Auth via Resend · P0 · M · X
   Procédure pas à pas : [`DEPLOYMENT.md` §2ter](./DEPLOYMENT.md). Gabarits prêts dans
   `supabase/templates/`.
-  **Done** : `npm run check:mail` sort **0** (il sort 1 aujourd'hui, trois contrôles en échec) ;
+  **Done** : `npm run check:mail` sort **0** ;
   une inscription de test reçoit son email en moins d'une minute, depuis `@send.thecosmo.app`,
   **hors dossier indésirables sur Gmail ET sur Outlook** ; la limite *Emails per hour* a été
   relevée — elle ne bouge pas toute seule quand on branche un SMTP.
-- [x] ✅ **T-12** — `report-bug` déployée et **fonctionnelle** le 2026-08-29 · P1 · XS · A
+- [x] **T-12** — déployer `report-bug` · P1 · XS · A
   **Done** : `list_edge_functions` liste `report-bug` ; un signalement envoyé depuis la prod
   arrive sur `contact@thecosmo.app` **sans** que le repli `mailto` s'affiche.
 
@@ -312,16 +189,16 @@ mesurable.
 utilisateur. Elle n'a jamais été éprouvée sous volume, ni protégée des bots, ni vérifiée de bout
 en bout côté attribution.
 
-- [x] ✅ **T-04** gabarits collés le 2026-08-29 · [⚪] **T-04b** *Confirm email* **écarté** (friction assumée, cf. `faille.md` § G-2)
+- [x] **T-04** — coller les 4 gabarits d'email · [⚪] **T-04b** *Confirm email*, écarté (friction assumée, cf. `faille.md` § G-2 et §3)
   **Done** : les quatre emails reçus sont ceux de `supabase/templates/` ; une inscription de test
   n'ouvre plus de session et affiche « Vérifiez votre boîte mail » ; le lien reçu active bien le
   compte. **Dans cet ordre** : activer les confirmations avant d'avoir le SMTP, c'est ouvrir
   l'inscription sur un expéditeur plafonné.
-- [~] 🟡 **T-14** — Turnstile sur inscription et reset · P1 · S · **code livré, deux réglages restants**
+- [~] **T-14** — Turnstile sur inscription et reset · P1 · S · A + B
   **Done** : une inscription sans jeton de challenge est refusée côté Supabase (pas seulement
   masquée côté client) ; le parcours démo → inscription reste franchissable en un essai ; un test
   E2E couvre le cas nominal.
-- [x] ✅ **T-20** — audit des deux drapeaux de facturation · P0 · XS · A
+- [x] **T-20** — audit des deux drapeaux de facturation · P0 · XS · A
   **Done** : `ENTERPRISE_BILLING_ENFORCED` lu dans `premium-config.ts` **et**
   `billing_flags.enterprise_seat_limit` lu en base sont tous deux `false`, avec la requête et sa
   date citées dans le commit. Jamais depuis un document.
@@ -332,9 +209,10 @@ en bout côté attribution.
 - [ ] **T-17** — sonde de disponibilité externe · P2 · XS · X
   **Done** : une alerte arrive sur le même canal que `OPS_ALERT_WEBHOOK_URL` quand la sonde est
   volontairement pointée sur une URL invalide.
-- [x] ✅ **T-18** — supprimée le 2026-08-29. **Done** : 7 fonctions en prod, elle n'y est plus, l'appel rend `404` (avant : `410`).
+- [x] **T-18** — supprimer `tmp-org-price-setup` · P3 · XS · X
+  **Done** : la fonction n'est plus listée en production, et l'appel rend `404`.
 
-> 🚦 **Fin de semaine 2 : passage du GO / NO-GO du §5.**
+> 🚦 **Fin de semaine 2 : passage du GO / NO-GO du §3.**
 
 ### SEMAINE 3 — 11 → 17 septembre · **Ouvrir l'acquisition, et regarder**
 
@@ -349,14 +227,14 @@ référents est franchi. Rien d'autre ne le remplace.
   indexées, domaines référents.
 - [ ] **T-21 (vague 1)** — les 5 premiers annuaires de `ACQUISITION-BACKLINKS.md` · P1 · X
   **Done** : 5 lignes remplies dans le tableau de suivi, avec la date de soumission et le statut.
-- [x] ✅ **T-23 (mesure)** — instrumenter l'activation · P1 · B
+- [x] **T-23 (mesure)** — instrumenter l'activation · P1 · B
   **Done** : on peut répondre par une requête à « combien de comptes créent une tâche le jour de
   leur inscription » et « combien reviennent le lendemain ». La correction vient après la mesure,
   pas avant.
-- [x] ✅ **T-30** — publier les durées de conservation · P2 · XS · B
+- [x] **T-30** — publier les durées de conservation · P2 · XS · B
   **Done** : les trois durées sont dans la politique de confidentialité, et `RGPD.md` §6 passe le
   point 3 au vert.
-- [x] ✅ **T-28** · resserrer les seuils Lighthouse · P2 · S · A
+- [x] **T-28** · resserrer les seuils Lighthouse · P2 · S · A
   **Done** : chaque seuil est posé juste au-dessus de la valeur du premier run réel, et le job
   reste vert.
 
@@ -372,17 +250,16 @@ sans corriger ces deux points revient à remplir un seau percé.
 - [ ] **T-23 (correction)** — traiter le premier écran après inscription · P1 · L · B
   **Done** : une action utile est faite par un nouveau compte dans les 60 premières secondes dans
   le parcours de recette, et la mesure de la semaine 3 est rejouée deux semaines plus tard.
-- [x] ✅ **T-24** — détection de nouvelle version · P2 · M · B
+- [x] **T-24** — détection de nouvelle version · P2 · M · B
   **Done** : un onglet ouvert sur l'ancien build affiche l'invitation à recharger en moins de
   5 minutes après un déploiement ; vérifié dans deux onglets réels, pas en test unitaire seul.
-- [x] ✅ **T-29** — chunk d'entrée sous 92 ko gzip · P2 · M · B
+- [x] **T-29** — chunk d'entrée sous 92 ko gzip · P2 · M · B
   **Done** : `npm run check:bundle` est vert **avec le plafond redescendu à 92 000**. Un plafond
   qu'on ne redescend pas n'est pas un budget.
-- [x] ✅ **T-25** · barre d'onglets entreprise sur mobile · P2 · M · B
-  **Done** : à 375 px, l'onglet actif d'un lien profond `?tab=members` est ramené dans le champ et des dégradés disent qu'il reste des onglets. Vérifié dans le navigateur par deux tests Playwright, **témoin exécuté** : les deux échouent contre l'ancienne barre.
+- [x] **T-25** · barre d'onglets entreprise sur mobile · P2 · M · B
   **Done** : les 7 destinations sont atteignables sans connaissance préalable sur un écran de
   375 px, vérifié dans le navigateur, pas déduit d'une règle.
-- [x] ✅ **T-31** · procédure de support écrite · P2 · S · X
+- [x] **T-31** · procédure de support écrite · P2 · S · X
   **Done** : un document d'une page dit qui répond, sous quel délai, et où arrivent les
   signalements.
 - [ ] **T-21 (vague 2)** — annuaires 6 à 12 · X
@@ -400,12 +277,12 @@ ces 60 jours. C'est la seule tâche de la roadmap dont le délai ne dépend pas 
 - [ ] **T-32** — déposer l'immatriculation au guichet unique INPI · P1 · M · X
   **Done** : dossier déposé, numéro de suivi conservé. Le SIREN arrivera plus tard, ce n'est pas
   le critère.
-- [x] ✅ **T-44** — recherche d'antériorité « COSMO » · P2 · S · **faite via TMview**
+- [x] **T-44** — recherche d'antériorité « COSMO » · P2 · S · X
   **Done** : les résultats INPI et EUIPO en classes 9 et 42 sont copiés dans `LEGAL.md` §F1, avec
   une conclusion écrite : on garde le nom, ou on consulte un conseil.
-- [x] ✅ **T-42** — vérifier l'URL du pooler en prod · P2 · XS · A
+- [x] **T-42** — vérifier l'URL du pooler en prod · P2 · XS · A
 - [ ] **T-21 (vague 3)** — annuaires 13 à 20 · X
-- [x] ✅ **T-26** — unifier les grammaires de filtre · P2 · M · B
+- [x] **T-26** — unifier les grammaires de filtre · P2 · M · B
 
 ### SEMAINE 6 — 2 → 8 octobre · **Rendre la chaîne de paiement réelle**
 
@@ -425,7 +302,7 @@ facture. Préparer maintenant évite de tout découvrir le jour de la bascule.
   webhook live est enregistré avec les 5 mêmes events, `STRIPE_SECRET_KEY` et
   `STRIPE_WEBHOOK_SECRET` sont remplacés, et un appel de fumée au webhook répond
   « Invalid signature » (donc la fonction tourne et vérifie).
-- [~] 🟡 **T-41** — mesure de scalabilité à volume réel · P2 · M · A · **coût par ligne mesuré, plan à volume non**
+- [~] **T-41** — mesure de scalabilité à volume réel · P2 · M · A
   **Done** : `EXPLAIN (analyze, buffers)` à chaud sur une organisation de 50 membres et
   ~2 000 `team_tasks`, ratio buffers / lignes scannées inscrit dans `SCALABILITY.md` §9 en
   remplacement de la projection.
@@ -458,117 +335,120 @@ drapeaux ne bougent qu'ici, et ensemble.
 **Pourquoi cette semaine** : une fois la boucle acquisition → produit → encaissement bouclée, la
 question redevient « à quelle vitesse peut-on avancer », donc la dette du socle.
 
-- [x] ✅ **T-45** · découper `TaskTable.tsx` · P3 · L · B
+- [x] **T-45** · découper `TaskTable.tsx` · P3 · L · B
   **Done** : plus aucun fichier au-dessus de 900 lignes, et le budget de `architecture.guard`
   redescendu d'autant. Le cliquet ne descend que quand la mesure descend.
-- [~] 🟡 **T-46** · `pg_dump` mensuel hors fournisseur · P3 · S · A · **workflow livré, secret restant**
+- [~] **T-46** — sauvegarde `pg_dump` hors fournisseur · P0 · S · A livre / X pose le secret
 - [ ] **T-47** — trancher `vendor-sentry` · P3 · S · X décide
 - [ ] **Revue de fin de cycle** : remesurer les dix notes d'audit, mettre à jour
   `docs/README.md`, archiver cette roadmap et en écrire une nouvelle. Une roadmap ne se met pas à
   jour, c'est un instantané — même règle que les audits.
 
----
-
-## 4. Répartition sur trois pistes
-
-### AGENT A — backend, infrastructure, sécurité, base de données
-
-Peut travailler sans jamais toucher un composant React.
-
-**Reste** : T-12 (déployer `report-bug`, après le secret) · T-36 côté secrets et Edge Functions ·
-T-38 (drapeau serveur) · T-39 (recette de paiement) · T-41 (mesure à volume) · T-46 (`pg_dump`) ·
-**T-49** (`rls-integration`, exige Docker) · T-28 (seuils Lighthouse, derrière T-50) ·
-vérification de T-10 et de T-02.
-
-✅ *Faits* : T-11, T-20, T-42.
-
-**Contrainte permanente** : l'agent A ne **jamais** écrire en base par le MCP Supabase — lecture
-seulement. Les migrations sont appliquées par Axel, vérifiées par l'agent.
-
-### AGENT B — frontend, UX, tests, analytics, contenu produit
-
-Peut travailler sans jamais toucher une migration.
-
-**Reste** : T-23 (correction de l'activation, **dès que la direction produit est donnée**) ·
-T-25 (barre d'onglets mobile) · T-37 côté mentions légales · T-45 (`TaskTable`).
-
-✅ *Faits* : T-14 côté formulaire, T-24, T-26, T-29, T-30, T-48. ⚪ T-27 clos sans suite.
-
-> ⚠️ **La piste B est presque vide, et ce n'est pas une bonne nouvelle** : il ne reste que quatre
-> lignes, dont une bloquée sur une décision. Tout le chemin critique du lancement est passé côté
-> Axel. Mettre un second agent sur du frontend maintenant produirait du travail qui n'avance pas
-> le GO.
-
-### AXEL — tout ce qui exige un humain, un compte ou une signature
-
-**Comptes et consoles** : T-01, T-05 à T-09, T-13, T-16, T-17, T-18, T-35, T-36, T-40.
-**Base de données** : T-10 (appliquer), T-19 (committer).
-**Juridique et administratif** : T-32, T-33, T-34, T-43, T-44, T-37.
-**Acquisition et mesure** : T-15, T-21, T-22, T-31.
-**Décisions** : T-47, et l'arbitrage de tout GO / NO-GO du §5.
-
-### Dépendances entre pistes — les quatre points de synchronisation
-
-1. **T-03 (SMTP, Axel) bloque T-04 (agent B), T-12 (agent A) et T-14.** C'est le nœud le plus
-   contraignant de la semaine 1 : rien de l'email ne peut avancer avant que le domaine soit
-   vérifié.
-2. **T-10 (Axel applique) bloque T-11 (agent A vérifie).** Flux habituel du dépôt : Axel applique,
-   Claude vérifie.
-3. **T-32 (immatriculation, Axel) bloque T-37, donc T-38, donc T-39.** Toute la piste
-   monétisation est derrière un délai administratif : c'est pourquoi elle démarre en semaine 5.
-4. **T-23 (mesure, agent B) doit précéder T-23 (correction).** Corriger l'activation avant de
-   l'avoir mesurée, c'est deviner. La roadmap sépare volontairement les deux moitiés de deux
-   semaines.
 
 ---
 
-## 5. GO / NO-GO avant lancement
+## 3. Décisions assumées et seuils de réouverture
 
-### 🔴 NO-GO — à corriger absolument
+Ce que l'on a choisi de ne PAS faire, avec le prix de ce choix et l'événement qui doit le rouvrir.
+Ce ne sont pas des retards : un risque assumé et daté vaut mieux qu'un risque oublié.
 
-| # | Condition | Vérification |
-|---|---|---|
-| 🟡 1 | ~~**PITR actif**~~ **→ condition RÉÉCRITE le 2026-08-29**, le PITR ayant été écarté (T-01, plan Free). Elle devient : **une sauvegarde existe ET a été restaurée une fois** (T-46, T-02) | ✅ La sauvegarde existe : artefact de 385 ko, quotidien. ⬜ Reste le drill, dont le chronomètre doit être écrit dans `DEPLOYMENT.md` §7 |
-| ✅ 2 | ~~**Emails d'authentification servis par un SMTP applicatif**~~ **LEVÉ le 2026-08-29** : `npm run check:mail` sort **0**, un email de réinitialisation est reçu depuis `thecosmo@send.thecosmo.app` hors indésirables. ⚠️ La **confirmation d'adresse** ne fait plus partie de la condition : elle est **écartée par décision** (T-04b), pas oubliée | `check:mail` vert, email reçu |
-| 🟡 3 | **Réécrite le 2026-08-29, l'ancienne était inatteignable.** ~~Protection contre les mots de passe compromis~~ : ❌ **réservée au plan Pro**, donc hors de portée tant qu'on reste en Free ; l'advisor restera rouge. ~~MFA admin~~ : ✅ 2FA posée sur le compte Supabase, mais protéger `/admin` demande du **code** que l'app n'a pas. Ce qui reste opposable : **longueur minimale 12**, posée | Longueur 12 côté serveur, 2FA active sur le compte Supabase |
-| 4 | **Chaîne `?ref=` prouvée de bout en bout** (T-15) | `acquisition_source` renseignée sur un compte réel créé pour l'occasion |
-| ✅ 5 | ~~Les deux drapeaux de facturation à `false`, vérifiés séparément~~ (T-20) | **Levé le 2026-08-28** : `premium-config.ts` et `billing_flags` lus séparément, tous deux `false` |
-| ✅ 6 | ~~**Alerte opérationnelle branchée**~~ **LEVÉ le 2026-08-29** : Sentry en production (T-16) **et** `OPS_ALERT_WEBHOOK_URL` posé, prouvé par une alerte réelle partie d'un appel à `renewal-notice` (T-13). S'ajoute la sonde de disponibilité `uptime.yml`, qui ouvre une issue GitHub en cas de panne | Alerte reçue dans le canal |
+### Les deux décisions d'Axel du 2026-08-29
 
-| ✅ 7 | ~~**Les cinq jobs CI verts sur `main`**~~ (T-49, T-50) | **LEVÉ le 2026-08-29**, run de `493ccaf` : `lint-test-build`, `audit`, `e2e`, `rls-integration` et `lighthouse` tous en `success`. Premier run entièrement vert depuis au moins le 2026-08-24. Historique : **Ajouté le 2026-08-28**, parce que la condition existait au §GO sans figurer ici — et qu'elle était fausse depuis quatre jours sans que personne le voie. `e2e` est réparé ; `rls-integration` et `lighthouse` restent rouges. ⚠️ **Corrigé le 2026-08-29** : sur le run de `076b1d1`, ils étaient **trois**, pas deux : `lint-test-build` échouait à l'étape `tsc -b`, cassé par le commit de T-26 lui-même. Correctif `6d694bf`, **confirmé vert en CI** sur le run de `5e2ae51`. ✅ **Au 2026-08-29 en fin de journée : quatre jobs sur cinq verts** (`lint-test-build`, `audit`, `e2e`, `lighthouse`). Seul `rls-integration` reste rouge |
+| Décision | Motif | Ce qui la compense | Ce qui doit la rouvrir |
+|---|---|---|---|
+| **Rester en plan Supabase Free** (T-01) | 125 $/mois pour 19 Mo de base et 28 comptes | T-46 passé en quotidien, seule sauvegarde | Egress > 3 Go/mois sur 5, ou le premier client payant |
+| **Ne pas activer la confirmation d'adresse** (T-04b) | Friction à l'inscription, sur un produit dont le problème mesuré est l'activation | Rien à ce jour. Une garde anti-faute-de-frappe sur le domaine reste proposée | Un compte injoignable au support, une inscription avec l'adresse d'un tiers, ou le premier client payant |
 
-### 🟠 Risques acceptables au lancement — assumés, à ne pas confondre avec « réglés »
+### Risques acceptés au lancement, à ne pas confondre avec « réglés »
 
 | Risque | Pourquoi il est acceptable maintenant | Quand il cesse de l'être |
 |---|---|---|
 | **Aucune monétisation active** (les deux drapeaux à `false`, Stripe en test) | Sans SIREN, encaisser serait du travail dissimulé. Le produit est gratuit et le dit | Dès le SIREN — T-38 |
 | **Aucune vérification d'adresse à l'inscription** (T-04b écarté) | Décision d'Axel du 2026-08-29 : la friction coûte des inscrits de façon certaine, le risque est probabiliste. Le SMTP étant en service, l'interrupteur reste à un clic | Un compte injoignable au support, une inscription avec l'adresse d'un tiers, ou le premier client payant |
 | **Plan Supabase Free : aucune sauvegarde native, aucun SLA, logs 24 h** (T-01 écarté) | 125 $/mois ne se justifient pas pour 19 Mo et 28 comptes. Le dump quotidien couvre la perte totale, pas le retour à hier | Egress > 3 Go/mois sur les 5 inclus, ou le premier client payant |
-| ~~**`report-bug` non déployé**~~ | ✅ **Levé le 2026-08-29** : déployée, secrets posés, et un signalement de test réellement reçu sur `contact@thecosmo.app` | — |
 | **Position 88 en SEO, 0 domaine référent** | C'est un état de départ, pas un défaut. La correction est manuelle et longue | Jamais bloquant, mais rien ne s'améliore sans T-21 |
 | **Jamais mesuré à volume** (`team_tasks`) | 4 organisations, 8 tâches d'équipe en prod | À la première organisation de plus de 20 personnes — T-41 |
 | **13 fichiers > 600 lignes** (14 la veille) | Le cliquet empêche la croissance nette, et il a fait sortir `AuthContext` du budget le 2026-08-28 — première coupe dans le socle et non dans `/entreprise` | Jamais un bloquant produit, seulement un coût de vitesse |
 | **`en` servie mais non indexable** | Choix délibéré : le contenu des pages est en français | Quand le contenu sera traduit |
-| ~~**Onglets périmés**~~ (T-24) | ✅ **Levé le 2026-08-28** : un onglet resté ouvert sur un vieux build propose de recharger. Vérifié en production | — |
 | **CVE dev-only et `GHSA-qwww-vcr4-c8h2`** | Inapplicables à une SPA Vite sans RSC, verrouillé par `no-open-redirect.test.ts` | À la migration React 19 |
 | **Le nom « COSMO » n'est pas libre** en classes 9 et 42 | 11 marques actives, dont une d'un éditeur de logiciel (T-44). Ça ne bloque pas un lancement, ça bloque un DÉPÔT — et ça crée un risque d'opposition | Dès que l'acquisition rend le nom coûteux à changer. Consultation de conseil en PI |
 
-### 🟢 GO — conditions minimales
+> 🔴 **Le mode de défaillance à garder en tête, parce qu'il est corrélé au trafic et mal
+> étiqueté.** Aucune adresse n'est vérifiée à l'inscription, l'activer ferait passer chaque
+> inscription par un expéditeur plafonné, et rien ne protège le formulaire des bots. Il ne se
+> déclenche donc qu'un jour de campagne, et l'inscrit voit « Trop de tentatives. Réessayez dans
+> quelques minutes. » Il n'a rien fait de trop : c'est le quota du projet, éventuellement consommé
+> par quelqu'un d'autre, qui est épuisé. Il réessaie, échoue, et part. Côté tableau de bord, ça
+> ressemble trait pour trait à une campagne qui ne convertit pas. C'est le scénario que T-03,
+> T-04b, T-14 et T-15 existent pour rendre impossible.
 
-Les sept NO-GO levés — **deux le sont, cinq restent** — les **cinq** jobs CI verts sur `main`
-(`lint-test-build`, `audit`, `e2e`, `rls-integration`, `lighthouse`), `check:drift` à zéro, et
-`git status` propre.
+### Conditions de GO
 
-> ⚠️ La version du 2026-08-27 écrivait « les quatre gardes CI » en en listant cinq, et personne
-> ne les avait regardées : trois étaient rouges. Un décompte faux dans la condition de GO
-> elle-même — c'est exactement le motif que ce dossier documente depuis le début.
+Les conditions ne se lisent pas ici mais **au §1** : toute tâche P0 non cochée est un NO-GO. S'y
+ajoutent trois gardes mécaniques, à vérifier le jour du GO et jamais sur mémoire : les **cinq**
+jobs CI verts sur `main` (`lint-test-build`, `audit`, `e2e`, `rls-integration`, `lighthouse`),
+`npm run check:drift` à zéro, et `git status` propre.
 
-**C'est tout.** Le produit est techniquement au-dessus de ce que son trafic exige ; ce qui manque
-au lancement n'est toujours pas du code.
+> ⚠️ La version du 2026-08-27 écrivait « les quatre gardes CI » en en listant cinq, et personne ne
+> les avait regardées : trois étaient rouges. Un décompte faux dans la condition de GO elle-même.
 
 ---
 
-## 6. Checkpoints après lancement
+## 4. Ce qu'il ne faut PAS faire pendant ces 60 jours
+
+La section la plus utile de ce document : elle porte ce qu'aucune liste de tâches ne peut dire,
+c'est-à-dire le travail qu'il serait naturel d'entreprendre et qui ne rapporterait rien.
+
+| À ne pas faire | Pourquoi |
+|---|---|
+| **Écrire ou approfondir des articles de blog** | Position 88 sur les requêtes non-marque. Un article de 2 000 mots en position 88 reste en position 88. Le SEO se débloque par T-21, pas par du contenu |
+| **Lancer `npm audit fix`** | Il propose `react-router` 7.11.0, qui **réintroduit** l'open redirect. Aucune version ne clôt les deux familles sous React 18 |
+| **Migrer vers React 19 + react-router 8** | Chantier réel, sans urgence : la CVE ouverte concerne le mode RSC, absent d'une SPA Vite. À faire en PR dédiée, hors de ces 60 jours |
+| **Supprimer les 43 index inutilisés** | Décision déjà prise et documentée. Sur 18 Mo de base, leur coût d'écriture est négligeable, et certains sont des FK `ON DELETE CASCADE` |
+| **Ajouter Redis, une file d'attente ou des read replicas** | YAGNI à 10 000 utilisateurs. React Query couvre le cache client, tout est synchrone, le webhook Stripe est idempotent |
+| **Migrer `vendor-charts` vers visx ou chart.js** | Le grief d'origine est caduc : la landing n'importe plus Recharts, le chunk est réellement lazy |
+| **Découper `PyramidTab` ou les fichiers > 600 lignes « pour la propreté »** | Le cliquet fait déjà baisser le budget à chaque passe, sans qu'aucune fonctionnalité ne soit reportée. Seul `TaskTable` mérite une coupe volontaire, et en semaine 8 |
+| **Ajouter un `refetchInterval` « juste pour être sûr »** | Chaque tick est une requête pour tout le monde, en permanence. C'est la dette qui a coûté 91,5 % du trafic d'une journée |
+| **Réintroduire un gate `isPremium()` sur le partage ou la collaboration** | Choix stratégique explicite : c'est le pari viral du produit |
+| **Traduire le contenu des pages pour ouvrir `en` à l'indexation** | Chantier XXL sans retour tant que le domaine n'a pas d'autorité. `en` reste servie, non indexable |
+| **Construire un back-office d'administration** | `/admin` répond déjà à la question qu'on se pose à ce stade : combien, qui, d'où |
+| **Armer la facturation avant le SIREN** | Encaisser avant l'immatriculation est du travail dissimulé. Et le parcours actuel mène à un checkout en mode test, donc à une carte réelle refusée |
+| **Faire confiance à un total sans le recompter** | Trois erreurs de comptage documentées en trois jours dans ce dépôt : les `refetchInterval`, les fichiers > 600 lignes, le tableau de `LEGAL.md`. Un total ne prouve rien |
+| **Déclarer un correctif acquis sans mesure** | La règle du dépôt, écrite après deux rétractations en trois jours. Une garde rouge est coupable jusqu'à preuve du contraire, et la preuve est une mesure à un commit nommé |
+
+### Recommandations d'audit devenues obsolètes
+
+Confrontées au code le 2026-08-27. Elles figurent encore dans les audits, il ne faut pas les
+exécuter.
+
+| Recommandation | Pourquoi elle tombe |
+|---|---|
+| `SEO.md` §3 : « approfondir les 5 articles les plus courts » | **Renversée par le §4 du même document.** Un article de 2 000 mots en position 88 reste en position 88. Le facteur limitant est l'autorité de domaine, pas la longueur |
+| `PERFORMANCE.md` : « migrer `vendor-charts` vers visx / chart.js » | Caduc : la landing n'importe plus Recharts, le chunk est réellement lazy |
+| `SCALABILITY.md` §7 : supprimer les 43 index inutilisés | Décision déjà prise : on ne supprime rien. 18 Mo de base, coût d'écriture négligeable |
+| `npm audit fix` sur `react-router` | **Piège actif.** Il propose 7.11.0, qui réintroduit l'open redirect `GHSA-wrjc-x8rr-h8h6`. La sortie est React 19 + router 8, en PR dédiée, hors de ces 60 jours |
+| Redis / file d'attente / read replicas | YAGNI à 10 000 utilisateurs |
+| `ACQUISITION.md` §4 : travailler la boucle de partage | Explicitement écarté par l'audit lui-même : il n'y a personne pour partager |
+
+### Recommandations d'audit déjà satisfaites
+
+Annoncées « à faire » par un audit, vérifiées faites dans le code. Ne pas les rouvrir.
+
+| Recommandation d'audit | Réalité vérifiée |
+|---|---|
+| `SCALABILITY.md` §9 : « `useTeamOKRs` en `live` conditionnel, ~15 min » | ✅ **Déjà fait.** `team-okrs/hooks.ts:39` porte `...(options?.live ? { refetchInterval: 30_000 } : {})`. Les 4 `refetchInterval` restants sont tous conditionnels, vérifié par grep nominatif |
+| `ACQUISITION.md` §7.1 : « appliquer la mig. 099 » | ✅ Appliquée en prod le 2026-08-23 |
+| `ARCHITECTURE.md` §5 : dérive repo ↔ prod | ✅ Refermée, seule la `130` est en attente |
+| `RGPD.md` §3 : rétention des tables analytiques | ✅ mig. 114 en prod |
+| `POST-AUDIT-GUIDE.md` point 4 : harnais RLS d'intégration en CI | ✅ Job `rls-integration`, 8 fichiers dans `e2e/rls/` |
+| `docs/TESTING.md` : couverture rouge | ✅ Verte au 2026-08-27 soir, 1 802 tests, seuils jamais baissés |
+
+---
+
+## 5. Checkpoints après lancement
+
+Ce qu'il faudra revérifier à chaque palier. Aucun de ces points n'a de statut : ce sont des
+questions à reposer le jour venu.
 
 ### À 100 utilisateurs
 
@@ -577,7 +457,7 @@ au lancement n'est toujours pas du code.
 | Performance | Le chemin critique est-il toujours sous 400 ko gzip ? `check:bundle` vert sans plafond relevé |
 | Coûts | Egress Supabase contre le plafond du plan ; base toujours loin de 500 Mo |
 | Sécurité | `get_advisors` : aucun WARN nouveau ; les fonctions exécutables par `anon` sont-elles toujours deux ? |
-| Infrastructure | Le PITR couvre-t-il toujours la fenêtre annoncée ? Un second drill a-t-il été fait ? |
+| Infrastructure | Le dump quotidien tourne-t-il encore, et un second drill de restauration a-t-il été fait ? Le PITR redevient-il justifiable (cf. seuils du §3) ? |
 | Erreurs | Taux d'erreur Sentry par session ; y a-t-il une erreur qui touche plus de 5 % des sessions ? |
 | Support | Combien de signalements, quel délai de réponse médian |
 | Analytics | `acquisition_source` renseignée sur quelle proportion des comptes ? Si c'est encore 0, la chaîne est cassée |
@@ -617,182 +497,11 @@ au lancement n'est toujours pas du code.
 
 ---
 
-## 7. Quick wins — la liste est VIDE
+## 6. Journal d'exécution
 
-**Les neuf de la liste du 2026-08-27 sont tous faits** (T-05, T-06, T-10, T-11, T-13, T-16, T-18,
-T-19, T-30, T-42, T-50). Ils sont cochés au §1 et racontés au §11.
-
-> Ce que cette section rappelle, maintenant qu'elle est vide : **il n'y a plus de tâche courte qui
-> réduise un risque.** Ce qui reste avant le GO se compte en heures d'Axel dans des consoles
-> tierces (Cloudflare, Search Console, annuaires) ou en actes administratifs à délai
-> incompressible (INPI). Une liste de quick wins vide n'est pas une bonne nouvelle en soi : elle
-> dit seulement qu'on a fini le facile.
-
----
-
-## 8. Ce qu'il ne faut PAS faire pendant ces 60 jours
-
-Section obligatoire, et la plus utile de ce document.
-
-| À ne pas faire | Pourquoi |
-|---|---|
-| **Écrire ou approfondir des articles de blog** | Position 88 sur les requêtes non-marque. Un article de 2 000 mots en position 88 reste en position 88. Le SEO se débloque par T-21, pas par du contenu |
-| **Lancer `npm audit fix`** | Il propose `react-router` 7.11.0, qui **réintroduit** l'open redirect. Aucune version ne clôt les deux familles sous React 18 |
-| **Migrer vers React 19 + react-router 8** | Chantier réel, sans urgence : la CVE ouverte concerne le mode RSC, absent d'une SPA Vite. À faire en PR dédiée, hors de ces 60 jours |
-| **Supprimer les 43 index inutilisés** | Décision déjà prise et documentée. Sur 18 Mo de base, leur coût d'écriture est négligeable, et certains sont des FK `ON DELETE CASCADE` |
-| **Ajouter Redis, une file d'attente ou des read replicas** | YAGNI à 10 000 utilisateurs. React Query couvre le cache client, tout est synchrone, le webhook Stripe est idempotent |
-| **Migrer `vendor-charts` vers visx ou chart.js** | Le grief d'origine est caduc : la landing n'importe plus Recharts, le chunk est réellement lazy |
-| **Découper `PyramidTab` ou les fichiers > 600 lignes « pour la propreté »** | Le cliquet fait déjà baisser le budget à chaque passe, sans qu'aucune fonctionnalité ne soit reportée. Seul `TaskTable` mérite une coupe volontaire, et en semaine 8 |
-| **Ajouter un `refetchInterval` « juste pour être sûr »** | Chaque tick est une requête pour tout le monde, en permanence. C'est la dette qui a coûté 91,5 % du trafic d'une journée |
-| **Réintroduire un gate `isPremium()` sur le partage ou la collaboration** | Choix stratégique explicite : c'est le pari viral du produit |
-| **Traduire le contenu des pages pour ouvrir `en` à l'indexation** | Chantier XXL sans retour tant que le domaine n'a pas d'autorité. `en` reste servie, non indexable |
-| **Construire un back-office d'administration** | `/admin` répond déjà à la question qu'on se pose à ce stade : combien, qui, d'où |
-| **Armer la facturation avant le SIREN** | Encaisser avant l'immatriculation est du travail dissimulé. Et le parcours actuel mène à un checkout en mode test, donc à une carte réelle refusée |
-| **Faire confiance à un total sans le recompter** | Trois erreurs de comptage documentées en trois jours dans ce dépôt : les `refetchInterval`, les fichiers > 600 lignes, le tableau de `LEGAL.md`. Un total ne prouve rien |
-| **Déclarer un correctif acquis sans mesure** | La règle du dépôt, écrite après deux rétractations en trois jours. Une garde rouge est coupable jusqu'à preuve du contraire, et la preuve est une mesure à un commit nommé |
-
----
-
-## 9. Score de maturité au 2026-08-28
-
-> Les notes du 2026-08-27 sont conservées entre parenthèses. **Trois bougent d'un point, une ne
-> bouge pas** — et l'absence de mouvement est aussi informative que le reste : rien de ce qui
-> bloque le palier 10 000 n'a été touché, parce que rien de ce qui le bloque n'est du code.
-
-### Lancement production — **7,5 / 10** (7)
-
-1 833 tests verts, RLS sur toutes les tables, aucun finding exploitable, CSP stricte, chemin
-critique passé de 393,9 à **364,3 ko** pour tout visiteur. Le demi-point vient de trois modes de
-défaillance silencieux fermés dans la journée : les onglets périmés (T-24), le monitoring dont
-personne n'avait vérifié qu'il était branché (T-16), et le job `e2e` (T-48).
-
-**Ce qui retient encore** : PITR absent, SMTP d'authentification non configuré, `report-bug` non
-déployée, chaîne `?ref=` jamais éprouvée — et **deux jobs CI rouges**, ce qu'on ignorait la veille.
-
-### 100 utilisateurs — **6,5 / 10** (6)
-
-Le chiffre de la veille était mal lu. « 0 actif sur 7 jours » décrivait l'activité *récente* :
-en réalité **18 comptes sur 28 ont créé des tâches, 11 en ont au moins cinq**. Le produit sert.
-Le vrai défaut est qu'**un inscrit sur deux ne revient jamais** après sa session d'inscription —
-et ça n'appelle pas les mêmes correctifs.
-
-**Ce qui retient** : pas de surveillance de disponibilité, pas de protection anti-bot **active**
-(le code est là, les clés non), pas de procédure de support.
-
-### 1 000 utilisateurs — **5,5 / 10** (5)
-
-Deux inconnues levées : les onglets périmés reçoivent maintenant les correctifs, et le pooler
-**n'était pas le sujet** — l'application n'ouvre aucune connexion Postgres, 14 sur 60 sont
-utilisées et 11 appartiennent à PostgREST.
-
-**Ce qui retient, inchangé** : rien n'a été mesuré à volume (la prod compte 8 tâches d'équipe), et
-le support repose entièrement sur une personne.
-
-### 10 000 utilisateurs — **3 / 10** (3, inchangé)
-
-**Aucun moyen légal d'encaisser un euro** : pas de structure, Stripe en compte de test, portail de
-résiliation non configuré, médiateur non souscrit. Sans revenu, la question ne se pose pas. S'y
-ajoute désormais un fait connu qui ne l'était pas : **le nom n'est pas libre** en classes 9 et 42.
-
-> **Ce qui empêche le 10/10, en une phrase par axe** — la formulation de la veille tient mot pour
-> mot, et c'est le point : la production n'est pas rattrapable (PITR), l'inscription n'est pas
-> éprouvée (SMTP), le produit n'est pas retenu (activation), la scalabilité n'est pas mesurée
-> (volume), le business n'est pas légal (immatriculation). **Une journée entière de travail
-> technique n'a déplacé aucun de ces cinq verrous, parce qu'aucun n'est technique.**
-
----
-
-## 10. Résumé exécutif
-
-### Aujourd'hui
-
-**Un produit d'ingénierie remarquable, et une entreprise qui n'existe pas encore.** Le dépôt est
-plus rigoureux que la majorité des SaaS financés : gardes automatiques qui refusent la régression,
-migrations testées sur base vierge, sécurité auditée à 86/100, documentation qui se corrige
-elle-même. En face : 28 comptes, **un inscrit sur deux qui ne revient jamais**, 0 € de revenu,
-0 domaine référent, aucune structure juridique, et un nom déjà déposé par onze titulaires dans ses
-propres classes. **Le goulot n'est pas technique depuis un moment déjà.**
-
-> ⚠️ **Mise à jour du 2026-08-28, et c'est la correction la plus utile de la journée.** Ce
-> paragraphe disait « 0 actif à 7 jours ». C'était une mauvaise lecture d'un chiffre juste : il
-> décrivait l'activité *récente*, pas l'usage. **18 comptes sur 28 ont créé des tâches, 11 en ont
-> au moins cinq.** Le produit sert à quelque chose. Ce qui ne marche pas, c'est le RETOUR — et un
-> problème de rétention n'appelle pas les mêmes correctifs qu'un produit que personne n'utilise.
-
-### Pour lancer — ce qui reste
-
-| # | Quoi | État au 2026-08-28 |
-|---|---|---|
-| 1 | Supabase Pro + PITR + drill chronométré (T-01, T-02) | ⬜ |
-| 2 | **SMTP applicatif, puis vérification d'adresse** (T-03, T-04b) | ⬜ **le nœud** : il bloque aussi T-04, T-12 et T-15. Préparé côté dépôt : runbook, gabarits, front, garde `npm run check:mail` |
-| 3 | Les cinq réglages de console Supabase et GitHub (T-05 à T-09) | ⬜ |
-| 4 | Migration 130 appliquée (T-10) | ⬜ · ✅ `check:drift` déjà joué (T-11) |
-| 5 | `report-bug` déployée (T-12) | ⬜ dépend du 2 |
-| 6 | Alerte opérationnelle et Sentry (T-13, T-16) | 🟡 **Sentry vérifié**, webhook restant |
-| 7 | Les deux clés Turnstile (T-14) | 🟡 **code livré et inerte**, deux réglages restants |
-| 8 | Chaîne `?ref=` prouvée sur un compte réel (T-15) | ⬜ dépend du 2 |
-| 9 | ~~Les cinq jobs CI verts~~ (T-49, T-50) | ✅ **Levé le 2026-08-29** : les cinq en `success` sur le run de `493ccaf` |
-
-**Aucune de ces lignes n'est du développement**, sauf la 9. Le lancement attend une session de
-consoles et une vérification.
-
-### Dans les 30 prochains jours
-
-Lancer, puis **regarder**. Les soumissions d'annuaires (T-21) démarrent dès que le GO est levé et
-ne s'arrêtent plus : c'est le seul levier SEO. En parallèle, **corriger** l'activation (T-23) —
-la mesure existe déjà dans `/admin`, c'est la décision produit qui manque : que doit-il se passer
-dans les 60 premières secondes d'un nouveau compte ? Et déposer l'immatriculation (T-32) **au plus
-tard en semaine 7**, sinon l'encaissement sort des 60 jours.
-
-Deux dettes techniques à refermer dans la même fenêtre, parce qu'elles rendent muettes des gardes
-qu'on croit actives : les **deux jobs CI rouges** (T-49, T-50) et le **conseil en PI sur le nom**
-(T-44), avant que l'acquisition ne rende un changement de nom coûteux.
-
-### Dans les 60 prochains jours — l'état à viser
-
-Un produit qui **encaisse légalement** : SIREN obtenu, Stripe en compte live, portail de
-résiliation qui fonctionne, mentions de facture conformes, les deux drapeaux réarmés ensemble, et
-une souscription réelle passée avec une vraie carte, résiliée avec succès. Plus : une rétention à
-7 jours mesurable et non nulle, une dizaine de domaines référents, et une production dont on sait
-combien de temps il faut pour la restaurer.
-
-### Pour 10 000 utilisateurs — les investissements réels
-
-Par ordre de montant : le **temps d'acquisition** (le SEO ne se paie pas, il se travaille), la
-**structure juridique et comptable** (immatriculation, médiateur, DPA, comptabilité), le **plan
-Supabase Pro puis au-delà** (PITR d'abord, read replicas ensuite), et enfin le **support**, qui
-est le premier poste qui ne peut plus reposer sur une personne. Le code, lui, demande peu :
-mesurer à volume, et découper ce qui freine.
-
-### Le plus gros risque
-
-**Lancer une campagne d'acquisition sur une chaîne d'inscription non éprouvée.** Trois faiblesses
-se combinent : aucune adresse n'est vérifiée à l'inscription, l'activer ferait passer chaque
-inscription par un expéditeur plafonné à quelques envois par heure (AM-1), et rien ne protège le
-formulaire des bots (AM-3).
-
-Le mode d'échec est le pire qui soit, parce qu'il est **corrélé au trafic et mal étiqueté** : il
-ne se déclenche qu'un jour de campagne, et l'inscrit voit « Trop de tentatives. Réessayez dans
-quelques minutes. » Il n'a rien fait de trop — c'est le quota du projet, éventuellement consommé
-par quelqu'un d'autre, qui est épuisé. Il réessaie, échoue, et part. Côté tableau de bord, ça
-ressemble trait pour trait à une campagne qui ne convertit pas. C'est exactement le scénario que
-T-03, T-04b, T-14 et T-15 existent pour rendre impossible.
-
-### Le plus gros quick win
-
-**Le MFA sur le compte admin (T-06), cinq minutes.** `/admin` expose toute la volumétrie business
-du produit et n'est protégé aujourd'hui que par une allowlist et un mot de passe. Meilleur
-rapport effort/risque du dossier — c'est `faille.md` qui l'écrit, et c'est toujours vrai.
-
-**Et le quick win le plus rentable à moyen terme** : les soumissions d'annuaires (T-21). Zéro
-euro, zéro ligne de code, et c'est la seule chose qui déplace une position 88.
-
----
-
-## 11. Journal d'exécution
-
-Une ligne par session. **On coche quand le critère « Done » est vérifié, pas quand le code est
-écrit.** Les tâches cochées restent dans les tableaux ci-dessus : le fil se perd si on les retire.
+Une session par entrée, la plus récente en tête de sa journée. **On coche quand le critère
+« Done » est vérifié, pas quand le code est écrit.** Les statuts vivent au §1 ; ici on raconte
+comment on y est arrivé, et surtout ce qu'on a cru à tort en chemin.
 
 ### 2026-08-29 (soir) — 11 tâches fermées, 2 décisions rendues, 3 angles morts refermés
 
