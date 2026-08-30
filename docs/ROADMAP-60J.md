@@ -522,6 +522,44 @@ source. Ce qui a été gardé bien que non demandé l'a été pour une raison pr
 assumées et leurs seuils de réouverture, les interdits des 60 jours, les checkpoints par palier.
 Aucun ne se déduit de la liste des tâches.
 
+#### 🎬 Hero de la landing perso — le « bug de motion design » était un écran blanc
+
+Axel signale que le motion design du hero bugue. Reproduit à 4× de bridage CPU, et ce n'était pas
+un problème d'animation : **pendant deux secondes, `/` affiche un écran BLANC avec un spinner**,
+puis le hero sombre apparaît d'un coup, son entrée déjà terminée. Le fallback de page
+(`PageLoader`) est un spinner sur le fond de l'application, qui suit le thème et se trouve donc
+être clair, alors que la landing est sombre par construction. Toute la chorégraphie GSAP jouait
+derrière lui.
+
+**Ce qui a été livré**, et pourquoi chaque pièce :
+
+| Pièce | Ce qu'elle règle |
+|---|---|
+| `LandingSkeleton` (App.tsx) | Le flash blanc. Un squelette sombre à la géométrie du hero : l'arrivée du contenu devient une continuité, plus un saut |
+| Reveal du H1 en CSS | `SplitText` re-découpait au chargement des fontes et recopiait les classes de gradient sur chaque mot. Le titre se révèle maintenant ligne par ligne, masque `overflow: hidden`, gradient et transform sur le **même** élément |
+| `HeroModuleDock` | Le visuel dit enfin ce que dit le titre : quatre modules arrivent de quatre directions et s'arriment à une seule fenêtre, la puce active suivant la vue affichée |
+| Tilt 3D et flottement infini retirés | Deux ressorts Framer et une boucle `repeat: Infinity` pour un effet invisible sur mobile et muet sur le produit |
+
+**Le dégradé du titre est réapparu au passage.** La deuxième ligne s'affichait en bleu plat depuis
+le passage à SplitText : `bg-clip-text` ne survit pas aux transforms des ENFANTS, et la recopie de
+classes ne compensait qu'à moitié. Gradient et transform portés par le même élément, le bleu →
+violet → fuchsia revient.
+
+**Le critère qui a fait retenir cette idée** : sous `prefers-reduced-motion`, qui est le réglage
+d'Axel, les quatre puces sont simplement déjà arrimées et libellées. Le hero explique toujours le
+produit sans qu'un pixel ne bouge. Une animation dont le sens disparaît quand elle ne joue pas est
+un effet, pas une explication.
+
+**Mesuré**, même machine, même session : performance **40 → 49**, TBT **1 190 → 720 ms**,
+accessibilité 92. Chiffres locaux, donc à confirmer sur le runner (cf. T-51 ci-dessous) : ils
+disent une direction, pas un score. Vérifié aussi : l'entrée joue réellement (la puce part de
+`matrix(0.86, 0, 0, 0.86, -120, -70)` à opacité 0 et arrive à l'identité en ~500 ms), le titre est
+visible et immobile sous `prefers-reduced-motion`, et les quatre puces passent en grille 2×2 à
+375 px au lieu de laisser une orpheline.
+
+**Une garde a fait son travail** : `text-[11px]` sur les puces mobiles a fait échouer le cliquet
+des tailles arbitraires (197 > 196). Remplacé par l'échelle fermée, pas par un budget relevé.
+
 #### 🔬 T-02 — le drill se fait dans Actions, pas sur le poste
 
 Le poste n'a ni client PostgreSQL ni Docker ; le runner sait déjà installer le client 17, et le

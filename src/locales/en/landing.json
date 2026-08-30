@@ -16,7 +16,14 @@
     "demoCta": "Try the free demo",
     "signupCta": "Create a free account",
     "reassurance": "Demo pre-filled with 100 tasks · nothing to install · ready in 1 click",
-    "scroll": "Discover"
+    "scroll": "Discover",
+    "modulesLabel": "The four modules brought together in COSMO",
+    "modules": {
+      "tasks": "Tasks",
+      "habits": "Habits",
+      "agenda": "Calendar",
+      "okr": "OKR"
+    }
   },
   "marquee": {
     "tasks": "Tasks",

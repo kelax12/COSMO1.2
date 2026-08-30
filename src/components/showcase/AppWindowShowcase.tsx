@@ -103,9 +103,20 @@ const slideVariants: Variants = {
 interface AppWindowShowcaseProps {
   /** Variante condensée (mobile) : utilise les showcases mobiles. */
   compact?: boolean;
+  /**
+   * Signale la vue affichée (`tasks` | `agenda` | `okr` | `habits`).
+   *
+   * Sert au hero de la landing : la puce du module correspondant s'allume en
+   * même temps que la fenêtre change de vue. C'est ce qui transforme une
+   * rangée de libellés en explication — le visiteur voit que les quatre
+   * modules sont quatre vues de la MÊME application.
+   *
+   * Doit être stable (`useCallback`) : ce composant est mémoïsé.
+   */
+  onSlideChange?: (cle: string) => void;
 }
 
-const AppWindowShowcaseBase: React.FC<AppWindowShowcaseProps> = ({ compact = false }) => {
+const AppWindowShowcaseBase: React.FC<AppWindowShowcaseProps> = ({ compact = false, onSlideChange }) => {
   const slides = compact ? MOBILE_SLIDES : DESKTOP_SLIDES;
   const containerRef = useRef<HTMLDivElement>(null);
   const inView = useInView(containerRef, { amount: 0.25 });
@@ -127,6 +138,12 @@ const AppWindowShowcaseBase: React.FC<AppWindowShowcaseProps> = ({ compact = fal
 
   const active = slides[index];
   const ActiveComp = active.Comp;
+
+  // Notifie APRÈS le rendu, jamais pendant : prévenir un parent en cours de
+  // rendu déclencherait un rendu imbriqué à chaque rotation.
+  useEffect(() => {
+    onSlideChange?.(active.key);
+  }, [active.key, onSlideChange]);
 
   // Effet appliqué au swap courant (cube → portal → cube …).
   const transitionStyle = TRANSITION_CYCLE[step % TRANSITION_CYCLE.length];

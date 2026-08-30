@@ -514,6 +514,26 @@ La landing n'est plus une page linéaire. Après le header, un **aiguillage**
   `landing/anchors.ts` — une par track, pour qu'aucun lien ne vise une section absente.
 - ❌ **Ne jamais ajouter une section entreprise dans `PersoTrack`** (ni l'inverse) : la
   séparation des deux parcours EST la structure de la page.
+- 🔴 **L'entrée du hero perso est en CSS, et elle doit le rester** (refonte du 2026-08-30).
+  Mesuré à 4× de bridage CPU : la landing affichait **deux secondes d'écran blanc avec un
+  spinner**, puis le hero apparaissait déjà fini. Le fallback de page était clair sur une page
+  sombre, et toute la chorégraphie GSAP jouait derrière lui. Trois règles en sont sorties :
+  **(1)** l'entrée du hero ne dépend ni de GSAP, ni du chunk de page, ni des fontes — elle est en
+  keyframes CSS (`src/index.css`, section « Hero de la landing ») pilotées par `--d` / `--tx` ;
+  **(2)** chaque règle n'a qu'un `from`, donc **l'état final est l'état par défaut** : une
+  animation qui ne joue pas laisse le contenu visible ; **(3)** la route `/` a son propre
+  squelette sombre (`LandingSkeleton` dans `App.tsx`), jamais le `PageLoader` clair.
+- ❌ **Ne jamais remettre `SplitText` sur le H1 du parcours perso.** Il imposait une re-découpe au
+  chargement des fontes et une recopie des classes de gradient sur chaque mot, `bg-clip-text` ne
+  survivant pas aux transforms des ENFANTS. Le titre est maintenant révélé ligne par ligne, le
+  gradient et le transform portés par le **même** élément — le seul cas que `bg-clip-text`
+  supporte. C'est ce qui a fait réapparaître le dégradé bleu → fuchsia, affiché en bleu plat
+  depuis le passage à SplitText.
+- ⚠️ **`HeroModuleDock` n'est pas une décoration** : les quatre puces suivent la vue affichée par
+  `AppWindowShowcase` (`onSlideChange`), et c'est ce qui fait comprendre que Tâches, Habitudes,
+  Agenda et OKR sont quatre vues de la MÊME application. Sous `prefers-reduced-motion` elles sont
+  déjà arrimées et libellées : **le sens survit à l'absence de mouvement**, c'est le critère qui a
+  fait retenir cette idée plutôt qu'un effet.
 - ⚠️ Les tarifs affichés viennent de `ENTERPRISE_PRICING_TIERS` — **jamais de montant en dur** :
   la landing et le produit doivent annoncer le même prix le jour de l'activation du paywall.
   Et le montant n'est **pas** animé par un compteur à ressort (il passerait par 48 € avant de

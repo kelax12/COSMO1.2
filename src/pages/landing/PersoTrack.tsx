@@ -1,12 +1,6 @@
-import React, { useRef } from 'react';
-import {
-  motion,
-  useReducedMotion,
-  useTransform,
-  useMotionValue,
-  useSpring,
-} from 'framer-motion';
-import { gsap, SplitText, useGSAP } from '@/lib/gsap';
+import React, { useCallback, useRef, useState } from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
+import { gsap, useGSAP } from '@/lib/gsap';
 import { ArrowRight } from 'lucide-react';
 import AppWindowShowcase from '@/components/showcase/AppWindowShowcase';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
@@ -17,6 +11,7 @@ import SolutionsSection from './SolutionsSection';
 import WhySection from './WhySection';
 import FaqSection from './FaqSection';
 import { pauseWhenOffscreen } from './pause-offscreen';
+import HeroModuleDock, { DELAI_ARRIMAGE_MS } from './HeroModuleDock';
 import TrackAnchors from './TrackAnchors';
 
 interface PersoTrackProps {
@@ -117,7 +112,7 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
     { scope: ctaRef },
   );
 
-  // ── Hero : SplitText, entrées, vie du fond, parallax multi-couches ──
+  // ── Hero : entrées secondaires, vie du fond, parallax multi-couches ──
   useGSAP(
     () => {
       const mm = gsap.matchMedia();
@@ -126,61 +121,12 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
         // Boucles infinies du hero, mises en pause dès que le hero sort de
         // l'écran (perf : zéro tick offscreen).
         const heroLoops: gsap.core.Tween[] = [];
-        // Tween du gradient accent : recréé à chaque re-split (fonts),
-        // il faut tuer l'ancien pour ne pas accumuler de tweens fantômes.
-        let accentTween: gsap.core.Tween | null = null;
-
-        // W1 — Reveal du H1 : split lignes/mots, chaque ligne masquée,
-        // les mots montent avec un léger stagger (autoSplit = re-split
-        // propre quand les fontes finissent de charger).
-        if (headingRef.current) {
-          SplitText.create('.hero-line', {
-            type: 'lines,words',
-            mask: 'lines',
-            autoSplit: true,
-            wordsClass: 'hero-word',
-            onSplit: (self) => {
-              // bg-clip-text ne survit pas aux transforms des enfants :
-              // on recopie le gradient du span parent sur chaque mot.
-              self.words.forEach((word) => {
-                const el = word as HTMLElement;
-                const line = el.closest<HTMLElement>('.hero-line');
-                if (line) {
-                  const copied = Array.from(line.classList).filter(
-                    (c) => c !== 'hero-line' && c !== 'hero-line-accent' && c !== 'block',
-                  );
-                  el.classList.add(...copied);
-                  if (line.classList.contains('hero-line-accent')) {
-                    el.classList.add('hero-word-accent');
-                    el.style.backgroundSize = line.style.backgroundSize;
-                  }
-                }
-              });
-              // Gradient animé de la 2e ligne (ex-Framer backgroundPosition).
-              if (accentTween) {
-                heroLoops.splice(heroLoops.indexOf(accentTween), 1);
-                accentTween.kill();
-              }
-              accentTween = gsap.to('.hero-word-accent', {
-                backgroundPosition: '100% 50%',
-                duration: 4,
-                repeat: -1,
-                yoyo: true,
-                ease: 'sine.inOut',
-              });
-              heroLoops.push(accentTween);
-              return gsap.from(self.words, {
-                yPercent: 115,
-                rotation: 4,
-                opacity: 0,
-                duration: 0.9,
-                ease: 'expo.out',
-                stagger: 0.045,
-                delay: 0.1,
-              });
-            },
-          });
-        }
+        // W1 — Le reveal du H1 est en CSS depuis le 2026-08-30 (masques par
+        // ligne, cf. `src/index.css`). Il vivait ici, en SplitText : découpe
+        // en mots, re-split au chargement des fontes, recopie des classes de
+        // gradient sur chaque mot. Trois mécanismes fragiles, et surtout une
+        // entrée qui ne pouvait jouer qu'une fois GSAP chargé — c'est-à-dire
+        // après le fallback de page, donc jamais vue.
 
         // Entrées du reste du hero (remplace les motion.* retirés).
         gsap.from('[data-hero-fade]', {
@@ -289,21 +235,17 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
     { scope: heroRef },
   );
 
-  // Tilt 3D du mockup suivant la souris (désactivé mobile / reduced-motion).
-  const pointerX = useMotionValue(0);
-  const pointerY = useMotionValue(0);
-  const rotateX = useSpring(useTransform(pointerY, [-0.5, 0.5], [7, -7]), { stiffness: 150, damping: 18 });
-  const rotateY = useSpring(useTransform(pointerX, [-0.5, 0.5], [-9, 9]), { stiffness: 150, damping: 18 });
+  // Vue affichée par la fenêtre du hero : la puce du module correspondant
+  // s'allume en même temps. Callback stable, la fenêtre étant mémoïsée.
+  const [moduleAffiche, setModuleAffiche] = useState('tasks');
+  const onSlideChange = useCallback((cle: string) => setModuleAffiche(cle), []);
 
-  const handleMockupPointer = (e: React.PointerEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    pointerX.set((e.clientX - rect.left) / rect.width - 0.5);
-    pointerY.set((e.clientY - rect.top) / rect.height - 0.5);
-  };
-  const resetMockupPointer = () => {
-    pointerX.set(0);
-    pointerY.set(0);
-  };
+  // Le tilt 3D à la souris a été RETIRÉ le 2026-08-30 avec la refonte du hero.
+  // Il coûtait deux ressorts Framer et un handler par mouvement de souris, pour
+  // un effet qu'un visiteur sur mobile ne voit jamais et qui ne dit rien du
+  // produit. Ce que le hero doit faire comprendre en deux secondes, c'est que
+  // quatre outils tiennent dans une seule fenêtre : c'est HeroModuleDock qui
+  // s'en charge, en CSS.
 
   return (
     <div ref={rootRef} className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
@@ -382,22 +324,35 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-8 items-center">
             {/* ── Colonne gauche : copy ── */}
             <div className="flex flex-col items-center text-center lg:items-start lg:text-left">
-              {/* W1 — H1 révélé par SplitText (lignes masquées, mots staggerés).
-                  Les gradients restent sur les spans (fallback reduced-motion /
-                  no-JS) et sont recopiés sur chaque mot au split, car
-                  bg-clip-text ne survit pas aux transforms des enfants. */}
+              {/* W1 — H1 révélé ligne par ligne, en CSS.
+                  Ce bloc utilisait SplitText : découpe en mots, re-split au
+                  chargement des fontes, et recopie des classes de gradient sur
+                  chaque mot parce que `bg-clip-text` ne survit pas aux
+                  transforms des ENFANTS. Trois mécanismes fragiles pour un
+                  effet que personne ne voyait, l'entrée jouant derrière le
+                  fallback de la page (mesuré le 2026-08-30).
+                  Ici le gradient et le transform sont portés par le MÊME
+                  élément, ce qui est le cas que `bg-clip-text` supporte, et le
+                  masque est une simple div en `overflow: hidden`. */}
               <h1
                 ref={headingRef}
                 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tight mb-6 leading-[1.05]"
               >
-                <span className="hero-line block bg-gradient-to-r from-white via-blue-100 to-white bg-clip-text text-transparent">
-                  {t('hero.line1')}
+                <span className="hero-line-mask">
+                  <span
+                    className="hero-line-in block bg-gradient-to-r from-white via-blue-100 to-white bg-clip-text text-transparent"
+                    style={{ ['--d' as string]: '80ms' }}
+                  >
+                    {t('hero.line1')}
+                  </span>
                 </span>
-                <span
-                  className="hero-line hero-line-accent block bg-[rgb(var(--color-accent-solid))] via-violet-400 to-fuchsia-400 bg-clip-text text-transparent"
-                  style={{ backgroundSize: '200% auto' }}
-                >
-                  {t('hero.line2')}
+                <span className="hero-line-mask">
+                  <span
+                    className="hero-line-in block bg-gradient-to-r from-[rgb(var(--color-accent-solid))] via-violet-400 to-fuchsia-400 bg-clip-text text-transparent"
+                    style={{ ['--d' as string]: '200ms' }}
+                  >
+                    {t('hero.line2')}
+                  </span>
                 </span>
               </h1>
 
@@ -440,27 +395,24 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
                 le motion.div interne garde l'entrée + le tilt Framer
                 (1 élément = 1 propriétaire de transform). */}
             <div ref={mockupLayerRef} className="relative w-full">
-              <motion.div
-                initial={reduceMotion ? false : { opacity: 0, y: 40, scale: 0.94 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                transition={{ delay: 0.3, duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
-                className="relative w-full"
-                style={{ perspective: 1400 }}
-              >
+              <div className="relative w-full" style={{ perspective: 1400 }}>
                 {/* Glow derrière le frame */}
                 <div className="absolute -inset-6 bg-gradient-to-tr bg-[rgb(var(--color-accent-solid))] via-violet-600/20 to-fuchsia-500/20 rounded-[2rem] blur-3xl" aria-hidden="true" />
 
-                <motion.div
-                  onPointerMove={isMobile || reduceMotion ? undefined : handleMockupPointer}
-                  onPointerLeave={isMobile || reduceMotion ? undefined : resetMockupPointer}
-                  style={isMobile || reduceMotion ? undefined : { rotateX, rotateY, transformStyle: 'preserve-3d' }}
-                  whileInView={isMobile || reduceMotion ? undefined : { y: [0, -10, 0] }}
-                  transition={isMobile || reduceMotion ? undefined : { duration: 6, repeat: Infinity, ease: 'easeInOut' }}
-                  className="relative max-w-[34rem] mx-auto lg:max-w-none lg:ml-auto"
-                >
-                  <AppWindowShowcase compact={isMobile} />
-                </motion.div>
-              </motion.div>
+                <div className="relative max-w-[34rem] mx-auto lg:max-w-none lg:ml-auto">
+                  {/* Les quatre modules arrivent de quatre directions et se
+                      posent sur la fenêtre : le visuel dit ce que dit le
+                      titre. Sans mouvement, ils sont déjà là, et le message
+                      tient toujours. */}
+                  <HeroModuleDock actif={moduleAffiche} />
+                  <div
+                    className="hero-window relative"
+                    style={{ ['--d' as string]: `${DELAI_ARRIMAGE_MS + 120}ms` }}
+                  >
+                    <AppWindowShowcase compact={isMobile} onSlideChange={onSlideChange} />
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 

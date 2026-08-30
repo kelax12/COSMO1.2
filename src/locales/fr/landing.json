@@ -16,7 +16,14 @@
     "demoCta": "Essayer la démo gratuite",
     "signupCta": "Créer un compte gratuit",
     "reassurance": "Démo pré-remplie de 100 tâches · aucune installation · prêt en 1 clic",
-    "scroll": "Découvrir"
+    "scroll": "Découvrir",
+    "modulesLabel": "Les quatre modules réunis dans COSMO",
+    "modules": {
+      "tasks": "Tâches",
+      "habits": "Habitudes",
+      "agenda": "Agenda",
+      "okr": "OKR"
+    }
   },
   "marquee": {
     "tasks": "Tâches",

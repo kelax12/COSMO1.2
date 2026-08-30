@@ -1583,3 +1583,125 @@ a:focus-visible:not([class*="ring-"]):not([class*="focus-visible:"]),
 @media (prefers-reduced-motion: reduce) {
   .ent-price { animation: none; }
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   Hero de la landing — parcours PARTICULIER
+   ═══════════════════════════════════════════════════════════════════
+   Trois règles, et elles viennent toutes du même incident. Le
+   2026-08-30, à 4x de bridage CPU, la landing affichait DEUX SECONDES
+   d'écran blanc avec un spinner, puis le hero apparaissait déjà fini.
+   Toute la chorégraphie d'entrée existait, et personne ne la voyait :
+   elle jouait derrière un fallback, ou après lui.
+
+   1. L'ENTRÉE EST EN CSS. Elle joue au premier rendu du hero, sans
+      attendre GSAP, ni le chunk de la page, ni les fontes. Une entrée
+      qui dépend de trois chargements n'est pas une entrée, c'est un
+      pari.
+   2. L'ÉTAT FINAL EST L'ÉTAT PAR DÉFAUT. Chaque règle ci-dessous n'a
+      qu'un `from` : si l'animation ne joue pas, l'élément est à sa
+      place, visible. C'est la règle du dépôt écrite après les feuilles
+      mobiles restées hors écran (2026-08-24) — un `initial` qui reste
+      appliqué est un contenu perdu.
+   3. SOUS `prefers-reduced-motion`, tout est déjà en place, et le sens
+      survit : les quatre modules restent affichés, arrimés à la
+      fenêtre. C'est le test d'une bonne idée d'animation — elle doit
+      encore raconter quelque chose quand elle ne joue pas.
+
+   Le retard de chaque élément se pose par `--d`, sa provenance par
+   `--tx` / `--ty` : la chorégraphie vit dans le JSX, la mécanique ici.
+*/
+
+.hero-line-mask {
+  display: block;
+  overflow: hidden;
+  /* Les jambages descendants (p, y, é) sont coupés par l'overflow sans
+     cette marge : le masque doit être plus haut que la ligne. */
+  padding-bottom: 0.14em;
+  margin-bottom: -0.14em;
+}
+
+.hero-line-in {
+  animation: hero-line-in 820ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: var(--d, 0ms);
+}
+
+@keyframes hero-line-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 108%, 0);
+  }
+}
+
+.hero-rise {
+  animation: hero-rise 700ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: var(--d, 0ms);
+}
+
+@keyframes hero-rise {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 14px, 0);
+  }
+}
+
+/* Les quatre modules convergent vers la fenêtre : chacun arrive de sa
+   propre direction (--tx/--ty) et se pose dans la barre. C'est la
+   phrase du titre, jouée. */
+.hero-chip {
+  animation: hero-chip-dock 760ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: var(--d, 0ms);
+}
+
+@keyframes hero-chip-dock {
+  from {
+    opacity: 0;
+    transform: translate3d(var(--tx, 0), var(--ty, 0), 0) scale(0.86);
+  }
+}
+
+.hero-window {
+  animation: hero-window-in 900ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: var(--d, 0ms);
+}
+
+@keyframes hero-window-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 26px, 0) scale(0.965);
+  }
+}
+
+/* Une seule impulsion quand les quatre se sont posés, jamais une
+   boucle : le hero ne doit rien coûter une fois l'entrée finie. */
+.hero-dock-glow {
+  animation: hero-dock-glow 1100ms ease-out both;
+  animation-delay: var(--d, 0ms);
+}
+
+@keyframes hero-dock-glow {
+  0%,
+  55% {
+    opacity: 0;
+  }
+  72% {
+    opacity: 0.55;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-line-in,
+  .hero-rise,
+  .hero-chip,
+  .hero-window,
+  .hero-dock-glow {
+    animation: none;
+  }
+  /* La lueur d'arrimage n'a plus de sens sans le mouvement qu'elle
+     ponctue : on la retire au lieu de la figer allumée. */
+  .hero-dock-glow {
+    opacity: 0;
+  }
+}
