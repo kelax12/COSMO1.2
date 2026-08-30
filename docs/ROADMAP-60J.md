@@ -130,7 +130,7 @@ les porte, jamais ici.
 |---|---|---|---|---|---|---|---|---|
 | ✅ T-45 | Dette technique | Découper `TaskTable.tsx` (1 124 lignes, plus gros fichier du dépôt, immobile depuis trois jours). **Fait le 2026-08-29 : 1 124 → 890** | Les quatre passes du cliquet ont toutes porté sur `/entreprise`, parce que c'est là qu'a lieu le travail. La dette du socle ne baisse pas toute seule | P3 | L | — | B | S8 |
 | ✅ T-46 | Fiabilité | **FERMÉ le 2026-08-29 (soir) : la sauvegarde EXISTE et tourne.** Secret posé, run vert, artefact `db-dump` de **385 ko** produit et téléchargeable, rétention 30 jours, prochain passage automatique à 04:26 UTC. Trois échecs successifs ont livré trois causes réelles, toutes refermées dans le workflow : identité du pooler (`postgres.<ref>`, absente), client PostgreSQL 16 utilisé face à un serveur 17, et un `Re-run` qui rejouait l'ancien fichier. ~~`pg_dump` mensuel~~ → **QUOTIDIEN**, et **remonté de P3 à P0**. La décision de rester en plan Free (donc sans T-01, donc sans aucune sauvegarde Supabase) fait de ce dump **la seule copie de la base qui existe**. Toujours inerte : sans le secret `SUPABASE_DB_URL` le job s'arrête en avertissement | ~~Complément du PITR~~ · Il n'y a plus rien à compléter : c'est la sauvegarde | **P0** | S | ~~T-01~~ | A livré / **X pose le secret** | S1 |
-| 🟡 T-51 | Performance | **Premier levier livré le 2026-08-29 : 407 ko de moins au chargement** (recharts n'arrive plus qu'à l'approche de sa section), LCP 3,3 → 2,7 s, TTI 3,4 → 2,8 s en mesure locale. **Landing : 55 de performance et jusqu'à 1,5 s de blocage du fil principal.** Mesuré en CI le 2026-08-29, quatre fois, sur la version française. Le blog et le guide sont à 96-97 sur le même build : ce n'est pas le socle, c'est la page | La landing est la première chose que voit un visiteur d'annuaire, et c'est la seule page lente du site. Ouvrir l'acquisition sur elle, c'est payer un clic pour une page qui rame | P3 | M | — | B | S8 |
+| 🟡 T-51 | Performance | **Premier levier livré le 2026-08-29 : 407 ko de moins au chargement** (recharts n'arrive plus qu'à l'approche de sa section), LCP 3,3 → 2,7 s, TTI 3,4 → 2,8 s en mesure locale. **Landing : 55 de performance et jusqu'à 1,5 s de blocage du fil principal.** Mesuré en CI le 2026-08-29, quatre fois, sur la version française. Le blog et le guide sont à 96-97 sur le même build : ce n'est pas le socle, c'est la page **Outillé et RE-CADRÉ le 2026-08-30.** `npm run profile:landing` profile le fil principal (Playwright + CPU bridé), et le job `lighthouse` de la CI publie désormais le bootup par script et le découpage du fil principal en annotations. Fait décisif : **la mesure locale ne reproduit pas l'écart** — sur ce poste, la landing (55 en CI) et le guide (96 en CI) rendent 40 et 45, la charge machine dominant tout. Toute attribution doit donc venir du runner. Première piste mesurée là-bas, à confirmer : `vendor-animation` (framer-motion) est le plus gros poste de bootup d'une page qui anime en GSAP, et `vendor-sentry` le suivant, ce dernier étant T-47 donc un arbitrage d'Axel. | La landing est la première chose que voit un visiteur d'annuaire, et c'est la seule page lente du site. Ouvrir l'acquisition sur elle, c'est payer un clic pour une page qui rame | P3 | M | — | B | S8 |
 | T-47 | Performance | Trancher `vendor-sentry` (49,2 ko gzip) sur le chemin critique | Ce n'est **pas** un arbitrage de performance : le différer revient à ne plus capturer les erreurs de démarrage, celles qui blanchissent l'écran. Décision produit, pas optimisation | P3 | S | — | X décide | S8 |
 
 ---
@@ -521,6 +521,49 @@ sections à 6. Une seule table porte un statut, et son décompte est recompté p
 source. Ce qui a été gardé bien que non demandé l'a été pour une raison précise : les décisions
 assumées et leurs seuils de réouverture, les interdits des 60 jours, les checkpoints par palier.
 Aucun ne se déduit de la liste des tâches.
+
+#### 🔬 T-02 — le drill se fait dans Actions, pas sur le poste
+
+Le poste n'a ni client PostgreSQL ni Docker ; le runner sait déjà installer le client 17, et le
+dump vit chez lui en artefact. Le workflow restaure, chronomètre, et surtout **juge sur
+l'isolation** : zéro table publique sans RLS, plus de 50 policies, et un utilisateur qui ne voit
+que ses propres tâches (rôle `authenticated` avec ses claims, `postgres` contournant la RLS). Une
+restauration qui rend les lignes mais perd l'isolation est une fuite totale, et elle ne se voit
+sur aucun compteur de volume.
+
+Trois gardes s'exécutent avant la moindre connexion, dont le refus de la production par l'hôte
+**ou** par l'utilisateur. Testées sur cinq cibles, deux formes de l'URL de production comprises.
+
+#### 🔴 T-51 — l'enseignement du jour est que je ne peux pas mesurer cette tâche d'ici
+
+Ce qui était prévu : profiler la landing, trouver le coupable, corriger. Ce qui s'est passé, dans
+l'ordre, parce que l'ordre est l'enseignement :
+
+1. Mon profil par échantillonnage a désigné **GSAP à 4 078 ms de CPU**, 51 % du fil principal.
+   Hypothèse évidente : les boucles infinies du hero.
+2. Expérience pour la vérifier : boucles neutralisées, rebuild, re-mesure. **Aucun changement.**
+   Et l'expérience était nulle : j'avais neutralisé le *suivi* des tweens, pas leur création.
+3. A/B refait au runtime, en tuant réellement les tweens : résultats incohérents d'une passe à
+   l'autre (142, 2 091, 26 ms), donc rien de conclu.
+4. Lighthouse, piloté sur le même navigateur, contredit mon profil : **GSAP y pèse 226 ms**. Mon
+   attribution était fausse par construction, l'échantillonnage rattachant à la frame du dessus le
+   style et le layout déclenchés en rAF.
+5. Contrôle décisif : mesurer le **guide**, que la CI note 96. Il sort à **45**, contre 40 pour la
+   landing. **La mesure locale ne distingue pas une page rapide d'une page lente** : elle mesure
+   la charge de cette machine.
+
+Conclusion, et elle vaut mieux qu'un correctif au jugé : **l'écart ne se reproduit que sur le
+runner**. Le job `lighthouse` publie donc maintenant le bootup par script et le découpage du fil
+principal en annotations, lisibles sans authentification. Le prochain run dira quoi corriger, sur
+la machine qui voit réellement 55 contre 96.
+
+Ce que Lighthouse a quand même montré ici, à confirmer là-bas : le plus gros poste de bootup de la
+landing est **`vendor-animation` (framer-motion)**, sur une page qui anime en GSAP et n'a besoin de
+framer que parce que `MotionConfig` est monté à la racine de `App.tsx` et que `CookieBanner` en
+dépend. Le suivant est `vendor-sentry`, c'est-à-dire T-47, un arbitrage qui appartient à Axel.
+**Rien n'a été corrigé** : sortir framer-motion du chemin public touche la garantie
+`prefers-reduced-motion`, la zone qui a déjà produit deux régressions dans ce dépôt, et ça se
+décide sur une mesure, pas sur une intuition.
 
 #### ✅ T-06 (b) — la 2FA de la console ne protégeait pas l'application
 

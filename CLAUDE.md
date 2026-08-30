@@ -136,6 +136,11 @@ npm run check:mail          # Délivrabilité des emails Auth : MX, SPF, DKIM Re
 npm run i18n:scan           # Chaînes en dur non externalisées
 npm run i18n:namespaces     # Quels catalogues le SHELL rend (donc eager) ; --pages
                             # donne la liste à déclarer par route dans App.tsx
+npm run profile:landing     # Profil du fil principal d'une page (CPU bride, via Playwright).
+                            # ⚠️ Mesure du 2026-08-30 : sur un poste de dev, la landing (55 en CI)
+                            # et le guide (96 en CI) rendent le MEME score, la charge machine
+                            # dominant tout. Un ecart entre deux PAGES ne se lit donc que sur le
+                            # runner ; l'outil sert a comparer un AVANT/APRES sur la meme page.
 npm run check:bundle        # Budget de bundle sur le build reel (CI, apres npm run build)
                             # Entree < 92 ko gzip. ❌ Ne jamais remonter un plafond.
 npm run test:rls   # Tests d'intégration RLS (stack Supabase locale)
