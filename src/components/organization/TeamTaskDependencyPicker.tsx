@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
-import { Check, Link2, Loader2, Plus, Search, X } from 'lucide-react';
+import { Check, Loader2, Plus, Search, X } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   Dialog,
@@ -204,8 +204,7 @@ const TeamTaskDependencyPicker = ({
       >
         <DialogHeader className="px-5 py-4 border-b shrink-0 space-y-1" style={{ borderColor: 'rgb(var(--color-border))' }}>
           <div className="flex items-center justify-between gap-3">
-            <DialogTitle className="text-base font-semibold flex items-center gap-2" style={{ color: 'rgb(var(--color-text-primary))' }}>
-              <Link2 size={16} aria-hidden="true" />
+            <DialogTitle className="text-base font-semibold" style={{ color: 'rgb(var(--color-text-primary))' }}>
               {t('projects.addDependency')}
             </DialogTitle>
             <button

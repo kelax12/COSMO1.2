@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
-import { Check, Link2, Loader2, Plus, Search, X } from 'lucide-react';
+import { Check, Loader2, Plus, Search, X } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   Dialog,
@@ -225,10 +225,9 @@ const TaskDependencyPicker = ({
         >
           <div className="flex items-center justify-between gap-3">
             <DialogTitle
-              className="text-base font-semibold flex items-center gap-2"
+              className="text-base font-semibold"
               style={{ color: 'rgb(var(--color-text-primary))' }}
             >
-              <Link2 size={16} aria-hidden="true" />
               {t('dependencies.add')}
             </DialogTitle>
             <button
