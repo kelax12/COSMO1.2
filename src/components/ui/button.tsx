@@ -42,6 +42,11 @@ const buttonVariants = cva(
   }
 )
 
+type ButtonProps = React.ComponentProps<"button"> &
+  VariantProps<typeof buttonVariants> & {
+    asChild?: boolean
+  }
+
 // `type` par défaut : "button", pas le défaut HTML "submit".
 //
 // Sans ça, tout <Button> posé dans un <form> sans `type` explicite soumettait
@@ -51,21 +56,33 @@ const buttonVariants = cva(
 // projet déclarent tous `type="submit"` ; aucun ne comptait sur l'implicite
 // (vérifié : les seuls <Button> non typés d'un fichier contenant un <form>
 // sont hors de ce <form>). `type` reste surchargeable via les props.
-function Button({
-  className,
-  variant = "default",
-  size = "default",
-  asChild = false,
-  type = "button",
-  ...props
-}: React.ComponentProps<"button"> &
-  VariantProps<typeof buttonVariants> & {
-    asChild?: boolean
-  }) {
+//
+// `forwardRef` OBLIGATOIRE tant que le projet est sur React 18.
+//
+// La source shadcn amont est écrite pour React 19, où `ref` est une prop
+// ordinaire d'un composant fonction. En 18 il ne l'est pas : React émettait
+// « Function components cannot be given refs » et — c'est le vrai coût — le
+// ref n'était JAMAIS attaché. `CalendarDayButton` (ui/calendar.tsx) s'en sert
+// pour poser le focus sur le jour survolé au clavier : son
+// `ref.current?.focus()` ne faisait donc rien, et la navigation clavier dans
+// le calendrier ne déplaçait pas le focus. L'avertissement n'était pas du
+// bruit, c'était le symptôme.
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(function Button(
+  {
+    className,
+    variant = "default",
+    size = "default",
+    asChild = false,
+    type = "button",
+    ...props
+  },
+  ref
+) {
   const Comp = asChild ? Slot : "button"
 
   return (
     <Comp
+      ref={ref}
       data-slot="button"
       data-variant={variant}
       data-size={size}
@@ -77,6 +94,7 @@ function Button({
       {...props}
     />
   )
-}
+})
 
 export { Button, buttonVariants }
+export type { ButtonProps }

@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle2, Trash2, ListPlus, MoreHorizontal, Tag, CalendarClock, ArrowLeft, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { DateCalendarPanel, DATE_PANEL_CLASS } from '@/components/ui/date-picker';
+import { DateCalendarPanel } from '@/components/ui/date-picker';
 import { useT } from '@/i18n/useT';
 
 interface CategoryOption {
@@ -61,16 +60,13 @@ const TaskBulkActionsBar: React.FC<Props> = ({
 }) => {
   const { t, tp } = useT('tasks');
   const [menuOpen, setMenuOpen] = useState(false);
-  const [menuView, setMenuView] = useState<'root' | 'category'>('root');
-  // Calendrier COSMO hors du menu (même contrainte que le snooze : le menu se
-  // ferme au clic, l'ancre doit survivre à sa fermeture). Il remplace l'input
-  // natif, qui ouvrait le calendrier du navigateur — hors thème, hors locale.
-  const [calendarOpen, setCalendarOpen] = useState(false);
-
-  const openDatePicker = () => {
-    setMenuOpen(false);
-    setCalendarOpen(true);
-  };
+  const [menuView, setMenuView] = useState<'root' | 'category' | 'date'>('root');
+  // Le calendrier COSMO est une VUE du menu, comme la liste des catégories —
+  // pas une seconde couche par-dessus. Même raison que dans `OverdueBanner`
+  // (cf. son commentaire) : une couche ouverte pendant que le menu se ferme
+  // se fait congédier par la restitution de focus. Il remplace l'input natif,
+  // qui ouvrait le calendrier du navigateur — hors thème, hors locale.
+  const openDatePicker = () => setMenuView('date');
 
   return (
     <AnimatePresence>
@@ -111,7 +107,7 @@ const TaskBulkActionsBar: React.FC<Props> = ({
               variant="outline"
               disabled={count === 0}
               onClick={() => { setMenuView('root'); setMenuOpen((v) => !v); }}
-              aria-label="Plus d'actions"
+              aria-label={t('table.moreActionsAria')}
               aria-haspopup="menu"
               aria-expanded={menuOpen}
             >
@@ -127,7 +123,9 @@ const TaskBulkActionsBar: React.FC<Props> = ({
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 6, scale: 0.97 }}
                     transition={{ duration: 0.12 }}
-                    className="absolute bottom-full mb-2 right-0 z-[70] w-60 rounded-xl border shadow-2xl overflow-hidden"
+                    className={`absolute bottom-full mb-2 right-0 z-[70] rounded-xl border shadow-2xl overflow-hidden ${
+                      menuView === 'date' ? 'w-[clamp(240px,22rem,calc(100vw-2rem))]' : 'w-60'
+                    }`}
                     style={{
                       backgroundColor: 'rgb(var(--color-surface))',
                       borderColor: 'rgb(var(--color-border))',
@@ -135,7 +133,28 @@ const TaskBulkActionsBar: React.FC<Props> = ({
                     role="menu"
                     aria-label={t('table.moreActions')}
                   >
-                    {menuView === 'root' ? (
+                    {menuView === 'date' ? (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => setMenuView('root')}
+                          className="w-full flex items-center gap-2 px-3.5 py-2 text-xs font-semibold uppercase tracking-wide hover:bg-[rgb(var(--color-hover))] transition-colors"
+                          style={{ color: 'rgb(var(--color-text-muted))' }}
+                          aria-label={t('table.backAria')}
+                        >
+                          <ArrowLeft size={13} aria-hidden="true" /> {t('table.back')}
+                        </button>
+                        <div className="h-px" style={{ backgroundColor: 'rgb(var(--color-border))' }} />
+                        <DateCalendarPanel
+                          allowClear={false}
+                          onSelect={(date) => {
+                            if (!date) return;
+                            onSetDeadline(date);
+                            setMenuOpen(false);
+                          }}
+                        />
+                      </>
+                    ) : menuView === 'root' ? (
                       <>
                         <button
                           type="button"
@@ -156,7 +175,7 @@ const TaskBulkActionsBar: React.FC<Props> = ({
                           style={{ color: 'rgb(var(--color-text-primary))' }}
                         >
                           <CalendarClock size={15} style={{ color: 'rgb(var(--color-text-secondary))' }} aria-hidden="true" />
-                          Modifier la deadline
+                          {t('table.editDeadline')}
                         </button>
                       </>
                     ) : (
@@ -166,7 +185,7 @@ const TaskBulkActionsBar: React.FC<Props> = ({
                           onClick={() => setMenuView('root')}
                           className="w-full flex items-center gap-2 px-3.5 py-2 text-xs font-semibold uppercase tracking-wide hover:bg-[rgb(var(--color-hover))] transition-colors"
                           style={{ color: 'rgb(var(--color-text-muted))' }}
-                          aria-label="Retour aux actions"
+                          aria-label={t('table.backAria')}
                         >
                           <ArrowLeft size={13} aria-hidden="true" /> {t('table.categoryBack')}
                         </button>
@@ -202,33 +221,6 @@ const TaskBulkActionsBar: React.FC<Props> = ({
                 </>
               )}
             </AnimatePresence>
-            {/* Calendrier COSMO — survit à la fermeture du menu, comme l'input
-                natif qu'il remplace. L'ancre est invisible : aucun champ de
-                date n'est affiché, c'est l'entrée de menu qui ouvre. */}
-            <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
-              <PopoverTrigger asChild>
-                {/* Ancre calée sur le bouton du menu (le conteneur est déjà
-                    `relative`). `pointer-events-none` pour ne jamais lui voler
-                    un clic. */}
-                <span aria-hidden="true" className="absolute inset-0 pointer-events-none" />
-              </PopoverTrigger>
-              <PopoverContent
-                className={`${DATE_PANEL_CLASS} z-[100]`}
-                align="start"
-                collisionPadding={16}
-                sideOffset={8}
-                aria-label={t('table.newDeadline')}
-              >
-                <DateCalendarPanel
-                  allowClear={false}
-                  onSelect={(date) => {
-                    if (!date) return;
-                    onSetDeadline(date);
-                    setCalendarOpen(false);
-                  }}
-                />
-              </PopoverContent>
-            </Popover>
           </div>
           <button
             type="button"
