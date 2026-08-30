@@ -2,18 +2,11 @@ import { useMemo, useState } from 'react';
 import { Link2, X, Plus, AlertTriangle } from 'lucide-react';
 import {
   useTeamTaskDependencies,
-  useAddTaskDependency,
   useRemoveTaskDependency,
   useTeamTasks,
   type TeamTask,
 } from '@/modules/team-projects';
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-} from '@/components/ui/dropdown-menu';
+import TeamTaskDependencyPicker from './TeamTaskDependencyPicker';
 import { useT } from '@/i18n/useT';
 
 interface TeamTaskDependenciesSectionProps {
@@ -34,10 +27,10 @@ interface TeamTaskDependenciesSectionProps {
 const TeamTaskDependenciesSection = ({ task, isManager }: TeamTaskDependenciesSectionProps) => {
   const { t, tp } = useT('org');
   const [open, setOpen] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   const { data: allTasks = [] } = useTeamTasks(task.orgId);
   const { data: dependencies = [] } = useTeamTaskDependencies(task.orgId);
-  const addDependency = useAddTaskDependency(task.orgId);
   const removeDependency = useRemoveTaskDependency(task.orgId);
 
   const byId = useMemo(() => new Map(allTasks.map((x) => [x.id, x])), [allTasks]);
@@ -59,24 +52,6 @@ const TeamTaskDependenciesSection = ({ task, isManager }: TeamTaskDependenciesSe
         .filter((x): x is TeamTask => !!x),
     [dependencies, task.id, byId],
   );
-
-  /**
-   * Candidats à l'ajout. Le filtre reproduit exactement ce que la base
-   * accepte (mig. 108) — même projet, jamais soi-même, jamais un doublon —
-   * pour ne pas proposer un choix qui sera rejeté.
-   *
-   * Les cycles plus longs ne sont PAS pré-filtrés ici : les détecter
-   * demanderait de parcourir tout le graphe à chaque ouverture de menu, et le
-   * trigger les refuse déjà avec un message clair.
-   */
-  const candidates = useMemo(() => {
-    const linked = new Set([
-      ...blockedBy.map((x) => x.id),
-      ...blocks.map((x) => x.id),
-      task.id,
-    ]);
-    return allTasks.filter((x) => x.projectId === task.projectId && !linked.has(x.id));
-  }, [allTasks, task.projectId, task.id, blockedBy, blocks]);
 
   const unfinishedBlockers = blockedBy.filter((x) => !x.completed).length;
 
@@ -168,27 +143,30 @@ const TeamTaskDependenciesSection = ({ task, isManager }: TeamTaskDependenciesSe
             </div>
           )}
 
-          {isManager && candidates.length > 0 && (
-            <DropdownMenu>
-              <DropdownMenuTrigger className="inline-flex items-center gap-1 text-xs font-semibold text-blue-500 hover:text-blue-600 transition-colors">
-                <Plus size={12} aria-hidden="true" /> {t('projects.addDependency')}
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-64 max-h-64 overflow-y-auto">
-                <DropdownMenuLabel>{t('projects.blockedBy')}</DropdownMenuLabel>
-                {candidates.map((x) => (
-                  <DropdownMenuItem
-                    key={x.id}
-                    onClick={() =>
-                      addDependency.mutate({ taskId: task.id, dependsOnId: x.id })
-                    }
-                  >
-                    <span className="truncate">{x.name}</span>
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+          {/* Toujours proposé, même sans autre tâche dans le projet : la
+              popup sait en créer une, et un bouton qui disparaît quand il n'y
+              a « rien à choisir » supprime précisément le chemin dont on a
+              besoin ce jour-là. */}
+          {isManager && (
+            <button
+              type="button"
+              onClick={() => setPickerOpen(true)}
+              className="inline-flex items-center gap-1 text-xs font-semibold text-blue-500 hover:text-blue-600 transition-colors"
+            >
+              <Plus size={12} aria-hidden="true" /> {t('projects.addDependency')}
+            </button>
           )}
         </div>
+      )}
+
+      {isManager && pickerOpen && (
+        <TeamTaskDependencyPicker
+          open={pickerOpen}
+          onClose={() => setPickerOpen(false)}
+          task={task}
+          tasks={allTasks}
+          dependencies={dependencies}
+        />
       )}
     </div>
   );
