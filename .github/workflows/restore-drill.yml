@@ -163,8 +163,13 @@ jobs:
         env:
           DB_URL: ${{ secrets.DRILL_DB_URL }}
           DUMP: ${{ steps.dump.outputs.dump }}
+        # Le runner invoque `bash -e` par defaut, quoi que le script demande.
+        # Ce step a besoin de survivre au code de sortie non-nul de pg_restore
+        # (des erreurs sur les objets Supabase sont ATTENDUES, cf. commentaire
+        # plus haut) pour les compter au lieu d'y mourir : `-e` doit rester
+        # absent, donc le shell est explicite au lieu du defaut du runner.
+        shell: bash --noprofile --norc -uo pipefail {0}
         run: |
-          set -uo pipefail
           DEBUT=$(date +%s)
           pg_restore --no-owner --no-privileges --no-acl --clean --if-exists \
                      --dbname "$DB_URL" "$DUMP" 2> restore.log
