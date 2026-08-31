@@ -581,7 +581,9 @@ Debug : `localStorage.removeItem('cosmo_onboarding_modules_done')` puis reload.
 
 Migrations dans `supabase/migration/*.sql`, convention `NNN_<feature>.sql`.
 **136 fichiers de migration, dernière = `132_task_dependencies.sql`** (au 2026-08-30).
-Ledger prod relu le 2026-08-30 : la `132` est la dernière appliquée, la `131` reste en attente.
+Ledger prod relu le 2026-08-31 : **tout le dépôt est appliqué**, `131` et `132` comprises.
+⚠️ Elles l'ont été dans l'ordre INVERSE de leur numéro (la `132` le 08-30, la `131` le 08-31) —
+elles ne se touchent pas, mais le ledger ne se lit donc pas comme une suite croissante.
 ✅ **La `132` a été appliquée en prod le 2026-08-30** (dépendances entre tâches PERSONNELLES,
 jumelle de la `108`), et vérifiée invariant par invariant plutôt que sur un « success » :
 `user_id` bien redérivé alors qu'on envoyait exprès celui d'un autre compte, doublon refusé
@@ -591,9 +593,19 @@ arête inter-comptes refusée, tâche inexistante refusée, `ON DELETE CASCADE` 
 en voit **zéro**, et son insertion est refusée. Tests joués dans une transaction annulée par
 un `RAISE` final — la table est restée à 0 ligne. Zéro advisor de sécurité sur cette table.
 Elle n'a modifié aucune table existante.
-🔴 **La `131` n'est PAS appliquée** : elle exige une session `aal2` pour `/admin` (T-06 (b)).
-Ordre : déployer le front, **enrôler**, puis appliquer. Dans ce sens il n'y a aucune fenêtre ;
-dans l'autre, `/admin` ne rend plus de statistiques jusqu'au premier code vérifié. ✅ La `130` a été appliquée
+✅ **La `131` a été appliquée en prod le 2026-08-31** (`/admin` exige une session `aal2`),
+et vérifiée acteur par acteur dans une transaction annulée : admin en `aal1` →
+`admin_allowlisted()` vrai mais `is_admin()` FAUX et `get_admin_stats()` refusée **42501** ;
+admin dont le jeton n'a **aucune** claim `aal` → `is_admin()` faux (la garde ne se relâche pas
+sur une valeur manquante) ; admin en `aal2` → garde ouverte, statistiques rendues ; compte non
+admin en `aal2` → tout faux, inchangé.
+🔴 **ELLE A ÉTÉ APPLIQUÉE AVANT L'ENRÔLEMENT**, à la demande explicite d'Axel, donc dans
+l'ordre que l'en-tête de la migration déconseille. Mesuré juste avant : le compte admin a
+**zéro facteur MFA**. Conséquence, tant qu'aucun code TOTP n'a été vérifié : `/admin`
+n'affiche plus de statistiques. Ce n'est pas un verrouillage — `AdminMfaGate` reste
+atteignable parce que `admin_allowlisted()` ignore volontairement le niveau d'assurance.
+**Prochaine action côté Axel : ouvrir `/admin` et enrôler un authentificateur.** Téléphone
+perdu → `DELETE FROM auth.mfa_factors WHERE user_id = '<uid>';` depuis le SQL editor. ✅ La `130` a été appliquée
 le 2026-08-29, vérifiée acteur par acteur (membre simple : 0 ligne).
 ✅ **Les `127`, `128` et `129` ont été appliquées en prod le 2026-08-27**, dans cet ordre, chacune
 vérifiée après coup : la `127` rend un résultat identique pour les 18 comptes qui ont des données
