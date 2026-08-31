@@ -148,7 +148,10 @@ jobs:
           echo "run_id=$RUN_ID" >> "$GITHUB_OUTPUT"
           # L'en-tete se relit avant toute connexion : un fichier tronque
           # echoue ici, pas au milieu d'une restauration.
-          pg_restore --list "$DUMP" | head -5
+          # `|| true` : head ferme le tube apres 5 lignes, pg_restore recoit
+          # SIGPIPE et sort en erreur ; sous pipefail ca tue le job pour rien,
+          # alors que la relecture elle-meme a reussi.
+          pg_restore --list "$DUMP" | head -5 || true
 
       # ── La mesure ──────────────────────────────────────────────────────
       # `--clean --if-exists` rend le drill rejouable sur la meme cible.
