@@ -230,7 +230,11 @@ jobs:
           SELECT count(*) FROM public.tasks;
           ROLLBACK;
           SQL
-          VISIBLES=$(tail -1 iso.txt)
+          # `tail -1` prenait le mot ROLLBACK (tag de commande imprime par psql
+          # apres BEGIN/SET/SELECT/ROLLBACK meme en -t), jamais le chiffre :
+          # la comparaison VISIBLES = TOTAL etait garantie fausse quel que soit
+          # le vrai resultat, donc ce controle ne pouvait jamais echouer.
+          VISIBLES=$(grep -E '^[0-9]+$' iso.txt | tail -1)
 
           echo "Tables publiques sans RLS : ${SANS_RLS:-?}"
           echo "Policies                  : ${POLICIES:-?}"
