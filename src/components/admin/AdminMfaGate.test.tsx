@@ -122,8 +122,14 @@ describe('AdminMfaGate', () => {
       { length: 1500 },
       (_, i) => `<rect x="${i % 41}" y="${Math.floor(i / 41)}" width="1" height="1" fill="#000"/>`
     ).join('');
-    const qrSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 41 41">${rects}</svg>`;
-    expect(qrSvg.length).toBeGreaterThan(60_000);
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 41 41">${rects}</svg>`;
+    expect(svg.length).toBeGreaterThan(60_000);
+
+    // 🔴 La forme RÉELLE livrée par supabase-js : `GoTrueClient` préfixe déjà
+    // la valeur de GoTrue, contrairement à ce qu'annonce son propre JSDoc.
+    // Un test qui passerait le SVG brut ne verrait jamais le double préfixe,
+    // qui est précisément ce qui a empêché ce QR de s'afficher.
+    const qrSvg = `data:image/svg+xml;utf-8,${svg}`;
 
     startTotpEnrolment.mockResolvedValue({ factorId: 'f1', qrSvg, secret: 'JBSWY3DPEHPK3PXP' });
     gateState = 'enrol';
@@ -132,9 +138,15 @@ describe('AdminMfaGate', () => {
     fireEvent.click(screen.getByRole('button'));
 
     const img = await waitFor(() => screen.getByRole('img'));
+    const src = img.getAttribute('src') ?? '';
     // Une image passive, jamais du SVG inline : la propriété de sécurité
     // compte autant que l'affichage.
-    expect(img.getAttribute('src')).toMatch(/^data:image\/svg\+xml/);
+    expect(src).toMatch(/^data:image\/svg\+xml/);
+    // Un SEUL en-tête. Un `data:` percent-encodé dans le corps (`data%3A`)
+    // est la signature du double préfixe, et le navigateur refuse l'image.
+    expect(src).not.toContain('data%3A');
+    // Le SVG est bien arrivé jusqu'au bout, pas seulement l'en-tête.
+    expect(src).toContain(encodeURIComponent('<svg'));
     // Le secret reste saisissable à la main si le QR ne passe pas.
     expect(screen.getByText(/JBSW/)).toBeTruthy();
   });
