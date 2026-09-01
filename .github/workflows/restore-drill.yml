@@ -1,0 +1,288 @@
+# ══════════════════════════════════════════════════════════════════
+# DRILL DE RESTAURATION (T-02) — restaure le dump quotidien vers un projet
+# jetable, chronomètre, et vérifie que ce qui revient est utilisable.
+#
+# POURQUOI CE WORKFLOW ET PAS UN SCRIPT LOCAL : le drill exige un client
+# PostgreSQL 17. La machine d'Axel n'a ni client Postgres ni Docker, et le
+# runner GitHub, lui, sait déjà en installer un — c'est exactement ce que fait
+# `db-backup.yml` chaque nuit. Le dump vit d'ailleurs ici, en artefact. Faire
+# le drill là où sont déjà l'outil et le fichier supprime la moitié des gestes,
+# et le chronomètre devient une mesure machine plutôt qu'un souvenir.
+#
+# CE QUE CE WORKFLOW PROUVE
+#   1. le dump se relit (`pg_restore --list`) ;
+#   2. il se restaure sur une instance vierge, et on sait en combien de temps ;
+#   3. les données sont là, en volume ;
+#   4. **la RLS est revenue** : aucune table publique sans RLS, des policies
+#      présentes, et un utilisateur ne voit que ses propres tâches. Une
+#      restauration qui rend les données mais perd l'isolation est le mode de
+#      défaillance silencieux de cette procédure.
+#
+# CE QU'IL NE PROUVE PAS, et qui reste un geste humain : ouvrir l'application
+# pointée sur le projet restauré, se connecter, créer une tâche. Le dump ne
+# contient pas les Edge Functions ni les secrets ; un `select` réussi ne dit
+# rien du parcours réel.
+#
+# 🔴 CE WORKFLOW ÉCRIT DANS UNE BASE. Trois gardes, toutes vérifiées avant la
+# moindre connexion : une confirmation à taper, un refus catégorique si l'URL
+# désigne le projet de PRODUCTION, et l'obligation d'une chaîne en mode session.
+#
+# MISE EN SERVICE (le jour du drill, et à défaire juste après)
+#   1. créer un projet Supabase jetable — ⚠️ le plan Free plafonne à 2 projets
+#      actifs, donc il faudra le supprimer, pas seulement l'oublier ;
+#   2. poser son « connection string » en mode session comme secret de dépôt
+#      `DRILL_DB_URL` ;
+#   3. lancer ce workflow (Actions → restore-drill → Run workflow) en tapant
+#      RESTAURER ;
+#   4. reporter le chronomètre dans `docs/DEPLOYMENT.md` §7 ;
+#   5. **supprimer le projet jetable ET le secret `DRILL_DB_URL`.**
+# ══════════════════════════════════════════════════════════════════
+name: restore-drill
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: 'Taper RESTAURER pour confirmer une ecriture dans la base cible'
+        required: true
+        default: ''
+      run_id:
+        description: 'Id du run db-backup a restaurer (vide = le dernier reussi)'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+  # Necessaire pour telecharger l'artefact d'un AUTRE run que celui-ci.
+  actions: read
+
+jobs:
+  drill:
+    runs-on: ubuntu-latest
+    steps:
+      # ── Garde 1 : intention, secret, et surtout PAS la production ───────
+      - name: Verifier l intention et la cible
+        id: guard
+        env:
+          DB_URL: ${{ secrets.DRILL_DB_URL }}
+          CONFIRMATION: ${{ inputs.confirmation }}
+          # Reference du projet de production. Elle est publique (elle est dans
+          # le bundle du site) : la citer ici ne revele rien, et c'est le seul
+          # moyen de refuser la cible qu'il ne faut jamais restaurer.
+          PROD_REF: ykeugqfgklejcdbrmawy
+        run: |
+          set -uo pipefail
+          if [ "$CONFIRMATION" != "RESTAURER" ]; then
+            echo "::error::Confirmation absente ou incorrecte. Ce workflow ECRIT dans la base cible."
+            exit 1
+          fi
+          if [ -z "${DB_URL:-}" ]; then
+            echo "::error::Secret DRILL_DB_URL absent. Cf. l'en-tete de ce workflow."
+            exit 1
+          fi
+          python3 - <<'EOF'
+          import os, sys
+          from urllib.parse import urlsplit
+          u = urlsplit(os.environ['DB_URL'].strip())
+          prod = os.environ['PROD_REF']
+          host, user = (u.hostname or ''), (u.username or '')
+          print(f"hote       : {host}")
+          print(f"utilisateur: {user}")
+          print(f"port       : {u.port}")
+          print(f"base       : {u.path.lstrip('/')}")
+          ok = True
+          # La garde qui compte. Un drill qui se trompe de cible ne perd pas un
+          # projet jetable, il perd la seule base qui existe.
+          if prod in host or prod in user:
+              print("::error::La cible designe le projet de PRODUCTION. Un drill se restaure "
+                    "vers un projet JETABLE, jamais vers la prod. Rien n'a ete tente.")
+              ok = False
+          if u.port == 6543:
+              print("::error::Port 6543 = pooler en mode TRANSACTION. pg_restore exige le mode "
+                    "SESSION (port 5432).")
+              ok = False
+          if not (u.password or ''):
+              print("::error::Aucun mot de passe dans la chaine.")
+              ok = False
+          sys.exit(0 if ok else 1)
+          EOF
+
+      # ── Client 17, meme piege que db-backup.yml ─────────────────────────
+      # Le paquet 17 se pose A COTE du client 16 preinstalle, et c'est le 16
+      # qui gagne dans le PATH. On impose le chemin absolu et on verifie.
+      - name: Installer le client PostgreSQL 17
+        run: |
+          set -euo pipefail
+          sudo sh -c 'echo "deb https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+          curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/pgdg.gpg
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client-17
+          BIN=/usr/lib/postgresql/17/bin
+          [ -x "$BIN/pg_restore" ] || { echo "::error::$BIN/pg_restore absent."; exit 1; }
+          echo "$BIN" >> "$GITHUB_PATH"
+          "$BIN/pg_restore" --version | grep -q ' 17\.' || {
+            echo "::error::Le binaire impose n'est pas en version 17."; exit 1; }
+          "$BIN/pg_restore" --version
+
+      # ── Le dump : celui d'un run precis, ou le dernier qui a reussi ─────
+      - name: Recuperer le dump
+        id: dump
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ inputs.run_id }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          if [ -z "$RUN_ID" ]; then
+            RUN_ID=$(gh run list --repo "$REPO" --workflow db-backup.yml \
+                       --status success --limit 1 --json databaseId \
+                       --jq '.[0].databaseId')
+            [ -n "$RUN_ID" ] || { echo "::error::Aucun run db-backup reussi trouve."; exit 1; }
+            echo "Dernier run db-backup reussi : $RUN_ID"
+          fi
+          gh run download "$RUN_ID" --repo "$REPO" --name db-dump --dir dump
+          DUMP=$(ls dump/*.dump | head -1)
+          [ -n "$DUMP" ] || { echo "::error::Artefact db-dump vide."; exit 1; }
+          echo "Fichier : $DUMP ($(stat -c%s "$DUMP") octets)"
+          echo "dump=$DUMP" >> "$GITHUB_OUTPUT"
+          echo "run_id=$RUN_ID" >> "$GITHUB_OUTPUT"
+          # L'en-tete se relit avant toute connexion : un fichier tronque
+          # echoue ici, pas au milieu d'une restauration.
+          # `|| true` : head ferme le tube apres 5 lignes, pg_restore recoit
+          # SIGPIPE et sort en erreur ; sous pipefail ca tue le job pour rien,
+          # alors que la relecture elle-meme a reussi.
+          pg_restore --list "$DUMP" | head -5 || true
+
+      # ── La mesure ──────────────────────────────────────────────────────
+      # `--clean --if-exists` rend le drill rejouable sur la meme cible.
+      # Les erreurs sur les objets appartenant aux roles Supabase (auth,
+      # storage, extensions) sont ATTENDUES sur une instance geree : on les
+      # compte au lieu d'echouer, et on juge sur les verifications d'apres.
+      - name: Restaurer, chronometre
+        id: restore
+        env:
+          DB_URL: ${{ secrets.DRILL_DB_URL }}
+          DUMP: ${{ steps.dump.outputs.dump }}
+        # Le runner invoque `bash -e` par defaut, quoi que le script demande.
+        # Ce step a besoin de survivre au code de sortie non-nul de pg_restore
+        # (des erreurs sur les objets Supabase sont ATTENDUES, cf. commentaire
+        # plus haut) pour les compter au lieu d'y mourir : `-e` doit rester
+        # absent, donc le shell est explicite au lieu du defaut du runner.
+        shell: bash --noprofile --norc -uo pipefail {0}
+        run: |
+          DEBUT=$(date +%s)
+          pg_restore --no-owner --no-privileges --no-acl --clean --if-exists \
+                     --dbname "$DB_URL" "$DUMP" 2> restore.log
+          CODE=$?
+          FIN=$(date +%s)
+          DUREE=$(( FIN - DEBUT ))
+          ERREURS=$(grep -c '^pg_restore: error' restore.log || true)
+          echo "duree=$DUREE"     >> "$GITHUB_OUTPUT"
+          echo "erreurs=$ERREURS" >> "$GITHUB_OUTPUT"
+          echo "code=$CODE"       >> "$GITHUB_OUTPUT"
+          echo "Duree : ${DUREE}s · code de sortie : $CODE · lignes d'erreur : $ERREURS"
+          echo "--- 40 premieres erreurs (contexte, pas verdict) ---"
+          grep '^pg_restore: error' restore.log | head -40 || true
+
+      # ── Ce qui juge vraiment : la donnee ET l'isolation ─────────────────
+      - name: Verifier la base restauree
+        id: verif
+        env:
+          DB_URL: ${{ secrets.DRILL_DB_URL }}
+        run: |
+          set -uo pipefail
+
+          # Volumes. `-tA` : ni en-tete ni alignement, donc analysable sans
+          # dependre de la mise en forme de psql.
+          psql "$DB_URL" -tA -F'|' <<'SQL' > volumes.txt
+          SELECT 'profiles', count(*) FROM public.profiles
+          UNION ALL SELECT 'tasks',  count(*) FROM public.tasks
+          UNION ALL SELECT 'habits', count(*) FROM public.habits
+          UNION ALL SELECT 'events', count(*) FROM public.events
+          UNION ALL SELECT 'okrs',   count(*) FROM public.okrs;
+          SQL
+          cat volumes.txt
+          TOTAL=$(grep '^tasks|' volumes.txt | cut -d'|' -f2)
+
+          # 🔴 Le controle qui donne son sens au drill. Une restauration qui
+          # rend les lignes mais perd la RLS est une fuite totale, et elle ne
+          # se voit sur aucun compteur de volume.
+          psql "$DB_URL" -tA <<'SQL' > rls.txt
+          SELECT count(*) FROM pg_class c
+          JOIN pg_namespace n ON n.oid = c.relnamespace
+          WHERE n.nspname = 'public' AND c.relkind = 'r' AND NOT c.relrowsecurity;
+          SELECT count(*) FROM pg_policies WHERE schemaname = 'public';
+          SQL
+          SANS_RLS=$(sed -n '1p' rls.txt)
+          POLICIES=$(sed -n '2p' rls.txt)
+
+          # Isolation effective : on se place dans le role `authenticated` avec
+          # les claims d'un utilisateur reel, on compte ses taches, on annule.
+          # `postgres` contourne la RLS (BYPASSRLS) ; `authenticated` non, et
+          # c'est tout l'objet de ce bloc.
+          psql "$DB_URL" -tA <<'SQL' > iso.txt
+          BEGIN;
+          SELECT set_config('request.jwt.claims',
+                            json_build_object('sub', (SELECT id::text FROM public.profiles
+                                                      ORDER BY id LIMIT 1),
+                                              'role', 'authenticated')::text, true);
+          SET LOCAL ROLE authenticated;
+          SELECT count(*) FROM public.tasks;
+          ROLLBACK;
+          SQL
+          VISIBLES=$(tail -1 iso.txt)
+
+          echo "Tables publiques sans RLS : ${SANS_RLS:-?}"
+          echo "Policies                  : ${POLICIES:-?}"
+          echo "Taches visibles par UN utilisateur : ${VISIBLES:-?} / ${TOTAL:-?}"
+
+          OK=0
+          if [ "${SANS_RLS:-1}" != "0" ]; then
+            echo "::error::${SANS_RLS} table(s) publique(s) sans RLS apres restauration."
+            OK=1
+          fi
+          if [ "${POLICIES:-0}" -le 50 ]; then
+            echo "::error::Seulement ${POLICIES:-0} policies restaurees, la prod en compte plus de 100."
+            OK=1
+          fi
+          if [ -n "${TOTAL:-}" ] && [ "${TOTAL:-0}" -gt 20 ] && [ "${VISIBLES:-}" = "${TOTAL}" ]; then
+            echo "::error::Un utilisateur voit les $TOTAL taches de la base. L'isolation n'est PAS revenue."
+            OK=1
+          fi
+          {
+            echo "sans_rls=${SANS_RLS:-}"
+            echo "policies=${POLICIES:-}"
+            echo "visibles=${VISIBLES:-}"
+            echo "total=${TOTAL:-}"
+          } >> "$GITHUB_OUTPUT"
+          exit $OK
+
+      # ── Le compte rendu, pret a coller dans DEPLOYMENT.md §7 ────────────
+      - name: Compte rendu
+        if: always()
+        env:
+          DUREE: ${{ steps.restore.outputs.duree }}
+          ERREURS: ${{ steps.restore.outputs.erreurs }}
+          SANS_RLS: ${{ steps.verif.outputs.sans_rls }}
+          POLICIES: ${{ steps.verif.outputs.policies }}
+          VISIBLES: ${{ steps.verif.outputs.visibles }}
+          TOTAL: ${{ steps.verif.outputs.total }}
+          RUN_ID: ${{ steps.dump.outputs.run_id }}
+        run: |
+          {
+            echo "## Drill de restauration — $(date -u +%Y-%m-%d) (UTC)"
+            echo ""
+            echo "| Mesure | Valeur |"
+            echo "|---|---|"
+            echo "| Dump restaure | run db-backup \`${RUN_ID:-?}\` |"
+            echo "| Duree de la restauration | **${DUREE:-?} s** |"
+            echo "| Lignes d'erreur pg_restore | ${ERREURS:-?} (objets Supabase, attendu) |"
+            echo "| Tables publiques sans RLS | ${SANS_RLS:-?} (attendu 0) |"
+            echo "| Policies restaurees | ${POLICIES:-?} |"
+            echo "| Taches visibles par un utilisateur | ${VISIBLES:-?} / ${TOTAL:-?} |"
+            echo ""
+            echo "**Reste a faire a la main** : pointer l'application sur le projet restaure,"
+            echo "se connecter, creer une tache. Puis SUPPRIMER le projet jetable et le secret"
+            echo "\`DRILL_DB_URL\`."
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "::notice::Drill : ${DUREE:-?}s, ${SANS_RLS:-?} table sans RLS, ${VISIBLES:-?}/${TOTAL:-?} taches visibles."
