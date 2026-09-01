@@ -43,9 +43,18 @@ export interface TotpEnrolment {
 export const countVerifiedTotp = (factors: MfaFactorLike[] | undefined): number =>
   (factors ?? []).filter((f) => f.factor_type === 'totp' && f.status === 'verified').length;
 
-/** Secret base32 groupé par 4, seule forme saisissable à la main sans erreur. */
-export const formatSecret = (secret: string): string =>
-  (secret.match(/.{1,4}/g) ?? []).join(' ');
+/**
+ * Secret base32 groupé par 4, seule forme saisissable à la main sans erreur.
+ *
+ * Total par construction : cette fonction est appelée PENDANT LE RENDU de
+ * l'écran d'enrôlement. Un `secret` absent y levait un `TypeError`, qui
+ * remontait à l'`AppErrorBoundary` — l'admin voyait « Une erreur inattendue
+ * s'est produite » à la place de son QR code, sans aucun moyen de savoir
+ * pourquoi. Un helper d'affichage ne doit jamais pouvoir abattre la page
+ * qui l'appelle.
+ */
+export const formatSecret = (secret: string | null | undefined): string =>
+  (String(secret ?? '').match(/.{1,4}/g) ?? []).join(' ');
 
 /**
  * L'écran à rendre, à partir des trois seules réponses qui comptent.
@@ -96,11 +105,21 @@ export async function startTotpEnrolment(friendlyName: string): Promise<TotpEnro
     friendlyName,
   });
   if (error) throw error;
-  return {
-    factorId: data.id,
-    qrSvg: data.totp.qr_code,
-    secret: data.totp.secret,
-  };
+
+  // La forme de la réponse se vérifie ICI, à la frontière, et jamais dans le
+  // rendu. Sans cette garde, un champ manquant devient un `TypeError` en
+  // phase de rendu, donc l'écran d'erreur générique de l'`AppErrorBoundary` :
+  // l'admin est bloqué dehors sans message exploitable, et la cause est
+  // invisible. Une réponse malformée doit produire une ERREUR, pas un écran
+  // blanc — l'appelant l'attrape déjà et affiche `mfa.enrolFailed`.
+  const factorId = data?.id;
+  const qrSvg = data?.totp?.qr_code;
+  const secret = data?.totp?.secret;
+  if (!factorId || !qrSvg || !secret) {
+    throw new Error('mfa_enrol_malformed_response');
+  }
+
+  return { factorId, qrSvg, secret };
 }
 
 /**
