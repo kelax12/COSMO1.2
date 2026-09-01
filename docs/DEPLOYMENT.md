@@ -555,8 +555,14 @@ projet restauré, se connecter, créer une tâche. Un `select` réussi ne dit ri
 |---|---|---|---|---|---|
 | 2026-09-01 | `33384797200` | 163 s | 0 | 129 | 289 / 724 |
 
-**Reste à faire, à la main, avant de clore le drill** : test humain (login + création d'une tâche
-sur le projet restauré), puis **supprimer le projet jetable ET le secret `DRILL_DB_URL`.**
+Le test humain (login + création d'une tâche sur le projet restauré) a été **volontairement
+sauté** (décision d'Axel, 2026-09-01) : l'app a chargé sans erreur sur le projet restauré
+(écran de connexion atteint, aucune erreur réseau/RLS), et le contrôle d'isolation automatisé
+avait déjà prouvé qu'un utilisateur authentifié ne voit que ses propres tâches. Le risque résiduel
+non couvert : un parcours applicatif complet (mutation, pas seulement lecture) n'a pas été rejoué.
+
+**Reste à faire, à la main, avant de clore le drill** : **supprimer le projet jetable ET le secret
+`DRILL_DB_URL`.**
 
 ### Export hors-fournisseur — automatisé le 2026-08-28
 
