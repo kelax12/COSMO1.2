@@ -31,14 +31,14 @@ garde que ce qui reste à faire.
 
 ## 1. Tableau récapitulatif — 52 tâches, la seule table qui porte un statut
 
-**Décompte au 2026-08-30**, recompté **par script** sur les tableaux ci-dessous, jamais de tête.
+**Décompte au 2026-09-01**, recompté **par script** sur les tableaux ci-dessous, jamais de tête.
 
 | | Nombre | Lesquelles |
 |---|---|---|
-| ✅ Fait et vérifié | **28** | T-02 · T-03 · T-04 · T-07 · T-08 · T-10 · T-11 · T-12 · T-13 · T-15 · T-16 · T-18 · T-19 · T-20 · T-24 · T-25 · T-26 · T-28 · T-29 · T-30 · T-31 · T-42 · T-44 · T-45 · T-46 · T-48 · T-49 · T-50 |
-| 🟡 Partiel | 6 | T-05 · T-06 · T-14 · T-23 · T-41 · T-51 |
+| ✅ Fait et vérifié | **29** | T-02 · T-03 · T-04 · T-07 · T-08 · T-10 · T-11 · T-12 · T-13 · T-15 · T-16 · T-18 · T-19 · T-20 · T-24 · T-25 · T-26 · T-28 · T-29 · T-30 · T-31 · T-35 · T-42 · T-44 · T-45 · T-46 · T-48 · T-49 · T-50 |
+| 🟡 Partiel | 7 | T-05 · T-06 · T-09 · T-14 · T-23 · T-41 · T-51 |
 | ⚪ Clos sans suite | 3 | T-01 · T-04b · T-27 |
-| ⬜ Ouvert | **15** | T-09 · T-17 · T-21 · T-22 · T-32 · T-33 · T-34 · T-35 · T-36 · T-37 · T-38 · T-39 · T-40 · T-43 · T-47 |
+| ⬜ Ouvert | **13** | T-17 · T-21 · T-22 · T-32 · T-33 · T-34 · T-36 · T-37 · T-38 · T-39 · T-40 · T-43 · T-47 |
 
 > Ce décompte est le seul résumé du document, et il vit **collé à sa source**. La version
 > précédente le tenait 500 lignes plus haut, dans une section qui avait cessé d'être mise à jour :
@@ -113,7 +113,7 @@ les porte, jamais ici.
 | T-32 | Legal | **Immatriculation micro-entreprise au guichet unique INPI** | Bloquant absolu de tout encaissement. Encaisser avant l'immatriculation est du travail dissimulé | P1 | M | — | X | S5 |
 | T-33 | Legal | Choisir et signer une société de domiciliation | Décision prise le 2026-08-26, exécution en attente. Conditionne B2 | P1 | S | — | X | S5 |
 | T-34 | Legal | Adhérer à un médiateur de la consommation et publier ses coordonnées dans les CGV | Adhésion payante et **obligatoire**, oubli classique sanctionné par la DGCCRF | P1 | S | T-32 | X | S6 |
-| T-35 | Paiement | Configurer le portail client Stripe (annulation d'abonnement activée) sur les **deux** comptes, test et live | E5 : `/v1/billing_portal/configurations` renvoie vide sur les deux comptes. **Le bouton existe, la résiliation ne marche pas** — et la landing promet « résiliable à tout moment » | P1 | XS | — | X | S6 |
+| ✅ T-35 | Paiement | Configurer le portail client Stripe (annulation d'abonnement activée) sur les **deux** comptes, test et live. **Fait le 2026-09-01**, une configuration par défaut active sur chacun, vérifiée par API | E5 : `/v1/billing_portal/configurations` renvoie vide sur les deux comptes. **Le bouton existe, la résiliation ne marche pas** — et la landing promet « résiliable à tout moment » | P1 | XS | — | X | S6 |
 | T-36 | Paiement | Basculer Stripe en compte **live** : `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, les 4 `STRIPE_ORG_PRICE_*` mensuels, endpoint webhook live avec les 5 mêmes events | La prod COSMO tourne sur une clé de TEST depuis le début : les customers réels vivent dans le sandbox. Les prix annuels se **dérivent**, il n'y a aucun secret annuel à poser | P1 | M | T-32, T-35 | X + A | S6 |
 | T-37 | Paiement | Compléter les mentions légales (SIREN, RCS, TVA, directeur de publication) et configurer les factures Stripe pour la France : mention « TVA non applicable, art. 293 B du CGI », mentions L441-9, numérotation continue | A3, C4, C5, C6. Une mention fausse est pire qu'une mention absente, d'où la dépendance au SIREN | P1 | S | T-32 | X + B | S6 |
 | T-38 | Paiement | Réarmer la facturation : `ENTERPRISE_BILLING_ENFORCED = true` **et** `billing_flags.enterprise_seat_limit = true`, dans le même déploiement | Les deux drapeaux se déplacent ensemble. Serveur seul = impasse client, client seul = on encaisse sans rien débloquer | P1 | XS | T-35, T-36, T-37 | A | S7 |
@@ -289,7 +289,7 @@ ces 60 jours. C'est la seule tâche de la roadmap dont le délai ne dépend pas 
 **Pourquoi cette semaine** : tout ce qui suit peut être préparé sans SIREN, sauf les mentions de
 facture. Préparer maintenant évite de tout découvrir le jour de la bascule.
 
-- [ ] **T-35** — configurer le portail client Stripe sur les deux comptes · P1 · XS · X
+- [x] **T-35** — configurer le portail client Stripe sur les deux comptes · P1 · XS · X
   **Done** : `GET /v1/billing_portal/configurations` renvoie une configuration active sur le
   compte test **et** sur le compte live, avec l'annulation d'abonnement autorisée. C'est la
   vérification qui a dégradé cette ligne de 🟡 à ❌ le 2026-08-26 : la refaire, ne pas la
@@ -508,6 +508,60 @@ questions à reposer le jour venu.
 Une session par entrée, la plus récente en tête de sa journée. **On coche quand le critère
 « Done » est vérifié, pas quand le code est écrit.** Les statuts vivent au §1 ; ici on raconte
 comment on y est arrivé, et surtout ce qu'on a cru à tort en chemin.
+
+### 2026-09-01 · T-35 : un abonné peut enfin résilier, et Stripe a trois contextes
+
+**Mesure d'abord.** `GET /v1/billing_portal/configurations` renvoyait `data: []` sur les deux
+comptes, exactement comme le 2026-08-26. L'application appelle
+`billingPortal.sessions.create({ customer, return_url })` **sans** paramètre `configuration` :
+Stripe cherche donc la configuration par défaut du compte, n'en trouve aucune, et la création de
+session échoue. Le bouton « Gérer mon abonnement » existait, la résiliation non, alors que la
+landing promet « résiliable à tout moment ».
+
+#### ✅ Les deux configurations existent et sont identiques
+
+| Compte | Configuration |
+|---|---|
+| `COSMO` (live, `acct_1TQVVnHJLweDSN4F`) | `bpc_1UAv9vHJLweDSN4F4xssO3OQ` |
+| `Environnement de test COSMO` (sandbox, `acct_1TQVWFHEm0kmXgy9`) | `bpc_1UAvS2HEm0kmXgy9XO4s1MM6` |
+
+`active: true`, `is_default: true`, `subscription_cancel` activé en `at_period_end`,
+`payment_method_update` et `invoice_history` activés, `default_return_url` sur
+`/entreprise?tab=billing`. Détail complet : `docs/STRIPE-LIVE.md`.
+
+#### ❌ Ce qui a été laissé fermé, et pourquoi
+
+`subscription_update` reste à `false`. Le portail propose deux choses sous ce nom, et la seconde
+est un piège : **« modifier la quantité »** ferait payer trois fois le prix pour **zéro siège de
+plus**, le quota étant porté par le palier (`max_members`) et jamais par la quantité Stripe. Le
+changement d'offre, lui, est légitime (`tierFromPriceId` redérive palier et périodicité du price
+ID) mais suppose que le webhook applique le nouveau quota : il s'ouvrira avec T-39, éprouvé, pas
+coché au passage.
+
+#### ⚠️ Ce qu'on a cru à tort : Stripe a trois contextes, pas deux
+
+L'URL `dashboard.stripe.com/test/...` a été donnée pour « le compte de test ». Elle ouvre en
+réalité le **mode test du compte live**, un troisième contexte. La première configuration a donc
+été posée au bon endroit par hasard (le live), la seconde dans le vide, et l'API a continué de
+renvoyer `data: []` sur le sandbox après un « c'est fait ». Le sandbox s'atteint par son
+identifiant de compte dans l'URL. C'est la vérification par API qui l'a attrapé, pas la
+confirmation humaine : deux personnes étaient de bonne foi et le résultat était faux.
+
+**Correction d'une affirmation d'Axel, parce qu'elle changeait une décision** : « le mode test
+est inutilisé et le restera ». C'est l'inverse. `STRIPE_SECRET_KEY` en prod est une clé de test,
+donc les customers des vrais utilisateurs vivent dans le sandbox, et c'est le compte **live** qui
+n'a encore jamais servi. Le sandbox était donc le plus urgent des deux.
+
+#### ⚠️ Reste ouvert, non bloquant
+
+`business_profile.terms_of_service_url` et `privacy_policy_url` remontent `null` sur les deux
+comptes alors que les informations publiques ont été saisies. Non tranché : le MCP Stripe n'expose
+aucune lecture du profil de compte, et la connexion est en lecture seule sur ce périmètre (toute
+la configuration a été faite à la main dans le dashboard). À vérifier à l'œil au prochain passage
+sur ces comptes, donc au plus tard avec T-36. Les deux URL attendues ont été vérifiées contre
+`src/i18n/route-slugs.json`, pas de mémoire : `/cgu` et `/politique-confidentialite`.
+
+**T-36 est désormais débloquée** de sa dépendance T-35. Il lui reste T-32, l'immatriculation.
 
 ### 2026-08-30 — T-06 (b) : `/admin` derrière un second facteur, et la roadmap dédoublonnée
 
