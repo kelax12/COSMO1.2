@@ -12,7 +12,7 @@
 // lieu d'une redirection silencieuse.
 // ═══════════════════════════════════════════════════════════════════
 import { describe, it, expect, beforeAll, beforeEach, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { ensureNamespaces } from '@/i18n/catalog';
 import type { AdminGateState } from '@/modules/auth/mfa';
@@ -97,5 +97,45 @@ describe('AdminMfaGate', () => {
     renderGate();
     expect(startTotpEnrolment).not.toHaveBeenCalled();
     expect(verifyTotp).not.toHaveBeenCalled();
+  });
+
+  // ═════════════════════════════════════════════════════════════════
+  // Régression du 2026-09-01 : le QR ne s'affichait pas, l'écran
+  // d'erreur générique le remplaçait.
+  //
+  // `svgToDataUri` faisait `btoa(String.fromCharCode(...octets))`. Le
+  // spread passe UN ARGUMENT PAR OCTET : au-delà de quelques dizaines de
+  // Ko il lève `RangeError: Maximum call stack size exceeded`. Or un QR
+  // TOTP réel est un SVG de ~1 500 `<rect>`, et la conversion se fait
+  // PENDANT LE RENDU — le throw remontait donc à l'`AppErrorBoundary`.
+  //
+  // Les tests précédents ne pouvaient pas le voir : `startTotpEnrolment`
+  // était mocké sans jamais résoudre, donc le QR n'était jamais rendu.
+  // C'est le trou de couverture, autant que le bug.
+  //
+  // Ce test rend un SVG de taille RÉALISTE. Avec l'ancienne implémentation
+  // il échoue ; avec `encodeURIComponent` il passe.
+  // ═════════════════════════════════════════════════════════════════
+  it('affiche le QR code d’un enrôlement, même pour un SVG de taille réelle', async () => {
+    // ~1 500 rects, la forme et l'ordre de grandeur d'un vrai QR GoTrue.
+    const rects = Array.from(
+      { length: 1500 },
+      (_, i) => `<rect x="${i % 41}" y="${Math.floor(i / 41)}" width="1" height="1" fill="#000"/>`
+    ).join('');
+    const qrSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 41 41">${rects}</svg>`;
+    expect(qrSvg.length).toBeGreaterThan(60_000);
+
+    startTotpEnrolment.mockResolvedValue({ factorId: 'f1', qrSvg, secret: 'JBSWY3DPEHPK3PXP' });
+    gateState = 'enrol';
+    renderGate();
+
+    fireEvent.click(screen.getByRole('button'));
+
+    const img = await waitFor(() => screen.getByRole('img'));
+    // Une image passive, jamais du SVG inline : la propriété de sécurité
+    // compte autant que l'affichage.
+    expect(img.getAttribute('src')).toMatch(/^data:image\/svg\+xml/);
+    // Le secret reste saisissable à la main si le QR ne passe pas.
+    expect(screen.getByText(/JBSW/)).toBeTruthy();
   });
 });

@@ -31,9 +31,19 @@ const CODE_LENGTH = 6;
  * passive. La source est notre propre backend d'authentification, mais une
  * garde qui repose sur « la source est de confiance » n'est pas une garde.
  * `img-src 'self' data:` est déjà autorisé par la CSP (`vercel.json`).
+ *
+ * 🔴 Ne JAMAIS revenir à `btoa(String.fromCharCode(...bytes))`. Le spread
+ * passe un argument par octet : au-delà de quelques dizaines de Ko il lève
+ * `RangeError: Maximum call stack size exceeded`. Or un QR TOTP est un SVG
+ * de ~1 500 `<rect>`, soit 60 à 100 Ko, et cette fonction est appelée
+ * PENDANT LE RENDU — un throw y remonte à l'`AppErrorBoundary`, donc
+ * l'écran d'erreur générique au lieu du QR code. C'est le bug observé le
+ * 2026-09-01, et `src/lib/bug-report.ts` mettait déjà en garde contre ce
+ * motif exact. `encodeURIComponent` n'a pas de limite de taille et c'est la
+ * forme que recommande la doc Supabase pour ce champ.
  */
 const svgToDataUri = (svg: string): string =>
-  `data:image/svg+xml;base64,${btoa(String.fromCharCode(...new TextEncoder().encode(svg)))}`;
+  `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
 
 /** Coquille commune aux deux écrans : même cadre, même largeur, mêmes tokens. */
 const GateCard: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
