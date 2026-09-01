@@ -23,6 +23,22 @@ const switchView = async (page: Page, name: 'Liste' | 'Tableau' | 'Planning') =>
   await page.getByRole('group', { name: /vue/i }).getByRole('button', { name }).click();
 };
 
+/**
+ * DEUX dialogues coexistent dès que le sélecteur de dépendances est ouvert :
+ * la modale de tâche et le sélecteur. Un `getByRole('dialog')` nu devient donc
+ * ambigu (violation du mode strict), d'où ces deux accesseurs nommés.
+ *
+ * ⚠️ Ces tests cherchaient `getByRole('menuitem')`, hérité d'une époque où le
+ * sélecteur était un menu déroulant. Il est devenu un dialogue avec une LISTE
+ * À COCHER (`<ul><li><button aria-pressed>`), qui ne porte aucun `menuitem` :
+ * la requête ne pouvait donc plus rien trouver, et les deux tests échouaient
+ * en CI depuis le 2026-08-30 sans que le produit ait quoi que ce soit. Le
+ * parcours réel est désormais : cocher, PUIS confirmer.
+ */
+const taskDialog = (page: Page) => page.getByRole('dialog', { name: /modifier la tâche/i });
+const pickerDialog = (page: Page) =>
+  page.getByRole('dialog', { name: /ajouter une dépendance/i });
+
 test.describe('Entreprise — dépendances et chemin critique (démo)', () => {
   test.describe.configure({ timeout: 120_000 });
 
@@ -104,24 +120,38 @@ test.describe('Entreprise — dépendances et chemin critique (démo)', () => {
     await expect(dialog.getByText(/^Bloque$/)).toBeVisible();
   });
 
-  test('Ajout : le menu ne propose que le même projet, jamais un lien déjà posé', async ({ demoPage: page }) => {
+  test('Ajout : le sélecteur reste dans le projet, et désactive un lien déjà posé', async ({ demoPage: page }) => {
     await navTo(page, /entreprise/i, /\/entreprise/);
     await orgTab(page, /^projets/i).click();
     await page.waitForURL(/tab=projects/);
     await switchView(page, 'Liste');
 
     await page.getByRole('button', { name: /Modifier la tâche Plan de communication/i }).click();
-    const dialog = page.getByRole('dialog');
+    const dialog = taskDialog(page);
     await dialog.getByRole('button', { expanded: false }).filter({ hasText: /dépendances/i }).click();
     await dialog.getByRole('button', { name: /ajouter une dépendance/i }).click();
 
-    const items = await page.getByRole('menuitem').allInnerTexts();
-    // « Kit presse » est déjà reliée dans l'autre sens : la proposer inviterait
-    // à créer un cycle que la base refuserait.
-    expect(items).not.toContain('Kit presse');
-    // Aucune tâche d'un autre projet : la base impose le même projet.
+    const picker = pickerDialog(page);
+    await expect(picker).toBeVisible();
+
+    // Une tâche d'un AUTRE projet est absente : la base impose le même projet,
+    // il n'y a donc rien à expliquer, seulement à ne pas proposer.
+    const items = (await picker.getByRole('listitem').allInnerTexts()).join('\n');
     expect(items).not.toContain('Setup analytics');
-    expect(items.length).toBeGreaterThan(0);
+
+    // « Kit presse » est déjà reliée dans l'autre sens : la choisir créerait un
+    // cycle que la base refuserait. Elle reste AFFICHÉE, avec sa raison, mais
+    // n'est pas sélectionnable — montrer pourquoi une option est indisponible
+    // vaut mieux que la faire disparaître sans rien dire. C'est la propriété
+    // qui compte ; l'ancienne version de ce test exigeait sa disparition pure
+    // et simple, ce que le produit ne fait plus.
+    const dejaLiee = picker.getByRole('listitem').filter({ hasText: 'Kit presse' });
+    await expect(dejaLiee).toBeVisible();
+    await expect(dejaLiee.getByRole('button')).toBeDisabled();
+
+    // Et il reste bien des candidats réellement sélectionnables.
+    const selectionnables = picker.getByRole('listitem').getByRole('button', { disabled: false });
+    expect(await selectionnables.count()).toBeGreaterThan(0);
   });
 
   test('Écriture : ajouter une dépendance rallonge le chemin critique', async ({ demoPage: page }) => {
@@ -141,10 +171,18 @@ test.describe('Entreprise — dépendances et chemin critique (démo)', () => {
 
     await switchView(page, 'Liste');
     await page.getByRole('button', { name: /Modifier la tâche Plan de communication/i }).click();
-    const dialog = page.getByRole('dialog');
+    const dialog = taskDialog(page);
     await dialog.getByRole('button', { expanded: false }).filter({ hasText: /dépendances/i }).click();
     await dialog.getByRole('button', { name: /ajouter une dépendance/i }).click();
-    await page.getByRole('menuitem').first().click();
+
+    // Le picker est une liste à cocher, pas un menu : on sélectionne, PUIS on
+    // confirme. Le bouton de confirmation porte le nombre choisi, ce qui le
+    // distingue du déclencheur resté dans la modale de tâche.
+    const picker = pickerDialog(page);
+    await picker.getByRole('listitem').first().getByRole('button').click();
+    await picker.getByRole('button', { name: /^ajouter 1 dépendance$/i }).click();
+    await expect(picker).toBeHidden();
+
     await expect(dialog.getByText(/bloquée par/i)).toBeVisible();
     await dialog.getByRole('button', { name: /^annuler$/i }).click();
 

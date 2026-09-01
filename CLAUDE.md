@@ -605,7 +605,19 @@ l'ordre que l'en-tête de la migration déconseille. Mesuré juste avant : le co
 n'affiche plus de statistiques. Ce n'est pas un verrouillage — `AdminMfaGate` reste
 atteignable parce que `admin_allowlisted()` ignore volontairement le niveau d'assurance.
 **Prochaine action côté Axel : ouvrir `/admin` et enrôler un authentificateur.** Téléphone
-perdu → `DELETE FROM auth.mfa_factors WHERE user_id = '<uid>';` depuis le SQL editor. ✅ La `130` a été appliquée
+perdu → `DELETE FROM auth.mfa_factors WHERE user_id = '<uid>';` depuis le SQL editor.
+🔴 **La porte de sortie était elle-même cassée, et ça a bel et bien produit un verrouillage
+(2026-09-01).** Le raisonnement ci-dessus — « ce n'est pas un verrouillage, `AdminMfaGate`
+reste atteignable » — était juste sur la garde et faux dans les faits : l'écran d'enrôlement
+levait une exception **en phase de rendu**, donc l'`AppErrorBoundary` affichait « Une erreur
+inattendue s'est produite » au lieu du QR code. Atteignable, mais inutilisable : `/admin` est
+resté inaccessible du 2026-08-31 au 2026-09-01, mesuré (`auth.mfa_factors` = 0 ligne).
+Corrigé (`formatSecret` rendue totale, réponse d'enrôlement validée à la frontière), avec les
+tests de régression qui manquaient — ils mockaient `startTotpEnrolment` sans jamais le
+résoudre, donc le QR n'était **jamais rendu**.
+**La leçon, qui vaut au-delà de cet écran** : quand une migration crée une dépendance à un
+chemin de récupération, ce chemin se PARCOURT avant d'appliquer la migration, il ne se
+raisonne pas. Ici il suffisait d'ouvrir l'écran une fois. ✅ La `130` a été appliquée
 le 2026-08-29, vérifiée acteur par acteur (membre simple : 0 ligne).
 ✅ **Les `127`, `128` et `129` ont été appliquées en prod le 2026-08-27**, dans cet ordre, chacune
 vérifiée après coup : la `127` rend un résultat identique pour les 18 comptes qui ont des données
