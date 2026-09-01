@@ -47,6 +47,65 @@ chantier de migration.
 - ❌ **Ne jamais créer un prix live sans `tax_behavior` explicite.** Les 8 prix du compte de
   TEST sont sur `unspecified` : c'est la valeur à ne pas reproduire.
 
+## Portail client · configuré sur les deux comptes (2026-09-01)
+
+Sans configuration de portail, `billingPortal.sessions.create({ customer, return_url })`
+échoue : l'application n'envoie **aucun** paramètre `configuration`, donc Stripe cherche la
+configuration **par défaut du compte**, et il n'en existait aucune. Conséquence mesurée le
+2026-09-01 : le bouton « Gérer mon abonnement » existait, et **un client abonné ne pouvait pas
+résilier**. La landing promet « résiliable à tout moment » (Conso. art. L215-1).
+
+| Compte | Configuration | `active` / `is_default` |
+|---|---|---|
+| `COSMO` (live) | `bpc_1UAv9vHJLweDSN4F4xssO3OQ` | `true` / `true` |
+| `Environnement de test COSMO` (sandbox) | `bpc_1UAvS2HEm0kmXgy9XO4s1MM6` | `true` / `true` |
+
+Les deux sont rigoureusement identiques :
+
+- `subscription_cancel` : **activé**, `mode: at_period_end`. On ne résilie pas au milieu d'une
+  période payée : le client garde ce qu'il a acheté, et rien n'est remboursé au prorata.
+- `payment_method_update` et `invoice_history` : activés.
+- `default_return_url` : `https://thecosmo.app/entreprise?tab=billing`.
+- `subscription_update` : **désactivé**, volontairement (ci-dessous).
+
+### ❌ Ne jamais activer « modifier la quantité » dans le portail
+
+Le nombre de sièges est porté par le **palier** (`max_members`), jamais par la quantité Stripe.
+Un client qui passerait la quantité de 1 à 3 paierait trois fois le prix et n'obtiendrait
+**aucun siège de plus**. C'est un bug de facturation en libre-service, et il serait de notre
+fait.
+
+Le changement d'offre (`subscription_update`) est légitime sur le fond : `tierFromPriceId`
+redérive le palier ET la périodicité depuis le price ID, précisément parce qu'un changement fait
+depuis le portail ne repasse pas par notre checkout. Il reste fermé tant qu'il n'a pas été
+éprouvé par la recette T-39 : il suppose aussi que le webhook applique le nouveau quota.
+
+### ⚠️ Trois contextes Stripe, pas deux
+
+Piège qui a coûté un aller-retour le 2026-09-01. `dashboard.stripe.com/test/...` n'ouvre **pas**
+le sandbox : il ouvre le **mode test du compte live**, un troisième contexte, vide et sans
+intérêt. Le sandbox s'atteint par son identifiant de compte :
+
+```
+https://dashboard.stripe.com/acct_1TQVWFHEm0kmXgy9/test/settings/billing/portal
+```
+
+Rien n'est partagé entre ces contextes : une configuration de portail se pose **une fois par
+contexte**, et une configuration posée au mauvais endroit ne se voit nulle part.
+
+### ⚠️ Les deux liens juridiques ne sont pas confirmés
+
+`business_profile.terms_of_service_url` et `privacy_policy_url` remontent `null` par l'API sur les
+deux comptes, alors que les informations publiques ont été saisies. Deux explications possibles,
+**non départagées** : soit Stripe rattache ces liens à l'affichage sans les recopier dans l'objet
+`billing_portal.configuration`, soit l'enregistrement n'a pas pris. Aucune opération de lecture du
+profil de compte n'est exposée pour trancher par API.
+
+Ça se vérifie à l'œil, bloc « Politiques juridiques » de la page du portail. Les URL attendues,
+vérifiées contre `src/i18n/route-slugs.json` plutôt que de mémoire : `https://thecosmo.app/cgu`
+(`terms` → `cgu`) et `https://thecosmo.app/politique-confidentialite` (`privacy`). Ce n'est pas
+bloquant pour la résiliation, c'est un point de conformité.
+
 ## Ce qui reste à faire avant d'encaisser
 
 1. **Créer la structure juridique.** Aucune micro-entreprise n'existe au 2026-08-26 : encaisser
