@@ -32,18 +32,34 @@ const CODE_LENGTH = 6;
  * garde qui repose sur « la source est de confiance » n'est pas une garde.
  * `img-src 'self' data:` est déjà autorisé par la CSP (`vercel.json`).
  *
- * 🔴 Ne JAMAIS revenir à `btoa(String.fromCharCode(...bytes))`. Le spread
- * passe un argument par octet : au-delà de quelques dizaines de Ko il lève
- * `RangeError: Maximum call stack size exceeded`. Or un QR TOTP est un SVG
- * de ~1 500 `<rect>`, soit 60 à 100 Ko, et cette fonction est appelée
- * PENDANT LE RENDU — un throw y remonte à l'`AppErrorBoundary`, donc
- * l'écran d'erreur générique au lieu du QR code. C'est le bug observé le
- * 2026-09-01, et `src/lib/bug-report.ts` mettait déjà en garde contre ce
- * motif exact. `encodeURIComponent` n'a pas de limite de taille et c'est la
- * forme que recommande la doc Supabase pour ce champ.
+ * 🔴 **`supabase.auth.mfa.enroll()` ne rend PAS un SVG brut, malgré ce que
+ * dit son propre JSDoc.** `GoTrueClient` préfixe la valeur lui-même avant de
+ * nous la rendre (`data.totp.qr_code = \`data:image/svg+xml;utf-8,${...}\``).
+ * Re-préfixer produisait donc une URI à DOUBLE en-tête, que le navigateur
+ * refuse : le QR code de `/admin` n'a jamais été affiché, ni avant ni après
+ * la refonte de cette fonction. Mesuré dans le navigateur le 2026-09-01 —
+ * double préfixe : échec ; préfixe retiré puis ré-encodé : charge.
+ *
+ * On normalise donc : retirer un éventuel en-tête `data:image/svg+xml…,`,
+ * puis ré-encoder. Le résultat est correct que la bibliothèque préfixe ou
+ * non, ce qui évite de dépendre d'un détail d'implémentation qui a déjà
+ * changé une fois. Ré-encoder plutôt que laisser passer tel quel : la valeur
+ * livrée par `auth-js` n'est pas percent-encodée, donc un `#` dans un futur
+ * SVG y serait lu comme un fragment d'URL.
+ *
+ * ⚠️ Ne pas revenir à `btoa(String.fromCharCode(...bytes))` pour autant : le
+ * spread passe un argument par octet et lève `RangeError` sur un gros SVG.
+ * Mesuré, il tient à la taille d'un QR (~77 Ko) et n'était donc PAS la cause
+ * du crash — mais `src/lib/bug-report.ts` met déjà en garde contre ce motif,
+ * et `encodeURIComponent` n'a aucune limite de taille.
  */
-const svgToDataUri = (svg: string): string =>
-  `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+const SVG_DATA_URI_HEADER = /^data:image\/svg\+xml[^,]*,/i;
+
+const svgToDataUri = (svg: string): string => {
+  const raw = String(svg ?? '');
+  if (!raw) return '';
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(raw.replace(SVG_DATA_URI_HEADER, ''))}`;
+};
 
 /** Coquille commune aux deux écrans : même cadre, même largeur, mêmes tokens. */
 const GateCard: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
