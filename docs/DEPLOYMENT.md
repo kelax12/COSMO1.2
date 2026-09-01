@@ -495,11 +495,10 @@ passer par `apply_migration` (MCP) ou le SQL editor avec le fichier versionné.
 
 ## 7. Backup & Disaster Recovery (runbook)
 
-**État au 2026-08-30, et il faut le lire sans l'adoucir** : le plan Free n'offre **aucune
-sauvegarde native**, et le PITR a été écarté avec le plan Pro (T-01). La seule copie de la base
-qui existe est le dump quotidien de `.github/workflows/db-backup.yml`. **Aucune restauration n'a
-encore été testée** : un backup non testé n'est pas un backup, et il l'est d'autant moins qu'il
-est seul.
+**État au 2026-09-01** : le plan Free n'offre **aucune sauvegarde native**, et le PITR a été
+écarté avec le plan Pro (T-01). La seule copie de la base qui existe est le dump quotidien de
+`.github/workflows/db-backup.yml`. **La restauration a été testée le 2026-09-01** (drill
+ci-dessous) : le dump se restaure, en 163 s, et l'isolation RLS survit.
 
 ### Restauration réelle (sinistre)
 1. Créer un projet Supabase neuf, récupérer sa chaîne de connexion en mode **session**.
@@ -510,7 +509,7 @@ est seul.
 4. Redéployer les Edge Functions et reposer les secrets sur le nouveau ref : **le dump ne les
    contient pas**. C'est la partie que personne n'anticipe le jour J.
 
-### Drill — `.github/workflows/restore-drill.yml` (livré le 2026-08-30, jamais exécuté)
+### Drill — `.github/workflows/restore-drill.yml` (livré le 2026-08-30, exécuté avec succès le 2026-09-01)
 
 Le drill tourne **dans GitHub Actions**, pas sur un poste : c'est là que vivent déjà le dump et un
 client PostgreSQL 17, et le chronomètre y devient une mesure machine. Il restaure, mesure, puis
@@ -542,11 +541,22 @@ juge sur ce qui compte vraiment.
 **Ce que le workflow ne prouve pas**, et qui reste un geste humain : pointer l'application sur le
 projet restauré, se connecter, créer une tâche. Un `select` réussi ne dit rien du parcours réel.
 
-**Résultat du dernier drill** : ⬜ jamais exécuté. Objectif RTO < 2 h.
+> ⚠️ **Le tout premier run (2026-09-01, avant celui du tableau) a réussi avec un chiffre faux.**
+> `VISIBLES=$(tail -1 iso.txt)` capturait le mot `ROLLBACK` (tag de commande imprimé par `psql`
+> après `BEGIN`/`SET`/`SELECT`/`ROLLBACK`, même en `-tA`), jamais le compte réel : la comparaison
+> `VISIBLES = TOTAL` était donc garantie fausse quel que soit le vrai résultat, et ce contrôle ne
+> pouvait **jamais** déclencher — même si l'isolation avait été cassée par la restauration.
+> Corrigé par `grep -E '^[0-9]+$' iso.txt | tail -1`. Le run rejoué ensuite (celui du tableau) a
+> mesuré un vrai chiffre.
+
+**Résultat du dernier drill** : ✅ réussi. RTO mesuré 163 s, objectif < 2 h très large.
 
 | Date | Run db-backup | Durée | Tables sans RLS | Policies | Tâches visibles / total |
 |---|---|---|---|---|---|
-| ⬜ | | | | | |
+| 2026-09-01 | `33384797200` | 163 s | 0 | 129 | 289 / 724 |
+
+**Reste à faire, à la main, avant de clore le drill** : test humain (login + création d'une tâche
+sur le projet restauré), puis **supprimer le projet jetable ET le secret `DRILL_DB_URL`.**
 
 ### Export hors-fournisseur — automatisé le 2026-08-28
 
