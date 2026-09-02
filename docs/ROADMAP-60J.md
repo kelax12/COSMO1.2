@@ -85,7 +85,7 @@ les porte, jamais ici.
 | 🟡 T-14 | Sécurité | **Code livré le 2026-08-28, inerte.** Reste : créer le widget Cloudflare, poser `VITE_TURNSTILE_SITE_KEY`, puis activer côté Supabase. Activer un CAPTCHA (Cloudflare Turnstile) sur inscription et reset de mot de passe | AM-3. Se pose côté Supabase Auth + un champ dans le formulaire | P1 | S | T-03 | A + B | S2 |
 | ✅ T-15 | Analytics | ~~Valider la chaîne `?ref=` de bout en bout~~ **fait le 2026-08-31** : compte jetable créé via `?ref=test_manuel`, vérifié en base (`profiles.acquisition_source = 'test_manuel'`), compte supprimé | 28 comptes, **0** avec une source. On ne sait toujours pas si la chaîne marche ou si personne n'est passé par un `?ref=`. Lancer une campagne sur une chaîne jamais validée est le gaspillage le plus cher possible | P0 | S | T-03 | X | S2 |
 | ✅ T-16 | Monitoring | Vérifier que `VITE_SENTRY_DSN` est bien posé sur Vercel et qu'une erreur de test remonte | Le monitoring est désactivé en silence si la variable manque. Jamais vérifié depuis le dépôt | P1 | XS | — | X | S1 |
-| T-17 | Monitoring | Brancher une sonde de disponibilité externe (UptimeRobot / Better Stack, palier gratuit) sur `/` et sur `auth/v1/health` | AM-4. **Palliatif en place depuis le 2026-08-29** (`uptime.yml`), qui ne dispense pas : une sonde hébergée chez GitHub ne détecte pas une panne de GitHub, et son cron dérive | P2 | XS | — | X | S2 |
+| T-17 | Monitoring | Brancher une sonde de disponibilité externe (UptimeRobot / Better Stack, palier gratuit) sur `/` et sur `auth/v1/health` | AM-4. **Palliatif en place depuis le 2026-08-29** (`uptime.yml`), qui ne dispense pas : une sonde hébergée chez GitHub ne détecte pas une panne de GitHub, et son cron dérive. 🔴 **Et il ne sondait que la moitié du système, en sortant vert** (trouvé et corrigé le 2026-09-02, commit `05add6d`) : il lisait `secrets.SUPABASE_URL`, un secret **qui n'existe pas dans ce dépôt**, donc la branche Supabase tombait dans un `::warning::` et le run affichait « tout va bien » en n'ayant testé que le site. L'URL du projet étant publique (bundle client, `DEPLOYMENT.md`, en dur dans `restore-drill.yml`), elle passe en repli d'expression : plus aucun secret requis, et le cas « secret vide » échoue au lieu de se taire. Prouvé par un run déclenché à la main, dont le log porte enfin `auth : HTTP 401` (preuve de vie GoTrue) à côté de `app : HTTP 200` | P2 | XS | — | X | S2 |
 | ✅ T-18 | DevOps | ~~Supprimer la fonction `tmp-org-price-setup`~~ **faite le 2026-08-29**, vérifiée : 7 fonctions en prod, elle n'y est plus, l'appel rend `404 NOT_FOUND` (avant : `410`) | AM-5, artefact non versionné dans la surface exposée. ⚠️ **Ne peut pas être fait par un agent** : le MCP Supabase déploie et lit des fonctions, il n'en supprime aucune. Le seul autre chemin est `supabase functions delete`, qui exige un jeton d'accès personnel. Geste d'Axel, 2 minutes | P3 | XS | — | X | S2 |
 | ✅ T-19 | Tests | Committer les trois fichiers non suivis (`e2e/rls/org-invitations.test.ts`, `e2e/reduced-motion-sheets.spec.ts`, `src/modules/team-projects/hooks.background.test.tsx`) et les 12 docs modifiés | Du travail vérifié qui n'est pas dans `main` n'existe pas, et une autre session peut l'emporter dans son propre commit | P1 | XS | — | X | S1 |
 | ✅ T-20 | UX / Produit | Passer les deux drapeaux de facturation en revue **avant** d'ouvrir l'acquisition et confirmer qu'ils sont bien à `false` des deux côtés (`ENTERPRISE_BILLING_ENFORCED` + `billing_flags.enterprise_seat_limit`) | Ils ont basculé trois fois en douze heures le 2026-08-25. L'état se lit dans le code et en base, jamais dans un document | P0 | XS | — | A | S2 |
@@ -118,18 +118,18 @@ les porte, jamais ici.
 | T-37 | Paiement | Compléter les mentions légales (SIREN, RCS, TVA, directeur de publication) et configurer les factures Stripe pour la France : mention « TVA non applicable, art. 293 B du CGI », mentions L441-9, numérotation continue | A3, C4, C5, C6. Une mention fausse est pire qu'une mention absente, d'où la dépendance au SIREN | P1 | S | T-32 | X + B | S6 |
 | T-38 | Paiement | Réarmer la facturation : `ENTERPRISE_BILLING_ENFORCED = true` **et** `billing_flags.enterprise_seat_limit = true`, dans le même déploiement | Les deux drapeaux se déplacent ensemble. Serveur seul = impasse client, client seul = on encaisse sans rien débloquer | P1 | XS | T-35, T-36, T-37 | A | S7 |
 | T-39 | Paiement | Recette de bout en bout avec une **vraie carte** : souscription mensuelle, changement de palier depuis le portail, résiliation, vérification de `org_subscriptions` et du journal `payment_records` | Le webhook et le checkout n'ont jamais traité un paiement réel. Le seul endroit où COSMO choisit un prix au lieu de se le faire désigner est la résolution annuelle | P1 | M | T-38 | X + A | S7 |
-| T-40 | Emails | Poser `CRON_SECRET` (Supabase **et** GitHub) pour armer les avis de reconduction tacite | E6. Un avis non envoyé rend l'abonnement résiliable à tout moment, remboursement compris. Sans objet tant qu'aucun abonnement annuel n'existe, donc juste après T-39 | P2 | XS | T-39 | X | S7 |
+| T-40 | Emails | Poser `CRON_SECRET` (Supabase **et** GitHub) pour armer les avis de reconduction tacite | E6. Un avis non envoyé rend l'abonnement résiliable à tout moment, remboursement compris. Sans objet tant qu'aucun abonnement annuel n'existe, donc juste après T-39. ⚠️ **Il manquait en réalité DEUX secrets, pas un** (trouvé le 2026-09-02) : `renewal-notice.yml` exigeait aussi `SUPABASE_URL`, absent du dépôt, et cette ligne ne le disait pas. Refermé par le même repli d'URL que `uptime.yml` (commit `05add6d`) : il ne reste bien que `CRON_SECRET`, le seul des deux qui soit un vrai secret, sa valeur devant être identique côté GitHub et côté Supabase | P2 | XS | T-39 | X | S7 |
 | 🟡 T-41 | Scalabilité | **Coût par ligne mesuré le 2026-08-28** (SCALABILITY §9bis), le rapport de 54× confirme l'audit du 14 août. Reste le comportement du planificateur, qui exige un vrai jeu de données. Mesurer à volume réel : injecter ~2 000 `team_tasks` dans une organisation de test de 50 membres et rejouer le runbook `SCALABILITY.md` §10 | Les correctifs 113/117/128 sont vérifiés en plan et en test, **jamais contre du volume**. C'est exactement la confiance non vérifiée qui a laissé passer un `Seq Scan` global pendant six semaines | P2 | M | — | A | S6 |
 | ✅ T-42 | Infrastructure | Confirmer que la prod utilise l'URL du pooler (PgBouncer 6543, mode transaction) | Jamais vérifié depuis le dépôt, et d'autant plus important vu le coût par ligne des prédicats RLS | P2 | XS | — | A | S5 |
 | T-43 | Legal | Collecter et archiver les DPA des sous-traitants (Supabase, Vercel, Sentry, Stripe, Resend, **Vesk**) | A5 et A6. Chaînon obligatoire pour vendre à une entreprise, et il ne s'obtient qu'en tant qu'entreprise. ⚠️ **Vesk manquait à cette liste** (ajouté le 2026-09-01) : il reçoit de la donnée personnelle depuis les pages publiques, il lui faut donc un DPA comme aux autres. Un sous-traitant qu'on oublie de lister est un sous-traitant sans contrat | P2 | M | T-32 | X | S7 |
-| ✅ T-44 | Legal | Recherche d'antériorité « COSMO » sur `data.inpi.fr` **et** `euipo.europa.eu`, classes 9 et 42 | Nom très générique, antériorités quasi certaines. La question n'est pas « existe-t-il une marque COSMO » mais « une marque COSMO couvre-t-elle le logiciel ». Se lancer sans le savoir, c'est risquer de devoir renommer après acquisition | P2 | S | — | X | S6 |
+| ✅ T-44 | Legal | Recherche d'antériorité « COSMO » sur `data.inpi.fr` **et** `euipo.europa.eu`, classes 9 et 42. **Faite le 2026-08-28** via TMview, qui agrège les deux registres : 11 marques `COSMO` actives, dont TANAZA S.p.A., éditeur de logiciel. ⚠️ **`LEGAL.md` F1 reste 🟡, et ce n'est pas une contradiction** (levée le 2026-09-02) : cette tâche-ci ne porte que la RECHERCHE, qui est faite ; F1 porte aussi l'**arbitrage** (garder le nom ou consulter un conseil en PI), qui n'est pas technique et n'appartient pas à cette roadmap. Ne pas « aligner » les deux en cochant F1 | Nom très générique, antériorités quasi certaines. La question n'est pas « existe-t-il une marque COSMO » mais « une marque COSMO couvre-t-elle le logiciel ». Se lancer sans le savoir, c'est risquer de devoir renommer après acquisition | P2 | S | — | X | S6 |
 
 ### PHASE 4 — 1 000 → 10 000 utilisateurs
 
 | ID | Cat. | Tâche | Pourquoi | P | Effort | Dép. | Piste | Deadline |
 |---|---|---|---|---|---|---|---|---|
 | ✅ T-45 | Dette technique | Découper `TaskTable.tsx` (1 124 lignes, plus gros fichier du dépôt, immobile depuis trois jours). **Fait le 2026-08-29 : 1 124 → 890** | Les quatre passes du cliquet ont toutes porté sur `/entreprise`, parce que c'est là qu'a lieu le travail. La dette du socle ne baisse pas toute seule | P3 | L | — | B | S8 |
-| ✅ T-46 | Fiabilité | **FERMÉ le 2026-08-29 (soir) : la sauvegarde EXISTE et tourne.** Secret posé, run vert, artefact `db-dump` de **385 ko** produit et téléchargeable, rétention 30 jours, prochain passage automatique à 04:26 UTC. Trois échecs successifs ont livré trois causes réelles, toutes refermées dans le workflow : identité du pooler (`postgres.<ref>`, absente), client PostgreSQL 16 utilisé face à un serveur 17, et un `Re-run` qui rejouait l'ancien fichier. ~~`pg_dump` mensuel~~ → **QUOTIDIEN**, et **remonté de P3 à P0**. La décision de rester en plan Free (donc sans T-01, donc sans aucune sauvegarde Supabase) fait de ce dump **la seule copie de la base qui existe**. Toujours inerte : sans le secret `SUPABASE_DB_URL` le job s'arrête en avertissement | ~~Complément du PITR~~ · Il n'y a plus rien à compléter : c'est la sauvegarde | **P0** | S | ~~T-01~~ | A livré / **X pose le secret** | S1 |
+| ✅ T-46 | Fiabilité | **FERMÉ le 2026-08-29 (soir) : la sauvegarde EXISTE et tourne.** Secret posé, run vert, artefact `db-dump` de **385 ko** produit et téléchargeable, rétention 30 jours, prochain passage automatique à 04:26 UTC. Trois échecs successifs ont livré trois causes réelles, toutes refermées dans le workflow : identité du pooler (`postgres.<ref>`, absente), client PostgreSQL 16 utilisé face à un serveur 17, et un `Re-run` qui rejouait l'ancien fichier. ~~`pg_dump` mensuel~~ → **QUOTIDIEN**, et **remonté de P3 à P0**. La décision de rester en plan Free (donc sans T-01, donc sans aucune sauvegarde Supabase) fait de ce dump **la seule copie de la base qui existe**. ~~Toujours inerte : sans le secret `SUPABASE_DB_URL` le job s'arrête en avertissement~~ — **phrase périmée, retirée le 2026-09-02** : le secret a été posé le 2026-08-29 (le même soir que la fermeture de la ligne), et la sauvegarde tourne depuis. Vérifié le 2026-09-02 : **4 runs quotidiens verts**, le dernier le jour même à 08:51 UTC. Elle a survécu quatre jours parce qu'elle décrivait l'état du matin dans une ligne fermée le soir | ~~Complément du PITR~~ · Il n'y a plus rien à compléter : c'est la sauvegarde | **P0** | S | ~~T-01~~ | A livré / **X pose le secret** | S1 |
 | 🟡 T-51 | Performance | **Premier levier livré le 2026-08-29 : 407 ko de moins au chargement** (recharts n'arrive plus qu'à l'approche de sa section), LCP 3,3 → 2,7 s, TTI 3,4 → 2,8 s en mesure locale. **Landing : 55 de performance et jusqu'à 1,5 s de blocage du fil principal.** Mesuré en CI le 2026-08-29, quatre fois, sur la version française. Le blog et le guide sont à 96-97 sur le même build : ce n'est pas le socle, c'est la page **Outillé et RE-CADRÉ le 2026-08-30.** `npm run profile:landing` profile le fil principal (Playwright + CPU bridé), et le job `lighthouse` de la CI publie désormais le bootup par script et le découpage du fil principal en annotations. Fait décisif : **la mesure locale ne reproduit pas l'écart** — sur ce poste, la landing (55 en CI) et le guide (96 en CI) rendent 40 et 45, la charge machine dominant tout. Toute attribution doit donc venir du runner. Première piste mesurée là-bas, à confirmer : `vendor-animation` (framer-motion) est le plus gros poste de bootup d'une page qui anime en GSAP, et `vendor-sentry` le suivant, ce dernier étant T-47 donc un arbitrage d'Axel. | La landing est la première chose que voit un visiteur d'annuaire, et c'est la seule page lente du site. Ouvrir l'acquisition sur elle, c'est payer un clic pour une page qui rame | P3 | M | — | B | S8 |
 | T-47 | Performance | Trancher `vendor-sentry` (49,2 ko gzip) sur le chemin critique | Ce n'est **pas** un arbitrage de performance : le différer revient à ne plus capturer les erreurs de démarrage, celles qui blanchissent l'écran. Décision produit, pas optimisation | P3 | S | — | X décide | S8 |
 
@@ -255,7 +255,11 @@ sans corriger ces deux points revient à remplir un seau percé.
   **Done** : un onglet ouvert sur l'ancien build affiche l'invitation à recharger en moins de
   5 minutes après un déploiement ; vérifié dans deux onglets réels, pas en test unitaire seul.
 - [x] **T-29** — chunk d'entrée sous 92 ko gzip · P2 · M · B
-  **Done** : `npm run check:bundle` est vert **avec le plafond redescendu à 92 000**. Un plafond
+  **Done** : `npm run check:bundle` est vert **avec le plafond redescendu à 79 000** (relu dans
+  `scripts/check-bundle-budget.mjs` le 2026-09-02 : `entry` = 79 000 pour 77 312 o mesurés, et le
+  budget qui décide est `critical` = 379 000). Ce critère annonçait 92 000, la cible d'origine :
+  elle a été dépassée, pas manquée, mais un critère qui ne dit pas le vrai chiffre ne se vérifie
+  pas. Un plafond
   qu'on ne redescend pas n'est pas un budget.
 - [x] **T-25** · barre d'onglets entreprise sur mobile · P2 · M · B
   **Done** : les 7 destinations sont atteignables sans connaissance préalable sur un écran de
@@ -337,9 +341,17 @@ drapeaux ne bougent qu'ici, et ensemble.
 question redevient « à quelle vitesse peut-on avancer », donc la dette du socle.
 
 - [x] **T-45** · découper `TaskTable.tsx` · P3 · L · B
-  **Done** : plus aucun fichier au-dessus de 900 lignes, et le budget de `architecture.guard`
+  **Done** : `TaskTable.tsx` sous les 900 lignes, et le budget de `architecture.guard`
   redescendu d'autant. Le cliquet ne descend que quand la mesure descend.
-- [~] **T-46** — sauvegarde `pg_dump` hors fournisseur · P0 · S · A livre / X pose le secret
+  ⚠️ **Critère corrigé le 2026-09-02.** Il disait « plus aucun fichier au-dessus de 900 lignes »,
+  ce qui était faux au moment même où on l'a coché : `PyramidTab.tsx` fait **1 045** lignes et
+  `AgendaPage.tsx` **919** (mesuré le 2026-09-02, `TaskTable.tsx` à **848**). Les deux sont hors
+  périmètre volontairement, le §4 interdisant de découper `PyramidTab` « pour la propreté ».
+  Un critère de Done ne doit porter que sur ce que la tâche promet, sinon il est faux le jour où
+  on le coche et personne ne le relit.
+- [x] **T-46** — sauvegarde `pg_dump` hors fournisseur · P0 · S · A livre / X pose le secret
+  **Done** : secret `SUPABASE_DB_URL` posé le 2026-08-29, et **4 exécutions quotidiennes vertes**
+  vérifiées le 2026-09-02 (dernière le jour même à 08:51 UTC), artefact produit à chaque fois.
 - [ ] **T-47** — trancher `vendor-sentry` · P3 · S · X décide
 - [ ] **Revue de fin de cycle** : remesurer les dix notes d'audit, mettre à jour
   `docs/README.md`, archiver cette roadmap et en écrire une nouvelle. Une roadmap ne se met pas à
@@ -511,6 +523,49 @@ questions à reposer le jour venu.
 Une session par entrée, la plus récente en tête de sa journée. **On coche quand le critère
 « Done » est vérifié, pas quand le code est écrit.** Les statuts vivent au §1 ; ici on raconte
 comment on y est arrivé, et surtout ce qu'on a cru à tort en chemin.
+
+### 2026-09-02 · Re-vérification des 52 tâches, une par une, contre la prod
+
+**Tous les statuts du §1 tiennent.** Aucune tâche cochée ne s'est révélée non faite, aucune tâche
+ouverte ne s'est révélée déjà faite, et le décompte 30 / 6 / 3 / 13 = 52 est juste. Ce qui a été
+mesuré plutôt que relu : ledger de migrations (`131`, `132`, et la `130` sous le nom
+`org_invitations_select_narrowed`), **7** Edge Functions dont `report-bug` et sans
+`tmp-org-price-setup`, `billing_flags.enterprise_seat_limit = false`, **1** facteur TOTP
+`verified`, les **5** jobs CI verts sur `main`, 4 runs `db-backup` quotidiens verts, 2 runs
+`restore-drill` verts, `check:mail` à 0 erreur, secret scanning et push protection actifs avec
+l'alerte n° 1 toujours ouverte.
+
+**Le seul défaut réel n'était dans aucune tâche, il était dans la garde elle-même.** `uptime.yml`,
+le palliatif de T-17, lisait `secrets.SUPABASE_URL` — un secret **qui n'existe pas dans ce dépôt**.
+La branche Supabase tombait donc dans un `::warning::` et le run sortait **vert** : depuis le
+2026-08-29, « la production va bien » signifiait « le site répond, on n'a rien su du backend ».
+L'en-tête du fichier affirmait pourtant que ce secret « existe déjà pour `renewal-notice` », ce
+qui était faux là aussi — et `renewal-notice.yml` en manquait donc **deux**, pas un, alors que
+T-40 n'en nommait qu'un. Corrigé par un repli d'expression sur l'URL du projet, qui n'est pas un
+secret (elle est déjà dans le bundle client, dans `DEPLOYMENT.md`, et en dur dans
+`restore-drill.yml` du même dépôt public), et le cas « secret posé mais vide » échoue désormais au
+lieu de se taire. Prouvé par un run déclenché à la main : le log porte `auth : HTTP 401` à côté de
+`app : HTTP 200`, ligne qui n'était **jamais** apparue.
+
+> 🔴 **La leçon, et elle ne porte pas sur ce workflow.** Une garde a été écrite, déployée, elle
+> s'exécute deux fois par heure depuis quatre jours, elle est verte, et elle ne mesurait que la
+> moitié de ce qu'elle prétend. Rien ne la distinguait d'une garde qui marche : il fallait ouvrir
+> son log et y chercher une ligne **absente**. C'est le pendant exact de la règle « ne pas
+> déclarer un correctif acquis sans mesure » : **un vert n'est pas une mesure**, et l'absence
+> d'une ligne ne se voit pas dans un résumé de run.
+
+Quatre critères de « Done » ont par ailleurs été corrigés parce qu'ils annonçaient autre chose que
+le réel, tous dans le sens du mieux, ce qui est précisément pourquoi personne ne les relisait :
+T-29 disait un plafond de 92 000 quand il est à **79 000** ; T-45 promettait « plus aucun fichier
+au-dessus de 900 lignes » alors que `PyramidTab.tsx` en fait **1 045** et `AgendaPage.tsx` **919**
+(la tâche ne portait que `TaskTable.tsx`, à **848**) ; T-46 traînait une phrase « toujours inerte »
+quatre jours après la pose de son secret, et sa case du §2 était restée à `[~]` quand le §1 disait
+✅ — la divergence §1/§2 que la règle 1 existe pour empêcher. T-44 enfin n'était **pas** en
+contradiction avec `LEGAL.md` F1 : la tâche porte la recherche, F1 porte aussi l'arbitrage.
+
+⚠️ **Une conclusion de cette revue était déjà périmée en l'écrivant** : « 0 compte actif sur
+7 jours » a été remesuré et corrigé plus bas dans ce même journal, par une autre session, pendant
+l'audit. Auditer un document vivant, c'est auditer une cible mobile.
 
 ### 2026-09-02 · T-06 (b) fermée : la tâche était faite, la roadmap ne le savait pas
 
