@@ -1,0 +1,106 @@
+# ══════════════════════════════════════════════════════════════════
+# Mesure de scalabilite du mode entreprise, A VOLUME (T-41)
+#
+# POURQUOI ICI ET PAS AILLEURS. `docs/SCALABILITY.md` §9bis nomme ce qui
+# manque : le comportement du PLANIFICATEUR a volume. Un basculement de plan ne
+# se deduit d'aucun ratio, il exige un vrai jeu de donnees. Or la prod compte
+# une dizaine de `team_tasks`, y ecrire 2 000 lignes est interdit par ce depot,
+# Docker n'est pas disponible sur le poste de dev, et une branche Supabase se
+# paie. Le runner de CI, lui, monte deja une stack Supabase complete pour
+# `rls-integration` : base jetable, volume libre, aucun euro.
+#
+# CE N'EST PAS UNE GATE. Le job ne tourne QUE sur declenchement manuel : il
+# seme des milliers de lignes et prend plusieurs minutes. Le rendre bloquant
+# ajouterait de l'attente a chaque push pour une question qu'on se pose une
+# fois par trimestre.
+#
+# OU LIRE LE RESULTAT : dans le RESUME du job, pas dans les logs. Les logs d'un
+# run exigent une authentification meme sur un depot public, le resume non.
+# ══════════════════════════════════════════════════════════════════
+name: scalability-volume
+
+on:
+  workflow_dispatch:
+    inputs:
+      steps:
+        description: 'Paliers de volume (team_tasks), separes par des virgules'
+        required: false
+        default: '200,2000'
+      members:
+        description: "Taille de l'organisation de test"
+        required: false
+        default: '50'
+
+permissions:
+  contents: read
+
+jobs:
+  measure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - uses: supabase/setup-cli@46f7f98c7f948ad727d22c1e67fab04c223a0520 # v3.0.0
+        with:
+          version: latest
+      - run: npm ci
+      - name: Start Supabase stack (local)
+        run: supabase start
+
+      - name: Export DATABASE_URL
+        run: |
+          supabase status -o env > supabase.env
+          set -a; . ./supabase.env; set +a
+          # Meme garde que `rls-integration` : un remap qui ne trouve rien ecrit
+          # une valeur VIDE sans faire echouer l'etape, et le job meurt deux
+          # etapes plus loin sur une cause invisible.
+          if [ -z "$DB_URL" ]; then
+            KEYS=$(sed -n 's/^\([A-Z_][A-Z0-9_]*\)=.*/\1/p' supabase.env | paste -sd, -)
+            echo "::warning::DB_URL absent de 'supabase status -o env' (cles vues : ${KEYS:-aucune}) — repli sur l'URL locale standard"
+            DB_URL="postgresql://postgres:postgres@127.0.0.1:54322/postgres"
+          fi
+          echo "DATABASE_URL=$DB_URL" >> "$GITHUB_ENV"
+
+      - name: Apply migrations on fresh DB
+        run: |
+          set -o pipefail
+          if node scripts/apply-migrations.mjs 2>&1 | tee migrate.log; then
+            exit 0
+          fi
+          {
+            echo '### ✖ Replay des migrations — echec'
+            echo ''
+            echo '```'
+            tail -n 60 migrate.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit 1
+
+      - name: Mesurer a volume
+        run: |
+          set -o pipefail
+          if node scripts/scalability-volume.mjs \
+               --steps="${{ inputs.steps }}" \
+               --members="${{ inputs.members }}" 2>&1 | tee volume.log; then
+            exit 0
+          fi
+          {
+            echo '### ✖ Mesure de volume — echec'
+            echo ''
+            echo '```'
+            tail -n 60 volume.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit 1
+
+      - name: Joindre les plans complets
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: scalability-volume-log
+          path: volume.log
+          retention-days: 30
