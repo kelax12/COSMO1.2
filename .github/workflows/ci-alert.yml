@@ -11,9 +11,18 @@
 # CE QUE ÇA FAIT : ouvre une issue GitHub — donc une notification par mail, on
 # est abonné d'office à son propre dépôt — au premier échec, puis se contente
 # de commenter tant qu'elle reste ouverte. Pas de spam. Refermer l'issue une
-# fois la CI verte réarme l'alerte.
+# fois la CI verte réarme l'alerte. ET pousse l'alerte sur le webhook ops.
 #
-# Aucun service externe, aucun secret : seulement le jeton du workflow.
+# 🔴 L'ISSUE SEULE NE SUFFIT PAS, c'est mesuré : `Vendor script watch` a échoué
+# chaque jour du 2026-08-29 au 2026-09-01, l'issue #44 s'est bien mise à jour à
+# chaque fois, et personne ne l'a lue pendant quatre jours — pendant que le
+# script tiers captait des adresses email. D'où le webhook, qui POUSSE au lieu
+# d'attendre qu'on vienne voir.
+#
+# ⚠️ Un canal d'alerte jamais testé ne vaut pas mieux qu'une page jamais
+# ouverte. D'où `workflow_dispatch` : « Run workflow » envoie un message de
+# TEST sur le webhook, sans toucher aux issues. À rejouer après tout changement
+# de webhook ou de salon.
 # ──────────────────────────────────────────────────────────────────────
 name: CI alert
 
@@ -21,6 +30,8 @@ on:
   workflow_run:
     workflows: [CI, Vendor script watch]
     types: [completed]
+  # Exercice à blanc du canal d'alerte, sans casser une garde pour le tester.
+  workflow_dispatch:
 
 # Seul droit élevé du dépôt, strictement borné à l'ouverture d'issues.
 permissions:
@@ -31,12 +42,17 @@ jobs:
   open-issue:
     # Uniquement les échecs sur main : un run annulé par un push suivant ou une
     # PR rouge n'ont pas à réveiller qui que ce soit.
+    # Le déclenchement manuel passe aussi, pour l'exercice à blanc du canal.
     if: >-
-      github.event.workflow_run.conclusion == 'failure' &&
-      github.event.workflow_run.head_branch == 'main'
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'failure' &&
+       github.event.workflow_run.head_branch == 'main')
     runs-on: ubuntu-latest
     steps:
       - name: Ouvrir ou mettre a jour l'issue « CI rouge »
+        # Jamais sur un exercice : un test du canal ne doit pas polluer le
+        # journal des vrais incidents.
+        if: github.event_name == 'workflow_run'
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
@@ -114,6 +130,7 @@ jobs:
           RUN_URL: ${{ github.event.workflow_run.html_url }}
           WF: ${{ github.event.workflow_run.name }}
           SHA: ${{ github.event.workflow_run.head_sha }}
+          EVENT: ${{ github.event_name }}
         run: |
           set -uo pipefail
 
@@ -132,7 +149,14 @@ jobs:
             exit 0
           fi
 
-          MSG="🚨 [cosmo/ci] ${WF} en echec sur main (${SHA:0:7}) — ${RUN_URL}"
+          if [ "${EVENT:-}" = "workflow_dispatch" ]; then
+            # Exercice a blanc : le message dit clairement qu'il n'y a pas
+            # d'incident, sinon un test finit par etre pris pour une panne —
+            # ou pire, une vraie panne pour un test.
+            MSG="✅ [cosmo/ci] Test du canal d'alerte — aucun incident. Si vous lisez ceci dans Discord, les echecs de CI et de Vendor script watch arriveront ici."
+          else
+            MSG="🚨 [cosmo/ci] ${WF} en echec sur main (${SHA:0:7}) — ${RUN_URL}"
+          fi
 
           # Fire-and-forget, comme `opsAlert()` : une panne d'alerting ne doit
           # jamais faire echouer le job qui alerte. On ne peut pas alerter sur
