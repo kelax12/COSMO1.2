@@ -27,11 +27,18 @@ jobs:
     steps:
       - name: Declencher les avis de reconduction
         env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          # Meme repli que `uptime.yml` : l'URL du projet est publique (bundle
+          # client, docs, `restore-drill.yml`). Elle manquait, et ce workflow
+          # exigeait donc DEUX secrets alors que la roadmap n'en nommait qu'un.
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL || 'https://ykeugqfgklejcdbrmawy.supabase.co' }}
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
         run: |
+          # `CRON_SECRET`, lui, est un vrai secret : sa valeur doit etre
+          # identique cote GitHub et cote Supabase, personne ne peut la
+          # deviner. Tant qu'il n'est pas pose, aucun avis ne part, et c'est
+          # sans consequence tant qu'aucun abonnement ANNUEL n'existe (T-40).
           if [ -z "$SUPABASE_URL" ] || [ -z "$CRON_SECRET" ]; then
-            echo "::warning::SUPABASE_URL ou CRON_SECRET absent — aucun avis declenche."
+            echo "::warning::CRON_SECRET absent, aucun avis declenche. Sans objet tant qu'aucun abonnement annuel n'existe (T-40)."
             exit 0
           fi
           code=$(curl -s -o /tmp/out.json -w '%{http_code}' -X POST \

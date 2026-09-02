@@ -22,8 +22,18 @@
 # alerte. L'issue se referme TOUTE SEULE au retour du vert, ce qui rearme
 # l'alerte sans geste manuel.
 #
-# Aucun service externe, aucun compte a creer. Le seul secret utilise,
-# `SUPABASE_URL`, existe deja pour `renewal-notice`.
+# Aucun service externe, aucun compte a creer, et AUCUN SECRET REQUIS.
+#
+# 🔴 Correction du 2026-09-02. Cet en-tete affirmait que le secret
+# `SUPABASE_URL` « existe deja pour renewal-notice ». Il n'existait pas, et
+# personne ne l'avait vu : le run sortait VERT en n'ayant sonde que le site,
+# la branche backend tombant dans son `::warning::`. Une sonde a moitie
+# aveugle qui affiche du vert est pire qu'une sonde absente.
+#
+# L'URL du projet n'est pas un secret : elle est deja dans le bundle client,
+# dans `docs/DEPLOYMENT.md`, et en dur dans `restore-drill.yml` de ce meme
+# depot public. Elle est donc posee en repli ci-dessous, et le secret ne sert
+# plus qu'a pointer la sonde ailleurs (bascule de projet).
 # ══════════════════════════════════════════════════════════════════
 name: Uptime
 
@@ -51,7 +61,10 @@ jobs:
       - name: Sonder la production
         id: probe
         env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          # Repli sur l'URL de production, publique (cf. en-tete). Le secret
+          # reste prioritaire pour pouvoir sonder un autre projet sans toucher
+          # a ce fichier.
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL || 'https://ykeugqfgklejcdbrmawy.supabase.co' }}
         run: |
           set -uo pipefail
           PANNES=""
@@ -79,8 +92,15 @@ jobs:
           # panne. Le secret n'est donc volontairement pas requis ici, et on
           # n'expose aucune cle dans un depot public. Ce qui signale une panne,
           # c'est un 5xx, un 000 (injoignable) ou la page « projet en pause ».
+          # 🔴 Plus d'avertissement silencieux ici. La version precedente
+          # sautait cette moitie de la sonde et sortait VERTE, donc « tout va
+          # bien » signifiait en realite « le site repond, on n'a rien su du
+          # backend ». Avec le repli d'URL ce cas ne peut plus survenir sauf a
+          # poser le secret VIDE, ce qui est une erreur de configuration : elle
+          # doit echouer, pas se taire.
           if [ -z "${SUPABASE_URL:-}" ]; then
-            echo "::warning::SUPABASE_URL absent : l'API Supabase n'a pas ete sondee. Poser le secret pour couvrir la moitie backend."
+            echo "::error::SUPABASE_URL vide : la sonde backend ne peut pas s'executer. Retirer le secret vide pour reprendre le repli."
+            exit 1
           else
             CODE_AUTH=$(curl -sS --max-time 20 --retry 2 --retry-delay 5 \
               -o /dev/null -w '%{http_code}' "$SUPABASE_URL/auth/v1/health" || echo 000)
