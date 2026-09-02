@@ -80,7 +80,7 @@ jobs:
             "**$WF** est en echec sur \`main\`." \
             "" \
             "- Run : $RUN_URL (#$RUN_NUM)" \
-            "- Commit : \`${SHA:0:7}\` — $SUBJECT" \
+            "- Commit : \`${SHA:0:7}\` · $SUBJECT" \
             "" \
             "Une garde rouge ne protege plus rien et rend muettes les autres" \
             "gardes du meme job. A traiter avant de livrer autre chose." \
@@ -153,9 +153,9 @@ jobs:
             # Exercice a blanc : le message dit clairement qu'il n'y a pas
             # d'incident, sinon un test finit par etre pris pour une panne —
             # ou pire, une vraie panne pour un test.
-            MSG="✅ [cosmo/ci] Test du canal d'alerte — aucun incident. Si vous lisez ceci dans Discord, les echecs de CI et de Vendor script watch arriveront ici."
+            MSG="✅ [cosmo/ci] Test du canal d'alerte, aucun incident. Si vous lisez ceci dans Discord, les echecs de CI et de Vendor script watch arriveront ici."
           else
-            MSG="🚨 [cosmo/ci] ${WF} en echec sur main (${SHA:0:7}) — ${RUN_URL}"
+            MSG="🚨 [cosmo/ci] ${WF} en echec sur main (${SHA:0:7}) : ${RUN_URL}"
           fi
 
           # Fire-and-forget, comme `opsAlert()` : une panne d'alerting ne doit
