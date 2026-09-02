@@ -5,6 +5,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { useBottomSheet } from '@/hooks/use-bottom-sheet';
 import { useT } from '@/i18n/useT';
+import { useTasks } from '@/modules/tasks';
+import { useOkrs } from '@/modules/okrs';
+import { resolveReassignTargets } from '@/modules/categories/impact';
+import { useReassignCategory } from '@/modules/categories/useReassignCategory';
+import DeleteCategoryDialog from '@/components/category/DeleteCategoryDialog';
 
 type ColorSettingsModalProps = {
   isOpen: boolean;
@@ -12,8 +17,25 @@ type ColorSettingsModalProps = {
   isNested?: boolean;
 };
 
-const ColorSettingsModal: React.FC<ColorSettingsModalProps> = ({ isOpen, onClose, isNested }) => {
+/**
+ * Contenu de la modale — monté UNIQUEMENT quand elle est ouverte.
+ *
+ * 🔴 POURQUOI cette coupure. Cinq écrans montent `<ColorSettingsModal>` en
+ * permanence (TasksSummary, EventModal, HabitModal, TaskModal, OKRModalSheet) :
+ * tant que les requêtes vivaient au-dessus du `if (!isOpen)`, une lecture des
+ * OKR partait depuis les pages Tâches, Agenda et Habitudes, qui n'en affichent
+ * aucun, pour une modale que personne n'avait ouverte.
+ *
+ * Second effet, tout aussi voulu : l'état local meurt à la fermeture. Avant, des
+ * suppressions mises en attente puis abandonnées (fermeture sans enregistrer)
+ * survivaient à la réouverture, et repartaient à la sauvegarde suivante.
+ */
+const ColorSettingsModalContent: React.FC<Omit<ColorSettingsModalProps, 'isOpen'>> = ({ onClose, isNested }) => {
   const { t } = useT('tasks');
+  const { t: tCommon, tp: tpCommon } = useT('common');
+  const { data: tasks = [] } = useTasks();
+  const { data: okrs = [] } = useOkrs();
+  const reassignCategory = useReassignCategory();
   const { sheetRef, handleBarWidth, sheetDragProps } = useBottomSheet(onClose);
   const { data: categories = [] } = useCategories();
   const createCategoryMutation = useCreateCategory();
@@ -24,6 +46,11 @@ const ColorSettingsModal: React.FC<ColorSettingsModalProps> = ({ isOpen, onClose
   // render when categories are already in the React Query cache.
   const [localCategories, setLocalCategories] = useState<Category[]>(categories);
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
+  // R-02 : ou partent les elements d'une categorie retiree, par categorie.
+  // La modale met les suppressions EN ATTENTE jusqu'a l'enregistrement : la
+  // decision de reclassement doit donc etre memorisee avec elles, sinon elle
+  // serait prise puis perdue.
+  const [reassignTargets, setReassignTargets] = useState<Record<string, string>>({});
   const [isSaving, setIsSaving] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -32,7 +59,10 @@ const ColorSettingsModal: React.FC<ColorSettingsModalProps> = ({ isOpen, onClose
     setLocalCategories(categories);
   }, [categories]);
 
-  if (!isOpen) return null;
+  // Une categorie encore en brouillon (`temp-`) n'existe pas cote serveur : la
+  // proposer comme destination ferait pointer des elements vers un identifiant
+  // qui ne sera jamais celui de la ligne creee.
+  const reassignOptions = localCategories.filter((c) => !c.id.startsWith('temp-'));
 
   const handleAddCategory = () => {
     const newId = `temp-${Date.now()}`;
@@ -61,8 +91,9 @@ const ColorSettingsModal: React.FC<ColorSettingsModalProps> = ({ isOpen, onClose
     setCategoryToDelete(id);
   };
 
-  const confirmDeleteLocal = () => {
+  const confirmDeleteLocal = (reassignTo: string) => {
     if (categoryToDelete) {
+      setReassignTargets(prev => ({ ...prev, [categoryToDelete]: reassignTo }));
       setLocalCategories(prev => prev.filter(cat => cat.id !== categoryToDelete));
       setCategoryToDelete(null);
     }
@@ -78,10 +109,24 @@ const ColorSettingsModal: React.FC<ColorSettingsModalProps> = ({ isOpen, onClose
 
     setIsSaving(true);
     try {
-      // Delete categories that were removed
-      const deletePromises = categories
-        .filter(cat => !localCategories.find(lc => lc.id === cat.id))
-        .map(cat => deleteCategoryMutation.mutateAsync(cat.id));
+      // R-02 : reaffecter AVANT de supprimer. L'ordre inverse laisserait une
+      // fenetre ou les elements pointent dans le vide, et un echec du
+      // reclassement deviendrait irrattrapable : plus rien ne dirait quels
+      // elements portaient la categorie disparue.
+      const removed = categories.filter(cat => !localCategories.find(lc => lc.id === cat.id));
+      // On peut supprimer DEUX categories d'un coup et designer la seconde comme
+      // destination de la premiere. `resolveReassignTargets` suit la chaine
+      // jusqu'a une categorie qui survit : sans lui, des elements partaient vers
+      // une categorie supprimee une ligne plus bas, et l'instantane `tasks` ne
+      // les montrait deja plus sous leur ancienne categorie au tour suivant.
+      const finalTargets = resolveReassignTargets(removed.map(c => c.id), reassignTargets);
+      let movedTotal = 0;
+      for (const cat of removed) {
+        const { moved } = await reassignCategory(cat.id, finalTargets[cat.id], tasks, okrs);
+        movedTotal += moved;
+      }
+
+      const deletePromises = removed.map(cat => deleteCategoryMutation.mutateAsync(cat.id));
 
       // Create or update categories
       const savePromises = localCategories.map(lc => {
@@ -105,9 +150,19 @@ const ColorSettingsModal: React.FC<ColorSettingsModalProps> = ({ isOpen, onClose
       });
 
       await Promise.all([...deletePromises, ...savePromises]);
+      // Le message de reclassement part APRES les ecritures : annoncer un
+      // deplacement avant de savoir si la suppression aboutit, c'est promettre
+      // un resultat qu'on n'a pas encore.
+      if (movedTotal > 0) toast.success(tpCommon('deleteCategory.doneReassigned', movedTotal));
       onClose();
     } catch (error) {
+      // Un echec avale en silence laissait l'utilisateur devant une modale qui
+      // ne se ferme pas, sans un mot. La reaffectation ayant lieu AVANT les
+      // suppressions, un echec de reclassement ne supprime rien ; un echec plus
+      // tard peut laisser une partie du lot ecrite. Dans les deux cas la modale
+      // reste ouverte sur l'etat local, donc rejouable.
       console.error('Error saving categories:', error);
+      toast.error(tCommon('pageError.hint'));
     } finally {
       setIsSaving(false);
     }
@@ -144,7 +199,7 @@ const ColorSettingsModal: React.FC<ColorSettingsModalProps> = ({ isOpen, onClose
             <h2 className="text-base sm:text-xl font-medium text-[rgb(var(--color-text-primary))]">{t('colorModal.title')}</h2>
             <button
               onClick={onClose}
-              aria-label="Fermer"
+              aria-label={tCommon('actions.close')}
               className="min-w-11 min-h-11 flex items-center justify-center rounded-lg text-[rgb(var(--color-text-muted))] hover:text-blue-600 hover:bg-[rgb(var(--color-hover))] transition-colors"
             >
               <X size={22} strokeWidth={2.5} />
@@ -221,67 +276,28 @@ const ColorSettingsModal: React.FC<ColorSettingsModalProps> = ({ isOpen, onClose
                 {isSaving ? (
                   <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 ) : (
-                  'Enregistrer'
+                  tCommon('actions.save')
                 )}
               </button>
             </div>
 
         </motion.div>
 
-        <AnimatePresence>
-          {categoryToDelete && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/30 backdrop-blur-md flex items-end sm:items-center justify-center z-[90] sm:p-4"
-              onClick={() => setCategoryToDelete(null)}
-            >
-              <motion.div
-                initial={{ y: '100%', opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                exit={{ y: '110%', opacity: 0, transition: { duration: 0.22, ease: [0.4, 0, 1, 1] } }}
-                transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.7 }}
-                onClick={(e) => e.stopPropagation()}
-                className="rounded-t-[28px] sm:rounded-2xl shadow-[0_-12px_40px_rgba(0,0,0,0.18)] sm:shadow-2xl w-full sm:max-w-sm overflow-hidden border-t sm:border"
-                style={{
-                  backgroundColor: 'rgb(var(--color-surface))',
-                  borderColor: 'rgb(var(--color-border))',
-                  paddingBottom: 'env(safe-area-inset-bottom)',
-                }}
-              >
-                <div className="sm:hidden flex justify-center pt-4 pb-3">
-                  <div className="w-9 h-[5px] rounded-full bg-slate-300/70 dark:bg-slate-500/60" />
-                </div>
-                <div className="p-5 sm:p-6">
-                  <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-4">
-                    <Trash2 className="text-red-600 dark:text-red-400" size={24} />
-                  </div>
-                  <h3 className="text-lg sm:text-xl font-bold mb-2" style={{ color: 'rgb(var(--color-text-primary))' }}>{t('colorModal.deleteTitle')}</h3>
-                  <p className="text-sm leading-relaxed mb-5 sm:mb-6" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-                    {t('colorModal.deleteBody')}
-                  </p>
-                  <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3">
-                    <button
-                      onClick={() => setCategoryToDelete(null)}
-                      className="flex-1 min-h-11 px-4 py-2.5 rounded-lg text-sm font-semibold text-[rgb(var(--color-text-primary))] border border-[rgb(var(--color-border))] hover:bg-[rgb(var(--color-hover))] transition-all"
-                    >
-                      Annuler
-                    </button>
-                    <button
-                      onClick={confirmDeleteLocal}
-                      className="flex-1 min-h-11 px-4 py-2.5 rounded-lg text-sm font-semibold text-white bg-red-600 hover:bg-red-700 transition-all shadow-md shadow-red-500/20"
-                    >
-                      Supprimer
-                    </button>
-                  </div>
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {/* Une seule confirmation de suppression de categorie dans tout le
+            produit : la reecrire ici a la main, c'etait deux ecrans a maintenir
+            pour la meme decision, et deux occasions de les laisser diverger. */}
+        <DeleteCategoryDialog
+          open={!!categoryToDelete}
+          category={localCategories.find(c => c.id === categoryToDelete) ?? null}
+          categories={reassignOptions}
+          onCancel={() => setCategoryToDelete(null)}
+          onConfirm={confirmDeleteLocal}
+        />
     </div>
   );
 };
+
+const ColorSettingsModal: React.FC<ColorSettingsModalProps> = ({ isOpen, onClose, isNested }) =>
+  isOpen ? <ColorSettingsModalContent onClose={onClose} isNested={isNested} /> : null;
 
 export default ColorSettingsModal;

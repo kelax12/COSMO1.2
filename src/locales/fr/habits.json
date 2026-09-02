@@ -3,13 +3,18 @@
     "new": "Nouvelle",
     "newHabit": "Nouvelle habitude",
     "errorTitle": "Impossible de charger les habitudes",
-    "errorHint": "Vérifie ta connexion internet, puis réessaie."
+    "errorHint": "Vérifie ta connexion internet, puis réessaie.",
+    "subtitle": "Développez de bonnes habitudes au quotidien",
+    "emptyTitle": "Aucune habitude",
+    "emptyBody": "Commencez par créer votre première habitude",
+    "emptyCta": "Créer une habitude"
   },
   "card": {
     "paused": "En pause",
     "pausedUntil": "En pause jusqu'au {{date}}",
     "history": "Historique",
-    "deleted": "Habitude supprimée"
+    "deleted": "Habitude supprimée",
+    "detailedTracking": "Suivi détaillé (30 jours)"
   },
   "table": {
     "title": "Tableau de suivi",
@@ -36,7 +41,11 @@
     "ok": "OK",
     "save": "Sauvegarder",
     "createHabit": "Créer l'habitude",
-    "editHabit": "Modifier l'habitude"
+    "editHabit": "Modifier l'habitude",
+    "details": "Détails",
+    "nameLabel": "Nom de l'habitude",
+    "legend": "Légende",
+    "customize": "Personnaliser"
   },
   "actions": {
     "more": "Plus d'actions",
@@ -50,7 +59,8 @@
     "resumed": "« {{name}} » a repris",
     "paused": "« {{name}} » en pause",
     "resumeHabit": "Reprendre l'habitude",
-    "pauseHabit": "Mettre en pause"
+    "pauseHabit": "Mettre en pause",
+    "copyName": "{{name}} (copie)"
   },
   "tracking": {
     "averageCompletion": "Complétion moyenne par jour",
@@ -68,7 +78,9 @@
     "creditError": "Erreur lors du crédit. Accès accordé tout de même.",
     "reconnect": "Veuillez vous reconnecter.",
     "alreadySubscribed": "Vous avez déjà un abonnement actif.",
-    "paymentError": "Erreur paiement. Réessayez."
+    "paymentError": "Erreur paiement. Réessayez.",
+    "offer": "Une pub de 15 s = 1 jour Premium offert.",
+    "title": "Soutenez Cosmo"
   },
   "recapCta": "Bilan",
   "recapSheetTitle": "Bilan de la semaine",
@@ -86,5 +98,22 @@
   "recapEmpty": "Image indisponible",
   "recapAlt": "Bilan de la semaine : heatmap d'habitudes, tâches terminées, série en cours",
   "recapShareText": "Mon bilan de la semaine sur Cosmo.",
-  "recapImageCta": "Essayez sans inscription"
+  "recapImageCta": "Essayez sans inscription",
+  "actionsMenu": {
+    "createTask": "Créer une tâche",
+    "scheduleInAgenda": "Planifier dans l'agenda",
+    "scheduleHint": "Événement avec heure ajustable",
+    "duplicateHint": "Copie avec un historique vierge",
+    "createTaskHint": "Aujourd'hui · {{minutes}} min",
+    "duplicate": "Dupliquer l'habitude"
+  },
+  "globalTracking": {
+    "empty": "Créez des habitudes pour voir le suivi global"
+  },
+  "period": {
+    "week": "Semaine",
+    "month": "Mois",
+    "all": "Tout",
+    "weekOf": "Semaine du {{date}}"
+  }
 }

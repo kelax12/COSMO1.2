@@ -6,8 +6,7 @@ import type { OrgMember } from '@/modules/organizations';
 import type { TeamProject, TeamTask, TeamTaskStatus } from '@/modules/team-projects';
 import {
   projectColor, PRIORITY_META, isTaskOverdue, sortOpenTasks, sortCompletedTasks,
-  STATUS_ORDER, STATUS_META,
-} from './team-projects.helpers';
+  STATUS_ORDER, STATUS_META, priorityLabelOf } from './team-projects.helpers';
 import MemberAvatar from './MemberAvatar';
 import { useT } from '@/i18n/useT';
 
@@ -227,7 +226,7 @@ const TeamProjectsKanban = ({ projects, tasks, members, onSetAssignees, onOpenTa
                   >
                     <p className="text-sm text-[rgb(var(--color-text-primary))] line-clamp-2">{task.name}</p>
                     <div className="flex items-center gap-2 mt-1.5">
-                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${priority.dot}`} role="img" aria-label={priority.label} title={priority.label} />
+                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${priority.dot}`} role="img" aria-label={priorityLabelOf(task.priority)} title={priorityLabelOf(task.priority)} />
                       {project && pColor && (
                         <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full truncate ${pColor.soft}`}>
                           {project.name}

@@ -93,6 +93,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
 }) => {
   const sheetMotion = useSheetMotion();
   const { t } = useT('taskModal');
+  const { t: tCommon } = useT('common');
   const [showPrioritySheet, setShowPrioritySheet] = useState(false);
   const [showCategorySheet, setShowCategorySheet] = useState(false);
   const [showListsModal, setShowListsModal] = useState(false);
@@ -134,10 +135,10 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
         </div>
         <div className="flex items-center justify-between px-4 h-11">
           <button type="button" onClick={handleClose} className="text-blue-500 text-[15px] min-w-[64px] text-left">
-            Annuler
+            {tCommon('actions.cancel')}
           </button>
           <span className="text-[17px] font-semibold text-[rgb(var(--color-text-primary))]">
-            {isCreating ? 'Nouvelle tâche' : 'Modifier'}
+            {isCreating ? t('form.headingCreate') : t('form.headingEditShort')}
           </span>
           <button
             type="button"
@@ -165,7 +166,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
               type="text"
               value={formData.name}
               onChange={(e) => { handleInputChange('name', e.target.value); clear('name'); }}
-              placeholder="Nom de la tâche"
+              placeholder={t('form.namePlaceholder')}
               autoFocus={isCreating}
               className={`w-full px-4 min-h-12 text-[17px] bg-transparent focus:outline-none focus:ring-0 ${
                 cellErrors.name
@@ -260,7 +261,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
                         onClick={() => { handleInputChange('deadline', ''); setShowDeadlinePicker(false); }}
                         className="w-full text-center text-[14px] text-red-500 py-3 border-t border-[rgb(var(--color-border))]"
                       >
-                        Effacer la date
+                        {t('form.clearDate')}
                       </button>
                     )}
                   </div>
@@ -343,7 +344,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
                   onChange={(value) => handleInputChange('description', value)}
                   rows={4}
                   autoFocus={!formData.description}
-                  placeholder="Description de la tâche"
+                  placeholder={t('form.descriptionPlaceholder')}
                   className="w-full text-[15px] bg-transparent focus:outline-none focus:ring-0 text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-muted))] resize-none"
                   style={{ border: 'none' }}
                 />
@@ -355,7 +356,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
                 className="flex items-center px-4 min-h-11 w-full"
               >
                 <span className="text-[15px] text-blue-600 dark:text-blue-400">
-                  + Ajouter une description
+                  {t('form.addDescription')}
                 </span>
               </button>
             )}
@@ -389,7 +390,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
                 type="button"
                 role="switch"
                 aria-checked={formData.bookmarked}
-                aria-label={formData.bookmarked ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+                aria-label={formData.bookmarked ? t('form.bookmarkRemove') : t('form.bookmarkAdd')}
                 onClick={() => handleInputChange('bookmarked', !formData.bookmarked)}
                 className={`relative w-[51px] h-[31px] rounded-full transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
                   formData.bookmarked ? 'bg-[rgb(var(--color-accent-solid))]' : 'bg-[rgb(var(--color-hover))]'
@@ -458,7 +459,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
                   disabled={isLoading}
                   className="w-full flex items-center justify-center min-h-11 text-red-500 text-[15px] active:bg-[rgb(var(--color-hover))] disabled:opacity-50 transition-colors"
                 >
-                  Supprimer la tâche
+                  {t('form.deleteTask')}
                 </button>
               </SectionCard>
             </>
@@ -516,7 +517,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
                     onClick={() => { handleInputChange('priority', opt.value); setCellErrors(prev => ({ ...prev, priority: false })); setShowPrioritySheet(false); }}
                     className="w-full flex items-center justify-between px-4 min-h-11 active:bg-[rgb(var(--color-hover))]"
                   >
-                    <span className={`text-[15px] ${opt.color}`}>{opt.label}</span>
+                    <span className={`text-[15px] ${opt.color}`}>{tCommon(opt.labelKey)}</span>
                     {formData.priority === opt.value && <Check size={16} className="text-blue-500" />}
                   </button>
                 </React.Fragment>
@@ -641,7 +642,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
                         type="text" value={emailInput}
                         onChange={(e) => setEmailInput(e.target.value)}
                         onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddEmail(); } }}
-                        placeholder="Email ou nom…"
+                        placeholder={t('form.collaboratorPlaceholder')}
                         className="w-full pl-9 pr-3 py-2 text-[15px] bg-[rgb(var(--color-hover))] rounded-xl focus:outline-none text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-muted))]"
                       />
                     </div>
@@ -669,7 +670,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
                           <span className="shrink-0 inline-flex items-center px-1.5 py-0.5 rounded-full text-caption font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">{t('mobile.sent')}</span>
                         )}
                         {isTaskOwner && (
-                          <button type="button" onClick={() => handleRemoveCollaborator(id)} className="p-1 text-red-400" aria-label="Retirer"><X size={14} /></button>
+                          <button type="button" onClick={() => handleRemoveCollaborator(id)} className="p-1 text-red-400" aria-label={tCommon('actions.remove')}><X size={14} /></button>
                         )}
                       </div>
                     );

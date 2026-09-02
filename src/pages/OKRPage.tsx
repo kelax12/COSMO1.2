@@ -7,9 +7,9 @@ import { getColorHex } from '@/components/CategoryManager';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'react-router';
 import { useCreateEvent } from '@/modules/events';
-import { useOkrs, useCreateOkr, useUpdateOkr, useDeleteOkr, useUpdateKeyResult, OKR, KeyResult } from '@/modules/okrs';
+import { useOkrs, useCreateOkr, useUpdateOkr, useDeleteOkr, useRestoreOkr, useUpdateKeyResult, OKR, KeyResult } from '@/modules/okrs';
 import { showUndoToast } from '@/lib/undo-toast';
-import { useCategories, useCreateCategory, useUpdateCategory, useDeleteCategory } from '@/modules/categories';
+import { useCategories, useCreateCategory, useUpdateCategory } from '@/modules/categories';
 import PageErrorState from '@/components/PageErrorState';
 import TaskModal from '@/components/TaskModal';
 import EventModal from '@/components/EventModal';
@@ -27,8 +27,10 @@ import OKRCard from './okr/OKRCard';
 import { OKRListSkeleton } from '@/components/skeletons';
 import DeleteObjectiveConfirm from './okr/DeleteObjectiveConfirm';
 import CategoryFilterBar from './okr/CategoryFilterBar';
-import DeleteCategoryConfirm from './okr/DeleteCategoryConfirm';
+import DeleteCategoryDialog from '@/components/category/DeleteCategoryDialog';
 import { useT } from '@/i18n/useT';
+import { useDeleteCategoryFlow } from './okr/useDeleteCategoryFlow';
+import { useTasks } from '@/modules/tasks';
 
 const OKRPage: React.FC = () => {
   const { t } = useT('okr');
@@ -45,12 +47,16 @@ const OKRPage: React.FC = () => {
   const createOkrMutation = useCreateOkr();
   const updateOkrMutation = useUpdateOkr();
   const deleteOkrMutation = useDeleteOkr();
+  const restoreOkrMutation = useRestoreOkr();
   const updateKeyResultMutation = useUpdateKeyResult();
   const createEventMutation = useCreateEvent();
   const { data: categories = [] } = useCategories();
+  // Sert au décompte d'impact d'une suppression de catégorie (R-02).
+  const { data: tasks = [] } = useTasks();
   const createCategoryMutation = useCreateCategory();
   const updateCategoryMutation = useUpdateCategory();
-  const deleteCategoryMutation = useDeleteCategory();
+  // Restauration d'un « Annuler » : recree la categorie sous SON identifiant,
+  // sinon les taches et objectifs qui la portaient restent orphelins (R-08).
   const [showCreateCategory, setShowCreateCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newCategoryColor, setNewCategoryColor] = useState('blue');
@@ -103,27 +109,21 @@ const OKRPage: React.FC = () => {
       { onSuccess: () => cancelEditCategory() }
     );
   };
-  const [categoryToDeleteId, setCategoryToDeleteId] = useState<string | null>(null);
-
-  const confirmDeleteCategory = () => {
-    if (!categoryToDeleteId) return;
-    // Undo (#38) : filet de sécurité aligné sur les tâches/listes — la
-    // suppression d'une catégorie est plus lourde de conséquences qu'une tâche.
-    const snapshot = categories.find((c) => c.id === categoryToDeleteId);
-    deleteCategoryMutation.mutate(categoryToDeleteId, {
-      onSuccess: () => {
-        if (selectedCategory === categoryToDeleteId) setSelectedCategory('all');
-        setCategoryToDeleteId(null);
-        if (snapshot) {
-          showUndoToast(t('page.categoryDeleted'), () => {
-            const { id: _id, ...rest } = snapshot;
-            createCategoryMutation.mutate(rest);
-          });
-        }
-      },
-    });
-  };
-
+  // Suppression d'une catégorie : réaffecter, supprimer, savoir annuler les
+  // DEUX. La séquence vit dans son propre module (cf. useDeleteCategoryFlow).
+  const {
+    categoryToDeleteId,
+    setCategoryToDeleteId,
+    isDeleting: isDeletingCategory,
+    confirmDelete: confirmDeleteCategory,
+  } = useDeleteCategoryFlow({
+    categories,
+    tasks,
+    objectives,
+    onDeleted: (deletedId) => {
+      if (selectedCategory === deletedId) setSelectedCategory('all');
+    },
+  });
 
   const updateKeyResult = (objectiveId: string, keyResultId: string, newValue: number) => {
     const obj = objectives.find((o) => o.id === objectiveId);
@@ -144,8 +144,17 @@ const OKRPage: React.FC = () => {
     deleteOkrMutation.mutate(objectiveId);
     setDeletingObjective(null);
     if (snapshot) {
-      const { id: _id, ...rest } = snapshot;
-      showUndoToast(t('page.okrDeleted'), () => { createOkrMutation.mutate(rest); });
+      // L'OKR, ses KR et les tâches qui les référencent (`task.krId`) revivent
+      // sous leurs identifiants d'origine (R-08).
+      //
+      // ⚠️ RÉSIDU ASSUMÉ : `kr_completions` cascade depuis `okrs` ET
+      // `key_results` (vérifié en production). Le journal des complétions est
+      // donc perdu à la suppression et ne revient pas ; le graphique « KR
+      // réalisés » du tableau de bord garde son trou. Seule une suppression
+      // logique le rattraperait — arbitrage laissé ouvert.
+      showUndoToast(t('page.okrDeleted'), () => {
+        restoreOkrMutation.mutate(snapshot);
+      });
     }
   };
 
@@ -315,8 +324,8 @@ const OKRPage: React.FC = () => {
           whileTap={{ scale: 0.95 }}
           onClick={() => setShowCheckin(true)}
           className="flex items-center justify-center gap-1.5 h-9 px-3 rounded-lg font-semibold text-sm border border-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid))] bg-[rgb(var(--color-surface))] hover:bg-[rgb(var(--color-hover))] transition-colors"
-          aria-label="Ouvrir le check-in hebdo"
-          title="Faire le point sur vos OKR : s'ouvre aussi automatiquement lundi/mardi depuis le Dashboard"
+          aria-label={t('page.openCheckinAria')}
+          title={t('page.openCheckinTitle')}
         >
           <CalendarCheck size={15} />
           <span>{t('page.weeklyCheckin')}</span>
@@ -487,11 +496,13 @@ const OKRPage: React.FC = () => {
       }
 
       {/* Dialog suppression catégorie */}
-      <DeleteCategoryConfirm
+      <DeleteCategoryDialog
         open={!!categoryToDeleteId}
-        categoryName={categories.find(c => c.id === categoryToDeleteId)?.name}
+        category={categories.find(c => c.id === categoryToDeleteId) ?? null}
+        categories={categories}
         onCancel={() => setCategoryToDeleteId(null)}
         onConfirm={confirmDeleteCategory}
+        isWorking={isDeletingCategory}
       />
 
       {/* FAB Nouvel objectif — mobile only */}

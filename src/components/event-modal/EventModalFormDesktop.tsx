@@ -28,6 +28,7 @@ const EventModalFormDesktop: React.FC<EventModalFormBodyProps> = ({
   getHeaderTitle, getSubmitButtonText, isPrefilledMode,
 }) => {
   const { t } = useT('eventModal');
+  const { t: tCommon } = useT('common');
   const calculateDuration = () => formatEventDuration(startDate, startTime, endDate, endTime);
   // Légende des catégories masquée par défaut (épure l'UI) — révélée à la demande.
   const [showCategoryLegend, setShowCategoryLegend] = useState(false);
@@ -305,10 +306,10 @@ const EventModalFormDesktop: React.FC<EventModalFormBodyProps> = ({
                     aria-label={t('recurrenceAria')}
                   >
                     {([
-                      { value: 'none', label: 'Non' },
-                      { value: 'daily', label: 'Tous les jours' },
-                      { value: 'weekly', label: 'Toutes les semaines' },
-                      { value: 'custom', label: 'Personnaliser' },
+                      { value: 'none', label: t('form.recurrenceNone') },
+                      { value: 'daily', label: t('form.recurrenceDaily') },
+                      { value: 'weekly', label: t('form.recurrenceWeekly') },
+                      { value: 'custom', label: t('form.recurrenceCustom') },
                     ] as { value: EventRecurrence; label: string }[]).map((opt) => {
                       const active = recurrence === opt.value;
                       return (
@@ -396,7 +397,7 @@ const EventModalFormDesktop: React.FC<EventModalFormBodyProps> = ({
                 onClick={() => setShowDescription(true)}
                 className="text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded px-1 -mx-1"
               >
-                + Ajouter un commentaire
+                {t('form.addComment')}
               </button>
             )}
           </div>
@@ -526,7 +527,7 @@ const EventModalFormDesktop: React.FC<EventModalFormBodyProps> = ({
               onClick={handleDelete}
               className="min-h-11 sm:w-auto text-sm font-bold border-0 text-white bg-red-600 hover:bg-red-700 active:bg-red-800 rounded-lg transition-all"
             >
-              Supprimer
+              {tCommon('actions.delete')}
             </Button>
           )}
           {mode === 'edit' && handleDuplicate && (

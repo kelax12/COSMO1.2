@@ -129,7 +129,7 @@ const DataResults: React.FC<{ query: string; onDone: () => void }> = ({ query, o
   return (
     <>
       {matchedTasks.length > 0 && (
-        <CommandGroup heading="Tâches">
+        <CommandGroup heading={t('palette.tasks')}>
           {matchedTasks.map((t) => (
             <CommandItem key={`task-${t.id}`} value={`task-${t.id}`} onSelect={() => go('/tasks', { openTaskId: t.id })}>
               <CheckSquare size={16} className={t.completed ? 'opacity-40' : ''} aria-hidden="true" />
@@ -259,7 +259,7 @@ export function CommandPalette() {
       { id: 'nav-statistics', label: t('palette.goStats'), group: t('palette.groupNavigation'), icon: <TrendingUp size={16} />, run: nav('/statistics'), keywords: ['stats', 'analytics', 'analyses'] },
       { id: 'nav-settings', label: t('palette.goSettings'), group: t('palette.groupNavigation'), icon: <SettingsIcon size={16} />, run: nav('/settings'), keywords: ['settings', 'config', 'réglages'] },
       ...(PREMIUM_ENFORCED
-        ? [{ id: 'nav-premium', label: 'Voir Premium', group: 'Navigation' as const, icon: <Crown size={16} />, run: nav('/premium'), keywords: ['premium', 'subscription', 'abonnement'] }]
+        ? [{ id: 'nav-premium', label: t('nav.seePremium'), group: 'Navigation' as const, icon: <Crown size={16} />, run: nav('/premium'), keywords: ['premium', 'subscription', 'abonnement'] }]
         : []),
       { id: 'pref-theme-light', label: t('palette.themeLight'), group: t('palette.groupPreferences'), icon: <Sun size={16} />, run: () => { setTheme('light'); setIsOpen(false); }, keywords: ['theme', 'light', 'jour', 'clair'] },
       { id: 'pref-theme-dark', label: t('palette.themeDark'), group: t('palette.groupPreferences'), icon: <Moon size={16} />, run: () => { setTheme('dark'); setIsOpen(false); }, keywords: ['theme', 'dark', 'nuit', 'sombre'] },

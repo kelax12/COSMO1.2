@@ -71,6 +71,7 @@ interface FrModules {
   habits: typeof import('@/locales/fr/habits.json');
   invite: typeof import('@/locales/fr/invite.json');
   landing: typeof import('@/locales/fr/landing.json');
+  legal: typeof import('@/locales/fr/legal.json');
   okr: typeof import('@/locales/fr/okr.json');
   org: typeof import('@/locales/fr/org.json');
   premium: typeof import('@/locales/fr/premium.json');
@@ -108,6 +109,8 @@ interface CatalogShapes {
   premium: Shape<'premium'>;
   /** Landing publique + pages marketing (à propos, cas d'usage, blog). */
   landing: Shape<'landing'>;
+  /** Pages contractuelles : CGU, confidentialité, mentions légales. */
+  legal: Shape<'legal'>;
   /** Mode entreprise — pyramide, équipes, projets, OKR d'équipe, invitations. */
   org: Shape<'org'>;
   /** Titres/descriptions des routes publiques — lu aussi par `prerender.mjs`. */
@@ -200,8 +203,8 @@ registry[DEFAULT_LOCALE] = {
  */
 const NAMESPACES: readonly Namespace[] = [
   'admin', 'agenda', 'common', 'dashboard', 'errors', 'eventModal', 'guide',
-  'habits', 'invite', 'landing', 'okr', 'org', 'premium', 'seo', 'settings',
-  'statistics', 'taskModal', 'tasks', 'tutorials',
+  'habits', 'invite', 'landing', 'legal', 'okr', 'org', 'premium', 'seo',
+  'settings', 'statistics', 'taskModal', 'tasks', 'tutorials',
 ];
 
 function isNamespace(value: string): value is Namespace {

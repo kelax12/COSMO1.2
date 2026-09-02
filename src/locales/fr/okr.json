@@ -19,7 +19,9 @@
       "noneDescription": "Créez votre premier objectif pour structurer vos résultats clés et suivre votre progression.",
       "filteredDescription": "Modifiez votre filtre ou créez un nouvel objectif dans cette catégorie.",
       "allTitle": "Aucun OKR pour le moment"
-    }
+    },
+    "openCheckinAria": "Ouvrir le check-in hebdo",
+    "openCheckinTitle": "Faire le point sur vos OKR : s'ouvre aussi automatiquement lundi/mardi depuis le Dashboard"
   },
   "card": {
     "uncategorized": "Sans catégorie",
@@ -109,6 +111,11 @@
     "savedCount_many": "{{count}} de KR mis à jour",
     "savedCount_other": "{{count}} KR mis à jour",
     "error": "Erreur lors de la mise à jour",
-    "saving": "Enregistrement…"
+    "saving": "Enregistrement…",
+    "krProgress": "KR {{index}} sur {{total}}"
+  },
+  "modalSheet": {
+    "titlePlaceholder": "Ex. Lancer la v2 du produit",
+    "pickPlaceholder": "Choisir…"
   }
 }

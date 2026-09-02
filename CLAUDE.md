@@ -128,12 +128,26 @@ npm run check:legal         # Cohérence du tableau de conformité de docs/LEGAL
                             # synthèse corresponde aux lignes. Ce total a été faux TROIS
                             # fois le 2026-08-26, toujours pour l'avoir additionné de tête.
 npm run check:mail          # Délivrabilité des emails Auth : MX, SPF, DKIM Resend, DMARC.
-                            # 🔴 ROUGE au 2026-08-27 : aucun SMTP applicatif n'est configuré,
-                            # et les confirmations d'inscription sont désactivées (mesuré en
-                            # base : `confirmation_sent_at` sur 1 compte / 28). Mise en service
-                            # et ordre des opérations : docs/DEPLOYMENT.md §2ter.
+                            # ✅ VERT au 2026-09-02 (remesuré) : DKIM, SPF et MX du Return-Path
+                            # en place sur `send.thecosmo.app`. Reste 1 avertissement, DMARC
+                            # `p=none` (surveillance seule), correct pour démarrer.
+                            # ⚠️ Le DNS ne prouve pas qu'un email ARRIVE : la preuve reste un
+                            # compte jetable vérifié sur Gmail ET Outlook (docs/DEPLOYMENT.md §2ter).
+                            # 🔴 Les confirmations d'inscription restent DÉSACTIVÉES, décision
+                            # d'Axel — cf. finding G-2 de faille.md.
                             # PAS une gate CI — dépend d'un état DNS externe.
-npm run i18n:scan           # Chaînes en dur non externalisées
+npm run i18n:scan           # Chaînes en dur non externalisées — **GATE CI depuis le 2026-09-02**
+                            # Cliquet à 25. `-- --list` dit LESQUELLES.
+                            # 🔴 Le seuil a valu 4 pendant une journée, sur une heuristique
+                            # aveugle à QUATRE formes entières : texte JSX contenant une
+                            # interpolation, texte sur plusieurs lignes, propriété d'objet
+                            # `label:` (vs attribut `label=`), et valeur par défaut de prop.
+                            # Le rapport certifiait « plus aucune chaîne en dur » pendant
+                            # qu'il en restait des dizaines dans le produit. Les quatre sont
+                            # couvertes ; le chiffre est monté parce que la MESURE a changé.
+                            # Ce qui reste vit hors des composants (titres SEO des pages
+                            # d'auth, grille Premium) — `src/components` est à ZÉRO.
+                            # ❌ Ne JAMAIS relever le seuil pour faire passer la CI.
 npm run i18n:namespaces     # Quels catalogues le SHELL rend (donc eager) ; --pages
                             # donne la liste à déclarer par route dans App.tsx
 npm run profile:landing     # Profil du fil principal d'une page (CPU bride, via Playwright).
@@ -366,6 +380,28 @@ Garde-fous propres à cette zone :
   fait depuis le Billing Portal ne repasse pas par notre checkout : les deux se redérivent du
   **price ID** (`tierFromPriceId`, `supabase/functions/_shared/org-tiers.ts`, qui rend le palier ET
   la périodicité). Sans ça, un client paie 100 € et reste bloqué au quota de 20 sièges.
+- ❌ **Ne jamais avaler l'erreur d'une lecture qui décide d'un routage** (audit Stripe 2026-09-02).
+  `getUidFromCustomer` et le pré-contrôle d'idempotence jetaient tous deux leur `error`. Une panne
+  de lecture devenait « pas d'utilisateur » ou « jamais traité » : dans le premier cas un paiement
+  encaissé sans abonnement appliqué et un marqueur d'idempotence écrit, donc aucune re-livraison ;
+  dans le second un rejeu de `bump_win_streak`, qui incrémente. Les deux relancent maintenant, comme
+  `orgIdFromInvoice` le faisait déjà. **En cas de doute, faire retenter Stripe, jamais deviner.**
+- ❌ **Un event Stripe qui DÉGRADE ne s'applique qu'à l'abonnement enregistré** (finding S-5).
+  La garde d'`applyOrgSubscription` est asymétrique, et c'est voulu : un event qui **active** fait
+  autorité d'où qu'il vienne (une nouvelle souscription supersède la précédente) ; un event
+  `cancelled` ou `past_due` venant d'un AUTRE abonnement que celui en base parle d'un abonnement
+  abandonné, et remettrait au gratuit une organisation qui vient de repayer. Ne pas remplacer par
+  un `.eq()` sur l'upsert : il empêcherait la toute première écriture.
+- ❌ **Ne JAMAIS ouvrir une session de paiement sans la preuve de renonciation** (finding S-6).
+  `stripe-org-checkout` exige `immediateExecution` ET `waivesWithdrawal` strictement à `true`, puis
+  écrit une ligne dans `withdrawal_consents` (mig. `135`) **avant** de créer la session : l'ordre
+  est la preuve. Les deux drapeaux sont exigés SÉPARÉMENT — l'art. L221-28, 13° demande deux
+  manifestations distinctes, pas un accord global. La table est append-only, immuable par trigger,
+  et se lit comme `renewal_notices` : **c'est une pièce à produire, jamais un cache.**
+- 🔴 **Le passage en compte live doit remettre à zéro les identifiants Stripe en base.**
+  `stripe-org-checkout` et `stripe-org-portal` réutilisent `stripe_customer_id` et
+  `stripe_subscription_id` tels quels ; un identifiant du compte de TEST présenté à une clé live
+  répond 404, donc 500. Les tables sont vides aujourd'hui — c'est le moment le moins cher.
 - ❌ **Ne jamais laisser un event d'organisation retomber sur la branche particulier.** Le
   customer Stripe d'une org porte `org_owner_uid` (jamais `supabase_uid`) et
   `getUidFromCustomer` refuse tout customer portant `org_id` — sinon la facture d'une entreprise
@@ -596,7 +632,13 @@ sans écran, **écrites en dur en français** hors des catalogues i18n.
 ## Base de données Supabase
 
 Migrations dans `supabase/migration/*.sql`, convention `NNN_<feature>.sql`.
-**136 fichiers de migration, dernière = `132_task_dependencies.sql`** (au 2026-08-30).
+**139 fichiers de migration, dernière = `135_withdrawal_consents.sql`** (au 2026-09-02).
+⚠️ La `133` (l'occurrence récurrente suivante prend un INSTANT, R-01) est **appliquée en prod** ;
+les `134` (un customer Stripe ne désigne qu'un seul compte, S-3) et `135` (preuve de renonciation
+au droit de rétractation, S-6) sont **écrites et NON appliquées**. La `134` échouera s'il existe un
+doublon, et c'est voulu. 🔴 **La `135` doit être appliquée AVANT de déployer les fonctions** : sans
+la table, `stripe-org-checkout` refuse toute session de paiement — ce qui est le bon sens de
+l'échec, mais coupe l'encaissement.
 Ledger prod relu le 2026-08-31 : **tout le dépôt est appliqué**, `131` et `132` comprises.
 ⚠️ Elles l'ont été dans l'ordre INVERSE de leur numéro (la `132` le 08-30, la `131` le 08-31) —
 elles ne se touchent pas, mais le ledger ne se lit donc pas comme une suite croissante.
@@ -1013,6 +1055,19 @@ t('project.name')                // clé plate dans le namespace
   servie mais **pas indexable**, parce que le corps des pages est encore en français. Ne jamais
   ajouter une locale à `INDEXABLE_LOCALES` avant d'avoir traduit le contenu — procédure complète
   dans [`docs/SEO.md`](./docs/SEO.md).
+- ❌ **Ne jamais écrire un slug localisé en dur dans un `to=`.** Le préfixe de locale est porté par
+  le `basename` : `<Link to="/politique-confidentialite">` devient `/en/politique-confidentialite`,
+  qui rend une **404** (une seule URL canonique par langue, comportement voulu). Mesuré dans le
+  navigateur le 2026-09-02 : les quatre liens vers les pages contractuelles (bandeau cookies + pied
+  de landing) tombaient tous sur une 404 en anglais. Passer par `useLocalizedPath()`
+  (`src/i18n/useLocalizedPath.ts`).
+- 📄 **Les trois pages contractuelles vivent dans le namespace `legal`**, en français et en anglais
+  (CGU, confidentialité, mentions légales). Les pages ne portent plus que la STRUCTURE du document
+  (`src/pages/legal/LegalDocument.tsx`) ; le gras et les liens sont dans le catalogue, en
+  `**gras**` et `[libellé](url)`, rendus par `RichText`.
+  🔴 **Le français fait foi** : chaque document porte une clause de langue disant que la version
+  française prévaut. Modifier le fond d'un de ces documents n'est pas une tâche de traduction —
+  c'est modifier un contrat, avec le préavis de 30 jours prévu à son article 11.
 - ❌ **Ne jamais identifier une erreur par son message en français** — il est traduit.
 - ❌ Ne jamais concaténer des fragments traduits : une clé = une phrase complète.
 
@@ -1080,6 +1135,42 @@ métropolitain : réglage `manual` + décalage, et ses échéances, ses reports 
 - ⚠️ **Les clés de `habits.completions` restent en date machine**, volontairement : elles sont déjà
   écrites en base sous cette forme et les basculer sur la préférence décalerait tout l'historique
   existant. À traiter par une migration dédiée, pas en passant.
+
+### ↩️ « Annuler » restaure l'identifiant (revue du 2026-09-02, R-08)
+
+Cinq chemins d'annulation écrivaient le même déstructurage, qui perdait l'identité de l'objet :
+
+```typescript
+const { id: _id, ...rest } = snapshot;   // ❌ revient sous un NOUVEL id
+createMutation.mutate(rest);
+restoreCategoryMutation.mutate(snapshot); // ✅ useRestoreX, id d'origine conservé
+```
+
+- Un `useRestoreX` existe pour `tasks`, `categories`, `events`, `lists` et `okrs`. Il passe
+  l'identifiant par le **second argument** de `create()`, jamais par le payload.
+- 🔴 **Pourquoi pas un champ `id` dans l'input** : le payload vient d'un état de formulaire, donc
+  d'un objet que des devtools peuvent enrichir. Un `id` forgé y ouvrait un **oracle d'existence**
+  (collision de clé primaire = 23505 au lieu d'un succès, donc la ligne d'autrui existe). Le test
+  de garde `categories/supabase.repository.test.ts` a refusé la première version du correctif, et
+  il avait raison. Contrat complet : `src/lib/restore-id.ts`.
+- ⚠️ **Ce que ça ne rattrape pas** : `kr_completions` cascade depuis `okrs` ET `key_results`.
+  Restaurer un OKR ramène l'objectif, ses KR et les `task.krId` qui les visent, mais pas le
+  journal des complétions. Le graphique « KR réalisés » garde son trou.
+
+### 🗂️ Supprimer une catégorie annonce son impact (R-02)
+
+Aucune clé étrangère ne pointe vers `categories` (vérifié en prod : zéro contrainte enfant).
+Mesuré avant correctif : **13 tâches sur 611 et 2 objectifs sur 14 déjà orphelins**.
+
+- `categoryImpact()` (`modules/categories/impact.ts`) compte les dépendants, `useReassignCategory`
+  les déplace. Les deux points d'entrée (`ColorSettingsModal`, `OKRPage`) réaffectent **avant** de
+  supprimer.
+- ❌ **Ne jamais inverser l'ordre.** Supprimer d'abord laisse une fenêtre où les éléments pointent
+  dans le vide, et un échec du reclassement devient irrattrapable : plus rien ne dit quels
+  éléments portaient la catégorie disparue.
+- ⚠️ `DeleteCategoryConfirm` (`pages/okr/`) ne sert plus qu'aux catégories d'ÉQUIPE
+  (`org_okr_categories`), dont l'impact n'a pas été mesuré. Ne pas le confondre avec
+  `components/category/DeleteCategoryDialog`.
 
 ### Champs canoniques du modèle
 

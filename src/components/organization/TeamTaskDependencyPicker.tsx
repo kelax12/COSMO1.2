@@ -16,7 +16,7 @@ import {
   type TeamTaskDependency,
 } from '@/modules/team-projects';
 import { useMyOrgPermissions } from '@/modules/organizations';
-import { PRIORITY_META } from './team-projects.helpers';
+import { PRIORITY_META, priorityLabelOf } from './team-projects.helpers';
 import {
   dependencyCandidates,
   dependencyEdge,
@@ -404,7 +404,7 @@ const TeamTaskDependencyPicker = ({
                       type="button"
                       onClick={() => setNewPriority(p)}
                       aria-pressed={newPriority === p}
-                      aria-label={PRIORITY_META[p].label}
+                      aria-label={priorityLabelOf(p)}
                       className={`flex-1 h-9 rounded-lg border text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors ${
                         newPriority === p
                           ? 'border-[rgb(var(--color-accent-solid))] bg-[rgb(var(--color-accent-solid))]/10'

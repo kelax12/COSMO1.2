@@ -3,6 +3,8 @@
 // ⚠️ Ce n'est PAS la frontière de sécurité (RLS + whitelist mapToDb).
 // Comportement déplacé verbatim depuis TaskModal.tsx (aucun durcissement).
 
+import { translator } from '@/i18n/useT';
+
 // Le formulaire n'a besoin que de ces champs pour la validation. `estimatedTime`
 // peut transitoirement valoir '' (champ vidé) — géré comme dans le composant.
 export interface TaskValidationInput {
@@ -14,23 +16,27 @@ export interface TaskValidationInput {
 export function computeValidationErrors(
   formData: TaskValidationInput
 ): { [key: string]: string } {
+  // `translator` est appelé DANS la fonction, jamais au niveau du module : au
+  // niveau du module il figerait la langue au premier import, et ces messages
+  // seraient restés en français dans toute l'application anglaise.
+  const { t } = translator('errors');
   const newErrors: { [key: string]: string } = {};
 
   if (!formData.name.trim()) {
-    newErrors.name = 'Le nom de la tâche est obligatoire';
+    newErrors.name = t('validation.taskForm.nameRequired');
   } else if (formData.name.trim().length < 3) {
-    newErrors.name = 'Le nom doit contenir au moins 3 caractères';
+    newErrors.name = t('validation.taskForm.nameTooShort');
   } else if (formData.name.trim().length > 100) {
-    newErrors.name = 'Le nom ne peut pas dépasser 100 caractères';
+    newErrors.name = t('validation.taskForm.nameTooLong');
   }
 
   // Temps estimé : facultatif. Ne valide que la cohérence si une valeur
   // (autre que vide) est saisie — jamais bloquant quand vide.
   if (String(formData.estimatedTime).trim() !== '') {
     if (isNaN(Number(formData.estimatedTime))) {
-      newErrors.estimatedTime = 'Veuillez entrer un nombre valide';
+      newErrors.estimatedTime = t('validation.taskForm.durationNaN');
     } else if (Number(formData.estimatedTime) < 0) {
-      newErrors.estimatedTime = 'La durée ne peut pas être négative';
+      newErrors.estimatedTime = t('validation.taskForm.durationNegative');
     }
   }
 

@@ -7,7 +7,7 @@ import { useMyOrgPermissions } from '@/modules/organizations';
 import { useMarkTaskNotificationsRead, type OrgMember } from '@/modules/organizations';
 import type { TeamProject, TeamTask, CreateTeamTaskInput, UpdateTeamTaskInput } from '@/modules/team-projects';
 import { useCreateTeamProject } from '@/modules/team-projects';
-import { PRIORITY_META, projectColor } from './team-projects.helpers';
+import { PRIORITY_META, projectColor, priorityLabelOf } from './team-projects.helpers';
 import AddCategoryButton from '@/components/AddCategoryButton';
 import { DatePicker } from '@/components/ui/date-picker';
 import DescriptionField from '@/components/DescriptionField';
@@ -507,8 +507,8 @@ const TeamTaskModal = ({
                       type="button"
                       role="radio"
                       aria-checked={priority === p}
-                      aria-label={PRIORITY_META[p].label}
-                      title={PRIORITY_META[p].label}
+                      aria-label={priorityLabelOf(p)}
+                      title={priorityLabelOf(p)}
                       onClick={() => setPriority(p)}
                       className={`flex-1 rounded-lg border text-xs font-semibold inline-flex items-center justify-center gap-1 transition-colors ${
                         priority === p

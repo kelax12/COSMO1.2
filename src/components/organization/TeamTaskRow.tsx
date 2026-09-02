@@ -3,7 +3,7 @@ import { format, parseISO } from 'date-fns';
 import { getDateLocale } from '@/i18n/format';
 import { useMyOrgPermissions, type OrgMember } from '@/modules/organizations';
 import type { TeamTask } from '@/modules/team-projects';
-import { PRIORITY_META, isTaskOverdue, taskDisplayStatus } from './team-projects.helpers';
+import { PRIORITY_META, isTaskOverdue, taskDisplayStatus, priorityLabelOf } from './team-projects.helpers';
 import AssigneesPicker from './AssigneesPicker';
 import { useT } from '@/i18n/useT';
 
@@ -71,8 +71,8 @@ const TeamTaskRow = ({
       {/* Priorité */}
       <span
         className={`w-1.5 h-1.5 rounded-full shrink-0 ${priority.dot}`}
-        aria-label={priority.label}
-        title={priority.label}
+        aria-label={priorityLabelOf(task.priority)}
+        title={priorityLabelOf(task.priority)}
       />
 
       {/* Nom + deadline — clic = édition complète */}

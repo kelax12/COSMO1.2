@@ -11,7 +11,7 @@ import {
   timelineRowsByAssignee, todayOffsetPercent, inWindowOrUnscheduled, UNASSIGNED_ID,
   type TimelineZoom, type TimelineMarker,
 } from './timeline.helpers';
-import { projectColor, PRIORITY_META, formatDuration } from './team-projects.helpers';
+import { projectColor, PRIORITY_META, formatDuration, priorityLabelOf } from './team-projects.helpers';
 import MemberAvatar from './MemberAvatar';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { useT } from '@/i18n/useT';
@@ -448,7 +448,7 @@ const TeamProjectsTimeline = ({ projects, tasks, members, groupBy, onOpenTask }:
                               <div className="flex items-center justify-between gap-2 mb-1.5">
                                 <span className="inline-flex items-center gap-1.5 text-caption font-bold text-[rgb(var(--color-text-secondary))] whitespace-nowrap">
                                   <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${priority.dot}`} aria-hidden="true" />
-                                  {priority.label}
+                                  {priorityLabelOf(marker.task.priority)}
                                 </span>
                                 <span className={`inline-flex items-center gap-1 text-caption font-semibold whitespace-nowrap ${marker.overdue ? 'text-red-500' : 'text-[rgb(var(--color-text-muted))]'}`}>
                                   <CalendarClock size={11} aria-hidden="true" />

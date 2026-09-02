@@ -28,6 +28,7 @@
 
 import React, { Component, ReactNode } from 'react';
 import * as Sentry from '@sentry/react';
+import { translator } from '@/i18n/useT';
 
 interface Props {
   children: ReactNode;
@@ -84,6 +85,10 @@ export class RootErrorBoundary extends Component<Props, State> {
   }
 
   render() {
+    // Composant de CLASSE : pas de hook possible. `translator` lit la locale
+    // courante a chaque appel, ce qui est exactement ce qu'il faut ici — cet
+    // ecran s'affiche quand le reste de l'app n'a pas demarre.
+    const { t } = translator('common');
     if (!this.state.hasError) return this.props.children;
 
     return (
@@ -110,12 +115,10 @@ export class RootErrorBoundary extends Component<Props, State> {
           ⚠️
         </div>
         <h1 style={{ fontSize: '20px', fontWeight: 600, margin: 0 }}>
-          COSMO n'a pas pu démarrer
+          {t('rootError.title')}
         </h1>
         <p style={{ maxWidth: '420px', lineHeight: 1.6, color: '#a8a8a8', margin: 0 }}>
-          Une erreur a interrompu le chargement de l'application. Rechargez la
-          page&nbsp;; si l'écran reste vide, déconnectez-vous pour repartir
-          d'une session propre.
+          {t('rootError.body')}
         </p>
         <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'center' }}>
           <button
@@ -148,7 +151,7 @@ export class RootErrorBoundary extends Component<Props, State> {
               fontWeight: 500,
             }}
           >
-            Se déconnecter
+            {t('rootError.signOut')}
           </button>
         </div>
         {this.state.message && (

@@ -5,7 +5,7 @@ import { format, parseISO } from 'date-fns';
 import { getDateLocale } from '@/i18n/format';
 import type { OrgMember } from '@/modules/organizations';
 import type { TeamProject, TeamTask } from '@/modules/team-projects';
-import { projectColor, PRIORITY_META, isTaskOverdue } from './team-projects.helpers';
+import { projectColor, PRIORITY_META, isTaskOverdue, priorityLabelOf } from './team-projects.helpers';
 import MemberAvatar from './MemberAvatar';
 import { useT } from '@/i18n/useT';
 
@@ -126,7 +126,7 @@ const AssignTaskSheet = ({ member, projects, tasks, onAssign, onCreateNew, onClo
                   >
                     <p className="text-sm text-[rgb(var(--color-text-primary))] truncate">{task.name}</p>
                     <div className="flex items-center gap-2 mt-1">
-                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${priority.dot}`} role="img" aria-label={priority.label} title={priority.label} />
+                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${priority.dot}`} role="img" aria-label={priorityLabelOf(task.priority)} title={priorityLabelOf(task.priority)} />
                       {project && pColor && (
                         <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full truncate ${pColor.soft}`}>
                           {project.name}

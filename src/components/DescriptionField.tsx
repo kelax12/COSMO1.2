@@ -9,6 +9,7 @@
 import React, { useRef, useState } from 'react';
 import { Maximize2, X } from 'lucide-react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import { useT } from '@/i18n/useT';
 
 export interface DescriptionFieldProps {
   value: string;
@@ -33,8 +34,11 @@ const DescriptionField: React.FC<DescriptionFieldProps> = ({
   autoFocus,
   className = '',
   style,
-  expandedTitle = 'Description',
+  expandedTitle,
 }) => {
+  const { t } = useT('common');
+  // Idem : defaut traduit au rendu, pas dans la signature.
+  const dialogTitle = expandedTitle ?? t('description.expandedTitle');
   const [isExpanded, setIsExpanded] = useState(false);
   const expandedRef = useRef<HTMLTextAreaElement>(null);
 
@@ -56,8 +60,8 @@ const DescriptionField: React.FC<DescriptionFieldProps> = ({
         <button
           type="button"
           onClick={() => setIsExpanded(true)}
-          aria-label="Agrandir la description"
-          title="Agrandir la description"
+          aria-label={t('description.expand')}
+          title={t('description.expand')}
           className="absolute bottom-2 right-2 p-1.5 rounded-md transition-colors hover:bg-[rgb(var(--color-hover))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
           style={{ color: 'rgb(var(--color-text-secondary))', backgroundColor: 'rgb(var(--color-surface))' }}
         >
@@ -87,12 +91,12 @@ const DescriptionField: React.FC<DescriptionFieldProps> = ({
         >
           <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: 'rgb(var(--color-border))' }}>
             <DialogTitle className="text-base font-semibold" style={{ color: 'rgb(var(--color-text-primary))' }}>
-              {expandedTitle}
+              {dialogTitle}
             </DialogTitle>
             <button
               type="button"
               onClick={() => setIsExpanded(false)}
-              aria-label="Fermer et revenir au formulaire"
+              aria-label={t('description.collapse')}
               className="p-2 rounded-lg transition-colors hover:bg-[rgb(var(--color-hover))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
               style={{ color: 'rgb(var(--color-text-secondary))' }}
             >

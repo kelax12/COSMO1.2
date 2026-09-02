@@ -3,13 +3,18 @@
     "new": "New",
     "newHabit": "New habit",
     "errorTitle": "Couldn't load your habits",
-    "errorHint": "Check your internet connection, then try again."
+    "errorHint": "Check your internet connection, then try again.",
+    "subtitle": "Build good habits, one day at a time",
+    "emptyTitle": "No habit yet",
+    "emptyBody": "Start by creating your first habit",
+    "emptyCta": "Create a habit"
   },
   "card": {
     "paused": "Paused",
     "pausedUntil": "Paused until {{date}}",
     "history": "History",
-    "deleted": "Habit deleted"
+    "deleted": "Habit deleted",
+    "detailedTracking": "Detailed tracking (30 days)"
   },
   "table": {
     "title": "Tracking board",
@@ -36,7 +41,11 @@
     "ok": "OK",
     "save": "Save",
     "createHabit": "Create habit",
-    "editHabit": "Edit habit"
+    "editHabit": "Edit habit",
+    "details": "Details",
+    "nameLabel": "Habit name",
+    "legend": "Legend",
+    "customize": "Customise"
   },
   "actions": {
     "more": "More actions",
@@ -50,7 +59,8 @@
     "resumed": "“{{name}}” resumed",
     "paused": "“{{name}}” paused",
     "resumeHabit": "Resume habit",
-    "pauseHabit": "Pause"
+    "pauseHabit": "Pause",
+    "copyName": "{{name}} (copy)"
   },
   "tracking": {
     "averageCompletion": "Average completion per day",
@@ -68,7 +78,9 @@
     "creditError": "Couldn't credit your day. Access granted anyway.",
     "reconnect": "Please sign in again.",
     "alreadySubscribed": "You already have an active subscription.",
-    "paymentError": "Payment error. Please try again."
+    "paymentError": "Payment error. Please try again.",
+    "offer": "One 15 s ad = 1 free Premium day.",
+    "title": "Support Cosmo"
   },
   "recapCta": "Recap",
   "recapSheetTitle": "Weekly recap",
@@ -86,5 +98,22 @@
   "recapEmpty": "Image unavailable",
   "recapAlt": "Weekly recap: habit heatmap, tasks completed, current streak",
   "recapShareText": "My week on Cosmo.",
-  "recapImageCta": "Try it, no sign-up"
+  "recapImageCta": "Try it, no sign-up",
+  "actionsMenu": {
+    "createTask": "Create a task",
+    "scheduleInAgenda": "Schedule in the calendar",
+    "scheduleHint": "Event with an adjustable time",
+    "duplicateHint": "A copy with a blank history",
+    "createTaskHint": "Today · {{minutes}} min",
+    "duplicate": "Duplicate the habit"
+  },
+  "globalTracking": {
+    "empty": "Create habits to see the overall tracking"
+  },
+  "period": {
+    "week": "Week",
+    "month": "Month",
+    "all": "All",
+    "weekOf": "Week of {{date}}"
+  }
 }

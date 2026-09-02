@@ -168,7 +168,8 @@
     "edit": "Edit task",
     "schedule": "Schedule in the calendar",
     "delete": "Delete task",
-    "removeFromList": "Remove from the list"
+    "removeFromList": "Remove from the list",
+    "receivedFrom": "Received from {{name}}"
   },
   "sort": {
     "label": "Sort by",
@@ -209,7 +210,8 @@
     "add": "Add a category",
     "none": "No categories yet",
     "deleteTitle": "Delete category",
-    "deleteBody": "Are you sure you want to delete this category? This cannot be undone."
+    "deleteBody": "Are you sure you want to delete this category? This cannot be undone.",
+    "editTitle": "Edit"
   },
   "smartLists": {
     "title": "Smart lists",
@@ -231,7 +233,9 @@
     "refuseList": "Decline the shared list {{name}}",
     "withCount": "Inbox, {{count}} pending",
     "accept": "Accept",
-    "refuse": "Decline"
+    "refuse": "Decline",
+    "acceptNamed": "Accept the friend request from {{name}}",
+    "refuseNamed": "Decline the friend request from {{name}}"
   },
   "filter": {
     "clearSearch": "Clear the search",
@@ -276,7 +280,13 @@
     "noList": "No lists yet",
     "create": "Create",
     "manualList": "manual list",
-    "manualLists": "manual lists"
+    "manualLists": "manual lists",
+    "emptyManual": "No manual list yet.",
+    "emptyManualHint": "Smart lists fill themselves.",
+    "empty": "No list yet",
+    "deleteNamed": "Delete {{name}}",
+    "namePlaceholder": "List name",
+    "namePlaceholderShort": "List name…"
   },
   "colorModal": {
     "nameTooShort": "Every category name must be at least 2 characters long",
@@ -348,5 +358,35 @@
     "thisWeekDescription": "Tasks due in the next 7 days",
     "highPriority": "High priority",
     "highPriorityDescription": "Priority 1 or 2 (very high / high)"
+  },
+  "rowMenu": {
+    "edit": "Edit",
+    "unbookmark": "Remove bookmark",
+    "bookmark": "Bookmark",
+    "collaborator": "Collaborator",
+    "duplicate": "Duplicate task",
+    "delete": "Delete"
+  },
+  "collaborators": {
+    "heading": "Collaborators",
+    "sharedWithYou": "This task was shared with you. Only its owner can manage collaborators.",
+    "removeNamed": "Remove {{name}}",
+    "addNamed": "Add {{name}} as a collaborator",
+    "mustSignIn": "This contact must sign in to Cosmo first",
+    "selectedCount": "Selected ({{count}})"
+  },
+  "shareList": {
+    "searchFriend": "Search a friend…"
+  },
+  "bulk": {
+    "deleteCount_one": "Delete {{count}} task",
+    "deleteCount_many": "Delete {{count}} tasks",
+    "deleteCount_other": "Delete {{count}} tasks"
+  },
+  "snooze": {
+    "menu": "Postpone",
+    "tomorrow": "Tomorrow",
+    "weekend": "This weekend",
+    "nextWeek": "Next week"
   }
 }

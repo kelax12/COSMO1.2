@@ -9,12 +9,9 @@ import {
 import { DateCalendarPanel, DATE_PANEL_CLASS } from '@/components/ui/date-picker';
 import { useT } from '@/i18n/useT';
 
-interface SnoozeOption {
-  id: string;
-  label: string;
-  /** Date locale 'YYYY-MM-DD'. */
-  deadline: string;
-}
+// Le type vient du module de report : le redéclarer ici, c'était deux
+// définitions à garder d'accord, et c'est ce qui a laissé le libellé en dur.
+import type { SnoozeOption } from '@/modules/tasks/snooze';
 
 interface OverdueBannerProps {
   count: number;
@@ -95,7 +92,7 @@ const OverdueBanner = ({ count, options, onSnoozeAll }: OverdueBannerProps) => {
             <>
               {options.map((opt) => (
                 <DropdownMenuItem key={opt.id} onClick={() => onSnoozeAll(opt.deadline)}>
-                  {opt.label}
+                  {t(opt.labelKey)}
                 </DropdownMenuItem>
               ))}
               {/* `preventDefault` : sans lui Radix referme le menu, alors

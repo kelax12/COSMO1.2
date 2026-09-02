@@ -18,8 +18,7 @@ import { useUpcomingEvents, type CalendarEvent } from '@/modules/events';
 import { groupEventsByDay } from './agenda-events.helpers';
 import type { OrgMember } from '@/modules/organizations';
 import {
-  projectColor, PRIORITY_META, sortOpenTasks, sumEstimatedTime, formatDuration,
-} from './team-projects.helpers';
+  projectColor, PRIORITY_META, sortOpenTasks, sumEstimatedTime, formatDuration, priorityLabelOf } from './team-projects.helpers';
 import WorkSummaryCard from './WorkSummaryCard';
 import TeamTaskModal from './TeamTaskModal';
 import TeamActivityFeed from './TeamActivityFeed';
@@ -377,7 +376,7 @@ const MyWorkTab = ({ orgId, members, currentUserId }: MyWorkTabProps) => {
                       >
                         {t.completed && <Check size={13} aria-hidden="true" />}
                       </button>
-                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${priority.dot}`} role="img" aria-label={priority.label} title={priority.label} />
+                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${priority.dot}`} role="img" aria-label={priorityLabelOf(t.priority)} title={priorityLabelOf(t.priority)} />
                       <button
                         type="button"
                         onClick={() => setEditingTask(t)}

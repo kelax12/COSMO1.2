@@ -194,7 +194,7 @@ export function WeeklyCheckinModal({ isOpen, onClose }: WeeklyCheckinModalProps)
                     Check-in hebdo
                   </h2>
                   <p className="text-xs text-[rgb(var(--color-text-muted))]">
-                    KR {currentIdx + 1} sur {allKRs.length}
+                    {t('checkin.krProgress', { index: currentIdx + 1, total: allKRs.length })}
                   </p>
                 </div>
                 <button

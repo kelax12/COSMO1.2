@@ -152,7 +152,7 @@ const CreateTeamModal = ({ members, currentUserId, isAdmin, onSubmit, onClose }:
           {/* Membres */}
           <div>
             <span className={labelClass} style={labelStyle}>
-              Membres ({selected.length})
+              {t('team.membersCount', { count: selected.length })}
             </span>
             {addable.length === 0 ? (
               <p className="text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>

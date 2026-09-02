@@ -456,7 +456,7 @@ const InboxMenu: React.FC = () => {
                         disabled={acceptFriendMutation.isPending}
                         title={tTasks('inbox.accept')}
                         className="w-7 h-7 rounded-md flex items-center justify-center text-[rgb(var(--color-accent))] hover:bg-[rgb(var(--color-hover))] disabled:opacity-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
-                        aria-label={`Accepter la demande d'ami de ${prettyName(req.senderEmail)}`}
+                        aria-label={tTasks('inbox.acceptNamed', { name: prettyName(req.senderEmail) ?? '' })}
                       >
                         <Check size={15} aria-hidden="true" />
                       </button>
@@ -465,7 +465,7 @@ const InboxMenu: React.FC = () => {
                         disabled={rejectFriendMutation.isPending}
                         title={tTasks('inbox.refuse')}
                         className="w-7 h-7 rounded-md flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))] disabled:opacity-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
-                        aria-label={`Refuser la demande d'ami de ${prettyName(req.senderEmail)}`}
+                        aria-label={tTasks('inbox.refuseNamed', { name: prettyName(req.senderEmail) ?? '' })}
                       >
                         <X size={15} aria-hidden="true" />
                       </button>
@@ -734,7 +734,7 @@ const InboxMenu: React.FC = () => {
             onClick={() => setShowAddFriend(true)}
             className="w-full h-11 md:h-9 rounded-lg border border-dashed border-[rgb(var(--color-chip-border))] text-slate-600 dark:text-slate-300 hover:border-[rgb(var(--color-accent-solid-hover))] hover:text-blue-600 dark:hover:text-blue-400 text-label sm:text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
           >
-            <UserPlus size={14} aria-hidden="true" /> Ajouter un ami
+            <UserPlus size={14} aria-hidden="true" /> {t('inbox.addFriend')}
           </button>
         )}
       </div>

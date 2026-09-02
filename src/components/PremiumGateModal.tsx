@@ -10,6 +10,7 @@ import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import AdModal from './AdModal';
 import { useT } from '@/i18n/useT';
+import { RichText } from '@/components/ui/rich-text';
 
 interface PremiumGateModalProps {
   isOpen: boolean;
@@ -35,7 +36,7 @@ export function PremiumGateModal({ isOpen, onClose, featureName }: PremiumGateMo
       await refreshBillingStatus();
     } catch (err) {
       if (isDailyAdLimitError(err)) {
-        toast.error('Limite quotidienne de pubs atteinte (20/jour). Revenez demain ou passez Premium.');
+        toast.error(t('gate.dailyAdLimit'));
       } else {
         toast.error(t('gate.creditError'));
       }
@@ -48,7 +49,7 @@ export function PremiumGateModal({ isOpen, onClose, featureName }: PremiumGateMo
     setIsCheckoutLoading(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) { toast.error('Veuillez vous reconnecter.'); return; }
+      if (!session) { toast.error(t('gate.signInAgain')); return; }
 
       const { data, error } = await supabase.functions.invoke('stripe-create-checkout', {
         headers: { Authorization: `Bearer ${session.access_token}` },
@@ -131,7 +132,12 @@ export function PremiumGateModal({ isOpen, onClose, featureName }: PremiumGateMo
               {/* Body */}
               <div className="p-6">
                 <p className="text-[rgb(var(--color-text-secondary))] text-sm mb-6 text-center">
-                  Débloquez <span className="font-semibold text-[rgb(var(--color-text-primary))]">{feature}</span> en regardant une pub gratuite ou en souscrivant.
+                  {/* Une phrase = une cle. La decouper en `avant` + `apres` figeait
+                      l'ordre des mots, ce qu'une langue peut changer, et c'est
+                      exactement ce que `RichText` existe pour eviter. */}
+                  <RichText strongClassName="font-semibold text-[rgb(var(--color-text-primary))]">
+                    {t('gate.unlock', { feature })}
+                  </RichText>
                 </p>
 
                 <div className="space-y-3">

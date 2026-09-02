@@ -47,7 +47,8 @@
     "joining": "Joining…",
     "join": "Join the company",
     "joined": "You have joined {{name}}!",
-    "signIn": "Sign in"
+    "signIn": "Sign in",
+    "heading": "Company invitation"
   },
   "createJoin": {
     "codeCopied": "Code copied",
@@ -531,7 +532,8 @@
     "addMemberAria": "Add a member to the team {{team}}",
     "addTo": "Add to {{name}}",
     "emerald": "Emerald",
-    "colorNamed": "Colour {{name}}"
+    "colorNamed": "Colour {{name}}",
+    "membersCount": "Members ({{count}})"
   },
   "project": {
     "newAria": "New team project",
@@ -934,7 +936,8 @@
     "planAria": "Subscription: {{plan}}",
     "planNamed": "{{name}} plan",
     "promoBadge": "Launch offer",
-    "insteadOf": "instead of €{{price}}"
+    "insteadOf": "instead of €{{price}}",
+    "withdrawalRequired": "Payment requires both withdrawal-waiver boxes to be ticked."
   },
   "inviteJoin": {
     "title": "Create or join a company",
@@ -1047,5 +1050,8 @@
       "everyone": "Everyone",
       "everyoneHint": "Any member of the company. Makes the other boxes irrelevant."
     }
+  },
+  "members": {
+    "removeTitleNamed": "Remove {{name}}?"
   }
 }
