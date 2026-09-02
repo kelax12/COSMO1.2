@@ -137,7 +137,7 @@ npm run check:mail          # Délivrabilité des emails Auth : MX, SPF, DKIM Re
                             # d'Axel — cf. finding G-2 de faille.md.
                             # PAS une gate CI — dépend d'un état DNS externe.
 npm run i18n:scan           # Chaînes en dur non externalisées — **GATE CI depuis le 2026-09-02**
-                            # Cliquet à 25. `-- --list` dit LESQUELLES.
+                            # Cliquet à ZÉRO. `-- --list` dit LESQUELLES.
                             # 🔴 Le seuil a valu 4 pendant une journée, sur une heuristique
                             # aveugle à QUATRE formes entières : texte JSX contenant une
                             # interpolation, texte sur plusieurs lignes, propriété d'objet
@@ -145,8 +145,11 @@ npm run i18n:scan           # Chaînes en dur non externalisées — **GATE CI d
                             # Le rapport certifiait « plus aucune chaîne en dur » pendant
                             # qu'il en restait des dizaines dans le produit. Les quatre sont
                             # couvertes ; le chiffre est monté parce que la MESURE a changé.
-                            # Ce qui reste vit hors des composants (titres SEO des pages
-                            # d'auth, grille Premium) — `src/components` est à ZÉRO.
+                            # Plus une seule chaîne d'interface en dur dans src/.
+                            # Deux exclusions ASSUMÉES : les commentaires de code (ce dépôt
+                            # commente en français) et les seeds de démo, dont le français
+                            # est la forme de référence recouverte par `localizeSeed` /
+                            # `isEnglishSeed`.
                             # ❌ Ne JAMAIS relever le seuil pour faire passer la CI.
 npm run i18n:namespaces     # Quels catalogues le SHELL rend (donc eager) ; --pages
                             # donne la liste à déclarer par route dans App.tsx
@@ -632,13 +635,23 @@ sans écran, **écrites en dur en français** hors des catalogues i18n.
 ## Base de données Supabase
 
 Migrations dans `supabase/migration/*.sql`, convention `NNN_<feature>.sql`.
-**139 fichiers de migration, dernière = `135_withdrawal_consents.sql`** (au 2026-09-02).
-⚠️ La `133` (l'occurrence récurrente suivante prend un INSTANT, R-01) est **appliquée en prod** ;
-les `134` (un customer Stripe ne désigne qu'un seul compte, S-3) et `135` (preuve de renonciation
-au droit de rétractation, S-6) sont **écrites et NON appliquées**. La `134` échouera s'il existe un
-doublon, et c'est voulu. 🔴 **La `135` doit être appliquée AVANT de déployer les fonctions** : sans
-la table, `stripe-org-checkout` refuse toute session de paiement — ce qui est le bon sens de
-l'échec, mais coupe l'encaissement.
+**140 fichiers de migration** (au 2026-09-02, 23 h). La dernière APPLIQUÉE est la
+`135_withdrawal_consents.sql`.
+⚠️ La `136_work_time_stats_okr_from_completions.sql` est présente dans l'arbre mais **non
+versionnée et NON appliquée** : c'est un travail en cours d'une autre session. Ne pas
+l'appliquer sans l'avoir relue.
+✅ **Tout le dépôt est appliqué en prod**, ledger relu le 2026-09-02 : la `133` (échéance récurrente
+en INSTANT, R-01), la `134` (un customer Stripe ne désigne qu'un seul compte, S-3) et la `135`
+(preuve de renonciation au droit de rétractation, S-6) sont en base, vérifiées acteur par acteur
+dans des transactions annulées.
+🔴 **`stripe-org-checkout` ne peut PAS créer de session sans la table `withdrawal_consents`.** Elle
+existe désormais ; mais un environnement monté sans elle coupe l'encaissement. C'est le bon sens de
+l'échec, il faut juste le savoir.
+⚠️ **Lire le ledger AVANT d'appliquer une migration, pas seulement après.** Le 2026-09-02, les `134`
+et `135` ont été appliquées DEUX fois : une session voisine les avait déjà passées à 16:24 UTC, et
+une seconde application a suivi à 21:14. Sans effet sur le schéma — elles sont idempotentes — mais
+le ledger a porté les seuls doublons de ses 127 entrées, retirés depuis. Ce dépôt a plusieurs
+sessions actives : l'état de la prod n'est jamais celui qu'on a laissé.
 Ledger prod relu le 2026-08-31 : **tout le dépôt est appliqué**, `131` et `132` comprises.
 ⚠️ Elles l'ont été dans l'ordre INVERSE de leur numéro (la `132` le 08-30, la `131` le 08-31) —
 elles ne se touchent pas, mais le ledger ne se lit donc pas comme une suite croissante.
