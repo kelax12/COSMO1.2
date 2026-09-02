@@ -36,6 +36,14 @@ Légende : 🔴 bloquant · 🟠 important · 🟡 à planifier · ✅ corrigé
 > privilégié**, une seule policy et aucune policy d'écriture, un compte tiers ne voit rien. Le motif
 > qui retenait la note est donc levé le jour même. Un correctif non déployé n'est pas un correctif —
 > et celui-ci l'est.
+>
+> ⚠️ **Incident de méthode, à consigner.** Les deux migrations ont été appliquées DEUX fois : une
+> session voisine les avait déjà passées à 16:24 UTC, une seconde application a suivi à 21:14 sans
+> que le ledger ait été relu d'abord. Sans effet sur le schéma — les deux migrations sont
+> idempotentes, et les vérifications ci-dessus portent sur l'état réel — mais le ledger a porté
+> **deux lignes par migration**, les seuls doublons de ses 127 entrées. Retirées, une entrée par
+> migration, schéma intact. *Ce dépôt a plusieurs sessions actives : lire le ledger avant
+> d'appliquer, pas seulement après.*
 
 > ### 🔴 2026-08-29 · la note ne bouge pas, mais une de ses justifications était fausse
 >
