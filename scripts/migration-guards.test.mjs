@@ -294,3 +294,72 @@ DROP FUNCTION IF EXISTS public.get_my_habits(INTEGER);
     expect(out).toMatch(/EN TROP/);
   });
 });
+
+// ══════════════════════════════════════════════════════════════════════
+// check-prod-drift — le nom d'une policy peut être NU, pas seulement cité
+//
+// Trouvé le 2026-09-02 en appliquant la mig. 135 : sa policy
+// `withdrawal_consents_select_owner` était annoncée « EN TROP en prod »
+// alors qu'elle venait d'être créée PAR une migration du dépôt.
+//
+// Cause : le parseur ne reconnaissait que `CREATE POLICY "nom" ON …`. Les deux
+// formes sont du SQL valide et les deux existent ici — quatre `CREATE POLICY`
+// sans guillemets vivent dans les migrations 100, 115 et 135. Les trois
+// premières ne se voyaient pas parce qu'une migration antérieure créait les
+// mêmes noms avec guillemets ; la quatrième n'avait pas de jumelle.
+//
+// 🔴 Même classe de défaut que le DROP de surcharge ci-dessus, et même gravité
+// réelle : la garde se trompait dans le sens RASSURANT. Une policy écrite sans
+// guillemets et réellement ABSENTE de la production n'aurait jamais été
+// réclamée, puisque le script ne l'attendait pas.
+// ══════════════════════════════════════════════════════════════════════
+describe('check-prod-drift — une policy au nom nu est attendue comme une autre', { timeout: 30_000 }, () => {
+  const DRIFT = resolve(ROOT, 'scripts/check-prod-drift.mjs');
+
+  const runDrift = (policiesInProd) => {
+    const file = join(dir, 'introspection.json');
+    writeFileSync(
+      file,
+      JSON.stringify({ tables: [], functions: [], triggers: [], policies: policiesInProd }),
+      'utf8',
+    );
+    const r = spawnSync(process.execPath, [DRIFT, file], {
+      cwd: dir,
+      encoding: 'utf8',
+      env: { ...process.env, COSMO_MIGRATION_DIR: join(dir, 'supabase', 'migration') },
+    });
+    return { code: r.status, out: `${r.stdout}${r.stderr}` };
+  };
+
+  // La forme exacte de la mig. 135 : nom nu, table sur la ligne suivante.
+  const NUE = `
+CREATE POLICY withdrawal_consents_select_owner
+  ON public.withdrawal_consents
+  FOR SELECT
+  TO authenticated
+  USING (true);
+`;
+
+  it('ne signale pas « EN TROP » une policy au nom nu présente en prod', () => {
+    write('135_preuve.sql', NUE);
+    const { code, out } = runDrift(['withdrawal_consents_select_owner@@withdrawal_consents']);
+    expect(out).not.toMatch(/EN TROP/);
+    expect(code).toBe(0);
+  });
+
+  // TÉMOIN — sans lui, un parseur qui n'attendrait RIEN passerait aussi le test
+  // ci-dessus, en cessant de détecter les policies réellement absentes.
+  it('SIGNALE la policy au nom nu quand elle manque en prod', () => {
+    write('135_preuve.sql', NUE);
+    const { code, out } = runDrift([]);
+    expect(out).toMatch(/withdrawal_consents_select_owner/);
+    expect(code).not.toBe(0);
+  });
+
+  it('un DROP au nom nu reste une suppression franche', () => {
+    write('135_preuve.sql', NUE);
+    write('136_retrait.sql', 'DROP POLICY IF EXISTS withdrawal_consents_select_owner ON public.withdrawal_consents;');
+    const { out } = runDrift(['withdrawal_consents_select_owner@@withdrawal_consents']);
+    expect(out).toMatch(/EN TROP/);
+  });
+});
