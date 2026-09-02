@@ -49,6 +49,8 @@ import TasksHeader from './tasks/TasksHeader';
 import TasksErrorState from './tasks/TasksErrorState';
 import { useChipLongPress } from './tasks/useChipLongPress';
 import { useT } from '@/i18n/useT';
+import { deadlineFromDayKey } from '@/lib/deadline';
+import { todayKeyInTz } from '@/lib/timezone';
 
 const TasksPage: React.FC = () => {
   const { t, tp } = useT('tasks');
@@ -303,11 +305,8 @@ const TasksPage: React.FC = () => {
     // Cas spécial : la liste virtuelle "Aujourd'hui" n'est pas en base.
     // Ajouter une tâche = poser sa deadline à aujourd'hui (00:00 local).
     if (selectingTasksForListId === VIRTUAL_TODAY_ID) {
-      const todayISO = (() => {
-        const d = new Date();
-        d.setHours(0, 0, 0, 0);
-        return d.toISOString();
-      })();
+      // Un seul chemin d'écriture pour toutes les échéances (@/lib/deadline).
+      const todayISO = deadlineFromDayKey(todayKeyInTz());
       selectedTasksForList.forEach(taskId => {
         updateTaskMutation.mutate({ id: taskId, updates: { deadline: todayISO } });
       });
@@ -364,7 +363,9 @@ const TasksPage: React.FC = () => {
       return;
     }
     createListMutation.mutate({
-      name: preset.label,
+      // Le nom est PERSISTÉ : on écrit celui de la langue courante, plus un
+      // libellé français en dur (risque R-05). La liste reste renommable.
+      name: t(preset.labelKey),
       color: preset.color,
       type: 'smart',
       smartRule: presetKey,

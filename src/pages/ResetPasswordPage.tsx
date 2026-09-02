@@ -68,6 +68,12 @@ const ResetPasswordPage = () => {
         setError(t('auth.resetFailed'));
         return;
       }
+      // R-17 — Révoquer les AUTRES sessions. Sans ça, changer son mot de passe
+      // après un accès non autorisé n'expulsait pas l'intrus : son jeton
+      // restait valide jusqu'à expiration, ce qui vide la manœuvre de son
+      // seul usage. `scope: 'others'` préserve la session courante.
+      const { error: revokeError } = await supabase.auth.signOut({ scope: 'others' });
+      if (revokeError) console.error('[ResetPasswordPage] revoke other sessions:', revokeError);
       navigate('/dashboard');
     } catch {
       setError(t('auth.genericError'));

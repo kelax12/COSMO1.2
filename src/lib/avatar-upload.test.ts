@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import {
   validateAvatarFile, computeAvatarDimensions, AVATAR_MAX_BYTES,
-  canvasToAvatarBlob, uploadAvatar, AVATAR_BUCKET,
+  canvasToAvatarBlob, uploadAvatar, AVATAR_BUCKET, removeAvatar, avatarStoragePath,
 } from './avatar-upload';
 
 describe('validateAvatarFile (faille V5)', () => {
@@ -70,15 +70,16 @@ describe('uploadAvatar', () => {
   type UploadOpts = { upsert: boolean; contentType: string; cacheControl: string };
 
   /** Faux client Storage minimal — même surface que celle typée par le module. */
-  const makeClient = (opts: { error?: unknown; publicUrl?: string } = {}) => {
+  const makeClient = (opts: { error?: unknown; publicUrl?: string; removeError?: unknown } = {}) => {
     const upload = vi.fn(async (_path: string, _body: Blob, _options: UploadOpts) => ({
       error: opts.error ?? null,
     }));
     const getPublicUrl = vi.fn(() => ({
       data: { publicUrl: opts.publicUrl ?? 'https://proj.supabase.co/storage/v1/object/public/avatars/u1/avatar.jpg' },
     }));
-    const from = vi.fn(() => ({ upload, getPublicUrl }));
-    return { client: { storage: { from } }, from, upload, getPublicUrl };
+    const remove = vi.fn(async () => ({ error: opts.removeError ?? null }));
+    const from = vi.fn(() => ({ upload, getPublicUrl, remove }));
+    return { client: { storage: { from } }, from, upload, getPublicUrl, remove };
   };
 
   it('écrit dans <userId>/avatar.jpg du bucket avatars (dossier imposé par la policy 084)', async () => {
@@ -114,5 +115,35 @@ describe('uploadAvatar', () => {
   it('URL publique vide → null plutôt qu’une URL bancale', async () => {
     const { client } = makeClient({ publicUrl: '' });
     await expect(uploadAvatar(client, 'u1', blob)).resolves.toBeNull();
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════
+// removeAvatar — R-03 : le fichier doit partir avec la référence
+// ═══════════════════════════════════════════════════════════════════
+describe('removeAvatar', () => {
+  const makeClient = (opts: { removeError?: unknown } = {}) => {
+    const upload = vi.fn(async () => ({ error: null }));
+    const getPublicUrl = vi.fn(() => ({ data: { publicUrl: 'https://cdn.test/x.jpg' } }));
+    const remove = vi.fn(async () => ({ error: opts.removeError ?? null }));
+    const from = vi.fn(() => ({ upload, getPublicUrl, remove }));
+    return { client: { storage: { from } }, from, remove };
+  };
+
+  it('supprime exactement <userId>/avatar.jpg dans le bucket avatars', async () => {
+    const { client, from, remove } = makeClient();
+    await expect(removeAvatar(client, 'u1')).resolves.toBe(true);
+
+    expect(from).toHaveBeenCalledWith(AVATAR_BUCKET);
+    expect(remove).toHaveBeenCalledWith(['u1/avatar.jpg']);
+  });
+
+  it('vise le même chemin que l’upload (une seule définition)', () => {
+    expect(avatarStoragePath('u1')).toBe('u1/avatar.jpg');
+  });
+
+  it('rend false si le stockage refuse, pour que l’appelant ne mente pas', async () => {
+    const { client } = makeClient({ removeError: { message: 'denied' } });
+    await expect(removeAvatar(client, 'u1')).resolves.toBe(false);
   });
 });

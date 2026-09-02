@@ -1,4 +1,5 @@
-import { Link, useNavigate } from 'react-router';
+import { Link, useNavigate, useSearchParams } from 'react-router';
+import { postAuthRoute, safeRedirectPath } from '@/lib/safe-redirect';
 import { useSeoMeta } from '@/lib/useSeoMeta';
 import AuthForm from '@/components/AuthForm';
 import Logo from '@/components/Logo';
@@ -12,6 +13,14 @@ const SignupPage = () => {
     canonical: 'https://thecosmo.app/signup',
   });
   const navigate = useNavigate();
+  // Idem `LoginPage` : on honore `?redirect=` s'il est interne. Le repli
+  // dépend du type de compte, l'onboarding entreprise restant la bonne
+  // destination par défaut d'une inscription professionnelle.
+  const [searchParams] = useSearchParams();
+  const requestedRedirect = searchParams.get('redirect');
+  // Basculer vers la connexion ne doit pas perdre le retour demandé.
+  const safeRedirect = safeRedirectPath(requestedRedirect);
+  const redirectQuery = safeRedirect ? `?redirect=${encodeURIComponent(safeRedirect)}` : '';
 
   return (
     <main
@@ -25,9 +34,15 @@ const SignupPage = () => {
         <AuthForm
           mode="register"
           headingAs="h1"
-          onSwitchMode={(m) => navigate(m === 'register' ? '/signup' : '/login')}
+          onSwitchMode={(m) => navigate(`${m === 'register' ? '/signup' : '/login'}${redirectQuery}`)}
           onSuccess={(accountType) =>
-            navigate(accountType === 'business' ? '/entreprise/onboarding' : '/dashboard')
+            navigate(
+              postAuthRoute(
+                requestedRedirect,
+                accountType === 'business' ? '/entreprise/onboarding' : '/dashboard',
+              ),
+              { replace: true },
+            )
           }
         />
       </div>

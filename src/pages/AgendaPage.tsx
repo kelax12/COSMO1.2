@@ -39,7 +39,7 @@ import { agendaTutorialStepsMobile } from '@/tutorials/agenda.mobile';
 import { getInitialScrollTime, buildCalendarEvents, shiftEventsForDisplay, defaultEventsWindow, bufferedWindow, taskEventDurationMinutes } from './agenda/calendar-events';
 import { useTimezonePref, fromDisplayISO, displayNow } from '@/lib/timezone';
 import AgendaSlotReviewModal from './agenda/AgendaSlotReviewModal';
-import { findOverdueTaskSlots, type OverdueTaskSlot } from './agenda/overdue-slots';
+import { useOverdueSlotReview } from './agenda/useOverdueSlotReview';
 import { useTasks, useToggleTaskComplete, useDeleteTask } from '@/modules/tasks';
 import { type MobileView, mobileCalendarStyles, MobileAgendaHeader, MobileDayStrip } from './agenda/MobileAgenda';
 import AgendaDesktopHeader from './agenda/AgendaDesktopHeader';
@@ -48,10 +48,12 @@ import QuickEventCard from './agenda/QuickEventCard';
 import { useAgendaEventDrag } from './agenda/useAgendaEventDrag';
 import { findSourceEvent } from './agenda/find-event';
 import PageErrorState from '@/components/PageErrorState';
+import { deadlineDayKey } from '@/lib/deadline';
 
 // ── Page principale ──────────────────────────────────────────────────────────
 const AgendaPage: React.FC = () => {
   const { t } = useT('agenda');
+  const { t: tCommon } = useT('common');
   // Locale FullCalendar — était figée à `"fr"` sur les DEUX calendriers, donc
   // les en-têtes de jour et le format d'heure restaient français quelle que
   // soit la langue de l'app. L'étiquette BCP 47 pilote aussi le PREMIER JOUR
@@ -81,9 +83,6 @@ const AgendaPage: React.FC = () => {
   const { data: tasks = [] } = useTasks();
   const toggleTaskComplete = useToggleTaskComplete();
   const deleteTaskMutation = useDeleteTask();
-  // Créneaux « écartés » pour cette session (fermeture sans décision) : ils
-  // réapparaîtront au prochain retour sur l'agenda.
-  const [snoozedSlotIds, setSnoozedSlotIds] = useState<Set<string>>(new Set());
   const { data: categories = [] } = useCategories();
   const { pref: tzPref } = useTimezonePref();
   const { user } = useAuth();
@@ -237,11 +236,15 @@ const AgendaPage: React.FC = () => {
       if (x > sidebarWidth && window.innerWidth < 768) setShowTaskSidebar(false);
     };
     const handlePointerMove = (e: PointerEvent) => { if (isDraggingTask) handleMove(e.clientX); };
+    // `handlePointerUp` doit être une CONSTANTE : passer deux fonctions fléchées
+    // distinctes à add/removeEventListener ne retirait rien, et un écouteur
+    // s'accumulait à chaque glisser pour la durée de vie de la page (R-16).
+    const handlePointerUp = () => setIsDraggingTask(false);
     window.addEventListener('pointermove', handlePointerMove);
-    window.addEventListener('pointerup', () => setIsDraggingTask(false));
+    window.addEventListener('pointerup', handlePointerUp);
     return () => {
       window.removeEventListener('pointermove', handlePointerMove);
-      window.removeEventListener('pointerup', () => setIsDraggingTask(false));
+      window.removeEventListener('pointerup', handlePointerUp);
     };
   }, [isDraggingTask]);
 
@@ -467,48 +470,24 @@ const AgendaPage: React.FC = () => {
   };
 
   // ── Revue des créneaux de tâche terminés (feature 2) ───────────────────────
-  // File des créneaux passés à traiter, écartés de cette session retirés.
-  const overdueSlots = React.useMemo(
-    () => findOverdueTaskSlots(events, tasks).filter((s) => !snoozedSlotIds.has(s.event.id)),
-    [events, tasks, snoozedSlotIds],
-  );
-  const currentReviewSlot = overdueSlots[0] ?? null;
-
-  const dismissReviewSlot = (eventId: string) =>
-    setSnoozedSlotIds((prev) => new Set(prev).add(eventId));
-
-  // Réalisée → valide la tâche côté tâche (comme partout ailleurs : toggle +
-  // toast d'annulation). Filtrée à « non complétée », donc le toggle = valider.
-  const handleSlotValidate = (slot: OverdueTaskSlot) => {
-    if (!slot.task.completed) toggleTaskComplete.mutate(slot.task.id);
-    dismissReviewSlot(slot.event.id);
-  };
-
-  // Reporter → replace le créneau à DEMAIN (relatif à maintenant) en conservant
-  // l'heure de début et la durée d'origine. Toujours dans le futur, même pour un
-  // créneau en retard de plusieurs jours (sinon le modal réapparaîtrait).
-  const handleSlotPostpone = (slot: OverdueTaskSlot) => {
-    const origStart = new Date(slot.event.start);
-    const durationMs = new Date(slot.event.end).getTime() - origStart.getTime();
-    const next = new Date();
-    next.setDate(next.getDate() + 1);
-    next.setHours(origStart.getHours(), origStart.getMinutes(), 0, 0);
-    const newStart = next.toISOString();
-    const newEnd = new Date(next.getTime() + Math.max(durationMs, 0)).toISOString();
-    updateEventMutation.mutate({ id: slot.event.id, updates: { start: newStart, end: newEnd } });
-    dismissReviewSlot(slot.event.id);
-  };
-
-  // Abandonner → supprime la tâche et son créneau agenda.
-  const handleSlotDelete = (slot: OverdueTaskSlot) => {
-    deleteEventMutation.mutate(slot.event.id);
-    deleteTaskMutation.mutate(slot.task.id);
-    dismissReviewSlot(slot.event.id);
-  };
-
-  const handleSlotSnooze = () => {
-    if (currentReviewSlot) dismissReviewSlot(currentReviewSlot.event.id);
-  };
+  // Le corps de cette revue vit dans `agenda/useOverdueSlotReview.ts` : quatre
+  // gestionnaires, un état et un dérivé qui ne parlent qu'entre eux.
+  const {
+    overdueSlots,
+    currentReviewSlot,
+    handleSlotValidate,
+    handleSlotPostpone,
+    handleSlotDelete,
+    handleSlotSnooze,
+  } = useOverdueSlotReview({
+    events,
+    tasks,
+    tzPref,
+    toggleTaskComplete: (taskId) => toggleTaskComplete.mutate(taskId),
+    updateEvent: (id, updates) => updateEventMutation.mutate({ id, updates }),
+    deleteEvent: (id) => deleteEventMutation.mutate(id),
+    deleteTask: (taskId) => deleteTaskMutation.mutate(taskId),
+  });
 
   // ── Mobile handlers ───────────────────────────────────────────────────────
   const handleMobileSetView = (view: MobileView) => {
@@ -567,7 +546,7 @@ const AgendaPage: React.FC = () => {
   // État d'erreur (#39) : sans lui, un échec réseau affichait un calendrier
   // vide — indistinguable d'une semaine sans événement.
   if (isEventsError && events.length === 0) {
-    return <PageErrorState subject="l'agenda" error={eventsError as Error | null} onRetry={() => refetchEvents()} />;
+    return <PageErrorState subject={tCommon('pageError.subjectAgenda')} error={eventsError as Error | null} onRetry={() => refetchEvents()} />;
   }
 
   return (
@@ -864,7 +843,9 @@ const AgendaPage: React.FC = () => {
           initialData={{
             name: eventForTaskCreation.title,
             category: categories.find(cat => cat.color === eventForTaskCreation.color)?.id,
-            deadline: eventForTaskCreation.start.slice(0, 10),
+            // `.slice(0, 10)` prenait le jour UTC de l'instant : un créneau de
+            // fin de nuit créait une tâche datée de la veille (risque R-15).
+            deadline: deadlineDayKey(eventForTaskCreation.start),
             estimatedTime: Math.max(
               1,
               Math.round(

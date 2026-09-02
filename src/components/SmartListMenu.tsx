@@ -156,7 +156,7 @@ const SmartListMenu: React.FC<SmartListMenuProps> = ({
                   aria-hidden
                 />
                 <span className="flex-1 font-medium text-sm text-[rgb(var(--color-text-primary))]">
-                  {preset.label}
+                  {t(preset.labelKey)}
                 </span>
                 {isActive && <Check size={15} className="shrink-0 text-emerald-500" aria-hidden />}
               </button>

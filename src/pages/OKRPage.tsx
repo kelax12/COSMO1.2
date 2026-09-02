@@ -32,6 +32,7 @@ import { useT } from '@/i18n/useT';
 
 const OKRPage: React.FC = () => {
   const { t } = useT('okr');
+  const { t: tCommon } = useT('common');
   const isMobile = useIsMobile();
   const tutorial = useTutorial(isMobile ? 'okr_mobile' : 'okr_desktop');
   const tutorialSteps = isMobile ? okrTutorialStepsMobile : okrTutorialStepsDesktop;
@@ -376,7 +377,7 @@ const OKRPage: React.FC = () => {
       {/* État d'erreur (#39) : sans lui, un échec réseau laissait la page
           vide — indistinguable de « vous n'avez aucun OKR ». */}
       {isOkrsError && objectives.length === 0 && (
-        <PageErrorState subject="les OKR" error={okrsError as Error | null} onRetry={() => refetchOkrs()} />
+        <PageErrorState subject={tCommon('pageError.subjectOkr')} error={okrsError as Error | null} onRetry={() => refetchOkrs()} />
       )}
 
       {isLoadingOkrs && objectives.length === 0 && <OKRListSkeleton count={4} />}

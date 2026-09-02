@@ -75,6 +75,7 @@ type MinimalStorageClient = {
         opts: { upsert: boolean; contentType: string; cacheControl: string },
       ): Promise<{ error: unknown }>;
       getPublicUrl(path: string): { data: { publicUrl: string } };
+      remove(paths: string[]): Promise<{ error: unknown }>;
     };
   };
 };
@@ -104,4 +105,31 @@ export async function uploadAvatar(
   if (error) return null;
   const { data } = bucket.getPublicUrl(path);
   return data?.publicUrl ? `${data.publicUrl}?v=${Date.now()}` : null;
+}
+
+/** Chemin de l'objet Storage d'un compte. Une seule définition, deux usages. */
+export const avatarStoragePath = (userId: string): string => `${userId}/avatar.jpg`;
+
+/**
+ * Supprime le fichier d'avatar du bucket.
+ *
+ * 🔴 POURQUOI (revue du 2026-09-02, risque R-03). Retirer sa photo ne faisait
+ * que remettre `avatar_url` à `null` dans `auth.users` et `profiles` : le
+ * FICHIER, lui, restait dans un bucket `public: true`, donc accessible sans
+ * authentification à une URL stable et devinable (`<uid>/avatar.jpg`). La
+ * suppression de compte avait le même trou, `delete-account` ne touchant pas au
+ * stockage. Une photographie de visage survivait ainsi au droit à l'effacement
+ * (RGPD art. 17).
+ *
+ * Rend `true` si le bucket ne contient plus l'objet à la sortie. Un fichier
+ * absent n'est pas une erreur : la fonction doit être rejouable.
+ */
+export async function removeAvatar(
+  client: MinimalStorageClient,
+  userId: string,
+): Promise<boolean> {
+  const { error } = await client.storage
+    .from(AVATAR_BUCKET)
+    .remove([avatarStoragePath(userId)]);
+  return !error;
 }

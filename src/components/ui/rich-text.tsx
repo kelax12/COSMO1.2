@@ -24,7 +24,7 @@ export const RichText: React.FC<{
   children: string;
   /** Classe appliquée aux segments en gras (la page décide de sa couleur). */
   strongClassName?: string;
-}> = ({ children, strongClassName = 'text-white font-semibold' }) => {
+}> = ({ children, strongClassName = 'font-semibold text-[rgb(var(--color-text-primary))]' }) => {
   // Découpe en gardant les délimiteurs : « a **b** c » → ['a ', '**b**', ' c'].
   const parts = children.split(/(\*\*[^*]+\*\*)/g);
   return (

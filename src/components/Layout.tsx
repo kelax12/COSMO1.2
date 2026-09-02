@@ -45,6 +45,7 @@ import GlobalNavShortcuts from './GlobalNavShortcuts';
 import InviteOrJoinModal from './organization/InviteOrJoinModal';
 import DeadlineReminder from './DeadlineReminder';
 import SyncStatusIndicator from './SyncStatusIndicator';
+import { isDueToday } from '@/lib/deadline';
 
 // Quick-add global — lazy : ne se charge qu'au premier rendu du Layout.
 const QuickAddBar = lazy(() => import('./QuickAddBar'));
@@ -238,9 +239,8 @@ const Layout: React.FC = () => {
   // Compteur de tâches restantes aujourd'hui (#49) — badge neutre sur l'item
   // Tâches. La disparition du badge (0 restant) est la récompense.
   const { data: allTasks = [] } = useTasks();
-  const todayStr = new Date().toLocaleDateString('en-CA');
   const tasksDueTodayCount = allTasks.filter(
-    (t) => !t.completed && t.deadline && t.deadline.slice(0, 10) === todayStr
+    (t) => !t.completed && isDueToday(t.deadline)
   ).length;
   const [isCollapsed, setIsCollapsed] = useState(() => {
     const saved = localStorage.getItem('sidebar-collapsed');

@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router';
 import { toast } from 'sonner';
 import { useTasks } from '@/modules/tasks';
+import { isDueToday, isOverdue } from '@/lib/deadline';
 
 const SEEN_KEY = 'cosmo_deadline_reminder_seen';
 
@@ -24,12 +25,10 @@ const DeadlineReminder: React.FC = () => {
       if (localStorage.getItem(SEEN_KEY) === today) return;
     } catch { /* ignore */ }
 
-    const dueToday = tasks.filter(
-      (t) => !t.completed && t.deadline && t.deadline.slice(0, 10) === today
-    ).length;
-    const overdue = tasks.filter(
-      (t) => !t.completed && t.deadline && t.deadline.slice(0, 10) < today
-    ).length;
+    // `.slice(0, 10)` rendait le jour UTC de l'instant stocké, comparé ici à
+    // un jour LOCAL : les deux ne coïncident qu'à Greenwich (risque R-01).
+    const dueToday = tasks.filter((t) => !t.completed && isDueToday(t.deadline)).length;
+    const overdue = tasks.filter((t) => isOverdue(t.deadline, t.completed)).length;
 
     if (dueToday === 0 && overdue === 0) return;
 

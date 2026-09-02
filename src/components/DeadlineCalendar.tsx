@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import TaskModal from './TaskModal';
 import { useT } from '@/i18n/useT';
+import { deadlineDayKey } from '@/lib/deadline';
 
 // Calendrier des échéances — composant shadcn Calendar (react-day-picker)
 // agrandi, avec pastilles de catégorie directement dans les cases des jours
@@ -17,6 +18,15 @@ const sameDay = (a: Date, b: Date) =>
   a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 
 const dayKey = (d: Date) => `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+
+// Une échéance est un JOUR : on la ramène d'abord dans le fuseau retenu, puis
+// on la reconstruit en date LOCALE, parce que c'est en heure locale que le
+// calendrier rend ses cases et que `selected` en revient. Lire directement
+// l'instant stocké plaçait la tâche dans la case de la veille (risque R-01).
+const dayKeyToLocalDate = (key: string): Date => {
+  const [y, m, d] = key.split('-').map(Number);
+  return new Date(y, m - 1, d);
+};
 
 const DeadlineCalendar: React.FC = () => {
   const { t } = useT('eventModal');
@@ -30,9 +40,9 @@ const DeadlineCalendar: React.FC = () => {
     const map = new Map<string, string[]>();
     for (const t of tasks) {
       if (!t.deadline || t.completed) continue;
-      const d = new Date(t.deadline);
-      if (Number.isNaN(d.getTime())) continue;
-      const key = dayKey(d);
+      const dayOfTask = deadlineDayKey(t.deadline);
+      if (!dayOfTask) continue;
+      const key = dayKey(dayKeyToLocalDate(dayOfTask));
       const color = getCategoryById(t.category)?.color || '#94a3b8';
       const arr = map.get(key) ?? [];
       if (arr.length < 4) arr.push(color);
@@ -44,9 +54,8 @@ const DeadlineCalendar: React.FC = () => {
   const dayTasks = useMemo(() => {
     if (!selected) return [];
     return tasks.filter((t) => {
-      if (!t.deadline) return false;
-      const d = new Date(t.deadline);
-      return !Number.isNaN(d.getTime()) && sameDay(d, selected);
+      const dayOfTask = deadlineDayKey(t.deadline);
+      return !!dayOfTask && sameDay(dayKeyToLocalDate(dayOfTask), selected);
     });
   }, [tasks, selected]);
 

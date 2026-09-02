@@ -13,6 +13,7 @@ import { getSnoozeOptions } from "@/modules/tasks/snooze";
 import { Friend } from "@/modules/friends";
 import { formatDate, formatDuration } from "./helpers";
 import { useT } from '@/i18n/useT';
+import { isTaskOverdue } from './helpers';
 
 interface TaskCardProps {
   task: Task;
@@ -136,7 +137,7 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
     onSelectTask(task.id);
   };
 
-  const isOverdue = !task.completed && new Date(task.deadline) < new Date();
+  const isOverdue = isTaskOverdue(task.deadline, task.completed);
 
   return (
     <motion.div

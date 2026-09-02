@@ -340,5 +340,13 @@
     "uncheck": "Uncheck “{{name}}”",
     "delete": "Delete the subtask “{{name}}”",
     "limitReached": "Maximum of {{max}} subtasks reached."
+  },
+  "smartPreset": {
+    "overdue": "Overdue",
+    "overdueDescription": "Past tasks still open",
+    "thisWeek": "This week",
+    "thisWeekDescription": "Tasks due in the next 7 days",
+    "highPriority": "High priority",
+    "highPriorityDescription": "Priority 1 or 2 (very high / high)"
   }
 }

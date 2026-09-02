@@ -18,6 +18,7 @@ import { useOrgNotificationCount } from '@/lib/hooks/use-org-notifications';
 import MobileMoreSheet from './MobileMoreSheet';
 import { useT } from '@/i18n/useT';
 import type { KeyOf } from '@/i18n/catalog';
+import { isDueToday } from '@/lib/deadline';
 
 interface TabConfig {
   to?: string;
@@ -78,9 +79,8 @@ const MobileTabBar: React.FC = () => {
   const tabs = showOrgTab
     ? [...TABS.filter((tab) => tab.to !== '/habits'), ENTERPRISE_TAB]
     : TABS;
-  const todayStr = new Date().toLocaleDateString('en-CA');
   const tasksDueTodayCount = allTasks.filter(
-    (t) => !t.completed && t.deadline && t.deadline.slice(0, 10) === todayStr
+    (t) => !t.completed && isDueToday(t.deadline)
   ).length;
 
   return (

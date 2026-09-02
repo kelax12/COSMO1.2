@@ -255,6 +255,42 @@ Deno.serve(async (req) => {
       }
     }
 
+    // R-06 — `payment_records` N'EST PAS PURGÉ, ET C'EST DÉLIBÉRÉ.
+    //
+    // CLAUDE.md demandait « anonymiser user_id, jamais supprimer la ligne ».
+    // Mesuré le 2026-09-02 : cette consigne est INAPPLICABLE. `row_hash`
+    // (mig. 125) scelle `user_id` dans le chaînage, et `verify_payment_chain()`
+    // recalcule chaque hash depuis les colonnes stockées. Écrire NULL dans
+    // `user_id` casserait la chaîne, donc produirait exactement le signal de
+    // falsification qu'on montre à un contrôleur. Le trigger d'immuabilité
+    // refuse d'ailleurs l'UPDATE, service_role compris.
+    //
+    // Ce qui rend la conservation acceptable, c'est que `user_id` cesse d'être
+    // une donnée identifiante à l'instant où la ligne `auth.users` disparaît :
+    // il ne reste qu'un UUID que COSMO ne sait plus rattacher à personne. Sa
+    // conservation est imposée par le CGI (art. L102 B) et permise par le RGPD
+    // (art. 17.3.b, obligation légale).
+    //
+    // ❌ Ne jamais « corriger » ce commentaire en ajoutant un UPDATE ici.
+
+    // R-03 — Le bucket `avatars` est PUBLIC : tant que le fichier existe, la
+    // photo reste accessible sans authentification à une URL stable et
+    // devinable (`<uid>/avatar.jpg`), même après la suppression du compte.
+    // Effacer les lignes sans effacer le fichier n'est pas un effacement.
+    //
+    // `remove` sur un objet absent n'est pas une erreur : la fonction reste
+    // rejouable, ce qui est la condition pour pouvoir réessayer après un échec
+    // partiel.
+    {
+      const { error } = await supabaseAdmin.storage
+        .from('avatars')
+        .remove([`${user.id}/avatar.jpg`])
+      if (error) {
+        console.error('delete-account: failed to remove avatar object:', error.message)
+        failedTables.push('storage:avatars')
+      }
+    }
+
     // M-6 — If any cleanup failed, refuse to drop the auth row. Otherwise we
     // permanently lose the user's identity and orphan data becomes impossible
     // to purge later (RGPD violation). The client can retry; the function is

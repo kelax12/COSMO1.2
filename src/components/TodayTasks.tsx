@@ -16,6 +16,7 @@ import { useCategories } from '@/modules/categories';
 import { useFriends, useSharesByTask } from '@/modules/friends';
 import { formatDate } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
+import { isDueToday } from '@/lib/deadline';
 
 const TodayTasks: React.FC = () => {
   const { t, tp } = useT('dashboard');
@@ -39,16 +40,15 @@ const TodayTasks: React.FC = () => {
   const { data: friends = [] }    = useFriends();
   const sharesByTask              = useSharesByTask();
 
-  const today = new Date();
-
   const todayTasks = useMemo(() => {
     return tasks
       .filter(task => !task.completed)
       .filter(task => {
-        const taskDate = task.deadline ? new Date(task.deadline) : null;
-        const isDueToday = taskDate ? taskDate.toDateString() === today.toDateString() : false;
+        // `toDateString()` compare deux jours en heure MACHINE, sans tenir
+        // compte du fuseau réglé ni du fait que l'échéance est un jour (R-01).
+        const dueToday = isDueToday(task.deadline);
         // Priorité facultative : 0 = non définie, ne compte pas comme « haute ».
-        return isDueToday || (task.priority > 0 && task.priority <= 2);
+        return dueToday || (task.priority > 0 && task.priority <= 2);
       })
       .sort((a, b) => {
         if (a.bookmarked && !b.bookmarked) return -1;

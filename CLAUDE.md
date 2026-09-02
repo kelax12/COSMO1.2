@@ -487,7 +487,7 @@ export type User = {
 | slugs localisés (à-propos, freelances, étudiants, managers, équipes, mentions légales, confidentialité, CGU) | via `routeSlug(key, locale)` — cf. `src/i18n/routes.ts` | public |
 | `/invite/:token` · `/org-invite/:token` | Claim d'invitation (partage / entreprise) | public |
 | `/dashboard` · `/tasks` · `/settings` | Socle | protégé |
-| `/agenda` · `/habits` · `/okr` · `/statistics` | Modules optionnels, gardés par `RequireModule` | protégé |
+| `/agenda` · `/habits` · `/okr` · `/statistics` | **Toujours visibles pour tout le monde** depuis le 2026-08-23, plus aucun réglage ne les masque | protégé |
 | `/entreprise` · `/entreprise/onboarding` | Mode entreprise (onboarding hors Layout) | protégé |
 | `/admin` | Console admin — URL non référencée, gating **serveur** (`get_admin_stats` rejette les non-admins) | protégé |
 | `/premium` | Redirige `/` tant que `PREMIUM_ENFORCED = false` | protégé |
@@ -552,28 +552,44 @@ La landing n'est plus une page linéaire. Après le header, un **aiguillage**
 
 ---
 
-## Modules actifs / onboarding progressif
+## Onboarding du premier compte
 
-L'utilisateur réel choisit quels modules optionnels afficher.
-Store : `src/modules/ui-states/active-modules.store.ts`.
+🔴 **La sélection de modules N'EXISTE PLUS.** Elle a été supprimée le 2026-08-23 (`acf29b7`,
+bug 6 sur 10), et ce fichier a continué à la décrire pendant dix jours. Vérifié dans tout le
+dépôt le 2026-09-02, en cherchant le code et pas seulement le nom : `active-modules.store.ts`,
+`useActiveModules`, `isModuleActive`, `ModuleOnboarding.tsx`, `RequireModule` et la clé
+`cosmo_active_modules` rendent **zéro occurrence**. Agenda, Habitudes, OKR et Statistiques sont
+visibles par tout le monde, tout le temps.
 
-```typescript
-import { useActiveModules, setActiveModules, isModuleActive } from '@/modules/ui-states';
-// ModuleKey = 'agenda' | 'habits' | 'okr' | 'statistics'
-```
+> ⚠️ **Une note ajoutée le 2026-09-02 sur cette même section n'a corrigé qu'un nom sur six** :
+> elle constatait l'absence de `RequireModule` et concluait « écrire la garde OU retirer
+> l'affirmation », sans voir que la fonctionnalité entière avait disparu. Chercher le symptôme
+> cité par la doc plutôt que la chose décrite laisse la dérive presque intacte, et la fait
+> paraître vérifiée.
 
-- **Dashboard + Tâches = socle, toujours actifs** (dépendances tâches↔agenda↔dashboard).
-- **En mode démo → tous les modules forcés actifs** (override dans `getSnapshot`). La démo ne voit
-  jamais l'onboarding et ne perd aucun onglet (fixtures E2E `loginDemo()`).
-- Persistance localStorage (`cosmo_active_modules`), défaut = tout actif (rétro-compat).
-- L'onboarding (`src/components/onboarding/ModuleOnboarding.tsx`, monté lazy au niveau **App**)
-  ne s'affiche qu'au 1er login réel (flag `cosmo_onboarding_modules_done`). Jamais en démo.
-- Toute nouvelle surface de nav listant les modules optionnels doit filtrer via
-  `useActiveModules()` : `Layout.tsx`, `MobileTabBar.tsx`, `MobileMoreSheet.tsx`.
-- Les routes optionnelles sont gardées par `RequireModule` (bloque l'accès URL directe).
-- Module masqué ≠ donnée supprimée : on cache nav + route, rien d'autre.
+**Ce qui se passe réellement après une inscription** (parcours personnel) :
 
-Debug : `localStorage.removeItem('cosmo_onboarding_modules_done')` puis reload.
+1. `SignupPage` renvoie sur `/dashboard` (`postAuthRoute`) — `/entreprise/onboarding` pour un
+   compte professionnel, qui est le seul onboarding restant.
+2. `FirstRunSetup` (`src/components/onboarding/`, monté dans `Layout`) pose **trois questions
+   passables** à un compte VIDE : des tâches, une habitude, un objectif. Ce qui est écrit devient
+   de vraies données. Une fois par appareil (`cosmo_first_run_done`), jamais en mode démo.
+
+Livré le 2026-09-02 (T-23). Il remplace `OnboardingExampleTasks`, qui créait 3 tâches d'exemple
+sans écran, **écrites en dur en français** hors des catalogues i18n.
+
+- ❌ **Ne jamais différer les créations à la dernière étape.** Chaque étape crée au moment où elle
+  est validée : quelqu'un qui répond à la première question puis ferme l'onglet garde sa tâche, et
+  c'est exactement la population que l'écran existe pour retenir (50 % des inscrits ne revenaient
+  jamais après leur session d'inscription).
+- ❌ **Ne jamais le déplacer sur une route.** Une inscription par Google ne repasse pas par
+  `SignupPage` : un accueil monté sur une route n'accueillerait qu'un des deux chemins.
+- ❌ **Ne jamais poser d'échéance sur la première tâche.** La personne a donné un intitulé, pas une
+  date ; en inventer une la ferait apparaître « en retard » dès le lendemain.
+- ⚠️ L'ancien drapeau `cosmo_onboarding_examples_created` reste **lu, jamais écrit** : qui a eu
+  l'ancien accueil puis supprimé ses tâches n'est pas accueilli une seconde fois.
+- Debug : `localStorage.removeItem('cosmo_first_run_done')`, supprimer ses tâches, puis recharger.
+  ⚠️ **Le compte doit être vide** : la garde est `taskCount === 0`, pas « compte récent ».
 
 ---
 
@@ -1023,6 +1039,48 @@ Codes entre parenthèses = bugs historiques ayant motivé la règle.
 - ❌ Dériver `isDemo` de l'email — utiliser `useIsDemo()` / `appModeStore.isDemo` (B0)
 - ❌ Muter `DEMO_FRIENDS` / `DEMO_INCOMING_REQUESTS` en place — `JSON.parse(JSON.stringify(...))` (B12)
 
+### 📅 Échéances — un jour, pas un instant (revue du 2026-09-02, R-01)
+
+`tasks.deadline` est un `timestamptz`, mais ce que la personne saisit est un **jour**. Les deux ne
+se convertissent ni par `new Date('YYYY-MM-DD')` (qui parse en **UTC**) ni par `.slice(0, 10')`
+(qui rend le jour **UTC** de l'instant). Un seul module fait foi : **`src/lib/deadline.ts`**.
+
+```typescript
+new Date(formData.deadline).toISOString()   // ❌ minuit UTC → la veille à l'ouest
+task.deadline.slice(0, 10)                  // ❌ jour UTC, pas le jour vécu
+deadlineFromDayKey(formData.deadline)       // ✅ écriture
+deadlineDayKey(task.deadline)               // ✅ lecture
+isDueToday(...) / isOverdue(...)            // ✅ comparaisons
+```
+
+- 🔴 **Trois écritures divergentes coexistaient** (`save-task`, `snooze`, `TasksPage`), pour trois
+  valeurs différentes du même jour choisi. Mesuré en prod : **467 des 601 échéances** portaient
+  00:00:00 UTC. Conséquence, pour tout fuseau à décalage négatif : une tâche datée du jour même
+  était classée « En retard » et absente de « Aujourd'hui ». **Invisible depuis la métropole**, ce
+  qui la rendait introuvable en regardant l'application fonctionner.
+- ❌ **Ne jamais comparer des INSTANTS pour décider « en retard ».** `new Date(deadline) < new Date()`
+  faisait basculer en rouge une tâche due aujourd'hui dès 00 h 01. On compare des **jours**.
+- ⚠️ **Les lignes écrites avant le correctif ne sont pas migrées, et c'est volontaire** : relues par
+  `deadlineDayKey`, elles rendent exactement ce qu'elles rendaient avant (juste en métropole, fausses
+  ailleurs). Aucune régression, et surtout aucune migration de données qui devrait deviner le fuseau
+  de chaque compte — la base ne le connaît pas.
+- ✅ **`team_tasks.deadline` est une `date`** et traverse sans conversion : elle ne porte aucun
+  instant. `deadlineDayKey` gère les deux formes, c'est sa raison d'être.
+
+### 🌍 Fuseau horaire — la préférence pilote AUSSI les journées
+
+`src/lib/timezone.ts` portait un décalage d'**affichage** pour le seul agenda. Il porte désormais
+le découpage des **journées** (`dayKeyInTz`, `todayKeyInTz`, `dayStartInTz`), ce qui permet à
+quelqu'un en Guadeloupe, à La Réunion ou en Nouvelle-Calédonie de se détacher du découpage
+métropolitain : réglage `manual` + décalage, et ses échéances, ses reports et ses listes
+« Aujourd'hui » suivent SON jour.
+
+- ❌ **Ne jamais faire dépendre un jour de `toLocaleDateString('en-CA')` seul** dans un chemin qui
+  touche aux échéances : c'est le fuseau de la MACHINE, pas celui que la personne a choisi.
+- ⚠️ **Les clés de `habits.completions` restent en date machine**, volontairement : elles sont déjà
+  écrites en base sous cette forme et les basculer sur la préférence décalerait tout l'historique
+  existant. À traiter par une migration dédiée, pas en passant.
+
 ### Champs canoniques du modèle
 
 - ❌ `habit.completedDates` — canonique : `habit.completions: Record<string, boolean>` (B5)
@@ -1074,8 +1132,15 @@ Codes entre parenthèses = bugs historiques ayant motivé la règle.
 - ❌ **Ne JAMAIS ajouter de policy UPDATE ou DELETE sur `payment_records` ou `payment_closures`,
   ni les inclure dans une purge.** C'est le journal d'encaissement inaltérable (mig. `125`,
   CGI art. 286-I-3° bis). L'immuabilité est portée par un **trigger**, pas par la RLS, parce que
-  `service_role` contourne la RLS mais pas les triggers. Une purge RGPD doit **anonymiser**
-  `user_id`, jamais supprimer la ligne : l'obligation de conservation prime (RGPD art. 17.3.b).
+  `service_role` contourne la RLS mais pas les triggers.
+  🔴 **CORRIGÉ le 2026-09-02** : ce paragraphe demandait d'« anonymiser `user_id` » à la purge.
+  C'est **inapplicable**. `row_hash` scelle `user_id` dans le chaînage, et
+  `verify_payment_chain()` recalcule chaque hash depuis les colonnes : écrire NULL casserait la
+  chaîne, donc produirait exactement le signal de falsification qu'on montre à un contrôleur.
+  Le trigger refuse d'ailleurs l'UPDATE. Ce qui rend la conservation acceptable est ailleurs :
+  `user_id` cesse d'identifier quiconque dès que la ligne `auth.users` disparaît, il ne reste
+  qu'un UUID que COSMO ne sait plus rattacher. `delete-account` ne touche donc PAS cette table,
+  et le commentaire qui l'explique est dans la fonction.
   Une erreur se corrige par une ligne compensatoire, comme en comptabilité.
 - ❌ **Ne jamais lire `cosmo_cookie_consent` directement.** Passer par
   `src/lib/cookie-consent.ts`, et par `useCookieConsent()` dans React. La dispersion est

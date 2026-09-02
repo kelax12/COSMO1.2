@@ -8,11 +8,11 @@ import { currentInLanguage } from '@/lib/useSeoMeta';
 import type { KeyOf } from '@/i18n/catalog';
 import {
   CheckSquare, Calendar, Repeat, Target, BarChart2,
-  Rocket, Star, Lightbulb, CircleDot, List,
+  Rocket, Lightbulb, CircleDot, List, Building2,
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────
-export type SectionId = 'demarrage' | 'taches' | 'listes' | 'agenda' | 'habitudes' | 'okr' | 'statistiques' | 'premium';
+export type SectionId = 'demarrage' | 'taches' | 'listes' | 'agenda' | 'habitudes' | 'okr' | 'statistiques' | 'entreprise';
 
 interface NavItem {
   id: SectionId;
@@ -36,22 +36,22 @@ export const NAV_ITEMS: NavItem[] = [
   { id: 'habitudes',    labelKey: 'nav.habitudes',    icon: <Repeat size={16} />,      color: '#eab308' },
   { id: 'okr',          labelKey: 'nav.okr',          icon: <Target size={16} />,      color: '#22c55e' },
   { id: 'statistiques', labelKey: 'nav.statistiques', icon: <BarChart2 size={16} />,   color: '#8b5cf6' },
-  { id: 'premium',      labelKey: 'nav.premium',      icon: <Star size={16} />,        color: '#eab308' },
+  { id: 'entreprise',   labelKey: 'nav.entreprise',   icon: <Building2 size={16} />,   color: '#6366f1' },
 ];
 
 // ─── Sub-components ───────────────────────────────────────────────────
 
 export const Tip: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <div className="flex gap-3 bg-[rgb(var(--color-accent-solid))]/10 border border-[rgb(var(--color-accent-solid))]/20 rounded-xl p-4 mt-6">
-    <Lightbulb size={16} className="text-blue-400 shrink-0 mt-0.5" />
-    <p className="text-sm text-blue-200 leading-relaxed">{children}</p>
+    <Lightbulb size={16} className="text-[rgb(var(--color-accent))] shrink-0 mt-0.5" />
+    <p className="text-sm text-[rgb(var(--color-text-primary))] leading-relaxed">{children}</p>
   </div>
 );
 
 export const Note: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <div className="flex gap-3 bg-slate-700/40 border border-white/8 rounded-xl p-4 mt-4">
-    <CircleDot size={15} className="text-slate-400 shrink-0 mt-0.5" />
-    <p className="text-sm text-slate-400 leading-relaxed">{children}</p>
+  <div className="flex gap-3 bg-[rgb(var(--color-hover))] border border-[rgb(var(--color-border))] rounded-xl p-4 mt-4">
+    <CircleDot size={15} className="text-[rgb(var(--color-text-muted))] shrink-0 mt-0.5" />
+    <p className="text-sm text-[rgb(var(--color-text-secondary))] leading-relaxed">{children}</p>
   </div>
 );
 
@@ -61,20 +61,20 @@ export const Step: React.FC<{ n: number; title: string; children: React.ReactNod
       {n}
     </div>
     <div>
-      <h3 className="font-semibold text-white mb-1 text-base">{title}</h3>
-      <p className="text-sm text-slate-400 leading-relaxed">{children}</p>
+      <h3 className="font-semibold text-[rgb(var(--color-text-primary))] mb-1 text-base">{title}</h3>
+      <p className="text-sm text-[rgb(var(--color-text-secondary))] leading-relaxed">{children}</p>
     </div>
   </div>
 );
 
 export const FeatureRow: React.FC<{ icon: React.ReactNode; label: string; desc: string }> = ({ icon, label, desc }) => (
-  <div className="flex items-start gap-3 py-3 border-b border-white/5 last:border-0">
-    <div className="w-8 h-8 rounded-lg bg-slate-700/60 flex items-center justify-center shrink-0 text-slate-300">
+  <div className="flex items-start gap-3 py-3 border-b border-[rgb(var(--color-border-muted))] last:border-0">
+    <div className="w-8 h-8 rounded-lg bg-[rgb(var(--color-hover))] flex items-center justify-center shrink-0 text-[rgb(var(--color-text-secondary))]">
       {icon}
     </div>
     <div>
-      <p className="text-sm font-medium text-white">{label}</p>
-      <p className="text-xs text-slate-400 mt-0.5">{desc}</p>
+      <p className="text-sm font-medium text-[rgb(var(--color-text-primary))]">{label}</p>
+      <p className="text-xs text-[rgb(var(--color-text-secondary))] mt-0.5">{desc}</p>
     </div>
   </div>
 );
@@ -85,8 +85,8 @@ export const SectionHeader: React.FC<{ id: SectionId; icon: React.ReactNode; col
       <span style={{ color }}>{icon}</span>
     </div>
     <div>
-      <h2 className="text-2xl font-bold text-white">{title}</h2>
-      <p className="text-slate-400 mt-1">{subtitle}</p>
+      <h2 className="text-2xl font-bold text-[rgb(var(--color-text-primary))]">{title}</h2>
+      <p className="text-[rgb(var(--color-text-secondary))] mt-1">{subtitle}</p>
     </div>
   </div>
 );
@@ -114,11 +114,11 @@ export function useGuideSchemas() {
       url: 'https://thecosmo.app/guide',
       inLanguage: currentInLanguage(),
       datePublished: '2025-01-01',
-      dateModified: '2026-05-31',
+      dateModified: '2026-08-30',
       author: { '@type': 'Organization', name: 'Cosmo', url: 'https://thecosmo.app' },
       publisher: { '@type': 'Organization', name: 'Cosmo', url: 'https://thecosmo.app' },
       mainEntityOfPage: 'https://thecosmo.app/guide',
-      articleSection: ['Prise en main', 'Tâches', 'Habitudes', 'Agenda', 'OKR', 'Statistiques'],
+      articleSection: ['Prise en main', 'Tâches', 'Listes', 'Agenda', 'Habitudes', 'OKR', 'Statistiques', 'Entreprise'],
     };
 
     const bc = document.createElement('script');

@@ -1,4 +1,5 @@
 import { toast } from 'sonner';
+import { deadlineFromDayKey } from '@/lib/deadline';
 import type {
   useCreateTask,
   useUpdateTask,
@@ -69,7 +70,10 @@ export function buildCreateTaskInput(
     description: formData.description.trim() || undefined,
     priority: formData.priority,
     category: formData.category,
-    deadline: formData.deadline ? new Date(formData.deadline).toISOString() : '',
+    // Le champ porte un JOUR ; on stocke l'instant de minuit dans le fuseau
+    // de la personne. `new Date(jour).toISOString()` donnait minuit UTC, donc
+    // la veille pour tout décalage négatif (risque R-01).
+    deadline: deadlineFromDayKey(formData.deadline),
     estimatedTime: Number(formData.estimatedTime),
     completed: formData.completed,
     bookmarked: formData.bookmarked,
@@ -159,7 +163,7 @@ export async function runTaskSave(deps: TaskSaveDeps) {
       description: formData.description.trim() || undefined,
       priority: formData.priority,
       category: formData.category,
-      deadline: formData.deadline ? new Date(formData.deadline).toISOString() : '',
+      deadline: deadlineFromDayKey(formData.deadline),
       estimatedTime: Number(formData.estimatedTime),
       completed: formData.completed,
       bookmarked: formData.bookmarked,

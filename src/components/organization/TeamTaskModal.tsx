@@ -588,16 +588,6 @@ const TeamTaskModal = ({
             )}
           </form>
 
-          {/* Sous-tâches (mig. 092) — édition uniquement : une sous-tâche a
-              besoin de l'id de sa tâche parente, qui n'existe pas encore en
-              création. */}
-          {!isCreating && task && (
-            <div className="px-5 pb-4 border-t border-[rgb(var(--color-border))] pt-4 space-y-4">
-              <TeamSubtasksSection taskId={task.id} />
-              <TeamTaskDependenciesSection task={task} isManager={isManager} />
-            </div>
-          )}
-
           {/* Commentaires (reco #9) — visible dès la CRÉATION (placeholder tant
               que la tâche n'existe pas), pas seulement en édition : le panneau
               assignés (à gauche) est déjà présent en création, cacher celui-ci
@@ -617,6 +607,16 @@ const TeamTaskModal = ({
             ) : (
               <PreCreateCommentComposer onSubmit={submitFirstComment} pending={pending} />
             )
+          )}
+
+          {/* Sous-tâches (mig. 092) — édition uniquement : une sous-tâche a
+              besoin de l'id de sa tâche parente, qui n'existe pas encore en
+              création. */}
+          {!isCreating && task && (
+            <div className="px-5 pb-4 border-t border-[rgb(var(--color-border))] pt-4 space-y-4">
+              <TeamSubtasksSection taskId={task.id} />
+              <TeamTaskDependenciesSection task={task} isManager={isManager} />
+            </div>
           )}
         </div>
 

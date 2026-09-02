@@ -74,16 +74,38 @@ export function downloadCSV(baseName: string, headers: string[], rows: unknown[]
 // Exports par module
 // ═══════════════════════════════════════════════════════════════════
 
+/**
+ * Tâches.
+ *
+ * ⚠️ Cinq colonnes ont été AJOUTÉES le 2026-09-02 (risque R-09) : `description`,
+ * `sous-tâches`, `récurrence`, `KR lié` et `complétée le`. Les quatre premières
+ * sont saisies par la personne, donc portables au sens de l'article 20 ; la
+ * dernière est la seule trace de QUAND le travail a été fait. Le fichier posait
+ * déjà la règle (« Toute nouvelle donnée SAISIE doit rejoindre cette
+ * fonction ») ; l'export ne la respectait pas pour les champs ajoutés depuis.
+ *
+ * Les sous-tâches sont aplaties en une cellule lisible plutôt qu'en JSON : un
+ * export de portabilité doit s'ouvrir dans un tableur, pas se parser.
+ */
 export function exportTasksCSV(tasks: Task[]): void {
-  const headers = ['ID', 'Nom', 'Catégorie', 'Priorité', 'Échéance', 'Durée (min)', 'Complétée', 'Favori', 'Créée le'];
+  const headers = [
+    'ID', 'Nom', 'Description', 'Catégorie', 'Priorité', 'Échéance',
+    'Durée (min)', 'Récurrence', 'Sous-tâches', 'KR lié',
+    'Complétée', 'Complétée le', 'Favori', 'Créée le',
+  ];
   const rows = tasks.map(t => [
     t.id,
     t.name,
+    t.description || '',
     t.category,
     t.priority,
     t.deadline,
     t.estimatedTime,
+    t.recurrence ?? 'none',
+    (t.subtasks ?? []).map(st => `${st.completed ? '[x]' : '[ ]'} ${st.name}`).join(' | '),
+    t.krId || '',
     t.completed ? 'Oui' : 'Non',
+    t.completedAt || '',
     t.bookmarked ? 'Oui' : 'Non',
     t.createdAt,
   ]);
@@ -122,16 +144,33 @@ export function exportHabitsCSV(habits: Habit[]): void {
   download(`cosmo-habitudes-${todayStr()}.csv`, rowsToCSV(headers, rows));
 }
 
+/**
+ * Événements.
+ *
+ * ⚠️ « Récurrent : Oui » ne suffisait pas à reconstituer l'agenda (R-09) : la
+ * règle de répétition, les jours cochés et les occurrences supprimées sont
+ * autant de choix de la personne. On exporte la règle elle-même, ses jours et
+ * ses exceptions, plus la tâche liée quand le créneau en planifie une.
+ */
 export function exportEventsCSV(events: CalendarEvent[]): void {
-  const headers = ['ID', 'Titre', 'Début', 'Fin', 'Couleur', 'Notes', 'Récurrent'];
+  const headers = [
+    'ID', 'Titre', 'Début', 'Fin', 'Couleur', 'Description', 'Notes',
+    'Récurrence', 'Jours de récurrence', 'Occurrences supprimées',
+    'Tâche liée', 'Privé',
+  ];
   const rows = events.map(e => [
     e.id,
     e.title,
     e.start,
     e.end,
     e.color || '',
+    e.description || '',
     e.notes || '',
-    e.recurrence ? 'Oui' : 'Non',
+    e.recurrence ?? 'none',
+    (e.recurrenceDays ?? []).join(' '),
+    (e.exceptions ?? []).join(' '),
+    e.taskId || '',
+    e.isPrivate ? 'Oui' : 'Non',
   ]);
   download(`cosmo-agenda-${todayStr()}.csv`, rowsToCSV(headers, rows));
 }
@@ -244,6 +283,14 @@ export function exportListsCSV(lists: TaskList[]): void {
  * catégories et listes manquaient. Toute nouvelle donnée SAISIE par
  * l'utilisateur doit rejoindre cette fonction, sinon l'export cesse
  * silencieusement d'être complet et la portabilité devient un mensonge.
+ */
+/**
+ * ⚠️ PLAFOND. `getAll()` passe par `fetchAllPages`, borné à `MAX_ROWS = 5000`.
+ * Au-delà, l'export est TRONQUÉ et seul un toast le signale (cf.
+ * `pagination.warning.ts`). Pour un export de portabilité, une troncature
+ * silencieuse est un défaut de conformité, pas un détail de performance :
+ * si un compte s'approche du plafond, il faut lever la borne ou exporter par
+ * lots avant de livrer le fichier.
  */
 export function exportAllCSV(data: {
   tasks: Task[];

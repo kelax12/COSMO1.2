@@ -396,7 +396,15 @@
       "Bash(xargs ls -1)",
       "Bash(grep -n -i \"three\\\\|3d\\\\|webgl\\\\|shader\\\\|typegpu\" C:/Users/Axel/.claude/skills/hyperframes-animation/SKILL.md | head -15; echo ====; grep -n -i \"three\\\\|3d\\\\|shader\\\\|particle\\\\|depth\" C:/Users/Axel/.claude/skills/hyperframes-keyframes/SKILL.md | head -10)",
       "Bash(git commit -q -m 'docs: rapport complet mode entreprise + strategie d acquisition *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(find \"C:\\\\Users\\\\Axel\\\\Documents\" -maxdepth 1 -iname \"*cockpit*\" -o -maxdepth 1 -iname \"*marketing*\" 2>/dev/null)",
+      "Bash(node -e \"const j=require\\('./src/locales/fr/landing.json'\\);const k=Object.keys\\(j\\).filter\\(x=>x.startsWith\\('enterprise.'\\)\\);for\\(const x of k\\)console.log\\(x+' :: '+JSON.stringify\\(j[x]\\)\\);\")",
+      "mcp__82902d07-1d58-4ca6-bc3b-43a823f72db8__get_git_deployment_context",
+      "mcp__82902d07-1d58-4ca6-bc3b-43a823f72db8__list_deployments",
+      "Bash(cp src/components/organization/TeamTasksToolbar.filter.test.tsx /c/Users/Axel/AppData/Local/Temp/claude/C--Users-Axel-Documents-COSMO1-1/0fb604ad-5865-4ff3-8518-295034d9bc11/scratchpad/toolbar.test.bak && git show HEAD:src/components/organization/TeamTasksToolbar.filter.test.tsx > src/components/organization/TeamTasksToolbar.filter.test.tsx && npx tsc -b 2>&1 | head -30; cp /c/Users/Axel/AppData/Local/Temp/claude/C--Users-Axel-Documents-COSMO1-1/0fb604ad-5865-4ff3-8518-295034d9bc11/scratchpad/toolbar.test.bak src/components/organization/TeamTasksToolbar.filter.test.tsx; echo RESTORED)",
+      "mcp__ed959362-2652-4902-ab10-a5e8fd99f495__list_available_accounts_or_orgs",
+      "PowerShell(gh secret list --repo kelax12/COSMO1.2)",
+      "PowerShell(gh issue list --repo kelax12/COSMO1.2 --state open --limit 10)"
     ]
   },
   "enabledMcpjsonServers": [

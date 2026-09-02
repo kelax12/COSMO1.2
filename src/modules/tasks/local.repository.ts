@@ -4,6 +4,7 @@ import { PaginationParams, PaginatedResult, DEFAULT_PAGE_SIZE } from '@/lib/pagi
 import { localizeSeed } from '@/lib/seed-i18n';
 import { reachableSets } from '@/lib/dependency-graph';
 import { TASK_DEPENDENCIES_STORAGE_KEY } from './constants';
+import { deadlineDayKey } from '@/lib/deadline';
 const STORAGE_KEY = 'cosmo_demo_tasks';
 
 // Helper pour générer des dates
@@ -146,8 +147,10 @@ export class LocalStorageTasksRepository implements ITasksRepository {
 
   async getByDate(date: string): Promise<Task[]> {
     const tasks = this.getTasks();
-    const targetDate = date.split('T')[0];
-    return tasks.filter(t => t.deadline.split('T')[0] === targetDate);
+    // `.split('T')[0]` rendait le jour UTC des deux côtés : deux instants du
+    // même jour vécu pouvaient ne pas se répondre (risque R-01).
+    const targetDate = deadlineDayKey(date);
+    return tasks.filter(t => deadlineDayKey(t.deadline) === targetDate);
   }
 
   async getFiltered(filters: TaskFilters): Promise<Task[]> {
