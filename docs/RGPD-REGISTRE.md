@@ -137,12 +137,32 @@ Dix traitements, sur 47 tables applicatives, **toutes protégées par Row Level 
 
 - **Finalité** : comprendre la fréquentation des pages publiques.
 - **Base légale** : **consentement** (art. 6.1.a et art. 82 loi Informatique et Libertés).
-- **Données** : adresse de la page, page référente, adresse IP, navigateur. **Sans cookie.**
+- **Données** : adresse de la page, page référente, adresse IP, navigateur, indicateurs
+  d'engagement (profondeur de défilement, temps passé, clics sur liens et boutons), et un
+  **identifiant aléatoire déposé dans le `localStorage`** du navigateur (`_a_cid`), qui permet
+  de rattacher les pages d'une même visite.
+  > ⚠️ **Ne pas réécrire « sans cookie » ici.** La mention y a figuré jusqu'au 2026-09-01 et
+  > elle était trompeuse : `localStorage` n'est effectivement pas un cookie, mais l'art. 82
+  > couvre toute information déposée sur le terminal, et un identifiant persistant est
+  > exactement ce que la personne a le droit de connaître. Une formulation littéralement vraie
+  > qui laisse croire à l'absence de traceur est une formulation fausse.
 - **Sous-traitants** : Vesk, Vercel Analytics.
 - **Recueil du consentement** : bandeau. **Rien n'est chargé tant que la personne n'a pas
   accepté**, et un refus ne charge jamais rien. Le choix est conservé sur l'appareil.
-- **Périmètre** : pages publiques uniquement. Le script n'est jamais monté sur une session
-  ouverte, pour qu'un compromis du fournisseur ne puisse pas lire un jeton de session.
+- **Périmètre** : pages de contenu public uniquement. Le script n'est jamais monté sur une
+  session ouverte, pour qu'un compromis du fournisseur ne puisse pas lire un jeton de session,
+  **ni sur une page portant un formulaire d'identifiants** (création de compte, connexion,
+  réinitialisation, invitation).
+  > 🔴 **Cette dernière exclusion est une garde de conformité, pas un détail d'implémentation.**
+  > Le script de Vesk contient un `tryIdentify()` qui lit les champs d'un formulaire
+  > d'inscription et en extrait l'**adresse email** et le **nom** pour les envoyer au
+  > fournisseur (détecté le 2026-09-01 par `vendor-watch.yml`). Ces données ne relèvent pas de
+  > la mesure d'audience et **ne sont pas couvertes par le consentement recueilli ici**. La
+  > seule chose qui les empêche d'être transmises est que le script n'est pas chargé sur ces
+  > pages : `CREDENTIAL_FORM_SEGMENTS` dans `src/lib/audience.ts`, verrouillé par
+  > `src/lib/audience.test.ts`. Retirer cette exclusion rendrait ce traitement non conforme.
+- **Point ouvert** : aucun DPA (art. 28) n'a été signé avec Vesk. À obtenir — cf. T-43 de la
+  roadmap, dont la liste ne le mentionnait pas.
 
 ## T9 · Supervision technique
 

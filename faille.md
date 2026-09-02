@@ -421,14 +421,34 @@ script, aucune lecture de `document.cookie`, aucun accès aux champs mot de pass
 obfuscation `atob`. L'endpoint est dérivé de l'origine du script lui-même, et la CSP borne
 `connect-src`.
 
-**🔴 Reste à arbitrer par Axel**, et ce n'est pas une décision technique :
-1. garder ce fournisseur tel quel, la capture étant désormais hors de portée ; **ou**
-2. lui demander de désactiver l'identification ; **ou**
-3. mettre le registre et la politique de confidentialité en conformité avec ce que le script
-   fait réellement.
+**✅ Arbitré par Axel le 2026-09-01 — option A : on garde Vesk, et on met la déclaration en
+conformité.** Motif : Vercel reste le tableau de bord de référence, et les indicateurs
+d'engagement de Vesk gardent leur valeur pour la phase d'acquisition qui commence.
 
-⚠️ Vesk **n'est pas** dans la liste des DPA à collecter (T-43 : Supabase, Vercel, Sentry, Stripe,
-Resend). Un sous-traitant qui reçoit de la donnée personnelle en a besoin d'un.
+Fait dans la foulée :
+
+- `docs/RGPD-REGISTRE.md` §T8 — les données déclarées incluent désormais les indicateurs
+  d'engagement **et l'identifiant persistant `_a_cid`**. La mention « sans cookie » a été
+  retirée, avec la raison écrite sur place : littéralement vraie, elle laissait croire à
+  l'absence de traceur. L'exclusion des pages d'identifiants y est inscrite comme **garde de
+  conformité**, pas comme détail d'implémentation.
+- `PolitiqueConfidentialitePage.tsx` — trois corrections. La page affirmait « Vesk n'écrit rien
+  sur votre appareil » (faux), rangeait la mesure sous l'**intérêt légitime** en §5 alors que
+  §7 et le registre disent consentement (deux sections du même document se contredisaient), et
+  sa section Cookies ne distinguait pas le strictement nécessaire de ce qui exige un accord.
+  Les pages exclues de la mesure sont maintenant nommées pour le visiteur. Une phrase cassée
+  qui traînait a été réparée au passage.
+- `docs/ROADMAP-60J.md` T-43 — **Vesk ajouté à la liste des DPA à collecter**, dont il était
+  absent. Un sous-traitant qu'on oublie de lister est un sous-traitant sans contrat.
+
+**🔴 Ce qui reste, et qui n'appartient qu'à Axel : obtenir le DPA de Vesk** (art. 28). Tant
+qu'il manque, ce traitement s'appuie sur un sous-traitant sans contrat de sous-traitance.
+
+⚠️ **Et la vraie leçon de ce finding n'est pas Vesk.** `vendor-watch.yml` a fait exactement son
+travail et a échoué chaque jour pendant quatre jours sans que personne ne le lise. Le prochain
+changement de ce script sera détecté de la même façon — **et ne servira à rien si l'alerte n'est
+pas lue.** Une garde planifiée sans destinataire n'est pas une garde. `OPS_ALERT_WEBHOOK_URL`
+existe depuis le 2026-08-29 : y router les échecs de `vendor-watch` fermerait ce trou.
 
 ---
 

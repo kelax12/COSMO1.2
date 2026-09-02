@@ -30,7 +30,7 @@ const PolitiqueConfidentialitePage: React.FC = () => {
         </button>
 
         <h1 className="text-3xl sm:text-4xl font-bold mb-2 text-white">Politique de confidentialité</h1>
-        <p className="text-slate-400 mb-10">Dernière mise à jour : 28 août 2026</p>
+        <p className="text-slate-400 mb-10">Dernière mise à jour : 2 septembre 2026</p>
 
         <Section title="1. Responsable du traitement">
           <p>
@@ -58,11 +58,25 @@ const PolitiqueConfidentialitePage: React.FC = () => {
             </li>
           </ul>
           <p className="mt-3">
-            <strong className="text-white">Mesure d'audience :</strong> Cosmo utilise Vesk, un outil de mesure d'audience
-            sans cookie. Vesk n'écrit rien sur votre appareil et ne construit aucun profil publicitaire. Il enregistre, à
-            chaque page consultée, l'adresse de la page, la page d'où vous venez, votre adresse IP et votre navigateur
-            l'adresse IP et le navigateur sont des données personnelles, même sans cookie. Ces données ne sont pas
-            rattachées à votre compte Cosmo et ne sont jamais recoupées avec vos tâches, habitudes ou OKR.
+            <strong className="text-white">Mesure d'audience :</strong> Cosmo utilise Vesk, un outil de mesure
+            d'audience, chargé uniquement si vous l'acceptez. Il enregistre, à chaque page consultée, l'adresse de la
+            page, la page d'où vous venez, votre adresse IP, votre navigateur, ainsi que des indicateurs d'engagement
+            (profondeur de défilement, temps passé, clics sur les liens et boutons). Il ne construit aucun profil
+            publicitaire.
+          </p>
+          <p className="mt-3">
+            <strong className="text-white">Identifiant de mesure :</strong> Vesk enregistre sur votre appareil, dans le
+            stockage local du navigateur, un identifiant aléatoire qui permet de reconnaître une même visite d'une page
+            à l'autre. Ce n'est pas un cookie, mais c'est bien une information déposée sur votre équipement : elle n'est
+            donc écrite qu'après votre acceptation, et vous pouvez l'effacer à tout moment en vidant les données de
+            site de votre navigateur. L'adresse IP, le navigateur et cet identifiant sont des données personnelles.
+            Ces données ne sont pas rattachées à votre compte Cosmo et ne sont jamais recoupées avec vos tâches,
+            habitudes ou OKR.
+          </p>
+          <p className="mt-3">
+            <strong className="text-white">Pages exclues de la mesure :</strong> la mesure d'audience n'est jamais
+            chargée sur les pages où vous saisissez des identifiants (création de compte, connexion, réinitialisation
+            de mot de passe, acceptation d'une invitation), ni sur aucun écran de l'application une fois connecté.
           </p>
           <p className="mt-3 text-slate-400 text-sm">
             Aucun autre outil de tracking tiers (Google Analytics, Mixpanel, Hotjar, etc.) n'est utilisé, et aucune donnée
@@ -97,8 +111,8 @@ const PolitiqueConfidentialitePage: React.FC = () => {
           <p>Le traitement de vos données repose sur :</p>
           <ul className="list-disc list-inside space-y-1 mt-2">
             <li><strong className="text-white">Exécution du contrat</strong> pour toutes les données nécessaires au fonctionnement du service</li>
-            <li><strong className="text-white">Intérêt légitime</strong> pour la sécurité de l'application et pour la mesure d'audience sans cookie (Vesk), limitée à des statistiques de fréquentation</li>
-            <li><strong className="text-white">Consentement</strong> pour les cookies non essentiels (si applicable)</li>
+            <li><strong className="text-white">Intérêt légitime</strong> pour la sécurité et la continuité de l'application</li>
+            <li><strong className="text-white">Consentement</strong> pour la mesure d'audience (Vesk et Vercel Analytics) et pour tout dépôt d'information sur votre appareil qui n'est pas strictement nécessaire au service. Rien n'est chargé tant que vous n'avez pas accepté, et un refus ne charge jamais rien. Vous pouvez revenir sur ce choix à tout moment</li>
           </ul>
         </Section>
 
@@ -128,7 +142,7 @@ const PolitiqueConfidentialitePage: React.FC = () => {
             <li><strong className="text-white">Sentry</strong> : détection des erreurs techniques. Les adresses email et les identifiants sont retirés automatiquement avant l'envoi</li>
             <li><strong className="text-white">Stripe</strong> : traitement sécurisé des paiements</li>
             <li><strong className="text-white">Google</strong> : uniquement si vous utilisez la connexion Google OAuth</li>
-            <li><strong className="text-white">Vesk</strong> : mesure d'audience sans cookie (adresse de la page, page référente, adresse IP, navigateur), chargée uniquement si vous l'acceptez</li>
+            <li><strong className="text-white">Vesk</strong> : mesure d'audience (adresse de la page, page référente, adresse IP, navigateur, indicateurs d'engagement, et un identifiant aléatoire déposé dans le stockage local du navigateur), chargée uniquement si vous l'acceptez et jamais sur les pages de saisie d'identifiants</li>
           </ul>
           <p className="mt-3">Aucune donnée n'est vendue à des tiers. Aucun partage à des fins publicitaires ou marketing.</p>
         </Section>
@@ -183,19 +197,32 @@ const PolitiqueConfidentialitePage: React.FC = () => {
           </p>
         </Section>
 
-        <Section title="10. Cookies">
-          <p>Cosmo utilise uniquement des cookies <strong className="text-white">strictement nécessaires</strong> au fonctionnement :</p>
+        <Section title="10. Cookies et informations stockées sur votre appareil">
+          <p>
+            Les éléments suivants sont <strong className="text-white">strictement nécessaires</strong> au
+            fonctionnement, et déposés sans votre consentement parce que le service ne peut pas s'en passer :
+          </p>
           <ul className="list-disc list-inside space-y-1 mt-2">
             <li>Cookie de session Supabase (authentification)</li>
             <li>Préférences de l'interface stockées en localStorage (thème, filtres)</li>
-            <li>Choix du consentement cookie stocké en localStorage</li>
+            <li>Choix du consentement stocké en localStorage — c'est lui qui nous permet de respecter votre refus</li>
+          </ul>
+          <p className="mt-3">
+            Les éléments suivants ne sont déposés{' '}
+            <strong className="text-white">qu'après votre acceptation</strong> :
+          </p>
+          <ul className="list-disc list-inside space-y-1 mt-2">
+            <li>
+              Un identifiant aléatoire déposé par Vesk dans le stockage local du navigateur, pour reconnaître une même
+              visite d'une page à l'autre
+            </li>
           </ul>
           <p className="mt-2 text-slate-400 text-sm">
-            Aucun cookie publicitaire ou de tracking tiers n'est déposé sur votre appareil.
+            Aucun cookie publicitaire n'est déposé sur votre appareil, et aucune donnée n'est utilisée à des fins
+            publicitaires.
           </p>
           <p className="mt-2 text-slate-400 text-sm">
-            Nos deux outils de mesure d'audience (Vesk et Vercel Analytics) fonctionnent sans cookie.
-            Nous avons néanmoins choisi de les soumettre à votre consentement :{' '}
+            Nos deux outils de mesure d'audience (Vesk et Vercel Analytics) sont soumis à votre consentement :{' '}
             <strong className="text-white">ils ne sont chargés que si vous cliquez sur « Accepter »</strong>{' '}
             dans le bandeau. Tant que vous n'avez pas répondu, rien n'est chargé, et si vous refusez,
             ils ne le sont jamais. Votre choix est conservé sur votre appareil et vous pouvez en changer

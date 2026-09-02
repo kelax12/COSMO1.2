@@ -104,10 +104,19 @@ const CookieBanner: React.FC = () => {
                 </span>
               </div>
 
+              {/* 🔴 Ce texte est la surface de RECUEIL du consentement : il doit
+                  décrire ce que « Accepter » déclenche, sinon le consentement
+                  n'est pas éclairé (art. 82 loi I&L, art. 4.11 RGPD).
+                  Il annonçait « uniquement des cookies strictement nécessaires »
+                  alors qu'accepter charge Vesk et Vercel Analytics, et dépose un
+                  identifiant persistant : la phrase décrivait le cas du REFUS et
+                  la proposait comme description de l'acceptation.
+                  Une clé = une phrase complète : l'ancienne version concaténait
+                  trois fragments traduits, ce qui rend toute relecture juridique
+                  impossible dans une autre langue. */}
               <p className="text-[13px] text-[rgb(var(--color-text-muted))] leading-relaxed">
-                {t('cookies.onlyCookies')}
-                <strong className="text-[rgb(var(--color-text-primary))] font-semibold">{t('cookies.strictlyNecessary')}</strong>
-                {t('cookies.purpose')}
+                {t('cookies.body')}{' '}
+                {t('cookies.ifYouRefuse')}{' '}
                 {/* A11y: links inside text blocks need a non-color affordance
                     (WCAG 1.4.1). underline is always on, not only :hover. */}
                 <Link
