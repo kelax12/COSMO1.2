@@ -168,3 +168,44 @@ describe('consentement aux traceurs', () => {
     expect(shouldLoadAudienceScript({ pathname: '/', storage })).toBe(false);
   });
 });
+
+// ═══════════════════════════════════════════════════════════════════
+// Régression du 2026-09-01 — le script ne doit JAMAIS tourner sur une
+// page où l'on saisit son email.
+//
+// `vendor-watch.yml` a détecté que le script servi avait changé. Sa
+// nouvelle version contient un `tryIdentify()` qui lit les champs d'un
+// formulaire d'inscription, en extrait l'ADRESSE EMAIL et le NOM, et les
+// envoie au fournisseur — déclenché sur `submit` ET sur un clic qui
+// ressemble à une inscription, donc dans une SPA comme la nôtre.
+//
+// Le registre RGPD (art. 30, §T8) ne déclare que « adresse de la page,
+// page référente, adresse IP, navigateur ». Un consentement recueilli
+// pour une mesure d'audience ne couvre pas l'identité de la personne.
+//
+// Ces pages sont publiques et sans session : les trois conditions de
+// chargement étaient réunies. Ce test est le cliquet.
+// ═══════════════════════════════════════════════════════════════════
+describe('pages à formulaire d’identifiants', () => {
+  const consenti = {
+    length: 0,
+    key: () => null,
+    getItem: (k: string) => (k === 'cosmo_cookie_consent' ? 'accepted' : null),
+  };
+
+  it('ne monte jamais la mesure là où l’on saisit un email', () => {
+    for (const p of [
+      '/signup', '/login', '/forgot-password', '/reset-password',
+      '/invite/abc123', '/org-invite/abc123',
+      '/en/signup', '/en/login', // le préfixe de locale ne doit pas rouvrir la porte
+    ]) {
+      expect(shouldLoadAudienceScript({ pathname: p, storage: consenti })).toBe(false);
+    }
+  });
+
+  it('mesure toujours les pages de contenu, qui sont la finalité déclarée', () => {
+    for (const p of ['/', '/blog', '/blog/mon-article', '/guide', '/a-propos', '/en/blog']) {
+      expect(shouldLoadAudienceScript({ pathname: p, storage: consenti })).toBe(true);
+    }
+  });
+});

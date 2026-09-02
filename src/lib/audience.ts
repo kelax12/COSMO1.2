@@ -44,6 +44,34 @@ export const AUTHENTICATED_SEGMENTS: readonly string[] = [
   'statistics', 'settings', 'entreprise', 'admin', 'premium',
 ];
 
+/**
+ * Pages PUBLIQUES portant un formulaire d'identifiants. Le script de mesure
+ * n'y est jamais monté.
+ *
+ * 🔴 POURQUOI (2026-09-01, trouvé par `vendor-watch.yml`) : le script servi a
+ * changé, et sa nouvelle version contient un `tryIdentify()` qui lit les
+ * champs d'un formulaire d'inscription, en extrait l'ADRESSE EMAIL et le NOM,
+ * et les envoie à `vesk.dev`. Il se déclenche sur `submit`, et aussi sur un
+ * clic qui « ressemble » à une inscription — donc dans une SPA sans submit
+ * natif, ce qui est exactement notre cas.
+ *
+ * Or le registre (art. 30, `docs/RGPD-REGISTRE.md` §T8) déclare pour ce
+ * traitement : « adresse de la page, page référente, adresse IP, navigateur ».
+ * Ni email ni nom. Un consentement recueilli pour une MESURE D'AUDIENCE ne
+ * couvre pas la transmission de l'identité de la personne à un tiers.
+ *
+ * Ces pages étant publiques et sans session, les trois conditions de
+ * `shouldLoadAudienceScript` étaient réunies : le script tournait bel et bien
+ * là où l'on saisit son email. On aligne donc le code sur ce qui est déclaré,
+ * plutôt que l'inverse. La mesure garde tout son sens : elle porte sur la
+ * landing, le blog, le guide et les cas d'usage — la fréquentation, qui est
+ * la finalité déclarée. Un formulaire de connexion n'a jamais été une page
+ * dont on mesure l'audience.
+ */
+export const CREDENTIAL_FORM_SEGMENTS: readonly string[] = [
+  'signup', 'login', 'forgot-password', 'reset-password', 'invite', 'org-invite',
+];
+
 /** Retire un éventuel préfixe de locale (`/en/tasks` → `/tasks`). */
 export function stripLocale(pathname: string): string {
   const [, first = '', ...rest] = pathname.split('/');
@@ -57,6 +85,19 @@ export function stripLocale(pathname: string): string {
 export function isPublicPath(pathname: string): boolean {
   const segment = stripLocale(pathname).split('/')[1] ?? '';
   return !AUTHENTICATED_SEGMENTS.includes(segment);
+}
+
+/**
+ * `true` si le chemin porte un formulaire d'identifiants.
+ *
+ * Volontairement SÉPARÉ de `isPublicPath` : `/login` est bel et bien une page
+ * publique, et le rester est utile ailleurs. Ce sont deux questions
+ * différentes — « est-ce hors de l'app ? » et « y saisit-on son email ? » — et
+ * les fondre dans un seul prédicat rendait le nom faux.
+ */
+export function hasCredentialForm(pathname: string): boolean {
+  const segment = stripLocale(pathname).split('/')[1] ?? '';
+  return CREDENTIAL_FORM_SEGMENTS.includes(segment);
 }
 
 /**
@@ -85,11 +126,14 @@ export function hasPersistedSession(storage: Pick<Storage, 'key' | 'length'>): b
 /**
  * Décision complète : charge-t-on le script de mesure ?
  *
- * TROIS conditions cumulatives, dont la première est juridique et les deux
- * autres techniques :
+ * QUATRE conditions cumulatives, dont les deux premières sont juridiques et
+ * les deux autres techniques :
  *   1. l'utilisateur a explicitement ACCEPTÉ les traceurs (art. 82 loi I&L) ;
- *   2. on est sur une page publique ;
- *   3. aucune session n'est persistée.
+ *   2. la page ne porte pas de formulaire d'identifiants (le script y
+ *      capterait email et nom, non déclarés au registre — cf.
+ *      `CREDENTIAL_FORM_SEGMENTS`) ;
+ *   3. on est sur une page publique ;
+ *   4. aucune session n'est persistée.
  *
  * L'ordre compte pour la lecture, pas pour l'exécution : le consentement est
  * cité en premier parce qu'il prime. Sans réponse de l'utilisateur, `null`
@@ -101,6 +145,7 @@ export function shouldLoadAudienceScript(input: {
 }): boolean {
   return (
     hasConsented(input.storage)
+    && !hasCredentialForm(input.pathname)
     && isPublicPath(input.pathname)
     && !hasPersistedSession(input.storage)
   );
