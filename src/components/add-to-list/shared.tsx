@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
+import { useT } from '@/i18n/useT';
 
 export type AddToListModalProps = {
   isOpen: boolean;
@@ -55,7 +56,12 @@ export const InlineForm: React.FC<{
   onSave: (name: string, color: string) => void;
   onCancel: () => void;
   saveLabel?: string;
-}> = ({ initialName = '', initialColor = 'blue', onSave, onCancel, saveLabel = 'Créer' }) => {
+}> = ({ initialName = '', initialColor = 'blue', onSave, onCancel, saveLabel }) => {
+  const { t } = useT('tasks');
+  const { t: tCommon } = useT('common');
+  // `saveLabel` reste surchargeable ; son defaut vient du catalogue et non de
+  // la signature, ou il serait fige en francais.
+  const saveText = saveLabel ?? t('addToList.create');
   const [name, setName] = useState(initialName);
   const [color, setColor] = useState(initialColor);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -80,7 +86,7 @@ export const InlineForm: React.FC<{
           if (e.key === 'Enter' && name.trim()) onSave(name.trim(), color);
           if (e.key === 'Escape') onCancel();
         }}
-        placeholder="Nom de la liste"
+        placeholder={t('addToList.namePlaceholder')}
         className="w-full h-11 px-3 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-hover))] text-sm font-medium focus:outline-none focus:border-[rgb(var(--color-accent-solid))] focus:ring-2 focus:ring-blue-500/20 text-[rgb(var(--color-text-primary))] placeholder:text-[rgb(var(--color-text-muted))] transition-all"
       />
       <ColorRow selected={color} onChange={setColor} />
@@ -90,7 +96,7 @@ export const InlineForm: React.FC<{
           onClick={onCancel}
           className="flex-1 min-h-9 rounded-lg border border-[rgb(var(--color-border))] text-sm font-medium text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] transition-colors"
         >
-          Annuler
+          {tCommon('actions.cancel')}
         </button>
         <button
           type="button"
@@ -98,7 +104,7 @@ export const InlineForm: React.FC<{
           disabled={!name.trim()}
           className="flex-1 min-h-9 rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] disabled:opacity-40 disabled:cursor-not-allowed text-sm font-semibold text-[rgb(var(--color-accent-solid-foreground))] transition-colors"
         >
-          {saveLabel}
+          {saveText}
         </button>
       </div>
     </motion.div>

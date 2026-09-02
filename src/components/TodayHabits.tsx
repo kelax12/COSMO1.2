@@ -51,8 +51,8 @@ const TodayHabits: React.FC = () => {
       <div className="card card-plain-mobile p-gutter md:p-6">
         <div className="flex items-center gap-3 mb-6">
           <div>
-            <h2 className="text-xl font-bold text-[rgb(var(--color-text-primary))]">Habitudes du jour</h2>
-            <p className="text-[rgb(var(--color-text-secondary))] text-sm">Chargement...</p>
+            <h2 className="text-xl font-bold text-[rgb(var(--color-text-primary))]">{t('todayHabits.heading')}</h2>
+            <p className="text-[rgb(var(--color-text-secondary))] text-sm">{t('todayHabits.loading')}</p>
           </div>
         </div>
         <div className="animate-pulse space-y-4">

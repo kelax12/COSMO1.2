@@ -21,7 +21,13 @@ import {
 
 export interface SnoozeOption {
   id: 'tomorrow' | 'weekend' | 'next-week';
-  label: string;
+  /**
+   * Clé du catalogue `tasks`, jamais la phrase.
+   *
+   * ⚠️ Ce module est pur et appelé hors rendu : y écrire « Demain » figeait le
+   * libellé en français pour toute la session, quelle que soit la langue.
+   */
+  labelKey: 'snooze.tomorrow' | 'snooze.weekend' | 'snooze.nextWeek';
   /** Instant à stocker (minuit du jour visé, dans le fuseau de la personne). */
   deadline: string;
 }
@@ -38,8 +44,8 @@ export function getSnoozeOptions(
 ): SnoozeOption[] {
   const today = todayKeyInTz(pref, now);
   return [
-    { id: 'tomorrow', label: 'Demain', deadline: deadlineFromDayKey(addDaysToKey(today, 1), pref) },
-    { id: 'weekend', label: 'Ce week-end', deadline: deadlineFromDayKey(nextWeekdayKey(today, 6), pref) },
-    { id: 'next-week', label: 'Semaine prochaine', deadline: deadlineFromDayKey(nextWeekdayKey(today, 1), pref) },
+    { id: 'tomorrow', labelKey: 'snooze.tomorrow', deadline: deadlineFromDayKey(addDaysToKey(today, 1), pref) },
+    { id: 'weekend', labelKey: 'snooze.weekend', deadline: deadlineFromDayKey(nextWeekdayKey(today, 6), pref) },
+    { id: 'next-week', labelKey: 'snooze.nextWeek', deadline: deadlineFromDayKey(nextWeekdayKey(today, 1), pref) },
   ];
 }

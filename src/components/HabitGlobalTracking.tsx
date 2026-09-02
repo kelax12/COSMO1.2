@@ -8,10 +8,12 @@ import { useT } from '@/i18n/useT';
 
 type PeriodType = 'week' | 'month' | 'all';
 
-const periodOptions: { value: PeriodType; label: string; days: number }[] = [
-  { value: 'week', label: 'Semaine', days: 7 },
-  { value: 'month', label: 'Mois', days: 30 },
-  { value: 'all', label: 'Tout', days: 0 },
+// Les libelles vivent dans le catalogue, pas ici : une constante de module fige
+// la langue au premier import. Seule la structure (valeur, fenetre) reste fixe.
+const periodOptions: { value: PeriodType; labelKey: 'period.week' | 'period.month' | 'period.all'; days: number }[] = [
+  { value: 'week', labelKey: 'period.week', days: 7 },
+  { value: 'month', labelKey: 'period.month', days: 30 },
+  { value: 'all', labelKey: 'period.all', days: 0 },
 ];
 
 const getSuccessColor = (percentage: number): string => {
@@ -143,7 +145,7 @@ const HabitGlobalTracking: React.FC = () => {
 
   const getPeriodLabel = (): string => {
     if (period === 'week')
-      return `Semaine du ${formatDate(currentDate, { day: 'numeric', month: 'short' })}`;
+      return t('period.weekOf', { date: formatDate(currentDate, { day: 'numeric', month: 'short' }) });
     if (period === 'month')
       return formatDate(currentDate, { month: 'long', year: 'numeric' });
     return t('table.sinceCreation');
@@ -153,7 +155,7 @@ const HabitGlobalTracking: React.FC = () => {
     return (
       <div className="card p-12 text-center">
         <p style={{ color: 'rgb(var(--color-text-secondary))' }}>
-          Créez des habitudes pour voir le suivi global
+          {t('globalTracking.empty')}
         </p>
       </div>
     );
@@ -239,7 +241,7 @@ const HabitGlobalTracking: React.FC = () => {
                   color: period === opt.value ? 'white' : 'rgb(var(--color-text-secondary))',
                 }}
               >
-                {opt.label}
+                {t(opt.labelKey)}
               </button>
             ))}
           </div>

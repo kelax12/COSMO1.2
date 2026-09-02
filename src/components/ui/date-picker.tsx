@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { useT } from '@/i18n/useT'
 import { format } from "date-fns"
 import { getDateLocale } from '@/i18n/format';
 import { CalendarIcon } from "lucide-react"
@@ -128,7 +129,7 @@ interface DatePickerProps {
 export function DatePicker({
   value,
   onChange,
-  placeholder = "Sélectionner une date",
+  placeholder,
   className,
   allowClear = true,
   displayFormat = "dd/MM/yyyy",
@@ -137,6 +138,9 @@ export function DatePicker({
   id,
   minDate,
 }: DatePickerProps) {
+  const { t } = useT('common')
+  // Defaut traduit au rendu : dans la signature, il serait fige en francais.
+  const placeholderText = placeholder ?? t('datePicker.placeholder')
   const [open, setOpen] = React.useState(false)
 
   const selectedDate = value ? new Date(value + "T12:00:00") : undefined
@@ -167,7 +171,7 @@ export function DatePicker({
           <span>
             {selectedDate
               ? format(selectedDate, displayFormat, { locale: getDateLocale() })
-              : placeholder}
+              : placeholderText}
           </span>
           <CalendarIcon size={16} className="shrink-0" style={{ color: 'rgb(var(--color-text-muted))' }} />
         </button>

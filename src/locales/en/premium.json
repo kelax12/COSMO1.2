@@ -29,7 +29,12 @@
     "alreadySubscribed": "You already have an active subscription.",
     "paymentError": "Something went wrong starting the payment. Please try again.",
     "dayCredited": "+1 Premium day credited!",
-    "creditError": "Couldn't credit your day"
+    "creditError": "Couldn't credit your day",
+    "signInAgain": "Please sign in again.",
+    "dailyAdLimit": "Daily ad limit reached (20 a day). Come back tomorrow, or go Premium.",
+    "getOneDay": "Get one Premium day",
+    "subscribe30": "Subscribe for 30 days of full Premium.",
+    "freeEarnDay": "Free · Earn +1 Premium day"
   },
   "gate": {
     "defaultFeature": "this feature",
@@ -43,7 +48,10 @@
     "or": "or",
     "subscribe": "Subscribe",
     "subscribeHint": "30 full Premium days, no ads",
-    "perMonth": "/month"
+    "perMonth": "/month",
+    "dailyAdLimit": "Daily ad limit reached (20 a day). Come back tomorrow, or go Premium.",
+    "signInAgain": "Please sign in again.",
+    "unlock": "Unlock **{{feature}}** by watching a free ad, or by subscribing."
   },
   "ad": {
     "sponsored": "Sponsored ad",

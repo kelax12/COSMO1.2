@@ -6,6 +6,7 @@
 import { useCallback, useState } from 'react';
 import { isPast, isToday, parseISO } from 'date-fns';
 import type { TeamActivityField, TeamTask, TeamTaskStatus } from '@/modules/team-projects';
+import { translator } from '@/i18n/useT';
 
 // ─── Couleurs de projet (champ TeamProject.color) ────────────────────
 
@@ -58,12 +59,27 @@ export const myAssignedTasks = (tasks: TeamTask[], userId: string): TeamTask[] =
 
 // ─── Priorités (1..5) ────────────────────────────────────────────────
 
-export const PRIORITY_META: Record<number, { dot: string; label: string }> = {
-  1: { dot: 'bg-red-500', label: 'P1 · Critique' },
-  2: { dot: 'bg-amber-500', label: 'P2 · Haute' },
-  3: { dot: 'bg-blue-500', label: 'P3 · Normale' },
-  4: { dot: 'bg-sky-400', label: 'P4 · Basse' },
-  5: { dot: 'bg-slate-400', label: 'P5 · Très basse' },
+// ⚠️ `labelKey`, pas `label` : ce module est importé par cinq écrans, et un
+// libellé écrit ici serait figé dans la langue du premier import.
+/**
+ * Libelle traduit d'une priorite — fonction, pas hook.
+ *
+ * Huit ecrans affichent cette pastille. Leur faire declarer chacun un
+ * `useT('common')` pour une seule chaine ajoutait une ligne a des fichiers deja
+ * hors budget, et repetait la resolution de la cle huit fois. `translator` lit
+ * la locale COURANTE a chaque appel : appele pendant le rendu, il rend la bonne
+ * langue, et la langue ne change pas sans rechargement complet (le prefixe de
+ * locale est porte par le `basename` du routeur, fige au montage).
+ */
+export const priorityLabelOf = (p: number): string =>
+  translator('common').t((PRIORITY_META[p] ?? PRIORITY_META[3]).labelKey);
+
+export const PRIORITY_META: Record<number, { dot: string; labelKey: 'priority.dotP1' | 'priority.dotP2' | 'priority.dotP3' | 'priority.dotP4' | 'priority.dotP5' }> = {
+  1: { dot: 'bg-red-500', labelKey: 'priority.dotP1' },
+  2: { dot: 'bg-amber-500', labelKey: 'priority.dotP2' },
+  3: { dot: 'bg-blue-500', labelKey: 'priority.dotP3' },
+  4: { dot: 'bg-sky-400', labelKey: 'priority.dotP4' },
+  5: { dot: 'bg-slate-400', labelKey: 'priority.dotP5' },
 };
 
 // ─── Tâches : retard, tri, stats ─────────────────────────────────────

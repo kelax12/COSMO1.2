@@ -15,6 +15,7 @@ import {
 import { taskKeys } from '@/modules/tasks';
 import { isImageAvatar, isEmojiAvatar } from '@/lib/avatar';
 import { useT } from '@/i18n/useT';
+import { RichText } from '@/components/ui/rich-text';
 
 /**
  * Monté au niveau App (comme CookieBanner) : dès que l'utilisateur est
@@ -150,9 +151,9 @@ const ShareInviteClaimer: React.FC = () => {
                 {t('shareInvite.sharedWithYou')}
               </h2>
               <p className="text-sm text-[rgb(var(--color-text-secondary))] mb-6">
-                <span className="font-semibold text-[rgb(var(--color-text-primary))]">{invite.owner_name}</span>
-                {' '}vous propose de collaborer sur{' '}
-                <span className="font-semibold text-[rgb(var(--color-text-primary))]">« {invite.task_name} »</span>.
+                {/* Une phrase entiere : l'ordre « qui / quoi » n'est pas le
+                    meme partout, et trois fragments de JSX l'auraient fige. */}
+                <RichText>{t('shareInvite.proposes', { name: invite.owner_name, task: invite.task_name })}</RichText>
               </p>
 
               <div className="flex flex-col-reverse sm:flex-row gap-2">
@@ -162,7 +163,7 @@ const ShareInviteClaimer: React.FC = () => {
                   className="flex-1 min-h-11 px-4 py-2.5 rounded-xl text-sm font-semibold text-[rgb(var(--color-text-secondary))] border border-[rgb(var(--color-border))] hover:border-red-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
                 >
                   <span className="inline-flex items-center gap-1.5 justify-center">
-                    <X size={15} aria-hidden="true" /> Refuser
+                    <X size={15} aria-hidden="true" /> {t('actions.refuse')}
                   </span>
                 </button>
                 <button
@@ -172,7 +173,7 @@ const ShareInviteClaimer: React.FC = () => {
                 >
                   <span className="inline-flex items-center gap-1.5 justify-center">
                     {busy ? <Loader2 size={15} className="animate-spin" aria-hidden="true" /> : <Check size={15} aria-hidden="true" />}
-                    Accepter la tâche
+                    {t('shareInvite.accept')}
                   </span>
                 </button>
               </div>

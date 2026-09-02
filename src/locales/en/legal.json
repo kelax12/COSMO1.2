@@ -1,0 +1,247 @@
+{
+  "back": "Back",
+  "updated": "Last updated: {{date}}",
+  "terms": {
+    "seoTitle": "Terms of Use – Cosmo App",
+    "seoDescription": "Terms of use for Cosmo, an app for tasks, habits and OKRs. Free access, rules of use and responsibilities.",
+    "title": "Terms of Use",
+    "updatedAt": "2 September 2026",
+    "s1": {
+      "title": "1. Purpose",
+      "p1": "These Terms of Use govern access to and use of **Cosmo**, a web platform for managing tasks, habits, objectives (OKRs) and a calendar.",
+      "p2": "By creating an account or using Cosmo, you accept these Terms of Use in full. If you do not accept them, you must not use the application."
+    },
+    "s2": {
+      "title": "2. Access to the service",
+      "intro": "Cosmo can be accessed:",
+      "li1": "In **demo mode**, with sample data and no sign-up",
+      "li2": "In **standard mode (free)**, after creating an account",
+      "li3": "In **Premium mode**, after taking out a paid subscription",
+      "outro": "Signing up requires a valid email address and a password. You are responsible for keeping your credentials confidential."
+    },
+    "s3": {
+      "title": "3. User account",
+      "p1": "Each user may hold only one account. You undertake to provide accurate information when signing up and to keep it up to date.",
+      "p2": "Cosmo reserves the right to suspend or delete an account in the event of a breach of these Terms of Use, without notice and without compensation."
+    },
+    "s4": {
+      "title": "4. Acceptable use",
+      "intro": "When using Cosmo, you undertake not to:",
+      "li1": "Use the application for unlawful or fraudulent purposes",
+      "li2": "Attempt to compromise the security of the application or of its servers",
+      "li3": "Extract, copy or redistribute the content of the application without authorisation",
+      "li4": "Create several accounts in order to circumvent restrictions",
+      "li5": "Share your account with other people (outside the collaboration features provided)",
+      "li6": "Use bots or automated scripts to interact with the application"
+    },
+    "s5": {
+      "title": "5. Paid subscription",
+      "intro": "Cosmo's company workspace comes in several plans, one of which is free. Paid plans differ in the number of members allowed in the organisation. Current prices are shown in the application and on the presentation page.",
+      "li1": "**All prices include tax**: the amount displayed is the amount charged",
+      "li2": "Payment is processed securely through **Stripe**. Cosmo never has access to your bank details",
+      "li3": "The subscription is taken out by the owner of the organisation, on behalf of the whole organisation",
+      "li4": "It renews automatically at the chosen frequency, monthly or yearly, until it is cancelled",
+      "li5": "You can cancel it **at any time** from your company workspace, in a minimal number of steps. Cancellation takes effect at the end of the period already paid for",
+      "li6": "If your subscription stops being active, your organisation returns to the free plan. **No member is ever removed**: only the ability to add new ones is suspended"
+    },
+    "s5bis": {
+      "title": "5 bis. Right of withdrawal",
+      "p1": "If you subscribe as a consumer, you have **fourteen days** from the date of subscription to withdraw, without having to give a reason.",
+      "p2": "Because the subscription covers digital content supplied immediately, the law allows you to request that it be performed without waiting for that period to end. In that case, the checkout asks you for two separate confirmations: your **express request for immediate performance**, and your **acknowledgement that you waive** your right of withdrawal once the service has been fully supplied. Neither box is ever pre-ticked, and payment cannot be started without them.",
+      "p3": "If you do not give these confirmations, you keep your full fourteen-day period. To withdraw, simply write to us at [axellongattepro@gmail.com](mailto:axellongattepro@gmail.com) stating your request. Any refund is made within fourteen days of our receiving it at the latest."
+    },
+    "s6": {
+      "title": "6. Ownership of your data",
+      "p1": "The data you create in Cosmo (tasks, habits, objectives, events) belongs to you. Cosmo accesses it only in order to provide the service.",
+      "p2": "You can ask for your data to be exported or deleted at any time, from the settings or by contacting [axellongattepro@gmail.com](mailto:axellongattepro@gmail.com)."
+    },
+    "s7": {
+      "title": "7. Intellectual property",
+      "p1": "The Cosmo application, its source code, its design, its trade marks and its logos are the exclusive property of Cosmo. Any unauthorised reproduction or exploitation is strictly prohibited."
+    },
+    "s8": {
+      "title": "8. Availability of the service",
+      "p1": "Cosmo endeavours to keep the service available as much as possible. Interruptions may nonetheless occur for maintenance or in cases of force majeure. Cosmo does not guarantee uninterrupted availability and accepts no liability for any losses resulting from unavailability."
+    },
+    "s9": {
+      "title": "9. Limitation of liability",
+      "p1": "Cosmo is provided \"as is\", with no warranty of fitness for a particular purpose. Cosmo cannot be held liable for indirect damage, loss of data or loss of profit arising from the use of, or the inability to use, the service.",
+      "p2": "Cosmo's liability is in any event limited to the amounts paid by the user over the last 12 months.",
+      "p3": "These limitations do not apply where the law sets them aside, in particular in cases of gross negligence or wilful misconduct, nor to the **statutory guarantee of conformity and the guarantee against hidden defects** that every consumer enjoys: those remain owed in all circumstances."
+    },
+    "s10": {
+      "title": "10. Termination",
+      "p1": "You can delete your account at any time from the application settings. Deletion causes all your data to be permanently erased within 90 days.",
+      "p2": "Cosmo may terminate your access in the event of a breach of these Terms of Use, after notice by email except in an emergency."
+    },
+    "s11": {
+      "title": "11. Changes to these Terms",
+      "p1": "Cosmo reserves the right to change these Terms of Use at any time. Changes take effect as soon as they are published. In the event of a substantial change, you will be informed by email with 30 days' notice.",
+      "p2": "Continuing to use the service after a change constitutes acceptance of the new Terms of Use."
+    },
+    "s12": {
+      "title": "12. Governing law and jurisdiction",
+      "p1": "These Terms of Use are governed by French law.",
+      "p2": "**If you are a consumer**, you keep the right to bring proceedings before the courts of the place where you live, and nothing in these Terms takes that right away from you.",
+      "p3": "For disputes between Cosmo and a business, and after an attempt at amicable resolution, the courts of Paris shall have sole jurisdiction."
+    },
+    "s13": {
+      "title": "13. Language of the contract",
+      "p1": "This document is available in French and in English. **If the two versions differ, the French version prevails**: it is the original version, and French law governs the contract."
+    },
+    "s14": {
+      "title": "14. Contact",
+      "p1": "For any question about these Terms of Use: [axellongattepro@gmail.com](mailto:axellongattepro@gmail.com)"
+    }
+  },
+  "privacy": {
+    "seoTitle": "Privacy policy – Cosmo App",
+    "seoDescription": "Cosmo's privacy policy: data collected, secure Supabase storage, Row Level Security, GDPR rights and contact.",
+    "title": "Privacy policy",
+    "updatedAt": "2 September 2026",
+    "s1": {
+      "title": "1. Data controller",
+      "p1": "The controller of the personal data collected through the Cosmo application is the Cosmo team, reachable at [axellongattepro@gmail.com](mailto:axellongattepro@gmail.com)."
+    },
+    "s2": {
+      "title": "2. Data collected",
+      "intro": "While you use Cosmo, we collect only the data needed for the service to work:",
+      "li1": "**Identification data:** display name, email address, encrypted password (standard sign-up), or profile picture and Google identifier (sign-in through Google OAuth)",
+      "li2": "**Productivity data:** tasks, categories, lists, habits and their completion history, calendar events, OKRs (objectives and key results) and their progress",
+      "li3": "**Social data:** friend list, friend requests, tasks shared with other users",
+      "li4": "**Subscription data:** Premium status, tokens, subscription end date. Bank details are handled exclusively by Stripe; Cosmo has no access to them",
+      "li5": "**Technical data:** Supabase session information (authentication token, date of last sign-in)",
+      "p1": "**Audience measurement:** Cosmo uses Vesk, an audience measurement tool, loaded only if you accept it. For each page viewed it records the page address, the page you came from, your IP address, your browser, and engagement indicators (scroll depth, time spent, clicks on links and buttons). It builds no advertising profile.",
+      "p2": "**Measurement identifier:** Vesk stores a random identifier on your device, in your browser's local storage, which lets it recognise a single visit from one page to the next. It is not a cookie, but it is still information placed on your equipment: it is therefore written only after you accept, and you can erase it at any time by clearing the site data in your browser. Your IP address, your browser and this identifier are personal data. This data is not attached to your Cosmo account and is never cross-referenced with your tasks, habits or OKRs.",
+      "p3": "**Pages excluded from measurement:** audience measurement is never loaded on pages where you enter credentials (account creation, sign-in, password reset, accepting an invitation), nor on any screen of the application once you are signed in.",
+      "note": "No other third-party tracking tool (Google Analytics, Mixpanel, Hotjar, and so on) is used, and no behavioural data is collected inside the application beyond this audience measurement."
+    },
+    "s3": {
+      "title": "3. Authentication methods",
+      "intro": "Cosmo offers two ways to sign in:",
+      "li1": "**Email and password:** your password is hashed server-side by Supabase Auth and is never stored in clear text",
+      "li2": "**Google OAuth:** by signing in through Google, you authorise Cosmo to retrieve your name, email address and profile picture from your Google account. No access to your calendar or to any other Google service is requested"
+    },
+    "s4": {
+      "title": "4. Purposes of processing",
+      "intro": "Your data is used solely to:",
+      "li1": "Create and authenticate your user account",
+      "li2": "Store and synchronise your productivity data (tasks, habits, calendar, OKRs)",
+      "li3": "Enable collaboration: task sharing, messaging and friend management",
+      "li4": "Process payments and manage your Premium subscription",
+      "li5": "Keep the application secure and working properly"
+    },
+    "s5": {
+      "title": "5. Legal basis",
+      "intro": "The processing of your data relies on:",
+      "li1": "**Performance of the contract**, for all data needed for the service to work",
+      "li2": "**Legitimate interest**, for the security and continuity of the application",
+      "li3": "**Consent**, for audience measurement (Vesk and Vercel Analytics) and for anything stored on your device that is not strictly necessary to the service. Nothing is loaded until you have accepted, and a refusal never loads anything. You can change your mind at any time"
+    },
+    "s6": {
+      "title": "6. Retention periods",
+      "li1": "Account and content data: kept for as long as the account is active, then permanently deleted within 90 days of closure",
+      "li2": "Session tokens: expire automatically according to the Supabase configuration",
+      "li3": "**Demo visit** (device identifier, set before any account is created): **90 days** if the visit does not lead to a sign-up, **400 days** if it does",
+      "li4": "**Activity days** (sign-in dates, used for usage statistics): **400 days**",
+      "li5": "**Technical payment markers** (identifiers of Stripe events already processed, used to avoid charging twice): **90 days**",
+      "li6": "Payment data: kept in line with legal obligations (10 years for accounting)",
+      "note": "These periods are applied automatically by the database, with no manual step. The payment journal is the exception: tax law requires it to be kept **and to remain unalterable**, so it can be neither erased nor modified, not even following a request to delete an account. Its rows contain neither your name nor your email address: they carry only a technical identifier, which stops designating anyone once your account is deleted."
+    },
+    "s7": {
+      "title": "7. Data sharing",
+      "intro": "Your data may pass through the following processors:",
+      "li1": "**Supabase**: database and authentication. Your data is hosted in the **eu-west-1 (Ireland)** region, therefore within the European Union",
+      "li2": "**Vercel**: website hosting. Processes connection data (IP address, technical logs)",
+      "li3": "**Vercel Analytics**: cookie-free audience measurement, loaded only if you accept it",
+      "li4": "**Sentry**: technical error detection. Email addresses and identifiers are stripped automatically before sending",
+      "li5": "**Stripe**: secure payment processing",
+      "li6": "**Google**: only if you use Google OAuth sign-in",
+      "li7": "**Vesk**: audience measurement (page address, referring page, IP address, browser, engagement indicators, and a random identifier stored in the browser's local storage), loaded only if you accept it and never on pages where credentials are entered",
+      "outro": "No data is sold to third parties. Nothing is shared for advertising or marketing purposes."
+    },
+    "s7bis": {
+      "title": "7 bis. Transfers outside the European Union",
+      "p1": "Your database is hosted in Ireland, therefore within the European Union, and does not leave it.",
+      "p2": "**Vercel** and **Sentry**, however, are companies established in the United States. The technical data they process on our behalf (IP address, connection logs, redacted error reports) may therefore be transferred outside the Union. Those transfers are covered by the European Commission's Standard Contractual Clauses or by an equivalent adequacy mechanism, as provided for in Articles 45 and 46 of the GDPR.",
+      "p3": "You can ask us for a copy of the applicable safeguards at the address given below."
+    },
+    "s8": {
+      "title": "8. Your rights (GDPR)",
+      "intro": "Under the General Data Protection Regulation (GDPR), you have the following rights:",
+      "li1": "**Right of access**: obtain a copy of your personal data",
+      "li2": "**Right to rectification**: correct inaccurate information from the settings",
+      "li3": "**Right to erasure**: delete your account and all your data",
+      "li4": "**Right to data portability**: export your data in a readable format",
+      "li5": "**Right to object**: object to certain processing",
+      "li6": "**Right to restriction**: restrict processing in certain cases",
+      "p1": "Portability is exercised directly from **Settings, My data tab**: the export covers your tasks, habits, events, OKRs, categories, lists and your profile, in CSV format.",
+      "p2": "For any other right: [axellongattepro@gmail.com](mailto:axellongattepro@gmail.com). We reply within **one month** of receiving your request, in accordance with Article 12 of the GDPR. That period may be extended by two months for a complex request, in which case we tell you within the first month.",
+      "p3": "You can also lodge a complaint with the **CNIL**, the French data protection authority: [www.cnil.fr](https://www.cnil.fr)"
+    },
+    "s9": {
+      "title": "9. Security",
+      "p1": "All communications between your browser and our servers are encrypted with HTTPS/TLS. Passwords are stored hashed (bcrypt, through Supabase Auth). Access to data is protected by Row Level Security (RLS) policies in the database: each user can reach only their own data."
+    },
+    "s10": {
+      "title": "10. Cookies and information stored on your device",
+      "intro": "The following are **strictly necessary** for the service to work, and are stored without your consent because the service cannot do without them:",
+      "li1": "Supabase session cookie (authentication)",
+      "li2": "Interface preferences stored in localStorage (theme, filters)",
+      "li3": "Your consent choice, stored in localStorage — it is what allows us to honour your refusal",
+      "consentIntro": "The following are stored **only after you accept**:",
+      "consentLi1": "A random identifier placed by Vesk in the browser's local storage, to recognise a single visit from one page to the next",
+      "note1": "No advertising cookie is placed on your device, and no data is used for advertising purposes.",
+      "note2": "Both of our audience measurement tools (Vesk and Vercel Analytics) require your consent: **they are loaded only if you click “Accept”** in the banner. Until you answer, nothing is loaded, and if you refuse, they never are. Your choice is kept on your device and you can change it by clearing the site data."
+    },
+    "s11": {
+      "title": "11. Changes",
+      "p1": "This policy may be updated. In the event of a substantial change, you will be informed by email or through a notification in the application. The date of the last update is shown at the top of this page."
+    },
+    "s12": {
+      "title": "12. Language of this document",
+      "p1": "This document is available in French and in English. **If the two versions differ, the French version prevails**: it is the original version."
+    }
+  },
+  "notice": {
+    "seoTitle": "Legal notice – Cosmo App",
+    "seoDescription": "Legal notice for the Cosmo productivity app: publisher, host, intellectual property and responsibilities.",
+    "title": "Legal notice",
+    "updatedAt": "2 September 2026",
+    "s1": {
+      "title": "1. Site publisher",
+      "intro": "The **Cosmo** website and application are published by:",
+      "li1": "**Name:** Cosmo",
+      "li2": "**Email address:** axellongattepro@gmail.com",
+      "li3": "**Publication director:** The Cosmo team"
+    },
+    "s2": {
+      "title": "2. Hosting",
+      "intro": "The Cosmo application is hosted by:",
+      "li1": "**Frontend:** Vercel Inc., 340 Pine Street, Suite 701, San Francisco, CA 94104, USA",
+      "li2": "**Database:** Supabase Inc., 970 Toa Payoh North, #07-04, Singapore 318992"
+    },
+    "s3": {
+      "title": "3. Intellectual property",
+      "p1": "All content on Cosmo (text, graphics, logos, icons, images, sounds, data) is the exclusive property of Cosmo or of its partners, and is protected by French and international intellectual property law.",
+      "p2": "Any reproduction, representation, modification, publication or adaptation of all or part of the site's elements, by whatever means or process, is prohibited without Cosmo's prior written authorisation."
+    },
+    "s4": {
+      "title": "4. Liability",
+      "p1": "Cosmo endeavours to keep the information published in the application accurate and up to date. Cosmo cannot, however, guarantee the accuracy, precision or completeness of the information made available.",
+      "p2": "Cosmo cannot be held liable for direct or indirect damage arising from the use of the application or from being unable to reach it."
+    },
+    "s5": {
+      "title": "5. Governing law",
+      "p1": "This legal notice is governed by French law. In the event of a dispute, the French courts shall have sole jurisdiction."
+    },
+    "s6": {
+      "title": "6. Language of this document",
+      "p1": "This document is available in French and in English. **If the two versions differ, the French version prevails**: it is the original version."
+    },
+    "s7": {
+      "title": "7. Contact",
+      "p1": "For any question about this legal notice, you can contact us at the following address: [axellongattepro@gmail.com](mailto:axellongattepro@gmail.com)"
+    }
+  }
+}

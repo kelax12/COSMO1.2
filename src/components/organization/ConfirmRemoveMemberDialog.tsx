@@ -30,7 +30,7 @@ const ConfirmRemoveMemberDialog = ({ member, pending, onConfirm, onCancel }: Con
     <AlertDialogContent className="bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl text-[rgb(var(--color-text-primary))] shadow-xl">
       <AlertDialogHeader>
         <AlertDialogTitle className="text-xl font-bold">
-          Retirer {member.displayName} ?
+          {t('members.removeTitleNamed', { name: member.displayName })}
         </AlertDialogTitle>
         <AlertDialogDescription className="text-[rgb(var(--color-text-secondary))] text-sm leading-relaxed">
           {t('removeMemberDialog.body')}

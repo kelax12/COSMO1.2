@@ -29,7 +29,12 @@
     "alreadySubscribed": "Vous avez déjà un abonnement actif.",
     "paymentError": "Erreur lors de la création du paiement. Réessayez.",
     "dayCredited": "+1 jour Premium crédité !",
-    "creditError": "Erreur lors du crédit du jour"
+    "creditError": "Erreur lors du crédit du jour",
+    "signInAgain": "Veuillez vous reconnecter.",
+    "dailyAdLimit": "Limite quotidienne de pubs atteinte (20/jour). Revenez demain ou passez Premium.",
+    "getOneDay": "Obtenir un jour Premium",
+    "subscribe30": "Souscrivez pour 30 jours de statut Premium complet.",
+    "freeEarnDay": "Gratuit · Gagne +1 jour Premium"
   },
   "gate": {
     "defaultFeature": "cette fonctionnalité",
@@ -43,7 +48,10 @@
     "or": "ou",
     "subscribe": "S'abonner",
     "subscribeHint": "30 jours Premium complet sans pub",
-    "perMonth": "/mois"
+    "perMonth": "/mois",
+    "dailyAdLimit": "Limite quotidienne de pubs atteinte (20/jour). Revenez demain ou passez Premium.",
+    "signInAgain": "Veuillez vous reconnecter.",
+    "unlock": "Débloquez **{{feature}}** en regardant une pub gratuite ou en souscrivant."
   },
   "ad": {
     "sponsored": "Publicité Sponsorisée",

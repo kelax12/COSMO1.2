@@ -87,7 +87,7 @@ const TasksSummary: React.FC<TasksSummaryProps> = ({
           )}
           <button
             onClick={() => setShowColorSettings(true)}
-            aria-label="Modifier la légende des couleurs"
+            aria-label={t('colorLegend.edit')}
             className="inline-flex items-center justify-center min-w-touch min-h-touch sm:min-w-0 sm:min-h-0 sm:p-2 rounded-lg transition-colors"
             style={{ color: 'rgb(var(--color-text-muted))' }}
             onMouseEnter={(e) => {
@@ -98,16 +98,16 @@ const TasksSummary: React.FC<TasksSummaryProps> = ({
               e.currentTarget.style.color = 'rgb(var(--color-text-muted))';
               e.currentTarget.style.backgroundColor = 'transparent';
             }}
-            title="Modifier la légende des couleurs"
+            title={t('colorLegend.edit')}
           >
             <Settings size={18} />
           </button>
         </div>
         
-        <h2 className="text-headline sm:text-xl font-bold mb-1 pr-16" style={{ color: 'rgb(var(--color-text-primary))' }}>Taches en cour : {totalTasks}</h2>
+        <h2 className="text-headline sm:text-xl font-bold mb-1 pr-16" style={{ color: 'rgb(var(--color-text-primary))' }}>{t('summary.openTasks', { count: totalTasks })}</h2>
         {todayMinutes > 0 && (
           <p className="text-label sm:text-sm mb-4" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-            ≈ {todayLoadLabel} planifiées aujourd'hui
+            {t('summary.todayLoad', { load: todayLoadLabel })}
           </p>
         )}
         {todayMinutes === 0 && <div className="mb-3" />}

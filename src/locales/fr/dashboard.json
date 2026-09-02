@@ -45,7 +45,8 @@
     },
     "today": "Aujourd'hui",
     "yesterday": "Hier",
-    "weekAbbr": "S{{number}}"
+    "weekAbbr": "S{{number}}",
+    "timeBreakdown": "Répartition du temps"
   },
   "sections": {
     "priorityTasks": "Tâches prioritaires",
@@ -94,7 +95,9 @@
       "body": "Êtes-vous sûr de vouloir supprimer cette tâche ? Cette action est irréversible.",
       "cancel": "Annuler",
       "confirm": "Supprimer"
-    }
+    },
+    "collaboratorsTitle": "Collaborateurs",
+    "deleteTitle": "Supprimer"
   },
   "collaborative": {
     "shared_one": "{{count}} tâche partagée",
@@ -137,5 +140,12 @@
     "markDone": "Marquer « {{name}} » comme terminée",
     "sourcePersonal": "Perso",
     "sourceTeam": "Équipe"
+  },
+  "collab": {
+    "removeShare": "Supprimer"
+  },
+  "todayHabits": {
+    "heading": "Habitudes du jour",
+    "loading": "Chargement…"
   }
 }

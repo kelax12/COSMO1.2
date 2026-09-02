@@ -426,10 +426,10 @@ export const TaskRow = React.memo(({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem onClick={() => onSelectTask(task.id)}>
-              <Pencil aria-hidden="true" /> Modifier
+              <Pencil aria-hidden="true" /> {t('rowMenu.edit')}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => onToggleBookmark(task.id)}>
-              <Bookmark aria-hidden="true" /> {task.bookmarked ? 'Retirer le favori' : 'Favori'}
+              <Bookmark aria-hidden="true" /> {task.bookmarked ? t('rowMenu.unbookmark') : t('rowMenu.bookmark')}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => onAddToList(task.id)}>
               <ListPlus aria-hidden="true" /> {t('card.addToList')}
@@ -443,22 +443,22 @@ export const TaskRow = React.memo(({
             {overdue && (
               <DropdownMenuSub>
                 <DropdownMenuSubTrigger>
-                  <Hourglass aria-hidden="true" /> Reporter
+                  <Hourglass aria-hidden="true" /> {t('snooze.menu')}
                 </DropdownMenuSubTrigger>
                 <DropdownMenuSubContent>
                   {getSnoozeOptions().map((opt) => (
                     <DropdownMenuItem key={opt.id} onClick={() => onSnooze(task.id, opt.deadline)}>
-                      {opt.label}
+                      {t(opt.labelKey)}
                     </DropdownMenuItem>
                   ))}
                 </DropdownMenuSubContent>
               </DropdownMenuSub>
             )}
             <DropdownMenuItem onClick={() => onOpenCollaborator(task.id)}>
-              <UserPlus aria-hidden="true" /> Collaborateur
+              <UserPlus aria-hidden="true" /> {t('rowMenu.collaborator')}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => onDuplicate(task.id)}>
-              <Copy aria-hidden="true" /> Dupliquer la tâche
+              <Copy aria-hidden="true" /> {t('rowMenu.duplicate')}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
@@ -466,7 +466,7 @@ export const TaskRow = React.memo(({
               onClick={() => onDeleteTask(task.id)}
               className="!text-red-500 focus:!text-red-500"
             >
-              <Trash2 className="!text-red-500" aria-hidden="true" /> Supprimer
+              <Trash2 className="!text-red-500" aria-hidden="true" /> {t('rowMenu.delete')}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

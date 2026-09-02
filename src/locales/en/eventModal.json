@@ -34,5 +34,17 @@
   "calendar": {
     "pickDay": "Pick a day",
     "noTask": "No tasks on that day."
+  },
+  "form": {
+    "recurrenceCustom": "Custom",
+    "addComment": "+ Add a note",
+    "customizeColors": "Customise the colours",
+    "recurrenceNone": "No",
+    "recurrenceDaily": "Every day",
+    "recurrenceWeekly": "Every week",
+    "recurrenceShortNone": "No",
+    "recurrenceShortDaily": "Day",
+    "recurrenceShortWeekly": "Wk",
+    "recurrenceShortCustom": "Custom"
   }
 }

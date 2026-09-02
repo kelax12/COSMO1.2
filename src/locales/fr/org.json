@@ -52,7 +52,8 @@
     "joining": "Adhésion…",
     "join": "Rejoindre l'entreprise",
     "joined": "Vous avez rejoint {{name}} !",
-    "signIn": "Se connecter"
+    "signIn": "Se connecter",
+    "heading": "Invitation d'entreprise"
   },
   "createJoin": {
     "codeCopied": "Code copié",
@@ -553,7 +554,8 @@
     "addMemberAria": "Ajouter un membre à l'équipe {{team}}",
     "addTo": "Ajouter à {{name}}",
     "emerald": "Émeraude",
-    "colorNamed": "Couleur {{name}}"
+    "colorNamed": "Couleur {{name}}",
+    "membersCount": "Membres ({{count}})"
   },
   "project": {
     "newAria": "Nouveau projet d'équipe",
@@ -969,7 +971,8 @@
     "planAria": "Abonnement : {{plan}}",
     "planNamed": "Plan {{name}}",
     "promoBadge": "Offre de lancement",
-    "insteadOf": "au lieu de {{price}} €"
+    "insteadOf": "au lieu de {{price}} €",
+    "withdrawalRequired": "Le paiement demande votre accord sur les deux cases de renonciation au droit de rétractation."
   },
   "inviteJoin": {
     "title": "Créer ou rejoindre une entreprise",
@@ -1082,5 +1085,8 @@
       "everyone": "Tout le monde",
       "everyoneHint": "N'importe quel membre de l'entreprise. Rend les autres cases inutiles."
     }
+  },
+  "members": {
+    "removeTitleNamed": "Retirer {{name}} ?"
   }
 }

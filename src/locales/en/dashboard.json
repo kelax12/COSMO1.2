@@ -43,7 +43,8 @@
     },
     "today": "Today",
     "yesterday": "Yesterday",
-    "weekAbbr": "W{{number}}"
+    "weekAbbr": "W{{number}}",
+    "timeBreakdown": "Time breakdown"
   },
   "sections": {
     "priorityTasks": "Priority tasks",
@@ -89,7 +90,9 @@
       "body": "Are you sure you want to delete this task? This cannot be undone.",
       "cancel": "Cancel",
       "confirm": "Delete"
-    }
+    },
+    "collaboratorsTitle": "Collaborators",
+    "deleteTitle": "Delete"
   },
   "collaborative": {
     "shared_one": "{{count}} shared task",
@@ -127,5 +130,12 @@
     "markDone": "Mark “{{name}}” as done",
     "sourcePersonal": "Personal",
     "sourceTeam": "Team"
+  },
+  "collab": {
+    "removeShare": "Delete"
+  },
+  "todayHabits": {
+    "heading": "Today's habits",
+    "loading": "Loading…"
   }
 }

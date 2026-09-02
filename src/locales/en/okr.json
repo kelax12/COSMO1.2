@@ -19,7 +19,9 @@
       "noneDescription": "Create your first objective to structure your key results and track your progress.",
       "filteredDescription": "Change your filter, or create a new objective in this category.",
       "allTitle": "No OKRs yet"
-    }
+    },
+    "openCheckinAria": "Open the weekly check-in",
+    "openCheckinTitle": "Review your OKRs. It also opens on its own on Monday and Tuesday from the dashboard."
   },
   "card": {
     "uncategorized": "Uncategorized",
@@ -107,6 +109,11 @@
     "savedCount_one": "{{count}} KR updated",
     "savedCount_other": "{{count}} KRs updated",
     "error": "Something went wrong while updating",
-    "saving": "Saving…"
+    "saving": "Saving…",
+    "krProgress": "KR {{index}} of {{total}}"
+  },
+  "modalSheet": {
+    "titlePlaceholder": "e.g. Launch product v2",
+    "pickPlaceholder": "Pick one…"
   }
 }

@@ -26,7 +26,7 @@ import {
   bufferedWindow,
   taskEventDurationMinutes,
 } from '@/pages/agenda/calendar-events';
-import { PRIORITY_META, isTaskOverdue, sortOpenTasks } from './team-projects.helpers';
+import { PRIORITY_META, isTaskOverdue, sortOpenTasks, priorityLabelOf } from './team-projects.helpers';
 import type { OrgMember } from '@/modules/organizations';
 import TeamTaskModal from './TeamTaskModal';
 import { useT } from '@/i18n/useT';
@@ -367,7 +367,7 @@ export const MemberAgendaBody = ({ member, onlyTaskId }: MemberAgendaBodyProps) 
                       data-task={JSON.stringify({ id: task.id, name: task.name, projectId: task.projectId, estimatedTime: task.estimatedTime, priority: task.priority })}
                     >
                       <div className="flex items-center gap-2">
-                        <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${priority.dot}`} role="img" aria-label={priority.label} title={priority.label} />
+                        <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${priority.dot}`} role="img" aria-label={priorityLabelOf(task.priority)} title={priorityLabelOf(task.priority)} />
                         <span className="text-sm font-medium text-[rgb(var(--color-text-primary))] truncate">{task.name}</span>
                       </div>
                       <div className="flex items-center gap-2 mt-1 text-[11px] text-[rgb(var(--color-text-muted))]">

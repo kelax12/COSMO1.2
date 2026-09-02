@@ -128,10 +128,12 @@ const HabitTable: React.FC = () => {
     return new Date(year, month - 1, day);
   };
 
+  // Libelles traduits AU RENDU : une constante de module les figerait dans la
+  // langue du premier import.
   const periodOptions = [
-  { value: 'week' as PeriodType, label: 'Semaine', days: 7 },
-  { value: 'month' as PeriodType, label: 'Mois', days: 30 },
-  { value: 'all' as PeriodType, label: 'Tout', days: 0 }];
+  { value: 'week' as PeriodType, label: t('period.week'), days: 7 },
+  { value: 'month' as PeriodType, label: t('period.month'), days: 30 },
+  { value: 'all' as PeriodType, label: t('period.all'), days: 0 }];
 
 
   const getOldestHabitDate = () => {

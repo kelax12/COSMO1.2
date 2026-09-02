@@ -24,6 +24,7 @@ const EventModalFormMobile: React.FC<EventModalFormBodyProps> = ({
   getHeaderTitle, getSubmitButtonText, duration, isMobileFormValid,
 }) => {
   const { t } = useT('eventModal');
+  const { t: tCommon } = useT('common');
   return (
   <div className="flex flex-col bg-[rgb(var(--color-background))] h-full">
     {/* Drag handle */}
@@ -38,7 +39,7 @@ const EventModalFormMobile: React.FC<EventModalFormBodyProps> = ({
         onClick={onClose}
         className="text-blue-500 text-[15px] min-w-16 min-h-11 flex items-center"
       >
-        Annuler
+        {tCommon('actions.cancel')}
       </button>
       <span className="text-[17px] font-semibold text-[rgb(var(--color-text-primary))] truncate mx-2">
         {getHeaderTitle()}
@@ -174,10 +175,10 @@ const EventModalFormMobile: React.FC<EventModalFormBodyProps> = ({
             aria-label={t('recurrenceAria')}
           >
             {([
-              { value: 'none', label: 'Non' },
-              { value: 'daily', label: 'Jour' },
-              { value: 'weekly', label: 'Sem.' },
-              { value: 'custom', label: 'Perso' },
+              { value: 'none', label: t('form.recurrenceShortNone') },
+              { value: 'daily', label: t('form.recurrenceShortDaily') },
+              { value: 'weekly', label: t('form.recurrenceShortWeekly') },
+              { value: 'custom', label: t('form.recurrenceShortCustom') },
             ] as { value: EventRecurrence; label: string }[]).map((opt) => {
               const active = recurrence === opt.value;
               return (
@@ -260,7 +261,7 @@ const EventModalFormMobile: React.FC<EventModalFormBodyProps> = ({
               <button
                 type="button"
                 onClick={() => setIsColorSettingsOpen(true)}
-                aria-label="Personnaliser les couleurs"
+                aria-label={t('form.customizeColors')}
                 className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border-2 border-dashed border-[rgb(var(--color-border-strong))] text-blue-500 text-[13px] font-medium"
               >
                 <Plus className="w-4 h-4" />
@@ -296,7 +297,7 @@ const EventModalFormMobile: React.FC<EventModalFormBodyProps> = ({
             className="flex items-center px-4 min-h-11 w-full"
           >
             <span className="text-[15px] text-blue-600 dark:text-blue-400">
-              + Ajouter un commentaire
+              {t('form.addComment')}
             </span>
           </button>
         )}

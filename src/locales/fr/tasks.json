@@ -181,7 +181,8 @@
     "edit": "Modifier la tâche",
     "schedule": "Planifier dans l'agenda",
     "delete": "Supprimer la tâche",
-    "removeFromList": "Retirer de la liste"
+    "removeFromList": "Retirer de la liste",
+    "receivedFrom": "Reçu de {{name}}"
   },
   "sort": {
     "label": "Trier par",
@@ -222,7 +223,8 @@
     "add": "Ajouter une catégorie",
     "none": "Aucune catégorie définie",
     "deleteTitle": "Supprimer la catégorie",
-    "deleteBody": "Êtes-vous sûr de vouloir supprimer cette catégorie ? Cette action est irréversible."
+    "deleteBody": "Êtes-vous sûr de vouloir supprimer cette catégorie ? Cette action est irréversible.",
+    "editTitle": "Modifier"
   },
   "smartLists": {
     "title": "Listes intelligentes",
@@ -245,7 +247,9 @@
     "refuseList": "Refuser la liste partagée {{name}}",
     "withCount": "Boîte de réception, {{count}} en attente",
     "accept": "Accepter",
-    "refuse": "Refuser"
+    "refuse": "Refuser",
+    "acceptNamed": "Accepter la demande d'ami de {{name}}",
+    "refuseNamed": "Refuser la demande d'ami de {{name}}"
   },
   "filter": {
     "clearSearch": "Effacer la recherche",
@@ -291,7 +295,13 @@
     "noList": "Aucune liste pour l'instant",
     "create": "Créer",
     "manualList": "liste manuelle",
-    "manualLists": "listes manuelles"
+    "manualLists": "listes manuelles",
+    "emptyManual": "Aucune liste manuelle pour l'instant.",
+    "emptyManualHint": "Les listes intelligentes se remplissent automatiquement.",
+    "empty": "Aucune liste pour l'instant",
+    "deleteNamed": "Supprimer {{name}}",
+    "namePlaceholder": "Nom de la liste",
+    "namePlaceholderShort": "Nom de la liste…"
   },
   "colorModal": {
     "nameTooShort": "Chaque nom de catégorie doit contenir au moins 2 caractères",
@@ -363,5 +373,35 @@
     "thisWeekDescription": "Tâches à faire dans les 7 prochains jours",
     "highPriority": "Priorité haute",
     "highPriorityDescription": "Priorité 1 ou 2 (très haute / haute)"
+  },
+  "rowMenu": {
+    "edit": "Modifier",
+    "unbookmark": "Retirer le favori",
+    "bookmark": "Favori",
+    "collaborator": "Collaborateur",
+    "duplicate": "Dupliquer la tâche",
+    "delete": "Supprimer"
+  },
+  "collaborators": {
+    "heading": "Collaborateurs",
+    "sharedWithYou": "Cette tâche t'a été partagée. Seul le propriétaire peut gérer les collaborateurs.",
+    "removeNamed": "Retirer {{name}}",
+    "addNamed": "Ajouter {{name}} comme collaborateur",
+    "mustSignIn": "Ce contact doit d'abord se connecter à Cosmo",
+    "selectedCount": "Sélectionnés ({{count}})"
+  },
+  "shareList": {
+    "searchFriend": "Rechercher un ami…"
+  },
+  "bulk": {
+    "deleteCount_one": "Supprimer {{count}} tâche",
+    "deleteCount_many": "Supprimer {{count}} de tâches",
+    "deleteCount_other": "Supprimer {{count}} tâches"
+  },
+  "snooze": {
+    "menu": "Reporter",
+    "tomorrow": "Demain",
+    "weekend": "Ce week-end",
+    "nextWeek": "Semaine prochaine"
   }
 }

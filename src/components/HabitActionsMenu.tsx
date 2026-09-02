@@ -169,10 +169,10 @@ const HabitActionsMenu: React.FC<HabitActionsMenuProps> = ({ habit }) => {
                 <ListPlus size={17} strokeWidth={1.75} className="shrink-0 text-[rgb(var(--color-text-secondary))]" />
                 <div className="flex-1 min-w-0">
                   <div className="text-sm text-[rgb(var(--color-text-primary))]">
-                    Créer une tâche
+                    {t('actionsMenu.createTask')}
                   </div>
                   <p className="text-[11px] text-[rgb(var(--color-text-muted))] mt-0.5">
-                    Aujourd'hui · {habit.estimatedTime} min
+                    {t('actionsMenu.createTaskHint', { minutes: habit.estimatedTime })}
                   </p>
                 </div>
               </button>
@@ -189,10 +189,10 @@ const HabitActionsMenu: React.FC<HabitActionsMenuProps> = ({ habit }) => {
                 <CalendarPlus size={17} strokeWidth={1.75} className="shrink-0 text-[rgb(var(--color-text-secondary))]" />
                 <div className="flex-1 min-w-0">
                   <div className="text-sm text-[rgb(var(--color-text-primary))]">
-                    Planifier dans l'agenda
+                    {t('actionsMenu.scheduleInAgenda')}
                   </div>
                   <p className="text-[11px] text-[rgb(var(--color-text-muted))] mt-0.5">
-                    Événement avec heure ajustable
+                    {t('actionsMenu.scheduleHint')}
                   </p>
                 </div>
               </button>
@@ -206,7 +206,7 @@ const HabitActionsMenu: React.FC<HabitActionsMenuProps> = ({ habit }) => {
                 onClick={() => {
                   const { id: _id, createdAt: _ca, completions: _c, ...rest } = habit;
                   createHabitMutation.mutate(
-                    { ...rest, name: `${habit.name} (copie)`, completions: {} },
+                    { ...rest, name: t('actions.copyName', { name: habit.name }), completions: {} },
                     { onSuccess: () => toast.success(t('actions.duplicated', { name: habit.name })) }
                   );
                   setOpen(false);
@@ -216,10 +216,10 @@ const HabitActionsMenu: React.FC<HabitActionsMenuProps> = ({ habit }) => {
                 <Copy size={17} strokeWidth={1.75} className="shrink-0 text-[rgb(var(--color-text-secondary))]" />
                 <div className="flex-1 min-w-0">
                   <div className="text-sm text-[rgb(var(--color-text-primary))]">
-                    Dupliquer l'habitude
+                    {t('actionsMenu.duplicate')}
                   </div>
                   <p className="text-[11px] text-[rgb(var(--color-text-muted))] mt-0.5">
-                    Copie avec un historique vierge
+                    {t('actionsMenu.duplicateHint')}
                   </p>
                 </div>
               </button>

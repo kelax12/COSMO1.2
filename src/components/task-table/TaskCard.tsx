@@ -308,7 +308,7 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
         {task.sharedBy && (
           <span className="inline-flex items-center gap-1 text-caption font-medium text-[rgb(var(--color-accent))] truncate">
             <Users size={12} aria-hidden="true" />
-            Reçu de {task.sharedBy}
+            {t('card.receivedFrom', { name: task.sharedBy })}
           </span>
         )}
         {!task.sharedBy && task.isCollaborative && (collaboratorsByTask.get(task.id)?.length ?? 0) > 0 && (

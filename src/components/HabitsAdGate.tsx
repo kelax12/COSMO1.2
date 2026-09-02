@@ -87,10 +87,10 @@ export function HabitsAdGate({ onUnlocked, onDismiss }: HabitsAdGateProps) {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-bold text-[rgb(var(--color-text-primary))] leading-tight">
-                Soutenez Cosmo
+                {t('adGate.title')}
               </p>
               <p className="text-xs text-[rgb(var(--color-text-muted))] leading-snug">
-                Une pub de 15 s = 1 jour Premium offert.
+                {t('adGate.offer')}
               </p>
             </div>
             <button
