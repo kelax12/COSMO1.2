@@ -1,5 +1,7 @@
 import type { Task } from '@/modules/tasks';
 import type { SmartRulePreset, TaskList } from './types';
+import { daysUntilDeadline, isDueToday } from '@/lib/deadline';
+import { getTimezonePref, type TimezonePref } from '@/lib/timezone';
 
 /**
  * Définition des presets smart : label affiché, couleur suggérée, icône
@@ -7,59 +9,58 @@ import type { SmartRulePreset, TaskList } from './types';
  */
 export interface SmartPresetDef {
   preset: SmartRulePreset;
-  label: string;
+  /**
+   * Clé de traduction du namespace `tasks`, JAMAIS un libellé.
+   *
+   * 🔴 `label` portait « En retard » en dur, et `TasksPage` le PERSISTAIT comme
+   * nom de liste : une liste créée par un anglophone gardait un nom français
+   * pour toujours, y compris après traduction de l'interface. Le défaut était
+   * écrit en base, pas seulement à l'écran (risque R-05).
+   */
+  labelKey: 'smartPreset.overdue' | 'smartPreset.thisWeek' | 'smartPreset.highPriority';
   color: string;       // valeur du champ color de la TaskList
-  description: string; // pour le sélecteur de preset
-  matches: (task: Task, now: Date) => boolean;
+  descriptionKey: string; // pour le sélecteur de preset
+  matches: (task: Task, now: Date, pref?: TimezonePref) => boolean;
 }
 
-const startOfDay = (d: Date) => {
-  const x = new Date(d);
-  x.setHours(0, 0, 0, 0);
-  return x;
-};
-
-const endOfDay = (d: Date) => {
-  const x = new Date(d);
-  x.setHours(23, 59, 59, 999);
-  return x;
-};
-
-const addDays = (d: Date, n: number) => {
-  const x = new Date(d);
-  x.setDate(x.getDate() + n);
-  return x;
-};
+// 🔴 Les règles comparent des JOURS, pas des instants (risque R-01).
+//
+// Elles opposaient auparavant `new Date(task.deadline)` à un minuit calculé en
+// heure machine. Comme l'échéance était écrite à minuit UTC, une tâche datée du
+// jour même retombait la veille au soir pour tout fuseau à décalage négatif :
+// elle sortait de « Cette semaine » et entrait dans « En retard ». Passer par
+// `daysUntilDeadline` fait porter la comparaison sur la clé de jour vécue dans
+// le fuseau retenu, ce qui rend aussi la règle juste pour quelqu'un qui a réglé
+// un décalage manuel (Guadeloupe, La Réunion, Nouvelle-Calédonie...).
 
 export const SMART_PRESETS: SmartPresetDef[] = [
   {
     preset: 'overdue',
-    label: 'En retard',
+    labelKey: 'smartPreset.overdue',
     color: 'red',
-    description: 'Tâches passées non complétées',
-    matches: (task, now) => {
+    descriptionKey: 'smartPreset.overdueDescription',
+    matches: (task, now, pref = getTimezonePref()) => {
       if (task.completed) return false;
-      if (!task.deadline) return false;
-      return new Date(task.deadline) < startOfDay(now);
+      const days = daysUntilDeadline(task.deadline, pref, now);
+      return Number.isFinite(days) && days < 0;
     },
   },
   {
     preset: 'this-week',
-    label: 'Cette semaine',
+    labelKey: 'smartPreset.thisWeek',
     color: 'blue',
-    description: 'Tâches à faire dans les 7 prochains jours',
-    matches: (task, now) => {
+    descriptionKey: 'smartPreset.thisWeekDescription',
+    matches: (task, now, pref = getTimezonePref()) => {
       if (task.completed) return false;
-      if (!task.deadline) return false;
-      const d = new Date(task.deadline);
-      return d >= startOfDay(now) && d <= endOfDay(addDays(now, 7));
+      const days = daysUntilDeadline(task.deadline, pref, now);
+      return Number.isFinite(days) && days >= 0 && days <= 7;
     },
   },
   {
     preset: 'high-priority',
-    label: 'Priorité haute',
+    labelKey: 'smartPreset.highPriority',
     color: 'orange',
-    description: 'Priorité 1 ou 2 (très haute / haute)',
+    descriptionKey: 'smartPreset.highPriorityDescription',
     matches: (task) => {
       if (task.completed) return false;
       return task.priority <= 2;
@@ -74,12 +75,13 @@ export const SMART_PRESETS: SmartPresetDef[] = [
 export const tasksInList = (
   list: TaskList,
   allTasks: Task[],
-  now: Date = new Date()
+  now: Date = new Date(),
+  pref: TimezonePref = getTimezonePref(),
 ): Task[] => {
   if (list.type === 'smart' && list.smartRule) {
     const preset = SMART_PRESETS.find(p => p.preset === list.smartRule);
     if (!preset) return [];
-    return allTasks.filter(t => preset.matches(t, now));
+    return allTasks.filter(t => preset.matches(t, now, pref));
   }
   // Manuelle : intersection avec taskIds
   const ids = new Set(list.taskIds);
@@ -91,13 +93,9 @@ export const tasksInList = (
  * jamais stockée. C'est une smart-list de fait mais on ne la traite pas
  * comme une vraie liste pour ne pas polluer le repository.
  */
-export const tasksDueToday = (allTasks: Task[], now: Date = new Date()): Task[] => {
-  const start = startOfDay(now);
-  const end = endOfDay(now);
-  return allTasks.filter(t => {
-    if (t.completed) return false;
-    if (!t.deadline) return false;
-    const d = new Date(t.deadline);
-    return d >= start && d <= end;
-  });
-};
+export const tasksDueToday = (
+  allTasks: Task[],
+  now: Date = new Date(),
+  pref: TimezonePref = getTimezonePref(),
+): Task[] =>
+  allTasks.filter(t => !t.completed && isDueToday(t.deadline, pref, now));

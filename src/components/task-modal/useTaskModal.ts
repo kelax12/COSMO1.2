@@ -51,6 +51,7 @@ import {
 } from './collaborators';
 import { runTaskSave, createTaskWithShares } from './save-task';
 import { translator } from '@/i18n/useT';
+import { deadlineDayKey } from '@/lib/deadline';
 
 export interface TaskModalProps {
   task?: Task;
@@ -262,7 +263,10 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
         description: initialData?.description || '',
         priority: initialData?.priority || 0,
         category: initialData?.category || '',
-        deadline: initialData?.deadline ? initialData.deadline.split('T')[0] : '',
+        // `.split('T')[0]` rendait le jour UTC de l'instant, donc la veille à
+        // l'ouest de Greenwich : le champ se pré-remplissait avec la mauvaise
+        // date (risque R-01).
+        deadline: deadlineDayKey(initialData?.deadline),
         estimatedTime: initialData?.estimatedTime || 0,
         completed: initialData?.completed || false,
         bookmarked: initialData?.bookmarked || false,
@@ -296,7 +300,7 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
         description: task.description || '',
         priority: task.priority ?? 0,
         category: task.category || '',
-        deadline: task.deadline ? task.deadline.split('T')[0] : '',
+        deadline: deadlineDayKey(task.deadline),
         // Préserver 0 (= pas de durée) au lieu d'injecter un 30 min fantôme
         // qui se persistait silencieusement à la sauvegarde.
         estimatedTime: task.estimatedTime || 0,
@@ -423,7 +427,7 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
       formData.description !== baselineDescription ||
       formData.priority !== task.priority ||
       formData.category !== task.category ||
-      formData.deadline !== (task.deadline ? task.deadline.split('T')[0] : '') ||
+      formData.deadline !== deadlineDayKey(task.deadline) ||
       formData.estimatedTime !== task.estimatedTime ||
       formData.completed !== task.completed ||
       formData.bookmarked !== task.bookmarked ||

@@ -1,12 +1,19 @@
 // ═══════════════════════════════════════════════════════════════════
 // Récurrence des tâches (#26) — helpers purs, testés unitairement.
 // À la complétion d'une tâche récurrente, l'occurrence suivante est générée
-// (hooks.ts → useToggleTaskComplete). Les dates restent des YYYY-MM-DD
-// calendaires locaux (convention projet, pas de toISOString).
+// (hooks.ts → useToggleTaskComplete).
+//
+// 🔴 Le raisonnement se fait sur des CLÉS DE JOUR, la valeur rendue est un
+// INSTANT (risque R-01). Avant, ce module lisait `deadline.slice(0, 10)` (le
+// jour UTC, donc la veille à l'ouest) et rendait un `YYYY-MM-DD` nu, que
+// `toggle_task_complete_v2` castait en timestamptz avec le fuseau du SERVEUR.
+// L'occurrence suivante naissait donc à minuit UTC : déjà en retard pour qui
+// vit à décalage négatif, à chaque validation. La mig. 133 fait accepter
+// l'instant côté SQL.
 // ═══════════════════════════════════════════════════════════════════
 import { Task, TaskRecurrence, CreateTaskInput } from './types';
-
-const toLocalYMD = (d: Date): string => d.toLocaleDateString('en-CA');
+import { deadlineDayKey, deadlineFromDayKey } from '@/lib/deadline';
+import { addDaysToKey, todayKeyInTz, getTimezonePref, type TimezonePref } from '@/lib/timezone';
 
 /**
  * Deadline de l'occurrence suivante. Base = max(deadline courante, aujourd'hui)
@@ -16,18 +23,32 @@ const toLocalYMD = (d: Date): string => d.toLocaleDateString('en-CA');
 export function nextOccurrenceDeadline(
   deadline: string,
   recurrence: TaskRecurrence,
-  now: Date = new Date()
+  now: Date = new Date(),
+  pref: TimezonePref = getTimezonePref(),
 ): string | null {
-  if (recurrence === 'none' || !deadline) return null;
-  const parsed = new Date(deadline.slice(0, 10) + 'T12:00:00');
-  if (Number.isNaN(parsed.getTime())) return null;
-  const today = new Date(now); today.setHours(12, 0, 0, 0);
-  const base = parsed.getTime() >= today.getTime() ? parsed : today;
-  const next = new Date(base);
-  if (recurrence === 'daily') next.setDate(next.getDate() + 1);
-  else if (recurrence === 'weekly') next.setDate(next.getDate() + 7);
-  else if (recurrence === 'monthly') next.setMonth(next.getMonth() + 1);
-  return toLocalYMD(next);
+  if (recurrence === 'none') return null;
+  const currentKey = deadlineDayKey(deadline, pref);
+  if (!currentKey) return null;
+  const todayKey = todayKeyInTz(pref, now);
+  // Base = la plus tardive des deux, pour ne pas générer une occurrence déjà
+  // en retard quand on valide une tâche restée des jours dans « En retard ».
+  const baseKey = currentKey >= todayKey ? currentKey : todayKey;
+
+  let nextKey: string;
+  if (recurrence === 'daily') {
+    nextKey = addDaysToKey(baseKey, 1);
+  } else if (recurrence === 'weekly') {
+    nextKey = addDaysToKey(baseKey, 7);
+  } else {
+    // Mensuel : le mois n'a pas de longueur fixe, donc pas d'arithmétique en
+    // jours. On avance sur le calendrier UTC, où `setUTCMonth` ne subit aucun
+    // effet d'heure d'été.
+    const [y, m, d] = baseKey.split('-').map(Number);
+    const cursor = new Date(Date.UTC(y, m - 1, d));
+    cursor.setUTCMonth(cursor.getUTCMonth() + 1);
+    nextKey = cursor.toISOString().slice(0, 10);
+  }
+  return deadlineFromDayKey(nextKey, pref);
 }
 
 /**

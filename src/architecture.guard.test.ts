@@ -195,7 +195,16 @@ const KNOWN_OVERSIZED = new Set([
 // calendrier COSMO ajoutait ~35 lignes à `TaskTable` ; le bandeau « En retard »
 // a été extrait dans `task-table/OverdueBanner.tsx` à cette occasion. Le
 // cliquet se resserre comme le demande le message d'échec de ce test.
-const OVERSIZED_BUDGET = 9905;
+// 2026-09-02 : 9905 → 9903. Même mécanique que la ligne du dessus, deuxième
+// occurrence. Les correctifs R-16 (écouteur `pointerup` qui s'accumulait) et
+// R-18 (report de créneau calculé en heure machine) ont fait remonter le stock
+// à 9941, soit 36 lignes au-dessus. La revue des créneaux passés a donc été
+// extraite dans `pages/agenda/useOverdueSlotReview.ts` : quatre gestionnaires,
+// un état et un dérivé qui ne parlaient qu'entre eux. Aucun comportement
+// changé, les corps sont repris à l'identique.
+// 🔴 Le réflexe à ne pas avoir : relever ce nombre. C'est un cliquet, il ne
+// tourne que dans un sens, et c'est ce qui l'a rendu utile deux fois de suite.
+const OVERSIZED_BUDGET = 9903;
 
 const loc = (file: string) => readFileSync(file, 'utf8').split('\n').length;
 

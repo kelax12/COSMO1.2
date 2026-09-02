@@ -6,6 +6,13 @@ import { format } from 'date-fns';
 // Alias : ce module exporte déjà son propre `formatDate` (helper métier qui
 // accepte une chaîne et gère l'absence de date).
 import { formatDate as formatDateIntl, getDateLocale } from '@/i18n/format';
+import { daysUntilDeadline, deadlineDayKey, isOverdue } from '@/lib/deadline';
+
+/** Clé de jour → Date locale, pour formater le jour VÉCU et pas l'instant. */
+const dayKeyToLocalDate = (key: string): Date => {
+  const [y, m, d] = key.split('-').map(Number);
+  return new Date(y, m - 1, d);
+};
 
 export const formatDate = (dateString: string | undefined) => {
   try {
@@ -23,16 +30,17 @@ export const formatDeadlineSmart = (dateString: string | undefined): string => {
   if (!dateString) return '—';
   const d = new Date(dateString);
   if (Number.isNaN(d.getTime())) return '—';
-  const today = new Date(); today.setHours(0, 0, 0, 0);
-  const target = new Date(d); target.setHours(0, 0, 0, 0);
-  const diffDays = Math.round((target.getTime() - today.getTime()) / 86400000);
+  // L'écart se compte en JOURS vécus dans le fuseau retenu, pas entre deux
+  // minuits calculés en heure machine : « Aujourd'hui » s'affichait « Hier »
+  // pour tout décalage négatif (risque R-01).
+  const diffDays = daysUntilDeadline(dateString);
   if (diffDays === 0) return "Aujourd'hui";
   if (diffDays === 1) return 'Demain';
   if (diffDays === -1) return 'Hier';
   if (diffDays < 0 && diffDays > -7) return `il y a ${-diffDays} j`;
   // 2–6 jours : jour de la semaine, sans ambiguïté dans cette fenêtre.
   if (diffDays > 1 && diffDays < 7) {
-    return format(d, 'EEEE', { locale: getDateLocale() });
+    return format(dayKeyToLocalDate(deadlineDayKey(dateString)), 'EEEE', { locale: getDateLocale() });
   }
   return formatDateIntl(d, { day: 'numeric', month: 'long' });
 };
@@ -47,9 +55,8 @@ export const formatDuration = (minutes: number | undefined): string => {
   return `${h} h ${String(m).padStart(2, '0')} min`;
 };
 
-// En retard : échéance passée et tâche non complétée.
-export const isTaskOverdue = (deadline: string | undefined, completed: boolean): boolean => {
-  if (completed || !deadline) return false;
-  const d = new Date(deadline);
-  return !Number.isNaN(d.getTime()) && d < new Date();
-};
+// En retard = échéance d'un JOUR RÉVOLU. L'ancienne comparaison d'instants
+// (`new Date(deadline) < new Date()`) faisait basculer une tâche due
+// aujourd'hui en rouge dès 00 h 01, puisque son minuit était déjà passé.
+export const isTaskOverdue = (deadline: string | undefined, completed: boolean): boolean =>
+  isOverdue(deadline, completed);

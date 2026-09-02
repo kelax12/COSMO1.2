@@ -48,7 +48,9 @@ const HabitsPage: React.FC = () => {
   const isMobile = useIsMobile();
   const tutorial = useTutorial(isMobile ? 'habits_mobile' : 'habits_desktop');
   const tutorialSteps = isMobile ? habitsTutorialStepsMobile : habitsTutorialStepsDesktop;
-  const { data: habits = [], isLoading, isError, error, refetch } = useHabits();
+  // `error` n'est volontairement plus destructuré : le message brut du backend
+  // ne s'affiche jamais (règle « faille V7 »), seul un texte traduit est rendu.
+  const { data: habits = [], isLoading, isError, refetch } = useHabits();
   const { pullY, isRefreshing, threshold } = usePullToRefresh(() => refetch());
   const [showModal, setShowModal] = useState(false);
   const [showRecap, setShowRecap] = useState(false);
@@ -100,7 +102,7 @@ const HabitsPage: React.FC = () => {
           {t('page.errorTitle')}
         </h2>
         <p className="text-sm text-[rgb(var(--color-text-secondary))] max-w-md">
-          {(error as Error)?.message || t('page.errorHint')}
+          {t('page.errorHint')}
         </p>
         <button
           onClick={() => refetch()}

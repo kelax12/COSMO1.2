@@ -355,5 +355,13 @@
     "uncheck": "Décocher « {{name}} »",
     "delete": "Supprimer la sous-tâche « {{name}} »",
     "limitReached": "Maximum de {{max}} sous-tâches atteint."
+  },
+  "smartPreset": {
+    "overdue": "En retard",
+    "overdueDescription": "Tâches passées non complétées",
+    "thisWeek": "Cette semaine",
+    "thisWeekDescription": "Tâches à faire dans les 7 prochains jours",
+    "highPriority": "Priorité haute",
+    "highPriorityDescription": "Priorité 1 ou 2 (très haute / haute)"
   }
 }

@@ -101,6 +101,126 @@ export function formatTimeInTz(
   return shifted.toLocaleTimeString(getIntlTag(), options);
 }
 
+// ── Jours calendaires dans le fuseau retenu ───────────────────────────
+//
+// `tasks.deadline` est un `timestamptz`, mais ce que la personne saisit est un
+// JOUR, pas un instant. Les deux représentations ne se convertissent pas avec
+// `new Date('YYYY-MM-DD')` (qui parse en UTC) ni avec `.slice(0, 10)` (qui rend
+// le jour UTC de l'instant) : ces deux raccourcis décalent la date d'un jour
+// partout où le fuseau n'est pas UTC ou juste à l'est.
+//
+// Un seul couple de fonctions fait donc foi, et TOUTE écriture comme toute
+// lecture d'une échéance passe par lui :
+//   dayKeyInTz(instant)  → 'YYYY-MM-DD'  (le jour vécu par la personne)
+//   dayStartInTz(jour)   → instant vrai de minuit ce jour-là, dans SON fuseau
+//
+// « Son fuseau » = le fuseau de la machine en mode 'default', le décalage figé
+// en mode 'manual'. C'est ce qui permet à quelqu'un en Guadeloupe de se
+// détacher de l'heure de métropole : il règle UTC-4 et ses journées ne sont
+// plus découpées par le fuseau de Paris.
+//
+// ❌ Ne JAMAIS écrire `new Date(champDate).toISOString()` pour une échéance, et
+//    ne jamais relire un jour par `deadline.slice(0, 10)`.
+
+const DAY_KEY_RE = /^(\d{4})-(\d{2})-(\d{2})$/;
+const DAY_MS = 86_400_000;
+
+/**
+ * Décalage effectif en minutes À L'EST de UTC (UTC+2 → +120).
+ *
+ * Attention au signe : `Date.prototype.getTimezoneOffset()` compte à l'inverse
+ * (minutes à AJOUTER à l'heure locale pour obtenir UTC), d'où la négation.
+ */
+export function tzOffsetMinutes(pref: TimezonePref, at: Date = new Date()): number {
+  return pref.mode === 'manual' ? pref.offsetHours * 60 : -at.getTimezoneOffset();
+}
+
+/** Instant (ISO ou Date) → clé de jour 'YYYY-MM-DD' vécue dans le fuseau retenu. */
+export function dayKeyInTz(
+  instant: string | Date,
+  pref: TimezonePref = getTimezonePref(),
+): string {
+  const t = typeof instant === 'string' ? new Date(instant) : instant;
+  if (Number.isNaN(t.getTime())) return '';
+  return new Date(t.getTime() + tzOffsetMinutes(pref, t) * 60_000)
+    .toISOString()
+    .slice(0, 10);
+}
+
+/** Clé de jour d'aujourd'hui dans le fuseau retenu. */
+export function todayKeyInTz(
+  pref: TimezonePref = getTimezonePref(),
+  now: Date = new Date(),
+): string {
+  return dayKeyInTz(now, pref);
+}
+
+/**
+ * Clé de jour → instant vrai de MINUIT ce jour-là dans le fuseau retenu.
+ *
+ * Le décalage dépend de l'instant lui-même (heure d'été) : on estime une
+ * première fois, puis on réévalue le décalage à l'instant estimé. No-op dans un
+ * fuseau à décalage constant, exact aux deux transitions annuelles. Même
+ * technique que `fromDisplayISO`, pour la même raison.
+ */
+export function dayStartInTz(
+  dayKey: string,
+  pref: TimezonePref = getTimezonePref(),
+): Date {
+  const m = DAY_KEY_RE.exec(dayKey);
+  if (!m) return new Date(NaN);
+  const asUTC = Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  const estimate = new Date(asUTC - tzOffsetMinutes(pref, new Date(asUTC)) * 60_000);
+  return new Date(asUTC - tzOffsetMinutes(pref, estimate) * 60_000);
+}
+
+/** Idem, en ISO. Chaîne vide si la clé n'est pas un jour valide. */
+export function dayStartISOInTz(
+  dayKey: string,
+  pref: TimezonePref = getTimezonePref(),
+): string {
+  const d = dayStartInTz(dayKey, pref);
+  return Number.isNaN(d.getTime()) ? '' : d.toISOString();
+}
+
+/** Dernier instant du jour (minuit du lendemain moins 1 ms). */
+export function dayEndInTz(
+  dayKey: string,
+  pref: TimezonePref = getTimezonePref(),
+): Date {
+  const start = dayStartInTz(dayKey, pref);
+  if (Number.isNaN(start.getTime())) return start;
+  return new Date(dayStartInTz(addDaysToKey(dayKey, 1), pref).getTime() - 1);
+}
+
+/**
+ * Arithmétique de calendrier sur une clé de jour, sans fuseau ni heure d'été :
+ * on travaille sur le calendrier UTC, où un jour fait toujours 24 h.
+ */
+export function addDaysToKey(dayKey: string, days: number): string {
+  const m = DAY_KEY_RE.exec(dayKey);
+  if (!m) return dayKey;
+  const base = Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  return new Date(base + days * DAY_MS).toISOString().slice(0, 10);
+}
+
+/** Jour de la semaine d'une clé de jour (0 = dimanche), sans effet de fuseau. */
+export function weekdayOfKey(dayKey: string): number {
+  const m = DAY_KEY_RE.exec(dayKey);
+  if (!m) return NaN;
+  return new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]))).getUTCDay();
+}
+
+/** Nombre de jours calendaires de `from` à `to` (négatif si `to` est avant). */
+export function daysBetweenKeys(from: string, to: string): number {
+  const a = DAY_KEY_RE.exec(from);
+  const b = DAY_KEY_RE.exec(to);
+  if (!a || !b) return NaN;
+  const ta = Date.UTC(Number(a[1]), Number(a[2]) - 1, Number(a[3]));
+  const tb = Date.UTC(Number(b[1]), Number(b[2]) - 1, Number(b[3]));
+  return Math.round((tb - ta) / DAY_MS);
+}
+
 /** Libellé court du fuseau actif (ex. « UTC+2 », « UTC-5 » ou « Heure locale »). */
 export function timezoneLabel(pref: TimezonePref): string {
   if (pref.mode !== 'manual') return 'Heure locale';

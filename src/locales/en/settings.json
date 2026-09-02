@@ -33,6 +33,7 @@
     "photoUpdated": "Profile picture updated",
     "photoDeleted": "Picture deleted",
     "photoUpdateFailed": "Couldn't update your picture",
+    "photoDeleteFailed": "Couldn't delete your picture",
     "unsupportedFormat": "Unsupported format",
     "unsupportedFormatHint": "Use JPEG, PNG, WebP or GIF.",
     "deletePhotoTitle": "Delete picture?",

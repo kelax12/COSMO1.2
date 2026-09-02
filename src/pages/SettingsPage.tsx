@@ -20,7 +20,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
 import { getCurrentUser } from '@/lib/auth-user';
 import { sanitizeEmail, isValidEmail } from '@/lib/email';
-import { validateAvatarFile, computeAvatarDimensions, canvasToAvatarBlob, uploadAvatar } from '@/lib/avatar-upload';
+import { validateAvatarFile, computeAvatarDimensions, canvasToAvatarBlob, uploadAvatar, removeAvatar } from '@/lib/avatar-upload';
 import { MIN_PASSWORD_LENGTH } from '@/lib/password-policy';
 import {
   AlertDialog,
@@ -177,6 +177,12 @@ const SettingsPage: React.FC = () => {
       }
       const { error } = await supabase.auth.updateUser({ password: passwords.new });
       if (error) { console.error('[SettingsPage] password update:', error); toast.error(t('security.updateError')); return; }
+      // R-17 — Révoquer les AUTRES sessions. Sans ça, changer son mot de passe
+      // après un accès non autorisé n'expulsait pas l'intrus : son jeton
+      // restait valide jusqu'à expiration, ce qui vide la manœuvre de son
+      // seul usage. `scope: 'others'` préserve la session courante.
+      const { error: revokeError } = await supabase.auth.signOut({ scope: 'others' });
+      if (revokeError) console.error('[SettingsPage] revoke other sessions:', revokeError);
       toast.success(t('security.updated'));
       setPasswords({ current: '', new: '', confirm: '' });
     } catch { toast.error('Une erreur inattendue est survenue'); }
@@ -304,10 +310,16 @@ const SettingsPage: React.FC = () => {
           updateDemoProfile({ avatar: undefined });
         } else {
           const { error } = await supabase.auth.updateUser({ data: { avatar_url: null } });
-          if (error) { toast.error('Impossible de supprimer la photo'); return; }
+          if (error) { toast.error(t('profile.photoDeleteFailed')); return; }
           // Idem au retrait : les amis doivent voir la suppression tout de suite.
           const authUser = await getCurrentUser();
-          if (authUser) await mirrorAvatarToProfile(authUser.id, null);
+          if (authUser) {
+            await mirrorAvatarToProfile(authUser.id, null);
+            // Le FICHIER doit partir avec la référence. Le bucket étant public,
+            // s'arrêter à `avatar_url = null` laissait la photo accessible sans
+            // authentification à une URL stable (risque R-03, RGPD art. 17).
+            await removeAvatar(supabase, authUser.id);
+          }
         }
         toast.success(t('profile.photoDeleted'));
       },

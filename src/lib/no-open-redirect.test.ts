@@ -47,6 +47,22 @@ const ASSIGN_FROM_URL = new RegExp(
     String.raw`)`
 );
 
+/**
+ * Le SEUL assainisseur reconnu : `src/lib/safe-redirect.ts`. Une valeur qui
+ * passe par lui n'est plus une destination arbitraire, c'est un chemin interne
+ * validé de forme (refus de `//evil`, `/\evil`, `/%2f…`, `/javascript:…`, des
+ * caractères de contrôle et du double encodage), couvert par 21 tests dans
+ * `safe-redirect.test.ts`.
+ *
+ * 🔴 Cette exemption est NOMINATIVE, et elle doit le rester. La consigne de
+ * l'en-tête reste entière : on ne met JAMAIS un fichier en liste blanche. Ce
+ * qu'on reconnaît ici, c'est un appel de fonction dont le contrat est testé, et
+ * seulement sur la ligne où il apparaît. Ajouter un second nom à cette liste
+ * revient à écrire un second assainisseur : il lui faut ses propres tests
+ * d'attaque AVANT d'être cité ici.
+ */
+const SANITIZER = /\b(?:postAuthRoute|safeRedirectPath)\s*\(/;
+
 const WINDOW = 3;
 
 function walk(dir: string): string[] {
@@ -69,13 +85,16 @@ function detect(lines: string[]): { line: number; why: string }[] {
   const tainted = new Set<string>();
   for (const l of lines) {
     const m = ASSIGN_FROM_URL.exec(l);
-    if (m) tainted.add(m[1]);
+    // Une lecture d'URL qui traverse l'assainisseur sur la MEME ligne ne teinte
+    // pas : la valeur affectee est deja un chemin interne valide.
+    if (m && !SANITIZER.test(l)) tainted.add(m[1]);
   }
 
   lines.forEach((line, i) => {
     if (!NAV_SINK.test(line)) return;
 
     if (URL_INPUT.test(line)) {
+      if (SANITIZER.test(line)) return;
       hits.push({ line: i, why: 'url-inline' });
       return;
     }
@@ -91,6 +110,10 @@ function detect(lines: string[]): { line: number; why: string }[] {
     const from = Math.max(0, i - WINDOW);
     const to = Math.min(lines.length, i + WINDOW + 1);
     for (let j = from; j < to; j++) {
+      // Une lecture d'URL voisine qui passe par l'assainisseur n'est pas un
+      // indice : c'est deja un chemin interne valide. Sans cette exception, la
+      // seule ligne SAINE du fichier accuserait ses trois voisines.
+      if (SANITIZER.test(lines[j])) continue;
       if (j !== i && URL_INPUT.test(lines[j])) {
         hits.push({ line: i, why: `url-proche:L${j + 1}` });
         return;
@@ -121,6 +144,14 @@ describe('G-9 — aucune navigation alimentee par un parametre d URL', () => {
       'deux-lignes': `const next = searchParams.get('returnTo');\nnavigate(next ?? '/');`,
       'location-href': `window.location.href = params.get('next')!;`,
       'multi-lignes': `navigate(\n  searchParams.get('next') ?? '/'\n);`,
+      // L'exemption d'assainisseur ne doit couvrir QUE la valeur qui le
+      // traverse. Un fichier qui assainit une destination et pas l'autre reste
+      // coupable pour la seconde : c'est la forme la plus probable de la
+      // regression, puisqu'elle se copie-colle a partir de la ligne saine.
+      'assaini-a-cote': `const safe = postAuthRoute(searchParams.get('redirect'));\nconst evil = searchParams.get('next');\nnavigate(evil ?? '/');`,
+      // Citer l'assainisseur ailleurs dans le fichier n'assainit rien : seule
+      // compte la ligne ou la valeur est lue.
+      'assainisseur-decoratif': `const raw = searchParams.get('next');\nconst home = postAuthRoute(null);\nnavigate(raw ?? home);`,
     };
 
     const undetected = Object.entries(probes)
@@ -128,5 +159,20 @@ describe('G-9 — aucune navigation alimentee par un parametre d URL', () => {
       .map(([name]) => name);
 
     expect(undetected).toEqual([]);
+  });
+
+  it("n'accuse pas une destination qui traverse l'assainisseur", () => {
+    // Le pendant du test precedent : la garde doit rester silencieuse sur la
+    // forme validee, sinon la seule issue serait de mettre le fichier en liste
+    // blanche, ce que son en-tete interdit. `safe-redirect.ts` refuse `//evil`,
+    // `/\evil`, `/%2f…`, `/javascript:…`, les caracteres de controle et le
+    // double encodage, et 21 tests le prouvent dans `safe-redirect.test.ts`.
+    const sain = [
+      `const redirectTo = postAuthRoute(searchParams.get('redirect'));`,
+      `const query = redirectTo === '/dashboard' ? '' : \`?redirect=\${encodeURIComponent(redirectTo)}\`;`,
+      `navigate(redirectTo, { replace: true });`,
+    ];
+
+    expect(detect(sain)).toEqual([]);
   });
 });
