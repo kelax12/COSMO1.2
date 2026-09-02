@@ -124,7 +124,10 @@
   },
   "pageError": {
     "hint": "Vérifie ta connexion internet, puis réessaie.",
-    "retry": "Réessayer"
+    "retry": "Réessayer",
+    "title": "Impossible de charger {subject}",
+    "subjectAgenda": "l'agenda",
+    "subjectOkr": "les OKR"
   },
   "demoBanner": {
     "aria": "Mode démo",
@@ -303,5 +306,28 @@
     "available": "Une nouvelle version de COSMO est disponible.",
     "reload": "Recharger",
     "dismiss": "Plus tard"
+  },
+  "firstRun": {
+    "title": "Bienvenue dans COSMO",
+    "subtitle": "Trois questions, une minute. Chaque etape peut etre passee.",
+    "step": "Etape {current} sur {total}",
+    "skip": "Passer cette etape",
+    "skipAll": "Passer l'accueil",
+    "next": "Continuer",
+    "finish": "Entrer dans COSMO",
+    "add": "Ajouter",
+    "remove": "Retirer",
+    "taskQuestion": "Qu'avez-vous a faire cette semaine ?",
+    "taskHint": "Une seule chose suffit. Vous pourrez en ajouter autant que vous voulez ensuite.",
+    "taskPlaceholder": "Ex. Rappeler le comptable",
+    "taskListLabel": "Taches a creer",
+    "habitQuestion": "Une habitude que vous voulez tenir ?",
+    "habitHint": "Elle sera suivie chaque jour, et vous pourrez en changer la duree plus tard.",
+    "habitPlaceholder": "Ex. Marcher 30 minutes",
+    "okrQuestion": "Un objectif pour les trois prochains mois ?",
+    "okrHint": "Un objectif est une direction. Le resultat cle, facultatif, est ce qui prouve qu'elle est atteinte.",
+    "okrPlaceholder": "Ex. Lancer la v2 du produit",
+    "okrKeyResultLabel": "Resultat cle (facultatif)",
+    "okrKeyResultPlaceholder": "Ex. Publier la page de vente"
   }
 }
