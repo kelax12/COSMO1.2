@@ -97,11 +97,10 @@
   },
   "cookies": {
     "banner": "Cookie banner",
-    "strictlyNecessary": "strictly necessary",
-    "purpose": " for the app to work (session, preferences). ",
     "title": "Cookies",
-    "noTracking": "No advertising tracking",
-    "onlyCookies": "Only cookies ",
+    "noTracking": "No advertising, no profiling",
+    "body": "Cosmo measures traffic on its public pages. If you accept, a random identifier is stored on your device to link the pages of a single visit.",
+    "ifYouRefuse": "If you decline, only what is strictly necessary for the service is used (session, preferences).",
     "learnMore": "Learn more",
     "decline": "Decline",
     "accept": "Accept"

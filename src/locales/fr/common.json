@@ -100,11 +100,10 @@
   },
   "cookies": {
     "banner": "Bannière cookies",
-    "strictlyNecessary": "strictement nécessaires",
-    "purpose": " au fonctionnement (session, préférences). ",
     "title": "Cookies",
-    "noTracking": "Aucun tracking publicitaire",
-    "onlyCookies": "Uniquement des cookies ",
+    "noTracking": "Aucune publicité, aucun profil",
+    "body": "Cosmo mesure la fréquentation de ses pages publiques. Si vous acceptez, un identifiant aléatoire est déposé sur votre appareil pour relier les pages d'une même visite.",
+    "ifYouRefuse": "Si vous refusez, seuls les éléments strictement nécessaires au service sont utilisés (session, préférences).",
     "learnMore": "En savoir plus",
     "decline": "Refuser",
     "accept": "Accepter"
