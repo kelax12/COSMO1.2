@@ -388,6 +388,50 @@ séparent pas.
 
 ---
 
+## 🟠 V-1 · le script analytics tiers capte email et nom — mitigé, arbitrage ouvert (2026-09-01)
+
+**Trouvé par `vendor-watch.yml`**, qui échouait à chaque exécution **depuis au moins le
+2026-08-29** sans que personne ne lise l'alerte. Le workflow n'était pas cassé : il alertait.
+C'est le premier enseignement, et il vaut pour toutes les gardes planifiées — **une alerte que
+personne ne lit ne protège rien.**
+
+**Ce qui a changé.** Le script servi à `https://www.vesk.dev/a.js` a gagné une fonction
+`tryIdentify()` qui lit les champs d'un formulaire d'inscription, en extrait l'**adresse email**
+(160 car. max) et le **nom** (80), et les envoie à `vesk.dev`. Elle se déclenche sur `submit`
+**et** sur un clic qui « ressemble » à une inscription — donc dans une SPA sans `submit` natif,
+ce qui est exactement notre cas. Elle exige un champ mot de passe et un signe d'inscription : un
+formulaire newsletter ne la déclenche donc pas.
+
+**Pourquoi c'est un écart.** Le registre (art. 30, `docs/RGPD-REGISTRE.md` §T8) déclare pour ce
+traitement : « adresse de la page, page référente, adresse IP, navigateur. **Sans cookie.** » Ni
+email, ni nom, ni identifiant persistant — or le script pose aussi un UUID `_a_cid` en
+`localStorage`. **Un consentement recueilli pour une MESURE D'AUDIENCE ne couvre pas la
+transmission de l'identité de la personne à un tiers.** Et `/signup` étant une page publique sans
+session, les trois conditions de chargement étaient réunies : le script tournait bel et bien là
+où l'on saisit son email.
+
+**Ce qui a été fait (2026-09-01).** `src/lib/audience.ts` ne monte plus le script sur les pages
+portant un formulaire d'identifiants (`CREDENTIAL_FORM_SEGMENTS` : `signup`, `login`,
+`forgot-password`, `reset-password`, `invite`, `org-invite`). On aligne le code sur ce qui est
+déclaré, plutôt que l'inverse. La mesure garde sa finalité : landing, blog, guide, cas d'usage.
+Cliquet : `src/lib/audience.test.ts`, vérifié rouge sans la garde.
+
+**Le reste de la revue, sans reproche** : aucun `eval`, aucun `new Function`, aucune injection de
+script, aucune lecture de `document.cookie`, aucun accès aux champs mot de passe, aucune
+obfuscation `atob`. L'endpoint est dérivé de l'origine du script lui-même, et la CSP borne
+`connect-src`.
+
+**🔴 Reste à arbitrer par Axel**, et ce n'est pas une décision technique :
+1. garder ce fournisseur tel quel, la capture étant désormais hors de portée ; **ou**
+2. lui demander de désactiver l'identification ; **ou**
+3. mettre le registre et la politique de confidentialité en conformité avec ce que le script
+   fait réellement.
+
+⚠️ Vesk **n'est pas** dans la liste des DPA à collecter (T-43 : Supabase, Vercel, Sentry, Stripe,
+Resend). Un sous-traitant qui reçoit de la donnée personnelle en a besoin d'un.
+
+---
+
 ## 🔴 Ouvert — bloquant
 
 ### A-9 — Plan Supabase `free` : pas de PITR, restauration jamais testée

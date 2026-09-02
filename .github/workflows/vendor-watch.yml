@@ -45,6 +45,10 @@ jobs:
           STATUS=0
 
           while read -r EXPECTED URL; do
+            # Lignes vides et commentaires : le fichier d'empreintes doit
+            # pouvoir porter la DATE et le motif de sa derniere revalidation.
+            # Une empreinte sans provenance ne dit pas ce qui a ete relu.
+            case "${EXPECTED:-}" in ''|'#'*) continue ;; esac
             [ -n "${URL:-}" ] || continue
 
             if ! curl -sSfL --max-time 30 "$URL" -o /tmp/vendor.js; then

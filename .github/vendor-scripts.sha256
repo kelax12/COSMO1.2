@@ -1,1 +1,28 @@
-ec4d94b92da559f7fd024aa1293f0a6def73cd639c12237ccff05e5ea7b53df5  https://www.vesk.dev/a.js
+# Empreintes des scripts TIERS servis sur les pages publiques.
+#
+# Ce fichier est une DÉCISION, pas un cache : chaque ligne dit « cette version
+# exacte a été relue et acceptée ». Ne jamais la mettre à jour pour faire
+# passer `vendor-watch` au vert — le rouge est l'alerte, pas la panne.
+#
+# Revalidé le 2026-09-01. Ce qui a changé, et ce qui a été fait :
+#   Le script a gagné un `tryIdentify()` qui lit les champs d'un formulaire
+#   d'INSCRIPTION (il exige un champ mot de passe + un signe d'inscription),
+#   en extrait l'ADRESSE EMAIL et le NOM, et les envoie à `vesk.dev`. Il se
+#   déclenche sur `submit` et sur un clic ressemblant à une inscription, donc
+#   dans une SPA comme la nôtre.
+#   Le registre RGPD (art. 30, §T8) ne déclare que « adresse de la page, page
+#   référente, adresse IP, navigateur ». Un consentement recueilli pour une
+#   MESURE D'AUDIENCE ne couvre pas la transmission de l'identité.
+#   → Mitigé côté COSMO : `src/lib/audience.ts` ne monte plus le script sur
+#     les pages portant un formulaire d'identifiants (`/signup`, `/login`,
+#     `/reset-password`, `/invite`…). Cliquet : `src/lib/audience.test.ts`.
+#   → RESTE À ARBITRER PAR AXEL : garder ce fournisseur, lui demander de
+#     désactiver l'identification, ou mettre le registre en conformité.
+#     Voir `faille.md`.
+#
+# Le reste de la revue, sans reproche : aucun `eval`, aucun `new Function`,
+# aucune injection de script, aucune lecture de `document.cookie`, aucun accès
+# aux champs mot de passe, aucune obfuscation `atob`. L'endpoint est dérivé de
+# l'origine du script lui-même (`new URL(src).origin + "/api/ingest"`), et la
+# CSP borne de toute façon `connect-src`.
+db9f240ddc5706d584c32ef51209d86d9cfc595a9f4d228bab2fd271ed433945  https://www.vesk.dev/a.js
