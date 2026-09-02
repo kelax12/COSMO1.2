@@ -679,15 +679,64 @@ sur une **branche** Supabase ou une stack locale, jamais en production.
 
 ---
 
+### 9ter. Mesuré À VOLUME le 2026-09-02 — la dernière inconnue est levée
+
+Le §9bis se terminait sur ce qui restait non prouvé : **le comportement du planificateur**. Il
+l'est maintenant. La mesure tourne sur le runner de CI, qui monte déjà une stack Supabase complète
+pour `rls-integration` — base jetable, volume libre, aucune ligne écrite en production.
+`npm`-side : `scripts/scalability-volume.mjs`, déclenché par le workflow `scalability-volume`
+(manuel, jamais une gate). Organisation de 50 membres, pyramide sur trois niveaux, 5 équipes,
+20 projets **rattachés à des équipes** (la branche coûteuse du prédicat).
+
+| Volume | Chemin | Buffers | Lignes balayées | Buffers/ligne | Rendues | ms | Plan |
+|---|---|---|---|---|---|---|---|
+| 200 | direct (`team_tasks`) | 1 805 | 200 | **9,03** | 40 | 69,97 | `Seq Scan` |
+| 200 | `get_my_team_tasks` (membre) | 15 | 40 | **0,38** | 40 | 1,06 | `Function Scan` |
+| 200 | `get_my_team_tasks` (manager) | 20 | 200 | **0,10** | 200 | 1,23 | `Function Scan` |
+| 2 000 | direct (`team_tasks`) | **18 041** | 2 000 | **9,02** | 400 | 704,47 | `Seq Scan` |
+| 2 000 | `get_my_team_tasks` (membre) | **51** | 400 | **0,13** | 400 | 1,84 | `Function Scan` |
+| 2 000 | `get_my_team_tasks` (manager) | 56 | 2 000 | **0,03** | 2 000 | 2,34 | `Function Scan` |
+
+**1. Aucun basculement de plan.** C'était la question, et la réponse est nette : `Seq Scan` d'un
+côté, `Function Scan` de l'autre, identiques aux deux paliers. Le risque qu'un ratio stable masque
+un changement de plan n'existe pas ici.
+
+**2. Le chemin direct est rigoureusement linéaire en la table ENTIÈRE.** Son ratio ne bouge pas
+(9,03 → 9,02) pendant que les buffers font ×10 avec le volume — 1 805 → 18 041 pour dix fois plus
+de lignes. C'est la démonstration de ce que la projection du §9bis annonçait : le coût d'une
+lecture croît avec le volume de toute la plateforme, pas avec celui de l'appelant.
+
+**3. Le rapport entre les deux chemins, à 2 000 lignes et pour le MÊME acteur : 18 041 contre 51
+buffers, soit 354×.** Le §9bis projetait « ≈ 6 700 buffers » à ce volume à partir d'un ratio de
+3,33 mesuré sur une organisation minuscule. Le réel est **2,7 fois pire** que la projection, parce
+que cette organisation-ci a 20 projets et 5 équipes : le prédicat a plus de travail par ligne. Une
+projection linéaire à partir d'un cas dégénéré sous-estime, elle ne surestime pas.
+
+> 🔴 **Et le piège du §9bis se referme, ce qui est le fait le plus utile de cette mesure.** À
+> 717 lignes, le chronomètre donnait la réponse INVERSE de la bonne : la RPC lisait moins de
+> buffers et mettait 8× plus de temps. À 2 000 lignes, les deux lectures **concordent** — 704 ms
+> contre 1,84 ms, dans le même sens que les buffers. Le croisement se produit donc **en dessous de
+> 2 000 lignes d'équipe**, c'est-à-dire dans une organisation ordinaire. Ce qui protégeait le
+> mauvais chemin n'était pas un doute méthodologique : c'était uniquement le fait qu'on n'avait
+> jamais de données.
+
+⚠️ Ce que cette mesure ne dit toujours pas : rien sur `tasks` à plusieurs millions de lignes, ni
+sur la concurrence (elle est mono-session). Elle porte sur le prédicat d'entreprise, à froid comme
+à chaud sur un runner partagé — les millisecondes absolues n'ont donc pas de valeur, seuls les
+rapports en ont.
+
+---
+
 **Ordre de traitement recommandé, révisé le 2026-08-28.** Les deux findings qui bloquaient le
 cas d'usage B2B (§2 et §2bis) sont refermés, le payload (§4) et le hook mort (§5) aussi. Il reste,
 par ordre décroissant de rapport valeur/effort :
 
 1. ✅ **`useTeamOKRs` en `live` conditionnel** — **déjà fait**, vérifié le 2026-08-27 :
    `team-okrs/hooks.ts` porte `...(options?.live ? { refetchInterval: 30_000 } : {})`.
-2. 🟡 **Mesurer §2 à volume réel.** Le coût par ligne est mesuré (§9bis) et confirme l'audit du
-   14 août. **Reste le comportement du planificateur**, qui exige un vrai jeu de données sur une
-   branche ou une stack locale.
+2. ✅ **Mesurer §2 à volume réel — FAIT le 2026-09-02 (§9ter).** Aucun basculement de plan entre
+   200 et 2 000 `team_tasks`, le chemin direct est linéaire en la table entière (ratio 9,0 stable,
+   buffers ×10), et le rapport entre les deux chemins atteint **354×** à 2 000 lignes. La mesure
+   se rejoue par le workflow `scalability-volume` (déclenchement manuel).
 3. Les deux derniers sondages permanents vers le canal Realtime existant.
 
 ---

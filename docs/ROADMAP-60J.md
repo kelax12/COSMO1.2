@@ -35,8 +35,8 @@ garde que ce qui reste à faire.
 
 | | Nombre | Lesquelles |
 |---|---|---|
-| ✅ Fait et vérifié | **30** | T-02 · T-03 · T-04 · T-06 · T-07 · T-08 · T-10 · T-11 · T-12 · T-13 · T-15 · T-16 · T-18 · T-19 · T-20 · T-24 · T-25 · T-26 · T-28 · T-29 · T-30 · T-31 · T-35 · T-42 · T-44 · T-45 · T-46 · T-48 · T-49 · T-50 |
-| 🟡 Partiel | 6 | T-05 · T-09 · T-14 · T-23 · T-41 · T-51 |
+| ✅ Fait et vérifié | **31** | T-02 · T-03 · T-04 · T-06 · T-07 · T-08 · T-10 · T-11 · T-12 · T-13 · T-15 · T-16 · T-18 · T-19 · T-20 · T-24 · T-25 · T-26 · T-28 · T-29 · T-30 · T-31 · T-35 · T-41 · T-42 · T-44 · T-45 · T-46 · T-48 · T-49 · T-50 |
+| 🟡 Partiel | 5 | T-05 · T-09 · T-14 · T-23 · T-51 |
 | ⚪ Clos sans suite | 3 | T-01 · T-04b · T-27 |
 | ⬜ Ouvert | **13** | T-17 · T-21 · T-22 · T-32 · T-33 · T-34 · T-36 · T-37 · T-38 · T-39 · T-40 · T-43 · T-47 |
 
@@ -119,7 +119,7 @@ les porte, jamais ici.
 | T-38 | Paiement | Réarmer la facturation : `ENTERPRISE_BILLING_ENFORCED = true` **et** `billing_flags.enterprise_seat_limit = true`, dans le même déploiement | Les deux drapeaux se déplacent ensemble. Serveur seul = impasse client, client seul = on encaisse sans rien débloquer | P1 | XS | T-35, T-36, T-37 | A | S7 |
 | T-39 | Paiement | Recette de bout en bout avec une **vraie carte** : souscription mensuelle, changement de palier depuis le portail, résiliation, vérification de `org_subscriptions` et du journal `payment_records` | Le webhook et le checkout n'ont jamais traité un paiement réel. Le seul endroit où COSMO choisit un prix au lieu de se le faire désigner est la résolution annuelle | P1 | M | T-38 | X + A | S7 |
 | T-40 | Emails | Poser `CRON_SECRET` (Supabase **et** GitHub) pour armer les avis de reconduction tacite | E6. Un avis non envoyé rend l'abonnement résiliable à tout moment, remboursement compris. Sans objet tant qu'aucun abonnement annuel n'existe, donc juste après T-39. ⚠️ **Il manquait en réalité DEUX secrets, pas un** (trouvé le 2026-09-02) : `renewal-notice.yml` exigeait aussi `SUPABASE_URL`, absent du dépôt, et cette ligne ne le disait pas. Refermé par le même repli d'URL que `uptime.yml` (commit `05add6d`) : il ne reste bien que `CRON_SECRET`, le seul des deux qui soit un vrai secret, sa valeur devant être identique côté GitHub et côté Supabase | P2 | XS | T-39 | X | S7 |
-| 🟡 T-41 | Scalabilité | **Coût par ligne mesuré le 2026-08-28** (SCALABILITY §9bis), le rapport de 54× confirme l'audit du 14 août. Reste le comportement du planificateur, qui exige un vrai jeu de données. Mesurer à volume réel : injecter ~2 000 `team_tasks` dans une organisation de test de 50 membres et rejouer le runbook `SCALABILITY.md` §10 | Les correctifs 113/117/128 sont vérifiés en plan et en test, **jamais contre du volume**. C'est exactement la confiance non vérifiée qui a laissé passer un `Seq Scan` global pendant six semaines | P2 | M | — | A | S6 |
+| ✅ T-41 | Scalabilité | ✅ **FERMÉE le 2026-09-02** : mesure à volume faite, `SCALABILITY.md` §9ter. Elle tourne sur le runner de CI, qui monte déjà une stack Supabase pour `rls-integration` — les trois portes qu'on croyait seules (prod interdite, Docker absent, branche payante) en cachaient une quatrième, ouverte depuis le début. Organisation de 50 membres, 5 équipes, 20 projets rattachés, paliers 200 et 2 000 `team_tasks`. **Aucun basculement de plan** (`Seq Scan` / `Function Scan` identiques aux deux paliers) : c'était LA question. Le chemin direct est linéaire en la table entière, ratio stable à 9,0 pendant que les buffers font ×10 ; le rapport entre les deux chemins atteint **354×** à 2 000 lignes, soit **2,7× pire que la projection** du §9bis, parce qu'elle extrapolait depuis une organisation dégénérée. Et le piège du chronomètre se referme : à 2 000 lignes le temps concorde enfin avec les buffers (704 ms contre 1,84 ms), donc le croisement se produit **en dessous** d'une organisation ordinaire. Rejouable par le workflow `scalability-volume`. ~~Coût par ligne mesuré le 2026-08-28~~ (SCALABILITY §9bis), le rapport de 54× confirme l'audit du 14 août. ~~Reste le comportement du planificateur, qui exige un vrai jeu de données. Mesurer à volume réel : injecter ~2 000 `team_tasks` dans une organisation de test de 50 membres et rejouer le runbook `SCALABILITY.md` §10~~ | Les correctifs 113/117/128 sont vérifiés en plan et en test, **jamais contre du volume**. C'est exactement la confiance non vérifiée qui a laissé passer un `Seq Scan` global pendant six semaines | P2 | M | — | A | S6 |
 | ✅ T-42 | Infrastructure | Confirmer que la prod utilise l'URL du pooler (PgBouncer 6543, mode transaction) | Jamais vérifié depuis le dépôt, et d'autant plus important vu le coût par ligne des prédicats RLS | P2 | XS | — | A | S5 |
 | T-43 | Legal | Collecter et archiver les DPA des sous-traitants (Supabase, Vercel, Sentry, Stripe, Resend, **Vesk**) | A5 et A6. Chaînon obligatoire pour vendre à une entreprise, et il ne s'obtient qu'en tant qu'entreprise. ⚠️ **Vesk manquait à cette liste** (ajouté le 2026-09-01) : il reçoit de la donnée personnelle depuis les pages publiques, il lui faut donc un DPA comme aux autres. Un sous-traitant qu'on oublie de lister est un sous-traitant sans contrat | P2 | M | T-32 | X | S7 |
 | ✅ T-44 | Legal | Recherche d'antériorité « COSMO » sur `data.inpi.fr` **et** `euipo.europa.eu`, classes 9 et 42. **Faite le 2026-08-28** via TMview, qui agrège les deux registres : 11 marques `COSMO` actives, dont TANAZA S.p.A., éditeur de logiciel. ⚠️ **`LEGAL.md` F1 reste 🟡, et ce n'est pas une contradiction** (levée le 2026-09-02) : cette tâche-ci ne porte que la RECHERCHE, qui est faite ; F1 porte aussi l'**arbitrage** (garder le nom ou consulter un conseil en PI), qui n'est pas technique et n'appartient pas à cette roadmap. Ne pas « aligner » les deux en cochant F1 | Nom très générique, antériorités quasi certaines. La question n'est pas « existe-t-il une marque COSMO » mais « une marque COSMO couvre-t-elle le logiciel ». Se lancer sans le savoir, c'est risquer de devoir renommer après acquisition | P2 | S | — | X | S6 |
@@ -130,8 +130,8 @@ les porte, jamais ici.
 |---|---|---|---|---|---|---|---|---|
 | ✅ T-45 | Dette technique | Découper `TaskTable.tsx` (1 124 lignes, plus gros fichier du dépôt, immobile depuis trois jours). **Fait le 2026-08-29 : 1 124 → 890** | Les quatre passes du cliquet ont toutes porté sur `/entreprise`, parce que c'est là qu'a lieu le travail. La dette du socle ne baisse pas toute seule | P3 | L | — | B | S8 |
 | ✅ T-46 | Fiabilité | **FERMÉ le 2026-08-29 (soir) : la sauvegarde EXISTE et tourne.** Secret posé, run vert, artefact `db-dump` de **385 ko** produit et téléchargeable, rétention 30 jours, prochain passage automatique à 04:26 UTC. Trois échecs successifs ont livré trois causes réelles, toutes refermées dans le workflow : identité du pooler (`postgres.<ref>`, absente), client PostgreSQL 16 utilisé face à un serveur 17, et un `Re-run` qui rejouait l'ancien fichier. ~~`pg_dump` mensuel~~ → **QUOTIDIEN**, et **remonté de P3 à P0**. La décision de rester en plan Free (donc sans T-01, donc sans aucune sauvegarde Supabase) fait de ce dump **la seule copie de la base qui existe**. ~~Toujours inerte : sans le secret `SUPABASE_DB_URL` le job s'arrête en avertissement~~ — **phrase périmée, retirée le 2026-09-02** : le secret a été posé le 2026-08-29 (le même soir que la fermeture de la ligne), et la sauvegarde tourne depuis. Vérifié le 2026-09-02 : **4 runs quotidiens verts**, le dernier le jour même à 08:51 UTC. Elle a survécu quatre jours parce qu'elle décrivait l'état du matin dans une ligne fermée le soir | ~~Complément du PITR~~ · Il n'y a plus rien à compléter : c'est la sauvegarde | **P0** | S | ~~T-01~~ | A livré / **X pose le secret** | S1 |
-| 🟡 T-51 | Performance | **Premier levier livré le 2026-08-29 : 407 ko de moins au chargement** (recharts n'arrive plus qu'à l'approche de sa section), LCP 3,3 → 2,7 s, TTI 3,4 → 2,8 s en mesure locale. **Landing : 55 de performance et jusqu'à 1,5 s de blocage du fil principal.** Mesuré en CI le 2026-08-29, quatre fois, sur la version française. Le blog et le guide sont à 96-97 sur le même build : ce n'est pas le socle, c'est la page **Outillé et RE-CADRÉ le 2026-08-30.** `npm run profile:landing` profile le fil principal (Playwright + CPU bridé), et le job `lighthouse` de la CI publie désormais le bootup par script et le découpage du fil principal en annotations. Fait décisif : **la mesure locale ne reproduit pas l'écart** — sur ce poste, la landing (55 en CI) et le guide (96 en CI) rendent 40 et 45, la charge machine dominant tout. Toute attribution doit donc venir du runner. Première piste mesurée là-bas, à confirmer : `vendor-animation` (framer-motion) est le plus gros poste de bootup d'une page qui anime en GSAP, et `vendor-sentry` le suivant, ce dernier étant T-47 donc un arbitrage d'Axel. | La landing est la première chose que voit un visiteur d'annuaire, et c'est la seule page lente du site. Ouvrir l'acquisition sur elle, c'est payer un clic pour une page qui rame | P3 | M | — | B | S8 |
-| T-47 | Performance | Trancher `vendor-sentry` (49,2 ko gzip) sur le chemin critique | Ce n'est **pas** un arbitrage de performance : le différer revient à ne plus capturer les erreurs de démarrage, celles qui blanchissent l'écran. Décision produit, pas optimisation | P3 | S | — | X décide | S8 |
+| 🟡 T-51 | Performance | **Premier levier livré le 2026-08-29 : 407 ko de moins au chargement** (recharts n'arrive plus qu'à l'approche de sa section), LCP 3,3 → 2,7 s, TTI 3,4 → 2,8 s en mesure locale. **Landing : 55 de performance et jusqu'à 1,5 s de blocage du fil principal.** Mesuré en CI le 2026-08-29, quatre fois, sur la version française. Le blog et le guide sont à 96-97 sur le même build : ce n'est pas le socle, c'est la page **Outillé et RE-CADRÉ le 2026-08-30.** `npm run profile:landing` profile le fil principal (Playwright + CPU bridé), et le job `lighthouse` de la CI publie désormais le bootup par script et le découpage du fil principal en annotations. Fait décisif : **la mesure locale ne reproduit pas l'écart** — sur ce poste, la landing (55 en CI) et le guide (96 en CI) rendent 40 et 45, la charge machine dominant tout. Toute attribution doit donc venir du runner. ~~Première piste mesurée là-bas, à confirmer : `vendor-animation` (framer-motion) est le plus gros poste de bootup d'une page qui anime en GSAP, et `vendor-sentry` le suivant, ce dernier étant T-47 donc un arbitrage d'Axel.~~ ✅ **CONFIRMÉ ET CORRIGÉ le 2026-09-02**, sur les annotations du job `lighthouse` (run `33656961480`, deux passes). La piste était bonne à moitié : `vendor-animation` **11 675 / 11 992 ms** de bootup sur `/`, mais `vendor-gsap` **11 679 / 10 727 ms** — les deux sont à égalité, pas l'un devant l'autre. `vendor-react` suit à ~9 000 ms. 🔴 **`vendor-sentry` n'apparaît dans aucun des deux top 3** : T-47 ne rendrait donc rien ici, l'espérer serait payer une perte de capture d'erreurs pour un gain nul. Et le chiffre qui désigne le vrai coupable est ailleurs : **le MÊME `vendor-animation` ne coûte que 228-270 ms sur `/guide/`**, soit 40× moins. Le chunk n'est pas cher, c'est la quantité de travail que la landing lui demande qui l'est — le correctif est donc dans la page, pas dans le découpage. Scores de la même mesure : `/` à 56-63 (TBT 546-1633 ms) contre 96-98 partout ailleurs. | La landing est la première chose que voit un visiteur d'annuaire, et c'est la seule page lente du site. Ouvrir l'acquisition sur elle, c'est payer un clic pour une page qui rame | P3 | M | — | B | S8 |
+| T-47 | Performance | Trancher `vendor-sentry` (49,2 ko gzip) sur le chemin critique. ⚠️ **Mesuré le 2026-09-02, et ça change la question** : `vendor-sentry` n'apparaît dans aucun top 3 de bootup des annotations `lighthouse`, sur aucune des quatre pages mesurées. Le différer ne ferait donc gagner **aucun** temps de fil principal, seulement 49,2 ko de transfert. La décision reste entière mais elle se pose autrement : ce n'est plus « perf contre capture d'erreurs », c'est « 49 ko contre capture d'erreurs » | Ce n'est **pas** un arbitrage de performance : le différer revient à ne plus capturer les erreurs de démarrage, celles qui blanchissent l'écran. Décision produit, pas optimisation | P3 | S | — | X décide | S8 |
 
 ---
 
@@ -307,7 +307,7 @@ facture. Préparer maintenant évite de tout découvrir le jour de la bascule.
   webhook live est enregistré avec les 5 mêmes events, `STRIPE_SECRET_KEY` et
   `STRIPE_WEBHOOK_SECRET` sont remplacés, et un appel de fumée au webhook répond
   « Invalid signature » (donc la fonction tourne et vérifie).
-- [~] **T-41** — mesure de scalabilité à volume réel · P2 · M · A
+- [x] **T-41** — mesure de scalabilité à volume réel · P2 · M · A
   **Done** : `EXPLAIN (analyze, buffers)` à chaud sur une organisation de 50 membres et
   ~2 000 `team_tasks`, ratio buffers / lignes scannées inscrit dans `SCALABILITY.md` §9 en
   remplacement de la projection.
@@ -523,6 +523,52 @@ questions à reposer le jour venu.
 Une session par entrée, la plus récente en tête de sa journée. **On coche quand le critère
 « Done » est vérifié, pas quand le code est écrit.** Les statuts vivent au §1 ; ici on raconte
 comment on y est arrivé, et surtout ce qu'on a cru à tort en chemin.
+
+### 2026-09-02 (soir) · T-41 fermée, et les deux migrations qui dormaient
+
+**La quatrième porte était ouverte depuis le début.** T-41 était bloquée par un raisonnement juste
+sur trois portes et incomplet sur la quatrième : écrire 2 000 lignes en production est interdit,
+Docker n'est pas installé sur le poste, une branche Supabase se paie. Or le runner de CI monte
+**déjà** une stack Supabase complète pour `rls-integration`, depuis des semaines. Base jetable,
+volume libre, zéro euro. `scripts/scalability-volume.mjs` + workflow `scalability-volume`, en
+déclenchement manuel — jamais une gate, il sème des milliers de lignes.
+
+Résultat, détaillé en `SCALABILITY.md` §9ter : **aucun basculement de plan** entre 200 et 2 000
+`team_tasks`, ce qui était LA question laissée ouverte le 2026-08-28. Le chemin direct garde un
+ratio de 9,0 buffers/ligne pendant que ses buffers font ×10 — linéaire en la table entière, comme
+annoncé. Le rapport entre les deux chemins atteint **354×** à 2 000 lignes, soit **2,7× pire que
+la projection**, qui extrapolait depuis une organisation de 6 lignes.
+
+> 🔴 **Le fait le plus utile n'est pas le rapport, c'est le croisement.** Le §9bis avertissait
+> qu'à 717 lignes le chronomètre donne la réponse INVERSE de la bonne. À 2 000 lignes, temps et
+> buffers concordent enfin (704 ms contre 1,84 ms). Le croisement se situe donc **en dessous
+> d'une organisation ordinaire** : ce qui protégeait le mauvais chemin n'était pas une subtilité
+> de méthode, c'était l'absence de données.
+
+**Deux migrations écrites dormaient hors du dépôt et hors de la prod**, la `134` et la `135`,
+alors que `CLAUDE.md` les annonce. La `135` bloque en plus l'encaissement tant qu'elle manque :
+sans la table, `stripe-org-checkout` refuse toute session. Appliquées et versionnées, vérifiées
+acteur par acteur dans une transaction annulée — pas sur un « success ». La `135` refuse un
+consentement incomplet, refuse l'UPDATE et le DELETE **même au rôle privilégié** (`service_role`
+contourne la RLS, jamais un trigger), et un compte tiers ne voit rien.
+
+**Et la garde a trouvé un défaut en elle-même**, comme le 2026-08-28. `check:drift` annonçait la
+policy de la `135` « EN TROP en prod » alors qu'une migration du dépôt venait de la créer : le
+parseur ne reconnaissait que `CREATE POLICY "nom"`, jamais le nom nu, pourtant du SQL valide et
+présent quatre fois ici. Même gravité que la fois précédente — **la garde se trompait dans le sens
+rassurant** : une policy au nom nu réellement absente n'aurait jamais été réclamée. Corrigé, avec
+son témoin.
+
+**Un checkpoint est devenu un test.** Le §5 demande de recompter les `refetchInterval`
+« nominativement » à 100 puis à 1 000 utilisateurs. Un checkpoint qu'on rejoue à la main est un
+checkpoint qu'on oubliera — c'est l'argument même d'`architecture.guard.test.ts`, et c'est ce
+comptage-là qui avait déjà été faux une fois, en laissant passer `useOrgJoinRequests`.
+`src/modules/polling.guard.test.ts` le mécanise : quatre fichiers nommés, chacun devant rester
+conditionnel, plus un témoin qui refuse une détection qui ne détecterait plus rien.
+
+Advisors relus au passage : 64, **aucun ERROR**, et les fonctions `SECURITY DEFINER` exécutables
+par `anon` sont **toujours exactement deux** (`preview_share_link`, `record_demo_visit`) — le
+checkpoint du §5 est donc vert. `verify_payment_chain()` ne rend aucune anomalie.
 
 ### 2026-09-02 · Re-vérification des 52 tâches, une par une, contre la prod
 
