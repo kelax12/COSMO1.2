@@ -157,10 +157,18 @@ function parseExpected() {
         expected.triggers.add(norm(m[1]));
       } else if ((m = stmt.match(/drop\s+trigger\s+(?:if\s+exists\s+)?([\w."]+)/i))) {
         expected.triggers.delete(norm(m[1]));
-      } else if ((m = stmt.match(/create\s+policy\s+"([^"]+)"\s+on\s+([\w."]+)/i))) {
-        expected.policies.add(`${m[1].toLowerCase()}@@${norm(m[2])}`);
-      } else if ((m = stmt.match(/drop\s+policy\s+(?:if\s+exists\s+)?"([^"]+)"\s+on\s+([\w."]+)/i))) {
-        expected.policies.delete(`${m[1].toLowerCase()}@@${norm(m[2])}`);
+        // Le nom d'une policy peut être entre guillemets OU nu — les deux sont
+        // du SQL valide, et les deux formes existent dans ce dépôt. Ne
+        // reconnaître que la forme citée était un angle mort : la policy de la
+        // mig. 135, écrite sans guillemets, n'était PAS attendue, donc la prod
+        // la signalait « EN TROP » alors qu'elle est versionnée. Défaut de la
+        // même famille que le DROP de surcharge ci-dessus : la garde échouait
+        // dans le sens rassurant, une policy réellement absente n'aurait pas
+        // été réclamée.
+      } else if ((m = stmt.match(/create\s+policy\s+(?:"([^"]+)"|([a-z_][\w$]*))\s+on\s+([\w."]+)/i))) {
+        expected.policies.add(`${(m[1] ?? m[2]).toLowerCase()}@@${norm(m[3])}`);
+      } else if ((m = stmt.match(/drop\s+policy\s+(?:if\s+exists\s+)?(?:"([^"]+)"|([a-z_][\w$]*))\s+on\s+([\w."]+)/i))) {
+        expected.policies.delete(`${(m[1] ?? m[2]).toLowerCase()}@@${norm(m[3])}`);
       }
     }
 
