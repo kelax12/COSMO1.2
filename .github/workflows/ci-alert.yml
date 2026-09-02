@@ -88,3 +88,62 @@ jobs:
               --label ci-red --body "$BODY"
             echo "Issue creee"
           fi
+
+      # ── Pousser l'alerte, au lieu d'attendre qu'on vienne la chercher ──
+      #
+      # POURQUOI CETTE ETAPE EXISTE : l'issue ci-dessus a parfaitement
+      # fonctionne, et n'a servi a RIEN. `Vendor script watch` a echoue chaque
+      # jour du 2026-08-29 au 2026-09-01 — le script tiers charge sur les pages
+      # publiques avait ete modifie pour capter l'email et le nom saisis a
+      # l'inscription — et l'issue #44 s'est bien mise a jour a chaque fois.
+      # Personne ne l'a lue pendant quatre jours.
+      #
+      # Une alerte qui attend d'etre consultee n'est pas une alerte, c'est une
+      # archive. Celle-ci est POUSSEE vers le meme canal que `opsAlert()` des
+      # Edge Functions (`supabase/functions/_shared/alert.ts`), et reprend son
+      # format : `text` ET `content` dans le meme corps, pour couvrir Slack et
+      # Discord sans savoir lequel est branche.
+      #
+      # ⚠️ `if: always()` : cette etape doit partir MEME si l'ecriture de
+      # l'issue a echoue. C'est justement quand le premier canal casse que le
+      # second compte.
+      - name: Pousser l'alerte sur le webhook ops
+        if: always()
+        env:
+          WEBHOOK: ${{ secrets.OPS_ALERT_WEBHOOK_URL }}
+          RUN_URL: ${{ github.event.workflow_run.html_url }}
+          WF: ${{ github.event.workflow_run.name }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -uo pipefail
+
+          # Le secret absent n'est PAS un silence : sans lui, la seule voie
+          # restante est l'issue, celle-la meme qui n'a pas ete lue. On le dit
+          # fort, dans les annotations ET dans le resume du job.
+          if [ -z "${WEBHOOK:-}" ]; then
+            echo "::warning::Secret OPS_ALERT_WEBHOOK_URL absent : aucune alerte poussee. Seule l'issue ci-red est ecrite, et c'est precisement le canal qui n'a pas ete lu pendant 4 jours (2026-08-29 au 09-01)."
+            {
+              echo "### ⚠️ Alerte non poussee"
+              echo
+              echo "Le secret \`OPS_ALERT_WEBHOOK_URL\` n'est pas defini sur ce depot."
+              echo "Le poser : **Settings → Secrets and variables → Actions**, meme URL"
+              echo "que le secret Supabase du meme nom."
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          MSG="🚨 [cosmo/ci] ${WF} en echec sur main (${SHA:0:7}) — ${RUN_URL}"
+
+          # Fire-and-forget, comme `opsAlert()` : une panne d'alerting ne doit
+          # jamais faire echouer le job qui alerte. On ne peut pas alerter sur
+          # l'alerting.
+          CODE=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 10 \
+                   -X POST "$WEBHOOK" \
+                   -H 'Content-Type: application/json' \
+                   --data "$(jq -nc --arg m "$MSG" '{text:$m, content:$m}')" \
+                 || echo "000")
+
+          case "$CODE" in
+            2*) echo "Alerte poussee (HTTP $CODE)" ;;
+            *)  echo "::warning::Le webhook ops n'a pas accepte l'alerte (HTTP $CODE). L'issue ci-red reste le filet." ;;
+          esac
