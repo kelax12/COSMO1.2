@@ -559,6 +559,25 @@ présent quatre fois ici. Même gravité que la fois précédente — **la garde
 rassurant** : une policy au nom nu réellement absente n'aurait jamais été réclamée. Corrigé, avec
 son témoin.
 
+**La garde de bundle mesurait un artefact qui n'existe nulle part.** Sans `VITE_SENTRY_DSN`, Vite
+remplace la variable par `undefined` à la compilation, la branche `Sentry.init` devient du code
+mort, et Rollup jette presque tout `@sentry/react` : 49 276 o gzip avec la variable, **3 818 sans**
+— même arbre, mêmes `node_modules`, et le hash du fichier produit localement sans DSN est celui du
+build de CI, ce qui ferme la question de la cause. La CI construisait sans. Conséquence chiffrée,
+mesurée après correctif : le chemin critique passe de **321,2 à 367,1 ko** — la garde annonçait
+**57,8 ko de marge sous son plafond, il n'en reste que 11,9**. Quatre fois moins.
+
+> 🔴 **Et le remède avait son propre défaut, trouvé par la CI en une passe.** Poser un faux DSN
+> donne au bundle sa forme de production, mais dans le job `lighthouse` la page est **exécutée** :
+> Sentry s'initialise vraiment, tente d'émettre vers un hôte inexistant, et `best-practices` tombe
+> de 100 à 96 sur les quatre pages. L'asymétrie est maintenant écrite dans `ci.yml` — un job qui
+> PÈSE un artefact et un job qui l'EXÉCUTE n'ont pas les mêmes besoins, et une variable qui change
+> la forme d'un bundle change aussi le comportement de la page.
+
+C'est ce piège qui avait fait écrire, quelques heures plus tôt dans T-47, que « `vendor-sentry`
+n'apparaît dans aucun top 3 de bootup, donc le différer ne rendrait rien ». Conclusion rétractée le
+jour même : elle venait d'une mesure structurellement incapable de voir Sentry.
+
 **Un checkpoint est devenu un test.** Le §5 demande de recompter les `refetchInterval`
 « nominativement » à 100 puis à 1 000 utilisateurs. Un checkpoint qu'on rejoue à la main est un
 checkpoint qu'on oubliera — c'est l'argument même d'`architecture.guard.test.ts`, et c'est ce
