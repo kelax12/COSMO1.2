@@ -31,12 +31,12 @@ garde que ce qui reste à faire.
 
 ## 1. Tableau récapitulatif — 52 tâches, la seule table qui porte un statut
 
-**Décompte au 2026-09-01**, recompté **par script** sur les tableaux ci-dessous, jamais de tête.
+**Décompte au 2026-09-02**, recompté **par script** sur les tableaux ci-dessous, jamais de tête.
 
 | | Nombre | Lesquelles |
 |---|---|---|
-| ✅ Fait et vérifié | **29** | T-02 · T-03 · T-04 · T-07 · T-08 · T-10 · T-11 · T-12 · T-13 · T-15 · T-16 · T-18 · T-19 · T-20 · T-24 · T-25 · T-26 · T-28 · T-29 · T-30 · T-31 · T-35 · T-42 · T-44 · T-45 · T-46 · T-48 · T-49 · T-50 |
-| 🟡 Partiel | 7 | T-05 · T-06 · T-09 · T-14 · T-23 · T-41 · T-51 |
+| ✅ Fait et vérifié | **30** | T-02 · T-03 · T-04 · T-06 · T-07 · T-08 · T-10 · T-11 · T-12 · T-13 · T-15 · T-16 · T-18 · T-19 · T-20 · T-24 · T-25 · T-26 · T-28 · T-29 · T-30 · T-31 · T-35 · T-42 · T-44 · T-45 · T-46 · T-48 · T-49 · T-50 |
+| 🟡 Partiel | 6 | T-05 · T-09 · T-14 · T-23 · T-41 · T-51 |
 | ⚪ Clos sans suite | 3 | T-01 · T-04b · T-27 |
 | ⬜ Ouvert | **13** | T-17 · T-21 · T-22 · T-32 · T-33 · T-34 · T-36 · T-37 · T-38 · T-39 · T-40 · T-43 · T-47 |
 
@@ -74,7 +74,7 @@ les porte, jamais ici.
 | ✅ T-04 | Emails | ~~Coller les 4 gabarits d'email dans le Dashboard~~ **fait le 2026-08-29** | ✅ **Écrits** (`supabase/templates/`, en français). Ils ne se déploient pas depuis le dépôt : `config push` n'est pas le workflow de ce projet | P1 | XS | T-03 | X | S2 |
 | ⚪ T-04b | Sécurité | **CLOS SANS CHANGEMENT — décision d'Axel du 2026-08-29 : trop de friction à l'inscription**, sur un produit dont le problème mesuré est l'activation. Risque accepté, pas oublié : détail, conditions de réouverture et état du front dans `faille.md` § G-2. ~~Activer *Confirm email*~~ | Ferme la porte à l'inscription avec l'adresse d'un tiers et aux comptes injoignables. ✅ Le front est prêt : `AuthForm` affiche « Vérifiez votre boîte mail » au lieu de pousser l'inscrit vers un écran protégé qui le rejetterait | P1 | XS | T-03, T-04 | X | S2 |
 | 🟡 T-05 | Sécurité | **Minimum 12 caractères posé le 2026-08-29** (déclaré : aucun réglage Auth n'est lisible depuis le dépôt). Aligné sur `MIN_PASSWORD_LENGTH`, et l'aide des Réglages, restée à 8 en fr comme en en, a été corrigée dans la foulée : la constante avait été centralisée, pas le TEXTE. **Coupée en deux le 2026-08-29.** Minimum 12 caractères : faisable, à faire. « Leaked password protection » : 🔴 **réservée au plan Pro** (« available on the Pro Plan and above »), donc **hors de portée tant qu'on reste en Free** ; l'advisor restera rouge et ce n'est pas un oubli | A-10, encore ouvert : l'advisor `auth_leaked_password_protection` est toujours remonté par la prod le 2026-08-27 | P0 | XS | — | X | S1 |
-| 🟡 T-06 | Sécurité | (a) ✅ **2FA posée sur le compte Supabase d'Axel le 2026-08-29**. (b) 🔴 **La mig. `131` a été appliquée en prod le 2026-08-31, AVANT tout enrôlement** — l'ordre inverse de celui prescrit. Et la porte de sortie prévue était cassée : l'écran d'enrôlement levait une exception **en phase de rendu**, donc l'`AppErrorBoundary` affichait « Une erreur inattendue s'est produite » au lieu du QR code. **`/admin` est donc resté verrouillé du 2026-08-31 au 2026-09-01** (mesuré : `auth.mfa_factors` = 0 ligne). ✅ **Deux bugs distincts corrigés et déployés le 2026-09-01**, le second masqué par le premier : (i) le crash (`formatSecret` levait sur un secret absent, en phase de rendu) ; (ii) le QR ne s'affichait **jamais**, `supabase-js` préfixant déjà `data:image/svg+xml;utf-8,` contrairement à son propre JSDoc, d'où une URI à double en-tête refusée par le navigateur. **QR confirmé affiché par Axel le 2026-09-01.** **Reste, et c'est le seul geste : scanner le QR, valider un code (la session passe en `aal2`), vérifier que `/admin` rend ses chiffres.** | `/admin` expose toute la volumétrie business et n'est protégé que par un mot de passe | P0 | (a) XS · (b) M | — | (a) X · (b) A + B | S1 |
+| ✅ T-06 | Sécurité | (a) ✅ **2FA posée sur le compte Supabase d'Axel le 2026-08-29**. (b) 🔴 **La mig. `131` a été appliquée en prod le 2026-08-31, AVANT tout enrôlement** — l'ordre inverse de celui prescrit. Et la porte de sortie prévue était cassée : l'écran d'enrôlement levait une exception **en phase de rendu**, donc l'`AppErrorBoundary` affichait « Une erreur inattendue s'est produite » au lieu du QR code. **`/admin` est donc resté verrouillé du 2026-08-31 au 2026-09-01** (mesuré : `auth.mfa_factors` = 0 ligne). ✅ **Deux bugs distincts corrigés et déployés le 2026-09-01**, le second masqué par le premier : (i) le crash (`formatSecret` levait sur un secret absent, en phase de rendu) ; (ii) le QR ne s'affichait **jamais**, `supabase-js` préfixant déjà `data:image/svg+xml;utf-8,` contrairement à son propre JSDoc, d'où une URI à double en-tête refusée par le navigateur. **QR confirmé affiché par Axel le 2026-09-01.** ✅ **Terminée le 2026-09-01**, mesuré en base le 2026-09-02 : `auth.mfa_factors` porte **1 facteur `totp` en statut `verified`** sur le compte admin, créé à 14:20:27 UTC et vérifié 46 secondes plus tard. Accès à `/admin` confirmé par Axel le 2026-09-02. Verrouillage réel : **du 2026-08-31 au 2026-09-01**, pas au-delà | `/admin` expose toute la volumétrie business et n'est protégé que par un mot de passe | P0 | (a) XS · (b) M | — | (a) X · (b) A + B | S1 |
 | ✅ T-07 | Sécurité | ~~Vérifier l'allowlist de redirection OAuth~~ **fait le 2026-08-29**. Deux jokers `cosmoapp-*-…vercel.app` conservés sciemment : le suffixe appartient au compte Vercel d'Axel, et `flowType: 'pkce'` rend le `code` inexploitable par une autre origine. **Un manque a été trouvé au passage** : `/reset-password` n'était PAS dans la liste alors que `ForgotPasswordPage` le demande, donc les resets retombaient sur la Site URL. Ajouté | Un wildcard trop large annule une partie du bénéfice de PKCE | P1 | XS | — | X | S1 |
 | ✅ T-08 | Sécurité | ~~Activer « Secure email change »~~ **fait le 2026-08-29** (déclaré). Le réglage vit dans le fournisseur **Email** de *Sign In / Providers*, pas dans le bloc *User Signups* | Prise de contrôle de compte par changement d'email | P1 | XS | — | X | S1 |
 | 🟡 T-09 | Sécurité | ✅ **Activé le 2026-09-01** : secret scanning, **push protection**, et mises à jour de sécurité Dependabot (les deux options `non_provider_patterns` / `validity_checks` exigent GitHub Advanced Security, indisponible ici). ⚠️ **Une fuite RÉELLE trouvée dans l'historique public**, confirmée par le scanner GitHub (alerte n° 1, « Supabase Service Key ») : `.env` a été commité au commit initial puis retiré du suivi — **retirer du suivi n'efface pas l'historique**. Il contenait `VITE_SUPABASE_SERVICE_ROLE_KEY` (qui contourne toute la RLS), `DATABASE_URL` et `BETTER_AUTH_SECRET`. **Inerte** : ces clés visent le projet `pzrpwyqwultyenvqfyhg`, qui **n'existe plus** (absent du compte, DNS inexistant, aucune réponse HTTP) — ce n'est PAS la prod `ykeugqfgklejcdbrmawy`. **Reste, et Axel seul peut y répondre : le mot de passe de ce `DATABASE_URL` a-t-il été RÉUTILISÉ** (base actuelle, autre service) ? Si oui, le changer. C'est la seconde moitié de la tâche | Le dépôt est **public** | P1 | XS | — | X | S1 |
@@ -157,7 +157,7 @@ roadmap suppose qu'on puisse se tromper sans tout perdre.
   le dépôt. L'allowlist de redirection doit contenir **toutes** les pages qui la demandent,
   `/reset-password` comprise.
   ❌ **Hors de portée en plan Free** : `auth_leaked_password_protection` est réservée au plan Pro. L'advisor restera rouge, ce n'est pas un oubli.
-  ⚠️ **La moitié (b) de T-06 est du code, pas un réglage** : livrée le 2026-08-30, elle attend l'application de la mig. `131` puis un enrôlement.
+  ✅ **La moitié (b) de T-06 était du code, pas un réglage** : livrée le 2026-08-30, mig. `131` appliquée le 2026-08-31, enrôlement TOTP vérifié le 2026-09-01.
 - [x] **T-16** — vérifier `VITE_SENTRY_DSN` sur Vercel · P1 · XS · X
   **Done** : une erreur déclenchée volontairement en prod apparaît dans Sentry sous 2 minutes.
 - [x] **T-13** — poser `OPS_ALERT_WEBHOOK_URL` · P1 · XS · X
@@ -508,6 +508,34 @@ questions à reposer le jour venu.
 Une session par entrée, la plus récente en tête de sa journée. **On coche quand le critère
 « Done » est vérifié, pas quand le code est écrit.** Les statuts vivent au §1 ; ici on raconte
 comment on y est arrivé, et surtout ce qu'on a cru à tort en chemin.
+
+### 2026-09-02 · T-06 (b) fermée : la tâche était faite, la roadmap ne le savait pas
+
+**Mesure d'abord, et elle a changé la conclusion.** La ligne T-06 disait « Reste, et c'est le seul
+geste : scanner le QR ». `auth.mfa_factors` en prod dit autre chose : **1 facteur `totp`, statut
+`verified`**, sur `axellongatte2@gmail.com`, créé le 2026-09-01 à 14:20:27 UTC et vérifié à
+14:21:13, soit **46 secondes plus tard**. Le statut ne passe à `verified` qu'après validation d'un
+code. Le geste avait donc été fait dans la foulée de la correction du QR, sans être reporté ici.
+
+Axel a confirmé l'accès à `/admin` le 2026-09-02, sans nouvelle saisie de code : sa session avait
+été élevée en `aal2` à l'enrôlement et le rafraîchissement du jeton la conserve. Ce n'est pas un
+contournement, et la garde elle-même avait été prouvée acteur par acteur le 2026-08-31 (admin en
+`aal1` : `get_admin_stats` refusée **42501**).
+
+**Le verrouillage de `/admin` a donc duré du 2026-08-31 au 2026-09-01**, pas au-delà. La correction
+de périmètre vaut d'être écrite : `public.admin_users` ne contient **qu'une seule ligne**, donc un
+seul compte au monde peut ouvrir cette console, et c'est l'adresse Gmail personnelle, pas
+l'adresse pro.
+
+**Ce que ça dit du document.** Deux jours de suite, une tâche a été trouvée plus avancée que ce
+que la roadmap affirmait (T-09 mal comptée hier, T-06 aujourd'hui). Le motif est le même : un
+geste fait dans une console ne laisse aucune trace dans le dépôt. La parade n'est pas d'écrire
+plus vite, c'est de **relire l'état réel avant de déclarer un reste à faire**, comme le §6 le dit
+déjà pour les migrations.
+
+**Reste en P0 : T-05** (minimum 12 caractères, la protection anti-fuite étant hors plan Free) et
+**T-09**, dont la seconde moitié tient en une question à laquelle Axel seul peut répondre : le mot
+de passe du `DATABASE_URL` fuité dans l'historique public a-t-il été **réutilisé** ailleurs.
 
 ### 2026-09-01 · T-35 : un abonné peut enfin résilier, et Stripe a trois contextes
 

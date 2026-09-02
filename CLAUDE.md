@@ -604,8 +604,14 @@ l'ordre que l'en-tête de la migration déconseille. Mesuré juste avant : le co
 **zéro facteur MFA**. Conséquence, tant qu'aucun code TOTP n'a été vérifié : `/admin`
 n'affiche plus de statistiques. Ce n'est pas un verrouillage — `AdminMfaGate` reste
 atteignable parce que `admin_allowlisted()` ignore volontairement le niveau d'assurance.
-**Prochaine action côté Axel : ouvrir `/admin` et enrôler un authentificateur.** Téléphone
-perdu → `DELETE FROM auth.mfa_factors WHERE user_id = '<uid>';` depuis le SQL editor.
+✅ **L'enrôlement a eu lieu le 2026-09-01**, mesuré en base le 2026-09-02 : `auth.mfa_factors`
+porte **1 facteur `totp` en statut `verified`** sur le compte admin, créé à 14:20:27 UTC et
+vérifié 46 secondes plus tard. Accès à `/admin` confirmé le 2026-09-02. Le verrouillage
+a donc duré **du 2026-08-31 au 2026-09-01**, pas au-delà.
+⚠️ **Un seul compte au monde ouvre cette console** : `public.admin_users` ne contient qu'une
+ligne, l'adresse Gmail personnelle d'Axel, pas l'adresse pro. Téléphone perdu →
+`DELETE FROM auth.mfa_factors WHERE user_id = '<uid>';` depuis le SQL editor, seule porte de
+sortie, et elle n'a pas d'autre gardien.
 🔴 **La porte de sortie était elle-même cassée, et ça a bel et bien produit un verrouillage
 (2026-09-01).** Le raisonnement ci-dessus — « ce n'est pas un verrouillage, `AdminMfaGate`
 reste atteignable » — était juste sur la garde et faux dans les faits : l'écran d'enrôlement
