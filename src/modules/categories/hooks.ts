@@ -5,6 +5,7 @@ import { getCategoriesRepository } from '@/lib/repository.factory';
 import type { Category, CreateCategoryInput, UpdateCategoryInput } from './types';
 import { categoryKeys } from './constants';
 import { translator } from '@/i18n/useT';
+import { splitRestore } from '@/lib/restore-id';
 
 // ═══════════════════════════════════════════════════════════════════
 // REPOSITORY HOOK
@@ -154,3 +155,31 @@ export const useCategoryColor = (id: string) => {
 
 export type { Category, CreateCategoryInput, UpdateCategoryInput } from './types';
 export { categoryKeys } from './constants';
+
+// ═══════════════════════════════════════════════════════════════════
+// RESTAURATION (« Annuler ») — recree l'objet sous SON identifiant
+// ═══════════════════════════════════════════════════════════════════
+//
+// Separe de `useCreateCategory` a dessein : l'identifiant passe par le second
+// argument de `create()`, hors du payload, donc hors de portee d'un objet de
+// formulaire enrichi depuis les devtools. Contrat complet et raison de ce
+// decoupage : `src/lib/restore-id.ts` (R-08).
+//
+// ⚠️ N'appeler QUE depuis un toast d'annulation.
+export const useRestoreCategory = () => {
+  const queryClient = useQueryClient();
+  const repository = useCategoriesRepository();
+
+  return useMutation({
+    mutationFn: (snapshot: Category) => {
+      const { payload, options } = splitRestore(snapshot);
+      return repository.create(payload as CreateCategoryInput, options);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: categoryKeys.lists() });
+    },
+    onError: (error: Error) => {
+      console.error('[useRestoreCategory]', error);
+    },
+  });
+};

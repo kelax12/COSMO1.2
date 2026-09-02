@@ -15,9 +15,7 @@ import { DateSelectArg, EventClickArg, EventDropArg, DatesSetArg, EventInput } f
 // obligerait à éditer ce fichier à chaque nouvelle langue — exactement ce que
 // le reste du socle i18n évite. Ici, toute langue future fonctionne sans code.
 import allCalendarLocales from '@fullcalendar/core/locales-all';
-import { findNextFreeSlot } from './agenda/free-slot';
-import { useEventsWindow, useCreateEvent, useUpdateEvent, useDeleteEvent, CreateEventInput, UpdateEventInput, CalendarEvent } from '@/modules/events';
-import { showUndoToast } from '@/lib/undo-toast';
+import { useEventsWindow, useCreateEvent, useUpdateEvent, useDeleteEvent, useRestoreEvent, CreateEventInput, CalendarEvent } from '@/modules/events';
 import { useCategories } from '@/modules/categories';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { useActiveOrganization, useOrgMembers } from '@/modules/organizations';
@@ -40,7 +38,7 @@ import { getInitialScrollTime, buildCalendarEvents, shiftEventsForDisplay, defau
 import { useTimezonePref, fromDisplayISO, displayNow } from '@/lib/timezone';
 import AgendaSlotReviewModal from './agenda/AgendaSlotReviewModal';
 import { useOverdueSlotReview } from './agenda/useOverdueSlotReview';
-import { useTasks, useToggleTaskComplete, useDeleteTask } from '@/modules/tasks';
+import { useTasks, useToggleTaskComplete, useDeleteTask, useRestoreTask } from '@/modules/tasks';
 import { type MobileView, mobileCalendarStyles, MobileAgendaHeader, MobileDayStrip } from './agenda/MobileAgenda';
 import AgendaDesktopHeader from './agenda/AgendaDesktopHeader';
 import RecurringEventsManager from './agenda/RecurringEventsManager';
@@ -49,6 +47,7 @@ import { useAgendaEventDrag } from './agenda/useAgendaEventDrag';
 import { findSourceEvent } from './agenda/find-event';
 import PageErrorState from '@/components/PageErrorState';
 import { deadlineDayKey } from '@/lib/deadline';
+import { useAgendaEventActions } from './agenda/useAgendaEventActions';
 
 // ── Page principale ──────────────────────────────────────────────────────────
 const AgendaPage: React.FC = () => {
@@ -79,10 +78,13 @@ const AgendaPage: React.FC = () => {
   const createEventMutation = useCreateEvent();
   const updateEventMutation = useUpdateEvent();
   const deleteEventMutation = useDeleteEvent();
+  const restoreEventMutation = useRestoreEvent();
   // Feature « revue de créneau » : tâches + mutations pour valider/supprimer.
   const { data: tasks = [] } = useTasks();
   const toggleTaskComplete = useToggleTaskComplete();
   const deleteTaskMutation = useDeleteTask();
+  // Sert UNIQUEMENT a l'annulation de l'abandon d'un creneau (R-07).
+  const restoreTaskMutation = useRestoreTask();
   const { data: categories = [] } = useCategories();
   const { pref: tzPref } = useTimezonePref();
   const { user } = useAuth();
@@ -394,80 +396,35 @@ const AgendaPage: React.FC = () => {
     return ids;
   }, [calendarEvents]);
 
-  const handleAddEvent = (eventData: CreateEventInput) => {
-    createEventMutation.mutate({ ...eventData, taskId: eventData.taskId || undefined });
-    setShowAddEventModal(false);
-    setSelectedTimeSlot(null);
-    setTimeout(() => { calendarRef.current?.getApi().unselect(); }, 100);
-  };
-
-  const handleUpdateEvent = (eventId: string, eventData: UpdateEventInput) => {
-    updateEventMutation.mutate({ id: eventId, updates: eventData });
-    setShowEditEventModal(false);
-    setSelectedEvent(null);
-    setSelectedInstanceDate(null);
-  };
-
-  const handleDeleteEvent = (eventId: string) => {
-    const master = events.find(e => e.id === eventId);
-    const isRecurring = master && (master.recurrence ?? 'none') !== 'none';
-    const instanceDate = selectedInstanceDate;
-
-    if (isRecurring && instanceDate && master) {
-      // Suppression d'une seule occurrence : ajouter la date dans les exceptions du master
-      const prevExceptions = master.exceptions ?? [];
-      updateEventMutation.mutate({ id: eventId, updates: { exceptions: [...prevExceptions, instanceDate] } });
-      showUndoToast(t('event.occurrenceDeleted'), () => {
-        // Annulation : retire la date des exceptions → l'occurrence réapparaît.
-        updateEventMutation.mutate({ id: eventId, updates: { exceptions: prevExceptions } });
-      });
-    } else if (master) {
-      const { id: _id, ...rest } = master;
-      deleteEventMutation.mutate(eventId);
-      showUndoToast(t('event.eventDeleted'), () => {
-        createEventMutation.mutate(rest as CreateEventInput);
-      });
-    }
-    setShowEditEventModal(false);
-    setSelectedEvent(null);
-    setSelectedInstanceDate(null);
-  };
-
-  // Dupliquer un événement (#3) : copie « (copie) » aux mêmes horaires.
-  const handleDuplicateEvent = (eventId: string) => {
-    const source = events.find(e => e.id === eventId);
-    if (!source) return;
-    // taskId retiré : la copie n'est PAS le même créneau de la même tâche.
-    // Le conserver ferait exister deux événements avec le même taskId, ce qui
-    // fait échouer la résolution par id+taskId ailleurs (drag/click/resize) —
-    // un des deux se retrouve silencieusement modifié à la place de l'autre.
-    const { id: _id, taskId: _taskId, ...rest } = source;
-    createEventMutation.mutate({ ...rest, title: `${source.title} (copie)` } as CreateEventInput);
-    setShowEditEventModal(false);
-    setSelectedEvent(null);
-    setSelectedInstanceDate(null);
-  };
-
-  // « Nouveau » sans plage sélectionnée : propose le prochain créneau libre (#19).
-  const handleOpenAddModal = () => {
-    setSelectedTimeSlot(findNextFreeSlot(calendarEvents));
-    setShowAddEventModal(true);
-  };
-
-  // FAB global (Layout.tsx) : sur /agenda il n'y a plus de « + » dans l'en-tête
-  // mobile (doublon retiré) — le FAB devient l'unique point de création.
-  useEffect(() => {
-    const handler = () => handleOpenAddModal();
-    window.addEventListener('open-agenda-create', handler);
-    return () => window.removeEventListener('open-agenda-create', handler);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [calendarEvents]);
-
-  const handleCloseAddModal = () => {
-    setShowAddEventModal(false);
-    setSelectedTimeSlot(null);
-    setTimeout(() => { calendarRef.current?.getApi().unselect(); }, 100);
-  };
+  const {
+    handleAddEvent,
+    handleUpdateEvent,
+    handleDeleteEvent,
+    handleDuplicateEvent,
+    handleOpenAddModal,
+    handleCloseAddModal,
+  } = useAgendaEventActions({
+    events,
+    calendarEvents,
+    selectedInstanceDate,
+    createEvent: (input) => createEventMutation.mutate(input),
+    updateEvent: (id, updates) => updateEventMutation.mutate({ id, updates }),
+    deleteEvent: (id) => deleteEventMutation.mutate(id),
+    restoreEvent: (event) => restoreEventMutation.mutate(event),
+    closeAddModal: () => { setShowAddEventModal(false); setSelectedTimeSlot(null); },
+    closeEditModal: () => {
+      setShowEditEventModal(false);
+      setSelectedEvent(null);
+      setSelectedInstanceDate(null);
+    },
+    openAddModal: (slot) => { setSelectedTimeSlot(slot); setShowAddEventModal(true); },
+    unselectCalendar: () => calendarRef.current?.getApi().unselect(),
+    labels: {
+      occurrenceDeleted: t('event.occurrenceDeleted'),
+      eventDeleted: t('event.eventDeleted'),
+      copySuffix: t('event.copySuffix'),
+    },
+  });
 
   // ── Revue des créneaux de tâche terminés (feature 2) ───────────────────────
   // Le corps de cette revue vit dans `agenda/useOverdueSlotReview.ts` : quatre
@@ -487,6 +444,9 @@ const AgendaPage: React.FC = () => {
     updateEvent: (id, updates) => updateEventMutation.mutate({ id, updates }),
     deleteEvent: (id) => deleteEventMutation.mutate(id),
     deleteTask: (taskId) => deleteTaskMutation.mutate(taskId),
+    restoreEvent: (event) => restoreEventMutation.mutate(event),
+    restoreTask: (task) => restoreTaskMutation.mutate(task),
+    deletedLabel: t('slotReview.deleted'),
   });
 
   // ── Mobile handlers ───────────────────────────────────────────────────────

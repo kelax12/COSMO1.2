@@ -48,6 +48,7 @@ export {
   useCreateList,
   useUpdateList,
   useDeleteList,
+  useRestoreList,
   useAddTaskToList,
   useRemoveTaskFromList,
 } from './hooks';

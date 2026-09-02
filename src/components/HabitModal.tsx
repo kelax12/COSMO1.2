@@ -20,6 +20,7 @@ interface HabitModalProps {
 
 const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
   const { t } = useT('habits');
+  const { t: tCommon } = useT('common');
   const { favoriteColors } = useFavoriteColors();
   const { data: categories = [] } = useCategories();
   const createHabitMutation = useCreateHabit();
@@ -140,7 +141,7 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                       onClick={guardedClose}
                       className="text-blue-500 text-[15px] min-w-16 min-h-11 flex items-center"
                     >
-                      Annuler
+                      {tCommon('actions.cancel')}
                     </button>
                     <span className="text-[17px] font-semibold text-[rgb(var(--color-text-primary))]">
                       {isEditing ? t('modal.edit') : t('modal.newHabit')}
@@ -179,7 +180,7 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
 
                     {/* Section DÉTAILS */}
                     <p className="text-[11px] font-semibold uppercase tracking-wider text-[rgb(var(--color-text-muted))] px-4 pb-1 pt-5">
-                      Détails
+                      {t('modal.details')}
                     </p>
                     <div className="bg-[rgb(var(--color-surface))] rounded-2xl shadow-sm overflow-hidden">
                       <div className="flex items-center px-4 min-h-11">
@@ -250,11 +251,11 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                           <button
                             type="button"
                             onClick={() => setIsColorSettingsOpen(true)}
-                            aria-label="Personnaliser les couleurs"
+                            aria-label={t('modal.customizeColors')}
                             className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border-2 border-dashed border-[rgb(var(--color-border-strong))] text-blue-500 text-[13px] font-medium"
                           >
                             <Plus className="w-4 h-4" />
-                            Personnaliser
+                            {t('modal.customize')}
                           </button>
                         </div>
                       ) : (
@@ -276,7 +277,7 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                           <button
                             type="button"
                             onClick={() => setIsColorSettingsOpen(true)}
-                            aria-label="Personnaliser les couleurs"
+                            aria-label={t('modal.customizeColors')}
                             className="w-10 h-10 rounded-xl border-2 border-dashed border-[rgb(var(--color-border-strong))] flex items-center justify-center"
                           >
                             <Plus className="w-4 h-4 text-blue-500" />
@@ -330,7 +331,7 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                       <div className="sm:col-span-2" ref={register('name')}>
                         <label className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-                          Nom de l'habitude
+                          {t('modal.nameLabel')}
                         </label>
                         <input
                           type="text"
@@ -406,7 +407,7 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                             className="text-[10px] font-bold uppercase tracking-widest mb-2"
                             style={{ color: 'rgb(var(--color-text-muted))' }}
                           >
-                            Légende
+                            {t('modal.legend')}
                           </h4>
                           <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-3 gap-y-1.5 max-h-[80px] overflow-y-auto">
                             {categories.map((cat) => (
@@ -429,7 +430,7 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                     style={{ borderColor: 'rgb(var(--color-border))' }}
                   >
                     <Button type="button" variant="outline" size="lg" onClick={guardedClose} className="sm:w-auto">
-                      Annuler
+                      {tCommon('actions.cancel')}
                     </Button>
                     <Button
                       type="submit"

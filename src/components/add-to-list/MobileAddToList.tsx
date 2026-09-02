@@ -20,6 +20,7 @@ import { useT } from '@/i18n/useT';
 
 const MobileAddToList: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskId }) => {
   const { t } = useT('tasks');
+  const { t: tCommon } = useT('common');
   const { data: lists = [] } = useLists();
   const addTaskToListMutation      = useAddTaskToList();
   const removeTaskFromListMutation = useRemoveTaskFromList();
@@ -141,7 +142,7 @@ const MobileAddToList: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskI
                 <button
                   type="button"
                   onClick={() => setDraftList(hasDraft ? null : { name: '', color: 'blue' })}
-                  aria-label="Nouvelle liste"
+                  aria-label={tCommon('actions.newList')}
                   className={`w-8 h-8 flex items-center justify-center rounded-lg transition-colors ${
                     hasDraft
                       ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400'
@@ -184,7 +185,7 @@ const MobileAddToList: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskI
                         <button
                           type="button"
                           onClick={() => cycleListColor(list)}
-                          aria-label="Changer la couleur"
+                          aria-label={tCommon('actions.changeColor')}
                           className="w-5 h-5 rounded-full shrink-0 transition-transform active:scale-90"
                           style={{ backgroundColor: color }}
                         />
@@ -218,14 +219,14 @@ const MobileAddToList: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskI
                               onClick={() => handleConfirmDelete(list.id)}
                               className="h-7 px-2.5 rounded-md text-xs font-semibold text-white bg-red-600 hover:bg-red-700 transition-colors"
                             >
-                              Supprimer
+                              {tCommon('actions.delete')}
                             </button>
                           </div>
                         ) : (
                           <button
                             type="button"
                             onClick={() => setConfirmDeleteId(list.id)}
-                            aria-label={`Supprimer ${list.name}`}
+                            aria-label={t('addToList.deleteNamed', { name: list.name })}
                             className="w-8 h-8 flex items-center justify-center rounded-lg text-[rgb(var(--color-text-muted))] hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors shrink-0"
                           >
                             <Trash2 size={13} />
@@ -282,7 +283,7 @@ const MobileAddToList: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskI
                     <button
                       type="button"
                       onClick={cycleDraftColor}
-                      aria-label="Changer la couleur"
+                      aria-label={tCommon('actions.changeColor')}
                       className="w-5 h-5 rounded-full shrink-0 transition-transform active:scale-90"
                       style={{ backgroundColor: resolveColor(draftList!.color) }}
                     />
@@ -295,7 +296,7 @@ const MobileAddToList: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskI
                         if (e.key === 'Enter'  && draftList!.name.trim()) handleCreate();
                         if (e.key === 'Escape') setDraftList(null);
                       }}
-                      placeholder="Nom de la liste…"
+                      placeholder={t('addToList.namePlaceholderShort')}
                       className="flex-1 min-w-0 text-sm bg-transparent focus:outline-none focus:ring-0 text-[rgb(var(--color-text-primary))] placeholder-gray-400 dark:placeholder-gray-600"
                       style={{ border: 'none' }}
                     />
@@ -304,7 +305,7 @@ const MobileAddToList: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskI
                         <Check size={16} />
                       </button>
                     ) : (
-                      <button type="button" onClick={() => setDraftList(null)} aria-label="Annuler" className="text-gray-400 shrink-0">
+                      <button type="button" onClick={() => setDraftList(null)} aria-label={tCommon('actions.cancel')} className="text-gray-400 shrink-0">
                         <X size={14} />
                       </button>
                     )}

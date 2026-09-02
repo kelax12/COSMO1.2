@@ -118,7 +118,7 @@ export const useSendFriendRequest = () => {
       queryClient.invalidateQueries({ queryKey: friendKeys.sentRequests() });
     },
     onError: (error: Error) => {
-      toast.error(`Impossible d'envoyer la demande d'ami : ${error.message}`);
+      toast.error(translator('errors').t('mutation.sendFriendRequest', { message: error.message }));
     },
   });
 };
@@ -134,7 +134,7 @@ export const useAcceptFriendRequest = () => {
       queryClient.invalidateQueries({ queryKey: friendKeys.lists() });
     },
     onError: (error: Error) => {
-      toast.error(`Impossible d'accepter la demande d'ami : ${error.message}`);
+      toast.error(translator('errors').t('mutation.acceptFriendRequest', { message: error.message }));
     },
   });
 };
@@ -157,7 +157,7 @@ export const useCancelFriendRequest = () => {
       queryClient.invalidateQueries({ queryKey: friendKeys.sentRequests() });
     },
     onError: (error: Error) => {
-      toast.error(`Impossible d'annuler la demande d'ami : ${error.message}`);
+      toast.error(translator('errors').t('mutation.cancelFriendRequest', { message: error.message }));
     },
   });
 };
@@ -173,7 +173,7 @@ export const useRejectFriendRequest = () => {
       queryClient.invalidateQueries({ queryKey: friendKeys.sentRequests() });
     },
     onError: (error: Error) => {
-      toast.error(`Impossible de refuser la demande d'ami : ${error.message}`);
+      toast.error(translator('errors').t('mutation.declineFriendRequest', { message: error.message }));
     },
   });
 };
@@ -200,7 +200,7 @@ export const useRemoveFriend = () => {
       if (context?.previousFriends) {
         queryClient.setQueryData(friendKeys.lists(), context.previousFriends);
       }
-      toast.error(`Impossible de supprimer l'ami : ${error.message}`);
+      toast.error(translator('errors').t('mutation.removeFriend', { message: error.message }));
     },
 
     onSettled: () => {
@@ -219,7 +219,7 @@ export const useShareTask = () => {
       queryClient.invalidateQueries({ queryKey: friendKeys.sharedTasks() });
     },
     onError: (error: Error) => {
-      toast.error(`Impossible de partager la tâche : ${error.message}`);
+      toast.error(translator('errors').t('mutation.shareTask', { message: error.message }));
     },
   });
 };
@@ -241,7 +241,7 @@ export const useAcceptSharedTask = () => {
       queryClient.invalidateQueries({ queryKey: taskKeys.pendingShared() });
     },
     onError: (error: Error) => {
-      toast.error(`Impossible d'accepter la tâche : ${error.message}`);
+      toast.error(translator('errors').t('mutation.acceptTask', { message: error.message }));
     },
   });
 };
@@ -262,7 +262,7 @@ export const useUnshareTask = () => {
       queryClient.invalidateQueries({ queryKey: taskKeys.pendingShared() });
     },
     onError: (error: Error) => {
-      toast.error(`Impossible d'annuler le partage de la tâche : ${error.message}`);
+      toast.error(translator('errors').t('mutation.unshareTask', { message: error.message }));
     },
   });
 };
@@ -282,7 +282,7 @@ export const useShareList = () => {
       queryClient.invalidateQueries({ queryKey: friendKeys.incomingSharedLists() });
     },
     onError: (error: Error) => {
-      toast.error(`Impossible de partager la liste : ${error.message}`);
+      toast.error(translator('errors').t('mutation.shareList', { message: error.message }));
     },
   });
 };
@@ -346,7 +346,7 @@ export const useAcceptSharedList = () => {
       queryClient.invalidateQueries({ queryKey: taskKeys.lists() });
     },
     onError: (error: Error) => {
-      toast.error(`Impossible d'accepter la liste : ${error.message}`);
+      toast.error(translator('errors').t('mutation.acceptList', { message: error.message }));
     },
   });
 };
@@ -361,7 +361,7 @@ export const useRefuseSharedList = () => {
       queryClient.invalidateQueries({ queryKey: friendKeys.incomingSharedLists() });
     },
     onError: (error: Error) => {
-      toast.error(`Impossible de refuser la liste : ${error.message}`);
+      toast.error(translator('errors').t('mutation.declineList', { message: error.message }));
     },
   });
 };

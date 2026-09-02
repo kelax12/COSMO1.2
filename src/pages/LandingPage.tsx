@@ -207,7 +207,7 @@ const LandingPage: React.FC = () => {
             <button
               className="group flex items-center gap-2.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 rounded-xl pr-2"
               onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-              aria-label="Retour en haut de la page"
+              aria-label={t('nav.backToTop')}
             >
               <div className="relative">
                 <div className="w-9 h-9 overflow-hidden rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/25 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-[10deg]">

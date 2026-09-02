@@ -58,7 +58,7 @@ const UseCasePage: React.FC = () => {
         <aside className="mt-14 rounded-2xl border border-white/10 bg-white/5 p-6 sm:p-8 text-center">
           <p className="text-lg font-semibold text-white mb-2">{t('useCasePage.ctaTitle')}</p>
           <p className="text-slate-400 text-sm mb-5">
-            Démo instantanée pré-remplie, sans inscription ni carte bancaire.
+            {t('useCase.demoNote')}
           </p>
           <Link
             to="/signup"

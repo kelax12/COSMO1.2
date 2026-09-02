@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 import { Undo2 } from 'lucide-react';
+import { useT } from '@/i18n/useT';
 
 /**
  * Toast d'annulation réutilisable avec barre de progression.
@@ -62,6 +63,7 @@ function ProgressBar({ duration }: { duration: number }) {
 }
 
 function UndoToastCard({ message, duration, onUndo }: UndoToastCardProps) {
+  const { t } = useT('common');
   return (
     <div
       className="flex flex-col gap-2 w-[320px] max-w-[90vw] rounded-xl border shadow-lg overflow-hidden"
@@ -83,7 +85,7 @@ function UndoToastCard({ message, duration, onUndo }: UndoToastCardProps) {
           className="inline-flex items-center gap-1.5 shrink-0 px-3 py-1.5 rounded-lg text-sm font-semibold text-[rgb(var(--color-accent-solid-foreground))] bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] active:bg-blue-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
         >
           <Undo2 size={15} aria-hidden="true" />
-          Annuler
+          {t('actions.undo')}
         </button>
       </div>
       <div

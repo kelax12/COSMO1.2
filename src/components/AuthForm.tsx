@@ -278,7 +278,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onSwitchMode, onSuccess, head
         {mode === 'register' && (
           <div>
             <label htmlFor="auth-name" className="block text-xs font-medium text-[rgb(var(--color-text-secondary))] mb-1.5">
-              Nom complet
+              {t('auth.fullName')}
             </label>
             <div className="relative">
               <User size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[rgb(var(--color-text-muted))] pointer-events-none" aria-hidden="true" />
@@ -291,7 +291,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onSwitchMode, onSuccess, head
                 value={formData.name}
                 onChange={handleInputChange}
                 className={inputClasses}
-                placeholder="Votre nom"
+                placeholder={t('auth.yourNamePlaceholder')}
                 required
               />
             </div>

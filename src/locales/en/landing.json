@@ -6,7 +6,8 @@
     "solutions": "Solutions",
     "guide": "Guide",
     "login": "Sign in",
-    "faq": "FAQ"
+    "faq": "FAQ",
+    "backToTop": "Back to top"
   },
   "hero": {
     "line1": "All your productivity,",
@@ -62,7 +63,12 @@
     "title4": "Where does your time go?",
     "desc4": "You stop guessing. You see.",
     "tag5": "// 05 · Zero friction",
-    "desc5": "A demo pre-filled with 12 months of realistic data. You try the real Cosmo, not a video. No email asked."
+    "desc5": "A demo pre-filled with 12 months of realistic data. You try the real Cosmo, not a video. No email asked.",
+    "heading": "What actually changes",
+    "habitsLine1": "Your habits,",
+    "habitsLine2": "across 26 weeks.",
+    "retention": "Retention 71%",
+    "demoVolume": "100 tasks · 100 habits · 150 events"
   },
   "features": {
     "heading": "A productivity app for every profile",
@@ -117,7 +123,9 @@
       "b3": "Track your progress from a single page",
       "b4": "See your productivity at a glance",
       "cta": "See the statistics"
-    }
+    },
+    "headingLine1": "Tasks, habits, calendar and OKRs",
+    "headingLine2": "in a single tool"
   },
   "useCases": {
     "students": {
@@ -181,7 +189,9 @@
     "q11": "Will my team members feel monitored?",
     "a11": "No, and that is a design decision. A manager sees their team's workload, tasks and calendar slots, but never the content of events marked as personal. Statistics cover team tasks, not individual activity. Everyone also sees, before joining a company, exactly what it will be able to observe about their work.",
     "q12": "How is data separated between teams?",
-    "a12": "Separation is enforced at the database level, not just in the interface: a project or objective attached to one team stays inaccessible to the others, even if the interface has a bug. A mid-level manager only sees themselves and the people reporting to them, directly or not, with no permissions to configure by hand."
+    "a12": "Separation is enforced at the database level, not just in the interface: a project or objective attached to one team stays inaccessible to the others, even if the interface has a bug. A mid-level manager only sees themselves and the people reporting to them, directly or not, with no permissions to configure by hand.",
+    "headingLine1": "Everything you want to know",
+    "headingLine2": "about Cosmo"
   },
   "footer": {
     "rights": "© 2026 All rights reserved.",
@@ -243,7 +253,10 @@
     "metaDescription": "Practical guides on the OKR method, habit tracking, time-blocking and personal productivity. By the Cosmo team.",
     "title": "The Cosmo blog",
     "readNext": "Read next",
-    "tryFree": "Try Cosmo for free"
+    "tryFree": "Try Cosmo for free",
+    "createFreeAccount": "Create a free account",
+    "ctaPitch": "Tasks, habits, calendar and OKRs in one app. Instant demo, no sign-up.",
+    "indexIntro": "Practical guides on OKRs, habits, time-blocking and productivity. No fluff."
   },
   "enterprise": {
     "gateway": {
@@ -504,5 +517,11 @@
       "note": "Free up to 5 members · no credit card",
       "noteFree": "Free during the launch offer · no credit card"
     }
+  },
+  "solutions": {
+    "learnMore": "Learn more"
+  },
+  "useCase": {
+    "demoNote": "Instant pre-filled demo. No sign-up, no card."
   }
 }

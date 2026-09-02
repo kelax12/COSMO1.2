@@ -310,11 +310,11 @@ const FeaturesSection: React.FC<FeaturesSectionProps> = ({ isMobile, handleFeatu
             className="text-4xl lg:text-5xl font-bold mb-6"
           >
             <span className="bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">
-              Tâches, habitudes, agenda et OKR
+              {t('features.headingLine1')}
             </span>
             <br />
             <span className="bg-gradient-to-r from-[rgb(var(--color-accent-solid))] to-purple-400 bg-clip-text text-transparent">
-              dans un seul outil
+              {t('features.headingLine2')}
             </span>
           </motion.h2>
           <motion.p

@@ -3,9 +3,13 @@ import React from 'react';
 import { Link } from 'react-router';
 import { useT } from '@/i18n/useT';
 import { CONTACT_EMAIL } from '@/lib/contact.mjs';
+import { useLocalizedPath } from '@/i18n/useLocalizedPath';
 
 const LandingFooter: React.FC = () => {
   const { t } = useT('landing');
+  // Slugs localisés : un `to=` en dur rend une 404 hors du français (voir
+  // `useLocalizedPath`). C'est le seul chemin vers les pages contractuelles.
+  const localizedPath = useLocalizedPath();
   return (
       <footer className="bg-black/40 backdrop-blur-xl border-t border-white/10 py-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -47,9 +51,9 @@ const LandingFooter: React.FC = () => {
               <a href="#faq" className="hover:text-white transition-colors">FAQ</a>
               <Link to="/signup" className="hover:text-white transition-colors">{t('footer.signup')}</Link>
               <Link to="/login" className="hover:text-white transition-colors">{t('footer.login')}</Link>
-              <Link to="/mentions-legales" className="hover:text-white transition-colors">{t('footer.legalNotice')}</Link>
-              <Link to="/politique-confidentialite" className="hover:text-white transition-colors">{t('footer.privacy')}</Link>
-              <Link to="/cgu" className="hover:text-white transition-colors">{t('footer.terms')}</Link>
+              <Link to={localizedPath('legalNotice')} className="hover:text-white transition-colors">{t('footer.legalNotice')}</Link>
+              <Link to={localizedPath('privacy')} className="hover:text-white transition-colors">{t('footer.privacy')}</Link>
+              <Link to={localizedPath('terms')} className="hover:text-white transition-colors">{t('footer.terms')}</Link>
             </div>
           </div>
         </div>

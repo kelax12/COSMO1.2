@@ -60,6 +60,7 @@ export const getColorFr = (colorName: string) => {
     onDelete
   }) => {
   const { t } = useT('tasks');
+  const { t: tCommon } = useT('common');
     const [isAdding, setIsAdding] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
@@ -287,7 +288,7 @@ export const getColorFr = (colorName: string) => {
                             className="px-6 py-3 rounded-xl font-bold transition-all active:scale-[0.98] hover:opacity-80"
                             style={{ backgroundColor: 'rgb(var(--color-border))', color: 'rgb(var(--color-text-secondary))' }}
                           >
-                            Annuler
+                            {tCommon('actions.cancel')}
                           </button>
                         </div>
                       </form>
@@ -355,14 +356,14 @@ export const getColorFr = (colorName: string) => {
                               <button
                                 onClick={() => startEdit(category)}
                                 className="p-2.5 bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-muted))] hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-xl transition-all shadow-sm active:scale-90"
-                                title="Modifier"
+                                title={t('categoryManager.editTitle')}
                               >
                                 <Edit2 size={18} />
                               </button>
                               <button
                                 onClick={() => setCategoryToDelete(category.id)}
                                 className="p-2.5 bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-muted))] hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-xl transition-all shadow-sm active:scale-90"
-                                title="Supprimer"
+                                title={t('categoryManager.deleteTitle')}
                               >
                                 <Trash2 size={18} />
                               </button>
@@ -420,7 +421,7 @@ export const getColorFr = (colorName: string) => {
                           onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'rgb(var(--color-active))')}
                           onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'rgb(var(--color-hover))')}
                         >
-                          Annuler
+                          {tCommon('actions.cancel')}
                         </button>
                         <button
                           onClick={confirmDelete}

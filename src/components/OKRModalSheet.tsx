@@ -73,6 +73,7 @@ const fromDateInput = (v: string) => (v ? new Date(v + 'T00:00:00').toISOString(
 
 export default function OKRModalSheet({ isOpen, onClose, categories, editingObjective, onSubmit }: OKRModalSheetProps) {
   const { t } = useT('okr');
+  const { t: tCommon } = useT('common');
   const isEdit = !!editingObjective;
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -167,7 +168,7 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
           <div className="grid gap-4 px-4 pb-4">
             <div className="grid gap-2">
               <Label htmlFor="okr-title">{t('modal.objective')}</Label>
-              <Input id="okr-title" value={title} autoFocus placeholder="Ex. Lancer la v2 du produit" onChange={(e) => setTitle(e.target.value)} />
+              <Input id="okr-title" value={title} autoFocus placeholder={t('modalSheet.titlePlaceholder')} onChange={(e) => setTitle(e.target.value)} />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
@@ -179,7 +180,7 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
                 </div>
                 <Select value={category} onValueChange={setCategory}>
                   <SelectTrigger id="okr-cat" className="w-full">
-                    <SelectValue placeholder="Choisir…" />
+                    <SelectValue placeholder={t('modalSheet.pickPlaceholder')} />
                   </SelectTrigger>
                   <SelectContent>
                     {categories.map((c) => (
@@ -214,7 +215,7 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
                 onClick={() => setKeyResults((p) => [...p, newKR()])}
                 className="bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))] border-0"
               >
-                <Plus aria-hidden="true" /> Ajouter
+                <Plus aria-hidden="true" /> {tCommon('actions.add')}
               </Button>
             </div>
 
@@ -236,7 +237,7 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
                       </Button>
                     )}
                     {keyResults.length > 1 && (
-                      <Button type="button" variant="destructive" size="icon-sm" aria-label="Retirer" onClick={() => setKeyResults((p) => p.filter((k) => k.id !== kr.id))}>
+                      <Button type="button" variant="destructive" size="icon-sm" aria-label={tCommon('actions.remove')} onClick={() => setKeyResults((p) => p.filter((k) => k.id !== kr.id))}>
                         <Trash2 aria-hidden="true" />
                       </Button>
                     )}

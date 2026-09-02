@@ -55,7 +55,7 @@ export function PremiumPage() {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        toast.error('Veuillez vous reconnecter.');
+        toast.error(t('page.signInAgain'));
         return;
       }
 
@@ -89,7 +89,7 @@ export function PremiumPage() {
       toast.success(t('page.dayCredited'));
     } catch (err) {
       if (isDailyAdLimitError(err)) {
-        toast.error('Limite quotidienne de pubs atteinte (20/jour). Revenez demain ou passez Premium.');
+        toast.error(t('page.dailyAdLimit'));
       } else {
         toast.error(t('page.creditError'));
       }
@@ -200,7 +200,7 @@ export function PremiumPage() {
           variants={itemVariants}
         >
           <h3 className="text-xl font-bold text-[rgb(var(--color-text-primary))] mb-6">
-            Obtenir un jour Premium
+            {t('page.getOneDay')}
           </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                 <motion.div
@@ -239,7 +239,7 @@ export function PremiumPage() {
                         <h4 className="font-bold text-[rgb(var(--color-text-primary))]">{t('page.monthlyTitle')}</h4>
                       </div>
                       <p className="text-[rgb(var(--color-text-secondary))] mb-4 text-sm font-medium">
-                        Souscrivez pour 30 jours de statut Premium complet.
+                        {t('page.subscribe30')}
                       </p>
                       <div className="text-center mb-4">
                         <div className="text-4xl font-bold text-[rgb(var(--color-accent))] mb-1">{formatCurrency(PREMIUM_MONTHLY_EUR)}</div>
@@ -524,7 +524,7 @@ export function PremiumPage() {
             <div>
               <p className="font-bold text-emerald-700 dark:text-emerald-300 text-base">{t('page.watchAdShort')}</p>
               <p className="text-sm text-emerald-600 dark:text-emerald-400/80 mt-0.5">
-                Gratuit · Gagne +1 jour Premium
+                {t('page.freeEarnDay')}
               </p>
             </div>
           </motion.button>

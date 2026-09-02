@@ -56,6 +56,7 @@ export function defaultSlot(task: Task | null): { start: string; end: string } {
 
 export default function ScheduleEventModal({ open, onOpenChange, task }: ScheduleEventModalProps) {
   const { t } = useT('eventModal');
+  const { t: tCommon } = useT('common');
   const createEvent = useCreateEvent();
   const categoryColor = useCategoryColor(task?.category ?? '');
 
@@ -167,7 +168,7 @@ export default function ScheduleEventModal({ open, onOpenChange, task }: Schedul
 
         <DialogFooter>
           <Button type="button" variant="outline" size="lg" onClick={() => onOpenChange(false)}>
-            Annuler
+            {tCommon('actions.cancel')}
           </Button>
           <Button
             type="button"

@@ -437,7 +437,7 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
                   </div>
                 ) : (
                   <div className="mt-2 text-xs font-semibold" style={{ color: 'rgb(var(--color-success))' }}>
-                    ✓ Déjà planifiée
+                    {t('sidebar.alreadyScheduled')}
                   </div>
                 )}
               </div>

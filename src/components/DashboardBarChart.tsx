@@ -162,7 +162,7 @@ const DashboardBarChart: React.FC<DashboardBarChartProps> = ({ viewMode }) => {
       <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 sm:mb-6">
         <div>
           <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-[rgb(var(--color-text-primary))] tracking-tight">
-            Répartition du temps
+            {t('chart.timeBreakdown')}
           </h2>
           <p className="text-[rgb(var(--color-text-secondary))] text-xs sm:text-sm flex items-center gap-2 mt-0.5">
             <Calendar size={14} />

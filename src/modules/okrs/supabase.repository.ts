@@ -12,6 +12,7 @@ import { warnIfTruncated } from '@/lib/pagination.warning';
 import { fetchAllPages, MAX_ROWS } from '@/lib/fetch-all-pages';
 // Source unique du calcul de progression OKR — fonction pure testable.
 import { recalcProgress } from './progress';
+import type { CreateOptions } from '@/lib/restore-id';
 import {
   OKRRow,
   KRRow,
@@ -235,12 +236,20 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
   // WRITE OPERATIONS
   // ═══════════════════════════════════════════════════════════════════
 
-  async create(input: CreateOKRInput): Promise<OKR> {
+  async create(input: CreateOKRInput, options?: CreateOptions): Promise<OKR> {
     if (!supabase) throw new Error('Supabase not configured');
     const user = await getCurrentUser();
     if (!user) throw new Error('Not authenticated');
 
-    const dbInput = { ...mapOkrToDb(input), user_id: user.id };
+    // `options.restoreId` ne vient JAMAIS d'un payload de formulaire :
+    // c'est un second argument, reserve aux « Annuler » (R-08). La
+    // whitelist `mapToDb` et le `user_id` pose depuis la session sont
+    // inchanges.
+    const dbInput = {
+      ...mapOkrToDb(input),
+      user_id: user.id,
+      ...(options?.restoreId ? { id: options.restoreId } : {}),
+    };
 
     const { data, error } = await supabase
       .from('okrs')

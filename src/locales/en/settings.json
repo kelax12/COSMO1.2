@@ -37,7 +37,16 @@
     "unsupportedFormat": "Unsupported format",
     "unsupportedFormatHint": "Use JPEG, PNG, WebP or GIF.",
     "deletePhotoTitle": "Delete picture?",
-    "deletePhotoBody": "Are you sure you want to delete your profile picture?"
+    "deletePhotoBody": "Are you sure you want to delete your profile picture?",
+    "tooLarge": "Image too large",
+    "tooLargeHint": "Maximum size: 500 KB.",
+    "invalidFile": "Invalid file",
+    "unreadableImage": "Couldn't read that image",
+    "invalidEmail": "That email address isn't valid.",
+    "changePhoto": "Change photo",
+    "changePhotoAria": "Change your profile photo",
+    "fullName": "Full name",
+    "yourNamePlaceholder": "Your name"
   },
   "timezone": {
     "heading": "Time zone",
@@ -68,7 +77,14 @@
     "deleteFailedHint": "Contact axellongattepro@gmail.com, your request will be handled manually.",
     "accountDeleted": "Account deleted",
     "networkError": "Network error",
-    "networkErrorHint": "Try again, or contact axellongattepro@gmail.com."
+    "networkErrorHint": "Try again, or contact axellongattepro@gmail.com.",
+    "unexpectedError": "Something unexpected went wrong",
+    "fillAllFields": "Please fill in every field",
+    "passwordsDiffer": "The new passwords don't match",
+    "serviceUnavailable": "Service unavailable",
+    "wrongCurrentPassword": "Wrong current password",
+    "newPasswordLabel": "New password",
+    "deleteAccount": "Delete my account"
   },
   "logout": {
     "title": "Sign out?",
@@ -114,7 +130,10 @@
     "supportTitle": "Need help?",
     "supportHint": "Our team replies within 24h.",
     "adminTitle": "Cosmo stats",
-    "adminHint": "Growth, activity and conversion, admin only."
+    "adminHint": "Growth, activity and conversion, admin only.",
+    "openGuide": "Open the guide",
+    "contactSupport": "Contact support",
+    "openDashboard": "Open the dashboard"
   },
   "data": {
     "title": "My data",
@@ -139,6 +158,8 @@
     "exportingAll": "Exporting all your data…",
     "exportingAllHint": "{{count}} items across 4 CSV files",
     "importNotice": "Import from Todoist / Notion / TickTick",
-    "importNoticeRest": ": coming soon. In the meantime, export your data from the source app as CSV and contact us for a manual import."
+    "importNoticeRest": ": coming soon. In the meantime, export your data from the source app as CSV and contact us for a manual import.",
+    "exportAll": "Export everything",
+    "exportAllHint": "Seven CSV files: tasks, habits, calendar, OKRs, categories, lists, profile"
   }
 }

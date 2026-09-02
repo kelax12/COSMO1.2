@@ -6,16 +6,36 @@ et les **règles durables** tirées des audits.
 - Historique complet (preuve des corrections, audits datés 2026-04 → 2026-08, anciens ordres de
   priorité) : [`docs/archive/faille-historique.md`](./docs/archive/faille-historique.md) — **archive, non maintenue**.
 - Procédures et patterns : [`docs/SECURITY.md`](./docs/SECURITY.md).
-- Dernière vérification de ce fichier contre le code **et contre la prod** : **2026-08-25**.
+- Dernière vérification de ce fichier contre le code **et contre la prod** : **2026-09-02**
+  (audit des Edge Functions Stripe, findings `S-1` à `S-6`, quinze requêtes de lecture en base).
   Relu contre le code de `main` le **2026-08-27** (ajout du finding G-1, mig. `130`). ⚠️ Les
-  chiffres de production de ce fichier (advisors, policies en base) datent toujours du 08-25 :
-  aucune requête n'a été passée en prod le 27.
+  chiffres d'advisors et de policies de ce fichier datent toujours du 08-25 : la campagne du 09-02
+  n'a mesuré que la surface de facturation, pas la RLS.
 
 Légende : 🔴 bloquant · 🟠 important · 🟡 à planifier · ✅ corrigé
 
 ---
 
-## Note de sécurité : 82 → 86 → **86 / 100** (2026-08-24 → 2026-08-25) · **inchangée au 2026-08-27 et au 2026-08-29**
+## Note de sécurité : 82 → 86 → **84 / 100** (2026-08-24 → 2026-09-02)
+
+> ### 🟠 2026-09-02 · la note BAISSE de 2, et c'est l'audit qui l'a fait baisser
+>
+> Rien ne s'est cassé : six findings sont apparus parce qu'on a enfin regardé la surface de
+> facturation. La ligne « findings ouverts dans le code » disait 0 depuis le 08-24 ; elle disait 0
+> **parce que personne n'avait lu les Edge Functions Stripe**, pas parce qu'elles étaient propres.
+>
+> *Une note qui monte quand on cesse de chercher ne mesure pas la sécurité, elle mesure
+> l'attention.* Les six correctifs livrés le même jour ne la font pas remonter : ils réparent des
+> trous que la note n'avait jamais comptés.
+>
+> ~~**Ce qui la retient à 84**, ce ne sont plus des findings ouverts — il n'y en a plus — mais deux
+> migrations **écrites et non appliquées** (`134`, `135`).~~ ✅ **Les deux ont été APPLIQUÉES en
+> production le 2026-09-02 au soir** (ledger `20260902162407` et `20260902162428`), et vérifiées
+> acteur par acteur dans une transaction annulée : doublon de `stripe_customer_id` refusé en 23505,
+> consentement incomplet refusé par la CHECK, UPDATE et DELETE refusés par le trigger **même au rôle
+> privilégié**, une seule policy et aucune policy d'écriture, un compte tiers ne voit rien. Le motif
+> qui retenait la note est donc levé le jour même. Un correctif non déployé n'est pas un correctif —
+> et celui-ci l'est.
 
 > ### 🔴 2026-08-29 · la note ne bouge pas, mais une de ses justifications était fausse
 >
@@ -40,10 +60,12 @@ Légende : 🔴 bloquant · 🟠 important · 🟡 à planifier · ✅ corrigé
 > ~~G-1 reste ouvert en production~~ → ✅ **G-1 est REFERMÉ le 2026-08-29** : mig. `130` appliquée en
 > production et vérifiée en base, pas sur parole (voir la section G-1).
 
-| Ce qui compose la note | 08-24 | 08-25 | **08-27** |
+| Ce qui compose la note | 08-25 | 08-27 | **09-02** |
 |---|---|---|---|
-| Findings High/Critical exploitables | 0 | 0 | 0 |
-| Findings ouverts dans le code | 0 (B-1/B-2/B-3 refermés) | 0 | 0 |
+| Findings High/Critical exploitables | 0 | 0 | **0** |
+| Findings ouverts dans le code | 0 | 0 | **0** · `S-5` et `S-6` refermés le jour même |
+| Migrations écrites, **non appliquées** en prod | 0 | 0 | **0** · `134` et `135` appliquées le 2026-09-02 au soir |
+| Surface auditée au moins une fois | pages + RLS | idem | **+ les 4 Edge Functions Stripe** |
 | Findings ouverts **en production** | 0 | 0 | ~~🟠 1 · G-1~~ → **0 au 2026-08-29**, mig. 130 appliquée et vérifiée |
 | Bloquants restants, **hors dépôt** | A-9 (pas de PITR) + 5 réglages de console | **inchangés** | **inchangés** |
 | Gardes automatiques vertes | 4 | **4** (+ périmètre élargi : 128 policies, 127 migrations) | **4** · `check:rls` 0 violation, `validate:migrations` 0 erreur avec la mig. 130 |
@@ -452,6 +474,178 @@ existe depuis le 2026-08-29 : y router les échecs de `vendor-watch` fermerait c
 
 ---
 
+## 🟠 Audit des Edge Functions Stripe — 2026-09-02
+
+**Périmètre** : `stripe-webhook` (662 l.), `stripe-org-checkout`, `stripe-org-portal`,
+`stripe-create-checkout`, `_shared/org-tiers.ts`, `_shared/org-stripe-prices.ts`, `_shared/alert.ts`,
+et `renewal-notice` parce qu'il dépend du même état. Vérifié en base : contraintes, RPC, volumes.
+
+**Aucun finding critique, et ce n'est pas une politesse.** Les gardes qui comptent sont là et sont
+justes : signature vérifiée avant toute lecture du corps, marqueur d'idempotence écrit APRÈS le
+handler, palier redérivé du price ID et jamais des metadata, refus explicite d'un prix inconnu
+plutôt qu'une dégradation au palier gratuit, `getUidFromCustomer` qui refuse un customer portant
+`org_id`. Les six findings ci-dessous portent tous sur des chemins d'ERREUR, pas sur le chemin
+nominal.
+
+**Mesuré en production le 2026-09-02** : 8 événements Stripe traités (4 `invoice.payment_succeeded`
+le 02/07, 4 `customer.subscription.deleted` le 31/07), 0 ligne dans `payment_records`,
+0 dans `org_subscriptions`, 54 dans `subscriptions`, 0 doublon de `stripe_customer_id`.
+
+> ⚠️ **Le journal fiscal ne couvre pas ces 8 événements**, et c'est normal : `payment_records`
+> naît avec la mig. `125` du 2026-08-26, un mois après. Aucun euro réel n'est concerné (clé Stripe
+> de TEST), donc aucune obligation n'a été manquée — mais « le journal couvre tout » est faux, et
+> une phrase pareille se dit vite devant un contrôleur.
+
+| # | Finding | Gravité | État |
+|---|---|---|---|
+| S-1 | Le pré-contrôle d'idempotence avalait son erreur → rejeu possible de `bump_win_streak` | 🟡 | ✅ corrigé |
+| S-2 | `getUidFromCustomer` avalait son erreur → paiement encaissé, abonnement jamais appliqué | 🟠 | ✅ corrigé |
+| S-3 | `subscriptions.stripe_customer_id` sans contrainte UNIQUE, alors que le code en dépend | ✅ | mig. `134` **appliquée en prod le 2026-09-02**, doublon refusé en 23505 (vérifié) |
+| S-4 | `renewal-notice` : expéditeur par défaut sur un domaine que Resend ne signera jamais | 🟠 | ✅ corrigé |
+| S-5 | Un event tardif d'un ANCIEN abonnement peut dégrader l'org qui vient de repayer | 🟠 | ✅ corrigé |
+| S-6 | La renonciation au droit de rétractation ne quitte jamais le navigateur | ✅ | corrigé · mig. `135` **appliquée en prod le 2026-09-02**, immuabilité et cloisonnement vérifiés |
+
+### ✅ S-1 · le pré-contrôle d'idempotence avalait son erreur
+
+`const { data: alreadyProcessed } = await …` jetait `error`. Une panne de lecture se lisait donc
+« jamais traité », et les handlers repartaient. La plupart sont des upserts, donc idempotents —
+**mais pas `bump_win_streak`, qui incrémente**. Un rejeu y ajoutait une victoire jamais gagnée,
+c'est-à-dire exactement ce que ce pré-contrôle existe pour empêcher.
+
+**Corrigé** : l'erreur produit un 500, Stripe retente. C'est la même règle que le marqueur écrit
+après le handler (faille M-5) : en cas de doute, faire retenter plutôt que deviner.
+
+### ✅ S-2 · une panne de lecture devenait un succès silencieux
+
+Même motif, conséquence plus lourde. `getUidFromCustomer` ignorait l'erreur de sa requête et
+rendait `null`. Tous ses appelants font `if (!uid) return` : un **succès** du handler, donc le
+marqueur d'idempotence écrit, donc Stripe qui ne re-livre jamais. Un paiement encaissé sans que
+l'abonnement soit appliqué, et personne pour le voir passer.
+
+C'est le finding que `orgIdFromInvoice` avait déjà reçu, avec un commentaire de dix lignes
+expliquant pourquoi il fallait relancer. **La leçon n'avait pas traversé les vingt lignes qui
+séparent les deux fonctions** : la branche entreprise a été durcie, sa jumelle particulière non.
+
+**Corrigé** : l'erreur est relancée. `recordPayment` reste protégé à part — une ligne de journal
+sans `user_id` reste une pièce comptable, une ligne absente est un trou.
+
+### ✅ S-3 · le code s'appuyait sur une unicité qui n'existait pas — mig. `134` appliquée le 2026-09-02
+
+`getUidFromCustomer` fait `.maybeSingle()` sur `stripe_customer_id`, qui **lève** au-delà d'une
+ligne. Côté organisation, la mig. `101` pose la contrainte UNIQUE, et le commentaire de
+`orgIdFromInvoice` la cite comme ce qui rend son appel sûr. Côté particulier, la même hypothèse est
+faite et rien ne la garantit (vérifié en base : la contrainte n'existe pas).
+
+0 doublon aujourd'hui sur 54 lignes : latent, sans gardien. La mig. `134` pose un index unique
+partiel. **Elle échouera s'il existe un doublon — c'est voulu** : le découvrir en appliquant une
+migration vaut mieux que le découvrir sur une facture.
+
+### ✅ S-4 · l'avis de reconduction ne pouvait pas partir
+
+`renewal-notice` portait `BUG_REPORT_FROM ?? 'Cosmo <bug@thecosmo.app>'`. Or le domaine vérifié
+chez Resend est `send.thecosmo.app` : la racine porte les MX et le SPF d'IONOS et **ne sera jamais
+signée**. Ce défaut ne dégradait pas l'envoi, il le rendait impossible.
+
+Ce qui rend le défaut coûteux, c'est ce que la fonction porte : l'avis de l'article L215-1. Ne pas
+l'envoyer ne coûte pas une amende, ça rend l'abonnement annuel **résiliable à tout moment et
+remboursable**. `docs/DEPLOYMENT.md` §2ter le disait déjà noir sur blanc ; le code, lui, offrait la
+valeur qui échoue.
+
+**Corrigé** : plus de défaut. Sans le secret, la fonction répond 503 et alerte.
+
+### ✅ S-5 · un event tardif peut dégrader une organisation qui vient de repayer
+
+`handleOrgSubscriptionDeleted` filtre sur `stripe_subscription_id`, avec un commentaire qui
+explique exactement pourquoi : après un cycle « résiliation puis réabonnement », la livraison
+tardive du `deleted` de l'ANCIEN abonnement remettrait au gratuit une organisation qui vient de
+payer.
+
+**`applyOrgSubscription` n'a pas ce filtre.** Elle fait un `upsert` sur `org_id` seul. Un
+`customer.subscription.updated` tardif portant le statut `canceled` de l'ancien abonnement écrit
+donc `tier_key = 'free'`, `max_members = 5`, `current_period_end = null` sur l'organisation qui
+vient de souscrire. La garde a été posée sur une porte et pas sur l'autre.
+
+**Corrigé le 2026-09-02.** La garde est ASYMÉTRIQUE, et c'est ce qui la rend juste :
+
+- un event qui **active** fait autorité, d'où qu'il vienne : un nouvel abonnement actif supersède
+  le précédent, c'est la souscription elle-même ;
+- un event qui **dégrade** (`cancelled`, `past_due`) n'est appliqué que s'il concerne l'abonnement
+  actuellement enregistré. Venant d'un autre, il parle par définition d'un abonnement abandonné.
+
+Un simple `.eq()` sur l'upsert ne convenait pas : il aurait empêché la toute première écriture,
+quand la ligne n'a encore aucun `stripe_subscription_id`. La lecture préalable relance sur erreur,
+comme partout ailleurs dans ce fichier.
+
+⚠️ **Fenêtre de concurrence assumée** : lecture puis écriture, donc deux livraisons simultanées
+peuvent lire la même valeur. L'état converge — l'event actif finit toujours par être appliqué, et
+une dégradation appliquée à tort est corrigée par le suivant. Verrouiller la ligne coûterait plus
+cher que ce que ça protège.
+
+### ✅ S-6 · la renonciation au droit de rétractation ne quitte jamais le navigateur
+
+`OrgBillingTab` recueille les deux cases exigées par l'article L221-28, 13° — accord exprès à
+l'exécution immédiate, et reconnaissance de renoncer — sans les pré-cocher, et son commentaire
+conclut : « nous laisse la preuve ». **Rien n'est envoyé au serveur et rien n'est enregistré.** Le
+corps posté à `stripe-org-checkout` est `{ orgId, tierKey, interval }`.
+
+Deux conséquences. Un appel direct à la fonction avec un JWT valide ouvre une session de paiement
+sans qu'aucun consentement ait été donné, alors que les CGU affirment « le paiement ne peut être
+engagé sans elles ». Et surtout, **le jour où un client conteste, il n'y a aucune preuve** — alors
+que le même dépôt traite `renewal_notices` comme une pièce à produire, avec la règle écrite
+« ⚠️ c'est une PREUVE, pas un cache ».
+
+**Corrigé le 2026-09-02**, en trois pièces.
+
+1. Les deux booléens sont **transmis** au serveur, séparément.
+2. `stripe-org-checkout` les **exige** strictement à `true`, chacun de son côté : accepter une
+   valeur « truthy » reviendrait à accepter `"false"`, et les fondre en un seul drapeau ferait
+   exactement ce que le texte interdit — un accord global au lieu de deux accords distincts.
+3. La **mig. `135`** crée `withdrawal_consents`, jumelle de `renewal_notices` : append-only,
+   immuabilité par TRIGGER (car `service_role` contourne la RLS mais pas un trigger), aucune policy
+   d'écriture, lecture ouverte au propriétaire de l'organisation — c'est SA preuve autant que la
+   nôtre. La ligne est écrite **avant** la création de la session : l'ordre est la preuve.
+
+L'échec d'écriture est **bloquant**, contrairement à `renewal_notices` qui trace après l'envoi. La
+règle n'est pas la même parce que la situation ne l'est pas : là-bas, un avis parti sans trace vaut
+mieux qu'un avis jamais parti ; ici, rien n'est encore engagé, donc renoncer ne coûte rien — et
+ouvrir une page de paiement en sachant qu'on ne pourra rien produire en cas de litige, c'est
+encaisser sans preuve.
+
+> ⚠️ **Une incohérence RESTE dans les CGU, et elle n'appartient qu'à Axel.** L'article 5 bis dit
+> « le paiement ne peut être engagé sans elles » — vrai depuis ce correctif — puis « si vous ne
+> donnez pas ces confirmations, vous conservez l'intégralité de votre délai de quatorze jours »,
+> qui décrit un cas que le produit rend impossible. Deux lectures possibles : soit la seconde
+> phrase disparaît, soit le produit accepte de vendre sans renonciation (le client garde alors ses
+> quatorze jours, et il faut un chemin de remboursement). C'est un choix produit, pas un correctif.
+
+### Ce que l'audit n'a PAS trouvé, et qui méritait d'être cherché
+
+- Aucun montant n'est calculé côté COSMO au moment de facturer. Le seul endroit qui CHOISIT un prix
+  est la dérivation annuelle, et elle vérifie le montant contre la grille avant d'ouvrir la session.
+- Aucune donnée de carte ne transite ni n'est stockée. `payment_records.payload` est une copie
+  volontairement étroite.
+- Les deux fonctions org vérifient `organizations.owner_id` côté serveur, et répondent la même chose
+  pour « pas propriétaire » et « org inexistante ».
+- `allow_promotion_codes` délègue les coupons à Stripe : aucune surface de brute-force côté COSMO.
+- Aucun message d'erreur brut n'est renvoyé à l'appelant.
+
+### ⚠️ Deux angles morts que cet audit ne pouvait pas couvrir
+
+1. **Le passage en compte live.** `stripe-org-checkout` et `stripe-org-portal` réutilisent le
+   `stripe_customer_id` et le `stripe_subscription_id` enregistrés. Ceux d'aujourd'hui vivent dans
+   le compte de TEST : le jour où `STRIPE_SECRET_KEY` devient une clé live, chaque appel
+   `subscriptions.retrieve` / `billingPortal.sessions.create` sur un identifiant de test répondra
+   404, donc 500. **Le basculement doit donc s'accompagner d'une remise à zéro des identifiants
+   Stripe en base**, sans quoi les organisations existantes ne pourront ni souscrire ni gérer.
+   Aujourd'hui `org_subscriptions` est vide, donc le coût est nul — c'est le bon moment.
+2. **Le cache `productIndex`** (`org-stripe-prices.ts`) n'est jamais invalidé en production
+   (`resetProductIndex` n'a aucun appelant hors test). Un isolate Deno survit longtemps : après une
+   rotation des secrets de prix, il continue d'indexer les anciens produits jusqu'à son recyclage.
+   Conséquence bornée (le webhook alerte et Stripe retente), mais elle tombera pile pendant le
+   basculement live.
+
+---
+
 ## 🔴 Ouvert — bloquant
 
 ### A-9 — Plan Supabase `free` : pas de PITR, restauration jamais testée
@@ -498,7 +692,7 @@ Aucun ne bloque un déploiement ; tous sont des clics dans le Dashboard.
 
 ---
 
-## Ordre de priorité avant déploiement prod (à jour 2026-08-27)
+## Ordre de priorité avant déploiement prod (à jour 2026-09-02)
 
 Section référencée par [`CLAUDE.md`](./CLAUDE.md) — elle n'existait plus depuis la refonte
 documentaire du 2026-08-14, le lien pointait dans le vide. Restaurée ici.
@@ -510,6 +704,9 @@ documentaire du 2026-08-14, le lien pointait dans le vide. Restaurée ici.
 | 1bis | Migrations `115` → `123` (permissions, FK RGPD, RPC indexables, Realtime, payload borné, fuseau des habitudes, périodicité de facturation) | 🟠 sécurité + perf | · | ✅ **appliquées et vérifiées en prod le 2026-08-25** |
 | 1ter | **Migration `130`** (G-1 · lecture d'`org_invitations` restreinte au destinataire, à l'inviteur et aux admins) | 🟠 minimisation RGPD | Claude applique et vérifie, sur demande d'Axel | ✅ **appliquée et vérifiée en prod le 2026-08-29** · parité mesurée acteur par acteur sur les données réelles, `check:drift` propre derrière |
 | 1quater | **G-2 — SMTP applicatif pour Auth** ([`docs/DEPLOYMENT.md`](./docs/DEPLOYMENT.md) §2ter) | 🟠 délivrabilité | Axel (deux consoles, non scriptable) | ✅ **EN SERVICE le 2026-08-29** · domaine `send.thecosmo.app` vérifié chez Resend, SMTP posé, limite d'envoi relevée, 4 gabarits collés, email de réinitialisation reçu depuis `noreply@send.thecosmo.app`. `npm run check:mail` **vert pour la première fois**. ⚠️ La confirmation d'adresse reste **volontairement désactivée** (décision d'Axel, cf. section G-2) |
+| 1quinquies | **Migration `134`** (S-3 · un customer Stripe ne désigne qu'un seul compte) | 🟠 intégrité facturation | ~~Axel applique~~ appliquée par agent | ✅ **APPLIQUÉE le 2026-09-02** · 0 doublon sur 54 lignes mesuré avant, doublon refusé en 23505 après |
+| 1sexies | **S-5** — un event Stripe tardif peut dégrader une org qui vient de repayer | 🟠 revenu | — | ✅ **corrigé le 2026-09-02**, garde asymétrique dans `applyOrgSubscription` |
+| 1septies | **Migration `135`** (S-6 · preuve de renonciation au droit de rétractation) | 🟠 preuve juridique | ~~Axel applique~~ appliquée par agent | ✅ **APPLIQUÉE le 2026-09-02**, donc AVANT tout déploiement des fonctions · append-only vérifiée : UPDATE et DELETE refusés même au rôle privilégié |
 | 2 | **Réglages de console Supabase** : A-10 (leaked password protection), MFA sur le compte admin, allowlist de redirection OAuth, secure email change | 🟠 clics Dashboard, ~30 min cumulés | **Axel** | ⏳ **en attente** |
 | 3 | **A-9 — plan Pro + PITR + drill de restauration** | 🔴 résilience, seul bloquant | **Axel** (compte, non scriptable) | ⏳ **en attente** |
 | 4 | Test de bout en bout de l'attribution `?ref=` (cf. [`docs/ACQUISITION.md`](./docs/ACQUISITION.md) §3) | 🟡 exige une vraie inscription | **Axel** | ⏳ **en attente** |
@@ -640,6 +837,20 @@ Procédure d'application, checklist de rédaction d'une migration et pattern RLS
 
 ## Stripe
 
-Le paiement n'est **pas finalisé**. S'il est activé, il faut les secrets `STRIPE_SECRET_KEY`,
-`STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_ID` et l'endpoint webhook côté Stripe.
-Détails : [`docs/POST-AUDIT-GUIDE.md`](./docs/POST-AUDIT-GUIDE.md).
+**Audité pour la première fois le 2026-09-02** — voir la section « Audit des Edge Functions
+Stripe » plus haut. La plomberie est complète et déployée ; ce qui manque n'est pas du code.
+
+- L'encaissement est **désarmé** : `ENTERPRISE_BILLING_ENFORCED = false` ET
+  `billing_flags.enterprise_seat_limit = false` (mig. `124`). Les deux drapeaux se déplacent
+  ensemble, cf. [`CLAUDE.md`](./CLAUDE.md).
+- `STRIPE_SECRET_KEY` est une clé de **TEST**. Les customers et abonnements enregistrés vivent donc
+  dans le compte de test.
+- 🔴 **Le basculement en compte live doit remettre à zéro les identifiants Stripe en base**
+  (`org_subscriptions.stripe_customer_id` / `stripe_subscription_id`, idem `subscriptions`) :
+  `stripe-org-checkout` et `stripe-org-portal` les réutilisent tels quels, et un identifiant de test
+  présenté à une clé live répond 404, donc 500. Les deux tables sont vides ou presque
+  aujourd'hui — c'est le moment le moins cher pour le faire.
+- Secrets nécessaires : `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_ID`
+  (particulier), les quatre `STRIPE_ORG_PRICE_*` mensuels (les annuels se dérivent, cf.
+  `_shared/org-stripe-prices.ts`), et l'endpoint webhook côté Stripe.
+  Détails : [`docs/POST-AUDIT-GUIDE.md`](./docs/POST-AUDIT-GUIDE.md).

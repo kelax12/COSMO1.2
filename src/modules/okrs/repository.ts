@@ -9,6 +9,7 @@ import { PaginationParams, PaginatedResult, DEFAULT_PAGE_SIZE } from '@/lib/pagi
 import { KR_COMPLETIONS_STORAGE_KEY } from '@/modules/kr-completions/constants';
 import { KRCompletion } from '@/modules/kr-completions/types';
 import { isEnglishSeed } from '@/lib/seed-i18n';
+import type { CreateOptions } from '@/lib/restore-id';
 
 // ═══════════════════════════════════════════════════════════════════
 // DEMO DATA
@@ -164,7 +165,7 @@ export interface IOKRsRepository {
   getPage(params?: PaginationParams): Promise<PaginatedResult<OKR>>;
 
   // Write operations
-  create(input: CreateOKRInput): Promise<OKR>;
+  create(input: CreateOKRInput, options?: CreateOptions): Promise<OKR>;
   update(id: string, updates: UpdateOKRInput): Promise<OKR>;
   delete(id: string): Promise<void>;
 
@@ -261,11 +262,13 @@ export class LocalStorageOKRsRepository implements IOKRsRepository {
   // WRITE OPERATIONS
   // ═══════════════════════════════════════════════════════════════════
 
-  async create(input: CreateOKRInput): Promise<OKR> {
+  async create(input: CreateOKRInput, options?: CreateOptions): Promise<OKR> {
     const okrs = this.getOKRs();
     const newOKR: OKR = {
       ...input,
-      id: crypto.randomUUID(),
+      // Parite avec le repository Supabase : `restoreId` vient d'un
+      // « Annuler », jamais d'un formulaire (R-08).
+      id: options?.restoreId ?? crypto.randomUUID(),
     };
     this.saveOKRs([...okrs, newOKR]);
 

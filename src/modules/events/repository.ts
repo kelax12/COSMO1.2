@@ -7,6 +7,7 @@ import { EVENTS_STORAGE_KEY } from './constants';
 import { PaginationParams, PaginatedResult, DEFAULT_PAGE_SIZE } from '@/lib/pagination.types';
 import { selectEventsInWindow } from './window';
 import { isEnglishSeed, localizeSeed } from '@/lib/seed-i18n';
+import type { CreateOptions } from '@/lib/restore-id';
 
 // ═══════════════════════════════════════════════════════════════════
 // DEMO DATA
@@ -186,7 +187,7 @@ export interface IEventsRepository {
   getWindowForUser(userId: string, startISO: string, endISO: string): Promise<CalendarEvent[]>;
 
   // Write operations
-  create(input: CreateEventInput): Promise<CalendarEvent>;
+  create(input: CreateEventInput, options?: CreateOptions): Promise<CalendarEvent>;
   /** Crée un événement DANS l'agenda d'un subordonné (manager — RLS mig. 077). */
   createForUser(userId: string, input: CreateEventInput): Promise<CalendarEvent>;
   update(id: string, updates: UpdateEventInput): Promise<CalendarEvent>;
@@ -310,11 +311,13 @@ export class LocalStorageEventsRepository implements IEventsRepository {
   // WRITE OPERATIONS
   // ═══════════════════════════════════════════════════════════════════
 
-  async create(input: CreateEventInput): Promise<CalendarEvent> {
+  async create(input: CreateEventInput, options?: CreateOptions): Promise<CalendarEvent> {
     const events = this.getEvents();
     const newEvent: CalendarEvent = {
       ...input,
-      id: crypto.randomUUID(),
+      // Parite avec le repository Supabase : `restoreId` vient d'un
+      // « Annuler », jamais d'un formulaire (R-08).
+      id: options?.restoreId ?? crypto.randomUUID(),
     };
     this.saveEvents([...events, newEvent]);
     return newEvent;

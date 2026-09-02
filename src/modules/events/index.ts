@@ -50,6 +50,7 @@ export {
   useCreateEvent,
   useUpdateEvent,
   useDeleteEvent,
+  useRestoreEvent,
   useCreateMemberEvent,
   useUpdateMemberEvent,
   useDeleteMemberEvent,

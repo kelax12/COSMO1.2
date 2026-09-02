@@ -269,7 +269,7 @@ export const useUpdateTask = () => {
       if (context?.previousTasks) {
         queryClient.setQueryData(taskKeys.lists(), context.previousTasks);
       }
-      toast.error(`Impossible de modifier la tâche : ${error.message}`);
+      toast.error(translator('errors').t('mutation.updateTask2', { message: error.message }));
     },
   });
 };
@@ -308,7 +308,7 @@ export const useDeleteTask = () => {
       if (context?.previousTasks) {
         queryClient.setQueryData(taskKeys.lists(), context.previousTasks);
       }
-      toast.error(`Impossible de supprimer la tâche : ${error.message}`);
+      toast.error(translator('errors').t('mutation.deleteTask', { message: error.message }));
     },
   });
 };
@@ -325,10 +325,12 @@ export const useToggleTaskComplete = () => {
     // puis transmise au repository qui bascule ET génère dans la MÊME
     // opération (mig. 086, audit archi H1).
     //
-    // Pourquoi le calcul reste client : `nextOccurrenceDeadline()` raisonne en
-    // date CALENDAIRE LOCALE de l'utilisateur (convention du projet). Le
-    // serveur ne connaît pas son fuseau ; refaire ce calcul en SQL décalerait
-    // les échéances d'un jour pour une partie des utilisateurs.
+    // Pourquoi le calcul reste client : `nextOccurrenceDeadline()` raisonne sur
+    // le JOUR CALENDAIRE vécu par l'utilisateur (`@/lib/deadline`), qui dépend
+    // du fuseau qu'il a réglé. Le serveur ne le connaît pas ; refaire ce calcul
+    // en SQL décalerait les échéances d'un jour pour tout le monde à l'ouest de
+    // Greenwich — c'est exactement ce que faisait le cast `::timestamptz` du
+    // paramètre `DATE`, refermé par la mig. 133.
     //
     // Ce qui a changé, c'est la GARANTIE : avant, la création était un
     // `create()` fire-and-forget dans `onSuccess`, avec un `.catch(() => {})`.
@@ -468,7 +470,7 @@ export const useToggleTaskBookmark = () => {
       if (context?.previousTasks) {
         queryClient.setQueryData(taskKeys.lists(), context.previousTasks);
       }
-      toast.error(`Impossible de modifier le signet : ${error.message}`);
+      toast.error(translator('errors').t('mutation.toggleBookmark', { message: error.message }));
     },
 
     // Invalidation sélective post-toggle

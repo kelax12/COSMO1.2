@@ -42,6 +42,26 @@ describe('SupabaseCategoriesRepository', () => {
     expect(inserted.user_id).toBe(supabaseMock.user?.id); // jamais 'attacker'
   });
 
+  it('create: un id forge dans le PAYLOAD reste ignore, meme avec restoreId (R-08)', async () => {
+    // Les deux chemins doivent rester distincts : le payload est ce qui vient
+    // d'un formulaire, donc potentiellement enrichi depuis les devtools ; seul
+    // le second argument, ecrit exprès par un « Annuler », impose l'identifiant.
+    supabaseMock.queueTable('categories', { data: row });
+    const forged = { name: 'X', color: 'red', id: 'forced' } as unknown as CreateCategoryInput;
+    await repo.create(forged, { restoreId: 'cat-restauree' });
+
+    const inserted = (supabaseMock.argsOf('categories', 'insert')?.[0] as Record<string, unknown>[])[0];
+    expect(inserted.id).toBe('cat-restauree'); // jamais 'forced'
+  });
+
+  it("create: sans restoreId, la base choisit l'identifiant", async () => {
+    supabaseMock.queueTable('categories', { data: row });
+    await repo.create({ name: 'X', color: 'red' });
+
+    const inserted = (supabaseMock.argsOf('categories', 'insert')?.[0] as Record<string, unknown>[])[0];
+    expect('id' in inserted).toBe(false);
+  });
+
   it('update: whitelists fields and scopes by id', async () => {
     supabaseMock.queueTable('categories', { data: { ...row, name: 'Perso' } });
     await repo.update('cat1', { name: 'Perso', user_id: 'attacker' } as never);

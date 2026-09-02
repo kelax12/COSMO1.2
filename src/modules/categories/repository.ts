@@ -5,6 +5,7 @@
 import { Category, CreateCategoryInput, UpdateCategoryInput } from './types';
 import { CATEGORIES_STORAGE_KEY } from './constants';
 import { localizeSeed } from '@/lib/seed-i18n';
+import type { CreateOptions } from '@/lib/restore-id';
 
 // ═══════════════════════════════════════════════════════════════════
 // DEMO DATA
@@ -38,7 +39,7 @@ export interface ICategoriesRepository {
   getById(id: string): Promise<Category | null>;
   
   // Write operations
-  create(input: CreateCategoryInput): Promise<Category>;
+  create(input: CreateCategoryInput, options?: CreateOptions): Promise<Category>;
   update(id: string, updates: UpdateCategoryInput): Promise<Category>;
   delete(id: string): Promise<void>;
 }
@@ -85,11 +86,13 @@ export class LocalStorageCategoriesRepository implements ICategoriesRepository {
   // WRITE OPERATIONS
   // ═══════════════════════════════════════════════════════════════════
 
-  async create(input: CreateCategoryInput): Promise<Category> {
+  async create(input: CreateCategoryInput, options?: CreateOptions): Promise<Category> {
     const categories = this.getCategories();
     const newCategory: Category = {
       ...input,
-      id: crypto.randomUUID(),
+      // Parite avec le repository Supabase : `restoreId` vient d'un
+      // « Annuler », jamais d'un formulaire (R-08).
+      id: options?.restoreId ?? crypto.randomUUID(),
     };
     this.saveCategories([...categories, newCategory]);
     return newCategory;

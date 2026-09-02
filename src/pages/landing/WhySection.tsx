@@ -114,7 +114,7 @@ const WhySection: React.FC = () => {
           {/* Header */}
           <div className="text-center mb-16 max-w-3xl mx-auto">
             <span className="why-kicker text-xs font-mono tracking-[0.3em] uppercase text-blue-400 mb-5 block">
-              Ce qui change tout
+              {t('why.heading')}
             </span>
             <h2 className="why-title text-4xl lg:text-6xl font-bold mb-6 leading-[1.05] tracking-tight">
               <span className="text-white">{t('why.titleTop')}</span>
@@ -205,7 +205,7 @@ const WhySection: React.FC = () => {
               <div className="absolute top-0 left-0 right-0 h-px bg-amber-400/40 group-hover:h-[3px] transition-all duration-500" />
               <span className="text-[10px] font-mono tracking-[0.25em] text-amber-400 uppercase">{t('why.tag2')}</span>
               <h3 className="text-xl font-semibold text-white mt-3 mb-3 leading-tight tracking-tight">
-                Vos habitudes,<br />sur 26 semaines.
+                {t('why.habitsLine1')}<br />{t('why.habitsLine2')}
               </h3>
               <p className="text-sm text-slate-400 leading-relaxed mb-5">
                 {t('why.desc2')}
@@ -269,7 +269,7 @@ const WhySection: React.FC = () => {
                 <div className="space-y-1.5 flex-1 min-w-0">
                   <div className="flex items-center gap-2 text-[11px] text-slate-300"><span className="w-1.5 h-1.5 rounded-full bg-emerald-400" /><span className="truncate">3 200 / 10 000 users</span></div>
                   <div className="flex items-center gap-2 text-[11px] text-slate-300"><span className="w-1.5 h-1.5 rounded-full bg-emerald-400" /><span className="truncate">NPS 38 → 50</span></div>
-                  <div className="flex items-center gap-2 text-[11px] text-slate-300"><span className="w-1.5 h-1.5 rounded-full bg-emerald-400" /><span className="truncate">Rétention 71%</span></div>
+                  <div className="flex items-center gap-2 text-[11px] text-slate-300"><span className="w-1.5 h-1.5 rounded-full bg-emerald-400" /><span className="truncate">{t('why.retention')}</span></div>
                 </div>
               </div>
             </motion.div>
@@ -331,7 +331,7 @@ const WhySection: React.FC = () => {
               <div className="flex items-center gap-3 flex-wrap">
                 <div className="flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-mono" style={{ backgroundColor: 'rgba(34, 211, 238, 0.08)', color: '#67E8F9', border: '1px solid rgba(34, 211, 238, 0.2)' }}>
                   <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
-                  100 tâches · 100 habitudes · 150 events
+                  {t('why.demoVolume')}
                 </div>
               </div>
             </motion.div>

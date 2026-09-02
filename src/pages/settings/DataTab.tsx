@@ -100,10 +100,10 @@ export function DataTab() {
         </div>
         <div className="flex-1">
           <div className="font-bold text-[rgb(var(--color-text-primary))] text-base">
-            Tout exporter
+            {t('data.exportAll')}
           </div>
           <p className="text-sm text-[rgb(var(--color-text-secondary))] mt-0.5">
-            4 fichiers CSV : tâches, habitudes, agenda, OKR
+            {t('data.exportAllHint')}
           </p>
         </div>
       </button>

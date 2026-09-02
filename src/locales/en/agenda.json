@@ -20,7 +20,8 @@
     "uncategorized": "Uncategorized",
     "addedBy": "Added by {{name}}",
     "occurrenceDeleted": "Occurrence deleted",
-    "eventDeleted": "Event deleted"
+    "eventDeleted": "Event deleted",
+    "copySuffix": "(copy)"
   },
   "quickCreate": {
     "titlePlaceholder": "Event title",
@@ -44,7 +45,8 @@
     "remaining_other": "{{count}} slots left to review",
     "validate": "Yes, complete the task",
     "postpone": "Reschedule",
-    "delete": "Delete"
+    "delete": "Delete",
+    "deleted": "Task and time slot deleted"
   },
   "sidebar": {
     "title": "Available tasks",
@@ -76,7 +78,8 @@
       "step1": "• Drag a task onto the calendar",
       "step2": "• Its properties carry over automatically",
       "step3": "• The duration sets the event length"
-    }
+    },
+    "alreadyScheduled": "✓ Already scheduled"
   },
   "recurrence": {
     "title": "Recurring events",

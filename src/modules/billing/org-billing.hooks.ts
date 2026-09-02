@@ -83,6 +83,7 @@ async function edgeErrorCode(error: unknown): Promise<string | null> {
  */
 const CHECKOUT_ERROR_KEYS: Record<string, KeyOf<'org'>> = {
   already_subscribed: 'billing.alreadySubscribed',
+  withdrawal_consent_required: 'billing.withdrawalRequired',
   yearly_unavailable: 'billing.yearlyUnavailable',
   forbidden: 'billing.ownerOnly',
 };
@@ -93,6 +94,8 @@ export const useStartOrgCheckout = () =>
       orgId,
       tierKey,
       interval,
+      immediateExecution,
+      waivesWithdrawal,
     }: {
       orgId: string;
       tierKey: OrgTierKey;
@@ -103,7 +106,26 @@ export const useStartOrgCheckout = () =>
        * mensuel, comme avant l'existence du sélecteur.
        */
       interval?: OrgBillingInterval;
-    }) => redirectToStripe('stripe-org-checkout', { orgId, tierKey, interval }),
+      /**
+       * Accord exprès à l'exécution immédiate du service (art. L221-28, 13°).
+       *
+       * ⚠️ Transmis au SERVEUR, qui refuse la session sans lui et enregistre la
+       * preuve avant de créer le paiement (`withdrawal_consents`, mig. 135).
+       * Ces deux drapeaux ne gardaient qu'un bouton jusqu'au 2026-09-02 : ils ne
+       * quittaient pas le navigateur, donc rien ne prouvait le consentement le
+       * jour d'une contestation (finding S-6).
+       */
+      immediateExecution: boolean;
+      /** Reconnaissance de renoncer au droit de rétractation. DEUX accords distincts. */
+      waivesWithdrawal: boolean;
+    }) =>
+      redirectToStripe('stripe-org-checkout', {
+        orgId,
+        tierKey,
+        interval,
+        immediateExecution,
+        waivesWithdrawal,
+      }),
     onError: (err: Error) => {
       // `translator(ns).t(key)` — forme vérifiée dans src/i18n/useT.ts et
       // utilisée par src/modules/organizations/hooks.ts. Hors composant, on ne

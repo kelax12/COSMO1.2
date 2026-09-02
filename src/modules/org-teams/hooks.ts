@@ -67,7 +67,7 @@ export const useAddTeamMember = (orgId: string) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: orgTeamKeys.members(orgId) });
     },
-    onError: (error: Error) => toast.error(`Impossible d'ajouter le membre : ${error.message}`),
+    onError: (error: Error) => toast.error(translator('errors').t('mutation.addTeamMember', { message: error.message })),
   });
 };
 
@@ -80,7 +80,7 @@ export const useRemoveTeamMember = (orgId: string) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: orgTeamKeys.members(orgId) });
     },
-    onError: (error: Error) => toast.error(`Impossible de retirer le membre : ${error.message}`),
+    onError: (error: Error) => toast.error(translator('errors').t('mutation.removeMember', { message: error.message })),
   });
 };
 

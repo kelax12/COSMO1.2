@@ -1,21 +1,22 @@
 import { toast } from 'sonner';
 import * as Sentry from '@sentry/react';
+import { translator } from '@/i18n/useT';
 
 const warned = new Set<string>();
 
 // User-friendly labels for the truncation toast. Keep keys aligned with the
 // `table` argument passed by each repository.
-const TABLE_LABELS: Record<string, string> = {
-  tasks: 'tâches',
-  habits: 'habitudes',
-  events: 'événements',
-  okrs: 'OKR',
-  kr_completions: 'complétions de KR',
-  categories: 'catégories',
-  lists: 'listes',
-  friends: 'amis',
-  team_tasks: 'tâches d\'équipe',
-};
+// Libelles lisibles du toast de troncature. Les cles suivent l'argument
+// `table` passe par chaque repository.
+//
+// ⚠️ Ils vivent dans le catalogue `common` (`pagination.tables.*`) et non ici :
+// le toast est traduit, donc un libelle francais en dur au milieu produirait
+// une phrase moitie anglaise moitie francaise (R-05). Une table absente de
+// cette liste retombe sur son nom technique, ce qui reste comprehensible.
+const TABLE_LABEL_KEYS: readonly string[] = [
+  'tasks', 'habits', 'events', 'okrs', 'kr_completions',
+  'categories', 'lists', 'friends', 'team_tasks',
+];
 
 /**
  * Avertit quand un getAll() Supabase atteint sa limite et que les données
@@ -48,9 +49,12 @@ export function warnIfTruncated<T>(rows: T[], limit: number, table: string): T[]
       tags: { pagination_table: table },
       extra: { rows: rows.length, limit },
     });
-    const label = TABLE_LABELS[table] ?? table;
-    toast.warning(`Plus de ${limit} ${label} détectées`, {
-      description: 'Seules les plus récentes sont affichées. Utilisez les filtres pour réduire la liste.',
+    const t = translator('common').t;
+    const label = TABLE_LABEL_KEYS.includes(table)
+      ? t(`pagination.tables.${table}` as Parameters<typeof t>[0])
+      : table;
+    toast.warning(t('pagination.truncated', { limit: String(limit), label }), {
+      description: t('pagination.truncatedHint'),
       duration: 8000,
     });
   }

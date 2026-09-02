@@ -6,7 +6,8 @@
     "solutions": "Solutions",
     "guide": "Guide",
     "login": "Se connecter",
-    "faq": "FAQ"
+    "faq": "FAQ",
+    "backToTop": "Retour en haut de la page"
   },
   "hero": {
     "line1": "Toute votre productivité,",
@@ -62,7 +63,12 @@
     "title4": "Où passe votre temps ?",
     "desc4": "Vous arrêtez de deviner. Vous voyez.",
     "tag5": "// 05 · Zéro friction",
-    "desc5": "Un mode démo pré-rempli avec 12 mois de données réalistes. Vous testez le vrai Cosmo, pas une vidéo. Pas un email demandé."
+    "desc5": "Un mode démo pré-rempli avec 12 mois de données réalistes. Vous testez le vrai Cosmo, pas une vidéo. Pas un email demandé.",
+    "heading": "Ce qui change tout",
+    "habitsLine1": "Vos habitudes,",
+    "habitsLine2": "sur 26 semaines.",
+    "retention": "Rétention 71%",
+    "demoVolume": "100 tâches · 100 habitudes · 150 events"
   },
   "features": {
     "heading": "Application productivité pour chaque profil",
@@ -117,7 +123,9 @@
       "b3": "Suivez vos progrès depuis une unique page",
       "b4": "Visualisez votre productivité en un coup d'œil",
       "cta": "Voir les statistiques"
-    }
+    },
+    "headingLine1": "Tâches, habitudes, agenda et OKR",
+    "headingLine2": "dans un seul outil"
   },
   "useCases": {
     "students": {
@@ -181,7 +189,9 @@
     "q11": "Mes collaborateurs vont-ils se sentir surveillés ?",
     "a11": "Non, et c'est un choix de conception. Un responsable voit la charge, les tâches et les créneaux d'agenda de son équipe, mais jamais le contenu des évènements marqués comme personnels. Les statistiques portent sur les tâches d'équipe, pas sur l'activité individuelle. Chaque personne voit d'ailleurs, avant de rejoindre une entreprise, exactement ce que celle-ci pourra observer de son travail.",
     "q12": "Comment les données sont-elles cloisonnées entre les équipes ?",
-    "a12": "Le cloisonnement est appliqué au niveau de la base de données, pas seulement à l'affichage : un projet ou un objectif rattaché à une équipe reste inaccessible aux autres, même en cas de bug d'interface. Un responsable intermédiaire ne voit que lui-même et les personnes qui lui reportent, directement ou non, sans aucune permission à configurer à la main."
+    "a12": "Le cloisonnement est appliqué au niveau de la base de données, pas seulement à l'affichage : un projet ou un objectif rattaché à une équipe reste inaccessible aux autres, même en cas de bug d'interface. Un responsable intermédiaire ne voit que lui-même et les personnes qui lui reportent, directement ou non, sans aucune permission à configurer à la main.",
+    "headingLine1": "Tout ce que vous voulez savoir",
+    "headingLine2": "sur Cosmo"
   },
   "footer": {
     "rights": "© 2026 Tous droits réservés.",
@@ -243,7 +253,10 @@
     "metaDescription": "Guides pratiques sur la méthode OKR, le suivi d'habitudes, le time-blocking et la productivité personnelle. Par l'équipe de Cosmo.",
     "title": "Le blog Cosmo",
     "readNext": "À lire ensuite",
-    "tryFree": "Essayez Cosmo gratuitement"
+    "tryFree": "Essayez Cosmo gratuitement",
+    "createFreeAccount": "Créer un compte gratuit",
+    "ctaPitch": "Tâches, habitudes, agenda et OKR dans une seule application. Démo instantanée, sans inscription.",
+    "indexIntro": "Guides pratiques sur la méthode OKR, les habitudes, le time-blocking et la productivité, sans bullshit."
   },
   "enterprise": {
     "gateway": {
@@ -504,5 +517,11 @@
       "note": "Gratuit jusqu'à 5 membres · sans carte bancaire",
       "noteFree": "Gratuit pendant l'offre de lancement · sans carte bancaire"
     }
+  },
+  "solutions": {
+    "learnMore": "En savoir plus"
+  },
+  "useCase": {
+    "demoNote": "Démo instantanée pré-remplie, sans inscription ni carte bancaire."
   }
 }

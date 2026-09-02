@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Pencil, Pin, PinOff, Trash2, Share2 } from 'lucide-react';
 import type { TaskList } from '@/modules/lists';
 import { useSheetMotion } from '@/components/mobile/mobile-motion';
+import { useT } from '@/i18n/useT';
 
 export interface ListColorOption {
   value: string;
@@ -35,6 +36,7 @@ const ListActionsSheet: React.FC<ListActionsSheetProps> = ({
   onPickColor,
   onShare,
 }) => {
+  const { t } = useT('common');
   const sheetMotion = useSheetMotion();
   const isOpen = !!list;
   const isSmart = list?.type === 'smart';
@@ -213,7 +215,7 @@ const ListActionsSheet: React.FC<ListActionsSheetProps> = ({
               >
                 <Trash2 size={17} strokeWidth={1.75} aria-hidden="true" className="text-red-500 shrink-0" />
                 <span className="text-[16px] text-red-500">
-                  Supprimer
+                  {t('actions.delete')}
                 </span>
               </button>
             </div>

@@ -133,7 +133,7 @@ export const useDeleteTeamOKR = (orgId: string) => {
       toast.success(translator('errors').t('success.objectiveDeleted'));
       queryClient.invalidateQueries({ queryKey: teamOkrKeys.list(orgId) });
     },
-    onError: (error: Error) => toast.error(`Impossible de supprimer l'objectif : ${error.message}`),
+    onError: (error: Error) => toast.error(translator('errors').t('mutation.deleteTeamObjective', { message: error.message })),
   });
 };
 

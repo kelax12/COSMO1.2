@@ -7,6 +7,7 @@ import { TaskRow, TaskDbInput, mapTaskFromDb, mapTaskToDb } from './mappers';
 import { PaginationParams, PaginatedResult, DEFAULT_PAGE_SIZE, assertValidCursor } from '@/lib/pagination.types';
 import { warnIfTruncated } from '@/lib/pagination.warning';
 import { fetchAllPages, MAX_ROWS } from '@/lib/fetch-all-pages';
+import type { CreateOptions } from '@/lib/restore-id';
 
 /** Fields the client is allowed to set on insert (user_id is added server-side from auth.uid()). */
 type TaskDbCreateInput = Omit<TaskDbInput, 'user_id'> & { user_id: string };
@@ -239,11 +240,19 @@ export class SupabaseTasksRepository implements ITasksRepository {
   // WRITE OPERATIONS
   // ═══════════════════════════════════════════════════════════════════
 
-  async create(input: CreateTaskInput): Promise<Task> {
+  async create(input: CreateTaskInput, options?: CreateOptions): Promise<Task> {
     if (!supabase) throw new Error('Supabase not configured');
     const user = await getCurrentUser();
     if (!user) throw new Error('Not authenticated');
-    const dbInput: TaskDbCreateInput = { ...mapTaskToDb(input), user_id: user.id };
+    // `options.restoreId` ne vient JAMAIS d'un payload de formulaire :
+    // c'est un second argument, reserve aux « Annuler » (R-08). La
+    // whitelist `mapToDb` et le `user_id` pose depuis la session sont
+    // inchanges.
+    const dbInput: TaskDbCreateInput = {
+      ...mapTaskToDb(input),
+      user_id: user.id,
+      ...(options?.restoreId ? { id: options.restoreId } : {}),
+    };
 
     const { data, error } = await supabase
       .from('tasks')
@@ -292,8 +301,12 @@ export class SupabaseTasksRepository implements ITasksRepository {
     // fire-and-forget côté client : perdu si l'onglet se fermait, dupliqué si
     // l'utilisateur décochait puis recochait.
     //
-    // `p_next_deadline` est calculée par l'appelant, en date LOCALE de
-    // l'utilisateur (le serveur ne connaît pas son fuseau).
+    // `p_next_deadline` est calculée par l'appelant : c'est l'INSTANT de minuit
+    // du jour visé, dans le fuseau de l'utilisateur (mig. 133). Elle transitait
+    // avant en date nue, que le SQL castait en timestamptz avec le fuseau du
+    // serveur, donc UTC : l'occurrence suivante naissait la veille pour tout
+    // décalage négatif (risque R-01). Le serveur ne juge jamais quel jour on
+    // est — il ne connaît pas le fuseau de l'utilisateur.
     const { data, error } = await supabase.rpc('toggle_task_complete_v2', {
       p_task_id: id,
       p_next_deadline: nextDeadline ?? null,

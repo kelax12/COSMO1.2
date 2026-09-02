@@ -58,9 +58,30 @@ Deno.serve(async (req) => {
     const { data: { user }, error: authError } = await supabaseUser.auth.getUser()
     if (authError || !user) return json({ error: 'Unauthorized' }, 401)
 
-    const { orgId, tierKey, interval } = await req.json().catch(() => ({}))
+    const { orgId, tierKey, interval, immediateExecution, waivesWithdrawal } =
+      await req.json().catch(() => ({}))
     if (typeof orgId !== 'string' || typeof tierKey !== 'string') {
       return json({ error: 'bad_request' }, 400)
+    }
+
+    // ── S-6 : la renonciation au droit de rétractation est EXIGÉE ────
+    //
+    // Art. L221-28, 13° : le délai de quatorze jours ne tombe que si le
+    // consommateur a donné DEUX manifestations distinctes — accord exprès à
+    // l'exécution immédiate, et reconnaissance de perdre son droit une fois le
+    // service pleinement fourni.
+    //
+    // `OrgBillingTab` les recueillait déjà, mais elles ne quittaient pas le
+    // navigateur : elles gardaient un bouton. Un appel direct à cette fonction
+    // ouvrait donc une session de paiement sans aucun consentement, alors que
+    // les CGU affirment « le paiement ne peut être engagé sans elles ».
+    //
+    // ⚠️ On exige les DEUX séparément, et strictement `true`. Accepter une
+    // valeur « truthy » reviendrait à accepter `"false"`, et fondre les deux en
+    // un seul drapeau ferait exactement ce que le texte interdit : un accord
+    // global à la place de deux accords distincts.
+    if (immediateExecution !== true || waivesWithdrawal !== true) {
+      return json({ error: 'withdrawal_consent_required' }, 400)
     }
 
     // Périodicité : le client n'envoie qu'un mot d'une liste fermée, jamais un
@@ -197,6 +218,36 @@ Deno.serve(async (req) => {
         `price id manquant pour le palier ${tier.key} (${billingInterval})`,
       )
       return json({ error: 'tier_unavailable' }, 500)
+    }
+
+    // ── S-6 : la preuve s'écrit AVANT le paiement ───────────────────
+    //
+    // L'ordre EST la preuve : le consentement précède la session, jamais
+    // l'inverse. Une ligne sans paiement derrière est inoffensive (un accord
+    // donné, un achat abandonné) ; un paiement sans ligne serait le trou qu'on
+    // ferme.
+    //
+    // ⚠️ L'échec est BLOQUANT. C'est le même raisonnement que le lien customer
+    // plus haut : ouvrir une page de paiement en sachant qu'on ne pourra rien
+    // produire en cas de litige, c'est encaisser sans preuve. `renewal_notices`
+    // suit la règle inverse (envoyer d'abord, tracer ensuite) parce qu'un avis
+    // parti sans trace vaut mieux qu'un avis jamais parti — ici, rien n'est
+    // encore engagé, donc renoncer ne coûte rien.
+    const { error: consentError } = await supabaseAdmin.from('withdrawal_consents').insert({
+      org_id: orgId,
+      user_id: user.id,
+      tier_key: tier.key,
+      billing_interval: billingInterval,
+      immediate_execution: true,
+      waives_withdrawal: true,
+    })
+    if (consentError) {
+      console.error('withdrawal_consents insert error:', consentError)
+      await opsAlert(
+        'stripe-org-checkout',
+        'preuve de renonciation au droit de retractation NON enregistree — session de paiement refusee',
+      )
+      return json({ error: 'Internal server error' }, 500)
     }
 
     const dayKey = new Date().toISOString().slice(0, 10)

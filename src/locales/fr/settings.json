@@ -37,7 +37,16 @@
     "unsupportedFormat": "Format non supporté",
     "unsupportedFormatHint": "Utilisez JPEG, PNG, WebP ou GIF.",
     "deletePhotoTitle": "Supprimer la photo ?",
-    "deletePhotoBody": "Êtes-vous sûr de vouloir supprimer votre photo de profil ?"
+    "deletePhotoBody": "Êtes-vous sûr de vouloir supprimer votre photo de profil ?",
+    "tooLarge": "Image trop grande",
+    "tooLargeHint": "Taille maximale : 500 Ko.",
+    "invalidFile": "Fichier invalide",
+    "unreadableImage": "Image illisible",
+    "invalidEmail": "Cette adresse email n'est pas valide.",
+    "changePhoto": "Changer la photo",
+    "changePhotoAria": "Changer la photo de profil",
+    "fullName": "Nom complet",
+    "yourNamePlaceholder": "Votre nom"
   },
   "timezone": {
     "heading": "Fuseau horaire",
@@ -68,7 +77,14 @@
     "deleteFailedHint": "Contactez axellongattepro@gmail.com, votre demande sera traitée manuellement.",
     "accountDeleted": "Compte supprimé",
     "networkError": "Erreur réseau",
-    "networkErrorHint": "Réessayez ou contactez axellongattepro@gmail.com."
+    "networkErrorHint": "Réessayez ou contactez axellongattepro@gmail.com.",
+    "unexpectedError": "Une erreur inattendue est survenue",
+    "fillAllFields": "Veuillez remplir tous les champs",
+    "passwordsDiffer": "Les nouveaux mots de passe ne correspondent pas",
+    "serviceUnavailable": "Service non disponible",
+    "wrongCurrentPassword": "Mot de passe actuel incorrect",
+    "newPasswordLabel": "Nouveau mot de passe",
+    "deleteAccount": "Supprimer le compte"
   },
   "logout": {
     "title": "Déconnexion ?",
@@ -114,7 +130,10 @@
     "supportTitle": "Besoin d'aide ?",
     "supportHint": "Notre équipe répond sous 24h.",
     "adminTitle": "Stats COSMO",
-    "adminHint": "Croissance, activité et conversion, réservé admin."
+    "adminHint": "Croissance, activité et conversion, réservé admin.",
+    "openGuide": "Ouvrir le guide",
+    "contactSupport": "Contacter le support",
+    "openDashboard": "Ouvrir le dashboard"
   },
   "data": {
     "title": "Mes données",
@@ -140,6 +159,8 @@
     "exportingAll": "Export de toutes vos données en cours…",
     "exportingAllHint": "{{count}} éléments répartis dans 4 fichiers CSV",
     "importNotice": "Import depuis Todoist / Notion / TickTick",
-    "importNoticeRest": " : bientôt disponible. En attendant, vous pouvez exporter vos données depuis l'app source en CSV puis nous contacter pour l'import manuel."
+    "importNoticeRest": " : bientôt disponible. En attendant, vous pouvez exporter vos données depuis l'app source en CSV puis nous contacter pour l'import manuel.",
+    "exportAll": "Tout exporter",
+    "exportAllHint": "Sept fichiers CSV : tâches, habitudes, agenda, OKR, catégories, listes, profil"
   }
 }

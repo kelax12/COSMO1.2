@@ -69,6 +69,46 @@ performance va moins bien que la sécurité, ils disent où chaque domaine se si
 > Et une dérive est enfin notée, celle que personne n'avait vue : **le chunk d'entrée est passé de
 > 87,2 à 106,9 kB en deux jours**, avec un plafond relevé de 92 à 112 kB pour l'absorber.
 
+## Mise à jour du 2026-09-02 · revue des pages, puis audit Stripe
+
+Deux campagnes le même jour, et elles ne se ressemblent pas.
+
+**Le matin, une revue page par page** (`src/pages`, 18 000 lignes, plus les repositories et
+`src/lib` qu'elles consomment) : vingt risques, dont quatre mesurés directement en base de
+production. Dix-sept sont refermés le jour même. Le plus lourd, `R-01`, est une classe de bug que
+ce dépôt déclare éradiquée depuis juin 2026 : une échéance écrite à minuit UTC et relue en heure
+locale, soit **467 des 601 échéances de la base**, invisible depuis la métropole et systématique
+pour tout fuseau à décalage négatif.
+
+**L'après-midi, l'audit des Edge Functions Stripe**, jamais relues jusque-là. Six findings, tous sur
+des chemins d'erreur ; détail dans [`../faille.md`](../faille.md).
+
+| Audit | 08-29 | **09-02** | Δ | Ce qui a bougé |
+|---|---|---|---|---|
+| [Sécurité](../faille.md) | 86 | **84** | −2 | Les Edge Functions Stripe sont auditées pour la première fois. Deux findings ouverts (`S-5`, `S-6`) et une contrainte que le code suppose depuis toujours, absente en base (`S-3`). Quatre correctifs livrés le même jour ne compensent pas : ils réparent des trous que la note n'avait jamais comptés |
+| [RGPD](./RGPD.md) | 84 | **86** | +2 | Le fichier d'avatar part enfin avec la référence, au retrait de la photo comme à la suppression du compte (bucket public). L'export de portabilité gagne dix colonnes réellement saisies. Et la politique de confidentialité cesse d'annoncer une anonymisation du journal d'encaissement que le scellement rend impossible |
+| [Tests / CI](./TESTING.md) | 93 | **94** | +1 | 1884 → **2026** tests. Deux nouveaux cliquets : `i18n:scan` devient bloquant (334 → **4** chaînes en dur), et une garde interdit `{var}` dans un catalogue — la syntaxe qui affichait « Étape {current} sur {total} » dans l'onboarding livré la veille |
+| [Architecture](./ARCHITECTURE.md) | 83 | **83** | 0 | Le cliquet a mordu deux fois et a été resserré deux fois (9903 → **9791**), mais aucun god component n'a disparu : trois extractions de compensation, pas d'assainissement |
+| [i18n](./I18N.md) | · | **·** | · | Les trois pages contractuelles existent en anglais, avec clause de langue. La dette de chaînes en dur passe de 334 à 4, toutes des commentaires de code. Note non attribuée : le périmètre réellement bilingue n'a pas été remesuré écran par écran |
+| [Scalabilité](./SCALABILITY.md) | 86 | **86** | 0 | Le tableau de bord charge toujours le jeu de données complet. Mesuré : 289 tâches et 128 événements au maximum pour un compte, donc aucun coût réel — le risque reste, la mesure ne le justifie pas encore |
+
+> ### ⚠️ Ce que ces deux campagnes disent de la méthode
+>
+> **Trois findings sur vingt étaient des règles déjà écrites, non tenues.** `R-10` (le message
+> d'erreur brut affiché à l'écran) contredit la règle « faille V7 » que `SettingsPage` cite dans un
+> commentaire. `S-2` a reçu son correctif dans `orgIdFromInvoice`, avec dix lignes d'explication —
+> et sa jumelle vingt lignes plus bas ne l'a pas reçu. `R-12` documentait une garde
+> (`RequireModule`) qui n'a jamais existé.
+>
+> **Deux findings ont été trouvés en regardant, pas en lisant.** Les quatre liens vers les pages
+> contractuelles rendaient une 404 en anglais ; le compteur d'étapes de l'onboarding affichait son
+> gabarit. Aucune gate ne pouvait les voir, et aucune relecture de code ne les avait vus.
+>
+> **Une garde du dépôt a refusé un correctif, et elle avait raison.** La première version de `R-08`
+> acceptait un `id` dans le payload de création ; `categories/supabase.repository.test.ts` l'a
+> rejetée parce que cela ouvrait un oracle d'existence sur les lignes d'autrui. *Le meilleur
+> résultat d'un audit, c'est quand le dépôt corrige l'auditeur.*
+
 ## Mise à jour du 2026-08-27 (fin de journée) · seuls les audits qui ont bougé
 
 Ce second tableau **complète** celui du dessus, il ne le remplace pas. Les audits absents de cette
@@ -252,7 +292,7 @@ testées** (`scripts/migration-guards.test.mjs`).
 | [`../CLAUDE.md`](../CLAUDE.md) | Point d'entrée : stack, modules, conventions, garde-fous |
 | [`../faille.md`](../faille.md) | Sécurité : findings **ouverts**, priorités avant prod, règles durables |
 | [`ARCHITECTURE.md`](./ARCHITECTURE.md) | Invariants du projet et leur état vérifié · **note 83 au 2026-08-29** |
-| [`SECURITY.md`](./SECURITY.md) | RLS, migrations SQL, repositories, Edge Functions, Stripe, CSP, secrets |
+| [`SECURITY.md`](./SECURITY.md) | RLS, migrations SQL, repositories, Edge Functions, Stripe, CSP, secrets · **les 4 Edge Functions Stripe auditées le 2026-09-02**, cf. [`../faille.md`](../faille.md) |
 | [`TESTING.md`](./TESTING.md) | Vitest, Playwright, a11y, i18n, CI, **checklist avant push prod** · **note 93 au 2026-08-29**, les cinq jobs CI verts · couverture relancée et verte le 2026-08-29 |
 | [`DEPLOYMENT.md`](./DEPLOYMENT.md) | Runbook deploy / rollback Vercel + Supabase, drill de restauration |
 | [`MOBILE.md`](./MOBILE.md) | Pages et composants mobiles, bottom-sheets, pièges iOS Safari · **note 76 au 2026-08-29** |

@@ -79,7 +79,7 @@ const UseCaseCardContent: React.FC<{
         className="relative inline-flex items-center gap-2 text-sm font-semibold tracking-wide transition-all duration-300 hover:gap-3"
         style={{ color: useCase.accent }}
       >
-        En savoir plus
+        {t('solutions.learnMore')}
         <ArrowRight size={14} />
       </button>
     </>

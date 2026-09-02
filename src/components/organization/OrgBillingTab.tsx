@@ -238,7 +238,16 @@ export function OrgBillingTab({ orgId, isOwner, memberCount, onBack }: Props) {
           canPay && withdrawalConsentGiven
             ? (tierKey) =>
                 checkout.mutate(
-                  { orgId, tierKey, interval: billingInterval },
+                  {
+                    orgId,
+                    tierKey,
+                    interval: billingInterval,
+                    // Les deux cases partent au serveur, qui refuse la session
+                    // sans elles et en garde la preuve (finding S-6). Elles ne
+                    // gardaient qu'un bouton jusque-là.
+                    immediateExecution,
+                    waivesWithdrawal,
+                  },
                   {
                     // L'annuel indisponible ramène la grille sur le mensuel :
                     // le message dit qu'il fonctionne, l'écran doit le montrer

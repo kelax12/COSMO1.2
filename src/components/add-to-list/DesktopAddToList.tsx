@@ -19,6 +19,7 @@ import { useT } from '@/i18n/useT';
 
 const DesktopAddToList: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskId }) => {
   const { t } = useT('tasks');
+  const { t: tCommon } = useT('common');
   const { data: lists = [] } = useLists();
   const addTaskToListMutation      = useAddTaskToList();
   const removeTaskFromListMutation = useRemoveTaskFromList();
@@ -155,7 +156,7 @@ const DesktopAddToList: React.FC<AddToListModalProps> = ({ isOpen, onClose, task
                     className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors"
                   >
                     <Plus size={16} className="shrink-0" />
-                    Nouvelle liste
+                    {tCommon('actions.newList')}
                   </motion.button>
                 )}
               </AnimatePresence>
@@ -164,7 +165,7 @@ const DesktopAddToList: React.FC<AddToListModalProps> = ({ isOpen, onClose, task
               {lists.length === 0 && !creating && (
                 <div className="py-8 text-center">
                   <p className="text-sm text-[rgb(var(--color-text-muted))]">
-                    Aucune liste pour l'instant
+                    {t('addToList.empty')}
                   </p>
                 </div>
               )}
@@ -240,7 +241,7 @@ const DesktopAddToList: React.FC<AddToListModalProps> = ({ isOpen, onClose, task
                                 onClick={(e) => { e.stopPropagation(); handleConfirmDelete(list.id); }}
                                 className="h-7 px-2.5 rounded-md text-xs font-semibold text-white bg-red-600 hover:bg-red-700 transition-colors"
                               >
-                                Supprimer
+                                {tCommon('actions.delete')}
                               </button>
                             </>
                           ) : (
@@ -273,7 +274,7 @@ const DesktopAddToList: React.FC<AddToListModalProps> = ({ isOpen, onClose, task
                               <button
                                 type="button"
                                 onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(list.id); }}
-                                aria-label={`Supprimer ${list.name}`}
+                                aria-label={t('addToList.deleteNamed', { name: list.name })}
                                 className="w-8 h-8 flex items-center justify-center rounded-lg text-[rgb(var(--color-text-muted))] hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors opacity-0 group-hover:opacity-100"
                               >
                                 <Trash2 size={13} />

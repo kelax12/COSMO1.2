@@ -56,9 +56,13 @@ export function nextOccurrenceDeadline(
  * Repart d'une tâche propre : non complétée, sous-tâches décochées, sans
  * champs collaboratifs (le partage ne se propage pas automatiquement).
  */
-export function buildNextOccurrence(task: Task, now: Date = new Date()): CreateTaskInput | null {
+export function buildNextOccurrence(
+  task: Task,
+  now: Date = new Date(),
+  pref: TimezonePref = getTimezonePref(),
+): CreateTaskInput | null {
   const recurrence = task.recurrence ?? 'none';
-  const nextDeadline = nextOccurrenceDeadline(task.deadline, recurrence, now);
+  const nextDeadline = nextOccurrenceDeadline(task.deadline, recurrence, now, pref);
   if (!nextDeadline) return null;
   return {
     name: task.name,

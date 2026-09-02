@@ -69,5 +69,29 @@
     "namePlaceholder": "Entrez le nom de la tâche",
     "minuteEstimate": "Estimation en minute",
     "listNamePlaceholder": "Nom de la liste..."
+  },
+  "delete": {
+    "titleOwner": "Supprimer la tâche",
+    "titleShared": "Quitter la tâche partagée",
+    "workingOwner": "Suppression…",
+    "workingShared": "Départ…",
+    "confirmOwner": "Supprimer",
+    "confirmShared": "Quitter"
+  },
+  "form": {
+    "nameRequired": "Nom de la tâche *",
+    "namePlaceholder": "Nom de la tâche",
+    "descriptionPlaceholder": "Description de la tâche",
+    "addDescription": "+ Ajouter une description",
+    "clearDate": "Effacer la date",
+    "bookmarkAdd": "Ajouter aux favoris",
+    "bookmarkRemove": "Retirer des favoris",
+    "categoryNameTooShort": "Le nom de la catégorie doit contenir au moins 2 caractères",
+    "headingShare": "Partager la tâche",
+    "headingCreate": "Nouvelle tâche",
+    "headingEdit": "Modifier la tâche",
+    "headingEditShort": "Modifier",
+    "deleteTask": "Supprimer la tâche",
+    "collaboratorPlaceholder": "Email ou nom…"
   }
 }
