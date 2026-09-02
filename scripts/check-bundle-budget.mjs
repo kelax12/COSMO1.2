@@ -189,6 +189,48 @@ for (const m of measured) {
   }
 }
 
+// ── Le build mesuré est-il celui qui part en production ? ────────────
+//
+// 🔴 Trouvé le 2026-09-02, et c'est le défaut le plus coûteux qu'ait porté
+// cette garde : elle mesurait un bundle plus léger que celui livré, sans
+// jamais le dire.
+//
+// `main.tsx` garde son `Sentry.init` derrière `if (sentryDsn)`. Quand
+// `VITE_SENTRY_DSN` est absente, Vite la remplace par `undefined` À LA
+// COMPILATION, la branche devient du code mort, et Rollup jette presque tout
+// `@sentry/react`. Mesuré le même jour, même arbre, mêmes `node_modules`,
+// seule la variable changeant :
+//
+//     avec DSN  →  vendor-sentry  145 740 o brut,  49 276 o gzip
+//     sans DSN  →  vendor-sentry   11 633 o brut,   3 818 o gzip
+//
+// La CI construisait sans la variable. Le chemin critique était donc
+// sous-estimé de ~45 ko gzip, et les attributions de bootup du job
+// `lighthouse` étaient structurellement AVEUGLES à Sentry — on ne pouvait rien
+// conclure sur son coût, ni dans un sens ni dans l'autre. Vercel, lui,
+// construit avec la variable.
+//
+// Une garde qui mesure le mauvais artefact est pire qu'une garde absente : elle
+// donne une réponse, et on la croit. D'où ce contrôle, qui refuse de valider un
+// budget calculé sur une forme de bundle qui n'existe nulle part.
+const sentry = measured.find((m) => m.base === 'vendor-sentry');
+const SENTRY_FLOOR = 20_000;
+if (sentry && sentry.gzip < SENTRY_FLOOR) {
+  errors.push(
+    `Build mesuré SANS \`VITE_SENTRY_DSN\` : vendor-sentry ne pèse que ${KB(sentry.gzip)}.\n` +
+      `  Sans la variable, Vite élimine la branche \`Sentry.init\` et Rollup jette\n` +
+      `  presque tout @sentry/react : le bundle mesuré n'est PAS celui livré, et le\n` +
+      `  chemin critique est sous-estimé d'environ 45 ko gzip.\n` +
+      `  Poser la variable au moment du build (n'importe quelle valeur non vide suffit,\n` +
+      `  elle ne décide que de la forme du bundle), puis relancer.`
+  );
+} else if (!sentry) {
+  report.push(
+    'ℹ️  vendor-sentry absent du build : si Sentry a été retiré volontairement, ' +
+      'supprimer le contrôle de plancher dans ce fichier.'
+  );
+}
+
 if (process.argv.includes('--report')) {
   for (const m of measured.slice(0, 20)) console.log(`${KB(m.gzip).padStart(9)}  ${m.name}`);
   console.log('');

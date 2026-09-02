@@ -90,6 +90,21 @@ jobs:
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          # 🔴 SANS cette variable, la CI ne mesure PAS le bundle qui part en
+          # production. `main.tsx` garde son `Sentry.init` derriere
+          # `if (sentryDsn)` ; Vite remplace la variable absente par `undefined`
+          # a la compilation, la branche devient du code mort, et Rollup jette
+          # presque tout `@sentry/react`. Mesure du 2026-09-02, meme arbre et
+          # meme node_modules, seule la variable change :
+          #     avec DSN  -> vendor-sentry 145 740 o brut, 49 276 o gzip
+          #     sans DSN  -> vendor-sentry  11 633 o brut,  3 818 o gzip
+          # La garde de budget sous-estimait donc le chemin critique reel de
+          # ~45 ko gzip, et les attributions de bootup du job `lighthouse`
+          # etaient structurellement AVEUGLES a Sentry. Vercel, lui, construit
+          # avec la variable posee.
+          # La valeur n'a pas besoin d'etre un vrai DSN : seule sa presence
+          # decide de la forme du bundle, et cet artefact n'est jamais deploye.
+          VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN || 'https://ci@example.invalid/0' }}
 
       # Le seul budget du dépôt qui n'avait aucune garde · et le seul qui ait
       # reculé sans que personne le voie (+5 ko gzip sur le chemin critique en
@@ -293,6 +308,21 @@ jobs:
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          # 🔴 SANS cette variable, la CI ne mesure PAS le bundle qui part en
+          # production. `main.tsx` garde son `Sentry.init` derriere
+          # `if (sentryDsn)` ; Vite remplace la variable absente par `undefined`
+          # a la compilation, la branche devient du code mort, et Rollup jette
+          # presque tout `@sentry/react`. Mesure du 2026-09-02, meme arbre et
+          # meme node_modules, seule la variable change :
+          #     avec DSN  -> vendor-sentry 145 740 o brut, 49 276 o gzip
+          #     sans DSN  -> vendor-sentry  11 633 o brut,  3 818 o gzip
+          # La garde de budget sous-estimait donc le chemin critique reel de
+          # ~45 ko gzip, et les attributions de bootup du job `lighthouse`
+          # etaient structurellement AVEUGLES a Sentry. Vercel, lui, construit
+          # avec la variable posee.
+          # La valeur n'a pas besoin d'etre un vrai DSN : seule sa presence
+          # decide de la forme du bundle, et cet artefact n'est jamais deploye.
+          VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN || 'https://ci@example.invalid/0' }}
 
       # Quel Chrome, et existe-t-il ? Une phase `collect` qui ne produit AUCUN
       # rapport echoue le plus souvent avant d'ouvrir un navigateur, et la
