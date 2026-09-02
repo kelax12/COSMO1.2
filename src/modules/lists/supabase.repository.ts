@@ -8,6 +8,7 @@ import { normalizeApiError } from '@/lib/normalizeApiError';
 import { IListsRepository } from './repository';
 import { TaskList, CreateListInput, UpdateListInput } from './types';
 import { warnIfTruncated } from '@/lib/pagination.warning';
+import type { CreateOptions } from '@/lib/restore-id';
 
 // ═══════════════════════════════════════════════════════════════════
 // DB ROW TYPES (snake_case - matches Supabase table schema)
@@ -35,6 +36,7 @@ interface ListRow {
  * DB input type for insert/update operations
  */
 interface ListDbInput {
+  id?: string;
   name?: string;
   color?: string;
   task_ids?: string[];
@@ -107,7 +109,7 @@ export class SupabaseListsRepository implements IListsRepository {
   // WRITE OPERATIONS
   // ═══════════════════════════════════════════════════════════════════
 
-  async create(input: CreateListInput): Promise<TaskList> {
+  async create(input: CreateListInput, options?: CreateOptions): Promise<TaskList> {
     if (!supabase) throw new Error('Supabase not configured');
     const user = await getCurrentUser();
     if (!user) throw new Error('Not authenticated');
@@ -137,6 +139,8 @@ export class SupabaseListsRepository implements IListsRepository {
       position: nextPosition,
       task_ids: [],
       user_id: user.id,
+      // Second argument, jamais un champ du payload (R-08).
+      ...(options?.restoreId ? { id: options.restoreId } : {}),
     };
 
     const { data, error } = await supabase

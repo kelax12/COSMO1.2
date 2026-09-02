@@ -204,7 +204,20 @@ const KNOWN_OVERSIZED = new Set([
 // changé, les corps sont repris à l'identique.
 // 🔴 Le réflexe à ne pas avoir : relever ce nombre. C'est un cliquet, il ne
 // tourne que dans un sens, et c'est ce qui l'a rendu utile deux fois de suite.
-const OVERSIZED_BUDGET = 9903;
+// 2026-09-02 (2) : 9903 → 9835. Troisième occurrence, même mécanique. Les
+// correctifs R-02 (impact et réaffectation avant de supprimer une catégorie),
+// R-07 (l'abandon d'un créneau devient annulable) et R-08 (« Annuler » restaure
+// l'identifiant d'origine) ont dépassé le stock de 13 lignes. Compensé par
+// l'extraction du dépôt de photo de profil dans `pages/settings/useAvatarUpload.ts`
+// (71 lignes hors de `SettingsPage`). Au passage, `modules/tasks/hooks.ts` avait
+// franchi le plafond des NOUVEAUX fichiers : `useRestoreTask` vit désormais dans
+// `modules/tasks/restore.hooks.ts`, ce qui rend aussi visible qu'une restauration
+// n'est pas une création.
+// 2026-09-02 (3) : 9835 → 9791. L'externalisation des 179 chaînes en dur (R-05)
+// a ajouté un traducteur `tCommon` dans plusieurs fichiers déjà hors budget.
+// Compensé par l'extraction des actions sur un événement dans
+// `pages/agenda/useAgendaEventActions.ts` (76 lignes hors d'`AgendaPage`).
+const OVERSIZED_BUDGET = 9791;
 
 const loc = (file: string) => readFileSync(file, 'utf8').split('\n').length;
 

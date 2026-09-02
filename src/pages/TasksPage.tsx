@@ -24,6 +24,7 @@ import {
   useCreateList,
   useUpdateList,
   useDeleteList,
+  useRestoreList,
   useAddTaskToList,
   tasksInList,
   tasksDueToday,
@@ -75,6 +76,7 @@ const TasksPage: React.FC = () => {
   const createListMutation = useCreateList();
   const updateListMutation = useUpdateList();
   const deleteListMutation = useDeleteList();
+  const restoreListMutation = useRestoreList();
   const [showCreateList, setShowCreateList] = useState(false);
   const [newListName, setNewListName] = useState('');
   const [newListColor, setNewListColor] = useState('blue');
@@ -269,12 +271,16 @@ const TasksPage: React.FC = () => {
       onSuccess: () => {
         if (selectedListId === listId) setSelectedListId(null);
         if (snapshot) {
+          // L'identifiant est restauré (R-08) : le tri mémorisé par liste
+          // (`sortPrefs`) et la sélection courante sont keyés dessus, donc les
+          // perdre revenait à réinitialiser la liste en la « restaurant ».
+          // `taskIds` reste posé en second temps : `create()` force `[]`.
           showUndoToast(t('lists.deleted'), () => {
-            const { id: _id, taskIds, ...rest } = snapshot;
-            createListMutation.mutate(rest, {
+            restoreListMutation.mutate(snapshot, {
               onSuccess: (newList) => {
-                if (taskIds.length > 0) {
-                  updateListMutation.mutate({ id: newList.id, updates: { taskIds } });
+                // `create()` force `taskIds: []` : le contenu se repose apres.
+                if (snapshot.taskIds.length > 0) {
+                  updateListMutation.mutate({ id: newList.id, updates: { taskIds: snapshot.taskIds } });
                 }
               },
             });

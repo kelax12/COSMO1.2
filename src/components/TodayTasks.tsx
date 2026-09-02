@@ -56,9 +56,9 @@ const TodayTasks: React.FC = () => {
         return a.priority - b.priority;
       })
       .slice(0, 5);
-    // `today` est volontairement re-lu à chaque render (granularité jour) ; le
-    // mémo keyé sur `tasks` suffit pour la liste « du jour ».
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // `isDueToday()` lit l'heure courante à chaque render : la granularité est
+    // le jour, donc mémoriser sur `tasks` seul suffit. Le `eslint-disable` qui
+    // couvrait la variable `today` disparaît avec elle.
   }, [tasks]);
 
   const totalTime = useMemo(() => todayTasks.reduce((sum, t) => sum + t.estimatedTime, 0), [todayTasks]);
@@ -245,10 +245,10 @@ const TodayTasks: React.FC = () => {
                     <button onClick={(e) => { e.stopPropagation(); setAddToListTask(task.id); }} className="p-1.5 rounded-lg hover:bg-[rgb(var(--color-hover))] transition-colors" title={t('todayTasks.addToList')}>
                       <MoreHorizontal size={15} className="text-[rgb(var(--color-text-muted))]" />
                     </button>
-                    <button onClick={(e) => { e.stopPropagation(); setCollaboratorTaskId(task.id); }} className="p-1.5 rounded-lg hover:bg-[rgb(var(--color-hover))] transition-colors" title="Collaborateurs">
+                    <button onClick={(e) => { e.stopPropagation(); setCollaboratorTaskId(task.id); }} className="p-1.5 rounded-lg hover:bg-[rgb(var(--color-hover))] transition-colors" title={t('todayTasks.collaboratorsTitle')}>
                       <UserPlus size={15} className="text-[rgb(var(--color-text-muted))]" />
                     </button>
-                    <button onClick={(e) => { e.stopPropagation(); handleDeleteClick(task); }} className="p-1.5 rounded-lg hover:bg-red-500/10 transition-colors" title="Supprimer">
+                    <button onClick={(e) => { e.stopPropagation(); handleDeleteClick(task); }} className="p-1.5 rounded-lg hover:bg-red-500/10 transition-colors" title={t('todayTasks.deleteTitle')}>
                       <Trash2 size={15} className="text-[rgb(var(--color-text-muted))] hover:text-red-500 transition-colors" />
                     </button>
                   </div>

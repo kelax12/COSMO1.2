@@ -6,6 +6,7 @@ import type { CalendarEvent, CreateEventInput, UpdateEventInput } from './types'
 import { eventsKeys } from './constants';
 import { translator } from '@/i18n/useT';
 import { recordDemoCreationIfDemo } from '@/lib/demo-engagement';
+import { splitRestore } from '@/lib/restore-id';
 
 // ═══════════════════════════════════════════════════════════════════
 // REPOSITORY HOOK
@@ -294,3 +295,32 @@ export const useUpcomingEvents = (limit = 5) => {
 
 export type { CalendarEvent, CreateEventInput, UpdateEventInput } from './types';
 export { eventsKeys } from './constants';
+
+// ═══════════════════════════════════════════════════════════════════
+// RESTAURATION (« Annuler ») — recree l'objet sous SON identifiant
+// ═══════════════════════════════════════════════════════════════════
+//
+// Separe de `useCreateEvent` a dessein : l'identifiant passe par le second
+// argument de `create()`, hors du payload, donc hors de portee d'un objet de
+// formulaire enrichi depuis les devtools. Contrat complet et raison de ce
+// decoupage : `src/lib/restore-id.ts` (R-08).
+//
+// ⚠️ N'appeler QUE depuis un toast d'annulation.
+export const useRestoreEvent = () => {
+  const queryClient = useQueryClient();
+  const repository = useEventsRepository();
+
+  return useMutation({
+    mutationFn: (snapshot: CalendarEvent) => {
+      const { payload, options } = splitRestore(snapshot);
+      return repository.create(payload as CreateEventInput, options);
+    },
+    onSuccess: () => {
+      invalidateAllEventQueries(queryClient);
+      queryClient.invalidateQueries({ queryKey: eventsKeys.all });
+    },
+    onError: (error: Error) => {
+      console.error('[useRestoreEvent]', error);
+    },
+  });
+};

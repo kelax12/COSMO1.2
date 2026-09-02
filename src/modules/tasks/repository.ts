@@ -1,5 +1,6 @@
 import { Task, CreateTaskInput, UpdateTaskInput, TaskFilters, TaskDependency } from './types';
 import { PaginationParams, PaginatedResult } from '@/lib/pagination.types';
+import type { CreateOptions } from '@/lib/restore-id';
 
 /**
  * Résultat d'un basculement de complétion.
@@ -66,7 +67,7 @@ export interface ITasksRepository {
   /**
    * Create a new task
    */
-  create(input: CreateTaskInput): Promise<Task>;
+  create(input: CreateTaskInput, options?: CreateOptions): Promise<Task>;
   
   /**
    * Update an existing task

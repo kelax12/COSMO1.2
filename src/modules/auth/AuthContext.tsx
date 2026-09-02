@@ -20,6 +20,7 @@ import { AUTH_LOGIN_GENERIC, AUTH_REGISTER_GENERIC, safeAuthError } from './auth
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import * as Sentry from '@sentry/react';
 import { toast } from 'sonner';
+import { translator } from '@/i18n/useT';
 
 const DEBUG = typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('debug');
 const dlog = (msg: string) => {
@@ -313,7 +314,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (oauthError) {
       // Toast differe : Sonner est monte par App, sous ce provider.
       setTimeout(() => {
-        toast.error("La connexion n'a pas abouti.", { description: oauthError });
+        toast.error(translator('common').t('auth.oauthFailed'), { description: oauthError });
       }, 0);
     }
 

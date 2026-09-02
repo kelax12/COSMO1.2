@@ -22,6 +22,7 @@
 
 import React, { useState } from 'react';
 import { findOverdueTaskSlots, type OverdueTaskSlot } from './overdue-slots';
+import { showUndoToast } from '@/lib/undo-toast';
 import { fromDisplayISO, toDisplayISO, displayNow, type TimezonePref } from '@/lib/timezone';
 import type { Task } from '@/modules/tasks/types';
 import type { CalendarEvent } from '@/modules/events';
@@ -36,6 +37,12 @@ interface OverdueSlotReviewDeps {
   updateEvent: (id: string, updates: { start: string; end: string }) => void;
   deleteEvent: (id: string) => void;
   deleteTask: (taskId: string) => void;
+  /** Recree l'evenement supprime, sous SON identifiant (annulation). */
+  restoreEvent: (event: CalendarEvent) => void;
+  /** Recree la tache supprimee, sous SON identifiant (annulation). */
+  restoreTask: (task: Task) => void;
+  /** Libellé du toast d'annulation, traduit par l'appelant. */
+  deletedLabel: string;
 }
 
 export function useOverdueSlotReview({
@@ -46,6 +53,9 @@ export function useOverdueSlotReview({
   updateEvent,
   deleteEvent,
   deleteTask,
+  restoreEvent,
+  restoreTask,
+  deletedLabel,
 }: OverdueSlotReviewDeps) {
   // Créneaux écartés pendant CETTE session : on ne les repropose pas.
   const [snoozedSlotIds, setSnoozedSlotIds] = useState<Set<string>>(new Set());
@@ -87,11 +97,25 @@ export function useOverdueSlotReview({
     dismissReviewSlot(slot.event.id);
   };
 
-  // Abandonner → supprime la tâche et son créneau agenda.
+  // Abandonner → supprime la tâche et son créneau agenda, AVEC annulation.
+  //
+  // 🔴 R-07. C'était la seule action irréversible du produit, et elle se
+  // trouvait dans le seul modal qui s'ouvre sans qu'on l'ait demandé : un clic
+  // mal placé sur un dialogue inattendu détruisait une tâche définitivement,
+  // alors que toutes les autres suppressions ont leur toast « Annuler ».
+  //
+  // Les deux objets reviennent sous LEURS identifiants (R-08), sinon la tâche
+  // restaurée perdrait son rattachement à ses listes et à son KR.
   const handleSlotDelete = (slot: OverdueTaskSlot) => {
-    deleteEvent(slot.event.id);
-    deleteTask(slot.task.id);
-    dismissReviewSlot(slot.event.id);
+    const eventSnapshot = slot.event;
+    const taskSnapshot = slot.task;
+    deleteEvent(eventSnapshot.id);
+    deleteTask(taskSnapshot.id);
+    dismissReviewSlot(eventSnapshot.id);
+    showUndoToast(deletedLabel, () => {
+      restoreTask(taskSnapshot);
+      restoreEvent(eventSnapshot);
+    });
   };
 
   const handleSlotSnooze = () => {

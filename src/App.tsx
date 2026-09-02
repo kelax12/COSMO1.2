@@ -57,9 +57,9 @@ const StatisticsPage = lazyWithRetry(() => import('@/pages/StatisticsPage'), ['d
 const SettingsPage = lazyWithRetry(() => import('@/pages/SettingsPage'), ['org', 'settings']);
 const PremiumPage = lazyWithRetry(() => import('@/pages/PremiumPage'), ['premium']);
 const GuidePage = lazyWithRetry(() => import('@/pages/GuidePage'), ['guide', 'seo']);
-const MentionsLegalesPage = lazyWithRetry(() => import('@/pages/MentionsLegalesPage'), ['seo']);
-const PolitiqueConfidentialitePage = lazyWithRetry(() => import('@/pages/PolitiqueConfidentialitePage'), ['seo']);
-const CGUPage = lazyWithRetry(() => import('@/pages/CGUPage'), ['seo']);
+const MentionsLegalesPage = lazyWithRetry(() => import('@/pages/MentionsLegalesPage'), ['legal', 'seo']);
+const PolitiqueConfidentialitePage = lazyWithRetry(() => import('@/pages/PolitiqueConfidentialitePage'), ['legal', 'seo']);
+const CGUPage = lazyWithRetry(() => import('@/pages/CGUPage'), ['legal', 'seo']);
 const InvitePage = lazyWithRetry(() => import('@/pages/InvitePage'), ['invite']);
 const AdminPage = lazyWithRetry(() => import('@/pages/AdminPage'), ['admin']);
 const OrganizationOnboardingPage = lazyWithRetry(() => import('@/pages/OrganizationOnboardingPage'), ['org']);

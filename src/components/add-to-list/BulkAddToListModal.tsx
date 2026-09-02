@@ -24,6 +24,7 @@ interface BulkAddToListModalProps {
  */
 const BulkAddToListModal: React.FC<BulkAddToListModalProps> = ({ isOpen, onClose, count, onAddToList }) => {
   const { t, tp } = useT('tasks');
+  const { t: tCommon } = useT('common');
   const { data: lists = [] } = useLists();
   const createListMutation = useCreateList();
   const [creating, setCreating] = useState(false);
@@ -129,7 +130,7 @@ const BulkAddToListModal: React.FC<BulkAddToListModalProps> = ({ isOpen, onClose
                     className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors"
                   >
                     <Plus size={16} className="shrink-0" />
-                    Nouvelle liste
+                    {tCommon('actions.newList')}
                   </motion.button>
                 )}
               </AnimatePresence>
@@ -137,7 +138,7 @@ const BulkAddToListModal: React.FC<BulkAddToListModalProps> = ({ isOpen, onClose
               {manualLists.length === 0 && !creating && (
                 <div className="py-8 text-center">
                   <p className="text-sm text-[rgb(var(--color-text-muted))]">
-                    Aucune liste manuelle pour l'instant.
+                    {t('addToList.emptyManual')}
                   </p>
                   <p className="text-xs text-[rgb(var(--color-text-muted))] mt-1">
                     {t('addToList.createOne')}
@@ -173,7 +174,7 @@ const BulkAddToListModal: React.FC<BulkAddToListModalProps> = ({ isOpen, onClose
               {lists.some((l) => l.type === 'smart') && (
                 <p className="flex items-center gap-1.5 text-[11px] text-[rgb(var(--color-text-muted))] px-1 pt-3">
                   <Sparkles size={10} aria-hidden="true" />
-                  Les listes intelligentes se remplissent automatiquement.
+                  {t('addToList.emptyManualHint')}
                 </p>
               )}
             </div>

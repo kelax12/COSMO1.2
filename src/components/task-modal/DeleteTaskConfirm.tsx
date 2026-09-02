@@ -4,6 +4,7 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trash2 } from 'lucide-react';
 import { useBottomSheet } from '@/hooks/use-bottom-sheet';
+import { useT } from '@/i18n/useT';
 
 interface DeleteTaskConfirmProps {
   isOpen: boolean;
@@ -15,6 +16,8 @@ interface DeleteTaskConfirmProps {
 }
 
 const DeleteTaskConfirm: React.FC<DeleteTaskConfirmProps> = ({ isOpen, onCancel, onConfirm, isLoading, isTaskOwner = true }) => {
+  const { t } = useT('taskModal');
+  const { t: tCommon } = useT('common');
   const { sheetRef, handleBarWidth, sheetDragProps } = useBottomSheet(onCancel);
 
   return (
@@ -46,7 +49,7 @@ const DeleteTaskConfirm: React.FC<DeleteTaskConfirmProps> = ({ isOpen, onCancel,
                 <Trash2 className="text-red-600 dark:text-red-400" size={24} />
               </div>
               <h3 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white mb-2">
-                {isTaskOwner ? 'Supprimer la tâche' : 'Quitter la tâche partagée'}
+                {isTaskOwner ? t('delete.titleOwner') : t('delete.titleShared')}
               </h3>
               <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-5 sm:mb-6">
                 {isTaskOwner
@@ -59,7 +62,7 @@ const DeleteTaskConfirm: React.FC<DeleteTaskConfirmProps> = ({ isOpen, onCancel,
                   onClick={onCancel}
                   className="flex-1 min-h-11 px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-700 dark:text-white border border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all"
                 >
-                  Annuler
+                  {tCommon('actions.cancel')}
                 </button>
                 <button
                   type="button"
@@ -67,7 +70,9 @@ const DeleteTaskConfirm: React.FC<DeleteTaskConfirmProps> = ({ isOpen, onCancel,
                   disabled={isLoading}
                   className="flex-1 min-h-11 px-4 py-2.5 rounded-lg text-sm font-semibold text-white bg-red-600 hover:bg-red-700 transition-all shadow-md shadow-red-500/20 disabled:opacity-50"
                 >
-                  {isLoading ? (isTaskOwner ? 'Suppression…' : 'Départ…') : (isTaskOwner ? 'Supprimer' : 'Quitter')}
+                  {isLoading
+                    ? (isTaskOwner ? t('delete.workingOwner') : t('delete.workingShared'))
+                    : (isTaskOwner ? t('delete.confirmOwner') : t('delete.confirmShared'))}
                 </button>
               </div>
             </div>

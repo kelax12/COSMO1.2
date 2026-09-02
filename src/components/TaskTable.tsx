@@ -77,6 +77,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
   searchTerm = '',
 }) => {
   const { t, tp } = useT('tasks');
+  const { t: tCommon } = useT('common');
   // ═══════════════════════════════════════════════════════════════════
   // TASKS - Depuis le module tasks (MIGRÉ)
   // ═══════════════════════════════════════════════════════════════════
@@ -757,13 +758,13 @@ const TaskTable: React.FC<TaskTableProps> = ({
                     onClick={() => setTaskToDelete(null)}
                     className="flex-1 min-h-11 px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-700 dark:text-white border border-[rgb(var(--color-border))] hover:bg-slate-50 dark:hover:bg-slate-700 transition-all"
                   >
-                    Annuler
+                    {tCommon('actions.cancel')}
                   </button>
                   <button
                     onClick={confirmDelete}
                     className="flex-1 min-h-11 px-4 py-2.5 rounded-lg text-sm font-semibold text-white bg-red-600 hover:bg-red-700 transition-all shadow-md shadow-red-500/20"
                   >
-                    Supprimer
+                    {tCommon('actions.delete')}
                   </button>
                 </div>
               </div>
@@ -799,7 +800,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
                   <Trash2 className="text-red-600 dark:text-red-400" size={24} />
                 </div>
                 <h3 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white mb-2">
-                  Supprimer {selectedIds.length} tâche{selectedIds.length > 1 ? 's' : ''}
+                  {tp('bulk.deleteCount', selectedIds.length)}
                 </h3>
                 <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-5 sm:mb-6">
                   {tp('table.bulkDeleteBody', selectedIds.length)}
@@ -809,13 +810,13 @@ const TaskTable: React.FC<TaskTableProps> = ({
                     onClick={() => setShowBulkDeleteConfirm(false)}
                     className="flex-1 min-h-11 px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-700 dark:text-white border border-[rgb(var(--color-border))] hover:bg-slate-50 dark:hover:bg-slate-700 transition-all"
                   >
-                    Annuler
+                    {tCommon('actions.cancel')}
                   </button>
                   <button
                     onClick={confirmBulkDelete}
                     className="flex-1 min-h-11 px-4 py-2.5 rounded-lg text-sm font-semibold text-white bg-red-600 hover:bg-red-700 transition-all shadow-md shadow-red-500/20"
                   >
-                    Supprimer
+                    {tCommon('actions.delete')}
                   </button>
                 </div>
               </div>

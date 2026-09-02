@@ -14,6 +14,7 @@ import { krCompletionKeys } from '@/modules/kr-completions/constants';
 import { validateAsync } from '@/lib/validation/lazy';
 import { translator } from '@/i18n/useT';
 import { recordDemoCreationIfDemo } from '@/lib/demo-engagement';
+import { splitRestore } from '@/lib/restore-id';
 
 // ═══════════════════════════════════════════════════════════════════
 // REPOSITORY - Via centralized factory (demo/production mode)
@@ -191,7 +192,7 @@ export const useUpdateOkr = () => {
       if (context?.previousOKRs) {
         queryClient.setQueryData(okrsKeys.lists(), context.previousOKRs);
       }
-      toast.error(`Impossible de modifier l'OKR : ${error.message}`);
+      toast.error(translator('errors').t('mutation.updateOkr', { message: error.message }));
     },
 
     // Refetch on settle
@@ -238,7 +239,7 @@ export const useDeleteOkr = () => {
       if (context?.previousOKRs) {
         queryClient.setQueryData(okrsKeys.lists(), context.previousOKRs);
       }
-      toast.error(`Impossible de supprimer l'OKR : ${error.message}`);
+      toast.error(translator('errors').t('mutation.deleteOkr', { message: error.message }));
     },
 
     // Cleanup on settle
@@ -334,3 +335,31 @@ export const useUpdateKeyResult = () => {
 
 export type { OKR, KeyResult, CreateOKRInput, UpdateOKRInput, UpdateKeyResultInput, OKRFilters } from './types';
 export { okrsKeys } from './constants';
+
+// ═══════════════════════════════════════════════════════════════════
+// RESTAURATION (« Annuler ») — recree l'objet sous SON identifiant
+// ═══════════════════════════════════════════════════════════════════
+//
+// Separe de `useCreateOkr` a dessein : l'identifiant passe par le second
+// argument de `create()`, hors du payload, donc hors de portee d'un objet de
+// formulaire enrichi depuis les devtools. Contrat complet et raison de ce
+// decoupage : `src/lib/restore-id.ts` (R-08).
+//
+// ⚠️ N'appeler QUE depuis un toast d'annulation.
+export const useRestoreOkr = () => {
+  const queryClient = useQueryClient();
+  const repository = useOKRsRepository();
+
+  return useMutation({
+    mutationFn: (snapshot: OKR) => {
+      const { payload, options } = splitRestore(snapshot);
+      return repository.create(payload as CreateOKRInput, options);
+    },
+    onSuccess: () => {
+      invalidateAllOKRQueries(queryClient);
+    },
+    onError: (error: Error) => {
+      console.error('[useRestoreOkr]', error);
+    },
+  });
+};

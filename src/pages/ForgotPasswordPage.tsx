@@ -75,14 +75,14 @@ const ForgotPasswordPage = () => {
             </div>
             <h1 className="text-2xl font-bold text-[rgb(var(--color-text-primary))] mb-2">{t('auth.emailSentTitle')}</h1>
             <p className="text-sm text-[rgb(var(--color-text-secondary))]">
-              Si un compte existe pour <span className="font-medium">{sanitizeEmail(email)}</span>, vous
-              recevrez un lien pour choisir un nouveau mot de passe. Pensez à vérifier vos spams.
+              {t('auth.resetSentBefore')} <span className="font-medium">{sanitizeEmail(email)}</span>,{' '}
+              {t('auth.resetSentAfter')}
             </p>
             <Link
               to="/login"
               className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-blue-400 hover:text-blue-300 transition-colors"
             >
-              <ArrowLeft size={14} aria-hidden="true" /> Retour à la connexion
+              <ArrowLeft size={14} aria-hidden="true" /> {t('auth.backToSignIn')}
             </Link>
           </div>
         ) : (
@@ -90,7 +90,7 @@ const ForgotPasswordPage = () => {
             <div className="text-center mb-8">
               <h1 className="text-2xl font-bold text-[rgb(var(--color-text-primary))] mb-2">{t('auth.forgotTitle')}</h1>
               <p className="text-sm text-[rgb(var(--color-text-secondary))]">
-                Saisissez votre email : nous vous enverrons un lien pour en choisir un nouveau.
+                {t('auth.forgotIntro')}
               </p>
             </div>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -138,7 +138,7 @@ const ForgotPasswordPage = () => {
                 to="/login"
                 className="inline-flex items-center gap-1.5 text-sm font-semibold text-blue-400 hover:text-blue-300 transition-colors"
               >
-                <ArrowLeft size={14} aria-hidden="true" /> Retour à la connexion
+                <ArrowLeft size={14} aria-hidden="true" /> {t('auth.backToSignIn')}
               </Link>
             </div>
           </>

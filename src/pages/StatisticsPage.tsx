@@ -219,11 +219,13 @@ export default function StatisticsPage() {
     year:  pickBucketTime(fixedBuckets?.[3]),
   }), [fixedBuckets, pickBucketTime]);
 
+  // Clés et non libellés : cette table est évaluée au rendu, mais y écrire du
+  // texte figeait la période en français pour toute la session (R-05).
   const periodDescriptiveText: Record<TimePeriod, string> = {
-    day: "aujourd'hui",
-    week: '7 derniers jours',
-    month: '30 derniers jours',
-    year: '365 derniers jours',
+    day: t('periodDescription.day'),
+    week: t('periodDescription.week'),
+    month: t('periodDescription.month'),
+    year: t('periodDescription.year'),
   };
 
   const sections = [
@@ -416,7 +418,7 @@ export default function StatisticsPage() {
                 color: !overviewDetail ? 'white' : 'rgb(var(--color-text-secondary))',
               }}
             >
-              Tout
+              {t('overview.showAll')}
             </button>
             <button
               type="button"

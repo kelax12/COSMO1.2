@@ -5,6 +5,7 @@ import { localizeSeed } from '@/lib/seed-i18n';
 import { reachableSets } from '@/lib/dependency-graph';
 import { TASK_DEPENDENCIES_STORAGE_KEY } from './constants';
 import { deadlineDayKey } from '@/lib/deadline';
+import type { CreateOptions } from '@/lib/restore-id';
 const STORAGE_KEY = 'cosmo_demo_tasks';
 
 // Helper pour générer des dates
@@ -191,11 +192,13 @@ export class LocalStorageTasksRepository implements ITasksRepository {
   // WRITE OPERATIONS (Phase 2)
   // ═══════════════════════════════════════════════════════════════════
 
-  async create(input: CreateTaskInput): Promise<Task> {
+  async create(input: CreateTaskInput, options?: CreateOptions): Promise<Task> {
     const tasks = this.getTasks();
     const newTask: Task = {
       ...input,
-      id: crypto.randomUUID(),
+      // Parite avec le repository Supabase : `restoreId` vient d'un
+      // « Annuler », jamais d'un formulaire (R-08).
+      id: options?.restoreId ?? crypto.randomUUID(),
       createdAt: new Date().toISOString(),
       bookmarked: input.bookmarked ?? false,
       completed: input.completed ?? false,

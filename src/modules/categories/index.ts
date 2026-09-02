@@ -45,4 +45,5 @@ export {
   useCreateCategory,
   useUpdateCategory,
   useDeleteCategory,
+  useRestoreCategory,
 } from './hooks';

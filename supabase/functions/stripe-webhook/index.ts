@@ -48,11 +48,27 @@ Deno.serve(async (req) => {
   // Pre-check ignores 23505 (concurrent delivery) and lets two parallel
   // workers race; the handlers are idempotent (upserts). The post-handler
   // INSERT then becomes the durable "done" marker.
-  const { data: alreadyProcessed } = await supabaseAdmin
+  //
+  // ⚠️ L'ERREUR DE LECTURE N'EST PAS IGNORABLE (audit Stripe 2026-09-02). Elle
+  // l'était : `const { data } = await …` jetait `error`, donc une panne de
+  // lecture se lisait « jamais traité » et rejouait les handlers. La plupart
+  // sont des upserts, donc idempotents — mais PAS `bump_win_streak`, qui
+  // incrémente. Un rejeu y ajoutait une victoire jamais gagnée, et c'est
+  // exactement ce que ce pré-contrôle existe pour empêcher. On renvoie 500 :
+  // Stripe retente, et la lecture rétablie tranchera.
+  const { data: alreadyProcessed, error: dedupReadError } = await supabaseAdmin
     .from('processed_stripe_events')
     .select('id')
     .eq('id', event.id)
     .maybeSingle()
+  if (dedupReadError) {
+    console.error('processed_stripe_events read error:', dedupReadError)
+    await opsAlert(
+      'stripe-webhook',
+      `lecture du marqueur d idempotence impossible pour l event ${event.id} — 500 pour forcer un retry plutot que de risquer un rejeu`,
+    )
+    return new Response('Internal error', { status: 500 })
+  }
   if (alreadyProcessed) {
     return new Response(JSON.stringify({ received: true, deduped: true }), {
       headers: { 'Content-Type': 'application/json' },
@@ -235,7 +251,20 @@ async function recordPayment(
 
     // Un abonnement particulier n'a pas d'org : on remonte l'uid par le
     // customer, en réutilisant la garde qui refuse un customer d'organisation.
-    const userId = orgId ? null : await getUidFromCustomer(invoice.customer as string)
+    //
+    // ⚠️ `getUidFromCustomer` LÈVE désormais sur panne de lecture, et c'est
+    // voulu pour les handlers métier. Ici on ne veut PAS ce comportement : une
+    // ligne de journal sans `user_id` reste une ligne de journal, alors qu'une
+    // ligne absente est un trou dans une pièce fiscale. Le montant, la date et
+    // l'identifiant Stripe suffisent au rapprochement comptable.
+    let userId: string | null = null
+    if (!orgId) {
+      try {
+        userId = await getUidFromCustomer(invoice.customer as string)
+      } catch (err) {
+        console.error('recordPayment: uid lookup failed, journaling without user_id:', err)
+      }
+    }
 
     const { error } = await supabaseAdmin.from('payment_records').insert({
       stripe_event_id: event.id,
@@ -380,13 +409,32 @@ async function applySubscriptionToDb(
   }
 }
 
+/**
+ * Customer Stripe → uid COSMO, ou `null` si ce n'est pas un customer particulier.
+ *
+ * ⚠️ L'ERREUR DE LECTURE EST RELANCÉE (audit Stripe 2026-09-02), pour la même
+ * raison qui l'a fait relancer dans `orgIdFromInvoice` : une panne de lecture
+ * est indiscernable d'un « pas d'utilisateur ». En l'avalant, tous les
+ * appelants faisaient `if (!uid) return` — un succès silencieux, donc le
+ * marqueur d'idempotence écrit et Stripe qui ne re-livre jamais. Un paiement
+ * encaissé sans que l'abonnement soit appliqué, et personne pour le voir.
+ *
+ * ⚠️ `maybeSingle()` LÈVE si plusieurs lignes partagent le customer. Côté
+ * organisation, une contrainte UNIQUE l'interdit (mig. 101) et le commentaire
+ * s'appuie dessus ; côté particulier cette contrainte MANQUE (mesuré en prod le
+ * 2026-09-02 : 0 doublon aujourd'hui, aucune garde demain) — cf. mig. 134.
+ */
 async function getUidFromCustomer(customerId: string): Promise<string | null> {
   // Try subscriptions table first (fastest)
-  const { data } = await supabaseAdmin
+  const { data, error } = await supabaseAdmin
     .from('subscriptions')
     .select('user_id')
     .eq('stripe_customer_id', customerId)
     .maybeSingle()
+  if (error) {
+    console.error('getUidFromCustomer lookup error:', error)
+    throw error
+  }
 
   if (data?.user_id) return data.user_id
 
@@ -590,6 +638,53 @@ async function applyOrgSubscription(
 
   // État transitoire (`incomplete`, en attente de 3-D Secure) : ne rien écrire.
   if (intent === 'skip') return
+
+  // ── S-5 : un event TARDIF d'un ANCIEN abonnement ne dégrade rien ──
+  //
+  // `handleOrgSubscriptionDeleted` filtrait déjà sur `stripe_subscription_id`,
+  // avec le scénario écrit en toutes lettres : après un cycle « résiliation
+  // puis réabonnement », la livraison tardive du `deleted` de l'ANCIEN
+  // abonnement remettrait au gratuit une organisation qui vient de repayer.
+  // Cette fonction-ci n'avait pas la garde : elle fait un `upsert` sur `org_id`
+  // seul, donc un `customer.subscription.updated` tardif portant `canceled`
+  // écrivait `tier_key = 'free'` sur le client qui paie. La garde avait été
+  // posée sur une porte et pas sur l'autre.
+  //
+  // La règle est asymétrique, et c'est ce qui la rend juste :
+  //   - un event qui ACTIVE fait autorité, d'où qu'il vienne. Un nouvel
+  //     abonnement actif supersède le précédent, c'est la souscription elle-même.
+  //   - un event qui DÉGRADE (`cancelled`, `past_due`) n'est appliqué que s'il
+  //     concerne l'abonnement ACTUELLEMENT enregistré. Venant d'un autre, il
+  //     parle par définition d'un abonnement abandonné.
+  //
+  // Un simple `.eq()` sur l'upsert ne convient pas : il empêcherait la toute
+  // première écriture, quand la ligne n'a encore aucun `stripe_subscription_id`.
+  //
+  // ⚠️ Lecture puis écriture, donc fenêtre de concurrence théorique : deux
+  // livraisons simultanées peuvent lire la même valeur. L'état converge quand
+  // même — l'event actif finit toujours par être appliqué, et un event de
+  // dégradation appliqué à tort est corrigé par le suivant. Verrouiller la
+  // ligne coûterait plus cher que ce que ça protège.
+  if (intent !== 'active') {
+    const { data: current, error: readError } = await supabaseAdmin
+      .from('org_subscriptions')
+      .select('stripe_subscription_id')
+      .eq('org_id', orgId)
+      .maybeSingle()
+    if (readError) {
+      // Même règle que partout ailleurs dans ce fichier : une panne de lecture
+      // n'est pas un « pas de ligne ». On fait retenter Stripe.
+      console.error('applyOrgSubscription: current subscription read error:', readError)
+      throw readError
+    }
+    const known = current?.stripe_subscription_id
+    if (known && known !== subscription.id) {
+      console.warn(
+        `applyOrgSubscription: ignoring ${subscription.status} event for stale subscription on org ${orgId}`,
+      )
+      return
+    }
+  }
 
   const priceId = subscription.items.data[0]?.price?.id ?? ''
   // Rend le palier ET la périodicité : les deux se changent depuis le Billing

@@ -74,6 +74,11 @@ jobs:
       - name: Validate i18n catalogs
         run: npm run i18n:check
 
+      # Cliquet de dette : `i18n:check` ne voit que les clés, donc jamais une
+      # chaîne restée en dur. Sans cette étape, la dette remonte en silence.
+      - name: No new hardcoded strings
+        run: npm run i18n:scan
+
       - name: Unit tests + coverage (enforced thresholds)
         run: npm run test:coverage
 

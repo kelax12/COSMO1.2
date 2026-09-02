@@ -12,6 +12,7 @@ import { PaginationParams, PaginatedResult, DEFAULT_PAGE_SIZE, assertValidCursor
 import { warnIfTruncated } from '@/lib/pagination.warning';
 import { fetchAllPages, MAX_ROWS } from '@/lib/fetch-all-pages';
 import { buildWindowOrFilter } from './window';
+import type { CreateOptions } from '@/lib/restore-id';
 
 export class SupabaseEventsRepository implements IEventsRepository {
   // Id de l'utilisateur courant, lu depuis la session (pas de round-trip).
@@ -191,11 +192,19 @@ export class SupabaseEventsRepository implements IEventsRepository {
   // WRITE OPERATIONS
   // ═══════════════════════════════════════════════════════════════════
 
-  async create(input: CreateEventInput): Promise<CalendarEvent> {
+  async create(input: CreateEventInput, options?: CreateOptions): Promise<CalendarEvent> {
     if (!supabase) throw new Error('Supabase not configured');
     const user = await getCurrentUser();
     if (!user) throw new Error('Not authenticated');
-    const dbInput = { ...mapEventToDb(input), user_id: user.id };
+    // `options.restoreId` ne vient JAMAIS d'un payload de formulaire :
+    // c'est un second argument, reserve aux « Annuler » (R-08). La
+    // whitelist `mapToDb` et le `user_id` pose depuis la session sont
+    // inchanges.
+    const dbInput = {
+      ...mapEventToDb(input),
+      user_id: user.id,
+      ...(options?.restoreId ? { id: options.restoreId } : {}),
+    };
 
     const { data, error } = await supabase
       .from('events')

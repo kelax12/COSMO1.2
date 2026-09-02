@@ -20,7 +20,8 @@
     "uncategorized": "Sans catégorie",
     "addedBy": "Ajouté par {{name}}",
     "occurrenceDeleted": "Occurrence supprimée",
-    "eventDeleted": "Événement supprimé"
+    "eventDeleted": "Événement supprimé",
+    "copySuffix": "(copie)"
   },
   "quickCreate": {
     "titlePlaceholder": "Titre de l'événement",
@@ -45,7 +46,8 @@
     "remaining_other": "{{count}} créneaux à passer en revue",
     "validate": "Oui, valider la tâche",
     "postpone": "Reporter",
-    "delete": "Supprimer"
+    "delete": "Supprimer",
+    "deleted": "Tâche et créneau supprimés"
   },
   "sidebar": {
     "title": "Tâches disponibles",
@@ -77,7 +79,8 @@
       "step1": "• Glissez une tâche vers le calendrier",
       "step2": "• Les propriétés se transfèrent automatiquement",
       "step3": "• La durée définit la longueur de l'événement"
-    }
+    },
+    "alreadyScheduled": "✓ Déjà planifiée"
   },
   "recurrence": {
     "title": "Événements récurrents",

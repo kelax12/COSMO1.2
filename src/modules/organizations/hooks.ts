@@ -207,7 +207,7 @@ export const useRequestJoinOrganization = () => {
       queryClient.invalidateQueries({ queryKey: orgKeys.inbox() });
     },
     onError: (error: Error) => {
-      toast.error(`Impossible de rejoindre l'entreprise : ${error.message}`);
+      toast.error(translator('errors').t('mutation.joinOrg', { message: error.message }));
     },
   });
 };
@@ -223,7 +223,7 @@ export const useRespondJoinRequest = () => {
       queryClient.invalidateQueries({ queryKey: orgKeys.all });
     },
     onError: (error: Error) => {
-      toast.error(`Impossible de traiter la demande : ${error.message}`);
+      toast.error(translator('errors').t('mutation.handleJoinRequest', { message: error.message }));
     },
   });
 };
@@ -237,7 +237,7 @@ export const useCancelJoinRequest = () => {
       queryClient.invalidateQueries({ queryKey: orgKeys.inbox() });
     },
     onError: (error: Error) => {
-      toast.error(`Impossible d'annuler la demande : ${error.message}`);
+      toast.error(translator('errors').t('mutation.cancelJoinRequest', { message: error.message }));
     },
   });
 };
@@ -271,7 +271,7 @@ export const useRemoveMember = () => {
       queryClient.invalidateQueries({ queryKey: orgKeys.all });
     },
     onError: (error: Error) => {
-      toast.error(`Impossible de retirer le membre : ${error.message}`);
+      toast.error(translator('errors').t('mutation.removeMember', { message: error.message }));
     },
   });
 };
@@ -286,7 +286,7 @@ export const useLeaveOrganization = () => {
       queryClient.invalidateQueries({ queryKey: orgKeys.all });
     },
     onError: (error: Error) => {
-      toast.error(`Impossible de quitter l'entreprise : ${error.message}`);
+      toast.error(translator('errors').t('mutation.leaveOrg', { message: error.message }));
     },
   });
 };
@@ -301,7 +301,7 @@ export const useDeleteOrganization = () => {
       queryClient.invalidateQueries({ queryKey: orgKeys.all });
     },
     onError: (error: Error) => {
-      toast.error(`Impossible de supprimer l'entreprise : ${error.message}`);
+      toast.error(translator('errors').t('mutation.deleteOrg', { message: error.message }));
     },
   });
 };

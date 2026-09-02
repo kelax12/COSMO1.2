@@ -60,3 +60,6 @@ export {
   useTasksDueWithinDays,
   useTaskLookup,
 } from './hooks.derived';
+
+// Restauration d'un « Annuler » — fichier separe, cf. son en-tete.
+export { useRestoreTask } from './restore.hooks';

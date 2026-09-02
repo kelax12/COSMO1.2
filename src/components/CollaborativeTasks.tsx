@@ -179,7 +179,7 @@ const CollaborativeTasks: React.FC = () => {
                       <button
                         onClick={(e) => { e.stopPropagation(); setTaskToDelete(task.id); }}
                         className="p-1.5 rounded-lg hover:bg-red-500/10 transition-colors"
-                        title="Supprimer"
+                        title={t('collab.removeShare')}
                       >
                         <Trash2 size={15} className="text-[rgb(var(--color-text-muted))] hover:text-red-500 transition-colors" />
                       </button>

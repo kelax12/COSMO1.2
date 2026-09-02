@@ -1,4 +1,5 @@
 import { Skeleton } from '@/components/ui/skeleton';
+import { useT } from '@/i18n/useT';
 
 /**
  * Skeletons — placeholders affichés pendant le chargement initial des données.
@@ -20,8 +21,9 @@ export function TaskCardSkeleton() {
 }
 
 export function TaskListSkeleton({ count = 6 }: { count?: number }) {
+  const { t } = useT('common');
   return (
-    <div className="space-y-2" role="status" aria-label="Chargement des tâches">
+    <div className="space-y-2" role="status" aria-label={t('loadingLabel.tasks')}>
       {Array.from({ length: count }).map((_, i) => (
         <TaskCardSkeleton key={i} />
       ))}
@@ -50,8 +52,9 @@ export function HabitCardSkeleton() {
 }
 
 export function HabitListSkeleton({ count = 4 }: { count?: number }) {
+  const { t } = useT('common');
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-3" role="status" aria-label="Chargement des habitudes">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-3" role="status" aria-label={t('loadingLabel.habits')}>
       {Array.from({ length: count }).map((_, i) => (
         <HabitCardSkeleton key={i} />
       ))}
@@ -83,8 +86,9 @@ export function OKRCardSkeleton() {
 }
 
 export function OKRListSkeleton({ count = 4 }: { count?: number }) {
+  const { t } = useT('common');
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6" role="status" aria-label="Chargement des OKR">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6" role="status" aria-label={t('loadingLabel.okrs')}>
       {Array.from({ length: count }).map((_, i) => (
         <OKRCardSkeleton key={i} />
       ))}

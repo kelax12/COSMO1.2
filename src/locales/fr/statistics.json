@@ -65,5 +65,14 @@
     "less": "Moins",
     "more": "Plus",
     "title": "Calendrier de complétion"
+  },
+  "periodDescription": {
+    "day": "aujourd'hui",
+    "week": "7 derniers jours",
+    "month": "30 derniers jours",
+    "year": "365 derniers jours"
+  },
+  "overview": {
+    "showAll": "Tout"
   }
 }

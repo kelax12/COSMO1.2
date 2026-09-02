@@ -4,8 +4,10 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Keyboard, X } from 'lucide-react';
 import { ShortcutsList } from './keyboard-shortcuts';
+import { useT } from '@/i18n/useT';
 
 const ShortcutsHelp = () => {
+  const { t } = useT('common');
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
@@ -72,7 +74,7 @@ const ShortcutsHelp = () => {
               <ShortcutsList />
             </div>
             <p className="px-5 pb-4 text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
-              Les raccourcis sont inactifs pendant la saisie dans un champ.
+              {t('shortcuts.inactiveWhileTyping')}
             </p>
           </motion.div>
         </motion.div>

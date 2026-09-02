@@ -96,7 +96,7 @@ describe('nextOccurrenceDeadline (#26)', () => {
 
 describe('buildNextOccurrence (#26)', () => {
   it('construit une occurrence propre : non complétée, sous-tâches décochées', () => {
-    const next = buildNextOccurrence(baseTask, NOW);
+    const next = buildNextOccurrence(baseTask, NOW, manual(2));
     expect(next).not.toBeNull();
     expect(next!.completed).toBe(false);
     expect(deadlineDayKey(next!.deadline, manual(2))).toBe('2026-07-15');
@@ -106,13 +106,13 @@ describe('buildNextOccurrence (#26)', () => {
   });
 
   it('ne propage pas les champs collaboratifs', () => {
-    const next = buildNextOccurrence({ ...baseTask, isCollaborative: true, pendingInvites: ['a@b.c'] }, NOW);
+    const next = buildNextOccurrence({ ...baseTask, isCollaborative: true, pendingInvites: ['a@b.c'] }, NOW, manual(2));
     expect(next!.isCollaborative).toBeUndefined();
     expect(next!.pendingInvites).toBeUndefined();
   });
 
   it('tâche non récurrente : null', () => {
-    expect(buildNextOccurrence({ ...baseTask, recurrence: 'none' }, NOW)).toBeNull();
-    expect(buildNextOccurrence({ ...baseTask, recurrence: undefined }, NOW)).toBeNull();
+    expect(buildNextOccurrence({ ...baseTask, recurrence: 'none' }, NOW, manual(2))).toBeNull();
+    expect(buildNextOccurrence({ ...baseTask, recurrence: undefined }, NOW, manual(2))).toBeNull();
   });
 });

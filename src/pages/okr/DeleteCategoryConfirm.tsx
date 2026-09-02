@@ -10,7 +10,13 @@ interface DeleteCategoryConfirmProps {
   onConfirm: () => void;
 }
 
-// Dialog de confirmation de suppression d'une catégorie OKR.
+// Dialog de confirmation de suppression d'une categorie OKR d'EQUIPE.
+//
+// ⚠️ Ne PAS l'utiliser pour les categories personnelles : celles-ci passent par
+// `@/components/category/DeleteCategoryDialog`, qui annonce le nombre de taches
+// et d'objectifs concernes et propose de les reclasser (risque R-02). Les deux
+// ne visent pas la meme table : ici `org_okr_categories`, la-bas `categories`.
+// L'impact cote equipe n'a pas ete mesure, il reste a traiter.
 const DeleteCategoryConfirm: React.FC<DeleteCategoryConfirmProps> = ({ open, categoryName, onCancel, onConfirm }) => {
   const { t } = useT('okr');
   return (

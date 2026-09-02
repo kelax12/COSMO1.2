@@ -10,7 +10,6 @@ import { ShortcutsList } from '@/components/keyboard-shortcuts';
 import { useIsAdmin } from '@/modules/admin';
 import { useNavigate } from 'react-router';
 import { useAuth } from '@/modules/auth/AuthContext';
-import { mirrorAvatarToProfile } from '@/modules/user/profile.repository';
 import ThemeToggle from '@/components/ThemeToggle';
 import LocaleToggle from '@/components/LocaleToggle';
 import { SUPPORTED_LOCALES } from '@/i18n/locale';
@@ -18,9 +17,7 @@ import { useT } from '@/i18n/useT';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
-import { getCurrentUser } from '@/lib/auth-user';
 import { sanitizeEmail, isValidEmail } from '@/lib/email';
-import { validateAvatarFile, computeAvatarDimensions, canvasToAvatarBlob, uploadAvatar, removeAvatar } from '@/lib/avatar-upload';
 import { MIN_PASSWORD_LENGTH } from '@/lib/password-policy';
 import {
   AlertDialog,
@@ -43,6 +40,7 @@ import {
   SectionCard,
 } from './settings/primitives';
 import { DataTab } from './settings/DataTab';
+import { useAvatarActions } from './settings/useAvatarUpload';
 import OrganizationSettingsCard from '@/components/organization/OrganizationSettingsCard';
 import { PageHeading } from '@/components/ui/typography';
 import { MobileHeader } from '@/components/mobile';
@@ -71,6 +69,12 @@ const SettingsPage: React.FC = () => {
   const [deletingAccount, setDeletingAccount] = useState(false);
 
   useEffect(() => { window.scrollTo(0, 0); }, []);
+
+  const { handleAvatarUpload, removeAvatarEverywhere } = useAvatarActions({
+    isDemo,
+    updateDemoProfile,
+    t,
+  });
 
   const [confirmConfig, setConfirmConfig] = useState<{
     isOpen: boolean; title: string; description: string; onConfirm: () => void;
@@ -109,7 +113,7 @@ const SettingsPage: React.FC = () => {
     // changing, so the user gets an instant, explicit message instead of a
     // generic failure coming back from Supabase (error_code email_address_invalid).
     if (!isThirdParty && email !== user.email && !isValidEmail(email)) {
-      toast.error("Cette adresse email n'est pas valide.");
+      toast.error(t('profile.invalidEmail'));
       return;
     }
     setSavingProfile(true);
@@ -138,7 +142,7 @@ const SettingsPage: React.FC = () => {
         if (code === 'email_exists' || status === 422) {
           message = t('profile.emailTaken');
         } else if (code === 'email_address_invalid') {
-          message = "Cette adresse email n'est pas valide.";
+          message = t('profile.invalidEmail');
         } else if (code === 'over_email_send_rate_limit' || status === 429) {
           message = t('profile.tooManyAttempts');
         }
@@ -150,19 +154,19 @@ const SettingsPage: React.FC = () => {
       } else {
         toast.success(t('profile.updated'));
       }
-    } catch { toast.error('Une erreur inattendue est survenue'); }
+    } catch { toast.error(t('security.unexpectedError')); }
     finally { setSavingProfile(false); }
   };
 
   const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!passwords.current || !passwords.new || !passwords.confirm) { toast.error('Veuillez remplir tous les champs'); return; }
-    if (passwords.new !== passwords.confirm) { toast.error('Les nouveaux mots de passe ne correspondent pas'); return; }
+    if (!passwords.current || !passwords.new || !passwords.confirm) { toast.error(t('security.fillAllFields')); return; }
+    if (passwords.new !== passwords.confirm) { toast.error(t('security.passwordsDiffer')); return; }
     if (passwords.new.length < MIN_PASSWORD_LENGTH) { toast.error(t('security.tooShort', { count: MIN_PASSWORD_LENGTH })); return; }
     if (passwords.current === passwords.new) { toast.error(t('security.mustDiffer')); return; }
     setSavingPassword(true);
     try {
-      if (!supabase) { toast.error('Service non disponible'); return; }
+      if (!supabase) { toast.error(t('security.serviceUnavailable')); return; }
       if (isDemo) { toast.info(t('security.demoDisabled')); return; }
       // Verify the current password before rotating. supabase.auth.updateUser
       // does NOT enforce knowledge of the current password — without this step
@@ -172,7 +176,7 @@ const SettingsPage: React.FC = () => {
         password: passwords.current,
       });
       if (reauthError) {
-        toast.error('Mot de passe actuel incorrect');
+        toast.error(t('security.wrongCurrentPassword'));
         return;
       }
       const { error } = await supabase.auth.updateUser({ password: passwords.new });
@@ -185,7 +189,7 @@ const SettingsPage: React.FC = () => {
       if (revokeError) console.error('[SettingsPage] revoke other sessions:', revokeError);
       toast.success(t('security.updated'));
       setPasswords({ current: '', new: '', confirm: '' });
-    } catch { toast.error('Une erreur inattendue est survenue'); }
+    } catch { toast.error(t('security.unexpectedError')); }
     finally { setSavingPassword(false); }
   };
 
@@ -229,99 +233,14 @@ const SettingsPage: React.FC = () => {
     setConfirmInput('');
   };
 
-  const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // Validation extraite dans lib/avatar-upload.ts (pur, testé — faille V5).
-    const verdict = validateAvatarFile(file);
-    if (!verdict.ok) {
-      if (verdict.reason === 'type') {
-        toast.error(t('profile.unsupportedFormat'), { description: t('profile.unsupportedFormatHint') });
-      } else {
-        toast.error('Image trop grande', { description: 'Taille maximale : 500 Ko.' });
-      }
-      e.target.value = '';
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const result = typeof reader.result === 'string' ? reader.result : '';
-      if (!result.startsWith('data:image/')) {
-        toast.error('Fichier invalide');
-        return;
-      }
-      const img = new Image();
-      img.onload = async () => {
-        const dims = computeAvatarDimensions(img.width, img.height);
-        const canvas = document.createElement('canvas');
-        canvas.width = dims.width;
-        canvas.height = dims.height;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) { toast.error(t('profile.photoUpdateFailed')); return; }
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-        // Persist avatar to the same source the UI reads from. In demo mode
-        // that's localStorage via useUpdateUserSettings; in prod that's le
-        // bucket Storage `avatars`. L'ancien chemin écrivait toujours dans
-        // localStorage, que `useAuth` ne lit jamais → perte silencieuse au
-        // rechargement. Faille B7.
-        if (isDemo) {
-          // La démo n'a pas de backend : la data URL reste locale et ne part
-          // dans aucun JWT — le problème AUD-04 ne s'y pose pas.
-          updateDemoProfile({ avatar: canvas.toDataURL('image/jpeg', 0.85) });
-        } else {
-          // AUD-04 — on n'écrit PLUS la data URL dans user_metadata (elle
-          // finissait dans le JWT de chaque requête). On uploade dans Storage
-          // et on ne persiste que l'URL publique, courte et sur un hôte
-          // autorisé par l'allowlist serveur d'AUD-03 (mig. 084).
-          const blob = await canvasToAvatarBlob(canvas);
-          if (!blob) { toast.error(t('profile.photoUpdateFailed')); return; }
-          const authUser = await getCurrentUser();
-          if (!authUser) { toast.error(t('profile.photoUpdateFailed')); return; }
-
-          const publicUrl = await uploadAvatar(supabase, authUser.id, blob);
-          if (!publicUrl) { toast.error(t('profile.photoUpdateFailed')); return; }
-
-          const { error } = await supabase.auth.updateUser({ data: { avatar_url: publicUrl } });
-          if (error) { toast.error(t('profile.photoUpdateFailed')); return; }
-          // Écriture-miroir dans `profiles` pour que les AUTRES utilisateurs
-          // voient la nouvelle photo (`auth.user_metadata` est privé). Passe
-          // par le repository : aucune page n'appelle `supabase.from()` en
-          // direct (docs/ARCHITECTURE.md §2).
-          await mirrorAvatarToProfile(authUser.id, publicUrl);
-        }
-        toast.success(t('profile.photoUpdated'));
-      };
-      img.onerror = () => toast.error('Image illisible');
-      img.src = result;
-    };
-    reader.readAsDataURL(file);
-  };
-
   const handleRemoveAvatar = () => {
     setConfirmConfig({
       isOpen: true, title: t('profile.deletePhotoTitle'),
       description: t('profile.deletePhotoBody'),
       variant: 'destructive',
       onConfirm: async () => {
-        if (isDemo) {
-          updateDemoProfile({ avatar: undefined });
-        } else {
-          const { error } = await supabase.auth.updateUser({ data: { avatar_url: null } });
-          if (error) { toast.error(t('profile.photoDeleteFailed')); return; }
-          // Idem au retrait : les amis doivent voir la suppression tout de suite.
-          const authUser = await getCurrentUser();
-          if (authUser) {
-            await mirrorAvatarToProfile(authUser.id, null);
-            // Le FICHIER doit partir avec la référence. Le bucket étant public,
-            // s'arrêter à `avatar_url = null` laissait la photo accessible sans
-            // authentification à une URL stable (risque R-03, RGPD art. 17).
-            await removeAvatar(supabase, authUser.id);
-          }
-        }
-        toast.success(t('profile.photoDeleted'));
+        // Le FICHIER part avec la référence (R-03) : cf. `useAvatarActions`.
+        if (await removeAvatarEverywhere()) toast.success(t('profile.photoDeleted'));
       },
     });
   };
@@ -469,7 +388,7 @@ const SettingsPage: React.FC = () => {
                         en violation `button-name` d'impact CRITICAL (WCAG 4.1.2)
                         et le guard a11y CI casse. */}
                     <button onClick={() => fileInputRef.current?.click()}
-                      aria-label="Changer la photo de profil"
+                      aria-label={t('profile.changePhotoAria')}
                       className="absolute inset-0 rounded-2xl bg-black/45 opacity-0 group-hover/av:opacity-100 transition-opacity flex items-center justify-center">
                       <Camera size={18} className="text-white" aria-hidden="true" />
                     </button>
@@ -480,12 +399,12 @@ const SettingsPage: React.FC = () => {
                     <div className="flex flex-wrap justify-center sm:justify-start gap-2 mt-3">
                       <button onClick={() => fileInputRef.current?.click()}
                         className="inline-flex items-center gap-1.5 px-4 min-h-touch sm:min-h-[36px] border border-[rgb(var(--color-border))] rounded-lg text-xs font-semibold text-[rgb(var(--color-text-secondary))] hover:border-[rgb(var(--color-accent))] hover:text-[rgb(var(--color-accent))] transition-all duration-150">
-                        <Camera size={12} /> Changer la photo
+                        <Camera size={12} /> {t('profile.changePhoto')}
                       </button>
                       {user.avatar && (
                         <button onClick={handleRemoveAvatar}
                           className="inline-flex items-center gap-1.5 px-4 min-h-touch sm:min-h-[36px] border border-red-200 rounded-lg text-xs font-semibold text-red-500 hover:bg-red-500 hover:border-red-500 hover:text-white transition-all duration-150">
-                          Supprimer
+                          {tCommon('actions.delete')}
                         </button>
                       )}
                     </div>
@@ -495,7 +414,7 @@ const SettingsPage: React.FC = () => {
               <SectionCard>
                 <h2 className="text-base font-bold text-[rgb(var(--color-text-primary))] mb-5">{t('profile.heading')}</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <LabeledInput label="Nom complet" icon={User} value={profileDraft.name} onChange={(e) => setProfileDraft(p => ({ ...p, name: e.target.value }))} placeholder="Votre nom" />
+                  <LabeledInput label={t('profile.fullName')} icon={User} value={profileDraft.name} onChange={(e) => setProfileDraft(p => ({ ...p, name: e.target.value }))} placeholder={t('profile.yourNamePlaceholder')} />
                   <LabeledInput label={t('profile.emailLabel')} type="email" icon={Mail} value={profileDraft.email} onChange={(e) => setProfileDraft(p => ({ ...p, email: e.target.value }))} placeholder={t('profile.emailPlaceholder')} disabled={isThirdParty} hint={isThirdParty ? t('profile.emailManaged') : undefined} />
                 </div>
                 <div className="flex justify-end mt-5">
@@ -643,7 +562,7 @@ const SettingsPage: React.FC = () => {
                 <form onSubmit={handleUpdatePassword} className="flex flex-col gap-4">
                   <LabeledInput label="Mot de passe actuel" showToggle value={passwords.current} onChange={(e) => setPasswords(p => ({ ...p, current: e.target.value }))} placeholder="••••••••••••" />
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <LabeledInput label="Nouveau mot de passe" showToggle value={passwords.new} onChange={(e) => setPasswords(p => ({ ...p, new: e.target.value }))} placeholder="••••••••••••" />
+                    <LabeledInput label={t('security.newPasswordLabel')} showToggle value={passwords.new} onChange={(e) => setPasswords(p => ({ ...p, new: e.target.value }))} placeholder="••••••••••••" />
                     <LabeledInput label="Confirmer" showToggle value={passwords.confirm} onChange={(e) => setPasswords(p => ({ ...p, confirm: e.target.value }))} placeholder="••••••••••••" />
                   </div>
                   <div className="flex justify-end pt-1">
@@ -659,7 +578,7 @@ const SettingsPage: React.FC = () => {
                   </div>
                   <button onClick={handleDeleteAccount} style={{ minHeight: '44px' }}
                     className="shrink-0 inline-flex items-center justify-center px-5 py-2.5 bg-red-500 text-white rounded-xl text-sm font-semibold hover:bg-red-600 active:scale-[0.97] transition-all duration-150">
-                    Supprimer le compte
+                    {t('security.deleteAccount')}
                   </button>
                 </div>
               </div>
@@ -754,7 +673,7 @@ const SettingsPage: React.FC = () => {
                   style={{ minHeight: '48px' }}
                   className="inline-flex items-center justify-center gap-2 w-full px-6 py-3 bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))] rounded-xl text-sm font-semibold active:scale-[0.97] transition-all duration-150"
                 >
-                  Ouvrir le guide <ChevronRight size={15} />
+                  {t('help.openGuide')} <ChevronRight size={15} />
                 </button>
               </div>
 
@@ -771,7 +690,7 @@ const SettingsPage: React.FC = () => {
                 </div>
                 <button onClick={handleOpenSupport}
                   className="inline-flex items-center justify-center gap-1.5 px-4 min-h-touch sm:min-h-[40px] rounded-xl text-xs font-semibold border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] active:scale-[0.97] transition-all duration-150 shrink-0">
-                  Contacter le support <ChevronRight size={12} />
+                  {t('help.contactSupport')} <ChevronRight size={12} />
                 </button>
               </div>
 
@@ -790,7 +709,7 @@ const SettingsPage: React.FC = () => {
                   </div>
                   <button onClick={() => navigate('/admin')}
                     className="inline-flex items-center justify-center gap-1.5 px-4 min-h-touch sm:min-h-[40px] rounded-xl text-xs font-semibold border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] active:scale-[0.97] transition-all duration-150 shrink-0">
-                    Ouvrir le dashboard <ChevronRight size={12} />
+                    {t('help.openDashboard')} <ChevronRight size={12} />
                   </button>
                 </div>
               )}

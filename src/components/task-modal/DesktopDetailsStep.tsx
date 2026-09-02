@@ -75,6 +75,7 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
   showDescription, setShowDescription,
 }) => {
   const { t } = useT('taskModal');
+  const { t: tCommon } = useT('common');
   // Formulaire minimal (#2) : replié en création, toujours déplié en édition.
   const [showAllFields, setShowAllFields] = useState(!isCreating);
 
@@ -100,7 +101,7 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                   {/* Task Name */}
                   <div ref={dRegister('name')}>
                     <label htmlFor="task-name" className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-                      Nom de la tâche *
+                      {t('form.nameRequired')}
                     </label>
                     <input
                       id="task-name"
@@ -320,7 +321,7 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                             onClick={() => {
                               const name = newCategoryName.trim();
                               if (name.length < 2) {
-                                toast.error('Le nom de la catégorie doit contenir au moins 2 caractères');
+                                toast.error(t('form.categoryNameTooShort'));
                                 return;
                               }
                               createCategoryMutation.mutate(
@@ -510,7 +511,7 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                       onClick={() => setShowDescription(true)}
                       className="text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded px-1 -mx-1"
                     >
-                      + Ajouter une description
+                      {t('form.addDescription')}
                     </button>
                   )}
 
@@ -519,7 +520,7 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                       <button
                         type="button"
                         onClick={() => handleInputChange('bookmarked', !formData.bookmarked)}
-                        aria-label={formData.bookmarked ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+                        aria-label={formData.bookmarked ? t('form.bookmarkRemove') : t('form.bookmarkAdd')}
                         className={`p-2.5 rounded-lg border transition-all ${
                           formData.bookmarked
                             ? 'bg-yellow-500/15 border-yellow-500/40'
@@ -608,7 +609,7 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                             }}
                             className="w-6 h-6 rounded-full border-2 border-white dark:border-slate-700 shadow-sm shrink-0 transition-transform hover:scale-110"
                             style={{ backgroundColor: listColorOptions.find(c => c.value === newListColor)?.color || '#3B82F6' }}
-                            title="Changer la couleur"
+                            title={tCommon('actions.changeColor')}
                           />
                           <input
                             type="text"

@@ -69,5 +69,29 @@
     "namePlaceholder": "Enter the task name",
     "minuteEstimate": "Estimate in minutes",
     "listNamePlaceholder": "List name..."
+  },
+  "delete": {
+    "titleOwner": "Delete this task",
+    "titleShared": "Leave this shared task",
+    "workingOwner": "Deleting…",
+    "workingShared": "Leaving…",
+    "confirmOwner": "Delete",
+    "confirmShared": "Leave"
+  },
+  "form": {
+    "nameRequired": "Task name *",
+    "namePlaceholder": "Task name",
+    "descriptionPlaceholder": "Task description",
+    "addDescription": "+ Add a description",
+    "clearDate": "Clear the date",
+    "bookmarkAdd": "Add to bookmarks",
+    "bookmarkRemove": "Remove from bookmarks",
+    "categoryNameTooShort": "A category name needs at least 2 characters",
+    "headingShare": "Share this task",
+    "headingCreate": "New task",
+    "headingEdit": "Edit this task",
+    "headingEditShort": "Edit",
+    "deleteTask": "Delete this task",
+    "collaboratorPlaceholder": "Email or name…"
   }
 }

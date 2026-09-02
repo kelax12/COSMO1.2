@@ -33,7 +33,20 @@ import { createClient } from 'npm:@supabase/supabase-js@2'
 import { opsAlert } from '../_shared/alert.ts'
 
 const APP_URL = Deno.env.get('APP_URL') ?? 'https://thecosmo.app'
-const MAIL_FROM = Deno.env.get('BUG_REPORT_FROM') ?? 'Cosmo <bug@thecosmo.app>'
+/**
+ * Expéditeur des avis L215-1.
+ *
+ * ⚠️ AUCUNE VALEUR PAR DÉFAUT (audit Stripe 2026-09-02). Elle valait
+ * `Cosmo <bug@thecosmo.app>`, or le domaine vérifié chez Resend est
+ * `send.thecosmo.app` : la racine porte les MX et le SPF d'IONOS et ne sera
+ * jamais signée. Ce défaut ne dégradait donc pas l'envoi, il le rendait
+ * IMPOSSIBLE — et en silence, sur la fonction qui porte une obligation légale
+ * dont l'oubli rend l'abonnement résiliable à tout moment.
+ *
+ * `docs/DEPLOYMENT.md` §2ter le disait déjà ; le code, lui, offrait la valeur
+ * qui échoue. Sans le secret, la fonction refuse de tourner et le dit.
+ */
+const MAIL_FROM = Deno.env.get('BUG_REPORT_FROM')
 
 /**
  * Secret partagé avec la CI. La fonction est déployée en `verify_jwt = false`
@@ -106,6 +119,14 @@ Deno.serve(async (req) => {
   if (req.headers.get('x-cron-secret') !== CRON_SECRET) {
     return new Response(JSON.stringify({ error: 'unauthorized' }), {
       status: 401,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
+
+  if (!MAIL_FROM) {
+    await opsAlert('renewal-notice', 'BUG_REPORT_FROM absent — aucun avis L215-1 ne peut partir (le domaine par defaut n est pas signe par Resend)')
+    return new Response(JSON.stringify({ error: 'sender_not_configured' }), {
+      status: 503,
       headers: { 'Content-Type': 'application/json' },
     })
   }

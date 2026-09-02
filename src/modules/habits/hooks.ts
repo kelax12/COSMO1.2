@@ -94,7 +94,7 @@ export const useUpdateHabit = () => {
       if (context?.previousHabits) {
         queryClient.setQueryData(habitKeys.lists(), context.previousHabits);
       }
-      toast.error(`Impossible de modifier l'habitude : ${error.message}`);
+      toast.error(translator('errors').t('mutation.updateHabit2', { message: error.message }));
     },
   });
 };
@@ -131,7 +131,7 @@ export const useDeleteHabit = () => {
       if (context?.previousHabits) {
         queryClient.setQueryData(habitKeys.lists(), context.previousHabits);
       }
-      toast.error(`Impossible de supprimer l'habitude : ${error.message}`);
+      toast.error(translator('errors').t('mutation.deleteHabit', { message: error.message }));
     },
   });
 };

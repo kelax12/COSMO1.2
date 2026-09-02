@@ -65,5 +65,14 @@
     "less": "Less",
     "more": "More",
     "title": "Completion calendar"
+  },
+  "periodDescription": {
+    "day": "today",
+    "week": "the last 7 days",
+    "month": "the last 30 days",
+    "year": "the last 365 days"
+  },
+  "overview": {
+    "showAll": "All"
   }
 }

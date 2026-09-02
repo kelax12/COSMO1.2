@@ -12,6 +12,7 @@ import type { Task } from '@/modules/tasks';
 import { useFriends, useShareList, type TaskSnapshot } from '@/modules/friends';
 import { collabIdOf, filterFriendsForCollab } from './task-modal/collaborators';
 import { isImageAvatar, isEmojiAvatar } from '@/lib/avatar';
+import { useT } from '@/i18n/useT';
 
 interface ShareListSheetProps {
   /** Liste à partager (null = fermé). */
@@ -22,6 +23,7 @@ interface ShareListSheetProps {
 }
 
 const ShareListSheet: React.FC<ShareListSheetProps> = ({ list, tasks, onClose }) => {
+  const { t } = useT('tasks');
   const { data: friends = [] } = useFriends();
   const shareListMutation = useShareList();
   const [search, setSearch] = useState('');
@@ -121,7 +123,7 @@ const ShareListSheet: React.FC<ShareListSheetProps> = ({ list, tasks, onClose })
                   type="text"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Rechercher un ami…"
+                  placeholder={t('shareList.searchFriend')}
                   className="w-full bg-[rgb(var(--color-background))] border border-[rgb(var(--color-border))] rounded-xl pl-9 pr-4 py-2 text-sm text-[rgb(var(--color-text-primary))] placeholder:text-[rgb(var(--color-text-muted))] focus:outline-none focus:border-teal-500 transition-all"
                 />
               </div>

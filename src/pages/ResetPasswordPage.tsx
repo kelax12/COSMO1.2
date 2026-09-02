@@ -97,7 +97,7 @@ const ResetPasswordPage = () => {
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold text-[rgb(var(--color-text-primary))] mb-2">{t('auth.resetTitle')}</h1>
           <p className="text-sm text-[rgb(var(--color-text-secondary))]">
-            Choisissez le nouveau mot de passe de votre compte.
+            {t('auth.resetIntro')}
           </p>
         </div>
 
@@ -107,7 +107,7 @@ const ResetPasswordPage = () => {
             <span>
               Ce lien est invalide ou a expiré.{' '}
               <Link to="/forgot-password" className="underline underline-offset-2 font-semibold">
-                Refaire une demande
+                {t('auth.requestAgain')}
               </Link>
             </span>
           </div>
@@ -145,7 +145,7 @@ const ResetPasswordPage = () => {
 
           <div>
             <label htmlFor="reset-confirm" className="block text-xs font-medium text-[rgb(var(--color-text-secondary))] mb-1.5">
-              Confirmer le mot de passe
+              {t('auth.confirmPassword')}
             </label>
             <div className="relative">
               <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[rgb(var(--color-text-muted))] pointer-events-none" aria-hidden="true" />

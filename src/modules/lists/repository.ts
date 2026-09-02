@@ -5,6 +5,7 @@
 import { TaskList, CreateListInput, UpdateListInput } from './types';
 import { LISTS_STORAGE_KEY } from './constants';
 import { localizeSeed } from '@/lib/seed-i18n';
+import type { CreateOptions } from '@/lib/restore-id';
 
 // ═══════════════════════════════════════════════════════════════════
 // DEMO DATA
@@ -76,7 +77,7 @@ export interface IListsRepository {
   getByTaskId(taskId: string): Promise<TaskList[]>;
 
   // Write operations
-  create(input: CreateListInput): Promise<TaskList>;
+  create(input: CreateListInput, options?: CreateOptions): Promise<TaskList>;
   update(id: string, updates: UpdateListInput): Promise<TaskList>;
   delete(id: string): Promise<void>;
 
@@ -140,7 +141,7 @@ export class LocalStorageListsRepository implements IListsRepository {
   // WRITE OPERATIONS
   // ═══════════════════════════════════════════════════════════════════
 
-  async create(input: CreateListInput): Promise<TaskList> {
+  async create(input: CreateListInput, options?: CreateOptions): Promise<TaskList> {
     const lists = this.getLists();
 
     // Backfill (#XX) : les listes jamais réordonnées manuellement n'ont pas
@@ -164,7 +165,9 @@ export class LocalStorageListsRepository implements IListsRepository {
 
     const newList: TaskList = {
       ...input,
-      id: crypto.randomUUID(),
+      // Parite avec le repository Supabase : `restoreId` vient d'un
+      // « Annuler », jamais d'un formulaire (R-08).
+      id: options?.restoreId ?? crypto.randomUUID(),
       taskIds: [],
       position: input.position ?? nextPosition,
     };

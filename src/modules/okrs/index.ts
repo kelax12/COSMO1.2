@@ -57,6 +57,7 @@ export {
   useCreateOkr,
   useUpdateOkr,
   useDeleteOkr,
+  useRestoreOkr,
   useUpdateKeyResult,
 } from './hooks';
 

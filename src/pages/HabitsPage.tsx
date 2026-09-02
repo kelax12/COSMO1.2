@@ -45,6 +45,7 @@ type ViewMode = 'list' | 'table' | 'global';
 
 const HabitsPage: React.FC = () => {
   const { t } = useT('habits');
+  const { t: tCommon } = useT('common');
   const isMobile = useIsMobile();
   const tutorial = useTutorial(isMobile ? 'habits_mobile' : 'habits_desktop');
   const tutorialSteps = isMobile ? habitsTutorialStepsMobile : habitsTutorialStepsDesktop;
@@ -108,7 +109,7 @@ const HabitsPage: React.FC = () => {
           onClick={() => refetch()}
           className="px-5 py-2.5 rounded-xl bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))] font-semibold text-sm"
         >
-          Réessayer
+          {tCommon('pageError.retry')}
         </button>
       </div>
     );
@@ -129,7 +130,7 @@ const HabitsPage: React.FC = () => {
         subtitle={
           habits.length > 0
             ? `Progression : ${getTodayCompletionRate()}% (${habits.filter(h => h.completions[new Date().toLocaleDateString('en-CA')]).length}/${habits.length})`
-            : 'Développez de bonnes habitudes au quotidien'
+            : t('page.subtitle')
         }
       />
 
@@ -139,7 +140,7 @@ const HabitsPage: React.FC = () => {
             Habitudes
           </PageHeading>
           <p className="text-sm md:text-base" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-            Développez de bonnes habitudes au quotidien
+            {t('page.subtitle')}
           </p>
           {habits.length > 0 && (
             <div className="mt-2 text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>
@@ -229,10 +230,10 @@ const HabitsPage: React.FC = () => {
                 className="text-lg md:text-xl font-semibold mb-2"
                 style={{ color: 'rgb(var(--color-text-primary))' }}
               >
-                Aucune habitude
+                {t('page.emptyTitle')}
               </h3>
               <p className="mb-6 text-sm md:text-base" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-                Commencez par créer votre première habitude
+                {t('page.emptyBody')}
               </p>
               <Button
                 variant="default"
@@ -240,7 +241,7 @@ const HabitsPage: React.FC = () => {
                 onClick={() => setShowModal(true)}
                 className="mx-auto flex items-center justify-center gap-2 px-10 py-3 text-base bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] "
               >
-                Créer une habitude
+                {t('page.emptyCta')}
               </Button>
             </div>
           )}
@@ -260,10 +261,10 @@ const HabitsPage: React.FC = () => {
               className="text-lg font-semibold mb-2"
               style={{ color: 'rgb(var(--color-text-primary))' }}
             >
-              Aucune habitude
+              {t('page.emptyTitle')}
             </h3>
             <p className="mb-6 text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-              Commencez par créer votre première habitude
+              {t('page.emptyBody')}
             </p>
             <Button
               variant="default"
@@ -271,7 +272,7 @@ const HabitsPage: React.FC = () => {
               onClick={() => setShowModal(true)}
               className="mx-auto flex items-center justify-center gap-2 px-10 py-3 text-base bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] "
             >
-              Créer une habitude
+              {t('page.emptyCta')}
             </Button>
           </div>
         ) : <HabitTable />
@@ -289,10 +290,10 @@ const HabitsPage: React.FC = () => {
               className="text-lg font-semibold mb-2"
               style={{ color: 'rgb(var(--color-text-primary))' }}
             >
-              Aucune habitude
+              {t('page.emptyTitle')}
             </h3>
             <p className="mb-6 text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-              Commencez par créer votre première habitude
+              {t('page.emptyBody')}
             </p>
             <Button
               variant="default"
@@ -300,7 +301,7 @@ const HabitsPage: React.FC = () => {
               onClick={() => setShowModal(true)}
               className="mx-auto flex items-center justify-center gap-2 px-10 py-3 text-base bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] "
             >
-              Créer une habitude
+              {t('page.emptyCta')}
             </Button>
           </div>
         ) : <HabitGlobalTracking />

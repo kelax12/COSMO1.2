@@ -10,9 +10,13 @@ import {
   type CookieConsent,
 } from '@/lib/cookie-consent';
 import { mountAudienceScript } from '@/lib/audience';
+import { useLocalizedPath } from '@/i18n/useLocalizedPath';
 
 const CookieBanner: React.FC = () => {
   const { t } = useT('common');
+  // Slugs localisés : un `to=` en dur rend une 404 hors du français (voir
+  // `useLocalizedPath`). C'est le seul chemin vers les pages contractuelles.
+  const localizedPath = useLocalizedPath();
   const [consent, setConsent] = useState<CookieConsent>(null);
   const [visible, setVisible] = useState(false);
   const entrance = useSlideUpEntrance();
@@ -120,7 +124,7 @@ const CookieBanner: React.FC = () => {
                 {/* A11y: links inside text blocks need a non-color affordance
                     (WCAG 1.4.1). underline is always on, not only :hover. */}
                 <Link
-                  to="/politique-confidentialite"
+                  to={localizedPath('privacy')}
                   className="text-blue-700 dark:text-blue-300 underline underline-offset-2"
                   onClick={handleRefuse}
                 >

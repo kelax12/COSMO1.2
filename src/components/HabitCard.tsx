@@ -181,7 +181,7 @@ const HabitCard: React.FC<HabitCardProps> = React.memo(({ habit }) => {
         {showDetails && (
           <div className="border-t border-[rgb(var(--color-border))] pt-4 mt-2">
             <h4 className="text-sm md:text-base font-semibold text-slate-900 dark:text-slate-100 mb-3">
-              Suivi détaillé (30 jours)
+              {t('card.detailedTracking')}
             </h4>
             <div className="grid grid-cols-6 sm:grid-cols-10 gap-2">
               {detailedDays.map((day) => (

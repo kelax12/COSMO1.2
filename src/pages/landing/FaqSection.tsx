@@ -49,10 +49,10 @@ const FaqSection: React.FC = () => {
               viewport={{ once: true }}
               className="text-3xl lg:text-4xl font-bold text-white mb-4"
             >
-              Tout ce que vous voulez savoir
+              {t('faq.headingLine1')}
               <br />
               <span className="bg-gradient-to-r from-[rgb(var(--color-accent-solid))] to-purple-400 bg-clip-text text-transparent">
-                sur Cosmo
+                {t('faq.headingLine2')}
               </span>
             </motion.h2>
             <motion.p

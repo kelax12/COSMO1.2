@@ -73,14 +73,14 @@ const RemoveFriendConfirm: React.FC<RemoveFriendConfirmProps> = ({
           paddingBottom: 'env(safe-area-inset-bottom)',
         }}
         role="alertdialog"
-        aria-label="Confirmer la suppression de l'ami"
+        aria-label={t('removeFriend.ariaConfirm')}
       >
         <div className="sm:hidden flex justify-center pt-3 pb-2">
           <div className="w-10 h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
         </div>
         <div className="p-5 sm:p-6">
           <h3 className="text-lg sm:text-xl font-bold mb-2 sm:mb-3" style={{ color: 'rgb(var(--color-text-primary))' }}>
-            Retirer cet ami
+            {t('removeFriend.title')}
           </h3>
           <p className="text-sm leading-relaxed mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
             {t('removeFriend.confirm')}{' '}
@@ -114,13 +114,13 @@ const RemoveFriendConfirm: React.FC<RemoveFriendConfirmProps> = ({
                 color: 'rgb(var(--color-text-primary))',
               }}
             >
-              Annuler
+              {t('actions.cancel')}
             </button>
             <button
               onClick={onConfirm}
               className="flex-1 min-h-11 px-4 py-2.5 rounded-lg text-sm font-semibold text-white bg-red-600 hover:bg-red-700 transition-all"
             >
-              Retirer
+              {t('actions.remove')}
             </button>
           </div>
         </div>

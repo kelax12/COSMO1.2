@@ -114,6 +114,7 @@ const TaskModalDesktopBody: React.FC<DesktopBodyProps> = ({
   sentRequests, pendingInvitesLocal, friends, cancelFriendRequestMutation,
 }) => {
   const { t } = useT('taskModal');
+  const { t: tCommon } = useT('common');
   // Enregistrement principal (bouton + touche Entrée dans un champ) : les
   // boutons vivent hors du <form> (footer sticky), donc on partage cette
   // logique entre onSubmit du form et onClick du bouton pour préserver la
@@ -146,7 +147,7 @@ const TaskModalDesktopBody: React.FC<DesktopBodyProps> = ({
           >
             <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
               <h2 className="text-base sm:text-lg font-semibold truncate" style={{ color: 'rgb(var(--color-text-primary))' }}>
-                {collaboratorsOnly ? 'Partager la tâche' : isCreating ? 'Nouvelle tâche' : 'Modifier la tâche'}
+                {collaboratorsOnly ? t('form.headingShare') : isCreating ? t('form.headingCreate') : t('form.headingEdit')}
               </h2>
               {hasChanges && !collaboratorsOnly &&
                 <div className="hidden xs:flex items-center gap-1 text-orange-500 text-xs font-medium bg-orange-500/10 px-2 py-1 rounded-md shrink-0">
@@ -304,7 +305,7 @@ const TaskModalDesktopBody: React.FC<DesktopBodyProps> = ({
                 disabled={isLoading}
                 className="min-h-11 w-full sm:w-auto text-red-500 hover:text-red-600 hover:bg-red-500/10"
               >
-                <Trash2 size={16} data-icon="inline-start" /> Supprimer
+                <Trash2 size={16} data-icon="inline-start" /> {tCommon('actions.delete')}
               </Button>
             ) : <span className="hidden sm:block" />}
             <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
@@ -318,7 +319,7 @@ const TaskModalDesktopBody: React.FC<DesktopBodyProps> = ({
                 ) : (
                   <>
                     <Button type="button" variant="outline" size="lg" onClick={handleClose} disabled={isLoading} className="min-h-11 w-full sm:w-auto">
-                      Annuler
+                      {tCommon('actions.cancel')}
                     </Button>
                     <Button
                       type="button"
@@ -345,7 +346,7 @@ const TaskModalDesktopBody: React.FC<DesktopBodyProps> = ({
               ) : (
                 <>
               <Button type="button" variant="outline" size="lg" onClick={handleClose} disabled={isLoading} className="min-h-11 w-full sm:w-auto">
-                Annuler
+                {tCommon('actions.cancel')}
               </Button>
               <Button
                 type="button"

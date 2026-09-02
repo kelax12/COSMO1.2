@@ -49,7 +49,7 @@ const ClaimOrgInvitePage = () => {
             <Building2 size={26} className="text-indigo-500" aria-hidden="true" />
           </div>
           <h1 className="text-2xl font-bold text-[rgb(var(--color-text-primary))]">
-            Invitation d'entreprise
+            {t('claim.heading')}
           </h1>
         </div>
 

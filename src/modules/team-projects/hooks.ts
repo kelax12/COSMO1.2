@@ -123,7 +123,7 @@ export const useUpdateTeamProject = (orgId: string) => {
       else if (input.archived === false) toast.success(translator('errors').t('success.projectRestored'));
       queryClient.invalidateQueries({ queryKey: teamProjectKeys.projects(orgId) });
     },
-    onError: (error: Error) => toast.error(`Impossible de modifier le projet : ${error.message}`),
+    onError: (error: Error) => toast.error(translator('errors').t('mutation.updateProject', { message: error.message })),
   });
 };
 
@@ -137,7 +137,7 @@ export const useArchiveTeamProject = (orgId: string) => {
       queryClient.invalidateQueries({ queryKey: teamProjectKeys.projects(orgId) });
       queryClient.invalidateQueries({ queryKey: teamProjectKeys.tasks(orgId) });
     },
-    onError: (error: Error) => toast.error(`Impossible d'archiver le projet : ${error.message}`),
+    onError: (error: Error) => toast.error(translator('errors').t('mutation.archiveProject', { message: error.message })),
   });
 };
 
@@ -179,7 +179,7 @@ export const useDeleteTeamTask = (orgId: string) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: teamProjectKeys.tasks(orgId) });
     },
-    onError: (error: Error) => toast.error(`Impossible de supprimer la tâche : ${error.message}`),
+    onError: (error: Error) => toast.error(translator('errors').t('mutation.deleteTask', { message: error.message })),
   });
 };
 
@@ -205,7 +205,7 @@ export const useAddTeamTaskComment = (taskId: string) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: teamProjectKeys.comments(taskId) });
     },
-    onError: (error: Error) => toast.error(`Impossible d'ajouter le commentaire : ${error.message}`),
+    onError: (error: Error) => toast.error(translator('errors').t('mutation.addComment', { message: error.message })),
   });
 };
 
@@ -217,7 +217,7 @@ export const useDeleteTeamTaskComment = (taskId: string) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: teamProjectKeys.comments(taskId) });
     },
-    onError: (error: Error) => toast.error(`Impossible de supprimer le commentaire : ${error.message}`),
+    onError: (error: Error) => toast.error(translator('errors').t('mutation.deleteComment', { message: error.message })),
   });
 };
 
@@ -247,7 +247,7 @@ export const useCreateTeamSubtask = (taskId: string) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: teamProjectKeys.subtasks(taskId) });
     },
-    onError: (error: Error) => toast.error(`Impossible d'ajouter la sous-tâche : ${error.message}`),
+    onError: (error: Error) => toast.error(translator('errors').t('mutation.addSubtask', { message: error.message })),
   });
 };
 
@@ -260,7 +260,7 @@ export const useUpdateTeamSubtask = (taskId: string) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: teamProjectKeys.subtasks(taskId) });
     },
-    onError: (error: Error) => toast.error(`Impossible de modifier la sous-tâche : ${error.message}`),
+    onError: (error: Error) => toast.error(translator('errors').t('mutation.updateSubtask', { message: error.message })),
   });
 };
 
@@ -272,7 +272,7 @@ export const useDeleteTeamSubtask = (taskId: string) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: teamProjectKeys.subtasks(taskId) });
     },
-    onError: (error: Error) => toast.error(`Impossible de supprimer la sous-tâche : ${error.message}`),
+    onError: (error: Error) => toast.error(translator('errors').t('mutation.deleteSubtask', { message: error.message })),
   });
 };
 
@@ -312,7 +312,7 @@ export const useCreateTeamLabel = (orgId: string) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: teamProjectKeys.labels(orgId) });
     },
-    onError: (error: Error) => toast.error(`Impossible de créer le label : ${error.message}`),
+    onError: (error: Error) => toast.error(translator('errors').t('mutation.createLabel', { message: error.message })),
   });
 };
 
@@ -325,7 +325,7 @@ export const useUpdateTeamLabel = (orgId: string) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: teamProjectKeys.labels(orgId) });
     },
-    onError: (error: Error) => toast.error(`Impossible de modifier le label : ${error.message}`),
+    onError: (error: Error) => toast.error(translator('errors').t('mutation.updateLabel', { message: error.message })),
   });
 };
 
@@ -339,7 +339,7 @@ export const useDeleteTeamLabel = (orgId: string) => {
       // La jonction perd des lignes par CASCADE : son cache est périmé aussi.
       queryClient.invalidateQueries({ queryKey: teamProjectKeys.taskLabels(orgId) });
     },
-    onError: (error: Error) => toast.error(`Impossible de supprimer le label : ${error.message}`),
+    onError: (error: Error) => toast.error(translator('errors').t('mutation.deleteLabel', { message: error.message })),
   });
 };
 
@@ -355,7 +355,7 @@ export const useToggleTaskLabel = (orgId: string) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: teamProjectKeys.taskLabels(orgId) });
     },
-    onError: (error: Error) => toast.error(`Impossible de modifier les labels : ${error.message}`),
+    onError: (error: Error) => toast.error(translator('errors').t('mutation.updateLabels', { message: error.message })),
   });
 };
 

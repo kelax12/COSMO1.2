@@ -39,7 +39,7 @@ const BlogArticlePage: React.FC = () => {
             </Link>
           </div>
           <Link to="/signup" className="text-sm text-slate-400 hover:text-white transition-colors items-center gap-1.5 hidden sm:flex shrink-0">
-            Créer un compte gratuit
+            {t('blog.createFreeAccount')}
             <ArrowRight size={14} />
           </Link>
         </div>
@@ -64,7 +64,7 @@ const BlogArticlePage: React.FC = () => {
           <div className="blog-prose" dangerouslySetInnerHTML={{ __html: article.html }} />
         </article>
 
-        <nav aria-label="À lire ensuite" className="mt-16">
+        <nav aria-label={t('blog.readNext')} className="mt-16">
           <h2 className="text-lg font-bold text-white mb-4">{t('blog.readNext')}</h2>
           <div className="space-y-3">
             {relatedArticles(article).map((a) => (
@@ -83,7 +83,7 @@ const BlogArticlePage: React.FC = () => {
         <aside className="mt-10 rounded-2xl border border-white/10 bg-white/5 p-6 sm:p-8 text-center">
           <p className="text-lg font-semibold mb-2">{t('blog.tryFree')}</p>
           <p className="text-slate-400 text-sm mb-5">
-            Tâches, habitudes, agenda et OKR dans une seule application. Démo instantanée, sans inscription.
+            {t('blog.ctaPitch')}
           </p>
           <Link
             to="/signup"

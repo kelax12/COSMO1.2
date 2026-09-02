@@ -8,6 +8,7 @@ import { normalizeApiError } from '@/lib/normalizeApiError';
 import { ICategoriesRepository } from './repository';
 import { Category, CreateCategoryInput, UpdateCategoryInput } from './types';
 import { warnIfTruncated } from '@/lib/pagination.warning';
+import type { CreateOptions } from '@/lib/restore-id';
 
 // ═══════════════════════════════════════════════════════════════════
 // DB ROW TYPES (snake_case - matches Supabase table schema)
@@ -73,11 +74,19 @@ export class SupabaseCategoriesRepository implements ICategoriesRepository {
   // WRITE OPERATIONS
   // ═══════════════════════════════════════════════════════════════════
 
-  async create(input: CreateCategoryInput): Promise<Category> {
+  async create(input: CreateCategoryInput, options?: CreateOptions): Promise<Category> {
     if (!supabase) throw new Error('Supabase not configured');
     const user = await getCurrentUser();
     if (!user) throw new Error('Not authenticated');
-    const dbInput = { ...this.mapToDb(input), user_id: user.id };
+    // `options.restoreId` ne vient JAMAIS d'un payload de formulaire :
+    // c'est un second argument, reserve aux « Annuler » (R-08). La
+    // whitelist `mapToDb` et le `user_id` pose depuis la session sont
+    // inchanges.
+    const dbInput = {
+      ...this.mapToDb(input),
+      user_id: user.id,
+      ...(options?.restoreId ? { id: options.restoreId } : {}),
+    };
 
     const { data, error } = await supabase
       .from('categories')
