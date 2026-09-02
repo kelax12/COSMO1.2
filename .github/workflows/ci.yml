@@ -322,7 +322,17 @@ jobs:
           # avec la variable posee.
           # La valeur n'a pas besoin d'etre un vrai DSN : seule sa presence
           # decide de la forme du bundle, et cet artefact n'est jamais deploye.
-          VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN || 'https://ci@example.invalid/0' }}
+          # ⚠️ Ici, PAS de valeur de repli — asymetrie voulue, et payee une fois.
+          # Le job `lint-test-build` PESE l'artefact : un faux DSN y suffit, rien
+          # ne s'execute. Ce job-ci EXECUTE la page. Avec un DSN bidon, Sentry
+          # s'initialise vraiment et tente d'emettre vers un hote qui n'existe
+          # pas ; la console se remplit d'erreurs et « best practices » tombe de
+          # 100 a 96 sur les QUATRE pages, sous le seuil de 0,97. Mesure du
+          # 2026-09-02, run 33671417915, rouge a cause de ce repli.
+          # Sans secret pose, ce build reste donc sans Sentry : les attributions
+          # de bootup restent aveugles a lui, et c'est ecrit noir sur blanc
+          # plutot que corrige par un faux qui fausserait le score.
+          VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
 
       # Quel Chrome, et existe-t-il ? Une phase `collect` qui ne produit AUCUN
       # rapport echoue le plus souvent avant d'ouvrir un navigateur, et la
