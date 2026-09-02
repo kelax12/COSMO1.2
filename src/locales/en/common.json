@@ -121,7 +121,10 @@
   },
   "pageError": {
     "hint": "Check your internet connection, then try again.",
-    "retry": "Try again"
+    "retry": "Try again",
+    "title": "Couldn't load {subject}",
+    "subjectAgenda": "your calendar",
+    "subjectOkr": "your OKRs"
   },
   "demoBanner": {
     "aria": "Demo mode",
@@ -299,5 +302,28 @@
     "available": "A new version of COSMO is available.",
     "reload": "Reload",
     "dismiss": "Later"
+  },
+  "firstRun": {
+    "title": "Welcome to COSMO",
+    "subtitle": "Three questions, one minute. Every step can be skipped.",
+    "step": "Step {current} of {total}",
+    "skip": "Skip this step",
+    "skipAll": "Skip the welcome",
+    "next": "Continue",
+    "finish": "Enter COSMO",
+    "add": "Add",
+    "remove": "Remove",
+    "taskQuestion": "What do you have to do this week?",
+    "taskHint": "One thing is enough. You can add as many as you like afterwards.",
+    "taskPlaceholder": "e.g. Call the accountant",
+    "taskListLabel": "Tasks to create",
+    "habitQuestion": "A habit you want to keep?",
+    "habitHint": "It will be tracked daily, and you can change its duration later.",
+    "habitPlaceholder": "e.g. Walk for 30 minutes",
+    "okrQuestion": "A goal for the next three months?",
+    "okrHint": "An objective is a direction. The key result, optional, is what proves you got there.",
+    "okrPlaceholder": "e.g. Ship product v2",
+    "okrKeyResultLabel": "Key result (optional)",
+    "okrKeyResultPlaceholder": "e.g. Publish the sales page"
   }
 }

@@ -52,7 +52,7 @@ const QuickAddBar = lazy(() => import('./QuickAddBar'));
 // Aide raccourcis clavier (#48) — touche « ? ».
 const ShortcutsHelp = lazy(() => import('./ShortcutsHelp'));
 // Tâches d'exemple au premier login (#49) — headless.
-const OnboardingExampleTasks = lazy(() => import('./OnboardingExampleTasks'));
+const FirstRunSetup = lazy(() => import('./onboarding/FirstRunSetup'));
 // Formulaire « Signaler un bug » — lazy : la très grande majorité des
 // sessions ne l'ouvre jamais, son chunk n'a pas à peser sur le Layout.
 const BugReportModal = lazy(() => import('./BugReportModal'));
@@ -427,9 +427,9 @@ const NavItems = () =>
       <Suspense fallback={null}>
         <ShortcutsHelp />
       </Suspense>
-      {/* Tâches d'exemple au premier login prod (#49) */}
+      {/* Premier écran d'un compte réel et vide (T-23) */}
       <Suspense fallback={null}>
-        <OnboardingExampleTasks />
+        <FirstRunSetup />
       </Suspense>
       {/* Raccourcis « g puis lettre » (#44) */}
       <GlobalNavShortcuts />
