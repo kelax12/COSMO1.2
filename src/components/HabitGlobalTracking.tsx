@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { formatDate } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
+import { HabitListSkeleton } from '@/components/skeletons';
 
 type PeriodType = 'week' | 'month' | 'all';
 
@@ -32,7 +33,10 @@ const getSuccessColor = (percentage: number): string => {
 
 const HabitGlobalTracking: React.FC = () => {
   const { t } = useT('habits');
-  const { data: habits = [] } = useHabits();
+  // C-40 — sans `isLoading`, l'ecran AFFIRME une absence qu'il ne connait pas
+  // encore : le premier rendu arrive avant la reponse, et la valeur par defaut
+  // `[]` est indistinguable d'un compte reellement vide.
+  const { data: habits = [], isLoading: loadingHabits } = useHabits();
   const [period, setPeriod] = useState<PeriodType>('all');
   const [currentDate, setCurrentDate] = useState(new Date());
   const [globalPage, setGlobalPage] = useState(0);
@@ -150,6 +154,8 @@ const HabitGlobalTracking: React.FC = () => {
       return formatDate(currentDate, { month: 'long', year: 'numeric' });
     return t('table.sinceCreation');
   };
+
+  if (loadingHabits) return <HabitListSkeleton count={2} />;
 
   if (habits.length === 0) {
     return (

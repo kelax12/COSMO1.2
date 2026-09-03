@@ -57,7 +57,10 @@ const TeamsSection = ({ orgId, members, currentUserId, isAdmin, canCreateTeam }:
   const { t } = useT('org');
   const [showNewTeam, setShowNewTeam] = useState(false);
 
-  const { data: teams = [] } = useOrgTeams(orgId);
+  // C-40 — sans `isLoading`, l'ecran AFFIRME une absence qu'il ne connait pas
+  // encore : le premier rendu arrive avant la reponse, et la valeur par defaut
+  // `[]` est indistinguable d'un compte reellement vide.
+  const { data: teams = [], isLoading: loadingTeams } = useOrgTeams(orgId);
   const { data: memberships = [] } = useOrgTeamMembers(orgId);
   const createTeam = useCreateOrgTeam(orgId);
   const deleteTeam = useDeleteOrgTeam(orgId);
@@ -103,7 +106,7 @@ const TeamsSection = ({ orgId, members, currentUserId, isAdmin, canCreateTeam }:
         />
       )}
 
-      {teams.length === 0 ? (
+      {loadingTeams ? null : teams.length === 0 ? (
         <p className="text-xs text-[rgb(var(--color-text-muted))] py-3">
           {canCreateTeam ? t('team.emptyManager') : t('team.empty')}
         </p>

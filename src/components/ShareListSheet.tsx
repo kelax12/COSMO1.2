@@ -24,7 +24,10 @@ interface ShareListSheetProps {
 
 const ShareListSheet: React.FC<ShareListSheetProps> = ({ list, tasks, onClose }) => {
   const { t } = useT('tasks');
-  const { data: friends = [] } = useFriends();
+  // C-40 — sans `isLoading`, la feuille AFFIRMAIT « Ajoute d'abord un ami »
+  // a quelqu'un qui en a : le premier rendu arrive avant la reponse, et la
+  // valeur par defaut `[]` est indistinguable d'un carnet reellement vide.
+  const { data: friends = [], isLoading: loadingFriends } = useFriends();
   const shareListMutation = useShareList();
   const [search, setSearch] = useState('');
 
@@ -131,13 +134,11 @@ const ShareListSheet: React.FC<ShareListSheetProps> = ({ list, tasks, onClose })
 
             {/* Liste des amis */}
             <div className="px-3 pb-3 overflow-y-auto">
-              {selectableFriends.length === 0 ? (
+              {loadingFriends ? null : selectableFriends.length === 0 ? (
                 <div className="px-2 py-8 text-center">
                   <UserPlus size={22} className="mx-auto mb-2 text-slate-400" aria-hidden="true" />
                   <p className="text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-                    {friends.length === 0
-                      ? 'Ajoute d’abord un ami pour partager une liste.'
-                      : 'Aucun ami ne correspond à ta recherche.'}
+                    {friends.length === 0 ? t('shareList.noFriendYet') : t('shareList.noMatch')}
                   </p>
                 </div>
               ) : (

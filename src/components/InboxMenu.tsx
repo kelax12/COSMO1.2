@@ -64,7 +64,10 @@ const InboxMenu: React.FC = () => {
   const { data: requests = [] } = useFriendRequests();
   const { data: tasks = [] } = useTasks();
   const { data: pendingShared = [] } = usePendingSharedTasks();
-  const { data: friends = [] } = useFriends();
+  // C-40 — sans `isLoading`, l'ecran AFFIRME une absence qu'il ne connait pas
+  // encore : le premier rendu arrive avant la reponse, et la valeur par defaut
+  // `[]` est indistinguable d'un compte reellement vide.
+  const { data: friends = [], isLoading: loadingFriends } = useFriends();
   const { data: relatedShares = [] } = useRelatedTaskShares();
   const acceptFriendMutation = useAcceptFriendRequest();
   const rejectFriendMutation = useRejectFriendRequest();
@@ -390,7 +393,7 @@ const InboxMenu: React.FC = () => {
       <div className="max-h-[60vh] overflow-y-auto">
         {/* ── Gérer mes amis ── */}
         {showManageFriends && (
-          friends.length === 0 ? (
+          loadingFriends ? null : friends.length === 0 ? (
             <div className="px-4 py-9 text-center">
               <p className="text-label sm:text-sm font-medium text-[rgb(var(--color-text-secondary))]">{t('inbox.noFriend')}</p>
               <p className="text-caption sm:text-xs text-[rgb(var(--color-text-muted))] mt-0.5">

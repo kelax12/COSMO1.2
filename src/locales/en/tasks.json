@@ -376,7 +376,9 @@
     "selectedCount": "Selected ({{count}})"
   },
   "shareList": {
-    "searchFriend": "Search a friend…"
+    "searchFriend": "Search a friend…",
+    "noFriendYet": "Add a friend first to share a list.",
+    "noMatch": "No friend matches your search."
   },
   "bulk": {
     "deleteCount_one": "Delete {{count}} task",
