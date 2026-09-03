@@ -5,7 +5,8 @@
   },
   "guide": {
     "title": "Guide d'utilisation Cosmo – Tâches, habitudes, OKR et agenda",
-    "description": "Apprenez à utiliser Cosmo : tâches, habitudes avec heatmap, agenda en time-blocking et gestion des OKR. Guide complet en français."
+    "description": "Apprenez à utiliser Cosmo : tâches, habitudes avec heatmap, agenda en time-blocking et gestion des OKR. Guide complet en français.",
+    "articleDescription": "Guide complet pour utiliser Cosmo : gestion de tâches, suivi d'habitudes avec heatmap, agenda time-blocking et méthode OKR."
   },
   "signup": {
     "title": "Inscription gratuite – Cosmo, app productivité tâches et OKR",
@@ -38,5 +39,17 @@
   "privacy": {
     "title": "Politique de confidentialité – Cosmo App",
     "description": "Politique de confidentialité de Cosmo : données collectées, stockage sécurisé Supabase, Row Level Security, droits RGPD et contact."
+  },
+  "forgotPassword": {
+    "title": "Mot de passe oublié – Cosmo",
+    "description": "Réinitialisez le mot de passe de votre compte Cosmo."
+  },
+  "resetPassword": {
+    "title": "Nouveau mot de passe – Cosmo",
+    "description": "Choisissez un nouveau mot de passe pour votre compte Cosmo."
+  },
+  "notFound": {
+    "title": "Page introuvable – Cosmo",
+    "description": "Cette page n'existe pas ou a été déplacée."
   }
 }

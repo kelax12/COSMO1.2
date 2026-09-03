@@ -16,9 +16,13 @@ import { MIN_PASSWORD_LENGTH } from '@/lib/password-policy';
  */
 const ResetPasswordPage = () => {
   const { t } = useT('common');
+  // Les titres et descriptions vivent DEJA dans `seo.json` : le prerendu les
+  // lit depuis ce catalogue, la page les recopiait a cote. Deux sources pour
+  // la meme balise, c'est une occasion de les laisser diverger.
+  const { t: tSeo } = useT('seo');
   useSeoMeta({
-    title: 'Nouveau mot de passe – Cosmo',
-    description: 'Choisissez un nouveau mot de passe pour votre compte Cosmo.',
+    title: tSeo('resetPassword.title'),
+    description: tSeo('resetPassword.description'),
     canonical: 'https://thecosmo.app/reset-password',
   });
   const navigate = useNavigate();
@@ -105,7 +109,7 @@ const ResetPasswordPage = () => {
           <div role="alert" className="mb-4 flex items-start gap-2 px-3 py-2.5 rounded-xl bg-red-500/10 border border-red-500/30 text-sm text-red-400">
             <AlertCircle size={16} className="shrink-0 mt-0.5" aria-hidden="true" />
             <span>
-              Ce lien est invalide ou a expiré.{' '}
+              {t('auth.resetLinkInvalid')}{' '}
               <Link to="/forgot-password" className="underline underline-offset-2 font-semibold">
                 {t('auth.requestAgain')}
               </Link>

@@ -34,7 +34,15 @@
     "dailyAdLimit": "Daily ad limit reached (20 a day). Come back tomorrow, or go Premium.",
     "getOneDay": "Get one Premium day",
     "subscribe30": "Subscribe for 30 days of full Premium.",
-    "freeEarnDay": "Free · Earn +1 Premium day"
+    "freeEarnDay": "Free · Earn +1 Premium day",
+    "heroTitle": "Cosmo Premium",
+    "freeVersion": "Free version",
+    "activeBadge": "PREMIUM ACTIVE",
+    "requiredBadge": "🔒 Premium required",
+    "compareTitle": "Free or Premium?",
+    "proColumn": "Premium",
+    "howToTitle": "How would you like to go Premium?",
+    "monthlyOffer": "{{price}} / month · 30 days of Premium"
   },
   "gate": {
     "defaultFeature": "this feature",
@@ -60,5 +68,23 @@
     "earned": "You earned 1 Premium token",
     "claim": "Claim the token",
     "support": "By watching this ad you support the development of Cosmo"
+  },
+  "table": {
+    "featureNoAdsTitle": "Ad-free habits",
+    "featureNoAdsDesc": "Open your habits without the daily ad",
+    "featureStatsTitle": "Advanced statistics",
+    "featureStatsDesc": "Detailed analyses, heatmaps and trends",
+    "rowTasks": "Unlimited tasks",
+    "rowHabits": "Unlimited habits",
+    "rowAgenda": "Agenda & events",
+    "rowOkr": "OKRs & key results",
+    "rowStatsBasic": "Basic statistics",
+    "rowSync": "Multi-device sync",
+    "rowDemo": "Demo mode",
+    "rowCollab": "Collaboration & task sharing",
+    "rowNoDailyAd": "Habits without the daily ad",
+    "rowStatsAdvanced": "Advanced statistics",
+    "rowNoAds": "No ads",
+    "rowSupport": "Priority support"
   }
 }

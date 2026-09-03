@@ -17,9 +17,13 @@ import { useT } from '@/i18n/useT';
  */
 const ForgotPasswordPage = () => {
   const { t } = useT('common');
+  // Les titres et descriptions vivent DEJA dans `seo.json` : le prerendu les
+  // lit depuis ce catalogue, la page les recopiait a cote. Deux sources pour
+  // la meme balise, c'est une occasion de les laisser diverger.
+  const { t: tSeo } = useT('seo');
   useSeoMeta({
-    title: 'Mot de passe oublié – Cosmo',
-    description: 'Réinitialisez le mot de passe de votre compte Cosmo.',
+    title: tSeo('forgotPassword.title'),
+    description: tSeo('forgotPassword.description'),
     canonical: 'https://thecosmo.app/forgot-password',
   });
   const [email, setEmail] = useState('');

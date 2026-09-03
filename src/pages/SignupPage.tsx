@@ -7,9 +7,13 @@ import { useT } from '@/i18n/useT';
 
 const SignupPage = () => {
   const { t } = useT('common');
+  // Les titres et descriptions vivent DEJA dans `seo.json` : le prerendu les
+  // lit depuis ce catalogue, la page les recopiait a cote. Deux sources pour
+  // la meme balise, c'est une occasion de les laisser diverger.
+  const { t: tSeo } = useT('seo');
   useSeoMeta({
-    title: 'Inscription gratuite – Cosmo, app productivité tâches et OKR',
-    description: "Créez votre compte Cosmo gratuitement. Gérez vos tâches, habitudes, agenda et objectifs OKR. Connexion possible via Google.",
+    title: tSeo('signup.title'),
+    description: tSeo('signup.description'),
     canonical: 'https://thecosmo.app/signup',
   });
   const navigate = useNavigate();

@@ -7,9 +7,10 @@ import React, { useMemo } from 'react';
 import type { Task } from '@/modules/tasks';
 import type { Habit } from '@/modules/habits';
 import type { CalendarEvent } from '@/modules/events';
-import type { OKR, KeyResult } from '@/modules/okrs';
-import { parseLocalDate } from '@/lib/workTimeCalculator';
-import type { WorkTimePeriodData, KeyResultHistory } from './types';
+import type { OKR } from '@/modules/okrs';
+import type { KRCompletion } from '@/modules/kr-completions/types';
+import { okrTimeByObjective, parseLocalDate } from '@/lib/workTimeCalculator';
+import type { WorkTimePeriodData } from './types';
 import { formatDate } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
 
@@ -95,10 +96,10 @@ export const OverviewStatistics: React.FC<{ workTimeData: WorkTimePeriodData[] }
   };
 
   const breakdown = [
-    { id: 'tasks', label: 'Tâches', time: totalDetails.tasksTime, color: '#3B82F6' },
-    { id: 'agenda', label: 'Agenda', time: totalDetails.eventsTime, color: '#ef4444' },
-    { id: 'habits', label: 'Habitudes', time: totalDetails.habitsTime, color: '#EAB308' },
-    { id: 'okr', label: 'OKR', time: totalDetails.okrTime, color: '#22C55E' },
+    { id: 'tasks', label: t('breakdown.tasks'), time: totalDetails.tasksTime, color: '#3B82F6' },
+    { id: 'agenda', label: t('breakdown.agenda'), time: totalDetails.eventsTime, color: '#ef4444' },
+    { id: 'habits', label: t('breakdown.habits'), time: totalDetails.habitsTime, color: '#EAB308' },
+    { id: 'okr', label: t('breakdown.okr'), time: totalDetails.okrTime, color: '#22C55E' },
   ].sort((a, b) => b.time - a.time);
 
   return (
@@ -176,7 +177,7 @@ export const TasksStatistics: React.FC<{
   colorSettings: Record<string, string>;
   categories: Array<{ id: string; color: string; name: string }>;
 }> = ({ tasks, colorSettings, categories }) => {
-  const { t } = useT('statistics');
+  const { t, tp } = useT('statistics');
   const getColorValue = (catId: string | undefined) => categories.find(c => c.id === catId)?.color || '#64748B';
   // Fix dots gris : itérer sur les VRAIES catégories (UUIDs), pas sur colorSettings (clés hardcodées cat-1...).
   // Fallback aux entrées colorSettings si aucune catégorie chargée (mode démo très précoce).
@@ -207,7 +208,7 @@ export const TasksStatistics: React.FC<{
       <div className="card p-6">
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-lg font-semibold" style={{ color: 'rgb(var(--color-text-primary))' }}>{t('details.byColor')}</h3>
-          <span className="text-sm font-medium px-2 py-1 rounded-lg bg-violet-100 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400">{tasks.length} tâches</span>
+          <span className="text-sm font-medium px-2 py-1 rounded-lg bg-violet-100 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400">{tp('details.taskCount', tasks.length)}</span>
         </div>
         <div className="space-y-4">
           {colorDistribution.map(item => (
@@ -364,21 +365,25 @@ export const AgendaStatistics: React.FC<{
 // ═══════════════════════════════════════════════════════════════════
 // OKR
 // ═══════════════════════════════════════════════════════════════════
-export const OKRStatistics: React.FC<{ objectives: OKR[]; rollingRange: { start: Date; end: Date } }> = ({ objectives, rollingRange }) => {
+export const OKRStatistics: React.FC<{
+  objectives: OKR[];
+  krCompletions: KRCompletion[];
+  rollingRange: { start: Date; end: Date };
+}> = ({ objectives, krCompletions, rollingRange }) => {
   const { t } = useT('statistics');
-  const okrWorkTime = objectives.map(okr => {
-    let workedTime = 0;
-    okr.keyResults.forEach((kr: KeyResult) => {
-      const history = (kr as KeyResult & { history?: KeyResultHistory[] }).history || [];
-      const total = history.reduce((sum: number, h: KeyResultHistory) => {
-        const hDate = parseLocalDate(h.date);
-        const norm = new Date(hDate.getFullYear(), hDate.getMonth(), hDate.getDate());
-        return norm >= rollingRange.start && norm <= rollingRange.end ? sum + h.increment : sum;
-      }, 0);
-      workedTime += total * kr.estimatedTime;
-    });
-    return { id: okr.id, title: okr.title, workedTime };
-  }).filter(o => o.workedTime > 0);
+  // ⚠️ Le temps investi vient du journal `kr_completions`, jamais d'un champ
+  // `kr.history` : ce champ n'existe pas dans le modele, et le lire rendait
+  // toujours 0 (cf. src/lib/workTimeCalculator.ts). Meme parcours que le total
+  // affiche au-dessus, pour que le detail somme exactement au total.
+  const byObjective = okrTimeByObjective(
+    rollingRange.start,
+    rollingRange.end,
+    krCompletions,
+    objectives,
+  );
+  const okrWorkTime = objectives
+    .map(okr => ({ id: okr.id, title: okr.title, workedTime: byObjective.get(okr.id) ?? 0 }))
+    .filter(o => o.workedTime > 0);
 
   const totalWorkedTime = okrWorkTime.reduce((sum, o) => sum + o.workedTime, 0);
   const maxWorkedTime = Math.max(...okrWorkTime.map(o => o.workedTime), 1);

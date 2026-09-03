@@ -64,5 +64,23 @@
     "codeLabel": "Code à six chiffres",
     "verify": "Vérifier",
     "codeRejected": "Code refusé. Vérifiez l'heure de votre téléphone, puis réessayez."
-  }
+  },
+  "active7d": "Actifs 7 j",
+  "inactive7to30": "Inactifs 7-30 j",
+  "inactive30plus": "Inactifs 30 j+",
+  "tasksAtLeastOne": "≥1 tâche",
+  "habitsAtLeastOne": "≥1 habitude",
+  "okrsAtLeastOne": "≥1 OKR",
+  "stickiness": "Stickiness DAU/MAU",
+  "stickinessHint": "{{dau}} actifs aujourd’hui / {{mau}} sur 30 j",
+  "churn": "Churn 30 j+",
+  "churnHint": "{{count}}/{{total}} comptes inactifs depuis 30 j+",
+  "tasks": "Tâches",
+  "habits": "Habitudes",
+  "okrs": "OKR",
+  "shares": "Partages",
+  "withFriends": "Ont ≥1 ami",
+  "withFriendsHint": "{{count}} comptes ({{pct}})",
+  "providerHint": "{{count}} comptes ({{pct}})",
+  "activeToday": "Actifs aujourd'hui"
 }

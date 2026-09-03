@@ -11,10 +11,13 @@ const formatArticleDate = (iso: string) =>
 
 const BlogIndexPage: React.FC = () => {
   const { t } = useT('landing');
+  // Les titres et descriptions vivent DEJA dans `seo.json` : le prerendu les
+  // lit depuis ce catalogue, la page les recopiait a cote. Deux sources pour
+  // la meme balise, c'est une occasion de les laisser diverger.
+  const { t: tSeo } = useT('seo');
   useSeoMeta({
-    title: 'Blog Cosmo : productivité, OKR, habitudes et time-blocking',
-    description:
-      'Guides pratiques sur la méthode OKR, le suivi d’habitudes, le time-blocking et la productivité personnelle. Par l’équipe de Cosmo.',
+    title: tSeo('blog.title'),
+    description: tSeo('blog.description'),
     canonical: 'https://thecosmo.app/blog',
   });
 

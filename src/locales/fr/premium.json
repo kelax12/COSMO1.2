@@ -34,7 +34,15 @@
     "dailyAdLimit": "Limite quotidienne de pubs atteinte (20/jour). Revenez demain ou passez Premium.",
     "getOneDay": "Obtenir un jour Premium",
     "subscribe30": "Souscrivez pour 30 jours de statut Premium complet.",
-    "freeEarnDay": "Gratuit · Gagne +1 jour Premium"
+    "freeEarnDay": "Gratuit · Gagne +1 jour Premium",
+    "heroTitle": "Cosmo Premium",
+    "freeVersion": "Version Gratuite",
+    "activeBadge": "PREMIUM ACTIF",
+    "requiredBadge": "🔒 Premium requis",
+    "compareTitle": "Gratuit ou Premium ?",
+    "proColumn": "Premium",
+    "howToTitle": "Comment veux-tu passer Premium ?",
+    "monthlyOffer": "{{price}} / mois · 30 jours Premium"
   },
   "gate": {
     "defaultFeature": "cette fonctionnalité",
@@ -60,5 +68,23 @@
     "earned": "Vous avez gagné 1 jeton Premium",
     "claim": "Récupérer le jeton",
     "support": "En regardant cette publicité, vous soutenez le développement de Cosmo"
+  },
+  "table": {
+    "featureNoAdsTitle": "Habitudes sans publicité",
+    "featureNoAdsDesc": "Accédez à vos habitudes sans la pub quotidienne",
+    "featureStatsTitle": "Statistiques avancées",
+    "featureStatsDesc": "Analyses détaillées, heatmaps et tendances",
+    "rowTasks": "Tâches illimitées",
+    "rowHabits": "Habitudes illimitées",
+    "rowAgenda": "Agenda & événements",
+    "rowOkr": "OKR & Key Results",
+    "rowStatsBasic": "Statistiques de base",
+    "rowSync": "Sync multi-appareils",
+    "rowDemo": "Mode démo",
+    "rowCollab": "Collaboration & partage de tâches",
+    "rowNoDailyAd": "Habitudes sans pub quotidienne",
+    "rowStatsAdvanced": "Statistiques avancées",
+    "rowNoAds": "Sans publicité",
+    "rowSupport": "Support prioritaire"
   }
 }
