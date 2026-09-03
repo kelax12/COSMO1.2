@@ -1,6 +1,10 @@
 # CLAUDE.md — COSMO 1.2
 
-Guide de travail dans ce dépôt. **Vérifié dans le code et contre la prod le 2026-08-24.**
+Guide de travail dans ce dépôt. **Vérifié dans le code et contre la prod le 2026-08-24**, relu
+contre le code de `main` et les 71 commits des 08-30 → 09-03 lors de la **passe d'audit du
+2026-09-03** (chiffres des scripts, gardes, CSP, saisie de date). ⚠️ Cette relecture-là **n'a pas
+remesuré la production** : ce qui en vient porte la date du commit qui l'a mesuré. Détail et notes
+par domaine : [`docs/README.md`](./docs/README.md).
 
 **Plan** : [Docs](#-carte-de-la-documentation) · [CLI données réelles](#-tu-peux-écrire-dans-le-vrai-compte-cosmo-daxel) · [Stack](#stack-technique) · [Scripts](#scripts) · [Env](#variables-denvironnement) · [Double mode](#architecture--double-mode-démo--production) · [Modules](#structure-des-modules) · [Hooks](#hooks-essentiels) · [Providers / Routing](#hiérarchie-des-providers-srcapptsx) · [Supabase](#base-de-données-supabase) · [Conventions](#conventions-de-code) · [i18n](#i18n--catalogues-maison-fr--en) · [🚫 Garde-fous](#-garde-fous--à-ne-jamais-faire)
 
@@ -109,13 +113,15 @@ npm run build      # Build prod → dist/ (vite build + node prerender.mjs)
 npm run preview    # Prévisualiser le build
 npm run lint       # ESLint (doit retourner 0 erreur)
 npm run typecheck  # tsc -b (doit retourner 0 erreur)
-npm test           # Vitest (run once), 1802 tests / 159 fichiers, ~3,5 min (2026-08-27 soir)
+npm test           # Vitest (run once), 2051 tests / 179 fichiers (mesure du 2026-09-02)
 npm run test:watch # Vitest en mode watch
 npm run test:coverage       # + couverture v8, seuils globaux et par fichier
-                            # ✅ VERTE au 2026-08-27 (soir) : 28,48 L · 28,15 S · 22,78 F · 23,59 B
+                            # ✅ VERTE au 2026-08-29 : 29,17 L · 28,81 S · 23,41 F · 24,17 B
                             # ❌ NE JAMAIS baisser un seuil pour repasser au vert.
-                            # Marge la plus serree : functions, ~1,4 pt. Elle etait tombee a
-                            # 0,32 pt le 2026-08-25 : la relancer APRES chaque vague de
+                            # ⚠️ NON RELANCEE depuis, alors que la suite a pris +215 tests ET
+                            # que le denominateur a grossi (onboarding, calendrier, deadline).
+                            # La marge la plus serree est `functions` ; elle etait tombee a
+                            # 0,32 pt le 2026-08-25. La relancer APRES chaque vague de
                             # features, pas seulement quand on y pense.
                             # Voir docs/TESTING.md
 npm run validate:migrations # Garde statique sur supabase/migration/*.sql (CI)
@@ -137,7 +143,8 @@ npm run check:mail          # Délivrabilité des emails Auth : MX, SPF, DKIM Re
                             # d'Axel — cf. finding G-2 de faille.md.
                             # PAS une gate CI — dépend d'un état DNS externe.
 npm run i18n:scan           # Chaînes en dur non externalisées — **GATE CI depuis le 2026-09-02**
-                            # Cliquet à ZÉRO. `-- --list` dit LESQUELLES.
+                            # Cliquet à **25** (`MAX_STRINGS`), et `src/components` est à ZÉRO.
+                            # `-- --list` dit LESQUELLES.
                             # 🔴 Le seuil a valu 4 pendant une journée, sur une heuristique
                             # aveugle à QUATRE formes entières : texte JSX contenant une
                             # interpolation, texte sur plusieurs lignes, propriété d'objet
@@ -145,7 +152,10 @@ npm run i18n:scan           # Chaînes en dur non externalisées — **GATE CI d
                             # Le rapport certifiait « plus aucune chaîne en dur » pendant
                             # qu'il en restait des dizaines dans le produit. Les quatre sont
                             # couvertes ; le chiffre est monté parce que la MESURE a changé.
-                            # Plus une seule chaîne d'interface en dur dans src/.
+                            # ❌ Ne jamais reprendre l'ancienne phrase « plus une seule chaîne
+                            # d'interface en dur dans src/ » : elle a été VRAIE de la mesure et
+                            # FAUSSE du produit pendant une journée. Le seul énoncé vérifiable
+                            # est la sortie de `-- --list`, jamais un chiffre de tête.
                             # Deux exclusions ASSUMÉES : les commentaires de code (ce dépôt
                             # commente en français) et les seeds de démo, dont le français
                             # est la forme de référence recouverte par `localizeSeed` /
@@ -159,9 +169,23 @@ npm run profile:landing     # Profil du fil principal d'une page (CPU bride, via
                             # dominant tout. Un ecart entre deux PAGES ne se lit donc que sur le
                             # runner ; l'outil sert a comparer un AVANT/APRES sur la meme page.
 npm run check:bundle        # Budget de bundle sur le build reel (CI, apres npm run build)
-                            # Entree < 92 ko gzip. ❌ Ne jamais remonter un plafond.
-npm run test:rls   # Tests d'intégration RLS (stack Supabase locale)
-npm run test:e2e   # Playwright, 62 tests × 2 projects = 124, 15 specs (+ :ui, :report)
+                            # Plafonds au 2026-09-02 : chemin critique < 379 000 o gzip
+                            # (mesure 367,1 ko, marge 11,9), entree < 79 000 o (mesure 78,4).
+                            # ❌ Ne jamais remonter un plafond.
+                            # 🔴 EXIGE `VITE_SENTRY_DSN` AU BUILD. Sans elle, Vite remplace la
+                            # variable A LA COMPILATION, la branche `if (sentryDsn)` de main.tsx
+                            # devient du code mort, et Rollup jette presque tout @sentry/react :
+                            # vendor-sentry passe de 49,3 a 3,8 ko gzip. La garde sous-estimait
+                            # alors le chemin critique de ~45 ko, et annoncait 57,8 ko de marge
+                            # la ou il en restait 11,9. Elle REFUSE desormais de valider un build
+                            # dont vendor-sentry pese moins de 20 ko (`SENTRY_FLOOR`).
+                            # ⚠️ Un job qui PESE un artefact et un job qui l'EXECUTE n'ont pas
+                            # les memes besoins : un faux DSN suffit a peser, mais il fait
+                            # s'initialiser Sentry pour de bon, qui emet vers un hote inexistant
+                            # et fait tomber `best-practices` de 100 a 96 dans lighthouse.
+npm run test:rls   # Tests d'intégration RLS (stack Supabase locale), 7 fichiers verts
+npm run test:e2e   # Playwright, 16 specs × 2 projects (+ :ui, :report)
+                   # ⚠️ Nombre de CAS non recompté depuis le 2026-08-25 (124 alors)
 npm run cosmo      # CLI données réelles (cf. plus haut)
 ```
 
@@ -989,6 +1013,13 @@ de sécurité à 5 min.
 - ⚠️ Toute nouvelle table écoutée en Realtime doit être ajoutée à la publication
   `supabase_realtime` **et** passée en `REPLICA IDENTITY FULL` (sinon les DELETE ne portent que
   la clé primaire et les filtres client ne matchent jamais) — cf. mig. 087.
+- ✅ **Le décompte nominatif est MÉCANISÉ depuis le 2026-09-02** : `src/modules/polling.guard.test.ts`
+  nomme les quatre fichiers qui doivent garder un `refetchInterval` conditionnel, et embarque un
+  témoin qui refuse une détection qui ne détecterait plus rien. Un checkpoint qu'on rejoue à la
+  main est un checkpoint qu'on oubliera, et **celui-ci a déjà été faux une fois**.
+- 🔴 **Ces canaux ont été COUPÉS en production sans que rien ne le dise**, du fait d'un `wss://`
+  manquant dans `connect-src` (corrigé le 2026-09-01, cf. garde-fous § Sécurité & env). Un canal
+  Realtime qui remplace un sondage supprime aussi le filet qui rattrapait sa panne.
 
 ---
 
@@ -1223,6 +1254,70 @@ Mesuré avant correctif : **13 tâches sur 611 et 2 objectifs sur 14 déjà orph
 - ⚠️ `prefers-reduced-motion` est **actif sur la machine d'Axel** : si une animation « ne
   s'affiche pas », vérifier ce réglage avant de suspecter le code.
 
+### 🛡️ Une garde se vérifie sur ce qu'elle REGARDE (passe du 2026-09-03)
+
+**En cinq jours, QUATRE gardes ont été prises en train de répondre sans mesurer.** C'est le constat
+le plus lourd de la fenêtre 08-30 → 09-03, et il ne porte pas sur le produit :
+
+| Garde | Ce qu'elle affirmait | Ce qu'elle regardait vraiment |
+|---|---|---|
+| `check:bundle` | chemin critique à 321,2 ko | un build sans Sentry, ~45 ko de moins que ce qui part en prod |
+| `uptime.yml` | run **vert**, « tout va bien » | le site répond ; la moitié backend était sautée sur un secret inexistant |
+| `restore-drill.yml` | isolation vérifiée | `tail -1` capturait le mot `ROLLBACK`, jamais le compte : le contrôle **ne pouvait pas** échouer |
+| `i18n:scan` | « plus aucune chaîne d'interface en dur » | une heuristique aveugle à quatre formes entières |
+
+- ❌ **Ne jamais conclure d'un « exit 0 » qu'une garde a mesuré.** La question n'est pas « tourne-t-elle ? »
+  (règle du 2026-08-29, insuffisante) mais **« sur quoi ? »**. Les quatre ci-dessus tournaient.
+- ❌ **Ne jamais laisser une garde sauter silencieusement une moitié de son travail.** Un secret
+  absent se solde par un **échec**, jamais par un `::warning::` dans un run vert.
+- ✅ **Toute garde corrigée repart avec un TÉMOIN** : une sonde qui refuse un parseur, un détecteur
+  ou une mesure qui ne détecterait plus rien. Trois des quatre en ont un aujourd'hui.
+- 🔴 **Une garde qui se trompe dans le sens rassurant est pire qu'une garde absente : elle donne
+  une réponse, et on la croit.**
+
+### 📣 Une alerte que personne ne lit est une archive, pas une alerte
+
+`vendor-watch.yml` a fait exactement son travail : il a détecté que le script de mesure d'audience
+chargé sur les pages publiques s'était mis à extraire **l'adresse email et le nom** saisis à
+l'inscription, il a échoué **chaque jour du 2026-08-29 au 2026-09-01**, il a mis son issue à jour à
+chaque fois, et personne ne l'a ouverte pendant quatre jours.
+
+- Les échecs de garde sont désormais **poussés** sur `OPS_ALERT_WEBHOOK_URL` (`ci-alert.yml`), même
+  format que `opsAlert()` des Edge Functions, avec un exercice à blanc en `workflow_dispatch`.
+- ⚠️ **Le canal reste INERTE** tant que ce secret n'est pas posé dans les secrets **Actions** du
+  dépôt : il n'existe aujourd'hui que côté Supabase.
+- ❌ **Ne jamais rendre une garde conditionnelle à la présence de son propre secret** (règle déjà
+  écrite le 2026-08-26, re-vérifiée ici) : secret absent = avertissement **visible**, jamais un
+  silence.
+
+### 📆 Saisie de date — le calendrier COSMO, sauf sur téléphone
+
+Six surfaces ouvraient encore le calendrier du navigateur : hors thème, hors locale de l'app, sans
+les presets. Elles passent toutes par `DatePicker` / `DateCalendarPanel` (un seul corps de
+calendrier, deux façons de l'ouvrir, dont les entrées de menu qui n'ont aucun champ où s'ancrer).
+
+- ✅ **Les deux `input[type=date]` d'`EventModalForm` restent natifs, et c'est un arbitrage** : sur
+  mobile la roue système vaut mieux que n'importe quel calendrier maison.
+- ❌ **Ne jamais réintroduire `filter: invert(1)` sur l'icône d'un sélecteur de date natif.** La
+  règle datait d'avant que `.dark` pose `color-scheme: dark` ; depuis, le navigateur dessine déjà
+  l'icône en clair et l'inversion la repeignait **en noir sur fond noir**, soit exactement le
+  défaut qu'elle prétendait corriger. Mesuré côte à côte dans le navigateur. Un garde-fou est posé
+  dans `index.css`.
+- ❌ **Ne jamais oublier `minDate` sur un report d'échéance** : sans lui on peut reporter une tâche
+  en retard **vers hier**.
+
+### ⌨️ `Button` est un `forwardRef`, et le projet est sur React 18
+
+L'avertissement « Function components cannot be given refs » n'était pas du bruit : la source
+shadcn amont est écrite pour **React 19**, où `ref` est une prop ordinaire. Ici elle ne l'est pas,
+le `ref` n'était donc **jamais attaché**, et le `ref.current?.focus()` de `CalendarDayButton` ne
+faisait rien : **les flèches ne déplaçaient pas le focus dans le calendrier** (WCAG 2.1.1).
+
+- ❌ **Ne jamais recopier un composant shadcn amont sans vérifier sa cible React.** C'est la classe
+  de bug, pas le cas particulier.
+- ⚠️ Prouvé dans le navigateur après correctif (Tab atteint la grille, Flèche droite passe du 30 au
+  31 août), et pas déduit de la lecture du code.
+
 ### Logique métier
 
 - ❌ Modifier `recordKRCompletion()` sans vérifier le graphique dashboard (démo ET prod)
@@ -1280,12 +1375,39 @@ Mesuré avant correctif : **13 tâches sur 611 et 2 objectifs sur 14 déjà orph
   (défaut) et `REVOKE`-ée pour `anon` (mig. `064b` / `094b`). Un trigger `BEFORE` s'exécutant
   **avant** le `WITH CHECK` de la RLS, en DEFINER ses messages d'erreur deviennent un oracle sur
   des lignes non lisibles (mig. `108`, finding B-3).
+- 🔴 **En CSP, un schéma écrit explicitement doit correspondre : `https:` ne couvre PAS `wss:`.**
+  `connect-src` autorisait `https://*.supabase.co` sans `wss://*.supabase.co` : le navigateur
+  bloquait **toutes** les connexions Realtime **en production**, en silence (la console disait
+  « The action has been blocked », l'écran ne disait rien). Les trois canaux d'`App.tsx` étaient
+  coupés, et comme ils ont justement REMPLACÉ huit sondages, il n'y avait plus aucun filet
+  derrière eux : une tâche partagée n'arrivait jamais. Trouvé le 2026-09-01 dans la console
+  d'Axel, **en cherchant autre chose**. Garde : `src/csp.guard.test.ts` (schéma `wss`, directives
+  de confinement, absence d'`unsafe-eval`, et `data:` dans `img-src` dont dépend le QR code TOTP).
+- 🔴 **Une migration qui crée une dépendance à un chemin de récupération : PARCOURIR ce chemin
+  avant de l'appliquer.** La mig. `131` exige une session `aal2` ; l'écran d'enrôlement TOTP levait
+  en phase de rendu et son QR portait un double préfixe `data:`. `/admin` est resté inaccessible du
+  2026-08-31 au 2026-09-01, et **un seul compte au monde** ouvre cette console. Le raisonnement
+  « ce n'est pas un verrouillage, l'écran reste atteignable » était juste sur la garde et faux dans
+  les faits. Il suffisait d'ouvrir l'écran une fois.
+- ⚠️ **Le dépôt est PUBLIC**, avec secret scanning, push protection et Dependabot actifs depuis le
+  2026-09-01. Une fuite réelle est confirmée dans l'historique (`.env` au commit initial), **inerte**
+  car elle vise un projet supprimé depuis. Retirer un fichier du suivi n'efface pas l'historique.
 
 ### Documentation
 
 - ❌ Traiter un fichier de `docs/archive/**` comme l'état courant du projet
 - ❌ Citer un numéro de ligne d'un autre fichier `.md` — les fichiers bougent, les liens de
   section survivent
+- ❌ **Recopier un « avant » au lieu de le relire à sa source.** Le tableau de bord des audits est
+  parti d'une note RGPD de 84 le 2026-09-02 alors qu'elle valait 86 depuis le 08-29 : la colonne
+  avait été reprise du tableau du 25. Troisième occurrence, après les `refetchInterval` du 08-25 et
+  la garde `architecture.guard` du 08-27 (« antérieure à mon travail », déclarée depuis un
+  `git stash` qui contenait déjà le commit fautif). **Un « avant » se reconstruit à un commit
+  nommé, jamais dans un arbre de travail ni depuis un tableau plus ancien.**
+- ❌ **Chercher le symptôme cité par la doc plutôt que la chose décrite.** Une note du 2026-09-02
+  n'a corrigé qu'un nom sur six sur la sélection de modules : elle constatait l'absence de
+  `RequireModule` sans voir que la fonctionnalité entière avait disparu, ce qui laisse la dérive
+  presque intacte **et la fait paraître vérifiée**.
 
 > **Sécurité (RLS, mass-assignment, Stripe, secrets) → [`docs/SECURITY.md`](./docs/SECURITY.md).
 > Toujours la consulter avant de toucher `supabase/`, le billing, ou un repository.**
