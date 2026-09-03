@@ -617,8 +617,14 @@ contre 96-98 sur toutes les autres pages du même build.
 > « Le coupable est nommé » l'était par une attribution de Lighthouse qui, par construction, met le
 > style et le paint déclenchés par une animation sous le fichier de la **bibliothèque** d'animation.
 > Mesuré : couper les **23** ScrollTrigger et les **8** tweens infinis de la page ne déplace pas la
-> mesure d'un point. Le coût réel est ailleurs, il est nommé en **C-37**, et il n'a rien à voir avec
+> mesure d'un point. Le coût réel est ailleurs, il est nommé en **C-67**, et il n'a rien à voir avec
 > un chunk ni avec une bibliothèque.
+>
+> ✅ **La cause a été corrigée le 2026-09-03** (C-67, fond du hero cuit) : la page ne bloque plus
+> **rien** au repos, 2 856 ms → 0 ms sur le build de prod. **Cet item reste ouvert quand même**, et
+> c'est volontaire : il porte un SCORE, et un score ne se constate que sur le runner. Tant que le
+> job `lighthouse` n'a pas rendu deux passes au-dessus de 90, on sait que le travail au repos a
+> disparu, pas que la page est passée. Relève : `a-faire-manuel.md` **M-39**.
 
 ### C-13 · T-47 · trancher `vendor-sentry` sur le chemin critique · **P3 · S**
 
@@ -628,11 +634,25 @@ question est donc rouverte, et **maintenant mesurable**.
 
 - **Fini quand** : une décision écrite, appuyée sur une mesure prise avec `VITE_SENTRY_DSN` posée.
 
-### C-14 · La marge de budget est de 11,9 ko, et elle a déjà été dépassée une fois · **P1 · M**
+### C-14 · Le budget d'entrée est DÉPASSÉ, de 0,1 ko · **P1 · M**
 
-Chemin critique **367,1 ko sous 379,0**, entrée **78,4 ko sous 79,0** (run vert du 2026-09-02). Le
-lot de la campagne sécurité du même jour a poussé l'entrée à **80,9 ko**, donc au-dessus, et il a
-fallu extraire du code pour passer.
+**Remesuré le 2026-09-03** sur le build de prod (avec `VITE_SENTRY_DSN`, sinon la garde pèse un
+artefact qui n'existe nulle part) :
+
+| | Mesure | Plafond | Marge |
+|---|---|---|---|
+| Chemin critique (8 chunks) | 366,8 ko | 370,0 ko | 3,2 ko |
+| **Chunk d'entrée** | **78,1 ko** | **78,0 ko** | **−0,1 ko, rouge** |
+
+⚠️ Les deux plafonds ne sont plus ceux qu'écrivait cet item (379,0 et 79,0, run du 2026-09-02) : le
+cliquet a été resserré depuis, et c'est son rôle. La marge n'est donc pas « 11,9 ko » mais 3,2 ko
+sur le chemin critique et **zéro** sur l'entrée.
+
+⚠️ **Ce que la mesure ne dit pas, et qu'il ne faut pas conclure trop vite** : au moment de ce
+relevé, l'arbre de travail portait des ajouts NON COMMITTÉS d'une autre session dans
+`src/locales/{fr,en}/errors.json` (~1,1 ko de texte), et les catalogues de l'entrée sont justement
+ce qui la fait grossir. Le dépassement peut donc être transitoire. Il se tranche en remesurant sur
+un arbre propre, pas en le supposant.
 
 - **La sortie n'est pas de relever le plafond**, elle est de regagner de la marge : les catalogues
   i18n de l'entrée, les dépendances tirées par le shell, et C-13.
@@ -2021,7 +2041,7 @@ Ce qu'il a rendu, et comment c'est mesuré :
 
 | Finding | Comment il a été établi |
 |---|---|
-| **C-67** · 71 % du fil bloqué AU REPOS, et ce sont les flous | build de prod, fenêtre de 4 s sans scroll ni clic, 3 passes : `/` à 2 856 ms, `/guide` à **0**, et 259 ms une fois les `filter: blur` neutralisés |
+| **C-67** · 71 % du fil bloqué AU REPOS, et ce sont les flous · ✅ **corrigé le jour même** | build de prod, fenêtre de 4 s sans scroll ni clic, 3 passes : `/` à 2 856 ms, `/guide` à **0**, et 259 ms une fois les `filter: blur` neutralisés. Après correctif : **0 ms sur les trois passes**, rendu tenu à la mesure de couleur (luminosité 51,5 → 51,1) |
 | **C-68** · la landing entreprise bloque autant, pour une autre cause | même protocole : 3 637 ms, insensible aux flous, et **bimodale** (0-370 ms ou 3 000+ ms sur la même URL) |
 | **C-69** · la fenêtre produit tourne sans pause, même en mouvement réduit | relevé de la vue annoncée toutes les 600 ms pendant 9,6 s, en `no-preference` puis en `reduce` : rotation **identique** |
 
