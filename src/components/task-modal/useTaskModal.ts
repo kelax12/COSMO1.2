@@ -12,6 +12,7 @@ import {
   useCreateTask,
   useUpdateTask,
   useDeleteTask,
+  useRestoreTask,
   useTask,
   Task,
   Subtask,
@@ -69,6 +70,8 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
   const createTaskMutation = useCreateTask();
   const updateTaskMutation = useUpdateTask();
   const deleteTaskMutation = useDeleteTask();
+  // « Annuler » : rend la tache sous SON identifiant (R-08, C-37).
+  const restoreTaskMutation = useRestoreTask();
 
   // Tâche créée à la volée pendant la création (clic « Générer le lien ») : une
   // fois persistée, la popup bascule en mode édition sur cette tâche (le lien a
@@ -589,9 +592,8 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
           setShowDeleteConfirm(false);
           onClose();
           // Raccourci d'annulation (barre de progression 5 s, haut à droite).
-          const { id: _id, createdAt: _ca, ...rest } = taskSnapshot;
           showUndoToast(translator('tasks').t('modal.deleted'), () => {
-            createTaskMutation.mutate(rest);
+            restoreTaskMutation.mutate(taskSnapshot);
           });
         },
         onError: (err) => {

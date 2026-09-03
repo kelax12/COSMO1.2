@@ -8,12 +8,12 @@ import { showUndoToast } from '@/lib/undo-toast';
 // ═══════════════════════════════════════════════════════════════════
 // Module tasks - Hooks indépendants (MIGRÉ)
 // ═══════════════════════════════════════════════════════════════════
-import { useTasks, useDeleteTask, useCreateTask, Task } from '@/modules/tasks';
+import { useTasks, useDeleteTask, useCreateTask, useRestoreTask, Task } from '@/modules/tasks';
 
 // ═══════════════════════════════════════════════════════════════════
 // Module events - Hooks indépendants (MIGRÉ)
 // ═══════════════════════════════════════════════════════════════════
-import { useEvents, useDeleteEvent } from '@/modules/events';
+import { useEvents, useDeleteEvent, useRestoreEvent } from '@/modules/events';
 
 // ═══════════════════════════════════════════════════════════════════
 // Module categories - (MIGRÉ)
@@ -45,7 +45,7 @@ const formatDuration = (minutes: number | undefined): string => {
 const TUTORIAL_KEY = 'cosmo_agenda_tutorial_open';
 
 const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
-  const { t } = useT('agenda');
+  const { t, tp } = useT('agenda');
   // ═══════════════════════════════════════════════════════════════════
   // TASKS - Depuis le module tasks (MIGRÉ)
   // ═══════════════════════════════════════════════════════════════════
@@ -56,8 +56,13 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
   // ═══════════════════════════════════════════════════════════════════
   const { data: events = [] } = useEvents();
   const deleteEventMutation = useDeleteEvent();
+  // « Annuler » de la suppression des evenements lies (C-43) : rend chaque
+  // evenement sous SON identifiant, comme le fait deja `useAgendaEventActions`.
+  const restoreEventMutation = useRestoreEvent();
   const deleteTaskMutation = useDeleteTask();
   const createTaskMutation = useCreateTask();
+  // « Annuler » d'une suppression de tache : SON identifiant, pas un neuf (R-08).
+  const restoreTaskMutation = useRestoreTask();
 
   // ═══════════════════════════════════════════════════════════════════
   // CATEGORIES - Depuis le module categories (MIGRÉ)
@@ -144,17 +149,24 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
     setContextMenu(null);
     deleteTaskMutation.mutate(task.id, {
       onSuccess: () => {
-        const { id: _id, createdAt: _ca, ...rest } = task;
-        showUndoToast(t('sidebar.taskDeleted'), () => { createTaskMutation.mutate(rest); });
+        showUndoToast(t('sidebar.taskDeleted'), () => { restoreTaskMutation.mutate(task); });
       },
     });
   };
 
+  const linkedEventCount = (taskId: string) => events.filter(ev => ev.taskId === taskId).length;
+
+  // C-43 — une entree de menu supprimait N evenements sans rien demander, sans
+  // rien dire et sans retour possible. On dit COMBIEN, et on offre « Annuler »,
+  // qui les rend sous LEURS identifiants (meme contrat que useAgendaEventActions).
   const handleDeleteLinkedEvent = (task: Task) => {
     setContextMenu(null);
     const linked = events.filter(ev => ev.taskId === task.id);
     if (linked.length === 0) return;
     linked.forEach(ev => deleteEventMutation.mutate(ev.id));
+    showUndoToast(tp('sidebar.linkedEventsDeleted', linked.length), () => {
+      linked.forEach(ev => restoreEventMutation.mutate(ev));
+    });
   };
 
   const handleDuplicateTask = (task: Task) => {
@@ -524,7 +536,7 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
                 style={{ color: 'rgb(var(--color-text-primary))' }}
               >
                 <CalendarX size={16} className="text-orange-500 shrink-0" />
-                {t('sidebar.deleteLinkedEvent')}
+                {tp('sidebar.deleteLinkedEvents', linkedEventCount(contextMenu.task.id))}
               </button>
             )}
             <button

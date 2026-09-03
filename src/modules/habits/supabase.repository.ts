@@ -2,6 +2,7 @@ import { supabase } from '@/lib/supabase';
 import { getCurrentUser } from '@/lib/auth-user';
 import { normalizeApiError } from '@/lib/normalizeApiError';
 import { IHabitsRepository } from './repository';
+import type { CreateOptions } from '@/lib/restore-id';
 import { Habit, CreateHabitInput, UpdateHabitInput } from './types';
 import { HabitRow, mapHabitFromDb, mapHabitToDb } from './mappers';
 import { PaginationParams, PaginatedResult, DEFAULT_PAGE_SIZE, assertValidCursor } from '@/lib/pagination.types';
@@ -132,10 +133,17 @@ export class SupabaseHabitsRepository implements IHabitsRepository {
     return data ? mapHabitFromDb(data) : null;
   }
 
-  async createHabit(input: CreateHabitInput): Promise<Habit> {
+  async createHabit(input: CreateHabitInput, options?: CreateOptions): Promise<Habit> {
     const user = await getCurrentUser();
     if (!user) throw new Error('Not authenticated');
-    const dbInput = { ...mapHabitToDb(input), user_id: user.id };
+    // `options.restoreId` ne vient JAMAIS d'un payload de formulaire : c'est un
+    // second argument, reserve aux « Annuler » (R-08). La whitelist
+    // `mapHabitToDb` et le `user_id` pose depuis la session sont inchanges.
+    const dbInput = {
+      ...mapHabitToDb(input),
+      user_id: user.id,
+      ...(options?.restoreId ? { id: options.restoreId } : {}),
+    };
 
     const { data, error } = await supabase
       .from('habits')

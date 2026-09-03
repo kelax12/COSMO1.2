@@ -152,6 +152,7 @@
     "updateLabel": "Couldn't update the label: {{message}}",
     "deleteLabel": "Couldn't delete the label: {{message}}",
     "updateLabels": "Couldn't update the labels: {{message}}",
+    "restoreHabit": "Couldn't restore the habit: {{message}}",
     "restoreTask": "Couldn't restore the task: {{message}}",
     "restoreCategory": "Couldn't restore the category: {{message}}",
     "restoreList": "Couldn't restore the list: {{message}}",

@@ -1,5 +1,6 @@
 import { IHabitsRepository } from './repository';
 import { safeGetItem, safeParseArray } from '@/lib/safe-json';
+import type { CreateOptions } from '@/lib/restore-id';
 import { Habit, CreateHabitInput, UpdateHabitInput } from './types';
 import { PaginationParams, PaginatedResult, DEFAULT_PAGE_SIZE } from '@/lib/pagination.types';
 import { localizeSeed } from '@/lib/seed-i18n';
@@ -116,11 +117,13 @@ export class LocalStorageHabitsRepository implements IHabitsRepository {
     return habit || null;
   }
 
-  async createHabit(input: CreateHabitInput): Promise<Habit> {
+  async createHabit(input: CreateHabitInput, options?: CreateOptions): Promise<Habit> {
     const habits = this.getHabits();
     const newHabit: Habit = {
       ...input,
-      id: crypto.randomUUID(),
+      // Parite avec le repository Supabase : `restoreId` vient d'un second
+      // argument reserve aux « Annuler », jamais du payload (R-08).
+      id: options?.restoreId ?? crypto.randomUUID(),
       completions: input.completions || {},
       createdAt: new Date().toISOString(),
     };

@@ -25,6 +25,7 @@ import {
   useTasks,
   useDeleteTask,
   useCreateTask,
+  useRestoreTask,
   useUpdateTask,
   useToggleTaskComplete,
   useToggleTaskBookmark,
@@ -84,6 +85,8 @@ const TaskTable: React.FC<TaskTableProps> = ({
   const { data: moduleTasks = [], isLoading: isLoadingTasks } = useTasks();
   const deleteMutation = useDeleteTask();
   const createMutation = useCreateTask();
+  // « Annuler » : rend la tache sous SON identifiant (R-08, C-37).
+  const restoreMutation = useRestoreTask();
   const updateMutation = useUpdateTask();
   const toggleCompleteMutation = useToggleTaskComplete();
   const toggleBookmarkMutation = useToggleTaskBookmark();
@@ -364,9 +367,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
         setTaskToDelete(null);
         if (taskSnapshot) {
           showUndoToast(t('toast.deleted'), () => {
-            // Recrée la tâche avec les mêmes champs (nouvel id généré côté repo)
-            const { id: _id, createdAt: _ca, ...rest } = taskSnapshot;
-            createMutation.mutate(rest);
+            restoreMutation.mutate(taskSnapshot);
           });
         }
       },
@@ -451,10 +452,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
 
     if (ownedSnapshots.length > 0) {
       showUndoToast(tp('toast.deletedCount', ownedSnapshots.length), () => {
-        ownedSnapshots.forEach(s => {
-          const { id: _id, createdAt: _ca, ...rest } = s;
-          createMutation.mutate(rest);
-        });
+        ownedSnapshots.forEach(s => restoreMutation.mutate(s));
       });
     } else if (received.length > 0) {
       toast.success(tp('toast.leftSharedCount', received.length));

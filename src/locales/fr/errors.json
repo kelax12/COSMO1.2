@@ -152,6 +152,7 @@
     "updateLabel": "Impossible de modifier le label : {{message}}",
     "deleteLabel": "Impossible de supprimer le label : {{message}}",
     "updateLabels": "Impossible de modifier les labels : {{message}}",
+    "restoreHabit": "Impossible de restaurer l'habitude : {{message}}",
     "restoreTask": "Impossible de restaurer la tâche : {{message}}",
     "restoreCategory": "Impossible de restaurer la catégorie : {{message}}",
     "restoreList": "Impossible de restaurer la liste : {{message}}",

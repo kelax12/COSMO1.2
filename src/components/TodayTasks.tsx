@@ -10,7 +10,7 @@ import EventModal from './EventModal';
 import AddToListModal from './AddToListModal';
 import EmptyState from './EmptyState';
 
-import { useTasks, useToggleTaskComplete, useToggleTaskBookmark, useDeleteTask, useCreateTask, Task } from '@/modules/tasks';
+import { useTasks, useToggleTaskComplete, useToggleTaskBookmark, useDeleteTask, useRestoreTask, Task } from '@/modules/tasks';
 import { useCreateEvent, CreateEventInput } from '@/modules/events';
 import { useCategories } from '@/modules/categories';
 import { useFriends, useSharesByTask } from '@/modules/friends';
@@ -34,7 +34,8 @@ const TodayTasks: React.FC = () => {
   const toggleCompleteMutation  = useToggleTaskComplete();
   const toggleBookmarkMutation  = useToggleTaskBookmark();
   const deleteMutation          = useDeleteTask();
-  const createMutation          = useCreateTask();
+  // « Annuler » uniquement : rend la tache sous SON identifiant (R-08).
+  const restoreMutation         = useRestoreTask();
   const createEventMutation     = useCreateEvent();
   const { data: categories = [] } = useCategories();
   const { data: friends = [] }    = useFriends();
@@ -91,9 +92,10 @@ const TodayTasks: React.FC = () => {
       onSuccess: () => {
         setTaskToDelete(null);
         if (snapshot) {
-          const { id: _id, createdAt: _ca, ...rest } = snapshot;
+          // Rend la tache sous SON identifiant : un id neuf la detacherait de
+          // ses listes et de son KR, en silence (R-08, C-37).
           showUndoToast(t('todayTasks.deleted'), () => {
-            createMutation.mutate(rest, {
+            restoreMutation.mutate(snapshot, {
               onSuccess: () => toast.success(t('todayTasks.restored')),
             });
           });
