@@ -1,7 +1,7 @@
 # Tableau de risque · `a-faire-code.md`
 
-**Dressé le 2026-09-03**, à partir des 64 items C-01 → C-64 de
-[`a-faire-code.md`](./a-faire-code.md). **8 sont clos**, **56 sont ouverts** et notés ci-dessous.
+**Dressé le 2026-09-03**, à partir des 66 items C-01 → C-66 de
+[`a-faire-code.md`](./a-faire-code.md). **8 sont clos**, **58 sont ouverts** et notés ci-dessous.
 
 Ce fichier ne porte **aucun statut** : il ne fait que classer. Le statut de chaque item reste dans
 `a-faire-code.md`, la sécurité dans `faille.md`, les gestes manuels dans `a-faire-manuel.md`.
@@ -103,15 +103,22 @@ une question de droit : détail et la seconde option dans C-65.
 
 ## Synthèse
 
-**57 items ouverts** depuis que la décision du 2026-09-03 en a ajouté un (C-65).
+**58 items ouverts** : les 56 d'origine, plus C-65 (le mécanisme de remboursement) et C-66 (les
+quatre capacités d'équipe sans écran, trouvées en mesurant C-49).
 
 | Urgence | Items | Dont gravité ≥ 4 | Nature dominante du coût |
 |---|---|---|---|
 | 🔴 **P0** | 3 | 3 | Destruction irréversible, promesse non tenable |
-| 🟠 **P1** | 14 | 9 | Revenu, rétention, facture d'infrastructure |
-| 🟡 **P2** | 23 | 5 | Conformité opposable, qualité perçue |
-| ⚪ **P3** | 17 | 0 | Dette, décisions à écrire |
+| 🟠 **P1** | 13 | 9 | Revenu, rétention, facture d'infrastructure |
+| 🟡 **P2** | 24 | 5 | Conformité opposable, qualité perçue |
+| ⚪ **P3** | 18 | 0 | Dette, décisions à écrire |
 | ✅ clos | 8 | . | . |
+
+> 🟢 **27 arbitrages ont été tranchés le 2026-09-03** et sont écrits au §0 de
+> [`a-faire-code.md`](./a-faire-code.md). Ils ne changent pas les cotations, à une exception près :
+> **C-04 tombe de 20 à 2**, parce qu'Axel a choisi de supprimer le mur-pub et les jetons plutôt que
+> de les réparer. C'est le seul risque de ce tableau qu'on ferme en retirant du produit au lieu d'y
+> ajouter du code.
 
 ---
 
@@ -138,7 +145,6 @@ découvre par une table vide, ou par quelqu'un qui réclame ce qu'on lui a promi
 
 | Item | Défaut | G | E | Risque | Combien de gens | Ce que la charge change |
 |---|---|---|---|---|---|---|
-| **C-04** | Le mur-pub Habitudes ne consomme pas de jeton : il est piloté par un flag `localStorage` daté | 4 | 5 | **20** | **10 000 gratuits** | À 0 client c'était « inoffensif tant que `PREMIUM_ENFORCED` vaut `false` ». Drapeau armé, c'est un **contournement de paywall en un clic** : vider son stockage local retire le mur définitivement, et un jeton crédité ne sert à rien. Fuite de revenu directe, sur la seule mécanique de monétisation des comptes gratuits. |
 | **C-47** | La suite de tests rend des échecs **faux** sous charge, indistinguables des vrais | 4 | 5 | **20** | tous, indirectement | C'est la garde dont dépendent toutes les autres. Le réflexe qu'elle installe, « c'est la contention, je rejoue », est celui qui expédiera une régression vers 11 000 comptes. |
 | **C-34** | `renewal-notice.yml` sort en **vert** quand son secret est absent, donc l'avis quotidien de reconduction n'est **jamais** parti | 3 | 5 | **15** | **1 000 payants**, à chaque anniversaire | 🟢 Descend de 25 grâce à la décision du 2026-09-03 : le remède de L215-1 est servi d'avance, donc la sanction est désamorcée. **L'obligation d'envoyer l'avis, elle, demeure**, et une garde qui sort en vert sur une obligation quotidienne non tenue reste le motif exact retiré d'`uptime.yml` le même jour. Redevient P0 si l'annuel part sur l'option (b) de C-65. |
 | **C-28** | Le canal d'alerte d'ops est inerte : le secret Actions n'existe pas | 4 | 4 | **16** | tous | À 27 utilisateurs, apprendre un incident avec quatre jours de retard était embarrassant. À 11 000, c'est l'écart entre « détecté par la garde » et « détecté par les clients ». Le précédent est documenté : quatre jours sans lecture pendant qu'un script tiers exfiltrait email et nom. |
@@ -160,6 +166,7 @@ découvre par une table vide, ou par quelqu'un qui réclame ce qu'on lui a promi
 | Item | Défaut | G | E | Risque | Ce que la charge change |
 |---|---|---|---|---|---|
 | **C-62** | Une centaine de messages d'erreur atteignent l'écran sans passer par aucun catalogue | 3 | 5 | **15** | Des centaines d'échecs de mutation par jour à cette taille. « Impossible de créer le lien : localStorage is not defined » devient une phrase que des gens lisent vraiment. |
+| **C-66** | Quatre capacités d'équipe ont leur back-end, leur permission et leur trigger, et aucun écran | 3 | 3 | **9** | 🆕 Trouvé le 2026-09-03 en mesurant C-49. Un projet d'équipe ne peut pas être archivé, un OKR d'équipe pas modifié, une catégorie d'équipe ni renommée ni supprimée. Rien ne casse, personne ne voit d'erreur : c'est un trou de parcours, invisible à la relecture puisque le code du chemin existe |
 | **C-30** | `renewal_notices` et `withdrawal_consents` en `ON DELETE CASCADE` : supprimer un compte détruit ses propres preuves | 3 | 3 | **9** | 🟢 Descend de 15. Une preuve sert à gagner une discussion, et la décision du 2026-09-03 supprime la discussion : on rembourse sans demander pourquoi. Reste que ces tables sont décrites partout comme des pièces à produire, que la destruction est **irréversible**, et que la migration `SET NULL` est du travail d'une heure |
 | **C-36** | `report-bug` et `renewal-notice` n'ont aucune garde, d'aucune sorte | 4 | 3 | **12** | Ces deux fonctions portent désormais une obligation légale quotidienne. C'est le corollaire direct de C-34 et C-35 : sans garde, le défaut revient. |
 | **C-27** | Les parcours livrés en septembre n'ont aucun test E2E | 3 | 4 | **12** | Onboarding, calendrier et dépendances de tâches sans filet de bout en bout. Une régression sur l'onboarding se paie maintenant en inscriptions. |
@@ -204,6 +211,7 @@ découvre par une table vide, ou par quelqu'un qui réclame ce qu'on lui a promi
 | **C-10** | Deux primitives livrées sans aucun consommateur | 2 | 2 | **4** | Adoptées et vérifiées sur un écran réel, ou supprimées |
 | **C-11** | Le picker natif n'a pas de garde de non-régression | 2 | 2 | **4** | Une garde qui compte les `input[type=date]` et n'autorise que les deux d'`EventModalForm` |
 | **C-50** | Quatre fabriques de clés React Query sans donnée depuis la mig. 129 | 2 | 2 | **4** | Suppression, `typecheck` comme preuve |
+| **C-04** | ~~Le mur-pub Habitudes ne consomme pas de jeton~~ · 🟢 le système entier est supprimé | 2 | 1 | **2** | Cotait 20 tant qu on comptait le corriger. Retrait du client, du webhook, du SQL et des textes, dans cet ordre |
 | **C-18** | CVE dev-only (`fast-uri`, `qs`, via `shadcn`) | 1 | 2 | **2** | `npm audit fix` sans `--force`, quand aucune autre session ne travaille dans l'arbre |
 | **C-60** | `useRef<T>()` sans valeur initiale, cassera sous les types React 19 | 1 | 1 | **1** | Dans la PR de bascule React 19, pas avant |
 
@@ -216,7 +224,7 @@ Aucun item ne descend. Voici les onze qui montent le plus, et la raison de chaqu
 | Item | Aujourd'hui | En charge | Ce qui a changé |
 |---|---|---|---|
 | **C-34** | 15 | **25 → 15** | L'avis L215-1 n'a pas de destinataire à 0 client. À 1 000 payants, chaque anniversaire non prévenu est remboursable. Puis la décision du 2026-09-03 le redescend à 15 en servant le remède d'avance |
-| **C-04** | 2 | **20** | « Inoffensif tant que `PREMIUM_ENFORCED` vaut `false` » devient un contournement de paywall pour 10 000 comptes |
+| **C-04** | 2 | **20 → 2** | « Inoffensif tant que `PREMIUM_ENFORCED` vaut `false` » devient un contournement de paywall pour 10 000 comptes. Puis l'arbitrage du 2026-09-03 le ramène à 2 en supprimant la fonctionnalité |
 | **C-30** | 12 | **15 → 9** | Les tables de preuve passent de 0 ligne à des milliers, et chaque suppression de compte en détruit. Puis la décision du 2026-09-03 le redescend à 9 : plus de discussion, donc moins besoin de preuve |
 | **C-05** | 8 | **15** | Une inélégance devient une ligne de facture et un palier Supabase |
 | **C-62** | 12 | **15** | Une centaine de phrases fausses × des centaines d'échecs par jour |

@@ -37,11 +37,72 @@ ne vive à deux endroits.
 
 ---
 
+## 0. Arbitrages tranchés le 2026-09-03
+
+**27 décisions d'Axel**, prises en une passe sur les items qui en attendaient une. Elles ne
+remplacent pas les items : elles disent **quelle branche** exécuter, et chaque item garde son « fini
+quand ». Une décision écrite ici fait foi contre une piste écrite dans l'item avant elle.
+
+> 🔴 **Ce qu'un arbitrage ne dit pas.** Aucune de ces lignes n'est un statut. Elles ne disent ni que
+> c'est fait, ni que c'est commencé. Elles ferment une question, ce qui est exactement ce qui
+> manquait : le dépôt porte trois arbitrages ouverts depuis plus d'une semaine, et un arbitrage qui
+> ne se rend pas devient un oubli.
+
+### Ce qu'on SORT du produit
+
+| Item | Décision | Comment |
+|---|---|---|
+| **C-04** | 🗑️ **Supprimer le système de jetons premium et le mur-pub Habitudes.** « Ce système est une archive du passé » | Retirer `HabitsAdGate`, `useDailyAdGate`, `addTokens`, les champs `premiumTokens` / `premiumWinStreak` / `lastTokenConsumption` du type `User`, et les deux RPC `consume_premium_token` / `credit_premium_token_from_ad`. ⚠️ `bump_win_streak` est appelée par `stripe-webhook` : la retirer du webhook **avant** de toucher au SQL. Les Habitudes deviennent gratuites pour tous, la monétisation ne repose plus que sur l'abonnement |
+| **C-49** | 🗑️ **Supprimer 42 des 46 hooks orphelins** | Les 29 sélecteurs purs (`hooks.derived.ts` et `useMemo`), les 12 lecteurs à l'unité **avec leurs méthodes de repository** (`getById` n'a aucun autre appelant, mesuré), et `useCreateKRCompletion`, qui est un INSERT client libre dans un journal append-only que ce fichier interdit par ailleurs. `npm run typecheck` est la preuve qu'aucun n'était appelé |
+| **C-49** | 🗑️ **Supprimer les 6 hooks d'étiquettes d'équipe, garder la table** | Une fonctionnalité entière sans écran. La table reste : un `DROP TABLE` est irréversible et une table vide ne coûte rien |
+| **C-10** | 🗑️ **Supprimer `MobileScreen` et `ListRow`** | Deux primitives jamais éprouvées. Si le besoin revient, elles se réécriront contre un écran réel, seule façon de les éprouver |
+
+### Ce qu'on GARDE, en l'écrivant
+
+| Item | Décision | Ce qui est acté |
+|---|---|---|
+| **C-03** | ❄️ **Geler les clés de `habits.completions` en date machine** | Migrer supposerait de savoir dans quel fuseau était chaque personne chaque jour, ce que la base ne sait pas, et décalerait des séries que les gens ont construites. À écrire dans `CLAUDE.md` et `docs/ARCHITECTURE.md` |
+| **C-09** | ❄️ **Geler le cliquet des gros fichiers** | Le budget ne bouge plus, donc rien n'empire, et un fichier se découpe quand on a de toute façon à le modifier. Fin des coupes à la ligne près que la garde provoquait |
+| **C-54** | ❄️ **Le bouton « Nouveau » EST le chemin clavier de l'agenda** | On ajoute le lien d'évitement qui manque (38 tabulations aujourd'hui) et la décision part dans `ACCESSIBILITY.md`. Le motif grille de FullCalendar n'est pas adopté |
+
+### Comment corriger, quand plusieurs voies existaient
+
+| Item | Décision | Comment |
+|---|---|---|
+| **C-65** | **Annuel remboursé au prorata des mois non consommés** | Transposition littérale de la règle mensuelle. Referme l'exposition annuelle en entier, donc C-34 reste en P1 |
+| **C-39** | **Propriétaire seul, et la suppression résilie et rembourse** | La RPC `delete_organization` exige le propriétaire, et le chemin de suppression appelle celui de C-65 : on résilie, on rembourse la période en cours, puis on supprime. Un seul geste, aucun débit orphelin |
+| **C-53** | **Un hook unique, les surfaces avec saisie d'abord** | `useModalA11y` porte le piège de focus, la restitution au déclencheur, Échap et `role="dialog" aria-modal="true"`. Ordre : `EventModal`, `HabitModal`, les feuilles mobiles, puis le reste des 58. Radix n'est PAS généralisé |
+| **C-23 · C-25** | **Les deux tokens changent, puis la gate passe en `serious`** | `--color-error` → `red-600` (4,83:1, calculé), et le bleu de marque à une teinte conforme. ⚠️ Le bleu porte l'identité visuelle : la nouvelle teinte se choisit à l'œil sur la landing avant d'être posée en token |
+| **C-57** | **`TouchTarget` sur les trois routes fautives** | Cases à cocher de `/dashboard` et `/entreprise` à 44 px de zone tactile (l'icône reste petite), les 42 boutons d'`/okr` de 40 à 44. Puis une garde compte les commandes sous la cible |
+| **C-41 · C-42 · C-43** | **Toast « Annuler » partout, et le libellé dit combien** | Les trois modales `add-to-list` passent par le flux de `TasksPage` (à extraire), `useRestoreEvent` sert les événements liés, et il faut écrire un `useRestoreComment` |
+| **C-62** | **Fermer le tuyau, pas seulement traduire** | Les refus des repositories deviennent des identifiants métier catalogués, comme les `RAISE` du SQL ; `{{message}}` ne reçoit plus que du texte de catalogue ; une garde le verrouille avec son témoin |
+| **C-46** | **Les écritures se classent avant d'être recâblées** | Silencieux pour une préférence d'affichage, **signalé** pour une donnée que la personne vient de créer. Les lectures, elles, sont du câblage direct sur `safe-json.ts` |
+| **C-12** | **Couper la chorégraphie GSAP sous la ligne de flottaison** | Le hero est déjà en CSS pur. On allège ou retire les `ScrollTrigger` des sections basses, qui coûtent au chargement sans être vues. Mesure de sortie : `/` au-dessus de 90 en CI, deux passes |
+| **C-13 · C-14** | **Différer Sentry après le premier rendu** | 49,3 ko sortent du chemin critique, soit quatre fois la marge actuelle. 🔴 **Angle mort créé, à combler dans la même PR** : les erreurs des premières millisecondes ne seraient plus capturées, et c'est exactement la fenêtre du bug de `Layout` du 2026-09-03. Poser un `window.onerror` minimal qui tamponne, et rejouer le tampon dans Sentry une fois chargé |
+| **C-06** | **Une règle ESLint qui exige le commentaire** | Chaque `eslint-disable exhaustive-deps` doit dire pourquoi la dépendance manquante ne peut pas périmer la valeur. Le nombre ne remonte plus, les injustifiables partent en passant |
+| **C-47** | **Borner la concurrence de vitest** | `maxForks` / `maxThreads` plafonnés plutôt que de laisser saturer une machine à plusieurs sessions, plus un `testTimeout` réaliste. Sortie : dix runs consécutifs, même verdict, machine chargée comprise |
+| **C-38** | **Corriger les deux angles morts, avec témoin** | Le détecteur cesse de jeter ce qui suit un deux-points de ternaire (`CODE_QUOTING`), le vocabulaire s'ouvre, une sonde refuse un scanner qui ne détecterait plus rien. ⚠️ À coordonner : une autre session modifie `scripts/i18n-scan.mjs` |
+| **C-31** | **Plafond serveur par IP et par compte, fenêtre glissante** | Ordre de grandeur retenu : 3 rapports / heure / compte, 10 / jour / IP. Un test montre la borne rouge avant d'être verte. Le CAPTCHA n'est pas retenu : il ne protège pas d'un appel direct à la fonction |
+| **C-02** | **Mesurer en prod, puis copier le flux personnel** | Compter combien d'OKR d'équipe visent une catégorie et combien sont déjà orphelins, puis réaffecter **avant** de supprimer, comme `categoryImpact()`. L'ordre est verrouillé par un test |
+| **C-27** | **Les trois parcours, plus celui du remboursement** | `FirstRunSetup`, le calendrier COSMO, les dépendances de tâches personnelles. Et C-65 touche de l'argent : il ne part pas sans son parcours E2E |
+| **C-18** | **Corriger maintenant**, quand aucune autre session ne travaille dans l'arbre | `npm audit fix` sans `--force`, montée de `shadcn` à 4.20.1, puis les cinq gates rejouées derrière |
+| **C-15 · C-16** | **Mesurer la concurrence avant de paginer quoi que ce soit** | Sans elle, toute décision de pagination est un pari : on ne sait pas si le coût vient du volume par compte (289 tâches au maximum mesuré) ou du nombre de sessions simultanées |
+
+### Les deux chantiers lourds acceptés
+
+| Item | Décision | Ce que ça engage |
+|---|---|---|
+| **C-20** | ✅ **Traduire les 15 pages éditoriales et ouvrir l'anglais à l'indexation** | 11 articles de blog et 4 pages cas d'usage prennent une dimension de locale, puis `en` entre dans `INDEXABLE_LOCALES` en suivant `docs/SEO.md`. ❌ Ne jamais ouvrir la locale avant le contenu. Engage aussi la **maintenance** de deux versions de chaque article |
+| **C-58 · C-19 · C-60** | ✅ **Migrer vers React 19 et `react-router` 8, maintenant** | Ce n'est plus une urgence sécurité (la CVE est fermée sous React 18 depuis le 2026-07-28), c'est un choix de fond : `ref` devient une prop ordinaire, donc la classe de bug qui a coûté `Button` puis `Input`, **silencieuse par construction**, disparaît. C-60 se règle dans la même PR. ⚠️ Chantier L à séquencer **après les P0**, sur une branche, avec la suite E2E derrière. Chiffrage : `docs/MIGRATION-REACT19.md` |
+
+---
+
 ## Sommaire
 
 | § | Domaine | Items |
 |---|---|---|
-| [1](#1-défauts-fonctionnels-connus) | Défauts fonctionnels connus | C-01 → C-08, C-37, C-40 → C-43, C-48, C-56, C-65 |
+| [0](#0-arbitrages-tranchés-le-2026-09-03) | 🟢 **Arbitrages tranchés** | 27 décisions du 2026-09-03 |
+| [1](#1-défauts-fonctionnels-connus) | Défauts fonctionnels connus | C-01 → C-08, C-37, C-40 → C-43, C-48, C-56, C-65, C-66 |
 | [2](#2-dette-structurelle) | Dette structurelle | C-09 → C-11, C-49, C-50 |
 | [3](#3-performance) | Performance | C-12 → C-14 |
 | [4](#4-scalabilité) | Scalabilité | C-15 → C-16 |
@@ -97,15 +158,38 @@ découpées autrement que ses échéances, sur le même écran.
 - **Fini quand** : une décision écrite (migrer, ou geler et documenter), et si migration, une
   vérification acteur par acteur dans une transaction annulée, comme les mig. 130 à 135.
 
-### C-04 · Le mur-pub Habitudes ne consomme pas de jeton · **P2 · S**
+### C-04 · Supprimer le système de jetons premium et le mur-pub Habitudes · **P2 · M** · 🟢 arbitré le 2026-09-03
 
-`consume_premium_token` n'est **pas câblé côté client** : le mur est piloté par un flag localStorage
-daté (`useDailyAdGate('habits')`), pas par le solde de jetons. Inoffensif aujourd'hui
-(`PREMIUM_ENFORCED = false`), **c'est un bug le jour où le drapeau passe à `true`** : un utilisateur
-qui vide son localStorage ne voit plus jamais le mur, et un jeton crédité ne sert à rien.
+**Le défaut d'origine** : `consume_premium_token` n'est pas câblé côté client, le mur est piloté par
+un flag `localStorage` daté (`useDailyAdGate('habits')`) et non par le solde de jetons. Inoffensif
+tant que `PREMIUM_ENFORCED` vaut `false` ; le jour où le drapeau passe à `true`, c'est un
+**contournement de paywall en une manipulation** pour 10 000 comptes gratuits, et un jeton crédité
+ne sert à rien.
 
-- **Fini quand** : le mur lit et consomme le solde serveur, et un test couvre « jeton consommé, mur
-  masqué » et « localStorage vidé, mur toujours appliqué ».
+🟢 **Décision d'Axel du 2026-09-03 : on ne le câble pas, on le supprime.** *« Ce système est une
+archive du passé, supprime-le afin de ne pas complexifier le code avec des choses inutiles. »* Les
+Habitudes deviennent gratuites pour tout le monde, et la monétisation ne repose plus que sur
+l'abonnement.
+
+**Ce que la suppression emporte, dans cet ordre :**
+
+1. **Le client** : `HabitsAdGate`, `useDailyAdGate` (`src/lib/hooks/use-daily-ad-gate.ts`), la clé
+   `cosmo_adwall_habits`, `addTokens` dans `billing.context`, et les champs `premiumTokens` /
+   `premiumWinStreak` / `lastTokenConsumption` du type `User`. ⚠️ Ces trois champs sont nommés dans
+   les garde-fous de `CLAUDE.md` (règle N5) : la règle disparaît avec eux, elle ne devient pas fausse.
+2. 🔴 **Le webhook AVANT le SQL.** `stripe-webhook` appelle `bump_win_streak`. Retirer la fonction
+   SQL d'abord ferait échouer un event Stripe en production, donc une re-livraison en boucle. On
+   retire l'appel, on redéploie la fonction, **et seulement ensuite** on écrit la migration.
+3. **Le SQL** : `consume_premium_token`, `credit_premium_token_from_ad`, `bump_win_streak`, et les
+   colonnes de `subscriptions` qui ne servent plus qu'à elles. ⚠️ Une colonne se supprime dans une
+   migration numérotée, jamais depuis le dashboard.
+4. **Les textes** : les clés de catalogue du mur-pub, en `fr` et en `en`.
+
+- **Fini quand** : `grep` ne rend plus aucune occurrence de `premiumTokens`, `adwall`,
+  `consume_premium_token` ni `bump_win_streak` dans `src/` et `supabase/`, la migration est
+  appliquée et vérifiée, `stripe-webhook` est redéployée **avant** elle, et `npm run typecheck`
+  passe. ❌ Ne pas retirer `PREMIUM_ENFORCED` au passage : ce drapeau garde les statistiques
+  premium et la route `/premium`, qui ne sont pas dans ce périmètre.
 
 ### C-05 · Le badge d'organisation lit jusqu'à 1 000 tâches d'équipe pour afficher un nombre · **P2 · S**
 
@@ -374,6 +458,32 @@ jusqu'à douze mois. Deux sorties, à trancher :
   couvre les trois : le cas nominal, le rejeu, et la période déjà remboursée. ❌ Ne pas livrer le
   bouton avant la borne : un remboursement rejouable est une perte d'argent, pas un défaut d'UX.
 
+### C-66 · Quatre capacités d'équipe ont leur back-end, leur permission et leur trigger, et aucun écran · **P2 · M**
+
+**Trouvé le 2026-09-03 en mesurant C-49**, et c'est le vrai résultat de cette mesure : sur les 46
+hooks sans consommateur, cinq sont des **mutations**. Un hook de lecture sans écran est du code mort ;
+une mutation sans écran est une **fonctionnalité qui n'a jamais été branchée**.
+
+| Hook orphelin | Ce qui manque au produit | Ce qui existe déjà côté serveur |
+|---|---|---|
+| `useArchiveTeamProject` | **Un projet d'équipe ne peut pas être archivé** | Le droit `project.delete` et le trigger `enforce_team_project_archive_scope`, écrits pour ce geste précis |
+| `useUpdateTeamOKR` | On peut **créer et supprimer** un OKR d'équipe, jamais le **modifier** | `TeamOKRModal` monte `useCreateTeamOKR`, `TeamOKRTab` monte `useDeleteTeamOKR`. Le troisième n'a jamais été monté |
+| `useUpdateTeamCategory` | Une catégorie d'équipe ne peut pas être **renommée** | `TeamCategoryPicker` monte `useCreateTeamCategory` et `useTeamCategories` |
+| `useDeleteTeamCategory` | Une catégorie d'équipe ne peut pas être **supprimée** | idem. Cousin de C-02, qui traite l'impact de la suppression sans qu'aucune suppression existe |
+
+**Comment c'est établi** : recherche des consommateurs de chaque hook dans `src/components` et
+`src/pages`, hors tests et hors barils. `useArchiveTeamProject` rend zéro fichier ; les trois autres
+rendent leurs jumeaux `create` et `delete`, jamais eux-mêmes.
+
+- ⚠️ **Ce n'est pas un bug**, et il ne faut pas le compter comme tel : rien ne casse, personne ne
+  voit d'erreur. C'est un trou de parcours, et il ne se voyait pas parce que le code du chemin
+  existe : à la lecture, tout est là.
+- **Arbitrage rendu le 2026-09-03** (§0) : les 42 autres orphelins sont supprimés, **ces quatre-là
+  ne le sont pas**. Ils deviennent cet item.
+- **Fini quand** : chacun des quatre gestes est atteignable depuis l'interface et vérifié **dans le
+  navigateur**, ou l'un d'eux est explicitement abandonné avec sa raison écrite, son hook supprimé,
+  et sa méthode de repository avec.
+
 ---
 
 ## 2. Dette structurelle
@@ -457,9 +567,19 @@ leur table. Aucun écran ne les monte.
 - **Nuance à ne pas perdre** : quelques-uns sont des **capacités d'interface assumées**, adossées
   à une note écrite (les `getPage` de la pagination, étape 3). Ceux-là se gardent **avec leur
   justification**, jamais par défaut.
-- **Fini quand** : chaque hook est soit adopté par un écran, soit supprimé avec sa clé et sa
-  méthode de repository ; et une garde compte les orphelins pour que le chiffre ne remonte pas.
-  Le balayage doit embarquer son **témoin**, sinon il finira par ne plus rien détecter.
+🟢 **Arbitré le 2026-09-03** (§0), après avoir mesuré que les 52 ne sont pas une population mais
+**quatre** : 6 hooks d'étiquettes d'équipe, **29 sélecteurs purs** (`useMemo` sur une donnée déjà
+chargée, zéro requête, zéro repository touché), **12 lecteurs à l'unité** (qui emportent leur méthode
+de repository, `getById` n'ayant **aucun** autre appelant, vérifié), et **5 mutations sans écran**.
+
+- **48 partent** : les 6 étiquettes, les 29 sélecteurs, les 12 lecteurs avec leurs méthodes dans les
+  **deux** repositories, et `useCreateKRCompletion`, qui est un INSERT client libre dans un journal
+  append-only que ce dépôt interdit par ailleurs. La table des étiquettes, elle, **reste**.
+- **4 restent, et changent de nature** : ce sont des écrans manquants, pas des orphelins. Ils
+  deviennent **C-66**.
+- **Fini quand** : les 48 sont supprimés, `npm run typecheck` confirme qu'aucun n'était appelé, et
+  une garde compte les orphelins pour que le chiffre ne remonte pas. Le balayage doit embarquer son
+  **témoin**, sinon il finira par ne plus rien détecter.
 
 ### C-50 · Quatre fabriques de clés React Query survivent à la mig. 129 sans porter de donnée · **P3 · XS**
 
