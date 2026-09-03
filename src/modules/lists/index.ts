@@ -52,3 +52,6 @@ export {
   useAddTaskToList,
   useRemoveTaskFromList,
 } from './hooks';
+
+// Flux « supprimer avec Annuler » partage par les trois ecrans (C-41).
+export { useDeleteListWithUndo } from './delete-flow.hooks';

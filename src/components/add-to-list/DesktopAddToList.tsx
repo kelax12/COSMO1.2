@@ -7,7 +7,7 @@ import {
   useRemoveTaskFromList,
   useCreateList,
   useUpdateList,
-  useDeleteList,
+  useDeleteListWithUndo,
 } from '@/modules/lists';
 import { AddToListModalProps, resolveColor, InlineForm } from './shared';
 import { useT } from '@/i18n/useT';
@@ -25,7 +25,7 @@ const DesktopAddToList: React.FC<AddToListModalProps> = ({ isOpen, onClose, task
   const removeTaskFromListMutation = useRemoveTaskFromList();
   const createListMutation         = useCreateList();
   const updateListMutation         = useUpdateList();
-  const deleteListMutation         = useDeleteList();
+  const { deleteList }             = useDeleteListWithUndo();
 
   const [creating, setCreating]               = useState(false);
   const [editingId, setEditingId]             = useState<string | null>(null);
@@ -78,10 +78,14 @@ const DesktopAddToList: React.FC<AddToListModalProps> = ({ isOpen, onClose, task
     setEditingId(null);
   };
 
+  // C-41 — passait par `deleteListMutation.mutate(listId)` nu : aucun retour
+  // possible, et le contenu de la liste etait perdu pour de bon. Le meme geste
+  // sur `/tasks` proposait « Annuler » depuis toujours.
   const handleConfirmDelete = (listId: string) => {
-    deleteListMutation.mutate(listId);
+    const list = lists.find((l) => l.id === listId);
     setConfirmDeleteId(null);
     if (editingId === listId) setEditingId(null);
+    if (list) deleteList(list);
   };
 
   return (

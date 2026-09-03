@@ -786,7 +786,11 @@
     "mentionAria": "Mentionner un membre",
     "sendAria": "Envoyer le commentaire",
     "formerMember": "Ancien membre",
-    "saveFirst": "Enregistrez la tâche pour ajouter des commentaires."
+    "saveFirst": "Enregistrez la tâche pour ajouter des commentaires.",
+    "deleteTitle": "Supprimer ce commentaire ?",
+    "deleteBody": "Il disparaitra pour toute l'equipe, et cette suppression est definitive : le fil de commentaires est un journal, il n'a pas de corbeille.",
+    "deleteConfirm": "Supprimer",
+    "deletePending": "Suppression…"
   },
   "leaveDialog": {
     "body": "Vous perdrez immédiatement l'accès aux projets, tâches et OKR de l'équipe. Vos données personnelles (tâches, habitudes, agenda) ne sont pas affectées. Vous pourrez revenir avec un nouveau code d'invitation."
