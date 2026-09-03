@@ -41,12 +41,28 @@ export const lazyWithRetry = <P extends object>(
 ) =>
   lazy(async () => {
     const STORAGE_KEY = 'cosmo:chunk-reload-attempt';
+    // 🔴 `sessionStorage` JETTE dans plusieurs contextes réels : webview, mode
+    // privé de certains navigateurs, cookies tiers bloqués. Sans ces gardes,
+    // l'accès se faisait dans le `try` du chargement : le module arrivait
+    // correctement, puis l'erreur de stockage était relancée telle quelle et
+    // TOUTE page lazy — donc toute l'application — échouait à s'afficher. Le
+    // marqueur anti-boucle est un confort, jamais une condition de rendu.
+    const readFlag = (): string | null => {
+      try { return sessionStorage.getItem(STORAGE_KEY); } catch { return null; }
+    };
+    const writeFlag = () => {
+      try { sessionStorage.setItem(STORAGE_KEY, '1'); } catch { /* stockage indisponible */ }
+    };
+    const clearFlag = () => {
+      try { sessionStorage.removeItem(STORAGE_KEY); } catch { /* stockage indisponible */ }
+    };
+
     try {
       const [mod] = await Promise.all([
         factory(),
         ensureNamespaces(namespaces, localeStore.locale),
       ]);
-      sessionStorage.removeItem(STORAGE_KEY);
+      clearFlag();
       return mod;
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
@@ -55,8 +71,8 @@ export const lazyWithRetry = <P extends object>(
         message.includes('Importing a module script failed') ||
         message.includes('error loading dynamically imported module');
 
-      if (isChunkError && !sessionStorage.getItem(STORAGE_KEY)) {
-        sessionStorage.setItem(STORAGE_KEY, '1');
+      if (isChunkError && !readFlag()) {
+        writeFlag();
         window.location.reload();
         // Promise jamais résolue : la page va recharger.
         return new Promise<{ default: ComponentType<P> }>(() => {});

@@ -12,6 +12,21 @@
 // promo » dans la page Stripe. Les codes sont créés et administrés depuis le
 // dashboard Stripe ; COSMO n'en valide aucun et n'en recalcule aucun montant,
 // donc aucune surface de brute-force n'est ouverte de notre côté.
+//
+// 🔴 ORDRE DE DÉPLOIEMENT — LIRE AVANT DE DÉPLOYER CETTE FONCTION
+//
+//   1. appliquer `supabase/migration/135_withdrawal_consents.sql` ;
+//   2. seulement ensuite, `supabase functions deploy stripe-org-checkout`.
+//
+// Cette fonction refuse TOUTE session de paiement tant que la table
+// `withdrawal_consents` n'existe pas (finding S-6 : la preuve de renonciation
+// s'écrit AVANT la session, et son échec est bloquant). C'est le bon sens de
+// l'échec — on n'encaisse pas sans pouvoir prouver — mais déployée dans le
+// mauvais ordre, elle coupe l'encaissement en silence côté client : une erreur
+// 500 générique, et rien dans l'écran qui dise pourquoi.
+//
+// L'alerte ops émise dans ce cas NOMME la migration, pour que le diagnostic
+// tienne en une lecture de log plutôt qu'en une enquête.
 // ═══════════════════════════════════════════════════════════════════
 import Stripe from 'npm:stripe@14.21.0'
 import { createClient } from 'npm:@supabase/supabase-js@2'
@@ -243,9 +258,15 @@ Deno.serve(async (req) => {
     })
     if (consentError) {
       console.error('withdrawal_consents insert error:', consentError)
+      // Le message NOMME la cause la plus probable : la table n'existe pas
+      // parce que la fonction a ete deployee avant la migration 135. Une
+      // alerte qui dit seulement « echec » fait recommencer l'enquete.
+      const missingTable = (consentError as { code?: string }).code === '42P01'
       await opsAlert(
         'stripe-org-checkout',
-        'preuve de renonciation au droit de retractation NON enregistree — session de paiement refusee',
+        missingTable
+          ? 'table withdrawal_consents ABSENTE — appliquer supabase/migration/135_withdrawal_consents.sql, la fonction a ete deployee avant sa migration. Aucun paiement ne peut aboutir d ici la.'
+          : 'preuve de renonciation au droit de retractation NON enregistree — session de paiement refusee',
       )
       return json({ error: 'Internal server error' }, 500)
     }

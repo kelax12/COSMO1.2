@@ -3,6 +3,7 @@
 // et TaskRow (desktop). Aucune logique métier (filtrage/tri = task-filtering.ts).
 // ═══════════════════════════════════════════════════════════════════
 import { format } from 'date-fns';
+import { translator } from '@/i18n/useT';
 // Alias : ce module exporte déjà son propre `formatDate` (helper métier qui
 // accepte une chaîne et gère l'absence de date).
 import { formatDate as formatDateIntl, getDateLocale } from '@/i18n/format';
@@ -34,10 +35,14 @@ export const formatDeadlineSmart = (dateString: string | undefined): string => {
   // minuits calculés en heure machine : « Aujourd'hui » s'affichait « Hier »
   // pour tout décalage négatif (risque R-01).
   const diffDays = daysUntilDeadline(dateString);
-  if (diffDays === 0) return "Aujourd'hui";
-  if (diffDays === 1) return 'Demain';
-  if (diffDays === -1) return 'Hier';
-  if (diffDays < 0 && diffDays > -7) return `il y a ${-diffDays} j`;
+  // Ce module lit DEJA la locale active (`getDateLocale`, `formatDateIntl`) :
+  // ces quatre libelles etaient les seuls a rester en francais au milieu d'une
+  // fonction par ailleurs traduite.
+  const { t } = translator('common');
+  if (diffDays === 0) return t('relativeDay.today');
+  if (diffDays === 1) return t('relativeDay.tomorrow');
+  if (diffDays === -1) return t('relativeDay.yesterday');
+  if (diffDays < 0 && diffDays > -7) return t('relativeDay.daysAgo', { count: -diffDays });
   // 2–6 jours : jour de la semaine, sans ambiguïté dans cette fenêtre.
   if (diffDays > 1 && diffDays < 7) {
     return format(dayKeyToLocalDate(deadlineDayKey(dateString)), 'EEEE', { locale: getDateLocale() });

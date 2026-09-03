@@ -23,8 +23,20 @@ export interface PyramidNode {
    * via le même deep-link `?member=&memberTab=` que la pyramide réelle.
    */
   demoUserId: string;
-  /** Nom affiché, identique au seed démo. */
-  name: string;
+  /**
+   * Nom propre affiché, identique au seed démo. ABSENT sur la racine, dont le
+   * « nom » est un pronom : voir `nameKey`. Passer par {@link nodeName}, jamais
+   * lire l'un des deux champs directement.
+   */
+  name?: string;
+  /**
+   * Clé de catalogue quand le « nom » n'est PAS un nom propre.
+   *
+   * Seule la racine est concernée : « Vous » est un pronom, il se traduit ;
+   * « Marie Dupont » est un nom propre, il ne se traduit pas. C'est la
+   * distinction que le libellé en dur écrasait.
+   */
+  nameKey?: KeyOf<'landing'>;
   /** Initiales de l'avatar, comme dans l'application. */
   initials: string;
   /** Classes Tailwind de l'avatar, reprises des couleurs de l'app. */
@@ -55,7 +67,9 @@ export const PYRAMID_NODES: PyramidNode[] = [
   {
     id: 'vous',
     demoUserId: 'demo-user',
-    name: 'Vous',
+    // Seul noeud dont le nom est un PRONOM et non un nom propre : les autres
+    // ne se traduisent pas, celui-ci si.
+    nameKey: 'enterprise.pyramid.nameYou',
     initials: 'V',
     avatarClass: 'bg-emerald-500',
     roleKey: 'enterprise.pyramid.roleAdmin',
@@ -212,3 +226,14 @@ export const ENTERPRISE_FAQ = Array.from({ length: 5 }, (_, i) => {
     answerKey: `enterprise.faq.a${n}${free ? 'Free' : ''}` as KeyOf<'landing'>,
   };
 });
+
+/**
+ * Nom affiché d'un nœud de la pyramide.
+ *
+ * Un nom PROPRE ne se traduit pas, un PRONOM si. Ce helper est le seul chemin :
+ * lire `node.name` directement rendait « Vous » en français à un anglophone.
+ */
+export const nodeName = (
+  node: PyramidNode,
+  t: (key: KeyOf<'landing'>) => string,
+): string => (node.nameKey ? t(node.nameKey) : node.name ?? '');

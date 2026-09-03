@@ -221,12 +221,6 @@ export function daysBetweenKeys(from: string, to: string): number {
   return Math.round((tb - ta) / DAY_MS);
 }
 
-/** Libellé court du fuseau actif (ex. « UTC+2 », « UTC-5 » ou « Heure locale »). */
-export function timezoneLabel(pref: TimezonePref): string {
-  if (pref.mode !== 'manual') return 'Heure locale';
-  const sign = pref.offsetHours < 0 ? '-' : '+';
-  return `UTC${sign}${Math.abs(pref.offsetHours)}`;
-}
 
 // ── Store (useSyncExternalStore, backed by localStorage, cross-tab) ────
 

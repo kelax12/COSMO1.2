@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
+import { normalizeApiError } from '@/lib/normalizeApiError';
 import { billingRepository } from './billing.repository';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { isPremiumSubscription } from './subscription.logic';
@@ -77,7 +78,10 @@ export const BillingProvider: React.FC<{ children: React.ReactNode }> = ({ child
         throw new Error('Client-side token credit is limited to +1 per call (use Stripe Checkout)');
       }
       const { error } = await supabase.rpc('credit_premium_token_from_ad');
-      if (error) throw error;
+      // `throw error` relançait l'objet PostgREST brut : ni une `Error`, donc
+      // invisible pour Sentry et pour la garde de retry, ni un message
+      // traduit. Toute erreur d'API du produit passe par `normalizeApiError`.
+      if (error) throw normalizeApiError(error);
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: billingKeys.subscription }),
   });

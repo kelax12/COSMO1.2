@@ -196,7 +196,9 @@
     "okrProgressTitle": "OKR progress",
     "overdueByMember": "Overdue by member",
     "csvProject": "Project",
-    "loading": "Loading statistics…"
+    "loading": "Loading statistics…",
+    "periodDays": "{{count}}d",
+    "periodAll": "All"
   },
   "myWork": {
     "upToDate": "Up to date",

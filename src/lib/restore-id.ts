@@ -56,6 +56,10 @@
 // des complétions, donc pas les points du graphique « KR réalisés ». Seule une
 // suppression logique le permettrait. C'est documenté à l'appel concerné.
 
+import * as Sentry from '@sentry/react';
+import { toast } from 'sonner';
+import { translator } from '@/i18n/useT';
+
 /** Options de création. Le champ n'est renseigné que par une restauration. */
 export interface CreateOptions {
   /**
@@ -79,4 +83,55 @@ export function splitRestore<T extends { id: string }>(
 ): { payload: Omit<T, 'id'>; options: CreateOptions } {
   const { id, ...payload } = snapshot;
   return { payload, options: { restoreId: id } };
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// QUAND « ANNULER » ÉCHOUE
+// ═══════════════════════════════════════════════════════════════════
+//
+// 🔴 POURQUOI (revue du 2026-09-02). Les cinq `useRestoreX` avaient tous le
+// même `onError` :
+//
+//     onError: (error: Error) => { console.error('[useRestoreX]', error); }
+//
+// Or `console.error` est listé dans `esbuild.pure` (`vite.config.ts`) : l'appel
+// est SUPPRIMÉ du bundle de production. En production, une restauration ratée
+// ne produisait donc strictement rien — pas de toast, pas de log, pas de
+// Sentry. L'utilisateur cliquait « Annuler », voyait le toast se fermer, et
+// repartait en croyant son objet revenu. Il ne l'était pas.
+//
+// C'est le pire endroit du produit pour un échec muet : l'utilisateur vient
+// justement de dire qu'il ne voulait PAS supprimer.
+//
+// ❌ Ne jamais confier un chemin d'erreur à `console.*` : la production le
+//    supprime. Un toast pour la personne, Sentry pour nous.
+
+/** Entité restaurable — sert à choisir le message et à étiqueter l'alerte. */
+export type RestorableEntity = 'task' | 'category' | 'list' | 'event' | 'okr';
+
+/** Clé de catalogue (namespace `errors`) par entité. */
+const RESTORE_ERROR_KEYS = {
+  task: 'mutation.restoreTask',
+  category: 'mutation.restoreCategory',
+  list: 'mutation.restoreList',
+  event: 'mutation.restoreEvent',
+  okr: 'mutation.restoreOkr',
+} as const satisfies Record<RestorableEntity, string>;
+
+/**
+ * `onError` partagé des cinq hooks de restauration : prévient la personne ET
+ * l'équipe.
+ *
+ * Le message vient du catalogue, jamais d'une phrase en dur : c'est un toast,
+ * donc de l'interface. `error.message` est celui d'`ApiError`, déjà résolu
+ * depuis le catalogue et sûr à afficher (jamais le texte serveur, faille V7/N1).
+ */
+export function reportRestoreFailure(entity: RestorableEntity, error: Error): void {
+  toast.error(
+    translator('errors').t(RESTORE_ERROR_KEYS[entity], { message: error.message }),
+  );
+  Sentry.captureException(error, {
+    level: 'error',
+    tags: { context: 'restore-undo', restore_entity: entity },
+  });
 }

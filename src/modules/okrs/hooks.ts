@@ -14,7 +14,7 @@ import { krCompletionKeys } from '@/modules/kr-completions/constants';
 import { validateAsync } from '@/lib/validation/lazy';
 import { translator } from '@/i18n/useT';
 import { recordDemoCreationIfDemo } from '@/lib/demo-engagement';
-import { splitRestore } from '@/lib/restore-id';
+import { reportRestoreFailure, splitRestore } from '@/lib/restore-id';
 
 // ═══════════════════════════════════════════════════════════════════
 // REPOSITORY - Via centralized factory (demo/production mode)
@@ -358,8 +358,8 @@ export const useRestoreOkr = () => {
     onSuccess: () => {
       invalidateAllOKRQueries(queryClient);
     },
-    onError: (error: Error) => {
-      console.error('[useRestoreOkr]', error);
-    },
+    // Un « Annuler » rate doit se VOIR : `console.error` est supprime du
+    // bundle de production (vite.config.ts), l'echec etait donc muet.
+    onError: (error: Error) => reportRestoreFailure('okr', error),
   });
 };

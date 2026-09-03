@@ -177,7 +177,18 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 
   const supabaseUid = session.metadata?.supabase_uid
   if (!supabaseUid) {
+    // Un paiement encaissé dont on ne sait pas à qui l'appliquer. Le `return`
+    // seul faisait écrire le marqueur d'idempotence : Stripe ne re-livrait
+    // jamais, et rien nulle part ne le disait. On ALERTE, puis on rend la main.
+    //
+    // Pas de `throw` : une metadata absente est déterministe, un rejeu de
+    // Stripe échouerait identiquement pendant trois jours pour rien. Ce qui
+    // manquait, c'est quelqu'un qui l'apprenne.
     console.error('checkout.session.completed: missing supabase_uid in metadata')
+    await opsAlert(
+      'stripe-webhook',
+      `checkout.session.completed sans supabase_uid (session ${session.id}) — paiement encaisse, abonnement NON applique, reprise manuelle requise`,
+    )
     return
   }
 
@@ -206,16 +217,31 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
   const uid = await getUidFromCustomer(subscription.customer as string)
   if (!uid) return
 
-  await supabaseAdmin
+  // Même garde asymétrique que côté organisation (finding S-5), qui n'existait
+  // que là : un event qui DÉGRADE ne s'applique qu'à l'abonnement ENREGISTRÉ.
+  //
+  // Sans le filtre, le scénario « résiliation puis réabonnement » ramène le
+  // compte au gratuit : le `customer.subscription.deleted` de l'ANCIEN
+  // abonnement peut être livré APRÈS le `checkout.session.completed` du
+  // nouveau, et l'écriture ne portait que sur `user_id`. Le client venait de
+  // repayer et perdait son premium, sans que rien ne le signale.
+  //
+  // ⚠️ `stripe_subscription_id` sort du payload : on ne peut pas à la fois
+  // filtrer sur une colonne et la réécrire. Elle vaut déjà `subscription.id`
+  // dans la seule ligne que ce filtre peut atteindre.
+  const { error } = await supabaseAdmin
     .from('subscriptions')
     .update({
       plan: 'free',
       status: 'cancelled',
       current_period_end: null,
       premium_tokens: 0,
-      stripe_subscription_id: subscription.id,
     })
     .eq('user_id', uid)
+    .eq('stripe_subscription_id', subscription.id)
+  // Une lecture/écriture en panne ne doit pas passer pour « rien à faire » :
+  // on relance, Stripe re-livre. En cas de doute, faire retenter Stripe.
+  if (error) throw error
 }
 
 /**
@@ -317,10 +343,23 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
   const uid = await getUidFromCustomer(invoice.customer as string)
   if (!uid) return
 
-  await supabaseAdmin
+  // Même garde que `handleSubscriptionDeleted` (finding S-5) : une facture
+  // impayée d'un abonnement ABANDONNÉ ne doit pas passer en `expired` celui
+  // qui vient d'être souscrit. Une facture de cycle porte toujours son
+  // abonnement ; sans lui, on ne sait pas de quoi l'event parle, et on ne
+  // dégrade rien plutôt que de dégrader au hasard.
+  const subscriptionId = invoice.subscription
+  if (typeof subscriptionId !== 'string') {
+    console.error('invoice.payment_failed: no subscription on invoice, skipping downgrade')
+    return
+  }
+
+  const { error } = await supabaseAdmin
     .from('subscriptions')
     .update({ status: 'expired' })
     .eq('user_id', uid)
+    .eq('stripe_subscription_id', subscriptionId)
+  if (error) throw error
 }
 
 // ─── Persistence ───────────────────────────────────────────────────
@@ -492,7 +531,16 @@ async function handleOrgCheckoutCompleted(session: Stripe.Checkout.Session) {
   if (session.mode !== 'subscription' || !session.subscription) return
 
   const orgId = session.metadata?.org_id
-  if (!orgId) return
+  if (!orgId) {
+    // Même raisonnement que côté particulier : ce handler n'est atteint QUE
+    // parce que le routage a lu `org_id`, donc son absence ici est une
+    // incohérence, pas un cas nominal. Elle ne doit pas disparaître.
+    await opsAlert(
+      'stripe-webhook',
+      `org checkout.session.completed sans org_id (session ${session.id}) — paiement encaisse, palier NON applique`,
+    )
+    return
+  }
 
   const subscription = await stripe.subscriptions.retrieve(session.subscription as string)
 

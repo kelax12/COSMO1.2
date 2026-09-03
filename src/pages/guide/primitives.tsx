@@ -5,6 +5,7 @@
 // ═══════════════════════════════════════════════════════════════════
 import React, { useEffect } from 'react';
 import { currentInLanguage } from '@/lib/useSeoMeta';
+import { useT } from '@/i18n/useT';
 import type { KeyOf } from '@/i18n/catalog';
 import {
   CheckSquare, Calendar, Repeat, Target, BarChart2,
@@ -94,6 +95,9 @@ export const SectionHeader: React.FC<{ id: SectionId; icon: React.ReactNode; col
 // ─── SEO schemas (JSON-LD) ────────────────────────────────────────────
 
 export function useGuideSchemas() {
+  // Le schema JSON-LD porte du texte INDEXE : il doit suivre la langue servie,
+  // comme les balises meta. Il etait ecrit en dur en francais.
+  const { t: guideT } = useT('seo');
   useEffect(() => {
     // Pages pré-rendues (prerender.mjs) : les schémas sont déjà en statique
     // dans le <head>. Ne pas dupliquer côté client.
@@ -109,8 +113,8 @@ export function useGuideSchemas() {
     const article = {
       '@context': 'https://schema.org',
       '@type': 'TechArticle',
-      headline: "Guide d'utilisation Cosmo – Tâches, habitudes, OKR et agenda",
-      description: "Guide complet pour utiliser Cosmo : gestion de tâches, suivi d'habitudes avec heatmap, agenda time-blocking et méthode OKR.",
+      headline: guideT('guide.title'),
+      description: guideT('guide.articleDescription'),
       url: 'https://thecosmo.app/guide',
       inLanguage: currentInLanguage(),
       datePublished: '2025-01-01',
@@ -137,5 +141,5 @@ export function useGuideSchemas() {
       document.getElementById('guide-breadcrumb')?.remove();
       document.getElementById('guide-article')?.remove();
     };
-  }, []);
+  }, [guideT]);
 }

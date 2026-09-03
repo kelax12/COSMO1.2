@@ -3,6 +3,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { CalendarEvent, CreateEventInput, UpdateEventInput, EventFilters } from './types';
+import { safeGetItem, safeParseArray } from '@/lib/safe-json';
 import { EVENTS_STORAGE_KEY } from './constants';
 import { PaginationParams, PaginatedResult, DEFAULT_PAGE_SIZE } from '@/lib/pagination.types';
 import { selectEventsInWindow } from './window';
@@ -203,12 +204,14 @@ export class LocalStorageEventsRepository implements IEventsRepository {
    * Get all events from localStorage (or initialize with demo data)
    */
   private getEvents(): CalendarEvent[] {
-    const data = localStorage.getItem(EVENTS_STORAGE_KEY);
-    if (!data) {
+    const stored = safeParseArray<CalendarEvent>(safeGetItem(EVENTS_STORAGE_KEY));
+    // Corrompu ou stockage indisponible : on re-seme plutot que de faire
+    // tomber la page (regle B14, helper `safeParseArray`).
+    if (!stored) {
       this.saveEvents(DEMO_EVENTS);
       return DEMO_EVENTS;
     }
-    return JSON.parse(data);
+    return stored;
   }
 
   /**

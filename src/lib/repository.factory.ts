@@ -47,22 +47,18 @@ import { SupabaseKRCompletionsRepository } from '@/modules/kr-completions/supaba
 
 // Organizations (mode entreprise)
 import { IOrganizationsRepository } from '@/modules/organizations/repository';
-import { LocalStorageOrganizationsRepository } from '@/modules/organizations/local.repository';
 import { SupabaseOrganizationsRepository } from '@/modules/organizations/supabase.repository';
 
 // Team projects & tasks (mode entreprise)
 import { ITeamProjectsRepository } from '@/modules/team-projects/repository';
-import { LocalStorageTeamProjectsRepository } from '@/modules/team-projects/local.repository';
 import { SupabaseTeamProjectsRepository } from '@/modules/team-projects/supabase.repository';
 
 // Team OKRs (mode entreprise)
 import { ITeamOKRsRepository } from '@/modules/team-okrs/repository';
-import { LocalStorageTeamOKRsRepository } from '@/modules/team-okrs/local.repository';
 import { SupabaseTeamOKRsRepository } from '@/modules/team-okrs/supabase.repository';
 
 // Org teams (équipes transverses, v2)
 import { IOrgTeamsRepository } from '@/modules/org-teams/repository';
-import { LocalStorageOrgTeamsRepository } from '@/modules/org-teams/local.repository';
 import { SupabaseOrgTeamsRepository } from '@/modules/org-teams/supabase.repository';
 
 // Org OKR categories (catégories d'OKR d'entreprise, partagées)
@@ -82,6 +78,72 @@ import { SupabaseTeamCategoriesRepository } from '@/modules/team-categories/supa
 // Stats (agrégats « temps investi » — RPC SQL en prod, calcul local en démo)
 import { IStatsRepository, LocalStatsRepository } from '@/modules/stats/repository';
 import { SupabaseStatsRepository } from '@/modules/stats/supabase.repository';
+
+// ═══════════════════════════════════════════════════════════════════
+// DÉPÔTS DE DÉMO DU MODE ENTREPRISE — chargés à la demande
+// ═══════════════════════════════════════════════════════════════════
+//
+// Mesuré le 2026-09-02 : les dépôts de démonstration pesaient **123,9 ko
+// bruts** dans le chunk d'entrée, soit un quart de son poids, téléchargés par
+// chaque visiteur — y compris celui qui repart de la landing sans se
+// connecter. La cause : ce fichier importait STATIQUEMENT les deux
+// implémentations de chaque module pour n'en instancier qu'une, et un import
+// statique est retenu même quand sa branche est morte à l'exécution.
+//
+// Les quatre du mode entreprise (52 ko bruts) partent donc dans un chunk à
+// part, via `src/lib/demo-repositories.ts`.
+//
+// 🔴 CE QUI REND LA COUPE SÛRE, ET CE QUI LA CASSERAIT. Les quatre interfaces
+// n'exposent QUE des méthodes asynchrones — vérifié avant d'écrire ce code.
+// Le mandataire ci-dessous reste donc synchrone à la construction et n'attend
+// le module qu'au premier APPEL, ce qui laisse intacts tous les appelants et
+// toute la séquence de `loginDemo()`. Qu'une de ces interfaces gagne un membre
+// synchrone — une propriété, un getter — et le mandataire cesse d'être
+// transparent pour lui : il faudra alors renoncer au différé pour ce module.
+//
+// ⚠️ Le mode PRODUCTION ne passe jamais ici : il instancie directement sa
+// classe Supabase, importée statiquement comme avant.
+
+/**
+ * Mandataire synchrone d'un dépôt dont le module arrive plus tard.
+ *
+ * Chaque méthode appelée attend le chargement puis délègue. Le module n'est
+ * demandé qu'une fois : `pending` mémorise l'import en vol, sinon deux appels
+ * simultanés (le cas normal — plusieurs hooks montent ensemble) en
+ * déclencheraient deux.
+ */
+function lazyDemoRepository<T extends object>(load: () => Promise<T>): T {
+  let instance: T | null = null;
+  let pending: Promise<T> | null = null;
+
+  const resolve = (): Promise<T> => {
+    if (instance) return Promise.resolve(instance);
+    pending ??= load().then((repo) => {
+      instance = repo;
+      return repo;
+    });
+    return pending;
+  };
+
+  return new Proxy({} as T, {
+    get: (_target, prop) => {
+      // `then` doit rester absent : sans ça, `await getXRepository()` prendrait
+      // le mandataire pour une promesse et tenterait de la dérouler.
+      if (prop === 'then') return undefined;
+      return (...args: unknown[]) =>
+        resolve().then((repo) => {
+          const method = (repo as Record<string | symbol, unknown>)[prop];
+          if (typeof method !== 'function') {
+            throw new Error(
+              `demo-repositories: « ${String(prop)} » n'est pas une méthode. ` +
+                'Le chargement différé suppose une interface 100 % asynchrone.',
+            );
+          }
+          return (method as (...a: unknown[]) => unknown).apply(repo, args);
+        });
+    },
+  });
+}
 
 // ═══════════════════════════════════════════════════════════════════
 // REPOSITORY SINGLETONS
@@ -234,7 +296,9 @@ export function getKRCompletionsRepository(): IKRCompletionsRepository {
 export function getOrganizationsRepository(): IOrganizationsRepository {
   if (!organizationsRepository) {
     organizationsRepository = appModeStore.isDemo
-      ? new LocalStorageOrganizationsRepository()
+      ? lazyDemoRepository<IOrganizationsRepository>(() =>
+          import('./demo-repositories').then((m) => m.createDemoOrganizationsRepository()),
+        )
       : new SupabaseOrganizationsRepository();
   }
   return organizationsRepository;
@@ -246,7 +310,9 @@ export function getOrganizationsRepository(): IOrganizationsRepository {
 export function getTeamProjectsRepository(): ITeamProjectsRepository {
   if (!teamProjectsRepository) {
     teamProjectsRepository = appModeStore.isDemo
-      ? new LocalStorageTeamProjectsRepository()
+      ? lazyDemoRepository<ITeamProjectsRepository>(() =>
+          import('./demo-repositories').then((m) => m.createDemoTeamProjectsRepository()),
+        )
       : new SupabaseTeamProjectsRepository();
   }
   return teamProjectsRepository;
@@ -258,7 +324,9 @@ export function getTeamProjectsRepository(): ITeamProjectsRepository {
 export function getTeamOKRsRepository(): ITeamOKRsRepository {
   if (!teamOKRsRepository) {
     teamOKRsRepository = appModeStore.isDemo
-      ? new LocalStorageTeamOKRsRepository()
+      ? lazyDemoRepository<ITeamOKRsRepository>(() =>
+          import('./demo-repositories').then((m) => m.createDemoTeamOKRsRepository()),
+        )
       : new SupabaseTeamOKRsRepository();
   }
   return teamOKRsRepository;
@@ -270,7 +338,9 @@ export function getTeamOKRsRepository(): ITeamOKRsRepository {
 export function getOrgTeamsRepository(): IOrgTeamsRepository {
   if (!orgTeamsRepository) {
     orgTeamsRepository = appModeStore.isDemo
-      ? new LocalStorageOrgTeamsRepository()
+      ? lazyDemoRepository<IOrgTeamsRepository>(() =>
+          import('./demo-repositories').then((m) => m.createDemoOrgTeamsRepository()),
+        )
       : new SupabaseOrgTeamsRepository();
   }
   return orgTeamsRepository;
@@ -312,7 +382,10 @@ export function getStatsRepository(): IStatsRepository {
           getTasksRepository(),
           getEventsRepository(),
           getHabitsRepository(),
-          getOKRsRepository()
+          getOKRsRepository(),
+          // Sans le journal des complétions de KR, `okrTime` vaut 0 : c'est sa
+          // seule source (cf. src/lib/workTimeCalculator.ts).
+          getKRCompletionsRepository()
         )
       : new SupabaseStatsRepository();
   }

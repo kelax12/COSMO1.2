@@ -7,7 +7,10 @@
     "subtitle": "Build good habits, one day at a time",
     "emptyTitle": "No habit yet",
     "emptyBody": "Start by creating your first habit",
-    "emptyCta": "Create a habit"
+    "emptyCta": "Create a habit",
+    "viewTable": "Table",
+    "viewList": "List",
+    "viewGlobal": "Global tracking"
   },
   "card": {
     "paused": "Paused",
@@ -105,7 +108,8 @@
     "scheduleHint": "Event with an adjustable time",
     "duplicateHint": "A copy with a blank history",
     "createTaskHint": "Today · {{minutes}} min",
-    "duplicate": "Duplicate the habit"
+    "duplicate": "Duplicate the habit",
+    "dueTodayDuration": "Due today · {{minutes}} min"
   },
   "globalTracking": {
     "empty": "Create habits to see the overall tracking"

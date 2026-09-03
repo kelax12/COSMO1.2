@@ -54,7 +54,9 @@ function declaredByRoute(): Map<string, string[]> {
 const stripExt = (p: string): string => p.replace(/\\/g, '/').replace(/\.tsx?$/, '');
 
 describe('découpage des catalogues i18n', () => {
-  it('tout namespace RENDU par le shell est eager', () => {
+  // ⏱️ Même raison que `no-open-redirect.test.ts` : parcours de tout le shell,
+  // ~5 s à vide, rouge sur une machine chargée le 2026-09-03.
+  it('tout namespace RENDU par le shell est eager', { timeout: 30_000 }, () => {
     const { byNamespace } = shellNamespaces() as {
       byNamespace: Map<string, string[]>;
     };

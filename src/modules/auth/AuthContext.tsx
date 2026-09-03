@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { resetRepositories, clearDemoStorage, getTasksRepository, getHabitsRepository } from '@/lib/repository.factory';
@@ -16,64 +16,25 @@ import {
   persistDemoProfile,
   type DemoProfilePatch,
 } from './demo-profile';
-import { AUTH_LOGIN_GENERIC, AUTH_REGISTER_GENERIC, safeAuthError } from './auth-errors';
+import { authLoginGeneric, authRegisterGeneric, safeAuthError } from './auth-errors';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import * as Sentry from '@sentry/react';
 import { toast } from 'sonner';
 import { translator } from '@/i18n/useT';
+import {
+  readLocalCache,
+  writeLocalCache,
+  clearLocalCache,
+  purgeAllLocalCache,
+} from './session-cache';
+import { localeStore } from '@/i18n/store';
+import { DEFAULT_LOCALE } from '@/i18n/locale';
+import { postAuthRoute } from '@/lib/safe-redirect';
 
 const DEBUG = typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('debug');
 const dlog = (msg: string) => {
   if (DEBUG) console.warn(`[AUTH] @${Math.round(performance.now())}ms ${msg}`);
 };
-
-// ─── Offline-first cache helpers ─────────────────────────────────────────────
-// Persist tasks/habits to localStorage so the app feels instant on cold start.
-// Each entry is keyed by userId to avoid cross-user leakage.
-// Max age: 24 h — stale data is shown immediately then silently replaced.
-
-const CACHE_MAX_AGE = 24 * 60 * 60 * 1000;
-
-function readLocalCache<T>(userId: string, key: string): T | null {
-  try {
-    const raw = localStorage.getItem(`cosmo:qcache:${userId}:${key}`);
-    if (!raw) return null;
-    const { data, at } = JSON.parse(raw) as { data: T; at: number };
-    if (Date.now() - at > CACHE_MAX_AGE) return null;
-    return data;
-  } catch {
-    return null;
-  }
-}
-
-function writeLocalCache(userId: string, key: string, data: unknown): void {
-  try {
-    localStorage.setItem(`cosmo:qcache:${userId}:${key}`, JSON.stringify({ data, at: Date.now() }));
-  } catch {
-    // localStorage full — ignore silently
-  }
-}
-
-function clearLocalCache(userId: string): void {
-  try {
-    localStorage.removeItem(`cosmo:qcache:${userId}:tasks`);
-    localStorage.removeItem(`cosmo:qcache:${userId}:habits`);
-  } catch { /* ignore */ }
-}
-
-// L-11 — On a shared device, signing out one user must not leave another
-// user's cache reachable via devtools (cosmo:qcache:* survives 24 h TTL).
-// Sweep every cache entry on SIGNED_OUT, not just the current userId.
-function purgeAllLocalCache(): void {
-  try {
-    const toRemove: string[] = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && key.startsWith('cosmo:qcache:')) toRemove.push(key);
-    }
-    toRemove.forEach(k => localStorage.removeItem(k));
-  } catch { /* ignore */ }
-}
 
 // Dernière connexion — ping fire-and-forget de la RPC touch_last_seen()
 // (migration 054, timestamp pris côté serveur). Dédupliqué par utilisateur et
@@ -121,7 +82,7 @@ type AuthContextType = {
   login: (email: string, password: string, captchaToken?: string) => Promise<{ success: boolean; error?: string }>;
   loginDemo: () => void;
   register: (name: string, email: string, password: string, accountType?: AccountType, captchaToken?: string) => Promise<{ success: boolean; error?: string; needsEmailConfirmation?: boolean }>;
-  loginWithGoogle: () => Promise<{ success: boolean; error?: string }>;
+  loginWithGoogle: (redirectPath?: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   /**
    * Met à jour le profil de la session DÉMO uniquement. No-op hors démo — un
@@ -157,7 +118,14 @@ const consumeOAuthErrorFromUrl = (): string | null => {
       tags: { context: 'oauth-callback' },
     });
     // Nettoie l'URL : sans ca, un rechargement rejoue l'erreur a l'infini.
-    const clean = window.location.pathname;
+    //
+    // 🔴 On ne retire QUE les parametres d'erreur. Reecrire sur le seul
+    // `pathname` jetait la query string entiere, `?redirect=` compris : un
+    // echec OAuth transitoire faisait perdre la destination d'une invitation
+    // d'entreprise, donc le jeton a usage unique qu'elle portait (garde R-04).
+    for (const key of ['error', 'error_code', 'error_description']) query.delete(key);
+    const remaining = query.toString();
+    const clean = `${window.location.pathname}${remaining ? `?${remaining}` : ''}`;
     window.history.replaceState(null, '', clean);
     return description;
   } catch {
@@ -171,6 +139,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const queryClient = useQueryClient();
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  // Miroir de `isLoading` lisible depuis un timer : le watchdog doit savoir si
+  // la session était ENCORE non résolue au moment où il tire, sans faire de ce
+  // constat un effet de bord glissé dans un updater de `setState`.
+  const isLoadingRef = useRef(true);
+  isLoadingRef.current = isLoading;
 
   // Source de vérité unique : appModeStore (faille B0 — l'ancien check sur l'email
   // était contournable en s'inscrivant avec demo@cosmo.app via supabase.auth.signUp).
@@ -189,7 +162,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // (which is user-writable from the client and trivially spoofable). Faille N5/N6.
   const mapSupabaseUserToAppUser = (supabaseUser: SupabaseUser): User => ({
     id: supabaseUser.id,
-    name: supabaseUser.user_metadata?.name || supabaseUser.email?.split('@')[0] || 'Utilisateur',
+    name: supabaseUser.user_metadata?.name || supabaseUser.email?.split('@')[0] || translator('common').t('auth.defaultUserName'),
     email: supabaseUser.email || '',
     avatar: supabaseUser.user_metadata?.avatar_url,
     provider: supabaseUser.app_metadata?.provider,
@@ -331,16 +304,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // authentifie. L'utilisateur retombe sur la landing, d'ou il peut se
     // reconnecter. Un `onAuthStateChange` tardif corrigera le tir tout seul.
     const loadingWatchdog = window.setTimeout(() => {
-      setIsLoading((stillLoading) => {
-        if (stillLoading) {
-          dlog('watchdog: session non resolue apres 12 s — on debloque l UI');
-          Sentry.captureMessage('auth: isLoading watchdog fired', {
-            level: 'warning',
-            tags: { context: 'auth-watchdog' },
-          });
-        }
-        return false;
-      });
+      // Les effets de bord (log, Sentry) sont HORS de l'updater : React peut
+      // rejouer un updater de `setState` — c'est explicitement autorisé, et il
+      // le fait en StrictMode — ce qui dédoublait l'événement Sentry. Un
+      // updater doit rester une fonction pure de l'état précédent, et il ne
+      // s'exécute d'ailleurs PAS au moment de l'appel : lire son argument pour
+      // décider ici n'aurait rien décidé du tout. D'où le ref.
+      const fired = isLoadingRef.current;
+      setIsLoading(false);
+      if (fired) {
+        dlog('watchdog: session non resolue apres 12 s — on debloque l UI');
+        Sentry.captureMessage('auth: isLoading watchdog fired', {
+          level: 'warning',
+          tags: { context: 'auth-watchdog' },
+        });
+      }
     }, 12_000);
 
     // Track the previous user id so we only blow away the cache when the
@@ -427,21 +405,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (email: string, password: string, captchaToken?: string) => {
     if (!isSupabaseConfigured) {
-      return { success: false, error: 'Supabase non configuré. Vérifiez les variables d\'environnement.' };
+      return { success: false, error: translator('common').t('auth.supabaseMissing') };
     }
     exitDemoIfActive();
     try {
       const { error } = await supabase.auth.signInWithPassword({ email, password, options: { captchaToken } });
-      if (error) return { success: false, error: safeAuthError(error, AUTH_LOGIN_GENERIC) };
+      if (error) return { success: false, error: safeAuthError(error, authLoginGeneric()) };
       return { success: true };
     } catch {
-      return { success: false, error: 'Une erreur est survenue' };
+      return { success: false, error: translator('common').t('auth.genericError') };
     }
   };
 
   const register = async (name: string, email: string, password: string, accountType: AccountType = 'personal', captchaToken?: string) => {
     if (!isSupabaseConfigured) {
-      return { success: false, error: 'Supabase non configuré. Vérifiez les variables d\'environnement.' };
+      return { success: false, error: translator('common').t('auth.supabaseMissing') };
     }
     // Sanitize (strip copy-paste invisible chars) then enforce a real email
     // format BEFORE signUp. HTML5 `type=email` and Supabase both accept
@@ -450,12 +428,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // address. Validating at this chokepoint blocks the problem at the source.
     const cleanEmail = sanitizeEmail(email);
     if (!isValidEmail(cleanEmail)) {
-      return { success: false, error: 'Veuillez saisir une adresse email valide.' };
+      return { success: false, error: translator('common').t('auth.invalidEmail') };
     }
     // Block the sentinel email at signup to prevent the email-based isDemo bypass
     // even on Supabase projects where email confirmation is disabled. Faille B0.
     if (cleanEmail.toLowerCase() === DEMO_SENTINEL_EMAIL) {
-      return { success: false, error: 'Cet email est réservé. Choisissez une autre adresse.' };
+      return { success: false, error: translator('common').t('auth.reservedEmail') };
     }
     exitDemoIfActive();
     // Source d'acquisition first-touch (src/lib/attribution.ts). Déjà normalisée
@@ -482,10 +460,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           },
         },
       });
-      if (error) return { success: false, error: safeAuthError(error, AUTH_REGISTER_GENERIC) };
+      if (error) return { success: false, error: safeAuthError(error, authRegisterGeneric()) };
       return { success: true, needsEmailConfirmation: !data.session }; // pas de session = confirmation exigée
     } catch {
-      return { success: false, error: 'Une erreur est survenue' };
+      return { success: false, error: translator('common').t('auth.genericError') };
     }
   };
 
@@ -516,16 +494,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
   };
 
-  const loginWithGoogle = async (): Promise<{ success: boolean; error?: string }> => {
+  /**
+   * @param redirectPath Destination interne après retour de Google. À défaut,
+   *   le `?redirect=` de l'URL courante — le départ OAuth se fait toujours
+   *   depuis `/login` ou `/signup`, qui le portent déjà. Validée par
+   *   `postAuthRoute` : une valeur forgée retombe sur `/dashboard`.
+   */
+  const loginWithGoogle = async (redirectPath?: string): Promise<{ success: boolean; error?: string }> => {
     if (!isSupabaseConfigured) {
-      return { success: false, error: 'Supabase non configuré. Vérifiez les variables d\'environnement.' };
+      return { success: false, error: translator('common').t('auth.supabaseMissing') };
     }
     exitDemoIfActive();
     try {
+      // Deux choses que `${origin}/dashboard` perdait :
+      //   1. le PRÉFIXE DE LOCALE — le `basename` du routeur porte `/en`, donc
+      //      un anglophone revenait sur la version française du produit ;
+      //   2. le `?redirect=` de la garde R-04 — une invitation d'entreprise
+      //      réclamée via Google perdait sa destination, et son jeton à usage
+      //      unique avec elle.
+      // 🔴 CÔTÉ SUPABASE : la « Redirect URL allow list » du projet doit couvrir
+      //    ces destinations, pas seulement `/dashboard`. Un motif large comme
+      //    `https://thecosmo.app/**` suffit ; sans lui, GoTrue renvoie sur le
+      //    Site URL par défaut et le retour d'invitation se reperd — vérifier
+      //    ce réglage AVANT de déployer ce changement.
+      const localePrefix = localeStore.locale === DEFAULT_LOCALE ? '' : `/${localeStore.locale}`;
+      const requested =
+        redirectPath ??
+        (typeof window === 'undefined'
+          ? null
+          : new URLSearchParams(window.location.search).get('redirect'));
+      const destination = postAuthRoute(requested);
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/dashboard`,
+          redirectTo: `${window.location.origin}${localePrefix}${destination}`,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
@@ -533,11 +535,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         },
       });
       if (error) {
-        return { success: false, error: error.message || 'Erreur lors de la connexion Google' };
+        return { success: false, error: error.message || translator('common').t('auth.googleFailed') };
       }
       return { success: true };
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Une erreur est survenue';
+      const message = err instanceof Error ? err.message : translator('common').t('auth.genericError');
       return { success: false, error: message };
     }
   };

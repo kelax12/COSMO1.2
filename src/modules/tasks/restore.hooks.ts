@@ -16,7 +16,7 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { getTasksRepository } from '@/lib/repository.factory';
-import { splitRestore } from '@/lib/restore-id';
+import { reportRestoreFailure, splitRestore } from '@/lib/restore-id';
 import { taskKeys } from './constants';
 import type { CreateTaskInput, Task } from './types';
 
@@ -42,8 +42,8 @@ export const useRestoreTask = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: taskKeys.lists() });
     },
-    onError: (error: Error) => {
-      console.error('[useRestoreTask]', error);
-    },
+    // Un « Annuler » rate doit se VOIR : `console.error` est supprime du
+    // bundle de production (vite.config.ts), l'echec etait donc muet.
+    onError: (error: Error) => reportRestoreFailure('task', error),
   });
 };

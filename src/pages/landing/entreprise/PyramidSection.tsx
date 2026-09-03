@@ -21,7 +21,7 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
 } from '@/components/ui/alert-dialog';
-import { PYRAMID_NODES, pyramidTree, subtreeOf, SHOTS, type PyramidNode } from './data';
+import { PYRAMID_NODES, pyramidTree, subtreeOf, SHOTS, nodeName, type PyramidNode } from './data';
 import AppShot from './AppShot';
 import StepSection from './StepSection';
 
@@ -220,7 +220,7 @@ const PyramidSection: React.FC<PyramidSectionProps> = ({ onMemberDemo }) => {
                     roleLabel={t(node.roleKey)}
                     onEnter={() => setFocusedId(node.id)}
                     onLeave={() => setFocusedId(null)}
-                    onRequestDemo={(tab) => setPendingDemo({ name: node.name, demoUserId: node.demoUserId, tab })}
+                    onRequestDemo={(tab) => setPendingDemo({ name: nodeName(node, t), demoUserId: node.demoUserId, tab })}
                   />
                 </li>
               ))}
@@ -277,7 +277,7 @@ const PyramidSection: React.FC<PyramidSectionProps> = ({ onMemberDemo }) => {
                   roleLabel={t(node.roleKey)}
                   onEnter={() => setFocusedId(node.id)}
                   onLeave={() => setFocusedId(null)}
-                  onRequestDemo={(tab) => setPendingDemo({ name: node.name, demoUserId: node.demoUserId, tab })}
+                  onRequestDemo={(tab) => setPendingDemo({ name: nodeName(node, t), demoUserId: node.demoUserId, tab })}
                 />
               ))}
             </div>
@@ -400,7 +400,7 @@ const PyramidCard: React.FC<PyramidCardProps> = ({
       onMouseLeave={onLeave}
       onFocus={onEnter}
       onBlur={onLeave}
-      aria-label={t('enterprise.pyramid.menuAria', { name: node.name })}
+      aria-label={t('enterprise.pyramid.menuAria', { name: nodeName(node, t) })}
       // `-translate-x-1/2 -translate-y-1/2` est un centrage STATIQUE en CSS, pas
       // une animation : il n'est donc pas concerné par le garde-fou
       // reduced-motion (aucune valeur `initial` de Framer ne peut le figer).
@@ -424,7 +424,7 @@ const PyramidCard: React.FC<PyramidCardProps> = ({
         {node.initials}
       </span>
       <span className="flex flex-col gap-0.5">
-        <span className="text-xs font-semibold leading-none text-white sm:text-sm">{node.name}</span>
+        <span className="text-xs font-semibold leading-none text-white sm:text-sm">{nodeName(node, t)}</span>
         <span className="flex items-center gap-1.5">
           <span className="font-mono text-caption uppercase tracking-[0.14em] text-slate-500">
             {roleLabel}
@@ -443,7 +443,7 @@ const PyramidCard: React.FC<PyramidCardProps> = ({
         className="w-64 border-white/[0.1] bg-[#12161D] text-white shadow-[0_16px_48px_-12px_rgba(0,0,0,0.7)]"
       >
         <DropdownMenuLabel className="text-slate-500">
-          {t('enterprise.pyramid.menuLabel', { name: node.name })}
+          {t('enterprise.pyramid.menuLabel', { name: nodeName(node, t) })}
         </DropdownMenuLabel>
         <DropdownMenuItem
           onClick={() => onRequestDemo('tasks')}

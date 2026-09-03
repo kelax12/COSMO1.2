@@ -142,7 +142,10 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
   const hasVelocity = velocity.some((v) => v.completed > 0);
   const hasTrend = trend.some((t) => t.rate > 0);
 
-  const periodLabel = STATS_PERIODS.find((p) => p.id === period)?.label ?? '';
+  const periodDays = STATS_PERIODS.find((p) => p.id === period)?.days ?? null;
+  const periodLabel = periodDays === null
+    ? t('overview.periodAll')
+    : t('overview.periodDays', { count: periodDays });
   const periodHint = period === 'all' ? t('overview.sinceStart') : t('overview.activeOver', { period: periodLabel });
 
   // Export CSV (reco #14) — membres, projets, OKR (3 fichiers espacés,
@@ -190,7 +193,7 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
                     : 'text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-secondary))]'
                 }`}
               >
-                {p.label}
+                {p.days === null ? t('overview.periodAll') : t('overview.periodDays', { count: p.days })}
               </button>
             ))}
           </div>

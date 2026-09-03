@@ -7,9 +7,10 @@ import React, { useMemo } from 'react';
 import type { Task } from '@/modules/tasks';
 import type { Habit } from '@/modules/habits';
 import type { CalendarEvent } from '@/modules/events';
-import type { OKR, KeyResult } from '@/modules/okrs';
-import { parseLocalDate } from '@/lib/workTimeCalculator';
-import type { WorkTimePeriodData, KeyResultHistory } from './types';
+import type { OKR } from '@/modules/okrs';
+import type { KRCompletion } from '@/modules/kr-completions/types';
+import { okrTimeByObjective, parseLocalDate } from '@/lib/workTimeCalculator';
+import type { WorkTimePeriodData } from './types';
 import { formatDate } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
 
@@ -364,21 +365,25 @@ export const AgendaStatistics: React.FC<{
 // ═══════════════════════════════════════════════════════════════════
 // OKR
 // ═══════════════════════════════════════════════════════════════════
-export const OKRStatistics: React.FC<{ objectives: OKR[]; rollingRange: { start: Date; end: Date } }> = ({ objectives, rollingRange }) => {
+export const OKRStatistics: React.FC<{
+  objectives: OKR[];
+  krCompletions: KRCompletion[];
+  rollingRange: { start: Date; end: Date };
+}> = ({ objectives, krCompletions, rollingRange }) => {
   const { t } = useT('statistics');
-  const okrWorkTime = objectives.map(okr => {
-    let workedTime = 0;
-    okr.keyResults.forEach((kr: KeyResult) => {
-      const history = (kr as KeyResult & { history?: KeyResultHistory[] }).history || [];
-      const total = history.reduce((sum: number, h: KeyResultHistory) => {
-        const hDate = parseLocalDate(h.date);
-        const norm = new Date(hDate.getFullYear(), hDate.getMonth(), hDate.getDate());
-        return norm >= rollingRange.start && norm <= rollingRange.end ? sum + h.increment : sum;
-      }, 0);
-      workedTime += total * kr.estimatedTime;
-    });
-    return { id: okr.id, title: okr.title, workedTime };
-  }).filter(o => o.workedTime > 0);
+  // ⚠️ Le temps investi vient du journal `kr_completions`, jamais d'un champ
+  // `kr.history` : ce champ n'existe pas dans le modele, et le lire rendait
+  // toujours 0 (cf. src/lib/workTimeCalculator.ts). Meme parcours que le total
+  // affiche au-dessus, pour que le detail somme exactement au total.
+  const byObjective = okrTimeByObjective(
+    rollingRange.start,
+    rollingRange.end,
+    krCompletions,
+    objectives,
+  );
+  const okrWorkTime = objectives
+    .map(okr => ({ id: okr.id, title: okr.title, workedTime: byObjective.get(okr.id) ?? 0 }))
+    .filter(o => o.workedTime > 0);
 
   const totalWorkedTime = okrWorkTime.reduce((sum, o) => sum + o.workedTime, 0);
   const maxWorkedTime = Math.max(...okrWorkTime.map(o => o.workedTime), 1);

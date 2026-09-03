@@ -3,6 +3,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { OKR, CreateOKRInput, UpdateOKRInput, UpdateKeyResultInput, OKRFilters } from './types';
+import { safeGetItem, safeParseArray } from '@/lib/safe-json';
 import { recalcProgress } from './progress';
 import { OKRS_STORAGE_KEY } from './constants';
 import { PaginationParams, PaginatedResult, DEFAULT_PAGE_SIZE } from '@/lib/pagination.types';
@@ -194,13 +195,15 @@ export class LocalStorageOKRsRepository implements IOKRsRepository {
    * Migrates legacy category IDs to the shared category system on first load.
    */
   private getOKRs(): OKR[] {
-    const data = localStorage.getItem(OKRS_STORAGE_KEY);
-    if (!data) {
+    const stored = safeParseArray<OKR>(safeGetItem(OKRS_STORAGE_KEY));
+    // Corrompu ou stockage indisponible : on re-seme plutot que de faire
+    // tomber la page (regle B14, helper `safeParseArray`).
+    if (!stored) {
       const demo = localizeOkrs(createDemoOkrs());
       this.saveOKRs(demo);
       return demo;
     }
-    const okrs: OKR[] = JSON.parse(data);
+    const okrs: OKR[] = stored;
     const migrated = okrs.map(okr => ({
       ...okr,
       category: CATEGORY_MIGRATIONS[okr.category] ?? okr.category,
@@ -308,14 +311,22 @@ export class LocalStorageOKRsRepository implements IOKRsRepository {
     okrs[index] = updatedOKR;
     this.saveOKRs(okrs);
 
-    // Journal append-only : delta de reps par KR
+    // Journal append-only : delta de reps par KR, SYMÉTRIQUE ±.
+    //
+    // Le `Math.max(0, …)` d'origine écrasait toute baisse : baisser un
+    // `currentValue` en démo laissait les reps au journal, là où le repository
+    // Supabase appelle `removeKRReps`. Le graphique « KR réalisés » divergeait
+    // donc entre la démo et la prod, sur le même geste. `updateKeyResult` juste
+    // en dessous traitait déjà les deux sens : c'est ce chemin-ci qui manquait.
     if (updates.keyResults) {
       for (const kr of updates.keyResults) {
         const prev = previousKRsById.get(kr.id);
         const previousValue = prev?.currentValue ?? 0;
-        const delta = Math.max(0, Math.round(kr.currentValue - previousValue));
+        const delta = Math.round(kr.currentValue - previousValue);
         if (delta > 0) {
           this.appendKRReps(updatedOKR.id, kr, updatedOKR.title, delta);
+        } else if (delta < 0) {
+          this.removeKRReps(kr.id, -delta);
         }
       }
     }
@@ -330,8 +341,8 @@ export class LocalStorageOKRsRepository implements IOKRsRepository {
    */
   private appendKRReps(okrId: string, kr: { id: string; title: string; completedAt?: string | null }, okrTitle: string, count: number): void {
     if (count <= 0) return;
-    const raw = localStorage.getItem(KR_COMPLETIONS_STORAGE_KEY);
-    const completions: KRCompletion[] = raw ? JSON.parse(raw) : [];
+    const completions: KRCompletion[] =
+      safeParseArray<KRCompletion>(safeGetItem(KR_COMPLETIONS_STORAGE_KEY)) ?? [];
     const completedAt = kr.completedAt ?? new Date().toISOString();
     for (let i = 0; i < count; i++) {
       completions.push({
@@ -353,9 +364,8 @@ export class LocalStorageOKRsRepository implements IOKRsRepository {
    */
   private removeKRReps(krId: string, count: number): void {
     if (count <= 0) return;
-    const raw = localStorage.getItem(KR_COMPLETIONS_STORAGE_KEY);
-    if (!raw) return;
-    const completions: KRCompletion[] = JSON.parse(raw);
+    const completions = safeParseArray<KRCompletion>(safeGetItem(KR_COMPLETIONS_STORAGE_KEY));
+    if (!completions) return;
     const toRemoveIds = new Set(
       completions
         .filter(c => c.krId === krId)

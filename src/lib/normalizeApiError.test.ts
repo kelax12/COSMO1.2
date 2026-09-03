@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { normalizeApiError } from './normalizeApiError';
+import { ApiError, normalizeApiError } from './normalizeApiError';
 
 // normalizeApiError logs the original (server) detail via console.error — silence
 // it in tests and assert the public `message` never leaks raw server text (V7/N1).
@@ -99,5 +99,46 @@ describe("normalizeApiError - erreurs metier des fonctions SQL (RAISE EXCEPTION)
     const out = normalizeApiError({ error: { code: "P0001", message: "seat_limit_reached" } });
     expect(out.code).toBe("seat_limit_reached");
     expect(out.message).toContain("places");
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════
+// La valeur RENDUE est une vraie `Error` (revue du 2026-09-02)
+//
+// `normalizeApiError` rendait un objet littéral, et 184 sites font
+// `throw normalizeApiError(...)`. Deux conséquences, toutes deux mesurées :
+//
+//   1. `error instanceof Error` était FAUX partout. Le prédicat `retry` de
+//      React Query (src/lib/query-retry.ts) commence par là : il retombait sur
+//      une chaîne vide et retentait les refus RLS définitifs.
+//   2. Un non-`Error` n'a pas de pile, et Sentry le classe en « Non-Error
+//      promise rejection captured » — chaîne explicitement listée dans
+//      `ignoreErrors` (src/main.tsx). Une erreur d'API qui s'échappait était
+//      donc jetée à l'entrée.
+// ═══════════════════════════════════════════════════════════════════
+describe('normalizeApiError — rend une vraie Error', () => {
+  it('est une instance de Error ET de ApiError', () => {
+    const out = normalizeApiError({ code: '23505', message: 'detail' });
+    expect(out).toBeInstanceOf(Error);
+    expect(out).toBeInstanceOf(ApiError);
+    expect(out.name).toBe('ApiError');
+  });
+
+  it('porte une pile, ce qui rend la capture Sentry exploitable', () => {
+    expect(typeof normalizeApiError('boom').stack).toBe('string');
+  });
+
+  it('expose le message utilisateur comme `message` de l\'Error', () => {
+    const out = normalizeApiError({ code: '23505', message: 'detail serveur' });
+    expect(out.message).toBe('Cette ressource existe déjà.');
+    expect(`${out}`).toContain('Cette ressource existe déjà.');
+  });
+
+  it('rend TELLE QUELLE une ApiError déjà normalisée (pas de double emballage)', () => {
+    const once = normalizeApiError({ code: '23505', message: 'detail serveur' });
+    const twice = normalizeApiError(once);
+    expect(twice).toBe(once);
+    expect(twice.code).toBe('23505');
+    expect(twice.originalMessage).toBe('detail serveur');
   });
 });

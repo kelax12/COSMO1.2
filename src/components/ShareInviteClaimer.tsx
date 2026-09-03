@@ -58,7 +58,7 @@ const ShareInviteClaimer: React.FC = () => {
       onError: (error: Error) => {
         const msg = error.message || '';
         if (msg.includes('own_link')) {
-          toast.info("Ce lien d'invitation pointe vers votre propre tâche.");
+          toast.info(t('shareInvite.ownLink'));
         } else if (msg.includes('expired_link')) {
           toast.error(t('shareInvite.expired'));
         } else {

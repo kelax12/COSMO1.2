@@ -12,6 +12,7 @@ import { taskKeys } from './constants';
 import { validateAsync } from '@/lib/validation/lazy';
 import { translator } from '@/i18n/useT';
 import { recordDemoCreationIfDemo } from '@/lib/demo-engagement';
+import { todayKeyInTz } from '@/lib/timezone';
 
 /**
  * Filet de sécurité si le canal Realtime tombe sans se reconnaître déconnecté.
@@ -160,9 +161,12 @@ export const useFilteredTasks = (filters: TaskFilters, options?: { enabled?: boo
  * Get today's tasks
  */
 export const useTodaysTasks = () => {
-  // Date locale (en-CA → YYYY-MM-DD), pas toISOString (UTC) — sinon le jour
-  // courant est décalé entre minuit et ~2h en France (UTC+1/+2).
-  const today = new Date().toLocaleDateString('en-CA');
+  // Le jour vient de la PRÉFÉRENCE de fuseau, pas de la machine :
+  // `toLocaleDateString('en-CA')` seul est le fuseau de l'appareil, ce que le
+  // garde-fou « Fuseau horaire » de CLAUDE.md interdit sur un chemin
+  // d'échéance — quelqu'un réglé sur UTC-4 depuis un poste en UTC+2 voyait
+  // « Aujourd'hui » basculer six heures trop tôt.
+  const today = todayKeyInTz();
   return useTasksByDate(today);
 };
 

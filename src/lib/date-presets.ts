@@ -23,14 +23,25 @@ export const nextWeekStr = (now: Date = new Date()): string => {
   return toLocalYMD(addDays(now, delta));
 };
 
+/**
+ * Clé de catalogue, jamais un libellé.
+ *
+ * 🔴 Ces trois presets portaient « Aujourd'hui », « Demain » et « Lundi
+ * prochain » EN DUR, et ils sont rendus par les deux pickers du produit — le
+ * calendrier desktop et la feuille mobile de la modale de tâche. Un visiteur
+ * anglophone les voyait donc en français (revue du 2026-09-02, point 5). Les
+ * traduire ici est impossible : ce module est pur, il n'a pas de locale.
+ */
+export type DatePresetKey = 'datePicker.today' | 'datePicker.tomorrow' | 'datePicker.nextMonday';
+
 export interface DatePreset {
-  label: string;
+  labelKey: DatePresetKey;
   /** '' = pas de date. */
   value: string;
 }
 
 export const buildDatePresets = (now: Date = new Date()): DatePreset[] => [
-  { label: "Aujourd'hui", value: todayStr(now) },
-  { label: 'Demain', value: tomorrowStr(now) },
-  { label: 'Lundi prochain', value: nextWeekStr(now) },
+  { labelKey: 'datePicker.today', value: todayStr(now) },
+  { labelKey: 'datePicker.tomorrow', value: tomorrowStr(now) },
+  { labelKey: 'datePicker.nextMonday', value: nextWeekStr(now) },
 ];

@@ -208,7 +208,9 @@
     "okrProgressTitle": "Avancement des OKR",
     "overdueByMember": "Retards par membre",
     "csvProject": "Projet",
-    "loading": "Chargement des statistiques…"
+    "loading": "Chargement des statistiques…",
+    "periodDays": "{{count}} j",
+    "periodAll": "Tout"
   },
   "myWork": {
     "upToDate": "À jour",

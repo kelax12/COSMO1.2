@@ -17,11 +17,13 @@ import type { OrgMember } from '@/modules/organizations';
 
 export type StatsPeriod = '7' | '30' | '90' | 'all';
 
-export const STATS_PERIODS: { id: StatsPeriod; label: string; days: number | null }[] = [
-  { id: '7', label: '7 j', days: 7 },
-  { id: '30', label: '30 j', days: 30 },
-  { id: '90', label: '90 j', days: 90 },
-  { id: 'all', label: 'Tout', days: null },
+// `days` porte le CHIFFRE, l'ecran porte la phrase : « 7 j » et « Tout »
+// etaient en dur, donc affiches en francais a un anglophone.
+export const STATS_PERIODS: { id: StatsPeriod; days: number | null }[] = [
+  { id: '7', days: 7 },
+  { id: '30', days: 30 },
+  { id: '90', days: 90 },
+  { id: 'all', days: null },
 ];
 
 /** Début de la fenêtre (minuit) ; null = pas de borne (« Tout »). */

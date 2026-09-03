@@ -125,7 +125,13 @@ function detect(lines: string[]): { line: number; why: string }[] {
 }
 
 describe('G-9 — aucune navigation alimentee par un parametre d URL', () => {
-  it('ne trouve aucune cible de navigation derivee de l URL', () => {
+  // ⏱️ Timeout explicite. Cette garde lit CHAQUE fichier de `src/` : elle tient
+  // en ~5 s à vide, c'est-à-dire exactement le défaut de Vitest, et elle a
+  // rougi le 2026-09-03 sur une machine qui compilait par ailleurs. Un test
+  // qui échoue sur la charge de la machine apprend à ignorer sa propre sortie,
+  // et c'est une garde de SÉCURITÉ : son rouge doit toujours vouloir dire
+  // « quelqu'un a introduit une redirection », jamais « le disque était pris ».
+  it('ne trouve aucune cible de navigation derivee de l URL', { timeout: 30_000 }, () => {
     const offenders = walk(SRC).flatMap((file) => {
       const lines = readFileSync(file, 'utf8').split('\n');
       return detect(lines).map(

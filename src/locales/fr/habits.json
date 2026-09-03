@@ -7,7 +7,10 @@
     "subtitle": "Développez de bonnes habitudes au quotidien",
     "emptyTitle": "Aucune habitude",
     "emptyBody": "Commencez par créer votre première habitude",
-    "emptyCta": "Créer une habitude"
+    "emptyCta": "Créer une habitude",
+    "viewTable": "Tableau",
+    "viewList": "Liste",
+    "viewGlobal": "Suivi global"
   },
   "card": {
     "paused": "En pause",
@@ -105,7 +108,8 @@
     "scheduleHint": "Événement avec heure ajustable",
     "duplicateHint": "Copie avec un historique vierge",
     "createTaskHint": "Aujourd'hui · {{minutes}} min",
-    "duplicate": "Dupliquer l'habitude"
+    "duplicate": "Dupliquer l'habitude",
+    "dueTodayDuration": "Échéance aujourd'hui · {{minutes}} min"
   },
   "globalTracking": {
     "empty": "Créez des habitudes pour voir le suivi global"

@@ -9,7 +9,7 @@ import { format } from 'date-fns';
 import { getDateLocale } from '@/i18n/format';
 import type { EventRecurrence } from '@/modules/events';
 import DescriptionField from '@/components/DescriptionField';
-import { DAY_LABELS } from './helpers';
+import { DAY_LABEL_KEYS } from './helpers';
 import type { EventModalFormBodyProps } from './event-modal-form.types';
 import { useT } from '@/i18n/useT';
 
@@ -149,8 +149,8 @@ const EventModalFormMobile: React.FC<EventModalFormBodyProps> = ({
             <div className="h-px bg-[rgb(var(--color-border))] ml-4" />
             <div className="flex items-center px-4 min-h-11">
               <span className="flex-1 text-[15px] text-[rgb(var(--color-text-primary))]">{t('duration')}</span>
-              <span className={`text-[15px] ${duration.startsWith('⚠️') ? 'text-red-500' : 'text-blue-500'}`}>
-                {duration}
+              <span className={`text-[15px] ${duration.kind === 'invalid' ? 'text-red-500' : 'text-blue-500'}`}>
+                {duration.kind === 'invalid' ? t('endBeforeStart') : duration.text}
               </span>
             </div>
           </>
@@ -215,8 +215,8 @@ const EventModalFormMobile: React.FC<EventModalFormBodyProps> = ({
               <span className="flex-1 text-left text-[15px] text-[rgb(var(--color-text-primary))]">{t('days')}</span>
               <span className="text-[15px] text-blue-500">
                 {recurrenceDays.length > 0
-                  ? [...recurrenceDays].sort().map((d) => DAY_LABELS[d]).join(', ')
-                  : 'Choisir'}
+                  ? [...recurrenceDays].sort().map((d) => t(DAY_LABEL_KEYS[d])).join(', ')
+                  : t('choose')}
               </span>
             </button>
           </>

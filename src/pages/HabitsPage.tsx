@@ -7,10 +7,12 @@ import { MobileHeader } from '@/components/mobile';
 import { Button } from "@/components/ui/button";
 
 // Ordre : Tableau (défaut, plus dense) → Liste → Suivi global
-const VIEW_TABS: { mode: 'list' | 'table' | 'global'; icon: React.ElementType; label: string }[] = [
-  { mode: 'table', icon: Grid3X3, label: 'Tableau' },
-  { mode: 'list', icon: List, label: 'Liste' },
-  { mode: 'global', icon: TrendingUp, label: 'Suivi global' },
+// Des CLES, pas des libelles : une constante de module est evaluee a l'import,
+// donc un libelle ecrit ici figerait la langue pour toute la session.
+const VIEW_TABS: { mode: 'list' | 'table' | 'global'; icon: React.ElementType; labelKey: 'page.viewTable' | 'page.viewList' | 'page.viewGlobal' }[] = [
+  { mode: 'table', icon: Grid3X3, labelKey: 'page.viewTable' },
+  { mode: 'list', icon: List, labelKey: 'page.viewList' },
+  { mode: 'global', icon: TrendingUp, labelKey: 'page.viewGlobal' },
 ];
 import HabitCard from '@/components/HabitCard';
 import HabitModal from '@/components/HabitModal';
@@ -161,7 +163,7 @@ const HabitsPage: React.FC = () => {
               }}
               data-tutorial-id="habits-view-switcher"
             >
-              {VIEW_TABS.map(({ mode, icon: Icon, label }) => (
+              {VIEW_TABS.map(({ mode, icon: Icon, labelKey }) => (
                 <motion.button
                   key={mode}
                   whileTap={{ scale: 0.95 }}
@@ -173,7 +175,7 @@ const HabitsPage: React.FC = () => {
                   }}
                 >
                   <Icon size={15} />
-                  <span>{label}</span>
+                  <span>{t(labelKey)}</span>
                 </motion.button>
               ))}
             </div>

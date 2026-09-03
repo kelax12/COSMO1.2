@@ -13,6 +13,7 @@ import type { CalendarEvent } from '@/modules/events';
 import type { OKR } from '@/modules/okrs';
 import type { Category } from '@/modules/categories';
 import type { TaskList } from '@/modules/lists';
+import { translator } from '@/i18n/useT';
 
 /**
  * Échappe une valeur pour CSV : entoure de guillemets si contient virgule,
@@ -70,6 +71,45 @@ export function downloadCSV(baseName: string, headers: string[], rows: unknown[]
   download(`${baseName}-${todayStr()}.csv`, rowsToCSV(headers, rows));
 }
 
+
+// ═══════════════════════════════════════════════════════════════════
+// Libellés — catalogue `common.csv`, jamais des littéraux
+// ═══════════════════════════════════════════════════════════════════
+//
+// 🔴 Les en-têtes, les noms de fichiers et les « Oui / Non » étaient EN DUR EN
+// FRANÇAIS (revue du 2026-09-02, point 24). Or l'export CSV est le support du
+// droit à la PORTABILITÉ (RGPD art. 20) : un anglophone qui exerce ce droit
+// recevait sept fichiers dont il ne lit aucune colonne.
+//
+// `translator` est appelé DANS chaque fonction, jamais au niveau du module :
+// évalué à l'import, il figerait la langue pour toute la session.
+
+/** Un en-tête de colonne. */
+const col = (key: string): string => {
+  const t = translator('common').t;
+  return t(`csv.col.${key}` as Parameters<typeof t>[0]);
+};
+
+/** Les en-têtes d'un tableau, dans l'ordre. */
+const cols = (...keys: string[]): string[] => keys.map(col);
+
+/** « Oui » / « Non » (majuscule) — la forme des colonnes booléennes. */
+const bool = (value: boolean): string => {
+  const t = translator('common').t;
+  return t(value ? 'csv.yes' : 'csv.no');
+};
+
+/** « oui » / « non » (minuscule) — la forme des lignes clé/valeur du profil. */
+const boolLower = (value: boolean): string => {
+  const t = translator('common').t;
+  return t(value ? 'csv.yesLower' : 'csv.noLower');
+};
+
+/** Nom de fichier localisé, suffixé de la date du jour. */
+const fileName = (key: string): string => {
+  const t = translator('common').t;
+  return `${t(`csv.file.${key}` as Parameters<typeof t>[0])}-${todayStr()}.csv`;
+};
 // ═══════════════════════════════════════════════════════════════════
 // Exports par module
 // ═══════════════════════════════════════════════════════════════════
@@ -88,11 +128,11 @@ export function downloadCSV(baseName: string, headers: string[], rows: unknown[]
  * export de portabilité doit s'ouvrir dans un tableur, pas se parser.
  */
 export function exportTasksCSV(tasks: Task[]): void {
-  const headers = [
-    'ID', 'Nom', 'Description', 'Catégorie', 'Priorité', 'Échéance',
-    'Durée (min)', 'Récurrence', 'Sous-tâches', 'KR lié',
-    'Complétée', 'Complétée le', 'Favori', 'Créée le',
-  ];
+  const headers = cols(
+    'id', 'name', 'description', 'category', 'priority', 'deadline',
+    'durationMin', 'recurrence', 'subtasks', 'linkedKr',
+    'completed', 'completedAt', 'bookmarked', 'createdAt',
+  );
   const rows = tasks.map(t => [
     t.id,
     t.name,
@@ -104,16 +144,16 @@ export function exportTasksCSV(tasks: Task[]): void {
     t.recurrence ?? 'none',
     (t.subtasks ?? []).map(st => `${st.completed ? '[x]' : '[ ]'} ${st.name}`).join(' | '),
     t.krId || '',
-    t.completed ? 'Oui' : 'Non',
+    bool(t.completed),
     t.completedAt || '',
-    t.bookmarked ? 'Oui' : 'Non',
+    bool(t.bookmarked),
     t.createdAt,
   ]);
-  download(`cosmo-taches-${todayStr()}.csv`, rowsToCSV(headers, rows));
+  download(fileName('tasks'), rowsToCSV(headers, rows));
 }
 
 export function exportHabitsCSV(habits: Habit[]): void {
-  const headers = ['ID', 'Nom', 'Description', 'Fréquence', 'Durée (min)', 'Couleur', 'Complétions', 'Créée le'];
+  const headers = cols('id', 'name', 'description', 'frequency', 'durationMin', 'color', 'completions', 'createdAt');
   const rows = habits.map(h => {
     // ⚠️ `completionsTotal` d'abord : depuis la mig. 119, `h.completions` est
     // borné à une fenêtre glissante en mode Supabase. Compter dessus donnerait
@@ -141,7 +181,7 @@ export function exportHabitsCSV(habits: Habit[]): void {
       h.createdAt || '',
     ];
   });
-  download(`cosmo-habitudes-${todayStr()}.csv`, rowsToCSV(headers, rows));
+  download(fileName('habits'), rowsToCSV(headers, rows));
 }
 
 /**
@@ -153,11 +193,11 @@ export function exportHabitsCSV(habits: Habit[]): void {
  * ses exceptions, plus la tâche liée quand le créneau en planifie une.
  */
 export function exportEventsCSV(events: CalendarEvent[]): void {
-  const headers = [
-    'ID', 'Titre', 'Début', 'Fin', 'Couleur', 'Description', 'Notes',
-    'Récurrence', 'Jours de récurrence', 'Occurrences supprimées',
-    'Tâche liée', 'Privé',
-  ];
+  const headers = cols(
+    'id', 'title', 'start', 'end', 'color', 'description', 'notes',
+    'recurrence', 'recurrenceDays', 'removedOccurrences',
+    'linkedTask', 'private',
+  );
   const rows = events.map(e => [
     e.id,
     e.title,
@@ -170,27 +210,27 @@ export function exportEventsCSV(events: CalendarEvent[]): void {
     (e.recurrenceDays ?? []).join(' '),
     (e.exceptions ?? []).join(' '),
     e.taskId || '',
-    e.isPrivate ? 'Oui' : 'Non',
+    bool(!!e.isPrivate),
   ]);
-  download(`cosmo-agenda-${todayStr()}.csv`, rowsToCSV(headers, rows));
+  download(fileName('events'), rowsToCSV(headers, rows));
 }
 
 export function exportOKRsCSV(okrs: OKR[]): void {
   // Une ligne par KR (avec OKR parent dénormalisé), plus exploitable en tableur
-  const headers = [
-    'OKR ID',
-    'OKR Titre',
-    'OKR Description',
-    'OKR Catégorie',
-    'OKR Progression',
-    'OKR Début',
-    'OKR Fin',
-    'KR Titre',
-    'KR Valeur actuelle',
-    'KR Valeur cible',
-    'KR Unité',
-    'KR Complétée',
-  ];
+  const headers = cols(
+    'okrId',
+    'okrTitle',
+    'okrDescription',
+    'okrCategory',
+    'okrProgress',
+    'okrStart',
+    'okrEnd',
+    'krTitle',
+    'krCurrent',
+    'krTarget',
+    'krUnit',
+    'krCompleted',
+  );
   const rows: unknown[][] = [];
   okrs.forEach(okr => {
     if (okr.keyResults.length === 0) {
@@ -209,12 +249,12 @@ export function exportOKRsCSV(okrs: OKR[]): void {
           kr.currentValue,
           kr.targetValue,
           kr.unit,
-          kr.completed ? 'Oui' : 'Non',
+          bool(kr.completed),
         ]);
       });
     }
   });
-  download(`cosmo-okr-${todayStr()}.csv`, rowsToCSV(headers, rows));
+  download(fileName('okrs'), rowsToCSV(headers, rows));
 }
 
 /**
@@ -236,22 +276,22 @@ export function exportProfileCSV(profile: {
   avatar?: string;
   autoValidation?: boolean;
 }): void {
-  const headers = ['Champ', 'Valeur'];
+  const headers = cols('field', 'value');
   const rows: unknown[][] = [
-    ['Identifiant', profile.id],
-    ['Nom', profile.name],
-    ['Email', profile.email],
-    ['Avatar', profile.avatar ? 'oui' : 'non'],
-    ['Validation automatique', profile.autoValidation ? 'oui' : 'non'],
+    [col('identifier'), profile.id],
+    [col('name'), profile.name],
+    [col('email'), profile.email],
+    [col('avatar'), boolLower(!!profile.avatar)],
+    [col('autoValidation'), boolLower(!!profile.autoValidation)],
   ];
-  download(`cosmo-profil-${todayStr()}.csv`, rowsToCSV(headers, rows));
+  download(fileName('profile'), rowsToCSV(headers, rows));
 }
 
 /** Catégories — créées par la personne, donc portables. */
 export function exportCategoriesCSV(categories: Category[]): void {
-  const headers = ['Id', 'Nom', 'Couleur'];
+  const headers = cols('id', 'name', 'color');
   const rows = categories.map((c) => [c.id, c.name, c.color]);
-  download(`cosmo-categories-${todayStr()}.csv`, rowsToCSV(headers, rows));
+  download(fileName('categories'), rowsToCSV(headers, rows));
 }
 
 /**
@@ -263,7 +303,7 @@ export function exportCategoriesCSV(categories: Category[]): void {
  * fichier illisible sans rien ajouter.
  */
 export function exportListsCSV(lists: TaskList[]): void {
-  const headers = ['Id', 'Nom', 'Couleur', 'Type', 'Regle intelligente', 'Nombre de taches'];
+  const headers = cols('id', 'name', 'color', 'type', 'smartRule', 'taskCount');
   const rows = lists.map((l) => [
     l.id,
     l.name,
@@ -272,7 +312,7 @@ export function exportListsCSV(lists: TaskList[]): void {
     l.smartRule ?? '',
     l.taskIds?.length ?? 0,
   ]);
-  download(`cosmo-listes-${todayStr()}.csv`, rowsToCSV(headers, rows));
+  download(fileName('lists'), rowsToCSV(headers, rows));
 }
 
 /**

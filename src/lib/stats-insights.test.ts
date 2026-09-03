@@ -18,7 +18,11 @@ const makeTask = (completedAt: string, id: string): Task => ({
   completedAt,
 });
 
-const makeHabit = (name: string, completions: Record<string, boolean>): Habit => ({
+const makeHabit = (
+  name: string,
+  completions: Record<string, boolean>,
+  extra: Partial<Habit> = {},
+): Habit => ({
   id: name,
   name,
   frequency: 'daily',
@@ -26,7 +30,19 @@ const makeHabit = (name: string, completions: Record<string, boolean>): Habit =>
   color: '#000',
   icon: '✓',
   completions,
+  ...extra,
 });
+
+/** Les 7 jours de la fenêtre, cochés. */
+const fullWeek = (): Record<string, boolean> => {
+  const out: Record<string, boolean> = {};
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(NOW);
+    d.setDate(d.getDate() - i);
+    out[d.toLocaleDateString('en-CA')] = true;
+  }
+  return out;
+};
 
 describe('stats-insights (#34)', () => {
   it('bestDayInsight : identifie le jour dominant (≥5 complétions)', () => {
@@ -39,9 +55,9 @@ describe('stats-insights (#34)', () => {
       makeTask('2026-07-06T10:00:00', 'e'),
       makeTask('2026-07-06T11:00:00', 'f'),
     ];
-    const insight = bestDayInsight(tasks, NOW);
-    expect(insight).toContain('mardi');
-    expect(insight).toContain('67 %');
+    // 2 = mardi. Le module rend un FAIT, jamais une phrase : c'est la page qui
+    // met en mots via le catalogue (revue du 2026-09-02, point 6).
+    expect(bestDayInsight(tasks, NOW)).toEqual({ kind: 'bestDay', weekday: 2, share: 67 });
   });
 
   it('bestDayInsight : null si moins de 5 complétions (pas assez de données)', () => {
@@ -49,24 +65,51 @@ describe('stats-insights (#34)', () => {
     expect(bestDayInsight(tasks, NOW)).toBeNull();
   });
 
-  it('fragileHabitInsight : repère l\'habitude la plus manquée (≥3 oublis)', () => {
-    const full: Record<string, boolean> = {};
-    for (let i = 0; i < 7; i++) {
-      const d = new Date(NOW);
-      d.setDate(d.getDate() - i);
-      full[d.toLocaleDateString('en-CA')] = true;
-    }
+  it("fragileHabitInsight : repère l'habitude la plus manquée (≥3 oublis)", () => {
     const habits = [
-      makeHabit('Lecture', full),               // 0 oubli
-      makeHabit('Sport', { '2026-07-08': true }), // 6 oublis
+      makeHabit('Lecture', fullWeek()),            // 0 oubli
+      makeHabit('Sport', { '2026-07-08': true }),  // 6 oublis
     ];
-    const insight = fragileHabitInsight(habits, NOW);
-    expect(insight).toContain('Sport');
-    expect(insight).toContain('6 oublis');
+    expect(fragileHabitInsight(habits, NOW)).toEqual({
+      kind: 'fragileHabit',
+      name: 'Sport',
+      missed: 6,
+    });
   });
 
   it('fragileHabitInsight : null sans habitude ou sans oubli notable', () => {
     expect(fragileHabitInsight([], NOW)).toBeNull();
+  });
+
+  // ── Point 26 de la revue ────────────────────────────────────────────
+  it("ne compte pas les jours ANTÉRIEURS à la création de l'habitude", () => {
+    // Créée hier : la fenêtre utile fait 2 jours, on ne peut pas lui reprocher
+    // 6 oublis. L'ancienne version affichait « 6 oublis cette semaine ».
+    const yesterday = new Date(NOW);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const habit = makeHabit('Sport', {}, { createdAt: yesterday.toISOString() });
+    expect(fragileHabitInsight([habit], NOW)).toBeNull();
+  });
+
+  it('respecte la FRÉQUENCE : une habitude hebdomadaire cochée une fois est tenue', () => {
+    const habit = makeHabit('Bilan', { '2026-07-06': true }, { frequency: 'weekly' });
+    expect(fragileHabitInsight([habit], NOW)).toBeNull();
+  });
+
+  it('une habitude MENSUELLE ne se juge pas sur 7 jours', () => {
+    const habit = makeHabit('Comptabilité', {}, { frequency: 'monthly' });
+    expect(fragileHabitInsight([habit], NOW)).toBeNull();
+  });
+
+  it('une habitude quotidienne ancienne et jamais cochée reste signalée', () => {
+    const old = new Date(NOW);
+    old.setDate(old.getDate() - 60);
+    const habit = makeHabit('Sport', {}, { createdAt: old.toISOString() });
+    expect(fragileHabitInsight([habit], NOW)).toEqual({
+      kind: 'fragileHabit',
+      name: 'Sport',
+      missed: 7,
+    });
   });
 
   it('momentumInsight : détecte la progression', () => {
@@ -78,7 +121,7 @@ describe('stats-insights (#34)', () => {
       makeTask('2026-06-28T10:00:00', 'p2'),
     ];
     const insight = momentumInsight(tasks, NOW);
-    expect(insight).toContain('En progression');
+    expect(insight?.kind).toBe('momentumUp');
   });
 
   it('buildInsights : filtre les nulls', () => {

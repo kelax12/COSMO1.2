@@ -64,7 +64,7 @@ export const useMyOrgPermissions = (orgId: string | undefined): MyOrgPermissions
       for (const key of ORG_PERMISSION_KEYS) all[key] = true;
       return {
         can: all,
-        assignTargets: DEFAULT_ASSIGN_TARGETS,
+        assignTargets: [...DEFAULT_ASSIGN_TARGETS],
         canAssign: () => true,
         assignableMembers: members,
         isLoading,

@@ -10,6 +10,8 @@
 // (pas d'auto-promotion admin, pas d'accepted_at forgé).
 
 import { supabase } from '@/lib/supabase';
+import { fetchInChunks } from '@/lib/in-chunks';
+import { warnIfTruncated } from '@/lib/pagination.warning';
 import { getCurrentUserId } from '@/lib/auth-user';
 import { normalizeApiError } from '@/lib/normalizeApiError';
 import { IOrganizationsRepository } from './repository';
@@ -91,7 +93,9 @@ export class SupabaseOrganizationsRepository implements IOrganizationsRepository
     if (mErr) throw normalizeApiError(mErr);
 
     type JoinedRow = { role: OrgRole; organizations: OrgRow | null };
-    return ((memberships ?? []) as unknown as JoinedRow[])
+    // Onzieme lecture bornee en dur, meme classe que les dix du point 13 :
+    // au-dela de 50 organisations, la liste etait coupee sans un mot.
+    return warnIfTruncated((memberships ?? []) as unknown as JoinedRow[], 50, 'organizations')
       .filter((r): r is JoinedRow & { organizations: OrgRow } => r.organizations != null)
       .map((r) => ({ ...this.mapOrg(r.organizations), myRole: r.role ?? 'member' }))
       // Le tri portait sur `organizations.created_at` : un `order` sur une
@@ -102,6 +106,9 @@ export class SupabaseOrganizationsRepository implements IOrganizationsRepository
 
   async getMembers(orgId: string): Promise<OrgMember[]> {
     if (!supabase) throw new Error('Supabase not configured');
+    // Capture locale : le narrowing de `supabase` ne survit pas au passage
+    // dans la closure de `fetchInChunks`.
+    const db = supabase;
     const { data: rows, error } = await supabase
       .from('organization_members')
       .select('*')
@@ -109,18 +116,23 @@ export class SupabaseOrganizationsRepository implements IOrganizationsRepository
       .order('joined_at', { ascending: true })
       .limit(500);
     if (error) throw normalizeApiError(error);
-    const members = (rows ?? []) as MemberRow[];
+    const members = warnIfTruncated((rows ?? []) as MemberRow[], 500, 'org_members');
     if (members.length === 0) return [];
 
     // Enrichir depuis profiles (nom/avatar sanitizés — jamais raw metadata).
     const ids = members.map((m) => m.user_id);
-    const { data: profiles } = await supabase
-      .from('profiles')
-      .select('id, email, display_name, avatar_url')
-      .in('id', ids);
-    const byId = new Map(
-      ((profiles ?? []) as ProfileRow[]).map((p) => [p.id, p]),
-    );
+    // Découpé en lots : `.in('id', ids)` passe par l'URL, et 500 UUID font
+    // ~19 ko de query string, donc un 414 avant même que la troncature de la
+    // lecture précédente ne se voie (point 14 de la revue du 2026-09-02).
+    const profiles = await fetchInChunks(ids, async (chunkIds) => {
+      const { data, error } = await db
+        .from('profiles')
+        .select('id, email, display_name, avatar_url')
+        .in('id', chunkIds);
+      if (error) throw normalizeApiError(error);
+      return (data ?? []) as ProfileRow[];
+    });
+    const byId = new Map(profiles.map((p) => [p.id, p]));
 
     return members.map((m) => {
       const p = byId.get(m.user_id);
@@ -139,6 +151,9 @@ export class SupabaseOrganizationsRepository implements IOrganizationsRepository
 
   async getPendingJoinRequests(orgId: string): Promise<OrgJoinRequest[]> {
     if (!supabase) throw new Error('Supabase not configured');
+    // Capture locale : le narrowing de `supabase` ne survit pas au passage
+    // dans la closure de `fetchInChunks`.
+    const db = supabase;
     const { data: rows, error } = await supabase
       .from('organization_join_requests')
       .select('*')
@@ -148,17 +163,26 @@ export class SupabaseOrganizationsRepository implements IOrganizationsRepository
       .order('requested_at', { ascending: true })
       .limit(200);
     if (error) throw normalizeApiError(error);
-    const requests = (rows ?? []) as { id: string; org_id: string; user_id: string; requested_at: string }[];
+    const requests = warnIfTruncated(
+      (rows ?? []) as { id: string; org_id: string; user_id: string; requested_at: string }[],
+      200,
+      'org_join_requests',
+    );
     if (requests.length === 0) return [];
 
     const ids = requests.map((r) => r.user_id);
-    const { data: profiles } = await supabase
-      .from('profiles')
-      .select('id, email, display_name, avatar_url')
-      .in('id', ids);
-    const byId = new Map(
-      ((profiles ?? []) as ProfileRow[]).map((p) => [p.id, p]),
-    );
+    // Découpé en lots : `.in('id', ids)` passe par l'URL, et 500 UUID font
+    // ~19 ko de query string, donc un 414 avant même que la troncature de la
+    // lecture précédente ne se voie (point 14 de la revue du 2026-09-02).
+    const profiles = await fetchInChunks(ids, async (chunkIds) => {
+      const { data, error } = await db
+        .from('profiles')
+        .select('id, email, display_name, avatar_url')
+        .in('id', chunkIds);
+      if (error) throw normalizeApiError(error);
+      return (data ?? []) as ProfileRow[];
+    });
+    const byId = new Map(profiles.map((p) => [p.id, p]));
 
     return requests.map((r) => {
       const p = byId.get(r.user_id);
@@ -466,7 +490,7 @@ export class SupabaseOrganizationsRepository implements IOrganizationsRepository
       .order('created_at', { ascending: false })
       .limit(100);
     if (error) throw normalizeApiError(error);
-    return (data ?? []).map((r) => this.mapInviteLink(r));
+    return warnIfTruncated(data ?? [], 100, 'org_invite_links').map((r) => this.mapInviteLink(r));
   }
 
   async revokeInviteLink(linkId: string): Promise<void> {

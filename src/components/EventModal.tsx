@@ -27,13 +27,14 @@ export type EventModalMode = 'add' | 'edit' | 'convert';
 // Logique pure extraite (cf. event-modal/helpers.ts).
 import {
   formatEventDuration,
-  headerTitle,
-  submitButtonText,
+  headerTitleKey,
+  submitButtonKey,
   getMissingEventFields,
   validateEventRange,
 } from './event-modal/helpers';
 import RecurrenceDaysModal from './event-modal/RecurrenceDaysModal';
 import EventModalForm from './event-modal/EventModalForm';
+import { useT } from '@/i18n/useT';
 
 type EventData = {
   title: string;
@@ -117,6 +118,7 @@ const EventModal: React.FC<EventModalProps> = ({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
+  const { t } = useT('eventModal');
   const { favoriteColors } = useFavoriteColors();
   const { pref: tzPref } = useTimezonePref();
   // Toujours appelé (les hooks ne peuvent pas être conditionnels) : son
@@ -407,8 +409,10 @@ const EventModal: React.FC<EventModalProps> = ({
     : undefined;
 
   const calculateDuration = () => formatEventDuration(startDate, startTime, endDate, endTime);
-  const getHeaderTitle = () => headerTitle(mode);
-  const getSubmitButtonText = () => submitButtonText(mode);
+  // Les helpers rendent des CLÉS, l'écran les met en mots : le module est pur
+  // et n'a pas de locale (revue du 2026-09-02, point 7).
+  const getHeaderTitle = () => t(headerTitleKey(mode) as Parameters<typeof t>[0]);
+  const getSubmitButtonText = () => t(submitButtonKey(mode) as Parameters<typeof t>[0]);
 
   if (!isOpen) return null;
   if (mode === 'edit' && !event) return null;

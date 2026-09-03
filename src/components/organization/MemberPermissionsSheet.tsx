@@ -129,7 +129,7 @@ const MemberPermissionsSheet = ({
     [member, members],
   );
 
-  const effectiveTargets = targets ?? DEFAULT_ASSIGN_TARGETS;
+  const effectiveTargets = targets ?? [...DEFAULT_ASSIGN_TARGETS];
   const targetsDecided = targets !== null;
 
   const toggle = (key: OrgPermissionKey) => {

@@ -3,6 +3,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { supabase } from '@/lib/supabase';
+import { warnIfTruncated } from '@/lib/pagination.warning';
 import { getCurrentUserId } from '@/lib/auth-user';
 import { normalizeApiError } from '@/lib/normalizeApiError';
 import { IOrgTeamsRepository } from './repository';
@@ -36,7 +37,7 @@ export class SupabaseOrgTeamsRepository implements IOrgTeamsRepository {
       .order('created_at', { ascending: true })
       .limit(200);
     if (error) throw normalizeApiError(error);
-    return ((data ?? []) as TeamRow[]).map(mapTeam);
+    return warnIfTruncated((data ?? []) as TeamRow[], 200, 'org_teams').map(mapTeam);
   }
 
   async getTeamMembers(orgId: string): Promise<OrgTeamMember[]> {
@@ -47,8 +48,10 @@ export class SupabaseOrgTeamsRepository implements IOrgTeamsRepository {
       .eq('org_id', orgId)
       .limit(2000);
     if (error) throw normalizeApiError(error);
-    return (
-      (data ?? []) as { team_id: string; org_id: string; user_id: string; is_lead: boolean | null }[]
+    return warnIfTruncated(
+      (data ?? []) as { team_id: string; org_id: string; user_id: string; is_lead: boolean | null }[],
+      2000,
+      'team_members',
     ).map((r) => ({
       teamId: r.team_id,
       orgId: r.org_id,

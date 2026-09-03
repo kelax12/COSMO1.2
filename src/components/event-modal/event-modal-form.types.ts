@@ -1,6 +1,7 @@
 // Types partagés entre EventModalForm (wrapper) et ses deux corps
 // (EventModalFormMobile / EventModalFormDesktop).
 import type React from 'react';
+import type { EventDuration } from './helpers';
 import type { MotionValue } from 'framer-motion';
 import type { EventRecurrence } from '@/modules/events';
 import type { EventModalMode } from '@/components/EventModal';
@@ -42,7 +43,8 @@ export interface EventModalFormProps {
   handleDuplicate?: () => void;
   getHeaderTitle: () => string;
   getSubmitButtonText: () => string;
-  duration: string | null;
+  /** Fait mesuré, jamais une phrase : « fin avant début » vit au catalogue. */
+  duration: EventDuration | null;
   isMobileFormValid: boolean;
   isPrefilledMode: boolean;
 }

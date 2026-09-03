@@ -6,7 +6,7 @@ import type { CalendarEvent, CreateEventInput, UpdateEventInput } from './types'
 import { eventsKeys } from './constants';
 import { translator } from '@/i18n/useT';
 import { recordDemoCreationIfDemo } from '@/lib/demo-engagement';
-import { splitRestore } from '@/lib/restore-id';
+import { reportRestoreFailure, splitRestore } from '@/lib/restore-id';
 
 // ═══════════════════════════════════════════════════════════════════
 // REPOSITORY HOOK
@@ -278,14 +278,18 @@ export const useEventsByDate = (date: string) => {
 
 export const useUpcomingEvents = (limit = 5) => {
   const { data: events = [] } = useEvents();
-  const now = new Date().toISOString();
   return useMemo(
-    () =>
-      events
+    () => {
+      // `now` est calculé DANS le mémo. Le lire au corps du hook produisait une
+      // valeur neuve à chaque rendu, mise en dépendance : le mémo n'était
+      // jamais réutilisé et l'on retriait toute la liste à chaque frame.
+      const now = new Date().toISOString();
+      return events
         .filter((e) => e.start >= now)
         .sort((a, b) => a.start.localeCompare(b.start))
-        .slice(0, limit),
-    [events, now, limit]
+        .slice(0, limit);
+    },
+    [events, limit]
   );
 };
 
@@ -319,8 +323,8 @@ export const useRestoreEvent = () => {
       invalidateAllEventQueries(queryClient);
       queryClient.invalidateQueries({ queryKey: eventsKeys.all });
     },
-    onError: (error: Error) => {
-      console.error('[useRestoreEvent]', error);
-    },
+    // Un « Annuler » rate doit se VOIR : `console.error` est supprime du
+    // bundle de production (vite.config.ts), l'echec etait donc muet.
+    onError: (error: Error) => reportRestoreFailure('event', error),
   });
 };

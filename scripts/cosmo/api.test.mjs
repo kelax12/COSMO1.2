@@ -9,6 +9,7 @@ import {
   reopenTask, updateTask, deleteTask, getTask,
 } from './api.mjs';
 import { CosmoValidationError } from './errors.mjs';
+import { deadlineToTimestamp } from './deadline.mjs';
 
 /**
  * Faux client Supabase : chaque méthode de chaînage se retourne elle-même,
@@ -170,7 +171,9 @@ describe('createTask', () => {
       category: PERSO_ID,
       priority: DEFAULT_TASK.priority,
       estimated_time: DEFAULT_TASK.estimatedTime,
-      deadline: '2026-07-27',
+      // Instant vrai de minuit LOCAL, pas la cle de jour nue : celle-ci serait
+      // castee en minuit UTC par Postgres (R-01, 4e chemin d'ecriture).
+      deadline: deadlineToTimestamp('2026-07-27'),
       bookmarked: false,
       completed: false,
       recurrence: 'none',
@@ -181,7 +184,7 @@ describe('createTask', () => {
   // n'a pas de DEFAULT : il FAUT envoyer user_id. La frontiere de securite
   // n'est donc pas « ne jamais l'envoyer » mais « le prendre de la session
   // verifiee, jamais de l'entree appelante » — comme le fait le repository
-  // applicatif (supabase.repository.ts:206).
+  // applicatif (supabase.repository.ts).
   it('pose le user_id de la session et ignore celui fourni en entree', async () => {
     const client = makeFakeClient({ data: { id: 'n1' }, error: null }, CATS);
     await createTask(

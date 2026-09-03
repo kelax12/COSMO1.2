@@ -150,10 +150,15 @@ Deno.serve(async (req) => {
     // RGPD §2 — `friends` stocke le nom, l'email et l'avatar de l'ami DANS la
     // ligne de l'autre utilisateur. La boucle generique ne filtre que
     // `user_id`, donc les lignes ou le compte supprime est `friend_user_id`
-    // survivaient. La FK `friends_friend_user_id_fkey` est `ON DELETE SET
-    // NULL` en production (verifie le 2026-08-24 sur `pg_constraint`) : elle
-    // ne supprime rien, elle se contente de couper le lien — la ligne reste,
-    // avec l'email et le nom en clair, et devient introuvable par identifiant.
+    // survivaient, avec l'email et le nom en clair.
+    //
+    // ⚠️ Corrige le 2026-09-03 (audit A-1) : ce commentaire affirmait que la FK
+    // `friends_friend_user_id_fkey` etait `ON DELETE SET NULL`, « verifie le
+    // 2026-08-24 ». Remesure sur `pg_constraint` : elle est `ON DELETE CASCADE`
+    // depuis la migration 116, qui l'a explicitement basculee. La purge
+    // explicite reste, et c'est volontaire : elle ne depend d'aucune FK, donc
+    // elle survit a un changement de schema fait ailleurs — c'est justement ce
+    // qui vient d'arriver au commentaire.
     // Meme traitement symetrique que `friend_requests` et `shared_tasks`.
     {
       const { error } = await supabaseAdmin.from('friends').delete().or(
@@ -196,12 +201,27 @@ Deno.serve(async (req) => {
         for (const org of ownedOrgs ?? []) {
           const orgId = org.id as string
           // Candidats = autres membres, admins d'abord, puis ancienneté.
-          const { data: others } = await supabaseAdmin
+          // A-1 (2026-09-03) — cette lecture DÉCIDE d'un routage, donc son
+          // erreur ne peut pas être avalée (famille S-1 / S-2). Elle l'était :
+          // sur panne, `others` valait `null`, donc « aucun autre membre »,
+          // donc aucun transfert — et `auth.admin.deleteUser` détruisait
+          // ensuite l'organisation entière, `organizations.owner_id` étant
+          // `ON DELETE CASCADE` (22 clés étrangères mesurées en prod le
+          // 2026-09-03, dont 21 en CASCADE, y compris les preuves
+          // `renewal_notices` et `withdrawal_consents`).
+          // En cas de doute : faire échouer l'effacement, qui est rejouable,
+          // jamais deviner que l'organisation est vide.
+          const { data: others, error: membersErr } = await supabaseAdmin
             .from('organization_members')
             .select('user_id, role, joined_at')
             .eq('org_id', orgId)
             .neq('user_id', user.id)
             .order('joined_at', { ascending: true })
+          if (membersErr) {
+            console.error('delete-account: failed to read org members:', membersErr.message)
+            failedTables.push('organization_members')
+            continue
+          }
           const successor =
             (others ?? []).find((m) => m.role === 'admin') ?? (others ?? [])[0]
           if (!successor) continue // seul membre → cascade s'en charge
@@ -215,12 +235,20 @@ Deno.serve(async (req) => {
             failedTables.push('organizations')
             continue
           }
-          // S'assurer que le successeur est admin.
-          await supabaseAdmin
+          // S'assurer que le successeur est admin. L'échec comptait pour rien :
+          // la propriété était déjà transférée, et une organisation dont le
+          // propriétaire n'est pas admin n'a plus personne pour inviter, gérer
+          // les droits ni résilier. On abandonne donc l'effacement, qui est
+          // rejouable — le transfert, lui, est déjà fait et ne sera pas rejoué.
+          const { error: promoteErr } = await supabaseAdmin
             .from('organization_members')
             .update({ role: 'admin' })
             .eq('org_id', orgId)
             .eq('user_id', successorId)
+          if (promoteErr) {
+            console.error('delete-account: failed to promote successor:', promoteErr.message)
+            failedTables.push('organization_members')
+          }
         }
       }
     }

@@ -13,8 +13,8 @@ import {
 import { useTasks } from '@/modules/tasks';
 import { useHabits } from '@/modules/habits';
 import { useEvents } from '@/modules/events';
-import { useOkrs, OKR, KeyResult } from '@/modules/okrs';
-import { useKRCompletions, KRCompletion } from '@/modules/kr-completions';
+import { useOkrs } from '@/modules/okrs';
+import { useKRCompletions } from '@/modules/kr-completions';
 import { calculateWorkTimeForPeriod } from '@/lib/workTimeCalculator';
 import { formatDate } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
@@ -111,21 +111,6 @@ const CustomTooltip = ({ active, payload, label, seriesLabel }: {
   );
 };
 
-const calcOkrTime = (start: Date, end: Date, krCompletions: KRCompletion[], okrs: OKR[]): number => {
-  const krMap = new Map<string, number>();
-  okrs.forEach((okr: OKR) => {
-    (okr.keyResults || []).forEach((kr: KeyResult) => {
-      krMap.set(kr.id, kr.estimatedTime || 0);
-    });
-  });
-  return krCompletions
-    .filter(c => {
-      const d = new Date(c.completedAt);
-      return d >= start && d <= end;
-    })
-    .reduce((sum, c) => sum + (krMap.get(c.krId) ?? 0), 0);
-};
-
 const DashboardChart: React.FC<DashboardChartProps> = ({ viewMode }) => {
   const { t } = useT('dashboard');
   const { data: tasks = [] } = useTasks();
@@ -136,11 +121,11 @@ const DashboardChart: React.FC<DashboardChartProps> = ({ viewMode }) => {
 
   const chartData: ChartPoint[] = useMemo(() => {
     const calcPeriod = (start: Date, end: Date) => {
-      const r = calculateWorkTimeForPeriod(start, end, { tasks, events, habits, okrs });
+      const r = calculateWorkTimeForPeriod(start, end, { tasks, events, habits, okrs, krCompletions });
       return {
         tasks: r.tasksTime,
         events: r.eventsTime,
-        okrs: calcOkrTime(start, end, krCompletions, okrs),
+        okrs: r.okrTime,
         habits: r.habitsTime,
       };
     };

@@ -5,7 +5,6 @@ import {
   toDisplayISO,
   fromDisplayISO,
   formatTimeInTz,
-  timezoneLabel,
   tzOffsetMinutes,
   dayKeyInTz,
   todayKeyInTz,
@@ -92,15 +91,6 @@ describe('formatTimeInTz', () => {
     const west = formatTimeInTz(iso, manual(-5));
     const east = formatTimeInTz(iso, manual(5));
     expect(west).not.toBe(east);
-  });
-});
-
-describe('timezoneLabel', () => {
-  it('libellés lisibles, signe + et -', () => {
-    expect(timezoneLabel(DEFAULT)).toBe('Heure locale');
-    expect(timezoneLabel(manual(2))).toBe('UTC+2');
-    expect(timezoneLabel(manual(-5))).toBe('UTC-5');
-    expect(timezoneLabel(manual(0))).toBe('UTC+0');
   });
 });
 

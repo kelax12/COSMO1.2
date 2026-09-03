@@ -8,6 +8,7 @@ import { PaginationParams, PaginatedResult, DEFAULT_PAGE_SIZE, assertValidCursor
 import { warnIfTruncated } from '@/lib/pagination.warning';
 import { fetchAllPages, MAX_ROWS } from '@/lib/fetch-all-pages';
 import type { CreateOptions } from '@/lib/restore-id';
+import { dayEndInTz, dayStartISOInTz } from '@/lib/timezone';
 
 /** Fields the client is allowed to set on insert (user_id is added server-side from auth.uid()). */
 type TaskDbCreateInput = Omit<TaskDbInput, 'user_id'> & { user_id: string };
@@ -177,8 +178,13 @@ export class SupabaseTasksRepository implements ITasksRepository {
   async getByDate(date: string): Promise<Task[]> {
     if (!supabase) throw new Error('Supabase not configured');
     const targetDate = date.split('T')[0];
-    const startOfDay = `${targetDate}T00:00:00.000Z`;
-    const endOfDay = `${targetDate}T23:59:59.999Z`;
+    // La fenêtre est celle du jour VÉCU, pas du jour UTC. Les échéances sont
+    // écrites à minuit dans le fuseau retenu (`deadlineFromDayKey`) : borner en
+    // `…T00:00:00.000Z` faisait tomber hors fenêtre toute tâche du jour à l'est
+    // de Greenwich, et y faisait entrer celle de la veille à l'ouest.
+    const startOfDay = dayStartISOInTz(targetDate);
+    const endOfDay = dayEndInTz(targetDate).toISOString();
+    if (!startOfDay) return [];
 
     // Même chemin indexable que getAll (cf. C1). Sans cela, cette lecture
     // conservait le `Seq Scan` de la table globale : le filtre `deadline`
@@ -222,12 +228,15 @@ export class SupabaseTasksRepository implements ITasksRepository {
       query = query.lte('priority', filters.priorityMax);
     }
 
+    // `deadlineBefore` / `deadlineAfter` sont des CLÉS DE JOUR ('YYYY-MM-DD'),
+    // bornes incluses. Les convertir en instants du fuseau retenu, sinon
+    // Postgres les caste en minuit UTC et la borne glisse d'un jour.
     if (filters.deadlineBefore) {
-      query = query.lte('deadline', filters.deadlineBefore);
+      query = query.lte('deadline', dayEndInTz(filters.deadlineBefore).toISOString());
     }
 
     if (filters.deadlineAfter) {
-      query = query.gte('deadline', filters.deadlineAfter);
+      query = query.gte('deadline', dayStartISOInTz(filters.deadlineAfter));
     }
 
     const { data, error } = await query.order('created_at', { ascending: false });

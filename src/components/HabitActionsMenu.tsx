@@ -107,7 +107,7 @@ const HabitActionsMenu: React.FC<HabitActionsMenuProps> = ({ habit }) => {
       {
         onSuccess: (newTask) => {
           toast.success(t('actions.taskCreated', { name: habit.name }), {
-            description: `Échéance aujourd'hui · ${habit.estimatedTime} min`,
+            description: t('actionsMenu.dueTodayDuration', { minutes: habit.estimatedTime }),
             duration: 4000,
           });
           // Note : pas d'undo ici — useCreateTask n'expose pas useDeleteTask
