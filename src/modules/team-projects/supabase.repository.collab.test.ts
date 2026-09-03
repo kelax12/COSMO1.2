@@ -15,6 +15,13 @@ vi.mock('@/lib/supabase', async () => {
 vi.mock('sonner', () => ({ toast: { error: vi.fn(), success: vi.fn(), warning: vi.fn() } }));
 
 import { SupabaseTeamProjectsRepository } from './supabase.repository';
+import { translator } from '@/i18n/useT';
+
+// On compare au CATALOGUE, jamais a une phrase recopiee : le repository ne jette
+// plus « Non authentifie » en dur, il resout la cle. Recopier le francais ici,
+// c'est refiger dans le test ce qu'on vient justement de sortir du code.
+const err = (key: Parameters<ReturnType<typeof translator<'errors'>>['t']>[0]) =>
+  translator('errors').t(key);
 
 const repo = new SupabaseTeamProjectsRepository();
 
@@ -158,7 +165,7 @@ describe('team-projects — sous-tâches', () => {
 
   it('createSubtask: rejette si non authentifié, sans INSERT', async () => {
     supabaseMock.user = null;
-    await expect(repo.createSubtask({ taskId: 'tk1', title: 'X' })).rejects.toThrow('Non authentifié');
+    await expect(repo.createSubtask({ taskId: 'tk1', title: 'X' })).rejects.toThrow(err('api.not_authenticated'));
     expect(supabaseMock.queries).toHaveLength(0);
   });
 
@@ -255,7 +262,7 @@ describe('team-projects — labels', () => {
 
   it('createLabel: rejette si non authentifié, sans INSERT', async () => {
     supabaseMock.user = null;
-    await expect(repo.createLabel('org1', { name: 'X' })).rejects.toThrow('Non authentifié');
+    await expect(repo.createLabel('org1', { name: 'X' })).rejects.toThrow(err('api.not_authenticated'));
     expect(supabaseMock.queries).toHaveLength(0);
   });
 

@@ -23,6 +23,17 @@ vi.mock('@/lib/supabase', async () => {
 vi.mock('sonner', () => ({ toast: { error: vi.fn(), success: vi.fn(), warning: vi.fn() } }));
 
 import { SupabaseFriendsRepository } from './supabase.repository';
+import { translator } from '@/i18n/useT';
+
+// On compare au CATALOGUE, jamais a une phrase recopiee. Les trois assertions
+// ci-dessous epelaient le message en dur, dont deux dans l'ANGLAIS d'avant
+// l'externalisation : elles sont devenues rouges le jour ou le repository a
+// cesse de jeter `new Error('Not authenticated')`. C'est la regle du depot,
+// « ne jamais identifier une erreur par son message », et elle vaut aussi pour
+// un test. Comparer a la cle garde ce que le test veut vraiment prouver : que
+// c'est CETTE erreur-la qui remonte, pas une autre.
+const err = (key: Parameters<ReturnType<typeof translator<'errors'>>['t']>[0]) =>
+  translator('errors').t(key);
 
 const repo = new SupabaseFriendsRepository();
 const ME = () => supabaseMock.user?.id as string;
@@ -103,7 +114,7 @@ describe('SupabaseFriendsRepository, demandes (lecture et retrait)', () => {
 
   it('cancelFriendRequest: refuse si deconnecte, AVANT toute requete', async () => {
     supabaseMock.user = null;
-    await expect(repo.cancelFriendRequest('r1')).rejects.toThrow('Non authentifié');
+    await expect(repo.cancelFriendRequest('r1')).rejects.toThrow(err('friends.notAuthenticated'));
     expect(supabaseMock.queries).toHaveLength(0);
   });
 });
@@ -205,13 +216,13 @@ describe('SupabaseFriendsRepository, partage de listes', () => {
 
     supabaseMock.queueTable('shared_lists', { error: { code: '42501', message: 'rls raw' } });
     await expect(repo.shareList({ listId: 'l1', friendId: 'x', name: 'L', color: 'blue', tasks: [] }))
-      .rejects.toThrow(/demande d'ami/);
+      .rejects.toThrow(err('friends.listNeedsFriendRequest'));
   });
 
   it('shareList: refuse si deconnecte', async () => {
     supabaseMock.user = null;
     await expect(repo.shareList({ listId: 'l1', friendId: 'x', name: 'L', color: 'blue', tasks: [] }))
-      .rejects.toThrow('Not authenticated');
+      .rejects.toThrow(err('friends.notAuthenticated'));
   });
 
   it('getIncomingSharedLists: destinataire = moi ET non acceptees, plafond 200', async () => {
@@ -257,7 +268,7 @@ describe('SupabaseFriendsRepository, partage de listes', () => {
 
   it('acceptSharedList: refuse si deconnecte, AVANT toute requete', async () => {
     supabaseMock.user = null;
-    await expect(repo.acceptSharedList('g1')).rejects.toThrow('Not authenticated');
+    await expect(repo.acceptSharedList('g1')).rejects.toThrow(err('friends.notAuthenticated'));
     expect(supabaseMock.queries).toHaveLength(0);
   });
 

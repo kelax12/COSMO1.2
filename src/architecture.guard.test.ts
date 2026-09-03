@@ -123,8 +123,7 @@ const KNOWN_OVERSIZED = new Set([
   'src/components/task-modal/DesktopDetailsStep.tsx', // 703
   'src/components/task-modal/TaskModalMobileBody.tsx', // 698
   'src/components/organization/TeamTaskModal.tsx', // 685
-  'src/pages/tasks/TaskListsBar.tsx', // 615
-  'src/modules/friends/supabase.repository.ts', // 601
+  'src/pages/tasks/TaskListsBar.tsx', // 616
 ]);
 
 /**
@@ -217,7 +216,15 @@ const KNOWN_OVERSIZED = new Set([
 // a ajouté un traducteur `tCommon` dans plusieurs fichiers déjà hors budget.
 // Compensé par l'extraction des actions sur un événement dans
 // `pages/agenda/useAgendaEventActions.ts` (76 lignes hors d'`AgendaPage`).
-const OVERSIZED_BUDGET = 9791;
+// 2026-09-03 : 9791 → 9190, 13 fichiers → 12. `friends/supabase.repository.ts`
+// sort de la liste (601 → 592) : l'externalisation de ses messages d'erreur a
+// remplacé des littéraux par des appels au catalogue, plus courts. Le fichier
+// est repassé sous la barre tout seul, sans découpe.
+// ⚠️ Sortir un fichier de la liste ne suffit pas : le stock doit baisser
+// D'AUTANT, sinon les 592 lignes libérées deviennent du mou distribué aux douze
+// fichiers restants, et le cliquet a reculé sans que personne ne le voie. Le
+// nombre ci-dessous est le stock RÉEL des douze, mesuré, pas déduit.
+const OVERSIZED_BUDGET = 9190;
 
 const loc = (file: string) => readFileSync(file, 'utf8').split('\n').length;
 
@@ -233,7 +240,7 @@ describe('architecture — taille des fichiers source', () => {
       'Nouveau(x) fichier(s) au-dessus du budget :\n' +
         `${newcomers.join('\n')}\n` +
         "Découper avant de livrer. Un god component ne se répare jamais plus tard —\n" +
-        'les 16 fichiers de KNOWN_OVERSIZED sont tous arrivés « juste au-dessus ».',
+        'les 12 fichiers de KNOWN_OVERSIZED sont tous arrivés « juste au-dessus ».',
     ).toEqual([]);
   });
 

@@ -5,6 +5,7 @@
 import { supabase } from '@/lib/supabase';
 import { getCurrentUser } from '@/lib/auth-user';
 import { normalizeApiError } from '@/lib/normalizeApiError';
+import { translator } from '@/i18n/useT';
 import { IFriendsRepository } from './repository';
 import { Friend, FriendRequestInput, ShareTaskInput, PendingFriendRequest, FriendRequestStatus, TaskShare, RelatedTaskShare, ShareListInput, SharedListGrant, TaskSnapshot } from './types';
 import { warnIfTruncated } from '@/lib/pagination.warning';
@@ -232,7 +233,7 @@ export class SupabaseFriendsRepository implements IFriendsRepository {
   async sendFriendRequest(input: FriendRequestInput): Promise<PendingFriendRequest> {
     if (!supabase) throw new Error('Supabase not configured');
     const currentUser = await getCurrentUser();
-    if (!currentUser) throw new Error('Non authentifié');
+    if (!currentUser) throw new Error(translator('errors').t('friends.notAuthenticated'));
 
     const email = input.email.toLowerCase();
 
@@ -312,7 +313,7 @@ export class SupabaseFriendsRepository implements IFriendsRepository {
   async cancelFriendRequest(requestId: string): Promise<void> {
     if (!supabase) throw new Error('Supabase not configured');
     const user = await getCurrentUser();
-    if (!user) throw new Error('Non authentifié');
+    if (!user) throw new Error(translator('errors').t('friends.notAuthenticated'));
     const { error } = await supabase
       .from('friend_requests')
       .delete()
@@ -364,7 +365,7 @@ export class SupabaseFriendsRepository implements IFriendsRepository {
     }
 
     const user = await getCurrentUser();
-    if (!user) throw new Error('Not authenticated');
+    if (!user) throw new Error(translator('errors').t('friends.notAuthenticated'));
 
     const { error } = await supabase
       .from('shared_tasks')
@@ -383,18 +384,13 @@ export class SupabaseFriendsRepository implements IFriendsRepository {
       if (code === '23503') {
         // FK violation : friend_id n'existe pas dans auth.users — le copain
         // n'est pas inscrit ou son profil n'a pas été résolu.
-        throw new Error(
-          "Le collaborateur n'est pas (encore) inscrit sur Cosmo. " +
-          "Demande-lui de se connecter au moins une fois, puis réessaie."
-        );
+        throw new Error(translator('errors').t('friends.taskRecipientNotRegistered'));
       }
       if (code === '42501') {
         // RLS WITH CHECK : la policy shared_tasks_insert (migration 036) exige
         // SOIT une amitié confirmée, SOIT une demande d'ami `pending` envoyée à
         // ce destinataire. Si elle échoue, aucune des deux n'existe.
-        throw new Error(
-          "Envoie d'abord une demande d'ami à cette personne pour pouvoir lui partager une tâche."
-        );
+        throw new Error(translator('errors').t('friends.taskNeedsFriendRequest'));
       }
       throw normalizeApiError(error);
     }
@@ -494,7 +490,7 @@ export class SupabaseFriendsRepository implements IFriendsRepository {
     }
 
     const user = await getCurrentUser();
-    if (!user) throw new Error('Not authenticated');
+    if (!user) throw new Error(translator('errors').t('friends.notAuthenticated'));
 
     const { error } = await supabase
       .from('shared_lists')
@@ -509,15 +505,10 @@ export class SupabaseFriendsRepository implements IFriendsRepository {
     if (error) {
       const code = (error as { code?: string }).code;
       if (code === '23503') {
-        throw new Error(
-          "Le destinataire n'est pas (encore) inscrit sur Cosmo. " +
-          "Demande-lui de se connecter au moins une fois, puis réessaie."
-        );
+        throw new Error(translator('errors').t('friends.listRecipientNotRegistered'));
       }
       if (code === '42501') {
-        throw new Error(
-          "Envoie d'abord une demande d'ami à cette personne pour pouvoir lui partager une liste."
-        );
+        throw new Error(translator('errors').t('friends.listNeedsFriendRequest'));
       }
       throw normalizeApiError(error);
     }
@@ -549,7 +540,7 @@ export class SupabaseFriendsRepository implements IFriendsRepository {
   async acceptSharedList(grantId: string): Promise<void> {
     if (!supabase) throw new Error('Supabase not configured');
     const user = await getCurrentUser();
-    if (!user) throw new Error('Not authenticated');
+    if (!user) throw new Error(translator('errors').t('friends.notAuthenticated'));
     // RLS `shared_lists_update` : le destinataire (friend_id) pose accepted_at.
     const { error } = await supabase
       .from('shared_lists')

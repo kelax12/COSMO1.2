@@ -151,7 +151,12 @@
     "createLabel": "Couldn't create the label: {{message}}",
     "updateLabel": "Couldn't update the label: {{message}}",
     "deleteLabel": "Couldn't delete the label: {{message}}",
-    "updateLabels": "Couldn't update the labels: {{message}}"
+    "updateLabels": "Couldn't update the labels: {{message}}",
+    "restoreTask": "Couldn't restore the task: {{message}}",
+    "restoreCategory": "Couldn't restore the category: {{message}}",
+    "restoreList": "Couldn't restore the list: {{message}}",
+    "restoreEvent": "Couldn't restore the event: {{message}}",
+    "restoreOkr": "Couldn't restore the objective: {{message}}"
   },
   "success": {
     "orgCreated": "Company created",
@@ -183,5 +188,12 @@
     "listShared": "List shared",
     "listAccepted": "List accepted",
     "permissionsUpdated": "Permissions updated"
+  },
+  "friends": {
+    "notAuthenticated": "You must be signed in to do this.",
+    "taskRecipientNotRegistered": "This collaborator has not signed up to Cosmo yet. Ask them to sign in once, then try again.",
+    "listRecipientNotRegistered": "This recipient has not signed up to Cosmo yet. Ask them to sign in once, then try again.",
+    "taskNeedsFriendRequest": "Send this person a friend request first so you can share a task with them.",
+    "listNeedsFriendRequest": "Send this person a friend request first so you can share a list with them."
   }
 }
