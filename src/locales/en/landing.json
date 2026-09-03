@@ -68,7 +68,16 @@
     "habitsLine1": "Your habits,",
     "habitsLine2": "across 26 weeks.",
     "retention": "Retention 71%",
-    "demoVolume": "100 tasks · 100 habits · 150 events"
+    "demoVolume": "100 tasks · 100 habits · 150 events",
+    "chartTasks": "Tasks",
+    "chartAgenda": "Agenda",
+    "chartOkr": "OKRs",
+    "chartHabits": "Habits",
+    "chartReading": "Reading",
+    "chartOther": "Other",
+    "desc4Intro": "Tasks, agenda, OKRs, habits: everything meets in a single view.",
+    "title5": "No sign-up.",
+    "title5b": "Just try it."
   },
   "features": {
     "heading": "A productivity app for every profile",
@@ -374,7 +383,8 @@
       "b4d": "Change a member's manager, and everything follows: their rights, their scope, what they see. Nothing to reconfigure by hand.",
       "roleLead": "Manager",
       "roleMember": "Member",
-      "roleAdmin": "Admin"
+      "roleAdmin": "Admin",
+      "nameYou": "You"
     },
     "projects": {
       "title": "Create your projects, assign them at any scale.",

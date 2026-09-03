@@ -4,6 +4,7 @@
 // ═══════════════════════════════════════════════════════════════════
 import { type Variants } from 'framer-motion';
 import { BarChart3, Sparkles, type LucideIcon } from 'lucide-react';
+import type { KeyOf } from '@/i18n/catalog';
 
 export const containerVariants: Variants = {
   hidden: { opacity: 0 },
@@ -28,31 +29,29 @@ export const itemVariants: Variants = {
   }
 };
 
-export const features: Array<{ icon: LucideIcon; title: string; description: string }> = [
-  {
-    icon: Sparkles,
-    title: 'Habitudes sans publicité',
-    description: 'Accédez à vos habitudes sans la pub quotidienne',
-  },
-  {
-    icon: BarChart3,
-    title: 'Statistiques avancées',
-    description: 'Analyses détaillées, heatmaps et tendances',
-  },
+// ⚠️ Des CLÉS, pas des phrases. Une constante de module qui porte du texte
+// traduit fige la langue au premier import : ces deux tableaux sont restés
+// entièrement en français alors que la page autour d'eux était traduite.
+// La traduction a lieu au rendu, dans `PremiumPage`.
+type PremiumKey = KeyOf<'premium'>;
+
+export const features: Array<{ icon: LucideIcon; titleKey: PremiumKey; descriptionKey: PremiumKey }> = [
+  { icon: Sparkles, titleKey: 'table.featureNoAdsTitle', descriptionKey: 'table.featureNoAdsDesc' },
+  { icon: BarChart3, titleKey: 'table.featureStatsTitle', descriptionKey: 'table.featureStatsDesc' },
 ];
 
 // Tableau comparatif Gratuit / Pro.
-export const COMPARISON_ROWS: Array<{ label: string; free: boolean | string; pro: boolean | string }> = [
-  { label: 'Tâches illimitées', free: true, pro: true },
-  { label: 'Habitudes illimitées', free: true, pro: true },
-  { label: 'Agenda & événements', free: true, pro: true },
-  { label: 'OKR & Key Results', free: true, pro: true },
-  { label: 'Statistiques de base', free: true, pro: true },
-  { label: 'Sync multi-appareils', free: true, pro: true },
-  { label: 'Mode démo', free: true, pro: true },
-  { label: 'Collaboration & partage de tâches', free: true, pro: true },
-  { label: 'Habitudes sans pub quotidienne', free: false, pro: true },
-  { label: 'Statistiques avancées', free: false, pro: true },
-  { label: 'Sans publicité', free: false, pro: true },
-  { label: 'Support prioritaire', free: false, pro: true },
+export const COMPARISON_ROWS: Array<{ labelKey: PremiumKey; free: boolean | string; pro: boolean | string }> = [
+  { labelKey: 'table.rowTasks', free: true, pro: true },
+  { labelKey: 'table.rowHabits', free: true, pro: true },
+  { labelKey: 'table.rowAgenda', free: true, pro: true },
+  { labelKey: 'table.rowOkr', free: true, pro: true },
+  { labelKey: 'table.rowStatsBasic', free: true, pro: true },
+  { labelKey: 'table.rowSync', free: true, pro: true },
+  { labelKey: 'table.rowDemo', free: true, pro: true },
+  { labelKey: 'table.rowCollab', free: true, pro: true },
+  { labelKey: 'table.rowNoDailyAd', free: false, pro: true },
+  { labelKey: 'table.rowStatsAdvanced', free: false, pro: true },
+  { labelKey: 'table.rowNoAds', free: false, pro: true },
+  { labelKey: 'table.rowSupport', free: false, pro: true },
 ];

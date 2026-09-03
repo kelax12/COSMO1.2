@@ -143,7 +143,7 @@ npm run check:mail          # Délivrabilité des emails Auth : MX, SPF, DKIM Re
                             # d'Axel — cf. finding G-2 de faille.md.
                             # PAS une gate CI — dépend d'un état DNS externe.
 npm run i18n:scan           # Chaînes en dur non externalisées — **GATE CI depuis le 2026-09-02**
-                            # Cliquet à **25** (`MAX_STRINGS`), et `src/components` est à ZÉRO.
+                            # Cliquet à **0** (`MAX_STRINGS`) : plus une chaîne détectée.
                             # `-- --list` dit LESQUELLES.
                             # 🔴 Le seuil a valu 4 pendant une journée, sur une heuristique
                             # aveugle à QUATRE formes entières : texte JSX contenant une
@@ -151,7 +151,8 @@ npm run i18n:scan           # Chaînes en dur non externalisées — **GATE CI d
                             # `label:` (vs attribut `label=`), et valeur par défaut de prop.
                             # Le rapport certifiait « plus aucune chaîne en dur » pendant
                             # qu'il en restait des dizaines dans le produit. Les quatre sont
-                            # couvertes ; le chiffre est monté parce que la MESURE a changé.
+                            # couvertes ; le chiffre était monté à 25 parce que la MESURE a
+                            # changé, puis les 25 ont été extraites à leur tour.
                             # ❌ Ne jamais reprendre l'ancienne phrase « plus une seule chaîne
                             # d'interface en dur dans src/ » : elle a été VRAIE de la mesure et
                             # FAUSSE du produit pendant une journée. Le seul énoncé vérifiable

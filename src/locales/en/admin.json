@@ -64,5 +64,23 @@
     "codeLabel": "Six-digit code",
     "verify": "Verify",
     "codeRejected": "Code rejected. Check your phone's clock, then try again."
-  }
+  },
+  "active7d": "Active 7 d",
+  "inactive7to30": "Inactive 7-30 d",
+  "inactive30plus": "Inactive 30 d+",
+  "tasksAtLeastOne": "≥1 task",
+  "habitsAtLeastOne": "≥1 habit",
+  "okrsAtLeastOne": "≥1 OKR",
+  "stickiness": "Stickiness DAU/MAU",
+  "stickinessHint": "{{dau}} active today / {{mau}} over 30 d",
+  "churn": "Churn 30 d+",
+  "churnHint": "{{count}}/{{total}} accounts inactive for 30 d+",
+  "tasks": "Tasks",
+  "habits": "Habits",
+  "okrs": "OKRs",
+  "shares": "Shares",
+  "withFriends": "Have ≥1 friend",
+  "withFriendsHint": "{{count}} accounts ({{pct}})",
+  "providerHint": "{{count}} accounts ({{pct}})",
+  "activeToday": "Active today"
 }

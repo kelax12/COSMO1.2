@@ -111,7 +111,7 @@ export function PremiumPage() {
             >
               <Crown size={36} style={{ color: '#eab308' }} />
               <PageHeading variant="standard" className="sm:text-4xl">
-                Cosmo Premium
+                {t('page.heroTitle')}
               </PageHeading>
             </motion.div>
           <p className="text-lg sm:text-xl text-slate-600 dark:text-blue-200/80 mb-12">
@@ -132,7 +132,7 @@ export function PremiumPage() {
                 ) : (
                   <>
                     <span className="text-[rgb(var(--color-text-muted))]"></span>
-                    Version Gratuite
+                    {t('page.freeVersion')}
                   </>
                 )}
               </h2>
@@ -177,7 +177,7 @@ export function PremiumPage() {
                             >
                   <span className="flex items-center gap-2 justify-center">
                     <Sparkles className="w-5 h-5" />
-                    PREMIUM ACTIF
+                    {t('page.activeBadge')}
                   </span>
                 </motion.div>
               ) : (
@@ -299,13 +299,13 @@ export function PremiumPage() {
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
-                          <h4 className="font-bold text-[rgb(var(--color-text-primary))]">{feature.title}</h4>
+                          <h4 className="font-bold text-[rgb(var(--color-text-primary))]">{t(feature.titleKey)}</h4>
                           {premium && <Check size={18} className="text-emerald-600 dark:text-emerald-400" />}
                         </div>
-                        <p className="text-sm text-[rgb(var(--color-text-secondary))]">{feature.description}</p>
+                        <p className="text-sm text-[rgb(var(--color-text-secondary))]">{t(feature.descriptionKey)}</p>
                         {!premium && (
                           <div className="mt-2 text-xs font-bold text-amber-600">
-                            🔒 Premium requis
+                            {t('page.requiredBadge')}
                           </div>
                         )}
                       </div>
@@ -418,7 +418,7 @@ export function PremiumPage() {
           variants={itemVariants}
         >
           <h3 className="text-xl font-bold text-[rgb(var(--color-text-primary))] mb-2">
-            Gratuit ou Premium ?
+            {t('page.compareTitle')}
           </h3>
           <p className="text-sm text-[rgb(var(--color-text-secondary))] mb-6">
             {t('page.freeNotice')}
@@ -446,7 +446,7 @@ export function PremiumPage() {
                       <th className="py-3 px-2 sm:px-4 font-bold text-amber-600 dark:text-amber-400 text-center w-24 sm:w-32">
                         <span className="inline-flex items-center gap-1.5">
                           <Crown size={14} />
-                          Premium
+                          {t('page.proColumn')}
                         </span>
                       </th>
                     </tr>
@@ -459,7 +459,7 @@ export function PremiumPage() {
                           row.free === false ? 'bg-amber-500/[0.03]' : ''
                         }`}
                       >
-                        <td className="py-3 px-2 text-[rgb(var(--color-text-primary))]">{row.label}</td>
+                        <td className="py-3 px-2 text-[rgb(var(--color-text-primary))]">{t(row.labelKey)}</td>
                         <td className="py-3 px-2 sm:px-4 text-center"><Cell value={row.free} /></td>
                         <td className="py-3 px-2 sm:px-4 text-center"><Cell value={row.pro} /></td>
                       </tr>
@@ -479,7 +479,7 @@ export function PremiumPage() {
                 whileTap={{ scale: 0.98 }}
               >
                 <Crown size={18} />
-                Passer Premium
+                {t('page.goPremium')}
               </motion.button>
             </div>
           )}
@@ -495,7 +495,7 @@ export function PremiumPage() {
         {/* Header */}
         <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-[rgb(var(--color-border))] shrink-0 flex items-center justify-between">
           <h2 className="text-lg font-bold text-[rgb(var(--color-text-primary))]">
-            Comment veux-tu passer Premium ?
+            {t('page.howToTitle')}
           </h2>
           <button
             onClick={() => setShowChoiceModal(false)}
@@ -550,7 +550,7 @@ export function PremiumPage() {
             <div>
               <p className="font-bold text-[rgb(var(--color-text-primary))] text-base">{t('page.subscribeShort')}</p>
               <p className="text-sm text-[rgb(var(--color-text-secondary))] mt-0.5">
-                {formatCurrency(PREMIUM_MONTHLY_EUR)} / mois · 30 jours Premium
+                {t('page.monthlyOffer', { price: formatCurrency(PREMIUM_MONTHLY_EUR) })}
               </p>
             </div>
           </motion.button>

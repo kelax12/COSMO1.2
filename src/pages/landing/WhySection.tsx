@@ -286,18 +286,17 @@ const WhySection: React.FC = () => {
                 {t('why.title4')}
               </h3>
               <p className="text-sm text-slate-400 leading-relaxed mb-6 max-w-md">
-                Tâches, agenda, OKR, habitudes : tout converge dans une seule vue.
-                {t('why.desc4')}
+                {t('why.desc4Intro')}{' '}{t('why.desc4')}
               </p>
               {/* Mini bar chart */}
               <div className="flex items-end gap-2 h-20">
                 {[
-                  { label: 'Tâches', h: 75, c: '#3B82F6' },
-                  { label: 'Agenda', h: 95, c: '#EF4444' },
-                  { label: 'OKR', h: 55, c: '#10B981' },
-                  { label: 'Habitudes', h: 70, c: '#F59E0B' },
-                  { label: 'Lecture', h: 35, c: '#8B5CF6' },
-                  { label: 'Autres', h: 25, c: '#64748B' },
+                  { label: t('why.chartTasks'), h: 75, c: '#3B82F6' },
+                  { label: t('why.chartAgenda'), h: 95, c: '#EF4444' },
+                  { label: t('why.chartOkr'), h: 55, c: '#10B981' },
+                  { label: t('why.chartHabits'), h: 70, c: '#F59E0B' },
+                  { label: t('why.chartReading'), h: 35, c: '#8B5CF6' },
+                  { label: t('why.chartOther'), h: 25, c: '#64748B' },
                 ].map((bar, i) => (
                   <div key={bar.label} className="flex-1 flex flex-col items-center gap-1.5">
                     <motion.div
@@ -323,7 +322,7 @@ const WhySection: React.FC = () => {
               <div className="absolute top-0 left-0 right-0 h-px bg-cyan-400/40 group-hover:h-[3px] transition-all duration-500" />
               <span className="text-[10px] font-mono tracking-[0.25em] text-cyan-400 uppercase">{t('why.tag5')}</span>
               <h3 className="text-2xl lg:text-3xl font-semibold text-white mt-3 mb-3 leading-tight tracking-tight">
-                Pas d'inscription.<br />Juste essayer.
+                {t('why.title5')}<br />{t('why.title5b')}
               </h3>
               <p className="text-sm text-slate-400 leading-relaxed mb-5 max-w-md">
                 {t('why.desc5')}

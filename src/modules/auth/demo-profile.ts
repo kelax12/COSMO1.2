@@ -20,6 +20,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import type { User } from './AuthContext';
+import { isEnglishSeed } from '@/lib/seed-i18n';
 
 /**
  * Email sentinelle réservé à la session démo locale. Bloqué à l'inscription
@@ -77,7 +78,10 @@ export function readDemoProfile(): DemoProfilePatch {
 export function buildDemoUser(): User {
   return {
     id: 'demo-user',
-    name: 'Utilisateur Démo',
+    // Le nom affiché du compte de démonstration suit la langue des seeds :
+    // c'est une donnée de démonstration comme les tâches d'exemple, pas une
+    // identité. Il n'était traduit nulle part.
+    name: isEnglishSeed() ? 'Demo User' : 'Utilisateur Démo',
     email: DEMO_SENTINEL_EMAIL,
     ...readDemoProfile(),
   };

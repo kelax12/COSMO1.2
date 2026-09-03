@@ -95,19 +95,18 @@ interface RecapLabels {
   time: string;
   habits: string;
   cta: string;
-  signature: string;
 }
 
-const DEFAULT_LABELS: RecapLabels = {
-  title: 'Ma semaine',
-  tasks: 'tâches terminées',
-  streak: 'série en cours',
-  streakUnit: 'jours',
-  time: 'temps investi',
-  habits: 'habitudes suivies',
-  cta: 'Essayez sans inscription',
-  signature: 'fait avec Cosmo · thecosmo.app',
-};
+/**
+ * Signature de marque — la seule chaîne écrite ici, et volontairement.
+ *
+ * ⚠️ Les sept autres libellés étaient dupliqués en français dans un
+ * `DEFAULT_LABELS` que PERSONNE n'utilisait : l'appelant les passe tous depuis
+ * le catalogue. Deux sources pour le même texte, dont une jamais relue, c'est
+ * la définition d'une dérive silencieuse. `RecapLabels` est donc obligatoire :
+ * un libellé manquant ne compile plus, au lieu de retomber en français.
+ */
+const BRAND_SIGNATURE = 'fait avec Cosmo · thecosmo.app';
 
 /**
  * Dessine le bilan. Rien de ce qui est écrit ici n'est nominatif : uniquement
@@ -116,10 +115,10 @@ const DEFAULT_LABELS: RecapLabels = {
 export function drawRecap(
   canvas: HTMLCanvasElement,
   recap: RecapData,
-  labels: Partial<RecapLabels> = {},
+  labels: RecapLabels,
   locale = 'fr-FR'
 ): void {
-  const text = { ...DEFAULT_LABELS, ...labels };
+  const text = { ...labels, signature: BRAND_SIGNATURE };
   canvas.width = RECAP_WIDTH;
   canvas.height = RECAP_HEIGHT;
   const ctx = canvas.getContext('2d');
@@ -228,7 +227,7 @@ export function drawRecap(
  */
 export async function renderRecapPng(
   recap: RecapData,
-  labels?: Partial<RecapLabels>,
+  labels: RecapLabels,
   locale?: string
 ): Promise<{ canvas: HTMLCanvasElement; blob: Blob | null; dataUrl: string }> {
   const canvas = document.createElement('canvas');

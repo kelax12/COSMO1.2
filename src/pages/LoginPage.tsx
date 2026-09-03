@@ -7,9 +7,13 @@ import { useT } from '@/i18n/useT';
 
 const LoginPage = () => {
   const { t } = useT('common');
+  // Les titres et descriptions vivent DEJA dans `seo.json` : le prerendu les
+  // lit depuis ce catalogue, la page les recopiait a cote. Deux sources pour
+  // la meme balise, c'est une occasion de les laisser diverger.
+  const { t: tSeo } = useT('seo');
   useSeoMeta({
-    title: 'Connexion – Cosmo, application de productivité',
-    description: 'Connectez-vous à Cosmo pour accéder à vos tâches, habitudes, agenda et OKR.',
+    title: tSeo('login.title'),
+    description: tSeo('login.description'),
     canonical: 'https://thecosmo.app/login',
   });
   const navigate = useNavigate();

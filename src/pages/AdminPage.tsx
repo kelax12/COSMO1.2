@@ -193,43 +193,43 @@ const AdminDashboard: React.FC = () => {
   // ── Données des graphiques (dérivées, pas de useMemo : calculs triviaux) ──
   // Répartition de l'activité : segments exclusifs qui somment au total.
   const activityData: LabeledValue[] = [
-    { label: "Actifs aujourd'hui", value: totals.activeToday },
-    { label: 'Actifs 7 j', value: Math.max(0, totals.active7d - totals.activeToday) },
-    { label: 'Inactifs 7-30 j', value: Math.max(0, totals.inactive7dPlus - totals.inactive30dPlus) },
-    { label: 'Inactifs 30 j+', value: totals.inactive30dPlus },
+    { label: t('activeToday'), value: totals.activeToday },
+    { label: t('active7d'), value: Math.max(0, totals.active7d - totals.activeToday) },
+    { label: t('inactive7to30'), value: Math.max(0, totals.inactive7dPlus - totals.inactive30dPlus) },
+    { label: t('inactive30plus'), value: totals.inactive30dPlus },
   ].filter((d) => d.value > 0);
 
   const providerData: LabeledValue[] = Object.entries(data.signupsByProvider).map(([provider, count]) => ({
     label: provider.charAt(0).toUpperCase() + provider.slice(1),
     value: count,
-    hint: `${count} comptes (${pct(count, totals.users)})`,
+    hint: t('providerHint', { count, pct: pct(count, totals.users) }),
   }));
 
   const adoptionData: LabeledValue[] = [
-    { label: '≥1 tâche', value: pctNum(adoption.tasksUsers, totals.users), hint: `${adoption.tasksUsers}/${totals.users} utilisateurs` },
-    { label: '≥1 habitude', value: pctNum(adoption.habitsUsers, totals.users), hint: `${adoption.habitsUsers}/${totals.users} utilisateurs` },
+    { label: t('tasksAtLeastOne'), value: pctNum(adoption.tasksUsers, totals.users), hint: t('usersRatio', { count: adoption.tasksUsers, total: totals.users }) },
+    { label: t('habitsAtLeastOne'), value: pctNum(adoption.habitsUsers, totals.users), hint: t('usersRatio', { count: adoption.habitsUsers, total: totals.users }) },
     { label: t('eventsAtLeastOne'), value: pctNum(adoption.eventsUsers, totals.users), hint: t('usersRatio', { count: adoption.eventsUsers, total: totals.users }) },
-    { label: '≥1 OKR', value: pctNum(adoption.okrsUsers, totals.users), hint: `${adoption.okrsUsers}/${totals.users} utilisateurs` },
+    { label: t('okrsAtLeastOne'), value: pctNum(adoption.okrsUsers, totals.users), hint: t('usersRatio', { count: adoption.okrsUsers, total: totals.users }) },
   ];
 
   const engagementData: LabeledValue[] = [
     { label: t('activation24h'), value: pctNum(activation24h.activated, activation24h.total), hint: t('activationHint', { count: activation24h.activated, total: activation24h.total }) },
     { label: t('taskCompletion'), value: pctNum(tasksCompletion.completed, tasksCompletion.total), hint: t('taskCompletionHint', { count: tasksCompletion.completed, total: tasksCompletion.total }) },
-    { label: 'Stickiness DAU/MAU', value: pctNum(stickiness.dau, stickiness.mau), hint: `${stickiness.dau} actifs aujourd'hui / ${stickiness.mau} sur 30 j` },
-    { label: 'Churn 30 j+', value: pctNum(totals.inactive30dPlus, totals.users), hint: `${totals.inactive30dPlus}/${totals.users} comptes inactifs depuis 30 j+` },
+    { label: t('stickiness'), value: pctNum(stickiness.dau, stickiness.mau), hint: t('stickinessHint', { dau: stickiness.dau, mau: stickiness.mau }) },
+    { label: t('churn'), value: pctNum(totals.inactive30dPlus, totals.users), hint: t('churnHint', { count: totals.inactive30dPlus, total: totals.users }) },
   ];
 
   const usageData: LabeledValue[] = [
-    { label: 'Tâches', value: usage.tasks },
-    { label: 'Habitudes', value: usage.habits },
+    { label: t('tasks'), value: usage.tasks },
+    { label: t('habits'), value: usage.habits },
     { label: t('events'), value: usage.events },
-    { label: 'OKRs', value: usage.okrs },
-    { label: 'Partages', value: usage.sharedTasks },
+    { label: t('okrs'), value: usage.okrs },
+    { label: t('shares'), value: usage.sharedTasks },
   ];
 
   const collabData: LabeledValue[] = [
     { label: t('shared'), value: collaboration.sharers, hint: t('sharedHint', { count: collaboration.sharers, pct: pct(collaboration.sharers, totals.users) }) },
-    { label: 'Ont ≥1 ami', value: collaboration.usersWithFriends, hint: `${collaboration.usersWithFriends} users (${pct(collaboration.usersWithFriends, totals.users)})` },
+    { label: t('withFriends'), value: collaboration.usersWithFriends, hint: t('withFriendsHint', { count: collaboration.usersWithFriends, pct: pct(collaboration.usersWithFriends, totals.users) }) },
     { label: t('acceptedRequests'), value: collaboration.acceptedRequests },
   ];
 
@@ -344,7 +344,7 @@ const AdminDashboard: React.FC = () => {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         <KpiCard label={t('accountsCreated')} value={String(totals.users)} />
         <KpiCard
-          label="Actifs aujourd'hui"
+          label={t('activeToday')}
           value={String(totals.activeToday)}
           hint={`${pct(totals.activeToday, totals.users)} des comptes`}
         />

@@ -68,7 +68,16 @@
     "habitsLine1": "Vos habitudes,",
     "habitsLine2": "sur 26 semaines.",
     "retention": "Rétention 71%",
-    "demoVolume": "100 tâches · 100 habitudes · 150 events"
+    "demoVolume": "100 tâches · 100 habitudes · 150 events",
+    "chartTasks": "Tâches",
+    "chartAgenda": "Agenda",
+    "chartOkr": "OKR",
+    "chartHabits": "Habitudes",
+    "chartReading": "Lecture",
+    "chartOther": "Autres",
+    "desc4Intro": "Tâches, agenda, OKR, habitudes : tout converge dans une seule vue.",
+    "title5": "Pas d'inscription.",
+    "title5b": "Juste essayer."
   },
   "features": {
     "heading": "Application productivité pour chaque profil",
@@ -374,7 +383,8 @@
       "b4d": "Changez le rattachement d'un membre, et tout suit : ses droits, son périmètre, ce qu'il voit. Rien à reconfigurer à la main.",
       "roleLead": "Manager",
       "roleMember": "Membre",
-      "roleAdmin": "Admin"
+      "roleAdmin": "Admin",
+      "nameYou": "Vous"
     },
     "projects": {
       "title": "Créez vos projets, attribuez-les à l'échelle que vous voulez.",

@@ -59,7 +59,10 @@
     "periodDay": "aujourd'hui",
     "periodWeek": "(7 j)",
     "periodMonth": "(30 j)",
-    "periodYear": "(365 j)"
+    "periodYear": "(365 j)",
+    "taskCount_one": "{{count}} tâche",
+    "taskCount_many": "{{count}} de tâches",
+    "taskCount_other": "{{count}} tâches"
   },
   "heatmap": {
     "less": "Moins",
@@ -74,5 +77,19 @@
   },
   "overview": {
     "showAll": "Tout"
+  },
+  "breakdown": {
+    "tasks": "Tâches",
+    "agenda": "Agenda",
+    "habits": "Habitudes",
+    "okr": "OKR"
+  },
+  "insights": {
+    "bestDay": "Votre meilleur jour : {{day}} ({{share}} % de vos tâches complétées sur 30 jours).",
+    "fragileHabit": "Habitude la plus fragile : « {{name}} », {{missed}} oublis cette semaine.",
+    "momentumFirst": "{{count}} tâches complétées cette semaine.",
+    "momentumUp": "En progression : {{count}} tâches complétées cette semaine (+{{delta}} % vs la semaine dernière).",
+    "momentumDown": "En baisse : {{count}} tâches complétées cette semaine ({{delta}} % vs la semaine dernière).",
+    "momentumStable": "Rythme stable : {{count}} tâches complétées cette semaine."
   }
 }
