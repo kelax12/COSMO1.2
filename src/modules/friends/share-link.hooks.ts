@@ -82,12 +82,29 @@ export const usePreviewShareLink = (token: string | undefined, enabled: boolean)
   });
 };
 
-/** Claim d'un lien d'invitation (RPC SECURITY DEFINER, mig. 046). */
+/**
+ * Claim d'un lien d'invitation (RPC SECURITY DEFINER, mig. 046).
+ *
+ * 🔴 C-63 — ce hook lancait l'erreur PostgREST BRUTE (`throw error`), et
+ * `ShareInviteClaimer` triait ensuite sur le TEXTE du message. Le reseau qui
+ * tombe, un `42501`, un 500 de PostgREST : aucun de ces messages ne contient
+ * `own_link` ni `expired_link`, donc l'utilisateur lisait « ce lien
+ * d'invitation est invalide » — une affirmation DEFINITIVE et FAUSSE, sur le
+ * chemin d'acquisition que `CLAUDE.md` protege explicitement, et il n'avait
+ * plus aucune raison de reessayer.
+ *
+ * `normalizeApiError` sait deja promouvoir `own_link` / `expired_link` /
+ * `invalid_link` en `ApiError.code` : les trois sont catalogues en `api.*`,
+ * en `fr` comme en `en`. L'appelant branche donc sur un CODE, jamais sur une
+ * phrase, et sa branche par defaut ne peut plus se faire passer pour un refus
+ * nomme. Les trois identifiants sont ceux des `RAISE EXCEPTION` de la mig. 046
+ * / 047 — verifies dans le SQL, pas supposes.
+ */
 export const useClaimShareLink = () => {
   return useMutation({
     mutationFn: async (token: string): Promise<ClaimShareLinkResult> => {
       const { data, error } = await supabase.rpc('claim_share_link', { p_token: token });
-      if (error) throw error; // message technique (invalid_link/expired_link/own_link) géré par l'appelant
+      if (error) throw normalizeApiError(error);
       return data as ClaimShareLinkResult;
     },
   });

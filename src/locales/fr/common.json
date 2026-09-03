@@ -241,7 +241,8 @@
     "sharedWithYou": "Tâche partagée avec vous",
     "proposes": "**{{name}}** vous propose de collaborer sur **« {{task}} »**.",
     "accept": "Accepter la tâche",
-    "ownLink": "Ce lien d'invitation pointe vers votre propre tâche."
+    "ownLink": "Ce lien d'invitation pointe vers votre propre tâche.",
+    "unverified": "Nous n'avons pas pu vérifier ce lien d'invitation. Réessayez dans un instant."
   },
   "shareLink": {
     "availableAfterCreate": "Disponible après la création",
@@ -416,7 +417,8 @@
   "rootError": {
     "title": "COSMO n'a pas pu démarrer",
     "signOut": "Se déconnecter",
-    "body": "Une erreur a interrompu le chargement de l'application. Rechargez la page. Si le problème persiste, déconnectez-vous pour repartir d'une session propre."
+    "body": "Une erreur a interrompu le chargement de l'application. Rechargez la page. Si le problème persiste, déconnectez-vous pour repartir d'une session propre.",
+    "reload": "Recharger"
   },
   "shortcuts": {
     "inactiveWhileTyping": "Les raccourcis sont inactifs pendant la saisie dans un champ.",

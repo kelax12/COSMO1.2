@@ -29,6 +29,9 @@
 import React, { Component, ReactNode } from 'react';
 import * as Sentry from '@sentry/react';
 import { translator } from '@/i18n/useT';
+// C-64 — la sortie de secours vit dans un module partage : `AppErrorBoundary`
+// l'offre desormais aussi, et deux copies d'un chemin de secours divergent.
+import { hardSignOut } from '@/lib/hard-sign-out';
 
 interface Props {
   children: ReactNode;
@@ -38,30 +41,6 @@ interface State {
   message: string;
 }
 
-/**
- * Purge tout ce qui pourrait ramener l'utilisateur dans l'état cassé, puis
- * repart sur la racine par un rechargement complet.
- *
- * On efface les clés de session Supabase (`sb-*-auth-token`) ET nos propres
- * caches (`cosmo*`). On ne touche à RIEN d'autre : le localStorage de
- * l'origine peut contenir des données étrangères à l'app.
- */
-function hardSignOut(): void {
-  try {
-    const doomed: string[] = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (!key) continue;
-      if (key.startsWith('sb-') || key.startsWith('cosmo')) doomed.push(key);
-    }
-    doomed.forEach((k) => localStorage.removeItem(k));
-  } catch {
-    /* navigation privée stricte — on tente quand même la redirection */
-  }
-  // `location.replace` et pas `assign` : l'écran cassé ne doit pas rester
-  // dans l'historique, sinon le bouton retour y ramène.
-  window.location.replace('/');
-}
 
 export class RootErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
@@ -135,7 +114,7 @@ export class RootErrorBoundary extends Component<Props, State> {
               fontWeight: 600,
             }}
           >
-            Recharger
+            {t('rootError.reload')}
           </button>
           <button
             type="button"
