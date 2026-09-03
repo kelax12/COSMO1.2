@@ -13,6 +13,7 @@ import {
   type ClaimShareLinkResult,
 } from '@/modules/friends';
 import { taskKeys } from '@/modules/tasks';
+import { ApiError } from '@/lib/normalizeApiError';
 import { isImageAvatar, isEmojiAvatar } from '@/lib/avatar';
 import { useT } from '@/i18n/useT';
 import { RichText } from '@/components/ui/rich-text';
@@ -42,6 +43,8 @@ const ShareInviteClaimer: React.FC = () => {
     } catch { return; }
     if (!token) return;
     // Retire le flag AVANT le claim : pas de double-claim sur re-render/reload.
+    // C-63 — il est REPOSE si le refus n'est pas nomme (cf. onError) : une
+    // panne reseau ne doit pas consommer une invitation.
     try { localStorage.removeItem(PENDING_INVITE_STORAGE_KEY); } catch { /* no-op */ }
 
     claimMutation.mutate(token, {
@@ -55,14 +58,25 @@ const ShareInviteClaimer: React.FC = () => {
         }
         setInvite(result);
       },
+      // C-63 — on branche sur le CODE, jamais sur le texte du message. Une
+      // panne reseau ou un 500 de PostgREST ne contient aucun identifiant :
+      // l'ancien tri par texte les faisait tomber dans « ce lien est
+      // invalide », une affirmation definitive et fausse sur le chemin
+      // d'acquisition, apres laquelle personne ne reessaie.
       onError: (error: Error) => {
-        const msg = error.message || '';
-        if (msg.includes('own_link')) {
+        const code = error instanceof ApiError ? error.code : '';
+        if (code === 'own_link') {
           toast.info(t('shareInvite.ownLink'));
-        } else if (msg.includes('expired_link')) {
+        } else if (code === 'expired_link') {
           toast.error(t('shareInvite.expired'));
-        } else {
+        } else if (code === 'invalid_link') {
           toast.error(t('shareInvite.invalid'));
+        } else {
+          // Refus NON nomme : on ne sait pas si le lien est mauvais. On le dit,
+          // et on REPOSE le jeton pour que le prochain montage reessaie —
+          // sinon une coupure reseau consomme l'invitation pour de bon.
+          toast.error(t('shareInvite.unverified'));
+          try { localStorage.setItem(PENDING_INVITE_STORAGE_KEY, token); } catch { /* no-op */ }
         }
       },
     });

@@ -238,7 +238,8 @@
     "sharedWithYou": "Task shared with you",
     "proposes": "**{{name}}** would like to collaborate with you on **“{{task}}”**.",
     "accept": "Accept the task",
-    "ownLink": "This invitation link points to your own task."
+    "ownLink": "This invitation link points to your own task.",
+    "unverified": "We couldn't verify this invitation link. Try again in a moment."
   },
   "shareLink": {
     "availableAfterCreate": "Available once created",
@@ -412,7 +413,8 @@
   "rootError": {
     "title": "COSMO couldn't start",
     "signOut": "Sign out",
-    "body": "An error interrupted the application while it was loading. Reload the page. If the problem persists, sign out to start from a clean session."
+    "body": "An error interrupted the application while it was loading. Reload the page. If the problem persists, sign out to start from a clean session.",
+    "reload": "Reload"
   },
   "shortcuts": {
     "inactiveWhileTyping": "Shortcuts are off while you type in a field.",
