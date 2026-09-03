@@ -2,11 +2,9 @@
 // KR-COMPLETIONS MODULE - React Query Hooks
 // ═══════════════════════════════════════════════════════════════════
 
-import { useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { getKRCompletionsRepository } from '@/lib/repository.factory';
-import { useIsDemo } from '@/lib/app-mode.store';
 import { IKRCompletionsRepository } from './repository';
 import { KRCompletion, CreateKRCompletionInput } from './types';
 import { krCompletionKeys } from './constants';
@@ -15,11 +13,15 @@ import { krCompletionKeys } from './constants';
 // REPOSITORY - Via centralized factory (demo/production mode)
 // ═══════════════════════════════════════════════════════════════════
 
-const useKRCompletionsRepository = (): IKRCompletionsRepository => {
-  const isDemo = useIsDemo();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  return useMemo(() => getKRCompletionsRepository(), [isDemo]);
-};
+// Sélection du repository : le factory est déjà un singleton paramétré par
+// `appModeStore.isDemo`, et `resetRepositories()` le vide à chaque bascule
+// (AuthContext). Le `useMemo(..., [isDemo])` qui vivait ici était donc
+// redondant, et son commentaire était faux : `resetRepositories()` est aussi
+// appelé sur des chemins où `isDemo` NE change pas (déconnexion d'une vraie
+// session), où la mémo rendait alors l'instance que le factory venait de
+// jeter. Six modules (events, lists, categories, friends, team-projects,
+// organizations) font déjà cet appel direct. Audit A-2, item C-06.
+const useKRCompletionsRepository = (): IKRCompletionsRepository => getKRCompletionsRepository();
 
 // ═══════════════════════════════════════════════════════════════════
 // READ HOOKS

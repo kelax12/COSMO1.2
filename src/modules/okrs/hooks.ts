@@ -6,7 +6,6 @@ import { useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { getOKRsRepository } from '@/lib/repository.factory';
-import { useIsDemo } from '@/lib/app-mode.store';
 import { IOKRsRepository } from './repository';
 import { OKR, CreateOKRInput, UpdateOKRInput, UpdateKeyResultInput, OKRFilters } from './types';
 import { okrsKeys } from './constants';
@@ -24,11 +23,15 @@ import { reportRestoreFailure, splitRestore } from '@/lib/restore-id';
  * Factory hook to get the OKRs repository
  * Uses centralized factory for demo/production mode switching
  */
-const useOKRsRepository = (): IOKRsRepository => {
-  const isDemo = useIsDemo();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  return useMemo(() => getOKRsRepository(), [isDemo]);
-};
+// Sélection du repository : le factory est déjà un singleton paramétré par
+// `appModeStore.isDemo`, et `resetRepositories()` le vide à chaque bascule
+// (AuthContext). Le `useMemo(..., [isDemo])` qui vivait ici était donc
+// redondant, et son commentaire était faux : `resetRepositories()` est aussi
+// appelé sur des chemins où `isDemo` NE change pas (déconnexion d'une vraie
+// session), où la mémo rendait alors l'instance que le factory venait de
+// jeter. Six modules (events, lists, categories, friends, team-projects,
+// organizations) font déjà cet appel direct. Audit A-2, item C-06.
+const useOKRsRepository = (): IOKRsRepository => getOKRsRepository();
 
 // ═══════════════════════════════════════════════════════════════════
 // HELPER FUNCTIONS
