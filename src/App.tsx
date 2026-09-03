@@ -54,13 +54,22 @@ const AgendaPage = lazyWithRetry(() => import('@/pages/AgendaPage'), ['agenda', 
 const HabitsPage = lazyWithRetry(() => import('@/pages/HabitsPage'), ['eventModal', 'habits', 'premium', 'tasks', 'tutorials']);
 const OKRPage = lazyWithRetry(() => import('@/pages/OKRPage'), ['eventModal', 'okr', 'taskModal', 'tasks', 'tutorials']);
 const StatisticsPage = lazyWithRetry(() => import('@/pages/StatisticsPage'), ['dashboard', 'premium', 'statistics']);
-const SettingsPage = lazyWithRetry(() => import('@/pages/SettingsPage'), ['org', 'settings']);
+// `tasks` : DataTab (export CSV) et `csv-export.ts` importent le BARREL
+// `@/modules/lists` pour `listKeys`, qui réexporte aussi `useDeleteListWithUndo`
+// (`delete-flow.hooks.ts`), dont le toast d'annulation passe par
+// `translator('tasks')`. Importer un seul nom d'un barrel charge tout son
+// graphe : trouvé par `npm run i18n:namespaces -- --pages` le 2026-09-03.
+const SettingsPage = lazyWithRetry(() => import('@/pages/SettingsPage'), ['org', 'settings', 'tasks']);
 const PremiumPage = lazyWithRetry(() => import('@/pages/PremiumPage'), ['premium']);
 const GuidePage = lazyWithRetry(() => import('@/pages/GuidePage'), ['guide', 'seo']);
 const MentionsLegalesPage = lazyWithRetry(() => import('@/pages/MentionsLegalesPage'), ['legal', 'seo']);
 const PolitiqueConfidentialitePage = lazyWithRetry(() => import('@/pages/PolitiqueConfidentialitePage'), ['legal', 'seo']);
 const CGUPage = lazyWithRetry(() => import('@/pages/CGUPage'), ['legal', 'seo']);
-const InvitePage = lazyWithRetry(() => import('@/pages/InvitePage'), ['invite']);
+// `tasks` : même mécanisme que `SettingsPage` ci-dessus, un cran plus loin —
+// `usePreviewShareLink` (`@/modules/friends`) importe `listKeys` du barrel
+// `@/modules/lists`, qui traîne `delete-flow.hooks.ts` et son
+// `translator('tasks')`.
+const InvitePage = lazyWithRetry(() => import('@/pages/InvitePage'), ['invite', 'tasks']);
 const AdminPage = lazyWithRetry(() => import('@/pages/AdminPage'), ['admin']);
 const OrganizationOnboardingPage = lazyWithRetry(() => import('@/pages/OrganizationOnboardingPage'), ['org']);
 const OrganizationPage = lazyWithRetry(() => import('@/pages/OrganizationPage'), ['eventModal', 'okr', 'org', 'tasks']);
