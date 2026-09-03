@@ -19,12 +19,12 @@
 // exercice du droit à l'effacement, ces données restaient dans les données de
 // chacun de ses anciens contacts, sans limite de durée.
 //
-// ⚠️ Et la FK ne rattrape rien : `friends_friend_user_id_fkey` est
-// `ON DELETE SET NULL` en production (vérifié sur `pg_constraint` le
-// 2026-08-24 — la migration 007 du dépôt déclare `ON DELETE CASCADE`, elle
-// n'a jamais été appliquée puisqu'elle est en `ADD COLUMN IF NOT EXISTS` sur
-// une colonne déjà présente). `SET NULL` coupe le lien SANS supprimer la
-// ligne : l'email survit, et devient même introuvable par identifiant.
+// ⚠️ Remesuré le 2026-09-03 (audit A-1) : `friends_friend_user_id_fkey` est
+// `ON DELETE CASCADE`, plus `SET NULL`. La migration 116 l'a explicitement
+// basculée, et ce commentaire décrivait donc l'état d'avant. La purge
+// explicite garde tout son sens : elle ne dépend d'AUCUNE FK, donc elle
+// survit à un changement de schéma fait ailleurs. C'est précisément ce qui
+// vient d'arriver à la phrase qu'elle remplace.
 //
 // FORME : une garde textuelle, pas un test d'intégration. Elle ne prouve pas
 // que la purge fonctionne — elle prouve qu'on n'a pas SILENCIEUSEMENT laissé

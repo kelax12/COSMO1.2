@@ -122,7 +122,21 @@
     "backToSignIn": "Retour à la connexion",
     "forgotIntro": "Saisissez votre email : nous vous enverrons un lien pour en choisir un nouveau.",
     "resetSentBefore": "Si un compte existe pour",
-    "resetSentAfter": "vous recevrez un lien pour choisir un nouveau mot de passe. Pensez à vérifier vos spams."
+    "resetSentAfter": "vous recevrez un lien pour choisir un nouveau mot de passe. Pensez à vérifier vos spams.",
+    "supabaseMissing": "Supabase non configuré. Vérifiez les variables d'environnement.",
+    "invalidEmail": "Veuillez saisir une adresse email valide.",
+    "reservedEmail": "Cet email est réservé. Choisissez une autre adresse.",
+    "googleFailed": "La connexion avec Google a échoué.",
+    "defaultUserName": "Utilisateur",
+    "accountType": "Type de compte",
+    "accountPersonal": "Particulier",
+    "accountPersonalDesc": "Usage personnel",
+    "registerGeneric": "Impossible de finaliser l'inscription. Vérifiez vos informations et réessayez.",
+    "loginGeneric": "Email ou mot de passe incorrect.",
+    "tooManyAttempts": "Trop de tentatives. Réessayez dans quelques minutes.",
+    "weakPassword": "Mot de passe trop faible. Choisissez-en un plus long et plus varié.",
+    "invalidEmailAddress": "Cette adresse email n'est pas valide.",
+    "captchaFailed": "La vérification anti-robot a échoué. Réessayez."
   },
   "cookies": {
     "banner": "Bannière cookies",
@@ -226,7 +240,8 @@
     "refused": "Invitation refusée.",
     "sharedWithYou": "Tâche partagée avec vous",
     "proposes": "**{{name}}** vous propose de collaborer sur **« {{task}} »**.",
-    "accept": "Accepter la tâche"
+    "accept": "Accepter la tâche",
+    "ownLink": "Ce lien d'invitation pointe vers votre propre tâche."
   },
   "shareLink": {
     "availableAfterCreate": "Disponible après la création",
@@ -297,7 +312,8 @@
   "collaborator": {
     "sent": "Envoyé",
     "requestSent": "⏳ Demande d'ami envoyée",
-    "awaiting": "En attente d'acceptation"
+    "awaiting": "En attente d'acceptation",
+    "generic": "Collaborateur"
   },
   "orgTier": {
     "free": "Gratuit",
@@ -441,7 +457,18 @@
       "categories": "catégories",
       "lists": "listes",
       "friends": "amis",
-      "team_tasks": "tâches d'équipe"
+      "team_tasks": "tâches d'équipe",
+      "team_projects": "projets d'équipe",
+      "org_members": "membres de l'entreprise",
+      "org_teams": "équipes",
+      "team_members": "appartenances d'équipe",
+      "team_task_comments": "commentaires",
+      "org_join_requests": "demandes d'adhésion",
+      "team_okrs": "OKR d'équipe",
+      "team_task_activity": "événements de journal",
+      "team_task_dependencies": "dépendances de tâches",
+      "org_invite_links": "liens d'invitation",
+      "organizations": "entreprises"
     }
   },
   "period": {
@@ -468,6 +495,96 @@
     "todayLoad": "≈ {{load}} planifiées aujourd’hui"
   },
   "datePicker": {
-    "placeholder": "Sélectionner une date"
+    "placeholder": "Sélectionner une date",
+    "today": "Aujourd'hui",
+    "tomorrow": "Demain",
+    "nextMonday": "Lundi prochain",
+    "noDate": "Pas de date"
+  },
+  "weekday": {
+    "0": "dimanche",
+    "1": "lundi",
+    "2": "mardi",
+    "3": "mercredi",
+    "4": "jeudi",
+    "5": "vendredi",
+    "6": "samedi"
+  },
+  "csv": {
+    "yes": "Oui",
+    "no": "Non",
+    "yesLower": "oui",
+    "noLower": "non",
+    "file": {
+      "tasks": "cosmo-taches",
+      "habits": "cosmo-habitudes",
+      "events": "cosmo-agenda",
+      "okrs": "cosmo-okr",
+      "profile": "cosmo-profil",
+      "categories": "cosmo-categories",
+      "lists": "cosmo-listes"
+    },
+    "col": {
+      "id": "ID",
+      "name": "Nom",
+      "description": "Description",
+      "category": "Catégorie",
+      "priority": "Priorité",
+      "deadline": "Échéance",
+      "durationMin": "Durée (min)",
+      "recurrence": "Récurrence",
+      "subtasks": "Sous-tâches",
+      "linkedKr": "KR lié",
+      "completed": "Complétée",
+      "completedAt": "Complétée le",
+      "bookmarked": "Favori",
+      "createdAt": "Créée le",
+      "frequency": "Fréquence",
+      "color": "Couleur",
+      "completions": "Complétions",
+      "title": "Titre",
+      "start": "Début",
+      "end": "Fin",
+      "notes": "Notes",
+      "recurrenceDays": "Jours de récurrence",
+      "removedOccurrences": "Occurrences supprimées",
+      "linkedTask": "Tâche liée",
+      "private": "Privé",
+      "okrId": "OKR ID",
+      "okrTitle": "OKR Titre",
+      "okrDescription": "OKR Description",
+      "okrCategory": "OKR Catégorie",
+      "okrProgress": "OKR Progression",
+      "okrStart": "OKR Début",
+      "okrEnd": "OKR Fin",
+      "krTitle": "KR Titre",
+      "krCurrent": "KR Valeur actuelle",
+      "krTarget": "KR Valeur cible",
+      "krUnit": "KR Unité",
+      "krCompleted": "KR Complétée",
+      "field": "Champ",
+      "value": "Valeur",
+      "identifier": "Identifiant",
+      "email": "Email",
+      "avatar": "Avatar",
+      "autoValidation": "Validation automatique",
+      "type": "Type",
+      "smartRule": "Règle intelligente",
+      "taskCount": "Nombre de tâches"
+    }
+  },
+  "deadlineReminder": {
+    "dueToday_one": "{{count}} tâche pour aujourd'hui",
+    "dueToday_other": "{{count}} tâches pour aujourd'hui",
+    "overdue": "{{count}} en retard",
+    "description": "Touchez pour voir vos tâches",
+    "action": "Voir",
+    "dueToday_many": "{{count}} tâches pour aujourd'hui"
+  },
+  "relativeDay": {
+    "today": "Aujourd'hui",
+    "tomorrow": "Demain",
+    "yesterday": "Hier",
+    "daysAgo": "il y a {{count}} j"
   }
 }

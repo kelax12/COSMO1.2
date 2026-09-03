@@ -3,6 +3,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { TaskList, CreateListInput, UpdateListInput } from './types';
+import { safeGetItem, safeParseArray } from '@/lib/safe-json';
 import { LISTS_STORAGE_KEY } from './constants';
 import { localizeSeed } from '@/lib/seed-i18n';
 import type { CreateOptions } from '@/lib/restore-id';
@@ -95,13 +96,15 @@ export class LocalStorageListsRepository implements IListsRepository {
    * Get all lists from localStorage (or initialize with demo data)
    */
   private getLists(): TaskList[] {
-    const data = localStorage.getItem(LISTS_STORAGE_KEY);
-    if (!data) {
+    const stored = safeParseArray<TaskList>(safeGetItem(LISTS_STORAGE_KEY));
+    // Corrompu ou stockage indisponible : on re-seme plutot que de faire
+    // tomber la page (regle B14, helper `safeParseArray`).
+    if (!stored) {
       const seeded = localizeSeed(DEMO_LISTS, DEMO_LISTS_EN);
       this.saveLists(seeded);
       return seeded;
     }
-    return JSON.parse(data);
+    return stored;
   }
 
   /**

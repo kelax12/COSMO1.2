@@ -231,12 +231,12 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
                     <div className="flex flex-wrap gap-1.5 px-4 pt-3">
                       {buildDatePresets().map((preset) => (
                         <button
-                          key={preset.label}
+                          key={preset.labelKey}
                           type="button"
                           onClick={() => { handleInputChange('deadline', preset.value); setShowDeadlinePicker(false); }}
                           className="px-2.5 py-1.5 rounded-lg text-xs font-medium border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))]"
                         >
-                          {preset.label}
+                          {tCommon(preset.labelKey)}
                         </button>
                       ))}
                     </div>

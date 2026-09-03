@@ -2,49 +2,66 @@
 // Comportement déplacé verbatim depuis EventModal.tsx.
 import type { EventModalMode } from '@/components/EventModal';
 
-// Libellés courts des jours, indexés sur Date.getDay() (0 = dimanche).
-export const DAY_LABELS = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+// ⚠️ Ce module est PUR : il n'a pas de locale. Il rendait des libellés
+// FRANÇAIS EN DUR — jours abrégés, titres de la modale, bouton de validation —
+// affichés tels quels à un anglophone (revue du 2026-09-02, point 7). Il rend
+// désormais des CLÉS du catalogue `eventModal`, mises en mots par l'écran.
+
+/** Clés des jours abrégés, indexées sur Date.getDay() (0 = dimanche). */
+export const DAY_LABEL_KEYS = [
+  'dayShort.0', 'dayShort.1', 'dayShort.2', 'dayShort.3',
+  'dayShort.4', 'dayShort.5', 'dayShort.6',
+] as const;
 // Ordre d'affichage lundi → dimanche pour le sélecteur de jours.
 export const DAY_ORDER = [1, 2, 3, 4, 5, 6, 0];
 
-// Durée affichée entre début et fin, ou null si incomplet.
+/**
+ * Durée entre début et fin.
+ *
+ * `invalid` plutôt qu'une phrase : « fin avant début » est un FAIT, et sa
+ * formulation appartient au catalogue. `null` = saisie incomplète.
+ */
+export type EventDuration = { kind: 'invalid' } | { kind: 'duration'; text: string };
+
 export function formatEventDuration(
   startDate: string,
   startTime: string,
   endDate: string,
   endTime: string
-): string | null {
+): EventDuration | null {
   if (!startDate || !startTime || !endDate || !endTime) return null;
   const start = new Date(`${startDate}T${startTime}`);
   const end = new Date(`${endDate}T${endTime}`);
   const diffMs = end.getTime() - start.getTime();
   const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
   const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-  if (diffMs <= 0) return "⚠️ Fin avant début";
-  if (diffHours === 0) return `${diffMinutes} min`;
-  if (diffMinutes === 0) return `${diffHours}h`;
-  return `${diffHours}h${diffMinutes}min`;
+  if (diffMs <= 0) return { kind: 'invalid' };
+  if (diffHours === 0) return { kind: 'duration', text: `${diffMinutes} min` };
+  if (diffMinutes === 0) return { kind: 'duration', text: `${diffHours}h` };
+  return { kind: 'duration', text: `${diffHours}h${diffMinutes}min` };
 }
 
-export function headerTitle(mode: EventModalMode): string {
+/** Clé de catalogue du titre de la modale. */
+export function headerTitleKey(mode: EventModalMode): string {
   switch (mode) {
     case 'add':
-      return "Ajouter un événement";
+      return 'headerAdd';
     case 'edit':
-      return "Modifier l'événement";
+      return 'headerEdit';
     case 'convert':
-      return "Convertir en événement";
+      return 'headerConvert';
   }
 }
 
-export function submitButtonText(mode: EventModalMode): string {
+/** Clé de catalogue du bouton de validation. */
+export function submitButtonKey(mode: EventModalMode): string {
   switch (mode) {
     case 'add':
-      return "Valider";
+      return 'submitAdd';
     case 'edit':
-      return "Enregistrer";
+      return 'submitEdit';
     case 'convert':
-      return "Convertir en événement";
+      return 'headerConvert';
   }
 }
 

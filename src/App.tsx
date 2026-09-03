@@ -6,7 +6,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';
 import { MotionConfig } from 'framer-motion';
 import { installMobileFocusRecovery } from '@/lib/mobileFocus';
-import { isTimeoutError } from '@/lib/withTimeout';
+import { shouldRetryQuery } from '@/lib/query-retry';
 import { useLocale } from '@/i18n/store';
 import { routeSlug } from '@/i18n/routes';
 // Extrait de ce fichier vers `@/lib/lazy-with-retry` pour que les onglets de
@@ -82,23 +82,11 @@ const queryClient = new QueryClient({
     queries: {
       staleTime: 1000 * 60 * 5,    // 5 minutes
       gcTime: 1000 * 60 * 30,      // 30 minutes
-      // Skip retry on definitive RLS / Postgrest errors AND on timeout/abort —
-      // on iOS Safari, the first cold connection routinely stalls past our 8 s
-      // fetch timeout. A blind retry serializes 8 s + 1 s + 8 s = ~17 s before
-      // we surface the error, which the user perceives as "loading 20 seconds".
-      // Better to fail fast: the localStorage cache (AuthContext) keeps every
-      // subsequent open instant, and visibilitychange → refetchQueries (mobileFocus)
-      // recovers the stale state without making the user wait for a second 8 s window.
-      retry: (failureCount, error) => {
-        if (failureCount >= 1) return false;
-        const msg = error instanceof Error ? error.message : '';
-        if (msg.includes('PGRST') || msg.includes('row-level security')) return false;
-        // i18n — identification par code stable, pas par sous-chaîne du message
-        // FR (`includes('Délai')` mourait dès la traduction du message de
-        // withTimeout, faisant silencieusement retomber iOS sur ~17 s perçues).
-        if (isTimeoutError(error)) return false;
-        return true;
-      },
+      // Prédicat extrait dans `@/lib/query-retry`, avec ses tests. Il vivait
+      // ici, donc testable par rien, et il était doublement faux : il lisait
+      // `error.message` alors que le code vit dans `.code`, sur des valeurs qui
+      // n'étaient même pas des `Error`. Détail complet dans le module.
+      retry: shouldRetryQuery,
       retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 3000),
       refetchOnWindowFocus: false,
       // `networkMode: 'always'` runs queries regardless of `navigator.onLine`.

@@ -13,7 +13,7 @@ import { Calendar } from '@/components/ui/calendar';
 import AddCategoryButton from '@/components/AddCategoryButton';
 import DescriptionField from '@/components/DescriptionField';
 import type { EventRecurrence } from '@/modules/events';
-import { DAY_LABELS, formatEventDuration } from './helpers';
+import { DAY_LABEL_KEYS, formatEventDuration } from './helpers';
 import type { EventModalFormBodyProps } from './event-modal-form.types';
 import { useT } from '@/i18n/useT';
 
@@ -29,7 +29,11 @@ const EventModalFormDesktop: React.FC<EventModalFormBodyProps> = ({
 }) => {
   const { t } = useT('eventModal');
   const { t: tCommon } = useT('common');
-  const calculateDuration = () => formatEventDuration(startDate, startTime, endDate, endTime);
+  const duration = formatEventDuration(startDate, startTime, endDate, endTime);
+  // « fin avant début » est un fait rendu par le helper ; sa phrase vit ici.
+  const durationText = duration === null
+    ? null
+    : duration.kind === 'invalid' ? t('endBeforeStart') : duration.text;
   // Légende des catégories masquée par défaut (épure l'UI) — révélée à la demande.
   const [showCategoryLegend, setShowCategoryLegend] = useState(false);
 
@@ -270,7 +274,7 @@ const EventModalFormDesktop: React.FC<EventModalFormBodyProps> = ({
               </div>
 
               {/* Durée calculée */}
-              {calculateDuration() && (
+              {durationText && (
                 <div className="pt-1">
                   <div className="flex items-center justify-between">
                     <span
@@ -281,7 +285,7 @@ const EventModalFormDesktop: React.FC<EventModalFormBodyProps> = ({
                     </span>
                     <div className="flex items-center gap-2 bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] px-3 py-1 rounded-full text-xs font-bold shadow-sm">
                       <Clock size={12} />
-                      <span>{calculateDuration()}</span>
+                      <span>{durationText}</span>
                     </div>
                   </div>
                 </div>
@@ -346,8 +350,8 @@ const EventModalFormDesktop: React.FC<EventModalFormBodyProps> = ({
                       className="text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
                     >
                       {recurrenceDays.length > 0
-                        ? [...recurrenceDays].sort().map((d) => DAY_LABELS[d]).join(', ')
-                        : 'Choisir les jours'}
+                        ? [...recurrenceDays].sort().map((d) => t(DAY_LABEL_KEYS[d])).join(', ')
+                        : t('chooseDays')}
                     </button>
                   </div>
                 )}

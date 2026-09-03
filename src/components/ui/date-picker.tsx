@@ -36,6 +36,7 @@ interface DateCalendarPanelProps {
  * de cette extraction.
  */
 export function DateCalendarPanel({ value, onSelect, allowClear = true, minDate }: DateCalendarPanelProps) {
+  const { t } = useT('common')
   const selectedDate = value ? new Date(value + "T12:00:00") : undefined
   const floor = minDate ? new Date(minDate + "T00:00:00") : undefined
   const presets = buildDatePresets().filter((p) => !minDate || p.value >= minDate)
@@ -47,12 +48,12 @@ export function DateCalendarPanel({ value, onSelect, allowClear = true, minDate 
       <div className="flex flex-wrap gap-1.5 p-2 border-b border-border">
         {presets.map((preset) => (
           <button
-            key={preset.label}
+            key={preset.labelKey}
             type="button"
             onClick={() => onSelect(preset.value)}
             className="px-2.5 py-1 rounded-lg text-xs font-medium border border-border hover:bg-accent transition-colors"
           >
-            {preset.label}
+            {t(preset.labelKey)}
           </button>
         ))}
         {allowClear && (
@@ -61,7 +62,7 @@ export function DateCalendarPanel({ value, onSelect, allowClear = true, minDate 
             onClick={() => onSelect('')}
             className="px-2.5 py-1 rounded-lg text-xs font-medium text-muted-foreground border border-transparent hover:bg-accent transition-colors"
           >
-            Pas de date
+            {t('datePicker.noDate')}
           </button>
         )}
       </div>

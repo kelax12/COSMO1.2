@@ -119,7 +119,21 @@
     "backToSignIn": "Back to sign-in",
     "forgotIntro": "Enter your email and we'll send you a link to choose a new password.",
     "resetSentBefore": "If an account exists for",
-    "resetSentAfter": "you'll get a link to choose a new password. Do check your spam folder."
+    "resetSentAfter": "you'll get a link to choose a new password. Do check your spam folder.",
+    "supabaseMissing": "Supabase is not configured. Check the environment variables.",
+    "invalidEmail": "Please enter a valid email address.",
+    "reservedEmail": "This email is reserved. Choose another address.",
+    "googleFailed": "Signing in with Google failed.",
+    "defaultUserName": "User",
+    "accountType": "Account type",
+    "accountPersonal": "Individual",
+    "accountPersonalDesc": "Personal use",
+    "registerGeneric": "We could not complete the sign-up. Check your details and try again.",
+    "loginGeneric": "Incorrect email or password.",
+    "tooManyAttempts": "Too many attempts. Try again in a few minutes.",
+    "weakPassword": "Password too weak. Choose a longer, more varied one.",
+    "invalidEmailAddress": "This email address is not valid.",
+    "captchaFailed": "The anti-robot check failed. Try again."
   },
   "cookies": {
     "banner": "Cookie banner",
@@ -223,7 +237,8 @@
     "refused": "Invitation declined.",
     "sharedWithYou": "Task shared with you",
     "proposes": "**{{name}}** would like to collaborate with you on **“{{task}}”**.",
-    "accept": "Accept the task"
+    "accept": "Accept the task",
+    "ownLink": "This invitation link points to your own task."
   },
   "shareLink": {
     "availableAfterCreate": "Available once created",
@@ -293,7 +308,8 @@
   "collaborator": {
     "sent": "Sent",
     "requestSent": "⏳ Friend request sent",
-    "awaiting": "Awaiting acceptance"
+    "awaiting": "Awaiting acceptance",
+    "generic": "Collaborator"
   },
   "orgTier": {
     "free": "Free",
@@ -437,7 +453,18 @@
       "categories": "categories",
       "lists": "lists",
       "friends": "friends",
-      "team_tasks": "team tasks"
+      "team_tasks": "team tasks",
+      "team_projects": "team projects",
+      "org_members": "organisation members",
+      "org_teams": "teams",
+      "team_members": "team memberships",
+      "team_task_comments": "comments",
+      "org_join_requests": "join requests",
+      "team_okrs": "team OKRs",
+      "team_task_activity": "activity entries",
+      "team_task_dependencies": "task dependencies",
+      "org_invite_links": "invite links",
+      "organizations": "organisations"
     }
   },
   "period": {
@@ -464,6 +491,96 @@
     "todayLoad": "≈ {{load}} planned today"
   },
   "datePicker": {
-    "placeholder": "Pick a date"
+    "placeholder": "Pick a date",
+    "today": "Today",
+    "tomorrow": "Tomorrow",
+    "nextMonday": "Next Monday",
+    "noDate": "No date"
+  },
+  "weekday": {
+    "0": "Sunday",
+    "1": "Monday",
+    "2": "Tuesday",
+    "3": "Wednesday",
+    "4": "Thursday",
+    "5": "Friday",
+    "6": "Saturday"
+  },
+  "csv": {
+    "yes": "Yes",
+    "no": "No",
+    "yesLower": "yes",
+    "noLower": "no",
+    "file": {
+      "tasks": "cosmo-tasks",
+      "habits": "cosmo-habits",
+      "events": "cosmo-calendar",
+      "okrs": "cosmo-okrs",
+      "profile": "cosmo-profile",
+      "categories": "cosmo-categories",
+      "lists": "cosmo-lists"
+    },
+    "col": {
+      "id": "ID",
+      "name": "Name",
+      "description": "Description",
+      "category": "Category",
+      "priority": "Priority",
+      "deadline": "Due date",
+      "durationMin": "Duration (min)",
+      "recurrence": "Recurrence",
+      "subtasks": "Subtasks",
+      "linkedKr": "Linked KR",
+      "completed": "Completed",
+      "completedAt": "Completed on",
+      "bookmarked": "Bookmarked",
+      "createdAt": "Created on",
+      "frequency": "Frequency",
+      "color": "Colour",
+      "completions": "Completions",
+      "title": "Title",
+      "start": "Start",
+      "end": "End",
+      "notes": "Notes",
+      "recurrenceDays": "Recurrence days",
+      "removedOccurrences": "Removed occurrences",
+      "linkedTask": "Linked task",
+      "private": "Private",
+      "okrId": "OKR ID",
+      "okrTitle": "OKR title",
+      "okrDescription": "OKR description",
+      "okrCategory": "OKR category",
+      "okrProgress": "OKR progress",
+      "okrStart": "OKR start",
+      "okrEnd": "OKR end",
+      "krTitle": "KR title",
+      "krCurrent": "KR current value",
+      "krTarget": "KR target value",
+      "krUnit": "KR unit",
+      "krCompleted": "KR completed",
+      "field": "Field",
+      "value": "Value",
+      "identifier": "Identifier",
+      "email": "Email",
+      "avatar": "Avatar",
+      "autoValidation": "Automatic validation",
+      "type": "Type",
+      "smartRule": "Smart rule",
+      "taskCount": "Task count"
+    }
+  },
+  "deadlineReminder": {
+    "dueToday_one": "{{count}} task due today",
+    "dueToday_other": "{{count}} tasks due today",
+    "overdue": "{{count}} overdue",
+    "description": "Tap to see your tasks",
+    "action": "View",
+    "dueToday_many": "{{count}} tasks due today"
+  },
+  "relativeDay": {
+    "today": "Today",
+    "tomorrow": "Tomorrow",
+    "yesterday": "Yesterday",
+    "daysAgo": "{{count}}d ago"
   }
 }

@@ -3,6 +3,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { Category, CreateCategoryInput, UpdateCategoryInput } from './types';
+import { safeGetItem, safeParseArray } from '@/lib/safe-json';
 import { CATEGORIES_STORAGE_KEY } from './constants';
 import { localizeSeed } from '@/lib/seed-i18n';
 import type { CreateOptions } from '@/lib/restore-id';
@@ -53,13 +54,15 @@ export class LocalStorageCategoriesRepository implements ICategoriesRepository {
    * Get all categories from localStorage (or initialize with demo data)
    */
   private getCategories(): Category[] {
-    const data = localStorage.getItem(CATEGORIES_STORAGE_KEY);
-    if (!data) {
+    const stored = safeParseArray<Category>(safeGetItem(CATEGORIES_STORAGE_KEY));
+    // Corrompu ou stockage indisponible : on re-seme plutot que de faire
+    // tomber la page (regle B14, helper `safeParseArray`).
+    if (!stored) {
       const seeded = localizeSeed(DEMO_CATEGORIES, DEMO_CATEGORIES_EN);
       this.saveCategories(seeded);
       return seeded;
     }
-    return JSON.parse(data);
+    return stored;
   }
 
   /**

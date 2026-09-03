@@ -5,7 +5,7 @@ import { getCategoriesRepository } from '@/lib/repository.factory';
 import type { Category, CreateCategoryInput, UpdateCategoryInput } from './types';
 import { categoryKeys } from './constants';
 import { translator } from '@/i18n/useT';
-import { splitRestore } from '@/lib/restore-id';
+import { reportRestoreFailure, splitRestore } from '@/lib/restore-id';
 
 // ═══════════════════════════════════════════════════════════════════
 // REPOSITORY HOOK
@@ -178,8 +178,8 @@ export const useRestoreCategory = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: categoryKeys.lists() });
     },
-    onError: (error: Error) => {
-      console.error('[useRestoreCategory]', error);
-    },
+    // Un « Annuler » rate doit se VOIR : `console.error` est supprime du
+    // bundle de production (vite.config.ts), l'echec etait donc muet.
+    onError: (error: Error) => reportRestoreFailure('category', error),
   });
 };

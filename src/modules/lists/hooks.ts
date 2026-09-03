@@ -5,7 +5,7 @@ import { getListsRepository } from '@/lib/repository.factory';
 import type { TaskList, CreateListInput, UpdateListInput } from './types';
 import { listKeys } from './constants';
 import { translator } from '@/i18n/useT';
-import { splitRestore } from '@/lib/restore-id';
+import { reportRestoreFailure, splitRestore } from '@/lib/restore-id';
 
 // ═══════════════════════════════════════════════════════════════════
 // REPOSITORY HOOK
@@ -240,8 +240,8 @@ export const useRestoreList = () => {
     onSuccess: () => {
       invalidateAllListQueries(queryClient);
     },
-    onError: (error: Error) => {
-      console.error('[useRestoreList]', error);
-    },
+    // Un « Annuler » rate doit se VOIR : `console.error` est supprime du
+    // bundle de production (vite.config.ts), l'echec etait donc muet.
+    onError: (error: Error) => reportRestoreFailure('list', error),
   });
 };

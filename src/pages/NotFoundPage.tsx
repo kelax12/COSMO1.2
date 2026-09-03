@@ -10,9 +10,12 @@ import { useT } from '@/i18n/useT';
 // ci-dessous suffit à Google (qui rend le JS) pour exclure ces URLs.
 const NotFoundPage: React.FC = () => {
   const { t } = useT('common');
+  // Titre et description viennent du catalogue `seo`, comme toutes les autres
+  // pages : ils etaient en dur en francais, donc servis tels quels en anglais.
+  const { t: tSeo } = useT('seo');
   useSeoMeta({
-    title: 'Page introuvable – Cosmo',
-    description: "Cette page n'existe pas ou a été déplacée.",
+    title: tSeo('notFound.title'),
+    description: tSeo('notFound.description'),
   });
 
   // noindex le temps de la 404, restauré au démontage (la valeur par défaut

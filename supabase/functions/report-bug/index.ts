@@ -15,10 +15,16 @@
 //
 // Secrets attendus :
 //   supabase secrets set RESEND_API_KEY=re_...
-//   supabase secrets set BUG_REPORT_TO=contact@thecosmo.app         (optionnel)
-//   supabase secrets set BUG_REPORT_FROM="Cosmo <bug@thecosmo.app>" (optionnel)
+//   supabase secrets set BUG_REPORT_TO=contact@thecosmo.app              (optionnel)
+//   supabase secrets set BUG_REPORT_FROM="Cosmo <bug@send.thecosmo.app>" (REQUIS)
 //
-// Sans RESEND_API_KEY la fonction répond 503 `mail_not_configured` : le
+// 🔴 Le domaine doit être `send.thecosmo.app`, PAS la racine `thecosmo.app` :
+//    seul le premier est vérifié chez Resend (la racine porte les MX et le SPF
+//    d'IONOS et ne sera jamais signée). Cette ligne recommandait la racine, et
+//    la disait « optionnel » — deux fois la même erreur, celle qui a fait
+//    échouer `renewal-notice` en silence jusqu'au 2026-09-02.
+//
+// Sans RESEND_API_KEY (ou sans BUG_REPORT_FROM) la fonction répond 503 : le
 // client affiche alors un repli « écrivez-nous directement ».
 //
 // Déploiement : `supabase functions deploy report-bug`
@@ -29,7 +35,20 @@ import { opsAlert } from '../_shared/alert.ts'
 
 const APP_URL = Deno.env.get('APP_URL') ?? 'http://localhost:5173'
 const CONTACT_EMAIL = Deno.env.get('BUG_REPORT_TO') ?? 'contact@thecosmo.app'
-const MAIL_FROM = Deno.env.get('BUG_REPORT_FROM') ?? 'Cosmo <bug@thecosmo.app>'
+/**
+ * Expéditeur. 🔴 AUCUN DÉFAUT, exactement comme `renewal-notice`.
+ *
+ * Le défaut supprimé était `Cosmo <bug@thecosmo.app>`, or le domaine vérifié
+ * chez Resend est `send.thecosmo.app` : la racine porte les MX et le SPF
+ * d'IONOS et ne sera jamais signée. Ce défaut ne dégradait pas l'envoi, il le
+ * rendait IMPOSSIBLE — tout signalement de bug repartait en 502 `send_failed`,
+ * en présentant une panne d'envoi là où il n'y avait qu'un secret absent.
+ *
+ * Le jumeau `renewal-notice` a été corrigé le 2026-09-02 ; celui-ci portait le
+ * même défaut, non repéré. Sans le secret, on répond `sender_not_configured`
+ * et le client bascule sur son lien mailto — le repli existe déjà.
+ */
+const MAIL_FROM = Deno.env.get('BUG_REPORT_FROM')
 
 // Origines autorisées : la prod, plus les deux serveurs de dev locaux
 // (`npm run dev` sur 5173, `npm start` sur 3000) — sans quoi le formulaire
@@ -89,6 +108,13 @@ Deno.serve(async (req) => {
   }
   if (req.method !== 'POST') {
     return json({ error: 'method_not_allowed' }, 405, req)
+  }
+
+  if (!MAIL_FROM) {
+    // Même repli que `mail_not_configured` : 503 parce que ce n'est pas un
+    // bug, c'est une configuration absente. Sans cette garde, l'envoi partait
+    // avec un expéditeur non signé et échouait en 502.
+    return json({ error: 'sender_not_configured' }, 503, req)
   }
 
   const apiKey = Deno.env.get('RESEND_API_KEY')

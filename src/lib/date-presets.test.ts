@@ -22,7 +22,13 @@ describe('date-presets (#25)', () => {
 
   it('buildDatePresets expose les 3 presets dans le bon ordre', () => {
     const presets = buildDatePresets(WED);
-    expect(presets.map((p) => p.label)).toEqual(["Aujourd'hui", 'Demain', 'Lundi prochain']);
+    // Des CLÉS de catalogue, jamais des libellés : les presets sont rendus par
+    // les deux pickers du produit, en français comme en anglais (point 5).
+    expect(presets.map((p) => p.labelKey)).toEqual([
+      'datePicker.today',
+      'datePicker.tomorrow',
+      'datePicker.nextMonday',
+    ]);
     expect(presets[0].value).toBe('2026-07-08');
   });
 });

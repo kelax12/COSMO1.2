@@ -1,4 +1,5 @@
 import { ITasksRepository, ToggleCompleteResult } from './repository';
+import { safeGetItem, safeParseArray } from '@/lib/safe-json';
 import { Task, CreateTaskInput, UpdateTaskInput, TaskFilters, TaskDependency } from './types';
 import { PaginationParams, PaginatedResult, DEFAULT_PAGE_SIZE } from '@/lib/pagination.types';
 import { localizeSeed } from '@/lib/seed-i18n';
@@ -111,13 +112,15 @@ const DEMO_TASKS_EN: Record<string, Partial<Task>> = {
 
 export class LocalStorageTasksRepository implements ITasksRepository {
   private getTasks(): Task[] {
-    const data = localStorage.getItem(STORAGE_KEY);
-    if (!data) {
+    const stored = safeParseArray<Task>(safeGetItem(STORAGE_KEY));
+    // Corrompu ou stockage indisponible : on re-seme plutot que de faire
+    // tomber la page (regle B14, helper `safeParseArray`).
+    if (!stored) {
       const seeded = localizeSeed(DEMO_TASKS, DEMO_TASKS_EN);
       this.saveTasks(seeded);
       return seeded;
     }
-    return JSON.parse(data);
+    return stored;
   }
 
   private saveTasks(tasks: Task[]): void {
@@ -177,12 +180,16 @@ export class LocalStorageTasksRepository implements ITasksRepository {
       tasks = tasks.filter(t => t.priority <= filters.priorityMax!);
     }
 
+    // Comparaison de JOURS, jamais de chaînes hétérogènes : `t.deadline` est un
+    // instant ISO, `deadlineBefore` une clé de jour. `'2026-09-02T22:00:00.000Z'
+    // <= '2026-09-03'` est vrai par hasard lexicographique, et faux dès que
+    // l'instant du 3 est stocké en heure locale négative.
     if (filters.deadlineBefore) {
-      tasks = tasks.filter(t => t.deadline <= filters.deadlineBefore!);
+      tasks = tasks.filter(t => !!t.deadline && deadlineDayKey(t.deadline) <= filters.deadlineBefore!);
     }
 
     if (filters.deadlineAfter) {
-      tasks = tasks.filter(t => t.deadline >= filters.deadlineAfter!);
+      tasks = tasks.filter(t => !!t.deadline && deadlineDayKey(t.deadline) >= filters.deadlineAfter!);
     }
 
     return tasks;

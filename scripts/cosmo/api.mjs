@@ -5,6 +5,7 @@
 // C'est cette couche, et elle seule, qu'un futur serveur MCP réutilisera :
 // chaque fonction exportée correspond à un tool.
 import { CosmoApiError, CosmoNotFoundError, CosmoValidationError } from './errors.mjs';
+import { deadlineEndOfDay, deadlineToTimestamp } from './deadline.mjs';
 
 /**
  * Colonnes de `tasks`. Duplique volontairement TASK_LIST_COLUMNS du
@@ -108,7 +109,9 @@ export async function listTasks(client, { completed, category, deadlineBefore, l
   // filtrerait alors qu'aucun filtre n'a ete demande — donc on ne resout que
   // si `category` a ete explicitement fourni.
   if (category) query = query.eq('category', await resolveCategoryId(client, category));
-  if (deadlineBefore) query = query.lte('deadline', deadlineBefore);
+  // Borne HAUTE incluse, exprimee en instant : une cle de jour nue serait
+  // castee en minuit UTC et exclurait toutes les taches du jour demande.
+  if (deadlineBefore) query = query.lte('deadline', deadlineEndOfDay(deadlineBefore));
   query = query.order('deadline', { ascending: true }).order('priority', { ascending: false });
   if (limit) query = query.limit(limit);
   const rows = unwrap(await query) ?? [];
@@ -138,7 +141,7 @@ export async function getTask(client, taskId) {
  * insert sans user_id est rejeté. La frontière de sécurité n'est donc pas
  * « ne jamais l'émettre » mais « le prendre de la session vérifiée, jamais de
  * `input` », exactement comme le repository applicatif
- * (src/modules/tasks/supabase.repository.ts:206).
+ * (src/modules/tasks/supabase.repository.ts).
  */
 export async function createTask(client, input, { now = new Date(), userId } = {}) {
   const name = (input?.name ?? '').trim();
@@ -155,7 +158,9 @@ export async function createTask(client, input, { now = new Date(), userId } = {
     name,
     priority: input.priority ?? DEFAULT_TASK.priority,
     category,
-    deadline: deadline ? deadline : null,
+    // Jour saisi -> instant vrai de minuit (cf. ./deadline.mjs). Envoyer la
+    // cle de jour nue ecrivait minuit UTC : 4e chemin d'ecriture divergent.
+    deadline: deadline ? deadlineToTimestamp(deadline) : null,
     estimated_time: input.estimatedTime ?? DEFAULT_TASK.estimatedTime,
     bookmarked: false,
     completed: false,
@@ -221,7 +226,7 @@ const UPDATABLE_FIELDS = {
   priority: (v) => ['priority', v],
   category: (v) => ['category', v],
   // Chaîne vide = « pas d'échéance » → NULL (la colonne est un timestamp).
-  deadline: (v) => ['deadline', v ? v : null],
+  deadline: (v) => ['deadline', v ? deadlineToTimestamp(v) : null],
   estimatedTime: (v) => ['estimated_time', v],
   bookmarked: (v) => ['bookmarked', v],
   recurrence: (v) => ['recurrence', v],

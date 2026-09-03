@@ -47,20 +47,30 @@ const RefreshScrollTriggerOnMount: React.FC = () => {
   return null;
 };
 
+/**
+ * Les cinq modules mis en avant.
+ *
+ * 🔴 La COPIE n'est plus ici. Titres, description, puces et libellé de CTA
+ * étaient écrits EN DUR EN FRANÇAIS et rendus tels quels, alors que
+ * `landing.features.<id>.*` portait déjà les quarante clés traduites — que
+ * plus rien ne consommait. Un visiteur anglophone lisait donc toute la section
+ * en français (revue du 2026-09-02, point 7 : le scan ne voyait pas ces
+ * formes, donc la gate certifiait un état qu'elle ne mesurait pas).
+ *
+ * `id` EST la clé de catalogue : `tasks` · `agenda` · `okr` · `habits` ·
+ * `stats`. Ajouter un module sans sa section de catalogue ne compile pas.
+ */
+type FeatureId = 'tasks' | 'agenda' | 'okr' | 'habits' | 'stats';
+
 interface Feature {
-  id: string;
+  id: FeatureId;
   path: string;
   icon: LucideIcon;
   /** classes tailwind du gradient d'accent (icône, puces, CTA) */
   gradient: string;
   shadow: string;
   glow: string;
-  titleTop: string;
-  titleAccent: string;
   accentText: string;
-  description: string;
-  bullets: string[];
-  cta: string;
   Desktop: React.ComponentType;
   Mobile: React.ComponentType;
   /** sens d'entrée du texte en mode empilé */
@@ -75,18 +85,7 @@ const FEATURES: Feature[] = [
     gradient: 'from-[rgb(var(--color-accent-solid))] to-cyan-500',
     shadow: 'shadow-blue-500/30',
     glow: 'from-[rgb(var(--color-accent-solid))]/20 to-cyan-500/20',
-    titleTop: 'Gestion de tâches',
-    titleAccent: 'nouvelle génération',
     accentText: 'from-[rgb(var(--color-accent-solid))] to-cyan-400',
-    description:
-      "Centralisez toutes vos tâches avec priorités, catégories colorées et deadlines. Filtrez en un clic pour vous concentrer sur l'essentiel.",
-    bullets: [
-      'Filtrez par priorité, catégorie, deadline en un clic',
-      "Ajoutez des catégories pour visualiser votre travail en un coup d'œil",
-      'Créez des listes de tâches pour mieux vous organiser',
-      'Partagez vos tâches en équipe',
-    ],
-    cta: 'Essayer les tâches',
     Desktop: TaskTableShowcase,
     Mobile: TaskCardMobileShowcase,
   },
@@ -97,18 +96,7 @@ const FEATURES: Feature[] = [
     gradient: 'from-red-500 to-rose-500',
     shadow: 'shadow-red-500/30',
     glow: 'from-red-500/20 to-rose-500/20',
-    titleTop: 'Agenda intégré',
-    titleAccent: 'avec time-blocking',
     accentText: 'from-red-400 to-rose-400',
-    description:
-      'Glissez vos tâches directement dans votre calendrier pour bloquer du temps. Vues jour, semaine, mois avec zoom granulaire.',
-    bullets: [
-      'Glissez une tâche depuis la sidebar vers un créneau : un événement est créé instantanément',
-      "Couleur de l'événement = couleur de la catégorie de la tâche, pour repérer vos priorités d'un coup d'œil",
-      'Créez, déplacez ou redimensionnez les événements à la souris : la tâche associée se met à jour automatiquement',
-      'Vues jour / semaine / mois avec basculement en un clic et navigation rapide entre les périodes',
-    ],
-    cta: "Ouvrir l'agenda",
     Desktop: AgendaShowcase,
     Mobile: AgendaMobileShowcase,
     fromRight: true,
@@ -120,18 +108,7 @@ const FEATURES: Feature[] = [
     gradient: 'from-green-500 to-emerald-500',
     shadow: 'shadow-green-500/30',
     glow: 'from-green-500/20 to-emerald-500/20',
-    titleTop: 'OKR & Objectifs',
-    titleAccent: 'à la Google',
     accentText: 'from-green-400 to-emerald-400',
-    description:
-      'La méthode OKR utilisée par Google, Intel et Netflix, maintenant dans votre poche. Définissez des objectifs ambitieux et mesurez chaque résultat clé.',
-    bullets: [
-      'Définissez des objectifs ambitieux avec des résultats clés chiffrés',
-      'Votre progression est calculée automatiquement',
-      "Visualisez l'avancée de vos objectifs en temps réel",
-      'Découpez vos objectifs en résultats clés pour passer de "un jour" à "maintenant"',
-    ],
-    cta: 'Voir les OKRs',
     Desktop: OKRCardShowcase,
     Mobile: OKRMobileShowcase,
   },
@@ -142,18 +119,7 @@ const FEATURES: Feature[] = [
     gradient: 'from-yellow-500 to-amber-500',
     shadow: 'shadow-yellow-500/30',
     glow: 'from-yellow-500/20 to-amber-500/20',
-    titleTop: 'Habitudes & Streaks',
-    titleAccent: 'visualisés en heatmap',
     accentText: 'from-yellow-400 to-amber-400',
-    description:
-      'Construisez des routines durables avec un suivi complet. La heatmap 26 semaines révèle vos patterns et récompense votre régularité.',
-    bullets: [
-      'Mesurez votre régularité grâce au système de tableau de suivi.',
-      "Restez motivé avec le système de série de jours d'affilée (streak)",
-      "Tableau de suivi global : visualisez toutes vos habitudes en un coup d'œil",
-      'Taux de complétion et temps investi : mesurez votre régularité réelle',
-    ],
-    cta: 'Suivre mes habitudes',
     Desktop: HabitHeatmapShowcase,
     Mobile: HabitMobileShowcase,
     fromRight: true,
@@ -165,18 +131,7 @@ const FEATURES: Feature[] = [
     gradient: 'from-violet-500 to-purple-600',
     shadow: 'shadow-violet-500/30',
     glow: 'from-violet-500/20 to-purple-600/20',
-    titleTop: 'Statistiques',
-    titleAccent: 'multi-modules',
     accentText: 'from-violet-400 to-purple-400',
-    description:
-      'Analysez votre temps investi sur tous vos modules : tâches, agenda, OKR, habitudes. Des données précises pour des décisions éclairées.',
-    bullets: [
-      'Répartition du temps sur tâches, agenda, OKR et habitudes pour une meilleure clarté',
-      'Vues jour, semaine, mois, année : zoomez où vous voulez',
-      'Suivez vos progrès depuis une unique page',
-      "Visualisez votre productivité en un coup d'œil",
-    ],
-    cta: 'Voir mes stats',
     Desktop: () => (
       <WhenVisible fallback={<ShowcaseSkeleton />}>
         <Suspense fallback={<ShowcaseSkeleton />}>
@@ -196,27 +151,32 @@ interface FeaturesSectionProps {
 
 /** Colonne texte d'un panneau (partagée entre les deux layouts). */
 const FeatureCopy: React.FC<{ feature: Feature; onCta: () => void }> = ({ feature, onCta }) => {
+  const { t } = useT('landing');
   const Icon = feature.icon;
+  // Clé de section = `feature.id`. `t` est typée par le catalogue `fr`, d'où
+  // le cast : la clé est construite, mais son existence est garantie par le
+  // type `FeatureId` qui n'accepte que les cinq sections écrites au catalogue.
+  const key = (suffix: string) => `features.${feature.id}.${suffix}` as Parameters<typeof t>[0];
   return (
     <div className="space-y-6">
       <div className={`inline-flex items-center justify-center w-14 h-14 bg-gradient-to-r ${feature.gradient} rounded-2xl shadow-lg ${feature.shadow}`}>
         <Icon size={28} className="text-white" />
       </div>
       <h3 className="text-3xl lg:text-4xl font-bold text-white leading-tight">
-        {feature.titleTop}
+        {t(key('titleTop'))}
         <br />
         <span className={`bg-gradient-to-r ${feature.accentText} bg-clip-text text-transparent`}>
-          {feature.titleAccent}
+          {t(key('titleAccent'))}
         </span>
       </h3>
-      <p className="text-lg text-slate-300 leading-relaxed">{feature.description}</p>
+      <p className="text-lg text-slate-300 leading-relaxed">{t(key('description'))}</p>
       <div className="space-y-3">
-        {feature.bullets.map((b, i) => (
+        {(['b1', 'b2', 'b3', 'b4'] as const).map((b, i) => (
           <div key={i} className="flex items-center gap-3">
             <div className={`w-5 h-5 bg-gradient-to-r ${feature.gradient} rounded-full flex items-center justify-center flex-shrink-0`}>
               <CheckCircle size={11} className="text-white" />
             </div>
-            <span className="text-slate-300 font-medium text-sm">{b}</span>
+            <span className="text-slate-300 font-medium text-sm">{t(key(b))}</span>
           </div>
         ))}
       </div>
@@ -224,7 +184,7 @@ const FeatureCopy: React.FC<{ feature: Feature; onCta: () => void }> = ({ featur
         onClick={onCta}
         className={`group bg-gradient-to-r ${feature.gradient} hover:shadow-lg text-white px-8 py-4 rounded-xl font-semibold transition-all duration-300 hover:scale-105 transform flex items-center gap-2`}
       >
-        {feature.cta} <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+        {t(key('cta'))} <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
       </button>
     </div>
   );

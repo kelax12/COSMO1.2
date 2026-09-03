@@ -57,7 +57,14 @@ const BUDGETS = {
   //     `Tooltip` fournit déjà le sien) et traînait `@radix-ui/react-tooltip`
   //     + tout `floating-ui`, 113 ko bruts, pour un seul consommateur lazy.
   // Plafond reposé ~1,6 % au-dessus du mesuré.
-  critical: 379_000,
+  // 2026-09-02 : 373 043 → **364 500 o**, et le plafond REDESCEND de 379 000 à
+  // 370 000. Les dépôts de DÉMONSTRATION du mode entreprise sont sortis du
+  // chemin critique (`src/lib/demo-repositories.ts`) : ils pesaient 52 ko bruts
+  // que tout visiteur téléchargeait, y compris celui qui repart de la landing
+  // sans jamais se connecter. Le reste des dépôts de démo, 72 ko bruts encore
+  // dans l'entrée, attend la séparation interface / implémentation locale que
+  // six modules n'ont pas.
+  critical: 370_000,
 
   // Mesure secondaire, conservée pour attraper le cas inverse : une entrée qui
   // enfle sans que le nombre de préchargements bouge. Le plafond est passé de
@@ -72,7 +79,20 @@ const BUDGETS = {
   //
   // 🔴 Toujours vérifier `critical` avant de toucher à celui-ci : sortir un
   // module de l'entrée sans le sortir du chemin critique ne gagne rien.
-  entry: 79_000,
+  // 2026-09-03 : 77 312 → **77 379 o**, plafond de 79 000 à 78 000. Même coupe
+  // que ci-dessus (les dépôts de démo entreprise sortent du chemin critique).
+  //
+  // ⚠️ Le cliquet a failli être RELEVÉ la veille pour absorber les 2,5 ko d'un
+  // lot de correctifs. Les deux mesures montaient, donc ce n'était pas le cas
+  // d'absorption qui l'autorise : couper d'abord était la bonne réponse, et la
+  // coupe a rendu 5,1 ko, deux fois ce qu'il fallait.
+  //
+  // 🔴 Le chiffre ci-dessus n'est PAS celui qu'annonçait la première version de
+  // ce commentaire (75 798). Il datait d'un arbre de la veille au soir ; le lot
+  // a continué de grossir de 1,6 ko pendant la nuit. Un plafond posé sur une
+  // mesure périmée est un plafond faux, même quand il est plus bas — celui-ci
+  // aurait fait échouer la CI sur une valeur que plus rien ne mesurait.
+  entry: 78_000,
 
   // Le plus gros chunk de page. `OrganizationPage` mesure ~64 ko.
   page: 70_000,

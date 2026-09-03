@@ -15,8 +15,9 @@ import { useCategories } from '@/modules/categories';
 import { useTasks } from '@/modules/tasks';
 import { useHabits } from '@/modules/habits';
 import { useEvents } from '@/modules/events';
-import { useOkrs, KeyResult } from '@/modules/okrs';
-import { parseLocalDate, getLocalDateString } from '@/lib/workTimeCalculator';
+import { useOkrs } from '@/modules/okrs';
+import { useKRCompletions } from '@/modules/kr-completions';
+import { okrTimeForPeriod, parseLocalDate, getLocalDateString } from '@/lib/workTimeCalculator';
 import { useWorkTimeStats } from '@/modules/stats';
 import type { WorkTimeBucket, WorkTimeRange } from '@/modules/stats';
 import { useVisibilityInterval } from '@/lib/hooks/usePerformance';
@@ -25,6 +26,7 @@ import { useBilling } from '@/modules/billing/billing.context';
 import PremiumGateModal from '@/components/PremiumGateModal';
 import { formatTime, formatTimeShort } from './statistics/format';
 import { buildInsights } from '@/lib/stats-insights';
+import { useInsightText } from './statistics/insights';
 
 // Graphique multi-séries « Temps de travail » (déplacé du Dashboard).
 // Lazy : recharts ne charge que si l'utilisateur ouvre la vue détaillée (faille P-2).
@@ -48,10 +50,15 @@ import { useT } from '@/i18n/useT';
 // ═══════════════════════════════════════════════════════════════════
 export default function StatisticsPage() {
   const { t } = useT('statistics');
+  // La mise en mots vit dans `statistics/insights.ts` : `stats-insights` ne
+  // rend plus que des faits (revue du 2026-09-02, point 6).
+  const insightText = useInsightText();
   const isMobile = useIsMobile();
   const { data: tasks = [] } = useTasks();
   const { data: events = [] } = useEvents();
   const { data: okrs = [] } = useOkrs();
+  // Journal des complétions de KR : SEULE source du temps investi sur les OKR.
+  const { data: krCompletions = [] } = useKRCompletions();
   const { colorSettings } = useColorSettings();
   const { data: categories = [] } = useCategories();
   const { data: habits = [] } = useHabits();
@@ -70,6 +77,7 @@ export default function StatisticsPage() {
 
   // Insights en langage naturel (#34) — calculés client-side, max 3 phrases.
   const insights = useMemo(() => buildInsights(tasks, habits, now), [tasks, habits, now]);
+
 
   // ── Agrégats « temps investi » (module stats) ──────────────────────
   // Le client ne construit que les plages de dates + labels ; les totaux
@@ -192,22 +200,14 @@ export default function StatisticsPage() {
         }).length;
         return total + count * habit.estimatedTime;
       }, 0),
-      okrTime: 0,
+      // ⚠️ Le temps investi sur les OKR vient du journal `kr_completions`.
+      // Cette ligne lisait `kr.history`, un champ absent du modele : elle
+      // rendait toujours 0 (cf. src/lib/workTimeCalculator.ts).
+      okrTime: okrTimeForPeriod(rollingRange.start, rollingRange.end, krCompletions, okrs),
     };
-    okrs.forEach(okr => {
-      okr.keyResults.forEach(kr => {
-        const krHistory = (kr as KeyResult & { history?: { date: string; increment: number }[] }).history || [];
-        const hist = krHistory.filter(h => {
-          const hDate = parseLocalDate(h.date);
-          const norm = new Date(hDate.getFullYear(), hDate.getMonth(), hDate.getDate());
-          return norm >= rollingRange.start && norm <= rollingRange.end;
-        });
-        details.okrTime += hist.reduce((s, h) => s + h.increment, 0) * kr.estimatedTime;
-      });
-    });
     details.totalTime = details.tasksTime + details.eventsTime + details.habitsTime + details.okrTime;
     return [{ label: '', totalTime: details.totalTime, details }];
-  }, [rollingTasks, rollingEvents, habits, okrs, rollingRange]);
+  }, [rollingTasks, rollingEvents, habits, okrs, krCompletions, rollingRange]);
 
   const totalWorkTime = workTimeData.reduce((sum, d) => sum + d.totalTime, 0);
   const avgWorkTime = workTimeData.length > 0 ? Math.round(totalWorkTime / workTimeData.length) : 0;
@@ -273,9 +273,9 @@ export default function StatisticsPage() {
       {insights.length > 0 && (
         <div className="card p-4 mb-8 space-y-1.5" role="status">
           {insights.map((insight) => (
-            <p key={insight} className="text-sm flex items-start gap-2" style={{ color: 'rgb(var(--color-text-primary))' }}>
+            <p key={insight.kind} className="text-sm flex items-start gap-2" style={{ color: 'rgb(var(--color-text-primary))' }}>
               <span className="text-blue-500 shrink-0" aria-hidden="true">→</span>
-              {insight}
+              {insightText(insight)}
             </p>
           ))}
         </div>
@@ -572,7 +572,7 @@ export default function StatisticsPage() {
 
       {selectedSection === 'tasks' && <TasksStatistics tasks={rollingTasks} colorSettings={colorSettings} categories={categories} />}
       {selectedSection === 'agenda' && <AgendaStatistics events={rollingEvents} categories={categories} />}
-      {selectedSection === 'okr' && <OKRStatistics objectives={okrs} rollingRange={rollingRange} />}
+      {selectedSection === 'okr' && <OKRStatistics objectives={okrs} krCompletions={krCompletions} rollingRange={rollingRange} />}
       {selectedSection === 'habits' && <HabitsStatistics habits={habits} rollingRange={rollingRange} selectedPeriod={selectedPeriod} now={now} />}
       {selectedSection === 'all' && <OverviewStatistics workTimeData={rollingWorkTimeData} />}
       </>

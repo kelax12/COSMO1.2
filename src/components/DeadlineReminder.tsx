@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { translator } from '@/i18n/useT';
 import { useNavigate } from 'react-router';
 import { toast } from 'sonner';
 import { useTasks } from '@/modules/tasks';
@@ -35,15 +36,19 @@ const DeadlineReminder: React.FC = () => {
     firedRef.current = true;
     try { localStorage.setItem(SEEN_KEY, today); } catch { /* ignore */ }
 
+    // Le pluriel passe par `tp` (Intl.PluralRules) : `${n > 1 ? 's' : ''}` est
+    // une règle FRANÇAISE écrite à la main, fausse dès qu'on change de langue
+    // (l'anglais met 0 au pluriel, le français au singulier).
+    const { t, tp } = translator('common');
     const parts: string[] = [];
-    if (dueToday > 0) parts.push(`${dueToday} tâche${dueToday > 1 ? 's' : ''} pour aujourd'hui`);
-    if (overdue > 0) parts.push(`${overdue} en retard`);
+    if (dueToday > 0) parts.push(tp('deadlineReminder.dueToday', dueToday, { count: dueToday }));
+    if (overdue > 0) parts.push(t('deadlineReminder.overdue', { count: overdue }));
 
     toast(parts.join(' · '), {
-      description: 'Touchez pour voir vos tâches',
+      description: t('deadlineReminder.description'),
       duration: 8000,
       action: {
-        label: 'Voir',
+        label: t('deadlineReminder.action'),
         onClick: () => navigate('/tasks'),
       },
     });

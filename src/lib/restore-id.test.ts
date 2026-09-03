@@ -1,5 +1,10 @@
-import { describe, it, expect } from 'vitest';
-import { splitRestore, type CreateOptions } from './restore-id';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { toast } from 'sonner';
+import * as Sentry from '@sentry/react';
+import { reportRestoreFailure, splitRestore, type CreateOptions } from './restore-id';
+
+vi.mock('sonner', () => ({ toast: { error: vi.fn() } }));
+vi.mock('@sentry/react', () => ({ captureException: vi.fn() }));
 
 describe('splitRestore', () => {
   it("sort l'identifiant du payload au lieu de le jeter", () => {
@@ -26,5 +31,44 @@ describe('splitRestore', () => {
       splitRestore({ id: 'evt-9', title: 'Reunion', start: 'a', end: 'b' });
     expect(Object.keys(payload).sort()).toEqual(['end', 'start', 'title']);
     expect(options).toEqual({ restoreId: 'evt-9' });
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════
+// Un « Annuler » qui rate doit se voir (revue du 2026-09-02)
+//
+// Les cinq hooks se contentaient d'un `console.error`, et le build de
+// production SUPPRIME `console.error` (`vite.config.ts → esbuild.pure`). En
+// prod, une restauration ratée ne produisait donc rien du tout : la personne
+// repartait en croyant son objet revenu.
+// ═══════════════════════════════════════════════════════════════════
+describe('reportRestoreFailure', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('affiche un toast traduit ET remonte l\'erreur à Sentry', () => {
+    const error = new Error('Cette ressource existe déjà.');
+    reportRestoreFailure('task', error);
+
+    expect(toast.error).toHaveBeenCalledTimes(1);
+    const shown = vi.mocked(toast.error).mock.calls[0][0];
+    expect(String(shown)).toContain('restaurer la tâche');
+    expect(String(shown)).toContain('Cette ressource existe déjà.');
+
+    expect(Sentry.captureException).toHaveBeenCalledWith(
+      error,
+      expect.objectContaining({ tags: expect.objectContaining({ context: 'restore-undo', restore_entity: 'task' }) }),
+    );
+  });
+
+  it.each([
+    ['category', 'catégorie'],
+    ['list', 'liste'],
+    ['event', 'événement'],
+    ['okr', 'objectif'],
+  ] as const)('nomme l\'entité restaurée : %s', (entity, fragment) => {
+    reportRestoreFailure(entity, new Error('boom'));
+    expect(String(vi.mocked(toast.error).mock.calls[0][0])).toContain(fragment);
   });
 });

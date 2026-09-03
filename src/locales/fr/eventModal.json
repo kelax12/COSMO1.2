@@ -46,5 +46,22 @@
     "recurrenceShortDaily": "Jour",
     "recurrenceShortWeekly": "Sem.",
     "recurrenceShortCustom": "Perso"
-  }
+  },
+  "endBeforeStart": "⚠️ Fin avant début",
+  "headerAdd": "Ajouter un événement",
+  "headerEdit": "Modifier l'événement",
+  "headerConvert": "Convertir en événement",
+  "submitAdd": "Valider",
+  "submitEdit": "Enregistrer",
+  "dayShort": {
+    "0": "Dim",
+    "1": "Lun",
+    "2": "Mar",
+    "3": "Mer",
+    "4": "Jeu",
+    "5": "Ven",
+    "6": "Sam"
+  },
+  "chooseDays": "Choisir les jours",
+  "choose": "Choisir"
 }

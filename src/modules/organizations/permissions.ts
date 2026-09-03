@@ -46,7 +46,13 @@ export const ORG_ASSIGN_TARGETS = ['self', 'peers', 'manager', 'subordinates', '
 export type OrgAssignTarget = (typeof ORG_ASSIGN_TARGETS)[number];
 
 /** Défaut historique : tout le monde peut assigner à tout le monde. */
-export const DEFAULT_ASSIGN_TARGETS: OrgAssignTarget[] = ['everyone'];
+/**
+ * 🔴 GELÉE, et rendue par COPIE partout. Le tableau était rendu tel quel par
+ * `effectiveAssignTargets`, donc partagé par tous les membres : un appelant qui
+ * l'aurait trié ou complété aurait modifié le défaut de l'organisation entière.
+ * C'est la classe de la faille B12 (seeds de démo mutés en place).
+ */
+export const DEFAULT_ASSIGN_TARGETS: readonly OrgAssignTarget[] = Object.freeze<OrgAssignTarget[]>(['everyone']);
 
 /**
  * Une ligne de `org_member_permissions` : uniquement des SURCHARGES.
@@ -121,8 +127,8 @@ export const effectiveAssignTargets = ({
   member: OrgMember;
   overrides?: OrgMemberPermissions | null;
 }): OrgAssignTarget[] => {
-  if (member.role === 'admin') return DEFAULT_ASSIGN_TARGETS;
-  return overrides?.assignTargets ?? DEFAULT_ASSIGN_TARGETS;
+  if (member.role === 'admin') return [...DEFAULT_ASSIGN_TARGETS];
+  return overrides?.assignTargets ?? [...DEFAULT_ASSIGN_TARGETS];
 };
 
 interface AssignInput {

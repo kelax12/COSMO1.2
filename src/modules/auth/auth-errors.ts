@@ -1,3 +1,5 @@
+import { translator } from '@/i18n/useT';
+
 // ═══════════════════════════════════════════════════════════════════
 // AUD-05 — Ne jamais renvoyer `error.message` brut à l'UI
 //
@@ -23,15 +25,19 @@
 // provider qui tient la session.
 // ═══════════════════════════════════════════════════════════════════
 
-export const AUTH_LOGIN_GENERIC = 'Email ou mot de passe incorrect.';
-export const AUTH_REGISTER_GENERIC =
-  "Impossible de finaliser l'inscription. Vérifiez vos informations et réessayez.";
+// 🔴 Des FONCTIONS, pas des constantes. Ces messages étaient des littéraux
+// français évalués À L'IMPORT : ils figeaient la langue pour toute la session
+// et s'affichaient tels quels à un anglophone. `translator` doit être appelé
+// au moment où le message est produit, jamais au niveau du module.
+export const authLoginGeneric = (): string => translator('common').t('auth.loginGeneric');
+export const authRegisterGeneric = (): string => translator('common').t('auth.registerGeneric');
 
 export type SupabaseAuthErrorLike = { code?: string; status?: number; message?: string };
 
 export const safeAuthError = (error: SupabaseAuthErrorLike, fallback: string): string => {
   // Loggé pour l'ops (droppé du bundle prod par esbuild, remonté par Sentry).
   console.error('[auth]', error.code ?? error.status ?? 'unknown', error.message);
+  const t = translator('common').t;
   const code = error.code;
   // ⚠️ Ce message est EXACT côté serveur et TROMPEUR côté utilisateur quand la
   // cause est le quota d'emails du projet : il n'a rien fait de trop, c'est le
@@ -40,19 +46,19 @@ export const safeAuthError = (error: SupabaseAuthErrorLike, fallback: string): s
   // codes, et GoTrue ne les distingue pas toujours. La vraie sortie est le
   // SMTP applicatif (docs/DEPLOYMENT.md §2ter), pas une meilleure phrase.
   if (code === 'over_email_send_rate_limit' || code === 'over_request_rate_limit' || error.status === 429) {
-    return 'Trop de tentatives. Réessayez dans quelques minutes.';
+    return t('auth.tooManyAttempts');
   }
   if (code === 'weak_password') {
-    return 'Mot de passe trop faible. Choisissez-en un plus long et plus varié.';
+    return t('auth.weakPassword');
   }
   if (code === 'email_address_invalid') {
-    return "Cette adresse email n'est pas valide.";
+    return t('auth.invalidEmailAddress');
   }
   // Vérification anti-robot refusée ou expirée. Le jeton Turnstile est à usage
   // unique et court : le cas normal n'est pas une attaque, c'est un formulaire
   // resté ouvert trop longtemps. On le dit, et l'écran réarme le widget.
   if (code === 'captcha_failed') {
-    return 'La vérification anti-robot a échoué. Réessayez.';
+    return t('auth.captchaFailed');
   }
   return fallback;
 };

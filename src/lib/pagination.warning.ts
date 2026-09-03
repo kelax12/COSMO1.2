@@ -16,6 +16,14 @@ const warned = new Set<string>();
 const TABLE_LABEL_KEYS: readonly string[] = [
   'tasks', 'habits', 'events', 'okrs', 'kr_completions',
   'categories', 'lists', 'friends', 'team_tasks',
+  // Mode entreprise — dix lectures bornees en dur qui tronquaient en silence
+  // (revue du 2026-09-02, point 13). C'est exactement ce que ce module existe
+  // pour empecher : une liste coupee a 200 sans que personne, ni l'utilisateur
+  // ni l'equipe, n'apprenne qu'elle l'a ete.
+  'team_projects', 'org_members', 'org_teams', 'team_members',
+  'team_task_comments', 'org_join_requests', 'team_okrs',
+  'team_task_activity', 'team_task_dependencies', 'org_invite_links',
+  'organizations',
 ];
 
 /**

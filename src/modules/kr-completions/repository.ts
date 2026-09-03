@@ -3,6 +3,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { KRCompletion, CreateKRCompletionInput, KRCompletionFilters } from './types';
+import { safeGetItem, safeParseArray } from '@/lib/safe-json';
 import { KR_COMPLETIONS_STORAGE_KEY } from './constants';
 
 // ═══════════════════════════════════════════════════════════════════
@@ -57,13 +58,15 @@ export interface IKRCompletionsRepository {
 export class LocalStorageKRCompletionsRepository implements IKRCompletionsRepository {
 
   private getCompletions(): KRCompletion[] {
-    const data = localStorage.getItem(KR_COMPLETIONS_STORAGE_KEY);
-    if (!data) {
+    const stored = safeParseArray<KRCompletion>(safeGetItem(KR_COMPLETIONS_STORAGE_KEY));
+    // Corrompu ou stockage indisponible : on re-seme plutot que de faire
+    // tomber la page (regle B14, helper `safeParseArray`).
+    if (!stored) {
       const demo = createDemoCompletions();
       this.saveCompletions(demo);
       return demo;
     }
-    return JSON.parse(data);
+    return stored;
   }
 
   private saveCompletions(completions: KRCompletion[]): void {

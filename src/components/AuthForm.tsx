@@ -164,13 +164,13 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onSwitchMode, onSuccess, head
     try {
       const result = await loginWithGoogle();
       if (!result.success) {
-        setFormError(result.error || 'Erreur lors de la connexion avec Google.');
+        setFormError(result.error || t('auth.googleFailed'));
         setIsGoogleLoading(false);
         return;
       }
       // En cas de succès, le navigateur est redirigé vers Google — pas de reset nécessaire
     } catch {
-      setFormError('Erreur lors de la connexion avec Google.');
+      setFormError(t('auth.googleFailed'));
       setIsGoogleLoading(false);
     }
   };
@@ -243,11 +243,11 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onSwitchMode, onSuccess, head
         {mode === 'register' && (
           <fieldset>
             <legend className="block text-xs font-medium text-[rgb(var(--color-text-secondary))] mb-1.5">
-              Type de compte
+              {t('auth.accountType')}
             </legend>
             <div className="grid grid-cols-2 gap-2">
               {([
-                { value: 'personal' as const, label: 'Particulier', desc: 'Usage personnel', Icon: UserRound },
+                { value: 'personal' as const, label: t('auth.accountPersonal'), desc: t('auth.accountPersonalDesc'), Icon: UserRound },
                 { value: 'business' as const, label: t('auth.accountBusiness'), desc: t('auth.accountBusinessDesc'), Icon: Building2 },
               ]).map(({ value, label, desc, Icon }) => {
                 const selected = accountType === value;

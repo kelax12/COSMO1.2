@@ -3,6 +3,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { supabase } from '@/lib/supabase';
+import { warnIfTruncated } from '@/lib/pagination.warning';
 import { getCurrentUserId } from '@/lib/auth-user';
 import { normalizeApiError } from '@/lib/normalizeApiError';
 import { ITeamOKRsRepository } from './repository';
@@ -75,7 +76,7 @@ export class SupabaseTeamOKRsRepository implements ITeamOKRsRepository {
       .order('created_at', { ascending: false })
       .limit(200);
     if (error) throw normalizeApiError(error);
-    const okrs = (okrRows ?? []) as OkrRow[];
+    const okrs = warnIfTruncated((okrRows ?? []) as OkrRow[], 200, 'team_okrs');
     if (okrs.length === 0) return [];
 
     const { data: krRows, error: krErr } = await supabase

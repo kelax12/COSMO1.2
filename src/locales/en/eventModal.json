@@ -46,5 +46,22 @@
     "recurrenceShortDaily": "Day",
     "recurrenceShortWeekly": "Wk",
     "recurrenceShortCustom": "Custom"
-  }
+  },
+  "endBeforeStart": "⚠️ End before start",
+  "headerAdd": "Add an event",
+  "headerEdit": "Edit the event",
+  "headerConvert": "Convert into an event",
+  "submitAdd": "Confirm",
+  "submitEdit": "Save",
+  "dayShort": {
+    "0": "Sun",
+    "1": "Mon",
+    "2": "Tue",
+    "3": "Wed",
+    "4": "Thu",
+    "5": "Fri",
+    "6": "Sat"
+  },
+  "chooseDays": "Choose the days",
+  "choose": "Choose"
 }

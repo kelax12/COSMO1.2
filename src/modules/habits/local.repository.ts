@@ -1,4 +1,5 @@
 import { IHabitsRepository } from './repository';
+import { safeGetItem, safeParseArray } from '@/lib/safe-json';
 import { Habit, CreateHabitInput, UpdateHabitInput } from './types';
 import { PaginationParams, PaginatedResult, DEFAULT_PAGE_SIZE } from '@/lib/pagination.types';
 import { localizeSeed } from '@/lib/seed-i18n';
@@ -90,13 +91,15 @@ const DEMO_HABITS_EN: Record<string, Partial<Habit>> = {
 
 export class LocalStorageHabitsRepository implements IHabitsRepository {
   private getHabits(): Habit[] {
-    const data = localStorage.getItem(STORAGE_KEY);
-    if (!data) {
+    const stored = safeParseArray<Habit>(safeGetItem(STORAGE_KEY));
+    // Corrompu ou stockage indisponible : on re-seme plutot que de faire
+    // tomber la page (regle B14, helper `safeParseArray`).
+    if (!stored) {
       const seeded = localizeSeed(DEMO_HABITS, DEMO_HABITS_EN);
       this.saveHabits(seeded);
       return seeded;
     }
-    return JSON.parse(data);
+    return stored;
   }
 
   private saveHabits(habits: Habit[]): void {

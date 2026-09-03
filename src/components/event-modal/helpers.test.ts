@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import {
   formatEventDuration,
-  headerTitle,
-  submitButtonText,
+  headerTitleKey,
+  submitButtonKey,
   getMissingEventFields,
   validateEventRange,
 } from './helpers';
@@ -12,27 +12,30 @@ describe('formatEventDuration', () => {
     expect(formatEventDuration('', '10:00', '2026-01-01', '11:00')).toBeNull();
   });
   it('formats hours and minutes', () => {
-    expect(formatEventDuration('2026-01-01', '10:00', '2026-01-01', '11:30')).toBe('1h30min');
+    expect(formatEventDuration('2026-01-01', '10:00', '2026-01-01', '11:30')).toEqual({ kind: 'duration', text: '1h30min' });
   });
   it('formats whole hours', () => {
-    expect(formatEventDuration('2026-01-01', '10:00', '2026-01-01', '12:00')).toBe('2h');
+    expect(formatEventDuration('2026-01-01', '10:00', '2026-01-01', '12:00')).toEqual({ kind: 'duration', text: '2h' });
   });
   it('formats minutes only', () => {
-    expect(formatEventDuration('2026-01-01', '10:00', '2026-01-01', '10:45')).toBe('45 min');
+    expect(formatEventDuration('2026-01-01', '10:00', '2026-01-01', '10:45')).toEqual({ kind: 'duration', text: '45 min' });
   });
+  // Un FAIT, pas une phrase : la formulation vit au catalogue `eventModal`
+  // (revue du 2026-09-02, point 7 — ce module est pur, il n'a pas de locale).
   it('flags an end before start', () => {
-    expect(formatEventDuration('2026-01-01', '11:00', '2026-01-01', '10:00')).toBe('⚠️ Fin avant début');
+    expect(formatEventDuration('2026-01-01', '11:00', '2026-01-01', '10:00')).toEqual({ kind: 'invalid' });
   });
 });
 
-describe('headerTitle / submitButtonText', () => {
-  it('maps each mode', () => {
-    expect(headerTitle('add')).toBe('Ajouter un événement');
-    expect(headerTitle('edit')).toBe("Modifier l'événement");
-    expect(headerTitle('convert')).toBe('Convertir en événement');
-    expect(submitButtonText('add')).toBe('Valider');
-    expect(submitButtonText('edit')).toBe('Enregistrer');
-    expect(submitButtonText('convert')).toBe('Convertir en événement');
+describe('headerTitleKey / submitButtonKey', () => {
+  it('maps each mode to a catalogue key', () => {
+    expect(headerTitleKey('add')).toBe('headerAdd');
+    expect(headerTitleKey('edit')).toBe('headerEdit');
+    expect(headerTitleKey('convert')).toBe('headerConvert');
+    expect(submitButtonKey('add')).toBe('submitAdd');
+    expect(submitButtonKey('edit')).toBe('submitEdit');
+    // « Convertir » est le même libellé que le titre en mode conversion.
+    expect(submitButtonKey('convert')).toBe('headerConvert');
   });
 });
 
