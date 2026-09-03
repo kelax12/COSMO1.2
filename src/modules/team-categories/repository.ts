@@ -5,6 +5,7 @@
 import { TeamCategory, CreateTeamCategoryInput, UpdateTeamCategoryInput } from './types';
 import { TEAM_CATEGORIES_STORAGE_KEY } from './constants';
 import { localizeSeed } from '@/lib/seed-i18n';
+import { safeGetItem, safeSetItem, writeJsonOrThrow } from '@/lib/safe-json';
 
 export interface ITeamCategoriesRepository {
   getCategories(orgId: string): Promise<TeamCategory[]>;
@@ -31,10 +32,10 @@ const DEMO_CATEGORIES_EN: Record<string, Partial<TeamCategory>> = {
 };
 
 function readOrSeed(): TeamCategory[] {
-  const data = localStorage.getItem(TEAM_CATEGORIES_STORAGE_KEY);
+  const data = safeGetItem(TEAM_CATEGORIES_STORAGE_KEY);
   if (!data) {
     const clone = JSON.parse(JSON.stringify(localizeSeed(DEMO_CATEGORIES, DEMO_CATEGORIES_EN))) as TeamCategory[];
-    localStorage.setItem(TEAM_CATEGORIES_STORAGE_KEY, JSON.stringify(clone));
+    safeSetItem(TEAM_CATEGORIES_STORAGE_KEY, JSON.stringify(clone));
     return clone;
   }
   try {
@@ -49,7 +50,7 @@ export class LocalStorageTeamCategoriesRepository implements ITeamCategoriesRepo
     return readOrSeed();
   }
   private save(cats: TeamCategory[]): void {
-    localStorage.setItem(TEAM_CATEGORIES_STORAGE_KEY, JSON.stringify(cats));
+    writeJsonOrThrow(TEAM_CATEGORIES_STORAGE_KEY, cats);
   }
 
   async getCategories(orgId: string): Promise<TeamCategory[]> {

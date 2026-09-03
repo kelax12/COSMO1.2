@@ -29,6 +29,7 @@ import {
 } from './constants';
 import type { OrgMemberPermissions, SetOrgPermissionsInput } from './permissions';
 import { isEnglishSeed, localizeSeed } from '@/lib/seed-i18n';
+import { safeGetItem, safeSetItem, writeJsonOrThrow } from '@/lib/safe-json';
 
 const DEMO_USER_ID = 'demo-user';
 export const DEMO_ORG_ID = 'org-demo-1';
@@ -104,17 +105,17 @@ const DEMO_ORGS_EN: Record<string, Partial<Organization>> = {
 
 // Lecture défensive : clone des seeds (faille B12), JSON.parse protégé (B14).
 function readOrSeed<T>(key: string, seed: T): T {
-  const data = localStorage.getItem(key);
+  const data = safeGetItem(key);
   if (!data) {
     const clone = JSON.parse(JSON.stringify(seed)) as T;
-    localStorage.setItem(key, JSON.stringify(clone));
+    safeSetItem(key, JSON.stringify(clone));
     return clone;
   }
   try {
     return JSON.parse(data) as T;
   } catch {
     const clone = JSON.parse(JSON.stringify(seed)) as T;
-    localStorage.setItem(key, JSON.stringify(clone));
+    safeSetItem(key, JSON.stringify(clone));
     return clone;
   }
 }
@@ -125,7 +126,7 @@ export class LocalStorageOrganizationsRepository implements IOrganizationsReposi
   }
 
   private saveOrgs(orgs: Organization[]): void {
-    localStorage.setItem(ORGS_STORAGE_KEY, JSON.stringify(orgs));
+    writeJsonOrThrow(ORGS_STORAGE_KEY, orgs);
   }
 
   private getMembersArray(): OrgMember[] {
@@ -143,7 +144,7 @@ export class LocalStorageOrganizationsRepository implements IOrganizationsReposi
   }
 
   private saveRequests(requests: OrgJoinRequest[]): void {
-    localStorage.setItem(ORG_JOIN_REQUESTS_STORAGE_KEY, JSON.stringify(requests));
+    writeJsonOrThrow(ORG_JOIN_REQUESTS_STORAGE_KEY, requests);
   }
 
   // ─── Read ──────────────────────────────────────────────────────────
@@ -210,7 +211,7 @@ export class LocalStorageOrganizationsRepository implements IOrganizationsReposi
       displayName: isEnglishSeed() ? 'You' : 'Vous',
       email: 'demo@cosmo.app',
     });
-    localStorage.setItem(ORG_MEMBERS_STORAGE_KEY, JSON.stringify(members));
+    writeJsonOrThrow(ORG_MEMBERS_STORAGE_KEY, members);
     return org;
   }
 
@@ -280,7 +281,7 @@ export class LocalStorageOrganizationsRepository implements IOrganizationsReposi
           email: req.requesterEmail,
           avatar: req.requesterAvatar,
         });
-        localStorage.setItem(ORG_MEMBERS_STORAGE_KEY, JSON.stringify(members));
+        writeJsonOrThrow(ORG_MEMBERS_STORAGE_KEY, members);
       }
     }
   }
@@ -331,7 +332,7 @@ export class LocalStorageOrganizationsRepository implements IOrganizationsReposi
   // ─── Administration ────────────────────────────────────────────────
 
   private saveMembers(members: OrgMember[]): void {
-    localStorage.setItem(ORG_MEMBERS_STORAGE_KEY, JSON.stringify(members));
+    writeJsonOrThrow(ORG_MEMBERS_STORAGE_KEY, members);
   }
 
   private adminCount(members: OrgMember[], orgId: string): number {
@@ -442,7 +443,7 @@ export class LocalStorageOrganizationsRepository implements IOrganizationsReposi
   }
 
   private saveInviteLinks(links: OrgInviteLink[]): void {
-    localStorage.setItem(ORG_INVITE_LINKS_STORAGE_KEY, JSON.stringify(links));
+    writeJsonOrThrow(ORG_INVITE_LINKS_STORAGE_KEY, links);
   }
 
   async createInviteLink(orgId: string, managerId: string | null): Promise<OrgInviteLink> {
@@ -532,6 +533,6 @@ export class LocalStorageOrganizationsRepository implements IOrganizationsReposi
       overrides: { ...input.overrides },
       assignTargets: input.assignTargets,
     });
-    localStorage.setItem(ORG_MEMBER_PERMISSIONS_STORAGE_KEY, JSON.stringify(rows));
+    writeJsonOrThrow(ORG_MEMBER_PERMISSIONS_STORAGE_KEY, rows);
   }
 }

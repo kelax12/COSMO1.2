@@ -8,6 +8,7 @@
 import { IOrgTeamsRepository } from './repository';
 import { OrgTeam, OrgTeamMember, CreateOrgTeamInput } from './types';
 import { ORG_TEAMS_STORAGE_KEY, ORG_TEAM_MEMBERS_STORAGE_KEY } from './constants';
+import { safeGetItem, safeSetItem, writeJsonOrThrow } from '@/lib/safe-json';
 
 const DEMO_ORG_ID = 'org-demo-1';
 const DEMO_USER_ID = 'demo-user';
@@ -30,17 +31,17 @@ const DEMO_TEAM_MEMBERS: OrgTeamMember[] = [
 ];
 
 function readOrSeed<T>(key: string, seed: T): T {
-  const data = localStorage.getItem(key);
+  const data = safeGetItem(key);
   if (!data) {
     const clone = JSON.parse(JSON.stringify(seed)) as T;
-    localStorage.setItem(key, JSON.stringify(clone));
+    safeSetItem(key, JSON.stringify(clone));
     return clone;
   }
   try {
     return JSON.parse(data) as T;
   } catch {
     const clone = JSON.parse(JSON.stringify(seed)) as T;
-    localStorage.setItem(key, JSON.stringify(clone));
+    safeSetItem(key, JSON.stringify(clone));
     return clone;
   }
 }
@@ -50,13 +51,13 @@ export class LocalStorageOrgTeamsRepository implements IOrgTeamsRepository {
     return readOrSeed<OrgTeam[]>(ORG_TEAMS_STORAGE_KEY, DEMO_TEAMS);
   }
   private saveTeams(teams: OrgTeam[]): void {
-    localStorage.setItem(ORG_TEAMS_STORAGE_KEY, JSON.stringify(teams));
+    writeJsonOrThrow(ORG_TEAMS_STORAGE_KEY, teams);
   }
   private getMembershipsArray(): OrgTeamMember[] {
     return readOrSeed<OrgTeamMember[]>(ORG_TEAM_MEMBERS_STORAGE_KEY, DEMO_TEAM_MEMBERS);
   }
   private saveMemberships(m: OrgTeamMember[]): void {
-    localStorage.setItem(ORG_TEAM_MEMBERS_STORAGE_KEY, JSON.stringify(m));
+    writeJsonOrThrow(ORG_TEAM_MEMBERS_STORAGE_KEY, m);
   }
 
   async getTeams(orgId: string): Promise<OrgTeam[]> {

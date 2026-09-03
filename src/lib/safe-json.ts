@@ -64,3 +64,68 @@ export function readJson<T>(key: string): T | null {
 export function readJsonArray<T>(key: string): T[] | null {
   return safeParseArray<T>(safeGetItem(key));
 }
+
+// ═══════════════════════════════════════════════════════════════════
+// ÉCRITURE — le silence n'est PAS toujours le bon comportement (C-46)
+// ═══════════════════════════════════════════════════════════════════
+//
+// 🔴 L'écriture n'est pas du câblage, contrairement à la lecture.
+//
+// `safeSetItem` avale l'échec. Pour une préférence d'affichage c'est le bon
+// comportement : rien n'est perdu que l'utilisateur ait produit. Pour une
+// donnée qu'il vient de CRÉER — une tâche, un objectif, une progression de
+// KR — c'est une perte sans signal : l'écran affiche la ligne (le cache React
+// Query l'a), le rechargement suivant ne la retrouve pas, et rien n'a jamais
+// dit qu'elle n'avait pas été enregistrée.
+//
+// MESURÉ (audit A-2) : une saisie de progression de KR en mode démo a fait
+// remonter un `QuotaExceededError` des 5 Mo directement depuis le repository.
+// Câbler `safeSetItem` partout aurait fait disparaître ce signal.
+//
+// Les écritures des dépôts de démo se classent donc en DEUX familles :
+//
+//   • le SEED (`readOrSeed` : on vient de cloner un jeu de démonstration) →
+//     `safeSetItem`. L'écriture ratée n'a rien coûté, l'appelant a déjà son
+//     clone en mémoire et la prochaine lecture re-sèmera.
+//   • la PERSISTANCE d'une donnée de l'utilisateur → `writeJsonOrThrow`, qui
+//     LÈVE. La mutation React Query remonte alors dans son `onError`, et la
+//     personne voit un message au lieu de croire son travail enregistré.
+
+import { ApiError } from './normalizeApiError';
+import { resolveMessage } from '@/i18n/catalog';
+import { localeStore } from '@/i18n/store';
+
+/** Reconnaît un dépassement de quota, quel que soit le navigateur. */
+function isQuotaError(err: unknown): boolean {
+  if (!(err instanceof DOMException)) return false;
+  // Chrome/Firefox nomment ; Safari ne renseigne que `code` (22), et Firefox
+  // en navigation privée renvoie 1014 sous un autre nom.
+  return (
+    err.name === 'QuotaExceededError' ||
+    err.name === 'NS_ERROR_DOM_QUOTA_REACHED' ||
+    err.code === 22 ||
+    err.code === 1014
+  );
+}
+
+/**
+ * Écrit une valeur JSON dans `localStorage`, ou LÈVE une `ApiError` dont le
+ * message vient du catalogue.
+ *
+ * ❌ Ne jamais remplacer par `safeSetItem` « pour ne plus voir d'erreur » :
+ *    l'erreur est le seul signal que la donnée n'a pas été enregistrée.
+ */
+export function writeJsonOrThrow(key: string, value: unknown): void {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch (err) {
+    const code = isQuotaError(err) ? 'storage_full' : 'storage_unavailable';
+    // Le texte vient du catalogue, jamais du moteur JS : c'est ce message qui
+    // sera interpolé dans le toast `mutation.*` de l'appelant (cf. C-62).
+    const message =
+      resolveMessage('errors', `api.${code}`, localeStore.locale) ??
+      resolveMessage('errors', 'api.GENERIC_ERROR', localeStore.locale) ??
+      code;
+    throw new ApiError(code, message, err instanceof Error ? err.message : String(err));
+  }
+}

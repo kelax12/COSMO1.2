@@ -3,7 +3,6 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { OKR, CreateOKRInput, UpdateOKRInput, UpdateKeyResultInput, OKRFilters } from './types';
-import { safeGetItem, safeParseArray } from '@/lib/safe-json';
 import { recalcProgress } from './progress';
 import { OKRS_STORAGE_KEY } from './constants';
 import { PaginationParams, PaginatedResult, DEFAULT_PAGE_SIZE } from '@/lib/pagination.types';
@@ -11,6 +10,7 @@ import { KR_COMPLETIONS_STORAGE_KEY, MAX_REPS_PER_WRITE } from '@/modules/kr-com
 import { KRCompletion } from '@/modules/kr-completions/types';
 import { isEnglishSeed } from '@/lib/seed-i18n';
 import type { CreateOptions } from '@/lib/restore-id';
+import { safeGetItem, safeParseArray, writeJsonOrThrow } from '@/lib/safe-json';
 
 // ═══════════════════════════════════════════════════════════════════
 // DEMO DATA
@@ -218,7 +218,7 @@ export class LocalStorageOKRsRepository implements IOKRsRepository {
    * Save OKRs to localStorage
    */
   private saveOKRs(okrs: OKR[]): void {
-    localStorage.setItem(OKRS_STORAGE_KEY, JSON.stringify(okrs));
+    writeJsonOrThrow(OKRS_STORAGE_KEY, okrs);
   }
 
   // ═══════════════════════════════════════════════════════════════════
@@ -372,7 +372,7 @@ export class LocalStorageOKRsRepository implements IOKRsRepository {
         okrTitle,
       });
     }
-    localStorage.setItem(KR_COMPLETIONS_STORAGE_KEY, JSON.stringify(completions));
+    writeJsonOrThrow(KR_COMPLETIONS_STORAGE_KEY, completions);
   }
 
   /**
@@ -393,7 +393,7 @@ export class LocalStorageOKRsRepository implements IOKRsRepository {
     );
     if (toRemoveIds.size === 0) return;
     const remaining = completions.filter(c => !toRemoveIds.has(c.id));
-    localStorage.setItem(KR_COMPLETIONS_STORAGE_KEY, JSON.stringify(remaining));
+    writeJsonOrThrow(KR_COMPLETIONS_STORAGE_KEY, remaining);
   }
 
   async delete(id: string): Promise<void> {
