@@ -41,7 +41,7 @@ ne vive à deux endroits.
 
 | § | Domaine | Items |
 |---|---|---|
-| [1](#1-défauts-fonctionnels-connus) | Défauts fonctionnels connus | C-01 → C-08, C-37, C-40 → C-43, C-48, C-56 |
+| [1](#1-défauts-fonctionnels-connus) | Défauts fonctionnels connus | C-01 → C-08, C-37, C-40 → C-43, C-48, C-56, C-65 |
 | [2](#2-dette-structurelle) | Dette structurelle | C-09 → C-11, C-49, C-50 |
 | [3](#3-performance) | Performance | C-12 → C-14 |
 | [4](#4-scalabilité) | Scalabilité | C-15 → C-16 |
@@ -320,6 +320,59 @@ personne peut donc valider un formulaire dont elle ne voit plus l'intitulé.
   entièrement accessible au défilement, et le centrage survit tant que la carte tient.
 - **Fini quand** : les trois conteneurs sont corrigés, et un test mesure qu'à 375 × 350 le haut de
   la carte est atteignable (`scrollTop = 0` donne un `top >= 0`), vu **rouge** avant d'être vert.
+
+### C-65 · Le remboursement du mois en cours n'existe nulle part dans le code · **P1 · M**
+
+**Décision d'Axel du 2026-09-03** : *« l'utilisateur doit pouvoir se faire rembourser le mois en
+cours à tout moment, mais que le mois en cours »*. Prise pour ne pas avoir à arbitrer au cas par cas,
+et c'est le bon calcul : sur un abonnement **mensuel**, rembourser le mois en cours est **exactement**
+le remède que l'art. L215-1 accorde au consommateur qu'on n'a pas prévenu de sa reconduction. La
+règle commerciale recouvre donc l'obligation légale, au lieu de s'y ajouter.
+
+🔴 **Une règle sans mécanisme est une phrase.** Aujourd'hui le produit n'a **aucun** chemin de
+remboursement : `stripe-org-portal` ouvre le portail Stripe, qui sait résilier mais **ne rembourse
+pas**, et aucune fonction n'appelle `refunds.create`. Tant que la personne doit écrire un e-mail
+pour obtenir ce qu'on lui promet, on est exactement dans la situation que la décision voulait
+éviter : une discussion, au cas par cas.
+
+**Ce qu'il faut écrire :**
+
+1. **Un bouton, pas une adresse e-mail.** Dans la vue de facturation (`OrgBillingTab`, et son
+   équivalent particulier) : « Résilier et être remboursé de la période en cours ». Self-service,
+   sans motif, sans confirmation humaine.
+2. **Une Edge Function `stripe-refund-current-period`.** Propriétaire uniquement (même contrôle que
+   `stripe-org-checkout`), `refunds.create` sur le `payment_intent` de la **dernière** facture payée,
+   puis `subscriptions.cancel` immédiat (pas `cancel_at_period_end` : on rembourse, donc l'accès
+   s'arrête).
+3. **Une borne, sinon c'est un robinet.** Une seule période remboursable, la dernière payée, une
+   seule fois. La garde est une **clé d'idempotence** dérivée de l'`invoice_id`, pas un booléen en
+   base. Même famille que le pré-contrôle d'idempotence du webhook, avec la même règle : une lecture
+   qui décide d'un routage ne doit jamais avaler son erreur, on fait retenter plutôt que deviner.
+4. **Une ligne compensatoire dans `payment_records`.** ❌ Jamais une modification de la ligne
+   d'origine : la table est scellée par `row_hash` et `verify_payment_chain()` recalcule chaque hash.
+   Un remboursement s'écrit comme en comptabilité, par une écriture de sens inverse.
+5. **Le texte, quelque part où on peut le lire.** Une garantie **plus favorable** que la loi
+   n'appelle pas le préavis de 30 jours de l'article 11 des CGU (il protège contre une dégradation),
+   mais elle doit être écrite, sans quoi personne ne sait qu'elle existe et elle ne désamorce rien.
+
+⚠️ **L'annuel n'est pas couvert par l'énoncé, et c'est le seul angle mort de la décision.** Sur un
+abonnement annuel (168 / 420 / 840 / 1 680 €), la reconduction est annuelle : « le mois en cours »
+ne désigne rien, et le remède légal porte sur **tout ce qui a été versé depuis l'anniversaire**,
+jusqu'à douze mois. Deux sorties, à trancher :
+
+- **(a) le prorata**, retenu par défaut ici : on rembourse les mois entamés non consommés. C'est la
+  transposition littérale de la règle mensuelle, et elle referme l'exposition annuelle en entier.
+- **(b) un mois seulement** sur l'annuel : moins cher, mais l'écart entre ce qu'on offre et ce que
+  la loi accorde reste ouvert, et il faut alors que l'avis de reconduction annuel parte vraiment
+  (C-34, C-35), ce qui remet la mécanique de cron sur le chemin critique.
+
+- **Où** : `supabase/functions/stripe-refund-current-period/` (à créer),
+  `supabase/functions/_shared/`, `src/modules/billing/`,
+  `src/components/organization/OrgBillingTab.tsx`, `src/locales/{fr,en}/`, les CGU (`legal`).
+- **Fini quand** : un remboursement se déclenche depuis l'écran, la ligne compensatoire est écrite,
+  `verify_payment_chain()` reste vraie, un second appel sur la même période est refusé, et un test
+  couvre les trois : le cas nominal, le rejeu, et la période déjà remboursée. ❌ Ne pas livrer le
+  bouton avant la borne : un remboursement rejouable est une perte d'argent, pas un défaut d'UX.
 
 ---
 

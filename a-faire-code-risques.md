@@ -37,6 +37,39 @@ ordonne. La preuve reste dans l'item d'origine.
 
 ---
 
+## 🟢 La décision du 2026-09-03, et ce qu'elle referme
+
+> **« L'utilisateur doit pouvoir se faire rembourser le mois en cours, à tout moment, mais que le
+> mois en cours. »**
+
+C'est la décision la plus rentable de ce tableau, et elle ne coûte pas un euro de plus que ce que la
+loi impose déjà : sur un abonnement **mensuel**, rembourser le mois en cours est **exactement** le
+remède que l'art. L215-1 accorde au consommateur qu'on n'a pas prévenu de sa reconduction. La règle
+commerciale **recouvre** l'obligation légale au lieu de s'y ajouter. On cesse d'arbitrer au cas par
+cas, et le contentieux disparaît avec le sujet du contentieux.
+
+Trois lignes bougent, et une quatrième apparaît :
+
+| Item | Avant | Après | Pourquoi |
+|---|---|---|---|
+| **C-34** · l'avis de reconduction n'est jamais parti | 🔴 25 | 🟠 15 | Le remède est déjà servi d'avance. L'obligation d'envoyer l'avis demeure, sa **sanction** est désamorcée |
+| **C-30** · la cascade détruit les preuves L215-1 et L221-28 | 🔴 15 | 🟡 9 | Une preuve sert à gagner une discussion. Il n'y a plus de discussion : on rembourse sans demander pourquoi |
+| **C-35** · les 3 Edge Functions déployées divergent du dépôt | 🔴 25 | 🔴 25 | **Inchangé.** Sa moitié « avis de reconduction » se referme, sa moitié `delete-account` non, et c'est la plus lourde des deux |
+| **C-65** · le remboursement n'existe nulle part dans le code | . | 🔴 20 | **Nouveau.** Aucune fonction n'appelle `refunds.create` : le portail Stripe résilie, il ne rembourse pas |
+
+🔴 **Une règle sans mécanisme est une phrase.** Tant que la personne doit écrire un e-mail pour
+obtenir ce qu'on lui promet, on est exactement dans la situation que la décision voulait éviter. Les
+trois baisses ci-dessus ne sont acquises **qu'une fois C-65 livré** : d'ici là, elles décrivent
+l'intention, pas le produit.
+
+⚠️ **L'annuel n'est pas couvert par l'énoncé.** Sur 168 à 1 680 € facturés une fois par an, « le mois
+en cours » ne désigne rien, et le remède légal porte sur tout ce qui a été versé depuis
+l'anniversaire. Ce tableau retient le **prorata des mois non consommés**, seule lecture qui referme
+l'exposition annuelle comme la règle mensuelle referme la sienne. C'est un arbitrage commercial, pas
+une question de droit : détail et la seconde option dans C-65.
+
+---
+
 ## Méthode de notation
 
 **Risque = Gravité × Exposition.**
@@ -70,11 +103,13 @@ ordonne. La preuve reste dans l'item d'origine.
 
 ## Synthèse
 
+**57 items ouverts** depuis que la décision du 2026-09-03 en a ajouté un (C-65).
+
 | Urgence | Items | Dont gravité ≥ 4 | Nature dominante du coût |
 |---|---|---|---|
-| 🔴 **P0** | 4 | 4 | Remboursement légal, destruction irréversible |
-| 🟠 **P1** | 13 | 9 | Revenu, rétention, facture d'infrastructure |
-| 🟡 **P2** | 22 | 5 | Conformité opposable, qualité perçue |
+| 🔴 **P0** | 3 | 3 | Destruction irréversible, promesse non tenable |
+| 🟠 **P1** | 14 | 9 | Revenu, rétention, facture d'infrastructure |
+| 🟡 **P2** | 23 | 5 | Conformité opposable, qualité perçue |
 | ⚪ **P3** | 17 | 0 | Dette, décisions à écrire |
 | ✅ clos | 8 | . | . |
 
@@ -82,16 +117,15 @@ ordonne. La preuve reste dans l'item d'origine.
 
 ## 🔴 P0 · incident en cours
 
-Ces quatre lignes partagent une propriété que les autres n'ont pas : **le temps qui passe aggrave le
+Ces trois lignes partagent une propriété que les autres n'ont pas : **le temps qui passe aggrave le
 coût sans qu'aucun utilisateur ne se plaigne**. On ne les découvre pas par un ticket, on les
-découvre par une mise en demeure ou par une table vide.
+découvre par une table vide, ou par quelqu'un qui réclame ce qu'on lui a promis.
 
 | Item | Défaut | G | E | Risque | Combien de gens | Ce que ça coûte réellement |
 |---|---|---|---|---|---|---|
-| **C-34** | `renewal-notice.yml` sort en **vert** quand son secret est absent, donc l'avis quotidien de reconduction n'est **jamais** parti | 5 | 5 | **25** | **1 000 payants**, à chaque anniversaire | L'art. L215-1 du code de la consommation donne au consommateur non prévenu le droit de résilier **à tout moment** et de se faire **rembourser les sommes versées depuis la reconduction**. Non prévenu, c'est toute la base payante. Le montant contestable n'est pas un incident, c'est un exercice comptable. |
-| **C-35** | Les 3 Edge Functions déployées divergent du dépôt, de 3 façons différentes | 5 | 5 | **25** | **tous** | Deux effets composés. **(a)** La version déployée de `renewal-notice` porte le défaut S-4, que `faille.md` déclare corrigé : elle expédie depuis un domaine que Resend ne signera jamais. Même conséquence que C-34, par un second chemin, et ce chemin-là resterait ouvert après avoir posé le secret. **(b)** Toute conclusion tirée en lisant `supabase/functions/` est fausse d'avance : c'est le seul item qui **invalide les autres items**. |
-| **C-30** | `renewal_notices` et `withdrawal_consents` en `ON DELETE CASCADE` : supprimer un compte détruit ses propres preuves | 5 | 3 | **15** | ~10 à 100 suppressions de compte / mois, dont quelques propriétaires payants | La charge de la preuve est sur le professionnel. Un client résilie, conteste, supprime son compte : la preuve qu'on l'a prévenu part avec. Chaque suppression est une pièce détruite, et **c'est irréversible**. À 0 client la migration était gratuite ; maintenant elle court après les lignes déjà perdues. |
-| **C-39** | N'importe quel **admin**, pas seulement le propriétaire, supprime l'organisation · la cascade emporte 21 tables dont `org_subscriptions` | 5 | 2 | **10** | 1 à 10 / mois | Le risque n'est pas la fréquence, c'est l'asymétrie. Un admin qui ne paie rien détruit les données de toute son équipe, **et l'abonnement Stripe continue de courir** : on débite un client dont l'organisation n'existe plus, et le prochain webhook tente un upsert sur une clé étrangère morte. Aucun geste ne rattrape ça. |
+| **C-35** | Les 3 Edge Functions déployées divergent du dépôt, de 3 façons différentes | 5 | 5 | **25** | **tous** | La décision du 2026-09-03 referme sa moitié « avis de reconduction ». **Elle ne touche pas à l'autre.** La version de `delete-account` qui tourne en production n'existe dans aucun commit, et le correctif C-29 (une lecture avalée qui peut détruire une organisation entière avec les données de tous ses membres) **n'y est pas**. Second effet, plus large : toute conclusion tirée en lisant `supabase/functions/` est fausse d'avance. C'est le seul item qui **invalide les autres items**. |
+| **C-65** | Le remboursement du mois en cours n'existe nulle part dans le code | 4 | 5 | **20** | **1 000 payants** | La décision d'Axel désamorce le contentieux L215-1 **à condition d'être exécutable**. Aujourd'hui aucune fonction n'appelle `refunds.create` : `stripe-org-portal` ouvre le portail Stripe, qui sait résilier et ne rembourse pas. Une garantie qu'on annonce et qu'on ne peut pas servir en un clic est pire qu'une garantie absente : elle crée l'attente **et** la discussion. C'est la ligne qui fait descendre C-34 et C-30 ; tant qu'elle n'est pas livrée, leurs baisses sont une intention. |
+| **C-39** | N'importe quel **admin**, pas seulement le propriétaire, supprime l'organisation · la cascade emporte 21 tables dont `org_subscriptions` | 5 | 2 | **10** | 1 à 10 / mois | Le risque n'est pas la fréquence, c'est l'asymétrie. Un admin qui ne paie rien détruit les données de toute son équipe, **et l'abonnement Stripe continue de courir** : on débite un client dont l'organisation n'existe plus, et le prochain webhook tente un upsert sur une clé étrangère morte. Aucun geste ne rattrape ça, et **aucune politique de remboursement ne rend les données** : c'est le seul P0 que la décision du 2026-09-03 ne touche pas du tout. |
 
 > ⚠️ **C-29 est clos dans le dépôt et vivant en production.** La lecture avalée qui peut détruire une
 > organisation entière est marquée corrigée le 2026-09-03, et **C-35 prouve que le dépôt n'est pas ce
@@ -106,6 +140,7 @@ découvre par une mise en demeure ou par une table vide.
 |---|---|---|---|---|---|---|
 | **C-04** | Le mur-pub Habitudes ne consomme pas de jeton : il est piloté par un flag `localStorage` daté | 4 | 5 | **20** | **10 000 gratuits** | À 0 client c'était « inoffensif tant que `PREMIUM_ENFORCED` vaut `false` ». Drapeau armé, c'est un **contournement de paywall en un clic** : vider son stockage local retire le mur définitivement, et un jeton crédité ne sert à rien. Fuite de revenu directe, sur la seule mécanique de monétisation des comptes gratuits. |
 | **C-47** | La suite de tests rend des échecs **faux** sous charge, indistinguables des vrais | 4 | 5 | **20** | tous, indirectement | C'est la garde dont dépendent toutes les autres. Le réflexe qu'elle installe, « c'est la contention, je rejoue », est celui qui expédiera une régression vers 11 000 comptes. |
+| **C-34** | `renewal-notice.yml` sort en **vert** quand son secret est absent, donc l'avis quotidien de reconduction n'est **jamais** parti | 3 | 5 | **15** | **1 000 payants**, à chaque anniversaire | 🟢 Descend de 25 grâce à la décision du 2026-09-03 : le remède de L215-1 est servi d'avance, donc la sanction est désamorcée. **L'obligation d'envoyer l'avis, elle, demeure**, et une garde qui sort en vert sur une obligation quotidienne non tenue reste le motif exact retiré d'`uptime.yml` le même jour. Redevient P0 si l'annuel part sur l'option (b) de C-65. |
 | **C-28** | Le canal d'alerte d'ops est inerte : le secret Actions n'existe pas | 4 | 4 | **16** | tous | À 27 utilisateurs, apprendre un incident avec quatre jours de retard était embarrassant. À 11 000, c'est l'écart entre « détecté par la garde » et « détecté par les clients ». Le précédent est documenté : quatre jours sans lecture pendant qu'un script tiers exfiltrait email et nom. |
 | **C-37** | Six « Annuler » rendent l'objet sous un **nouvel identifiant** | 4 | 4 | **16** | 100 à 1 000 / mois | Le cas du lot est le pire : annuler la suppression de dix tâches rend dix tâches détachées de toutes leurs listes et de leur KR, sans une seule erreur à l'écran. À l'échelle, c'est de la perte de données silencieuse, quotidienne, et non détectable par la personne au moment où elle se produit. |
 | **C-56** | Clavier ouvert, le haut de `FirstRunSetup`, `BugReportModal` et `InviteOrJoinModal` est **inatteignable** | 4 | 4 | **16** | 200 à 500 nouveaux comptes Android / mois | `FirstRunSetup` existe pour retenir une population précise : la moitié des inscrits qui ne revenaient jamais. Sur Android, cet écran ampute sa propre question. Le coût se paie en inscriptions perdues, la ligne du produit qu'on cherche justement à faire monter. |
@@ -125,6 +160,7 @@ découvre par une mise en demeure ou par une table vide.
 | Item | Défaut | G | E | Risque | Ce que la charge change |
 |---|---|---|---|---|---|
 | **C-62** | Une centaine de messages d'erreur atteignent l'écran sans passer par aucun catalogue | 3 | 5 | **15** | Des centaines d'échecs de mutation par jour à cette taille. « Impossible de créer le lien : localStorage is not defined » devient une phrase que des gens lisent vraiment. |
+| **C-30** | `renewal_notices` et `withdrawal_consents` en `ON DELETE CASCADE` : supprimer un compte détruit ses propres preuves | 3 | 3 | **9** | 🟢 Descend de 15. Une preuve sert à gagner une discussion, et la décision du 2026-09-03 supprime la discussion : on rembourse sans demander pourquoi. Reste que ces tables sont décrites partout comme des pièces à produire, que la destruction est **irréversible**, et que la migration `SET NULL` est du travail d'une heure |
 | **C-36** | `report-bug` et `renewal-notice` n'ont aucune garde, d'aucune sorte | 4 | 3 | **12** | Ces deux fonctions portent désormais une obligation légale quotidienne. C'est le corollaire direct de C-34 et C-35 : sans garde, le défaut revient. |
 | **C-27** | Les parcours livrés en septembre n'ont aucun test E2E | 3 | 4 | **12** | Onboarding, calendrier et dépendances de tâches sans filet de bout en bout. Une régression sur l'onboarding se paie maintenant en inscriptions. |
 | **C-64** | `AppErrorBoundary` n'offre qu'un rechargement, là où la racine offre une sortie | 4 | 3 | **12** | Quand la cause est déterministe (valeur de stockage, réponse en cache), recharger ramène le même écran. À 11 000 comptes, cette impasse est atteinte tous les jours par quelqu'un. |
@@ -179,9 +215,9 @@ Aucun item ne descend. Voici les onze qui montent le plus, et la raison de chaqu
 
 | Item | Aujourd'hui | En charge | Ce qui a changé |
 |---|---|---|---|
-| **C-34** | 15 | **25** | L'avis L215-1 n'a pas de destinataire à 0 client. À 1 000 payants, chaque anniversaire non prévenu est remboursable |
+| **C-34** | 15 | **25 → 15** | L'avis L215-1 n'a pas de destinataire à 0 client. À 1 000 payants, chaque anniversaire non prévenu est remboursable. Puis la décision du 2026-09-03 le redescend à 15 en servant le remède d'avance |
 | **C-04** | 2 | **20** | « Inoffensif tant que `PREMIUM_ENFORCED` vaut `false` » devient un contournement de paywall pour 10 000 comptes |
-| **C-30** | 12 | **15** | Les tables de preuve passent de 0 ligne à des milliers, et chaque suppression de compte en détruit |
+| **C-30** | 12 | **15 → 9** | Les tables de preuve passent de 0 ligne à des milliers, et chaque suppression de compte en détruit. Puis la décision du 2026-09-03 le redescend à 9 : plus de discussion, donc moins besoin de preuve |
 | **C-05** | 8 | **15** | Une inélégance devient une ligne de facture et un palier Supabase |
 | **C-62** | 12 | **15** | Une centaine de phrases fausses × des centaines d'échecs par jour |
 | **C-57** | 15 | **15** | Le score ne bouge pas, la population passe de quelques dizaines à plusieurs milliers |
@@ -190,6 +226,12 @@ Aucun item ne descend. Voici les onze qui montent le plus, et la raison de chaqu
 | **C-64** | 8 | **12** | Une impasse rare devient une impasse quotidienne |
 | **C-07** | 6 | **12** | 5 % de 11 000, c'est 500 personnes en mouvement réduit |
 | **C-15 / C-16** | 4 | **9 / 12** | Le seuil de réouverture écrit dans l'item est franchi par l'hypothèse elle-même |
+
+Et les trois seules qui **descendent**, toutes les trois par la décision du 2026-09-03, aucune par du
+code : **C-34** (25 → 15), **C-30** (15 → 9), et la moitié « avis de reconduction » de **C-35**.
+C'est la démonstration la plus nette de ce tableau : *une décision produit d'une ligne a fermé plus
+d'exposition que n'importe lequel des 56 correctifs*. Elle en ouvre un, C-65, qui est le prix à payer
+pour que les trois baisses soient réelles.
 
 ---
 
