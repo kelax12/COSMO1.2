@@ -45,12 +45,12 @@ ne vive à deux endroits.
 | [2](#2-dette-structurelle) | Dette structurelle | C-09 → C-11, C-49, C-50 |
 | [3](#3-performance) | Performance | C-12 → C-14 |
 | [4](#4-scalabilité) | Scalabilité | C-15 → C-16 |
-| [5](#5-sécurité-et-dépendances) | Sécurité et dépendances | C-17 → C-19, C-29 → C-33, C-39, C-44 → C-46, C-58 → C-60 |
+| [5](#5-sécurité-et-dépendances) | Sécurité et dépendances | C-17 → C-19, C-29 → C-33, C-39, C-44 → C-46, C-58 → C-64 |
 | [6](#6-i18n) | i18n | C-20 → C-22, C-38 |
 | [7](#7-accessibilité) | Accessibilité | C-23 → C-25, C-51 → C-55, C-57 |
 | [8](#8-tests-et-gardes) | Tests et gardes | C-26 → C-28, C-34 → C-36, C-47 |
 | [9](#9-ce-qui-nest-PAS-du-code) | Ce qui n'est PAS du code | renvois |
-| [10](#10-couverture--ce-que-cette-liste-ne-peut-pas-contenir) | 🔴 Couverture et audits à lancer | 3 audits restants |
+| [10](#10-couverture--ce-que-cette-liste-ne-peut-pas-contenir) | 🔴 Couverture et audits à lancer | 2 audits restants |
 
 ---
 
@@ -806,6 +806,132 @@ tout le mode entreprise en démo tombe avant d'atteindre la garde censée le sau
 > une perte sans signal. Les écritures se classent donc par nature avant d'être recâblées, et le
 > test de `Storage.prototype` doit couvrir `setItem` autant que `getItem`.
 
+### C-61 · ~~Un repli d'agrément fermait toute l'application authentifiée~~ · **P1 · S** · ✅ corrigé le 2026-09-03
+
+Trouvé par l'audit **A-7**, et c'est son résultat le plus lourd. `src/components/Layout.tsx`
+initialisait l'état « barre latérale repliée » **en phase de rendu**, à nu :
+
+```ts
+const [isCollapsed, setIsCollapsed] = useState(() => {
+  const saved = localStorage.getItem('sidebar-collapsed');
+  return saved ? JSON.parse(saved) : false;   // ❌ ni try, ni safeParse (règle B14)
+});
+```
+
+Ce qui lève dans un initialiseur de rendu ne remonte dans aucun `onError` : ça remonte à
+l'`AppErrorBoundary`. Or `Layout` est le parent de **toutes** les pages protégées.
+
+**Mesuré dans le navigateur le 2026-09-03**, trois entrées, trois fois le même écran
+« ⚠️ Une erreur inattendue s'est produite / Veuillez rafraîchir la page » :
+
+1. une valeur non-JSON dans la clé (`'oui'`) : `JSON.parse` lève ;
+2. un navigateur qui **refuse** le stockage (navigation privée stricte, « bloquer les données de
+   site ») : `getItem` lève, sur un profil **neuf**, sans aucune valeur corrompue ;
+3. le bouton « Rafraîchir la page », **seule sortie proposée**, relit la même clé et rend le
+   **même écran**. L'impasse est permanente : toutes les pages protégées montent `Layout`, donc la
+   déconnexion elle-même est hors d'atteinte.
+
+C'est la forme exacte du verrouillage `/admin` du 2026-09-01, et la règle B14 de `CLAUDE.md` la
+nommait depuis longtemps — le helper `safeParse` / `readJson` existait déjà.
+
+- **Corrigé** : lecture par `readJson<boolean>()`, écriture par `safeSetItem()` (l'effet qui
+  persistait la valeur levait pour la même raison). Vérifié **dans le navigateur après correctif** :
+  les deux entrées rendent l'application normalement.
+- **Garde** : `src/render-storage.guard.test.ts`, vue **rouge** sur le vrai défaut avant le
+  correctif, avec **deux témoins** (un initialiseur non protégé doit être vu, un initialiseur
+  protégé ne doit pas l'être).
+- **Balayage complet** : c'était la **seule** occurrence de `src/`. Les 84 autres `catch` vides du
+  dépôt ont été inventoriés un par un — tous portent un accès au stockage déjà protégé, aucun
+  n'avale un échec de mutation.
+
+### C-62 · Une centaine de messages d'erreur atteignent l'écran sans passer par aucun catalogue · **P2 · M**
+
+Trouvé par l'audit **A-7**. Le dépôt affiche ses erreurs de mutation par 75 clés `mutation.*` qui
+**interpolent le message de l'exception** :
+
+```json
+"mutation.updateTask2": "Impossible de modifier la tâche : {{message}}"
+```
+
+C'est sûr tant que l'exception est une `ApiError`, dont le `message` vient du catalogue. Rien ne le
+garantit : `src/modules/` contient **99 `throw new Error('<littéral>')`** (hors les 151
+« Supabase not configured »), et n'importe quelle exception interne passe par le même tuyau.
+
+**Mesuré le 2026-09-03 en exécutant les vrais repositories et le vrai moteur i18n** — ce sont les
+phrases telles que rendues, pas des reconstitutions :
+
+| Ce que l'utilisateur lit | Ce que c'est |
+|---|---|
+| `Impossible de modifier la tâche : Task with id id-inexistant-42 not found` | une phrase **anglaise** portant un **identifiant interne** |
+| `Impossible de créer le lien : Vous ne faites pas partie de cette entreprise` | un français **hors catalogue** |
+| `Impossible de rejoindre l'entreprise : Code invalide` | idem |
+| `Impossible de créer le lien : localStorage is not defined` | un message **du moteur JS**, brut |
+
+La dernière ligne est la plus parlante : le canal est **entièrement ouvert**, du `throw` jusqu'au
+toast. Un `TypeError` (« Cannot read properties of undefined ») s'y afficherait de la même façon.
+
+Répartition des 99 : environ 45 phrases françaises écrites en dur (donc **identiques en anglais**,
+un littéral n'ayant pas de locale), une vingtaine d'anglaises (donc affichées telles quelles en
+français), et 12 qui interpolent un identifiant d'entité.
+
+- **Le modèle existe déjà dans le dépôt** : `org-billing.hooks.ts` fait
+  `t(CHECKOUT_ERROR_KEYS[err.message] ?? 'billing.error')` — le texte serveur sert de **clé**,
+  jamais d'affichage. C'est la même idée que `promoteBusinessCode` dans `normalizeApiError`.
+- **Fini quand** : les refus des repositories de démo sont désignés par un identifiant métier
+  catalogué (comme les `RAISE EXCEPTION 'identifiant'` du SQL), `{{message}}` ne reçoit plus qu'un
+  texte de catalogue, et une garde le verrouille avec son témoin. ⚠️ Ne pas se contenter de
+  traduire les 45 phrases françaises : c'est le **tuyau** qui est le défaut, pas son contenu du jour.
+
+### C-63 · `useClaimShareLink` lance l'erreur PostgREST brute, et l'appelant l'identifie par son message · **P2 · S**
+
+Trouvé par l'audit **A-7**. `src/modules/friends/share-link.hooks.ts` fait `if (error) throw error`
+sans `normalizeApiError`, et `ShareInviteClaimer` trie ensuite sur le **texte** :
+
+```ts
+const msg = error.message || '';
+if (msg.includes('own_link')) …
+else if (msg.includes('expired_link')) …
+else toast.error(t('shareInvite.invalid'));      // ❌ branche par défaut affirmative
+```
+
+**Scénario d'échec** : le réseau tombe, ou la RPC répond `42501`, ou PostgREST rend un 500. Le
+message ne contient aucun des deux identifiants, donc l'utilisateur lit « ce lien d'invitation est
+invalide » — une affirmation **définitive et fausse**, sur le chemin d'acquisition que `CLAUDE.md`
+protège explicitement (le partage de tâches est gratuit, c'est le levier viral). Il n'a plus aucune
+raison de réessayer, et le jeton a déjà été retiré du `localStorage` avant l'appel.
+
+C'est la même classe que le bug corrigé le 2026-09-02 dans `query-retry.ts`, dont le commentaire
+reconnaît d'ailleurs le résidu : « quelques chemins lancent encore l'erreur Supabase sans la
+normaliser ».
+
+- **Inventaire complet des rethrows bruts** : 8 sites. Sept sont sans conséquence (les cinq de
+  `mfa.ts` valident la réponse à la frontière et l'appelant n'affiche que des clés de catalogue ;
+  `BugReportModal`, `HabitsAdGate`, `PremiumGateModal` et `PremiumPage` attrapent et affichent une
+  clé, avec repli `mailto` pour le premier). Seul celui-ci décide d'un message.
+- **Fini quand** : le refus est identifié par un **code** (`normalizeApiError` + `promoteBusinessCode`
+  reconnaissent déjà `own_link` / `expired_link` s'ils sont catalogués), la branche par défaut dit
+  « nous n'avons pas pu vérifier ce lien, réessayez » plutôt que « invalide », et le jeton n'est
+  retiré du stockage qu'après un refus **nommé**.
+
+### C-64 · `AppErrorBoundary` n'offre qu'un rechargement, là où `RootErrorBoundary` offre une sortie · **P2 · S**
+
+Trouvé par l'audit **A-7**, en mesurant C-61. `RootErrorBoundary` a été écrit pour une raison
+nommée dans son propre en-tête : « le pire n'était pas l'écran vide, c'était l'impasse ». Il porte
+donc un `hardSignOut()` qui purge les clés de session et repart sur `/`.
+
+`AppErrorBoundary`, qui est **plus bas dans l'arbre et attrape donc en premier**, n'offre que
+« Rafraîchir la page ». Quand la cause est déterministe — une valeur de stockage, une réponse d'API
+mise en cache, une préférence — le rechargement ramène le même écran, ce qui a été **mesuré** sur
+C-61. L'utilisateur n'a alors aucun geste disponible.
+
+- Accessoirement, son repli est peint en couleurs écrites en dur (`#666`, `#3b82f6`) au lieu des
+  tokens de thème, alors que `RootErrorBoundary` assume son couple noir/blanc pour une raison
+  explicite (le thème peut ne jamais avoir été posé). Ici le thème est posé : l'écran d'erreur est
+  la seule surface du produit qui ignore le thème choisi.
+- **Fini quand** : le repli plein cadre propose la même sortie de secours que la racine, et un test
+  vérifie qu'une frontière déclenchée deux fois de suite laisse encore un geste possible. ⚠️ Ne pas
+  toucher au repli `null` (widget secondaire) : c'est une option volontaire de l'API du composant.
+
 ---
 
 ## 6. i18n
@@ -871,6 +997,15 @@ S'y ajoutent des chaînes hors JSX que personne ne cherche : les placeholders to
 Hors `src/components`, la même sonde remonte notamment `HabitsPage:142` et `:149` (le titre et la
 progression vus ci-dessus), `CommandPalette:142`, `SettingsPage:421`, `ResetPasswordPage:141`
 et `:181`, `ForgotPasswordPage:42` et `:137`.
+
+**Troisième angle mort, ajouté par l'audit A-7 le 2026-09-03**, vérifié en exécutant les filtres du
+script sur des échantillons : `CODE_QUOTING` rend `true` sur
+`throw new Error('Vous ne faites pas partie de cette entreprise')` **et** sur
+`toast.error('Impossible de créer le lien')`. Toute chaîne passée en **argument de fonction** est
+donc classée « code ». C'est précisément l'endroit où vivent la centaine de messages d'erreur de
+**C-62**. Et le filtre « identifiant seul » jette tout mot unique sans mot-outil français : le
+libellé « Recharger » de `RootErrorBoundary` est invisible pour cette raison, alors que le bouton
+voisin passe, lui, par `t('rootError.signOut')`.
 
 ⚠️ **Ne pas corriger le scanner à l'aveugle.** `scripts/i18n-scan.mjs` est en cours de modification
 par une autre session au moment de cet audit (c'est elle qui a descendu `MAX_STRINGS` à 0). Le
@@ -1312,7 +1447,10 @@ anglais. Et `src/modules`, où vivent les deux implémentations qui doivent se c
 n'avait jamais été relu : **A-2, passé le 2026-09-03, en a rendu trois** (C-48 → C-50), plus un
 complément à C-46 et **deux correctifs livrés**. Enfin, aucun audit n'avait jamais été fait **au
 clavier** : **A-3, passé le 2026-09-03, en a rendu cinq** (C-51 → C-55) et **trois correctifs**,
-dont un défaut que la documentation déclarait corrigé depuis le 2026-08-30.
+dont un défaut que la documentation déclarait corrigé depuis le 2026-08-30. Enfin, personne n'avait
+regardé ce que voit l'utilisateur **quand ça casse** : **A-7, passé le 2026-09-03, en a rendu
+quatre** (C-61 → C-64), plus un complément à C-38 et **un correctif livré** — dont un P1 qui fermait
+l'application entière à quiconque navigue avec les données de site bloquées.
 
 ### ✅ A-1 · les 3 Edge Functions non-Stripe · passé le 2026-09-03
 
@@ -1539,12 +1677,38 @@ des 24 composants shadcn contre leur version amont s'est limitée à la question
 point demandé qui soit falsifiable à l'échelle du dépôt) ; un écart non lié au ref pourrait dormir
 ailleurs, cf. la réserve laissée sur C-19.
 
+### ✅ A-7 · les chemins d'erreur du client · passé le 2026-09-03
+
+| Finding | Comment il a été établi |
+|---|---|
+| **C-61** · un repli d'agrément fermait toute l'app authentifiée | **navigateur**, trois entrées : valeur non-JSON, stockage refusé sur profil neuf, et le bouton de sortie qui rend le même écran |
+| **C-62** · une centaine de messages d'erreur hors catalogue | exécution des vrais repositories + du vrai moteur i18n : quatre phrases relevées telles que rendues |
+| **C-63** · le claim d'un lien partagé identifie son erreur par le texte | lecture de code + inventaire complet des 8 rethrows bruts, dont 7 sans conséquence |
+| **C-64** · la frontière basse n'offre aucune sortie de secours | mesuré en jouant C-61 : « Rafraîchir la page » ramène le même écran |
+| complément à **C-38** | exécution des filtres de `i18n-scan.mjs` sur échantillons : `CODE_QUOTING` classe « code » toute chaîne en argument |
+
+Ce qu'il a **infirmé**, et qui est donc clos : les 84 `catch` vides du dépôt ont été inventoriés un
+par un, **aucun n'avale un échec de mutation** (tous protègent un accès au stockage) ; sur 104
+`useMutation`, **cinq** seulement n'ont pas d'`onError`, et quatre sont volontaires et documentées ;
+`isDailyAdLimitError` survit à `normalizeApiError` par sa branche `code === '23514'` ; `mfa.ts`
+valide bien sa réponse à la frontière (le correctif du 2026-09-01 tient) ; `BugReportModal` est le
+modèle du genre, avec son repli `mailto` ; `safeRedirectPath` protège son `decodeURIComponent` ; et
+un balayage complet des initialiseurs de rendu (`useState` / `useMemo`) n'a trouvé **qu'une** lecture
+de stockage non protégée dans tout `src/` — celle de C-61.
+
+🔴 **Ce que cet audit n'a PAS pu mesurer, et qui reste donc ouvert** : le `.env` local ne porte
+**aucune** valeur Supabase, donc l'application locale tourne intégralement en **mode démo**. Aucun
+chemin d'erreur réel de Supabase, de GoTrue ou du réseau n'a pu être provoqué : mot de passe refusé,
+session expirée en cours d'usage, coupure réseau pendant une mutation. Le seul écran obtenu en
+tentant une connexion est « Supabase non configuré. Vérifiez les variables d'environnement. », qui
+mesure la configuration locale, pas le produit. Cette moitié est reportée dans
+[`a-faire-manuel.md`](./a-faire-manuel.md) §7 (M-35, M-36).
+
 ### Audits à lancer, par rapport valeur / effort
 
 | # | Audit | Pourquoi maintenant | Ce qu'il rendrait |
 |---|---|---|---|
 | **A-4** | **Mobile sur appareil réel** (iOS Safari, Android) · 🟠 **moitié appareil restante**, cf. la section juste au-dessus et [`a-faire-manuel.md`](./a-faire-manuel.md) §7 (M-25) | La note mobile n'a toujours **aucune** mesure sur vrai téléphone : la passe du 2026-09-03 n'a pu mesurer qu'en viewport émulé. Les pièges WebKit documentés dans `MOBILE.md` viennent justement de bugs invisibles en émulation | Les bugs de feuille, de clavier virtuel, de `100vh` et de gestes que l'émulation ne montre pas ; et la confirmation iOS de C-56, dont le mécanisme diffère d'Android |
-| **A-7** | **Chemins d'erreur du client** (que voit l'utilisateur quand ça casse) | `R-10` a montré un message d'erreur brut affiché à l'écran, en contradiction avec une règle que le fichier citait dans un commentaire. Personne n'a vérifié les autres | Les fuites de détail technique, les échecs avalés, et les écrans blancs derrière `AppErrorBoundary` |
 | **A-8** | **Le fil principal de la landing** | C-12. C'est la seule page lente, et la première que voit un visiteur d'annuaire | L'attribution réelle des 546 à 1 633 ms de blocage, à prendre **sur le runner**, jamais en local |
 
 **Les huit prompts sont écrits, prêts à coller** : [`prompts-audits.md`](./prompts-audits.md), A-1
@@ -1553,7 +1717,7 @@ préambule commun porte les règles de méthode du dépôt (mesurer plutôt que 
 obligatoire, jamais de seuil baissé, sessions concurrentes), puis un corps par audit avec son
 périmètre, ses questions et ses pièges connus.
 
-> **Une fois A-4, A-7 et A-8 passés et leurs findings ajoutés ici, la phrase « il ne reste plus un seul
+> **Une fois A-4 et A-8 passés et leurs findings ajoutés ici, la phrase « il ne reste plus un seul
 > problème lié au code » devient vérifiable.** Avant, elle ne l'est pas, et l'écrire quand même
 > serait exactement le défaut que ce dépôt a corrigé quatre fois en cinq jours : **une réponse
 > rassurante donnée par une mesure qui ne regardait pas.**
