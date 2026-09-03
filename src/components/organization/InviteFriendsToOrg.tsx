@@ -33,7 +33,10 @@ interface InviteFriendsToOrgProps {
 const InviteFriendsToOrg: React.FC<InviteFriendsToOrgProps> = ({ orgId, variant = 'inline' }) => {
   const { t } = useT('org');
   const isDemo = useIsDemo();
-  const { data: friends = [] } = useFriends();
+  // C-40 — sans `isLoading`, l'ecran AFFIRME une absence qu'il ne connait pas
+  // encore : le premier rendu arrive avant la reponse, et la valeur par defaut
+  // `[]` est indistinguable d'un compte reellement vide.
+  const { data: friends = [], isLoading: loadingFriends } = useFriends();
   const { data: members = [] } = useOrgMembers(orgId);
   const { data: pendingIds = [] } = usePendingSentInvitations(orgId);
   const pendingSet = new Set(pendingIds);
@@ -51,7 +54,7 @@ const InviteFriendsToOrg: React.FC<InviteFriendsToOrgProps> = ({ orgId, variant 
         <p className="text-xs text-[rgb(var(--color-text-muted))]">
           {t('inviteJoin.demoNotice')}
         </p>
-      ) : friends.length === 0 ? (
+      ) : loadingFriends ? null : friends.length === 0 ? (
         <p className="text-xs text-[rgb(var(--color-text-muted))]">
           {t('inviteJoin.noFriendYet')}
         </p>

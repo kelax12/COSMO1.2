@@ -391,7 +391,9 @@
     "selectedCount": "Sélectionnés ({{count}})"
   },
   "shareList": {
-    "searchFriend": "Rechercher un ami…"
+    "searchFriend": "Rechercher un ami…",
+    "noFriendYet": "Ajoute d’abord un ami pour partager une liste.",
+    "noMatch": "Aucun ami ne correspond à ta recherche."
   },
   "bulk": {
     "deleteCount_one": "Supprimer {{count}} tâche",

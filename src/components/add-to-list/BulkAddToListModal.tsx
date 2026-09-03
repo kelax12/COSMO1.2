@@ -25,7 +25,10 @@ interface BulkAddToListModalProps {
 const BulkAddToListModal: React.FC<BulkAddToListModalProps> = ({ isOpen, onClose, count, onAddToList }) => {
   const { t, tp } = useT('tasks');
   const { t: tCommon } = useT('common');
-  const { data: lists = [] } = useLists();
+  // C-40 — sans `isLoading`, l'ecran AFFIRME une absence qu'il ne connait pas
+  // encore : le premier rendu arrive avant la reponse, et la valeur par defaut
+  // `[]` est indistinguable d'un compte reellement vide.
+  const { data: lists = [], isLoading: loadingLists } = useLists();
   const createListMutation = useCreateList();
   const [creating, setCreating] = useState(false);
 
@@ -135,7 +138,7 @@ const BulkAddToListModal: React.FC<BulkAddToListModalProps> = ({ isOpen, onClose
                 )}
               </AnimatePresence>
 
-              {manualLists.length === 0 && !creating && (
+              {!loadingLists && manualLists.length === 0 && !creating && (
                 <div className="py-8 text-center">
                   <p className="text-sm text-[rgb(var(--color-text-muted))]">
                     {t('addToList.emptyManual')}

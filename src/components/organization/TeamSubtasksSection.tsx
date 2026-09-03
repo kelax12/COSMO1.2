@@ -22,7 +22,10 @@ const TeamSubtasksSection = ({ taskId }: TeamSubtasksSectionProps) => {
   const { t } = useT('org');
   const [draft, setDraft] = useState('');
 
-  const { data: subtasks = [] } = useTeamSubtasks(taskId);
+  // C-40 — sans `isLoading`, l'ecran AFFIRME une absence qu'il ne connait pas
+  // encore : le premier rendu arrive avant la reponse, et la valeur par defaut
+  // `[]` est indistinguable d'un compte reellement vide.
+  const { data: subtasks = [], isLoading: loadingSubtasks } = useTeamSubtasks(taskId);
   const createSubtask = useCreateTeamSubtask(taskId);
   const updateSubtask = useUpdateTeamSubtask(taskId);
   const deleteSubtask = useDeleteTeamSubtask(taskId);
@@ -67,7 +70,7 @@ const TeamSubtasksSection = ({ taskId }: TeamSubtasksSectionProps) => {
         </div>
       )}
 
-      {subtasks.length === 0 ? (
+      {loadingSubtasks ? null : subtasks.length === 0 ? (
         <p className="text-xs text-[rgb(var(--color-text-muted))] py-1">
           {t('taskModal.subtasksEmpty')}
         </p>

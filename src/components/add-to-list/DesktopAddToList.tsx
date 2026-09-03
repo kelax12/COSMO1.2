@@ -20,7 +20,10 @@ import { useT } from '@/i18n/useT';
 const DesktopAddToList: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskId }) => {
   const { t } = useT('tasks');
   const { t: tCommon } = useT('common');
-  const { data: lists = [] } = useLists();
+  // C-40 — sans `isLoading`, l'ecran AFFIRME une absence qu'il ne connait pas
+  // encore : le premier rendu arrive avant la reponse, et la valeur par defaut
+  // `[]` est indistinguable d'un compte reellement vide.
+  const { data: lists = [], isLoading: loadingLists } = useLists();
   const addTaskToListMutation      = useAddTaskToList();
   const removeTaskFromListMutation = useRemoveTaskFromList();
   const createListMutation         = useCreateList();
@@ -166,7 +169,7 @@ const DesktopAddToList: React.FC<AddToListModalProps> = ({ isOpen, onClose, task
               </AnimatePresence>
 
               {/* Empty state */}
-              {lists.length === 0 && !creating && (
+              {!loadingLists && lists.length === 0 && !creating && (
                 <div className="py-8 text-center">
                   <p className="text-sm text-[rgb(var(--color-text-muted))]">
                     {t('addToList.empty')}
