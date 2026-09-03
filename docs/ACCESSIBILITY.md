@@ -87,9 +87,9 @@ Ce qui plafonne la note tient en deux points, et aucun n'est technique :
 
 1. **Le bouton d'action principal est à 3,34** (blanc sur le bleu de marque), sous les 4,5 requis.
    Le corriger demande d'assombrir la couleur de marque de 16 %, **arbitrage d'Axel**.
-2. **Quatre audits n'ont jamais été faits** : `/agenda` (FullCalendar), les modales (piège de
-   focus, Échap, `aria-modal`), la navigation clavier complète, et VoiceOver iOS sur un vrai
-   appareil. Tant qu'ils manquent, la note mesure ce qu'axe-core sait voir, pas la conformité.
+2. **Trois de ces quatre audits ont été faits le 2026-09-03** (A-3), au clavier et dans le
+   navigateur : `/agenda` (FullCalendar), les modales (piège de focus, Échap, `aria-modal`) et le
+   parcours clavier. **VoiceOver iOS sur un vrai appareil reste entier.** Cf. la section suivante.
    *Un scan automatique couvre environ un tiers des critères WCAG ; le reste demande un humain.*
 
 ## ✅ A-8 et A-11 tranchés le 2026-08-24 (mesurés, pas estimés)
@@ -151,6 +151,48 @@ pastille de forfait 36→44, onglets d'organisation 42→44.
 > en AA. Les 44 px du projet sont une règle INTERNE (iOS HIG), plus stricte que la
 > conformité. Les cibles restantes entre 24 et 44 sont donc conformes AA.
 
+## ⌨️ A-3 · audit clavier du 2026-09-03 (mesuré, pas estimé)
+
+Premier parcours **au clavier** de ce dépôt, souris débranchée. Harnais :
+`e2e/a11y-keyboard-audit.spec.ts`, qui embarque un **témoin** — une modale Radix sur laquelle les
+trois détecteurs (entrée du focus, piège, Échap) doivent répondre « conforme ». S'il échoue, aucune
+mesure du fichier n'a de valeur.
+
+**Ce qui a été corrigé** (findings C-51 et C-52 de `a-faire-code.md`) :
+
+- Le **calendrier COSMO** ne se pilotait pas au clavier, sur ses **huit** surfaces. Ouvrir le
+  calendrier posait le focus sur la rangée de presets, où les flèches ne font rien ; le mois
+  affiché était le mois COURANT même quand le champ portait une autre date ; et `initialFocus`
+  était une prop **morte** depuis `react-day-picker` 9. Après correctif : le focus part du jour
+  sélectionné, dans le bon mois, et `→ → ↓` déplace bien de 3 déc. à 4 déc. puis 11 déc.
+- Les **libellés ARIA du calendrier étaient en anglais** (« Go to the Previous Month »,
+  « Today, jeudi 3 septembre 2026 ») : `react-day-picker` ne traduit que les DATES, jamais ses
+  libellés. Idem pour le bouton de fermeture par défaut de `DialogContent`, nommé `Close` sur sept
+  composants du produit.
+
+**Ce qui reste ouvert**, mesuré et non corrigé :
+
+| Constat | Où | Finding |
+|---|---|---|
+| Aucune modale maison ne piège le focus (58 fichiers, zéro utilitaire, zéro `activeElement` capturé) | `EventModal`, `HabitModal`, les feuilles | C-53 |
+| `EventModal` : le focus **reste derrière** la modale, et Échap ne ferme pas | `/agenda` | C-53 |
+| `/agenda` : **0 cellule de jour focalisable** sur 8, et **38 tabulations** jusqu'au premier événement, sans lien d'évitement | FullCalendar | C-54 |
+| Trois surfaces que les sondes n'ont pas atteintes | calendrier ouvert depuis un MENU | C-55 |
+
+⚠️ **Limites, à dire plutôt qu'à laisser croire.** Tout vient de **Chromium desktop** ; ce qui est
+prouvé, c'est le déplacement du FOCUS, pas ce qu'un lecteur d'écran ANNONCE. Deux modales sur
+cinquante-huit ont été réellement ouvertes : l'absence totale d'utilitaire de piège de focus dans
+le dépôt rend le résultat généralisable, mais c'est une inférence.
+
+### Gate axe-core · le chiffre qui manquait
+
+Dix routes scannées le 2026-09-03 : **zéro `critical`**, et **trois** violations `serious`
+distinctes une fois dédoublonnées, toutes de contraste, portées par **deux tokens** —
+`--color-error` (`#ef4444`, 3,76:1 sur blanc) et `--color-accent-solid` (`#2563eb`, 4,31:1 sur son
+fond teinté), toutes dans le bandeau d'échéances. Passer la gate à `serious` est donc **bon marché
+mais pas gratuit** : `red-600` (`#dc2626`, 4,83:1) suffit pour les deux premières, la troisième est
+le même arbitrage que le bleu de marque.
+
 ## Findings résiduels de l'audit du 2026-05-29
 
 L'audit d'origine listait A-1 → A-11. Vérifié dans le code le **2026-08-14** :
@@ -174,10 +216,12 @@ son intitulé, A-11 purement caduc, et les deux avaient survécu trois mois côt
 des cibles de 24 à 32 px **conformes AA** (WCAG 2.5.8 exige 24×24, pas 44, cf. le rappel de seuil
 plus haut). Détail : [`UI-PATTERNS.md`](./UI-PATTERNS.md) §Dette UI/UX ouverte.
 
-Restent ouverts par ailleurs : audit dédié `/agenda` (FullCalendar, pattern ARIA non trivial),
-audit dédié modals (focus trap, ESC, `aria-modal`), audit clavier complet, VoiceOver iOS sur vrai device.
-Objectif de durcissement : **A-8 étant tranché, la gate peut désormais passer de `critical` à
-`serious`**, c'est le prochain geste, et il est bon marché.
+Reste ouvert par ailleurs : **VoiceOver iOS sur un vrai appareil**, le seul des quatre audits que
+le 2026-09-03 n'a pas passé — il ne se simule pas. Les trois autres (`/agenda`, modales, parcours
+clavier) sont couverts par la section « A-3 » ci-dessus, avec leurs findings ouverts.
+Objectif de durcissement : la gate peut passer de `critical` à `serious` **au prix de deux tokens**,
+chiffrés ci-dessus — et non « gratuitement », comme cette page l'a écrit du 2026-08-24 au 2026-09-03
+sans jamais compter les violations concernées.
 
 ## Règles
 
@@ -196,6 +240,13 @@ Objectif de durcissement : **A-8 étant tranché, la gate peut désormais passer
 - ❌ **Pas de couleur seule pour transmettre l'information** — toujours doubler avec une icône, du texte, ou un état.
 - ❌ **Pas de `motion.h1 initial={{opacity:0}}`** sans aussi laisser un h1 statique présent — axe flag `page-has-heading-one`.
 - ✅ **Un texte découpé en fragments visuels doit avoir un nom accessible ENTIER** (2026-08-27, D4/D5) : mettre la phrase complète en `sr-only`, passer les fragments en `aria-hidden`, et pour une date ajouter un `<time dateTime>`. Sans ça, « 27 » + « août » empilés se lisent « 27août », et un espacement obtenu par `ml-2` n'existe pas pour un lecteur d'écran.
+- ✅ **Une prop d'accessibilité recopiée d'un exemple se vérifie CONTRE LA VERSION INSTALLéE**
+  (2026-09-03, C-51). `initialFocus` de `react-day-picker` survit dans les types, marqué déprécié,
+  et n'est plus lu par personne : la prop était écrite, le focus n'allait nulle part. Même classe
+  que le `Button` non `forwardRef` du 2026-08-30. **Une prop qui ne fait rien ne prévient pas.**
+- ✅ **Une bibliothèque traduit ses DATES, pas ses libellés ARIA** (2026-09-03, C-52). Passer
+  `locale` à `react-day-picker` laisse « Go to the Previous Month » intact. Ces chaînes vivent dans
+  `node_modules` : `i18n:scan` ne peut pas les voir, et ne le pourra jamais.
 - ✅ **Une pastille purement visuelle qui porte une information est `role="img"` + `aria-label`** (2026-08-27, E2). `title=` seul ne se voit ni au clavier ni au toucher, et ne remplace pas un nom accessible.
 
 ## Ne jamais faire — Accessibilité

@@ -499,7 +499,13 @@
     "today": "Aujourd'hui",
     "tomorrow": "Demain",
     "nextMonday": "Lundi prochain",
-    "noDate": "Pas de date"
+    "noDate": "Pas de date",
+    "navLabel": "Navigation du calendrier",
+    "prevMonth": "Aller au mois précédent",
+    "nextMonth": "Aller au mois suivant",
+    "todayPrefix": "Aujourd'hui, {{date}}",
+    "presets": "Raccourcis de date",
+    "selectedSuffix": "{{date}}, sélectionné"
   },
   "weekday": {
     "0": "dimanche",
