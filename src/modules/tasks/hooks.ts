@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { showUndoToast } from '@/lib/undo-toast';
@@ -22,15 +21,15 @@ import { todayKeyInTz } from '@/lib/timezone';
  */
 const COLLAB_POLL_INTERVAL_MS = 5 * 60_000;
 
-// ═══════════════════════════════════════════════════════════════════
-// Repository - Via centralized factory (demo/production mode)
-// ═══════════════════════════════════════════════════════════════════
-const useTasksRepository = (): ITasksRepository => {
-  const isDemo = useIsDemo();
-  // isDemo dependency is intentional: re-select repository on mode switch
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  return useMemo(() => getTasksRepository(), [isDemo]);
-};
+// Sélection du repository : le factory est déjà un singleton paramétré par
+// `appModeStore.isDemo`, et `resetRepositories()` le vide à chaque bascule
+// (AuthContext). Le `useMemo(..., [isDemo])` qui vivait ici était donc
+// redondant, et son commentaire était faux : `resetRepositories()` est aussi
+// appelé sur des chemins où `isDemo` NE change pas (déconnexion d'une vraie
+// session), où la mémo rendait alors l'instance que le factory venait de
+// jeter. Six modules (events, lists, categories, friends, team-projects,
+// organizations) font déjà cet appel direct. Audit A-2, item C-06.
+const useTasksRepository = (): ITasksRepository => getTasksRepository();
 
 // ═══════════════════════════════════════════════════════════════════
 // READ HOOKS (Phase 1)

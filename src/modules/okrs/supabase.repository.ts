@@ -21,6 +21,7 @@ import {
   mapOkrFromDb,
   mapOkrToDb,
 } from './mappers';
+import { MAX_REPS_PER_WRITE } from '@/modules/kr-completions/constants';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -439,9 +440,9 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
     if (!supabase || count <= 0) return;
     // Clamp the row count: a client setting currentValue to e.g. 100_000 would
     // otherwise insert 100k rows in one call (storage abuse + dashboard
-    // overcount). 100 reps per write is more than enough for any real use.
-    // Faille B18.
-    const MAX_REPS_PER_WRITE = 100;
+    // overcount). Faille B18. La borne est PARTAGEE avec le repository
+    // localStorage (`@/modules/kr-completions/constants`) : elle avait diverge,
+    // seul ce chemin-ci clampait (audit A-2).
     const safeCount = Math.min(count, MAX_REPS_PER_WRITE);
     const user = await getCurrentUser();
     if (!user) {
@@ -471,7 +472,6 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
    */
   private async removeKRReps(krId: string, count: number): Promise<void> {
     if (!supabase || count <= 0) return;
-    const MAX_REPS_PER_WRITE = 100;
     const safeCount = Math.min(count, MAX_REPS_PER_WRITE);
     const user = await getCurrentUser();
     if (!user) return;

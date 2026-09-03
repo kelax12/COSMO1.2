@@ -7,7 +7,7 @@ import { safeGetItem, safeParseArray } from '@/lib/safe-json';
 import { recalcProgress } from './progress';
 import { OKRS_STORAGE_KEY } from './constants';
 import { PaginationParams, PaginatedResult, DEFAULT_PAGE_SIZE } from '@/lib/pagination.types';
-import { KR_COMPLETIONS_STORAGE_KEY } from '@/modules/kr-completions/constants';
+import { KR_COMPLETIONS_STORAGE_KEY, MAX_REPS_PER_WRITE } from '@/modules/kr-completions/constants';
 import { KRCompletion } from '@/modules/kr-completions/types';
 import { isEnglishSeed } from '@/lib/seed-i18n';
 import type { CreateOptions } from '@/lib/restore-id';
@@ -338,13 +338,30 @@ export class LocalStorageOKRsRepository implements IOKRsRepository {
    * Append-only : ajoute `count` lignes (1 par rep) dans le journal
    * localStorage. Toutes timestampées à l'instant — utilisé par
    * create() / update() / updateKeyResult().
+   *
+   * ⚠️ PARITÉ OBLIGATOIRE avec `recordKRReps` du repository Supabase, sur DEUX
+   * points que ce chemin-ci a manqués (audit A-2) :
+   *
+   *   1. LE CLAMP (faille B18). Le champ `currentValue` de `OKRCard` est un
+   *      `input[type=number]` sans `max`, qui remonte à CHAQUE frappe : taper
+   *      « 50000 » demandait 5 puis 50 puis 500 puis 5 000 puis 50 000 reps.
+   *      Sans borne, la boucle écrivait des dizaines de milliers de lignes,
+   *      bloquait le fil principal ~20 s, puis levait un `QuotaExceededError`
+   *      des 5 Mo de `localStorage` — mesuré. Le repository Supabase clampe à
+   *      100 depuis B18 ; ce chemin ne l'avait jamais fait.
+   *   2. L'HORODATAGE. `kr.completedAt` est la date à laquelle le KR a été
+   *      ACHEVÉ, pas celle de la rep qu'on ajoute. L'utiliser datait les
+   *      nouvelles reps d'un KR déjà terminé au jour de son achèvement : le
+   *      graphique « KR réalisés » du tableau de bord ne montrait rien pour
+   *      aujourd'hui. Le serveur a toujours utilisé `now()`.
    */
   private appendKRReps(okrId: string, kr: { id: string; title: string; completedAt?: string | null }, okrTitle: string, count: number): void {
     if (count <= 0) return;
+    const safeCount = Math.min(count, MAX_REPS_PER_WRITE);
     const completions: KRCompletion[] =
       safeParseArray<KRCompletion>(safeGetItem(KR_COMPLETIONS_STORAGE_KEY)) ?? [];
-    const completedAt = kr.completedAt ?? new Date().toISOString();
-    for (let i = 0; i < count; i++) {
+    const completedAt = new Date().toISOString();
+    for (let i = 0; i < safeCount; i++) {
       completions.push({
         id: crypto.randomUUID(),
         krId: kr.id,
@@ -364,13 +381,14 @@ export class LocalStorageOKRsRepository implements IOKRsRepository {
    */
   private removeKRReps(krId: string, count: number): void {
     if (count <= 0) return;
+    const safeCount = Math.min(count, MAX_REPS_PER_WRITE);
     const completions = safeParseArray<KRCompletion>(safeGetItem(KR_COMPLETIONS_STORAGE_KEY));
     if (!completions) return;
     const toRemoveIds = new Set(
       completions
         .filter(c => c.krId === krId)
         .sort((a, b) => b.completedAt.localeCompare(a.completedAt))
-        .slice(0, count)
+        .slice(0, safeCount)
         .map(c => c.id)
     );
     if (toRemoveIds.size === 0) return;
