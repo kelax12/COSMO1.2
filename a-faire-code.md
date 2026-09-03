@@ -639,7 +639,7 @@ fallu extraire du code pour passer.
 - **Fini quand** : `npm run check:bundle` rend au moins 5 % de marge sur les deux budgets, sur un
   build avec `VITE_SENTRY_DSN`.
 
-### C-67 · La landing bloque le fil principal **71 % du temps AU REPOS**, et ce sont ses flous, pas ses animations · **P1 · M**
+### C-67 · ~~La landing bloque le fil principal **71 % du temps AU REPOS**, et ce sont ses flous~~ · **P1 · M** · ✅ corrigé le 2026-09-03
 
 Trouvé par l'audit **A-8**. C'est la réponse à C-12, et elle **contredit** la piste que C-12
 désignait.
@@ -682,9 +682,37 @@ Ce sont des couches superposées, donc chacune qui reste force le re-rendu de to
   équipé d'un GPU. Le lancement d'un navigateur avec GPU a échoué dans cet environnement, la
   question reste **ouverte** (`a-faire-manuel.md` **M-38**), et un téléphone d'entrée de gamme est
   plus proche du cas logiciel que d'un poste de bureau.
-- **Fini quand** : `node scripts/landing-motion-probe.mjs --url http://localhost:4399/` rend moins
-  de 300 ms au repos **sans** neutraliser quoi que ce soit, **et** `/` dépasse 90 en CI sur deux
-  passes. L'avant est pris : 56-63, TBT 546 à 1 633 ms (2026-09-02).
+**Corrigé le 2026-09-03, arbitrage M-37 rendu par Axel : « cuire le fond ».** Les quatre couches
+décoratives du hero et la lueur derrière le mockup ne portent plus aucun `filter: blur()` : ce sont
+des `radial-gradient` qui s'éteignent vers `transparent`, c'est-à-dire déjà flous. Seule l'opacité
+reste animée.
+
+| Mesure (build de prod, 4 s au repos, 3 passes) | Avant | Après |
+|---|---|---|
+| Fil principal bloqué | **2 856 ms (71 %)** | **0 ms** sur les trois passes |
+| Surface floutée du premier écran | 1,95 Mpx sur 20 éléments | **0,023 Mpx** sur 5 |
+
+**Le rendu a été tenu à la mesure, pas à l'œil** : couleur moyenne et saturation moyenne du hero,
+décodées dans un canvas, l'avant étant reconstruit au commit `e20920f`. Luminosité 51,5 → **51,1**,
+bleu 75,8 → 72,1, saturation 46,2 → 41,0. Deux enseignements de cette boucle :
+
+- un aplat **opaque** flouté garde son alpha sur tout son cœur, un dégradé radial ne le garde qu'au
+  centre : il faut un **plateau**, et il faut dimensionner le dégradé à l'étendue du flou (un disque
+  de 34 rem flouté à 110 px s'étale sur ~34 rem + 220 px), pas à celle du disque ;
+- chaque dégradé doit atteindre `transparent` **avant** le bord de sa boîte : sans le flou qui
+  adoucissait les arêtes, un stop encore coloré à 100 % dessine un rectangle visible. C'est le
+  défaut qu'a montré la première capture après correctif.
+
+⚠️ **Mesuré au passage, et ça ferme une piste** : retirer le halo conique tournant ne changeait
+**rien** aux pixels (bleu 75,8 → 75,8). Il tournait sur 40 s, sous `opacity-50`, derrière le reste :
+personne ne l'a jamais vu. Toute l'ambiance venait des trois aplats opaques floutés.
+
+- **Reste à faire** : `/` doit dépasser 90 en CI sur deux passes pour que l'item soit clos côté
+  score. L'avant est pris (56-63, TBT 546 à 1 633 ms, 2026-09-02) ; le relèvement de l'après est un
+  geste d'Axel, `a-faire-manuel.md` **M-39**.
+- **Garde** : `node scripts/landing-motion-probe.mjs --url http://localhost:4399/` doit rendre moins
+  de 300 ms au repos **sans** rien neutraliser. ❌ Ne jamais remettre un `filter: blur()` animé dans
+  le premier écran de `/`.
 
 ### C-68 · `/entreprise-presentation` bloque autant, pour une cause que l'audit n'a PAS su isoler · **P2 · M**
 
@@ -1535,7 +1563,7 @@ Deux défauts de nature différente, à ne pas traiter ensemble :
   passent à 44, et une garde compte les commandes sous la cible sur les routes protégées, avec un
   témoin qui refuse un détecteur qui ne détecterait plus rien.
 
-### C-69 · La fenêtre produit tourne toute seule, sans pause, y compris en mouvement réduit · **P2 · S**
+### C-69 · La fenêtre produit tourne toute seule, sans pause, y compris en mouvement réduit · **P2 · S** · 🟠 arbitrage rendu : on garde
 
 Trouvé par l'audit **A-8** en cherchant autre chose. `AppWindowShowcase` (le mockup du hero de `/`)
 change de vue toutes les **2,5 s**, indéfiniment. La rotation n'est gatée que par `useInView` : il
@@ -1560,10 +1588,18 @@ texte qu'un visiteur essaie de lire.
   conformité, pas de performance.
 - ⚠️ `MotionConfig reducedMotion="user"` (dans `App.tsx`) ne couvre pas ce cas : il neutralise les
   animations de transform de Framer, pas un `setInterval` ni une transition d'opacité.
-- **Fini quand** : la rotation ne démarre pas sous `prefers-reduced-motion` (les quatre vues restent
-  atteignables autrement, la rangée de puces `HeroModuleDock` étant déjà cliquable-compatible), une
-  commande de pause existe pour les autres, et un test couvre les deux préférences. ❌ Ne pas se
-  contenter de ralentir : la conformité demande un **contrôle**, pas une cadence plus douce.
+🟠 **Arbitrage rendu par Axel le 2026-09-03 : on conserve le comportement actuel.** L'item
+reste donc **ouvert**, et il n'est pas refermé : la décision porte sur le fait de ne rien changer
+aujourd'hui, pas sur le fait que le défaut n'existe pas. Ce qu'elle laisse en l'état, dit une fois :
+un échec WCAG 2.2.2 de **niveau A** sur la première page du site, c'est-à-dire la marche la plus
+basse, celle qu'un audit d'accessibilité relève en premier, et l'EAA s'applique à un service vendu à
+des consommateurs.
+
+- **Si la décision change, fini quand** : la rotation ne démarre pas sous `prefers-reduced-motion`
+  (les quatre vues restent atteignables autrement, la rangée de puces `HeroModuleDock` étant déjà
+  cliquable-compatible), une commande de pause existe pour les autres, et un test couvre les deux
+  préférences. ❌ Ne pas se contenter de ralentir : la conformité demande un **contrôle**, pas une
+  cadence plus douce.
 
 ---
 
