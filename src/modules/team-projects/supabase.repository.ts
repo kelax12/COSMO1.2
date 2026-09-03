@@ -3,6 +3,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { supabase } from '@/lib/supabase';
+import { translator } from '@/i18n/useT';
 import { getCurrentUserId } from '@/lib/auth-user';
 import { normalizeApiError } from '@/lib/normalizeApiError';
 import { warnIfTruncated } from '@/lib/pagination.warning';
@@ -65,7 +66,7 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
       .order('created_at', { ascending: true })
       .limit(200);
     if (error) throw normalizeApiError(error);
-    return ((data ?? []) as unknown as ProjectRow[]).map(mapProject);
+    return warnIfTruncated((data ?? []) as unknown as ProjectRow[], 200, 'team_projects').map(mapProject);
   }
 
   async createProject(orgId: string, input: CreateTeamProjectInput): Promise<TeamProject> {
@@ -224,7 +225,7 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
       .order('created_at', { ascending: true })
       .limit(200);
     if (error) throw normalizeApiError(error);
-    return ((data ?? []) as CommentRow[]).map(mapComment);
+    return warnIfTruncated((data ?? []) as CommentRow[], 200, 'team_task_comments').map(mapComment);
   }
 
   async addComment(input: CreateTeamTaskCommentInput): Promise<TeamTaskComment> {
@@ -273,7 +274,7 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
     if (!supabase) throw new Error('Supabase not configured');
     const { data: auth } = await supabase.auth.getUser();
     const uid = auth.user?.id;
-    if (!uid) throw new Error('Non authentifié');
+    if (!uid) throw new Error(translator('errors').t('api.not_authenticated'));
     const { data, error } = await supabase
       .from('team_task_subtasks')
       .insert({
@@ -329,7 +330,7 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
     if (!supabase) throw new Error('Supabase not configured');
     const { data: auth } = await supabase.auth.getUser();
     const uid = auth.user?.id;
-    if (!uid) throw new Error('Non authentifié');
+    if (!uid) throw new Error(translator('errors').t('api.not_authenticated'));
     const { data, error } = await supabase
       .from('team_labels')
       .insert({
@@ -420,7 +421,7 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
       .order('created_at', { ascending: false })
       .limit(100);
     if (error) throw normalizeApiError(error);
-    return (data as ActivityRow[]).map(mapActivity);
+    return warnIfTruncated((data ?? []) as ActivityRow[], 100, 'team_task_activity').map(mapActivity);
   }
 
   /**
@@ -441,7 +442,7 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
       .order('created_at', { ascending: false })
       .limit(500);
     if (error) throw normalizeApiError(error);
-    return (data as ActivityRow[]).map(mapActivity);
+    return warnIfTruncated((data ?? []) as ActivityRow[], 500, 'team_task_activity').map(mapActivity);
   }
 
   // ─── Dépendances (mig. 108) ────────────────────────────────────────
@@ -456,7 +457,11 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
       .select('task_id, depends_on_id')
       .limit(5000);
     if (error) throw normalizeApiError(error);
-    return (data as unknown as { task_id: string; depends_on_id: string }[]).map((r) => ({
+    return warnIfTruncated(
+      (data ?? []) as unknown as { task_id: string; depends_on_id: string }[],
+      5000,
+      'team_task_dependencies',
+    ).map((r) => ({
       taskId: r.task_id,
       dependsOnId: r.depends_on_id,
     }));

@@ -151,7 +151,12 @@
     "createLabel": "Impossible de créer le label : {{message}}",
     "updateLabel": "Impossible de modifier le label : {{message}}",
     "deleteLabel": "Impossible de supprimer le label : {{message}}",
-    "updateLabels": "Impossible de modifier les labels : {{message}}"
+    "updateLabels": "Impossible de modifier les labels : {{message}}",
+    "restoreTask": "Impossible de restaurer la tâche : {{message}}",
+    "restoreCategory": "Impossible de restaurer la catégorie : {{message}}",
+    "restoreList": "Impossible de restaurer la liste : {{message}}",
+    "restoreEvent": "Impossible de restaurer l'événement : {{message}}",
+    "restoreOkr": "Impossible de restaurer l'objectif : {{message}}"
   },
   "success": {
     "orgCreated": "Entreprise créée",
@@ -183,5 +188,12 @@
     "listShared": "Liste partagée",
     "listAccepted": "Liste acceptée",
     "permissionsUpdated": "Permissions mises à jour"
+  },
+  "friends": {
+    "notAuthenticated": "Vous devez être connecté pour effectuer cette action.",
+    "taskRecipientNotRegistered": "Le collaborateur n'est pas (encore) inscrit sur Cosmo. Demande-lui de se connecter au moins une fois, puis réessaie.",
+    "listRecipientNotRegistered": "Le destinataire n'est pas (encore) inscrit sur Cosmo. Demande-lui de se connecter au moins une fois, puis réessaie.",
+    "taskNeedsFriendRequest": "Envoie d'abord une demande d'ami à cette personne pour pouvoir lui partager une tâche.",
+    "listNeedsFriendRequest": "Envoie d'abord une demande d'ami à cette personne pour pouvoir lui partager une liste."
   }
 }
