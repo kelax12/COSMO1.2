@@ -41,13 +41,13 @@ ne vive à deux endroits.
 
 | § | Domaine | Items |
 |---|---|---|
-| [1](#1-défauts-fonctionnels-connus) | Défauts fonctionnels connus | C-01 → C-08, C-37, C-40 → C-43, C-48 |
+| [1](#1-défauts-fonctionnels-connus) | Défauts fonctionnels connus | C-01 → C-08, C-37, C-40 → C-43, C-48, C-56 |
 | [2](#2-dette-structurelle) | Dette structurelle | C-09 → C-11, C-49, C-50 |
 | [3](#3-performance) | Performance | C-12 → C-14 |
 | [4](#4-scalabilité) | Scalabilité | C-15 → C-16 |
 | [5](#5-sécurité-et-dépendances) | Sécurité et dépendances | C-17 → C-19, C-29 → C-33, C-39, C-44 → C-46 |
 | [6](#6-i18n) | i18n | C-20 → C-22, C-38 |
-| [7](#7-accessibilité) | Accessibilité | C-23 → C-25 |
+| [7](#7-accessibilité) | Accessibilité | C-23 → C-25, C-51 → C-55, C-57 |
 | [8](#8-tests-et-gardes) | Tests et gardes | C-26 → C-28, C-34 → C-36, C-47 |
 | [9](#9-ce-qui-nest-PAS-du-code) | Ce qui n'est PAS du code | renvois |
 | [10](#10-couverture--ce-que-cette-liste-ne-peut-pas-contenir) | 🔴 Couverture et audits à lancer | 5 audits restants |
@@ -273,6 +273,53 @@ le message tel quel plutôt qu'une erreur anonyme, parce que l'utilisateur peut 
   française **dans les deux modes**. ❌ Ne pas se contenter de traduire la chaîne du repository
   local : les deux chemins doivent converger, sinon la divergence revient au prochain message.
 
+### C-56 · Clavier ouvert, le haut de trois écrans devient inatteignable · **P2 · S**
+
+Trouvé par l'audit **A-4**. Trois surfaces partagent la même classe de conteneur, et les trois sont
+des **formulaires**, donc les trois ouvrent le clavier :
+
+| Composant | Rôle |
+|---|---|
+| `src/components/onboarding/FirstRunSetup.tsx:119` | l'accueil d'un compte neuf, monté dans `Layout` donc mobile aussi |
+| `src/components/BugReportModal.tsx:147` | signaler un bug, y compris depuis un compte cassé |
+| `src/components/organization/InviteOrJoinModal.tsx:115` | rejoindre ou créer une organisation |
+
+```
+fixed inset-0 … flex items-center justify-center … overflow-y-auto p-4
+```
+
+`align-items: center` **plus** `overflow-y: auto` est le piège CSS classique : quand l'enfant est
+plus haut que le conteneur, le débordement se répartit **des deux côtés**, et la partie qui sort par
+le haut n'entre pas dans `scrollHeight`. Aucun défilement ne peut la ramener, `scrollTop` étant
+borné à zéro.
+
+**Mesuré le 2026-09-03**, dans le navigateur, avec le CSS réel du projet et la liste de classes de
+`FirstRunSetup`, viewport **375 × 350** (la hauteur que prend le viewport de mise en page d'un
+téléphone Android quand le clavier est ouvert) :
+
+| Grandeur | Valeur |
+|---|---|
+| hauteur de la carte | 457,6 px |
+| hauteur du conteneur | 350 px |
+| `scrollHeight` / course de défilement utile | 420 px / **70 px** |
+| haut de la carte à `scrollTop = 0` | **-28,8 px** |
+| haut de la carte à `scrollTop` maximal | -98,4 px |
+
+**Scénario d'échec** : quelqu'un s'inscrit sur un téléphone Android, le champ de la première
+question prend le focus (`autoFocus`), le clavier s'ouvre. Le titre, le compteur d'étape et **la
+question à laquelle il est en train de répondre** sont au-dessus du bord haut, et aucun geste ne les
+ramène. Le bouton « Continuer », lui, reste atteignable (mesuré à 309,6 px après défilement) : la
+personne peut donc valider un formulaire dont elle ne voit plus l'intitulé.
+
+- ⚠️ **Le mécanisme n'est pas le même sur les deux plateformes**, et ceci n'a pas été joué sur un
+  appareil : Android réduit le viewport de mise en page (ce que la mesure ci-dessus modélise), iOS
+  Safari ne le réduit pas et fait défiler la page à la place. Le finding est donc **établi pour
+  Android, à confirmer pour iOS**, cf. `a-faire-manuel.md` §7, M-25.
+- **Piste** : remplacer `items-center` par `items-center` + `my-auto` sur l'enfant, ou passer le
+  conteneur en `items-start` avec une marge automatique. Les deux rendent le débordement
+  entièrement accessible au défilement, et le centrage survit tant que la carte tient.
+- **Fini quand** : les trois conteneurs sont corrigés, et un test mesure qu'à 375 × 350 le haut de
+  la carte est atteignable (`scrollTop = 0` donne un `top >= 0`), vu **rouge** avant d'être vert.
 
 ---
 
@@ -800,6 +847,35 @@ le travail fini. C'est la leçon opérationnelle de cet item.
 sonde : `npm test` et Bash étaient indisponibles à ce moment. Le premier geste du correctif est donc
 de les REMESURER en soumettant les cas au scanner.
 
+> ### ✅ Remesuré par sonde le 2026-09-03 (audit A-4) · les deux angles morts sont confirmés
+>
+> Le geste demandé juste au-dessus a été joué : un fichier `src/__i18n_probe.tsx` a été posé, ne
+> contenant que des chaînes que le scan est censé voir, puis retiré.
+>
+> ```tsx
+> <span>{cond ? format(new Date(d + "T12:00:00"), "d MMM yyyy", { locale: l() }) : 'Aucune'}</span>
+> <span>{ok ? 'Terminee' : 'Aucune'}</span>
+> <label className="y">Date</label>
+> ```
+>
+> `node scripts/i18n-scan.mjs --list` rend **`FICHIERS: 0 | CHAINES UNIQUES: 0`**. Le verdict n'est
+> donc plus déduit du motif, il est mesuré : **la forme ternaire est bien invisible**, y compris sur
+> `'Aucune'`, dont le mot est pourtant DANS `FR_STOPWORD`.
+>
+> **Le mécanisme exact, qui n'était pas encore nommé** : ce n'est pas seulement le motif (2) qui
+> rate la forme. Le motif (1), celui du texte JSX, capture bien tout le contenu entre `>` et `<`,
+> ternaire compris, mais `looksLikeCode` le jette ensuite sur `CODE_QUOTING`
+> (`/['"]\s*[,:)\]]|[,:(\[]\s*['"]/`) : **le deux-points d'un ternaire est indistinguable de celui
+> d'un littéral d'objet**. Toute chaîne française placée après un `:` de ternaire est donc écartée
+> comme du code, quel que soit son vocabulaire. C'est pour cela qu'élargir `FR_STOPWORD` ne
+> refermera **que le second** angle mort.
+>
+> Le même passage remonte 41 valeurs dans 23 fichiers `.tsx` avec un vocabulaire élargi, contre 49
+> dans 35 fichiers au comptage `grep` de l'énoncé : les deux ordres de grandeur concordent, l'écart
+> venant du vocabulaire de la sonde, pas du produit.
+
+
+
 - **Où** : `scripts/i18n-scan.mjs` (les deux angles morts restants), puis les fichiers listés.
 - **Fini quand** : une sonde à vocabulaire OUVERT, qui regarde les chaînes dans une expression JSX,
   et le scanner rendent le même verdict sur `src/components` ; le seuil descend à 0 sur la NOUVELLE
@@ -813,20 +889,38 @@ de les REMESURER en soumettant les cas au scanner.
 
 ### C-23 · Durcir la gate axe-core de `critical` à `serious` · **P2 · S**
 
-Écrit comme « le prochain geste, et il est bon marché » depuis que A-8 est tranché. Les violations
-`serious` sont déjà dumpées dans `test-results/a11y/`, simplement non bloquantes.
+Écrit comme « le prochain geste, et il est bon marché » depuis que A-8 est tranché. **Chiffré le
+2026-09-03 (A-3)**, ce qui manquait pour savoir si c'était vrai : les dix routes scannées rendent
+**zéro `critical`** et, une fois dédoublonnées, **trois** violations `serious` distinctes, toutes
+de contraste, toutes portées par **deux tokens** :
 
-- **Fini quand** : `assertNoCritical` devient `assertNoSerious`, la CI est verte, et les violations
-  restantes sont corrigées et non exemptées.
+| Ratio | Couleur | Sur | Où | Pages touchées |
+|---|---|---|---|---|
+| 3,76 | `--color-error` `#ef4444` | blanc | « · N en retard » de `DeadlineReminder` | 8 / 10 |
+| 3,63 | `--color-error` `#ef4444` | `#fffafa` | compteur de retard d'une ligne | 8 / 10 |
+| 4,31 | `--color-accent-solid` `#2563eb` | `#e3ebfa` | lien d'action du même bandeau | 9 / 10 |
 
-### C-24 · Quatre audits d'accessibilité jamais faits · **P2 · L**
+C'est donc **bon marché mais pas gratuit** : `--color-error` en thème clair est `red-500`, sous les
+4,5:1 sur blanc. `red-600` (`#dc2626`) vaut 4,83:1 et suffit. Le troisième est le bleu de marque
+sur son propre fond teinté, cousin de **C-25** : même arbitrage, autre surface.
 
-`/agenda` (FullCalendar, pattern ARIA non trivial), les modals (focus trap, ESC, `aria-modal`), le
-parcours clavier complet, et VoiceOver iOS sur vrai appareil.
+- ⚠️ **La mesure ne couvre PAS un écran ouvert** : axe-core ne scanne que l'état initial de chaque
+  route. Les modales, menus et calendriers ne sont dans aucun de ces chiffres.
+- **Fini quand** : `assertNoCritical` devient `assertNoSerious`, la CI est verte, et les trois
+  violations ci-dessus sont corrigées et non exemptées.
 
-- ⚠️ **Le périmètre a grossi le 2026-08-30** : le calendrier COSMO est devenu le composant de saisie
-  de date sur six surfaces, et **seul le déplacement du focus** y a été vérifié.
-- **Fini quand** : les quatre sont faits et leurs findings sont ici. Cf. audit **A-3** du §10.
+### C-24 · Quatre audits d'accessibilité jamais faits · **P2 · L** · 🟠 trois sur quatre faits le 2026-09-03
+
+**A-3 en a passé trois** (parcours clavier, modales, `/agenda`), au clavier et dans le navigateur,
+avec un harnais à témoin : `e2e/a11y-keyboard-audit.spec.ts`. Ils ont rendu **C-51 → C-55**, dont
+trois corrigés dans la foulée.
+
+- ❌ **VoiceOver iOS sur un vrai appareil reste entier**, et il ne se simule pas : aucun appareil
+  réel n'était accessible à cette session. C'est la même limite que **A-4**, et les deux se feront
+  ensemble ou pas du tout.
+- ⚠️ Ce qui a été mesuré l'a été **sur Chromium desktop**. Un lecteur d'écran ne lit pas l'arbre
+  d'accessibilité comme Playwright : ce qui est prouvé ici, c'est le FOCUS, pas l'annonce.
+- **Fini quand** : le quatrième est fait et ses findings sont ici.
 
 ### C-25 · Le bleu de marque est à 3,34:1 · **P3 · XS**
 
@@ -835,6 +929,165 @@ pas devient un oubli.
 
 - **Fini quand** : soit la teinte change, soit la décision « on garde, voici pourquoi et où c'est
   acceptable » est écrite dans `ACCESSIBILITY.md`.
+
+### C-51 · ~~Le calendrier COSMO ne se pilotait pas au clavier, sur ses huit surfaces~~ · **P1 · S** · ✅ corrigé le 2026-09-03
+
+Le 2026-08-30 avait corrigé `Button` en `forwardRef` et prouvé « Flèche droite passe du 30 au 31
+août ». **Ce n'était vrai que si le focus se trouvait déjà dans la grille.** Mesuré le 2026-09-03,
+en ouvrant le calendrier au clavier (Entrée sur le champ) depuis la modale OKR :
+
+| Geste | Avant | Après |
+|---|---|---|
+| ouvrir le calendrier | focus sur le preset « Aujourd'hui » | focus sur le jour sélectionné, dans la grille |
+| mois affiché, champ à « 2 décembre 2026 » | **septembre 2026** (le mois courant) | décembre 2026 |
+| `→` `→` `↓` | aucun mouvement, trois fois | 3 déc. → 4 déc. → 11 déc. |
+
+**Trois causes distinctes, aucune visible en relecture** :
+
+1. `initialFocus` est **mort** depuis `react-day-picker` 9 : la prop survit dans les types, marquée
+   dépréciée, et `useFocus` ne lit plus que `autoFocus`. Exactement la classe du `Button` non
+   `forwardRef` — une prop écrite pour une autre version majeure, qui ne fait **rien**, en silence.
+2. Radix `PopoverContent` pose le focus sur le **premier** élément focalisable, c'est-à-dire la
+   rangée de presets. Sur une rangée de boutons, les flèches ne font rien : on croit être dans un
+   calendrier et rien ne bouge. Corrigé par un `onOpenAutoFocus` qui vise le jour `tabindex="0"`.
+3. `selected` **ne pilote pas** le mois affiché : sans `defaultMonth`, un champ déjà rempli ouvrait
+   le mois courant. Le jour focalisé était alors hors de la grille rendue, et `moveFocus` ne
+   trouvait aucune cible — d'où des flèches inertes même une fois le focus au bon endroit.
+
+- 🔴 Ce défaut portait sur les **huit** surfaces qui montent `DatePicker` (échéance de tâche,
+  OKR, OKR d'équipe, tâche d'équipe, dépendances perso et équipe, planification d'événement).
+- **Garde** : `e2e/a11y-keyboard-audit.spec.ts` assertionne l'ouverture, le mouvement des flèches
+  et l'absence de libellé anglais. Vue rouge (`arrowMoved: false`) avant d'être verte.
+
+### C-52 · ~~Le calendrier annonçait « Go to the Previous Month » en français~~ · **P2 · XS** · ✅ corrigé le 2026-09-03
+
+`react-day-picker` ne traduit **aucun** de ses libellés ARIA : `locale` ne porte que les DATES.
+Relevé dans l'arbre d'accessibilité du calendrier ouvert :
+
+> `["Navigation bar", "Go to the Previous Month", "Go to the Next Month", ..., "Today, jeudi 3 septembre 2026"]`
+
+Un lecteur d'écran francophone entendait donc l'anglais sur le composant de saisie de date de tout
+le produit, et « Today, jeudi 3 septembre 2026 » mélangeait les deux langues dans la même phrase.
+Après correctif : `["Raccourcis de date", "Navigation du calendrier", "Aller au mois précédent",
+"Aller au mois suivant", ...]`.
+
+- 🔴 **`i18n:scan` ne pouvait pas le voir, et ne le pourra jamais** : ces chaînes vivent dans
+  `node_modules`, pas dans `src/`. Le cliquet à 0 reste vrai et reste aveugle à cette famille.
+- Même famille, corrigée avec : le bouton de fermeture par défaut de `DialogContent` s'appelait
+  `Close`, en dur dans la source shadcn amont, sur **sept** composants du produit. Garde :
+  `src/components/ui/dialog.test.tsx`, vue rouge avant d'être verte.
+- La rangée de presets, qui est la première chose que rencontre le focus, n'avait **aucun nom** :
+  elle est maintenant un `role="group"` nommé.
+
+### C-53 · Aucune modale maison ne piège le focus · **P1 · L**
+
+**58 fichiers** montent une surface modale hors `ui/dialog` (recensés par balayage de `src/`), et
+le dépôt ne contient **aucun** utilitaire de piège de focus ni **aucune** capture de
+`document.activeElement` : rien ne restitue le focus au déclencheur. Deux cas mesurés au clavier,
+conteneur = l'overlay réel, avec témoin Radix vert sur les trois détecteurs :
+
+| Modale | focus entre ? | piégé ? | Échap ferme ? | `role` | `aria-modal` |
+|---|---|---|---|---|---|
+| *témoin* « Créer une tâche » (Radix) | oui | **oui** | oui | `dialog` | absent |
+| `HabitModal` | oui (champ) | **non**, sort sur `BODY` | **non**, une fois le focus sorti | absent | absent |
+| `EventModal` | **non**, reste sur « Nouveau » | **non** | **non**, aucun gestionnaire | absent | absent |
+
+**Scénario d'échec concret**, `EventModal`, au clavier seul : sur `/agenda`, Tab jusqu'à
+« Nouveau », Entrée. La modale s'ouvre, le focus **reste sur le bouton derrière elle**. Le premier
+Tab atteint « Réunion d'équipe », un événement du calendrier **masqué par l'overlay**. Échap ne
+fait rien. On remplit donc un formulaire qu'on ne peut pas atteindre, en parcourant une page qu'on
+ne voit plus.
+
+`HabitModal` est un cran au-dessus (un champ prend le focus, Échap marche **tant qu'on est
+dedans**) et montre pourquoi : le gestionnaire d'Échap est un `onKeyDown` **sur l'overlay**, donc
+il dépend de la remontée d'un évènement React depuis l'élément focalisé. Focus sorti, Échap mort.
+
+- ⚠️ **`aria-modal` manque partout, y compris sur le témoin Radix** — c'est acceptable pour Radix,
+  qui neutralise les frères par `aria-hidden` ; ça ne l'est pas pour une modale maison, qui ne fait
+  ni l'un ni l'autre.
+- ❌ **Ne pas corriger 58 fichiers un par un.** Il faut UN composant (ou un hook) qui porte le
+  piège, la restitution du focus, Échap et `role="dialog" aria-modal="true"`, puis y faire passer
+  les surfaces, en commençant par celles qui portent une saisie.
+- **Fini quand** : le harnais mesure `trapped: true`, `focusMovedIn: true` et `escClosed: true` sur
+  `EventModal`, `HabitModal` et les feuilles mobiles, et le fichier de mesure passe de
+  `console.log` à `expect`.
+
+### C-54 · `/agenda` : les jours du calendrier sont hors d'atteinte au clavier · **P2 · M**
+
+Premier audit du pattern ARIA de FullCalendar, mesuré sur `/agenda` en démo :
+
+- **`focusableDays: 0`** sur 8 cellules de jour. Les **événements** sont atteignables (3 sur 3, ce
+  sont des `<a>`), mais **aucune case vide ne l'est**. Or créer un événement se fait en cliquant
+  un créneau : **ce geste n'a aucun équivalent clavier**, il faut passer par le bouton « Nouveau ».
+- **38 tabulations** pour aller du haut de la page au premier événement, dont **onze** boutons
+  « Options de la tâche » consécutifs du panneau latéral, tous nommés pareil. Il n'y a **aucun lien
+  d'évitement**.
+- Une `<table>` porte `role="grid"` avec **zéro descendant focalisable géré** : un motif de grille
+  annoncé mais non implémenté, ce qu'axe-core ne signale pas.
+
+- ⚠️ **Ce finding décrit, il ne prescrit pas.** Le prompt A-3 demandait de dire ce qui est
+  atteignable sans chercher à tout réparer : rendre les jours navigables demande d'adopter le
+  motif grille de FullCalendar, ce qui n'est pas un correctif de passage.
+- **Fini quand** : un lien d'évitement existe vers le contenu principal, et soit les créneaux
+  vides sont atteignables au clavier, soit la décision « on garde, le bouton Nouveau est le chemin
+  clavier » est écrite dans `ACCESSIBILITY.md`.
+
+### C-55 · Trois surfaces que A-3 n'a PAS réussi à mesurer · **P3 · S**
+
+Honnêteté de couverture, pas finding de produit. Trois choses cherchées sans y arriver, qu'il ne
+faut donc pas croire vérifiées :
+
+1. **Le calendrier ouvert depuis une entrée de MENU** — `OverdueBanner` (« Tout replanifier ») et
+   `TaskBulkActionsBar` (« Modifier la deadline »). Le premier n'apparaît pas dans le jeu de démo
+   (aucune tâche en retard) ; sur le second, cocher une tâche en mode sélection laissait
+   « 0 sélectionnée », donc la barre restait désactivée. C'est la surface la plus risquée des huit :
+   une **grille** vit à l'intérieur d'un `role="menu"`, ce que l'ARIA n'autorise pas, et les
+   correctifs de C-51 (`autoFocus`) n'ont **pas** été éprouvés dans ce conteneur-là.
+2. **Le bouton « Plus d'actions » de la barre de sélection n'est jamais jugé stable** par
+   Playwright — 34 tentatives, jamais immobile. Une barre qui n'arrête pas de bouger est un
+   soupçon, pas une preuve, mais il mérite d'être regardé.
+3. **En mode sélection, les cases à cocher gardent le nom « Marquer comme complétée »** alors
+   qu'elles sélectionnent. Relevé dans l'arbre d'accessibilité, non confirmé par un clic réussi.
+
+- **Fini quand** : les trois sont mesurés, dans le navigateur, et rendent un finding ou un « rien ».
+
+### C-57 · Cibles tactiles sous 44 px : 16 × 16 px pour cocher une tâche sur l'accueil · **P2 · M**
+
+Trouvé par l'audit **A-4**. `docs/MOBILE.md` porte « ❌ Touch target < 44 × 44 px (WCAG 2.5.5) »
+dans sa liste « Ne jamais faire », et la ligne « cibles tactiles » de son tableau de note n'a pas
+été recomptée depuis le 2026-08-27.
+
+**Mesuré le 2026-09-03**, dans le navigateur, mode démo, viewport 375 × 812, en ne comptant que les
+vraies commandes (`button`, `[role="button"]`, `input[type=checkbox]`) et jamais les liens de texte,
+qui relèvent de l'exception « inline » de WCAG 2.5.5 :
+
+| Route | Sous la cible | Total | Tailles rencontrées |
+|---|---|---|---|
+| `/dashboard` | **6** | 33 | **16 × 16** (×3), 173 × 32, 263 × 32 |
+| `/entreprise` | **6** | 20 | **24 × 24** (×3), 146 à 203 × 32 |
+| `/okr` | **43** | 54 | **40 × 40** (×42), 153 × 40 |
+| `/tasks`, `/habits`, `/settings` | **0** | 181 | rien sous la cible |
+
+Deux défauts de nature différente, à ne pas traiter ensemble :
+
+1. 🔴 **16 × 16 px pour `Marquer « … » comme terminée`** sur `/dashboard`, et 24 × 24 sur
+   `/entreprise`. C'est le geste principal du produit, sur son écran d'accueil, à moins de la
+   moitié de la cible. **Scénario d'échec** : le doigt tombe à côté et ouvre la tâche au lieu de la
+   cocher, ou ne déclenche rien ; sur une liste dense, deux cases voisines sont à quelques pixels
+   l'une de l'autre.
+2. 🟠 **42 boutons à 40 × 40 px sur `/okr`**, soit 4 px de manque, de façon systématique
+   (« Modifier l'objectif », « Supprimer l'objectif », les incréments de KR). Une seule valeur à
+   corriger, pas 42 décisions.
+
+- ⚠️ Les trois routes propres sont exactement celles que le design system mobile a migrées, et les
+  trois routes fautives celles qu'il n'a jamais touchées. C'est la même cause racine que le finding
+  « le design system mobile n'a jamais été adopté » de `MOBILE.md`, pas un défaut indépendant.
+- ⚠️ **Mesure en viewport émulé**, pas sur un appareil : la taille en pixels CSS est la même, mais
+  le taux de ratage réel ne se mesure qu'avec un doigt. Cf. `a-faire-manuel.md` §7, M-25.
+- **Fini quand** : les cases à cocher passent à 44 px de zone tactile (l'icône peut rester petite,
+  c'est le `TouchTarget` du dossier `mobile/` qui porte exactement ce contrat), les 40 px d'`/okr`
+  passent à 44, et une garde compte les commandes sous la cible sur les routes protégées, avec un
+  témoin qui refuse un détecteur qui ne détecterait plus rien.
 
 ---
 
@@ -971,13 +1224,16 @@ pas les dupliquer** :
 | PITR, plan Supabase (A-9, T-01) | `faille.md` | décision assumée |
 | Annuaires et Search Console (T-21, T-22) | `ACQUISITION-BACKLINKS.md` | manuel |
 | Mot de passe historique du `.env` fuité (T-09, seconde moitié) | `ROADMAP-60J.md` | Axel seul |
+| Passer l'audit **A-4** sur un vrai téléphone (§10) | `a-faire-manuel.md` §7, M-25 | appareil en main |
+| Déployer les 3 Edge Functions (C-29, C-35) | `a-faire-manuel.md` §8, M-30 | ligne de commande |
+| Poser les secrets `CRON_SECRET` et `OPS_ALERT_WEBHOOK_URL` (C-28, C-34) | `a-faire-manuel.md` §3, M-11 et M-12 | console |
 
 ---
 
 ## 10. Couverture · ce que cette liste ne peut PAS contenir
 
 **Cette liste est exhaustive de ce qui est CONNU. Elle ne l'est pas du produit.** Une zone
-n'a jamais reçu de revue dédiée. Les défauts qui y dorment ne peuvent pas figurer ici, par construction : *un finding qu'on n'a jamais cherché n'est ni
+n'a jamais reçu de revue dédiée, et une cinquième vient d'en recevoir une aux trois quarts. Les défauts qui y dorment ne peuvent pas figurer ici, par construction : *un finding qu'on n'a jamais cherché n'est ni
 vrai ni faux, il est absent.*
 
 Ce dépôt a déjà mesuré ce que vaut une zone non lue, deux fois. Les Edge Functions Stripe
@@ -988,7 +1244,9 @@ production. La seconde moitié de `src/components` n'avait jamais été lue non 
 2026-09-03, en a rendu huit** (C-37 → C-44), dont un mesuré en ouvrant simplement l'application en
 anglais. Et `src/modules`, où vivent les deux implémentations qui doivent se comporter pareil,
 n'avait jamais été relu : **A-2, passé le 2026-09-03, en a rendu trois** (C-48 → C-50), plus un
-complément à C-46 et **deux correctifs livrés**.
+complément à C-46 et **deux correctifs livrés**. Enfin, aucun audit n'avait jamais été fait **au
+clavier** : **A-3, passé le 2026-09-03, en a rendu cinq** (C-51 → C-55) et **trois correctifs**,
+dont un défaut que la documentation déclarait corrigé depuis le 2026-08-30.
 
 ### ✅ A-1 · les 3 Edge Functions non-Stripe · passé le 2026-09-03
 
@@ -1102,12 +1360,91 @@ ce qu'un utilisateur lit à l'écran : la chaîne a été prouvée maillon par m
 `onError` → gabarit du catalogue), elle n'a pas été photographiée. Et la parité démo ↔ Supabase
 n'a été éprouvée par exécution que là où elle était en doute — le reste est une lecture comparée.
 
+### ✅ A-3 · accessibilité manuelle : clavier, modales, `/agenda` · passé le 2026-09-03
+
+Le premier audit de ce dépôt à se faire **au clavier**, sans souris. Harnais :
+`e2e/a11y-keyboard-audit.spec.ts`, qui embarque son **témoin** — une modale Radix sur laquelle les
+trois détecteurs (entrée du focus, piège, Échap) doivent répondre « conforme ». S'il échoue, aucune
+mesure du fichier n'a de valeur. Il a rendu **C-51 → C-55**, plus le chiffrage qui manquait à C-23.
+
+| Finding | Comment il a été établi |
+|---|---|
+| **C-51** · le calendrier ne se pilotait pas au clavier | ouverture à la touche Entrée puis trace des flèches : `["2 déc.", "→ 2 déc.", "→ 2 déc.", "↓ 2 déc."]` — trois pressions, zéro mouvement ; puis lecture de `useFocus` dans `node_modules` |
+| **C-52** · libellés ARIA anglais | arbre d'accessibilité du calendrier ouvert, avant / après |
+| **C-53** · aucune modale maison ne piège le focus | 15 Tab depuis l'overlay réel, sur `HabitModal` et `EventModal`, témoin Radix vert ; plus l'absence, vérifiée dans tout `src/`, du moindre `activeElement` capturé |
+| **C-54** · `/agenda` : jours hors d'atteinte | comptage des descendants focalisables de `.fc`, puis marche clavier réelle jusqu'au premier événement (38 tabulations) |
+| **C-55** · trois surfaces non mesurées | échec des sondes, dit plutôt que masqué |
+| *chiffrage de C-23* | dix routes scannées, violations dédoublonnées par (ratio, couleurs, taille) |
+
+**Trois correctifs livrés**, chacun vu rouge avant d'être vert : les trois causes de C-51
+(`autoFocus` au lieu d'`initialFocus` mort, `onOpenAutoFocus` qui vise la grille au lieu des
+presets, `defaultMonth` manquant), les libellés ARIA de C-52, et le bouton de fermeture
+`DialogContent` qui s'appelait `Close` sur sept composants.
+
+Ce qu'il a **infirmé**, et qui est donc clos : le défaut du 2026-08-30 (`Button` non `forwardRef`)
+n'est pas revenu — une fois le focus dans la grille, les flèches naviguent bien, jour par jour et
+semaine par semaine ; Échap ferme le calendrier ; les **événements** de `/agenda` sont tous
+atteignables au clavier ; et les dix routes scannées ne rendent **aucune** violation `critical`.
+
+⚠️ **Trois limites de cet audit, à dire plutôt qu'à laisser croire.**
+
+1. **VoiceOver iOS n'a pas été fait**, et n'a pas été simulé. Ce qui est prouvé ici, c'est le
+   déplacement du FOCUS ; ce qu'un lecteur d'écran ANNONCE ne l'est pas. C-24 reste ouvert pour ça.
+2. **Tout vient de Chromium desktop**, viewport de bureau. Les feuilles mobiles sous
+   `prefers-reduced-motion` réellement émulé restent à parcourir — `e2e/reduced-motion-sheets.spec.ts`
+   couvre leur POSITION, pas leur parcours clavier.
+3. **Deux modales sur cinquante-huit** ont été mesurées. L'absence totale d'utilitaire de piège de
+   focus dans le dépôt rend le résultat généralisable, mais c'est une inférence : les cinquante-six
+   autres n'ont pas été ouvertes.
+
+### 🟠 A-4 · mobile sur appareil réel · TENTÉ le 2026-09-03, moitié appareil NON FAITE
+
+🔴 **Cet audit reste dans le tableau ci-dessous, et ce n'est pas un oubli.** Son périmètre est « le
+produit connecté sur un appareil RÉEL », et son livrable exige pour chaque finding **le modèle, la
+version d'OS et le navigateur**. Aucun appareil n'était accessible : son propre prompt tranche ce
+cas, un audit sans appareil devient « à refaire », pas « fait ». Le protocole de reprise, écran par
+écran, est dans [`a-faire-manuel.md`](./a-faire-manuel.md) §7 (M-25).
+
+Ce que la moitié **indépendante de l'appareil** a quand même rendu, mesuré en viewport émulé et par
+sonde, jamais déduit :
+
+| Finding | Comment il a été établi |
+|---|---|
+| **C-56** · le haut de trois écrans devient inatteignable, clavier ouvert | carte de `FirstRunSetup` reconstruite avec sa liste de classes réelle dans le CSS du projet, viewport 375 × 350 : haut à **-28,8 px** pour un `scrollTop` déjà nul, course de défilement de 70 px pour 124 px de débordement |
+| **C-57** · cibles tactiles sous 44 px | comptage des commandes (jamais des liens de texte) sur six routes en démo à 375 × 812 : 16 × 16 px pour cocher une tâche sur `/dashboard`, 42 boutons à 40 × 40 sur `/okr`, zéro sur les trois routes migrées |
+| *remesure de **C-38*** | le geste que C-38 réclamait explicitement : une sonde soumise au scanner, qui rend `0` sur trois chaînes qu'il devrait voir, et qui nomme enfin le mécanisme (`CODE_QUOTING` confond le `:` d'un ternaire avec celui d'un littéral d'objet) |
+
+Ce qu'il a **infirmé**, et qui est donc clos, chaque point mesuré plutôt que lu :
+
+- **le plancher de 16 px sur les champs tient**, y compris là où une classe Tailwind explicite le
+  contredit : `input[type=time]` avec `text-[15px]`, `input[type=date]` avec `text-[0.765997rem]`
+  et `input[type=text]` avec `text-[15px]` calculent **tous 16 px** à 375 px de large. iOS Safari ne
+  zoomera donc pas au focus sur la saisie d'événement. C'était le premier soupçon de cet audit, et
+  il était faux ;
+- **`/entreprise` ne cache rien derrière la barre d'onglets**, alors que sa racine ne porte que
+  `py-6`, soit 24 px : mesuré défilement en butée, l'élément le plus bas finit à 679 px pour une
+  barre qui commence à 747. C'est `Layout` qui réserve la place, pas la page. Rien à corriger, mais
+  la page ne tiendrait pas seule ;
+- **`FirstRunSetup` est sain sous `prefers-reduced-motion`** : il passe par `useSlideUpEntrance`,
+  qui n'émet **aucune** clé de transform dans ce mode, donc aucune valeur résiduelle ne peut le
+  laisser hors écran ;
+- **la conversion jour vers instant de la ligne de date mobile est correcte** :
+  `EventModalFormMobile` formate par `new Date(startDate + "T12:00:00")`, donc midi **local**, le
+  seul motif qui survit aux deux sens de décalage. C'était le point 4 du prompt, et il ne casse pas
+  ici. Reste à confirmer sur un appareil réglé sur un fuseau négatif, la roue système étant, elle,
+  hors de portée d'une émulation.
+
+⚠️ **Ce que cette moitié ne remplace pas** : la note de 76 / 100 de `docs/MOBILE.md` reste sans
+**aucune** mesure sur téléphone, et les pièges qu'elle documente (WebKit, `100vh`, clavier virtuel,
+scroll d'un conteneur qui n'est pas `window`) viennent tous de bugs qui ne se voyaient **pas** en
+émulation. Un viewport de 375 × 350 modélise Android ; il ne modélise pas iOS, qui ne réduit pas son
+viewport de mise en page.
+
 ### Audits à lancer, par rapport valeur / effort
 
 | # | Audit | Pourquoi maintenant | Ce qu'il rendrait |
 |---|---|---|---|
-| **A-3** | **Accessibilité manuelle** : clavier complet, modals, `/agenda`, VoiceOver iOS | C-24. Un tiers de WCAG est invisible pour axe-core, et le défaut trouvé le 2026-08-30 (flèches mortes dans le calendrier) en est la preuve | Les défauts de focus, d'ordre de tabulation et d'annonce, sur les écrans les plus utilisés |
-| **A-4** | **Mobile sur appareil réel** (iOS Safari, Android) | La note mobile n'a **aucune** mesure sur vrai téléphone : tout vient d'un viewport émulé. Les pièges WebKit documentés dans `MOBILE.md` viennent d'ailleurs de là | Les bugs de feuille, de clavier virtuel, de `100vh` et de gestes que l'émulation ne montre pas |
+| **A-4** | **Mobile sur appareil réel** (iOS Safari, Android) · 🟠 **moitié appareil restante**, cf. la section juste au-dessus et [`a-faire-manuel.md`](./a-faire-manuel.md) §7 (M-25) | La note mobile n'a toujours **aucune** mesure sur vrai téléphone : la passe du 2026-09-03 n'a pu mesurer qu'en viewport émulé. Les pièges WebKit documentés dans `MOBILE.md` viennent justement de bugs invisibles en émulation | Les bugs de feuille, de clavier virtuel, de `100vh` et de gestes que l'émulation ne montre pas ; et la confirmation iOS de C-56, dont le mécanisme diffère d'Android |
 | **A-6** | **Faisabilité React 19 + `react-router` 8** | C-17 et C-19. C'est la seule sortie de la double CVE, et la cause d'un bug déjà rencontré | Un plan de migration chiffré, et la liste des composants shadcn à réaligner |
 | **A-7** | **Chemins d'erreur du client** (que voit l'utilisateur quand ça casse) | `R-10` a montré un message d'erreur brut affiché à l'écran, en contradiction avec une règle que le fichier citait dans un commentaire. Personne n'a vérifié les autres | Les fuites de détail technique, les échecs avalés, et les écrans blancs derrière `AppErrorBoundary` |
 | **A-8** | **Le fil principal de la landing** | C-12. C'est la seule page lente, et la première que voit un visiteur d'annuaire | L'attribution réelle des 546 à 1 633 ms de blocage, à prendre **sur le runner**, jamais en local |
@@ -1118,7 +1455,7 @@ préambule commun porte les règles de méthode du dépôt (mesurer plutôt que 
 obligatoire, jamais de seuil baissé, sessions concurrentes), puis un corps par audit avec son
 périmètre, ses questions et ses pièges connus.
 
-> **Une fois A-3, A-4, A-6, A-7 et A-8 passés et leurs findings ajoutés ici, la phrase « il ne reste plus un seul
+> **Une fois A-4, A-6, A-7 et A-8 passés et leurs findings ajoutés ici, la phrase « il ne reste plus un seul
 > problème lié au code » devient vérifiable.** Avant, elle ne l'est pas, et l'écrire quand même
 > serait exactement le défaut que ce dépôt a corrigé quatre fois en cinq jours : **une réponse
 > rassurante donnée par une mesure qui ne regardait pas.**
