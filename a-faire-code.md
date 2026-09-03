@@ -4,6 +4,11 @@
 `docs/ROADMAP-60J.md` et les dix audits de `docs/`. Chaque item porte **où c'est**, **pourquoi ça
 compte** et **ce qui prouve que c'est fini**.
 
+> **Complété le 2026-09-03 au soir**, à `31482a3`, après la passe qui a traité les points 5 à 31
+> d'une revue de code. Ajouts : **C-45** (allowlist Supabase des redirections OAuth), **C-46**
+> (`localStorage` hors `try` dans les dépôts de démo), **C-47** (échecs de tests faux sous charge).
+> **C-22** est clos ; **C-38** est à moitié fait et dit désormais ce qui a été fermé et ce qui reste.
+
 **Ce que ce fichier contient** : uniquement ce qui se corrige **en écrivant du code ou du SQL**.
 Tout ce qui se règle dans une console, chez un fournisseur ou au guichet (immatriculation, Stripe
 live, secrets, backlinks, DPA, plan Supabase) reste dans [`docs/ROADMAP-60J.md`](./docs/ROADMAP-60J.md)
@@ -36,16 +41,16 @@ ne vive à deux endroits.
 
 | § | Domaine | Items |
 |---|---|---|
-| [1](#1-défauts-fonctionnels-connus) | Défauts fonctionnels connus | C-01 → C-08, C-37, C-40 → C-43 |
-| [2](#2-dette-structurelle) | Dette structurelle | C-09 → C-11 |
+| [1](#1-défauts-fonctionnels-connus) | Défauts fonctionnels connus | C-01 → C-08, C-37, C-40 → C-43, C-48 |
+| [2](#2-dette-structurelle) | Dette structurelle | C-09 → C-11, C-49, C-50 |
 | [3](#3-performance) | Performance | C-12 → C-14 |
 | [4](#4-scalabilité) | Scalabilité | C-15 → C-16 |
-| [5](#5-sécurité-et-dépendances) | Sécurité et dépendances | C-17 → C-19, C-29 → C-33, C-39, C-44 |
+| [5](#5-sécurité-et-dépendances) | Sécurité et dépendances | C-17 → C-19, C-29 → C-33, C-39, C-44 → C-46 |
 | [6](#6-i18n) | i18n | C-20 → C-22, C-38 |
 | [7](#7-accessibilité) | Accessibilité | C-23 → C-25 |
-| [8](#8-tests-et-gardes) | Tests et gardes | C-26 → C-28, C-34 → C-36 |
+| [8](#8-tests-et-gardes) | Tests et gardes | C-26 → C-28, C-34 → C-36, C-47 |
 | [9](#9-ce-qui-nest-PAS-du-code) | Ce qui n'est PAS du code | renvois |
-| [10](#10-couverture--ce-que-cette-liste-ne-peut-pas-contenir) | 🔴 Couverture et audits à lancer | 6 audits restants |
+| [10](#10-couverture--ce-que-cette-liste-ne-peut-pas-contenir) | 🔴 Couverture et audits à lancer | 5 audits restants |
 
 ---
 
@@ -235,6 +240,40 @@ commente pourquoi l'identifiant doit revenir.
 - **Fini quand** : le libellé dit combien d'événements partent, et un « Annuler » les restaure par
   `useRestoreEvent`.
 
+### C-48 · Un refus de dépendance de tâche dit deux choses différentes, aucune lisible · **P2 · S**
+
+Le trigger de la mig. 132 refuse un cycle par `RAISE EXCEPTION 'This dependency would create a
+cycle'`, et `LocalStorageTasksRepository.addDependency` lève la **même phrase anglaise en dur**,
+par souci de parité. Le hook `useAddTaskDependency` justifie ce choix en commentaire : on remonte
+le message tel quel plutôt qu'une erreur anonyme, parce que l'utilisateur peut agir sur un cycle.
+**Les deux modes contredisent cette phrase, chacun à sa façon** :
+
+- **En production**, `normalizeApiError` ne promeut un message serveur en code métier que s'il
+  matche `BUSINESS_CODE_RE` (`^[a-z][a-z0-9_]{2,49}$`). Une phrase avec des espaces et des
+  majuscules ne matche pas : le refus retombe sur le message générique. Ce qu'on voulait surtout
+  ne pas perdre est **exactement ce qui est perdu**.
+- **En mode démo**, aucun `normalizeApiError` sur ce chemin : la phrase anglaise arrive telle
+  quelle dans le gabarit français. Un utilisateur francophone lit
+  « **Dépendance impossible : This dependency would create a cycle** ».
+
+- **Mesuré** (audit A-2, sondes rejouées) :
+  `normalizeApiError({ code: 'P0001', message: 'This dependency would create a cycle' }).message`
+  ne contient pas le mot « cycle » ; et `repo.addDependency(b, a)` après `addDependency(a, b)`
+  rejette bien sur la phrase anglaise brute.
+- **Où** : `supabase/migration/132_*.sql` (3 `RAISE`), `src/modules/tasks/local.repository.ts`
+  (`addDependency`), `src/modules/tasks/hooks.ts` (`useAddTaskDependency`),
+  `src/lib/normalizeApiError.ts`, `src/locales/{fr,en}/errors.json`.
+- **Piste** : faire dire aux trois `RAISE` des **identifiants** (`dependency_cycle`,
+  `dependency_cross_account`, `dependency_task_missing`) plutôt que des phrases — c'est la
+  convention que `normalizeApiError` sait déjà relayer — les cataloguer en `api.*`, et faire lever
+  les mêmes identifiants au repository local. ⚠️ Une migration qui change un message de `RAISE` se
+  relit contre tous les appelants du trigger avant d'être appliquée.
+- **Fini quand** : les deux repositories refusent par le même identifiant, les trois sont
+  catalogués en `fr` et en `en`, et un test vérifie qu'un utilisateur francophone lit une phrase
+  française **dans les deux modes**. ❌ Ne pas se contenter de traduire la chaîne du repository
+  local : les deux chemins doivent converger, sinon la divergence revient au prochain message.
+
+
 ---
 
 ## 2. Dette structurelle
@@ -280,6 +319,63 @@ dans le navigateur**. Rien n'empêche un `input type="date"` de revenir.
 
 - **Fini quand** : une garde compte les `input[type=date]` de `src/` et n'autorise que les deux
   d'`EventModalForm`, avec la raison en commentaire.
+
+### C-49 · 52 des 206 hooks exportés par `src/modules` n'ont aucun consommateur · **P3 · M**
+
+Compté à `HEAD` par un balayage qui ignore les fichiers de test et les barils `index.ts`, et
+**validé par témoin** : les hooks connus comme vivants (`useTasks`, `useHabits`, `useEvents`,
+`useOkrs`, `useCreateTask`, `useActiveOrganization`) rendent 7 à 27 fichiers consommateurs, là où
+les 52 ci-dessous n'apparaissent que dans leur déclaration et dans le baril qui les réexporte.
+
+**Un quart de la surface publique des modules n'est jamais exécuté.** Ce n'est pas seulement du
+poids : c'est du code **non éprouvé**, la famille exacte de C-10 (`MobileScreen`, `ListRow`) et de
+`MobileHeader`, qui n'avait jamais fonctionné en un mois sur la seule page qui le montait.
+
+Le cas le plus net est une **fonctionnalité entière** : les étiquettes d'équipe, six hooks
+(`useTeamLabels`, `useTeamTaskLabels`, `useCreateTeamLabel`, `useUpdateTeamLabel`,
+`useDeleteTeamLabel`, `useToggleTaskLabel`), leurs clés React Query, leurs deux repositories et
+leur table. Aucun écran ne les monte.
+
+<details><summary>Les 52</summary>
+
+`useArchiveTeamProject` · `useAtRiskOkrs` · `useBookmarkedTasks` · `useCategory` ·
+`useCategoryNames` · `useCompletedKeyResults` · `useCompletedOkrs` · `useCompletedTasks` ·
+`useCreateKRCompletion` · `useCreateTeamLabel` · `useDeleteTeamCategory` · `useDeleteTeamLabel` ·
+`useEvent` · `useEventsByDate` · `useEventsByTask` · `useFilteredOkrs` · `useFilteredTasks` ·
+`useFriendCount` · `useHabit` · `useHabitStats` · `useHabitsByFrequency` ·
+`useHabitsNeedingAttention` · `useHabitsWithStats` · `useKeyResults` · `useList` ·
+`useListsForTask` · `useMyTaskShares` · `useOkr` · `useOkrStats` · `useOkrsByCategory` ·
+`useOkrsByStatus` · `useOkrsEndingSoon` · `useOkrsWithProgress` · `useSearchTasks` ·
+`useTaskLookup` · `useTaskStats` · `useTasksByCategory` · `useTasksByDate` ·
+`useTasksByPriority` · `useTasksByStatus` · `useTasksDueWithinDays` · `useTasksInPriorityRange` ·
+`useTeamLabels` · `useTeamTaskActivity` · `useTeamTaskLabels` · `useTodaysHabitStatus` ·
+`useTodaysTasks` · `useToggleTaskLabel` · `useUIState` · `useUpdateTeamCategory` ·
+`useUpdateTeamLabel` · `useUpdateTeamOKR`
+
+</details>
+
+- **Nuance à ne pas perdre** : quelques-uns sont des **capacités d'interface assumées**, adossées
+  à une note écrite (les `getPage` de la pagination, étape 3). Ceux-là se gardent **avec leur
+  justification**, jamais par défaut.
+- **Fini quand** : chaque hook est soit adopté par un écran, soit supprimé avec sa clé et sa
+  méthode de repository ; et une garde compte les orphelins pour que le chiffre ne remonte pas.
+  Le balayage doit embarquer son **témoin**, sinon il finira par ne plus rien détecter.
+
+### C-50 · Quatre fabriques de clés React Query survivent à la mig. 129 sans porter de donnée · **P3 · XS**
+
+`orgKeys.joinRequests`, `orgKeys.mySentRequest`, `orgKeys.myInvitations` et
+`orgKeys.myRemovalNotices` (`src/modules/organizations/constants.ts`) n'ont **plus aucun lecteur ni
+aucun invalidateur** depuis que la boîte de réception a été fondue en une clé unique.
+
+C'est précisément le piège que la note de la mig. 129 décrit : invalider une ancienne sous-clé ne
+rafraîchit plus rien, **en silence**. Tant qu'elles restent exportées, elles sont disponibles pour
+la prochaine mutation qu'on écrira, et l'erreur ne se verra pas.
+
+- **Fini quand** : les quatre sont supprimées, `orgKeys.inbox()` reste la seule clé de la boîte de
+  réception, et `npm run typecheck` confirme qu'elles n'avaient effectivement aucun appelant.
+  ⚠️ Ne pas toucher à `orgKeys.pendingSentInvitations`, qui est vivante
+  (`usePendingSentInvitations`).
+
 
 ---
 
@@ -507,6 +603,55 @@ une couleur légitime que `SAFE_COLOR_RE` refuserait disparaîtrait en silence.
 - **Fini quand** : `chart.test.tsx` couvre une couleur valide, une couleur d'évasion, un `id`
   d'évasion, et les formats réellement passés par les quatre appelants.
 
+### C-45 · `loginWithGoogle` vise désormais des URL que l'allowlist Supabase ne couvre peut-être pas · **P1 · XS (code) + geste console**
+
+Le code livré le 2026-09-03 construit `redirectTo` comme
+`${origin}${préfixe de locale}${destination}` au lieu de `${origin}/dashboard` : c'est ce qui rend à
+un anglophone sa version de l'application, et à une invitation d'entreprise réclamée via Google sa
+destination (garde R-04, jeton à usage unique).
+
+🔴 **Le code est en production ; le réglage qui le rend valide, non vérifié.** La *Redirect URL allow
+list* du projet Supabase doit couvrir `https://thecosmo.app/**`. Si elle ne porte que
+`/dashboard`, GoTrue ignore la valeur envoyée et renvoie sur le Site URL : la connexion Google
+« marche » et perd silencieusement la destination — exactement le symptôme d'avant le correctif,
+avec le correctif en place.
+
+- **Où** : `src/modules/auth/AuthContext.tsx`, `loginWithGoogle` (le commentaire 🔴 le dit sur place).
+- **Fini quand** : l'allowlist est vérifiée dans la console Supabase, **et** une vraie connexion
+  Google depuis `/en/login?redirect=/org-invite/<token>` atterrit sur la page d'invitation, en
+  anglais. Le geste console est dans [`a-faire-manuel.md`](./a-faire-manuel.md) ; la preuve
+  attendue est ce parcours, pas la capture du réglage.
+
+### C-46 · Les dépôts de démo touchent `localStorage` hors de tout `try` · **P2 · S**
+
+`src/lib/safe-json.ts` (créé le 2026-09-03) donne `safeGetItem` / `safeSetItem` / `safeParseArray`,
+et n'est câblé que sur les **sept** lecteurs que la revue nommait. Il reste **60 appels bruts à
+`localStorage` dans 14 fichiers de dépôt** — dont `org-teams`, `organizations`, `team-projects`,
+`team-okrs`, `org-okr-categories`, `team-categories` et `friends`.
+
+Le `JSON.parse` y est bien protégé — c'était la règle B14 — mais **le `getItem` qui le précède ne
+l'est pas**, et c'est lui qui lève en navigation privée, en webview et quand les cookies tiers sont
+bloqués. Exemple exact, `org-teams/local.repository.ts:33` : `getItem` est **avant** le `try`, donc
+tout le mode entreprise en démo tombe avant d'atteindre la garde censée le sauver.
+
+- **Où** : les 14 `*/repository.ts` et `*/local.repository.ts` listés par
+  `grep -c "localStorage\.\(getItem\|setItem\|removeItem\)" src/modules/**/*repository.ts`.
+- **Piste** : passer par `safe-json.ts`, qui existe déjà. Aucune décision à prendre, c'est du câblage.
+- **Fini quand** : plus aucun `localStorage.` direct dans `src/modules/**/repository.ts`, et un test
+  qui fait JETER `Storage.prototype.getItem` vérifie que le mode démo se re-sème au lieu de tomber
+  (le patron est dans `src/lib/safe-json.test.ts`).
+
+> ⚠️ **Complément de l'audit A-2 : l'ÉCRITURE n'est pas du câblage, elle demande une décision.**
+> `safeSetItem` a **zéro appelant dans tout le dépôt**, et les écritures nues jettent dans les
+> mêmes conditions que les lectures — plus une qui leur est propre, le quota. **Mesuré** : une
+> saisie de progression de KR en mode démo a fait remonter un `QuotaExceededError` des 5 Mo
+> **directement depuis le repository** (cause corrigée par ailleurs, mais le chemin nu demeure sur
+> les 60 appels).
+> Câbler `safeSetItem` partout **avalerait silencieusement** l'échec : pour une préférence
+> d'affichage c'est le bon comportement, pour une donnée que l'utilisateur vient de créer c'est
+> une perte sans signal. Les écritures se classent donc par nature avant d'être recâblées, et le
+> test de `Storage.prototype` doit couvrir `setItem` autant que `getItem`.
+
 ---
 
 ## 6. i18n
@@ -529,13 +674,11 @@ remesurés.**
 
 - **Fini quand** : remesuré, puis les non-légitimes traduites.
 
-### C-22 · `i18n:scan` à 25 · **P3 · S**
+### C-22 · ~~`i18n:scan` à 25~~ · **P3 · S** · ✅ clos le 2026-09-03, remplacé par C-38
 
-Le seuil dit ce que la mesure voit, et la mesure est enfin honnête (quatre formes aveugles couvertes
-le 2026-09-02). `src/components` est à zéro ; le reste ne l'est pas.
-
-- **Fini quand** : `npm run i18n:scan -- --list` est vide et le seuil descend à 0. ❌ Ne jamais
-  relever le seuil, ❌ ne jamais réécrire « plus une seule chaîne en dur » sans avoir lu la liste.
+Le seuil est descendu à 0 et `npm run i18n:scan -- --list` est vide. **Cela ne veut pas dire que le
+produit n'a plus de chaîne en dur** : c'est exactement le piège que C-38 documente. L'item est clos
+sur son énoncé (« le seuil vaut 25 »), pas sur son intention.
 
 ### C-38 · `i18n:scan` annonce ZÉRO, et l'interface anglaise parle français · **P1 · M**
 
@@ -580,12 +723,48 @@ par une autre session au moment de cet audit (c'est elle qui a descendu `MAX_STR
 correctif se coordonne, sinon les deux se marchent dessus. Cet item **remplace** C-22, dont le
 chiffre de 25 n'est plus celui du dépôt.
 
-- **Où** : `scripts/i18n-scan.mjs` (les deux angles morts), puis les fichiers listés.
+#### État au 2026-09-03 (fin de journée) — la moitié est faite
+
+**Fermé.** Le scanner est passé à **cinq** familles de motifs et sa liste de mots-outils a été
+élargie. Trois angles morts de plus ont été comblés, dont deux qui n'étaient pas dans l'énoncé
+ci-dessus :
+
+- les MESSAGES rendus par du code — `return '…'`, `throw new Error('…')`, `return { error: '…' }` ;
+- le corps d'une chaîne excluait les **trois** guillemets à la fois, donc une apostrophe dans une
+  chaîne à guillemets doubles rendait la valeur incapturable (« Aujourd'hui ») → `QUOTED` borne
+  désormais le corps par SON propre délimiteur ;
+- le filtre « identifiant seul » jetait « Demain », un mot français isolé ressemblant à un
+  identifiant → il ne s'applique plus à une valeur qui porte un mot-outil français.
+
+La mesure élargie a fait apparaître **22 chaînes** que le seuil à ZÉRO certifiait absentes, dont les
+**cinq sections de la landing** rendues intégralement en français alors que leurs 40 clés traduites
+dormaient dans `landing.json` **sans un seul consommateur**. Toutes externalisées ; le seuil est
+revenu à 0 sur la nouvelle mesure.
+
+⚠️ **Les deux derniers angles morts n'ont pas été trouvés en relisant le scanner, mais en lui
+soumettant les chaînes qu'il était censé voir.** Les deux premiers avaient été corrigés en croyant
+le travail fini. C'est la leçon opérationnelle de cet item.
+
+**Reste ouvert — les deux angles morts de l'énoncé d'origine, tous deux confirmés le 2026-09-03 :**
+
+1. **La forme ternaire.** `aria-label={cond ? 'A' : 'B'}` : le motif (2) exige la chaîne
+   immédiatement après `attribut=` ou `attribut={`, et `cond ? ` n'est pas de l'espace. **49
+   occurrences dans 35 fichiers** (mesuré par `grep`, pas estimé — l'énoncé disait « une
+   trentaine »), et le scanner en voit **zéro**.
+2. **Le vocabulaire fermé.** `masquer`, `afficher`, `sauvegarder`, `creer`, `epingler` manquent
+   toujours à `FR_STOPWORD`. Témoin encore vivant : `TaskTable.tsx:617`
+   `aria-label="Masquer l'astuce"` — attribut simple, sans accent, invisible pour la mesure.
+
+⚠️ Ces deux points ont été vérifiés **par lecture du motif et par `grep`**, pas en exécutant une
+sonde : `npm test` et Bash étaient indisponibles à ce moment. Le premier geste du correctif est donc
+de les REMESURER en soumettant les cas au scanner.
+
+- **Où** : `scripts/i18n-scan.mjs` (les deux angles morts restants), puis les fichiers listés.
 - **Fini quand** : une sonde à vocabulaire OUVERT, qui regarde les chaînes dans une expression JSX,
   et le scanner rendent le même verdict sur `src/components` ; le seuil descend à 0 sur la NOUVELLE
   mesure ; et `/en/login` comme `/en/habits` sont relus **dans le navigateur**. ❌ Ne jamais
   réécrire « plus une seule chaîne en dur » : la phrase a déjà été vraie de la mesure et fausse du
-  produit trois fois.
+  produit **quatre** fois.
 
 ---
 
@@ -703,6 +882,33 @@ puis corrigée le 2026-08-26) et que rien n'empêche sa réintroduction.
   de `renewal-notice` échoue fermé sur secret absent, `report-bug` n'a pas de valeur par défaut
   d'expéditeur, et aucune des deux ne renvoie un corps d'erreur du fournisseur.
 
+### C-47 · La suite de tests rend des échecs FAUX sous charge, et personne ne peut les distinguer des vrais · **P2 · S**
+
+Observé **trois fois le 2026-09-03**, sur le même arbre, à quelques minutes d'intervalle :
+
+| Run | Verdict | Réalité |
+|---|---|---|
+| 1 | 3 échecs (`UseCasePage`, `AuthForm.confirmation`, `FirstRunSetup`) | les 3 passent isolément |
+| 2 | 2107 / 2107 ✅ | — |
+| 3 | 1 échec (`TeamTasksToolbar.filter`) | passe isolément (3/3) |
+
+Et un rejeu isolé a lui-même échoué sans exécuter un seul test :
+`Error: [vitest-pool-runner]: Timeout waiting for worker to respond`, 63 s pour zéro cas.
+
+**Pourquoi ça compte plus qu'un désagrément** : ce dépôt a plusieurs sessions actives sur la même
+machine. Un rouge n'y prouve rien, et le réflexe qu'il installe — « c'est sûrement la contention,
+je rejoue » — est exactement celui qui fera passer une vraie régression. C'est la même classe que le
+§ « une garde se vérifie sur ce qu'elle REGARDE » de `CLAUDE.md` : ici la garde répond, mais sa
+réponse n'est pas fiable.
+
+- **Où** : `vitest.config.ts` (`pool`, `poolOptions`, `testTimeout`, `hookTimeout`).
+- **Piste** : borner la concurrence (`maxForks`/`maxThreads`) plutôt que de laisser vitest saturer
+  la machine, et relever le délai d'attente du worker. `--pool=threads` a suffi à rendre le cas
+  isolé vert là où `forks` échouait à démarrer : ce n'est pas une preuve, c'est une piste.
+- **Fini quand** : dix runs consécutifs de `npm test` sur un arbre inchangé rendent le **même**
+  verdict, machine chargée comprise. ❌ Ne pas « corriger » en retirant des tests ni en relevant un
+  seuil de tolérance d'échec.
+
 ---
 
 ## 9. Ce qui n'est PAS du code
@@ -729,8 +935,8 @@ pas les dupliquer** :
 
 ## 10. Couverture · ce que cette liste ne peut PAS contenir
 
-**Cette liste est exhaustive de ce qui est CONNU. Elle ne l'est pas du produit.** Deux zones
-n'ont jamais reçu de revue dédiée. Les défauts qui y dorment ne peuvent pas figurer ici, par construction : *un finding qu'on n'a jamais cherché n'est ni
+**Cette liste est exhaustive de ce qui est CONNU. Elle ne l'est pas du produit.** Une zone
+n'a jamais reçu de revue dédiée. Les défauts qui y dorment ne peuvent pas figurer ici, par construction : *un finding qu'on n'a jamais cherché n'est ni
 vrai ni faux, il est absent.*
 
 Ce dépôt a déjà mesuré ce que vaut une zone non lue, deux fois. Les Edge Functions Stripe
@@ -739,7 +945,9 @@ rendu **six**. Les trois fonctions NON-Stripe n'avaient jamais été relues : **
 2026-09-03, en a rendu huit** (C-29 → C-36), dont deux P1 qui ne se voyaient qu'en interrogeant la
 production. La seconde moitié de `src/components` n'avait jamais été lue non plus : **A-5, passé le
 2026-09-03, en a rendu huit** (C-37 → C-44), dont un mesuré en ouvrant simplement l'application en
-anglais.
+anglais. Et `src/modules`, où vivent les deux implémentations qui doivent se comporter pareil,
+n'avait jamais été relu : **A-2, passé le 2026-09-03, en a rendu trois** (C-48 → C-50), plus un
+complément à C-46 et **deux correctifs livrés**.
 
 ### ✅ A-1 · les 3 Edge Functions non-Stripe · passé le 2026-09-03
 
@@ -791,11 +999,72 @@ resté à un viewport 0 × 0 pendant la première moitié de la session : aucune
 de cet état, et la vérification à l'écran n'a repris qu'après avoir forcé une taille. Et le parcours
 clavier complet des écrans lus ici n'a **pas** été fait : c'est A-3, il reste entier.
 
+### ✅ A-2 · `src/modules` : repositories, hooks, parité démo ↔ Supabase · passé le 2026-09-03
+
+Vingt-deux modules, 21 407 lignes hors tests. La zone est celle où **deux implémentations doivent
+se comporter pareil**, et c'est bien là qu'était le défaut le plus coûteux.
+
+**Deux correctifs livrés**, vus rouges avant d'être verts (`src/modules/okrs/repository.test.ts`,
+trois cas de régression) :
+
+- **Le clamp de la faille B18 n'existait que côté Supabase.** Le champ de progression d'un KR est
+  un `input[type=number]` **sans `max`** qui remonte à chaque frappe : taper « 50000 » demandait
+  5, puis 50, puis 500, puis 5 000, puis 50 000 reps. Le repository Supabase borne à 100 depuis
+  B18 ; le repository localStorage écrivait tout. **Mesuré** : ~20 s de fil principal bloqué, puis
+  un `QuotaExceededError` des 5 Mo remonté brut. La borne est désormais **une constante partagée**
+  (`MAX_REPS_PER_WRITE`, portée par le journal lui-même) : elle ne peut plus diverger.
+- **Les reps étaient datées de l'achèvement du KR, pas de l'instant.** `kr.completedAt ?? now()`
+  au lieu de `now()` : ajouter une rep à un KR déjà terminé écrivait au journal une ligne datée du
+  jour de son achèvement, donc **invisible du graphique « KR réalisés »** du tableau de bord. Le
+  serveur a toujours utilisé `now()`.
+
+**Quatre `eslint-disable react-hooks/exhaustive-deps` supprimés** (sur les 36 de C-06) : `tasks`,
+`habits`, `okrs` et `kr-completions` mémoïsaient leur repository par `useMemo(…, [isDemo])`, là où
+six autres modules appellent simplement le factory. La mémoïsation était redondante — le factory
+est déjà un singleton paramétré par `appModeStore.isDemo` — et son commentaire était **faux** :
+`resetRepositories()` est appelé cinq fois dans `AuthContext`, dont des chemins où `isDemo` ne
+change pas, où la mémo rendait alors l'instance que le factory venait de jeter. Vérifié au
+préalable que la référence n'entre dans **aucun** tableau de dépendances.
+
+| Finding | Comment il a été établi |
+|---|---|
+| **C-48** · le refus de cycle dit deux choses, aucune lisible | sondes exécutées : `normalizeApiError({code:'P0001', message:'This dependency would create a cycle'})` ne contient plus le mot « cycle » ; le repository local rejette bien sur la phrase anglaise brute, qui atterrit dans le gabarit français |
+| **C-49** · 52 des 206 hooks exportés n'ont aucun consommateur | balayage hors tests et hors barils, **validé par témoin** : les six hooks connus comme vivants rendent 7 à 27 consommateurs, les 52 autres zéro |
+| **C-50** · quatre fabriques de clés survivent à la mig. 129 à vide | recherche de chaque clé dans tout `src` : ni lecteur ni invalidateur |
+| *complément à C-46* | le `QuotaExceededError` mesuré ci-dessus, qui montre que le côté **écriture** demande une décision, pas du câblage |
+
+Ce qu'il a **infirmé**, et qui est donc clos pour cette zone — c'est la moitié utile du rapport :
+
+- **Les six RPC obligatoires sont les seuls chemins de liste.** `get_my_tasks`,
+  `get_my_team_tasks`, `get_my_team_projects`, `get_my_team_task_dependencies`, `get_my_habits`,
+  `get_my_org_inbox` : aucun `.from()` direct hors des exceptions légitimes (`getById`, insert,
+  update, delete, et `task_dependencies` personnelles).
+- **Aucune écriture ne contourne sa whitelist.** Pas un seul `...input` répandu dans un `insert`
+  ou un `update` ; `user_id` est toujours posé depuis la session (ou depuis la cible, sous la
+  policy `events_manager_insert`), jamais depuis un payload.
+- **Le contrat `restoreId` est identique sur les cinq modules** qui le portent : second argument
+  de `create()`, jamais un champ du payload.
+- **`getById` rend `null` de la même façon partout** (`PGRST116` côté Supabase, `?? null` côté
+  local), et les jeux de méthodes des deux repositories coïncident, module par module.
+- **Les quatre `refetchInterval` restants sont bien conditionnels**, et ce sont bien les quatre
+  fichiers que `polling.guard.test.ts` nomme.
+- **Deux invalidations manquantes repérées n'ont aucun symptôme**, et c'est mesuré, pas déduit :
+  supprimer une tâche n'invalide pas le graphe de dépendances, mais ses deux seuls consommateurs
+  filtrent déjà les arêtes orphelines (`computeCriticalPath` le fait explicitement) ; et
+  `statsKeys` n'est invalidé par personne, parce que `useWorkTimeStats` est délibérément en
+  `staleTime: 0`. ❌ Ne pas les « corriger » : il n'y a rien à corriger.
+- **Les `JSON.parse` de `src/modules` sont tous gardés** (règle B14, côté lecture).
+
+⚠️ **Limite de cet audit, à dire plutôt qu'à laisser croire.** Tout ce qui précède vient de la
+lecture du code et de sondes exécutées en Node, **pas du navigateur**. C-48 en particulier décrit
+ce qu'un utilisateur lit à l'écran : la chaîne a été prouvée maillon par maillon (repository →
+`onError` → gabarit du catalogue), elle n'a pas été photographiée. Et la parité démo ↔ Supabase
+n'a été éprouvée par exécution que là où elle était en doute — le reste est une lecture comparée.
+
 ### Audits à lancer, par rapport valeur / effort
 
 | # | Audit | Pourquoi maintenant | Ce qu'il rendrait |
 |---|---|---|---|
-| **A-2** | **`src/modules` : repositories et hooks** (parité démo ↔ Supabase, clés React Query, invalidations) | La revue du 2026-09-02 portait sur `src/pages` et `src/lib`. Les modules n'ont jamais été relus en tant que tels, et c'est là que vivent les deux implémentations qui doivent se comporter pareil | Les divergences démo / prod, les clés d'invalidation manquantes (un écran qui ne se rafraîchit plus **en silence**), et les fermetures périmées de C-06 |
 | **A-3** | **Accessibilité manuelle** : clavier complet, modals, `/agenda`, VoiceOver iOS | C-24. Un tiers de WCAG est invisible pour axe-core, et le défaut trouvé le 2026-08-30 (flèches mortes dans le calendrier) en est la preuve | Les défauts de focus, d'ordre de tabulation et d'annonce, sur les écrans les plus utilisés |
 | **A-4** | **Mobile sur appareil réel** (iOS Safari, Android) | La note mobile n'a **aucune** mesure sur vrai téléphone : tout vient d'un viewport émulé. Les pièges WebKit documentés dans `MOBILE.md` viennent d'ailleurs de là | Les bugs de feuille, de clavier virtuel, de `100vh` et de gestes que l'émulation ne montre pas |
 | **A-6** | **Faisabilité React 19 + `react-router` 8** | C-17 et C-19. C'est la seule sortie de la double CVE, et la cause d'un bug déjà rencontré | Un plan de migration chiffré, et la liste des composants shadcn à réaligner |
@@ -808,7 +1077,7 @@ préambule commun porte les règles de méthode du dépôt (mesurer plutôt que 
 obligatoire, jamais de seuil baissé, sessions concurrentes), puis un corps par audit avec son
 périmètre, ses questions et ses pièges connus.
 
-> **Une fois A-2, A-3, A-4, A-6, A-7 et A-8 passés et leurs findings ajoutés ici, la phrase « il ne reste plus un seul
+> **Une fois A-3, A-4, A-6, A-7 et A-8 passés et leurs findings ajoutés ici, la phrase « il ne reste plus un seul
 > problème lié au code » devient vérifiable.** Avant, elle ne l'est pas, et l'écrire quand même
 > serait exactement le défaut que ce dépôt a corrigé quatre fois en cinq jours : **une réponse
 > rassurante donnée par une mesure qui ne regardait pas.**
