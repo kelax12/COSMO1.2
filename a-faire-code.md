@@ -452,10 +452,51 @@ réintroduirait l'open redirect `GHSA-wrjc-x8rr-h8h6`.
 
 ### C-18 · CVE dev-only · **P3 · S**
 
-`vitest`, `eslint`, `vite`, `glob`/`minimatch` : jamais servies au navigateur. `npm audit fix --force`
-casse le peer `eslint-plugin-react-hooks` (vérifié en `--dry-run`).
+**Remesuré le 2026-09-03**, après que GitHub a annoncé « 4 vulnerabilities (4 high) » au push. Les
+paquets ne sont plus ceux de l'énoncé d'origine, et **la conclusion pratique s'inverse**.
 
-- **Fini quand** : une passe outillage dédiée, jamais mêlée à une passe sécurité.
+Ce que disent les alertes, mesuré et non déduit :
+
+| Source | Paquet | Sévérité | Correctif |
+|---|---|---|---|
+| Dependabot (4 avis) | `fast-uri` 3.1.5 | high ×4 | **3.1.6** |
+| `npm audit` local | `qs` 6.16.0 | moderate ×2 | disponible |
+
+**Les quatre alertes sont un seul paquet.** Dependabot compte les avis (deux SSRF, deux confusions
+d'hôte), pas les dépendances. Et le `npm audit` local en remonte une cinquième que Dependabot ne
+montre pas.
+
+Les deux descendent de la **même racine, une devDependency** :
+
+```
+shadcn@4.18.0                        ← devDependency, CLI de génération de composants
+└── @modelcontextprotocol/sdk@1.30.0
+    ├── express@5.2.1 → qs@6.16.0
+    └── ajv@8.20.0    → fast-uri@3.1.5
+```
+
+`shadcn` n'est **jamais bundlé** : rien de tout cela n'atteint le navigateur. La gate CI le confirme,
+mesurée le 2026-09-03 : `npm audit --omit=dev --audit-level=high` → **`found 0 vulnerabilities`**,
+exit 0. L'exploitation supposerait de faire avaler au CLI, sur la machine d'un développeur, un
+schéma ou une URL forgés. Faible, pas nul.
+
+🔴 **Ce que l'ancien énoncé disait de faux, et qui décidait de l'action.** Il affirmait que corriger
+impose `npm audit fix --force`, lequel casse le peer `eslint-plugin-react-hooks`. C'était vrai de
+`vitest` / `eslint` / `vite` / `glob`, le lot d'alors. **Ce n'est pas vrai de ce lot-ci** :
+`npm audit` annonce « fix available via `npm audit fix` », **sans `--force`**, et `shadcn` est passé
+à **4.20.1** en amont. L'item décourageait donc un geste bon marché.
+
+⚠️ Ce constat vaut pour les paquets du 2026-09-03. Le prochain lot sera encore un autre : **relire
+`npm audit` avant d'agir, jamais cet item seul.** C'est précisément ce que son ancienne version
+invitait à ne pas faire.
+
+- **Où** : `package.json` (`devDependencies.shadcn`), `package-lock.json`.
+- **Piste** : `npm audit fix` puis montée de `shadcn` à 4.20.1. ⚠️ Réécrit `package-lock.json` et
+  `node_modules` : à faire quand **aucune autre session** ne travaille dans l'arbre (règle 5 des
+  règles de traitement).
+- **Fini quand** : `npm audit` rend 0 vulnérabilité, les cinq gates sont rejouées derrière, et le
+  tableau ci-dessus porte sa nouvelle date. ❌ Ne jamais mêler cette passe à une passe sécurité
+  produit : ce sont deux natures de risque, et les confondre fait passer l'une pour l'autre.
 
 ### C-19 · Les composants shadcn recopiés visent React 19 · **P2 · M**
 
