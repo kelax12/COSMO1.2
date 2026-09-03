@@ -5,6 +5,7 @@
 import { OrgOKRCategory, CreateOrgOKRCategoryInput, UpdateOrgOKRCategoryInput } from './types';
 import { ORG_OKR_CATEGORIES_STORAGE_KEY } from './constants';
 import { localizeSeed } from '@/lib/seed-i18n';
+import { safeGetItem, safeSetItem, writeJsonOrThrow } from '@/lib/safe-json';
 
 export interface IOrgOKRCategoriesRepository {
   getCategories(orgId: string): Promise<OrgOKRCategory[]>;
@@ -31,10 +32,10 @@ const DEMO_CATEGORIES_EN: Record<string, Partial<OrgOKRCategory>> = {
 };
 
 function readOrSeed(): OrgOKRCategory[] {
-  const data = localStorage.getItem(ORG_OKR_CATEGORIES_STORAGE_KEY);
+  const data = safeGetItem(ORG_OKR_CATEGORIES_STORAGE_KEY);
   if (!data) {
     const clone = JSON.parse(JSON.stringify(localizeSeed(DEMO_CATEGORIES, DEMO_CATEGORIES_EN))) as OrgOKRCategory[];
-    localStorage.setItem(ORG_OKR_CATEGORIES_STORAGE_KEY, JSON.stringify(clone));
+    safeSetItem(ORG_OKR_CATEGORIES_STORAGE_KEY, JSON.stringify(clone));
     return clone;
   }
   try {
@@ -49,7 +50,7 @@ export class LocalStorageOrgOKRCategoriesRepository implements IOrgOKRCategories
     return readOrSeed();
   }
   private save(cats: OrgOKRCategory[]): void {
-    localStorage.setItem(ORG_OKR_CATEGORIES_STORAGE_KEY, JSON.stringify(cats));
+    writeJsonOrThrow(ORG_OKR_CATEGORIES_STORAGE_KEY, cats);
   }
 
   async getCategories(orgId: string): Promise<OrgOKRCategory[]> {

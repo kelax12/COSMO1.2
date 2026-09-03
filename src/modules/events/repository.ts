@@ -3,12 +3,12 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { CalendarEvent, CreateEventInput, UpdateEventInput, EventFilters } from './types';
-import { safeGetItem, safeParseArray } from '@/lib/safe-json';
 import { EVENTS_STORAGE_KEY } from './constants';
 import { PaginationParams, PaginatedResult, DEFAULT_PAGE_SIZE } from '@/lib/pagination.types';
 import { selectEventsInWindow } from './window';
 import { isEnglishSeed, localizeSeed } from '@/lib/seed-i18n';
 import type { CreateOptions } from '@/lib/restore-id';
+import { safeGetItem, safeParseArray, writeJsonOrThrow } from '@/lib/safe-json';
 
 // ═══════════════════════════════════════════════════════════════════
 // DEMO DATA
@@ -218,7 +218,7 @@ export class LocalStorageEventsRepository implements IEventsRepository {
    * Save events to localStorage
    */
   private saveEvents(events: CalendarEvent[]): void {
-    localStorage.setItem(EVENTS_STORAGE_KEY, JSON.stringify(events));
+    writeJsonOrThrow(EVENTS_STORAGE_KEY, events);
   }
 
   // ═══════════════════════════════════════════════════════════════════
@@ -245,7 +245,7 @@ export class LocalStorageEventsRepository implements IEventsRepository {
 
   // ── Agendas des membres (mode entreprise démo) ─────────────────────
   private getMemberStore(): Record<string, CalendarEvent[]> {
-    const raw = localStorage.getItem(MEMBER_EVENTS_STORAGE_KEY);
+    const raw = safeGetItem(MEMBER_EVENTS_STORAGE_KEY);
     if (!raw) return {};
     try {
       const parsed = JSON.parse(raw);
@@ -256,7 +256,7 @@ export class LocalStorageEventsRepository implements IEventsRepository {
   }
 
   private saveMemberStore(store: Record<string, CalendarEvent[]>): void {
-    localStorage.setItem(MEMBER_EVENTS_STORAGE_KEY, JSON.stringify(store));
+    writeJsonOrThrow(MEMBER_EVENTS_STORAGE_KEY, store);
   }
 
   /** Agenda d'un membre (seedé à la première lecture pour les subordonnés démo connus). */

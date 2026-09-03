@@ -16,6 +16,7 @@ import {
 } from './types';
 import { TEAM_OKRS_STORAGE_KEY } from './constants';
 import { isEnglishSeed } from '@/lib/seed-i18n';
+import { safeGetItem, safeSetItem, writeJsonOrThrow } from '@/lib/safe-json';
 
 const DEMO_ORG_ID = 'org-demo-1';
 const DEMO_USER_ID = 'demo-user';
@@ -128,24 +129,24 @@ function localizeOkrs(okrs: TeamOKR[]): TeamOKR[] {
 }
 
 function readOrSeed(): TeamOKR[] {
-  const data = localStorage.getItem(TEAM_OKRS_STORAGE_KEY);
+  const data = safeGetItem(TEAM_OKRS_STORAGE_KEY);
   if (!data) {
     const clone = JSON.parse(JSON.stringify(localizeOkrs(DEMO_OKRS))) as TeamOKR[];
-    localStorage.setItem(TEAM_OKRS_STORAGE_KEY, JSON.stringify(clone));
+    safeSetItem(TEAM_OKRS_STORAGE_KEY, JSON.stringify(clone));
     return clone;
   }
   try {
     return JSON.parse(data) as TeamOKR[];
   } catch {
     const clone = JSON.parse(JSON.stringify(DEMO_OKRS)) as TeamOKR[];
-    localStorage.setItem(TEAM_OKRS_STORAGE_KEY, JSON.stringify(clone));
+    safeSetItem(TEAM_OKRS_STORAGE_KEY, JSON.stringify(clone));
     return clone;
   }
 }
 
 export class LocalStorageTeamOKRsRepository implements ITeamOKRsRepository {
   private save(okrs: TeamOKR[]): void {
-    localStorage.setItem(TEAM_OKRS_STORAGE_KEY, JSON.stringify(okrs));
+    writeJsonOrThrow(TEAM_OKRS_STORAGE_KEY, okrs);
   }
 
   async getAll(orgId: string): Promise<TeamOKR[]> {

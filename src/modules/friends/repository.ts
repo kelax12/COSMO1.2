@@ -5,6 +5,7 @@
 import { Friend, FriendRequestInput, ShareTaskInput, PendingFriendRequest, TaskShare, RelatedTaskShare, ShareListInput, SharedListGrant } from './types';
 import { FRIENDS_STORAGE_KEY, FRIEND_REQUESTS_STORAGE_KEY, SHARED_TASKS_STORAGE_KEY, SHARED_LISTS_STORAGE_KEY } from './constants';
 import { isEnglishSeed } from '@/lib/seed-i18n';
+import { safeGetItem, safeSetItem, writeJsonOrThrow } from '@/lib/safe-json';
 
 /** Id de l'utilisateur démo — utilisé pour distinguer partages entrants/sortants. */
 const DEMO_USER_ID = 'demo-user';
@@ -136,7 +137,7 @@ export class LocalStorageFriendsRepository implements IFriendsRepository {
    * Get all friends from localStorage (or initialize with demo data)
    */
   private getFriends(): Friend[] {
-    const data = localStorage.getItem(FRIENDS_STORAGE_KEY);
+    const data = safeGetItem(FRIENDS_STORAGE_KEY);
     if (!data) {
       // Defensive clone — DEMO_FRIENDS is a module-level constant. The old
       // code returned it directly and later code mutated the result, leaving
@@ -160,14 +161,14 @@ export class LocalStorageFriendsRepository implements IFriendsRepository {
    * Save friends to localStorage
    */
   private saveFriends(friends: Friend[]): void {
-    localStorage.setItem(FRIENDS_STORAGE_KEY, JSON.stringify(friends));
+    writeJsonOrThrow(FRIENDS_STORAGE_KEY, friends);
   }
 
   /**
    * Get pending friend requests
    */
   private getRequests(): PendingFriendRequest[] {
-    const data = localStorage.getItem(FRIEND_REQUESTS_STORAGE_KEY);
+    const data = safeGetItem(FRIEND_REQUESTS_STORAGE_KEY);
     if (!data) {
       // Defensive clone — see getFriends() above. Faille B12.
       const seed = JSON.parse(JSON.stringify(DEMO_INCOMING_REQUESTS)) as PendingFriendRequest[];
@@ -187,7 +188,7 @@ export class LocalStorageFriendsRepository implements IFriendsRepository {
    * Save pending friend requests
    */
   private saveRequests(requests: PendingFriendRequest[]): void {
-    localStorage.setItem(FRIEND_REQUESTS_STORAGE_KEY, JSON.stringify(requests));
+    writeJsonOrThrow(FRIEND_REQUESTS_STORAGE_KEY, requests);
   }
 
   /**
@@ -196,7 +197,7 @@ export class LocalStorageFriendsRepository implements IFriendsRepository {
    */
   private getSharedTasksMap(): Record<string, { friendId: string; role?: 'viewer' | 'editor'; accepted?: boolean }[]> {
     try {
-      return JSON.parse(localStorage.getItem(SHARED_TASKS_STORAGE_KEY) || '{}');
+      return JSON.parse(safeGetItem(SHARED_TASKS_STORAGE_KEY) || '{}');
     } catch {
       return {};
     }
@@ -326,7 +327,7 @@ export class LocalStorageFriendsRepository implements IFriendsRepository {
       sharedTasks[input.taskId].push({ friendId: input.friendId, role: input.role || 'viewer' });
     }
     
-    localStorage.setItem(SHARED_TASKS_STORAGE_KEY, JSON.stringify(sharedTasks));
+    writeJsonOrThrow(SHARED_TASKS_STORAGE_KEY, sharedTasks);
   }
 
   async unshareTask(taskId: string, friendId: string): Promise<void> {
@@ -336,7 +337,7 @@ export class LocalStorageFriendsRepository implements IFriendsRepository {
       sharedTasks[taskId] = sharedTasks[taskId].filter(
         (s: { friendId: string }) => s.friendId !== friendId
       );
-      localStorage.setItem(SHARED_TASKS_STORAGE_KEY, JSON.stringify(sharedTasks));
+      writeJsonOrThrow(SHARED_TASKS_STORAGE_KEY, sharedTasks);
     }
   }
 
@@ -345,7 +346,7 @@ export class LocalStorageFriendsRepository implements IFriendsRepository {
     const sharedTasks = this.getSharedTasksMap();
     if (sharedTasks[taskId]) {
       sharedTasks[taskId] = sharedTasks[taskId].map((s) => ({ ...s, accepted: true }));
-      localStorage.setItem(SHARED_TASKS_STORAGE_KEY, JSON.stringify(sharedTasks));
+      writeJsonOrThrow(SHARED_TASKS_STORAGE_KEY, sharedTasks);
     }
   }
 
@@ -391,23 +392,23 @@ export class LocalStorageFriendsRepository implements IFriendsRepository {
    * JSON.parse protégé — faille B14).
    */
   private getSharedListsArray(): SharedListGrant[] {
-    const data = localStorage.getItem(SHARED_LISTS_STORAGE_KEY);
+    const data = safeGetItem(SHARED_LISTS_STORAGE_KEY);
     if (!data) {
       const seed = localizeIncomingSharedLists(JSON.parse(JSON.stringify(DEMO_INCOMING_SHARED_LISTS)) as SharedListGrant[]);
-      localStorage.setItem(SHARED_LISTS_STORAGE_KEY, JSON.stringify(seed));
+      safeSetItem(SHARED_LISTS_STORAGE_KEY, JSON.stringify(seed));
       return seed;
     }
     try {
       return JSON.parse(data) as SharedListGrant[];
     } catch {
       const seed = localizeIncomingSharedLists(JSON.parse(JSON.stringify(DEMO_INCOMING_SHARED_LISTS)) as SharedListGrant[]);
-      localStorage.setItem(SHARED_LISTS_STORAGE_KEY, JSON.stringify(seed));
+      safeSetItem(SHARED_LISTS_STORAGE_KEY, JSON.stringify(seed));
       return seed;
     }
   }
 
   private saveSharedListsArray(grants: SharedListGrant[]): void {
-    localStorage.setItem(SHARED_LISTS_STORAGE_KEY, JSON.stringify(grants));
+    writeJsonOrThrow(SHARED_LISTS_STORAGE_KEY, grants);
   }
 
   async shareList(input: ShareListInput): Promise<void> {

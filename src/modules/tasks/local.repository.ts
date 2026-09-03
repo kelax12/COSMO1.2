@@ -1,5 +1,4 @@
 import { ITasksRepository, ToggleCompleteResult } from './repository';
-import { safeGetItem, safeParseArray } from '@/lib/safe-json';
 import { Task, CreateTaskInput, UpdateTaskInput, TaskFilters, TaskDependency } from './types';
 import { PaginationParams, PaginatedResult, DEFAULT_PAGE_SIZE } from '@/lib/pagination.types';
 import { localizeSeed } from '@/lib/seed-i18n';
@@ -7,6 +6,7 @@ import { reachableSets } from '@/lib/dependency-graph';
 import { TASK_DEPENDENCIES_STORAGE_KEY } from './constants';
 import { deadlineDayKey } from '@/lib/deadline';
 import type { CreateOptions } from '@/lib/restore-id';
+import { safeGetItem, safeParseArray, writeJsonOrThrow } from '@/lib/safe-json';
 const STORAGE_KEY = 'cosmo_demo_tasks';
 
 // Helper pour générer des dates
@@ -124,7 +124,7 @@ export class LocalStorageTasksRepository implements ITasksRepository {
   }
 
   private saveTasks(tasks: Task[]): void {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+    writeJsonOrThrow(STORAGE_KEY, tasks);
   }
 
   // ═══════════════════════════════════════════════════════════════════
@@ -370,7 +370,7 @@ export class LocalStorageTasksRepository implements ITasksRepository {
   // production refuserait.
 
   private getDependencyEdges(): TaskDependency[] {
-    const raw = localStorage.getItem(TASK_DEPENDENCIES_STORAGE_KEY);
+    const raw = safeGetItem(TASK_DEPENDENCIES_STORAGE_KEY);
     if (!raw) return [];
     try {
       const parsed = JSON.parse(raw);
@@ -383,7 +383,7 @@ export class LocalStorageTasksRepository implements ITasksRepository {
   }
 
   private saveDependencyEdges(edges: TaskDependency[]): void {
-    localStorage.setItem(TASK_DEPENDENCIES_STORAGE_KEY, JSON.stringify(edges));
+    writeJsonOrThrow(TASK_DEPENDENCIES_STORAGE_KEY, edges);
   }
 
   async getDependencies(): Promise<TaskDependency[]> {

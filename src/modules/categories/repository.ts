@@ -3,10 +3,10 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { Category, CreateCategoryInput, UpdateCategoryInput } from './types';
-import { safeGetItem, safeParseArray } from '@/lib/safe-json';
 import { CATEGORIES_STORAGE_KEY } from './constants';
 import { localizeSeed } from '@/lib/seed-i18n';
 import type { CreateOptions } from '@/lib/restore-id';
+import { safeGetItem, safeParseArray, writeJsonOrThrow } from '@/lib/safe-json';
 
 // ═══════════════════════════════════════════════════════════════════
 // DEMO DATA
@@ -69,7 +69,7 @@ export class LocalStorageCategoriesRepository implements ICategoriesRepository {
    * Save categories to localStorage
    */
   private saveCategories(categories: Category[]): void {
-    localStorage.setItem(CATEGORIES_STORAGE_KEY, JSON.stringify(categories));
+    writeJsonOrThrow(CATEGORIES_STORAGE_KEY, categories);
   }
 
   // ═══════════════════════════════════════════════════════════════════

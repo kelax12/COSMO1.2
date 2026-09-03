@@ -38,6 +38,7 @@ import {
   TEAM_TASK_DEPENDENCIES_STORAGE_KEY,
 } from './constants';
 import { localizeSeed } from '@/lib/seed-i18n';
+import { safeGetItem, safeSetItem, writeJsonOrThrow } from '@/lib/safe-json';
 
 const DEMO_ORG_ID = 'org-demo-1';
 const DEMO_USER_ID = 'demo-user';
@@ -319,17 +320,17 @@ const DEMO_ACTIVITY: TeamTaskActivity[] = [
 ];
 
 function readOrSeed<T>(key: string, seed: T): T {
-  const data = localStorage.getItem(key);
+  const data = safeGetItem(key);
   if (!data) {
     const clone = JSON.parse(JSON.stringify(seed)) as T;
-    localStorage.setItem(key, JSON.stringify(clone));
+    safeSetItem(key, JSON.stringify(clone));
     return clone;
   }
   try {
     return JSON.parse(data) as T;
   } catch {
     const clone = JSON.parse(JSON.stringify(seed)) as T;
-    localStorage.setItem(key, JSON.stringify(clone));
+    safeSetItem(key, JSON.stringify(clone));
     return clone;
   }
 }
@@ -339,7 +340,7 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
     return readOrSeed<TeamProject[]>(TEAM_PROJECTS_STORAGE_KEY, localizeSeed(DEMO_PROJECTS, DEMO_PROJECTS_EN));
   }
   private saveProjects(p: TeamProject[]): void {
-    localStorage.setItem(TEAM_PROJECTS_STORAGE_KEY, JSON.stringify(p));
+    writeJsonOrThrow(TEAM_PROJECTS_STORAGE_KEY, p);
   }
   private getTasksArray(): TeamTask[] {
     // Migration douce du localStorage antérieur à la multi-assignation
@@ -354,7 +355,7 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
     });
   }
   private saveTasks(tks: TeamTask[]): void {
-    localStorage.setItem(TEAM_TASKS_STORAGE_KEY, JSON.stringify(tks));
+    writeJsonOrThrow(TEAM_TASKS_STORAGE_KEY, tks);
   }
 
   async getProjects(orgId: string): Promise<TeamProject[]> {
@@ -480,7 +481,7 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
     return readOrSeed<TeamTaskComment[]>(TEAM_TASK_COMMENTS_STORAGE_KEY, localizeSeed(DEMO_COMMENTS, DEMO_COMMENTS_EN));
   }
   private saveComments(c: TeamTaskComment[]): void {
-    localStorage.setItem(TEAM_TASK_COMMENTS_STORAGE_KEY, JSON.stringify(c));
+    writeJsonOrThrow(TEAM_TASK_COMMENTS_STORAGE_KEY, c);
   }
 
   async getComments(taskId: string): Promise<TeamTaskComment[]> {
@@ -513,7 +514,7 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
     return readOrSeed<TeamSubtask[]>(TEAM_TASK_SUBTASKS_STORAGE_KEY, localizeSeed(DEMO_SUBTASKS, DEMO_SUBTASKS_EN));
   }
   private saveSubtasks(s: TeamSubtask[]): void {
-    localStorage.setItem(TEAM_TASK_SUBTASKS_STORAGE_KEY, JSON.stringify(s));
+    writeJsonOrThrow(TEAM_TASK_SUBTASKS_STORAGE_KEY, s);
   }
 
   async getSubtasks(taskId: string): Promise<TeamSubtask[]> {
@@ -560,13 +561,13 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
     return readOrSeed<TeamLabel[]>(TEAM_LABELS_STORAGE_KEY, localizeSeed(DEMO_LABELS, DEMO_LABELS_EN));
   }
   private saveLabels(l: TeamLabel[]): void {
-    localStorage.setItem(TEAM_LABELS_STORAGE_KEY, JSON.stringify(l));
+    writeJsonOrThrow(TEAM_LABELS_STORAGE_KEY, l);
   }
   private getTaskLabelsArray(): TeamTaskLabel[] {
     return readOrSeed<TeamTaskLabel[]>(TEAM_TASK_LABELS_STORAGE_KEY, DEMO_TASK_LABELS);
   }
   private saveTaskLabels(tl: TeamTaskLabel[]): void {
-    localStorage.setItem(TEAM_TASK_LABELS_STORAGE_KEY, JSON.stringify(tl));
+    writeJsonOrThrow(TEAM_TASK_LABELS_STORAGE_KEY, tl);
   }
 
   async getLabels(_orgId: string): Promise<TeamLabel[]> {
@@ -656,7 +657,7 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
   }
 
   private saveDependencies(deps: TeamTaskDependency[]): void {
-    localStorage.setItem(TEAM_TASK_DEPENDENCIES_STORAGE_KEY, JSON.stringify(deps));
+    writeJsonOrThrow(TEAM_TASK_DEPENDENCIES_STORAGE_KEY, deps);
   }
 
   async getTaskDependencies(_orgId: string): Promise<TeamTaskDependency[]> {

@@ -1,9 +1,9 @@
 import { IHabitsRepository } from './repository';
-import { safeGetItem, safeParseArray } from '@/lib/safe-json';
 import type { CreateOptions } from '@/lib/restore-id';
 import { Habit, CreateHabitInput, UpdateHabitInput } from './types';
 import { PaginationParams, PaginatedResult, DEFAULT_PAGE_SIZE } from '@/lib/pagination.types';
 import { localizeSeed } from '@/lib/seed-i18n';
+import { safeGetItem, safeParseArray, writeJsonOrThrow } from '@/lib/safe-json';
 
 const STORAGE_KEY = 'cosmo_demo_habits';
 
@@ -104,7 +104,7 @@ export class LocalStorageHabitsRepository implements IHabitsRepository {
   }
 
   private saveHabits(habits: Habit[]): void {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(habits));
+    writeJsonOrThrow(STORAGE_KEY, habits);
   }
 
   async fetchHabits(): Promise<Habit[]> {

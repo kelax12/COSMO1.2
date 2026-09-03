@@ -26,7 +26,9 @@
     "already_a_member": "This person is already part of the company.",
     "invitation_not_found": "This invitation no longer exists.",
     "invitation_already_processed": "This invitation has already been handled.",
-    "inviter_no_longer_member": "The person who invited you is no longer part of this company."
+    "inviter_no_longer_member": "The person who invited you is no longer part of this company.",
+    "storage_full": "This browser's storage is full. Free some space, then try again.",
+    "storage_unavailable": "This browser refuses to store demo data. Check that it isn't in strict private browsing mode."
   },
   "validation": {
     "fallback": "Invalid data",

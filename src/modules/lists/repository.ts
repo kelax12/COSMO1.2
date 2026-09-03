@@ -3,10 +3,10 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { TaskList, CreateListInput, UpdateListInput } from './types';
-import { safeGetItem, safeParseArray } from '@/lib/safe-json';
 import { LISTS_STORAGE_KEY } from './constants';
 import { localizeSeed } from '@/lib/seed-i18n';
 import type { CreateOptions } from '@/lib/restore-id';
+import { safeGetItem, safeParseArray, writeJsonOrThrow } from '@/lib/safe-json';
 
 // ═══════════════════════════════════════════════════════════════════
 // DEMO DATA
@@ -111,7 +111,7 @@ export class LocalStorageListsRepository implements IListsRepository {
    * Save lists to localStorage
    */
   private saveLists(lists: TaskList[]): void {
-    localStorage.setItem(LISTS_STORAGE_KEY, JSON.stringify(lists));
+    writeJsonOrThrow(LISTS_STORAGE_KEY, lists);
   }
 
   // ═══════════════════════════════════════════════════════════════════

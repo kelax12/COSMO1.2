@@ -3,8 +3,8 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { KRCompletion, CreateKRCompletionInput, KRCompletionFilters } from './types';
-import { safeGetItem, safeParseArray } from '@/lib/safe-json';
 import { KR_COMPLETIONS_STORAGE_KEY } from './constants';
+import { safeGetItem, safeParseArray, writeJsonOrThrow } from '@/lib/safe-json';
 
 // ═══════════════════════════════════════════════════════════════════
 // DEMO DATA — Seeds matching the completed KRs in OKR demo data
@@ -70,7 +70,7 @@ export class LocalStorageKRCompletionsRepository implements IKRCompletionsReposi
   }
 
   private saveCompletions(completions: KRCompletion[]): void {
-    localStorage.setItem(KR_COMPLETIONS_STORAGE_KEY, JSON.stringify(completions));
+    writeJsonOrThrow(KR_COMPLETIONS_STORAGE_KEY, completions);
   }
 
   // ═══════════════════════════════════════════════════════════════════

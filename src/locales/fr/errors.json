@@ -26,7 +26,9 @@
     "already_a_member": "Cette personne fait déjà partie de l'entreprise.",
     "invitation_not_found": "Cette invitation n'existe plus.",
     "invitation_already_processed": "Cette invitation a déjà été traitée.",
-    "inviter_no_longer_member": "La personne qui vous a invité ne fait plus partie de cette entreprise."
+    "inviter_no_longer_member": "La personne qui vous a invité ne fait plus partie de cette entreprise.",
+    "storage_full": "L'espace de stockage de ce navigateur est plein. Libérez de la place, puis réessayez.",
+    "storage_unavailable": "Ce navigateur refuse d'enregistrer les données du mode démo. Vérifiez qu'il n'est pas en navigation privée stricte."
   },
   "validation": {
     "fallback": "Données invalides",
