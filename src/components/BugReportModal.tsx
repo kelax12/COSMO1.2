@@ -144,10 +144,19 @@ const BugReportModal: React.FC<BugReportModalProps> = ({ open, onOpenChange }) =
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto"
+        className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm overflow-y-auto"
         onClick={() => !sending && close()}
         role="presentation"
       >
+        {/* C-56 — `items-center` ET `overflow-y-auto` sur le MEME element est
+            le piege CSS classique : quand l'enfant depasse, le debordement se
+            repartit DES DEUX COTES, et la partie qui sort par le haut n'entre
+            pas dans `scrollHeight`. `scrollTop` etant borne a zero, aucun geste
+            ne la ramene. Mesure a 375x350 (viewport Android clavier ouvert) :
+            haut de la carte a -55,8 px, et le defilement l'ELOIGNE encore. Le
+            scroll appartient donc au conteneur, le centrage a un enfant
+            `min-h-full` — apres correctif, +16 px, atteignable. */}
+        <div className="flex min-h-full items-center justify-center p-4">
         <motion.div
           // La position vient du CSS (centrage flex), l'animation ne porte que
           // sur l'opacité et l'échelle : sous prefers-reduced-motion la valeur
@@ -298,6 +307,7 @@ const BugReportModal: React.FC<BugReportModalProps> = ({ open, onOpenChange }) =
             </form>
           )}
         </motion.div>
+        </div>
       </motion.div>
     </AnimatePresence>,
     document.body,
