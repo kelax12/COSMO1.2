@@ -418,6 +418,11 @@ Ce dépôt a déjà mesuré ce que vaut une zone non lue : les Edge Functions St
 | **A-7** | **Chemins d'erreur du client** (que voit l'utilisateur quand ça casse) | `R-10` a montré un message d'erreur brut affiché à l'écran, en contradiction avec une règle que le fichier citait dans un commentaire. Personne n'a vérifié les autres | Les fuites de détail technique, les échecs avalés, et les écrans blancs derrière `AppErrorBoundary` |
 | **A-8** | **Le fil principal de la landing** | C-12. C'est la seule page lente, et la première que voit un visiteur d'annuaire | L'attribution réelle des 546 à 1 633 ms de blocage, à prendre **sur le runner**, jamais en local |
 
+**Les huit prompts sont écrits, prêts à coller** : [`prompts-audits.md`](./prompts-audits.md). Un
+préambule commun porte les règles de méthode du dépôt (mesurer plutôt que déduire, témoin
+obligatoire, jamais de seuil baissé, sessions concurrentes), puis un corps par audit avec son
+périmètre, ses questions et ses pièges connus.
+
 > **Une fois A-1 à A-8 passés et leurs findings ajoutés ici, la phrase « il ne reste plus un seul
 > problème lié au code » devient vérifiable.** Avant, elle ne l'est pas, et l'écrire quand même
 > serait exactement le défaut que ce dépôt a corrigé quatre fois en cinq jours : **une réponse
