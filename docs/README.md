@@ -391,6 +391,7 @@ testées** (`scripts/migration-guards.test.mjs`).
 | [`STRIPE-LIVE.md`](./STRIPE-LIVE.md) | Compte Stripe live : les 8 prix et le `tax_behavior` définitif · **créé le 2026-08-26** |
 | [`SUPPORT.md`](./SUPPORT.md) | Procédure de support : qui répond, sous quel délai, par quel canal, et quand ça devient un incident · **créé le 2026-08-28** |
 | [`POST-AUDIT-GUIDE.md`](./POST-AUDIT-GUIDE.md) | Réactivation premium (`PREMIUM_ENFORCED`), finalisation Stripe |
+| [`MIGRATION-REACT19.md`](./MIGRATION-REACT19.md) | Étude de faisabilité React 19 + `react-router` 8 · **créée le 2026-09-03** (audit A-6), non notée (ce n'est pas un audit de domaine) |
 | [`COSMO-CLI.md`](./COSMO-CLI.md) | CLI d'accès aux données COSMO réelles (`scripts/cosmo/`) |
 | [`AGENT-AJOUTER-TACHE.md`](./AGENT-AJOUTER-TACHE.md) | Mémo court : ajouter une tâche dans le vrai compte |
 | [`../supabase/migration/README.md`](../supabase/migration/README.md) | Convention de nommage et ledger des migrations |

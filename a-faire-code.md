@@ -45,12 +45,12 @@ ne vive à deux endroits.
 | [2](#2-dette-structurelle) | Dette structurelle | C-09 → C-11, C-49, C-50 |
 | [3](#3-performance) | Performance | C-12 → C-14 |
 | [4](#4-scalabilité) | Scalabilité | C-15 → C-16 |
-| [5](#5-sécurité-et-dépendances) | Sécurité et dépendances | C-17 → C-19, C-29 → C-33, C-39, C-44 → C-46 |
+| [5](#5-sécurité-et-dépendances) | Sécurité et dépendances | C-17 → C-19, C-29 → C-33, C-39, C-44 → C-46, C-58 → C-60 |
 | [6](#6-i18n) | i18n | C-20 → C-22, C-38 |
 | [7](#7-accessibilité) | Accessibilité | C-23 → C-25, C-51 → C-55, C-57 |
 | [8](#8-tests-et-gardes) | Tests et gardes | C-26 → C-28, C-34 → C-36, C-47 |
 | [9](#9-ce-qui-nest-PAS-du-code) | Ce qui n'est PAS du code | renvois |
-| [10](#10-couverture--ce-que-cette-liste-ne-peut-pas-contenir) | 🔴 Couverture et audits à lancer | 5 audits restants |
+| [10](#10-couverture--ce-que-cette-liste-ne-peut-pas-contenir) | 🔴 Couverture et audits à lancer | 3 audits restants |
 
 ---
 
@@ -485,17 +485,13 @@ basculement de plan). Ce qu'elle ne dit **toujours pas** : rien sur la **concurr
 
 ## 5. Sécurité et dépendances
 
-### C-17 · `react-router` · la seule sortie est React 19 · **P2 · L**
+### C-17 · ~~`react-router` · la seule sortie est React 19~~ · **P2 · L** · ✅ clos le 2026-09-03, remplacé par C-58
 
-`GHSA-qwww-vcr4-c8h2` (CSRF en mode RSC) est **inapplicable ici** (aucun RSC dans une SPA Vite), mais
-**aucune version ne ferme les deux familles à la fois sous React 18** : rétrograder en 7.11.0
-réintroduirait l'open redirect `GHSA-wrjc-x8rr-h8h6`.
-
-- ❌ **Ne jamais lancer `npm audit fix`** sur ce paquet.
-- **Fini quand** : PR dédiée React 19 + `react-router` 8. ⚠️ Elle referme aussi C-18 : `Button` a dû
-  devenir un `forwardRef` **parce que** la source shadcn amont est écrite pour React 19.
-- **Le garde-fou tient en attendant** : `src/lib/no-open-redirect.test.ts` verrouille la propriété
-  qui rend l'open redirect inexploitable.
+🔴 **Ce que cet item affirmait était faux depuis le 2026-07-28**, sans que personne ne revienne
+vérifier : « aucune version ne ferme les deux familles à la fois sous React 18 ». L'audit **A-6**
+a mesuré que `react-router@7.18.2`, déjà installé, ferme les deux CVE sous React 18 — la migration
+n'est donc plus une urgence sécurité. Détail complet, chronologie et preuve : **C-58** ci-dessous
+et [`docs/MIGRATION-REACT19.md`](./docs/MIGRATION-REACT19.md).
 
 ### C-18 · CVE dev-only · **P3 · S**
 
@@ -545,14 +541,84 @@ invitait à ne pas faire.
   tableau ci-dessus porte sa nouvelle date. ❌ Ne jamais mêler cette passe à une passe sécurité
   produit : ce sont deux natures de risque, et les confondre fait passer l'une pour l'autre.
 
-### C-19 · Les composants shadcn recopiés visent React 19 · **P2 · M**
+### C-19 · ~~Les composants shadcn recopiés visent React 19~~ · **P2 · M** · 🟠 traité par l'audit A-6, cf. C-59
 
-`Button` a été trouvé cassé (le `ref` n'était jamais attaché, donc un focus clavier mort dans le
-calendrier). **Rien ne dit que c'est le seul** : la classe de bug est « composant amont recopié sans
-vérifier sa cible React », et elle est silencieuse.
+`Button` avait été trouvé cassé (le `ref` n'était jamais attaché, donc un focus clavier mort dans le
+calendrier). L'audit **A-6** a balayé **tout** `ref={` posé sur un composant (pas un élément DOM
+natif) dans `src/**/*.tsx` (125 occurrences au total) : sur `src/components/ui/`, seuls `Button` et
+`Input` reçoivent un ref quelque part dans le code. `Button` était déjà corrigé ; `Input` ne l'était
+pas — **corrigé cette session, cf. C-59**. Les 22 autres fichiers recopiés depuis shadcn ne
+reçoivent aucun ref aujourd'hui : la classe de bug n'a plus d'instance vivante connue.
 
-- **Fini quand** : les composants de `src/components/ui/` recopiés depuis shadcn sont relus contre
-  leur version amont, et ceux qui reçoivent un `ref` sont testés au clavier.
+⚠️ **Reste ouvert, et c'est pour ça que ce n'est pas ✅** : ceci est un état daté, pas une garantie
+permanente. Aucun test ni aucune gate ne détecte automatiquement un futur composant shadcn recopié
+sans `forwardRef` avant qu'un consommateur lui pose un ref — la classe de bug reste silencieuse par
+construction. Et cet audit n'a pas fait, faute de périmètre, une relecture ligne à ligne des 24
+fichiers contre leur source amont (hors la question du ref) : un écart non lié au ref pourrait
+dormir ailleurs.
+
+- **Fini quand** : soit une gate détecte un composant shadcn sans `forwardRef`, soit chaque
+  composant est revérifié à l'ajout de son premier ref (discipline manuelle, pas outillée).
+
+### C-58 · Le blocage sécurité qui forçait React 19 est déjà levé · **P3 · XS** · trouvé par l'audit A-6
+
+`CLAUDE.md` et `faille.md` décrivaient un piège à deux CVE (`GHSA-qwww-vcr4-c8h2`,
+`GHSA-wrjc-x8rr-h8h6`) sans issue sous React 18. **Mesuré contre trois sources indépendantes**,
+ce n'est plus vrai depuis le 2026-07-28 :
+
+1. L'avis GitHub lui-même (interrogé via l'API, pas son résumé dans la doc) porte **deux plages
+   disjointes avec chacune son propre correctif** : `[7.12.0, 7.18.2)` corrigée en **7.18.2**,
+   `[8.0.0, 8.3.0)` corrigée en 8.3.0. La doc les avait fusionnées en une seule plage
+   (« ≥ 7.12.0 < 8.3.0 »), ce qui masquait le correctif intermédiaire.
+2. `react-router@7.18.2` (publié le 2026-07-28) est **déjà celui installé** : `package.json` porte
+   `^7.18.2`, `package-lock.json` l'épingle exactement.
+3. `npm audit` local (0 alerte sur `react-router` — les 2 seules alertes actuelles viennent de
+   `shadcn`, C-18, sans rapport) et l'API OSV interrogée pour `react-router@7.18.2` (`{"vulns":[]}`)
+   rendent tous les deux zéro résultat. `GHSA-wrjc-x8rr-h8h6` est fermé dès 7.18.0.
+
+**Conséquence** : le dépôt ferme déjà les deux CVE, aujourd'hui, sous React 18, sans avoir rien
+changé. La migration React 19 + `react-router` 8 n'est plus une urgence sécurité — chiffrage complet
+dans [`docs/MIGRATION-REACT19.md`](./docs/MIGRATION-REACT19.md).
+
+- ❌ **Ça ne change rien à la règle `npm audit fix`** : toujours ne pas la lancer sur ce paquet sans
+  relire l'avis à la main.
+- **Correctif documentaire livré** : `faille.md` § « Ouvert · à planifier » corrigé.
+- **Fini quand** : fini — c'est un constat, pas un correctif de code. Le moment de la migration
+  (désormais un arbitrage produit, plus une urgence) est dans `a-faire-manuel.md` M-33.
+
+### C-59 · ~~`Input` (`src/components/ui/input.tsx`) n'était pas un `forwardRef`~~ · **P2 · S** · ✅ corrigé le 2026-09-03, trouvé par l'audit A-6
+
+Même classe de bug que `Button` avant lui (C-18 historique) : composant recopié depuis shadcn
+amont, écrit pour React 19 où `ref` est une prop ordinaire, sans `React.forwardRef`. Sous React 18,
+un ref posé dessus n'est jamais attaché — aucune erreur visible, juste un focus qui n'arrive jamais.
+
+**Scénario d'échec mesuré** : `AdminMfaGate` (`src/components/admin/AdminMfaGate.tsx:106`) pose
+`ref={inputRef}` sur cet `Input` pour donner le focus au champ de code TOTP au montage
+(`useEffect(() => inputRef.current?.focus(), [])`). Avec `Input` en simple fonction,
+`inputRef.current` restait `null` : le focus automatique du **seul écran qui protège `/admin`**
+ne s'exécutait jamais, silencieusement. Reproduit avant correctif : un test rend `<Input ref={ref}/>`
+puis vérifie `ref.current instanceof HTMLInputElement` — échoue (`null`) avant, passe après.
+
+- **Où** : `src/components/ui/input.tsx` (converti en `React.forwardRef`, même schéma que
+  `Button`), `src/components/ui/input.test.tsx` (test de non-régression : ref attaché sans
+  avertissement React, et focus programmatique fonctionnel — le cas exact d'`AdminMfaGate`).
+- **Fini quand** : fini. Trouvé via le balayage systématique de A-6, corrigé et testé le
+  2026-09-03 ; le correctif est entré sur `main` par le commit `8a8869d` d'une session voisine
+  (travail A-3 sur le clavier), qui a repris les deux fichiers déjà écrits dans l'arbre partagé au
+  moment de son propre commit. `npm run typecheck`, `npm run lint`, `npm run i18n:check` et la
+  suite complète (`npx vitest run`) sont verts derrière.
+
+### C-60 · `useRef<T>()` sans valeur initiale : cassera sous les types React 19 · **P3 · XS** · trouvé par l'audit A-6
+
+`src/lib/hooks/useDebounce.ts:69` (`usePrevious`) appelle `useRef<T>()` sans argument. Valide sous
+React 18 ; les types `@types/react` 19 rendent l'argument initial obligatoire (alignés sur
+`useState`), donc ce site échouerait `tsc` dès la bascule.
+
+- **Où** : `src/lib/hooks/useDebounce.ts:69`.
+- **Piste** : `useRef<T | undefined>(undefined)`.
+- **Fini quand** : fait dans la même PR que la bascule React 19 (cf. `docs/MIGRATION-REACT19.md`
+  §5) — pas avant, le code est valide aujourd'hui et ce fichier n'a pas d'autre raison d'être
+  touché isolément.
 
 ### C-29 · ~~`delete-account` : la lecture qui désigne le successeur d'une organisation avalait son erreur~~ · **P1 · S** · ✅ corrigé le 2026-09-03
 
@@ -1440,12 +1506,44 @@ scroll d'un conteneur qui n'est pas `window`) viennent tous de bugs qui ne se vo
 émulation. Un viewport de 375 × 350 modélise Android ; il ne modélise pas iOS, qui ne réduit pas son
 viewport de mise en page.
 
+### ✅ A-6 · faisabilité React 19 + `react-router` 8 · passé le 2026-09-03
+
+Une ÉTUDE, comme demandé : aucune version majeure n'a bougé dans `package.json`. Rapport complet
+dans [`docs/MIGRATION-REACT19.md`](./docs/MIGRATION-REACT19.md) (chronologie CVE, inventaire ref
+par ref, chiffrage). Deux correctifs bornés livrés dans la foulée.
+
+| Finding | Comment il a été établi |
+|---|---|
+| **C-58** · le blocage sécurité qui forçait React 19 est déjà levé | l'avis GitHub interrogé directement (pas son résumé dans la doc) rend deux plages disjointes, chacune avec son propre correctif ; `npm audit` local et l'API OSV interrogée pour `react-router@7.18.2` (déjà installé) rendent tous les deux zéro vulnérabilité |
+| **C-59** · `Input` n'était pas un `forwardRef`, comme `Button` avant lui | balayage exhaustif des 125 `ref={` de `src/**/*.tsx` : `Input` est le seul composant shadcn, avec `Button`, à recevoir un ref quelque part dans le code ; test rouge (`ref.current` à `null`) avant correctif, vert après |
+| **C-60** · un `useRef<T>()` sans valeur initiale, cassera sous les types React 19 | `grep` de tout `src/` : un seul site (`useDebounce.ts:69`) |
+
+Ce qu'il a **infirmé**, et qui est donc clos : la quasi-totalité des ruptures officielles React 19
+(`ReactDOM.render`/`.hydrate`, `react-dom/test-utils`, `propTypes`, `defaultProps`, refs string,
+retours implicites de callback ref) n'a **aucune** occurrence dans ce code ; la nouvelle
+transformation JSX est déjà active ; `prerender.mjs` ne fait aucun rendu React côté serveur, donc
+les ruptures `react-dom/server` sont hors sujet ; et côté `react-router`, l'app n'utilise que le
+mode déclaratif (`<BrowserRouter>`, `<Routes>/<Route>`, `React.lazy`, `AppErrorBoundary` maison) —
+aucune des ruptures listées par le CHANGELOG officiel de la v8 (retrait de `react-router-dom`,
+champs `meta`/`data`, middleware toujours actif, `splitRouteModules`) ne touche un mode que ce
+dépôt n'utilise pas. `basename`, les routes lazy, l'`ErrorBoundary` maison et les slugs localisés
+traversent donc la migration sans changement. Il n'y a, de fait, **aucune migration
+`react-router` 7 → 8 indépendante à chiffrer** : une fois React 19 posé, c'est une montée de
+version. Et `no-open-redirect.test.ts` verrouille une propriété du CODE du dépôt, indépendante de
+la version de la bibliothèque.
+
+⚠️ **Limite de cet audit.** Le chiffrage (§5 de `docs/MIGRATION-REACT19.md`) suppose que le
+parcours manuel prévu pour PR 1 (`createPortal`, calendrier, audit clavier) ne révèle rien
+d'imprévu — c'est une estimation avant exécution, pas une migration déjà éprouvée. Et la relecture
+des 24 composants shadcn contre leur version amont s'est limitée à la question du `ref` (le seul
+point demandé qui soit falsifiable à l'échelle du dépôt) ; un écart non lié au ref pourrait dormir
+ailleurs, cf. la réserve laissée sur C-19.
+
 ### Audits à lancer, par rapport valeur / effort
 
 | # | Audit | Pourquoi maintenant | Ce qu'il rendrait |
 |---|---|---|---|
 | **A-4** | **Mobile sur appareil réel** (iOS Safari, Android) · 🟠 **moitié appareil restante**, cf. la section juste au-dessus et [`a-faire-manuel.md`](./a-faire-manuel.md) §7 (M-25) | La note mobile n'a toujours **aucune** mesure sur vrai téléphone : la passe du 2026-09-03 n'a pu mesurer qu'en viewport émulé. Les pièges WebKit documentés dans `MOBILE.md` viennent justement de bugs invisibles en émulation | Les bugs de feuille, de clavier virtuel, de `100vh` et de gestes que l'émulation ne montre pas ; et la confirmation iOS de C-56, dont le mécanisme diffère d'Android |
-| **A-6** | **Faisabilité React 19 + `react-router` 8** | C-17 et C-19. C'est la seule sortie de la double CVE, et la cause d'un bug déjà rencontré | Un plan de migration chiffré, et la liste des composants shadcn à réaligner |
 | **A-7** | **Chemins d'erreur du client** (que voit l'utilisateur quand ça casse) | `R-10` a montré un message d'erreur brut affiché à l'écran, en contradiction avec une règle que le fichier citait dans un commentaire. Personne n'a vérifié les autres | Les fuites de détail technique, les échecs avalés, et les écrans blancs derrière `AppErrorBoundary` |
 | **A-8** | **Le fil principal de la landing** | C-12. C'est la seule page lente, et la première que voit un visiteur d'annuaire | L'attribution réelle des 546 à 1 633 ms de blocage, à prendre **sur le runner**, jamais en local |
 
@@ -1455,7 +1553,7 @@ préambule commun porte les règles de méthode du dépôt (mesurer plutôt que 
 obligatoire, jamais de seuil baissé, sessions concurrentes), puis un corps par audit avec son
 périmètre, ses questions et ses pièges connus.
 
-> **Une fois A-4, A-6, A-7 et A-8 passés et leurs findings ajoutés ici, la phrase « il ne reste plus un seul
+> **Une fois A-4, A-7 et A-8 passés et leurs findings ajoutés ici, la phrase « il ne reste plus un seul
 > problème lié au code » devient vérifiable.** Avant, elle ne l'est pas, et l'écrire quand même
 > serait exactement le défaut que ce dépôt a corrigé quatre fois en cinq jours : **une réponse
 > rassurante donnée par une mesure qui ne regardait pas.**

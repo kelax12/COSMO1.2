@@ -105,6 +105,7 @@ facteur TOTP y donne accès. Téléphone perdu, la seule porte de sortie est
 | M-20 | **Vesk** (mesure d'audience) : gardé, avec surveillance quotidienne de son empreinte | Décision du 2026-08-18. Refermer l'issue `ci-red` réarme l'alerte | `faille.md` V-1 |
 | M-21 | **`vendor-sentry` sur le chemin critique** : le différer, ou pas | Ce n'est pas un arbitrage de performance : le différer revient à ne plus capturer les erreurs de démarrage, celles qui blanchissent l'écran. ⚠️ La mesure qui servait à trancher était fausse (build sans DSN) : il en faut une nouvelle avant de décider | `a-faire-code.md` C-13, `ROADMAP-60J.md` T-47 |
 | M-22 | **Un admin non propriétaire doit-il pouvoir supprimer l'entreprise ?** | Aujourd'hui oui, et la suppression emporte l'abonnement et les preuves légales. Le code peut appliquer n'importe laquelle des deux réponses, mais c'est un choix produit | `a-faire-code.md` C-39 |
+| M-33 | **Quand planifier la migration React 19 + `react-router` 8** | Ce n'est plus une urgence sécurité (audit A-6, C-58 : les deux CVE citées par `faille.md` sont déjà fermées par la version installée). Le chiffrage est nettement plus léger que redouté (0,5 à 1 jour + moins d'une heure, cf. `docs/MIGRATION-REACT19.md` §5) faute de rupture réelle dans ce code. C'est désormais un arbitrage de priorité ordinaire, pas un blocage | `a-faire-code.md` C-58, `docs/MIGRATION-REACT19.md` |
 
 ---
 

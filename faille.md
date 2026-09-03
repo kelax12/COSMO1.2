@@ -734,13 +734,22 @@ relit contre la console et contre `docs/ROADMAP-60J.md`, jamais de mémoire.
 
 ## 🟡 Ouvert — à planifier
 
-- **`GHSA-qwww-vcr4-c8h2`** (`react-router` ≥ 7.12.0 < 8.3.0, CSRF en **mode RSC**).
-  **Inapplicable ici** : aucun RSC dans une SPA Vite. ⚠️ **Ne pas lancer `npm audit fix`** : il
-  propose 7.11.0, qui **réintroduirait** l'open redirect `GHSA-wrjc-x8rr-h8h6`. Aucune version ne
-  clôt les deux familles à la fois sous React 18 → la sortie est la migration React 19 +
-  `react-router` 8, en PR dédiée.
+- 🔴 **CORRIGÉ le 2026-09-03 (audit A-6)** : ce point disait « aucune version ne clôt les deux
+  familles à la fois sous React 18 ». **Faux depuis le 2026-07-28**, et personne n'était revenu
+  vérifier. L'avis `GHSA-qwww-vcr4-c8h2` porte en réalité **deux plages disjointes avec chacune son
+  propre correctif** — `[7.12.0, 7.18.2)` corrigée en **7.18.2**, `[8.0.0, 8.3.0)` corrigée en
+  8.3.0 — que ce paragraphe avait fusionnées en une seule plage (« ≥ 7.12.0 < 8.3.0 »), masquant le
+  correctif intermédiaire. `react-router@7.18.2` (publié le 2026-07-28) est **déjà celui installé**
+  (`package-lock.json`), et interrogé pour cette version précise, `npm audit` local et l'API OSV
+  rendent tous les deux **zéro** vulnérabilité. `GHSA-wrjc-x8rr-h8h6` (l'open redirect) est lui
+  aussi fermé, dès 7.18.0. **Conséquence : ce n'est plus un blocage sécurité.** La migration React
+  19 + `react-router` 8 redevient une modernisation ordinaire, sans urgence — chiffrage complet
+  dans [`docs/MIGRATION-REACT19.md`](./docs/MIGRATION-REACT19.md).
+  ⚠️ Ça ne change rien à la règle : ne toujours pas lancer `npm audit fix` sur ce paquet sans
+  relire l'avis, un lockfile différent peut encore proposer une rétrogradation.
   La propriété qui rend l'open redirect inexploitable (aucune navigation alimentée par un
-  paramètre d'URL) est **verrouillée par un test** : `src/lib/no-open-redirect.test.ts`.
+  paramètre d'URL) reste **verrouillée par un test**, sans rapport avec la version installée :
+  `src/lib/no-open-redirect.test.ts`.
 - **CVE dev-only** (`vitest`, `eslint`, `vite`, `glob`/`minimatch`) : jamais servies au
   navigateur. `npm audit fix --force` casserait le peer `eslint-plugin-react-hooks` (vérifié en
   `--dry-run`) → mise à jour outillage dédiée, jamais dans une passe sécurité.
