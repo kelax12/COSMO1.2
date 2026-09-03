@@ -116,12 +116,21 @@ const FirstRunSetup: React.FC = () => {
 
   return (
     <div
-      className="fixed inset-0 z-[60] flex items-center justify-center overflow-y-auto p-4"
+      className="fixed inset-0 z-[60] overflow-y-auto"
       style={{ backgroundColor: 'rgb(var(--color-background))' }}
       role="dialog"
       aria-modal="true"
       aria-label={t('firstRun.title')}
     >
+      {/* C-56 — `items-center` ET `overflow-y-auto` sur le MEME element est le
+          piege CSS classique : quand l'enfant depasse, le debordement se
+          repartit DES DEUX COTES, et la partie qui sort par le haut n'entre pas
+          dans `scrollHeight`. `scrollTop` etant borne a zero, aucun geste ne la
+          ramene. Mesure a 375x350 (la hauteur d'un viewport Android clavier
+          ouvert) : haut de la carte a -55,8 px, et le defilement l'ELOIGNE
+          encore. Le scroll appartient donc au conteneur, le centrage a un
+          enfant `min-h-full` — apres correctif, +16 px, atteignable. */}
+      <div className="flex min-h-full items-center justify-center p-4">
       {/* Position en CSS, l'animation ne porte que le décoratif : sous
           `prefers-reduced-motion` ce helper ne produit AUCUN transform. */}
       <motion.div
@@ -249,6 +258,7 @@ const FirstRunSetup: React.FC = () => {
           </Button>
         </div>
       </motion.div>
+      </div>
     </div>
   );
 };
