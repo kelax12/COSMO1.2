@@ -1,6 +1,52 @@
 # Patterns UI — COSMO
 
-## Note UI / UX : 70 → 80 → 82 → **84 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29)
+## Note UI / UX : 70 → 80 → 82 → 84 → **87 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03)
+
+> ### 2026-09-03 · +3, et deux des trois défauts avaient été introduits par leur propre correctif
+>
+> **Le calendrier COSMO remplace le picker natif partout où il était visible**, six surfaces :
+> échéance de tâche d'équipe, date de « Planifier dans l'agenda », les deux champs des popups de
+> dépendances, et les deux entrées de menu qui ouvraient le picker par `showPicker()` (report en
+> masse des tâches en retard, deadline de la barre de sélection). Ces deux dernières n'avaient
+> aucun champ où s'ancrer, d'où l'extraction de `DateCalendarPanel` : un seul corps de calendrier,
+> deux façons de l'ouvrir. `minDate` reprend l'attribut `min` de l'ancien input natif, sans quoi on
+> pouvait reporter une tâche en retard **vers hier**.
+>
+> ⚪ **Deux `input[type=date]` natifs restent, et c'est voulu** : ceux d'`EventModalForm`, mobiles.
+> La roue système vaut mieux que n'importe quel calendrier maison sur un téléphone.
+>
+> **Les flèches ne déplaçaient pas le focus dans le calendrier, et l'avertissement le disait.**
+> « Function components cannot be given refs » n'était pas du bruit : la source shadcn amont est
+> écrite pour React 19, où `ref` est une prop ordinaire ; le projet est sur React 18, où elle ne
+> l'est pas. Le `ref.current?.focus()` de `CalendarDayButton` ne faisait donc **rien**. Prouvé dans
+> le navigateur après correctif : Tab atteint la grille, Flèche droite déplace le focus du 30 au
+> 31 août.
+>
+> **L'icône noire des sélecteurs natifs venait de la règle censée la corriger.** `index.css`
+> appliquait `filter: invert(1)` en thème sombre, écrite avant que `.dark` pose `color-scheme:
+> dark`. Depuis, le navigateur dessine déjà l'icône en clair, et l'inversion la repeignait en
+> **noir sur fond noir**. Mesuré côte à côte dans le navigateur avant de toucher au code, puis
+> vérifié sur `date`, `time` et `datetime-local` en thèmes Sombre **et** Noir. La règle est
+> supprimée, pas remplacée, et un garde-fou interdit sa réintroduction.
+>
+> **Un premier écran qui demande au lieu de faire à la place.** `FirstRunSetup` remplace
+> `OnboardingExampleTasks`, qui créait trois tâches d'exemple **sans aucun écran** et **en français
+> écrit en dur**. Mesure de prod du 2026-08-28, sur 28 comptes : 36 % n'ont jamais rien créé, 50 %
+> ne sont jamais revenus après leur session d'inscription. Chaque étape crée **au moment où elle est
+> validée**, jamais à la fin, et l'écran est monté dans `Layout` et non sur une route, parce qu'une
+> inscription par Google ne repasse pas par `SignupPage`.
+>
+> Dans le même mouvement, seize points de revue de `src/components` : une seule confirmation de
+> suppression au lieu de deux, un échec de sauvegarde qui s'annonce au lieu d'être avalé, les
+> requêtes de `ColorSettingsModal` qui ne partent plus que modale ouverte, et `RichText` qui
+> souligne ses liens, annonce un schéma refusé au lieu de le taire, et arrive **avec ses tests**,
+> lui qui n'en avait aucun alors qu'il porte une allowlist anti-XSS.
+>
+> 🔴 **Ce qui plafonne à 87, et c'est un constat sur la méthode** : deux défauts de cette fenêtre
+> ont été trouvés **en regardant, pas en lisant**. Les quatre liens vers les pages contractuelles
+> rendaient une 404 en anglais, et le compteur d'étapes de l'onboarding affichait son gabarit,
+> « Étape {current} sur {total} ». Aucune gate ne pouvait les voir. Et la liste de findings du
+> 2026-08-14 (tableau ci-dessous) **n'a pas été remesurée** depuis le 08-27.
 
 > ### 2026-08-29 · +2, deux P1 de la critique du 2026-08-27 fermés
 >

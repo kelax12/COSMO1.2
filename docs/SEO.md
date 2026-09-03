@@ -13,7 +13,26 @@ cause n'est pas dans le dépôt.
 > liens et les Core Web Vitals terrain. Ces données vivent dans Search Console, Ahrefs et
 > PageSpeed Insights.
 
-## Note SEO : 73 → 73 → **75 / 100** (2026-08-25 → 2026-08-27 → 2026-08-29)
+## Note SEO : 73 → 73 → **75 / 100** (2026-08-25 → 2026-08-27 → 2026-08-29) · inchangée au 2026-09-03
+
+> ### 2026-09-03 · toujours 75, et la raison n'a pas changé depuis le 2026-08-19
+>
+> Les 71 commits des 08-30 au 09-03 ne produisent **aucun contenu indexable** et ne touchent ni au
+> prérendu, ni au `sitemap.xml`, ni aux canonicals, ni aux `hreflang`. Deux mouvements les
+> effleurent sans rien changer au référencement :
+>
+> - les trois pages contractuelles existent désormais en anglais, mais `en` **n'est toujours pas
+>   dans `INDEXABLE_LOCALES`** : servie aux utilisateurs, fermée à Google, exactement comme prévu
+>   tant que le corps des pages reste français ;
+> - quatre liens vers ces pages rendaient une **404 en anglais** (slug localisé écrit en dur dans
+>   un `to=`, alors que le préfixe de locale est porté par le `basename`). Corrigé. C'est un défaut
+>   d'expérience et de liens internes, sur des pages **non indexables** : il ne rapporte pas de
+>   point SEO.
+>
+> **Ce qui décide de la note n'a pas été remesuré** : la position moyenne, les clics non-marque et
+> les domaines référents vivent dans Search Console, et la dernière lecture date du **2026-08-19**.
+> Le facteur limitant reste l'autorité de domaine, et le seul levier reste
+> [`ACQUISITION-BACKLINKS.md`](./ACQUISITION-BACKLINKS.md), intégralement manuel.
 
 > ### 2026-08-29 · +2, et le gain vient d'un défaut trouvé, pas d'un contenu écrit
 >

@@ -1,6 +1,26 @@
 # Mobile-first — patterns et conventions
 
-## Note mobile / DA : 62 → 72 → 74 → **76 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29)
+## Note mobile / DA : 62 → 72 → 74 → **76 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29) · inchangée au 2026-09-03
+
+> ### 2026-09-03 · note inchangée, et rien de mobile n'a été mesuré
+>
+> Les 71 commits des 08-30 au 09-03 touchent le socle, la CI, la sécurité et la landing desktop.
+> Trois choses seulement concernent cette note, et aucune ne rapporte de point :
+>
+> - **Les deux `input[type=date]` natifs qui restent sont ASSUMÉS**, et ce sont des champs mobiles :
+>   ceux d'`EventModalForm` (desktop en `md:hidden`, plus l'overlay mobile). Le calendrier COSMO a
+>   remplacé le picker natif sur les six surfaces où il était visible, mais **pas** sur téléphone :
+>   la roue système vaut mieux que n'importe quel calendrier maison. C'est un arbitrage écrit, pas
+>   un oubli, cf. [`UI-PATTERNS.md`](./UI-PATTERNS.md) ;
+> - `FirstRunSetup` est monté dans `Layout`, donc il s'affiche aussi sur mobile. **Son rendu
+>   téléphone n'a pas été vérifié écran par écran** ;
+> - l'entrée du hero de la landing est passée en CSS. Le gain mesuré (deux secondes d'écran blanc à
+>   4× de bridage CPU) profite d'abord aux appareils lents, donc aux mobiles, mais il a été mesuré
+>   **au bureau, avec un bridage simulé**, jamais sur un vrai téléphone.
+>
+> ⚠️ **Ni l'adhérence à l'échelle typographique fermée, ni les libellés sous le plancher de 11 px,
+> ni les cibles tactiles n'ont été recomptés** depuis le 2026-08-27. Les lignes correspondantes du
+> tableau ci-dessous portent donc toujours leur date d'origine.
 
 > ### 2026-08-29 · +2, sept onglets qui tenaient dans 335 px visibles
 >

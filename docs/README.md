@@ -3,6 +3,13 @@
 **Dernière revue de cohérence complète : 2026-08-25**, tous les documents notés ci-dessous ont été
 confrontés au code de `main`, au build du jour et à la prod à cette date.
 
+**Passe documentaire du 2026-09-03** : les **71 commits** postérieurs à la revue du 2026-08-29
+relus, et **les onze audits renotés ou explicitement laissés inchangés**. ⚠️ **Aucune mesure
+nouvelle contre la production** ce jour-là : chaque chiffre cité vient du commit qui l'a produit,
+ou se relit dans le dépôt à `HEAD`. Une erreur de report est corrigée au passage, la note RGPD du
+2026-09-02 partait d'une base périmée. Tableau et détail : [§ Mise à jour du
+2026-09-03](#mise-à-jour-du-2026-09-03--les-journées-08-30-à-09-01-navaient-jamais-été-notées).
+
 **Passe partielle du 2026-08-27** (fin de journée) : les dix audits notés ont été relus contre le
 code de `main` et les dix-neuf commits du jour. Les mesures **contre la production** n'ont pas été
 refaites ce jour-là, sauf celles inscrites dans les commits eux-mêmes. Détail dans le second
@@ -68,6 +75,79 @@ performance va moins bien que la sécurité, ils disent où chaque domaine se si
 > dans [`PERFORMANCE.md`](./PERFORMANCE.md) : qui ouvre les sept onglets paie 9 kB gzip de plus.
 > Et une dérive est enfin notée, celle que personne n'avait vue : **le chunk d'entrée est passé de
 > 87,2 à 106,9 kB en deux jours**, avec un plafond relevé de 92 à 112 kB pour l'absorber.
+
+## Mise à jour du 2026-09-03 · les journées 08-30 à 09-01 n'avaient jamais été notées
+
+La passe du 2026-09-02 a noté **les deux campagnes de sa propre journée**, et rien d'autre : elle
+ne dit rien des 08-30, 08-31 et 09-01, et elle ne crédite pas la fermeture de T-41, faite à 18 h 58
+le 09-02, trois heures avant qu'elle soit écrite. Cette passe relit les **71 commits** postérieurs
+à la revue du 2026-08-29 (14 h 45) contre le code de `main` et contre les mesures inscrites dans
+les commits eux-mêmes. **Aucune mesure nouvelle n'a été prise contre la production ce jour-là** :
+tout ce qui suit est soit vérifiable dans le dépôt à `HEAD`, soit une mesure datée et signée par
+le commit qui l'a produite.
+
+| Audit | dernière note | **09-03** | Δ | Ce qui a bougé |
+|---|---|---|---|---|
+| [Scalabilité](./SCALABILITY.md) | 86 (08-29) | **89** | +3 | **T-41 fermée** : le comportement du planificateur est mesuré à volume sur le runner, 200 → 2 000 `team_tasks`, aucun basculement de plan. Le rapport entre les deux chemins est de **354×** à 2 000 lignes, et la projection du §9bis était **2,7× trop optimiste** |
+| [UI / UX](./UI-PATTERNS.md) | 84 (08-29) | **87** | +3 | Le calendrier COSMO remplace le picker natif sur **six surfaces** ; un focus clavier mort depuis toujours dans le calendrier ; une icône noire sur fond noir causée par le correctif censé la corriger ; un premier écran qui demande au lieu de faire à la place |
+| [Sécurité](../faille.md) | 84 (09-02) | **86** | +2 | `/admin` est réellement derrière une session `aal2` : la mig. `131` est appliquée **et** le facteur TOTP est enrôlé et vérifié. Realtime était bloqué en production faute de `wss://` dans la CSP, sans un mot à l'écran. Secret scanning, push protection et Dependabot actifs sur un dépôt public |
+| [Tests / CI](./TESTING.md) | 94 (09-02) | **95** | +1 | Suite 1 836 → **2 051 / 179**. Quatre cliquets nouveaux, dont deux avec témoin. Ce qui retient le cinquième point est nommé plus bas : **quatre gardes ont été prises en train de répondre sans mesurer**, en cinq jours |
+| [Architecture](./ARCHITECTURE.md) | 83 (09-02) | **84** | +1 | Cliquet 9 949 → **9 190**, fichiers hors budget 13 → **12**. `friends/supabase.repository.ts` sort de la liste **et** le budget baisse de ses 592 lignes, au lieu de les distribuer en mou aux douze autres |
+| [Accessibilité](./ACCESSIBILITY.md) | 81 (08-29) | **82** | +1 | Trois défauts réels, aucun visible par axe-core : les flèches ne déplaçaient pas le focus dans le calendrier (`Button` ne recevait jamais son `ref`), les liens de `RichText` n'étaient pas soulignés, et l'icône des sélecteurs de date natifs était noire sur fond noir en thème sombre |
+| [Performance](./PERFORMANCE.md) | 94 (08-29) | **92** | −2 | `check:bundle` **mesurait un artefact qui n'existe nulle part** : sans `VITE_SENTRY_DSN`, Rollup jette presque tout `@sentry/react` et la garde sous-estimait le chemin critique d'environ **45 ko gzip**. La marge réelle sous le plafond n'est pas de 57,8 ko mais de **11,9** |
+| [RGPD](./RGPD.md) | 86 (08-29) | **86** | 0 | Le +2 du 09-02 était réel mais **calculé depuis une base périmée** (84 au lieu de 86, cf. correction ci-dessous). Appliqué à la bonne base il est compensé, pas annulé : un script tiers a transmis **email et nom** depuis `/signup` en production, hors de ce que déclare le registre, et son DPA n'est toujours pas obtenu |
+| [Mobile / DA](./MOBILE.md) | 76 (08-29) | **76** | 0 | Rien de spécifiquement mobile n'a été mesuré. Les deux `input[type=date]` natifs restants sont **assumés** (roue système iOS), et l'adhérence à l'échelle typographique n'a pas été recomptée depuis le 08-25 |
+| [SEO](./SEO.md) | 75 (08-29) | **75** | 0 | Aucun contenu indexable produit, aucun `hreflang` ni canonical touché. Search Console n'a pas été relue depuis le **2026-08-19** |
+| [i18n](./I18N.md) | · | **·** | · | La dette annoncée passe de 4 à **25** chaînes en dur sans qu'une seule chaîne ait été ajoutée : l'heuristique était aveugle à quatre formes entières. `src/components` est à zéro. Note toujours non attribuée, le périmètre bilingue n'ayant pas été remesuré écran par écran |
+
+> ### 🔴 Une correction de base, avant de lire les deltas
+>
+> Le tableau du 2026-09-02 fait partir le RGPD de **84**, alors que la passe du 08-29 l'avait déjà
+> porté à **86**. Le +2 de la journée était justifié, ligne par ligne ; c'est la colonne de départ
+> qui était périmée, recopiée depuis le tableau du 25. Les deux valeurs affichées ce jour-là ne
+> peuvent donc pas être vraies en même temps. **La bonne lecture est : 86 le 08-29, et 86 le
+> 09-02**, le gain de la journée étant exactement compensé par ce qu'elle a découvert.
+>
+> C'est la troisième fois que ce document se trompe en recopiant un « avant » au lieu de le
+> relire : après les `refetchInterval` du 08-25 et la garde `architecture.guard` du 08-27.
+> *Un « avant » se relit à sa source, il ne se recopie pas.*
+
+> ### 🔴 Ce que cette fenêtre de cinq jours dit vraiment
+>
+> **Quatre gardes ont été prises en train de répondre sans mesurer.** C'est le fait le plus lourd
+> de la période, et il touche quatre outils différents :
+>
+> | Garde | Ce qu'elle affirmait | Ce qu'elle mesurait |
+> |---|---|---|
+> | `check:bundle` | chemin critique à 321,2 ko | un build sans Sentry, soit ~45 ko de moins que ce qui part en production |
+> | `uptime.yml` | run **vert**, « tout va bien » | le site répond ; la moitié backend de la sonde était sautée sur un secret inexistant |
+> | `restore-drill.yml` | isolation vérifiée | `tail -1` capturait le mot `ROLLBACK`, jamais le compte : le contrôle ne pouvait **pas** échouer |
+> | `i18n:scan` | « plus aucune chaîne d'interface en dur », seuil verrouillé à 4 | une heuristique aveugle au texte interpolé, au texte multiligne, aux propriétés `label:` et aux valeurs par défaut de prop |
+>
+> Les quatre ont été trouvées et corrigées dans la fenêtre, trois d'entre elles **avec un témoin**
+> qui refuse un parseur ou une sonde qui ne détecterait plus rien. Mais la classe est la même à
+> chaque fois, et elle est pire que l'absence de garde : *une garde qui se trompe dans le sens
+> rassurant donne une réponse, et on la croit.*
+>
+> **Une alerte que personne ne lit n'est pas une alerte, c'est une archive.** `vendor-watch.yml` a
+> parfaitement fonctionné : il a détecté que le script tiers chargé sur les pages publiques s'était
+> mis à extraire l'**adresse email et le nom** saisis à l'inscription, il a échoué chaque jour du
+> 2026-08-29 au 2026-09-01, il a mis à jour son issue à chaque fois, et personne ne l'a ouverte
+> pendant quatre jours. Les alertes sont désormais **poussées** sur le webhook d'ops, avec un
+> exercice à blanc déclenchable à la main. ⚠️ Le mécanisme reste **inerte** tant que le secret
+> `OPS_ALERT_WEBHOOK_URL` n'est pas posé dans les secrets Actions du dépôt.
+>
+> **Deux migrations ont été appliquées deux fois.** Les `134` et `135` avaient déjà été passées par
+> une session voisine trois heures plus tôt. Aucun effet sur le schéma, les deux étant idempotentes,
+> mais le ledger a porté les seuls doublons de ses 127 entrées. *Ce dépôt a plusieurs sessions
+> actives : l'état de la production n'est jamais celui qu'on a laissé.*
+>
+> **Une migration appliquée avant que son chemin de secours ait été parcouru a verrouillé `/admin`
+> pendant deux jours.** La mig. `131` exige une session `aal2` ; l'écran d'enrôlement TOTP levait
+> en phase de rendu, donc affichait l'erreur générique au lieu du QR code, lui-même cassé par un
+> double préfixe `data:`. Le raisonnement « ce n'est pas un verrouillage, l'écran reste
+> atteignable » était juste sur la garde et faux dans les faits. *Quand une migration crée une
+> dépendance à un chemin de récupération, ce chemin se PARCOURT avant, il ne se raisonne pas.*
 
 ## Mise à jour du 2026-09-02 · revue des pages, puis audit Stripe
 
@@ -290,21 +370,21 @@ testées** (`scripts/migration-guards.test.mjs`).
 | Doc | Périmètre |
 |---|---|
 | [`../CLAUDE.md`](../CLAUDE.md) | Point d'entrée : stack, modules, conventions, garde-fous |
-| [`../faille.md`](../faille.md) | Sécurité : findings **ouverts**, priorités avant prod, règles durables |
-| [`ARCHITECTURE.md`](./ARCHITECTURE.md) | Invariants du projet et leur état vérifié · **note 83 au 2026-08-29** |
+| [`../faille.md`](../faille.md) | Sécurité : findings **ouverts**, priorités avant prod, règles durables · **note 86 au 2026-09-03** |
+| [`ARCHITECTURE.md`](./ARCHITECTURE.md) | Invariants du projet et leur état vérifié · **note 84 au 2026-09-03** |
 | [`SECURITY.md`](./SECURITY.md) | RLS, migrations SQL, repositories, Edge Functions, Stripe, CSP, secrets · **les 4 Edge Functions Stripe auditées le 2026-09-02**, cf. [`../faille.md`](../faille.md) |
-| [`TESTING.md`](./TESTING.md) | Vitest, Playwright, a11y, i18n, CI, **checklist avant push prod** · **note 93 au 2026-08-29**, les cinq jobs CI verts · couverture relancée et verte le 2026-08-29 |
+| [`TESTING.md`](./TESTING.md) | Vitest, Playwright, a11y, i18n, CI, **checklist avant push prod** · **note 95 au 2026-09-03**, les cinq jobs CI verts · couverture relancée et verte le 2026-08-29 |
 | [`DEPLOYMENT.md`](./DEPLOYMENT.md) | Runbook deploy / rollback Vercel + Supabase, drill de restauration |
-| [`MOBILE.md`](./MOBILE.md) | Pages et composants mobiles, bottom-sheets, pièges iOS Safari · **note 76 au 2026-08-29** |
-| [`UI-PATTERNS.md`](./UI-PATTERNS.md) | Listes, modals, tutoriels, onboarding, thèmes · **note 84 au 2026-08-29** |
-| [`PERFORMANCE.md`](./PERFORMANCE.md) | `manualChunks`, lazy loading, images et polices, budget bundle · **note 94 au 2026-08-29**, gardé par `npm run check:bundle` et par le job `lighthouse` · et depuis le 2026-08-26 **le coût serveur d'une ouverture de session**, ramené de 29 à 21 requêtes REST |
-| [`ACCESSIBILITY.md`](./ACCESSIBILITY.md) | WCAG / EAA, aria, contraste, gates axe-core + Lighthouse · **note 81 au 2026-08-29**, la gate Lighthouse mesure et bloque enfin |
-| [`SCALABILITY.md`](./SCALABILITY.md) | Montée en charge · **note 86 au 2026-08-29**, coût par ligne mesuré, jamais éprouvé à volume |
-| [`SEO.md`](./SEO.md) | Prérendu, sitemap, hreflang, indexation par locale · **note 75 au 2026-08-29** · données Search Console du 2026-08-19, non remesurées |
+| [`MOBILE.md`](./MOBILE.md) | Pages et composants mobiles, bottom-sheets, pièges iOS Safari · **note 76 au 2026-08-29**, inchangée au 2026-09-03 |
+| [`UI-PATTERNS.md`](./UI-PATTERNS.md) | Listes, modals, tutoriels, onboarding, thèmes · **note 87 au 2026-09-03** |
+| [`PERFORMANCE.md`](./PERFORMANCE.md) | `manualChunks`, lazy loading, images et polices, budget bundle · **note 92 au 2026-09-03**, gardé par `npm run check:bundle` et par le job `lighthouse` · et depuis le 2026-08-26 **le coût serveur d'une ouverture de session**, ramené de 29 à 21 requêtes REST |
+| [`ACCESSIBILITY.md`](./ACCESSIBILITY.md) | WCAG / EAA, aria, contraste, gates axe-core + Lighthouse · **note 82 au 2026-09-03**, la gate Lighthouse mesure et bloque enfin |
+| [`SCALABILITY.md`](./SCALABILITY.md) | Montée en charge · **note 89 au 2026-09-03**, coût par ligne mesuré ET éprouvé à volume (200 puis 2 000 lignes, §9ter) |
+| [`SEO.md`](./SEO.md) | Prérendu, sitemap, hreflang, indexation par locale · **note 75 au 2026-08-29**, inchangée au 2026-09-03 · données Search Console du 2026-08-19, non remesurées |
 | [`ACQUISITION-BACKLINKS.md`](./ACQUISITION-BACKLINKS.md) | 🔴 Le chantier qui débloque le SEO : kit de soumission annuaires, prêt à coller — **100 % manuel** |
 | [`ACQUISITION.md`](./ACQUISITION.md) | Attribution `?ref=`, funnel mesuré en prod, runbook — **audit du 2026-08-14** |
-| [`I18N.md`](./I18N.md) | Qualité réelle des traductions, périmètre bilingue — **audit du 2026-08-14** |
-| [`RGPD.md`](./RGPD.md) | Inventaire des données personnelles, droits, rétention · **note 86 au 2026-08-29**, durées de conservation publiées |
+| [`I18N.md`](./I18N.md) | Qualité réelle des traductions, périmètre bilingue — **audit du 2026-08-14**, non renoté · `i18n:scan` est une gate bloquante depuis le 2026-09-02 (seuil 25, cf. la note du 09-03 en tête du fichier) |
+| [`RGPD.md`](./RGPD.md) | Inventaire des données personnelles, droits, rétention · **note 86 au 2026-08-29**, inchangée au 2026-09-03, durées de conservation publiées |
 | [`RGPD-REGISTRE.md`](./RGPD-REGISTRE.md) | Registre des activites de traitement (RGPD art. 30) · **cree le 2026-08-26** |
 | [`RGPD-VIOLATION.md`](./RGPD-VIOLATION.md) | Procedure de violation de donnees sous 72 h (RGPD art. 33-34) · **cree le 2026-08-26** |
 | [`LEGAL.md`](./LEGAL.md) | Obligations légales du fondateur : statut, TVA, droit de la consommation, marque, sous-traitants · **créé le 2026-08-26**, non noté (ce n'est pas un audit) |

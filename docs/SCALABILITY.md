@@ -9,7 +9,33 @@ s'est révélée fausse.
 Toutes les mesures de ce document sont **reproductibles** : les requêtes sont en
 [§10 Runbook](#10-runbook--refaire-cet-audit).
 
-## Note de scalabilité : 71 → 84 → **86 / 100** (2026-08-24 → 2026-08-25 → 2026-08-29) · inchangée au 2026-08-27
+## Note de scalabilité : 71 → 84 → 86 → **89 / 100** (2026-08-24 → 2026-08-25 → 2026-08-29 → 2026-09-03) · inchangée au 2026-08-27
+
+> ### 2026-09-03 · +3, la seule inconnue qui plafonnait la note est levée
+>
+> Le bloc du 2026-08-29 ci-dessous nommait ce qui retenait la note : **rien n'avait jamais été
+> mesuré à volume**, et un basculement de plan ne se déduit d'aucun ratio. C'est fait, et le détail
+> est en [§9ter](#9ter-mesuré-à-volume-le-2026-09-02--la-dernière-inconnue-est-levée).
+>
+> | | avant (§9bis, 08-28) | **§9ter, 09-02** |
+> |---|---|---|
+> | Volume éprouvé | 6 à 717 lignes | **200 puis 2 000 `team_tasks`**, organisation de 50 membres |
+> | Basculement de plan | inconnu | **aucun** · `Seq Scan` d'un côté, `Function Scan` de l'autre, aux deux paliers |
+> | Rapport entre les deux chemins | projeté « ≈ 6 700 buffers » | **mesuré 18 041 contre 51**, soit 354× |
+> | Fiabilité du chronomètre | il donnait la réponse INVERSE à 717 lignes | temps et buffers **concordent** à 2 000 lignes |
+> | Recomptage des `refetchInterval` | checkpoint manuel du §5 | **mécanisé** · `src/modules/polling.guard.test.ts`, 4 fichiers nommés + témoin |
+>
+> **La projection était 2,7× trop optimiste**, et c'est le résultat le plus utile : elle
+> extrapolait linéairement depuis une organisation de 6 lignes. *Une projection tirée d'un cas
+> dégénéré sous-estime, elle ne surestime pas.* Le croisement où le chronomètre cesse de mentir se
+> situe **dans** une organisation ordinaire : ce qui protégeait le mauvais chemin n'était pas une
+> subtilité de méthode, c'était l'absence de données.
+>
+> 🔴 **Ce qui plafonne à 89** : la mesure est faite sur un runner, pas contre la production, et elle
+> est **mono-session** (rien sur la concurrence, rien sur `tasks` à plusieurs millions de lignes).
+> Et le tableau de bord charge toujours le jeu de données complet, sans coût réel aujourd'hui
+> (289 tâches et 128 événements au maximum pour un compte, mesuré le 2026-09-02) : le risque reste
+> écrit, la mesure ne le justifie toujours pas.
 
 > ### 2026-08-29 · +2, deux inconnues portées depuis des semaines sont levées
 >
@@ -28,7 +54,8 @@ Toutes les mesures de ce document sont **reproductibles** : les requêtes sont e
 > 🔴 **Ce qui plafonne à 86, et n'a pas bougé** : rien n'a été mesuré à VOLUME. La production
 > compte 8 tâches d'équipe. Un basculement de plan ne se déduit pas d'un ratio, et cette
 > vérification demande un vrai jeu de données sur une branche ou une stack locale, jamais en
-> production. C'est T-41, toujours à moitié faite.
+> production. C'est T-41, toujours à moitié faite. → ✅ **Levé le 2026-09-02** (§9ter) : la stack
+> montée par le runner de CI était la quatrième porte, et elle était ouverte depuis le début.
 
 > **2026-08-27 · note inchangée, un finding rouvre sous une autre forme.** La pastille de
 > navigation rechargeait `get_my_team_tasks` à chaque retour d'onglet, depuis toutes les pages
