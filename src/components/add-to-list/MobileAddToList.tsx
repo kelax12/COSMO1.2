@@ -8,7 +8,7 @@ import {
   useRemoveTaskFromList,
   useCreateList,
   useUpdateList,
-  useDeleteList,
+  useDeleteListWithUndo,
 } from '@/modules/lists';
 import { AddToListModalProps, COLOR_PALETTE, resolveColor } from './shared';
 import { useT } from '@/i18n/useT';
@@ -26,7 +26,7 @@ const MobileAddToList: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskI
   const removeTaskFromListMutation = useRemoveTaskFromList();
   const createListMutation         = useCreateList();
   const updateListMutation         = useUpdateList();
-  const deleteListMutation         = useDeleteList();
+  const { deleteList }             = useDeleteListWithUndo();
 
   const [editMode, setEditMode]               = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
@@ -98,9 +98,12 @@ const MobileAddToList: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskI
     });
   };
 
+  // C-41 — meme defaut que `DesktopAddToList` : la suppression n'etait pas
+  // annulable ici, alors qu'elle l'est sur `/tasks`.
   const handleConfirmDelete = (listId: string) => {
-    deleteListMutation.mutate(listId);
+    const list = lists.find((l) => l.id === listId);
     setConfirmDeleteId(null);
+    if (list) deleteList(list);
   };
 
   const manualLists = lists.filter((l) => l.type !== 'smart');

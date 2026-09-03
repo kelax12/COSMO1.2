@@ -9,6 +9,16 @@ import {
 } from '@/modules/team-projects';
 import type { OrgMember } from '@/modules/organizations';
 import MemberAvatar from './MemberAvatar';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { useT } from '@/i18n/useT';
 
 interface TaskCommentsSectionProps {
@@ -37,6 +47,12 @@ const TaskCommentsSection = ({ taskId, members, currentUserId, autoSubmitDraft, 
   const deleteMutation = useDeleteTeamTaskComment(taskId);
   const [body, setBody] = useState('');
   const [mentionQuery, setMentionQuery] = useState<string | null>(null);
+  // C-42 — la suppression partait sur un seul clic, sans confirmation ni
+  // annulation, et le commentaire disparaissait pour toute l'equipe. C'etait la
+  // seule suppression du mode entreprise sans aucun filet. Ce fil est un
+  // journal append-only : il n'existe pas de « restaurer », donc c'est une
+  // confirmation qu'il faut, pas un toast d'annulation.
+  const [commentToDelete, setCommentToDelete] = useState<string | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const memberById = useMemo(() => new Map(members.map((m) => [m.userId, m])), [members]);
@@ -146,7 +162,7 @@ const TaskCommentsSection = ({ taskId, members, currentUserId, autoSubmitDraft, 
                 {c.authorId === currentUserId && (
                   <button
                     type="button"
-                    onClick={() => deleteMutation.mutate(c.id)}
+                    onClick={() => setCommentToDelete(c.id)}
                     disabled={deleteMutation.isPending}
                     aria-label={t('comments.deleteAria')}
                     className="shrink-0 w-7 h-7 rounded-lg flex items-center justify-center hover:bg-red-500/10 hover:text-red-500 transition-colors disabled:opacity-50"
@@ -159,6 +175,33 @@ const TaskCommentsSection = ({ taskId, members, currentUserId, autoSubmitDraft, 
             );
           })}
         </ul>
+      )}
+
+      {commentToDelete && (
+        <AlertDialog open onOpenChange={(open) => { if (!open) setCommentToDelete(null); }}>
+          <AlertDialogContent className="bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl text-[rgb(var(--color-text-primary))] shadow-xl">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="text-xl font-bold">
+                {t('comments.deleteTitle')}
+              </AlertDialogTitle>
+              <AlertDialogDescription className="text-[rgb(var(--color-text-secondary))] text-sm leading-relaxed">
+                {t('comments.deleteBody')}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter className="gap-2">
+              <AlertDialogCancel className="rounded-xl border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] hover:bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-primary))] font-semibold text-sm">
+                {t('common.cancel')}
+              </AlertDialogCancel>
+              <AlertDialogAction
+                disabled={deleteMutation.isPending}
+                onClick={() => { deleteMutation.mutate(commentToDelete); setCommentToDelete(null); }}
+                className="rounded-xl font-semibold text-sm bg-red-500 hover:bg-red-600 text-white disabled:opacity-50"
+              >
+                {deleteMutation.isPending ? t('comments.deletePending') : t('comments.deleteConfirm')}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       )}
 
       <div className="relative shrink-0">

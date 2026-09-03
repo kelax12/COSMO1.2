@@ -754,7 +754,11 @@
     "mentionAria": "Mention a member",
     "sendAria": "Send comment",
     "formerMember": "Former member",
-    "saveFirst": "Save the task to add comments."
+    "saveFirst": "Save the task to add comments.",
+    "deleteTitle": "Delete this comment?",
+    "deleteBody": "It will disappear for the whole team, and the deletion is permanent: the comment thread is a journal, it has no trash.",
+    "deleteConfirm": "Delete",
+    "deletePending": "Deleting…"
   },
   "leaveDialog": {
     "body": "You'll immediately lose access to the team's projects, tasks and OKRs. Your personal data (tasks, habits, calendar) is not affected. You can come back with a new invitation code."

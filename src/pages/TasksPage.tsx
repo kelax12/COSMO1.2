@@ -14,7 +14,6 @@ import { useLocation } from 'react-router';
 // Module tasks - Hooks indépendants (MIGRÉ)
 // ═══════════════════════════════════════════════════════════════════
 import { useTasks, useUpdateTask } from '@/modules/tasks';
-import { showUndoToast } from '@/lib/undo-toast';
 
 // ═══════════════════════════════════════════════════════════════════
 // Module lists - (MIGRÉ)
@@ -24,7 +23,7 @@ import {
   useCreateList,
   useUpdateList,
   useDeleteList,
-  useRestoreList,
+  useDeleteListWithUndo,
   useAddTaskToList,
   tasksInList,
   tasksDueToday,
@@ -76,7 +75,6 @@ const TasksPage: React.FC = () => {
   const createListMutation = useCreateList();
   const updateListMutation = useUpdateList();
   const deleteListMutation = useDeleteList();
-  const restoreListMutation = useRestoreList();
   const [showCreateList, setShowCreateList] = useState(false);
   const [newListName, setNewListName] = useState('');
   const [newListColor, setNewListColor] = useState('blue');
@@ -265,29 +263,14 @@ const TasksPage: React.FC = () => {
 
   // Suppression directe sans popup : réversible via le toast « Annuler »
   // (recrée la liste puis restaure ses taskIds — create force taskIds à []).
+  // Flux partage avec les deux modales « Ajouter a une liste » (C-41) : le
+  // meme geste doit offrir la meme garantie, quel que soit l'ecran.
+  const { deleteList } = useDeleteListWithUndo((listId) => {
+    if (selectedListId === listId) setSelectedListId(null);
+  });
   const deleteListById = (listId: string) => {
     const snapshot = lists.find(l => l.id === listId);
-    deleteListMutation.mutate(listId, {
-      onSuccess: () => {
-        if (selectedListId === listId) setSelectedListId(null);
-        if (snapshot) {
-          // L'identifiant est restauré (R-08) : le tri mémorisé par liste
-          // (`sortPrefs`) et la sélection courante sont keyés dessus, donc les
-          // perdre revenait à réinitialiser la liste en la « restaurant ».
-          // `taskIds` reste posé en second temps : `create()` force `[]`.
-          showUndoToast(t('lists.deleted'), () => {
-            restoreListMutation.mutate(snapshot, {
-              onSuccess: (newList) => {
-                // `create()` force `taskIds: []` : le contenu se repose apres.
-                if (snapshot.taskIds.length > 0) {
-                  updateListMutation.mutate({ id: newList.id, updates: { taskIds: snapshot.taskIds } });
-                }
-              },
-            });
-          });
-        }
-      },
-    });
+    if (snapshot) deleteList(snapshot);
   };
 
   const startSelectingTasks = (listId: string) => {
