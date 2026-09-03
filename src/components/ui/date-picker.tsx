@@ -41,11 +41,20 @@ export function DateCalendarPanel({ value, onSelect, allowClear = true, minDate 
   const floor = minDate ? new Date(minDate + "T00:00:00") : undefined
   const presets = buildDatePresets().filter((p) => !minDate || p.value >= minDate)
 
+  /** Nom accessible d'un jour, avec ses états — cf. `labels` plus bas. */
+  const dayLabel = (date: Date, modifiers?: { today?: boolean; selected?: boolean }) => {
+    const long = format(date, 'PPPP', { locale: getDateLocale() })
+    const base = modifiers?.today ? t('datePicker.todayPrefix', { date: long }) : long
+    return modifiers?.selected ? t('datePicker.selectedSuffix', { date: base }) : base
+  }
+
   return (
     <>
       {/* Presets au-dessus du calendrier (#25) : 80 % des échéances sont
-          « aujourd'hui / demain / ce week-end » — un clic au lieu de trois. */}
-      <div className="flex flex-wrap gap-1.5 p-2 border-b border-border">
+          « aujourd'hui / demain / ce week-end » — un clic au lieu de trois.
+          `group` + `aria-label` : c'est la PREMIÈRE chose que rencontre le
+          focus clavier, une rangée de boutons sans rien qui la nomme. */}
+      <div className="flex flex-wrap gap-1.5 p-2 border-b border-border" role="group" aria-label={t('datePicker.presets')}>
         {presets.map((preset) => (
           <button
             key={preset.labelKey}
@@ -69,10 +78,41 @@ export function DateCalendarPanel({ value, onSelect, allowClear = true, minDate 
       <Calendar
         mode="single"
         selected={selectedDate}
+        // `selected` ne pilote PAS le mois affiché en react-day-picker 9 :
+        // sans `defaultMonth`, le calendrier s'ouvre sur le mois COURANT même
+        // quand le champ porte déjà une date. Mesuré le 2026-09-03 : champ à
+        // « 2 décembre 2026 », calendrier ouvert sur « septembre 2026 ». Le
+        // jour focalisé était alors hors de la grille affichée, et les
+        // flèches ne déplaçaient plus rien.
+        defaultMonth={selectedDate}
         onSelect={(date) => { if (date) onSelect(format(date, "yyyy-MM-dd")) }}
         disabled={floor ? { before: floor } : undefined}
         locale={getDateLocale()}
-        initialFocus
+        // 🔴 `initialFocus` est MORT depuis react-day-picker 9 : la prop
+        // survit dans les types (dépréciée) mais `useFocus` ne lit plus que
+        // `autoFocus`. Mesuré le 2026-09-03 : ouvrir le calendrier au clavier
+        // posait le focus sur la rangée de presets, où les flèches ne font
+        // rien — la grille n'était atteignable que par un Maj+Tab qui
+        // rebouclait. Même classe que le `Button` non-forwardRef du
+        // 2026-08-30 : une prop écrite pour une autre version majeure, qui
+        // ne fait silencieusement rien.
+        autoFocus
+        // react-day-picker ne traduit AUCUN de ses libellés ARIA : `locale`
+        // ne porte que les DATES. Sans ça, le calendrier d'un produit
+        // francophone annonce « Navigation bar », « Go to the Previous
+        // Month » et « Today, jeudi 3 septembre 2026 » (mesuré).
+        // `i18n:scan` ne peut pas le voir : ces chaînes vivent dans la
+        // bibliothèque, pas dans src/.
+        labels={{
+          labelNav: () => t('datePicker.navLabel'),
+          labelPrevious: () => t('datePicker.prevMonth'),
+          labelNext: () => t('datePicker.nextMonth'),
+          // « Today, » et « , selected » sont concaténés en dur par
+          // labelDayButton : on refait le libellé entier plutôt que de le
+          // rapiécer, sinon la traduction dépendrait de l'ordre des mots.
+          labelDayButton: dayLabel,
+          labelGridcell: dayLabel,
+        }}
         className="w-full p-3 [--cell-size:2.5rem]"
         classNames={{
           root: "w-full",
@@ -183,6 +223,20 @@ export function DatePicker({
         align="start"
         collisionPadding={16}
         sideOffset={8}
+        // Radix pose le focus sur le PREMIER élément focalisable du popover,
+        // c'est-à-dire le preset « Aujourd'hui » — et sur une rangée de
+        // boutons, les flèches ne font rien : on croit être dans un
+        // calendrier et rien ne bouge. On vise donc explicitement le jour
+        // que la grille rend focalisable (`tabindex="0"`), le seul endroit
+        // où les flèches naviguent.
+        onOpenAutoFocus={(e) => {
+          const day = (e.currentTarget as HTMLElement | null)?.querySelector<HTMLElement>(
+            '[data-slot="calendar"] button[tabindex="0"]',
+          )
+          if (!day) return // pas de grille rendue : on laisse Radix faire
+          e.preventDefault()
+          day.focus()
+        }}
       >
         <DateCalendarPanel
           value={value}

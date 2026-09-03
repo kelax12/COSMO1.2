@@ -495,7 +495,13 @@
     "today": "Today",
     "tomorrow": "Tomorrow",
     "nextMonday": "Next Monday",
-    "noDate": "No date"
+    "noDate": "No date",
+    "navLabel": "Calendar navigation",
+    "prevMonth": "Go to the previous month",
+    "nextMonth": "Go to the next month",
+    "todayPrefix": "Today, {{date}}",
+    "presets": "Date shortcuts",
+    "selectedSuffix": "{{date}}, selected"
   },
   "weekday": {
     "0": "Sunday",
