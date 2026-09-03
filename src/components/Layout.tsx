@@ -46,6 +46,7 @@ import InviteOrJoinModal from './organization/InviteOrJoinModal';
 import DeadlineReminder from './DeadlineReminder';
 import SyncStatusIndicator from './SyncStatusIndicator';
 import { isDueToday } from '@/lib/deadline';
+import { readJson, safeSetItem } from '@/lib/safe-json';
 
 // Quick-add global — lazy : ne se charge qu'au premier rendu du Layout.
 const QuickAddBar = lazy(() => import('./QuickAddBar'));
@@ -242,10 +243,17 @@ const Layout: React.FC = () => {
   const tasksDueTodayCount = allTasks.filter(
     (t) => !t.completed && isDueToday(t.deadline)
   ).length;
-  const [isCollapsed, setIsCollapsed] = useState(() => {
-    const saved = localStorage.getItem('sidebar-collapsed');
-    return saved ? JSON.parse(saved) : false;
-  });
+  // Cet initialiseur s'exécute EN PHASE DE RENDU, et `Layout` est le parent de
+  // toutes les pages protégées : ce qui lève ici ne remonte dans aucun
+  // `onError`, ça remonte à l'`AppErrorBoundary`. Mesuré le 2026-09-03 (audit
+  // A-7) : une valeur non-JSON, OU un navigateur qui refuse le stockage
+  // (navigation privée stricte), rendaient « Une erreur inattendue s'est
+  // produite » sur toute l'app authentifiée — et « Rafraîchir la page », seule
+  // sortie proposée, relisait la même clé et rendait le même écran.
+  // Un repli d'agrément ne doit jamais pouvoir fermer le produit (règle B14).
+  const [isCollapsed, setIsCollapsed] = useState(
+    () => readJson<boolean>('sidebar-collapsed') ?? false,
+  );
   // « + » de la nav : inviter un ami / rejoindre une entreprise avec un code.
   // Monte dans `globalOverlays`, donc partage par les rendus mobile ET desktop.
   const [inviteOpen, setInviteOpen] = useState(false);
@@ -267,7 +275,9 @@ const Layout: React.FC = () => {
     return () => window.removeEventListener('open-bug-report', open);
   }, []);
   useEffect(() => {
-    localStorage.setItem('sidebar-collapsed', JSON.stringify(isCollapsed));
+    // Même raison qu'à la lecture : une exception dans un effet remonte elle
+    // aussi à la frontière d'erreur, pas dans un `catch` d'appelant.
+    safeSetItem('sidebar-collapsed', JSON.stringify(isCollapsed));
   }, [isCollapsed]);
 
   // Raccourci « [ » : replie/déplie la sidebar (#14) — convention Linear.
