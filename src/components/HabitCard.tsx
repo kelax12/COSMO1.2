@@ -3,7 +3,7 @@ import { Clock, Flame, Calendar, Edit2, Trash2, CheckCircle, Pause } from 'lucid
 import { useHabitPauses } from '@/lib/hooks/use-habit-pauses';
 import { format } from 'date-fns';
 import { formatDate, getDateLocale } from '@/i18n/format';
-import { Habit, useDeleteHabit, useToggleHabitCompletion, useCreateHabit } from '@/modules/habits';
+import { Habit, useDeleteHabit, useToggleHabitCompletion, useRestoreHabit } from '@/modules/habits';
 import { useT } from '@/i18n/useT';
 import { habitStreak } from '@/modules/habits/streak';
 import { showUndoToast } from '@/lib/undo-toast';
@@ -18,7 +18,9 @@ interface HabitCardProps {
 const HabitCard: React.FC<HabitCardProps> = React.memo(({ habit }) => {
   const { t } = useT('habits');
   const deleteHabitMutation = useDeleteHabit();
-  const createHabitMutation = useCreateHabit();
+  // « Annuler » uniquement : rend l'habitude sous SON identifiant, sinon sa
+  // pause (keyee par id) et son historique restent orphelins (R-08, C-37).
+  const restoreHabitMutation = useRestoreHabit();
   const toggleCompletionMutation = useToggleHabitCompletion();
 
   const [showDetails, setShowDetails] = useState(false);
@@ -35,10 +37,9 @@ const HabitCard: React.FC<HabitCardProps> = React.memo(({ habit }) => {
     deleteHabitMutation.mutate(habit.id, {
       onSuccess: () => {
         // Raccourci d'annulation (barre de progression 5 s, haut à droite).
-        // On recrée l'habitude avec son historique de complétions.
-        const { id: _id, createdAt: _ca, ...rest } = snapshot;
+        // On rend l'habitude sous SON identifiant, avec son historique.
         showUndoToast(t('card.deleted'), () => {
-          createHabitMutation.mutate(rest);
+          restoreHabitMutation.mutate(snapshot);
         });
       },
     });
