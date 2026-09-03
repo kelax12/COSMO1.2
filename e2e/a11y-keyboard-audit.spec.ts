@@ -11,9 +11,9 @@
 // valeur : c'est la garde contre un harnais qui ne détecte plus rien.
 //
 // Deux régimes assumés :
-//   · le DatePicker est ASSERTIONNÉ (findings C-29/C-30, corrigés ici) ;
+//   · le DatePicker est ASSERTIONNÉ (findings C-51/C-52, corrigés ici) ;
 //   · les modales maison et /agenda sont seulement IMPRIMÉS — leurs défauts
-//     sont ouverts (C-31, C-32) et les figer en `expect(...).toBe(false)`
+//     sont ouverts (C-53, C-54) et les figer en `expect(...).toBe(false)`
 //     ferait échouer la CI le jour où quelqu'un les corrige.
 // ═══════════════════════════════════════════════════════════════════
 
@@ -205,7 +205,7 @@ test('MESURE — DatePicker ancré à un champ (modale OKR)', async ({ demoPage:
   });
   console.log('[a11y-kbd] DatePicker noms accessibles', JSON.stringify(names));
 
-  // ── RÉGRESSION (findings C-29 et C-30) ──────────────────────────
+  // ── RÉGRESSION (findings C-51 et C-52) ──────────────────────────
   // 1. Ouvrir le calendrier au clavier doit poser le focus DANS la grille.
   //    `initialFocus` est mort en react-day-picker 9 (seul `autoFocus` est lu),
   //    et le focus tombait sur la rangée de presets, où les flèches ne font
