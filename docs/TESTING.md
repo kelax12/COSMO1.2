@@ -1,6 +1,47 @@
 # Tests — COSMO
 
-## Note de tests / CI : 80 → 83 → 88 → 89 → **93 / 100** (2026-08-24 → 2026-08-25 soir → 2026-08-27 soir → 2026-08-29)
+## Note de tests / CI : 80 → 83 → 88 → 89 → 93 → 94 → **95 / 100** (2026-08-24 → 2026-08-25 soir → 2026-08-27 soir → 2026-08-29 → 2026-09-02 → 2026-09-03)
+
+> ### 2026-09-03 · +1, quatre cliquets de plus et quatre gardes prises en défaut
+>
+> Le 2026-09-02 avait porté la note à **94** (tableau de bord de [`README.md`](./README.md)) sans
+> que ce fichier l'enregistre : 1 884 → 2 026 tests, `i18n:scan` devenu bloquant, et une garde
+> interdisant `{var}` dans un catalogue. Ce bloc couvre les deux, et se lit contre la colonne
+> 08-29.
+>
+> | | 08-29 | **09-03** |
+> |---|---|---|
+> | Suite unitaire | 1 836 / 166, verte | **2 051 / 179, verte** (mesurée le 2026-09-02) |
+> | Jobs CI verts sur `main` | 5 sur 5 | **5 sur 5**, une rougeur `e2e` du 08-30 au 09-01 refermée |
+> | Fichiers de garde (`*guard*`, comptés dans l'arbre) | 6 | **9** |
+>
+> **Trois fichiers de garde nouveaux, plus deux gardes existantes durcies, et trois d'entre eux
+> portent un témoin** (une sonde qui refuse un parseur ou un détecteur qui ne détecterait plus
+> rien) :
+>
+> | Cliquet | Ce qu'il verrouille |
+> |---|---|
+> | `src/csp.guard.test.ts` | le schéma `wss:` dans `connect-src`, les directives de confinement, l'absence d'`unsafe-eval`, et `data:` dans `img-src` dont dépend le QR code TOTP. Vérifié rouge sans le correctif |
+> | `src/modules/polling.guard.test.ts` | quatre fichiers nommés doivent garder leur `refetchInterval` **conditionnel**. Ce comptage a déjà été faux une fois (`useOrgJoinRequests`, monté par `Layout`, donc actif partout) : il cesse d'être un checkpoint qu'on rejoue à la main |
+> | `scripts/migration-guards.test.mjs` (+3 cas) | le parseur de `check:drift` ne reconnaissait que `CREATE POLICY "nom" ON …`, jamais le **nom nu**, pourtant présent quatre fois dans le dépôt. Il réclamait donc la suppression d'une policy que le dépôt venait de créer |
+> | `check:bundle` · `SENTRY_FLOOR` | refuse de valider un budget calculé sur un build sans Sentry, cf. [`PERFORMANCE.md`](./PERFORMANCE.md) |
+> | `src/i18n/interpolation.guard.test.ts` | interdit la syntaxe `{var}` dans un catalogue, celle qui affichait « Étape {current} sur {total} » dans l'onboarding livré la veille |
+>
+> 🔴 **Ce qui empêche d'aller plus haut, et ce n'est toujours pas un nombre de tests : en cinq
+> jours, QUATRE gardes ont été prises en train de répondre sans mesurer.** `check:bundle` pesait un
+> artefact qui n'existe nulle part, la sonde `uptime.yml` sortait verte en ayant sauté toute sa
+> moitié backend sur un secret inexistant, le contrôle d'isolation de `restore-drill.yml` capturait
+> le mot `ROLLBACK` au lieu du compte et **ne pouvait pas échouer**, et `i18n:scan` certifiait
+> « plus aucune chaîne d'interface en dur » avec une heuristique aveugle à quatre formes entières.
+> Les quatre sont corrigées. La règle écrite le 08-29 (« une garde doit avoir tourné avant d'être
+> invoquée comme preuve ») ne suffisait pas : elle demande maintenant **qu'on vérifie ce que la
+> garde regarde**, pas seulement qu'elle tourne.
+>
+> ⚠️ Et une alerte qui fonctionne ne protège rien si personne ne l'ouvre : `vendor-watch.yml` a
+> détecté une exfiltration réelle d'email et de nom, a échoué quatre jours d'affilée, a mis son
+> issue à jour à chaque fois, et n'a été lue qu'au cinquième. Les échecs sont désormais **poussés**
+> sur `OPS_ALERT_WEBHOOK_URL`, avec un exercice à blanc déclenchable à la main. Le canal reste
+> **inerte** tant que ce secret n'est pas posé dans les secrets Actions.
 
 > ### 2026-08-29 · +4, et le gain n'est pas un test de plus
 >

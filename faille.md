@@ -6,6 +6,10 @@ et les **règles durables** tirées des audits.
 - Historique complet (preuve des corrections, audits datés 2026-04 → 2026-08, anciens ordres de
   priorité) : [`docs/archive/faille-historique.md`](./docs/archive/faille-historique.md) — **archive, non maintenue**.
 - Procédures et patterns : [`docs/SECURITY.md`](./docs/SECURITY.md).
+- **Passe documentaire du 2026-09-03** : les 71 commits postérieurs au 2026-08-29 relus, la note
+  portée à **86**, et les deux tableaux d'actions relus ligne par ligne (A-9 et les réglages de
+  console : **trois lignes sur cinq étaient périmées**). ⚠️ **Aucune mesure nouvelle contre la
+  production** ce jour-là : les chiffres cités sont ceux des commits qui les ont produits.
 - Dernière vérification de ce fichier contre le code **et contre la prod** : **2026-09-02**
   (audit des Edge Functions Stripe, findings `S-1` à `S-6`, quinze requêtes de lecture en base).
   Relu contre le code de `main` le **2026-08-27** (ajout du finding G-1, mig. `130`). ⚠️ Les
@@ -16,7 +20,39 @@ Légende : 🔴 bloquant · 🟠 important · 🟡 à planifier · ✅ corrigé
 
 ---
 
-## Note de sécurité : 82 → 86 → **84 / 100** (2026-08-24 → 2026-09-02)
+## Note de sécurité : 82 → 86 → 84 → **86 / 100** (2026-08-24 → 2026-09-02 → 2026-09-03)
+
+> ### 2026-09-03 · +2, et pour la première fois depuis longtemps ce sont des protections EN VIGUEUR
+>
+> Cette passe rattrape les journées 08-30 au 09-01, que la campagne du 09-02 n'avait pas notées.
+> Les deux points viennent de choses qui **tournent en production**, pas de code écrit :
+>
+> | | Ce qui a changé |
+> |---|---|
+> | **`/admin` derrière une session `aal2`** | La mig. `131` est appliquée (08-31) **et** le facteur TOTP est enrôlé : `auth.mfa_factors` porte 1 facteur `totp` en statut `verified` sur le compte admin, créé le 2026-09-01 à 14:20:27 UTC et vérifié 46 secondes plus tard. Une session ouverte avec un mot de passe volé ne suffit plus |
+> | **Realtime n'était pas chiffré ailleurs, il était BLOQUÉ** | `connect-src` autorisait `https://*.supabase.co` mais pas `wss://*.supabase.co` ; en CSP un schéma écrit explicitement doit correspondre. Les trois canaux de collaboration étaient coupés **en production**, en silence, et ils avaient justement remplacé huit sondages : plus aucun filet derrière eux. Verrouillé par `src/csp.guard.test.ts`, vérifié rouge sans le correctif |
+> | **Secret scanning, push protection et Dependabot** | Actifs sur le dépôt **public**. Une fuite réelle trouvée dans l'historique : `.env` commité au commit initial (`service_role`, `DATABASE_URL`). **Inerte** : ces clés visent un projet supprimé depuis (absent du compte, DNS inexistant). Reste la question de la réutilisation du mot de passe, qui n'appartient qu'à Axel |
+> | **Mig. `134` et `135` appliquées et vérifiées** | Déjà créditées le 09-02, rappelées ici parce qu'elles ferment la condition d'encaissement : sans `withdrawal_consents`, `stripe-org-checkout` refuse toute session |
+>
+> 🔴 **Ce qui empêche d'aller au-delà de 86 :**
+>
+> - **`V-1` reste ouvert par son seul bout qui compte** : le DPA du fournisseur de mesure
+>   d'audience n'est pas obtenu (art. 28). Le script a transmis **email et nom** depuis `/signup`
+>   en production, et la garde qui l'a détecté a échoué quatre jours sans être lue ;
+> - **A-9 change de forme sans disparaître** : le drill de restauration a été **exécuté avec succès
+>   le 2026-09-01**, RTO mesuré **163 s**, isolation vérifiée. Il n'y a toujours **aucun PITR**, le
+>   plan Free n'incluant aucune sauvegarde : le dump quotidien est désormais la **seule** copie de
+>   la base qui existe ;
+> - **le canal d'alerte d'ops reste inerte** tant que `OPS_ALERT_WEBHOOK_URL` n'est pas posé dans
+>   les secrets Actions du dépôt.
+>
+> ⚠️ **Une leçon qui vaut plus que les deux points.** La mig. `131` a été appliquée **avant** que le
+> chemin de secours ait été parcouru une seule fois. Ce chemin était cassé : l'écran d'enrôlement
+> levait en phase de rendu, donc affichait l'erreur générique au lieu du QR code, lui-même cassé
+> par un double préfixe `data:`. `/admin` est resté inaccessible du 2026-08-31 au 2026-09-01, et un
+> seul compte au monde ouvre cette console. *Quand une migration crée une dépendance à un chemin de
+> récupération, ce chemin se PARCOURT avant de l'appliquer, il ne se raisonne pas : il suffisait
+> d'ouvrir l'écran une fois.*
 
 > ### 🟠 2026-09-02 · la note BAISSE de 2, et c'est l'audit qui l'a fait baisser
 >
@@ -656,12 +692,26 @@ encaisser sans preuve.
 
 ## 🔴 Ouvert — bloquant
 
-### A-9 — Plan Supabase `free` : pas de PITR, restauration jamais testée
-Rétention de backup minimale, aucun Point-In-Time Recovery, et le drill de restauration n'a
-jamais été exécuté. **RPO réel jusqu'à 24 h, RTO inconnu.**
+### A-9 — Plan Supabase `free` : pas de PITR (drill de restauration ✅ exécuté le 2026-09-01)
+~~Rétention de backup minimale, aucun Point-In-Time Recovery, et le drill de restauration n'a
+jamais été exécuté. **RPO réel jusqu'à 24 h, RTO inconnu.**~~
 
-**Action** (compte, non scriptable) : passer en plan Pro → activer PITR → exécuter le drill de
-restauration décrit dans [`docs/DEPLOYMENT.md`](./docs/DEPLOYMENT.md) §7. Effort ≈ 1 h.
+**Mis à jour le 2026-09-03.** Deux des trois branches sont refermées :
+
+- ✅ **Le drill a été exécuté et réussi le 2026-09-01** : **RTO mesuré 163 s**, 0 table sans RLS,
+  129 policies, isolation vérifiée (289 des 724 tâches visibles par un seul utilisateur). Détail
+  et bugs de script corrigés en route dans [`docs/DEPLOYMENT.md`](./docs/DEPLOYMENT.md) §7. Le
+  parcours de mutation n'a pas été rejoué à la main : risque résiduel assumé, décision consignée ;
+- ✅ **Le RPO est ramené à 24 h** par un dump quotidien (T-46), et non plus mensuel. Le secret est
+  posé et la sauvegarde **tourne** : 4 runs quotidiens verts au 2026-09-02, artefact de 385 ko,
+  rétention 30 jours ;
+- 🔴 **Aucun PITR, et c'est une décision, pas un retard** : rester en plan Free est un arbitrage
+  d'Axel du 2026-08-29 (Pro 25 $/mois, PITR 100 $/mois de plus, pour 19 Mo de base et 28 comptes).
+  Conséquence à porter en clair, **le plan Free n'inclut AUCUNE sauvegarde** : ce dump est la
+  **seule** copie de la base qui existe.
+
+**Action restante** (compte, non scriptable) : passer en plan Pro puis activer PITR, aux seuils de
+réouverture nommés dans [`docs/ROADMAP-60J.md`](./docs/ROADMAP-60J.md).
 
 ---
 
@@ -669,13 +719,16 @@ restauration décrit dans [`docs/DEPLOYMENT.md`](./docs/DEPLOYMENT.md) §7. Effo
 
 Aucun ne bloque un déploiement ; tous sont des clics dans le Dashboard.
 
-| # | Action | Où | Effort |
+**Relu ligne par ligne le 2026-09-03** : trois des cinq lignes étaient périmées. Ce tableau se
+relit contre la console et contre `docs/ROADMAP-60J.md`, jamais de mémoire.
+
+| # | Action | Où | État au 2026-09-03 |
 |---|---|---|---|
-| A-10 | **Activer « Leaked password protection »** (HaveIBeenPwned) + minimum 12 caractères. La garde client existe, la garde serveur non. | Authentication → Policies | 2 min |
-| — | **MFA (TOTP) sur le compte admin.** `/admin` n'est protégé que par l'allowlist `admin_users` + mot de passe, alors que `get_admin_stats` expose toute la volumétrie business. Meilleur rapport effort/risque du dossier. | Authentication | 5 min |
-| — | **Vérifier l'allowlist de redirection OAuth** : un wildcard trop large annulerait une partie du bénéfice de PKCE. | Authentication → URL Configuration | 5 min |
-| — | **Activer « Secure email change »** (confirmation sur l'ancienne ET la nouvelle adresse). | Authentication | 2 min |
-| — | **Vérifier la non-réutilisation du mot de passe `DATABASE_URL` historique** + activer le secret scanning GitHub (le dépôt est **public**). | Supabase + GitHub | 15 min |
+| A-10 | **Activer « Leaked password protection »** (HaveIBeenPwned) + minimum 12 caractères. | Authentication → Policies | 🟡 **à moitié**. La longueur minimale est posée, et les **trois** endroits disent 12 (code, serveur, texte affiché sous le champ, ce dernier annonçait encore 8). « Leaked password protection » est **réservée au plan Pro**, donc hors de portée tant que T-01 est écarté : l'advisor `auth_leaked_password_protection` restera rouge, et c'est attendu |
+| — | ~~**MFA (TOTP) sur le compte admin.**~~ | Authentication | ✅ **FAIT, et en vigueur.** 2FA posée sur le compte Supabase le 2026-08-29 ; côté applicatif, la mig. `131` (appliquée le 08-31) exige une session `aal2` pour `is_admin()`, et le facteur TOTP est **enrôlé et vérifié** depuis le 2026-09-01. ⚠️ Un seul compte au monde ouvre cette console, et la suppression du facteur en SQL est sa seule porte de sortie |
+| — | **Vérifier l'allowlist de redirection OAuth** : un wildcard trop large annulerait une partie du bénéfice de PKCE. | Authentication → URL Configuration | ✅ **FAIT le 2026-08-29** (T-07). `/reset-password` y manquait, donc une réinitialisation retombait sur la Site URL au lieu de l'écran de changement de mot de passe. Les deux jokers Vercel sont conservés **sciemment** : le suffixe appartient au compte d'Axel, et `flowType: 'pkce'` rend le code inexploitable depuis une autre origine |
+| — | **Activer « Secure email change »** (confirmation sur l'ancienne ET la nouvelle adresse). | Authentication | ✅ **Déclaré posé le 2026-08-29** (T-08), avec « Secure password change ». Marqué **déclaré et non vérifié** : aucun réglage Auth n'est lisible depuis le dépôt, contrairement à `Confirm email` que `/auth/v1/settings` expose |
+| — | **Vérifier la non-réutilisation du mot de passe `DATABASE_URL` historique** + activer le secret scanning GitHub (le dépôt est **public**). | Supabase + GitHub | 🟡 **à moitié**. Secret scanning, push protection et Dependabot **actifs** (T-09). Une fuite réelle confirmée dans l'historique : `.env` commité au commit initial, retiré du suivi ensuite, ce qui n'efface pas l'historique. **Inerte** : ces clés visent un projet supprimé depuis. 🔴 **Reste la réutilisation du mot de passe, qui n'appartient qu'à Axel** |
 
 ---
 

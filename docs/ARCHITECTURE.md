@@ -10,7 +10,35 @@ dit ligne par ligne. Mesuré contre le code de `main` et la prod. Remplace
 Ce document ne redécrit pas l'architecture — c'est le rôle de [`../CLAUDE.md`](../CLAUDE.md). Il
 répond à une seule question : **les invariants qu'on s'est donnés tiennent-ils encore ?**
 
-## Note d'architecture : 74 → 79 → 81 → **83 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29)
+## Note d'architecture : 74 → 79 → 81 → 83 → **84 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03)
+
+> ### 2026-09-03 · +1, le cliquet a mordu quatre fois et a été resserré quatre fois
+>
+> | | 08-29 | **09-03** (valeurs lues dans `src/architecture.guard.test.ts` à `HEAD`) |
+> |---|---|---|
+> | Fichiers hors budget | 13 | **12** |
+> | Budget du cliquet | 9 949 | **9 190** |
+> | Plus gros fichier | `PyramidTab` 1 046 · `TaskTable` 890 | `PyramidTab` **1 046** · `TaskTable` **890** |
+>
+> Quatre resserrages, tous **imposés** par la garde alors que le travail portait ailleurs :
+> `OverdueBanner` extrait de `TaskTable` (9 949 → 9 905), `useOverdueSlotReview` extrait
+> d'`AgendaPage` (9 905 → 9 903), la revue de `src/components` (9 903 → 9 791), puis la sortie de
+> `friends/supabase.repository.ts` de la liste des fichiers hors budget (9 791 → 9 190).
+>
+> **Le point vient de la manière, pas du nombre.** `friends/supabase.repository.ts` est passé sous
+> 600 lignes **sans découpe** : l'externalisation i18n a remplacé des littéraux par des appels plus
+> courts. Le budget a donc été baissé de ses 592 lignes en même temps que le fichier sortait de la
+> liste. Sans ce geste, ces 592 lignes seraient devenues du **mou distribué aux douze autres**, et
+> le cliquet aurait reculé sans que personne ne le voie.
+>
+> 🔴 **Ce qui plafonne à 84, et n'a pas bougé d'un pouce** : aucun god component n'a disparu. Le
+> plus gros fichier du dépôt est le même qu'au 08-29, et les extractions sont des compensations,
+> pas un assainissement. Le critère de la tâche T-45 a d'ailleurs été trouvé **faux** le 09-02 : il
+> promettait « plus aucun fichier au-dessus de 900 lignes » alors que `PyramidTab.tsx` en fait
+> 1 045 et `AgendaPage.tsx` 919 ; la tâche ne portait que `TaskTable.tsx`.
+>
+> ⚠️ Les autres critères du tableau §1 (invariants tenus, primitives sans consommateur, invariants
+> outillés) **n'ont pas été remesurés** ce jour-là.
 
 > ### 2026-08-29 · +2, la première coupe volontaire du socle
 >

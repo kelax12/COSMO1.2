@@ -1,6 +1,54 @@
 # Performance bundle — `vite.config.ts manualChunks`
 
-## Note de performance : 68 → 64 → 88 → 91 → **94 / 100** (2026-08-24 → 2026-08-27 → 2026-08-29)
+## Note de performance : 68 → 64 → 88 → 91 → 94 → **92 / 100** (2026-08-24 → 2026-08-27 → 2026-08-29 → 2026-09-03)
+
+> ### 🟠 2026-09-03 · la note BAISSE de 2 : la garde mesurait un artefact qui n'existe nulle part
+>
+> Le +3 du 2026-08-29 ci-dessous s'intitulait « la mesure existe enfin ». Elle existait, et **elle
+> pesait le mauvais build**. `main.tsx` garde son `Sentry.init` derrière `if (sentryDsn)` ; sans
+> `VITE_SENTRY_DSN`, Vite remplace la variable **à la compilation**, la branche devient du code
+> mort et Rollup jette presque tout `@sentry/react`. La CI construisait sans la variable, Vercel
+> l'a posée.
+>
+> | Même arbre, mêmes `node_modules`, seule la variable change | brut | gzip |
+> |---|---|---|
+> | `vendor-sentry` **sans** DSN (ce que la CI pesait) | 11 633 o | **3 818 o** |
+> | `vendor-sentry` **avec** DSN (ce qui part en production) | 145 740 o | **49 276 o** |
+>
+> Deux conséquences, et la seconde est la pire :
+>
+> - `check:bundle` **sous-estimait le chemin critique d'environ 45 ko gzip** : il affichait
+>   321,2 ko là où le bundle livré en pèse 367,1. La marge annoncée sous le plafond de 379,0 était
+>   de 57,8 ko ; **il en reste 11,9**, soit quatre fois moins ;
+> - les attributions de bootup du job `lighthouse` étaient **structurellement aveugles à Sentry**.
+>   La conclusion T-47 « `vendor-sentry` n'apparaît dans aucun top 3, donc le différer ne rendrait
+>   rien » a été **rétractée** : elle était tirée d'une mesure qui ne pouvait pas le voir.
+>
+> **Les deux points retirés ne sanctionnent aucune régression du produit.** Ils rendent un crédit
+> versé sur une mesure fausse : la marge réelle a toujours été de 11,9 ko, on l'a seulement crue
+> quatre fois plus grande pendant quatre jours. *Une garde qui mesure le mauvais artefact est pire
+> qu'une garde absente : elle donne une réponse, et on la croit.*
+>
+> Ce que la fenêtre a rendu, en revanche :
+>
+> - les deux étapes de build de `ci.yml` posent la variable, et `check:bundle` **refuse désormais
+>   de valider un budget** calculé sur un build dont `vendor-sentry` pèse moins de 20 ko gzip
+>   (`SENTRY_FLOOR`), vérifié dans les deux sens ;
+> - l'asymétrie est écrite : un job qui **pèse** un artefact et un job qui l'**exécute** n'ont pas
+>   les mêmes besoins. Le faux DSN faisait s'initialiser Sentry pour de bon, qui émettait vers un
+>   hôte inexistant, et `best-practices` tombait de 100 à 96 sur les quatre pages. `lighthouse` ne
+>   prend donc que le vrai secret, sans repli ;
+> - **T-51 corrigée par la mesure** : `vendor-animation` (11 675 à 11 992 ms) et `vendor-gsap`
+>   (10 727 à 11 679 ms) sont **à égalité** sur `/`, et le MÊME `vendor-animation` ne coûte que
+>   228 à 270 ms sur `/guide/`, **40× moins**. Le chunk n'est pas cher : c'est la quantité de
+>   travail que la landing lui demande. Le correctif est dans la page, pas dans le découpage ;
+> - l'entrée du hero de la landing est **en CSS**, plus en GSAP : elle ne dépend plus ni du chunk
+>   de page ni des fontes, et la route `/` a son propre squelette sombre. Mesuré à 4× de bridage
+>   CPU, la page affichait **deux secondes d'écran blanc** avec un spinner clair sur fond sombre.
+>
+> ⚠️ **Chiffres non remesurés ici** : le chunk d'entrée et le chemin critique n'ont pas été rebâtis
+> le 2026-09-03. Les valeurs de référence sont celles du run vert du 2026-09-02, entrée **78,4 ko**
+> sous un plafond de 79,0 et chemin critique **367,1 ko** sous 379,0.
 
 > ### 2026-08-29 · +3, et la mesure existe enfin
 >

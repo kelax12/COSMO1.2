@@ -5,7 +5,27 @@
 **+ Lighthouse CI** (`lighthouserc.json`, job `lighthouse`) sur les 4 routes prérendues.
 **Gates CI** : les violations `impact: 'critical'` sont **bloquantes** (`assertNoCritical`). `serious` / `moderate` / `minor` sont dumpées dans `test-results/a11y/<route>.json` mais non bloquantes. Le score a11y de Lighthouse est **bloquant** sur `/`, `/guide`, `/blog`, `/pour-freelances`.
 
-## Note d'accessibilité : 76 → 79 → 80 → **81 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29)
+## Note d'accessibilité : 76 → 79 → 80 → 81 → **82 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03)
+
+> ### 2026-09-03 · +1, trois défauts réels, aucun visible par axe-core
+>
+> | # | Critère WCAG | Ce qui était cassé |
+> |---|---|---|
+> | **F1** | 2.1.1 Clavier (A) | Les flèches ne déplaçaient **pas** le focus dans le calendrier. `Button` n'était pas un `forwardRef` : la source shadcn amont est écrite pour React 19, où `ref` est une prop ordinaire, le projet est sur React 18. Le `ref.current?.focus()` de `CalendarDayButton` ne faisait rien depuis toujours. Prouvé dans le navigateur : Tab atteint la grille des jours, Flèche droite passe du 30 au 31 août |
+> | **F2** | 1.4.1 Utilisation de la couleur (A) | Les liens rendus par `RichText` n'étaient pas soulignés : seule la couleur les distinguait du texte |
+> | **F3** | 1.4.11 Contraste du non-texte (AA) | L'icône des sélecteurs de date natifs était **noire sur fond noir** en thème sombre, à cause d'un `filter: invert(1)` devenu contre-productif depuis que `.dark` pose `color-scheme: dark`. Mesuré côte à côte dans le navigateur, sur `date`, `time` et `datetime-local`, en thèmes Sombre et Noir |
+>
+> **Le point vient de F1**, qui est un défaut de clavier pur, donc de la moitié de WCAG qu'un scan
+> automatique ne voit pas : axe-core ne teste pas si une flèche déplace réellement le focus. Le
+> défaut vivait dans le composant `Button`, c'est-à-dire partout, mais un seul appelant du dépôt
+> lui passe un `ref` (vérifié) : la portée réelle est le calendrier.
+>
+> ⚠️ **Ce que cette passe n'a pas fait** : les scores Lighthouse a11y n'ont pas été relus après ces
+> trois correctifs, aucune cible tactile n'a été recomptée, et les quatre audits jamais faits
+> (agenda, modals, clavier de bout en bout, VoiceOver iOS) restent à faire. Le calendrier COSMO
+> ayant remplacé le picker natif sur **six surfaces** (cf. [`UI-PATTERNS.md`](./UI-PATTERNS.md)),
+> c'est désormais un composant maison qui porte la saisie de date : son parcours clavier complet
+> mérite un audit dédié, il n'a été vérifié que sur le déplacement du focus.
 
 > ### 2026-08-29 · +1, la gate Lighthouse mesure enfin, et elle bloque
 >

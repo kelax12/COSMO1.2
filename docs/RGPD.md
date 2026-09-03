@@ -4,23 +4,71 @@
 119 : effacement et portabilité). Premier audit dédié de ce domaine. Jusqu'ici, la conformité était
 traitée par fragments dans les audits sécurité. Mesuré sur le schéma de prod et le code.
 
-## Note RGPD : 78 → 84 → **86 / 100** (2026-08-24 → 2026-08-25 → 2026-08-29) · inchangée au 2026-08-27
+## Note RGPD : 78 → 84 → **86 / 100** (2026-08-24 → 2026-08-25 → 2026-08-29) · inchangée aux 2026-08-27, 2026-09-02 et 2026-09-03
+
+> ### 🔴 2026-09-03 · une correction de base, puis une journée qui s'annule elle-même
+>
+> **La correction d'abord.** Le tableau de bord du 2026-09-02 ([`README.md`](./README.md)) fait
+> partir cette note de **84** et annonce **86** en arrivée, alors que la passe du 08-29 l'avait
+> déjà portée à 86. Le +2 de la journée était justifié ligne par ligne ; c'est la colonne de
+> départ qui était périmée, recopiée depuis le tableau du 25. *Un « avant » se relit à sa source,
+> il ne se recopie pas.*
+>
+> **Ce que la journée du 09-02 a réellement apporté**, et qui vaut bien ses deux points :
+>
+> - le fichier d'avatar part enfin **avec** la référence, au retrait de la photo comme à la
+>   suppression du compte. Le bucket est **public** : une photo restait accessible à une URL
+>   devinable après la suppression du compte ;
+> - l'export de portabilité (art. 20) gagne dix colonnes réellement saisies ;
+> - la politique de confidentialité cesse d'annoncer une **anonymisation du journal
+>   d'encaissement** que le scellement rend impossible. `row_hash` scelle `user_id` dans le
+>   chaînage : écrire `NULL` produirait exactement le signal de falsification qu'on montre à un
+>   contrôleur. Ce qui rend la conservation acceptable est ailleurs, et c'est maintenant écrit :
+>   `user_id` cesse d'identifier quiconque dès que la ligne `auth.users` disparaît.
+>
+> **Ce qui les compense exactement, et pourquoi la note ne monte pas :**
+>
+> - le script de mesure d'audience chargé sur les pages publiques s'est mis à extraire l'**adresse
+>   email et le nom** saisis à l'inscription et à les transmettre au fournisseur, sur `/signup`,
+>   **en production**. Le registre art. 30 déclarait « adresse de la page, page référente, adresse
+>   IP, navigateur, sans cookie » : ni email, ni nom, ni identifiant persistant, alors que le
+>   script dépose aussi un UUID en `localStorage`. Un consentement recueilli pour une **mesure
+>   d'audience** ne couvre pas la transmission de l'identité ;
+> - la garde `vendor-watch.yml` l'a détecté et a échoué **chaque jour du 2026-08-29 au
+>   2026-09-01** sans que personne n'ouvre son issue ;
+> - le bandeau de consentement annonçait « uniquement des cookies strictement nécessaires » alors
+>   qu'accepter chargeait deux mesures et déposait un identifiant : il décrivait le cas du **refus**
+>   en le présentant comme la description de l'**acceptation**. Un consentement ainsi recueilli
+>   n'est pas éclairé (art. 4.11 RGPD, art. 82 loi I&L).
+>
+> Tout cela est corrigé : le script n'est plus monté sur les pages portant un formulaire
+> d'identifiants, le registre et la politique disent ce que le script fait vraiment, et le bandeau
+> est réécrit en phrases complètes. **Mais un écart de cette nature, resté quatre jours en
+> production et signalé sans être lu, retire ce que la journée avait gagné.** Et il reste ouvert
+> par un bout qui n'appartient qu'à Axel : **le DPA du fournisseur (art. 28) n'est pas obtenu**,
+> cf. finding `V-1` de [`../faille.md`](../faille.md).
 
 > ### 2026-08-29 · +2, les durées de conservation sont publiées
 >
 > Les trois durées mesurées sont désormais **dans la politique de confidentialité**, à la portée du
 > lecteur et plus seulement dans le dépôt : 90 jours pour une visite de démonstration non
 > convertie, 400 jours pour les jours d'activité et une démonstration convertie, 90 jours pour les
-> marqueurs techniques de paiement. La mention que le journal d'encaissement est **anonymisé et non
-> supprimé** y figure aussi, ce qui est la seule formulation exacte : l'obligation de conservation
-> fiscale prime sur l'effacement (RGPD art. 17.3.b).
+> marqueurs techniques de paiement. ~~La mention que le journal d'encaissement est **anonymisé et
+> non supprimé** y figure aussi, ce qui est la seule formulation exacte~~ 🔴 **Faux, corrigé le
+> 2026-09-02** : le journal n'est **pas** anonymisable, `row_hash` scelle `user_id` dans le
+> chaînage et le trigger refuse l'UPDATE. La formulation exacte est celle du bloc du 09-03
+> ci-dessus. Ce qui reste vrai : l'obligation de conservation fiscale prime sur l'effacement
+> (RGPD art. 17.3.b).
 >
 > C'était le dernier point du dossier qui n'attendait rien d'autre que d'être écrit, et il débloque
 > la réponse à un acheteur B2B.
 >
 > ⚠️ **Ce qui reste, et qui ne s'obtient qu'en tant qu'entreprise** : les DPA des sous-traitants
-> (Supabase, Vercel, Sentry, Stripe, Resend) ne sont ni collectés ni archivés, et G-1
-> (minimisation d'`org_invitations`, mig. 130) est écrit mais **non appliqué en production**.
+> (Supabase, Vercel, Sentry, Stripe, Resend) ne sont ni collectés ni archivés ~~et G-1
+> (minimisation d'`org_invitations`, mig. 130) est écrit mais **non appliqué en production**~~ →
+> ✅ **la mig. 130 a été appliquée en production le 2026-08-29 au soir**, quelques heures après
+> cette passe, et G-1 est refermé. La liste des DPA à collecter s'est en revanche **allongée** le
+> 2026-09-02 : le fournisseur de mesure d'audience y manquait (finding `V-1`).
 
 > **2026-08-27 · note inchangée, et le tableau ci-dessous non plus.** Un seul mouvement dans le
 > périmètre RGPD ce jour-là : la mig. `130` (minimisation de `org_invitations`, art. 5.1.c) est
