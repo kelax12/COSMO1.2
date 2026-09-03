@@ -25,6 +25,7 @@ décision. Rien ici ne se corrige en écrivant du code.
 | [5](#5-décisions-qui-nappartiennent-quà-toi) | Décisions produit | arbitrage |
 | [6](#6-acquisition-et-seo) | Annuaires, Search Console | manuel, répétitif |
 | [7](#7-vérifications-quaucune-gate-ne-peut-faire) | Ce qu'il faut ouvrir soi-même | appareil réel |
+| [8](#8-déploiements-quun-git-push-ne-fait-pas) | 🔴 Edge Functions déployées ≠ dépôt | ligne de commande |
 
 ---
 
@@ -66,7 +67,8 @@ déclencher la cascade depuis l'écran). Détail dans [`a-faire-code.md`](./a-fa
 | # | Secret | Où | Ce qui reste inerte tant qu'il manque | Statut tenu dans |
 |---|---|---|---|---|
 | M-11 | `OPS_ALERT_WEBHOOK_URL` | Secrets **Actions** du dépôt GitHub | Le canal d'alerte d'ops. Il existe côté Supabase, pas côté GitHub : `ci-alert.yml` ne pousse donc rien. `vendor-watch.yml` a échoué quatre jours d'affilée sans que personne n'ouvre son issue, c'est exactement ce que ce canal existe pour empêcher | `a-faire-code.md` C-28 |
-| M-12 | `CRON_SECRET` | Supabase **et** GitHub, **même valeur des deux côtés** | Les avis de reconduction tacite. Un avis non envoyé rend l'abonnement résiliable à tout moment, remboursement compris. Sans objet tant qu'aucun abonnement annuel n'existe, donc juste après M-08 | `ROADMAP-60J.md` T-40, `a-faire-code.md` C-34 |
+| M-12 | `CRON_SECRET` | Supabase **et** GitHub, **même valeur des deux côtés** | Les avis de reconduction tacite. Un avis non envoyé rend l'abonnement résiliable à tout moment, remboursement compris. Sans objet tant qu'aucun abonnement annuel n'existe, donc juste après M-08. **Mesuré le 2026-09-03** : la fonction déployée répond `503 cron_secret_not_configured` à tout appel, donc le secret n'est posé **nulle part**, et le travail quotidien n'a jamais tourné une seule fois | `ROADMAP-60J.md` T-40, `a-faire-code.md` C-34 |
+| M-29 | `BUG_REPORT_FROM` | Supabase (`supabase secrets set`) | **Les deux** fonctions qui envoient un e-mail (`report-bug` et `renewal-notice`) lisent ce même secret. La valeur doit viser `send.thecosmo.app`, jamais la racine `thecosmo.app`, que Resend ne signera jamais. ⚠️ Une fois le déploiement M-30 fait, les deux fonctions n'ont **plus de valeur par défaut** et répondent `503 sender_not_configured` : M-30 sans M-29 coupe le formulaire de signalement de bug | `a-faire-code.md` C-35 |
 | M-13 | `VITE_TURNSTILE_SITE_KEY` | Vercel | Le CAPTCHA d'inscription | `ROADMAP-60J.md` |
 | M-14 | `VITE_SENTRY_DSN` **au build** | Vercel et CI | ⚠️ Sans elle, Vite remplace la variable à la compilation, Rollup jette presque tout `@sentry/react`, et `check:bundle` mesure un artefact qui n'existe nulle part. La garde refuse désormais ce build, mais le réglage reste à tenir | `CLAUDE.md` |
 
@@ -127,6 +129,31 @@ produisent pas de correctif : elles produisent des **findings**, qui rejoignent 
 | M-26 | **Vérifier une échéance sur un appareil réglé sur un fuseau à décalage NÉGATIF** | C'est là que le bug R-01 cassait, et c'est invisible depuis la métropole. 467 des 601 échéances de la prod portaient 00:00:00 UTC |
 | M-27 | **Envoyer un e-mail de test vers un compte jetable Gmail ET Outlook** | Le DNS vert ne prouve pas la délivrabilité. Procédure dans `DEPLOYMENT.md` §2ter |
 | M-28 | **Parcourir l'application au clavier seul**, souris débranchée | Un tiers de WCAG est invisible pour axe-core. Le 2026-08-30, les flèches ne déplaçaient pas le focus dans le calendrier depuis des semaines, et aucune gate ne pouvait le voir. Prompt prêt : `prompts-audits.md`, A-3 |
+
+---
+
+## 8. Déploiements qu'un `git push` ne fait pas
+
+🔴 **Ajouté par l'audit A-1, le 2026-09-03, et c'est son résultat le plus lourd.** Les trois sources
+Edge Functions **réellement déployées** ont été lues via l'API de management et comparées à `main` :
+**les trois divergent, de trois façons différentes**. Un push ne déploie aucune Edge Function, donc
+un correctif committé, testé et vert peut ne pas exister pour les utilisateurs.
+
+| Fonction | Déployée | Ce qui tourne en production aujourd'hui |
+|---|---|---|
+| `delete-account` | v13, 2026-09-02 | Une variante **qui n'existe dans aucun commit** : elle porte les correctifs R-03 et R-06 du 09-02, mais elle a **perdu** la purge symétrique de `friends` committée le 08-24. Elle échouerait à `src/rgpd-erasure.guard.test.ts`, qui est vert |
+| `renewal-notice` | v9, 2026-08-26 | Le défaut **S-4**, que `faille.md` déclare corrigé : expéditeur par défaut sur un domaine que Resend ne signera jamais |
+| `report-bug` | v8, 2026-08-29 | Le **même** défaut S-4, sur la fonction jumelle. Le correctif est committé depuis le 2026-09-03, donc **seul le déploiement manque** |
+
+| # | À faire | Pourquoi c'est toi | Statut tenu dans |
+|---|---|---|---|
+| M-30 | **Déployer les trois fonctions** : `supabase functions deploy delete-account`, puis `report-bug`, puis `renewal-notice`. Vérifier ensuite que le numéro de version a bien augmenté pour les trois | La commande demande les identifiants Supabase du projet. ⚠️ Faire M-29 dans la même séance, sinon le formulaire de bug répond `503` | `a-faire-code.md` C-35 |
+| M-32 | **Envoyer un vrai signalement de bug depuis l'app**, après M-29 et M-30, et vérifier qu'il arrive sur `contact@thecosmo.app` avec le `Reply-To` du compte et la pièce jointe lisible | Envoyer un e-mail réel depuis le domaine est une action sortante. Et aucune sonde ne prouve qu'un e-mail **arrive** : il faut ouvrir la boîte. Complète M-27 | `a-faire-code.md` C-35 |
+
+⚠️ **Aucune donnée n'est perdue aujourd'hui par la ligne `delete-account`** : la migration 116 a
+basculé `friends_friend_user_id_fkey` en `ON DELETE CASCADE` (remesuré le 2026-09-03), donc la
+cascade fait le travail que le code déployé ne fait plus. Ce qui est cassé n'est pas la purge, c'est
+le fait de **raisonner depuis un dépôt qui ne décrit pas la production**.
 
 ---
 
