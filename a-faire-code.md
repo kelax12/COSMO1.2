@@ -104,11 +104,11 @@ quand ». Une décision écrite ici fait foi contre une piste écrite dans l'ite
 | [0](#0-arbitrages-tranchés-le-2026-09-03) | 🟢 **Arbitrages tranchés** | 27 décisions du 2026-09-03 |
 | [1](#1-défauts-fonctionnels-connus) | Défauts fonctionnels connus | C-01 → C-08, C-37, C-40 → C-43, C-48, C-56, C-65, C-66 |
 | [2](#2-dette-structurelle) | Dette structurelle | C-09 → C-11, C-49, C-50 |
-| [3](#3-performance) | Performance | C-12 → C-14 |
+| [3](#3-performance) | Performance | C-12 → C-14, C-67, C-68 |
 | [4](#4-scalabilité) | Scalabilité | C-15 → C-16 |
 | [5](#5-sécurité-et-dépendances) | Sécurité et dépendances | C-17 → C-19, C-29 → C-33, C-39, C-44 → C-46, C-58 → C-64 |
 | [6](#6-i18n) | i18n | C-20 → C-22, C-38 |
-| [7](#7-accessibilité) | Accessibilité | C-23 → C-25, C-51 → C-55, C-57 |
+| [7](#7-accessibilité) | Accessibilité | C-23 → C-25, C-51 → C-55, C-57, C-69 |
 | [8](#8-tests-et-gardes) | Tests et gardes | C-26 → C-28, C-34 → C-36, C-47 |
 | [9](#9-ce-qui-nest-PAS-du-code) | Ce qui n'est PAS du code | renvois |
 | [10](#10-couverture--ce-que-cette-liste-ne-peut-pas-contenir) | 🔴 Couverture et audits à lancer | 2 audits restants |
@@ -613,6 +613,13 @@ contre 96-98 sur toutes les autres pages du même build.
   mesure **locale ne vaut rien** ici (la charge machine domine, la landing et le guide y rendent le
   même score) : toute attribution vient du runner.
 
+> 🔴 **Corrigé le 2026-09-03 par l'audit A-8, et c'est la puce ci-dessus qui était fausse.**
+> « Le coupable est nommé » l'était par une attribution de Lighthouse qui, par construction, met le
+> style et le paint déclenchés par une animation sous le fichier de la **bibliothèque** d'animation.
+> Mesuré : couper les **23** ScrollTrigger et les **8** tweens infinis de la page ne déplace pas la
+> mesure d'un point. Le coût réel est ailleurs, il est nommé en **C-37**, et il n'a rien à voir avec
+> un chunk ni avec une bibliothèque.
+
 ### C-13 · T-47 · trancher `vendor-sentry` sur le chemin critique · **P3 · S**
 
 49,3 ko gzip payés par tout visiteur. La conclusion « le différer ne rendrait rien » a été
@@ -631,6 +638,71 @@ fallu extraire du code pour passer.
   i18n de l'entrée, les dépendances tirées par le shell, et C-13.
 - **Fini quand** : `npm run check:bundle` rend au moins 5 % de marge sur les deux budgets, sur un
   build avec `VITE_SENTRY_DSN`.
+
+### C-67 · La landing bloque le fil principal **71 % du temps AU REPOS**, et ce sont ses flous, pas ses animations · **P1 · M**
+
+Trouvé par l'audit **A-8**. C'est la réponse à C-12, et elle **contredit** la piste que C-12
+désignait.
+
+**La mesure.** Build de **prod** (`npm run preview`), page chargée, puis une fenêtre de 4 000 ms
+**au repos** : aucun scroll, aucun clic, rien à animer par une interaction. On somme les tâches
+longues qui *commencent* dans cette fenêtre. Une page tranquille rend 0.
+
+| Page | fil bloqué / 4 000 ms | sans les `filter: blur` |
+|---|---|---|
+| `/` | **2 856 ms (71 %)** — passes : 2 576, 2 856, 2 906 | **259 ms (6 %)** — passes : 336, 259, 203 |
+| `/guide` | **0 ms**, sur les trois passes | 0 ms |
+| `/entreprise-presentation` | 3 637 ms (91 %) | inchangé, cf. **C-68** |
+
+**Neutraliser les flous retire 91 % du blocage.** Neutraliser les `backdrop-filter` n'en retire
+rien (3 286 ms). Une règle CSS **sans effet** laisse la mesure à 9 % près : ce n'est donc pas
+l'injection qu'on mesure.
+
+**Ce qui a été éliminé, et c'est ce qui corrige C-12** : tuer les **23** `ScrollTrigger` de la page
+ne déplace pas la mesure (3 015 contre 3 053 ms). Mettre en pause les **8** tweens GSAP infinis non
+plus (2 798). Couper la rotation de la fenêtre produit non plus (3 238). `vendor-animation` et
+`vendor-gsap` arrivaient en tête du bootup Lighthouse parce que l'échantillonnage attribue le style
+et le **paint** déclenchés par une animation au fichier de la bibliothèque qui tient la frame —
+l'en-tête de `scripts/profile-landing.mjs` le disait déjà, personne ne l'avait appliqué au verdict.
+
+**Ce qui coûte, précisément** : le premier écran de `/` empile **20 surfaces floutées** pour
+**1,95 Mpx** d'aire visible, dont quatre grandes couches décoratives animées en permanence
+(`PersoTrack.tsx`, halo conique 763 × 763 en `blur(90px)` qui tourne sur 40 s, plus trois aurores en
+`blur(100px)` et `blur(110px)` qui pulsent, toutes en `repeat: Infinity`). Le coût est
+**cumulatif** : retirer une seule famille n'en enlève que ~30 %, les retirer toutes en enlève 91 %.
+Ce sont des couches superposées, donc chacune qui reste force le re-rendu de toute la pile.
+
+- ❌ **Ce n'est pas un réglage de compositeur** : `will-change: transform, opacity`,
+  `translateZ(0)`, `contain: paint` et diviser le rayon par trois ont **tous** été mesurés, aucun ne
+  déplace la mesure.
+- **Piste** : cuire le fond (image ou `radial-gradient` déjà flou, seule l'opacité reste animée).
+  L'arbitrage de direction artistique appartient à Axel : `a-faire-manuel.md` **M-37**.
+- ⚠️ **La mesure est en rastérisation LOGICIELLE** (SwiftShader), comme le runner de CI : c'est la
+  bonne condition pour expliquer un score Lighthouse, pas pour prédire ce que ressent un poste
+  équipé d'un GPU. Le lancement d'un navigateur avec GPU a échoué dans cet environnement, la
+  question reste **ouverte** (`a-faire-manuel.md` **M-38**), et un téléphone d'entrée de gamme est
+  plus proche du cas logiciel que d'un poste de bureau.
+- **Fini quand** : `node scripts/landing-motion-probe.mjs --url http://localhost:4399/` rend moins
+  de 300 ms au repos **sans** neutraliser quoi que ce soit, **et** `/` dépasse 90 en CI sur deux
+  passes. L'avant est pris : 56-63, TBT 546 à 1 633 ms (2026-09-02).
+
+### C-68 · `/entreprise-presentation` bloque autant, pour une cause que l'audit n'a PAS su isoler · **P2 · M**
+
+Trouvé par l'audit **A-8**, et écrit ici **parce qu'il n'est pas résolu**. Sur le build de prod, la
+landing entreprise bloque le fil **3 637 ms sur 4 000 (91 %)** au repos, mais neutraliser les flous
+n'y change **rien** : sa cause est différente de celle de C-67, et elle n'est pas nommée.
+
+Ce que la mesure dit, et c'est tout ce qu'elle dit : le comportement est **bimodal**. Six passes ont
+rendu soit ~0-370 ms, soit ~3 000-3 400 ms, sur la même URL et le même build. Retirer le canvas
+WebGL (`LightRays`, `vendor-ogl`) a produit les deux **seules** passes à 0 ms — mais une troisième
+passe est repartie à 3 031 ms avec le canvas retiré. Le shader est donc un **suspect**, pas une
+conclusion.
+
+- ❌ **Ne pas refermer cet item en accusant le shader** : ce serait exactement le défaut que ce
+  dépôt a corrigé quatre fois, une réponse rassurante donnée par une mesure qui ne discrimine pas.
+- **Fini quand** : la bimodalité est expliquée (trace CDP par catégorie raster/GPU, ou une sonde qui
+  dit laquelle des deux branches le chargement a prise), la cause est nommée, et la page rend moins
+  de 300 ms au repos sur trois passes consécutives.
 
 ---
 
@@ -1463,6 +1535,36 @@ Deux défauts de nature différente, à ne pas traiter ensemble :
   passent à 44, et une garde compte les commandes sous la cible sur les routes protégées, avec un
   témoin qui refuse un détecteur qui ne détecterait plus rien.
 
+### C-69 · La fenêtre produit tourne toute seule, sans pause, y compris en mouvement réduit · **P2 · S**
+
+Trouvé par l'audit **A-8** en cherchant autre chose. `AppWindowShowcase` (le mockup du hero de `/`)
+change de vue toutes les **2,5 s**, indéfiniment. La rotation n'est gatée que par `useInView` : il
+n'y a **ni bouton de pause, ni arrêt au survol, ni au focus**, et surtout **aucun égard pour
+`prefers-reduced-motion`**.
+
+**Mesuré le 2026-09-03** sur le build de prod, en relevant la vue annoncée toutes les 600 ms
+pendant ~9,6 s :
+
+| Préférence | Vues traversées |
+|---|---|
+| `no-preference` | `tasks` → `agenda` → `okr` → `habits` (avec les états de transition) |
+| **`reduce`** | **`tasks` → `agenda` → `okr` → `habits`** — exactement la même rotation |
+
+C'est un échec **WCAG 2.2.2 « Pause, Stop, Hide », niveau A** : un contenu qui démarre
+automatiquement, dure plus de cinq secondes et est présenté en parallèle d'autre contenu doit
+pouvoir être mis en pause. Ici il est présenté à côté du H1 et des CTA, c'est-à-dire exactement le
+texte qu'un visiteur essaie de lire.
+
+- ⚠️ Ce n'est **pas** la cause de la lenteur de C-67 : couper la rotation ne déplace pas la mesure
+  (3 238 ms contre 3 053). Les deux findings sont indépendants, et celui-ci est un défaut de
+  conformité, pas de performance.
+- ⚠️ `MotionConfig reducedMotion="user"` (dans `App.tsx`) ne couvre pas ce cas : il neutralise les
+  animations de transform de Framer, pas un `setInterval` ni une transition d'opacité.
+- **Fini quand** : la rotation ne démarre pas sous `prefers-reduced-motion` (les quatre vues restent
+  atteignables autrement, la rangée de puces `HeroModuleDock` étant déjà cliquable-compatible), une
+  commande de pause existe pour les autres, et un test couvre les deux préférences. ❌ Ne pas se
+  contenter de ralentir : la conformité demande un **contrôle**, pas une cadence plus douce.
+
 ---
 
 ## 8. Tests et gardes
@@ -1877,12 +1979,44 @@ tentant une connexion est « Supabase non configuré. Vérifiez les variables d'
 mesure la configuration locale, pas le produit. Cette moitié est reportée dans
 [`a-faire-manuel.md`](./a-faire-manuel.md) §7 (M-35, M-36).
 
+### ✅ A-8 · le fil principal de la landing · passé le 2026-09-03
+
+Ce qu'il a rendu, et comment c'est mesuré :
+
+| Finding | Comment il a été établi |
+|---|---|
+| **C-67** · 71 % du fil bloqué AU REPOS, et ce sont les flous | build de prod, fenêtre de 4 s sans scroll ni clic, 3 passes : `/` à 2 856 ms, `/guide` à **0**, et 259 ms une fois les `filter: blur` neutralisés |
+| **C-68** · la landing entreprise bloque autant, pour une autre cause | même protocole : 3 637 ms, insensible aux flous, et **bimodale** (0-370 ms ou 3 000+ ms sur la même URL) |
+| **C-69** · la fenêtre produit tourne sans pause, même en mouvement réduit | relevé de la vue annoncée toutes les 600 ms pendant 9,6 s, en `no-preference` puis en `reduce` : rotation **identique** |
+
+Ce qu'il a **infirmé**, et qui est donc clos : la piste que C-12 désignait. `vendor-animation` et
+`vendor-gsap` ne sont pas les coupables, et le découpage des chunks n'y est pour rien. Tuer les 23
+`ScrollTrigger`, mettre en pause les 8 tweens infinis, couper la rotation de la fenêtre produit :
+**aucune de ces trois coupes ne déplace la mesure**. Sont également infirmés, par mesure, quatre
+correctifs « évidents » : `will-change`, `translateZ(0)`, `contain: paint` et diviser le rayon de
+flou par trois ne changent rien. Le `backdrop-filter` ne coûte rien non plus.
+
+**Trois pièges de mesure ont été rencontrés, et deux ont d'abord produit des chiffres faux :**
+
+1. **Muter `el.style` ne tient pas.** React réécrit la prop `style` à chaque rendu, et cette page en
+   déclenche un toutes les 2,5 s : la neutralisation disparaît en cours de mesure.
+2. **Marquer les nœuds par un attribut ne tient pas non plus.** La rotation de la fenêtre produit
+   **remonte des sous-arbres entiers**, et les nœuds neufs n'ont pas la marque. Seule une règle CSS
+   `*` survit aux deux. Ces deux pièges ont fait rendre, au même scénario, 405 ms puis 2 679 ms.
+3. **L'onglet du panneau navigateur était resté ouvert sur la landing**, donc la page mesurée
+   tournait aussi à côté : les passes sont passées de ±3 % à des écarts de 1 à 13. Cousin exact de
+   la rétractation du 2026-08-27, où c'était un onglet **caché** qui faussait le sens inverse.
+
+Le harnais qui en sort, `scripts/landing-motion-probe.mjs`, porte donc **deux témoins** : une règle
+CSS sans effet, qui doit laisser la mesure inchangée (sinon c'est l'injection qu'on mesure), et un
+inventaire structurel qui doit **changer** entre `no-preference` et `reduce` (sinon le détecteur ne
+regarde pas les animations). Les deux échouent en rouge et rendent `exit 1`.
+
 ### Audits à lancer, par rapport valeur / effort
 
 | # | Audit | Pourquoi maintenant | Ce qu'il rendrait |
 |---|---|---|---|
 | **A-4** | **Mobile sur appareil réel** (iOS Safari, Android) · 🟠 **moitié appareil restante**, cf. la section juste au-dessus et [`a-faire-manuel.md`](./a-faire-manuel.md) §7 (M-25) | La note mobile n'a toujours **aucune** mesure sur vrai téléphone : la passe du 2026-09-03 n'a pu mesurer qu'en viewport émulé. Les pièges WebKit documentés dans `MOBILE.md` viennent justement de bugs invisibles en émulation | Les bugs de feuille, de clavier virtuel, de `100vh` et de gestes que l'émulation ne montre pas ; et la confirmation iOS de C-56, dont le mécanisme diffère d'Android |
-| **A-8** | **Le fil principal de la landing** | C-12. C'est la seule page lente, et la première que voit un visiteur d'annuaire | L'attribution réelle des 546 à 1 633 ms de blocage, à prendre **sur le runner**, jamais en local |
 
 **Les huit prompts sont écrits, prêts à coller** : [`prompts-audits.md`](./prompts-audits.md), A-1
 compris, pour qu'on puisse rejouer la mesure. Un
@@ -1890,7 +2024,7 @@ préambule commun porte les règles de méthode du dépôt (mesurer plutôt que 
 obligatoire, jamais de seuil baissé, sessions concurrentes), puis un corps par audit avec son
 périmètre, ses questions et ses pièges connus.
 
-> **Une fois A-4 et A-8 passés et leurs findings ajoutés ici, la phrase « il ne reste plus un seul
+> **Une fois A-4 passé et ses findings ajoutés ici, la phrase « il ne reste plus un seul
 > problème lié au code » devient vérifiable.** Avant, elle ne l'est pas, et l'écrire quand même
 > serait exactement le défaut que ce dépôt a corrigé quatre fois en cinq jours : **une réponse
 > rassurante donnée par une mesure qui ne regardait pas.**
