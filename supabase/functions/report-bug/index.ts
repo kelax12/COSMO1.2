@@ -73,8 +73,27 @@ const TITLE_MAX = 120
 const DESCRIPTION_MIN = 10
 const DESCRIPTION_MAX = 5000
 const ATTACHMENT_MAX_BYTES = 3 * 1024 * 1024
-const ALLOWED_ATTACHMENT_TYPES = new Set([
-  'image/png', 'image/jpeg', 'image/gif', 'image/webp', 'application/pdf', 'text/plain',
+/**
+ * Types de piece jointe autorises, ET l'extension que porte le fichier joint.
+ *
+ * 🔴 C-32 — l'allowlist etait DECORATIVE. Elle validait `attachment.type`, puis
+ * ne le transmettait jamais : Resend ne recoit que `filename` et `content`, et
+ * type la piece jointe d'apres le NOM de fichier, qui n'etait borne qu'en
+ * longueur. `{ name: 'facture.html', type: 'image/png', content: <base64 d'un
+ * formulaire d'hameconnage> }` passait la validation et arrivait dans la boite
+ * de contact en piece jointe HTML — exactement ce que l'allowlist affirmait
+ * interdire.
+ *
+ * L'extension est donc DERIVEE du type valide, jamais reprise du nom envoye :
+ * c'est le seul des deux champs qui ait ete verifie.
+ */
+const ATTACHMENT_EXTENSION_BY_TYPE = new Map<string, string>([
+  ['image/png', 'png'],
+  ['image/jpeg', 'jpg'],
+  ['image/gif', 'gif'],
+  ['image/webp', 'webp'],
+  ['application/pdf', 'pdf'],
+  ['text/plain', 'txt'],
 ])
 // Le contexte technique est un dictionnaire libre côté client : on le borne
 // pour qu'il ne devienne pas un canal d'exfiltration de 5 Mo de texte.
@@ -152,7 +171,8 @@ Deno.serve(async (req) => {
     const name = typeof raw.name === 'string' ? singleLine(raw.name).slice(0, 100) : ''
     const type = typeof raw.type === 'string' ? raw.type : ''
     const content = typeof raw.content === 'string' ? raw.content : ''
-    if (!name || !ALLOWED_ATTACHMENT_TYPES.has(type) || !content) {
+    const extension = ATTACHMENT_EXTENSION_BY_TYPE.get(type)
+    if (!name || !extension || !content) {
       return json({ error: 'invalid_attachment' }, 400, req)
     }
     // 4 caractères base64 = 3 octets : on borne la taille réelle du fichier
@@ -163,7 +183,14 @@ Deno.serve(async (req) => {
     if (!/^[A-Za-z0-9+/=\s]+$/.test(content)) {
       return json({ error: 'invalid_attachment' }, 400, req)
     }
-    attachment = { filename: name, content: content.replace(/\s+/g, '') }
+    // C-32 — le nom est reconstruit : radical nettoye + extension DERIVEE du
+    // type valide. Un `facture.html` declare `image/png` repart en
+    // `facture.png`, donc inerte dans un client de messagerie.
+    const stem = name
+      .replace(/\.[^.]*$/, '')          // retire l'extension envoyee, quelle qu'elle soit
+      .replace(/[^A-Za-z0-9._-]/g, '_') // et tout ce qui n'est pas un nom de fichier
+      .slice(0, 80) || 'piece-jointe'
+    attachment = { filename: `${stem}.${extension}`, content: content.replace(/\s+/g, '') }
   }
 
   // Contexte technique (URL, user agent, viewport…) — borné et aplati.
@@ -178,7 +205,14 @@ Deno.serve(async (req) => {
 
   // Identité de l'auteur : elle vient du JWT, JAMAIS du corps de la requête.
   // Un visiteur non connecté (clé anon) reste anonyme, et c'est valide.
+  //
+  // 🔴 C-33 — l'erreur de `getUser()` n'etait pas lue. Sur panne de l'API auth,
+  // un utilisateur CONNECTE etait traite comme anonyme : le rapport partait
+  // sans son adresse et sans `reply_to`, donc sans aucun moyen de lui repondre,
+  // et rien ne le disait. « Anonyme » et « auteur non resolu » sont deux etats
+  // differents, et un seul des deux justifie de ne pas pouvoir repondre.
   let reporterEmail: string | null = null
+  let reporterUnresolved = false
   const authHeader = req.headers.get('Authorization') ?? ''
   if (authHeader) {
     try {
@@ -187,18 +221,24 @@ Deno.serve(async (req) => {
         Deno.env.get('SUPABASE_ANON_KEY') ?? '',
         { global: { headers: { Authorization: authHeader } } },
       )
-      const { data } = await anon.auth.getUser()
-      reporterEmail = data.user?.email ?? null
+      const { data, error } = await anon.auth.getUser()
+      // Une cle anon seule rend `user: null` SANS erreur : c'est un visiteur
+      // non connecte, cas nominal et voulu. Une erreur, elle, veut dire qu'on
+      // n'a pas su repondre a la question.
+      if (error) reporterUnresolved = true
+      else reporterEmail = data.user?.email ?? null
     } catch {
-      reporterEmail = null
+      reporterUnresolved = true
     }
   }
+  const reporterLabel = reporterEmail
+    ?? (reporterUnresolved ? 'auteur non resolu (panne de l API auth)' : 'non connecté (anonyme)')
 
   const textBody = [
     description,
     '',
     '---',
-    `Auteur : ${reporterEmail ?? 'non connecté (anonyme)'}`,
+    `Auteur : ${reporterLabel}`,
     ...contextLines,
   ].join('\n')
 
@@ -206,7 +246,7 @@ Deno.serve(async (req) => {
     `<p style="white-space:pre-wrap">${escapeHtml(description)}</p>`,
     '<hr>',
     '<p style="font:12px/1.6 monospace;color:#555">',
-    `Auteur : ${escapeHtml(reporterEmail ?? 'non connecté (anonyme)')}<br>`,
+    `Auteur : ${escapeHtml(reporterLabel)}<br>`,
     ...contextLines.map((line) => `${escapeHtml(line)}<br>`),
     '</p>',
   ].join('')

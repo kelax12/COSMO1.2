@@ -35,16 +35,33 @@ jobs:
         run: |
           # `CRON_SECRET`, lui, est un vrai secret : sa valeur doit etre
           # identique cote GitHub et cote Supabase, personne ne peut la
-          # deviner. Tant qu'il n'est pas pose, aucun avis ne part, et c'est
-          # sans consequence tant qu'aucun abonnement ANNUEL n'existe (T-40).
+          # deviner.
+          #
+          # 🔴 C-34 — ce bloc faisait `exit 0` sur un `::warning::`. C'est le
+          # motif exact retire d'`uptime.yml` le 2026-09-03, encore en place
+          # ici : le workflow sortait en VERT tous les jours depuis sa
+          # creation, sur une obligation quotidienne jamais tenue. Une garde
+          # qui repond sans mesurer est pire qu'une garde absente — elle donne
+          # une reponse, et on la croit.
+          #
+          # ❌ Ne jamais rendre une garde conditionnelle a la presence de son
+          #    propre secret : secret absent = ECHEC, jamais un silence vert.
           if [ -z "$SUPABASE_URL" ] || [ -z "$CRON_SECRET" ]; then
-            echo "::warning::CRON_SECRET absent, aucun avis declenche. Sans objet tant qu'aucun abonnement annuel n'existe (T-40)."
-            exit 0
+            echo "::error::CRON_SECRET absent des secrets Actions : AUCUN avis de reconduction ne part (Conso. L215-1). Poser le secret, avec la meme valeur que cote Supabase."
+            exit 1
           fi
           code=$(curl -s -o /tmp/out.json -w '%{http_code}' -X POST \
             "$SUPABASE_URL/functions/v1/renewal-notice" \
             -H "x-cron-secret: $CRON_SECRET")
           echo "HTTP $code"; cat /tmp/out.json; echo
+          # TEMOIN : une garde qui n'appelle rien ne mesure rien. Si `curl`
+          # n'a pas rendu de code HTTP a trois chiffres, l'appel n'a pas eu
+          # lieu, et le test de statut ci-dessous serait une comparaison sur
+          # du vide — verte par accident.
+          case "$code" in
+            [0-9][0-9][0-9]) ;;
+            *) echo "::error::Aucun code HTTP : l appel n a pas eu lieu, la garde n a rien mesure."; exit 1 ;;
+          esac
           # Un echec doit etre VISIBLE : l obligation est quotidienne, et un
           # workflow vert sur une fonction en erreur ferait passer un
           # manquement pour un jour normal.
