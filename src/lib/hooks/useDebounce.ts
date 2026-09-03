@@ -66,7 +66,11 @@ export const useDebouncedCallback = <T extends (...args: unknown[]) => unknown>(
  * @param value - The value to track
  */
 export const usePrevious = <T>(value: T): T | undefined => {
-  const ref = useRef<T>();
+  // C-60 — `useRef<T>()` sans valeur initiale ne compile plus sous les types
+  // React 19 (`useRef` y exige un argument). Le type porte donc `| undefined`
+  // et la valeur initiale est explicite : meme comportement, meme signature de
+  // retour, et la migration ne butera pas la-dessus.
+  const ref = useRef<T | undefined>(undefined);
 
   useEffect(() => {
     ref.current = value;

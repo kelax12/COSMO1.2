@@ -25,12 +25,14 @@ export const orgKeys = {
   /** Liste de MES organisations (multi-org). */
   mine: () => [...orgKeys.all, 'mine'] as const,
   members: (orgId: string) => [...orgKeys.all, 'members', orgId] as const,
-  joinRequests: (orgId: string) => [...orgKeys.all, 'joinRequests', orgId] as const,
-  mySentRequest: () => [...orgKeys.all, 'mySentRequest'] as const,
-  /** Invitations d'entreprise recues et non traitees (boite de reception). */
-  myInvitations: () => [...orgKeys.all, 'myInvitations'] as const,
-  /** Retraits d'entreprise non acquittes (boite de reception). */
-  myRemovalNotices: () => [...orgKeys.all, 'myRemovalNotices'] as const,
+  // ⚠️ C-50 — QUATRE fabriques ont ete SUPPRIMEES ici (`joinRequests`,
+  // `mySentRequest`, `myInvitations`, `myRemovalNotices`). Depuis la mig. 129,
+  // la boite de reception tient en une seule cle, `inbox()` : ces quatre-la ne
+  // portaient plus aucune donnee, n'avaient plus ni lecteur ni invalidateur, et
+  // restaient pourtant exportees. C'est exactement le piege que la note de la
+  // mig. 129 decrit — invalider une ancienne sous-cle ne rafraichit plus rien,
+  // EN SILENCE, et la prochaine mutation ecrite les aurait trouvees
+  // disponibles. ❌ Ne pas les recreer : elargir `inbox()`.
   /** Amis que j'ai invités dans cette org, invitation encore en attente. */
   pendingSentInvitations: (orgId: string) => [...orgKeys.all, 'pendingSentInvitations', orgId] as const,
   /**
