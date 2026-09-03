@@ -279,32 +279,63 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
           {/* Couche parallax moyenne (GSAP) : halo + aurores. Les loops
               d'opacité/scale restent en Framer sur les enfants ; GSAP ne
               translate que ce wrapper (pas de conflit de transform). */}
+          {/* ── Aurores CUITES : des dégradés déjà doux, zéro `filter: blur()` ──
+              Ces quatre couches étaient des aplats floutés à 90-110 px, animés
+              en boucle. Mesuré le 2026-09-03 (audit A-8, build de prod, fenêtre
+              de 4 s AU REPOS, sans scroll ni clic) : la page bloquait le fil
+              principal 2 856 ms sur 4 000, et neutraliser les seuls
+              `filter: blur` la ramenait à 259 ms. `/guide`, sur le même build,
+              en bloque 0.
+              🔴 Le coût n'était PAS les bibliothèques d'animation, contrairement
+              à ce que le bootup Lighthouse laissait croire : couper les 23
+              ScrollTrigger, les 8 tweens infinis ou la rotation de la fenêtre
+              produit ne déplaçait pas la mesure d'un point. C'était la
+              rastérisation d'une pile de surfaces floutées, refaite à chaque
+              frame — et le coût est CUMULATIF, les couches se superposant.
+              ❌ Ne pas « réoptimiser » en remettant un `filter: blur()` ici, ni
+              espérer le rattraper par un `will-change`, un `translateZ(0)`, un
+              `contain: paint` ou un rayon plus petit : les quatre ont été
+              mesurés, aucun ne change quoi que ce soit.
+              ✅ Un `radial-gradient` qui s'éteint vers `transparent` EST déjà
+              flou : il produit le même halo diffus, mais il se peint comme un
+              dégradé ordinaire. Seule l'opacité reste animée — jamais un
+              transform, cf. la règle `MotionConfig reducedMotion="user"`.
+              Harnais de non-régression : `scripts/landing-motion-probe.mjs`. */}
           <div ref={auroraLayerRef} className="absolute inset-0">
-            {/* Halo conique lumineux animé (rotation lente) */}
+            {/* Nappe de teintes (remplace le halo conique tournant).
+                ⚠️ Chaque dégradé DOIT atteindre `transparent` avant le bord de
+                sa boîte : sans le flou qui adoucissait les arêtes, un stop
+                encore coloré à 100 % dessine un rectangle visible. C'est le
+                défaut qu'a montré la première capture après correctif. */}
             <motion.div
-              className="absolute left-1/2 top-[-10%] h-[42rem] w-[42rem] -translate-x-1/2 rounded-full opacity-50"
+              className="absolute left-1/2 top-[-18%] h-[58rem] w-[58rem] -translate-x-1/2 rounded-full"
               style={{
                 background:
-                  'conic-gradient(from 0deg, rgba(59,130,246,0.18), rgba(139,92,246,0.16), rgba(217,70,239,0.14), rgba(34,211,238,0.16), rgba(59,130,246,0.18))',
-                filter: 'blur(90px)',
+                  'radial-gradient(circle closest-side, rgba(99,102,241,0.80) 0%, rgba(99,102,241,0.72) 34%, rgba(139,92,246,0.56) 56%, rgba(217,70,239,0.30) 76%, rgba(34,211,238,0.12) 90%, transparent 100%)',
               }}
-              whileInView={reduceMotion ? undefined : { rotate: 360 }}
-              transition={reduceMotion ? undefined : { duration: 40, repeat: Infinity, ease: 'linear' }}
+              whileInView={reduceMotion ? undefined : { opacity: [0.82, 1, 0.82] }}
+              transition={reduceMotion ? undefined : { duration: 14, repeat: Infinity, ease: 'easeInOut' }}
             />
             {/* Aurores */}
             <motion.div
-              className="absolute -top-24 left-1/2 h-[34rem] w-[34rem] -translate-x-1/2 rounded-full bg-gradient-to-br bg-[rgb(var(--color-accent-solid))] via-violet-600/20 to-fuchsia-600/20 blur-[110px]"
-              whileInView={reduceMotion ? undefined : { opacity: [0.55, 0.8, 0.55], scale: [1, 1.06, 1] }}
+              className="absolute -top-40 left-1/2 h-[60rem] w-[60rem] -translate-x-1/2 rounded-full"
+              style={{
+                background:
+                  'radial-gradient(circle closest-side, rgb(var(--color-accent-solid) / 0.92) 0%, rgb(var(--color-accent-solid) / 0.88) 34%, rgb(var(--color-accent-solid) / 0.70) 54%, rgba(139,92,246,0.44) 72%, rgba(217,70,239,0.18) 88%, transparent 100%)',
+              }}
+              whileInView={reduceMotion ? undefined : { opacity: [0.78, 1, 0.78] }}
               transition={reduceMotion ? undefined : { duration: 9, repeat: Infinity, ease: 'easeInOut' }}
             />
             <motion.div
-              className="absolute top-10 -left-20 h-80 w-80 rounded-full bg-cyan-500/15 blur-[100px]"
-              whileInView={reduceMotion ? undefined : { opacity: [0.4, 0.65, 0.4] }}
+              className="absolute -top-4 -left-40 h-[38rem] w-[38rem] rounded-full"
+              style={{ background: 'radial-gradient(circle closest-side, rgba(6,182,212,0.62) 0%, rgba(6,182,212,0.54) 40%, rgba(6,182,212,0.26) 70%, transparent 100%)' }}
+              whileInView={reduceMotion ? undefined : { opacity: [0.45, 0.7, 0.45] }}
               transition={reduceMotion ? undefined : { duration: 7, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
             />
             <motion.div
-              className="absolute top-24 -right-16 h-80 w-80 rounded-full bg-fuchsia-500/15 blur-[100px]"
-              whileInView={reduceMotion ? undefined : { opacity: [0.4, 0.7, 0.4] }}
+              className="absolute top-8 -right-36 h-[38rem] w-[38rem] rounded-full"
+              style={{ background: 'radial-gradient(circle closest-side, rgba(217,70,239,0.62) 0%, rgba(217,70,239,0.54) 40%, rgba(217,70,239,0.26) 70%, transparent 100%)' }}
+              whileInView={reduceMotion ? undefined : { opacity: [0.45, 0.72, 0.45] }}
               transition={reduceMotion ? undefined : { duration: 8, repeat: Infinity, ease: 'easeInOut', delay: 2 }}
             />
           </div>
@@ -396,8 +427,17 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
                 (1 élément = 1 propriétaire de transform). */}
             <div ref={mockupLayerRef} className="relative w-full">
               <div className="relative w-full" style={{ perspective: 1400 }}>
-                {/* Glow derrière le frame */}
-                <div className="absolute -inset-6 bg-gradient-to-tr bg-[rgb(var(--color-accent-solid))] via-violet-600/20 to-fuchsia-500/20 rounded-[2rem] blur-3xl" aria-hidden="true" />
+                {/* Glow derrière le frame — cuit lui aussi (cf. les aurores
+                    ci-dessus) : c'était la plus grande surface floutée restante
+                    du premier écran, 640 x 670 px en `blur-3xl`. */}
+                <div
+                  className="absolute -inset-40 rounded-[50%]"
+                  style={{
+                    background:
+                      'radial-gradient(ellipse farthest-side, rgb(var(--color-accent-solid) / 0.95) 0%, rgb(var(--color-accent-solid) / 0.82) 40%, rgba(139,92,246,0.52) 64%, rgba(217,70,239,0.20) 84%, transparent 100%)',
+                  }}
+                  aria-hidden="true"
+                />
 
                 <div className="relative max-w-[34rem] mx-auto lg:max-w-none lg:ml-auto">
                   {/* Les quatre modules arrivent de quatre directions et se
