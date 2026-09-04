@@ -94,6 +94,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
   const sheetMotion = useSheetMotion();
   const { t } = useT('taskModal');
   const { t: tCommon } = useT('common');
+  const { t: tOv } = useT('overlays');
   const [showPrioritySheet, setShowPrioritySheet] = useState(false);
   const [showCategorySheet, setShowCategorySheet] = useState(false);
   const [showListsModal, setShowListsModal] = useState(false);
@@ -236,7 +237,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
                           onClick={() => { handleInputChange('deadline', preset.value); setShowDeadlinePicker(false); }}
                           className="px-2.5 py-1.5 rounded-lg text-xs font-medium border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))]"
                         >
-                          {tCommon(preset.labelKey)}
+                          {tOv(preset.labelKey)}
                         </button>
                       ))}
                     </div>

@@ -57,6 +57,7 @@ const RemoveFriendConfirm: React.FC<RemoveFriendConfirmProps> = ({
   onConfirm,
 }) => {
   const { t } = useT('common');
+  const ov = useT('overlays');
   if (!open) return null;
 
   return (
@@ -73,34 +74,34 @@ const RemoveFriendConfirm: React.FC<RemoveFriendConfirmProps> = ({
           paddingBottom: 'env(safe-area-inset-bottom)',
         }}
         role="alertdialog"
-        aria-label={t('removeFriend.ariaConfirm')}
+        aria-label={ov.t('removeFriend.ariaConfirm')}
       >
         <div className="sm:hidden flex justify-center pt-3 pb-2">
           <div className="w-10 h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
         </div>
         <div className="p-5 sm:p-6">
           <h3 className="text-lg sm:text-xl font-bold mb-2 sm:mb-3" style={{ color: 'rgb(var(--color-text-primary))' }}>
-            {t('removeFriend.title')}
+            {ov.t('removeFriend.title')}
           </h3>
           <p className="text-sm leading-relaxed mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-            {t('removeFriend.confirm')}{' '}
+            {ov.t('removeFriend.confirm')}{' '}
             <strong style={{ color: 'rgb(var(--color-text-primary))' }}>
               {friendName}
             </strong>
             {' de vos amis ?'}
           </p>
           <p className="text-sm leading-relaxed mb-4" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-            {t('removeFriend.bodyBefore')}<strong style={{ color: 'rgb(var(--color-text-primary))' }}>{t('removeFriend.bodyAllYours')}</strong>{t('removeFriend.bodyMiddle')}<strong style={{ color: 'rgb(var(--color-text-primary))' }}>{t('removeFriend.bodyAllTheirs')}</strong>{t('removeFriend.bodyAfter')}
+            {ov.t('removeFriend.bodyBefore')}<strong style={{ color: 'rgb(var(--color-text-primary))' }}>{ov.t('removeFriend.bodyAllYours')}</strong>{ov.t('removeFriend.bodyMiddle')}<strong style={{ color: 'rgb(var(--color-text-primary))' }}>{ov.t('removeFriend.bodyAllTheirs')}</strong>{ov.t('removeFriend.bodyAfter')}
           </p>
 
           {(ownedSharedTasks.length > 0 || receivedSharedTasks.length > 0) && (
             <div className="mb-5 sm:mb-6 max-h-52 overflow-y-auto">
               <TaskPreviewList
-                title={t('removeFriend.losesAccess')}
+                title={ov.t('removeFriend.losesAccess')}
                 tasks={ownedSharedTasks}
               />
               <TaskPreviewList
-                title={t('removeFriend.youLoseAccess')}
+                title={ov.t('removeFriend.youLoseAccess')}
                 tasks={receivedSharedTasks}
               />
             </div>

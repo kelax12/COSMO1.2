@@ -7,7 +7,7 @@ import { ShortcutsList } from './keyboard-shortcuts';
 import { useT } from '@/i18n/useT';
 
 const ShortcutsHelp = () => {
-  const { t } = useT('common');
+  const ov = useT('overlays');
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
@@ -74,7 +74,7 @@ const ShortcutsHelp = () => {
               <ShortcutsList />
             </div>
             <p className="px-5 pb-4 text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
-              {t('shortcuts.inactiveWhileTyping')}
+              {ov.t('shortcuts.inactiveWhileTyping')}
             </p>
           </motion.div>
         </motion.div>

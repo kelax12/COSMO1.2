@@ -43,24 +43,24 @@ const CommandPalette = lazy(() => import('@/components/CommandPalette'));
 //
 // Le second argument est la liste des catalogues i18n du SOUS-ARBRE de la page.
 // Régénérer après tout déplacement de composant : `npm run i18n:namespaces`.
-const LandingPage = lazyWithRetry(() => import('@/pages/LandingPage'), ['landing', 'seo']);
-const LoginPage = lazyWithRetry(() => import('@/pages/LoginPage'), ['seo']);
-const SignupPage = lazyWithRetry(() => import('@/pages/SignupPage'), ['seo']);
+const LandingPage = lazyWithRetry(() => import('@/pages/LandingPage'), ['landing', 'overlays', 'seo']);
+const LoginPage = lazyWithRetry(() => import('@/pages/LoginPage'), ['overlays', 'seo']);
+const SignupPage = lazyWithRetry(() => import('@/pages/SignupPage'), ['overlays', 'seo']);
 const ForgotPasswordPage = lazyWithRetry(() => import('@/pages/ForgotPasswordPage'), ['seo']);
 const ResetPasswordPage = lazyWithRetry(() => import('@/pages/ResetPasswordPage'), ['seo']);
-const DashboardPage = lazyWithRetry(() => import('@/pages/DashboardPage'), ['dashboard', 'eventModal', 'okr', 'org', 'taskModal', 'tasks']);
-const TasksPage = lazyWithRetry(() => import('@/pages/TasksPage'), ['eventModal', 'org', 'taskModal', 'tasks', 'tutorials']);
-const AgendaPage = lazyWithRetry(() => import('@/pages/AgendaPage'), ['agenda', 'eventModal', 'org', 'taskModal', 'tasks', 'tutorials']);
-const HabitsPage = lazyWithRetry(() => import('@/pages/HabitsPage'), ['eventModal', 'habits', 'premium', 'tasks', 'tutorials']);
-const OKRPage = lazyWithRetry(() => import('@/pages/OKRPage'), ['eventModal', 'okr', 'taskModal', 'tasks', 'tutorials']);
-const StatisticsPage = lazyWithRetry(() => import('@/pages/StatisticsPage'), ['dashboard', 'premium', 'statistics']);
+const DashboardPage = lazyWithRetry(() => import('@/pages/DashboardPage'), ['dashboard', 'eventModal', 'okr', 'org', 'overlays', 'taskModal', 'tasks']);
+const TasksPage = lazyWithRetry(() => import('@/pages/TasksPage'), ['eventModal', 'org', 'overlays', 'taskModal', 'tasks', 'tutorials']);
+const AgendaPage = lazyWithRetry(() => import('@/pages/AgendaPage'), ['agenda', 'eventModal', 'org', 'overlays', 'taskModal', 'tasks', 'tutorials']);
+const HabitsPage = lazyWithRetry(() => import('@/pages/HabitsPage'), ['eventModal', 'habits', 'overlays', 'premium', 'tasks', 'tutorials']);
+const OKRPage = lazyWithRetry(() => import('@/pages/OKRPage'), ['eventModal', 'okr', 'overlays', 'taskModal', 'tasks', 'tutorials']);
+const StatisticsPage = lazyWithRetry(() => import('@/pages/StatisticsPage'), ['dashboard', 'overlays', 'premium', 'statistics']);
 // `tasks` : DataTab (export CSV) et `csv-export.ts` importent le BARREL
 // `@/modules/lists` pour `listKeys`, qui réexporte aussi `useDeleteListWithUndo`
 // (`delete-flow.hooks.ts`), dont le toast d'annulation passe par
 // `translator('tasks')`. Importer un seul nom d'un barrel charge tout son
 // graphe : trouvé par `npm run i18n:namespaces -- --pages` le 2026-09-03.
-const SettingsPage = lazyWithRetry(() => import('@/pages/SettingsPage'), ['csv', 'org', 'settings', 'tasks']);
-const PremiumPage = lazyWithRetry(() => import('@/pages/PremiumPage'), ['premium']);
+const SettingsPage = lazyWithRetry(() => import('@/pages/SettingsPage'), ['csv', 'org', 'overlays', 'settings', 'tasks']);
+const PremiumPage = lazyWithRetry(() => import('@/pages/PremiumPage'), ['overlays', 'premium']);
 const GuidePage = lazyWithRetry(() => import('@/pages/GuidePage'), ['guide', 'seo']);
 const MentionsLegalesPage = lazyWithRetry(() => import('@/pages/MentionsLegalesPage'), ['legal', 'seo']);
 const PolitiqueConfidentialitePage = lazyWithRetry(() => import('@/pages/PolitiqueConfidentialitePage'), ['legal', 'seo']);
@@ -69,11 +69,11 @@ const CGUPage = lazyWithRetry(() => import('@/pages/CGUPage'), ['legal', 'seo'])
 // `usePreviewShareLink` (`@/modules/friends`) importe `listKeys` du barrel
 // `@/modules/lists`, qui traîne `delete-flow.hooks.ts` et son
 // `translator('tasks')`.
-const InvitePage = lazyWithRetry(() => import('@/pages/InvitePage'), ['invite', 'tasks']);
-const AdminPage = lazyWithRetry(() => import('@/pages/AdminPage'), ['admin']);
-const OrganizationOnboardingPage = lazyWithRetry(() => import('@/pages/OrganizationOnboardingPage'), ['org']);
-const OrganizationPage = lazyWithRetry(() => import('@/pages/OrganizationPage'), ['csv', 'eventModal', 'okr', 'org', 'tasks']);
-const ClaimOrgInvitePage = lazyWithRetry(() => import('@/pages/ClaimOrgInvitePage'), ['org']);
+const InvitePage = lazyWithRetry(() => import('@/pages/InvitePage'), ['invite', 'overlays', 'tasks']);
+const AdminPage = lazyWithRetry(() => import('@/pages/AdminPage'), ['admin', 'overlays']);
+const OrganizationOnboardingPage = lazyWithRetry(() => import('@/pages/OrganizationOnboardingPage'), ['org', 'overlays']);
+const OrganizationPage = lazyWithRetry(() => import('@/pages/OrganizationPage'), ['csv', 'eventModal', 'okr', 'org', 'overlays', 'tasks']);
+const ClaimOrgInvitePage = lazyWithRetry(() => import('@/pages/ClaimOrgInvitePage'), ['org', 'overlays']);
 const NotFoundPage = lazyWithRetry(() => import('@/pages/NotFoundPage'), ['seo']);
 const BlogIndexPage = lazyWithRetry(() => import('@/pages/BlogIndexPage'), ['landing', 'seo']);
 const BlogArticlePage = lazyWithRetry(() => import('@/pages/BlogArticlePage'), ['landing', 'seo']);
@@ -83,7 +83,7 @@ const UseCasePage = lazyWithRetry(() => import('@/pages/UseCasePage'), ['landing
 // Lazy load Layout. Il enveloppe TOUTES les routes protégées : son `org` est
 // donc chargé une seule fois pour toute la session connectée, et les pages
 // qu'il contient le retrouvent déjà en mémoire.
-const Layout = lazyWithRetry(() => import('@/components/Layout'), ['bugReport', 'org', 'tasks']);
+const Layout = lazyWithRetry(() => import('@/components/Layout'), ['bugReport', 'org', 'overlays', 'tasks']);
 
 // Query client config optimized
 const queryClient = new QueryClient({

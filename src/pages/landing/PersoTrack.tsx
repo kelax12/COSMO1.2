@@ -549,15 +549,11 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
               {/*
                 Count-ups : la démo est pré-remplie, chiffres animés (GSAP).
 
-                🔴 `role="img"` N'EST PAS DÉCORATIF ICI. Les trois chiffres et
-                leurs libellés sont `aria-hidden` (ils sont animés, donc lus en
-                cours de route), et le sens est porté par le seul `aria-label`
-                du conteneur. Sans rôle, `aria-label` est INTERDIT sur un `div`
-                (axe : `aria-prohibited-attr`, impact `serious`, mesuré sur la
-                landing le 2026-09-04) : le navigateur l'ignore, et comme les
-                enfants sont masqués, un lecteur d'écran ne recevait
-                strictement RIEN. `role="img"` est le motif canonique d'une
-                composition graphique resumée par un texte de remplacement.
+                🔴 `role="img"` n'est pas décoratif : les enfants sont
+                `aria-hidden` (ils sont animés), donc le sens ne tient qu'à
+                l'`aria-label`. Sans rôle, `aria-label` est INTERDIT sur un
+                `div` (axe `aria-prohibited-attr`, `serious`) : le bloc était
+                entièrement muet pour un lecteur d'écran. Mesuré le 2026-09-04.
               */}
               <div
                 role="img"

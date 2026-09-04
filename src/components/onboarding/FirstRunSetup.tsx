@@ -35,7 +35,7 @@ import {
 const TOTAL_STEPS = 3;
 
 const FirstRunSetup: React.FC = () => {
-  const { t } = useT('common');
+  const ov = useT('overlays');
   const isDemo = useIsDemo();
   const { isAuthenticated } = useAuth();
   const { data: tasks, isSuccess } = useTasks({ enabled: isAuthenticated && !isDemo });
@@ -108,9 +108,9 @@ const FirstRunSetup: React.FC = () => {
   };
 
   const questions = [
-    { q: t('firstRun.taskQuestion'), hint: t('firstRun.taskHint') },
-    { q: t('firstRun.habitQuestion'), hint: t('firstRun.habitHint') },
-    { q: t('firstRun.okrQuestion'), hint: t('firstRun.okrHint') },
+    { q: ov.t('firstRun.taskQuestion'), hint: ov.t('firstRun.taskHint') },
+    { q: ov.t('firstRun.habitQuestion'), hint: ov.t('firstRun.habitHint') },
+    { q: ov.t('firstRun.okrQuestion'), hint: ov.t('firstRun.okrHint') },
   ];
   const isLast = step === TOTAL_STEPS - 1;
 
@@ -120,7 +120,7 @@ const FirstRunSetup: React.FC = () => {
       style={{ backgroundColor: 'rgb(var(--color-background))' }}
       role="dialog"
       aria-modal="true"
-      aria-label={t('firstRun.title')}
+      aria-label={ov.t('firstRun.title')}
     >
       {/* C-56 — `items-center` ET `overflow-y-auto` sur le MEME element est le
           piege CSS classique : quand l'enfant depasse, le debordement se
@@ -141,16 +141,16 @@ const FirstRunSetup: React.FC = () => {
         <div className="flex items-start justify-between gap-4">
           <div>
             <h1 className="text-title font-semibold text-[rgb(var(--color-text-primary))]">
-              {t('firstRun.title')}
+              {ov.t('firstRun.title')}
             </h1>
             <p className="mt-1 text-body text-[rgb(var(--color-text-secondary))]">
-              {t('firstRun.subtitle')}
+              {ov.t('firstRun.subtitle')}
             </p>
           </div>
           <button
             type="button"
             onClick={close}
-            aria-label={t('firstRun.skipAll')}
+            aria-label={ov.t('firstRun.skipAll')}
             className="shrink-0 rounded-full p-2 text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))]"
           >
             <X size={18} aria-hidden="true" />
@@ -158,7 +158,7 @@ const FirstRunSetup: React.FC = () => {
         </div>
 
         <p className="mt-6 text-caption uppercase tracking-wider text-[rgb(var(--color-text-muted))]">
-          {t('firstRun.step', { current: String(step + 1), total: String(TOTAL_STEPS) })}
+          {ov.t('firstRun.step', { current: String(step + 1), total: String(TOTAL_STEPS) })}
         </p>
         <h2 className="mt-1 text-headline font-semibold text-[rgb(var(--color-text-primary))]">
           {questions[step].q}
@@ -181,15 +181,15 @@ const FirstRunSetup: React.FC = () => {
                       addTaskDraft();
                     }
                   }}
-                  placeholder={t('firstRun.taskPlaceholder')}
+                  placeholder={ov.t('firstRun.taskPlaceholder')}
                   aria-label={questions[0].q}
                 />
                 <Button type="button" variant="secondary" onClick={addTaskDraft}>
-                  {t('firstRun.add')}
+                  {ov.t('firstRun.add')}
                 </Button>
               </div>
               {taskNames.length > 0 && (
-                <ul aria-label={t('firstRun.taskListLabel')} className="space-y-1">
+                <ul aria-label={ov.t('firstRun.taskListLabel')} className="space-y-1">
                   {taskNames.map((name, i) => (
                     <li
                       key={`${name}-${i}`}
@@ -198,7 +198,7 @@ const FirstRunSetup: React.FC = () => {
                       <span className="text-label text-[rgb(var(--color-text-primary))]">{name}</span>
                       <button
                         type="button"
-                        aria-label={`${t('firstRun.remove')} : ${name}`}
+                        aria-label={`${ov.t('firstRun.remove')} : ${name}`}
                         onClick={() => setTaskNames((prev) => prev.filter((_, j) => j !== i))}
                         className="text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-primary))]"
                       >
@@ -216,7 +216,7 @@ const FirstRunSetup: React.FC = () => {
               autoFocus
               value={habitDraft}
               onChange={(e) => setHabitDraft(e.target.value)}
-              placeholder={t('firstRun.habitPlaceholder')}
+              placeholder={ov.t('firstRun.habitPlaceholder')}
               aria-label={questions[1].q}
             />
           )}
@@ -227,17 +227,17 @@ const FirstRunSetup: React.FC = () => {
                 autoFocus
                 value={okrDraft}
                 onChange={(e) => setOkrDraft(e.target.value)}
-                placeholder={t('firstRun.okrPlaceholder')}
+                placeholder={ov.t('firstRun.okrPlaceholder')}
                 aria-label={questions[2].q}
               />
               <label className="block">
                 <span className="text-caption text-[rgb(var(--color-text-muted))]">
-                  {t('firstRun.okrKeyResultLabel')}
+                  {ov.t('firstRun.okrKeyResultLabel')}
                 </span>
                 <Input
                   value={krDraft}
                   onChange={(e) => setKrDraft(e.target.value)}
-                  placeholder={t('firstRun.okrKeyResultPlaceholder')}
+                  placeholder={ov.t('firstRun.okrKeyResultPlaceholder')}
                   className="mt-1"
                 />
               </label>
@@ -251,10 +251,10 @@ const FirstRunSetup: React.FC = () => {
             onClick={advance}
             className="text-label text-[rgb(var(--color-text-muted))] underline underline-offset-2 hover:text-[rgb(var(--color-text-primary))]"
           >
-            {t('firstRun.skip')}
+            {ov.t('firstRun.skip')}
           </button>
           <Button type="button" onClick={submitStep}>
-            {isLast ? t('firstRun.finish') : t('firstRun.next')}
+            {isLast ? ov.t('firstRun.finish') : ov.t('firstRun.next')}
           </Button>
         </div>
       </motion.div>

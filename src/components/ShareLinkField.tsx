@@ -32,7 +32,7 @@ interface ShareLinkFieldProps {
  * réellement ouverte côté propriétaire).
  */
 const ShareLinkField: React.FC<ShareLinkFieldProps> = ({ taskId, ownerCanShare, onGenerate, className = '' }) => {
-  const { t } = useT('common');
+  const ov = useT('overlays');
   const isDemo = useIsDemo();
   // Section visible pour le propriétaire hors démo. En CRÉATION (pas encore de
   // taskId) : si `onGenerate` est fourni → bouton « Générer le lien » (crée la
@@ -49,9 +49,9 @@ const ShareLinkField: React.FC<ShareLinkFieldProps> = ({ taskId, ownerCanShare, 
 
   const inviteUrl = inviteToken ? buildInviteUrl(inviteToken) : '';
   const fieldValue = isCreating
-    ? t('shareLink.availableAfterCreate')
+    ? ov.t('shareLink.availableAfterCreate')
     : isLoading
-      ? t('shareLink.generatingLink')
+      ? ov.t('shareLink.generatingLink')
       : inviteUrl;
 
   const handleCopy = async () => {
@@ -59,10 +59,10 @@ const ShareLinkField: React.FC<ShareLinkFieldProps> = ({ taskId, ownerCanShare, 
     try {
       await navigator.clipboard.writeText(inviteUrl);
       setLinkCopied(true);
-      toast.success(t('shareLink.copied'));
+      toast.success(ov.t('shareLink.copied'));
       setTimeout(() => setLinkCopied(false), 2000);
     } catch {
-      toast.error(t('shareLink.copyFailed'));
+      toast.error(ov.t('shareLink.copyFailed'));
     }
   };
 
@@ -87,7 +87,7 @@ const ShareLinkField: React.FC<ShareLinkFieldProps> = ({ taskId, ownerCanShare, 
         <Link2 size={14} aria-hidden="true" /> Lien d'invitation
       </h3>
       <p className="text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
-        {t('shareLink.hint')}
+        {ov.t('shareLink.hint')}
       </p>
       {showGenerateButton ? (
         <>
@@ -101,10 +101,10 @@ const ShareLinkField: React.FC<ShareLinkFieldProps> = ({ taskId, ownerCanShare, 
             {generating
               ? <Loader2 size={16} className="animate-spin" data-icon="inline-start" />
               : <Link2 size={16} data-icon="inline-start" />}
-            {generating ? t('shareLink.creating') : t('shareLink.generate')}
+            {generating ? ov.t('shareLink.creating') : ov.t('shareLink.generate')}
           </Button>
           <p className="text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
-            {t('shareLink.willSave')}
+            {ov.t('shareLink.willSave')}
           </p>
         </>
       ) : (
@@ -116,7 +116,7 @@ const ShareLinkField: React.FC<ShareLinkFieldProps> = ({ taskId, ownerCanShare, 
               disabled={isCreating}
               value={fieldValue}
               onFocus={(e) => { if (!isCreating) e.currentTarget.select(); }}
-              aria-label={t('shareLink.aria')}
+              aria-label={ov.t('shareLink.aria')}
               className={`flex-1 px-4 py-3 min-h-11 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${isCreating ? 'opacity-60 cursor-not-allowed' : ''}`}
               style={{
                 backgroundColor: 'rgb(var(--color-hover))',
@@ -132,12 +132,12 @@ const ShareLinkField: React.FC<ShareLinkFieldProps> = ({ taskId, ownerCanShare, 
               className={`inline-flex items-center justify-center gap-2 min-h-11 ${linkCopied ? 'bg-emerald-600 hover:bg-emerald-600 text-[rgb(var(--color-accent-solid-foreground))]' : 'bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))]'}`}
             >
               {linkCopied ? <Check size={16} data-icon="inline-start" /> : <Copy size={16} data-icon="inline-start" />}
-              {linkCopied ? t('shareLink.copiedShort') : t('shareLink.copy')}
+              {linkCopied ? ov.t('shareLink.copiedShort') : ov.t('shareLink.copy')}
             </Button>
           </div>
           {isCreating && (
             <p className="text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
-              {t('shareLink.saveFirst')}
+              {ov.t('shareLink.saveFirst')}
             </p>
           )}
         </>

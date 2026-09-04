@@ -54,7 +54,7 @@ import { useT } from '@/i18n/useT';
  * partagée n'est plus gated par le Premium.
  */
 const InboxMenu: React.FC = () => {
-  const { t, tp } = useT('common');
+  const ov = useT('overlays');
   const { t: tTasks } = useT('tasks');
   const { t: tOrg } = useT('org');
   const { user } = useAuth();
@@ -262,10 +262,10 @@ const InboxMenu: React.FC = () => {
 
   // ── Handlers ───────────────────────────────────────────────────────────
   const handleAcceptFriend = (id: string) => {
-    acceptFriendMutation.mutate(id, { onSuccess: () => toast.success(t('inbox.friendAccepted')) });
+    acceptFriendMutation.mutate(id, { onSuccess: () => toast.success(ov.t('inbox.friendAccepted')) });
   };
   const handleRejectFriend = (id: string) => {
-    rejectFriendMutation.mutate(id, { onSuccess: () => toast.success(t('inbox.requestRefused')) });
+    rejectFriendMutation.mutate(id, { onSuccess: () => toast.success(ov.t('inbox.requestRefused')) });
   };
 
   const handleAcceptTask = (task: Task) => {
@@ -323,7 +323,7 @@ const InboxMenu: React.FC = () => {
     if (!friendToRemove) return;
     const { id, name } = friendToRemove;
     removeFriendMutation.mutate(id, {
-      onSuccess: () => toast.success(t('inbox.removedFriend', { name })),
+      onSuccess: () => toast.success(ov.t('inbox.removedFriend', { name })),
     });
     setFriendToRemove(null);
   };
@@ -333,7 +333,7 @@ const InboxMenu: React.FC = () => {
     if (!email) return;
     sendFriendMutation.mutate({ email }, {
       onSuccess: () => {
-        toast.success(t('inbox.friendRequestSent'));
+        toast.success(ov.t('inbox.friendRequestSent'));
         setFriendEmail('');
         setShowAddFriend(false);
       },
@@ -359,11 +359,11 @@ const InboxMenu: React.FC = () => {
             <button
               onClick={() => setShowManageFriends(false)}
               className="-ml-1 w-7 h-7 rounded-md flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
-              aria-label={t('inbox.backToInbox')}
+              aria-label={ov.t('inbox.backToInbox')}
             >
               <ArrowLeft size={16} aria-hidden="true" />
             </button>
-            <span className="font-semibold text-label sm:text-sm text-[rgb(var(--color-text-primary))]">{t('inbox.myFriends')}</span>
+            <span className="font-semibold text-label sm:text-sm text-[rgb(var(--color-text-primary))]">{ov.t('inbox.myFriends')}</span>
             {friends.length > 0 && (
               <span className="ml-auto text-caption sm:text-xs text-[rgb(var(--color-text-muted))] tabular-nums">
                 {friends.length}
@@ -380,8 +380,8 @@ const InboxMenu: React.FC = () => {
               <button
                 onClick={() => setShowManageFriends(true)}
                 className="w-7 h-7 rounded-md flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
-                aria-label={t('inbox.manageFriends')}
-                title={t('inbox.manageFriends')}
+                aria-label={ov.t('inbox.manageFriends')}
+                title={ov.t('inbox.manageFriends')}
               >
                 <Settings size={15} aria-hidden="true" />
               </button>
@@ -395,9 +395,9 @@ const InboxMenu: React.FC = () => {
         {showManageFriends && (
           loadingFriends ? null : friends.length === 0 ? (
             <div className="px-4 py-9 text-center">
-              <p className="text-label sm:text-sm font-medium text-[rgb(var(--color-text-secondary))]">{t('inbox.noFriend')}</p>
+              <p className="text-label sm:text-sm font-medium text-[rgb(var(--color-text-secondary))]">{ov.t('inbox.noFriend')}</p>
               <p className="text-caption sm:text-xs text-[rgb(var(--color-text-muted))] mt-0.5">
-                {t('inbox.noFriendHint')}
+                {ov.t('inbox.noFriendHint')}
               </p>
             </div>
           ) : (
@@ -411,7 +411,7 @@ const InboxMenu: React.FC = () => {
                   <button
                     onClick={() => setFriendToRemove({ id: friend.id, name: friend.name })}
                     disabled={removeFriendMutation.isPending}
-                    title={t('inbox.removeFriendShort')}
+                    title={ov.t('inbox.removeFriendShort')}
                     className="w-7 h-7 rounded-md flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))] hover:text-red-500 disabled:opacity-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 shrink-0"
                     aria-label={`Retirer ${friend.name} de vos amis`}
                   >
@@ -427,7 +427,7 @@ const InboxMenu: React.FC = () => {
           <div className="px-4 py-9 text-center">
             <p className="text-label sm:text-sm font-medium text-[rgb(var(--color-text-secondary))]">{tTasks('inbox.allClear')}</p>
             <p className="text-caption sm:text-xs text-[rgb(var(--color-text-muted))] mt-0.5">
-              {t('inbox.allClearHint')}
+              {ov.t('inbox.allClearHint')}
             </p>
           </div>
         )}
@@ -436,7 +436,7 @@ const InboxMenu: React.FC = () => {
         {!showManageFriends && incomingRequests.length > 0 && (
           <div>
             <p className="px-4 pt-3 pb-1 text-caption sm:text-xs font-semibold text-[rgb(var(--color-text-muted))] uppercase tracking-wide">
-              {t('inbox.friendRequests', { count: incomingRequests.length })}
+              {ov.t('inbox.friendRequests', { count: incomingRequests.length })}
             </p>
             <div className="divide-y divide-[rgb(var(--color-border))]">
               {incomingRequests.map((req: PendingFriendRequest) => {
@@ -543,7 +543,7 @@ const InboxMenu: React.FC = () => {
                       {grant.name}
                     </p>
                     <p className="text-caption sm:text-xs truncate text-[rgb(var(--color-text-muted))]">
-                      {tp('inbox.receivedFromWithCount', grant.tasks.length, { name: sharerName })}
+                      {ov.tp('inbox.receivedFromWithCount', grant.tasks.length, { name: sharerName })}
                     </p>
                   </div>
                   <div className="flex items-center gap-0.5 shrink-0">
@@ -665,7 +665,7 @@ const InboxMenu: React.FC = () => {
         {!showManageFriends && pendingJoinRequests.length > 0 && (
           <div>
             <p className="px-4 pt-3 pb-1 text-caption sm:text-xs font-semibold text-[rgb(var(--color-text-muted))] uppercase tracking-wide">
-              {t('inbox.joinRequests', { count: pendingJoinRequests.length })}
+              {ov.t('inbox.joinRequests', { count: pendingJoinRequests.length })}
             </p>
             <div className="divide-y divide-[rgb(var(--color-border))]">
               {pendingJoinRequests.map((req) => {
@@ -676,10 +676,10 @@ const InboxMenu: React.FC = () => {
                   <div key={req.id} className="flex items-center gap-3 px-4 py-2.5">
                     <div className="flex-1 min-w-0">
                       <p className="text-label sm:text-sm font-medium text-[rgb(var(--color-text-primary))] truncate">
-                        {req.requesterName || t('inbox.someone')}
+                        {req.requesterName || ov.t('inbox.someone')}
                       </p>
                       <p className="text-caption sm:text-xs truncate text-[rgb(var(--color-text-muted))]">
-                        {t('inbox.wantsToJoin')}{timeAgo ? ` · ${timeAgo}` : ''}
+                        {ov.t('inbox.wantsToJoin')}{timeAgo ? ` · ${timeAgo}` : ''}
                       </p>
                     </div>
                     <div className="flex items-center gap-0.5 shrink-0">
@@ -688,7 +688,7 @@ const InboxMenu: React.FC = () => {
                         disabled={respondJoinRequestMutation.isPending}
                         title={tTasks('inbox.accept')}
                         className="w-7 h-7 rounded-md flex items-center justify-center text-[rgb(var(--color-accent))] hover:bg-[rgb(var(--color-hover))] disabled:opacity-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
-                        aria-label={t('inbox.acceptJoin', { name: req.requesterName || t('inbox.someone') })}
+                        aria-label={ov.t('inbox.acceptJoin', { name: req.requesterName || ov.t('inbox.someone') })}
                       >
                         <Check size={15} aria-hidden="true" />
                       </button>
@@ -697,7 +697,7 @@ const InboxMenu: React.FC = () => {
                         disabled={respondJoinRequestMutation.isPending}
                         title={tTasks('inbox.refuse')}
                         className="w-7 h-7 rounded-md flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))] disabled:opacity-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
-                        aria-label={t('inbox.refuseJoin', { name: req.requesterName || t('inbox.someone') })}
+                        aria-label={ov.t('inbox.refuseJoin', { name: req.requesterName || ov.t('inbox.someone') })}
                       >
                         <X size={15} aria-hidden="true" />
                       </button>
@@ -721,7 +721,7 @@ const InboxMenu: React.FC = () => {
               onChange={(e) => setFriendEmail(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSendFriendRequest()}
               placeholder="email@exemple.com"
-              aria-label={t('inbox.friendEmailAria')}
+              aria-label={ov.t('inbox.friendEmailAria')}
               className="flex-1 h-9 px-3 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] text-label sm:text-sm text-[rgb(var(--color-text-primary))] placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-[rgb(var(--color-accent-solid))] transition-all"
             />
             <button
@@ -737,7 +737,7 @@ const InboxMenu: React.FC = () => {
             onClick={() => setShowAddFriend(true)}
             className="w-full h-11 md:h-9 rounded-lg border border-dashed border-[rgb(var(--color-chip-border))] text-slate-600 dark:text-slate-300 hover:border-[rgb(var(--color-accent-solid-hover))] hover:text-blue-600 dark:hover:text-blue-400 text-label sm:text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
           >
-            <UserPlus size={14} aria-hidden="true" /> {t('inbox.addFriend')}
+            <UserPlus size={14} aria-hidden="true" /> {ov.t('inbox.addFriend')}
           </button>
         )}
       </div>

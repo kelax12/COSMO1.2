@@ -36,7 +36,7 @@ interface DateCalendarPanelProps {
  * de cette extraction.
  */
 export function DateCalendarPanel({ value, onSelect, allowClear = true, minDate }: DateCalendarPanelProps) {
-  const { t } = useT('common')
+  const ov = useT('overlays')
   const selectedDate = value ? new Date(value + "T12:00:00") : undefined
   const floor = minDate ? new Date(minDate + "T00:00:00") : undefined
   const presets = buildDatePresets().filter((p) => !minDate || p.value >= minDate)
@@ -44,8 +44,8 @@ export function DateCalendarPanel({ value, onSelect, allowClear = true, minDate 
   /** Nom accessible d'un jour, avec ses états — cf. `labels` plus bas. */
   const dayLabel = (date: Date, modifiers?: { today?: boolean; selected?: boolean }) => {
     const long = format(date, 'PPPP', { locale: getDateLocale() })
-    const base = modifiers?.today ? t('datePicker.todayPrefix', { date: long }) : long
-    return modifiers?.selected ? t('datePicker.selectedSuffix', { date: base }) : base
+    const base = modifiers?.today ? ov.t('datePicker.todayPrefix', { date: long }) : long
+    return modifiers?.selected ? ov.t('datePicker.selectedSuffix', { date: base }) : base
   }
 
   return (
@@ -54,7 +54,7 @@ export function DateCalendarPanel({ value, onSelect, allowClear = true, minDate 
           « aujourd'hui / demain / ce week-end » — un clic au lieu de trois.
           `group` + `aria-label` : c'est la PREMIÈRE chose que rencontre le
           focus clavier, une rangée de boutons sans rien qui la nomme. */}
-      <div className="flex flex-wrap gap-1.5 p-2 border-b border-border" role="group" aria-label={t('datePicker.presets')}>
+      <div className="flex flex-wrap gap-1.5 p-2 border-b border-border" role="group" aria-label={ov.t('datePicker.presets')}>
         {presets.map((preset) => (
           <button
             key={preset.labelKey}
@@ -62,7 +62,7 @@ export function DateCalendarPanel({ value, onSelect, allowClear = true, minDate 
             onClick={() => onSelect(preset.value)}
             className="px-2.5 py-1 rounded-lg text-xs font-medium border border-border hover:bg-accent transition-colors"
           >
-            {t(preset.labelKey)}
+            {ov.t(preset.labelKey)}
           </button>
         ))}
         {allowClear && (
@@ -71,7 +71,7 @@ export function DateCalendarPanel({ value, onSelect, allowClear = true, minDate 
             onClick={() => onSelect('')}
             className="px-2.5 py-1 rounded-lg text-xs font-medium text-muted-foreground border border-transparent hover:bg-accent transition-colors"
           >
-            {t('datePicker.noDate')}
+            {ov.t('datePicker.noDate')}
           </button>
         )}
       </div>
@@ -104,9 +104,9 @@ export function DateCalendarPanel({ value, onSelect, allowClear = true, minDate 
         // `i18n:scan` ne peut pas le voir : ces chaînes vivent dans la
         // bibliothèque, pas dans src/.
         labels={{
-          labelNav: () => t('datePicker.navLabel'),
-          labelPrevious: () => t('datePicker.prevMonth'),
-          labelNext: () => t('datePicker.nextMonth'),
+          labelNav: () => ov.t('datePicker.navLabel'),
+          labelPrevious: () => ov.t('datePicker.prevMonth'),
+          labelNext: () => ov.t('datePicker.nextMonth'),
           // « Today, » et « , selected » sont concaténés en dur par
           // labelDayButton : on refait le libellé entier plutôt que de le
           // rapiécer, sinon la traduction dépendrait de l'ordre des mots.
@@ -179,9 +179,9 @@ export function DatePicker({
   id,
   minDate,
 }: DatePickerProps) {
-  const { t } = useT('common')
+  const ov = useT('overlays')
   // Defaut traduit au rendu : dans la signature, il serait fige en francais.
-  const placeholderText = placeholder ?? t('datePicker.placeholder')
+  const placeholderText = placeholder ?? ov.t('datePicker.placeholder')
   const [open, setOpen] = React.useState(false)
 
   const selectedDate = value ? new Date(value + "T12:00:00") : undefined

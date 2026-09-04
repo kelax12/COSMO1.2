@@ -75,6 +75,7 @@ interface FrModules {
   landing: typeof import('@/locales/fr/landing.json');
   legal: typeof import('@/locales/fr/legal.json');
   okr: typeof import('@/locales/fr/okr.json');
+  overlays: typeof import('@/locales/fr/overlays.json');
   org: typeof import('@/locales/fr/org.json');
   premium: typeof import('@/locales/fr/premium.json');
   seo: typeof import('@/locales/fr/seo.json');
@@ -125,6 +126,24 @@ interface CatalogShapes {
   invite: Shape<'invite'>;
   /** OKR — page, cartes, catégories, modales, check-in hebdo. */
   okr: Shape<'okr'>;
+  /**
+   * Surfaces ouvertes À LA DEMANDE : raccourcis clavier, palette de commandes,
+   * boîte de réception, accueil du premier compte, confirmations de
+   * suppression, champ de lien de partage, calendrier de saisie, avertissement
+   * de pagination.
+   *
+   * 🔴 Namespace À PART, pour la troisième fois la même raison que `csv` et
+   * `bugReport` : ces neuf sections vivaient dans `common`, l'un des DEUX
+   * catalogues du chunk d'ENTRÉE. Leurs 8,5 ko bruts (fr) + 7,7 (en) partaient
+   * donc chez tout visiteur de la landing, du blog ou d'une page légale, pour
+   * des surfaces qu'aucun d'eux n'ouvrira jamais — il faut être connecté.
+   *
+   * ⚠️ Ce n'est PAS « tout ce qui est modal ». `shareInvite` reste dans
+   * `common` parce que `ShareInviteClaimer` est monté par le SHELL
+   * (`npm run i18n:namespaces` le nomme) : l'y déplacer rendrait `overlays`
+   * eager, donc annulerait le gain en le déguisant.
+   */
+  overlays: Shape<'overlays'>;
   /** Premium — page d'offre, mur de fonctionnalité, modale publicitaire. */
   premium: Shape<'premium'>;
   /** Landing publique + pages marketing (à propos, cas d'usage, blog). */
@@ -225,6 +244,7 @@ const NAMESPACES: readonly Namespace[] = [
   'admin', 'agenda', 'bugReport', 'common', 'csv', 'dashboard', 'errors', 'eventModal',
   'guide',
   'habits', 'invite', 'landing', 'legal', 'okr', 'org', 'premium', 'seo',
+  'overlays',
   'settings', 'statistics', 'taskModal', 'tasks', 'tutorials',
 ];
 

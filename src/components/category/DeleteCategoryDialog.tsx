@@ -57,7 +57,7 @@ const DeleteCategoryDialogBody: React.FC<{
   onConfirm: (reassignTo: string) => void;
   isWorking: boolean;
 }> = ({ category, categories, onCancel, onConfirm, isWorking }) => {
-  const { t, tp } = useT('common');
+  const ov = useT('overlays');
   const { data: tasks = [] } = useTasks();
   const { data: okrs = [] } = useOkrs();
 
@@ -104,18 +104,18 @@ const DeleteCategoryDialogBody: React.FC<{
                 id="delete-category-title"
                 className="text-xl font-bold text-[rgb(var(--color-text-primary))] mb-3"
               >
-                {t('deleteCategory.title', { name: category.name })}
+                {ov.t('deleteCategory.title', { name: category.name })}
               </h3>
 
               {/* L'impact AVANT la question : on ne demande pas de décider sans
                   avoir dit ce qui est en jeu. */}
               <div className="text-sm leading-relaxed mb-5 space-y-1 text-[rgb(var(--color-text-secondary))]">
                 {impact.total === 0 ? (
-                  <p>{t('deleteCategory.noImpact')}</p>
+                  <p>{ov.t('deleteCategory.noImpact')}</p>
                 ) : (
                   <>
-                    {impact.tasks > 0 && <p>{tp('deleteCategory.impactTasks', impact.tasks)}</p>}
-                    {impact.okrs > 0 && <p>{tp('deleteCategory.impactOkrs', impact.okrs)}</p>}
+                    {impact.tasks > 0 && <p>{ov.tp('deleteCategory.impactTasks', impact.tasks)}</p>}
+                    {impact.okrs > 0 && <p>{ov.tp('deleteCategory.impactOkrs', impact.okrs)}</p>}
                   </>
                 )}
               </div>
@@ -123,7 +123,7 @@ const DeleteCategoryDialogBody: React.FC<{
               {showReassign && (
                 <fieldset className="mb-6 space-y-2">
                   <legend className="text-xs font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))] mb-2">
-                    {t('deleteCategory.reassignLabel')}
+                    {ov.t('deleteCategory.reassignLabel')}
                   </legend>
 
                   <label className="flex items-center gap-2.5 text-sm text-[rgb(var(--color-text-primary))] cursor-pointer min-h-11">
@@ -134,7 +134,7 @@ const DeleteCategoryDialogBody: React.FC<{
                       checked={reassignTo === NO_CATEGORY}
                       onChange={() => setReassignTo(NO_CATEGORY)}
                     />
-                    {t('deleteCategory.reassignNone')}
+                    {ov.t('deleteCategory.reassignNone')}
                   </label>
 
                   <label className="flex items-center gap-2.5 text-sm text-[rgb(var(--color-text-primary))] cursor-pointer min-h-11">
@@ -145,12 +145,12 @@ const DeleteCategoryDialogBody: React.FC<{
                       checked={reassignTo !== NO_CATEGORY}
                       onChange={() => setReassignTo(targets[0].id)}
                     />
-                    {t('deleteCategory.reassignTo')}
+                    {ov.t('deleteCategory.reassignTo')}
                   </label>
 
                   {reassignTo !== NO_CATEGORY && (
                     <select
-                      aria-label={t('deleteCategory.reassignPick')}
+                      aria-label={ov.t('deleteCategory.reassignPick')}
                       value={reassignTo}
                       onChange={(e) => setReassignTo(e.target.value)}
                       className="w-full min-h-11 rounded-xl border px-3 text-sm bg-[rgb(var(--color-hover))] border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))]"
@@ -165,7 +165,7 @@ const DeleteCategoryDialogBody: React.FC<{
 
               <div className="flex gap-3">
                 <Button variant="outline" className="flex-1 min-h-11" onClick={onCancel} disabled={isWorking}>
-                  {t('deleteCategory.cancel')}
+                  {ov.t('deleteCategory.cancel')}
                 </Button>
                 <Button
                   variant="destructive"
@@ -173,7 +173,7 @@ const DeleteCategoryDialogBody: React.FC<{
                   onClick={() => onConfirm(reassignTo)}
                   disabled={isWorking}
                 >
-                  {isWorking ? t('deleteCategory.working') : t('deleteCategory.confirm')}
+                  {isWorking ? ov.t('deleteCategory.working') : ov.t('deleteCategory.confirm')}
                 </Button>
               </div>
             </div>

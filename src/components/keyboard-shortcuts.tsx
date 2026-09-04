@@ -15,7 +15,7 @@ const IS_MAC =
   typeof navigator !== 'undefined' &&
   /Mac|iPhone|iPad|iPod/.test(navigator.platform || navigator.userAgent || '');
 
-type CommonKey = KeyOf<'common'>;
+type CommonKey = KeyOf<'overlays'>;
 
 export interface Shortcut {
   /** Suite de touches à presser (affichées comme des <kbd>). */
@@ -82,23 +82,23 @@ const Kbd: React.FC<{ children: React.ReactNode }> = ({ children }) => (
  * `compact` réduit les marges verticales pour l'intégration dans une carte.
  */
 export const ShortcutsList: React.FC<{ compact?: boolean }> = ({ compact = false }) => {
-  const { t } = useT('common');
+  const ov = useT('overlays');
   return (
     <div className={compact ? 'space-y-4' : 'space-y-5'}>
       {SHORTCUT_GROUPS.map((group) => (
         <div key={group.titleKey}>
           <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'rgb(var(--color-text-muted))' }}>
-            {t(group.titleKey)}
+            {ov.t(group.titleKey)}
           </p>
           <ul className="space-y-2.5">
             {group.items.map((s) => (
               <li key={s.labelKey} className="flex items-center justify-between gap-4">
-                <span className="text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>{t(s.labelKey)}</span>
+                <span className="text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>{ov.t(s.labelKey)}</span>
                 <span className="flex items-center gap-1 shrink-0">
                   {s.keys.map((k, i) => (
                     <span key={`${s.labelKey}-${k}-${i}`} className="flex items-center gap-1">
                       {i > 0 && group.sequential && (
-                        <span className="text-[11px]" style={{ color: 'rgb(var(--color-text-muted))' }}>{t('shortcuts.then')}</span>
+                        <span className="text-[11px]" style={{ color: 'rgb(var(--color-text-muted))' }}>{ov.t('shortcuts.then')}</span>
                       )}
                       <Kbd>{k}</Kbd>
                     </span>
