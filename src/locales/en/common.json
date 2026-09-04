@@ -225,10 +225,6 @@
     "member": "Member",
     "tasks": "Tasks"
   },
-  "moduleOnboarding": {
-    "question": "What do you want to manage?",
-    "hint": "Pick your modules. You can turn them back on any time in Settings."
-  },
   "shareInvite": {
     "alreadyCollab": "You already collaborate on “{{name}}”.",
     "expired": "This invitation link has expired. Ask for a new one.",
