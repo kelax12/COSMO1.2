@@ -11,14 +11,14 @@ compte** et **ce qui prouve que c'est fini**.
 
 > ### 🟢 Passe du 2026-09-04 — état au soir, poussé sur `main`
 >
-> **70 items. 30 clos, 8 à moitié, 32 ouverts.** Chaque item concerné porte une
+> **70 items. 34 clos, 4 à moitié, 32 ouverts.** Chaque item concerné porte une
 > note en tête qui dit ce qui a été fait, ce qui reste, et sous quelles réserves.
 > Le détail de ce qui reste est en **[§ 11](#11-ce-qui-reste-ouvert)**.
 >
 > | État | Nombre | Ce que ça veut dire |
 > |---|---|---|
-> | ✅ clos | 30 | 9 l'étaient avant cette passe, 21 le sont depuis |
-> | 🟠 à moitié | 8 | C-14, C-23, C-39, C-40, C-56, C-57, C-62, C-65 |
+> | ✅ clos | 34 | 9 l'étaient avant cette passe, 25 le sont depuis |
+> | 🟠 à moitié | 4 | C-14 et C-23 (avancés, critère non atteint) · C-39 et C-65 (le code est écrit, il n'est pas déployé) |
 > | ⬜ ouvert | 32 | rien n'a été engagé |
 >
 > 🔴 **CE QUI COMPTE PLUS QUE LE DÉCOMPTE : cinq énoncés se sont révélés faux à
@@ -152,7 +152,7 @@ quand ». Une décision écrite ici fait foi contre une piste écrite dans l'ite
 | [8](#8-tests-et-gardes) | Tests et gardes | C-26 → C-28, C-34 → C-36, C-47 |
 | [9](#9-ce-qui-nest-PAS-du-code) | Ce qui n'est PAS du code | renvois |
 | [10](#10-couverture--ce-que-cette-liste-ne-peut-pas-contenir) | 🔴 Couverture et audits à lancer | 2 audits restants |
-| [11](#11-ce-qui-reste-ouvert) | 🔴 **Ce qui reste ouvert** | 3 gestes, 8 à moitié, 32 entiers |
+| [11](#11-ce-qui-reste-ouvert) | 🔴 **Ce qui reste ouvert** | 3 gestes, 4 à moitié, 32 entiers |
 
 ---
 
@@ -329,7 +329,23 @@ juste** : ce sont des DUPLICATIONS, pas des annulations. Ne pas les « corriger 
 
 ### C-40 · Douze écrans affichent « il n'y a rien » pendant le premier chargement · **P2 · S**
 
-> 🟠 SEPT corrigés le 2026-09-04, et **cinq écartés après relecture** : ils ne mentent pas (deux rendent `null`, deux ne choisissent qu'une date ou un groupement, `useTaskModal` teste une validation de formulaire). Le chiffre de douze était une sur-mesure.
+> ✅ **Refermé le 2026-09-04.** Sept écrans corrigés, et **cinq écartés après
+> relecture** : ils ne mentent pas (deux rendent `null`, deux ne choisissent
+> qu'une date ou un groupement, `useTaskModal` teste une validation de
+> formulaire). Le chiffre de douze était une sur-mesure.
+>
+> Le balayage a ensuite été étendu de `src/components` à **tout `src`** : zéro
+> nouvelle occurrence, les quatre seuls fichiers détectés étant ceux déjà
+> dispensés. Une garde bornée au lieu où l'on a trouvé le défaut ne protège que
+> ce lieu. Deux autres formes de lecture aveugle ont été cherchées et sont
+> ABSENTES du dépôt (`const { data = [] }` sans renommage, `useX().data ?? []`) ;
+> elles ne sont pas couvertes par le détecteur, et la garde le dit.
+>
+> ⚠️ La garde vérifie la DESTRUCTURATION, pas l'usage : c'est `noUnusedLocals`
+> qui rattrape le reste, et la paire tient, pas la garde seule. Elle porte
+> désormais un **témoin de taille de corpus**, un balayage du mauvais répertoire
+> rendrait une liste vide, donc le vert.
+
 
 `const { data: x = [] } = useX()` sans lire `isLoading`, suivi d'un état vide sur `x.length === 0` :
 l'écran affirme une absence alors qu'il ne sait pas encore. Détecté par sonde (avec témoin), 12
@@ -420,7 +436,23 @@ le message tel quel plutôt qu'une erreur anonyme, parce que l'utilisateur peut 
 
 ### C-56 · Clavier ouvert, le haut de trois écrans devient inatteignable · **P2 · S**
 
-> 🟠 corrigé le 2026-09-04, mais **UN SEUL des trois écrans était cassé**. Remesuré à 375×350 dans l'application : `BugReportModal` et `InviteOrJoinModal` rendaient déjà +16 px, leur carte portant `my-auto`. Seul `FirstRunSetup` l'était (-55,8 px). Les trois passent au motif « scroll dehors, centrage `min-h-full` ».
+> ✅ **Refermé le 2026-09-04**, mais **UN SEUL des trois écrans était cassé**.
+> Remesuré à 375×350 dans l'application : `BugReportModal` et `InviteOrJoinModal`
+> rendaient déjà +16 px, leur carte portant `my-auto`. Seul `FirstRunSetup`
+> l'était (-55,8 px), et c'est le pire des trois, puisque c'est l'accueil d'un
+> compte neuf. Les trois passent au motif « scroll dehors, centrage `min-h-full` ».
+>
+> Le balayage systématique réclamé a été fait : **zéro contrevenant** dans tout
+> `src`, sous les trois formes d'écriture de classes. La garde n'en lisait
+> qu'une (`className="…"`) ; elle couvre maintenant aussi les littéraux de
+> gabarit et `cn(...)`, avec un témoin pour chacune, plus un témoin négatif sur
+> le motif de SORTIE, sans quoi une garde finit par interdire sa propre
+> correction.
+>
+> ⚠️ La sonde `scripts/_c56-probe.mjs` est AUTONOME, et ça ne l'a pas toujours
+> été : sa première version lisait un répertoire temporaire de session, donc elle
+> était **morte à la livraison**.
+
 
 Trouvé par l'audit **A-4**. Trois surfaces partagent la même classe de conteneur, et les trois sont
 des **formulaires**, donc les trois ouvrent le clavier :
@@ -735,45 +767,32 @@ question est donc rouverte, et **maintenant mesurable**.
 
 ### C-14 · Le budget d'entrée est DÉPASSÉ, de 0,1 ko · **P1 · M**
 
-> 🟠 **Repassé au VERT le 2026-09-04, en deux fois — mais PAS clos** (la raison est à la
-> fin de cette note, et elle compte).
+> 🟠 **Pas clos, mais nettement amélioré.** Le budget d'entrée a **3,97 % de marge au 2026-09-04** (0,25 % le matin), et
+> le chemin critique 15,1 %. Le critère de sortie en demande 5 % sur les DEUX :
+> **il manque 803 o**, l'item reste donc 🟠.
 >
-> Passe 1 : 78 031 → 77 966 o, en retirant du mort (trois codes d'API LLM que
-> COSMO n'appelle pas, et `common.moduleOnboarding`, dont la fonctionnalité a
-> été supprimée le 2026-08-23). La cause du rouge était mon propre lot de
-> catalogue, isolée en rejouant le build avec les `errors.json` d'avant.
+> Le gain vient d'un troisième découpage de catalogue, après `csv` et
+> `bugReport` : neuf sections quittent `common` pour un namespace `overlays`
+> chargé par route (raccourcis, palette, boîte de réception, accueil du premier
+> compte, confirmation de suppression, lien de partage, calendrier de saisie,
+> avertissement de pagination). **77 364 → 74 903 o gzip**, chemin critique
+> 317,2 → 314,3 ko. Aucun plafond n'a bougé.
 >
-> Passe 2 : trois cles EAGER de plus (C-39, C-42) ont repassé la ligne. Le
-> grignotage de clés mortes n'a rendu que 15 o — gzip compresse très bien des
-> chaînes voisines. Le gain est venu d'un découpage : la section `csv` vivait
-> dans `common`, l'un des DEUX catalogues du chunk d'entrée, et ses 1,4 ko
-> bruts partaient chez tout visiteur pour un geste qu'on n'atteint que depuis
-> Réglages → Données. Elle devient un namespace à part, déclaré sur les deux
-> routes que `i18n:namespaces -- --pages` nomme. **77 556 o, 444 de marge.**
+> ⚠️ `shareInvite` reste dans `common` : le shell monte `ShareInviteClaimer`.
+> L'emporter aurait rendu `overlays` eager, donc annulé le gain en le déguisant.
 >
-> ❌ Le plafond n'a pas bougé.
+> 🔴 **Le levier suivant ne suffirait probablement même pas.** Ce serait la
+> section `auth` (3,3 ko fr), mais le shell en lit onze clés : il faudrait la
+> scinder en deux, et l'extrapolation du ratio mesuré ici la donne à ~760 o pour
+> 803 nécessaires. C'est une extrapolation, pas une mesure, mais elle vaut mieux
+> que de laisser croire que le prochain geste ferme l'item.
 >
-> 🔴 **L'ITEM N'EST PAS CLOS, et son statut est 🟠, pas ✅.** Son « fini quand »
-> demande **au moins 5 % de marge sur les DEUX budgets**. Mesure du
-> 2026-09-04 : chemin critique 317,2 / 370,0 → **14,3 % de marge, acquis** ;
-> entrée 77,8 / 78,0 → **0,25 %**. Le second n'y est pas, et de loin. Lire
-> « budget respecté » comme « C-14 est fait » serait exactement l'erreur que
-> ce fichier reproche aux gardes : confondre « vert » et « atteint ».
->
-> ✅ **Le levier décidé a été tiré le 2026-09-04.** Sentry est chargé APRÈS le
-> premier rendu : **chemin critique 366,3 → 317,2 ko**. L'angle mort que
-> l'arbitrage nommait est comblé dans le même lot — filets `window.onerror` posés
-> avant tout, et un TAMPON qui rejoue ce qui est arrivé avant le SDK, dans l'ordre
-> (utilisateur, fils d'Ariane, événements).
->
-> ⚠️ Deux pièges mesurés, sans lesquels le correctif était un RECUL : un
-> `await import()` lu par NAMESPACE n'est pas élagué (49,3 → **155,9 ko**), et
-> `manualChunks` faisait `modulepreload`er le chunk depuis `index.html`, donc
-> télécharger au chargement malgré l'import dynamique.
->
-> ⚠️ Coût assumé : `browserTracingIntegration` initialisée après le rendu ne voit
-> qu'une partie du `pageload`. La capture d'ERREURS, elle, est intégralement
-> préservée par le tampon.
+> ⚠️ Effet de bord instructif : trois fichiers de test sont tombés d'un coup, non
+> parce que le produit avait cassé, mais parce qu'un test ne charge aucune route,
+> donc ne voyait que les deux namespaces eager. La suite dépendait d'un détail de
+> DÉCOUPAGE du bundle. `src/test/setup.ts` enregistre désormais tous les
+> catalogues de référence.
+
 
 **Remesuré le 2026-09-03** sur le build de prod (avec `VITE_SENTRY_DSN`, sinon la garde pèse un
 artefact qui n'existe nulle part) :
@@ -1302,15 +1321,32 @@ nommait depuis longtemps — le helper `safeParse` / `readJson` existait déjà.
 
 ### C-62 · Une centaine de messages d'erreur atteignent l'écran sans passer par aucun catalogue · **P2 · M**
 
-> 🟠 **Le remplaçant existe, le tuyau n'est pas fermé.** `makeApiError(code)`
-> (`src/lib/normalizeApiError.ts`) rend une `ApiError` dont le message vient du
-> catalogue, exactement comme un `RAISE EXCEPTION '<code>'` du SQL — c'est la primitive
-> que l'arbitrage demande. Trois chemins y passent déjà : les refus de dépendance
-> (C-48), les échecs d'écriture en démo (C-46) et `not_authenticated` du journal KR.
+> ✅ **Refermé le 2026-09-04.** 94 des 98 `throw new Error('<littéral>')` de
+> `src/modules` passent à `makeApiError('<code>')` : le code sert de clé, le
+> catalogue rend la phrase, et un code non catalogué retombe sur le message
+> générique, jamais sur le code brut. 10 codes ajoutés en fr ET en, le reste
+> réutilise les 32 qui existaient.
 >
-> ⚠️ **Les ~99 littéraux de `src/modules/` sont toujours là.** Ce qui est fait, c'est
-> qu'il n'y a plus d'excuse pour en ajouter un : la garde de ce fichier reste à écrire,
-> avec son témoin, et c'est elle qui fermera l'item.
+> Les 4 restants sont **dispensés et nommés dans la garde** : trois erreurs de
+> provider (levées au rendu, elles partent dans l'`AppErrorBoundary`, jamais dans
+> un toast) et le garde-fou « Supabase not configured ».
+>
+> 🔴 **Deux effets de bord trouvés en chemin, tous deux corrigés.**
+> `CHECKOUT_ERROR_KEYS[err.message]` indexait une table de CODES par un message :
+> ça ne marchait que tant que le défaut existait. Et `no_url` /
+> `mfa_enrol_malformed_response` n'étaient dans AUCUN catalogue, trouvés par la
+> garde elle-même, qui vérifie désormais que chaque code employé existe dans les
+> deux langues. Un code absent ne casse rien, il rend l'écran **muet**, et le
+> silence est le mode de panne de cette conception.
+>
+> ⚠️ 21 assertions de test passaient par le TEXTE de l'erreur ; elles assertent
+> maintenant le `code`. Identifier une erreur par son message est justement ce
+> que `CLAUDE.md` interdit.
+>
+> ⚠️ Ce qui n'est PAS couvert, et la garde le dit : un `err.message` relayé à la
+> main par un appelant, et les onze `throw new Error(translator('errors').t(…))`
+> de `friends`, catalogués donc hors du défaut de C-62, mais sans `code` stable.
+
 
 Trouvé par l'audit **A-7**. Le dépôt affiche ses erreurs de mutation par 75 clés `mutation.*` qui
 **interpolent le message de l'exception** :
@@ -1560,21 +1596,33 @@ de les REMESURER en soumettant les cas au scanner.
 
 ### C-23 · Durcir la gate axe-core de `critical` à `serious` · **P2 · S**
 
-> 🟠 **Un token sur deux, et la gate N'EST PAS durcie.** `--color-error` passe à
-> `red-600` (**3,76 → 4,83:1**, vérifié dans le navigateur sur l'app réelle). Nœuds
-> `serious` mesurés par axe-core sur les onze routes : **74 → 44**.
+> 🟠 **Pas clos, mais la gate EST durcie depuis le 2026-09-04**, autrement que ne le prévoyait
+> l'énoncé : tout `serious` casse la CI, **sauf les règles nommées** dans
+> `SERIOUS_NOT_BLOCKING`. Il y en a une, `color-contrast`, avec sa raison et
+> l'item qui la porte (C-25).
 >
-> 🔴 **L'énoncé de cet item est PÉRIMÉ et sa conclusion s'inverse.** Il annonçait « trois
-> violations distinctes, deux tokens, bon marché ». Remesure : **onze paires de couleurs
-> distinctes**, plus un `aria-prohibited-attr` sur la landing qu'il ne mentionne pas. Le
-> chiffre de trois venait d'un dédoublonnage sur les trois premiers nœuds de chaque
-> violation.
+> **Ce que ça a immédiatement attrapé** : la landing portait un
+> `aria-prohibited-attr`, un `aria-label` sur un `div` sans rôle, dont les trois
+> enfants sont `aria-hidden` parce qu'ils sont animés. Le navigateur ignore le
+> label, les enfants sont masqués : le bloc était **entièrement muet** pour un
+> lecteur d'écran, run après run, parce que `serious` était seulement dumpé.
+> Corrigé (`role="img"`). Landing : 2 violations → **0**, tous impacts confondus.
+> Vérifié par mutation.
 >
-> Il reste donc deux familles, dont aucune ne se tranche ici : le bleu de marque sur son
-> fond teinté (4,31:1, neuf nœuds) — c'est **C-25**, un arbitrage produit, et l'arbitrage
-> du §0 précise que la teinte « se choisit à l'œil sur la landing » ; et des paires
-> TRANSITOIRES (`#dde7fa` sur `#d6e2f9`, 1,04:1) qu'axe mesure en plein fondu d'entrée.
-> Durcir la gate dessus rendrait la CI instable, pas plus accessible.
+> 🔴 **L'énoncé d'origine reste PÉRIMÉ.** Il annonçait « trois violations
+> distinctes, deux tokens, bon marché ». C'est le `slice(0, 3)` du rapport qui
+> produisait ce chiffre : la mesure complète en rend **onze paires sur 74 nœuds**.
+> Le rapport ne tronque plus. Un échantillon rapporté comme un total est pire
+> qu'une absence de mesure, on agit dessus.
+>
+> ⚠️ **L'item reste 🟠** : les 41 nœuds restants sont tous du contraste et
+> demandent un arbitrage de marque, pas un correctif. Trois familles, mesurées :
+> le bleu `#2563eb` sur son fond teinté `#e3ebfa` (4,31:1, neuf routes) ; le blanc
+> sur le **dégradé** du bouton principal (3,49 à 4,48 selon l'endroit où axe
+> échantillonne) ; et des paires transitoires mesurées en plein fondu (1,02:1),
+> sur lesquelles durcir rendrait la CI instable sans rien rendre plus lisible.
+> Quand C-25 est tranché, la dernière dispense tombe.
+
 
 Écrit comme « le prochain geste, et il est bon marché » depuis que A-8 est tranché. **Chiffré le
 2026-09-03 (A-3)**, ce qui manquait pour savoir si c'était vrai : les dix routes scannées rendent
@@ -1740,19 +1788,29 @@ faut donc pas croire vérifiées :
 
 ### C-57 · Cibles tactiles sous 44 px : 16 × 16 px pour cocher une tâche sur l'accueil · **P2 · M**
 
-> 🟠 corrigé le 2026-09-04 · **18 commandes sous la cible → 0** sur six routes, par la
-> primitive `TouchTarget` que l'arbitrage nomme (posée d'abord en classes à la main,
-> ce qui donnait le même pixel et ratait le point : le dépôt a déjà un item, C-10, sur
-> des primitives que personne n'adopte donc que rien n'éprouve).
+> ✅ **Refermé le 2026-09-04** · **18 commandes sous la cible → 0**, sur les
+> **huit** routes protégées, par la primitive `TouchTarget` que l'arbitrage nomme.
 >
-> ⚠️ Les « 42 boutons à 40×40 sur /okr » ne se reproduisent PAS : `/okr` rendait 1 sur
-> 58 avant correctif, et c'était un bouton *inline* (exception WCAG 2.5.5).
+> ⚠️ La garde ne couvrait que six routes alors que le critère dit « les routes
+> protégées ». Étendue : `/agenda` passe, `/statistics` rendait une commande de
+> **16 × 16 px sans aucun nom accessible**, et le message d'échec disait
+> `16x16 «  »`, donc introuvable. Deux défauts en un :
 >
-> 🔴 **CE QUE LA GARDE NE VOIT PAS, et un cas trouvé en le vérifiant** : elle ne mesure
-> que l'ÉTAT INITIAL de six routes. Rien dans une modale n'est compté. Relevé au
-> passage, non corrigé : le bouton de suppression d'un commentaire d'équipe
-> (`TaskCommentsSection`) fait **28 × 28 px**. Même classe, hors du périmètre de
-> l'item et de son arbitrage — à traiter avec les surfaces modales.
+> 1. **Le détecteur mesurait la mauvaise boîte.** Une case à cocher enveloppée
+>    dans un `<label>` n'est pas une cible de 16 px : l'association implicite rend
+>    tout le label cliquable. Il mesure désormais la cible réelle, et le nom vient
+>    du texte du label. **Ça n'a dispensé de rien** : le label fait lui aussi
+>    moins de 44 px de haut. La correction de mesure n'a pas fait disparaître le
+>    défaut, elle l'a désigné correctement.
+> 2. **La cible** : `min-h-11` sur le label.
+>
+> Les « 42 boutons à 40×40 sur /okr » ne se reproduisent PAS : `/okr` rendait
+> **1 sur 58** avant correctif, et c'était un bouton *inline* (exception WCAG
+> 2.5.5).
+>
+> 🔴 **Ce que la garde ne voit toujours pas** : l'état INITIAL de huit routes,
+> rien dans une modale. C'est **C-70**.
+
 
 Trouvé par l'audit **A-4**. `docs/MOBILE.md` porte « ❌ Touch target < 44 × 44 px (WCAG 2.5.5) »
 dans sa liste « Ne jamais faire », et la ligne « cibles tactiles » de son tableau de note n'a pas
@@ -2368,18 +2426,22 @@ transaction annulée, acteur par acteur. Ne pas conclure d'un « success » : la
 qui ne se voit qu'en jouant la borne (`hits > p_limit`, jamais `>=` — avec `>=` le compteur gèle
 sur la limite, `hits <= limit` reste vrai, et **le plafond ne refuse jamais**).
 
-### 11.2 🟠 Huit items à moitié faits
+### 11.2 🟠 Quatre items à moitié faits
+
+Ils étaient huit le matin du 2026-09-04. **C-40, C-56, C-57 et C-62 ont été
+refermés dans la journée** ; leur note dit ce qui a été mesuré, et ce que leur
+énoncé annonçait de faux.
 
 | Item | Ce qui est en place | Ce qui manque |
 |---|---|---|
-| **C-14** budget d'entrée | repassé au vert : critique **317,2 ko** (marge 14,3 %), entrée **77,8 ko** | l'item exige **≥ 5 % sur les DEUX** : l'entrée est à **0,25 %**. Un import de plus la repasse au rouge |
-| **C-23** gate axe-core | un token sur deux corrigé | la gate n'a **pas** pu être durcie : l'énoncé annonçait 3 violations, la mesure en rend **11 paires / 74 nœuds** |
-| **C-39** suppression d'organisation | `useDeleteOrgFlow` rembourse avant de supprimer, propriétaire seul | dépend de la mig. `138` **et** du déploiement de `stripe-org-refund` |
-| **C-40** « rien » pendant le chargement | garde posée, **sept** écrans corrigés | l'énoncé disait douze ; cinq ne mentaient pas et sont nommés dans la garde. Reste à repasser sur les écrans hors périmètre initial |
-| **C-56** haut d'écran inatteignable | `FirstRunSetup` corrigé, sonde autonome `scripts/_c56-probe.mjs` | l'énoncé annonçait trois écrans ; **un seul** l'était. Le balayage systématique des autres surfaces `items-center` + `overflow-y-auto` n'a pas été fait |
-| **C-57** cibles tactiles | ce qui est corrigé est **asserté**, le reste **imprimé** (`e2e/touch-targets.spec.ts`) | `/okr` rendait 1 cible sur 58, et c'était un bouton *inline* (exception WCAG 2.5.5). Le chiffrage réel de l'item reste à faire écran par écran |
-| **C-62** messages d'erreur | la primitive existe : `makeApiError(code)` | **~99 littéraux** atteignent encore l'écran sans passer par elle |
+| **C-14** budget d'entrée | **74 903 o**, soit 3,97 % de marge (0,25 % le matin) ; chemin critique 15,1 %. Aucun plafond n'a bougé | l'item exige **≥ 5 % sur les DEUX** : il manque **803 o**. Le levier suivant (scinder la section `auth`, dont le shell lit onze clés) est extrapolé à ~760 o : il ne suffirait probablement même pas |
+| **C-23** gate axe-core | tout `serious` bloque, **sauf** `color-contrast`, nommément dispensé avec son item. La landing est à **0 violation** | les 41 nœuds restants sont tous du contraste, et relèvent de **C-25**, un arbitrage de marque. La dernière dispense tombe quand C-25 est tranché |
+| **C-39** suppression d'organisation | `useDeleteOrgFlow` rembourse avant de supprimer, propriétaire seul, vérifié par mutation | dépend de la mig. **138** et du déploiement de `stripe-org-refund`. **Rien de tout ça n'est en production** |
 | **C-65** remboursement | fonction, calcul du montant (12 cas **exécutés**), bouton, garantie écrite aux CGU | **rien n'est déployé**, et rien n'a été joué contre Stripe. C-27 exige un parcours E2E pour cet item |
+
+🔴 **C-39 et C-65 ne sont pas « à moitié faits » au même sens que C-14 et
+C-23** : leur code est écrit et testé, il n'est simplement **pas en production**.
+Ce sont les gestes du § 11.1 qui les débloquent, pas du travail supplémentaire.
 
 ### 11.3 ⬜ Trente-deux items entiers
 
