@@ -43,6 +43,34 @@ function codeOnly(source: string): string {
     .join(String.fromCharCode(10));
 }
 
+/**
+ * Assertion d'ORDRE entre deux extraits, qui exige d'abord qu'ils EXISTENT.
+ *
+ * 🔴 POURQUOI CE HELPER, ET PAS `indexOf` NU. Deux `indexOf` comparés
+ * directement passent quand le premier extrait est ABSENT : `indexOf` rend
+ * `-1`, et `-1 < n` est vrai. L'assertion « A vient avant B » est alors verte
+ * précisément dans le cas le plus grave — celui où A a disparu.
+ *
+ * Trouvé par mutation le 2026-09-04 : renommer `refund.mutate` laissait le
+ * test au VERT. C'est exactement « une garde qui répond sans mesurer », et
+ * cette fois dans une garde que je venais d'écrire pour ça.
+ */
+function expectOrder(source: string, first: string, second: string, why: string): void {
+  // ⚠️ Position d'un TOKEN, pas d'une sous-chaine. `indexOf('refund.mutate')`
+  // matche aussi `zzrefund.mutate` : un renommage passerait inapercu. On exige
+  // que le caractere precedent ne fasse pas partie d'un identifiant.
+  const at = (needle: string): number => {
+    const escaped = needle.replace(/[.*+?^${}()|[\]\\]/g, (c) => '\\' + c);
+    const m = new RegExp(`(?<![A-Za-z0-9_$])${escaped}`).exec(source);
+    return m ? m.index : -1;
+  };
+  const a = at(first);
+  const b = at(second);
+  expect(a, `${first} est ABSENT — ${why}`).toBeGreaterThan(-1);
+  expect(b, `${second} est ABSENT — ${why}`).toBeGreaterThan(-1);
+  expect(a, why).toBeLessThan(b);
+}
+
 const refundFn = read('supabase/functions/stripe-org-refund/index.ts');
 const webhook = read('supabase/functions/stripe-webhook/index.ts');
 const billingTab = read('src/components/organization/OrgBillingTab.tsx');
@@ -82,9 +110,11 @@ describe('l ORDRE des deux actions', () => {
     // puis echouer a resilier laisse la personne avec son argent et un acces
     // de trop (a son avantage) ; resilier puis echouer a rembourser lui prend
     // les deux. C'est exactement la discussion que la decision supprime.
-    const code = codeOnly(refundFn);
-    expect(code.indexOf('stripe.refunds.create')).toBeLessThan(
-      code.indexOf('stripe.subscriptions.cancel'),
+    expectOrder(
+      codeOnly(refundFn),
+      'stripe.refunds.create',
+      'stripe.subscriptions.cancel',
+      'on rembourse AVANT de resilier',
     );
   });
 
@@ -99,7 +129,7 @@ describe('l ORDRE des deux actions', () => {
     // « Un seul geste, aucun debit orphelin. » L'ordre inverse ferait perdre
     // l'identifiant Stripe avec la cascade sur `org_subscriptions`.
     const code = codeOnly(deleteFlow);
-    expect(code.indexOf('refund.mutate')).toBeLessThan(code.indexOf('remove.mutate'));
+    expectOrder(code, 'refund.mutate', 'remove.mutate', 'on rembourse AVANT de supprimer');
     // Et la suppression n'a lieu QUE si le remboursement a reussi : mieux vaut
     // une organisation encore la qu'une organisation detruite et un debit qui
     // continue.

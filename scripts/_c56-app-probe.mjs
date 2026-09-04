@@ -3,10 +3,27 @@
 import { chromium } from 'playwright';
 
 const BASE = process.env.BASE ?? 'http://localhost:5287';
+/**
+ * Message lisible quand le serveur de dev n'est pas la.
+ *
+ * ⚠️ Sans ca, la sonde vomit une trace Playwright de trente lignes ou la seule
+ * information utile — « rien n'ecoute sur ce port » — est noyee.
+ */
+function expliqueEtSors(err) {
+  const msg = String(err && err.message ? err.message : err);
+  if (/ECONNREFUSED|ERR_CONNECTION_REFUSED|net::ERR/.test(msg)) {
+    console.error(`Aucun serveur sur ${BASE}.`);
+    console.error('Demarrer le serveur de dev avant, ou passer BASE=<url>.');
+  } else {
+    console.error(msg);
+  }
+  process.exit(1);
+}
+
 const b = await chromium.launch();
 const p = await b.newPage({ viewport: { width: 375, height: Number(process.env.H ?? 350) } });
 
-await p.goto(BASE + '/login', { waitUntil: 'networkidle' });
+await p.goto(BASE + '/login', { waitUntil: 'networkidle' }).catch(expliqueEtSors);
 // Mode demo : le bouton porte un libelle stable dans les deux locales.
 await p.getByRole('button', { name: /d[ée]mo/i }).first().click();
 await p.waitForURL(/dashboard/, { timeout: 20000 });
