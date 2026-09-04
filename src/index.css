@@ -56,7 +56,14 @@
     --color-accent-solid-foreground: 255 255 255; /* texte blanc sur les boutons pleins */
     --color-success: 34 197 94;
     --color-warning: 245 158 11;
-    --color-error: 239 68 68;
+    --color-error: 220 38 38;   /* red-600 — C-23. `red-500` (239 68 68) rendait
+                                   3,76:1 sur blanc et 3,63:1 sur le fond teinte
+                                   du bandeau d'echeances, sous les 4,5:1 de WCAG
+                                   1.4.3 (AA). red-600 vaut 4,83:1. Ce n'est PAS un
+                                   arbitrage de marque : c'est la couleur SEMANTIQUE
+                                   de l'erreur, et un message d'erreur illisible ne
+                                   remplit pas sa fonction. Les trois themes sombres
+                                   gardent leur valeur : le contraste y est inverse. */
     --color-surface: 255 255 255;
     --color-background: 248 250 252;
 
