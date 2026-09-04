@@ -716,6 +716,15 @@
     "nameTooShort": "Le nom de la catégorie doit contenir au moins 2 caractères",
     "updated": "Catégorie mise à jour"
   },
+  "teamCategory": {
+    "renameAria": "Renommer la catégorie {{name}}",
+    "deleteAria": "Supprimer la catégorie {{name}}",
+    "colorAria": "Couleur {{color}}",
+    "save": "Enregistrer",
+    "deleteTitle": "Supprimer la catégorie « {{name}} » ?",
+    "deleteImpact": "Projets concernés : {{projects}} · Tâches concernées : {{tasks}}. Rien d'autre n'est supprimé : ces éléments perdent simplement leur étiquette.",
+    "deleteConfirm": "Supprimer"
+  },
   "okrTab": {
     "fallbackTeam": "Équipe",
     "loading": "Chargement…",

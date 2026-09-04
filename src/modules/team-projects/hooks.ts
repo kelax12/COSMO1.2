@@ -128,20 +128,6 @@ export const useUpdateTeamProject = (orgId: string) => {
   });
 };
 
-export const useArchiveTeamProject = (orgId: string) => {
-  const queryClient = useQueryClient();
-  const repository = useRepo();
-  return useMutation({
-    mutationFn: (projectId: string) => repository.archiveProject(projectId),
-    onSuccess: () => {
-      toast.success(translator('errors').t('success.projectArchived'));
-      queryClient.invalidateQueries({ queryKey: teamProjectKeys.projects(orgId) });
-      queryClient.invalidateQueries({ queryKey: teamProjectKeys.tasks(orgId) });
-    },
-    onError: (error: Error) => toast.error(translator('errors').t('mutation.archiveProject', { message: error.message })),
-  });
-};
-
 export const useCreateTeamTask = (orgId: string) => {
   const queryClient = useQueryClient();
   const repository = useRepo();

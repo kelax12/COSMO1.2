@@ -34,8 +34,11 @@ export interface ITeamProjectsRepository {
   // Projets — getProjects retourne AUSSI les archivés (filtrage côté UI).
   getProjects(orgId: string): Promise<TeamProject[]>;
   createProject(orgId: string, input: CreateTeamProjectInput): Promise<TeamProject>;
+  // Archiver = updateProject({ archived }) : un seul chemin, celui que l'UI
+  // emprunte (menu de la carte projet, droit `project.delete`, trigger
+  // `enforce_team_project_archive_scope`). Une méthode `archiveProject`
+  // dédiée a coexisté sans consommateur jusqu'au 2026-09-04 (C-66).
   updateProject(projectId: string, input: UpdateTeamProjectInput): Promise<TeamProject>;
-  archiveProject(projectId: string): Promise<void>;
 
   // Tâches d'équipe
   getTasks(orgId: string, filters?: TeamTaskFilters): Promise<TeamTask[]>;

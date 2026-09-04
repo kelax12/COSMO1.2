@@ -120,16 +120,6 @@ describe('SupabaseTeamProjectsRepository — projets', () => {
     supabaseMock.queueTable('team_projects', { data: null, error: { message: 'denied', code: '42501' } });
     await expect(repo.updateProject('p1', { name: 'X' })).rejects.toBeTruthy();
   });
-
-  it('archiveProject: update archived_at ciblé par id', async () => {
-    supabaseMock.queueTable('team_projects', { data: null });
-    await repo.archiveProject('p1');
-
-    const patch = supabaseMock.argsOf('team_projects', 'update')?.[0] as Record<string, unknown>;
-    expect(Object.keys(patch)).toEqual(['archived_at']);
-    expect(typeof patch.archived_at).toBe('string');
-    expect(supabaseMock.argsOf('team_projects', 'eq')).toEqual(['id', 'p1']);
-  });
 });
 
 describe('SupabaseTeamProjectsRepository — tâches', () => {
