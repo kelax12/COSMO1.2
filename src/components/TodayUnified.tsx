@@ -80,19 +80,35 @@ const TodayUnified = () => {
                   : 'border-[rgb(var(--color-border))]'
               }`}
             >
+              {/* 🔴 C-57 — cette commande faisait 16 x 16 px : la zone tactile
+                  epousait l'icone. C'est le geste PRINCIPAL du produit, sur son
+                  ecran d'accueil, a moins de la moitie de la cible WCAG 2.5.5
+                  (44 x 44). Le doigt tombait a cote et ouvrait la tache au lieu
+                  de la cocher, et sur une liste dense deux cases voisines sont
+                  a quelques pixels l'une de l'autre.
+
+                  ⚠️ L'ICONE reste a 16 px : c'est la CIBLE qui grandit. Une
+                  icone de 44 px serait lourde — c'est exactement le contrat de
+                  `TouchTarget` (`components/mobile/`). Marges negatives pour
+                  que la rangee ne grandisse pas avec la cible. */}
               <button
                 type="button"
                 onClick={() => complete(item)}
                 aria-label={t('today.markDone', { name: item.name })}
-                className="shrink-0 text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-success))] transition-colors"
+                className="shrink-0 -my-2 -ml-2 min-h-touch min-w-touch inline-flex items-center justify-center rounded-row text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-success))] transition-colors"
               >
                 <Circle size={16} aria-hidden="true" />
               </button>
 
+              {/* C-57 — la rangee entiere ouvre l'element, et elle mesurait
+                  32 px de haut. Large mais trop basse : WCAG 2.5.5 demande
+                  44 px dans les DEUX dimensions. Ce n'est pas un lien en ligne
+                  (l'exception « inline » ne s'applique qu'a une cible prise
+                  dans une phrase), c'est un bloc : il doit atteindre la cible. */}
               <button
                 type="button"
                 onClick={() => navigate(item.href)}
-                className="flex-1 min-w-0 text-left"
+                className="flex-1 min-w-0 min-h-touch flex flex-col justify-center text-left"
               >
                 <span className="block text-label text-[rgb(var(--color-text-primary))] truncate">
                   {item.name}

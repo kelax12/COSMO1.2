@@ -368,19 +368,31 @@ const MyWorkTab = ({ orgId, members, currentUserId }: MyWorkTabProps) => {
                   const priority = PRIORITY_META[t.priority] ?? PRIORITY_META[3];
                   return (
                     <li key={t.id} className="flex items-center gap-2.5 py-1.5 px-1 rounded-lg hover:bg-[rgb(var(--color-hover))] transition-colors">
+                      {/* C-57 — la case faisait 24 x 24 px, soit un peu plus de
+                          la moitie de la cible WCAG 2.5.5. La BORDURE reste a
+                          24 px (c'est elle qu'on voit), la CIBLE fait 44 :
+                          l'element interieur porte l'apparence, le bouton porte
+                          la zone tactile. Marges negatives pour que la rangee
+                          ne grandisse pas. */}
                       <button
                         type="button"
                         onClick={() => toggleComplete(t)}
                         aria-label={tt('myWork.markDone', { name: t.name })}
-                        className="w-6 h-6 rounded-md border border-[rgb(var(--color-border))] hover:border-[rgb(var(--color-accent))] flex items-center justify-center shrink-0 transition-colors"
+                        className="-my-2.5 -ml-2.5 min-h-touch min-w-touch inline-flex items-center justify-center shrink-0"
                       >
-                        {t.completed && <Check size={13} aria-hidden="true" />}
+                        <span className="w-6 h-6 rounded-md border border-[rgb(var(--color-border))] hover:border-[rgb(var(--color-accent))] flex items-center justify-center transition-colors">
+                          {t.completed && <Check size={13} aria-hidden="true" />}
+                        </span>
                       </button>
                       <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${priority.dot}`} role="img" aria-label={priorityLabelOf(t.priority)} title={priorityLabelOf(t.priority)} />
+                      {/* C-57 — `min-h-8` = 32 px : large mais trop bas. WCAG
+                          2.5.5 demande 44 px dans les DEUX dimensions, et ce
+                          n'est pas une cible en ligne (l'exception ne couvre
+                          qu'une incise dans une phrase), c'est un bloc. */}
                       <button
                         type="button"
                         onClick={() => setEditingTask(t)}
-                        className="flex-1 min-w-0 min-h-8 flex flex-col justify-center text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]/60 rounded-md"
+                        className="flex-1 min-w-0 min-h-touch flex flex-col justify-center text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]/60 rounded-md"
                       >
                         <span className="block text-sm text-[rgb(var(--color-text-primary))] truncate">{t.name}</span>
                       </button>
