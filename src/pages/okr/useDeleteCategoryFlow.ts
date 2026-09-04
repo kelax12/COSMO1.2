@@ -39,7 +39,8 @@ interface DeleteCategoryFlowArgs {
 
 export function useDeleteCategoryFlow({ categories, tasks, objectives, onDeleted }: DeleteCategoryFlowArgs) {
   const { t } = useT('okr');
-  const { t: tCommon, tp: tpCommon } = useT('common');
+  const { t: tCommon } = useT('common');
+  const { tp: tpOv } = useT('overlays');
   const deleteCategoryMutation = useDeleteCategory();
   const restoreCategoryMutation = useRestoreCategory();
   const reassignCategory = useReassignCategory();
@@ -58,7 +59,7 @@ export function useDeleteCategoryFlow({ categories, tasks, objectives, onDeleted
       const { moved, taskIds, okrIds } = await reassignCategory(categoryToDeleteId, reassignTo, tasks, objectives);
       movedTaskIds = taskIds;
       movedOkrIds = okrIds;
-      if (moved > 0) toast.success(tpCommon('deleteCategory.doneReassigned', moved));
+      if (moved > 0) toast.success(tpOv('deleteCategory.doneReassigned', moved));
     } catch {
       toast.error(tCommon('pageError.hint'));
       setIsDeleting(false);

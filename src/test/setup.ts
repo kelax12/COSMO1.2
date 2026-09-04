@@ -17,6 +17,40 @@ import { afterEach, beforeAll } from 'vitest';
 // existantes attendent. Un test qui veut vérifier une autre langue doit la
 // poser explicitement via `localeStore.setLocale()`.
 // ──────────────────────────────────────────────────────────────────
+// ──────────────────────────────────────────────────────────────────
+// Tous les catalogues, chargés d'avance
+//
+// 🔴 POURQUOI (2026-09-04). Deux namespaces seulement sont EAGER dans le
+// bundle (`common`, `errors`) ; les autres arrivent par `import()` quand la
+// route qui les déclare se charge. Un test, lui, ne charge aucune route : il
+// ne voyait donc que ces deux-là, et tout code lisant un namespace paresseux
+// rendait sa clé brute.
+//
+// Tant que `common` contenait presque tout, ça ne se voyait pas. En sortir
+// neuf sections (C-14, namespace `overlays`) a fait tomber trois fichiers de
+// test d'un coup — non parce que le produit avait cassé, mais parce que la
+// suite dépendait d'un détail de DÉCOUPAGE du bundle. Un test qui casse en
+// déplaçant une clé d'un catalogue à l'autre n'apprend rien sur le code.
+//
+// On enregistre donc les catalogues de référence (fr) pour tout le monde. Un
+// test qui veut vérifier une autre langue la pose explicitement.
+// ──────────────────────────────────────────────────────────────────
+beforeAll(async () => {
+  const { registerCatalog } = await import('@/i18n/catalog');
+  type Catalog = Parameters<typeof registerCatalog>[2];
+  const modules = import.meta.glob('@/locales/fr/*.json', { eager: true }) as Record<
+    string,
+    { default: Catalog }
+  >;
+  for (const [path, mod] of Object.entries(modules)) {
+    const ns = path.split('/').pop()?.replace('.json', '');
+    if (!ns) continue;
+    // Le cast est confiné ici : `import.meta.glob` ne peut pas typer ses clés,
+    // et `registerCatalog` ignore un namespace inconnu.
+    registerCatalog('fr', ns as Parameters<typeof registerCatalog>[1], mod.default);
+  }
+});
+
 beforeAll(async () => {
   if (typeof window === 'undefined') return;
   try {

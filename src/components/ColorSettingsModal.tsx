@@ -32,7 +32,8 @@ type ColorSettingsModalProps = {
  */
 const ColorSettingsModalContent: React.FC<Omit<ColorSettingsModalProps, 'isOpen'>> = ({ onClose, isNested }) => {
   const { t } = useT('tasks');
-  const { t: tCommon, tp: tpCommon } = useT('common');
+  const { t: tCommon } = useT('common');
+  const { tp: tpOv } = useT('overlays');
   const { data: tasks = [] } = useTasks();
   const { data: okrs = [] } = useOkrs();
   const reassignCategory = useReassignCategory();
@@ -153,7 +154,7 @@ const ColorSettingsModalContent: React.FC<Omit<ColorSettingsModalProps, 'isOpen'
       // Le message de reclassement part APRES les ecritures : annoncer un
       // deplacement avant de savoir si la suppression aboutit, c'est promettre
       // un resultat qu'on n'a pas encore.
-      if (movedTotal > 0) toast.success(tpCommon('deleteCategory.doneReassigned', movedTotal));
+      if (movedTotal > 0) toast.success(tpOv('deleteCategory.doneReassigned', movedTotal));
       onClose();
     } catch (error) {
       // Un echec avale en silence laissait l'utilisateur devant une modale qui

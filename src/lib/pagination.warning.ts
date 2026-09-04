@@ -60,7 +60,7 @@ export function warnIfTruncated<T>(rows: T[], limit: number, table: string): T[]
       tags: { pagination_table: table },
       extra: { rows: rows.length, limit },
     });
-    const t = translator('common').t;
+    const t = translator('overlays').t;
     const label = TABLE_LABEL_KEYS.includes(table)
       ? t(`pagination.tables.${table}` as Parameters<typeof t>[0])
       : table;

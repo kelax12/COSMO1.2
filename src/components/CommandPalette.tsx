@@ -61,7 +61,7 @@ const MAX_DATA_RESULTS = 8;
  * caractères, pour ne pas alourdir le DOM ni déclencher de fetch hors session.
  */
 const DataResults: React.FC<{ query: string; onDone: () => void }> = ({ query, onDone }) => {
-  const { t } = useT('common');
+  const ov = useT('overlays');
   const navigate = useNavigate();
   const { data: tasks = [] } = useTasks();
   const { data: habits = [] } = useHabits();
@@ -129,7 +129,7 @@ const DataResults: React.FC<{ query: string; onDone: () => void }> = ({ query, o
   return (
     <>
       {matchedTasks.length > 0 && (
-        <CommandGroup heading={t('palette.tasks')}>
+        <CommandGroup heading={ov.t('palette.tasks')}>
           {matchedTasks.map((t) => (
             <CommandItem key={`task-${t.id}`} value={`task-${t.id}`} onSelect={() => go('/tasks', { openTaskId: t.id })}>
               <CheckSquare size={16} className={t.completed ? 'opacity-40' : ''} aria-hidden="true" />
@@ -149,7 +149,7 @@ const DataResults: React.FC<{ query: string; onDone: () => void }> = ({ query, o
         </CommandGroup>
       )}
       {matchedEvents.length > 0 && (
-        <CommandGroup heading={t('palette.events')}>
+        <CommandGroup heading={ov.t('palette.events')}>
           {matchedEvents.map((e) => (
             <CommandItem key={`event-${e.id}`} value={`event-${e.id}`} onSelect={() => go('/agenda')}>
               <Calendar size={16} aria-hidden="true" />
@@ -172,18 +172,18 @@ const DataResults: React.FC<{ query: string; onDone: () => void }> = ({ query, o
         </CommandGroup>
       )}
       {matchedTeamTasks.length > 0 && (
-        <CommandGroup heading={t('palette.teamTasks')}>
+        <CommandGroup heading={ov.t('palette.teamTasks')}>
           {matchedTeamTasks.map((teamTask) => (
             <CommandItem key={`team-task-${teamTask.id}`} value={`team-task-${teamTask.id}`} onSelect={() => go(buildOrgLink('projects', { task: teamTask.id }))}>
               <CheckSquare size={16} className={teamTask.completed ? 'opacity-40' : ''} aria-hidden="true" />
               <span className={`flex-1 ${teamTask.completed ? 'line-through opacity-60' : ''}`}>{teamTask.name}</span>
-              <span className="text-xs text-[rgb(var(--color-text-muted))]">{t('palette.team')}</span>
+              <span className="text-xs text-[rgb(var(--color-text-muted))]">{ov.t('palette.team')}</span>
             </CommandItem>
           ))}
         </CommandGroup>
       )}
       {matchedTeamProjects.length > 0 && (
-        <CommandGroup heading={t('palette.teamProjects')}>
+        <CommandGroup heading={ov.t('palette.teamProjects')}>
           {matchedTeamProjects.map((p) => (
             <CommandItem key={`team-project-${p.id}`} value={`team-project-${p.id}`} onSelect={() => go(buildOrgLink('projects', { project: p.id }))}>
               <FolderKanban size={16} aria-hidden="true" />
@@ -193,18 +193,18 @@ const DataResults: React.FC<{ query: string; onDone: () => void }> = ({ query, o
         </CommandGroup>
       )}
       {matchedMembers.length > 0 && (
-        <CommandGroup heading={t('palette.orgMembers')}>
+        <CommandGroup heading={ov.t('palette.orgMembers')}>
           {matchedMembers.map((m) => (
             <CommandItem key={`org-member-${m.userId}`} value={`org-member-${m.userId}`} onSelect={() => go(buildOrgLink('members', { member: m.userId }))}>
               <UserRound size={16} aria-hidden="true" />
               <span className="flex-1">{m.displayName}</span>
-              <span className="text-xs text-[rgb(var(--color-text-muted))]">{t('palette.member')}</span>
+              <span className="text-xs text-[rgb(var(--color-text-muted))]">{ov.t('palette.member')}</span>
             </CommandItem>
           ))}
         </CommandGroup>
       )}
       {matchedTeams.length > 0 && (
-        <CommandGroup heading={t('palette.orgTeams')}>
+        <CommandGroup heading={ov.t('palette.orgTeams')}>
           {matchedTeams.map((tm) => (
             <CommandItem key={`org-team-${tm.id}`} value={`org-team-${tm.id}`} onSelect={() => go(buildOrgLink('members'))}>
               <UsersRound size={16} aria-hidden="true" />
@@ -214,7 +214,7 @@ const DataResults: React.FC<{ query: string; onDone: () => void }> = ({ query, o
         </CommandGroup>
       )}
       {matchedTeamOkrs.length > 0 && (
-        <CommandGroup heading={t('palette.teamOkrs')}>
+        <CommandGroup heading={ov.t('palette.teamOkrs')}>
           {matchedTeamOkrs.map((o) => (
             <CommandItem key={`team-okr-${o.id}`} value={`team-okr-${o.id}`} onSelect={() => go(buildOrgLink('okr'))}>
               <Target size={16} aria-hidden="true" />
@@ -239,6 +239,7 @@ const DataResults: React.FC<{ query: string; onDone: () => void }> = ({ query, o
  */
 export function CommandPalette() {
   const { t } = useT('common');
+  const ov = useT('overlays');
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState('');
   const navigate = useNavigate();
@@ -251,26 +252,26 @@ export function CommandPalette() {
       setIsOpen(false);
     };
     const base: PaletteCommand[] = [
-      { id: 'nav-dashboard', label: t('palette.goHome'), group: t('palette.groupNavigation'), icon: <LayoutDashboard size={16} />, run: nav('/dashboard'), keywords: ['dashboard', 'accueil', 'home', 'tableau de bord'] },
-      { id: 'nav-tasks', label: t('palette.goTasks'), group: t('palette.groupNavigation'), icon: <CheckSquare size={16} />, run: nav('/tasks'), keywords: ['tasks', 'todo', 'todolist'] },
-      { id: 'nav-agenda', label: t('palette.goAgenda'), group: t('palette.groupNavigation'), icon: <Calendar size={16} />, run: nav('/agenda'), keywords: ['calendar', 'événements', 'events'] },
-      { id: 'nav-habits', label: t('palette.goHabits'), group: t('palette.groupNavigation'), icon: <Repeat size={16} />, run: nav('/habits'), keywords: ['habits', 'routines'] },
-      { id: 'nav-okr', label: t('palette.goOkr'), group: t('palette.groupNavigation'), icon: <Target size={16} />, run: nav('/okr'), keywords: ['objectives', 'key results', 'objectifs'] },
-      { id: 'nav-statistics', label: t('palette.goStats'), group: t('palette.groupNavigation'), icon: <TrendingUp size={16} />, run: nav('/statistics'), keywords: ['stats', 'analytics', 'analyses'] },
-      { id: 'nav-settings', label: t('palette.goSettings'), group: t('palette.groupNavigation'), icon: <SettingsIcon size={16} />, run: nav('/settings'), keywords: ['settings', 'config', 'réglages'] },
+      { id: 'nav-dashboard', label: ov.t('palette.goHome'), group: ov.t('palette.groupNavigation'), icon: <LayoutDashboard size={16} />, run: nav('/dashboard'), keywords: ['dashboard', 'accueil', 'home', 'tableau de bord'] },
+      { id: 'nav-tasks', label: ov.t('palette.goTasks'), group: ov.t('palette.groupNavigation'), icon: <CheckSquare size={16} />, run: nav('/tasks'), keywords: ['tasks', 'todo', 'todolist'] },
+      { id: 'nav-agenda', label: ov.t('palette.goAgenda'), group: ov.t('palette.groupNavigation'), icon: <Calendar size={16} />, run: nav('/agenda'), keywords: ['calendar', 'événements', 'events'] },
+      { id: 'nav-habits', label: ov.t('palette.goHabits'), group: ov.t('palette.groupNavigation'), icon: <Repeat size={16} />, run: nav('/habits'), keywords: ['habits', 'routines'] },
+      { id: 'nav-okr', label: ov.t('palette.goOkr'), group: ov.t('palette.groupNavigation'), icon: <Target size={16} />, run: nav('/okr'), keywords: ['objectives', 'key results', 'objectifs'] },
+      { id: 'nav-statistics', label: ov.t('palette.goStats'), group: ov.t('palette.groupNavigation'), icon: <TrendingUp size={16} />, run: nav('/statistics'), keywords: ['stats', 'analytics', 'analyses'] },
+      { id: 'nav-settings', label: ov.t('palette.goSettings'), group: ov.t('palette.groupNavigation'), icon: <SettingsIcon size={16} />, run: nav('/settings'), keywords: ['settings', 'config', 'réglages'] },
       ...(PREMIUM_ENFORCED
         ? [{ id: 'nav-premium', label: t('nav.seePremium'), group: 'Navigation' as const, icon: <Crown size={16} />, run: nav('/premium'), keywords: ['premium', 'subscription', 'abonnement'] }]
         : []),
-      { id: 'pref-theme-light', label: t('palette.themeLight'), group: t('palette.groupPreferences'), icon: <Sun size={16} />, run: () => { setTheme('light'); setIsOpen(false); }, keywords: ['theme', 'light', 'jour', 'clair'] },
-      { id: 'pref-theme-dark', label: t('palette.themeDark'), group: t('palette.groupPreferences'), icon: <Moon size={16} />, run: () => { setTheme('dark'); setIsOpen(false); }, keywords: ['theme', 'dark', 'nuit', 'sombre'] },
-      { id: 'pref-theme-gris', label: t('palette.themeGrey'), group: t('palette.groupPreferences'), icon: <Circle size={16} />, run: () => { setTheme('gris'); setIsOpen(false); }, keywords: ['theme', 'gris', 'graphite', 'github'] },
-      { id: 'pref-theme-noir', label: t('palette.themeBlack'), group: t('palette.groupPreferences'), icon: <MoonStar size={16} />, run: () => { setTheme('noir'); setIsOpen(false); }, keywords: ['theme', 'noir', 'oled', 'amoled', 'monochrome'] },
+      { id: 'pref-theme-light', label: ov.t('palette.themeLight'), group: ov.t('palette.groupPreferences'), icon: <Sun size={16} />, run: () => { setTheme('light'); setIsOpen(false); }, keywords: ['theme', 'light', 'jour', 'clair'] },
+      { id: 'pref-theme-dark', label: ov.t('palette.themeDark'), group: ov.t('palette.groupPreferences'), icon: <Moon size={16} />, run: () => { setTheme('dark'); setIsOpen(false); }, keywords: ['theme', 'dark', 'nuit', 'sombre'] },
+      { id: 'pref-theme-gris', label: ov.t('palette.themeGrey'), group: ov.t('palette.groupPreferences'), icon: <Circle size={16} />, run: () => { setTheme('gris'); setIsOpen(false); }, keywords: ['theme', 'gris', 'graphite', 'github'] },
+      { id: 'pref-theme-noir', label: ov.t('palette.themeBlack'), group: ov.t('palette.groupPreferences'), icon: <MoonStar size={16} />, run: () => { setTheme('noir'); setIsOpen(false); }, keywords: ['theme', 'noir', 'oled', 'amoled', 'monochrome'] },
     ];
     if (isAuthenticated) {
       base.push(
         {
           id: 'action-quick-add',
-          label: t('palette.quickTask'),
+          label: ov.t('palette.quickTask'),
           hint: 'N',
           group: 'Actions',
           icon: <Plus size={16} />,
@@ -284,7 +285,7 @@ export function CommandPalette() {
         // création via location.state.openCreate, lu par chaque page.
         {
           id: 'action-create-event',
-          label: t('palette.createEvent'),
+          label: ov.t('palette.createEvent'),
           group: 'Actions',
           icon: <CalendarPlus size={16} />,
           run: nav('/agenda', { openCreate: true }),
@@ -292,7 +293,7 @@ export function CommandPalette() {
         },
         {
           id: 'action-create-habit',
-          label: t('palette.createHabit'),
+          label: ov.t('palette.createHabit'),
           group: 'Actions',
           icon: <Repeat size={16} />,
           run: nav('/habits', { openCreate: true }),
@@ -300,7 +301,7 @@ export function CommandPalette() {
         },
         {
           id: 'action-create-okr',
-          label: t('palette.createObjective'),
+          label: ov.t('palette.createObjective'),
           group: 'Actions',
           icon: <Target size={16} />,
           run: nav('/okr', { openCreate: true }),
@@ -308,7 +309,7 @@ export function CommandPalette() {
         },
         {
           id: 'action-shortcuts',
-          label: t('palette.showShortcuts'),
+          label: ov.t('palette.showShortcuts'),
           hint: '?',
           group: 'Actions',
           icon: <Keyboard size={16} />,
@@ -320,7 +321,7 @@ export function CommandPalette() {
         },
         {
           id: 'action-logout',
-          label: t('palette.logout'),
+          label: ov.t('palette.logout'),
           group: 'Actions',
           icon: <LogOut size={16} />,
           run: () => { logout(); setIsOpen(false); },
@@ -404,11 +405,11 @@ export function CommandPalette() {
                 autoFocus
                 value={query}
                 onValueChange={setQuery}
-                placeholder={t('palette.searchPlaceholder')}
+                placeholder={ov.t('palette.searchPlaceholder')}
                 className="text-[rgb(var(--color-text-primary))]"
               />
               <CommandList className="max-h-none flex-1">
-                <CommandEmpty>{t('palette.noResult')}</CommandEmpty>
+                <CommandEmpty>{ov.t('palette.noResult')}</CommandEmpty>
                 {showDataResults && (
                   <DataResults query={query} onDone={() => setIsOpen(false)} />
                 )}
@@ -430,15 +431,15 @@ export function CommandPalette() {
                 <div className="flex items-center gap-3">
                   <span className="flex items-center gap-1">
                     <kbd className="px-1.5 py-0.5 rounded border border-[rgb(var(--color-border))] bg-[rgb(var(--color-hover))]">↑↓</kbd>
-                    {t('palette.navigate')}
+                    {ov.t('palette.navigate')}
                   </span>
                   <span className="flex items-center gap-1">
                     <kbd className="px-1.5 py-0.5 rounded border border-[rgb(var(--color-border))] bg-[rgb(var(--color-hover))]">↵</kbd>
-                    {t('palette.open')}
+                    {ov.t('palette.open')}
                   </span>
                   <span className="flex items-center gap-1">
                     <kbd className="px-1.5 py-0.5 rounded border border-[rgb(var(--color-border))] bg-[rgb(var(--color-hover))]">ESC</kbd>
-                    {t('palette.close')}
+                    {ov.t('palette.close')}
                   </span>
                 </div>
                 <span className="hidden sm:inline">
