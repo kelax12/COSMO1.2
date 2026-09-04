@@ -9,6 +9,31 @@ compte** et **ce qui prouve que c'est fini**.
 > (`localStorage` hors `try` dans les dépôts de démo), **C-47** (échecs de tests faux sous charge).
 > **C-22** est clos ; **C-38** est à moitié fait et dit désormais ce qui a été fermé et ce qui reste.
 
+> ### 🟢 Passe du 2026-09-04 — 24 items traités, poussés sur `main`
+>
+> Chaque item concerné porte une note en tête disant ce qui a été fait. Douze
+> commits, 44 fichiers, trois migrations écrites. **Ce qui compte plus que le
+> décompte** : quatre énoncés se sont révélés PARTIELLEMENT FAUX à la
+> remesure, et la note de l'item le dit à chaque fois plutôt que d'aligner le
+> résultat sur l'attendu.
+>
+> | Item | Ce que l'énoncé disait | Ce que la mesure a rendu |
+> |---|---|---|
+> | **C-56** | trois écrans inatteignables clavier ouvert | **un seul** — les deux autres portaient `my-auto` sur leur carte, et rendaient déjà +16 px |
+> | **C-57** | « 43 sous la cible sur /okr, dont 42 à 40×40 » | `/okr` rendait **1 sur 58**, et c'était un bouton *inline* (exception WCAG 2.5.5) |
+> | **C-40** | douze écrans affirment une absence | **sept** — cinq ne mentent pas, et sont nommés un par un dans la garde |
+> | **C-23** | « trois violations `serious`, deux tokens, bon marché » | **onze paires de couleurs**, 74 nœuds. La gate n'est donc PAS durcie, et la raison est écrite |
+>
+> ⚠️ **Trois migrations écrites, AUCUNE appliquée** : `137` (identifiants de
+> refus de dépendance), `138` (les preuves survivent à la suppression d'une
+> org + propriétaire seul), `139` (plafond de débit). Chacune porte sa séquence
+> de vérification à jouer dans une transaction annulée. Deux secrets restent à
+> poser : `RATE_LIMIT_SALT` et `CRON_SECRET`.
+>
+> ⚠️ **Aucune Edge Function n'est déployée** par un push (C-35) : `report-bug`
+> tourne encore sans son plafond de débit tant que
+> `supabase functions deploy report-bug` n'a pas été joué.
+
 **Ce que ce fichier contient** : uniquement ce qui se corrige **en écrivant du code ou du SQL**.
 Tout ce qui se règle dans une console, chez un fournisseur ou au guichet (immatriculation, Stripe
 live, secrets, backlinks, DPA, plan Supabase) reste dans [`docs/ROADMAP-60J.md`](./docs/ROADMAP-60J.md)
@@ -118,6 +143,8 @@ quand ». Une décision écrite ici fait foi contre une piste écrite dans l'ite
 ## 1. Défauts fonctionnels connus
 
 ### C-01 · Restaurer un OKR ne restaure pas le journal de ses complétions · **P1 · M**
+
+> ✅ corrigé le 2026-09-04 · le journal est capturé AVANT le `delete` et rejoué à la restauration, borné par `MAX_REPS_PER_WRITE` (B18). 6 tests.
 
 `kr_completions` cascade depuis `okrs` **et** `key_results`. `useRestoreOkr` ramène l'objectif, ses
 KR et les `task.krId` qui les visent, mais **pas** le journal : le graphique « KR réalisés » du
@@ -242,6 +269,8 @@ Les deux sont du code, et les deux tombent pile pendant le basculement (T-36) :
 
 ### C-37 · Six « Annuler » de `src/components` rendent l'objet sous un NOUVEL identifiant · **P1 · M**
 
+> ✅ corrigé le 2026-09-04 · les cinq chemins tâche passent par `useRestoreTask`, `useRestoreHabit` est créé. Garde vue ROUGE sur exactement les cinq fichiers.
+
 Le correctif R-08 du 2026-09-02 a créé `splitRestore` et les cinq `useRestoreX`, puis s'est arrêté
 à `src/pages`. Les chemins d'annulation qui vivent dans `src/components` écrivent toujours le motif
 que `src/lib/restore-id.ts` documente comme fautif, en toutes lettres, à sa ligne 9 :
@@ -278,6 +307,8 @@ juste** : ce sont des DUPLICATIONS, pas des annulations. Ne pas les « corriger 
 
 ### C-40 · Douze écrans affichent « il n'y a rien » pendant le premier chargement · **P2 · S**
 
+> 🟠 SEPT corrigés le 2026-09-04, et **cinq écartés après relecture** : ils ne mentent pas (deux rendent `null`, deux ne choisissent qu'une date ou un groupement, `useTaskModal` teste une validation de formulaire). Le chiffre de douze était une sur-mesure.
+
 `const { data: x = [] } = useX()` sans lire `isLoading`, suivi d'un état vide sur `x.length === 0` :
 l'écran affirme une absence alors qu'il ne sait pas encore. Détecté par sonde (avec témoin), 12
 occurrences dans `src/components` :
@@ -297,6 +328,8 @@ comportement correct, il ne ment pas.
 
 ### C-41 · Supprimer une liste depuis les trois modales « Ajouter à une liste » n'a ni annulation ni impact annoncé · **P2 · S**
 
+> ✅ corrigé le 2026-09-04 · flux `useDeleteListWithUndo` partagé par les trois écrans. ⚠️ `BulkAddToListModal` ne supprime aucune liste, contrairement à l'énoncé.
+
 Deux composants pour le même geste, avec deux garanties différentes. `TasksPage.deleteListById`
 supprime avec un « Annuler » qui restaure l'identifiant **et** repose `taskIds` (le commentaire y
 explique pourquoi). `add-to-list/DesktopAddToList.tsx:82`, `MobileAddToList.tsx:102` et
@@ -308,6 +341,8 @@ pas de comptage des tâches concernées dans la confirmation.
 
 ### C-42 · Un commentaire d'équipe se supprime en un clic, sans confirmation ni annulation · **P2 · XS**
 
+> ✅ corrigé le 2026-09-04 · toast « Annuler » + `useRestoreComment`, conformément à l'arbitrage. **L'horodatage est restauré aussi** : sans lui le commentaire reviendrait à la fin du fil.
+
 `organization/TaskCommentsSection.tsx:149` : `onClick={() => deleteMutation.mutate(c.id)}`. Aucune
 confirmation, aucun « Annuler », et le commentaire disparaît pour toute l'équipe. C'est la seule
 suppression du mode entreprise sans aucun filet.
@@ -315,6 +350,8 @@ suppression du mode entreprise sans aucun filet.
 - **Fini quand** : confirmation ou toast « Annuler », au choix, mais l'un des deux.
 
 ### C-43 · « Supprimer l'événement lié » supprime N événements sans rien demander ni rien dire · **P2 · S**
+
+> ✅ corrigé le 2026-09-04 · le libellé dit combien, et « Annuler » les rend par `useRestoreEvent`.
 
 `TaskSidebar.tsx:153` : une entrée de menu contextuel, un `linked.forEach(ev => deleteEventMutation.mutate(ev.id))`,
 pas de confirmation, pas de comptage, pas de toast de succès, pas d'annulation. L'agenda fait
@@ -325,6 +362,8 @@ commente pourquoi l'identifiant doit revenir.
   `useRestoreEvent`.
 
 ### C-48 · Un refus de dépendance de tâche dit deux choses différentes, aucune lisible · **P2 · S**
+
+> ✅ corrigé le 2026-09-04 (mig. **137**, NON APPLIQUÉE) · quatre identifiants catalogués, chemin ÉQUIPE compris. Table de transition pour que le correctif marche avant l'application, à retirer ensuite.
 
 Le trigger de la mig. 132 refuse un cycle par `RAISE EXCEPTION 'This dependency would create a
 cycle'`, et `LocalStorageTasksRepository.addDependency` lève la **même phrase anglaise en dur**,
@@ -358,6 +397,8 @@ le message tel quel plutôt qu'une erreur anonyme, parce que l'utilisateur peut 
   local : les deux chemins doivent converger, sinon la divergence revient au prochain message.
 
 ### C-56 · Clavier ouvert, le haut de trois écrans devient inatteignable · **P2 · S**
+
+> 🟠 corrigé le 2026-09-04, mais **UN SEUL des trois écrans était cassé**. Remesuré à 375×350 dans l'application : `BugReportModal` et `InviteOrJoinModal` rendaient déjà +16 px, leur carte portant `my-auto`. Seul `FirstRunSetup` l'était (-55,8 px). Les trois passent au motif « scroll dehors, centrage `min-h-full` ».
 
 Trouvé par l'audit **A-4**. Trois surfaces partagent la même classe de conteneur, et les trois sont
 des **formulaires**, donc les trois ouvrent le clavier :
@@ -524,6 +565,8 @@ page qui l'utilisait.
 
 ### C-11 · Le picker natif n'a pas de test de non-régression sur les six surfaces · **P3 · S**
 
+> ✅ fait le 2026-09-04 · `src/date-picker.guard.test.ts`, les deux `EventModalForm` nommées une par une, avec un témoin qui refuse une dispense périmée.
+
 Le calendrier COSMO a remplacé le picker natif sur six surfaces le 2026-08-30, vérifié **à la main
 dans le navigateur**. Rien n'empêche un `input type="date"` de revenir.
 
@@ -583,6 +626,8 @@ de repository, `getById` n'ayant **aucun** autre appelant, vérifié), et **5 mu
 
 ### C-50 · Quatre fabriques de clés React Query survivent à la mig. 129 sans porter de donnée · **P3 · XS**
 
+> ✅ fait le 2026-09-04 · les quatre fabriques supprimées, `typecheck` confirme qu'elles n'avaient aucun appelant.
+
 `orgKeys.joinRequests`, `orgKeys.mySentRequest`, `orgKeys.myInvitations` et
 `orgKeys.myRemovalNotices` (`src/modules/organizations/constants.ts`) n'ont **plus aucun lecteur ni
 aucun invalidateur** depuis que la boîte de réception a été fondue en une clé unique.
@@ -635,6 +680,24 @@ question est donc rouverte, et **maintenant mesurable**.
 - **Fini quand** : une décision écrite, appuyée sur une mesure prise avec `VITE_SENTRY_DSN` posée.
 
 ### C-14 · Le budget d'entrée est DÉPASSÉ, de 0,1 ko · **P1 · M**
+
+> ✅ **Refermé le 2026-09-04, DEUX fois** — la première n'a pas tenu.
+>
+> Passe 1 : 78 031 → 77 966 o, en retirant du mort (trois codes d'API LLM que
+> COSMO n'appelle pas, et `common.moduleOnboarding`, dont la fonctionnalité a
+> été supprimée le 2026-08-23). La cause du rouge était mon propre lot de
+> catalogue, isolée en rejouant le build avec les `errors.json` d'avant.
+>
+> Passe 2 : trois cles EAGER de plus (C-39, C-42) ont repassé la ligne. Le
+> grignotage de clés mortes n'a rendu que 15 o — gzip compresse très bien des
+> chaînes voisines. Le gain est venu d'un découpage : la section `csv` vivait
+> dans `common`, l'un des DEUX catalogues du chunk d'entrée, et ses 1,4 ko
+> bruts partaient chez tout visiteur pour un geste qu'on n'atteint que depuis
+> Réglages → Données. Elle devient un namespace à part, déclaré sur les deux
+> routes que `i18n:namespaces -- --pages` nomme. **77 556 o, 444 de marge.**
+>
+> ❌ Le plafond n'a pas bougé. ⚠️ La marge reste inférieure aux 5 % que
+> demande l'énoncé : l'item n'est PAS clos, il est repassé au vert.
 
 **Remesuré le 2026-09-03** sur le build de prod (avec `VITE_SENTRY_DSN`, sinon la garde pèse un
 artefact qui n'existe nulle part) :
@@ -903,6 +966,8 @@ puis vérifie `ref.current instanceof HTMLInputElement` — échoue (`null`) ava
 
 ### C-60 · `useRef<T>()` sans valeur initiale : cassera sous les types React 19 · **P3 · XS** · trouvé par l'audit A-6
 
+> ✅ corrigé le 2026-09-04 · une seule occurrence, `usePrevious`.
+
 `src/lib/hooks/useDebounce.ts:69` (`usePrevious`) appelle `useRef<T>()` sans argument. Valide sous
 React 18 ; les types `@types/react` 19 rendent l'argument initial obligatoire (alignés sur
 `useState`), donc ce site échouerait `tsc` dès la bascule.
@@ -940,6 +1005,8 @@ organisations de la prod ont d'autres membres que leur propriétaire.
 
 ### C-30 · Supprimer un compte propriétaire détruit les preuves L215-1 et L221-28 de son organisation · **P1 · M**
 
+> ✅ code écrit le 2026-09-04 (mig. **138**, NON APPLIQUÉE) · les deux tables passent en `ON DELETE SET NULL`. ⚠️ `renewal_notices` avait pour PK `(org_id, period_end)` : clé de substitution + contrainte UNIQUE, c'est elle que vise l'`ON CONFLICT` de la Edge Function. ⚠️ Le trigger d'immuabilité de `withdrawal_consents` refusait TOUTE mutation, donc aussi le `SET NULL` : il autorise désormais le seul détachement `org_id → NULL`.
+
 Trouvé par l'audit **A-1**, mesuré sur `pg_constraint` le 2026-09-03. `renewal_notices` (avis de
 reconduction, Conso. art. L215-1) et `withdrawal_consents` (renonciation au droit de rétractation,
 art. L221-28) référencent `organizations(id)` **`ON DELETE CASCADE`**. Or `delete-account` laisse
@@ -961,6 +1028,8 @@ motif, appliqué à une seule des trois tables de preuve.
 
 ### C-31 · `report-bug` est un relais d'e-mail ouvert, sans aucune limite de débit · **P2 · M**
 
+> ✅ code écrit le 2026-09-04 (mig. **139**, NON APPLIQUÉE) · 3/heure/compte et 10/jour/IP, fenêtre glissante, décision atomique. **Aucune IP en base** (hachage salé). ⚠️ Reste à poser le secret `RATE_LIMIT_SALT` — sans lui la fonction REFUSE.
+
 Trouvé par l'audit **A-1**. La fonction est en `verify_jwt: true`, mais **la clé anon suffit** (elle
 est dans le bundle client, donc publique) et c'est volontaire : on veut pouvoir signaler un bug
 depuis un compte cassé. Il n'y a ensuite **ni CAPTCHA, ni throttle client, ni compteur serveur, ni
@@ -980,6 +1049,8 @@ domaine qui porte les e-mails d'authentification et les avis L215-1.
 
 ### C-32 · `report-bug` : l'allowlist de types de pièce jointe est décorative · **P3 · S**
 
+> ✅ corrigé le 2026-09-04 · l'extension du fichier joint est DÉRIVÉE du type validé, jamais reprise du nom envoyé.
+
 `ALLOWED_ATTACHMENT_TYPES` valide `attachment.type`… puis **ne le transmet jamais**. Resend ne reçoit
 que `filename` et `content`, et type la pièce jointe d'après le **nom de fichier**, qui n'est borné
 qu'en longueur.
@@ -993,6 +1064,8 @@ qu'en longueur.
 
 ### C-33 · `report-bug` : une panne d'authentification anonymise l'auteur en silence · **P3 · XS**
 
+> ✅ corrigé le 2026-09-04 · l'erreur de `getUser()` est lue, et « auteur non résolu » se distingue de « anonyme ».
+
 `const { data } = await anon.auth.getUser()` — l'erreur n'est pas lue. Sur panne de l'API auth, un
 utilisateur **connecté** est traité comme anonyme : le rapport part sans son adresse et sans
 `reply_to`, donc sans aucun moyen de lui répondre, et rien à l'écran ne le dit. Même famille que
@@ -1002,6 +1075,8 @@ C-29, conséquence bien plus faible.
   « auteur non résolu » plutôt que « non connecté (anonyme) ».
 
 ### C-39 · N'importe quel ADMIN peut supprimer l'entreprise depuis l'écran, et la cascade emporte tout · **P1 · M**
+
+> ✅ code écrit le 2026-09-04 (mig. **138**, NON APPLIQUÉE) · la RPC exige le PROPRIÉTAIRE et refuse tant qu'un abonnement court ; l'écran monte la zone rouge sur `isOwner` ; le dialogue dit ce qu'il advient de l'abonnement et des preuves.
 
 C-30 a trouvé la cascade par la suppression de COMPTE et demande le bon correctif (`ON DELETE SET
 NULL` sur les deux tables de preuve). Cet audit a trouvé le **second chemin, bien plus court** :
@@ -1035,6 +1110,8 @@ false`). C'est ce qui en fait le moment le moins cher, et le jour d'après il es
   cascade reste celui de C-30, à ne pas dupliquer ici. Le tout **avant** T-38.
 
 ### C-44 · `ui/chart.tsx` porte une allowlist anti-XSS sans un seul test · **P3 · XS**
+
+> ✅ fait le 2026-09-04 · `chart.test.tsx`, 18 cas : les formats réels des quatre appelants, le scénario d'évasion du commentaire, l'évasion par `id` et par clé.
 
 Exactement le cas de `RichText` avant le 2026-09-02, dans un fichier que la revue n'a pas atteint.
 `src/components/ui/chart.tsx` fait un `dangerouslySetInnerHTML` sur du CSS construit, protégé par
@@ -1070,6 +1147,8 @@ avec le correctif en place.
   attendue est ce parcours, pas la capture du réglage.
 
 ### C-46 · Les dépôts de démo touchent `localStorage` hors de tout `try` · **P2 · S**
+
+> ✅ corrigé le 2026-09-04 · les 14 dépôts passent par `safe-json`. Les écritures sont **classées** : `safeSetItem` pour un seed, `writeJsonOrThrow` (nouveau, message catalogué) pour une donnée de l'utilisateur.
 
 `src/lib/safe-json.ts` (créé le 2026-09-03) donne `safeGetItem` / `safeSetItem` / `safeParseArray`,
 et n'est câblé que sur les **sept** lecteurs que la revue nommait. Il reste **60 appels bruts à
@@ -1177,6 +1256,8 @@ français), et 12 qui interpolent un identifiant d'entité.
 
 ### C-63 · `useClaimShareLink` lance l'erreur PostgREST brute, et l'appelant l'identifie par son message · **P2 · S**
 
+> ✅ corrigé le 2026-09-04 · le hook normalise, l'appelant branche sur le CODE, et la branche par défaut REPOSE le jeton au lieu de le consommer.
+
 Trouvé par l'audit **A-7**. `src/modules/friends/share-link.hooks.ts` fait `if (error) throw error`
 sans `normalizeApiError`, et `ShareInviteClaimer` trie ensuite sur le **texte** :
 
@@ -1207,6 +1288,8 @@ normaliser ».
   retiré du stockage qu'après un refus **nommé**.
 
 ### C-64 · `AppErrorBoundary` n'offre qu'un rechargement, là où `RootErrorBoundary` offre une sortie · **P2 · S**
+
+> ✅ corrigé le 2026-09-04 · `hardSignOut` partagée par les deux frontières, repli aux tokens de thème. Un test vérifie que deux déclenchements de suite laissent encore un geste.
 
 Trouvé par l'audit **A-7**, en mesurant C-61. `RootErrorBoundary` a été écrit pour une raison
 nommée dans son propre en-tête : « le pire n'était pas l'écran vide, c'était l'impasse ». Il porte
@@ -1547,6 +1630,8 @@ faut donc pas croire vérifiées :
 
 ### C-57 · Cibles tactiles sous 44 px : 16 × 16 px pour cocher une tâche sur l'accueil · **P2 · M**
 
+> 🟠 corrigé le 2026-09-04 · **18 commandes sous la cible → 0** sur six routes. ⚠️ Les « 42 boutons à 40×40 sur /okr » ne se reproduisent PAS : `/okr` rendait 1 sur 58 avant correctif, et c'était un bouton *inline* (exception WCAG 2.5.5).
+
 Trouvé par l'audit **A-4**. `docs/MOBILE.md` porte « ❌ Touch target < 44 × 44 px (WCAG 2.5.5) »
 dans sa liste « Ne jamais faire », et la ligne « cibles tactiles » de son tableau de note n'a pas
 été recomptée depuis le 2026-08-27.
@@ -1655,6 +1740,8 @@ quatre jours pendant qu'un script tiers exfiltrait email et nom.
 
 ### C-34 · `renewal-notice.yml` sort en VERT quand son secret est absent · **P1 · XS**
 
+> ✅ corrigé le 2026-09-04 · secret absent = `exit 1`, plus un témoin qui refuse un run où `curl` n'a rendu aucun code HTTP.
+
 Trouvé par l'audit **A-1**, et c'est **le motif exact retiré d'`uptime.yml` le 2026-09-03**, encore
 en place dans un autre fichier :
 
@@ -1700,6 +1787,8 @@ différentes**.
 
 ### C-36 · `report-bug` et `renewal-notice` n'ont aucune garde, d'aucune sorte · **P2 · S**
 
+> ✅ fait le 2026-09-04 · `src/edge-mail-functions.guard.test.ts`, trois détecteurs avec témoins. Elle retire les commentaires avant de lire : ces fichiers CITENT leurs anciens défauts.
+
 Seul `delete-account` en a une (`src/rgpd-erasure.guard.test.ts`). Les deux autres n'ont **aucun
 test**, alors que `renewal-notice` a déjà porté une garde inversée (`if (SECRET && …)`, introduite
 puis corrigée le 2026-08-26) et que rien n'empêche sa réintroduction.
@@ -1709,6 +1798,8 @@ puis corrigée le 2026-08-26) et que rien n'empêche sa réintroduction.
   d'expéditeur, et aucune des deux ne renvoie un corps d'erreur du fournisseur.
 
 ### C-47 · La suite de tests rend des échecs FAUX sous charge, et personne ne peut les distinguer des vrais · **P2 · S**
+
+> ✅ corrigé le 2026-09-04 · `maxWorkers: 2` + délais à 20 s. **Quatre runs consécutifs sur arbre gelé, verdict identique** (plus trois autres en concurrence). ⚠️ Sept runs, pas dix. Coût : ~210 s contre ~176.
 
 Observé **trois fois le 2026-09-03**, sur le même arbre, à quelques minutes d'intervalle :
 
