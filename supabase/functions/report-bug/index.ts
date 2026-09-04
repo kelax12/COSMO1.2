@@ -32,6 +32,7 @@
 
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { opsAlert } from '../_shared/alert.ts'
+import { REPORT_BUG_LIMITS, callerIp, consumeRateLimits } from '../_shared/rate-limit.ts'
 
 const APP_URL = Deno.env.get('APP_URL') ?? 'http://localhost:5173'
 const CONTACT_EMAIL = Deno.env.get('BUG_REPORT_TO') ?? 'contact@thecosmo.app'
@@ -143,6 +144,47 @@ Deno.serve(async (req) => {
     return json({ error: 'mail_not_configured' }, 503, req)
   }
 
+  // ═══════════════════════════════════════════════════════════════════
+  // 🔴 C-31 — PLAFOND DE DEBIT, AVANT TOUT TRAVAIL
+  // ═══════════════════════════════════════════════════════════════════
+  //
+  // Cette fonction est un relais d'e-mail OUVERT : `verify_jwt: true`, mais la
+  // clé anon suffit — elle est dans le bundle client — et c'est VOULU, on doit
+  // pouvoir signaler un bug depuis un compte cassé. Il n'y avait ensuite ni
+  // CAPTCHA, ni throttle client, ni compteur serveur, ni plafond par IP.
+  //
+  // Une boucle de quelques lignes postait des rapports valides avec 3 Mo de
+  // pièce jointe. Chaque appel est un e-mail réel expédié par notre compte
+  // Resend : quota épuisé, boîte de contact noyée, et surtout réputation
+  // d'expéditeur du domaine abîmée — celle-là met des mois à se reconstruire,
+  // et c'est le même domaine qui porte les e-mails d'authentification et les
+  // avis de reconduction (Conso. L215-1). Un seul abus coupe l'inscription ET
+  // la conformité, pour tout le monde.
+  //
+  // ⚠️ LA PLACE DE CE BLOC EST UN CHOIX : avant le parsing du corps, donc
+  //    avant de décoder jusqu'à 3 Mo de base64. Un plafond qui s'applique
+  //    après le travail coûteux ne protège que la boîte mail, pas la fonction.
+  //
+  // Plafonds (arbitrage du 2026-09-03) : 3 rapports / heure / compte,
+  // 10 / jour / IP. Le compte n'est pas encore résolu ici — il l'est plus bas,
+  // depuis le JWT — donc on borne d'abord par IP, puis par compte une fois
+  // l'auteur connu.
+  const ipVerdict = await consumeRateLimits('report-bug', [
+    {
+      domain: 'report-bug:ip',
+      value: callerIp(req),
+      limit: REPORT_BUG_LIMITS.perIp.limit,
+      window: REPORT_BUG_LIMITS.perIp.window,
+    },
+  ])
+  if (!ipVerdict.allowed) {
+    // 503 quand c'est NOTRE configuration qui manque, 429 quand c'est un abus :
+    // les deux ne veulent pas dire la même chose à celui qui les lit.
+    return ipVerdict.misconfigured
+      ? json({ error: 'rate_limit_not_configured' }, 503, req)
+      : json({ error: 'too_many_requests' }, 429, req)
+  }
+
   let payload: {
     title?: unknown
     description?: unknown
@@ -233,6 +275,26 @@ Deno.serve(async (req) => {
   }
   const reporterLabel = reporterEmail
     ?? (reporterUnresolved ? 'auteur non resolu (panne de l API auth)' : 'non connecté (anonyme)')
+
+  // Second plafond, maintenant que l'auteur est connu : 3 / heure / compte.
+  // Il s'ajoute au plafond par IP, il ne le remplace pas — un abus depuis
+  // plusieurs comptes derrière une même IP reste borné par le premier, et un
+  // abus d'un compte derrière plusieurs IP par celui-ci.
+  if (reporterEmail) {
+    const accountVerdict = await consumeRateLimits('report-bug', [
+      {
+        domain: 'report-bug:account',
+        value: reporterEmail,
+        limit: REPORT_BUG_LIMITS.perAccount.limit,
+        window: REPORT_BUG_LIMITS.perAccount.window,
+      },
+    ])
+    if (!accountVerdict.allowed) {
+      return accountVerdict.misconfigured
+        ? json({ error: 'rate_limit_not_configured' }, 503, req)
+        : json({ error: 'too_many_requests' }, 429, req)
+    }
+  }
 
   const textBody = [
     description,
