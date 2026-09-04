@@ -22,6 +22,13 @@ import {
   TeamTaskDependency,
   TeamTaskActivity,
 } from './types';
+import type { CreateOptions } from '@/lib/restore-id';
+
+/** Options de restauration d'un commentaire (« Annuler » uniquement, C-42). */
+export interface RestoreCommentOptions extends CreateOptions {
+  /** Horodatage d'origine : sans lui, le commentaire revient a la fin du fil. */
+  restoreCreatedAt?: string;
+}
 
 export interface ITeamProjectsRepository {
   // Projets — getProjects retourne AUSSI les archivés (filtrage côté UI).
@@ -38,7 +45,22 @@ export interface ITeamProjectsRepository {
 
   // Commentaires (mig. 082) — journal immuable, delete auteur only.
   getComments(taskId: string): Promise<TeamTaskComment[]>;
-  addComment(input: CreateTeamTaskCommentInput): Promise<TeamTaskComment>;
+  /**
+   * `options` n'est renseigne que par un « Annuler » (C-42). Il porte DEUX
+   * champs, et le second est propre a ce cas : un fil de commentaires est
+   * ordonne par `createdAt`, donc restaurer sans l'horodatage remettrait le
+   * commentaire A LA FIN du fil, apres des reponses qu'il precedait. La
+   * conversation serait rendue incomprehensible par le geste cense la reparer.
+   *
+   * ❌ Les deux passent par ce SECOND argument, jamais par le payload : celui-ci
+   *    vient d'un etat de composant (raison complete dans `src/lib/restore-id.ts`).
+   * ⚠️ `author_id` reste pose par le SERVEUR depuis la session, comme a la
+   *    creation : restaurer ne doit jamais permettre d'ecrire au nom d'un autre.
+   */
+  addComment(
+    input: CreateTeamTaskCommentInput,
+    options?: RestoreCommentOptions,
+  ): Promise<TeamTaskComment>;
   deleteComment(commentId: string): Promise<void>;
 
   // Sous-tâches (mig. 092)

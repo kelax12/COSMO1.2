@@ -162,7 +162,8 @@
     "restoreCategory": "Impossible de restaurer la catégorie : {{message}}",
     "restoreList": "Impossible de restaurer la liste : {{message}}",
     "restoreEvent": "Impossible de restaurer l'événement : {{message}}",
-    "restoreOkr": "Impossible de restaurer l'objectif : {{message}}"
+    "restoreOkr": "Impossible de restaurer l'objectif : {{message}}",
+    "restoreComment": "Impossible de restaurer le commentaire : {{message}}"
   },
   "success": {
     "orgCreated": "Entreprise créée",

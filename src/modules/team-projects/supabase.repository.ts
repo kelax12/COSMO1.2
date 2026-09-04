@@ -7,6 +7,7 @@ import { translator } from '@/i18n/useT';
 import { getCurrentUserId } from '@/lib/auth-user';
 import { normalizeApiError } from '@/lib/normalizeApiError';
 import { warnIfTruncated } from '@/lib/pagination.warning';
+import type { RestoreCommentOptions } from './repository';
 import { ITeamProjectsRepository } from './repository';
 import {
   TeamProject,
@@ -228,7 +229,10 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
     return warnIfTruncated((data ?? []) as CommentRow[], 200, 'team_task_comments').map(mapComment);
   }
 
-  async addComment(input: CreateTeamTaskCommentInput): Promise<TeamTaskComment> {
+  async addComment(
+    input: CreateTeamTaskCommentInput,
+    options?: RestoreCommentOptions,
+  ): Promise<TeamTaskComment> {
     if (!supabase) throw new Error('Supabase not configured');
     const { data: session } = await supabase.auth.getSession();
     const uid = session.session?.user?.id;
@@ -239,9 +243,16 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
       .from('team_task_comments')
       .insert({
         task_id: input.taskId,
+        // `author_id` vient de la SESSION, jamais de l'input — y compris sur
+        // une restauration : « Annuler » ne doit pas permettre d'ecrire au nom
+        // de quelqu'un d'autre. La policy WITH CHECK le verifie aussi.
         author_id: uid,
         body: input.body,
         mentions: input.mentions ?? [],
+        // C-42 — restauration seulement. La whitelist reste explicite : on
+        // n'etend pas le spread de l'input, on ajoute deux champs nommes.
+        ...(options?.restoreId ? { id: options.restoreId } : {}),
+        ...(options?.restoreCreatedAt ? { created_at: options.restoreCreatedAt } : {}),
       })
       .select('*')
       .single();

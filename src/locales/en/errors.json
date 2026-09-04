@@ -162,7 +162,8 @@
     "restoreCategory": "Couldn't restore the category: {{message}}",
     "restoreList": "Couldn't restore the list: {{message}}",
     "restoreEvent": "Couldn't restore the event: {{message}}",
-    "restoreOkr": "Couldn't restore the objective: {{message}}"
+    "restoreOkr": "Couldn't restore the objective: {{message}}",
+    "restoreComment": "Couldn't restore the comment: {{message}}"
   },
   "success": {
     "orgCreated": "Company created",

@@ -6,6 +6,7 @@
 // réparties/assignées aux 6 membres de « Nova Studio », dates relatives.
 // Rechargées à chaque loginDemo() (sweep cosmo_* de clearDemoStorage).
 
+import type { RestoreCommentOptions } from './repository';
 import { ITeamProjectsRepository } from './repository';
 import {
   TeamProject,
@@ -491,14 +492,19 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
       .sort((a, b) => (a.createdAt < b.createdAt ? -1 : 1));
   }
 
-  async addComment(input: CreateTeamTaskCommentInput): Promise<TeamTaskComment> {
+  async addComment(
+    input: CreateTeamTaskCommentInput,
+    options?: RestoreCommentOptions,
+  ): Promise<TeamTaskComment> {
+    // Parite avec le depot Supabase : les deux champs de restauration viennent
+    // d'un SECOND argument reserve aux « Annuler », jamais du payload (C-42).
     const comment: TeamTaskComment = {
-      id: `comment-${Date.now()}`,
+      id: options?.restoreId ?? `comment-${Date.now()}`,
       taskId: input.taskId,
       authorId: DEMO_USER_ID,
       body: input.body,
       mentions: input.mentions ?? [],
-      createdAt: new Date().toISOString(),
+      createdAt: options?.restoreCreatedAt ?? new Date().toISOString(),
     };
     this.saveComments([...this.getCommentsArray(), comment]);
     return comment;
