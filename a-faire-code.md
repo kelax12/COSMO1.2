@@ -144,7 +144,13 @@ quand ». Une décision écrite ici fait foi contre une piste écrite dans l'ite
 
 ### C-01 · Restaurer un OKR ne restaure pas le journal de ses complétions · **P1 · M**
 
-> ✅ corrigé le 2026-09-04 · le journal est capturé AVANT le `delete` et rejoué à la restauration, borné par `MAX_REPS_PER_WRITE` (B18). 6 tests.
+> ✅ corrigé le 2026-09-04 · le journal est capturé AVANT le `delete` et rejoué à la
+> restauration. ⚠️ **Corrigé une seconde fois le même jour** : la première version
+> appelait `getKRCompletionsRepository().create()` depuis le hook, soit exactement le
+> chemin que l'arbitrage C-49 fait supprimer (« un INSERT client libre dans un journal
+> append-only »). L'écriture appartient désormais au repository OKR
+> (`restoreCompletions`), au même endroit que `recordKRReps`, et la borne B18 a suivi.
+> Aucun code client ne touche `kr_completions`.
 
 `kr_completions` cascade depuis `okrs` **et** `key_results`. `useRestoreOkr` ramène l'objectif, ses
 KR et les `task.krId` qui les visent, mais **pas** le journal : le graphique « KR réalisés » du
@@ -1085,7 +1091,16 @@ C-29, conséquence bien plus faible.
 
 ### C-39 · N'importe quel ADMIN peut supprimer l'entreprise depuis l'écran, et la cascade emporte tout · **P1 · M**
 
-> ✅ code écrit le 2026-09-04 (mig. **138**, NON APPLIQUÉE) · la RPC exige le PROPRIÉTAIRE et refuse tant qu'un abonnement court ; l'écran monte la zone rouge sur `isOwner` ; le dialogue dit ce qu'il advient de l'abonnement et des preuves.
+> 🟠 code écrit le 2026-09-04 (mig. **138**, NON APPLIQUÉE) · la RPC exige le
+> PROPRIÉTAIRE ✅, l'écran monte la zone rouge sur `isOwner` ✅, le dialogue dit ce
+> qu'il advient de l'abonnement et des preuves ✅.
+>
+> ⚠️ **La moitié « rembourse » de l'arbitrage n'est PAS livrée.** La décision dit
+> « résilie ET rembourse puis supprime, un seul geste, aucun débit orphelin » ; ce qui
+> est livré REFUSE tant qu'un abonnement court, donc deux gestes. C-65 n'existe pas
+> (rien n'appelle `refunds.create`), et des trois états possibles échouer fermé est le
+> seul sûr. Le refus est écrit comme un INTÉRIM à RETIRER quand C-65 arrive, pas à
+> cumuler avec lui.
 
 C-30 a trouvé la cascade par la suppression de COMPTE et demande le bon correctif (`ON DELETE SET
 NULL` sur les deux tables de preuve). Cet audit a trouvé le **second chemin, bien plus court** :
@@ -1639,7 +1654,19 @@ faut donc pas croire vérifiées :
 
 ### C-57 · Cibles tactiles sous 44 px : 16 × 16 px pour cocher une tâche sur l'accueil · **P2 · M**
 
-> 🟠 corrigé le 2026-09-04 · **18 commandes sous la cible → 0** sur six routes. ⚠️ Les « 42 boutons à 40×40 sur /okr » ne se reproduisent PAS : `/okr` rendait 1 sur 58 avant correctif, et c'était un bouton *inline* (exception WCAG 2.5.5).
+> 🟠 corrigé le 2026-09-04 · **18 commandes sous la cible → 0** sur six routes, par la
+> primitive `TouchTarget` que l'arbitrage nomme (posée d'abord en classes à la main,
+> ce qui donnait le même pixel et ratait le point : le dépôt a déjà un item, C-10, sur
+> des primitives que personne n'adopte donc que rien n'éprouve).
+>
+> ⚠️ Les « 42 boutons à 40×40 sur /okr » ne se reproduisent PAS : `/okr` rendait 1 sur
+> 58 avant correctif, et c'était un bouton *inline* (exception WCAG 2.5.5).
+>
+> 🔴 **CE QUE LA GARDE NE VOIT PAS, et un cas trouvé en le vérifiant** : elle ne mesure
+> que l'ÉTAT INITIAL de six routes. Rien dans une modale n'est compté. Relevé au
+> passage, non corrigé : le bouton de suppression d'un commentaire d'équipe
+> (`TaskCommentsSection`) fait **28 × 28 px**. Même classe, hors du périmètre de
+> l'item et de son arbitrage — à traiter avec les surfaces modales.
 
 Trouvé par l'audit **A-4**. `docs/MOBILE.md` porte « ❌ Touch target < 44 × 44 px (WCAG 2.5.5) »
 dans sa liste « Ne jamais faire », et la ligne « cibles tactiles » de son tableau de note n'a pas
