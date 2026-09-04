@@ -107,7 +107,7 @@ export function splitRestore<T extends { id: string }>(
 //    supprime. Un toast pour la personne, Sentry pour nous.
 
 /** Entité restaurable — sert à choisir le message et à étiqueter l'alerte. */
-export type RestorableEntity = 'task' | 'category' | 'list' | 'event' | 'okr';
+export type RestorableEntity = 'task' | 'category' | 'list' | 'event' | 'okr' | 'comment';
 
 /** Clé de catalogue (namespace `errors`) par entité. */
 const RESTORE_ERROR_KEYS = {
@@ -116,6 +116,7 @@ const RESTORE_ERROR_KEYS = {
   list: 'mutation.restoreList',
   event: 'mutation.restoreEvent',
   okr: 'mutation.restoreOkr',
+  comment: 'mutation.restoreComment',
 } as const satisfies Record<RestorableEntity, string>;
 
 /**

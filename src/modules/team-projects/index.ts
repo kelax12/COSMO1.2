@@ -68,3 +68,6 @@ export {
   useAddTeamTaskComment,
   useDeleteTeamTaskComment,
 } from './hooks';
+
+// Restauration d'un commentaire supprime (« Annuler », C-42).
+export { useRestoreComment } from './restore-comment.hooks';
