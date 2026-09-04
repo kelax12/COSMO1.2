@@ -155,7 +155,7 @@ quand ». Une décision écrite ici fait foi contre une piste écrite dans l'ite
 | [8](#8-tests-et-gardes) | Tests et gardes | C-26 → C-28, C-34 → C-36, C-47 |
 | [9](#9-ce-qui-nest-PAS-du-code) | Ce qui n'est PAS du code | renvois |
 | [10](#10-couverture--ce-que-cette-liste-ne-peut-pas-contenir) | 🔴 Couverture et audits à lancer | 2 audits restants |
-| [11](#11-ce-qui-reste-ouvert) | 🔴 **Ce qui reste ouvert** | 3 gestes, 4 à moitié, 32 entiers |
+| [11](#11-ce-qui-reste-ouvert) | 🔴 **Ce qui reste ouvert** | 3 gestes, 4 à moitié, 31 entiers |
 
 ---
 
@@ -581,6 +581,40 @@ jusqu'à douze mois. Deux sorties, à trancher :
 
 ### C-66 · Quatre capacités d'équipe ont leur back-end, leur permission et leur trigger, et aucun écran · **P2 · M**
 
+> ✅ traité le 2026-09-04 · **deux des quatre lignes du tableau ci-dessous étaient fausses à la
+> remesure**, et une troisième nommait le mauvais module. Le geste manquait pour **deux**
+> capacités, pas quatre : renommer et supprimer une **catégorie d'entreprise**
+> (`team-categories`, mig. 111). Les deux sont livrées dans `TeamCategoryPicker`, gardées par
+> `can['category.manage']`, et vérifiées dans le navigateur. Les deux hooks réellement orphelins,
+> `useArchiveTeamProject` et `useUpdateTeamOKR`, sont supprimés (avec `archiveProject` côté
+> repository) : leur geste était déjà atteignable par un AUTRE hook.
+>
+> **Ce que la mesure du 2026-09-03 a raté, et pourquoi** : elle a cherché les consommateurs d'un
+> **nom de hook**, pas l'existence du **geste**. Or :
+> - archiver un projet existe depuis le 2026-08-25 (menu « ⋯ » de `TeamProjectCard` → Archiver /
+>   Restaurer), par `useUpdateTeamProject({ archived })`, gardé par `can['project.delete']` et
+>   passant par le même trigger `enforce_team_project_archive_scope` — `archiveProject` n'en était
+>   qu'un doublon strict ;
+> - modifier un OKR d'équipe existe depuis le 2026-07-14 (crayon de la carte → « Modifier
+>   l'objectif »), par `useEditTeamOKR`, qui fait la méta ET la synchro des KR en un seul toast ;
+> - `useUpdateTeamCategory` / `useDeleteTeamCategory` désignaient des hooks du module
+>   `team-categories`, jamais nommé dans l'item, alors que le tableau citait `TeamCategoryPicker`
+>   et son cousin `org-okr-categories` — dont le renommage et la suppression, eux, existent dans
+>   `TeamOKRTab` depuis le 2026-07-17.
+>
+> **Vérifié dans le navigateur** (mode démo, /entreprise) : « Produit » renommée en « Produit V2 »
+> et recoloriée, le nouveau nom se propage au menu « Catégorie » de la carte projet ; suppression
+> confirmée après annonce d'impact, la chip et le badge du projet disparaissent. **L'annonce
+> d'impact a son témoin** : elle affichait « Projets concernés : 0 », puis « 1 » après avoir
+> étiqueté un projet — elle mesure, elle n'imprime pas un zéro. Archivage / restauration et
+> édition d'OKR reparcourus dans le même passage, les deux marchent.
+>
+> ⚠️ **Deux choix assumés.** (1) La confirmation de suppression est **en ligne**, pas un
+> `AlertDialog` : le sélecteur est monté dans une feuille et dans un modal, et empiler un second
+> piège de focus est la façon la plus simple de rendre la confirmation inatteignable au clavier.
+> (2) Le bouton « Nouvelle catégorie » est désormais gardé lui aussi par `category.manage` : il
+> était offert à tout le monde alors que la policy `team_categories_insert` l'a toujours refusé.
+
 **Trouvé le 2026-09-03 en mesurant C-49**, et c'est le vrai résultat de cette mesure : sur les 46
 hooks sans consommateur, cinq sont des **mutations**. Un hook de lecture sans écran est du code mort ;
 une mutation sans écran est une **fonctionnalité qui n'a jamais été branchée**.
@@ -699,7 +733,10 @@ de repository, `getById` n'ayant **aucun** autre appelant, vérifié), et **5 mu
   **deux** repositories, et `useCreateKRCompletion`, qui est un INSERT client libre dans un journal
   append-only que ce dépôt interdit par ailleurs. La table des étiquettes, elle, **reste**.
 - **4 restent, et changent de nature** : ce sont des écrans manquants, pas des orphelins. Ils
-  deviennent **C-66**.
+  deviennent **C-66**. ⚠️ **Corrigé le 2026-09-04** : ils n'étaient que **2**. Deux des quatre
+  gestes existaient déjà à l'écran, servis par un AUTRE hook — la mesure avait cherché les
+  consommateurs d'un nom de hook, pas l'existence du geste. Les deux doublons sont supprimés
+  avec leur méthode de repository, ce qui porte ce balayage à **50 partent, 2 restent**.
 - **Fini quand** : les 48 sont supprimés, `npm run typecheck` confirme qu'aucun n'était appelé, et
   une garde compte les orphelins pour que le chiffre ne remonte pas. Le balayage doit embarquer son
   **témoin**, sinon il finira par ne plus rien détecter.
@@ -2417,8 +2454,8 @@ périmètre, ses questions et ses pièges connus.
 
 État au **2026-09-04**, reconstruit item par item depuis les notes de ce fichier, pas
 depuis un tableau plus ancien. **Trois gestes hors code bloquent du travail déjà écrit** ;
-viennent ensuite les **8 items à moitié faits** (le plus rentable, la moitié est là), puis
-les **32 entiers**.
+viennent ensuite les **4 items à moitié faits** (le plus rentable, la moitié est là), puis
+les **31 entiers**.
 
 ### 11.1 🔴 Trois gestes qui ne sont pas du code, et qui bloquent du code déjà écrit
 
@@ -2499,7 +2536,7 @@ refermés dans la journée** ; leur note dit ce qui a été mesuré, et ce que l
 C-23** : leur code est écrit et testé, il n'est simplement **pas en production**.
 Ce sont les gestes du § 11.1 qui les débloquent, pas du travail supplémentaire.
 
-### 11.3 ⬜ Trente-deux items entiers
+### 11.3 ⬜ Trente et un items entiers
 
 Rien n'a été engagé dessus. Regroupés par ce qu'ils coûtent à ouvrir.
 
@@ -2508,12 +2545,11 @@ Rien n'a été engagé dessus. Regroupés par ce qu'ils coûtent à ouvrir.
 live · `C-20` contenu éditorial monolingue · `C-58` le blocage sécurité qui forçait React 19 est
 levé, donc la migration redevient un arbitrage de coût.
 
-**Défauts fonctionnels mesurés (6)**
+**Défauts fonctionnels mesurés (5)**
 `C-02` supprimer une catégorie d'ÉQUIPE n'annonce pas son impact · `C-03` les clés de
 `habits.completions` ignorent le fuseau choisi · `C-05` le badge d'organisation lit jusqu'à
 1 000 tâches d'équipe · `C-45` `loginWithGoogle` vise des URL hors allowlist Supabase ·
-`C-66` quatre capacités d'équipe ont back-end et permission, sans interface · `C-69` la fenêtre
-produit de la landing tourne sans pause, y compris hors écran.
+`C-69` la fenêtre produit de la landing tourne sans pause, y compris hors écran.
 
 **Performance et scalabilité (4)**
 `C-12` la landing reste la seule page lente · `C-15` le tableau de bord charge le jeu complet ·

@@ -58,22 +58,6 @@ export const useCreateTeamOKR = (orgId: string) => {
   });
 };
 
-export const useUpdateTeamOKR = (orgId: string) => {
-  const queryClient = useQueryClient();
-  const repository = useRepo();
-  return useMutation({
-    mutationFn: async ({ okrId, input }: { okrId: string; input: UpdateTeamOKRInput }) => {
-      const valid = await validateAsync('teamOkr.update', input);
-      return repository.update(okrId, valid as UpdateTeamOKRInput);
-    },
-    onSuccess: () => {
-      toast.success(translator('errors').t('success.objectiveUpdated'));
-      queryClient.invalidateQueries({ queryKey: teamOkrKeys.list(orgId) });
-    },
-    onError: (error: Error) => toast.error(translator('errors').t('mutation.updateObjective', { message: error.message })),
-  });
-};
-
 /**
  * Édition complète d'un OKR : méta (titre/description/catégorie/date/équipes)
  * + synchronisation des KR (ajout/màj/suppression). Un seul toast final.

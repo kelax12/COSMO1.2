@@ -157,7 +157,6 @@
     "toggleBookmark": "Impossible de modifier le signet : {{message}}",
     "deleteTeamObjective": "Impossible de supprimer l'objectif : {{message}}",
     "updateProject": "Impossible de modifier le projet : {{message}}",
-    "archiveProject": "Impossible d'archiver le projet : {{message}}",
     "addComment": "Impossible d'ajouter le commentaire : {{message}}",
     "deleteComment": "Impossible de supprimer le commentaire : {{message}}",
     "addSubtask": "Impossible d'ajouter la sous-tâche : {{message}}",

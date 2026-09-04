@@ -686,6 +686,15 @@
     "nameTooShort": "The category name must be at least 2 characters long",
     "updated": "Category updated"
   },
+  "teamCategory": {
+    "renameAria": "Rename the {{name}} category",
+    "deleteAria": "Delete the {{name}} category",
+    "colorAria": "Color {{color}}",
+    "save": "Save",
+    "deleteTitle": "Delete the “{{name}}” category?",
+    "deleteImpact": "Projects affected: {{projects}} · Tasks affected: {{tasks}}. Nothing else is deleted: those items simply lose their label.",
+    "deleteConfirm": "Delete"
+  },
   "okrTab": {
     "fallbackTeam": "Team",
     "loading": "Loading…",

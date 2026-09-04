@@ -45,7 +45,6 @@ export {
   useTeamTasks,
   useCreateTeamProject,
   useUpdateTeamProject,
-  useArchiveTeamProject,
   useCreateTeamTask,
   useUpdateTeamTask,
   useTeamSubtasks,

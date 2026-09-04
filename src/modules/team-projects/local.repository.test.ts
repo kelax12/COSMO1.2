@@ -95,7 +95,7 @@ describe('LocalStorageTeamProjectsRepository (démo)', () => {
   it('crée puis archive un projet (archivedAt renseigné, toujours listé)', async () => {
     const created = await repo.createProject(ORG, { name: 'Projet éphémère' });
     expect((await repo.getProjects(ORG)).some((p) => p.id === created.id)).toBe(true);
-    await repo.archiveProject(created.id);
+    await repo.updateProject(created.id, { archived: true });
     const archived = (await repo.getProjects(ORG)).find((p) => p.id === created.id);
     expect(archived?.archivedAt).toBeTruthy();
   });

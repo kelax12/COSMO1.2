@@ -157,7 +157,6 @@
     "toggleBookmark": "Couldn't update the bookmark: {{message}}",
     "deleteTeamObjective": "Couldn't delete the objective: {{message}}",
     "updateProject": "Couldn't update the project: {{message}}",
-    "archiveProject": "Couldn't archive the project: {{message}}",
     "addComment": "Couldn't add the comment: {{message}}",
     "deleteComment": "Couldn't delete the comment: {{message}}",
     "addSubtask": "Couldn't add the subtask: {{message}}",

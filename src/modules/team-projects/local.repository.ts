@@ -396,15 +396,6 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
     return p;
   }
 
-  async archiveProject(projectId: string): Promise<void> {
-    const projects = this.getProjectsArray();
-    const p = projects.find((x) => x.id === projectId);
-    if (p) {
-      p.archivedAt = new Date().toISOString();
-      this.saveProjects(projects);
-    }
-  }
-
   async getTasks(orgId: string, filters?: TeamTaskFilters): Promise<TeamTask[]> {
     return this.getTasksArray().filter((tk) => {
       if (tk.orgId !== orgId) return false;

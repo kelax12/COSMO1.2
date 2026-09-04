@@ -123,15 +123,6 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
     return mapProject(data as ProjectRow);
   }
 
-  async archiveProject(projectId: string): Promise<void> {
-    if (!supabase) throw new Error('Supabase not configured');
-    const { error } = await supabase
-      .from('team_projects')
-      .update({ archived_at: new Date().toISOString() })
-      .eq('id', projectId);
-    if (error) throw normalizeApiError(error);
-  }
-
   // ─── Tâches ────────────────────────────────────────────────────────
 
   async getTasks(orgId: string, filters?: TeamTaskFilters): Promise<TeamTask[]> {
