@@ -9,30 +9,45 @@ compte** et **ce qui prouve que c'est fini**.
 > (`localStorage` hors `try` dans les dépôts de démo), **C-47** (échecs de tests faux sous charge).
 > **C-22** est clos ; **C-38** est à moitié fait et dit désormais ce qui a été fermé et ce qui reste.
 
-> ### 🟢 Passe du 2026-09-04 — 24 items traités, poussés sur `main`
+> ### 🟢 Passe du 2026-09-04 — état au soir, poussé sur `main`
 >
-> Chaque item concerné porte une note en tête disant ce qui a été fait. Douze
-> commits, 44 fichiers, trois migrations écrites. **Ce qui compte plus que le
-> décompte** : quatre énoncés se sont révélés PARTIELLEMENT FAUX à la
-> remesure, et la note de l'item le dit à chaque fois plutôt que d'aligner le
+> **70 items. 30 clos, 8 à moitié, 32 ouverts.** Chaque item concerné porte une
+> note en tête qui dit ce qui a été fait, ce qui reste, et sous quelles réserves.
+> Le détail de ce qui reste est en **[§ 11](#11-ce-qui-reste-ouvert)**.
+>
+> | État | Nombre | Ce que ça veut dire |
+> |---|---|---|
+> | ✅ clos | 30 | 9 l'étaient avant cette passe, 21 le sont depuis |
+> | 🟠 à moitié | 8 | C-14, C-23, C-39, C-40, C-56, C-57, C-62, C-65 |
+> | ⬜ ouvert | 32 | rien n'a été engagé |
+>
+> 🔴 **CE QUI COMPTE PLUS QUE LE DÉCOMPTE : cinq énoncés se sont révélés faux à
+> la remesure.** La note de l'item le dit à chaque fois, plutôt que d'aligner le
 > résultat sur l'attendu.
 >
 > | Item | Ce que l'énoncé disait | Ce que la mesure a rendu |
 > |---|---|---|
-> | **C-56** | trois écrans inatteignables clavier ouvert | **un seul** — les deux autres portaient `my-auto` sur leur carte, et rendaient déjà +16 px |
+> | **C-56** | trois écrans inatteignables clavier ouvert | **un seul** — les deux autres portaient `my-auto` sur leur carte |
 > | **C-57** | « 43 sous la cible sur /okr, dont 42 à 40×40 » | `/okr` rendait **1 sur 58**, et c'était un bouton *inline* (exception WCAG 2.5.5) |
 > | **C-40** | douze écrans affirment une absence | **sept** — cinq ne mentent pas, et sont nommés un par un dans la garde |
-> | **C-23** | « trois violations `serious`, deux tokens, bon marché » | **onze paires de couleurs**, 74 nœuds. La gate n'est donc PAS durcie, et la raison est écrite |
+> | **C-23** | « trois violations `serious`, deux tokens, bon marché » | **onze paires de couleurs**, 74 nœuds. La gate n'a donc PAS pu être durcie |
+> | **C-41** | les TROIS modales `add-to-list` suppriment une liste | `BulkAddToListModal` n'en supprime aucune |
+>
+> ⚠️ **Et quatre GARDES tournaient dans le vide**, trouvées par mutation (casser
+> le défaut, vérifier que la garde rougit) : une assertion d'ordre par `indexOf`
+> verte quand l'appel a DISPARU, un balayage sans témoin de corpus, une garde
+> qui vérifie la destructuration et pas l'usage, un `toContain` qui matchait une
+> ligne d'import. Toutes corrigées et remutées. Une sonde versionnée était même
+> **morte à la livraison** (elle lisait un répertoire temporaire de session).
 >
 > ⚠️ **Trois migrations écrites, AUCUNE appliquée** : `137` (identifiants de
-> refus de dépendance), `138` (les preuves survivent à la suppression d'une
-> org + propriétaire seul), `139` (plafond de débit). Chacune porte sa séquence
-> de vérification à jouer dans une transaction annulée. Deux secrets restent à
-> poser : `RATE_LIMIT_SALT` et `CRON_SECRET`.
+> refus de dépendance), `138` (preuves qui survivent + propriétaire seul), `139`
+> (plafond de débit). Chacune porte sa séquence de vérification à jouer dans une
+> transaction annulée.
 >
-> ⚠️ **Aucune Edge Function n'est déployée** par un push (C-35) : `report-bug`
-> tourne encore sans son plafond de débit tant que
-> `supabase functions deploy report-bug` n'a pas été joué.
+> ⚠️ **Aucune Edge Function n'est déployée par un push** (C-35). `report-bug`
+> tourne encore sans son plafond, et `stripe-org-refund` n'existe pas en
+> production. Deux secrets restent à poser : `RATE_LIMIT_SALT`, `CRON_SECRET`.
 
 **Ce que ce fichier contient** : uniquement ce qui se corrige **en écrivant du code ou du SQL**.
 Tout ce qui se règle dans une console, chez un fournisseur ou au guichet (immatriculation, Stripe
@@ -133,10 +148,11 @@ quand ». Une décision écrite ici fait foi contre une piste écrite dans l'ite
 | [4](#4-scalabilité) | Scalabilité | C-15 → C-16 |
 | [5](#5-sécurité-et-dépendances) | Sécurité et dépendances | C-17 → C-19, C-29 → C-33, C-39, C-44 → C-46, C-58 → C-64 |
 | [6](#6-i18n) | i18n | C-20 → C-22, C-38 |
-| [7](#7-accessibilité) | Accessibilité | C-23 → C-25, C-51 → C-55, C-57, C-69 |
+| [7](#7-accessibilité) | Accessibilité | C-23 → C-25, C-51 → C-55, C-57, C-69, C-70 |
 | [8](#8-tests-et-gardes) | Tests et gardes | C-26 → C-28, C-34 → C-36, C-47 |
 | [9](#9-ce-qui-nest-PAS-du-code) | Ce qui n'est PAS du code | renvois |
 | [10](#10-couverture--ce-que-cette-liste-ne-peut-pas-contenir) | 🔴 Couverture et audits à lancer | 2 audits restants |
+| [11](#11-ce-qui-reste-ouvert) | 🔴 **Ce qui reste ouvert** | 3 gestes, 8 à moitié, 32 entiers |
 
 ---
 
@@ -702,6 +718,15 @@ contre 96-98 sur toutes les autres pages du même build.
 
 ### C-13 · T-47 · trancher `vendor-sentry` sur le chemin critique · **P3 · S**
 
+> ✅ **Tranché ET exécuté le 2026-09-04.** La décision demandée est prise : Sentry est
+> **différé après le premier rendu**. Mesure sur build de prod avec `VITE_SENTRY_DSN` :
+> **chemin critique 366,3 → 317,2 ko**, et le chunk n'est plus `modulepreload`é depuis
+> `index.html` (0 occurrence).
+>
+> ⚠️ Deux pièges mesurés, sans lesquels c'était un RECUL : un `await import()` lu par
+> NAMESPACE n'est pas élagué (49,3 → **155,9 ko**), et `manualChunks` faisait précharger
+> le chunk malgré l'import dynamique. Détail dans `src/lib/sentry-client.ts`.
+
 49,3 ko gzip payés par tout visiteur. La conclusion « le différer ne rendrait rien » a été
 **rétractée le 2026-09-02** : elle venait d'une mesure structurellement aveugle à Sentry. La
 question est donc rouverte, et **maintenant mesurable**.
@@ -710,7 +735,8 @@ question est donc rouverte, et **maintenant mesurable**.
 
 ### C-14 · Le budget d'entrée est DÉPASSÉ, de 0,1 ko · **P1 · M**
 
-> ✅ **Refermé le 2026-09-04, DEUX fois** — la première n'a pas tenu.
+> 🟠 **Repassé au VERT le 2026-09-04, en deux fois — mais PAS clos** (la raison est à la
+> fin de cette note, et elle compte).
 >
 > Passe 1 : 78 031 → 77 966 o, en retirant du mort (trois codes d'API LLM que
 > COSMO n'appelle pas, et `common.moduleOnboarding`, dont la fonctionnalité a
@@ -725,8 +751,14 @@ question est donc rouverte, et **maintenant mesurable**.
 > Réglages → Données. Elle devient un namespace à part, déclaré sur les deux
 > routes que `i18n:namespaces -- --pages` nomme. **77 556 o, 444 de marge.**
 >
-> ❌ Le plafond n'a pas bougé. ⚠️ La marge reste inférieure aux 5 % que
-> demande l'énoncé : l'item n'est PAS clos, il est repassé au vert.
+> ❌ Le plafond n'a pas bougé.
+>
+> 🔴 **L'ITEM N'EST PAS CLOS, et son statut est 🟠, pas ✅.** Son « fini quand »
+> demande **au moins 5 % de marge sur les DEUX budgets**. Mesure du
+> 2026-09-04 : chemin critique 317,2 / 370,0 → **14,3 % de marge, acquis** ;
+> entrée 77,8 / 78,0 → **0,25 %**. Le second n'y est pas, et de loin. Lire
+> « budget respecté » comme « C-14 est fait » serait exactement l'erreur que
+> ce fichier reproche aux gardes : confondre « vert » et « atteint ».
 >
 > ✅ **Le levier décidé a été tiré le 2026-09-04.** Sentry est chargé APRÈS le
 > premier rendu : **chemin critique 366,3 → 317,2 ko**. L'angle mort que
@@ -1270,6 +1302,16 @@ nommait depuis longtemps — le helper `safeParse` / `readJson` existait déjà.
 
 ### C-62 · Une centaine de messages d'erreur atteignent l'écran sans passer par aucun catalogue · **P2 · M**
 
+> 🟠 **Le remplaçant existe, le tuyau n'est pas fermé.** `makeApiError(code)`
+> (`src/lib/normalizeApiError.ts`) rend une `ApiError` dont le message vient du
+> catalogue, exactement comme un `RAISE EXCEPTION '<code>'` du SQL — c'est la primitive
+> que l'arbitrage demande. Trois chemins y passent déjà : les refus de dépendance
+> (C-48), les échecs d'écriture en démo (C-46) et `not_authenticated` du journal KR.
+>
+> ⚠️ **Les ~99 littéraux de `src/modules/` sont toujours là.** Ce qui est fait, c'est
+> qu'il n'y a plus d'excuse pour en ajouter un : la garde de ce fichier reste à écrire,
+> avec son témoin, et c'est elle qui fermera l'item.
+
 Trouvé par l'audit **A-7**. Le dépôt affiche ses erreurs de mutation par 75 clés `mutation.*` qui
 **interpolent le message de l'exception** :
 
@@ -1517,6 +1559,22 @@ de les REMESURER en soumettant les cas au scanner.
 ## 7. Accessibilité
 
 ### C-23 · Durcir la gate axe-core de `critical` à `serious` · **P2 · S**
+
+> 🟠 **Un token sur deux, et la gate N'EST PAS durcie.** `--color-error` passe à
+> `red-600` (**3,76 → 4,83:1**, vérifié dans le navigateur sur l'app réelle). Nœuds
+> `serious` mesurés par axe-core sur les onze routes : **74 → 44**.
+>
+> 🔴 **L'énoncé de cet item est PÉRIMÉ et sa conclusion s'inverse.** Il annonçait « trois
+> violations distinctes, deux tokens, bon marché ». Remesure : **onze paires de couleurs
+> distinctes**, plus un `aria-prohibited-attr` sur la landing qu'il ne mentionne pas. Le
+> chiffre de trois venait d'un dédoublonnage sur les trois premiers nœuds de chaque
+> violation.
+>
+> Il reste donc deux familles, dont aucune ne se tranche ici : le bleu de marque sur son
+> fond teinté (4,31:1, neuf nœuds) — c'est **C-25**, un arbitrage produit, et l'arbitrage
+> du §0 précise que la teinte « se choisit à l'œil sur la landing » ; et des paires
+> TRANSITOIRES (`#dde7fa` sur `#d6e2f9`, 1,04:1) qu'axe mesure en plein fondu d'entrée.
+> Durcir la gate dessus rendrait la CI instable, pas plus accessible.
 
 Écrit comme « le prochain geste, et il est bon marché » depuis que A-8 est tranché. **Chiffré le
 2026-09-03 (A-3)**, ce qui manquait pour savoir si c'était vrai : les dix routes scannées rendent
@@ -1898,7 +1956,15 @@ puis corrigée le 2026-08-26) et que rien n'empêche sa réintroduction.
 
 ### C-47 · La suite de tests rend des échecs FAUX sous charge, et personne ne peut les distinguer des vrais · **P2 · S**
 
-> ✅ corrigé le 2026-09-04 · `maxWorkers: 2` + délais à 20 s. **Quatre runs consécutifs sur arbre gelé, verdict identique** (plus trois autres en concurrence). ⚠️ Sept runs, pas dix. Coût : ~210 s contre ~176.
+> ✅ corrigé le 2026-09-04 · `maxWorkers: 2` + délais à 20 s. **DIX runs
+> consécutifs sur l'arbre poussé, un seul verdict distinct** — le critère de
+> sortie de l'item est atteint, machine chargée comprise (les runs se sont
+> déroulés pendant que d'autres suites tournaient).
+>
+> ⚠️ Coût réel : ~210 s contre ~176 avant, soit +20 %. C'est le prix d'un
+> verdict qui veut dire quelque chose. `maxWorkers: 2` est calibré sur CETTE
+> machine (4 cœurs, 8 Go) : sur un runner plus large il laisse de la capacité
+> inutilisée, et il se remonte en REMESURANT la stabilité, jamais l'inverse.
 
 Observé **trois fois le 2026-09-03**, sur le même arbre, à quelques minutes d'intervalle :
 
@@ -2274,3 +2340,89 @@ périmètre, ses questions et ses pièges connus.
 > problème lié au code » devient vérifiable.** Avant, elle ne l'est pas, et l'écrire quand même
 > serait exactement le défaut que ce dépôt a corrigé quatre fois en cinq jours : **une réponse
 > rassurante donnée par une mesure qui ne regardait pas.**
+
+---
+
+## 11. Ce qui reste ouvert
+
+État au **2026-09-04**, reconstruit item par item depuis les notes de ce fichier, pas
+depuis un tableau plus ancien. **Trois gestes hors code bloquent du travail déjà écrit** ;
+viennent ensuite les **8 items à moitié faits** (le plus rentable, la moitié est là), puis
+les **32 entiers**.
+
+### 11.1 🔴 Trois gestes qui ne sont pas du code, et qui bloquent du code déjà écrit
+
+Ce sont les seuls endroits où du travail livré ne produit **rien** en production.
+
+| Geste | Ce qui attend derrière | Conséquence tant que ce n'est pas fait |
+|---|---|---|
+| **Appliquer les migrations `137`, `138`, `139`** | identifiants de refus de dépendance (C-48), preuves qui survivent à la suppression d'une organisation (C-30, C-39), plafond de débit (C-31) | `dependency-errors.ts` traduit encore via sa **table de transition** sur les phrases anglaises ; supprimer une organisation détruit toujours ses preuves L215-1 ; `consume_rate_limit` n'existe pas, donc le plafond ne s'applique pas |
+| **Déployer les Edge Functions** (`supabase functions deploy`) | `report-bug` (C-31 → C-33, C-36), `stripe-org-refund` (C-65), `stripe-webhook` (ligne compensatoire de remboursement) | `report-bug` tourne **sans plafond, sans allowlist réelle, et anonymise l'auteur en cas de panne d'auth** ; le remboursement du mois en cours **n'existe pas en production**, alors que les CGU le promettent désormais |
+| **Poser deux secrets** : `RATE_LIMIT_SALT` (Supabase), `CRON_SECRET` + `OPS_ALERT_WEBHOOK_URL` (secrets **Actions**) | C-31, C-34, C-28 | sans sel, `consumeRateLimits` **REFUSE** (choix délibéré : pas de sel, pas de service) ; `ci-alert.yml` reste inerte |
+
+⚠️ **Ordre imposé** : `139` avant le déploiement de `report-bug`, sinon la fonction appelle une
+RPC absente. `138` avant tout usage de la suppression d'organisation.
+
+🔴 **Les trois migrations portent chacune leur séquence de vérification** à jouer dans une
+transaction annulée, acteur par acteur. Ne pas conclure d'un « success » : la `139` a un piège
+qui ne se voit qu'en jouant la borne (`hits > p_limit`, jamais `>=` — avec `>=` le compteur gèle
+sur la limite, `hits <= limit` reste vrai, et **le plafond ne refuse jamais**).
+
+### 11.2 🟠 Huit items à moitié faits
+
+| Item | Ce qui est en place | Ce qui manque |
+|---|---|---|
+| **C-14** budget d'entrée | repassé au vert : critique **317,2 ko** (marge 14,3 %), entrée **77,8 ko** | l'item exige **≥ 5 % sur les DEUX** : l'entrée est à **0,25 %**. Un import de plus la repasse au rouge |
+| **C-23** gate axe-core | un token sur deux corrigé | la gate n'a **pas** pu être durcie : l'énoncé annonçait 3 violations, la mesure en rend **11 paires / 74 nœuds** |
+| **C-39** suppression d'organisation | `useDeleteOrgFlow` rembourse avant de supprimer, propriétaire seul | dépend de la mig. `138` **et** du déploiement de `stripe-org-refund` |
+| **C-40** « rien » pendant le chargement | garde posée, **sept** écrans corrigés | l'énoncé disait douze ; cinq ne mentaient pas et sont nommés dans la garde. Reste à repasser sur les écrans hors périmètre initial |
+| **C-56** haut d'écran inatteignable | `FirstRunSetup` corrigé, sonde autonome `scripts/_c56-probe.mjs` | l'énoncé annonçait trois écrans ; **un seul** l'était. Le balayage systématique des autres surfaces `items-center` + `overflow-y-auto` n'a pas été fait |
+| **C-57** cibles tactiles | ce qui est corrigé est **asserté**, le reste **imprimé** (`e2e/touch-targets.spec.ts`) | `/okr` rendait 1 cible sur 58, et c'était un bouton *inline* (exception WCAG 2.5.5). Le chiffrage réel de l'item reste à faire écran par écran |
+| **C-62** messages d'erreur | la primitive existe : `makeApiError(code)` | **~99 littéraux** atteignent encore l'écran sans passer par elle |
+| **C-65** remboursement | fonction, calcul du montant (12 cas **exécutés**), bouton, garantie écrite aux CGU | **rien n'est déployé**, et rien n'a été joué contre Stripe. C-27 exige un parcours E2E pour cet item |
+
+### 11.3 ⬜ Trente-deux items entiers
+
+Rien n'a été engagé dessus. Regroupés par ce qu'ils coûtent à ouvrir.
+
+**Ce qui demande une décision avant du code (4)**
+`C-04` supprimer les jetons premium et le mur-pub · `C-08` deux dettes Stripe avant la bascule
+live · `C-20` contenu éditorial monolingue · `C-58` le blocage sécurité qui forçait React 19 est
+levé, donc la migration redevient un arbitrage de coût.
+
+**Défauts fonctionnels mesurés (6)**
+`C-02` supprimer une catégorie d'ÉQUIPE n'annonce pas son impact · `C-03` les clés de
+`habits.completions` ignorent le fuseau choisi · `C-05` le badge d'organisation lit jusqu'à
+1 000 tâches d'équipe · `C-45` `loginWithGoogle` vise des URL hors allowlist Supabase ·
+`C-66` quatre capacités d'équipe ont back-end et permission, sans interface · `C-69` la fenêtre
+produit de la landing tourne sans pause, y compris hors écran.
+
+**Performance et scalabilité (4)**
+`C-12` la landing reste la seule page lente · `C-15` le tableau de bord charge le jeu complet ·
+`C-16` la mesure à volume est mono-session · `C-68` `/entreprise-presentation` bloque autant, pour
+une cause **non identifiée**.
+
+**Accessibilité (6)**
+`C-24` quatre audits jamais faits · `C-25` le bleu de marque est à 3,34:1 · `C-53` aucune modale
+maison ne piège le focus · `C-54` `/agenda` : jours hors d'atteinte au clavier · `C-55` trois
+surfaces que A-3 n'a pas su mesurer · `C-70` 22 cibles sous 44 px dans `TeamTaskModal`.
+
+**Dette structurelle (5)**
+`C-06` 36 `eslint-disable exhaustive-deps` · `C-07` 17 feuilles animées à la main · `C-09` 12
+fichiers au-dessus de 600 lignes · `C-10` deux primitives sans consommateur · `C-49` 52 hooks
+exportés sans consommateur.
+
+**Tests, gardes et i18n (7)**
+`C-18` CVE dev-only · `C-21` 71 valeurs `en` identiques au `fr` · `C-26` la couverture n'a pas été
+relancée depuis le 2026-08-29 · `C-27` les parcours livrés en septembre n'ont pas de test E2E ·
+`C-28` le canal d'alerte d'ops est inerte · `C-35` rien ne compare le code déployé des Edge
+Functions à celui du dépôt · `C-38` `i18n:scan` annonce ZÉRO et l'interface anglaise parle
+français.
+
+### 11.4 Deux audits restent à lancer
+
+Ils sont décrits en **[§ 10](#10-couverture--ce-que-cette-liste-ne-peut-pas-contenir)** avec leur
+rapport valeur / effort. Tant que **A-4** n'est pas passé et ses findings versés ici, la phrase
+« il ne reste plus un seul problème lié au code » **n'est pas vérifiable** — et l'écrire quand
+même serait exactement le défaut corrigé quatre fois en cinq jours : une réponse rassurante
+donnée par une mesure qui ne regardait pas.
