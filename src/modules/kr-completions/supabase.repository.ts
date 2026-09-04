@@ -4,7 +4,7 @@
 
 import { supabase } from '@/lib/supabase';
 import { getCurrentUser } from '@/lib/auth-user';
-import { normalizeApiError } from '@/lib/normalizeApiError';
+import { makeApiError, normalizeApiError } from '@/lib/normalizeApiError';
 import { IKRCompletionsRepository } from './repository';
 import { KRCompletion, CreateKRCompletionInput, KRCompletionFilters } from './types';
 import { warnIfTruncated } from '@/lib/pagination.warning';
@@ -73,7 +73,7 @@ export class SupabaseKRCompletionsRepository implements IKRCompletionsRepository
     if (!supabase) throw new Error('Supabase not configured');
 
     const user = await getCurrentUser();
-    if (!user) throw new Error('Not authenticated');
+    if (!user) throw makeApiError('not_authenticated');
 
     const { data, error } = await supabase
       .from('kr_completions')

@@ -294,7 +294,7 @@ describe('SupabaseOrganizationsRepository — invitations placées', () => {
 
   it('createInviteLink: rejette si non authentifié, sans INSERT', async () => {
     supabaseMock.user = null;
-    await expect(repo.createInviteLink('org1', null)).rejects.toThrow('Not authenticated');
+    await expect(repo.createInviteLink('org1', null)).rejects.toMatchObject({ code: 'not_authenticated' });
     expect(supabaseMock.queries).toHaveLength(0);
   });
 
@@ -323,7 +323,7 @@ describe('SupabaseOrganizationsRepository — invitations placées', () => {
     expect(supabaseMock.rpcCalls[0]).toEqual({ fn: 'claim_org_invite', args: { p_token: 'tok' } });
 
     supabaseMock.queueRpc('claim_org_invite', { data: null });
-    await expect(repo.claimInviteLink('bad')).rejects.toThrow('invalid_link');
+    await expect(repo.claimInviteLink('bad')).rejects.toMatchObject({ code: 'invalid_link' });
   });
 
   it('regenerateJoinCode: RPC regenerate_join_code renvoie le nouveau code', async () => {

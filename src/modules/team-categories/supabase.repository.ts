@@ -4,7 +4,7 @@
 
 import { supabase } from '@/lib/supabase';
 import { getCurrentUserId } from '@/lib/auth-user';
-import { normalizeApiError } from '@/lib/normalizeApiError';
+import { makeApiError, normalizeApiError } from '@/lib/normalizeApiError';
 import { ITeamCategoriesRepository } from './repository';
 import { TeamCategory, CreateTeamCategoryInput, UpdateTeamCategoryInput } from './types';
 
@@ -42,7 +42,7 @@ export class SupabaseTeamCategoriesRepository implements ITeamCategoriesReposito
   async createCategory(orgId: string, input: CreateTeamCategoryInput): Promise<TeamCategory> {
     if (!supabase) throw new Error('Supabase not configured');
     const uid = await getCurrentUserId();
-    if (!uid) throw new Error('Not authenticated');
+    if (!uid) throw makeApiError('not_authenticated');
     // Whitelist explicite — org_id/created_by jamais depuis l'input.
     const { data, error } = await supabase
       .from('team_categories')

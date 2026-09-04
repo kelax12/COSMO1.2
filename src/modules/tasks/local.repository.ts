@@ -8,6 +8,7 @@ import { deadlineDayKey } from '@/lib/deadline';
 import type { CreateOptions } from '@/lib/restore-id';
 import { DEPENDENCY_ERRORS, makeDependencyError } from './dependency-errors';
 import { safeGetItem, safeParseArray, writeJsonOrThrow } from '@/lib/safe-json';
+import { makeApiError } from '@/lib/normalizeApiError';
 const STORAGE_KEY = 'cosmo_demo_tasks';
 
 // Helper pour générer des dates
@@ -222,7 +223,7 @@ export class LocalStorageTasksRepository implements ITasksRepository {
     const index = tasks.findIndex(t => t.id === id);
     
     if (index === -1) {
-      throw new Error(`Task with id ${id} not found`);
+      throw makeApiError('not_found');
     }
     
     const updatedTask: Task = { ...tasks[index], ...updates };
@@ -236,7 +237,7 @@ export class LocalStorageTasksRepository implements ITasksRepository {
     const filtered = tasks.filter(t => t.id !== id);
     
     if (filtered.length === tasks.length) {
-      throw new Error(`Task with id ${id} not found`);
+      throw makeApiError('not_found');
     }
     
     this.saveTasks(filtered);
@@ -265,7 +266,7 @@ export class LocalStorageTasksRepository implements ITasksRepository {
     const index = tasks.findIndex(t => t.id === id);
 
     if (index === -1) {
-      throw new Error(`Task with id ${id} not found`);
+      throw makeApiError('not_found');
     }
 
     const task = tasks[index];
@@ -327,7 +328,7 @@ export class LocalStorageTasksRepository implements ITasksRepository {
     const index = tasks.findIndex(t => t.id === id);
 
     if (index === -1) {
-      throw new Error(`Task with id ${id} not found`);
+      throw makeApiError('not_found');
     }
 
     const task = tasks[index];

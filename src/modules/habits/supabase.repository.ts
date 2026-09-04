@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { getCurrentUser } from '@/lib/auth-user';
-import { normalizeApiError } from '@/lib/normalizeApiError';
+import { makeApiError, normalizeApiError } from '@/lib/normalizeApiError';
 import { IHabitsRepository } from './repository';
 import type { CreateOptions } from '@/lib/restore-id';
 import { Habit, CreateHabitInput, UpdateHabitInput } from './types';
@@ -135,7 +135,7 @@ export class SupabaseHabitsRepository implements IHabitsRepository {
 
   async createHabit(input: CreateHabitInput, options?: CreateOptions): Promise<Habit> {
     const user = await getCurrentUser();
-    if (!user) throw new Error('Not authenticated');
+    if (!user) throw makeApiError('not_authenticated');
     // `options.restoreId` ne vient JAMAIS d'un payload de formulaire : c'est un
     // second argument, reserve aux « Annuler » (R-08). La whitelist
     // `mapHabitToDb` et le `user_id` pose depuis la session sont inchanges.
@@ -204,7 +204,7 @@ export class SupabaseHabitsRepository implements IHabitsRepository {
     // `RETURNS TABLE` → PostgREST renvoie un tableau, là où la v1 renvoyait
     // un objet. Une seule ligne par construction (filtrée sur l'id).
     const row = (Array.isArray(data) ? data[0] : data) as HabitRow | undefined;
-    if (!row) throw new Error('Habit not found');
+    if (!row) throw makeApiError('not_found');
     return mapHabitFromDb(row);
   }
 

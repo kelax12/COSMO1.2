@@ -4,7 +4,7 @@
 
 import { supabase } from '@/lib/supabase';
 import { getCurrentUser } from '@/lib/auth-user';
-import { normalizeApiError } from '@/lib/normalizeApiError';
+import { makeApiError, normalizeApiError } from '@/lib/normalizeApiError';
 
 export interface Subscription {
   id: string;
@@ -35,7 +35,7 @@ export class BillingRepository {
     if (!supabase) throw new Error('Supabase not configured');
 
     const user = await getCurrentUser();
-    if (!user) throw new Error('Not authenticated');
+    if (!user) throw makeApiError('not_authenticated');
 
     const { data: existing, error: fetchError } = await supabase
       .from('subscriptions')
@@ -90,7 +90,7 @@ export class BillingRepository {
   async addTokens(amount: number, _activatePremium = false): Promise<Subscription> {
     if (!supabase) throw new Error('Supabase not configured');
     if (amount !== 1) {
-      throw new Error('Client-side token credit is limited to +1 per call (use Stripe Checkout)');
+      throw makeApiError('invalid_input');
     }
     const { data, error } = await supabase.rpc('credit_premium_token_from_ad');
     if (error) throw normalizeApiError(error);

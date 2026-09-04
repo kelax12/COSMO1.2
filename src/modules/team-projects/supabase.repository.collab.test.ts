@@ -15,13 +15,11 @@ vi.mock('@/lib/supabase', async () => {
 vi.mock('sonner', () => ({ toast: { error: vi.fn(), success: vi.fn(), warning: vi.fn() } }));
 
 import { SupabaseTeamProjectsRepository } from './supabase.repository';
-import { translator } from '@/i18n/useT';
-
-// On compare au CATALOGUE, jamais a une phrase recopiee : le repository ne jette
-// plus « Non authentifie » en dur, il resout la cle. Recopier le francais ici,
-// c'est refiger dans le test ce qu'on vient justement de sortir du code.
-const err = (key: Parameters<ReturnType<typeof translator<'errors'>>['t']>[0]) =>
-  translator('errors').t(key);
+// On assertait le MESSAGE resolu depuis le catalogue. C'etait deja mieux qu'une
+// phrase recopiee, mais ca reste identifier une erreur par son texte, ce que
+// `CLAUDE.md` interdit : le texte est traduit, et il change quand on ameliore
+// une formulation. Depuis C-62 le repository jette une `ApiError`, donc le test
+// assert le CODE, qui lui ne bouge pas et ne se traduit pas.
 
 const repo = new SupabaseTeamProjectsRepository();
 
@@ -101,7 +99,7 @@ describe('team-projects — commentaires', () => {
 
   it('addComment: rejette si non authentifié, sans INSERT', async () => {
     supabaseMock.user = null;
-    await expect(repo.addComment({ taskId: 'tk1', body: 'X' })).rejects.toThrow('Not authenticated');
+    await expect(repo.addComment({ taskId: 'tk1', body: 'X' })).rejects.toMatchObject({ code: 'not_authenticated' });
     expect(supabaseMock.queries).toHaveLength(0);
   });
 
@@ -165,7 +163,7 @@ describe('team-projects — sous-tâches', () => {
 
   it('createSubtask: rejette si non authentifié, sans INSERT', async () => {
     supabaseMock.user = null;
-    await expect(repo.createSubtask({ taskId: 'tk1', title: 'X' })).rejects.toThrow(err('api.not_authenticated'));
+    await expect(repo.createSubtask({ taskId: 'tk1', title: 'X' })).rejects.toMatchObject({ code: 'not_authenticated' });
     expect(supabaseMock.queries).toHaveLength(0);
   });
 
@@ -262,7 +260,7 @@ describe('team-projects — labels', () => {
 
   it('createLabel: rejette si non authentifié, sans INSERT', async () => {
     supabaseMock.user = null;
-    await expect(repo.createLabel('org1', { name: 'X' })).rejects.toThrow(err('api.not_authenticated'));
+    await expect(repo.createLabel('org1', { name: 'X' })).rejects.toMatchObject({ code: 'not_authenticated' });
     expect(supabaseMock.queries).toHaveLength(0);
   });
 

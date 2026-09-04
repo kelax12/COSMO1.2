@@ -6,6 +6,7 @@ import { Friend, FriendRequestInput, ShareTaskInput, PendingFriendRequest, TaskS
 import { FRIENDS_STORAGE_KEY, FRIEND_REQUESTS_STORAGE_KEY, SHARED_TASKS_STORAGE_KEY, SHARED_LISTS_STORAGE_KEY } from './constants';
 import { isEnglishSeed } from '@/lib/seed-i18n';
 import { safeGetItem, safeSetItem, writeJsonOrThrow } from '@/lib/safe-json';
+import { makeApiError } from '@/lib/normalizeApiError';
 
 /** Id de l'utilisateur démo — utilisé pour distinguer partages entrants/sortants. */
 const DEMO_USER_ID = 'demo-user';
@@ -259,13 +260,13 @@ export class LocalStorageFriendsRepository implements IFriendsRepository {
     const request = requests.find(r => r.id === requestId);
 
     if (!request) {
-      throw new Error(`Friend request ${requestId} not found`);
+      throw makeApiError('not_found');
     }
     // Only incoming requests carry `senderEmail`. Outgoing demo requests have
     // only the recipient's email and must not be acceptable as "you befriend
     // yourself" — reject those explicitly. Faille B13.
     if (!request.senderEmail) {
-      throw new Error('Cannot accept an outgoing friend request');
+      throw makeApiError('invalid_input');
     }
 
     // Update request status

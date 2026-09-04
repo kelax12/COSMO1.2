@@ -139,7 +139,7 @@ describe('SupabaseTasksRepository — écriture', () => {
     supabaseMock.user = null;
     await expect(
       repo.create({ name: 'X', priority: 3, category: 'c', deadline: '', estimatedTime: 0, bookmarked: false, completed: false }),
-    ).rejects.toThrow('Not authenticated');
+    ).rejects.toMatchObject({ code: 'not_authenticated' });
   });
 
   it('update: mapTaskToDb whitelist drops forged user_id (anti-mass-assignment V1)', async () => {

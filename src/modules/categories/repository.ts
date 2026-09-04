@@ -7,6 +7,7 @@ import { CATEGORIES_STORAGE_KEY } from './constants';
 import { localizeSeed } from '@/lib/seed-i18n';
 import type { CreateOptions } from '@/lib/restore-id';
 import { safeGetItem, safeParseArray, writeJsonOrThrow } from '@/lib/safe-json';
+import { makeApiError } from '@/lib/normalizeApiError';
 
 // ═══════════════════════════════════════════════════════════════════
 // DEMO DATA
@@ -106,7 +107,7 @@ export class LocalStorageCategoriesRepository implements ICategoriesRepository {
     const index = categories.findIndex(c => c.id === id);
 
     if (index === -1) {
-      throw new Error(`Category with id ${id} not found`);
+      throw makeApiError('not_found');
     }
 
     const updatedCategory: Category = { ...categories[index], ...updates };
@@ -120,7 +121,7 @@ export class LocalStorageCategoriesRepository implements ICategoriesRepository {
     const filtered = categories.filter(c => c.id !== id);
 
     if (filtered.length === categories.length) {
-      throw new Error(`Category with id ${id} not found`);
+      throw makeApiError('not_found');
     }
 
     this.saveCategories(filtered);

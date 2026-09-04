@@ -3,9 +3,8 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { supabase } from '@/lib/supabase';
-import { translator } from '@/i18n/useT';
 import { getCurrentUserId } from '@/lib/auth-user';
-import { normalizeApiError } from '@/lib/normalizeApiError';
+import { makeApiError, normalizeApiError } from '@/lib/normalizeApiError';
 import { warnIfTruncated } from '@/lib/pagination.warning';
 import type { RestoreCommentOptions } from './repository';
 import { ITeamProjectsRepository } from './repository';
@@ -73,7 +72,7 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
   async createProject(orgId: string, input: CreateTeamProjectInput): Promise<TeamProject> {
     if (!supabase) throw new Error('Supabase not configured');
     const uid = await getCurrentUserId();
-    if (!uid) throw new Error('Not authenticated');
+    if (!uid) throw makeApiError('not_authenticated');
     // Whitelist explicite — org_id/created_by injectés serveur-side, jamais input.
     // Id généré client : pas de `.select()` de représentation après l'insert —
     // un manager non-admin rattachant le projet à une équipe hors de son
@@ -155,7 +154,7 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
   async createTask(orgId: string, input: CreateTeamTaskInput): Promise<TeamTask> {
     if (!supabase) throw new Error('Supabase not configured');
     const uid = await getCurrentUserId();
-    if (!uid) throw new Error('Not authenticated');
+    if (!uid) throw makeApiError('not_authenticated');
     const { data, error } = await supabase
       .from('team_tasks')
       .insert({
@@ -236,7 +235,7 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
     if (!supabase) throw new Error('Supabase not configured');
     const { data: session } = await supabase.auth.getSession();
     const uid = session.session?.user?.id;
-    if (!uid) throw new Error('Not authenticated');
+    if (!uid) throw makeApiError('not_authenticated');
     // Whitelist explicite (anti mass-assignment V1) ; author_id = self,
     // vérifié aussi par la policy WITH CHECK.
     const { data, error } = await supabase
@@ -285,7 +284,7 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
     if (!supabase) throw new Error('Supabase not configured');
     const { data: auth } = await supabase.auth.getUser();
     const uid = auth.user?.id;
-    if (!uid) throw new Error(translator('errors').t('api.not_authenticated'));
+    if (!uid) throw makeApiError('not_authenticated');
     const { data, error } = await supabase
       .from('team_task_subtasks')
       .insert({
@@ -341,7 +340,7 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
     if (!supabase) throw new Error('Supabase not configured');
     const { data: auth } = await supabase.auth.getUser();
     const uid = auth.user?.id;
-    if (!uid) throw new Error(translator('errors').t('api.not_authenticated'));
+    if (!uid) throw makeApiError('not_authenticated');
     const { data, error } = await supabase
       .from('team_labels')
       .insert({

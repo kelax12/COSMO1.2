@@ -88,7 +88,7 @@ describe('SupabaseTeamProjectsRepository — projets', () => {
 
   it('createProject: rejette si non authentifié, sans INSERT', async () => {
     supabaseMock.user = null;
-    await expect(repo.createProject('org1', { name: 'X' })).rejects.toThrow('Not authenticated');
+    await expect(repo.createProject('org1', { name: 'X' })).rejects.toMatchObject({ code: 'not_authenticated' });
     expect(supabaseMock.queries).toHaveLength(0);
   });
 
@@ -203,7 +203,7 @@ describe('SupabaseTeamProjectsRepository — tâches', () => {
 
   it('createTask: rejette si non authentifié, sans INSERT', async () => {
     supabaseMock.user = null;
-    await expect(repo.createTask('org1', { projectId: 'p1', name: 'X' })).rejects.toThrow('Not authenticated');
+    await expect(repo.createTask('org1', { projectId: 'p1', name: 'X' })).rejects.toMatchObject({ code: 'not_authenticated' });
     expect(supabaseMock.queries).toHaveLength(0);
   });
 

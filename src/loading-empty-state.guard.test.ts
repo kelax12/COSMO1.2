@@ -51,7 +51,24 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
-const COMPONENTS = join(process.cwd(), 'src/components');
+/**
+ * 🔴 LE CORPUS A ETE ELARGI A TOUT `src` LE 2026-09-04.
+ *
+ * La mesure d origine ne regardait que `src/components`, parce que c est la
+ * que les douze occurrences avaient ete comptees. Une garde bornee au lieu ou
+ * l on a trouve le defaut ne protege que ce lieu : `src/pages` et
+ * `src/modules` rendent aussi des etats vides.
+ *
+ * Le balayage etendu rend ZERO nouvelle occurrence — les quatre seuls
+ * fichiers detectes sont ceux deja dispenses ci-dessous. L elargissement ne
+ * masque donc rien ; il ferme le reste de la surface.
+ *
+ * ⚠️ Deux autres formes de lecture aveugle ont ete cherchees et sont ABSENTES
+ * du depot : `const { data = [] } = useX()` (sans renommage) et
+ * `useX().data ?? []`. Elles ne sont pas couvertes par le detecteur ; le noter
+ * vaut mieux que de laisser croire a une couverture qu il n a pas.
+ */
+const SRC = join(process.cwd(), 'src');
 
 /**
  * Fichiers ou le detecteur voit le motif mais ou il n'y a PAS d'affirmation.
@@ -59,10 +76,10 @@ const COMPONENTS = join(process.cwd(), 'src/components');
  * aucune phrase d'absence — ne rien dire n'est pas affirmer une absence.
  */
 const NOT_AN_ASSERTION = new Map<string, string>([
-  ['HabitTable.tsx', 'le test ne sert qu a choisir une date par defaut, aucun rendu'],
-  ['organization/OrgNotificationsBell.tsx', 'rend `null` : une cloche morte est du bruit, pas un mensonge'],
-  ['organization/TeamAssigneeGroups.tsx', 'rend `null` : la section entiere disparait, elle n affirme rien'],
-  ['organization/TeamProjectsTab.tsx', 'le test choisit un GROUPEMENT, la liste plate reste rendue'],
+  ['components/HabitTable.tsx', 'le test ne sert qu a choisir une date par defaut, aucun rendu'],
+  ['components/organization/OrgNotificationsBell.tsx', 'rend `null` : une cloche morte est du bruit, pas un mensonge'],
+  ['components/organization/TeamAssigneeGroups.tsx', 'rend `null` : la section entiere disparait, elle n affirme rien'],
+  ['components/organization/TeamProjectsTab.tsx', 'le test choisit un GROUPEMENT, la liste plate reste rendue'],
 ]);
 
 /** Lecture React Query dont l'etat de chargement n'est PAS destructure. */
@@ -106,9 +123,9 @@ describe('garde — pas d\'etat vide affirme pendant le chargement (C-40)', () =
   });
 
   it('aucun composant ne rend un etat vide sur une lecture a l\'aveugle', () => {
-    const offenders = walk(COMPONENTS)
+    const offenders = walk(SRC)
       .map((rel) => rel.split(String.fromCharCode(92)).join('/'))
-      .map((rel) => [rel, blindEmptyStates(readFileSync(join(COMPONENTS, rel), 'utf-8'))] as const)
+      .map((rel) => [rel, blindEmptyStates(readFileSync(join(SRC, rel), 'utf-8'))] as const)
       .filter(([rel]) => !NOT_AN_ASSERTION.has(rel))
       .filter(([, names]) => names.length > 0)
       .map(([rel, names]) => `${rel} → ${names.join(', ')}`);
@@ -123,12 +140,29 @@ describe('garde — pas d\'etat vide affirme pendant le chargement (C-40)', () =
     ).toEqual([]);
   });
 
+  it('TEMOIN : le corpus balaye est bien tout `src`, et pas un repertoire vide', () => {
+    // 🔴 Une garde qui parcourt le mauvais repertoire rend une liste vide, donc
+    // le VERT, exactement comme si tout allait bien. C est le defaut trouve par
+    // mutation dans `architecture.guard` le 2026-09-04 : aucun temoin de taille
+    // de corpus, donc aucune facon de distinguer « rien a signaler » de « rien
+    // regarde ». Le seuil est volontairement bas et inegalable par accident.
+    const files = walk(SRC);
+    expect(files.length).toBeGreaterThan(400);
+    // Et il couvre les trois zones, pas seulement celle ou le defaut a ete vu.
+    for (const zone of ['components/', 'pages/', 'modules/']) {
+      expect(
+        files.some((f) => f.split(String.fromCharCode(92)).join('/').startsWith(zone)),
+        `le balayage ne couvre pas ${zone}`,
+      ).toBe(true);
+    }
+  });
+
   it('TEMOIN : chaque dispense est encore justifiee par une detection reelle', () => {
     // Une liste d'exceptions qui ne couvre plus rien finit par en couvrir une
     // vraie : si un de ces fichiers cesse de porter le motif, la dispense est
     // perimee et doit tomber.
     for (const [rel] of NOT_AN_ASSERTION) {
-      const source = readFileSync(join(COMPONENTS, rel), 'utf-8');
+      const source = readFileSync(join(SRC, rel), 'utf-8');
       expect(blindEmptyStates(source), `${rel} ne porte plus le motif`).not.toEqual([]);
     }
   });

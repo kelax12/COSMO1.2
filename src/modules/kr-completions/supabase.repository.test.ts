@@ -63,7 +63,7 @@ describe('SupabaseKRCompletionsRepository', () => {
     supabaseMock.user = null;
     await expect(
       repo.create({ krId: 'k', okrId: 'o', completedAt: 'd', krTitle: 't', okrTitle: 't', userId: 'x' }),
-    ).rejects.toThrow('Not authenticated');
+    ).rejects.toMatchObject({ code: 'not_authenticated' });
     expect(supabaseMock.queries).toHaveLength(0); // aucun INSERT tenté
   });
 

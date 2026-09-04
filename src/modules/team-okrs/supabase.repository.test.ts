@@ -179,7 +179,7 @@ describe('SupabaseTeamOKRsRepository — create', () => {
 
   it('create: rejette si non authentifié, sans INSERT ; erreur DB → rejet normalisé', async () => {
     supabaseMock.user = null;
-    await expect(repo.create('org1', { title: 'X', keyResults: [] })).rejects.toThrow('Not authenticated');
+    await expect(repo.create('org1', { title: 'X', keyResults: [] })).rejects.toMatchObject({ code: 'not_authenticated' });
     expect(supabaseMock.queries).toHaveLength(0);
 
     supabaseMock.reset();

@@ -17,6 +17,7 @@ import {
 import { TEAM_OKRS_STORAGE_KEY } from './constants';
 import { isEnglishSeed } from '@/lib/seed-i18n';
 import { safeGetItem, safeSetItem, writeJsonOrThrow } from '@/lib/safe-json';
+import { makeApiError } from '@/lib/normalizeApiError';
 
 const DEMO_ORG_ID = 'org-demo-1';
 const DEMO_USER_ID = 'demo-user';
@@ -197,7 +198,7 @@ export class LocalStorageTeamOKRsRepository implements ITeamOKRsRepository {
   async update(okrId: string, input: UpdateTeamOKRInput): Promise<void> {
     const okrs = readOrSeed();
     const okr = okrs.find((o) => o.id === okrId);
-    if (!okr) throw new Error('OKR introuvable');
+    if (!okr) throw makeApiError('not_found');
     if (input.title !== undefined) okr.title = input.title;
     if (input.description !== undefined) okr.description = input.description;
     if (input.category !== undefined) okr.category = input.category;
@@ -230,13 +231,13 @@ export class LocalStorageTeamOKRsRepository implements ITeamOKRsRepository {
       this.save(okrs);
       return;
     }
-    throw new Error('Key result introuvable');
+    throw makeApiError('not_found');
   }
 
   async syncKeyResults(okrId: string, orgId: string, krs: SyncTeamKRInput[]): Promise<void> {
     const okrs = readOrSeed();
     const okr = okrs.find((o) => o.id === okrId);
-    if (!okr) throw new Error('OKR introuvable');
+    if (!okr) throw makeApiError('not_found');
     const existing = new Map(okr.keyResults.map((k) => [k.id, k]));
     const next: TeamKeyResult[] = krs.slice(0, 10).map((input) => {
       const target = input.targetValue > 0 ? input.targetValue : 1;

@@ -12,7 +12,7 @@
 
 import { supabase } from '@/lib/supabase';
 import { getCurrentUser } from '@/lib/auth-user';
-import { normalizeApiError } from '@/lib/normalizeApiError';
+import { makeApiError, normalizeApiError } from '@/lib/normalizeApiError';
 
 /**
  * Get-or-create du lien d'invitation d'une tâche.
@@ -37,7 +37,7 @@ export async function getOrCreateShareLink(taskId: string): Promise<string> {
   if (existing) return existing.id as string;
 
   const user = await getCurrentUser();
-  if (!user) throw new Error('Not authenticated');
+  if (!user) throw makeApiError('not_authenticated');
 
   const { data: created, error: insertError } = await supabase
     .from('share_links')

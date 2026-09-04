@@ -105,7 +105,7 @@ describe('SupabaseTeamCategoriesRepository', () => {
 
   it('createCategory: refuse si deconnecte, AVANT toute requete', async () => {
     supabaseMock.user = null;
-    await expect(repo.createCategory(ORG, { name: 'X' })).rejects.toThrow('Not authenticated');
+    await expect(repo.createCategory(ORG, { name: 'X' })).rejects.toMatchObject({ code: 'not_authenticated' });
     // Zéro requête : la garde doit court-circuiter, pas laisser la RLS trancher.
     expect(supabaseMock.queries).toHaveLength(0);
   });

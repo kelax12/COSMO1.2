@@ -97,7 +97,7 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
       const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
       const keepIds = keyResults.map(kr => kr.id);
       if (keepIds.some(id => !UUID_RE.test(id))) {
-        throw new Error('Invalid key result id');
+        throw makeApiError('invalid_input');
       }
       const { error: deleteError } = await supabase
         .from('key_results')
@@ -160,7 +160,7 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
       const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
       const ISO_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})?$/;
       if (!UUID_RE.test(params.cursor) || !ISO_RE.test(params.cursorDate)) {
-        throw new Error('Invalid pagination cursor');
+        throw makeApiError('invalid_input');
       }
       query = query.or(
         `created_at.lt.${params.cursorDate},and(created_at.eq.${params.cursorDate},id.lt.${params.cursor})`
@@ -241,7 +241,7 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
   async create(input: CreateOKRInput, options?: CreateOptions): Promise<OKR> {
     if (!supabase) throw new Error('Supabase not configured');
     const user = await getCurrentUser();
-    if (!user) throw new Error('Not authenticated');
+    if (!user) throw makeApiError('not_authenticated');
 
     // `options.restoreId` ne vient JAMAIS d'un payload de formulaire :
     // c'est un second argument, reserve aux « Annuler » (R-08). La
@@ -482,7 +482,7 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
     if (!supabase || completions.length === 0) return;
     const user = await getCurrentUser();
     // C-62 — identifiant CATALOGUE, pas un littéral anglais. Les voisins de ce
-    // fichier écrivent encore `throw new Error('Not authenticated')`, et c'est
+    // fichier écrivent encore `throw makeApiError('not_authenticated')`, et c'est
     // exactement le tuyau que C-62 doit fermer : le message atterrit tel quel
     // dans le gabarit français `mutation.*`. Ne pas en ajouter un de plus par
     // \« parité \» avec un défaut.
@@ -540,10 +540,10 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
     if (!supabase) throw new Error('Supabase not configured');
 
     const okr = await this.getById(okrId);
-    if (!okr) throw new Error(`OKR with id ${okrId} not found`);
+    if (!okr) throw makeApiError('not_found');
 
     const krIndex = okr.keyResults.findIndex(kr => kr.id === keyResultId);
-    if (krIndex === -1) throw new Error(`KeyResult with id ${keyResultId} not found`);
+    if (krIndex === -1) throw makeApiError('not_found');
 
     const previousCurrentValue = okr.keyResults[krIndex].currentValue;
 

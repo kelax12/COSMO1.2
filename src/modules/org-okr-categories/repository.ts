@@ -6,6 +6,7 @@ import { OrgOKRCategory, CreateOrgOKRCategoryInput, UpdateOrgOKRCategoryInput } 
 import { ORG_OKR_CATEGORIES_STORAGE_KEY } from './constants';
 import { localizeSeed } from '@/lib/seed-i18n';
 import { safeGetItem, safeSetItem, writeJsonOrThrow } from '@/lib/safe-json';
+import { makeApiError } from '@/lib/normalizeApiError';
 
 export interface IOrgOKRCategoriesRepository {
   getCategories(orgId: string): Promise<OrgOKRCategory[]>;
@@ -77,7 +78,7 @@ export class LocalStorageOrgOKRCategoriesRepository implements IOrgOKRCategories
   async updateCategory(categoryId: string, input: UpdateOrgOKRCategoryInput): Promise<OrgOKRCategory> {
     const all = this.getAll();
     const idx = all.findIndex((c) => c.id === categoryId);
-    if (idx === -1) throw new Error('Catégorie introuvable');
+    if (idx === -1) throw makeApiError('not_found');
     const updated: OrgOKRCategory = {
       ...all[idx],
       ...(input.name !== undefined ? { name: input.name } : {}),
