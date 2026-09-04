@@ -459,7 +459,9 @@ export default function StatisticsPage() {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <label className="flex items-center gap-2 cursor-pointer">
+            {/* `min-h-11` = 44 px : la cible est le LABEL entier (association
+                implicite), pas la case de 16 px. WCAG 2.5.5, C-57. */}
+            <label className="flex items-center gap-2 cursor-pointer min-h-11">
               <input
                 type="checkbox"
                 checked={showReferenceBar}
