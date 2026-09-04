@@ -30,6 +30,60 @@ export default defineConfig({
     // pas être ramassés par Vitest.
     exclude: ['e2e/**', 'node_modules/**', 'dist/**', 'src/__test__/**'],
     clearMocks: true,
+
+    // ═══════════════════════════════════════════════════════════════
+    // CONCURRENCE BORNÉE — un rouge doit vouloir dire quelque chose
+    // ═══════════════════════════════════════════════════════════════
+    //
+    // 🔴 POURQUOI (finding C-47). Observé TROIS fois le 2026-09-03, sur le
+    // même arbre, à quelques minutes d'intervalle :
+    //
+    //   run 1 : 3 échecs (UseCasePage, AuthForm.confirmation, FirstRunSetup)
+    //           — les 3 passent isolément
+    //   run 2 : 2107 / 2107 ✅
+    //   run 3 : 1 échec (TeamTasksToolbar.filter) — passe isolément (3/3)
+    //
+    // Et un rejeu isolé a lui-même échoué sans exécuter un seul test :
+    // `Error: [vitest-pool-runner]: Timeout waiting for worker to respond`,
+    // 63 s pour zéro cas.
+    //
+    // Ce n'est pas un désagrément. Ce dépôt a plusieurs sessions actives sur
+    // la même machine : un rouge n'y prouve rien, et le réflexe qu'il
+    // installe — « c'est sûrement la contention, je rejoue » — est exactement
+    // celui qui fera passer une vraie régression. Même classe que le
+    // § « une garde se vérifie sur ce qu'elle REGARDE » de CLAUDE.md : ici la
+    // garde répond, mais sa réponse n'est pas fiable.
+    //
+    // LA CAUSE, mesurée : 4 cœurs et 8 Go. Vitest ouvre par défaut un worker
+    // par cœur, et la majorité de nos fichiers montent jsdom, qui est cher en
+    // mémoire. Quatre jsdom concurrents + un autre agent sur la même machine
+    // saturent la RAM, et un worker qui ne répond plus est signalé comme un
+    // échec de test alors qu'il n'a rien exécuté.
+    //
+    // ❌ On ne « corrige » PAS en retirant des tests ni en relevant un seuil de
+    //    tolérance d'échec. On borne la machine : moins de workers, et un délai
+    //    d'attente qui laisse un worker démarrer sur une machine chargée.
+    //    Aucun test ne devient plus indulgent — c'est le HARNAIS qui cesse de
+    //    confondre « lent » et « cassé ».
+    //
+    // ⚠️ `maxForks: 2` est un compromis mesuré sur CETTE machine, pas une
+    //    vérité : sur un runner CI plus large, il laisse de la capacité
+    //    inutilisée. Si la durée devient le problème, la remonter en
+    //    remesurant la stabilité, jamais l'inverse.
+    // 🔴 `poolOptions.forks.maxForks` A ETE ECRIT ICI D'ABORD, ET VITEST
+    // L'IGNORAIT EN SILENCE : la clé a été retirée en Vitest 4, remplacée par
+    // `maxWorkers` au niveau racine. Seul un `DEPRECATED` en tête de sortie le
+    // disait, et il passe inaperçu dans un run vert. Une garde écrite dans une
+    // option morte est exactement le défaut que ce correctif traite — elle
+    // « répond » sans rien mesurer. Vérifié ici en comparant la durée AVANT /
+    // APRÈS, pas en relisant la config.
+    pool: 'forks',
+    maxWorkers: 2,
+    // Défauts de vitest : 5 s. Une machine chargée dépasse régulièrement ce
+    // seuil sur un fichier qui monte jsdom, sans rien avoir de cassé.
+    testTimeout: 20_000,
+    hookTimeout: 20_000,
+    teardownTimeout: 20_000,
     coverage: {
       provider: 'v8',
       reporter: ['text-summary', 'json-summary', 'html'],
