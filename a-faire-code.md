@@ -454,6 +454,29 @@ personne peut donc valider un formulaire dont elle ne voit plus l'intitulé.
 
 ### C-65 · Le remboursement du mois en cours n'existe nulle part dans le code · **P1 · M**
 
+> 🟠 **Écrit le 2026-09-04, NON DÉPLOYÉ, NON ÉPROUVÉ CONTRE STRIPE.**
+>
+> Livré : `stripe-org-refund` (propriétaire seul, rembourse puis résilie
+> immédiatement), `_shared/refund-amount.ts` (mensuel entier / annuel au prorata des
+> mois entiers non consommés, comme l'arbitrage tranche), la ligne compensatoire à
+> montant NÉGATIF écrite par le webhook sur `charge.refunded`, le bouton dans l'onglet
+> Facturation, et la clause dans les CGU — vérifiée RENDUE dans le navigateur, en `fr`
+> et en `en`.
+>
+> La borne existe sous trois formes : clé d'idempotence Stripe dérivée de
+> l'`invoice_id` (pas un booléen en base), pré-contrôle qui RETRANCHE ce qui a déjà été
+> rendu, et double bornage du montant par l'encaissé.
+>
+> 🔴 **CE QUI EST RÉELLEMENT ÉPROUVÉ : le calcul du MONTANT, 12 cas exécutés.** C'est
+> la seule partie qui décide d'un chiffre, donc la seule qui coûte de l'argent en se
+> trompant. Tout le reste n'a que des gardes TEXTUELLES : pas de Docker, clé Stripe de
+> TEST, zéro `org_subscriptions`, rien d'encaissé — **rien n'a été joué contre
+> Stripe**.
+>
+> ❌ **NE PAS DÉPLOYER SANS LE PARCOURS E2E** que C-27 exige nommément pour cet item :
+> « C-65 touche de l'argent, il ne part pas sans son parcours E2E ». Il reste à écrire,
+> contre le compte de test.
+
 **Décision d'Axel du 2026-09-03** : *« l'utilisateur doit pouvoir se faire rembourser le mois en
 cours à tout moment, mais que le mois en cours »*. Prise pour ne pas avoir à arbitrer au cas par cas,
 et c'est le bon calcul : sur un abonnement **mensuel**, rembourser le mois en cours est **exactement**
@@ -705,14 +728,20 @@ question est donc rouverte, et **maintenant mesurable**.
 > ❌ Le plafond n'a pas bougé. ⚠️ La marge reste inférieure aux 5 % que
 > demande l'énoncé : l'item n'est PAS clos, il est repassé au vert.
 >
-> 🔴 **Le levier DÉCIDÉ n'a pas été tiré.** L'arbitrage du 2026-09-03 tranche
-> pour **différer Sentry après le premier rendu** (49,3 ko hors du chemin
-> critique, « quatre fois la marge actuelle »), avec son angle mort à combler
-> dans la même PR : un `window.onerror` minimal qui tamponne et rejoue dans
-> Sentry une fois chargé — précisément la fenêtre du bug de `Layout` du
-> 2026-09-02. Rien de tout ça n'est fait. Ce qui précède est un **dépannage**
-> qui a rendu le vert, pas l'exécution de la décision, et il ne dispense pas
-> de la tirer : les 444 o regagnés ne sont pas les 49,3 ko attendus.
+> ✅ **Le levier décidé a été tiré le 2026-09-04.** Sentry est chargé APRÈS le
+> premier rendu : **chemin critique 366,3 → 317,2 ko**. L'angle mort que
+> l'arbitrage nommait est comblé dans le même lot — filets `window.onerror` posés
+> avant tout, et un TAMPON qui rejoue ce qui est arrivé avant le SDK, dans l'ordre
+> (utilisateur, fils d'Ariane, événements).
+>
+> ⚠️ Deux pièges mesurés, sans lesquels le correctif était un RECUL : un
+> `await import()` lu par NAMESPACE n'est pas élagué (49,3 → **155,9 ko**), et
+> `manualChunks` faisait `modulepreload`er le chunk depuis `index.html`, donc
+> télécharger au chargement malgré l'import dynamique.
+>
+> ⚠️ Coût assumé : `browserTracingIntegration` initialisée après le rendu ne voit
+> qu'une partie du `pageload`. La capture d'ERREURS, elle, est intégralement
+> préservée par le tampon.
 
 **Remesuré le 2026-09-03** sur le build de prod (avec `VITE_SENTRY_DSN`, sinon la garde pèse un
 artefact qui n'existe nulle part) :
@@ -1095,12 +1124,11 @@ C-29, conséquence bien plus faible.
 > PROPRIÉTAIRE ✅, l'écran monte la zone rouge sur `isOwner` ✅, le dialogue dit ce
 > qu'il advient de l'abonnement et des preuves ✅.
 >
-> ⚠️ **La moitié « rembourse » de l'arbitrage n'est PAS livrée.** La décision dit
-> « résilie ET rembourse puis supprime, un seul geste, aucun débit orphelin » ; ce qui
-> est livré REFUSE tant qu'un abonnement court, donc deux gestes. C-65 n'existe pas
-> (rien n'appelle `refunds.create`), et des trois états possibles échouer fermé est le
-> seul sûr. Le refus est écrit comme un INTÉRIM à RETIRER quand C-65 arrive, pas à
-> cumuler avec lui.
+> ✅ **La moitié « rembourse » est livrée le 2026-09-04** (C-65). L'écran appelle
+> `stripe-org-refund` et n'enchaîne sur `delete_organization` QUE si le remboursement
+> a réussi — un seul geste, aucun débit orphelin, comme décidé. Le refus de la RPC
+> n'est plus un intérim : il devient le filet SERVEUR, qui ne se déclenche jamais sur
+> le parcours nominal mais rend la règle obligatoire pour un appel direct.
 
 C-30 a trouvé la cascade par la suppression de COMPTE et demande le bon correctif (`ON DELETE SET
 NULL` sur les deux tables de preuve). Cet audit a trouvé le **second chemin, bien plus court** :
