@@ -72,6 +72,19 @@ describe("architecture — `supabase.from()` ne sort pas d'un repository", () =>
   const stripComments = (src: string) =>
     src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
 
+  // 🔴 TEMOIN, ajoute le 2026-09-04. Ce balayage n'avait AUCUNE assertion sur
+  // la taille de son corpus : si `walk()` cessait de trouver des fichiers — un
+  // chemin qui change, un dossier deplace — la garde passerait au vert en ne
+  // regardant plus rien, et personne ne le verrait. `design-system.guard` et
+  // `rgpd-erasure.guard` portent deja ce controle sous une autre forme
+  // (`files.length > 50`, `source.length > 1000`) ; celui-ci ne l'avait pas.
+  it('TEMOIN : le balayage voit reellement des fichiers', () => {
+    expect(files.length).toBeGreaterThan(100);
+    // Et il voit bien des fichiers de PAGE ou de COMPOSANT, pas seulement des
+    // repositories : filtrer sur `isRepository` ne doit pas tout vider.
+    expect(files.filter((f) => !isRepository(f)).length).toBeGreaterThan(100);
+  });
+
   it('aucune page ni composant ne lit une table en direct', () => {
     const violations = files
       .filter((f) => !isRepository(f))

@@ -24,6 +24,16 @@
 // (`selectableFriends`, `invitable`) lui echappe, et il faut donc continuer a
 // le regarder a l'oeil. Une garde doit dire ce qu'elle mesure.
 //
+// 🔴 ET ELLE VERIFIE LA DESTRUCTURATION, PAS L'USAGE. Mesure par mutation le
+// 2026-09-04 : retirer le `loadingFriends ? null :` de `ShareListSheet` sans
+// toucher a la destructuration laisse cette garde au VERT. Ce qui rattrape ce
+// cas n'est pas elle, c'est `noUnusedLocals` du tsconfig — la variable devient
+// inutilisee et `npm run typecheck` echoue (verifie).
+//
+// La PAIRE tient donc, pas la garde seule. Le noter ici plutot que de laisser
+// croire que ce fichier suffit : c'est exactement la difference entre « une
+// garde repond » et « une garde mesure ».
+//
 // Cinq occurrences de la mesure d'origine ont ete RELUES puis ecartees, pour
 // ne pas gonfler le chiffre avec des cas qui ne mentent pas. Elles sont nommees
 // une par une dans `NOT_AN_ASSERTION`, jamais couvertes par un motif de chemin.

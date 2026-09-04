@@ -94,9 +94,18 @@ describe('useDeleteListWithUndo (C-41)', () => {
       'components/add-to-list/MobileAddToList.tsx',
       'pages/TasksPage.tsx',
     ];
+    // 🔴 ON EXIGE L'APPEL, PAS LA PRESENCE DU NOM. Mesure par mutation le
+    // 2026-09-04 : neutraliser l'usage dans `TasksPage` en laissant l'import
+    // laissait ce test au VERT — `toContain('useDeleteListWithUndo')` matchait
+    // la ligne d'import. Un ecran peut importer un flux et ne pas s'en servir.
     for (const rel of callers) {
       const src = readFileSync(join(process.cwd(), 'src', rel), 'utf-8');
-      expect(src, `${rel} doit passer par useDeleteListWithUndo`).toContain('useDeleteListWithUndo');
+      expect(src, `${rel} doit APPELER useDeleteListWithUndo()`).toMatch(
+        /useDeleteListWithUndo\s*\(/,
+      );
+      expect(src, `${rel} doit utiliser le \`deleteList\` qu'il en tire`).toMatch(
+        /(?<![A-Za-z0-9_$.])deleteList\s*\(/,
+      );
     }
   });
 });

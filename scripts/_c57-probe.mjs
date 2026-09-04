@@ -12,16 +12,42 @@
 //
 // ⚠️ Mesure en viewport EMULE, pas sur un appareil : la taille en pixels CSS
 // est la meme, mais le taux de ratage reel ne se mesure qu'avec un doigt.
+//
+// 🔴 CECI EST UNE SONDE, PAS UNE GARDE. Elle IMPRIME un etat, elle ne fait
+// echouer aucune CI. La garde, c'est `e2e/touch-targets.spec.ts`, qui
+// assertionne. Confondre les deux mene a croire qu'un `exit 0` vaut « rien
+// sous la cible » — c'est le motif que ce depot a retire d'`uptime.yml` et de
+// `renewal-notice.yml`. Elle sort donc 1 si elle TROUVE quelque chose, pour
+// qu'un enchainement de commandes ne la lise pas a l'envers.
+//
+// Necessite un serveur de dev. `BASE=<url> node scripts/_c57-probe.mjs`.
 import { chromium } from 'playwright';
 
 const BASE = process.env.BASE ?? 'http://localhost:5287';
 const ROUTES = (process.env.ROUTES ?? '/dashboard,/entreprise,/okr,/tasks,/habits,/settings').split(',');
 const TARGET = 44;
 
+/**
+ * Message lisible quand le serveur de dev n'est pas la.
+ *
+ * ⚠️ Sans ca, la sonde vomit une trace Playwright de trente lignes ou la seule
+ * information utile — « rien n'ecoute sur ce port » — est noyee.
+ */
+function expliqueEtSors(err) {
+  const msg = String(err && err.message ? err.message : err);
+  if (/ECONNREFUSED|ERR_CONNECTION_REFUSED|net::ERR/.test(msg)) {
+    console.error(`Aucun serveur sur ${BASE}.`);
+    console.error('Demarrer le serveur de dev avant, ou passer BASE=<url>.');
+  } else {
+    console.error(msg);
+  }
+  process.exit(1);
+}
+
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 375, height: 812 } });
 
-await page.goto(`${BASE}/login`, { waitUntil: 'networkidle' });
+await page.goto(`${BASE}/login`, { waitUntil: 'networkidle' }).catch(expliqueEtSors);
 
 // La banniere cookies est `fixed` en bas et intercepte les clics sur un
 // viewport de telephone. On tranche le consentement AVANT de mesurer — sans
@@ -104,4 +130,5 @@ for (const route of ROUTES) {
 const totalUnder = rows.reduce((n, r) => n + r.under.length, 0);
 console.log(`\nTOTAL sous la cible : ${totalUnder}`);
 await browser.close();
-process.exit(0);
+// Sortie PARLANTE : 0 seulement si la mesure est a zero.
+process.exit(totalUnder === 0 ? 0 : 1);
