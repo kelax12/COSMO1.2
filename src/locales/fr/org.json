@@ -611,6 +611,8 @@
     "membersLose_other": "Les {{count}} membres perdent l'accès immédiatement.",
     "projectsDeleted": "Tous les projets, tâches d'équipe et OKR sont supprimés définitivement.",
     "teamsErased": "Les équipes, invitations et la pyramide sont effacées.",
+    "subscriptionFirst": "Un abonnement en cours doit être résilié AVANT : la suppression sera refusée tant qu'il est actif.",
+    "evidenceKept": "Les avis de reconduction et les renonciations au droit de rétractation sont conservés : ce sont des pièces légales, pas des données d'entreprise.",
     "personalSafe": "Les données personnelles des membres ne sont pas affectées.",
     "confirmPrefix": "Pour confirmer, tapez",
     "confirmSuffix": "ci-dessous :",

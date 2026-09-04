@@ -58,6 +58,13 @@ const DeleteOrganizationDialog = ({ org, memberCount, pending, onConfirm, onCanc
               <li>{tp('deleteOrg.membersLose', memberCount)}</li>
               <li>{t('deleteOrg.projectsDeleted')}</li>
               <li>{t('deleteOrg.teamsErased')}</li>
+              {/* C-39 — la liste ne mentionnait NI l'abonnement NI les preuves.
+                  L'abonnement Stripe continue de courir apres la suppression
+                  de la ligne : `delete_organization` (mig. 138) refuse
+                  desormais tant qu'il est actif, et cette ligne dit pourquoi
+                  AVANT qu'on se heurte au refus. */}
+              <li>{t('deleteOrg.subscriptionFirst')}</li>
+              <li>{t('deleteOrg.evidenceKept')}</li>
               <li>{t('deleteOrg.personalSafe')}</li>
             </ul>
           </div>

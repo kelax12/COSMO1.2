@@ -14,6 +14,8 @@
     "invalid_link": "This invitation link is not valid or has already been used.",
     "own_link": "You cannot use your own invitation link.",
     "not_org_admin": "This action is restricted to company administrators.",
+    "not_org_owner": "This action is restricted to the company owner.",
+    "org_has_active_subscription": "Cancel the company subscription first: it would keep running after deletion.",
     "not_authenticated": "You must be signed in to perform this action.",
     "forbidden": "You do not have the required permissions for this action.",
     "cannot_invite_self": "You cannot invite yourself.",
