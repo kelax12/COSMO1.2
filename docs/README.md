@@ -379,6 +379,7 @@ testées** (`scripts/migration-guards.test.mjs`).
 | [`UI-PATTERNS.md`](./UI-PATTERNS.md) | Listes, modals, tutoriels, onboarding, thèmes · **note 87 au 2026-09-03** |
 | [`PERFORMANCE.md`](./PERFORMANCE.md) | `manualChunks`, lazy loading, images et polices, budget bundle · **note 92 au 2026-09-03**, gardé par `npm run check:bundle` et par le job `lighthouse` · et depuis le 2026-08-26 **le coût serveur d'une ouverture de session**, ramené de 29 à 21 requêtes REST |
 | [`ACCESSIBILITY.md`](./ACCESSIBILITY.md) | WCAG / EAA, aria, contraste, gates axe-core + Lighthouse · **note 82 au 2026-09-03**, la gate Lighthouse mesure et bloque enfin |
+| [`AUDIT-VOICEOVER-IOS.md`](./AUDIT-VOICEOVER-IOS.md) | Check-list du **quatrième** audit d'accessibilité, à jouer d'une traite sur un iPhone (12 étapes, ~60 min, témoin en tête). Le seul instrument qui mesure l'**annonce** : le dépôt ne prouve aujourd'hui que le **focus** |
 | [`SCALABILITY.md`](./SCALABILITY.md) | Montée en charge · **note 89 au 2026-09-03**, coût par ligne mesuré ET éprouvé à volume (200 puis 2 000 lignes, §9ter) |
 | [`SEO.md`](./SEO.md) | Prérendu, sitemap, hreflang, indexation par locale · **note 75 au 2026-08-29**, inchangée au 2026-09-03 · données Search Console du 2026-08-19, non remesurées |
 | [`ACQUISITION-BACKLINKS.md`](./ACQUISITION-BACKLINKS.md) | 🔴 Le chantier qui débloque le SEO : kit de soumission annuaires, prêt à coller — **100 % manuel** |
