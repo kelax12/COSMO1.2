@@ -244,10 +244,27 @@ BEGIN
     RAISE EXCEPTION 'not_org_owner';
   END IF;
 
-  -- Un abonnement encore vivant se résilie AVANT. Sans cette garde, on
-  -- supprime la ligne que le webhook Stripe vient mettre à jour : le prochain
-  -- event tenterait un upsert sur une clé étrangère morte, et le client
-  -- continuerait d'être débité pour une organisation qui n'existe plus.
+  -- 🔴 CE REFUS EST UN INTÉRIM, PAS LA CIBLE. L'arbitrage du 2026-09-03 décide
+  -- autre chose : « la suppression résilie ET REMBOURSE » — on résilie, on
+  -- rembourse la période en cours (chemin de C-65), puis on supprime, EN UN
+  -- SEUL GESTE, « aucun débit orphelin ».
+  --
+  -- C-65 n'existe pas encore : aucune fonction du dépôt n'appelle
+  -- `refunds.create`, et `stripe-org-portal` ouvre un portail qui sait
+  -- résilier sans rembourser. Livrer « supprime malgré l'abonnement » sans ce
+  -- chemin produirait exactement le débit orphelin que la décision veut
+  -- éviter ; livrer « résilie automatiquement » sans rembourser tiendrait la
+  -- moitié de la promesse en silence.
+  --
+  -- On échoue donc FERMÉ, ce qui est le seul état sûr des trois. Le coût est
+  -- assumé et il est réel : deux gestes au lieu d'un, ce que la décision
+  -- refusait. ✅ À REMPLACER par l'appel à C-65 dès qu'il existe — et alors
+  -- cette garde disparaît, elle ne se cumule pas avec lui.
+  --
+  -- Sans elle en attendant : on supprimerait la ligne que le webhook Stripe
+  -- vient mettre à jour, le prochain event tenterait un upsert sur une clé
+  -- étrangère morte, et le client continuerait d'être débité pour une
+  -- organisation qui n'existe plus.
   IF EXISTS (
     SELECT 1 FROM public.org_subscriptions
      WHERE org_id = p_org

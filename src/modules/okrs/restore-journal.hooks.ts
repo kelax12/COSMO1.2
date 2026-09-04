@@ -23,15 +23,25 @@
 //    identifiant (les `kr_id` / `okr_id` du journal pointent dessus, un id
 //    neuf rendrait les lignes orphelines), puis rejoue le journal.
 //
-// ❌ JAMAIS un INSERT client libre : la table est un journal append-only. On
-//    passe par `repository.create()`, exactement comme `recordKRReps`.
+// ❌ JAMAIS UN INSERT CLIENT LIBRE, et la première version de ce hook s'y est
+//    trompée. Elle appelait `getKRCompletionsRepository().create()` — soit
+//    exactement ce que l'arbitrage du 2026-09-03 fait SUPPRIMER avec
+//    `useCreateKRCompletion` (« un INSERT client libre dans un journal
+//    append-only que ce fichier interdit par ailleurs »). Passer par le
+//    repository plutôt que par le hook gardait le défaut en changeant son nom.
+//
+//    L'écriture du journal appartient au REPOSITORY OKR
+//    (`restoreCompletions`), au même endroit que `recordKRReps` — le chemin
+//    que l'item C-01 désigne explicitement. Aucun code client ne touche plus
+//    `kr_completions`.
 //
 // ── LA BORNE ────────────────────────────────────────────────────────
 //
-// 🔴 `MAX_REPS_PER_WRITE` s'applique ICI AUSSI (faille B18). Le tableau de
-// complétions vient d'une lecture, mais il traverse l'état d'un composant :
-// c'est un objet que des devtools peuvent enrichir. Sans borne, on rouvrirait
-// par la porte de l'annulation le trou que le cap a fermé côté écriture.
+// 🔴 `MAX_REPS_PER_WRITE` (faille B18) s'applique DANS LE REPOSITORY, là où
+// vit déjà celle de `recordKRReps` : le tableau vient d'une lecture, mais il
+// traverse l'état d'un composant, donc un objet que des devtools peuvent
+// enrichir. La borner ici ET là serait la dupliquer ; la borner ici SEULEMENT
+// la laisserait contournable par un appel direct au repository.
 //
 // ── CE QUE ÇA NE RATTRAPE PAS ───────────────────────────────────────
 //
@@ -41,9 +51,8 @@
 // c'est lui qui alimente le graphique.
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { getOKRsRepository, getKRCompletionsRepository } from '@/lib/repository.factory';
+import { getOKRsRepository } from '@/lib/repository.factory';
 import { reportRestoreFailure, splitRestore } from '@/lib/restore-id';
-import { MAX_REPS_PER_WRITE } from '@/modules/kr-completions/constants';
 import { krCompletionKeys } from '@/modules/kr-completions/constants';
 import type { KRCompletion } from '@/modules/kr-completions/types';
 import { okrsKeys } from './constants';
@@ -66,29 +75,15 @@ export interface RestoreOkrPayload {
  */
 export const useRestoreOkrWithJournal = () => {
   const queryClient = useQueryClient();
-  const okrRepository = getOKRsRepository();
-  const journalRepository = getKRCompletionsRepository();
+  const repository = getOKRsRepository();
 
   return useMutation({
     mutationFn: async ({ okr, completions }: RestoreOkrPayload) => {
       const { payload, options } = splitRestore(okr);
       // L'objectif D'ABORD : les `okr_id` / `kr_id` du journal le désignent.
-      const restored = await okrRepository.create(payload as CreateOKRInput, options);
-
-      // Même borne que l'écriture normale (B18) : ce tableau a traversé l'état
-      // d'un composant, il n'est donc pas plus digne de confiance qu'un input.
-      const bounded = completions.slice(0, MAX_REPS_PER_WRITE);
-      for (const entry of bounded) {
-        await journalRepository.create({
-          krId: entry.krId,
-          okrId: entry.okrId,
-          userId: entry.userId,
-          completedAt: entry.completedAt,
-          krTitle: entry.krTitle,
-          okrTitle: entry.okrTitle,
-        });
-      }
-
+      const restored = await repository.create(payload as CreateOKRInput, options);
+      // Puis le journal, par le repository — jamais depuis ici.
+      await repository.restoreCompletions(completions);
       return restored;
     },
     onSuccess: () => {

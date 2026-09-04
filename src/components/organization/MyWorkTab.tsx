@@ -26,6 +26,7 @@ import { MyWorkSkeleton } from './OrgLoadingSkeletons';
 import OrgEventsTimeline from './OrgEventsTimeline';
 import { buildOrgEvents } from './org-events.helpers';
 import { useT } from '@/i18n/useT';
+import TouchTarget from '@/components/mobile/TouchTarget';
 
 interface MyWorkTabProps {
   orgId: string;
@@ -374,16 +375,15 @@ const MyWorkTab = ({ orgId, members, currentUserId }: MyWorkTabProps) => {
                           l'element interieur porte l'apparence, le bouton porte
                           la zone tactile. Marges negatives pour que la rangee
                           ne grandisse pas. */}
-                      <button
-                        type="button"
+                      <TouchTarget
                         onClick={() => toggleComplete(t)}
                         aria-label={tt('myWork.markDone', { name: t.name })}
-                        className="-my-2.5 -ml-2.5 min-h-touch min-w-touch inline-flex items-center justify-center shrink-0"
+                        className="-my-2.5 -ml-2.5"
                       >
                         <span className="w-6 h-6 rounded-md border border-[rgb(var(--color-border))] hover:border-[rgb(var(--color-accent))] flex items-center justify-center transition-colors">
                           {t.completed && <Check size={13} aria-hidden="true" />}
                         </span>
-                      </button>
+                      </TouchTarget>
                       <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${priority.dot}`} role="img" aria-label={priorityLabelOf(t.priority)} title={priorityLabelOf(t.priority)} />
                       {/* C-57 — `min-h-8` = 32 px : large mais trop bas. WCAG
                           2.5.5 demande 44 px dans les DEUX dimensions, et ce

@@ -5,6 +5,7 @@ import { useToggleTaskComplete } from '@/modules/tasks';
 import { useUpdateTeamTask } from '@/modules/team-projects';
 import { useActiveOrganization } from '@/modules/organizations';
 import { useT } from '@/i18n/useT';
+import TouchTarget from '@/components/mobile/TouchTarget';
 
 /**
  * Vue « Aujourd'hui » unifiée (item #29) — section du tableau de bord.
@@ -89,16 +90,15 @@ const TodayUnified = () => {
 
                   ⚠️ L'ICONE reste a 16 px : c'est la CIBLE qui grandit. Une
                   icone de 44 px serait lourde — c'est exactement le contrat de
-                  `TouchTarget` (`components/mobile/`). Marges negatives pour
-                  que la rangee ne grandisse pas avec la cible. */}
-              <button
-                type="button"
+                  `TouchTarget`, que l'arbitrage du 2026-09-03 nomme. Marges
+                  negatives pour que la rangee ne grandisse pas avec la cible. */}
+              <TouchTarget
                 onClick={() => complete(item)}
                 aria-label={t('today.markDone', { name: item.name })}
-                className="shrink-0 -my-2 -ml-2 min-h-touch min-w-touch inline-flex items-center justify-center rounded-row text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-success))] transition-colors"
+                className="-my-2 -ml-2 hover:text-[rgb(var(--color-success))]"
               >
                 <Circle size={16} aria-hidden="true" />
-              </button>
+              </TouchTarget>
 
               {/* C-57 — la rangee entiere ouvre l'element, et elle mesurait
                   32 px de haut. Large mais trop basse : WCAG 2.5.5 demande

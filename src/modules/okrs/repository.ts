@@ -170,6 +170,30 @@ export interface IOKRsRepository {
   update(id: string, updates: UpdateOKRInput): Promise<OKR>;
   delete(id: string): Promise<void>;
 
+
+  /**
+   * Rejoue le journal d'un OKR qu'on vient de restaurer (C-01).
+   *
+   * 🔴 POURQUOI C'EST UNE METHODE DE REPOSITORY, ET PAS UN APPEL CLIENT.
+   *
+   * La premiere version de C-01 appelait
+   * `getKRCompletionsRepository().create()` depuis le hook. C'est exactement
+   * ce que l'arbitrage du 2026-09-03 fait SUPPRIMER avec
+   * `useCreateKRCompletion` : « un INSERT client libre dans un journal
+   * append-only que ce fichier interdit par ailleurs ». Le contourner en
+   * appelant le repository plutot que le hook aurait garde le defaut en
+   * changeant son nom.
+   *
+   * L'ecriture du journal appartient donc au repository OKR, comme
+   * `appendKRReps` / `recordKRReps` — le meme chemin que celui que l'item
+   * C-01 designe explicitement.
+   *
+   * ⚠️ Borne `MAX_REPS_PER_WRITE` (faille B18) : le tableau vient d'une
+   *    lecture, mais il traverse l'etat d'un composant, donc un objet que des
+   *    devtools peuvent enrichir.
+   */
+  restoreCompletions(completions: KRCompletion[]): Promise<void>;
+
   // KeyResult operations
   updateKeyResult(okrId: string, keyResultId: string, updates: UpdateKeyResultInput): Promise<OKR>;
 }
@@ -373,6 +397,27 @@ export class LocalStorageOKRsRepository implements IOKRsRepository {
       });
     }
     writeJsonOrThrow(KR_COMPLETIONS_STORAGE_KEY, completions);
+  }
+
+  /**
+   * C-01 — rejoue le journal d'un OKR restauré. Contrat et raison dans
+   * `IOKRsRepository.restoreCompletions`.
+   *
+   * ⚠️ Les horodatages d'ORIGINE sont conservés : c'est tout l'intérêt. Les
+   * réécrire à `now()` remettrait les N points d'un coup sur aujourd'hui, ce
+   * qui n'est pas restaurer un graphique mais en inventer un autre.
+   */
+  async restoreCompletions(completions: KRCompletion[]): Promise<void> {
+    if (completions.length === 0) return;
+    const bounded = completions.slice(0, MAX_REPS_PER_WRITE);
+    const existing: KRCompletion[] =
+      safeParseArray<KRCompletion>(safeGetItem(KR_COMPLETIONS_STORAGE_KEY)) ?? [];
+    writeJsonOrThrow(KR_COMPLETIONS_STORAGE_KEY, [
+      ...existing,
+      // Identifiant NEUF : un journal est un ensemble d'événements, rien ne
+      // référence une de ses lignes. Seul son contenu alimente le graphique.
+      ...bounded.map((c) => ({ ...c, id: crypto.randomUUID() })),
+    ]);
   }
 
   /**
