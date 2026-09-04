@@ -40,14 +40,17 @@ compte** et **ce qui prouve que c'est fini**.
 > ligne d'import. Toutes corrigées et remutées. Une sonde versionnée était même
 > **morte à la livraison** (elle lisait un répertoire temporaire de session).
 >
-> ⚠️ **Trois migrations écrites, AUCUNE appliquée** : `137` (identifiants de
-> refus de dépendance), `138` (preuves qui survivent + propriétaire seul), `139`
-> (plafond de débit). Chacune porte sa séquence de vérification à jouer dans une
-> transaction annulée.
+> 🔴 **CE QUI EST ÉCRIT N'EST PAS CE QUI TOURNE.** Vérifié en base et sur le
+> projet le 2026-09-04 au soir, pas déduit du dépôt : la dernière migration
+> appliquée est la **`135`** (les `137`, `138`, `139` sont écrites, aucune n'est
+> en base), `stripe-org-refund` **n'existe pas** en production, `report-bug` y
+> tourne en **v8 du 2026-08-29** donc sans son plafond, et `stripe-webhook` en
+> **v26 du 2026-08-26** donc sans la ligne compensatoire de remboursement. Trois
+> secrets restent à poser. Détail et ordre imposé en **[§ 11.1](#11-ce-qui-reste-ouvert)**.
 >
-> ⚠️ **Aucune Edge Function n'est déployée par un push** (C-35). `report-bug`
-> tourne encore sans son plafond, et `stripe-org-refund` n'existe pas en
-> production. Deux secrets restent à poser : `RATE_LIMIT_SALT`, `CRON_SECRET`.
+> ⚠️ Il a fallu interroger le projet à la main pour savoir tout ça : **rien ne
+> compare le code déployé à celui du dépôt**, donc rien n'aurait signalé l'écart.
+> C'est C-35, et cette passe en est la démonstration.
 
 **Ce que ce fichier contient** : uniquement ce qui se corrige **en écrivant du code ou du SQL**.
 Tout ce qui se règle dans une console, chez un fournisseur ou au guichet (immatriculation, Stripe
@@ -2412,19 +2415,63 @@ les **32 entiers**.
 
 Ce sont les seuls endroits où du travail livré ne produit **rien** en production.
 
-| Geste | Ce qui attend derrière | Conséquence tant que ce n'est pas fait |
+> ✅ **Vérifié en base et sur le projet, le 2026-09-04 au soir** — ledger de
+> migrations et liste des Edge Functions lus, pas déduits du dépôt. Les trois
+> lignes ci-dessous sont des mesures, pas des suppositions.
+
+**a. Appliquer les migrations `137`, `138`, `139`**
+
+La dernière entrée du ledger est **`135_withdrawal_consents`**. Ni la `136`
+(travail en cours d'une autre session, non versionné) ni les trois écrites
+ici ne sont en base.
+
+| Migration | Ce qui attend derrière | Conséquence tant qu'elle n'est pas appliquée |
 |---|---|---|
-| **Appliquer les migrations `137`, `138`, `139`** | identifiants de refus de dépendance (C-48), preuves qui survivent à la suppression d'une organisation (C-30, C-39), plafond de débit (C-31) | `dependency-errors.ts` traduit encore via sa **table de transition** sur les phrases anglaises ; supprimer une organisation détruit toujours ses preuves L215-1 ; `consume_rate_limit` n'existe pas, donc le plafond ne s'applique pas |
-| **Déployer les Edge Functions** (`supabase functions deploy`) | `report-bug` (C-31 → C-33, C-36), `stripe-org-refund` (C-65), `stripe-webhook` (ligne compensatoire de remboursement) | `report-bug` tourne **sans plafond, sans allowlist réelle, et anonymise l'auteur en cas de panne d'auth** ; le remboursement du mois en cours **n'existe pas en production**, alors que les CGU le promettent désormais |
-| **Poser deux secrets** : `RATE_LIMIT_SALT` (Supabase), `CRON_SECRET` + `OPS_ALERT_WEBHOOK_URL` (secrets **Actions**) | C-31, C-34, C-28 | sans sel, `consumeRateLimits` **REFUSE** (choix délibéré : pas de sel, pas de service) ; `ci-alert.yml` reste inerte |
+| **137** identifiants de refus de dépendance | C-48 | `dependency-errors.ts` traduit encore via sa **table de transition** sur les phrases anglaises |
+| **138** preuves qui survivent + propriétaire seul | C-30, C-39 | supprimer une organisation **détruit** ses preuves L215-1 et sa renonciation au droit de rétractation |
+| **139** plafond de débit | C-31 | `consume_rate_limit` n'existe pas, donc le plafond ne s'applique nulle part |
 
-⚠️ **Ordre imposé** : `139` avant le déploiement de `report-bug`, sinon la fonction appelle une
-RPC absente. `138` avant tout usage de la suppression d'organisation.
+⚠️ **Ordre imposé** : la `139` avant le déploiement de `report-bug`, sinon la
+fonction appelle une RPC absente. La `138` avant tout usage de la suppression
+d'organisation.
 
-🔴 **Les trois migrations portent chacune leur séquence de vérification** à jouer dans une
-transaction annulée, acteur par acteur. Ne pas conclure d'un « success » : la `139` a un piège
-qui ne se voit qu'en jouant la borne (`hits > p_limit`, jamais `>=` — avec `>=` le compteur gèle
-sur la limite, `hits <= limit` reste vrai, et **le plafond ne refuse jamais**).
+🔴 Chacune porte sa séquence de vérification, à jouer **acteur par acteur dans
+une transaction annulée**. Ne pas conclure d'un « success » : la `139` a un
+piège qui ne se voit qu'en jouant la borne (`hits > p_limit`, jamais `>=` —
+avec `>=` le compteur gèle sur la limite, `hits <= limit` reste vrai, et **le
+plafond ne refuse jamais**).
+
+**b. Déployer les Edge Functions**
+
+Sept fonctions sont actives. **`stripe-org-refund` n'en fait pas partie : elle
+n'existe pas en production.** Et les deux autres que cette passe a modifiées
+portent une version antérieure au correctif.
+
+| Fonction | Version déployée | Ce que la prod exécute donc |
+|---|---|---|
+| `report-bug` | v8, **2026-08-29** | sans plafond de débit, sans allowlist réelle de pièces jointes, et elle **anonymise l'auteur** en cas de panne d'authentification (C-31 → C-33, C-36) |
+| `stripe-webhook` | v26, **2026-08-26** | sans la branche `charge.refunded`, donc **aucune ligne compensatoire** au journal d'encaissement |
+| `stripe-org-refund` | **absente** | le remboursement du mois en cours n'existe pas, alors que les CGU le promettent depuis le 2026-09-04 (C-65) |
+
+🔴 **Les deux dernières lignes se tiennent** : déployer `stripe-org-refund`
+sans `stripe-webhook` rembourserait pour de vrai sans rien écrire au journal.
+Les déployer ensemble, ou ni l'une ni l'autre.
+
+⚠️ **Cette lecture est exactement ce que C-35 demande de mécaniser.** Il a
+fallu interroger le projet à la main pour savoir ce qui tourne : rien ne
+compare le code déployé à celui du dépôt, donc rien n'aurait signalé l'écart.
+
+**c. Poser trois secrets**
+
+| Secret | Où | Sans lui |
+|---|---|---|
+| `RATE_LIMIT_SALT` | Supabase | `consumeRateLimits` **REFUSE** — choix délibéré : pas de sel, pas de service, plutôt qu'un hachage devinable (C-31) |
+| `CRON_SECRET` | secrets **Actions** | C-34 |
+| `OPS_ALERT_WEBHOOK_URL` | secrets **Actions** | `ci-alert.yml` reste inerte (C-28) |
+
+❌ **Ne jamais rendre une garde conditionnelle à la présence de son propre
+secret.** Un secret absent se solde par un échec visible, jamais par un
+silence.
 
 ### 11.2 🟠 Quatre items à moitié faits
 
