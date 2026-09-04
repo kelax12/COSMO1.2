@@ -120,13 +120,14 @@ facteur TOTP y donne accès. Téléphone perdu, la seule porte de sortie est
 
 ## 7. Vérifications qu'aucune gate ne peut faire
 
-Ce sont les huit mesures que le dépôt réclame et que personne n'a jamais prises. Elles ne
+Ce sont les neuf mesures que le dépôt réclame et que personne n'a jamais prises. Elles ne
 produisent pas de correctif : elles produisent des **findings**, qui rejoignent ensuite
 `a-faire-code.md`.
 
 | # | À faire | Pourquoi aucune CI ne le remplace |
 |---|---|---|
 | M-25 | **Ouvrir le produit sur un vrai téléphone** (iOS Safari et Android), en mode démo puis sur un vrai compte | La note mobile de 76/100 n'a **aucune** mesure hors viewport émulé. 🟠 **Tenté le 2026-09-03, audit A-4** : aucun appareil n'était accessible, donc seule la moitié indépendante de l'appareil a pu être jouée (viewport émulé + sondes). Elle a rendu deux findings de code, `a-faire-code.md` **C-56** (le haut des trois formulaires `FirstRunSetup`, `BugReportModal`, `InviteOrJoinModal` devient inatteignable clavier ouvert, mesuré à 375×350) et **C-57** (cibles tactiles à 16×16 px pour cocher une tâche sur `/dashboard`, 40×40 sur `/okr`) — et a écarté deux soupçons (le plancher 16px des champs tient déjà, la conversion jour/instant de la date mobile d'événement est correcte). **Rien de tout ça n'a été confirmé au doigt**, et le mécanisme de C-56 diffère entre Android (viewport de mise en page réduit, modélisé) et iOS (page qui défile à la place, pas testé). Chaque bug retenu doit porter le modèle, la version d'OS et le navigateur, sinon il n'est pas reproductible. Prompt prêt : `prompts-audits.md`, A-4 |
+| M-40 | **Jouer la check-list VoiceOver iOS sur un iPhone**, d'une traite, en mode démo : [`docs/AUDIT-VOICEOVER-IOS.md`](./docs/AUDIT-VOICEOVER-IOS.md) (12 étapes, ~60 min, préparation comprise) | C'est le **quatrième** audit d'accessibilité de `C-24`, le seul que le 2026-09-03 n'a pas passé. Il ne se simule pas : ce que le dépôt prouve aujourd'hui, c'est le **focus**, jamais l'**annonce** (Playwright lit le DOM, pas l'arbre d'accessibilité comme un lecteur d'écran). Trois correctifs d'annonce (D4, D5, E2) ont été écrits **sans jamais avoir été entendus**. La check-list commence par un **témoin** : si le premier bouton n'annonce pas son `aria-label`, l'instrument est faux et rien de la suite ne compte. Chaque finding doit porter modèle, version d'iOS et **verbatim**. Se joue dans la même séance que M-25 |
 | M-26 | **Vérifier une échéance sur un appareil réglé sur un fuseau à décalage NÉGATIF** | C'est là que le bug R-01 cassait, et c'est invisible depuis la métropole. 467 des 601 échéances de la prod portaient 00:00:00 UTC |
 | M-27 | **Envoyer un e-mail de test vers un compte jetable Gmail ET Outlook** | Le DNS vert ne prouve pas la délivrabilité. Procédure dans `DEPLOYMENT.md` §2ter |
 | M-28 | **Parcourir l'application au clavier seul**, souris débranchée | Un tiers de WCAG est invisible pour axe-core. Le 2026-08-30, les flèches ne déplaçaient pas le focus dans le calendrier depuis des semaines, et aucune gate ne pouvait le voir. Prompt prêt : `prompts-audits.md`, A-3 |

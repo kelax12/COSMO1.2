@@ -5,6 +5,34 @@
 **+ Lighthouse CI** (`lighthouserc.json`, job `lighthouse`) sur les 4 routes prérendues.
 **Gates CI** : les violations `impact: 'critical'` sont **bloquantes** (`assertNoCritical`). `serious` / `moderate` / `minor` sont dumpées dans `test-results/a11y/<route>.json` mais non bloquantes. Le score a11y de Lighthouse est **bloquant** sur `/`, `/guide`, `/blog`, `/pour-freelances`.
 
+## 🔎 Ce que nos mesures prouvent, et ce qu'elles ne prouvent pas
+
+🔴 **Tout ce que ce document appelle « mesuré » a été mesuré sur Chromium desktop**, en viewport de
+bureau, par axe-core et par Playwright. Or **Playwright ne lit pas l'arbre d'accessibilité comme un
+lecteur d'écran** : il interroge le DOM, `document.activeElement` et des attributs. Ce qui est
+prouvé ici, c'est le **FOCUS**. Ce n'est pas l'**ANNONCE**.
+
+| Prouvé aujourd'hui | Non prouvé, et donc à ne pas affirmer |
+|---|---|
+| Où part le focus à l'ouverture d'une surface, et où il revient à sa fermeture | Ce qu'un lecteur d'écran **prononce** en arrivant sur cet élément |
+| Qu'une flèche déplace le focus, et de quelle cellule à quelle cellule | Le **rôle** annoncé (« case à cocher » plutôt que « bouton »), et l'état (« cochée », « sélectionné ») |
+| Qu'un élément est atteignable au clavier, et en combien de tabulations | L'**ordre de lecture au balayage**, qui inclut le texte non focalisable et diffère de l'ordre de tabulation |
+| Qu'un attribut ARIA est **présent** dans le DOM (`aria-label`, `aria-modal`, `aria-live`) | Qu'il produise **un effet audible** : une région live peut exister et n'être jamais vocalisée |
+| Qu'un nom accessible existe (axe-core le vérifie) | Qu'il soit **intelligible** : « 27août » avait un nom accessible, et il était faux (finding D4) |
+| Le comportement d'un clavier physique | Les gestes VoiceOver, le rotor, l'exploration au doigt, et ce que le double tap déclenche |
+
+Conséquences pratiques, à tenir :
+
+- ❌ **Ne jamais écrire dans ce document qu'un écran est « lisible par un lecteur d'écran »** tant
+  que l'audit VoiceOver iOS n'a pas été joué. La formule autorisée est « le focus se déplace
+  correctement », qui est ce qui a été observé.
+- ❌ **Ne jamais compter un correctif d'annonce comme vérifié** parce qu'il est écrit. Les trois
+  correctifs D4, D5 et E2 du 2026-08-27 portent sur ce qui est **prononcé** : ils n'ont jamais été
+  entendus, seulement relus.
+- ✅ **Le seul instrument qui mesure l'annonce est un vrai lecteur d'écran sur un vrai appareil.**
+  La check-list est prête et se joue d'une traite :
+  [`AUDIT-VOICEOVER-IOS.md`](./AUDIT-VOICEOVER-IOS.md).
+
 ## Note d'accessibilité : 76 → 79 → 80 → 81 → **82 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03)
 
 > ### 2026-09-03 · +1, trois défauts réels, aucun visible par axe-core
@@ -180,9 +208,10 @@ mesure du fichier n'a de valeur.
 | Trois surfaces que les sondes n'ont pas atteintes | calendrier ouvert depuis un MENU | C-55 |
 
 ⚠️ **Limites, à dire plutôt qu'à laisser croire.** Tout vient de **Chromium desktop** ; ce qui est
-prouvé, c'est le déplacement du FOCUS, pas ce qu'un lecteur d'écran ANNONCE. Deux modales sur
-cinquante-huit ont été réellement ouvertes : l'absence totale d'utilitaire de piège de focus dans
-le dépôt rend le résultat généralisable, mais c'est une inférence.
+prouvé, c'est le déplacement du FOCUS, pas ce qu'un lecteur d'écran ANNONCE (le partage exact est
+dans le § « Ce que nos mesures prouvent » en tête de ce document). Deux modales sur cinquante-huit
+ont été réellement ouvertes : l'absence totale d'utilitaire de piège de focus dans le dépôt rend le
+résultat généralisable, mais c'est une inférence.
 
 ### Gate axe-core · le chiffre qui manquait
 
@@ -219,6 +248,9 @@ plus haut). Détail : [`UI-PATTERNS.md`](./UI-PATTERNS.md) §Dette UI/UX ouverte
 Reste ouvert par ailleurs : **VoiceOver iOS sur un vrai appareil**, le seul des quatre audits que
 le 2026-09-03 n'a pas passé — il ne se simule pas. Les trois autres (`/agenda`, modales, parcours
 clavier) sont couverts par la section « A-3 » ci-dessus, avec leurs findings ouverts.
+**Sa check-list est prête depuis le 2026-09-04** et se joue d'une traite, témoin compris :
+[`AUDIT-VOICEOVER-IOS.md`](./AUDIT-VOICEOVER-IOS.md). Ce qui manque n'est plus le protocole, c'est
+l'appareil et l'heure.
 Objectif de durcissement : la gate peut passer de `critical` à `serious` **au prix de deux tokens**,
 chiffrés ci-dessus — et non « gratuitement », comme cette page l'a écrit du 2026-08-24 au 2026-09-03
 sans jamais compter les violations concernées.

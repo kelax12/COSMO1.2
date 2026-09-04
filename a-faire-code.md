@@ -1658,7 +1658,16 @@ trois corrigés dans la foulée.
   ensemble ou pas du tout.
 - ⚠️ Ce qui a été mesuré l'a été **sur Chromium desktop**. Un lecteur d'écran ne lit pas l'arbre
   d'accessibilité comme Playwright : ce qui est prouvé ici, c'est le FOCUS, pas l'annonce.
-- **Fini quand** : le quatrième est fait et ses findings sont ici.
+- ✅ **2026-09-04, la part faisable par une session est faite** : la limite « focus ≠ annonce » est
+  écrite noir sur blanc dans [`docs/ACCESSIBILITY.md`](./docs/ACCESSIBILITY.md) § « Ce que nos
+  mesures prouvent, et ce qu'elles ne prouvent pas », avec le partage ligne à ligne de ce qui est
+  prouvé et de ce qui ne l'est pas ; et la check-list du quatrième audit est prête, jouable d'une
+  traite sur un iPhone, témoin compris :
+  [`docs/AUDIT-VOICEOVER-IOS.md`](./docs/AUDIT-VOICEOVER-IOS.md) (12 étapes, ~60 min, en mode
+  démo). Elle est référencée par **M-40** dans `a-faire-manuel.md`.
+  🔴 **Ce n'est pas l'audit.** Écrire le protocole ne mesure rien : C-24 reste ouvert.
+- **Fini quand** : le quatrième est fait **sur un appareil réel** et ses findings sont ici, chacun
+  avec son modèle, sa version d'iOS et son verbatim.
 
 ### C-25 · Le bleu de marque est à 3,34:1 · **P3 · XS**
 
