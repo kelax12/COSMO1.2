@@ -6,6 +6,7 @@ import { reachableSets } from '@/lib/dependency-graph';
 import { TASK_DEPENDENCIES_STORAGE_KEY } from './constants';
 import { deadlineDayKey } from '@/lib/deadline';
 import type { CreateOptions } from '@/lib/restore-id';
+import { DEPENDENCY_ERRORS, makeDependencyError } from './dependency-errors';
 import { safeGetItem, safeParseArray, writeJsonOrThrow } from '@/lib/safe-json';
 const STORAGE_KEY = 'cosmo_demo_tasks';
 
@@ -391,19 +392,24 @@ export class LocalStorageTasksRepository implements ITasksRepository {
   }
 
   async addDependency(taskId: string, dependsOnId: string): Promise<void> {
+    // C-48 — les refus passent par un IDENTIFIANT catalogue, jamais par une
+    // phrase anglaise : elle ne matchait pas `BUSINESS_CODE_RE` en prod (refus
+    // generique) et arrivait telle quelle dans un gabarit francais en demo.
+    // Une auto-dependance EST un cycle de longueur 1 : meme identifiant que la
+    // contrainte `task_dependencies_no_self` de la mig. 132.
     if (taskId === dependsOnId) {
-      throw new Error('A task cannot depend on itself');
+      throw makeDependencyError(DEPENDENCY_ERRORS.cycle);
     }
     const tasks = this.getTasks();
     if (!tasks.some(t => t.id === taskId) || !tasks.some(t => t.id === dependsOnId)) {
-      throw new Error('Both tasks must exist');
+      throw makeDependencyError(DEPENDENCY_ERRORS.taskMissing);
     }
     const edges = this.getDependencyEdges();
     if (edges.some(d => d.taskId === taskId && d.dependsOnId === dependsOnId)) return;
     // Le cycle se teste depuis la BLOQUANTE : si elle dépend déjà, même
     // indirectement, de la bloquée, l'arête refermerait la boucle.
     if (reachableSets(edges, dependsOnId).upstream.has(taskId)) {
-      throw new Error('This dependency would create a cycle');
+      throw makeDependencyError(DEPENDENCY_ERRORS.cycle);
     }
     this.saveDependencyEdges([...edges, { taskId, dependsOnId }]);
   }

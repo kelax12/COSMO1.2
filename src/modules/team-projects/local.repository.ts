@@ -38,6 +38,7 @@ import {
   TEAM_TASK_DEPENDENCIES_STORAGE_KEY,
 } from './constants';
 import { localizeSeed } from '@/lib/seed-i18n';
+import { DEPENDENCY_ERRORS, makeDependencyError } from '@/modules/tasks/dependency-errors';
 import { safeGetItem, safeSetItem, writeJsonOrThrow } from '@/lib/safe-json';
 
 const DEMO_ORG_ID = 'org-demo-1';
@@ -671,7 +672,9 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
    * sur une donnée impossible.
    */
   async addTaskDependency(taskId: string, dependsOnId: string, _orgId: string): Promise<void> {
-    if (taskId === dependsOnId) throw new Error('A task cannot depend on itself');
+    // C-48 — identifiants catalogues, pas des phrases anglaises. Une
+    // auto-dependance EST un cycle de longueur 1.
+    if (taskId === dependsOnId) throw makeDependencyError(DEPENDENCY_ERRORS.cycle);
 
     const deps = this.getDependenciesArray();
     if (deps.some((d) => d.taskId === taskId && d.dependsOnId === dependsOnId)) return;
@@ -679,9 +682,9 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
     const tasks = this.getTasksArray();
     const target = tasks.find((t) => t.id === taskId);
     const blocker = tasks.find((t) => t.id === dependsOnId);
-    if (!target || !blocker) throw new Error('Both tasks must exist');
+    if (!target || !blocker) throw makeDependencyError(DEPENDENCY_ERRORS.taskMissing);
     if (target.projectId !== blocker.projectId) {
-      throw new Error('A dependency must stay within a single project');
+      throw makeDependencyError(DEPENDENCY_ERRORS.crossProject);
     }
 
     // Remonte les bloquantes de `dependsOnId` : atteindre `taskId` = cycle.
@@ -690,7 +693,7 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
     for (let depth = 0; depth < 200 && frontier.length > 0; depth++) {
       const next: string[] = [];
       for (const id of frontier) {
-        if (id === taskId) throw new Error('This dependency would create a cycle');
+        if (id === taskId) throw makeDependencyError(DEPENDENCY_ERRORS.cycle);
         if (seen.has(id)) continue;
         seen.add(id);
         for (const d of deps) if (d.taskId === id) next.push(d.dependsOnId);
