@@ -7,7 +7,8 @@ import { getColorHex } from '@/components/CategoryManager';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'react-router';
 import { useCreateEvent } from '@/modules/events';
-import { useOkrs, useCreateOkr, useUpdateOkr, useDeleteOkr, useRestoreOkr, useUpdateKeyResult, OKR, KeyResult } from '@/modules/okrs';
+import { useOkrs, useCreateOkr, useUpdateOkr, useDeleteOkr, useRestoreOkrWithJournal, useUpdateKeyResult, OKR, KeyResult } from '@/modules/okrs';
+import { useKRCompletions } from '@/modules/kr-completions';
 import { showUndoToast } from '@/lib/undo-toast';
 import { useCategories, useCreateCategory, useUpdateCategory } from '@/modules/categories';
 import PageErrorState from '@/components/PageErrorState';
@@ -47,7 +48,10 @@ const OKRPage: React.FC = () => {
   const createOkrMutation = useCreateOkr();
   const updateOkrMutation = useUpdateOkr();
   const deleteOkrMutation = useDeleteOkr();
-  const restoreOkrMutation = useRestoreOkr();
+  // « Annuler » d'une suppression : rend l'objectif ET son journal (C-01).
+  const restoreOkrMutation = useRestoreOkrWithJournal();
+  // Lu pour pouvoir CAPTURER le journal avant une suppression.
+  const { data: allCompletions = [] } = useKRCompletions();
   const updateKeyResultMutation = useUpdateKeyResult();
   const createEventMutation = useCreateEvent();
   const { data: categories = [] } = useCategories();
@@ -141,19 +145,19 @@ const OKRPage: React.FC = () => {
   };
   const deleteObjective = (objectiveId: string) => {
     const snapshot = objectives.find(o => o.id === objectiveId);
+    // C-01 — le journal se capture AVANT le `delete` : `kr_completions`
+    // cascade depuis `okrs` ET `key_results`, les lignes n'existent plus
+    // après. Sans cette capture, « Annuler » ramenait l'objectif et laissait
+    // au graphique « KR réalisés » un trou DÉFINITIF, alors que la personne
+    // venait justement de dire qu'elle ne voulait PAS supprimer.
+    const journalSnapshot = allCompletions.filter(c => c.okrId === objectiveId);
     deleteOkrMutation.mutate(objectiveId);
     setDeletingObjective(null);
     if (snapshot) {
       // L'OKR, ses KR et les tâches qui les référencent (`task.krId`) revivent
-      // sous leurs identifiants d'origine (R-08).
-      //
-      // ⚠️ RÉSIDU ASSUMÉ : `kr_completions` cascade depuis `okrs` ET
-      // `key_results` (vérifié en production). Le journal des complétions est
-      // donc perdu à la suppression et ne revient pas ; le graphique « KR
-      // réalisés » du tableau de bord garde son trou. Seule une suppression
-      // logique le rattraperait — arbitrage laissé ouvert.
+      // sous leurs identifiants d'origine (R-08), et le journal est rejoué.
       showUndoToast(t('page.okrDeleted'), () => {
-        restoreOkrMutation.mutate(snapshot);
+        restoreOkrMutation.mutate({ okr: snapshot, completions: journalSnapshot });
       });
     }
   };

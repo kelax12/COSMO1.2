@@ -76,3 +76,7 @@ export {
 } from './hooks.derived';
 
 export type { EnrichedKeyResult } from './hooks.derived';
+
+// Restauration AVEC le journal des completions (C-01).
+export { useRestoreOkrWithJournal } from './restore-journal.hooks';
+export type { RestoreOkrPayload } from './restore-journal.hooks';
