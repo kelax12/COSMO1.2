@@ -4,6 +4,7 @@
 // toggles, pagination.
 import { describe, it, expect, beforeEach } from 'vitest';
 import { LocalStorageTasksRepository } from './local.repository';
+import { dependencyErrorCode, DEPENDENCY_ERRORS } from './dependency-errors';
 
 let repo: LocalStorageTasksRepository;
 beforeEach(() => {
@@ -189,14 +190,25 @@ describe('dépendances', () => {
     expect(await repo.getDependencies()).toEqual([{ taskId: 't013', dependsOnId: 't002' }]);
   });
 
+  // ⚠️ C-48 — ces trois refus s'assertaient sur le TEXTE anglais du message
+  // (`/itself/`, `/must exist/`, `/cycle/`). C'est exactement ce que la règle
+  // « ne jamais identifier une erreur par son message » interdit : le message
+  // vient désormais du catalogue, donc il est TRADUIT, et un test qui le lit
+  // casserait au premier changement de langue ou de formulation. On asserte
+  // l'IDENTIFIANT, qui est le contrat partagé avec les triggers (mig. 137).
+
   it('refuse une tâche qui dépendrait d elle-même', async () => {
     await repo.getAll();
-    await expect(repo.addDependency('t013', 't013')).rejects.toThrow(/itself/i);
+    // Une auto-dépendance EST un cycle de longueur 1 : même identifiant que la
+    // contrainte `task_dependencies_no_self` de la mig. 132.
+    const err = await repo.addDependency('t013', 't013').catch((e) => e);
+    expect(dependencyErrorCode(err)).toBe(DEPENDENCY_ERRORS.cycle);
   });
 
   it('refuse une arête vers une tâche inexistante', async () => {
     await repo.getAll();
-    await expect(repo.addDependency('t013', 'absente')).rejects.toThrow(/must exist/i);
+    const err = await repo.addDependency('t013', 'absente').catch((e) => e);
+    expect(dependencyErrorCode(err)).toBe(DEPENDENCY_ERRORS.taskMissing);
   });
 
   it('refuse un cycle INDIRECT, comme le trigger', async () => {
@@ -204,7 +216,8 @@ describe('dépendances', () => {
     // t013 ← t002 ← t003 : rendre t013 dépendante de t003 referme la boucle.
     await repo.addDependency('t002', 't013');
     await repo.addDependency('t003', 't002');
-    await expect(repo.addDependency('t013', 't003')).rejects.toThrow(/cycle/i);
+    const err = await repo.addDependency('t013', 't003').catch((e) => e);
+    expect(dependencyErrorCode(err)).toBe(DEPENDENCY_ERRORS.cycle);
     expect(await repo.getDependencies()).toHaveLength(2);
   });
 

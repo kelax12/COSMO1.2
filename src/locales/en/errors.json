@@ -28,7 +28,11 @@
     "invitation_already_processed": "This invitation has already been handled.",
     "inviter_no_longer_member": "The person who invited you is no longer part of this company.",
     "storage_full": "This browser's storage is full. Free some space, then try again.",
-    "storage_unavailable": "This browser refuses to store demo data. Check that it isn't in strict private browsing mode."
+    "storage_unavailable": "This browser refuses to store demo data. Check that it isn't in strict private browsing mode.",
+    "dependency_task_missing": "One of the two tasks can't be found. Reload the page, then try again.",
+    "dependency_cross_account": "A dependency can only link two tasks from the same account.",
+    "dependency_cross_project": "A dependency can only link two tasks from the same project.",
+    "dependency_cycle": "This dependency would create a loop: the blocking task already depends on the blocked one."
   },
   "validation": {
     "fallback": "Invalid data",

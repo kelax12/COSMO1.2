@@ -10,6 +10,7 @@ import { teamProjectKeys } from './constants';
 import type { UpdateTeamSubtaskInput, CreateTeamLabelInput, UpdateTeamLabelInput } from './types';
 import type { CreateTeamProjectInput, UpdateTeamProjectInput, CreateTeamTaskInput, UpdateTeamTaskInput, TeamTaskFilters } from './types';
 import { translator } from '@/i18n/useT';
+import { dependencyErrorCode } from '@/modules/tasks/dependency-errors';
 
 const useRepo = () => getTeamProjectsRepository();
 
@@ -407,6 +408,24 @@ export const useTeamTaskDependencies = (orgId: string | undefined) => {
   });
 };
 
+/**
+ * Message d'un refus de dépendance d'équipe (C-48).
+ *
+ * Un refus NOMMÉ est rendu tel quel — c'est déjà une phrase de catalogue,
+ * actionnable. Avant, la phrase anglaise du `RAISE` (mig. 108/109) ne matchait
+ * pas `BUSINESS_CODE_RE` : le refus retombait sur le message générique en
+ * production, et arrivait en anglais dans le gabarit français en démo.
+ *
+ * ⚠️ « tâche introuvable » et « tâche hors périmètre » rendent volontairement
+ * le MÊME texte : les distinguer rouvrirait l'oracle d'existence refermé par
+ * la mig. 109.
+ */
+const dependencyErrorMessage = (error: Error): string => {
+  const code = dependencyErrorCode(error);
+  if (code) return translator('errors').t(`api.${code}` as never);
+  return translator('org').t('projects.dependencyFailed', { message: error.message });
+};
+
 export const useAddTaskDependency = (orgId: string) => {
   const queryClient = useQueryClient();
   const repository = useRepo();
@@ -420,7 +439,7 @@ export const useAddTaskDependency = (orgId: string) => {
     // On remonte le message tel quel plutôt qu'un « une erreur est survenue » :
     // l'utilisateur peut agir sur un cycle, pas sur une erreur anonyme.
     onError: (error: Error) =>
-      toast.error(translator('org').t('projects.dependencyFailed', { message: error.message })),
+      toast.error(dependencyErrorMessage(error)),
   });
 };
 
@@ -434,6 +453,6 @@ export const useRemoveTaskDependency = (orgId: string) => {
       queryClient.invalidateQueries({ queryKey: teamProjectKeys.dependencies(orgId) });
     },
     onError: (error: Error) =>
-      toast.error(translator('org').t('projects.dependencyFailed', { message: error.message })),
+      toast.error(dependencyErrorMessage(error)),
   });
 };

@@ -8,6 +8,7 @@ import { ITasksRepository } from './repository';
 import { Task, CreateTaskInput, UpdateTaskInput, TaskFilters, TaskDependency } from './types';
 import { nextOccurrenceDeadline } from './recurrence';
 import { taskKeys } from './constants';
+import { dependencyErrorCode } from './dependency-errors';
 import { validateAsync } from '@/lib/validation/lazy';
 import { translator } from '@/i18n/useT';
 import { recordDemoCreationIfDemo } from '@/lib/demo-engagement';
@@ -542,9 +543,27 @@ export const useTaskDependencies = (options?: { enabled?: boolean }) => {
 };
 
 /**
+ * Message d'un refus de dépendance. Un refus NOMMÉ est rendu tel quel (il est
+ * déjà une phrase de catalogue, actionnable) ; tout le reste passe par le
+ * gabarit générique, qui dit au moins de quoi il s'agit.
+ */
+const dependencyErrorMessage = (error: Error): string => {
+  const t = translator('errors').t;
+  const code = dependencyErrorCode(error);
+  if (code) return t(`api.${code}` as never);
+  return t('mutation.taskDependency', { message: error.message });
+};
+
+/**
  * Le refus le plus courant est un CYCLE, rejeté par le trigger (mig. 132).
- * On remonte le message tel quel plutôt qu'un « une erreur est survenue » :
- * l'utilisateur peut agir sur un cycle, pas sur une erreur anonyme.
+ * On veut le DIRE plutôt qu'un « une erreur est survenue » : l'utilisateur
+ * peut agir sur un cycle, pas sur une erreur anonyme.
+ *
+ * 🔴 C-48 — cette intention était contredite par les deux modes. En prod, la
+ * phrase anglaise du `RAISE` ne matchait pas `BUSINESS_CODE_RE`, donc le refus
+ * retombait sur le message générique ; en démo, elle arrivait telle quelle
+ * dans le gabarit français. Les deux passent désormais par un IDENTIFIANT
+ * catalogué (`dependency-errors.ts`, mig. 137).
  */
 export const useAddTaskDependency = () => {
   const queryClient = useQueryClient();
@@ -555,8 +574,7 @@ export const useAddTaskDependency = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: taskKeys.dependencies() });
     },
-    onError: (error: Error) =>
-      toast.error(translator('errors').t('mutation.taskDependency', { message: error.message })),
+    onError: (error: Error) => toast.error(dependencyErrorMessage(error)),
   });
 };
 
@@ -569,7 +587,6 @@ export const useRemoveTaskDependency = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: taskKeys.dependencies() });
     },
-    onError: (error: Error) =>
-      toast.error(translator('errors').t('mutation.taskDependency', { message: error.message })),
+    onError: (error: Error) => toast.error(dependencyErrorMessage(error)),
   });
 };

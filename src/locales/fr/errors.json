@@ -28,7 +28,11 @@
     "invitation_already_processed": "Cette invitation a déjà été traitée.",
     "inviter_no_longer_member": "La personne qui vous a invité ne fait plus partie de cette entreprise.",
     "storage_full": "L'espace de stockage de ce navigateur est plein. Libérez de la place, puis réessayez.",
-    "storage_unavailable": "Ce navigateur refuse d'enregistrer les données du mode démo. Vérifiez qu'il n'est pas en navigation privée stricte."
+    "storage_unavailable": "Ce navigateur refuse d'enregistrer les données du mode démo. Vérifiez qu'il n'est pas en navigation privée stricte.",
+    "dependency_task_missing": "Une des deux tâches est introuvable. Rechargez la page, puis réessayez.",
+    "dependency_cross_account": "Une dépendance ne peut relier que deux tâches d'un même compte.",
+    "dependency_cross_project": "Une dépendance ne peut relier que deux tâches d'un même projet.",
+    "dependency_cycle": "Cette dépendance créerait une boucle : la tâche bloquante dépend déjà de la tâche bloquée."
   },
   "validation": {
     "fallback": "Données invalides",
