@@ -584,6 +584,8 @@
     "membersLose_other": "The {{count}} members lose access immediately.",
     "projectsDeleted": "All projects, team tasks and OKRs are permanently deleted.",
     "teamsErased": "Teams, invitations and the pyramid are erased.",
+    "subscriptionFirst": "An ongoing subscription must be cancelled FIRST: deletion is refused while it is active.",
+    "evidenceKept": "Renewal notices and withdrawal waivers are kept: they are legal records, not company data.",
     "personalSafe": "Members' personal data is not affected.",
     "confirmPrefix": "To confirm, type",
     "confirmSuffix": "below:",

@@ -473,9 +473,22 @@ const OrganizationPage = () => {
             />
           </div>
 
-          {/* #5 : un admin ne « quitte » pas — il peut supprimer l'entreprise
-              (confirmation extrême, façon GitHub). Les autres membres quittent. */}
-          {isAdmin ? (
+          {/* #5 : le PROPRIETAIRE ne « quitte » pas — il peut supprimer
+              l'entreprise (confirmation extrême, façon GitHub). Tous les
+              autres, admins compris, quittent.
+
+              🔴 C-39 — cette zone etait montee sur `isAdmin`, alors que le
+              bouton « Transferer la propriete » juste a cote etait deja
+              reserve au proprietaire : la restriction existait, elle n'avait
+              pas ete portee sur le geste DESTRUCTEUR. Une entreprise a deux
+              admins ; le second, qui ne paie rien, supprimait l'organisation,
+              et le proprietaire continuait d'etre debite d'un abonnement
+              Stripe qui, lui, court toujours.
+
+              ⚠️ Ce n'est que l'affichage. La regle vit dans
+              `delete_organization` (mig. 138), seule porte vers un DELETE sur
+              `organizations`. */}
+          {isOwner ? (
             <div className="mt-2 rounded-2xl border border-red-300/60 dark:border-red-700/40 bg-red-50/40 dark:bg-red-900/10 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <h3 className="text-sm font-bold text-red-600 dark:text-red-400">{t('page.dangerZone')}</h3>
@@ -484,7 +497,7 @@ const OrganizationPage = () => {
                 </p>
               </div>
               <div className="flex flex-col sm:flex-row gap-2 shrink-0">
-                {user?.id === myOrg.ownerId && members.length > 1 && (
+                {members.length > 1 && (
                   <button
                     type="button"
                     onClick={() => setTransferring(true)}

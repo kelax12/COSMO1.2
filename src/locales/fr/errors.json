@@ -14,6 +14,8 @@
     "invalid_link": "Ce lien d'invitation n'est pas valide ou a déjà été utilisé.",
     "own_link": "Vous ne pouvez pas utiliser votre propre lien d'invitation.",
     "not_org_admin": "Cette action est réservée aux administrateurs de l'entreprise.",
+    "not_org_owner": "Cette action est réservée au propriétaire de l'entreprise.",
+    "org_has_active_subscription": "Résiliez d'abord l'abonnement de l'entreprise : il continuerait de courir après la suppression.",
     "not_authenticated": "Vous devez être connecté pour effectuer cette action.",
     "forbidden": "Vous n'avez pas les droits nécessaires pour cette action.",
     "cannot_invite_self": "Vous ne pouvez pas vous inviter vous-même.",
