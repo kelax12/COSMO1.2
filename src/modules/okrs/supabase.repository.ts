@@ -4,7 +4,7 @@
 
 import { supabase } from '@/lib/supabase';
 import { getCurrentUser } from '@/lib/auth-user';
-import { normalizeApiError } from '@/lib/normalizeApiError';
+import { normalizeApiError, makeApiError } from '@/lib/normalizeApiError';
 import { IOKRsRepository } from './repository';
 import { OKR, CreateOKRInput, UpdateOKRInput, UpdateKeyResultInput, OKRFilters, KeyResult } from './types';
 import { PaginationParams, PaginatedResult, DEFAULT_PAGE_SIZE } from '@/lib/pagination.types';
@@ -481,7 +481,12 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
   async restoreCompletions(completions: KRCompletion[]): Promise<void> {
     if (!supabase || completions.length === 0) return;
     const user = await getCurrentUser();
-    if (!user) throw new Error('Not authenticated');
+    // C-62 — identifiant CATALOGUE, pas un littéral anglais. Les voisins de ce
+    // fichier écrivent encore `throw new Error('Not authenticated')`, et c'est
+    // exactement le tuyau que C-62 doit fermer : le message atterrit tel quel
+    // dans le gabarit français `mutation.*`. Ne pas en ajouter un de plus par
+    // \« parité \» avec un défaut.
+    if (!user) throw makeApiError('not_authenticated');
 
     // Même borne que l'écriture normale (faille B18).
     const rows = completions.slice(0, MAX_REPS_PER_WRITE).map((c) => ({

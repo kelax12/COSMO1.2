@@ -30,6 +30,19 @@
 // est la même, mais le taux de ratage réel ne se mesure qu'avec un doigt
 // (`a-faire-manuel.md` §7, M-25).
 //
+// 🔴 CE QUE LA PREMIÈRE VERSION DE CETTE GARDE NE VOYAIT PAS. Elle ne mesurait
+// que l'ÉTAT INITIAL de six routes — donc rien dans une modale, un menu ou une
+// feuille. Le trou s'est révélé le jour même : le bouton de suppression d'un
+// commentaire d'équipe faisait **28 × 28 px**, dans un fil qu'on n'atteint
+// qu'en ouvrant une tâche. Une garde qui déclare « 0 sous la cible » en ne
+// regardant que le repos dit vrai de sa mesure et faux du produit — la classe
+// de défaut que `CLAUDE.md` documente sous « une garde se vérifie sur ce
+// qu'elle REGARDE ».
+//
+// Le dernier cas ouvre donc une surface RÉELLE et mesure dedans. Il ne couvre
+// pas les 58 modales du produit, et ne le prétend pas : il couvre celle qui
+// portait le défaut, et il ouvre la porte pour les suivantes.
+//
 // ⚠️ Ce que l'énoncé d'origine annonçait et qui NE s'est PAS reproduit :
 // « 43 commandes sous la cible sur /okr, dont 42 à 40 x 40 px ». Remesuré ici,
 // `/okr` rend **0 sur 57**. Le chiffre est laissé tel quel dans l'historique
@@ -129,4 +142,42 @@ test.describe('C-57 — cibles tactiles (WCAG 2.5.5)', () => {
       ).toEqual([]);
     });
   }
+
+  // ── Une surface OUVERTE, pas seulement l'état de repos ─────────────
+  // 🔴 DEUX RÉGIMES, comme `a11y-keyboard-audit.spec.ts` : ce qui est corrigé
+  // est ASSERTIONNÉ, ce qui reste ouvert est seulement IMPRIMÉ. Figer en
+  // `expect(...).toEqual([])` les 23 commandes que cette modale porte encore
+  // sous la cible ferait rouge une CI qui l'est déjà pour une autre raison, et
+  // surtout forcerait 23 décisions de design qu'aucun arbitrage n'a rendues.
+  //
+  // Ce qui EST assertionné : le bouton que C-57 a fait passer de 28 à 44 px.
+  // Ce qui est imprimé part dans l item C-70 avec son chiffre.
+  test("modale de tache d equipe : la commande corrigee tient, le reste est mesure", async ({ demoPage }) => {
+    await demoPage.goto('/entreprise');
+    await demoPage.waitForLoadState('networkidle');
+    await demoPage.waitForTimeout(2000);
+
+    const taskButton = demoPage.locator('button[aria-label^="Marquer"]').first();
+    await expect(taskButton).toBeVisible({ timeout: 15_000 });
+    // Le bouton VOISIN de la case ouvre la tâche (la case, elle, la coche).
+    await demoPage.locator('li:has(button[aria-label^="Marquer"]) button').nth(1).click();
+
+    const dialog = demoPage.getByRole('dialog');
+    await expect(dialog.first()).toBeVisible({ timeout: 10_000 });
+    await demoPage.waitForTimeout(1200);
+
+    const under = await commandsUnderTarget(demoPage, TARGET);
+
+    // ── ASSERTIONNÉ : la suppression d'un commentaire d'équipe ─────────
+    // Elle faisait 28 × 28 px, trouvée en vérifiant la conformité de C-57
+    // parce que la garde ne regardait alors que l'état de repos de six routes.
+    expect(
+      under.filter((u) => /commentaire/i.test(u.name)).map((u) => `${u.w}x${u.h} « ${u.name} »`),
+      'La suppression d un commentaire d equipe doit rester a 44 px.',
+    ).toEqual([]);
+
+    // ── IMPRIMÉ : le reste, qui appartient à C-70 ──────────────────────
+    console.log(`[C-70] TeamTaskModal : ${under.length} commande(s) sous 44 x 44 px`);
+    for (const u of under) console.log(`  ${u.w}x${u.h}  « ${u.name} »`);
+  });
 });

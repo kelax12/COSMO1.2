@@ -91,9 +91,7 @@ export function readJsonArray<T>(key: string): T[] | null {
 //     LÈVE. La mutation React Query remonte alors dans son `onError`, et la
 //     personne voit un message au lieu de croire son travail enregistré.
 
-import { ApiError } from './normalizeApiError';
-import { resolveMessage } from '@/i18n/catalog';
-import { localeStore } from '@/i18n/store';
+import { makeApiError } from './normalizeApiError';
 
 /** Reconnaît un dépassement de quota, quel que soit le navigateur. */
 function isQuotaError(err: unknown): boolean {
@@ -119,13 +117,12 @@ export function writeJsonOrThrow(key: string, value: unknown): void {
   try {
     localStorage.setItem(key, JSON.stringify(value));
   } catch (err) {
-    const code = isQuotaError(err) ? 'storage_full' : 'storage_unavailable';
     // Le texte vient du catalogue, jamais du moteur JS : c'est ce message qui
     // sera interpolé dans le toast `mutation.*` de l'appelant (cf. C-62).
-    const message =
-      resolveMessage('errors', `api.${code}`, localeStore.locale) ??
-      resolveMessage('errors', 'api.GENERIC_ERROR', localeStore.locale) ??
-      code;
-    throw new ApiError(code, message, err instanceof Error ? err.message : String(err));
+    throw makeApiError(
+      isQuotaError(err) ? 'storage_full' : 'storage_unavailable',
+      err instanceof Error ? err.message : String(err),
+    );
   }
 }
+

@@ -65,6 +65,34 @@ const messageForCode = (code: string): string | null =>
 const genericMessage = (): string => messageForCode('GENERIC_ERROR') ?? 'GENERIC_ERROR';
 
 /**
+ * Lève-toi une erreur métier CATALOGUÉE, au lieu d'une phrase en dur.
+ *
+ * 🔴 POURQUOI (finding C-62). `src/modules/` contient 99
+ * `throw new Error('<littéral>')`, et 75 clés `mutation.*` interpolent
+ * `{{message}}`. Le littéral traverse donc le tuyau entier et s'affiche tel
+ * quel : « Impossible de modifier la tâche : Task with id … not found », ou
+ * « Impossible de créer le lien : localStorage is not defined ». Environ 45 de
+ * ces phrases sont en français écrit en dur — donc identiques en anglais — et
+ * une vingtaine en anglais, donc affichées telles quelles en français.
+ *
+ * `makeApiError` est le remplaçant : il rend une `ApiError` dont le `message`
+ * vient du catalogue (`errors.api.<code>`), exactement comme si le serveur
+ * avait levé `RAISE EXCEPTION '<code>'`. Le contrat de `{{message}}` redevient
+ * vrai — il ne reçoit que du texte de catalogue.
+ *
+ * ⚠️ Un code non catalogué retombe sur le message générique, il ne rend jamais
+ *    le code brut à l'écran. Le code reste dans `ApiError.code`, donc
+ *    l'appelant peut toujours brancher dessus.
+ *
+ * ❌ Ne pas ajouter un `throw new Error('<phrase>')` de plus « par parité »
+ *    avec les voisins d'un fichier : c'est le tuyau qui est le défaut, pas son
+ *    contenu du jour.
+ */
+export function makeApiError(code: string, originalMessage?: string): ApiError {
+  return new ApiError(code, messageForCode(code) ?? genericMessage(), originalMessage ?? code);
+}
+
+/**
  * Forme d'un identifiant d'erreur métier : `seat_limit_reached`, `expired_link`…
  * Volontairement stricte — elle ne peut pas matcher une phrase Postgres, qui
  * contient des espaces, des majuscules ou des guillemets.
