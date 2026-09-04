@@ -228,10 +228,6 @@
     "member": "Membre",
     "tasks": "Tâches"
   },
-  "moduleOnboarding": {
-    "question": "Que voulez-vous gérer ?",
-    "hint": "Choisissez vos modules. Vous pourrez les réactiver à tout moment dans les Réglages."
-  },
   "shareInvite": {
     "alreadyCollab": "Vous collaborez déjà sur « {{name}} ».",
     "expired": "Ce lien d'invitation a expiré. Demandez-en un nouveau.",
