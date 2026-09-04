@@ -15,6 +15,12 @@ import type { Category } from '@/modules/categories';
 import type { TaskList } from '@/modules/lists';
 import { translator } from '@/i18n/useT';
 
+// ⚠️ Namespace `csv` et non `common` : `common` est eager (chunk d'entrée) et
+// ces libellés ne servent qu'aux deux écrans qui exportent. Les routes qui
+// montent un export DOIVENT déclarer 'csv' dans `App.tsx`, sinon les en-têtes
+// sortiraient en clés brutes — c'est ce que verrouille
+// `lazy-namespaces.guard.test.ts`.
+
 /**
  * Échappe une valeur pour CSV : entoure de guillemets si contient virgule,
  * guillemet, ou retour à la ligne. Les guillemets internes sont doublés.
@@ -86,8 +92,8 @@ export function downloadCSV(baseName: string, headers: string[], rows: unknown[]
 
 /** Un en-tête de colonne. */
 const col = (key: string): string => {
-  const t = translator('common').t;
-  return t(`csv.col.${key}` as Parameters<typeof t>[0]);
+  const t = translator('csv').t;
+  return t(`col.${key}` as Parameters<typeof t>[0]);
 };
 
 /** Les en-têtes d'un tableau, dans l'ordre. */
@@ -95,20 +101,20 @@ const cols = (...keys: string[]): string[] => keys.map(col);
 
 /** « Oui » / « Non » (majuscule) — la forme des colonnes booléennes. */
 const bool = (value: boolean): string => {
-  const t = translator('common').t;
-  return t(value ? 'csv.yes' : 'csv.no');
+  const t = translator('csv').t;
+  return t(value ? 'yes' : 'no');
 };
 
 /** « oui » / « non » (minuscule) — la forme des lignes clé/valeur du profil. */
 const boolLower = (value: boolean): string => {
-  const t = translator('common').t;
-  return t(value ? 'csv.yesLower' : 'csv.noLower');
+  const t = translator('csv').t;
+  return t(value ? 'yesLower' : 'noLower');
 };
 
 /** Nom de fichier localisé, suffixé de la date du jour. */
 const fileName = (key: string): string => {
-  const t = translator('common').t;
-  return `${t(`csv.file.${key}` as Parameters<typeof t>[0])}-${todayStr()}.csv`;
+  const t = translator('csv').t;
+  return `${t(`file.${key}` as Parameters<typeof t>[0])}-${todayStr()}.csv`;
 };
 // ═══════════════════════════════════════════════════════════════════
 // Exports par module

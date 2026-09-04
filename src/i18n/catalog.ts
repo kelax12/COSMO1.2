@@ -66,6 +66,7 @@ interface FrModules {
   admin: typeof import('@/locales/fr/admin.json');
   agenda: typeof import('@/locales/fr/agenda.json');
   dashboard: typeof import('@/locales/fr/dashboard.json');
+  csv: typeof import('@/locales/fr/csv.json');
   eventModal: typeof import('@/locales/fr/eventModal.json');
   guide: typeof import('@/locales/fr/guide.json');
   habits: typeof import('@/locales/fr/habits.json');
@@ -97,6 +98,16 @@ interface CatalogShapes {
   errors: typeof frErrors;
   /** Guide d'utilisation — sommaire, sections, étapes, encarts. */
   guide: Shape<'guide'>;
+  /**
+   * En-têtes et libellés des exports CSV.
+   *
+   * 🔴 Namespace À PART, et pas dans `common` : il y vivait, et `common` est
+   * l'un des DEUX catalogues du chunk d'entrée. Ses 1,4 ko bruts partaient
+   * donc chez TOUT visiteur, pour une fonctionnalité qu'on n'atteint que
+   * depuis Réglages → Données ou l'aperçu d'entreprise. Mesuré : l'entrée
+   * passe de 78 023 à 77 556 o gzip, soit **467 o**, en le sortant.
+   */
+  csv: Shape<'csv'>;
   /** Modale d'événement — champs, récurrence, planification, calendrier. */
   eventModal: Shape<'eventModal'>;
   /** Habitudes — liste, tableau de suivi, modale, actions, mur-pub. */
@@ -202,7 +213,7 @@ registry[DEFAULT_LOCALE] = {
  * fantôme que `t()` ne saurait pas typer.
  */
 const NAMESPACES: readonly Namespace[] = [
-  'admin', 'agenda', 'common', 'dashboard', 'errors', 'eventModal', 'guide',
+  'admin', 'agenda', 'common', 'csv', 'dashboard', 'errors', 'eventModal', 'guide',
   'habits', 'invite', 'landing', 'legal', 'okr', 'org', 'premium', 'seo',
   'settings', 'statistics', 'taskModal', 'tasks', 'tutorials',
 ];

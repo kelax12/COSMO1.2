@@ -59,7 +59,7 @@ const StatisticsPage = lazyWithRetry(() => import('@/pages/StatisticsPage'), ['d
 // (`delete-flow.hooks.ts`), dont le toast d'annulation passe par
 // `translator('tasks')`. Importer un seul nom d'un barrel charge tout son
 // graphe : trouvé par `npm run i18n:namespaces -- --pages` le 2026-09-03.
-const SettingsPage = lazyWithRetry(() => import('@/pages/SettingsPage'), ['org', 'settings', 'tasks']);
+const SettingsPage = lazyWithRetry(() => import('@/pages/SettingsPage'), ['csv', 'org', 'settings', 'tasks']);
 const PremiumPage = lazyWithRetry(() => import('@/pages/PremiumPage'), ['premium']);
 const GuidePage = lazyWithRetry(() => import('@/pages/GuidePage'), ['guide', 'seo']);
 const MentionsLegalesPage = lazyWithRetry(() => import('@/pages/MentionsLegalesPage'), ['legal', 'seo']);
@@ -72,7 +72,7 @@ const CGUPage = lazyWithRetry(() => import('@/pages/CGUPage'), ['legal', 'seo'])
 const InvitePage = lazyWithRetry(() => import('@/pages/InvitePage'), ['invite', 'tasks']);
 const AdminPage = lazyWithRetry(() => import('@/pages/AdminPage'), ['admin']);
 const OrganizationOnboardingPage = lazyWithRetry(() => import('@/pages/OrganizationOnboardingPage'), ['org']);
-const OrganizationPage = lazyWithRetry(() => import('@/pages/OrganizationPage'), ['eventModal', 'okr', 'org', 'tasks']);
+const OrganizationPage = lazyWithRetry(() => import('@/pages/OrganizationPage'), ['csv', 'eventModal', 'okr', 'org', 'tasks']);
 const ClaimOrgInvitePage = lazyWithRetry(() => import('@/pages/ClaimOrgInvitePage'), ['org']);
 const NotFoundPage = lazyWithRetry(() => import('@/pages/NotFoundPage'), ['seo']);
 const BlogIndexPage = lazyWithRetry(() => import('@/pages/BlogIndexPage'), ['landing', 'seo']);
