@@ -546,8 +546,24 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
               <p className="text-xl text-slate-300 mb-8 max-w-2xl mx-auto">
                 {t('cta.subtitle')}
               </p>
-              {/* Count-ups : la démo est pré-remplie, chiffres animés (GSAP) */}
-              <div className="flex items-center justify-center gap-8 mb-10 text-slate-300" aria-label={t('cta.statsAria')}>
+              {/*
+                Count-ups : la démo est pré-remplie, chiffres animés (GSAP).
+
+                🔴 `role="img"` N'EST PAS DÉCORATIF ICI. Les trois chiffres et
+                leurs libellés sont `aria-hidden` (ils sont animés, donc lus en
+                cours de route), et le sens est porté par le seul `aria-label`
+                du conteneur. Sans rôle, `aria-label` est INTERDIT sur un `div`
+                (axe : `aria-prohibited-attr`, impact `serious`, mesuré sur la
+                landing le 2026-09-04) : le navigateur l'ignore, et comme les
+                enfants sont masqués, un lecteur d'écran ne recevait
+                strictement RIEN. `role="img"` est le motif canonique d'une
+                composition graphique resumée par un texte de remplacement.
+              */}
+              <div
+                role="img"
+                className="flex items-center justify-center gap-8 mb-10 text-slate-300"
+                aria-label={t('cta.statsAria')}
+              >
                 {[
                   { value: 100, label: t('cta.tasks') },
                   { value: 100, label: t('cta.habits') },
