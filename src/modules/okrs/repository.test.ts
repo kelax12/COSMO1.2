@@ -196,6 +196,54 @@ describe('journal KR — parité démo ↔ Supabase', () => {
     expect(journal()).toHaveLength(MAX_REPS_PER_WRITE);
   });
 
+  // ── C-01 : le rejeu du journal a la restauration ───────────────────
+  //
+  // 🔴 L'ecriture du journal appartient au REPOSITORY, pas au client :
+  // l'arbitrage du 2026-09-03 supprime `useCreateKRCompletion` parce qu'un
+  // INSERT client libre dans un journal append-only est interdit. La borne
+  // B18 doit donc vivre ICI, avec celle de `appendKRReps`.
+
+  it('rejoue le journal d un OKR restaure, en conservant les horodatages', async () => {
+    // Les reecrire a `now()` remettrait les N points d'un coup sur
+    // aujourd'hui : ce n'est pas restaurer un graphique, c'est en inventer un.
+    await repo.restoreCompletions([
+      {
+        id: 'ignore', krId: 'k1', okrId: 'o1', userId: 'demo-user',
+        completedAt: '2026-06-01T10:00:00.000Z', krTitle: 'K', okrTitle: 'O',
+      },
+      {
+        id: 'ignore2', krId: 'k1', okrId: 'o1', userId: 'demo-user',
+        completedAt: '2026-07-01T10:00:00.000Z', krTitle: 'K', okrTitle: 'O',
+      },
+    ]);
+    const rows = journal();
+    expect(rows).toHaveLength(2);
+    expect(rows.map((r) => r.completedAt)).toEqual([
+      '2026-06-01T10:00:00.000Z',
+      '2026-07-01T10:00:00.000Z',
+    ]);
+    // Identifiant NEUF : rien ne reference une ligne de journal, seul son
+    // contenu alimente le graphique.
+    expect(rows.map((r) => r.id)).not.toContain('ignore');
+  });
+
+  it('borne AUSSI le rejeu de restauration a MAX_REPS_PER_WRITE (B18)', async () => {
+    // Le tableau vient d'une lecture, mais il traverse l'etat d'un composant :
+    // sans borne, on rouvrirait par la porte de l'annulation le trou que le
+    // cap a ferme cote ecriture.
+    const flood = Array.from({ length: MAX_REPS_PER_WRITE + 250 }, (_, i) => ({
+      id: `c-${i}`, krId: 'k1', okrId: 'o1', userId: 'demo-user',
+      completedAt: '2026-06-01T10:00:00.000Z', krTitle: 'K', okrTitle: 'O',
+    }));
+    await repo.restoreCompletions(flood);
+    expect(journal()).toHaveLength(MAX_REPS_PER_WRITE);
+  });
+
+  it('un journal vide n ecrit rien', async () => {
+    await repo.restoreCompletions([]);
+    expect(journal()).toHaveLength(0);
+  });
+
   it('borne aussi le retrait symétrique', async () => {
     seedOkrs([okr({ id: 'o1', keyResults: [kr({ id: 'k1', currentValue: 0, targetValue: 100 })] })]);
     await repo.updateKeyResult('o1', 'k1', { currentValue: 50 });

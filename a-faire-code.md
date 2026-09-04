@@ -698,6 +698,15 @@ question est donc rouverte, et **maintenant mesurable**.
 >
 > ❌ Le plafond n'a pas bougé. ⚠️ La marge reste inférieure aux 5 % que
 > demande l'énoncé : l'item n'est PAS clos, il est repassé au vert.
+>
+> 🔴 **Le levier DÉCIDÉ n'a pas été tiré.** L'arbitrage du 2026-09-03 tranche
+> pour **différer Sentry après le premier rendu** (49,3 ko hors du chemin
+> critique, « quatre fois la marge actuelle »), avec son angle mort à combler
+> dans la même PR : un `window.onerror` minimal qui tamponne et rejoue dans
+> Sentry une fois chargé — précisément la fenêtre du bug de `Layout` du
+> 2026-09-02. Rien de tout ça n'est fait. Ce qui précède est un **dépannage**
+> qui a rendu le vert, pas l'exécution de la décision, et il ne dispense pas
+> de la tirer : les 444 o regagnés ne sont pas les 49,3 ko attendus.
 
 **Remesuré le 2026-09-03** sur le build de prod (avec `VITE_SENTRY_DSN`, sinon la garde pèse un
 artefact qui n'existe nulle part) :

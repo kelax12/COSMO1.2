@@ -22,6 +22,7 @@ import {
   mapOkrToDb,
 } from './mappers';
 import { MAX_REPS_PER_WRITE } from '@/modules/kr-completions/constants';
+import type { KRCompletion } from '@/modules/kr-completions/types';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -458,6 +459,38 @@ export class SupabaseOKRsRepository implements IOKRsRepository {
       completed_at: completedAt,
       kr_title: kr.title,
       okr_title: okrTitle,
+    }));
+
+    const { error } = await supabase.from('kr_completions').insert(rows);
+    if (error) throw normalizeApiError(error);
+  }
+
+  /**
+   * C-01 — rejoue le journal d'un OKR restauré. Contrat et raison dans
+   * `IOKRsRepository.restoreCompletions`.
+   *
+   * ⚠️ Les horodatages d'ORIGINE sont conservés, contrairement à
+   * `recordKRReps` qui timestampe à l'instant : c'est tout l'intérêt. Les
+   * réécrire à `now()` remettrait les N points d'un coup sur aujourd'hui, ce
+   * qui n'est pas restaurer un graphique mais en inventer un autre.
+   *
+   * ⚠️ `user_id` vient de la SESSION, jamais du tableau : restaurer ne doit
+   * pas devenir un chemin pour écrire dans le journal de quelqu'un d'autre.
+   * La RLS le vérifie de toute façon.
+   */
+  async restoreCompletions(completions: KRCompletion[]): Promise<void> {
+    if (!supabase || completions.length === 0) return;
+    const user = await getCurrentUser();
+    if (!user) throw new Error('Not authenticated');
+
+    // Même borne que l'écriture normale (faille B18).
+    const rows = completions.slice(0, MAX_REPS_PER_WRITE).map((c) => ({
+      user_id: user.id,
+      kr_id: c.krId,
+      okr_id: c.okrId,
+      completed_at: c.completedAt,
+      kr_title: c.krTitle,
+      okr_title: c.okrTitle,
     }));
 
     const { error } = await supabase.from('kr_completions').insert(rows);

@@ -16,18 +16,23 @@ import React from 'react';
 import { renderHook, waitFor, act } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
-const okrRepo = { create: vi.fn(), delete: vi.fn(), getAll: vi.fn() };
-const journalRepo = { create: vi.fn(), getAll: vi.fn() };
+// 🔴 UN SEUL repository est mocke, et c'est le point du correctif : le hook ne
+// doit JAMAIS atteindre `getKRCompletionsRepository`. S'il y revenait, ce mock
+// absent le ferait echouer bruyamment au lieu de le laisser passer.
+const okrRepo = {
+  create: vi.fn(),
+  delete: vi.fn(),
+  getAll: vi.fn(),
+  restoreCompletions: vi.fn(),
+};
 
 vi.mock('@/lib/repository.factory', () => ({
   getOKRsRepository: () => okrRepo,
-  getKRCompletionsRepository: () => journalRepo,
 }));
 vi.mock('sonner', () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
 vi.mock('@sentry/react', () => ({ captureException: vi.fn() }));
 
 import { useRestoreOkrWithJournal } from './restore-journal.hooks';
-import { MAX_REPS_PER_WRITE } from '@/modules/kr-completions/constants';
 import type { OKR } from './types';
 import type { KRCompletion } from '@/modules/kr-completions/types';
 
@@ -56,7 +61,7 @@ function wrapper() {
 
 beforeEach(() => {
   okrRepo.create.mockReset().mockResolvedValue(okr);
-  journalRepo.create.mockReset().mockImplementation(async (input) => ({ ...input, id: 'new' }));
+  okrRepo.restoreCompletions.mockReset().mockResolvedValue(undefined);
 });
 
 describe('useRestoreOkrWithJournal (C-01)', () => {
@@ -68,15 +73,34 @@ describe('useRestoreOkrWithJournal (C-01)', () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
     // C'est LE défaut : l'objectif revenait, le journal non.
-    expect(journalRepo.create).toHaveBeenCalledTimes(3);
-    const written = journalRepo.create.mock.calls.map(([c]) => c.completedAt);
-    expect(written).toEqual(completions.map((c) => c.completedAt));
+    expect(okrRepo.restoreCompletions).toHaveBeenCalledWith(completions);
+  });
+
+  it('passe par le REPOSITORY OKR, jamais par le journal directement', async () => {
+    // 🔴 L'arbitrage du 2026-09-03 supprime `useCreateKRCompletion` parce que
+    // c'est « un INSERT client libre dans un journal append-only ». Appeler
+    // `getKRCompletionsRepository()` depuis ici garderait le défaut en
+    // changeant son nom. Le hook ne connaît QUE le repository OKR.
+    const { readFileSync } = await import('node:fs');
+    const { join } = await import('node:path');
+    const src = readFileSync(
+      join(process.cwd(), 'src/modules/okrs/restore-journal.hooks.ts'),
+      'utf-8',
+    );
+    const code = src
+      .split(String.fromCharCode(10))
+      .map((line) => {
+        const at = line.indexOf('//');
+        return at === -1 ? line : line.slice(0, at);
+      })
+      .join(String.fromCharCode(10));
+    expect(code).not.toContain('getKRCompletionsRepository');
   });
 
   it('recree l objectif sous SON identifiant, AVANT le journal', async () => {
     const order: string[] = [];
     okrRepo.create.mockImplementation(async () => { order.push('okr'); return okr; });
-    journalRepo.create.mockImplementation(async (input) => { order.push('journal'); return { ...input, id: 'x' }; });
+    okrRepo.restoreCompletions.mockImplementation(async () => { order.push('journal'); });
 
     const { result } = renderHook(() => useRestoreOkrWithJournal(), { wrapper: wrapper() });
     act(() => { result.current.mutate({ okr, completions: [completion(0)] }); });
@@ -93,36 +117,20 @@ describe('useRestoreOkrWithJournal (C-01)', () => {
     expect(options).toEqual({ restoreId: 'okr-1' });
   });
 
-  it('conserve les champs du journal a l identique', async () => {
+  it('transmet les champs du journal a l identique', async () => {
     const { result } = renderHook(() => useRestoreOkrWithJournal(), { wrapper: wrapper() });
     act(() => { result.current.mutate({ okr, completions: [completion(0)] }); });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-    expect(journalRepo.create).toHaveBeenCalledWith({
-      krId: 'kr-1',
-      okrId: 'okr-1',
-      userId: 'u-1',
-      completedAt: '2026-09-01T10:00:00.000Z',
-      krTitle: 'Dix clients',
-      okrTitle: 'Lancer COSMO',
-    });
-    // ⚠️ L'identifiant de la LIGNE de journal n'est pas restaure, et c'est
-    // voulu : rien ne reference une ligne de `kr_completions`, seul son
-    // contenu alimente le graphique.
-    expect(journalRepo.create.mock.calls[0][0]).not.toHaveProperty('id');
-  });
-
-  it('BORNE le rejeu, comme l ecriture normale (faille B18)', async () => {
-    // Ce tableau vient d'une lecture, mais il traverse l'etat d'un composant :
-    // c'est un objet que des devtools peuvent enrichir. Sans borne, on
-    // rouvrirait par la porte de l'annulation le trou que le cap a ferme cote
-    // ecriture.
-    const flood = Array.from({ length: MAX_REPS_PER_WRITE + 250 }, (_, i) => completion(i));
-    const { result } = renderHook(() => useRestoreOkrWithJournal(), { wrapper: wrapper() });
-    act(() => { result.current.mutate({ okr, completions: flood }); });
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
-
-    expect(journalRepo.create).toHaveBeenCalledTimes(MAX_REPS_PER_WRITE);
+    expect(okrRepo.restoreCompletions).toHaveBeenCalledWith([
+      expect.objectContaining({
+        krId: 'kr-1',
+        okrId: 'okr-1',
+        completedAt: '2026-09-01T10:00:00.000Z',
+        krTitle: 'Dix clients',
+        okrTitle: 'Lancer COSMO',
+      }),
+    ]);
   });
 
   it('reste utile quand aucun journal n a pu etre capture', async () => {
@@ -131,7 +139,7 @@ describe('useRestoreOkrWithJournal (C-01)', () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
     expect(okrRepo.create).toHaveBeenCalledTimes(1);
-    expect(journalRepo.create).not.toHaveBeenCalled();
+    expect(okrRepo.restoreCompletions).toHaveBeenCalledWith([]);
   });
 
   it('un echec de restauration ne passe PAS en silence', async () => {
