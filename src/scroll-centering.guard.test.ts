@@ -41,8 +41,50 @@ import { join } from 'node:path';
 
 const SRC = join(process.cwd(), 'src');
 
-/** Un attribut `className` qui combine centrage vertical et defilement. */
-const TRAP = /className="[^"]*\bitems-center\b[^"]*\boverflow-y-auto\b[^"]*"|className="[^"]*\boverflow-y-auto\b[^"]*\bitems-center\b[^"]*"/;
+/**
+ * Un attribut `className` qui combine centrage vertical et defilement.
+ *
+ * 🔴 LA PREMIERE VERSION NE LISAIT QUE `className="..."`. Elle a ete elargie
+ * le 2026-09-04, en faisant le balayage systematique que l item reclamait :
+ * trois formes ecrivent des classes dans ce depot, la garde n en voyait qu une.
+ *
+ *     className="items-center overflow-y-auto"        <- vue
+ *     className={`items-center ${x} overflow-y-auto`} <- AVEUGLE
+ *     className={cn('items-center', 'overflow-y-auto')} <- AVEUGLE
+ *
+ * Le balayage a rendu ZERO contrevenant sous les trois formes : l elargissement
+ * ne masque donc aucun defaut existant, il ferme la porte par laquelle le
+ * prochain serait entre sans reveiller personne.
+ *
+ * ⚠️ On lit la valeur BRUTE de l attribut, interpolations comprises. Une classe
+ * assemblee a l execution reste invisible — limite assumee d une garde
+ * statique, et elle est la meme pour les trois formes.
+ */
+const CLASS_ATTR = /className=(?:"([^"]*)"|\{`([^`]*)`\}|\{cn\(([^]*?)\)\})/g;
+
+/**
+ * Les deux classes dans la MEME valeur d attribut, quel que soit l ordre.
+ *
+ * ⚠️ On ne coupe PAS sur les espaces : dans un `cn(...)` les classes sont
+ * entourees de quotes et suivies de virgules, si bien que decouper par espaces
+ * rend `items-center',` — qui ne vaut pas `items-center`. Ce detail a fait
+ * echouer le temoin `cn()` a la premiere ecriture, et sans ce temoin la garde
+ * serait repartie en croyant couvrir une forme qu elle ne voyait pas.
+ */
+function isTrap(value: string): boolean {
+  const tokens = new Set(value.split(/[^A-Za-z0-9_:/.[\]%-]+/));
+  return tokens.has('items-center') && tokens.has('overflow-y-auto');
+}
+
+const TRAP = {
+  test(source: string): boolean {
+    CLASS_ATTR.lastIndex = 0;
+    for (let m = CLASS_ATTR.exec(source); m; m = CLASS_ATTR.exec(source)) {
+      if (isTrap([m[1], m[2], m[3]].filter(Boolean).join(' '))) return true;
+    }
+    return false;
+  },
+};
 
 function walk(dir: string, base = ''): string[] {
   const out: string[] = [];
@@ -60,9 +102,22 @@ describe('garde — pas de centrage vertical sur un conteneur defilant (C-56)', 
     // Sans cette sonde, une regex cassee rendrait la garde verte pour toujours.
     expect(TRAP.test(String.raw`className="fixed inset-0 flex items-center justify-center overflow-y-auto p-4"`)).toBe(true);
     expect(TRAP.test(String.raw`className="fixed inset-0 overflow-y-auto flex items-center p-4"`)).toBe(true);
+    // ... et sous les deux formes qui lui echappaient avant le 2026-09-04.
+    expect(TRAP.test('className={`fixed inset-0 flex items-center ${x} overflow-y-auto`}')).toBe(
+      true,
+    );
+    expect(TRAP.test(String.raw`className={cn('flex items-center', 'overflow-y-auto')}`)).toBe(true);
     // ... et qu il epargne les deux sorties mesurees comme correctes.
     expect(TRAP.test(String.raw`className="fixed inset-0 overflow-y-auto"`)).toBe(false);
     expect(TRAP.test(String.raw`className="flex min-h-full items-center justify-center p-4"`)).toBe(false);
+    // ⚠️ Le motif de SORTIE est deux attributs distincts : defilement dehors,
+    // centrage dans l enfant. La garde doit les laisser passer, sinon elle
+    // interdit sa propre correction.
+    expect(
+      TRAP.test(
+        String.raw`<div className=\"fixed inset-0 overflow-y-auto\"><div className=\"flex min-h-full items-center\">`,
+      ),
+    ).toBe(false);
   });
 
   it('aucun composant ne combine les deux sur le meme element', () => {

@@ -5,7 +5,7 @@
 import { supabase } from '@/lib/supabase';
 import { warnIfTruncated } from '@/lib/pagination.warning';
 import { getCurrentUserId } from '@/lib/auth-user';
-import { normalizeApiError } from '@/lib/normalizeApiError';
+import { makeApiError, normalizeApiError } from '@/lib/normalizeApiError';
 import { ITeamOKRsRepository } from './repository';
 import {
   TeamOKR,
@@ -124,7 +124,7 @@ export class SupabaseTeamOKRsRepository implements ITeamOKRsRepository {
   async create(orgId: string, input: CreateTeamOKRInput): Promise<TeamOKR> {
     if (!supabase) throw new Error('Supabase not configured');
     const uid = await getCurrentUserId();
-    if (!uid) throw new Error('Not authenticated');
+    if (!uid) throw makeApiError('not_authenticated');
 
     // Ids générés client + inserts SANS `.select()` de représentation : une
     // fois l'OKR rattaché à des équipes hors du périmètre du créateur, la

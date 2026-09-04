@@ -118,7 +118,7 @@ describe('SupabaseHabitsRepository', () => {
     supabaseMock.user = null;
     await expect(
       repo.createHabit({ name: 'X', frequency: 'daily', estimatedTime: 0, color: 'c', icon: 'i' }),
-    ).rejects.toThrow('Not authenticated');
+    ).rejects.toMatchObject({ code: 'not_authenticated' });
   });
 
   it('getById: PGRST116 → null', async () => {

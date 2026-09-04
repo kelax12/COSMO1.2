@@ -4,6 +4,7 @@ import { Habit, CreateHabitInput, UpdateHabitInput } from './types';
 import { PaginationParams, PaginatedResult, DEFAULT_PAGE_SIZE } from '@/lib/pagination.types';
 import { localizeSeed } from '@/lib/seed-i18n';
 import { safeGetItem, safeParseArray, writeJsonOrThrow } from '@/lib/safe-json';
+import { makeApiError } from '@/lib/normalizeApiError';
 
 const STORAGE_KEY = 'cosmo_demo_habits';
 
@@ -134,7 +135,7 @@ export class LocalStorageHabitsRepository implements IHabitsRepository {
   async updateHabit(id: string, updates: UpdateHabitInput): Promise<Habit> {
     const habits = this.getHabits();
     const index = habits.findIndex(h => h.id === id);
-    if (index === -1) throw new Error('Habit not found');
+    if (index === -1) throw makeApiError('not_found');
 
     const updatedHabit = { ...habits[index], ...updates };
     habits[index] = updatedHabit;
@@ -151,7 +152,7 @@ export class LocalStorageHabitsRepository implements IHabitsRepository {
   async toggleCompletion(id: string, date: string): Promise<Habit> {
     const habits = this.getHabits();
     const index = habits.findIndex(h => h.id === id);
-    if (index === -1) throw new Error('Habit not found');
+    if (index === -1) throw makeApiError('not_found');
 
     const habit = habits[index];
     const completions = { ...habit.completions };

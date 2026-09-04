@@ -16,6 +16,7 @@ import type { KeyOf } from '@/i18n/catalog';
 import { getOrgSubscription } from './org-billing.repository';
 import type { OrgSubscription } from './org-billing.types';
 import type { OrgBillingInterval, OrgTierKey } from './premium-config';
+import { ApiError, makeApiError } from '@/lib/normalizeApiError';
 
 export const orgBillingKeys = {
   all: ['org-billing'] as const,
@@ -40,7 +41,7 @@ async function redirectToStripe(
   if (!supabase) throw new Error('Supabase not configured');
 
   const { data: { session } } = await supabase.auth.getSession();
-  if (!session) throw new Error('not_authenticated');
+  if (!session) throw makeApiError('not_authenticated');
 
   const { data, error } = await supabase.functions.invoke(fn, {
     headers: { Authorization: `Bearer ${session.access_token}` },
@@ -53,9 +54,9 @@ async function redirectToStripe(
   // Sans cette extraction, tous ces cas retombaient sur le message générique
   // « Impossible de contacter Stripe », y compris quand Stripe répondait très
   // bien. On dit à l'utilisateur ce qui s'est réellement passé.
-  if (error) throw new Error((await edgeErrorCode(error)) ?? 'invoke_failed');
-  if (data?.error) throw new Error(data.error as string);
-  if (!data?.url) throw new Error('no_url');
+  if (error) throw makeApiError((await edgeErrorCode(error)) ?? 'invoke_failed');
+  if (data?.error) throw makeApiError(data.error as string);
+  if (!data?.url) throw makeApiError('no_url');
 
   window.location.href = data.url as string;
 }
@@ -81,6 +82,21 @@ async function edgeErrorCode(error: unknown): Promise<string | null> {
  * fonctionne, donc l'utilisateur a une action possible tout de suite. Un
  * message générique le laisserait croire que le paiement est en panne.
  */
+/**
+ * Le CODE d'une erreur, jamais son texte affichable.
+ *
+ * 🔴 POURQUOI CE HELPER (C-62). La table ci-dessous etait indexee par
+ * `err.message`, ce qui n'a marche que tant que ces refus voyageaient dans un
+ * `throw new Error('<code>')` — c'est-a-dire tant que le code SERVAIT AUSSI de
+ * message affichable. C'est exactement le tuyau que C-62 ferme : depuis, le
+ * code est dans `ApiError.code` et `message` porte le texte du catalogue.
+ *
+ * Indexer par `message` reviendrait donc a chercher « Une erreur inattendue est
+ * survenue. » dans une table de codes : introuvable, repli generique, et un
+ * ecran qui cesse de dire ce qui s'est reellement passe sans que rien n'echoue.
+ */
+const errorCode = (err: Error): string => (err instanceof ApiError ? err.code : err.message);
+
 const CHECKOUT_ERROR_KEYS: Record<string, KeyOf<'org'>> = {
   already_subscribed: 'billing.alreadySubscribed',
   withdrawal_consent_required: 'billing.withdrawalRequired',
@@ -134,7 +150,7 @@ export const useStartOrgCheckout = () =>
       // utilisée par src/modules/organizations/hooks.ts. Hors composant, on ne
       // peut pas appeler le hook `useT`.
       const { t } = translator('org');
-      toast.error(t(CHECKOUT_ERROR_KEYS[err.message] ?? 'billing.error'));
+      toast.error(t(CHECKOUT_ERROR_KEYS[errorCode(err)] ?? 'billing.error'));
     },
   });
 
@@ -156,7 +172,7 @@ export const useCancelAndRefundOrg = (onDone?: () => void) =>
     mutationFn: async ({ orgId }: { orgId: string }) => {
       if (!supabase) throw new Error('Supabase not configured');
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error('not_authenticated');
+      if (!session) throw makeApiError('not_authenticated');
 
       const { data, error } = await supabase.functions.invoke('stripe-org-refund', {
         headers: { Authorization: `Bearer ${session.access_token}` },
@@ -179,7 +195,7 @@ export const useCancelAndRefundOrg = (onDone?: () => void) =>
     },
     onError: (err: Error) => {
       const { t } = translator('org');
-      toast.error(t(CHECKOUT_ERROR_KEYS[err.message] ?? 'billing.error'));
+      toast.error(t(CHECKOUT_ERROR_KEYS[errorCode(err)] ?? 'billing.error'));
     },
   });
 

@@ -59,7 +59,7 @@ describe('SupabaseOKRsRepository — lecture', () => {
     supabaseMock.queueTable('okrs', { data: [] });
     await expect(
       repo.getPage({ cursor: 'aaa","bbb")', cursorDate: VALID_ISO }),
-    ).rejects.toThrow('Invalid pagination cursor');
+    ).rejects.toMatchObject({ code: 'invalid_input' });
     expect(supabaseMock.argsOf('okrs', 'or')).toBeUndefined();
   });
 });
@@ -75,7 +75,7 @@ describe('SupabaseOKRsRepository — syncKRsToTable (M-1)', () => {
         startDate: '2026-01-01', endDate: '2026-12-31',
         keyResults: [{ ...jsonbKR, id: 'aaa","bbb")', currentValue: 0 }],
       } as never),
-    ).rejects.toThrow('Invalid key result id');
+    ).rejects.toMatchObject({ code: 'invalid_input' });
 
     // upsert a eu lieu (1 requête key_results), mais JAMAIS le delete not.in
     const krQueries = supabaseMock.queries.filter((q) => q.table === 'key_results');
@@ -148,7 +148,7 @@ describe('SupabaseOKRsRepository — updateKeyResult & journal append-only', () 
     supabaseMock.queueTable('okrs', { data: null, error: { code: 'PGRST116' } });
     await expect(
       repo.updateKeyResult('okr1', 'legacy-123', { currentValue: 1 }),
-    ).rejects.toThrow('OKR with id okr1 not found');
+    ).rejects.toMatchObject({ code: 'not_found' });
     // Preuve du routage : aucune requête key_results directe (chemin table UUID)
     expect(supabaseMock.queries[0].table).toBe('okrs');
   });

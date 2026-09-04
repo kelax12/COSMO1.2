@@ -90,6 +90,6 @@ describe('SupabaseListsRepository', () => {
 
   it('delete: requires auth and double-scopes (V15)', async () => {
     supabaseMock.user = null;
-    await expect(repo.delete('l1')).rejects.toThrow('Not authenticated');
+    await expect(repo.delete('l1')).rejects.toMatchObject({ code: 'not_authenticated' });
   });
 });

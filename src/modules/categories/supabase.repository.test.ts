@@ -79,6 +79,6 @@ describe('SupabaseCategoriesRepository', () => {
 
   it('create: rejects when not authenticated', async () => {
     supabaseMock.user = null;
-    await expect(repo.create({ name: 'X', color: 'red' })).rejects.toThrow('Not authenticated');
+    await expect(repo.create({ name: 'X', color: 'red' })).rejects.toMatchObject({ code: 'not_authenticated' });
   });
 });

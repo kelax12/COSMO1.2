@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { getCurrentUser } from '@/lib/auth-user';
-import { normalizeApiError } from '@/lib/normalizeApiError';
+import { makeApiError, normalizeApiError } from '@/lib/normalizeApiError';
 import { ITasksRepository, ToggleCompleteResult } from './repository';
 import { Task, CreateTaskInput, UpdateTaskInput, TaskFilters, TaskDependency } from './types';
 import { TaskRow, TaskDbInput, mapTaskFromDb, mapTaskToDb } from './mappers';
@@ -252,7 +252,7 @@ export class SupabaseTasksRepository implements ITasksRepository {
   async create(input: CreateTaskInput, options?: CreateOptions): Promise<Task> {
     if (!supabase) throw new Error('Supabase not configured');
     const user = await getCurrentUser();
-    if (!user) throw new Error('Not authenticated');
+    if (!user) throw makeApiError('not_authenticated');
     // `options.restoreId` ne vient JAMAIS d'un payload de formulaire :
     // c'est un second argument, reserve aux « Annuler » (R-08). La
     // whitelist `mapToDb` et le `user_id` pose depuis la session sont

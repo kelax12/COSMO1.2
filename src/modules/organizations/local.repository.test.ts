@@ -142,8 +142,8 @@ describe('LocalStorageOrganizationsRepository (démo, multi-org v2)', () => {
   });
 
   it('requestJoin : erreur générique sur code inconnu, refus si déjà membre', async () => {
-    await expect(repo.requestJoin('COSMO-ZZZZZZ')).rejects.toThrow('Code invalide');
-    await expect(repo.requestJoin('COSMO-DEMO42')).rejects.toThrow(/déjà membre/);
+    await expect(repo.requestJoin('COSMO-ZZZZZZ')).rejects.toMatchObject({ code: 'invalid_link' });
+    await expect(repo.requestJoin('COSMO-DEMO42')).rejects.toMatchObject({ code: 'already_a_member' });
   });
 
   // ─── Pyramide (v2, lot 1b) ──────────────────────────────────────────
@@ -167,7 +167,7 @@ describe('LocalStorageOrganizationsRepository (démo, multi-org v2)', () => {
   });
 
   it('setMemberManager : refuse les cycles (Marie sous Jean, son subordonné)', async () => {
-    await expect(repo.setMemberManager(DEMO_ORG_ID, 'friend-1', 'friend-2')).rejects.toThrow(/cycle/i);
+    await expect(repo.setMemberManager(DEMO_ORG_ID, 'friend-1', 'friend-2')).rejects.toMatchObject({ code: 'hierarchy_cycle' });
   });
 
   it('setMemberManager : refuse un responsable hors org et soi-même', async () => {
@@ -178,7 +178,7 @@ describe('LocalStorageOrganizationsRepository (démo, multi-org v2)', () => {
   it('setMemberManager : non-admin limité à son sous-arbre (Atelier Lune)', async () => {
     await seedSecondOrg(repo);
     // Dans Atelier Lune, demo-user est membre sans subordonnés → aucun droit.
-    await expect(repo.setMemberManager(SECOND_ORG_ID, 'user-theo', 'demo-user')).rejects.toThrow(/sous vous/);
+    await expect(repo.setMemberManager(SECOND_ORG_ID, 'user-theo', 'demo-user')).rejects.toMatchObject({ code: 'out_of_scope' });
   });
 
   it('removeMember re-parente les subordonnés au grand-parent', async () => {

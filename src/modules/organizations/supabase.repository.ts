@@ -13,7 +13,7 @@ import { supabase } from '@/lib/supabase';
 import { fetchInChunks } from '@/lib/in-chunks';
 import { warnIfTruncated } from '@/lib/pagination.warning';
 import { getCurrentUserId } from '@/lib/auth-user';
-import { normalizeApiError } from '@/lib/normalizeApiError';
+import { makeApiError, normalizeApiError } from '@/lib/normalizeApiError';
 import { IOrganizationsRepository } from './repository';
 import { MyOrganization, Organization, OrgMember, OrgJoinRequest, OrgRole, UpdateOrganizationInput, OrgInviteLink, OrgInvitation, OrgRemovalNotice, OrgInbox } from './types';
 import { mapOrgInbox, type OrgInboxRow } from './inbox.repository';
@@ -469,7 +469,7 @@ export class SupabaseOrganizationsRepository implements IOrganizationsRepository
   async createInviteLink(orgId: string, managerId: string | null): Promise<OrgInviteLink> {
     if (!supabase) throw new Error('Supabase not configured');
     const uid = await getCurrentUserId();
-    if (!uid) throw new Error('Not authenticated');
+    if (!uid) throw makeApiError('not_authenticated');
     const { data, error } = await supabase
       .from('org_invite_links')
       .insert({ org_id: orgId, manager_id: managerId, created_by: uid })
@@ -504,7 +504,7 @@ export class SupabaseOrganizationsRepository implements IOrganizationsRepository
     const { data, error } = await supabase.rpc('claim_org_invite', { p_token: token });
     if (error) throw normalizeApiError(error);
     const row = (Array.isArray(data) ? data[0] : data) as { org_id: string; org_name: string } | null;
-    if (!row) throw new Error('invalid_link');
+    if (!row) throw makeApiError('invalid_link');
     return { orgId: row.org_id, orgName: row.org_name };
   }
 

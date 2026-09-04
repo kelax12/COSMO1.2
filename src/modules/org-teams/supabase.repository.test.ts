@@ -107,7 +107,7 @@ describe('SupabaseOrgTeamsRepository', () => {
 
   it('createTeam: rejette si non authentifié, sans INSERT', async () => {
     supabaseMock.user = null;
-    await expect(repo.createTeam('org1', { name: 'X' })).rejects.toThrow('Not authenticated');
+    await expect(repo.createTeam('org1', { name: 'X' })).rejects.toMatchObject({ code: 'not_authenticated' });
     expect(supabaseMock.queries).toHaveLength(0);
   });
 

@@ -41,6 +41,7 @@ import {
 import { localizeSeed } from '@/lib/seed-i18n';
 import { DEPENDENCY_ERRORS, makeDependencyError } from '@/modules/tasks/dependency-errors';
 import { safeGetItem, safeSetItem, writeJsonOrThrow } from '@/lib/safe-json';
+import { makeApiError } from '@/lib/normalizeApiError';
 
 const DEMO_ORG_ID = 'org-demo-1';
 const DEMO_USER_ID = 'demo-user';
@@ -385,7 +386,7 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
   async updateProject(projectId: string, input: UpdateTeamProjectInput): Promise<TeamProject> {
     const projects = this.getProjectsArray();
     const p = projects.find((x) => x.id === projectId);
-    if (!p) throw new Error('Projet introuvable');
+    if (!p) throw makeApiError('not_found');
     if (input.name !== undefined) p.name = input.name;
     if (input.color !== undefined) p.color = input.color;
     if (input.teamId !== undefined) p.teamId = input.teamId;
@@ -442,7 +443,7 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
   async updateTask(taskId: string, input: UpdateTeamTaskInput): Promise<TeamTask> {
     const tasks = this.getTasksArray();
     const task = tasks.find((x) => x.id === taskId);
-    if (!task) throw new Error('Tâche introuvable');
+    if (!task) throw makeApiError('not_found');
     if (input.name !== undefined) task.name = input.name;
     if (input.description !== undefined) task.description = input.description;
     if (input.priority !== undefined) task.priority = input.priority;
@@ -550,7 +551,7 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
   async updateSubtask(subtaskId: string, input: UpdateTeamSubtaskInput): Promise<TeamSubtask> {
     const all = this.getSubtasksArray();
     const subtask = all.find((s) => s.id === subtaskId);
-    if (!subtask) throw new Error('Sous-tâche introuvable');
+    if (!subtask) throw makeApiError('not_found');
     if (input.title !== undefined) subtask.title = input.title;
     if (input.completed !== undefined) subtask.completed = input.completed;
     if (input.position !== undefined) subtask.position = input.position;
@@ -587,7 +588,7 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
     // démo accepterait « bug » et « Bug » là où la prod renverrait une erreur.
     const wanted = input.name.trim().toLowerCase();
     if (all.some((l) => l.name.trim().toLowerCase() === wanted)) {
-      throw new Error('Ce label existe déjà');
+      throw makeApiError('duplicate_label');
     }
     const label: TeamLabel = {
       id: crypto.randomUUID(),
@@ -604,7 +605,7 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
   async updateLabel(labelId: string, input: UpdateTeamLabelInput): Promise<TeamLabel> {
     const all = this.getLabelsArray();
     const label = all.find((l) => l.id === labelId);
-    if (!label) throw new Error('Label introuvable');
+    if (!label) throw makeApiError('not_found');
     if (input.name !== undefined) label.name = input.name.trim();
     if (input.color !== undefined) label.color = input.color;
     this.saveLabels(all);

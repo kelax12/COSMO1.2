@@ -4,7 +4,7 @@
 
 import { supabase } from '@/lib/supabase';
 import { getCurrentUser } from '@/lib/auth-user';
-import { normalizeApiError } from '@/lib/normalizeApiError';
+import { makeApiError, normalizeApiError } from '@/lib/normalizeApiError';
 import { IListsRepository } from './repository';
 import { TaskList, CreateListInput, UpdateListInput } from './types';
 import { warnIfTruncated } from '@/lib/pagination.warning';
@@ -112,7 +112,7 @@ export class SupabaseListsRepository implements IListsRepository {
   async create(input: CreateListInput, options?: CreateOptions): Promise<TaskList> {
     if (!supabase) throw new Error('Supabase not configured');
     const user = await getCurrentUser();
-    if (!user) throw new Error('Not authenticated');
+    if (!user) throw makeApiError('not_authenticated');
 
     // Backfill (#XX) : les listes jamais réordonnées manuellement n'ont pas
     // de `position` et retombent sur le tri alphabétique (cf. mig. 021). Sans
@@ -156,7 +156,7 @@ export class SupabaseListsRepository implements IListsRepository {
   async update(id: string, updates: UpdateListInput): Promise<TaskList> {
     if (!supabase) throw new Error('Supabase not configured');
     const user = await getCurrentUser();
-    if (!user) throw new Error('Not authenticated');
+    if (!user) throw makeApiError('not_authenticated');
     const dbUpdates = this.mapToDb(updates);
 
     const { data, error } = await supabase
@@ -174,7 +174,7 @@ export class SupabaseListsRepository implements IListsRepository {
   async delete(id: string): Promise<void> {
     if (!supabase) throw new Error('Supabase not configured');
     const user = await getCurrentUser();
-    if (!user) throw new Error('Not authenticated');
+    if (!user) throw makeApiError('not_authenticated');
     const { error } = await supabase
       .from('lists')
       .delete()

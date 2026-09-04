@@ -80,7 +80,7 @@ describe('SupabaseEventsRepository', () => {
 
     supabaseMock.reset();
     supabaseMock.user = null;
-    await expect(repo.create({ title: 'X', start: 'a', end: 'b' })).rejects.toThrow('Not authenticated');
+    await expect(repo.create({ title: 'X', start: 'a', end: 'b' })).rejects.toMatchObject({ code: 'not_authenticated' });
   });
 
   it('update: mapEventToDb whitelist drops forged user_id (anti-mass-assignment V1)', async () => {

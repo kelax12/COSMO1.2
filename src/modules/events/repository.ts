@@ -9,6 +9,7 @@ import { selectEventsInWindow } from './window';
 import { isEnglishSeed, localizeSeed } from '@/lib/seed-i18n';
 import type { CreateOptions } from '@/lib/restore-id';
 import { safeGetItem, safeParseArray, writeJsonOrThrow } from '@/lib/safe-json';
+import { makeApiError } from '@/lib/normalizeApiError';
 
 // ═══════════════════════════════════════════════════════════════════
 // DEMO DATA
@@ -352,7 +353,7 @@ export class LocalStorageEventsRepository implements IEventsRepository {
         return updated;
       }
     }
-    throw new Error(`Event with id ${id} not found`);
+    throw makeApiError('not_found');
   }
 
   async delete(id: string): Promise<void> {
@@ -370,7 +371,7 @@ export class LocalStorageEventsRepository implements IEventsRepository {
           return;
         }
       }
-      throw new Error(`Event with id ${id} not found`);
+      throw makeApiError('not_found');
     }
 
     this.saveEvents(filtered);

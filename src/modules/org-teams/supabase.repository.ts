@@ -5,7 +5,7 @@
 import { supabase } from '@/lib/supabase';
 import { warnIfTruncated } from '@/lib/pagination.warning';
 import { getCurrentUserId } from '@/lib/auth-user';
-import { normalizeApiError } from '@/lib/normalizeApiError';
+import { makeApiError, normalizeApiError } from '@/lib/normalizeApiError';
 import { IOrgTeamsRepository } from './repository';
 import { OrgTeam, OrgTeamMember, CreateOrgTeamInput } from './types';
 
@@ -65,7 +65,7 @@ export class SupabaseOrgTeamsRepository implements IOrgTeamsRepository {
   async createTeam(orgId: string, input: CreateOrgTeamInput): Promise<OrgTeam> {
     if (!supabase) throw new Error('Supabase not configured');
     const uid = await getCurrentUserId();
-    if (!uid) throw new Error('Not authenticated');
+    if (!uid) throw makeApiError('not_authenticated');
     // Whitelist explicite — org_id/created_by jamais depuis l'input.
     const { data, error } = await supabase
       .from('org_teams')

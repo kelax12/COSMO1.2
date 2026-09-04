@@ -8,6 +8,7 @@
 // GoTrue porte tout l'état : la liste des facteurs et le niveau d'assurance
 // se demandent au serveur, jamais au localStorage.
 import { supabase } from '@/lib/supabase';
+import { makeApiError } from '@/lib/normalizeApiError';
 
 /** Ce que la page `/admin` doit afficher, avant toute requête de stats. */
 export type AdminGateState = 'loading' | 'not-admin' | 'enrol' | 'challenge' | 'ready';
@@ -116,7 +117,7 @@ export async function startTotpEnrolment(friendlyName: string): Promise<TotpEnro
   const qrSvg = data?.totp?.qr_code;
   const secret = data?.totp?.secret;
   if (!factorId || !qrSvg || !secret) {
-    throw new Error('mfa_enrol_malformed_response');
+    throw makeApiError('mfa_enrol_malformed_response');
   }
 
   return { factorId, qrSvg, secret };

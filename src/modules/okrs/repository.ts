@@ -11,6 +11,7 @@ import { KRCompletion } from '@/modules/kr-completions/types';
 import { isEnglishSeed } from '@/lib/seed-i18n';
 import type { CreateOptions } from '@/lib/restore-id';
 import { safeGetItem, safeParseArray, writeJsonOrThrow } from '@/lib/safe-json';
+import { makeApiError } from '@/lib/normalizeApiError';
 
 // ═══════════════════════════════════════════════════════════════════
 // DEMO DATA
@@ -313,7 +314,7 @@ export class LocalStorageOKRsRepository implements IOKRsRepository {
     const index = okrs.findIndex(o => o.id === id);
 
     if (index === -1) {
-      throw new Error(`OKR with id ${id} not found`);
+      throw makeApiError('not_found');
     }
 
     // Snapshot AVANT update : pour calculer le delta de currentValue par KR
@@ -446,7 +447,7 @@ export class LocalStorageOKRsRepository implements IOKRsRepository {
     const filtered = okrs.filter(o => o.id !== id);
 
     if (filtered.length === okrs.length) {
-      throw new Error(`OKR with id ${id} not found`);
+      throw makeApiError('not_found');
     }
 
     this.saveOKRs(filtered);
@@ -480,14 +481,14 @@ export class LocalStorageOKRsRepository implements IOKRsRepository {
     const okrIndex = okrs.findIndex(o => o.id === okrId);
 
     if (okrIndex === -1) {
-      throw new Error(`OKR with id ${okrId} not found`);
+      throw makeApiError('not_found');
     }
 
     const okr = okrs[okrIndex];
     const krIndex = okr.keyResults.findIndex(kr => kr.id === keyResultId);
 
     if (krIndex === -1) {
-      throw new Error(`KeyResult with id ${keyResultId} not found`);
+      throw makeApiError('not_found');
     }
 
     // Snapshot before update — capture le currentValue d'origine pour delta

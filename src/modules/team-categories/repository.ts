@@ -6,6 +6,7 @@ import { TeamCategory, CreateTeamCategoryInput, UpdateTeamCategoryInput } from '
 import { TEAM_CATEGORIES_STORAGE_KEY } from './constants';
 import { localizeSeed } from '@/lib/seed-i18n';
 import { safeGetItem, safeSetItem, writeJsonOrThrow } from '@/lib/safe-json';
+import { makeApiError } from '@/lib/normalizeApiError';
 
 export interface ITeamCategoriesRepository {
   getCategories(orgId: string): Promise<TeamCategory[]>;
@@ -77,7 +78,7 @@ export class LocalStorageTeamCategoriesRepository implements ITeamCategoriesRepo
   async updateCategory(categoryId: string, input: UpdateTeamCategoryInput): Promise<TeamCategory> {
     const all = this.getAll();
     const idx = all.findIndex((c) => c.id === categoryId);
-    if (idx === -1) throw new Error('Catégorie introuvable');
+    if (idx === -1) throw makeApiError('not_found');
     const updated: TeamCategory = {
       ...all[idx],
       ...(input.name !== undefined ? { name: input.name } : {}),

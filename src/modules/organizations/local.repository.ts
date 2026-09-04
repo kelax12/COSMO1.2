@@ -30,6 +30,7 @@ import {
 import type { OrgMemberPermissions, SetOrgPermissionsInput } from './permissions';
 import { isEnglishSeed, localizeSeed } from '@/lib/seed-i18n';
 import { safeGetItem, safeSetItem, writeJsonOrThrow } from '@/lib/safe-json';
+import { makeApiError } from '@/lib/normalizeApiError';
 
 const DEMO_USER_ID = 'demo-user';
 export const DEMO_ORG_ID = 'org-demo-1';
@@ -218,12 +219,12 @@ export class LocalStorageOrganizationsRepository implements IOrganizationsReposi
   async requestJoin(code: string): Promise<{ orgName: string }> {
     const org = this.getOrgsArray().find((o) => o.joinCode === code.toUpperCase().trim());
     // Erreur générique (même comportement que la prod : pas de leak).
-    if (!org) throw new Error('Code invalide');
+    if (!org) throw makeApiError('invalid_link');
     const isMember = this.getMembersArray().some(
       (m) => m.orgId === org.id && m.userId === DEMO_USER_ID,
     );
-    if (isMember) throw new Error('Vous êtes déjà membre de cette entreprise');
-    throw new Error('Demande envoyée : en mode démo, utilisez les entreprises fournies');
+    if (isMember) throw makeApiError('already_a_member');
+    throw makeApiError('demo_unavailable');
   }
 
   // --- Invitations nominatives (mig. 105) ---------------------------
@@ -234,7 +235,7 @@ export class LocalStorageOrganizationsRepository implements IOrganizationsReposi
   // plutot qu une fausse reussite.
 
   async inviteFriendToOrg(_orgId: string, _friendUserId: string): Promise<void> {
-    throw new Error("En mode demo, les invitations d entreprise ne sont pas envoyees");
+    throw makeApiError('demo_unavailable');
   }
 
   async getMyOrgInvitations(): Promise<OrgInvitation[]> {
@@ -249,7 +250,7 @@ export class LocalStorageOrganizationsRepository implements IOrganizationsReposi
   }
 
   async respondOrgInvitation(_invitationId: string, _accept: boolean): Promise<void> {
-    throw new Error("En mode demo, les invitations d entreprise ne sont pas envoyees");
+    throw makeApiError('demo_unavailable');
   }
 
   async getMyOrgRemovalNotices(): Promise<OrgRemovalNotice[]> {
@@ -264,7 +265,7 @@ export class LocalStorageOrganizationsRepository implements IOrganizationsReposi
     const requests = this.getRequestsArray();
     const req = requests.find((r) => r.id === requestId);
     if (!req || req.status !== 'pending') {
-      throw new Error('Demande introuvable ou déjà traitée');
+      throw makeApiError('not_found');
     }
     req.status = accept ? 'accepted' : 'rejected';
     this.saveRequests(requests);
@@ -293,9 +294,9 @@ export class LocalStorageOrganizationsRepository implements IOrganizationsReposi
   async updateOrganization(orgId: string, input: UpdateOrganizationInput): Promise<Organization> {
     const orgs = this.getOrgsArray();
     const org = orgs.find((o) => o.id === orgId);
-    if (!org) throw new Error('Entreprise introuvable');
+    if (!org) throw makeApiError('not_found');
     const me = this.getMembersArray().find((m) => m.orgId === orgId && m.userId === DEMO_USER_ID);
-    if (me?.role !== 'admin') throw new Error('Seul un administrateur peut modifier le profil');
+    if (me?.role !== 'admin') throw makeApiError('not_org_admin');
     if (input.name !== undefined) org.name = input.name;
     if (input.description !== undefined) org.description = input.description;
     if (input.industry !== undefined) org.industry = input.industry;
@@ -306,7 +307,7 @@ export class LocalStorageOrganizationsRepository implements IOrganizationsReposi
 
   async deleteOrganization(orgId: string): Promise<void> {
     const me = this.getMembersArray().find((m) => m.orgId === orgId && m.userId === DEMO_USER_ID);
-    if (me?.role !== 'admin') throw new Error('Seul un administrateur peut supprimer l\'entreprise');
+    if (me?.role !== 'admin') throw makeApiError('not_org_admin');
     this.saveOrgs(this.getOrgsArray().filter((o) => o.id !== orgId));
     this.saveMembers(this.getMembersArray().filter((m) => m.orgId !== orgId));
     this.saveRequests(this.getRequestsArray().filter((r) => r.orgId !== orgId));
@@ -315,11 +316,11 @@ export class LocalStorageOrganizationsRepository implements IOrganizationsReposi
   async transferOwnership(orgId: string, newOwnerId: string): Promise<void> {
     const orgs = this.getOrgsArray();
     const org = orgs.find((o) => o.id === orgId);
-    if (!org) throw new Error('Entreprise introuvable');
-    if (org.ownerId !== DEMO_USER_ID) throw new Error('Seul le propriétaire peut transférer la propriété');
+    if (!org) throw makeApiError('not_found');
+    if (org.ownerId !== DEMO_USER_ID) throw makeApiError('not_org_owner');
     const members = this.getMembersArray();
     if (!members.some((m) => m.orgId === orgId && m.userId === newOwnerId)) {
-      throw new Error('Le nouveau propriétaire doit être membre de l\'entreprise');
+      throw makeApiError('not_org_member');
     }
     org.ownerId = newOwnerId;
     this.saveOrgs(orgs);
@@ -342,9 +343,9 @@ export class LocalStorageOrganizationsRepository implements IOrganizationsReposi
   async setMemberRole(orgId: string, userId: string, role: OrgRole): Promise<void> {
     const members = this.getMembersArray();
     const member = members.find((m) => m.orgId === orgId && m.userId === userId);
-    if (!member) throw new Error('Membre introuvable');
+    if (!member) throw makeApiError('not_found');
     if (member.role === 'admin' && role !== 'admin' && this.adminCount(members, orgId) <= 1) {
-      throw new Error('Impossible de rétrograder le dernier administrateur');
+      throw makeApiError('last_admin');
     }
     member.role = role;
     this.saveMembers(members);
@@ -353,9 +354,9 @@ export class LocalStorageOrganizationsRepository implements IOrganizationsReposi
   async removeMember(orgId: string, userId: string): Promise<void> {
     const members = this.getMembersArray();
     const member = members.find((m) => m.orgId === orgId && m.userId === userId);
-    if (!member) throw new Error('Membre introuvable');
+    if (!member) throw makeApiError('not_found');
     if (member.role === 'admin' && this.adminCount(members, orgId) <= 1) {
-      throw new Error('Impossible de retirer le dernier administrateur');
+      throw makeApiError('last_admin');
     }
     // Re-parentage des subordonnés vers le grand-parent (miroir de la RPC).
     const next = members
@@ -369,9 +370,9 @@ export class LocalStorageOrganizationsRepository implements IOrganizationsReposi
   async leaveOrganization(orgId: string): Promise<void> {
     const members = this.getMembersArray();
     const me = members.find((m) => m.orgId === orgId && m.userId === DEMO_USER_ID);
-    if (!me) throw new Error('Vous ne faites pas partie de cette entreprise');
+    if (!me) throw makeApiError('not_org_member');
     if (me.role === 'admin' && this.adminCount(members, orgId) <= 1) {
-      throw new Error('Transférez le rôle admin avant de quitter');
+      throw makeApiError('last_admin');
     }
     // Re-parentage des subordonnés vers le grand-parent (miroir de la RPC).
     const next = members
@@ -404,31 +405,31 @@ export class LocalStorageOrganizationsRepository implements IOrganizationsReposi
   async setMemberManager(orgId: string, userId: string, managerId: string | null): Promise<void> {
     const members = this.getMembersArray();
     const target = members.find((m) => m.orgId === orgId && m.userId === userId);
-    if (!target) throw new Error('Membre introuvable');
+    if (!target) throw makeApiError('not_found');
 
     const me = members.find((m) => m.orgId === orgId && m.userId === DEMO_USER_ID);
     const isAdmin = me?.role === 'admin';
     if (!isAdmin) {
       const mySubtree = this.subtreeOf(members, orgId, DEMO_USER_ID);
       if (!mySubtree.has(userId)) {
-        throw new Error('Vous ne pouvez déplacer que les membres sous vous');
+        throw makeApiError('out_of_scope');
       }
       if (managerId === null) {
-        throw new Error('Seul un administrateur peut détacher un membre');
+        throw makeApiError('not_org_admin');
       }
       if (managerId !== DEMO_USER_ID && !mySubtree.has(managerId)) {
-        throw new Error('La destination doit être dans votre équipe');
+        throw makeApiError('out_of_scope');
       }
     }
 
     if (managerId !== null) {
-      if (managerId === userId) throw new Error('Un membre ne peut pas être son propre responsable');
+      if (managerId === userId) throw makeApiError('hierarchy_cycle');
       if (!members.some((m) => m.orgId === orgId && m.userId === managerId)) {
-        throw new Error('Le responsable doit être membre de l\'entreprise');
+        throw makeApiError('not_org_member');
       }
       // Anti-cycle : la destination ne peut pas être un descendant de la cible.
       if (this.subtreeOf(members, orgId, userId).has(managerId)) {
-        throw new Error('Ce déplacement créerait un cycle dans la hiérarchie');
+        throw makeApiError('hierarchy_cycle');
       }
     }
 
@@ -449,13 +450,13 @@ export class LocalStorageOrganizationsRepository implements IOrganizationsReposi
   async createInviteLink(orgId: string, managerId: string | null): Promise<OrgInviteLink> {
     const members = this.getMembersArray();
     const me = members.find((m) => m.orgId === orgId && m.userId === DEMO_USER_ID);
-    if (!me) throw new Error('Vous ne faites pas partie de cette entreprise');
+    if (!me) throw makeApiError('not_org_member');
     const isAdmin = me.role === 'admin';
     if (!isAdmin) {
       // Manager : lien uniquement sous soi ou son sous-arbre.
       const mySubtree = this.subtreeOf(members, orgId, DEMO_USER_ID);
       if (managerId === null || (managerId !== DEMO_USER_ID && !mySubtree.has(managerId))) {
-        throw new Error('Vous ne pouvez inviter que sous votre équipe');
+        throw makeApiError('out_of_scope');
       }
     }
     const link: OrgInviteLink = {
@@ -484,15 +485,15 @@ export class LocalStorageOrganizationsRepository implements IOrganizationsReposi
 
   async claimInviteLink(_token: string): Promise<{ orgId: string; orgName: string }> {
     // Démo mono-utilisateur : un lien s'adresse à quelqu'un d'autre.
-    throw new Error('Les liens d\'invitation se testent avec un vrai compte');
+    throw makeApiError('demo_unavailable');
   }
 
   async regenerateJoinCode(orgId: string): Promise<string> {
     const orgs = this.getOrgsArray();
     const org = orgs.find((o) => o.id === orgId);
-    if (!org) throw new Error('Entreprise introuvable');
+    if (!org) throw makeApiError('not_found');
     const me = this.getMembersArray().find((m) => m.orgId === orgId && m.userId === DEMO_USER_ID);
-    if (me?.role !== 'admin') throw new Error('Seul un administrateur peut régénérer le code');
+    if (me?.role !== 'admin') throw makeApiError('not_org_admin');
     const code = generateDemoJoinCode();
     org.joinCode = code;
     this.saveOrgs(orgs);
@@ -519,10 +520,10 @@ export class LocalStorageOrganizationsRepository implements IOrganizationsReposi
     input: SetOrgPermissionsInput,
   ): Promise<void> {
     const target = this.getMembersArray().find((m) => m.orgId === orgId && m.userId === userId);
-    if (!target) throw new Error('Membre introuvable');
+    if (!target) throw makeApiError('not_found');
     // Miroir de la garde serveur : un admin détient tout par construction.
     if (target.role === 'admin') {
-      throw new Error('Un administrateur détient déjà toutes les permissions');
+      throw makeApiError('forbidden');
     }
     const rows = this.getPermissionsArray().filter(
       (p) => !(p.orgId === orgId && p.userId === userId),

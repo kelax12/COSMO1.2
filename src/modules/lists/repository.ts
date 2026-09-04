@@ -7,6 +7,7 @@ import { LISTS_STORAGE_KEY } from './constants';
 import { localizeSeed } from '@/lib/seed-i18n';
 import type { CreateOptions } from '@/lib/restore-id';
 import { safeGetItem, safeParseArray, writeJsonOrThrow } from '@/lib/safe-json';
+import { makeApiError } from '@/lib/normalizeApiError';
 
 // ═══════════════════════════════════════════════════════════════════
 // DEMO DATA
@@ -183,7 +184,7 @@ export class LocalStorageListsRepository implements IListsRepository {
     const index = lists.findIndex(l => l.id === id);
 
     if (index === -1) {
-      throw new Error(`List with id ${id} not found`);
+      throw makeApiError('not_found');
     }
 
     const updatedList: TaskList = { ...lists[index], ...updates };
@@ -197,7 +198,7 @@ export class LocalStorageListsRepository implements IListsRepository {
     const filtered = lists.filter(l => l.id !== id);
 
     if (filtered.length === lists.length) {
-      throw new Error(`List with id ${id} not found`);
+      throw makeApiError('not_found');
     }
 
     this.saveLists(filtered);
@@ -212,7 +213,7 @@ export class LocalStorageListsRepository implements IListsRepository {
     const index = lists.findIndex(l => l.id === listId);
 
     if (index === -1) {
-      throw new Error(`List with id ${listId} not found`);
+      throw makeApiError('not_found');
     }
 
     const list = lists[index];
@@ -230,7 +231,7 @@ export class LocalStorageListsRepository implements IListsRepository {
     const index = lists.findIndex(l => l.id === listId);
 
     if (index === -1) {
-      throw new Error(`List with id ${listId} not found`);
+      throw makeApiError('not_found');
     }
 
     const list = lists[index];

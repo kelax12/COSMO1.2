@@ -4,7 +4,7 @@
 
 import { supabase } from '@/lib/supabase';
 import { getCurrentUser } from '@/lib/auth-user';
-import { normalizeApiError } from '@/lib/normalizeApiError';
+import { makeApiError, normalizeApiError } from '@/lib/normalizeApiError';
 import { IEventsRepository } from './repository';
 import { CalendarEvent, CreateEventInput, UpdateEventInput, EventFilters } from './types';
 import { mapEventFromDb, mapEventToDb } from './mappers';
@@ -23,7 +23,7 @@ export class SupabaseEventsRepository implements IEventsRepository {
     if (!supabase) throw new Error('Supabase not configured');
     const { data } = await supabase.auth.getSession();
     const uid = data.session?.user?.id;
-    if (!uid) throw new Error('Not authenticated');
+    if (!uid) throw makeApiError('not_authenticated');
     return uid;
   }
 
@@ -195,7 +195,7 @@ export class SupabaseEventsRepository implements IEventsRepository {
   async create(input: CreateEventInput, options?: CreateOptions): Promise<CalendarEvent> {
     if (!supabase) throw new Error('Supabase not configured');
     const user = await getCurrentUser();
-    if (!user) throw new Error('Not authenticated');
+    if (!user) throw makeApiError('not_authenticated');
     // `options.restoreId` ne vient JAMAIS d'un payload de formulaire :
     // c'est un second argument, reserve aux « Annuler » (R-08). La
     // whitelist `mapToDb` et le `user_id` pose depuis la session sont
