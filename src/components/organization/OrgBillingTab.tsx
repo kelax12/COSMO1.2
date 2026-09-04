@@ -6,7 +6,7 @@ import { useT } from '@/i18n/useT';
 import { formatDate } from '@/i18n/format';
 import { ENTERPRISE_BILLING_ENFORCED } from '@/modules/billing/premium-config';
 import type { OrgBillingInterval } from '@/modules/billing/premium-config';
-import { useOrgSubscription, useStartOrgCheckout, useOpenOrgPortal } from '@/modules/billing/org-billing.hooks';
+import { useOrgSubscription, useStartOrgCheckout, useOpenOrgPortal, useCancelAndRefundOrg } from '@/modules/billing/org-billing.hooks';
 import { effectiveQuota, effectiveTierKey } from '@/modules/billing/org-billing.logic';
 import { ORG_TIER_LABEL_KEYS } from '@/modules/billing/org-tier-labels';
 import { EnterpriseTierGrid } from './EnterpriseTierGrid';
@@ -35,6 +35,8 @@ export function OrgBillingTab({ orgId, isOwner, memberCount, onBack }: Props) {
   const { data: subscription } = useOrgSubscription(orgId);
   const checkout = useStartOrgCheckout();
   const portal = useOpenOrgPortal();
+  // C-65 — resilier ET se faire rembourser, en un geste.
+  const refund = useCancelAndRefundOrg();
   // Périodicité affichée dans la grille. État LOCAL, jamais persisté : c'est
   // une question posée avant l'achat, pas une préférence de l'utilisateur. La
   // périodicité qui compte après coup est celle de l'abonnement, et elle vient
@@ -287,6 +289,42 @@ export function OrgBillingTab({ orgId, isOwner, memberCount, onBack }: Props) {
             {t('billing.manage')}
           </button>
           <p className="text-xs text-[rgb(var(--color-text-secondary))]">{t('billing.manageHint')}</p>
+        </div>
+      )}
+
+      {/* ═══════════════════════════════════════════════════════════════
+          C-65 — LA GARANTIE, LA OU ON PEUT L'EXERCER
+          ═══════════════════════════════════════════════════════════════
+
+          🔴 Decision d'Axel du 2026-09-03 : « l'utilisateur doit pouvoir se
+          faire rembourser le mois en cours a tout moment, mais que le mois en
+          cours. » Une regle sans mecanisme est une phrase : avant ce bouton,
+          `stripe-org-portal` ouvrait le portail Stripe, qui sait resilier et
+          NE REMBOURSE PAS. Il fallait nous ecrire — donc exactement la
+          discussion au cas par cas que la decision voulait supprimer.
+
+          ⚠️ Le texte est ICI, et pas seulement dans les CGU : « une garantie
+          plus favorable que la loi doit etre ecrite, sans quoi personne ne
+          sait qu'elle existe et elle ne desamorce rien. »
+
+          Meme drapeau que le CTA de paiement : proposer un remboursement quand
+          rien n'est encaisse n'aurait aucun sens. */}
+      {canPay && subscription && subscription.tierKey !== 'free' && (
+        <div className="flex flex-col gap-2 rounded-lg border border-[rgb(var(--color-border))] p-3">
+          <h3 className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">
+            {t('billing.refundTitle')}
+          </h3>
+          <p className="text-xs text-[rgb(var(--color-text-secondary))]">
+            {t('billing.refundExplain')}
+          </p>
+          <button
+            type="button"
+            disabled={refund.isPending}
+            onClick={() => refund.mutate({ orgId })}
+            className="self-start rounded-lg border border-[rgb(var(--color-border))] px-3 py-2 text-sm disabled:opacity-60 hover:border-red-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+          >
+            {refund.isPending ? t('billing.refundPending') : t('billing.refundCta')}
+          </button>
         </div>
       )}
     </div>

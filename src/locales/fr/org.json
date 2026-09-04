@@ -977,7 +977,15 @@
     "planNamed": "Plan {{name}}",
     "promoBadge": "Offre de lancement",
     "insteadOf": "au lieu de {{price}} €",
-    "withdrawalRequired": "Le paiement demande votre accord sur les deux cases de renonciation au droit de rétractation."
+    "withdrawalRequired": "Le paiement demande votre accord sur les deux cases de renonciation au droit de rétractation.",
+    "refundDone": "Abonnement résilié, {{amount}} € remboursés. Le virement apparaît sous 5 à 10 jours ouvrés selon votre banque.",
+    "cancelDone": "Abonnement résilié. Il n'y avait rien à rembourser sur la période en cours.",
+    "noSubscription": "Cette entreprise n'a aucun abonnement en cours.",
+    "refundFailed": "Le remboursement n'a pas abouti. Rien n'a été résilié, réessayez dans un instant.",
+    "refundTitle": "Résilier et être remboursé",
+    "refundExplain": "Vous récupérez la période en cours, sans motif à donner et sans nous écrire. L'accès s'arrête immédiatement, puisque la période est remboursée.",
+    "refundCta": "Résilier et être remboursé de la période en cours",
+    "refundPending": "Résiliation en cours…"
   },
   "inviteJoin": {
     "title": "Créer ou rejoindre une entreprise",

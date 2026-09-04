@@ -86,6 +86,9 @@ const CHECKOUT_ERROR_KEYS: Record<string, KeyOf<'org'>> = {
   withdrawal_consent_required: 'billing.withdrawalRequired',
   yearly_unavailable: 'billing.yearlyUnavailable',
   forbidden: 'billing.ownerOnly',
+  // C-65 — les refus propres au remboursement.
+  no_subscription: 'billing.noSubscription',
+  refund_failed: 'billing.refundFailed',
 };
 
 export const useStartOrgCheckout = () =>
@@ -130,6 +133,51 @@ export const useStartOrgCheckout = () =>
       // `translator(ns).t(key)` — forme vérifiée dans src/i18n/useT.ts et
       // utilisée par src/modules/organizations/hooks.ts. Hors composant, on ne
       // peut pas appeler le hook `useT`.
+      const { t } = translator('org');
+      toast.error(t(CHECKOUT_ERROR_KEYS[err.message] ?? 'billing.error'));
+    },
+  });
+
+/**
+ * Résilier ET se faire rembourser la période en cours, en un geste (C-65).
+ *
+ * 🔴 POURQUOI CE HOOK N'UTILISE PAS `redirectToStripe`. Celui-là attend une
+ * `url` et navigue dessus ; ici il n'y a nulle part où aller — l'action se
+ * termine sur place, et la personne doit VOIR ce qui s'est passé. Une
+ * redirection vers Stripe reviendrait à lui redemander de faire elle-même ce
+ * qu'on vient de lui promettre en un clic.
+ *
+ * ⚠️ Le montant rendu vient du SERVEUR (`refundedCents`), il n'est jamais
+ * recalculé ici : deux calculs d'un même montant finissent par diverger, et
+ * celui qu'on afficherait ne serait pas celui qu'on a viré.
+ */
+export const useCancelAndRefundOrg = (onDone?: () => void) =>
+  useMutation({
+    mutationFn: async ({ orgId }: { orgId: string }) => {
+      if (!supabase) throw new Error('Supabase not configured');
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('not_authenticated');
+
+      const { data, error } = await supabase.functions.invoke('stripe-org-refund', {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+        body: { orgId },
+      });
+      // Même extraction que `redirectToStripe` : le code métier est dans le
+      // CORPS, pas dans le message de l'erreur.
+      if (error) throw new Error((await edgeErrorCode(error)) ?? 'invoke_failed');
+      if (data?.error) throw new Error(data.error as string);
+      return { refundedCents: Number(data?.refundedCents ?? 0) };
+    },
+    onSuccess: ({ refundedCents }) => {
+      const { t } = translator('org');
+      toast.success(
+        refundedCents > 0
+          ? t('billing.refundDone', { amount: (refundedCents / 100).toFixed(2) })
+          : t('billing.cancelDone'),
+      );
+      onDone?.();
+    },
+    onError: (err: Error) => {
       const { t } = translator('org');
       toast.error(t(CHECKOUT_ERROR_KEYS[err.message] ?? 'billing.error'));
     },

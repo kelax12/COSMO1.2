@@ -120,6 +120,24 @@ Deno.serve(async (req) => {
         else await handleInvoicePaymentFailed(invoice)
         break
       }
+      case 'charge.refunded': {
+        // ═══════════════════════════════════════════════════════════
+        // C-65 — LA LIGNE COMPENSATOIRE
+        // ═══════════════════════════════════════════════════════════
+        //
+        // 🔴 « Jamais une modification de la ligne d'origine : la table est
+        // scellée par `row_hash` et `verify_payment_chain()` recalcule chaque
+        // hash depuis les colonnes. Un remboursement s'écrit comme en
+        // comptabilité, par une écriture de sens inverse. »
+        //
+        // C'est le SEUL endroit où un remboursement entre au journal :
+        // `stripe-org-refund` crée le remboursement chez Stripe et n'écrit
+        // rien ici. Un journal scellé n'a qu'un écrivain, et son idempotence
+        // tient à `stripe_event_id`, qui est unique.
+        const charge = event.data.object as Stripe.Charge
+        await recordRefund(event, charge)
+        break
+      }
       default:
         // Ignore unhandled events
         break
@@ -261,6 +279,73 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
  *
  * ❌ Ne JAMAIS y stocker l'objet Stripe entier : il porte des données de carte.
  */
+/**
+ * Écrit la ligne COMPENSATOIRE d'un remboursement (C-65).
+ *
+ * 🔴 MONTANT NÉGATIF, et c'est tout le point. La table est append-only et
+ * scellée : on ne corrige pas une ligne, on en écrit une de sens inverse.
+ * `verify_payment_chain()` reste donc vraie, et la somme du journal donne le
+ * net encaissé sans avoir à interpréter quoi que ce soit.
+ *
+ * ⚠️ `amount_refunded` et pas `amount` : un remboursement PARTIEL (le prorata
+ * annuel en est un) ne rend pas la totalité de la charge. Utiliser `amount`
+ * écrirait une compensation plus grosse que le remboursement réel, et le
+ * journal cesserait de correspondre à la banque.
+ */
+async function recordRefund(event: Stripe.Event, charge: Stripe.Charge) {
+  try {
+    // Le rattachement se fait par la FACTURE, comme pour un encaissement :
+    // c'est elle qui porte l'organisation.
+    let orgId: string | null = null
+    if (charge.invoice) {
+      const invoiceId = typeof charge.invoice === 'string' ? charge.invoice : charge.invoice.id
+      const { data, error } = await supabaseAdmin
+        .from('payment_records')
+        .select('org_id, user_id')
+        .eq('stripe_invoice_id', invoiceId)
+        .not('org_id', 'is', null)
+        .limit(1)
+        .maybeSingle()
+      // ⚠️ Lecture qui décide d'un RATTACHEMENT : elle ne doit pas avaler son
+      // erreur. Une ligne compensatoire orpheline se rapproche mal, et le
+      // journal fiscal est ce qu'on produit en contrôle.
+      if (error) throw error
+      orgId = data?.org_id ?? null
+    }
+
+    const { error } = await supabaseAdmin.from('payment_records').insert({
+      stripe_event_id: event.id,
+      event_type: event.type,
+      stripe_invoice_id: typeof charge.invoice === 'string' ? charge.invoice : (charge.invoice?.id ?? null),
+      stripe_customer_id: (charge.customer as string) ?? null,
+      org_id: orgId,
+      user_id: null,
+      // 🔴 NÉGATIF. C'est ce qui en fait une écriture de sens inverse.
+      amount_cents: -(charge.amount_refunded ?? 0),
+      currency: (charge.currency ?? 'eur').toLowerCase(),
+      occurred_at: new Date(event.created * 1000).toISOString(),
+      payload: {
+        charge_id: charge.id ?? null,
+        refunded_in_full: charge.refunded ?? false,
+        original_amount: charge.amount ?? null,
+      },
+    })
+
+    // 23505 = rejeu du même event. C'est l'idempotence qui fonctionne.
+    const code = (error as { code?: string } | null)?.code
+    if (error && code !== '23505') {
+      console.error('payment_records refund insert error:', error)
+      await opsAlert(
+        'stripe-webhook',
+        `ligne compensatoire NON ecrite pour l event ${event.id} (code ${code ?? 'inconnu'}) — le journal fiscal montre un encaissement sans son remboursement`,
+      )
+    }
+  } catch (err) {
+    console.error('recordRefund failed:', err)
+    await opsAlert('stripe-webhook', `recordRefund a leve pour l event ${event.id} — trou dans le journal fiscal`)
+  }
+}
+
 async function recordPayment(
   event: Stripe.Event,
   invoice: Stripe.Invoice,

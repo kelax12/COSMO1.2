@@ -942,7 +942,15 @@
     "planNamed": "{{name}} plan",
     "promoBadge": "Launch offer",
     "insteadOf": "instead of €{{price}}",
-    "withdrawalRequired": "Payment requires both withdrawal-waiver boxes to be ticked."
+    "withdrawalRequired": "Payment requires both withdrawal-waiver boxes to be ticked.",
+    "refundDone": "Subscription cancelled, €{{amount}} refunded. The transfer appears within 5 to 10 business days depending on your bank.",
+    "cancelDone": "Subscription cancelled. There was nothing to refund for the current period.",
+    "noSubscription": "This company has no active subscription.",
+    "refundFailed": "The refund did not go through. Nothing was cancelled, try again in a moment.",
+    "refundTitle": "Cancel and get a refund",
+    "refundExplain": "You get the current period back, with no reason to give and no need to write to us. Access stops immediately, since the period is refunded.",
+    "refundCta": "Cancel and refund the current period",
+    "refundPending": "Cancelling…"
   },
   "inviteJoin": {
     "title": "Create or join a company",
