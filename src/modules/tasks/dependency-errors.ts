@@ -38,9 +38,7 @@
 // ✅ A SUPPRIMER une fois la mig. 137 appliquee en production, avec la ligne
 //    correspondante du ledger comme preuve.
 
-import { ApiError } from '@/lib/normalizeApiError';
-import { resolveMessage } from '@/i18n/catalog';
-import { localeStore } from '@/i18n/store';
+import { ApiError, makeApiError } from '@/lib/normalizeApiError';
 
 /** Les quatre refus, tels que la mig. 137 les nomme. */
 export const DEPENDENCY_ERRORS = {
@@ -98,9 +96,7 @@ export function dependencyErrorCode(error: unknown): string | null {
  * telle quelle.
  */
 export function makeDependencyError(code: string): ApiError {
-  const message =
-    resolveMessage('errors', `api.${code}`, localeStore.locale) ??
-    resolveMessage('errors', 'api.GENERIC_ERROR', localeStore.locale) ??
-    code;
-  return new ApiError(code, message, code);
+  // Delegue a la primitive partagee : un seul endroit resout un code en
+  // message de catalogue, sinon deux copies finissent par diverger (C-62).
+  return makeApiError(code);
 }

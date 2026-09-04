@@ -1704,6 +1704,41 @@ Deux défauts de nature différente, à ne pas traiter ensemble :
   passent à 44, et une garde compte les commandes sous la cible sur les routes protégées, avec un
   témoin qui refuse un détecteur qui ne détecterait plus rien.
 
+### C-70 · 22 cibles tactiles sous 44 px dans `TeamTaskModal` · **P2 · M** · 🆕 trouvé le 2026-09-04
+
+**Trouvé en vérifiant la conformité de C-57 à son arbitrage**, et c'est le vrai résultat de cette
+vérification : la garde de C-57 déclarait « 0 commande sous la cible » en ne mesurant que l'**état
+initial** de six routes. Rien dans une modale, un menu ou une feuille n'était compté. Elle disait
+donc vrai de sa mesure et faux du produit — la classe de défaut que `CLAUDE.md` documente sous
+« une garde se vérifie sur ce qu'elle REGARDE ».
+
+Le harnais ouvre désormais une surface RÉELLE (`TeamTaskModal`, via `/entreprise` → Mes tâches) et
+mesure dedans. **22 commandes sous 44 × 44 px**, viewport 375 × 812 :
+
+| Taille | Combien | Exemples |
+|---|---|---|
+| 64 × 42 | 5 | les puces de priorité, `P1 · Critique` → `P5 · Très basse` |
+| 341 × 42 | 7 | les lignes d'assignation (équipes et membres) |
+| 343 × 42 | 1 | le champ d'échéance |
+| 69–146 × 26 | 4 | les puces de catégorie, `Client` / `Produit` / `Support` / `Nouvelle catégorie` |
+| 28 × 28 | 1 | « Agrandir la description » |
+| 59 × 16, 166 × 20, 303 × 14 | 3 | « Créer un projet », « Assigner la tâche », « Dépendances » |
+
+⚠️ **Deux de la même modale ont DÉJÀ été corrigées** et sont assertionnées, pas imprimées : la
+suppression d'un commentaire d'équipe (28 → 44) et son envoi (40 → 44). Elles appartenaient au
+geste que C-57 traitait, les 22 autres non.
+
+- ⚠️ **Ce n'est pas 22 corrections, c'est UNE décision de design.** Les 42 px n'ont besoin que de
+  4 px ; les 26 px de puces et les 14–20 px de libellés-boutons demandent de rouvrir la densité de
+  la modale. C'est la même cause racine que C-57 (« le design system mobile n'a jamais été
+  adopté »), sur une surface qu'il n'a jamais touchée.
+- ❌ **Ne pas les figer en `expect(...)` avant l'arbitrage.** Le harnais applique les deux régimes
+  d'`a11y-keyboard-audit.spec.ts` : ce qui est corrigé est ASSERTIONNÉ, ce qui reste ouvert est
+  IMPRIMÉ. Les figer forcerait 22 décisions que personne n'a rendues.
+- **Fini quand** : l'arbitrage est rendu (élargir la densité, ou exempter explicitement une famille
+  avec sa raison), les commandes retenues passent à 44 px, et le `console.log` du harnais devient
+  un `expect`.
+
 ### C-69 · La fenêtre produit tourne toute seule, sans pause, y compris en mouvement réduit · **P2 · S** · 🟠 arbitrage rendu : on garde
 
 Trouvé par l'audit **A-8** en cherchant autre chose. `AppWindowShowcase` (le mockup du hero de `/`)

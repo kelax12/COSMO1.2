@@ -167,7 +167,11 @@ const TaskCommentsSection = ({ taskId, members, currentUserId, autoSubmitDraft, 
                     }}
                     disabled={deleteMutation.isPending}
                     aria-label={t('comments.deleteAria')}
-                    className="shrink-0 w-7 h-7 rounded-lg flex items-center justify-center hover:bg-red-500/10 hover:text-red-500 transition-colors disabled:opacity-50"
+                    // C-57 — 28 x 28 px avant : la zone tactile epousait l'icone.
+                    // Trouve en verifiant la conformite de C-57, dont la garde ne
+                    // mesure que l'etat initial de six ROUTES, jamais une modale.
+                    // Marges negatives pour que la rangee du fil ne grandisse pas.
+                    className="shrink-0 -my-2 min-h-touch min-w-touch rounded-lg flex items-center justify-center hover:bg-red-500/10 hover:text-red-500 transition-colors disabled:opacity-50"
                     style={{ color: 'rgb(var(--color-text-muted))' }}
                   >
                     <Trash2 size={13} aria-hidden="true" />
@@ -229,7 +233,10 @@ const TaskCommentsSection = ({ taskId, members, currentUserId, autoSubmitDraft, 
             onClick={submit}
             disabled={!body.trim() || addMutation.isPending}
             aria-label={t('comments.sendAria')}
-            className="shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition-colors disabled:opacity-40 bg-[rgb(var(--color-accent))] text-[rgb(var(--color-background))] hover:opacity-90"
+            // C-57 — 40 x 40 px avant, 4 px sous la cible. Meme famille de geste
+            // que la suppression juste au-dessus, meme composant : les corriger
+            // separement aurait laisse la moitie du fil sous la cible.
+            className="shrink-0 min-h-touch min-w-touch rounded-xl flex items-center justify-center transition-colors disabled:opacity-40 bg-[rgb(var(--color-accent))] text-[rgb(var(--color-background))] hover:opacity-90"
           >
             <Send size={16} aria-hidden="true" />
           </button>
