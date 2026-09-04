@@ -7,12 +7,12 @@ import {
   useActiveOrganization,
   useOrgMembers,
   useLeaveOrganization,
-  useDeleteOrganization,
   useTransferOwnership,
   useMyOrgPermissions,
   isManagerOf,
 } from '@/modules/organizations';
 import { ENTERPRISE_BILLING_ENFORCED } from '@/modules/billing/premium-config';
+import { useDeleteOrgFlow } from './organization/useDeleteOrgFlow';
 import { useOrgSubscription } from '@/modules/billing/org-billing.hooks';
 import { isQuotaReached, effectiveQuota } from '@/modules/billing/org-billing.logic';
 import { PageHeading } from '@/components/ui/typography';
@@ -159,7 +159,10 @@ const OrganizationPage = () => {
   // plus bas ne serait pas monté sur tous les rendus.
   const { data: orgSubscription } = useOrgSubscription(myOrg?.id);
   const leaveMutation = useLeaveOrganization();
-  const deleteMutation = useDeleteOrganization();
+  // C-39 — « la suppression resilie ET REMBOURSE » (arbitrage du 2026-09-03) :
+  // un seul geste, aucun debit orphelin. L'enchainement et son ordre vivent
+  // dans `useDeleteOrgFlow`, avec la raison de cet ordre.
+  const deleteFlow = useDeleteOrgFlow(() => setConfirmingDelete(false));
   const transferMutation = useTransferOwnership();
 
   if (isLoading) {
@@ -510,7 +513,7 @@ const OrganizationPage = () => {
                 <button
                   type="button"
                   onClick={() => setConfirmingDelete(true)}
-                  disabled={deleteMutation.isPending}
+                  disabled={deleteFlow.isPending}
                   className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-red-600 hover:bg-red-700 disabled:opacity-60 transition-colors"
                 >
                   <Trash2 size={15} aria-hidden="true" /> {t('page.deleteOrg')}
@@ -570,10 +573,8 @@ const OrganizationPage = () => {
         <DeleteOrganizationDialog
           org={myOrg}
           memberCount={members.length}
-          pending={deleteMutation.isPending}
-          onConfirm={() =>
-            deleteMutation.mutate(myOrg.id, { onSuccess: () => setConfirmingDelete(false) })
-          }
+          pending={deleteFlow.isPending}
+          onConfirm={() => deleteFlow.run(myOrg.id)}
           onCancel={() => setConfirmingDelete(false)}
         />
       )}

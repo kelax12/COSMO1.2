@@ -54,7 +54,7 @@ const SECTIONS: LegalSection[] = [
         kind: 'ul',
         items: [
           'terms.s5.li1', 'terms.s5.li2', 'terms.s5.li3',
-          'terms.s5.li4', 'terms.s5.li5', 'terms.s5.li6',
+          'terms.s5.li4', 'terms.s5.li5', 'terms.s5.li5bis', 'terms.s5.li6',
         ],
       },
     ],
