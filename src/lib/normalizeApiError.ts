@@ -1,4 +1,7 @@
-import * as Sentry from '@sentry/react';
+// Sentry n'est PLUS importe statiquement : il est charge apres le premier
+// rendu (arbitrage C-13/C-14). `monitoring` est la seule porte, et elle
+// tamponne ce qui arrive avant le chargement.
+import * as monitoring from '@/lib/monitoring';
 import { resolveMessage } from '@/i18n/catalog';
 import { localeStore } from '@/i18n/store';
 
@@ -150,9 +153,9 @@ interface ApiErrorLike {
  */
 const traceServerDetail = (code: string, originalMessage: string, known: boolean): void => {
   const detail = `${code}: ${originalMessage}`;
-  Sentry.addBreadcrumb({ category: 'api', level: 'warning', message: detail });
+  monitoring.addBreadcrumb({ category: 'api', level: 'warning', message: detail });
   if (!known) {
-    Sentry.captureMessage(`api error non catalogué — ${detail}`, {
+    monitoring.captureMessage(`api error non catalogué — ${detail}`, {
       level: 'warning',
       tags: { api_code: code },
     });

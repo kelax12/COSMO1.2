@@ -38,7 +38,10 @@
 // ═══════════════════════════════════════════════════════════════════
 import { useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import * as Sentry from '@sentry/react';
+// Sentry n'est PLUS importe statiquement : il est charge apres le premier
+// rendu (arbitrage C-13/C-14). `monitoring` est la seule porte, et elle
+// tamponne ce qui arrive avant le chargement.
+import * as monitoring from '@/lib/monitoring';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { useIsDemo } from '@/lib/app-mode.store';
 import { friendKeys } from './constants';
@@ -100,7 +103,7 @@ export function useFriendsInboxRealtime(userId: string | undefined): void {
         .subscribe();
     } catch (err) {
       console.warn('[realtime] canal amis indisponible, repli sur le retour d onglet', err);
-      Sentry.captureException(err, {
+      monitoring.captureException(err, {
         level: 'warning',
         tags: { context: 'realtime-websocket-unavailable' },
       });

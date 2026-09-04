@@ -17,7 +17,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 const repo = { addComment: vi.fn(), deleteComment: vi.fn(), getComments: vi.fn() };
 vi.mock('@/lib/repository.factory', () => ({ getTeamProjectsRepository: () => repo }));
 vi.mock('sonner', () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
-vi.mock('@sentry/react', () => ({ captureException: vi.fn() }));
+// Sentry est charge en differe : `monitoring` est la seule porte (C-13/C-14).
+vi.mock('@/lib/monitoring', () => ({ captureException: vi.fn() }));
 
 import { useRestoreComment } from './restore-comment.hooks';
 import type { TeamTaskComment } from './types';

@@ -30,7 +30,8 @@ vi.mock('@/lib/repository.factory', () => ({
   getOKRsRepository: () => okrRepo,
 }));
 vi.mock('sonner', () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
-vi.mock('@sentry/react', () => ({ captureException: vi.fn() }));
+// Sentry est charge en differe : `monitoring` est la seule porte (C-13/C-14).
+vi.mock('@/lib/monitoring', () => ({ captureException: vi.fn() }));
 
 import { useRestoreOkrWithJournal } from './restore-journal.hooks';
 import type { OKR } from './types';

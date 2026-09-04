@@ -56,7 +56,10 @@
 // des complétions, donc pas les points du graphique « KR réalisés ». Seule une
 // suppression logique le permettrait. C'est documenté à l'appel concerné.
 
-import * as Sentry from '@sentry/react';
+// Sentry n'est PLUS importe statiquement : il est charge apres le premier
+// rendu (arbitrage C-13/C-14). `monitoring` est la seule porte, et elle
+// tamponne ce qui arrive avant le chargement.
+import * as monitoring from '@/lib/monitoring';
 import { toast } from 'sonner';
 import { translator } from '@/i18n/useT';
 
@@ -131,7 +134,7 @@ export function reportRestoreFailure(entity: RestorableEntity, error: Error): vo
   toast.error(
     translator('errors').t(RESTORE_ERROR_KEYS[entity], { message: error.message }),
   );
-  Sentry.captureException(error, {
+  monitoring.captureException(error, {
     level: 'error',
     tags: { context: 'restore-undo', restore_entity: entity },
   });

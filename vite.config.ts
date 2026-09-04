@@ -133,9 +133,11 @@ export default defineConfig({
           if (id.includes('node_modules/@supabase')) {
             return 'vendor-supabase';
           }
-          if (id.includes('node_modules/@sentry')) {
-            return 'vendor-sentry';
-          }
+          // @sentry N'EST PLUS force dans un chunk nomme : il est charge en
+          // import() dynamique (monitoring.ts). Un manualChunk le hissait et
+          // Vite le `modulepreload`ait depuis index.html — donc telecharge
+          // par tout le monde au chargement, ce qui annulait la mise en
+          // differe. Rollup lui donne desormais son propre chunk async.
           // ⚠️ `clsx` / `tailwind-merge` / `cva` DOIVENT être assignés
           // explicitement, et c'est le correctif le plus rentable du fichier.
           //

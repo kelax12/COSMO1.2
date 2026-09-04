@@ -1,10 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { toast } from 'sonner';
-import * as Sentry from '@sentry/react';
+import * as monitoring from '@/lib/monitoring';
 import { reportRestoreFailure, splitRestore, type CreateOptions } from './restore-id';
 
 vi.mock('sonner', () => ({ toast: { error: vi.fn() } }));
-vi.mock('@sentry/react', () => ({ captureException: vi.fn() }));
+// ⚠️ On mocke `@/lib/monitoring`, plus `@sentry/react` directement : depuis
+// l'arbitrage C-13 · C-14, Sentry est charge APRES le premier rendu et
+// `monitoring` est la seule porte (elle tamponne ce qui arrive avant). Ce qui
+// est teste ici n'a pas change — l'erreur doit REMONTER — seul le chemin a
+// change.
+vi.mock('@/lib/monitoring', () => ({ captureException: vi.fn() }));
 
 describe('splitRestore', () => {
   it("sort l'identifiant du payload au lieu de le jeter", () => {
@@ -56,7 +61,7 @@ describe('reportRestoreFailure', () => {
     expect(String(shown)).toContain('restaurer la tâche');
     expect(String(shown)).toContain('Cette ressource existe déjà.');
 
-    expect(Sentry.captureException).toHaveBeenCalledWith(
+    expect(monitoring.captureException).toHaveBeenCalledWith(
       error,
       expect.objectContaining({ tags: expect.objectContaining({ context: 'restore-undo', restore_entity: 'task' }) }),
     );

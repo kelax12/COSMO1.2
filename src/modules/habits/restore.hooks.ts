@@ -21,7 +21,10 @@ import { splitRestore } from '@/lib/restore-id';
 import { habitKeys } from './constants';
 import type { CreateHabitInput, Habit } from './types';
 import { toast } from 'sonner';
-import * as Sentry from '@sentry/react';
+// Sentry n'est PLUS importe statiquement : il est charge apres le premier
+// rendu (arbitrage C-13/C-14). `monitoring` est la seule porte, et elle
+// tamponne ce qui arrive avant le chargement.
+import * as monitoring from '@/lib/monitoring';
 import { translator } from '@/i18n/useT';
 
 export const useRestoreHabit = () => {
@@ -42,7 +45,7 @@ export const useRestoreHabit = () => {
       toast.error(
         translator('errors').t('mutation.restoreHabit', { message: error.message }),
       );
-      Sentry.captureException(error, {
+      monitoring.captureException(error, {
         level: 'error',
         tags: { context: 'restore-undo', restore_entity: 'habit' },
       });

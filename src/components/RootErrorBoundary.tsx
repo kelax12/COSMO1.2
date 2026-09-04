@@ -27,7 +27,10 @@
 // plutôt qu'à `AuthContext` (qui n'existe peut-être plus à cet instant).
 
 import React, { Component, ReactNode } from 'react';
-import * as Sentry from '@sentry/react';
+// Sentry n'est PLUS importe statiquement : il est charge apres le premier
+// rendu (arbitrage C-13/C-14). `monitoring` est la seule porte, et elle
+// tamponne ce qui arrive avant le chargement.
+import * as monitoring from '@/lib/monitoring';
 import { translator } from '@/i18n/useT';
 // C-64 — la sortie de secours vit dans un module partage : `AppErrorBoundary`
 // l'offre desormais aussi, et deux copies d'un chemin de secours divergent.
@@ -54,7 +57,7 @@ export class RootErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
     console.error('[RootErrorBoundary]', error, info.componentStack);
-    Sentry.captureException(error, {
+    monitoring.captureException(error, {
       level: 'fatal',
       contexts: { react: { componentStack: info.componentStack ?? undefined } },
       // Distingue nettement, dans Sentry, « une page a planté » de « toute

@@ -36,7 +36,11 @@ vi.mock('@/lib/supabase', () => ({
 vi.mock('@/lib/app-mode.store', () => ({ useIsDemo: () => false }));
 
 const captureException = vi.fn();
-vi.mock('@sentry/react', () => ({ captureException: (...a: unknown[]) => captureException(...a) }));
+// ⚠️ On mocke `@/lib/monitoring`, plus `@sentry/react` : depuis l'arbitrage
+// C-13 · C-14, Sentry est charge APRES le premier rendu et `monitoring` est la
+// seule porte. La propriete testee est inchangee — la degradation doit REMONTER
+// en `warning` — seul le chemin a change.
+vi.mock('@/lib/monitoring', () => ({ captureException: (...a: unknown[]) => captureException(...a) }));
 
 import { useSharedTasksRealtime } from './useSharedTasksRealtime';
 
