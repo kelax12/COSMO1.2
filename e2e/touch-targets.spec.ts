@@ -61,6 +61,16 @@ interface UnderTarget {
   w: number;
   h: number;
   name: string;
+  /**
+   * Un extrait du HTML.
+   *
+   * ⚠️ Ajoute le 2026-09-04 : le rapport ne donnait que la taille et le nom
+   * accessible, or le premier defaut trouve en etendant la garde a /statistics
+   * etait une commande de 16 x 16 px SANS AUCUN NOM. Le message d echec disait
+   * donc `16x16 «  »`, ce qui ne permet pas de la retrouver. Une garde qui
+   * rapporte un defaut doit dire ou il est.
+   */
+  html: string;
 }
 
 async function commandsUnderTarget(page: Page, target: number): Promise<UnderTarget[]> {
@@ -78,10 +88,33 @@ async function commandsUnderTarget(page: Page, target: number): Promise<UnderTar
       );
     };
 
+    /**
+     * La cible REELLE d'une commande.
+     *
+     * 🔴 Une case a cocher enveloppee dans un `<label>` n'est pas une cible de
+     * 16 px : l'association implicite rend TOUT le label cliquable, donc c'est
+     * lui qu'il faut mesurer. Le detecteur mesurait la case, et rapportait donc
+     * une taille qui n'est pas celle du geste — en plus de perdre le nom, porte
+     * par le texte du label et non par l'input.
+     *
+     * ⚠️ Ca ne dispense de rien : sur /statistics, le label mesure aussi moins
+     * de 44 px de haut. La correction du detecteur n'a pas fait disparaitre le
+     * defaut, elle l'a designe correctement. C'est le seul resultat acceptable
+     * pour une correction de mesure.
+     */
+    const effectiveTarget = (el: Element): Element => {
+      const label = el.closest('label');
+      return label && label.contains(el) ? label : el;
+    };
+
     const out: UnderTarget[] = [];
-    for (const el of document.querySelectorAll(
+    const seen = new Set<Element>();
+    for (const control of document.querySelectorAll(
       'button, [role="button"], input[type="checkbox"]',
     )) {
+      const el = effectiveTarget(control);
+      if (seen.has(el)) continue;
+      seen.add(el);
       const r = el.getBoundingClientRect();
       // Élément non rendu : ni un défaut, ni une cible.
       if (r.width === 0 || r.height === 0) continue;
@@ -93,6 +126,7 @@ async function commandsUnderTarget(page: Page, target: number): Promise<UnderTar
           name:
             el.getAttribute('aria-label')
             ?? (el.textContent ?? '').trim().slice(0, 40),
+          html: el.outerHTML.slice(0, 160),
         });
       }
     }
@@ -124,7 +158,20 @@ test.describe('C-57 — cibles tactiles (WCAG 2.5.5)', () => {
     await demoPage.evaluate(() => document.getElementById('c57-temoin')?.remove());
   });
 
-  for (const route of ['/dashboard', '/entreprise', '/okr', '/tasks', '/habits', '/settings']) {
+  for (const route of [
+    '/dashboard',
+    '/entreprise',
+    '/okr',
+    '/tasks',
+    '/habits',
+    '/settings',
+    // Ajoutees le 2026-09-04 : le critere de l item dit « les routes
+    // protegees », et il y en a huit. En couvrir six et parler des routes
+    // protegees, c est le meme ecart de langage que les enonces que cette
+    // passe a trouves faux.
+    '/agenda',
+    '/statistics',
+  ]) {
     test(`${route} : aucune commande sous 44 x 44 px`, async ({ demoPage }) => {
       // `goto` direct et pas `navTo` : on mesure une PAGE, pas un parcours de
       // navigation, et la barre d onglets mobile n expose pas les six routes.
@@ -134,7 +181,7 @@ test.describe('C-57 — cibles tactiles (WCAG 2.5.5)', () => {
 
       const under = await commandsUnderTarget(demoPage, TARGET);
       expect(
-        under.map((u) => `${u.w}x${u.h} « ${u.name} »`),
+        under.map((u) => `${u.w}x${u.h} « ${u.name} » ${u.html}`),
         'La zone tactile doit faire 44 px dans les DEUX dimensions. L ICONE, '
           + 'elle, reste petite : c est le contrat de `TouchTarget` '
           + '(src/components/mobile/). Marges negatives pour que la rangee ne '
