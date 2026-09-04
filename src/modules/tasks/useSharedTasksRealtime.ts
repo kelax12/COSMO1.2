@@ -34,7 +34,10 @@
 // ═══════════════════════════════════════════════════════════════════
 import { useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import * as Sentry from '@sentry/react';
+// Sentry n'est PLUS importe statiquement : il est charge apres le premier
+// rendu (arbitrage C-13/C-14). `monitoring` est la seule porte, et elle
+// tamponne ce qui arrive avant le chargement.
+import * as monitoring from '@/lib/monitoring';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { useIsDemo } from '@/lib/app-mode.store';
 import { taskKeys } from './constants';
@@ -108,7 +111,7 @@ export function useSharedTasksRealtime(userId: string | undefined): void {
       // simplement moins réactive. Le savoir reste utile pour mesurer combien
       // d'utilisateurs sont dans ce cas.
       console.warn('[realtime] canal indisponible, repli sur le sondage', err);
-      Sentry.captureException(err, {
+      monitoring.captureException(err, {
         level: 'warning',
         tags: { context: 'realtime-websocket-unavailable' },
       });

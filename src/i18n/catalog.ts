@@ -66,6 +66,7 @@ interface FrModules {
   admin: typeof import('@/locales/fr/admin.json');
   agenda: typeof import('@/locales/fr/agenda.json');
   dashboard: typeof import('@/locales/fr/dashboard.json');
+  bugReport: typeof import('@/locales/fr/bugReport.json');
   csv: typeof import('@/locales/fr/csv.json');
   eventModal: typeof import('@/locales/fr/eventModal.json');
   guide: typeof import('@/locales/fr/guide.json');
@@ -107,6 +108,14 @@ interface CatalogShapes {
    * depuis Réglages → Données ou l'aperçu d'entreprise. Mesuré : l'entrée
    * passe de 78 023 à 77 556 o gzip, soit **467 o**, en le sortant.
    */
+  /**
+   * Formulaire « Signaler un bug ».
+   *
+   * 🔴 Namespace À PART pour la même raison que `csv` : il vivait dans
+   * `common`, donc dans le chunk d'entrée, alors que `BugReportModal` est
+   * `lazy()` et que ses 1,2 ko bruts ne servent qu'à ceux qui l'ouvrent.
+   */
+  bugReport: Shape<'bugReport'>;
   csv: Shape<'csv'>;
   /** Modale d'événement — champs, récurrence, planification, calendrier. */
   eventModal: Shape<'eventModal'>;
@@ -213,7 +222,8 @@ registry[DEFAULT_LOCALE] = {
  * fantôme que `t()` ne saurait pas typer.
  */
 const NAMESPACES: readonly Namespace[] = [
-  'admin', 'agenda', 'common', 'csv', 'dashboard', 'errors', 'eventModal', 'guide',
+  'admin', 'agenda', 'bugReport', 'common', 'csv', 'dashboard', 'errors', 'eventModal',
+  'guide',
   'habits', 'invite', 'landing', 'legal', 'okr', 'org', 'premium', 'seo',
   'settings', 'statistics', 'taskModal', 'tasks', 'tutorials',
 ];

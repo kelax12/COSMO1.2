@@ -1,8 +1,8 @@
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router';
-import * as Sentry from '@sentry/react';
 import App from './App.tsx';
 import { RootErrorBoundary } from './components/RootErrorBoundary';
+import { installEarlyHandlers, startMonitoring } from './lib/monitoring';
 import { applyTheme, resolveInitialTheme } from './lib/theme';
 import { captureFirstTouch } from './lib/attribution';
 import { mountAudienceScript } from './lib/audience';
@@ -14,20 +14,46 @@ import { resolveRouterBootstrap } from './i18n/bootstrap';
 import { loadCatalogs } from './i18n/catalog';
 import './index.css';
 
-// Sentry — error monitoring prod (faille §14 / I3). Init synchrone, AVANT le
-// warmup iOS Safari pour capturer aussi les erreurs très précoces. Désactivé
-// silencieusement si VITE_SENTRY_DSN est absent (utile en dev local).
-const sentryDsn = import.meta.env.VITE_SENTRY_DSN;
-if (sentryDsn) {
-  // M-9 — sendDefaultPii: false strips Sentry's auto-collected user identifiers
-  // (IP, cookies). It does NOT scrub PII that lands in error.message itself —
-  // Supabase errors routinely include emails and UUIDs in their message. This
-  // beforeSend hook regex-strips both from message + exception values before
-  // the event leaves the browser. Defense-in-depth for RGPD.
-  const EMAIL_RE = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
-  const UUID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
-  const scrub = (s: string): string => s.replace(EMAIL_RE, '[email]').replace(UUID_RE, '[uuid]');
+// ═══════════════════════════════════════════════════════════════════
+// Sentry — CHARGÉ APRÈS LE PREMIER RENDU (arbitrage C-13 · C-14)
+// ═══════════════════════════════════════════════════════════════════
+//
+// 49,3 ko gzip payés par TOUT visiteur, sur le chemin critique, pour un
+// paquet dont on n'a besoin qu'au premier incident. La décision du
+// 2026-09-03 le sort de là.
+//
+// 🔴 L'ANGLE MORT QUE LA DÉCISION NOMME, ET SA RÉPONSE. « Les erreurs des
+// premières millisecondes ne seraient plus capturées, et c'est exactement la
+// fenêtre du bug de `Layout` du 2026-09-03. » Deux mesures, posées AVANT
+// tout le reste :
+//
+//   1. `installEarlyHandlers()` — un `window.onerror` et un
+//      `unhandledrejection` minimaux, quelques lignes, aucun paquet ;
+//   2. `src/lib/monitoring.ts` tamponne TOUT appel arrivé avant que le SDK
+//      soit là, et le rejoue ensuite. Rien n'est perdu, seul l'envoi est
+//      retardé.
+//
+// ⚠️ Ces deux lignes doivent rester les PREMIÈRES instructions exécutables du
+//    fichier. Tout ce qui les précède s'exécute sans filet.
+installEarlyHandlers();
 
+// M-9 — sendDefaultPii: false strips Sentry's auto-collected user identifiers
+// (IP, cookies). It does NOT scrub PII that lands in error.message itself —
+// Supabase errors routinely include emails and UUIDs in their message. This
+// beforeSend hook regex-strips both from message + exception values before
+// the event leaves the browser. Defense-in-depth for RGPD.
+const EMAIL_RE = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
+const UUID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
+const scrub = (s: string): string => s.replace(EMAIL_RE, '[email]').replace(UUID_RE, '[uuid]');
+
+const sentryDsn = import.meta.env.VITE_SENTRY_DSN;
+
+/**
+ * Configuration du SDK. Reste ICI, et pas dans `monitoring.ts` : le scrubbing
+ * RGPD et l'échantillonnage se relisent au même endroit que le reste de
+ * l'amorçage, pas dans un module utilitaire.
+ */
+function initSentry(Sentry: typeof import('./lib/sentry-client')): void {
   Sentry.init({
     dsn: sentryDsn,
     environment: import.meta.env.MODE,
@@ -35,10 +61,11 @@ if (sentryDsn) {
     // VERCEL_GIT_COMMIT_SHA). Lie chaque erreur/transaction au déploiement
     // exact → régressions attribuables à un commit, et rollback ciblé.
     release: __APP_RELEASE__,
-    // Tracing perf activé à 10 % (audit architecture TOP-7 — angle mort
-    // observabilité). browserTracingIntegration auto-instrumente pageload +
-    // navigations SPA. Échantillonnage bas pour rester dans le quota Sentry
-    // tout en donnant une visibilité TTFB/LCP/navigations en prod.
+    // ⚠️ COÛT ASSUMÉ DE LA DÉCISION : initialisée après le premier rendu,
+    // `browserTracingIntegration` ne voit qu'une partie du `pageload`. La
+    // transaction de chargement est dégradée. Ça porte sur la MESURE de
+    // performance, pas sur la capture d'erreurs — celle-ci est intégralement
+    // préservée par le tampon de `monitoring.ts`.
     integrations: [Sentry.browserTracingIntegration()],
     tracesSampleRate: 0.1,
     // Propage le contexte de trace aux requêtes Supabase (corrèle un appel
@@ -224,4 +251,24 @@ function mount(): void {
 // `catch` et non `finally` sur l'échec : on monte l'app quoi qu'il arrive. Une
 // langue dont les catalogues n'ont pas pu être chargés rend en français, ce qui
 // reste infiniment préférable à une page blanche.
-loadCatalogs(activeLocale).catch(() => undefined).then(mount);
+loadCatalogs(activeLocale).catch(() => undefined).then(() => {
+  mount();
+
+  // ── Sentry, APRÈS le premier rendu ────────────────────────────────
+  //
+  // `requestIdleCallback` et pas un `setTimeout(0)` : on veut la première
+  // fenêtre d'inactivité, pas la prochaine tâche — qui tomberait en plein
+  // milieu du travail de montage qu'on cherche justement à ne pas ralentir.
+  // Repli `setTimeout` pour Safari, qui ne l'implémente toujours pas.
+  //
+  // ⚠️ Le tampon de `monitoring.ts` couvre tout l'intervalle : ce délai
+  //    retarde l'ENVOI, il ne perd rien.
+  if (sentryDsn) {
+    const load = () => { void startMonitoring(initSentry); };
+    const idle = (window as Window & {
+      requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => void;
+    }).requestIdleCallback;
+    if (idle) idle(load, { timeout: 3000 });
+    else setTimeout(load, 0);
+  }
+});

@@ -18,7 +18,10 @@ import {
 } from './demo-profile';
 import { authLoginGeneric, authRegisterGeneric, safeAuthError } from './auth-errors';
 import { User as SupabaseUser } from '@supabase/supabase-js';
-import * as Sentry from '@sentry/react';
+// Sentry n'est PLUS importe statiquement : il est charge apres le premier
+// rendu (arbitrage C-13/C-14). `monitoring` est la seule porte, et elle
+// tamponne ce qui arrive avant le chargement.
+import * as monitoring from '@/lib/monitoring';
 import { toast } from 'sonner';
 import { translator } from '@/i18n/useT';
 import {
@@ -113,7 +116,7 @@ const consumeOAuthErrorFromUrl = (): string | null => {
     const description =
       query.get('error_description') ?? hash.get('error_description') ?? code;
     console.error('[auth] retour OAuth en erreur', code, description);
-    Sentry.captureMessage(`OAuth callback error: ${code}`, {
+    monitoring.captureMessage(`OAuth callback error: ${code}`, {
       level: 'warning',
       tags: { context: 'oauth-callback' },
     });
@@ -153,7 +156,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Observabilité : corrèle les erreurs/transactions Sentry à l'utilisateur.
   // Id uniquement — pas d'email ni de PII (cohérent avec sendDefaultPii:false).
   useEffect(() => {
-    Sentry.setUser(user ? { id: user.id } : null);
+    monitoring.setUser(user ? { id: user.id } : null);
   }, [user]);
 
   // Map a Supabase session user to our App user type.
@@ -274,7 +277,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       } catch (err) {
         dlog(`initializeAuth: caught error after retry — ${(err as Error)?.message}`);
-        Sentry.captureException(err, { tags: { context: 'auth-init-getSession-retry-failed' } });
+        monitoring.captureException(err, { tags: { context: 'auth-init-getSession-retry-failed' } });
       } finally {
         dlog('initializeAuth: setIsLoading(false) — done');
         setIsLoading(false);
@@ -314,7 +317,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setIsLoading(false);
       if (fired) {
         dlog('watchdog: session non resolue apres 12 s — on debloque l UI');
-        Sentry.captureMessage('auth: isLoading watchdog fired', {
+        monitoring.captureMessage('auth: isLoading watchdog fired', {
           level: 'warning',
           tags: { context: 'auth-watchdog' },
         });

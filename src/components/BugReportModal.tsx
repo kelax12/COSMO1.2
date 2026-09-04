@@ -44,7 +44,10 @@ const primaryBtn =
   'w-full py-3 rounded-xl text-sm font-semibold bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] hover:bg-[rgb(var(--color-accent-solid-hover))] disabled:opacity-40 transition-all inline-flex items-center justify-center gap-2';
 
 const BugReportModal: React.FC<BugReportModalProps> = ({ open, onOpenChange }) => {
-  const { t } = useT('common');
+  // ⚠️ Namespace `bugReport` et non `common` : `common` est eager (chunk
+  // d'entree) et ces libelles ne servent qu'a ceux qui ouvrent ce formulaire.
+  // La route qui le monte doit declarer 'bugReport' dans App.tsx.
+  const { t } = useT('bugReport');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [file, setFile] = useState<File | null>(null);
@@ -114,12 +117,12 @@ const BugReportModal: React.FC<BugReportModalProps> = ({ open, onOpenChange }) =
       if (error) throw error;
 
       setSent(true);
-      toast.success(t('bugReport.toastSuccess'));
+      toast.success(t('toastSuccess'));
     } catch {
       // Aucune issue morte : on bascule sur le lien mailto vers la même
       // adresse plutôt que d'afficher « erreur » et rien d'autre.
       setMailFallback(true);
-      toast.error(t('bugReport.toastError'));
+      toast.error(t('toastError'));
     } finally {
       setSending(false);
     }
@@ -129,13 +132,13 @@ const BugReportModal: React.FC<BugReportModalProps> = ({ open, onOpenChange }) =
 
   const errorMessage = fieldError
     ? fieldError === 'title'
-      ? t('bugReport.errors.title', { min: BUG_REPORT_LIMITS.titleMin, max: BUG_REPORT_LIMITS.titleMax })
+      ? t('errors.title', { min: BUG_REPORT_LIMITS.titleMin, max: BUG_REPORT_LIMITS.titleMax })
       : fieldError === 'description'
-        ? t('bugReport.errors.description', {
+        ? t('errors.description', {
             min: BUG_REPORT_LIMITS.descriptionMin,
             max: BUG_REPORT_LIMITS.descriptionMax,
           })
-        : t('bugReport.errors.attachment', { max: BUG_REPORT_LIMITS.attachmentMaxBytes / (1024 * 1024) })
+        : t('errors.attachment', { max: BUG_REPORT_LIMITS.attachmentMaxBytes / (1024 * 1024) })
     : null;
 
   return createPortal(
@@ -169,20 +172,20 @@ const BugReportModal: React.FC<BugReportModalProps> = ({ open, onOpenChange }) =
           onClick={(e) => e.stopPropagation()}
           role="dialog"
           aria-modal="true"
-          aria-label={t('bugReport.title')}
+          aria-label={t('title')}
           className="w-full max-w-xl my-auto rounded-3xl bg-[rgb(var(--color-background))] border border-[rgb(var(--color-border))] shadow-2xl overflow-hidden"
         >
           {/* En-tête */}
           <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-[rgb(var(--color-border))]">
             <h2 className="text-base sm:text-lg font-bold text-[rgb(var(--color-text-primary))] inline-flex items-center gap-2">
               <Bug size={18} className="text-red-500" aria-hidden="true" />
-              {t('bugReport.title')}
+              {t('title')}
             </h2>
             <button
               type="button"
               onClick={close}
               disabled={sending}
-              aria-label={t('bugReport.close')}
+              aria-label={t('close')}
               className="w-9 h-9 rounded-xl flex items-center justify-center text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] transition-colors disabled:opacity-40"
             >
               <X size={18} aria-hidden="true" />
@@ -194,24 +197,24 @@ const BugReportModal: React.FC<BugReportModalProps> = ({ open, onOpenChange }) =
             <div className="px-5 sm:px-6 py-10 flex flex-col items-center text-center gap-3">
               <CheckCircle2 size={40} className="text-green-500" aria-hidden="true" />
               <p className="text-base font-semibold text-[rgb(var(--color-text-primary))]">
-                {t('bugReport.successTitle')}
+                {t('successTitle')}
               </p>
               <p className="text-sm text-[rgb(var(--color-text-secondary))] max-w-sm">
-                {t('bugReport.successBody')}
+                {t('successBody')}
               </p>
               <button type="button" onClick={close} className={`${primaryBtn} mt-2 max-w-[200px]`}>
-                {t('bugReport.done')}
+                {t('done')}
               </button>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="px-5 sm:px-6 py-5 flex flex-col gap-4">
               <p className="text-sm text-[rgb(var(--color-text-secondary))]">
-                {t('bugReport.intro')}
+                {t('intro')}
               </p>
 
               <div className="flex flex-col gap-1.5">
                 <label htmlFor="bug-title" className="text-xs font-semibold uppercase tracking-wide text-[rgb(var(--color-text-secondary))]">
-                  {t('bugReport.fields.title')}
+                  {t('fields.title')}
                 </label>
                 <input
                   id="bug-title"
@@ -219,7 +222,7 @@ const BugReportModal: React.FC<BugReportModalProps> = ({ open, onOpenChange }) =
                   value={title}
                   onChange={(e) => { setTitle(e.target.value); setFieldError(null); }}
                   maxLength={BUG_REPORT_LIMITS.titleMax}
-                  placeholder={t('bugReport.placeholders.title')}
+                  placeholder={t('placeholders.title')}
                   className={inputClasses}
                   autoFocus
                 />
@@ -227,7 +230,7 @@ const BugReportModal: React.FC<BugReportModalProps> = ({ open, onOpenChange }) =
 
               <div className="flex flex-col gap-1.5">
                 <label htmlFor="bug-description" className="text-xs font-semibold uppercase tracking-wide text-[rgb(var(--color-text-secondary))]">
-                  {t('bugReport.fields.description')}
+                  {t('fields.description')}
                 </label>
                 <textarea
                   id="bug-description"
@@ -235,14 +238,14 @@ const BugReportModal: React.FC<BugReportModalProps> = ({ open, onOpenChange }) =
                   onChange={(e) => { setDescription(e.target.value); setFieldError(null); }}
                   maxLength={BUG_REPORT_LIMITS.descriptionMax}
                   rows={6}
-                  placeholder={t('bugReport.placeholders.description')}
+                  placeholder={t('placeholders.description')}
                   className={`${inputClasses} resize-y min-h-[120px]`}
                 />
               </div>
 
               <div className="flex flex-col gap-1.5">
                 <span className="text-xs font-semibold uppercase tracking-wide text-[rgb(var(--color-text-secondary))]">
-                  {t('bugReport.fields.attachment')}
+                  {t('fields.attachment')}
                 </span>
                 {/* L'input natif est masqué mais reste focalisable au clavier :
                     c'est lui qui porte le libellé accessible du bouton. */}
@@ -260,7 +263,7 @@ const BugReportModal: React.FC<BugReportModalProps> = ({ open, onOpenChange }) =
                     className="cursor-pointer inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] hover:bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-primary))] transition-colors"
                   >
                     <Paperclip size={16} aria-hidden="true" />
-                    {t('bugReport.chooseFile')}
+                    {t('chooseFile')}
                   </label>
                   {file ? (
                     <span className="text-sm text-[rgb(var(--color-text-secondary))] inline-flex items-center gap-2 min-w-0">
@@ -271,7 +274,7 @@ const BugReportModal: React.FC<BugReportModalProps> = ({ open, onOpenChange }) =
                           setFile(null);
                           if (fileInputRef.current) fileInputRef.current.value = '';
                         }}
-                        aria-label={t('bugReport.removeFile')}
+                        aria-label={t('removeFile')}
                         className="text-[rgb(var(--color-text-muted))] hover:text-red-500 transition-colors"
                       >
                         <X size={14} aria-hidden="true" />
@@ -279,7 +282,7 @@ const BugReportModal: React.FC<BugReportModalProps> = ({ open, onOpenChange }) =
                     </span>
                   ) : (
                     <span className="text-xs text-[rgb(var(--color-text-muted))]">
-                      {t('bugReport.attachmentHint', { max: BUG_REPORT_LIMITS.attachmentMaxBytes / (1024 * 1024) })}
+                      {t('attachmentHint', { max: BUG_REPORT_LIMITS.attachmentMaxBytes / (1024 * 1024) })}
                     </span>
                   )}
                 </div>
@@ -291,7 +294,7 @@ const BugReportModal: React.FC<BugReportModalProps> = ({ open, onOpenChange }) =
 
               {mailFallback && (
                 <p role="alert" className="text-sm text-[rgb(var(--color-text-secondary))]">
-                  {t('bugReport.fallback')}{' '}
+                  {t('fallback')}{' '}
                   <a href={mailtoHref} className="text-[rgb(var(--color-accent))] underline underline-offset-2">
                     {CONTACT_EMAIL}
                   </a>
@@ -302,7 +305,7 @@ const BugReportModal: React.FC<BugReportModalProps> = ({ open, onOpenChange }) =
                 {sending
                   ? <Loader2 size={16} className="animate-spin" aria-hidden="true" />
                   : <Send size={16} aria-hidden="true" />}
-                {sending ? t('bugReport.sending') : t('bugReport.submit')}
+                {sending ? t('sending') : t('submit')}
               </button>
             </form>
           )}

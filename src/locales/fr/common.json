@@ -317,36 +317,6 @@
     "t50": "Entreprise",
     "tmax": "Illimité"
   },
-  "bugReport": {
-    "title": "Signaler un bug",
-    "close": "Fermer",
-    "intro": "Décrivez ce qui ne marche pas : nous recevons votre message directement, avec la page et le navigateur d'où il part.",
-    "fields": {
-      "title": "Titre",
-      "description": "Description",
-      "attachment": "Pièce jointe (facultatif)"
-    },
-    "placeholders": {
-      "title": "En une phrase, que s'est-il passé ?",
-      "description": "Ce que vous faisiez, ce que vous attendiez, ce qui s'est produit à la place."
-    },
-    "chooseFile": "Choisir un fichier",
-    "removeFile": "Retirer la pièce jointe",
-    "attachmentHint": "Capture, PDF ou log, {{max}} Mo maximum",
-    "submit": "Envoyer",
-    "sending": "Envoi en cours...",
-    "done": "Fermer",
-    "successTitle": "Message envoyé, merci !",
-    "successBody": "Votre signalement est bien arrivé. Merci de prendre le temps de nous aider à corriger Cosmo : on regarde ça au plus vite.",
-    "toastSuccess": "Signalement envoyé. Merci !",
-    "toastError": "L'envoi a échoué.",
-    "fallback": "L'envoi automatique n'a pas fonctionné. Écrivez-nous directement à",
-    "errors": {
-      "title": "Le titre doit faire entre {{min}} et {{max}} caractères.",
-      "description": "La description doit faire entre {{min}} et {{max}} caractères.",
-      "attachment": "Pièce jointe refusée : image, PDF ou texte, {{max}} Mo maximum."
-    }
-  },
   "appVersion": {
     "available": "Une nouvelle version de COSMO est disponible.",
     "reload": "Recharger",

@@ -1,5 +1,8 @@
 import React, { Component, ReactNode } from 'react';
-import * as Sentry from '@sentry/react';
+// Sentry n'est PLUS importe statiquement : il est charge apres le premier
+// rendu (arbitrage C-13/C-14). `monitoring` est la seule porte, et elle
+// tamponne ce qui arrive avant le chargement.
+import * as monitoring from '@/lib/monitoring';
 import { appModeStore } from '@/lib/app-mode.store';
 import { getTranslator } from '@/i18n/useT';
 import { localeStore } from '@/i18n/store';
@@ -26,7 +29,7 @@ export class AppErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
     console.error('[ErrorBoundary]', error, info.componentStack);
-    Sentry.captureException(error, {
+    monitoring.captureException(error, {
       contexts: { react: { componentStack: info.componentStack ?? undefined } },
       tags: { mode: appModeStore.isDemo ? 'demo' : 'prod' },
     });

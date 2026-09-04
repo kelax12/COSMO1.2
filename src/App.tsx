@@ -83,7 +83,7 @@ const UseCasePage = lazyWithRetry(() => import('@/pages/UseCasePage'), ['landing
 // Lazy load Layout. Il enveloppe TOUTES les routes protégées : son `org` est
 // donc chargé une seule fois pour toute la session connectée, et les pages
 // qu'il contient le retrouvent déjà en mémoire.
-const Layout = lazyWithRetry(() => import('@/components/Layout'), ['org', 'tasks']);
+const Layout = lazyWithRetry(() => import('@/components/Layout'), ['bugReport', 'org', 'tasks']);
 
 // Query client config optimized
 const queryClient = new QueryClient({

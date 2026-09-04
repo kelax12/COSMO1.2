@@ -233,22 +233,48 @@ for (const m of measured) {
 // Une garde qui mesure le mauvais artefact est pire qu'une garde absente : elle
 // donne une réponse, et on la croit. D'où ce contrôle, qui refuse de valider un
 // budget calculé sur une forme de bundle qui n'existe nulle part.
-const sentry = measured.find((m) => m.base === 'vendor-sentry');
+//
+// ⚠️ RÉÉCRIT le 2026-09-04, parce que la garde s'était mise à parler d'un chunk
+// qui n'existe plus. Sentry est désormais chargé APRÈS le premier rendu
+// (arbitrage C-13 · C-14) : il n'est plus dans `vendor-sentry`, plus dans le
+// chemin critique, et plus préchargé depuis `index.html`. La garde cherchait
+// `vendor-sentry`, ne le trouvait plus, et affichait « si Sentry a été retiré
+// volontairement… » — une phrase FAUSSE et rassurante sur un build où Sentry
+// est bien présent. Exactement le défaut qu'elle existe pour empêcher.
+//
+// Ce qu'elle protège aujourd'hui n'est plus le chiffrage du chemin critique
+// (Sentry n'y est plus, la variable ne le change donc plus), mais un fait plus
+// simple : **le build mesuré expédie-t-il réellement Sentry ?** Sans la
+// variable, `startMonitoring` reste derrière `if (sentryDsn)`, la branche
+// devient du code mort, et le chunk disparaît entièrement. Un budget vert sur
+// un artefact d'où le monitoring a été éliminé ne dit rien du produit.
+const sentry = measured.find((m) => m.base.startsWith('sentry-client'));
 const SENTRY_FLOOR = 20_000;
-if (sentry && sentry.gzip < SENTRY_FLOOR) {
+if (!sentry) {
   errors.push(
-    `Build mesuré SANS \`VITE_SENTRY_DSN\` : vendor-sentry ne pèse que ${KB(sentry.gzip)}.\n` +
-      `  Sans la variable, Vite élimine la branche \`Sentry.init\` et Rollup jette\n` +
-      `  presque tout @sentry/react : le bundle mesuré n'est PAS celui livré, et le\n` +
-      `  chemin critique est sous-estimé d'environ 45 ko gzip.\n` +
-      `  Poser la variable au moment du build (n'importe quelle valeur non vide suffit,\n` +
-      `  elle ne décide que de la forme du bundle), puis relancer.`
+    [
+      'Aucun chunk `sentry-client` dans le build : Sentry n’est pas expédié.',
+      '  Cause la plus probable : `VITE_SENTRY_DSN` absente au moment du build.',
+      '  Vite la remplace par `undefined` À LA COMPILATION, la branche',
+      '  `if (sentryDsn)` de main.tsx devient du code mort, et Rollup élimine',
+      '  tout le chargement différé. Poser la variable (n’importe quelle valeur',
+      '  non vide suffit, elle ne décide que de la forme du bundle), puis relancer.',
+      '  Si Sentry a été retiré VOLONTAIREMENT, supprimer ce contrôle ici.',
+    ].join('\n')
   );
-} else if (!sentry) {
-  report.push(
-    'ℹ️  vendor-sentry absent du build : si Sentry a été retiré volontairement, ' +
-      'supprimer le contrôle de plancher dans ce fichier.'
+} else if (sentry.gzip < SENTRY_FLOOR) {
+  errors.push(
+    [
+      `Chunk \`sentry-client\` anormalement petit (${KB(sentry.gzip)}) : le SDK a`,
+      '  probablement été élagué à tort. Attendu ~48 ko gzip.',
+    ].join('\n')
   );
+} else {
+  // ⚠️ Le SENS de ce chiffre a changé, et le rappeler évite de le relire comme
+  // avant : ce chunk est LAZY, il ne pèse plus sur le premier chargement. Il
+  // est mesuré ici pour qu'un retour en arrière (import statique, préchargement
+  // réintroduit) se voie dans `critique`, pas pour être budgété.
+  report.push(`ℹ️  sentry-client ${KB(sentry.gzip)} — chargé APRÈS le premier rendu, hors chemin critique.`);
 }
 
 if (process.argv.includes('--report')) {

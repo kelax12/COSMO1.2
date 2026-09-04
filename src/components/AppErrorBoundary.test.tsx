@@ -3,11 +3,16 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import * as Sentry from '@sentry/react';
+import * as monitoring from '@/lib/monitoring';
 import { AppErrorBoundary } from './AppErrorBoundary';
 import { hardSignOut } from '@/lib/hard-sign-out';
 
-vi.mock('@sentry/react', () => ({ captureException: vi.fn() }));
+// ⚠️ On mocke `@/lib/monitoring`, plus `@sentry/react` directement : depuis
+// l'arbitrage C-13 · C-14, Sentry est charge APRES le premier rendu et
+// `monitoring` est la seule porte (elle tamponne ce qui arrive avant). Ce qui
+// est teste ici n'a pas change — l'erreur doit REMONTER — seul le chemin a
+// change.
+vi.mock('@/lib/monitoring', () => ({ captureException: vi.fn() }));
 vi.mock('@/lib/hard-sign-out', () => ({ hardSignOut: vi.fn() }));
 
 const Boom = () => {
@@ -30,7 +35,7 @@ describe('AppErrorBoundary', () => {
     // Generic, user-facing copy — never the raw error text (faille V7).
     expect(screen.getByText(/erreur inattendue/i)).toBeTruthy();
     expect(screen.queryByText(/kaboom/)).toBeNull();
-    expect(Sentry.captureException).toHaveBeenCalledTimes(1);
+    expect(monitoring.captureException).toHaveBeenCalledTimes(1);
   });
 
   it('renders children unchanged when there is no error', () => {
