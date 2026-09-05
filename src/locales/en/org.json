@@ -115,6 +115,8 @@
     "intro": "The pyramid shows who works with whom: each member reports to a direct manager. Invite your colleagues to build it.",
     "results_one": "{{count}} result",
     "results_other": "{{count}} results",
+    "moveCount_one": "{{count}} change",
+    "moveCount_other": "{{count}} changes",
     "display": "Show",
     "byTeam": "By team",
     "chooseView": "Choose the pyramid view",
