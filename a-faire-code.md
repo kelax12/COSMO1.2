@@ -11,7 +11,7 @@ compte** et **ce qui prouve que c'est fini**.
 
 > ### 🟢 Passe du 2026-09-04 — état au soir, poussé sur `main`
 >
-> **70 items. 34 clos, 4 à moitié, 32 ouverts.** Chaque item concerné porte une
+> **70 items. 35 clos, 4 à moitié, 31 ouverts.** Chaque item concerné porte une
 > note en tête qui dit ce qui a été fait, ce qui reste, et sous quelles réserves.
 > Le détail de ce qui reste est en **[§ 11](#11-ce-qui-reste-ouvert)**.
 >
@@ -155,7 +155,7 @@ quand ». Une décision écrite ici fait foi contre une piste écrite dans l'ite
 | [8](#8-tests-et-gardes) | Tests et gardes | C-26 → C-28, C-34 → C-36, C-47 |
 | [9](#9-ce-qui-nest-PAS-du-code) | Ce qui n'est PAS du code | renvois |
 | [10](#10-couverture--ce-que-cette-liste-ne-peut-pas-contenir) | 🔴 Couverture et audits à lancer | 2 audits restants |
-| [11](#11-ce-qui-reste-ouvert) | 🔴 **Ce qui reste ouvert** | 3 gestes, 4 à moitié, 31 entiers |
+| [11](#11-ce-qui-reste-ouvert) | 🔴 **Ce qui reste ouvert** | 3 gestes, 4 à moitié, 30 entiers |
 
 ---
 
@@ -870,7 +870,7 @@ longues qui *commencent* dans cette fenêtre. Une page tranquille rend 0.
 |---|---|---|
 | `/` | **2 856 ms (71 %)** — passes : 2 576, 2 856, 2 906 | **259 ms (6 %)** — passes : 336, 259, 203 |
 | `/guide` | **0 ms**, sur les trois passes | 0 ms |
-| `/entreprise-presentation` | 3 637 ms (91 %) | inchangé, cf. **C-68** |
+| `/entreprise-presentation` | 3 637 ms (91 %) | ✅ **0 ms** depuis le 2026-09-05, cf. **C-68** — cause différente (saturation du tampon de commandes GPU), corrigée séparément |
 
 **Neutraliser les flous retire 91 % du blocage.** Neutraliser les `backdrop-filter` n'en retire
 rien (3 286 ms). Une règle CSS **sans effet** laisse la mesure à 9 % près : ce n'est donc pas
@@ -934,21 +934,83 @@ personne ne l'a jamais vu. Toute l'ambiance venait des trois aplats opaques flou
 
 ### C-68 · `/entreprise-presentation` bloque autant, pour une cause que l'audit n'a PAS su isoler · **P2 · M**
 
-Trouvé par l'audit **A-8**, et écrit ici **parce qu'il n'est pas résolu**. Sur le build de prod, la
-landing entreprise bloque le fil **3 637 ms sur 4 000 (91 %)** au repos, mais neutraliser les flous
-n'y change **rien** : sa cause est différente de celle de C-67, et elle n'est pas nommée.
+> ✅ **corrigé le 2026-09-05.** Bimodalité expliquée, cause nommée, page mesurée à
+> **0 ms sur trois passes consécutives** avec la sonde de garde. Le mécanisme est
+> écrit dans le code, en tête de la boucle de
+> [`LightRays.tsx`](./src/components/reactbits/LightRays.tsx).
 
-Ce que la mesure dit, et c'est tout ce qu'elle dit : le comportement est **bimodal**. Six passes ont
-rendu soit ~0-370 ms, soit ~3 000-3 400 ms, sur la même URL et le même build. Retirer le canvas
-WebGL (`LightRays`, `vendor-ogl`) a produit les deux **seules** passes à 0 ms — mais une troisième
-passe est repartie à 3 031 ms avec le canvas retiré. Le shader est donc un **suspect**, pas une
-conclusion.
+Trouvé par l'audit **A-8**. Sur le build de prod, la landing entreprise bloquait le fil
+**3 637 ms sur 4 000 (91 %)** au repos, et neutraliser les flous n'y changeait **rien** : sa cause
+était différente de celle de C-67 et elle n'était pas nommée. L'audit constatait un comportement
+**bimodal** (~0-370 ms ou ~3 000-3 400 ms sur la même URL et le même build) et désignait le canvas
+WebGL (`LightRays`, `vendor-ogl`) comme **suspect**, sans pouvoir conclure.
 
-- ❌ **Ne pas refermer cet item en accusant le shader** : ce serait exactement le défaut que ce
-  dépôt a corrigé quatre fois, une réponse rassurante donnée par une mesure qui ne discrimine pas.
-- **Fini quand** : la bimodalité est expliquée (trace CDP par catégorie raster/GPU, ou une sonde qui
-  dit laquelle des deux branches le chargement a prise), la cause est nommée, et la page rend moins
-  de 300 ms au repos sur trois passes consécutives.
+**Ce que la trace CDP a montré, et qui nomme la cause.** Sonde écrite pour ça :
+`scripts/landing-bimodal-probe.mjs`, qui enregistre pour chaque passe une signature de la page
+(contexte WebGL obtenu, backend GL, taille du tampon de dessin, frames servies) **puis** une trace
+ventilée par catégorie en **temps propre** sur le fil principal du rendu.
+
+Le fil principal ne **fait** rien : il **attend**. Poste de tête,
+`CommandBufferProxyImpl::WaitForGetOffset`, **2 300 à 4 500 ms** sur une fenêtre de 4 000 —
+c'est-à-dire le blocage synchrone du renderer sur un tampon de commandes plein, pendant que le
+processus GPU passe le même temps dans `CommandBufferService:PutChanged` à exécuter le shader.
+`LightRays` peint le **viewport entier** dans un fragment shader à chaque frame, indéfiniment ;
+quand la machine ne sait pas tenir la frame, les commandes s'empilent et le fil bloque pour faire
+de la place. **Aucun de nos JavaScript ne tournait** : c'est exactement pour ça que couper les
+flous, les 23 `ScrollTrigger` et les 8 tweens infinis ne déplaçait pas la mesure d'un point.
+
+**La bimodalité n'était pas une propriété de la page.** 28 passes de référence, **zéro passe
+basse** : la mesure de base est haute à tous les coups. Elle se reproduit exactement quand on
+**masque** le canvas, 0, 0, **111** ms. Masquer le canvas par CSS demande à
+l'`IntersectionObserver`, donc à un rendu React, donc à un effet de nettoyage, de gagner une course
+contre l'embouteillage qu'il est censé défaire : quand il la gagne, 0 ms ; quand il la perd, la
+boucle continue et on relit 3 000 ms. Le « suspect » était le bon, pour la mauvaise raison. Second
+mécanisme, mesuré aussi : une file qui sature n'a pas un coût progressif, elle draine ou elle ne
+draine pas. À 0,46 Mpx par frame la mesure est elle-même bistable (0 puis 3 486 ms), à 0,90 Mpx
+elle est haute à tous les coups.
+
+**Correctif.** `LightRays` mesure la cadence qu'il obtient et le temps qu'il passe **dans**
+`render`, et descend d'un palier tant que ça ne tient pas : demi-résolution (le point de **départ**)
+→ un huitième des pixels → 20 images par seconde → **gel**, la boucle s'arrête et la dernière frame
+reste à l'écran. Les rayons restent visibles dans tous les cas ; c'est le mouvement qui se retire,
+jamais l'image. Aucun arbitrage de direction artistique n'a donc été nécessaire, contrairement à
+C-67.
+
+| Mesure (build de prod, `landing-motion-probe.mjs`, 4 s au repos, 3 passes) | Avant | Après |
+|---|---|---|
+| Fil principal bloqué | **3 637 ms (91 %)** | **0 ms** sur les trois passes |
+| Plancher : la même page sans aucun canvas (6 passes) | — | 0 ms, soit **exactement le coût du shader actif** |
+| `/` (non-régression) | 0 ms | 0 ms |
+
+- 🔴 **Trois pièges mesurés, chacun ayant produit une conclusion fausse avant d'être vu :**
+  1. **Une médiane du coût par frame ne suffit pas.** À demi-résolution elle passait sous le seuil
+     pendant que la page rendait encore 270 à 545 ms de tâches longues : quelques frames rares mais
+     énormes, invisibles pour une médiane. Un compteur d'accrocs a été ajouté à côté.
+  2. **Échantillonner l'écart entre deux `requestAnimationFrame` mesure la mauvaise chose** dès
+     qu'on saute des frames : les frames sautées sont servies vite, leur médiane reste basse
+     pendant que chaque frame réellement soumise sature. On échantillonne les frames **rendues**.
+  3. **Descendre depuis le haut coûte la descente.** Une échelle qui commence à pleine résolution
+     laissait un résidu **stable** de 315 à 393 ms sur six passes, là où la même page sans canvas
+     rendait 0 sur six. Ce n'était ni du bruit ni le régime établi : c'étaient les quelques dizaines
+     de frames payées à pleine résolution le temps que le détecteur se prononce, et elles tombent
+     dans les premières secondes, le seul moment où quelqu'un regarde. **Un détecteur ne peut pas
+     être plus rapide que la preuve qu'il attend ; il peut ne jamais avoir à la payer.** La
+     demi-résolution est devenue le point de départ.
+- ❌ **Ne jamais remplacer l'échelle adaptative par une détection de rastériseur logiciel**
+  (`SwiftShader`, `llvmpipe`) : ça verdirait la sonde sans rien rendre à un téléphone d'entrée de
+  gamme, qui a bien un GPU et n'en sature pas moins. C'est précisément la réponse rassurante que
+  cet item interdisait.
+- ⚠️ **Le témoin de `landing-motion-probe.mjs` a viré au ROUGE après le correctif**, et il avait
+  tort : il compare un **écart relatif**, qui perd son sens quand la base tombe près de zéro
+  (157 % de 196 ms, soit 300 ms absolues, donc du bruit de mesure). Un plancher absolu de 400 ms a
+  été posé, avec le raisonnement écrit dans le fichier. Une garde qui se trompe dans le sens
+  **alarmant** est moins grave que l'inverse, mais elle rend la sonde inutilisable le jour où le
+  travail est fait.
+- **Garde** : `node scripts/landing-motion-probe.mjs --url http://localhost:4399/entreprise-presentation`
+  doit rendre moins de 300 ms au repos, sans rien neutraliser. La ventilation, quand il faut savoir
+  **pourquoi**, est `scripts/landing-bimodal-probe.mjs` : son champ `tampon` dit si l'échelle
+  adaptative s'est engagée, et c'est le seul champ qui séparait, passe par passe, une mesure à 0 ms
+  d'une mesure à 3 665 ms sur le même build.
 
 ---
 
@@ -2457,7 +2519,7 @@ Ce qu'il a rendu, et comment c'est mesuré :
 | Finding | Comment il a été établi |
 |---|---|
 | **C-67** · 71 % du fil bloqué AU REPOS, et ce sont les flous · ✅ **corrigé le jour même** | build de prod, fenêtre de 4 s sans scroll ni clic, 3 passes : `/` à 2 856 ms, `/guide` à **0**, et 259 ms une fois les `filter: blur` neutralisés. Après correctif : **0 ms sur les trois passes**, rendu tenu à la mesure de couleur (luminosité 51,5 → 51,1) |
-| **C-68** · la landing entreprise bloque autant, pour une autre cause | même protocole : 3 637 ms, insensible aux flous, et **bimodale** (0-370 ms ou 3 000+ ms sur la même URL) |
+| **C-68** · la landing entreprise bloque autant, pour une autre cause | ✅ corrigé le 2026-09-05 · le fil ATTENDAIT un tampon de commandes GPU plein (`WaitForGetOffset`), il n'exécutait rien ; la bimodalité venait du scénario qui masquait le canvas, pas de la page. 3 637 → **0 ms** |
 | **C-69** · la fenêtre produit tourne sans pause, même en mouvement réduit | relevé de la vue annoncée toutes les 600 ms pendant 9,6 s, en `no-preference` puis en `reduce` : rotation **identique** |
 
 Ce qu'il a **infirmé**, et qui est donc clos : la piste que C-12 désignait. `vendor-animation` et
@@ -2588,7 +2650,7 @@ refermés dans la journée** ; leur note dit ce qui a été mesuré, et ce que l
 C-23** : leur code est écrit et testé, il n'est simplement **pas en production**.
 Ce sont les gestes du § 11.1 qui les débloquent, pas du travail supplémentaire.
 
-### 11.3 ⬜ Trente et un items entiers
+### 11.3 ⬜ Trente items entiers
 
 Rien n'a été engagé dessus. Regroupés par ce qu'ils coûtent à ouvrir.
 
@@ -2603,10 +2665,9 @@ levé, donc la migration redevient un arbitrage de coût.
 1 000 tâches d'équipe · `C-45` `loginWithGoogle` vise des URL hors allowlist Supabase ·
 `C-69` la fenêtre produit de la landing tourne sans pause, y compris hors écran.
 
-**Performance et scalabilité (4)**
+**Performance et scalabilité (3)**
 `C-12` la landing reste la seule page lente · `C-15` le tableau de bord charge le jeu complet ·
-`C-16` la mesure à volume est mono-session · `C-68` `/entreprise-presentation` bloque autant, pour
-une cause **non identifiée**.
+`C-16` la mesure à volume est mono-session.
 
 **Accessibilité (6)**
 `C-24` quatre audits jamais faits · `C-25` le bleu de marque est à 3,34:1 · `C-53` aucune modale

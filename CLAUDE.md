@@ -611,6 +611,30 @@ La landing n'est plus une page linéaire. Après le header, un **aiguillage**
   gradient et le transform portés par le **même** élément — le seul cas que `bg-clip-text`
   supporte. C'est ce qui a fait réapparaître le dégradé bleu → fuchsia, affiché en bleu plat
   depuis le passage à SplitText.
+- 🔴 **Le shader du hero ENTREPRISE se règle tout seul, et il ne doit jamais redevenir fixe**
+  (finding C-68, corrigé le 2026-09-05). `LightRays` peint le viewport entier dans un fragment
+  shader à chaque frame, indéfiniment. Quand la machine ne tient pas la frame, les commandes
+  s'empilent, le tampon se remplit, et **le fil principal BLOQUE** dans
+  `CommandBufferProxyImpl::WaitForGetOffset` en attendant qu'il se vide. Mesuré sur le build de
+  prod, rastérisation logicielle : **3 637 ms bloquées sur 4 000 au repos**, dont ~2 800 de pure
+  attente. **Aucun de nos JavaScript ne tournait** — c'est pour ça que couper les flous, les 23
+  `ScrollTrigger` et les 8 tweens infinis ne déplaçait pas la mesure d'un point, et pourquoi la
+  cause a mis quatre jours à être nommée. Le composant mesure désormais la cadence qu'il obtient et
+  le temps qu'il passe **dans** `render`, et descend d'un palier tant que ça ne tient pas :
+  demi-résolution (le **départ**) → un huitième des pixels → 20 img/s → **gel**, la dernière frame
+  restant affichée. **Les rayons restent visibles dans tous les cas** ; c'est le mouvement qui se
+  retire, jamais l'image. Le mécanisme et ses mesures vivent dans
+  `src/components/reactbits/light-rays-budget.ts`, avec leurs tests.
+  ❌ **Ne jamais remplacer ça par une détection de rastériseur logiciel** (`SwiftShader`,
+  `llvmpipe`) : ça verdit la sonde sans rien rendre à un téléphone d'entrée de gamme, qui a bien un
+  GPU et n'en sature pas moins.
+  ❌ **Ne jamais faire repartir l'échelle de la pleine résolution.** Descendre depuis le haut coûte
+  la descente : mesuré, un résidu **stable** de 315 à 393 ms sur six passes, là où la même page
+  sans canvas rendait 0 sur six. Ces frames-là tombent dans les premières secondes, le seul moment
+  où quelqu'un regarde.
+  ⚠️ **Une file qui sature n'a pas un coût progressif, elle a deux états.** C'est ce qui rendait la
+  mesure BIMODALE, et aucune moyenne ne pouvait l'expliquer. Toute mesure de cette page se lit
+  passe par passe, jamais en médiane.
 - ⚠️ **`HeroModuleDock` n'est pas une décoration** : les quatre puces suivent la vue affichée par
   `AppWindowShowcase` (`onSlideChange`), et c'est ce qui fait comprendre que Tâches, Habitudes,
   Agenda et OKR sont quatre vues de la MÊME application. Sous `prefers-reduced-motion` elles sont

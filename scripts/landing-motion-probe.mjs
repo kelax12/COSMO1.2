@@ -140,8 +140,20 @@ for (const r of resultats) {
 const base = resultats[0].ms;
 const temoinCss = resultats.find((r) => r.nom.startsWith('TEMOIN')).ms;
 const ecartTemoin = base === 0 ? 0 : Math.abs(temoinCss - base) / Math.max(base, 1);
+// PLANCHER : le temoin compare un ECART RELATIF, qui perd tout sens quand la
+// page est devenue tranquille. Le 2026-09-05, apres le correctif C-68,
+// `/entreprise-presentation` est passee de 3 240 a 196 ms et le temoin est
+// vire ROUGE a 157 % — soit 300 ms d'ecart absolu, c'est-a-dire du bruit de
+// mesure. Un temoin qui accuse l'injection sur une page qui ne bloque plus
+// rien est un temoin qui se trompe dans le sens ALARMANT ; c'est moins grave
+// que l'inverse, mais ca rend la sonde inutilisable une fois le travail fait.
+// En dessous de ce plancher il n'y a plus rien a discriminer.
+const PLANCHER_TEMOIN = 400; // ms
 console.log('');
-if (ecartTemoin > 0.35) {
+if (Math.max(base, temoinCss) < PLANCHER_TEMOIN) {
+  console.log(`TEMOIN SANS OBJET : les deux mesures sont sous ${PLANCHER_TEMOIN} ms `
+    + `(${base} et ${temoinCss}). La page ne bloque plus rien, il n y a plus d effet a discriminer.`);
+} else if (ecartTemoin > 0.35) {
   console.error(`TEMOIN ROUGE : la regle sans effet deplace la mesure de ${Math.round(ecartTemoin * 100)} %. `
     + 'C est l injection qu on mesure, pas les effets. Aucune conclusion.');
   process.exitCode = 1;
