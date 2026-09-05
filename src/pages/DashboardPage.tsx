@@ -253,42 +253,50 @@ const DashboardPage: React.FC = () => {
 
   return (
     <div className="min-h-[100dvh] bg-[rgb(var(--color-background))] p-3 sm:p-6 lg:p-8 pb-[calc(64px+env(safe-area-inset-bottom)+88px)] md:pb-8 transition-colors duration-300">
+      {/* ── Mobile : en-tête canonique (cf. docs/MOBILE.md) ──
+          Maquette 02, « Le même écran, sans la coque » : plus de salutation.
+          Elle occupait la ligne la plus haute et la plus grande de l'écran
+          pour dire quelque chose que la personne sait déjà — son propre
+          prénom. À la place, la date du jour, qui est le seul repère dont la
+          liste a besoin.
+
+          Le résumé contextuel juste en dessous n'est PAS passé en
+          `subtitle` : il contient des liens cliquables, et un `subtitle`
+          disparaît quand l'en-tête se compacte. On perdrait des points
+          d'entrée au premier scroll.
+
+          🔴 Rendu HORS du `motion.div variants={containerVariants}` : `position:
+          sticky` reste collé tant que son PARENT direct reste dans le
+          viewport, pas au-delà. Le bloc salutation ne fait que ~150 px — mesuré
+          dans le navigateur, le header sortait par le HAUT dès 150 px de
+          scroll au lieu de rester collé. Sorti à ce niveau (le `<div
+          min-h-[100dvh]>`, qui fait toute la hauteur de la page), il reste
+          collé sur tout le scroll, comme `TasksHeader` sur `/tasks`.
+          🔴 Sorti du `space-y-4` du conteneur, PAS juste posé en premier
+          enfant à l'intérieur : `space-y-*` de Tailwind marge le second
+          enfant même si le premier est `md:hidden` (il ne matche pas
+          `:not([hidden])`, c'est un `display:none` par media query, pas
+          l'attribut `hidden`). Le laisser dedans ajoutait un espacement de
+          16 px entre la date et le résumé qui n'existait pas avant — mesuré
+          dans le navigateur — et un espace fantôme identique tout en haut du
+          rendu desktop, où le header est invisible mais compte encore comme
+          premier enfant. */}
+      <MobileHeader
+        title={formatDate(new Date(), {
+          weekday: 'long',
+          day: 'numeric',
+          month: 'short',
+        })}
+        actions={<InboxMenu />}
+      />
       <motion.div
         className="max-w-[1600px] mx-auto space-y-4 sm:space-y-6 lg:space-y-8"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
       >
-        {/* ── Mobile : en-tête canonique (cf. docs/MOBILE.md) ──
-            Maquette 02, « Le même écran, sans la coque » : plus de
-            salutation. Elle occupait la ligne la plus haute et la plus
-            grande de l'écran pour dire quelque chose que la personne sait
-            déjà — son propre prénom. À la place, la date du jour, qui est
-            le seul repère dont la liste a besoin.
-
-            Le résumé contextuel juste en dessous n'est PAS passé en
-            `subtitle` : il contient des liens cliquables, et un `subtitle`
-            disparaît quand l'en-tête se compacte. On perdrait des points
-            d'entrée au premier scroll.
-
-            🔴 Rendu HORS du `motion.div variants={itemVariants}` qui suit :
-            `position: sticky` reste collé tant que son PARENT direct reste
-            dans le viewport, pas au-delà. Ce parent-là ne fait que la
-            hauteur du bloc salutation (~150 px) — mesuré dans le navigateur,
-            le header sortait par le HAUT dès 150 px de scroll au lieu de
-            rester collé. Frère du conteneur `containerVariants` (qui, lui,
-            fait toute la hauteur de la page), le header reste collé sur
-            tout le scroll, comme `TasksHeader` sur `/tasks`. */}
-        <MobileHeader
-          title={formatDate(new Date(), {
-            weekday: 'long',
-            day: 'numeric',
-            month: 'short',
-          })}
-          actions={<InboxMenu />}
-        />
-
-        {/* Salutation desktop + résumé contextuel */}
+        {/* Salutation (desktop) + résumé contextuel (desktop ET mobile,
+            directement sous la date) */}
           <motion.div
             variants={itemVariants}
           >
