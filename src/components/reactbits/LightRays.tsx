@@ -1,5 +1,6 @@
 import { useRef, useEffect, useState } from 'react';
 import { Renderer, Program, Triangle, Mesh } from 'ogl';
+import { creerEchelleAdaptative, type EchelleAdaptative } from './light-rays-budget';
 
 export type RaysOrigin =
   | 'top-center'
@@ -104,6 +105,8 @@ const LightRays: React.FC<LightRaysProps> = ({
   const animationIdRef = useRef<number | null>(null);
   const meshRef = useRef<Mesh | null>(null);
   const cleanupFunctionRef = useRef<(() => void) | null>(null);
+  // Budget d'affichage : voir `./light-rays-budget.ts`, finding C-68.
+  const echelleRef = useRef<EchelleAdaptative>(creerEchelleAdaptative());
   const [isVisible, setIsVisible] = useState(false);
   const observerRef = useRef<IntersectionObserver | null>(null);
 
@@ -138,6 +141,8 @@ const LightRays: React.FC<LightRaysProps> = ({
 
     const initializeWebGL = async () => {
       if (!containerRef.current) return;
+
+      echelleRef.current = creerEchelleAdaptative();
 
       await new Promise(resolve => setTimeout(resolve, 10));
 
@@ -293,7 +298,7 @@ void main() {
       const updatePlacement = () => {
         if (!containerRef.current || !renderer) return;
 
-        renderer.dpr = Math.min(window.devicePixelRatio, 2);
+        renderer.dpr = Math.min(window.devicePixelRatio, 2) * echelleRef.current.echelle;
 
         const { clientWidth: wCSS, clientHeight: hCSS } = containerRef.current;
         renderer.setSize(wCSS, hCSS);
@@ -309,10 +314,31 @@ void main() {
         uniforms.rayDir.value = dir;
       };
 
+      // Le mécanisme, ses mesures et ses garde-fous : `./light-rays-budget.ts`.
+      // En résumé : ce shader peint le viewport entier à chaque frame ; quand la
+      // machine ne tient pas, le fil principal BLOQUE sur un tampon de commandes
+      // plein. On mesure ce qu'on obtient et on descend d'un palier tant que ça
+      // ne tient pas, jusqu'au gel — les rayons restent alors VISIBLES, c'est le
+      // mouvement qui se retire, jamais l'image.
+      let derniereFrame = 0;
+
       const loop = (t: number) => {
         if (!rendererRef.current || !uniformsRef.current || !meshRef.current) {
           return;
         }
+
+        // Un onglet en arrière-plan ne paie rien.
+        if (document.hidden) {
+          animationIdRef.current = requestAnimationFrame(loop);
+          return;
+        }
+
+        const echelle = echelleRef.current;
+        if (echelle.intervalleVise && t - derniereFrame < echelle.intervalleVise) {
+          animationIdRef.current = requestAnimationFrame(loop);
+          return;
+        }
+        derniereFrame = t;
 
         uniforms.iTime.value = t * 0.001;
 
@@ -326,7 +352,17 @@ void main() {
         }
 
         try {
+          const t0 = performance.now();
           renderer.render({ scene: mesh });
+
+          if (echelle.observer(t, performance.now() - t0)) {
+            if (echelle.gele) {
+              animationIdRef.current = null;
+              return; // la dernière frame reste à l'écran.
+            }
+            updatePlacement();
+          }
+
           animationIdRef.current = requestAnimationFrame(loop);
         } catch (error) {
           console.warn('WebGL rendering error:', error);
