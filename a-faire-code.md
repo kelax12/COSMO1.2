@@ -527,6 +527,28 @@ personne peut donc valider un formulaire dont elle ne voit plus l'intitulé.
 > ❌ **NE PAS DÉPLOYER SANS LE PARCOURS E2E** que C-27 exige nommément pour cet item :
 > « C-65 touche de l'argent, il ne part pas sans son parcours E2E ». Il reste à écrire,
 > contre le compte de test.
+>
+> 🟠 **2026-09-05 — la MOITIÉ CLIENT est désormais exécutée, la moitié serveur ne l'est
+> toujours pas.** `src/components/organization/OrgBillingTab.refund.parcours.test.tsx`
+> (5 cas) rend le composant réel avec le drapeau retourné pour ce fichier seulement et
+> `supabase.functions.invoke` intercepté : un seul appel à `stripe-org-refund`, corps
+> `{ orgId }` sans aucun montant, montant affiché = `refundedCents` du serveur, rejeu
+> borné à 0 qui parle de résiliation et pas d'argent, `refund_failed` qui dit que rien
+> n'a été résilié, non-propriétaire qui ne voit aucun bouton. Vu **rouge** : recalculer
+> le montant côté client fait tomber 2 cas sur 5.
+> S'y ajoute `e2e/demo-billing-disarmed.spec.ts`, qui vérifie la seule garantie qui
+> tienne en production aujourd'hui — drapeau à `false`, aucun CTA de paiement ni de
+> remboursement atteignable.
+>
+> 🔴 **Ce qui reste NON ÉPROUVÉ, et pourquoi ça ne peut pas l'être depuis ce poste** :
+> `refunds.create`, l'annulation immédiate, la clé d'idempotence dérivée de
+> l'`invoice_id`, le pré-contrôle qui retranche, la ligne compensatoire de
+> `payment_records` et la chaîne de `verify_payment_chain()`. Trois obstacles
+> indépendants : le bouton n'existe nulle part tant que `ENTERPRISE_BILLING_ENFORCED`
+> vaut `false` (et retourner ce drapeau est une décision commerciale, pas un réglage de
+> test) ; la clé Stripe est une clé de TEST, `org_subscriptions` est vide, il n'y a
+> aucune facture à rembourser ; `APP_URL` épingle l'origine CORS sur la production.
+> **La condition de déploiement n'est donc pas levée.**
 
 **Décision d'Axel du 2026-09-03** : *« l'utilisateur doit pouvoir se faire rembourser le mois en
 cours à tout moment, mais que le mois en cours »*. Prise pour ne pas avoir à arbitrer au cas par cas,
@@ -2073,13 +2095,76 @@ dénominateur qui a grossi (onboarding, calendrier, deadline, catégories). La m
   date, et les seuils du glob `supabase.repository.ts` sont **remontés** si le gain est acquis.
   ❌ Jamais un seuil baissé.
 
-### C-27 · Les parcours livrés en septembre n'ont pas de test E2E · **P2 · M**
+### C-27 · Les parcours livrés en septembre n'ont pas de test E2E · **🟡 TROIS SUR QUATRE, le 2026-09-05**
 
 `FirstRunSetup` (25 tests unitaires, aucun parcours), le calendrier COSMO sur ses six surfaces, et
 les dépendances de tâches **personnelles** (les tests E2E existants portent sur l'entreprise). Le
 nombre de cas E2E n'a pas été recompté depuis le 2026-08-25 (124 alors, 16 specs aujourd'hui).
 
 - **Fini quand** : un parcours E2E par écran neuf, et le décompte réel inscrit dans `TESTING.md`.
+
+#### Ce qui a été livré
+
+| Parcours | Spec | Cas | État |
+|---|---|---|---|
+| `FirstRunSetup` | `e2e/stubbed/first-run.spec.ts` | 5 | ✅ vert, **vu rouge** sous sabotage |
+| Le calendrier COSMO, six surfaces | `e2e/demo-calendar.spec.ts` | 7 | ✅ vert |
+| Dépendances de tâches personnelles | `e2e/demo-task-dependencies.spec.ts` | 2 | ✅ vert |
+| Remboursement (C-65) | `OrgBillingTab.refund.parcours.test.tsx` + `e2e/demo-billing-disarmed.spec.ts` | 5 + 1 | 🟠 **moitié client seulement** |
+
+🔴 **`FirstRunSetup` n'était pas resté sans parcours par oubli : aucun test ne POUVAIT l'atteindre.**
+Sa garde commence par `!isDemo`, `.env` est vide en local et absent en CI, donc `appModeStore`
+démarre `isDemo = true` sans aucun chemin d'exécution pour en sortir depuis le navigateur. Il a donc
+fallu un harnais avant le test : mode Vite `e2e-stub` (`.env.e2e-stub`, versionné, sans secret) qui
+sert l'app **hors démo** vers un hôte qui ne résout pas, `e2e/supabase-stub.ts` qui pose la session
+et intercepte tout, et un troisième project Playwright `supabase-stub` sur le port 3210.
+⚠️ Ce harnais prouve le parcours CLIENT ; il ne prouve rien de la RLS ni des triggers.
+
+⚠️ **`demo-calendar` et `demo-task-dependencies` ne sont pas joués sur `mobile-safari`**, et la
+raison est mesurée, pas supposée : sur `/tasks` en 390 px, ni « Tout replanifier » ni
+« Sélectionner » n'existent, et la carte mobile n'a pas de menu de ligne équivalent. C'est un écart
+de PRODUIT, écrit dans `playwright.config.ts` et dans `TESTING.md` plutôt que caché derrière un
+`skip` silencieux.
+
+🔴 **Le remboursement (C-65) n'a toujours PAS été joué contre Stripe, et il ne peut pas l'être
+d'ici.** Trois raisons, toutes indépendantes du temps qu'on y met : le bouton n'est monté nulle part
+tant que `ENTERPRISE_BILLING_ENFORCED` vaut `false` (retourner le drapeau pour un test violerait la
+règle « le flag est la SEULE condition ») ; `STRIPE_SECRET_KEY` est une clé de TEST, `org_subscriptions`
+est vide, il n'existe aucune facture à rembourser ; `APP_URL` épingle l'origine CORS sur la
+production. Ce qui a été livré à la place est la **moitié client, réellement exécutée** — composant
+réel, hook réel, `functions.invoke` intercepté : un seul appel, corps sans montant, montant affiché
+= montant du serveur, rejeu borné à 0 qui ne prétend pas rembourser deux fois, échec qui le dit,
+non-propriétaire qui ne voit rien. ❌ **Ne pas déployer C-65 en s'appuyant là-dessus.**
+
+#### Le décompte, remesuré
+
+**190 cas, 23 specs, 3 projects** (96 chromium · 87 mobile-safari · 7 supabase-stub), mesuré le
+2026-09-05 par `npx playwright test --list`. Le chiffre de `TESTING.md` (« 62 × 2 = 124 ») datait du
+2026-08-25 et avait été **recopié** ensuite : il était déjà faux de 44 cas et de 2 specs avant tout
+ajout de septembre, et la même ligne annonçait `reduced-motion-sheets` à 3 cas sur chromium là où il
+en porte 5, sur les deux projects.
+
+❌ **Ne plus jamais écrire ce total en « N × 2 ».** Les projects ne jouent plus le même ensemble ;
+une multiplication redonnerait un chiffre faux, ce qui est très exactement comment le précédent l'est
+devenu.
+
+🔴 **Trouvé en passant, et ça change la valeur de tout ce qui précède : WebKit n'était pas installé
+sur le poste.** `npx playwright test --project=mobile-safari` répondait « Executable doesn't exist at
+…\webkit-2336 ». Tout ce qui a été annoncé comme « joué localement » sur mobile depuis la création de
+ce project ne l'avait donc jamais été. Installé.
+
+⚠️ **Deux défauts d'accessibilité rencontrés en écrivant ces tests, non corrigés ici** : la case de
+sélection du tableau desktop (`task-table/list.tsx`) n'a **aucun nom accessible** — un `motion.button`
+nu, alors que sa jumelle mobile est nommée ; et **quatre** libellés d'interface sont en dur en
+français dans les deux fichiers de liste — `list.tsx` : `Planifier` (texte JSX),
+`` `Actions pour ${task.name}` `` (aria-label interpolé), `"Invitation en attente d'acceptation"` ;
+`TaskCard.tsx` : `'Masquer les actions' : 'Afficher les actions'` (aria-label ternaire).
+🔴 `npm run i18n:scan -- --list` rend **`FICHIERS: 0 | CHAINES UNIQUES: 0`** pendant que ces quatre
+chaînes sont là : ce sont **trois formes de plus** que l'heuristique ne voit pas (texte JSX précédé
+d'un élément, valeur d'attribut, ternaire d'attribut), après les quatre déjà corrigées le 2026-09-02.
+Le seuil est à 0 et la gate est verte — c'est encore « une garde qui répond sans mesurer », dans
+celle-là même dont le compteur avait déjà été faux une fois.
+
 
 ### C-28 · Le canal d'alerte d'ops est inerte · **P1 · XS (code) + geste d'Axel**
 

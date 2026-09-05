@@ -79,6 +79,12 @@
 | Couverture · statements / functions | · | sous les seuils | 27,20 / 21,69 | **28,15 / 22,78** |
 | Glob `supabase.repository.ts` (statements) | · | 63,74 % (seuil 65) | **76,79 %** (seuil remonté à 74) | non remesuré |
 
+> ⚠️ **La ligne « Tests E2E Playwright » ci-dessus est périmée, et elle l'était déjà quand elle a
+> été écrite le 2026-08-27.** Remesuré le 2026-09-05 : **190 cas, 23 specs, 3 projects** — et
+> `reduced-motion-sheets` en porte 5, sur les DEUX projects, pas 3 sur chromium. Le décompte à
+> jour, avec sa méthode, est au § Playwright. Cette ligne n'est pas corrigée ici : c'est un
+> instantané daté dans un tableau d'évolution, le réécrire falsifierait l'historique.
+
 **+5 après la campagne de tests du soir.** La gate de couverture est repassée au vert **sans
 qu'aucun seuil ne soit baissé**, ce qui était la seule sortie acceptable : 115 tests ajoutés, tous
 sur la cible que la gate désignait elle-même.
@@ -445,14 +451,92 @@ npm run test:e2e:report  # rapport HTML
 **Avant le premier run** : `npx playwright install chromium webkit` (le project
 `mobile-safari` utilise WebKit).
 
-**62 tests × 2 projects = 124** (`chromium` = Desktop Chrome, `mobile-safari` =
-iPhone 12), répartis sur **15 specs** (au 2026-08-25 ; 41 × 2 sur 11 specs au
-2026-08-14). Les 3 tests de `demo-touch-gestures.spec.ts` sont `skip` sur
-chromium (viewport ≥ 768 px). La CI ne joue que le project `chromium`.
+> 🔴 **WebKit n'était PAS installé sur le poste de développement** (constaté le
+> 2026-09-05 : `Executable doesn't exist at …\webkit-2336`). Tout ce qui a été
+> annoncé comme « joué localement » sur `mobile-safari` depuis la création de ce
+> project ne l'avait donc **jamais** été — la moitié mobile de chaque chiffre de
+> ce fichier venait de la CI, ou de nulle part. Installé depuis.
 
-Les 4 specs ajoutées couvrent le mode entreprise, arrivé jusque-là sans E2E :
-`demo-entreprise-dependencies` (9), `demo-entreprise-tasks-tab` (5),
+### Décompte réel — mesuré le 2026-09-05 (`npx playwright test --list`)
+
+**190 cas, 23 specs, 3 projects.** Le chiffre précédent (« 62 × 2 = 124, 15/16
+specs ») datait du 2026-08-25 et a été **recopié** ensuite au lieu d'être
+remesuré : il était déjà faux de 44 cas et de 2 specs avant tout ajout de
+septembre. Un total qu'on recopie n'est pas une mesure.
+
+| Project | Cas | Ce qu'il joue |
+|---|---|---|
+| `chromium` | **96** | Desktop Chrome, mode démo |
+| `mobile-safari` | **87** | iPhone 12 / WebKit, mode démo |
+| `supabase-stub` | **7** | Desktop Chrome, **hors mode démo** (cf. plus bas) |
+
+❌ **Ne jamais écrire ce total sous la forme « N × 2 ».** Les projects ne jouent
+plus le même ensemble : `demo-calendar` et `demo-task-dependencies` sont hors de
+`mobile-safari` (raison mesurée, cf. ci-dessous), et `e2e/stubbed/**` n'est joué
+que par `supabase-stub`. Une multiplication redonnerait un chiffre faux, et
+c'est exactement comme ça que le précédent l'est devenu.
+
+Les 3 tests de `demo-touch-gestures.spec.ts` sont `skip` sur chromium
+(viewport ≥ 768 px). La CI joue `chromium` **et** `supabase-stub` (mêmes
+binaires Chrome) ; `mobile-safari` reste hors CI, WebKit coûtant une minute
+d'installation de plus.
+
+🔴 **Un project hors CI est un project qui ne tourne nulle part.** `supabase-stub`
+a été ajouté au job `e2e` le 2026-09-05 en même temps que les specs qu'il porte :
+sans ça, `FirstRunSetup` et le retour OAuth seraient des gardes posées sur `main`
+qui ne s'exécutent jamais — la faute déjà commise deux fois ici.
+
+#### Le project `supabase-stub` — jouer ce que la démo ne peut pas atteindre
+
+`e2e/fixtures.ts` ouvre le mode démo, et **toute garde qui commence par
+`!isDemo` était donc structurellement hors de portée de la suite** : `.env` est
+vide en local et absent en CI, donc `appModeStore` démarre `isDemo = true` sans
+aucun chemin d'exécution pour en sortir depuis le navigateur. `FirstRunSetup`
+n'était pas resté sans parcours par oubli — aucun test ne **pouvait** l'atteindre.
+
+Le mode Vite `e2e-stub` (`.env.e2e-stub`, versionné, sans secret) sert l'app avec
+deux variables Supabase non vides pointant `stub.cosmo.invalid`, un hôte qui ne
+résout pas ; `e2e/supabase-stub.ts` pose une session dans `localStorage` et
+intercepte tout ce qui part vers lui. Serveur dédié sur le port **3210**, avec
+`reuseExistingServer: false` : réutiliser un serveur trouvé là ferait jouer ces
+specs contre une app en mode démo, où l'écran testé ne monte jamais.
+
+- ⚠️ Ce harnais prouve le **parcours client** (quel écran, dans quel ordre,
+  quelle requête part avec quel corps). Il ne prouve **rien** du serveur : ni
+  RLS, ni triggers, ni forme réelle des réponses PostgREST. Ces frontières-là
+  restent celles de `npm run test:rls` et `npm run check:rls`.
+- ⚠️ Les specs y utilisent `goto(..., { waitUntil: 'domcontentloaded' })` : le
+  canal Realtime rouvre en boucle un WebSocket vers l'hôte stub, donc `load`
+  n'arrive jamais. Mesuré : `page.goto` expirait à 120 s sur une page rendue
+  depuis 25 s.
+
+#### Ce qui n'est PAS joué sur `mobile-safari`, et pourquoi
+
+`demo-calendar` et `demo-task-dependencies` visent un DOM qui n'est pas forké par
+viewport. Ce qui diffère, c'est la navigation pour l'atteindre : mesuré le
+2026-09-05 sur `/tasks` en 390 px, ni « Tout replanifier » (bandeau des tâches en
+retard) ni « Sélectionner » (barre d'actions groupées) n'existent, et la carte
+mobile n'offre pas de menu de ligne équivalent. 🔴 **C'est un écart de produit,
+pas un verdict de conformité mobile** — il est nommé dans `playwright.config.ts`
+plutôt que caché derrière un `skip` silencieux.
+
+Les 4 specs de la vague entreprise couvrent le mode entreprise, arrivé jusque-là
+sans E2E : `demo-entreprise-dependencies` (9), `demo-entreprise-tasks-tab` (5),
 `demo-entreprise-session-fixes` (5), `demo-entreprise-okr-modal` (2).
+
+#### Les parcours ajoutés le 2026-09-05 (C-27)
+
+| Spec | Cas | Ce qu'elle ferme |
+|---|---|---|
+| `stubbed/first-run.spec.ts` | 5 | `FirstRunSetup` : la garde s'ouvre sur un compte vide, **chaque étape écrit au moment où elle est validée** (mesuré sur les requêtes parties, pas sur un état React), la première tâche part sans échéance, l'accueil ne revient pas |
+| `demo-calendar.spec.ts` | 7 | Le calendrier COSMO sur ses **six** surfaces, plus `minDate` du report en masse et le focus au clavier dans la grille (défaut React 18 / `forwardRef`) |
+| `demo-task-dependencies.spec.ts` | 2 | Graphe **personnel** (mig. 132) : poser une arête et la relire, refuser un cycle **indirect à trois maillons**, ne jamais se proposer soi-même, retirer ; « Créer et lier » |
+| `demo-billing-disarmed.spec.ts` | 1 | Tant que `ENTERPRISE_BILLING_ENFORCED` est `false`, aucun CTA de paiement ni de remboursement n'est atteignable |
+
+Les quatre premiers cas ont été **vus rouges avant d'être verts** : différer les
+créations de `FirstRunSetup` à la dernière étape fait tomber le premier ; le
+calcul du montant remboursé refait côté client fait tomber deux cas du parcours
+de remboursement.
 
 Les fichiers `e2e/rls/*.test.ts` ne sont **pas** des specs Playwright : ce sont
 des tests Vitest d'intégration (`npm run test:rls`, job CI `rls-integration`,
@@ -573,9 +657,13 @@ Avant `git push` sur `main` (qui déclenche le deploy Vercel) :
 1. ✅ `npm run lint` → **0 erreurs** (les warnings préexistants sont OK)
 2. ✅ `npm test` → **tous les tests unitaires Vitest passent** (bloquant CI)
 3. ✅ `npm run build` → succès. Aucun chunk first-paint > **150 kB gzip** (sauf `vendor-charts` lazy attendu).
-4. ✅ `npm run test:e2e` → **124 tests** (62 × 2 projects), 3 skip attendus
-   (gestes tactiles sur chromium). Port 3000 — vérifier qu'aucun dev server
-   périmé ne le squatte (`reuseExistingServer`).
+4. ✅ `npm run test:e2e` → **190 tests** sur 23 specs et 3 projects (96 chromium,
+   87 mobile-safari, 7 supabase-stub — mesure du 2026-09-05, cf. § Playwright),
+   3 skip attendus (gestes tactiles sur chromium). Ports **3000** (démo) et
+   **3210** (`e2e-stub`) — vérifier qu'aucun dev server périmé ne les squatte.
+   ⚠️ Le 3210 refuse volontairement de réutiliser un serveur existant : une
+   collision doit échouer, pas passer en mesurant la mauvaise app.
+   ❌ Ne pas recopier ce nombre : le remesurer avec `npx playwright test --list`.
 5. ✅ **Smoke test mobile preview** 375×812 : login démo → Dashboard, créer/compléter une tâche (clic + swipe droit), navigation Tab bar, rien caché derrière la MobileTabBar.
 6. ✅ **Si touche `recordKRCompletion()`** : vérifier le graphique dashboard en démo ET en prod.
 7. ✅ **Si touche un modal** : drag-to-close, ESC, clic backdrop.
