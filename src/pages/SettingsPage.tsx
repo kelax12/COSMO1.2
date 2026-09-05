@@ -5,7 +5,6 @@ import {
   HelpCircle, Camera,
   Mail, ChevronRight, BarChart3,
 } from 'lucide-react';
-import { useTimezonePref, clampOffsetHours } from '@/lib/timezone';
 import { ShortcutsList } from '@/components/keyboard-shortcuts';
 import { useIsAdmin } from '@/modules/admin';
 import { useNavigate } from 'react-router';
@@ -15,10 +14,6 @@ import LocaleToggle from '@/components/LocaleToggle';
 import { SUPPORTED_LOCALES } from '@/i18n/locale';
 import { useT } from '@/i18n/useT';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
-import { toast } from 'sonner';
-import { supabase } from '@/lib/supabase';
-import { sanitizeEmail, isValidEmail } from '@/lib/email';
-import { MIN_PASSWORD_LENGTH } from '@/lib/password-policy';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -40,7 +35,9 @@ import {
   SectionCard,
 } from './settings/primitives';
 import { DataTab } from './settings/DataTab';
+import TimezoneSection from './settings/TimezoneSection';
 import { useAvatarActions } from './settings/useAvatarUpload';
+import { useAccountActions } from './settings/useAccountActions';
 import OrganizationSettingsCard from '@/components/organization/OrganizationSettingsCard';
 import { PageHeading } from '@/components/ui/typography';
 import { MobileHeader } from '@/components/mobile';
@@ -52,7 +49,6 @@ const SettingsPage: React.FC = () => {
   const { t: tCommon } = useT('common');
   const { t } = useT('settings');
   const { user, logout, isDemo, updateDemoProfile } = useAuth();
-  const { pref: tzPref, setMode: setTzMode, setOffsetHours: setTzOffset } = useTimezonePref();
   const isAdmin = useIsAdmin();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -64,10 +60,6 @@ const SettingsPage: React.FC = () => {
   // synchrone — comportement identique à un rendu conditionnel classique.
   const prefersReducedMotion = useReducedMotion();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [savingProfile, setSavingProfile] = useState(false);
-  const [savingPassword, setSavingPassword] = useState(false);
-  const [deletingAccount, setDeletingAccount] = useState(false);
-
   useEffect(() => { window.scrollTo(0, 0); }, []);
 
   const { handleAvatarUpload, removeAvatarEverywhere } = useAvatarActions({
@@ -76,12 +68,45 @@ const SettingsPage: React.FC = () => {
     t,
   });
 
-  const [confirmConfig, setConfirmConfig] = useState<{
-    isOpen: boolean; title: string; description: string; onConfirm: () => void;
-    variant: 'default' | 'destructive'; showInput?: boolean; confirmationText?: string;
-  }>({ isOpen: false, title: '', description: '', onConfirm: () => {}, variant: 'default' });
-  const [confirmInput, setConfirmInput] = useState('');
+  // Third-party (OAuth) accounts manage their email upstream (e.g. Google) —
+  // editing it here is locked. Native email/password (and demo) accounts can
+  // change their email inline. `provider` comes from Supabase app_metadata.
+  const isThirdParty = !isDemo && !!user?.provider && user.provider !== 'email';
+
+  // Les cinq gestes qui touchent au compte, et l'unique boîte de confirmation
+  // qu'ils partagent — cf. `useAccountActions` pour les deux règles de sécurité
+  // qu'ils portent (vérification de l'ancien mot de passe, révocation des
+  // autres sessions).
+  const {
+    savingProfile,
+    savingPassword,
+    deletingAccount,
+    confirmConfig,
+    closeConfirm,
+    confirmInput,
+    setConfirmInput,
+    saveProfile,
+    updatePassword,
+    deleteAccount,
+    removeAvatar,
+    confirmLogout,
+  } = useAccountActions({
+    user,
+    isDemo,
+    isThirdParty,
+    logout,
+    navigate,
+    updateDemoProfile,
+    removeAvatarEverywhere,
+    t,
+  });
+
   const [passwords, setPasswords] = useState({ current: '', new: '', confirm: '' });
+
+  const handleUpdatePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (await updatePassword(passwords)) setPasswords({ current: '', new: '', confirm: '' });
+  };
 
   // Local edit state for the profile form. The inputs are now controlled
   // independently from `user.*` (which is the Supabase session truth) so
@@ -96,162 +121,6 @@ const SettingsPage: React.FC = () => {
   }, [user?.id, user?.name, user?.email]);
 
   if (!user) return null;
-
-  // Third-party (OAuth) accounts manage their email upstream (e.g. Google) —
-  // editing it here is locked. Native email/password (and demo) accounts can
-  // change their email inline. `provider` comes from Supabase app_metadata.
-  const isThirdParty = !isDemo && !!user.provider && user.provider !== 'email';
-
-  const handleSaveProfile = async () => {
-    const name = profileDraft.name.trim();
-    // sanitizeEmail strips copy-paste invisible chars (zero-width, NBSP, BOM)
-    // that would otherwise make a visually-correct address fail validation.
-    const email = sanitizeEmail(profileDraft.email);
-    if (!name) { toast.error(t('profile.nameEmpty')); return; }
-    if (!email) { toast.error(t('profile.emailEmpty')); return; }
-    // Validate the format before the round-trip when the email is actually
-    // changing, so the user gets an instant, explicit message instead of a
-    // generic failure coming back from Supabase (error_code email_address_invalid).
-    if (!isThirdParty && email !== user.email && !isValidEmail(email)) {
-      toast.error(t('profile.invalidEmail'));
-      return;
-    }
-    setSavingProfile(true);
-    try {
-      if (isDemo) {
-        // La démo n'a pas de backend : la mutation passe par AuthContext, qui
-        // EST la source lue par cet écran. L'ancien chemin écrivait dans
-        // `cosmo_user`, que plus personne ne relisait depuis que `useAuth` est
-        // devenu la source de vérité — le toast s'affichait, rien ne changeait.
-        updateDemoProfile({ name, email });
-        toast.success(t('profile.updatedDemo'));
-        return;
-      }
-      const payload: { data: { name: string }; email?: string } = { data: { name } };
-      // Never attempt an email change on a third-party (OAuth) account — its
-      // email is owned by the provider. Defensive: the input is also disabled.
-      if (!isThirdParty && email !== user.email) payload.email = email;
-      const { error } = await supabase.auth.updateUser(payload);
-      if (error) {
-        console.error('[SettingsPage] updateUser:', error);
-        // Map known Supabase auth error codes to explicit, safe French copy.
-        // We never surface the raw error.message in the UI (faille V7).
-        const code = (error as { code?: string }).code;
-        const status = (error as { status?: number }).status;
-        let message = t('profile.updateFailed');
-        if (code === 'email_exists' || status === 422) {
-          message = t('profile.emailTaken');
-        } else if (code === 'email_address_invalid') {
-          message = t('profile.invalidEmail');
-        } else if (code === 'over_email_send_rate_limit' || status === 429) {
-          message = t('profile.tooManyAttempts');
-        }
-        toast.error(message);
-        return;
-      }
-      if (payload.email) {
-        toast.success(t('profile.updatedCheckMail'));
-      } else {
-        toast.success(t('profile.updated'));
-      }
-    } catch { toast.error(t('security.unexpectedError')); }
-    finally { setSavingProfile(false); }
-  };
-
-  const handleUpdatePassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!passwords.current || !passwords.new || !passwords.confirm) { toast.error(t('security.fillAllFields')); return; }
-    if (passwords.new !== passwords.confirm) { toast.error(t('security.passwordsDiffer')); return; }
-    if (passwords.new.length < MIN_PASSWORD_LENGTH) { toast.error(t('security.tooShort', { count: MIN_PASSWORD_LENGTH })); return; }
-    if (passwords.current === passwords.new) { toast.error(t('security.mustDiffer')); return; }
-    setSavingPassword(true);
-    try {
-      if (!supabase) { toast.error(t('security.serviceUnavailable')); return; }
-      if (isDemo) { toast.info(t('security.demoDisabled')); return; }
-      // Verify the current password before rotating. supabase.auth.updateUser
-      // does NOT enforce knowledge of the current password — without this step
-      // anyone with a hijacked session can lock the user out. Faille B8.
-      const { error: reauthError } = await supabase.auth.signInWithPassword({
-        email: user.email,
-        password: passwords.current,
-      });
-      if (reauthError) {
-        toast.error(t('security.wrongCurrentPassword'));
-        return;
-      }
-      const { error } = await supabase.auth.updateUser({ password: passwords.new });
-      if (error) { console.error('[SettingsPage] password update:', error); toast.error(t('security.updateError')); return; }
-      // R-17 — Révoquer les AUTRES sessions. Sans ça, changer son mot de passe
-      // après un accès non autorisé n'expulsait pas l'intrus : son jeton
-      // restait valide jusqu'à expiration, ce qui vide la manœuvre de son
-      // seul usage. `scope: 'others'` préserve la session courante.
-      const { error: revokeError } = await supabase.auth.signOut({ scope: 'others' });
-      if (revokeError) console.error('[SettingsPage] revoke other sessions:', revokeError);
-      toast.success(t('security.updated'));
-      setPasswords({ current: '', new: '', confirm: '' });
-    } catch { toast.error(t('security.unexpectedError')); }
-    finally { setSavingPassword(false); }
-  };
-
-  const handleDeleteAccount = () => {
-    setConfirmConfig({
-      isOpen: true, title: t('security.deleteAccountTitle'),
-      description: t('security.deleteAccountBody'),
-      variant: 'destructive', showInput: true, confirmationText: 'DELETE',
-      onConfirm: async () => {
-        setDeletingAccount(true);
-        try {
-          if (isDemo) {
-            toast.success(t('security.demoAccountCleared'));
-            await logout();
-            navigate('/');
-            return;
-          }
-          // Call the `delete-account` Edge Function (uses service_role to
-          // remove the auth user + all user-owned rows). Falls back to a
-          // support-email message if the function isn't deployed yet —
-          // honest copy rather than silently doing nothing. Faille B9.
-          const { error } = await supabase.functions.invoke('delete-account');
-          if (error) {
-            toast.error(t('security.deleteFailed'), {
-              description: t('security.deleteFailedHint'),
-            });
-            return;
-          }
-          toast.success(t('security.accountDeleted'));
-          await logout();
-          navigate('/');
-        } catch {
-          toast.error(t('security.networkError'), {
-            description: t('security.networkErrorHint'),
-          });
-        } finally {
-          setDeletingAccount(false);
-        }
-      },
-    });
-    setConfirmInput('');
-  };
-
-  const handleRemoveAvatar = () => {
-    setConfirmConfig({
-      isOpen: true, title: t('profile.deletePhotoTitle'),
-      description: t('profile.deletePhotoBody'),
-      variant: 'destructive',
-      onConfirm: async () => {
-        // Le FICHIER part avec la référence (R-03) : cf. `useAvatarActions`.
-        if (await removeAvatarEverywhere()) toast.success(t('profile.photoDeleted'));
-      },
-    });
-  };
-
-  const handleLogout = () => {
-    setConfirmConfig({
-      isOpen: true, title: t('logout.title'), description: t('logout.body'),
-      variant: 'default',
-      onConfirm: () => { logout(); toast.success(t('logout.success')); navigate('/'); },
-    });
-  };
 
   const handleOpenSupport = () => {
     window.location.href = 'mailto:axellongattepro@gmail.com';
@@ -321,7 +190,7 @@ const SettingsPage: React.FC = () => {
         </nav>
 
         <div className="p-3 border-t border-[rgb(var(--color-border))]">
-          <button onClick={handleLogout} style={{ minHeight: '44px' }}
+          <button onClick={confirmLogout} style={{ minHeight: '44px' }}
             className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium text-[rgb(var(--color-text-secondary))] hover:bg-red-500/8 hover:text-red-500 transition-all duration-150 group">
             <LogOut size={15} className="group-hover:-translate-x-0.5 transition-transform" />
             {t('page.logout')}
@@ -402,7 +271,7 @@ const SettingsPage: React.FC = () => {
                         <Camera size={12} /> {t('profile.changePhoto')}
                       </button>
                       {user.avatar && (
-                        <button onClick={handleRemoveAvatar}
+                        <button onClick={removeAvatar}
                           className="inline-flex items-center gap-1.5 px-4 min-h-touch sm:min-h-[36px] border border-red-200 rounded-lg text-xs font-semibold text-red-500 hover:bg-red-500 hover:border-red-500 hover:text-white transition-all duration-150">
                           {tCommon('actions.delete')}
                         </button>
@@ -418,129 +287,12 @@ const SettingsPage: React.FC = () => {
                   <LabeledInput label={t('profile.emailLabel')} type="email" icon={Mail} value={profileDraft.email} onChange={(e) => setProfileDraft(p => ({ ...p, email: e.target.value }))} placeholder={t('profile.emailPlaceholder')} disabled={isThirdParty} hint={isThirdParty ? t('profile.emailManaged') : undefined} />
                 </div>
                 <div className="flex justify-end mt-5">
-                  <PrimaryButton onClick={handleSaveProfile} loading={savingProfile}>{savingProfile ? 'Sauvegarde…' : 'Sauvegarder'}</PrimaryButton>
+                  <PrimaryButton onClick={() => saveProfile(profileDraft)} loading={savingProfile}>{savingProfile ? 'Sauvegarde…' : 'Sauvegarder'}</PrimaryButton>
                 </div>
               </SectionCard>
 
               {/* ── Fuseau horaire d'affichage ── */}
-              <SectionCard>
-                <div className="flex items-center gap-2 mb-1">
-                  <h2 className="text-base font-bold text-[rgb(var(--color-text-primary))]">{t('timezone.heading')}</h2>
-                </div>
-                <p className="text-xs text-[rgb(var(--color-text-secondary))] mb-4">
-                  {t('timezone.description')}
-                </p>
-                <div className="flex flex-col gap-2.5">
-                  {/* Option : heure par défaut (locale) */}
-                  <button
-                    type="button"
-                    onClick={() => setTzMode('default')}
-                    style={{ minHeight: '56px' }}
-                    className={`flex items-center justify-between gap-3 px-4 py-3 rounded-xl border text-left transition-colors ${
-                      tzPref.mode === 'default'
-                        ? 'border-[rgb(var(--color-accent))] bg-[rgb(var(--color-accent))]/8'
-                        : 'border-[rgb(var(--color-border))] hover:border-[rgb(var(--color-accent))]/40'
-                    }`}
-                    aria-pressed={tzPref.mode === 'default'}
-                  >
-                    <div>
-                      <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">{t('timezone.defaultTitle')}</p>
-                      <p className="text-caption text-[rgb(var(--color-text-secondary))] mt-0.5">{t('timezone.defaultHint')}</p>
-                    </div>
-                    <span className={`shrink-0 w-4 h-4 rounded-full border-2 ${
-                      tzPref.mode === 'default'
-                        ? 'border-[rgb(var(--color-accent))] bg-[rgb(var(--color-accent))]'
-                        : 'border-[rgb(var(--color-border))]'
-                    }`} />
-                  </button>
-
-                  {/* Option : heure personnalisée (UTC+N) */}
-                  <button
-                    type="button"
-                    onClick={() => setTzMode('manual')}
-                    style={{ minHeight: '56px' }}
-                    className={`flex items-center justify-between gap-3 px-4 py-3 rounded-xl border text-left transition-colors ${
-                      tzPref.mode === 'manual'
-                        ? 'border-[rgb(var(--color-accent))] bg-[rgb(var(--color-accent))]/8'
-                        : 'border-[rgb(var(--color-border))] hover:border-[rgb(var(--color-accent))]/40'
-                    }`}
-                    aria-pressed={tzPref.mode === 'manual'}
-                  >
-                    <div>
-                      <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">{t('timezone.customTitle')}</p>
-                      <p className="text-caption text-[rgb(var(--color-text-secondary))] mt-0.5">{t('timezone.customHint')}</p>
-                    </div>
-                    <span className={`shrink-0 w-4 h-4 rounded-full border-2 ${
-                      tzPref.mode === 'manual'
-                        ? 'border-[rgb(var(--color-accent))] bg-[rgb(var(--color-accent))]'
-                        : 'border-[rgb(var(--color-border))]'
-                    }`} />
-                  </button>
-
-                  {tzPref.mode === 'manual' && (() => {
-                    // Signe + magnitude dérivés du décalage signé stocké (ex. -5 →
-                    // signe '-', magnitude 5). L'utilisateur choisit le signe via
-                    // un toggle +/− et la magnitude via le champ numérique ; les
-                    // deux se recombinent en un offsetHours signé unique.
-                    const sign: '+' | '-' = tzPref.offsetHours < 0 ? '-' : '+';
-                    const magnitude = Math.abs(tzPref.offsetHours);
-                    const applySign = (nextSign: '+' | '-') =>
-                      setTzOffset(clampOffsetHours(nextSign === '-' ? -magnitude : magnitude));
-                    const applyMagnitude = (nextMagnitude: number) =>
-                      setTzOffset(clampOffsetHours(sign === '-' ? -nextMagnitude : nextMagnitude));
-                    return (
-                      <div className="flex items-center gap-2 pl-1 pt-1">
-                        <label htmlFor="tz-offset" className="text-sm text-[rgb(var(--color-text-secondary))]">{t('timezone.offsetLabel')}</label>
-
-                        {/* Toggle du signe : UTC+ (est de Greenwich) / UTC- (ouest) */}
-                        <div className="inline-flex rounded-lg border border-[rgb(var(--color-border))] overflow-hidden" role="group" aria-label={t('timezone.offsetSign')}>
-                          <button
-                            type="button"
-                            onClick={() => applySign('+')}
-                            aria-pressed={sign === '+'}
-                            className={`px-3 min-h-touch sm:min-h-9 text-sm font-semibold transition-colors ${
-                              sign === '+'
-                                ? 'bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))]'
-                                : 'bg-[rgb(var(--color-background))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]'
-                            }`}
-                          >
-                            +
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => applySign('-')}
-                            aria-pressed={sign === '-'}
-                            className={`px-3 min-h-touch sm:min-h-9 text-sm font-semibold border-l border-[rgb(var(--color-border))] transition-colors ${
-                              sign === '-'
-                                ? 'bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))]'
-                                : 'bg-[rgb(var(--color-background))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]'
-                            }`}
-                          >
-                            −
-                          </button>
-                        </div>
-
-                        <div className="inline-flex items-stretch rounded-lg border border-[rgb(var(--color-border))] overflow-hidden focus-within:ring-2 focus-within:ring-[rgb(var(--color-accent))]/30">
-                          <span className="inline-flex items-center px-3 bg-[rgb(var(--color-hover))] text-sm font-semibold text-[rgb(var(--color-text-primary))] select-none">
-                            UTC{sign}
-                          </span>
-                          <input
-                            id="tz-offset"
-                            type="number"
-                            inputMode="numeric"
-                            min={0}
-                            max={sign === '-' ? 12 : 14}
-                            step={1}
-                            value={magnitude}
-                            onChange={(e) => applyMagnitude(Number(e.target.value))}
-                            className="w-16 px-3 min-h-touch sm:min-h-9 bg-[rgb(var(--color-background))] text-sm font-semibold text-[rgb(var(--color-text-primary))] outline-none"
-                          />
-                        </div>
-                      </div>
-                    );
-                  })()}
-                </div>
-              </SectionCard>
+              <TimezoneSection />
 
               </div>
 
@@ -576,7 +328,7 @@ const SettingsPage: React.FC = () => {
                     <h2 className="text-sm font-bold text-red-600 dark:text-red-500">{t('security.dangerZone')}</h2>
                     <p className="text-xs text-red-500/70 mt-1">{t('security.dangerHint')}</p>
                   </div>
-                  <button onClick={handleDeleteAccount} style={{ minHeight: '44px' }}
+                  <button onClick={deleteAccount} style={{ minHeight: '44px' }}
                     className="shrink-0 inline-flex items-center justify-center px-5 py-2.5 bg-red-500 text-white rounded-xl text-sm font-semibold hover:bg-red-600 active:scale-[0.97] transition-all duration-150">
                     {t('security.deleteAccount')}
                   </button>
@@ -719,7 +471,7 @@ const SettingsPage: React.FC = () => {
       </main>
 
       {/* ── confirm dialog ── */}
-      <AlertDialog open={confirmConfig.isOpen} onOpenChange={(open) => setConfirmConfig(prev => ({ ...prev, isOpen: open }))}>
+      <AlertDialog open={confirmConfig.isOpen} onOpenChange={(open) => { if (!open) closeConfirm(); }}>
         <AlertDialogContent
           className="bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl text-[rgb(var(--color-text-primary))] shadow-xl">
           <AlertDialogHeader>
@@ -741,7 +493,7 @@ const SettingsPage: React.FC = () => {
                 deletingAccount ||
                 (confirmConfig.showInput && confirmInput !== confirmConfig.confirmationText)
               }
-              onClick={() => { confirmConfig.onConfirm(); setConfirmConfig(prev => ({ ...prev, isOpen: false })); }}
+              onClick={() => { confirmConfig.onConfirm(); closeConfirm(); }}
               className="rounded-xl font-semibold text-sm bg-red-500 hover:bg-red-600 text-white disabled:opacity-50">
               {deletingAccount ? 'Suppression…' : 'Confirmer'}
             </AlertDialogAction>
