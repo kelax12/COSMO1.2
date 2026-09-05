@@ -14,3 +14,13 @@ export const PRIORITY_OPTIONS = [
 export function priorityColor(p: number): string {
   return PRIORITY_OPTIONS.find(o => o.value === p)?.color ?? 'text-gray-400';
 }
+
+// `value` typé large (pas `TaskRecurrence`) pour ne pas faire dépendre ce
+// fichier de constantes pures du module tasks — les deux corps mobile et
+// desktop le comparent à `formData.recurrence` sans jamais l'écrire ailleurs.
+export const RECURRENCE_OPTIONS = [
+  { value: 'none', labelKey: 'fields.recurrenceNever' as const },
+  { value: 'daily', labelKey: 'fields.recurrenceDaily' as const },
+  { value: 'weekly', labelKey: 'fields.recurrenceWeekly' as const },
+  { value: 'monthly', labelKey: 'fields.recurrenceMonthly' as const },
+];
