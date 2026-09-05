@@ -9,6 +9,10 @@ import { useT } from '@/i18n/useT';
 interface TasksHeaderProps {
   showDeadlineCalendar: boolean;
   onToggleCalendar: () => void;
+  /** Nombre de tâches non terminées dans la vue courante. */
+  openCount: number;
+  /** Combien de ces tâches sont en retard. */
+  overdueCount: number;
 }
 
 /**
@@ -26,13 +30,38 @@ interface TasksHeaderProps {
  * `data-tutorial-id` est porté par les DEUX boutons calendrier ; `findTarget`
  * (page-tutorial-helpers) sélectionne celui qui est réellement visible.
  */
-const TasksHeader: React.FC<TasksHeaderProps> = ({ showDeadlineCalendar, onToggleCalendar }) => {
-  const { t } = useT('tasks');
+const TasksHeader: React.FC<TasksHeaderProps> = ({
+  showDeadlineCalendar,
+  onToggleCalendar,
+  openCount,
+  overdueCount,
+}) => {
+  const { t, tp } = useT('tasks');
+
+  // Maquette 04 — « En-tête large qui se rétracte » : au repos le titre porte
+  // ce qu'il y a à faire, au premier défilement il ne reste que « Tâches ».
+  // Deux phrases complètes séparées par un point médian, jamais une phrase
+  // recousue à partir de fragments : « en retard » n'existe pas seul.
+  const mobileSummary = (
+    <>
+      <span>{tp('header.openCount', openCount)}</span>
+      {overdueCount > 0 && (
+        <>
+          <span aria-hidden="true"> · </span>
+          <span className="text-red-500 font-medium">
+            {tp('header.overdueCount', overdueCount)}
+          </span>
+        </>
+      )}
+    </>
+  );
+
   return (
     <>
       {/* ── Mobile ── */}
       <MobileHeader
         title={t('header.title')}
+        subtitle={mobileSummary}
         actions={
           <>
             {/* Loupe retirée du header mobile : redondante avec la barre de

@@ -23,100 +23,16 @@ import TodayUnified from '@/components/TodayUnified';
 import { useActiveOrganization } from '@/modules/organizations';
 import CollaborativeTasks from '@/components/CollaborativeTasks';
 import ActiveOKRs from '@/components/ActiveOKRs';
+import MiniBarChart from '@/components/MiniBarChart';
 import TextType from '@/components/TextType';
 import MobileCollapsible from '@/components/MobileCollapsible';
 import WeeklyCheckinModal, { useWeeklyCheckin } from '@/components/WeeklyCheckinModal';
 import { formatDate, formatTime } from '@/i18n/format';
-import { useT, type Translator } from '@/i18n/useT';
+import { useT } from '@/i18n/useT';
 import { VIEW_MODES, type ViewMode } from '@/lib/view-mode';
 // SocialRequests retiré du corps de page : les demandes d'amis ET les tâches
 // partagées à accepter sont désormais regroupées dans InboxMenu (bouton boîte
 // de réception en haut de page, avec pastille de notification).
-
-/**
- * Étiquette d'une barre du mini-graphique.
- *
- * La table `MONTHS_FR` codée en dur qui vivait ici a disparu au profit de
- * `formatDate` (`Intl` sous le capot) : les noms de mois abrégés existent déjà
- * dans toutes les locales, les réécrire à la main revenait à maintenir une
- * traduction de plus — et à la figer en français.
- */
-const formatBarDate = (raw: string, t: Translator<'dashboard'>['t']): string => {
-  // Only format yyyy-mm-dd strings (7 days view)
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
-  const todayStr = new Date().toLocaleDateString('en-CA');
-  if (raw === todayStr) return t('chart.today');
-  const yesterday = new Date();
-  yesterday.setDate(yesterday.getDate() - 1);
-  if (raw === yesterday.toLocaleDateString('en-CA')) return t('chart.yesterday');
-  const [y, m, d] = raw.split('-').map(Number);
-  return formatDate(new Date(y, m - 1, d), { day: 'numeric', month: 'short' });
-};
-
-const MiniBarChart: React.FC<{ data: { value: number; label?: string; date?: string }[]; color?: string; ariaLabel?: string }> = ({ data, color = '#2563EB', ariaLabel }) => {
-  const { t } = useT('dashboard');
-  const [hovered, setHovered] = React.useState<number | null>(null);
-  const max = Math.max(...data.map(d => d.value), 1);
-
-  React.useEffect(() => {
-    if (hovered === null) return;
-    const handler = () => setHovered(null);
-    window.addEventListener('touchstart', handler, { passive: true });
-    return () => window.removeEventListener('touchstart', handler);
-  }, [hovered]);
-
-  const darken = (hex: string) => {
-    const n = parseInt(hex.slice(1), 16);
-    const r = Math.max(0, (n >> 16) - 40);
-    const g = Math.max(0, ((n >> 8) & 0xff) - 40);
-    const b = Math.max(0, (n & 0xff) - 40);
-    return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`;
-  };
-
-  // #35 — résumé textuel : les valeurs ne sont sinon exposées qu'au hover/touch,
-  // invisibles au clavier et aux lecteurs d'écran (WCAG/EAA).
-  const summary = ariaLabel
-    ? `${ariaLabel} : ${data.map(d => d.value).join(', ')}`
-    : undefined;
-
-  return (
-    <div
-      className="flex items-end gap-[3px] h-[56px] w-full pt-1 relative"
-      role="img"
-      aria-label={summary}>
-      {data.map((d, i) => {
-        const tooltipLabel = d.label ? d.label : d.date ? formatBarDate(d.date, t) : '';
-        return (
-          <div
-            key={i}
-            className="flex-1 relative flex flex-col items-center justify-end h-full"
-            onMouseEnter={() => setHovered(i)}
-            onMouseLeave={() => setHovered(null)}
-            onTouchStart={(e) => {
-              e.stopPropagation();
-              setHovered(prev => prev === i ? null : i);
-            }}
-          >
-            {hovered === i && (
-              <div className="absolute bottom-full mb-1.5 left-1/2 -translate-x-1/2 z-10 whitespace-nowrap bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] text-caption md:text-[10px] font-bold px-2 py-1 rounded-lg shadow-lg pointer-events-none">
-                {tooltipLabel ? `${tooltipLabel} : ` : ''}{d.value}
-              </div>
-            )}
-            <div
-              className={`w-full rounded-t-[3px] transition-all duration-150 ${
-                hovered === i ? '' : ''
-              }`}
-              style={{
-                height: `${Math.max((d.value / max) * 100, 8)}%`,
-                backgroundColor: hovered === i ? darken(color) : color,
-              }}
-            />
-          </div>
-        );
-      })}
-    </div>
-  );
-};
 
 // Affichage du graphique "Répartition du temps" (DashboardBarChart).
 // Masqué pour l'instant — passer à true pour le réafficher.
@@ -124,7 +40,7 @@ const SHOW_REPARTITION_CHART = false;
 
 // TextType 1×/jour (#33) : l'animation machine à écrire ne joue qu'à la
 // première visite du jour — le dashboard est la page la plus visitée, chaque
-// seconde avant lisibilité y est multipliée. Flag daté, pattern useDailyAdGate.
+// seconde avant lisibilité y est multipliée. Flag localStorage daté.
 const TYPING_SEEN_KEY = 'cosmo_dashboard_typing_seen';
 const shouldPlayTypingToday = (): boolean => {
   const today = new Date().toLocaleDateString('en-CA');
@@ -344,20 +260,28 @@ const DashboardPage: React.FC = () => {
             variants={itemVariants}
           >
             {/* ── Mobile : en-tête canonique (cf. docs/MOBILE.md) ──
-                Le titre reprend la salutation, mais SANS l'effet de frappe :
-                une animation lettre par lettre dans une barre qui se compacte
-                au scroll n'a pas de sens, et le `truncate` la couperait en
-                plein milieu. Le résumé contextuel juste en dessous n'est PAS
-                passé en `subtitle` : il contient des liens cliquables, et un
-                `subtitle` disparaît quand l'en-tête se compacte. On perdrait
-                des points d'entrée au premier scroll. */}
+                Maquette 02, « Le même écran, sans la coque » : plus de
+                salutation. Elle occupait la ligne la plus haute et la plus
+                grande de l'écran pour dire quelque chose que la personne sait
+                déjà — son propre prénom. À la place, la date du jour, qui est
+                le seul repère dont la liste a besoin.
+
+                Le résumé contextuel juste en dessous n'est PAS passé en
+                `subtitle` : il contient des liens cliquables, et un `subtitle`
+                disparaît quand l'en-tête se compacte. On perdrait des points
+                d'entrée au premier scroll. */}
+            {/* ⚠️ Le titre est la DATE, pas le mot « Aujourd'hui » de la
+                maquette : ce mot nomme déjà la section dépliable juste en
+                dessous (`sections.today`, vue unifiée perso + équipe). Mesuré
+                dans le navigateur en 375 px — deux « Aujourd'hui » à 100 px
+                d'écart, l'un en h1 l'autre en h2. La date remplit la même
+                fonction de repère et ne double aucun libellé. */}
             <MobileHeader
-              title={
-                <>
-                  <span>{t('greeting')} </span>
-                  <span className="text-[rgb(var(--color-accent-solid))]">{displayUser.name}</span>
-                </>
-              }
+              title={formatDate(new Date(), {
+                weekday: 'long',
+                day: 'numeric',
+                month: 'short',
+              })}
             />
 
             <div className="flex items-start justify-between gap-3">
@@ -468,8 +392,12 @@ const DashboardPage: React.FC = () => {
           </motion.div>
         )}
 
-        {/* Toggle vue + Statistiques rapides */}
-        <motion.div variants={itemVariants}>
+        {/* Toggle vue + Statistiques rapides — DESKTOP UNIQUEMENT.
+            Maquette 02 : sur mobile, ces quatre tuiles et leur sélecteur de
+            période occupaient tout le premier écran, au-dessus de la première
+            chose à faire. Un compteur ne se fait pas ; il se consulte, et il
+            se consulte depuis Statistiques. Le rendu desktop est inchangé. */}
+        <motion.div variants={itemVariants} className="hidden md:block">
           <div className="flex items-center justify-stretch sm:justify-end mb-3 sm:mb-4">
             <div className="flex gap-1 p-1 bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-xl w-full sm:w-auto">
               {VIEW_MODES.map(mode => (

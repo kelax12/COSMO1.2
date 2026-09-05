@@ -4,7 +4,13 @@
     "subtitle": "Gérez vos tâches efficacement",
     "calendar": "Calendrier",
     "showCalendar": "Afficher le calendrier",
-    "hideCalendar": "Masquer le calendrier"
+    "hideCalendar": "Masquer le calendrier",
+    "openCount_one": "{{count}} tâche à faire",
+    "openCount_many": "{{count}} de tâches à faire",
+    "openCount_other": "{{count}} tâches à faire",
+    "overdueCount_one": "{{count}} en retard",
+    "overdueCount_many": "{{count}} en retard",
+    "overdueCount_other": "{{count}} en retard"
   },
   "error": {
     "title": "Impossible de charger les tâches",
@@ -182,7 +188,8 @@
     "schedule": "Planifier dans l'agenda",
     "delete": "Supprimer la tâche",
     "removeFromList": "Retirer de la liste",
-    "receivedFrom": "Reçu de {{name}}"
+    "receivedFrom": "Reçu de {{name}}",
+    "overdueActions": "Sortir cette tâche du retard"
   },
   "sort": {
     "label": "Trier par",
@@ -404,6 +411,8 @@
     "menu": "Reporter",
     "tomorrow": "Demain",
     "weekend": "Ce week-end",
-    "nextWeek": "Semaine prochaine"
+    "nextWeek": "Semaine prochaine",
+    "today": "Aujourd'hui",
+    "chooseDate": "Choisir"
   }
 }

@@ -30,7 +30,12 @@ const TeamTaskCardLiteInner = React.forwardRef<HTMLDivElement, TeamTaskCardLiteP
       <div
         ref={ref}
         data-testid="team-task-card"
-        className="relative mb-1.5 flex items-stretch gap-3 px-3 py-2.5 rounded-card cursor-pointer bg-indigo-500/[0.12] dark:bg-indigo-500/[0.20] border border-indigo-300/40 dark:border-indigo-700/40"
+        // Alignée sur `TaskCard` : plus de carte, un filet de séparation.
+        // Ces lignes cohabitent avec les tâches personnelles dans la MÊME
+        // liste — en garder la moitié en cartes aurait juste eu l'air cassé.
+        // L'appartenance à une équipe reste dite par le fond indigo, la
+        // pastille de projet et la barre de couleur, pas par un cadre.
+        className="relative flex items-stretch gap-3 px-3 py-2.5 cursor-pointer border-b border-[rgb(var(--color-border))] bg-indigo-500/[0.07] dark:bg-indigo-500/[0.12]"
         style={{ minHeight: '60px' }}
         onClick={() => onEdit(task)}
       >
