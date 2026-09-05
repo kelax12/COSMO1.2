@@ -112,6 +112,8 @@
     "fullName": "Full name",
     "yourNamePlaceholder": "Your name",
     "oauthFailed": "That sign-in didn't go through.",
+    "oauthRedirectLostTitle": "Signed in, but your destination was lost.",
+    "oauthRedirectLostBody": "You landed on the home page instead of the page you asked for. Open your invitation link again to pick up where you left off.",
     "resetIntro": "Choose the new password for your account.",
     "confirmPassword": "Confirm the password",
     "requestAgain": "Request a new link",
