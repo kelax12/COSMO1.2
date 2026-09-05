@@ -92,6 +92,7 @@
     "headingEdit": "Edit this task",
     "headingEditShort": "Edit",
     "deleteTask": "Delete this task",
-    "collaboratorPlaceholder": "Email or name…"
+    "collaboratorPlaceholder": "Email or name…",
+    "addCollaborator": "Add"
   }
 }
