@@ -151,8 +151,14 @@ jobs:
       - run: npm ci
       - name: Install Playwright Chromium
         run: npx playwright install --with-deps chromium
-      - name: Run E2E (Chromium)
-        run: npx playwright test --project=chromium
+      # 🔴 `supabase-stub` DOIT figurer ici. Il utilise Desktop Chrome, donc
+      # l'installation ci-dessus suffit, et il porte les parcours qui ne sont
+      # PAS atteignables en mode démo (`FirstRunSetup`, retour OAuth) : le
+      # laisser hors de la CI reviendrait à poser sur `main` des gardes qui ne
+      # tournent nulle part — la faute que ce dépôt s'est déjà faite deux fois.
+      # `mobile-safari` reste hors CI (WebKit, ~1 min d'installation en plus).
+      - name: Run E2E (Chromium + supabase-stub)
+        run: npx playwright test --project=chromium --project=supabase-stub
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
