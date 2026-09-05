@@ -1,10 +1,8 @@
 import React, { useState, useEffect, useRef, useLayoutEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Inbox, UserPlus, Check, X, Send, Settings, Trash2, ArrowLeft } from 'lucide-react';
+import { Inbox, UserPlus, Send, Settings, Trash2, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
-import { formatDistanceToNow } from 'date-fns';
-import { getDateLocale } from '@/i18n/format';
 import {
   useFriendRequests,
   useAcceptFriendRequest,
@@ -38,6 +36,8 @@ import { useIsDemo } from '@/lib/app-mode.store';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { getAcknowledgedShares, acknowledgeShare } from '@/lib/acknowledged-shares';
 import RemoveFriendConfirm from './RemoveFriendConfirm';
+import InboxOrgSections from './inbox/InboxOrgSections';
+import InboxSocialSections from './inbox/InboxSocialSections';
 import { useT } from '@/i18n/useT';
 
 /**
@@ -56,7 +56,6 @@ import { useT } from '@/i18n/useT';
 const InboxMenu: React.FC = () => {
   const ov = useT('overlays');
   const { t: tTasks } = useT('tasks');
-  const { t: tOrg } = useT('org');
   const { user } = useAuth();
 
   const queryClient = useQueryClient();
@@ -340,13 +339,6 @@ const InboxMenu: React.FC = () => {
     });
   };
 
-  const prettyName = (email?: string) =>
-    email
-      ?.split('@')[0]
-      .split('.')
-      .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
-      .join(' ') ?? email;
-
   // ── Popover ────────────────────────────────────────────────────────────
   const popoverInner = (
     <>
@@ -432,281 +424,46 @@ const InboxMenu: React.FC = () => {
           </div>
         )}
 
-        {/* ── Demandes d'amis ── */}
-        {!showManageFriends && incomingRequests.length > 0 && (
-          <div>
-            <p className="px-4 pt-3 pb-1 text-caption sm:text-xs font-semibold text-[rgb(var(--color-text-muted))] uppercase tracking-wide">
-              {ov.t('inbox.friendRequests', { count: incomingRequests.length })}
-            </p>
-            <div className="divide-y divide-[rgb(var(--color-border))]">
-              {incomingRequests.map((req: PendingFriendRequest) => {
-                const timeAgo = req.sentAt
-                  ? formatDistanceToNow(new Date(req.sentAt), { locale: getDateLocale(), addSuffix: true })
-                  : '';
-                return (
-                  <div key={req.id} className="flex items-center gap-3 px-4 py-2.5">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-label sm:text-sm font-medium text-[rgb(var(--color-text-primary))] truncate">
-                        {req.senderName || prettyName(req.senderEmail)}
-                      </p>
-                      <p className="text-caption sm:text-xs text-[rgb(var(--color-text-muted))] truncate">
-                        {req.senderEmail}{timeAgo ? ` · ${timeAgo}` : ''}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-0.5 shrink-0">
-                      <button
-                        onClick={() => handleAcceptFriend(req.id)}
-                        disabled={acceptFriendMutation.isPending}
-                        title={tTasks('inbox.accept')}
-                        className="w-7 h-7 rounded-md flex items-center justify-center text-[rgb(var(--color-accent))] hover:bg-[rgb(var(--color-hover))] disabled:opacity-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
-                        aria-label={tTasks('inbox.acceptNamed', { name: prettyName(req.senderEmail) ?? '' })}
-                      >
-                        <Check size={15} aria-hidden="true" />
-                      </button>
-                      <button
-                        onClick={() => handleRejectFriend(req.id)}
-                        disabled={rejectFriendMutation.isPending}
-                        title={tTasks('inbox.refuse')}
-                        className="w-7 h-7 rounded-md flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))] disabled:opacity-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
-                        aria-label={tTasks('inbox.refuseNamed', { name: prettyName(req.senderEmail) ?? '' })}
-                      >
-                        <X size={15} aria-hidden="true" />
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+        {/* Les nouvelles qui viennent des amis. */}
+        {!showManageFriends && (
+          <InboxSocialSections
+            friendRequests={incomingRequests}
+            onAcceptFriend={handleAcceptFriend}
+            onRejectFriend={handleRejectFriend}
+            isAcceptFriendPending={acceptFriendMutation.isPending}
+            isRejectFriendPending={rejectFriendMutation.isPending}
+            sharedTasks={tasksToAccept}
+            sharerOfTask={(task) => sharerOf(task)?.name ?? task.sharedBy}
+            onAcceptTask={handleAcceptTask}
+            onRejectTask={handleRejectTask}
+            isRejectTaskPending={unshareTaskMutation.isPending}
+            sharedLists={incomingLists}
+            sharerOfList={(grant) =>
+              listSharerOf(grant)?.name ?? grant.sharedByName ?? tTasks('inbox.anonymousSharer')
+            }
+            onAcceptList={handleAcceptList}
+            onRejectList={handleRejectList}
+            isAcceptListPending={acceptSharedListMutation.isPending}
+            isRejectListPending={refuseSharedListMutation.isPending}
+          />
         )}
 
-        {/* ── Tâches à accepter ── */}
-        {!showManageFriends && tasksToAccept.length > 0 && (
-          <div className="px-3 pt-3 pb-1">
-            <p className="px-4 pt-3 pb-1 text-caption sm:text-xs font-semibold text-[rgb(var(--color-text-muted))] uppercase tracking-wide">
-              {tTasks('inbox.sharedTasks', { count: tasksToAccept.length })}
-            </p>
-            <div className="divide-y divide-[rgb(var(--color-border))]">
-              {tasksToAccept.map((task) => {
-                const sharer = sharerOf(task);
-                const sharerName = sharer?.name ?? task.sharedBy;
-                return (
-                <div key={task.id} className="flex items-center gap-3 px-4 py-2.5">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-label sm:text-sm font-medium text-[rgb(var(--color-text-primary))] truncate">
-                      {task.name}
-                    </p>
-                    <p className="text-caption sm:text-xs text-[rgb(var(--color-text-muted))] truncate">
-                      {sharerName}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-0.5 shrink-0">
-                    <button
-                      onClick={() => handleAcceptTask(task)}
-                      title={tTasks('inbox.accept')}
-                      className="w-7 h-7 rounded-md flex items-center justify-center text-[rgb(var(--color-accent))] hover:bg-[rgb(var(--color-hover))] disabled:opacity-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
-                      aria-label={tTasks('inbox.acceptTask', { name: task.name })}
-                    >
-                      <Check size={15} aria-hidden="true" />
-                    </button>
-                    <button
-                      onClick={() => handleRejectTask(task)}
-                      disabled={unshareTaskMutation.isPending}
-                      title={tTasks('inbox.refuse')}
-                      className="w-7 h-7 rounded-md flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))] disabled:opacity-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
-                      aria-label={tTasks('inbox.refuseTask', { name: task.name })}
-                    >
-                      <X size={15} aria-hidden="true" />
-                    </button>
-                  </div>
-                </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* ── Listes partagées à accepter ── */}
-        {!showManageFriends && incomingLists.length > 0 && (
-          <div>
-            <p className="px-4 pt-3 pb-1 text-caption sm:text-xs font-semibold text-[rgb(var(--color-text-muted))] uppercase tracking-wide">
-              {tTasks('inbox.sharedLists', { count: incomingLists.length })}
-            </p>
-            <div className="divide-y divide-[rgb(var(--color-border))]">
-              {incomingLists.map((grant) => {
-                const sharer = listSharerOf(grant);
-                const sharerName = sharer?.name ?? grant.sharedByName ?? tTasks('inbox.anonymousSharer');
-                return (
-                <div key={grant.id} className="flex items-center gap-3 px-4 py-2.5">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-label sm:text-sm font-medium text-[rgb(var(--color-text-primary))] truncate">
-                      {grant.name}
-                    </p>
-                    <p className="text-caption sm:text-xs truncate text-[rgb(var(--color-text-muted))]">
-                      {ov.tp('inbox.receivedFromWithCount', grant.tasks.length, { name: sharerName })}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-0.5 shrink-0">
-                    <button
-                      onClick={() => handleAcceptList(grant)}
-                      disabled={acceptSharedListMutation.isPending}
-                      title={tTasks('inbox.accept')}
-                      className="w-7 h-7 rounded-md flex items-center justify-center text-[rgb(var(--color-accent))] hover:bg-[rgb(var(--color-hover))] disabled:opacity-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
-                      aria-label={tTasks('inbox.acceptList', { name: grant.name })}
-                    >
-                      <Check size={15} aria-hidden="true" />
-                    </button>
-                    <button
-                      onClick={() => handleRejectList(grant)}
-                      disabled={refuseSharedListMutation.isPending}
-                      title={tTasks('inbox.refuse')}
-                      className="w-7 h-7 rounded-md flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))] disabled:opacity-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
-                      aria-label={tTasks('inbox.refuseList', { name: grant.name })}
-                    >
-                      <X size={15} aria-hidden="true" />
-                    </button>
-                  </div>
-                </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* ── Retrait d'une entreprise (mig. 106) ── */}
-        {!showManageFriends && removalNotices.length > 0 && (
-          <div>
-            <p className="px-4 pt-3 pb-1 text-caption sm:text-xs font-semibold text-[rgb(var(--color-text-muted))] uppercase tracking-wide">
-              {tOrg('inviteJoin.removedHeading')}
-            </p>
-            <div className="divide-y divide-[rgb(var(--color-border))]">
-              {removalNotices.map((notice) => {
-                const timeAgo = notice.createdAt
-                  ? formatDistanceToNow(new Date(notice.createdAt), { locale: getDateLocale(), addSuffix: true })
-                  : '';
-                return (
-                  <div key={notice.id} className="flex items-center gap-3 px-4 py-2.5">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-label sm:text-sm font-medium text-[rgb(var(--color-text-primary))] truncate">
-                        {tOrg('inviteJoin.removedBody', { org: notice.orgName })}
-                      </p>
-                      <p className="text-caption sm:text-xs truncate text-[rgb(var(--color-text-muted))]">
-                        {notice.actorName ? tOrg('inviteJoin.removedBy', { name: notice.actorName }) : ''}
-                        {notice.actorName && timeAgo ? ' · ' : ''}{timeAgo}
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => dismissRemovalMutation.mutate(notice.id)}
-                      disabled={dismissRemovalMutation.isPending}
-                      className="shrink-0 text-caption sm:text-xs font-semibold px-2.5 py-1.5 rounded-lg text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] disabled:opacity-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
-                    >
-                      {tOrg('inviteJoin.removedDismiss')}
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* ── Invitations d'entreprise reçues (mig. 105) ── */}
-        {!showManageFriends && orgInvitations.length > 0 && (
-          <div>
-            <p className="px-4 pt-3 pb-1 text-caption sm:text-xs font-semibold text-[rgb(var(--color-text-muted))] uppercase tracking-wide">
-              {tOrg('inviteJoin.inboxHeading')}
-            </p>
-            <div className="divide-y divide-[rgb(var(--color-border))]">
-              {orgInvitations.map((invitation) => {
-                const timeAgo = invitation.createdAt
-                  ? formatDistanceToNow(new Date(invitation.createdAt), { locale: getDateLocale(), addSuffix: true })
-                  : '';
-                return (
-                  <div key={invitation.id} className="flex items-center gap-3 px-4 py-2.5">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-label sm:text-sm font-medium text-[rgb(var(--color-text-primary))] truncate">
-                        {invitation.orgName}
-                      </p>
-                      <p className="text-caption sm:text-xs truncate text-[rgb(var(--color-text-muted))]">
-                        {tOrg('inviteJoin.inboxFrom', { name: invitation.inviterName })}{timeAgo ? ` · ${timeAgo}` : ''}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-0.5 shrink-0">
-                      <button
-                        onClick={() =>
-                          respondOrgInvitationMutation.mutate({ invitationId: invitation.id, accept: true })
-                        }
-                        disabled={respondOrgInvitationMutation.isPending}
-                        title={tTasks('inbox.accept')}
-                        className="w-7 h-7 rounded-md flex items-center justify-center text-[rgb(var(--color-accent))] hover:bg-[rgb(var(--color-hover))] disabled:opacity-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
-                        aria-label={tOrg('inviteJoin.inboxAccept', { org: invitation.orgName })}
-                      >
-                        <Check size={15} aria-hidden="true" />
-                      </button>
-                      <button
-                        onClick={() =>
-                          respondOrgInvitationMutation.mutate({ invitationId: invitation.id, accept: false })
-                        }
-                        disabled={respondOrgInvitationMutation.isPending}
-                        title={tTasks('inbox.refuse')}
-                        className="w-7 h-7 rounded-md flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))] disabled:opacity-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
-                        aria-label={tOrg('inviteJoin.inboxRefuse', { org: invitation.orgName })}
-                      >
-                        <X size={15} aria-hidden="true" />
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* ── Demandes d'adhésion entreprise (admin) ── */}
-        {!showManageFriends && pendingJoinRequests.length > 0 && (
-          <div>
-            <p className="px-4 pt-3 pb-1 text-caption sm:text-xs font-semibold text-[rgb(var(--color-text-muted))] uppercase tracking-wide">
-              {ov.t('inbox.joinRequests', { count: pendingJoinRequests.length })}
-            </p>
-            <div className="divide-y divide-[rgb(var(--color-border))]">
-              {pendingJoinRequests.map((req) => {
-                const timeAgo = req.requestedAt
-                  ? formatDistanceToNow(new Date(req.requestedAt), { locale: getDateLocale(), addSuffix: true })
-                  : '';
-                return (
-                  <div key={req.id} className="flex items-center gap-3 px-4 py-2.5">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-label sm:text-sm font-medium text-[rgb(var(--color-text-primary))] truncate">
-                        {req.requesterName || ov.t('inbox.someone')}
-                      </p>
-                      <p className="text-caption sm:text-xs truncate text-[rgb(var(--color-text-muted))]">
-                        {ov.t('inbox.wantsToJoin')}{timeAgo ? ` · ${timeAgo}` : ''}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-0.5 shrink-0">
-                      <button
-                        onClick={() => handleRespondJoin(req.id, true)}
-                        disabled={respondJoinRequestMutation.isPending}
-                        title={tTasks('inbox.accept')}
-                        className="w-7 h-7 rounded-md flex items-center justify-center text-[rgb(var(--color-accent))] hover:bg-[rgb(var(--color-hover))] disabled:opacity-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
-                        aria-label={ov.t('inbox.acceptJoin', { name: req.requesterName || ov.t('inbox.someone') })}
-                      >
-                        <Check size={15} aria-hidden="true" />
-                      </button>
-                      <button
-                        onClick={() => handleRespondJoin(req.id, false)}
-                        disabled={respondJoinRequestMutation.isPending}
-                        title={tTasks('inbox.refuse')}
-                        className="w-7 h-7 rounded-md flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))] disabled:opacity-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
-                        aria-label={ov.t('inbox.refuseJoin', { name: req.requesterName || ov.t('inbox.someone') })}
-                      >
-                        <X size={15} aria-hidden="true" />
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+        {/* Les nouvelles qui viennent de l'organisation — un domaine à part,
+            que ce panneau se contente de brancher. */}
+        {!showManageFriends && (
+          <InboxOrgSections
+            removalNotices={removalNotices}
+            orgInvitations={orgInvitations}
+            joinRequests={pendingJoinRequests}
+            onDismissRemoval={(id) => dismissRemovalMutation.mutate(id)}
+            isDismissPending={dismissRemovalMutation.isPending}
+            onRespondInvitation={(invitationId, accept) =>
+              respondOrgInvitationMutation.mutate({ invitationId, accept })
+            }
+            isRespondInvitationPending={respondOrgInvitationMutation.isPending}
+            onRespondJoin={handleRespondJoin}
+            isRespondJoinPending={respondJoinRequestMutation.isPending}
+          />
         )}
       </div>
 
