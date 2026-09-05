@@ -115,6 +115,8 @@
     "fullName": "Nom complet",
     "yourNamePlaceholder": "Votre nom",
     "oauthFailed": "La connexion n'a pas abouti.",
+    "oauthRedirectLostTitle": "Connexion réussie, mais destination perdue.",
+    "oauthRedirectLostBody": "Vous avez été ramené sur la page d'accueil au lieu de la page demandée. Rouvrez votre lien d'invitation pour reprendre où vous en étiez.",
     "resetIntro": "Choisissez le nouveau mot de passe de votre compte.",
     "confirmPassword": "Confirmer le mot de passe",
     "requestAgain": "Refaire une demande",

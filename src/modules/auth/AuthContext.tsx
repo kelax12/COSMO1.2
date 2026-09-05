@@ -33,6 +33,11 @@ import {
 import { localeStore } from '@/i18n/store';
 import { DEFAULT_LOCALE } from '@/i18n/locale';
 import { postAuthRoute } from '@/lib/safe-redirect';
+import {
+  recordOAuthRedirectIntent,
+  clearOAuthRedirectIntent,
+  reportOAuthLandingMismatch,
+} from './oauth-landing';
 
 const DEBUG = typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('debug');
 const dlog = (msg: string) => {
@@ -134,6 +139,28 @@ const consumeOAuthErrorFromUrl = (): string | null => {
   } catch {
     return null;
   }
+};
+
+/**
+ * Sonde C-45 : appelée au moment où une session s'ouvre réellement.
+ *
+ * Une intention de redirection n'existe que si `loginWithGoogle` vient de
+ * partir chez Google depuis cet onglet. Si une session s'ouvre alors que
+ * l'URL courante n'est pas celle qu'on avait demandée, c'est que GoTrue a
+ * substitué le Site URL, donc que la « Redirect URL allow list » du projet
+ * ne couvre pas la destination. On le dit à l'exploitant (console + Sentry)
+ * ET à l'utilisateur, dont l'invitation vient de se perdre.
+ */
+const checkOAuthLanding = (): void => {
+  if (typeof window === 'undefined') return;
+  const mismatch = reportOAuthLandingMismatch(window.location.href);
+  if (!mismatch) return;
+  // Toast différé : Sonner est monté par App, sous ce provider.
+  setTimeout(() => {
+    toast.error(translator('common').t('auth.oauthRedirectLostTitle'), {
+      description: translator('common').t('auth.oauthRedirectLostBody'),
+    });
+  }, 0);
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -269,6 +296,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
         dlog(`initializeAuth: getSession() resolved — session=${!!session?.user}`);
         if (session?.user) {
+          checkOAuthLanding();
           setUser(mapSupabaseUserToAppUser(session.user));
           touchLastSeen(session.user.id);
           dlog('initializeAuth: calling restoreAndRefresh()');
@@ -352,6 +380,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (event === 'INITIAL_SESSION') {
         lastUserId = currentUserId;
         if (session?.user) {
+          checkOAuthLanding();
           setUser(mapSupabaseUserToAppUser(session.user));
           touchLastSeen(session.user.id);
           restoreAndRefresh(session.user.id, !!cacheWriteUnsub);
@@ -372,6 +401,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       if (session?.user) {
+        // `checkOAuthLanding` consomme l'intention : les trois points d'appel
+        // couvrent les trois ordres possibles (getSession, INITIAL_SESSION,
+        // SIGNED_IN), le premier arrivé gagne, les suivants sont des no-op.
+        checkOAuthLanding();
         setUser(mapSupabaseUserToAppUser(session.user));
         touchLastSeen(session.user.id);
       } else if (event === 'SIGNED_OUT') {
@@ -527,10 +560,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           ? null
           : new URLSearchParams(window.location.search).get('redirect'));
       const destination = postAuthRoute(requested);
+      const redirectTo = `${window.location.origin}${localePrefix}${destination}`;
+      // Sonde C-45 : on note où on a demandé à revenir. Au retour, si
+      // l'atterrissage ne correspond pas, `checkOAuthLanding` le dit au lieu
+      // de laisser la destination se perdre en silence (cf. oauth-landing.ts).
+      recordOAuthRedirectIntent(redirectTo);
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}${localePrefix}${destination}`,
+          redirectTo,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
@@ -538,10 +576,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         },
       });
       if (error) {
+        // Départ avorté : l'intention n'a plus de retour à décrire, et la
+        // laisser traîner ferait accuser la prochaine navigation.
+        clearOAuthRedirectIntent();
         return { success: false, error: error.message || translator('common').t('auth.googleFailed') };
       }
       return { success: true };
     } catch (err) {
+      clearOAuthRedirectIntent();
       const message = err instanceof Error ? err.message : translator('common').t('auth.genericError');
       return { success: false, error: message };
     }
