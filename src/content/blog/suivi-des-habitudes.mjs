@@ -85,5 +85,71 @@ export const article = {
 <p>Quand l'oublier devient inconfortable, c'est le signe que le comportement s'est automatisé. Vous pouvez alors la retirer du suivi et libérer la place pour la suivante.</p>
 `,
     },
+    en: {
+      title: "Habit tracking: what to measure (and what discourages you)",
+      metaTitle: "Habit tracking: what to measure to keep going",
+      description: "Streaks, completion rate, heatmaps: which habit-tracking indicators genuinely help, which sabotage consistency, and how to start properly.",
+      readingMinutes: 8,
+      faq: [
+        ["What is the best indicator for tracking a habit?", "The completion rate over a rolling period of 4 to 12 weeks. It tolerates missed days, unlike a streak, and reflects real consistency rather than recent performance."],
+        ["Are streaks useful or counterproductive?", "Both. A streak motivates while it climbs, but a broken streak often triggers a complete abandonment, the all-or-nothing effect. Use it as secondary encouragement, never as the main indicator."],
+        ["How many habits should you track at once?", "Two or three at the start. Every extra habit lowers the probability of keeping all of them: the limiting factor is not motivation but the number of daily decisions your system asks of you."],
+      ],
+      html: `
+<p class="lead">Tracking habits means ticking boxes, and that is the easy part. The difficulty lies elsewhere: choosing <em>what</em> to look at. Depending on which indicator you put front and centre, the same tracking produces either consistency that settles in, or abandonment at the first slip. Here is what each indicator actually measures, which one belongs at the centre, and how to start a tracking practice that lasts beyond three weeks.</p>
+
+<h2 id="pourquoi">Why track, rather than simply do</h2>
+<p>Tracking is not there to grade you. It serves three precise purposes, and if your system delivers none of them it is not worth the time it costs:</p>
+<ul>
+<li><strong>Making consistency visible.</strong> Memory is a poor judge: after an irregular week you remember either the failure or the exception. An objective record settles it.</li>
+<li><strong>Detecting bad calibration early.</strong> A habit kept 30 % of the time is not a motivation problem, it is a badly sized or badly placed habit. The number says so in three weeks, intuition takes three months.</li>
+<li><strong>Providing immediate feedback.</strong> The benefit of a habit arrives in months, ticking gives a signal today. That is what carries you across the gap.</li>
+</ul>
+
+<h2 id="indicateurs">The three indicators, and what each is worth</h2>
+
+<h3>The streak: motivating, but fragile</h3>
+<p>The number of consecutive days. It works remarkably well while it climbs, and that is precisely its flaw. A 40-day streak broken on a Tuesday produces, in a lot of people, a complete abandonment, because the indicator drops to zero while reality still stands at 40 days out of 41.</p>
+<p>Use it as encouragement, never as a judge. And if you are sensitive to it, adopt the rule that has proven itself: <strong>never miss twice in a row</strong>. It keeps the benefit of the streak without its cliff edge.</p>
+
+<h3>The completion rate: the central indicator</h3>
+<p>The percentage of times the habit was kept over a rolling period of four to twelve weeks. This is the one to put at the centre, for a simple reason: it tolerates missed days without erasing them. A habit at 85 % is excellent, at 60 % it is real but fragile, below 50 % it does not exist yet and needs an adjustment rather than extra effort.</p>
+<p>Its real strength is comparative: this month's rate against last month's tells you whether you are improving, which no cumulative counter can do.</p>
+
+<h3>The heatmap: the view that reveals patterns</h3>
+<p>One cell per day, coloured if the habit was kept, the representation popularised by the GitHub contribution graph. Its value is not aesthetic: it surfaces <strong>patterns</strong> that no percentage shows. Systematic gaps at weekends, a clean break every time you travel, a gradual decline after six weeks. Each of those points at a precise cause, and therefore at a possible correction.</p>
+<p>Over 26 weeks (six months, beyond which a habit is generally anchored), the heatmap tells a story you can read in three seconds.</p>
+
+<h2 id="pieges">The four traps of tracking</h2>
+<ol>
+<li><strong>Too many habits at once.</strong> This is by far the number one cause of failure. Every habit added lowers the probability of keeping all of them, because the cost is not the effort of each one but the number of daily decisions. Two or three, no more, until they no longer require thinking about.</li>
+<li><strong>Habits that are too big.</strong> "Exercise for an hour" fails where "put your shoes on and go outside" succeeds. Calibrate on your worst day, not your best: a habit has to stay doable on a day when everything is going wrong, otherwise it will not survive the first difficult week.</li>
+<li><strong>Tracking an outcome instead of an action.</strong> "Lose 4 kg" is not a habit, it is a goal, and it cannot be ticked daily. Track the action you control. The outcome belongs to <a href="/en/blog/methode-okr-exemples">OKRs</a>, with a different horizon and different indicators.</li>
+<li><strong>Confusing tracking with judgement.</strong> A largely empty grid is information about calibration, not a verdict on you. The day tracking becomes a source of guilt it stops being a tool, and that is the moment people stop ticking.</li>
+</ol>
+
+<h2 id="demarrer">Starting a tracking practice that lasts</h2>
+<ol>
+<li><strong>Choose two habits</strong>, one of which you almost have already. The quick success of the first carries the second.</li>
+<li><strong>Attach each one to an existing trigger</strong>: after the morning coffee, when you close the laptop, before dinner. A fixed time of day works less well than chaining onto something you already do.</li>
+<li><strong>Tick at the moment itself</strong>, not in the evening from memory. Reconstructed tracking is wrong, and wrong tracking is no longer useful for deciding.</li>
+<li><strong>Judge nothing before three weeks.</strong> The first two measure the installation, not the habit.</li>
+<li><strong>In week four, look at the completion rate</strong> and adjust one single thing: the size of the habit, or its moment. Never both, or you will not know what worked.</li>
+</ol>
+<p>On how long it takes before a habit becomes automatic, the article on <a href="/en/blog/combien-de-temps-prendre-habitude">how long it takes to build a habit</a> sets out what the research actually says, and why the 21-day figure is a stubborn myth. On an academic rhythm, where the calendar imposes its own peaks, the <a href="/en/for-students">Cosmo for students</a> page shows the same mechanics applied to revision.</p>
+
+<h2 id="pratique">Habit tracking in Cosmo</h2>
+<p>In <a href="/en/">Cosmo</a>, a habit is created with its frequency (daily, weekly or specific days) and ticked in one gesture. The three indicators in this article come as standard: a 26-week heatmap, the streak and the completion rate over the chosen period, with the rate given prominence rather than the streak, for exactly the reason described above.</p>
+<p>The rest comes from the integration: your habits appear on the same <a href="/en/blog/tableau-de-bord-productivite">dashboard</a> as your tasks for the day and your goals, which avoids the extra tracking app that everybody forgets to open after a month. <a href="/en/signup">It is free</a>, and the demo opens with no sign-up, with 100 habits and several months of history so you can see what these curves look like once filled in.</p>
+
+<h2 id="faq">Frequently asked questions</h2>
+<h3>Should you track habits on paper or in an app?</h3>
+<p>Paper is enough for two or three habits and has the advantage of being immediate. An app becomes clearly better as soon as you want to compare periods or spot patterns, and computing a completion rate by hand is exactly the kind of chore that makes people abandon tracking.</p>
+<h3>What do you do after a long interruption?</h3>
+<p>Restart at a reduced version of the habit, not the one from before. Going straight back to the original level after three weeks off almost always fails, and the failure wrongly confirms that you "cannot do it".</p>
+<h3>When can you stop tracking a habit?</h3>
+<p>When forgetting it feels uncomfortable, which is the sign that the behaviour has become automatic. You can then drop it from tracking and free the slot for the next one.</p>
+`,
+    },
   },
 };
