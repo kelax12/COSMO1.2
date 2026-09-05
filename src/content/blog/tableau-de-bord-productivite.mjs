@@ -85,5 +85,71 @@ export const article = {
 <p>Ne rien optimiser. C'est le signe d'une surcharge, pas d'un défaut de méthode : retirez des engagements jusqu'à ce que la semaine à venir tienne dans les heures disponibles, puis reprenez le pilotage.</p>
 `,
     },
+    en: {
+      title: "A productivity dashboard: what to put on it (and what to take off)",
+      metaTitle: "Productivity dashboard: the 6 indicators worth having",
+      description: "What should a personal productivity dashboard show? The 6 indicators that make you act, the ones that are useless, and how to build it.",
+      readingMinutes: 8,
+      faq: [
+        ["Which indicators belong on a productivity dashboard?", "Six are enough: tasks completed over the period, habit completion rate, time split by category, goal progress, the load of the week ahead, and the planned-to-done ratio. Beyond that you look without acting."],
+        ["How often should you look at your dashboard?", "Once a week for the review, plus a ten-second daily glance at the day's load. Checking it continuously changes no decision and costs attention."],
+        ["Should a personal dashboard look like a company dashboard?", "No. A company dashboard exists to report, a personal dashboard exists to decide. It should fit on one screen and show only what you can act on this week."],
+      ],
+      html: `
+<p class="lead">A productivity dashboard is a tempting promise: your life on one screen. In practice, most of the ones people build end up as decoration. Pretty, consulted for three weeks, then ignored. The reason is almost always the same: they show what is easy to measure rather than what triggers a decision. Here is what deserves a place, what to take off, and how to build one without spending a weekend on it.</p>
+
+<h2 id="critere">The only criterion that counts: does it change a decision?</h2>
+<p>Before adding an indicator, ask it this question: <strong>if this number doubles or collapses, what do I do differently on Monday?</strong> If the answer is "nothing", the indicator does not belong. It is interesting, not useful, and the difference between the two is exactly what separates a living dashboard from an abandoned one.</p>
+<p>That filter removes most of the metrics you find in tools straight away: total tasks created since forever, cumulative time over the year, badges, composite scores. They flatter or they shame, they steer nothing.</p>
+
+<h2 id="indicateurs">The 6 indicators that make you act</h2>
+
+<h3>1. Tasks completed over the period</h3>
+<p>Not the historical total: the volume of the past week, compared with the ones before it. This is your real throughput, and it serves one precise purpose, calibrating what you commit to next week. Someone who finishes twelve tasks a week and plans thirty is organising their own disappointment, every Monday.</p>
+
+<h3>2. Habit completion rate</h3>
+<p>The percentage of times you kept your routines over the period. Below 50 %, the habit is badly calibrated: too ambitious, badly placed in the day, or not wanted enough. That is a signal to adjust, not a reason for guilt, and it is far better seen in week 3 than in month 4. The <a href="/en/blog/combien-de-temps-prendre-habitude">real time it takes for a habit to stick</a> makes this tracking indispensable, and the article on <a href="/en/blog/suivi-des-habitudes">habit tracking</a> sets out which of the three indicators deserves first place.</p>
+
+<h3>3. Time split by category</h3>
+<p>The indicator that surprises people the most, consistently. You believe you spend your days producing, and the split shows that admin and meetings take half of it. It is the only figure that allows an honest conversation with yourself about workload, and, for a freelancer, the basis for better pricing.</p>
+
+<h3>4. Goal progress</h3>
+<p>If you work with <a href="/en/blog/methode-okr-exemples">OKRs</a>, this is the progress of each key result. Otherwise a simple estimate per goal. What matters is the <strong>trajectory</strong>: halfway through a quarter, a goal at 20 % is not "behind", it is being silently abandoned. Seeing that early leaves two options, accelerate or give up explicitly. Both are better than drift.</p>
+
+<h3>5. The load of the week ahead</h3>
+<p>The hours already committed in the calendar against the hours genuinely available. This is the only forward-looking indicator, and therefore the only one that prevents a problem instead of recording it. A week with 45 hours committed against 35 available is not solved with more discipline: it is solved by removing something, before it starts. For a <a href="/en/for-managers">manager</a> it is the same indicator applied to the team: load gets read before it is endured, never after.</p>
+
+<h3>6. The planned-to-done ratio</h3>
+<p>Of the slots you had blocked, how many did you keep? This ratio measures the quality of your planning, not your worth. Persistently below 60 %, it says your blocks are too long, too optimistic, or placed at times when you are not actually available. It is the natural complement to <a href="/en/blog/time-blocking-guide">time-blocking</a>.</p>
+
+<h2 id="a-retirer">What to take off</h2>
+<ul>
+<li><strong>Cumulative counters.</strong> "1,847 tasks completed" steers nothing. A running total never goes down, so it can never raise an alarm.</li>
+<li><strong>Composite scores.</strong> A "productivity score out of 100" mixes things that are not comparable: when it drops, you do not know what to do. Prefer five readable numbers to one opaque index.</li>
+<li><strong>Comparisons with other people.</strong> Their constraints are not yours. The only useful point of comparison is you, a month ago.</li>
+<li><strong>Series that are too long.</strong> A three-year chart flattens the recent variations, the ones you can still act on. Twelve weeks is almost always enough.</li>
+</ul>
+
+<h2 id="rythme">How often to look</h2>
+<p>A dashboard consulted continuously becomes a news feed: it occupies attention without producing a decision. Two appointments are enough.</p>
+<ol>
+<li><strong>Ten seconds in the morning</strong> on the day's load and the habits to tick. No analysis, just framing.</li>
+<li><strong>Fifteen minutes at the end of the week</strong> for the review: real throughput, time per category, goal progress, and a single adjustment decision for the week ahead. A single one, because that is what makes the review sustainable.</li>
+</ol>
+
+<h2 id="construire">Building it without spending a weekend</h2>
+<p>Plenty of people build their dashboard in a spreadsheet. It works, and it is an excellent exercise for clarifying what you want to track, but manual entry is a debt: after six weeks the data is out of date, and a stale dashboard is worse than no dashboard, because it gives false confidence.</p>
+<p>The practical rule: <strong>only track by hand what no tool can compute on its own.</strong> Everything that follows from your tasks, your habits or your calendar should fill itself in, otherwise you will end up stopping.</p>
+<p>That is precisely what <a href="/en/">Cosmo</a> does: the dashboard shows the day's progress, the habits to tick, the next events and the curve of key results achieved, and the Statistics page gives time invested per category and how it evolves. The first five indicators in this article are readable there with no extra data entry, they fall out of normal use of the app. <a href="/en/signup">It is free</a>, and the demo opens with no sign-up and 12 months of data, so you can see what the dashboard looks like once it is full.</p>
+
+<h2 id="faq">Frequently asked questions</h2>
+<h3>How many indicators at most?</h3>
+<p>Six, seven if truly necessary. Beyond that you stop reading and start skimming. A dashboard that does not fit on one screen has already failed.</p>
+<h3>Should you track your time to the minute?</h3>
+<p>No. A split by category in half-hour blocks is more than enough to reveal the imbalances. Minute-level tracking costs more attention than it saves.</p>
+<h3>What if all my indicators are red?</h3>
+<p>Optimise nothing. That is the sign of overload, not of a flawed method: remove commitments until the week ahead fits in the hours available, then go back to steering.</p>
+`,
+    },
   },
 };
