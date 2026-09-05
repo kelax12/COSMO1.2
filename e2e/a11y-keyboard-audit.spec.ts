@@ -273,3 +273,136 @@ test('MESURE — /agenda FullCalendar au clavier', async ({ demoPage: page }) =>
   }
   console.log('[a11y-kbd] Agenda marche clavier', JSON.stringify({ reachedEvent, steps: walk.length, walk: walk.slice(0, 30) }));
 });
+
+// ═══════════════════════════════════════════════════════════════════
+// C-54 · liens d'évitement + chemin clavier de création (/agenda)
+//
+// Ces trois tests sont ASSERTIONNÉS, pas imprimés : ils portent la décision
+// prise le 2026-09-04 (cf. docs/ACCESSIBILITY.md § « C-54 tranché »), à savoir
+// que le motif grille de FullCalendar n'est PAS adopté et que le bouton
+// « Nouveau » est le chemin clavier de la création. Une décision qui n'est
+// gardée par rien redevient un oubli à la première refonte.
+//
+// Le mode d'échec qu'ils visent est SILENCIEUX : un lien d'évitement dont la
+// cible a perdu son `tabIndex={-1}` fait défiler la page sans déplacer le
+// focus. On vérifie donc `document.activeElement`, jamais le défilement.
+// ═══════════════════════════════════════════════════════════════════
+
+/** Identité de l'élément focalisé : id, rôle implicite, nom accessible. */
+async function focusedIdentity(page: Page) {
+  return page.evaluate(() => {
+    const el = document.activeElement as HTMLElement | null;
+    if (!el) return { id: '', tag: '', name: '' };
+    return {
+      id: el.id,
+      tag: el.tagName.toLowerCase(),
+      name: (el.getAttribute('aria-label') || el.textContent || '').trim().slice(0, 40),
+    };
+  });
+}
+
+test('GARDE — /agenda : les deux liens d\'évitement déplacent le focus', async ({ demoPage: page }) => {
+  await navTo(page, /agenda/i, /\/agenda/);
+  await page.waitForLoadState('networkidle');
+  await page.locator('.fc').first().waitFor({ state: 'attached', timeout: 30_000 });
+  await page.waitForTimeout(1_000);
+
+  // 1. Premier arrêt de tabulation de la page = le lien d'évitement global.
+  //
+  //    🔴 Il faut repartir d'un CHARGEMENT, pas d'un simple `body.press('Tab')`.
+  //    `navTo` a cliqué le lien « Agenda » de la barre latérale : Chromium garde
+  //    ce lien comme point de départ de la navigation séquentielle, et le Tab
+  //    suivant reprend au MILIEU de la nav (on tombait sur « OKR »). Un `blur()`
+  //    ne suffit pas, le point de départ survit au relâchement du focus.
+  //    C'est exactement ce biais qui rendait les « 38 tabulations » du
+  //    2026-09-03 optimistes : elles étaient comptées depuis ce lien, donc plus
+  //    bas que le haut de page réel.
+  await page.reload();
+  await page.waitForLoadState('networkidle');
+  await page.locator('.fc').first().waitFor({ state: 'attached', timeout: 30_000 });
+  await page.waitForTimeout(1_000);
+  await page.keyboard.press('Tab');
+  const first = await focusedIdentity(page);
+  expect(first.tag, `premier arrêt de tabulation: ${JSON.stringify(first)}`).toBe('a');
+  expect(first.name).toMatch(/contenu principal/i);
+
+  // 2. Entrée pose le focus SUR le <main>, pas seulement le défilement.
+  await page.keyboard.press('Enter');
+  expect((await focusedIdentity(page)).id).toBe('main-content');
+
+  // 3. Le premier arrêt À L'INTÉRIEUR du main est le second lien d'évitement,
+  //    celui qui saute le panneau des tâches.
+  await page.keyboard.press('Tab');
+  const second = await focusedIdentity(page);
+  expect(second.name, `premier arrêt dans le main: ${JSON.stringify(second)}`).toMatch(/calendrier/i);
+
+  // 4. Il pose le focus sur le conteneur du calendrier DESKTOP.
+  await page.keyboard.press('Enter');
+  expect((await focusedIdentity(page)).id).toBe('agenda-calendar');
+
+  // 5. Et de là, le premier événement est à quelques tabulations, contre 38
+  //    avant correctif (finding C-54).
+  let steps = 0;
+  let reached = false;
+  for (; steps < 10 && !reached; steps++) {
+    await page.keyboard.press('Tab');
+    reached = await page.evaluate(() => !!(document.activeElement as HTMLElement)?.closest('.fc-event'));
+  }
+  console.log('[a11y-kbd] C-54 tabulations calendrier → 1er événement', JSON.stringify({ reached, steps }));
+  expect(reached, `premier événement non atteint en ${steps} tabulations depuis le calendrier`).toBe(true);
+});
+
+test('GARDE — /agenda : le bouton « Nouveau » est atteignable au clavier et ouvre la saisie', async ({ demoPage: page }) => {
+  await navTo(page, /agenda/i, /\/agenda/);
+  await page.waitForLoadState('networkidle');
+  await page.locator('.fc').first().waitFor({ state: 'attached', timeout: 30_000 });
+  await page.waitForTimeout(1_000);
+
+  // On part du calendrier et on REMONTE l'ordre de tabulation : le bouton de
+  // création le précède dans le DOM. Preuve d'atteignabilité au clavier, pas
+  // un `focus()` programmatique qui prouverait seulement que l'élément existe.
+  await page.evaluate(() => document.getElementById('agenda-calendar')?.focus());
+  let found = false;
+  const walk: string[] = [];
+  for (let i = 0; i < 20 && !found; i++) {
+    await page.keyboard.press('Shift+Tab');
+    const id = await focusedIdentity(page);
+    walk.push(id.name);
+    found = /^nouveau$/i.test(id.name);
+  }
+  expect(found, `bouton « Nouveau » non atteint en remontant: ${JSON.stringify(walk)}`).toBe(true);
+
+  // Entrée l'active. La saisie offre un jour ET une heure, tous deux
+  // atteignables en continuant simplement à tabuler : c'est ce qui rend la
+  // décision « le bouton Nouveau est le chemin clavier » tenable.
+  //
+  // ⚠️ Le focus n'ENTRE PAS dans la modale à l'ouverture (finding C-53, encore
+  // ouvert) : il reste sur le bouton, et la modale se rejoint en tabulant à
+  // travers les événements du calendrier qui la précèdent dans le DOM. Mesuré
+  // le 2026-09-04 : 4 tabulations jusqu'au bouton « Fermer » de la modale,
+  // 7 jusqu'au premier champ d'heure. La borne de 12 laisse la marge d'un
+  // jeu de démo plus fourni sans laisser passer une régression d'ordre.
+  await page.keyboard.press('Enter');
+  await page.waitForTimeout(500);
+  expect(
+    await page.locator('input[type="time"]:visible').count(),
+    "la saisie ouverte ne propose aucun champ d'heure visible",
+  ).toBeGreaterThan(0);
+
+  const fieldWalk: string[] = [];
+  let onTimeField = false;
+  for (let i = 0; i < 12 && !onTimeField; i++) {
+    await page.keyboard.press('Tab');
+    const info = await page.evaluate(() => {
+      const el = document.activeElement as HTMLElement | null;
+      return {
+        isTime: el?.getAttribute('type') === 'time',
+        name: `${el?.tagName.toLowerCase()}[${(el?.getAttribute('aria-label') || el?.textContent || el?.getAttribute('type') || '').trim().slice(0, 25)}]`,
+      };
+    });
+    fieldWalk.push(info.name);
+    onTimeField = info.isTime;
+  }
+  console.log('[a11y-kbd] C-54 chemin clavier de création', JSON.stringify({ tabs: fieldWalk.length, fieldWalk }));
+  expect(onTimeField, `aucun champ d'heure atteint en tabulant depuis « Nouveau »: ${JSON.stringify(fieldWalk)}`).toBe(true);
+});

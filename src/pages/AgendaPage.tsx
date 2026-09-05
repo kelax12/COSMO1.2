@@ -46,8 +46,17 @@ import QuickEventCard from './agenda/QuickEventCard';
 import { useAgendaEventDrag } from './agenda/useAgendaEventDrag';
 import { findSourceEvent } from './agenda/find-event';
 import PageErrorState from '@/components/PageErrorState';
+import SkipLink from '@/components/SkipLink';
 import { deadlineDayKey } from '@/lib/deadline';
 import { useAgendaEventActions } from './agenda/useAgendaEventActions';
+
+/**
+ * Cible du lien d'évitement du panneau des tâches. Portée par le conteneur du
+ * calendrier DESKTOP uniquement : les deux calendriers coexistent dans le DOM
+ * sur mobile (le desktop y est masqué en CSS), et deux `id` identiques
+ * rendraient le saut indéterminé.
+ */
+const AGENDA_CALENDAR_ID = 'agenda-calendar';
 
 // ── Page principale ──────────────────────────────────────────────────────────
 const AgendaPage: React.FC = () => {
@@ -516,6 +525,21 @@ const AgendaPage: React.FC = () => {
       className="h-full flex overflow-hidden"
       style={{ backgroundColor: 'rgb(var(--color-background))' }}
     >
+      {/* Second lien d'évitement (WCAG 2.4.1). Celui de `Layout` saute la barre
+          latérale de l'APPLICATION ; celui-ci saute le panneau des tâches, ses
+          filtres et ses onze boutons « Options de la tâche » tous nommés
+          pareil, qui séparaient le haut de page du premier événement (finding
+          C-54 : 38 tabulations mesurées). Desktop seulement : sur mobile le
+          panneau est un calque, il se ferme par Échap et ne s'interpose pas
+          dans l'ordre de tabulation quand il est fermé. */}
+      {showTaskSidebar && (
+        <SkipLink
+          targetId={AGENDA_CALENDAR_ID}
+          label={t('nav.skipToCalendar')}
+          className="hidden md:block"
+        />
+      )}
+
       {/* Task Sidebar & Backdrop */}
       <AnimatePresence mode="wait">
         {showTaskSidebar && (
@@ -662,7 +686,9 @@ const AgendaPage: React.FC = () => {
           initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.3 }}
           className="hidden md:flex flex-1 p-2 lg:p-6 min-w-0 overflow-hidden"
         >
-          <div className="rounded-xl shadow-lg border h-full w-full overflow-hidden"
+          <div className="rounded-xl shadow-lg border h-full w-full overflow-hidden focus:outline-none"
+            id={AGENDA_CALENDAR_ID}
+            tabIndex={-1}
             data-tutorial-id="agenda-calendar-grid"
             style={{ backgroundColor: 'rgb(var(--calendar-bg))', borderColor: 'rgb(var(--calendar-border))' }}>
             <div className="p-2 lg:p-6 h-full w-full overflow-hidden">

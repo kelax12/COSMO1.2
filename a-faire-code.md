@@ -106,7 +106,7 @@ quand ». Une décision écrite ici fait foi contre une piste écrite dans l'ite
 |---|---|---|
 | **C-03** | ❄️ **Geler les clés de `habits.completions` en date machine** | Migrer supposerait de savoir dans quel fuseau était chaque personne chaque jour, ce que la base ne sait pas, et décalerait des séries que les gens ont construites. À écrire dans `CLAUDE.md` et `docs/ARCHITECTURE.md` |
 | **C-09** | ❄️ **Geler le cliquet des gros fichiers** | Le budget ne bouge plus, donc rien n'empire, et un fichier se découpe quand on a de toute façon à le modifier. Fin des coupes à la ligne près que la garde provoquait |
-| **C-54** | ❄️ **Le bouton « Nouveau » EST le chemin clavier de l'agenda** | On ajoute le lien d'évitement qui manque (38 tabulations aujourd'hui) et la décision part dans `ACCESSIBILITY.md`. Le motif grille de FullCalendar n'est pas adopté |
+| **C-54** | ❄️ **Le bouton « Nouveau » EST le chemin clavier de l'agenda** | ✅ **Fait le 2026-09-04.** Deux liens d'évitement posés (global + `/agenda`), décision écrite dans `ACCESSIBILITY.md`, deux gardes assertionnées. Le motif grille de FullCalendar n'est pas adopté |
 
 ### Comment corriger, quand plusieurs voies existaient
 
@@ -1796,7 +1796,7 @@ il dépend de la remontée d'un évènement React depuis l'élément focalisé. 
   `EventModal`, `HabitModal` et les feuilles mobiles, et le fichier de mesure passe de
   `console.log` à `expect`.
 
-### C-54 · `/agenda` : les jours du calendrier sont hors d'atteinte au clavier · **P2 · M**
+### C-54 · ~~`/agenda` : les jours du calendrier sont hors d'atteinte au clavier~~ · **P2 · M** · ✅ tranché le 2026-09-04
 
 Premier audit du pattern ARIA de FullCalendar, mesuré sur `/agenda` en démo :
 
@@ -1815,6 +1815,33 @@ Premier audit du pattern ARIA de FullCalendar, mesuré sur `/agenda` en démo :
 - **Fini quand** : un lien d'évitement existe vers le contenu principal, et soit les créneaux
   vides sont atteignables au clavier, soit la décision « on garde, le bouton Nouveau est le chemin
   clavier » est écrite dans `ACCESSIBILITY.md`.
+
+**Rendu le 2026-09-04** : le motif grille n'est **pas** adopté, le bouton « Nouveau » est le chemin
+clavier, et la décision est écrite dans
+[`docs/ACCESSIBILITY.md`](./docs/ACCESSIBILITY.md) § « C-54 tranché ». Livré avec :
+
+- **Deux** liens d'évitement (`src/components/SkipLink.tsx`) : un global dans `Layout`, qui saute
+  la barre latérale de l'application sur toutes les routes protégées ; un second sur `/agenda`,
+  monté seulement quand le panneau des tâches est ouvert, qui saute ses onze boutons homonymes.
+- Mesuré après correctif : 1 tabulation jusqu'au `<main>`, 1 de plus jusqu'au calendrier, 1 de plus
+  jusqu'au premier événement. Le bouton « Nouveau » est à 4 tabulations de sa modale et à 7 du
+  premier champ d'heure.
+- 🔴 **Le « 38 tabulations » de ce finding était compté trop bas.** La marche partait de
+  `body.press('Tab')` avec le focus encore posé sur le lien « Agenda » cliqué par la fixture, et
+  Chromium garde ce lien comme point de départ de la navigation séquentielle : elle repartait du
+  MILIEU de la navigation. Le trajet réel depuis le haut de page était donc plus long que 38,
+  jamais plus court. Un `blur()` n'y change rien, le point de départ lui survit : la garde repart
+  d'un rechargement.
+- **Deux gardes assertionnées** dans `e2e/a11y-keyboard-audit.spec.ts`. La première vérifie que
+  chaque lien déplace `document.activeElement`, pas qu'il fait défiler : c'est le mode d'échec
+  silencieux d'un lien d'évitement dont la cible a perdu son `tabIndex={-1}`. La seconde garde la
+  DÉCISION elle-même, en remontant au clavier jusqu'au bouton « Nouveau » puis en redescendant
+  jusqu'à un champ d'heure.
+- ⚠️ **Deux choses restent ouvertes, et ne sont pas refermées par cet item** : la modale de saisie
+  n'accueille pas le focus et Échap ne la ferme pas (**C-53**, qui vaut pour les 58 modales) ; et la
+  `<table>` de FullCalendar garde son `role="grid"` sans descendant focalisable géré, arbitrage
+  assumé dans `ACCESSIBILITY.md` plutôt que maquillé par un patch de rôle après chaque rendu.
+
 
 ### C-55 · Trois surfaces que A-3 n'a PAS réussi à mesurer · **P3 · S**
 

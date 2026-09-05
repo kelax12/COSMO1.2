@@ -45,6 +45,7 @@ import GlobalNavShortcuts from './GlobalNavShortcuts';
 import InviteOrJoinModal from './organization/InviteOrJoinModal';
 import DeadlineReminder from './DeadlineReminder';
 import SyncStatusIndicator from './SyncStatusIndicator';
+import SkipLink, { MAIN_CONTENT_ID } from './SkipLink';
 import { isDueToday } from '@/lib/deadline';
 import { readJson, safeSetItem } from '@/lib/safe-json';
 
@@ -465,6 +466,8 @@ const NavItems = () =>
         className="flex flex-col h-[100dvh] overflow-hidden"
         style={{ backgroundColor: 'rgb(var(--color-background))' }}
       >
+        {/* Lien d'évitement (WCAG 2.4.1) — premier arrêt de tabulation. */}
+        <SkipLink targetId={MAIN_CONTENT_ID} label={t('nav.skipToContent')} />
         {/* Bannière conversion démo → compte (#9) */}
         <DemoConversionBanner />
         {/* État sync mobile (#37) — visible uniquement hors ligne / en cours */}
@@ -472,7 +475,9 @@ const NavItems = () =>
           <SyncStatusIndicator hideWhenSynced />
         </div>
         <main
-          className="flex-1 overflow-auto pb-20"
+          id={MAIN_CONTENT_ID}
+          tabIndex={-1}
+          className="flex-1 overflow-auto pb-20 focus:outline-none"
           style={{ backgroundColor: 'rgb(var(--color-background))' }}
         >
           <Outlet />
@@ -513,6 +518,10 @@ const NavItems = () =>
 
   return (
     <div className="flex h-screen overflow-hidden" style={{ backgroundColor: 'rgb(var(--color-background))' }}>
+      {/* Lien d'évitement (WCAG 2.4.1) — premier arrêt de tabulation, il saute
+          la barre latérale entière (logo, thème, recherche, dix entrées de
+          nav, état de sync, signalement de bug). */}
+      <SkipLink targetId={MAIN_CONTENT_ID} label={t('nav.skipToContent')} />
       {/* Sidebar */}
       <aside
         className={`${isCollapsed ? 'w-20' : 'w-[205px]'} relative transition-all duration-300 ease-in-out nav-container border-r flex flex-col group`}>
@@ -577,7 +586,9 @@ const NavItems = () =>
         {/* Bannière conversion démo → compte (#9) */}
         <DemoConversionBanner />
         <main
-          className="flex-1 overflow-auto relative"
+          id={MAIN_CONTENT_ID}
+          tabIndex={-1}
+          className="flex-1 overflow-auto relative focus:outline-none"
           style={{ backgroundColor: 'rgb(var(--color-background))' }}>
 
           <Outlet />
