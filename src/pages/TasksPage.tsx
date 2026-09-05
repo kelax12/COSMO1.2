@@ -46,6 +46,7 @@ import { filterTasksForPage, VIRTUAL_TODAY_ID } from './tasks/task-page-filter';
 import TaskListsBar from './tasks/TaskListsBar';
 import { colorOptions, resolveListColor } from './tasks/list-colors';
 import TasksHeader from './tasks/TasksHeader';
+import { isTaskOverdue } from '@/components/task-table/helpers';
 import TasksErrorState from './tasks/TasksErrorState';
 import { useChipLongPress } from './tasks/useChipLongPress';
 import { useT } from '@/i18n/useT';
@@ -329,6 +330,17 @@ const TasksPage: React.FC = () => {
     [tasks, searchTerm, selectedCategories, priorityRange, selectedListId, selectingTasksForListId, lists]
   );
 
+  // Résumé de l'en-tête mobile (maquette 04). Il porte sur la vue COURANTE
+  // (`filteredTasks`), pas sur la base entière : un compteur qui ignore le
+  // filtre actif contredirait la liste affichée juste en dessous.
+  const headerCounts = useMemo(() => {
+    const open = filteredTasks.filter(task => !task.completed);
+    return {
+      openCount: open.length,
+      overdueCount: open.filter(task => isTaskOverdue(task.deadline, task.completed)).length,
+    };
+  }, [filteredTasks]);
+
   // Compteur de tâches par liste (calculé une fois, partagé entre toutes les
   // chips). Seules les tâches NON terminées comptent — le chiffre représente
   // le reste à faire de la liste, pas son volume total.
@@ -416,6 +428,8 @@ const TasksPage: React.FC = () => {
         <TasksHeader
           showDeadlineCalendar={showDeadlineCalendar}
           onToggleCalendar={() => setShowDeadlineCalendar(!showDeadlineCalendar)}
+          openCount={headerCounts.openCount}
+          overdueCount={headerCounts.overdueCount}
         />
 
         <AnimatePresence>

@@ -5,7 +5,10 @@
 // ═══════════════════════════════════════════════════════════════════
 import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence, useMotionValue, useTransform, animate } from "framer-motion";
-import { Bookmark, Calendar, MoreHorizontal, UserPlus, Copy, Trash2, CheckCircle2, X, Users, AlertTriangle, Hourglass, Pencil } from "lucide-react";
+import { Bookmark, Calendar, MoreHorizontal, UserPlus, Copy, Trash2, CheckCircle2, X, AlertTriangle, Hourglass, Pencil } from "lucide-react";
+import { OverdueQuickActions } from "./OverdueQuickActions";
+import { deadlineFromDayKey } from "@/lib/deadline";
+import { getTimezonePref } from "@/lib/timezone";
 import CollaboratorAvatars from "@/components/CollaboratorAvatars";
 import { useCategoryLookup } from "@/modules/categories";
 import { Task } from "@/modules/tasks";
@@ -65,6 +68,9 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
   const { t } = useT('tasks');
 
   const [actionsVisible, setActionsVisible] = useState(false);
+  // Maquette 16 — « Choisir » : le calendrier COSMO, jamais celui du
+  // navigateur (cf. CLAUDE.md, § Saisie de date).
+  const [rescheduleOpen, setRescheduleOpen] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -139,6 +145,20 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
 
   const isOverdue = isTaskOverdue(task.deadline, task.completed);
 
+  // Maquette 16 — « Le retard porte sa solution ». `OverdueQuickActions` rend
+  // une clé de jour ; la conversion en instant reste ici, sur le chemin
+  // d'écriture, et passe par `@/lib/deadline` comme les trois autres (R-01).
+  const rescheduleTo = (dayKey: string) => {
+    setRescheduleOpen(false);
+    onSnooze(task.id, deadlineFromDayKey(dayKey, getTimezonePref()));
+  };
+
+  // Deux initiales pour le rond de la maquette 15. `sharedBy` est un nom
+  // affichable, pas un UUID — il vient déjà résolu du repository.
+  const sharedByInitials = task.sharedBy
+    ? task.sharedBy.trim().split(/\s+/).map(part => part[0]).join('').slice(0, 2).toUpperCase()
+    : '';
+
   return (
     <motion.div
       ref={ref}
@@ -146,13 +166,18 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
       // la <table> desktop reste dans le DOM en `hidden md:block`, donc un
       // sélecteur `table tbody tr` résout une ligne INVISIBLE sur mobile.
       data-testid="task-card"
-      className="relative mb-1.5"
+      // ── Fin des cartes (arbitrage d'Axel, 2026-09-05) ──
+      // La disposition de chaque tâche est INCHANGÉE ; ce qui disparaît, c'est
+      // la carte qui l'entourait. Vingt cartes empilées, c'est vingt bords à
+      // lire avant d'atteindre vingt titres. Un filet d'un pixel sépare aussi
+      // bien et ne dessine rien.
+      className="relative border-b border-[rgb(var(--color-border))]"
       layout
       animate={isExiting ? { x: '100%', opacity: 0 } : { x: 0, opacity: 1 }}
       transition={{ type: 'spring', damping: 22, stiffness: 260 }}
     >
     {/* Swipe wrapper — isolates card + reveal layers from the action row below */}
-    <div className="relative overflow-hidden rounded-card">
+    <div className="relative overflow-hidden">
     {/* Reveal layers BEHIND the card — full size, full color */}
     {!addToListMode && (
       <>
@@ -161,7 +186,7 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
           style={{ opacity: greenOpacity }}
           animate={isValidating ? { scale: [1, 1.04, 1] } : {}}
           transition={{ duration: 0.35, ease: 'easeOut' }}
-          className="absolute inset-0 bg-green-500 pointer-events-none flex items-center justify-start pl-5 rounded-card"
+          className="absolute inset-0 bg-green-500 pointer-events-none flex items-center justify-start pl-5"
         >
           <motion.div
             style={{ opacity: greenIconOpacity }}
@@ -174,7 +199,7 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
         {/* Left swipe → gray bg behind */}
         <motion.div
           style={{ opacity: grayOpacity }}
-          className="absolute inset-0 bg-slate-500 dark:bg-slate-600 pointer-events-none flex items-center justify-end pr-5 rounded-card"
+          className="absolute inset-0 bg-slate-500 dark:bg-slate-600 pointer-events-none flex items-center justify-end pr-5"
         >
           <motion.div
             style={{ opacity: grayIconOpacity }}
@@ -210,10 +235,11 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
       }}
       whileTap={addToListMode ? undefined : { scale: 0.98 }}
       transition={{ duration: 0.1 }}
-      // Pas de bordure au repos : sur un fond sombre, une bordure par ligne
-      // dessine une grille qui fatigue l'œil dans une liste dense. La séparation
-      // vient du contraste surface/fond et de l'espace entre les lignes.
-      className={`relative flex items-stretch gap-3 px-3 py-2.5 rounded-card transition-colors ${addToListMode ? 'cursor-default border' : 'cursor-pointer'} ${task.completed && !addToListMode ? 'opacity-50' : ''}`}
+      // Ni bordure ni arrondi : la séparation est le filet du parent.
+      // ⚠️ Le fond reste OPAQUE malgré la disparition de la carte — les calques
+      // vert et gris du swipe sont dessinés DERRIÈRE cette ligne. Un fond
+      // transparent les laisserait voir en permanence.
+      className={`relative flex items-stretch gap-3 px-3 py-2.5 transition-colors ${addToListMode ? 'cursor-default' : 'cursor-pointer'} ${task.completed && !addToListMode ? 'opacity-50' : ''}`}
       onClick={handleCardClick}
       onPointerDown={startLongPress}
       onPointerUp={cancelLongPress}
@@ -221,12 +247,9 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
       onContextMenu={(e) => { e.preventDefault(); }}
       style={{
         x,
-        backgroundColor: addToListMode
-          ? (selectedForListIds.includes(task.id) ? 'rgba(59, 130, 246, 0.1)' : 'rgb(var(--color-surface))')
-          : 'rgb(var(--color-surface))',
-        borderColor: addToListMode && selectedForListIds.includes(task.id)
-          ? '#3B82F6'
-          : 'rgb(var(--color-border))',
+        backgroundColor: addToListMode && selectedForListIds.includes(task.id)
+          ? 'rgba(59, 130, 246, 0.1)'
+          : 'rgb(var(--color-background))',
         minHeight: '60px',
         touchAction: 'pan-y',
       }}
@@ -300,17 +323,37 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
             Deux lignes suffisent : la liste virtualisée MESURE chaque carte
             (`virtualizer.measureElement` dans `list.tsx`), la hauteur variable
             est donc supportée. Ne pas revenir à `truncate` « pour la densité ». */}
-        <p className={`font-medium text-body leading-tight line-clamp-2 ${task.completed ? 'line-through' : ''}`} style={{ color: 'rgb(var(--color-text-primary))' }}>
-          {task.name}
-        </p>
+        {/* Maquette 16 — « Le retard porte sa solution » : la tâche en retard
+            est la SEULE à s'agrandir. Un cran d'échelle suffit à la faire
+            sortir de la liste sans la déguiser en bloc à part. */}
+        <div className="flex items-start gap-1.5">
+          <p
+            className={`flex-1 min-w-0 font-medium leading-tight line-clamp-2 ${
+              isOverdue ? 'text-headline' : 'text-body'
+            } ${task.completed ? 'line-through' : ''}`}
+            style={{ color: 'rgb(var(--color-text-primary))' }}
+          >
+            {task.name}
+          </p>
 
-        {/* Collaborateur — ligne dédiée sous le titre, ne concurrence plus la méta */}
-        {task.sharedBy && (
-          <span className="inline-flex items-center gap-1 text-caption font-medium text-[rgb(var(--color-accent))] truncate">
-            <Users size={12} aria-hidden="true" />
-            {t('card.receivedFrom', { name: task.sharedBy })}
-          </span>
-        )}
+          {/* Maquette 15 — « Le collaborateur en avatar, pas en texte ».
+              « Reçu de Jean Martin » prenait une ligne entière sous le titre,
+              sur toutes les tâches partagées. Le rond porte les initiales ; la
+              phrase complète reste le nom accessible, elle n'est pas perdue —
+              elle cesse juste d'occuper une ligne de liste. */}
+          {task.sharedBy && (
+            <span
+              className="mt-0.5 shrink-0 inline-flex size-4 items-center justify-center rounded-full bg-[rgb(var(--color-accent))]/15 text-caption font-bold leading-none text-[rgb(var(--color-accent))]"
+              title={t('card.receivedFrom', { name: task.sharedBy })}
+              aria-hidden="true"
+            >
+              {sharedByInitials}
+            </span>
+          )}
+          {task.sharedBy && (
+            <span className="sr-only">{t('card.receivedFrom', { name: task.sharedBy })}</span>
+          )}
+        </div>
         {!task.sharedBy && task.isCollaborative && (collaboratorsByTask.get(task.id)?.length ?? 0) > 0 && (
           <span className="inline-flex items-center gap-1.5">
             <CollaboratorAvatars
@@ -350,6 +393,15 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
             </>
           )}
         </div>
+
+        {isOverdue && !addToListMode && (
+          <OverdueQuickActions
+            deadline={task.deadline}
+            onReschedule={rescheduleTo}
+            open={rescheduleOpen}
+            onOpenChange={setRescheduleOpen}
+          />
+        )}
       </div>
 
       {/* Priority badge — échelle d'URGENCE (task-priority-1..5 : rouge→orange→

@@ -4,7 +4,13 @@
     "subtitle": "Manage your tasks efficiently",
     "calendar": "Calendar",
     "showCalendar": "Show the calendar",
-    "hideCalendar": "Hide the calendar"
+    "hideCalendar": "Hide the calendar",
+    "openCount_one": "{{count}} task to do",
+    "openCount_many": "{{count}} tasks to do",
+    "openCount_other": "{{count}} tasks to do",
+    "overdueCount_one": "{{count}} overdue",
+    "overdueCount_many": "{{count}} overdue",
+    "overdueCount_other": "{{count}} overdue"
   },
   "error": {
     "title": "Could not load your tasks",
@@ -169,7 +175,8 @@
     "schedule": "Schedule in the calendar",
     "delete": "Delete task",
     "removeFromList": "Remove from the list",
-    "receivedFrom": "Received from {{name}}"
+    "receivedFrom": "Received from {{name}}",
+    "overdueActions": "Get this task out of overdue"
   },
   "sort": {
     "label": "Sort by",
@@ -389,6 +396,8 @@
     "menu": "Postpone",
     "tomorrow": "Tomorrow",
     "weekend": "This weekend",
-    "nextWeek": "Next week"
+    "nextWeek": "Next week",
+    "today": "Today",
+    "chooseDate": "Pick a date"
   }
 }
