@@ -92,6 +92,7 @@
     "headingEdit": "Modifier la tâche",
     "headingEditShort": "Modifier",
     "deleteTask": "Supprimer la tâche",
-    "collaboratorPlaceholder": "Email ou nom…"
+    "collaboratorPlaceholder": "Email ou nom…",
+    "addCollaborator": "Ajouter"
   }
 }

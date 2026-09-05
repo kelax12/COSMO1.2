@@ -10,7 +10,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
 import { getDateLocale } from '@/i18n/format';
-import { Bookmark, Check, Loader2, Minus, Plus, Search, UserPlus, X } from 'lucide-react';
+import { Bookmark, Check, ChevronRight, Loader2, Minus, Plus, Search, UserPlus, X } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { useBottomSheet } from '@/hooks/use-bottom-sheet';
 import { useSheetMotion } from '@/components/mobile/mobile-motion';
@@ -19,6 +19,8 @@ import { useCreateCategory } from '@/modules/categories';
 import AddToListModal from '@/components/AddToListModal';
 import ShareLinkField from '@/components/ShareLinkField';
 import { SectionTitle, SectionCard, CellSeparator, Cell } from './primitives';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { isImageAvatar, isEmojiAvatar } from '@/lib/avatar';
 import { buildDatePresets } from '@/lib/date-presets';
 import SubtaskChecklist from './SubtaskChecklist';
 import TaskDependenciesSection from './TaskDependenciesSection';
@@ -79,6 +81,20 @@ export interface MobileBodyProps {
   /** Crée la tâche à la volée (création) pour générer le lien d'invitation. */
   onGenerateShareLink: () => Promise<string | null>;
 }
+
+/** Petit avatar rond (photo, emoji ou initiales) — devant un nom de
+ *  collaborateur/ami dans les listes de la feuille Collaborateurs. */
+const MiniAvatar: React.FC<{ name: string; avatar?: string }> = ({ name, avatar }) => {
+  const initials = name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+  return (
+    <Avatar className="size-7 shrink-0">
+      {isImageAvatar(avatar) ? <AvatarImage src={avatar} alt="" /> : null}
+      <AvatarFallback className="bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-secondary))] text-caption font-bold">
+        {isEmojiAvatar(avatar) ? <span className="text-xs">{avatar}</span> : initials}
+      </AvatarFallback>
+    </Avatar>
+  );
+};
 
 const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
   formData, handleInputChange, onSubtasksChange,
@@ -275,17 +291,24 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
                 <CellSeparator />
                 <div className="flex items-center justify-between px-4 min-h-11 gap-3">
                   <span className="text-[15px] text-[rgb(var(--color-text-primary))]">{t('fields.repeat')}</span>
-                  <select
-                    value={formData.recurrence}
-                    onChange={(e) => handleInputChange('recurrence', e.target.value)}
-                    aria-label={t('fields.recurrenceAria')}
-                    className="text-[15px] bg-transparent text-right text-blue-500 focus:outline-none"
-                  >
-                    <option value="none">{t('fields.recurrenceNever')}</option>
-                    <option value="daily">{t('fields.recurrenceDaily')}</option>
-                    <option value="weekly">{t('fields.recurrenceWeekly')}</option>
-                    <option value="monthly">{t('fields.recurrenceMonthly')}</option>
-                  </select>
+                  {/* `appearance-none` + bordure/fond retirés : Safari iOS
+                      dessine sinon sa capsule native autour d'un `<select>`,
+                      seul champ de cette carte à ne pas suivre le style des
+                      autres lignes (texte bleu aligné à droite + chevron). */}
+                  <span className="flex items-center gap-1.5 shrink-0 ml-2">
+                    <select
+                      value={formData.recurrence}
+                      onChange={(e) => handleInputChange('recurrence', e.target.value)}
+                      aria-label={t('fields.recurrenceAria')}
+                      className="appearance-none border-none bg-transparent text-[15px] text-right text-blue-500 focus:outline-none"
+                    >
+                      <option value="none">{t('fields.recurrenceNever')}</option>
+                      <option value="daily">{t('fields.recurrenceDaily')}</option>
+                      <option value="weekly">{t('fields.recurrenceWeekly')}</option>
+                      <option value="monthly">{t('fields.recurrenceMonthly')}</option>
+                    </select>
+                    <ChevronRight size={16} className="text-[rgb(var(--color-text-muted))] shrink-0" aria-hidden="true" />
+                  </span>
                 </div>
               </>
             )}
@@ -407,8 +430,14 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
             </div>
           </SectionCard>
 
-          {/* ── Section SOUS-TÂCHES (#12) — édition : persistance immédiate ;
-                création : contrôlé, incluses dans le payload createTask. ── */}
+          {/* ── Section SOUS-TÂCHES (#12) + DÉPENDANCES (mig. 132) ── Une
+                seule carte, comme sur desktop (DesktopDetailsStep) :
+                `TaskDependenciesSection` porte déjà son propre `border-t`
+                pour se séparer de ce qui précède — lui donner SA PROPRE
+                carte empilait deux `rounded-2xl` à espacement nul (le
+                conteneur parent est en `gap-0`), et les deux bordures
+                arrondies se heurtaient en un bug d'affichage visible à
+                l'écran (coins qui se chevauchent au lieu de s'espacer). ── */}
           {((!isCreating && taskId) || (isCreating && onSubtasksChange)) && (
             <>
               <SectionTitle>{t('sections.subtasks')}</SectionTitle>
@@ -419,20 +448,12 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
                   ) : (
                     <SubtaskChecklist hideLabel value={formData.subtasks ?? []} onChange={onSubtasksChange} />
                   )}
+                  {/* Dépendances (édition seulement : une arête référence deux
+                      tâches, la seconde n'existe pas encore en création). */}
+                  {!isCreating && taskId && <TaskDependenciesSection taskId={taskId} />}
                 </div>
               </SectionCard>
             </>
-          )}
-
-          {/* ── Section DÉPENDANCES (mig. 132) — édition seulement : une arête
-                référence deux tâches, la seconde n'existe pas encore tant
-                qu'on est en création. ── */}
-          {!isCreating && taskId && (
-            <SectionCard>
-              <div className="px-4 py-3">
-                <TaskDependenciesSection taskId={taskId} />
-              </div>
-            </SectionCard>
           )}
 
           {/* ── Section COLLABORATION ── */}
@@ -636,18 +657,27 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
               )}
               {isTaskOwner && (
                 <div className="px-4 pb-3 shrink-0">
-                  <div className="flex gap-2">
-                    <div className="relative flex-1">
+                  <div className="flex items-center gap-2">
+                    <div className="relative flex-1 max-w-[calc(100%-44px)]">
                       <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[rgb(var(--color-text-muted))]" />
                       <input
                         type="text" value={emailInput}
                         onChange={(e) => setEmailInput(e.target.value)}
                         onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddEmail(); } }}
                         placeholder={t('form.collaboratorPlaceholder')}
-                        className="w-full pl-9 pr-3 py-2 text-[15px] bg-[rgb(var(--color-hover))] rounded-xl focus:outline-none text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-muted))]"
+                        className="w-full h-9 pl-9 pr-3 text-[15px] bg-[rgb(var(--color-hover))] rounded-xl focus:outline-none text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-muted))]"
                       />
                     </div>
-                    <button type="button" onClick={handleAddEmail} disabled={!emailInput.trim()} className="px-3 py-2 bg-[rgb(var(--color-accent-solid))] disabled:bg-blue-300 text-[rgb(var(--color-accent-solid-foreground))] rounded-xl">
+                    {/* `disabled:opacity-40` plutôt qu'un bleu Tailwind en
+                        dur (`bg-blue-300`) : ce dernier ignore le thème et
+                        rendait un carré bleu pâle décalé du reste de l'UI. */}
+                    <button
+                      type="button"
+                      onClick={handleAddEmail}
+                      disabled={!emailInput.trim()}
+                      aria-label={t('form.addCollaborator')}
+                      className="shrink-0 size-9 flex items-center justify-center bg-[rgb(var(--color-accent-solid))] disabled:opacity-40 text-[rgb(var(--color-accent-solid-foreground))] rounded-xl transition-opacity"
+                    >
                       <UserPlus size={16} />
                     </button>
                   </div>
@@ -664,8 +694,11 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
                     const isSent = isTaskOwner && !info.isPending && pendingShareIds.has(id);
                     return (
                       <div key={id} className="flex items-center justify-between py-1.5 gap-2">
-                        <span className="text-[14px] text-[rgb(var(--color-text-primary))] truncate flex-1">
-                          {info.name}{!isTaskOwner && id === ownerId ? t('mobile.owner') : ''}
+                        <span className="flex items-center gap-2 min-w-0 flex-1">
+                          <MiniAvatar name={info.name} avatar={info.avatar} />
+                          <span className="text-[14px] text-[rgb(var(--color-text-primary))] truncate">
+                            {info.name}{!isTaskOwner && id === ownerId ? t('mobile.owner') : ''}
+                          </span>
                         </span>
                         {isSent && (
                           <span className="shrink-0 inline-flex items-center px-1.5 py-0.5 rounded-full text-caption font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">{t('mobile.sent')}</span>
@@ -686,10 +719,13 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
                     return (
                       <button
                         key={friend.id} type="button" onClick={() => toggleCollaborator(cId)}
-                        className="w-full flex items-center justify-between py-2.5 border-b border-[rgb(var(--color-border))] last:border-0"
+                        className="w-full flex items-center justify-between gap-2 py-2.5 border-b border-[rgb(var(--color-border))] last:border-0"
                       >
-                        <span className="text-[15px] text-[rgb(var(--color-text-primary))]">{friend.name}</span>
-                        {isSelected ? <Check size={16} className="text-blue-500" /> : <Plus size={16} className="text-[rgb(var(--color-text-muted))]" />}
+                        <span className="flex items-center gap-2 min-w-0">
+                          <MiniAvatar name={friend.name} avatar={friend.avatar} />
+                          <span className="text-[15px] text-[rgb(var(--color-text-primary))] truncate">{friend.name}</span>
+                        </span>
+                        {isSelected ? <Check size={16} className="shrink-0 text-blue-500" /> : <Plus size={16} className="shrink-0 text-[rgb(var(--color-text-muted))]" />}
                       </button>
                     );
                   })}
