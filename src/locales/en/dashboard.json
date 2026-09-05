@@ -137,5 +137,10 @@
   "todayHabits": {
     "heading": "Today's habits",
     "loading": "Loading…"
+  },
+  "moments": {
+    "morning": "This morning",
+    "afternoon": "This afternoon",
+    "evening": "This evening"
   }
 }
