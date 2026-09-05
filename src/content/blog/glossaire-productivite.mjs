@@ -79,5 +79,65 @@ export const article = {
 <p>Tous ces concepts vivent au même endroit dans <a href="/">Cosmo</a> : les OKR avec progression automatique, le time-blocking par glisser-déposer, les priorités pour appliquer Eisenhower, et les habitudes avec heatmap et streaks. <a href="/signup">Gratuit</a>, démo instantanée sans inscription.</p>
 `,
     },
+    en: {
+      title: "A productivity glossary: 20 terms finally defined clearly",
+      metaTitle: "Productivity glossary: OKRs, time-blocking, deep work",
+      description: "OKRs, time-blocking, deep work, habit stacking, Parkinson's law and more. 20 productivity terms defined clearly, with what each one is actually good for.",
+      readingMinutes: 8,
+      html: `
+<p class="lead">Productivity culture loves its jargon. Here are the 20 terms you will run into everywhere, defined plainly and without mystique, each with the part actually worth remembering.</p>
+
+<h2 id="objectifs">Goals &amp; measurement</h2>
+<h3>OKR (Objectives &amp; Key Results)</h3>
+<p>A short-cycle goal system: one qualitative ambition, proven by 2 to 5 numeric results. Popularised by Intel, then Google. A healthy target is around 70 % attainment. → <a href="/en/blog/methode-okr-exemples">Full guide with 15 examples</a>.</p>
+<h3>Key result</h3>
+<p>The numeric proof of an objective: a starting value, a target value, a deadline. It measures an outcome ("5 interviews booked"), never an activity ("50 applications sent").</p>
+<h3>SMART goal</h3>
+<p>A drafting grid: Specific, Measurable, Achievable, Realistic, Time-bound. Useful for writing a goal down, not sufficient on its own for deciding what matters. → <a href="/en/blog/okr-vs-smart-vs-kpi">OKRs vs SMART vs KPIs</a>.</p>
+<h3>KPI (Key Performance Indicator)</h3>
+<p>A metric watched continuously to know the health of an activity. A thermometer, not a plan of action.</p>
+<h3>North star metric</h3>
+<p>The single metric meant to sum up the value a product delivers (nights booked, for Airbnb). A useful idea, as long as you do not change it every month.</p>
+
+<h2 id="temps">Managing time</h2>
+<h3>Time-blocking</h3>
+<p>Reserving calendar slots for your tasks instead of working as things come. The task becomes an appointment. → <a href="/en/blog/time-blocking-guide">Full guide</a>.</p>
+<h3>Time-boxing</h3>
+<p>Time-blocking with a hard stop: when the slot ends you stop, finished or not. The right tool against perfectionism and against tasks with no natural end.</p>
+<h3>Task batching</h3>
+<p>Grouping tasks of the same nature (email, invoices, calls) into one block to remove context switches.</p>
+<h3>Deep work</h3>
+<p>Cal Newport's term: fully concentrated work on a cognitively demanding task, without interruption. The scarcest and most productive resource in a working day.</p>
+<h3>Context switching</h3>
+<p>The cognitive cost of moving from one task to another. After an interruption it takes on average 23 minutes to get back to full concentration (Gloria Mark, UC Irvine).</p>
+<h3>The Pomodoro technique</h3>
+<p>Working in 25-minute intervals separated by short breaks. Effective for getting started when motivation is missing, less suited to real deep-work sessions, which it fragments.</p>
+<h3>Parkinson's law</h3>
+<p>"Work expands so as to fill the time available for its completion." The practical corollary: give a task less time and it compresses. That is the active ingredient in time-boxing.</p>
+
+<h2 id="priorisation">Prioritising</h2>
+<h3>The Eisenhower matrix</h3>
+<p>Sorting tasks along two axes (urgent, important) into 4 quadrants: do, schedule, delegate, delete. → <a href="/en/blog/matrice-eisenhower">Guide with examples</a>.</p>
+<h3>MIT (Most Important Task)</h3>
+<p>The task, or the two or three tasks, that would make the day a success if they were the only thing you got done. Chosen in the morning, before email.</p>
+<h3>Eat the frog</h3>
+<p>Do the most unpleasant task first, while willpower is at its highest. Loosely attributed to Mark Twain, popularised by Brian Tracy.</p>
+
+<h2 id="habitudes">Habits</h2>
+<h3>Streak</h3>
+<p>The number of consecutive days a habit has been kept. A powerful motivator, provided you know that one isolated miss ruins nothing. → <a href="/en/blog/combien-de-temps-prendre-habitude">How long does it take to build a habit?</a></p>
+<h3>Habit stacking</h3>
+<p>Attaching a new habit to an existing routine: "after [current habit], I do [new habit]". A contextual trigger beats an abstract time of day.</p>
+<h3>Habit heatmap</h3>
+<p>A calendar grid where each day kept colours a cell, in the spirit of the GitHub contribution graph. It makes consistency, and the gaps in it, visible at a glance.</p>
+<h3>The two-day rule</h3>
+<p>Never miss a habit two days in a row. It rests on the research: an isolated miss has no measurable effect, it is the repeated miss that kills the habit.</p>
+<h3>The 21-day rule (a myth)</h3>
+<p>The idea that a habit forms in 21 days is a misreading of an observation by Maxwell Maltz. The science (Lally, 2009): a median of 66 days, ranging from 18 to 254.</p>
+
+<h2 id="pratique">From glossary to practice</h2>
+<p>All of these concepts live in one place in <a href="/en/">Cosmo</a>: OKRs with progress computed for you, time-blocking by drag and drop, priorities to apply Eisenhower, and habits with heatmaps and streaks. <a href="/en/signup">Free</a>, with an instant demo and no sign-up.</p>
+`,
+    },
   },
 };

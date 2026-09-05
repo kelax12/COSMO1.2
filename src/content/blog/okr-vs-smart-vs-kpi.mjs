@@ -79,5 +79,65 @@ export const article = {
 <p>OKR sur 6-12 semaines, 2-3 objectifs, résultats clés simples. SMART sert de filtre de formulation.</p>
 `,
     },
+    en: {
+      title: "OKRs vs SMART goals vs KPIs: which one to use, and when",
+      metaTitle: "OKRs vs SMART vs KPIs: which method should you use?",
+      description: "OKRs, SMART goals and KPIs do not answer the same question. Concrete differences, a comparison table and a simple rule for knowing when to use each one.",
+      readingMinutes: 6,
+      faq: [
+        ["Can you use OKRs and KPIs at the same time?", "Yes, and it is the ideal setup: KPIs watch the health of the business continuously, OKRs concentrate a quarter's effort on what has to change. When a KPI degrades for long enough, it becomes a candidate for an OKR."],
+        ["Can a SMART goal serve as a key result?", "In practice a good key result looks a great deal like a SMART goal: specific, measurable, time-bound. What the OKR adds, and what an isolated SMART goal lacks, is the qualitative ambition that ties several measures together."],
+        ["Which method works for personal goals?", "OKRs adapt very well to personal use: a 6 to 12 week cycle, 2 or 3 objectives, key results that are simple to measure. SMART helps you word each key result properly."],
+      ],
+      html: `
+<p class="lead">Three acronyms, three promises to help you "reach your goals", and a lot of confusion. The reality is simpler: <strong>OKRs, SMART goals and KPIs do not answer the same question</strong>. SMART words a goal, a KPI watches a metric, OKRs organise a cycle of ambition. Once that distinction is clear, knowing which to use becomes obvious.</p>
+
+<h2 id="definitions">The three methods, one sentence each</h2>
+<ul>
+<li><strong>SMART</strong> is a <em>drafting grid</em>: a goal should be Specific, Measurable, Achievable, Realistic and Time-bound. SMART does not tell you what to aim at, it checks that what you are aiming at is properly written.</li>
+<li><strong>KPI</strong> (Key Performance Indicator) is a <em>monitoring instrument</em>: a metric followed continuously to know the health of an activity (monthly traffic, churn rate, average basket, the number on the scale).</li>
+<li><strong>OKR</strong> (Objectives &amp; Key Results) is a <em>cycle system</em>: a qualitative ambition (the objective) proven by 2 to 5 numeric measures (the key results), over a quarter, with a target attainment of around 70 %.</li>
+</ul>
+
+<h2 id="tableau">Side by side</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>Criterion</th><th>SMART</th><th>KPI</th><th>OKR</th></tr></thead>
+<tbody>
+<tr><td>What it is</td><td>A grid for writing ONE goal</td><td>A metric watched continuously</td><td>Ambition plus measures over a cycle</td></tr>
+<tr><td>Horizon</td><td>Variable, often long</td><td>Permanent</td><td>A quarter (6 to 12 weeks personally)</td></tr>
+<tr><td>Level of ambition</td><td>"Achievable" by definition</td><td>Neutral, it is a thermometer</td><td>Deliberately ambitious (70 % counts as success)</td></tr>
+<tr><td>Answers</td><td>"Is my goal well written?"</td><td>"How is the business doing?"</td><td>"What has to change this quarter, and how do we prove it?"</td></tr>
+<tr><td>Main risk</td><td>Wording the wrong goal beautifully</td><td>Watching without ever acting</td><td>Too many OKRs, so no priorities at all</td></tr>
+</tbody>
+</table></div>
+
+<h2 id="complementaires">Why treating them as rivals is a mistake</h2>
+<p>The three nest naturally:</p>
+<ol>
+<li><strong>Your KPIs run continuously</strong>: that is the dashboard. Most of the time you look at them and do nothing in particular, because nothing is wrong.</li>
+<li><strong>When a KPI has to move significantly</strong> (churn is climbing, traffic is flat, sleep is getting worse), it becomes the raw material of an <strong>OKR</strong>: a quarter of concentrated effort with numeric key results.</li>
+<li><strong>Each key result is worded the SMART way</strong>: specific, measurable, time-bound. SMART is the drafting tool, the OKR is the structure that gives it a direction and a rhythm.</li>
+</ol>
+<p>A worked example: your "monthly organic visits" KPI has been flat at 2,000 for six months. You turn it into a quarterly OKR. Objective: "make content our first acquisition channel". KR1: go from 2,000 to 8,000 visits a month. KR2: publish 12 articles. KR3: earn 15 backlinks. Each KR is SMART. At the end of the cycle the KPI goes back to being a plain monitoring indicator, at its new level.</p>
+
+<h2 id="quand">Which method, when? The simple rule</h2>
+<ul>
+<li><strong>You want to monitor</strong> → KPI. Define 3 to 7 health indicators, not forty.</li>
+<li><strong>You want to change something</strong> → OKR. Two to four objectives per cycle, no more. Borrow from our <a href="/en/blog/methode-okr-exemples">15 OKR examples</a> or start from the <a href="/en/blog/template-okr-gratuit">free template</a>.</li>
+<li><strong>You are writing any goal or key result</strong> → run it through the SMART filter before you commit to it.</li>
+</ul>
+
+<h2 id="cosmo">What that looks like in practice</h2>
+<p>In <a href="/en/">Cosmo</a> this articulation is built in: your <strong>OKRs</strong> carry the cycle (progress is recomputed every time a key result is updated), the <strong>statistics</strong> play the KPI role (time invested per module and per category, week after week), and your daily tasks connect to all of it through <a href="/en/blog/time-blocking-guide">time-blocking</a>. Inside an organisation, those same OKRs cascade by team and by department in the <a href="/en/for-companies">company workspace</a>. <a href="/en/signup">Free</a>, with a demo and no sign-up.</p>
+
+<h2 id="faq">Frequently asked questions</h2>
+<h3>Can you use OKRs and KPIs at the same time?</h3>
+<p>Yes, and it is the ideal setup. KPIs watch, OKRs concentrate effort where an indicator has to move.</p>
+<h3>Can a SMART goal serve as a key result?</h3>
+<p>A good key result is SMART by construction. The OKR adds the qualitative ambition that ties several measures together.</p>
+<h3>What about personal goals?</h3>
+<p>OKRs over 6 to 12 weeks, 2 or 3 objectives, key results that are simple to measure. SMART works as a wording filter.</p>
+`,
+    },
   },
 };

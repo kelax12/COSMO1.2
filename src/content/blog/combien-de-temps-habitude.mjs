@@ -78,5 +78,64 @@ export const article = {
 <p>Non, c'est le mythe le plus toxique du domaine. L'étude de Lally montre qu'un accroc isolé n'a pas d'effet mesurable. La seule règle : ne jamais rater deux fois de suite.</p>
 `,
     },
+    en: {
+      title: "How long does it really take to build a habit? (what the science says)",
+      metaTitle: "How long to build a habit? The real answer",
+      description: "21 days? 66 days? The real answer from the science is more nuanced, and far more useful. What the landmark study found, and how to actually use it.",
+      readingMinutes: 7,
+      faq: [
+        ["So is it 21, 30, 66 or 90 days to build a habit?", "A median of 66 days according to the landmark study (Lally, 2009), with a real range of 18 to 254 days depending on the habit and the person."],
+        ["How many habits should you start at once?", "Two or three at most. Every habit still forming consumes attention."],
+        ["If a streak breaks, is everything lost?", "No: an isolated miss has no measurable effect on habit formation. The rule is simply never to miss twice in a row."],
+      ],
+      html: `
+<p class="lead">"It takes 21 days to build a habit." You have read that number everywhere, and it is wrong. The research gives an answer that is both less marketable and far more useful: <strong>66 days on average, with enormous variation depending on the habit and the person, from 18 to 254 days</strong>. Understanding why changes how you go about it entirely, and above all it explains why you were never "bad at this": you just had the wrong number in your head.</p>
+
+<h2 id="mythe">Where does the 21-day myth come from?</h2>
+<p>From a misreading. In the 1960s, the cosmetic surgeon Maxwell Maltz observed that his patients took <em>"a minimum of about 21 days"</em> to get used to their new face. His book <em>Psycho-Cybernetics</em> sold millions of copies, the qualifier fell away along the road, and "a minimum of about 21 days" became "it takes 21 days". No study has ever validated that figure for habit formation.</p>
+
+<h2 id="etude">What the real study says: 18 to 254 days</h2>
+<p>The scientific reference is the study by <strong>Phillippa Lally</strong> (University College London, 2009), published in the <em>European Journal of Social Psychology</em>. 96 participants each chose a new daily habit (drinking a glass of water at lunch, running for 15 minutes, eating a piece of fruit) and reported every day how automatic the behaviour felt.</p>
+<p>The results:</p>
+<ul>
+<li><strong>a median of 66 days</strong> to reach the plateau of automaticity;</li>
+<li>a real range of <strong>18 to 254 days</strong> depending on the habit and the person;</li>
+<li>the more complex the habit, the longer it takes: drinking a glass of water becomes automatic in a few weeks, doing 50 sit-ups before your morning coffee can take months;</li>
+<li>and the most important finding of all: <strong>missing a single isolated day had no measurable effect</strong> on habit formation.</li>
+</ul>
+
+<h2 id="consequences">The 4 practical consequences</h2>
+<h3>1. Stop judging yourself at day 21</h3>
+<p>If the habit still takes effort after three weeks, you are simply average. The feeling of automaticity arrives much later than popular culture promises. The only real failure is quitting because you believed it should already be easy.</p>
+<h3>2. One missed day breaks nothing, two do</h3>
+<p>The science is clear: an isolated miss is neutral. The operational rule that follows is <strong>"never twice in a row"</strong>. Miss Monday if life demands it, then protect Tuesday as though your streak depended on it, because that is where it is actually decided.</p>
+<h3>3. Difficulty predicts duration, so start ridiculously small</h3>
+<p>Since complexity lengthens the time to automaticity, the rational strategy is to shrink the habit to its minimum version: 5 minutes of running, 1 page of reading, 10 vocabulary words, the same logic behind <a href="/en/for-students">student revision routines</a>. You automate the <em>trigger</em> first (running every morning), and increase the <em>dose</em> afterwards. Doing it the other way round, starting strong, maximises both the difficulty and the delay.</p>
+<h3>4. The trigger matters more than motivation</h3>
+<p>In Lally's study the habit was always anchored to a precise context ("after lunch", "after my coffee"). That is the principle behind <em>habit stacking</em>: attach the new habit to an existing routine rather than to an abstract time of day. "After I put my cup in the sink, I put my running shoes on" beats "run at 7 am" hands down.</p>
+
+<h2 id="phases">The 3 phases (and where it breaks)</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>Phase</th><th>Rough period</th><th>What happens</th><th>The risk</th></tr></thead>
+<tbody>
+<tr><td>Take-off</td><td>Weeks 1 to 2</td><td>High motivation, high effort, no visible results</td><td>Starting too hard and burning out</td></tr>
+<tr><td>Crossing the desert</td><td>Weeks 3 to 8</td><td>The novelty has gone, automaticity has not arrived</td><td>This is where 80 % of people quit</td></tr>
+<tr><td>Automaticity</td><td>From 2 to 3 months</td><td>The behaviour fires on its own, not doing it feels uncomfortable</td><td>Believing you have "arrived" and dismantling the tracking</td></tr>
+</tbody>
+</table></div>
+<p>Crossing the desert is precisely the moment when <strong>visual tracking</strong> becomes decisive: when the feeling of progress is absent, visible proof of the ground already covered takes its place.</p>
+
+<h2 id="mesurer">Making consistency visible</h2>
+<p>That is the whole principle of habit tracking in <a href="/en/">Cosmo</a>: every habit shows a <strong>26-week heatmap</strong> in the GitHub style, where each day ticked colours a cell, plus your current <strong>streak</strong> and your completion rate. The chain of green cells makes visible exactly what crossing the desert hides from you: you are moving forward. And because missing an isolated day is scientifically harmless, what counts is the trend over 26 weeks, not perfection. On which indicators are worth watching, and which discourage instead of helping, the article on <a href="/en/blog/suivi-des-habitudes">habit tracking</a> takes a position. Create your first two or three habits <a href="/en/signup">for free</a>, or try the demo with no sign-up and habits already filled in.</p>
+
+<h2 id="faq">Frequently asked questions</h2>
+<h3>So is it 21, 30, 66 or 90 days?</h3>
+<p>A median of 66 days, ranging from 18 to 254. Remember it as "roughly 2 to 3 months, longer if it is ambitious", and design your system to hold for that long, not for three weeks.</p>
+<h3>How many habits should you start at once?</h3>
+<p>Two or three at most. Every habit still forming consumes attention, and starting six is the surest way to keep none.</p>
+<h3>If a streak breaks, is everything lost?</h3>
+<p>No, and this is the most toxic myth in the field. Lally's study shows that an isolated miss has no measurable effect. The only rule: never miss twice in a row.</p>
+`,
+    },
   },
 };

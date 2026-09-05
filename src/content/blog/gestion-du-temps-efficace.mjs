@@ -82,5 +82,68 @@ export const article = {
 <p>Ne pas rattraper. Reprendre à la revue suivante comme si de rien n'était. Les systèmes d'organisation ne meurent pas d'une mauvaise semaine, ils meurent de la tentative de compenser la mauvaise semaine.</p>
 `,
     },
+    en: {
+      title: "Effective time management: 7 principles that last",
+      metaTitle: "Effective time management: 7 principles that hold up",
+      description: "The 7 time-management principles that survive a busy week, with no complicated method: trade-offs, calendar slots, work units, the weekly review.",
+      readingMinutes: 9,
+      faq: [
+        ["What is the most effective time-management method?", "The one you keep for three months. In practice the combination that holds up best is: a single list, an explicit trade-off on priorities, and reserved calendar slots for what genuinely matters."],
+        ["How do you manage your time when everything is urgent?", "Everything cannot be urgent: that is almost always the symptom of a missing trade-off. Sort on two axes (urgent and important), handle quadrant 1, and above all reserve a slot for quadrant 2, because that is what produces next week's emergencies."],
+        ["How long before you see a result?", "Two to three weeks to feel the difference in mental load, six to eight for the system to hold without conscious effort. Below that you are judging a system on its installation period."],
+      ],
+      html: `
+<p class="lead">Time management suffers from a misunderstanding: it is presented as a problem of technique, when it is first of all a problem of trade-offs. No method fits sixty hours of work into a thirty-five hour week. What a good method does instead is make visible what does not fit, early enough for you to decide what to drop. Here are seven principles that survive a busy week, from the most structural to the most granular.</p>
+
+<h2 id="arbitrage">1. Accept that managing your time means giving things up</h2>
+<p>This is the principle all the others follow from, and the only genuinely hard one. A week contains a fixed number of useful hours, for most people between thirty and forty when counted honestly. Any method that promises to "do more" without removing anything simply postpones the moment you discover it did not fit.</p>
+<p>The practical consequence: every time you accept something new, name what it displaces. Not mentally, in your list. A commitment made without an identified counterpart is a commitment that will be kept at the expense of something you did not choose.</p>
+
+<h2 id="liste-unique">2. One list, not four</h2>
+<p>Tasks in a notebook, others in unread email, others again in messages you send yourself: mental load does not come from the volume of work, it comes from uncertainty about what you have forgotten. As long as the list is not single, part of your attention stays busy watching the others.</p>
+<p>Consolidating matters more than which tool you pick. One list on paper beats three perfect apps. If the choice of tool is blocking you anyway, the <a href="/en/blog/cosmo-vs-todoist">Cosmo and Todoist comparison</a> sets out the criteria that actually count.</p>
+
+<h2 id="arbitrer">3. Make trade-offs explicitly, not by feel</h2>
+<p>With no written criterion, "prioritising" amounts to handling whatever shouts loudest. Two questions are enough for each task: <strong>is it urgent?</strong> and <strong>is it important?</strong> That is the <a href="/en/blog/matrice-eisenhower">Eisenhower matrix</a>, and its value is not the sorting itself but the fact that it forces the question "important relative to what?".</p>
+<p>This is where explicit goals become useful: without them everything looks important and the trade-off stops filtering anything. Two to four goals for the quarter are enough to settle 80 % of cases.</p>
+
+<h2 id="creneaux">4. What has no slot does not exist</h2>
+<p>An important but non-urgent task will always lose to an emergency, indefinitely, whatever your discipline. The only protection that works is physical: give it a place in the calendar, on the same footing as an appointment with somebody else.</p>
+<p>That is the principle of <a href="/en/blog/time-blocking-guide">time-blocking</a>, and its secondary benefit is as valuable as the first: by placing your tasks in slots, you discover immediately what does not fit in the week, before you have committed rather than after.</p>
+
+<h2 id="unite">5. Work in units, not continuously</h2>
+<p>Sustained attention is counted in blocks of twenty to ninety minutes depending on the person and the task, not in days. Two concrete consequences:</p>
+<ul>
+<li><strong>Group what is of the same nature.</strong> Email in two blocks a day rather than continuously, calls back to back, admin in a single stretch. Every context switch costs several minutes of spinning back up, an invisible and considerable cost once accumulated.</li>
+<li><strong>Protect the start of a block.</strong> The first minutes determine the rest: knowing exactly what to begin with is worth more than ten extra minutes. Hence the value of splitting tasks until the first action is obvious.</li>
+</ul>
+
+<h2 id="frottement">6. Reduce friction rather than relying on willpower</h2>
+<p>Willpower is a variable resource, friction is constant. If a task requires opening three tools and finding a password before you can start, it will be postponed, not out of laziness but because of the cost of entry. Conversely, what is immediately at hand gets done.</p>
+<p>The same applies to the system itself: a method that demands fifteen minutes of daily maintenance will be abandoned within three weeks, whatever its theoretical quality. The right question is not "which is the best method?" but "which one will I still be using in three months?".</p>
+
+<h2 id="revue">7. A weekly review, short and non-negotiable</h2>
+<p>This is the most frequently abandoned principle, and the one that holds all the others up. Fifteen to twenty minutes at the end of the week:</p>
+<ol>
+<li>What was finished, and above all what was planned without being done, which tells you about your real calibration.</li>
+<li>Where the time went, by broad category. This is often the surprise of the week.</li>
+<li>Where the underlying goals stand, as a trajectory rather than an exact percentage.</li>
+<li><strong>A single</strong> adjustment for the following week. One, not five: that is what makes the review sustainable.</li>
+</ol>
+<p>Without that appointment, an organisation system drifts within a few weeks and nobody notices, because nothing in an ordinary week forces you to look up.</p>
+
+<h2 id="pratique">Putting the 7 principles in place</h2>
+<p>None of these principles requires a particular tool, but all of them require the data to be in one place. That is what makes a stack of applications expensive: the weekly review turns into a collection job, so it gets skipped. <a href="/en/for-freelancers">Freelancers</a> feel this more harshly than most, because nobody else will hold the frame for them. And if a term used here is unfamiliar, the <a href="/en/blog/glossaire-productivite">productivity glossary</a> defines them all.</p>
+<p><a href="/en/">Cosmo</a> was built on that constraint: a single list with priorities and categories, a calendar that accepts tasks dragged in for time-blocking, habits for what should become automatic, <a href="/en/blog/methode-okr-exemples">OKRs</a> to define what "important" means this quarter, and a <a href="/en/blog/tableau-de-bord-productivite">dashboard</a> that makes the Friday review possible in fifteen minutes with no re-entry. <a href="/en/signup">Free</a>, with a demo you can open without signing up.</p>
+
+<h2 id="faq">Frequently asked questions</h2>
+<h3>Which principle should you start with?</h3>
+<p>The second one: bring everything into a single list. It requires no method and produces the most immediate relief. The others get added afterwards, one a week.</p>
+<h3>Should you plan every minute of your day?</h3>
+<p>No, and it is counterproductive. Reserve the two or three blocks that genuinely matter and leave the rest open: a day planned to 100 % does not survive the first surprise, and then the whole plan gets abandoned.</p>
+<h3>What do you do when a week goes completely off the rails?</h3>
+<p>Do not catch up. Pick things up at the next review as though nothing had happened. Organisation systems do not die of a bad week, they die of the attempt to compensate for the bad week.</p>
+`,
+    },
   },
 };

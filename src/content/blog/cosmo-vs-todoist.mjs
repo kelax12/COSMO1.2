@@ -90,5 +90,75 @@ export const article = {
 <p>Todoist est un excellent outil, et si votre besoin s'arrête aux tâches, gardez-le. Mais si votre organisation ressemble à « une todo-list + une app d'habitudes + un agenda + un tableur d'objectifs », alors le vrai sujet n'est pas de choisir la meilleure todo-list : c'est d'arrêter de payer la friction entre quatre outils. C'est exactement le pari de Cosmo, et vous pouvez le vérifier en deux minutes, <a href="/signup">gratuitement et sans carte bancaire</a>.</p>
 `,
     },
+    en: {
+      title: "Cosmo vs Todoist: which one should you choose in 2026?",
+      metaTitle: "Cosmo vs Todoist (2026): an honest, complete comparison",
+      description: "Todoist is an excellent task manager. Cosmo adds habits, a time-blocking calendar and OKRs in a free app. An honest comparison, point by point.",
+      readingMinutes: 7,
+      html: `
+<p class="lead">Todoist is probably the most accomplished task manager on the market: 18 years of existence, native apps everywhere, formidable natural-language input. So why compare at all? Because the question is not "which is the best to-do list?" but "<strong>what does your system actually need?</strong>". If the answer includes habit tracking, time-blocking or measurable goals, the match gets interesting. An honest comparison, point by point.</p>
+
+<h2 id="resume">The verdict in 30 seconds</h2>
+<ul>
+<li><strong>Choose Todoist</strong> if you only want to manage tasks, with native apps (Windows, macOS, mobile), integrations across your whole ecosystem (Gmail, Slack, calendars) and extremely fast capture.</li>
+<li><strong>Choose Cosmo</strong> if you want to connect tasks, <strong>habits</strong>, a <strong>time-blocking calendar</strong> and <strong>OKRs</strong> in a single free tool, rather than juggling three or four applications.</li>
+</ul>
+
+<h2 id="tableau">Side by side</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>Criterion</th><th>Todoist</th><th>Cosmo</th></tr></thead>
+<tbody>
+<tr><td>Task management</td><td>Excellent, the market reference</td><td>Complete: priorities 1 to 5, categories, lists, filters</td></tr>
+<tr><td>Natural-language input</td><td>Yes, remarkable ("tomorrow 2pm")</td><td>No, a structured form</td></tr>
+<tr><td>Habit tracking</td><td>Not native, worked around with recurring tasks</td><td>Native: 26-week heatmap, streaks, completion rate</td></tr>
+<tr><td>Calendar and time-blocking</td><td>Calendar view (paid), no true time-blocking</td><td>Native: drag a task into the calendar and the linked event is created</td></tr>
+<tr><td>OKRs and goals</td><td>Absent</td><td>Native, with progress computed for you</td></tr>
+<tr><td>Statistics</td><td>Karma, a gamification score</td><td>Across modules: time invested in tasks, habits, calendar, OKRs</td></tr>
+<tr><td>Collaboration</td><td>Yes, mature (shared projects)</td><td>Task sharing with Viewer and Editor roles</td></tr>
+<tr><td>Native apps</td><td>Windows, macOS, iOS, Android, extensions</td><td>A mobile-first web app, nothing to install</td></tr>
+<tr><td>Third-party integrations</td><td>Very many (calendars, Slack, email)</td><td>None to date</td></tr>
+<tr><td>Price</td><td>Limited free tier (5 projects), Pro around 4 to 5 € a month</td><td>Free, with the main features unlimited</td></tr>
+<tr><td>Try without an account</td><td>No</td><td>Yes, an instant pre-filled demo with no sign-up</td></tr>
+</tbody>
+</table></div>
+
+<h2 id="todoist-fort">Where Todoist is still ahead</h2>
+<p>Let us be direct: on <strong>pure task management</strong>, Todoist has an 18-year head start and it shows.</p>
+<ul>
+<li><strong>Natural-language input.</strong> Typing "Report every Monday 9am #Work" and watching the recurrence, the time and the project fill themselves in is the best on the market.</li>
+<li><strong>Native apps.</strong> System-wide keyboard shortcuts, a widget, capture from anywhere: if you capture 30 tasks a day, that comfort matters.</li>
+<li><strong>The ecosystem.</strong> Todoist plugs into Gmail, Outlook, Slack and your calendar. Cosmo, at this stage, offers no third-party integrations.</li>
+<li><strong>Collaborative maturity.</strong> Todoist's shared projects are battle-tested for running a whole team.</li>
+</ul>
+
+<h2 id="cosmo-fort">Where Cosmo changes the terms</h2>
+<p>Todoist's limit is not what it does, it is what it does not do. A complete personal system rests on four pillars, and Todoist covers one.</p>
+<ul>
+<li><strong>Habits are native.</strong> In Todoist a habit is a recurring task that makes you feel guilty when it is overdue. In Cosmo it is its own object: a 26-week GitHub-style heatmap, streaks, completion rate. Consistency gets built visually.</li>
+<li><strong>Time-blocking is real.</strong> You drag a task onto a calendar slot and the event is created and linked to the task. Planning your day takes two minutes, with no external sync.</li>
+<li><strong>OKRs give a direction.</strong> A to-do list tells you what to do today, it never tells you whether you are moving towards what matters. Cosmo's OKRs connect your daily actions to measurable goals (<a href="/en/blog/methode-okr-exemples">see our guide to the OKR method with 15 examples</a>).</li>
+<li><strong>The price.</strong> Cosmo's main features are free with no project limit. Free Todoist caps at 5 projects, and the calendar view is paid.</li>
+<li><strong>Frictionless trial.</strong> The <a href="/en/">Cosmo demo</a> opens with no account, pre-filled with 12 months of realistic data, so you can judge it loaded in two minutes.</li>
+</ul>
+
+<h2 id="profils">Which tool for which profile?</h2>
+<h3>You capture a great many tasks, everywhere, all the time</h3>
+<p><strong>Todoist.</strong> Its lightning capture and native apps are built for exactly that.</p>
+<h3>You want to build habits as well as manage tasks</h3>
+<p><strong>Cosmo.</strong> That is the structural difference: habits are a pillar here, not a workaround.</p>
+<h3>You plan your days with time-blocking</h3>
+<p><strong>Cosmo</strong>, unless you already have a Todoist plus Google Calendar flow that suits you.</p>
+<h3>You set quarterly goals, personal or professional</h3>
+<p><strong>Cosmo.</strong> Todoist simply does not have that building block.</p>
+<h3>Your whole team has to collaborate on projects</h3>
+<p><strong>Todoist</strong> for heavy collaboration and integrations. Cosmo is enough for sharing tasks between two or three people, and goes further as soon as shared goals are involved, as the <a href="/en/for-teams">Cosmo for teams</a> page shows.</p>
+
+<h2 id="migration">Moving from Todoist to Cosmo</h2>
+<p>There is no automatic import today, but that is an opportunity to clear house: copy across only the tasks that are genuinely active (rarely more than 20), recreate your projects as coloured categories, then add what Todoist was not carrying: two or three habits and a first quarterly OKR. The <a href="/en/guide">user guide</a> covers the full setup in ten minutes. If you work for yourself, the <a href="/en/for-freelancers">Cosmo for freelancers</a> page shows the same flow applied to a client portfolio.</p>
+
+<h2 id="conclusion">Conclusion</h2>
+<p>Todoist is an excellent tool, and if your need stops at tasks, keep it. But if your system looks like "a to-do list plus a habit app plus a calendar plus a goals spreadsheet", then the real question is not which to-do list is best: it is how to stop paying the friction between four tools. That is precisely Cosmo's bet, and you can check it in two minutes, <a href="/en/signup">free and with no credit card</a>.</p>
+`,
+    },
   },
 };
