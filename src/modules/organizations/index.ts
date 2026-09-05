@@ -102,5 +102,5 @@ export {
 } from './notifications';
 export type { OrgNotification, OrgNotificationKind } from './notifications';
 
-export { useOrgInbox } from './inbox';
+export { useOrgInbox, useOrgBadgeTasks } from './inbox';
 export { mapOrgInbox, type OrgInboxRow } from './inbox.repository';

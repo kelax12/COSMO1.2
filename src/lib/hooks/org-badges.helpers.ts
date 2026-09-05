@@ -6,7 +6,20 @@
 // onglet ET testé : c'est la seule partie qui décide quelque chose.
 // ═══════════════════════════════════════════════════════════════════
 
-import type { TeamTask } from '@/modules/team-projects';
+/**
+ * Ce que le calcul lit REELLEMENT d'une tache. Volontairement plus etroit que
+ * `TeamTask` : la pastille a deux sources, la boite de reception en production
+ * (mig. 142, qui ne renvoie que ces champs) et les taches d'equipe locales en
+ * demo. Nommer l'intersection est ce qui garantit qu'elles ne divergent pas.
+ */
+export interface BadgeSourceTask {
+  id: string;
+  name: string;
+  completed: boolean;
+  assigneeIds: string[];
+  createdBy: string;
+  createdAt: string;
+}
 
 export interface OrgBadgeInput {
   userId: string;
@@ -14,7 +27,7 @@ export interface OrgBadgeInput {
   lastSeen: number;
   /** Demandes d'adhésion en attente (0 si non-admin). */
   pendingRequests: number;
-  tasks: TeamTask[];
+  tasks: BadgeSourceTask[];
   /**
    * Notifications serveur non lues (mig. 095) — 0 en démo, où il n'y a pas de
    * base. Elles SUPPLANTENT le comptage dérivé des tâches quand elles

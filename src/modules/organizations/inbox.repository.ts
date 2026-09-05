@@ -27,6 +27,10 @@ export interface OrgInboxRow {
     id: string; org_id: string; actor_id: string | null; kind: string;
     task_id: string | null; read_at: string | null; created_at: string;
   }>;
+  /** mig. 142 — `my_org_badge_tasks()`, agregee dans la meme lecture. */
+  badge_tasks?: Array<{
+    org_id: string; id: string; name: string; created_at: string; kind: string;
+  }>;
 }
 
 export function mapOrgInbox(raw: OrgInboxRow): OrgInbox {
@@ -70,6 +74,16 @@ export function mapOrgInbox(raw: OrgInboxRow): OrgInbox {
       taskId: r.task_id,
       readAt: r.read_at,
       createdAt: r.created_at,
+    })),
+    // `kind` vient d'une colonne TEXT : tout ce qui n'est pas `assigned` est
+    // traite comme un simple libelle d'apercu. Un `kind` inconnu ne doit
+    // JAMAIS pouvoir gonfler un compteur.
+    badgeTasks: (raw.badge_tasks ?? []).map((r) => ({
+      orgId: r.org_id,
+      id: r.id,
+      name: r.name,
+      createdAt: r.created_at,
+      kind: r.kind === 'assigned' ? ('assigned' as const) : ('notified' as const),
     })),
   };
 }

@@ -203,6 +203,28 @@ export interface OrgJoinRequest {
  * attendre que l'organisation active soit resolue. Le filtrage par
  * organisation se fait cote client, sur une liste deja bornee par la RPC.
  */
+/**
+ * Une tache d'equipe telle que la pastille en a besoin, et rien de plus
+ * (mig. 142). `kind` dit POURQUOI elle est la :
+ *
+ *   • `assigned` — assignation en cours qui ne vient pas de moi. C'est le
+ *     comptage derive, celui que le client filtre ensuite par `lastSeen`.
+ *   • `notified` — tache visee par une de mes notifications non lues. Elle ne
+ *     sert qu'a NOMMER l'apercu, jamais a compter : sans elle, la pastille
+ *     afficherait un nombre qu'aucune liste ne peut expliquer.
+ *
+ * ❌ Ne pas la confondre avec `TeamTask`, et ne pas l'elargir « tant qu'on y
+ * est » : c'est precisement la lecture org-wide de `team_tasks`, montee par
+ * `Layout` sur toutes les pages protegees, que cette section a remplacee.
+ */
+export interface OrgBadgeTask {
+  orgId: string;
+  id: string;
+  name: string;
+  createdAt: string;
+  kind: 'assigned' | 'notified';
+}
+
 export interface OrgInbox {
   invitations: OrgInvitation[];
   removalNotices: OrgRemovalNotice[];
@@ -211,4 +233,9 @@ export interface OrgInbox {
   /** Vue ADMIN : les demandes adressees aux organisations que j'administre. */
   joinRequests: OrgJoinRequest[];
   notifications: import('./notifications').OrgNotification[];
+  /**
+   * De quoi peindre la pastille d'entreprise sans lire la liste des taches
+   * d'equipe (mig. 142). Vide en mode demo, ou la source reste locale.
+   */
+  badgeTasks: OrgBadgeTask[];
 }

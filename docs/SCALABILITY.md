@@ -345,6 +345,40 @@ Les policies restent en place en défense en profondeur, comme pour `get_my_task
 > par `Layout`, `App` ou `CommandPalette`, et avec quel `staleTime` »**. C'est la troisième fois
 > que ce trio produit un coût permanent (`useTeamTasks`, puis `useTeamOKRs`, puis `useOrgBadges`).
 
+### 🟢 2026-09-05 · le rechargement était éteint, la LECTURE ne l'était pas (C-05)
+
+> Quatrième forme du même motif, et la dernière de cette série. Le correctif d'août avait coupé le
+> **rechargement** de la pastille (`background`) ; la **lecture** partait toujours au premier
+> montage, donc à chaque chargement de l'application, depuis n'importe quelle page protégée.
+>
+> **Trace « avant », production, 2026-09-05 20:11:24 UTC**, une seule adresse, donc une seule
+> session — lue par session, jamais sur un compteur agrégé (leçon des onglets zombies) :
+>
+> ```
+> 20:11:24.497  /rest/v1/rpc/get_my_tasks
+> 20:11:24.499  /rest/v1/rpc/get_my_org_inbox
+> 20:11:24.502  /rest/v1/rpc/get_my_team_tasks
+> ```
+>
+> `get_my_team_projects` est **absent** de cette rafale, alors qu'il est présent trois secondes
+> plus tôt sur `/tasks` : ce n'est donc pas un écran de /entreprise qui lit, c'est `Layout`.
+>
+> **Correctif (mig. 142)** : la boîte de réception gagne une section `badge_tasks`. Le serveur
+> rend les **seules** lignes dont la pastille a besoin — assignations en cours qui ne viennent pas
+> de moi, et noms des tâches visées par mes notifications non lues — bornées à 200 et 50 **par
+> organisation**. `useOrgBadges` ne monte plus `useTeamTasks` hors démo, où la source reste
+> `localStorage` et ne coûte rien.
+>
+> **Parité mesurée avant application**, en prod, dans une transaction annulée : pour les 11 couples
+> (compte, organisation) de la base, l'ensemble des identifiants est **identique** à celui que le
+> client dérivait de `get_my_team_tasks` ; trois de ces couples sont non vides, sans quoi la
+> comparaison n'aurait comparé que des zéros. Isolation vérifiée sur les 28 comptes : zéro fuite
+> inter-organisations, zéro ligne pour un compte sans organisation.
+>
+> ⚠️ **La trace « après » manque encore** : elle demande une vraie session sur le front déployé.
+> Tant qu'elle n'est pas prise, ce correctif est *appliqué et prouvé côté base*, **pas** mesuré de
+> bout en bout — et la note de ce document ne bouge donc pas, même règle qu'en août.
+
 ### ✅ Contre-mesure indépendante, 2026-08-26 : oui, éteintes. Et ce que ça révèle.
 
 > Le doute était légitime : les compteurs cumulés de `friend_requests` (269 682 `seq_scan` pour

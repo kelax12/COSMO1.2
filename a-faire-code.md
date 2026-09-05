@@ -245,6 +245,29 @@ l'abonnement.
 
 ### C-05 · Le badge d'organisation lit jusqu'à 1 000 tâches d'équipe pour afficher un nombre · **P2 · S**
 
+> ✅ corrigé le 2026-09-05 · le compte vient du serveur (mig. **142**, `badge_tasks` ajouté à
+> `get_my_org_inbox()`), et `useOrgBadges` ne monte plus `useTeamTasks` hors démo.
+> **Parité mesurée en prod avant application**, dans une transaction annulée, acteur par acteur :
+> pour les **11 couples (compte, organisation)** de la base, l'ensemble des identifiants dérivés
+> est **identique** à celui que le client calculait depuis `get_my_team_tasks` — dont trois couples
+> non vides (1, 1 et 2 tâches), sans quoi la comparaison n'aurait comparé que des zéros.
+> Isolation vérifiée sur les **28 comptes** : zéro fuite inter-organisations, et zéro ligne pour un
+> compte sans organisation.
+> ⚠️ **Le dernier maillon reste à mesurer** : la trace `edge_logs` d'une vraie session *après
+> déploiement du front*. L'avant est enregistré (cf. ci-dessous) ; l'après demande qu'Axel ouvre
+> l'application une fois sur la version déployée.
+
+**Trace « avant », production, 2026-09-05 20:11:24 UTC** (une seule IP, donc une seule session) :
+
+```
+20:11:24.497  /rest/v1/rpc/get_my_tasks
+20:11:24.499  /rest/v1/rpc/get_my_org_inbox
+20:11:24.502  /rest/v1/rpc/get_my_team_tasks   ← la pastille, et rien d'autre
+```
+
+`get_my_team_projects` est **absent** de cette rafale : ce n'est donc pas un écran de /entreprise
+qui lit, c'est `Layout`. C'est exactement la ligne qui doit disparaître après déploiement.
+
 Identifié le 2026-08-27, explicitement laissé « non engagé ». Le rechargement a été coupé
 (`useTeamTasks` a gagné `background`), **la lecture pas**. C'est la lecture la plus chère du produit
 (§2 de `SCALABILITY.md`), montée par `Layout`, donc sur toutes les pages protégées.
