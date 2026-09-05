@@ -6,10 +6,12 @@ import { DashboardCardSkeleton } from '@/components/skeletons';
 import EmptyState from '@/components/EmptyState';
 import { formatDate } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
+import { useIsMobile } from '@/lib/hooks/use-mobile';
 
 const ActiveOKRs: React.FC = () => {
   const { t, tp } = useT('dashboard');
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const { data: okrs = [], isLoading } = useOkrs();
 
   const activeOKRs = okrs.filter(okr => !okr.completed).slice(0, 3);
@@ -37,13 +39,54 @@ const ActiveOKRs: React.FC = () => {
               </div>
             </div>
     
+              {isMobile ? (
+                /* Mobile : tableau à une colonne, séparateur entre lignes —
+                   même traitement que le fil « Aujourd'hui » et les
+                   habitudes, plus de carte individuelle par OKR (arbitrage
+                   du 2026-09-05). */
+                <ul>
+                  {activeOKRs.map(okr => {
+                    const progress = getProgress(okr.keyResults);
+                    return (
+                      <li key={okr.id} className="border-b border-[rgb(var(--color-border))] last:border-b-0">
+                        <button
+                          type="button"
+                          onClick={() => navigate('/okr')}
+                          className="w-full min-h-touch py-2.5 text-left"
+                        >
+                          <div className="flex items-center justify-between gap-2 mb-1.5">
+                            <span className="flex-1 min-w-0 truncate text-label font-medium text-[rgb(var(--color-text-primary))]">
+                              {okr.title}
+                            </span>
+                            <span className="shrink-0 flex items-center gap-1 text-label font-semibold text-[rgb(var(--color-success))]">
+                              <TrendingUp size={14} aria-hidden="true" />
+                              {progress}%
+                            </span>
+                          </div>
+                          <div className="w-full bg-[rgb(var(--color-border-muted))] rounded-full h-1.5 mb-1.5">
+                            <div
+                              className="bg-[rgb(var(--color-success))] h-1.5 rounded-full transition-all duration-300"
+                              style={{ width: `${progress}%` }}
+                            />
+                          </div>
+                          <p className="text-caption text-[rgb(var(--color-text-muted))] truncate">
+                            {tp('okrs.keyResult', okr.keyResults.length)}
+                            {' · '}
+                            {t('okrs.deadline', { date: formatDate(new Date(okr.endDate), { day: 'numeric', month: 'long', year: 'numeric' }) })}
+                          </p>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              ) : (
               <div className="space-y-4">
                 {activeOKRs.map(okr => {
                   const progress = getProgress(okr.keyResults);
-                  
+
                   return (
-                    <div 
-                      key={okr.id} 
+                    <div
+                      key={okr.id}
                       className="p-4 bg-[rgb(var(--color-hover))] rounded-xl border border-[rgb(var(--color-border))] transition-all duration-300 hover:shadow-md hover:border-[rgb(var(--color-success)/0.5)] hover:bg-[rgb(var(--color-success)/0.05)] cursor-pointer"
                     >
                       <div className="flex items-center justify-between mb-3">
@@ -77,7 +120,9 @@ const ActiveOKRs: React.FC = () => {
                 </div>
               );
             })}
-  
+              </div>
+              )}
+
             {activeOKRs.length === 0 && (
               /* Empty state avec CTA (#16) : seul point de découverte des OKR
                  sur mobile (absents de la tab bar). */
@@ -92,7 +137,6 @@ const ActiveOKRs: React.FC = () => {
               />
             )}
         </div>
-      </div>
     );
 };
 

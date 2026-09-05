@@ -287,7 +287,13 @@ const DashboardPage: React.FC = () => {
           day: 'numeric',
           month: 'short',
         })}
-        actions={<InboxMenu />}
+        // `-my-1.5` sur le bouton, PAS sur ce qui suit le header : réduit sa
+        // boîte à marge (44px → ~32px, la hauteur du titre) pour que la ligne
+        // d'en-tête garde la hauteur du TEXTE plutôt que celle du bouton, sans
+        // toucher au flux après le header. Contrairement à l'essai précédent
+        // (`-mt-4` sur le bloc suivant), rien ici ne chevauche la boîte du
+        // header sticky — la marge négative reste interne à sa propre ligne.
+        actions={<div className="-my-1.5"><InboxMenu /></div>}
       />
       <motion.div
         className="max-w-[1600px] mx-auto space-y-4 sm:space-y-6 lg:space-y-8"
