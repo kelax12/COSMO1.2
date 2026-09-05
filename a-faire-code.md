@@ -2029,6 +2029,31 @@ aura un. C'est exactement la définition d'une garde qui répond sans mesurer.
 
 ### C-35 · Rien ne compare le code déployé des Edge Functions à celui du dépôt · **P1 · M**
 
+> ✅ **La garde est écrite le 2026-09-04** · `npm run check:edge`
+> (`scripts/check-edge-deploy.mjs`), job `Edge deploy drift` (quotidien +
+> à chaque push touchant `supabase/functions/`), branché sur `ci-alert.yml`.
+> Témoin : `scripts/check-edge-deploy.guard.test.mjs`, 18 cas, **vérifiés en
+> sabotant le comparateur cinq fois** (comparateur qui ne trouve jamais rien →
+> 6 rouges ; comparateur borgne → 1 ; lecture vide acceptée → 2 ; secret absent
+> dégradé en `::warning::` + exit 0 → 1 ; normalisation trop polie → 2).
+>
+> ⚠️ **Ce qui n'est PAS encore prouvé, et il faut le lire avant de croire ce
+> job vert** : le lecteur (`supabase functions download`) n'a jamais tourné,
+> faute de `SUPABASE_ACCESS_TOKEN` sur la machine de développement. Le premier
+> run de CI est la vérification. Le script est écrit pour **échouer** et non
+> pour se taire si la mise en page du bundle diffère de celle mesurée
+> (`assertReadSomething` : bundle vide ou sans entrypoint reconnaissable = une
+> erreur, jamais « identique au dépôt »).
+>
+> 🔴 **Les deux moitiés de l'item ne sont pas au même point.** La garde existe ;
+> la seconde exigence du « fini quand » (chaque statut de finding portant sur
+> une Edge Function cite sa version déployée) n'est **pas** faite dans
+> `faille.md`. L'item reste ouvert pour ça.
+>
+> Divergence remesurée le 2026-09-04, pendant l'écriture : le dépôt porte
+> `Deno.env.get('BUG_REPORT_FROM')` sans valeur par défaut, la `report-bug` v8
+> en ligne porte toujours `?? 'Cosmo <bug@thecosmo.app>'`. S-4 tourne encore.
+
 Trouvé par l'audit **A-1**, et c'est son résultat le plus lourd. Les trois sources déployées ont été
 lues via l'API le 2026-09-03 et comparées à `main` : **les trois divergent, de trois façons
 différentes**.

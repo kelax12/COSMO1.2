@@ -1,6 +1,7 @@
 # ──────────────────────────────────────────────────────────────────────
 # Alerte quand une garde automatique passe au rouge sur `main`.
-# Couvre `CI` et `Vendor script watch` (surveillance du script tiers).
+# Couvre `CI`, `Vendor script watch` (surveillance du script tiers) et
+# `Edge deploy drift` (le code deploye des Edge Functions contre le depot).
 #
 # POURQUOI : les quatre gardes de `ci.yml` sont restées rouges des mois sans
 # que personne ne réagisse — `rls-integration` n'avait JAMAIS été verte depuis
@@ -28,7 +29,7 @@ name: CI alert
 
 on:
   workflow_run:
-    workflows: [CI, Vendor script watch]
+    workflows: [CI, Vendor script watch, Edge deploy drift]
     types: [completed]
   # Exercice à blanc du canal d'alerte, sans casser une garde pour le tester.
   workflow_dispatch:

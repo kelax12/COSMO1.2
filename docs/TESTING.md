@@ -538,6 +538,32 @@ npx playwright test e2e/a11y-audit.spec.ts --project=chromium
   du dépôt. **À resserrer après le premier run réel**, un budget très au-dessus du réel ne mesure
   rien.
 - `concurrency` annule les runs obsolètes, `permissions: contents:read`. Dépendances : `.github/dependabot.yml`.
+
+### `edge-deploy-drift.yml` · le code déployé contre le dépôt *(ajouté le 2026-09-04, finding C-35)*
+
+`npm run check:edge` télécharge le bundle de **chaque Edge Function réellement déployée** et le
+compare octet pour octet à `supabase/functions/`, dans les deux sens, modules `_shared/` importés
+compris. Quotidien à 05:41 UTC **et** à chaque push touchant `supabase/functions/` : une dérive de
+déploiement naît d'un déploiement, qui n'événemente rien ici, pas d'un commit.
+
+Ce que ça a fermé : le 2026-09-03, les trois sources en ligne divergeaient toutes les trois de
+`main`. Rien ne regardait, donc rien n'avait jamais rien dit.
+
+- 🔴 **Secret absent = échec.** Pas de `if: secrets.X != ''`, pas de valeur de repli, pas de
+  `continue-on-error`. La règle est écrite dans `CLAUDE.md` et a déjà été violée deux fois.
+- `.github/edge-deploy.json` déclare quelle fonction du dépôt n'est **pas encore** en ligne, avec sa
+  raison et sa date. ❌ Il ne couvre que l'existence : aucune divergence de contenu ne peut être
+  éteinte depuis ce fichier, et une fonction qu'il dit non déployée alors qu'elle est en ligne fait
+  échouer la garde.
+- **Témoin** : `scripts/check-edge-deploy.guard.test.mjs`, 18 cas, ramassés par `npm test` et
+  rejoués par le job en `always()`. Vérifiés en sabotant le comparateur **cinq fois** : comparateur
+  qui ne trouve jamais rien (6 rouges), comparateur borgne (1), lecture vide acceptée comme
+  « identique » (2), secret absent dégradé en `::warning::` + exit 0 (1), normalisation trop polie
+  (2). Un témoin qu'on n'a pas vu échouer n'est pas un témoin.
+- ⚠️ **Le lecteur n'a pas encore tourné** : `supabase functions download` exige un
+  `SUPABASE_ACCESS_TOKEN`, absent de la machine de développement. Le premier run de CI est la
+  vérification. `assertReadSomething()` refuse un bundle vide ou sans entrypoint reconnaissable :
+  une lecture ratée est une **erreur**, jamais un « identique au dépôt ».
 - Runbook deploy/rollback : [`DEPLOYMENT.md`](./DEPLOYMENT.md).
 
 ## Checklist avant push prod
@@ -557,6 +583,8 @@ Avant `git push` sur `main` (qui déclenche le deploy Vercel) :
 9. ✅ **Si touche un tutoriel** : desktop ET mobile (flags distincts), vérifier que les `data-tutorial-id` existent.
 10. ✅ **Si touche une page nouvelle** : `min-h-[100dvh]` + `pb-[calc(...)]` + landmark `<main>` (A-5) + h1 visible.
 11. ✅ **Si touche `supabase/migration/*.sql`** : checklist [`SECURITY.md`](./SECURITY.md). Vérifier `mcp__supabase__get_advisors`.
-12. ✅ **Si touche `supabase/functions/*.ts`** : présence de `supabase/config.toml` (M-10).
+12. ✅ **Si touche `supabase/functions/*.ts`** : présence de `supabase/config.toml` (M-10), puis
+    **déployer** (`supabase functions deploy <slug>`), car un correctif committé et non déployé est
+    exactement le finding C-35. `npm run check:edge` le dira, mais après coup.
 13. ✅ **Si touche un `<button>` icon-only, un `<input>`, ou ajoute une page publique** : relancer le scan a11y (Critical = 0).
 14. ✅ **Si suspicion de bug iOS Safari** : tester avec `?debug=1` (Eruda).
