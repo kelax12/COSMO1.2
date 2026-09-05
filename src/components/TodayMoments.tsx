@@ -1,15 +1,16 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
-import { AlertTriangle, Building2, Check, Circle, User } from 'lucide-react';
+import { AlertTriangle, Building2, Check, User } from 'lucide-react';
 import { useEvents } from '@/modules/events';
 import { useHabits } from '@/modules/habits';
-import { useTasks } from '@/modules/tasks';
-import { useTeamTasks } from '@/modules/team-projects';
+import { useTasks, type Task } from '@/modules/tasks';
+import { useTeamTasks, useUpdateTeamTask } from '@/modules/team-projects';
 import { useActiveOrganization } from '@/modules/organizations';
 import { useAuth } from '@/modules/auth/AuthContext';
-import { useTodayItems, useCompleteTodayItem } from '@/modules/today';
+import { useTodayItems, useCompleteTodayItem, type TodayItem } from '@/modules/today';
 import { useT } from '@/i18n/useT';
-import TouchTarget from '@/components/mobile/TouchTarget';
+import { showUndoToast } from '@/lib/undo-toast';
+import TaskModal from '@/components/TaskModal';
 import { buildMoments, todayCompletionReport } from './today-moments.helpers';
 
 /**
@@ -27,7 +28,13 @@ import { buildMoments, todayCompletionReport } from './today-moments.helpers';
  *
  * 🔴 Écriture : la vue LIT deux tables et n'en écrit jamais une à la place de
  * l'autre — `useCompleteTodayItem` porte cet aiguillage, partagé avec
- * `TodayUnified` (desktop). Ouvrir renvoie sur l'écran d'origine.
+ * `TodayUnified` (desktop).
+ *
+ * ⚠️ Ouvrir une tâche PERSO ouvre désormais `TaskModal` en place (au lieu de
+ * naviguer vers `/tasks`) — c'est ce qu'on veut pour cocher/éditer sans
+ * quitter l'accueil. Une tâche d'ÉQUIPE reste routée vers son écran d'origine :
+ * `TeamTaskModal` a besoin des projets et des membres de l'organisation, une
+ * dépendance trop lourde pour ce fil au regard du gain.
  *
  * Desktop garde `TodayUnified`, inchangé.
  */
@@ -42,6 +49,45 @@ const TodayMoments = () => {
   const { activeOrg } = useActiveOrganization();
   const { data: teamTasks = [] } = useTeamTasks(activeOrg?.id);
   const complete = useCompleteTodayItem();
+  // Côté PERSO, `complete()` appelle `useToggleTaskComplete()`, qui affiche
+  // déjà son propre toast « Tâche validée » + Annuler (`tasks/hooks.ts`) : ne
+  // pas en ajouter un second ici, ce serait deux toasts pour un seul geste.
+  // Côté ÉQUIPE, `useUpdateTeamTask` est une mutation générique sans ce toast
+  // — c'est le seul cas où cet écran doit en fournir un, avec le chemin
+  // inverse (`completed: false`) pour l'Annuler.
+  const updateTeamTaskMutation = useUpdateTeamTask(activeOrg?.id ?? '');
+
+  // Tâche PERSO ouverte dans `TaskModal` (id, pas l'objet : `allTasks` reste
+  // la source fraîche pendant que la modale est ouverte).
+  const [openTaskId, setOpenTaskId] = useState<string | null>(null);
+  const openTask = useMemo<Task | undefined>(
+    () => (openTaskId ? allTasks.find((t) => t.id === openTaskId) : undefined),
+    [openTaskId, allTasks],
+  );
+
+  // Anime brièvement la coche avant de committer et d'ouvrir le toast
+  // d'annulation — le temps de VOIR le check avant que la ligne ne parte.
+  const [validatingKey, setValidatingKey] = useState<string | null>(null);
+
+  const handleComplete = (item: TodayItem) => {
+    const key = `${item.source}-${item.id}`;
+    setValidatingKey(key);
+    window.setTimeout(() => {
+      setValidatingKey((k) => (k === key ? null : k));
+      complete(item);
+      // Perso : `complete()` déclenche déjà son propre toast + Annuler.
+      if (item.source === 'team') {
+        showUndoToast(t('today.completedToast', { name: item.name }), () => {
+          updateTeamTaskMutation.mutate({ taskId: item.id, input: { completed: false } });
+        });
+      }
+    }, 220);
+  };
+
+  const handleOpen = (item: TodayItem) => {
+    if (item.source === 'personal') setOpenTaskId(item.id);
+    else navigate(item.href);
+  };
 
   // Mêmes tâches d'équipe que le fil : celles qui me sont assignées.
   const myTeamTasks = useMemo(
@@ -134,18 +180,34 @@ const TodayMoments = () => {
               >
                 {entry.task ? (
                   <>
-                    {/* L'icône reste à 16 px, c'est la CIBLE qui fait 44
-                        (WCAG 2.5.5) — même contrat que `TodayUnified`. */}
-                    <TouchTarget
-                      onClick={() => complete(entry.task!)}
-                      aria-label={t('today.markDone', { name: entry.task.name })}
-                      className="-ml-2 hover:text-[rgb(var(--color-success))]"
-                    >
-                      <Circle size={16} aria-hidden="true" />
-                    </TouchTarget>
+                    {/* Case à cocher ronde — même dessin que la case d'action
+                        de TaskTable (`task-table/TaskCard.tsx`) : bordure,
+                        remplissage + coche à la validation, cible 44×44
+                        (WCAG 2.5.5) portée par le bouton, l'icône visuelle
+                        reste à 24px. */}
                     <button
                       type="button"
-                      onClick={() => navigate(entry.task!.href)}
+                      onClick={() => handleComplete(entry.task!)}
+                      aria-label={t('today.markDone', { name: entry.task.name })}
+                      className="min-w-11 min-h-11 -my-2 -ml-2 p-2 flex items-center justify-center shrink-0"
+                    >
+                      <span
+                        className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
+                          validatingKey === `${entry.task.source}-${entry.task.id}`
+                            ? 'scale-110 bg-[rgb(var(--color-accent-solid))] border-[rgb(var(--color-accent-solid))]'
+                            : 'border-[rgb(var(--color-text-muted))]'
+                        }`}
+                      >
+                        {validatingKey === `${entry.task.source}-${entry.task.id}` && (
+                          <svg className="w-4 h-4 text-[rgb(var(--color-accent-solid-foreground))]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleOpen(entry.task!)}
                       className="flex-1 min-w-0 min-h-touch flex flex-col justify-center text-left"
                     >
                       <span className="block text-label text-[rgb(var(--color-text-primary))] truncate">
@@ -198,6 +260,12 @@ const TodayMoments = () => {
           </ul>
         </div>
       ))}
+
+      <TaskModal
+        isOpen={!!openTaskId}
+        task={openTask}
+        onClose={() => setOpenTaskId(null)}
+      />
     </section>
   );
 };
