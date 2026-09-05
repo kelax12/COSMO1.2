@@ -82,7 +82,15 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
         className,
       )}
     >
-      <div className="flex items-start justify-between gap-3">
+      {/* `items-start` au repos : le sous-titre (2 lignes) doit aligner le
+          titre et les actions sur le HAUT du bloc, pas sur son centre.
+          `items-center` une fois compact : il n'y a plus qu'une ligne de
+          texte (le sous-titre disparaît juste au-dessus), centrer évite que
+          le titre paraisse décroché par rapport à des actions plus hautes
+          que lui (le bouton fait 44px, le texte compact ~24px). Valable sur
+          TOUTES les pages qui utilisent `MobileHeader`, pas seulement le
+          Dashboard. */}
+      <div className={cn('flex justify-between gap-3', compact ? 'items-center' : 'items-start')}>
         <div className="min-w-0 flex-1">
           <h1
             className={cn(
