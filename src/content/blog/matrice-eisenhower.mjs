@@ -1,23 +1,35 @@
-// Article de blog — contenu partagé React + prerender. ESM pur.
+// Article de blog, contenu partagé React + prerender. ESM pur.
+//
+// Deux dimensions, à ne jamais confondre :
+//   - la colonne vertébrale (`slug`, dates, `related`) est COMMUNE à toutes
+//     les langues : c'est une seule publication traduite, pas deux articles ;
+//   - `locales` porte tout ce qui se traduit, `readingMinutes` compris (un
+//     texte anglais n'a aucune raison de se lire dans le même temps que le
+//     français).
+//
+// Une locale absente n'est jamais repliée en silence sur le français côté SEO :
+// `articlesFor()` ne la publie pas, donc le prérendu ne peut pas produire une
+// page anglaise au corps français. Voir src/content/blog/index.mjs.
 export const article = {
-  slug: 'matrice-eisenhower',
-  title: 'La matrice Eisenhower : prioriser ses tâches en 4 cases (+ exemples)',
-  metaTitle: 'Matrice Eisenhower : méthode, exemples et limites (guide)',
-  description:
-    "Urgent ou important ? La matrice Eisenhower classe vos tâches en 4 quadrants : faire, planifier, déléguer ou supprimer. Méthode complète avec exemples.",
-  datePublished: '2026-07-18',
-  dateModified: '2026-07-18',
-  readingMinutes: 7,
+  slug: "matrice-eisenhower",
+  datePublished: "2026-07-18",
+  dateModified: "2026-07-18",
   // Suite de lecture : choisie par proximité de sujet, pas par date. Le tri
   // par récence envoyait les mêmes 3 liens depuis les 11 articles, ce qui
   // laissait 4 d'entre eux sans aucun lien entrant interne.
-  related: ['gestion-du-temps-efficace', 'time-blocking-guide', 'glossaire-productivite'],
-  faq: [
-    ['Quelle est la différence entre urgent et important ?', "Urgent = exige une action immédiate (une deadline, un appel). Important = contribue à vos objectifs de fond. Une tâche peut être l'un, l'autre, les deux ou aucun des deux, d'où les 4 quadrants."],
-    ['Que faire des tâches ni urgentes ni importantes ?', "Les supprimer, ou les assumer comme du loisir choisi. Le piège n'est pas de se détendre, c'est de traiter ces tâches comme du travail."],
-    ['La matrice Eisenhower suffit-elle pour s’organiser ?', "Non : elle classe, mais ne planifie pas. Elle est plus efficace combinée au time-blocking (le quadrant 2 va dans l'agenda) et à des objectifs clairs qui définissent ce qui est « important »."],
-  ],
-  html: `
+  related: ["gestion-du-temps-efficace","time-blocking-guide","glossaire-productivite"],
+  locales: {
+    fr: {
+      title: "La matrice Eisenhower : prioriser ses tâches en 4 cases (+ exemples)",
+      metaTitle: "Matrice Eisenhower : méthode, exemples et limites (guide)",
+      description: "Urgent ou important ? La matrice Eisenhower classe vos tâches en 4 quadrants : faire, planifier, déléguer ou supprimer. Méthode complète avec exemples.",
+      readingMinutes: 7,
+      faq: [
+        ["Quelle est la différence entre urgent et important ?", "Urgent = exige une action immédiate (une deadline, un appel). Important = contribue à vos objectifs de fond. Une tâche peut être l'un, l'autre, les deux ou aucun des deux, d'où les 4 quadrants."],
+        ["Que faire des tâches ni urgentes ni importantes ?", "Les supprimer, ou les assumer comme du loisir choisi. Le piège n'est pas de se détendre, c'est de traiter ces tâches comme du travail."],
+        ["La matrice Eisenhower suffit-elle pour s’organiser ?", "Non : elle classe, mais ne planifie pas. Elle est plus efficace combinée au time-blocking (le quadrant 2 va dans l'agenda) et à des objectifs clairs qui définissent ce qui est « important »."],
+      ],
+      html: `
 <p class="lead">« Ce qui est important est rarement urgent, et ce qui est urgent est rarement important. » La phrase attribuée au président Eisenhower a donné son nom à l'outil de priorisation le plus simple qui existe : deux questions, quatre cases, une décision par tâche. Voici comment l'utiliser correctement, et surtout comment éviter le piège dans lequel tombe la majorité de ses utilisateurs.</p>
 
 <h2 id="principe">Le principe : deux questions, quatre quadrants</h2>
@@ -61,4 +73,6 @@ export const article = {
 <h3>La matrice suffit-elle pour s'organiser ?</h3>
 <p>Non : elle classe mais ne planifie pas. Combinez-la au time-blocking (Q2 → agenda) et à des objectifs explicites (OKR) qui définissent « important ».</p>
 `,
+    },
+  },
 };

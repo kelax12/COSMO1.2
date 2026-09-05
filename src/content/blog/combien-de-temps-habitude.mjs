@@ -1,23 +1,35 @@
-// Article de blog — contenu partagé React + prerender. ESM pur.
+// Article de blog, contenu partagé React + prerender. ESM pur.
+//
+// Deux dimensions, à ne jamais confondre :
+//   - la colonne vertébrale (`slug`, dates, `related`) est COMMUNE à toutes
+//     les langues : c'est une seule publication traduite, pas deux articles ;
+//   - `locales` porte tout ce qui se traduit, `readingMinutes` compris (un
+//     texte anglais n'a aucune raison de se lire dans le même temps que le
+//     français).
+//
+// Une locale absente n'est jamais repliée en silence sur le français côté SEO :
+// `articlesFor()` ne la publie pas, donc le prérendu ne peut pas produire une
+// page anglaise au corps français. Voir src/content/blog/index.mjs.
 export const article = {
-  slug: 'combien-de-temps-prendre-habitude',
-  title: "Combien de temps faut-il vraiment pour prendre une habitude ? (ce que dit la science)",
-  metaTitle: 'Combien de temps pour une habitude ? La vraie réponse',
-  description:
-    "21 jours ? 66 jours ? La vraie réponse de la science est plus nuancée, et plus utile. Ce que montre l'étude de référence, et comment s'en servir concrètement.",
-  datePublished: '2026-07-18',
-  dateModified: '2026-07-18',
-  readingMinutes: 7,
+  slug: "combien-de-temps-prendre-habitude",
+  datePublished: "2026-07-18",
+  dateModified: "2026-07-18",
   // Suite de lecture : choisie par proximité de sujet, pas par date. Le tri
   // par récence envoyait les mêmes 3 liens depuis les 11 articles, ce qui
   // laissait 4 d'entre eux sans aucun lien entrant interne.
-  related: ['suivi-des-habitudes', 'time-blocking-guide', 'glossaire-productivite'],
-  faq: [
-    ['Alors, 21, 30, 66 ou 90 jours pour prendre une habitude ?', '66 jours en médiane selon l’étude de référence (Lally, 2009), avec une fourchette réelle de 18 à 254 jours selon l’habitude et la personne.'],
-    ['Combien d’habitudes lancer en même temps ?', '2 ou 3 maximum. Chaque habitude en formation consomme de l’attention.'],
-    ['Un streak cassé, tout est perdu ?', 'Non : un accroc isolé n’a pas d’effet mesurable sur la formation de l’habitude. La règle : ne jamais rater deux fois de suite.'],
-  ],
-  html: `
+  related: ["suivi-des-habitudes","time-blocking-guide","glossaire-productivite"],
+  locales: {
+    fr: {
+      title: "Combien de temps faut-il vraiment pour prendre une habitude ? (ce que dit la science)",
+      metaTitle: "Combien de temps pour une habitude ? La vraie réponse",
+      description: "21 jours ? 66 jours ? La vraie réponse de la science est plus nuancée, et plus utile. Ce que montre l'étude de référence, et comment s'en servir concrètement.",
+      readingMinutes: 7,
+      faq: [
+        ["Alors, 21, 30, 66 ou 90 jours pour prendre une habitude ?", "66 jours en médiane selon l’étude de référence (Lally, 2009), avec une fourchette réelle de 18 à 254 jours selon l’habitude et la personne."],
+        ["Combien d’habitudes lancer en même temps ?", "2 ou 3 maximum. Chaque habitude en formation consomme de l’attention."],
+        ["Un streak cassé, tout est perdu ?", "Non : un accroc isolé n’a pas d’effet mesurable sur la formation de l’habitude. La règle : ne jamais rater deux fois de suite."],
+      ],
+      html: `
 <p class="lead">« Il faut 21 jours pour prendre une habitude. » Vous avez lu ce chiffre partout, et il est faux. La recherche donne une réponse à la fois moins vendeuse et beaucoup plus utile : <strong>en moyenne 66 jours, avec d'énormes variations selon l'habitude et la personne (de 18 à 254 jours)</strong>. Comprendre pourquoi change complètement la façon de s'y prendre, et surtout, ça explique pourquoi vous n'avez jamais été « nul » : vous aviez juste un mauvais chiffre en tête.</p>
 
 <h2 id="mythe">D'où vient le mythe des 21 jours ?</h2>
@@ -65,4 +77,6 @@ export const article = {
 <h3>Un streak cassé, tout est perdu ?</h3>
 <p>Non, c'est le mythe le plus toxique du domaine. L'étude de Lally montre qu'un accroc isolé n'a pas d'effet mesurable. La seule règle : ne jamais rater deux fois de suite.</p>
 `,
+    },
+  },
 };

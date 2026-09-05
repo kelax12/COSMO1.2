@@ -1,17 +1,30 @@
-// Pages use-case (landing commerciales) — contenu partagé entre React
+// Pages cas d'usage (landing commerciales), contenu partagé entre React
 // (UseCasePage) et prerender.mjs. ESM pur, aucun import.
+//
+// ⚠️ Le registre est keyé par `routeId`, PAS par slug. Il l'était par slug
+// français, et c'est ce qui faisait redirriger les quatre pages anglaises vers
+// l'accueil : sous `en`, App.tsx déclare la route `for-freelancers`, que
+// `getUseCase()` ne trouvait pas. La table des slugs reste src/i18n/
+// route-slugs.json, seule et unique : la recopier ici rouvrirait la
+// possibilité qu'une URL servie diverge de l'URL déclarée canonique.
+//
+// `locales` porte tout ce qui se traduit. Une locale absente ici est une
+// locale que le prérendu ne publiera pas pour cette page (cf. prerender.mjs,
+// `availableLocales`) : impossible de sortir une page anglaise au corps
+// français.
 export const USE_CASES = [
   {
-    slug: 'pour-freelances',
+    routeId: "freelancers",
     // `lastmod` du sitemap : à bouger quand la copie de cette page change.
-    dateModified: '2026-08-16',
-    audience: 'freelances',
-    title: "L'application de productivité pensée pour les freelances",
-    metaTitle: 'App de productivité freelance : tâches et objectifs',
-    description:
-      'Freelance : gérez clients, deadlines, prospection et objectifs trimestriels dans une seule app gratuite. Time-blocking natif, démo sans inscription.',
-    lead: "Être freelance, c'est porter tous les rôles à la fois : la production, la prospection, l'administratif, la stratégie. Votre outil d'organisation doit suivre, sans vous coûter un abonnement de plus.",
-    html: `
+    dateModified: "2026-08-16",
+    locales: {
+      fr: {
+        audience: "freelances",
+        title: "L'application de productivité pensée pour les freelances",
+        metaTitle: "App de productivité freelance : tâches et objectifs",
+        description: "Freelance : gérez clients, deadlines, prospection et objectifs trimestriels dans une seule app gratuite. Time-blocking natif, démo sans inscription.",
+        lead: "Être freelance, c'est porter tous les rôles à la fois : la production, la prospection, l'administratif, la stratégie. Votre outil d'organisation doit suivre, sans vous coûter un abonnement de plus.",
+        html: `
 <h2>Le problème du freelance organisé</h2>
 <p>Vous avez probablement déjà un système : une todo-list pour les livrables, un agenda pour les rendez-vous clients, peut-être un tableur pour vos objectifs de chiffre d'affaires… et une résolution abandonnée de prospecter « plus régulièrement ». Quatre outils, zéro vision d'ensemble, et la prospection, seule garante de votre pipeline dans trois mois, passe toujours après l'urgence du jour.</p>
 <h2>Ce que Cosmo change, concrètement</h2>
@@ -33,18 +46,21 @@ export const USE_CASES = [
 
 <h2>Pourquoi gratuit ?</h2>
 <p>Les fonctionnalités principales de Cosmo sont gratuites, sans limite de projets ni de clients. Pour un indépendant, c'est un poste de dépense en moins, et la <a href="/">démo s'essaie sans créer de compte</a>, avec 12 mois de données réalistes pour juger sur pièce en deux minutes. Si vous partez d'un système éclaté entre trois outils, l'article sur la <a href="/blog/gestion-du-temps-efficace">gestion du temps efficace</a> décrit l'ordre dans lequel les regrouper sans tout casser.</p>`,
+      },
+    },
   },
   {
-    slug: 'pour-etudiants',
+    routeId: "students",
     // `lastmod` du sitemap : à bouger quand la copie de cette page change.
-    dateModified: '2026-08-16',
-    audience: 'étudiants',
-    title: "L'application de productivité gratuite pour les étudiants",
-    metaTitle: 'App de productivité étudiant : révisions et deadlines',
-    description:
-      "Étudiant : organisez cours, révisions et deadlines avec le time-blocking, construisez des habitudes de travail durables. 100 % gratuit, sans carte bancaire.",
-    lead: "Entre les cours, les partiels, les projets de groupe et un job à côté, le problème n'est pas le manque de motivation, c'est l'absence de système. Et un budget étudiant n'a pas de place pour un abonnement productivité.",
-    html: `
+    dateModified: "2026-08-16",
+    locales: {
+      fr: {
+        audience: "étudiants",
+        title: "L'application de productivité gratuite pour les étudiants",
+        metaTitle: "App de productivité étudiant : révisions et deadlines",
+        description: "Étudiant : organisez cours, révisions et deadlines avec le time-blocking, construisez des habitudes de travail durables. 100 % gratuit, sans carte bancaire.",
+        lead: "Entre les cours, les partiels, les projets de groupe et un job à côté, le problème n'est pas le manque de motivation, c'est l'absence de système. Et un budget étudiant n'a pas de place pour un abonnement productivité.",
+        html: `
 <h2>Le semestre type, sans système</h2>
 <p>Tout va bien jusqu'à mi-octobre. Puis les deadlines s'empilent, les révisions se compressent dans les dix derniers jours, et chaque partiel se prépare dans l'urgence. Le problème n'est pas l'intelligence ni la volonté : c'est qu'un semestre est un projet de 4 mois géré sans plan.</p>
 <h2>Le système Cosmo pour un semestre</h2>
@@ -67,18 +83,21 @@ export const USE_CASES = [
 
 <h2>Vraiment gratuit, vraiment sans friction</h2>
 <p>Pas de carte bancaire, pas d'essai de 14 jours : les fonctionnalités principales sont gratuites, point. Cosmo fonctionne dans le navigateur de votre téléphone comme sur l'ordi de la BU, sans installation. <a href="/">Testez la démo sans inscription</a>, deux minutes suffisent pour voir si le système vous parle.</p>`,
+      },
+    },
   },
   {
-    slug: 'pour-managers',
+    routeId: "managers",
     // `lastmod` du sitemap : à bouger quand la copie de cette page change.
-    dateModified: '2026-08-16',
-    audience: 'managers',
-    title: "L'application de productivité pour managers et chefs d'équipe",
-    metaTitle: 'App de productivité manager : OKR et priorités',
-    description:
-      "Manager : pilotez vos OKR, protégez votre temps de travail profond entre les réunions et suivez les tâches partagées avec votre équipe. Gratuit.",
-    lead: "Le paradoxe du manager : plus vous êtes sollicité, moins il reste de temps pour le travail qui justifie votre poste : la stratégie, les décisions, les gens. Reprendre ce temps est un problème d'outillage autant que de discipline.",
-    html: `
+    dateModified: "2026-08-16",
+    locales: {
+      fr: {
+        audience: "managers",
+        title: "L'application de productivité pour managers et chefs d'équipe",
+        metaTitle: "App de productivité manager : OKR et priorités",
+        description: "Manager : pilotez vos OKR, protégez votre temps de travail profond entre les réunions et suivez les tâches partagées avec votre équipe. Gratuit.",
+        lead: "Le paradoxe du manager : plus vous êtes sollicité, moins il reste de temps pour le travail qui justifie votre poste : la stratégie, les décisions, les gens. Reprendre ce temps est un problème d'outillage autant que de discipline.",
+        html: `
 <h2>L'agenda d'un manager est un champ de bataille</h2>
 <p>Des réunions posées par d'autres, des sollicitations continues, et en fin de semaine cette question : « qu'ai-je vraiment fait avancer ? ». Les objectifs annuels de l'équipe, eux, vivent dans un slide revu deux fois par an. Ce n'est pas un défaut personnel, c'est ce qui arrive quand l'important n'a pas d'outil face à l'urgent.</p>
 <h2>Ce que Cosmo apporte à un manager</h2>
@@ -101,18 +120,21 @@ export const USE_CASES = [
 
 <h2>Commencez par vous</h2>
 <p>Le meilleur argument pour diffuser une méthode à son équipe, c'est de l'incarner un trimestre. <a href="/">Essayez la démo sans inscription</a>, posez vos OKR du trimestre en 15 minutes, et jugez sur vos propres résultats, c'est gratuit. Quand la méthode est validée et que vous voulez embarquer tout le monde, le <a href="/pour-equipes">mode entreprise</a> prend le relais : organigramme, projets d'équipe et statistiques de pilotage.</p>`,
+      },
+    },
   },
   {
-    slug: 'pour-equipes',
+    routeId: "teams",
     // `lastmod` du sitemap : à bouger quand la copie de cette page change.
-    dateModified: '2026-08-16',
-    audience: 'équipes',
-    title: "L'application de gestion d'équipe pour les PME et les studios",
-    metaTitle: "App de gestion d'équipe : projets, OKR et pilotage",
-    description:
-      "Organigramme automatique, projets d'équipe, OKR pondérés et statistiques de pilotage dans une seule app. Gratuit jusqu'à 5 personnes, démo sans inscription.",
-    lead: "Dans la plupart des équipes, le travail vit dans un outil et le pilotage dans un autre : les tâches d'un côté, un tableur d'objectifs et un organigramme oublié de l'autre. Cosmo réunit les deux, sans imposer un déploiement de six mois.",
-    html: `
+    dateModified: "2026-08-16",
+    locales: {
+      fr: {
+        audience: "équipes",
+        title: "L'application de gestion d'équipe pour les PME et les studios",
+        metaTitle: "App de gestion d'équipe : projets, OKR et pilotage",
+        description: "Organigramme automatique, projets d'équipe, OKR pondérés et statistiques de pilotage dans une seule app. Gratuit jusqu'à 5 personnes, démo sans inscription.",
+        lead: "Dans la plupart des équipes, le travail vit dans un outil et le pilotage dans un autre : les tâches d'un côté, un tableur d'objectifs et un organigramme oublié de l'autre. Cosmo réunit les deux, sans imposer un déploiement de six mois.",
+        html: `
 <h2>Deux outils, deux vérités</h2>
 <p>Le scénario est presque toujours le même. Chacun gère ses tâches dans son coin : une app perso, un carnet, une liste dans la messagerie. L'équipe, elle, a un outil de gestion de projet où l'on note ce qui doit être partagé. Résultat : personne n'a sa journée complète sur un seul écran, et le manager reconstitue l'état d'avancement en posant la question à cinq personnes.</p>
 <p>Le coût de cette double saisie ne se voit pas dans un budget, mais il se paie tous les jours : des tâches oubliées parce qu'elles étaient dans l'autre outil, un point hebdomadaire qui sert à collecter de l'information plutôt qu'à décider, et des objectifs trimestriels qui vivent dans un slide revu deux fois par an.</p>
@@ -136,7 +158,10 @@ export const USE_CASES = [
 <h2>Gratuit jusqu'à cinq personnes</h2>
 <p>Une équipe de moins de cinq personnes utilise le mode entreprise gratuitement, sans fonctionnalité bridée ni période d'essai à surveiller : l'organigramme, les projets, les OKR et les statistiques sont tous inclus. C'est assez pour qu'une équipe fondatrice, un pôle ou un premier projet pilote juge sur pièce avant d'embarquer le reste de l'entreprise.</p>
 <p><a href="/">La démo s'essaie sans créer de compte</a> : une organisation fictive de six personnes, avec ses projets, ses objectifs et son organigramme déjà remplis, pour se faire une idée en deux minutes. Si vous êtes seul responsable pour l'instant, la page <a href="/pour-managers">pour les managers</a> décrit le même produit du point de vue individuel.</p>`,
+      },
+    },
   },
 ];
 
-export const getUseCase = (slug) => USE_CASES.find((u) => u.slug === slug);
+/** Fiche d'un cas d'usage par son identifiant de route (jamais par slug). */
+export const getUseCase = (routeId) => USE_CASES.find((u) => u.routeId === routeId);

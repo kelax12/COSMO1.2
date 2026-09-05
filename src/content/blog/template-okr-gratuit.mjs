@@ -1,32 +1,37 @@
-// Article de blog — contenu partagé React + prerender. ESM pur.
-// Linkable asset : template Excel généré par scripts/generate-okr-template.py
-// → public/downloads/template-okr-cosmo.xlsx
+// Article de blog, contenu partagé React + prerender. ESM pur.
 //
-// C'est la SEULE page du site qui offre quelque chose à télécharger, donc la
-// seule qui puisse attirer un lien entrant spontané. Elle a été portée de
-// ~560 à ~1 800 mots le 2026-08-19 pour cette raison : à autorité de domaine
-// nulle, un actif linkable vaut plus qu'un article de plus.
+// Deux dimensions, à ne jamais confondre :
+//   - la colonne vertébrale (`slug`, dates, `related`) est COMMUNE à toutes
+//     les langues : c'est une seule publication traduite, pas deux articles ;
+//   - `locales` porte tout ce qui se traduit, `readingMinutes` compris (un
+//     texte anglais n'a aucune raison de se lire dans le même temps que le
+//     français).
+//
+// Une locale absente n'est jamais repliée en silence sur le français côté SEO :
+// `articlesFor()` ne la publie pas, donc le prérendu ne peut pas produire une
+// page anglaise au corps français. Voir src/content/blog/index.mjs.
 export const article = {
-  slug: 'template-okr-gratuit',
-  title: 'Template OKR gratuit (Excel) : personnel et équipe, prêt à remplir',
-  metaTitle: 'Template OKR gratuit à télécharger (Excel)',
-  description:
-    'Téléchargez notre template OKR gratuit au format Excel : exemples pré-remplis, progression automatique, versions perso et équipe. Sans email.',
-  datePublished: '2026-07-18',
-  dateModified: '2026-08-19',
-  readingMinutes: 9,
+  slug: "template-okr-gratuit",
+  datePublished: "2026-07-18",
+  dateModified: "2026-08-19",
   // Suite de lecture : choisie par proximité de sujet, pas par date. Le tri
   // par récence envoyait les mêmes 3 liens depuis les 11 articles, ce qui
   // laissait 4 d'entre eux sans aucun lien entrant interne.
-  related: ['methode-okr-exemples', 'okr-vs-smart-vs-kpi', 'glossaire-productivite'],
-  faq: [
-    ['Le template OKR fonctionne-t-il sur Google Sheets ?', 'Oui : importez le fichier .xlsx dans Google Sheets (Fichier → Importer), les formules de progression sont conservées. Compatible aussi LibreOffice Calc et Numbers.'],
-    ['Puis-je partager le template à mon équipe ?', 'Oui, librement. Dupliquez la feuille « OKR équipe-startup » par personne si chacun suit ses propres OKR, en gardant un seul fichier pour tout le monde.'],
-    ['Faut-il donner son email pour télécharger ?', 'Non. Le lien est direct, sans formulaire ni inscription.'],
-    ["Combien d'objectifs mettre dans le template ?", "2 à 4 par cycle, avec 2 à 5 résultats clés chacun. Au-delà, la revue hebdomadaire dépasse dix minutes et cesse d'avoir lieu."],
-    ['Peut-on commencer en cours de trimestre ?', "Oui, et c'est préférable à attendre : prenez les semaines restantes comme durée de cycle et ajustez les cibles en proportion."],
-  ],
-  html: `
+  related: ["methode-okr-exemples","okr-vs-smart-vs-kpi","glossaire-productivite"],
+  locales: {
+    fr: {
+      title: "Template OKR gratuit (Excel) : personnel et équipe, prêt à remplir",
+      metaTitle: "Template OKR gratuit à télécharger (Excel)",
+      description: "Téléchargez notre template OKR gratuit au format Excel : exemples pré-remplis, progression automatique, versions perso et équipe. Sans email.",
+      readingMinutes: 9,
+      faq: [
+        ["Le template OKR fonctionne-t-il sur Google Sheets ?", "Oui : importez le fichier .xlsx dans Google Sheets (Fichier → Importer), les formules de progression sont conservées. Compatible aussi LibreOffice Calc et Numbers."],
+        ["Puis-je partager le template à mon équipe ?", "Oui, librement. Dupliquez la feuille « OKR équipe-startup » par personne si chacun suit ses propres OKR, en gardant un seul fichier pour tout le monde."],
+        ["Faut-il donner son email pour télécharger ?", "Non. Le lien est direct, sans formulaire ni inscription."],
+        ["Combien d'objectifs mettre dans le template ?", "2 à 4 par cycle, avec 2 à 5 résultats clés chacun. Au-delà, la revue hebdomadaire dépasse dix minutes et cesse d'avoir lieu."],
+        ["Peut-on commencer en cours de trimestre ?", "Oui, et c'est préférable à attendre : prenez les semaines restantes comme durée de cycle et ajustez les cibles en proportion."],
+      ],
+      html: `
 <p class="lead">Vous connaissez la méthode, il ne manque que le support. Voici un <strong>template OKR gratuit au format Excel</strong> (compatible Google Sheets et LibreOffice) : deux feuilles prêtes à remplir (OKR personnels et OKR équipe/startup), avec des exemples concrets et la progression calculée automatiquement. Téléchargement direct, <strong>sans email demandé</strong>.</p>
 
 <p><a href="/downloads/template-okr-cosmo.xlsx" download><strong>Télécharger le template OKR (.xlsx, 9 Ko)</strong></a></p>
@@ -141,4 +146,6 @@ export const article = {
 <h3>Que faire si je rate deux revues d'affilée ?</h3>
 <p>Reprendre à la suivante, sans rattraper les semaines manquées. Rien dans le template ne dépend de l'historique : seule la valeur actuelle compte. C'est surtout le signal qu'il faut déplacer le créneau de revue, pas augmenter la volonté.</p>
 `,
+    },
+  },
 };

@@ -1,27 +1,35 @@
-// Article de blog — contenu partagé React + prerender. ESM pur.
+// Article de blog, contenu partagé React + prerender. ESM pur.
 //
-// Cible SEO : « suivi des habitudes » (30 rech./mois, difficulté 29).
-// Complète `combien-de-temps-habitude` (durée d'ancrage) en traitant la
-// question distincte du SUIVI : quoi mesurer, comment, et quand ajuster.
+// Deux dimensions, à ne jamais confondre :
+//   - la colonne vertébrale (`slug`, dates, `related`) est COMMUNE à toutes
+//     les langues : c'est une seule publication traduite, pas deux articles ;
+//   - `locales` porte tout ce qui se traduit, `readingMinutes` compris (un
+//     texte anglais n'a aucune raison de se lire dans le même temps que le
+//     français).
+//
+// Une locale absente n'est jamais repliée en silence sur le français côté SEO :
+// `articlesFor()` ne la publie pas, donc le prérendu ne peut pas produire une
+// page anglaise au corps français. Voir src/content/blog/index.mjs.
 export const article = {
-  slug: 'suivi-des-habitudes',
-  title: "Suivi des habitudes : ce qu'il faut mesurer (et ce qui décourage)",
-  metaTitle: 'Suivi des habitudes : quoi mesurer pour tenir dans la durée',
-  description:
-    "Streak, taux de complétion, heatmap : quels indicateurs de suivi des habitudes aident vraiment, lesquels sabotent la régularité, et comment bien démarrer.",
-  datePublished: '2026-08-12',
-  dateModified: '2026-08-12',
-  readingMinutes: 8,
+  slug: "suivi-des-habitudes",
+  datePublished: "2026-08-12",
+  dateModified: "2026-08-12",
   // Suite de lecture : choisie par proximité de sujet, pas par date. Le tri
   // par récence envoyait les mêmes 3 liens depuis les 11 articles, ce qui
   // laissait 4 d'entre eux sans aucun lien entrant interne.
-  related: ['combien-de-temps-prendre-habitude', 'tableau-de-bord-productivite', 'methode-okr-exemples'],
-  faq: [
-    ['Quel est le meilleur indicateur pour suivre une habitude ?', "Le taux de complétion sur une période glissante (4 à 12 semaines). Il tolère les jours manqués, contrairement au streak, et reflète la régularité réelle plutôt que la performance récente."],
-    ['Le streak est-il utile ou contre-productif ?', "Les deux. Il motive tant qu'il monte, mais un streak cassé provoque souvent un abandon total, l'effet « tout ou rien ». Utilisez-le comme encouragement secondaire, jamais comme indicateur principal."],
-    ['Combien d’habitudes suivre en même temps ?', "Deux ou trois au démarrage. Chaque habitude supplémentaire réduit la probabilité de toutes les tenir : le facteur limitant n'est pas la motivation mais le nombre de décisions quotidiennes que le système vous demande."],
-  ],
-  html: `
+  related: ["combien-de-temps-prendre-habitude","tableau-de-bord-productivite","methode-okr-exemples"],
+  locales: {
+    fr: {
+      title: "Suivi des habitudes : ce qu'il faut mesurer (et ce qui décourage)",
+      metaTitle: "Suivi des habitudes : quoi mesurer pour tenir dans la durée",
+      description: "Streak, taux de complétion, heatmap : quels indicateurs de suivi des habitudes aident vraiment, lesquels sabotent la régularité, et comment bien démarrer.",
+      readingMinutes: 8,
+      faq: [
+        ["Quel est le meilleur indicateur pour suivre une habitude ?", "Le taux de complétion sur une période glissante (4 à 12 semaines). Il tolère les jours manqués, contrairement au streak, et reflète la régularité réelle plutôt que la performance récente."],
+        ["Le streak est-il utile ou contre-productif ?", "Les deux. Il motive tant qu'il monte, mais un streak cassé provoque souvent un abandon total, l'effet « tout ou rien ». Utilisez-le comme encouragement secondaire, jamais comme indicateur principal."],
+        ["Combien d’habitudes suivre en même temps ?", "Deux ou trois au démarrage. Chaque habitude supplémentaire réduit la probabilité de toutes les tenir : le facteur limitant n'est pas la motivation mais le nombre de décisions quotidiennes que le système vous demande."],
+      ],
+      html: `
 <p class="lead">Suivre ses habitudes, c'est cocher des cases, la partie facile. La difficulté est ailleurs : choisir <em>quoi</em> regarder. Selon l'indicateur mis en avant, le même suivi produit soit une régularité qui s'installe, soit un abandon au premier accroc. Voici ce que chaque indicateur mesure réellement, celui qu'il faut mettre au centre, et la façon de démarrer un suivi qui tienne au-delà de trois semaines.</p>
 
 <h2 id="pourquoi">Pourquoi suivre, plutôt que simplement faire</h2>
@@ -76,4 +84,6 @@ export const article = {
 <h3>Quand peut-on arrêter de suivre une habitude ?</h3>
 <p>Quand l'oublier devient inconfortable, c'est le signe que le comportement s'est automatisé. Vous pouvez alors la retirer du suivi et libérer la place pour la suivante.</p>
 `,
+    },
+  },
 };

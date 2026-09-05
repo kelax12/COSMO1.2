@@ -1,18 +1,30 @@
-// Article de blog — glossaire (cible longue traîne « définition X »). ESM pur.
+// Article de blog, contenu partagé React + prerender. ESM pur.
+//
+// Deux dimensions, à ne jamais confondre :
+//   - la colonne vertébrale (`slug`, dates, `related`) est COMMUNE à toutes
+//     les langues : c'est une seule publication traduite, pas deux articles ;
+//   - `locales` porte tout ce qui se traduit, `readingMinutes` compris (un
+//     texte anglais n'a aucune raison de se lire dans le même temps que le
+//     français).
+//
+// Une locale absente n'est jamais repliée en silence sur le français côté SEO :
+// `articlesFor()` ne la publie pas, donc le prérendu ne peut pas produire une
+// page anglaise au corps français. Voir src/content/blog/index.mjs.
 export const article = {
-  slug: 'glossaire-productivite',
-  title: 'Glossaire de la productivité : 20 termes enfin définis clairement',
-  metaTitle: 'Glossaire productivité : OKR, time-blocking, deep work',
-  description:
-    'OKR, time-blocking, deep work, habit stacking, loi de Parkinson… 20 termes de la productivité définis en français, clairement, avec leur usage concret.',
-  datePublished: '2026-07-18',
-  dateModified: '2026-07-18',
-  readingMinutes: 8,
+  slug: "glossaire-productivite",
+  datePublished: "2026-07-18",
+  dateModified: "2026-07-18",
   // Suite de lecture : choisie par proximité de sujet, pas par date. Le tri
   // par récence envoyait les mêmes 3 liens depuis les 11 articles, ce qui
   // laissait 4 d'entre eux sans aucun lien entrant interne.
-  related: ['methode-okr-exemples', 'time-blocking-guide', 'combien-de-temps-prendre-habitude'],
-  html: `
+  related: ["methode-okr-exemples","time-blocking-guide","combien-de-temps-prendre-habitude"],
+  locales: {
+    fr: {
+      title: "Glossaire de la productivité : 20 termes enfin définis clairement",
+      metaTitle: "Glossaire productivité : OKR, time-blocking, deep work",
+      description: "OKR, time-blocking, deep work, habit stacking, loi de Parkinson… 20 termes de la productivité définis en français, clairement, avec leur usage concret.",
+      readingMinutes: 8,
+      html: `
 <p class="lead">Le monde de la productivité adore le jargon. Voici les 20 termes que vous croiserez partout, définis clairement et sans mystique, avec pour chacun ce qu'il faut vraiment en retenir.</p>
 
 <h2 id="objectifs">Objectifs &amp; mesure</h2>
@@ -66,4 +78,6 @@ export const article = {
 <h2 id="pratique">Passer du glossaire à la pratique</h2>
 <p>Tous ces concepts vivent au même endroit dans <a href="/">Cosmo</a> : les OKR avec progression automatique, le time-blocking par glisser-déposer, les priorités pour appliquer Eisenhower, et les habitudes avec heatmap et streaks. <a href="/signup">Gratuit</a>, démo instantanée sans inscription.</p>
 `,
+    },
+  },
 };

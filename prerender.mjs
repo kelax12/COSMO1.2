@@ -18,7 +18,7 @@
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { ARTICLES, relatedArticles } from './src/content/blog/index.mjs';
+import { ARTICLES, articlesFor, relatedArticles } from './src/content/blog/index.mjs';
 import { USE_CASES } from './src/content/use-cases.mjs';
 import { CONTACT_EMAIL } from './src/lib/contact.mjs';
 import {
@@ -29,8 +29,23 @@ import {
   canonicalUrl,
   hreflangLinks,
   localizePath,
+  routeSlug,
   sitemapAlternates,
 } from './src/i18n/seo-urls.mjs';
+
+/**
+ * `{ locale → valeur }` pour les seules langues où l'article ou le cas d'usage
+ * est réellement écrit. C'est la brique qui rend `availableLocales()` exact :
+ * une langue absente du registre n'apparaît ni en `meta`, ni en `content`, donc
+ * n'est ni prérendue, ni déclarée en `hreflang`, ni listée au sitemap.
+ */
+const byLocale = (entry, build) =>
+  Object.fromEntries(
+    INDEXABLE_LOCALES.filter((locale) => entry.locales?.[locale]).map((locale) => [
+      locale,
+      build(entry.locales[locale], locale),
+    ])
+  );
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DIST = join(__dirname, 'dist');
@@ -109,6 +124,58 @@ const faqSchema = {
 
 /** Libellé de la racine dans le fil d'Ariane, par locale. */
 const HOME_LABEL = { fr: 'Accueil', en: 'Home', es: 'Inicio' };
+
+/**
+ * Chrome du prérendu : les quelques mots qui entourent le contenu des registres
+ * (fils d'Ariane, liens de bas de page, mentions de durée de lecture).
+ *
+ * Ils vivent ici et non dans src/locales/ parce qu'ils n'existent QUE dans le
+ * repli indexable : aucun composant React ne les rend. Les sortir dans un
+ * catalogue ajouterait des clés que `i18n:check` exigerait de tenir sans que
+ * personne ne les voie jamais à l'écran.
+ */
+const UI = {
+  fr: {
+    blogTitle: 'Le blog Cosmo',
+    blogIntro: (n) =>
+      `Guides pratiques sur la méthode OKR, le suivi d'habitudes, le time-blocking et la productivité personnelle. ${n} articles, écrits pour être utiles sans avoir à installer quoi que ce soit.`,
+    readArticle: "Lire l'article",
+    readingTime: (n) => `${n} min de lecture`,
+    readNext: 'À lire ensuite',
+    allArticles: '← Tous les articles',
+    tryFree: 'Essayer Cosmo gratuitement',
+    home: 'Accueil',
+    blog: 'Blog',
+    signup: 'Créer un compte gratuit',
+    guide: "Guide d'utilisation",
+    rss: 'Flux RSS',
+  },
+  en: {
+    blogTitle: 'The Cosmo blog',
+    blogIntro: (n) =>
+      `Practical guides on the OKR method, habit tracking, time-blocking and personal productivity. ${n} articles, written to be useful without installing anything.`,
+    readArticle: 'Read the article',
+    readingTime: (n) => `${n} min read`,
+    readNext: 'Read next',
+    allArticles: '← All articles',
+    tryFree: 'Try Cosmo for free',
+    home: 'Home',
+    blog: 'Blog',
+    signup: 'Create a free account',
+    guide: 'User guide',
+    rss: 'RSS feed',
+  },
+};
+
+// Une locale qu'on ouvre à l'indexation sans lui écrire ce chrome produirait un
+// `undefined` au milieu d'un fil d'Ariane, silencieusement. On échoue au build.
+for (const locale of INDEXABLE_LOCALES) {
+  if (!UI[locale]) {
+    throw new Error(
+      `prerender: la locale « ${locale} » est indexable mais n'a pas d'entrée dans UI (prerender.mjs).`
+    );
+  }
+}
 
 const breadcrumb = (name, path, locale) => ({
   '@context': 'https://schema.org',
@@ -283,9 +350,9 @@ const ROUTES = [
   {
     path: '/blog',
     meta: fromCatalog('blog'),
-    // Les ARTICLES restent français : le schéma Blog reste donc en fr-FR quelle
-    // que soit la locale de l'index, sinon on déclarerait des BlogPosting
-    // anglais qui n'existent pas.
+    // Le schéma Blog ne liste QUE les articles écrits dans la langue de la page.
+    // Déclarer un BlogPosting anglais qui n'existe pas est une erreur Search
+    // Console, et l'index anglais n'a aucune raison d'annoncer un corps français.
     extraLd: (locale) => [
       { obj: breadcrumb('Blog', '/blog', locale), id: 'blog-breadcrumb' },
       {
@@ -293,112 +360,140 @@ const ROUTES = [
           '@context': 'https://schema.org',
           '@type': 'Blog',
           name: 'Blog Cosmo',
-          url: `${BASE}/blog`,
-          inLanguage: BCP47_TAG[DEFAULT_LOCALE],
+          url: canonicalUrl('/blog', locale),
+          inLanguage: BCP47_TAG[locale],
           publisher: { '@type': 'Organization', name: 'Cosmo', url: BASE },
-          blogPost: ARTICLES.map((a) => ({
+          blogPost: articlesFor(locale).map((a) => ({
             '@type': 'BlogPosting',
             headline: a.title,
             image: `${BASE}/og-card.png`,
-            url: `${BASE}/blog/${a.slug}`,
+            url: canonicalUrl(`/blog/${a.slug}`, locale),
             datePublished: a.datePublished,
           })),
         },
         id: 'blog-schema',
       },
     ],
-    content: {
-      // Chaque article sort en <h2> plutôt qu'en <li> : l'index n'avait
-      // AUCUN titre de niveau 2 dans le HTML prérendu, donc aucune structure
-      // exploitable pour un crawler sans JS.
-      fr: `<h1>Le blog Cosmo</h1>
-        <p>Guides pratiques sur la méthode OKR, le suivi d'habitudes, le time-blocking et la productivité personnelle. ${ARTICLES.length} articles, écrits pour être utiles sans avoir à installer quoi que ce soit.</p>
-        ${ARTICLES.map((a) => `<h2><a href="/blog/${a.slug}">${a.title}</a></h2>
-        <p>${a.description} <a href="/blog/${a.slug}">Lire l'article</a>, ${a.readingMinutes} min de lecture.</p>`).join('\n        ')}
-        <p><a href="/">Accueil</a> · <a href="/signup">Créer un compte gratuit</a> · <a href="/rss.xml">Flux RSS</a></p>`,
-    },
+    // Chaque article sort en <h2> plutôt qu'en <li> : l'index n'avait AUCUN
+    // titre de niveau 2 dans le HTML prérendu, donc aucune structure
+    // exploitable pour un crawler sans JS.
+    content: Object.fromEntries(
+      INDEXABLE_LOCALES.map((locale) => {
+        const posts = articlesFor(locale);
+        if (posts.length === 0) return [locale, null];
+        const u = UI[locale];
+        const at = (path) => localizePath(path, locale);
+        return [
+          locale,
+          `<h1>${u.blogTitle}</h1>
+        <p>${u.blogIntro(posts.length)}</p>
+        ${posts
+          .map(
+            (a) => `<h2><a href="${at(`/blog/${a.slug}`)}">${a.title}</a></h2>
+        <p>${a.description} <a href="${at(`/blog/${a.slug}`)}">${u.readArticle}</a>, ${u.readingTime(a.readingMinutes)}.</p>`
+          )
+          .join('\n        ')}
+        <p><a href="${at('/')}">${u.home}</a> · <a href="${at('/signup')}">${u.signup}</a> · <a href="/rss.xml">${u.rss}</a></p>`,
+        ];
+      }).filter(([, content]) => content)
+    ),
   },
   // Articles de blog — contenu complet visible (src/content/blog/*.mjs).
-  // Français uniquement (phase 3) : ils ne reçoivent donc que `x-default`, et
-  // aucune alternate `en`/`es` — déclarer une alternate vers une page qui
-  // n'existe pas est une erreur Search Console.
+  // Une langue n'est publiée que si l'article y est réellement écrit : les
+  // `hreflang` en sont dérivés, donc ils ne peuvent pas annoncer une page qui
+  // n'existe pas (erreur Search Console), ni une page anglaise au corps
+  // français. Le slug, lui, est celui de la publication et ne se traduit pas :
+  // /en/blog/<slug> est la version anglaise du MÊME article.
   ...ARTICLES.map((a) => ({
     path: `/blog/${a.slug}`,
     // Pas de suffixe de marque : « | Blog Cosmo » coûtait 12 caractères et
     // poussait 6 titres au-delà des ~60 affichés par Google (donc tronqués).
     // Google affiche de toute façon le nom du site sous le titre.
-    meta: { fr: { title: a.metaTitle, description: a.description } },
-    extraLd: () => [
-      {
-        obj: {
-          '@context': 'https://schema.org',
-          '@type': 'BreadcrumbList',
-          itemListElement: [
-            { '@type': 'ListItem', position: 1, name: 'Accueil', item: `${BASE}/` },
-            { '@type': 'ListItem', position: 2, name: 'Blog', item: `${BASE}/blog` },
-            { '@type': 'ListItem', position: 3, name: a.title, item: `${BASE}/blog/${a.slug}` },
-          ],
+    meta: byLocale(a, (c) => ({ title: c.metaTitle, description: c.description })),
+    extraLd: (locale) => {
+      const c = a.locales[locale];
+      const url = canonicalUrl(`/blog/${a.slug}`, locale);
+      return [
+        {
+          obj: {
+            '@context': 'https://schema.org',
+            '@type': 'BreadcrumbList',
+            itemListElement: [
+              { '@type': 'ListItem', position: 1, name: UI[locale].home, item: canonicalUrl('/', locale) },
+              { '@type': 'ListItem', position: 2, name: UI[locale].blog, item: canonicalUrl('/blog', locale) },
+              { '@type': 'ListItem', position: 3, name: c.title, item: url },
+            ],
+          },
+          id: `blog-${a.slug}-breadcrumb`,
         },
-        id: `blog-${a.slug}-breadcrumb`,
-      },
-      {
-        obj: {
-          '@context': 'https://schema.org',
-          '@type': 'BlogPosting',
-          headline: a.title,
-          description: a.description,
-          image: `${BASE}/og-card.png`,
-          url: `${BASE}/blog/${a.slug}`,
-          inLanguage: 'fr-FR',
-          datePublished: a.datePublished,
-          dateModified: a.dateModified,
-          author: { '@type': 'Organization', name: 'Cosmo', url: BASE },
-          publisher: { '@type': 'Organization', name: 'Cosmo', url: BASE },
-          mainEntityOfPage: `${BASE}/blog/${a.slug}`,
+        {
+          obj: {
+            '@context': 'https://schema.org',
+            '@type': 'BlogPosting',
+            headline: c.title,
+            description: c.description,
+            image: `${BASE}/og-card.png`,
+            url,
+            inLanguage: BCP47_TAG[locale],
+            datePublished: a.datePublished,
+            dateModified: a.dateModified,
+            author: { '@type': 'Organization', name: 'Cosmo', url: BASE },
+            publisher: { '@type': 'Organization', name: 'Cosmo', url: BASE },
+            mainEntityOfPage: url,
+          },
+          id: `blog-${a.slug}-posting`,
         },
-        id: `blog-${a.slug}-posting`,
-      },
-      // FAQPage si l'article a une section FAQ (rich results)
-      ...(a.faq?.length
-        ? [{
-            obj: {
-              '@context': 'https://schema.org',
-              '@type': 'FAQPage',
-              mainEntity: a.faq.map(([q, ans]) => ({
-                '@type': 'Question',
-                name: q,
-                acceptedAnswer: { '@type': 'Answer', text: ans },
-              })),
-            },
-            id: `blog-${a.slug}-faq`,
-          }]
-        : []),
-    ],
-    content: {
-      fr: `<p><a href="/">Accueil</a> › <a href="/blog">Blog</a></p>
-        <h1>${a.title}</h1>
-        ${a.html}
-        <h2>À lire ensuite</h2>
-        <ul>
-          ${relatedArticles(a).map((o) => `<li><a href="/blog/${o.slug}">${o.title}</a></li>`).join('\n          ')}
-        </ul>
-        <p><a href="/blog">← Tous les articles</a> · <a href="/signup">Essayer Cosmo gratuitement</a></p>`,
+        // FAQPage si l'article a une section FAQ (rich results)
+        ...(c.faq?.length
+          ? [{
+              obj: {
+                '@context': 'https://schema.org',
+                '@type': 'FAQPage',
+                mainEntity: c.faq.map(([q, ans]) => ({
+                  '@type': 'Question',
+                  name: q,
+                  acceptedAnswer: { '@type': 'Answer', text: ans },
+                })),
+              },
+              id: `blog-${a.slug}-faq`,
+            }]
+          : []),
+      ];
     },
+    content: byLocale(a, (c, locale) => {
+      const u = UI[locale];
+      const at = (path) => localizePath(path, locale);
+      return `<p><a href="${at('/')}">${u.home}</a> › <a href="${at('/blog')}">${u.blog}</a></p>
+        <h1>${c.title}</h1>
+        ${c.html}
+        <h2>${u.readNext}</h2>
+        <ul>
+          ${relatedArticles(a, locale).map((o) => `<li><a href="${at(`/blog/${o.slug}`)}">${o.title}</a></li>`).join('\n          ')}
+        </ul>
+        <p><a href="${at('/blog')}">${u.allArticles}</a> · <a href="${at('/signup')}">${u.tryFree}</a></p>`;
+    }),
   })),
   // Pages use-case commerciales — contenu complet visible
-  // (src/content/use-cases.mjs). Français uniquement, comme les articles.
+  // (src/content/use-cases.mjs). Le chemin canonique est le slug FRANÇAIS ;
+  // les autres langues en dérivent par `localizePath`, qui lit la même table
+  // route-slugs.json que l'app. Aucune seconde table de slugs.
   ...USE_CASES.map((u) => ({
-    path: `/${u.slug}`,
-    meta: { fr: { title: `${u.metaTitle} | Cosmo`, description: u.description } },
+    path: `/${routeSlug(u.routeId, DEFAULT_LOCALE)}`,
+    meta: byLocale(u, (c) => ({ title: `${c.metaTitle} | Cosmo`, description: c.description })),
     extraLd: (locale) => [
-      { obj: breadcrumb(u.title, `/${u.slug}`, locale), id: `usecase-${u.slug}-breadcrumb` },
+      {
+        obj: breadcrumb(u.locales[locale].title, `/${routeSlug(u.routeId, DEFAULT_LOCALE)}`, locale),
+        id: `usecase-${u.routeId}-breadcrumb`,
+      },
     ],
-    content: {
-      fr: `<h1>${u.title}</h1>
-        <p>${u.lead}</p>
-        ${u.html}
-        <p><a href="/">Accueil</a> · <a href="/signup">Créer un compte gratuit</a> · <a href="/guide">Guide d'utilisation</a></p>`,
-    },
+    content: byLocale(u, (c, locale) => {
+      const ui = UI[locale];
+      const at = (path) => localizePath(path, locale);
+      return `<h1>${c.title}</h1>
+        <p>${c.lead}</p>
+        ${c.html}
+        <p><a href="${at('/')}">${ui.home}</a> · <a href="${at('/signup')}">${ui.signup}</a> · <a href="${at('/guide')}">${ui.guide}</a></p>`;
+    }),
   })),
   {
     path: '/cgu',
@@ -694,9 +789,10 @@ try {
     ARTICLES.map((a) =>
       sitemapGroup(`/blog/${a.slug}`, localesOf(`/blog/${a.slug}`), a.dateModified, 'monthly', '0.7')
     ).join('') +
-    USE_CASES.map((u) =>
-      sitemapGroup(`/${u.slug}`, localesOf(`/${u.slug}`), u.dateModified, 'monthly', '0.7')
-    ).join('');
+    USE_CASES.map((u) => {
+      const path = `/${routeSlug(u.routeId, DEFAULT_LOCALE)}`;
+      return sitemapGroup(path, localesOf(path), u.dateModified, 'monthly', '0.7');
+    }).join('');
 
   sitemap = sitemap.replace('</urlset>', `${generated}</urlset>`);
   writeFileSync(sitemapPath, sitemap, 'utf8');
@@ -707,8 +803,14 @@ try {
 }
 
 // ── RSS : flux du blog généré depuis ARTICLES (autodiscovery dans <head>) ──
+//
+// Le flux reste FRANÇAIS, et c'est un choix, pas un oubli : un `<channel>`
+// porte UNE `<language>`, et un lecteur RSS ne négocie pas la langue. Ouvrir
+// l'anglais ici demanderait un second flux à son propre URL, déclaré par son
+// propre `<link rel="alternate">`. À faire le jour où l'anglais a une audience,
+// pas en même temps que la traduction.
 const rfc822 = (d) => new Date(`${d}T12:00:00Z`).toUTCString();
-const rssItems = [...ARTICLES]
+const rssItems = articlesFor(DEFAULT_LOCALE)
   .sort((a, b) => (a.datePublished < b.datePublished ? 1 : -1))
   .map((a) =>
     `    <item>\n      <title><![CDATA[${a.title}]]></title>\n      <link>${BASE}/blog/${a.slug}</link>\n      <guid isPermaLink="true">${BASE}/blog/${a.slug}</guid>\n      <pubDate>${rfc822(a.datePublished)}</pubDate>\n      <description><![CDATA[${a.description}]]></description>\n    </item>`
@@ -728,17 +830,27 @@ ${rssItems}
 </rss>
 `;
 writeFileSync(join(DIST, 'rss.xml'), rss, 'utf8');
-console.log(`  rss.xml → ${ARTICLES.length} articles`);
+console.log(`  rss.xml → ${rssItems.split('<item>').length - 1} articles (${DEFAULT_LOCALE})`);
 
 // ── llms.txt : sections blog + cas d'usage générées depuis les registres ──
 try {
   const llmsPath = join(DIST, 'llms.txt');
   let llms = readFileSync(llmsPath, 'utf8');
+  // llms.txt décrit le site dans sa langue de référence : un même document ne
+  // peut pas lister deux fois chaque page sans devenir illisible pour ce qu'il
+  // est, un sommaire.
   const llmsGenerated =
     `\n## Articles du blog\n\n` +
-    ARTICLES.map((a) => `- [${a.title}](${BASE}/blog/${a.slug}) : ${a.description}`).join('\n') +
+    articlesFor(DEFAULT_LOCALE)
+      .map((a) => `- [${a.title}](${BASE}/blog/${a.slug}) : ${a.description}`)
+      .join('\n') +
     `\n\n## Cas d'usage\n\n` +
-    USE_CASES.map((u) => `- [${u.title}](${BASE}/${u.slug}) : ${u.description}`).join('\n') +
+    USE_CASES.filter((u) => u.locales[DEFAULT_LOCALE])
+      .map((u) => {
+        const c = u.locales[DEFAULT_LOCALE];
+        return `- [${c.title}](${BASE}/${routeSlug(u.routeId, DEFAULT_LOCALE)}) : ${c.description}`;
+      })
+      .join('\n') +
     `\n\n## Autres pages\n\n- [Blog](${BASE}/blog)\n- [À propos](${BASE}/a-propos)\n- [Flux RSS](${BASE}/rss.xml)\n`;
   writeFileSync(llmsPath, llms.trimEnd() + '\n' + llmsGenerated, 'utf8');
   console.log(`  llms.txt → +${ARTICLES.length} articles, +${USE_CASES.length} cas d'usage`);

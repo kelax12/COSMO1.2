@@ -1,23 +1,35 @@
-// Article de blog — contenu partagé React + prerender. ESM pur.
+// Article de blog, contenu partagé React + prerender. ESM pur.
+//
+// Deux dimensions, à ne jamais confondre :
+//   - la colonne vertébrale (`slug`, dates, `related`) est COMMUNE à toutes
+//     les langues : c'est une seule publication traduite, pas deux articles ;
+//   - `locales` porte tout ce qui se traduit, `readingMinutes` compris (un
+//     texte anglais n'a aucune raison de se lire dans le même temps que le
+//     français).
+//
+// Une locale absente n'est jamais repliée en silence sur le français côté SEO :
+// `articlesFor()` ne la publie pas, donc le prérendu ne peut pas produire une
+// page anglaise au corps français. Voir src/content/blog/index.mjs.
 export const article = {
-  slug: 'okr-vs-smart-vs-kpi',
-  title: 'OKR vs objectifs SMART vs KPI : quelle méthode choisir (et quand) ?',
-  metaTitle: 'OKR vs SMART vs KPI : quelle méthode choisir ?',
-  description:
-    "OKR, SMART et KPI ne répondent pas à la même question. Différences concrètes, tableau comparatif et règle simple pour savoir quand utiliser chaque méthode.",
-  datePublished: '2026-07-18',
-  dateModified: '2026-07-18',
-  readingMinutes: 6,
+  slug: "okr-vs-smart-vs-kpi",
+  datePublished: "2026-07-18",
+  dateModified: "2026-07-18",
   // Suite de lecture : choisie par proximité de sujet, pas par date. Le tri
   // par récence envoyait les mêmes 3 liens depuis les 11 articles, ce qui
   // laissait 4 d'entre eux sans aucun lien entrant interne.
-  related: ['methode-okr-exemples', 'template-okr-gratuit', 'tableau-de-bord-productivite'],
-  faq: [
-    ['Peut-on utiliser OKR et KPI en même temps ?', "Oui, et c'est même la configuration idéale : les KPI surveillent la santé en continu, les OKR concentrent l'effort du trimestre sur ce qui doit changer. Quand un KPI se dégrade durablement, il devient candidat à un OKR."],
-    ['Un objectif SMART peut-il servir de résultat clé ?', "En pratique, un bon résultat clé ressemble beaucoup à un objectif SMART : spécifique, mesurable, temporellement borné. L'OKR ajoute la couche qui manque au SMART isolé : l'ambition qualitative qui relie plusieurs mesures entre elles."],
-    ['Quelle méthode pour des objectifs personnels ?', "Les OKR s'adaptent très bien au personnel : un cycle de 6-12 semaines, 2-3 objectifs, des résultats clés simples à mesurer. SMART aide à formuler chaque résultat clé proprement."],
-  ],
-  html: `
+  related: ["methode-okr-exemples","template-okr-gratuit","tableau-de-bord-productivite"],
+  locales: {
+    fr: {
+      title: "OKR vs objectifs SMART vs KPI : quelle méthode choisir (et quand) ?",
+      metaTitle: "OKR vs SMART vs KPI : quelle méthode choisir ?",
+      description: "OKR, SMART et KPI ne répondent pas à la même question. Différences concrètes, tableau comparatif et règle simple pour savoir quand utiliser chaque méthode.",
+      readingMinutes: 6,
+      faq: [
+        ["Peut-on utiliser OKR et KPI en même temps ?", "Oui, et c'est même la configuration idéale : les KPI surveillent la santé en continu, les OKR concentrent l'effort du trimestre sur ce qui doit changer. Quand un KPI se dégrade durablement, il devient candidat à un OKR."],
+        ["Un objectif SMART peut-il servir de résultat clé ?", "En pratique, un bon résultat clé ressemble beaucoup à un objectif SMART : spécifique, mesurable, temporellement borné. L'OKR ajoute la couche qui manque au SMART isolé : l'ambition qualitative qui relie plusieurs mesures entre elles."],
+        ["Quelle méthode pour des objectifs personnels ?", "Les OKR s'adaptent très bien au personnel : un cycle de 6-12 semaines, 2-3 objectifs, des résultats clés simples à mesurer. SMART aide à formuler chaque résultat clé proprement."],
+      ],
+      html: `
 <p class="lead">Trois acronymes, trois promesses de « mieux atteindre ses objectifs », et beaucoup de confusion. La réalité est plus simple : <strong>OKR, SMART et KPI ne répondent pas à la même question</strong>. SMART formule un objectif, KPI surveille une métrique, OKR organise un cycle d'ambition. Une fois cette distinction posée, savoir lequel utiliser devient évident.</p>
 
 <h2 id="definitions">Les trois méthodes en une phrase chacune</h2>
@@ -66,4 +78,6 @@ export const article = {
 <h3>Et pour des objectifs personnels ?</h3>
 <p>OKR sur 6-12 semaines, 2-3 objectifs, résultats clés simples. SMART sert de filtre de formulation.</p>
 `,
+    },
+  },
 };
