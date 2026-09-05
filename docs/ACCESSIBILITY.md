@@ -33,7 +33,21 @@ Conséquences pratiques, à tenir :
   La check-list est prête et se joue d'une traite :
   [`AUDIT-VOICEOVER-IOS.md`](./AUDIT-VOICEOVER-IOS.md).
 
-## Note d'accessibilité : 76 → 79 → 80 → 81 → **82 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03)
+## Note d'accessibilité : 76 → 79 → 80 → 81 → 82 → **83 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-04)
+
+> ### 2026-09-04 · +1, un critère A qui n'était couvert nulle part
+>
+> **2.4.1 Contourner des blocs (A)**, jusqu'ici absent du produit : aucune page protégée n'avait de
+> lien d'évitement, donc la barre latérale entière se retabulait à chaque écran, et `/agenda` y
+> ajoutait onze boutons homonymes avant le premier événement. Deux liens posés, tous deux
+> assertionnés sur le déplacement de `document.activeElement`. Détail et arbitrage : § « C-54
+> tranché » plus bas.
+>
+> ⚠️ **+1 seulement, et pas davantage** : le critère est désormais satisfait sur les routes
+> protégées, pas sur les pages publiques (landing, blog, guide), qui n'ont pas été touchées.
+> Le « 82 » d'avant est repris de la ligne du 2026-09-03 de ce même fichier, pas d'un tableau plus
+> ancien.
+
 
 > ### 2026-09-03 · +1, trois défauts réels, aucun visible par axe-core
 >
@@ -204,7 +218,7 @@ mesure du fichier n'a de valeur.
 |---|---|---|
 | Aucune modale maison ne piège le focus (58 fichiers, zéro utilitaire, zéro `activeElement` capturé) | `EventModal`, `HabitModal`, les feuilles | C-53 |
 | `EventModal` : le focus **reste derrière** la modale, et Échap ne ferme pas | `/agenda` | C-53 |
-| `/agenda` : **0 cellule de jour focalisable** sur 8, et **38 tabulations** jusqu'au premier événement, sans lien d'évitement | FullCalendar | C-54 |
+| `/agenda` : **0 cellule de jour focalisable** sur 8 | FullCalendar | C-54, **tranché le 2026-09-04**, cf. section suivante |
 | Trois surfaces que les sondes n'ont pas atteintes | calendrier ouvert depuis un MENU | C-55 |
 
 ⚠️ **Limites, à dire plutôt qu'à laisser croire.** Tout vient de **Chromium desktop** ; ce qui est
@@ -212,6 +226,72 @@ prouvé, c'est le déplacement du FOCUS, pas ce qu'un lecteur d'écran ANNONCE (
 dans le § « Ce que nos mesures prouvent » en tête de ce document). Deux modales sur cinquante-huit
 ont été réellement ouvertes : l'absence totale d'utilitaire de piège de focus dans le dépôt rend le
 résultat généralisable, mais c'est une inférence.
+
+### C-54 tranché le 2026-09-04 · le bouton « Nouveau » EST le chemin clavier de l'agenda
+
+**Décision rendue, pas différée.** Les cellules de jour de FullCalendar restent hors du parcours de
+tabulation, et le motif grille ARIA n'est **pas** adopté. Créer un événement au clavier passe par le
+bouton « Nouveau », qui ouvre la saisie pré-remplie sur le prochain créneau libre. Ce qui a été
+corrigé dans la même passe, c'est le coût du trajet : deux liens d'évitement, qui manquaient.
+
+**Pourquoi ce sens.** Adopter le motif grille n'est pas un réglage, c'est un composant : gérer
+`tabindex` roving sur 7 colonnes × N créneaux, câbler les huit flèches, `Home` / `Fin` / `PagePrec` /
+`PageSuiv`, annoncer la cellule active, et refaire le tout à chaque changement de vue (jour, semaine,
+mois) et à chaque zoom, les cinq crans de `slotDuration` compris. Le geste équivalent existe déjà,
+il est atteignable, et il ouvre un formulaire où le jour et l'heure se saisissent explicitement.
+L'écart réel entre les deux chemins est un confort, pas un accès.
+
+**Ce qui a changé** (`src/components/SkipLink.tsx`) :
+
+- un lien d'évitement **global**, premier arrêt de tabulation de `Layout`, qui pose le focus sur le
+  `<main>` et saute la barre latérale entière : logo, thème, recherche, dix entrées de navigation,
+  état de synchronisation, signalement de bug ;
+- un **second** lien, propre à `/agenda`, qui saute le panneau des tâches, ses filtres et ses onze
+  boutons « Options de la tâche » tous nommés pareil. Il n'est monté que lorsque ce panneau est
+  ouvert, et sur desktop seulement : sur mobile le panneau est un calque, il ne s'interpose pas dans
+  l'ordre de tabulation quand il est fermé.
+
+**Mesuré après correctif** (2026-09-04, Chromium desktop, jeu de démo, `e2e/a11y-keyboard-audit.spec.ts`) :
+
+| Trajet | Tabulations |
+|---|---|
+| Haut de page → `<main>` | 1, puis Entrée |
+| `<main>` → conteneur du calendrier | 1, puis Entrée |
+| Conteneur du calendrier → premier événement | 1 |
+| Bouton « Nouveau » → modale de saisie | 4 |
+| Bouton « Nouveau » → premier champ d'heure | 7 |
+
+⚠️ **Le « 38 tabulations » du 2026-09-03 était compté trop bas.** La marche partait de
+`body.press('Tab')` alors que le focus se trouvait encore sur le lien « Agenda » de la barre
+latérale, cliqué par la fixture : Chromium garde ce lien comme point de départ de la navigation
+séquentielle, et la mesure repartait donc du MILIEU de la navigation. Le chiffre sous-estimait le
+trajet réel depuis le haut de page. Un `blur()` ne corrige rien, le point de départ lui survit :
+les mesures ci-dessus repartent d'un **rechargement**.
+
+**Ce que la décision NE règle pas, et qu'il ne faut pas laisser croire réglé :**
+
+- Le focus **n'entre pas** dans la modale de saisie à son ouverture, et Échap ne la ferme pas : c'est
+  le finding **C-53**, encore ouvert, et il vaut pour les 58 modales du produit. Le chemin clavier de
+  création marche parce qu'on peut continuer à tabuler jusqu'à la modale, pas parce que la modale
+  accueille le focus. Le jour où C-53 est corrigé, les 4 tabulations ci-dessus tombent à 0.
+- Une `<table>` de FullCalendar porte `role="grid"` sans aucun descendant focalisable géré, donc
+  annonce un motif d'interaction qu'elle n'implémente pas. Le rôle vient de la bibliothèque, sur un
+  arbre qu'elle re-rend à chaque changement de vue : le réécrire demanderait de repasser derrière
+  chaque rendu. **Arbitrage assumé, pas oubli** : on ne patche pas le rôle, on ne prétend pas non
+  plus que le motif grille est implémenté. Si un audit lecteur d'écran montre que l'annonce
+  « tableau de N lignes » égare réellement, la réponse sera d'adopter le motif, pas de maquiller le
+  rôle.
+- Rien de tout ceci n'a été entendu dans un lecteur d'écran. Ce qui est prouvé, c'est le déplacement
+  du FOCUS (cf. le § « Ce que nos mesures prouvent » en tête de ce document).
+
+**Gardes** : deux tests assertionnés dans `e2e/a11y-keyboard-audit.spec.ts`, **vus rouges avant
+d'être verts** (la première assertion tombait sur « OKR », ce qui a précisément révélé le biais de
+mesure ci-dessus). Le premier vérifie que
+chaque lien d'évitement **déplace `document.activeElement`** vers sa cible, jamais qu'il fait
+défiler : un lien dont la cible a perdu son `tabIndex={-1}` fait défiler sans déplacer le focus,
+c'est le mode d'échec silencieux du lien d'évitement. Le second remonte l'ordre de tabulation depuis
+le calendrier jusqu'au bouton « Nouveau », l'active à la touche Entrée, et redescend jusqu'à un champ
+d'heure : c'est la décision elle-même qui est gardée, pas seulement le lien.
 
 ### Gate axe-core · le chiffre qui manquait
 
@@ -279,6 +359,11 @@ sans jamais compter les violations concernées.
 - ✅ **Une bibliothèque traduit ses DATES, pas ses libellés ARIA** (2026-09-03, C-52). Passer
   `locale` à `react-day-picker` laisse « Go to the Previous Month » intact. Ces chaînes vivent dans
   `node_modules` : `i18n:scan` ne peut pas les voir, et ne le pourra jamais.
+- ✅ **Tout bloc répété avant le contenu se saute** (2026-09-04, C-54, WCAG 2.4.1). Un lien
+  d'évitement se pose avec `SkipLink`, et sa cible porte `tabIndex={-1}` : sans lui, `href="#x"`
+  fait DÉFILER sans déplacer le focus, et la garde paraît verte pendant que le clavier reste
+  coincé. Un second lien se justifie quand une page interpose son propre bloc, comme le panneau
+  des tâches de `/agenda` et ses onze boutons homonymes.
 - ✅ **Une pastille purement visuelle qui porte une information est `role="img"` + `aria-label`** (2026-08-27, E2). `title=` seul ne se voit ni au clavier ni au toucher, et ne remplace pas un nom accessible.
 
 ## Ne jamais faire — Accessibilité
@@ -290,3 +375,5 @@ sans jamais compter les violations concernées.
 - ❌ Lien dans un paragraphe distingué uniquement par couleur (A-4 / WCAG 1.4.1).
 - ❌ `text-green-600`, `text-blue-100` sur fond clair sans vérifier le contraste 4.5:1.
 - ❌ Faire annoncer une checkbox custom comme « bouton » — utiliser `role="checkbox" aria-checked`.
+- ❌ Annoncer un motif d'interaction qu'on n'implémente pas (`role="grid"` sans descendant
+  focalisable géré, `role="dialog"` sans piège de focus). Un rôle est une PROMESSE de clavier.
