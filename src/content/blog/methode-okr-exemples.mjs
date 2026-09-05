@@ -134,5 +134,120 @@ export const article = {
 <p>Non. La cible saine se situe autour de 70 % : c'est le signe d'objectifs réellement ambitieux. Un OKR systématiquement à 100 % doit vous pousser à viser plus haut au cycle suivant.</p>
 `,
     },
+    en: {
+      title: "The OKR method explained simply (with 15 concrete examples)",
+      metaTitle: "OKR method: a simple guide and 15 concrete examples (2026)",
+      description: "What is the OKR method? A simple definition, the rules for writing them, and 15 concrete personal and professional OKR examples ready to adapt.",
+      readingMinutes: 9,
+      faq: [
+        ["How many OKRs should you set?", "Two to four objectives per cycle at most, with 2 to 5 key results each. The fewer you have, the better the method works."],
+        ["How long should an OKR cycle be?", "The quarter is the standard. For personal goals, a cycle of 6 to 12 weeks works very well too."],
+        ["Is an OKR at 60 % a failure?", "No. The healthy target is around 70 %, which is the sign of genuinely ambitious goals."],
+      ],
+      html: `
+<p class="lead">The OKR method (Objectives &amp; Key Results) is the goal-setting system used by Google, Intel, Netflix and Spotify. Its principle fits in one sentence: an ambitious, qualitative <strong>objective</strong>, measured by 2 to 5 numeric <strong>key results</strong>. This guide explains how it works, how to write good OKRs, and gives you 15 concrete examples, personal and professional, to adapt directly.</p>
+
+<h2 id="definition">What is an OKR? A simple definition</h2>
+<p>An OKR has two parts:</p>
+<ul>
+<li><strong>The Objective (O)</strong>: a qualitative, ambitious and motivating direction. It answers "where do I want to go?". For example: <em>"Become a reference in my field"</em>.</li>
+<li><strong>The Key Results (KR)</strong>: 2 to 5 numeric measures that prove the objective has been reached. They answer "how will I know I am there?". For example: <em>"Publish 12 articles", "Reach 1,000 newsletter subscribers"</em>.</li>
+</ul>
+<p>The golden rule: <strong>the objective inspires, the key results measure</strong>. If your objective contains a number, it is probably a key result in disguise. The vocabulary of the field (KR, KPI, deep work, time-blocking) is gathered in our <a href="/en/blog/glossaire-productivite">productivity glossary</a> if a term escapes you. And if your key result cannot be measured without an argument ("improve quality"), it is not a key result.</p>
+
+<h2 id="origines">Where does the OKR method come from?</h2>
+<p>The method was born at <strong>Intel</strong> in the 1970s, driven by Andy Grove. John Doerr, then a young engineer at Intel, brought it to <strong>Google in 1999</strong>, when the company had barely 40 employees. Larry Page would later credit OKRs with part of Google's ability to grow without losing its bearings. The method has since spread far beyond tech, and it also works very well at an individual scale, to structure a year, a quarter or a personal project.</p>
+
+<h2 id="pourquoi">Why it works, where resolutions fail</h2>
+<ul>
+<li><strong>Measurement replaces intention.</strong> "Get back into sport" fails because nothing tells you whether you are on track. "Run 3 times a week for 12 weeks" can be checked every week.</li>
+<li><strong>Ambition is calibrated.</strong> A good OKR aims at 70 % attainment. Hitting 100 % everywhere means you aimed too low, which is a fundamental difference from classic SMART goals.</li>
+<li><strong>The number is limited.</strong> Two to four objectives a quarter, no more. The method forces you to choose, and therefore to give things up, which is its real power.</li>
+<li><strong>The rhythm is short.</strong> The quarter is the ideal cycle: long enough to achieve, short enough to correct.</li>
+</ul>
+
+<h2 id="ecrire">How to write a good OKR: the checklist</h2>
+<ol>
+<li>The objective fits in one sentence, contains no number, and genuinely motivates you.</li>
+<li>Each key result has a number (a target value) and an implicit deadline (the end of the cycle).</li>
+<li>Two to five key results per objective. Beyond that, split it into two objectives.</li>
+<li>Key results measure a <strong>result</strong>, not an activity. "Send 50 applications" is an activity, "land 5 interviews" is a result. Both are useful, but know which one you are writing.</li>
+<li>At the halfway point, each key result must be scoreable objectively, from 0 to 100 %.</li>
+</ol>
+
+<h2 id="exemples-perso">8 personal OKR examples</h2>
+
+<h3>1. Health: getting back in shape</h3>
+<p><strong>O:</strong> Get back to a level of fitness I am proud of.<br><strong>KR1:</strong> Run 3 sessions a week for 12 weeks. <strong>KR2:</strong> Go from 0 to 10 km without stopping. <strong>KR3:</strong> Sleep 7 hours 30 on average, measured over the month.</p>
+
+<h3>2. Money: taking back control</h3>
+<p><strong>O:</strong> Put my personal finances in order.<br><strong>KR1:</strong> Save 15 % of every monthly income. <strong>KR2:</strong> Cut recurring spending by 100 € a month. <strong>KR3:</strong> Build an emergency fund of 3,000 €.</p>
+
+<h3>3. Learning: picking up a language</h3>
+<p><strong>O:</strong> Hold a conversation in Spanish.<br><strong>KR1:</strong> 90 sessions of 15 minutes over the quarter. <strong>KR2:</strong> Finish 2 easy books in the original. <strong>KR3:</strong> Have 6 conversations of 30 minutes with a native speaker.</p>
+
+<h3>4. Side project: finally shipping</h3>
+<p><strong>O:</strong> Make my project exist in the real world.<br><strong>KR1:</strong> Publish a first usable version. <strong>KR2:</strong> Reach 50 active users. <strong>KR3:</strong> Collect 20 structured pieces of user feedback.</p>
+
+<h3>5. Reading and culture</h3>
+<p><strong>O:</strong> Become a real reader again.<br><strong>KR1:</strong> Read 6 books in the quarter. <strong>KR2:</strong> 20 minutes of reading on 5 evenings a week. <strong>KR3:</strong> Write a summary note for each book finished.</p>
+
+<h3>6. Career: preparing a move</h3>
+<p><strong>O:</strong> Make myself the obvious choice for the role I want.<br><strong>KR1:</strong> Lead 2 projects visible beyond my team. <strong>KR2:</strong> Earn a recognised certification in the field. <strong>KR3:</strong> Have lunch with 6 people who already hold that role.</p>
+
+<h3>7. Social life and family</h3>
+<p><strong>O:</strong> Be genuinely present for the people close to me.<br><strong>KR1:</strong> One fully disconnected weekend a month. <strong>KR2:</strong> Organise 6 dinners or outings with friends. <strong>KR3:</strong> Call my parents every week, 12 out of 12.</p>
+
+<h3>8. Creativity</h3>
+<p><strong>O:</strong> Build a regular creative practice.<br><strong>KR1:</strong> Publish 12 pieces, one a week. <strong>KR2:</strong> Follow one structured course or tutorial all the way through. <strong>KR3:</strong> Get feedback from 3 creators I admire.</p>
+
+<h2 id="exemples-pro">7 professional OKR examples</h2>
+<p>The examples that follow read on their own, but they make full sense collectively: how they cascade by department and by team is the subject of the <a href="/en/for-teams">Cosmo for teams</a> page.</p>
+
+<h3>9. Early-stage startup: finding product-market fit</h3>
+<p><strong>O:</strong> Prove the product solves a real problem.<br><strong>KR1:</strong> 40 % of active users come back every week. <strong>KR2:</strong> 25 user interviews conducted. <strong>KR3:</strong> NPS above 40.</p>
+
+<h3>10. Marketing: organic acquisition</h3>
+<p><strong>O:</strong> Make content our first acquisition channel.<br><strong>KR1:</strong> Go from 2,000 to 8,000 monthly organic visits. <strong>KR2:</strong> Publish 12 SEO-optimised articles. <strong>KR3:</strong> Earn 15 backlinks from authoritative sites.</p>
+
+<h3>11. Product: activation</h3>
+<p><strong>O:</strong> Make the first use magical.<br><strong>KR1:</strong> Raise day-one activation from 30 % to 50 %. <strong>KR2:</strong> Bring median time-to-value under 3 minutes. <strong>KR3:</strong> Halve support tickets related to onboarding.</p>
+
+<h3>12. Sales</h3>
+<p><strong>O:</strong> Build a predictable sales machine.<br><strong>KR1:</strong> 30 qualified demos a month. <strong>KR2:</strong> Demo-to-customer conversion rate of 20 %. <strong>KR3:</strong> Average sales cycle down from 45 to 30 days.</p>
+
+<h3>13. HR: recruiting</h3>
+<p><strong>O:</strong> Attract profiles we would not have dared approach.<br><strong>KR1:</strong> 3 senior hires signed. <strong>KR2:</strong> 50 % of applications coming from referrals. <strong>KR3:</strong> Average time to hire under 35 days.</p>
+
+<h3>14. Customer support</h3>
+<p><strong>O:</strong> Turn support into a competitive advantage.<br><strong>KR1:</strong> First response in under 2 hours (median). <strong>KR2:</strong> CSAT at 95 % or above. <strong>KR3:</strong> 20 help articles published, cutting recurring tickets by 30 %.</p>
+
+<h3>15. Engineering team</h3>
+<p><strong>O:</strong> Ship fast without breaking things.<br><strong>KR1:</strong> Deploy to production every day. <strong>KR2:</strong> Halve the rate of critical incidents. <strong>KR3:</strong> 90 % test coverage on the core modules.</p>
+
+<h2 id="erreurs">The 5 mistakes that kill OKRs</h2>
+<ol>
+<li><strong>Too many objectives.</strong> Six objectives means zero priorities. Keep to 2 to 4.</li>
+<li><strong>Activity key results everywhere.</strong> If all your key results are "do X times", you are measuring your busyness, not your results.</li>
+<li><strong>Writing them, then forgetting them.</strong> An OKR is revisited every week, and 10 minutes is enough. Without a follow-up ritual the method is worth nothing.</li>
+<li><strong>Aiming for 100 %.</strong> If everything is green at the end of the quarter, your goals were not ambitious.</li>
+<li><strong>Tying OKRs to pay.</strong> In a company, that is the surest way to get goals sandbagged from the moment they are written.</li>
+</ol>
+
+<h2 id="okr-smart">OKRs, SMART, KPIs: what is the difference?</h2>
+<p>The three coexist very well: a <strong>KPI</strong> is a permanent health indicator (the dashboard), a <strong>SMART</strong> goal is a single well-worded aim, and an <strong>OKR</strong> is a complete system connecting an ambition to its numeric proof over a short cycle. In practice: watch your KPIs continuously, and when a KPI has to move significantly, turn it into an OKR for a quarter. The <a href="/en/blog/okr-vs-smart-vs-kpi">detailed comparison of the three methods</a> gives the full table and the rule for choosing.</p>
+
+<h2 id="demarrer">Tracking your OKRs without a spreadsheet</h2>
+<p>To start today, we offer a <a href="/en/blog/template-okr-gratuit">free OKR spreadsheet template</a>, with pre-filled examples, automatic progress and no email required. But the real friction point of OKRs is not the writing, it is the <strong>weekly follow-up</strong>. A spreadsheet works, but nobody opens it. <a href="/en/">Cosmo</a> has OKRs built in: you create your objectives and key results, progress is computed as you update the key results, and the dashboard chart shows the key results you have achieved week after week, next to your <a href="/en/guide">tasks, habits and calendar</a>, so that follow-up happens in the same place as the action. <a href="/en/signup">It is free</a>, and demo mode lets you try it with 8 pre-filled OKRs and no sign-up.</p>
+
+<h2 id="faq">Frequently asked questions</h2>
+<h3>How many OKRs should you set?</h3>
+<p>Two to four objectives per cycle at most, with 2 to 5 key results each. The fewer you have, the better the method works.</p>
+<h3>How long should an OKR cycle be?</h3>
+<p>The quarter is the standard. For personal goals, a cycle of 6 to 12 weeks works very well too.</p>
+<h3>Is an OKR at 60 % a failure?</h3>
+<p>No. The healthy target is around 70 %, which is the sign of genuinely ambitious goals. An OKR that always lands at 100 % should push you to aim higher next cycle.</p>
+`,
+    },
   },
 };

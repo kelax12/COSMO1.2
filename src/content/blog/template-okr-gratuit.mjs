@@ -147,5 +147,133 @@ export const article = {
 <p>Reprendre à la suivante, sans rattraper les semaines manquées. Rien dans le template ne dépend de l'historique : seule la valeur actuelle compte. C'est surtout le signal qu'il faut déplacer le créneau de revue, pas augmenter la volonté.</p>
 `,
     },
+    en: {
+      title: "Free OKR template (Excel): personal and team, ready to fill in",
+      metaTitle: "Free OKR template to download (Excel)",
+      description: "Download our free OKR template in Excel format: pre-filled examples, automatic progress, personal and team versions. No email required.",
+      readingMinutes: 9,
+      faq: [
+        ["Does the OKR template work in Google Sheets?", "Yes: import the .xlsx file into Google Sheets (File then Import) and the progress formulas are preserved. It is also compatible with LibreOffice Calc and Numbers."],
+        ["Can I share the template with my team?", "Yes, freely. Duplicate the team and startup sheet once per person if everyone tracks their own OKRs, keeping a single file for everybody."],
+        ["Do I have to give an email address to download it?", "No. The link is direct, with no form and no sign-up."],
+        ["How many objectives should go in the template?", "Two to four per cycle, with 2 to 5 key results each. Beyond that, the weekly review runs past ten minutes and stops happening."],
+        ["Can you start mid-quarter?", "Yes, and it beats waiting: take the remaining weeks as your cycle length and scale the targets down in proportion."],
+      ],
+      html: `
+<p class="lead">You know the method, all that is missing is the support. Here is a <strong>free OKR template in Excel format</strong> (compatible with Google Sheets and LibreOffice): two sheets ready to fill in, personal OKRs and team or startup OKRs, with concrete examples and progress computed for you. Direct download, <strong>no email required</strong>.</p>
+
+<p><a href="/downloads/template-okr-cosmo.xlsx" download><strong>Download the OKR template (.xlsx, 9 KB)</strong></a> (the sheet labels are in French)</p>
+
+<h2 id="contenu">What is in the template</h2>
+<ul>
+<li><strong>Instructions</strong>: the 5 rules for making your OKRs work, on one page.</li>
+<li><strong>Personal OKRs</strong>: one complete pre-filled example (getting back in shape) plus two blank objectives with their key results.</li>
+<li><strong>Team and startup OKRs</strong>: an acquisition example (SEO content) with the same structure.</li>
+<li><strong>Automatic progress</strong>: enter the starting value, the target value and the current value. The percentage computes itself, bounded between 0 and 100 %.</li>
+</ul>
+
+<h3>The 7 columns, and what each is for</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>Column</th><th>What goes in it</th><th>Why it exists</th></tr></thead>
+<tbody>
+<tr><td>Objective</td><td>A qualitative direction, with no number</td><td>Merged across all the rows of its key results, so an objective with none is impossible to miss</td></tr>
+<tr><td>Key result</td><td>A verifiable measure, with its unit</td><td>This is the only row you will update every week</td></tr>
+<tr><td>Starting value</td><td>Where you stand on day 1</td><td>Without it, 40 % progress means nothing</td></tr>
+<tr><td>Target value</td><td>Where you want to be at the end of the cycle</td><td>Forces you to choose between ambition and fiction</td></tr>
+<tr><td>Current value</td><td>Today's measure</td><td>The only number you touch during the weekly review</td></tr>
+<tr><td>Progress</td><td>Nothing, it is a formula</td><td>(current minus start) divided by (target minus start), bounded to 0 and 100 %</td></tr>
+<tr><td>Notes and next action</td><td>One sentence, not a journal</td><td>The most neglected and most useful column: it turns an observation into a decision</td></tr>
+</tbody>
+</table></div>
+<p>Progress is deliberately bounded: a key result at 130 % does not exist in this template. Overshooting a target is not a performance, it is a sign the target was badly set, and letting that overshoot inflate the average would hide an objective falling behind right next to it.</p>
+
+<h2 id="utiliser">How to use it in 4 steps</h2>
+<ol>
+<li><strong>Choose 2 to 4 objectives</strong> for the next 12 weeks. No more, because that constraint is what makes the method. An objective is qualitative and motivating, numbers have no place in it.</li>
+<li><strong>Write 2 to 5 key results per objective.</strong> Each has to be a verifiable number: "go from 0 to 10 km without stopping", not "run better". If the wording is giving you trouble, borrow from our <a href="/en/blog/methode-okr-exemples">15 annotated OKR examples</a>.</li>
+<li><strong>Fill in the start and the target.</strong> That is what lets progress compute itself, and what forces you to know where you are starting from, the step everybody skips.</li>
+<li><strong>Update every week.</strong> Ten minutes, on the same day each week (Friday works well). That ritual is what separates an OKR from a January resolution.</li>
+</ol>
+
+<h2 id="cibles">Setting start and target without lying to yourself</h2>
+<p>This is the step that decides the value of the whole quarter, and it is the one people rush. Two symmetrical mistakes lie in wait.</p>
+<p>The first is <strong>sandbagging</strong>: setting a target you already know you will hit. It produces a green sheet and a quarter with no effect. The test is simple: if you are 90 % certain of getting there, that is not a key result, it is a forecast.</p>
+<p>The second is the <strong>decorative target</strong>: "go from 2,000 to 50,000 visits". Nobody believes it, so nobody uses it to make trade-offs, and the objective is quietly abandoned by week 4. A useful target is uncomfortable, not absurd.</p>
+<p>The working benchmark: aim at a target you give yourself a <strong>50 to 70 % chance</strong> of reaching. In OKR culture, finishing a cycle around 70 % is the sign of a well-calibrated objective, and 100 % everywhere means you aimed too low.</p>
+<p>And if you do not know your starting value, <strong>do not invent it</strong>: spend the first week measuring it, and start the cycle with a real number. A quarter that begins on a false baseline produces twelve weeks of false conclusions.</p>
+
+<h2 id="exemple">A worked example, line by line</h2>
+<p>The personal OKR sheet ships with this objective already entered, captured at week 4 of a 12-week cycle:</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Key result</th><th>Start</th><th>Target</th><th>Current</th><th>Progress</th></tr></thead>
+<tbody>
+<tr><td>Run 3 sessions a week for 12 weeks (36 sessions)</td><td>0</td><td>36</td><td>9</td><td>25 %</td></tr>
+<tr><td>Go from 0 to 10 km without stopping</td><td>0</td><td>10</td><td>4</td><td>40 %</td></tr>
+<tr><td>Sleep 7 hours 30 on average per night (hours)</td><td>6.5</td><td>7.5</td><td>7.0</td><td>50 %</td></tr>
+</tbody>
+</table></div>
+<p>Three things are worth noticing. First, <strong>the unit is in the wording</strong> (sessions, km, hours): without it, after a month you no longer know whether "9" is a number of runs or of kilometres. Second, the third key result starts at 6.5 rather than zero, which is exactly the case where progress computed without a starting value would lie, showing 93 % instead of 50 %. Third, the first row is at 25 % in week 4 of 12, which is precisely on schedule: the comparison that counts is not "where am I", but "where am I <em>relative to how much of the cycle has elapsed</em>".</p>
+<p>That is the reading to get into the habit of, and it is the same one as a <a href="/en/blog/tableau-de-bord-productivite">productivity dashboard</a>: what steers a decision is the trajectory, never the absolute value.</p>
+
+<h2 id="revue">The 10-minute weekly review</h2>
+<p>The template is only worth as much as this ritual. Without it you will have filled in a nice table in January and reopened it in April, with the unpleasant feeling of having lost a quarter.</p>
+<p>Put a recurring 10-minute slot in the calendar, on the same day each week, and block it like an appointment: it is the most profitable use of <a href="/en/blog/time-blocking-guide">time-blocking</a> there is. During those 10 minutes, three moves, in this order:</p>
+<ol>
+<li><strong>Update the "current value" column</strong>, and only that. You do not rewrite your objectives during a review: that is how people end up adjusting the target to the result rather than the other way round.</li>
+<li><strong>Spot the key result furthest behind</strong> relative to how much of the cycle has elapsed. One only, the worst.</li>
+<li><strong>Write a single next action</strong> in the Notes column, and carry it into your task list for the week. A concrete action, doable in under two hours.</li>
+</ol>
+<p>That is all. The review is neither a report nor a tribunal, it is a set of points. It has done its job if it produces <strong>one line in your following week</strong>.</p>
+
+<h2 id="scorer">Scoring your cycle at the end (and why 70 % is a success)</h2>
+<p>At the end of the quarter, the average of an objective's progress gives its score, between 0 and 100 %. The reading grid, inherited from practice at Intel and then Google:</p>
+<ul>
+<li><strong>60 to 80 %</strong>: the zone to aim for. The objective was ambitious and you genuinely moved.</li>
+<li><strong>Above 90 %, consistently</strong>: your targets are too low. Next quarter, raise them until it feels uncomfortable.</li>
+<li><strong>Below 40 %</strong>: the question is not "did I work hard enough?" but "was this the right objective?". An objective at 20 % halfway through is not behind, it is being abandoned without anybody saying so.</li>
+</ul>
+<p>The score is there to calibrate the next cycle, never to evaluate a person. As soon as an OKR score decides a bonus, targets collapse within three quarters: everybody learns to promise only what they already know they can deliver. And if your need is to <em>monitor</em> rather than to <em>change</em>, what you want is a KPI, not an OKR. The distinction is set out in <a href="/en/blog/okr-vs-smart-vs-kpi">OKRs vs SMART vs KPIs</a>.</p>
+
+<h2 id="equipe">Adapting the template for a team</h2>
+<p>The team and startup sheet is enough for 2 to 5 people. Three adjustments make it usable collectively:</p>
+<ul>
+<li><strong>An "owner" column.</strong> A key result with no name against it does not move. One owner per key result, not per objective: that is the granularity that makes the review possible.</li>
+<li><strong>A "confidence" column, 1 to 5.</strong> Filled in at every review, it captures what progress cannot see: a key result at 60 % whose confidence drops from 4 to 2 is a warning three weeks before the number falls away.</li>
+<li><strong>One tab per team, never one file per person.</strong> The day the file gets duplicated, versions diverge and tracking dies. That is the structural limit of a spreadsheet in a group, and it arrives quickly: beyond five people the question is no longer <em>whether</em> but <em>when</em>. The subject is taken head on in the <a href="/en/for-teams">Cosmo for teams</a> page.</li>
+</ul>
+
+<h2 id="erreurs">The 4 most common filling-in mistakes</h2>
+<ol>
+<li><strong>Confusing a key result with a task.</strong> "Send 50 applications" is an activity, "land 5 interviews" is a result. The first is achieved by working a lot, the second by working well.</li>
+<li><strong>Putting a number in the objective.</strong> If the objective already carries the measure, the key results become a task list and the method loses its point. The objective inspires, the key results measure.</li>
+<li><strong>Filling all 8 available rows.</strong> The template offers 2 blank objectives of 4 key results each. That is a capacity, not an instruction: two objectives of three key results beat eight rows you will never read again.</li>
+<li><strong>Changing targets along the way.</strong> A target that moves in week 7 is no longer a target. Note in the Notes column why it was wrong instead, and use that to calibrate the next cycle.</li>
+</ol>
+<p>If a term in the field escapes you (key result, cycle, KPI, sandbagging), the <a href="/en/blog/glossaire-productivite">productivity glossary</a> defines them all in one sentence.</p>
+
+<h2 id="pieges">The 3 traps of tracking in a spreadsheet</h2>
+<p>This template is the best way to start today. Let us be honest about its limits, familiar to anybody who has tracked OKRs in Excel:</p>
+<ol>
+<li><strong>Nobody opens the file.</strong> A spreadsheet does not chase you: the weekly update rests entirely on your discipline, precisely the resource OKRs are supposed to save.</li>
+<li><strong>Tracking is disconnected from the action.</strong> Your daily tasks live elsewhere, and the link between "what I do today" and "my goals for the quarter" stays invisible.</li>
+<li><strong>No visual history.</strong> A cell at 40 % does not tell you your trajectory: steady progress, or a last-minute sprint?</li>
+</ol>
+<p>If those limits are holding you back, <a href="/en/">Cosmo</a> has OKRs built in: progress updated as you act, a chart of key results achieved on the dashboard, and your goals living next to your <a href="/en/blog/time-blocking-guide">scheduled tasks</a> and your habits. <a href="/en/signup">Free</a>, with a demo and no sign-up.</p>
+
+<h2 id="faq">Frequently asked questions</h2>
+<h3>Does the template work in Google Sheets?</h3>
+<p>Yes: import the .xlsx file into Google Sheets (File then Import) and the progress formulas are preserved. It is also compatible with LibreOffice Calc and Numbers.</p>
+<h3>Can I share it with my team?</h3>
+<p>Yes, freely. If each member tracks their own OKRs, duplicate the team and startup sheet once per person, keeping a single file for everybody rather than one file each.</p>
+<h3>Do I have to give an email address to download it?</h3>
+<p>No. The link is direct, with no form and no sign-up. We would rather you judged the content than gave us your address.</p>
+<h3>How many objectives should go in the template?</h3>
+<p>Two to four per cycle, with 2 to 5 key results each. The template offers more for layout comfort, not as a quota to fill. Beyond four, the weekly review runs past ten minutes and stops happening.</p>
+<h3>Can I start mid-quarter?</h3>
+<p>Yes, and it is better than waiting. Take the remaining weeks as your cycle length and scale the targets down in proportion: a well-tracked seven-week cycle beats a twelve-week cycle that starts in a month.</p>
+<h3>What if I miss two reviews in a row?</h3>
+<p>Pick up at the next one, without catching up the missed weeks. Nothing in the template depends on history, only the current value counts. It is mostly a signal that the review slot needs moving, not that willpower needs raising.</p>
+`,
+    },
   },
 };
