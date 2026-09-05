@@ -8,6 +8,7 @@
 // habitudes, OKR...), ce que la garde `lazy-namespaces.guard.test.ts` refuse
 // a juste titre : un catalogue charge est du poids envoye au navigateur.
 // ═══════════════════════════════════════════════════════════════════
+import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getOrganizationsRepository } from '@/lib/repository.factory';
 import { orgKeys } from './constants';
@@ -42,4 +43,23 @@ export const useOrgInbox = () => {
     staleTime: 1000 * 30,
     refetchOnWindowFocus: true,
   });
+};
+
+/**
+ * Les taches dont la pastille d'entreprise a besoin, pour l'organisation
+ * demandee (mig. 142). Selecteur, PAS une requete : c'est la meme lecture que
+ * `useOrgInbox`.
+ *
+ * ❌ Ne pas remonter `useTeamTasks` ici. C'est ce que faisait `useOrgBadges`
+ * jusqu'au 2026-09-05 : `Layout` le monte, donc la lecture la plus chere du
+ * produit (`get_my_team_tasks` + `.limit(1000)`, SCALABILITY.md §2) partait sur
+ * TOUTES les pages protegees pour peindre un nombre. Le rechargement avait ete
+ * coupe en aout, la lecture pas (finding C-05).
+ */
+export const useOrgBadgeTasks = (orgId: string | undefined) => {
+  const { data } = useOrgInbox();
+  return useMemo(
+    () => (orgId ? (data?.badgeTasks ?? []).filter((t) => t.orgId === orgId) : []),
+    [data, orgId],
+  );
 };

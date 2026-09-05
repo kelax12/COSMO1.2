@@ -187,7 +187,15 @@ export class LocalStorageOrganizationsRepository implements IOrganizationsReposi
       this.getMySentJoinRequest(),
     ]);
     const joinRequests = this.getRequestsArray().filter((r) => r.status === 'pending');
-    return { invitations, removalNotices, myJoinRequest, joinRequests, notifications: readDemoNotifications() };
+    // `badgeTasks` reste vide en demo, volontairement : il n'y a aucune requete
+    // a economiser, et les taches d'equipe locales sont deja lues gratuitement
+    // par `useOrgBadges` (cf. le commentaire de ce hook). Fabriquer ici une
+    // seconde derivation des memes seeds ferait DEUX definitions de « nouvelle
+    // assignation », donc deux chiffres qui finiraient par diverger.
+    return {
+      invitations, removalNotices, myJoinRequest, joinRequests,
+      notifications: readDemoNotifications(), badgeTasks: [],
+    };
   }
 
   // ─── Write ─────────────────────────────────────────────────────────
