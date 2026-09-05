@@ -297,17 +297,15 @@ const DashboardPage: React.FC = () => {
       >
         {/* Salutation (desktop) + résumé contextuel (desktop ET mobile,
             directement sous la date).
-            🔴 `-mt-4 md:mt-0` : le bouton de la boîte de réception fait
-            44×44 (cible tactile, WCAG 2.5.5) alors que la date ne fait que
-            32 px de haut — `items-start` aligne les deux sur le HAUT, donc
-            la ligne d'en-tête reste haute de 44 px et laisse ~16 px de vide
-            sous le texte avant que ce bloc ne commence. Mesuré dans le
-            navigateur. Remonté ici plutôt qu'en réduisant le bouton, qui
-            resterait sous la cible tactile minimale. Sans effet sur desktop,
-            où le header mobile ne rend rien (`md:hidden`, hauteur nulle). */}
+            ⚠️ Un `-mt-*` a été essayé ici pour compenser la hauteur du
+            bouton de la boîte de réception (44px vs 32px de texte), mais un
+            margin négatif qui fait chevaucher ce bloc sur la boîte du header
+            sticky juste au-dessus est exactement le genre de construction
+            qui casse le scroll tactile sur certains navigateurs mobiles
+            (zone de chevauchement qui intercepte le geste). Retiré : mieux
+            vaut un petit espace visible qu'un scroll cassé. */}
           <motion.div
             variants={itemVariants}
-            className="-mt-4 md:mt-0"
           >
             {/* ⚠️ Le titre est la DATE, pas le mot « Aujourd'hui » de la
                 maquette : ce mot nomme déjà la section dépliable juste en
