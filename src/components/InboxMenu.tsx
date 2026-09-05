@@ -39,6 +39,7 @@ import RemoveFriendConfirm from './RemoveFriendConfirm';
 import InboxOrgSections from './inbox/InboxOrgSections';
 import InboxSocialSections from './inbox/InboxSocialSections';
 import { useT } from '@/i18n/useT';
+import TouchTarget from '@/components/mobile/TouchTarget';
 
 /**
  * Boîte de réception unifiée du Dashboard. Remplace l'ancien panneau
@@ -523,11 +524,13 @@ const InboxMenu: React.FC = () => {
 
   return (
     <>
-      <button
+      {/* Sans bordure ni fond — même traitement que son homologue
+          `TasksInboxMenu` (variant mobile) : un `TouchTarget` transparent,
+          l'icône seule porte le déclencheur. */}
+      <TouchTarget
         ref={triggerRef}
-        type="button"
         onClick={() => setOpen((v) => !v)}
-        className="relative flex items-center justify-center w-11 h-11 rounded-xl bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] hover:border-[rgb(var(--color-accent)/0.5)] hover:bg-[rgb(var(--color-hover))] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+        className="relative"
         aria-label={total > 0 ? tTasks('inbox.withCount', { count: total }) : tTasks('inbox.label')}
         aria-haspopup="dialog"
         aria-expanded={open}
@@ -535,13 +538,13 @@ const InboxMenu: React.FC = () => {
         <Inbox size={20} aria-hidden="true" />
         {total > 0 && (
           <span
-            className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-red-600 text-white text-caption md:text-[10px] font-bold flex items-center justify-center shadow-sm ring-2 ring-[rgb(var(--color-background))]"
+            className="absolute top-1.5 right-1.5 min-w-[16px] h-[16px] px-1 rounded-full bg-red-600 text-white text-caption font-bold flex items-center justify-center shadow-sm ring-2 ring-[rgb(var(--color-background))]"
             aria-hidden="true"
           >
             {total > 9 ? '9+' : total}
           </span>
         )}
-      </button>
+      </TouchTarget>
       {typeof document !== 'undefined' && createPortal(popoverContent, document.body)}
       {typeof document !== 'undefined' &&
         createPortal(
