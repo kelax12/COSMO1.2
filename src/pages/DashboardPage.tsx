@@ -296,9 +296,18 @@ const DashboardPage: React.FC = () => {
         animate="visible"
       >
         {/* Salutation (desktop) + résumé contextuel (desktop ET mobile,
-            directement sous la date) */}
+            directement sous la date).
+            🔴 `-mt-4 md:mt-0` : le bouton de la boîte de réception fait
+            44×44 (cible tactile, WCAG 2.5.5) alors que la date ne fait que
+            32 px de haut — `items-start` aligne les deux sur le HAUT, donc
+            la ligne d'en-tête reste haute de 44 px et laisse ~16 px de vide
+            sous le texte avant que ce bloc ne commence. Mesuré dans le
+            navigateur. Remonté ici plutôt qu'en réduisant le bouton, qui
+            resterait sous la cible tactile minimale. Sans effet sur desktop,
+            où le header mobile ne rend rien (`md:hidden`, hauteur nulle). */}
           <motion.div
             variants={itemVariants}
+            className="-mt-4 md:mt-0"
           >
             {/* ⚠️ Le titre est la DATE, pas le mot « Aujourd'hui » de la
                 maquette : ce mot nomme déjà la section dépliable juste en
