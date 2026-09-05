@@ -138,6 +138,7 @@
     "overdue_many": "{{count}} de retard",
     "overdue_other": "{{count}} en retard",
     "markDone": "Marquer « {{name}} » comme terminée",
+    "completedToast": "« {{name}} » terminée",
     "sourcePersonal": "Perso",
     "sourceTeam": "Équipe"
   },
