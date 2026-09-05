@@ -536,33 +536,68 @@ const DashboardPage: React.FC = () => {
                 </MobileCollapsible>
               </div>
             )}
-            <MobileCollapsible title={t('sections.priorityTasks')} defaultOpen>
-              <TodayTasks />
-            </MobileCollapsible>
-            {/* Graphique "Répartition du temps" masqué (conservé dans le code,
-                réactivable en repassant SHOW_REPARTITION_CHART à true). */}
-            {SHOW_REPARTITION_CHART && (
-              <Suspense fallback={null}>
-                <DashboardBarChart viewMode={viewMode} />
-              </Suspense>
+            {/* « Tâches prioritaires » et « Tâches collaboratives » — retirées
+                de MOBILE (arbitrage du 2026-09-05) : le fil « Aujourd'hui »
+                ci-dessus (`TodayMoments`) couvre déjà les tâches perso avec
+                case à cocher et ouverture en modale, ces deux sections
+                faisaient doublon. Desktop inchangé.
+                ⚠️ `isMobile`, pas `md:hidden` : les tuiles de stats plus haut
+                ont déjà appris cette leçon dans ce même fichier — un `hidden`
+                CSS cache sans décharger, `TodayTasks`/`CollaborativeTasks`
+                resteraient montés et à jour en double. */}
+            {!isMobile && (
+              <>
+                <MobileCollapsible title={t('sections.priorityTasks')} defaultOpen>
+                  <TodayTasks />
+                </MobileCollapsible>
+                {/* Graphique "Répartition du temps" masqué (conservé dans le code,
+                    réactivable en repassant SHOW_REPARTITION_CHART à true). */}
+                {SHOW_REPARTITION_CHART && (
+                  <Suspense fallback={null}>
+                    <DashboardBarChart viewMode={viewMode} />
+                  </Suspense>
+                )}
+                <MobileCollapsible title={t('sections.collaborativeTasks')}>
+                  <CollaborativeTasks />
+                </MobileCollapsible>
+              </>
             )}
-            <MobileCollapsible title={t('sections.collaborativeTasks')}>
-              <CollaborativeTasks />
-            </MobileCollapsible>
-            <MobileCollapsible title={t('sections.activeOkrs')}>
-              <ActiveOKRs />
-            </MobileCollapsible>
+
+            {/* OKR en cours / Habitudes du jour :
+                - Desktop (inchangé) : OKR dans cette colonne, Habitudes dans
+                  la colonne de droite, chacune dans sa carte collapsible.
+                - Mobile : les deux vivent ICI, l'une après l'autre, ordre
+                  INVERSÉ (Habitudes avant OKR) et SANS carte — même
+                  traitement que `TodayMoments` (`ActiveOKRs` et `TodayHabits`
+                  portent déjà leur propre titre et leur propre
+                  `card-plain-mobile`, transparent sous 768px ; le seul
+                  « format card » qui restait venait de `MobileCollapsible`
+                  lui-même, retiré ici). */}
+            {isMobile && (
+              <div className="flex flex-col gap-6">
+                <TodayHabits />
+                <ActiveOKRs />
+              </div>
+            )}
+            {!isMobile && (
+              <MobileCollapsible title={t('sections.activeOkrs')}>
+                <ActiveOKRs />
+              </MobileCollapsible>
+            )}
           </motion.div>
 
-          {/* Colonne droite - Habitudes du jour */}
-          <motion.div
-            className="lg:col-span-1 flex flex-col gap-4 sm:gap-6 lg:gap-8"
-            variants={itemVariants}
-          >
-            <MobileCollapsible title={t('sections.todayHabits')}>
-              <TodayHabits />
-            </MobileCollapsible>
-          </motion.div>
+          {/* Colonne droite - Habitudes du jour (desktop uniquement : sur
+              mobile, Habitudes vit dans la colonne de gauche ci-dessus). */}
+          {!isMobile && (
+            <motion.div
+              className="lg:col-span-1 flex flex-col gap-4 sm:gap-6 lg:gap-8"
+              variants={itemVariants}
+            >
+              <MobileCollapsible title={t('sections.todayHabits')}>
+                <TodayHabits />
+              </MobileCollapsible>
+            </motion.div>
+          )}
         </motion.div>
 
       </motion.div>
