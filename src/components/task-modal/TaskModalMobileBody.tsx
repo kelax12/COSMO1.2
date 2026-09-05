@@ -10,7 +10,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
 import { getDateLocale } from '@/i18n/format';
-import { Bookmark, Check, ChevronRight, Loader2, Minus, Plus, Search, UserPlus, X } from 'lucide-react';
+import { Bookmark, Check, Loader2, Minus, Plus, Search, UserPlus, X } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { useBottomSheet } from '@/hooks/use-bottom-sheet';
 import { useSheetMotion } from '@/components/mobile/mobile-motion';
@@ -25,7 +25,7 @@ import { buildDatePresets } from '@/lib/date-presets';
 import SubtaskChecklist from './SubtaskChecklist';
 import TaskDependenciesSection from './TaskDependenciesSection';
 import DescriptionField from '@/components/DescriptionField';
-import { PRIORITY_OPTIONS, priorityColor } from './constants';
+import { PRIORITY_OPTIONS, priorityColor, RECURRENCE_OPTIONS } from './constants';
 import { useT } from '@/i18n/useT';
 
 export interface MobileBodyProps {
@@ -113,6 +113,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
   const { t: tOv } = useT('overlays');
   const [showPrioritySheet, setShowPrioritySheet] = useState(false);
   const [showCategorySheet, setShowCategorySheet] = useState(false);
+  const [showRecurrenceSheet, setShowRecurrenceSheet] = useState(false);
   const [showListsModal, setShowListsModal] = useState(false);
   const [showCollabSheet, setShowCollabSheet] = useState(false);
   // Ouvre directement la feuille Collaborateurs quand le modal est demandé
@@ -285,31 +286,28 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
                 </motion.div>
               )}
             </AnimatePresence>
-            {/* Récurrence (#26) — visible dès qu'une échéance est posée */}
+            {/* Récurrence (#26) — visible dès qu'une échéance est posée.
+                🔴 Un `<select>` natif ne s'aligne pas de façon fiable sur les
+                autres lignes malgré `appearance-none` : l'UA stylesheet garde
+                un padding/line-height propre à `<select>` que rien ne
+                garantit identique à celui d'un `<span>` — vérifié « pas
+                aligné » sur un vrai iPhone alors que la capture avait l'air
+                bonne. Un `Cell` + feuille d'options, comme Priorité et
+                Catégorie juste au-dessus, RÉUTILISE le même composant :
+                l'alignement ne peut pas diverger, c'est le même code qui le
+                rend. */}
             {formData.deadline && (
               <>
                 <CellSeparator />
-                <div className="flex items-center justify-between px-4 min-h-11 gap-3">
-                  <span className="text-[15px] text-[rgb(var(--color-text-primary))]">{t('fields.repeat')}</span>
-                  {/* `appearance-none` + bordure/fond retirés : Safari iOS
-                      dessine sinon sa capsule native autour d'un `<select>`,
-                      seul champ de cette carte à ne pas suivre le style des
-                      autres lignes (texte bleu aligné à droite + chevron). */}
-                  <span className="flex items-center gap-1.5 shrink-0 ml-2">
-                    <select
-                      value={formData.recurrence}
-                      onChange={(e) => handleInputChange('recurrence', e.target.value)}
-                      aria-label={t('fields.recurrenceAria')}
-                      className="appearance-none border-none bg-transparent text-[15px] text-right text-blue-500 focus:outline-none"
-                    >
-                      <option value="none">{t('fields.recurrenceNever')}</option>
-                      <option value="daily">{t('fields.recurrenceDaily')}</option>
-                      <option value="weekly">{t('fields.recurrenceWeekly')}</option>
-                      <option value="monthly">{t('fields.recurrenceMonthly')}</option>
-                    </select>
-                    <ChevronRight size={16} className="text-[rgb(var(--color-text-muted))] shrink-0" aria-hidden="true" />
-                  </span>
-                </div>
+                <Cell
+                  label={t('fields.repeat')}
+                  value={
+                    <span className="text-blue-500">
+                      {t(RECURRENCE_OPTIONS.find(o => o.value === formData.recurrence)?.labelKey ?? 'fields.recurrenceNever')}
+                    </span>
+                  }
+                  onTap={() => setShowRecurrenceSheet(true)}
+                />
               </>
             )}
             <CellSeparator />
@@ -541,6 +539,41 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
                   >
                     <span className={`text-[15px] ${opt.color}`}>{tCommon(opt.labelKey)}</span>
                     {formData.priority === opt.value && <Check size={16} className="text-blue-500" />}
+                  </button>
+                </React.Fragment>
+              ))}
+              <div className="h-3" />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Action sheet : Répéter ── */}
+      <AnimatePresence>
+        {showRecurrenceSheet && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/40 z-[60] flex items-end"
+            onClick={() => setShowRecurrenceSheet(false)}
+          >
+            <motion.div
+              {...sheetMotion}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full bg-[rgb(var(--color-surface))] rounded-t-2xl overflow-hidden"
+              style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+            >
+              <div className="flex justify-center pt-3 pb-2"><div className="w-9 h-1 rounded-full bg-[rgb(var(--color-border-strong))]" /></div>
+              <p className="text-[13px] font-semibold uppercase tracking-wider text-[rgb(var(--color-text-muted))] px-4 pb-2">{t('fields.repeat')}</p>
+              {RECURRENCE_OPTIONS.map((opt, i) => (
+                <React.Fragment key={opt.value}>
+                  {i > 0 && <CellSeparator />}
+                  <button
+                    type="button"
+                    onClick={() => { handleInputChange('recurrence', opt.value); setShowRecurrenceSheet(false); }}
+                    className="w-full flex items-center justify-between px-4 min-h-11 active:bg-[rgb(var(--color-hover))]"
+                  >
+                    <span className="text-[15px] text-[rgb(var(--color-text-primary))]">{t(opt.labelKey)}</span>
+                    {formData.recurrence === opt.value && <Check size={16} className="text-blue-500" />}
                   </button>
                 </React.Fragment>
               ))}
