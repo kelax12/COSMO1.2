@@ -47,6 +47,35 @@ export const USE_CASES = [
 <h2>Pourquoi gratuit ?</h2>
 <p>Les fonctionnalités principales de Cosmo sont gratuites, sans limite de projets ni de clients. Pour un indépendant, c'est un poste de dépense en moins, et la <a href="/">démo s'essaie sans créer de compte</a>, avec 12 mois de données réalistes pour juger sur pièce en deux minutes. Si vous partez d'un système éclaté entre trois outils, l'article sur la <a href="/blog/gestion-du-temps-efficace">gestion du temps efficace</a> décrit l'ordre dans lequel les regrouper sans tout casser.</p>`,
       },
+      en: {
+        audience: "freelancers",
+        title: "The productivity app built for freelancers",
+        metaTitle: "Freelance productivity app: tasks and goals",
+        description: "Freelancing: manage clients, deadlines, prospecting and quarterly goals in one free app. Native time-blocking, demo with no sign-up.",
+        lead: "Being freelance means carrying every role at once: delivery, prospecting, admin, strategy. Your organisation tool has to keep up, without costing you another subscription.",
+        html: `
+<h2>The organised freelancer's problem</h2>
+<p>You probably already have a system: a to-do list for deliverables, a calendar for client meetings, perhaps a spreadsheet for revenue goals, and an abandoned resolution to prospect "more regularly". Four tools, no overall view, and prospecting, the only guarantee of a pipeline in three months, always comes after today's emergency.</p>
+<h2>What Cosmo changes, concretely</h2>
+<ul>
+<li><strong>One category per client.</strong> Every task carries its client's colour, and the statistics then show you where your time actually goes, which is often a surprise, and the basis for better pricing.</li>
+<li><strong>Time-blocking protects delivery.</strong> Drag your tasks into the calendar to reserve your billable working blocks, and find out what genuinely fits in a week before saying yes to the next project.</li>
+<li><strong>Prospecting becomes a habit, not a resolution.</strong> "3 outreach contacts a week", tracked with a heatmap and a streak: the consistency that fills a pipeline gets built like a training habit.</li>
+<li><strong>Quarterly OKRs to steer the business.</strong> "Reach X in recurring revenue", "sign 2 clients in the new segment": your goals as a business owner live next to your tasks as a producer, and progress computes itself.</li>
+</ul>
+<h2>A typical week, organised in Cosmo</h2>
+<p>On Monday morning, fifteen minutes is enough: you review the week's deliverables, give them a priority from 1 to 5, then drag them into the calendar. That last move is the most important one, because it tells you, before you commit to a client, whether the week genuinely holds. A Friday delivery day that already counts eleven hours of blocked work will not absorb the "small urgent tweak" without breaking something else.</p>
+<p>During the week, incoming requests become dated tasks rather than messages you keep in your head. On Friday the review takes a quarter of an hour: what was delivered, where the time went per client, and where your quarterly goals stand. It is also the moment when <a href="/en/blog/tableau-de-bord-productivite">reading the dashboard</a> saves you from discovering at the end of the quarter that prospecting never happened.</p>
+
+<h2>The fixed-price trap</h2>
+<p>Most freelancers underestimate fixed-price projects, not through lack of experience but through lack of data: with no measure of the time actually spent, you price on an impression, and the impression systematically forgets the back and forth, the scoping calls and the reworks. One category per client, plus a few weeks of time-blocking, is enough to reveal the gap between billed time and lived time. It is often the data that justifies the first real rate increase, and it is read in the statistics, not in a hand-kept spreadsheet.</p>
+
+<h2>What about the "business owner" side?</h2>
+<p>It is the part that goes first when delivery overflows, even though it decides what your business looks like in six months. Two concrete levers: a <strong>prospecting habit</strong> ("3 outreach contacts a week") tracked with a heatmap rather than with good intentions, and <a href="/en/blog/methode-okr-exemples">quarterly OKRs</a> that write down in black and white what you are aiming at, recurring revenue, diversification, moving upmarket. The mere fact that they are visible on the same screen as today's tasks changes how you make trade-offs.</p>
+
+<h2>Why free?</h2>
+<p>Cosmo's main features are free, with no limit on projects or clients. For someone self-employed that is one expense line fewer, and the <a href="/en/">demo can be tried without creating an account</a>, with 12 months of realistic data so you can judge it in two minutes. If you are starting from a system split across three tools, the article on <a href="/en/blog/gestion-du-temps-efficace">effective time management</a> describes the order in which to consolidate them without breaking everything.</p>`,
+      },
     },
   },
   {
@@ -83,6 +112,36 @@ export const USE_CASES = [
 
 <h2>Vraiment gratuit, vraiment sans friction</h2>
 <p>Pas de carte bancaire, pas d'essai de 14 jours : les fonctionnalités principales sont gratuites, point. Cosmo fonctionne dans le navigateur de votre téléphone comme sur l'ordi de la BU, sans installation. <a href="/">Testez la démo sans inscription</a>, deux minutes suffisent pour voir si le système vous parle.</p>`,
+      },
+      en: {
+        audience: "students",
+        title: "The free productivity app for students",
+        metaTitle: "Student productivity app: revision and deadlines",
+        description: "Students: organise lectures, revision and deadlines with time-blocking, and build working habits that last. 100 % free, no credit card.",
+        lead: "Between lectures, exams, group projects and a job on the side, the problem is not a lack of motivation, it is the absence of a system. And a student budget has no room for a productivity subscription.",
+        html: `
+<h2>A typical semester, with no system</h2>
+<p>Everything is fine until mid-October. Then the deadlines pile up, revision gets compressed into the last ten days, and every exam is prepared in a rush. The problem is neither intelligence nor willpower: it is that a semester is a four-month project run without a plan.</p>
+<h2>The Cosmo system for a semester</h2>
+<ul>
+<li><strong>One category per subject.</strong> Each course has its colour, and deadlines (essays, presentations, exams) become dated tasks prioritised from 1 to 5. No more permanent mental sticky note.</li>
+<li><strong>Time-blocking makes revision real.</strong> "Revise macroeconomics" does not exist until it is a 2-hour slot on Tuesday at 2 pm. Drag your revision tasks into the calendar: the week fills up, and falling behind becomes visible before it turns critical.</li>
+<li><strong>Habits carry the long term.</strong> Thirty minutes of English, rereading your notes the same evening, 3 training sessions: the 26-week heatmap, exactly the length of a semester, shows your consistency better than any good intention.</li>
+<li><strong>One OKR per semester.</strong> "Pass the semester properly", with measurable key results (a target average, zero resits, dissertation handed in early): you know in week 6 whether you are on trajectory, not in week 15.</li>
+</ul>
+<h2>Organising a week of lectures</h2>
+<p>On Sunday evening, ten minutes: you list what has to move this week (a problem set, a chapter to review, a group report), you date it, then you place the working slots in the calendar between lectures. The point is not a beautiful timetable, it is realising straight away that you have six free hours left, not fifteen. Better to know that on Sunday than on Thursday night.</p>
+<p>The rest of the week, you tick things off. And at the end you look at two things: what got done, and what you had planned without doing. That second number is the more instructive one, because in three or four weeks it teaches you how many hours of personal study you actually sustain. All subsequent planning becomes realistic from there.</p>
+
+<h2>Preparing for an exam without cramming everything</h2>
+<p>Last-minute revision fails for a mechanical reason: memory needs spaced repetition, not one long session. Concretely, an exam five weeks away is prepared by placing short recurring revision slots starting now, one subject per slot: that is exactly what <a href="/en/blog/time-blocking-guide">time-blocking</a> is for. The difference from "I will revise regularly" is that a slot exists in the calendar and defends itself against other demands, whereas an intention exists nowhere.</p>
+<p>For group projects, task sharing avoids the chat thread where nobody knows who is doing what: one task, one owner, one deadline visible to everyone. It is free, and it does not force anybody to create an account on yet another tool.</p>
+
+<h2>The habits that make the difference over a semester</h2>
+<p>A semester is a four-month project, and repeated behaviours beat bursts of speed. Rereading your notes the evening of the lecture, thirty minutes of a language, two or three training sessions: these routines weigh more on the final average than a week of cramming. The 26-week heatmap, exactly the length of a semester, shows your real consistency, and the <a href="/en/blog/suivi-des-habitudes">completion rate</a> tells you in week 4 whether a habit was too ambitious, while there is still time to shrink it.</p>
+
+<h2>Genuinely free, genuinely frictionless</h2>
+<p>No credit card, no 14-day trial: the main features are free, full stop. Cosmo runs in your phone's browser as well as on a library computer, with nothing to install. <a href="/en/">Try the demo without signing up</a>, two minutes is enough to see whether the system speaks to you.</p>`,
       },
     },
   },
@@ -121,6 +180,36 @@ export const USE_CASES = [
 <h2>Commencez par vous</h2>
 <p>Le meilleur argument pour diffuser une méthode à son équipe, c'est de l'incarner un trimestre. <a href="/">Essayez la démo sans inscription</a>, posez vos OKR du trimestre en 15 minutes, et jugez sur vos propres résultats, c'est gratuit. Quand la méthode est validée et que vous voulez embarquer tout le monde, le <a href="/pour-equipes">mode entreprise</a> prend le relais : organigramme, projets d'équipe et statistiques de pilotage.</p>`,
       },
+      en: {
+        audience: "managers",
+        title: "The productivity app for managers and team leads",
+        metaTitle: "Manager productivity app: OKRs and priorities",
+        description: "Managers: steer your OKRs, protect your deep-work time between meetings and follow the tasks shared with your team. Free.",
+        lead: "The manager's paradox: the more people need you, the less time is left for the work that justifies the role, namely strategy, decisions and people. Getting that time back is a tooling problem as much as a discipline one.",
+        html: `
+<h2>A manager's calendar is a battlefield</h2>
+<p>Meetings booked by other people, continuous demands, and at the end of the week that question: "what did I actually move forward?". The team's annual goals, meanwhile, live in a slide reviewed twice a year. That is not a personal failing, it is what happens when the important has no tool to face the urgent.</p>
+<h2>What Cosmo brings a manager</h2>
+<ul>
+<li><strong>OKRs come out of the slide deck.</strong> Quarterly objectives and measurable key results, progress computed automatically, a progress chart on the dashboard: the Monday OKR check-in gets prepared in 5 minutes, with real numbers.</li>
+<li><strong>Time-blocking defends your deep work.</strong> Block your thinking slots before meetings devour the week, because a calendar already occupied by your priorities is your best line of defence.</li>
+<li><strong>Task sharing, without the machinery.</strong> Share a task with a colleague as Viewer or Editor, follow progress from your dashboard, discuss in the context of the task, without deploying yet another project-management tool.</li>
+<li><strong>Statistics reveal your real week.</strong> Time spent per category (meetings, one-to-ones, delivery, strategy): the data missing from every conversation about workload.</li>
+</ul>
+<h2>Taking back control of your week</h2>
+<p>A manager's calendar fills itself by default: if you put nothing in it, other people will. The countermeasure is simple and unpopular: block your uninterruptible working slots first, before the week fills up, and treat them as real appointments. Two protected two-hour blocks beat ten intentions scattered between meetings.</p>
+<p>The second lever is the weekly review: twenty minutes on Friday to look at what moved, where the time went by category, and where the goals stand. It is short, and it is what saves you from arriving at the quarterly check-in reconstructing the story from memory. The <a href="/en/blog/tableau-de-bord-productivite">dashboard</a> supplies the numbers with no re-entry.</p>
+
+<h2>Keeping OKRs alive between reviews</h2>
+<p>The problem with OKRs in companies is almost never how they are worded, it is that they are written at the start of the quarter and reopened the day before the review. In between, daily decisions get made without them, and the gap is discovered too late to correct.</p>
+<p>Fixing that takes one thing: the goals have to be visible in the same place as the tasks. When each key result's progress updates as you go and shows on the dashboard, the Monday check-in gets prepared in five minutes with real numbers, and a drifting objective is spotted halfway through, while it is still possible to choose between accelerating and giving up explicitly. If the method is new to your team, the article <a href="/en/blog/okr-vs-smart-vs-kpi">OKRs vs SMART vs KPIs</a> clarifies what each framework can and cannot do.</p>
+
+<h2>Following the team without watching over them</h2>
+<p>Task sharing as Viewer or Editor gives the visibility you need without turning the tool into a surveillance device: you see the progress of what has been explicitly shared, not everybody's activity. The distinction matters, because a tool experienced as monitoring gets filled in as little as possible, and quickly stops being reliable. This collaboration is free in Cosmo, which spares you having to justify licences to test a method for a quarter.</p>
+
+<h2>Start with yourself</h2>
+<p>The best argument for spreading a method to your team is to embody it for a quarter. <a href="/en/">Try the demo without signing up</a>, set your quarterly OKRs in 15 minutes, and judge on your own results, for free. Once the method is proven and you want to bring everybody on board, <a href="/en/for-teams">company mode</a> takes over: org chart, team projects and steering statistics.</p>`,
+      },
     },
   },
   {
@@ -158,6 +247,37 @@ export const USE_CASES = [
 <h2>Gratuit jusqu'à cinq personnes</h2>
 <p>Une équipe de moins de cinq personnes utilise le mode entreprise gratuitement, sans fonctionnalité bridée ni période d'essai à surveiller : l'organigramme, les projets, les OKR et les statistiques sont tous inclus. C'est assez pour qu'une équipe fondatrice, un pôle ou un premier projet pilote juge sur pièce avant d'embarquer le reste de l'entreprise.</p>
 <p><a href="/">La démo s'essaie sans créer de compte</a> : une organisation fictive de six personnes, avec ses projets, ses objectifs et son organigramme déjà remplis, pour se faire une idée en deux minutes. Si vous êtes seul responsable pour l'instant, la page <a href="/pour-managers">pour les managers</a> décrit le même produit du point de vue individuel.</p>`,
+      },
+      en: {
+        audience: "teams",
+        title: "The team management app for small companies and studios",
+        metaTitle: "Team management app: projects, OKRs and steering",
+        description: "An org chart that draws itself, team projects, weighted OKRs and steering statistics in one app. Free up to 5 people, demo with no sign-up.",
+        lead: "In most teams the work lives in one tool and the steering in another: tasks on one side, a goals spreadsheet and a forgotten org chart on the other. Cosmo brings the two together, without imposing a six-month rollout.",
+        html: `
+<h2>Two tools, two versions of the truth</h2>
+<p>The scenario is almost always the same. Everybody manages their own tasks in their own corner: a personal app, a notebook, a list in the messaging tool. The team, meanwhile, has a project-management tool where people record what has to be shared. The result: nobody has their full day on one screen, and the manager reconstructs the state of play by asking five people.</p>
+<p>The cost of that double entry does not show up in a budget, but it is paid every day: tasks forgotten because they were in the other tool, a weekly meeting spent collecting information rather than deciding, and quarterly goals living in a slide reviewed twice a year.</p>
+<h2>What Cosmo brings a team</h2>
+<ul>
+<li><strong>An org chart that draws itself.</strong> Each person is attached to a manager when they arrive, and the structure builds itself. No HR form to fill in, no table to keep up to date, and that same structure then determines who sees what.</li>
+<li><strong>Team tasks land in each person's own to-do list.</strong> A task assigned from the team board appears directly in the personal list of the person concerned. One app to open in the morning, not two.</li>
+<li><strong>Team OKRs that do not lie.</strong> Each key result carries a weight, so three easy objectives reached no longer make a quarter look successful when the fourth, the only one that mattered, has not moved.</li>
+<li><strong>Steering with no reporting to prepare.</strong> Load per person, completion rate, weekly velocity, delays, goal progress: the numbers are there permanently, and export when they have to be presented elsewhere.</li>
+</ul>
+<h2>The org chart finally does something</h2>
+<p>In most tools the org chart is a picture: nice on the intranet, with no effect on the actual work. Here it is the central mechanism. Attaching somebody to a manager gives that manager what they need to support them (the person's load, their overdue tasks, their schedule) and nothing else. A middle manager sees their own scope, never their neighbour's, without a single permission being configured by hand.</p>
+<p>Alongside that reporting line, cross-functional teams group people by project or by area, independently of who reports to whom. That is what lets a project lead run a piece of work with people who are not in their team, without duplicating the organisation or creating one workspace per department.</p>
+<h2>Seeing your team's schedule without asking</h2>
+<p>"Are you free on Thursday?" is still one of the most expensive questions of a working week, especially remotely. A manager reaches their team's calendar directly and places what needs placing, with no back and forth. The content of events marked as personal stays private, only the slot appears. That limit is not a detail: a tool experienced as surveillance gets filled in as little as possible, and very quickly stops being reliable.</p>
+<h2>The Monday review, prepared before the meeting</h2>
+<p>A guided walkthrough goes back over the past week (what moved, what slipped, who is overloaded) and ends with decisions to take rather than a table to interpret. Three minutes alone in front of the screen replace a good part of the half hour spent collecting information in the meeting. The time recovered does not vanish: it goes back to the conversation that justified the meeting in the first place.</p>
+<p>For goals the principle is the same as for tasks: they only survive if they are visible in the same place as the daily work. If the method is new to your team, the article <a href="/en/blog/okr-vs-smart-vs-kpi">OKRs vs SMART vs KPIs</a> clarifies what each framework can do, and the <a href="/en/blog/template-okr-gratuit">free OKR template</a> gives you a base to adapt.</p>
+<h2>Following the team without watching over them</h2>
+<p>The separation between what is shared and what stays private is built into the product, not left to everybody's goodwill. Projects attached to a team stay invisible to the others, the content of personal calendars never surfaces, and every person joining an organisation sees, before confirming, what it will be able to observe of their work. The separation is enforced at the level of the data itself: it is not the display that hides things, it is the access that is refused.</p>
+<h2>Free up to five people</h2>
+<p>A team of fewer than five people uses company mode for free, with no crippled features and no trial period to watch: the org chart, projects, OKRs and statistics are all included. That is enough for a founding team, a department or a first pilot project to judge on the evidence before bringing the rest of the company on board.</p>
+<p><a href="/en/">The demo can be tried without creating an account</a>: a fictional organisation of six people, with its projects, goals and org chart already filled in, so you can form a view in two minutes. If you are the only manager for now, the <a href="/en/for-managers">for managers</a> page describes the same product from an individual point of view.</p>`,
       },
     },
   },
