@@ -152,5 +152,18 @@
     "morning": "Ce matin",
     "afternoon": "Cet après-midi",
     "evening": "Ce soir"
+  },
+  "dayClosed": {
+    "title": "Tout est fait.",
+    "tasks_one": "{{count}} tâche",
+    "tasks_many": "{{count}} de tâches",
+    "tasks_other": "{{count}} tâches",
+    "habits_one": "{{count}} habitude",
+    "habits_many": "{{count}} d'habitudes",
+    "habits_other": "{{count}} habitudes",
+    "events_one": "{{count}} rendez-vous",
+    "events_many": "{{count}} de rendez-vous",
+    "events_other": "{{count}} rendez-vous",
+    "at": "Journée bouclée à {{time}}."
   }
 }

@@ -1,11 +1,16 @@
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router';
-import { AlertTriangle, Building2, Circle, User } from 'lucide-react';
+import { AlertTriangle, Building2, Check, Circle, User } from 'lucide-react';
 import { useEvents } from '@/modules/events';
+import { useHabits } from '@/modules/habits';
+import { useTasks } from '@/modules/tasks';
+import { useTeamTasks } from '@/modules/team-projects';
+import { useActiveOrganization } from '@/modules/organizations';
+import { useAuth } from '@/modules/auth/AuthContext';
 import { useTodayItems, useCompleteTodayItem } from '@/modules/today';
 import { useT } from '@/i18n/useT';
 import TouchTarget from '@/components/mobile/TouchTarget';
-import { buildMoments } from './today-moments.helpers';
+import { buildMoments, todayCompletionReport } from './today-moments.helpers';
 
 /**
  * « Matin · après-midi · soir » — maquette 28, l'accueil MOBILE.
@@ -27,13 +32,42 @@ import { buildMoments } from './today-moments.helpers';
  * Desktop garde `TodayUnified`, inchangé.
  */
 const TodayMoments = () => {
-  const { t } = useT('dashboard');
+  const { t, tp } = useT('dashboard');
   const navigate = useNavigate();
   const { items, isLoading } = useTodayItems();
   const { data: events = [] } = useEvents();
+  const { data: allTasks = [] } = useTasks();
+  const { data: habits = [] } = useHabits();
+  const { user } = useAuth();
+  const { activeOrg } = useActiveOrganization();
+  const { data: teamTasks = [] } = useTeamTasks(activeOrg?.id);
   const complete = useCompleteTodayItem();
 
+  // Mêmes tâches d'équipe que le fil : celles qui me sont assignées.
+  const myTeamTasks = useMemo(
+    () => (user ? teamTasks.filter((task) => task.assigneeIds.includes(user.id)) : []),
+    [teamTasks, user],
+  );
+
   const groups = useMemo(() => buildMoments({ events, tasks: items }), [events, items]);
+  const report = useMemo(
+    () => todayCompletionReport({ tasks: allTasks, teamTasks: myTeamTasks, habits, events }),
+    [allTasks, myTeamTasks, habits, events],
+  );
+
+  // ── Maquette 49 : « La journée bouclée, sans confettis » ──
+  // Un fait, un chiffre, une heure. Pas de confettis, pas d'anneau : la
+  // maquette 29 (l'anneau de journée) a été jetée pour la raison exacte qui
+  // vaut ici — une récompense qui n'apprend rien sur ce qu'il reste à faire.
+  // La journée est bouclée quand il ne reste RIEN à faire — pas quand les
+  // trois moments sont vides. Un rendez-vous passé y figure encore, et lier la
+  // condition à des moments vides l'aurait rendue morte tous les jours où
+  // l'agenda contient quelque chose.
+  // ⚠️ `items` ne contient JAMAIS d'élément terminé — `mergeTodayItems` les
+  // écarte à la source. « Plus rien en attente » s'écrit donc `length === 0`,
+  // et un `every(done)` serait une tautologie déguisée en condition.
+  const dayClosed =
+    !isLoading && report.total > 0 && items.length === 0 && report.upcomingEvents === 0;
 
   return (
     <section className="card-plain-mobile p-gutter rounded-2xl">
@@ -44,11 +78,48 @@ const TodayMoments = () => {
       {isLoading && groups.length === 0 && (
         <p className="text-label text-[rgb(var(--color-text-secondary))]">{t('today.loading')}</p>
       )}
-      {!isLoading && groups.length === 0 && (
+      {!isLoading && groups.length === 0 && !dayClosed && (
         <p className="text-label text-[rgb(var(--color-text-secondary))]">{t('today.empty')}</p>
       )}
 
-      {groups.map((group) => (
+      {dayClosed && (
+        <div className="flex items-start gap-3">
+          <span
+            className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-[rgb(var(--color-success))]/15 text-[rgb(var(--color-success))]"
+            aria-hidden="true"
+          >
+            <Check size={16} />
+          </span>
+          <div className="min-w-0">
+            <p className="text-body font-semibold text-[rgb(var(--color-text-primary))]">
+              {t('dayClosed.title')}
+            </p>
+            {/* Trois comptes pluralisés SÉPARÉMENT, joints par le point
+                médian déjà utilisé partout dans le produit. Une phrase unique
+                à trois nombres rendait « 1 tâches » en français (vu à
+                l'écran) : aucune forme plurielle ne peut accorder trois
+                nombres à la fois. */}
+            <p className="text-label text-[rgb(var(--color-text-secondary))]">
+              {[
+                tp('dayClosed.tasks', report.tasksDone),
+                tp('dayClosed.habits', report.habitsDone),
+                tp('dayClosed.events', report.eventsToday),
+              ].join(' · ')}
+            </p>
+            {/* L'heure n'est affichée que si on la CONNAÎT : `completedAt`
+                manque sur les tâches d'avant son introduction et en mode
+                local. Mieux vaut la taire que montrer l'heure à laquelle on
+                regarde l'écran comme celle à laquelle on a fini. */}
+            {report.closedAt && (
+              <p className="text-caption text-[rgb(var(--color-text-muted))]">
+                {t('dayClosed.at', { time: report.closedAt })}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {!dayClosed && groups.map((group) => (
         <div key={group.moment} className="mt-4 first:mt-0">
           <h3 className="mb-1.5 text-caption font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))]">
             {t(`moments.${group.moment}`)}

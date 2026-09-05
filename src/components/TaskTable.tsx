@@ -14,6 +14,8 @@ import TaskBulkActionsBar from './task-table/TaskBulkActionsBar';
 import { TeamTaskRowLite } from './task-table/TeamTaskRowLite';
 import TeamTaskModal from './organization/TeamTaskModal';
 import { myAssignedTasks } from './organization/team-projects.helpers';
+import { useSheetMotion } from '@/components/mobile/mobile-motion';
+import { useBottomSheet } from '@/hooks/use-bottom-sheet';
 
 // ═══════════════════════════════════════════════════════════════════
 // Module tasks - Hooks indépendants (MIGRÉ)
@@ -60,6 +62,8 @@ type TaskTableProps = {
   showQuickFilters?: boolean;
   /** Terme de recherche de la page — filtre aussi les tâches d'équipe fusionnées. */
   searchTerm?: string;
+  /** Bascule « voir les terminées », proposée par le marqueur de fin de liste. */
+  onShowCompletedChange?: (value: boolean) => void;
 };
 
 
@@ -76,6 +80,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
   onToggleTaskForList,
   showQuickFilters = true,
   searchTerm = '',
+  onShowCompletedChange,
 }) => {
   const { t, tp } = useT('tasks');
   const { t: tCommon } = useT('common');
@@ -157,6 +162,13 @@ const TaskTable: React.FC<TaskTableProps> = ({
   const [showBulkListModal, setShowBulkListModal] = useState(false);
   // Modal de confirmation bloquant pour la suppression groupée (#10).
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
+
+  // Les deux feuilles de confirmation ci-dessous affichaient une poignee de
+  // glissement qui ne declenchait rien (audit mobile 2026-08-14). Un helper
+  // par feuille : `useBottomSheet` ne sait fermer qu'une seule surface.
+  const sheetMotion = useSheetMotion();
+  const deleteSheet = useBottomSheet(useCallback(() => setTaskToDelete(null), []));
+  const bulkDeleteSheet = useBottomSheet(useCallback(() => setShowBulkDeleteConfirm(false), []));
   // Nombre de tâches figé à l'ouverture du modal : bulkAddToList vide la
   // sélection, on évite un « 0 tâche » qui clignoterait pendant la fermeture.
   const [bulkModalCount, setBulkModalCount] = useState(0);
@@ -275,6 +287,14 @@ const TaskTable: React.FC<TaskTableProps> = ({
   const scopedTeamTasks = useMemo(
     () => (scopeFilter === 'perso' ? [] : myTeamTasks),
     [scopeFilter, myTeamTasks],
+  );
+
+  // Maquette 50 — « La fin de la liste se dit ». Le décompte porte sur les
+  // tâches TERMINÉES que la vue courante n'affiche pas : c'est la seule chose
+  // que le marqueur puisse proposer d'ouvrir.
+  const hiddenCompletedCount = useMemo(
+    () => (showCompleted ? 0 : tasks.filter((t) => t.completed).length),
+    [tasks, showCompleted],
   );
 
   // Fusion triée : mêmes clés de tri que compareTasks (task-filtering.ts),
@@ -640,6 +660,31 @@ const TaskTable: React.FC<TaskTableProps> = ({
           onToggleTeamComplete={handleToggleTeamComplete}
           onEditTeamTask={setEditingTeamTask}
         />
+
+        {/* ── Maquette 50 : « La fin de la liste se dit » ──
+            Sans marqueur, on ne sait jamais si l'on a tout vu ou si le
+            chargement continue — la liste est virtualisée au-delà de 50 items,
+            donc le doute est fondé. Une ligne suffit, et elle porte le seul
+            ailleurs qui existe : les tâches terminées, qu'aucun écran ne
+            proposait d'ouvrir depuis la liste elle-même. */}
+        {unifiedRows.length > 0 && !addToListMode && (
+          <div className="pt-4 pb-2 text-center">
+            <p className="text-caption text-[rgb(var(--color-text-muted))]">
+              {showCompleted
+                ? tp('table.endOfListCompleted', unifiedRows.length)
+                : tp('table.endOfList', unifiedRows.length)}
+            </p>
+            {hiddenCompletedCount > 0 && onShowCompletedChange && (
+              <button
+                type="button"
+                onClick={() => onShowCompletedChange(true)}
+                className="mt-1 min-h-touch px-3 text-label font-semibold text-[rgb(var(--color-accent))]"
+              >
+                {tp('table.seeCompleted', hiddenCompletedCount)}
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       {unifiedRows.length === 0 && isLoadingTasks && (
@@ -732,16 +777,15 @@ const TaskTable: React.FC<TaskTableProps> = ({
             onClick={() => setTaskToDelete(null)}
           >
             <motion.div
-              initial={{ y: '100%', opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: '110%', opacity: 0, transition: { duration: 0.22, ease: [0.4, 0, 1, 1] } }}
-              transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.7 }}
+              ref={deleteSheet.sheetRef}
+              {...deleteSheet.sheetDragProps}
+              {...sheetMotion}
               onClick={(e) => e.stopPropagation()}
               className="bg-[rgb(var(--color-surface))] rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-sm overflow-hidden border-t sm:border border-[rgb(var(--color-border))]"
               style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
             >
               <div className="sm:hidden flex justify-center pt-4 pb-3">
-                <div className="w-9 h-[5px] rounded-full bg-slate-300/70 dark:bg-slate-500/60" />
+                <motion.div className="h-[5px] rounded-full bg-slate-300/70 dark:bg-slate-500/60" style={{ width: deleteSheet.handleBarWidth }} />
               </div>
               <div className="p-5 sm:p-6">
                 <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-4">
@@ -782,16 +826,15 @@ const TaskTable: React.FC<TaskTableProps> = ({
             onClick={() => setShowBulkDeleteConfirm(false)}
           >
             <motion.div
-              initial={{ y: '100%', opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: '110%', opacity: 0, transition: { duration: 0.22, ease: [0.4, 0, 1, 1] } }}
-              transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.7 }}
+              ref={bulkDeleteSheet.sheetRef}
+              {...bulkDeleteSheet.sheetDragProps}
+              {...sheetMotion}
               onClick={(e) => e.stopPropagation()}
               className="bg-[rgb(var(--color-surface))] rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-sm overflow-hidden border-t sm:border border-[rgb(var(--color-border))]"
               style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
             >
               <div className="sm:hidden flex justify-center pt-4 pb-3">
-                <div className="w-9 h-[5px] rounded-full bg-slate-300/70 dark:bg-slate-500/60" />
+                <motion.div className="h-[5px] rounded-full bg-slate-300/70 dark:bg-slate-500/60" style={{ width: bulkDeleteSheet.handleBarWidth }} />
               </div>
               <div className="p-5 sm:p-6">
                 <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-4">

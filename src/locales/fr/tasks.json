@@ -137,7 +137,16 @@
     "overdueCount_many": "{{count}} de tâches en retard",
     "overdueCount_other": "{{count}} tâches en retard",
     "rescheduleAllBtn": "Tout replanifier",
-    "colName": "Nom de la tâche"
+    "colName": "Nom de la tâche",
+    "endOfList_one": "fin de la liste · {{count}} tâche",
+    "endOfList_many": "fin de la liste · {{count}} de tâches",
+    "endOfList_other": "fin de la liste · {{count}} tâches",
+    "endOfListCompleted_one": "fin de la liste · {{count}} tâche terminée",
+    "endOfListCompleted_many": "fin de la liste · {{count}} de tâches terminées",
+    "endOfListCompleted_other": "fin de la liste · {{count}} tâches terminées",
+    "seeCompleted_one": "Voir la tâche terminée",
+    "seeCompleted_many": "Voir les {{count}} de tâches terminées",
+    "seeCompleted_other": "Voir les {{count}} terminées"
   },
   "toast": {
     "leftShared": "Vous avez quitté la tâche partagée",

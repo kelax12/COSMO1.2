@@ -142,5 +142,18 @@
     "morning": "This morning",
     "afternoon": "This afternoon",
     "evening": "This evening"
+  },
+  "dayClosed": {
+    "title": "Everything is done.",
+    "tasks_one": "{{count}} task",
+    "tasks_many": "{{count}} tasks",
+    "tasks_other": "{{count}} tasks",
+    "habits_one": "{{count}} habit",
+    "habits_many": "{{count}} habits",
+    "habits_other": "{{count}} habits",
+    "events_one": "{{count}} appointment",
+    "events_many": "{{count}} appointments",
+    "events_other": "{{count}} appointments",
+    "at": "Day closed at {{time}}."
   }
 }
