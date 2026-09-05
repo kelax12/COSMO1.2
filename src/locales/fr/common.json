@@ -304,5 +304,10 @@
     "tomorrow": "Demain",
     "yesterday": "Hier",
     "daysAgo": "il y a {{count}} j"
+  },
+  "pullToRefresh": {
+    "pull": "Tirer pour actualiser",
+    "release": "Relâcher pour actualiser",
+    "refreshing": "Actualisation…"
   }
 }
