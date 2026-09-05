@@ -259,35 +259,45 @@ const DashboardPage: React.FC = () => {
         initial="hidden"
         animate="visible"
       >
-        {/* Header avec salutation */}
+        {/* ── Mobile : en-tête canonique (cf. docs/MOBILE.md) ──
+            Maquette 02, « Le même écran, sans la coque » : plus de
+            salutation. Elle occupait la ligne la plus haute et la plus
+            grande de l'écran pour dire quelque chose que la personne sait
+            déjà — son propre prénom. À la place, la date du jour, qui est
+            le seul repère dont la liste a besoin.
+
+            Le résumé contextuel juste en dessous n'est PAS passé en
+            `subtitle` : il contient des liens cliquables, et un `subtitle`
+            disparaît quand l'en-tête se compacte. On perdrait des points
+            d'entrée au premier scroll.
+
+            🔴 Rendu HORS du `motion.div variants={itemVariants}` qui suit :
+            `position: sticky` reste collé tant que son PARENT direct reste
+            dans le viewport, pas au-delà. Ce parent-là ne fait que la
+            hauteur du bloc salutation (~150 px) — mesuré dans le navigateur,
+            le header sortait par le HAUT dès 150 px de scroll au lieu de
+            rester collé. Frère du conteneur `containerVariants` (qui, lui,
+            fait toute la hauteur de la page), le header reste collé sur
+            tout le scroll, comme `TasksHeader` sur `/tasks`. */}
+        <MobileHeader
+          title={formatDate(new Date(), {
+            weekday: 'long',
+            day: 'numeric',
+            month: 'short',
+          })}
+          actions={<InboxMenu />}
+        />
+
+        {/* Salutation desktop + résumé contextuel */}
           <motion.div
             variants={itemVariants}
           >
-            {/* ── Mobile : en-tête canonique (cf. docs/MOBILE.md) ──
-                Maquette 02, « Le même écran, sans la coque » : plus de
-                salutation. Elle occupait la ligne la plus haute et la plus
-                grande de l'écran pour dire quelque chose que la personne sait
-                déjà — son propre prénom. À la place, la date du jour, qui est
-                le seul repère dont la liste a besoin.
-
-                Le résumé contextuel juste en dessous n'est PAS passé en
-                `subtitle` : il contient des liens cliquables, et un `subtitle`
-                disparaît quand l'en-tête se compacte. On perdrait des points
-                d'entrée au premier scroll. */}
             {/* ⚠️ Le titre est la DATE, pas le mot « Aujourd'hui » de la
                 maquette : ce mot nomme déjà la section dépliable juste en
                 dessous (`sections.today`, vue unifiée perso + équipe). Mesuré
                 dans le navigateur en 375 px — deux « Aujourd'hui » à 100 px
                 d'écart, l'un en h1 l'autre en h2. La date remplit la même
                 fonction de repère et ne double aucun libellé. */}
-            <MobileHeader
-              title={formatDate(new Date(), {
-                weekday: 'long',
-                day: 'numeric',
-                month: 'short',
-              })}
-            />
-
             <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0">
                 <PageHeading variant="hero" className="mb-1 sm:mb-2 lg:mb-3 hidden md:block">
@@ -368,8 +378,11 @@ const DashboardPage: React.FC = () => {
                 })()}
               </motion.p>
             </div>
-            {/* Boîte de réception : demandes d'amis + tâches partagées à accepter */}
-            <div className="shrink-0 pt-1 flex items-center gap-2">
+            {/* Boîte de réception : demandes d'amis + tâches partagées à accepter.
+                Sur mobile elle est désormais dans `MobileHeader.actions`, alignée
+                avec la date (elle occupait sinon la ligne du résumé, plus bas et
+                dépareillée du reste de l'en-tête). */}
+            <div className="hidden md:flex shrink-0 pt-1 items-center gap-2">
               <InboxMenu />
             </div>
             </div>

@@ -479,7 +479,7 @@ const NavItems = () =>
         <main
           id={MAIN_CONTENT_ID}
           tabIndex={-1}
-          className="flex-1 overflow-auto pb-20 focus:outline-none"
+          className="flex-1 overflow-y-auto overflow-x-hidden pb-20 focus:outline-none"
           style={{ backgroundColor: 'rgb(var(--color-background))' }}
         >
           <Outlet />
@@ -590,7 +590,7 @@ const NavItems = () =>
         <main
           id={MAIN_CONTENT_ID}
           tabIndex={-1}
-          className="flex-1 overflow-auto relative focus:outline-none"
+          className="flex-1 overflow-y-auto overflow-x-hidden relative focus:outline-none"
           style={{ backgroundColor: 'rgb(var(--color-background))' }}>
 
           <Outlet />
