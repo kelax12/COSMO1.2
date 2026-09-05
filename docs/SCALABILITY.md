@@ -351,17 +351,26 @@ Les policies restent en place en défense en profondeur, comme pour `get_my_task
 > **rechargement** de la pastille (`background`) ; la **lecture** partait toujours au premier
 > montage, donc à chaque chargement de l'application, depuis n'importe quelle page protégée.
 >
-> **Trace « avant », production, 2026-09-05 20:11:24 UTC**, une seule adresse, donc une seule
-> session — lue par session, jamais sur un compteur agrégé (leçon des onglets zombies) :
+> **Trace « avant », production, 2026-09-05 10:41:31 UTC**, chargement à froid, une seule adresse —
+> lue par session, jamais sur un compteur agrégé (leçon des onglets zombies) :
 >
 > ```
-> 20:11:24.497  /rest/v1/rpc/get_my_tasks
-> 20:11:24.499  /rest/v1/rpc/get_my_org_inbox
-> 20:11:24.502  /rest/v1/rpc/get_my_team_tasks
+> 10:41:31.800  /rest/v1/rpc/get_my_org_inbox
+> 10:41:31.802  /rest/v1/rpc/get_my_team_tasks     ← 2 ms apres l'inbox
+>    …
+> 10:41:31.960  /rest/v1/rpc/get_my_team_projects  ← 158 ms plus tard, autre vague
 > ```
 >
-> `get_my_team_projects` est **absent** de cette rafale, alors qu'il est présent trois secondes
-> plus tôt sur `/tasks` : ce n'est donc pas un écran de /entreprise qui lit, c'est `Layout`.
+> **Ce qui désigne `Layout`, c'est l'écart, pas une absence.** `TaskTable` et les écrans
+> /entreprise montent `useTeamProjects` et `useTeamTasks` dans le **même rendu** : leurs requêtes
+> partent dans la même milliseconde. Ici `get_my_team_tasks` part avec la boîte de réception et
+> `organization_members`, dès que l'organisation active est résolue ; `get_my_team_projects` suit
+> 158 ms plus tard avec `okrs`, `kr_completions`, `lists`, `friends` — la vague de la page.
+>
+> ⚠️ **Le premier « avant » écrit ici citait la rafale de 20:11:24 et ne prouvait rien** :
+> `useTeamProjects` garde 5 min de fraîcheur contre 30 s pour `useTeamTasks`, donc un simple retour
+> sur `/tasks` produit la même signature. Corrigé le jour même. Une trace « avant » qui admet deux
+> explications n'est pas une trace, c'est une coïncidence qu'on a lue dans le bon sens.
 >
 > **Correctif (mig. 142)** : la boîte de réception gagne une section `badge_tasks`. Le serveur
 > rend les **seules** lignes dont la pastille a besoin — assignations en cours qui ne viennent pas
