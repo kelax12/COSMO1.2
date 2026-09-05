@@ -69,6 +69,7 @@ déclencher la cascade depuis l'écran). Détail dans [`a-faire-code.md`](./a-fa
 | M-11 | `OPS_ALERT_WEBHOOK_URL` | Secrets **Actions** du dépôt GitHub | Le canal d'alerte d'ops. Il existe côté Supabase, pas côté GitHub : `ci-alert.yml` ne pousse donc rien. `vendor-watch.yml` a échoué quatre jours d'affilée sans que personne n'ouvre son issue, c'est exactement ce que ce canal existe pour empêcher | `a-faire-code.md` C-28 |
 | M-12 | `CRON_SECRET` | Supabase **et** GitHub, **même valeur des deux côtés** | Les avis de reconduction tacite. Un avis non envoyé rend l'abonnement résiliable à tout moment, remboursement compris. Sans objet tant qu'aucun abonnement annuel n'existe, donc juste après M-08. **Mesuré le 2026-09-03** : la fonction déployée répond `503 cron_secret_not_configured` à tout appel, donc le secret n'est posé **nulle part**, et le travail quotidien n'a jamais tourné une seule fois | `ROADMAP-60J.md` T-40, `a-faire-code.md` C-34 |
 | M-29 | `BUG_REPORT_FROM` | Supabase (`supabase secrets set`) | **Les deux** fonctions qui envoient un e-mail (`report-bug` et `renewal-notice`) lisent ce même secret. La valeur doit viser `send.thecosmo.app`, jamais la racine `thecosmo.app`, que Resend ne signera jamais. ⚠️ Une fois le déploiement M-30 fait, les deux fonctions n'ont **plus de valeur par défaut** et répondent `503 sender_not_configured` : M-30 sans M-29 coupe le formulaire de signalement de bug | `a-faire-code.md` C-35 |
+| M-33 | `SUPABASE_ACCESS_TOKEN` | Secrets **Actions** du dépôt GitHub (jeton personnel : dashboard Supabase → Account → Access Tokens) | Le job `Edge deploy drift`, seule chose qui compare le code **déployé** des Edge Functions à celui du dépôt. ⚠️ Contrairement aux autres lignes de ce tableau, ce secret manquant ne rend pas la garde muette : elle **échoue** et ouvre une issue `ci-red` tous les jours jusqu'à ce qu'il soit posé. C'est voulu : un secret absent ne doit jamais produire un run vert. Poser le secret ou désactiver le workflow, pas de troisième option | `a-faire-code.md` C-35 |
 | M-13 | `VITE_TURNSTILE_SITE_KEY` | Vercel | Le CAPTCHA d'inscription | `ROADMAP-60J.md` |
 | M-14 | `VITE_SENTRY_DSN` **au build** | Vercel et CI | ⚠️ Sans elle, Vite remplace la variable à la compilation, Rollup jette presque tout `@sentry/react`, et `check:bundle` mesure un artefact qui n'existe nulle part. La garde refuse désormais ce build, mais le réglage reste à tenir | `CLAUDE.md` |
 
@@ -155,6 +156,12 @@ un correctif committé, testé et vert peut ne pas exister pour les utilisateurs
 |---|---|---|---|
 | M-30 | **Déployer les trois fonctions** : `supabase functions deploy delete-account`, puis `report-bug`, puis `renewal-notice`. Vérifier ensuite que le numéro de version a bien augmenté pour les trois | La commande demande les identifiants Supabase du projet. ⚠️ Faire M-29 dans la même séance, sinon le formulaire de bug répond `503` | `a-faire-code.md` C-35 |
 | M-32 | **Envoyer un vrai signalement de bug depuis l'app**, après M-29 et M-30, et vérifier qu'il arrive sur `contact@thecosmo.app` avec le `Reply-To` du compte et la pièce jointe lisible | Envoyer un e-mail réel depuis le domaine est une action sortante. Et aucune sonde ne prouve qu'un e-mail **arrive** : il faut ouvrir la boîte. Complète M-27 | `a-faire-code.md` C-35 |
+
+✅ **Depuis le 2026-09-04, ce tableau n'est plus un relevé fait à la main.** `npm run check:edge`
+(job `Edge deploy drift`, quotidien) télécharge le bundle de chaque fonction en ligne et le compare
+au dépôt : la prochaine dérive s'annoncera toute seule, avec le nom du fichier et la première ligne
+qui diffère. Il faut **poser M-33** pour ça. Le tableau ci-dessus reste la mesure du 09-03,
+remesurée le 09-04 pour `report-bug` (toujours v8, S-4 toujours en ligne).
 
 ⚠️ **Aucune donnée n'est perdue aujourd'hui par la ligne `delete-account`** : la migration 116 a
 basculé `friends_friend_user_id_fkey` en `ON DELETE CASCADE` (remesuré le 2026-09-03), donc la

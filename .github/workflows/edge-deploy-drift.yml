@@ -1,0 +1,119 @@
+# ──────────────────────────────────────────────────────────────────────
+# Le code DEPLOYE des Edge Functions, compare a celui du depot.
+#
+# 🔴 POURQUOI (finding C-35, audit A-1)
+#
+# Le 2026-09-03, les trois sources deployees lisibles ont ete relues via
+# l'API Management et comparees a `main` : LES TROIS divergeaient, de trois
+# facons differentes. `delete-account` executait une variante absente du
+# depot ; `renewal-notice` et `report-bug` portaient le defaut S-4 que
+# `faille.md` declare corrige. Remesure du 2026-09-04 : `stripe-org-refund`
+# n'existe pas en prod, `report-bug` tourne toujours en v8 du 08-29,
+# `stripe-webhook` en v26 du 08-26. Il a fallu interroger le projet A LA
+# MAIN pour l'apprendre, et rien dans la CI ne l'aurait jamais dit.
+#
+# Consequence, et c'est la seule qui compte : toute conclusion tiree en
+# lisant `supabase/functions/` etait fausse d'avance, y compris les statuts
+# de `faille.md`. Un « ✅ corrige » sur une Edge Function ne veut rien dire
+# sans sa date de deploiement.
+#
+# ── CE QU'IL FAUT FAIRE QUAND CE JOB CASSE ────────────────────────────
+#
+# Le RESUME du job nomme la fonction, le fichier et la premiere ligne qui
+# differe. Deux cas, deux gestes opposes :
+#
+#   · le depot est en avance (le correctif est committe, pas deploye) →
+#     `supabase functions deploy <slug>`. C'est un geste manuel d'Axel,
+#     suivi dans `a-faire-manuel.md`.
+#   · la prod est en avance (quelqu'un a deploye depuis un arbre de travail
+#     non committe, ce qui est EXACTEMENT ce qui a produit C-35) → recuperer
+#     le code deploye et le committer, avant tout autre travail.
+#
+# ❌ NE JAMAIS refermer ce job en ajoutant la fonction a la liste
+# `notDeployed` de `.github/edge-deploy.json` : cette liste ne couvre que
+# l'EXISTENCE, jamais le contenu, et une fonction qui y figure alors qu'elle
+# est en ligne fait echouer la garde exprès.
+#
+# ── PLANIFIE, ET PAS SEULEMENT SUR PUSH ───────────────────────────────
+#
+# Une derive de deploiement ne nait pas d'un commit : elle nait d'un
+# DEPLOIEMENT, qui n'evenemente rien ici. Un job qui ne tournerait que sur
+# push laisserait passer exactement le scenario mesure le 09-03, ou la prod
+# a bouge sans que le depot ne bouge.
+# ──────────────────────────────────────────────────────────────────────
+name: Edge deploy drift
+
+on:
+  schedule:
+    - cron: '41 5 * * *' # tous les jours, 05:41 UTC
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - supabase/functions/**
+      - .github/edge-deploy.json
+      - .github/workflows/edge-deploy-drift.yml
+      - scripts/check-edge-deploy.mjs
+
+permissions:
+  contents: read
+
+concurrency:
+  group: edge-deploy-drift-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      # Le corps servi par l'API Management est une archive eszip, un format
+      # binaire de Deno. On delegue son decodage au decodeur officiel plutot
+      # que d'ecrire un parseur maison : une piece qui se met a rendre zero
+      # fichier sans le dire est precisement la classe de defaut que ce job
+      # existe pour refermer.
+      # ⚠️ Epingle sur un SHA, comme tous les `uses:` du depot : `@v1` etait
+      # une BRANCHE, qui avance a chaque release.
+      - uses: supabase/setup-cli@46f7f98c7f948ad727d22c1e67fab04c223a0520 # v3.0.0
+        with:
+          version: latest
+
+      # Le temoin est une suite Vitest : il lui faut les dependances. Elles
+      # sont installees AVANT la comparaison, pour que l'etape qui mesure et
+      # celle qui verifie la mesure ne dependent pas toutes deux d'un meme
+      # `npm ci` place a l'interieur de l'une des deux.
+      - run: npm ci
+
+      # 🔴 PAS de `if: secrets.X != ''`, PAS de valeur de repli, PAS de
+      # `continue-on-error`. « Ne jamais rendre une garde conditionnelle a la
+      # presence de son propre secret » est une regle ecrite de CLAUDE.md,
+      # violee deux fois : `renewal-notice` le 2026-08-26 (`if (SECRET &&
+      # ...)`, qui laissait passer tout le monde tant que le secret n'etait
+      # pas pose) et `uptime.yml`, qui SAUTAIT toute sa moitie backend sur un
+      # secret inexistant en restant VERT. Le script sort en 1 si le jeton
+      # manque, et cette etape n'a rien qui puisse rattraper ca.
+      #
+      # Le jeton est un PAT Supabase (https://supabase.com/dashboard/account/tokens),
+      # a poser dans Settings -> Secrets and variables -> Actions.
+      - name: Comparer le code deploye au depot
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: npm run check:edge
+
+      # Le TEMOIN, rejoue a chaque run et pas seulement dans `npm test` : il
+      # soumet au comparateur des ecarts qu'il DOIT voir (un caractere
+      # change, un fichier present d'un seul cote, un bundle vide, un secret
+      # absent) et echoue s'il ne les voit pas.
+      #
+      # ⚠️ Il tourne APRES la comparaison, et en `always()`. Deux raisons :
+      # un temoin qui ne s'execute que quand la garde est verte ne dit rien
+      # le jour ou elle est rouge, et c'est ce jour-la qu'on se demande si
+      # c'est la prod qui a bouge ou la garde qui delire.
+      - name: Temoin · le comparateur compare-t-il encore quelque chose ?
+        if: ${{ always() }}
+        run: npx vitest run scripts/check-edge-deploy.guard.test.mjs

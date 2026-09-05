@@ -1,0 +1,31 @@
+{
+  "_pourquoi": [
+    "Declaration lue par `npm run check:edge` (scripts/check-edge-deploy.mjs).",
+    "",
+    "Elle ne dit QUE quelles fonctions du depot ne sont pas encore en ligne, et",
+    "pourquoi. Elle ne peut PAS faire taire une divergence de code : une fonction",
+    "deployee est comparee octet pour octet, sans exception et sans reglage.",
+    "Ce serait la porte de sortie qui viderait la garde de son sens.",
+    "",
+    "Un `notDeployed` dont la fonction est en realite en ligne fait ECHOUER la",
+    "garde : sans ca la note perime en silence et plus personne ne compare ce que",
+    "cette fonction execute.",
+    "",
+    "Une fonction du depot absente de prod ET absente d'ici fait echouer la garde",
+    "aussi : c'est une capacite que le depot annonce et que le produit n'a pas."
+  ],
+  "_projectRef": [
+    "Le ref du projet n'est pas un secret : il est present dans l'URL Supabase",
+    "compilee dans chaque bundle servi aux visiteurs. Le mettre ici plutot que",
+    "dans une variable d'environnement retire une chose a configurer, donc un",
+    "chemin de plus par lequel la garde pourrait se taire."
+  ],
+  "projectRef": "ykeugqfgklejcdbrmawy",
+  "notDeployed": [
+    {
+      "slug": "stripe-org-refund",
+      "since": "2026-09-04",
+      "reason": "Livree avec C-65/C-39, jamais deployee. Le deploiement est un geste manuel d'Axel (a-faire-manuel.md), et la facturation entreprise est desarmee : ENTERPRISE_BILLING_ENFORCED = false"
+    }
+  ]
+}

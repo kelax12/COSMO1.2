@@ -134,6 +134,23 @@ npm run check:legal         # Cohérence du tableau de conformité de docs/LEGAL
                             # lignes collées, identifiants en double, et surtout que la
                             # synthèse corresponde aux lignes. Ce total a été faux TROIS
                             # fois le 2026-08-26, toujours pour l'avoir additionné de tête.
+npm run check:edge          # Le code DÉPLOYÉ des Edge Functions contre le dépôt (finding C-35).
+                            # Job `Edge deploy drift` : quotidien 05:41 UTC + à chaque push
+                            # touchant `supabase/functions/`. Branché sur `ci-alert.yml`.
+                            # 🔴 EXIGE `SUPABASE_ACCESS_TOKEN`. Secret absent = ÉCHEC, jamais
+                            # un `::warning::` dans un run vert.
+                            # ⚠️ Le 2026-09-03, les TROIS sources déployées lisibles
+                            # divergeaient de `main`, de trois façons différentes. Tant que
+                            # rien ne comparait, toute conclusion tirée en lisant
+                            # `supabase/functions/` était fausse d'avance, y compris les
+                            # statuts de `faille.md`. **Un « ✅ corrigé » sur une Edge Function
+                            # ne veut rien dire sans sa date de déploiement.**
+                            # `.github/edge-deploy.json` ne déclare que l'EXISTENCE (quelle
+                            # fonction n'est pas encore en ligne, pourquoi, depuis quand).
+                            # ❌ Il ne peut pas faire taire une divergence de CONTENU, et une
+                            # fonction qu'il dit non déployée alors qu'elle est en ligne fait
+                            # échouer la garde : sinon la note périme en silence.
+                            # Témoin : `scripts/check-edge-deploy.guard.test.mjs`.
 npm run check:mail          # Délivrabilité des emails Auth : MX, SPF, DKIM Resend, DMARC.
                             # ✅ VERT au 2026-09-02 (remesuré) : DKIM, SPF et MX du Return-Path
                             # en place sur `send.thecosmo.app`. Reste 1 avertissement, DMARC
@@ -1276,6 +1293,28 @@ le plus lourd de la fenêtre 08-30 → 09-03, et il ne porte pas sur le produit 
   ou une mesure qui ne détecterait plus rien. Trois des quatre en ont un aujourd'hui.
 - 🔴 **Une garde qui se trompe dans le sens rassurant est pire qu'une garde absente : elle donne
   une réponse, et on la croit.**
+
+#### Le cas symétrique : ce que AUCUNE garde ne regardait (C-35)
+
+Les quatre lignes ci-dessus sont des gardes qui mesuraient à côté. Le défaut jumeau est une zone
+que **rien** ne mesure, et il est plus difficile à voir : il n'y a pas de run vert à mettre en
+cause, juste un silence qu'on prend pour un accord.
+
+**Le code déployé des Edge Functions était cette zone.** Le 2026-09-03, les trois sources en ligne
+ont été relues via l'API Management et comparées à `main` : les trois divergeaient, de trois façons
+différentes. `delete-account` exécutait une variante **absente du dépôt** ; `renewal-notice` et
+`report-bug` portaient le défaut S-4 que `faille.md` déclare corrigé. Remesuré le 2026-09-04 : la
+`report-bug` v8 en ligne porte toujours `?? 'Cosmo <bug@thecosmo.app>'` là où le dépôt ne porte plus
+de valeur par défaut.
+
+- ❌ **Ne jamais conclure d'une lecture de `supabase/functions/` qu'une Edge Function fait ce que le
+  dépôt dit.** Le dépôt décrit ce qu'on a écrit, pas ce qui s'exécute. `npm run check:edge` est le
+  seul lien entre les deux.
+- ❌ **Ne jamais écrire un statut de finding sur une Edge Function sans citer sa version déployée.**
+  Un « ✅ corrigé » qui ne dit pas *déployé le …* décrit un commit, pas la production.
+- ⚠️ Un déploiement n'événemente rien dans la CI : c'est pour ça que le job tourne aussi **à
+  l'heure**, et pas seulement sur `push`. La dérive du 09-03 est née d'un déploiement, pas d'un
+  commit.
 
 ### 📣 Une alerte que personne ne lit est une archive, pas une alerte
 
