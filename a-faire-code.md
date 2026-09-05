@@ -257,16 +257,26 @@ l'abonnement.
 > déploiement du front*. L'avant est enregistré (cf. ci-dessous) ; l'après demande qu'Axel ouvre
 > l'application une fois sur la version déployée.
 
-**Trace « avant », production, 2026-09-05 20:11:24 UTC** (une seule IP, donc une seule session) :
+**Trace « avant », production, 2026-09-05 10:41:31 UTC**, chargement à froid, une seule adresse :
 
 ```
-20:11:24.497  /rest/v1/rpc/get_my_tasks
-20:11:24.499  /rest/v1/rpc/get_my_org_inbox
-20:11:24.502  /rest/v1/rpc/get_my_team_tasks   ← la pastille, et rien d'autre
+10:41:31.800  /rest/v1/rpc/get_my_org_inbox
+10:41:31.802  /rest/v1/rpc/get_my_team_tasks     ← 2 ms apres l'inbox
+   …
+10:41:31.960  /rest/v1/rpc/get_my_team_projects  ← 158 ms plus tard, autre vague
 ```
 
-`get_my_team_projects` est **absent** de cette rafale : ce n'est donc pas un écran de /entreprise
-qui lit, c'est `Layout`. C'est exactement la ligne qui doit disparaître après déploiement.
+Ce qui désigne `Layout` n'est pas l'absence de `get_my_team_projects`, c'est l'**écart**. Les deux
+écrans qui lisent vraiment la liste (`TaskTable`, /entreprise) montent `useTeamProjects` et
+`useTeamTasks` dans le **même rendu** : leurs deux requêtes partent dans la même milliseconde. Ici
+`get_my_team_tasks` part avec la boîte de réception et `organization_members`, c'est-à-dire dès que
+l'organisation active est résolue ; `get_my_team_projects` arrive 158 ms plus tard avec `okrs`,
+`kr_completions`, `lists` et `friends`, la vague de la page. Deux vagues, deux causes.
+
+⚠️ **Une première version de cette note citait la rafale de 20:11:24, et elle était trop faible** :
+`useTeamProjects` a 5 min de fraîcheur contre 30 s pour `useTeamTasks`, donc un retour sur `/tasks`
+produit *exactement* la même signature sans que la pastille y soit pour quelque chose. Un « avant »
+se cite sur une trace qui ne peut avoir qu'une seule explication.
 
 Identifié le 2026-08-27, explicitement laissé « non engagé ». Le rechargement a été coupé
 (`useTeamTasks` a gagné `background`), **la lecture pas**. C'est la lecture la plus chère du produit
