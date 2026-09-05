@@ -16,6 +16,8 @@ import { useLists } from '@/modules/lists';
 import { useTeamTasks, useTeamProjects } from '@/modules/team-projects';
 import { useActiveOrganization } from '@/modules/organizations';
 import { useAuth } from '@/modules/auth/AuthContext';
+import { useToggleTaskComplete } from '@/modules/tasks';
+import { useUpdateTeamTask } from '@/modules/team-projects';
 import { mergeTodayItems } from './today.helpers';
 import type { TodayItem } from './types';
 
@@ -71,5 +73,27 @@ export function useTodayItems(): UseTodayItemsResult {
     items,
     isLoading: tasksLoading || (!!orgId && teamLoading),
     hasOrg: !!orgId,
+  };
+}
+
+/**
+ * Cocher un élément de la vue unifiée, par SON chemin d'écriture d'origine.
+ *
+ * 🔴 C'est la règle non négociable du module : la vue LIT les deux tables, elle
+ * n'en écrit jamais une à la place de l'autre. Récurrence serveur côté perso,
+ * triggers de statut côté équipe — un chemin unifié les casserait tous deux.
+ *
+ * Extrait de `TodayUnified` quand `TodayMoments` (maquette 28) est devenu un
+ * second consommateur : deux copies de cet aiguillage, c'est la garantie qu'un
+ * jour l'une des deux cochera dans la mauvaise table.
+ */
+export function useCompleteTodayItem(): (item: TodayItem) => void {
+  const { activeOrg } = useActiveOrganization();
+  const togglePersonal = useToggleTaskComplete();
+  const updateTeamTask = useUpdateTeamTask(activeOrg?.id ?? '');
+
+  return (item: TodayItem) => {
+    if (item.source === 'personal') togglePersonal.mutate(item.id);
+    else updateTeamTask.mutate({ taskId: item.id, input: { completed: true } });
   };
 }

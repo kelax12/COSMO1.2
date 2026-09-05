@@ -20,14 +20,17 @@ import TodayHabits from '@/components/TodayHabits';
 import InboxMenu from '@/components/InboxMenu';
 import TodayTasks from '@/components/TodayTasks';
 import TodayUnified from '@/components/TodayUnified';
+import TodayMoments from '@/components/TodayMoments';
 import { useActiveOrganization } from '@/modules/organizations';
 import CollaborativeTasks from '@/components/CollaborativeTasks';
 import ActiveOKRs from '@/components/ActiveOKRs';
 import MiniBarChart from '@/components/MiniBarChart';
 import TextType from '@/components/TextType';
 import MobileCollapsible from '@/components/MobileCollapsible';
+import { useIsMobile } from '@/lib/hooks/use-mobile';
 import WeeklyCheckinModal, { useWeeklyCheckin } from '@/components/WeeklyCheckinModal';
 import { formatDate, formatTime } from '@/i18n/format';
+import { deadlineDayKey } from '@/lib/deadline';
 import { useT } from '@/i18n/useT';
 import { VIEW_MODES, type ViewMode } from '@/lib/view-mode';
 // SocialRequests retiré du corps de page : les demandes d'amis ET les tâches
@@ -59,6 +62,7 @@ const DashboardPage: React.FC = () => {
   // source de taches : le titre de section lui-meme est donc conditionne, pas
   // seulement son contenu.
   const { activeOrg } = useActiveOrganization();
+  const isMobile = useIsMobile();
   const [viewMode, setViewMode] = useState<ViewMode>('day');
   const weeklyCheckin = useWeeklyCheckin();
   const [checkinOpen, setCheckinOpen] = useState(false);
@@ -314,7 +318,14 @@ const DashboardPage: React.FC = () => {
                 transition={{ delay: 0.2 }}
               >
                 {(() => {
-                  const remainingTasks = tasks.filter(t => !t.completed && t.deadline && new Date(t.deadline).toLocaleDateString('en-CA') === today).length;
+                  // `<=` et non `===` : une tâche en retard reste à faire
+                  // aujourd'hui. Avec l'égalité stricte, l'accueil affichait
+                  // « aucune tâche restante aujourd'hui » directement au-dessus
+                  // de trois tâches en retard listées par la section du dessous
+                  // (vu en 375 px le 2026-09-05). C'est aussi la règle de
+                  // périmètre déjà tranchée pour le fil unifié :
+                  // « échéance ≤ aujourd'hui, ou en retard, et non terminée ».
+                  const remainingTasks = tasks.filter(t => !t.completed && t.deadline && deadlineDayKey(t.deadline) <= today).length;
                   const now = new Date();
                   const nextEvent = events
                     .filter(e => new Date(e.start).toLocaleDateString('en-CA') === today && new Date(e.start) >= now)
@@ -397,6 +408,12 @@ const DashboardPage: React.FC = () => {
             période occupaient tout le premier écran, au-dessus de la première
             chose à faire. Un compteur ne se fait pas ; il se consulte, et il
             se consulte depuis Statistiques. Le rendu desktop est inchangé. */}
+        {/* Les quatre tuiles et leurs mini-graphiques ne sont plus RENDUS sur
+            téléphone (maquette 02, puis arbitrage du 2026-09-05). `hidden`
+            suffisait à les cacher, pas à les décharger : quatre sparklines et
+            leurs 28 barres restaient calculées et montées dans le DOM d'un
+            écran qui ne les montre jamais. Desktop strictement inchangé. */}
+        {!isMobile && (
         <motion.div variants={itemVariants} className="hidden md:block">
           <div className="flex items-center justify-stretch sm:justify-end mb-3 sm:mb-4">
             <div className="flex gap-1 p-1 bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-xl w-full sm:w-auto">
@@ -457,6 +474,7 @@ const DashboardPage: React.FC = () => {
             ))}
           </div>
         </motion.div>
+        )}
 
         {/* Contenu principal en grille */}
         <motion.div
@@ -471,10 +489,24 @@ const DashboardPage: React.FC = () => {
             {/* Vue « Aujourd'hui » unifiee (#29) — perso + equipe. Reservee aux
                 membres d'une organisation : sans deuxieme source, elle ferait
                 doublon avec « Taches prioritaires ». */}
+            {/* ── Mobile : le fil découpé en trois moments (maquette 28) ──
+                Rendez-vous et tâches mélangés, et rendu pour TOUT LE MONDE :
+                `TodayUnified` était réservé aux membres d'une organisation
+                parce que sans deuxième source de tâches il faisait doublon
+                avec « Tâches prioritaires ». Ce fil-ci porte aussi l'agenda,
+                donc il dit quelque chose qu'aucune autre section ne dit, même
+                sans organisation. */}
+            <div className="md:hidden">
+              <TodayMoments />
+            </div>
+
+            {/* ── Desktop (inchangé) ── */}
             {activeOrg && (
-              <MobileCollapsible title={t('sections.today')} defaultOpen>
-                <TodayUnified />
-              </MobileCollapsible>
+              <div className="hidden md:block">
+                <MobileCollapsible title={t('sections.today')} defaultOpen>
+                  <TodayUnified />
+                </MobileCollapsible>
+              </div>
             )}
             <MobileCollapsible title={t('sections.priorityTasks')} defaultOpen>
               <TodayTasks />

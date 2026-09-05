@@ -1,9 +1,6 @@
 import { useNavigate } from 'react-router';
 import { Circle, AlertTriangle, Building2, User } from 'lucide-react';
-import { useTodayItems, type TodayItem } from '@/modules/today';
-import { useToggleTaskComplete } from '@/modules/tasks';
-import { useUpdateTeamTask } from '@/modules/team-projects';
-import { useActiveOrganization } from '@/modules/organizations';
+import { useTodayItems, useCompleteTodayItem } from '@/modules/today';
 import { useT } from '@/i18n/useT';
 import TouchTarget from '@/components/mobile/TouchTarget';
 
@@ -27,18 +24,11 @@ const TodayUnified = () => {
   const { t, tp } = useT('dashboard');
   const navigate = useNavigate();
   const { items, isLoading, hasOrg } = useTodayItems();
-  const { activeOrg } = useActiveOrganization();
-  const togglePersonal = useToggleTaskComplete();
-  const updateTeamTask = useUpdateTeamTask(activeOrg?.id ?? '');
+  // Chaque source garde SON chemin d'écriture — règle non négociable de cette
+  // vue, portée par le hook depuis que `TodayMoments` (mobile) la partage.
+  const complete = useCompleteTodayItem();
 
   if (!hasOrg) return null;
-
-  // Chaque source garde SON chemin d'écriture — c'est la règle non négociable
-  // de cette vue.
-  const complete = (item: TodayItem) => {
-    if (item.source === 'personal') togglePersonal.mutate(item.id);
-    else updateTeamTask.mutate({ taskId: item.id, input: { completed: true } });
-  };
 
   const overdueCount = items.filter((i) => i.overdue).length;
 

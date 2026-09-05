@@ -147,5 +147,10 @@
   "todayHabits": {
     "heading": "Habitudes du jour",
     "loading": "Chargement…"
+  },
+  "moments": {
+    "morning": "Ce matin",
+    "afternoon": "Cet après-midi",
+    "evening": "Ce soir"
   }
 }
