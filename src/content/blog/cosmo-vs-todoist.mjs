@@ -1,19 +1,30 @@
-// Article de blog — contenu partagé entre React (BlogArticlePage) et
-// prerender.mjs. ESM pur, aucun import.
+// Article de blog, contenu partagé React + prerender. ESM pur.
+//
+// Deux dimensions, à ne jamais confondre :
+//   - la colonne vertébrale (`slug`, dates, `related`) est COMMUNE à toutes
+//     les langues : c'est une seule publication traduite, pas deux articles ;
+//   - `locales` porte tout ce qui se traduit, `readingMinutes` compris (un
+//     texte anglais n'a aucune raison de se lire dans le même temps que le
+//     français).
+//
+// Une locale absente n'est jamais repliée en silence sur le français côté SEO :
+// `articlesFor()` ne la publie pas, donc le prérendu ne peut pas produire une
+// page anglaise au corps français. Voir src/content/blog/index.mjs.
 export const article = {
-  slug: 'cosmo-vs-todoist',
-  title: 'Cosmo vs Todoist : lequel choisir en 2026 ?',
-  metaTitle: 'Cosmo vs Todoist (2026) : comparatif honnête et complet',
-  description:
-    'Todoist est un excellent gestionnaire de tâches. Cosmo ajoute habitudes, agenda time-blocking et OKR dans une app gratuite. Comparatif honnête, point par point.',
-  datePublished: '2026-07-18',
-  dateModified: '2026-07-18',
-  readingMinutes: 7,
+  slug: "cosmo-vs-todoist",
+  datePublished: "2026-07-18",
+  dateModified: "2026-07-18",
   // Suite de lecture : choisie par proximité de sujet, pas par date. Le tri
   // par récence envoyait les mêmes 3 liens depuis les 11 articles, ce qui
   // laissait 4 d'entre eux sans aucun lien entrant interne.
-  related: ['gestion-du-temps-efficace', 'methode-okr-exemples', 'time-blocking-guide'],
-  html: `
+  related: ["gestion-du-temps-efficace","methode-okr-exemples","time-blocking-guide"],
+  locales: {
+    fr: {
+      title: "Cosmo vs Todoist : lequel choisir en 2026 ?",
+      metaTitle: "Cosmo vs Todoist (2026) : comparatif honnête et complet",
+      description: "Todoist est un excellent gestionnaire de tâches. Cosmo ajoute habitudes, agenda time-blocking et OKR dans une app gratuite. Comparatif honnête, point par point.",
+      readingMinutes: 7,
+      html: `
 <p class="lead">Todoist est probablement le gestionnaire de tâches le plus abouti du marché : 18 ans d'existence, des applications natives partout, une saisie en langage naturel redoutable. Alors pourquoi comparer ? Parce que la question n'est pas « quelle est la meilleure todo-list ? » mais « <strong>de quoi votre organisation a-t-elle besoin ?</strong> ». Si la réponse inclut le suivi d'habitudes, le time-blocking ou des objectifs mesurables, le match devient intéressant. Comparatif honnête, point par point.</p>
 
 <h2 id="resume">Le verdict en 30 secondes</h2>
@@ -78,4 +89,6 @@ export const article = {
 <h2 id="conclusion">Conclusion</h2>
 <p>Todoist est un excellent outil, et si votre besoin s'arrête aux tâches, gardez-le. Mais si votre organisation ressemble à « une todo-list + une app d'habitudes + un agenda + un tableur d'objectifs », alors le vrai sujet n'est pas de choisir la meilleure todo-list : c'est d'arrêter de payer la friction entre quatre outils. C'est exactement le pari de Cosmo, et vous pouvez le vérifier en deux minutes, <a href="/signup">gratuitement et sans carte bancaire</a>.</p>
 `,
+    },
+  },
 };

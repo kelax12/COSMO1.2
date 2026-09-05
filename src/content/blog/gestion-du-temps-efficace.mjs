@@ -1,27 +1,35 @@
-// Article de blog — contenu partagé React + prerender. ESM pur.
+// Article de blog, contenu partagé React + prerender. ESM pur.
 //
-// Cible SEO : « gestion du temps efficace » (difficulté 14). Volume faible
-// mais intention claire et concurrence faible — page d'entrée vers les
-// articles time-blocking / Eisenhower / OKR.
+// Deux dimensions, à ne jamais confondre :
+//   - la colonne vertébrale (`slug`, dates, `related`) est COMMUNE à toutes
+//     les langues : c'est une seule publication traduite, pas deux articles ;
+//   - `locales` porte tout ce qui se traduit, `readingMinutes` compris (un
+//     texte anglais n'a aucune raison de se lire dans le même temps que le
+//     français).
+//
+// Une locale absente n'est jamais repliée en silence sur le français côté SEO :
+// `articlesFor()` ne la publie pas, donc le prérendu ne peut pas produire une
+// page anglaise au corps français. Voir src/content/blog/index.mjs.
 export const article = {
-  slug: 'gestion-du-temps-efficace',
-  title: 'Gestion du temps efficace : 7 principes qui tiennent dans la durée',
-  metaTitle: 'Gestion du temps efficace : 7 principes qui tiennent',
-  description:
-    "Les 7 principes de gestion du temps qui survivent à une semaine chargée, sans méthode compliquée : arbitrage, créneaux, unité de travail, revue hebdomadaire.",
-  datePublished: '2026-08-12',
-  dateModified: '2026-08-12',
-  readingMinutes: 9,
+  slug: "gestion-du-temps-efficace",
+  datePublished: "2026-08-12",
+  dateModified: "2026-08-12",
   // Suite de lecture : choisie par proximité de sujet, pas par date. Le tri
   // par récence envoyait les mêmes 3 liens depuis les 11 articles, ce qui
   // laissait 4 d'entre eux sans aucun lien entrant interne.
-  related: ['time-blocking-guide', 'matrice-eisenhower', 'cosmo-vs-todoist'],
-  faq: [
-    ['Quelle est la méthode de gestion du temps la plus efficace ?', "Celle que vous tenez trois mois. En pratique, la combinaison qui résiste le mieux est : une liste unique, un arbitrage explicite des priorités, et des créneaux réservés dans l'agenda pour ce qui compte vraiment."],
-    ['Comment gérer son temps quand tout est urgent ?', "Tout ne peut pas être urgent : c'est presque toujours le symptôme d'une absence d'arbitrage. Classez sur deux axes (urgent / important), traitez le quadrant 1, et surtout réservez un créneau pour le quadrant 2, c'est lui qui produit les urgences de la semaine prochaine."],
-    ['Combien de temps faut-il pour voir un résultat ?', "Deux à trois semaines pour sentir la différence sur la charge mentale, six à huit pour que le système tienne sans effort conscient. En dessous, on juge un système sur sa période d'installation."],
-  ],
-  html: `
+  related: ["time-blocking-guide","matrice-eisenhower","cosmo-vs-todoist"],
+  locales: {
+    fr: {
+      title: "Gestion du temps efficace : 7 principes qui tiennent dans la durée",
+      metaTitle: "Gestion du temps efficace : 7 principes qui tiennent",
+      description: "Les 7 principes de gestion du temps qui survivent à une semaine chargée, sans méthode compliquée : arbitrage, créneaux, unité de travail, revue hebdomadaire.",
+      readingMinutes: 9,
+      faq: [
+        ["Quelle est la méthode de gestion du temps la plus efficace ?", "Celle que vous tenez trois mois. En pratique, la combinaison qui résiste le mieux est : une liste unique, un arbitrage explicite des priorités, et des créneaux réservés dans l'agenda pour ce qui compte vraiment."],
+        ["Comment gérer son temps quand tout est urgent ?", "Tout ne peut pas être urgent : c'est presque toujours le symptôme d'une absence d'arbitrage. Classez sur deux axes (urgent / important), traitez le quadrant 1, et surtout réservez un créneau pour le quadrant 2, c'est lui qui produit les urgences de la semaine prochaine."],
+        ["Combien de temps faut-il pour voir un résultat ?", "Deux à trois semaines pour sentir la différence sur la charge mentale, six à huit pour que le système tienne sans effort conscient. En dessous, on juge un système sur sa période d'installation."],
+      ],
+      html: `
 <p class="lead">La gestion du temps souffre d'un malentendu : on la présente comme un problème de technique, alors que c'est d'abord un problème d'arbitrage. Aucune méthode ne fait entrer soixante heures de travail dans une semaine de trente-cinq. Ce qu'une bonne méthode fait, en revanche, c'est rendre visible ce qui ne rentre pas, assez tôt pour décider quoi abandonner. Voici sept principes qui survivent à une semaine chargée, du plus structurant au plus fin.</p>
 
 <h2 id="arbitrage">1. Accepter que gérer son temps, c'est renoncer</h2>
@@ -73,4 +81,6 @@ export const article = {
 <h3>Que faire quand la semaine dérape complètement ?</h3>
 <p>Ne pas rattraper. Reprendre à la revue suivante comme si de rien n'était. Les systèmes d'organisation ne meurent pas d'une mauvaise semaine, ils meurent de la tentative de compenser la mauvaise semaine.</p>
 `,
+    },
+  },
 };

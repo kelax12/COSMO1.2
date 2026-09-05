@@ -1,26 +1,35 @@
-// Article de blog — contenu partagé React + prerender. ESM pur.
+// Article de blog, contenu partagé React + prerender. ESM pur.
 //
-// Cible SEO : « tableau de bord productivité » (140 rech./mois, difficulté 13
-// — le meilleur ratio volume/difficulté du set suivi au 2026-08-12).
+// Deux dimensions, à ne jamais confondre :
+//   - la colonne vertébrale (`slug`, dates, `related`) est COMMUNE à toutes
+//     les langues : c'est une seule publication traduite, pas deux articles ;
+//   - `locales` porte tout ce qui se traduit, `readingMinutes` compris (un
+//     texte anglais n'a aucune raison de se lire dans le même temps que le
+//     français).
+//
+// Une locale absente n'est jamais repliée en silence sur le français côté SEO :
+// `articlesFor()` ne la publie pas, donc le prérendu ne peut pas produire une
+// page anglaise au corps français. Voir src/content/blog/index.mjs.
 export const article = {
-  slug: 'tableau-de-bord-productivite',
-  title: 'Tableau de bord de productivité : quoi y mettre (et quoi en retirer)',
-  metaTitle: 'Tableau de bord productivité : les 6 indicateurs utiles',
-  description:
-    "Que doit afficher un tableau de bord de productivité personnel ? Les 6 indicateurs qui font agir, ceux qui ne servent à rien, et comment le construire.",
-  datePublished: '2026-08-12',
-  dateModified: '2026-08-12',
-  readingMinutes: 8,
+  slug: "tableau-de-bord-productivite",
+  datePublished: "2026-08-12",
+  dateModified: "2026-08-12",
   // Suite de lecture : choisie par proximité de sujet, pas par date. Le tri
   // par récence envoyait les mêmes 3 liens depuis les 11 articles, ce qui
   // laissait 4 d'entre eux sans aucun lien entrant interne.
-  related: ['methode-okr-exemples', 'suivi-des-habitudes', 'cosmo-vs-todoist'],
-  faq: [
-    ['Quels indicateurs mettre dans un tableau de bord de productivité ?', "Six suffisent : les tâches terminées sur la période, le taux de complétion des habitudes, le temps réparti par catégorie, l'avancement des objectifs, la charge de la semaine à venir et le ratio planifié/réalisé. Au-delà, on regarde sans agir."],
-    ['À quelle fréquence consulter son tableau de bord ?', "Une fois par semaine pour la revue, plus un coup d'œil quotidien de dix secondes sur la charge du jour. Le consulter en continu ne change aucune décision et coûte de l'attention."],
-    ['Un tableau de bord personnel doit-il ressembler à un dashboard d’entreprise ?', "Non. Un dashboard d'entreprise sert à rendre compte, un tableau de bord personnel sert à décider. Il doit tenir sur un écran et ne montrer que ce sur quoi vous pouvez agir cette semaine."],
-  ],
-  html: `
+  related: ["methode-okr-exemples","suivi-des-habitudes","cosmo-vs-todoist"],
+  locales: {
+    fr: {
+      title: "Tableau de bord de productivité : quoi y mettre (et quoi en retirer)",
+      metaTitle: "Tableau de bord productivité : les 6 indicateurs utiles",
+      description: "Que doit afficher un tableau de bord de productivité personnel ? Les 6 indicateurs qui font agir, ceux qui ne servent à rien, et comment le construire.",
+      readingMinutes: 8,
+      faq: [
+        ["Quels indicateurs mettre dans un tableau de bord de productivité ?", "Six suffisent : les tâches terminées sur la période, le taux de complétion des habitudes, le temps réparti par catégorie, l'avancement des objectifs, la charge de la semaine à venir et le ratio planifié/réalisé. Au-delà, on regarde sans agir."],
+        ["À quelle fréquence consulter son tableau de bord ?", "Une fois par semaine pour la revue, plus un coup d'œil quotidien de dix secondes sur la charge du jour. Le consulter en continu ne change aucune décision et coûte de l'attention."],
+        ["Un tableau de bord personnel doit-il ressembler à un dashboard d’entreprise ?", "Non. Un dashboard d'entreprise sert à rendre compte, un tableau de bord personnel sert à décider. Il doit tenir sur un écran et ne montrer que ce sur quoi vous pouvez agir cette semaine."],
+      ],
+      html: `
 <p class="lead">Un tableau de bord de productivité est une promesse tentante : voir sa vie en un écran. En pratique, la plupart de ceux qu'on construit finissent en décoration, jolis, consultés trois semaines, puis ignorés. La raison est presque toujours la même : ils affichent ce qui est facile à mesurer plutôt que ce qui déclenche une décision. Voici ce qui mérite d'y figurer, ce qu'il faut en retirer, et comment le monter sans y passer un week-end.</p>
 
 <h2 id="critere">Le seul critère qui compte : est-ce que ça change une décision ?</h2>
@@ -75,4 +84,6 @@ export const article = {
 <h3>Que faire si tous mes indicateurs sont au rouge ?</h3>
 <p>Ne rien optimiser. C'est le signe d'une surcharge, pas d'un défaut de méthode : retirez des engagements jusqu'à ce que la semaine à venir tienne dans les heures disponibles, puis reprenez le pilotage.</p>
 `,
+    },
+  },
 };

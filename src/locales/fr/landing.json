@@ -265,7 +265,9 @@
     "tryFree": "Essayez Cosmo gratuitement",
     "createFreeAccount": "Créer un compte gratuit",
     "ctaPitch": "Tâches, habitudes, agenda et OKR dans une seule application. Démo instantanée, sans inscription.",
-    "indexIntro": "Guides pratiques sur la méthode OKR, les habitudes, le time-blocking et la productivité, sans bullshit."
+    "indexIntro": "Guides pratiques sur la méthode OKR, les habitudes, le time-blocking et la productivité, sans bullshit.",
+    "readingTime": "{{minutes}} min de lecture",
+    "startFree": "Commencer gratuitement"
   },
   "enterprise": {
     "gateway": {

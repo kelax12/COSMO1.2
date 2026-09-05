@@ -1,23 +1,35 @@
-// Article de blog — contenu partagé React + prerender. ESM pur.
+// Article de blog, contenu partagé React + prerender. ESM pur.
+//
+// Deux dimensions, à ne jamais confondre :
+//   - la colonne vertébrale (`slug`, dates, `related`) est COMMUNE à toutes
+//     les langues : c'est une seule publication traduite, pas deux articles ;
+//   - `locales` porte tout ce qui se traduit, `readingMinutes` compris (un
+//     texte anglais n'a aucune raison de se lire dans le même temps que le
+//     français).
+//
+// Une locale absente n'est jamais repliée en silence sur le français côté SEO :
+// `articlesFor()` ne la publie pas, donc le prérendu ne peut pas produire une
+// page anglaise au corps français. Voir src/content/blog/index.mjs.
 export const article = {
-  slug: 'time-blocking-guide',
-  title: 'Time-blocking : le guide complet pour reprendre le contrôle de vos journées',
-  metaTitle: 'Time-blocking : le guide complet (méthode + exemples)',
-  description:
-    'Le time-blocking consiste à réserver des créneaux pour vos tâches au lieu de subir votre journée. Méthode pas à pas, variantes, erreurs à éviter et exemples.',
-  datePublished: '2026-07-18',
-  dateModified: '2026-07-18',
-  readingMinutes: 8,
+  slug: "time-blocking-guide",
+  datePublished: "2026-07-18",
+  dateModified: "2026-07-18",
   // Suite de lecture : choisie par proximité de sujet, pas par date. Le tri
   // par récence envoyait les mêmes 3 liens depuis les 11 articles, ce qui
   // laissait 4 d'entre eux sans aucun lien entrant interne.
-  related: ['gestion-du-temps-efficace', 'matrice-eisenhower', 'suivi-des-habitudes'],
-  faq: [
-    ['Combien de temps faut-il pour prendre le pli du time-blocking ?', 'Comptez deux semaines de rodage : la première sert surtout à découvrir que vous sous-estimez vos durées.'],
-    ['Le time-blocking fonctionne-t-il avec un métier fait d’imprévus ?', 'Oui, en inversant la logique : bloquez seulement 2-3 heures protégées par jour et laissez le reste ouvert.'],
-    ['Faut-il time-blocker le week-end ?', 'Rien ne l’impose. Beaucoup n’en tirent bénéfice que pour un ou deux blocs choisis, le reste du temps libre reste libre.'],
-  ],
-  html: `
+  related: ["gestion-du-temps-efficace","matrice-eisenhower","suivi-des-habitudes"],
+  locales: {
+    fr: {
+      title: "Time-blocking : le guide complet pour reprendre le contrôle de vos journées",
+      metaTitle: "Time-blocking : le guide complet (méthode + exemples)",
+      description: "Le time-blocking consiste à réserver des créneaux pour vos tâches au lieu de subir votre journée. Méthode pas à pas, variantes, erreurs à éviter et exemples.",
+      readingMinutes: 8,
+      faq: [
+        ["Combien de temps faut-il pour prendre le pli du time-blocking ?", "Comptez deux semaines de rodage : la première sert surtout à découvrir que vous sous-estimez vos durées."],
+        ["Le time-blocking fonctionne-t-il avec un métier fait d’imprévus ?", "Oui, en inversant la logique : bloquez seulement 2-3 heures protégées par jour et laissez le reste ouvert."],
+        ["Faut-il time-blocker le week-end ?", "Rien ne l’impose. Beaucoup n’en tirent bénéfice que pour un ou deux blocs choisis, le reste du temps libre reste libre."],
+      ],
+      html: `
 <p class="lead">Une todo-list dit ce que vous avez à faire. Elle ne dit jamais <em>quand</em>. C'est exactement pour ça que la vôtre déborde : sans rendez-vous dans le calendrier, une tâche reste un vœu. Le <strong>time-blocking</strong> corrige ce défaut structurel en donnant un créneau horaire à chaque chose importante. Cal Newport, auteur de <em>Deep Work</em>, estime qu'une semaine de 40 heures time-blockée produit autant qu'une semaine de 60 heures menée au fil de l'eau. Voici comment vous y mettre, concrètement.</p>
 
 <h2 id="definition">Le time-blocking, c'est quoi exactement ?</h2>
@@ -88,4 +100,6 @@ export const article = {
 <h3>Faut-il time-blocker le week-end ?</h3>
 <p>Rien ne l'impose. Beaucoup n'en tirent bénéfice que pour un ou deux blocs choisis (sport, projet perso), le reste du temps libre reste libre.</p>
 `,
+    },
+  },
 };

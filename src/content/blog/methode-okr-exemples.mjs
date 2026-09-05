@@ -1,25 +1,35 @@
-// Article de blog — contenu partagé entre React (BlogArticlePage) et
-// prerender.mjs (HTML statique + JSON-LD). ESM pur, aucun import : doit
-// rester importable par Node au build ET par Vite côté client.
+// Article de blog, contenu partagé React + prerender. ESM pur.
+//
+// Deux dimensions, à ne jamais confondre :
+//   - la colonne vertébrale (`slug`, dates, `related`) est COMMUNE à toutes
+//     les langues : c'est une seule publication traduite, pas deux articles ;
+//   - `locales` porte tout ce qui se traduit, `readingMinutes` compris (un
+//     texte anglais n'a aucune raison de se lire dans le même temps que le
+//     français).
+//
+// Une locale absente n'est jamais repliée en silence sur le français côté SEO :
+// `articlesFor()` ne la publie pas, donc le prérendu ne peut pas produire une
+// page anglaise au corps français. Voir src/content/blog/index.mjs.
 export const article = {
-  slug: 'methode-okr-exemples',
-  title: 'La méthode OKR expliquée simplement (+ 15 exemples concrets)',
-  metaTitle: 'Méthode OKR : guide simple + 15 exemples concrets (2026)',
-  description:
-    "Qu'est-ce que la méthode OKR ? Définition simple, règles d'écriture et 15 exemples concrets d'OKR personnels et professionnels, prêts à adapter.",
-  datePublished: '2026-07-18',
-  dateModified: '2026-07-18',
-  readingMinutes: 9,
+  slug: "methode-okr-exemples",
+  datePublished: "2026-07-18",
+  dateModified: "2026-07-18",
   // Suite de lecture : choisie par proximité de sujet, pas par date. Le tri
   // par récence envoyait les mêmes 3 liens depuis les 11 articles, ce qui
   // laissait 4 d'entre eux sans aucun lien entrant interne.
-  related: ['template-okr-gratuit', 'okr-vs-smart-vs-kpi', 'tableau-de-bord-productivite'],
-  faq: [
-    ['Combien d’OKR faut-il définir ?', '2 à 4 objectifs maximum par cycle, avec 2 à 5 résultats clés chacun. Moins vous en avez, plus la méthode fonctionne.'],
-    ['Quelle durée pour un cycle OKR ?', 'Le trimestre est le standard. Pour des objectifs personnels, un cycle de 6 à 12 semaines fonctionne très bien aussi.'],
-    ['Un OKR à 60 %, c’est un échec ?', 'Non. La cible saine se situe autour de 70 % : c’est le signe d’objectifs réellement ambitieux.'],
-  ],
-  html: `
+  related: ["template-okr-gratuit","okr-vs-smart-vs-kpi","tableau-de-bord-productivite"],
+  locales: {
+    fr: {
+      title: "La méthode OKR expliquée simplement (+ 15 exemples concrets)",
+      metaTitle: "Méthode OKR : guide simple + 15 exemples concrets (2026)",
+      description: "Qu'est-ce que la méthode OKR ? Définition simple, règles d'écriture et 15 exemples concrets d'OKR personnels et professionnels, prêts à adapter.",
+      readingMinutes: 9,
+      faq: [
+        ["Combien d’OKR faut-il définir ?", "2 à 4 objectifs maximum par cycle, avec 2 à 5 résultats clés chacun. Moins vous en avez, plus la méthode fonctionne."],
+        ["Quelle durée pour un cycle OKR ?", "Le trimestre est le standard. Pour des objectifs personnels, un cycle de 6 à 12 semaines fonctionne très bien aussi."],
+        ["Un OKR à 60 %, c’est un échec ?", "Non. La cible saine se situe autour de 70 % : c’est le signe d’objectifs réellement ambitieux."],
+      ],
+      html: `
 <p class="lead">La méthode OKR (Objectives &amp; Key Results) est le système de définition d'objectifs utilisé par Google, Intel, Netflix ou Spotify. Son principe tient en une phrase : un <strong>objectif</strong> ambitieux et qualitatif, mesuré par 2 à 5 <strong>résultats clés</strong> chiffrés. Ce guide vous explique comment elle fonctionne, comment écrire de bons OKR, et vous donne 15 exemples concrets (personnels et professionnels) à adapter directement.</p>
 
 <h2 id="definition">Qu'est-ce qu'un OKR ? Définition simple</h2>
@@ -123,4 +133,6 @@ export const article = {
 <h3>Un OKR à 60 %, c'est un échec ?</h3>
 <p>Non. La cible saine se situe autour de 70 % : c'est le signe d'objectifs réellement ambitieux. Un OKR systématiquement à 100 % doit vous pousser à viser plus haut au cycle suivant.</p>
 `,
+    },
+  },
 };

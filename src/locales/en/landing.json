@@ -265,7 +265,9 @@
     "tryFree": "Try Cosmo for free",
     "createFreeAccount": "Create a free account",
     "ctaPitch": "Tasks, habits, calendar and OKRs in one app. Instant demo, no sign-up.",
-    "indexIntro": "Practical guides on OKRs, habits, time-blocking and productivity. No fluff."
+    "indexIntro": "Practical guides on OKRs, habits, time-blocking and productivity. No fluff.",
+    "readingTime": "{{minutes}} min read",
+    "startFree": "Get started for free"
   },
   "enterprise": {
     "gateway": {
