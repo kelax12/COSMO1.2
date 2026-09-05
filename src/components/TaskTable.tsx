@@ -1,20 +1,21 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router';
-import { Lightbulb, Trash2, X } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Lightbulb, X } from 'lucide-react';
 import { useBilling } from '@/modules/billing/billing.context';
 import TaskModal from './TaskModal';
 import BulkAddToListModal from './add-to-list/BulkAddToListModal';
 import ScheduleEventModal from './ScheduleEventModal';
 import AddToListModal from './AddToListModal';
-import { VirtualizedTaskList, TaskRow, type UnifiedTaskRow } from './task-table/list';
+import { VirtualizedTaskList } from './task-table/list';
+import { useUnifiedTaskRows } from './task-table/useUnifiedTaskRows';
+import TaskTableDesktop from './task-table/TaskTableDesktop';
+import ConfirmDeleteSheet from './task-table/ConfirmDeleteSheet';
+import TaskListPlaceholders from './task-table/TaskListPlaceholders';
+import { useTaskSelection } from './task-table/useTaskSelection';
 import TaskQuickFilters from './task-table/TaskQuickFilters';
 import OverdueBanner from './task-table/OverdueBanner';
 import TaskBulkActionsBar from './task-table/TaskBulkActionsBar';
-import { TeamTaskRowLite } from './task-table/TeamTaskRowLite';
 import TeamTaskModal from './organization/TeamTaskModal';
-import { myAssignedTasks } from './organization/team-projects.helpers';
-import { useSheetMotion } from '@/components/mobile/mobile-motion';
 import { useBottomSheet } from '@/hooks/use-bottom-sheet';
 
 // ═══════════════════════════════════════════════════════════════════
@@ -36,7 +37,6 @@ import {
 } from '@/modules/tasks';
 
 import { usePriorityRange } from '@/modules/ui-states';
-import { filterAndSortTasks } from '@/modules/tasks/task-filtering';
 import { getSnoozeOptions } from '@/modules/tasks/snooze';
 import { isTaskOverdue } from './task-table/helpers';
 import { useLists, useAddTaskToList } from '@/modules/lists';
@@ -83,7 +83,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
   onShowCompletedChange,
 }) => {
   const { t, tp } = useT('tasks');
-  const { t: tCommon } = useT('common');
+
   // ═══════════════════════════════════════════════════════════════════
   // TASKS - Depuis le module tasks (MIGRÉ)
   // ═══════════════════════════════════════════════════════════════════
@@ -152,38 +152,48 @@ const TaskTable: React.FC<TaskTableProps> = ({
   const [taskToDelete, setTaskToDelete] = useState<string | null>(null);
   const [showCreateFromEmpty, setShowCreateFromEmpty] = useState(false);
 
-  // Sélection multiple (#10) : réutilise le rendu checkbox du mode
-  // « ajout à une liste » (addToListMode) pour un mode générique avec barre
-  // d'actions groupées (compléter / ajouter à une liste / supprimer).
-  const [selectMode, setSelectMode] = useState(false);
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  // Modal d'ajout groupé à une liste (#23) — remplace l'ancien DropdownMenu
-  // (désactivé quand aucune liste manuelle → bouton « Liste » sans réaction).
-  const [showBulkListModal, setShowBulkListModal] = useState(false);
-  // Modal de confirmation bloquant pour la suppression groupée (#10).
-  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
-
-  // Les deux feuilles de confirmation ci-dessous affichaient une poignee de
-  // glissement qui ne declenchait rien (audit mobile 2026-08-14). Un helper
-  // par feuille : `useBottomSheet` ne sait fermer qu'une seule surface.
-  const sheetMotion = useSheetMotion();
-  const deleteSheet = useBottomSheet(useCallback(() => setTaskToDelete(null), []));
-  const bulkDeleteSheet = useBottomSheet(useCallback(() => setShowBulkDeleteConfirm(false), []));
-  // Nombre de tâches figé à l'ouverture du modal : bulkAddToList vide la
-  // sélection, on évite un « 0 tâche » qui clignoterait pendant la fermeture.
-  const [bulkModalCount, setBulkModalCount] = useState(0);
   const { data: allLists = [] } = useLists();
   const { data: categories = [] } = useCategories();
   const addTaskToListMutation = useAddTaskToList();
 
-  const toggleSelected = useCallback((id: string) => {
-    setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
-  }, []);
+  // Sélection multiple (#10) : réutilise le rendu checkbox du mode
+  // « ajout à une liste » (addToListMode) pour un mode générique avec barre
+  // d'actions groupées (compléter / ajouter à une liste / supprimer).
+  const {
+    selectMode,
+    setSelectMode,
+    selectedIds,
+    toggleSelected,
+    exitSelectMode,
+    showBulkListModal,
+    setShowBulkListModal,
+    openBulkListModal,
+    bulkModalCount,
+    showBulkDeleteConfirm,
+    setShowBulkDeleteConfirm,
+    bulkComplete,
+    bulkAddToList,
+    confirmBulkDelete,
+    bulkSetCategory,
+    bulkSetDeadline,
+  } = useTaskSelection({
+    tasks,
+    lists: allLists,
+    userId: user?.id,
+    isDemo,
+    toggleComplete: (taskId) => toggleCompleteMutation.mutate(taskId),
+    addTaskToList: (taskId, listId) => addTaskToListMutation.mutate({ taskId, listId }),
+    updateTask: (id, updates) => updateMutation.mutate({ id, updates }),
+    deleteTask: (id) => deleteMutation.mutate(id),
+    restoreTask: (task) => restoreMutation.mutate(task),
+    unshareTask: (taskId, friendId) => unshareTaskMutation.mutate({ taskId, friendId }),
+  });
 
-  // ⚠️ Plus de `setBulkMenuOpen(false)` ici : l'état du menu « ⋯ » vit dans
-  // `TaskBulkActionsBar`, qui se ferme lui-même et disparaît avec le mode
-  // sélection. Cinq gestionnaires métier n'ont plus à connaître un menu.
-  const exitSelectMode = () => { setSelectMode(false); setSelectedIds([]); };
+  // Les deux feuilles de confirmation ci-dessous affichaient une poignee de
+  // glissement qui ne declenchait rien (audit mobile 2026-08-14). Un helper
+  // par feuille : `useBottomSheet` ne sait fermer qu'une seule surface.
+  const deleteSheet = useBottomSheet(useCallback(() => setTaskToDelete(null), []));
+  const bulkDeleteSheet = useBottomSheet(useCallback(() => setShowBulkDeleteConfirm(false), [setShowBulkDeleteConfirm]));
   const [activeQuickFilter, setActiveQuickFilter] = useState<'none' | 'bookmarked' | 'completed' | 'overdue' | 'collaboration'>('none');
 
   const toggleQuickFilter = (filter: 'bookmarked' | 'completed' | 'overdue' | 'collaboration') => {
@@ -247,103 +257,21 @@ const TaskTable: React.FC<TaskTableProps> = ({
     try { localStorage.setItem('cosmo_swipe_hint_dismissed', '1'); } catch { /* ignore */ }
   };
 
-  // Filtrage et tri mémoïsés — logique pure extraite (task-filtering.ts, testée).
-  const filteredAndSortedTasks = useMemo(
-    () => filterAndSortTasks({
-      tasks,
-      quickFilter: activeQuickFilter,
-      showCompleted,
-      priorityRange,
-      sortField: localSortField,
-      sortDirection,
-    }),
-    [tasks, activeQuickFilter, showCompleted, priorityRange, localSortField, sortDirection],
-  );
-
-  const sortedTasks = filteredAndSortedTasks;
-
-  // ── Tâches d'équipe assignées à moi, filtrées comme les tâches perso ──
-  // Les filtres perso (favoris/retard/collaboration) n'ont pas d'équivalent
-  // côté équipe : quand l'un d'eux est actif, on masque les tâches d'équipe
-  // plutôt que d'afficher une liste qu'aucun de ces filtres ne décrit.
-  const teamTasksVisibleForQuickFilter = activeQuickFilter === 'none' || activeQuickFilter === 'completed';
-  const teamCompletedState = activeQuickFilter === 'completed' ? true : showCompleted;
-
-  const myTeamTasks = useMemo(() => {
-    if (!user || !teamTasksVisibleForQuickFilter) return [];
-    let result = myAssignedTasks(allTeamTasks, user.id).filter((t) => t.completed === teamCompletedState);
-    if (searchTerm) {
-      const lower = searchTerm.toLowerCase();
-      result = result.filter((t) => t.name.toLowerCase().includes(lower));
-    }
-    result = result.filter((t) => t.priority >= priorityRange[0] && t.priority <= priorityRange[1]);
-    return result;
-  }, [allTeamTasks, user, teamTasksVisibleForQuickFilter, teamCompletedState, searchTerm, priorityRange]);
-
-  const scopedPersoTasks = useMemo(
-    () => (scopeFilter === 'entreprise' ? [] : sortedTasks),
-    [scopeFilter, sortedTasks],
-  );
-  const scopedTeamTasks = useMemo(
-    () => (scopeFilter === 'perso' ? [] : myTeamTasks),
-    [scopeFilter, myTeamTasks],
-  );
-
-  // Maquette 50 — « La fin de la liste se dit ». Le décompte porte sur les
-  // tâches TERMINÉES que la vue courante n'affiche pas : c'est la seule chose
-  // que le marqueur puisse proposer d'ouvrir.
-  const hiddenCompletedCount = useMemo(
-    () => (showCompleted ? 0 : tasks.filter((t) => t.completed).length),
-    [tasks, showCompleted],
-  );
-
-  // Fusion triée : mêmes clés de tri que compareTasks (task-filtering.ts),
-  // adaptées aux deux formes (Task / TeamTask). Les champs sans équivalent
-  // côté équipe (catégorie, date de création) laissent l'ordre d'insertion
-  // (perso d'abord) — cas secondaire, non prioritaire ici.
-  const unifiedRows: UnifiedTaskRow[] = useMemo(() => {
-    const rows: UnifiedTaskRow[] = [
-      ...scopedPersoTasks.map((task) => ({ kind: 'perso' as const, id: task.id, task })),
-      ...scopedTeamTasks.map((task) => ({
-        kind: 'entreprise' as const,
-        id: task.id,
-        task,
-        project: teamProjectsById.get(task.projectId),
-      })),
-    ];
-
-    if (!localSortField) return rows;
-
-    const sortValue = (row: UnifiedTaskRow) => {
-      const t = row.task;
-      switch (localSortField) {
-        case 'name': return t.name;
-        case 'priority': return t.priority;
-        case 'deadline': return t.deadline ? new Date(t.deadline).getTime() : Number.POSITIVE_INFINITY;
-        case 'estimatedTime': return t.estimatedTime ?? 0;
-        case 'completedAt': return showCompleted && t.completedAt ? new Date(t.completedAt).getTime() : 0;
-        default: return 0;
-      }
-    };
-
-    return [...rows].sort((a, b) => {
-      if (localSortField === 'priority') {
-        // Une tâche sans priorité (0) est la MOINS prioritaire, quel que soit
-        // le sens de tri — même règle que compareTasks (task-filtering.ts).
-        const aNone = a.task.priority === 0;
-        const bNone = b.task.priority === 0;
-        if (aNone && bNone) return 0;
-        if (aNone) return 1;
-        if (bNone) return -1;
-      }
-      const va = sortValue(a);
-      const vb = sortValue(b);
-      const comparison = typeof va === 'string' && typeof vb === 'string'
-        ? va.localeCompare(vb)
-        : (va as number) - (vb as number);
-      return sortDirection === 'asc' ? comparison : -comparison;
-    });
-  }, [scopedPersoTasks, scopedTeamTasks, teamProjectsById, localSortField, sortDirection, showCompleted]);
+  // Quelles lignes cette liste montre, et dans quel ordre — dérivation pure,
+  // les deux gisements (perso, équipe) filtrés par les mêmes règles.
+  const { unifiedRows, hiddenCompletedCount } = useUnifiedTaskRows({
+    tasks,
+    allTeamTasks,
+    teamProjectsById,
+    userId: user?.id,
+    quickFilter: activeQuickFilter,
+    scopeFilter,
+    showCompleted,
+    priorityRange,
+    sortField: localSortField,
+    sortDirection,
+    searchTerm,
+  });
 
   const selectedTaskData = tasks.find(task => task.id === selectedTask);
   const selectedTaskForCollaboratorsData = tasks.find(task => task.id === selectedTaskForCollaborators);
@@ -438,66 +366,6 @@ const TaskTable: React.FC<TaskTableProps> = ({
   };
 
 
-  // ── Actions groupées du mode sélection (#10) ──
-  const bulkComplete = () => {
-    const toComplete = tasks.filter(t => selectedIds.includes(t.id) && !t.completed);
-    toComplete.forEach(t => toggleCompleteMutation.mutate(t.id));
-    toast.success(tp('toast.completedCount', toComplete.length));
-    exitSelectMode();
-  };
-
-  const bulkAddToList = (listId: string) => {
-    selectedIds.forEach(taskId => addTaskToListMutation.mutate({ taskId, listId }));
-    const listName = allLists.find(l => l.id === listId)?.name ?? 'la liste';
-    toast.success(tp('toast.addedToList', selectedIds.length, { list: listName }));
-    exitSelectMode();
-  };
-
-  const confirmBulkDelete = () => {
-    const selected = tasks.filter(t => selectedIds.includes(t.id));
-
-    // Tâches REÇUES (prod) : on n'en est pas propriétaire, la RLS bloque le
-    // DELETE. On quitte plutôt le partage (unshare) — non restaurable via undo.
-    const received = selected.filter(t =>
-      !isDemo && !!t.userId && !!user?.id && t.userId !== user.id
-    );
-    // Tout le reste (perso + collaboratives dont on est propriétaire) : DELETE
-    // classique, réversible via le toast « Annuler ».
-    const ownedSnapshots = selected.filter(t => !received.includes(t));
-
-    received.forEach(t => {
-      if (user?.id) unshareTaskMutation.mutate({ taskId: t.id, friendId: user.id });
-    });
-    ownedSnapshots.forEach(t => deleteMutation.mutate(t.id));
-
-    if (ownedSnapshots.length > 0) {
-      showUndoToast(tp('toast.deletedCount', ownedSnapshots.length), () => {
-        ownedSnapshots.forEach(s => restoreMutation.mutate(s));
-      });
-    } else if (received.length > 0) {
-      toast.success(tp('toast.leftSharedCount', received.length));
-    }
-
-    setShowBulkDeleteConfirm(false);
-    exitSelectMode();
-  };
-
-  // Menu « ⋯ » : modification groupée de la catégorie / deadline.
-  // `task.category` stocke l'ID de la catégorie (cf. seed démo `cat-1`..`cat-5`
-  // + useCategoryLookup, qui indexe par id) — jamais le nom affiché.
-  const bulkSetCategory = (categoryId: string, categoryName: string) => {
-    selectedIds.forEach(id => updateMutation.mutate({ id, updates: { category: categoryId } }));
-    toast.success(tp('toast.movedToCategory', selectedIds.length, { category: categoryName }));
-    exitSelectMode();
-  };
-
-  const bulkSetDeadline = (deadline: string) => {
-    selectedIds.forEach(id => updateMutation.mutate({ id, updates: { deadline } }));
-    toast.success(tp('toast.deadlineUpdated', selectedIds.length));
-    exitSelectMode();
-  };
-
-
   // Le mode sélection (#10) réutilise le rendu checkbox du mode addToList.
   const effectiveAddToListMode = addToListMode || selectMode;
   const effectiveSelectedForListIds = selectMode ? selectedIds : selectedForListIds;
@@ -531,91 +399,31 @@ const TaskTable: React.FC<TaskTableProps> = ({
       )}
 
       {/* Desktop View (Table) */}
-      <div className="hidden md:block table-container shadow-sm overflow-x-auto">
-        <table className="data-table w-full" style={{ minWidth: '1000px' }}>
-          <thead>
-            <tr className="">
-              {/* A11y: empty <th> need a label for screen readers. */}
-              <th className="px-2 py-3" style={{ width: '40px' }}><span className="sr-only">{t('table.colComplete')}</span></th>
-              <th className="px-2 py-3" style={{ width: '48px' }}><span className="sr-only">{t('table.colCategoryColor')}</span></th>
-              <th
-                className="cursor-pointer px-2 py-3"
-                onClick={() => handleSort('name')}
-              >
-                {t('table.colName')}
-                {localSortField === 'name' && (
-                  <span className="ml-1">{sortDirection === 'asc' ? '↑' : '↓'}</span>
-                )}
-              </th>
-              <th className="px-2 py-3" style={{ width: '150px' }}>{t('table.colCategory')}</th>
-              <th 
-                className="cursor-pointer text-center px-1 py-3"
-                onClick={() => handleSort('priority')}
-                style={{ width: '70px' }}
-              >
-                {t('table.colPriority')}
-                {localSortField === 'priority' && (
-                  <span className="ml-1">{sortDirection === 'asc' ? '↑' : '↓'}</span>
-                )}
-              </th>
-              <th
-                className="cursor-pointer px-2 py-3"
-                onClick={() => handleSort('deadline')}
-                style={{ width: '100px' }}
-              >
-                {activeQuickFilter === 'completed' ? t('table.colValidationDate') : t('table.colDeadline')}
-                {localSortField === 'deadline' && (
-                  <span className="ml-1">{sortDirection === 'asc' ? '↑' : '↓'}</span>
-                )}
-              </th>
-                <th 
-                  className="cursor-pointer text-center px-1 py-3"
-                  onClick={() => handleSort('estimatedTime')}
-                  style={{ width: '70px' }}
-                >
-                  {t('table.colDuration')}
-                  {localSortField === 'estimatedTime' && (
-                  <span className="ml-1">{sortDirection === 'asc' ? '↑' : '↓'}</span>
-                )}
-              </th>
-              <th className="text-center px-1 py-3" style={{ width: '70px' }}>{t('table.colActions')}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {unifiedRows.map((row) => row.kind === 'perso' ? (
-              <TaskRow
-                key={row.id}
-                task={row.task}
-                addToListMode={effectiveAddToListMode}
-                selectedForListIds={effectiveSelectedForListIds}
-                activeQuickFilter={activeQuickFilter}
-                showCompleted={showCompleted}
-                onSelectTask={handleSelectTask}
-                onToggleTaskForList={effectiveToggleForList}
-                onToggleComplete={handleToggleComplete}
-                onToggleBookmark={handleToggleBookmark}
-                onScheduleTask={setTaskToEventModal}
-                onAddToList={setAddToListTask}
-                onOpenCollaborator={handleOpenCollaborator}
-                onDuplicate={handleDuplicate}
-                onDeleteTask={handleDeleteRequest}
-                onSnooze={handleSnooze}
-                collaboratorsByTask={collaboratorsByTask}
-                pendingCollaboratorTaskIds={pendingCollaboratorTaskIds}
-                friends={friends}
-              />
-            ) : (
-              <TeamTaskRowLite
-                key={row.id}
-                task={row.task}
-                project={row.project}
-                onToggleComplete={handleToggleTeamComplete}
-                onEdit={setEditingTeamTask}
-              />
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <TaskTableDesktop
+        rows={unifiedRows}
+        sortField={localSortField}
+        sortDirection={sortDirection}
+        onSort={handleSort}
+        addToListMode={effectiveAddToListMode}
+        selectedForListIds={effectiveSelectedForListIds}
+        activeQuickFilter={activeQuickFilter}
+        showCompleted={showCompleted}
+        onSelectTask={handleSelectTask}
+        onToggleTaskForList={effectiveToggleForList}
+        onToggleComplete={handleToggleComplete}
+        onToggleBookmark={handleToggleBookmark}
+        onScheduleTask={setTaskToEventModal}
+        onAddToList={setAddToListTask}
+        onOpenCollaborator={handleOpenCollaborator}
+        onDuplicate={handleDuplicate}
+        onDeleteTask={handleDeleteRequest}
+        onSnooze={handleSnooze}
+        collaboratorsByTask={collaboratorsByTask}
+        pendingCollaboratorTaskIds={pendingCollaboratorTaskIds}
+        friends={friends}
+        onToggleTeamComplete={handleToggleTeamComplete}
+        onEditTeamTask={setEditingTeamTask}
+      />
 
       {/* Mobile View (Cards) — virtualisé au-delà de 50 items */}
       <div className="md:hidden">
@@ -687,40 +495,20 @@ const TaskTable: React.FC<TaskTableProps> = ({
         )}
       </div>
 
-      {unifiedRows.length === 0 && isLoadingTasks && (
-        <div className="space-y-2 p-2">
-          {[1, 2, 3, 4, 5].map(i => (
-            <div key={i} className="h-14 rounded-xl bg-[rgb(var(--color-hover))] animate-pulse" />
-          ))}
-        </div>
-      )}
-
-      {unifiedRows.length === 0 && !isLoadingTasks && (
-        <div className="text-center py-12" style={{ color: 'rgb(var(--color-text-muted))' }}>
-          <h3 className="text-xl font-semibold mb-2" style={{ color: 'rgb(var(--color-text-primary))' }}>
-            {showCompleted ? t('table.emptyCompleted') : t('table.empty')}
-          </h3>
-          <p className="text-sm">
-            {showCompleted ? t('table.emptyCompletedHint') : t('table.emptyHint')}
-          </p>
-          {!showCompleted && !addToListMode && (
-            <button
-              type="button"
-              onClick={() => setShowCreateFromEmpty(true)}
-              className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))] text-sm font-semibold transition-colors shadow-sm"
-            >
-              {t('table.createTask')}
-            </button>
-          )}
-        </div>
-      )}
+      <TaskListPlaceholders
+        rowCount={unifiedRows.length}
+        isLoading={isLoadingTasks}
+        showCompleted={showCompleted}
+        addToListMode={addToListMode}
+        onCreateTask={() => setShowCreateFromEmpty(true)}
+      />
 
       <TaskBulkActionsBar
         open={selectMode}
         count={selectedIds.length}
         categories={categories}
         onComplete={bulkComplete}
-        onAddToList={() => { setBulkModalCount(selectedIds.length); setShowBulkListModal(true); }}
+        onAddToList={openBulkListModal}
         onDelete={() => setShowBulkDeleteConfirm(true)}
         onSetCategory={bulkSetCategory}
         onSetDeadline={bulkSetDeadline}
@@ -767,104 +555,24 @@ const TaskTable: React.FC<TaskTableProps> = ({
         />
       )}
 
-        <AnimatePresence>
-        {taskToDelete && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center z-[60] sm:p-4"
-            onClick={() => setTaskToDelete(null)}
-          >
-            <motion.div
-              ref={deleteSheet.sheetRef}
-              {...deleteSheet.sheetDragProps}
-              {...sheetMotion}
-              onClick={(e) => e.stopPropagation()}
-              className="bg-[rgb(var(--color-surface))] rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-sm overflow-hidden border-t sm:border border-[rgb(var(--color-border))]"
-              style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
-            >
-              <div className="sm:hidden flex justify-center pt-4 pb-3">
-                <motion.div className="h-[5px] rounded-full bg-slate-300/70 dark:bg-slate-500/60" style={{ width: deleteSheet.handleBarWidth }} />
-              </div>
-              <div className="p-5 sm:p-6">
-                <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-4">
-                  <Trash2 className="text-red-600 dark:text-red-400" size={24} />
-                </div>
-                <h3 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white mb-2">{t('table.deleteTitle')}</h3>
-                <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-5 sm:mb-6">
-                  {t('table.deleteBody')}
-                </p>
-                <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3">
-                  <button
-                    onClick={() => setTaskToDelete(null)}
-                    className="flex-1 min-h-11 px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-700 dark:text-white border border-[rgb(var(--color-border))] hover:bg-slate-50 dark:hover:bg-slate-700 transition-all"
-                  >
-                    {tCommon('actions.cancel')}
-                  </button>
-                  <button
-                    onClick={confirmDelete}
-                    className="flex-1 min-h-11 px-4 py-2.5 rounded-lg text-sm font-semibold text-white bg-red-600 hover:bg-red-700 transition-all shadow-md shadow-red-500/20"
-                  >
-                    {tCommon('actions.delete')}
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-        </AnimatePresence>
+        <ConfirmDeleteSheet
+          open={!!taskToDelete}
+          title={t('table.deleteTitle')}
+          body={t('table.deleteBody')}
+          onCancel={() => setTaskToDelete(null)}
+          onConfirm={confirmDelete}
+          sheet={deleteSheet}
+        />
 
         {/* Confirmation bloquante de la suppression groupée (#10) */}
-        <AnimatePresence>
-        {showBulkDeleteConfirm && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center z-[60] sm:p-4"
-            onClick={() => setShowBulkDeleteConfirm(false)}
-          >
-            <motion.div
-              ref={bulkDeleteSheet.sheetRef}
-              {...bulkDeleteSheet.sheetDragProps}
-              {...sheetMotion}
-              onClick={(e) => e.stopPropagation()}
-              className="bg-[rgb(var(--color-surface))] rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-sm overflow-hidden border-t sm:border border-[rgb(var(--color-border))]"
-              style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
-            >
-              <div className="sm:hidden flex justify-center pt-4 pb-3">
-                <motion.div className="h-[5px] rounded-full bg-slate-300/70 dark:bg-slate-500/60" style={{ width: bulkDeleteSheet.handleBarWidth }} />
-              </div>
-              <div className="p-5 sm:p-6">
-                <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-4">
-                  <Trash2 className="text-red-600 dark:text-red-400" size={24} />
-                </div>
-                <h3 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white mb-2">
-                  {tp('bulk.deleteCount', selectedIds.length)}
-                </h3>
-                <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-5 sm:mb-6">
-                  {tp('table.bulkDeleteBody', selectedIds.length)}
-                </p>
-                <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3">
-                  <button
-                    onClick={() => setShowBulkDeleteConfirm(false)}
-                    className="flex-1 min-h-11 px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-700 dark:text-white border border-[rgb(var(--color-border))] hover:bg-slate-50 dark:hover:bg-slate-700 transition-all"
-                  >
-                    {tCommon('actions.cancel')}
-                  </button>
-                  <button
-                    onClick={confirmBulkDelete}
-                    className="flex-1 min-h-11 px-4 py-2.5 rounded-lg text-sm font-semibold text-white bg-red-600 hover:bg-red-700 transition-all shadow-md shadow-red-500/20"
-                  >
-                    {tCommon('actions.delete')}
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-        </AnimatePresence>
+        <ConfirmDeleteSheet
+          open={showBulkDeleteConfirm}
+          title={tp('bulk.deleteCount', selectedIds.length)}
+          body={tp('table.bulkDeleteBody', selectedIds.length)}
+          onCancel={() => setShowBulkDeleteConfirm(false)}
+          onConfirm={confirmBulkDelete}
+          sheet={bulkDeleteSheet}
+        />
 
         {addToListTask && (
           <AddToListModal
