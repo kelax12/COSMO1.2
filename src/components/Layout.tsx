@@ -40,6 +40,7 @@ import { useActiveOrganization } from '@/modules/organizations';
 import { useOrgNotificationCount } from '@/lib/hooks/use-org-notifications';
 import MobileTabBar from './layout/MobileTabBar';
 import DemoConversionBanner from './DemoConversionBanner';
+import OfflineBanner from './OfflineBanner';
 import DemoBridgePrompt from './DemoBridgePrompt';
 import GlobalNavShortcuts from './GlobalNavShortcuts';
 import InviteOrJoinModal from './organization/InviteOrJoinModal';
@@ -469,6 +470,7 @@ const NavItems = () =>
         {/* Lien d'évitement (WCAG 2.4.1) — premier arrêt de tabulation. */}
         <SkipLink targetId={MAIN_CONTENT_ID} label={t('nav.skipToContent')} />
         {/* Bannière conversion démo → compte (#9) */}
+        <OfflineBanner />
         <DemoConversionBanner />
         {/* État sync mobile (#37) — visible uniquement hors ligne / en cours */}
         <div className="fixed top-2 right-2 z-40 rounded-full bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] px-2.5 py-1 shadow-sm empty:hidden">

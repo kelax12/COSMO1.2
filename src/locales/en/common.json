@@ -306,5 +306,15 @@
     "pull": "Pull to refresh",
     "release": "Release to refresh",
     "refreshing": "Refreshing…"
+  },
+  "offline": {
+    "label": "Offline",
+    "text": " · your changes will not be saved until the network is back."
+  },
+  "sync": {
+    "offline": "Offline",
+    "syncing": "Syncing…",
+    "synced": "Synced",
+    "savedLocal": "Saved (local)"
   }
 }

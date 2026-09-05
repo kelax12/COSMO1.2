@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildMoments, momentOfHour } from './today-moments.helpers';
+import { buildMoments, momentOfHour, todayCompletionReport } from './today-moments.helpers';
 import type { CalendarEvent } from '@/modules/events';
 import type { TodayItem } from '@/modules/today';
 
@@ -86,5 +86,59 @@ describe('buildMoments — placement', () => {
     });
     expect(groups).toHaveLength(1);
     expect(groups[0].entries.map((e) => e.event?.id)).toEqual(['bon']);
+  });
+});
+
+describe('todayCompletionReport — maquette 49', () => {
+  const habit = (id: string, days: Record<string, boolean>) =>
+    ({ id, name: id, completions: days }) as unknown as Parameters<
+      typeof todayCompletionReport
+    >[0]['habits'][number];
+
+  const doneTask = (id: string, at: Date | null) =>
+    ({
+      id,
+      name: id,
+      completed: true,
+      completedAt: at ? at.toISOString() : undefined,
+    }) as unknown as Parameters<typeof todayCompletionReport>[0]['tasks'][number];
+
+  it("compte ce qui a été fait AUJOURD'HUI, et rend l'heure du dernier", () => {
+    const r = todayCompletionReport({
+      tasks: [doneTask('t1', at(9, 5)), doneTask('t2', at(18, 42)), doneTask('hier', new Date(2026, 8, 4, 10))],
+      habits: [habit('h1', { '2026-09-05': true }), habit('h2', { '2026-09-04': true })],
+      events: [event('e', iso(10))],
+      now: at(20),
+    });
+    expect(r).toMatchObject({ tasksDone: 2, habitsDone: 1, eventsToday: 1, total: 4, closedAt: '18:42' });
+  });
+
+  it("ne compte comme « à venir » que les rendez-vous PAS ENCORE terminés", () => {
+    // Sans cette distinction la journée ne se bouclerait jamais un jour où
+    // l'agenda contient quoi que ce soit : un rendez-vous ne se coche pas.
+    const passe = { ...event('passe', iso(10)), end: at(11).toISOString() };
+    const aVenir = { ...event('a-venir', iso(21)), end: at(22).toISOString() };
+    expect(
+      todayCompletionReport({ tasks: [], habits: [], events: [passe, aVenir], now: at(20) }).upcomingEvents,
+    ).toBe(1);
+    expect(
+      todayCompletionReport({ tasks: [], habits: [], events: [passe], now: at(20) }).upcomingEvents,
+    ).toBe(0);
+  });
+
+  it("rend closedAt null plutôt que l'heure courante quand aucun horodatage n'existe", () => {
+    const r = todayCompletionReport({
+      tasks: [doneTask('sans-date', null)],
+      habits: [],
+      events: [],
+      now: at(20),
+    });
+    expect(r.closedAt).toBeNull();
+    // La tâche n'est pas comptée non plus : rien ne prouve qu'elle l'a été aujourd'hui.
+    expect(r.tasksDone).toBe(0);
+  });
+
+  it('distingue un compte vide d’une journée bouclée', () => {
+    expect(todayCompletionReport({ tasks: [], habits: [], events: [], now: at(20) }).total).toBe(0);
   });
 });

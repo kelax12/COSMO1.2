@@ -131,7 +131,16 @@
     "overdueCount_one": "{{count}} overdue task",
     "overdueCount_other": "{{count}} overdue tasks",
     "rescheduleAllBtn": "Reschedule all",
-    "colName": "Task name"
+    "colName": "Task name",
+    "endOfList_one": "end of list · {{count}} task",
+    "endOfList_many": "end of list · {{count}} tasks",
+    "endOfList_other": "end of list · {{count}} tasks",
+    "endOfListCompleted_one": "end of list · {{count}} completed task",
+    "endOfListCompleted_many": "end of list · {{count}} completed tasks",
+    "endOfListCompleted_other": "end of list · {{count}} completed tasks",
+    "seeCompleted_one": "See the completed task",
+    "seeCompleted_many": "See the {{count}} completed",
+    "seeCompleted_other": "See the {{count}} completed"
   },
   "toast": {
     "leftShared": "You left the shared task",

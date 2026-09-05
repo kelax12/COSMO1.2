@@ -6,11 +6,25 @@ import { useT } from '@/i18n/useT';
  * Préférer à un spinner : perçu plus rapide, donne une preview de la structure finale.
  */
 
+/**
+ * Maquette 47 — « Le chargement a la forme du résultat ».
+ *
+ * ⚠️ Ce squelette a cessé d'avoir la forme du résultat le 2026-09-05, quand les
+ * lignes de tâches ont perdu leur carte : il continuait à dessiner un cadre
+ * arrondi sur fond `surface` là où la liste rend des lignes à plat séparées par
+ * un filet. Un squelette qui annonce une autre mise en page fait sauter l'écran
+ * au moment où les données arrivent — c'est précisément ce qu'il existe pour
+ * éviter. Il reprend donc, sur mobile, les mesures EXACTES de `TaskCard` :
+ * `px-3 py-2.5`, hauteur minimale 60 px, barre de catégorie de 4 px, pastille
+ * de 24 px, deux lignes de texte, filet en bas.
+ *
+ * Desktop (`md:`) garde son rendu en carte, inchangé.
+ */
 export function TaskCardSkeleton() {
   return (
-    <div className="flex items-center gap-3 p-3 rounded-xl bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))]">
-      <Skeleton className="w-1 h-10 rounded-full shrink-0" />
-      <Skeleton className="w-5 h-5 rounded-md shrink-0" />
+    <div className="flex items-center gap-3 px-3 py-2.5 min-h-[60px] border-b border-[rgb(var(--color-border))] md:min-h-0 md:p-3 md:rounded-xl md:border md:bg-[rgb(var(--color-surface))]">
+      <Skeleton className="w-1 self-stretch rounded-full shrink-0 md:h-10 md:self-auto" />
+      <Skeleton className="w-6 h-6 rounded-full shrink-0 md:w-5 md:h-5 md:rounded-md" />
       <div className="flex-1 min-w-0 space-y-2">
         <Skeleton className="h-4 w-3/4" />
         <Skeleton className="h-3 w-1/2" />
@@ -23,9 +37,15 @@ export function TaskCardSkeleton() {
 export function TaskListSkeleton({ count = 6 }: { count?: number }) {
   const { t } = useT('common');
   return (
-    <div className="space-y-2" role="status" aria-label={t('loadingLabel.tasks')}>
+    <div className="space-y-0 md:space-y-2" role="status" aria-label={t('loadingLabel.tasks')}>
       {Array.from({ length: count }).map((_, i) => (
-        <TaskCardSkeleton key={i} />
+        // « … et s'estompe vers le bas » : l'opacité décroît ligne à ligne, ce
+        // qui dit que la liste continue au-delà du dernier placeholder au lieu
+        // de promettre exactement six éléments. Plancher à 0,15 pour que la
+        // dernière ligne reste perceptible.
+        <div key={i} style={{ opacity: Math.max(0.15, 1 - i * 0.15) }}>
+          <TaskCardSkeleton />
+        </div>
       ))}
     </div>
   );

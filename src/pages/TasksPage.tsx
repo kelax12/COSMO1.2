@@ -611,6 +611,7 @@ const TasksPage: React.FC = () => {
                 ) : (
                 <TaskTable
                   tasks={filteredTasks}
+                  onShowCompletedChange={handleShowCompletedChange}
                   sortField={filter}
                   sortDirection={sortDirection}
                   onSortDirectionChange={handleSortDirectionChange}
