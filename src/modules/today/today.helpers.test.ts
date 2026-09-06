@@ -25,12 +25,22 @@ const projects: TeamProject[] = [
   { id: 'proj-1', orgId: 'o', name: 'Refonte', color: 'blue', createdBy: 'me', createdAt: '2026-01-01' },
 ];
 
-const merge = (tasks: Task[], team: TeamTask[], opts?: { listNames?: Map<string, string> }) =>
+const merge = (
+  tasks: Task[],
+  team: TeamTask[],
+  opts?: {
+    listNames?: Map<string, string>;
+    personalCategories?: Map<string, { name: string; color: string }>;
+    teamCategories?: Map<string, { name: string; color: string }>;
+  },
+) =>
   mergeTodayItems({
     tasks,
     teamTasks: team,
     projects,
     listNameByTaskId: opts?.listNames ?? new Map(),
+    personalCategoryById: opts?.personalCategories ?? new Map(),
+    teamCategoryById: opts?.teamCategories ?? new Map(),
     now: NOW,
   });
 
@@ -107,6 +117,33 @@ describe('mergeTodayItems — fusion des deux sources', () => {
   it('affiche la liste comme contexte des tâches perso', () => {
     const listNames = new Map([['p1', 'Courses']]);
     expect(merge([task({ id: 'p1' })], [], { listNames })[0].contextLabel).toBe('Courses');
+  });
+});
+
+describe('mergeTodayItems — catégorie', () => {
+  it('résout le nom et la couleur de la catégorie perso par son id', () => {
+    const personalCategories = new Map([['blue', { name: 'Travail', color: '#3B82F6' }]]);
+    const item = merge([task({ id: 'p1', category: 'blue' })], [], { personalCategories })[0];
+    expect(item.categoryName).toBe('Travail');
+    expect(item.categoryColor).toBe('#3B82F6');
+  });
+
+  it('résout le nom et la couleur de la catégorie équipe par categoryId', () => {
+    const teamCategories = new Map([['cat-1', { name: 'Urgent', color: '#EF4444' }]]);
+    const item = merge([], [teamTask({ id: 'e1', categoryId: 'cat-1' })], { teamCategories })[0];
+    expect(item.categoryName).toBe('Urgent');
+    expect(item.categoryColor).toBe('#EF4444');
+  });
+
+  it('laisse la catégorie à null quand elle est inconnue ou absente', () => {
+    // Perso : id de catégorie qui ne résout à rien.
+    const p = merge([task({ id: 'p1', category: 'disparue' })], [])[0];
+    expect(p.categoryName).toBeNull();
+    expect(p.categoryColor).toBeNull();
+    // Équipe : `categoryId` absent — jamais interrogé côté carte.
+    const e = merge([], [teamTask({ id: 'e1', categoryId: undefined })])[0];
+    expect(e.categoryName).toBeNull();
+    expect(e.categoryColor).toBeNull();
   });
 });
 

@@ -27,6 +27,10 @@ export interface TodayItem {
   priority: number;
   /** Contexte affiché : nom de liste (perso) ou de projet (équipe). */
   contextLabel: string | null;
+  /** Nom de la catégorie (perso : `categories` ; équipe : `team_categories`). */
+  categoryName: string | null;
+  /** Couleur de la catégorie — même source que `categoryName`. */
+  categoryColor: string | null;
   /** Ouvre l'écran d'origine — jamais d'édition inline dans cette vue. */
   href: string;
   /** Échéance strictement antérieure à aujourd'hui. */
