@@ -40,7 +40,10 @@ const DeleteObjectiveConfirm: React.FC<DeleteObjectiveConfirmProps> = ({ deletin
                   <div className="w-9 h-[5px] rounded-full bg-slate-300/70 dark:bg-slate-500/60" />
                 </div>
                 <div className="p-5 sm:p-6">
-                  <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-4">
+                  {/* Icône retirée sur mobile (demande utilisateur) : le
+                      titre + le corps portent déjà l'information. Desktop
+                      inchangé. */}
+                  <div className="hidden sm:flex w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 items-center justify-center mb-4">
                     <Trash2 className="text-red-600 dark:text-red-400" size={24} />
                   </div>
                   <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">{t('deleteObjective.title')}</h3>
