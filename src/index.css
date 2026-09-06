@@ -1721,3 +1721,41 @@ a:focus-visible:not([class*="ring-"]):not([class*="focus-visible:"]),
     opacity: 0;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   Dashboard mobile — tous les textes +1px, header exclu
+   ═══════════════════════════════════════════════════════════════════
+   Portée à `.dashboard-mobile-text-boost` (posée sur le conteneur du
+   Dashboard qui suit `MobileHeader` — un FRÈRE, pas un descendant : le
+   header est donc exclu par construction, sans sélecteur `:not()`).
+
+   Hors de tout `@layer` exprès : les classes `.text-*` de Tailwind
+   vivent dans son layer `utilities`, qui gagne sur `@layer components`
+   quelle que soit la spécificité. Une règle NON layered gagne toujours
+   sur une règle layered — c'est le seul moyen fiable de surcharger
+   `text-sm` etc. sans toucher au fichier de config Tailwind (qui, lui,
+   s'appliquerait à toute l'app, pas seulement à cette page).
+
+   Deux familles de classes de texte coexistent sur cette page :
+   l'échelle fermée à 6 crans (`text-caption/label/body/headline/
+   title/display`, pilotée par les tokens `--t-*` ci-dessus) et les
+   tailles Tailwind brutes restées sur quelques titres non migrés
+   (`text-xl` de TodayHabits/ActiveOKRs, etc.). Les deux sont couvertes. */
+@media (max-width: 767px) {
+  .dashboard-mobile-text-boost {
+    --t-display: calc(1.75rem + 1px);
+    --t-title: calc(1.375rem + 1px);
+    --t-headline: calc(1.0625rem + 1px);
+    --t-body: calc(0.9375rem + 1px);
+    --t-label: calc(0.8125rem + 1px);
+    --t-caption: calc(0.6875rem + 1px);
+  }
+  .dashboard-mobile-text-boost .text-xs { font-size: calc(0.75rem + 1px); }
+  .dashboard-mobile-text-boost .text-sm { font-size: calc(0.875rem + 1px); }
+  .dashboard-mobile-text-boost .text-base { font-size: calc(1rem + 1px); }
+  .dashboard-mobile-text-boost .text-lg { font-size: calc(1.125rem + 1px); }
+  .dashboard-mobile-text-boost .text-xl { font-size: calc(1.25rem + 1px); }
+  .dashboard-mobile-text-boost .text-2xl { font-size: calc(1.5rem + 1px); }
+  .dashboard-mobile-text-boost .text-3xl { font-size: calc(1.875rem + 1px); }
+  .dashboard-mobile-text-boost .text-4xl { font-size: calc(2.25rem + 1px); }
+}
