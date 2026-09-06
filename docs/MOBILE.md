@@ -484,6 +484,42 @@ Une liste mobile ne vit pas dans une carte : la carte ajoute une 2ᵉ gouttière
 
 **Piège `MobileCollapsible`** (`src/components/MobileCollapsible.tsx`, Dashboard uniquement) : le composant enveloppait chaque widget déplié dans un hack `[&>div]:rounded-t-none [&>div]:border-t-0` pour masquer la couture entre son en-tête (bg/bordure pleins) et la carte `.card` de l'enfant. Depuis que les 4 widgets utilisent `.card-plain-mobile` (transparents sous 768 px), il n'y a plus de couture à masquer — le hack a été retiré. **Ne pas le réintroduire** si un futur widget wrappé garde encore un fond/bordure plein sur mobile ; corriger plutôt le widget lui-même. La classe `.mobile-collapsible-body` reste nécessaire (elle masque le titre dupliqué du widget via `src/index.css`), seul le child-selector de couture a disparu.
 
+### Chips de filtre — pattern Spotify (2026-09-06)
+
+Toute pilule de **filtre/sélection** (liste rapide, filtre rapide, catégorie) suit le pattern
+Spotify — comparé côte à côte à l'ancien style Cosmo par Axel, tranché en sa faveur : `rounded-full`,
+**jamais de bordure**, fond PLEIN dans les deux états (au repos ET actif), jamais de fond
+transparent + contour coloré.
+
+```
+Repos  : bg-[rgb(var(--color-chip-bg))]      text-[rgb(var(--color-text-secondary))]
+Actif  : bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))]
+         (ou la couleur de la catégorie elle-même, cf. CategoryFilterBar)
+Hover  : bg-[rgb(var(--color-hover))] (repos uniquement — l'état actif ne change pas au survol)
+```
+
+- **Seule exception** : une chip qui représente une catégorie ou une liste garde sa **pastille de
+  couleur** avant le nom (`<span className="rounded-full" style={{backgroundColor}}/>`, ~8-10px) —
+  c'est une information (quelle couleur est associée à cet élément), pas un contour décoratif.
+- ❌ **Ne jamais coder un état inactif en `border-[rgb(var(--color-border))]` + fond transparent** :
+  c'est exactement l'ancien pattern Cosmo, remplacé par cette note. Un fond transparent avec un
+  simple contour est plus fragile en accessibilité (contraste dépendant du fond de page) et
+  moins dense visuellement qu'un fond plein.
+- ❌ **Ne jamais garder de bordure sur l'état ACTIF non plus** — y compris les couleurs
+  sémantiques ad hoc (ex. l'ancien traitement vert bordé de la chip « Aujourd'hui » dans
+  `TaskListsBar`, retiré : elle suit désormais le même plein neutre que les autres chips).
+- ✅ **Ne s'applique PAS** aux contrôles segmentés (un seul conteneur bordé, boutons internes sans
+  bordure propre — `TaskQuickFilters` « Tout/Perso/Entreprise », le sélecteur de vue
+  d'`HabitsPage`) : c'est un pattern différent (choix exclusif dans un rail unique), pas une
+  rangée de pilules indépendantes.
+- ✅ **Ne s'applique PAS** à un bouton d'action « ajouter » à bordure pointillée (`+ Nouvelle
+  liste`, `+ Nouvelle catégorie`) : ce n'est pas un filtre, c'est une action, le pointillé signale
+  justement « ceci n'est pas encore un élément réel ».
+- Composants migrés au 2026-09-06 : `TaskQuickFilters`, `TaskListsBar` (chip « Tout », « Aujourd'hui »,
+  chips de liste), `CategoryFilterBar` (OKR perso + équipe, partagé), `OKRCategoryPicker`,
+  `TeamCategoryPicker`. Tout nouveau filtre/chip de sélection réutilise ce pattern — ne pas
+  repartir d'une bordure.
+
 ### Exceptions documentées (densité / mimique volontaire — ne pas "corriger")
 
 - **`HabitHeatmap`** (`src/pages/statistics/HabitHeatmap.tsx`) : labels de jour/mois à 8-9px dans des cellules de calendrier de 13-20px. Forcer 11px ferait déborder une grille de 26 semaines × 7 jours sur un écran de 393px. Densité de données assumée, pas une dette.

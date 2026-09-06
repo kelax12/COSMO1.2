@@ -21,9 +21,13 @@ interface Props {
   onScope: (scope: ScopeFilter) => void;
 }
 
+/** Chip Spotify (docs/MOBILE.md § Chips de filtre) : pilule pleine, sans
+ *  bordure — ni au repos, ni active. Remplace l'ancien style « pilule
+ *  bordée » hérité du `Button variant="outline"`. */
+const CHIP = '!rounded-full !border-transparent !bg-[rgb(var(--color-chip-bg))] !text-[rgb(var(--color-text-secondary))] hover:!bg-[rgb(var(--color-hover))]';
 /** Classe des pastilles actives, identique pour les cinq boutons. */
 const ACTIF =
-  '!bg-[rgb(var(--color-accent-solid))] hover:!bg-[rgb(var(--color-accent-solid-hover))] !text-[rgb(var(--color-accent-solid-foreground))] !border-[rgb(var(--color-accent-solid))]';
+  '!rounded-full !bg-[rgb(var(--color-accent-solid))] hover:!bg-[rgb(var(--color-accent-solid-hover))] !text-[rgb(var(--color-accent-solid-foreground))] !border-transparent';
 
 /**
  * Filtres rapides de la page Tâches : signets, terminées, en retard,
@@ -54,7 +58,7 @@ const TaskQuickFilters: React.FC<Props> = ({
         <Button
           variant="outline"
           onClick={() => onToggle('bookmarked')}
-          className={`flex items-center gap-2 ${active === 'bookmarked' ? ACTIF : ''}`}
+          className={`flex items-center gap-2 ${CHIP} ${active === 'bookmarked' ? ACTIF : ''}`}
         >
           {active === 'bookmarked' ? <BookmarkCheck size={20} data-icon="inline-start" /> : <Bookmark size={20} data-icon="inline-start" />}
           <span className="hidden sm:inline">{active === 'bookmarked' ? tCommon('actions.all') : t('table.quickFilter.bookmarked')}</span>
@@ -64,7 +68,7 @@ const TaskQuickFilters: React.FC<Props> = ({
         <Button
           variant="outline"
           onClick={() => onToggle('completed')}
-          className={`flex items-center gap-2 ${active === 'completed' ? ACTIF : ''}`}
+          className={`flex items-center gap-2 ${CHIP} ${active === 'completed' ? ACTIF : ''}`}
         >
           <CheckCircle2 size={20} data-icon="inline-start" />
           <span className="hidden sm:inline">{t('table.quickFilter.completed')}</span>
@@ -74,7 +78,7 @@ const TaskQuickFilters: React.FC<Props> = ({
         <Button
           variant="outline"
           onClick={() => onToggle('overdue')}
-          className={`flex items-center gap-2 ${active === 'overdue' ? ACTIF : ''}`}
+          className={`flex items-center gap-2 ${CHIP} ${active === 'overdue' ? ACTIF : ''}`}
         >
           <AlertTriangle size={20} data-icon="inline-start" />
           <span className="hidden sm:inline">{t('table.quickFilter.overdue')}</span>
@@ -84,7 +88,7 @@ const TaskQuickFilters: React.FC<Props> = ({
         <Button
           variant="outline"
           onClick={() => onToggle('collaboration')}
-          className={`flex items-center gap-2 ${active === 'collaboration' ? ACTIF : ''}`}
+          className={`flex items-center gap-2 ${CHIP} ${active === 'collaboration' ? ACTIF : ''}`}
         >
           <Users size={20} data-icon="inline-start" />
           <span className="hidden sm:inline">{t('table.quickFilter.collaboration')}</span>
@@ -95,7 +99,7 @@ const TaskQuickFilters: React.FC<Props> = ({
           <Button
             variant="outline"
             onClick={onToggleSelectMode}
-            className={`flex items-center gap-2 ${selectMode ? ACTIF : ''}`}
+            className={`flex items-center gap-2 ${CHIP} ${selectMode ? ACTIF : ''}`}
           >
             <CheckSquare size={20} data-icon="inline-start" />
             <span>{selectMode ? t('table.cancelSelect') : t('table.select')}</span>
