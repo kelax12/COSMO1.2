@@ -38,7 +38,8 @@
     "shown_other": "{{shown}} / {{count}} tâches affichées"
   },
   "lists": {
-    "sectionTitle": "Listes",
+    "sectionTitle": "Accès rapide aux listes",
+    "sectionTitleShort": "Listes",
     "newList": "Nouvelle liste",
     "manualListTitle": "Nouvelle liste manuelle",
     "chipLabel": "Liste",
