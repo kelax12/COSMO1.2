@@ -141,7 +141,8 @@
     "markUndone": "Marquer « {{name}} » comme non terminée",
     "completedToast": "« {{name}} » terminée",
     "sourcePersonal": "Perso",
-    "sourceTeam": "Équipe"
+    "sourceTeam": "Équipe",
+    "noCategory": "Sans catégorie"
   },
   "collab": {
     "removeShare": "Supprimer"

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
-import { AlertTriangle, Building2, Check, User } from 'lucide-react';
+import { AlertTriangle, Check } from 'lucide-react';
 import { useEvents } from '@/modules/events';
 import { useHabits } from '@/modules/habits';
 import { useTasks, type Task } from '@/modules/tasks';
@@ -214,16 +214,18 @@ const TodayMoments = () => {
                         {entry.task.name}
                       </span>
                       <span className="flex items-center gap-1.5 text-caption text-[rgb(var(--color-text-muted))]">
-                        {entry.task.source === 'team' ? (
-                          <Building2 size={11} aria-hidden="true" />
-                        ) : (
-                          <User size={11} aria-hidden="true" />
-                        )}
+                        {/* Catégorie plutôt que perso/équipe (icône Building2/
+                            User) : le rond reprend la couleur EXACTE de la
+                            catégorie — même code que les autres écrans
+                            (TaskCard, TeamCategoryPicker) — au lieu de
+                            distinguer seulement la source. */}
+                        <span
+                          className="size-2 rounded-full shrink-0"
+                          style={{ backgroundColor: entry.task.categoryColor ?? 'rgb(var(--color-text-muted))' }}
+                          aria-hidden="true"
+                        />
                         <span className="truncate">
-                          {entry.task.contextLabel ??
-                            (entry.task.source === 'team'
-                              ? t('today.sourceTeam')
-                              : t('today.sourcePersonal'))}
+                          {entry.task.categoryName ?? t('today.noCategory')}
                         </span>
                       </span>
                     </button>

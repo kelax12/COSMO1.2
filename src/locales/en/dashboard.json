@@ -131,7 +131,8 @@
     "markUndone": "Mark “{{name}}” as not done",
     "completedToast": "“{{name}}” completed",
     "sourcePersonal": "Personal",
-    "sourceTeam": "Team"
+    "sourceTeam": "Team",
+    "noCategory": "No category"
   },
   "collab": {
     "removeShare": "Delete"

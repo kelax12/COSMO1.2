@@ -13,12 +13,14 @@
 import { useMemo } from 'react';
 import { useTasks } from '@/modules/tasks';
 import { useLists } from '@/modules/lists';
+import { useCategories } from '@/modules/categories';
 import { useTeamTasks, useTeamProjects } from '@/modules/team-projects';
+import { useTeamCategories } from '@/modules/team-categories';
 import { useActiveOrganization } from '@/modules/organizations';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { useToggleTaskComplete } from '@/modules/tasks';
 import { useUpdateTeamTask } from '@/modules/team-projects';
-import { mergeTodayItems } from './today.helpers';
+import { mergeTodayItems, type CategoryLite } from './today.helpers';
 import type { TodayItem } from './types';
 
 export interface UseTodayItemsResult {
@@ -43,8 +45,10 @@ export function useTodayItems(): UseTodayItemsResult {
 
   const { data: tasks = [], isLoading: tasksLoading } = useTasks();
   const { data: lists = [] } = useLists();
+  const { data: categories = [] } = useCategories();
   const { data: teamTasks = [], isLoading: teamLoading } = useTeamTasks(orgId);
   const { data: projects = [] } = useTeamProjects(orgId);
+  const { data: teamCategories = [] } = useTeamCategories(orgId);
 
   // Contexte des tâches perso : leur liste. Les listes « smart » sont ignorées
   // — leur appartenance est calculée, pas déclarée, et une tâche y entre ou en
@@ -64,9 +68,18 @@ export function useTodayItems(): UseTodayItemsResult {
     [teamTasks, user],
   );
 
+  const personalCategoryById = useMemo(
+    () => new Map<string, CategoryLite>(categories.map((c) => [c.id, { name: c.name, color: c.color }])),
+    [categories],
+  );
+  const teamCategoryById = useMemo(
+    () => new Map<string, CategoryLite>(teamCategories.map((c) => [c.id, { name: c.name, color: c.color }])),
+    [teamCategories],
+  );
+
   const items = useMemo(
-    () => mergeTodayItems({ tasks, teamTasks: myTeamTasks, projects, listNameByTaskId }),
-    [tasks, myTeamTasks, projects, listNameByTaskId],
+    () => mergeTodayItems({ tasks, teamTasks: myTeamTasks, projects, listNameByTaskId, personalCategoryById, teamCategoryById }),
+    [tasks, myTeamTasks, projects, listNameByTaskId, personalCategoryById, teamCategoryById],
   );
 
   return {

@@ -41,6 +41,12 @@ const toLocalDeadline = (raw: string | undefined): string | null => {
   return Number.isNaN(parsed.getTime()) ? null : localYMD(parsed);
 };
 
+/** Nom + couleur d'une catégorie — forme commune aux deux modèles. */
+export interface CategoryLite {
+  name: string;
+  color: string;
+}
+
 export interface MergeTodayInput {
   tasks: Task[];
   teamTasks: TeamTask[];
@@ -48,6 +54,10 @@ export interface MergeTodayInput {
   projects: TeamProject[];
   /** Nom de liste par id de tâche perso — contexte affiché. */
   listNameByTaskId: Map<string, string>;
+  /** Catégories perso (`categories`), par id. */
+  personalCategoryById: Map<string, CategoryLite>;
+  /** Catégories d'équipe (`team_categories`), par id. */
+  teamCategoryById: Map<string, CategoryLite>;
   now?: Date;
 }
 
@@ -63,6 +73,8 @@ export function mergeTodayItems({
   teamTasks,
   projects,
   listNameByTaskId,
+  personalCategoryById,
+  teamCategoryById,
   now = new Date(),
 }: MergeTodayInput): TodayItem[] {
   const today = localYMD(now);
@@ -80,6 +92,7 @@ export function mergeTodayItems({
   for (const t of tasks) {
     const deadline = dueDate(t.deadline, t.completed);
     if (!deadline) continue;
+    const category = personalCategoryById.get(t.category);
     items.push({
       id: t.id,
       source: 'personal',
@@ -88,6 +101,8 @@ export function mergeTodayItems({
       done: t.completed,
       priority: t.priority,
       contextLabel: listNameByTaskId.get(t.id) ?? null,
+      categoryName: category?.name ?? null,
+      categoryColor: category?.color ?? null,
       href: `/tasks?task=${t.id}`,
       overdue: deadline < today,
     });
@@ -96,6 +111,7 @@ export function mergeTodayItems({
   for (const t of teamTasks) {
     const deadline = dueDate(t.deadline, t.completed);
     if (!deadline) continue;
+    const category = t.categoryId ? teamCategoryById.get(t.categoryId) : undefined;
     items.push({
       id: t.id,
       source: 'team',
@@ -104,6 +120,8 @@ export function mergeTodayItems({
       done: t.completed,
       priority: t.priority,
       contextLabel: projectNameById.get(t.projectId) ?? null,
+      categoryName: category?.name ?? null,
+      categoryColor: category?.color ?? null,
       href: `/entreprise?tab=projects&task=${t.id}`,
       overdue: deadline < today,
     });
