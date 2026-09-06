@@ -36,8 +36,10 @@ import { postAuthRoute } from '@/lib/safe-redirect';
 import {
   recordOAuthRedirectIntent,
   clearOAuthRedirectIntent,
-  reportOAuthLandingMismatch,
 } from './oauth-landing';
+// Les deux sondes qui lisent le retour OAuth dans l'URL : un échec OAuth est
+// silencieux par défaut, et ce sont elles qui le rendent visible.
+import { consumeOAuthErrorFromUrl, checkOAuthLanding } from './oauth-url-probes';
 
 const DEBUG = typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('debug');
 const dlog = (msg: string) => {
@@ -61,8 +63,8 @@ function touchLastSeen(userId: string): void {
 }
 
 // User type — identity fields only.
-// Premium/financial state (premiumTokens, subscriptionEndDate, win_streak, …) lives
-// exclusively in the Supabase `subscriptions` table and is consumed via useBilling().
+// Premium/financial state (plan, status, période Stripe) lives exclusively in the
+// Supabase `subscriptions` table and is consumed via useBilling().
 // `autoValidation` is a UI preference stored locally in demo mode (see user/hooks.ts).
 export type User = {
   id: string;
@@ -97,70 +99,6 @@ type AuthContextType = {
    * vrai compte passe par `supabase.auth.updateUser`, jamais par le client.
    */
   updateDemoProfile: (patch: DemoProfilePatch) => void;
-};
-
-/**
- * Le fournisseur OAuth renvoie ses echecs dans l'URL, pas dans une exception.
- *
- * Google redirige vers `/dashboard?error=access_denied&error_description=...`
- * (ou la meme chose dans le fragment, selon le flux). `detectSessionInUrl`
- * n'ouvre alors aucune session et ne signale rien : cote utilisateur, la
- * connexion « a marche » puis l'app est vide. On lit ces parametres au
- * demarrage pour en laisser une trace exploitable, puis on nettoie l'URL
- * (elle peut contenir un identifiant de tentative).
- *
- * Retourne la description lisible s'il y en a une.
- */
-const consumeOAuthErrorFromUrl = (): string | null => {
-  if (typeof window === 'undefined') return null;
-  try {
-    const query = new URLSearchParams(window.location.search);
-    const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''));
-    const code = query.get('error') ?? hash.get('error');
-    if (!code) return null;
-    const description =
-      query.get('error_description') ?? hash.get('error_description') ?? code;
-    console.error('[auth] retour OAuth en erreur', code, description);
-    monitoring.captureMessage(`OAuth callback error: ${code}`, {
-      level: 'warning',
-      tags: { context: 'oauth-callback' },
-    });
-    // Nettoie l'URL : sans ca, un rechargement rejoue l'erreur a l'infini.
-    //
-    // 🔴 On ne retire QUE les parametres d'erreur. Reecrire sur le seul
-    // `pathname` jetait la query string entiere, `?redirect=` compris : un
-    // echec OAuth transitoire faisait perdre la destination d'une invitation
-    // d'entreprise, donc le jeton a usage unique qu'elle portait (garde R-04).
-    for (const key of ['error', 'error_code', 'error_description']) query.delete(key);
-    const remaining = query.toString();
-    const clean = `${window.location.pathname}${remaining ? `?${remaining}` : ''}`;
-    window.history.replaceState(null, '', clean);
-    return description;
-  } catch {
-    return null;
-  }
-};
-
-/**
- * Sonde C-45 : appelée au moment où une session s'ouvre réellement.
- *
- * Une intention de redirection n'existe que si `loginWithGoogle` vient de
- * partir chez Google depuis cet onglet. Si une session s'ouvre alors que
- * l'URL courante n'est pas celle qu'on avait demandée, c'est que GoTrue a
- * substitué le Site URL, donc que la « Redirect URL allow list » du projet
- * ne couvre pas la destination. On le dit à l'exploitant (console + Sentry)
- * ET à l'utilisateur, dont l'invitation vient de se perdre.
- */
-const checkOAuthLanding = (): void => {
-  if (typeof window === 'undefined') return;
-  const mismatch = reportOAuthLandingMismatch(window.location.href);
-  if (!mismatch) return;
-  // Toast différé : Sonner est monté par App, sous ce provider.
-  setTimeout(() => {
-    toast.error(translator('common').t('auth.oauthRedirectLostTitle'), {
-      description: translator('common').t('auth.oauthRedirectLostBody'),
-    });
-  }, 0);
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);

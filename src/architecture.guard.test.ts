@@ -106,38 +106,38 @@ describe("architecture — `supabase.from()` ne sort pas d'un repository", () =>
 // ═══════════════════════════════════════════════════════════════════
 //
 // Objectif du refactor de juin 2026 : aucun fichier source > 600 lignes.
-// L'objectif a cédé pendant la construction du mode entreprise. On ne peut pas
-// le rétablir d'un test — découper `PyramidTab.tsx` (1 505 lignes) est un
-// chantier, pas un correctif. Mais on peut arrêter l'hémorragie, et c'est ce
-// que fait ce cliquet :
+// L'objectif a cédé pendant la construction du mode entreprise, et le cliquet
+// ci-dessous a servi de tourniquet le temps de le rétablir : aucun NOUVEAU
+// fichier au-dessus de 600, et un stock d'exceptions qui ne pouvait que
+// baisser.
 //
-//   • aucun NOUVEAU fichier ne dépasse 600 lignes ;
-//   • le total des fichiers déjà hors budget ne remonte JAMAIS.
+// ✅ **La liste est VIDE depuis le 2026-09-05** (C-09). Les douze derniers
+// fichiers hors budget ont été découpés, 9 200 lignes ramenées à 6 595 pour
+// les mêmes douze, le reste parti dans vingt-trois fichiers qui portent
+// chacun une frontière : un geste (`usePyramidDnd`), une surface
+// (`AgendaCalendarSection`), une dérivation (`useUnifiedTaskRows`), un
+// domaine (`InboxOrgSections`), un jeu de données (`demo-seed`).
 //
-// Le budget en TOTAL plutôt que par fichier est délibéré : il autorise à
-// déplacer du code entre deux gros fichiers pendant un refactor en cours, tout
-// en interdisant la croissance nette. Chaque découpage doit faire BAISSER
-// `OVERSIZED_BUDGET`.
+// 🔴 **Il n'y a plus d'exception, donc il n'y a plus de mou.** La règle est
+// redevenue simple, et c'est tout l'intérêt : un fichier au-dessus de 600
+// lignes fait échouer ce test, point. Rouvrir `KNOWN_OVERSIZED` pour y
+// glisser un nom serait revenir en arrière de quinze mois — un fichier se
+// découpe AVANT d'être livré, jamais « plus tard ».
+//
+// ⚠️ La leçon des quatre passes qui ont précédé celle-ci : compenser une
+// croissance ailleurs faisait BAISSER le total sans qu'aucun god component ne
+// disparaisse. Le stock rétrécissait, l'invariant non. C'est pourquoi la
+// sortie exigée n'était pas « un budget plus bas » mais « une liste vide ».
 const MAX_FILE_LOC = 600;
 
 /**
- * Fichiers hors budget au 2026-08-24, avec leur taille d'alors. Cette liste ne
- * doit que RÉTRÉCIR. Y ajouter un fichier est un aveu, pas une solution.
+ * Fichiers autorisés à dépasser `MAX_FILE_LOC`.
+ *
+ * 🔴 VIDE, et doit le rester. Y ajouter un nom est un aveu, pas une solution :
+ * le test « pas de fichier disparu ou déjà assaini » plus bas garde la liste
+ * honnête, mais rien ne peut garder honnête une liste qu'on rallonge.
  */
-const KNOWN_OVERSIZED = new Set([
-  'src/components/organization/PyramidTab.tsx', // 1046 (etait 1506 — NodeCard extrait le 2026-08-24)
-  'src/components/TaskTable.tsx', // 890 (etait 1124 — filtres rapides et barre d'actions groupees extraits le 2026-08-29)
-  'src/pages/AgendaPage.tsx', // 900
-  'src/pages/SettingsPage.tsx', // 850
-  'src/components/InboxMenu.tsx', // 802
-  'src/components/task-modal/useTaskModal.ts', // 719
-  'src/pages/TasksPage.tsx', // 712
-  'src/modules/team-projects/local.repository.ts', // 710
-  'src/components/task-modal/DesktopDetailsStep.tsx', // 703
-  'src/components/task-modal/TaskModalMobileBody.tsx', // 698
-  'src/components/organization/TeamTaskModal.tsx', // 685
-  'src/pages/tasks/TaskListsBar.tsx', // 616
-]);
+const KNOWN_OVERSIZED = new Set<string>([]);
 
 /**
  * Somme des lignes des fichiers ci-dessus.
@@ -237,7 +237,21 @@ const KNOWN_OVERSIZED = new Set([
 // D'AUTANT, sinon les 592 lignes libérées deviennent du mou distribué aux douze
 // fichiers restants, et le cliquet a reculé sans que personne ne le voie. Le
 // nombre ci-dessous est le stock RÉEL des douze, mesuré, pas déduit.
-const OVERSIZED_BUDGET = 9190;
+//
+// 2026-09-05 (C-09) : 9 190 → 0, 12 fichiers → 0. Les douze derniers sont
+// passés sous la barre, chacun par une frontière réelle et non par une coupe
+// à la ligne près. Les mesures avant → après :
+//
+//   PyramidTab 1 045 → 573 · TaskTable 854 → 598 · AgendaPage 867 → 584
+//   InboxMenu 805 → 565 · SettingsPage 756 → 508 · useTaskModal 725 → 571
+//   TasksPage 717 → 549 · team-projects/local.repository 712 → 444
+//   TaskModalMobileBody 780 → 597 · DesktopDetailsStep 710 → 545
+//   TeamTaskModal 698 → 540 · TaskListsBar 615 → 521
+//
+// Le budget devient donc STRUCTURELLEMENT zéro : il n'y a plus de stock à
+// autoriser. La constante reste, à zéro, pour que le test qui la lit continue
+// d'échouer si quelqu'un rouvre `KNOWN_OVERSIZED`.
+const OVERSIZED_BUDGET = 0;
 
 const loc = (file: string) => readFileSync(file, 'utf8').split('\n').length;
 
@@ -253,7 +267,10 @@ describe('architecture — taille des fichiers source', () => {
       'Nouveau(x) fichier(s) au-dessus du budget :\n' +
         `${newcomers.join('\n')}\n` +
         "Découper avant de livrer. Un god component ne se répare jamais plus tard —\n" +
-        'les 12 fichiers de KNOWN_OVERSIZED sont tous arrivés « juste au-dessus ».',
+        "les douze qu'il a fallu reprendre en 2026 sont TOUS arrivés « juste\n" +
+        "au-dessus », et il a fallu quinze mois pour revenir à zéro (C-09).\n" +
+        "Chercher la frontière : un geste, une surface, une dérivation, un domaine,\n" +
+        "un jeu de données. Jamais une coupe à la ligne près.",
     ).toEqual([]);
   });
 

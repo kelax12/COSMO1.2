@@ -105,7 +105,7 @@ quand ». Une décision écrite ici fait foi contre une piste écrite dans l'ite
 | Item | Décision | Ce qui est acté |
 |---|---|---|
 | **C-03** | ❄️ **Geler les clés de `habits.completions` en date machine** | Migrer supposerait de savoir dans quel fuseau était chaque personne chaque jour, ce que la base ne sait pas, et décalerait des séries que les gens ont construites. À écrire dans `CLAUDE.md` et `docs/ARCHITECTURE.md` |
-| **C-09** | ❄️ **Geler le cliquet des gros fichiers** | Le budget ne bouge plus, donc rien n'empire, et un fichier se découpe quand on a de toute façon à le modifier. Fin des coupes à la ligne près que la garde provoquait |
+| **C-09** | ❄️ **Geler le cliquet des gros fichiers** | ✅ **Dépassé le 2026-09-05** : plutôt que geler, les quinze fichiers ont été découpés et la liste est vide. L'arbitrage visait à éviter les coupes à la ligne près — c'est obtenu autrement, chaque sortie portant une frontière |
 | **C-54** | ❄️ **Le bouton « Nouveau » EST le chemin clavier de l'agenda** | ✅ **Fait le 2026-09-04.** Deux liens d'évitement posés (global + `/agenda`), décision écrite dans `ACCESSIBILITY.md`, deux gardes assertionnées. Le motif grille de FullCalendar n'est pas adopté |
 
 ### Comment corriger, quand plusieurs voies existaient
@@ -145,7 +145,7 @@ quand ». Une décision écrite ici fait foi contre une piste écrite dans l'ite
 | § | Domaine | Items |
 |---|---|---|
 | [0](#0-arbitrages-tranchés-le-2026-09-03) | 🟢 **Arbitrages tranchés** | 27 décisions du 2026-09-03 |
-| [1](#1-défauts-fonctionnels-connus) | Défauts fonctionnels connus | C-01 → C-08, C-37, C-40 → C-43, C-48, C-56, C-65, C-66 |
+| [1](#1-défauts-fonctionnels-connus) | Défauts fonctionnels connus | C-01 → C-08, C-37, C-40 → C-43, C-48, C-56, C-65, C-66, C-71 |
 | [2](#2-dette-structurelle) | Dette structurelle | C-09 → C-11, C-49, C-50 |
 | [3](#3-performance) | Performance | C-12 → C-14, C-67, C-68 |
 | [4](#4-scalabilité) | Scalabilité | C-15 → C-16 |
@@ -155,7 +155,7 @@ quand ». Une décision écrite ici fait foi contre une piste écrite dans l'ite
 | [8](#8-tests-et-gardes) | Tests et gardes | C-26 → C-28, C-34 → C-36, C-47 |
 | [9](#9-ce-qui-nest-PAS-du-code) | Ce qui n'est PAS du code | renvois |
 | [10](#10-couverture--ce-que-cette-liste-ne-peut-pas-contenir) | 🔴 Couverture et audits à lancer | 2 audits restants |
-| [11](#11-ce-qui-reste-ouvert) | 🔴 **Ce qui reste ouvert** | 3 gestes, 4 à moitié, 30 entiers |
+| [11](#11-ce-qui-reste-ouvert) | 🔴 **Ce qui reste ouvert** | 3 gestes, 4 à moitié, 29 entiers |
 
 ---
 
@@ -185,6 +185,50 @@ jamais traité.
   logique.
 
 ### C-02 · Supprimer une catégorie d'ÉQUIPE n'annonce toujours pas son impact · **P1 · S**
+
+> ✅ corrigé le 2026-09-04 · impact mesuré en prod, réaffectation avant suppression, ordre
+> verrouillé par un test.
+>
+> **La mesure, en lecture seule, le 2026-09-04** (4 organisations en base) :
+>
+> | | |
+> |---|---|
+> | catégories d'OKR d'équipe (`org_okr_categories`) | **2**, portées par **1** organisation |
+> | OKR d'équipe (`team_okrs`) | **1**, dont **1** porte une catégorie |
+> | déjà orphelins | **0** |
+>
+> ⚠️ **Ce zéro ne dit pas que le défaut est inoffensif, il dit que l'usage entreprise est encore
+> minuscule** : un seul OKR d'équipe existe en base. Le versant personnel avait déjà 13 tâches sur
+> 611 et 2 objectifs sur 14 quand R-02 a été mesuré. La même suppression produit le même trou dès
+> le premier vrai client.
+>
+> 🔴 **Le rattachement se fait par NOM, pas par identifiant**, et c'est le point que la lecture du
+> code seule aurait raté. `team_okrs.category` est une colonne texte qui porte le **nom** de la
+> catégorie (mig. 078, « aucune modif de team_okrs »). Compter par identifiant aurait rendu **0**
+> sur des données réelles, c'est-à-dire un « aucun impact » faux affiché juste avant la
+> suppression. La mesure ci-dessus a d'ailleurs commencé par ce contresens : la première requête
+> comparait `org_okr_categories.id::text` à `team_okrs.category` et annonçait **1 orphelin sur 1**.
+>
+> ✅ **Le jumeau `team_categories` (mig. 111) n'est PAS concerné** : lui porte un vrai FK
+> `ON DELETE SET NULL`, donc la base détache elle-même. Vérifié aussi : 0 catégorie d'équipe, 0
+> tâche et 0 projet rattachés à cette date.
+>
+> **Ce qui a été livré** : `orgOkrCategoryImpact()` / `orgOkrCategoryDependents()`
+> (`src/modules/org-okr-categories/impact.ts`, logique pure, comparaison par nom),
+> `useDeleteOrgOKRCategoryFlow` (`src/components/organization/`) qui réaffecte **puis** supprime,
+> et `DeleteCategoryConfirm` qui annonce le nombre d'objectifs concernés et propose une
+> destination avant de demander confirmation. Son ancien texte **décrivait** le défaut (« les OKR
+> associés conserveront leur catégorie mais ne seront plus filtrables ») sans rien proposer ; il
+> est remplacé, fr et en.
+>
+> **L'ordre est verrouillé par `useDeleteOrgOKRCategoryFlow.test.tsx`**, qui regarde la **suite**
+> des appels au dépôt et non leur nombre : `update:o1 → update:o3 → delete`. Un test vérifie qu'un
+> échec de la réaffectation **n'entraîne aucune suppression** et laisse le geste rejouable.
+>
+> ⚠️ **Pas d'« Annuler » ici, contrairement au versant personnel** (R-08) : rien ne permet de
+> restituer une `org_okr_categories` sous son identifiant d'origine, `createCategory` en forge un
+> neuf. Une annulation serait une réparation en apparence seulement. C'est précisément pourquoi
+> l'annonce d'impact **avant** est le seul filet disponible.
 
 Le finding R-02 a été refermé pour les catégories **personnelles** (`categoryImpact()` +
 `useReassignCategory`, réaffectation avant suppression). Son jumeau entreprise ne l'a pas été :
@@ -312,6 +356,29 @@ corrigées et un cliquet interdit la récidive, mais 17 feuilles n'utilisent tou
 
 ### C-08 · Deux dettes Stripe à payer AVANT la bascule live · **P1 · S**
 
+> ✅ traité le 2026-09-04 · **(1)** la mig. `140` installe
+> `reset_stripe_identifiers(p_apply BOOLEAN DEFAULT false)`, à blanc par défaut, écrite pour être
+> jouée DANS la fenêtre de bascule et non avant, avec sa séquence de vérification acteur par acteur
+> en transaction annulée. **Non appliquée** : elle attend Axel. **(2)** l'index produit → palier
+> porte désormais deux invalidations, par signature des secrets mensuels (rotation) et par TTL
+> (10 min complet, 30 s à trous). Trois tests vus ROUGES sur l'ancien code, plus un quatrième qui
+> refuse une TTL trop agressive.
+>
+> ⚠️ **Un énoncé de ce finding était faux, et il portait la décision** : « les tables sont VIDES
+> aujourd'hui ». Mesuré en prod le 2026-09-04, c'est vrai d'`org_subscriptions` (0 ligne) et faux
+> de `subscriptions` (54 lignes, dont **5 avec un `cus_…` et 2 avec un `sub_…`** de mai 2026, tous
+> du compte de test). Le coût n'est pas nul, il est faible.
+>
+> ⚠️ **Effacer les deux colonnes ne suffisait pas côté organisation** : une org à un palier payant
+> garderait son quota de sièges sans rien derrière pour le payer, et le portail (qui exige un
+> `stripe_customer_id`) répondrait `no_subscription`. Ni facturable, ni résiliable. Elle est donc
+> redescendue au palier gratuit en `cancelled`, sans qu'aucun membre soit retiré.
+>
+> 🔴 **Ce qui n'est PAS fait, et reste ouvert** : les deux Edge Functions ne rattrapent toujours pas
+> un `resource_missing` Stripe. La migration nettoie la donnée, elle ne rend pas le code tolérant à
+> un identifiant périmé : un customer supprimé à la main dans le dashboard Stripe produirait le même
+> 500. Suivi en C-71.
+
 Les deux sont du code, et les deux tombent pile pendant le basculement (T-36) :
 
 1. **Remise à zéro des identifiants Stripe en base.** `stripe-org-checkout` et `stripe-org-portal`
@@ -324,6 +391,27 @@ Les deux sont du code, et les deux tombent pile pendant le basculement (T-36) :
 
 - **Fini quand** : un script de bascule (ou une migration) vide les deux colonnes, et le cache porte
   une invalidation par TTL ou par version de secret.
+
+### C-71 · Les deux Edge Functions Stripe rendent 500 sur un identifiant périmé · **P2 · S**
+
+Détaché de C-08, dont la migration `140` traite la DONNÉE sans rendre le CODE tolérant.
+
+`stripe-org-checkout` (`stripe.subscriptions.retrieve(sub.stripe_subscription_id)`) et
+`stripe-org-portal` (`billingPortal.sessions.create({ customer })`) présentent tels quels des
+identifiants venus de la base, sans `try/catch`. Stripe répond `resource_missing` (404) dès que
+l'objet n'existe plus : identifiant d'un autre compte, customer supprimé à la main dans le
+dashboard, objet purgé. Le SDK lève, la fonction rend 500, et le propriétaire n'a plus ni bouton
+pour payer ni bouton pour résilier, sans message lui disant quoi faire.
+
+La bascule live est le cas le plus probable, et il est couvert par la mig. `140`. Ce qui reste,
+c'est la classe : **une lecture Stripe dont l'échec décide d'un routage ne doit pas devenir un
+500**. Un `resource_missing` sur un customer se traite comme « pas de customer » (on en recrée
+un, l'`idempotencyKey` évite le doublon) ; sur un abonnement, comme « pas d'abonnement en
+cours ». Toute AUTRE erreur Stripe doit continuer à relancer, conformément à la règle « en cas de
+doute, faire retenter Stripe, jamais deviner » (CLAUDE.md).
+
+- **Fini quand** : les deux fonctions distinguent `resource_missing` du reste, et un test le
+  prouve pour chacune.
 
 ### C-37 · Six « Annuler » de `src/components` rendent l'objet sous un NOUVEL identifiant · **P1 · M**
 
@@ -700,28 +788,58 @@ rendent leurs jumeaux `create` et `delete`, jamais eux-mêmes.
 
 ### C-09 · 12 fichiers au-dessus de 600 lignes, budget 9 190 · **P2 · XL**
 
+> ✅ **Fait le 2026-09-05.** `KNOWN_OVERSIZED` est **vide**, `OVERSIZED_BUDGET` vaut **0**, et
+> l'invariant de juin 2026 tient à nouveau : aucun fichier de `src/` au-dessus de 600 lignes.
+
 Invariant non tenu depuis juin 2026. Le cliquet ne fait que **rétrécir**, et c'est déjà ça, mais les
 quatre dernières passes étaient des **compensations imposées par la garde**, pas de
 l'assainissement : aucun god component n'a disparu depuis le 2026-08-29.
 
-| Fichier | LOC |
-|---|---|
-| `src/components/organization/PyramidTab.tsx` | 1 046 |
-| `src/pages/AgendaPage.tsx` | 900 |
-| `src/components/TaskTable.tsx` | 890 |
-| `src/pages/SettingsPage.tsx` | 850 |
-| `src/components/InboxMenu.tsx` | 802 |
-| `src/components/task-modal/useTaskModal.ts` | 719 |
-| `src/pages/TasksPage.tsx` | 712 |
-| `src/modules/team-projects/local.repository.ts` | 710 |
-| `src/components/task-modal/DesktopDetailsStep.tsx` | 703 |
-| `src/components/task-modal/TaskModalMobileBody.tsx` | 698 |
-| `src/components/organization/TeamTaskModal.tsx` | 685 |
-| `src/pages/tasks/TaskListsBar.tsx` | 616 |
+🔴 **Ils n'étaient pas douze, mais quinze.** La garde était **déjà ROUGE avant cette passe** :
+`Layout.tsx` (605), `AuthContext.tsx` (639) et `DashboardPage.tsx` (624) avaient franchi la barre
+sans être dans `KNOWN_OVERSIZED`, donc en faisant échouer le test « aucun NOUVEAU fichier ». Personne
+ne l'avait vu, parce qu'une garde rouge dans une suite déjà rouge ne se distingue pas du bruit. Le
+même défaut que les quatre gardes du 2026-09-03, dans l'autre sens : là c'était une garde qui
+répondait sans mesurer, ici une garde qui mesurait sans être lue.
+
+| Fichier | avant | après | Frontière sortie |
+|---|---|---|---|
+| `components/organization/PyramidTab.tsx` | 1 045 | **573** | `usePyramidDnd` (le geste), `PyramidToolbar` (les contrôles), `UnplacedMembersPanel` |
+| `pages/AgendaPage.tsx` | 867 | **584** | `AgendaCalendarSection` (seul à connaître FullCalendar), `useAgendaMobileView`, `useCalendarGridGestures` |
+| `components/TaskTable.tsx` | 854 | **598** | `useUnifiedTaskRows`, `TaskTableDesktop`, `ConfirmDeleteSheet`, `useTaskSelection`, `TaskListPlaceholders` |
+| `components/InboxMenu.tsx` | 805 | **565** | `InboxSocialSections` / `InboxOrgSections` — deux domaines qui ne se connaissent pas |
+| `components/task-modal/TaskModalMobileBody.tsx` | 780 | **597** | `MobileActionSheet` + `MobileChoiceSheet`, `MobileCollaboratorsSheet`, `DurationStepper` |
+| `pages/SettingsPage.tsx` | 756 | **508** | `TimezoneSection`, `useAccountActions` |
+| `components/task-modal/useTaskModal.ts` | 725 | **571** | `useTaskCollaborators` |
+| `pages/TasksPage.tsx` | 717 | **549** | `useTaskLists` |
+| `modules/team-projects/local.repository.ts` | 712 | **444** | `demo-seed.ts` — un jeu de données n'est pas un repository |
+| `components/task-modal/DesktopDetailsStep.tsx` | 710 | **545** | `CategoryField` |
+| `components/organization/TeamTaskModal.tsx` | 698 | **540** | `TeamTaskFields` |
+| `pages/tasks/TaskListsBar.tsx` | 615 | **521** | `CreateListForm` |
+| `modules/auth/AuthContext.tsx` | 639 | **577** | `oauth-url-probes.ts` |
+| `pages/DashboardPage.tsx` | 624 | **472** | `useStatCards` |
+| `components/Layout.tsx` | 605 | **480** | `layout/NavItemLink.tsx` |
+
+**Cinq défauts réels sont partis avec les découpes**, parce qu'ils vivaient dans les copies :
+
+1. La pastille de couleur du formulaire de liste **mobile** cherchait sa teinte dans `colorOptions` et
+   retombait sur le bleu — une couleur hex posée depuis le sélecteur desktop, sur le même état,
+   s'affichait donc en bleu au doigt.
+2. La création de catégorie de `DesktopDetailsStep` validait **deux fois**, avec **deux messages
+   différents** (`fields.categoryNameTooShort` sur Entrée, `form.…` au clic — deux clés qui existent
+   toutes les deux, avec des libellés anglais distincts).
+3. Les deux `aria-label` du pas de durée mobile étaient **en dur en français**, alors que
+   `fields.decrease5` / `fields.increase5` existaient déjà : un lecteur d'écran anglophone entendait
+   « Diminuer de 5 minutes ».
+4. Le compteur « N modification(s) » de la pyramide bricolait son pluriel en JSX. Devenu
+   `pyramid.moveCount`, fr et en.
+5. Deux confirmations de suppression de `TaskTable`, 60 lignes chacune, copiées à l'identique.
 
 - **Fini quand** : la liste `KNOWN_OVERSIZED` est vide. Chaque sortie doit être une **frontière
   réelle** (un composant extrait qui ne connaît pas le domaine de son parent), jamais une coupe à la
   ligne près, et le budget baisse du nombre de lignes sorties, sinon le mou est distribué aux autres.
+  ✅ Les deux conditions sont tenues : liste vide, budget à 0. Le message d'échec de la garde ne parle
+  plus d'un stock à ne pas dépasser mais d'une frontière à chercher.
 
 ### C-10 · Deux primitives livrées sans aucun consommateur · **P3 · S**
 
@@ -1880,7 +1998,7 @@ Après correctif : `["Raccourcis de date", "Navigation du calendrier", "Aller au
 - La rangée de presets, qui est la première chose que rencontre le focus, n'avait **aucun nom** :
   elle est maintenant un `role="group"` nommé.
 
-### C-53 · Aucune modale maison ne piège le focus · **P1 · L**
+### C-53 · ~~Aucune modale maison ne piège le focus~~ · **P1 · L** · ✅ corrigé le 2026-09-05
 
 **58 fichiers** montent une surface modale hors `ui/dialog` (recensés par balayage de `src/`), et
 le dépôt ne contient **aucun** utilitaire de piège de focus ni **aucune** capture de
@@ -1912,6 +2030,66 @@ il dépend de la remontée d'un évènement React depuis l'élément focalisé. 
 - **Fini quand** : le harnais mesure `trapped: true`, `focusMovedIn: true` et `escClosed: true` sur
   `EventModal`, `HabitModal` et les feuilles mobiles, et le fichier de mesure passe de
   `console.log` à `expect`.
+
+**Rendu le 2026-09-05** : un hook unique, `useModalA11y`
+([`src/hooks/use-modal-a11y.ts`](./src/hooks/use-modal-a11y.ts)), porte le piège de focus, la
+restitution au déclencheur, Échap et `role="dialog" aria-modal="true"`. Aucune des 58 surfaces
+n'a été corrigée à la main.
+
+**Mesuré dans le navigateur après correctif** (`chromium`, mode démo), sur les mêmes trois
+détecteurs que le témoin Radix :
+
+| Surface | `focusMovedIn` | `trapped` | `escClosed` | `role` | `aria-modal` |
+|---|---|---|---|---|---|
+| *témoin* Radix | oui | oui | oui | `dialog` | absent (Radix neutralise les frères) |
+| `EventModal` | oui (« Fermer ») | **oui** | **oui** | `dialog` | `true` |
+| `HabitModal` | oui (champ) | **oui** | **oui** | `dialog` | `true` |
+| `MobileMoreSheet` | oui (« Aller aux paramètres ») | **oui** | **oui** | `dialog` | `true` |
+
+Les trois lignes `MESURE` de [`e2e/a11y-keyboard-audit.spec.ts`](./e2e/a11y-keyboard-audit.spec.ts)
+sont **passées de `console.log` à `expect`**, via un helper unique qui applique aux surfaces maison
+exactement les contrôles du témoin.
+
+Surfaces câblées, les saisies d'abord : `EventModal`, `HabitModal`, la primitive
+`mobile/BottomSheet` (donc toutes les feuilles qui la consomment), `MobileMoreSheet`,
+`ShareListSheet`, `MobileAddToList`, plus les trois modales qui s'ouvrent **par-dessus** les deux
+premières — `ConfirmDiscardDialog`, `ColorSettingsModal`, `RecurrenceDaysModal`.
+
+- 🔴 **Les modales enfants n'étaient pas un « et tant qu'à faire », c'était une régression que le
+  correctif lui-même créait.** `EventModal` rend ses trois enfants en **frères** de son overlay,
+  pas dedans : une fois le parent piégé, son piège leur aurait repris le focus à la première
+  tabulation. D'où la pile (`openStack`) — seule la dernière modale empilée réagit à Échap et au
+  Tab. Vérifié aussi que les enfants montés depuis `TaskModal` sont, eux, **à l'intérieur** de son
+  `DialogContent` Radix : pas de gestionnaire concurrent.
+- 🔴 **L'écouteur est sur `document`, en capture, jamais un `onKeyDown` sur l'overlay.** C'est le
+  défaut exact de `HabitModal` : un gestionnaire React qui dépend de la remontée d'un évènement
+  depuis l'élément focalisé meurt dès que le focus est sorti — c'est-à-dire précisément dans le
+  cas qu'il existe pour rattraper. La capture protège en plus des champs qui appellent
+  `stopPropagation` sur leurs touches (les champs de date natifs le font).
+- 🔴 **La restitution du focus lisait `ref.current` dans le nettoyage de l'effet, où React l'a
+  déjà remis à `null`.** Un `useEffect` est PASSIF : ses refs sont détachées avant son nettoyage.
+  Le nœud est donc capturé à l'ouverture. Trouvé par un *warning* ESLint pris au sérieux, pas par
+  la mesure — `focusReturned` valait `false` sur `HabitModal` avant ce correctif.
+- ❌ **`focusReturned` est IMPRIMÉ, jamais assertionné, et ce n'est pas une complaisance** : le
+  témoin Radix lui-même le rend `false` (mesuré). Un détecteur que la bibliothèque de référence
+  ne passe pas mesure le détecteur, pas la modale. Les trois détecteurs de ce finding sont verts
+  sur le témoin, donc opposables ; celui-là ne l'est pas.
+- ⚠️ **La feuille mobile est mesurée par REDIMENSIONNEMENT du viewport, pas par un `test.skip`
+  sur le project desktop.** Sur cette machine, les tests de ce fichier échouent tous dans la
+  fixture partagée en `mobile-safari` (elle attend « Bonjour » dans le H1 du dashboard, dont
+  l'en-tête collant rend la date) — reproduit deux fois, et **avant** l'ouverture de la moindre
+  modale, donc hors du périmètre de C-53. Ce n'est pas un project cassé pour autant :
+  `touch-targets.spec.ts`, même fixture, est vert sur `mobile-safari`. Le défaut est sensible au
+  timing. La seule conclusion sûre est qu'une garde ne doit pas s'exécuter uniquement là.
+- ✅ **Onze tests unitaires** dans
+  [`src/hooks/use-modal-a11y.guard.test.tsx`](./src/hooks/use-modal-a11y.guard.test.tsx), dont
+  **trois témoins** qui montent la MÊME modale sans le hook et vérifient que la mesure vire au
+  rouge. Le hook a par ailleurs été **saboté trois fois** (piège désarmé, Échap désarmé, mise au
+  focus initiale retirée) : chaque sabotage a fait rougir exactement les tests concernés, jamais
+  zéro.
+- ⚠️ **Ce qui RESTE ouvert** : les 58 surfaces ne sont pas toutes câblées. Le hook existe et dix
+  surfaces y passent, les plus exposées d'abord ; le reste se branche au fil de l'eau, sans
+  décision d'architecture à reprendre.
 
 ### C-54 · ~~`/agenda` : les jours du calendrier sont hors d'atteinte au clavier~~ · **P2 · M** · ✅ tranché le 2026-09-04
 
@@ -1958,7 +2136,6 @@ clavier, et la décision est écrite dans
   n'accueille pas le focus et Échap ne la ferme pas (**C-53**, qui vaut pour les 58 modales) ; et la
   `<table>` de FullCalendar garde son `role="grid"` sans descendant focalisable géré, arbitrage
   assumé dans `ACCESSIBILITY.md` plutôt que maquillé par un patch de rôle après chaque rendu.
-
 
 ### C-55 · Trois surfaces que A-3 n'a PAS réussi à mesurer · **P3 · S**
 
@@ -2197,7 +2374,6 @@ chaînes sont là : ce sont **trois formes de plus** que l'heuristique ne voit p
 d'un élément, valeur d'attribut, ternaire d'attribut), après les quatre déjà corrigées le 2026-09-02.
 Le seuil est à 0 et la gate est verte — c'est encore « une garde qui répond sans mesurer », dans
 celle-là même dont le compteur avait déjà été faux une fois.
-
 
 ### C-28 · Le canal d'alerte d'ops est inerte · **P1 · XS (code) + geste d'Axel**
 
@@ -2501,7 +2677,7 @@ mesure du fichier n'a de valeur. Il a rendu **C-51 → C-55**, plus le chiffrage
 |---|---|
 | **C-51** · le calendrier ne se pilotait pas au clavier | ouverture à la touche Entrée puis trace des flèches : `["2 déc.", "→ 2 déc.", "→ 2 déc.", "↓ 2 déc."]` — trois pressions, zéro mouvement ; puis lecture de `useFocus` dans `node_modules` |
 | **C-52** · libellés ARIA anglais | arbre d'accessibilité du calendrier ouvert, avant / après |
-| **C-53** · aucune modale maison ne piège le focus | 15 Tab depuis l'overlay réel, sur `HabitModal` et `EventModal`, témoin Radix vert ; plus l'absence, vérifiée dans tout `src/`, du moindre `activeElement` capturé |
+| **C-53** · ~~aucune modale maison ne piège le focus~~ ✅ 2026-09-05 | 15 Tab depuis l'overlay réel, sur `HabitModal` et `EventModal`, témoin Radix vert ; plus l'absence, vérifiée dans tout `src/`, du moindre `activeElement` capturé. **Refermé par `useModalA11y`** : les trois détecteurs sont désormais des `expect` |
 | **C-54** · `/agenda` : jours hors d'atteinte | comptage des descendants focalisables de `.fc`, puis marche clavier réelle jusqu'au premier événement (38 tabulations) |
 | **C-55** · trois surfaces non mesurées | échec des sondes, dit plutôt que masqué |
 | *chiffrage de C-23* | dix routes scannées, violations dédoublonnées par (ratio, couleurs, taille) |
@@ -2768,20 +2944,21 @@ refermés dans la journée** ; leur note dit ce qui a été mesuré, et ce que l
 C-23** : leur code est écrit et testé, il n'est simplement **pas en production**.
 Ce sont les gestes du § 11.1 qui les débloquent, pas du travail supplémentaire.
 
-### 11.3 ⬜ Trente items entiers
+### 11.3 ⬜ Vingt-neuf items entiers
 
 Rien n'a été engagé dessus. Regroupés par ce qu'ils coûtent à ouvrir.
 
-**Ce qui demande une décision avant du code (4)**
-`C-04` supprimer les jetons premium et le mur-pub · `C-08` deux dettes Stripe avant la bascule
-live · `C-20` contenu éditorial monolingue · `C-58` le blocage sécurité qui forçait React 19 est
-levé, donc la migration redevient un arbitrage de coût.
+**Ce qui demande une décision avant du code (3)**
+`C-04` supprimer les jetons premium et le mur-pub · `C-20` contenu éditorial monolingue ·
+`C-58` le blocage sécurité qui forçait React 19 est levé, donc la migration redevient un
+arbitrage de coût.
 
 **Défauts fonctionnels mesurés (5)**
-`C-02` supprimer une catégorie d'ÉQUIPE n'annonce pas son impact · `C-03` les clés de
+`C-03` les clés de
 `habits.completions` ignorent le fuseau choisi · `C-05` le badge d'organisation lit jusqu'à
 1 000 tâches d'équipe · `C-45` `loginWithGoogle` vise des URL hors allowlist Supabase ·
-`C-69` la fenêtre produit de la landing tourne sans pause, y compris hors écran.
+`C-69` la fenêtre produit de la landing tourne sans pause, y compris hors écran · `C-71` les
+deux Edge Functions Stripe rendent 500 sur un identifiant Stripe périmé.
 
 **Performance et scalabilité (3)**
 `C-12` la landing reste la seule page lente · `C-15` le tableau de bord charge le jeu complet ·
@@ -2792,10 +2969,10 @@ levé, donc la migration redevient un arbitrage de coût.
 maison ne piège le focus · `C-54` `/agenda` : jours hors d'atteinte au clavier · `C-55` trois
 surfaces que A-3 n'a pas su mesurer · `C-70` 22 cibles sous 44 px dans `TeamTaskModal`.
 
-**Dette structurelle (5)**
-`C-06` 36 `eslint-disable exhaustive-deps` · `C-07` 17 feuilles animées à la main · `C-09` 12
-fichiers au-dessus de 600 lignes · `C-10` deux primitives sans consommateur · `C-49` 52 hooks
-exportés sans consommateur.
+**Dette structurelle (4)**
+`C-06` 36 `eslint-disable exhaustive-deps` · `C-07` 17 feuilles animées à la main ·
+`C-10` deux primitives sans consommateur · `C-49` 52 hooks exportés sans consommateur.
+~~`C-09` fichiers au-dessus de 600 lignes~~ — **fermé le 2026-09-05**, `KNOWN_OVERSIZED` vide.
 
 **Tests, gardes et i18n (7)**
 `C-18` CVE dev-only · `C-21` 71 valeurs `en` identiques au `fr` · `C-26` la couverture n'a pas été
