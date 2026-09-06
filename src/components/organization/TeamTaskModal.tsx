@@ -1,20 +1,17 @@
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X, AlertCircle, Trash2, Loader2, ChevronRight, Check, Send } from 'lucide-react';
+import { X, AlertCircle, Trash2, Loader2, Check, Send } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { useMyOrgPermissions } from '@/modules/organizations';
 import { useMarkTaskNotificationsRead, type OrgMember } from '@/modules/organizations';
 import type { TeamProject, TeamTask, CreateTeamTaskInput, UpdateTeamTaskInput } from '@/modules/team-projects';
 import { useCreateTeamProject } from '@/modules/team-projects';
-import { PRIORITY_META, projectColor, priorityLabelOf } from './team-projects.helpers';
-import AddCategoryButton from '@/components/AddCategoryButton';
-import { DatePicker } from '@/components/ui/date-picker';
-import DescriptionField from '@/components/DescriptionField';
+import { priorityLabelOf } from './team-projects.helpers';
 import MemberAvatar from './MemberAvatar';
 import TaskCommentsSection from './TaskCommentsSection';
 import TeamAssigneeGroups from './TeamAssigneeGroups';
-import TeamCategoryPicker from './TeamCategoryPicker';
+import TeamTaskFields from './TeamTaskFields';
 import TeamSubtasksSection from './TeamSubtasksSection';
 import TeamTaskDependenciesSection from './TeamTaskDependenciesSection';
 import { useAuth } from '@/modules/auth/AuthContext';
@@ -94,14 +91,6 @@ interface TeamTaskModalProps {
    */
   isManager?: boolean;
 }
-
-const labelClass = 'block text-xs font-semibold uppercase tracking-wider mb-2';
-const labelStyle = { color: 'rgb(var(--color-text-secondary))' };
-// Hauteur extraite pour que le groupe priorité (pas un input, mais aligné à côté) la partage.
-const inputHeightClass = 'h-[2.626275rem]';
-const inputClass =
-  `w-full px-[0.875425rem] ${inputHeightClass} border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none hover:border-[rgb(var(--color-accent-solid-hover))] focus:border-[rgb(var(--color-accent-solid))] focus:border-2 transition-all text-[0.875425rem]`;
-const inputStyle = { backgroundColor: 'rgb(var(--color-surface))', color: 'rgb(var(--color-text-primary))' };
 
 /**
  * Modal de tâche d'équipe — même langage visuel que le TaskModal personnel
@@ -406,187 +395,40 @@ const TeamTaskModal = ({
             </div>
           )}
 
-          <form onSubmit={(e) => { e.preventDefault(); handleSave(); }} className="space-y-5">
-            <div>
-              <label htmlFor="team-task-name" className={labelClass} style={labelStyle}>{t('taskModal.name')}</label>
-              <input
-                id="team-task-name"
-                type="text"
-                value={name}
-                onChange={(e) => { setName(e.target.value); setError(null); }}
-                placeholder={t('taskModal.namePlaceholder')}
-                autoFocus
-                maxLength={500}
-                className={inputClass}
-                style={inputStyle}
-              />
-            </div>
-
-            <div>
-              <label htmlFor="team-task-desc" className={labelClass} style={labelStyle}>{t('taskModal.description')}</label>
-              <DescriptionField
-                id="team-task-desc"
-                value={description}
-                onChange={setDescription}
-                rows={3}
-                placeholder={t('taskModal.descriptionPlaceholder')}
-                expandedTitle={t('taskModal.description')}
-                className={`${inputClass} h-auto py-3 resize-y min-h-[66.5323px]`}
-                style={inputStyle}
-              />
-            </div>
-
-            {/* Catégorie (mig. 111) — distincte du projet, jamais héritée de
-                lui : une tâche porte sa propre catégorie. */}
-            <div>
-              <span className={labelClass} style={labelStyle}>{t('project.category')}</span>
-              <TeamCategoryPicker orgId={orgId} value={categoryId} onChange={setCategoryId} />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <label htmlFor="team-task-project" className={labelClass} style={{ ...labelStyle, marginBottom: 0 }}>{t('taskModal.project')}</label>
-                  {/* Créer un projet sans quitter la tâche — même pattern que
-                      « + Ajouter » pour une catégorie côté tâche personnelle. */}
-                  <AddCategoryButton
-                    onClick={() => { setShowNewProjectInput(true); setNewProjectName(''); }}
-                    ariaLabel={t('taskModal.createProjectAria')}
-                  />
-                </div>
-                <select
-                  id="team-task-project"
-                  value={projectId}
-                  onChange={(e) => setProjectId(e.target.value)}
-                  className={inputClass}
-                  style={inputStyle}
-                >
-                  {projects.map((p) => (
-                    <option key={p.id} value={p.id}>{p.name}</option>
-                  ))}
-                </select>
-                {showNewProjectInput && (
-                  <div className="flex items-center gap-2 mt-2">
-                    <input
-                      type="text"
-                      autoFocus
-                      value={newProjectName}
-                      onChange={(e) => setNewProjectName(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); submitNewProject(); }
-                        else if (e.key === 'Escape') { setShowNewProjectInput(false); setNewProjectName(''); }
-                      }}
-                      placeholder={t('taskModal.projectNamePlaceholder')}
-                      className="flex-1 min-w-0 px-3 py-1.5 text-sm border rounded-lg focus:outline-none focus:border-[rgb(var(--color-accent))] border-[rgb(var(--color-border))]"
-                      style={{ backgroundColor: 'rgb(var(--color-surface))', color: 'rgb(var(--color-text-primary))' }}
-                    />
-                    <button
-                      type="button"
-                      disabled={newProjectName.trim().length < 2 || createProject.isPending}
-                      onClick={submitNewProject}
-                      className="shrink-0 px-3 py-1.5 rounded-lg text-sm font-semibold bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] hover:bg-[rgb(var(--color-accent-solid-hover))] disabled:opacity-40 transition-colors"
-                    >
-                      {t('taskModal.createProjectCta')}
-                    </button>
-                  </div>
-                )}
-                {projectId && (
-                  <span className="inline-flex items-center gap-1.5 mt-1.5 text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
-                    <span className={`w-2 h-2 rounded-full ${projectColor(projects.find((p) => p.id === projectId)?.color ?? 'blue').dot}`} aria-hidden="true" />
-                    {t('taskModal.teamProject')}
-                  </span>
-                )}
-              </div>
-
-              <div>
-                <span className={labelClass} style={labelStyle}>{t('taskModal.priority')}</span>
-                <div className={`flex gap-1.5 ${inputHeightClass} items-stretch`} role="radiogroup" aria-label={t('taskModal.priority')}>
-                  {[1, 2, 3, 4, 5].map((p) => (
-                    <button
-                      key={p}
-                      type="button"
-                      role="radio"
-                      aria-checked={priority === p}
-                      aria-label={priorityLabelOf(p)}
-                      title={priorityLabelOf(p)}
-                      onClick={() => setPriority(p)}
-                      className={`flex-1 rounded-lg border text-xs font-semibold inline-flex items-center justify-center gap-1 transition-colors ${
-                        priority === p
-                          ? 'border-[rgb(var(--color-accent-solid))] bg-[rgb(var(--color-accent-solid))]/10'
-                          : 'border-slate-200 dark:border-slate-700 hover:bg-[rgb(var(--color-hover))]'
-                      }`}
-                      style={{ color: priority === p ? 'rgb(var(--color-text-primary))' : 'rgb(var(--color-text-muted))' }}
-                    >
-                      <span className={`w-1.5 h-1.5 rounded-full ${PRIORITY_META[p].dot}`} aria-hidden="true" />
-                      {p}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <label htmlFor="team-task-deadline" className={labelClass} style={labelStyle}>{t('taskModal.deadline')}</label>
-                {/* Calendrier COSMO, jamais le picker natif du navigateur : il
-                    ignore le thème, la locale de l'app et les presets. */}
-                <DatePicker
-                  id="team-task-deadline"
-                  value={deadline}
-                  onChange={setDeadline}
-                  placeholder={t('taskModal.deadlinePlaceholder')}
-                  className={inputHeightClass}
-                  // Cette modale monte à z-[9999] : au z-[100] par défaut, le
-                  // calendrier s'ouvrirait derrière elle. `z-[10000]` est le
-                  // cran « popover DANS une feuille portalisée ».
-                  popoverClassName="z-[10000]"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="team-task-time" className={labelClass} style={labelStyle}>{t('taskModal.estimatedTime')}</label>
-                <input
-                  id="team-task-time"
-                  type="number"
-                  min={0}
-                  max={100000}
-                  value={estimatedTime}
-                  onChange={(e) => setEstimatedTime(e.target.value)}
-                  placeholder={t('taskModal.timePlaceholder')}
-                  className={`${inputClass} appearance-none`}
-                  style={inputStyle}
-                />
-              </div>
-            </div>
-
-            {/* Assignés — disclosure mobile/tablette uniquement : à partir de
-                `lg`, un panneau dédié à gauche du modal reprend ce rôle en
-                permanence (pas besoin de replier ce qu'il y a la place de
-                montrer). Même état, même `renderAssigneeRow`. */}
-            {!isWide && (
-              <div className="border-t pt-4" style={{ borderColor: 'rgb(var(--color-border))' }}>
-                <button
-                  type="button"
-                  onClick={() => setShowAssignees((v) => !v)}
-                  aria-expanded={showAssignees}
-                  className="flex items-center gap-2 text-sm font-semibold hover:text-blue-500 transition-colors"
-                  style={{ color: 'rgb(var(--color-text-secondary))' }}
-                >
-                  <ChevronRight size={16} aria-hidden="true" className={`transition-transform ${showAssignees ? 'rotate-90' : ''}`} />
-                  {t('taskModal.assignTask')}
-                  {assigneeIds.length > 0 && (
-                    <span className="px-1.5 py-0.5 rounded-full text-xs bg-[rgb(var(--color-accent-solid))]/10 text-blue-500">
-                      {assigneeIds.length}
-                    </span>
-                  )}
-                </button>
-                {showAssignees && (
-                  <div className="mt-3 rounded-xl border overflow-hidden max-h-56 overflow-y-auto" style={{ borderColor: 'rgb(var(--color-border))', backgroundColor: 'rgb(var(--color-surface))' }}>
-                    <TeamAssigneeGroups orgId={orgId} value={assigneeIds} onChange={setAssigneeIds} />
-                    {assignableMembers.map(renderAssigneeRow)}
-                  </div>
-                )}
-              </div>
-            )}
-          </form>
+          <TeamTaskFields
+            orgId={orgId}
+            projects={projects}
+            name={name}
+            onNameChange={(v) => { setName(v); setError(null); }}
+            description={description}
+            onDescriptionChange={setDescription}
+            categoryId={categoryId}
+            onCategoryChange={setCategoryId}
+            projectId={projectId}
+            onProjectChange={setProjectId}
+            priority={priority}
+            onPriorityChange={setPriority}
+            deadline={deadline}
+            onDeadlineChange={setDeadline}
+            estimatedTime={estimatedTime}
+            onEstimatedTimeChange={setEstimatedTime}
+            showNewProjectInput={showNewProjectInput}
+            onOpenNewProject={() => { setShowNewProjectInput(true); setNewProjectName(''); }}
+            onCancelNewProject={() => { setShowNewProjectInput(false); setNewProjectName(''); }}
+            newProjectName={newProjectName}
+            onNewProjectNameChange={setNewProjectName}
+            onSubmitNewProject={submitNewProject}
+            isCreatingProject={createProject.isPending}
+            assigneeIds={assigneeIds}
+            onAssigneeIdsChange={setAssigneeIds}
+            assignableMembers={assignableMembers}
+            renderAssigneeRow={renderAssigneeRow}
+            showAssignees={showAssignees}
+            onToggleAssignees={() => setShowAssignees((v) => !v)}
+            isWide={isWide}
+            priorityLabelOf={priorityLabelOf}
+            onSubmit={handleSave}
+          />
 
           {/* Commentaires (reco #9) — visible dès la CRÉATION (placeholder tant
               que la tâche n'existe pas), pas seulement en édition : le panneau
