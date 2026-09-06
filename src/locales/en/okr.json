@@ -52,10 +52,21 @@
     "colorHint": "Click: cycle colours · Shift+click: hex palette"
   },
   "deleteCategory": {
-    "title": "Confirm deletion",
+    "title": "Delete “{{name}}”?",
     "cancel": "Cancel",
     "confirm": "Delete",
-    "body": "Are you sure you want to delete the category “{{name}}”? The linked OKRs keep their category but can no longer be filtered."
+    "working": "Deleting…",
+    "noImpact": "No team objective uses this category, so deleting it affects nothing.",
+    "impactOkrs_one": "{{count}} team objective uses this category.",
+    "impactOkrs_many": "{{count}} team objectives use this category.",
+    "impactOkrs_other": "{{count}} team objectives use this category.",
+    "reassignLabel": "What should happen to them?",
+    "reassignNone": "Leave them without a category",
+    "reassignTo": "Move them to another category",
+    "reassignPick": "Pick a category",
+    "doneReassigned_one": "{{count}} objective moved",
+    "doneReassigned_many": "{{count}} objectives moved",
+    "doneReassigned_other": "{{count}} objectives moved"
   },
   "deleteObjective": {
     "title": "Delete objective",
