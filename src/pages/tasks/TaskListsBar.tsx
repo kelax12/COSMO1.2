@@ -137,15 +137,17 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                         onClick={() => {
                           clearListFilter();
                         }}
-                        // Chip Spotify (docs/MOBILE.md § Chips de filtre) :
-                        // pilule pleine, sans bordure — au repos comme active.
-                        // `h-9` réduit (2026-09-06) : 44px de haut faisait une
-                        // pilule disproportionnée une fois pleine au lieu de
-                        // bordée — Spotify tourne autour de 36-40px.
-                        className={`shrink-0 whitespace-nowrap inline-flex items-center justify-center px-3 h-9 sm:h-auto sm:py-2 rounded-full text-label sm:text-sm font-medium transition-all ${
+                        // Chip Spotify (docs/MOBILE.md § Chips de filtre) — MOBILE
+                        // UNIQUEMENT : pilule pleine, sans bordure. `h-9` réduit
+                        // (2026-09-06) : 44px de haut faisait une pilule
+                        // disproportionnée une fois pleine au lieu de bordée —
+                        // Spotify tourne autour de 36-40px.
+                        // Desktop (sm+) : forme d'origine inchangée (rounded-lg,
+                        // bordure, shadow-sm) — jamais migrée sur le pattern Spotify.
+                        className={`shrink-0 whitespace-nowrap inline-flex items-center justify-center px-3 sm:px-3.5 h-9 sm:h-auto sm:py-2 rounded-full sm:rounded-lg text-label sm:text-sm font-medium transition-all sm:shadow-sm sm:border ${
                           !selectedListId
-                            ? 'bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))]'
-                            : 'bg-[rgb(var(--color-chip-bg))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]'
+                            ? 'bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] sm:border-[rgb(var(--color-accent-solid))] sm:shadow-md'
+                            : 'bg-[rgb(var(--color-chip-bg))] sm:bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] sm:border-[rgb(var(--color-border))]'
                         }`}
                       >
                         <span className="hidden sm:inline">{t('filters.allTasks')}</span>
@@ -196,16 +198,15 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
                           onClick={() => setSelectedListId(selectedListId === VIRTUAL_TODAY_ID ? null : VIRTUAL_TODAY_ID)}
-                          // Chip Spotify : même pilule pleine sans bordure que
-                          // les autres chips de filtre — l'ancien traitement
-                          // vert dédié (bordure + fond teinté) est retiré,
-                          // « Aujourd'hui » ne porte pas de pastille colorée
-                          // (c'est une smart list, pas une liste), donc rien
-                          // à conserver de l'exception « pastille avant le nom ».
-                          className={`shrink-0 whitespace-nowrap inline-flex items-center gap-1.5 px-3 h-9 sm:h-auto sm:py-2 rounded-full text-label sm:text-sm font-medium transition-all ${
+                          // Chip Spotify — MOBILE UNIQUEMENT : pilule pleine
+                          // sans bordure, pas de pastille colorée (« Aujourd'hui »
+                          // est une smart list, pas une liste).
+                          // Desktop (sm+) : forme d'origine inchangée, y compris
+                          // le traitement vert dédié à cette chip.
+                          className={`shrink-0 whitespace-nowrap inline-flex items-center gap-1.5 px-3 sm:px-3.5 h-9 sm:h-auto sm:py-2 rounded-full sm:rounded-lg text-label sm:text-sm font-medium transition-all sm:shadow-sm sm:border ${
                             selectedListId === VIRTUAL_TODAY_ID
-                              ? 'bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))]'
-                              : 'bg-[rgb(var(--color-chip-bg))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]'
+                              ? 'bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] sm:bg-emerald-600 sm:text-white sm:border-emerald-700 dark:sm:bg-emerald-500 sm:shadow-md'
+                              : 'bg-[rgb(var(--color-chip-bg))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] sm:bg-emerald-50 sm:text-emerald-700 sm:hover:bg-emerald-100 sm:border-emerald-200 dark:sm:bg-emerald-900/30 dark:sm:text-emerald-300 dark:sm:hover:bg-emerald-900/50 dark:sm:border-emerald-800'
                           }`}
                           title={t('lists.todayChipTitle')}
                         >
@@ -396,14 +397,16 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                                 onPointerCancel={cancelChipLongPress}
                                 onPointerLeave={cancelChipLongPress}
                                 onContextMenu={(e) => { if (isMobile) e.preventDefault(); }}
-                                // Chip Spotify : pilule pleine sans bordure.
-                                // La pastille de couleur de la liste (juste
-                                // en dessous) reste — seule exception au
+                                // Chip Spotify — MOBILE UNIQUEMENT : pilule pleine
+                                // sans bordure. La pastille de couleur de la liste
+                                // (juste en dessous) reste — seule exception au
                                 // remplacement, demandée explicitement.
-                                className={`flex items-center gap-1.5 px-3 h-9 sm:h-auto sm:py-2 rounded-full text-label sm:text-sm font-medium transition-all ${
+                                // Desktop (sm+) : forme d'origine inchangée
+                                // (rounded-lg, bordure, shadow-sm).
+                                className={`flex items-center gap-1.5 px-3 sm:px-3.5 h-9 sm:h-auto sm:py-2 rounded-full sm:rounded-lg text-label sm:text-sm font-medium transition-all sm:shadow-sm sm:border ${
                                   isSelected
-                                    ? 'bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))]'
-                                    : 'bg-[rgb(var(--color-chip-bg))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]'
+                                    ? 'bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] sm:border-[rgb(var(--color-accent-solid))] sm:shadow-md'
+                                    : 'bg-[rgb(var(--color-chip-bg))] sm:bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] sm:border-[rgb(var(--color-border))]'
                                 }`}
                               >
                                 {/* Indicateur visuel : pastille couleur, ou icône Sparkles si smart */}
