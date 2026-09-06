@@ -53,8 +53,10 @@ const OKRCategoryPicker = ({ orgId, value, onChange }: OKRCategoryPickerProps) =
               key={c.id}
               type="button"
               onClick={() => onChange(active ? '' : c.name)}
-              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border transition-colors ${
-                active ? 'text-white border-transparent' : 'border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]'
+              // Chip Spotify (docs/MOBILE.md § Chips de filtre) : pilule
+              // pleine sans bordure, pastille de couleur conservée.
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
+                active ? 'text-white' : 'bg-[rgb(var(--color-chip-bg))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]'
               }`}
               style={active ? { backgroundColor: c.color } : undefined}
             >

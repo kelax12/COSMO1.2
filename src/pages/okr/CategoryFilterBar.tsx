@@ -80,10 +80,13 @@ const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
   accentAllActive = false,
 }) => {
   const { t } = useT('okr');
+  // Chip Spotify (docs/MOBILE.md § Chips de filtre) : pilule pleine, sans
+  // bordure — l'ancien style (fond transparent + bordure) est retiré, la
+  // pastille de couleur (juste en dessous) reste, seule exception demandée.
   // Taille des chips — la page OKR perso les agrandit (~+20%) via `large`.
   const chipCls = large
-    ? 'inline-flex items-center gap-2 px-3 min-h-touch sm:min-h-0 sm:py-1.5 rounded-full text-sm font-medium border transition-colors'
-    : 'inline-flex items-center gap-1.5 px-2.5 min-h-touch sm:min-h-0 sm:py-1 rounded-full text-xs font-medium border transition-colors';
+    ? 'inline-flex items-center gap-2 px-3 min-h-touch sm:min-h-0 sm:py-1.5 rounded-full text-sm font-medium transition-colors'
+    : 'inline-flex items-center gap-1.5 px-2.5 min-h-touch sm:min-h-0 sm:py-1 rounded-full text-xs font-medium transition-colors';
   const dotCls = large ? 'w-2.5 h-2.5' : 'w-2 h-2';
   const addChipCls = `inline-flex items-center rounded-full font-medium border border-dashed border-[rgb(var(--color-border))] text-[rgb(var(--color-text-muted))] hover:text-blue-500 hover:border-[rgb(var(--color-accent))] transition-colors min-h-touch sm:min-h-0 ${
     large ? 'gap-1.5 px-3 sm:py-1.5 text-sm' : 'gap-1 px-2.5 sm:py-1 text-xs'
@@ -95,8 +98,8 @@ const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
   // avec du texte noir dessus. La classe porte le duo de tokens, et le seul
   // theme qui en devie — Gris — le fait dans sa propre regle CSS.
   const allActiveCls = accentAllActive
-    ? 'chip-accent-solid border-transparent'
-    : 'bg-[rgb(var(--color-text-primary))] text-[rgb(var(--color-surface))] border-transparent';
+    ? 'chip-accent-solid'
+    : 'bg-[rgb(var(--color-text-primary))] text-[rgb(var(--color-surface))]';
   return (
       <div className="flex items-center gap-1.5 flex-wrap mb-6" data-tutorial-id="okr-category-filter">
         {/* Style « pastilles » du mode entreprise, appliqué aux deux modes :
@@ -107,7 +110,7 @@ const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
           className={`${chipCls} ${
             selectedCategory === 'all'
               ? allActiveCls
-              : 'border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]'
+              : 'bg-[rgb(var(--color-chip-bg))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]'
           }`}>
           {t('categories.all')}
         </button>
@@ -225,8 +228,8 @@ const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
                       onClick={() => setSelectedCategory(category.id)}
                       className={`${chipCls} ${
                         selectedCategory === category.id
-                          ? 'text-white border-transparent'
-                          : 'border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]'
+                          ? 'text-white'
+                          : 'bg-[rgb(var(--color-chip-bg))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]'
                       }`}
                       style={selectedCategory === category.id ? { backgroundColor: resolveColor(category.color) } : undefined}>
                       <span
