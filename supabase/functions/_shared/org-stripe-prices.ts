@@ -148,42 +148,122 @@ export async function resolveYearlyPriceId(
 // ─── Sens inverse : price ID → palier + périodicité ──────────────────
 
 /**
- * Table produit → palier, construite une fois par isolate.
+ * Table produit → palier.
  *
  * Le webhook reçoit un price ID nu et doit en déduire le palier. Pour les prix
  * MENSUELS, les secrets suffisent (comparaison de chaînes, aucun appel réseau).
  * Pour les ANNUELS dérivés, il faut remonter au produit, donc lire les prix
  * mensuels une fois. Sans ce cache, chaque event Stripe coûterait quatre
- * `prices.retrieve` — un webhook qui appelle Stripe en boucle finit par se
+ * `prices.retrieve`, et un webhook qui appelle Stripe en boucle finit par se
  * faire limiter, et un webhook limité, c'est une facture non appliquée.
+ *
+ * ── POURQUOI IL NE SUFFIT PAS DE CONSTRUIRE L'INDEX UNE FOIS (C-08) ─
+ *
+ * Il était construit « une fois par isolate », et `resetProductIndex` n'avait
+ * AUCUN appelant hors test : rien, en production, ne pouvait le vider. Or un
+ * isolate Deno survit longtemps, et deux dérives le rendent faux sans que
+ * personne le voie :
+ *
+ * 1. **Rotation des secrets de prix.** Le jour du passage en compte live, les
+ *    quatre `STRIPE_ORG_PRICE_*` changent de valeur. Un isolate déjà chaud
+ *    continue d'indexer les produits du compte de TEST : tout price ID annuel
+ *    live retombe sur `undefined`, donc « prix inconnu », donc aucune facture
+ *    appliquée, sur le premier jour où l'on encaisse pour de vrai.
+ * 2. **Index PARTIEL.** La boucle avale volontairement l'erreur d'un palier
+ *    illisible (voir plus bas). Si Stripe hoquette pendant la construction, le
+ *    palier manquant l'est DÉFINITIVEMENT dans cet isolate, alors que l'appel
+ *    suivant aurait réussi.
+ *
+ * D'où deux invalidations, chacune contre une dérive :
+ *
+ * - **Par version de secret** : l'index porte la signature des quatre price IDs
+ *   mensuels qui l'ont construit. Une valeur qui change, et il est reconstruit
+ *   au prochain appel. C'est exact, pas heuristique : la signature est la
+ *   totalité de ce dont dépend l'index. Les secrets ANNUELS n'y entrent pas :
+ *   ils ne servent qu'à court-circuiter la dérivation, l'index ne les lit
+ *   jamais.
+ * - **Par TTL** : borne haute de fraîcheur pour tout ce que la signature ne
+ *   capture pas. Un index COMPLET est gardé dix minutes ; un index partiel
+ *   trente secondes, parce qu'un trou vient presque toujours d'une panne
+ *   passagère qu'il ne faut pas figer.
+ *
+ * ⚠️ La signature n'est jamais journalisée : ce sont des identifiants de prix,
+ * pas des secrets d'authentification, mais ils n'ont rien à faire dans un log.
  */
-let productIndex: Map<string, OrgTierKey> | null = null
+interface ProductIndexEntry {
+  index: Map<string, OrgTierKey>
+  /** Concaténation des price IDs mensuels ayant servi à la construire. */
+  signature: string
+  /** `Date.now()` de la construction. */
+  builtAt: number
+  /** Tous les paliers portant un secret mensuel ont-ils été indexés ? */
+  complete: boolean
+}
 
-/** Testabilité : un isolate long ne doit pas garder un index périmé. */
+/** Fraîcheur d'un index complet. */
+export const PRODUCT_INDEX_TTL_MS = 10 * 60 * 1000
+
+/** Fraîcheur d'un index à trous : on retente vite, la cause est passagère. */
+export const PRODUCT_INDEX_PARTIAL_TTL_MS = 30 * 1000
+
+let productIndex: ProductIndexEntry | null = null
+
+/**
+ * Vide l'index.
+ *
+ * Utilisée par les tests. En production, l'invalidation est automatique
+ * (signature + TTL ci-dessus) : ce n'est pas à un appelant de savoir quand un
+ * cache est périmé, c'est précisément ce qui a produit C-08.
+ */
 export function resetProductIndex(): void {
   productIndex = null
+}
+
+/** Ce dont l'index dépend, et rien d'autre : les quatre price IDs mensuels. */
+function monthlySecretSignature(env: EnvReader): string {
+  return ORG_TIERS.map((tier) => {
+    const name = priceEnvVarFor(tier, 'monthly')
+    return `${tier.key}=${(name ? env(name) : undefined) ?? ''}`
+  }).join('|')
 }
 
 async function getProductIndex(
   stripe: StripeLike,
   env: EnvReader,
 ): Promise<Map<string, OrgTierKey>> {
-  if (productIndex) return productIndex
+  const signature = monthlySecretSignature(env)
+  const now = Date.now()
+
+  if (productIndex && productIndex.signature === signature) {
+    const ttl = productIndex.complete ? PRODUCT_INDEX_TTL_MS : PRODUCT_INDEX_PARTIAL_TTL_MS
+    if (now - productIndex.builtAt < ttl) return productIndex.index
+  }
+
   const index = new Map<string, OrgTierKey>()
+  let expected = 0
+  let indexed = 0
   for (const tier of ORG_TIERS) {
     const monthlyVar = priceEnvVarFor(tier, 'monthly')
     const monthlyId = monthlyVar ? env(monthlyVar) : undefined
     if (!monthlyId) continue
+    expected += 1
     try {
       const monthly = await stripe.prices.retrieve(monthlyId)
       index.set(productIdOf(monthly), tier.key)
+      indexed += 1
     } catch {
       // Un palier illisible ne doit pas empêcher les autres d'être indexés :
       // l'appelant traitera « palier introuvable » comme un prix inconnu, ce
       // qui alerte et force un retry Stripe plutôt que de dégrader une org.
+      // Le trou n'est PAS figé pour autant : l'index est alors marqué
+      // incomplet, donc réessayé au bout de trente secondes.
     }
   }
-  productIndex = index
+
+  // `indexed`, pas `index.size` : deux paliers partageant un produit Stripe
+  // écriraient une seule entrée pour deux lectures réussies, et l'index serait
+  // alors reconstruit toutes les trente secondes pour rien.
+  productIndex = { index, signature, builtAt: now, complete: indexed === expected }
   return index
 }
 
