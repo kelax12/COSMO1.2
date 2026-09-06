@@ -37,7 +37,7 @@
     "shown_other": "{{shown}} / {{count}} tasks shown"
   },
   "lists": {
-    "sectionTitle": "Quick access to lists",
+    "sectionTitle": "Lists",
     "newList": "New list",
     "manualListTitle": "New manual list",
     "chipLabel": "List",
