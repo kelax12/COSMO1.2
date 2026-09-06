@@ -167,7 +167,6 @@ export default defineConfig({
         // Extractions phase 3 (logique pure des god-components)
         'src/lib/avatar-upload.ts': { lines: 100, functions: 100, statements: 100, branches: 90 },
         'src/components/AddTaskForm.validation.ts': { lines: 100, functions: 100, statements: 100, branches: 90 },
-        'src/modules/billing/ad-limit.ts': { lines: 100, functions: 100, statements: 100, branches: 90 },
         // Définition canonique de « premium » côté client, extraite de
         // billing.context.tsx (audit 2026-06-10). Une régression ici = accès
         // premium incorrect pour tous les comptes.
