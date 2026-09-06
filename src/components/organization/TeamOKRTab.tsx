@@ -14,9 +14,10 @@ import {
   useOrgOKRCategories,
   useCreateOrgOKRCategory,
   useUpdateOrgOKRCategory,
-  useDeleteOrgOKRCategory,
   OKR_CATEGORY_COLORS,
 } from '@/modules/org-okr-categories';
+import { orgOkrCategoryImpact } from '@/modules/org-okr-categories/impact';
+import { useDeleteOrgOKRCategoryFlow } from './useDeleteOrgOKRCategoryFlow';
 import { getColorHex } from '@/components/CategoryManager';
 import CategoryFilterBar from '@/pages/okr/CategoryFilterBar';
 import DeleteCategoryConfirm from '@/pages/okr/DeleteCategoryConfirm';
@@ -136,7 +137,6 @@ const TeamOKRTab = ({ orgId }: TeamOKRTabProps) => {
   const { data: categories = [] } = useOrgOKRCategories(orgId);
   const createCategory = useCreateOrgOKRCategory(orgId);
   const updateCategory = useUpdateOrgOKRCategory(orgId);
-  const deleteCategory = useDeleteOrgOKRCategory(orgId);
   const reassignCategory = useReassignTeamOKRCategory(orgId);
   const updateKR = useUpdateTeamKR(orgId);
   const deleteOKR = useDeleteTeamOKR(orgId);
@@ -152,7 +152,22 @@ const TeamOKRTab = ({ orgId }: TeamOKRTabProps) => {
   const [showCreateCategory, setShowCreateCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newCategoryColor, setNewCategoryColor] = useState<string>(OKR_CATEGORY_COLORS[0]);
-  const [categoryToDeleteId, setCategoryToDeleteId] = useState<string | null>(null);
+  // Suppression d'une catégorie : réaffecter AVANT de supprimer (item C-02).
+  const {
+    categoryToDeleteId,
+    setCategoryToDeleteId,
+    isDeleting: isDeletingCategory,
+    confirmDelete: confirmDeleteCategory,
+  } = useDeleteOrgOKRCategoryFlow({
+    orgId,
+    categories,
+    okrs,
+    onDeleted: (deletedId) => {
+      if (selectedCategory === deletedId) setSelectedCategory('all');
+    },
+  });
+
+  const categoryToDelete = categories.find((c) => c.id === categoryToDeleteId);
 
   const teamName = (id: string) => teams.find((x) => x.id === id)?.name ?? t('okrTab.fallbackTeam');
   // Couleur d'une catégorie par son nom (badge coloré, parité mode perso).
@@ -210,16 +225,6 @@ const TeamOKRTab = ({ orgId }: TeamOKRTabProps) => {
       },
     );
   };
-  const confirmDeleteCategory = () => {
-    if (!categoryToDeleteId) return;
-    deleteCategory.mutate(categoryToDeleteId, {
-      onSuccess: () => {
-        if (selectedCategory === categoryToDeleteId) setSelectedCategory('all');
-        setCategoryToDeleteId(null);
-      },
-    });
-  };
-
   if (isLoading) {
     return <div className="py-10 text-center text-sm text-[rgb(var(--color-text-muted))]">{t('okrTab.loading')}</div>;
   }
@@ -375,9 +380,12 @@ const TeamOKRTab = ({ orgId }: TeamOKRTabProps) => {
       {/* Dialog suppression catégorie (même composant que la page OKR perso) */}
       <DeleteCategoryConfirm
         open={!!categoryToDeleteId}
-        categoryName={categories.find((c) => c.id === categoryToDeleteId)?.name}
+        categoryName={categoryToDelete?.name}
+        impactedOkrs={orgOkrCategoryImpact(categoryToDelete?.name, okrs).okrs}
+        targetNames={categories.filter((c) => c.id !== categoryToDeleteId).map((c) => c.name)}
         onCancel={() => setCategoryToDeleteId(null)}
         onConfirm={confirmDeleteCategory}
+        isWorking={isDeletingCategory}
       />
 
       {showCreate && (

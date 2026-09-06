@@ -52,10 +52,21 @@
     "colorHint": "Clic : cycle couleurs · Shift+clic : palette hex"
   },
   "deleteCategory": {
-    "title": "Confirmer la suppression",
+    "title": "Supprimer « {{name}} » ?",
     "cancel": "Annuler",
     "confirm": "Supprimer",
-    "body": "Êtes-vous sûr de vouloir supprimer la catégorie « {{name}} » ? Les OKR associés conserveront leur catégorie mais ne seront plus filtrables."
+    "working": "Suppression…",
+    "noImpact": "Aucun objectif d'équipe ne porte cette catégorie : la supprimer n'affecte rien.",
+    "impactOkrs_one": "{{count}} objectif d'équipe porte cette catégorie.",
+    "impactOkrs_many": "{{count}} d'objectifs d'équipe portent cette catégorie.",
+    "impactOkrs_other": "{{count}} objectifs d'équipe portent cette catégorie.",
+    "reassignLabel": "Que faire de ces objectifs ?",
+    "reassignNone": "Les laisser sans catégorie",
+    "reassignTo": "Les reclasser dans une autre catégorie",
+    "reassignPick": "Choisir une catégorie",
+    "doneReassigned_one": "{{count}} objectif reclassé",
+    "doneReassigned_many": "{{count}} d'objectifs reclassés",
+    "doneReassigned_other": "{{count}} objectifs reclassés"
   },
   "deleteObjective": {
     "title": "Supprimer l'objectif",
