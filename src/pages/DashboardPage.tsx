@@ -144,7 +144,11 @@ const DashboardPage: React.FC = () => {
         actions={<div className="-my-1.5"><InboxMenu /></div>}
       />
       <motion.div
-        className="max-w-[1600px] mx-auto space-y-4 sm:space-y-6 lg:space-y-8"
+        // `dashboard-mobile-text-boost` (index.css) : +1px sur tous les
+        // textes de cette page en-dessous de 768px. Posée ici — frère de
+        // `MobileHeader`, pas ancêtre — pour exclure le header par
+        // construction plutôt que par un sélecteur `:not()`.
+        className="dashboard-mobile-text-boost max-w-[1600px] mx-auto space-y-4 sm:space-y-6 lg:space-y-8"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
