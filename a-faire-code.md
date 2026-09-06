@@ -98,7 +98,7 @@ quand ». Une décision écrite ici fait foi contre une piste écrite dans l'ite
 | **C-04** | 🗑️ **Supprimer le système de jetons premium et le mur-pub Habitudes.** « Ce système est une archive du passé » | Retirer `HabitsAdGate`, `useDailyAdGate`, `addTokens`, les champs `premiumTokens` / `premiumWinStreak` / `lastTokenConsumption` du type `User`, et les deux RPC `consume_premium_token` / `credit_premium_token_from_ad`. ⚠️ `bump_win_streak` est appelée par `stripe-webhook` : la retirer du webhook **avant** de toucher au SQL. Les Habitudes deviennent gratuites pour tous, la monétisation ne repose plus que sur l'abonnement |
 | **C-49** | 🗑️ **Supprimer 42 des 46 hooks orphelins** | Les 29 sélecteurs purs (`hooks.derived.ts` et `useMemo`), les 12 lecteurs à l'unité **avec leurs méthodes de repository** (`getById` n'a aucun autre appelant, mesuré), et `useCreateKRCompletion`, qui est un INSERT client libre dans un journal append-only que ce fichier interdit par ailleurs. `npm run typecheck` est la preuve qu'aucun n'était appelé |
 | **C-49** | 🗑️ **Supprimer les 6 hooks d'étiquettes d'équipe, garder la table** | Une fonctionnalité entière sans écran. La table reste : un `DROP TABLE` est irréversible et une table vide ne coûte rien |
-| **C-10** | 🗑️ **Supprimer `MobileScreen` et `ListRow`** | Deux primitives jamais éprouvées. Si le besoin revient, elles se réécriront contre un écran réel, seule façon de les éprouver |
+| **C-10** | 🗑️ **Supprimer `MobileScreen` et `ListRow`** | ✅ **Fait le 2026-09-05.** Deux primitives jamais éprouvées. Si le besoin revient, elles se réécriront contre un écran réel, seule façon de les éprouver |
 
 ### Ce qu'on GARDE, en l'écrivant
 
@@ -843,12 +843,38 @@ répondait sans mesurer, ici une garde qui mesurait sans être lue.
 
 ### C-10 · Deux primitives livrées sans aucun consommateur · **P3 · S**
 
+> ✅ **Fait le 2026-09-05** · `MobileScreen` et `ListRow` **supprimés**, conformément à
+> l'arbitrage du 2026-09-03 (§0). 163 lignes de composant + 67 lignes de test, `src/` compile et
+> la suite passe sans qu'aucun écran ne bouge — la meilleure preuve que rien ne les montait.
+
 `MobileScreen` et `ListRow` (`ARCHITECTURE.md` §1, `MOBILE.md`). Ce n'est pas seulement inutile :
 c'est **non éprouvé**. `MobileHeader` n'avait jamais fonctionné en un mois d'existence, sur la seule
 page qui l'utilisait.
 
+**Vérifié avant de supprimer, pas déduit de l'item.** Balayage de `src/` et `e2e/` : les deux noms
+n'apparaissent que dans leur propre fichier, le baril `components/mobile/index.ts`, et leur propre
+test. Deux faux positifs écartés au passage :
+
+- `src/modules/lists/supabase.repository.ts` déclare sa **propre** `interface ListRow` — une forme
+  de ligne de base de données, sans rapport. Le nom était donc déjà repris ailleurs, ce qui est un
+  argument de plus pour libérer celui de la primitive.
+- `src/graphify-out/**` est un artefact **généré et gitignoré**, pas du code.
+
+**Ce que la suppression a appris**, et qui vaut au-delà de ces deux fichiers :
+
+- Les deux primitives étaient livrées **avec leurs tests, tous verts**. Un test vert sur un
+  composant que rien ne monte prouve sa cohérence interne, jamais son adéquation à un écran.
+  **Livré ≠ éprouvé, et testé ≠ éprouvé non plus.**
+- `py-gutter` n'avait qu'un seul usage dans tout le dépôt : `MobileScreen`. La classe reste
+  disponible (l'échelle `gutter` sert à `px-gutter`, utilisé par 5 fichiers), mais plus personne
+  ne l'écrit — une primitive morte entraîne du vocabulaire mort, et ça ne se voit qu'en tirant.
+- La règle « ne jamais recalculer le padding de page à la main » de `MOBILE.md` pointait vers
+  `MobileScreen`. Elle a été **réécrite en donnant le calcul**, parce qu'une règle qui renvoie à
+  un composant supprimé n'est plus applicable : toutes les pages le font déjà à la main.
+
 - **Fini quand** : soit elles sont adoptées et vérifiées sur un écran réel, soit elles sont
-  supprimées.
+  supprimées. ✅ Supprimées. `ARCHITECTURE.md` §1, `MOBILE.md` (catalogue, tableau de suivi,
+  « ne jamais faire ») et le baril mis à jour dans le même geste.
 
 ### C-11 · Le picker natif n'a pas de test de non-régression sur les six surfaces · **P3 · S**
 
@@ -2969,10 +2995,11 @@ deux Edge Functions Stripe rendent 500 sur un identifiant Stripe périmé.
 maison ne piège le focus · `C-54` `/agenda` : jours hors d'atteinte au clavier · `C-55` trois
 surfaces que A-3 n'a pas su mesurer · `C-70` 22 cibles sous 44 px dans `TeamTaskModal`.
 
-**Dette structurelle (4)**
+**Dette structurelle (3)**
 `C-06` 36 `eslint-disable exhaustive-deps` · `C-07` 17 feuilles animées à la main ·
-`C-10` deux primitives sans consommateur · `C-49` 52 hooks exportés sans consommateur.
+`C-49` 52 hooks exportés sans consommateur.
 ~~`C-09` fichiers au-dessus de 600 lignes~~ — **fermé le 2026-09-05**, `KNOWN_OVERSIZED` vide.
+~~`C-10` deux primitives sans consommateur~~ — **fermé le 2026-09-05**, supprimées.
 
 **Tests, gardes et i18n (7)**
 `C-18` CVE dev-only · `C-21` 71 valeurs `en` identiques au `fr` · `C-26` la couverture n'a pas été

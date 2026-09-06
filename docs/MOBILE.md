@@ -51,7 +51,7 @@
 | Adhérence à l'échelle typographique fermée | 169 / 1 656 = **10 %** | 243 / 1 927 = **13 %** | **non remesurée** · le stock de tailles arbitraires passe de 202 à **196** |
 | Libellés sous le plancher de 11 px | · | 79 | **75** |
 | Niveau de navigation de l'espace entreprise | 3ᵉ (Plus → feuille → Entreprise) | 3ᵉ | ✅ **1ᵉʳ** · onglet de la barre du bas |
-| Primitives à 0 consommateur | `MobileScreen`, `ListRow` | **inchangé** | inchangé |
+| Primitives à 0 consommateur | `MobileScreen`, `ListRow` | **inchangé** | ✅ **0** · supprimées le 2026-09-05 (C-10) |
 
 ### 2026-08-27 · +2, un point de navigation et une rétractation
 
@@ -207,7 +207,7 @@ invisible sur une machine sans le réglage.
 
 ⚠️ Le pattern à risque (`initial` avec `x`/`y` non nul sur un élément `fixed` ou `sticky`) est
 présent dans **plus de 20 fichiers** (`CommandPalette`, `QuickAddBar`, `InboxMenu`,
-`SmartListMenu`, `HabitsAdGate`, `ColorSettingsModal`…). Tous ne sont pas cassés — seuls le sont
+`SmartListMenu`, `ColorSettingsModal`…). Tous ne sont pas cassés — seuls le sont
 ceux dont la **position finale** dépend du transform plutôt que du CSS.
 
 **Correction** : la position finale doit venir du CSS (`bottom-[…]`), l'animation ne doit porter
@@ -277,10 +277,17 @@ mobile mais **deux** — la page Tâches, et tout le reste. C'est la cause struc
 et assumer que les primitives ne couvrent que Tâches. L'état intermédiaire actuel est le pire des
 trois : il coûte de la maintenance sans rendre de cohérence.
 
+> ✅ **Tranché le 2026-09-05 (C-10) : la seconde branche.** `MobileScreen` et `ListRow` sont
+> supprimés. Les mesures ci-dessus restent celles de leur date — c'est leur intérêt — mais l'état
+> courant est celui-ci. Ce qui a emporté la décision n'est pas le poids du code (163 lignes) :
+> c'est qu'une primitive que rien ne contraint ne peut pas être jugée. Elles se réécriront contre
+> un écran le jour où un écran les demande.
+
 ### 🟠 3. Onze bottom-sheets réimplémentés à la main, et cinq mentent sur leur geste
 
 `docs/MOBILE.md` (plus bas) présente `BottomSheet` comme « réutilisée telle quelle par toute
-nouvelle feuille modale » et documente **une** exception (`AdModal`). La réalité mesurée :
+nouvelle feuille modale » et documente **une** exception (`AdModal`, supprimée depuis par C-04).
+La réalité mesurée :
 **11 feuilles réimplémentent le pattern à la main** contre 2 qui utilisent la primitive.
 
 Pire que la duplication, leur comportement diverge :
@@ -384,18 +391,25 @@ Tokens dans `src/index.css` (`:root`), exposés en utilitaires Tailwind (`tailwi
 
 | Primitive | Rôle |
 |---|---|
-| `MobileScreen` | Wrapper de page : `min-h-[100dvh]`, gouttière, réserve tab bar + safe-area (+ FAB via `hasFab`) |
 | `MobileHeader` | Grand titre qui se compacte au scroll (motif « large title » iOS) + slot actions |
-| `ListRow` | Ligne canonique : rail couleur, titre `text-body`, meta `text-caption`, `min-h-touch` |
 | `SectionHeader` | Titre de section discret + compte + action |
 | `Segmented` | Contrôle segmenté (pastille active animée via `layoutId`) |
 | `TouchTarget` | Bouton-icône dont la zone tactile fait réellement 44×44 px |
 | `BottomSheet` | Feuille bas-d'écran mobile / dialogue centré desktop (`sm:`), drag-to-dismiss, extrait de la modale de choix Premium — réutilisée telle quelle par toute nouvelle feuille modale à 2 choix ou plus |
+
+> 🗑️ **`MobileScreen` et `ListRow` ont été supprimés le 2026-09-05** (C-10) : six semaines
+> d'existence, zéro écran les montant. Ils sont restés dans cette table tout ce temps, et une
+> table qui liste une primitive que rien n'utilise décrit une architecture qui n'existe pas.
+>
+> ❌ **Ne pas les recréer d'après cette note.** Si le besoin revient, ils se réécrivent CONTRE un
+> écran réel : c'est la seule façon de savoir ce qu'ils doivent porter, et c'est précisément ce
+> qui manquait à `MobileHeader` — utilisé par une page, et cassé pendant un mois sans que
+> personne le voie.
 | `mobile-motion.ts` | Courbes partagées (`SHEET_SPRING`…) + `haptic()` + `prefersReducedMotion()` |
 
 Composer ces briques plutôt que redessiner. Tests : `src/components/mobile/mobile-primitives.test.tsx`.
 
-> **Le pattern bottom-sheet existe aussi hors de `BottomSheet`** : `AdModal.tsx` (pub Premium/Habitudes) a son propre hook `useBottomSheet` (`src/hooks/use-bottom-sheet.ts`) avec drag-to-dismiss, antérieur à la primitive partagée. Les deux implémentations sont volontairement restées séparées (risque de régression trop élevé pour un gain cosmétique) — ne pas les fusionner sans un passage dédié.
+> **Le pattern bottom-sheet existe aussi hors de `BottomSheet`** : le hook `useBottomSheet` (`src/hooks/use-bottom-sheet.ts`), avec drag-to-dismiss, est antérieur à la primitive partagée et sert encore quelques feuilles maison. Son premier porteur, `AdModal.tsx`, a été supprimé le 2026-09-04 avec le mur-pub (C-04). Ne pas fusionner les deux implémentations sans un passage dédié.
 
 ### Champs de saisie — 16 px obligatoire
 
@@ -561,7 +575,11 @@ if (supabaseUrl) {
 
 - ❌ **Écrire `text-[Npx]` sur du mobile** — utiliser l'échelle à 6 crans (`design-system.guard.test.ts` bloque sous 11 px)
 - ❌ **Ajouter une taille custom à `tailwind.config.js` sans l'ajouter aussi à `extendTailwindMerge`** dans `src/lib/utils.ts` — elle disparaîtra silencieusement du DOM
-- ❌ **Recalculer à la main** le padding de page — utiliser `MobileScreen` (ou au minimum `p-gutter` + la réserve `pb-[calc(...)]`)
+- ❌ **Oublier la réserve de bas de page** — une page mobile pose `px-gutter` et
+  `pb-[calc(64px+env(safe-area-inset-bottom)+24px)]`, ou `+88px` si elle porte un FAB. Sans elle,
+  le dernier élément passe sous la tab bar. ⚠️ `MobileScreen` portait ce calcul et a été supprimé
+  le 2026-09-05 (C-10, zéro consommateur) : la règle est donc à appliquer à la main, comme le font
+  déjà toutes les pages
 - ❌ **Enfermer une liste mobile dans une `.card`** — utiliser `.card-plain-mobile`
 - ❌ Mettre un input mobile sous 16 px (iOS zoome au focus)
 - ❌ Redessiner un en-tête / une ligne / un contrôle segmenté au lieu de composer `src/components/mobile/`
