@@ -73,18 +73,6 @@
     "globalTracking": "Suivi Global",
     "trackingFor": "Suivi pour : {{name}}"
   },
-  "adGate": {
-    "support": "Soutenir Cosmo",
-    "hideForToday": "Masquer pour aujourd'hui",
-    "credited": "+1 jour Premium crédité ! Bonne journée.",
-    "dailyLimit": "Limite quotidienne de pubs atteinte. Accès accordé pour aujourd'hui.",
-    "creditError": "Erreur lors du crédit. Accès accordé tout de même.",
-    "reconnect": "Veuillez vous reconnecter.",
-    "alreadySubscribed": "Vous avez déjà un abonnement actif.",
-    "paymentError": "Erreur paiement. Réessayez.",
-    "offer": "Une pub de 15 s = 1 jour Premium offert.",
-    "title": "Soutenez Cosmo"
-  },
   "recapCta": "Bilan",
   "recapSheetTitle": "Bilan de la semaine",
   "recapSheetSubtitle": "Une image prête à partager. Aucun nom de tâche ni d'habitude n'y figure.",

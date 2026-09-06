@@ -94,12 +94,11 @@
       <style>#boot-screen{display:none}#seo-fallback{display:block}</style>
     </noscript>
 
-    <!-- AdSense — chargé À LA DEMANDE par AdModal (cf. src/components/AdModal.tsx).
-         Ne PAS remettre le script ici : chargé globalement, il active les
-         « Auto ads » (vignettes interstitielles déclenchées au changement de
-         page, dont le clic ouvre un nouvel onglet). Le mur-pub étant dormant
-         (PREMIUM_ENFORCED=false), le script n'est injecté que lorsque l'AdModal
-         s'ouvre réellement. -->
+    <!-- ❌ Aucun script publicitaire, nulle part. Le mur-pub et le système de
+         jetons premium ont été supprimés le 2026-09-04 (C-04) : COSMO ne charge
+         plus AdSense, ni ici ni à la demande. Remettre ce script activerait les
+         « Auto ads » (vignettes interstitielles au changement de page, dont le
+         clic ouvre un nouvel onglet), et il n'a plus rien à financer. -->
 
     <!-- JSON-LD : SoftwareApplication -->
     <script type="application/ld+json">

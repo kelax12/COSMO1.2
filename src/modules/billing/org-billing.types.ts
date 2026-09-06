@@ -2,7 +2,7 @@
 // BILLING — Abonnement d'ORGANISATION (mode entreprise)
 //
 // Distinct de `Subscription` (billing.repository.ts), qui porte l'abonnement
-// PARTICULIER : jetons premium, win_streak, plan 3,50 €/mois. Les deux ne
+// PARTICULIER : plan, statut et période, 3,50 €/mois. Les deux ne
 // partagent aucune colonne et ne doivent jamais être confondus.
 // ═══════════════════════════════════════════════════════════════════
 import type { OrgBillingInterval, OrgTierKey } from './premium-config';

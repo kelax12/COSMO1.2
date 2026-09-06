@@ -1,10 +1,12 @@
 // ═══════════════════════════════════════════════════════════════════
 // Kill-switch d'application du Premium (source de vérité unique).
 //
-//  false → premium NON appliqué : toutes les features sont gratuites, le
-//          mur-pub Habitudes est masqué. Le code premium (Stripe, RPC,
-//          gates `isPremium()`, HabitsAdGate, PremiumPage) reste intact et
+//  false → premium NON appliqué : toutes les features sont gratuites. Le code
+//          premium (Stripe, gates `isPremium()`, PremiumPage) reste intact et
 //          DORMANT — rien n'est supprimé.
+//          C-04 (2026-09-04) : le mur-pub Habitudes et le système de jetons,
+//          eux, ne sont PAS dormants : ils ont été SUPPRIMÉS. Rebasculer ce
+//          drapeau ne les ramène pas, et ne doit pas les réécrire.
 //  true  → premium appliqué (monétisation). Re-basculer ICI pour réactiver.
 //
 // Décision 2026-06-21 : gratuit pour tous, monétisation reportée. Quand on

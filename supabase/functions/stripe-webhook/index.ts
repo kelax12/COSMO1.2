@@ -52,10 +52,9 @@ Deno.serve(async (req) => {
   // ⚠️ L'ERREUR DE LECTURE N'EST PAS IGNORABLE (audit Stripe 2026-09-02). Elle
   // l'était : `const { data } = await …` jetait `error`, donc une panne de
   // lecture se lisait « jamais traité » et rejouait les handlers. La plupart
-  // sont des upserts, donc idempotents — mais PAS `bump_win_streak`, qui
-  // incrémente. Un rejeu y ajoutait une victoire jamais gagnée, et c'est
-  // exactement ce que ce pré-contrôle existe pour empêcher. On renvoie 500 :
-  // Stripe retente, et la lecture rétablie tranchera.
+  // sont des upserts, donc idempotents — mais un handler non idempotent
+  // (historiquement `bump_win_streak`, supprimé par C-04) rejouerait son effet.
+  // On renvoie 500 : Stripe retente, et la lecture rétablie tranchera.
   const { data: alreadyProcessed, error: dedupReadError } = await supabaseAdmin
     .from('processed_stripe_events')
     .select('id')
@@ -211,24 +210,15 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   }
 
   const subscription = await stripe.subscriptions.retrieve(session.subscription as string)
-  // Initial subscription: set tokens + reset win_streak to 1.
-  await applySubscriptionToDb(supabaseUid, subscription, session.customer as string, {
-    resetTokens: true,
-    resetWinStreak: true,
-  })
+  await applySubscriptionToDb(supabaseUid, subscription, session.customer as string)
 }
 
 async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
   const uid = await getUidFromCustomer(subscription.customer as string)
   if (!uid) return
-  // Generic update event (billing address, payment method, etc.). Only sync
-  // plan/status/period_end — preserve tokens and win_streak. The previous
-  // implementation reset both on every event, destroying ad-earned tokens and
-  // clamping win_streak to {0, 1}. Faille B10/W6.
-  await applySubscriptionToDb(uid, subscription, subscription.customer as string, {
-    resetTokens: false,
-    resetWinStreak: false,
-  })
+  // Generic update event (billing address, payment method, etc.) — plan,
+  // status et period_end sont les seuls états portés par la ligne.
+  await applySubscriptionToDb(uid, subscription, subscription.customer as string)
 }
 
 async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
@@ -253,7 +243,6 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
       plan: 'free',
       status: 'cancelled',
       current_period_end: null,
-      premium_tokens: 0,
     })
     .eq('user_id', uid)
     .eq('stripe_subscription_id', subscription.id)
@@ -416,11 +405,7 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
   const subscription = await stripe.subscriptions.retrieve(invoice.subscription as string)
   const uid = await getUidFromCustomer(invoice.customer as string)
   if (!uid) return
-  // Renewal: refresh tokens AND increment win_streak by 1.
-  await applySubscriptionToDb(uid, subscription, invoice.customer as string, {
-    resetTokens: true,
-    incrementWinStreak: true,
-  })
+  await applySubscriptionToDb(uid, subscription, invoice.customer as string)
 }
 
 async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
@@ -449,64 +434,26 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
 
 // ─── Persistence ───────────────────────────────────────────────────
 
-type ApplyOpts = {
-  resetTokens?: boolean
-  resetWinStreak?: boolean
-  incrementWinStreak?: boolean
-}
-
 async function applySubscriptionToDb(
   userId: string,
   subscription: Stripe.Subscription,
   customerId: string,
-  opts: ApplyOpts = {},
 ) {
   const isActive = subscription.status === 'active' || subscription.status === 'trialing'
   const periodEnd = new Date(subscription.current_period_end * 1000)
-  const daysLeft = isActive
-    ? Math.max(1, Math.ceil((periodEnd.getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
-    : 0
 
-  // Always-written subscription state.
-  const payload: {
-    user_id: string
-    plan: string
-    status: string
-    current_period_end: string | null
-    stripe_customer_id: string
-    stripe_subscription_id: string
-    premium_tokens?: number
-    win_streak?: number
-  } = {
+  // 🗑️ C-04 (2026-09-04) — `premium_tokens` et `win_streak` ne sont plus
+  // écrits : le système de jetons premium a été supprimé, et les colonnes
+  // avec lui. La ligne ne porte plus que l'état de l'abonnement, entièrement
+  // dérivé de l'event Stripe — donc rien à préserver d'un event à l'autre, et
+  // plus aucune écriture non idempotente dans ce fichier.
+  const payload = {
     user_id: userId,
     plan: isActive ? 'premium' : 'free',
     status: isActive ? 'active' : 'cancelled',
     current_period_end: isActive ? periodEnd.toISOString() : null,
     stripe_customer_id: customerId,
     stripe_subscription_id: subscription.id,
-  }
-
-  // premium_tokens / win_streak are only INCLUDED in the upsert when this event
-  // is actually meant to change them. Omitting them means `ON CONFLICT DO UPDATE`
-  // leaves the existing values untouched — WITHOUT a read-then-write that could
-  // clobber a concurrent `credit_premium_token_from_ad` increment (token race).
-  // Previously every event read the row then wrote both fields back, so a
-  // subscription.updated firing alongside an ad-credit could erase the credit.
-  if (!isActive) {
-    // Cancellation / expiry: explicitly zero out.
-    payload.premium_tokens = 0
-    payload.win_streak = 0
-  } else {
-    if (opts.resetTokens) payload.premium_tokens = daysLeft
-    if (opts.resetWinStreak) payload.win_streak = 1
-    // AUD-14 — `incrementWinStreak` n'est PLUS traité ici : il l'était par un
-    // read-modify-write (SELECT win_streak puis upsert n+1). Or le marqueur
-    // d'idempotence n'est écrit qu'APRÈS le handler (choix délibéré, faille
-    // M-5) : deux livraisons concurrentes du même event exécutent toutes deux
-    // le handler, lisent la même valeur et écrivent la même — un incrément
-    // perdu — ou s'entrelacent en n+2. L'incrément est désormais fait par la
-    // RPC atomique `bump_win_streak` après l'upsert (voir plus bas).
-    // else: pure preserve (e.g. subscription.updated) → omit both fields.
   }
 
   // Atomic upsert keyed by user_id — replaces the previous UPDATE-then-INSERT
@@ -517,19 +464,6 @@ async function applySubscriptionToDb(
   if (error) {
     console.error('applySubscriptionToDb upsert error:', error)
     throw error
-  }
-
-  // AUD-14 — Incrément atomique (`UPDATE … SET win_streak = win_streak + 1`)
-  // exécuté APRÈS l'upsert, pour que la ligne existe forcément. Sûr sous
-  // livraison concurrente, contrairement au read-modify-write précédent.
-  if (isActive && opts.incrementWinStreak) {
-    const { error: bumpError } = await supabaseAdmin.rpc('bump_win_streak', {
-      p_user: userId,
-    })
-    if (bumpError) {
-      console.error('bump_win_streak error:', bumpError)
-      throw bumpError
-    }
   }
 }
 
@@ -569,16 +503,16 @@ async function getUidFromCustomer(customerId: string): Promise<string | null> {
   // ORGANISATION et ne doit JAMAIS se résoudre en un uid particulier. Sans ce
   // test, une facture d'organisation dont le routage a échoué retombait sur la
   // branche particulier et écrasait l'abonnement PERSONNEL du propriétaire
-  // (plan, status, premium_tokens, win_streak) — le tout en renvoyant un
-  // succès, donc sans jamais être re-livrée par Stripe.
+  // (plan, status, période) — le tout en renvoyant un succès, donc sans
+  // jamais être re-livrée par Stripe.
   if ((customer as Stripe.Customer).metadata?.org_id) return null
   return (customer as Stripe.Customer).metadata?.supabase_uid ?? null
 }
 
 // ─── Univers ENTREPRISE ────────────────────────────────────────────
 //
-// Écrit exclusivement dans `org_subscriptions`. Aucun jeton premium, aucun
-// `win_streak` : ces notions appartiennent à l'abonnement particulier.
+// Écrit exclusivement dans `org_subscriptions` : palier, quota de sièges et
+// périodicité, qui n'existent pas côté abonnement particulier.
 
 const env = (name: string) => Deno.env.get(name)
 
@@ -859,10 +793,9 @@ async function applyOrgSubscription(
     stripe_subscription_id: subscription.id,
   }
 
-  // Omis = `ON CONFLICT DO UPDATE` laisse la valeur existante intacte (même
-  // technique que `premium_tokens` côté particulier). C'est le cœur du cas
-  // `past_due` : palier, quota et fin de période sont PRÉSERVÉS pendant les
-  // relances, pour être restaurés intacts au paiement rattrapé.
+  // Omis = `ON CONFLICT DO UPDATE` laisse la valeur existante intacte. C'est le
+  // cœur du cas `past_due` : palier, quota et fin de période sont PRÉSERVÉS
+  // pendant les relances, pour être restaurés intacts au paiement rattrapé.
   if (intent === 'active' && match) {
     payload.tier_key = match.tier.key
     payload.max_members = match.tier.maxMembers
