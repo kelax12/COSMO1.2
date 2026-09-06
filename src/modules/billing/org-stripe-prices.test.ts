@@ -11,12 +11,14 @@
 // (aucune API Deno, aucun spécificateur `npm:`) et n'entre jamais dans le
 // bundle Vite.
 // ═══════════════════════════════════════════════════════════════════
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
   resolveYearlyPriceId,
   resolveTierMatch,
   resetProductIndex,
   yearlyUnitAmountCents,
+  PRODUCT_INDEX_TTL_MS,
+  PRODUCT_INDEX_PARTIAL_TTL_MS,
   type StripeLike,
   type StripePriceLike,
 } from '../../../supabase/functions/_shared/org-stripe-prices';
@@ -247,7 +249,7 @@ describe('resolveTierMatch — sens inverse pour le webhook', () => {
     expect(await resolveTierMatch(stripe, '', monthlyOnly, tierFromPriceId)).toBeUndefined();
   });
 
-  it('ne lit les prix mensuels qu’une fois par isolate', async () => {
+  it('ne relit pas les prix mensuels tant que l’index est frais', async () => {
     let retrieves = 0;
     const base = fakeStripe(catalogue);
     const counting: StripeLike = {
@@ -265,5 +267,147 @@ describe('resolveTierMatch — sens inverse pour le webhook', () => {
     // Le second appel ne relit que le prix interrogé, jamais l'index.
     expect(retrieves - afterFirst).toBe(1);
     expect(afterFirst).toBeGreaterThan(1);
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════
+// Invalidation de l'index produit → palier (C-08).
+//
+// L'index était construit « une fois par isolate », sans aucun chemin de
+// péremption en production. Ces tests décrivent les deux dérives qui le
+// rendaient faux en silence, et prouvent qu'aucune ne survit.
+//
+// ⚠️ Aucun de ces tests n'appelle `resetProductIndex` en cours de route : c'est
+// tout l'objet du correctif. Le `beforeEach` global le fait pour isoler les
+// cas les uns des autres, jamais pour provoquer le comportement mesuré.
+// ═══════════════════════════════════════════════════════════════════
+describe('index produit → palier : invalidation', () => {
+  const monthly = (id: string, product: string, cents: number) =>
+    price({ id, product, unit_amount: cents, recurring: { interval: 'month', interval_count: 1 } });
+
+  /**
+   * Catalogue COMPLET : les quatre paliers payants sont lisibles.
+   *
+   * C'est ce qu'il faut pour mesurer la fraîcheur d'un index complet : le
+   * catalogue partiel des tests précédents produit un index à trous, donc la
+   * TTL courte, donc pas le comportement qu'on veut décrire ici.
+   */
+  const catalogue = {
+    prod_t10: [monthly('price_m10', 'prod_t10', 2000)],
+    prod_t20: [monthly('price_m20', 'prod_t20', 5000), price({ id: 'price_y20' })],
+    prod_t50: [monthly('price_m50', 'prod_t50', 10000)],
+    prod_tmax: [monthly('price_mmax', 'prod_tmax', 20000)],
+  };
+
+  /** Client Stripe qui compte ses lectures. */
+  function counting(base: StripeLike) {
+    const calls = { retrieve: 0 };
+    const stripe: StripeLike = {
+      prices: {
+        retrieve: (id) => {
+          calls.retrieve += 1;
+          return base.prices.retrieve(id);
+        },
+        list: base.prices.list,
+      },
+    };
+    return { stripe, calls };
+  }
+
+  afterEach(() => vi.useRealTimers());
+
+  it('reconstruit l’index quand un secret de prix change, le jour de la bascule live', async () => {
+    // Compte de TEST : le prix mensuel t20 vit sur `prod_test`.
+    const test = fakeStripe({
+      prod_test: [
+        price({ id: 'price_m20', product: 'prod_test', unit_amount: 5000, recurring: { interval: 'month', interval_count: 1 } }),
+        price({ id: 'price_y20_test', product: 'prod_test' }),
+      ],
+    });
+    const match = await resolveTierMatch(test, 'price_y20_test', monthlyOnly, tierFromPriceId);
+    expect(match?.tier.key).toBe('t20');
+
+    // Bascule : les secrets désignent désormais les prix du compte LIVE, portés
+    // par un autre produit. Personne n'a vidé quoi que ce soit.
+    const liveEnv = (name: string): string | undefined =>
+      name === 'STRIPE_ORG_PRICE_T20' ? 'price_m20_live' : undefined;
+    const live = fakeStripe({
+      prod_live: [
+        price({ id: 'price_m20_live', product: 'prod_live', unit_amount: 5000, recurring: { interval: 'month', interval_count: 1 } }),
+        price({ id: 'price_y20_live', product: 'prod_live' }),
+      ],
+    });
+    const liveMatch = await resolveTierMatch(live, 'price_y20_live', liveEnv, tierFromPriceId);
+    expect(liveMatch?.tier.key).toBe('t20');
+    expect(liveMatch?.interval).toBe('yearly');
+  });
+
+  it('reconstruit l’index passé le TTL, même à secrets identiques', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-09-04T10:00:00Z'));
+    const { stripe, calls } = counting(fakeStripe(catalogue));
+
+    await resolveTierMatch(stripe, 'price_y20', monthlyOnly, tierFromPriceId);
+    const construction = calls.retrieve;
+    expect(construction).toBeGreaterThan(1);
+
+    // Juste avant l'échéance : l'index sert encore.
+    vi.setSystemTime(Date.now() + PRODUCT_INDEX_TTL_MS - 1000);
+    await resolveTierMatch(stripe, 'price_y20', monthlyOnly, tierFromPriceId);
+    expect(calls.retrieve).toBe(construction + 1);
+
+    // Passé l'échéance : reconstruction complète.
+    vi.setSystemTime(Date.now() + PRODUCT_INDEX_TTL_MS + 1000);
+    await resolveTierMatch(stripe, 'price_y20', monthlyOnly, tierFromPriceId);
+    expect(calls.retrieve).toBeGreaterThan(construction + 2);
+  });
+
+  it('ne fige pas un index à trous : un palier illisible est retenté trente secondes après', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-09-04T10:00:00Z'));
+
+    // t20 est illisible au premier passage, lisible ensuite.
+    let t20Readable = false;
+    const base = fakeStripe(catalogue);
+    const flaky: StripeLike = {
+      prices: {
+        retrieve: (id) =>
+          id === 'price_m20' && !t20Readable
+            ? Promise.reject(new Error('stripe hiccup'))
+            : base.prices.retrieve(id),
+        list: base.prices.list,
+      },
+    };
+
+    // Index construit avec un trou : le prix annuel t20 n'est pas reconnu.
+    expect(
+      await resolveTierMatch(flaky, 'price_y20', monthlyOnly, tierFromPriceId),
+    ).toBeUndefined();
+
+    t20Readable = true;
+
+    // Avant l'échéance courte, le trou tient encore.
+    vi.setSystemTime(Date.now() + PRODUCT_INDEX_PARTIAL_TTL_MS - 1000);
+    expect(
+      await resolveTierMatch(flaky, 'price_y20', monthlyOnly, tierFromPriceId),
+    ).toBeUndefined();
+
+    // Passé l'échéance courte, il se referme tout seul.
+    vi.setSystemTime(Date.now() + PRODUCT_INDEX_PARTIAL_TTL_MS + 1000);
+    const match = await resolveTierMatch(flaky, 'price_y20', monthlyOnly, tierFromPriceId);
+    expect(match?.tier.key).toBe('t20');
+  });
+
+  it('un index COMPLET n’est pas reconstruit au bout de trente secondes', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-09-04T10:00:00Z'));
+    const { stripe, calls } = counting(fakeStripe(catalogue));
+
+    await resolveTierMatch(stripe, 'price_y20', monthlyOnly, tierFromPriceId);
+    const construction = calls.retrieve;
+
+    vi.setSystemTime(Date.now() + PRODUCT_INDEX_PARTIAL_TTL_MS + 1000);
+    await resolveTierMatch(stripe, 'price_y20', monthlyOnly, tierFromPriceId);
+    expect(calls.retrieve).toBe(construction + 1);
   });
 });
