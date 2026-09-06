@@ -28,12 +28,6 @@ import { useT } from '@/i18n/useT';
 import { habitsTutorialStepsDesktop } from '@/tutorials/habits.desktop';
 import { habitsTutorialStepsMobile } from '@/tutorials/habits.mobile';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
-import { useAuth } from '@/modules/auth/AuthContext';
-import { useBilling } from '@/modules/billing/billing.context';
-import { shouldShowAdWall } from '@/modules/billing/subscription.logic';
-import { PREMIUM_ENFORCED } from '@/modules/billing/premium-config';
-import { useDailyAdGate } from '@/lib/hooks/use-daily-ad-gate';
-import HabitsAdGate from '@/components/HabitsAdGate';
 
 // Bilan hebdo partageable : chargé seulement quand on l'ouvre (le moteur de
 // rendu canvas ne doit peser sur aucun écran — cf. docs/PERFORMANCE.md).
@@ -69,26 +63,6 @@ const HabitsPage: React.FC = () => {
       window.history.replaceState({}, document.title);
     }
   }, [location]);
-
-  // ── Mur-pub quotidien ────────────────────────────────────────────────
-  // Habitudes = gratuites mais ad-supported : un non-abonné regarde 1 pub/jour.
-  // Les abonnés PAYANTS (Stripe → current_period_end) n'en voient jamais. La
-  // démo non plus. Le flag daté (useDailyAdGate) garantit la récurrence : il ne
-  // dépend PAS de isPremium() (qui ne se périme jamais côté client, cf. CLAUDE.md).
-  const { isDemo } = useAuth();
-  const { subscription, isLoading: billingLoading } = useBilling();
-  const { seenToday, markSeenToday } = useDailyAdGate('habits');
-  const isPaidSubscriber =
-    !!subscription?.current_period_end &&
-    new Date(subscription.current_period_end) >= new Date();
-  // Premium désactivé (PREMIUM_ENFORCED=false) → mur-pub jamais affiché.
-  const showAdWall = shouldShowAdWall({
-    enforced: PREMIUM_ENFORCED,
-    isDemo,
-    billingLoading,
-    isPaidSubscriber,
-    seenToday,
-  });
 
   const getTodayCompletionRate = () => {
     if (habits.length === 0) return 0;
@@ -337,12 +311,6 @@ const HabitsPage: React.FC = () => {
         accentColor="#EAB308"
       />
 
-      {/* Bannière pub quotidienne NON bloquante (#50) — la page reste
-          pleinement utilisable ; fermer = masquer pour aujourd'hui (plus
-          d'éjection vers l'accueil : jamais de porte devant une streak). */}
-      {showAdWall && (
-        <HabitsAdGate onUnlocked={markSeenToday} onDismiss={markSeenToday} />
-      )}
     </div>
   );
 };

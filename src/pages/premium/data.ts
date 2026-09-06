@@ -3,7 +3,7 @@
 // Extraits verbatim (god-component refactor). Aucune logique.
 // ═══════════════════════════════════════════════════════════════════
 import { type Variants } from 'framer-motion';
-import { BarChart3, Sparkles, type LucideIcon } from 'lucide-react';
+import { BarChart3, Heart, type LucideIcon } from 'lucide-react';
 import type { KeyOf } from '@/i18n/catalog';
 
 export const containerVariants: Variants = {
@@ -36,8 +36,8 @@ export const itemVariants: Variants = {
 type PremiumKey = KeyOf<'premium'>;
 
 export const features: Array<{ icon: LucideIcon; titleKey: PremiumKey; descriptionKey: PremiumKey }> = [
-  { icon: Sparkles, titleKey: 'table.featureNoAdsTitle', descriptionKey: 'table.featureNoAdsDesc' },
   { icon: BarChart3, titleKey: 'table.featureStatsTitle', descriptionKey: 'table.featureStatsDesc' },
+  { icon: Heart, titleKey: 'table.featureSupportTitle', descriptionKey: 'table.featureSupportDesc' },
 ];
 
 // Tableau comparatif Gratuit / Pro.
@@ -50,8 +50,6 @@ export const COMPARISON_ROWS: Array<{ labelKey: PremiumKey; free: boolean | stri
   { labelKey: 'table.rowSync', free: true, pro: true },
   { labelKey: 'table.rowDemo', free: true, pro: true },
   { labelKey: 'table.rowCollab', free: true, pro: true },
-  { labelKey: 'table.rowNoDailyAd', free: false, pro: true },
   { labelKey: 'table.rowStatsAdvanced', free: false, pro: true },
-  { labelKey: 'table.rowNoAds', free: false, pro: true },
   { labelKey: 'table.rowSupport', free: false, pro: true },
 ];

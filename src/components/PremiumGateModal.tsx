@@ -1,14 +1,12 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useBottomSheet } from '@/hooks/use-bottom-sheet';
-import { Crown, Play, X, Zap, Loader2 } from 'lucide-react';
+import { Crown, X, Loader2 } from 'lucide-react';
 import { useBilling } from '@/modules/billing/billing.context';
-import { isDailyAdLimitError } from '@/modules/billing/ad-limit';
 import { PREMIUM_MONTHLY_EUR } from '@/modules/billing/premium-config';
 import { formatCurrency } from '@/i18n/format';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-import AdModal from './AdModal';
 import { useT } from '@/i18n/useT';
 import { RichText } from '@/components/ui/rich-text';
 
@@ -25,25 +23,8 @@ export function PremiumGateModal({ isOpen, onClose, featureName }: PremiumGateMo
   // paramètre est évalué à l'appel, mais `t` n'existe pas au niveau du module.
   const feature = featureName ?? t('gate.defaultFeature');
   const { sheetRef, handleBarWidth, sheetDragProps } = useBottomSheet(onClose);
-  const { addTokens, refreshBillingStatus } = useBilling();
-  const [showAdModal, setShowAdModal] = useState(false);
+  const { refreshBillingStatus } = useBilling();
   const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
-
-  const handleAdComplete = async () => {
-    try {
-      await addTokens(1);
-      toast.success(t('gate.creditedFor', { feature }));
-      await refreshBillingStatus();
-    } catch (err) {
-      if (isDailyAdLimitError(err)) {
-        toast.error(t('gate.dailyAdLimit'));
-      } else {
-        toast.error(t('gate.creditError'));
-      }
-    }
-    setShowAdModal(false);
-    onClose();
-  };
 
   const handleCheckout = async () => {
     setIsCheckoutLoading(true);
@@ -141,33 +122,6 @@ export function PremiumGateModal({ isOpen, onClose, featureName }: PremiumGateMo
                 </p>
 
                 <div className="space-y-3">
-                  {/* Option 1 — Pub */}
-                  <motion.button
-                    onClick={() => setShowAdModal(true)}
-                    className="w-full flex items-center gap-4 p-4 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-700 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-colors group"
-                    whileHover={{ scale: 1.01 }}
-                    whileTap={{ scale: 0.99 }}
-                  >
-                    <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center shrink-0">
-                      <Play size={18} className="text-white" />
-                    </div>
-                    <div className="text-left flex-1">
-                      <div className="font-bold text-emerald-800 dark:text-emerald-300 text-sm">{t('gate.watchAd')}</div>
-                      <div className="text-emerald-600 dark:text-emerald-400/80 text-xs">{t('gate.watchAdHint')}</div>
-                    </div>
-                    <div className="flex items-center gap-1 bg-emerald-500 text-white px-2.5 py-1 rounded-full text-xs font-bold shrink-0">
-                      <Zap size={11} />
-                      Gratuit
-                    </div>
-                  </motion.button>
-
-                  {/* Séparateur */}
-                  <div className="flex items-center gap-3">
-                    <div className="flex-1 h-px bg-[rgb(var(--color-border))]" />
-                    <span className="text-xs text-slate-400 font-medium">{t('gate.or')}</span>
-                    <div className="flex-1 h-px bg-[rgb(var(--color-border))]" />
-                  </div>
-
                   {/* Option 2 — Abonnement */}
                   <motion.button
                     onClick={handleCheckout}
@@ -198,12 +152,6 @@ export function PremiumGateModal({ isOpen, onClose, featureName }: PremiumGateMo
           </motion.div>
         )}
       </AnimatePresence>
-
-      <AdModal
-        isOpen={showAdModal}
-        onClose={() => setShowAdModal(false)}
-        onAdComplete={handleAdComplete}
-      />
     </>
   );
 }

@@ -1,7 +1,5 @@
 import React, { createContext, useContext, useCallback } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
-import { makeApiError, normalizeApiError } from '@/lib/normalizeApiError';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { billingRepository } from './billing.repository';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { isPremiumSubscription } from './subscription.logic';
@@ -12,17 +10,11 @@ interface SubscriptionRow {
   plan: 'free' | 'premium';
   status: 'active' | 'cancelled' | 'expired';
   current_period_end: string | null;
-  premium_tokens: number;
-  win_streak: number;
-  // Camelcase aliases for backward compatibility
-  premiumTokens?: number;
-  winStreak?: number;
+  // Camelcase alias for backward compatibility
   currentPeriodEnd?: string | null;
 }
 
 interface BillingStats {
-  tokenUsage: number;
-  tokenLimit: number;
   isPremium: boolean;
   plan: 'free' | 'premium';
 }
@@ -31,9 +23,7 @@ interface BillingContextType {
   stats: BillingStats;
   isLoading: boolean;
   refreshBillingStatus: () => Promise<void>;
-  incrementTokenUsage: () => void;
   isPremium: () => boolean;
-  addTokens: (amount: number, activatePremium?: boolean) => Promise<void>;
   subscription: SubscriptionRow | null;
 }
 
@@ -44,11 +34,7 @@ const billingKeys = { subscription: ['billing', 'subscription'] as const };
 function mapRow(row: Record<string, unknown>): SubscriptionRow {
   return {
     ...(row as unknown as SubscriptionRow),
-    premium_tokens: row.premium_tokens as number,
-    win_streak: row.win_streak as number,
-    // Camelcase aliases
-    premiumTokens: row.premium_tokens as number,
-    winStreak: row.win_streak as number,
+    // Camelcase alias
     currentPeriodEnd: row.current_period_end as string | null,
   };
 }
@@ -70,22 +56,6 @@ export const BillingProvider: React.FC<{ children: React.ReactNode }> = ({ child
     staleTime: 1000 * 60 * 5,
   });
 
-  const addTokensMutation = useMutation({
-    mutationFn: async ({ amount }: { amount: number; activatePremium?: boolean }) => {
-      // L'activation Premium ne peut se faire qu'via Stripe webhook (service_role).
-      // Ici on autorise uniquement +1 (vidéo regardée) via la RPC SECURITY DEFINER.
-      if (amount !== 1) {
-        throw makeApiError('invalid_input');
-      }
-      const { error } = await supabase.rpc('credit_premium_token_from_ad');
-      // `throw error` relançait l'objet PostgREST brut : ni une `Error`, donc
-      // invisible pour Sentry et pour la garde de retry, ni un message
-      // traduit. Toute erreur d'API du produit passe par `normalizeApiError`.
-      if (error) throw normalizeApiError(error);
-    },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: billingKeys.subscription }),
-  });
-
   // Logique extraite dans subscription.logic.ts (pure, testée) — ne pas
   // ré-inliner ici (audit 2026-06-10, couverture des chemins critiques).
   // Premium désactivé (PREMIUM_ENFORCED=false) → true pour tous : débloque
@@ -97,8 +67,6 @@ export const BillingProvider: React.FC<{ children: React.ReactNode }> = ({ child
   );
 
   const stats: BillingStats = {
-    tokenUsage: 0,
-    tokenLimit: subscription?.premium_tokens ?? 0,
     isPremium: isPremium(),
     plan: subscription?.plan ?? 'free',
   };
@@ -112,9 +80,7 @@ export const BillingProvider: React.FC<{ children: React.ReactNode }> = ({ child
       stats,
       isLoading,
       refreshBillingStatus,
-      incrementTokenUsage: () => {},
       isPremium,
-      addTokens: (amount, activatePremium) => addTokensMutation.mutateAsync({ amount, activatePremium }),
       subscription: subscription ?? null,
     }}>
       {children}

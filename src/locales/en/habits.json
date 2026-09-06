@@ -73,18 +73,6 @@
     "globalTracking": "Overall tracking",
     "trackingFor": "Tracking: {{name}}"
   },
-  "adGate": {
-    "support": "Support Cosmo",
-    "hideForToday": "Hide for today",
-    "credited": "+1 Premium day credited! Enjoy your day.",
-    "dailyLimit": "Daily ad limit reached. Access granted for today.",
-    "creditError": "Couldn't credit your day. Access granted anyway.",
-    "reconnect": "Please sign in again.",
-    "alreadySubscribed": "You already have an active subscription.",
-    "paymentError": "Payment error. Please try again.",
-    "offer": "One 15 s ad = 1 free Premium day.",
-    "title": "Support Cosmo"
-  },
   "recapCta": "Recap",
   "recapSheetTitle": "Weekly recap",
   "recapSheetSubtitle": "A ready-to-share image. No task or habit name appears on it.",

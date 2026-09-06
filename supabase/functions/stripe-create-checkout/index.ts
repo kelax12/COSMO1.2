@@ -105,8 +105,6 @@ Deno.serve(async (req) => {
             stripe_customer_id: customerId,
             plan: 'free',
             status: 'active',
-            premium_tokens: 0,
-            win_streak: 0,
           },
           { onConflict: 'user_id' },
         )

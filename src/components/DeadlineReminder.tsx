@@ -10,7 +10,7 @@ const SEEN_KEY = 'cosmo_deadline_reminder_seen';
 /**
  * Rappel de deadlines v1 (#30) : à l'ouverture de l'app, un toast cliquable
  * signale les tâches qui arrivent à échéance aujourd'hui (+ celles en retard).
- * Une fois par jour (flag localStorage daté — pattern useDailyAdGate).
+ * Une fois par jour (flag localStorage daté).
  * Composant headless monté dans Layout.
  */
 const DeadlineReminder: React.FC = () => {

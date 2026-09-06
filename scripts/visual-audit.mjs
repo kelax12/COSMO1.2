@@ -46,7 +46,6 @@ const SUPPRESS_OVERLAYS = `
   localStorage.setItem('cosmo:last-checkin-week','2026-W25');
   localStorage.setItem('cosmo_swipe_hint_anim_seen','1');
   localStorage.setItem('cosmo_swipe_hint_dismissed','1');
-  localStorage.setItem('cosmo_adwall_habits_'+new Date().toLocaleDateString('en-CA'),'1');
 `;
 const SET_LIGHT = `localStorage.setItem('theme','light');document.documentElement.classList.remove('dark','test','monochrome','glass');`;
 const SET_DARK  = `localStorage.setItem('theme','dark');document.documentElement.classList.remove('light','test','monochrome','glass');document.documentElement.classList.add('dark');`;
