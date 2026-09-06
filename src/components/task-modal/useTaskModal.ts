@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useInvalidShake } from '@/hooks/use-invalid-shake';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
 import { useFormDraft } from '@/lib/hooks/use-form-draft';
@@ -29,7 +29,6 @@ import { useCategories, useCreateCategory } from '@/modules/categories';
 // ═══════════════════════════════════════════════════════════════════
 import { useLists, useAddTaskToList, useRemoveTaskFromList, useCreateList } from '@/modules/lists';
 
-import { useFriends, useSendFriendRequest, useCancelFriendRequest, useShareTask, useUnshareTask, useTaskShares, useSentFriendRequests } from '@/modules/friends';
 
 // ═══════════════════════════════════════════════════════════════════
 // BillingContext — vérification premium côté serveur
@@ -44,12 +43,9 @@ import {
   isStep1Valid as isStep1ValidFor,
   missingStep1Fields as missingStep1FieldsFor,
 } from './validation';
-// Helpers d'identité/affichage des collaborateurs (cf. task-modal/collaborators.ts).
-import {
-  collabIdOf,
-  filterFriendsForCollab,
-  resolveCollaboratorDisplay,
-} from './collaborators';
+// « Qui travaille sur cette tâche » vit dans son propre hook : amis, partages
+// déjà accordés, invitations par email, et les gestes qui les modifient.
+import { useTaskCollaborators } from './useTaskCollaborators';
 import { runTaskSave, createTaskWithShares } from './save-task';
 import { translator } from '@/i18n/useT';
 import { deadlineDayKey } from '@/lib/deadline';
@@ -103,49 +99,43 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
   const removeTaskFromListMutation = useRemoveTaskFromList();
   const createListMutation = useCreateList();
 
-  const { data: friends = [] } = useFriends();
-  const { data: sentRequests = [] } = useSentFriendRequests();
-  const shareTaskMutation = useShareTask();
-  const unshareTaskMutation = useUnshareTask();
-  const sendFriendRequestMutation = useSendFriendRequest();
-  // ANNULATION par l expediteur : useCancelFriendRequest (status cancelled).
-  // useRejectFriendRequest ecrit rejected, reserve au destinataire par la RLS.
-  const cancelFriendRequestMutation = useCancelFriendRequest();
-
   const { user } = useAuth();
   const isDemo = useIsDemo();
 
-  // Propriétaire de la tâche : seul lui peut gérer les collaborateurs (la policy
-  // RLS shared_tasks_insert exige auth.uid() = shared_by + propriété de la tâche).
-  // Pour une nouvelle tâche, l'utilisateur courant est forcément propriétaire.
-  // Pour une tâche reçue, `task.userId` = auth.uid du partageur ≠ moi.
-  const isTaskOwner = !effectiveTask?.userId || effectiveTask.userId === user?.id;
-
-  // shared_tasks est la source de vérité du partage (colonne `tasks.collaborators`
-  // supprimée — migration 028). On dérive l'état « assignés » des grants.
-  const { data: shares = [] } = useTaskShares(effectiveTask?.id);
-  const existingShareIds = useMemo(() => shares.map((s) => s.friendId), [shares]);
-  // friend_ids des collaborateurs n'ayant pas encore accepté → badge « Envoyé ».
-  const pendingShareIds = useMemo(
-    () => new Set(shares.filter((s) => !s.accepted).map((s) => s.friendId)),
-    [shares]
-  );
-  const existingCollaboratorIds = useMemo(
-    () => [...existingShareIds, ...(effectiveTask?.pendingInvites || [])],
-    [existingShareIds, effectiveTask?.pendingInvites]
-  );
-
-  // Liste des collaborateurs à afficher selon le point de vue :
-  //  - propriétaire → les destinataires (existingCollaboratorIds)
-  //  - destinataire → le propriétaire (task.userId) + co-destinataires lisibles,
-  //    en s'excluant soi-même (lecture seule).
-  const seedCollaboratorIds = useMemo(() => {
-    if (isTaskOwner) return existingCollaboratorIds;
-    const ids = new Set<string>();
-    if (effectiveTask?.userId && effectiveTask.userId !== user?.id) ids.add(effectiveTask.userId);
-    existingShareIds.forEach((id) => { if (id !== user?.id) ids.add(id); });
-    return [...ids];
-  }, [isTaskOwner, existingCollaboratorIds, existingShareIds, effectiveTask?.userId, user?.id]);
+  const {
+    friends,
+    sentRequests,
+    isTaskOwner,
+    existingShareIds,
+    pendingShareIds,
+    seedCollaboratorIds,
+    collaborators,
+    collaboratorsDirty,
+    pendingInvitesLocal,
+    emailInput,
+    setEmailInput,
+    inputError,
+    setInputError,
+    showCollaboratorSection,
+    setShowCollaboratorSection,
+    filteredFriends,
+    displayInfo,
+    handleAddEmail,
+    handleRemoveCollaborator,
+    toggleCollaborator,
+    resetCollaborators,
+    seedCollaboratorsForTask,
+    shareTaskMutation,
+    unshareTaskMutation,
+    cancelFriendRequestMutation,
+  } = useTaskCollaborators({
+    effectiveTask,
+    task,
+    isOpen,
+    isCreating,
+    showCollaborators,
+    updateTask: (id, updates) => updateTaskMutation.mutate({ id, updates }),
+  });
 
 
   // Marqueur visuel (shake + bordure rouge) des champs requis non remplis
@@ -177,18 +167,6 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [okrFields, setOkrFields] = useState<Record<string, boolean>>({});
 
-  // Collaborator state (integrated from AddTaskForm)
-  const [collaborators, setCollaborators] = useState<string[]>([]);
-  // L'utilisateur a-t-il explicitement modifié les collaborateurs ? Tant que
-  // false, on re-synchronise `collaborators` depuis les grants shared_tasks
-  // (même en cours d'édition d'autres champs) et on NE touche PAS aux partages
-  // à la sauvegarde — évite de désassigner des collaborateurs à cause d'une
-  // course entre le chargement async des grants et une édition (faille).
-  const [collaboratorsDirty, setCollaboratorsDirty] = useState(false);
-  const [pendingInvitesLocal, setPendingInvitesLocal] = useState<string[]>([]);
-  const [emailInput, setEmailInput] = useState('');
-  const [inputError, setInputError] = useState<string | null>(null);
-  const [showCollaboratorSection, setShowCollaboratorSection] = useState(showCollaborators);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
   // Section Description masquée par défaut (même système que le formulaire
@@ -212,7 +190,6 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
   ];
 
   const collaboratorRef = useRef<HTMLDivElement>(null);
-  const autoPromoteDoneRef = useRef<Set<string>>(new Set());
 
   // Close collaborator section on outside click
   useEffect(() => {
@@ -227,7 +204,10 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [showCollaboratorSection]);
+    // `setShowCollaboratorSection` vient de `useTaskCollaborators` : c'est un
+    // setter de `useState`, donc une identité stable. ESLint ne peut plus le
+    // prouver depuis qu'il traverse une frontière de hook.
+  }, [showCollaboratorSection, setShowCollaboratorSection]);
 
   // Sauvegarde du brouillon (#47) : pendant la saisie en création libre
   // uniquement (pas le flux OKR pré-rempli). Un nom non vide suffit —
@@ -289,13 +269,10 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
         setOkrFields({});
       }
 
-        setCollaborators([]);
-        setCollaboratorsDirty(false);
-        setPendingInvitesLocal([]);
-        setSelectedListIds([]);
+      resetCollaborators();
+      setSelectedListIds([]);
       setHasChanges(false);
       setErrors({});
-      setShowCollaboratorSection(showCollaborators);
     } else if (task) {
       setShowDescription(Boolean(task.description && task.description.length > 0));
       setFormData({
@@ -326,16 +303,13 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
         setOkrFields({});
       }
 
-      setCollaborators(existingCollaboratorIds);
-        setCollaboratorsDirty(false);
-        setPendingInvitesLocal(task.pendingInvites || []);
+      seedCollaboratorsForTask(task);
 
-        const taskLists = lists.filter(l => l.taskIds.includes(task.id)).map(l => l.id);
+      const taskLists = lists.filter(l => l.taskIds.includes(task.id)).map(l => l.id);
       setSelectedListIds(taskLists);
 
       setHasChanges(false);
       setErrors({});
-      setShowCollaboratorSection(showCollaborators || existingCollaboratorIds.length > 0 || false);
     }
     // Use `task?.id` and `lists.length` instead of full-object/full-array
     // references — those churn on every React Query refetch and would
@@ -344,16 +318,6 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
     // to step 1 mid-flow.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, task?.id, isCreating, showCollaborators, lists.length]);
-
-  // Re-seed selected collaborators once shared_tasks grants load (the query
-  // resolves async after open). Guarded on !hasChanges so it never clobbers
-  // in-flight edits — shares are stale-stable during editing (no refetch on
-  // focus), so this only fires for the initial load.
-  useEffect(() => {
-    if (!isOpen || !task || isCreating || collaboratorsDirty) return;
-    setCollaborators(seedCollaboratorIds);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, task?.id, isCreating, collaboratorsDirty, seedCollaboratorIds.join(',')]);
 
   // Complète `formData.description` une fois le détail complet chargé
   // (`fullTask`, cf. plus haut). Gardé sur `!hasChanges` : si l'utilisateur a
@@ -365,48 +329,6 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
     setFormData(prev => ({ ...prev, description: fullTask.description ?? '' }));
     setShowDescription(prev => prev || Boolean(fullTask.description && fullTask.description.length > 0));
   }, [isOpen, effectiveTask?.id, effectiveIsCreating, fullTask?.description, hasChanges]);
-
-  // Auto-promote pending invites that have since become friends
-  useEffect(() => {
-    if (!isOpen || !task || isCreating || !friends.length) return;
-    const pending = task.pendingInvites ?? [];
-    if (!pending.length) return;
-
-    const toPromote = pending.filter(email => {
-      const key = `${task.id}:${email}`;
-      if (autoPromoteDoneRef.current.has(key)) return false;
-      return friends.some(f => f.email.toLowerCase() === email.toLowerCase());
-    });
-    if (!toPromote.length) return;
-
-    toPromote.forEach(email => autoPromoteDoneRef.current.add(`${task.id}:${email}`));
-
-    const promotedNames: string[] = [];
-    toPromote.forEach(email => {
-      const friend = friends.find(f => f.email.toLowerCase() === email.toLowerCase());
-      if (!friend) return;
-      promotedNames.push(friend.name);
-      // Le partage réel = ligne shared_tasks. Plus de colonne `collaborators`.
-      shareTaskMutation.mutate({
-        taskId: task.id,
-        friendId: friend.userId ?? friend.id,
-        friendEmail: friend.email,
-        role: 'editor'
-      });
-    });
-
-    const newPendingEmails = new Set(toPromote.map(e => e.toLowerCase()));
-    const newPendingInvites = pending.filter(e => !newPendingEmails.has(e.toLowerCase()));
-
-    updateTaskMutation.mutate({
-      id: task.id,
-      updates: {
-        pendingInvites: newPendingInvites,
-      }
-    });
-    toast.success(`🎉 ${promotedNames.join(', ')} ${promotedNames.length > 1 ? 'ont rejoint' : 'a rejoint'} la tâche !`);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, task?.id, friends.length]);
 
   // Track changes — la comparaison doit couvrir TOUS les champs éditables de
   // l'étape 1 (y compris les listes) : le bouton « Sauvegarder » de l'étape 2
@@ -494,13 +416,10 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
       subtasks: [],
     });
     setOkrFields({});
-    setCollaborators([]);
-    setCollaboratorsDirty(false);
-    setPendingInvitesLocal([]);
+    resetCollaborators();
     setSelectedListIds([]);
     setHasChanges(false);
     setErrors({});
-    setShowCollaboratorSection(showCollaborators);
     setStep(1);
     toast.success(translator('tasks').t('modal.created', { name: createdTaskName }));
   };
@@ -615,79 +534,6 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
   const confirmDiscardClose = () => {
     setShowDiscardConfirm(false);
     onClose();
-  };
-
-  // Helpers d'identité/affichage des collaborateurs — logique pure extraite
-  // dans task-modal/collaborators.ts (testée). On lie ici les dépendances d'état.
-  const filteredFriends = filterFriendsForCollab(friends, collaborators, emailInput);
-  const displayInfo = (id: string) =>
-    resolveCollaboratorDisplay(id, {
-      friends, sentRequests, pendingInvitesLocal,
-      // Vue destinataire : afficher le nom du propriétaire (task.sharedBy) au
-      // lieu du libellé générique « Collaborateur ».
-      ownerId: effectiveTask?.userId,
-      ownerName: effectiveTask?.sharedBy,
-    });
-
-  const handleAddEmail = () => {
-    const value = emailInput.trim().toLowerCase();
-    if (!value) return;
-
-    const friend = friends.find(f => f.email.toLowerCase() === value);
-
-    if (friend) {
-      // Store the friend's auth.uid (via userId) so RLS / shared_tasks FK
-      // accept it. Falls back to friend.id in demo mode.
-      const collabId = collabIdOf(friend);
-      if (!collaborators.includes(collabId)) {
-        setCollaborators([...collaborators, collabId]);
-        setCollaboratorsDirty(true);
-      }
-    } else {
-      // Reject input that doesn't look like an email — prevents garbage
-      // entries in `pendingInvites`. Faille D2.
-      const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRe.test(value)) {
-        setInputError('Utilisateur introuvable');
-        return;
-      }
-      if (collaborators.includes(value)) {
-        setEmailInput('');
-        return;
-      }
-      sendFriendRequestMutation.mutate({ email: value });
-      setCollaborators([...collaborators, value]);
-      setCollaboratorsDirty(true);
-      setPendingInvitesLocal([...pendingInvitesLocal, value]);
-      // No immediate updateTaskMutation — deferred to handleSave() to avoid
-      // cache invalidation that would set hasChanges=false.
-    }
-    setEmailInput('');
-    setInputError(null);
-  };
-
-  const handleRemoveCollaborator = (collaboratorName: string) => {
-    const newCollaborators = collaborators.filter((c) => c !== collaboratorName);
-    setCollaborators(newCollaborators);
-    setCollaboratorsDirty(true);
-    const newPendingInvites = pendingInvitesLocal.filter(e => e !== collaboratorName);
-    setPendingInvitesLocal(newPendingInvites);
-    // NOTE: no immediate updateTaskMutation here — changes are batched into
-    // handleSave() when the user clicks "Sauvegarder", which already includes
-    // collaborators and pendingInvites in the payload. Calling the mutation
-    // here would invalidate the React Query cache, cause the `task` prop to
-    // update, set hasChanges=false, and disable the save button.
-  };
-
-  const toggleCollaborator = (collabId: string) => {
-    // `collabId` is the friend's auth.users.id (or friend.id in demo).
-    if (collaborators.includes(collabId)) {
-      handleRemoveCollaborator(collabId);
-    } else {
-      // Defer to handleSave(), no immediate mutation.
-      setCollaborators((prev) => [...prev, collabId]);
-      setCollaboratorsDirty(true);
-    }
   };
 
   // Loading state derived from mutations
