@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { PageHeading } from '@/components/ui/typography';
 import { MobileHeader } from '@/components/mobile';
+import TouchTarget from '@/components/mobile/TouchTarget';
 import { Plus, Target, CalendarCheck, CheckCircle2 } from 'lucide-react';
 import WeeklyCheckinModal from '@/components/WeeklyCheckinModal';
 import { getColorHex } from '@/components/CategoryManager';
@@ -288,11 +289,44 @@ const OKRPage: React.FC = () => {
 
       {/* ── Mobile : en-tête canonique (cf. docs/MOBILE.md) ──
           Titre grand au repos, compacté au scroll. Le bloc desktop ci-dessous
-          est l'ancien rendu, masqué sous `md`. */}
-      <MobileHeader title={t('page.title')} subtitle={t('page.subtitle')} />
+          est l'ancien rendu, masqué sous `md`.
+          🔴 « OKR terminés » vit désormais DANS `actions` : le poser en
+          ligne séparée sous le header (comme avant) est le bug déjà corrigé
+          sur le Dashboard — l'icône ne restait pas alignée avec le titre une
+          fois le header compacté au scroll. Sur mobile elle perd aussi sa
+          bordure/pilule au profit d'un `TouchTarget` icône seule, même
+          traitement que la boîte de réception du Dashboard et de
+          `TasksInboxMenu`. */}
+      <MobileHeader
+        title={t('page.title')}
+        subtitle={t('page.subtitle')}
+        actions={
+          <TouchTarget
+            // `flyTargetRef` (OKRDeadlineReviewModal, ligne plus bas) anime un
+            // objectif complété JUSQU'À ce bouton : sur mobile c'est CELUI-CI
+            // qui est visible, le bouton desktop est `hidden` (donc sans
+            // position de layout — sa `getBoundingClientRect()` rendrait
+            // 0,0,0,0). Un seul des deux reçoit la ref à la fois.
+            ref={isMobile ? finishedButtonRef : undefined}
+            onClick={() => setShowCompletedModal(true)}
+            aria-label={t('page.seeCompleted')}
+            className="relative"
+          >
+            <CheckCircle2 size={20} aria-hidden="true" />
+            {completedCount > 0 && (
+              <span
+                className="absolute top-1.5 right-1.5 min-w-[16px] h-[16px] px-1 rounded-full bg-emerald-600 text-white text-caption font-bold flex items-center justify-center shadow-sm ring-2 ring-[rgb(var(--color-background))]"
+                aria-hidden="true"
+              >
+                {completedCount}
+              </span>
+            )}
+          </TouchTarget>
+        }
+      />
 
-      <div className="mb-8 flex items-start justify-between gap-3">
-        <div className="min-w-0 hidden md:block">
+      <div className="hidden md:flex mb-8 items-start justify-between gap-3">
+        <div className="min-w-0">
           <PageHeading variant="standard" className="mb-2">
             {t('page.title')}
           </PageHeading>
@@ -301,9 +335,9 @@ const OKRPage: React.FC = () => {
           </p>
         </div>
 
-        {/* Bouton "OKR terminés" en haut à droite — cible de l'animation fly-to du popup deadline (pattern Calendrier de TasksPage). */}
+        {/* Bouton "OKR terminés" — cible de l'animation fly-to du popup deadline (pattern Calendrier de TasksPage). Desktop uniquement : équivalent mobile dans `MobileHeader.actions` ci-dessus. */}
         <motion.button
-          ref={finishedButtonRef}
+          ref={isMobile ? undefined : finishedButtonRef}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={() => setShowCompletedModal(true)}
