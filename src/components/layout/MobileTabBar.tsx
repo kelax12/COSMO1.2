@@ -48,11 +48,16 @@ const TABS: TabConfig[] = [
  * internes retirées, et « Habitudes » comme « Entreprise » se tronquent.
  * Mesuré, pas supposé.
  *
- * Pourquoi « Habitudes » : c'est un module OPTIONNEL (`RequireModule`), donc
- * déjà absent pour une partie des comptes, alors que l'espace entreprise est
- * la seule zone collaborative du produit — et il était jusqu'ici au 3e niveau
- * de navigation sur mobile (Plus → feuille → Entreprise). Habitudes reste
- * atteignable dans « Plus », qui la liste déjà.
+ * Pourquoi « Habitudes » : l'espace entreprise est la seule zone
+ * collaborative du produit, et il était jusqu'ici au 3e niveau de navigation
+ * sur mobile (Plus → feuille → Entreprise).
+ *
+ * 🔴 Ce paragraphe affirmait « Habitudes reste atteignable dans Plus, qui la
+ * liste déjà » — FAUX, elle n'y a jamais été : un membre d'organisation
+ * n'avait plus AUCUN chemin mobile vers /habits. Ajoutée dans
+ * `MobileMoreSheet` (2026-09-06), conditionnelle au même déclencheur
+ * (`myOrg`) que ce remplacement, pour ne pas dupliquer l'onglet chez qui
+ * l'a déjà en barre du bas.
  */
 const ENTERPRISE_TAB: TabConfig = { to: '/entreprise', labelKey: 'nav.enterprise', icon: Building2 };
 
