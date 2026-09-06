@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router';
-import { Target, BarChart2, Crown, Settings, LogOut, ChevronRight, Building2, Check, Plus, Bug } from 'lucide-react';
+import { Target, BarChart2, Crown, Settings, LogOut, ChevronRight, Building2, Check, Plus, Bug, Repeat } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { prefetchRoute } from '@/lib/route-prefetch';
@@ -42,6 +42,18 @@ const links: SheetLink[] = [
   { to: '/settings',   labelKey: 'nav.settings',   descriptionKey: 'nav.descriptions.settings',   icon: Settings,  iconBg: 'bg-gray-500'   },
 ];
 
+// « Habitudes » remplace son propre onglet dans la barre du bas dès qu'on
+// appartient à une organisation (MobileTabBar : `showOrgTab`, « Entreprise »
+// prend sa place plutôt que de s'ajouter en 6e position). Un commentaire de
+// MobileTabBar affirmait « elle reste atteignable dans Plus, qui la liste
+// déjà » — FAUX : elle n'y a jamais été. Aucun chemin mobile ne menait plus
+// à /habits pour un membre d'organisation. Ajoutée ICI, conditionnelle au
+// même déclencheur que le remplacement dans la barre — un compte SANS
+// organisation la voit déjà en barre du bas, l'y dupliquer ferait doublon.
+const habitsLink: SheetLink = {
+  to: '/habits', labelKey: 'nav.habits', descriptionKey: 'nav.descriptions.habits', icon: Repeat, iconBg: 'bg-yellow-500',
+};
+
 const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({ open, onOpenChange }) => {
   const sheetMotion = useSheetMotion();
   const { t } = useT('common');
@@ -52,10 +64,11 @@ const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({ open, onOpenChange })
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Filtre premium, puis ajoute l'entrée « Entreprise » pour les membres
-  // d'une org.
+  // Filtre premium, ajoute « Habitudes » pour les membres d'une org (dont la
+  // barre du bas ne porte plus cet onglet) puis « Entreprise ».
   const visibleLinks: SheetLink[] = [
     ...(PREMIUM_ENFORCED ? links : links.filter((l) => l.to !== '/premium')),
+    ...(myOrg ? [habitsLink] : []),
     ...(myOrg
       ? [{
           to: '/entreprise',
