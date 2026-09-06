@@ -15,10 +15,6 @@ import {
   TeamSubtask,
   CreateTeamSubtaskInput,
   UpdateTeamSubtaskInput,
-  TeamLabel,
-  CreateTeamLabelInput,
-  UpdateTeamLabelInput,
-  TeamTaskLabel,
   TeamTaskDependency,
   TeamTaskActivity,
 } from './types';
@@ -72,18 +68,14 @@ export interface ITeamProjectsRepository {
   updateSubtask(subtaskId: string, input: UpdateTeamSubtaskInput): Promise<TeamSubtask>;
   deleteSubtask(subtaskId: string): Promise<void>;
 
-  // Labels (mig. 093)
-  getLabels(orgId: string): Promise<TeamLabel[]>;
-  createLabel(orgId: string, input: CreateTeamLabelInput): Promise<TeamLabel>;
-  updateLabel(labelId: string, input: UpdateTeamLabelInput): Promise<TeamLabel>;
-  deleteLabel(labelId: string): Promise<void>;
-  /** Toutes les jonctions accessibles — une requête pour toute l'org, pas une par tâche. */
-  getTaskLabels(orgId: string): Promise<TeamTaskLabel[]>;
-  addTaskLabel(taskId: string, labelId: string): Promise<void>;
-  removeTaskLabel(taskId: string, labelId: string): Promise<void>;
+  // 🗑️ Les étiquettes (mig. 093) ont été retirées de cette interface le
+  // 2026-09-05 (C-49) : `getLabels`, `createLabel`, `updateLabel`,
+  // `deleteLabel`, `getTaskLabels`, `addTaskLabel`, `removeTaskLabel`. Aucun
+  // écran ne montait leurs hooks, donc aucun appelant. La TABLE reste en base.
 
   // Historique (mig. 094) — lecture seule : la table est append-only, écrite par trigger.
-  getTaskActivity(taskId: string): Promise<TeamTaskActivity[]>;
+  // 🗑️ `getTaskActivity` (journal PAR TÂCHE) retiré le 2026-09-05 (C-49) :
+  // sans appelant. `getOrgActivity` ci-dessous sert la revue hebdomadaire.
   /**
    * Journal de TOUTE l'organisation depuis `since` (ISO) — revue hebdomadaire
    * (#26). Borné côté serveur : la revue lit deux semaines, pas l'historique.
@@ -92,10 +84,11 @@ export interface ITeamProjectsRepository {
 
   // Dépendances entre tâches (mig. 108) — « bloque / bloqué par ».
   /**
-   * Toutes les arêtes accessibles de l'org, en UNE requête (même contrat que
-   * `getTaskLabels`) : le chemin critique se calcule sur un projet entier, en
-   * charger une par tâche multiplierait les allers-retours par le nombre de
-   * cartes affichées.
+   * Toutes les arêtes accessibles de l'org, en UNE requête : le chemin
+   * critique se calcule sur un projet entier, en charger une par tâche
+   * multiplierait les allers-retours par le nombre de cartes affichées.
+   *
+   * (Ce contrat était partagé avec `getTaskLabels`, retiré le 2026-09-05.)
    */
   getTaskDependencies(orgId: string): Promise<TeamTaskDependency[]>;
   /** `taskId` devient bloquée par `dependsOnId`. */

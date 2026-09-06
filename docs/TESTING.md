@@ -334,6 +334,23 @@ d'attraper une vague de code non testé. C'est la seconde qui a été prise.
 > | Échelle z-index fermée | `src/design-system.guard.test.ts` | Qu'un composant réinvente sa valeur. La table publiée listait 7 paliers pendant que le code en utilisait 16 |
 > | Mouvement des feuilles | `src/design-system.guard.test.ts` | Qu'une nouvelle feuille écrive `y: '100%'` à la main. Sous `prefers-reduced-motion`, ça peut l'ouvrir 100 % sous l'écran — mesuré, pas supposé |
 > | Chemin d'accès entreprise | `src/modules/team-projects/supabase.repository.test.ts` | Un retour à `.from('team_tasks')`, qui réintroduirait le `Seq Scan` + CTE par ligne sans aucun symptôme avant la montée en charge |
+> | Hooks de module sans consommateur | `src/modules/orphan-hooks.guard.test.ts` (2026-09-05, C-49) | Qu'un hook exporté par `src/modules` soit livré sans qu'aucun écran ne le monte. 49 s'étaient accumulés, dont trois fichiers `hooks.derived.ts` orphelins EN ENTIER. Un hook sans écran n'est pas du poids, il est **non éprouvé** |
+>
+> 🔴 **Ce que la garde des orphelins a appris sur les balayages textuels**, et qui vaut pour tous
+> ceux de ce dépôt — les deux cas ont été rencontrés en l'écrivant, pas imaginés :
+>
+> 1. **Retirer les commentaires AVANT de chercher.** `useCreateKRCompletion` sortait de la liste
+>    des orphelins parce que deux commentaires expliquant pourquoi il est dangereux le nommaient.
+>    Une mention n'est pas un appel.
+> 2. **Le fichier déclarant peut être son propre consommateur.** `useFilteredTasks` n'est importé
+>    par aucun écran, mais `usePendingTasks` l'appelle dans le même fichier — et sert deux
+>    composants vivants. Le compter orphelin aurait fait supprimer un hook dont dépendent
+>    `DeadlineCalendar` et `TasksSummary`.
+>
+> Son **témoin** va plus loin que « le balayage voit des fichiers » : il exige que des hooks connus
+> vivants rendent plus de trois consommateurs, **et** qu'un hook inexistant en rende zéro. Sans
+> cette seconde sonde, une mesure qui répondrait toujours « consommé » passerait au vert en ne
+> détectant plus rien. Les deux sabotages ont été **joués** avant de livrer.
 >
 > Les trois premières sont des **cliquets** : le stock existant est toléré et ne peut que baisser.
 > Une gate rouge en permanence finit ignorée — c'est la règle du dossier.

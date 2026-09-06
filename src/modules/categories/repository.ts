@@ -38,8 +38,6 @@ const DEMO_CATEGORIES_EN: Record<string, Partial<Category>> = {
 export interface ICategoriesRepository {
   // Read operations
   getAll(): Promise<Category[]>;
-  getById(id: string): Promise<Category | null>;
-  
   // Write operations
   create(input: CreateCategoryInput, options?: CreateOptions): Promise<Category>;
   update(id: string, updates: UpdateCategoryInput): Promise<Category>;
@@ -79,11 +77,6 @@ export class LocalStorageCategoriesRepository implements ICategoriesRepository {
 
   async getAll(): Promise<Category[]> {
     return this.getCategories();
-  }
-
-  async getById(id: string): Promise<Category | null> {
-    const categories = this.getCategories();
-    return categories.find(c => c.id === id) || null;
   }
 
   // ═══════════════════════════════════════════════════════════════════

@@ -32,17 +32,6 @@ export const useHabits = () => {
 };
 
 /**
- * Fetch a single habit by ID
- */
-export const useHabit = (id: string) => {
-  const repository = useHabitsRepository();
-  return useQuery({
-    queryKey: habitKeys.detail(id),
-    queryFn: () => repository.getById(id),
-    enabled: !!id,
-  });
-};
-/**
  * Create a new habit
  */
 export const useCreateHabit = () => {

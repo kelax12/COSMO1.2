@@ -26,16 +26,6 @@ export const useCategories = () => {
   });
 };
 
-export const useCategory = (id: string) => {
-  const repository = useCategoriesRepository();
-  return useQuery({
-    queryKey: categoryKeys.detail(id),
-    queryFn: () => repository.getById(id),
-    enabled: !!id,
-    staleTime: 1000 * 60 * 30, // 30 minutes — quasi statiques, mutations invalident le cache
-  });
-};
-
 // ═══════════════════════════════════════════════════════════════════
 // MUTATION HOOKS
 // ═══════════════════════════════════════════════════════════════════
@@ -130,11 +120,6 @@ export const useDeleteCategory = () => {
 // ═══════════════════════════════════════════════════════════════════
 // DERIVED HOOKS
 // ═══════════════════════════════════════════════════════════════════
-
-export const useCategoryNames = () => {
-  const { data: categories = [] } = useCategories();
-  return useMemo(() => categories.map((c) => c.name), [categories]);
-};
 
 export const useCategoryLookup = () => {
   const { data: categories = [] } = useCategories();

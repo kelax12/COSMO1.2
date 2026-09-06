@@ -49,24 +49,6 @@ export const useEventsWindow = (startISO: string | null, endISO: string | null) 
   });
 };
 
-export const useEvent = (id: string) => {
-  const repository = useEventsRepository();
-  return useQuery({
-    queryKey: eventsKeys.detail(id),
-    queryFn: () => repository.getById(id),
-    enabled: !!id,
-  });
-};
-
-export const useEventsByTask = (taskId: string) => {
-  const repository = useEventsRepository();
-  return useQuery({
-    queryKey: eventsKeys.byTask(taskId),
-    queryFn: () => repository.getByTaskId(taskId),
-    enabled: !!taskId,
-  });
-};
-
 // ═══════════════════════════════════════════════════════════════════
 // MUTATION HOOKS
 // ═══════════════════════════════════════════════════════════════════
@@ -267,14 +249,6 @@ export const useDeleteMemberEvent = (userId: string) => {
 // ═══════════════════════════════════════════════════════════════════
 // DERIVED HOOKS
 // ═══════════════════════════════════════════════════════════════════
-
-export const useEventsByDate = (date: string) => {
-  const { data: events = [] } = useEvents();
-  return useMemo(
-    () => events.filter((e) => e.start.startsWith(date)),
-    [events, date]
-  );
-};
 
 export const useUpcomingEvents = (limit = 5) => {
   const { data: events = [] } = useEvents();

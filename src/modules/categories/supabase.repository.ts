@@ -55,21 +55,6 @@ export class SupabaseCategoriesRepository implements ICategoriesRepository {
     return warnIfTruncated(data || [], 200, 'categories').map(this.mapFromDb);
   }
 
-  async getById(id: string): Promise<Category | null> {
-    if (!supabase) throw new Error('Supabase not configured');
-    const { data, error } = await supabase
-      .from('categories')
-      .select('*')
-      .eq('id', id)
-      .single();
-
-    if (error) {
-      if (error.code === 'PGRST116') return null; // Not found
-      throw normalizeApiError(error);
-    }
-    return data ? this.mapFromDb(data) : null;
-  }
-
   // ═══════════════════════════════════════════════════════════════════
   // WRITE OPERATIONS
   // ═══════════════════════════════════════════════════════════════════

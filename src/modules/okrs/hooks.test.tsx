@@ -23,7 +23,7 @@ vi.mock('@/lib/app-mode.store', () => ({
 vi.mock('sonner', () => ({ toast: { error: vi.fn(), success: vi.fn(), warning: vi.fn() } }));
 
 import {
-  useOkrs, useActiveOkrs, useCompletedOkrs, useCreateOkr, useDeleteOkr, useUpdateKeyResult,
+  useOkrs, useActiveOkrs, useCreateOkr, useDeleteOkr, useUpdateKeyResult,
 } from './hooks';
 import type { OKR } from './types';
 
@@ -122,21 +122,24 @@ describe('useDeleteOkr', () => {
 // tous les jours : `okrs`, puis `key_results` pour hydrater ce qu'on venait
 // de lire. Ces tests échouent si quelqu'un les rebranche sur le réseau.
 // ═══════════════════════════════════════════════════════════════════
-describe('useActiveOkrs / useCompletedOkrs', () => {
+// `useCompletedOkrs` a été supprimé le 2026-09-05 (C-49), sans consommateur.
+// `useActiveOkrs`, lui, est monté par `ActiveOKRs` : c'est LUI que ce test
+// protège, et l'assertion qui compte reste la même — filtrer en mémoire, sans
+// seconde requête.
+describe('useActiveOkrs', () => {
   const fini: OKR = { ...okr, id: 'o2', title: 'Fini', completed: true };
 
-  it('filtrent en mémoire SANS seconde requête', async () => {
+  it('filtre en mémoire SANS seconde requête', async () => {
     fakeRepo.getAll.mockResolvedValue([okr, fini]);
     const { wrapper } = makeWrapper();
     const { result } = renderHook(
-      () => ({ tous: useOkrs(), actifs: useActiveOkrs(), finis: useCompletedOkrs() }),
+      () => ({ tous: useOkrs(), actifs: useActiveOkrs() }),
       { wrapper },
     );
     await waitFor(() => expect(result.current.tous.isSuccess).toBe(true));
 
-    expect(result.current.actifs.data.map((o) => o.id)).toEqual(['o1']);
-    expect(result.current.finis.data.map((o) => o.id)).toEqual(['o2']);
-    // Une seule lecture pour les trois hooks, et jamais le chemin filtré.
+    expect(result.current.actifs.data.map((o: OKR) => o.id)).toEqual(['o1']);
+    // Une seule lecture pour les deux hooks, et jamais le chemin filtré.
     expect(fakeRepo.getAll).toHaveBeenCalledTimes(1);
     expect(fakeRepo.getFiltered).not.toHaveBeenCalled();
   });

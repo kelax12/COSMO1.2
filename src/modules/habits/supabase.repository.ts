@@ -119,20 +119,6 @@ export class SupabaseHabitsRepository implements IHabitsRepository {
     };
   }
 
-  async getById(id: string): Promise<Habit | null> {
-    const { data, error } = await supabase
-      .from('habits')
-      .select('*')
-      .eq('id', id)
-      .single();
-
-    if (error) {
-      if (error.code === 'PGRST116') return null;
-      throw normalizeApiError(error);
-    }
-    return data ? mapHabitFromDb(data) : null;
-  }
-
   async createHabit(input: CreateHabitInput, options?: CreateOptions): Promise<Habit> {
     const user = await getCurrentUser();
     if (!user) throw makeApiError('not_authenticated');

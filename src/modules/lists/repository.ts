@@ -75,9 +75,6 @@ const DEMO_LISTS_EN: Record<string, Partial<TaskList>> = {
 export interface IListsRepository {
   // Read operations
   getAll(): Promise<TaskList[]>;
-  getById(id: string): Promise<TaskList | null>;
-  getByTaskId(taskId: string): Promise<TaskList[]>;
-
   // Write operations
   create(input: CreateListInput, options?: CreateOptions): Promise<TaskList>;
   update(id: string, updates: UpdateListInput): Promise<TaskList>;
@@ -129,11 +126,6 @@ export class LocalStorageListsRepository implements IListsRepository {
       if (ap !== bp) return ap - bp;
       return a.name.localeCompare(b.name);
     });
-  }
-
-  async getById(id: string): Promise<TaskList | null> {
-    const lists = this.getLists();
-    return lists.find(l => l.id === id) || null;
   }
 
   async getByTaskId(taskId: string): Promise<TaskList[]> {

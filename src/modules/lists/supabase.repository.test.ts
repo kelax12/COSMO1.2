@@ -34,21 +34,6 @@ describe('SupabaseListsRepository', () => {
     expect(result[0].position).toBeUndefined();
   });
 
-  it('getById: defense-in-depth — scopes by id AND user_id (V15), null when logged out', async () => {
-    supabaseMock.queueTable('lists', { data: row });
-    await repo.getById('l1');
-    const eqs = supabaseMock.callsFor('lists').filter((c) => c.method === 'eq');
-    expect(eqs.map((c) => c.args)).toEqual([
-      ['id', 'l1'],
-      ['user_id', supabaseMock.user?.id],
-    ]);
-
-    supabaseMock.reset();
-    supabaseMock.user = null;
-    expect(await repo.getById('l1')).toBeNull();
-    expect(supabaseMock.queries).toHaveLength(0); // aucune requête sans session
-  });
-
   it('create: forces empty task_ids and auth-derived user_id (anti-mass-assignment)', async () => {
     // `create()` appelle d'abord `getAll()` en interne (backfill des positions,
     // cf. mig. 021) : il faut donc DEUX réponses en file, et la première doit

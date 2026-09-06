@@ -32,7 +32,6 @@ export { SupabaseCategoriesRepository } from './supabase.repository';
 
 export {
   useCategories,
-  useCategory,
   useCategoryColor,
   useCategoryLookup,
 } from './hooks';

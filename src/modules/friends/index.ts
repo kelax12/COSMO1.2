@@ -48,12 +48,10 @@ export {
   useFriendRequests,
   useSentFriendRequests,
   useTaskShares,
-  useMyTaskShares,
   useSharesByTask,
   useCollaboratorsByTask,
   usePendingCollaboratorTaskIds,
   useRelatedTaskShares,
-  useFriendCount,
   usePendingRequestCount,
   useIncomingSharedLists,
 } from './hooks';

@@ -20,10 +20,6 @@ import {
   TeamSubtask,
   CreateTeamSubtaskInput,
   UpdateTeamSubtaskInput,
-  TeamLabel,
-  CreateTeamLabelInput,
-  UpdateTeamLabelInput,
-  TeamTaskLabel,
   TeamTaskActivity,
   TeamTaskDependency,
   CreateTeamTaskCommentInput,
@@ -31,8 +27,6 @@ import {
 import {
   TEAM_PROJECTS_STORAGE_KEY, TEAM_TASKS_STORAGE_KEY, TEAM_TASK_COMMENTS_STORAGE_KEY,
   TEAM_TASK_SUBTASKS_STORAGE_KEY,
-  TEAM_LABELS_STORAGE_KEY,
-  TEAM_TASK_LABELS_STORAGE_KEY,
   TEAM_TASK_ACTIVITY_STORAGE_KEY,
   TEAM_TASK_DEPENDENCIES_STORAGE_KEY,
 } from './constants';
@@ -48,8 +42,6 @@ import {
   DEMO_TASKS, DEMO_TASKS_EN,
   DEMO_COMMENTS, DEMO_COMMENTS_EN,
   DEMO_SUBTASKS, DEMO_SUBTASKS_EN,
-  DEMO_LABELS, DEMO_LABELS_EN,
-  DEMO_TASK_LABELS,
   DEMO_ACTIVITY,
   DEMO_TASK_DEPENDENCIES,
 } from './demo-seed';
@@ -286,90 +278,7 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
     this.saveSubtasks(this.getSubtasksArray().filter((s) => s.id !== subtaskId));
   }
 
-  // ─── Labels (mig. 093) ─────────────────────────────────────────────
-
-  private getLabelsArray(): TeamLabel[] {
-    return readOrSeed<TeamLabel[]>(TEAM_LABELS_STORAGE_KEY, localizeSeed(DEMO_LABELS, DEMO_LABELS_EN));
-  }
-  private saveLabels(l: TeamLabel[]): void {
-    writeJsonOrThrow(TEAM_LABELS_STORAGE_KEY, l);
-  }
-  private getTaskLabelsArray(): TeamTaskLabel[] {
-    return readOrSeed<TeamTaskLabel[]>(TEAM_TASK_LABELS_STORAGE_KEY, DEMO_TASK_LABELS);
-  }
-  private saveTaskLabels(tl: TeamTaskLabel[]): void {
-    writeJsonOrThrow(TEAM_TASK_LABELS_STORAGE_KEY, tl);
-  }
-
-  async getLabels(_orgId: string): Promise<TeamLabel[]> {
-    return [...this.getLabelsArray()].sort((a, b) => a.name.localeCompare(b.name));
-  }
-
-  async createLabel(orgId: string, input: CreateTeamLabelInput): Promise<TeamLabel> {
-    const all = this.getLabelsArray();
-    // Miroir de l'index unique insensible à la casse (mig. 093) : sans lui, la
-    // démo accepterait « bug » et « Bug » là où la prod renverrait une erreur.
-    const wanted = input.name.trim().toLowerCase();
-    if (all.some((l) => l.name.trim().toLowerCase() === wanted)) {
-      throw makeApiError('duplicate_label');
-    }
-    const label: TeamLabel = {
-      id: crypto.randomUUID(),
-      orgId,
-      name: input.name.trim(),
-      color: input.color ?? '#6366f1',
-      createdBy: DEMO_USER_ID,
-      createdAt: new Date().toISOString(),
-    };
-    this.saveLabels([...all, label]);
-    return label;
-  }
-
-  async updateLabel(labelId: string, input: UpdateTeamLabelInput): Promise<TeamLabel> {
-    const all = this.getLabelsArray();
-    const label = all.find((l) => l.id === labelId);
-    if (!label) throw makeApiError('not_found');
-    if (input.name !== undefined) label.name = input.name.trim();
-    if (input.color !== undefined) label.color = input.color;
-    this.saveLabels(all);
-    return label;
-  }
-
-  async deleteLabel(labelId: string): Promise<void> {
-    this.saveLabels(this.getLabelsArray().filter((l) => l.id !== labelId));
-    // Miroir du ON DELETE CASCADE de la jonction.
-    this.saveTaskLabels(this.getTaskLabelsArray().filter((tl) => tl.labelId !== labelId));
-  }
-
-  async getTaskLabels(_orgId: string): Promise<TeamTaskLabel[]> {
-    return this.getTaskLabelsArray();
-  }
-
-  async addTaskLabel(taskId: string, labelId: string): Promise<void> {
-    const all = this.getTaskLabelsArray();
-    // Miroir de la PK composite : poser deux fois le même label est un no-op.
-    if (all.some((tl) => tl.taskId === taskId && tl.labelId === labelId)) return;
-    this.saveTaskLabels([...all, { taskId, labelId }]);
-  }
-
-  async removeTaskLabel(taskId: string, labelId: string): Promise<void> {
-    this.saveTaskLabels(
-      this.getTaskLabelsArray().filter((tl) => !(tl.taskId === taskId && tl.labelId === labelId)),
-    );
-  }
-
   // ─── Historique (mig. 094) ─────────────────────────────────────────
-
-  /**
-   * En production, ce journal est écrit par un trigger. En démo il n'y a pas
-   * de base : on renvoie ce qui a été semé, sans jamais l'écrire depuis l'UI —
-   * c'est ce qui garde la même propriété append-only des deux côtés.
-   */
-  async getTaskActivity(taskId: string): Promise<TeamTaskActivity[]> {
-    return readOrSeed<TeamTaskActivity[]>(TEAM_TASK_ACTIVITY_STORAGE_KEY, DEMO_ACTIVITY)
-      .filter((a) => a.taskId === taskId)
-      .sort((a, b) => (a.createdAt > b.createdAt ? -1 : 1));
-  }
 
   /** Même contrat qu'en production : borné à l'org et à la fenêtre demandée. */
   async getOrgActivity(orgId: string, since: string): Promise<TeamTaskActivity[]> {

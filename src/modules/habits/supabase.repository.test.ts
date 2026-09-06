@@ -121,11 +121,6 @@ describe('SupabaseHabitsRepository', () => {
     ).rejects.toMatchObject({ code: 'not_authenticated' });
   });
 
-  it('getById: PGRST116 → null', async () => {
-    supabaseMock.queueTable('habits', { data: null, error: { code: 'PGRST116' } });
-    expect(await repo.getById('missing')).toBeNull();
-  });
-
   it('toggleCompletion: passe par la RPC atomique BORNEE (TOCTOU-1 + mig. 121)', async () => {
     // `RETURNS TABLE` -> PostgREST renvoie un TABLEAU, la v1 renvoyait un objet.
     supabaseMock.queueRpc('toggle_habit_completion_v2', {

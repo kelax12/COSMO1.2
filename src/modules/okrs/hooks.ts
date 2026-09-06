@@ -7,13 +7,12 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { getOKRsRepository } from '@/lib/repository.factory';
 import { IOKRsRepository } from './repository';
-import { OKR, CreateOKRInput, UpdateOKRInput, UpdateKeyResultInput, OKRFilters } from './types';
+import { OKR, CreateOKRInput, UpdateOKRInput, UpdateKeyResultInput } from './types';
 import { okrsKeys } from './constants';
 import { krCompletionKeys } from '@/modules/kr-completions/constants';
 import { validateAsync } from '@/lib/validation/lazy';
 import { translator } from '@/i18n/useT';
 import { recordDemoCreationIfDemo } from '@/lib/demo-engagement';
-import { reportRestoreFailure, splitRestore } from '@/lib/restore-id';
 
 // ═══════════════════════════════════════════════════════════════════
 // REPOSITORY - Via centralized factory (demo/production mode)
@@ -64,42 +63,6 @@ export const useOkrs = (options?: { enabled?: boolean }) => {
   });
 };
 
-/**
- * Fetch a single OKR by ID
- */
-export const useOkr = (id: string, options?: { enabled?: boolean }) => {
-  const repository = useOKRsRepository();
-  return useQuery({
-    queryKey: okrsKeys.detail(id),
-    queryFn: () => repository.getById(id),
-    enabled: (options?.enabled ?? true) && !!id,
-  });
-};
-
-/**
- * Fetch OKRs by category
- */
-export const useOkrsByCategory = (category: string, options?: { enabled?: boolean }) => {
-  const repository = useOKRsRepository();
-  return useQuery({
-    queryKey: okrsKeys.byCategory(category),
-    queryFn: () => repository.getByCategory(category),
-    enabled: (options?.enabled ?? true) && !!category,
-  });
-};
-
-/**
- * Fetch OKRs with filters
- */
-export const useFilteredOkrs = (filters: OKRFilters, options?: { enabled?: boolean }) => {
-  const repository = useOKRsRepository();
-  return useQuery({
-    queryKey: okrsKeys.list(filters),
-    queryFn: () => repository.getFiltered(filters),
-    enabled: options?.enabled ?? true,
-  });
-};
-
 // ═══════════════════════════════════════════════════════════════════
 // COMPUTED HOOKS
 // ═══════════════════════════════════════════════════════════════════
@@ -121,12 +84,6 @@ export const useFilteredOkrs = (filters: OKRFilters, options?: { enabled?: boole
 export const useActiveOkrs = () => {
   const { data, ...rest } = useOkrs();
   const filtered = useMemo(() => (data ?? []).filter((okr) => !okr.completed), [data]);
-  return { ...rest, data: filtered };
-};
-
-export const useCompletedOkrs = () => {
-  const { data, ...rest } = useOkrs();
-  const filtered = useMemo(() => (data ?? []).filter((okr) => okr.completed), [data]);
   return { ...rest, data: filtered };
 };
 
@@ -349,20 +306,3 @@ export { okrsKeys } from './constants';
 // decoupage : `src/lib/restore-id.ts` (R-08).
 //
 // ⚠️ N'appeler QUE depuis un toast d'annulation.
-export const useRestoreOkr = () => {
-  const queryClient = useQueryClient();
-  const repository = useOKRsRepository();
-
-  return useMutation({
-    mutationFn: (snapshot: OKR) => {
-      const { payload, options } = splitRestore(snapshot);
-      return repository.create(payload as CreateOKRInput, options);
-    },
-    onSuccess: () => {
-      invalidateAllOKRQueries(queryClient);
-    },
-    // Un « Annuler » rate doit se VOIR : `console.error` est supprime du
-    // bundle de production (vite.config.ts), l'echec etait donc muet.
-    onError: (error: Error) => reportRestoreFailure('okr', error),
-  });
-};
