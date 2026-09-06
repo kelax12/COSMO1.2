@@ -5,79 +5,10 @@
 // ne se justifie pas.
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import ListRow from './ListRow';
 import SectionHeader from './SectionHeader';
 import Segmented from './Segmented';
 import TouchTarget from './TouchTarget';
-import MobileScreen from './MobileScreen';
 import BottomSheet from './BottomSheet';
-
-describe('MobileScreen', () => {
-  it('réserve plus de place en bas quand la page a un FAB', () => {
-    const { container, rerender } = render(<MobileScreen>contenu</MobileScreen>);
-    const screenEl = () => container.firstElementChild as HTMLElement;
-    expect(screenEl().className).toContain('pb-[calc(64px+env(safe-area-inset-bottom)+24px)]');
-
-    rerender(<MobileScreen hasFab>contenu</MobileScreen>);
-    expect(screenEl().className).toContain('pb-[calc(64px+env(safe-area-inset-bottom)+88px)]');
-  });
-
-  it('utilise 100dvh et jamais 100vh (Safari iOS rogne sinon le contenu)', () => {
-    const { container } = render(<MobileScreen>contenu</MobileScreen>);
-    const className = (container.firstElementChild as HTMLElement).className;
-    expect(className).toContain('min-h-[100dvh]');
-    expect(className).not.toContain('100vh');
-  });
-
-  it('permet de retirer la gouttière pour un contenu bord à bord', () => {
-    const { container } = render(<MobileScreen gutter={false}>contenu</MobileScreen>);
-    expect((container.firstElementChild as HTMLElement).className).not.toContain('px-gutter');
-  });
-});
-
-describe('ListRow', () => {
-  it('affiche titre et meta', () => {
-    render(<ListRow title="Réviser le devis" meta="Demain · 45 min" />);
-    expect(screen.getByText('Réviser le devis')).toBeTruthy();
-    expect(screen.getByText('Demain · 45 min')).toBeTruthy();
-  });
-
-  it("n'est un bouton que si elle est cliquable", () => {
-    const { rerender } = render(<ListRow title="Inerte" />);
-    expect(screen.queryByRole('button')).toBeNull();
-
-    rerender(<ListRow title="Cliquable" onClick={vi.fn()} />);
-    expect(screen.getByRole('button')).toBeTruthy();
-  });
-
-  it('est activable au clavier (Entrée et Espace), et rien d’autre', () => {
-    const onClick = vi.fn();
-    render(<ListRow title="Cliquable" onClick={onClick} />);
-    const row = screen.getByRole('button');
-
-    fireEvent.keyDown(row, { key: 'Enter' });
-    fireEvent.keyDown(row, { key: ' ' });
-    expect(onClick).toHaveBeenCalledTimes(2);
-
-    fireEvent.keyDown(row, { key: 'a' });
-    expect(onClick).toHaveBeenCalledTimes(2);
-  });
-
-  it('respecte la cible tactile minimale', () => {
-    render(<ListRow title="Ligne" onClick={vi.fn()} />);
-    expect(screen.getByRole('button').className).toContain('min-h-touch');
-  });
-
-  it('affiche le filet de couleur uniquement quand une couleur est fournie', () => {
-    const { container, rerender } = render(<ListRow title="Sans filet" />);
-    expect(container.querySelector('[aria-hidden]')).toBeNull();
-
-    rerender(<ListRow title="Avec filet" railColor="#ef4444" />);
-    const rail = container.querySelector('[aria-hidden]') as HTMLElement;
-    expect(rail).toBeTruthy();
-    expect(rail.style.backgroundColor).toBe('rgb(239, 68, 68)');
-  });
-});
 
 describe('SectionHeader', () => {
   it('affiche le compte à côté du titre', () => {

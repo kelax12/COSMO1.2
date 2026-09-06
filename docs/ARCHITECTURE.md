@@ -294,7 +294,7 @@ Le dépôt accumule des primitives et des hooks livrés puis jamais adoptés :
 | ~~`useMessages` (`src/modules/user`)~~ | ✅ **supprimé le 2026-08-24** — avec `useUser`, `useWatchAd` et `useUpdateUserSettings` : tout le module sauf le type `User` |
 | ~~`useTasksInfinite`~~ | ✅ **supprimé le 2026-08-25** : la marche à suivre est restée en commentaire à sa place (cf. [`SCALABILITY.md`](./SCALABILITY.md) §5). `getPage()` est **conservé** : capacité d'interface implémentée et testée sur tous les modules |
 | **`MobileHeader`** | ✅ **2 → 8 le 2026-08-25** : les 6 pages migrées (cf. [`MOBILE.md`](./MOBILE.md) §2) |
-| `MobileScreen`, `ListRow` (`src/components/mobile`) | **0** (cf. [`MOBILE.md`](./MOBILE.md)) |
+| ~~`MobileScreen`, `ListRow` (`src/components/mobile`)~~ | ✅ **supprimés le 2026-09-05** (C-10) — 0 consommateur en six semaines d'existence (cf. [`MOBILE.md`](./MOBILE.md)) |
 | `TouchTarget` | 2 |
 | `BottomSheet`, `Segmented` | 2 chacun, mais 16 fichiers importent une variante de feuille (cf. [`MOBILE.md`](./MOBILE.md) §3) |
 
@@ -313,7 +313,16 @@ lui-même — c'est que la doc décrit alors une architecture qui n'existe pas.
 > et depuis un mois. Deux sorties seulement pour un code sans consommateur : **l'adopter ou le
 > supprimer.** Le garder, c'est accumuler du code dont on ignore l'état.
 >
-> ⚠️ `MobileScreen` et `ListRow` sont toujours à **0**, un mois après le constat.
+> ✅ **`MobileScreen` et `ListRow` ont pris la seconde sortie le 2026-09-05** (C-10) : six semaines
+> à 0 consommateur, ils sont supprimés. C'est le premier item de cette table à être fermé par la
+> suppression plutôt que par l'adoption, et les deux issues comptent autant — ce que la règle
+> interdit, c'est la troisième, « on garde, ça resservira ».
+>
+> ⚠️ **Ce que la suppression a confirmé, et qu'on ne voit qu'en la faisant** : les deux primitives
+> étaient livrées AVEC leurs tests (67 lignes, tous verts). Un test vert sur un composant que rien
+> ne monte ne prouve que sa propre cohérence, jamais son adéquation à un écran. C'est la même
+> illusion que `MobileHeader`, qui ne fonctionnait pas pendant un mois : sa page l'utilisait, mais
+> personne n'avait regardé le résultat. Livré ≠ éprouvé, et testé ≠ éprouvé non plus.
 
 > **2026-08-27 · une troisième forme du motif, plus discrète : le hook existant mais non exporté.**
 > `useUpcomingEvents` (module `events`) était écrit, testé par son module, et **absent du barrel**.

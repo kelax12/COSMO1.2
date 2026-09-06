@@ -208,7 +208,7 @@ découvre par une table vide, ou par quelqu'un qui réclame ce qu'on lui a promi
 | **C-33** | `report-bug` : une panne d'auth anonymise l'auteur en silence | 2 | 3 | **6** | Distinguer l'échec de l'absence de session |
 | **C-21** | 71 valeurs `en` identiques au `fr` | 2 | 2 | **4** | Remesurer d'abord : les chiffres datent du 2026-08-14 |
 | **C-44** | `ui/chart.tsx` porte une allowlist anti-XSS sans un seul test | 2 | 2 | **4** | Quatre tests. Les quatre appelants ne passent que des constantes |
-| **C-10** | Deux primitives livrées sans aucun consommateur | 2 | 2 | **4** | Adoptées et vérifiées sur un écran réel, ou supprimées |
+| **C-10** | Deux primitives livrées sans aucun consommateur | 2 | 2 | **4** | ✅ **Fermé le 2026-09-05** — supprimées (la seconde branche de l'alternative) |
 | **C-11** | Le picker natif n'a pas de garde de non-régression | 2 | 2 | **4** | Une garde qui compte les `input[type=date]` et n'autorise que les deux d'`EventModalForm` |
 | **C-50** | Quatre fabriques de clés React Query sans donnée depuis la mig. 129 | 2 | 2 | **4** | Suppression, `typecheck` comme preuve |
 | **C-04** | ~~Le mur-pub Habitudes ne consomme pas de jeton~~ · 🟢 le système entier est supprimé | 2 | 1 | **2** | Cotait 20 tant qu on comptait le corriger. Retrait du client, du webhook, du SQL et des textes, dans cet ordre |
