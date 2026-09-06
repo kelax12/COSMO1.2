@@ -4,6 +4,7 @@ import React from 'react';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
 import { X, Plus, Pencil, Trash2, Sparkles, Pin, PinOff, Share2 } from 'lucide-react';
 import SmartListMenu from '@/components/SmartListMenu';
+import CreateListForm from './CreateListForm';
 import { useCreateList, useDeleteList, type SmartRulePreset, type TaskList } from '@/modules/lists';
 import { VIRTUAL_TODAY_ID } from './task-page-filter';
 import { useT } from '@/i18n/useT';
@@ -75,6 +76,19 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
   onShareList,
 }) => {
   const { t, tp } = useT('tasks');
+
+  // Une seule création, deux emplacements (desktop inline, mobile empilé) :
+  // les deux formulaires partagent ces gestes plutôt que d'en recopier un.
+  const submitNewList = () => {
+    createListMutation.mutate({ name: newListName.trim(), color: newListColor }, {
+      onSuccess: () => {
+        setNewListName('');
+        setNewListColor('blue');
+        setShowCreateList(false);
+      },
+    });
+  };
+  const cancelNewList = () => { setShowCreateList(false); setNewListName(''); };
 
   return (
                 <motion.div
@@ -430,81 +444,18 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                               <Plus size={16} /> {t('lists.chipLabel')}
                             </motion.button>
                           ) : (
-                            <motion.form
+                            <CreateListForm
                               key="add-form"
-                              initial={{ opacity: 0, width: 0 }}
-                              animate={{ opacity: 1, width: 'auto' }}
-                              exit={{ opacity: 0, width: 0 }}
-                              className="flex items-center gap-2"
-                              onSubmit={(e) => {
-                                e.preventDefault();
-                                if (!newListName.trim()) return;
-                                createListMutation.mutate({ name: newListName.trim(), color: newListColor }, {
-                                  onSuccess: () => {
-                                    setNewListName('');
-                                    setNewListColor('blue');
-                                    setShowCreateList(false);
-                                  }
-                                });
-                              }}
-                            >
-                              {/* Pastille cyclique : click rapide passe à la couleur suivante.
-                                  Long-press / Shift-click ouvre le color picker hex natif via le input HTML5. */}
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  // Shift+clic ou clic droit → ouvre le color picker natif
-                                  if (e.shiftKey) {
-                                    e.currentTarget.nextElementSibling?.dispatchEvent(new MouseEvent('click'));
-                                    return;
-                                  }
-                                  const idx = colorOptions.findIndex(c => c.value === newListColor);
-                                  setNewListColor(colorOptions[(idx + 1) % colorOptions.length].value);
-                                }}
-                                className="w-6 h-6 rounded-full border-2 border-white dark:border-slate-700 shadow-sm shrink-0 transition-transform hover:scale-110"
-                                style={{ backgroundColor: resolveListColor(newListColor) }}
-                                title={t('lists.colorCycleTitle')}
-                              />
-                              {/* Color picker hex caché — déclenché par Shift+clic sur la pastille */}
-                              <input
-                                type="color"
-                                value={resolveListColor(newListColor)}
-                                onChange={(e) => setNewListColor(e.target.value)}
-                                className="sr-only"
-                                aria-label={t('lists.customColorAria')}
-                                tabIndex={-1}
-                              />
-                              <input
-                                autoFocus
-                                type="text"
-                                value={newListName}
-                                onChange={(e) => setNewListName(e.target.value)}
-                                placeholder={t('lists.namePlaceholder')}
-                                size={Math.max(newListName.length + 2, 14)}
-                                className="px-3 py-1.5 text-sm rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-0"
-                                style={{
-                                  backgroundColor: 'rgb(var(--color-surface))',
-                                  borderColor: 'rgb(var(--color-border))',
-                                  color: 'rgb(var(--color-text-primary))',
-                                  fieldSizing: 'content',
-                                } as React.CSSProperties}
-                                onKeyDown={(e) => { if (e.key === 'Escape') { setShowCreateList(false); setNewListName(''); } }}
-                              />
-                              <button
-                                type="submit"
-                                disabled={!newListName.trim()}
-                                className="px-3 py-1.5 text-sm rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))] font-medium disabled:opacity-40 transition-all"
-                              >
-                                {t('lists.create')}
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => { setShowCreateList(false); setNewListName(''); }}
-                                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
-                              >
-                                <X size={14} />
-                              </button>
-                            </motion.form>
+                              variant="inline"
+                              name={newListName}
+                              onNameChange={setNewListName}
+                              color={newListColor}
+                              onColorChange={setNewListColor}
+                              colorOptions={colorOptions}
+                              resolveColor={resolveListColor}
+                              onSubmit={submitNewList}
+                              onCancel={cancelNewList}
+                            />
                           )}
                         </AnimatePresence>
                       </div>
@@ -514,63 +465,18 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                     <div className="sm:hidden mt-2">
                       <AnimatePresence mode="wait">
                         {showCreateList && (
-                          <motion.form
+                          <CreateListForm
                             key="add-form-mobile"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            className="flex items-center gap-2"
-                            onSubmit={(e) => {
-                              e.preventDefault();
-                              if (!newListName.trim()) return;
-                              createListMutation.mutate({ name: newListName.trim(), color: newListColor }, {
-                                onSuccess: () => {
-                                  setNewListName('');
-                                  setNewListColor('blue');
-                                  setShowCreateList(false);
-                                }
-                              });
-                            }}
-                          >
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const idx = colorOptions.findIndex(c => c.value === newListColor);
-                                setNewListColor(colorOptions[(idx + 1) % colorOptions.length].value);
-                              }}
-                              className="w-6 h-6 rounded-full border-2 border-white dark:border-slate-700 shadow-sm shrink-0 transition-transform hover:scale-110"
-                              style={{ backgroundColor: colorOptions.find(c => c.value === newListColor)?.color || '#3B82F6' }}
-                              title={t('lists.changeColor')}
-                            />
-                            <input
-                              autoFocus
-                              type="text"
-                              value={newListName}
-                              onChange={(e) => setNewListName(e.target.value)}
-                              placeholder={t('lists.namePlaceholder')}
-                              className="flex-1 px-3 py-2 text-sm rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500"
-                              style={{
-                                backgroundColor: 'rgb(var(--color-surface))',
-                                borderColor: 'rgb(var(--color-border))',
-                                color: 'rgb(var(--color-text-primary))'
-                              }}
-                              onKeyDown={(e) => { if (e.key === 'Escape') { setShowCreateList(false); setNewListName(''); } }}
-                            />
-                            <button
-                              type="submit"
-                              disabled={!newListName.trim()}
-                              className="px-3 py-2 text-sm rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))] font-medium disabled:opacity-40 transition-all"
-                            >
-                              {t('lists.create')}
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => { setShowCreateList(false); setNewListName(''); }}
-                              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
-                            >
-                              <X size={14} />
-                            </button>
-                          </motion.form>
+                            variant="stacked"
+                            name={newListName}
+                            onNameChange={setNewListName}
+                            color={newListColor}
+                            onColorChange={setNewListColor}
+                            colorOptions={colorOptions}
+                            resolveColor={resolveListColor}
+                            onSubmit={submitNewList}
+                            onCancel={cancelNewList}
+                          />
                         )}
                       </AnimatePresence>
                     </div>
