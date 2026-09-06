@@ -662,6 +662,29 @@ encaisser sans preuve.
 > phrase disparaît, soit le produit accepte de vendre sans renonciation (le client garde alors ses
 > quatorze jours, et il faut un chemin de remboursement). C'est un choix produit, pas un correctif.
 
+### 🔴 S-7 · le doublon que la mig. `134` ne couvre pas — trouvé le 2026-09-06, migration `143` écrite, PAS appliquée
+
+`S-3` (ci-dessus) contraint `subscriptions.stripe_customer_id`. Elle ne contraint pas
+`subscriptions.user_id` — et rien d'autre ne le fait : ni PK, ni index unique. En vérifiant la
+mig. `141` (C-04) le 2026-09-06, le compte `8fc7ec89-beab-40fb-b197-6236b1067030` porte **23
+lignes** dans `subscriptions`, `created_at` du 2026-04-06 au 2026-04-11 — une corruption ancienne,
+sans rapport avec la 141.
+
+`BillingRepository.getSubscription()` lit par `.eq('user_id', …).maybeSingle()` — lève dès qu'une
+requête rend plus d'une ligne — et `stripe-create-checkout` / `stripe-webhook` upsertent par
+`onConflict: 'user_id'`, qui ne déclenche AUCUN conflit sans contrainte correspondante : chaque
+appel INSERT une ligne de plus au lieu de mettre à jour l'existante. C'est la cause la plus
+probable des 23 lignes du compte cité.
+
+**Actif en production, pas seulement latent** : tant que le doublon n'est pas nettoyé, toute
+lecture de l'abonnement de ce compte (connexion, page Premium, `useBilling()` au montage de
+l'app) échoue pour lui.
+
+**Migration `143_subscriptions_user_unique.sql` écrite, PAS ENCORE APPLIQUÉE.** Elle dédoublonne
+tous les comptes concernés (garde le `stripe_customer_id` non NULL s'il y en a un, sinon la ligne
+la plus ancienne) puis pose `UNIQUE (user_id)`. Compte de doublons totaux non mesuré à cette date —
+seul le cas trouvé par hasard est confirmé ; la requête de comptage est dans l'en-tête du fichier.
+
 ### Ce que l'audit n'a PAS trouvé, et qui méritait d'être cherché
 
 - Aucun montant n'est calculé côté COSMO au moment de facturer. Le seul endroit qui CHOISIT un prix
@@ -777,6 +800,7 @@ documentaire du 2026-08-14, le lien pointait dans le vide. Restaurée ici.
 | 1quinquies | **Migration `134`** (S-3 · un customer Stripe ne désigne qu'un seul compte) | 🟠 intégrité facturation | ~~Axel applique~~ appliquée par agent | ✅ **APPLIQUÉE le 2026-09-02** · 0 doublon sur 54 lignes mesuré avant, doublon refusé en 23505 après |
 | 1sexies | **S-5** — un event Stripe tardif peut dégrader une org qui vient de repayer | 🟠 revenu | — | ✅ **corrigé le 2026-09-02**, garde asymétrique dans `applyOrgSubscription` |
 | 1septies | **Migration `135`** (S-6 · preuve de renonciation au droit de rétractation) | 🟠 preuve juridique | ~~Axel applique~~ appliquée par agent | ✅ **APPLIQUÉE le 2026-09-02**, donc AVANT tout déploiement des fonctions · append-only vérifiée : UPDATE et DELETE refusés même au rôle privilégié |
+| 1octies | **Migration `143`** (S-7 · `subscriptions.user_id` sans contrainte unique, un compte réel porte 23 lignes et son `.maybeSingle()` lève) | 🔴 bug actif en prod pour ce compte | **Axel applique** (dédoublonnage destructif, à relire d'abord) | ⏳ **écrite, PAS appliquée** — compter les autres comptes touchés avant d'appliquer (requête dans l'en-tête du fichier) |
 | 2 | **Réglages de console Supabase** : A-10 (leaked password protection), MFA sur le compte admin, allowlist de redirection OAuth, secure email change | 🟠 clics Dashboard, ~30 min cumulés | **Axel** | ⏳ **en attente** |
 | 3 | **A-9 — plan Pro + PITR + drill de restauration** | 🔴 résilience, seul bloquant | **Axel** (compte, non scriptable) | ⏳ **en attente** |
 | 4 | Test de bout en bout de l'attribution `?ref=` (cf. [`docs/ACQUISITION.md`](./docs/ACQUISITION.md) §3) | 🟡 exige une vraie inscription | **Axel** | ⏳ **en attente** |
