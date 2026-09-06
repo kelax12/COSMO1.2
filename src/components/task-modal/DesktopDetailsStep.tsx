@@ -6,7 +6,6 @@
 // étape). Tout le reste vient des props.
 import React, { useEffect, useState } from 'react';
 import { X, AlertCircle, Bookmark, List, ChevronDown, Plus, Minus } from 'lucide-react';
-import { toast } from 'sonner';
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -16,7 +15,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { DatePicker } from '@/components/ui/date-picker';
-import AddCategoryButton from '@/components/AddCategoryButton';
+import CategoryField from './CategoryField';
 import SubtaskChecklist from './SubtaskChecklist';
 import TaskDependenciesSection from './TaskDependenciesSection';
 import DescriptionField from '@/components/DescriptionField';
@@ -88,9 +87,6 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
   useEffect(() => {
     if (!isCreating) setShowAllFields(true);
   }, [isCreating]);
-  const [showNewCategoryInput, setShowNewCategoryInput] = useState(false);
-  const [newCategoryName, setNewCategoryName] = useState('');
-  const [newCategoryColor, setNewCategoryColor] = useState('blue');
   const [showNewListInput, setShowNewListInput] = useState(false);
   const [newListName, setNewListName] = useState('');
   const [newListColor, setNewListColor] = useState('blue');
@@ -185,178 +181,17 @@ const DesktopDetailsStep: React.FC<DesktopDetailsStepProps> = ({
                     </div>
 
                     <div ref={dRegister('category')}>
-                      <div className="flex items-center justify-between mb-2">
-                        <label className="block text-xs font-semibold uppercase tracking-wider" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-                          {t('fields.category')}
-                        </label>
-                        {/* Créer une catégorie sans quitter le modal — bouton au-dessus
-                            de l'input (pattern unifié avec les modals OKR). */}
-                        <AddCategoryButton onClick={() => { setShowNewCategoryInput(true); setNewCategoryName(''); }} />
-                      </div>
-                      {/* Mobile : select natif système */}
-                      <div className="sm:hidden relative">
-                        <select
-                          value={formData.category || ''}
-                          onChange={(e) => handleInputChange('category', e.target.value)}
-                          className="w-full h-[2.626275rem] px-[0.875425rem] pr-10 border rounded-lg appearance-none text-[0.875425rem] focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          style={{
-                            backgroundColor: 'rgb(var(--color-surface))',
-                            color: formData.category ? 'rgb(var(--color-text-primary))' : 'rgb(var(--color-text-muted))',
-                            borderColor: errors.category ? 'rgb(var(--color-error))' : 'rgb(var(--color-border))',
-                          }}
-                        >
-                          <option value="">{t('common.chooseDots')}</option>
-                          {categories.map((cat) => (
-                            <option key={cat.id} value={cat.id}>{cat.name}</option>
-                          ))}
-                        </select>
-                        <ChevronDown size={18} className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-blue-500" />
-                      </div>
-                      {/* Desktop : dropdown custom */}
-                      <div className="hidden sm:block">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                                <button
-                                  type="button"
-                                  className={`w-full flex items-center justify-between px-[0.875425rem] h-[2.626275rem] border rounded-lg focus:outline-none hover:border-[rgb(var(--color-border-strong))] focus:border-[rgb(var(--color-accent))] focus:ring-1 focus:ring-[rgb(var(--color-accent))] data-[state=open]:border-[rgb(var(--color-accent))] data-[state=open]:ring-1 data-[state=open]:ring-[rgb(var(--color-accent))] transition-all text-[0.875425rem] ${
-                                    errors.category || dInvalid('category') ? 'border-[rgb(var(--color-error))]' : (okrFields.category ? 'border-[rgb(var(--color-accent-solid))] dark:border-[rgb(var(--color-accent-solid))]' : 'border-[rgb(var(--color-border))]')
-                                  } ${okrFields.category ? 'bg-blue-50/50 dark:bg-blue-900/20' : ''}`}
-                                  style={{
-                                  backgroundColor: okrFields.category ? undefined : 'rgb(var(--color-surface))',
-                                  color: formData.category ? 'rgb(var(--color-text-primary))' : 'rgb(var(--color-text-muted))',
-                                  borderColor: errors.category || dInvalid('category') ? '#ef4444' : (okrFields.category ? undefined : undefined)
-                                }}
-                              >
-                              <span>{categories.find(c => c.id === formData.category)?.name || (formData.category === 'okr' ? 'OKR' : 'Choisir...')}</span>
-                              <ChevronDown size={18} className="text-blue-500" />
-                            </button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent
-                            align="start"
-                            className="w-[var(--radix-dropdown-menu-trigger-width)] border-[rgb(var(--color-border))] p-1 shadow-xl"
-                            style={{ backgroundColor: 'rgb(var(--color-surface))' }}
-                          >
-                              {formData.category === 'okr' && !categories.find(c => c.id === 'okr') && (
-                            <DropdownMenuItem asChild>
-                              <button
-                                type="button"
-                                onClick={() => handleInputChange('category', 'okr')}
-                                className="w-full text-left px-4 py-3 text-base rounded-md transition-colors flex items-center gap-2 bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] shadow-sm"
-                              >
-                                <div className="w-2 h-2 rounded-full bg-[rgb(var(--color-accent-solid))]" />
-                                OKR
-                              </button>
-                            </DropdownMenuItem>
-                          )}
-                          {categories.map((cat) => (
-                            <DropdownMenuItem key={cat.id} asChild>
-                              <button
-                                key={cat.id}
-                                type="button"
-                                onClick={() => handleInputChange('category', formData.category === cat.id ? '' : cat.id)}
-                                className={`w-full text-left px-4 py-3 text-base rounded-md transition-colors flex items-center gap-2 ${
-                                  formData.category === cat.id
-                                    ? 'bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] shadow-sm'
-                                    : 'text-slate-700 dark:text-slate-200 hover:bg-[rgb(var(--color-accent-solid-hover))] hover:text-[rgb(var(--color-accent-solid-foreground))] dark:hover:bg-[rgb(var(--color-accent-solid-hover))]'
-                                }`}
-                              >
-                                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: cat.color }} />
-                                {cat.name}
-                              </button>
-                            </DropdownMenuItem>
-                          ))}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                      </div>
-
-                      {showNewCategoryInput && (
-                        <div className="flex items-center gap-2 mt-2">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const idx = listColorOptions.findIndex(c => c.value === newCategoryColor);
-                              setNewCategoryColor(listColorOptions[(idx + 1) % listColorOptions.length].value);
-                            }}
-                            className="w-6 h-6 rounded-full border-2 border-white dark:border-slate-700 shadow-sm shrink-0 transition-transform hover:scale-110"
-                            style={{ backgroundColor: listColorOptions.find(c => c.value === newCategoryColor)?.color || '#3B82F6' }}
-                            title={t('desktop.changeColor')}
-                          />
-                          <input
-                            type="text"
-                            autoFocus
-                            value={newCategoryName}
-                            onChange={(e) => setNewCategoryName(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
-                                e.preventDefault();
-                                const name = newCategoryName.trim();
-                                if (name.length < 2) {
-                                  toast.error(t('fields.categoryNameTooShort'));
-                                  return;
-                                }
-                                createCategoryMutation.mutate(
-                                  { name, color: listColorOptions.find(c => c.value === newCategoryColor)?.color || '#3B82F6' },
-                                  {
-                                    onSuccess: (created) => {
-                                      handleInputChange('category', created.id);
-                                      setShowNewCategoryInput(false);
-                                      setNewCategoryName('');
-                                      setNewCategoryColor('blue');
-                                    }
-                                  }
-                                );
-                              } else if (e.key === 'Escape') {
-                                setShowNewCategoryInput(false);
-                                setNewCategoryName('');
-                                setNewCategoryColor('blue');
-                              }
-                            }}
-                            placeholder={t('fields.categoryNamePlaceholder')}
-                            className="flex-1 min-w-0 px-3 py-1.5 text-sm border rounded-lg focus:outline-none focus:border-[rgb(var(--color-accent))] border-[rgb(var(--color-border))]"
-                            style={{ backgroundColor: 'rgb(var(--color-surface))', color: 'rgb(var(--color-text-primary))' }}
-                          />
-                          <button
-                            type="button"
-                            disabled={newCategoryName.trim().length < 2 || createCategoryMutation.isPending}
-                            onClick={() => {
-                              const name = newCategoryName.trim();
-                              if (name.length < 2) {
-                                toast.error(t('form.categoryNameTooShort'));
-                                return;
-                              }
-                              createCategoryMutation.mutate(
-                                { name, color: listColorOptions.find(c => c.value === newCategoryColor)?.color || '#3B82F6' },
-                                {
-                                  onSuccess: (created) => {
-                                    handleInputChange('category', created.id);
-                                    setShowNewCategoryInput(false);
-                                    setNewCategoryName('');
-                                    setNewCategoryColor('blue');
-                                  }
-                                }
-                              );
-                            }}
-                            className="px-3 py-1.5 text-sm rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))] font-medium disabled:opacity-40 transition-all"
-                          >
-                            {createCategoryMutation.isPending ? t('common.creating') : t('common.create')}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => { setShowNewCategoryInput(false); setNewCategoryName(''); setNewCategoryColor('blue'); }}
-                            className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
-                            style={{ color: 'rgb(var(--color-text-secondary))' }}
-                          >
-                            <X size={14} />
-                          </button>
-                        </div>
-                      )}
-
-                        {errors.category &&
-                          <div className="flex items-center gap-2 mt-1 text-red-600 dark:text-red-400 text-sm" role="alert">
-                            <AlertCircle size={14} aria-hidden="true" />
-                            {errors.category}
-                          </div>
-                        }
+                      <CategoryField
+                        value={formData.category}
+                        onChange={(id) => handleInputChange('category', id)}
+                        categories={categories}
+                        colorOptions={listColorOptions}
+                        createCategory={(input, options) => createCategoryMutation.mutate(input, options)}
+                        isCreating={createCategoryMutation.isPending}
+                        error={errors.category}
+                        shaking={dInvalid('category')}
+                        fromOkr={!!okrFields.category}
+                      />
                       </div>
                   </div>
 

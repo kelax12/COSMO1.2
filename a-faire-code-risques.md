@@ -198,7 +198,7 @@ découvre par une table vide, ou par quelqu'un qui réclame ce qu'on lui a promi
 |---|---|---|---|---|---|
 | **C-06** | 36 `eslint-disable react-hooks/exhaustive-deps` dans 28 fichiers | 3 | 3 | **9** | Chacun supprimé, ou justifié en commentaire, puis une règle qui exige le commentaire |
 | **C-49** | 52 des 206 hooks exportés n'ont aucun consommateur | 2 | 3 | **6** | Adoptés ou supprimés, plus un compteur avec témoin. Un quart de la surface publique des modules n'est jamais exécuté |
-| **C-09** | 12 fichiers au-dessus de 600 lignes | 2 | 3 | **6** | `KNOWN_OVERSIZED` vide, par frontières réelles |
+| **C-09** | 15 fichiers au-dessus de 600 lignes (12 listés + 3 hors liste) | 2 | 3 | **6** | ✅ **Fermé le 2026-09-05** — `KNOWN_OVERSIZED` vide, par frontières réelles |
 | **C-13** | Trancher `vendor-sentry` sur le chemin critique (49,3 ko gzip) | 2 | 3 | **6** | Une décision écrite, appuyée sur une mesure avec `VITE_SENTRY_DSN` posée. Se traite avec C-14 |
 | **C-19** | Aucune gate ne détecte un composant shadcn recopié sans `forwardRef` | 3 | 2 | **6** | Une gate, ou une discipline écrite et datée |
 | **C-55** | Trois surfaces que l'audit A-3 n'a pas réussi à mesurer | 2 | 3 | **6** | Les mesurer, dans le navigateur, et rendre un finding ou un « rien » |

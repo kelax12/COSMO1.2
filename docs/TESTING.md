@@ -305,12 +305,23 @@ d'attraper une vague de code non testé. C'est la seconde qui a été prise.
 > | Garde | Forme |
 > |---|---|
 > | `supabase.from()` uniquement dans un `*.repository.ts` | binaire — 0 violation, et ça doit le rester |
-> | Aucun fichier source > 600 lignes | **cliquet** — aucun nouveau dépassement, et le total des 17 fichiers déjà hors budget (13 103 lignes) ne remonte pas |
+> | Aucun fichier source > 600 lignes | **binaire depuis le 2026-09-05** — `KNOWN_OVERSIZED` est vide, `OVERSIZED_BUDGET` vaut 0 |
 >
 > Le cliquet plutôt qu'un seuil dur : rendre la règle rouge sur les 17 fichiers existants
 > produirait une gate rouge en permanence, donc ignorée — exactement le travers que l'audit
 > pointe. Un troisième test interdit à la liste `KNOWN_OVERSIZED` de garder un fichier déjà
 > assaini, sans quoi un découpage libérerait de la place pour un futur dépassement.
+>
+> ✅ **Le cliquet a fini son office (C-09, 2026-09-05).** Les 17 fichiers de départ, puis les 15
+> qui restaient, ont tous été découpés : la règle est redevenue binaire, et il n'y a plus de mou
+> à distribuer. Le troisième test garde son sens — il empêche de rouvrir la liste.
+>
+> 🔴 **Ce que cette passe a appris, et qui vaut au-delà de la taille des fichiers** : la garde
+> était **rouge depuis un moment sans que personne le sache**. Trois fichiers
+> (`Layout`, `AuthContext`, `DashboardPage`) avaient franchi 600 lignes hors de la liste, donc en
+> faisant échouer le test « aucun NOUVEAU fichier ». Une garde rouge dans une suite déjà rouge ne
+> se distingue pas du bruit : c'est le pendant exact des quatre gardes du 2026-09-03 qui
+> répondaient sans mesurer. Celle-ci mesurait, et personne ne la lisait.
 >
 > ⚠️ Les commentaires sont retirés avant la recherche de `supabase.from(`. Sans ça, la phrase qui
 > **explique** la règle la déclenchait. Une garde qui se mord la queue finit désactivée.

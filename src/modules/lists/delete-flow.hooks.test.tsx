@@ -89,23 +89,33 @@ describe('useDeleteListWithUndo (C-41)', () => {
   it('les trois ecrans passent par ce flux, aucun ne supprime en direct', () => {
     // Temoin de non-regression : c'est la DIVERGENCE entre ecrans qui etait le
     // defaut, pas l'absence de toast a un endroit precis.
-    const callers = [
-      'components/add-to-list/DesktopAddToList.tsx',
-      'components/add-to-list/MobileAddToList.tsx',
-      'pages/TasksPage.tsx',
+    //
+    // ⚠️ Un ecran peut porter le flux LUI-MEME, ou le deleguer au hook qui
+    // porte ses listes (`TasksPage` -> `useTaskLists`, extrait le 2026-09-05
+    // par C-09). La chaine est alors verifiee en DEUX temps : le fichier qui
+    // appelle, et l'ecran qui le monte. Se contenter de deplacer le chemin
+    // aurait coupe le lien entre l'ecran et le flux.
+    const chains: { flow: string; screen?: string; mounts?: RegExp }[] = [
+      { flow: 'components/add-to-list/DesktopAddToList.tsx' },
+      { flow: 'components/add-to-list/MobileAddToList.tsx' },
+      { flow: 'pages/tasks/useTaskLists.ts', screen: 'pages/TasksPage.tsx', mounts: /useTaskLists\s*\(/ },
     ];
     // 🔴 ON EXIGE L'APPEL, PAS LA PRESENCE DU NOM. Mesure par mutation le
     // 2026-09-04 : neutraliser l'usage dans `TasksPage` en laissant l'import
     // laissait ce test au VERT — `toContain('useDeleteListWithUndo')` matchait
     // la ligne d'import. Un ecran peut importer un flux et ne pas s'en servir.
-    for (const rel of callers) {
-      const src = readFileSync(join(process.cwd(), 'src', rel), 'utf-8');
-      expect(src, `${rel} doit APPELER useDeleteListWithUndo()`).toMatch(
+    for (const { flow, screen, mounts } of chains) {
+      const src = readFileSync(join(process.cwd(), 'src', flow), 'utf-8');
+      expect(src, `${flow} doit APPELER useDeleteListWithUndo()`).toMatch(
         /useDeleteListWithUndo\s*\(/,
       );
-      expect(src, `${rel} doit utiliser le \`deleteList\` qu'il en tire`).toMatch(
+      expect(src, `${flow} doit utiliser le \`deleteList\` qu'il en tire`).toMatch(
         /(?<![A-Za-z0-9_$.])deleteList\s*\(/,
       );
+      if (screen && mounts) {
+        const screenSrc = readFileSync(join(process.cwd(), 'src', screen), 'utf-8');
+        expect(screenSrc, `${screen} doit monter le hook qui porte le flux`).toMatch(mounts);
+      }
     }
   });
 });
