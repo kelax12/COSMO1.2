@@ -55,6 +55,7 @@
     "defaultOnAria": "Default list",
     "defaultOffAria": "Pin as default list",
     "colorCycleTitle": "Click: cycle colours · Shift+click: hex palette",
+    "colorLabel": "Color",
     "customColorAria": "Pick a custom colour",
     "changeColor": "Change the colour",
     "todayAddTitle": "Add tasks to today (sets their deadline to today)",

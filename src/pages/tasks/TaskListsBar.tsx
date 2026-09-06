@@ -5,6 +5,7 @@ import { motion, AnimatePresence, Reorder } from 'framer-motion';
 import { X, Plus, Pencil, Trash2, Sparkles, Pin, PinOff, Share2 } from 'lucide-react';
 import SmartListMenu from '@/components/SmartListMenu';
 import CreateListForm from './CreateListForm';
+import CreateListSheet from './CreateListSheet';
 import { useCreateList, useDeleteList, type SmartRulePreset, type TaskList } from '@/modules/lists';
 import { VIRTUAL_TODAY_ID } from './task-page-filter';
 import { useT } from '@/i18n/useT';
@@ -112,11 +113,19 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                       )}
                     </div>
 
-                    {/* `pt-8` sur desktop réserve l'espace du survol (boutons
-                        +/corbeille de la chip « Aujourd'hui », en -top-8). Ce
-                        survol n'existe pas au tactile → `pt-2` sur mobile,
-                        ~24px d'espace vide en moins. */}
-                    <div className="flex sm:flex-wrap gap-3 pt-2 sm:pt-8 overflow-x-auto sm:overflow-visible -mx-3 px-3 sm:mx-0 sm:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [mask-image:linear-gradient(to_right,black_calc(100%-16px),transparent)] sm:[mask-image:none]">
+                    {/* `pt-8` réserve l'espace des boutons +/corbeille de la
+                        chip « Aujourd'hui » (en -top-8) — nécessaire sur
+                        mobile AUSSI : `selectedListId === VIRTUAL_TODAY_ID`
+                        (ligne plus bas) les révèle aussi bien au TAP qu'au
+                        survol, et ce conteneur est en `overflow-x-auto` —
+                        qui, sans `overflow-y` explicite, calcule l'axe Y en
+                        `auto` lui aussi (règle CSS : "visible" ne peut pas
+                        cohabiter avec un axe non-visible). Avec `pt-2`
+                        (l'ancien réglage, qui supposait ces boutons
+                        « hover only »), les boutons révélés par un TAP
+                        étaient donc rognés en haut du conteneur — invisibles,
+                        pas juste discrets. */}
+                    <div className="flex sm:flex-wrap gap-3 pt-8 overflow-x-auto sm:overflow-visible -mx-3 px-3 sm:mx-0 sm:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [mask-image:linear-gradient(to_right,black_calc(100%-16px),transparent)] sm:[mask-image:none]">
                       <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
@@ -125,7 +134,10 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                         }}
                         // Chip Spotify (docs/MOBILE.md § Chips de filtre) :
                         // pilule pleine, sans bordure — au repos comme active.
-                        className={`shrink-0 whitespace-nowrap inline-flex items-center justify-center px-3.5 h-11 sm:h-auto sm:py-2 rounded-full text-label sm:text-sm font-medium transition-all ${
+                        // `h-9` réduit (2026-09-06) : 44px de haut faisait une
+                        // pilule disproportionnée une fois pleine au lieu de
+                        // bordée — Spotify tourne autour de 36-40px.
+                        className={`shrink-0 whitespace-nowrap inline-flex items-center justify-center px-3 h-9 sm:h-auto sm:py-2 rounded-full text-label sm:text-sm font-medium transition-all ${
                           !selectedListId
                             ? 'bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))]'
                             : 'bg-[rgb(var(--color-chip-bg))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]'
@@ -154,7 +166,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                               animate={{ opacity: 1, y: 0 }}
                               exit={{ opacity: 0, y: 4 }}
                               transition={{ duration: 0.15 }}
-                              className="absolute -top-8 inset-x-0 flex justify-center gap-2.5 z-10"
+                              className="absolute -top-8 inset-x-0 flex justify-center gap-2.5 z-20"
                             >
                               <button
                                 onClick={(e) => { e.stopPropagation(); startSelectingTasks(VIRTUAL_TODAY_ID); }}
@@ -185,7 +197,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                           // « Aujourd'hui » ne porte pas de pastille colorée
                           // (c'est une smart list, pas une liste), donc rien
                           // à conserver de l'exception « pastille avant le nom ».
-                          className={`shrink-0 whitespace-nowrap inline-flex items-center gap-2 px-3.5 h-11 sm:h-auto sm:py-2 rounded-full text-label sm:text-sm font-medium transition-all ${
+                          className={`shrink-0 whitespace-nowrap inline-flex items-center gap-1.5 px-3 h-9 sm:h-auto sm:py-2 rounded-full text-label sm:text-sm font-medium transition-all ${
                             selectedListId === VIRTUAL_TODAY_ID
                               ? 'bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))]'
                               : 'bg-[rgb(var(--color-chip-bg))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]'
@@ -194,7 +206,9 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                         >
                           <Sparkles size={13} />
                           <span>{t('filters.today')}</span>
-                          <span className="text-caption sm:text-xs opacity-70 ml-0.5">{tasksCountByListId.get(VIRTUAL_TODAY_ID) ?? 0}</span>
+                          {/* Compte masqué sur mobile (souci d'espace, 2026-09-06) : chaque
+                              chip mobile n'a déjà que la place pour son nom. */}
+                          <span className="hidden sm:inline text-xs opacity-70 ml-0.5">{tasksCountByListId.get(VIRTUAL_TODAY_ID) ?? 0}</span>
                         </motion.button>
                       </div>
                       )}
@@ -243,7 +257,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                                   animate={{ opacity: 1, y: 0 }}
                                   exit={{ opacity: 0, y: 4 }}
                                   transition={{ duration: 0.15 }}
-                                  className="absolute -top-8 inset-x-0 flex justify-center gap-2.5 z-10"
+                                  className="absolute -top-8 inset-x-0 flex justify-center gap-2.5 z-20"
                                 >
                                   {/* Bouton "épingler par défaut" — seul un peut être actif */}
                                   <button
@@ -381,7 +395,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                                 // La pastille de couleur de la liste (juste
                                 // en dessous) reste — seule exception au
                                 // remplacement, demandée explicitement.
-                                className={`flex items-center gap-2 px-3.5 h-11 sm:h-auto sm:py-2 rounded-full text-label sm:text-sm font-medium transition-all ${
+                                className={`flex items-center gap-1.5 px-3 h-9 sm:h-auto sm:py-2 rounded-full text-label sm:text-sm font-medium transition-all ${
                                   isSelected
                                     ? 'bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))]'
                                     : 'bg-[rgb(var(--color-chip-bg))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]'
@@ -402,7 +416,8 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                                     className={isSelected ? 'opacity-80' : 'text-amber-500'}
                                   />
                                 )}
-                                <span className="text-caption sm:text-xs opacity-60 ml-1">
+                                {/* Compte masqué sur mobile (souci d'espace, 2026-09-06). */}
+                                <span className="hidden sm:inline text-xs opacity-60 ml-1">
                                   {tasksCountByListId.get(list.id) ?? 0}
                                 </span>
                                 {isSelected && (
@@ -471,25 +486,20 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                       </div>
                     </div>
 
-                    {/* Formulaire nouvelle liste — mobile (déclenché par l'icône + dans l'en-tête) */}
-                    <div className="sm:hidden mt-2">
-                      <AnimatePresence mode="wait">
-                        {showCreateList && (
-                          <CreateListForm
-                            key="add-form-mobile"
-                            variant="stacked"
-                            name={newListName}
-                            onNameChange={setNewListName}
-                            color={newListColor}
-                            onColorChange={setNewListColor}
-                            colorOptions={colorOptions}
-                            resolveColor={resolveListColor}
-                            onSubmit={submitNewList}
-                            onCancel={cancelNewList}
-                          />
-                        )}
-                      </AnimatePresence>
-                    </div>
+                    {/* Nouvelle liste — mobile (déclenché par l'icône + dans l'en-tête) :
+                        une feuille du bas, pas un formulaire poussé sous l'en-tête. Même
+                        geste que les autres confirmations/créations mobiles de l'app. */}
+                    <CreateListSheet
+                      isOpen={showCreateList}
+                      onClose={cancelNewList}
+                      name={newListName}
+                      onNameChange={setNewListName}
+                      color={newListColor}
+                      onColorChange={setNewListColor}
+                      colorOptions={colorOptions}
+                      resolveColor={resolveListColor}
+                      onSubmit={submitNewList}
+                    />
 
                     <AnimatePresence>
                       {selectingTasksForListId && (
