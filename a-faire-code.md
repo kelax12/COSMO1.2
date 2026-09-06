@@ -920,9 +920,44 @@ leur table. Aucun écran ne les monte.
 
 </details>
 
+> ✅ **Fait le 2026-09-05.** **49 hooks supprimés**, il en reste **un** — `useFilteredTasks`, et
+> c'est le point le plus important de cette passe (voir plus bas). Garde livrée :
+> `src/modules/orphan-hooks.guard.test.ts`, avec témoin, **éprouvée par deux sabotages**.
+>
+> **Remesuré avant d'agir, pas repris de la liste** : 49 orphelins, pas 52. Les trois manquants
+> étaient déjà traités — `useArchiveTeamProject` et `useUpdateTeamOKR` supprimés par C-66,
+> `useUpdateTeamCategory` / `useDeleteTeamCategory` **adoptés** par `TeamCategoryPicker`. Un
+> quatrième, `useRestoreOkr`, était **nouveau** : prédécesseur mort de `useRestoreOkrWithJournal`
+> (C-01). Le garder, c'était laisser deux façons de restaurer un OKR, dont une qui perd
+> silencieusement le journal des complétions — exactement le défaut que C-01 venait de fermer.
+>
+> 🔴 **`useFilteredTasks` NE DEVAIT PAS être supprimé, et la liste d'origine le demandait.** Aucun
+> écran ne l'importe, mais `usePendingTasks` l'appelle — dans le même fichier — et `usePendingTasks`
+> sert `DeadlineCalendar` et `TasksSummary`. **Une liste de « noms sans consommateur direct » n'est
+> pas une liste de suppressions sûres.** La garde connaît maintenant ce cas : le fichier déclarant
+> compte comme consommateur dès qu'il mentionne le hook ailleurs que dans sa déclaration.
+>
+> 🔴 **Second angle mort, rencontré pour de vrai** : `useCreateKRCompletion` sortait de la liste
+> des orphelins parce que **deux commentaires expliquant pourquoi il est dangereux le nommaient**.
+> Une mention n'est pas un appel. La garde retire les commentaires avant de chercher — même
+> correctif que `architecture.guard.test.ts` avait dû faire pour `supabase.from(`.
+>
+> **Ce qui est parti avec les hooks** : les trois `hooks.derived.ts` (tasks, okrs, habits) étaient
+> orphelins **en entier**, fichier et tests compris — 20 sélecteurs sous un en-tête
+> « Performance Optimized » qui était un contresens, un `useMemo` sur une donnée déjà chargée
+> n'économisant aucune requête. Côté repositories : les **7 méthodes d'étiquettes d'équipe** et
+> `getTaskActivity` (la table `team_labels`, elle, **reste** en base — supprimer des données pour
+> du code mort serait irréversible), et `getById` dans **cinq** modules.
+>
+> ⚠️ **`getById` n'était PAS sans appelant partout, contrairement à ce que l'arbitrage affirmait
+> (« vérifié »).** Il reste dans `okrs` — appelé **deux fois en interne** par son propre repository
+> Supabase — et dans `tasks`, où `useTask` est bien vivant (`useTaskModal`, `SubtaskChecklist`).
+> Le supprimer des sept modules aurait cassé la mise à jour d'un OKR.
+
 - **Nuance à ne pas perdre** : quelques-uns sont des **capacités d'interface assumées**, adossées
   à une note écrite (les `getPage` de la pagination, étape 3). Ceux-là se gardent **avec leur
-  justification**, jamais par défaut.
+  justification**, jamais par défaut. ✅ Respecté : les quatre `getPage` sont toujours là, et
+  `ALLOWED_ORPHANS` dans la garde impose une raison écrite à toute exception future.
 🟢 **Arbitré le 2026-09-03** (§0), après avoir mesuré que les 52 ne sont pas une population mais
 **quatre** : 6 hooks d'étiquettes d'équipe, **29 sélecteurs purs** (`useMemo` sur une donnée déjà
 chargée, zéro requête, zéro repository touché), **12 lecteurs à l'unité** (qui emportent leur méthode
@@ -939,6 +974,14 @@ de repository, `getById` n'ayant **aucun** autre appelant, vérifié), et **5 mu
 - **Fini quand** : les 48 sont supprimés, `npm run typecheck` confirme qu'aucun n'était appelé, et
   une garde compte les orphelins pour que le chiffre ne remonte pas. Le balayage doit embarquer son
   **témoin**, sinon il finira par ne plus rien détecter.
+  ✅ **Tenu, à une correction près** : 49 supprimés (pas 48 — la population avait bougé), `typecheck`
+  vert, et `src/modules/orphan-hooks.guard.test.ts` livrée. Le témoin ne se contente pas de vérifier
+  que le balayage voit des fichiers : il exige que des hooks **connus vivants** rendent plus de trois
+  consommateurs, **et** qu'un hook inexistant en rende zéro — sans cette seconde sonde, une mesure
+  qui renverrait toujours « consommé » passerait au vert en ne détectant plus rien.
+  🔴 **Les deux sabotages ont été JOUÉS, pas raisonnés** : (1) un hook exporté sans consommateur
+  ajouté à `lists/hooks.ts` fait bien échouer la garde ; (2) `consumerCount` forcé à rendre `1` fait
+  bien tomber le **témoin**. Une garde qu'on n'a pas vue échouer ne vaut rien.
 
 ### C-50 · Quatre fabriques de clés React Query survivent à la mig. 129 sans porter de donnée · **P3 · XS**
 
@@ -2995,9 +3038,9 @@ deux Edge Functions Stripe rendent 500 sur un identifiant Stripe périmé.
 maison ne piège le focus · `C-54` `/agenda` : jours hors d'atteinte au clavier · `C-55` trois
 surfaces que A-3 n'a pas su mesurer · `C-70` 22 cibles sous 44 px dans `TeamTaskModal`.
 
-**Dette structurelle (3)**
-`C-06` 36 `eslint-disable exhaustive-deps` · `C-07` 17 feuilles animées à la main ·
-`C-49` 52 hooks exportés sans consommateur.
+**Dette structurelle (2)**
+`C-06` 36 `eslint-disable exhaustive-deps` · `C-07` 17 feuilles animées à la main.
+~~`C-49` 52 hooks exportés sans consommateur~~ — **fermé le 2026-09-05**, 49 supprimés + garde.
 ~~`C-09` fichiers au-dessus de 600 lignes~~ — **fermé le 2026-09-05**, `KNOWN_OVERSIZED` vide.
 ~~`C-10` deux primitives sans consommateur~~ — **fermé le 2026-09-05**, supprimées.
 

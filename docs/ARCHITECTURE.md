@@ -297,10 +297,29 @@ Le dépôt accumule des primitives et des hooks livrés puis jamais adoptés :
 | ~~`MobileScreen`, `ListRow` (`src/components/mobile`)~~ | ✅ **supprimés le 2026-09-05** (C-10) — 0 consommateur en six semaines d'existence (cf. [`MOBILE.md`](./MOBILE.md)) |
 | `TouchTarget` | 2 |
 | `BottomSheet`, `Segmented` | 2 chacun, mais 16 fichiers importent une variante de feuille (cf. [`MOBILE.md`](./MOBILE.md) §3) |
+| ~~49 hooks de `src/modules`~~ | ✅ **supprimés le 2026-09-05** (C-49) — dont trois `hooks.derived.ts` orphelins EN ENTIER. Le motif est désormais **outillé** : `src/modules/orphan-hooks.guard.test.ts` |
 
 Ce n'est pas grave pris isolément, mais c'est un **motif** : on construit la brique générique, on
 migre la première page en vitrine, et la migration s'arrête là. Le coût n'est pas le code mort
 lui-même — c'est que la doc décrit alors une architecture qui n'existe pas.
+
+> ✅ **Ce motif a un outil depuis le 2026-09-05** : `src/modules/orphan-hooks.guard.test.ts`. Il
+> échoue dès qu'un hook exporté par `src/modules` n'est monté par rien. C'est la seule sortie
+> durable — les trois relevés manuels (2026-08-24, 08-25, 09-03) ont chacun trouvé la même chose,
+> parce qu'aucun d'eux ne laissait derrière lui de quoi la voir revenir.
+>
+> 🔴 **Deux angles morts, rencontrés POUR DE VRAI en écrivant cette garde**, et qui valent pour
+> tout balayage de ce dépôt :
+>
+> 1. **Une mention en commentaire n'est pas un appel.** `useCreateKRCompletion` disparaissait de
+>    la liste des orphelins parce que deux commentaires expliquant pourquoi il est dangereux le
+>    nommaient. Même correctif que `architecture.guard.test.ts` pour `supabase.from(`.
+> 2. **Un hook appelé par un autre hook du même fichier n'est pas orphelin.** `useFilteredTasks`
+>    n'est importé par aucun écran, mais `usePendingTasks` l'appelle, et celui-là sert deux
+>    composants vivants. La liste de C-49 demandait sa suppression : l'appliquer littéralement
+>    cassait `DeadlineCalendar` et `TasksSummary`.
+>
+> **Une liste de « noms sans consommateur direct » n'est pas une liste de suppressions sûres.**
 
 > ✅ **Le motif s'est inversé une fois, et il faut le noter parce que c'est la première.**
 > `MobileHeader` a été **adopté** (2 → 8 consommateurs) au lieu d'être supprimé, et la migration

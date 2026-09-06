@@ -26,11 +26,6 @@ describe('SupabaseCategoriesRepository', () => {
     expect(result).toEqual([{ id: 'cat1', name: 'Travail', color: 'blue' }]);
   });
 
-  it('getById: returns null on PGRST116 (not found) instead of throwing', async () => {
-    supabaseMock.queueTable('categories', { data: null, error: { code: 'PGRST116', message: 'No rows' } });
-    expect(await repo.getById('missing')).toBeNull();
-  });
-
   it('create: whitelists fields — extra/forged input keys are dropped, user_id comes from auth', async () => {
     supabaseMock.queueTable('categories', { data: row });
     // Simule un input forgé (devtools) avec des clés hostiles

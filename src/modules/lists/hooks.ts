@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { getListsRepository } from '@/lib/repository.factory';
@@ -26,16 +25,6 @@ export const useLists = () => {
   return useQuery({
     queryKey: listKeys.lists(),
     queryFn: () => repository.getAll(),
-    staleTime: 1000 * 60 * 30, // 30 minutes — changent rarement, mutations invalident le cache
-  });
-};
-
-export const useList = (id: string) => {
-  const repository = useListsRepository();
-  return useQuery({
-    queryKey: listKeys.detail(id),
-    queryFn: () => repository.getById(id),
-    enabled: !!id,
     staleTime: 1000 * 60 * 30, // 30 minutes — changent rarement, mutations invalident le cache
   });
 };
@@ -203,14 +192,6 @@ export const useRemoveTaskFromList = () => {
 // DERIVED HOOKS
 // ═══════════════════════════════════════════════════════════════════
 
-export const useListsForTask = (taskId: string) => {
-  const { data: lists = [] } = useLists();
-  return useMemo(
-    () => lists.filter((list) => list.taskIds.includes(taskId)),
-    [lists, taskId]
-  );
-};
-
 // ═══════════════════════════════════════════════════════════════════
 // RE-EXPORTS
 // ═══════════════════════════════════════════════════════════════════
@@ -245,3 +226,4 @@ export const useRestoreList = () => {
     onError: (error: Error) => reportRestoreFailure('list', error),
   });
 };
+

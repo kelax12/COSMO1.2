@@ -176,8 +176,6 @@ const KNOWN_DEMO_MEMBER_IDS = [
 export interface IEventsRepository {
   // Read operations
   getAll(): Promise<CalendarEvent[]>;
-  getById(id: string): Promise<CalendarEvent | null>;
-  getByTaskId(taskId: string): Promise<CalendarEvent[]>;
   getFiltered(filters: EventFilters): Promise<CalendarEvent[]>;
   getPage(params?: PaginationParams): Promise<PaginatedResult<CalendarEvent>>;
   /** Événements de la fenêtre [startISO, endISO] + TOUS les récurrents (cf. window.ts). */
@@ -228,11 +226,6 @@ export class LocalStorageEventsRepository implements IEventsRepository {
 
   async getAll(): Promise<CalendarEvent[]> {
     return this.getEvents();
-  }
-
-  async getById(id: string): Promise<CalendarEvent | null> {
-    const events = this.getEvents();
-    return events.find(e => e.id === id) || null;
   }
 
   async getByTaskId(taskId: string): Promise<CalendarEvent[]> {

@@ -2,11 +2,9 @@
 // KR-COMPLETIONS MODULE - React Query Hooks
 // ═══════════════════════════════════════════════════════════════════
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
+import { useQuery } from '@tanstack/react-query';
 import { getKRCompletionsRepository } from '@/lib/repository.factory';
 import { IKRCompletionsRepository } from './repository';
-import { KRCompletion, CreateKRCompletionInput } from './types';
 import { krCompletionKeys } from './constants';
 
 // ═══════════════════════════════════════════════════════════════════
@@ -42,44 +40,3 @@ export const useKRCompletions = (options?: { enabled?: boolean }) => {
 // ═══════════════════════════════════════════════════════════════════
 // WRITE HOOKS (Mutations)
 // ═══════════════════════════════════════════════════════════════════
-
-/**
- * Create a KR completion record.
- * Called when a Key Result is marked as complete.
- */
-export const useCreateKRCompletion = () => {
-  const queryClient = useQueryClient();
-  const repository = useKRCompletionsRepository();
-
-  return useMutation({
-    mutationFn: (input: CreateKRCompletionInput) => repository.create(input),
-
-    // Optimistic update — add immediately for instant dashboard feedback
-    onMutate: async (input) => {
-      await queryClient.cancelQueries({ queryKey: krCompletionKeys.all });
-
-      const previous = queryClient.getQueryData<KRCompletion[]>(krCompletionKeys.lists());
-
-      if (previous) {
-        const optimistic: KRCompletion = { ...input, id: crypto.randomUUID() };
-        queryClient.setQueryData<KRCompletion[]>(
-          krCompletionKeys.lists(),
-          (old) => [...(old ?? []), optimistic]
-        );
-      }
-
-      return { previous };
-    },
-
-    onError: (error: Error, _variables, context) => {
-      if (context?.previous) {
-        queryClient.setQueryData(krCompletionKeys.lists(), context.previous);
-      }
-      toast.error(`Erreur enregistrement KR : ${error.message}`);
-    },
-
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: krCompletionKeys.all });
-    },
-  });
-};

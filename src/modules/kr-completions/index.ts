@@ -31,5 +31,4 @@ export { LocalStorageKRCompletionsRepository } from './repository';
 
 export {
   useKRCompletions,
-  useCreateKRCompletion,
 } from './hooks';

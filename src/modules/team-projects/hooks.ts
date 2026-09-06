@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 import { getTeamProjectsRepository } from '@/lib/repository.factory';
 import { validateAsync } from '@/lib/validation/lazy';
 import { teamProjectKeys } from './constants';
-import type { UpdateTeamSubtaskInput, CreateTeamLabelInput, UpdateTeamLabelInput } from './types';
+import type { UpdateTeamSubtaskInput } from './types';
 import type { CreateTeamProjectInput, UpdateTeamProjectInput, CreateTeamTaskInput, UpdateTeamTaskInput, TeamTaskFilters } from './types';
 import { translator } from '@/i18n/useT';
 import { dependencyErrorCode } from '@/modules/tasks/dependency-errors';
@@ -263,88 +263,16 @@ export const useDeleteTeamSubtask = (taskId: string) => {
   });
 };
 
-// ─── Labels (mig. 093) ───────────────────────────────────────────────
-
-export const useTeamLabels = (orgId: string | undefined) => {
-  const repository = useRepo();
-  return useQuery({
-    queryKey: teamProjectKeys.labels(orgId ?? ''),
-    queryFn: () => repository.getLabels(orgId as string),
-    enabled: !!orgId,
-    // Le vocabulaire bouge rarement — inutile de le refetcher en continu.
-    staleTime: 1000 * 60 * 5,
-  });
-};
-
-/**
- * Jonctions tâche ↔ label pour TOUTE l'organisation, en une requête.
- * Les chips s'affichent sur chaque ligne de liste : une requête par tâche
- * ferait exploser les aller-retours sur un écran de 50 tâches.
- */
-export const useTeamTaskLabels = (orgId: string | undefined) => {
-  const repository = useRepo();
-  return useQuery({
-    queryKey: teamProjectKeys.taskLabels(orgId ?? ''),
-    queryFn: () => repository.getTaskLabels(orgId as string),
-    enabled: !!orgId,
-    staleTime: 1000 * 30,
-  });
-};
-
-export const useCreateTeamLabel = (orgId: string) => {
-  const queryClient = useQueryClient();
-  const repository = useRepo();
-  return useMutation({
-    mutationFn: (input: CreateTeamLabelInput) => repository.createLabel(orgId, input),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: teamProjectKeys.labels(orgId) });
-    },
-    onError: (error: Error) => toast.error(translator('errors').t('mutation.createLabel', { message: error.message })),
-  });
-};
-
-export const useUpdateTeamLabel = (orgId: string) => {
-  const queryClient = useQueryClient();
-  const repository = useRepo();
-  return useMutation({
-    mutationFn: ({ labelId, input }: { labelId: string; input: UpdateTeamLabelInput }) =>
-      repository.updateLabel(labelId, input),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: teamProjectKeys.labels(orgId) });
-    },
-    onError: (error: Error) => toast.error(translator('errors').t('mutation.updateLabel', { message: error.message })),
-  });
-};
-
-export const useDeleteTeamLabel = (orgId: string) => {
-  const queryClient = useQueryClient();
-  const repository = useRepo();
-  return useMutation({
-    mutationFn: (labelId: string) => repository.deleteLabel(labelId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: teamProjectKeys.labels(orgId) });
-      // La jonction perd des lignes par CASCADE : son cache est périmé aussi.
-      queryClient.invalidateQueries({ queryKey: teamProjectKeys.taskLabels(orgId) });
-    },
-    onError: (error: Error) => toast.error(translator('errors').t('mutation.deleteLabel', { message: error.message })),
-  });
-};
-
-/** Pose/retire un label sur une tâche — une seule mutation pour les deux sens. */
-export const useToggleTaskLabel = (orgId: string) => {
-  const queryClient = useQueryClient();
-  const repository = useRepo();
-  return useMutation({
-    mutationFn: ({ taskId, labelId, attached }: { taskId: string; labelId: string; attached: boolean }) =>
-      attached
-        ? repository.removeTaskLabel(taskId, labelId)
-        : repository.addTaskLabel(taskId, labelId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: teamProjectKeys.taskLabels(orgId) });
-    },
-    onError: (error: Error) => toast.error(translator('errors').t('mutation.updateLabels', { message: error.message })),
-  });
-};
+// 🗑️ Les SIX hooks d'etiquettes d'equipe (mig. 093) ont ete supprimes le
+// 2026-09-05 (C-49) : `useTeamLabels`, `useTeamTaskLabels`, `useCreateTeamLabel`,
+// `useUpdateTeamLabel`, `useDeleteTeamLabel`, `useToggleTaskLabel`. Une
+// fonctionnalite ENTIERE — hooks, cles de cache, methodes des deux
+// repositories — livree sans qu'aucun ecran ne la monte.
+//
+// ⚠️ La TABLE `team_labels` et sa jonction RESTENT en base : supprimer des
+// donnees pour du code mort serait irreversible, et la mig. 093 est appliquee
+// en prod. Le jour ou les etiquettes reviennent, le back-end est la ; c'est
+// le front qui se reecrira, contre un ecran.
 
 // ─── Historique (mig. 094) — lecture seule ───────────────────────────
 
@@ -365,16 +293,10 @@ export const useOrgActivity = (orgId: string | undefined, since: string) => {
   });
 };
 
-export const useTeamTaskActivity = (taskId: string | undefined) => {
-  const repository = useRepo();
-  return useQuery({
-    queryKey: teamProjectKeys.activity(taskId ?? ''),
-    queryFn: () => repository.getTaskActivity(taskId as string),
-    enabled: !!taskId,
-    staleTime: 1000 * 15,
-  });
-};
+// 🗑️ `useTeamTaskActivity` supprime le 2026-09-05 (C-49) : le journal PAR
+// TACHE n'etait monte par aucun ecran. `useOkrActivity`/`useOrgActivity`
 
+// ci-dessus, lui, sert la revue hebdomadaire — le journal reste lisible.
 // ─── Dépendances entre tâches (mig. 108) ─────────────────────────────
 
 /**

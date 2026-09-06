@@ -18,7 +18,6 @@ export { SupabaseHabitsRepository } from './supabase.repository';
 // React Query hooks
 export {
   useHabits,
-  useHabit,
   useCreateHabit,
   useUpdateHabit,
   useDeleteHabit,
@@ -32,10 +31,6 @@ export { useRestoreHabit } from './restore.hooks';
 // DERIVED HOOKS (Performance Optimized)
 // ═══════════════════════════════════════════════════════════════════
 
-export {
-  useHabitsWithStats,
-  useHabitsByFrequency,
-  useHabitStats,
-  useHabitsNeedingAttention,
-  useTodaysHabitStatus,
-} from './hooks.derived';
+// 🗑️ `hooks.derived.ts` a été SUPPRIMÉ le 2026-09-05 (C-49) : ses cinq
+// sélecteurs n'avaient aucun consommateur. Le fichier était orphelin EN
+// ENTIER. Cf. la note du baril `tasks`.

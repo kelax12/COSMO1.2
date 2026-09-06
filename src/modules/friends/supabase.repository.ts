@@ -118,21 +118,6 @@ export class SupabaseFriendsRepository implements IFriendsRepository {
     );
   }
 
-  async getById(id: string): Promise<Friend | null> {
-    if (!supabase) throw new Error('Supabase not configured');
-    const { data, error } = await supabase
-      .from('friends')
-      .select('*')
-      .eq('id', id)
-      .single();
-
-    if (error) {
-      if (error.code === 'PGRST116') return null;
-      throw normalizeApiError(error);
-    }
-    return data ? this.mapFromDb(data) : null;
-  }
-
   async getByEmail(email: string): Promise<Friend | null> {
     if (!supabase) throw new Error('Supabase not configured');
     // L-9 — Validate input at boundary: reject empty / oversized strings and

@@ -130,21 +130,6 @@ export class SupabaseEventsRepository implements IEventsRepository {
     return warnIfTruncated(rows, MAX_ROWS, 'events:window:member').map(mapEventFromDb);
   }
 
-  async getById(id: string): Promise<CalendarEvent | null> {
-    if (!supabase) throw new Error('Supabase not configured');
-    const { data, error } = await supabase
-      .from('events')
-      .select('*')
-      .eq('id', id)
-      .single();
-
-    if (error) {
-      if (error.code === 'PGRST116') return null;
-      throw normalizeApiError(error);
-    }
-    return data ? mapEventFromDb(data) : null;
-  }
-
   async getByTaskId(taskId: string): Promise<CalendarEvent[]> {
     if (!supabase) throw new Error('Supabase not configured');
     const { data, error } = await supabase

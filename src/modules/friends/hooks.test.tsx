@@ -21,7 +21,7 @@ vi.mock('@/modules/auth/AuthContext', () => ({ useAuth: () => ({ user: { id: 'me
 
 import {
   useFriends, useFriendRequests, useSendFriendRequest,
-  useAcceptFriendRequest, useRemoveFriend, useShareTask, useFriendCount, useSharesByTask,
+  useAcceptFriendRequest, useRemoveFriend, useShareTask, useSharesByTask,
 } from './hooks';
 import type { Friend } from './types';
 
@@ -39,14 +39,14 @@ beforeEach(() => {
   Object.values(fakeRepo).forEach((fn) => fn.mockReset());
 });
 
-describe('useFriends / useFriendCount', () => {
-  it('fetches friends and derives the count', async () => {
+// `useFriendCount` a été supprimé le 2026-09-05 (C-49), sans consommateur.
+describe('useFriends', () => {
+  it('fetches friends', async () => {
     fakeRepo.getAll.mockResolvedValue([friend]);
     const { wrapper } = makeWrapper();
-    const { result } = renderHook(() => ({ friends: useFriends(), count: useFriendCount() }), { wrapper });
-    await waitFor(() => expect(result.current.friends.isSuccess).toBe(true));
-    expect(result.current.friends.data).toEqual([friend]);
-    expect(result.current.count).toBe(1);
+    const { result } = renderHook(() => useFriends(), { wrapper });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.data).toEqual([friend]);
   });
 });
 

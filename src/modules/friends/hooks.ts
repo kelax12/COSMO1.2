@@ -87,21 +87,6 @@ export const useTaskShares = (taskId: string | undefined) => {
   });
 };
 
-/**
- * ⚠️ Plus aucun écran ne monte ce hook : `useSharesByTask` dérive désormais de
- * `useRelatedTaskShares`, qui lit la même table en couvrant strictement le
- * même périmètre. Le garder revient à garder une seconde requête à portée de
- * main ; le rebrancher rétablirait celle qu'on vient de retirer.
- */
-export const useMyTaskShares = () => {
-  const repository = useFriendsRepository();
-  return useQuery({
-    queryKey: friendKeys.myTaskShares(),
-    queryFn: () => repository.getMyTaskShares(),
-    staleTime: 1000 * 60 * 2, // 2 minutes — doit rester réactif (partages)
-  });
-};
-
 // ═══════════════════════════════════════════════════════════════════
 // MUTATION HOOKS
 // ═══════════════════════════════════════════════════════════════════
@@ -369,11 +354,6 @@ export const useRefuseSharedList = () => {
 // ═══════════════════════════════════════════════════════════════════
 // DERIVED HOOKS
 // ═══════════════════════════════════════════════════════════════════
-
-export const useFriendCount = () => {
-  const { data: friends = [] } = useFriends();
-  return useMemo(() => friends.length, [friends]);
-};
 
 export const usePendingRequestCount = () => {
   const { data: requests = [] } = useFriendRequests();

@@ -54,7 +54,7 @@ describe('LocalStorageListsRepository', () => {
     expect((await repo.update('x', { name: 'Y' })).name).toBe('Y');
     await expect(repo.update('absent', { name: 'z' })).rejects.toThrow();
     await repo.delete('x');
-    expect(await repo.getById('x')).toBeNull();
+    expect((await repo.getAll()).some((l) => l.id === 'x')).toBe(false);
     await expect(repo.delete('absent')).rejects.toThrow();
   });
 
@@ -62,9 +62,9 @@ describe('LocalStorageListsRepository', () => {
     seed([list({ id: 'x', taskIds: [] })]);
     await repo.addTaskToList('t1', 'x');
     await repo.addTaskToList('t1', 'x'); // pas de doublon
-    expect((await repo.getById('x'))?.taskIds).toEqual(['t1']);
+    expect((await repo.getAll()).find((l) => l.id === 'x')?.taskIds).toEqual(['t1']);
     await repo.removeTaskFromList('t1', 'x');
-    expect((await repo.getById('x'))?.taskIds).toEqual([]);
+    expect((await repo.getAll()).find((l) => l.id === 'x')?.taskIds).toEqual([]);
     await expect(repo.addTaskToList('t', 'absent')).rejects.toThrow();
     await expect(repo.removeTaskFromList('t', 'absent')).rejects.toThrow();
   });

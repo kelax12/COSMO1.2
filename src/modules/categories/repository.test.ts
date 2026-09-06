@@ -17,12 +17,6 @@ describe('LocalStorageCategoriesRepository', () => {
     expect(localStorage.getItem(CATEGORIES_STORAGE_KEY)).not.toBeNull();
   });
 
-  it('getById renvoie la catégorie ou null', async () => {
-    await repo.getAll();
-    expect((await repo.getById('cat-1'))?.name).toBe('Travail');
-    expect(await repo.getById('absente')).toBeNull();
-  });
-
   it('create ajoute une catégorie avec id généré', async () => {
     await repo.getAll();
     const created = await repo.create({ name: 'Loisirs', color: '#000' });

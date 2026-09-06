@@ -71,26 +71,6 @@ export class SupabaseListsRepository implements IListsRepository {
     return warnIfTruncated(data || [], 200, 'lists').map(this.mapFromDb);
   }
 
-  async getById(id: string): Promise<TaskList | null> {
-    if (!supabase) throw new Error('Supabase not configured');
-    // Defense-in-depth: also scope by user_id even though RLS already does.
-    // Faille V15.
-    const user = await getCurrentUser();
-    if (!user) return null;
-    const { data, error } = await supabase
-      .from('lists')
-      .select('*')
-      .eq('id', id)
-      .eq('user_id', user.id)
-      .single();
-
-    if (error) {
-      if (error.code === 'PGRST116') return null; // Not found
-      throw normalizeApiError(error);
-    }
-    return data ? this.mapFromDb(data) : null;
-  }
-
   async getByTaskId(taskId: string): Promise<TaskList[]> {
     if (!supabase) throw new Error('Supabase not configured');
     const user = await getCurrentUser();

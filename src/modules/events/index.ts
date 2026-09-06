@@ -36,8 +36,6 @@ export { LocalStorageEventsRepository } from './repository';
 export {
   useEvents,
   useEventsWindow,
-  useEvent,
-  useEventsByTask,
   useMemberEventsWindow,
   useUpcomingEvents,
 } from './hooks';

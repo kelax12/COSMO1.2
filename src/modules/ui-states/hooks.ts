@@ -194,17 +194,4 @@ export const useColorSettings = () => {
 // ═══════════════════════════════════════════════════════════════════
 // COMBINED UI STATE HOOK
 // ═══════════════════════════════════════════════════════════════════
-
-export const useUIState = () => {
-  const { favoriteColors, setFavoriteColors } = useFavoriteColors();
-  const { priorityRange, setPriorityRange } = usePriorityRange();
-  const { colorSettings } = useColorSettings();
-
-  return {
-    favoriteColors,
-    setFavoriteColors,
-    priorityRange,
-    setPriorityRange,
-    colorSettings,
-  };
-};
+

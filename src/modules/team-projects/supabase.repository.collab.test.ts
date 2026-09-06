@@ -33,11 +33,6 @@ const subtaskRow = {
   position: 2, created_by: 'u1', created_at: '2026-08-01T10:00:00.000Z',
 };
 
-const labelRow = {
-  id: 'lb1', org_id: 'org1', name: 'urgent', color: '#f5b942',
-  created_by: 'u1', created_at: '2026-08-01T10:00:00.000Z',
-};
-
 const activityRow = {
   id: 'ac1', task_id: 'tk1', org_id: 'org1', actor_id: 'u1',
   field: 'status', old_value: 'todo', new_value: 'doing',
@@ -222,160 +217,14 @@ describe('team-projects — sous-tâches', () => {
   });
 });
 
-describe('team-projects — labels', () => {
-  it('getLabels: filtre org_id, ordonne par name asc, mappe en camelCase', async () => {
-    supabaseMock.queueTable('team_labels', { data: [labelRow] });
-    const result = await repo.getLabels('org1');
-
-    expect(supabaseMock.argsOf('team_labels', 'eq')).toEqual(['org_id', 'org1']);
-    expect(supabaseMock.argsOf('team_labels', 'order')).toEqual(['name', { ascending: true }]);
-    expect(result).toEqual([{
-      id: 'lb1', orgId: 'org1', name: 'urgent', color: '#f5b942',
-      createdBy: 'u1', createdAt: labelRow.created_at,
-    }]);
-  });
-
-  it('getLabels: normalise les erreurs DB', async () => {
-    supabaseMock.queueTable('team_labels', { data: null, error: { message: 'denied', code: '42501' } });
-    await expect(repo.getLabels('org1')).rejects.toBeTruthy();
-  });
-
-  it("createLabel: org_id du paramètre, created_by de la session — jamais de l'input", async () => {
-    supabaseMock.queueTable('team_labels', { data: labelRow });
-    await repo.createLabel('org1', { name: 'urgent', color: '#f5b942' });
-
-    const inserted = supabaseMock.argsOf('team_labels', 'insert')?.[0] as Record<string, unknown>;
-    expect(inserted).toEqual({
-      org_id: 'org1', name: 'urgent', color: '#f5b942', created_by: supabaseMock.user?.id,
-    });
-  });
-
-  it('createLabel: couleur par défaut #6366f1', async () => {
-    supabaseMock.queueTable('team_labels', { data: labelRow });
-    await repo.createLabel('org1', { name: 'urgent' });
-
-    const inserted = supabaseMock.argsOf('team_labels', 'insert')?.[0] as Record<string, unknown>;
-    expect(inserted.color).toBe('#6366f1');
-  });
-
-  it('createLabel: rejette si non authentifié, sans INSERT', async () => {
-    supabaseMock.user = null;
-    await expect(repo.createLabel('org1', { name: 'X' })).rejects.toMatchObject({ code: 'not_authenticated' });
-    expect(supabaseMock.queries).toHaveLength(0);
-  });
-
-  it('createLabel: normalise les erreurs DB', async () => {
-    supabaseMock.queueTable('team_labels', { data: null, error: { message: 'dup', code: '23505' } });
-    await expect(repo.createLabel('org1', { name: 'X' })).rejects.toBeTruthy();
-  });
-
-  it('updateLabel: whitelist name/color — jamais org_id ni created_by', async () => {
-    supabaseMock.queueTable('team_labels', { data: labelRow });
-    await repo.updateLabel('lb1', { name: 'bloquant', color: '#22d3ee' });
-
-    expect(supabaseMock.argsOf('team_labels', 'update')?.[0]).toEqual({
-      name: 'bloquant', color: '#22d3ee',
-    });
-    expect(supabaseMock.argsOf('team_labels', 'eq')).toEqual(['id', 'lb1']);
-  });
-
-  it('updateLabel: input vide → patch vide', async () => {
-    supabaseMock.queueTable('team_labels', { data: labelRow });
-    await repo.updateLabel('lb1', {});
-
-    expect(supabaseMock.argsOf('team_labels', 'update')?.[0]).toEqual({});
-  });
-
-  it('updateLabel: normalise les erreurs DB', async () => {
-    supabaseMock.queueTable('team_labels', { data: null, error: { message: 'denied', code: '42501' } });
-    await expect(repo.updateLabel('lb1', { name: 'X' })).rejects.toBeTruthy();
-  });
-
-  it('deleteLabel: delete ciblé par id', async () => {
-    supabaseMock.queueTable('team_labels', { data: null });
-    await repo.deleteLabel('lb1');
-
-    expect(supabaseMock.callsFor('team_labels').map((c) => c.method)).toEqual(['delete', 'eq']);
-    expect(supabaseMock.argsOf('team_labels', 'eq')).toEqual(['id', 'lb1']);
-  });
-
-  it('deleteLabel: normalise les erreurs DB', async () => {
-    supabaseMock.queueTable('team_labels', { data: null, error: { message: 'denied', code: '42501' } });
-    await expect(repo.deleteLabel('lb1')).rejects.toBeTruthy();
-  });
-});
-
-describe('team-projects — jonction tâche/label', () => {
-  it('getTaskLabels: une seule requête jonction, filtrée par les labels de l’org', async () => {
-    supabaseMock.queueTable('team_labels', { data: [labelRow, { ...labelRow, id: 'lb2' }] });
-    supabaseMock.queueTable('team_task_labels', {
-      data: [{ task_id: 'tk1', label_id: 'lb1' }],
-    });
-    const result = await repo.getTaskLabels('org1');
-
-    expect(supabaseMock.argsOf('team_task_labels', 'select')).toEqual(['task_id, label_id']);
-    expect(supabaseMock.argsOf('team_task_labels', 'in')).toEqual(['label_id', ['lb1', 'lb2']]);
-    expect(result).toEqual([{ taskId: 'tk1', labelId: 'lb1' }]);
-  });
-
-  it("getTaskLabels: aucun label dans l'org → aucune requête sur la jonction", async () => {
-    supabaseMock.queueTable('team_labels', { data: [] });
-    expect(await repo.getTaskLabels('org1')).toEqual([]);
-    expect(supabaseMock.queries.map((q) => q.table)).toEqual(['team_labels']);
-  });
-
-  it('getTaskLabels: normalise les erreurs DB de la jonction', async () => {
-    supabaseMock.queueTable('team_labels', { data: [labelRow] });
-    supabaseMock.queueTable('team_task_labels', { data: null, error: { message: 'denied', code: '42501' } });
-    await expect(repo.getTaskLabels('org1')).rejects.toBeTruthy();
-  });
-
-  it('addTaskLabel: insert des deux seules clés de jonction', async () => {
-    supabaseMock.queueTable('team_task_labels', { data: null });
-    await repo.addTaskLabel('tk1', 'lb1');
-
-    expect(supabaseMock.argsOf('team_task_labels', 'insert')?.[0]).toEqual({
-      task_id: 'tk1', label_id: 'lb1',
-    });
-  });
-
-  it('addTaskLabel: normalise les erreurs DB', async () => {
-    supabaseMock.queueTable('team_task_labels', { data: null, error: { message: 'dup', code: '23505' } });
-    await expect(repo.addTaskLabel('tk1', 'lb1')).rejects.toBeTruthy();
-  });
-
-  it('removeTaskLabel: delete ciblé par task_id ET label_id', async () => {
-    supabaseMock.queueTable('team_task_labels', { data: null });
-    await repo.removeTaskLabel('tk1', 'lb1');
-
-    expect(supabaseMock.callsFor('team_task_labels').filter((c) => c.method === 'eq').map((c) => c.args))
-      .toEqual([['task_id', 'tk1'], ['label_id', 'lb1']]);
-  });
-
-  it('removeTaskLabel: normalise les erreurs DB', async () => {
-    supabaseMock.queueTable('team_task_labels', { data: null, error: { message: 'denied', code: '42501' } });
-    await expect(repo.removeTaskLabel('tk1', 'lb1')).rejects.toBeTruthy();
-  });
-});
+// 🗑️ Les blocs « labels » et « jonction tache/label » ont ete retires le
+// 2026-09-05 (C-49) avec les sept methodes de repository qu'ils couvraient :
+// une fonctionnalite entiere sans ecran. La TABLE reste en base.
 
 describe('team-projects — historique', () => {
-  it('getTaskActivity: filtre task_id, ordre anti-chronologique, cap 100', async () => {
-    supabaseMock.queueTable('team_task_activity', { data: [activityRow] });
-    const result = await repo.getTaskActivity('tk1');
-
-    expect(supabaseMock.argsOf('team_task_activity', 'eq')).toEqual(['task_id', 'tk1']);
-    expect(supabaseMock.argsOf('team_task_activity', 'order')).toEqual(['created_at', { ascending: false }]);
-    expect(supabaseMock.argsOf('team_task_activity', 'limit')).toEqual([100]);
-    expect(result).toEqual([{
-      id: 'ac1', taskId: 'tk1', orgId: 'org1', actorId: 'u1',
-      field: 'status', oldValue: 'todo', newValue: 'doing', createdAt: activityRow.created_at,
-    }]);
-  });
-
-  it('getTaskActivity: normalise les erreurs DB', async () => {
-    supabaseMock.queueTable('team_task_activity', { data: null, error: { message: 'denied', code: '42501' } });
-    await expect(repo.getTaskActivity('tk1')).rejects.toBeTruthy();
-  });
+  // 🗑️ Les deux tests `getTaskActivity` sont partis le 2026-09-05 (C-49) avec
+  // la methode : le journal PAR TACHE n'avait aucun ecran. `getOrgActivity`
+  // ci-dessous, lui, sert la revue hebdomadaire.
 
   it('getOrgActivity: filtre org_id + gte(created_at, since) comme l’index, cap 500', async () => {
     supabaseMock.queueTable('team_task_activity', { data: [activityRow] });

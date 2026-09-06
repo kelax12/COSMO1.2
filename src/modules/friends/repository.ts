@@ -90,8 +90,6 @@ function localizeIncomingSharedLists(lists: SharedListGrant[]): SharedListGrant[
 export interface IFriendsRepository {
   // Read operations
   getAll(): Promise<Friend[]>;
-  getById(id: string): Promise<Friend | null>;
-  getByEmail(email: string): Promise<Friend | null>;
   getPendingRequests(): Promise<PendingFriendRequest[]>;
   getSentRequests(): Promise<PendingFriendRequest[]>;
 
@@ -210,11 +208,6 @@ export class LocalStorageFriendsRepository implements IFriendsRepository {
 
   async getAll(): Promise<Friend[]> {
     return this.getFriends();
-  }
-
-  async getById(id: string): Promise<Friend | null> {
-    const friends = this.getFriends();
-    return friends.find(f => f.id === id) || null;
   }
 
   async getByEmail(email: string): Promise<Friend | null> {

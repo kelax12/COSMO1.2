@@ -4,7 +4,6 @@ import type { CreateOptions } from '@/lib/restore-id';
 
 export interface IHabitsRepository {
   fetchHabits(): Promise<Habit[]>;
-  getById(id: string): Promise<Habit | null>;
   /**
    * `options.restoreId` n'est renseigne que par un « Annuler » (R-08) : il
    * passe par un SECOND argument, jamais par le payload, qui vient d'un etat

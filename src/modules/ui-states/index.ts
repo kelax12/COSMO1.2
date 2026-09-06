@@ -23,7 +23,6 @@ export {
   useFavoriteColors,
   usePriorityRange,
   useColorSettings,
-  useUIState,
   useTaskSortPrefs,
   useLastVisitedPage,
   getLastVisitedPage,

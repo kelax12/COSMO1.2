@@ -38,33 +38,9 @@ const err = (key: Parameters<ReturnType<typeof translator<'errors'>>['t']>[0]) =
 const repo = new SupabaseFriendsRepository();
 const ME = () => supabaseMock.user?.id as string;
 
-const friendRow = {
-  id: 'f1', name: 'Alice', email: 'alice@test.dev',
-  friend_user_id: 'alice-uid', user_id: 'u1',
-};
-
 beforeEach(() => supabaseMock.reset());
 
 describe('SupabaseFriendsRepository, demandes (lecture et retrait)', () => {
-  it('getById: PGRST116 (aucune ligne) donne null, jamais une exception', async () => {
-    supabaseMock.queueTable('friends', { data: null, error: { code: 'PGRST116' } });
-    await expect(repo.getById('f1')).resolves.toBeNull();
-  });
-
-  it('getById: mappe friend_user_id vers userId (cle de matching des collaborateurs)', async () => {
-    supabaseMock.queueTable('friends', { data: friendRow });
-    const friend = await repo.getById('f1');
-    expect(supabaseMock.argsOf('friends', 'eq')).toEqual(['id', 'f1']);
-    expect(friend).toEqual({
-      id: 'f1', name: 'Alice', email: 'alice@test.dev', avatar: undefined, userId: 'alice-uid',
-    });
-  });
-
-  it('getById: une vraie erreur remonte (seul PGRST116 est avale)', async () => {
-    supabaseMock.queueTable('friends', { data: null, error: { code: '42501', message: 'rls' } });
-    await expect(repo.getById('f1')).rejects.toBeTruthy();
-  });
-
   it('getSentRequests: demandes ENVOYEES par moi et encore pending', async () => {
     supabaseMock.queueTable('friend_requests', {
       data: [{
