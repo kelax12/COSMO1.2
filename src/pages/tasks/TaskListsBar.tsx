@@ -100,7 +100,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                   data-tutorial-id="tasks-lists"
                 >
                   <div className="mb-2 sm:mb-4">
-                    <div className="flex items-center justify-between mb-1 sm:mb-4">
+                    <div className="flex items-center justify-between">
                       <h2 className="text-label sm:text-sm font-semibold text-slate-700 dark:text-slate-300">{t('lists.sectionTitle')}</h2>
                       {!showCreateList && (
                         <button
