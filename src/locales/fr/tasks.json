@@ -409,7 +409,8 @@
   "shareList": {
     "searchFriend": "Rechercher un ami…",
     "noFriendYet": "Ajoute d’abord un ami pour partager une liste.",
-    "noMatch": "Aucun ami ne correspond à ta recherche."
+    "noMatch": "Aucun ami ne correspond à ta recherche.",
+    "sheetLabel": "Partager la liste {{name}}"
   },
   "bulk": {
     "deleteCount_one": "Supprimer {{count}} tâche",

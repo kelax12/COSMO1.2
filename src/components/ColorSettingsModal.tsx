@@ -5,11 +5,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { useBottomSheet } from '@/hooks/use-bottom-sheet';
 import { useT } from '@/i18n/useT';
+import { useModalA11y } from '@/hooks/use-modal-a11y';
 import { useTasks } from '@/modules/tasks';
 import { useOkrs } from '@/modules/okrs';
 import { resolveReassignTargets } from '@/modules/categories/impact';
 import { useReassignCategory } from '@/modules/categories/useReassignCategory';
 import DeleteCategoryDialog from '@/components/category/DeleteCategoryDialog';
+import { useSheetMotion } from '@/components/mobile/mobile-motion';
 
 type ColorSettingsModalProps = {
   isOpen: boolean;
@@ -38,6 +40,15 @@ const ColorSettingsModalContent: React.FC<Omit<ColorSettingsModalProps, 'isOpen'
   const { data: okrs = [] } = useOkrs();
   const reassignCategory = useReassignCategory();
   const { sheetRef, handleBarWidth, sheetDragProps } = useBottomSheet(onClose);
+  // C-53 — modale montee par-dessus EventModal / HabitModal, en FRERE de leur
+  // overlay. Le composant n'est monte QUE lorsqu'il est ouvert (cf. le wrapper
+  // en bas de fichier), d'ou `open: true`.
+  const { ref: overlayRef, dialogProps } = useModalA11y<HTMLDivElement>({
+    open: true,
+    onClose,
+    label: t('colorModal.title'),
+  });
+  const sheetMotion = useSheetMotion();
   const { data: categories = [] } = useCategories();
   const createCategoryMutation = useCreateCategory();
   const updateCategoryMutation = useUpdateCategory();
@@ -170,7 +181,11 @@ const ColorSettingsModalContent: React.FC<Omit<ColorSettingsModalProps, 'isOpen'
   };
 
   return (
-    <div className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center sm:px-4 pointer-events-auto">
+    <div
+      ref={overlayRef}
+      {...dialogProps}
+      className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center sm:px-4 pointer-events-auto"
+    >
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -182,10 +197,7 @@ const ColorSettingsModalContent: React.FC<Omit<ColorSettingsModalProps, 'isOpen'
         <motion.div
           ref={sheetRef}
           {...sheetDragProps}
-          initial={{ y: '100%', opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: '110%', opacity: 0, transition: { duration: 0.22, ease: [0.4, 0, 1, 1] } }}
-          transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.7 }}
+          {...sheetMotion}
             className={`relative w-full overflow-hidden rounded-t-[28px] sm:rounded-[20px] bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-primary))] shadow-[0_-12px_40px_rgba(0,0,0,0.18)] sm:shadow-2xl border-t sm:border border-[rgb(var(--color-border))] transition-all flex flex-col max-h-[88vh] sm:max-h-[85vh] ${
               isNested ? 'sm:max-w-[510px]' : 'sm:max-w-[572px]'
             }`}

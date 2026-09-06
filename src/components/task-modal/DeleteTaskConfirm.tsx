@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Trash2 } from 'lucide-react';
 import { useBottomSheet } from '@/hooks/use-bottom-sheet';
 import { useT } from '@/i18n/useT';
+import { useSheetMotion } from '@/components/mobile/mobile-motion';
 
 interface DeleteTaskConfirmProps {
   isOpen: boolean;
@@ -19,6 +20,7 @@ const DeleteTaskConfirm: React.FC<DeleteTaskConfirmProps> = ({ isOpen, onCancel,
   const { t } = useT('taskModal');
   const { t: tCommon } = useT('common');
   const { sheetRef, handleBarWidth, sheetDragProps } = useBottomSheet(onCancel);
+  const sheetMotion = useSheetMotion();
 
   return (
     <AnimatePresence>
@@ -33,10 +35,7 @@ const DeleteTaskConfirm: React.FC<DeleteTaskConfirmProps> = ({ isOpen, onCancel,
           <motion.div
             ref={sheetRef}
             {...sheetDragProps}
-            initial={{ y: '100%', opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: '110%', opacity: 0, transition: { duration: 0.22, ease: [0.4, 0, 1, 1] } }}
-            transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.7 }}
+            {...sheetMotion}
             onClick={(e) => e.stopPropagation()}
             className="bg-[rgb(var(--color-surface))] rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-sm overflow-hidden border-t sm:border border-[rgb(var(--color-border))]"
             style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}

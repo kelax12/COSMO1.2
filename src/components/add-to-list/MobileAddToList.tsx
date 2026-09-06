@@ -12,6 +12,8 @@ import {
 } from '@/modules/lists';
 import { AddToListModalProps, COLOR_PALETTE, resolveColor } from './shared';
 import { useT } from '@/i18n/useT';
+import { useModalA11y } from '@/hooks/use-modal-a11y';
+import { useSheetMotion } from '@/components/mobile/mobile-motion';
 
 // ════════════════════════════════════════════════════════════════════════
 // Mobile : version iOS-style sheet avec brouillon inline,
@@ -36,6 +38,7 @@ const MobileAddToList: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskI
   const [draftList, setDraftList]             = useState<{ name: string; color: string } | null>(null);
   const draftInputRef = useRef<HTMLInputElement>(null);
   const { sheetRef, handleBarWidth, sheetDragProps } = useBottomSheet(onClose);
+  const sheetMotion = useSheetMotion();
 
   const hasDraft = draftList !== null;
 
@@ -51,23 +54,30 @@ const MobileAddToList: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskI
     if (hasDraft) requestAnimationFrame(() => draftInputRef.current?.focus());
   }, [hasDraft]);
 
+  // C-53 — Echap est desormais porte par `useModalA11y`, qui vient AVEC le
+  // piege de focus et la restitution au declencheur. L'escalade par couches
+  // (brouillon, confirmation de suppression, mode edition) est conservee : elle
+  // decrit ce que « fermer » veut dire ici, pas comment la touche est captee.
+  const escalatingClose = () => {
+    if (draftList)       { setDraftList(null);       return; }
+    if (confirmDeleteId) { setConfirmDeleteId(null); return; }
+    if (editMode)        { setEditMode(false);       return; }
+    onClose();
+  };
+  const { ref: overlayRef, dialogProps } = useModalA11y<HTMLDivElement>({
+    open: isOpen,
+    onClose: escalatingClose,
+    labelledBy: 'add-to-list-title-mobile',
+  });
+
   useEffect(() => {
     if (!isOpen) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape') return;
-      if (draftList)       { setDraftList(null);       return; }
-      if (confirmDeleteId) { setConfirmDeleteId(null); return; }
-      if (editMode)        { setEditMode(false);       return; }
-      onClose();
-    };
-    document.addEventListener('keydown', onKey);
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     return () => {
-      document.removeEventListener('keydown', onKey);
       document.body.style.overflow = prev;
     };
-  }, [isOpen, onClose, editMode, draftList, confirmDeleteId]);
+  }, [isOpen]);
 
   const handleToggle = (listId: string) => {
     if (editMode) return;
@@ -119,19 +129,15 @@ const MobileAddToList: React.FC<AddToListModalProps> = ({ isOpen, onClose, taskI
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.18 }}
+          ref={overlayRef}
+          {...dialogProps}
           className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm"
           onClick={onClose}
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="add-to-list-title-mobile"
         >
           <motion.div
             ref={sheetRef}
             {...sheetDragProps}
-            initial={{ y: '100%', opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: '110%', opacity: 0, transition: { duration: 0.22, ease: [0.4, 0, 1, 1] } }}
-            transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.7 }}
+            {...sheetMotion}
             onClick={(e) => e.stopPropagation()}
             className="w-full rounded-t-2xl shadow-2xl flex flex-col max-h-[92vh] bg-[rgb(var(--color-surface))]"
             style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}

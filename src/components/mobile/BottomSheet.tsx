@@ -1,7 +1,8 @@
 import React from 'react';
-import { motion, AnimatePresence, type PanInfo } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { SHEET_SPRING, FADE_TRANSITION, haptic } from './mobile-motion';
+import { FADE_TRANSITION, useSheetDrag, useSheetMotion } from './mobile-motion';
+import { useModalA11y } from '@/hooks/use-modal-a11y';
 
 interface BottomSheetProps {
   open: boolean;
@@ -16,16 +17,24 @@ interface BottomSheetProps {
  * Feuille bas-d'écran sur mobile, dialogue centré sur desktop (`sm:` et plus).
  *
  * Extrait de la modale de choix Premium (PremiumPage) et de la structure
- * reprise à l'identique par HabitsAdGate — au lieu de deux copies qui
+ * reprise à l'identique par les feuilles maison, au lieu de deux copies qui
  * divergeraient avec le temps, une seule brique. Cf. docs/MOBILE.md.
  */
 export default function BottomSheet({ open, onClose, children, ariaLabel, className }: BottomSheetProps) {
-  const handleDragEnd = (_: unknown, info: PanInfo) => {
-    if (info.offset.y > 80 || info.velocity.y > 500) {
-      haptic(10);
-      onClose();
-    }
-  };
+  // Mouvement ET geste viennent des helpers du design system : c'est la
+  // primitive, elle ne peut pas etre l'endroit ou la convention se reecrit
+  // a la main. `useSheetDrag` porte les memes seuils (80 px OU 500 px/s) et
+  // le meme retour haptique que la version qui vivait ici.
+  const sheetMotion = useSheetMotion();
+  const sheetDrag = useSheetDrag(onClose);
+  // C-53 — `role`/`aria-modal` etaient deja poses ici, mais rien ne piegeait
+  // le focus ni ne le rendait au declencheur, et Echap ne fermait pas : une
+  // feuille annoncee comme modale sans en avoir le comportement clavier.
+  const { ref: panelRef, dialogProps } = useModalA11y<HTMLDivElement>({
+    open,
+    onClose,
+    label: ariaLabel,
+  });
 
   return (
     <AnimatePresence>
@@ -42,17 +51,10 @@ export default function BottomSheet({ open, onClose, children, ariaLabel, classN
         >
           <motion.div
             key="sheet-panel"
-            role="dialog"
-            aria-modal="true"
-            aria-label={ariaLabel}
-            initial={{ y: '100%', opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: '100%', opacity: 0 }}
-            transition={SHEET_SPRING}
-            drag="y"
-            dragConstraints={{ top: 0, bottom: 0 }}
-            dragElastic={{ top: 0, bottom: 0.4 }}
-            onDragEnd={handleDragEnd}
+            ref={panelRef}
+            {...dialogProps}
+            {...sheetMotion}
+            {...sheetDrag}
             onClick={(e) => e.stopPropagation()}
             className={cn(
               'w-full sm:max-w-md bg-[rgb(var(--color-surface))] sm:rounded-2xl rounded-t-sheet shadow-2xl flex flex-col max-h-[92vh]',

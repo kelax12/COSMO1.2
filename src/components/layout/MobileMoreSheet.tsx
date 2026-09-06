@@ -18,6 +18,7 @@ import {
 import { useBottomSheet } from '@/hooks/use-bottom-sheet';
 import { useSheetMotion } from '@/components/mobile/mobile-motion';
 import { useT } from '@/i18n/useT';
+import { useModalA11y, mergeRefs } from '@/hooks/use-modal-a11y';
 import type { KeyOf } from '@/i18n/catalog';
 
 interface MobileMoreSheetProps {
@@ -68,6 +69,14 @@ const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({ open, onOpenChange })
 
   const handleClose = () => onOpenChange(false);
   const { sheetRef, backdropOpacity, handleBarWidth, sheetDragProps } = useBottomSheet(handleClose);
+  // C-53 — c'est le SEUL acces mobile a OKR, Statistiques, Parametres et a la
+  // deconnexion : une feuille qui n'accueille pas le focus et qu'Echap ne ferme
+  // pas y coute plus cher qu'ailleurs.
+  const { ref: panelRef, dialogProps } = useModalA11y<HTMLDivElement>({
+    open,
+    onClose: handleClose,
+    label: t('nav.moreOptions'),
+  });
 
   const handleLogout = async () => {
     handleClose();
@@ -90,6 +99,11 @@ const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({ open, onOpenChange })
         <>
           {/* Backdrop */}
           <motion.div
+            // Ancre E2E : le voile sert de TEMOIN LOCAL a la mesure sous
+            // mouvement reduit. Il est anime en opacite SEULE, donc sain par
+            // construction ; s'il est eteint, c'est le harnais qui ne peint
+            // pas, pas la feuille qui est cassee.
+            data-mobile-more-sheet-backdrop
             className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
             style={{ opacity: backdropOpacity }}
             onClick={handleClose}
@@ -97,7 +111,8 @@ const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({ open, onOpenChange })
 
           {/* Sheet */}
           <motion.div
-            ref={sheetRef}
+            ref={mergeRefs(sheetRef, panelRef)}
+            {...dialogProps}
             // Point d'ancrage stable pour les E2E (navTo dans e2e/fixtures.ts) :
             // sans scope, `getByRole('button', { name: /okr/i })` matchait aussi
             // les MobileCollapsible de la page RESTÉE derrière la feuille (le
