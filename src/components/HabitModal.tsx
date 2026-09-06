@@ -3,6 +3,7 @@ import { X, Plus, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useBottomSheet } from '@/hooks/use-bottom-sheet';
 import { useInvalidShake } from '@/hooks/use-invalid-shake';
+import { useModalA11y } from '@/hooks/use-modal-a11y';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
 import { useFavoriteColors } from '@/modules/ui-states';
 import { useCategories } from '@/modules/categories';
@@ -11,6 +12,7 @@ import ColorSettingsModal from './ColorSettingsModal';
 import ConfirmDiscardDialog from './ConfirmDiscardDialog';
 import { Button } from '@/components/ui/button';
 import { useT } from '@/i18n/useT';
+import { useSheetMotion } from '@/components/mobile/mobile-motion';
 
 interface HabitModalProps {
   isOpen: boolean;
@@ -94,11 +96,18 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
     doSave();
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Escape') guardedClose();
-  };
-
+  // C-53 — l'ancien gestionnaire d'Echap etait un `onKeyDown` React pose sur
+  // l'overlay : il dependait de la remontee d'un evenement depuis l'element
+  // focalise, donc il mourait des que le focus sortait de la modale. Il n'y
+  // avait par ailleurs aucun piege, aucune restitution du focus, aucun role.
+  // Tout cela vient maintenant de `useModalA11y`, qui ecoute `document`.
   const { sheetRef, handleBarWidth, sheetDragProps } = useBottomSheet(guardedClose);
+  const sheetMotion = useSheetMotion();
+  const { ref: overlayRef, dialogProps } = useModalA11y<HTMLDivElement>({
+    open: isOpen,
+    onClose: guardedClose,
+    label: isEditing ? t('modal.editHabit') : t('modal.createHabit'),
+  });
 
   return (
     <>
@@ -108,17 +117,15 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            ref={overlayRef}
+            {...dialogProps}
             className="fixed inset-0 bg-black/30 backdrop-blur-md flex items-end sm:items-center justify-center z-50 sm:p-4"
             onClick={guardedClose}
-            onKeyDown={handleKeyDown}
           >
             <motion.div
               ref={sheetRef}
               {...sheetDragProps}
-              initial={{ y: '100%', opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: '110%', opacity: 0, transition: { duration: 0.22, ease: [0.4, 0, 1, 1] } }}
-              transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.7 }}
+              {...sheetMotion}
               className="w-full sm:max-w-lg sm:rounded-2xl rounded-t-[28px] shadow-[0_-12px_40px_rgba(0,0,0,0.18)] sm:shadow-2xl flex flex-col max-h-[88vh]"
               style={{
                 backgroundColor: 'rgb(var(--color-surface))',

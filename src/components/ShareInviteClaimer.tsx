@@ -17,6 +17,8 @@ import { ApiError } from '@/lib/normalizeApiError';
 import { isImageAvatar, isEmojiAvatar } from '@/lib/avatar';
 import { useT } from '@/i18n/useT';
 import { RichText } from '@/components/ui/rich-text';
+import { useSheetMotion } from '@/components/mobile/mobile-motion';
+import { useBottomSheet } from '@/hooks/use-bottom-sheet';
 
 /**
  * Monté au niveau App (comme CookieBanner) : dès que l'utilisateur est
@@ -86,6 +88,10 @@ const ShareInviteClaimer: React.FC = () => {
   }, [isAuthenticated, isLoading, isDemo]);
 
   const closeAfter = () => setInvite(null);
+  const sheetMotion = useSheetMotion();
+  // Meme correction que les cinq feuilles de l'audit 2026-08-14 : la
+  // poignee affichee plus bas ne declenchait aucun geste.
+  const { sheetRef, handleBarWidth, sheetDragProps } = useBottomSheet(closeAfter);
 
   const handleAccept = () => {
     if (!invite) return;
@@ -136,15 +142,14 @@ const ShareInviteClaimer: React.FC = () => {
           />
 
           <motion.div
+            ref={sheetRef}
+            {...sheetDragProps}
             className="relative w-full sm:max-w-md bg-[rgb(var(--color-surface))] rounded-t-[28px] sm:rounded-2xl shadow-[0_-12px_40px_rgba(0,0,0,0.18)] sm:shadow-2xl overflow-hidden flex flex-col"
             style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
-            initial={{ y: '100%', opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: '110%', opacity: 0, transition: { duration: 0.22, ease: [0.4, 0, 1, 1] } }}
-            transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.7 }}
+            {...sheetMotion}
           >
             <div className="sm:hidden flex justify-center pt-3 pb-1 shrink-0">
-              <div className="h-[5px] w-10 rounded-full bg-[rgb(var(--color-border-strong))]" />
+              <motion.div className="h-[5px] rounded-full bg-[rgb(var(--color-border-strong))]" style={{ width: handleBarWidth }} />
             </div>
 
             <div className="p-6 text-center">

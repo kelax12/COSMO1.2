@@ -9,6 +9,7 @@ import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { useT } from '@/i18n/useT';
 import { RichText } from '@/components/ui/rich-text';
+import { useSheetMotion } from '@/components/mobile/mobile-motion';
 
 interface PremiumGateModalProps {
   isOpen: boolean;
@@ -23,6 +24,7 @@ export function PremiumGateModal({ isOpen, onClose, featureName }: PremiumGateMo
   // paramètre est évalué à l'appel, mais `t` n'existe pas au niveau du module.
   const feature = featureName ?? t('gate.defaultFeature');
   const { sheetRef, handleBarWidth, sheetDragProps } = useBottomSheet(onClose);
+  const sheetMotion = useSheetMotion();
   const { refreshBillingStatus } = useBilling();
   const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
 
@@ -85,10 +87,7 @@ export function PremiumGateModal({ isOpen, onClose, featureName }: PremiumGateMo
               {...sheetDragProps}
               className="relative w-full sm:max-w-md bg-[rgb(var(--color-surface))] rounded-t-[28px] sm:rounded-2xl shadow-[0_-12px_40px_rgba(0,0,0,0.18)] sm:shadow-2xl overflow-hidden max-h-[88vh] sm:max-h-[90vh] flex flex-col"
               style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
-              initial={{ y: '100%', opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: '110%', opacity: 0, transition: { duration: 0.22, ease: [0.4, 0, 1, 1] } }}
-              transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.7 }}
+              {...sheetMotion}
             >
               <div className="sm:hidden flex justify-center pt-3 pb-1 shrink-0">
                 <motion.div style={{ width: handleBarWidth }} className="h-[5px] rounded-full bg-slate-300/70 dark:bg-slate-500/60" />

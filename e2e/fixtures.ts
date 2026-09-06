@@ -92,7 +92,30 @@ export const test = base.extend<{ demoPage: Page }>({
     // serveur chaud, passent bien en dessous).
     //    45 s : au tout premier test d'un serveur froid, Vite compile encore
     //    le DashboardPage lazy (+ recharts) pendant que l'animation joue.
-    await expect(page.getByRole('heading', { level: 1 })).toContainText(/bonjour/i, { timeout: 45_000 });
+    //
+    // 🔴 LE TITRE N'EST PAS LE MÊME AUX DEUX TAILLES, et cette fixture a
+    //    longtemps supposé le contraire. Le « Bonjour, <prénom> » du dashboard
+    //    est écrit `hidden md:block` (DashboardPage.tsx) : sous 768 px le h1
+    //    est LA DATE, choix produit délibéré et commenté à sa source. Attendre
+    //    `/bonjour/i` était donc STRUCTURELLEMENT impossible à tenir sur un
+    //    viewport mobile — la fixture y échouait au bout de 45 s, avant le
+    //    moindre test, sur tous les specs à la fois.
+    //
+    //    Mesuré le 2026-09-06 : le h1 rendu en 390 px est « dimanche 6 sept. ».
+    //    C'est ce qui rendait le project `mobile-safari` intégralement rouge,
+    //    et ce qui empêchait `e2e/reduced-motion-sheets.spec.ts` de mesurer
+    //    `MobileMoreSheet` — la seule feuille dont on sache qu'elle a vraiment
+    //    été cassée.
+    //
+    // ❌ Ne pas « corriger » ça en acceptant n'importe quel h1 : un h1 vide ou
+    //    celui d'une autre page passerait, et la fixture cesserait de prouver
+    //    qu'on est bien arrivé sur le dashboard rendu. On attend le titre que
+    //    la taille courante rend RÉELLEMENT.
+    const isMobileViewport = (page.viewportSize()?.width ?? 1280) < 768;
+    await expect(page.getByRole('heading', { level: 1 })).toContainText(
+      isMobileViewport ? /\d/ : /bonjour/i,
+      { timeout: 45_000 },
+    );
 
     // 4. Skip onboarding général + tutoriels par page
     //    L'overlay onboarding est posé 500ms après loginDemo() et bloque

@@ -4,7 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import type { EventRecurrence } from '@/modules/events';
 import { DAY_ORDER } from './helpers';
 import { useT } from '@/i18n/useT';
-import { useSheetDrag } from '@/components/mobile/mobile-motion';
+import { useSheetDrag, useSheetMotion } from '@/components/mobile/mobile-motion';
+import { useModalA11y } from '@/hooks/use-modal-a11y';
 
 interface RecurrenceDaysModalProps {
   isOpen: boolean;
@@ -20,6 +21,13 @@ const RecurrenceDaysModal: React.FC<RecurrenceDaysModalProps> = ({
   const { t } = useT('eventModal');
   const { t: tCommon } = useT('common');
   const sheetDrag = useSheetDrag(onClose);
+  const sheetMotion = useSheetMotion();
+  // C-53 — feuille montee par-dessus EventModal, en FRERE de son overlay.
+  const { ref: overlayRef, dialogProps } = useModalA11y<HTMLDivElement>({
+    open: isOpen,
+    onClose,
+    label: t('repeatDays'),
+  });
   return (
       <AnimatePresence>
         {isOpen && (
@@ -27,14 +35,13 @@ const RecurrenceDaysModal: React.FC<RecurrenceDaysModalProps> = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            ref={overlayRef}
+            {...dialogProps}
             className="fixed inset-0 bg-black/40 backdrop-blur-md flex items-end sm:items-center justify-center z-[70] sm:p-4"
             onClick={() => onClose()}
           >
             <motion.div
-              initial={{ y: '100%', opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: '110%', opacity: 0, transition: { duration: 0.22, ease: [0.4, 0, 1, 1] } }}
-              transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.7 }}
+              {...sheetMotion}
               // La poignee ci-dessous promettait un geste qui n existait pas
               // (audit mobile 2026-08-14 : cinq feuilles dans ce cas). Une
               // affordance qui ment est pire que pas d affordance.

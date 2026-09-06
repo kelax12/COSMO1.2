@@ -7,6 +7,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { AlertTriangle } from 'lucide-react';
 import { useBottomSheet } from '@/hooks/use-bottom-sheet';
 import { useT } from '@/i18n/useT';
+import { useSheetMotion } from '@/components/mobile/mobile-motion';
+import { useModalA11y } from '@/hooks/use-modal-a11y';
 
 interface ConfirmDiscardDialogProps {
   isOpen: boolean;
@@ -17,6 +19,15 @@ interface ConfirmDiscardDialogProps {
 const ConfirmDiscardDialog: React.FC<ConfirmDiscardDialogProps> = ({ isOpen, onCancel, onConfirm }) => {
   const { t } = useT('common');
   const { sheetRef, handleBarWidth, sheetDragProps } = useBottomSheet(onCancel);
+  const sheetMotion = useSheetMotion();
+  // C-53 — cette confirmation s'ouvre PAR-DESSUS EventModal / HabitModal, et
+  // elle est rendue en FRERE de leur overlay, pas dedans. Sans piege a elle,
+  // le piege du parent lui reprendrait le focus a la premiere tabulation.
+  const { ref: overlayRef, dialogProps } = useModalA11y<HTMLDivElement>({
+    open: isOpen,
+    onClose: onCancel,
+    label: t('discard.title'),
+  });
 
   return (
     <AnimatePresence>
@@ -25,16 +36,15 @@ const ConfirmDiscardDialog: React.FC<ConfirmDiscardDialogProps> = ({ isOpen, onC
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
+          ref={overlayRef}
+          {...dialogProps}
           className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center z-[70] sm:p-4"
           onClick={onCancel}
         >
           <motion.div
             ref={sheetRef}
             {...sheetDragProps}
-            initial={{ y: '100%', opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: '110%', opacity: 0, transition: { duration: 0.22, ease: [0.4, 0, 1, 1] } }}
-            transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.7 }}
+            {...sheetMotion}
             onClick={(e) => e.stopPropagation()}
             className="bg-[rgb(var(--color-surface))] rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-sm overflow-hidden border-t sm:border border-[rgb(var(--color-border))]"
             style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}

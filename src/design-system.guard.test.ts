@@ -206,8 +206,8 @@ describe('design system mobile — échelle typographique', () => {
 // L'audit UI du 2026-08-14 a compté « 8 valeurs hors barème » et proposé de
 // les rabattre sur les 7 paliers publiés. En les relisant une par une, ce
 // n'était pas le bon diagnostic : ces valeurs ne sont pas des accidents, elles
-// portent un ORDRE réel et voulu — `AdModal` (300) doit passer devant
-// `CookieBanner` (200), `PageTutorial` (500) devant tout le chrome, un popover
+// portent un ORDRE réel et voulu — `PremiumGateModal` (200) doit passer
+// devant le chrome, `PageTutorial` (500) devant tout, un popover
 // ouvert DANS une feuille portalisée (10000) devant la feuille (9999). Les
 // rabattre sur 7 paliers aurait créé des collisions d'empilement pour faire
 // entrer la réalité dans un tableau.
@@ -277,42 +277,27 @@ describe('design system — échelle z-index', () => {
 // sans issue pour les utilisateurs en mouvement réduit — et invisible pour tous
 // les autres, ce qui explique que ça ait tenu si longtemps.
 //
-// FORME : CLIQUET. Les fichiers ci-dessous portent encore un `y: '100%'` écrit
-// à la main. Tous ne sont pas cassés — un `initial` qui contient AUSSI une clé
-// non-transform se résout correctement. Les rendre tous rouges d'un coup
-// produirait une gate rouge en permanence, donc ignorée. La liste ne peut que
-// RÉTRÉCIR : aucun nouveau fichier ne doit y entrer, et `useSheetMotion()` est
-// le chemin par défaut.
+// FORME : CLIQUET, ET IL EST MAINTENANT A ZERO (C-07, 2026-09-04).
 //
-// ✅ 2026-08-27 : cette phrase « tous ne sont pas cassés » n'était appuyée que
-// sur UNE feuille regardée à l'œil. Elle est maintenant MESURÉE, dans un
-// navigateur qui composite et sous `reducedMotion: 'reduce'` réellement émulé :
-// `e2e/reduced-motion-sheets.spec.ts`. Deux des feuilles ci-dessous s'ouvrent
-// bien, et `LoginModal` REMISE dans sa forme d'avant migration s'ouvrait bien
-// elle aussi — le commit `a1debe3` avait donc affirmé un bug qui n'existait pas.
+// Il a vecu avec une liste de 17 fichiers geles : les rendre rouges d'un coup
+// aurait produit une gate rouge en permanence, donc ignoree. Les 16 qui
+// restaient (`AdModal` ayant disparu avec le mur-pub) passent desormais par
+// `useSheetMotion()`, et la liste est vide. La regle devient donc simple :
+// plus AUCUN `y: '100%'` ecrit a la main, nulle part, hors du helper.
 //
-// ⚠️ CE FICHIER-CI NE PEUT PAS TRANCHER LA QUESTION. Il compte des chaînes de
-// caractères ; il ne sait pas si une feuille s'ouvre. Ne jamais lui faire dire
-// qu'une feuille fonctionne : c'est le rôle du spec Playwright ci-dessus.
-const KNOWN_HANDROLLED_SHEETS = new Set([
-  'src/components/AdModal.tsx',
-  'src/components/ColorSettingsModal.tsx',
-  'src/components/CompletedOKRsModal.tsx',
-  'src/components/ConfirmDiscardDialog.tsx',
-  'src/components/HabitModal.tsx',
-  'src/components/LoginModal.tsx',
-  'src/components/PremiumGateModal.tsx',
-  'src/components/ShareInviteClaimer.tsx',
-  'src/components/ShareListSheet.tsx',
-  'src/components/TaskTable.tsx',
-  'src/components/WeeklyCheckinModal.tsx',
-  'src/components/add-to-list/MobileAddToList.tsx',
-  'src/components/event-modal/EventModalForm.tsx',
-  'src/components/event-modal/RecurrenceDaysModal.tsx',
-  'src/components/mobile/BottomSheet.tsx',
-  'src/components/task-modal/DeleteTaskConfirm.tsx',
-  'src/pages/okr/DeleteObjectiveConfirm.tsx',
-]);
+// ⚠️ CE FICHIER-CI NE PEUT PAS TRANCHER LA QUESTION. Il compte des chaines de
+// caracteres ; il ne sait pas si une feuille s'OUVRE. Ne jamais lui faire dire
+// qu'une feuille fonctionne : c'est le role de `e2e/reduced-motion-sheets.spec.ts`,
+// qui MESURE l'etat peint sous `reducedMotion: 'reduce'` reellement emule.
+//
+// 🔴 LE DETECTEUR IGNORE LES COMMENTAIRES, et ce n'etait pas le cas avant.
+// `LoginModal.tsx` a ete migre le 2026-08-27 et est reste dans la liste des
+// fichiers fautifs jusqu'au 2026-09-04 : la seule occurrence qu'il portait
+// encore etait le COMMENTAIRE expliquant pourquoi il avait ete migre. Une
+// garde qui compte ses propres explications ne mesure pas le produit — meme
+// classe de defaut que les quatre gardes reprises le 2026-09-03.
+const stripComments = (src: string) =>
+  src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/[^\n]*/g, '$1');
 
 // Le seul endroit ou `y: '100%'` est LEGITIME : le helper lui-meme, qui ne
 // l'emet que lorsque le mouvement n'est PAS reduit.
@@ -321,38 +306,49 @@ const SHEET_MOTION_HOME = 'src/components/mobile/mobile-motion.ts';
 const SHEET_SLIDE = /y:\s*['"]100%['"]/;
 
 describe('design system — mouvement des feuilles sous mouvement réduit', () => {
-  it("n'introduit aucune nouvelle feuille avec un `y: '100%'` écrit à la main", () => {
-    const newcomers = files
-      .filter((file) => SHEET_SLIDE.test(readFileSync(file, 'utf8')))
+  it("n'écrit aucune feuille avec un `y: '100%'` à la main", () => {
+    const offenders = files
+      .filter((file) => SHEET_SLIDE.test(stripComments(readFileSync(file, 'utf8'))))
       .map(rel)
-      .filter((file) => file !== SHEET_MOTION_HOME && !KNOWN_HANDROLLED_SHEETS.has(file));
+      .filter((file) => file !== SHEET_MOTION_HOME);
 
     expect(
-      newcomers,
+      offenders,
       [
         'Feuille(s) animée(s) à la main :',
-        ...newcomers,
-        "Utiliser `useSheetMotion()` (src/components/mobile/mobile-motion.ts).",
-        "Sous `prefers-reduced-motion`, un `initial={{ y: '100%' }}` peut rester",
-        'appliqué : la feuille s ouvre alors 100 % sous l écran. Mesuré, pas supposé.',
+        ...offenders,
+        'Utiliser `useSheetMotion()` (src/components/mobile/mobile-motion.ts).',
+        'Le cliquet est à ZÉRO depuis le 2026-09-04 : il ne se rouvre pas.',
+        "Sous `prefers-reduced-motion`, la position d'arrivée doit venir du CSS,",
+        "l'animation ne portant que sur l'opacité.",
       ].join('\n'),
     ).toEqual([]);
   });
 
-  it('ne laisse pas la liste garder un fichier déjà migré', () => {
-    const stale = [...KNOWN_HANDROLLED_SHEETS].filter((file) => {
-      const full = files.find((f) => rel(f) === file);
-      return full && !SHEET_SLIDE.test(readFileSync(full, 'utf8'));
-    });
+  // TÉMOIN. Une garde à zéro qui ne détecterait plus rien rend le MÊME verdict
+  // qu'une garde saine : « aucune violation ». Les deux ne se distinguent qu'en
+  // donnant au détecteur une violation à trouver. Sans ces deux cas, casser le
+  // regex ci-dessus laisserait la suite verte.
+  it("détecte réellement une feuille écrite à la main (témoin)", () => {
+    const sample = [
+      '<motion.div',
+      "  initial={{ y: '100%', opacity: 0 }}",
+      '  animate={{ y: 0, opacity: 1 }}',
+      '/>',
+    ].join('\n');
 
-    expect(
-      stale,
-      [
-        'Fichier(s) migré(s) mais encore listé(s) :',
-        ...stale,
-        'Les retirer de KNOWN_HANDROLLED_SHEETS — sinon la liste reprend du mou',
-        'et un futur `y: 100%` y passerait inaperçu.',
-      ].join('\n'),
-    ).toEqual([]);
+    expect(SHEET_SLIDE.test(stripComments(sample))).toBe(true);
+  });
+
+  // TÉMOIN, second volet : ignorer les commentaires ne doit pas devenir un
+  // trou. Le filtre enlève une explication, jamais du code voisin.
+  it("ne laisse pas un commentaire masquer le code voisin (témoin)", () => {
+    const withCodeAfterComment = [
+      "// une feuille s'écrivait initial={{ y: '100%' }}",
+      "const real = { y: '100%' };",
+    ].join('\n');
+
+    expect(SHEET_SLIDE.test(stripComments("// y: '100%'"))).toBe(false);
+    expect(SHEET_SLIDE.test(stripComments(withCodeAfterComment))).toBe(true);
   });
 });

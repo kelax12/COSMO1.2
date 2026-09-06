@@ -5,6 +5,7 @@ import { X, ChevronRight, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { useActiveOkrs, useUpdateKeyResult } from '@/modules/okrs';
 import { useT } from '@/i18n/useT';
+import { useSheetMotion } from '@/components/mobile/mobile-motion';
 
 const STORAGE_KEY = 'cosmo:last-checkin-week';
 
@@ -76,6 +77,7 @@ interface WeeklyCheckinModalProps {
 export function WeeklyCheckinModal({ isOpen, onClose }: WeeklyCheckinModalProps) {
   const { t, tp } = useT('okr');
   const { sheetRef, handleBarWidth, sheetDragProps } = useBottomSheet(onClose);
+  const sheetMotion = useSheetMotion();
   const { data: activeOkrs = [] } = useActiveOkrs();
   const updateKR = useUpdateKeyResult();
 
@@ -174,10 +176,7 @@ export function WeeklyCheckinModal({ isOpen, onClose }: WeeklyCheckinModalProps)
           <motion.div
             ref={sheetRef}
             {...sheetDragProps}
-            initial={{ y: '100%', opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: '110%', opacity: 0, transition: { duration: 0.22, ease: [0.4, 0, 1, 1] } }}
-            transition={{ type: 'spring', damping: 28, stiffness: 280 }}
+            {...sheetMotion}
             onClick={e => e.stopPropagation()}
             className="w-full sm:max-w-md bg-[rgb(var(--color-surface))] sm:rounded-2xl rounded-t-2xl shadow-2xl flex flex-col max-h-[92vh] overflow-hidden"
             style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}

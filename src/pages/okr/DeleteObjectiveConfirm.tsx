@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useT } from '@/i18n/useT';
-import { useSheetDrag } from '@/components/mobile/mobile-motion';
+import { useSheetDrag, useSheetMotion } from '@/components/mobile/mobile-motion';
 
 interface DeleteObjectiveConfirmProps {
   deletingObjective: string | null;
@@ -15,6 +15,7 @@ interface DeleteObjectiveConfirmProps {
 const DeleteObjectiveConfirm: React.FC<DeleteObjectiveConfirmProps> = ({ deletingObjective, setDeletingObjective, deleteObjective }) => {
   const { t } = useT('okr');
   const sheetDrag = useSheetDrag(() => setDeletingObjective(null));
+  const sheetMotion = useSheetMotion();
   return (
         <AnimatePresence>
           {deletingObjective && (
@@ -26,10 +27,7 @@ const DeleteObjectiveConfirm: React.FC<DeleteObjectiveConfirmProps> = ({ deletin
               onClick={() => setDeletingObjective(null)}
             >
               <motion.div
-                initial={{ y: '100%', opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                exit={{ y: '100%', opacity: 0, transition: { duration: 0.25, ease: [0.32, 0.72, 0, 1] } }}
-                transition={{ type: 'spring', damping: 32, stiffness: 320, mass: 0.7 }}
+                {...sheetMotion}
                 // La poignee ci-dessous promettait un geste qui n existait pas
                 // (audit mobile 2026-08-14 : cinq feuilles dans ce cas). Une
                 // affordance qui ment est pire que pas d affordance.

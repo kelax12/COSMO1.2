@@ -13,6 +13,9 @@ import { useFriends, useShareList, type TaskSnapshot } from '@/modules/friends';
 import { collabIdOf, filterFriendsForCollab } from './task-modal/collaborators';
 import { isImageAvatar, isEmojiAvatar } from '@/lib/avatar';
 import { useT } from '@/i18n/useT';
+import { useSheetMotion } from '@/components/mobile/mobile-motion';
+import { useBottomSheet } from '@/hooks/use-bottom-sheet';
+import { useModalA11y } from '@/hooks/use-modal-a11y';
 
 interface ShareListSheetProps {
   /** Liste à partager (null = fermé). */
@@ -24,6 +27,19 @@ interface ShareListSheetProps {
 
 const ShareListSheet: React.FC<ShareListSheetProps> = ({ list, tasks, onClose }) => {
   const { t } = useT('tasks');
+  const sheetMotion = useSheetMotion();
+  // La poignee de glissement ci-dessous promettait un geste inexistant
+  // (audit mobile 2026-08-14). `useBottomSheet` plutot que `useSheetDrag` :
+  // il est MOBILE seulement et cede le geste a la liste d'amis des qu'elle
+  // est defilee, la ou un `drag='y'` nu empecherait de la faire defiler.
+  const { sheetRef, handleBarWidth, sheetDragProps } = useBottomSheet(onClose);
+  // C-53 — la feuille se declarait `role="dialog"` sans `aria-modal`, sans
+  // piege de focus et sans Echap.
+  const { ref: overlayRef, dialogProps } = useModalA11y<HTMLDivElement>({
+    open: Boolean(list),
+    onClose,
+    label: list ? t('shareList.sheetLabel', { name: list.name }) : undefined,
+  });
   // C-40 — sans `isLoading`, la feuille AFFIRMAIT « Ajoute d'abord un ami »
   // a quelqu'un qui en a : le premier rendu arrive avant la reponse, et la
   // valeur par defaut `[]` est indistinguable d'un carnet reellement vide.
@@ -80,14 +96,15 @@ const ShareListSheet: React.FC<ShareListSheetProps> = ({ list, tasks, onClose })
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
+          ref={overlayRef}
+          {...dialogProps}
           className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-[2px] sm:p-4"
           onClick={onClose}
         >
           <motion.div
-            initial={{ y: '100%', opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: '100%', opacity: 0, transition: { duration: 0.2, ease: [0.4, 0, 1, 1] } }}
-            transition={{ type: 'spring', damping: 32, stiffness: 340, mass: 0.65 }}
+            ref={sheetRef}
+            {...sheetDragProps}
+            {...sheetMotion}
             onClick={(e) => e.stopPropagation()}
             className="w-full sm:max-w-md flex flex-col overflow-hidden rounded-t-[20px] sm:rounded-[20px] border-t sm:border"
             style={{
@@ -96,12 +113,10 @@ const ShareListSheet: React.FC<ShareListSheetProps> = ({ list, tasks, onClose })
               paddingBottom: 'env(safe-area-inset-bottom)',
               maxHeight: '80vh',
             }}
-            role="dialog"
-            aria-label={`Partager la liste ${list.name}`}
           >
             {/* Drag handle (mobile) */}
             <div className="sm:hidden flex justify-center pt-3 pb-1 shrink-0">
-              <div className="w-9 h-[4px] rounded-full" style={{ backgroundColor: 'rgb(var(--color-border))' }} />
+              <motion.div className="h-[4px] rounded-full" style={{ width: handleBarWidth, backgroundColor: 'rgb(var(--color-border))' }} />
             </div>
 
             {/* Header teal — identité « listes partagées » */}

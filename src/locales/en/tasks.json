@@ -394,7 +394,8 @@
   "shareList": {
     "searchFriend": "Search a friend…",
     "noFriendYet": "Add a friend first to share a list.",
-    "noMatch": "No friend matches your search."
+    "noMatch": "No friend matches your search.",
+    "sheetLabel": "Share the list {{name}}"
   },
   "bulk": {
     "deleteCount_one": "Delete {{count}} task",

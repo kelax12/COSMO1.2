@@ -8,6 +8,7 @@ import type { OKR } from '@/modules/okrs';
 // déjà dans ce composant.
 import { formatDate as formatDateIntl } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
+import { useSheetMotion } from '@/components/mobile/mobile-motion';
 
 type Category = { id: string; name: string; color: string };
 
@@ -28,6 +29,7 @@ type Props = {
 const CompletedOKRsModal: React.FC<Props> = ({ isOpen, onClose, okrs, categories, resolveColor, onEdit }) => {
   const { t, tp } = useT('okr');
   const { sheetRef, handleBarWidth, sheetDragProps } = useBottomSheet(onClose);
+  const sheetMotion = useSheetMotion();
   useEffect(() => {
     if (!isOpen) return;
     const prev = document.body.style.overflow;
@@ -71,10 +73,7 @@ const CompletedOKRsModal: React.FC<Props> = ({ isOpen, onClose, okrs, categories
             ref={sheetRef}
             {...sheetDragProps}
             key="panel"
-            initial={{ y: '100%', opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: '110%', opacity: 0, transition: { duration: 0.22, ease: [0.4, 0, 1, 1] } }}
-            transition={{ type: 'spring', damping: 28, stiffness: 280 }}
+            {...sheetMotion}
             onClick={(e) => e.stopPropagation()}
             className="w-full sm:max-w-3xl sm:rounded-2xl rounded-t-2xl shadow-2xl flex flex-col max-h-[92dvh] bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))]"
             style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}

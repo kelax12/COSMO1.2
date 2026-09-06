@@ -137,6 +137,69 @@ pour 760 px de hauteur. Mobile 375 × 812 : **694 = clientHeight**.
 > caractère près, ce qui rend leur bon fonctionnement très probable, **mais probable n'est pas
 > mesuré** : les ajouter au fichier est la dette ouverte de ce point.
 
+### « 0 feuille cassée » : ce que dit la MESURE, et à quelle date (C-07, 2026-09-06)
+
+🔴 **La phrase ne s'appuie plus sur le cliquet statique, et il faut dire pourquoi.** Depuis C-07,
+`KNOWN_HANDROLLED_SHEETS` est **vide** dans `src/design-system.guard.test.ts` : les 16 feuilles
+écrites à la main passent par `useSheetMotion()`. C'est un bon résultat, mais **ce n'est pas une
+preuve qu'une feuille s'ouvre** : cette garde compte des chaînes de caractères dans des fichiers.
+Un cliquet à zéro et une feuille hors écran sont parfaitement compatibles.
+
+**L'énoncé vérifiable est donc celui-ci, et rien de plus large :**
+
+> Le 2026-09-06, sur `chromium`, framer-motion 12.43.0, `reducedMotion: 'reduce'` réellement
+> émulé, **cinq surfaces ont été ouvertes et mesurées peintes** par
+> `e2e/reduced-motion-sheets.spec.ts` : le témoin `LoginModal`, `HabitModal`,
+> `CompletedOKRsModal`, `DeleteObjectiveConfirm` et `MobileMoreSheet`. Cinq tests verts.
+
+Ce qui a changé ce jour-là, au-delà du chiffre :
+
+- ✅ **`MobileMoreSheet` est mesurée pour la première fois.** C'est la feuille du 2026-08-24, celle
+  dont on sait qu'elle a vraiment été cassée, et **elle n'était mesurée nulle part** : le test se
+  `skip`ait sur le project `chromium` (viewport 1280 px, or la feuille n'est montée que sous
+  768 px) et n'atteignait jamais son corps sur `mobile-safari`. Un `skip` d'un côté, un échec de
+  fixture de l'autre, et le rapport se lit comme « rien à signaler ». Le test porte désormais son
+  propre viewport (390 × 844), donc la mesure ne dépend plus du project qui la lance.
+- 🔴 **La fixture E2E supposait le desktop, ce qui rendait TOUT viewport mobile rouge.**
+  `e2e/fixtures.ts` attendait un `h1` contenant « Bonjour », or ce titre est écrit
+  `hidden md:block` dans `DashboardPage.tsx` : sous 768 px le `h1` est la date (mesuré :
+  « dimanche 6 sept. »). L'attente était donc structurellement intenable, et une spec ancienne et
+  sans rapport (`demo-toggle-habit`) échouait au même endroit. La fixture attend maintenant le
+  titre que la taille courante rend réellement.
+- ✅ **Le témoin négatif a été rejoué, pas recopié.** `MobileMoreSheet` a été cassée pour de vrai,
+  deux fois, puis restaurée (empreinte md5 revérifiée identique) :
+  - `initial={{ y: '100%' }}` **avec** `animate={{ y: 0 }}`, écrit à la main sans le helper : le
+    test **passe**. Sur framer-motion 12.43.0, une clé de transform reçoit `{ type: false }` en
+    mouvement réduit, c'est-à-dire une transition instantanée vers la cible ; la forme exacte du
+    2026-08-24 ne se reproduit donc plus.
+  - le même `initial` **privé de son `animate`** : le test **échoue**, sur « 0 px visibles sur
+    582 px de hauteur, transform `matrix(1, 0, 0, 1, 0, 582)` », la signature exacte du défaut
+    d'origine.
+- ⚠️ **Le second contrôle est ce qui valide le premier.** Un « ça passe » obtenu sur une mutation
+  que Vite n'aurait pas servie ne vaudrait rien. Les deux contrôles portent sur le même fichier :
+  le second vire au rouge, donc le serveur servait bien les mutations, donc le vert du premier
+  parle du produit et pas du harnais.
+
+⚠️ **Conséquence à écrire noir sur blanc : ce fichier ne peut pas échouer sur le défaut de
+2026-08-24 tant que cette version de framer-motion est installée.** L'appeler « non-régression »
+sans cette phrase serait exactement la faute cataloguée le 2026-09-03, une garde qui répond sans
+mesurer. Ce qu'il prouve, c'est qu'il **sait dire non** à une feuille hors écran, et que cinq
+surfaces nommées s'ouvrent réellement.
+
+⚠️ **Et la migration reste juste indépendamment de ce résultat** : une seule écriture au lieu de
+seize, et une app qui ne dépend plus du détail d'implémentation d'une dépendance. Ce qui a changé
+une fois entre deux versions peut rechanger ; `useSheetMotion` n'émet aucune clé de transform en
+mouvement réduit, donc la question ne se pose plus.
+
+🔴 **Dette ouverte, et elle n'a pas disparu avec C-07** : 5 surfaces mesurées, pas 16. Les onze
+autres partagent maintenant **un seul chemin de code**, ce qui porte plus loin que seize littéraux
+identiques, mais partager un chemin de code n'est pas la même chose qu'avoir été ouvert.
+
+🔴 **Le project `mobile-safari` n'a PAS été remis au vert par cette passe.** Le correctif de
+fixture lève la cause qui touchait tous les viewports mobiles, mais un second mode d'échec propre à
+WebKit subsiste : `page.goto('/')` n'atteint pas `load`. Non traité ici, hors du périmètre de
+C-07, et à ne pas confondre avec « mobile-safari est vert ».
+
 **+10, le deuxième plus gros mouvement.** Le finding structurel de cet audit, « le design system
 mobile n'a jamais été adopté », a reculé pour la première fois depuis sa création en juillet :
 six pages migrées, et surtout **le composant qui portait la migration s'est révélé cassé depuis le
