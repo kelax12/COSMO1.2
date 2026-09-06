@@ -389,13 +389,18 @@ const TaskTable: React.FC<TaskTableProps> = ({
       />
 
       {/* Bandeau « En retard » (#9) : visible dès qu'une tâche a dépassé sa
-          deadline — replanification groupée en un clic. */}
+          deadline — replanification groupée en un clic.
+          Desktop uniquement (redesign mobile 2026-09-07) : sur mobile, chaque
+          tâche en retard porte déjà sa propre solution de report
+          (`OverdueQuickActions` sur la carte), le bandeau global disparaît. */}
       {!addToListMode && !showCompleted && activeQuickFilter === 'none' && overdueTasks.length > 0 && (
-        <OverdueBanner
-          count={overdueTasks.length}
-          options={getSnoozeOptions()}
-          onSnoozeAll={handleSnoozeAllOverdue}
-        />
+        <div className="hidden md:block">
+          <OverdueBanner
+            count={overdueTasks.length}
+            options={getSnoozeOptions()}
+            onSnoozeAll={handleSnoozeAllOverdue}
+          />
+        </div>
       )}
 
       {/* Desktop View (Table) */}
@@ -460,7 +465,6 @@ const TaskTable: React.FC<TaskTableProps> = ({
           onAddToList={setAddToListTask}
           onDeleteTask={handleDeleteRequest}
           onScheduleTask={setTaskToEventModal}
-          onDuplicate={handleDuplicate}
           onSnooze={handleSnooze}
           collaboratorsByTask={collaboratorsByTask}
           pendingCollaboratorTaskIds={pendingCollaboratorTaskIds}

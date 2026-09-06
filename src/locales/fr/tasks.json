@@ -199,7 +199,11 @@
     "delete": "Supprimer la tâche",
     "removeFromList": "Retirer de la liste",
     "receivedFrom": "Reçu de {{name}}",
-    "overdueActions": "Sortir cette tâche du retard"
+    "overdueActions": "Sortir cette tâche du retard",
+    "favorite": "Ajouter aux favoris",
+    "unfavorite": "Retirer des favoris",
+    "actionsFor": "Actions pour {{name}}",
+    "noCategoryShort": "Sans catégorie"
   },
   "sort": {
     "label": "Trier par",

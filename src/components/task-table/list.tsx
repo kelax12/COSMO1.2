@@ -59,7 +59,6 @@ interface VirtualizedTaskListProps {
   onAddToList: (id: string) => void;
   onDeleteTask: (id: string) => void;
   onScheduleTask: (task: Task) => void;
-  onDuplicate: (id: string) => void;
   onSnooze: (id: string, deadline: string) => void;
   collaboratorsByTask: Map<string, string[]>;
   pendingCollaboratorTaskIds: Set<string>;
@@ -84,7 +83,6 @@ export const VirtualizedTaskList: React.FC<VirtualizedTaskListProps> = (props) =
     onAddToList: props.onAddToList,
     onDeleteTask: props.onDeleteTask,
     onScheduleTask: props.onScheduleTask,
-    onDuplicate: props.onDuplicate,
     onSnooze: props.onSnooze,
     collaboratorsByTask: props.collaboratorsByTask,
     pendingCollaboratorTaskIds: props.pendingCollaboratorTaskIds,

@@ -186,7 +186,11 @@
     "delete": "Delete task",
     "removeFromList": "Remove from the list",
     "receivedFrom": "Received from {{name}}",
-    "overdueActions": "Get this task out of overdue"
+    "overdueActions": "Get this task out of overdue",
+    "favorite": "Add to favorites",
+    "unfavorite": "Remove from favorites",
+    "actionsFor": "Actions for {{name}}",
+    "noCategoryShort": "No category"
   },
   "sort": {
     "label": "Sort by",

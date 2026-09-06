@@ -4,15 +4,15 @@
 // chaque render parent). Pilotée par props, aucune logique métier.
 // ═══════════════════════════════════════════════════════════════════
 import React, { useState, useEffect, useRef } from "react";
-import { motion, AnimatePresence, useMotionValue, useTransform, animate } from "framer-motion";
-import { Bookmark, Calendar, MoreHorizontal, UserPlus, Copy, Trash2, CheckCircle2, X, AlertTriangle, Hourglass, Pencil } from "lucide-react";
+import { motion, useMotionValue, useTransform, animate } from "framer-motion";
+import { Bookmark, MoreHorizontal, AlertTriangle, Hourglass, CheckCircle2 } from "lucide-react";
 import { OverdueQuickActions } from "./OverdueQuickActions";
+import TaskActionsSheet from "./TaskActionsSheet";
 import { deadlineFromDayKey } from "@/lib/deadline";
 import { getTimezonePref } from "@/lib/timezone";
 import CollaboratorAvatars from "@/components/CollaboratorAvatars";
 import { useCategoryLookup } from "@/modules/categories";
 import { Task } from "@/modules/tasks";
-import { getSnoozeOptions } from "@/modules/tasks/snooze";
 import { Friend } from "@/modules/friends";
 import { formatDate, formatDuration } from "./helpers";
 import { useT } from '@/i18n/useT';
@@ -30,7 +30,6 @@ interface TaskCardProps {
   onAddToList: (id: string) => void;
   onDeleteTask: (id: string) => void;
   onScheduleTask: (task: Task) => void;
-  onDuplicate: (id: string) => void;
   onSnooze: (id: string, deadline: string) => void;
   collaboratorsByTask: Map<string, string[]>;
   pendingCollaboratorTaskIds: Set<string>;
@@ -51,7 +50,6 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
   onAddToList,
   onDeleteTask,
   onScheduleTask,
-  onDuplicate,
   onSnooze,
   collaboratorsByTask,
   pendingCollaboratorTaskIds,
@@ -254,14 +252,6 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
         touchAction: 'pan-y',
       }}
     >
-      {/* Color bar (left) — toujours la couleur de catégorie pour que
-          la TaskCard mobile soit visuellement cohérente avec la catégorie.
-          L'état overdue/bookmark est signalé par l'icône bookmark + la date. */}
-      <div
-        className="w-1 self-stretch rounded-full shrink-0"
-        style={{ backgroundColor: categoryColor }}
-      />
-
       {/* Checkbox */}
       {addToListMode ? (
         <button
@@ -312,6 +302,17 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
         </button>
       )}
 
+      {/* Pin de couleur — catégorie, entre la case à cocher et le titre
+          (remplace l'ancienne bande colorée pleine hauteur, cf. demande
+          redesign mobile 2026-09-07). */}
+      {!addToListMode && (
+        <span
+          className="self-center shrink-0 w-2 h-2 rounded-full"
+          style={{ backgroundColor: categoryColor }}
+          aria-hidden="true"
+        />
+      )}
+
       {/* Title + meta */}
       <div className="flex-1 min-w-0 flex flex-col justify-center gap-0.5">
         {/* Titre */}
@@ -329,7 +330,7 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
         <div className="flex items-start gap-1.5">
           <p
             className={`flex-1 min-w-0 font-medium leading-tight line-clamp-2 ${
-              isOverdue ? 'text-headline' : 'text-body'
+              isOverdue ? 'text-body' : 'text-label'
             } ${task.completed ? 'line-through' : ''}`}
             style={{ color: 'rgb(var(--color-text-primary))' }}
           >
@@ -359,7 +360,7 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
             <CollaboratorAvatars
               collaboratorIds={collaboratorsByTask.get(task.id)}
               friends={friends}
-              size="sm"
+              size="md"
               maxVisible={3}
             />
             {pendingCollaboratorTaskIds.has(task.id) && (
@@ -440,98 +441,21 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
     </motion.div>
     </div>
 
-    {/* Actions row — revealed on long press or left swipe */}
-    <AnimatePresence>
-      {actionsVisible && !addToListMode && (
-        <motion.div
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: 'auto' }}
-          exit={{ opacity: 0, height: 0 }}
-          transition={{ duration: 0.18 }}
-          className="overflow-hidden"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className="mt-1 flex items-center justify-around gap-1 p-2 rounded-card border" style={{
-            borderColor: 'rgb(var(--color-border))',
-            backgroundColor: 'rgb(var(--color-hover))'
-          }}>
-            <button
-              onClick={(e) => { e.stopPropagation(); onSelectTask(task.id); setActionsVisible(false); }}
-              className="min-w-touch min-h-touch p-2 rounded-row text-[rgb(var(--color-text-secondary))] flex items-center justify-center"
-              aria-label={t('card.edit')}
-            >
-              <Pencil size={18} />
-            </button>
-            <button
-              onClick={(e) => { e.stopPropagation(); onToggleBookmark(task.id); setActionsVisible(false); }}
-              className={`min-w-touch min-h-touch p-2 rounded-row flex items-center justify-center transition-colors ${task.bookmarked ? 'text-amber-500 bg-amber-500/10' : 'text-slate-500'}`}
-              aria-label={task.bookmarked ? 'Retirer des favoris' : 'Ajouter aux favoris'}
-            >
-              <Bookmark size={18} fill={task.bookmarked ? 'currentColor' : 'none'} />
-            </button>
-            <button
-              onClick={(e) => { e.stopPropagation(); onOpenCollaborator(task.id); setActionsVisible(false); }}
-              className="min-w-touch min-h-touch p-2 rounded-row text-[rgb(var(--color-text-secondary))] flex items-center justify-center"
-              aria-label={t('card.addCollaborator')}
-            >
-              <UserPlus size={18} />
-            </button>
-            {!task.completed && (
-              <button
-                onClick={(e) => { e.stopPropagation(); onScheduleTask(task); setActionsVisible(false); }}
-                className="min-w-touch min-h-touch p-2 rounded-row text-[rgb(var(--color-text-secondary))] flex items-center justify-center"
-                aria-label={t('card.schedule')}
-              >
-                <Calendar size={18} />
-              </button>
-            )}
-            <button
-              onClick={(e) => { e.stopPropagation(); onAddToList(task.id); setActionsVisible(false); }}
-              className="min-w-touch min-h-touch p-2 rounded-row text-[rgb(var(--color-text-secondary))] flex items-center justify-center"
-              aria-label={t('card.addToList')}
-            >
-              <MoreHorizontal size={18} />
-            </button>
-            <button
-              onClick={(e) => { e.stopPropagation(); onDuplicate(task.id); setActionsVisible(false); }}
-              className="min-w-touch min-h-touch p-2 rounded-row text-[rgb(var(--color-text-secondary))] flex items-center justify-center"
-              aria-label={t('card.duplicate')}
-            >
-              <Copy size={18} />
-            </button>
-            {/* Reporter à demain (#42) : disponible pour toute tâche non
-                complétée avec échéance, pas seulement celles en retard. */}
-            {!task.completed && task.deadline && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onSnooze(task.id, getSnoozeOptions()[0].deadline);
-                  setActionsVisible(false);
-                }}
-                className={`min-w-touch min-h-touch p-2 rounded-row flex items-center justify-center ${isOverdue ? 'text-amber-500' : 'text-slate-500'}`}
-                aria-label={t('card.postponeTomorrow')}
-              >
-                <Hourglass size={18} />
-              </button>
-            )}
-            <button
-              onClick={(e) => { e.stopPropagation(); onDeleteTask(task.id); setActionsVisible(false); }}
-              className="min-w-touch min-h-touch p-2 rounded-row text-red-500 flex items-center justify-center"
-              aria-label={t('card.delete')}
-            >
-              <Trash2 size={18} />
-            </button>
-            <button
-              onClick={(e) => { e.stopPropagation(); setActionsVisible(false); }}
-              className="min-w-touch min-h-touch p-2 rounded-row text-slate-400 dark:text-[rgb(var(--color-text-secondary))] flex items-center justify-center"
-              aria-label={t('card.close')}
-            >
-              <X size={18} />
-            </button>
-          </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+    {/* Feuille d'actions — design Spotify (en-tête + liste verticale icône +
+        libellé), déclenchée par long-press, swipe gauche ou le bouton « ⋯ ». */}
+    <TaskActionsSheet
+      open={actionsVisible && !addToListMode}
+      task={task}
+      categoryName={category?.name}
+      categoryColor={categoryColor}
+      onClose={() => setActionsVisible(false)}
+      onEdit={onSelectTask}
+      onToggleBookmark={onToggleBookmark}
+      onOpenCollaborator={onOpenCollaborator}
+      onScheduleTask={() => onScheduleTask(task)}
+      onAddToList={onAddToList}
+      onDeleteTask={onDeleteTask}
+    />
   </motion.div>
   );
 });
