@@ -36,6 +36,7 @@ import {
 import OrgConsentNotice from './OrgConsentNotice';
 import InviteFriendsToOrg from './InviteFriendsToOrg';
 import { useT } from '@/i18n/useT';
+import { useModalA11y } from '@/hooks/use-modal-a11y';
 
 interface InviteOrJoinModalProps {
   open: boolean;
@@ -104,6 +105,14 @@ const InviteOrJoinModal: React.FC<InviteOrJoinModalProps> = ({ open, onOpenChang
     });
   };
 
+  // C-53 — appele AVANT le return anticipe : l'ordre des hooks ne tolere pas
+  // qu'un appel disparaisse quand la modale est fermee.
+  const { ref: modalA11yRef, dialogProps: modalA11yProps } = useModalA11y<HTMLDivElement>({
+    open,
+    onClose: () => onOpenChange(false),
+    label: t('inviteJoin.title'),
+  });
+
   if (!open) return null;
 
   return createPortal(
@@ -135,9 +144,8 @@ const InviteOrJoinModal: React.FC<InviteOrJoinModalProps> = ({ open, onOpenChang
           exit={{ opacity: 0, scale: 0.97 }}
           transition={{ duration: 0.15 }}
           onClick={(e) => e.stopPropagation()}
-          role="dialog"
-          aria-modal="true"
-          aria-label={t('inviteJoin.title')}
+          ref={modalA11yRef}
+          {...modalA11yProps}
           className="w-full max-w-3xl my-auto rounded-3xl bg-[rgb(var(--color-background))] border border-[rgb(var(--color-border))] shadow-2xl overflow-hidden"
         >
           {/* En-tête */}

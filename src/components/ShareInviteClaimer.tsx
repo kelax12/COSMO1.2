@@ -19,6 +19,7 @@ import { useT } from '@/i18n/useT';
 import { RichText } from '@/components/ui/rich-text';
 import { useSheetMotion } from '@/components/mobile/mobile-motion';
 import { useBottomSheet } from '@/hooks/use-bottom-sheet';
+import { useModalA11y } from '@/hooks/use-modal-a11y';
 
 /**
  * Monté au niveau App (comme CookieBanner) : dès que l'utilisateur est
@@ -120,6 +121,16 @@ const ShareInviteClaimer: React.FC = () => {
 
   const busy = acceptMutation.isPending || unshareMutation.isPending;
 
+  // C-53 — piege de focus, restitution du focus au declencheur, Echap et
+  // semantique ARIA. Le nom accessible est celui que la surface portait deja.
+  const { ref: modalA11yRef, dialogProps: modalA11yProps } = useModalA11y<HTMLDivElement>({
+    open: true,
+    // Le voile ferme par closeAfter (« decider plus tard », la tache reste
+    // dans la boite de reception). Echap emprunte le MEME chemin.
+    onClose: closeAfter,
+    labelledBy: "share-invite-title",
+  });
+
   return (
     <AnimatePresence>
       {invite && (
@@ -128,9 +139,8 @@ const ShareInviteClaimer: React.FC = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="share-invite-title"
+          ref={modalA11yRef}
+          {...modalA11yProps}
         >
           {/* Backdrop — fermer = décider plus tard (la tâche reste dans l'inbox) */}
           <motion.div

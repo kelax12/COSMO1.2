@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { useT } from '@/i18n/useT';
 import { NO_ORG_OKR_CATEGORY } from '@/modules/org-okr-categories/impact';
+import { useModalA11y } from '@/hooks/use-modal-a11y';
 
 interface DeleteCategoryConfirmProps {
   open: boolean;
@@ -58,6 +59,14 @@ const DeleteCategoryConfirm: React.FC<DeleteCategoryConfirmProps> = ({
 
   const showReassign = impactedOkrs > 0 && targetNames.length > 0;
 
+  // C-53 — piege de focus, restitution du focus au declencheur, Echap et
+  // semantique ARIA. Le nom accessible est celui que la surface portait deja.
+  const { ref: modalA11yRef, dialogProps: modalA11yProps } = useModalA11y<HTMLDivElement>({
+    open: open,
+    onClose: onCancel,
+    labelledBy: "delete-org-okr-category-title",
+  });
+
   return (
     <AnimatePresence>
       {open && (
@@ -72,9 +81,8 @@ const DeleteCategoryConfirm: React.FC<DeleteCategoryConfirmProps> = ({
             initial={{ opacity: 0, scale: 0.95, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="delete-org-okr-category-title"
+            ref={modalA11yRef}
+            {...modalA11yProps}
             className="bg-[rgb(var(--color-surface))] rounded-xl shadow-2xl w-full max-w-sm overflow-hidden border border-[rgb(var(--color-border))]"
             onClick={(e) => e.stopPropagation()}
           >

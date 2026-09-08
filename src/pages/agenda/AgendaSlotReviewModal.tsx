@@ -4,6 +4,7 @@ import { CheckCircle2, CalendarClock, Trash2, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { getDateLocale } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
+import { useModalA11y } from '@/hooks/use-modal-a11y';
 import { formatTimeInTz, toDisplayISO, type TimezonePref } from '@/lib/timezone';
 import type { OverdueTaskSlot } from './overdue-slots';
 
@@ -30,6 +31,15 @@ const AgendaSlotReviewModal: React.FC<AgendaSlotReviewModalProps> = ({
   slot, remaining, tzPref, onValidate, onPostpone, onDelete, onSnooze,
 }) => {
   const { t, tp } = useT('agenda');
+  // C-53 — piege de focus, restitution du focus au declencheur, Echap et
+  // semantique ARIA. Le nom accessible est celui que la surface portait deja.
+  const { ref: modalA11yRef, dialogProps: modalA11yProps } = useModalA11y<HTMLDivElement>({
+    open: true,
+    // « Fermer sans decider » : le creneau reviendra a la prochaine visite.
+    onClose: onSnooze,
+    labelledBy: "slot-review-title",
+  });
+
   return (
     <AnimatePresence>
       {slot && (
@@ -47,9 +57,8 @@ const AgendaSlotReviewModal: React.FC<AgendaSlotReviewModalProps> = ({
             transition={{ type: 'spring', damping: 26, stiffness: 260 }}
             onClick={(e) => e.stopPropagation()}
             className="w-full sm:max-w-md bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-t-2xl sm:rounded-2xl shadow-2xl p-6"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="slot-review-title"
+            ref={modalA11yRef}
+            {...modalA11yProps}
           >
             <div className="flex items-start justify-between gap-3 mb-4">
               <div className="flex items-center gap-3">

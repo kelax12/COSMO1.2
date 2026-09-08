@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useBottomSheet } from '@/hooks/use-bottom-sheet';
+import { useModalA11y } from '@/hooks/use-modal-a11y';
 import { X, ChevronRight, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { useActiveOkrs, useUpdateKeyResult } from '@/modules/okrs';
@@ -103,6 +104,20 @@ export function WeeklyCheckinModal({ isOpen, onClose }: WeeklyCheckinModalProps)
   }, [isOpen]);
 
   const current = allKRs[currentIdx];
+
+  // C-53 — piege de focus, Echap, restitution au declencheur.
+  //
+  // `open` inclut `current` : la surface n'est montee que s'il reste un KR a
+  // pointer. Armer le piege sur un overlay jamais rendu ne garderait rien tout
+  // en le pretendant.
+  //
+  // Le nom accessible vient du TITRE AFFICHE (`labelledBy`), jamais d'une
+  // chaine recopiee : deux libelles pour la meme modale finissent par diverger.
+  const { ref: overlayRef, dialogProps } = useModalA11y<HTMLDivElement>({
+    open: isOpen && Boolean(current),
+    onClose,
+    labelledBy: 'weekly-checkin-title',
+  });
   const isLast = currentIdx === allKRs.length - 1;
 
   const currentValue = current
@@ -165,13 +180,13 @@ export function WeeklyCheckinModal({ isOpen, onClose }: WeeklyCheckinModalProps)
     <AnimatePresence>
       {isOpen && current && (
         <motion.div
+          ref={overlayRef}
+          {...dialogProps}
           className="fixed inset-0 z-[150] flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm sm:p-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
-          role="dialog"
-          aria-modal="true"
         >
           <motion.div
             ref={sheetRef}
@@ -189,7 +204,7 @@ export function WeeklyCheckinModal({ isOpen, onClose }: WeeklyCheckinModalProps)
             <div className="px-5 pt-3 pb-4 shrink-0 border-b border-[rgb(var(--color-border))]">
               <div className="flex items-center justify-between mb-2">
                 <div>
-                  <h2 className="font-bold text-base text-[rgb(var(--color-text-primary))]">
+                  <h2 id="weekly-checkin-title" className="font-bold text-base text-[rgb(var(--color-text-primary))]">
                     Check-in hebdo
                   </h2>
                   <p className="text-xs text-[rgb(var(--color-text-muted))]">

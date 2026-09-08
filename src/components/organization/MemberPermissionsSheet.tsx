@@ -15,6 +15,7 @@ import {
 } from '@/modules/organizations';
 import MemberAvatar from './MemberAvatar';
 import { useT } from '@/i18n/useT';
+import { useModalA11y } from '@/hooks/use-modal-a11y';
 
 interface MemberPermissionsSheetProps {
   member: OrgMember;
@@ -196,6 +197,14 @@ const MemberPermissionsSheet = ({
     );
   };
 
+  // C-53 — piege de focus, restitution du focus au declencheur, Echap et
+  // semantique ARIA. Le nom accessible est celui que la surface portait deja.
+  const { ref: modalA11yRef, dialogProps: modalA11yProps } = useModalA11y<HTMLDivElement>({
+    open: true,
+    onClose: onClose,
+    label: t('permissions.aria', { name: member.displayName }),
+  });
+
   return createPortal(
     <div
       className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-0 sm:p-4"
@@ -204,9 +213,8 @@ const MemberPermissionsSheet = ({
       <div
         className="bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] w-full sm:max-w-lg max-h-[88vh] shadow-2xl flex flex-col rounded-t-[24px] sm:rounded-2xl"
         onClick={(e) => e.stopPropagation()}
-        role="dialog"
-        aria-modal="true"
-        aria-label={t('permissions.aria', { name: member.displayName })}
+        ref={modalA11yRef}
+        {...modalA11yProps}
       >
         <div className="flex items-start justify-between gap-3 p-5 pb-3 shrink-0">
           <div className="flex items-center gap-3 min-w-0">

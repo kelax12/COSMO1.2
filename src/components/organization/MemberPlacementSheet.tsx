@@ -3,6 +3,7 @@ import { X, ArrowUpFromLine } from 'lucide-react';
 import { useSetMemberManager, isManagerOf, subtreeOf, type OrgMember } from '@/modules/organizations';
 import MemberAvatar from './MemberAvatar';
 import { useT } from '@/i18n/useT';
+import { useModalA11y } from '@/hooks/use-modal-a11y';
 
 interface MemberPlacementSheetProps {
   orgId: string;
@@ -44,6 +45,14 @@ const MemberPlacementSheet = ({ orgId, target, members, currentUserId, isAdmin, 
     );
   };
 
+  // C-53 — piege de focus, restitution du focus au declencheur, Echap et
+  // semantique ARIA. Le nom accessible est celui que la surface portait deja.
+  const { ref: modalA11yRef, dialogProps: modalA11yProps } = useModalA11y<HTMLDivElement>({
+    open: true,
+    onClose: onClose,
+    label: `Placer ${target.displayName}`,
+  });
+
   return createPortal(
     <div
       className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-0 sm:p-4"
@@ -52,8 +61,8 @@ const MemberPlacementSheet = ({ orgId, target, members, currentUserId, isAdmin, 
       <div
         className="bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-t-[24px] sm:rounded-2xl w-full sm:max-w-md max-h-[80vh] overflow-y-auto p-6 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
-        role="dialog"
-        aria-label={`Placer ${target.displayName}`}
+        ref={modalA11yRef}
+        {...modalA11yProps}
       >
         <div className="flex items-center justify-between mb-1">
           <h2 className="text-lg font-bold text-[rgb(var(--color-text-primary))]">
