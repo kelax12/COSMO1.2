@@ -363,7 +363,7 @@ const AdminDashboard: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
         <ChartCard
           title="Inscriptions"
-          note={signups?.granularity === 'week' ? 'Par semaine, depuis le lancement' : 'Par jour, depuis le lancement'}
+          note={signups?.granularity === 'week' ? t('signupsNoteWeekly') : t('signupsNoteDaily')}
         >
           {signups && <SignupsChart data={signups.points} />}
         </ChartCard>

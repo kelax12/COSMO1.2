@@ -42,6 +42,8 @@
   "topChannelHint": "{{count}} inscriptions",
   "goalChart": "Progression vers l'objectif",
   "goalChartNote": "Total de comptes cumulé, axe cadré sur {{goal}}",
+  "signupsNoteWeekly": "Par semaine, depuis le lancement",
+  "signupsNoteDaily": "Par jour, depuis le lancement",
   "signupsBySource": "Inscriptions par canal",
   "signupsBySourceNote": "Par jour, empilé par canal, 60 derniers jours renseignés",
   "channels": "Canaux d'acquisition",

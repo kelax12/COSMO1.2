@@ -287,7 +287,7 @@ const SettingsPage: React.FC = () => {
                   <LabeledInput label={t('profile.emailLabel')} type="email" icon={Mail} value={profileDraft.email} onChange={(e) => setProfileDraft(p => ({ ...p, email: e.target.value }))} placeholder={t('profile.emailPlaceholder')} disabled={isThirdParty} hint={isThirdParty ? t('profile.emailManaged') : undefined} />
                 </div>
                 <div className="flex justify-end mt-5">
-                  <PrimaryButton onClick={() => saveProfile(profileDraft)} loading={savingProfile}>{savingProfile ? 'Sauvegarde…' : 'Sauvegarder'}</PrimaryButton>
+                  <PrimaryButton onClick={() => saveProfile(profileDraft)} loading={savingProfile}>{savingProfile ? t('profile.saving') : t('profile.save')}</PrimaryButton>
                 </div>
               </SectionCard>
 
@@ -312,10 +312,10 @@ const SettingsPage: React.FC = () => {
                 <h2 className="text-base font-bold text-[rgb(var(--color-text-primary))] mb-1">{t('security.heading')}</h2>
                 <p className="text-xs text-[rgb(var(--color-text-secondary))] mb-5">{t('security.hint')}</p>
                 <form onSubmit={handleUpdatePassword} className="flex flex-col gap-4">
-                  <LabeledInput label="Mot de passe actuel" showToggle value={passwords.current} onChange={(e) => setPasswords(p => ({ ...p, current: e.target.value }))} placeholder="••••••••••••" />
+                  <LabeledInput label="Mot de passe actuel" showToggle showPasswordLabel={tCommon('auth.showPassword')} hidePasswordLabel={tCommon('auth.hidePassword')} value={passwords.current} onChange={(e) => setPasswords(p => ({ ...p, current: e.target.value }))} placeholder="••••••••••••" />
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <LabeledInput label={t('security.newPasswordLabel')} showToggle value={passwords.new} onChange={(e) => setPasswords(p => ({ ...p, new: e.target.value }))} placeholder="••••••••••••" />
-                    <LabeledInput label="Confirmer" showToggle value={passwords.confirm} onChange={(e) => setPasswords(p => ({ ...p, confirm: e.target.value }))} placeholder="••••••••••••" />
+                    <LabeledInput label={t('security.newPasswordLabel')} showToggle showPasswordLabel={tCommon('auth.showPassword')} hidePasswordLabel={tCommon('auth.hidePassword')} value={passwords.new} onChange={(e) => setPasswords(p => ({ ...p, new: e.target.value }))} placeholder="••••••••••••" />
+                    <LabeledInput label="Confirmer" showToggle showPasswordLabel={tCommon('auth.showPassword')} hidePasswordLabel={tCommon('auth.hidePassword')} value={passwords.confirm} onChange={(e) => setPasswords(p => ({ ...p, confirm: e.target.value }))} placeholder="••••••••••••" />
                   </div>
                   <div className="flex justify-end pt-1">
                     <PrimaryButton type="submit" loading={savingPassword}>{savingPassword ? t('security.updating') : t('security.update')}</PrimaryButton>

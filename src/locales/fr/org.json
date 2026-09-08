@@ -685,6 +685,7 @@
     "manager": "Manager",
     "attachedTo": "Rattaché(e) à",
     "you": "vous",
+    "youSuffix": " (vous)",
     "noManager": "Sans responsable (sommet ou non placé)",
     "noDirectReport": "Aucun subordonné direct",
     "crossTeams": "Équipes transverses",

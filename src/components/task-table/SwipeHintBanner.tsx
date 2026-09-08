@@ -49,11 +49,7 @@ export default function SwipeHintBanner({ addToListMode, rowCount }: SwipeHintBa
       <button
         type="button"
         onClick={dismiss}
-        // Repris VERBATIM de `TaskTable` : la clé `table.dismissHint` qui
-        // remplace cette chaîne n'existe pas encore dans les catalogues de
-        // `main`, elle vit dans le travail non commité d'une session voisine.
-        // L'extraction ne change donc rien ; c'est ce commit-là qui traduira.
-        aria-label="Masquer l'astuce"
+        aria-label={t('table.dismissHint')}
         className="shrink-0 w-11 h-11 flex items-center justify-center rounded-md hover:bg-[rgb(var(--color-surface))]"
         style={{ color: 'rgb(var(--color-text-muted))' }}
       >

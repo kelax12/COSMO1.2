@@ -76,7 +76,9 @@
     "workingOwner": "Suppression…",
     "workingShared": "Départ…",
     "confirmOwner": "Supprimer",
-    "confirmShared": "Quitter"
+    "confirmShared": "Quitter",
+    "bodyOwner": "Êtes-vous sûr de vouloir supprimer cette tâche ? Cette action est irréversible.",
+    "bodyShared": "Vous quitterez cette tâche partagée : elle restera visible pour son propriétaire et les autres collaborateurs."
   },
   "form": {
     "nameRequired": "Nom de la tâche *",
@@ -93,6 +95,7 @@
     "headingEditShort": "Modifier",
     "deleteTask": "Supprimer la tâche",
     "collaboratorPlaceholder": "Email ou nom…",
-    "addCollaborator": "Ajouter"
+    "addCollaborator": "Ajouter",
+    "userNotFound": "Utilisateur introuvable"
   }
 }

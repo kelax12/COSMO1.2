@@ -7,7 +7,9 @@
     "guide": "Guide",
     "login": "Sign in",
     "faq": "FAQ",
-    "backToTop": "Back to top"
+    "backToTop": "Back to top",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu"
   },
   "hero": {
     "line1": "All your productivity,",

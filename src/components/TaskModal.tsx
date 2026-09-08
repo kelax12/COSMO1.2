@@ -1,5 +1,6 @@
 import React from 'react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import { useT } from '@/i18n/useT';
 import ColorSettingsModal from './ColorSettingsModal';
 
 // Corps mobile full-screen extrait (cf. task-modal/TaskModalMobileBody.tsx).
@@ -17,6 +18,7 @@ import { useTaskModal, type TaskModalProps } from './task-modal/useTaskModal';
 // ─────────────────────────────────────────────────────────────────────────────
 
 const TaskModal: React.FC<TaskModalProps> = (props) => {
+  const { t } = useT('tasks');
   const { isOpen, showCollaborators = false } = props;
   const {
     task, isCreating, onGenerateShareLink,
@@ -48,7 +50,7 @@ const TaskModal: React.FC<TaskModalProps> = (props) => {
         className="p-0 border-0 bg-transparent shadow-none top-auto bottom-0 left-0 translate-x-0 translate-y-0 max-w-none w-full h-[94dvh] max-h-[94dvh] sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:bottom-auto sm:max-w-xl sm:h-auto sm:max-h-[calc(100vh-2rem)] lg:max-h-[85vh] overflow-visible sm:overflow-hidden flex flex-col"
       >
         <DialogTitle className="sr-only">
-          {isCreating ? 'Créer une nouvelle tâche' : 'Modifier la tâche'}
+          {isCreating ? t('modal.createTitle') : t('modal.editTitle')}
         </DialogTitle>
         {isMobile ? (
           <TaskModalMobileBody

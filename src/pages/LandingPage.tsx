@@ -256,7 +256,7 @@ const LandingPage: React.FC = () => {
               <button
                 onClick={() => setShowMobileMenu(!showMobileMenu)}
                 className="md:hidden inline-flex items-center justify-center w-11 h-11 text-slate-300 hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 rounded-lg"
-                aria-label={showMobileMenu ? 'Fermer le menu' : 'Ouvrir le menu'}
+                aria-label={showMobileMenu ? t('nav.closeMenu') : t('nav.openMenu')}
                 aria-expanded={showMobileMenu}
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">

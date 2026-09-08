@@ -158,7 +158,7 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
     <Sheet open={isOpen} onOpenChange={(o) => { if (!o) onClose(); }}>
       <SheetContent className="flex w-full flex-col gap-0 p-0 sm:max-w-lg rounded-l-2xl border-l-0 overflow-hidden">
         <SheetHeader>
-          <SheetTitle>{isEdit ? "Modifier l'objectif" : 'Nouvel objectif'}</SheetTitle>
+          <SheetTitle>{isEdit ? t('card.editObjective') : t('page.newObjective')}</SheetTitle>
           <SheetDescription>{t('modal.description')}</SheetDescription>
         </SheetHeader>
 

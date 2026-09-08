@@ -62,7 +62,7 @@ const ResetPasswordPage = () => {
       return;
     }
     if (password !== confirm) {
-      setError('Les deux mots de passe ne correspondent pas.');
+      setError(t('auth.passwordMismatch'));
       return;
     }
     setIsLoading(true);
@@ -138,7 +138,7 @@ const ResetPasswordPage = () => {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                aria-label={showPassword ? t('auth.hidePassword') : t('auth.showPassword')}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-primary))] transition-colors p-1"
               >
                 {showPassword ? <EyeOff size={16} aria-hidden="true" /> : <Eye size={16} aria-hidden="true" />}
@@ -178,7 +178,7 @@ const ResetPasswordPage = () => {
             disabled={isLoading || hasSession === false}
             className="w-full py-3 rounded-xl text-sm font-semibold text-[rgb(var(--color-accent-solid-foreground))] bg-[rgb(var(--color-accent-solid))] to-purple-600 hover:bg-[rgb(var(--color-accent-solid-hover))] hover:to-purple-500 disabled:opacity-60 transition-all shadow-lg shadow-blue-500/20"
           >
-            {isLoading ? 'Enregistrement...' : 'Enregistrer le mot de passe'}
+            {isLoading ? t('auth.savingEllipsis') : t('auth.savePassword')}
           </button>
         </form>
       </div>

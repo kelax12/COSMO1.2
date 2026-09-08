@@ -1,4 +1,8 @@
 {
+  "listActions": {
+    "removeDefault": "Retirer des favoris",
+    "setDefault": "Épingler par défaut"
+  },
   "language": {
     "label": "Langue",
     "description": "Langue de l'interface",
@@ -83,6 +87,8 @@
     "accountBusiness": "Entreprise",
     "accountBusinessDesc": "Équipe & collaboration",
     "forgotPassword": "Mot de passe oublié ?",
+    "sendResetLink": "Envoyer le lien",
+    "sendingEllipsis": "Envoi...",
     "minChars": "{{count}} caractères minimum",
     "signingInSlow": "Connexion en cours… le serveur met du temps à répondre",
     "signIn": "Se connecter",
@@ -121,6 +127,11 @@
     "oauthRedirectLostBody": "Vous avez été ramené sur la page d'accueil au lieu de la page demandée. Rouvrez votre lien d'invitation pour reprendre où vous en étiez.",
     "resetIntro": "Choisissez le nouveau mot de passe de votre compte.",
     "confirmPassword": "Confirmer le mot de passe",
+    "showPassword": "Afficher le mot de passe",
+    "hidePassword": "Masquer le mot de passe",
+    "savePassword": "Enregistrer le mot de passe",
+    "savingEllipsis": "Enregistrement...",
+    "passwordMismatch": "Les deux mots de passe ne correspondent pas.",
     "requestAgain": "Refaire une demande",
     "backToSignIn": "Retour à la connexion",
     "forgotIntro": "Saisissez votre email : nous vous enverrons un lien pour en choisir un nouveau.",
@@ -227,7 +238,11 @@
     "sent": "Envoyé",
     "requestSent": "⏳ Demande d'ami envoyée",
     "awaiting": "En attente d'acceptation",
-    "generic": "Collaborateur"
+    "generic": "Collaborateur",
+    "removeAria": "Retirer",
+    "addAria": "Ajouter",
+    "removeNamedAria": "Retirer {{name}}",
+    "addNamedAria": "Ajouter {{name}}"
   },
   "orgTier": {
     "free": "Gratuit",
