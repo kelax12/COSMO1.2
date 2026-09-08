@@ -216,8 +216,8 @@ mesure du fichier n'a de valeur.
 
 | Constat | Où | Finding |
 |---|---|---|
-| Aucune modale maison ne piège le focus (58 fichiers, zéro utilitaire, zéro `activeElement` capturé) | `EventModal`, `HabitModal`, les feuilles | C-53 |
-| `EventModal` : le focus **reste derrière** la modale, et Échap ne ferme pas | `/agenda` | C-53 |
+| ~~Aucune modale maison ne piège le focus~~ | `EventModal`, `HabitModal`, les feuilles | C-53, **corrigé le 2026-09-05**, cf. § « C-53 refermé » |
+| ~~`EventModal` : le focus **reste derrière** la modale, et Échap ne ferme pas~~ | `/agenda` | C-53, **corrigé le 2026-09-05** |
 | `/agenda` : **0 cellule de jour focalisable** sur 8 | FullCalendar | C-54, **tranché le 2026-09-04**, cf. section suivante |
 | Trois surfaces que les sondes n'ont pas atteintes | calendrier ouvert depuis un MENU | C-55 |
 
@@ -226,6 +226,87 @@ prouvé, c'est le déplacement du FOCUS, pas ce qu'un lecteur d'écran ANNONCE (
 dans le § « Ce que nos mesures prouvent » en tête de ce document). Deux modales sur cinquante-huit
 ont été réellement ouvertes : l'absence totale d'utilitaire de piège de focus dans le dépôt rend le
 résultat généralisable, mais c'est une inférence.
+⚠️ **Cette limite vaut toujours après le correctif, dans l'autre sens** : dix surfaces sont câblées
+et mesurées, les quarante-huit autres ne le sont pas. « Le hook existe » ne veut pas dire « toutes
+les modales piègent le focus » — ne jamais écrire la seconde phrase à la place de la première.
+
+### C-53 refermé le 2026-09-05 · un hook porte le piège, pas 58 fichiers
+
+`useModalA11y` (`src/hooks/use-modal-a11y.ts`) porte, pour toute surface modale maison, le piège
+de focus, la restitution du focus au déclencheur, Échap et `role="dialog" aria-modal="true"`.
+Aucune surface n'a été corrigée à la main, et **Radix n'a pas été généralisé**.
+
+🔴 **L'énoncé vérifiable est la LISTE des surfaces mesurées, jamais « toutes les modales piègent le
+focus ».** Le hook est câblé sur **10 des 58 surfaces modales maison**, et **6 d'entre elles sont
+mesurées dans un navigateur**. Écrire un chiffre sans sa liste, c'est reprendre le défaut que ce
+finding corrige.
+
+**Les 6 surfaces mesurées** (`e2e/a11y-keyboard-audit.spec.ts`, Chromium, remesuré le 2026-09-08,
+11 tests verts) :
+
+| Surface | Ce qui est assertionné |
+|---|---|
+| `HabitModal` | `focusMovedIn` · `trapped` · `escClosed` · `role` · `aria-modal` |
+| `EventModal` | idem, + Échap passe par `guardedClose` |
+| `MobileMoreSheet` | les cinq mêmes, viewport forcé à 375 × 812 |
+| `ConfirmDiscardDialog` | prend le piège à `EventModal`, le lui rend |
+| `ColorSettingsModal` | prend le piège à `EventModal`, le lui rend |
+| `RecurrenceDaysModal` | prend le piège à `EventModal`, le lui rend |
+
+**Les 4 câblées mais NON mesurées**, à ne pas compter comme prouvées : `BottomSheet`,
+`TaskActionsSheet`, `ShareListSheet`, `MobileAddToList`.
+
+Les lignes correspondantes de `e2e/a11y-keyboard-audit.spec.ts` sont passées de `console.log` à
+`expect` : un rapport que personne ne lit est une archive, pas une garde.
+
+#### Ce que la passe du 2026-09-08 a ajouté, et pourquoi
+
+`EventModal` était la dernière des trois surfaces principales à ne pas être câblée, et c'est celle
+qui portait le seul cas que le câblage pouvait casser : ses **trois modales frères**. Deux gardes
+ont donc été écrites, et chacune a été **vue échouer** avant d'être retenue.
+
+- **Échap passe par `guardedClose`.** Le mode d'échec visé est silencieux : un Échap branché sur
+  `onClose` au lieu de `guardedClose` ferme proprement, sans erreur, et jette une saisie que le
+  même geste à la souris aurait protégée. La garde ouvre un événement existant, modifie le titre,
+  presse Échap, et exige que la confirmation d'abandon s'affiche, que `EventModal` reste montée et
+  que la saisie soit intacte — puis qu'elle le soit encore après avoir refusé l'abandon.
+  🔎 **Témoin** : en remplaçant `onClose: guardedClose` par `onClose` dans `EventModal.tsx`, la
+  garde vire au rouge sur « Échap ne passe pas par guardedClose : la saisie est perdue ».
+- **Le piège se déplace, dans les DEUX sens.** À l'ouverture d'un frère le focus entre chez lui et
+  y reste ; à sa fermeture, `EventModal` le rattrape. Ne vérifier que l'aller laisserait passer une
+  modale parente définitivement inerte derrière son enfant refermé — un écran qu'on voit et où le
+  clavier ne fait plus rien.
+  🔎 **Témoin** : en neutralisant `isTopmost` (la fonction rend `true` quel que soit l'appelant),
+  Échap traverse et ferme les **deux** surfaces d'un coup ; la garde échoue sur « fermer la modale
+  enfant ne doit pas fermer le parent ».
+- ⚠️ **Les surfaces sont désignées par leur NOM ACCESSIBLE**, jamais par
+  `div.fixed.inset-0 … .last()`. Avec deux overlays empilés, « le dernier » désigne tantôt le
+  parent, tantôt l'enfant : l'assertion changerait de cible en cours de test sans jamais échouer.
+  Ce choix fait au passage de `aria-label` une chose testée, pas seulement posée.
+- ⚠️ **Un rôle EXPLICITE écrase le rôle implicite.** La puce « Personnaliser » de la récurrence est
+  un `<button role="radio">` : cherchée comme un bouton, elle est introuvable, et le test **expire**
+  au lieu d'échouer sur ce qu'il mesure. Un timeout n'est pas un résultat.
+
+- 🔴 **Un gestionnaire de modale ne peut pas dépendre de l'endroit où se trouve le focus.**
+  `HabitModal` avait déjà un Échap : un `onKeyDown` React posé sur l'overlay, donc suspendu à la
+  remontée d'un évènement depuis l'élément focalisé. Focus sorti, Échap mort — c'est-à-dire
+  inopérant exactement dans le cas qu'il existait pour rattraper. L'écouteur vit désormais sur
+  `document`, en **capture**, ce qui le protège aussi des champs qui appellent `stopPropagation`
+  sur leurs touches (les champs de date natifs le font).
+- 🔴 **Une pile, parce que les modales s'empilent réellement.** `EventModal` rend
+  `ConfirmDiscardDialog`, `ColorSettingsModal` et `RecurrenceDaysModal` en **frères** de son
+  overlay, pas dedans : sans pile, le piège du parent leur reprendrait le focus. Seule la dernière
+  surface empilée réagit à Échap et au Tab.
+- ❌ **`aria-modal` n'est pas décoratif ici.** Il manquait partout, y compris sur le témoin Radix —
+  acceptable pour Radix, qui neutralise les frères par `aria-hidden`, et pas pour une modale
+  maison, qui ne fait ni l'un ni l'autre.
+- ⚠️ **`focusReturned` est mesuré et imprimé, jamais assertionné** : le témoin Radix lui-même le
+  rend `false`. Un détecteur que la bibliothèque de référence ne passe pas mesure le détecteur,
+  pas la modale.
+- ⚠️ **Le hook existe et dix surfaces y passent, pas cinquante-huit** — et six seulement sont
+  mesurées, cf. les deux listes en tête de section. Les plus exposées d'abord
+  (celles qui portent une saisie, puis les feuilles mobiles). Le reste se branche au fil de l'eau :
+  il n'y a plus de décision d'architecture à reprendre, seulement du câblage.
 
 ### C-54 tranché le 2026-09-04 · le bouton « Nouveau » EST le chemin clavier de l'agenda
 
@@ -258,8 +339,8 @@ L'écart réel entre les deux chemins est un confort, pas un accès.
 | Haut de page → `<main>` | 1, puis Entrée |
 | `<main>` → conteneur du calendrier | 1, puis Entrée |
 | Conteneur du calendrier → premier événement | 1 |
-| Bouton « Nouveau » → modale de saisie | 4 |
-| Bouton « Nouveau » → premier champ d'heure | 7 |
+| Bouton « Nouveau » → modale de saisie | ~~4~~ → **0** (remesuré le 2026-09-08) |
+| Bouton « Nouveau » → premier champ d'heure | ~~7~~ → **3** (remesuré le 2026-09-08) |
 
 ⚠️ **Le « 38 tabulations » du 2026-09-03 était compté trop bas.** La marche partait de
 `body.press('Tab')` alors que le focus se trouvait encore sur le lien « Agenda » de la barre
@@ -270,10 +351,12 @@ les mesures ci-dessus repartent d'un **rechargement**.
 
 **Ce que la décision NE règle pas, et qu'il ne faut pas laisser croire réglé :**
 
-- Le focus **n'entre pas** dans la modale de saisie à son ouverture, et Échap ne la ferme pas : c'est
-  le finding **C-53**, encore ouvert, et il vaut pour les 58 modales du produit. Le chemin clavier de
-  création marche parce qu'on peut continuer à tabuler jusqu'à la modale, pas parce que la modale
-  accueille le focus. Le jour où C-53 est corrigé, les 4 tabulations ci-dessus tombent à 0.
+- ✅ **RÉGLÉ DEPUIS, et ce paragraphe disait le contraire.** Il affirmait que le focus n'entre pas
+  dans la modale de saisie et qu'Échap ne la ferme pas — vrai le 2026-09-04, faux depuis que
+  `EventModal` est câblée sur `useModalA11y`. Remesuré le 2026-09-08 : le focus **entre** à
+  l'ouverture, Échap **ferme** (via `guardedClose`), et le trajet jusqu'au premier champ d'heure
+  tombe de 7 tabulations à **3**, toutes DANS la modale. Les deux lignes du tableau ci-dessus
+  portent leur ancienne valeur barrée : un « avant » se relit à sa source, il ne se recopie pas.
 - Une `<table>` de FullCalendar porte `role="grid"` sans aucun descendant focalisable géré, donc
   annonce un motif d'interaction qu'elle n'implémente pas. Le rôle vient de la bibliothèque, sur un
   arbre qu'elle re-rend à chaque changement de vue : le réécrire demanderait de repasser derrière

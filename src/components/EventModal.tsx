@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useFormDraft } from '@/lib/hooks/use-form-draft';
 import { useInvalidShake } from "@/hooks/use-invalid-shake";
+import { useModalA11y } from "@/hooks/use-modal-a11y";
 import ColorSettingsModal from "./ColorSettingsModal";
 import ConfirmDiscardDialog from "./ConfirmDiscardDialog";
 
@@ -414,6 +415,16 @@ const EventModal: React.FC<EventModalProps> = ({
   const getHeaderTitle = () => t(headerTitleKey(mode) as Parameters<typeof t>[0]);
   const getSubmitButtonText = () => t(submitButtonKey(mode) as Parameters<typeof t>[0]);
 
+  // C-53 — piege de focus, restitution au declencheur, Echap et role dialog.
+  // Echap passe par `guardedClose`, donc par la MEME garde de brouillon que la
+  // croix : fermer au clavier ne doit pas perdre une saisie que le clic aurait
+  // protegee.
+  const { ref: overlayRef, dialogProps } = useModalA11y<HTMLDivElement>({
+    open: isOpen,
+    onClose: guardedClose,
+    label: t(headerTitleKey(mode) as Parameters<typeof t>[0]),
+  });
+
   if (!isOpen) return null;
   if (mode === 'edit' && !event) return null;
   if ((mode === 'add' || mode === 'convert') && !task) return null;
@@ -426,6 +437,8 @@ const EventModal: React.FC<EventModalProps> = ({
   return (
     <>
       <div
+        ref={overlayRef}
+        {...dialogProps}
         className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/30 backdrop-blur-md md:p-4 opacity-0 animate-modal-backdrop"
         onClick={guardedClose}
       >
