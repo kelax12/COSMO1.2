@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router';
-import { Lightbulb, X } from 'lucide-react';
 import { useBilling } from '@/modules/billing/billing.context';
 import TaskModal from './TaskModal';
 import BulkAddToListModal from './add-to-list/BulkAddToListModal';
@@ -14,6 +13,7 @@ import TaskListPlaceholders from './task-table/TaskListPlaceholders';
 import { useTaskSelection } from './task-table/useTaskSelection';
 import TaskQuickFilters from './task-table/TaskQuickFilters';
 import OverdueBanner from './task-table/OverdueBanner';
+import SwipeHintBanner from './task-table/SwipeHintBanner';
 import TaskBulkActionsBar from './task-table/TaskBulkActionsBar';
 import TeamTaskModal from './organization/TeamTaskModal';
 import { useBottomSheet } from '@/hooks/use-bottom-sheet';
@@ -248,15 +248,6 @@ const TaskTable: React.FC<TaskTableProps> = ({
     });
   }, [tasks, createMutation]);
 
-  // Hint de découvrabilité des gestes (mobile) — affiché une fois, dismissable.
-  const [swipeHintDismissed, setSwipeHintDismissed] = useState<boolean>(() => {
-    try { return localStorage.getItem('cosmo_swipe_hint_dismissed') === '1'; } catch { return false; }
-  });
-  const dismissSwipeHint = () => {
-    setSwipeHintDismissed(true);
-    try { localStorage.setItem('cosmo_swipe_hint_dismissed', '1'); } catch { /* ignore */ }
-  };
-
   // Quelles lignes cette liste montre, et dans quel ordre — dérivation pure,
   // les deux gisements (perso, équipe) filtrés par les mêmes règles.
   const { unifiedRows, hiddenCompletedCount } = useUnifiedTaskRows({
@@ -432,27 +423,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
 
       {/* Mobile View (Cards) — virtualisé au-delà de 50 items */}
       <div className="md:hidden">
-        {/* Hint de découvrabilité des gestes (affiché une fois) */}
-        {!swipeHintDismissed && !addToListMode && unifiedRows.length > 0 && (
-          <div
-            className="flex items-center gap-2 mb-2 px-3 py-2 rounded-lg text-xs"
-            style={{ backgroundColor: 'rgb(var(--color-hover))', color: 'rgb(var(--color-text-secondary))' }}
-          >
-            <span className="flex-1 flex items-center gap-1.5">
-              <Lightbulb size={14} className="shrink-0" aria-hidden="true" />
-              {t('table.gestureHint')}
-            </span>
-            <button
-              type="button"
-              onClick={dismissSwipeHint}
-              aria-label="Masquer l'astuce"
-              className="shrink-0 w-11 h-11 flex items-center justify-center rounded-md hover:bg-[rgb(var(--color-surface))]"
-              style={{ color: 'rgb(var(--color-text-muted))' }}
-            >
-              <X size={14} />
-            </button>
-          </div>
-        )}
+        <SwipeHintBanner addToListMode={addToListMode} rowCount={unifiedRows.length} />
         <VirtualizedTaskList
           rows={unifiedRows}
           addToListMode={effectiveAddToListMode}
