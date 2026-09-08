@@ -110,14 +110,26 @@ function detect(lines: string[]): { line: number; why: string }[] {
     const from = Math.max(0, i - WINDOW);
     const to = Math.min(lines.length, i + WINDOW + 1);
     for (let j = from; j < to; j++) {
+      if (j === i || !URL_INPUT.test(lines[j])) continue;
       // Une lecture d'URL voisine qui passe par l'assainisseur n'est pas un
       // indice : c'est deja un chemin interne valide. Sans cette exception, la
       // seule ligne SAINE du fichier accuserait ses trois voisines.
       if (SANITIZER.test(lines[j])) continue;
-      if (j !== i && URL_INPUT.test(lines[j])) {
-        hits.push({ line: i, why: `url-proche:L${j + 1}` });
-        return;
-      }
+      // Meme raisonnement, un cran plus loin : l'assainisseur n'est pas
+      // toujours SUR la ligne de lecture. La forme reelle de `loginWithGoogle`
+      // lit l'URL au bout d'une affectation multi-lignes (que ASSIGN_FROM_URL
+      // ne capture donc pas), assainit a la ligne SUIVANTE, et n'envoie au sink
+      // que le resultat assaini :
+      //     const requested = redirectPath ?? new URLSearchParams(…).get('redirect');
+      //     const destination = postAuthRoute(requested);   ← l'assainisseur
+      //     const redirectTo = `${origin}${localePrefix}${destination}`;
+      // Ce qui atteint le sink n'est plus la valeur lue. On ne blanchit que
+      // dans le SENS DU FLUX (lecture AVANT sink) : un assainisseur situe
+      // apres le sink n'assainit rien, et laisser passer ce cas rouvrirait la
+      // forme `navigate(\n searchParams.get('next')\n)`.
+      if (j < i && lines.slice(j + 1, i).some((l) => SANITIZER.test(l))) continue;
+      hits.push({ line: i, why: `url-proche:L${j + 1}` });
+      return;
     }
   });
 
@@ -158,6 +170,17 @@ describe('G-9 — aucune navigation alimentee par un parametre d URL', () => {
       // Citer l'assainisseur ailleurs dans le fichier n'assainit rien : seule
       // compte la ligne ou la valeur est lue.
       'assainisseur-decoratif': `const raw = searchParams.get('next');\nconst home = postAuthRoute(null);\nnavigate(raw ?? home);`,
+      // TEMOIN de l'exemption « assainisseur entre la lecture et le sink »
+      // ajoutee pour `loginWithGoogle`. C'est la MEME forme — lecture d'URL au
+      // bout d'une affectation multi-lignes, donc invisible pour
+      // ASSIGN_FROM_URL, puis interpolation dans un `redirectTo` — a ceci pres
+      // qu'AUCUN assainisseur ne s'intercale. Elle doit rester detectee : sans
+      // ce cas, l'exemption pourrait blanchir toute la classe au lieu de la
+      // seule valeur qui traverse reellement `postAuthRoute`.
+      'multi-lignes-sans-assainisseur': `const requested =\n  redirectPath ??\n  new URLSearchParams(window.location.search).get('redirect');\nconst redirectTo = \`\${window.location.origin}\${requested}\`;`,
+      // Second temoin : l'assainisseur cite APRES le sink ne blanchit rien. Le
+      // flux va de la lecture vers la navigation, pas l'inverse.
+      'assainisseur-apres-le-sink': `navigate(\n  new URLSearchParams(window.location.search).get('next') ?? '/'\n);\nconst plusTard = postAuthRoute(null);`,
     };
 
     const undetected = Object.entries(probes)
@@ -177,6 +200,25 @@ describe('G-9 — aucune navigation alimentee par un parametre d URL', () => {
       `const redirectTo = postAuthRoute(searchParams.get('redirect'));`,
       `const query = redirectTo === '/dashboard' ? '' : \`?redirect=\${encodeURIComponent(redirectTo)}\`;`,
       `navigate(redirectTo, { replace: true });`,
+    ];
+
+    expect(detect(sain)).toEqual([]);
+  });
+
+  it("n'accuse pas la forme reelle de loginWithGoogle", () => {
+    // Le faux positif qui a rendu `main` rouge le 2026-09-08, recopie de
+    // `AuthContext.tsx`. La fenetre voyait la lecture d'URL et le sink, sans
+    // voir que `postAuthRoute` se tient entre les deux — l'assainisseur n'est
+    // ni sur la ligne de lecture, ni sur celle du sink.
+    const sain = [
+      `const localePrefix = localeStore.locale === DEFAULT_LOCALE ? '' : \`/\${localeStore.locale}\`;`,
+      `const requested =`,
+      `  redirectPath ??`,
+      `  (typeof window === 'undefined'`,
+      `    ? null`,
+      `    : new URLSearchParams(window.location.search).get('redirect'));`,
+      `const destination = postAuthRoute(requested);`,
+      `const redirectTo = \`\${window.location.origin}\${localePrefix}\${destination}\`;`,
     ];
 
     expect(detect(sain)).toEqual([]);
