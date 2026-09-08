@@ -79,6 +79,14 @@ jobs:
       - name: No new hardcoded strings
         run: npm run i18n:scan
 
+      # Second angle mort du meme mecanisme : le moteur retombe sur le francais
+      # cle par cle, donc une valeur `en` jamais traduite s affiche en francais
+      # dans une interface anglaise, sans jamais ressembler a une cle brute.
+      # `i18n:check` ne voit que les CLES. Ce cliquet compte les valeurs
+      # identiques qui ne sont pas declarees legitimes.
+      - name: No untranslated en values
+        run: npm run i18n:identical
+
       - name: Unit tests + coverage (enforced thresholds)
         run: npm run test:coverage
 

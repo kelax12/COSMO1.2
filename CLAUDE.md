@@ -180,6 +180,31 @@ npm run i18n:scan           # Chaînes en dur non externalisées — **GATE CI d
                             # est la forme de référence recouverte par `localizeSeed` /
                             # `isEnglishSeed`.
                             # ❌ Ne JAMAIS relever le seuil pour faire passer la CI.
+npm run i18n:identical      # Valeurs `en` IDENTIQUES au `fr` non declarees legitimes.
+                            # GATE CI depuis le 2026-09-08, cliquet a **0**.
+                            # `-- --list` dit LESQUELLES.
+                            # Angle mort qu'il ferme : le moteur retombe cle par cle sur `fr`,
+                            # donc une valeur jamais traduite s'affiche EN FRANCAIS dans une
+                            # interface anglaise, sans jamais ressembler a une cle brute.
+                            # `i18n:check` ne voit que les CLES, jamais leur contenu.
+                            # 🔴 Le chiffre historique (« 71 valeurs, 3 % ») datait du
+                            # 2026-08-14 et n'a jamais ete remesure pendant que le catalogue
+                            # gagnait 1 403 cles. Remesure du 2026-09-08 : **92 / 3 808
+                            # (2,4 %)**, dont **2 vraiment non traduites** ; les 90 autres
+                            # etaient legitimes et n'avaient jamais ete triees.
+                            # Les legitimes sont DECLAREES une fois pour toutes dans
+                            # `scripts/i18n-identical-allowlist.json` (categorie + valeur `fr`
+                            # EPINGLEE), sinon le prochain audit refait le meme tri a la main.
+                            # L'allowlist est VERIFIEE : une entree dont la cle a disparu, qui
+                            # a fini par etre traduite, dont la valeur `fr` a change, ou dont
+                            # la categorie n'existe pas, fait ECHOUER la garde. Sans la valeur
+                            # epinglee, renommer un libelle ferait heriter la nouvelle chaine
+                            # de la dispense accordee a l'ancienne.
+                            # ❌ Ne JAMAIS relever le seuil pour faire passer la CI.
+                            # ❌ Ne jamais declarer legitime une PHRASE : les six categories
+                            # couvrent des mots, des sigles, des formats et des noms.
+                            # Temoin : `scripts/i18n-identical.guard.test.mjs` (9 cas), vu
+                            # echouer sur trois sabotages du script avant d'etre committe.
 npm run i18n:namespaces     # Quels catalogues le SHELL rend (donc eager) ; --pages
                             # donne la liste à déclarer par route dans App.tsx
 npm run profile:landing     # Profil du fil principal d'une page (CPU bride, via Playwright).
@@ -1160,7 +1185,10 @@ t('project.name')                // clé plate dans le namespace
 
 - **`fr` est le catalogue de référence** : le moteur retombe clé par clé sur lui. Un catalogue
   traduit incomplet n'affiche donc jamais de clé brute — et ne se voit pas non plus.
-  `npm run i18n:check` (bloquant CI) est la seule protection réelle.
+  `npm run i18n:check` (bloquant CI) est la seule protection réelle **sur les clés**.
+  ⚠️ Il ne regarde jamais le CONTENU d'une valeur : une valeur `en` recopiée du français passe
+  sans bruit. C'est `npm run i18n:identical` (bloquant CI, cliquet à **0**) qui ferme cet
+  angle-là. ❌ Ne jamais conclure d'un `i18n:check` vert que l'anglais est traduit.
 - **Slugs de routes localisés** : `src/i18n/routes.ts` + `route-slugs.json`. Une seule URL
   canonique par langue et par page (`/en/about` répond, `/en/a-propos` → 404, voulu).
 - Le préfixe de locale est porté par le `basename` du routeur, **figé au montage** — changer de
