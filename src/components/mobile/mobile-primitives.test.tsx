@@ -4,7 +4,7 @@
 // n'est pas installé dans ce projet, et l'ajouter pour trois matchers de confort
 // ne se justifie pas.
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import SectionHeader from './SectionHeader';
 import Segmented from './Segmented';
 import TouchTarget from './TouchTarget';
@@ -99,6 +99,80 @@ describe('BottomSheet', () => {
     expect(onClose).not.toHaveBeenCalled();
 
     fireEvent.click(screen.getByRole('presentation'));
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════
+// C-53 · `BottomSheet` — les trois détecteurs, en jsdom faute de mieux
+//
+// 🔴 C'est la SEULE des dix surfaces câblées sur `useModalA11y` qu'aucun test
+// de navigateur ne peut atteindre, et la raison n'est pas un oubli : son unique
+// consommateur produit est `WeeklyRecapSheet`, monté derrière
+// `WEEKLY_RECAP_ENABLED = false` (`src/pages/HabitsPage.tsx`). Aucun geste
+// utilisateur n'ouvre cette feuille aujourd'hui.
+//
+// On mesure donc le composant RÉEL ici, sur les mêmes détecteurs que le harnais
+// clavier (`e2e/a11y-keyboard-audit.spec.ts`) : entrée du focus, piège, Échap,
+// plus `aria-modal`. Ce n'est pas équivalent à une mesure de navigateur — jsdom
+// ne calcule aucune géométrie et ne simule aucune tabulation native — et
+// `docs/ACCESSIBILITY.md` le dit comme tel plutôt que de compter cette surface
+// avec les autres.
+//
+// ⚠️ Le jour où le drapeau repasse à `true`, cette couverture ne suffit plus :
+// il faut une ligne dans le harnais clavier.
+// ═══════════════════════════════════════════════════════════════════
+describe('BottomSheet — C-53 (piège de focus)', () => {
+  /**
+   * jsdom ne simule aucune navigation séquentielle : le piège se mesure en
+   * émettant le `keydown`, ce qui est justement le chemin que le défaut
+   * d'origine empruntait.
+   */
+  const press = (key: string, shiftKey = false) =>
+    act(() => {
+      document.activeElement?.dispatchEvent(
+        new KeyboardEvent('keydown', { key, shiftKey, bubbles: true, cancelable: true }),
+      );
+    });
+
+  const Sheet = ({ onClose = vi.fn() }: { onClose?: () => void }) => (
+    <BottomSheet open onClose={onClose} ariaLabel="Choix">
+      <button type="button">Premier</button>
+      <button type="button">Dernier</button>
+    </BottomSheet>
+  );
+
+  it('porte aria-modal, pas seulement role="dialog"', () => {
+    render(<Sheet />);
+    expect(screen.getByRole('dialog', { name: 'Choix' }).getAttribute('aria-modal')).toBe('true');
+  });
+
+  it('déplace le focus dans la feuille à l’ouverture (focusMovedIn)', async () => {
+    render(<Sheet />);
+    // Le hook déplace le focus après peinture (`requestAnimationFrame`).
+    await act(async () => { await new Promise((r) => requestAnimationFrame(() => r(null))); });
+    expect(screen.getByRole('dialog').contains(document.activeElement)).toBe(true);
+  });
+
+  it('boucle du dernier focalisable au premier (trapped)', async () => {
+    render(<Sheet />);
+    await act(async () => { await new Promise((r) => requestAnimationFrame(() => r(null))); });
+    act(() => screen.getByRole('button', { name: 'Dernier' }).focus());
+    press('Tab');
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Premier' }));
+  });
+
+  it('Échap ferme, même quand le focus est SORTI de la feuille (escClosed)', async () => {
+    const onClose = vi.fn();
+    render(
+      <>
+        <button type="button">Derrière la feuille</button>
+        <Sheet onClose={onClose} />
+      </>,
+    );
+    await act(async () => { await new Promise((r) => requestAnimationFrame(() => r(null))); });
+    act(() => screen.getByRole('button', { name: 'Derrière la feuille' }).focus());
+    press('Escape');
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 });

@@ -237,24 +237,49 @@ de focus, la restitution du focus au déclencheur, Échap et `role="dialog" aria
 Aucune surface n'a été corrigée à la main, et **Radix n'a pas été généralisé**.
 
 🔴 **L'énoncé vérifiable est la LISTE des surfaces mesurées, jamais « toutes les modales piègent le
-focus ».** Le hook est câblé sur **10 des 58 surfaces modales maison**, et **6 d'entre elles sont
-mesurées dans un navigateur**. Écrire un chiffre sans sa liste, c'est reprendre le défaut que ce
-finding corrige.
+focus ».** Le hook est câblé sur **10 des 58 surfaces modales maison**, et **les 10 sont mesurées**
+depuis le 2026-09-08. Écrire un chiffre sans sa liste, c'est reprendre le défaut que ce finding
+corrige — la liste ci-dessous est donc l'énoncé, le « 10 sur 10 » n'en est que le résumé.
 
-**Les 6 surfaces mesurées** (`e2e/a11y-keyboard-audit.spec.ts`, Chromium, remesuré le 2026-09-08,
-11 tests verts) :
+**Les 9 mesurées dans un vrai navigateur** (`e2e/a11y-keyboard-audit.spec.ts`, Chromium,
+14 tests verts le 2026-09-08). Cinq détecteurs sauf mention : `focusMovedIn` · `trapped` ·
+`escClosed` · `role="dialog"` · `aria-modal="true"`.
 
-| Surface | Ce qui est assertionné |
-|---|---|
-| `HabitModal` | `focusMovedIn` · `trapped` · `escClosed` · `role` · `aria-modal` |
-| `EventModal` | idem, + Échap passe par `guardedClose` |
-| `MobileMoreSheet` | les cinq mêmes, viewport forcé à 375 × 812 |
-| `ConfirmDiscardDialog` | prend le piège à `EventModal`, le lui rend |
-| `ColorSettingsModal` | prend le piège à `EventModal`, le lui rend |
-| `RecurrenceDaysModal` | prend le piège à `EventModal`, le lui rend |
+| Surface | Chemin mesuré | En plus des cinq détecteurs |
+|---|---|---|
+| `HabitModal` | `/habits`, bouton de création | — |
+| `EventModal` | `/agenda`, bouton « Nouveau » | Échap passe par `guardedClose` |
+| `MobileMoreSheet` | « Plus d'options », viewport 375 × 812 | — |
+| `ConfirmDiscardDialog` | Échap sur un `EventModal` modifié | prend le piège au parent, le lui rend |
+| `ColorSettingsModal` | `EventModal` → « Créer une catégorie » | prend le piège au parent, le lui rend |
+| `RecurrenceDaysModal` | `EventModal` → récurrence « Personnaliser » | prend le piège au parent, le lui rend |
+| `TaskActionsSheet` | `/tasks` mobile, « Afficher les actions » | — |
+| `MobileAddToList` | `TaskActionsSheet` → « Ajouter à une liste » | relais de surface, pas empilement |
+| `ShareListSheet` | `/tasks` desktop, liste **manuelle** créée puis survolée | — |
 
-**Les 4 câblées mais NON mesurées**, à ne pas compter comme prouvées : `BottomSheet`,
-`TaskActionsSheet`, `ShareListSheet`, `MobileAddToList`.
+**La 10ᵉ, `BottomSheet`, est mesurée en jsdom, et il faut dire pourquoi.** Aucun geste utilisateur
+ne l'ouvre : son unique consommateur produit est `WeeklyRecapSheet`, monté derrière
+`WEEKLY_RECAP_ENABLED = false` (`src/pages/HabitsPage.tsx`). Un test de navigateur devrait activer
+du code mort pour l'atteindre. Le composant réel est donc monté dans
+`src/components/mobile/mobile-primitives.test.tsx`, sur `focusMovedIn`, `trapped`, `escClosed` et
+`aria-modal` — les mêmes détecteurs, un environnement plus faible : jsdom ne calcule aucune
+géométrie et ne simule aucune tabulation native.
+⚠️ **Le jour où ce drapeau repasse à `true`, cette couverture ne suffit plus** : il faudra une ligne
+dans le harnais clavier.
+
+**Ce que les mesures ont appris sur le produit, en passant :**
+
+- Le jeu de démo ne contient **que des listes intelligentes**, et « Partager » n'est monté que pour
+  `list.type !== 'smart'`. La garde `ShareListSheet` crée donc sa liste manuelle : sans ça elle
+  n'aurait jamais trouvé son déclencheur et aurait **expiré**. Un timeout n'est pas un résultat.
+- `AddToListModal` aiguille sur `useIsMobile()` : au-dessus du point de rupture il rend
+  `DesktopAddToList`, qui **n'est pas câblée**. Mesurer sur desktop aurait parlé d'un autre
+  composant que celui que la garde nomme.
+- `TaskActionsSheet` appartient à la carte mobile : au-dessus du point de rupture, le bouton
+  « Actions pour … » existe encore mais n'ouvre pas cette surface.
+- L'URL passe à `/tasks` **avant** que le chunk lazy ait remplacé le tableau de bord. Trois sondes
+  successives ont mesuré le dashboard en croyant lire la page Tâches : les gardes attendent
+  désormais un élément DE la page, jamais un délai.
 
 Les lignes correspondantes de `e2e/a11y-keyboard-audit.spec.ts` sont passées de `console.log` à
 `expect` : un rapport que personne ne lit est une archive, pas une garde.
@@ -303,8 +328,8 @@ ont donc été écrites, et chacune a été **vue échouer** avant d'être reten
 - ⚠️ **`focusReturned` est mesuré et imprimé, jamais assertionné** : le témoin Radix lui-même le
   rend `false`. Un détecteur que la bibliothèque de référence ne passe pas mesure le détecteur,
   pas la modale.
-- ⚠️ **Le hook existe et dix surfaces y passent, pas cinquante-huit** — et six seulement sont
-  mesurées, cf. les deux listes en tête de section. Les plus exposées d'abord
+- ⚠️ **Le hook existe et dix surfaces y passent, pas cinquante-huit** — et les dix sont
+  mesurées, cf. les listes en tête de section. Les plus exposées d'abord
   (celles qui portent une saisie, puis les feuilles mobiles). Le reste se branche au fil de l'eau :
   il n'y a plus de décision d'architecture à reprendre, seulement du câblage.
 
