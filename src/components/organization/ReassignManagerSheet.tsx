@@ -10,6 +10,7 @@ import {
 } from '@/modules/organizations';
 import MemberAvatar from './MemberAvatar';
 import { useT } from '@/i18n/useT';
+import { useModalA11y } from '@/hooks/use-modal-a11y';
 
 interface ReassignManagerSheetProps {
   /** Le membre qu'on retire (avec subordonnés). */
@@ -96,6 +97,17 @@ const ReassignManagerSheet = ({ member, members, ownerId, currentUserId, onConfi
     );
   };
 
+  // C-53 — piege de focus, restitution du focus au declencheur, Echap et
+  // semantique ARIA. Le nom accessible est celui que la surface portait deja.
+  const { ref: modalA11yRef, dialogProps: modalA11yProps } = useModalA11y<HTMLDivElement>({
+    open: true,
+    // Le voile et la croix refusent tous deux de fermer pendant l'operation
+    // (pending). Echap suit la MEME regle : une touche qui annulerait un
+    // reattachement en cours ferait ce qu'aucun clic ne peut faire.
+    onClose: () => { if (!pending) onCancel(); },
+    label: t('member.reassignAria', { name: member.displayName }),
+  });
+
   return createPortal(
     <div
       className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-0 sm:p-4"
@@ -104,8 +116,8 @@ const ReassignManagerSheet = ({ member, members, ownerId, currentUserId, onConfi
       <div
         className="bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-t-[24px] sm:rounded-2xl w-full sm:max-w-md max-h-[85vh] flex flex-col shadow-2xl"
         onClick={(e) => e.stopPropagation()}
-        role="dialog"
-        aria-label={t('member.reassignAria', { name: member.displayName })}
+        ref={modalA11yRef}
+        {...modalA11yProps}
       >
         <div className="flex items-start justify-between gap-2 p-5 pb-3 border-b border-[rgb(var(--color-border))]">
           <div className="min-w-0">

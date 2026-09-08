@@ -5,6 +5,7 @@ import { Pencil, Pin, PinOff, Trash2, Share2 } from 'lucide-react';
 import type { TaskList } from '@/modules/lists';
 import { useSheetMotion } from '@/components/mobile/mobile-motion';
 import { useT } from '@/i18n/useT';
+import { useModalA11y } from '@/hooks/use-modal-a11y';
 
 export interface ListColorOption {
   value: string;
@@ -44,15 +45,23 @@ const ListActionsSheet: React.FC<ListActionsSheetProps> = ({
 
   useEffect(() => {
     if (!isOpen) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
-    window.addEventListener('keydown', onKey);
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     return () => {
-      window.removeEventListener('keydown', onKey);
       document.body.style.overflow = prev;
     };
   }, [isOpen, onClose]);
+
+  // C-53 — piege de focus, restitution du focus au declencheur, Echap et
+  // semantique ARIA. Le nom accessible est celui que la surface portait deja.
+  //
+  // `list` peut etre null : la surface n'est montee que quand une liste est
+  // choisie, mais le hook est appele a CHAQUE rendu, comme tout hook.
+  const { ref: modalA11yRef, dialogProps: modalA11yProps } = useModalA11y<HTMLDivElement>({
+    open: isOpen,
+    onClose,
+    label: list ? `Actions pour la liste ${list.name}` : undefined,
+  });
 
   const content = (
     <AnimatePresence>
@@ -77,8 +86,8 @@ const ListActionsSheet: React.FC<ListActionsSheetProps> = ({
               paddingBottom: 'env(safe-area-inset-bottom)',
               borderRadius: '20px 20px 0 0',
             }}
-            role="dialog"
-            aria-label={`Actions pour la liste ${list.name}`}
+            ref={modalA11yRef}
+            {...modalA11yProps}
           >
             {/* Drag handle */}
             <div className="flex justify-center pt-3 pb-2 shrink-0">

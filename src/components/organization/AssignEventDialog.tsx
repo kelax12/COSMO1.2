@@ -6,6 +6,7 @@ import type { TeamTask } from '@/modules/team-projects';
 import MemberAvatar from './MemberAvatar';
 import { MemberAgendaBody } from './MemberAgendaBody';
 import { useT } from '@/i18n/useT';
+import { useModalA11y } from '@/hooks/use-modal-a11y';
 
 /** Sans accents/casse — même normalisation que MemberDirectory. */
 const normalize = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
@@ -61,6 +62,13 @@ const AssignEventDialog = ({ task, members, currentUserId, onClose }: AssignEven
 
   const selectedMember = members.find((m) => m.userId === selectedId) ?? null;
 
+  // C-53 — appele AVANT le return anticipe ci-dessous, jamais apres.
+  const { ref: modalA11yRef, dialogProps: modalA11yProps } = useModalA11y<HTMLDivElement>({
+    open: Boolean(task),
+    onClose,
+    label: task ? `${t('projects.tasksTabScheduleAction')} — ${task.name}` : undefined,
+  });
+
   if (!task) return null;
 
   return createPortal(
@@ -71,9 +79,8 @@ const AssignEventDialog = ({ task, members, currentUserId, onClose }: AssignEven
       <div
         className="bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] w-full shadow-2xl flex flex-col rounded-t-[24px] sm:rounded-2xl h-[92dvh] sm:h-[90vh] sm:max-w-[79.2rem]"
         onClick={(e) => e.stopPropagation()}
-        role="dialog"
-        aria-modal="true"
-        aria-label={`${t('projects.tasksTabScheduleAction')} — ${task.name}`}
+        ref={modalA11yRef}
+        {...modalA11yProps}
       >
         {/* En-tête */}
         <div className="flex items-center justify-between gap-3 px-4 sm:px-6 py-3 border-b border-[rgb(var(--color-border))] shrink-0">

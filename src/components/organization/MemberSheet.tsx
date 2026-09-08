@@ -16,6 +16,7 @@ import {
 import { MemberProfileBody } from './MemberProfileBody';
 import { MemberTasksBody, MemberContributionBody } from './MemberInsightsBodies';
 import { MemberAgendaBody } from './MemberAgendaBody';
+import { useModalA11y } from '@/hooks/use-modal-a11y';
 
 interface MemberSheetProps {
   orgId: string;
@@ -116,6 +117,14 @@ const MemberSheet = ({
   // s'agrandit donc pour cet onglet — sans quoi la grille se rend écrasée.
   const wide = tab === 'agenda';
 
+  // C-53 — piege de focus, restitution du focus au declencheur, Echap et
+  // semantique ARIA. Le nom accessible est celui que la surface portait deja.
+  const { ref: modalA11yRef, dialogProps: modalA11yProps } = useModalA11y<HTMLDivElement>({
+    open: true,
+    onClose: onClose,
+    label: t('member.sheetAria', { name: member.displayName }),
+  });
+
   return createPortal(
     <div
       className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-0 sm:p-4"
@@ -126,9 +135,8 @@ const MemberSheet = ({
           wide ? 'h-[92dvh] sm:h-[90vh] sm:max-w-6xl' : 'max-h-[85vh] sm:max-w-md'
         }`}
         onClick={(e) => e.stopPropagation()}
-        role="dialog"
-        aria-modal="true"
-        aria-label={t('member.sheetAria', { name: member.displayName })}
+        ref={modalA11yRef}
+        {...modalA11yProps}
       >
         {/* En-tête */}
         <div className="flex items-start justify-between gap-3 p-5 pb-3 shrink-0">

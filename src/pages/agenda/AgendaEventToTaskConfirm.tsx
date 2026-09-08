@@ -2,6 +2,7 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { CalendarEvent } from '@/modules/events';
 import { useT } from '@/i18n/useT';
+import { useModalA11y } from '@/hooks/use-modal-a11y';
 
 interface AgendaEventToTaskConfirmProps {
   event: CalendarEvent | null;
@@ -22,6 +23,14 @@ const AgendaEventToTaskConfirm: React.FC<AgendaEventToTaskConfirmProps> = ({
   event, onCancel, onDelete, onConvertToTask,
 }) => {
   const { t } = useT('agenda');
+  // C-53 — piege de focus, restitution du focus au declencheur, Echap et
+  // semantique ARIA. Le nom accessible est celui que la surface portait deja.
+  const { ref: modalA11yRef, dialogProps: modalA11yProps } = useModalA11y<HTMLDivElement>({
+    open: true,
+    onClose: onCancel,
+    labelledBy: "event-to-task-title",
+  });
+
   return (
     <AnimatePresence>
       {event && (
@@ -39,9 +48,8 @@ const AgendaEventToTaskConfirm: React.FC<AgendaEventToTaskConfirmProps> = ({
             transition={{ type: 'spring', damping: 26, stiffness: 260 }}
             onClick={(e) => e.stopPropagation()}
             className="w-full sm:max-w-md bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-t-2xl sm:rounded-2xl shadow-2xl p-6"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="event-to-task-title"
+            ref={modalA11yRef}
+            {...modalA11yProps}
           >
             <div className="flex items-start justify-between gap-3 mb-4">
               <div>

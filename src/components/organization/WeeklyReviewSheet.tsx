@@ -6,6 +6,7 @@ import type { OrgMember } from '@/modules/organizations';
 import { formatDuration } from './team-projects.helpers';
 import { buildWeeklyReview, reviewWindow } from './weekly-review.helpers';
 import { useT } from '@/i18n/useT';
+import { useModalA11y } from '@/hooks/use-modal-a11y';
 
 interface WeeklyReviewSheetProps {
   orgId: string;
@@ -66,6 +67,14 @@ const WeeklyReviewSheet = ({ orgId, tasks, members, onOpenTask, onClose }: Weekl
     ? 'text-[rgb(var(--color-text-muted))]'
     : velocityChange > 0 ? 'text-emerald-500' : 'text-red-500';
 
+  // C-53 — piege de focus, restitution du focus au declencheur, Echap et
+  // semantique ARIA. Le nom accessible est celui que la surface portait deja.
+  const { ref: modalA11yRef, dialogProps: modalA11yProps } = useModalA11y<HTMLDivElement>({
+    open: true,
+    onClose: onClose,
+    label: t('weeklyReview.title'),
+  });
+
   return createPortal(
     <div
       className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-0 sm:p-4"
@@ -74,9 +83,8 @@ const WeeklyReviewSheet = ({ orgId, tasks, members, onOpenTask, onClose }: Weekl
       <div
         className="bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-t-[24px] sm:rounded-2xl w-full sm:max-w-lg max-h-[88vh] flex flex-col shadow-2xl"
         onClick={(e) => e.stopPropagation()}
-        role="dialog"
-        aria-modal="true"
-        aria-label={t('weeklyReview.title')}
+        ref={modalA11yRef}
+        {...modalA11yProps}
       >
         <div className="flex items-start justify-between gap-3 p-5 pb-3 border-b border-[rgb(var(--color-border))] shrink-0">
           <div className="min-w-0">

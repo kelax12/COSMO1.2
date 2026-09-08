@@ -6,6 +6,7 @@ import { subtreeOf, type OrgMember } from '@/modules/organizations';
 import MemberAvatar from './MemberAvatar';
 import { useT } from '@/i18n/useT';
 import type { KeyOf } from '@/i18n/catalog';
+import { useModalA11y } from '@/hooks/use-modal-a11y';
 
 /** Palette d'équipes — valeurs CSS directes (pastilles `backgroundColor`). */
 // Noms de couleur = CLÉS du catalogue : cette constante est évaluée au premier
@@ -70,6 +71,14 @@ const CreateTeamModal = ({ members, currentUserId, isAdmin, onSubmit, onClose }:
     }
   };
 
+  // C-53 — piege de focus, restitution du focus au declencheur, Echap et
+  // semantique ARIA. Le nom accessible est celui que la surface portait deja.
+  const { ref: modalA11yRef, dialogProps: modalA11yProps } = useModalA11y<HTMLDivElement>({
+    open: true,
+    onClose: onClose,
+    label: t('team.newTeam'),
+  });
+
   return createPortal(
     <div
       className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-0 sm:p-4"
@@ -79,8 +88,8 @@ const CreateTeamModal = ({ members, currentUserId, isAdmin, onSubmit, onClose }:
         className="flex flex-col w-full sm:max-w-md max-h-[92vh] sm:max-h-[85vh] rounded-t-[28px] sm:rounded-2xl shadow-2xl overflow-hidden"
         style={{ backgroundColor: 'rgb(var(--color-surface))' }}
         onClick={(e) => e.stopPropagation()}
-        role="dialog"
-        aria-label={t('team.newTeam')}
+        ref={modalA11yRef}
+        {...modalA11yProps}
       >
         {/* Poignée de glissement RETIRÉE, pas oubliée : elle ne faisait rien, et le geste n'a pas sa place sur un formulaire (docs/MOBILE.md §3). */}
         <div className="sm:hidden pt-3 shrink-0" aria-hidden="true" />

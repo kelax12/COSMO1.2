@@ -11,6 +11,7 @@ import {
 } from '@/modules/lists';
 import { AddToListModalProps, resolveColor, InlineForm } from './shared';
 import { useT } from '@/i18n/useT';
+import { useModalA11y } from '@/hooks/use-modal-a11y';
 
 // ════════════════════════════════════════════════════════════════════════
 // Desktop : design du commit bcddf61 — modal centré, InlineForm,
@@ -91,6 +92,14 @@ const DesktopAddToList: React.FC<AddToListModalProps> = ({ isOpen, onClose, task
     if (list) deleteList(list);
   };
 
+  // C-53 — piege de focus, restitution du focus au declencheur, Echap et
+  // semantique ARIA. Le nom accessible est celui que la surface portait deja.
+  const { ref: modalA11yRef, dialogProps: modalA11yProps } = useModalA11y<HTMLDivElement>({
+    open: isOpen,
+    onClose: onClose,
+    labelledBy: "add-to-list-title",
+  });
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -101,9 +110,8 @@ const DesktopAddToList: React.FC<AddToListModalProps> = ({ isOpen, onClose, task
           transition={{ duration: 0.18 }}
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
           onClick={onClose}
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="add-to-list-title"
+          ref={modalA11yRef}
+          {...modalA11yProps}
         >
           <motion.div
             initial={{ opacity: 0, scale: 0.96, y: 8 }}

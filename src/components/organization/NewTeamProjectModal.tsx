@@ -9,6 +9,7 @@ import { PROJECT_COLOR_NAMES, PROJECT_COLORS, PRIORITY_META } from './team-proje
 import AssigneesPicker from './AssigneesPicker';
 import TeamCategoryPicker from './TeamCategoryPicker';
 import { useT } from '@/i18n/useT';
+import { useModalA11y } from '@/hooks/use-modal-a11y';
 
 /** Tâche initiale saisie dans le popup (créée après le projet). */
 export interface DraftTask {
@@ -77,6 +78,14 @@ const NewTeamProjectModal = ({ orgId, teams, members, defaultTeamId, onSubmit, o
     }
   };
 
+  // C-53 — piege de focus, restitution du focus au declencheur, Echap et
+  // semantique ARIA. Le nom accessible est celui que la surface portait deja.
+  const { ref: modalA11yRef, dialogProps: modalA11yProps } = useModalA11y<HTMLDivElement>({
+    open: true,
+    onClose: onClose,
+    label: t('project.newAria'),
+  });
+
   return createPortal(
     <div
       className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-0 sm:p-4"
@@ -86,8 +95,8 @@ const NewTeamProjectModal = ({ orgId, teams, members, defaultTeamId, onSubmit, o
         className="flex flex-col w-full sm:max-w-xl max-h-[92vh] sm:max-h-[85vh] rounded-t-[28px] sm:rounded-2xl shadow-[0_-12px_40px_rgba(0,0,0,0.18)] sm:shadow-2xl overflow-hidden"
         style={{ backgroundColor: 'rgb(var(--color-surface))' }}
         onClick={(e) => e.stopPropagation()}
-        role="dialog"
-        aria-label={t('project.newAria')}
+        ref={modalA11yRef}
+        {...modalA11yProps}
       >
         {/* Poignée de glissement RETIRÉE, pas oubliée : elle ne faisait rien, et le geste n'a pas sa place sur un formulaire (docs/MOBILE.md §3). */}
         <div className="sm:hidden pt-3 shrink-0" aria-hidden="true" />

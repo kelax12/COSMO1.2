@@ -8,6 +8,7 @@ import type { TeamProject, TeamTask } from '@/modules/team-projects';
 import { projectColor, PRIORITY_META, isTaskOverdue, priorityLabelOf } from './team-projects.helpers';
 import MemberAvatar from './MemberAvatar';
 import { useT } from '@/i18n/useT';
+import { useModalA11y } from '@/hooks/use-modal-a11y';
 
 interface AssignTaskSheetProps {
   /** Membre cible (null = colonne « Non assignées » → création seule). */
@@ -40,6 +41,14 @@ const AssignTaskSheet = ({ member, projects, tasks, onAssign, onCreateNew, onClo
     return q ? base.filter((t) => t.name.toLowerCase().includes(q)) : base;
   }, [tasks, member, search]);
 
+  // C-53 — piege de focus, restitution du focus au declencheur, Echap et
+  // semantique ARIA. Le nom accessible est celui que la surface portait deja.
+  const { ref: modalA11yRef, dialogProps: modalA11yProps } = useModalA11y<HTMLDivElement>({
+    open: true,
+    onClose: onClose,
+    label: member ? t('assign.assignTo', { name: member.displayName }) : t('assign.addUnassigned'),
+  });
+
   return createPortal(
     <div
       className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-0 sm:p-4"
@@ -48,8 +57,8 @@ const AssignTaskSheet = ({ member, projects, tasks, onAssign, onCreateNew, onClo
       <div
         className="bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-t-[24px] sm:rounded-2xl w-full sm:max-w-md max-h-[85vh] flex flex-col shadow-2xl"
         onClick={(e) => e.stopPropagation()}
-        role="dialog"
-        aria-label={member ? t('assign.assignTo', { name: member.displayName }) : t('assign.addUnassigned')}
+        ref={modalA11yRef}
+        {...modalA11yProps}
       >
         {/* En-tête */}
         <div className="flex items-center gap-3 p-5 pb-3 border-b border-[rgb(var(--color-border))]">
