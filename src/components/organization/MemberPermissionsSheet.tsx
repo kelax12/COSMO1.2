@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X, ShieldCheck, RotateCcw } from 'lucide-react';
 import {
@@ -108,13 +108,8 @@ const MemberPermissionsSheet = ({
     () => current?.assignTargets ?? null,
   );
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
+  // Echap appartient a useModalA11y (appele plus bas), qui ecoute en CAPTURE
+  // et survit donc a un champ qui arrete la propagation de ses touches.
 
   // Ce que vaut chaque droit AUJOURD'HUI pour ce membre, surcharges comprises :
   // c'est l'état affiché par les interrupteurs.

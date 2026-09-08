@@ -5,6 +5,7 @@ import { CheckCircle2, X, Clock } from 'lucide-react';
 import type { OKR, KeyResult } from '@/modules/okrs';
 import { formatDate } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
+import { useModalA11y } from '@/hooks/use-modal-a11y';
 
 type Category = { id: string; name: string; color: string };
 
@@ -56,12 +57,20 @@ const OKRDeadlineReviewModal: React.FC<Props> = ({ okr, categories, flyTargetRef
     return () => { document.body.style.overflow = prev; };
   }, [okr]);
 
-  useEffect(() => {
-    if (!okr || phase !== 'edit') return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [okr, phase, onClose]);
+  // Echap appartient desormais a useModalA11y, avec la MEME garde de phase
+  // (`phase === 'edit'') : voir l'appel du hook plus bas.
+
+  // C-53 — appele AVANT le return anticipe.
+  //
+  // Le nom accessible est le TITRE AFFICHE de l'objectif : il n'existait pas de
+  // cle dediee, et le titre EST le sujet de cette revue.
+  const { ref: modalA11yRef, dialogProps: modalA11yProps } = useModalA11y<HTMLDivElement>({
+    open: Boolean(okr && draft),
+    // Le voile ne ferme que pendant la phase d'edition, jamais pendant
+    // l'animation de validation : Echap suit exactement la meme regle.
+    onClose: () => { if (phase === 'edit') onClose(); },
+    labelledBy: 'okr-deadline-review-title',
+  });
 
   if (!okr || !draft) return null;
 
@@ -129,6 +138,8 @@ const OKRDeadlineReviewModal: React.FC<Props> = ({ okr, categories, flyTargetRef
         exit={{ opacity: 0 }}
         transition={{ duration: phase === 'flying' ? 0.45 : 0.2 }}
         onClick={() => phase === 'edit' && onClose()}
+        ref={modalA11yRef}
+        {...modalA11yProps}
         className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center bg-slate-950/60 backdrop-blur-sm sm:p-4"
       >
         <motion.div
@@ -192,7 +203,7 @@ const OKRDeadlineReviewModal: React.FC<Props> = ({ okr, categories, flyTargetRef
                   <span>→</span>
                   <span>{formatDate(new Date(draft.endDate), { day: 'numeric', month: 'long', year: 'numeric' })}</span>
                 </div>
-                <h3 className="text-base sm:text-lg font-semibold mb-1" style={{ color: 'rgb(var(--color-text-primary))' }}>{draft.title}</h3>
+                <h3 id="okr-deadline-review-title" className="text-base sm:text-lg font-semibold mb-1" style={{ color: 'rgb(var(--color-text-primary))' }}>{draft.title}</h3>
                 <p className="text-xs sm:text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>{draft.description}</p>
               </div>
             </div>

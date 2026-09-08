@@ -13,6 +13,7 @@ import {
 import { formatTimeInTz, toDisplayISO, getTimezonePref, type TimezonePref } from '@/lib/timezone';
 import { formatDate } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
+import { useModalA11y } from '@/hooks/use-modal-a11y';
 
 // Valeur factice interceptée par onValueChange pour ouvrir le gestionnaire de
 // catégories au lieu de sélectionner une catégorie (#option "+ Ajouter").
@@ -58,8 +59,15 @@ const QuickEventCard: React.FC<QuickEventCardProps> = ({ slot, categories, tzPre
   const submit = () => { if (title.trim()) onCreate(title.trim(), color); };
   const left = Math.max(8, Math.min(slot.x, window.innerWidth - 272));
   const top = Math.max(8, Math.min(slot.y, window.innerHeight - 240));
+  // C-53 — piege de focus, restitution du focus au declencheur, Echap et
+  // semantique ARIA. Cette surface n'en portait aucune.
+  const { ref: modalA11yRef, dialogProps: modalA11yProps } = useModalA11y<HTMLDivElement>({
+    open: true,
+    onClose: onClose,
+    label: t('quickCreate.aria'),
+  });
   return (
-    <div className="fixed inset-0 z-[60]" onClick={onClose}>
+    <div ref={modalA11yRef} {...modalA11yProps} className="fixed inset-0 z-[60]" onClick={onClose}>
       <div
         onClick={(e) => e.stopPropagation()}
         className="bg-popover text-popover-foreground border-border absolute w-64 rounded-lg border p-3 shadow-xl"

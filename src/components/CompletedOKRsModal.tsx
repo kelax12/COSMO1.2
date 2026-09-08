@@ -9,6 +9,7 @@ import type { OKR } from '@/modules/okrs';
 import { formatDate as formatDateIntl } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
 import { useSheetMotion } from '@/components/mobile/mobile-motion';
+import { useModalA11y } from '@/hooks/use-modal-a11y';
 
 type Category = { id: string; name: string; color: string };
 
@@ -34,11 +35,10 @@ const CompletedOKRsModal: React.FC<Props> = ({ isOpen, onClose, okrs, categories
     if (!isOpen) return;
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
-    window.addEventListener('keydown', onKey);
+    // Echap appartient a useModalA11y ; cet effet ne garde que le blocage
+    // du defilement du fond.
     return () => {
       document.body.style.overflow = prev;
-      window.removeEventListener('keydown', onKey);
     };
   }, [isOpen, onClose]);
 
@@ -57,6 +57,13 @@ const CompletedOKRsModal: React.FC<Props> = ({ isOpen, onClose, okrs, categories
     return Math.round(sum / okr.keyResults.length);
   };
 
+  // C-53 — piege de focus, restitution du focus au declencheur, Echap et
+  // semantique ARIA. Cette surface n'en portait aucune.
+  const { ref: modalA11yRef, dialogProps: modalA11yProps } = useModalA11y<HTMLDivElement>({
+    open: isOpen,
+    onClose: onClose,
+    label: t('completed.title'),
+  });
   return createPortal(
     <AnimatePresence>
       {isOpen && (
@@ -67,6 +74,8 @@ const CompletedOKRsModal: React.FC<Props> = ({ isOpen, onClose, okrs, categories
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
           onClick={onClose}
+          ref={modalA11yRef}
+          {...modalA11yProps}
           className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center bg-slate-950/60 backdrop-blur-sm sm:p-4"
         >
           <motion.div

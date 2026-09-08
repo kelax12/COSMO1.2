@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { useT } from '@/i18n/useT';
 import { RichText } from '@/components/ui/rich-text';
 import { useSheetMotion } from '@/components/mobile/mobile-motion';
+import { useModalA11y } from '@/hooks/use-modal-a11y';
 
 interface PremiumGateModalProps {
   isOpen: boolean;
@@ -57,6 +58,13 @@ export function PremiumGateModal({ isOpen, onClose, featureName }: PremiumGateMo
     }
   };
 
+  // C-53 — piege de focus, restitution du focus au declencheur, Echap et
+  // semantique ARIA. Cette surface n'en portait aucune.
+  const { ref: modalA11yRef, dialogProps: modalA11yProps } = useModalA11y<HTMLDivElement>({
+    open: isOpen,
+    onClose: onClose,
+    label: t('gate.title'),
+  });
   return (
     <>
       <AnimatePresence>
@@ -67,6 +75,8 @@ export function PremiumGateModal({ isOpen, onClose, featureName }: PremiumGateMo
             // or Radix pose `pointer-events: none` sur <body> tant que son
             // Dialog est ouvert. Sans override, le modal s'affiche mais aucun
             // élément n'est cliquable.
+            ref={modalA11yRef}
+            {...modalA11yProps}
             className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center sm:p-4 pointer-events-auto"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

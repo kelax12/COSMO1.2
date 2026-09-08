@@ -78,6 +78,7 @@
     "refuse": "Decline"
   },
   "auth": {
+    "modalAria": "Sign in or sign up",
     "loginSubtitle": "Sign in to your account",
     "registerSubtitle": "Create your free account",
     "orEmail": "or continue with an email",

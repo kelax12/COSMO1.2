@@ -3,6 +3,7 @@ import { X, Plus, Trash2, Edit2, Check, LayoutGrid, Palette } from 'lucide-react
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { useT } from '@/i18n/useT';
+import { useModalA11y } from '@/hooks/use-modal-a11y';
 
 export type Category = {
   id: string;
@@ -125,10 +126,17 @@ export const getColorFr = (colorName: string) => {
       }
     };
 
+  // C-53 — piege de focus, restitution du focus au declencheur, Echap et
+  // semantique ARIA. Cette surface n'en portait aucune.
+  const { ref: modalA11yRef, dialogProps: modalA11yProps } = useModalA11y<HTMLDivElement>({
+    open: isOpen,
+    onClose: onClose,
+    label: t('categoryManager.title'),
+  });
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div ref={modalA11yRef} {...modalA11yProps} className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

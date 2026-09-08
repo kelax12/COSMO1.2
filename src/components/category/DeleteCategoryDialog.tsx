@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { useT } from '@/i18n/useT';
+import { useModalA11y } from '@/hooks/use-modal-a11y';
 import { useTasks } from '@/modules/tasks';
 import { useOkrs } from '@/modules/okrs';
 import type { Category } from '@/modules/categories';
@@ -81,6 +82,13 @@ const DeleteCategoryDialogBody: React.FC<{
 
   const showReassign = impact.total > 0 && targets.length > 0;
 
+  // C-53 — le corps n'est monte que lorsque la boite est ouverte.
+  const { ref: modalA11yRef, dialogProps: modalA11yProps } = useModalA11y<HTMLDivElement>({
+    open: true,
+    onClose: onCancel,
+    labelledBy: 'delete-category-title',
+  });
+
   return (
         <motion.div
           initial={{ opacity: 0 }}
@@ -93,9 +101,8 @@ const DeleteCategoryDialogBody: React.FC<{
             initial={{ opacity: 0, scale: 0.95, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="delete-category-title"
+            ref={modalA11yRef}
+            {...modalA11yProps}
             className="bg-[rgb(var(--color-surface))] rounded-xl shadow-2xl w-full max-w-sm overflow-hidden border border-[rgb(var(--color-border))]"
             onClick={(e) => e.stopPropagation()}
           >

@@ -17,6 +17,7 @@ import { useFriends, useSharesByTask } from '@/modules/friends';
 import { formatDate } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
 import { isDueToday } from '@/lib/deadline';
+import { useModalA11y } from '@/hooks/use-modal-a11y';
 
 const TodayTasks: React.FC = () => {
   const { t, tp } = useT('dashboard');
@@ -118,6 +119,18 @@ const TodayTasks: React.FC = () => {
   const confirmDelete = () => {
     if (taskToDelete) deleteTaskNow(taskToDelete);
   };
+
+  // C-53 — piege de focus, restitution du focus au declencheur, Echap et
+  // semantique ARIA. Cette surface n'en portait aucune.
+  //
+  // Pose AVANT l'etat de chargement ci-dessous, qui sort du composant : un
+  // hook place apres lui ne serait pas appele a chaque rendu.
+  const { ref: modalA11yRef, dialogProps: modalA11yProps } = useModalA11y<HTMLDivElement>({
+    open: Boolean(taskToDelete),
+    onClose: () => setTaskToDelete(null),
+    label: t('todayTasks.deleteDialog.title'),
+    role: 'alertdialog',
+  });
 
   if (isLoadingTasks) {
     return (
@@ -308,7 +321,7 @@ const TodayTasks: React.FC = () => {
 
       {/* Delete confirmation */}
       {taskToDelete && (
-        <div className="fixed inset-0 bg-slate-900/40 dark:bg-slate-950/70 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
+        <div ref={modalA11yRef} {...modalA11yProps} className="fixed inset-0 bg-slate-900/40 dark:bg-slate-950/70 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}

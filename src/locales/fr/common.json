@@ -81,6 +81,7 @@
     "refuse": "Refuser"
   },
   "auth": {
+    "modalAria": "Connexion ou inscription",
     "loginSubtitle": "Connectez-vous à votre compte",
     "registerSubtitle": "Créez votre compte gratuitement",
     "orEmail": "ou continuer avec un email",
