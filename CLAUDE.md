@@ -1195,10 +1195,20 @@ t('project.name')                // clé plate dans le namespace
   langue implique un rechargement complet (cf. `src/i18n/bootstrap.ts`).
 - Les dates passent par `src/i18n/format.ts` (locale date-fns alignée sur la locale active).
 - ⚠️ **« Servie » ≠ « indexable »** : `SUPPORTED_LOCALES` (`src/i18n/locale.ts`) ouvre une langue
-  aux utilisateurs ; `INDEXABLE_LOCALES` (`src/i18n/seo-urls.mjs`) l'ouvre à Google. `en` est
-  servie mais **pas indexable**, parce que le corps des pages est encore en français. Ne jamais
-  ajouter une locale à `INDEXABLE_LOCALES` avant d'avoir traduit le contenu — procédure complète
-  dans [`docs/SEO.md`](./docs/SEO.md).
+  aux utilisateurs ; `INDEXABLE_LOCALES` (`src/i18n/seo-urls.mjs`) l'ouvre à Google. Les deux
+  valent aujourd'hui `fr` + `en` : **l'anglais est indexable depuis le 2026-09-08** (C-20). `es`
+  n'est ni servie ni indexable, alors qu'elle figure dans `route-slugs.json` : c'est le mécanisme
+  prévu, pas un oubli.
+  ❌ **Ne jamais ajouter une locale à `INDEXABLE_LOCALES` avant d'avoir traduit le CORPS des
+  pages**, pas seulement les métas : c'est le duplicate content que toute l'architecture i18n
+  existe pour empêcher. Pour `en`, les 50 pages ont été mesurées une par une avant la bascule.
+  🔴 **Les trois fichiers se commitent ENSEMBLE** (`src/i18n/seo-urls.mjs`, `prerender.mjs`,
+  `vercel.json`) : l'état à moitié ouvert, où le `noindex` est retiré mais la locale absente
+  d'`INDEXABLE_LOCALES`, est le PIRE des trois, Google indexant alors `/en` sans `hreflang` ni
+  sitemap. `npm run i18n:check` est la gate qui refuse cet état.
+  ⚠️ Ouvrir une locale découvre aussi les routes applicatives sous son préfixe : `Disallow:`
+  est un **préfixe**, `/dashboard` ne couvre pas `/en/dashboard`, et c'est le `noindex` retiré
+  qui les bouchait. Procédure complète dans [`docs/SEO.md`](./docs/SEO.md).
 - ❌ **Ne jamais écrire un slug localisé en dur dans un `to=`.** Le préfixe de locale est porté par
   le `basename` : `<Link to="/politique-confidentialite">` devient `/en/politique-confidentialite`,
   qui rend une **404** (une seule URL canonique par langue, comportement voulu). Mesuré dans le
