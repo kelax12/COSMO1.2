@@ -16,6 +16,7 @@ import TeamSubtasksSection from './TeamSubtasksSection';
 import TeamTaskDependenciesSection from './TeamTaskDependenciesSection';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { useT } from '@/i18n/useT';
+import { useModalA11y } from '@/hooks/use-modal-a11y';
 
 /**
  * Composeur affiché à la place de `TaskCommentsSection` tant que la tâche
@@ -315,6 +316,15 @@ const TeamTaskModal = ({
     'flex flex-col w-72 max-h-[85vh] rounded-2xl border shadow-2xl overflow-hidden shrink-0';
   const sidePanelStyle = { backgroundColor: 'rgb(var(--color-surface))', borderColor: 'rgb(var(--color-border))' };
 
+  // C-53 — piege de focus, Echap, restitution au declencheur.
+  // Le voile refuse de fermer pendant l'enregistrement (`pending`) : Echap
+  // suit la MEME regle, sinon la touche ferait ce qu'aucun clic ne peut faire.
+  const { ref: modalA11yRef, dialogProps: modalA11yProps } = useModalA11y<HTMLDivElement>({
+    open: true,
+    onClose: () => { if (!pending) onClose(); },
+    label: isCreating ? t('taskModal.newAria') : t('taskModal.editAria', { name: task?.name ?? '' }),
+  });
+
   return createPortal(
     <div
       className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-0 sm:p-4"
@@ -351,8 +361,8 @@ const TeamTaskModal = ({
         className="flex flex-col w-full sm:max-w-xl sm:w-full shrink-0 max-h-[92vh] sm:max-h-[85vh] rounded-t-[28px] sm:rounded-2xl shadow-[0_-12px_40px_rgba(0,0,0,0.18)] sm:shadow-2xl overflow-hidden"
         style={{ backgroundColor: 'rgb(var(--color-surface))' }}
         onClick={(e) => e.stopPropagation()}
-        role="dialog"
-        aria-label={isCreating ? t('taskModal.newAria') : t('taskModal.editAria', { name: task?.name ?? '' })}
+        ref={modalA11yRef}
+        {...modalA11yProps}
       >
         {/* Poignée de glissement RETIRÉE, pas oubliée : elle ne faisait rien, et le geste n'a pas sa place sur un formulaire (docs/MOBILE.md §3). */}
         <div className="sm:hidden pt-3 shrink-0" aria-hidden="true" />
