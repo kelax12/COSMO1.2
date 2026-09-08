@@ -100,26 +100,31 @@ html = html.replace(/"dateModified":\s*"[\d-]+"/g, `"dateModified": "${CONTENT_L
 // un contenu visible qui ne disait pas la même chose, ce qui est exactement ce
 // que la doc schema.org interdit. Une seule source, plus de synchro à tenir.
 //
-// La home n'est publiée que dans la locale par défaut tant qu'elle n'est pas
-// traduite, donc le schéma est construit depuis ce catalogue-là.
-const LANDING_FAQ = JSON.parse(
-  readFileSync(join(__dirname, 'src/locales', DEFAULT_LOCALE, 'landing.json'), 'utf8')
-).faq;
+// Le schéma suit la LOCALE de la page. Il était construit depuis le seul
+// catalogue français, ce qui était juste tant que la home n'existait qu'en
+// français ; publier une home anglaise avec un FAQPage français ferait comparer
+// à Google un balisage et un contenu visible qui ne disent pas la même chose,
+// exactement ce que la doc schema.org interdit.
+const faqSchemaFor = (locale) => {
+  const catalog = JSON.parse(
+    readFileSync(join(__dirname, 'src/locales', locale, 'landing.json'), 'utf8')
+  ).faq;
 
-const FAQ_ITEMS = Object.keys(LANDING_FAQ)
-  .filter((key) => /^q\d+$/.test(key))
-  .sort((a, b) => Number(a.slice(1)) - Number(b.slice(1)))
-  .map((qKey) => [LANDING_FAQ[qKey], LANDING_FAQ[`a${qKey.slice(1)}`]])
-  .filter(([question, answer]) => question && answer);
+  const items = Object.keys(catalog)
+    .filter((key) => /^q\d+$/.test(key))
+    .sort((a, b) => Number(a.slice(1)) - Number(b.slice(1)))
+    .map((qKey) => [catalog[qKey], catalog[`a${qKey.slice(1)}`]])
+    .filter(([question, answer]) => question && answer);
 
-const faqSchema = {
-  '@context': 'https://schema.org',
-  '@type': 'FAQPage',
-  mainEntity: FAQ_ITEMS.map(([q, a]) => ({
-    '@type': 'Question',
-    name: q,
-    acceptedAnswer: { '@type': 'Answer', text: a },
-  })),
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: items.map(([q, a]) => ({
+      '@type': 'Question',
+      name: q,
+      acceptedAnswer: { '@type': 'Answer', text: a },
+    })),
+  };
 };
 
 /** Libellé de la racine dans le fil d'Ariane, par locale. */
@@ -175,7 +180,13 @@ for (const locale of INDEXABLE_LOCALES) {
       `prerender: la locale « ${locale} » est indexable mais n'a pas d'entrée dans UI (prerender.mjs).`
     );
   }
+  if (!HOME_LABEL[locale]) {
+    throw new Error(
+      `prerender: la locale « ${locale} » est indexable mais n'a pas de HOME_LABEL (prerender.mjs).`
+    );
+  }
 }
+
 
 const breadcrumb = (name, path, locale) => ({
   '@context': 'https://schema.org',
@@ -253,6 +264,21 @@ const ROUTES = [
         <h2>Statistiques</h2>
         <p>Temps investi par catégorie, évolution sur la période choisie, comparaison entre modules. C'est la page à ouvrir en fin de semaine ou de mois : elle répond à « où est parti mon temps ? » avec des chiffres plutôt qu'avec une impression, et c'est souvent là que se décide le prochain ajustement.</p>
         <p><a href="/">Retour à l'accueil</a> · <a href="/signup">Créer un compte gratuit</a> · <a href="/blog">Le blog</a></p>`,
+      en: `<h1>The Cosmo user guide</h1>
+        <p>This guide covers the six areas of Cosmo, in the order you meet them in practice. Allow around fifteen minutes to read it all, but nothing obliges you to set everything up on day one: tasks alone are enough to start usefully.</p>
+        <h2>Getting started</h2>
+        <p>There are two ways in. <strong>Demo mode</strong> opens the complete application with no sign-up, pre-filled with 12 months of data: that is the right way to explore without building anything. A <strong>free account</strong> takes thirty seconds to create, by email or through Google, and your data then follows you from one device to another.</p>
+        <h2>Tasks</h2>
+        <p>The foundation. A task carries a name, a description, a priority from 1 to 5, a coloured category, a deadline and a list. Filters combine to isolate what matters now, and lists serve lasting groupings (a client, a project, a course). A recurring task regenerates itself automatically when you tick it, and subtasks break down whatever is too big to start. Sharing is done by email, as Viewer or Editor, free of charge.</p>
+        <h2>Habits</h2>
+        <p>Create the habit, choose its frequency (daily, weekly or specific days), then tick it off as the days go by. The 26-week heatmap shows your real consistency, the streak counts consecutive days, and the completion rate situates the current period. The advice that changes everything: two or three habits at most when you start, even if you add more in a month. A list of fifteen habits almost always ends in giving up on all of them.</p>
+        <h2>Calendar</h2>
+        <p>The calendar accepts ordinary events, but its value lies elsewhere: drag a task from the side panel onto a slot and the event is created and stays linked to the task. That is <a href="/en/blog/time-blocking-guide">time-blocking</a>, and it is what turns a list of intentions into a realistic week. Day, week and month views, with recurring events managed from the same panel.</p>
+        <h2>OKRs</h2>
+        <p>One qualitative objective, 2 to 5 numeric key results. You update the current value of a key result, Cosmo recomputes the objective's progress and records each completion in your history, and that trace is what feeds the dashboard chart. If the method is new to you, the article <a href="/en/blog/methode-okr-exemples">the OKR method with 15 examples</a> gives you wordings ready to adapt.</p>
+        <h2>Statistics</h2>
+        <p>Time invested per category, how it evolves over the chosen period, comparison between modules. This is the page to open at the end of a week or a month: it answers "where did my time go?" with numbers rather than an impression, and that is often where the next adjustment gets decided.</p>
+        <p><a href="/en/">Back to the home page</a> · <a href="/en/signup">Create a free account</a> · <a href="/en/blog">The blog</a></p>`,
     },
   },
   {
@@ -262,6 +288,9 @@ const ROUTES = [
       fr: `<h1>Créer un compte Cosmo gratuit</h1>
         <p>Inscrivez-vous gratuitement pour gérer vos tâches, habitudes, agenda et OKR dans une seule application. Connexion possible via Google.</p>
         <p><a href="/">Accueil</a> · <a href="/login">J'ai déjà un compte</a></p>`,
+      en: `<h1>Create a free Cosmo account</h1>
+        <p>Sign up free to manage your tasks, habits, calendar and OKRs in a single application. You can also sign in with Google.</p>
+        <p><a href="/en/">Home</a> · <a href="/en/login">I already have an account</a></p>`,
     },
   },
   {
@@ -271,6 +300,9 @@ const ROUTES = [
       fr: `<h1>Connexion à Cosmo</h1>
         <p>Connectez-vous pour retrouver vos tâches, habitudes, agenda et objectifs OKR.</p>
         <p><a href="/">Accueil</a> · <a href="/signup">Créer un compte gratuit</a></p>`,
+      en: `<h1>Sign in to Cosmo</h1>
+        <p>Sign in to find your tasks, habits, calendar and OKR goals again.</p>
+        <p><a href="/en/">Home</a> · <a href="/en/signup">Create a free account</a></p>`,
     },
   },
   {
@@ -301,6 +333,27 @@ const ROUTES = [
         <h2>Nous écrire</h2>
         <p>Le projet est développé par une équipe indépendante, en France. Une question, un bug, une idée de fonctionnalité, une demande presse : écrivez à axellongattepro@gmail.com : les retours d'utilisateurs orientent réellement la feuille de route.</p>
         <p><a href="/">Accueil</a> · <a href="/signup">Créer un compte gratuit</a> · <a href="/blog">Blog</a> · <a href="/guide">Guide d'utilisation</a></p>`,
+      en: `<h1>About Cosmo</h1>
+        <p>Cosmo is a free, all-in-one productivity application built in France: tasks, habits, a calendar with time-blocking and OKRs connected in a single ecosystem. An independent product, developed in France.</p>
+
+        <h2>Why Cosmo exists</h2>
+        <p>Most organised people use three or four tools: a task manager, a habit tracker, a calendar, and a spreadsheet for the annual goals they reopen twice a year. Each does its job well, none sees the whole. The result is that underlying goals carry no weight against the urgency of the day, because they are not written anywhere you look every morning.</p>
+        <p>Cosmo came out of that observation. Bringing the four together in one product is not a convenience: it is what lets a quarterly goal come down into concrete tasks, a task receive a real slot in the calendar, and the statistics show the gap between what you are aiming at and what you actually do. None of those links is possible when the data lives in four separate applications.</p>
+
+        <h2>What we have chosen</h2>
+        <ul>
+          <li><strong>Free for the essentials.</strong> Tasks, habits, calendar, OKRs, statistics and task sharing are free, with no credit card and no time-limited trial. Collaboration in particular will stay free: an organisation app that charges you for inviting somebody removes the one thing that makes it useful with other people.</li>
+          <li><strong>Usable in two minutes.</strong> Demo mode opens the complete application, pre-filled with 12 months of realistic data, with no account and no email. You judge an organisation tool loaded, not in front of an empty screen.</li>
+          <li><strong>Mobile first.</strong> Cosmo is designed first for a phone held in one hand, then widened to a desktop screen, not the other way round. Nothing to install: it all works in the browser.</li>
+          <li><strong>Your data belongs to you.</strong> Storage on Supabase with Row Level Security: every row is partitioned to its owner at database level, not just in the interface. In demo mode nothing leaves your browser. Account deletion is permanent and complete, on request from the settings.</li>
+        </ul>
+
+        <h2>Cosmo, The Cosmo App or thecosmo?</h2>
+        <p>All three refer to the same application: Cosmo, available at thecosmo.app. People also look for us as "Cosmo app", "The Cosmo" or "thecosmo app", and that is always us. Several unrelated products carry the name Cosmo (a German radio station, various mobile apps): Cosmo is a web productivity application, with nothing to download, and its only official site is thecosmo.app.</p>
+
+        <h2>Write to us</h2>
+        <p>The project is developed by an independent team, in France. A question, a bug, a feature idea, a press request: write to axellongattepro@gmail.com, because user feedback genuinely steers the roadmap.</p>
+        <p><a href="/en/">Home</a> · <a href="/en/signup">Create a free account</a> · <a href="/en/blog">Blog</a> · <a href="/en/guide">User guide</a></p>`,
     },
   },
   {
@@ -345,6 +398,33 @@ const ROUTES = [
         <p>Un forfait pour toute l'organisation, quel que soit le nombre de projets, et non un tarif par personne : gratuit jusqu'à 5 membres, 20 € par mois de 5 à 10 membres, 50 € de 10 à 20, 100 € de 20 à 50, et 200 € au-delà de 50. Le forfait s'ajuste tout seul quand l'organisation grandit et redescend si l'effectif baisse. Sans engagement, résiliable à tout moment, sans carte bancaire pour démarrer.</p>
 
         <p><a href="/">Cosmo pour moi</a> · <a href="/signup">Créer mon organisation</a> · <a href="/guide">Guide d'utilisation</a></p>`,
+      en: `<h1>Cosmo for companies: your org chart is your execution engine</h1>
+        <p>In Cosmo for companies, everyone's scope follows from your org chart: what they see, what gets assigned to them, what gets measured. Each colleague also keeps the personal Cosmo they already use, which avoids having one more tool to get adopted. Setting it up takes four steps.</p>
+
+        <h2>Step 1: invite your team and group them</h2>
+        <p>Everyone joins the organisation with the Cosmo account they already have, by organisation code or by single-use link, and you attach them to their manager. You then create as many teams as you need and place whoever you want in them, and one person can belong to several teams. Access follows from that single attachment: a manager sees their complete subtree (their teams, their projects, their goals, their statistics) without a single permission having to be ticked by hand. Changing an attachment is enough to reorganise, because rights are not copied anywhere: they are recomputed from the link.</p>
+        <p>The org chart is not a staff directory, it is the screen from which you follow each person: opening their card shows their current tasks, their load and their schedule. A manager can create, move and edit calendar events for the people who report to them; what those people have marked as personal stays private, and only the slot appears. Two sibling branches of the org chart, on the other hand, are partitioned, and the rule is enforced in the database, not merely hidden in the interface.</p>
+        <p><img src="/screenshots/entreprise/pyramide.webp" width="1500" height="938" alt="The Pyramid tab in Cosmo for companies: the organisation's org chart, each member attached to their manager" /></p>
+
+        <h2>Step 2: create your projects and assign them at the right scale</h2>
+        <p>A project belongs to a team and gathers its tasks. You assign them to one person or several, anywhere in your scope, and each of them finds those tasks in their own Cosmo alongside their personal ones. A kanban to know where each task stands, a timeline to see deadlines coming, with subtasks, labels, comments with mentions and a change history.</p>
+        <p><img src="/screenshots/entreprise/projets.webp" width="1500" height="938" alt="The Projects tab in Cosmo for companies: projects by team with their tasks, deadlines and assignees" /></p>
+
+        <h2>Step 3: set your goals, at every scale</h2>
+        <p>An organisation goal cascades into team OKRs, each OKR into numeric key results: the same mechanism at every level, in the categories you define. Each key result achieved is logged on the date it was achieved, in a journal that cannot be rewritten afterwards, and that is what makes the dashboard curve defensible in a steering committee.</p>
+        <p><img src="/screenshots/entreprise/okr.webp" width="1500" height="938" alt="The OKR tab in Cosmo for companies: team goals and their numeric key results, with their progress" /></p>
+
+        <h2>Step 4: follow everyone's progress</h2>
+        <p>The Statistics tab answers the Monday morning question: who is moving, who is falling behind, who is overloaded. Velocity and trend over the period compared with previous ones, open tasks and delays for each member, time invested aggregated by team and by project. Leadership reads the whole organisation, a manager reads their scope, and the attachment set up in step 1 is what decides that. The overview, meanwhile, opens each day: your assigned tasks, your deadlines and what has just moved in your teams.</p>
+        <p><img src="/screenshots/entreprise/statistiques.webp" width="1500" height="938" alt="The Statistics tab in Cosmo for companies: OKR progress and workload for each team member" /></p>
+
+        <h2>Security, privacy and reversibility</h2>
+        <p>Every table is protected by access policies evaluated server side: a request forged from the browser brings back nothing more than a legitimate one. A manager sees the work in their scope, never the personal tasks, habits or calendar of their colleagues. Account deletion is genuinely executed server side, consent to joining an organisation is explicit, and no data is resold. Transferring ownership and deleting the organisation are in the interface, not in a support ticket.</p>
+
+        <h2>Pricing</h2>
+        <p>One plan for the whole organisation, whatever the number of projects, rather than a per-person price: free up to 5 members, 20 € a month from 5 to 10 members, 50 € from 10 to 20, 100 € from 20 to 50, and 200 € beyond 50. The plan adjusts itself as the organisation grows and comes back down if headcount falls. No commitment, cancellable at any time, no credit card to start.</p>
+
+        <p><a href="/en/">Cosmo for me</a> · <a href="/en/signup">Create my organisation</a> · <a href="/en/guide">User guide</a></p>`,
     },
   },
   {
@@ -501,6 +581,10 @@ const ROUTES = [
     content: {
       fr: `<h1>Conditions Générales d'Utilisation</h1>
         <p>Conditions générales d'utilisation de l'application Cosmo. <a href="/">Retour à l'accueil</a></p>`,
+      // ⚠️ Le francais fait foi : chaque document contractuel porte une clause de
+      // langue le disant. Ce bloc est un resume indexable, pas le contrat.
+      en: `<h1>Terms of Service</h1>
+        <p>Terms of service for the Cosmo application. The French version prevails. <a href="/en/">Back to the home page</a></p>`,
     },
   },
   {
@@ -509,6 +593,8 @@ const ROUTES = [
     content: {
       fr: `<h1>Mentions légales</h1>
         <p>Mentions légales de l'application Cosmo. <a href="/">Retour à l'accueil</a></p>`,
+      en: `<h1>Legal notice</h1>
+        <p>Legal notice for the Cosmo application. The French version prevails. <a href="/en/">Back to the home page</a></p>`,
     },
   },
   {
@@ -517,6 +603,8 @@ const ROUTES = [
     content: {
       fr: `<h1>Politique de confidentialité</h1>
         <p>Politique de confidentialité de l'application Cosmo. <a href="/">Retour à l'accueil</a></p>`,
+      en: `<h1>Privacy policy</h1>
+        <p>Privacy policy for the Cosmo application. The French version prevails. <a href="/en/">Back to the home page</a></p>`,
     },
   },
 ];
@@ -579,6 +667,44 @@ const HOME_STATIC = `<h1>Cosmo – Gestionnaire de tâches, habitudes et OKR</h1
         <p>Cosmo existe aussi en mode entreprise : votre pyramide managériale y structure les projets, les OKR et les statistiques d'équipe, et le périmètre de chacun découle de la hiérarchie réelle plutôt que de partages faits à la main. Chaque collaborateur conserve le Cosmo personnel décrit ci-dessus. C'est gratuit jusqu'à 5 membres, <a href="/entreprise-presentation">découvrir Cosmo Entreprise</a>.</p>
         <p><a href="/signup">Créer un compte gratuit</a> · <a href="/guide">Guide d'utilisation</a> · <a href="/blog">Le blog Cosmo</a></p>`;
 
+// Home anglaise. Même règle que la version française : chaque section décrit une
+// capacité RÉELLE du produit, et les captures gardent `loading=lazy` (ce bloc vit
+// dans #seo-fallback, en display:none — sans l'attribut, le scanner de
+// préchargement téléchargeait 790 ko d'images que personne ne voit jamais).
+const HOME_STATIC_EN = `<h1>Cosmo, a task, habit and OKR manager</h1>
+        <p>Cosmo is a free productivity application that brings together four tools normally kept apart: task management, habit tracking, a calendar with time-blocking, and the OKR method (Objectives &amp; Key Results). The starting idea is simple: your tasks for today, your routines and your underlying goals describe the same life, so they have no reason to live in three applications that ignore each other.</p>
+        <p>Everything runs in the browser, on desktop and on mobile, with nothing to install. You can <a href="/en/">try the demo without creating an account</a>: it opens pre-filled with 12 months of realistic data (100 tasks, 100 habits, around 150 calendar events and 8 OKRs), which is enough to judge the product loaded rather than in front of an empty screen.</p>
+
+        <h2>Managing tasks without drowning</h2>
+        <p>Each task carries a priority from 1 to 5, a coloured category, a deadline and, if you need it, a list. Filters cross those criteria to answer the only question that counts in the morning: what do I do now? Recurring tasks regenerate themselves once ticked, subtasks break down whatever is too big, and search finds any item instantly. Tasks can also be shared with other users, to read or to edit, and that collaboration is free and will stay free.</p>
+
+        <h2>Tracking habits and seeing your consistency</h2>
+        <p>A habit is defined by its frequency: daily, weekly, or on specific days. You tick, Cosmo measures. The 26-week heatmap, in the spirit of the GitHub contribution graph, makes consistency visible at a glance, far better than an isolated number. The streak counts your consecutive days, and the completion rate situates the current period against previous ones. The rule that works: start with two or three habits, not fifteen.</p>
+
+        <h2>Time-blocking, to make the plan real</h2>
+        <p>A task without a slot stays an intention. Cosmo's calendar accepts drag and drop from the task panel: you drop "write the proposal" on Tuesday at 2 pm, the event is created and stays linked to the task. Day, week and month views, with recurring events. The point of time-blocking is not cosmetic, it confronts your list with the only genuinely limited resource, the hours available in the week.</p>
+
+        <h2>Steering your goals with the OKR method</h2>
+        <p>The <a href="/en/blog/methode-okr-exemples">OKR method</a>, popularised by Intel and then Google, structures an ambitious goal into 2 to 5 measurable key results. Cosmo computes the progress of each key result and of the overall objective, and archives each completion to build your history. What most OKR tools do not do: here your quarterly goals sit alongside your daily tasks, which makes visible the gap between what you are aiming at and what you actually spend your days on.</p>
+
+        <h2>What it looks like</h2>
+        <p>Three screens of the application, in demo mode:</p>
+
+        <p>
+          <img src="/screenshots/dashboard.webp" width="1280" height="800" loading="lazy" decoding="async" alt="The Cosmo dashboard: completed tasks, calendar events, key results achieved and the day's habits gathered on a single screen" />
+          <img src="/screenshots/taches.webp" width="1280" height="800" loading="lazy" decoding="async" alt="The Cosmo task manager: quick-access lists, filters by priority and category, overdue tasks flagged" />
+          <img src="/screenshots/habitudes.webp" width="1280" height="800" loading="lazy" decoding="async" alt="Cosmo habit tracking: a weekly table of ticked habits with the consecutive-day streak for each one" />
+        </p>
+
+        <h2>A dashboard that connects the four</h2>
+        <p>The dashboard brings together the day's progress, the habits to tick, the next events and the curve of key results achieved. The Statistics page goes further: time invested per category, how it evolves over the period, comparison between modules. It is the productivity dashboard that is missing when each tool only knows a quarter of your activity.</p>
+
+        <h2>What does it cost?</h2>
+        <p>The main features (tasks, habits, calendar, OKRs, statistics, sharing) are free, with no credit card and no time-limited trial. Your data is stored on Supabase with Row Level Security: nobody but you can reach it. In demo mode, nothing leaves your browser.</p>
+        <h2>And for an organisation?</h2>
+        <p>Cosmo also exists in company mode: your management pyramid structures the projects, the OKRs and the team statistics, and everyone's scope follows from the real hierarchy rather than from shares made by hand. Each colleague keeps the personal Cosmo described above. It is free up to 5 members, <a href="/en/for-companies">discover Cosmo for companies</a>.</p>
+        <p><a href="/en/signup">Create a free account</a> · <a href="/en/guide">User guide</a> · <a href="/en/blog">The Cosmo blog</a></p>`;
+
 // Maillage interne statique commun, ajouté au bas de #seo-fallback sur TOUTES
 // les routes (y compris la home) — Ahrefs (et les crawlers sans JS) ne suivent
 // que ces liens-là pour établir les entrantes. Sans ce bloc, /a-propos, les 3
@@ -588,22 +714,70 @@ const HOME_STATIC = `<h1>Cosmo – Gestionnaire de tâches, habitudes et OKR</h1
 // Les `href` sont localisés : sous `/en/`, pointer vers `/a-propos` enverrait
 // le crawler sur la version française et casserait le cloisonnement des langues
 // (Google suit ces liens pour établir la structure du site).
+// Les LIBELLÉS se traduisent aussi, pas seulement les `href`. Un pied de page
+// dont les liens pointent vers `/en/...` sous des mots français annoncerait à un
+// crawler une page anglaise décrite en français, exactement la contradiction que
+// le cloisonnement des langues doit éviter.
+const FOOTER_LABELS = {
+  fr: {
+    guide: "Guide d'utilisation",
+    enterprise: 'Cosmo Entreprise',
+    blog: 'Blog',
+    freelancers: 'Pour les freelances',
+    students: 'Pour les étudiants',
+    managers: 'Pour les managers',
+    teams: 'Pour les équipes',
+    about: 'À propos',
+    signup: 'Inscription gratuite',
+    login: 'Connexion',
+    legalNotice: 'Mentions légales',
+    privacy: 'Confidentialité',
+    terms: 'CGU',
+  },
+  en: {
+    guide: 'User guide',
+    enterprise: 'Cosmo for companies',
+    blog: 'Blog',
+    freelancers: 'For freelancers',
+    students: 'For students',
+    managers: 'For managers',
+    teams: 'For teams',
+    about: 'About',
+    signup: 'Free sign-up',
+    login: 'Sign in',
+    legalNotice: 'Legal notice',
+    privacy: 'Privacy',
+    terms: 'Terms',
+  },
+};
+
+// Même garde que pour `UI` : une locale indexable sans libellés de pied de page
+// produirait des `undefined` dans le maillage interne, silencieusement.
+for (const locale of INDEXABLE_LOCALES) {
+  if (!FOOTER_LABELS[locale]) {
+    throw new Error(
+      `prerender: la locale « ${locale} » est indexable mais n'a pas d'entrée dans FOOTER_LABELS (prerender.mjs).`
+    );
+  }
+}
+
 const staticFooterNav = (locale) => {
-  const link = (path, label) => `<a href="${localizePath(path, locale)}">${label}</a>`;
+  const label = FOOTER_LABELS[locale];
+  const link = (path, key) => `<a href="${localizePath(path, locale)}">${label[key]}</a>`;
   return `<p>${[
-    link('/guide', "Guide d'utilisation"),
-    link('/entreprise-presentation', 'Cosmo Entreprise'),
-    link('/blog', 'Blog'),
-    link('/pour-freelances', 'Pour les freelances'),
-    link('/pour-etudiants', 'Pour les étudiants'),
-    link('/pour-managers', 'Pour les managers'),
-    link('/pour-equipes', 'Pour les équipes'),
-    link('/a-propos', 'À propos'),
-    link('/signup', 'Inscription gratuite'),
-    link('/login', 'Connexion'),
-    link('/mentions-legales', 'Mentions légales'),
-    link('/politique-confidentialite', 'Confidentialité'),
-    link('/cgu', 'CGU'),
+    link('/guide', 'guide'),
+    link('/entreprise-presentation', 'enterprise'),
+    link('/blog', 'blog'),
+    link('/pour-freelances', 'freelancers'),
+    link('/pour-etudiants', 'students'),
+    link('/pour-managers', 'managers'),
+    link('/pour-equipes', 'teams'),
+    link('/a-propos', 'about'),
+    link('/signup', 'signup'),
+    link('/login', 'login'),
+    link('/mentions-legales', 'legalNotice'),
+    link('/politique-confidentialite', 'privacy'),
+    link('/cgu', 'terms'),
     // Adresse de contact — même bloc que la nav statique parce qu'elle doit
     // être lisible par un crawler sans JS, exactement comme le footer React
     // l'affiche pour un vrai navigateur.
@@ -704,18 +878,19 @@ for (const route of ROUTES) {
 }
 
 // ── Home : FAQPage JSON-LD statique + contenu visible dans #root ──────────
-// La FAQ reste française tant que la home n'est pas traduite (phase 5) : la
-// home n'est donc publiée que dans la locale par défaut.
+// La home est publiée dans chaque locale qui a un corps écrit, et le FAQPage
+// suit la locale de la page (`faqSchemaFor`) : un balisage français sur une
+// page anglaise ferait diverger le schéma et le contenu visible.
 const homeRoute = {
   path: '/',
   meta: fromCatalog('root'),
-  content: { fr: HOME_STATIC },
+  content: { fr: HOME_STATIC, en: HOME_STATIC_EN },
 };
 for (const locale of availableLocales(homeRoute)) {
   let home = buildPage(homeRoute, locale, availableLocales(homeRoute));
   if (!home.includes('"FAQPage"')) {
-    home = home.replace('</head>', `    ${ld(faqSchema, 'faq-schema')}\n  </head>`);
-    console.log('  injected FAQPage JSON-LD into index.html');
+    home = home.replace('</head>', `    ${ld(faqSchemaFor(locale), 'faq-schema')}\n  </head>`);
+    console.log(`  injected FAQPage JSON-LD (${locale}) into index.html`);
   }
   writeFileSync(join(DIST, localizePath('/', locale), 'index.html'), home, 'utf8');
 }
@@ -745,20 +920,6 @@ const sitemapGroup = (path, alternates, lastmod, changefreq, priority) =>
 
 try {
   let sitemap = readFileSync(sitemapPath, 'utf8');
-  // Les deux URLs du socle (`public/sitemap.xml`) reçoivent leur date de
-  // contenu, pas celle du build (cf. CONTENT_LASTMOD). Remplacement par
-  // index plutôt que par regex : une URL contient `/` et `.`, qu'il faudrait
-  // sinon échapper à la main dans le motif.
-  const stampLastmod = (xml, path, date) => {
-    const at = xml.indexOf(`<loc>${BASE}${path}</loc>`);
-    if (at === -1) return xml;
-    const open = xml.indexOf('<lastmod>', at);
-    const close = xml.indexOf('</lastmod>', open);
-    if (open === -1 || close === -1) return xml;
-    return xml.slice(0, open) + `<lastmod>${date}` + xml.slice(close);
-  };
-  sitemap = stampLastmod(sitemap, '/', CONTENT_LASTMOD['/']);
-  sitemap = stampLastmod(sitemap, '/guide', CONTENT_LASTMOD['/guide']);
 
   // Déclaration du namespace xhtml, requise dès qu'on émet des `xhtml:link`.
   if (!sitemap.includes('xmlns:xhtml')) {
@@ -774,6 +935,14 @@ try {
   };
 
   const generated =
+    // La home et le guide passent par `sitemapGroup` comme les autres, et non
+    // plus par le socle `public/sitemap.xml`. Le socle ne savait porter qu'une
+    // seule URL par page : il ne pouvait ni émettre `/en/…`, ni porter les
+    // `xhtml:link` réciproques. Tant que `fr` était seule indexable ça ne se
+    // voyait pas ; à l'ouverture de `en` (C-20) les deux pages les plus
+    // importantes du site étaient les seules absentes du sitemap en anglais.
+    sitemapGroup('/', availableLocales(homeRoute), CONTENT_LASTMOD['/'], 'weekly', '1.0') +
+    sitemapGroup('/guide', localesOf('/guide'), CONTENT_LASTMOD['/guide'], 'monthly', '0.8') +
     // Priorité 0.9 : c'est la page qui porte l'offre payante, juste sous la home.
     sitemapGroup(
       '/entreprise-presentation',
