@@ -143,7 +143,8 @@ Vérifié dans `dist/` après `npm run build`, jamais depuis la lecture de `prer
 `/en/(terms|legal-notice|privacy-policy)` (le français fait foi contractuellement), sur les
 invitations et sur les pages de mot de passe.
 
-> ⚠️ **Deux défauts trouvés par la bascule, invisibles tant que `fr` était seule indexable :**
+> ⚠️ **Trois défauts trouvés par la bascule. Les deux premiers étaient invisibles tant que `fr`
+> était seule indexable ; le troisième était là depuis toujours :**
 >
 > 1. **`/` et `/guide` étaient absents du sitemap en anglais.** Ils venaient du socle statique
 >    `public/sitemap.xml`, pas de `sitemapGroup` : une entrée écrite à la main ne porte qu'une URL,
@@ -152,6 +153,15 @@ invitations et sur les pages de mot de passe.
 > 2. **`robots.txt` ne couvrait pas les routes applicatives sous `/en`.** `Disallow:` est un
 >    préfixe : `/dashboard` ne matche pas `/en/dashboard`. Le `noindex` global sur `/en/(.*)` les
 >    bouchait ; le retirer découvrait les dix. Elles sont maintenant nommées.
+> 3. **`robots.txt` interdisait au crawl `/entreprise-presentation`**, la page publique qui porte
+>    l'offre payante, prérendue et déclarée au sitemap en **priorité 0.9**, la plus haute après
+>    l'accueil. `Disallow: /entreprise` visait la route applicative, mais `Disallow:` matche par
+>    **préfixe** et le slug public partage ses onze premiers caractères. C'est la contradiction du
+>    § « Ne jamais faire » ci-dessous, en pire : la page n'était pas seulement déclarée puis
+>    désindexée, elle était déclarée puis **rendue incrawlable**. Corrigé par `Disallow:
+>    /entreprise$` plus `Disallow: /entreprise/`. Préexistant, sans rapport avec l'ouverture de
+>    `en` ; c'est l'audit des 40 URLs du sitemap contre les 20 règles qui l'a sorti, et c'était la
+>    seule collision. Le slug anglais est `for-companies`, il n'a jamais eu le problème.
 
 **✅ La faille est refermée (2026-08-19).** La règle était `/en/(.*)`, qui exige la barre
 oblique : **`https://thecosmo.app/en` sortait sans `noindex`** — précisément l'URL de l'accueil
@@ -348,6 +358,10 @@ traduit : c'est le scénario que toute l'architecture i18n a été conçue pour 
 - ❌ Déclarer au sitemap une URL qu'on désindexe par ailleurs (contradiction signalée par Search Console).
 - ❌ Ajouter un `Allow:` par page dans `robots.txt` — `Allow: /` les rend redondants et la liste
   se périme en silence.
+- ❌ **Écrire une règle `robots.txt` en préfixe nu quand un slug public commence par les mêmes
+  lettres.** `Disallow:` matche par préfixe : `/entreprise` bloquait `/entreprise-presentation`.
+  Utiliser `$` (fin d'URL) et une règle explicite pour le sous-arbre. Vaut aussi à l'ouverture
+  d'une langue : `/dashboard` ne couvre pas `/en/dashboard`.
 - ❌ Bloquer au crawl une page qu'on veut désindexer : Google doit pouvoir **lire** le `noindex`.
   C'est pourquoi `/invite/` et les pages légales sont crawlables mais `noindex` par en-tête.
 - ❌ Publier un nouvel article tant que ceux de moins de 900 mots n'ont pas été approfondis.

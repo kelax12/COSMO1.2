@@ -8,7 +8,8 @@ Disallow: /okr
 Disallow: /statistics
 Disallow: /settings
 Disallow: /premium
-Disallow: /entreprise
+Disallow: /entreprise$
+Disallow: /entreprise/
 Disallow: /admin
 
 # Mêmes routes sous le préfixe de locale anglais. `Disallow:` est un préfixe :
@@ -24,8 +25,22 @@ Disallow: /en/okr
 Disallow: /en/statistics
 Disallow: /en/settings
 Disallow: /en/premium
-Disallow: /en/entreprise
+Disallow: /en/entreprise$
+Disallow: /en/entreprise/
 Disallow: /en/admin
+
+# ⚠️ `/entreprise` porte un `$` (fin d'URL) et une seconde règle pour son
+# sous-arbre, au lieu du préfixe nu `/entreprise`. `Disallow:` matche par
+# PRÉFIXE : `/entreprise` bloquait donc aussi `/entreprise-presentation`, la
+# page publique qui porte l'offre payante, prérendue et déclarée au sitemap en
+# priorité 0.9. On interdisait au crawl une page qu'on veut voir classée, soit
+# l'inverse exact de la contradiction que ce fichier documente plus bas.
+# Corrigé le 2026-09-08, après avoir mesuré les 40 URLs du sitemap contre les
+# 20 règles : c'était la seule collision.
+# ❌ Ne jamais réécrire ces lignes en préfixe nu : le slug public et la route
+# applicative partagent leurs onze premiers caractères.
+# (Le slug anglais est `for-companies`, il n'a jamais eu le problème ; les
+#  deux règles `/en/entreprise` gardent la même forme par cohérence.)
 
 # Les `Allow:` explicites par page ont été retirés le 2026-08-12 : `Allow: /`
 # les rendait tous redondants, et la liste devait être tenue à jour à chaque
