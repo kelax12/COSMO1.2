@@ -116,18 +116,42 @@ Mesuré sur les 24 pages prérendues :
 **Le grief central de juillet — « le prérendu ne sort que 161 mots » — est corrigé** : l'accueil
 émet ~600 mots de contenu propre, les pages use-case 680–900.
 
-## 2. International — correct et délibéré, faille refermée
+## 2. International : l'anglais est OUVERT à l'indexation (2026-09-08)
 
-**Ce n'est pas un oubli**, contrairement à ce que la seule lecture du `dist/` laisse croire.
-`INDEXABLE_LOCALES = ['fr']` dans `src/i18n/seo-urls.mjs` est un choix documenté dans le fichier
-lui-même : `/en/` **est servi** depuis la phase 2, mais le **corps** des pages est encore en
-français — seules les méta sont traduites. Indexer ça produirait du contenu français sur des URLs
-anglaises, soit exactement le duplicate content que le chantier i18n cherche à éviter.
+> 🔄 **Bascule C-20, le 2026-09-08.** Ce paragraphe décrivait `INDEXABLE_LOCALES = ['fr']` comme
+> un choix délibéré : `/en/` était servi, mais son **corps** restait français, et l'indexer aurait
+> produit du duplicate content. Cette raison a cessé d'être vraie : le corps anglais a été écrit.
 
-La décision est appliquée de bout en bout, et c'est cohérent :
+`INDEXABLE_LOCALES = ['fr', 'en']`. La condition de sortie était le **contenu**, pas la config, et
+elle a été mesurée avant la bascule, pas déduite : accueil, guide, à-propos et entreprise
+(430 à 700 mots), les 4 pages métier (579 à 815 mots) et les 11 articles (657 à 1 985 mots) ont
+tous un corps anglais réel. Aucune page ne restait en français.
 
-- pas de prérendu `/en/`, pas d'URL `/en/` au sitemap, pas de `hreflang="en"` ;
-- `vercel.json` pose `X-Robots-Tag: noindex` sur `/(en|es)` **et** `/(en|es)/(.*)`.
+Vérifié dans `dist/` après `npm run build`, jamais depuis la lecture de `prerender.mjs` :
+
+| Contrôle | Résultat |
+|---|---|
+| Pages prérendues | **50**, dont **26 sous `/en`** |
+| URLs au sitemap | **40**, dont **20 sous `/en`** |
+| `lastmod` manquant | **0** |
+| `hreflang` réciproques (`fr-FR` + `en-US` + `x-default`), `<head>` et sitemap | **50/50 pages**, et chaque alternate pointe vers un fichier qui existe |
+| `canonical` / `lang` / `og:locale` conformes à la locale | **50/50** |
+| URL au sitemap **et** `noindex` (contradiction) | **0** |
+| FAQPage JSON-LD | suit la locale (`faqSchemaFor`), FAQ anglaise sur `/en/`, française sur `/` |
+
+`vercel.json` ne pose donc plus de `noindex` sur `/en`, et le conserve sur `/es`, sur
+`/en/(terms|legal-notice|privacy-policy)` (le français fait foi contractuellement), sur les
+invitations et sur les pages de mot de passe.
+
+> ⚠️ **Deux défauts trouvés par la bascule, invisibles tant que `fr` était seule indexable :**
+>
+> 1. **`/` et `/guide` étaient absents du sitemap en anglais.** Ils venaient du socle statique
+>    `public/sitemap.xml`, pas de `sitemapGroup` : une entrée écrite à la main ne porte qu'une URL,
+>    donc ni `/en/…` ni alternates. Les deux pages les plus importantes du site étaient les seules
+>    au groupe de langue muet. Le socle est désormais **vide** et tout passe par le générateur.
+> 2. **`robots.txt` ne couvrait pas les routes applicatives sous `/en`.** `Disallow:` est un
+>    préfixe : `/dashboard` ne matche pas `/en/dashboard`. Le `noindex` global sur `/en/(.*)` les
+>    bouchait ; le retirer découvrait les dix. Elles sont maintenant nommées.
 
 **✅ La faille est refermée (2026-08-19).** La règle était `/en/(.*)`, qui exige la barre
 oblique : **`https://thecosmo.app/en` sortait sans `noindex`** — précisément l'URL de l'accueil
@@ -306,6 +330,15 @@ Dans cet ordre, sinon on publie du duplicate content :
 3. Ajouter la locale à `INDEXABLE_LOCALES` (`src/i18n/seo-urls.mjs`) — elle devient prérendue,
    déclarée au sitemap et annoncée en `hreflang`.
 4. Retirer la règle `X-Robots-Tag: noindex` correspondante dans `vercel.json`.
+5. Nommer les routes applicatives sous le nouveau préfixe dans `robots.txt` : `Disallow:` est un
+   **préfixe**, `/dashboard` ne couvre pas `/xx/dashboard`, et c'est le `noindex` global qu'on
+   vient de retirer qui les bouchait.
+6. Faire tourner `npm run build` et vérifier dans `dist/`, jamais dans `prerender.mjs`.
+
+🔴 **Les points 3 et 4 se commitent ENSEMBLE.** L'état à moitié ouvert (contenu prérendu et
+`noindex` retiré, mais locale absente d'`INDEXABLE_LOCALES`) est le plus dangereux des trois :
+Google peut indexer `/xx` sans hreflang ni sitemap. `npm run i18n:check` le refuse, et c'est cette
+gate qui rattrape l'oubli, pas la relecture.
 
 ❌ Ne jamais ajouter une locale à `INDEXABLE_LOCALES` avant que son contenu soit réellement
 traduit : c'est le scénario que toute l'architecture i18n a été conçue pour empêcher.

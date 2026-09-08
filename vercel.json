@@ -43,6 +43,12 @@
       ]
     },
     {
+      "source": "/en/(terms|legal-notice|privacy-policy)",
+      "headers": [
+        { "key": "X-Robots-Tag", "value": "noindex, follow" }
+      ]
+    },
+    {
       "source": "/(en|es)/(invite|org-invite)/(.*)",
       "headers": [
         { "key": "X-Robots-Tag", "value": "noindex, nofollow" }
@@ -55,13 +61,13 @@
       ]
     },
     {
-      "source": "/(en|es)",
+      "source": "/es",
       "headers": [
         { "key": "X-Robots-Tag", "value": "noindex" }
       ]
     },
     {
-      "source": "/(en|es)/(.*)",
+      "source": "/es/(.*)",
       "headers": [
         { "key": "X-Robots-Tag", "value": "noindex" }
       ]

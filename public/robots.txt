@@ -11,6 +11,22 @@ Disallow: /premium
 Disallow: /entreprise
 Disallow: /admin
 
+# Mêmes routes sous le préfixe de locale anglais. `Disallow:` est un préfixe :
+# `/dashboard` ne couvre PAS `/en/dashboard`. Tant que `en` n'était pas
+# indexable, le `X-Robots-Tag: noindex` posé par vercel.json sur `/en/(.*)`
+# les bouchait toutes ; ouvrir `en` à l'indexation (C-20) retire ce filet, et
+# il faut donc les nommer ici.
+Disallow: /en/dashboard
+Disallow: /en/tasks
+Disallow: /en/agenda
+Disallow: /en/habits
+Disallow: /en/okr
+Disallow: /en/statistics
+Disallow: /en/settings
+Disallow: /en/premium
+Disallow: /en/entreprise
+Disallow: /en/admin
+
 # Les `Allow:` explicites par page ont été retirés le 2026-08-12 : `Allow: /`
 # les rendait tous redondants, et la liste devait être tenue à jour à chaque
 # nouvelle page publique — une source d'oubli silencieux.

@@ -1,10 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Socle du sitemap : uniquement les pages qui n'ont PAS de registre les
-  générant. Le reste (blog, use-cases, /a-propos) est ajouté au build par
-  prerender.mjs, avec le lastmod du jour.
+  Socle du sitemap : volontairement VIDE. Toutes les URLs sont générées au
+  build par prerender.mjs, seul chemin qui développe un chemin sur chacune de
+  ses locales publiées et qui porte les `xhtml:link` réciproques exigés par
+  Google.
 
-  Volontairement ABSENTES (2026-08-12) :
+  `/` et `/guide` vivaient ici jusqu'au 2026-09-08. Une entrée écrite à la main
+  ne porte qu'UNE URL : elle ne pouvait donc pas déclarer `/en/…`, et le groupe
+  de langue de ces deux pages était muet. Invisible tant que `fr` était seule
+  indexable, et faux le jour de l'ouverture de `en`.
+  ❌ Ne jamais réintroduire une URL en dur ici : elle serait la seule à ne pas
+  suivre l'ouverture d'une langue, et personne ne le verrait.
+
+  Volontairement ABSENTES du sitemap (2026-08-12) :
    - /signup, /login  → pages transactionnelles sans contenu propre. Elles
      restent crawlables et reçoivent des liens internes, mais un sitemap
      n'a de sens que pour des pages qu'on veut voir classées.
@@ -13,16 +21,4 @@
      désindexe est une contradiction que Search Console signale.
 -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>https://thecosmo.app/</loc>
-    <lastmod>2026-05-31</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>1.0</priority>
-  </url>
-  <url>
-    <loc>https://thecosmo.app/guide</loc>
-    <lastmod>2026-05-31</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
 </urlset>
