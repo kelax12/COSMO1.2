@@ -56,6 +56,7 @@
 // pointer une base réelle par accident est le seul dégât qu'il puisse causer.
 // ═══════════════════════════════════════════════════════════════════
 import pg from 'pg';
+import { assertDisposable, fillTo, seedOrg, walkPlan } from './scalability-seed.mjs';
 
 const arg = (name, fallback) => {
   const hit = process.argv.find((a) => a.startsWith(`--${name}=`));
@@ -72,24 +73,9 @@ if (!DB_URL) {
   process.exit(2);
 }
 
-// Garde-fou : localhost/127.0.0.1 uniquement. Une base Supabase hébergée porte
-// toujours un hôte `*.supabase.co` ou `*.pooler.supabase.com`.
-const isLocal = /@(localhost|127\.0\.0\.1|\[::1\])[:/]/.test(DB_URL);
-if (!isLocal && !FORCE) {
-  console.error(
-    'DATABASE_URL ne pointe pas une base locale. Ce script ECRIT des milliers de lignes.\n' +
-      'Relancer avec --i-know-this-is-not-production seulement si la base est jetable.',
-  );
-  process.exit(2);
-}
+assertDisposable(DB_URL, FORCE);
 
 const client = new pg.Client({ connectionString: DB_URL });
-
-/** Somme récursive d'un compteur sur tous les nœuds d'un plan EXPLAIN JSON. */
-function walkPlan(node, visit) {
-  visit(node);
-  for (const child of node.Plans ?? []) walkPlan(child, visit);
-}
 
 /**
  * Mesure UN chemin de lecture, sous le rôle `authenticated`, plan chauffé.
@@ -140,133 +126,11 @@ async function measure(label, sql, uid, params = []) {
   }
 }
 
-/**
- * Sème une organisation réaliste.
- *
- * 🔴 En instructions SÉQUENTIELLES, jamais en une seule CTE modifiante. Les
- * triggers de validation de ces tables (`validate_org_manager`,
- * `validate_team_membership`, `validate_project_team`) LISENT les tables qu'on
- * vient de remplir ; or les lignes écrites par une CTE modifiante ne sont pas
- * visibles d'une lecture de table dans la même instruction, toutes les branches
- * partageant un instantané. Le semis « élégant » en un seul WITH échouerait
- * donc sur ses propres gardes, et le message ne dirait pas pourquoi.
- */
-async function seed() {
-  console.log(`Semis : 1 organisation, ${MEMBERS} membres, 5 equipes, 20 projets.`);
-
-  const { rows: people } = await client.query(
-    `INSERT INTO auth.users (id, instance_id, aud, role, email, encrypted_password,
-                             created_at, updated_at, raw_user_meta_data)
-     SELECT gen_random_uuid(), '00000000-0000-0000-0000-000000000000', 'authenticated',
-            'authenticated', 'volume' || lpad(i::text, 4, '0') || '@exemple.test',
-            '', now(), now(), '{}'::jsonb
-     FROM generate_series(1, $1) AS i
-     RETURNING id`,
-    [MEMBERS],
-  );
-  const ids = people.map((r) => r.id);
-
-  const { rows: orgRows } = await client.query(
-    `INSERT INTO public.organizations (name, join_code, owner_id)
-     VALUES ('Organisation de volume', 'VOL' || substr(md5(random()::text), 1, 5), $1)
-     RETURNING id`,
-    [ids[0]],
-  );
-  const orgId = orgRows[0].id;
-
-  // L'admin d'abord : la pyramide se valide contre des membres déjà présents.
-  await client.query(
-    `INSERT INTO public.organization_members (org_id, user_id, role)
-     VALUES ($1, $2, 'admin')`,
-    [orgId, ids[0]],
-  );
-
-  // Puis les managers de niveau 2, puis les feuilles. Trois niveaux : sans
-  // profondeur, get_subtree() rendrait un arbre dégénéré et la mesure porterait
-  // sur un cas qui n'existe pas chez un vrai client.
-  const managers = ids.slice(1, 8);
-  for (const m of managers) {
-    await client.query(
-      `INSERT INTO public.organization_members (org_id, user_id, role, manager_id)
-       VALUES ($1, $2, 'member', $3)`,
-      [orgId, m, ids[0]],
-    );
-  }
-  const leaves = ids.slice(8);
-  for (const [i, leaf] of leaves.entries()) {
-    await client.query(
-      `INSERT INTO public.organization_members (org_id, user_id, role, manager_id)
-       VALUES ($1, $2, 'member', $3)`,
-      [orgId, leaf, managers[i % managers.length]],
-    );
-  }
-
-  const { rows: teams } = await client.query(
-    `INSERT INTO public.org_teams (org_id, name)
-     SELECT $1, 'Equipe ' || i FROM generate_series(1, 5) AS i
-     RETURNING id`,
-    [orgId],
-  );
-
-  for (const [i, uid] of ids.entries()) {
-    await client.query(
-      `INSERT INTO public.org_team_members (org_id, team_id, user_id) VALUES ($1, $2, $3)`,
-      [orgId, teams[i % teams.length].id, uid],
-    );
-  }
-
-  // Projets RATTACHÉS à une équipe : c'est la branche coûteuse du prédicat. Un
-  // projet `team_id IS NULL` est visible de tout membre sans le moindre calcul,
-  // il ne mesurerait rien.
-  const { rows: projects } = await client.query(
-    `INSERT INTO public.team_projects (org_id, name, team_id)
-     SELECT $1, 'Projet ' || i, ($2::uuid[])[1 + (i % 5)]
-     FROM generate_series(1, 20) AS i
-     RETURNING id`,
-    [orgId, teams.map((t) => t.id)],
-  );
-
-  return {
-    org_id: orgId,
-    admin_id: ids[0],
-    manager_id: managers[0],
-    member_id: ids[ids.length - 1],
-    projets: projects.length,
-    membres: ids.length,
-  };
-}
-
-async function fillTo(orgId, target) {
-  const { rows } = await client.query(
-    'SELECT count(*)::int AS n FROM public.team_tasks WHERE org_id = $1',
-    [orgId],
-  );
-  const missing = target - rows[0].n;
-  if (missing <= 0) return;
-  await client.query(
-    `
-    INSERT INTO public.team_tasks (org_id, project_id, name, priority, status)
-    SELECT $1,
-           p.id,
-           'Tache de volume ' || i,
-           1 + (i % 4),
-           (ARRAY['todo','in_progress','done'])[1 + (i % 3)]
-    FROM generate_series(1, $2) AS i
-    CROSS JOIN LATERAL (
-      SELECT id FROM public.team_projects
-       WHERE org_id = $1 ORDER BY id OFFSET (i % 20) LIMIT 1
-    ) AS p
-    `,
-    [orgId, missing],
-  );
-  await client.query('ANALYZE public.team_tasks');
-}
-
 const fmt = (n, d = 2) => (n === null ? 'n/a' : Number(n).toFixed(d));
 
 async function main() {
   await client.connect();
-  const ctx = await seed();
+  const ctx = await seedOrg(client, MEMBERS);
   console.log(
     `Organisation ${ctx.org_id} — ${ctx.membres} membres, ${ctx.projets} projets.`,
   );
@@ -276,7 +140,7 @@ async function main() {
   let flip = false;
 
   for (const step of STEPS) {
-    await fillTo(ctx.org_id, step);
+    await fillTo(client, ctx.org_id, step);
     const { rows } = await client.query(
       'SELECT count(*)::int AS n FROM public.team_tasks WHERE org_id = $1',
       [ctx.org_id],

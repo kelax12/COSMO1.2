@@ -1,5 +1,6 @@
 # ══════════════════════════════════════════════════════════════════
-# Mesure de scalabilite du mode entreprise, A VOLUME (T-41)
+# Mesure de scalabilite du mode entreprise : A VOLUME (T-41) et EN
+# CONCURRENCE (C-16). Deux questions distinctes, une seule stack jetable.
 #
 # POURQUOI ICI ET PAS AILLEURS. `docs/SCALABILITY.md` §9bis nomme ce qui
 # manque : le comportement du PLANIFICATEUR a volume. Un basculement de plan ne
@@ -12,7 +13,8 @@
 # CE N'EST PAS UNE GATE. Le job ne tourne QUE sur declenchement manuel : il
 # seme des milliers de lignes et prend plusieurs minutes. Le rendre bloquant
 # ajouterait de l'attente a chaque push pour une question qu'on se pose une
-# fois par trimestre.
+# fois par trimestre. L'etape de concurrence peut par ailleurs echouer sur son
+# propre TEMOIN, ce qui n'est pas un defaut du produit — cf. son commentaire.
 #
 # OU LIRE LE RESULTAT : dans le RESUME du job, pas dans les logs. Les logs d'un
 # run exigent une authentification meme sur un depot public, le resume non.
@@ -30,6 +32,14 @@ on:
         description: "Taille de l'organisation de test"
         required: false
         default: '50'
+      sessions:
+        description: 'Paliers de CONCURRENCE (sessions simultanees), separes par des virgules'
+        required: false
+        default: '1,2,4,8,16'
+      iterations:
+        description: 'Requetes par session et par palier de concurrence'
+        required: false
+        default: '30'
 
 permissions:
   contents: read
@@ -37,7 +47,7 @@ permissions:
 jobs:
   measure:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -97,10 +107,41 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
           exit 1
 
+      # ── La CONCURRENCE (C-16) ────────────────────────────────────
+      #
+      # La mesure de volume ci-dessus repond a « combien coute UNE lecture ».
+      # Celle-ci repond a « a partir de combien de lecteurs simultanes la base
+      # cesse de rendre du debit », qui n'en decoule pas : le §9ter etait
+      # mono-session, et c'est la concurrence qui decide de C-15.
+      #
+      # 🔴 CETTE ETAPE PEUT ECHOUER SANS QUE LA BASE AILLE MAL : le harnais
+      # rejoue le meme balayage sur un TEMOIN dont on sait qu'il sature, et
+      # sort en erreur si ce temoin ne sature PAS. Un harnais qui rend toujours
+      # « ca tient » ne mesure rien.
+      - name: Mesurer en concurrence
+        run: |
+          set -o pipefail
+          if node scripts/scalability-concurrency.mjs \
+               --sessions="${{ inputs.sessions }}" \
+               --iterations="${{ inputs.iterations }}" \
+               --members="${{ inputs.members }}" 2>&1 | tee concurrency.log; then
+            exit 0
+          fi
+          {
+            echo '### ✖ Mesure de concurrence — echec'
+            echo ''
+            echo '```'
+            tail -n 60 concurrency.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit 1
+
       - name: Joindre les plans complets
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: scalability-volume-log
-          path: volume.log
+          path: |
+            volume.log
+            concurrency.log
           retention-days: 30
