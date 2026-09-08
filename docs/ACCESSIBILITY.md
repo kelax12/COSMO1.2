@@ -241,9 +241,15 @@ main, c'est un CLIQUET.** `src/components/modal-a11y.guard.test.ts` balaie `src/
 tout fichier qui monte une surface modale maison, et exige de chacun qu'il importe `useModalA11y`.
 Les exceptions sont déclarées dans le fichier, **une par une, avec leur motif**.
 
-**53 surfaces sont câblées.** Ce chiffre n'est plus à recompter : s'il baisse, la garde échoue.
-Une liste qu'on relit à la main est une liste qu'on oubliera de relire — c'est exactement comme ça
-que ce finding est resté ouvert pendant trois passes.
+**Mesuré le 2026-09-08 : 61 surfaces détectées, 53 câblées, 8 déclarées non-modales avec leur
+motif.** Ces chiffres ne sont plus à recompter : la garde les recalcule à chaque exécution, et
+échoue si une surface sort du compte. Une liste qu'on relit à la main est une liste qu'on oubliera
+de relire — c'est exactement comme ça que ce finding est resté ouvert pendant trois passes.
+
+⚠️ **Le « 58 » qui circulait depuis l'audit A-3 n'a jamais été remesuré, et il était faux dans les
+deux sens** : le recensement cherchait `fixed inset-0` et ratait les surfaces qui ne portent qu'un
+`role="dialog"`, tout en comptant des popovers qui n'en sont pas. Le message du commit `a8305a1` le
+reprend encore ; le chiffre opposable est celui de la garde, pas celui-là.
 
 ⚠️ **Câblé n'est pas mesuré, et les deux ne se confondent pas.** 10 surfaces sont mesurées au
 clavier dans un vrai navigateur (liste ci-dessous) ; les 43 autres sont câblées et couvertes par le
