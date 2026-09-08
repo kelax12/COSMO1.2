@@ -25,6 +25,7 @@
     "copySuffix": "(copie)"
   },
   "quickCreate": {
+    "aria": "Création rapide d'un événement",
     "titlePlaceholder": "Titre de l'événement",
     "categoryPlaceholder": "Catégorie",
     "addCategory": "Ajouter une catégorie",

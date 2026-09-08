@@ -31,6 +31,7 @@ import {
   type BugReportField,
 } from '@/lib/bug-report';
 import { useT } from '@/i18n/useT';
+import { useModalA11y } from '@/hooks/use-modal-a11y';
 
 interface BugReportModalProps {
   open: boolean;
@@ -72,17 +73,17 @@ const BugReportModal: React.FC<BugReportModalProps> = ({ open, onOpenChange }) =
 
   const close = () => onOpenChange(false);
 
-  // Échap ferme la fenêtre — sauf pendant l'envoi, où fermer perdrait la
-  // saisie sans savoir si le mail est parti.
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !sending) close();
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, sending]);
+  // C-53 — piege de focus, Echap, restitution du focus au declencheur.
+  //
+  // Echap gardait deja `!sending` : fermer pendant l'envoi perdrait la saisie
+  // sans savoir si le mail est parti. La garde est conservee mot pour mot ; ce
+  // qui change, c'est que la touche appartient au hook et non plus a un
+  // ecouteur window pose ici.
+  const { ref: modalA11yRef, dialogProps: modalA11yProps } = useModalA11y<HTMLDivElement>({
+    open,
+    onClose: () => { if (!sending) close(); },
+    label: t('title'),
+  });
 
   const mailtoHref =
     `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(`[Bug] ${title.trim()}`)}` +
@@ -170,9 +171,8 @@ const BugReportModal: React.FC<BugReportModalProps> = ({ open, onOpenChange }) =
           exit={{ opacity: 0, scale: 0.97 }}
           transition={{ duration: 0.15 }}
           onClick={(e) => e.stopPropagation()}
-          role="dialog"
-          aria-modal="true"
-          aria-label={t('title')}
+          ref={modalA11yRef}
+          {...modalA11yProps}
           className="w-full max-w-xl my-auto rounded-3xl bg-[rgb(var(--color-background))] border border-[rgb(var(--color-border))] shadow-2xl overflow-hidden"
         >
           {/* En-tête */}

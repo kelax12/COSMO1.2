@@ -11,6 +11,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useBottomSheet } from '@/hooks/use-bottom-sheet';
 import { useSheetMotion } from '@/components/mobile/mobile-motion';
 import { useT } from '@/i18n/useT';
+import { useModalA11y } from '@/hooks/use-modal-a11y';
 
 interface ColorOption {
   value: string;
@@ -46,6 +47,13 @@ const CreateListSheet = ({
   const { sheetRef, handleBarWidth, sheetDragProps } = useBottomSheet(onClose);
   const sheetMotion = useSheetMotion();
 
+  // C-53 — piege de focus, restitution du focus au declencheur, Echap et
+  // semantique ARIA. Cette surface n'en portait aucune.
+  const { ref: modalA11yRef, dialogProps: modalA11yProps } = useModalA11y<HTMLDivElement>({
+    open: isOpen,
+    onClose: onClose,
+    label: t('lists.newList'),
+  });
   return (
     <AnimatePresence>
       {isOpen && (
@@ -53,6 +61,8 @@ const CreateListSheet = ({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
+          ref={modalA11yRef}
+          {...modalA11yProps}
           className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end justify-center z-[70] md:hidden"
           onClick={onClose}
         >

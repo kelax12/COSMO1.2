@@ -9,6 +9,7 @@ import { useCategories } from '@/modules/categories';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
 import { formatDate } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
+import { useModalA11y } from '@/hooks/use-modal-a11y';
 
 /**
  * Quick-add global (#1) — capture une tâche en langage naturel depuis
@@ -122,6 +123,13 @@ const QuickAddBar = () => {
     return formatDate(new Date(y, m - 1, day), { weekday: 'short', day: 'numeric', month: 'short' });
   };
 
+  // C-53 — piege de focus, restitution du focus au declencheur, Echap et
+  // semantique ARIA. Cette surface n'en portait aucune.
+  const { ref: modalA11yRef, dialogProps: modalA11yProps } = useModalA11y<HTMLDivElement>({
+    open: isOpen,
+    onClose: () => setIsOpen(false),
+    label: t('quickAdd.createAria'),
+  });
   return (
     <AnimatePresence>
       {isOpen && (
@@ -130,6 +138,8 @@ const QuickAddBar = () => {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.15 }}
+          ref={modalA11yRef}
+          {...modalA11yProps}
           className="fixed inset-0 z-[70] bg-black/40 backdrop-blur-sm flex items-start justify-center pt-[18vh] px-4"
           onClick={() => setIsOpen(false)}
         >

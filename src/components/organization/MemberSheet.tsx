@@ -79,14 +79,8 @@ const MemberSheet = ({
     setTab((current) => resolveMemberTab(current, tabs));
   }, [tabs]);
 
-  // Échapper ferme la fiche — les trois sheets d'origine ne le faisaient pas.
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
+  // Échap ferme la fiche — les trois sheets d'origine ne le faisaient pas.
+  // La touche appartient maintenant a useModalA11y (appele plus bas).
 
   /**
    * URL absolue : le lien part dans une conversation, un chemin relatif n'y

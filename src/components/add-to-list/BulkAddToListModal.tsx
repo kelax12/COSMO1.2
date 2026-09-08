@@ -39,21 +39,16 @@ const BulkAddToListModal: React.FC<BulkAddToListModalProps> = ({ isOpen, onClose
     if (!isOpen) setCreating(false);
   }, [isOpen]);
 
+  // Echap appartient a useModalA11y (plus bas) ; cet effet ne garde que le
+  // blocage du defilement du fond.
   useEffect(() => {
     if (!isOpen) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape') return;
-      if (creating) { setCreating(false); return; }
-      onClose();
-    };
-    document.addEventListener('keydown', onKey);
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     return () => {
-      document.removeEventListener('keydown', onKey);
       document.body.style.overflow = prev;
     };
-  }, [isOpen, onClose, creating]);
+  }, [isOpen]);
 
   const handleCreate = (name: string, color: string) => {
     createListMutation.mutate(
@@ -72,7 +67,12 @@ const BulkAddToListModal: React.FC<BulkAddToListModalProps> = ({ isOpen, onClose
   // semantique ARIA. Le nom accessible est celui que la surface portait deja.
   const { ref: modalA11yRef, dialogProps: modalA11yProps } = useModalA11y<HTMLDivElement>({
     open: isOpen,
-    onClose: onClose,
+    // ⚠️ Fermeture A ETAGES, conservee mot pour mot depuis l'ecouteur maison
+    // qu'elle remplace : quand le sous-formulaire de creation est ouvert, Echap
+    // l'annule d'abord et ne ferme la modale qu'au second appui. Deplacer la
+    // touche dans le hook sans deplacer l'escalade aurait fait perdre une
+    // saisie en cours, sans que rien ne le signale.
+    onClose: () => { if (creating) { setCreating(false); return; } onClose(); },
     labelledBy: "bulk-add-to-list-title",
   });
 

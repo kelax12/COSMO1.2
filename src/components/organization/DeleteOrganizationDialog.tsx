@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import type { MyOrganization } from '@/modules/organizations';
 import { useT } from '@/i18n/useT';
+import { useModalA11y } from '@/hooks/use-modal-a11y';
 
 interface DeleteOrganizationDialogProps {
   org: MyOrganization;
@@ -22,8 +23,18 @@ const DeleteOrganizationDialog = ({ org, memberCount, pending, onConfirm, onCanc
   const [typed, setTyped] = useState('');
   const match = typed === org.name;
 
+  // C-53 — piege de focus, restitution du focus au declencheur, Echap et
+  // semantique ARIA. Cette surface n'en portait aucune.
+  const { ref: modalA11yRef, dialogProps: modalA11yProps } = useModalA11y<HTMLDivElement>({
+    open: true,
+    onClose: onCancel,
+    label: t('common.deleteOrgTitle', { name: org.name }),
+    role: 'alertdialog',
+  });
   return createPortal(
     <div
+      ref={modalA11yRef}
+      {...modalA11yProps}
       className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm p-0 sm:p-4"
       onClick={pending ? undefined : onCancel}
     >

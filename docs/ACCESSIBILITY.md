@@ -236,10 +236,58 @@ les modales piègent le focus » — ne jamais écrire la seconde phrase à la p
 de focus, la restitution du focus au déclencheur, Échap et `role="dialog" aria-modal="true"`.
 Aucune surface n'a été corrigée à la main, et **Radix n'a pas été généralisé**.
 
-🔴 **L'énoncé vérifiable est la LISTE des surfaces mesurées, jamais « toutes les modales piègent le
-focus ».** Le hook est câblé sur **10 des 58 surfaces modales maison**, et **les 10 sont mesurées**
-depuis le 2026-09-08. Écrire un chiffre sans sa liste, c'est reprendre le défaut que ce finding
-corrige — la liste ci-dessous est donc l'énoncé, le « 10 sur 10 » n'en est que le résumé.
+🔴 **L'énoncé vérifiable a changé de nature le 2026-09-08 : ce n'est plus une liste tenue à la
+main, c'est un CLIQUET.** `src/components/modal-a11y.guard.test.ts` balaie `src/**/*.tsx`, retient
+tout fichier qui monte une surface modale maison, et exige de chacun qu'il importe `useModalA11y`.
+Les exceptions sont déclarées dans le fichier, **une par une, avec leur motif**.
+
+**53 surfaces sont câblées.** Ce chiffre n'est plus à recompter : s'il baisse, la garde échoue.
+Une liste qu'on relit à la main est une liste qu'on oubliera de relire — c'est exactement comme ça
+que ce finding est resté ouvert pendant trois passes.
+
+⚠️ **Câblé n'est pas mesuré, et les deux ne se confondent pas.** 10 surfaces sont mesurées au
+clavier dans un vrai navigateur (liste ci-dessous) ; les 43 autres sont câblées et couvertes par le
+cliquet, pas par une mesure. Écrire « les 53 piègent le focus » serait exactement le glissement que
+ce paragraphe existe pour empêcher.
+
+#### Ce que la garde a trouvé que l'inventaire manuel avait raté (2026-09-08)
+
+Elle n'a pas seulement figé l'existant, elle a corrigé le recensement :
+
+- **6 surfaces absentes de l'inventaire manuel**, qui cherchait `fixed inset-0` alors qu'elles ne
+  portaient qu'un `role="dialog"` posé à la main. Cinq se sont révélées être des **popovers ancrés**
+  ou un carton de tutoriel — non modaux, déclarés comme tels avec leur motif ; piéger le focus dans
+  un popover empêcherait d'en sortir en tabulant, ce qui est précisément sa façon de se fermer.
+- **5 surfaces câblées gardaient un Échap écrit à la main**, en plus de celui du hook. Le
+  comportement était identique, donc invisible — mais deux propriétaires pour une touche, ce sont
+  deux endroits où la règle de fermeture peut diverger. C'est le défaut d'origine de `HabitModal`,
+  réapparu en cinq exemplaires. La garde le refuse désormais.
+- L'une d'elles, `BulkAddToListModal`, portait une fermeture **à étages** : Échap annule d'abord le
+  sous-formulaire de création, et ne ferme la modale qu'au second appui. Déplacer la touche sans
+  déplacer l'escalade aurait fait perdre une saisie en cours, **sans que rien ne le signale**.
+- Le détecteur lisait aussi les **commentaires** : un fichier `.ts` était signalé parce qu'un
+  commentaire y décrit un overlay. Le JSX vit dans les `.tsx`, s'y restreindre supprime la classe
+  entière de faux positifs.
+
+🔎 **Témoins.** La garde compte les surfaces détectées et refuse de passer sous 40 : sans ça, casser
+le détecteur rendrait le fichier **vert**. Et elle a été vue échouer, en retirant le hook de
+`WeeklyCheckinModal` : elle nomme le fichier fautif.
+
+#### Trois règles que le câblage des 43 a dégagées
+
+- ❌ **Le chemin de fermeture n'est pas toujours `onClose`.** C'est `onCancel`, `onSnooze`,
+  `closeAfter`, `onOpenChange(false)`, ou un `setState`. Échap doit emprunter **exactement** le
+  chemin du voile et de la croix, jamais un raccourci.
+- ❌ **Une surface qui refuse de fermer pendant une opération refuse aussi Échap.**
+  `ReassignManagerSheet`, `TeamTaskModal` et `BugReportModal` gardent leur fermeture derrière un
+  `pending` / `sending` : sans la même garde sur la touche, Échap ferait ce qu'aucun clic ne peut
+  faire — abandonner un réattachement en cours, ou perdre une saisie sans savoir si le mail est
+  parti.
+- ❌ **Un hook ne se pose jamais après un `return` anticipé.** Sept fichiers ont un état de
+  chargement ou un `if (!open) return null` avant leur surface. Le codemod refusait ces cas, et
+  ESLint a rattrapé les deux fois où j'ai passé outre : `react-hooks/rules-of-hooks` avait raison.
+
+#### Les 10 surfaces mesurées au clavier
 
 **Les 9 mesurées dans un vrai navigateur** (`e2e/a11y-keyboard-audit.spec.ts`, Chromium,
 14 tests verts le 2026-09-08). Cinq détecteurs sauf mention : `focusMovedIn` · `trapped` ·
@@ -328,10 +376,10 @@ ont donc été écrites, et chacune a été **vue échouer** avant d'être reten
 - ⚠️ **`focusReturned` est mesuré et imprimé, jamais assertionné** : le témoin Radix lui-même le
   rend `false`. Un détecteur que la bibliothèque de référence ne passe pas mesure le détecteur,
   pas la modale.
-- ⚠️ **Le hook existe et dix surfaces y passent, pas cinquante-huit** — et les dix sont
-  mesurées, cf. les listes en tête de section. Les plus exposées d'abord
-  (celles qui portent une saisie, puis les feuilles mobiles). Le reste se branche au fil de l'eau :
-  il n'y a plus de décision d'architecture à reprendre, seulement du câblage.
+- ⚠️ **Le hook existe, 53 surfaces y passent, et un cliquet le tient** (2026-09-08). Ce n'était
+  pas le cas pendant les trois premières passes : le câblage s'est fait par vagues, et la liste des
+  surfaces restantes vivait dans un fichier Markdown. Elle vit maintenant dans un test. **Câblé
+  n'est toujours pas mesuré** : 10 surfaces sont mesurées au clavier, 43 sont câblées et gardées.
 
 ### C-54 tranché le 2026-09-04 · le bouton « Nouveau » EST le chemin clavier de l'agenda
 

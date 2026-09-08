@@ -4,6 +4,7 @@ import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useT } from '@/i18n/useT';
+import { useModalA11y } from '@/hooks/use-modal-a11y';
 import { useSlideUpEntrance } from '@/lib/motion-safe';
 import { useIsDemo } from '@/lib/app-mode.store';
 import { useAuth } from '@/modules/auth/AuthContext';
@@ -65,12 +66,23 @@ const FirstRunSetup: React.FC = () => {
       alreadyDone,
     });
 
-  if (!open) return null;
-
   const close = () => {
     markFirstRunDone();
     setDismissed(true);
   };
+
+  // C-53 — appele AVANT le return anticipe : un hook qui disparait quand
+  // l'ecran est ferme casse l'ordre des hooks.
+  //
+  // Echap emprunte le MEME chemin que la croix « tout passer » : c'est le seul
+  // geste de fermeture que cet ecran offre, il n'a pas de voile a cliquer.
+  const { ref: modalA11yRef, dialogProps: modalA11yProps } = useModalA11y<HTMLDivElement>({
+    open,
+    onClose: close,
+    label: ov.t('firstRun.title'),
+  });
+
+  if (!open) return null;
 
   const addTaskDraft = () => {
     const name = taskDraft.trim();
@@ -118,9 +130,8 @@ const FirstRunSetup: React.FC = () => {
     <div
       className="fixed inset-0 z-[60] overflow-y-auto"
       style={{ backgroundColor: 'rgb(var(--color-background))' }}
-      role="dialog"
-      aria-modal="true"
-      aria-label={ov.t('firstRun.title')}
+      ref={modalA11yRef}
+      {...modalA11yProps}
     >
       {/* C-56 — `items-center` ET `overflow-y-auto` sur le MEME element est le
           piege CSS classique : quand l'enfant depasse, le debordement se

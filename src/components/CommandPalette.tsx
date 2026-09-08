@@ -37,6 +37,7 @@ import { buildOrgLink } from '@/components/organization/deep-link.helpers';
 import { useTeamTasks, useTeamProjects } from '@/modules/team-projects';
 import { formatDate } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
+import { useModalA11y } from '@/hooks/use-modal-a11y';
 
 interface PaletteCommand {
   id: string;
@@ -375,10 +376,19 @@ export function CommandPalette() {
 
   const showDataResults = isAuthenticated && query.trim().length >= 2;
 
+  // C-53 — piege de focus, restitution du focus au declencheur, Echap et
+  // semantique ARIA. Cette surface n'en portait aucune.
+  const { ref: modalA11yRef, dialogProps: modalA11yProps } = useModalA11y<HTMLDivElement>({
+    open: isOpen,
+    onClose: () => setIsOpen(false),
+    label: ov.t('palette.searchPlaceholder'),
+  });
   return (
     <AnimatePresence>
       {isOpen && (
         <motion.div
+          ref={modalA11yRef}
+          {...modalA11yProps}
           className="fixed inset-0 z-[200] flex items-start justify-center pt-[12vh] bg-black/50 backdrop-blur-sm p-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}

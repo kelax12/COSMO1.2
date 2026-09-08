@@ -1,5 +1,6 @@
 import React from 'react';
 import { useT } from '@/i18n/useT';
+import { useModalA11y } from '@/hooks/use-modal-a11y';
 
 interface RemoveFriendConfirmProps {
   open: boolean;
@@ -58,10 +59,25 @@ const RemoveFriendConfirm: React.FC<RemoveFriendConfirmProps> = ({
 }) => {
   const { t } = useT('common');
   const ov = useT('overlays');
+  // C-53 — appele AVANT le return anticipe : ESLint refuse (a juste titre) un
+  // hook qui disparait quand la boite est fermee.
+  //
+  // `alertdialog` et non `dialog` : cette confirmation etait deja annoncee
+  // comme telle, et la rétrograder ferait perdre la lecture automatique du
+  // contenu a l'ouverture.
+  const { ref: modalA11yRef, dialogProps: modalA11yProps } = useModalA11y<HTMLDivElement>({
+    open,
+    onClose: onCancel,
+    label: ov.t('removeFriend.ariaConfirm'),
+    role: 'alertdialog',
+  });
+
   if (!open) return null;
 
   return (
     <div
+      ref={modalA11yRef}
+      {...modalA11yProps}
       className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center z-[10000] sm:p-4 animate-in fade-in duration-150"
       onClick={onCancel}
     >

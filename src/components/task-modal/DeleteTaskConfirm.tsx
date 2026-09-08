@@ -6,6 +6,7 @@ import { Trash2 } from 'lucide-react';
 import { useBottomSheet } from '@/hooks/use-bottom-sheet';
 import { useT } from '@/i18n/useT';
 import { useSheetMotion } from '@/components/mobile/mobile-motion';
+import { useModalA11y } from '@/hooks/use-modal-a11y';
 
 interface DeleteTaskConfirmProps {
   isOpen: boolean;
@@ -22,6 +23,14 @@ const DeleteTaskConfirm: React.FC<DeleteTaskConfirmProps> = ({ isOpen, onCancel,
   const { sheetRef, handleBarWidth, sheetDragProps } = useBottomSheet(onCancel);
   const sheetMotion = useSheetMotion();
 
+  // C-53 — piege de focus, restitution du focus au declencheur, Echap et
+  // semantique ARIA. Cette surface n'en portait aucune.
+  const { ref: modalA11yRef, dialogProps: modalA11yProps } = useModalA11y<HTMLDivElement>({
+    open: isOpen,
+    onClose: onCancel,
+    label: isTaskOwner ? t('delete.titleOwner') : t('delete.titleShared'),
+    role: 'alertdialog',
+  });
   return (
     <AnimatePresence>
       {isOpen && (
@@ -29,6 +38,8 @@ const DeleteTaskConfirm: React.FC<DeleteTaskConfirmProps> = ({ isOpen, onCancel,
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
+          ref={modalA11yRef}
+          {...modalA11yProps}
           className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center z-[70] sm:p-4"
           onClick={onCancel}
         >

@@ -5,6 +5,7 @@ import { Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useT } from '@/i18n/useT';
 import { useSheetDrag, useSheetMotion } from '@/components/mobile/mobile-motion';
+import { useModalA11y } from '@/hooks/use-modal-a11y';
 
 interface DeleteObjectiveConfirmProps {
   deletingObjective: string | null;
@@ -16,6 +17,14 @@ const DeleteObjectiveConfirm: React.FC<DeleteObjectiveConfirmProps> = ({ deletin
   const { t } = useT('okr');
   const sheetDrag = useSheetDrag(() => setDeletingObjective(null));
   const sheetMotion = useSheetMotion();
+  // C-53 — piege de focus, restitution du focus au declencheur, Echap et
+  // semantique ARIA. Cette surface n'en portait aucune.
+  const { ref: modalA11yRef, dialogProps: modalA11yProps } = useModalA11y<HTMLDivElement>({
+    open: Boolean(deletingObjective),
+    onClose: () => setDeletingObjective(null),
+    label: t('deleteObjective.title'),
+    role: 'alertdialog',
+  });
   return (
         <AnimatePresence>
           {deletingObjective && (
@@ -23,6 +32,8 @@ const DeleteObjectiveConfirm: React.FC<DeleteObjectiveConfirmProps> = ({ deletin
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
+              ref={modalA11yRef}
+              {...modalA11yProps}
               className="fixed inset-0 bg-slate-900/30 dark:bg-slate-950/50 backdrop-blur-md flex items-end sm:items-center justify-center z-[60] sm:p-4"
               onClick={() => setDeletingObjective(null)}
             >

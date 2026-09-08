@@ -154,10 +154,20 @@ export interface ModalA11yOptions {
   initialFocusRef?: React.RefObject<HTMLElement>;
   /** Échap ferme-t-il ? Faux seulement pour une surface bloquante assumée. */
   closeOnEscape?: boolean;
+  /**
+   * Rôle ARIA de la surface. `alertdialog` pour une confirmation destructive :
+   * il demande aux lecteurs d'écran d'annoncer le contenu à l'ouverture, ce que
+   * `dialog` ne fait pas.
+   *
+   * ❌ Ne jamais rétrograder un `alertdialog` existant en `dialog` au motif que
+   * c'est la valeur par défaut du hook : on perdrait l'annonce, sans que rien
+   * ne le signale.
+   */
+  role?: 'dialog' | 'alertdialog';
 }
 
 export interface ModalA11yDialogProps {
-  role: 'dialog';
+  role: 'dialog' | 'alertdialog';
   'aria-modal': true;
   'aria-label'?: string;
   'aria-labelledby'?: string;
@@ -193,6 +203,7 @@ export function useModalA11y<T extends HTMLElement = HTMLDivElement>({
   labelledBy,
   initialFocusRef,
   closeOnEscape = true,
+  role = 'dialog',
 }: ModalA11yOptions): ModalA11yResult<T> {
   const ref = useRef<T>(null);
   const triggerRef = useRef<HTMLElement | null>(null);
@@ -318,7 +329,7 @@ export function useModalA11y<T extends HTMLElement = HTMLDivElement>({
   return {
     ref,
     dialogProps: {
-      role: 'dialog',
+      role,
       'aria-modal': true,
       ...(label ? { 'aria-label': label } : {}),
       ...(labelledBy ? { 'aria-labelledby': labelledBy } : {}),

@@ -22,6 +22,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Check } from 'lucide-react';
 import { useSheetMotion } from '@/components/mobile/mobile-motion';
 import { CellSeparator } from './primitives';
+import { useModalA11y } from '@/hooks/use-modal-a11y';
 
 interface MobileActionSheetProps {
   open: boolean;
@@ -38,11 +39,20 @@ interface MobileActionSheetProps {
 export const MobileActionSheet = ({ open, title, onClose, scrollable = false, maxHeightClass = 'max-h-[70vh]', children }: MobileActionSheetProps) => {
   const sheetMotion = useSheetMotion();
 
+  // C-53 — piege de focus, restitution du focus au declencheur, Echap et
+  // semantique ARIA. Cette surface n'en portait aucune.
+  const { ref: modalA11yRef, dialogProps: modalA11yProps } = useModalA11y<HTMLDivElement>({
+    open: open,
+    onClose: onClose,
+    label: title,
+  });
   return (
     <AnimatePresence>
       {open && (
         <motion.div
           initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+          ref={modalA11yRef}
+          {...modalA11yProps}
           className="fixed inset-0 bg-black/40 z-[60] flex items-end"
           onClick={onClose}
         >
