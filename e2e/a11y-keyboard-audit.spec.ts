@@ -320,6 +320,116 @@ test('MESURE — MobileMoreSheet (feuille mobile)', async ({ demoPage: page }) =
   assertModalTrapsFocus('MobileMoreSheet', report);
 });
 
+// ═══════════════════════════════════════════════════════════════════
+// C-53 · les trois dernières surfaces câblées et non mesurées
+//
+// Elles complètent la liste de `docs/ACCESSIBILITY.md` § « C-53 refermé ».
+// Aucune n'était atteignable par les mesures précédentes : deux vivent sur
+// `/tasks` derrière un déclencheur par carte, la troisième exige une liste
+// MANUELLE, que le jeu de démo ne contient pas (ses sept listes sont toutes
+// intelligentes, et le partage leur est refusé par construction).
+//
+// ⚠️ Le check-in hebdomadaire s'ouvre par-dessus `/tasks` au premier passage.
+// Il n'est pas dans le périmètre de C-53, mais il recouvre la barre de listes :
+// sans le refermer, les trois gardes mesurent un écran qu'on ne voit pas.
+// ═══════════════════════════════════════════════════════════════════
+
+/** Ouvre `/tasks`, attend le vrai rendu, et écarte le check-in hebdomadaire. */
+async function openTasksPage(page: Page): Promise<void> {
+  await navTo(page, /to ?do|tâches|tasks/i, /\/tasks/);
+  // 🔴 Attendre un élément DE LA PAGE, pas un délai : l'URL passe à `/tasks`
+  // alors que le chunk lazy n'a pas encore remplacé le dashboard. Trois sondes
+  // successives ont mesuré le tableau de bord en croyant lire la page Tâches.
+  await expect(page.getByRole('button', { name: /^créer une (nouvelle )?tâche$/i }).first())
+    .toBeVisible({ timeout: 30_000 });
+  const skip = page.getByRole('button', { name: /ignorer le check-in/i });
+  if (await skip.isVisible().catch(() => false)) await skip.click();
+  await page.waitForTimeout(400);
+}
+
+test('MESURE — TaskActionsSheet (feuille d\'actions d\'une tâche)', async ({ demoPage: page }) => {
+  // ⚠️ Viewport MOBILE : la feuille appartient à `TaskCard`, la carte mobile.
+  // Au-dessus du point de rupture, le bouton « Actions pour … » existe encore
+  // mais n'ouvre pas cette surface — mesuré le 2026-09-08, la garde cherchait
+  // un `role="dialog"` qui n'était jamais monté.
+  await page.setViewportSize({ width: 375, height: 812 });
+  await openTasksPage(page);
+
+  const trigger = page.getByRole('button', { name: /afficher les actions|^actions pour /i }).filter({ visible: true }).first();
+  await trigger.focus();
+  await markTrigger(page);
+  await trigger.click();
+  const sheet = page.getByRole('dialog', { name: /^actions pour /i });
+  await expect(sheet).toBeVisible({ timeout: 20_000 });
+
+  const report = await measureFocus(page, sheet, true);
+  console.log('[a11y-kbd] TaskActionsSheet', JSON.stringify(report));
+  assertModalTrapsFocus('TaskActionsSheet', report);
+});
+
+test('MESURE — MobileAddToList (« Ajouter à une liste »)', async ({ demoPage: page }) => {
+  // ⚠️ Viewport MOBILE obligatoire, et ce n'est pas un choix de confort :
+  // `AddToListModal` aiguille sur `useIsMobile()` et rend `DesktopAddToList`
+  // au-dessus du point de rupture. Cette variante-là n'est PAS câblée sur
+  // `useModalA11y` ; mesurée sur desktop, la garde parlerait d'un autre
+  // composant que celui qu'elle nomme.
+  await page.setViewportSize({ width: 375, height: 812 });
+  await openTasksPage(page);
+
+  const trigger = page.getByRole('button', { name: /afficher les actions|^actions pour /i }).filter({ visible: true }).first();
+  await trigger.click();
+  const actions = page.getByRole('dialog', { name: /^actions pour /i });
+  await expect(actions).toBeVisible({ timeout: 20_000 });
+
+  await actions.getByRole('button', { name: /^ajouter à une liste$/i }).first().click();
+  // `TaskActionsSheet` se FERME en s'ouvrant sur celle-ci (`open={actionsVisible
+  // && !addToListMode}`) : c'est un relais, pas un empilement. La garde des
+  // frères d'EventModal couvre l'empilement ; ici on vérifie le relais.
+  const sheet = page.getByRole('dialog', { name: /^listes$/i });
+  await expect(sheet).toBeVisible({ timeout: 10_000 });
+
+  const report = await measureFocus(page, sheet, true);
+  console.log('[a11y-kbd] MobileAddToList', JSON.stringify(report));
+  assertModalTrapsFocus('MobileAddToList', report);
+});
+
+test('MESURE — ShareListSheet (partage d\'une liste manuelle)', async ({ demoPage: page }) => {
+  await page.setViewportSize({ width: 1440, height: 950 });
+  await openTasksPage(page);
+
+  // 🔴 Le jeu de démo n'a QUE des listes intelligentes, et le bouton
+  // « Partager » n'est monté que pour `list.type !== 'smart'` : sans créer une
+  // liste manuelle, la garde ne trouverait jamais son déclencheur et
+  // EXPIRERAIT — un timeout n'est pas un résultat.
+  //
+  // ⚠️ Sur desktop la création est INLINE (`CreateListForm variant="inline"`),
+  // pas une feuille, et son déclencheur est la puce « Liste » — le bouton
+  // « Nouvelle liste » est `sm:hidden`, donc mobile uniquement. Viser ce
+  // dernier ici faisait attendre 3 min un élément jamais monté.
+  await page.getByRole('button', { name: /^liste$/i }).filter({ visible: true }).first().click();
+  const nameField = page.getByPlaceholder(/nom de la liste/i).first();
+  await expect(nameField).toBeVisible({ timeout: 10_000 });
+  await nameField.fill('Liste a11y');
+  await nameField.press('Enter');
+
+  const chip = page.getByRole('button', { name: /^liste a11y/i }).filter({ visible: true }).first();
+  await expect(chip).toBeVisible({ timeout: 15_000 });
+  // Les actions de la puce sont révélées au SURVOL sur desktop.
+  await chip.hover();
+  const trigger = page.getByRole('button', { name: /^partager la liste$/i }).filter({ visible: true }).first();
+  await expect(trigger).toBeVisible({ timeout: 10_000 });
+  await trigger.focus();
+  await markTrigger(page);
+  await trigger.click();
+
+  const sheet = page.getByRole('dialog', { name: /^partager la liste liste a11y$/i });
+  await expect(sheet).toBeVisible({ timeout: 20_000 });
+
+  const report = await measureFocus(page, sheet, true);
+  console.log('[a11y-kbd] ShareListSheet', JSON.stringify(report));
+  assertModalTrapsFocus('ShareListSheet', report);
+});
+
 test('MESURE — DatePicker ancré à un champ (modale OKR)', async ({ demoPage: page }) => {
   await navTo(page, /okr/i, /\/okr/);
   await page.waitForLoadState('networkidle');
