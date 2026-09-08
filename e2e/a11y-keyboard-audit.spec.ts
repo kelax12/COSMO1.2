@@ -11,10 +11,16 @@
 // valeur : c'est la garde contre un harnais qui ne détecte plus rien.
 //
 // Deux régimes assumés :
-//   · le DatePicker est ASSERTIONNÉ (findings C-51/C-52, corrigés ici) ;
-//   · les modales maison et /agenda sont seulement IMPRIMÉS — leurs défauts
-//     sont ouverts (C-53, C-54) et les figer en `expect(...).toBe(false)`
-//     ferait échouer la CI le jour où quelqu'un les corrige.
+//   · le DatePicker (C-51/C-52) et les modales maison (C-53) sont ASSERTIONNÉS ;
+//   · /agenda reste IMPRIMÉ pour la partie que C-54 a tranchée en l'état (le
+//     `role="grid"` de FullCalendar sans descendant focalisable géré).
+//
+// 🔴 C-53 — CE FICHIER EST PASSÉ DE `console.log` À `expect` le 2026-09-05.
+// Les trois modales ci-dessous étaient mesurées et IMPRIMÉES : un rapport que
+// personne ne lit est une archive, pas une garde. `useModalA11y`
+// (`src/hooks/use-modal-a11y.ts`) porte le piège, la restitution du focus au
+// déclencheur, Échap et `role="dialog" aria-modal="true"` ; les mesures sont
+// donc devenues des assertions, sur les MÊMES détecteurs que le témoin Radix.
 // ═══════════════════════════════════════════════════════════════════
 
 import { test, expect, navTo } from './fixtures';
@@ -89,6 +95,28 @@ async function measureFocus(
   return { focusMovedIn, focusedOnOpen, trapped: firstEscapee === null, firstEscapee, escClosed, role, ariaModal, focusReturned };
 }
 
+/**
+ * Les trois détecteurs de C-53, appliqués à une surface modale maison.
+ *
+ * ⚠️ Volontairement les MÊMES que ceux du témoin Radix : une modale maison qui
+ * passerait un jeu de contrôles plus indulgent que la bibliothèque de
+ * référence n'aurait rien prouvé.
+ */
+function assertModalTrapsFocus(surface: string, report: FocusReport): void {
+  expect(report.focusMovedIn, `${surface}: focus resté sur ${report.focusedOnOpen}`).toBe(true);
+  expect(report.trapped, `${surface}: focus sorti sur ${report.firstEscapee}`).toBe(true);
+  expect(report.escClosed, `${surface}: Échap ne ferme pas`).toBe(true);
+  expect(report.role, `${surface}: pas de role="dialog"`).toBe('dialog');
+  expect(report.ariaModal, `${surface}: pas d'aria-modal`).toBe('true');
+  // 🔴 `focusReturned` est IMPRIMÉ, jamais assertionné, et ce n'est pas une
+  // complaisance : mesuré le 2026-09-05, le TÉMOIN Radix lui-même le rend
+  // `false`. Un détecteur que la bibliothèque de référence ne passe pas mesure
+  // le détecteur, pas la modale — en faire une gate tiendrait les surfaces
+  // maison à une barre que Radix ne franchit pas. Les trois détecteurs de
+  // C-53 (`focusMovedIn`, `trapped`, `escClosed`) sont, eux, verts sur le
+  // témoin, donc opposables.
+}
+
 // ── TÉMOIN ────────────────────────────────────────────────────────
 test('TÉMOIN — modale Radix « Créer une tâche »', async ({ demoPage: page }) => {
   await navTo(page, /to ?do|tâches|tasks/i, /\/tasks/);
@@ -115,7 +143,9 @@ test('MESURE — HabitModal', async ({ demoPage: page }) => {
   await trigger.dispatchEvent('click');
   const overlay = page.locator('div.fixed.inset-0').filter({ visible: true }).last();
   await expect(overlay).toBeVisible({ timeout: 20_000 });
-  console.log('[a11y-kbd] HabitModal', JSON.stringify(await measureFocus(page, overlay, true)));
+  const report = await measureFocus(page, overlay, true);
+  console.log('[a11y-kbd] HabitModal', JSON.stringify(report));
+  assertModalTrapsFocus('HabitModal', report);
 });
 
 test('MESURE — EventModal (/agenda)', async ({ demoPage: page }) => {
@@ -126,8 +156,170 @@ test('MESURE — EventModal (/agenda)', async ({ demoPage: page }) => {
   await trigger.dispatchEvent('click');
   const overlay = page.locator('div.fixed.inset-0').filter({ visible: true }).last();
   await expect(overlay).toBeVisible({ timeout: 20_000 });
-  console.log('[a11y-kbd] EventModal', JSON.stringify(await measureFocus(page, overlay, true)));
+  const report = await measureFocus(page, overlay, true);
+  console.log('[a11y-kbd] EventModal', JSON.stringify(report));
+  assertModalTrapsFocus('EventModal', report);
 });
+// ═══════════════════════════════════════════════════════════════════
+// C-53 · EventModal et ses modales FRÈRES (`openStack`)
+//
+// `EventModal` rend `ConfirmDiscardDialog`, `ColorSettingsModal` et
+// `RecurrenceDaysModal` en FRÈRES de son overlay, jamais dedans. C'est le seul
+// cas que ce câblage pouvait casser : deux pièges écoutent `document` en même
+// temps, et sans la pile (`openStack`, `src/hooks/use-modal-a11y.ts`) celui du
+// parent reprendrait le focus à l'enfant dès la première tabulation.
+//
+// Les deux tests mesurent le DÉPLACEMENT du piège dans les DEUX sens : il
+// passe à l'enfant à l'ouverture, il revient au parent à sa fermeture. Ne
+// vérifier que l'aller laisserait passer une modale parente définitivement
+// inerte derrière son enfant refermé — un écran qu'on voit et où le clavier
+// ne fait plus rien.
+//
+// ⚠️ Les surfaces sont désignées par leur NOM ACCESSIBLE, pas par
+// `div.fixed.inset-0 … .last()` : avec deux overlays empilés, « le dernier »
+// désigne tantôt le parent, tantôt l'enfant, et l'assertion changerait de
+// cible en cours de test sans jamais échouer.
+// ═══════════════════════════════════════════════════════════════════
+
+/** Le focus reste-t-il dans `container` après `n` tabulations ? Sinon, où. */
+async function firstTabEscapee(page: Page, container: Locator, n = 12): Promise<string | null> {
+  for (let i = 0; i < n; i++) {
+    await page.keyboard.press('Tab');
+    if (!(await focusInside(container))) return await describeFocus(page);
+  }
+  return null;
+}
+
+test('GARDE — EventModal : Échap passe par guardedClose, et le piège suit la confirmation', async ({ demoPage: page }) => {
+  // Le formulaire desktop est celui qui porte la saisie mesurée ici ; on fixe
+  // le viewport pour que la garde tourne à l'identique dans TOUS les projects
+  // (même précaution que la feuille mobile ci-dessus, en sens inverse).
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await navTo(page, /agenda/i, /\/agenda/);
+  await page.waitForLoadState('networkidle');
+  await page.locator('.fc-event').first().waitFor({ state: 'visible', timeout: 30_000 });
+
+  // Mode ÉDITION : la garde de brouillon (`isEditDirty`) n'existe QUE là. En
+  // création c'est `useFormDraft` qui protège la saisie, et Échap ferme sec.
+  await page.locator('.fc-event').first().click();
+  const eventModal = page.getByRole('dialog', { name: /modifier l'événement/i });
+  await expect(eventModal).toBeVisible({ timeout: 20_000 });
+
+  const titleField = eventModal.locator("input[placeholder=\"nom de l'événement\"]").first();
+  await titleField.waitFor({ state: 'visible', timeout: 10_000 });
+  await titleField.fill('Titre modifié au clavier');
+
+  // ── Échap ne doit PAS perdre la saisie ───────────────────────────
+  // Le mode d'échec visé est SILENCIEUX : un Échap câblé sur `onClose` au lieu
+  // de `guardedClose` ferme proprement, sans erreur, et jette la saisie que le
+  // même geste à la souris aurait protégée.
+  await page.keyboard.press('Escape');
+  const discard = page.getByRole('dialog', { name: /abandonner les modifications/i });
+  await expect(
+    discard,
+    'Échap ne passe pas par guardedClose : la saisie est perdue sans confirmation',
+  ).toBeVisible({ timeout: 5_000 });
+  await expect(eventModal, 'EventModal démontée alors que la confirmation est ouverte').toBeVisible();
+  await expect(titleField).toHaveValue('Titre modifié au clavier');
+
+  // ── Le piège est passé À L'ENFANT ────────────────────────────────
+  expect(
+    await focusInside(discard),
+    `focus non entré dans la confirmation: ${await describeFocus(page)}`,
+  ).toBe(true);
+  const escapee = await firstTabEscapee(page, discard);
+  expect(escapee, `le focus a quitté la confirmation vers ${escapee}`).toBe(null);
+
+  // ── … et il REVIENT au parent quand elle se referme ──────────────
+  await page.keyboard.press('Escape');
+  await expect(discard).toBeHidden({ timeout: 5_000 });
+  await expect(eventModal, 'refuser l\'abandon doit laisser EventModal ouverte').toBeVisible();
+  await expect(titleField, 'la saisie n\'a pas survécu au refus de l\'abandon').toHaveValue(
+    'Titre modifié au clavier',
+  );
+  const escapee2 = await firstTabEscapee(page, eventModal);
+  expect(escapee2, `EventModal ne rattrape plus le focus après la confirmation: ${escapee2}`).toBe(null);
+});
+
+// Les deux autres frères que CLAUDE.md nomme. `ConfirmDiscardDialog`, le
+// troisième, est couvert par la garde d'Échap ci-dessus — c'est LUI qu'Échap
+// fait apparaître, le mesurer ailleurs serait le mesurer deux fois.
+const EVENT_MODAL_CHILDREN = [
+  { surface: 'ColorSettingsModal', role: 'button', open: /créer une catégorie/i, dialog: /modifier les catégories/i },
+  // ⚠️ `role="radio"`, pas `button` : la puce de récurrence est un <button> dont
+  // le rôle EXPLICITE écrase le rôle implicite. Cherché comme un bouton, il est
+  // introuvable — et le test expire au lieu d'échouer sur ce qu'il mesure.
+  { surface: 'RecurrenceDaysModal', role: 'radio', open: /^personnaliser$/i, dialog: /répéter les jours/i },
+] as const;
+
+for (const child of EVENT_MODAL_CHILDREN) {
+  test(`GARDE — EventModal : ${child.surface} prend le piège, puis le rend`, async ({ demoPage: page }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await navTo(page, /agenda/i, /\/agenda/);
+    await page.waitForLoadState('networkidle');
+    const trigger = page.getByRole('button', { name: /^nouveau$/i }).filter({ visible: true }).first();
+    await trigger.click({ timeout: 20_000 });
+    const eventModal = page.getByRole('dialog', { name: /ajouter un événement/i });
+    await expect(eventModal).toBeVisible({ timeout: 20_000 });
+
+    await eventModal.getByRole(child.role, { name: child.open }).first().click();
+    const sibling = page.getByRole('dialog', { name: child.dialog });
+    await expect(sibling).toBeVisible({ timeout: 10_000 });
+
+    // ── Le piège est passé À L'ENFANT ──────────────────────────────
+    expect(
+      await focusInside(sibling),
+      `focus non entré dans ${child.surface}: ${await describeFocus(page)}`,
+    ).toBe(true);
+    const escapee = await firstTabEscapee(page, sibling);
+    expect(escapee, `le focus a quitté ${child.surface} vers ${escapee}`).toBe(null);
+
+    // ── … et il REVIENT au parent ──────────────────────────────────
+    // 🔴 Le `toBeVisible` sur le parent n'est pas de la redondance : sans la
+    // pile, Échap traverse et ferme les DEUX surfaces. Mesuré le 2026-09-08 en
+    // neutralisant `isTopmost`, c'est exactement cette ligne qui vire au rouge.
+    await page.keyboard.press('Escape');
+    await expect(sibling).toBeHidden({ timeout: 5_000 });
+    await expect(eventModal, 'fermer la modale enfant ne doit pas fermer le parent').toBeVisible();
+    const escapee2 = await firstTabEscapee(page, eventModal);
+    expect(escapee2, `EventModal ne rattrape plus le focus après ${child.surface}: ${escapee2}`).toBe(null);
+  });
+}
+
+test('MESURE — MobileMoreSheet (feuille mobile)', async ({ demoPage: page }) => {
+  // La feuille n'existe QUE sous le point de rupture mobile : sur desktop le
+  // bouton n'est pas monté, et un test qui « passe » faute de trouver sa cible
+  // ne mesure rien (même précaution que `reduced-motion-sheets.spec.ts`).
+  //
+  // ⚠️ On REDIMENSIONNE au lieu de `test.skip(vw >= 768)`. Un skip sur le
+  // project desktop ferait dépendre la SEULE mesure de feuille mobile du
+  // project `mobile-safari`, et sur cette machine il n'y arrive pas : mesuré
+  // deux fois le 2026-09-05, les tests de ce fichier échouent tous dans la
+  // fixture partagée (`fixtures.ts`), qui attend « Bonjour » dans le H1 du
+  // dashboard là où l'en-tête mobile collant rend « samedi 5 sept. ». C'est
+  // AVANT l'ouverture de la moindre modale, donc hors du périmètre de C-53.
+  // ⚠️ Et ce n'est pas un project cassé pour autant : `touch-targets.spec.ts`,
+  // qui passe par la même fixture, est vert sur `mobile-safari`. Le défaut est
+  // sensible au timing, donc ni « toujours rouge » ni « toujours vert » — la
+  // seule conclusion sûre est qu'une garde ne doit pas s'exécuter uniquement
+  // là. Le redimensionnement la fait tourner dans TOUS les projects.
+  await page.setViewportSize({ width: 375, height: 812 });
+  await expect(page.getByRole('button', { name: /plus d'options/i }).first()).toBeVisible({
+    timeout: 20_000,
+  });
+
+  const trigger = page.getByRole('button', { name: /plus d'options/i }).first();
+  await trigger.focus();
+  await markTrigger(page);
+  await trigger.click();
+  const sheet = page.locator('[data-mobile-more-sheet]');
+  await expect(sheet).toBeVisible({ timeout: 20_000 });
+
+  const report = await measureFocus(page, sheet, true);
+  console.log('[a11y-kbd] MobileMoreSheet', JSON.stringify(report));
+  assertModalTrapsFocus('MobileMoreSheet', report);
+});
+
 test('MESURE — DatePicker ancré à un champ (modale OKR)', async ({ demoPage: page }) => {
   await navTo(page, /okr/i, /\/okr/);
   await page.waitForLoadState('networkidle');
