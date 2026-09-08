@@ -6,6 +6,24 @@ import type { TodayItem } from '@/modules/today';
 const event = (id: string, iso: string, title = id): CalendarEvent =>
   ({ id, title, start: iso, end: iso }) as CalendarEvent;
 
+/**
+ * Couleur stable et PROPRE à un id : deux tâches du même test n'ont jamais la
+ * même. Une pastille qui prendrait la couleur d'une autre entrée se voit.
+ */
+const colorOf = (id: string) =>
+  `#${(([...id].reduce((a, c) => (a * 31 + c.charCodeAt(0)) | 0, 7) >>> 0) % 0xffffff)
+    .toString(16)
+    .padStart(6, '0')}`;
+
+/**
+ * La catégorie n'entre dans AUCUNE décision de ces trois fonctions : ni
+ * `momentOfHour` ni `todayCompletionReport` ne la lisent, et `buildMoments` ne
+ * s'en sert ni pour placer, ni pour trier, ni pour filtrer. Elle est
+ * TRANSPORTÉE jusqu'à `entry.task`, d'où `TodayMoments` peint la pastille et le
+ * libellé (rien ne la re-résout après coup). Elle est donc distincte par tâche
+ * plutôt que `null` : un transport qui perdrait le champ ou mélangerait deux
+ * entrées le dirait, ce qu'un `null` uniforme laisserait passer.
+ */
 const task = (id: string, over = false): TodayItem => ({
   id,
   source: 'personal',
@@ -14,6 +32,8 @@ const task = (id: string, over = false): TodayItem => ({
   done: false,
   priority: 3,
   contextLabel: null,
+  categoryName: `Categorie ${id}`,
+  categoryColor: colorOf(id),
   href: `/tasks?task=${id}`,
   overdue: over,
 });
@@ -53,6 +73,27 @@ describe('buildMoments — placement', () => {
     // La MÊME tâche, le même jour, à 20 h : elle a suivi la journée.
     const soir = buildMoments({ events: [], tasks: [task('t1')], now: at(20) });
     expect(soir[0].moment).toBe('evening');
+  });
+
+  it("porte la catégorie de CHAQUE tâche jusqu'à son entrée, sans la mélanger", () => {
+    // `TodayMoments` peint le rond et le libellé depuis `entry.task`, et rien
+    // ne re-résout la catégorie après `mergeTodayItems` : si `buildMoments` la
+    // perdait, l'écran retomberait sur « Sans catégorie » en gris pour tout le
+    // monde, sans qu'aucune donnée soit fausse en base.
+    const a = task('t-a');
+    const b = task('t-b');
+    const [group] = buildMoments({ events: [], tasks: [a, b], now: at(9) });
+    // Relu par id, jamais par position : deux tâches partagent le même
+    // `minutes: Infinity`, et l'ordre que le tri leur laisse ne fait pas partie
+    // de ce que ce test mesure.
+    const carried = (id: string) => group.entries.find((e) => e.task?.id === id)?.task;
+    expect(carried('t-a')).toMatchObject({ categoryName: a.categoryName, categoryColor: a.categoryColor });
+    expect(carried('t-b')).toMatchObject({ categoryName: b.categoryName, categoryColor: b.categoryColor });
+    // Le témoin de la garde : les deux catégories sont bien distinctes, sinon
+    // les deux égalités ci-dessus passeraient aussi sur un transport qui les
+    // échange.
+    expect(a.categoryName).not.toBe(b.categoryName);
+    expect(a.categoryColor).not.toBe(b.categoryColor);
   });
 
   it("fait passer l'heure avant ce qui n'en a pas, dans un même moment", () => {
