@@ -2047,11 +2047,40 @@ trois corrigés dans la foulée.
   mesures prouvent, et ce qu'elles ne prouvent pas », avec le partage ligne à ligne de ce qui est
   prouvé et de ce qui ne l'est pas ; et la check-list du quatrième audit est prête, jouable d'une
   traite sur un iPhone, témoin compris :
-  [`docs/AUDIT-VOICEOVER-IOS.md`](./docs/AUDIT-VOICEOVER-IOS.md) (12 étapes, ~60 min, en mode
-  démo). Elle est référencée par **M-40** dans `a-faire-manuel.md`.
+  [`docs/AUDIT-VOICEOVER-IOS.md`](./docs/AUDIT-VOICEOVER-IOS.md) (12 étapes, en mode démo). Elle
+  est référencée par **M-40** dans `a-faire-manuel.md`.
   🔴 **Ce n'est pas l'audit.** Écrire le protocole ne mesure rien : C-24 reste ouvert.
+- ✅ **2026-09-08, la check-list a été remise à jour après C-53, et rien de plus.** La version du
+  09-04 (commit `7008bc6`) décrivait un produit d'avant le câblage des **53 surfaces modales
+  maison** et d'avant la refonte de la liste mobile de `/tasks`. Ce qui a changé :
+  - chaque surface câblée atteignable sur iPhone a sa ligne, avec le **nom accessible qu'elle doit
+    annoncer**, résolu depuis `src/locales/fr/` et non deviné. Les 53 sont nommées : 46 dans le
+    parcours, 7 en annexe B avec le motif qui les rend inatteignables au doigt (raccourci clavier,
+    drapeau à `false`, aiguillage desktop) ;
+  - quatre détecteurs uniformes par modale (nom annoncé, curseur qui entre, balayage qui ne
+    ressort pas, « Z » qui ferme **et** rend le focus), plus les **six exceptions assumées** :
+    trois surfaces qui refusent de se fermer pendant une opération, trois à fermeture par étages ;
+  - la section `/tasks` refaite sur les gestes d'aujourd'hui, dont le point le plus exposé de
+    l'écran : sur mobile, les actions d'une liste n'ont **aucun chemin autre que l'appui long**,
+    les boutons flottants étant conditionnés à `!isMobile`. Si le double tap maintenu ne passe pas
+    sous VoiceOver, six actions deviennent inatteignables ;
+  - cinq surfaces dont le nom accessible est écrit **en dur en français** sont marquées, et une
+    passe en anglais est prévue pour les entendre ;
+  - le témoin d'entrée corrigé : la clé est `landing:hero.demoAria`, pas `landing.demoAria`.
+  🔴 **Une check-list à jour n'est pas une check-list jouée.** Cette passe n'a rien mesuré sur un
+  appareil : elle a mis l'instrument au niveau du produit, pas relevé une valeur.
+- 🔴 **C-24 RESTE OUVERT, et le restera tant qu'aucune mesure sur appareil réel n'existe.** Aucune
+  ligne de `docs/AUDIT-VOICEOVER-IOS.md` n'est cochée, aucun finding `V-xx` n'a été ouvert, et rien
+  dans ce dépôt ne doit dire le contraire. Une seule chose refermera cet item : un compte-rendu
+  portant un modèle d'iPhone, une version d'iOS et des verbatims.
 - **Fini quand** : le quatrième est fait **sur un appareil réel** et ses findings sont ici, chacun
   avec son modèle, sa version d'iOS et son verbatim.
+
+> 🟡 **Trouvé en passant, à traiter ailleurs** : `CategoryManager` est **câblé** sur `useModalA11y`
+> et **monté nulle part**. Seul son helper `getColorHex` est importé (`OKRPage`, `TeamOKRTab`) ;
+> le composant modal, lui, n'a aucun consommateur. Même famille que les orphelins supprimés par
+> C-49. Ce n'est pas un défaut d'accessibilité, c'est du code mort qui gonfle le compte des
+> surfaces à auditer.
 
 ### C-25 · Le bleu de marque est à 3,34:1 · **P3 · XS**
 
@@ -2972,24 +3001,143 @@ périmètre, ses questions et ses pièges connus.
 
 ## 11. Ce qui reste ouvert
 
-État au **2026-09-04**, reconstruit item par item depuis les notes de ce fichier, pas
-depuis un tableau plus ancien. **Trois gestes hors code bloquent du travail déjà écrit** ;
-viennent ensuite les **4 items à moitié faits** (le plus rentable, la moitié est là), puis
-les entiers du §11.3 — dont le décompte est à reconstruire, cf. l'avertissement qui l'y coiffe.
+État au **2026-09-08 au soir**. Chaque item déplacé par cette passe a été rouvert **dans le code**
+avant que sa note ne change : ledger de migrations et versions déployées lus par API, gardes
+exécutées, sondes jouées. Recopier une note depuis un tableau plus ancien est le défaut que ce
+fichier documente lui-même (§ Documentation de `CLAUDE.md`), et il a déjà frappé trois fois ici.
+
+### 11.0 Le décompte, nominatif
+
+**71 items, aucun trou, aucun doublon**, vérifié en dépliant `C-01` → `C-71`. Les trois listes
+s'égrènent : un total qu'on ne peut pas réciter ne prouve rien. Le « 14 commencés » de la passe
+précédente n'a jamais correspondu qu'à 13 items énumérés, et le « 27 entiers » du § 11.3 s'annonçait
+lui-même comme « un total moins deux, pas un recomptage ».
+
+#### ✅ Fini (50)
+
+`C-01` `C-02` `C-04` `C-05` `C-07` `C-08` `C-09` `C-10` `C-11` `C-13` `C-15` `C-16` `C-17` `C-19`
+`C-20` `C-21` `C-22` `C-29` `C-32` `C-33` `C-34` `C-35` `C-36` `C-37` `C-40` `C-41` `C-42` `C-43`
+`C-44` `C-45` `C-46` `C-47` `C-49` `C-50` `C-51` `C-52` `C-53` `C-54` `C-56` `C-57` `C-59` `C-60`
+`C-61` `C-62` `C-63` `C-64` `C-66` `C-67` `C-68` `C-71`
+
+**Les dix que CETTE passe déplace**, chacun rouvert dans le code avant que sa note ne change. Un
+« ✅ » sans commit décrit une intention ; sur une Edge Function, un « ✅ » sans **version déployée
+et sa date** décrit un commit, pas la production.
+
+| Item | Commit | Ce qui a été mesuré, et non déduit |
+|---|---|---|
+| **C-02** catégorie d'équipe | `ac52f5f` (2026-09-06) | `orgOkrCategoryImpact` et `orgOkrCategoryDependents` existent, `impact.test.ts` rend **6 tests verts**, joués ici |
+| **C-04** jetons premium | `87dd4a0` (2026-09-06) + mig. **141 APPLIQUÉE en prod le 2026-09-06** (ledger lu par API) | `grep` des onze noms de l'énoncé dans `src/`, `supabase/functions/` et `scripts/` : **une seule occurrence**, un commentaire de `stripe-webhook` disant que la RPC a été supprimée. Le webhook **déployé** (v27) ne porte plus l'appel, seulement ce commentaire : la règle d'ordre « retirer du webhook AVANT de toucher au SQL » a été tenue, déploiement à 19:27 UTC, migration à 19:34 |
+| **C-07** feuilles à la main | `a588cbb` (2026-09-06) | le cliquet de `design-system.guard.test.ts` est à **zéro**, sans liste gelée, et il ignore désormais les commentaires. **22 fichiers** consomment `useSheetMotion` / `useSheetDrag`, contre 8 à l'énoncé |
+| **C-08** dettes Stripe live | `e4f23c3` (2026-09-06), **déployé** dans `stripe-org-checkout` **v12, le 2026-09-08 à 06:31 UTC** | l'invalidation double de l'index produit (signature des secrets mensuels, plus TTL 10 min complet et 30 s à trous) a été **relue dans le code en ligne**, pas dans le dépôt. La mig. `140` reste **non appliquée**, et c'est voulu : elle se joue DANS la fenêtre de bascule |
+| **C-15** tableau de bord | `bd842cd` (2026-09-08) | **tranchée**, pas repoussée : on ne fait rien, avec deux seuils de réouverture nommés (`docs/SCALABILITY.md` §9quater) |
+| **C-16** mesure mono-session | `147019c` (2026-09-08) | `.github/workflows/scalability-volume.yml` porte l'étape « Mesurer en concurrence », ses paliers de sessions simultanées et son témoin |
+| **C-20** contenu monolingue | `7213e22`, `0f6b852`, `df851fb` (2026-09-05), `3c9501a` (2026-09-08) | les **11** articles et les **4** pages cas d'usage portent chacun un bloc `fr` ET un bloc `en`, compté fichier par fichier, et `INDEXABLE_LOCALES` vaut `['fr', 'en']`. L'ordre imposé a été tenu : le contenu d'abord, la locale ensuite |
+| **C-21** valeurs `en` restées en français | `380c06b` (2026-09-08) | `npm run i18n:identical` joué ici : **3 844 couples comparables, 92 identiques, 92 déclarées légitimes, 0 non déclarée**. Gate CI, cliquet à 0 |
+| **C-53** modales sans piège de focus | `a8305a1` et `96b47b8` (2026-09-08) | garde exécutée : **4 tests verts**, et ses trois chiffres recalculés ici. Voir l'encadré ci-dessous |
+| **C-71** 500 sur identifiant Stripe périmé | `380c06b` (2026-09-08), **déployé** : `stripe-org-checkout` **v12 le 2026-09-08 à 06:31 UTC**, `stripe-org-portal` **v9 le 2026-09-08 à 06:32 UTC** | le `isResourceMissing` des deux fonctions a été lu **dans le code en ligne**. Le portail rend `no_customer` (400) au lieu d'un 500, le checkout repart sur une souscription neuve, et toute autre erreur Stripe continue de relancer |
+
+> 🔴 **C-53 : ne jamais réécrire « 58 surfaces modales ».** Ce chiffre a traversé **trois** passes
+> d'audit sans être remesuré, et il était faux dans les deux sens à la fois. Le seul énoncé
+> opposable est celui que la garde **recalcule à chaque exécution**, et qui a été recalculé ici :
+>
+> | | |
+> |---|---|
+> | surfaces modales maison détectées dans `src/**/*.tsx` | **61** |
+> | câblées sur `useModalA11y` | **53** |
+> | déclarées non modales, chacune avec son motif | **8** |
+>
+> ⚠️ **Câblé n'est pas mesuré** : 10 surfaces seulement sont parcourues au clavier dans un vrai
+> navigateur (`e2e/a11y-keyboard-audit.spec.ts`). Ne jamais écrire « les 53 piègent le focus ».
+>
+> ⚠️ Détail relevé en recomptant, et qui n'est **pas** un item : `EXEMPTS` porte **11** entrées pour
+> **8** surfaces. Trois d'entre elles (`TaskTable.tsx`, `event-modal/EventModalForm.tsx`,
+> `task-modal/TaskModalMobileBody.tsx`) ne sont plus détectées comme surfaces du tout. Le test
+> « aucune exemption périmée » ne les voit pas : il ne regarde que l'existence du fichier et
+> l'absence du hook. C'est le « cimetière de motifs » contre lequel le commentaire de la garde met
+> lui-même en garde, en plus petit.
+
+#### 🟠 Commencé (11)
+
+`C-14` `C-23` `C-24` `C-27` `C-28` `C-30` `C-31` `C-38` `C-39` `C-48` `C-65`
+
+Ils se lisent en **deux familles**, et les confondre fait perdre le seul renseignement utile :
+
+- **critère non atteint, il reste du travail** : `C-14` `C-23` `C-24` `C-27` `C-38` ;
+- **écrits, testés, mais PAS en production** : `C-28` `C-30` `C-31` `C-39` `C-48` `C-65`. Ce sont
+  les gestes du § 11.1 qui les débloquent, pas du travail supplémentaire.
+
+> 🔴 **`C-38` n'est PAS fini, contrairement au décompte d'entrée de cette passe.** Mesuré ici, en
+> jouant la sonde que son propre « Fini quand » exige, puis en la retirant.
+>
+> **Les deux angles morts de son énoncé sont bien refermés** (`0724e36`) : le scanner voit
+> maintenant la forme ternaire (`{cond ? 'Terminee' : 'Aucune'}` remonte bien `Aucune`) et son
+> vocabulaire s'est ouvert (`aria-label="Masquer l'astuce"` et `'Afficher le mot de passe'`
+> remontent). Les 49 occurrences ternaires de l'énoncé sont par ailleurs toutes passées à `t(...)`.
+>
+> **Mais un TROISIÈME angle mort subsiste, et il n'avait jamais été nommé** : une chaîne posée en
+> **valeur de propriété d'objet à l'intérieur d'un appel de fonction**. Sonde isolée,
+> `setErrors({ general: 'Erreur lors de la suppression…' })` rend `FICHIERS: 0 | CHAINES UNIQUES: 0`,
+> alors que le même texte dans `throw new Error(...)` est capturé. Ce n'est pas théorique : cette
+> forme cache **exactement les trois chaînes que C-38 nomme**, toutes trois encore en dur, toutes
+> trois affichées à l'utilisateur dans la modale de tâche.
+>
+> | Fichier | Chaîne |
+> |---|---|
+> | `src/components/task-modal/save-task.ts:158` | `Erreur lors de la création. Veuillez réessayer.` |
+> | `src/components/task-modal/save-task.ts:238` | `Erreur lors de la sauvegarde. Veuillez réessayer.` |
+> | `src/components/task-modal/useTaskModal.ts:520` | `Erreur lors de la suppression. Veuillez réessayer.` |
+>
+> C'est la **quatrième** fois que ce cliquet certifie ZÉRO sur un produit qui parle français, et la
+> leçon de l'item se confirme mot pour mot : **les angles morts ne se trouvent pas en relisant le
+> scanner, mais en lui soumettant les chaînes qu'il est censé voir.**
+>
+> **Fini quand** : la sonde ci-dessus remonte la chaîne, les trois messages passent par `t(...)`, et
+> `/en/login` comme `/en/habits` sont relus **dans le navigateur**. ❌ Ne jamais réécrire « plus une
+> seule chaîne en dur » : la phrase a déjà été vraie de la mesure et fausse du produit quatre fois.
+
+| Item | Ce qui est en place | Ce qui manque |
+|---|---|---|
+| **C-14** budget d'entrée | **74 903 o**, soit 3,97 % de marge ; chemin critique 15,1 %. Aucun plafond n'a bougé | l'item exige **≥ 5 % sur les DEUX** : il manque **803 o**, et le levier suivant est extrapolé à ~760 o, donc probablement insuffisant à lui seul |
+| **C-23** gate axe-core | tout `serious` bloque, sauf `color-contrast`, nommément dispensé avec son item. La landing est à **0 violation** | les 41 nœuds restants sont tous du contraste et relèvent de **C-25**, un arbitrage de marque. La dernière dispense tombe quand C-25 est tranché |
+| **C-24** quatre audits jamais faits | partiellement engagé | le reste des audits, avec leur rapport valeur / effort au § 10 |
+| **C-27** parcours de septembre sans E2E | quelques parcours couverts | les parcours livrés en septembre, **C-65** compris, n'ont toujours aucun test E2E |
+| **C-38** `i18n:scan` | deux angles morts sur trois refermés | le troisième, ci-dessus, et les trois chaînes qu'il cache |
+| **C-28** canal d'alerte d'ops | `ci-alert.yml` écrit et branché | le secret `OPS_ALERT_WEBHOOK_URL` dans les secrets **Actions** (§ 11.1c) |
+| **C-30** preuves qui survivent | code écrit | la mig. **138** (§ 11.1a) |
+| **C-31** plafond de débit | `consumeRateLimits` écrit | la mig. **139**, le secret `RATE_LIMIT_SALT`, et le redéploiement de `report-bug` |
+| **C-39** suppression d'organisation | `useDeleteOrgFlow` rembourse avant de supprimer, propriétaire seul, vérifié par mutation | la mig. **138** et le déploiement de `stripe-org-refund` |
+| **C-48** identifiants de refus de dépendance | code écrit | la mig. **137** |
+| **C-65** remboursement | fonction, calcul du montant (12 cas exécutés), bouton, garantie écrite aux CGU. ✅ **La branche `charge.refunded` du webhook, elle, EST déployée** (v27, 2026-09-06 à 19:27 UTC, relue en ligne) | `stripe-org-refund` **n'existe pas en production**, et rien n'a été joué contre Stripe |
+
+#### ⬜ Pas commencé (10)
+
+`C-03` `C-06` `C-12` `C-18` `C-25` `C-26` `C-55` `C-58` `C-69` `C-70`
+
+- **Décision avant code (1)** : `C-58` le blocage sécurité qui forçait React 19 est levé, la
+  migration redevient un arbitrage de coût.
+- **Défauts fonctionnels (2)** : `C-03` les clés de `habits.completions` ignorent le fuseau choisi ·
+  `C-69` la fenêtre produit de la landing tourne sans pause, y compris hors écran.
+- **Performance (1)** : `C-12` la landing reste la seule page lente.
+- **Accessibilité (3)** : `C-25` le bleu de marque est à 3,34:1 · `C-55` trois surfaces que A-3 n'a
+  pas su mesurer · `C-70` 22 cibles sous 44 px dans `TeamTaskModal`.
+- **Dette, tests et gardes (3)** : `C-06` 36 `eslint-disable exhaustive-deps` · `C-18` CVE dev-only ·
+  `C-26` la couverture n'a pas été relancée depuis le 2026-08-29.
 
 ### 11.1 🔴 Trois gestes qui ne sont pas du code, et qui bloquent du code déjà écrit
 
 Ce sont les seuls endroits où du travail livré ne produit **rien** en production.
 
-> ✅ **Vérifié en base et sur le projet, le 2026-09-04 au soir** — ledger de
-> migrations et liste des Edge Functions lus, pas déduits du dépôt. Les trois
-> lignes ci-dessous sont des mesures, pas des suppositions.
+> ✅ **Remesuré le 2026-09-08 au soir**, ledger de migrations et versions d'Edge Functions lus par
+> API. Les tableaux ci-dessous sont des mesures, pas des suppositions. **Deux lignes de la version
+> du 2026-09-04 étaient périmées et ont été corrigées** : la mig. `141` est appliquée, et
+> `stripe-webhook` porte désormais sa branche de remboursement.
 
 **a. Appliquer les migrations `137`, `138`, `139`**
 
-La dernière entrée du ledger est **`135_withdrawal_consents`**. Ni la `136`
-(travail en cours d'une autre session, non versionné) ni les trois écrites
-ici ne sont en base.
+Le ledger porte **142 entrées** et sa dernière est `141_drop_premium_tokens` (2026-09-06), passée
+**après** la `142` (2026-09-05) : il ne se lit toujours pas comme une suite croissante. Restent hors
+base la `136` (travail d'une autre session), les trois ci-dessous, et la `140`.
 
 | Migration | Ce qui attend derrière | Conséquence tant qu'elle n'est pas appliquée |
 |---|---|---|
@@ -2997,116 +3145,63 @@ ici ne sont en base.
 | **138** preuves qui survivent + propriétaire seul | C-30, C-39 | supprimer une organisation **détruit** ses preuves L215-1 et sa renonciation au droit de rétractation |
 | **139** plafond de débit | C-31 | `consume_rate_limit` n'existe pas, donc le plafond ne s'applique nulle part |
 
-⚠️ **Ordre imposé** : la `139` avant le déploiement de `report-bug`, sinon la
-fonction appelle une RPC absente. La `138` avant tout usage de la suppression
-d'organisation.
+⚠️ **Ordre imposé** : la `139` avant le déploiement de `report-bug`, sinon la fonction appelle une
+RPC absente. La `138` avant tout usage de la suppression d'organisation.
 
-🔴 Chacune porte sa séquence de vérification, à jouer **acteur par acteur dans
-une transaction annulée**. Ne pas conclure d'un « success » : la `139` a un
-piège qui ne se voit qu'en jouant la borne (`hits > p_limit`, jamais `>=` —
-avec `>=` le compteur gèle sur la limite, `hits <= limit` reste vrai, et **le
-plafond ne refuse jamais**).
+🔴 La **`140`** ne rejoint PAS cette liste, et ce n'est pas un oubli : elle se joue **dans** la
+fenêtre de bascule Stripe live, jamais avant. Tant que la clé est une clé de test, chaque checkout
+réécrit un identifiant de test.
+
+🔴 Chacune porte sa séquence de vérification, à jouer **acteur par acteur dans une transaction
+annulée**. Ne pas conclure d'un « success » : la `139` a un piège qui ne se voit qu'en jouant la
+borne (`hits > p_limit`, jamais `>=` : avec `>=` le compteur gèle sur la limite, `hits <= limit`
+reste vrai, et **le plafond ne refuse jamais**).
 
 **b. Déployer les Edge Functions**
 
-Sept fonctions sont actives. **`stripe-org-refund` n'en fait pas partie : elle
-n'existe pas en production.** Et les deux autres que cette passe a modifiées
-portent une version antérieure au correctif.
+Sept fonctions sont actives. **`stripe-org-refund` n'en fait toujours pas partie.**
 
 | Fonction | Version déployée | Ce que la prod exécute donc |
 |---|---|---|
 | `report-bug` | v8, **2026-08-29** | sans plafond de débit, sans allowlist réelle de pièces jointes, et elle **anonymise l'auteur** en cas de panne d'authentification (C-31 → C-33, C-36) |
-| `stripe-webhook` | v26, **2026-08-26** | sans la branche `charge.refunded`, donc **aucune ligne compensatoire** au journal d'encaissement |
 | `stripe-org-refund` | **absente** | le remboursement du mois en cours n'existe pas, alors que les CGU le promettent depuis le 2026-09-04 (C-65) |
 
-🔴 **Les deux dernières lignes se tiennent** : déployer `stripe-org-refund`
-sans `stripe-webhook` rembourserait pour de vrai sans rien écrire au journal.
-Les déployer ensemble, ou ni l'une ni l'autre.
+✅ **Ce qui est rentré en production depuis la version du 2026-09-04 de ce tableau**, relu dans le
+code en ligne et non déduit du dépôt :
 
-⚠️ **Cette lecture est exactement ce que C-35 demande de mécaniser.** Il a
-fallu interroger le projet à la main pour savoir ce qui tourne : rien ne
-compare le code déployé à celui du dépôt, donc rien n'aurait signalé l'écart.
+| Fonction | Version | Déployée le | Ce qu'elle apporte |
+|---|---|---|---|
+| `stripe-webhook` | **v27** | 2026-09-06 à 19:27 UTC | la branche `charge.refunded`, donc **la ligne compensatoire** au journal d'encaissement (C-65). Elle n'appelle plus `bump_win_streak`, qui n'y survit qu'en commentaire (C-04) |
+| `stripe-org-checkout` | **v12** | 2026-09-08 à 06:31 UTC | C-71, et l'invalidation double de l'index produit (C-08) |
+| `stripe-org-portal` | **v9** | 2026-09-08 à 06:32 UTC | C-71 |
+
+🔴 **La dépendance croisée a changé de sens, et c'est une bonne nouvelle.** La version du 2026-09-04
+disait : déployer `stripe-org-refund` sans `stripe-webhook` rembourserait pour de vrai sans rien
+écrire au journal, donc « les deux ensemble, ou ni l'une ni l'autre ». Le webhook étant désormais en
+ligne avec sa branche de remboursement, **`stripe-org-refund` peut partir seule**.
+
+⚠️ `npm run check:edge` **n'a pas pu être joué** depuis cette machine : `SUPABASE_ACCESS_TOKEN` y est
+absent, et la garde échoue bruyamment plutôt que d'avertir, exactement comme elle le doit. Les
+versions ci-dessus viennent donc d'une lecture directe du code déployé par l'API Management,
+fonction par fonction. C'est le geste que C-35 a mécanisé pour la CI, et il reste manuel ici.
 
 **c. Poser trois secrets**
 
 | Secret | Où | Sans lui |
 |---|---|---|
-| `RATE_LIMIT_SALT` | Supabase | `consumeRateLimits` **REFUSE** — choix délibéré : pas de sel, pas de service, plutôt qu'un hachage devinable (C-31) |
+| `RATE_LIMIT_SALT` | Supabase | `consumeRateLimits` **REFUSE**, choix délibéré : pas de sel, pas de service, plutôt qu'un hachage devinable (C-31) |
 | `CRON_SECRET` | secrets **Actions** | C-34 |
 | `OPS_ALERT_WEBHOOK_URL` | secrets **Actions** | `ci-alert.yml` reste inerte (C-28) |
 
-❌ **Ne jamais rendre une garde conditionnelle à la présence de son propre
-secret.** Un secret absent se solde par un échec visible, jamais par un
-silence.
+❌ **Ne jamais rendre une garde conditionnelle à la présence de son propre secret.** Un secret absent
+se solde par un échec visible, jamais par un silence.
 
-### 11.2 🟠 Quatre items à moitié faits
-
-Ils étaient huit le matin du 2026-09-04. **C-40, C-56, C-57 et C-62 ont été
-refermés dans la journée** ; leur note dit ce qui a été mesuré, et ce que leur
-énoncé annonçait de faux.
-
-| Item | Ce qui est en place | Ce qui manque |
-|---|---|---|
-| **C-14** budget d'entrée | **74 903 o**, soit 3,97 % de marge (0,25 % le matin) ; chemin critique 15,1 %. Aucun plafond n'a bougé | l'item exige **≥ 5 % sur les DEUX** : il manque **803 o**. Le levier suivant (scinder la section `auth`, dont le shell lit onze clés) est extrapolé à ~760 o : il ne suffirait probablement même pas |
-| **C-23** gate axe-core | tout `serious` bloque, **sauf** `color-contrast`, nommément dispensé avec son item. La landing est à **0 violation** | les 41 nœuds restants sont tous du contraste, et relèvent de **C-25**, un arbitrage de marque. La dernière dispense tombe quand C-25 est tranché |
-| **C-39** suppression d'organisation | `useDeleteOrgFlow` rembourse avant de supprimer, propriétaire seul, vérifié par mutation | dépend de la mig. **138** et du déploiement de `stripe-org-refund`. **Rien de tout ça n'est en production** |
-| **C-65** remboursement | fonction, calcul du montant (12 cas **exécutés**), bouton, garantie écrite aux CGU | **rien n'est déployé**, et rien n'a été joué contre Stripe. C-27 exige un parcours E2E pour cet item |
-
-🔴 **C-39 et C-65 ne sont pas « à moitié faits » au même sens que C-14 et
-C-23** : leur code est écrit et testé, il n'est simplement **pas en production**.
-Ce sont les gestes du § 11.1 qui les débloquent, pas du travail supplémentaire.
-
-### 11.3 ⬜ Vingt-sept items entiers
-
-Rien n'a été engagé dessus. Regroupés par ce qu'ils coûtent à ouvrir.
-
-> ⚠️ **Ce total est un total moins deux, pas un recomptage** (2026-09-08) : C-15 et C-16 sortent,
-> le reste n'a pas été revérifié item par item. Et les sous-totaux de cette section **ne
-> réconcilient déjà pas** avec le titre — « Tests, gardes et i18n (7) » en énumère six, et le
-> groupe « Dette structurelle (2) » en porte trois barrés. Le chiffre du titre est donc à
-> reconstruire à la prochaine passe, pas à recopier.
-
-**Ce qui demande une décision avant du code (3)**
-`C-04` supprimer les jetons premium et le mur-pub · `C-20` contenu éditorial monolingue ·
-`C-58` le blocage sécurité qui forçait React 19 est levé, donc la migration redevient un
-arbitrage de coût.
-
-**Défauts fonctionnels mesurés (5)**
-`C-03` les clés de
-`habits.completions` ignorent le fuseau choisi · `C-05` le badge d'organisation lit jusqu'à
-1 000 tâches d'équipe · `C-45` `loginWithGoogle` vise des URL hors allowlist Supabase ·
-`C-69` la fenêtre produit de la landing tourne sans pause, y compris hors écran · `C-71` les
-deux Edge Functions Stripe rendent 500 sur un identifiant Stripe périmé.
-
-**Performance et scalabilité (1)**
-`C-12` la landing reste la seule page lente.
-
-> ⚠️ `C-15` et `C-16` sortent de cette liste le 2026-09-08 : la mesure de concurrence est faite
-> (§9quater), et C-15 est **tranchée** — ne rien faire, avec deux seuils de réouverture écrits.
-> Ce n'est pas un item repoussé, c'est une décision, et elle se rouvre à un chiffre nommé.
-
-**Accessibilité (6)**
-`C-24` quatre audits jamais faits · `C-25` le bleu de marque est à 3,34:1 · `C-53` aucune modale
-maison ne piège le focus · `C-54` `/agenda` : jours hors d'atteinte au clavier · `C-55` trois
-surfaces que A-3 n'a pas su mesurer · `C-70` 22 cibles sous 44 px dans `TeamTaskModal`.
-
-**Dette structurelle (2)**
-`C-06` 36 `eslint-disable exhaustive-deps` · `C-07` 17 feuilles animées à la main.
-~~`C-49` 52 hooks exportés sans consommateur~~ — **fermé le 2026-09-05**, 49 supprimés + garde.
-~~`C-09` fichiers au-dessus de 600 lignes~~ — **fermé le 2026-09-05**, `KNOWN_OVERSIZED` vide.
-~~`C-10` deux primitives sans consommateur~~ — **fermé le 2026-09-05**, supprimées.
-
-**Tests, gardes et i18n (7)**
-`C-18` CVE dev-only · `C-26` la couverture n'a pas été
-relancée depuis le 2026-08-29 · `C-27` les parcours livrés en septembre n'ont pas de test E2E ·
-`C-28` le canal d'alerte d'ops est inerte · `C-35` rien ne compare le code déployé des Edge
-Functions à celui du dépôt · `C-38` `i18n:scan` annonce ZÉRO et l'interface anglaise parle
-français.
-
-### 11.4 Deux audits restent à lancer
+### 11.2 Deux audits restent à lancer
 
 Ils sont décrits en **[§ 10](#10-couverture--ce-que-cette-liste-ne-peut-pas-contenir)** avec leur
 rapport valeur / effort. Tant que **A-4** n'est pas passé et ses findings versés ici, la phrase
-« il ne reste plus un seul problème lié au code » **n'est pas vérifiable** — et l'écrire quand
-même serait exactement le défaut corrigé quatre fois en cinq jours : une réponse rassurante
-donnée par une mesure qui ne regardait pas.
+« il ne reste plus un seul problème lié au code » **n'est pas vérifiable**. L'écrire quand même
+serait exactement le défaut corrigé quatre fois en cinq jours : une réponse rassurante donnée par
+une mesure qui ne regardait pas. La sonde `i18n:scan` de cette passe en est la cinquième
+illustration, et elle a demandé une minute : il suffisait de soumettre au scanner une chaîne que le
+produit affiche encore.
