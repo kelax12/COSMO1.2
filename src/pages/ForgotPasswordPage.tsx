@@ -39,7 +39,7 @@ const ForgotPasswordPage = () => {
     setError(null);
     const clean = sanitizeEmail(email);
     if (!isValidEmail(clean)) {
-      setError("Cette adresse email n'est pas valide.");
+      setError(t('auth.invalidEmailAddress'));
       return;
     }
     setIsLoading(true);
@@ -134,7 +134,7 @@ const ForgotPasswordPage = () => {
                 disabled={isLoading}
                 className="w-full py-3 rounded-xl text-sm font-semibold text-[rgb(var(--color-accent-solid-foreground))] bg-[rgb(var(--color-accent-solid))] to-purple-600 hover:bg-[rgb(var(--color-accent-solid-hover))] hover:to-purple-500 disabled:opacity-60 transition-all shadow-lg shadow-blue-500/20"
               >
-                {isLoading ? 'Envoi...' : 'Envoyer le lien'}
+                {isLoading ? t('auth.sendingEllipsis') : t('auth.sendResetLink')}
               </button>
             </form>
             <div className="mt-6 pt-6 border-t border-[rgb(var(--color-border))] text-center">

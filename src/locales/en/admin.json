@@ -42,6 +42,8 @@
   "topChannelHint": "{{count}} sign-ups",
   "goalChart": "Progress toward the goal",
   "goalChartNote": "Cumulative accounts, axis framed on {{goal}}",
+  "signupsNoteWeekly": "Weekly, since launch",
+  "signupsNoteDaily": "Daily, since launch",
   "signupsBySource": "Sign-ups by channel",
   "signupsBySourceNote": "Daily, stacked by channel, last 60 recorded days",
   "channels": "Acquisition channels",

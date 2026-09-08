@@ -197,7 +197,7 @@ const ListActionsSheet: React.FC<ListActionsSheetProps> = ({
                   : <Pin    size={17} strokeWidth={1.75} aria-hidden="true" style={{ color: 'rgb(var(--color-text-secondary))', flexShrink: 0 }} />
                 }
                 <span className="text-[16px]" style={{ color: 'rgb(var(--color-text-primary))' }}>
-                  {list.isDefault ? 'Retirer des favoris' : 'Épingler par défaut'}
+                  {list.isDefault ? t('listActions.removeDefault') : t('listActions.setDefault')}
                 </span>
               </button>
             </div>

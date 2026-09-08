@@ -92,7 +92,7 @@ const CollaboratorItemBase: React.FC<CollaboratorItemProps> = ({
             ? 'border-[rgb(var(--color-accent-solid))] bg-blue-50 dark:bg-blue-900/20'
             : 'border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] hover:border-[rgb(var(--color-accent))] hover:bg-[rgb(var(--color-hover))]'
         }`}
-        aria-label={variant === 'remove' ? `Retirer ${name}` : `Ajouter ${name}`}
+        aria-label={variant === 'remove' ? t('collaborator.removeNamedAria', { name }) : t('collaborator.addNamedAria', { name })}
       >
         <Avatar className="size-8 shrink-0">
           {!isPending && isImage && <AvatarImage src={avatar} alt={name} />}
@@ -177,7 +177,7 @@ const CollaboratorItemBase: React.FC<CollaboratorItemProps> = ({
               ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'
               : 'text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-900/30'
         }`}
-        aria-label={variant === 'remove' ? 'Retirer' : 'Ajouter'}
+        aria-label={variant === 'remove' ? t('collaborator.removeAria') : t('collaborator.addAria')}
       >
         {variant === 'remove' && <Trash2 size={18} />}
         {variant === 'add' && <UserPlus size={18} />}

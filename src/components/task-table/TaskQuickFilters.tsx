@@ -2,6 +2,7 @@ import React from 'react';
 import { Bookmark, BookmarkCheck, CheckCircle2, CheckSquare, AlertTriangle, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useT } from '@/i18n/useT';
+import type { KeyOf } from '@/i18n/catalog';
 
 export type QuickFilter = 'none' | 'bookmarked' | 'completed' | 'overdue' | 'collaboration';
 export type ScopeFilter = 'all' | 'perso' | 'entreprise';
@@ -28,6 +29,16 @@ const CHIP = '!rounded-full !border-transparent !bg-[rgb(var(--color-chip-bg))] 
 /** Classe des pastilles actives, identique pour les cinq boutons. */
 const ACTIF =
   '!rounded-full !bg-[rgb(var(--color-accent-solid))] hover:!bg-[rgb(var(--color-accent-solid-hover))] !text-[rgb(var(--color-accent-solid-foreground))] !border-transparent';
+
+/** Clé du catalogue `tasks` par portée. Une table plutôt qu'un ternaire
+ *  imbriqué : `scope${… ? 'Perso' : 'Entreprise'}` construisait un fragment
+ *  de clé qui n'est pas du texte affiché, mais que le scanner i18n ne peut
+ *  pas distinguer d'un vrai libellé sans lire l'intention du code. */
+const SCOPE_LABEL_KEY: Record<ScopeFilter, KeyOf<'tasks'>> = {
+  all: 'table.quickFilter.scopeAll',
+  perso: 'table.quickFilter.scopePerso',
+  entreprise: 'table.quickFilter.scopeEntreprise',
+};
 
 /**
  * Filtres rapides de la page Tâches : signets, terminées, en retard,
@@ -126,7 +137,7 @@ const TaskQuickFilters: React.FC<Props> = ({
                     : 'text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]'
                 }`}
               >
-                {t(`table.quickFilter.scope${value === 'all' ? 'All' : value === 'perso' ? 'Perso' : 'Entreprise'}`)}
+                {t(SCOPE_LABEL_KEY[value])}
               </button>
             ))}
           </div>

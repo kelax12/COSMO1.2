@@ -270,7 +270,7 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
           <button
             type="button"
             onClick={() => onShowQuickFiltersChange?.(!showQuickFilters)}
-            aria-label={showQuickFilters ? "Masquer les options" : "Afficher les options"}
+            aria-label={showQuickFilters ? t('sort.hideOptions') : t('sort.showOptions')}
             aria-pressed={showQuickFilters}
             className={`md:hidden shrink-0 flex items-center gap-1 px-2 min-h-touch text-label font-medium transition-colors hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded ${
               showQuickFilters

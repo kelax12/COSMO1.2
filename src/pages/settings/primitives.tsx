@@ -54,11 +54,16 @@ export const NAV_GROUPS: NavGroup[] = [
 /* ─── reusable: LabeledInput ───────────────────────────────────── */
 export function LabeledInput({
   label, type = 'text', value, onChange, placeholder, icon: Icon, showToggle, disabled, hint,
+  showPasswordLabel = 'Show password', hidePasswordLabel = 'Hide password',
 }: {
   label: string; type?: string; value: string;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   placeholder?: string; icon?: React.ElementType; showToggle?: boolean;
   disabled?: boolean; hint?: string;
+  /** Libellés du bouton œil — CLÉS résolues par l'appelant, jamais du texte
+   *  écrit ici (même règle que `labelKey` plus haut) : ce composant n'a pas
+   *  de `useT`, il rend ce qu'on lui passe. */
+  showPasswordLabel?: string; hidePasswordLabel?: string;
 }) {
   const [visible, setVisible] = useState(false);
   const inputType = showToggle ? (visible ? 'text' : 'password') : type;
@@ -77,7 +82,7 @@ export function LabeledInput({
         {showToggle && (
           <button type="button" tabIndex={-1} onClick={() => setVisible(v => !v)}
             className="absolute right-1 top-1/2 -translate-y-1/2 min-h-touch min-w-touch sm:min-h-0 sm:min-w-0 flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-primary))] transition-colors sm:p-1"
-            aria-label={visible ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}>
+            aria-label={visible ? hidePasswordLabel : showPasswordLabel}>
             {visible ? <EyeOff size={15} /> : <Eye size={15} />}
           </button>
         )}

@@ -55,9 +55,7 @@ const DeleteTaskConfirm: React.FC<DeleteTaskConfirmProps> = ({ isOpen, onCancel,
                 {isTaskOwner ? t('delete.titleOwner') : t('delete.titleShared')}
               </h3>
               <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-5 sm:mb-6">
-                {isTaskOwner
-                  ? 'Êtes-vous sûr de vouloir supprimer cette tâche ? Cette action est irréversible.'
-                  : 'Vous quitterez cette tâche partagée : elle restera visible pour son propriétaire et les autres collaborateurs.'}
+                {isTaskOwner ? t('delete.bodyOwner') : t('delete.bodyShared')}
               </p>
               <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3">
                 <button

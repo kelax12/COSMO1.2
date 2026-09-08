@@ -76,7 +76,9 @@
     "workingOwner": "Deleting…",
     "workingShared": "Leaving…",
     "confirmOwner": "Delete",
-    "confirmShared": "Leave"
+    "confirmShared": "Leave",
+    "bodyOwner": "Are you sure you want to delete this task? This action cannot be undone.",
+    "bodyShared": "You'll leave this shared task: it will stay visible to its owner and the other collaborators."
   },
   "form": {
     "nameRequired": "Task name *",
@@ -93,6 +95,7 @@
     "headingEditShort": "Edit",
     "deleteTask": "Delete this task",
     "collaboratorPlaceholder": "Email or name…",
-    "addCollaborator": "Add"
+    "addCollaborator": "Add",
+    "userNotFound": "User not found"
   }
 }

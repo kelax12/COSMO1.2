@@ -41,6 +41,7 @@ import {
   useTaskShares,
 } from '@/modules/friends';
 import { useAuth } from '@/modules/auth/AuthContext';
+import { useT } from '@/i18n/useT';
 import { collabIdOf, filterFriendsForCollab, resolveCollaboratorDisplay } from './collaborators';
 
 interface Params {
@@ -63,6 +64,7 @@ export function useTaskCollaborators({
   showCollaborators,
   updateTask,
 }: Params) {
+  const { t } = useT('taskModal');
   const { user } = useAuth();
   const { data: friends = [] } = useFriends();
   const { data: sentRequests = [] } = useSentFriendRequests();
@@ -186,7 +188,7 @@ export function useTaskCollaborators({
       // entries in `pendingInvites`. Faille D2.
       const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRe.test(value)) {
-        setInputError('Utilisateur introuvable');
+        setInputError(t('form.userNotFound'));
         return;
       }
       if (collaborators.includes(value)) {

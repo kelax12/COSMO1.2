@@ -63,6 +63,8 @@
     "todayAddAria": "Add tasks to today",
     "todayHideTitle": "Hide the Today chip (re-enable from ✨)",
     "todayHideAria": "Hide the Today chip",
+    "showTodaySmartList": "Show “Today”",
+    "hideTodaySmartList": "Hide “Today”",
     "todayChipTitle": "Tasks due today",
     "selectPromptToday": "Select tasks: their deadline will be set to today",
     "selectPromptList": "Select tasks to add to “{{list}}”",
@@ -106,6 +108,7 @@
     "colDuration": "Duration",
     "colActions": "Actions",
     "gestureHint": "Swipe right to complete · hold (or “⋯”) for options",
+    "dismissHint": "Dismiss the hint",
     "emptyCompleted": "No completed tasks",
     "empty": "No tasks",
     "emptyCompletedHint": "Complete tasks to see them here",
@@ -191,7 +194,11 @@
     "favorite": "Add to favorites",
     "unfavorite": "Remove from favorites",
     "actionsFor": "Actions for {{name}}",
-    "noCategoryShort": "No category"
+    "noCategoryShort": "No category",
+    "cancel": "Undo",
+    "validate": "Validate",
+    "showActions": "Show actions",
+    "hideActions": "Hide actions"
   },
   "sort": {
     "label": "Sort by",
@@ -207,7 +214,9 @@
     "reset": "Reset",
     "resetAria": "Reset all filters",
     "advanced": "Show advanced filters",
-    "filters": "Filters"
+    "filters": "Filters",
+    "showOptions": "Show options",
+    "hideOptions": "Hide options"
   },
   "quickAdd": {
     "create": "Create",
@@ -283,6 +292,8 @@
     "willBeAdded": "Will be added",
     "creating": "Creating...",
     "createTask": "Create task",
+    "createTitle": "Create a new task",
+    "editTitle": "Edit task",
     "savingEllipsis": "Saving...",
     "closeForm": "Close the form",
     "unsaved": "Unsaved",

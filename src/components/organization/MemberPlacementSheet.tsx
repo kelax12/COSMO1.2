@@ -100,7 +100,7 @@ const MemberPlacementSheet = ({ orgId, target, members, currentUserId, isAdmin, 
                 <span className="flex-1 min-w-0">
                   <span className="block text-sm font-semibold text-[rgb(var(--color-text-primary))] truncate">
                     {m.displayName}
-                    {m.userId === currentUserId ? ' (vous)' : ''}
+                    {m.userId === currentUserId ? t('member.youSuffix') : ''}
                   </span>
                   {isManagerOf(members, m.userId) && (
                     <span className="block text-[11px] text-blue-600 dark:text-blue-400">{t('member.manager')}</span>

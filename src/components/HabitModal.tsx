@@ -308,7 +308,7 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                           : 'bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] opacity-40'
                       }`}
                     >
-                      {isEditing ? 'Sauvegarder' : "Créer l'habitude"}
+                      {isEditing ? t('modal.save') : t('modal.createHabit')}
                     </button>
                   </div>
                 </div>
@@ -446,7 +446,7 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                       className="bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] !text-[rgb(var(--color-accent-solid-foreground))] !border-0 gap-2 sm:w-auto"
                     >
                       <Check size={16} />
-                      {isEditing ? 'Sauvegarder' : "Créer l'habitude"}
+                      {isEditing ? t('modal.save') : t('modal.createHabit')}
                     </Button>
                   </div>
                 </>

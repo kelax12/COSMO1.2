@@ -64,6 +64,8 @@
     "todayAddAria": "Ajouter des tâches à aujourd'hui",
     "todayHideTitle": "Masquer la chip Aujourd'hui (réactivable depuis ✨)",
     "todayHideAria": "Masquer la chip Aujourd'hui",
+    "showTodaySmartList": "Afficher « Aujourd'hui »",
+    "hideTodaySmartList": "Masquer « Aujourd'hui »",
     "todayChipTitle": "Tâches dont l'échéance est aujourd'hui",
     "selectPromptToday": "Sélectionnez des tâches : leur échéance sera fixée à aujourd'hui",
     "selectPromptList": "Sélectionnez des tâches à ajouter dans « {{list}} »",
@@ -109,6 +111,7 @@
     "colDuration": "Durée",
     "colActions": "Actions",
     "gestureHint": "Glissez à droite pour valider · maintenez (ou « ⋯ ») pour les options",
+    "dismissHint": "Masquer l'astuce",
     "emptyCompleted": "Aucune tâche complétée",
     "empty": "Aucune tâche",
     "emptyCompletedHint": "Complétez des tâches pour les voir ici",
@@ -204,7 +207,11 @@
     "favorite": "Ajouter aux favoris",
     "unfavorite": "Retirer des favoris",
     "actionsFor": "Actions pour {{name}}",
-    "noCategoryShort": "Sans catégorie"
+    "noCategoryShort": "Sans catégorie",
+    "cancel": "Annuler",
+    "validate": "Valider",
+    "showActions": "Afficher les actions",
+    "hideActions": "Masquer les actions"
   },
   "sort": {
     "label": "Trier par",
@@ -220,7 +227,9 @@
     "reset": "Réinitialiser",
     "resetAria": "Réinitialiser tous les filtres",
     "advanced": "Afficher les filtres avancés",
-    "filters": "Filtres"
+    "filters": "Filtres",
+    "showOptions": "Afficher les options",
+    "hideOptions": "Masquer les options"
   },
   "quickAdd": {
     "create": "Créer",
@@ -297,6 +306,8 @@
     "willBeAdded": "Sera ajouté",
     "creating": "Création...",
     "createTask": "Créer la tâche",
+    "createTitle": "Créer une nouvelle tâche",
+    "editTitle": "Modifier la tâche",
     "savingEllipsis": "Enregistrement...",
     "closeForm": "Fermer le formulaire",
     "unsaved": "Non sauvegardé",

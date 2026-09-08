@@ -73,13 +73,39 @@
 // leçon, et elle vaut au-delà de ce script : **avant de conclure « plus rien en
 // dur », soumettre la chose à la mesure, pas relire la mesure.**
 //
+// **Troisième fois (revue du 2026-09-08).** `scripts/i18n-scan.guard.test.mjs`
+// existait déjà, non suivi par git, écrit par une session précédente puis
+// jamais exécuté contre un scanner corrigé : 5 de ses 7 témoins échouaient.
+// Quatre angles morts de plus, tous du même type — une chaîne française vraie,
+// à un endroit qu'aucun motif ne regardait —
+//
+//   e. les DEUX branches d'un ternaire, en attribut JSX (`aria-label={cond ?
+//      'Masquer…' : 'Afficher…'}`) ou comme enfant JSX (`{done ? 'Terminée' :
+//      'Aucune échéance'}`) : le `?` ou le `:` n'est ni un espace ni une
+//      accolade, donc les motifs (1) et (2) ne s'arrêtaient jamais dessus, et
+//      le filtre anti-code (`CODE_QUOTING`) rejetait le fragment JSX entier
+//      dès qu'il contenait `: '` ;
+//   f. le vocabulaire fermé ne contenait toujours pas certains verbes
+//      d'interface sans accent (« Masquer », « Sauvegarder ») ;
+//   g. un message passé en ARGUMENT à une fonction quelconque (`setError('Le
+//      nom est obligatoire')`) : le motif (5) ne regardait que `return` /
+//      `throw new Error(` / les clés `error:` `message:` `description:`
+//      `reason:` — pas un appel de fonction arbitraire ;
+//   h. les éléments d'un TABLEAU de libellés (`['Nom du membre', 'Tâches
+//      terminées']`) : aucun motif ne regardait une chaîne entre `[`/`,` et
+//      `,`/`]`.
+//
 // ── CE QUE LE SCAN NE VOIT VOLONTAIREMENT PAS ──────────────────────
 //
-// Deux exclusions, et ce sont des décisions, pas des angles morts :
+// Trois exclusions, et ce sont des décisions, pas des angles morts :
 //
 //   - les COMMENTAIRES de code — ce dépôt commente en français ;
 //   - les SEEDS de démonstration, dont le français est la forme de référence,
-//     recouverte en anglais par `localizeSeed` / `isEnglishSeed`.
+//     recouverte en anglais par `localizeSeed` / `isEnglishSeed` ;
+//   - la SYNTAXE quick-add (`src/lib/quick-add-examples.ts`, marqueur
+//     `QUICK_ADD_FR_ONLY_SYNTAX`) : `parseQuickAdd` ne reconnaît que des
+//     mots-clés français, donc l'exemple affiché N'EST PAS un texte à
+//     traduire — le traduire casserait la démonstration qu'il donne.
 //
 // ⚠️ Ce qu'il ne verra jamais : une phrase construite par concaténation, ou un
 // texte hors de `src/`. Le total est un PLANCHER, pas une preuve.
@@ -102,6 +128,11 @@ const SKIP = /(__test__|showcase|\.test\.|\.spec\.)/;
 // que `localizeSeed` — c'est la forme que prennent les seeds a structure
 // imbriquee (les OKR, dont le recouvrement ne peut pas etre generique).
 const isSeedFile = (source) => /localizeSeed|isEnglishSeed|SEED_I18N/.test(source);
+
+// Meme logique que `isSeedFile`, pour la syntaxe quick-add
+// (src/lib/quick-add-examples.ts) : un exemple qui cesserait de porter ce
+// marqueur redeviendrait visible au scan, ce qui est le signal voulu.
+const isLockedSyntaxFile = (source) => /QUICK_ADD_FR_ONLY_SYNTAX/.test(source);
 
 function walk(d, out = []) {
   for (const e of readdirSync(d, { withFileTypes: true })) {
@@ -143,10 +174,14 @@ const FR_STOPWORD =
   "|aujourd|demain|hier|prochain|prochaine|pas|lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche" +
   // Vocabulaire des MESSAGES d'erreur, qui vivent dans des `return` et des
   // `throw` — formes que les motifs ne regardaient pas non plus.
-  "|erreur|utilisateur|veuillez|survenue|connexion|compte|champ|obligatoire|introuvable|saisir|reserve)\\b";
+  "|erreur|utilisateur|veuillez|survenue|connexion|compte|champ|obligatoire|introuvable|saisir|reserve" +
+  // Angle mort f (2026-09-08) : verbes d'interface sans accent, absents de
+  // la liste alors qu'ils n'existent pas en anglais sous cette forme.
+  "|masquer|sauvegarder)\\b";
 
 /** Une chaîne « française » : accent OU mot-outil français. */
 const FR = `(?:${ACC}|${FR_STOPWORD})`;
+const FR_RE = new RegExp(FR, 'i');
 
 /**
  * Corps d'une chaine, borne par SON PROPRE delimiteur.
@@ -159,8 +194,20 @@ const FR = `(?:${ACC}|${FR_STOPWORD})`;
  *
  * Consequence : ces motifs rendent la valeur en groupe 2, d'ou le second
  * element de chaque entree de PATTERNS.
+ *
+ * 🔴 Le delimiteur est un groupe NOMME, unique a chaque appel (`quoteId`), pas
+ * `\1`. Le motif (6) embarque DEUX appels de `QUOTED` dans un seul pattern
+ * (une branche vraie ET une branche fausse) : avec un `\1` fixe, la seconde
+ * chaine se serait refermee sur le delimiteur de la PREMIERE au lieu du sien.
+ * Mesure : `'Sauvegarder' : "Créer l'habitude"` rendait "Créer l" — tronque
+ * a la premiere apostrophe, parce que `\1` visait encore le guillemet simple
+ * de la branche vraie plutot que le guillemet double de la branche fausse.
  */
-const QUOTED = (inner) => `(['"\`])((?:(?!\\1)[^\\n])*${inner}(?:(?!\\1)[^\\n])*)\\1`;
+let quoteId = 0;
+const QUOTED = (inner) => {
+  const g = `q${quoteId++}`;
+  return `(?<${g}>['"\`])((?:(?!\\k<${g}>)[^\\n])*${inner}(?:(?!\\k<${g}>)[^\\n])*)\\k<${g}>`;
+};
 
 /** `[motif, index du groupe qui porte la valeur]`. */
 const PATTERNS = [
@@ -186,6 +233,62 @@ const PATTERNS = [
   // `AuthContext` et les cinq de `friends/supabase.repository`, toutes
   // remontees a l'ecran.
   [new RegExp(`(?:return|new Error\\(|(?<![A-Za-z])(?:error|message|description|reason)\\s*:)\\s*\\{?\\s*${QUOTED(FR)}`, 'gi'), 2],
+  // (6) Les DEUX branches d'un ternaire — `cond ? '…' : '…'` — que ce soit
+  // dans un attribut JSX ou comme enfant JSX. Ni (1) ni (2) ne s'arrêtent sur
+  // `?` ou `:`, et le fragment JSX entier était de toute façon rejeté par
+  // `CODE_QUOTING` dès qu'il contenait `: '` (angle mort e, 2026-09-08).
+  //
+  // 🔴 Une PREMIÈRE version exigeait que les DEUX branches matchent FR EN
+  // REGEX, dans un seul match : `fontFamily: 'system-ui, -apple-system,
+  // sans-serif'` (« sans » y matchait le mot-outil dans « sans-serif ») ne
+  // matchait plus, bien vu — mais `savingProfile ? 'Sauvegarde…' :
+  // 'Sauvegarder'` non plus, la branche vraie n'ayant ni accent ni mot-outil :
+  // le bouton « Sauvegarder » redevenait invisible.
+  //
+  // Une SECONDE version essayait un lookbehind a largeur variable pour
+  // rendre les deux branches independantes tout en gardant FR en regex —
+  // `(?<=\?\s*QUOTED\s*:\s*)QUOTED(FR)`. V8 le compile, mais un backreference
+  // NOMME defini a l'INTERIEUR d'un lookbehind ne s'y resout pas de la meme
+  // facon qu'en avant : le motif ne matchait plus JAMAIS. Verifie isole,
+  // hors de ce fichier, avant de l'abandonner.
+  //
+  // Le motif ne verifie donc plus que la STRUCTURE (deux chaines quelconques
+  // de part et d'autre de `?`/`:`) ; c'est le filtre FR_RE, apres capture,
+  // qui decide independamment pour CHAQUE branche si elle est francaise.
+  //
+  // 🔴 Cette structure seule matche aussi un ternaire qui choisit une VALEUR
+  // (route, cle i18n, id d'evenement) plutot qu'un TEXTE affiche. Un essai de
+  // lookbehind excluant tout `?` precede d'une comparaison `===`/`!==` a ete
+  // ABANDONNE : `variant === 'remove' ? 'Retirer' : 'Ajouter'`
+  // (CollaboratorItem) et `m.userId === currentUserId ? ' (vous)' : ''`
+  // (MemberPlacementSheet) choisissent aussi un TEXTE via une comparaison
+  // d'egalite — l'exclure aurait fait disparaitre deux phrases reelles pour
+  // en cacher trois qui n'en etaient pas. C'est l'inverse du principe de ce
+  // scanner (« mieux vaut un faux positif qu'une chaine oubliee »). Les VRAIS
+  // faux positifs (routes, cles a points, identifiants kebab-case) sont donc
+  // filtres par la FORME de la valeur capturee, dans `looksLikeCode`,
+  // jamais par la forme de la condition qui a choisi entre les deux.
+  [new RegExp(`\\?\\s*${QUOTED('')}\\s*:\\s*${QUOTED('')}`, 'gi'), [2, 4]],
+  // (7) Argument d'un appel de fonction QUELCONQUE — `setError('…')`,
+  // `confirm2('…')`. Exclut nommément `t(` et `tp(`, les appels de traduction :
+  // leur clé peut contenir un mot du vocabulaire fermé (`taches.liste.vide`)
+  // sans être une phrase (angle mort g, 2026-09-08). Exclut aussi
+  // `console.*(` : un diagnostic destiné à la console du navigateur n'est pas
+  // une chaîne d'INTERFACE, personne ne le lit traduit.
+  //
+  // 🔴 Restreint aux valeurs à PLUSIEURS mots (`requirePhrase`) : sans ça,
+  // `useT('agenda')` remonte 'agenda' — un namespace, pas une phrase — parce
+  // que « agenda » est aussi un nom commun de la liste. `useT`/`useTranslation`
+  // ne sont pas exclus par leur nom : c'est la forme du contenu qui protège,
+  // pas la liste des appelants.
+  [new RegExp(`(?<![\\w$])(?<!console\\.)(?!t\\(|tp\\()[A-Za-z_$][\\w$]*\\(\\s*${QUOTED(FR)}`, 'g'), 2, true],
+  // (8) Éléments d'un tableau de libellés — `['Nom du membre', 'Tâches
+  // terminées']`. Le séparateur de fin est en lookahead, comme (6), pour que
+  // chaque élément d'un tableau à plus de deux entrées matche (angle mort h,
+  // 2026-09-08). Même garde `requirePhrase` que (7), pour la même raison :
+  // `['/dashboard', '/agenda', '/entreprise']` et les tableaux de namespaces
+  // (`['agenda', 'eventModal', …]`) partagent des mots de la liste fermée.
+  [new RegExp(`[\\[,]\\s*${QUOTED(FR)}(?=\\s*[,\\]])`, 'gi'), 2, true],
 ];
 
 // ── Ce qui n'est PAS une phrase d'interface ────────────────────────
@@ -206,6 +309,35 @@ const CODE_QUOTING = /['"]\s*[,:)\]]|[,:(\[]\s*['"]/;
 const looksLikeCode = (v) =>
   CODE_MARKERS.some((m) => v.includes(m)) ||
   CODE_QUOTING.test(v) ||
+  // Un chemin de route (`/entreprise`, `/agenda?tab=x`) matche FR des qu'il
+  // contient un mot de la liste fermee, mais ce n'est jamais une phrase. Vu
+  // dans une branche de ternaire (angle mort e) : requirePhrase ne s'applique
+  // qu'aux motifs (7)/(8), et une route peut etre un seul mot.
+  v.startsWith('/') ||
+  // Un identifiant kebab-case (`open-agenda-create`) ou un simple mot MINUSCULE
+  // isole (`entreprise`, `perso`) matchent FR des qu'ils contiennent un mot de
+  // la liste fermee, mais ce sont des VALEURS d'etat ou des id d'evenement, pas
+  // des phrases affichees. Une vraie phrase francaise d'un seul mot commence
+  // par une MAJUSCULE (« Sauvegarder », « Entreprise » en tant que libelle).
+  /^[a-z][a-z0-9-]*$/.test(v) ||
+  // Une CLE i18n a points (`enterprise.switcher.entreprise`) — jamais une
+  // phrase, meme quand un de ses segments est un mot de la liste fermee.
+  (v.includes('.') && /^[\w.]+$/.test(v)) ||
+  // Un format date-fns (`"d MMMM yyyy 'à' HH:mm"`) contient un texte litteral
+  // ENTRE GUILLEMETS SIMPLES — la convention d'echappement de date-fns — donc
+  // « à » y matche l'accent. `format()` est deja localise par `getDateLocale()` ;
+  // ce n'est pas une phrase a traduire a la main. Detecte par les jetons de
+  // format qui n'apparaissent jamais dans une phrase affichee.
+  /\b(?:yyyy|MMMM?|HH:mm|EEEE?)\b/.test(v) ||
+  // Un message de diagnostic pour la console (`console.error('[auth] …')`)
+  // n'est pas une chaine d'INTERFACE : personne ne le lit traduit. Le motif
+  // (8), pense pour les tableaux, matche aussi n'importe quelle liste
+  // d'arguments separee par des virgules — donc les arguments suivants d'un
+  // `console.error(msg1, msg2, msg3)` — sans savoir que la fonction appelee
+  // est `console.*`. La convention du depot marque ces messages d'un tag
+  // entre crochets (`[auth]`, `[realtime]`) : plus fiable ici que de
+  // remonter jusqu'au nom de la fonction.
+  /^\[[a-z][a-z-]*\]/.test(v) ||
   // 🔴 Le filtre « identifiant seul » ne s'applique QU'AUX valeurs sans
   // mot-outil francais. Applique en bloc, il jetait « Demain » — un mot
   // francais isole ressemble a un identifiant — alors que la valeur n'arrive
@@ -225,27 +357,81 @@ const looksLikeCode = (v) =>
 const stripComments = (source) =>
   source.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/^\s*\/\/.*$/gm, '');
 
+// ── Les diagnostics `console.*` ne sont pas de l'interface non plus ────
+//
+// Un `console.error('[auth] …', arg2, 'suite du message …')` n'est lu par
+// PERSONNE d'autre qu'un developpeur dans les outils du navigateur — le
+// traduire n'a pas de sens. Le motif (8), pense pour les tableaux, matche
+// aussi n'importe quelle liste d'arguments separee par des virgules : sans
+// ce retrait, le DEUXIEME argument d'un `console.error` (qui ne porte pas
+// le tag `[auth]` du premier) restait visible. On retire l'appel ENTIER
+// (parentheses comprises, en comptant leur profondeur a la main — pas de
+// regex a parenthese non bornee), comme les commentaires ci-dessus.
+const stripConsoleCalls = (source) => {
+  const re = /console\.(?:log|warn|error|info|debug)\(/g;
+  let out = '';
+  let last = 0;
+  let m;
+  while ((m = re.exec(source))) {
+    out += source.slice(last, m.index);
+    let i = re.lastIndex;
+    let depth = 1;
+    while (i < source.length && depth > 0) {
+      const c = source[i];
+      if (c === '(') depth++;
+      else if (c === ')') depth--;
+      else if (c === '"' || c === "'" || c === '`') {
+        const q = c;
+        i++;
+        while (i < source.length && source[i] !== q) {
+          if (source[i] === '\\') i++;
+          i++;
+        }
+      }
+      i++;
+    }
+    last = i;
+    re.lastIndex = i;
+  }
+  return out + source.slice(last);
+};
+
 const rows = [];
 for (const f of walk('src')) {
   const raw = readFileSync(f, 'utf8');
-  if (isSeedFile(raw)) continue;
-  const s = stripComments(raw);
+  if (isSeedFile(raw) || isLockedSyntaxFile(raw)) continue;
+  const s = stripConsoleCalls(stripComments(raw));
   const hits = new Set();
-  for (const [re, group] of PATTERNS) {
+  for (const [re, groupOrGroups, requirePhrase] of PATTERNS) {
     re.lastIndex = 0;
     let m;
+    // (6) porte DEUX groupes (les deux branches du ternaire) sur un seul
+    // match : les autres motifs n'en portent qu'un, normalise en tableau ici.
+    const groups = Array.isArray(groupOrGroups) ? groupOrGroups : [groupOrGroups];
     while ((m = re.exec(s))) {
-      // Une phrase JSX peut arriver sur plusieurs lignes : on la normalise
-      // avant de la compter, sinon la meme phrase compterait deux fois selon
-      // l'endroit ou le formatage l'a coupee.
-      const v = m[group].replace(/\s+/g, ' ').trim();
-      if (!v || v.length < 3) continue;
-      if (/^[\d\s%·—–\-+.,:/()€]+$/.test(v)) continue;
-      // Une interpolation est conservee DANS une phrase (« {x} min » en est
-      // une), mais un fragment qui n'est que du code n'en est pas une.
-      if (/^\{[^}]*\}$/.test(v)) continue;
-      if (looksLikeCode(v)) continue;
-      hits.add(v);
+      for (const group of groups) {
+        // Une phrase JSX peut arriver sur plusieurs lignes : on la normalise
+        // avant de la compter, sinon la meme phrase compterait deux fois selon
+        // l'endroit ou le formatage l'a coupee.
+        const v = m[group].replace(/\s+/g, ' ').trim();
+        if (!v || v.length < 3) continue;
+        if (/^[\d\s%·—–\-+.,:/()€]+$/.test(v)) continue;
+        // Une interpolation est conservee DANS une phrase (« {x} min » en est
+        // une), mais un fragment qui n'est que du code n'en est pas une.
+        if (/^\{[^}]*\}$/.test(v)) continue;
+        // (7) et (8) matchent hors de tout contexte d'interface — n'importe
+        // quel appel de fonction, n'importe quel tableau — donc un simple nom
+        // commun de la liste fermee (route, namespace i18n : `agenda`,
+        // `entreprise`) y ressemble a une phrase. Une phrase a plusieurs mots ;
+        // un identifiant seul n'en a qu'un.
+        if (requirePhrase && !/\s/.test(v)) continue;
+        // Motif (6) : la structure du ternaire est verifiee en regex, mais
+        // pas le contenu — chaque branche doit prouver ELLE-MEME qu'elle est
+        // francaise (accent ou mot-outil), independamment de l'autre.
+        if (!FR_RE.test(v)) continue;
+        if (looksLikeCode(v)) continue;
+        hits.add(v);
+      }
     }
   }
   if (hits.size > 0) rows.push([hits.size, f.replace(/\\/g, '/'), [...hits]]);

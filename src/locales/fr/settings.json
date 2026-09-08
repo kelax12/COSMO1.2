@@ -46,7 +46,9 @@
     "changePhoto": "Changer la photo",
     "changePhotoAria": "Changer la photo de profil",
     "fullName": "Nom complet",
-    "yourNamePlaceholder": "Votre nom"
+    "yourNamePlaceholder": "Votre nom",
+    "save": "Sauvegarder",
+    "saving": "Sauvegarde…"
   },
   "timezone": {
     "heading": "Fuseau horaire",

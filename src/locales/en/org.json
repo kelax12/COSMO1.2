@@ -655,6 +655,7 @@
     "manager": "Manager",
     "attachedTo": "Reports to",
     "you": "you",
+    "youSuffix": " (you)",
     "noManager": "No manager (top of the pyramid or unplaced)",
     "noDirectReport": "No direct reports",
     "crossTeams": "Cross-functional teams",

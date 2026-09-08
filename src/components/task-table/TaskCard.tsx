@@ -191,7 +191,7 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
             className="flex items-center gap-2 text-white whitespace-nowrap"
           >
             <CheckCircle2 size={22} />
-            <span className="text-label font-bold">{task.completed ? 'Annuler' : 'Valider'}</span>
+            <span className="text-label font-bold">{task.completed ? t('card.cancel') : t('card.validate')}</span>
           </motion.div>
         </motion.div>
         {/* Left swipe → gray bg behind */}
@@ -432,7 +432,7 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
           }}
           onPointerDown={(e) => { e.stopPropagation(); }}
           className="self-center shrink-0 min-w-11 min-h-11 -my-1 -mr-1 p-2 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700/40 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-          aria-label={actionsVisible ? 'Masquer les actions' : 'Afficher les actions'}
+          aria-label={actionsVisible ? t('card.hideActions') : t('card.showActions')}
           aria-expanded={actionsVisible}
         >
           <MoreHorizontal size={18} />

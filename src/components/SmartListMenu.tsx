@@ -125,7 +125,7 @@ const SmartListMenu: React.FC<SmartListMenuProps> = ({
             >
               <Sun size={15} className="shrink-0 text-emerald-500" aria-hidden />
               <span className="flex-1 font-medium text-sm text-[rgb(var(--color-text-primary))]">
-                {todayHidden ? "Afficher « Aujourd'hui »" : "Masquer « Aujourd'hui »"}
+                {todayHidden ? t('lists.showTodaySmartList') : t('lists.hideTodaySmartList')}
               </span>
               {!todayHidden && <span className="text-xs text-[rgb(var(--color-text-muted))]">({todayCount})</span>}
             </button>
@@ -198,12 +198,17 @@ const SmartListMenu: React.FC<SmartListMenuProps> = ({
         ref={triggerRef}
         type="button"
         onClick={() => setOpen(v => !v)}
-        className="inline-flex shrink-0 items-center gap-1.5 min-h-touch sm:min-h-0 sm:h-9 px-3 rounded-lg border-2 border-dashed border-violet-300 dark:border-violet-600 bg-transparent text-sm font-medium text-violet-500 dark:text-violet-400 hover:border-violet-500 hover:text-violet-600 dark:hover:text-violet-300 hover:bg-violet-50 dark:hover:bg-violet-900/30 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
+        // Chip Spotify — MOBILE UNIQUEMENT : même taille/forme que les autres
+        // chips de la barre (pilule pleine h-9, sans bordure en tirets).
+        // Desktop (sm+) : forme d'origine inchangée (bordure pointillée, rounded-lg).
+        className="inline-flex shrink-0 items-center gap-1.5 px-3 sm:px-3 h-9 sm:h-auto sm:min-h-0 sm:py-2 rounded-full sm:rounded-lg border sm:border-2 border-transparent sm:border-dashed sm:border-violet-300 dark:sm:border-violet-600 bg-[rgb(var(--color-chip-bg))] sm:bg-transparent text-label sm:text-sm font-medium text-violet-600 sm:text-violet-500 dark:text-violet-300 dark:sm:text-violet-400 hover:bg-violet-100 dark:hover:bg-violet-900/30 sm:hover:border-violet-500 sm:hover:text-violet-600 dark:sm:hover:text-violet-300 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
         title={t('smartLists.create')}
         aria-label={t('smartLists.create')}
         aria-expanded={open}
       >
-        <Sparkles size={16} /> Smart
+        <Sparkles size={13} className="sm:hidden" />
+        <Sparkles size={16} className="hidden sm:inline" />
+        <span>Smart</span>
       </button>
       {typeof document !== 'undefined' && createPortal(popoverContent, document.body)}
     </>
