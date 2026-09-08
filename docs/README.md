@@ -76,6 +76,22 @@ performance va moins bien que la sécurité, ils disent où chaque domaine se si
 > Et une dérive est enfin notée, celle que personne n'avait vue : **le chunk d'entrée est passé de
 > 87,2 à 106,9 kB en deux jours**, avec un plafond relevé de 92 à 112 kB pour l'absorber.
 
+## Mise à jour du 2026-09-08 · un seul domaine mesuré, un seul déplacé
+
+Cette passe ne note **qu'un domaine** : elle vient d'une mesure prise ce jour-là, sur le runner,
+et rien d'autre n'a été remesuré. Les autres notes restent celles du 2026-09-03 — les recopier ici
+en les présentant comme d'aujourd'hui serait la troisième occurrence de l'erreur nommée au
+§ « Documentation » de `CLAUDE.md`.
+
+| Audit | dernière note | **09-08** | Δ | Ce qui a bougé |
+|---|---|---|---|---|
+| [Scalabilité](./SCALABILITY.md) | 89 (09-03) | **91** | +2 | **C-16 fermée** : la mesure cesse d'être mono-session. 1 → 16 sessions parallèles sur acteurs distincts, plateau à **~1 250 req/s** sur 4 vCPU atteint dès **8 sessions**, mise en file au-delà (latence médiane ×6, p99 ×17, débit identique). Le rapport entre les deux chemins passe de 354× à **×532** sous charge. Le harnais repart avec un **témoin qui le fait échouer** s'il ne sature pas. **C-15 est tranchée** plutôt que laissée ouverte : le coût est le **CPU par requête**, pas le volume par compte ni le nombre de sessions — avec deux seuils de réouverture écrits |
+
+⚠️ Les mesures restent celles d'un runner de CI, pas de la production : le nombre de vCPU du plan
+Free n'est pas connu, donc son plateau à elle n'est pas celui de ce tableau.
+
+---
+
 ## Mise à jour du 2026-09-03 · les journées 08-30 à 09-01 n'avaient jamais été notées
 
 La passe du 2026-09-02 a noté **les deux campagnes de sa propre journée**, et rien d'autre : elle
@@ -380,7 +396,7 @@ testées** (`scripts/migration-guards.test.mjs`).
 | [`PERFORMANCE.md`](./PERFORMANCE.md) | `manualChunks`, lazy loading, images et polices, budget bundle · **note 92 au 2026-09-03**, gardé par `npm run check:bundle` et par le job `lighthouse` · et depuis le 2026-08-26 **le coût serveur d'une ouverture de session**, ramené de 29 à 21 requêtes REST |
 | [`ACCESSIBILITY.md`](./ACCESSIBILITY.md) | WCAG / EAA, aria, contraste, gates axe-core + Lighthouse · **note 82 au 2026-09-03**, la gate Lighthouse mesure et bloque enfin |
 | [`AUDIT-VOICEOVER-IOS.md`](./AUDIT-VOICEOVER-IOS.md) | Check-list du **quatrième** audit d'accessibilité, à jouer d'une traite sur un iPhone (12 étapes, ~60 min, témoin en tête). Le seul instrument qui mesure l'**annonce** : le dépôt ne prouve aujourd'hui que le **focus** |
-| [`SCALABILITY.md`](./SCALABILITY.md) | Montée en charge · **note 89 au 2026-09-03**, coût par ligne mesuré ET éprouvé à volume (200 puis 2 000 lignes, §9ter) |
+| [`SCALABILITY.md`](./SCALABILITY.md) | Montée en charge · **note 91 au 2026-09-08**, coût par ligne mesuré, éprouvé à volume (§9ter) **et en concurrence** (1 → 16 sessions, §9quater) |
 | [`SEO.md`](./SEO.md) | Prérendu, sitemap, hreflang, indexation par locale · **note 75 au 2026-08-29**, inchangée au 2026-09-03 · données Search Console du 2026-08-19, non remesurées |
 | [`ACQUISITION-BACKLINKS.md`](./ACQUISITION-BACKLINKS.md) | 🔴 Le chantier qui débloque le SEO : kit de soumission annuaires, prêt à coller — **100 % manuel** |
 | [`ACQUISITION.md`](./ACQUISITION.md) | Attribution `?ref=`, funnel mesuré en prod, runbook — **audit du 2026-08-14** |

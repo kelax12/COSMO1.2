@@ -129,7 +129,7 @@ quand ». Une décision écrite ici fait foi contre une piste écrite dans l'ite
 | **C-02** | **Mesurer en prod, puis copier le flux personnel** | Compter combien d'OKR d'équipe visent une catégorie et combien sont déjà orphelins, puis réaffecter **avant** de supprimer, comme `categoryImpact()`. L'ordre est verrouillé par un test |
 | **C-27** | **Les trois parcours, plus celui du remboursement** | `FirstRunSetup`, le calendrier COSMO, les dépendances de tâches personnelles. Et C-65 touche de l'argent : il ne part pas sans son parcours E2E |
 | **C-18** | **Corriger maintenant**, quand aucune autre session ne travaille dans l'arbre | `npm audit fix` sans `--force`, montée de `shadcn` à 4.20.1, puis les cinq gates rejouées derrière |
-| **C-15 · C-16** | **Mesurer la concurrence avant de paginer quoi que ce soit** | Sans elle, toute décision de pagination est un pari : on ne sait pas si le coût vient du volume par compte (289 tâches au maximum mesuré) ou du nombre de sessions simultanées |
+| **C-15 · C-16** | ✅ **fait le 2026-09-08** — mesurer la concurrence avant de paginer quoi que ce soit | L'arbitrage disait « on ne sait pas si le coût vient du volume par compte ou du nombre de sessions simultanées ». Mesuré (§9quater) : **ni l'un ni l'autre**, il vient du **CPU par requête**, et les deux n'agissent que par lui. C-16 fermée, C-15 tranchée avec deux seuils de réouverture |
 
 ### Les deux chantiers lourds acceptés
 
@@ -155,7 +155,7 @@ quand ». Une décision écrite ici fait foi contre une piste écrite dans l'ite
 | [8](#8-tests-et-gardes) | Tests et gardes | C-26 → C-28, C-34 → C-36, C-47 |
 | [9](#9-ce-qui-nest-PAS-du-code) | Ce qui n'est PAS du code | renvois |
 | [10](#10-couverture--ce-que-cette-liste-ne-peut-pas-contenir) | 🔴 Couverture et audits à lancer | 2 audits restants |
-| [11](#11-ce-qui-reste-ouvert) | 🔴 **Ce qui reste ouvert** | 3 gestes, 4 à moitié, 29 entiers |
+| [11](#11-ce-qui-reste-ouvert) | 🔴 **Ce qui reste ouvert** | 3 gestes, 4 à moitié, 27 entiers |
 
 ---
 
@@ -1260,21 +1260,48 @@ C-67.
 
 ### C-15 · Le tableau de bord charge le jeu de données complet · **P3 · M**
 
+> ✅ **tranchée le 2026-09-08** · on ne fait rien, et pour la première fois sur une mesure plutôt
+> que sur une intuition. `SCALABILITY.md` §9quater a mesuré la concurrence : le plafond de montée
+> en charge s'écrit `cœurs / coût par requête`. Le coût n'est donc **ni** le volume par compte
+> **ni** le nombre de sessions — les deux n'agissent que par le CPU unitaire. Paginer ne gagne du
+> débit qu'en proportion du CPU retiré, et pour 289 tâches c'est une fraction de rien.
+> **Seuils de réouverture**, écrits et mesurables : (1) un compte dépasse **2 000 lignes** dans une
+> table qui alimente le tableau de bord ; (2) le nombre de sessions **simultanément actives** en
+> production atteint le nombre de vCPU du plan Postgres — et il faudra alors mesurer sur la prod,
+> pas sur un runner.
+
 Aucune pagination : la page lit tout et agrège côté client. **Mesuré le 2026-09-02 : 289 tâches et
-128 événements au maximum pour un compte**, donc aucun coût réel aujourd'hui. Le risque est écrit
-depuis longtemps, la mesure ne le justifie pas encore.
+128 événements au maximum pour un compte**, donc aucun coût réel aujourd'hui.
 
 - **Fini quand** : soit un seuil déclenche une agrégation serveur, soit la décision « on ne fait
-  rien tant que X » est écrite avec son seuil de réouverture (comme T-01).
+  rien tant que X » est écrite avec son seuil de réouverture (comme T-01). → **la seconde branche**,
+  ci-dessus.
 
 ### C-16 · La mesure à volume est mono-session · **P3 · M**
 
+> ✅ **fermée le 2026-09-08** · le workflow `scalability-volume` joue désormais N sessions
+> parallèles (`-f sessions=1,2,4,8,16`, N paramétrable), sur des **acteurs distincts**, et rend un
+> chiffre **par session** autant qu'agrégé. Résultat inscrit et daté dans
+> [`docs/SCALABILITY.md` §9quater](./docs/SCALABILITY.md) : plateau à **~1 250 req/s** sur 4 vCPU
+> atteint dès **8 sessions**, mise en file au-delà (latence médiane ×6, p99 ×17, débit inchangé),
+> et le rapport entre les deux chemins passe de 354× en mono-session à **×532** sous charge.
+> Le harnais repart avec son **témoin** — le chemin direct que la mig. 113 interdit : s'il
+> n'apparaît pas comme saturé, le harnais **sort en erreur**, parce qu'un harnais qui rend toujours
+> « ça tient » ne mesure rien. Verdict pur et testé (12 cas), **vu échouer sur cinq sabotages**.
+>
+> ⚠️ **Ce qui reste ouvert n'est pas la concurrence, c'est le lieu de la mesure** : rien n'est
+> mesuré contre la PRODUCTION (le nombre de vCPU de son plan Free n'est pas connu, donc son plateau
+> n'est pas celui du tableau), rien sur `tasks` à plusieurs millions de lignes, et le coût de
+> TRANSFERT des lignes est hors périmètre par construction — la requête mesurée rend `count(*)`,
+> faute de quoi c'est le fil unique de Node qu'on chronomètre.
+
 `SCALABILITY.md` §9ter a levé l'inconnue du planificateur (200 puis 2 000 `team_tasks`, aucun
-basculement de plan). Ce qu'elle ne dit **toujours pas** : rien sur la **concurrence**, rien sur
-`tasks` à plusieurs millions de lignes.
+basculement de plan). Ce qu'elle ne disait **pas** : rien sur la **concurrence**, rien sur `tasks`
+à plusieurs millions de lignes.
 
 - **Fini quand** : le workflow `scalability-volume` sait jouer N sessions parallèles, et le résultat
-  est inscrit dans le §9ter avec sa date.
+  est inscrit dans le §9ter avec sa date. → fait, en **§9quater** (le §9ter est une mesure datée,
+  on ne le réécrit pas : on écrit la suivante à côté et on l'y renvoie).
 
 ---
 
@@ -2948,7 +2975,7 @@ périmètre, ses questions et ses pièges connus.
 État au **2026-09-04**, reconstruit item par item depuis les notes de ce fichier, pas
 depuis un tableau plus ancien. **Trois gestes hors code bloquent du travail déjà écrit** ;
 viennent ensuite les **4 items à moitié faits** (le plus rentable, la moitié est là), puis
-les **31 entiers**.
+les entiers du §11.3 — dont le décompte est à reconstruire, cf. l'avertissement qui l'y coiffe.
 
 ### 11.1 🔴 Trois gestes qui ne sont pas du code, et qui bloquent du code déjà écrit
 
@@ -3029,9 +3056,15 @@ refermés dans la journée** ; leur note dit ce qui a été mesuré, et ce que l
 C-23** : leur code est écrit et testé, il n'est simplement **pas en production**.
 Ce sont les gestes du § 11.1 qui les débloquent, pas du travail supplémentaire.
 
-### 11.3 ⬜ Vingt-neuf items entiers
+### 11.3 ⬜ Vingt-sept items entiers
 
 Rien n'a été engagé dessus. Regroupés par ce qu'ils coûtent à ouvrir.
+
+> ⚠️ **Ce total est un total moins deux, pas un recomptage** (2026-09-08) : C-15 et C-16 sortent,
+> le reste n'a pas été revérifié item par item. Et les sous-totaux de cette section **ne
+> réconcilient déjà pas** avec le titre — « Tests, gardes et i18n (7) » en énumère six, et le
+> groupe « Dette structurelle (2) » en porte trois barrés. Le chiffre du titre est donc à
+> reconstruire à la prochaine passe, pas à recopier.
 
 **Ce qui demande une décision avant du code (3)**
 `C-04` supprimer les jetons premium et le mur-pub · `C-20` contenu éditorial monolingue ·
@@ -3045,9 +3078,12 @@ arbitrage de coût.
 `C-69` la fenêtre produit de la landing tourne sans pause, y compris hors écran · `C-71` les
 deux Edge Functions Stripe rendent 500 sur un identifiant Stripe périmé.
 
-**Performance et scalabilité (3)**
-`C-12` la landing reste la seule page lente · `C-15` le tableau de bord charge le jeu complet ·
-`C-16` la mesure à volume est mono-session.
+**Performance et scalabilité (1)**
+`C-12` la landing reste la seule page lente.
+
+> ⚠️ `C-15` et `C-16` sortent de cette liste le 2026-09-08 : la mesure de concurrence est faite
+> (§9quater), et C-15 est **tranchée** — ne rien faire, avec deux seuils de réouverture écrits.
+> Ce n'est pas un item repoussé, c'est une décision, et elle se rouvre à un chiffre nommé.
 
 **Accessibilité (6)**
 `C-24` quatre audits jamais faits · `C-25` le bleu de marque est à 3,34:1 · `C-53` aucune modale

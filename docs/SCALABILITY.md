@@ -9,7 +9,37 @@ s'est révélée fausse.
 Toutes les mesures de ce document sont **reproductibles** : les requêtes sont en
 [§10 Runbook](#10-runbook--refaire-cet-audit).
 
-## Note de scalabilité : 71 → 84 → 86 → **89 / 100** (2026-08-24 → 2026-08-25 → 2026-08-29 → 2026-09-03) · inchangée au 2026-08-27
+## Note de scalabilité : 71 → 84 → 86 → 89 → **91 / 100** (2026-08-24 → 2026-08-25 → 2026-08-29 → 2026-09-03 → 2026-09-08) · inchangée au 2026-08-27
+
+> ### 2026-09-08 · +2, la mesure cesse d'être mono-session et C-15 est tranchée
+>
+> Le bloc du 2026-09-03 ci-dessous nommait ce qui plafonnait la note : la mesure était
+> **mono-session**, et le tableau de bord chargeait le jeu de données complet sans que rien ne
+> justifie d'y toucher. Le premier point est levé, le second est **décidé** — pas laissé ouvert.
+> Détail en [§9quater](#9quater-mesuré-en-concurrence-le-2026-09-08--la-mesure-cesse-dêtre-mono-session-c-16).
+>
+> | | avant (§9ter, 09-02) | **§9quater, 09-08** |
+> |---|---|---|
+> | Sessions jouées | **1** | **1 → 16**, acteurs distincts, N paramétrable |
+> | Plateau de débit | inconnu | **~1 250 req/s** sur 4 vCPU, atteint dès **8 sessions** |
+> | Régime au-delà | inconnu | **mise en file** : latence médiane ×6, p99 ×17, débit identique |
+> | Rapport entre les deux chemins | 354× (mono-session) | **×532** à 16 sessions |
+> | Ce que rend le harnais | un chiffre agrégé | **par session ET agrégé**, avec l'écart entre sessions (×1,00 → ×2,74) |
+> | Témoin | aucun | le chemin direct de la mig. 113 : **le harnais sort en erreur** s'il ne sature pas |
+> | C-15 (pagination du tableau de bord) | « le risque reste écrit, la mesure ne le justifie pas » | **tranchée**, avec deux seuils de réouverture mesurables |
+>
+> **Le fait le plus utile n'est pas le plateau, c'est ce qu'il déplace.** Le coût de montée en
+> charge n'est ni le volume par compte ni le nombre de sessions : c'est le **CPU par requête**, et
+> les deux autres n'agissent que par lui. Une décision de pagination ne se juge donc plus au nombre
+> de lignes chargées, mais au CPU qu'elle retire — ce qui, pour 289 tâches, est une fraction de
+> rien. *Un plafond qui s'écrit `cœurs / coût unitaire` ne se déplace pas en rendant moins de
+> lignes, il se déplace en coûtant moins cher.*
+>
+> 🔴 **Ce qui plafonne à 91** : rien n'est mesuré contre la PRODUCTION — le nombre de vCPU de son
+> plan Free n'est pas connu, donc son plateau à elle n'est pas celui du tableau. Rien non plus sur
+> `tasks` à plusieurs millions de lignes, et le coût de TRANSFERT des lignes est hors périmètre par
+> construction (la requête mesurée rend `count(*)`, faute de quoi c'est Node qu'on chronomètre).
+> Le plan Postgres Free reste le seul bloquant de résilience (§8).
 
 > ### 2026-09-03 · +3, la seule inconnue qui plafonnait la note est levée
 >
@@ -790,10 +820,132 @@ projection linéaire à partir d'un cas dégénéré sous-estime, elle ne surest
 > mauvais chemin n'était pas un doute méthodologique : c'était uniquement le fait qu'on n'avait
 > jamais de données.
 
-⚠️ Ce que cette mesure ne dit toujours pas : rien sur `tasks` à plusieurs millions de lignes, ni
-sur la concurrence (elle est mono-session). Elle porte sur le prédicat d'entreprise, à froid comme
-à chaud sur un runner partagé — les millisecondes absolues n'ont donc pas de valeur, seuls les
-rapports en ont.
+⚠️ Ce que cette mesure ne dit toujours pas : rien sur `tasks` à plusieurs millions de lignes. Elle
+porte sur le prédicat d'entreprise, à froid comme à chaud sur un runner partagé — les millisecondes
+absolues n'ont donc pas de valeur, seuls les rapports en ont.
+
+> ✅ **« Rien sur la concurrence (elle est mono-session) », levé le 2026-09-08** : c'était la
+> dernière phrase de ce paragraphe et l'item C-16. Le §9quater ci-dessous mesure 1 à 16 sessions
+> parallèles, trouve le plateau, et tranche C-15. Le rapport entre les deux chemins, mesuré ici à
+> 354× en mono-session, monte à **×532** sous concurrence.
+
+---
+
+### 9quater. Mesuré EN CONCURRENCE le 2026-09-08 — la mesure cesse d'être mono-session (C-16)
+
+Le §9ter se terminait sur ce qu'il ne disait pas : « rien sur la concurrence (elle est
+mono-session) ». C'est l'item **C-16**, et c'est lui qui décide de **C-15** — tant qu'on ignore si
+le coût vient du volume par compte ou du nombre de lecteurs simultanés, toute décision de
+pagination est un pari.
+
+Une mesure de volume répond à « combien coûte UNE lecture ». Une mesure de concurrence répond à une
+autre question, qui n'en découle pas : « à partir de combien de lecteurs simultanés la base cesse
+de rendre du débit ». Aucun palier de volume supplémentaire ne pouvait y répondre.
+
+**Le harnais** : `scripts/scalability-concurrency.mjs`, même workflow `scalability-volume`
+(déclenchement manuel), même stack Supabase jetable, même organisation semée
+(`scripts/scalability-seed.mjs`, source unique désormais partagée avec le harnais de volume).
+N sessions Postgres distinctes, **chacune sous un membre différent**, martèlent
+`get_my_team_tasks(org)` en parallèle. Organisation de 50 membres, 20 projets, 2 000 `team_tasks`
+(4 000 dans la table, le harnais de volume ayant semé les siennes juste avant).
+Run [34196569724](https://github.com/kelax12/COSMO1.2/actions/runs/34196569724), 4 vCPU.
+
+#### Le chemin imposé — `get_my_team_tasks(org)`
+
+| Sessions | Débit (req/s) | p50 (ms) | p95 (ms) | p99 (ms) | Écart entre sessions | Gain marginal | Régime |
+|---|---|---|---|---|---|---|---|
+| 1 | 611 | 1,59 | 1,77 | 2,04 | ×1,00 | référence | — |
+| 2 | 929 | 1,91 | 2,26 | 2,96 | ×1,25 | 1,52× pour 2× idéal | dégradé |
+| 4 | **1 197** | 2,57 | 5,44 | 5,99 | ×1,36 | 1,29× | dégradé |
+| 8 | **1 255** | 5,30 | 12,04 | 19,20 | ×1,77 | **1,05×** | **saturé** |
+| 16 | **1 233** | 9,63 | 24,24 | 34,92 | **×2,74** | **0,98×** | **saturé** |
+
+#### Le TÉMOIN — le chemin direct que la mig. 113 interdit
+
+| Sessions | Débit (req/s) | p50 (ms) | p95 (ms) | Gain marginal | Régime |
+|---|---|---|---|---|---|
+| 1 | 1,37 | 737 | 761 | référence | — |
+| 2 | 2,49 | 748 | 919 | 1,82× pour 2× idéal | dégradé |
+| 4 | 2,99 | 1 297 | 1 520 | 1,20× | dégradé |
+| 8 | 3,67 | 2 148 | 2 514 | 1,23× | dégradé |
+| 16 | **3,16** | **5 122** | 5 514 | **0,86×** | **saturé** |
+
+**1. Le plateau existe, et il se situe au NOMBRE DE CŒURS.** Le débit du chemin imposé monte
+jusqu'à ~1 250 req/s puis ne bouge plus : 1 255 à 8 sessions, 1 233 à 16, soit un gain marginal de
+0,98× là où le doublement des sessions en promet 2. Passé ce point, chaque session ajoutée
+n'achète plus de débit, elle achète de l'attente — la latence médiane fait ×6 (1,59 → 9,63 ms) et
+la p99 ×17 (2,04 → 34,92 ms) pour un débit **identique**. C'est la définition de la mise en file.
+
+**2. Le plafond est CPU, donc il s'écrit `cœurs / coût par requête`.** 4 vCPU pour une requête à
+1,59 ms donnent un plafond théorique de ~2 500 req/s ; on en mesure 1 233, soit une efficacité de
+49 % au plateau. La conséquence pratique est la seule qui compte pour C-15 : **paginer ne gagne du
+débit qu'en proportion du CPU retiré par requête.** Ni le nombre de lignes rendues, ni le nombre de
+sessions ne déplacent ce plafond — seul le coût unitaire le fait.
+
+**3. Le témoin sature bien plus tôt, et l'écart entre les deux chemins EXPLOSE sous charge.** Le
+chemin direct plafonne dès 4 sessions, à **3 req/s**, et à 16 sessions il met **5,1 secondes** par
+lecture. Le rapport entre les deux chemins passe de **354×** en mono-session (§9ter) à **×532** à
+16 sessions : la concurrence ne dilue pas le défaut que la mig. 113 corrige, elle l'aggrave. Une
+organisation servie par le mauvais chemin ne devient pas lente, elle devient inutilisable à quatre
+utilisateurs simultanés.
+
+> 🔴 **Ce qu'une moyenne aurait caché, et pourquoi ce harnais rend un chiffre PAR SESSION.** À
+> 16 sessions, la médiane globale dit 9,63 ms — un chiffre rassurant. Les sessions prises une par
+> une disent 4,82 ms pour la plus rapide et 13,19 ms pour la plus lente, **×2,74**, alors qu'elles
+> font exactement le même travail sur la même base au même instant. C'est cet écart qui est le
+> signal de la file d'attente, et il croît proprement avec la charge (×1,00 → ×1,25 → ×1,36 →
+> ×1,77 → ×2,74). Un harnais qui n'aurait rendu qu'une moyenne aurait mesuré la saturation sans
+> jamais pouvoir la nommer.
+
+> ✅ **Le harnais repart avec son TÉMOIN, et le témoin est une mesure, pas une déclaration.** Le
+> tableau du chemin direct n'est pas une comparaison de politesse : le harnais **sort en erreur**
+> si ce chemin n'apparaît pas comme saturé au palier le plus chargé. Un harnais qui rend toujours
+> « ça tient » ne mesure rien — c'est la règle du § « une garde se vérifie sur ce qu'elle REGARDE »
+> de `CLAUDE.md`, appliquée avant que la garde ne serve. Le verdict lui-même est pur et testé
+> (`scripts/scalability-concurrency.stats.test.mjs`, 12 cas), et il a été **vu échouer sur cinq
+> sabotages** : détecteur bloqué sur « linéaire », détecteur bloqué sur « saturé », témoin qui
+> accepte tout, écart entre sessions effacé, débit agrégé calculé sur la somme des sessions au lieu
+> de la fenêtre du palier. Chacun rend le fichier rouge.
+
+⚠️ **Trois choses que cette mesure ne dit pas, et qu'il ne faut pas lui faire dire :**
+
+1. **Le genou est celui de CE runner.** « Saturé à 8 sessions » n'est pas une propriété de la
+   requête : c'est `4 cœurs / 1,59 ms`. Sur une machine à 16 cœurs le plateau serait plus haut, et
+   le régime de saturation identique. Ce qui se transporte est le **coût unitaire** et la **forme**
+   de la courbe, jamais le nombre de sessions.
+2. **La requête mesurée rend une ligne (`count(*)`), pas 400.** Sans ça, à 16 sessions, c'est le
+   fil unique de Node qui aurait été chronométré, pas la base. Le travail serveur est identique —
+   le prédicat est évalué ligne par ligne dans les deux cas — mais **le coût de TRANSFERT des
+   lignes n'est pas couvert**. Un témoin de ce choix est intégré à la sortie : le rapport de
+   latence direct/RPC au palier le plus chargé vaut **×532** ; s'il s'effondrait vers 1, ce serait
+   le signe que le client est redevenu le goulot.
+3. **Rien n'est mesuré contre la production**, ni sur `tasks` à plusieurs millions de lignes. Le
+   nombre de vCPU du plan Free de la prod n'a pas été mesuré, donc son plateau à elle n'est **pas**
+   celui de ce tableau.
+
+#### Ce que ça décide pour C-15 — ne rien faire, avec un seuil de réouverture mesurable
+
+**C-15 (« le tableau de bord charge le jeu de données complet ») reste fermé, et pour la première
+fois sur une mesure plutôt que sur une intuition.** La question ouverte était : le coût vient-il du
+volume par compte ou du nombre de sessions simultanées ? La réponse est **ni l'un ni l'autre
+directement** — il vient du **CPU par requête**, et les deux autres n'agissent que par lui.
+
+- Le plafond de concurrence est `cœurs / coût unitaire`. La lecture du tableau de bord porte sur
+  **289 tâches au maximum pour un compte** (mesuré le 2026-09-02), contre 2 000 lignes d'équipe
+  ici : son coût unitaire est une fraction de celui mesuré. Paginer ne rendrait que cette fraction.
+- Le genou de la courbe est à **8 lecteurs simultanés soutenus** sur 4 cœurs. La prod compte
+  **28 comptes et 0 actif sur 7 jours** (§1) : elle est à trois ordres de grandeur du genou, et
+  aucun geste de pagination ne rapprocherait ce chiffre de quoi que ce soit.
+- **Réouvrir C-15 quand l'une de ces deux bornes est franchie**, et pas avant :
+  1. un compte dépasse **2 000 lignes** dans une table qui alimente le tableau de bord (l'ordre de
+     grandeur mesuré ici, où le coût unitaire devient comparable) ;
+  2. le nombre de sessions **simultanément actives** en production atteint le nombre de vCPU du
+     plan Postgres — c'est là que le plateau commence, et il faudra alors l'avoir mesuré sur la
+     prod, pas sur un runner.
+
+Le geste qui rapporterait le plus n'est donc pas de paginer le tableau de bord : c'est de **rejouer
+ce harnais après tout changement du coût unitaire d'une lecture montée sur une page protégée**.
+C'est ce que le workflow permet désormais, en une commande.
 
 ---
 
@@ -803,11 +955,16 @@ par ordre décroissant de rapport valeur/effort :
 
 1. ✅ **`useTeamOKRs` en `live` conditionnel** — **déjà fait**, vérifié le 2026-08-27 :
    `team-okrs/hooks.ts` porte `...(options?.live ? { refetchInterval: 30_000 } : {})`.
-2. ✅ **Mesurer §2 à volume réel — FAIT le 2026-09-02 (§9ter).** Aucun basculement de plan entre
+2. ✅ **Mesurer §2 EN CONCURRENCE — FAIT le 2026-09-08 (§9quater, item C-16).** Le plateau du
+   chemin imposé est à ~1 250 req/s sur 4 cœurs, atteint dès 8 sessions ; le chemin direct plafonne
+   à 3 req/s dès 4 sessions et met 5,1 s par lecture à 16. C'est ce qui ferme **C-15** : le coût
+   n'est ni le volume par compte ni le nombre de sessions, c'est le **CPU par requête**, et les
+   deux autres n'agissent que par lui. Seuils de réouverture écrits dans le §9quater.
+3. ✅ **Mesurer §2 à volume réel — FAIT le 2026-09-02 (§9ter).** Aucun basculement de plan entre
    200 et 2 000 `team_tasks`, le chemin direct est linéaire en la table entière (ratio 9,0 stable,
    buffers ×10), et le rapport entre les deux chemins atteint **354×** à 2 000 lignes. La mesure
    se rejoue par le workflow `scalability-volume` (déclenchement manuel).
-3. Les deux derniers sondages permanents vers le canal Realtime existant.
+4. Les deux derniers sondages permanents vers le canal Realtime existant.
 
 ---
 
@@ -837,6 +994,19 @@ rollback;
 Lecture du résultat : diviser `Buffers: shared hit` par le nombre de lignes **scannées**
 (`rows` + `Rows Removed by Filter`), pas par les lignes retournées. C'est ce ratio qui se projette
 linéairement, et lui seul.
+
+Les deux mesures qui exigent du volume ne se rejouent PAS en production : elles écrivent. Elles
+tournent sur la stack jetable du runner, par le workflow `scalability-volume` (déclenchement
+manuel, jamais une gate), qui joue les deux à la suite dans le même job :
+
+```bash
+gh workflow run scalability-volume.yml --ref main   -f steps=2000 -f members=50 -f sessions=1,2,4,8,16 -f iterations=30
+```
+
+`steps` pilote les paliers de VOLUME (§9ter), `sessions` les paliers de CONCURRENCE (§9quater) — le
+harnais de concurrence remet toujours le palier 1, qui sert de référence à toute la lecture. ⚠️
+L'étape de concurrence **peut échouer sans que la base aille mal** : elle sort en erreur si son
+propre témoin ne sature pas. Ce n'est alors pas le produit qui est en cause, c'est la détection.
 
 Côté code, les quatre points à revérifier : `TASK_LIST_COLUMNS` toujours unique source de colonnes,
 `select('*')` restants dans les repos, `refetchInterval` (`grep -rn "refetchInterval:" src`), et
