@@ -1796,13 +1796,29 @@ articles en français.
 - **Fini quand** : le contenu porte sa locale, et `en` peut entrer dans `INDEXABLE_LOCALES` en
   suivant la procédure de `docs/SEO.md`. ❌ Ne jamais ouvrir la locale avant le contenu.
 
-### C-21 · 71 valeurs `en` identiques au `fr` · **P3 · S**
+### C-21 · ~~71 valeurs `en` identiques au `fr`~~ · **P3 · S** · ✅ clos le 2026-09-08
 
-3 % des 2 476 clés, concentrées sur `taskModal` (10 %), `eventModal` (9 %) et `admin` (6 %). Une
-partie est légitimement identique (noms propres, symboles). **Chiffres du 2026-08-14, non
-remesurés.**
+**Remesuré** (le chiffre de 71 datait du 2026-08-14 et n'avait jamais été repris, alors que le
+catalogue a gagné 1 403 clés depuis) : **92 identités sur 3 808 couples comparables, soit 2,4 %**.
+Répartition par namespace dans `docs/I18N.md` § 1.
 
-- **Fini quand** : remesuré, puis les non-légitimes traduites.
+Le tri légitimes / non traduites, lui, n'avait **jamais** été fait : c'est ce qui rendait l'énoncé
+inexploitable, pas le chiffre. À l'arrivée, **90 des 92 étaient légitimes** et il restait **deux**
+défauts, dont un seul côté anglais :
+
+- `admin.sharedHint` : c'est le catalogue **`fr`** qui disait « {{count}} users ({{pct}}) ».
+- `org.pyramid.directCount_one` / `_other` : `en` rendait « 1 direct » et « 5 direct », désormais
+  « 1 direct report » / « 5 direct reports ».
+
+Les 90 autres sont déclarées une fois pour toutes dans `scripts/i18n-identical-allowlist.json`
+(catégorie + valeur `fr` épinglée), pour que le prochain audit ne refasse pas le tri à la main.
+
+- **Garde** : `npm run i18n:identical`, cliquet à **0**, en CI. L'allowlist est *vérifiée* : une
+  entrée dont la clé a disparu, qui a fini par être traduite, dont la valeur `fr` a changé, ou dont
+  la catégorie n'existe pas, fait échouer la garde.
+- **Témoin** : `scripts/i18n-identical.guard.test.mjs`, 9 cas soumis au script réel, vu échouer sur
+  trois sabotages (détecteur neutralisé, contrôle de péremption neutralisé, allowlist qui dispense
+  tout) avant d'être committé.
 
 ### C-22 · ~~`i18n:scan` à 25~~ · **P3 · S** · ✅ clos le 2026-09-03, remplacé par C-38
 
@@ -3045,7 +3061,7 @@ surfaces que A-3 n'a pas su mesurer · `C-70` 22 cibles sous 44 px dans `TeamTas
 ~~`C-10` deux primitives sans consommateur~~ — **fermé le 2026-09-05**, supprimées.
 
 **Tests, gardes et i18n (7)**
-`C-18` CVE dev-only · `C-21` 71 valeurs `en` identiques au `fr` · `C-26` la couverture n'a pas été
+`C-18` CVE dev-only · `C-26` la couverture n'a pas été
 relancée depuis le 2026-08-29 · `C-27` les parcours livrés en septembre n'ont pas de test E2E ·
 `C-28` le canal d'alerte d'ops est inerte · `C-35` rien ne compare le code déployé des Edge
 Functions à celui du dépôt · `C-38` `i18n:scan` annonce ZÉRO et l'interface anglaise parle

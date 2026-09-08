@@ -10,7 +10,7 @@
   "taskCompletionHint": "{{count}}/{{total}} tâches complétées",
   "events": "Événements",
   "shared": "Ont partagé",
-  "sharedHint": "{{count}} users ({{pct}})",
+  "sharedHint": "{{count}} utilisateurs ({{pct}})",
   "acceptedRequests": "Demandes acceptées",
   "demoVisitors": "Visiteurs démo",
   "demoConverted": "{{count}} convertis ({{pct}})",

@@ -15,6 +15,7 @@
 import Stripe from 'npm:stripe@14.21.0'
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { opsAlert } from '../_shared/alert.ts'
+import { isResourceMissing } from '../_shared/stripe-errors.ts'
 
 const APP_URL = Deno.env.get('APP_URL') ?? 'http://localhost:5173'
 const ALLOWED_ORIGINS = new Set([APP_URL])
@@ -85,10 +86,22 @@ Deno.serve(async (req) => {
       httpClient: Stripe.createFetchHttpClient(),
     })
 
-    const session = await stripe.billingPortal.sessions.create({
-      customer: sub.stripe_customer_id,
-      return_url: `${APP_URL}/entreprise?tab=billing`,
-    })
+    // ── C-71 : un customer qui ne vit plus dans le compte présenté ──
+    //
+    // `resource_missing` (404) est le cas de tout `stripe_customer_id` de test
+    // le jour du passage en compte live, ou d'un customer supprimé côté
+    // Stripe après coup. Il n'y a alors rien à gérer : on le dit clairement,
+    // jamais un 500 opaque. Toute AUTRE erreur Stripe continue de relancer.
+    let session: Awaited<ReturnType<typeof stripe.billingPortal.sessions.create>>
+    try {
+      session = await stripe.billingPortal.sessions.create({
+        customer: sub.stripe_customer_id,
+        return_url: `${APP_URL}/entreprise?tab=billing`,
+      })
+    } catch (err) {
+      if (!isResourceMissing(err)) throw err
+      return json({ error: 'no_customer' }, 400)
+    }
 
     return json({ url: session.url })
   } catch (err) {

@@ -34,6 +34,7 @@ import { opsAlert } from '../_shared/alert.ts'
 import { priceIdForTier, tierByKey, FREE_TIER_MAX_MEMBERS } from '../_shared/org-tiers.ts'
 import type { OrgBillingInterval } from '../_shared/org-tiers.ts'
 import { resolveYearlyPriceId } from '../_shared/org-stripe-prices.ts'
+import { isResourceMissing } from '../_shared/stripe-errors.ts'
 
 const APP_URL = Deno.env.get('APP_URL') ?? 'http://localhost:5173'
 const ALLOWED_ORIGINS = new Set([APP_URL])
@@ -142,8 +143,23 @@ Deno.serve(async (req) => {
       .maybeSingle()
 
     if (sub?.stripe_subscription_id) {
-      const existing = await stripe.subscriptions.retrieve(sub.stripe_subscription_id)
-      if (existing.status === 'active' || existing.status === 'trialing') {
+      // ── C-71 : un identifiant qui ne vit plus dans le compte présenté ──
+      //
+      // `resource_missing` (404) est le cas de TOUS les abonnements de test le
+      // jour du passage en compte live (mig. 140 non encore jouée), ou d'un
+      // abonnement supprimé côté Stripe après coup. On ne bloque alors
+      // personne derrière un identifiant mort : on repart sur une souscription
+      // neuve, exactement comme si `org_subscriptions` n'en portait aucun.
+      //
+      // Toute AUTRE erreur Stripe continue de relancer — « en cas de doute,
+      // faire retenter Stripe, jamais deviner ».
+      let existing: Awaited<ReturnType<typeof stripe.subscriptions.retrieve>> | null = null
+      try {
+        existing = await stripe.subscriptions.retrieve(sub.stripe_subscription_id)
+      } catch (err) {
+        if (!isResourceMissing(err)) throw err
+      }
+      if (existing && (existing.status === 'active' || existing.status === 'trialing')) {
         // Changement de palier = portail Stripe, pas un second checkout.
         return json({ error: 'already_subscribed' }, 400)
       }

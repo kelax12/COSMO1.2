@@ -1,0 +1,381 @@
+{
+  "$schema-maison": "scripts/i18n-identical.mjs. Toute entree doit exister dans fr ET en, y porter la MEME valeur, et cette valeur doit etre celle epinglee ici.",
+  "categories": {
+    "nom-propre": "Nom de marque, de produit, de domaine ou d equipe. Ne se traduit pas.",
+    "sigle": "Sigle ou abreviation identique dans les deux langues (OKR, FAQ, ID, DAU/MAU).",
+    "symbole-ou-format": "La valeur ne porte que des variables, des chiffres, des unites ou de la ponctuation. Rien a traduire.",
+    "mot-identique": "Le mot francais et le mot anglais s ecrivent de la meme facon (Description, Total, Navigation).",
+    "anglicisme-fr": "Terme anglais employe tel quel en francais (Sprint, Blog, Drag & drop). C est le FRANCAIS qui emprunte.",
+    "identifiant-technique": "Nom de fichier ou identifiant expose a l utilisateur mais non traduisible."
+  },
+  "entrees": {
+    "admin.acquisition": {
+      "categorie": "mot-identique",
+      "valeur": "Acquisition"
+    },
+    "admin.engagement": {
+      "categorie": "mot-identique",
+      "valeur": "Engagement"
+    },
+    "admin.okrsAtLeastOne": {
+      "categorie": "symbole-ou-format",
+      "valeur": "≥1 OKR"
+    },
+    "admin.stickiness": {
+      "categorie": "anglicisme-fr",
+      "valeur": "Stickiness DAU/MAU"
+    },
+    "bugReport.fields.description": {
+      "categorie": "mot-identique",
+      "valeur": "Description"
+    },
+    "common.nav.premium": {
+      "categorie": "mot-identique",
+      "valeur": "Premium"
+    },
+    "common.nav.admin": {
+      "categorie": "mot-identique",
+      "valeur": "Admin"
+    },
+    "common.nav.documentTitle": {
+      "categorie": "symbole-ou-format",
+      "valeur": "{{page}} – Cosmo"
+    },
+    "common.auth.email": {
+      "categorie": "mot-identique",
+      "valeur": "Email"
+    },
+    "common.cookies.title": {
+      "categorie": "mot-identique",
+      "valeur": "Cookies"
+    },
+    "common.description.expandedTitle": {
+      "categorie": "mot-identique",
+      "valeur": "Description"
+    },
+    "csv.file.categories": {
+      "categorie": "identifiant-technique",
+      "valeur": "cosmo-categories"
+    },
+    "csv.col.id": {
+      "categorie": "sigle",
+      "valeur": "ID"
+    },
+    "csv.col.description": {
+      "categorie": "mot-identique",
+      "valeur": "Description"
+    },
+    "csv.col.notes": {
+      "categorie": "mot-identique",
+      "valeur": "Notes"
+    },
+    "csv.col.okrId": {
+      "categorie": "sigle",
+      "valeur": "OKR ID"
+    },
+    "csv.col.email": {
+      "categorie": "mot-identique",
+      "valeur": "Email"
+    },
+    "csv.col.avatar": {
+      "categorie": "mot-identique",
+      "valeur": "Avatar"
+    },
+    "csv.col.type": {
+      "categorie": "mot-identique",
+      "valeur": "Type"
+    },
+    "dashboard.okrs.timeProgress": {
+      "categorie": "symbole-ou-format",
+      "valeur": "{{current}} / {{target}} min"
+    },
+    "dashboard.collaborative.collaboratorStatus": {
+      "categorie": "symbole-ou-format",
+      "valeur": "{{name}} - {{status}}"
+    },
+    "dashboard.habits.minutes": {
+      "categorie": "symbole-ou-format",
+      "valeur": "{{count}} min"
+    },
+    "eventModal.date": {
+      "categorie": "mot-identique",
+      "valeur": "Date"
+    },
+    "eventModal.schedule.date": {
+      "categorie": "mot-identique",
+      "valeur": "Date"
+    },
+    "eventModal.schedule.notes": {
+      "categorie": "mot-identique",
+      "valeur": "Notes"
+    },
+    "guide.start.cardDashboard": {
+      "categorie": "anglicisme-fr",
+      "valeur": "Dashboard"
+    },
+    "guide.start.cardNotifications": {
+      "categorie": "mot-identique",
+      "valeur": "Notifications"
+    },
+    "guide.tasks.featCollab": {
+      "categorie": "mot-identique",
+      "valeur": "Collaboration"
+    },
+    "guide.agenda.featDrag": {
+      "categorie": "anglicisme-fr",
+      "valeur": "Drag & drop"
+    },
+    "guide.entreprise.featInvite": {
+      "categorie": "mot-identique",
+      "valeur": "Invitations"
+    },
+    "habits.table.dayCell": {
+      "categorie": "symbole-ou-format",
+      "valeur": "{{name}}, {{date}}"
+    },
+    "habits.modal.ok": {
+      "categorie": "mot-identique",
+      "valeur": "OK"
+    },
+    "landing.nav.solutions": {
+      "categorie": "mot-identique",
+      "valeur": "Solutions"
+    },
+    "landing.nav.guide": {
+      "categorie": "mot-identique",
+      "valeur": "Guide"
+    },
+    "landing.nav.faq": {
+      "categorie": "sigle",
+      "valeur": "FAQ"
+    },
+    "landing.hero.modules.okr": {
+      "categorie": "sigle",
+      "valeur": "OKR"
+    },
+    "landing.marquee.timeBlocking": {
+      "categorie": "anglicisme-fr",
+      "valeur": "Time-blocking"
+    },
+    "landing.why.tag1": {
+      "categorie": "anglicisme-fr",
+      "valeur": "// 01 · Time blocking"
+    },
+    "landing.why.tag2": {
+      "categorie": "mot-identique",
+      "valeur": "// 02 · Discipline"
+    },
+    "landing.why.tag3": {
+      "categorie": "sigle",
+      "valeur": "// 03 · OKR"
+    },
+    "landing.why.chartAgenda": {
+      "categorie": "mot-identique",
+      "valeur": "Agenda"
+    },
+    "landing.footer.blog": {
+      "categorie": "anglicisme-fr",
+      "valeur": "Blog"
+    },
+    "landing.footer.faq": {
+      "categorie": "sigle",
+      "valeur": "FAQ"
+    },
+    "landing.about.namesBold1": {
+      "categorie": "nom-propre",
+      "valeur": "Cosmo"
+    },
+    "landing.about.namesBold2": {
+      "categorie": "nom-propre",
+      "valeur": "thecosmo.app"
+    },
+    "landing.enterprise.pyramid.roleLead": {
+      "categorie": "anglicisme-fr",
+      "valeur": "Manager"
+    },
+    "landing.enterprise.pyramid.roleAdmin": {
+      "categorie": "mot-identique",
+      "valeur": "Admin"
+    },
+    "landing.enterprise.okr.team1Team": {
+      "categorie": "nom-propre",
+      "valeur": "Design"
+    },
+    "legal.terms.s14.title": {
+      "categorie": "mot-identique",
+      "valeur": "14. Contact"
+    },
+    "legal.notice.s7.title": {
+      "categorie": "mot-identique",
+      "valeur": "7. Contact"
+    },
+    "okr.modal.descriptionLabel": {
+      "categorie": "mot-identique",
+      "valeur": "Description"
+    },
+    "org.pyramid.roleAdmin": {
+      "categorie": "mot-identique",
+      "valeur": "admin"
+    },
+    "org.pyramid.roleManager": {
+      "categorie": "anglicisme-fr",
+      "valeur": "manager"
+    },
+    "org.pyramid.cardAria": {
+      "categorie": "symbole-ou-format",
+      "valeur": "{{name}}, {{role}}{{reports}}"
+    },
+    "org.pyramid.badgeAdmin": {
+      "categorie": "mot-identique",
+      "valeur": "Admin"
+    },
+    "org.pyramid.badgeManager": {
+      "categorie": "anglicisme-fr",
+      "valeur": "Manager"
+    },
+    "org.overview.csvTotal": {
+      "categorie": "mot-identique",
+      "valeur": "Total"
+    },
+    "org.okrModal.descriptionLabel": {
+      "categorie": "mot-identique",
+      "valeur": "Description"
+    },
+    "org.projects.tasksTabColActions": {
+      "categorie": "mot-identique",
+      "valeur": "ACTIONS"
+    },
+    "org.taskModal.description": {
+      "categorie": "mot-identique",
+      "valeur": "Description"
+    },
+    "org.taskModal.labelsTitle": {
+      "categorie": "anglicisme-fr",
+      "valeur": "Labels"
+    },
+    "org.member.manager": {
+      "categorie": "anglicisme-fr",
+      "valeur": "Manager"
+    },
+    "org.member.tabContribution": {
+      "categorie": "mot-identique",
+      "valeur": "Contribution"
+    },
+    "org.common.adminBadge": {
+      "categorie": "mot-identique",
+      "valeur": "Admin"
+    },
+    "org.colors.indigo": {
+      "categorie": "mot-identique",
+      "valeur": "Indigo"
+    },
+    "org.colors.teal": {
+      "categorie": "anglicisme-fr",
+      "valeur": "Teal"
+    },
+    "org.colors.violet": {
+      "categorie": "mot-identique",
+      "valeur": "Violet"
+    },
+    "org.templates.sprint": {
+      "categorie": "anglicisme-fr",
+      "valeur": "Sprint"
+    },
+    "org.notifications.title": {
+      "categorie": "mot-identique",
+      "valeur": "Notifications"
+    },
+    "org.roles.adminShort": {
+      "categorie": "mot-identique",
+      "valeur": "Admin"
+    },
+    "org.roles.manager": {
+      "categorie": "anglicisme-fr",
+      "valeur": "Manager"
+    },
+    "org.permissions.sectionOrg": {
+      "categorie": "mot-identique",
+      "valeur": "Organisation"
+    },
+    "overlays.palette.groupNavigation": {
+      "categorie": "mot-identique",
+      "valeur": "Navigation"
+    },
+    "overlays.removeFriend.bodyAfter": {
+      "categorie": "symbole-ou-format",
+      "valeur": "."
+    },
+    "premium.page.heroTitle": {
+      "categorie": "nom-propre",
+      "valeur": "Cosmo Premium"
+    },
+    "premium.page.proColumn": {
+      "categorie": "mot-identique",
+      "valeur": "Premium"
+    },
+    "premium.page.stepActivateTitle": {
+      "categorie": "mot-identique",
+      "valeur": "Activation"
+    },
+    "settings.nav.modules": {
+      "categorie": "mot-identique",
+      "valeur": "Modules"
+    },
+    "settings.nav.guide": {
+      "categorie": "mot-identique",
+      "valeur": "Guide"
+    },
+    "statistics.chart.minutes": {
+      "categorie": "symbole-ou-format",
+      "valeur": "min"
+    },
+    "statistics.details.total": {
+      "categorie": "mot-identique",
+      "valeur": "Total"
+    },
+    "statistics.breakdown.agenda": {
+      "categorie": "mot-identique",
+      "valeur": "Agenda"
+    },
+    "taskModal.common.ok": {
+      "categorie": "mot-identique",
+      "valeur": "OK"
+    },
+    "taskModal.fields.description": {
+      "categorie": "mot-identique",
+      "valeur": "Description"
+    },
+    "taskModal.sections.description": {
+      "categorie": "mot-identique",
+      "valeur": "Description"
+    },
+    "taskModal.sections.organisation": {
+      "categorie": "mot-identique",
+      "valeur": "Organisation"
+    },
+    "taskModal.sections.collaboration": {
+      "categorie": "mot-identique",
+      "valeur": "Collaboration"
+    },
+    "taskModal.mobile.participants": {
+      "categorie": "mot-identique",
+      "valeur": "Participants"
+    },
+    "tasks.table.colActions": {
+      "categorie": "mot-identique",
+      "valeur": "Actions"
+    },
+    "tasks.card.options": {
+      "categorie": "mot-identique",
+      "valeur": "Options"
+    },
+    "tasks.subtasks.progress": {
+      "categorie": "symbole-ou-format",
+      "valeur": "{{done}}/{{total}}"
+    },
+    "tutorials.habitsMobile.step5Title": {
+      "categorie": "anglicisme-fr",
+      "valeur": "Mini heatmap"
+    }
+  }
+}
