@@ -214,13 +214,20 @@ async function main() {
   await admin.connect();
   const ctx = await seedOrg(admin, MEMBERS);
   await fillTo(admin, ctx.org_id, VOLUME);
+  // Deux comptes, pas un : la RPC est bornee a l'organisation, le chemin direct
+  // balaie la TABLE ENTIERE. Quand ce harnais tourne apres celui du volume dans
+  // le meme job, la table porte les lignes des deux — et cest fidele au reproche
+  // fait au chemin direct : son cout croit avec la plateforme, pas avec
+  // l'appelant. Encore faut-il que la sortie dise sur quoi elle a porte.
   const { rows: vol } = await admin.query(
-    'SELECT count(*)::int AS n FROM public.team_tasks WHERE org_id = $1',
+    `SELECT count(*) FILTER (WHERE org_id = $1)::int AS mine,
+            count(*)::int AS total
+       FROM public.team_tasks`,
     [ctx.org_id],
   );
   console.log(
     `Organisation ${ctx.org_id} — ${ctx.membres} membres, ${ctx.projets} projets, ` +
-      `${vol[0].n} team_tasks.\n` +
+      `${vol[0].mine} team_tasks (table entiere : ${vol[0].total}).\n` +
       `Paliers de concurrence : ${SESSIONS.join(', ')} · ${ITERATIONS} requetes par session.`,
   );
 
@@ -298,7 +305,8 @@ async function main() {
       [
         '### Scalabilite du mode entreprise — mesure en CONCURRENCE (C-16)',
         '',
-        `Organisation de ${MEMBERS} membres, ${ctx.projets} projets, ${vol[0].n} \`team_tasks\`. ` +
+        `Organisation de ${MEMBERS} membres, ${ctx.projets} projets, ${vol[0].mine} \`team_tasks\` ` +
+          `(table entiere : ${vol[0].total} — le chemin direct la balaie toute). ` +
           `${ITERATIONS} requetes par session, acteurs distincts.`,
         '',
         '#### Chemin impose — `get_my_team_tasks(org)`',

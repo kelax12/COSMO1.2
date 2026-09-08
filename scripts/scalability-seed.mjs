@@ -52,25 +52,31 @@ export function assertDisposable(dbUrl, force) {
  * seul cache d'autorisation, pas la charge d'une organisation.
  */
 export async function seedOrg(client, members, log = console.log) {
-  log(`Semis : 1 organisation, ${members} membres, 5 equipes, 20 projets.`);
+  // 🔴 Un NONCE par semis, pas un compteur global. Les deux harnais tournent
+  // dans le MEME job, donc sur la meme base : sans lui, le second semis meurt
+  // sur `users_email_partial_key` (23505) parce que le premier a deja pose
+  // `volume0001@exemple.test`. C'est arrive au premier run, et l'echec ne
+  // disait pas « deux semis », il disait « cle dupliquee ».
+  const nonce = Math.random().toString(36).slice(2, 8);
+  log(`Semis (${nonce}) : 1 organisation, ${members} membres, 5 equipes, 20 projets.`);
 
   const { rows: people } = await client.query(
     `INSERT INTO auth.users (id, instance_id, aud, role, email, encrypted_password,
                              created_at, updated_at, raw_user_meta_data)
      SELECT gen_random_uuid(), '00000000-0000-0000-0000-000000000000', 'authenticated',
-            'authenticated', 'volume' || lpad(i::text, 4, '0') || '@exemple.test',
+            'authenticated', 'volume-' || $2 || '-' || lpad(i::text, 4, '0') || '@exemple.test',
             '', now(), now(), '{}'::jsonb
      FROM generate_series(1, $1) AS i
      RETURNING id`,
-    [members],
+    [members, nonce],
   );
   const ids = people.map((r) => r.id);
 
   const { rows: orgRows } = await client.query(
     `INSERT INTO public.organizations (name, join_code, owner_id)
-     VALUES ('Organisation de volume', 'VOL' || substr(md5(random()::text), 1, 5), $1)
+     VALUES ('Organisation de volume ' || $2, 'VOL' || substr(md5(random()::text), 1, 5), $1)
      RETURNING id`,
-    [ids[0]],
+    [ids[0], nonce],
   );
   const orgId = orgRows[0].id;
 
