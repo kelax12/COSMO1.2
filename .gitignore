@@ -4,6 +4,9 @@
 .idea/
 .vscode/
 
+# Git worktrees (isolated workspaces for agent-driven implementation)
+.worktrees/
+
 # Dependencies
 node_modules/
 /node_modules
