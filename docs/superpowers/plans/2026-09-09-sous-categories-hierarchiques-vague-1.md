@@ -74,7 +74,7 @@ npx vitest run src/modules/categories/tree.test.ts
 | `src/components/TaskFilter.tsx` | **Modifier.** Filtre arborescent, descendants inclus | 12 |
 | `src/components/TaskCategoryIndicator.tsx` | **Modifier.** Chemin en infobulle | 13 |
 | `src/modules/categories/repository.ts` (seeds) | **Modifier.** Seeds démo arborescents | 14 |
-| `supabase/migration/144_categories_fk.sql` | **Créer.** Nettoyage, conversion UUID, clé étrangère | 16 |
+| `supabase/migration/145_categories_fk.sql` | **Créer.** Nettoyage, conversion UUID, clé étrangère | 16 |
 | `src/modules/tasks/supabase.repository.ts` | **Modifier.** `''` ↔ `NULL` au mapping | 16 |
 | `src/modules/okrs/supabase.repository.ts` | **Modifier.** Idem | 16 |
 
@@ -2576,22 +2576,22 @@ git commit -am "fix(categories): corrections issues de la verification intermedi
 
 ---
 
-## Task 16: Migration `144` · la clé étrangère
+## Task 16: Migration `145` · la clé étrangère
 
 ⚠️ **En dernier, et volontairement séparable.** Si elle doit être reportée, tout ce qui précède reste livrable et cohérent.
 
 **Files:**
-- Create: `supabase/migration/144_categories_fk.sql`
+- Create: `supabase/migration/145_categories_fk.sql`
 - Modify: `src/modules/tasks/supabase.repository.ts`
 - Modify: `src/modules/okrs/supabase.repository.ts`
 
 - [ ] **Step 1: Écrire la migration**
 
-Créer `supabase/migration/144_categories_fk.sql` :
+Créer `supabase/migration/145_categories_fk.sql` :
 
 ```sql
 -- ═══════════════════════════════════════════════════════════════════
--- Migration 144 — `tasks.category` et `okrs.category` deviennent de vraies FK
+-- Migration 145 — `tasks.category` et `okrs.category` deviennent de vraies FK
 --
 -- POURQUOI (risque R-02, revue du 2026-09-02)
 -- Aucune clé étrangère ne pointait vers `categories`. Supprimer une catégorie
@@ -2664,7 +2664,7 @@ CREATE INDEX IF NOT EXISTS idx_okrs_category  ON public.okrs(category);
 Dans `src/modules/tasks/supabase.repository.ts`, au mapping de lecture :
 
 ```typescript
-      // La base porte NULL depuis la mig. 144 ; le modèle client porte la
+      // La base porte NULL depuis la mig. 145 ; le modèle client porte la
       // chaîne vide (NO_CATEGORY). La conversion vit ICI, et nulle part ailleurs.
       category: row.category ?? '',
 ```
@@ -2682,7 +2682,7 @@ Faire la même chose dans `src/modules/okrs/supabase.repository.ts`.
 Ajouter dans `src/modules/tasks/supabase.repository.test.ts` :
 
 ```typescript
-describe('mapping de category (mig. 144)', () => {
+describe('mapping de category (mig. 145)', () => {
   it('lit NULL comme la chaîne vide', async () => {
     expect((await readSingleRow({ ...ROW, category: null })).category).toBe('');
   });
@@ -2726,7 +2726,7 @@ CREATE TEMP TABLE before_fp AS
   SELECT id, category FROM public.tasks
    WHERE category <> '' AND category IN (SELECT id::text FROM public.categories);
 
--- … jouer ici le contenu de 144_categories_fk.sql …
+-- … jouer ici le contenu de 145_categories_fk.sql …
 
 -- 1. Zéro orphelin après
 -- 2. Aucune tâche non orpheline n'a changé de catégorie :
@@ -2740,8 +2740,8 @@ RAISE EXCEPTION 'rollback volontaire';
 - [ ] **Step 7: Commit**
 
 ```bash
-git add supabase/migration/144_categories_fk.sql src/modules/tasks/supabase.repository.ts src/modules/okrs/supabase.repository.ts src/modules/tasks/supabase.repository.test.ts
-git commit -m "feat(db): migration 144, cle etrangere de category vers categories"
+git add supabase/migration/145_categories_fk.sql src/modules/tasks/supabase.repository.ts src/modules/okrs/supabase.repository.ts src/modules/tasks/supabase.repository.test.ts
+git commit -m "feat(db): migration 145, cle etrangere de category vers categories"
 ```
 
 - [ ] **Step 8: Appliquer en production, hors heure de pointe, après accord d'Axel**
@@ -2822,7 +2822,7 @@ Attendu : code 0, avec `VITE_SENTRY_DSN` défini au build.
 
 - [ ] **Step 6: Mettre la documentation à jour**
 
-Dans `CLAUDE.md`, section « Base de données Supabase », ajouter les migrations `143` et `144` avec leur date d'application réelle et ce qui a été vérifié.
+Dans `CLAUDE.md`, section « Base de données Supabase », ajouter les migrations `143`, `144` et `145` avec leur date d'application réelle et ce qui a été vérifié.
 
 🔴 **Ne jamais écrire « appliquée » sans la date**, et ne jamais recopier un « avant » depuis un tableau plus ancien : il se reconstruit à un commit nommé.
 
@@ -2830,7 +2830,7 @@ Dans `CLAUDE.md`, section « Base de données Supabase », ajouter les migration
 
 ```bash
 git add CLAUDE.md
-git commit -m "docs: migrations 143 et 144 appliquees, sous-categories livrees"
+git commit -m "docs: migrations 143 a 145 appliquees, sous-categories livrees"
 ```
 
 ---
@@ -2843,7 +2843,7 @@ git commit -m "docs: migrations 143 et 144 appliquees, sous-categories livrees"
 | §2.2 absence de clé étrangère | 16 |
 | §2.3 éditeur par lot | 8 |
 | §3.1 migration 143 | 2 |
-| §3.2 migration 144 | 16 |
+| §3.2 migration 145 | 16 |
 | §4.1 types | 3 |
 | §4.2 `tree.ts` | 1 |
 | §4.3 `NO_CATEGORY` reste `''` | 16 |

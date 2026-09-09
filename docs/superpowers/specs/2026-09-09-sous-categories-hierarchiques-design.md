@@ -163,7 +163,7 @@ mémoire, côté client. ❌ Ne jamais ajouter d'aller-retour serveur pour déri
 branche : ce serait une lecture de plus sur toutes les pages protégées, exactement ce
 que la règle « agréger des lectures » et le finding C-05 ont fermé ailleurs.
 
-### 3.2 `144_categories_fk.sql`
+### 3.2 `145_categories_fk.sql`
 
 Ferme R-02 au niveau de la base. Ordre impératif :
 
@@ -236,7 +236,7 @@ donnée inattendue.
 ### 4.3 L'absence de catégorie
 
 🔴 **`NO_CATEGORY` reste la chaîne vide au niveau TypeScript.** La bascule vers
-`NULL` introduite par la migration `144` est absorbée dans `mapTaskToDb` /
+`NULL` introduite par la migration `145` est absorbée dans `mapTaskToDb` /
 `mapDbToTask` et leurs équivalents OKR, et **nulle part ailleurs**. Propager `null`
 jusqu'aux composants imposerait de revoir des dizaines de comparaisons
 `t.category === ...` pour un gain nul, et créerait deux marqueurs d'absence à
@@ -391,7 +391,7 @@ pour la modale et `common` pour les actions partagées.
 | Restauration | `useRestoreCategory` rend l'`id` **et** le `parentId` d'origine |
 | Parité démo / production | le repository local refuse ce que le trigger refuse |
 | Migrations | `npm run validate:migrations`, `npm run check:rls` |
-| Migration `144` | preuve en transaction annulée, avant application (§3.2) |
+| Migration `145` | preuve en transaction annulée, avant application (§3.2) |
 
 🔴 **Chaque garde ajoutée part avec un témoin.** Quatre gardes de ce dépôt ont été
 prises en train de répondre sans mesurer entre le 08-30 et le 09-03. Une garde qui se
@@ -405,14 +405,14 @@ trompe dans le sens rassurant est pire qu'une garde absente.
 4. Modale de gestion, avec le menu « Déplacer vers… ».
 5. `CategoryField`, filtres, affichage.
 6. Seeds démo.
-7. Migration `144`, prouvée puis appliquée hors heure de pointe.
+7. Migration `145`, prouvée puis appliquée hors heure de pointe.
 
-⚠️ La `144` est **en dernier** et volontairement séparable : si elle doit être
+⚠️ La `145` est **en dernier** et volontairement séparable : si elle doit être
 reportée, tout le reste de la vague reste livrable et cohérent.
 
 ## 10. Réserve portée à la connaissance d'Axel
 
-La vague 1 reste large, la migration `144` étant une conversion de type sur `tasks`.
+La vague 1 reste large, la migration `145` étant une conversion de type sur `tasks`.
 Elle est pour cette raison placée en dernier et rendue séparable (§9).
 
 Le glisser-déposer, envisagé puis **retiré du périmètre le 2026-09-09**, n'est plus un
