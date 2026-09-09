@@ -229,21 +229,6 @@
     "tokenPriority": "priority",
     "tokenDuration": "duration"
   },
-  "categoryManager": {
-    "title": "Manage categories",
-    "subtitle": "Organise your objectives and tasks",
-    "edit": "Edit category",
-    "new": "New category",
-    "namePlaceholder": "Category name (e.g. Sport, Work...)",
-    "icon": "Icon",
-    "color": "Colour:",
-    "yours": "Your categories ({{count}})",
-    "add": "Add a category",
-    "none": "No categories yet",
-    "deleteTitle": "Delete category",
-    "deleteBody": "Are you sure you want to delete this category? This cannot be undone.",
-    "editTitle": "Edit"
-  },
   "smartLists": {
     "title": "Smart lists",
     "hint": "Contents update automatically.",

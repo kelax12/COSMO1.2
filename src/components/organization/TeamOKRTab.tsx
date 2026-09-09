@@ -18,7 +18,7 @@ import {
 } from '@/modules/org-okr-categories';
 import { orgOkrCategoryImpact } from '@/modules/org-okr-categories/impact';
 import { useDeleteOrgOKRCategoryFlow } from './useDeleteOrgOKRCategoryFlow';
-import { getColorHex } from '@/components/CategoryManager';
+import { getColorHex } from '@/lib/category-colors';
 import CategoryFilterBar from '@/pages/okr/CategoryFilterBar';
 import DeleteCategoryConfirm from '@/pages/okr/DeleteCategoryConfirm';
 import TeamOKRModal from './TeamOKRModal';

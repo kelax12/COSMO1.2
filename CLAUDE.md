@@ -1450,6 +1450,31 @@ faisait rien : **les flèches ne déplaçaient pas le focus dans le calendrier**
 - ⚠️ Prouvé dans le navigateur après correctif (Tab atteint la grille, Flèche droite passe du 30 au
   31 août), et pas déduit de la lecture du code.
 
+### 🪟 Une surface modale maison passe par `useModalA11y` (C-53)
+
+Piège de focus, restitution du focus au déclencheur, Échap et `role="dialog" aria-modal="true"` :
+tout ça vit dans `src/hooks/use-modal-a11y.ts`, jamais recopié à la main. Le périmètre est tenu par
+un **cliquet**, `src/components/modal-a11y.guard.test.ts`, qui balaie `src/**/*.tsx`, retient tout
+fichier qui monte une surface modale maison, et exige de chacun qu'il importe le hook.
+
+**Mesuré le 2026-09-09 : 60 surfaces détectées, 52 câblées, 8 déclarées non modales avec leur
+motif.** Ces chiffres se relisent dans la garde, jamais de tête.
+
+- ❌ **Ne JAMAIS ajouter une entrée aux `EXEMPTS` pour faire passer la CI.** Une surface qui capture
+  l'écran se câble ; une surface qui n'en est pas une se déclare, et la déclaration doit dire
+  **pourquoi** elle n'en est pas une — jamais un motif général.
+- ❌ **Ne jamais garder un `Escape` écrit à la main sur une surface câblée** : le hook est le
+  propriétaire de la touche, et deux gestionnaires, c'est deux endroits où la règle de fermeture
+  peut diverger (défaut d'origine de `HabitModal`).
+- ⚠️ **Câblé n'est pas mesuré.** 10 surfaces sont jouées au clavier dans un vrai navigateur, les
+  42 autres sont câblées et gardées. Écrire « les 52 piègent le focus » est le glissement que le
+  paragraphe de [`docs/ACCESSIBILITY.md`](./docs/ACCESSIBILITY.md) existe pour empêcher.
+- 🔴 **Une surface câblée mais INATTEIGNABLE gonfle le périmètre sans jamais le dire** : elle se
+  compte comme conforme, et personne ne la joue puisque personne ne peut l'ouvrir. C'est ce qui a
+  fait supprimer `CategoryManager` le 2026-09-09 (câblé, monté nulle part, 53 → 52), orphelin de la
+  même famille que les 49 hooks retirés par C-49. **Vérifier qu'une surface a un consommateur fait
+  partie du câblage.**
+
 ### Logique métier
 
 - ❌ Modifier `recordKRCompletion()` sans vérifier le graphique dashboard (démo ET prod)
