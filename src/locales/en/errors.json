@@ -119,6 +119,7 @@
     "createCategory": "Couldn't create the category: {{message}}",
     "updateCategory": "Couldn't edit the category: {{message}}",
     "deleteCategory": "Couldn't delete the category: {{message}}",
+    "moveCategory": "Couldn't move the category: {{message}}",
     "createEvent": "Couldn't create the event: {{message}}",
     "updateEvent": "Couldn't edit the event: {{message}}",
     "deleteEvent": "Couldn't delete the event: {{message}}",

@@ -119,6 +119,7 @@
     "createCategory": "Impossible de créer la catégorie : {{message}}",
     "updateCategory": "Impossible de modifier la catégorie : {{message}}",
     "deleteCategory": "Impossible de supprimer la catégorie : {{message}}",
+    "moveCategory": "Impossible de déplacer la catégorie : {{message}}",
     "createEvent": "Impossible de créer l'événement : {{message}}",
     "updateEvent": "Impossible de modifier l'événement : {{message}}",
     "deleteEvent": "Impossible de supprimer l'événement : {{message}}",

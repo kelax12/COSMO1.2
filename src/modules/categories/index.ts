@@ -16,7 +16,25 @@ export type {
 // CONSTANTS & QUERY KEYS
 // ═══════════════════════════════════════════════════════════════════
 
-export { categoryKeys, CATEGORIES_STORAGE_KEY } from './constants';
+export { categoryKeys, CATEGORIES_STORAGE_KEY, DEFAULT_CATEGORY_COLOR } from './constants';
+
+// ═══════════════════════════════════════════════════════════════════
+// ARBRE — logique pure (tâche 1)
+// ═══════════════════════════════════════════════════════════════════
+
+export {
+  CATEGORY_MAX_DEPTH,
+  buildTree,
+  categoryPath,
+  childrenOf,
+  descendantIds,
+  ancestorIds,
+  formatPath,
+  orderByDepth,
+  treeDepth,
+  wouldCreateCycle,
+} from './tree';
+export type { CategoryNode } from './tree';
 
 // ═══════════════════════════════════════════════════════════════════
 // REPOSITORY
@@ -43,6 +61,7 @@ export {
 export {
   useCreateCategory,
   useUpdateCategory,
+  useMoveCategory,
   useDeleteCategory,
   useRestoreCategory,
 } from './hooks';
