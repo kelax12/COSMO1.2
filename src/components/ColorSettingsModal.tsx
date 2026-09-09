@@ -11,6 +11,7 @@ import {
   CategoryNode,
   CATEGORY_MAX_DEPTH,
   DEFAULT_CATEGORY_COLOR,
+  orderByDepth,
 } from '@/modules/categories';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
@@ -32,6 +33,25 @@ type ColorSettingsModalProps = {
   onClose: () => void;
   isNested?: boolean;
 };
+
+/**
+ * Plan d'écriture d'un lot de créations.
+ *
+ * 🔴 POURQUOI. Un enfant créé dans le MÊME lot que son parent porte un
+ * `parentId` en `temp-`, qui ne désigne aucune ligne serveur. Envoyer tout le
+ * lot en parallèle (`Promise.all`) enverrait l'enfant avec une référence
+ * invalide, puisque son parent n'existe pas encore côté serveur au moment de
+ * l'écriture.
+ *
+ * On crée donc par niveau : `orderByDepth` trie les brouillons (préfixe
+ * `temp-`) par profondeur croissante, et lève si le lot contient un cycle
+ * plutôt que de boucler indéfiniment. `handleSave` substitue ensuite chaque
+ * `parentId` en `temp-` par l'identifiant réel rendu par la création du
+ * parent, niveau après niveau.
+ */
+export function planCreations(drafts: readonly Category[]): Category[] {
+  return orderByDepth(drafts.filter((c) => c.id.startsWith('temp-')));
+}
 
 /**
  * Contenu de la modale — monté UNIQUEMENT quand elle est ouverte.
@@ -199,26 +219,22 @@ const ColorSettingsModalContent: React.FC<Omit<ColorSettingsModalProps, 'isOpen'
 
       const deletePromises = removed.map(cat => deleteCategoryMutation.mutateAsync(cat.id));
 
-      // Create or update categories
-      const savePromises = localCategories.map(lc => {
-        const existing = categories.find(cat => cat.id === lc.id);
-        if (existing) {
-          // Update existing category
-          if (existing.name !== lc.name || existing.color !== lc.color) {
+      // Mises à jour nom/couleur : elles visent des lignes qui existent déjà,
+      // donc peuvent partir en parallèle avec les suppressions. Ce sont les
+      // CRÉATIONS (plus bas) qui doivent respecter un ordre : un enfant ne
+      // peut pas référencer un parent qui n'a pas encore été écrit.
+      const updatePromises = localCategories
+        .filter((lc) => !lc.id.startsWith('temp-'))
+        .map((lc) => {
+          const existing = categories.find((cat) => cat.id === lc.id);
+          if (existing && (existing.name !== lc.name || existing.color !== lc.color)) {
             return updateCategoryMutation.mutateAsync({
               id: lc.id,
-              updates: { name: lc.name, color: lc.color }
+              updates: { name: lc.name, color: lc.color },
             });
           }
           return Promise.resolve();
-        } else {
-          // Create new category (temp IDs start with 'temp-')
-          return createCategoryMutation.mutateAsync({
-            name: lc.name,
-            color: lc.color
-          });
-        }
-      });
+        });
 
       // « Déplacer vers… » (tâche 9) écrit ici, à l'enregistrement — jamais à
       // la confirmation du dialogue, qui ne fait que muter `localCategories`.
@@ -226,7 +242,8 @@ const ColorSettingsModalContent: React.FC<Omit<ColorSettingsModalProps, 'isOpen'
       // réordonnancement : on la distingue de la mise à jour nom/couleur
       // ci-dessus, qu'elle ne touche jamais, même si les deux ont changé pour
       // la même catégorie dans le même lot (deux écritures sur des colonnes
-      // disjointes, sans conflit).
+      // disjointes, sans conflit). Ne concerne que les lignes déjà en base :
+      // une création porte déjà son `parentId`/`position` définitifs.
       const movePromises = localCategories
         .filter((lc) => !lc.id.startsWith('temp-'))
         .filter((lc) => {
@@ -235,7 +252,26 @@ const ColorSettingsModalContent: React.FC<Omit<ColorSettingsModalProps, 'isOpen'
         })
         .map((lc) => moveCategoryMutation.mutateAsync({ id: lc.id, parentId: lc.parentId, position: lc.position }));
 
-      await Promise.all([...deletePromises, ...savePromises, ...movePromises]);
+      await Promise.all([...deletePromises, ...updatePromises, ...movePromises]);
+
+      // Créations : par niveau, en séquence. Un enfant créé dans le même lot
+      // que son parent porte un `parentId` en `temp-` qui ne désigne encore
+      // aucune ligne serveur ; on substitue donc chaque `temp-` par
+      // l'identifiant réel rendu par la création de son parent, au fur et à
+      // mesure qu'on descend les niveaux.
+      const tempToReal = new Map<string, string>();
+      for (const draft of planCreations(localCategories)) {
+        const parentId = draft.parentId?.startsWith('temp-')
+          ? tempToReal.get(draft.parentId) ?? null
+          : draft.parentId;
+        const created = await createCategoryMutation.mutateAsync({
+          name: draft.name,
+          color: draft.color,
+          parentId,
+          position: draft.position,
+        });
+        tempToReal.set(draft.id, created.id);
+      }
       // Le message de reclassement part APRES les ecritures : annoncer un
       // deplacement avant de savoir si la suppression aboutit, c'est promettre
       // un resultat qu'on n'a pas encore.
