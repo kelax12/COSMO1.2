@@ -4,7 +4,7 @@ import { MobileHeader } from '@/components/mobile';
 import TouchTarget from '@/components/mobile/TouchTarget';
 import { Plus, Target, CalendarCheck, CheckCircle2 } from 'lucide-react';
 import WeeklyCheckinModal from '@/components/WeeklyCheckinModal';
-import { getColorHex } from '@/components/CategoryManager';
+import { getColorHex } from '@/lib/category-colors';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'react-router';
 import { useCreateEvent } from '@/modules/events';
