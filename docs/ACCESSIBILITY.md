@@ -241,8 +241,12 @@ main, c'est un CLIQUET.** `src/components/modal-a11y.guard.test.ts` balaie `src/
 tout fichier qui monte une surface modale maison, et exige de chacun qu'il importe `useModalA11y`.
 Les exceptions sont déclarées dans le fichier, **une par une, avec leur motif**.
 
-**Mesuré le 2026-09-08 : 61 surfaces détectées, 53 câblées, 8 déclarées non-modales avec leur
-motif.** Ces chiffres ne sont plus à recompter : la garde les recalcule à chaque exécution, et
+**Mesuré le 2026-09-09 : 60 surfaces détectées, 52 câblées, 8 déclarées non-modales avec leur
+motif.** ⚠️ Le compte valait **61 / 53** le 2026-09-08 : `CategoryManager` a été supprimé le
+2026-09-09 (câblé, mais **monté nulle part** — un orphelin de la famille C-49). Une surface inatteignable
+gonfle un périmètre d'audit **sans jamais le dire** : elle se compte comme conforme, et personne ne
+la joue puisque personne ne peut l'ouvrir. Ces chiffres ne sont plus à recompter : la garde les
+recalcule à chaque exécution, et
 échoue si une surface sort du compte. Une liste qu'on relit à la main est une liste qu'on oubliera
 de relire — c'est exactement comme ça que ce finding est resté ouvert pendant trois passes.
 
@@ -252,8 +256,8 @@ deux sens** : le recensement cherchait `fixed inset-0` et ratait les surfaces qu
 reprend encore ; le chiffre opposable est celui de la garde, pas celui-là.
 
 ⚠️ **Câblé n'est pas mesuré, et les deux ne se confondent pas.** 10 surfaces sont mesurées au
-clavier dans un vrai navigateur (liste ci-dessous) ; les 43 autres sont câblées et couvertes par le
-cliquet, pas par une mesure. Écrire « les 53 piègent le focus » serait exactement le glissement que
+clavier dans un vrai navigateur (liste ci-dessous) ; les 42 autres sont câblées et couvertes par le
+cliquet, pas par une mesure. Écrire « les 52 piègent le focus » serait exactement le glissement que
 ce paragraphe existe pour empêcher.
 
 #### Ce que la garde a trouvé que l'inventaire manuel avait raté (2026-09-08)
@@ -382,10 +386,10 @@ ont donc été écrites, et chacune a été **vue échouer** avant d'être reten
 - ⚠️ **`focusReturned` est mesuré et imprimé, jamais assertionné** : le témoin Radix lui-même le
   rend `false`. Un détecteur que la bibliothèque de référence ne passe pas mesure le détecteur,
   pas la modale.
-- ⚠️ **Le hook existe, 53 surfaces y passent, et un cliquet le tient** (2026-09-08). Ce n'était
+- ⚠️ **Le hook existe, 52 surfaces y passent, et un cliquet le tient** (2026-09-09). Ce n'était
   pas le cas pendant les trois premières passes : le câblage s'est fait par vagues, et la liste des
   surfaces restantes vivait dans un fichier Markdown. Elle vit maintenant dans un test. **Câblé
-  n'est toujours pas mesuré** : 10 surfaces sont mesurées au clavier, 43 sont câblées et gardées.
+  n'est toujours pas mesuré** : 10 surfaces sont mesurées au clavier, 42 sont câblées et gardées.
 
 ### C-54 tranché le 2026-09-04 · le bouton « Nouveau » EST le chemin clavier de l'agenda
 

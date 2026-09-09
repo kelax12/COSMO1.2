@@ -2076,11 +2076,14 @@ trois corrigés dans la foulée.
 - **Fini quand** : le quatrième est fait **sur un appareil réel** et ses findings sont ici, chacun
   avec son modèle, sa version d'iOS et son verbatim.
 
-> 🟡 **Trouvé en passant, à traiter ailleurs** : `CategoryManager` est **câblé** sur `useModalA11y`
-> et **monté nulle part**. Seul son helper `getColorHex` est importé (`OKRPage`, `TeamOKRTab`) ;
-> le composant modal, lui, n'a aucun consommateur. Même famille que les orphelins supprimés par
-> C-49. Ce n'est pas un défaut d'accessibilité, c'est du code mort qui gonfle le compte des
-> surfaces à auditer.
+> ✅ **Traité le 2026-09-09.** `CategoryManager` était **câblé** sur `useModalA11y` et **monté nulle
+> part** : seul son helper `getColorHex` était importé (`OKRPage`, `TeamOKRTab`), le composant modal
+> n'avait aucun consommateur. Même famille que les orphelins supprimés par C-49 — pas un défaut
+> d'accessibilité, du code mort qui gonflait le compte des surfaces à auditer. Le composant et ses
+> 13 clés i18n mortes sont supprimés ; `getColorHex` vit dans `src/lib/category-colors.ts` (dans
+> `lib/` et non dans le module `categories`, ses deux appelants étant de deux zones différentes).
+> **Le cliquet C-53 est passé de 53 à 52 câblées** (61 → 60 surfaces détectées), chiffre repris dans
+> `docs/ACCESSIBILITY.md`, `docs/AUDIT-VOICEOVER-IOS.md` (annexes A et B) et `CLAUDE.md`.
 
 ### C-25 · Le bleu de marque est à 3,34:1 · **P3 · XS**
 

@@ -321,6 +321,10 @@ utilise **21**. Les 8 valeurs hors barème, chacune dans un seul composant :
 | `z-[500]` | `PageTutorial.tsx` |
 | `z-[10000]` | `AssigneesPicker.tsx`, `RemoveFriendConfirm.tsx` |
 
+> ⚠️ Ce tableau est la mesure d'origine, gardée telle quelle. Depuis, `CategoryManager.tsx` a été
+> supprimé (2026-09-09, code mort) : le `z-[110]` de cette ligne n'existe plus, il reste donc
+> **7 valeurs hors barème** et non 8.
+
 Aucun bug d'empilement constaté aujourd'hui, mais la table a été publiée **et n'a pas tenu** :
 chaque nouveau composant a repris l'habitude de choisir sa valeur. Une échelle qui n'est pas
 vérifiée par un lint ne tient pas — même leçon que les invariants RLS et `check:rls`.
@@ -547,7 +551,7 @@ Paliers en usage — **choisir dans cette table**, ne pas inventer de nouvelle v
 | `z-40` | UI flottante de page : FAB quick-add, indicateur sync | `Layout.tsx` |
 | `z-50` | Modals/sheets standards + MobileTabBar | TaskModal, EventModal, HabitModal |
 | `z-[60]` `z-[70]` `z-[80]` `z-[90]` | Couches SUCCESSIVES au-dessus d'un modal ouvert. Quatre crans, pas un intervalle : `ColorSettingsModal` empile 80 puis 90 | QuickAddBar `z-[70]`, ColorSettingsModal 80/90 |
-| `z-[100]` `z-[110]` | Popovers Radix au-dessus d'un modal (110 = imbriqué dans 100) | `date-picker.tsx`, `CategoryManager` |
+| `z-[100]` `z-[110]` | Popovers Radix au-dessus d'un modal (110 = imbriqué dans 100) | `date-picker.tsx` |
 | `z-[150]` | Modal plein écran au-dessus du chrome applicatif | `WeeklyCheckinModal` |
 | `z-[190]` `z-[200]` | Surfaces système : bannières, CommandPalette, PremiumGateModal | `DemoBridgePrompt` 190, `CookieBanner` 200 |
 | `z-[250]` `z-[300]` | Interstitiels AU-DESSUS des surfaces système | `ShareInviteClaimer`, `AdModal` |

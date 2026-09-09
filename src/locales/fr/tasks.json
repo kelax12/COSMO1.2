@@ -242,21 +242,6 @@
     "tokenPriority": "priorité",
     "tokenDuration": "durée"
   },
-  "categoryManager": {
-    "title": "Gestion des catégories",
-    "subtitle": "Organisez vos objectifs et tâches",
-    "edit": "Modifier la catégorie",
-    "new": "Nouvelle catégorie",
-    "namePlaceholder": "Nom de la catégorie (ex: Sport, Travail...)",
-    "icon": "Icône",
-    "color": "Couleur :",
-    "yours": "Vos catégories ({{count}})",
-    "add": "Ajouter une catégorie",
-    "none": "Aucune catégorie définie",
-    "deleteTitle": "Supprimer la catégorie",
-    "deleteBody": "Êtes-vous sûr de vouloir supprimer cette catégorie ? Cette action est irréversible.",
-    "editTitle": "Modifier"
-  },
   "smartLists": {
     "title": "Listes intelligentes",
     "hint": "Le contenu se met à jour automatiquement.",
