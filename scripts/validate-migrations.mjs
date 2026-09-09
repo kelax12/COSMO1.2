@@ -17,6 +17,10 @@
 //      trigger doit ECRIRE au-dela des droits de l'appelant (notifications,
 //      mig. 095/110), jamais quand il ne fait que VALIDER (une garde executee
 //      avec des privileges elargis devient elle-meme le contournement).
+//      [ERREUR] si en plus son nom porte le prefixe `validate_` / `enforce_` /
+//      `prevent_` (convention du depot pour une garde qui ne fait QUE valider,
+//      mig. 143) : la, DEFINER n'a jamais de justification, donc plus question
+//      d'avertissement.
 //
 // Codes de sortie : 1 si au moins une ERREUR, 0 sinon (les WARN n'échouent pas).
 // ═══════════════════════════════════════════════════════════════════
@@ -134,7 +138,23 @@ for (const [key, t] of triggerFns) {
     err(t.file, `fonction de trigger ${t.fn}() jamais REVOKE-ee pour authenticated — REVOKE FROM PUBLIC ne suffit pas (mig. 094b)`);
   }
   if (t.secdef) {
-    warn(t.file, `fonction de trigger ${t.fn}() en SECURITY DEFINER — legitime seulement si elle doit ECRIRE au-dela des droits de l'appelant (notifications, mig. 095/110) ; une garde de validation doit rester SECURITY INVOKER (finding B-3)`);
+    // Convention du dépôt : un nom en `validate_` / `enforce_` / `prevent_`
+    // désigne une garde qui ne fait que VALIDER (elle lève ou rend NEW tel
+    // quel), jamais une écriture au-delà des droits de l'appelant. Pour cette
+    // classe, DEFINER n'est jamais légitime : c'est ERREUR, pas avertissement.
+    // Un nom `notify_*` (ou tout autre) reste un avertissement, parce que le
+    // script ne peut pas voir si le corps écrit réellement ailleurs — c'est le
+    // cas des triggers de notification (mig. 095/110), volontairement DEFINER.
+    // Ajouté pour la mig. 143 : `enforce_category_tree()` ne fait QUE valider,
+    // et une fonction SECURITY DEFINER là ferait de ses messages d'erreur un
+    // oracle sur des lignes non lisibles (finding B-3) — voir
+    // migration-guards.test.mjs, cas « refuse une fonction de trigger SECURITY
+    // DEFINER », vu rouge avant ce durcissement.
+    if (/^(validate_|enforce_|prevent_)/.test(t.fn)) {
+      err(t.file, `fonction de trigger ${t.fn}() en SECURITY DEFINER — une garde qui ne fait que VALIDER (préfixe validate_/enforce_/prevent_) doit rester SECURITY INVOKER, sinon ses erreurs deviennent un oracle sur des lignes non lisibles (finding B-3)`);
+    } else {
+      warn(t.file, `fonction de trigger ${t.fn}() en SECURITY DEFINER — legitime seulement si elle doit ECRIRE au-dela des droits de l'appelant (notifications, mig. 095/110) ; une garde de validation doit rester SECURITY INVOKER (finding B-3)`);
+    }
   }
 }
 
