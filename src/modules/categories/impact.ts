@@ -26,6 +26,8 @@
 
 import type { Task } from '@/modules/tasks/types';
 import type { OKR } from '@/modules/okrs/types';
+import type { Category } from './types';
+import { descendantIdSet } from './tree';
 
 export interface CategoryImpact {
   /** Tâches qui portent cette catégorie. */
@@ -71,6 +73,66 @@ export function categoryDependents(
   return {
     taskIds: tasks.filter((t) => t.category === categoryId).map((t) => t.id),
     okrIds: okrs.filter((o) => o.category === categoryId).map((o) => o.id),
+  };
+}
+
+/** Impact d'une suppression de BRANCHE : le nœud et tous ses descendants. */
+export interface BranchImpact extends CategoryImpact {
+  /** Sous-catégories emportées, le nœud lui-même exclu. */
+  subcategories: number;
+}
+
+/**
+ * Ce que la suppression de la BRANCHE de `categoryId` laisserait orphelin.
+ *
+ * 🔴 Compter le seul nœud visé donnerait un chiffre faux dans la boîte de
+ * confirmation : supprimer « Travail » emporte aussi les tâches rangées dans
+ * « Travail › SEO ». Annoncer moins que ce qu'on supprime est exactement le
+ * défaut que R-02 ferme, transposé à la profondeur ajoutée par les
+ * sous-catégories.
+ *
+ * La traversée elle-même est déléguée à `descendantIdSet` (`./tree`) : c'est
+ * le seul endroit du dépôt qui connaît les règles de l'arbre (cycles
+ * compris), et une seconde implémentation ici finirait par diverger de la
+ * première changement après changement.
+ */
+export function branchImpact(
+  categoryId: string | null | undefined,
+  tasks: readonly Task[],
+  okrs: readonly OKR[],
+  categories: readonly Category[],
+): BranchImpact {
+  if (!categoryId) return { ...EMPTY_IMPACT, subcategories: 0 };
+
+  const descendants = descendantIdSet(categoryId, categories);
+  const ids = new Set<string>([categoryId, ...descendants]);
+  const taskCount = tasks.filter((t) => ids.has(t.category)).length;
+  const okrCount = okrs.filter((o) => ids.has(o.category)).length;
+
+  return {
+    tasks: taskCount,
+    okrs: okrCount,
+    total: taskCount + okrCount,
+    subcategories: descendants.size,
+  };
+}
+
+/**
+ * Identifiants à réaffecter pour toute une BRANCHE (le nœud et ses
+ * descendants). Miroir de `categoryDependents`, même raison d'être : l'appel
+ * qui répare a besoin des identifiants, pas des totaux de `branchImpact`.
+ */
+export function branchDependents(
+  categoryId: string | null | undefined,
+  tasks: readonly Task[],
+  okrs: readonly OKR[],
+  categories: readonly Category[],
+): CategoryDependents {
+  if (!categoryId) return { taskIds: [], okrIds: [] };
+  const ids = new Set<string>([categoryId, ...descendantIdSet(categoryId, categories)]);
+  return {
+    taskIds: tasks.filter((t) => ids.has(t.category)).map((t) => t.id),
+    okrIds: okrs.filter((o) => ids.has(o.category)).map((o) => o.id),
   };
 }
 
