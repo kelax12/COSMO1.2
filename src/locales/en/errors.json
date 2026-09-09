@@ -10,6 +10,7 @@
     "TIMEOUT": "Request timed out. Check your connection.",
     "already_a_member": "This person is already part of the company.",
     "cannot_invite_self": "You cannot invite yourself.",
+    "category_batch_cycle": "This category batch can't be saved: it contains a loop.",
     "demo_unavailable": "This action is not available in demo mode.",
     "dependency_cross_account": "A dependency can only link two tasks from the same account.",
     "dependency_cross_project": "A dependency can only link two tasks from the same project.",
