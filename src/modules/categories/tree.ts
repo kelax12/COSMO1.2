@@ -48,8 +48,13 @@ export function childrenOf(parentId: string | null, categories: readonly Categor
  * (tâches, catégories…) par appartenance à une branche fait ce test une fois
  * PAR ÉLÉMENT filtré : un `.includes()` sur tableau refait le BFS à chaque
  * appel, un `Set.has()` le fait une seule fois, hissé hors de la boucle par
- * l'appelant. Mesuré à 30/60 catégories sur les 611 tâches réelles de la prod :
- * 1,61/7,68 ms par passage de filtre contre ~0,07 ms avec le `Set` hissé.
+ * l'appelant.
+ *
+ * Le coût du tableau est quadratique en catégories, celui du `Set` hissé est
+ * plat : c'est l'ASYMÉTRIE qui motive cette forme, pas un seuil. ⚠️ Aucun
+ * chiffre n'est cité ici volontairement — une mesure sans son harnais survit à
+ * sa propre validité, et ce dépôt s'est fait prendre plusieurs fois par un
+ * nombre recopié longtemps après avoir cessé d'être vrai.
  */
 export function descendantIdSet(id: string, categories: readonly Category[]): ReadonlySet<string> {
   const out = new Set<string>();
@@ -159,6 +164,14 @@ export function subtreeHeight(id: string, categories: readonly Category[]): numb
  * un nœud au niveau 8 donne une profondeur de 12 pour ses feuilles, alors que
  * `id` lui-même n'atteint que 9 : il faut ajouter la HAUTEUR de la branche
  * déplacée, pas juste la profondeur du point d'attache.
+ *
+ * ⚠️ Ne juge QUE la profondeur. Un déplacement légitime en profondeur peut être
+ * un cycle : les deux gardes s'appellent ensemble, `wouldCreateCycle` d'abord.
+ *
+ * ⚠️ Un `newParentId` inconnu du lot est traité comme « à la racine »
+ * (`treeDepth` rend 0). L'appelant est censé proposer une destination prise
+ * dans `categories` ; c'est la base qui refuse un parent inexistant, pas cette
+ * fonction.
  */
 export function wouldExceedMaxDepth(
   id: string,
@@ -188,6 +201,11 @@ export function wouldExceedMaxDepth(
  * Un utilisateur avec un arbre corrompu doit voir ses catégories APLATIES,
  * jamais disparues : c'est la seule sortie qui ne perd rien pendant qu'on
  * répare les données.
+ *
+ * ⚠️ La composante corrompue est aplatie ENTIÈREMENT, pas seulement les nœuds
+ * du cycle : un enfant sain accroché à un nœud pris dans un cycle remonte lui
+ * aussi à la racine. Volontaire — on ne cherche pas à sauver une hiérarchie
+ * partielle sous un parent dont la place est elle-même indéterminée.
  */
 export function buildTree(categories: readonly Category[]): CategoryNode[] {
   const known = new Set(categories.map((c) => c.id));
