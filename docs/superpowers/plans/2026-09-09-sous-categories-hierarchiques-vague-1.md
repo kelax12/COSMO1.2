@@ -528,6 +528,7 @@ DECLARE
   ancestor_owner  UUID;
   depth           INTEGER := 1;
   hops            INTEGER := 0;
+  branch_height   INTEGER := 1;
 BEGIN
   IF NEW.parent_id IS NULL THEN
     RETURN NEW;
@@ -559,6 +560,31 @@ BEGIN
     SELECT parent_id INTO ancestor FROM public.categories WHERE id = ancestor;
     hops := hops + 1;
   END LOOP;
+
+  -- 🔴 LA PROFONDEUR DU NŒUD ÉCRIT NE SUFFIT PAS.
+  -- La boucle ci-dessus ne mesure que `NEW`. Déplacer une branche haute de 4
+  -- crans sous un nœud au niveau 8 met ses FEUILLES au niveau 12, alors que
+  -- `NEW` lui-même n'atteint que 9 : le trigger ne se déclenche pas, puisque
+  -- les lignes descendantes ne sont pas écrites et ne le font donc jamais
+  -- partir. Il faut ajouter la HAUTEUR de la branche déplacée.
+  -- (Défaut trouvé en revue de code sur le module client `tree.ts`, qui portait
+  -- exactement la même erreur ; `wouldExceedMaxDepth` en est le miroir.)
+  --
+  -- ⚠️ `depth < 64` borne la descente : le trigger interdit les cycles, mais
+  -- une base restaurée ne doit pas pouvoir faire boucler une CTE récursive.
+  WITH RECURSIVE branch(id, depth) AS (
+    SELECT NEW.id, 1
+    UNION ALL
+    SELECT c.id, b.depth + 1
+      FROM public.categories c
+      JOIN branch b ON c.parent_id = b.id
+     WHERE b.depth < 64
+  )
+  SELECT max(depth) INTO branch_height FROM branch;
+
+  IF depth + COALESCE(branch_height, 1) - 1 > 10 THEN
+    RAISE EXCEPTION 'Category nesting is limited to 10 levels';
+  END IF;
 
   RETURN NEW;
 END;
@@ -654,6 +680,10 @@ BEGIN;
 -- 3. un cycle à trois maillons est refusé
 -- 4. un parent appartenant à un autre compte est refusé
 -- 5. la profondeur 11 est refusée, la 10 acceptée
+-- 5bis. 🔴 DÉPLACER une branche haute de 4 crans sous un nœud au niveau 8 est
+--       REFUSÉ (ses feuilles atteindraient 12). C'est le cas que la seule
+--       profondeur du nœud écrit laisse passer, et il ne se teste QUE par un
+--       UPDATE de `parent_id`, jamais par un INSERT.
 -- 6. deux racines de même nom sont refusées (ux_categories_root_name)
 -- 7. deux sœurs de même nom sont refusées, deux « Design » sous deux parents
 --    différents sont acceptées
@@ -810,7 +840,7 @@ export const DEFAULT_CATEGORY_COLOR = '#3B82F6';
 Dans `src/modules/categories/repository.ts`, ajouter en tête les imports :
 
 ```typescript
-import { CATEGORY_MAX_DEPTH, treeDepth, wouldCreateCycle } from './tree';
+import { wouldCreateCycle, wouldExceedMaxDepth } from './tree';
 import { DEFAULT_CATEGORY_COLOR } from './constants';
 ```
 
@@ -832,11 +862,11 @@ Ajouter dans la classe `LocalStorageCategoriesRepository`, avant `create` :
     if (!categories.some((c) => c.id === parentId)) throw makeApiError('not_found');
     if (wouldCreateCycle(id, parentId, categories)) throw makeApiError('validation');
 
-    const projected = categories.map((c) => (c.id === id ? { ...c, parentId } : c));
-    if (!projected.some((c) => c.id === id)) {
-      projected.push({ id, name: '', color: '', parentId, position: 0 });
-    }
-    if (treeDepth(id, projected) > CATEGORY_MAX_DEPTH) throw makeApiError('validation');
+    // 🔴 `treeDepth(id) > CATEGORY_MAX_DEPTH` NE SUFFIT PAS : ça ne mesure que
+    // le nœud écrit, donc déplacer une branche haute de 4 crans sous un nœud au
+    // niveau 8 passerait, en mettant ses feuilles au niveau 12.
+    // `wouldExceedMaxDepth` ajoute la hauteur de la branche déplacée.
+    if (wouldExceedMaxDepth(id, parentId, categories)) throw makeApiError('validation');
   }
 ```
 
@@ -2360,9 +2390,16 @@ export function matchesCategoryFilter(
 ): boolean {
   if (selected === '') return true;
   if (taskCategory === selected) return true;
-  return descendantIds(selected, categories).includes(taskCategory);
+  return descendantIdSet(selected, categories).has(taskCategory);
 }
 ```
+
+⚠️ **Hisser le `Set` hors de la boucle** dans le composant. Appelée telle quelle
+pour chaque tâche, cette fonction refait le parcours de la branche à chaque
+élément filtré : le coût devient quadratique en catégories alors qu'il est plat
+si le `Set` est calculé une fois. Dans `TaskFilter`, mémoriser
+`useMemo(() => descendantIdSet(selected, categories), [selected, categories])`
+et passer le `Set` au prédicat.
 
 Remplacer la liste plate de catégories du filtre par le même rendu d'arbre repliable que la modale, en réutilisant `buildTree`.
 
