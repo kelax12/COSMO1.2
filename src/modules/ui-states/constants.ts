@@ -12,6 +12,8 @@ export const FAVORITE_COLORS_KEY = 'cosmo_favorite_colors';
 export const PRIORITY_RANGE_KEY = 'cosmo_priority_range';
 export const TASK_SORT_PREFS_KEY = 'cosmo_task_sort_prefs';
 export const LAST_VISITED_PAGE_KEY = 'cosmo_last_visited_page';
+/** Catégories repliées dans l'arbre de gestion, par identifiant. */
+export const CATEGORY_COLLAPSED_KEY = 'cosmo_category_collapsed';
 
 /** Clé de tri utilisée quand aucune liste n'est sélectionnée. */
 export const SORT_PREF_ALL_TASKS_KEY = '__all__';

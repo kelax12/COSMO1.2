@@ -1,6 +1,16 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { X, Plus, Trash2 } from 'lucide-react';
-import { useCategories, useCreateCategory, useUpdateCategory, useDeleteCategory, Category } from '@/modules/categories';
+import { X, Plus } from 'lucide-react';
+import {
+  useCategories,
+  useCreateCategory,
+  useUpdateCategory,
+  useDeleteCategory,
+  Category,
+  buildTree,
+  CategoryNode,
+  CATEGORY_MAX_DEPTH,
+  DEFAULT_CATEGORY_COLOR,
+} from '@/modules/categories';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { useBottomSheet } from '@/hooks/use-bottom-sheet';
@@ -11,7 +21,9 @@ import { useOkrs } from '@/modules/okrs';
 import { resolveReassignTargets } from '@/modules/categories/impact';
 import { useReassignCategory } from '@/modules/categories/useReassignCategory';
 import DeleteCategoryDialog from '@/components/category/DeleteCategoryDialog';
+import CategoryTreeRow from '@/components/category/CategoryTreeRow';
 import { useSheetMotion } from '@/components/mobile/mobile-motion';
+import { useCollapsedCategories } from '@/modules/ui-states';
 
 type ColorSettingsModalProps = {
   isOpen: boolean;
@@ -49,6 +61,7 @@ const ColorSettingsModalContent: React.FC<Omit<ColorSettingsModalProps, 'isOpen'
     label: t('colorModal.title'),
   });
   const sheetMotion = useSheetMotion();
+  const { isCollapsed, setCollapsed } = useCollapsedCategories();
   const { data: categories = [] } = useCategories();
   const createCategoryMutation = useCreateCategory();
   const updateCategoryMutation = useUpdateCategory();
@@ -76,26 +89,43 @@ const ColorSettingsModalContent: React.FC<Omit<ColorSettingsModalProps, 'isOpen'
   // qui ne sera jamais celui de la ligne creee.
   const reassignOptions = localCategories.filter((c) => !c.id.startsWith('temp-'));
 
-  const handleAddCategory = () => {
+  // Aplatit l'arbre en lignes visibles (ordre d'affichage, profondeur, a-t-il
+  // des enfants), en s'arrêtant sous une catégorie repliée. `AnimatePresence`
+  // a besoin d'une liste À PLAT pour suivre proprement l'entrée/sortie de
+  // chaque ligne : une récursion qui rendrait directement les enfants casserait
+  // ce suivi, chaque niveau devenant un ensemble d'enfants distinct.
+  const flattenVisible = (nodes: CategoryNode[], depth: number, out: Array<{ category: Category; depth: number; hasChildren: boolean }>) => {
+    for (const node of nodes) {
+      const hasChildren = node.children.length > 0;
+      out.push({ category: node.category, depth, hasChildren });
+      if (hasChildren && !isCollapsed(node.category.id)) {
+        flattenVisible(node.children, depth + 1, out);
+      }
+    }
+  };
+  const visibleRows: Array<{ category: Category; depth: number; hasChildren: boolean }> = [];
+  flattenVisible(buildTree(localCategories), 1, visibleRows);
+
+  const handleAddCategory = (parentId: string | null = null) => {
     const newId = `temp-${Date.now()}`;
+    const parent = parentId ? localCategories.find((c) => c.id === parentId) : undefined;
     const newCat: Category = {
       id: newId,
       name: '',
-      color: '#3B82F6',
-      // Brouillon `temp-` : racine, en fin de fratrie. La sous-catégorie via
-      // ce modal arrive avec la tâche 14.
-      parentId: null,
-      position: localCategories.length,
+      // Couleur héritée du parent : une famille se lit à la teinte. Une
+      // racine sans parent reprend la couleur par défaut du module.
+      color: parent?.color ?? DEFAULT_CATEGORY_COLOR,
+      parentId,
+      position: localCategories.filter((c) => c.parentId === parentId).length,
     };
     setLocalCategories([...localCategories, newCat]);
-    
+    // Un enfant né replié serait invisible sous son parent : le déplier.
+    if (parentId) setCollapsed(parentId, false);
+
     setTimeout(() => {
-      if (scrollRef.current) {
-        scrollRef.current.scrollTo({
-          top: scrollRef.current.scrollHeight,
-          behavior: 'smooth'
-        });
-      }
+      const row = scrollRef.current?.querySelector<HTMLElement>(`[data-category-id="${newId}"]`);
+      row?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      row?.querySelector<HTMLInputElement>('input[type="text"]')?.focus();
     }, 100);
   };
 
@@ -230,54 +260,46 @@ const ColorSettingsModalContent: React.FC<Omit<ColorSettingsModalProps, 'isOpen'
             style={{ backgroundColor: 'rgb(var(--color-surface))' }}
           >
             <div className="flex justify-end mb-4">
-              <button 
-                onClick={handleAddCategory}
+              <button
+                onClick={() => handleAddCategory()}
+                aria-label={t('colorModal.addRoot')}
                 className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors p-2 bg-blue-50 dark:bg-blue-900/20 rounded-full shadow-sm"
               >
                 <Plus size={24} strokeWidth={3} />
               </button>
             </div>
 
-            <div className="space-y-4">
+            {/* Arbre des catégories. Rôles ARIA portés par le conteneur et par
+                chaque `CategoryTreeRow` (treeitem/aria-level/aria-expanded) :
+                sans eux un lecteur d'écran lit une liste plate. */}
+            <div role="tree" aria-label={t('colorModal.title')} className="space-y-1">
               <AnimatePresence mode="popLayout">
-                {localCategories.map((category) => (
-                    <motion.div
-                      key={category.id}
-                      layout
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, scale: 0.95 }}
-                      className="flex items-center gap-3"
-                    >
-                      <div className="relative group bg-[rgb(var(--color-surface))] rounded-[15px]">
-                        <div 
-                          className="h-10 w-10 rounded-[15px] flex-shrink-0 cursor-pointer shadow-sm hover:brightness-110 transition-all"
-                          style={{ backgroundColor: category.color }}
-                        />
-                        <input
-                            type="color"
-                            value={category.color}
-                            onChange={(e) => handleUpdateLocal(category.id, { color: e.target.value })}
-                            className="absolute inset-0 opacity-0 cursor-pointer w-full h-full rounded-[15px] bg-transparent"
-                          />
-                      </div>
-                    
-                    <div className="flex-1">
-                      <input
-                        type="text"
-                        value={category.name}
-                        onChange={(e) => handleUpdateLocal(category.id, { name: e.target.value })}
-                        className="w-full bg-[rgb(var(--color-background))] border border-[rgb(var(--color-border))] rounded-xl px-4 py-2 text-[rgb(var(--color-text-primary))] placeholder:text-[rgb(var(--color-text-muted))] focus:outline-none focus:border-[rgb(var(--color-accent-solid))] dark:focus:border-slate-500 transition-all"
-                        placeholder={t('colorModal.namePlaceholder')}
-                      />
-                    </div>
-
-                      <button
-                        onClick={() => handleDeleteLocal(category.id)}
-                        className="p-1 text-red-500 hover:text-red-600 transition-colors"
-                      >
-                        <Trash2 size={20} />
-                      </button>
+                {visibleRows.map(({ category, depth, hasChildren }) => (
+                  <motion.div
+                    key={category.id}
+                    layout
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                  >
+                    <CategoryTreeRow
+                      id={category.id}
+                      name={category.name}
+                      color={category.color}
+                      depth={depth}
+                      hasChildren={hasChildren}
+                      isExpanded={!isCollapsed(category.id)}
+                      onToggle={() => setCollapsed(category.id, !isCollapsed(category.id))}
+                      onNameChange={(name) => handleUpdateLocal(category.id, { name })}
+                      onColorChange={(color) => handleUpdateLocal(category.id, { color })}
+                      onAddChild={() => handleAddCategory(category.id)}
+                      // « Déplacer vers… » arrive avec la tâche 9 : le bouton
+                      // existe déjà (même ligne pour tous les cas), il ne fait
+                      // encore rien.
+                      onMove={() => {}}
+                      onDelete={() => handleDeleteLocal(category.id)}
+                      atMaxDepth={depth >= CATEGORY_MAX_DEPTH}
+                    />
                   </motion.div>
                 ))}
               </AnimatePresence>

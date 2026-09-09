@@ -326,7 +326,16 @@
     "title": "Edit categories",
     "namePlaceholder": "Category name",
     "deleteTitle": "Delete category",
-    "deleteBody": "Are you sure you want to delete this category? This cannot be undone."
+    "deleteBody": "Are you sure you want to delete this category? This cannot be undone.",
+    "expand": "Expand",
+    "collapse": "Collapse",
+    "colorFor": "Colour of {{name}}",
+    "nameFor": "Name of {{name}}",
+    "addChildTo": "Add a subcategory to {{name}}",
+    "moveCategory": "Move {{name}}",
+    "deleteCategory": "Delete {{name}}",
+    "maxDepthReached": "Maximum depth reached",
+    "addRoot": "Add a category"
   },
   "desktop": {
     "closeForm": "Close the form",
