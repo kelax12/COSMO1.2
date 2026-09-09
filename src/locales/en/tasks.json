@@ -335,7 +335,12 @@
     "moveCategory": "Move {{name}}",
     "deleteCategory": "Delete {{name}}",
     "maxDepthReached": "Maximum depth reached",
-    "addRoot": "Add a category"
+    "addRoot": "Add a category",
+    "moveTitle": "Move category",
+    "moveTarget": "New parent category",
+    "moveToRoot": "To the top level, no parent",
+    "moveCancel": "Cancel",
+    "moveConfirm": "Move"
   },
   "desktop": {
     "closeForm": "Close the form",

@@ -4,6 +4,7 @@ import {
   useCategories,
   useCreateCategory,
   useUpdateCategory,
+  useMoveCategory,
   useDeleteCategory,
   Category,
   buildTree,
@@ -22,6 +23,7 @@ import { resolveReassignTargets } from '@/modules/categories/impact';
 import { useReassignCategory } from '@/modules/categories/useReassignCategory';
 import DeleteCategoryDialog from '@/components/category/DeleteCategoryDialog';
 import CategoryTreeRow from '@/components/category/CategoryTreeRow';
+import MoveCategoryDialog from '@/components/category/MoveCategoryDialog';
 import { useSheetMotion } from '@/components/mobile/mobile-motion';
 import { useCollapsedCategories } from '@/modules/ui-states';
 
@@ -65,12 +67,18 @@ const ColorSettingsModalContent: React.FC<Omit<ColorSettingsModalProps, 'isOpen'
   const { data: categories = [] } = useCategories();
   const createCategoryMutation = useCreateCategory();
   const updateCategoryMutation = useUpdateCategory();
+  const moveCategoryMutation = useMoveCategory();
   const deleteCategoryMutation = useDeleteCategory();
-  
+
   // Initialize directly from cached data so the list is populated on first
   // render when categories are already in the React Query cache.
   const [localCategories, setLocalCategories] = useState<Category[]>(categories);
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
+  // « Déplacer vers… » (tâche 9) : la modale reste un éditeur par lot, donc la
+  // confirmation ne fait QUE modifier `localCategories` — rien ne part au
+  // serveur avant « Enregistrer ». C'est `handleSave` qui écrit le déplacement,
+  // via `useMoveCategory` (voir plus bas).
+  const [categoryToMove, setCategoryToMove] = useState<string | null>(null);
   // R-02 : ou partent les elements d'une categorie retiree, par categorie.
   // La modale met les suppressions EN ATTENTE jusqu'a l'enregistrement : la
   // decision de reclassement doit donc etre memorisee avec elles, sinon elle
@@ -144,7 +152,24 @@ const ColorSettingsModalContent: React.FC<Omit<ColorSettingsModalProps, 'isOpen'
       setCategoryToDelete(null);
     }
   };
-  
+
+  // « Déplacer vers… » — ne touche QUE l'état local (cf. commentaire sur
+  // `categoryToMove`). La position choisie est la fin de la nouvelle fratrie :
+  // le menu ne propose pas de rang, seulement une destination, exactement
+  // comme `handleAddCategory` place une nouvelle catégorie en dernier.
+  const confirmMoveLocal = (parentId: string | null) => {
+    if (!categoryToMove) return;
+    setLocalCategories(prev => {
+      const siblingsCount = prev.filter(
+        (c) => c.parentId === parentId && c.id !== categoryToMove,
+      ).length;
+      return prev.map((c) =>
+        c.id === categoryToMove ? { ...c, parentId, position: siblingsCount } : c,
+      );
+    });
+    setCategoryToMove(null);
+  };
+
   const handleSave = async () => {
     // Validation : chaque nom de catégorie doit faire ≥ 2 caractères
     const invalid = localCategories.find(lc => lc.name.trim().length < 2);
@@ -180,22 +205,37 @@ const ColorSettingsModalContent: React.FC<Omit<ColorSettingsModalProps, 'isOpen'
         if (existing) {
           // Update existing category
           if (existing.name !== lc.name || existing.color !== lc.color) {
-            return updateCategoryMutation.mutateAsync({ 
-              id: lc.id, 
-              updates: { name: lc.name, color: lc.color } 
+            return updateCategoryMutation.mutateAsync({
+              id: lc.id,
+              updates: { name: lc.name, color: lc.color }
             });
           }
           return Promise.resolve();
         } else {
           // Create new category (temp IDs start with 'temp-')
-          return createCategoryMutation.mutateAsync({ 
-            name: lc.name, 
-            color: lc.color 
+          return createCategoryMutation.mutateAsync({
+            name: lc.name,
+            color: lc.color
           });
         }
       });
 
-      await Promise.all([...deletePromises, ...savePromises]);
+      // « Déplacer vers… » (tâche 9) écrit ici, à l'enregistrement — jamais à
+      // la confirmation du dialogue, qui ne fait que muter `localCategories`.
+      // `useMoveCategory` est LA mutation dédiée au reparentage ET au
+      // réordonnancement : on la distingue de la mise à jour nom/couleur
+      // ci-dessus, qu'elle ne touche jamais, même si les deux ont changé pour
+      // la même catégorie dans le même lot (deux écritures sur des colonnes
+      // disjointes, sans conflit).
+      const movePromises = localCategories
+        .filter((lc) => !lc.id.startsWith('temp-'))
+        .filter((lc) => {
+          const existing = categories.find((cat) => cat.id === lc.id);
+          return !!existing && (existing.parentId !== lc.parentId || existing.position !== lc.position);
+        })
+        .map((lc) => moveCategoryMutation.mutateAsync({ id: lc.id, parentId: lc.parentId, position: lc.position }));
+
+      await Promise.all([...deletePromises, ...savePromises, ...movePromises]);
       // Le message de reclassement part APRES les ecritures : annoncer un
       // deplacement avant de savoir si la suppression aboutit, c'est promettre
       // un resultat qu'on n'a pas encore.
@@ -293,10 +333,7 @@ const ColorSettingsModalContent: React.FC<Omit<ColorSettingsModalProps, 'isOpen'
                       onNameChange={(name) => handleUpdateLocal(category.id, { name })}
                       onColorChange={(color) => handleUpdateLocal(category.id, { color })}
                       onAddChild={() => handleAddCategory(category.id)}
-                      // « Déplacer vers… » arrive avec la tâche 9 : le bouton
-                      // existe déjà (même ligne pour tous les cas), il ne fait
-                      // encore rien.
-                      onMove={() => {}}
+                      onMove={() => setCategoryToMove(category.id)}
                       onDelete={() => handleDeleteLocal(category.id)}
                       atMaxDepth={depth >= CATEGORY_MAX_DEPTH}
                     />
@@ -331,6 +368,16 @@ const ColorSettingsModalContent: React.FC<Omit<ColorSettingsModalProps, 'isOpen'
           categories={reassignOptions}
           onCancel={() => setCategoryToDelete(null)}
           onConfirm={confirmDeleteLocal}
+        />
+
+        {/* Rendue en FRÈRE de l'overlay ci-dessus : `useModalA11y` empile les
+            surfaces (`openStack`), seule la dernière ouverte réagit à Échap. */}
+        <MoveCategoryDialog
+          open={!!categoryToMove}
+          category={localCategories.find(c => c.id === categoryToMove) ?? null}
+          categories={localCategories}
+          onCancel={() => setCategoryToMove(null)}
+          onConfirm={confirmMoveLocal}
         />
     </div>
   );

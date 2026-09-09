@@ -350,7 +350,12 @@
     "moveCategory": "Déplacer {{name}}",
     "deleteCategory": "Supprimer {{name}}",
     "maxDepthReached": "Profondeur maximale atteinte",
-    "addRoot": "Ajouter une catégorie"
+    "addRoot": "Ajouter une catégorie",
+    "moveTitle": "Déplacer la catégorie",
+    "moveTarget": "Nouvelle catégorie parente",
+    "moveToRoot": "À la racine, sans parent",
+    "moveCancel": "Annuler",
+    "moveConfirm": "Déplacer"
   },
   "desktop": {
     "closeForm": "Fermer le formulaire",
