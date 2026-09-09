@@ -13,7 +13,7 @@ import { X, AlertCircle, ChevronRight, Loader2, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import DesktopCollaboratorsStep from './DesktopCollaboratorsStep';
 import DesktopDetailsStep from './DesktopDetailsStep';
-import { useCreateCategory } from '@/modules/categories';
+import { useCreateCategory, type Category } from '@/modules/categories';
 import { useCreateList } from '@/modules/lists';
 import { useCancelFriendRequest } from '@/modules/friends';
 import type { Task } from '@/modules/tasks';
@@ -54,7 +54,7 @@ export interface DesktopBodyProps {
   isStep1Valid: () => boolean;
   isFormValid: () => boolean;
   missingStep1Fields: () => string[];
-  categories: Array<{ id: string; name: string; color: string }>;
+  categories: Category[];
   createCategoryMutation: ReturnType<typeof useCreateCategory>;
   listColorOptions: { value: string; color: string }[];
   lists: Array<{ id: string; name: string; color: string; taskIds: string[]; type?: string; smartRule?: string; isDefault?: boolean; position?: number }>;

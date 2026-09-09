@@ -23,7 +23,12 @@ describe('SupabaseCategoriesRepository', () => {
     expect(supabaseMock.argsOf('categories', 'order')).toEqual(['name', { ascending: true }]);
     expect(supabaseMock.argsOf('categories', 'limit')).toEqual([200]);
     // user_id n'est PAS exposé dans le domaine
-    expect(result).toEqual([{ id: 'cat1', name: 'Travail', color: 'blue' }]);
+    // ⚠️ `parentId`/`position` sont des PLACEHOLDERS ici (tâche 3) : le
+    // mapping réel des colonnes `parent_id`/`position` (mig. 143) est la
+    // tâche 4, qui remplacera ces valeurs et cette assertion.
+    expect(result).toEqual([
+      { id: 'cat1', name: 'Travail', color: 'blue', parentId: null, position: 0 },
+    ]);
   });
 
   it('create: whitelists fields — extra/forged input keys are dropped, user_id comes from auth', async () => {

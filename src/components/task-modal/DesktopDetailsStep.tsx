@@ -19,7 +19,7 @@ import CategoryField from './CategoryField';
 import SubtaskChecklist from './SubtaskChecklist';
 import TaskDependenciesSection from './TaskDependenciesSection';
 import DescriptionField from '@/components/DescriptionField';
-import type { useCreateCategory } from '@/modules/categories';
+import type { useCreateCategory, Category } from '@/modules/categories';
 import type { useCreateList } from '@/modules/lists';
 import { useT } from '@/i18n/useT';
 
@@ -49,7 +49,7 @@ export interface DesktopDetailsStepProps {
   dRegister: (name: string) => (el: HTMLElement | null) => void;
   dClear: (name: string) => void;
   dInvalid: (name: string) => boolean;
-  categories: Array<{ id: string; name: string; color: string }>;
+  categories: Category[];
   createCategoryMutation: ReturnType<typeof useCreateCategory>;
   listColorOptions: { value: string; color: string }[];
   lists: Array<{ id: string; name: string; color: string; taskIds: string[]; type?: string; smartRule?: string; isDefault?: boolean; position?: number }>;

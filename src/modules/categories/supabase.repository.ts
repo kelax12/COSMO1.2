@@ -117,6 +117,11 @@ export class SupabaseCategoriesRepository implements ICategoriesRepository {
       id: row.id,
       name: row.name,
       color: row.color,
+      // ⚠️ Placeholders : le mapping de l'arbre (colonnes `parent_id` /
+      // `position` de la mig. 143) est la tâche 4. Ne pas construire cette
+      // logique ici.
+      parentId: null,
+      position: 0,
     };
   }
 

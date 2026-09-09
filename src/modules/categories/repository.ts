@@ -3,7 +3,8 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { Category, CreateCategoryInput, UpdateCategoryInput } from './types';
-import { CATEGORIES_STORAGE_KEY } from './constants';
+import { CATEGORIES_STORAGE_KEY, DEFAULT_CATEGORY_COLOR } from './constants';
+import { wouldCreateCycle, wouldExceedMaxDepth } from './tree';
 import { localizeSeed } from '@/lib/seed-i18n';
 import type { CreateOptions } from '@/lib/restore-id';
 import { safeGetItem, safeParseArray, writeJsonOrThrow } from '@/lib/safe-json';
@@ -14,11 +15,11 @@ import { makeApiError } from '@/lib/normalizeApiError';
 // ═══════════════════════════════════════════════════════════════════
 
 const DEMO_CATEGORIES: Category[] = [
-  { id: 'cat-1', name: 'Travail', color: '#3B82F6' },
-  { id: 'cat-2', name: 'Personnel', color: '#10B981' },
-  { id: 'cat-3', name: 'Santé', color: '#EF4444' },
-  { id: 'cat-4', name: 'Apprentissage', color: '#8B5CF6' },
-  { id: 'cat-5', name: 'Projets', color: '#F97316' },
+  { id: 'cat-1', name: 'Travail', color: '#3B82F6', parentId: null, position: 0 },
+  { id: 'cat-2', name: 'Personnel', color: '#10B981', parentId: null, position: 1 },
+  { id: 'cat-3', name: 'Santé', color: '#EF4444', parentId: null, position: 2 },
+  { id: 'cat-4', name: 'Apprentissage', color: '#8B5CF6', parentId: null, position: 3 },
+  { id: 'cat-5', name: 'Projets', color: '#F97316', parentId: null, position: 4 },
 ];
 
 // Overlay anglais — cf. src/lib/seed-i18n.ts. Ces labels sont la source
@@ -71,6 +72,26 @@ export class LocalStorageCategoriesRepository implements ICategoriesRepository {
     writeJsonOrThrow(CATEGORIES_STORAGE_KEY, categories);
   }
 
+  /**
+   * Miroir du trigger `enforce_category_tree` (mig. 143).
+   *
+   * 🔴 Le mode démo doit refuser EXACTEMENT ce que la production refuse. Une
+   * démo plus permissive laisse écrire un état que le serveur rejettera, et le
+   * défaut ne se découvre qu'après la bascule.
+   */
+  private assertTreeIsValid(id: string, parentId: string | null, categories: Category[]): void {
+    if (parentId === null) return;
+    if (parentId === id) throw makeApiError('hierarchy_cycle');
+    if (!categories.some((c) => c.id === parentId)) throw makeApiError('not_found');
+    if (wouldCreateCycle(id, parentId, categories)) throw makeApiError('hierarchy_cycle');
+
+    // 🔴 `treeDepth(id) > CATEGORY_MAX_DEPTH` NE SUFFIT PAS : ça ne mesure que
+    // le nœud écrit, donc déplacer une branche haute de 4 crans sous un nœud au
+    // niveau 8 passerait, en mettant ses feuilles au niveau 12.
+    // `wouldExceedMaxDepth` ajoute la hauteur de la branche déplacée.
+    if (wouldExceedMaxDepth(id, parentId, categories)) throw makeApiError('hierarchy_max_depth');
+  }
+
   // ═══════════════════════════════════════════════════════════════════
   // READ OPERATIONS
   // ═══════════════════════════════════════════════════════════════════
@@ -85,11 +106,19 @@ export class LocalStorageCategoriesRepository implements ICategoriesRepository {
 
   async create(input: CreateCategoryInput, options?: CreateOptions): Promise<Category> {
     const categories = this.getCategories();
+    const id = options?.restoreId ?? crypto.randomUUID();
+    const parentId = input.parentId ?? null;
+
+    this.assertTreeIsValid(id, parentId, categories);
+
     const newCategory: Category = {
-      ...input,
+      name: input.name,
+      color: input.color ?? DEFAULT_CATEGORY_COLOR,
+      parentId,
+      position: input.position ?? categories.filter((c) => c.parentId === parentId).length,
       // Parite avec le repository Supabase : `restoreId` vient d'un
       // « Annuler », jamais d'un formulaire (R-08).
-      id: options?.restoreId ?? crypto.randomUUID(),
+      id,
     };
     this.saveCategories([...categories, newCategory]);
     return newCategory;
@@ -103,6 +132,10 @@ export class LocalStorageCategoriesRepository implements ICategoriesRepository {
       throw makeApiError('not_found');
     }
 
+    if (updates.parentId !== undefined) {
+      this.assertTreeIsValid(id, updates.parentId, categories);
+    }
+
     const updatedCategory: Category = { ...categories[index], ...updates };
     categories[index] = updatedCategory;
     this.saveCategories(categories);
@@ -111,6 +144,13 @@ export class LocalStorageCategoriesRepository implements ICategoriesRepository {
 
   async delete(id: string): Promise<void> {
     const categories = this.getCategories();
+
+    // Miroir du ON DELETE NO ACTION de la mig. 143 : une branche ne part jamais
+    // en silence. L'appelant doit avoir décidé du sort des enfants.
+    if (categories.some((c) => c.parentId === id)) {
+      throw makeApiError('category_has_children');
+    }
+
     const filtered = categories.filter(c => c.id !== id);
 
     if (filtered.length === categories.length) {

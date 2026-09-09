@@ -81,7 +81,11 @@ const ColorSettingsModalContent: React.FC<Omit<ColorSettingsModalProps, 'isOpen'
     const newCat: Category = {
       id: newId,
       name: '',
-      color: '#3B82F6'
+      color: '#3B82F6',
+      // Brouillon `temp-` : racine, en fin de fratrie. La sous-catégorie via
+      // ce modal arrive avec la tâche 14.
+      parentId: null,
+      position: localCategories.length,
     };
     setLocalCategories([...localCategories, newCat]);
     

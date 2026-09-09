@@ -17,7 +17,7 @@ import { useCategories, useUpdateCategory, useDeleteCategory, useCategoryLookup 
 import { categoryKeys } from './constants';
 import type { Category } from './types';
 
-const cat: Category = { id: 'c1', name: 'Travail', color: '#3B82F6' };
+const cat: Category = { id: 'c1', name: 'Travail', color: '#3B82F6', parentId: null, position: 0 };
 
 function makeWrapper() {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
