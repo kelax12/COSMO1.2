@@ -363,3 +363,43 @@ CREATE POLICY withdrawal_consents_select_owner
     expect(out).toMatch(/EN TROP/);
   });
 });
+
+// ── Une garde d'arbre ne doit JAMAIS être SECURITY DEFINER (mig. 143) ──
+//
+// Un trigger BEFORE s'exécute avant le WITH CHECK de la RLS : en DEFINER, ses
+// messages d'erreur deviennent un oracle sur des lignes non lisibles (B-3).
+// Ce cas EXISTE pour être vu rouge : il a été vérifié en retirant le mot
+// SECURITY INVOKER de la migration réelle avant d'être committé.
+describe('trigger de garde de l arbre des categories', () => {
+  it('refuse une fonction de trigger SECURITY DEFINER', () => {
+    // ⚠️ La clause SECURITY doit précéder le `AS $$` : le parseur de
+    // validate-migrations.mjs ne lit que ce qui se trouve ENTRE `RETURNS
+    // TRIGGER` et le premier `AS` — exactement la convention déjà suivie par
+    // toutes les fonctions de trigger du dépôt (cf. mig. 132). REVOKE est posé
+    // pour isoler le seul défaut testé ici (DEFINER) des deux erreurs, sans
+    // rapport, que la règle REVOKE lève déjà par ailleurs.
+    write(
+      '143_categories_tree.sql',
+      `CREATE OR REPLACE FUNCTION public.enforce_category_tree()
+       RETURNS TRIGGER
+       LANGUAGE plpgsql
+       SECURITY DEFINER
+       AS $$ BEGIN RETURN NEW; END; $$;
+       CREATE TRIGGER trg_enforce_category_tree
+         BEFORE INSERT ON public.categories
+         FOR EACH ROW EXECUTE FUNCTION public.enforce_category_tree();
+       REVOKE ALL ON FUNCTION public.enforce_category_tree() FROM PUBLIC, anon, authenticated;`,
+    );
+    const { code, out } = run(VALIDATE);
+    expect(code).not.toBe(0);
+    expect(out).toMatch(/DEFINER/i);
+  });
+
+  it('accepte la fonction reelle, en INVOKER et REVOKE-ee', () => {
+    write(
+      '143_categories_tree.sql',
+      readFileSync(resolve(ROOT, 'supabase/migration/143_categories_tree.sql'), 'utf8'),
+    );
+    expect(run(VALIDATE).code).toBe(0);
+  });
+});
