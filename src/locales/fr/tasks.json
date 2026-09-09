@@ -341,7 +341,16 @@
     "title": "Modifier les catégories",
     "namePlaceholder": "Nom de la catégorie",
     "deleteTitle": "Supprimer la catégorie",
-    "deleteBody": "Êtes-vous sûr de vouloir supprimer cette catégorie ? Cette action est irréversible."
+    "deleteBody": "Êtes-vous sûr de vouloir supprimer cette catégorie ? Cette action est irréversible.",
+    "expand": "Déplier",
+    "collapse": "Replier",
+    "colorFor": "Couleur de {{name}}",
+    "nameFor": "Nom de {{name}}",
+    "addChildTo": "Ajouter une sous-catégorie à {{name}}",
+    "moveCategory": "Déplacer {{name}}",
+    "deleteCategory": "Supprimer {{name}}",
+    "maxDepthReached": "Profondeur maximale atteinte",
+    "addRoot": "Ajouter une catégorie"
   },
   "desktop": {
     "closeForm": "Fermer le formulaire",

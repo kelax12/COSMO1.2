@@ -10,6 +10,7 @@ import {
   PRIORITY_RANGE_KEY,
   TASK_SORT_PREFS_KEY,
   LAST_VISITED_PAGE_KEY,
+  CATEGORY_COLLAPSED_KEY,
   DEFAULT_FAVORITE_COLORS,
   DEFAULT_PRIORITY_RANGE,
   DEFAULT_COLOR_SETTINGS,
@@ -59,6 +60,17 @@ function readLastVisitedPage(): string | null {
   } catch { return null; }
 }
 
+function readCollapsedCategories(): string[] {
+  try {
+    const stored = localStorage.getItem(CATEGORY_COLLAPSED_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed)) return parsed.filter((v): v is string => typeof v === 'string');
+    }
+  } catch { /* ignore */ }
+  return [];
+}
+
 let priorityRangeState: PriorityRange = readPriorityRange();
 const priorityRangeListeners = new Set<() => void>();
 
@@ -70,6 +82,9 @@ const taskSortPrefsListeners = new Set<() => void>();
 
 let lastVisitedPageState: string | null = readLastVisitedPage();
 const lastVisitedPageListeners = new Set<() => void>();
+
+let collapsedCategoriesState: string[] = readCollapsedCategories();
+const collapsedCategoriesListeners = new Set<() => void>();
 
 // ═══════════════════════════════════════════════════════════════════
 // FAVORITE COLORS HOOK
@@ -155,6 +170,39 @@ export const useLastVisitedPage = () => {
 /** Lecture directe (hors React) — utilisée pour la redirection au démarrage. */
 export const getLastVisitedPage = (): string | null => lastVisitedPageState;
 
+// ═══════════════════════════════════════════════════════════════════
+// CATÉGORIES REPLIÉES — état de l'arbre de gestion
+// ═══════════════════════════════════════════════════════════════════
+//
+// ⚠️ On mémorise ce qui est REPLIÉ, pas ce qui est déplié : une catégorie
+// nouvellement créée n'est dans aucune des deux listes, et le défaut doit être
+// « visible ». Mémoriser les dépliées ferait naître chaque nouvel enfant
+// invisible sous son parent.
+//
+// ⚠️ Lecture dans un try/catch : un `JSON.parse` nu sur `localStorage` fait
+// tomber la page si la valeur est corrompue (règle B14).
+
+export const useCollapsedCategories = () => {
+  const collapsed = useSyncExternalStore(
+    (cb) => { collapsedCategoriesListeners.add(cb); return () => collapsedCategoriesListeners.delete(cb); },
+    () => collapsedCategoriesState,
+    () => collapsedCategoriesState,
+  );
+
+  const setCollapsed = useCallback((id: string, isCollapsed: boolean) => {
+    const next = isCollapsed
+      ? [...collapsedCategoriesState.filter((c) => c !== id), id]
+      : collapsedCategoriesState.filter((c) => c !== id);
+    collapsedCategoriesState = next;
+    try { localStorage.setItem(CATEGORY_COLLAPSED_KEY, JSON.stringify(next)); } catch { /* ignore */ }
+    collapsedCategoriesListeners.forEach((l) => l());
+  }, []);
+
+  const isCollapsed = useCallback((id: string) => collapsed.includes(id), [collapsed]);
+
+  return { collapsed, setCollapsed, isCollapsed };
+};
+
 // Cross-tab sync (storage event)
 if (typeof window !== 'undefined') {
   window.addEventListener('storage', (e) => {
@@ -170,6 +218,9 @@ if (typeof window !== 'undefined') {
     } else if (e.key === LAST_VISITED_PAGE_KEY) {
       lastVisitedPageState = readLastVisitedPage();
       lastVisitedPageListeners.forEach(l => l());
+    } else if (e.key === CATEGORY_COLLAPSED_KEY) {
+      collapsedCategoriesState = readCollapsedCategories();
+      collapsedCategoriesListeners.forEach(l => l());
     }
   });
 }

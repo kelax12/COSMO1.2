@@ -12,6 +12,7 @@ export {
   PRIORITY_RANGE_KEY,
   TASK_SORT_PREFS_KEY,
   LAST_VISITED_PAGE_KEY,
+  CATEGORY_COLLAPSED_KEY,
   SORT_PREF_ALL_TASKS_KEY,
   DEFAULT_FAVORITE_COLORS,
   DEFAULT_PRIORITY_RANGE,
@@ -26,4 +27,5 @@ export {
   useTaskSortPrefs,
   useLastVisitedPage,
   getLastVisitedPage,
+  useCollapsedCategories,
 } from './hooks';
