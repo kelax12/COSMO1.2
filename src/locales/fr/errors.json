@@ -10,6 +10,7 @@
     "TIMEOUT": "Délai d'attente dépassé. Vérifie ta connexion.",
     "already_a_member": "Cette personne fait déjà partie de l'entreprise.",
     "cannot_invite_self": "Vous ne pouvez pas vous inviter vous-même.",
+    "category_batch_cycle": "Ce lot de catégories ne peut pas être enregistré : il contient une boucle.",
     "demo_unavailable": "Cette action n'est pas disponible en mode démonstration.",
     "dependency_cross_account": "Une dépendance ne peut relier que deux tâches d'un même compte.",
     "dependency_cross_project": "Une dépendance ne peut relier que deux tâches d'un même projet.",

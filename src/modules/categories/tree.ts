@@ -13,6 +13,7 @@
 // empêche de créer un cycle, mais un client ne doit jamais GELER sur une donnée
 // inattendue (base restaurée, migration partielle, données de test).
 
+import { makeApiError } from '@/lib/normalizeApiError';
 import type { Category } from './types';
 
 /**
@@ -40,9 +41,18 @@ export function childrenOf(parentId: string | null, categories: readonly Categor
   return categories.filter((c) => c.parentId === parentId).sort(bySibling);
 }
 
-/** Tous les descendants de `id`, le nœud lui-même exclu. */
-export function descendantIds(id: string, categories: readonly Category[]): string[] {
-  const out: string[] = [];
+/**
+ * Tous les descendants de `id`, le nœud lui-même exclu, en `Set`.
+ *
+ * 🔴 POURQUOI un `Set` et pas un tableau. Un appelant qui filtre une liste
+ * (tâches, catégories…) par appartenance à une branche fait ce test une fois
+ * PAR ÉLÉMENT filtré : un `.includes()` sur tableau refait le BFS à chaque
+ * appel, un `Set.has()` le fait une seule fois, hissé hors de la boucle par
+ * l'appelant. Mesuré à 30/60 catégories sur les 611 tâches réelles de la prod :
+ * 1,61/7,68 ms par passage de filtre contre ~0,07 ms avec le `Set` hissé.
+ */
+export function descendantIdSet(id: string, categories: readonly Category[]): ReadonlySet<string> {
+  const out = new Set<string>();
   const seen = new Set<string>([id]);
   const queue: string[] = [id];
 
@@ -51,12 +61,23 @@ export function descendantIds(id: string, categories: readonly Category[]): stri
     for (const child of categories) {
       if (child.parentId !== current || seen.has(child.id)) continue;
       seen.add(child.id);
-      out.push(child.id);
+      out.add(child.id);
       queue.push(child.id);
     }
   }
 
   return out;
+}
+
+/**
+ * Tous les descendants de `id`, le nœud lui-même exclu.
+ *
+ * Forme la plus lisible quand le résultat n'est consulté qu'une fois — pour
+ * un filtre répété élément par élément, hisser `descendantIdSet` hors de la
+ * boucle plutôt que d'appeler celle-ci à chaque itération.
+ */
+export function descendantIds(id: string, categories: readonly Category[]): string[] {
+  return [...descendantIdSet(id, categories)];
 }
 
 /** Ancêtres de `id`, de la racine au parent direct. */
@@ -81,7 +102,9 @@ export function categoryPath(id: string, categories: readonly Category[]): Categ
   const byId = new Map(categories.map((c) => [c.id, c]));
   const self = byId.get(id);
   if (!self) return [];
-  const path = ancestorIds(id, categories).map((a) => byId.get(a)).filter((c): c is Category => Boolean(c));
+  const path = ancestorIds(id, categories)
+    .map((a) => byId.get(a))
+    .filter((c): c is Category => Boolean(c));
   return [...path, self];
 }
 
@@ -104,21 +127,102 @@ export function wouldCreateCycle(
 ): boolean {
   if (newParentId === null) return false;
   if (newParentId === id) return true;
-  return descendantIds(id, categories).includes(newParentId);
+  return descendantIdSet(id, categories).has(newParentId);
 }
 
-/** Liste plate vers arbre. Un nœud dont le parent est absent devient racine. */
+/** Hauteur de la branche enracinée en `id`, le nœud seul valant 1. */
+export function subtreeHeight(id: string, categories: readonly Category[]): number {
+  let maxDepth = 1;
+  // Cycle-safe comme le reste du fichier (`seen`) : une branche corrompue
+  // doit rendre une hauteur, jamais geler.
+  const seen = new Set<string>([id]);
+  const stack: Array<{ id: string; depth: number }> = [{ id, depth: 1 }];
+
+  while (stack.length > 0) {
+    const { id: current, depth } = stack.pop() as { id: string; depth: number };
+    if (depth > maxDepth) maxDepth = depth;
+    for (const child of childrenOf(current, categories)) {
+      if (seen.has(child.id)) continue;
+      seen.add(child.id);
+      stack.push({ id: child.id, depth: depth + 1 });
+    }
+  }
+
+  return maxDepth;
+}
+
+/**
+ * Rattacher `id` sous `newParentId` dépasserait-il `CATEGORY_MAX_DEPTH` ?
+ *
+ * 🔴 POURQUOI on ne se contente pas de `treeDepth(id, …) > CATEGORY_MAX_DEPTH`.
+ * Ça ne mesure QUE le nœud écrit. Déplacer une branche de 4 crans de haut sous
+ * un nœud au niveau 8 donne une profondeur de 12 pour ses feuilles, alors que
+ * `id` lui-même n'atteint que 9 : il faut ajouter la HAUTEUR de la branche
+ * déplacée, pas juste la profondeur du point d'attache.
+ */
+export function wouldExceedMaxDepth(
+  id: string,
+  newParentId: string | null,
+  categories: readonly Category[],
+): boolean {
+  const parentDepth = newParentId === null ? 0 : treeDepth(newParentId, categories);
+  return parentDepth + subtreeHeight(id, categories) > CATEGORY_MAX_DEPTH;
+}
+
+/**
+ * Liste plate vers arbre. Un nœud dont le parent est absent devient racine.
+ *
+ * 🔴 POURQUOI un nœud pris dans un CYCLE devient aussi une racine. Le trigger
+ * empêche d'en créer, mais ce module existe justement pour ne jamais geler ou
+ * perdre des données sur une base restaurée, une migration partielle ou des
+ * données de test — le même principe que le reste du fichier (`ancestorIds`,
+ * `descendantIdSet`).
+ *
+ * Sans ce traitement, un cycle mutuel (`a → b → a`) ne qualifie JAMAIS comme
+ * racine — chaque parent est présent, et différent de soi-même — et
+ * `buildTree` faisait alors disparaître SILENCIEUSEMENT tout nœud pris dans le
+ * cycle : la même classe de perte que R-02, mais ici sans même un avertissement
+ * de suppression puisque rien n'a été supprimé, la ligne a juste cessé d'être
+ * rendue.
+ *
+ * Un utilisateur avec un arbre corrompu doit voir ses catégories APLATIES,
+ * jamais disparues : c'est la seule sortie qui ne perd rien pendant qu'on
+ * répare les données.
+ */
 export function buildTree(categories: readonly Category[]): CategoryNode[] {
   const known = new Set(categories.map((c) => c.id));
+  const byId = new Map(categories.map((c) => [c.id, c]));
   const nodes = new Map<string, CategoryNode>(
     categories.map((c) => [c.id, { category: c, children: [] }]),
   );
   const roots: CategoryNode[] = [];
 
+  // Parent utilisable : présent dans le lot, et différent du nœud lui-même
+  // (l'auto-parentage est déjà exclu ici, avant même de parler de cycle).
+  const effectiveParent = (category: Category): string | null =>
+    category.parentId !== null && known.has(category.parentId) && category.parentId !== category.id
+      ? category.parentId
+      : null;
+
+  // Un nœud dont la chaîne de parents boucle sans jamais atteindre une
+  // racine (`parentId === null`) est pris dans un cycle, direct ou à
+  // plusieurs maillons. Le rattacher normalement le ferait disparaître de
+  // l'arbre : aucune racine ne mène jusqu'à lui.
+  const isTrappedInCycle = (id: string): boolean => {
+    const seen = new Set<string>([id]);
+    let current = effectiveParent(byId.get(id) as Category);
+    while (current !== null) {
+      if (seen.has(current)) return true;
+      seen.add(current);
+      current = effectiveParent(byId.get(current) as Category);
+    }
+    return false;
+  };
+
   for (const category of [...categories].sort(bySibling)) {
     const node = nodes.get(category.id) as CategoryNode;
-    const parentId = category.parentId;
-    if (parentId !== null && known.has(parentId) && parentId !== category.id) {
+    const parentId = effectiveParent(category);
+    if (parentId !== null && !isTrappedInCycle(category.id)) {
       (nodes.get(parentId) as CategoryNode).children.push(node);
     } else {
       roots.push(node);
@@ -154,7 +258,11 @@ export function orderByDepth<T extends { id: string; parentId: string | null }>(
       (i) => i.parentId === null || !inBatch.has(i.parentId) || placed.has(i.parentId),
     );
     if (ready.length === 0) {
-      throw new Error('Category batch is not orderable: cycle among pending rows');
+      // ApiError cataloguée, pas un `throw new Error('<phrase>')` : ce module
+      // sera atteint depuis le chemin de sauvegarde d'une modale, et un
+      // littéral non traduit remonterait tel quel dans le toast d'un
+      // utilisateur français (règle de `src/lib/normalizeApiError.ts`, C-62).
+      throw makeApiError('category_batch_cycle');
     }
     for (const item of ready) {
       placed.add(item.id);

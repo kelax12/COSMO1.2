@@ -6,10 +6,13 @@ import {
   categoryPath,
   childrenOf,
   descendantIds,
+  descendantIdSet,
   formatPath,
   orderByDepth,
+  subtreeHeight,
   treeDepth,
   wouldCreateCycle,
+  wouldExceedMaxDepth,
 } from './tree';
 import type { Category } from './types';
 
@@ -65,6 +68,23 @@ describe('descendantIds', () => {
     expect(() => descendantIds('a', cyclic)).not.toThrow();
     expect(descendantIds('a', cyclic)).toEqual(['b']);
   });
+
+  it('rend un tableau vide pour un auto-parentage', () => {
+    expect(descendantIds('a', [cat('a', 'a')])).toEqual([]);
+  });
+});
+
+describe('descendantIdSet', () => {
+  it('rend le même ensemble que descendantIds, sous forme de Set', () => {
+    expect([...descendantIdSet('travail', TREE)].sort()).toEqual(
+      descendantIds('travail', TREE).sort(),
+    );
+  });
+
+  it('conserve l ordre d insertion du parcours BFS', () => {
+    const cyclic = [cat('a', 'b'), cat('b', 'a')];
+    expect([...descendantIdSet('a', cyclic)]).toEqual(['b']);
+  });
 });
 
 describe('ancestorIds', () => {
@@ -91,8 +111,12 @@ describe('categoryPath / formatPath', () => {
     expect(categoryPath('inconnu', TREE)).toEqual([]);
   });
 
-  it('formate avec le séparateur demandé', () => {
+  it('formate avec le séparateur PAR DÉFAUT', () => {
     expect(formatPath(categoryPath('backlinks', TREE))).toBe('Travail › SEO › Backlinks');
+  });
+
+  it('formate avec le séparateur demandé', () => {
+    expect(formatPath(categoryPath('backlinks', TREE), ' / ')).toBe('Travail / SEO / Backlinks');
   });
 });
 
@@ -101,6 +125,68 @@ describe('treeDepth', () => {
     expect(treeDepth('travail', TREE)).toBe(1);
     expect(treeDepth('seo', TREE)).toBe(2);
     expect(treeDepth('backlinks', TREE)).toBe(3);
+  });
+
+  it('rend 0 pour un identifiant inconnu', () => {
+    expect(treeDepth('inconnu', TREE)).toBe(0);
+  });
+});
+
+describe('bySibling (via childrenOf)', () => {
+  it('départage deux frères à la même position par le nom', () => {
+    const siblings: Category[] = [
+      cat('z', 'parent', 0, 'Zèbre'),
+      cat('a', 'parent', 0, 'Alpha'),
+    ];
+    expect(childrenOf('parent', siblings).map((c) => c.id)).toEqual(['a', 'z']);
+  });
+});
+
+describe('subtreeHeight', () => {
+  it('vaut 1 pour une feuille', () => {
+    expect(subtreeHeight('backlinks', TREE)).toBe(1);
+  });
+
+  it('compte le nœud lui-même dans la hauteur de la branche', () => {
+    // travail -> seo -> backlinks : 3 crans.
+    expect(subtreeHeight('travail', TREE)).toBe(3);
+  });
+
+  it('ne boucle pas sur un cycle déjà présent en données', () => {
+    const cyclic = [cat('a', 'b'), cat('b', 'a')];
+    expect(() => subtreeHeight('a', cyclic)).not.toThrow();
+  });
+});
+
+describe('wouldExceedMaxDepth', () => {
+  // Chaîne level-1 (racine) → level-8, une catégorie par niveau.
+  const CHAIN: Category[] = Array.from({ length: 8 }, (_, i) =>
+    cat(`level-${i + 1}`, i === 0 ? null : `level-${i}`),
+  );
+  // Branche de hauteur 4, détachée de la chaîne.
+  const BRANCH: Category[] = [
+    cat('branch-root', null),
+    cat('branch-2', 'branch-root'),
+    cat('branch-3', 'branch-2'),
+    cat('branch-4', 'branch-3'),
+  ];
+  const DATA = [...CHAIN, ...BRANCH];
+
+  it('refuse un déplacement qui dépasserait CATEGORY_MAX_DEPTH (8 + 4 > 10)', () => {
+    expect(wouldExceedMaxDepth('branch-root', 'level-8', DATA)).toBe(true);
+  });
+
+  it('accepte un déplacement qui reste dans la limite (6 + 4 = 10)', () => {
+    expect(wouldExceedMaxDepth('branch-root', 'level-6', DATA)).toBe(false);
+  });
+
+  it('refuse pile un cran au-delà (7 + 4 = 11)', () => {
+    expect(wouldExceedMaxDepth('branch-root', 'level-7', DATA)).toBe(true);
+  });
+
+  it('ne boucle pas sur un cycle déjà présent en données', () => {
+    const cyclic = [cat('a', 'b'), cat('b', 'a')];
+    expect(() => wouldExceedMaxDepth('a', 'b', cyclic)).not.toThrow();
   });
 });
 
@@ -131,6 +217,27 @@ describe('buildTree', () => {
     const orphan = [cat('x', 'parent-disparu')];
     expect(buildTree(orphan).map((n) => n.category.id)).toEqual(['x']);
   });
+
+  // FIX 1 (critique) : ni 'a' ni 'b' ne qualifiaient comme racine (chacun a un
+  // parent présent, différent de lui-même), donc les deux disparaissaient de
+  // l'arbre rendu. Un utilisateur avec un arbre corrompu doit voir ses
+  // catégories APLATIES, jamais disparues.
+  it('aplatit un cycle à deux nœuds au lieu de le faire disparaître', () => {
+    const cyclic = [cat('a', 'b'), cat('b', 'a')];
+    const ids = buildTree(cyclic).map((n) => n.category.id);
+    expect(ids.sort()).toEqual(['a', 'b']);
+  });
+
+  it('aplatit un cycle à trois nœuds, une racine légitime restant inchangée', () => {
+    const withCycle = [
+      cat('root', null),
+      cat('a', 'c'),
+      cat('b', 'a'),
+      cat('c', 'b'),
+    ];
+    const ids = buildTree(withCycle).map((n) => n.category.id);
+    expect(ids.sort()).toEqual(['a', 'b', 'c', 'root']);
+  });
 });
 
 describe('orderByDepth', () => {
@@ -144,8 +251,10 @@ describe('orderByDepth', () => {
     expect(orderByDepth([cat('seo', 'travail')]).map((c) => c.id)).toEqual(['seo']);
   });
 
-  it('lève sur un lot non ordonnançable plutôt que de boucler', () => {
-    expect(() => orderByDepth([cat('a', 'b'), cat('b', 'a')])).toThrow(/cycle/i);
+  it('lève une ApiError cataloguée sur un lot non ordonnançable, plutôt que de boucler', () => {
+    expect(() => orderByDepth([cat('a', 'b'), cat('b', 'a')])).toThrow(
+      expect.objectContaining({ code: 'category_batch_cycle' }),
+    );
   });
 });
 
