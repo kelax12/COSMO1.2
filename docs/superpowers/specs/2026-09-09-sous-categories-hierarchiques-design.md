@@ -19,7 +19,7 @@ Décisions prises avec Axel le 2026-09-09 :
 | Affecter à un nœud non-feuille | autorisé, n'importe quel nœud |
 | Couleur | héritée du parent à la création, surchargeable ensuite |
 | Profondeur | illimitée dans le modèle, plafond de garde à 10 |
-| Écran de gestion | arbre repliable, glisser-déposer desktop, menu « Déplacer vers… » mobile et clavier |
+| Écran de gestion | arbre repliable, reparentage par le menu « Déplacer vers… » **uniquement**, sans glisser-déposer (décision du 2026-09-09 : rester simple et intuitif) |
 | Sélection sur une tâche | liste déroulante arborescente avec recherche par chemin |
 | Suppression d'un parent | choix dans la boîte de dialogue : remonter les enfants, ou supprimer la branche |
 | Affichage sur une tâche | la feuille seule, chemin complet en infobulle |
@@ -248,8 +248,8 @@ ancêtre disparaît.
 - `useCreateCategory` calcule la couleur héritée quand `parentId` est fourni et que
   l'appelant ne donne pas de couleur.
 - Un `useMoveCategory({ id, parentId, position })` unique : c'est la **seule**
-  mutation derrière le glisser-déposer et le menu « Déplacer vers… ». Deux chemins
-  d'interface, une règle.
+  mutation derrière le menu « Déplacer vers… », seul geste de reparentage.
+  ❌ Ne jamais lui adjoindre un glisser-déposer.
 - `local.repository.ts` (démo) reproduit le trigger : cycles, profondeur, parent d'un
   autre compte. Sinon la démo autorise ce que la production refuse.
 
@@ -271,10 +271,16 @@ vient du CSS, jamais d'une animation de transform.
   **couleur du parent** (au lieu du `#3B82F6` en dur actuel), déplié, focus sur le
   champ de nom ;
 - le « + Ajouter » du pied continue de créer une **racine** ;
-- glisser-déposer desktop pour reparenter **et** réordonner ;
-- un menu « … » par ligne avec « Déplacer vers… », seul chemin sur mobile et au
-  clavier. Le sélecteur de destination exclut la ligne elle-même, ses descendants, et
-  toute ligne `temp-`.
+- un menu « … » par ligne avec « Déplacer vers… », **seul** chemin de reparentage
+  et de réordonnancement, identique à la souris, au doigt et au clavier. Le
+  sélecteur de destination exclut la ligne elle-même, ses descendants, et toute
+  ligne `temp-`.
+
+🔴 **Pas de glisser-déposer** (décision du 2026-09-09). La fonctionnalité doit rester
+simple et intuitive : un seul geste, qui marche partout, plutôt que deux chemins dont
+l'un ne fonctionne ni au doigt ni au clavier et demande un auto-défilement, des zones
+de dépôt et un état de survol. ❌ Ne pas le réintroduire « pour le confort desktop » :
+il n'ajouterait aucune capacité, seulement une seconde définition du même geste.
 
 ### 5.1 L'ordre d'écriture à l'enregistrement
 
@@ -321,8 +327,9 @@ racine en le disant.
 
 La modale monte déjà `useModalA11y` : rien à recâbler, mais l'arbre doit être
 navigable au clavier (rôles `tree` / `treeitem`, `aria-expanded`, `aria-level`,
-flèches pour parcourir, `Entrée` pour renommer). Le glisser-déposer n'est **jamais**
-le seul chemin : le menu « Déplacer vers… » est son équivalent complet.
+flèches pour parcourir, `Entrée` pour renommer). Le reparentage passe par le menu
+« Déplacer vers… », qui est atteignable au clavier par construction : c'est une des
+raisons pour lesquelles il est le seul chemin retenu.
 
 ## 6. Sélection, filtres, affichage
 
@@ -377,7 +384,7 @@ trompe dans le sens rassurant est pire qu'une garde absente.
 1. `tree.ts` et ses tests (aucune dépendance, aucun risque).
 2. Migration `143`, prouvée puis appliquée.
 3. Types, repository, hooks, repository démo.
-4. Modale de gestion, menu « Déplacer vers… » d'abord, glisser-déposer ensuite.
+4. Modale de gestion, avec le menu « Déplacer vers… ».
 5. `CategoryField`, filtres, affichage.
 6. Seeds démo.
 7. Migration `144`, prouvée puis appliquée hors heure de pointe.
@@ -388,9 +395,10 @@ reportée, tout le reste de la vague reste livrable et cohérent.
 ## 10. Réserve portée à la connaissance d'Axel
 
 La vague 1 reste large, la migration `144` étant une conversion de type sur `tasks`.
-Le candidat naturel au report est le **glisser-déposer** : le menu « Déplacer vers… »
-couvre la même action, fonctionne au clavier et sur téléphone, et coûte une fraction
-du travail. Cette réduction a été proposée et non retenue au moment de la validation.
+Elle est pour cette raison placée en dernier et rendue séparable (§9).
+
+Le glisser-déposer, envisagé puis **retiré du périmètre le 2026-09-09**, n'est plus un
+candidat au report : il n'est plus dans le plan du tout.
 
 ## 11. Hors périmètre, vagues suivantes
 
