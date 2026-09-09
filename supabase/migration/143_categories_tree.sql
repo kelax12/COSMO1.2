@@ -18,15 +18,35 @@
 -- ═══════════════════════════════════════════════════════════════════
 
 ALTER TABLE public.categories
-  ADD COLUMN IF NOT EXISTS parent_id UUID REFERENCES public.categories(id) ON DELETE RESTRICT,
+  ADD COLUMN IF NOT EXISTS parent_id UUID REFERENCES public.categories(id) ON DELETE NO ACTION,
   ADD COLUMN IF NOT EXISTS position  INTEGER NOT NULL DEFAULT 0;
 
--- 🔴 ON DELETE RESTRICT, jamais CASCADE. Supprimer un parent ne doit pas
--- emporter sa branche en silence : la base refuse, ce qui force l'application
--- à avoir pris explicitement la décision « remonter les enfants » ou
--- « supprimer la branche ».
+-- 🔴 NI CASCADE, NI RESTRICT : `NO ACTION`. La nuance décide d'un chemin RGPD.
+--
+-- Ce qu'on veut : supprimer un parent en laissant ses enfants derrière doit être
+-- REFUSÉ, pour forcer l'application à avoir tranché « remonter les enfants » ou
+-- « supprimer la branche ». `CASCADE` emporterait la branche en silence.
+--
+-- Mais `RESTRICT` se vérifie IMMÉDIATEMENT, ligne par ligne : il ne voit pas que
+-- l'enfant part dans la MÊME requête. Or deux chemins suppriment les catégories
+-- d'un compte en un seul DELETE groupé :
+--
+--   1. `delete-account` (Edge Function), qui balaie `USER_OWNED_TABLES` ;
+--   2. la cascade de `user_id REFERENCES auth.users(id) ON DELETE CASCADE`,
+--      déclenchée par la suppression du compte auth lui-même.
+--
+-- Avec `RESTRICT`, ces deux chemins échouent dès qu'un compte possède une seule
+-- sous-catégorie, et la suppression de compte est BLOQUÉE. C'est exactement la
+-- régression B9 (RGPD art. 17) que ce dépôt a déjà payée une fois.
+--
+-- `NO ACTION` vérifie en FIN DE REQUÊTE : la suppression groupée d'une branche
+-- entière passe, celle d'un parent seul est toujours refusée. Même garantie,
+-- sans le blocage.
+--
+-- ⚠️ L'application supprime catégorie par catégorie, en requêtes SÉPARÉES : pour
+-- elle, l'ordre feuilles vers racine reste obligatoire.
 COMMENT ON COLUMN public.categories.parent_id IS
-  'Catégorie parente. NULL = racine. RESTRICT : la suppression d''un parent est refusée tant qu''il a des enfants.';
+  'Catégorie parente. NULL = racine. NO ACTION : supprimer un parent en laissant ses enfants est refusé en fin de requête, mais une branche entière peut partir dans un seul DELETE (suppression de compte).';
 
 CREATE INDEX IF NOT EXISTS idx_categories_parent
   ON public.categories(user_id, parent_id);
@@ -58,8 +78,14 @@ CREATE UNIQUE INDEX IF NOT EXISTS ux_categories_root_name
 -- le WITH CHECK de la RLS : en DEFINER, ses messages d'erreur deviendraient un
 -- oracle sur des lignes non lisibles (finding B-3).
 
+-- ⚠️ `SET search_path` explicite, comme les gardes de la mig. 132 : sans lui,
+-- l'advisor Supabase `function_search_path_mutable` se rallume, et le corps
+-- dépendrait du chemin de l'appelant (la mig. 024 a déjà payé cette leçon).
 CREATE OR REPLACE FUNCTION public.enforce_category_tree()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SET search_path = ''
+AS $$
 DECLARE
   ancestor        UUID;
   ancestor_owner  UUID;
@@ -125,7 +151,7 @@ BEGIN
 
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$;
 
 DROP TRIGGER IF EXISTS trg_enforce_category_tree ON public.categories;
 CREATE TRIGGER trg_enforce_category_tree

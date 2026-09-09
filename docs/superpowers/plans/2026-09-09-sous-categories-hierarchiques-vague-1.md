@@ -481,15 +481,17 @@ Créer `supabase/migration/143_categories_tree.sql` :
 -- ═══════════════════════════════════════════════════════════════════
 
 ALTER TABLE public.categories
-  ADD COLUMN IF NOT EXISTS parent_id UUID REFERENCES public.categories(id) ON DELETE RESTRICT,
+  ADD COLUMN IF NOT EXISTS parent_id UUID REFERENCES public.categories(id) ON DELETE NO ACTION,
   ADD COLUMN IF NOT EXISTS position  INTEGER NOT NULL DEFAULT 0;
 
--- 🔴 ON DELETE RESTRICT, jamais CASCADE. Supprimer un parent ne doit pas
--- emporter sa branche en silence : la base refuse, ce qui force l'application
--- à avoir pris explicitement la décision « remonter les enfants » ou
--- « supprimer la branche ».
+-- 🔴 NI CASCADE, NI RESTRICT : `NO ACTION`. La nuance decide d'un chemin RGPD.
+-- `RESTRICT` se verifie IMMEDIATEMENT, ligne par ligne, donc il refuse une
+-- suppression groupee ou parent et enfants partent ensemble : `delete-account`
+-- et la cascade depuis `auth.users` echoueraient des qu'un compte a une seule
+-- sous-categorie, bloquant la suppression de compte (regression B9, RGPD art. 17).
+-- `NO ACTION` verifie en FIN DE REQUETE : meme garantie, sans le blocage.
 COMMENT ON COLUMN public.categories.parent_id IS
-  'Catégorie parente. NULL = racine. RESTRICT : la suppression d''un parent est refusée tant qu''il a des enfants.';
+  'Catégorie parente. NULL = racine. NO ACTION : supprimer un parent en laissant ses enfants est refusé en fin de requête, mais une branche entière peut partir dans un seul DELETE (suppression de compte).';
 
 CREATE INDEX IF NOT EXISTS idx_categories_parent
   ON public.categories(user_id, parent_id);
@@ -922,7 +924,7 @@ Remplacer `delete` :
   async delete(id: string): Promise<void> {
     const categories = this.getCategories();
 
-    // Miroir du ON DELETE RESTRICT de la mig. 143 : une branche ne part jamais
+    // Miroir du ON DELETE NO ACTION de la mig. 143 : une branche ne part jamais
     // en silence. L'appelant doit avoir décidé du sort des enfants.
     if (categories.some((c) => c.parentId === id)) {
       throw makeApiError('validation');
@@ -2123,7 +2125,7 @@ Dans `ColorSettingsModal`, `confirmDeleteLocal(reassignTo, childrenMode)` :
 - `promote` : chaque enfant direct prend le `parentId` du supprimé, puis le nœud est retiré de l'état local.
 - `deleteBranch` : le nœud **et tous ses descendants** sont retirés, et **tous leurs identifiants** entrent dans `removed`, donc dans `resolveReassignTargets`. C'est ce qui fait retomber une destination emportée par la branche sur une catégorie qui survit (test de la tâche 6).
 
-🔴 À l'enregistrement, une branche se supprime **des feuilles vers la racine** : `ON DELETE RESTRICT` refuse l'ordre inverse. Trier les suppressions par profondeur **décroissante**, ce qui s'obtient en inversant `orderByDepth`.
+🔴 À l'enregistrement, une branche se supprime **des feuilles vers la racine** : l'application écrit une suppression par catégorie, en requêtes séparées, et `ON DELETE NO ACTION` refuse alors l'ordre inverse. Trier les suppressions par profondeur **décroissante**, ce qui s'obtient en inversant `orderByDepth`.
 
 - [ ] **Step 4: Vérifier dans le navigateur**
 
@@ -2600,7 +2602,7 @@ Créer `supabase/migration/144_categories_fk.sql` :
 -- La réaffectation avant suppression (`useReassignCategory`) tient cette
 -- garantie côté APPLICATION. Cette migration la fait tenir par la BASE.
 --
--- ⚠️ ON DELETE SET NULL, pas RESTRICT : la réaffectation reste le chemin
+-- ⚠️ ON DELETE SET NULL, pas NO ACTION : la réaffectation reste le chemin
 -- normal, le SET NULL n'est que le filet de dernier recours. Il ne remplace
 -- pas le dialogue qui demande où partent les éléments.
 --
