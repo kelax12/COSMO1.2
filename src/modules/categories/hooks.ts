@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { getCategoriesRepository } from '@/lib/repository.factory';
 import type { Category, CreateCategoryInput, UpdateCategoryInput } from './types';
-import { categoryKeys } from './constants';
+import { categoryKeys, DEFAULT_CATEGORY_COLOR } from './constants';
 import { translator } from '@/i18n/useT';
 import { reportRestoreFailure, splitRestore } from '@/lib/restore-id';
 
@@ -30,12 +30,27 @@ export const useCategories = () => {
 // MUTATION HOOKS
 // ═══════════════════════════════════════════════════════════════════
 
+/**
+ * Création d'une catégorie.
+ *
+ * ⚠️ La couleur est HÉRITÉE du parent au moment de la CRÉATION, pas résolue au
+ * rendu : une couleur calculée à l'affichage repeindrait rétroactivement toutes
+ * les sous-catégories le jour où on change celle du parent. Elle reste
+ * surchargeable ensuite, comme n'importe quelle couleur.
+ */
 export const useCreateCategory = () => {
   const queryClient = useQueryClient();
   const repository = useCategoriesRepository();
 
   return useMutation({
-    mutationFn: (input: CreateCategoryInput) => repository.create(input),
+    mutationFn: (input: CreateCategoryInput) => {
+      const known = queryClient.getQueryData<Category[]>(categoryKeys.lists()) ?? [];
+      const parent = input.parentId ? known.find((c) => c.id === input.parentId) : undefined;
+      return repository.create({
+        ...input,
+        color: input.color ?? parent?.color ?? DEFAULT_CATEGORY_COLOR,
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: categoryKeys.lists() });
     },
@@ -79,6 +94,47 @@ export const useUpdateCategory = () => {
         queryClient.setQueryData(categoryKeys.detail(updatedCategory.id), updatedCategory);
         queryClient.invalidateQueries({ queryKey: categoryKeys.detail(updatedCategory.id) });
       }
+      queryClient.invalidateQueries({ queryKey: categoryKeys.lists() });
+    },
+  });
+};
+
+/**
+ * Déplacement d'une catégorie : reparentage ET réordonnancement.
+ *
+ * 🔴 UNE SEULE mutation, et UN SEUL geste d'interface : le menu
+ * « Déplacer vers… ». ❌ Ne jamais lui adjoindre un glisser-déposer : la
+ * décision produit du 2026-09-09 est que cette fonctionnalité doit rester
+ * simple et intuitive, et un second chemin serait un second endroit où la
+ * règle peut diverger.
+ */
+export const useMoveCategory = () => {
+  const queryClient = useQueryClient();
+  const repository = useCategoriesRepository();
+
+  return useMutation({
+    mutationFn: ({ id, parentId, position }: { id: string; parentId: string | null; position: number }) =>
+      repository.update(id, { parentId, position }),
+
+    onMutate: async ({ id, parentId, position }) => {
+      await queryClient.cancelQueries({ queryKey: categoryKeys.all });
+      const previousCategories = queryClient.getQueryData<Category[]>(categoryKeys.lists());
+      if (previousCategories) {
+        queryClient.setQueryData<Category[]>(categoryKeys.lists(), (old) =>
+          old?.map((c) => (c.id === id ? { ...c, parentId, position } : c)),
+        );
+      }
+      return { previousCategories };
+    },
+
+    onError: (error: Error, _variables, context) => {
+      if (context?.previousCategories) {
+        queryClient.setQueryData(categoryKeys.lists(), context.previousCategories);
+      }
+      toast.error(translator('errors').t('mutation.moveCategory', { message: error.message }));
+    },
+
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: categoryKeys.lists() });
     },
   });
