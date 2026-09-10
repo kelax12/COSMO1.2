@@ -533,11 +533,14 @@ const OKRPage: React.FC = () => {
         />
       }
 
-      {/* Dialog suppression catégorie */}
+      {/* Dialog suppression catégorie. `categoriesTree` ne porte QUE le nœud
+          visé : ce flux ne sait pas supprimer une branche (voir la doc de la
+          prop dans `DeleteCategoryDialog`). */}
       <DeleteCategoryDialog
         open={!!categoryToDeleteId}
         category={categories.find(c => c.id === categoryToDeleteId) ?? null}
         categories={categories}
+        categoriesTree={categoryToDeleteId ? categories.filter(c => c.id === categoryToDeleteId) : []}
         onCancel={() => setCategoryToDeleteId(null)}
         onConfirm={confirmDeleteCategory}
         isWorking={isDeletingCategory}
