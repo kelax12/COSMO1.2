@@ -3,43 +3,13 @@ import { ChevronDown, SlidersHorizontal, X, Search, Plus, ArrowUpDown } from 'lu
 import { motion, AnimatePresence } from 'framer-motion';
 import { Slider } from './ui/slider';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import { Popover, PopoverTrigger, PopoverContent } from './ui/popover';
+import CategoryFilterTree from './task-filter/CategoryFilterTree';
 
 import { useCategories } from '@/modules/categories';
-import type { Category } from '@/modules/categories';
-import { descendantIdSet } from '@/modules/categories/tree';
 import { usePriorityRange } from '@/modules/ui-states';
 import { useT } from '@/i18n/useT';
-
-/**
- * Une tâche classée dans `taskCategory` passe-t-elle le filtre posé sur
- * `selected` ?
- *
- * 🔴 CHANGEMENT DE SÉMANTIQUE ASSUMÉ (2026-09-09). Filtrer « Travail » remonte
- * désormais aussi les tâches de « Travail › SEO ». C'est l'attente naturelle
- * d'un arbre ; un compte dont les catégories restent plates ne voit aucune
- * différence, `descendantIdSet` rendant alors un ensemble vide.
- *
- * ⚠️ Cette fonction recalcule la branche de `selected` à CHAQUE appel — c'est
- * volontaire pour rester une fonction pure et testable en isolation (cf.
- * `task-filter-branch.test.ts`). Un appelant qui filtre une LISTE de tâches
- * (une par tâche) doit hisser `descendantIdSet(selected, categories)` hors de
- * sa boucle et comparer directement au `Set`, jamais rappeler cette fonction
- * par tâche : c'est ce que fait `filterTasksForPage`
- * (`src/pages/tasks/task-page-filter.ts`), qui applique la même règle au
- * filtre multi-sélection réel de cette page.
- */
-export function matchesCategoryFilter(
-  taskCategory: string,
-  selected: string,
-  categories: readonly Category[],
-): boolean {
-  if (selected === '') return true;
-  if (taskCategory === selected) return true;
-  return descendantIdSet(selected, categories).has(taskCategory);
-}
 
 type TaskFilterProps = {
   onFilterChange: (value: string) => void;
@@ -274,22 +244,11 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
                 {/* Catégories */}
                 <div>
                   <label className="block text-sm font-semibold mb-3" style={{ color: 'rgb(var(--color-text-secondary))' }}>{t('filter.filterCategories')}</label>
-                  <div className="grid max-h-[180px] gap-1 overflow-y-auto pr-1 custom-scrollbar">
-                    {categories.map((category) => (
-                      <label
-                        key={category.id}
-                        className="flex cursor-pointer items-center gap-2 py-1 text-sm"
-                        style={{ color: 'rgb(var(--color-text-primary))' }}
-                      >
-                        <Checkbox
-                          checked={selectedCategories.includes(category.id)}
-                          onCheckedChange={() => toggleCategory(category.id)}
-                        />
-                        <span className="inline-block w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: category.color }} aria-hidden="true" />
-                        <span className="truncate">{category.name}</span>
-                      </label>
-                    ))}
-                  </div>
+                  <CategoryFilterTree
+                    categories={categories}
+                    selectedCategories={selectedCategories}
+                    onToggle={toggleCategory}
+                  />
                 </div>
 
               </div>
