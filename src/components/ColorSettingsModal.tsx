@@ -21,6 +21,7 @@ import { useModalA11y } from '@/hooks/use-modal-a11y';
 import { useTasks } from '@/modules/tasks';
 import { useOkrs } from '@/modules/okrs';
 import { resolveReassignTargets } from '@/modules/categories/impact';
+import { descendantIdSet } from '@/modules/categories/tree';
 import { useReassignCategory } from '@/modules/categories/useReassignCategory';
 import DeleteCategoryDialog from '@/components/category/DeleteCategoryDialog';
 import CategoryTreeRow from '@/components/category/CategoryTreeRow';
@@ -51,6 +52,30 @@ type ColorSettingsModalProps = {
  */
 export function planCreations(drafts: readonly Category[]): Category[] {
   return orderByDepth(drafts.filter((c) => c.id.startsWith('temp-')));
+}
+
+/**
+ * Ordre d'écriture d'un lot de SUPPRESSIONS (tâche 10, suppression de
+ * branche).
+ *
+ * 🔴 POURQUOI feuilles-vers-racine. La FK `categories.parent_id` est
+ * `ON DELETE NO ACTION` (mig. 143) : la contrainte se vérifie À LA FIN DE
+ * CHAQUE INSTRUCTION, et l'app écrit une suppression PAR CATÉGORIE, en
+ * requêtes séparées — jamais une suppression groupée où Postgres verrait la
+ * branche entière partir dans la MÊME instruction. Supprimer un parent avant
+ * ses enfants échoue donc : au moment où l'instruction du parent s'exécute,
+ * l'enfant existe toujours et pointe encore dessus.
+ *
+ * `orderByDepth` trie parent-avant-enfant (profondeur CROISSANTE) — pensé
+ * pour les créations, où le parent doit exister avant qu'on écrive l'enfant
+ * qui le référence. Pour une suppression c'est l'inverse qu'il faut :
+ * l'enfant doit avoir disparu avant qu'on supprime le parent qu'il référence.
+ * On réutilise donc `orderByDepth` tel quel — même arbre, même notion de
+ * profondeur — et on INVERSE le résultat plutôt que de réécrire un second
+ * tri qui finirait par diverger du premier.
+ */
+export function planDeletions(removed: readonly Category[]): Category[] {
+  return [...orderByDepth(removed)].reverse();
 }
 
 /**
@@ -165,12 +190,43 @@ const ColorSettingsModalContent: React.FC<Omit<ColorSettingsModalProps, 'isOpen'
     setCategoryToDelete(id);
   };
 
-  const confirmDeleteLocal = (reassignTo: string) => {
-    if (categoryToDelete) {
-      setReassignTargets(prev => ({ ...prev, [categoryToDelete]: reassignTo }));
-      setLocalCategories(prev => prev.filter(cat => cat.id !== categoryToDelete));
-      setCategoryToDelete(null);
+  const confirmDeleteLocal = (reassignTo: string, childrenMode: 'promote' | 'deleteBranch') => {
+    if (!categoryToDelete) return;
+    const targetId = categoryToDelete;
+
+    if (childrenMode === 'deleteBranch') {
+      // Toute la BRANCHE part : le nœud visé ET tous ses descendants. Chaque
+      // identifiant entre dans `reassignTargets` (donc dans `removed` puis
+      // `resolveReassignTargets` à l'enregistrement) : c'est ce qui fait
+      // retomber une destination emportée par la branche sur une catégorie
+      // qui survit (test de la tâche 6). Se contenter du seul nœud visé
+      // laisserait le contenu des descendants filer vers `NO_CATEGORY` par
+      // défaut, alors que la personne a choisi une destination pour TOUT.
+      const branchIds = [targetId, ...descendantIdSet(targetId, localCategories)];
+      setReassignTargets(prev => {
+        const next = { ...prev };
+        for (const id of branchIds) next[id] = reassignTo;
+        return next;
+      });
+      setLocalCategories(prev => prev.filter(cat => !branchIds.includes(cat.id)));
+    } else {
+      // « Remonter d'un cran » : les enfants DIRECTS prennent le parent du
+      // supprimé — leur contenu ne bouge PAS, ce ne sont pas eux qui
+      // disparaissent. `handleSave` détecte ce changement de `parentId` comme
+      // n'importe quel « Déplacer vers… » (tâche 9) et l'écrit via
+      // `useMoveCategory`, AVANT de supprimer le nœud lui-même : le FK
+      // `ON DELETE NO ACTION` refuserait sinon la suppression tant que ces
+      // enfants pointent encore dessus.
+      const parentId = localCategories.find(c => c.id === targetId)?.parentId ?? null;
+      setLocalCategories(prev =>
+        prev
+          .filter(cat => cat.id !== targetId)
+          .map(cat => (cat.parentId === targetId ? { ...cat, parentId } : cat)),
+      );
+      setReassignTargets(prev => ({ ...prev, [targetId]: reassignTo }));
     }
+
+    setCategoryToDelete(null);
   };
 
   // « Déplacer vers… » — ne touche QUE l'état local (cf. commentaire sur
@@ -217,12 +273,8 @@ const ColorSettingsModalContent: React.FC<Omit<ColorSettingsModalProps, 'isOpen'
         movedTotal += moved;
       }
 
-      const deletePromises = removed.map(cat => deleteCategoryMutation.mutateAsync(cat.id));
-
       // Mises à jour nom/couleur : elles visent des lignes qui existent déjà,
-      // donc peuvent partir en parallèle avec les suppressions. Ce sont les
-      // CRÉATIONS (plus bas) qui doivent respecter un ordre : un enfant ne
-      // peut pas référencer un parent qui n'a pas encore été écrit.
+      // et peuvent partir en parallèle entre elles.
       const updatePromises = localCategories
         .filter((lc) => !lc.id.startsWith('temp-'))
         .map((lc) => {
@@ -252,7 +304,31 @@ const ColorSettingsModalContent: React.FC<Omit<ColorSettingsModalProps, 'isOpen'
         })
         .map((lc) => moveCategoryMutation.mutateAsync({ id: lc.id, parentId: lc.parentId, position: lc.position }));
 
-      await Promise.all([...deletePromises, ...updatePromises, ...movePromises]);
+      // 🔴 Les MOVES doivent être écrits AVANT les suppressions ci-dessous, et
+      // non en parallèle avec elles (contrairement à l'ancien code). Un enfant
+      // « remonté d'un cran » (`confirmDeleteLocal`, choix `promote`) porte un
+      // `movePromises` qui le détache de son ancien parent — celui-là même
+      // qu'on va supprimer. Si la suppression du parent partait EN MÊME TEMPS
+      // que ce déplacement, l'ordre d'arrivée des deux requêtes sur le serveur
+      // n'est pas garanti : la suppression peut arriver alors que l'enfant
+      // pointe ENCORE sur le parent visé, et `ON DELETE NO ACTION` (mig. 143)
+      // la refuse.
+      await Promise.all([...updatePromises, ...movePromises]);
+
+      // Suppressions : DES FEUILLES VERS LA RACINE, et EN SÉQUENCE — jamais en
+      // parallèle. La FK `categories.parent_id` est `ON DELETE NO ACTION`
+      // (mig. 143) : la contrainte se vérifie À LA FIN DE CHAQUE INSTRUCTION,
+      // et cette boucle écrit une suppression PAR CATÉGORIE, en requêtes
+      // séparées (jamais une suppression groupée où Postgres verrait la
+      // branche entière partir dans la MÊME instruction). Supprimer un parent
+      // avant que ses enfants aient disparu échoue donc — et un envoi en
+      // parallèle (`Promise.all`) ne garantirait pas que les suppressions
+      // arrivent sur le serveur dans l'ordre où elles ont été émises.
+      // `planDeletions` inverse `orderByDepth` (parent-avant-enfant, pensé
+      // pour les créations) pour obtenir enfant-avant-parent.
+      for (const cat of planDeletions(removed)) {
+        await deleteCategoryMutation.mutateAsync(cat.id);
+      }
 
       // Créations : par niveau, en séquence. Un enfant créé dans le même lot
       // que son parent porte un `parentId` en `temp-` qui ne désigne encore
@@ -402,6 +478,7 @@ const ColorSettingsModalContent: React.FC<Omit<ColorSettingsModalProps, 'isOpen'
           open={!!categoryToDelete}
           category={localCategories.find(c => c.id === categoryToDelete) ?? null}
           categories={reassignOptions}
+          categoriesTree={localCategories}
           onCancel={() => setCategoryToDelete(null)}
           onConfirm={confirmDeleteLocal}
         />
