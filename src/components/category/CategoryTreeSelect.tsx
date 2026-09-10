@@ -103,8 +103,14 @@ const CategoryTreeSelect: React.FC<CategoryTreeSelectProps> = ({
         {selectedPath || t('fields.categoryNone')}
       </button>
 
+      {/* ⚠️ 90 est un cran PUBLIÉ de l'échelle, pas une valeur inventée au cas par
+          cas : cette habitude-là avait produit 16 valeurs pour 7 paliers
+          documentés (`design-system.guard`). C'est le cran « au-dessus d'un
+          modal ouvert », et ce panneau s'ouvre depuis le modal de tâche.
+          ⚠️ La garde lit AUSSI les commentaires : ne jamais y écrire une valeur
+          hors échelle, même pour l'expliquer. */}
       {open && (
-        <div ref={ref} {...dialogProps} className="fixed inset-0 z-[85] flex items-end sm:items-center justify-center">
+        <div ref={ref} {...dialogProps} className="fixed inset-0 z-[90] flex items-end sm:items-center justify-center">
           <div className="absolute inset-0 bg-black/30 backdrop-blur-md" onClick={close} />
           <div className="relative w-full sm:max-w-sm max-h-[70vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] p-2">
             <input
