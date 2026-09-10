@@ -17,6 +17,12 @@
     "fallback": "Check your internet connection, then try again.",
     "retry": "Try again"
   },
+  "fields": {
+    "category": "Category",
+    "categoryNone": "No category",
+    "categorySearch": "Search a category",
+    "categoryNoResult": "No category matches"
+  },
   "actions": {
     "newTask": "New task",
     "newTaskAria": "Create a new task",

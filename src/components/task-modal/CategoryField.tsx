@@ -6,8 +6,16 @@
 // rappel — et la création en ligne, qui reste ici parce qu'elle n'existe
 // que pour ce champ.
 //
-// ⚠️ Deux rendus, un seul état : `select` natif sur mobile (la roue système
-// vaut mieux qu'un menu maison au doigt), menu Radix sur desktop.
+// ⚠️ Un seul rendu, mobile ET desktop : `CategoryTreeSelect` est déjà une
+// feuille en bas d'écran sur petit viewport (`items-end sm:items-center`),
+// donc le `select` natif et le menu Radix d'avant n'ont plus de raison
+// d'exister séparément — et l'arbre (recherche par chemin, sous-catégories)
+// n'a pas d'équivalent dans un `<select>` natif.
+//
+// ❌ L'ancienne option pseudo-catégorie `value === 'okr'` a été retirée en
+// migrant vers l'arbre (tâche 11) : aucun appelant ne pose jamais cette
+// valeur littérale — `OKRPage` transmet `objective.category`, un vrai
+// identifiant de catégorie (ou `''`). C'était du code mort.
 //
 // 🔴 La validation de la création était écrite DEUX FOIS — une fois sur
 // Entrée, une fois sur le bouton — et les deux ne disaient pas la même
@@ -18,15 +26,10 @@
 // Extrait le 2026-09-05 (C-09).
 // ═══════════════════════════════════════════════════════════════════
 import { useState } from 'react';
-import { ChevronDown, X, AlertCircle } from 'lucide-react';
+import { X, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-} from '@/components/ui/dropdown-menu';
 import AddCategoryButton from '@/components/AddCategoryButton';
+import CategoryTreeSelect from '@/components/category/CategoryTreeSelect';
 import type { Category } from '@/modules/categories';
 import { useT } from '@/i18n/useT';
 
@@ -105,81 +108,14 @@ const CategoryField = ({
         <AddCategoryButton onClick={() => { setShowNewCategoryInput(true); setNewCategoryName(''); }} />
       </div>
 
-      {/* Mobile : select natif système */}
-      <div className="sm:hidden relative">
-        <select
-          value={value || ''}
-          onChange={(e) => onChange(e.target.value)}
-          className="w-full h-[2.626275rem] px-[0.875425rem] pr-10 border rounded-lg appearance-none text-[0.875425rem] focus:outline-none focus:ring-2 focus:ring-blue-500"
-          style={{
-            backgroundColor: 'rgb(var(--color-surface))',
-            color: value ? 'rgb(var(--color-text-primary))' : 'rgb(var(--color-text-muted))',
-            borderColor: error ? 'rgb(var(--color-error))' : 'rgb(var(--color-border))',
-          }}
-        >
-          <option value="">{t('common.chooseDots')}</option>
-          {categories.map((cat) => (
-            <option key={cat.id} value={cat.id}>{cat.name}</option>
-          ))}
-        </select>
-        <ChevronDown size={18} className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-blue-500" />
-      </div>
-
-      {/* Desktop : dropdown custom */}
-      <div className="hidden sm:block">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button
-              type="button"
-              className={`w-full flex items-center justify-between px-[0.875425rem] h-[2.626275rem] border rounded-lg focus:outline-none hover:border-[rgb(var(--color-border-strong))] focus:border-[rgb(var(--color-accent))] focus:ring-1 focus:ring-[rgb(var(--color-accent))] data-[state=open]:border-[rgb(var(--color-accent))] data-[state=open]:ring-1 data-[state=open]:ring-[rgb(var(--color-accent))] transition-all text-[0.875425rem] ${
-                error || shaking ? 'border-[rgb(var(--color-error))]' : (fromOkr ? 'border-[rgb(var(--color-accent-solid))] dark:border-[rgb(var(--color-accent-solid))]' : 'border-[rgb(var(--color-border))]')
-              } ${fromOkr ? 'bg-blue-50/50 dark:bg-blue-900/20' : ''}`}
-              style={{
-                backgroundColor: fromOkr ? undefined : 'rgb(var(--color-surface))',
-                color: value ? 'rgb(var(--color-text-primary))' : 'rgb(var(--color-text-muted))',
-                borderColor: error || shaking ? '#ef4444' : undefined,
-              }}
-            >
-              <span>{categories.find((c) => c.id === value)?.name || (value === 'okr' ? 'OKR' : t('common.chooseDots'))}</span>
-              <ChevronDown size={18} className="text-blue-500" />
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            align="start"
-            className="w-[var(--radix-dropdown-menu-trigger-width)] border-[rgb(var(--color-border))] p-1 shadow-xl"
-            style={{ backgroundColor: 'rgb(var(--color-surface))' }}
-          >
-            {value === 'okr' && !categories.find((c) => c.id === 'okr') && (
-              <DropdownMenuItem asChild>
-                <button
-                  type="button"
-                  onClick={() => onChange('okr')}
-                  className="w-full text-left px-4 py-3 text-base rounded-md transition-colors flex items-center gap-2 bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] shadow-sm"
-                >
-                  <div className="w-2 h-2 rounded-full bg-[rgb(var(--color-accent-solid))]" />
-                  OKR
-                </button>
-              </DropdownMenuItem>
-            )}
-            {categories.map((cat) => (
-              <DropdownMenuItem key={cat.id} asChild>
-                <button
-                  type="button"
-                  onClick={() => onChange(value === cat.id ? '' : cat.id)}
-                  className={`w-full text-left px-4 py-3 text-base rounded-md transition-colors flex items-center gap-2 ${
-                    value === cat.id
-                      ? 'bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] shadow-sm'
-                      : 'text-slate-700 dark:text-slate-200 hover:bg-[rgb(var(--color-accent-solid-hover))] hover:text-[rgb(var(--color-accent-solid-foreground))] dark:hover:bg-[rgb(var(--color-accent-solid-hover))]'
-                  }`}
-                >
-                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: cat.color }} />
-                  {cat.name}
-                </button>
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
+      <CategoryTreeSelect
+        value={value}
+        onChange={onChange}
+        categories={categories}
+        hasError={!!error}
+        shaking={shaking}
+        fromOkr={fromOkr}
+      />
 
       {showNewCategoryInput && (
         <div className="flex items-center gap-2 mt-2">

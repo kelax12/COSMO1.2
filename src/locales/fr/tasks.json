@@ -17,6 +17,12 @@
     "fallback": "Vérifie ta connexion internet, puis réessaie.",
     "retry": "Réessayer"
   },
+  "fields": {
+    "category": "Catégorie",
+    "categoryNone": "Aucune catégorie",
+    "categorySearch": "Rechercher une catégorie",
+    "categoryNoResult": "Aucune catégorie ne correspond"
+  },
   "actions": {
     "newTask": "Nouvelle tâche",
     "newTaskAria": "Créer une nouvelle tâche",
