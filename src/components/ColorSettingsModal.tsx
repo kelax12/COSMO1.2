@@ -91,6 +91,42 @@ export function planDeletions(removed: readonly Category[]): Category[] {
  * suppressions mises en attente puis abandonnées (fermeture sans enregistrer)
  * survivaient à la réouverture, et repartaient à la sauvegarde suivante.
  */
+/**
+ * Ce que la suppression de `targetId` fait à la liste EN COURS D'ÉDITION.
+ *
+ * 🔴 POURQUOI une fonction pure, hors du composant. La revue de la suppression
+ * de branche l'a relevé : rien n'exerçait ce branchement, et c'est le seul
+ * endroit du chantier où se tromper DÉTRUIT des données. Le sortir de l'état
+ * React le rend vérifiable sans monter un écran, comme `planCreations`.
+ *
+ * `promote` : les enfants DIRECTS prennent le parent du supprimé. Leur contenu
+ * ne bouge pas — ce ne sont pas eux qui disparaissent. `handleSave` verra ce
+ * changement de `parentId` comme n'importe quel « Déplacer vers… » et l'écrira
+ * AVANT la suppression du nœud : `ON DELETE NO ACTION` (mig. 143) refuserait
+ * sinon de supprimer un parent dont les enfants pointent encore dessus.
+ *
+ * `deleteBranch` : le nœud ET tous ses descendants partent.
+ */
+export function applyDeleteToDrafts(
+  drafts: readonly Category[],
+  targetId: string,
+  childrenMode: 'promote' | 'deleteBranch',
+): { next: Category[]; removedIds: string[] } {
+  if (childrenMode === 'deleteBranch') {
+    const removedIds = [targetId, ...descendantIdSet(targetId, drafts)];
+    const gone = new Set(removedIds);
+    return { next: drafts.filter((cat) => !gone.has(cat.id)), removedIds };
+  }
+
+  const parentId = drafts.find((c) => c.id === targetId)?.parentId ?? null;
+  return {
+    next: drafts
+      .filter((cat) => cat.id !== targetId)
+      .map((cat) => (cat.parentId === targetId ? { ...cat, parentId } : cat)),
+    removedIds: [targetId],
+  };
+}
+
 const ColorSettingsModalContent: React.FC<Omit<ColorSettingsModalProps, 'isOpen'>> = ({ onClose, isNested }) => {
   const { t } = useT('tasks');
   const { t: tCommon } = useT('common');
@@ -194,37 +230,18 @@ const ColorSettingsModalContent: React.FC<Omit<ColorSettingsModalProps, 'isOpen'
     if (!categoryToDelete) return;
     const targetId = categoryToDelete;
 
-    if (childrenMode === 'deleteBranch') {
-      // Toute la BRANCHE part : le nœud visé ET tous ses descendants. Chaque
-      // identifiant entre dans `reassignTargets` (donc dans `removed` puis
-      // `resolveReassignTargets` à l'enregistrement) : c'est ce qui fait
-      // retomber une destination emportée par la branche sur une catégorie
-      // qui survit (test de la tâche 6). Se contenter du seul nœud visé
-      // laisserait le contenu des descendants filer vers `NO_CATEGORY` par
-      // défaut, alors que la personne a choisi une destination pour TOUT.
-      const branchIds = [targetId, ...descendantIdSet(targetId, localCategories)];
-      setReassignTargets(prev => {
-        const next = { ...prev };
-        for (const id of branchIds) next[id] = reassignTo;
-        return next;
-      });
-      setLocalCategories(prev => prev.filter(cat => !branchIds.includes(cat.id)));
-    } else {
-      // « Remonter d'un cran » : les enfants DIRECTS prennent le parent du
-      // supprimé — leur contenu ne bouge PAS, ce ne sont pas eux qui
-      // disparaissent. `handleSave` détecte ce changement de `parentId` comme
-      // n'importe quel « Déplacer vers… » (tâche 9) et l'écrit via
-      // `useMoveCategory`, AVANT de supprimer le nœud lui-même : le FK
-      // `ON DELETE NO ACTION` refuserait sinon la suppression tant que ces
-      // enfants pointent encore dessus.
-      const parentId = localCategories.find(c => c.id === targetId)?.parentId ?? null;
-      setLocalCategories(prev =>
-        prev
-          .filter(cat => cat.id !== targetId)
-          .map(cat => (cat.parentId === targetId ? { ...cat, parentId } : cat)),
-      );
-      setReassignTargets(prev => ({ ...prev, [targetId]: reassignTo }));
-    }
+    // La transition d'état vit dans `applyDeleteToDrafts`, vérifiable sans
+    // monter d'écran. Ici on ne fait que l'appliquer et enregistrer où part le
+    // contenu de chaque identifiant retiré : c'est cette liste complète que
+    // `resolveReassignTargets` suit à l'enregistrement pour ne jamais renvoyer
+    // vers une catégorie emportée par la même branche.
+    const { next, removedIds } = applyDeleteToDrafts(localCategories, targetId, childrenMode);
+    setLocalCategories(next);
+    setReassignTargets(prev => {
+      const updated = { ...prev };
+      for (const id of removedIds) updated[id] = reassignTo;
+      return updated;
+    });
 
     setCategoryToDelete(null);
   };
