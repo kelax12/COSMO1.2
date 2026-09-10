@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { planCreations, planDeletions } from './ColorSettingsModal';
+import { applyDeleteToDrafts, planCreations, planDeletions } from './ColorSettingsModal';
 import type { Category } from '@/modules/categories';
 
 const draft = (id: string, parentId: string | null): Category => ({
@@ -77,5 +77,71 @@ describe('planDeletions', () => {
     // d'abord, racine en dernier — pas un ordre arbitraire qui satisferait
     // les deux inégalités ci-dessus par accident sur un lot de longueur 3.
     expect(plan.map((c) => c.id)).toEqual(['leaf', 'branch', 'root']);
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════
+// Le sort des enfants quand on supprime leur parent
+// ═══════════════════════════════════════════════════════════════════
+//
+// 🔴 POURQUOI CES TESTS EXISTENT. La revue de la suppression de branche a
+// relevé que RIEN n'exerçait ce branchement, alors que c'est le seul endroit du
+// chantier où se tromper DÉTRUIT des données : choisir la mauvaise issue
+// déplace des tâches qui n'avaient aucune raison de bouger.
+//
+//        travail
+//          ├── seo
+//          │    └── backlinks
+//          └── design
+describe('applyDeleteToDrafts', () => {
+  const cat = (id: string, parentId: string | null): Category => ({
+    id, name: id, color: '#000', parentId, position: 0,
+  });
+  const ARBRE = [
+    cat('travail', null),
+    cat('seo', 'travail'),
+    cat('backlinks', 'seo'),
+    cat('design', 'travail'),
+  ];
+
+  it('« remonter » retire le nœud et raccroche ses enfants à SON parent', () => {
+    const { next, removedIds } = applyDeleteToDrafts(ARBRE, 'seo', 'promote');
+    expect(next.map((c) => c.id).sort()).toEqual(['backlinks', 'design', 'travail']);
+    // backlinks passe sous travail, le parent de seo — pas à la racine.
+    expect(next.find((c) => c.id === 'backlinks')?.parentId).toBe('travail');
+    // Seul le nœud visé est reclassé : le contenu des enfants ne bouge pas.
+    expect(removedIds).toEqual(['seo']);
+  });
+
+  it('« remonter » sur une RACINE rend ses enfants racines à leur tour', () => {
+    const { next } = applyDeleteToDrafts(ARBRE, 'travail', 'promote');
+    expect(next.find((c) => c.id === 'seo')?.parentId).toBeNull();
+    expect(next.find((c) => c.id === 'design')?.parentId).toBeNull();
+  });
+
+  it('« supprimer la branche » emporte le nœud ET tous ses descendants', () => {
+    const { next, removedIds } = applyDeleteToDrafts(ARBRE, 'seo', 'deleteBranch');
+    expect(next.map((c) => c.id).sort()).toEqual(['design', 'travail']);
+    // 🔴 Les DEUX identifiants doivent être reclassés : sans backlinks dans la
+    // liste, le contenu des descendants filerait vers « aucune catégorie »
+    // alors que la personne a choisi une destination pour TOUT.
+    expect(removedIds.sort()).toEqual(['backlinks', 'seo']);
+  });
+
+  // ─── TÉMOIN ────────────────────────────────────────────────────────
+  // Les deux issues doivent DIVERGER. Une implémentation qui traiterait
+  // « remonter » comme « supprimer la branche » passerait les cas ci-dessus
+  // sur un nœud sans enfant, et détruirait des données sur les autres.
+  it('TÉMOIN : les deux issues ne rendent pas le même résultat', () => {
+    const promote = applyDeleteToDrafts(ARBRE, 'seo', 'promote');
+    const branche = applyDeleteToDrafts(ARBRE, 'seo', 'deleteBranch');
+    expect(promote.next.map((c) => c.id).sort()).not.toEqual(branche.next.map((c) => c.id).sort());
+    expect(promote.removedIds).not.toEqual(branche.removedIds);
+  });
+
+  it('ne mute jamais le tableau reçu', () => {
+    const copie = JSON.parse(JSON.stringify(ARBRE));
+    applyDeleteToDrafts(ARBRE, 'seo', 'deleteBranch');
+    expect(ARBRE).toEqual(copie);
   });
 });
