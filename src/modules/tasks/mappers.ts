@@ -12,7 +12,8 @@ export interface TaskRow {
   name: string;
   description?: string;
   priority: number;
-  category: string;
+  // Depuis la mig. 145 : NULL en base = aucune categorie.
+  category: string | null;
   deadline: string | null;
   estimated_time: number;
   created_at?: string;
@@ -35,7 +36,7 @@ export interface TaskDbInput {
   name?: string;
   description?: string;
   priority?: number;
-  category?: string;
+  category?: string | null;
   deadline?: string | null;
   estimated_time?: number;
   bookmarked?: boolean;
@@ -87,7 +88,14 @@ export function mapTaskToDb(input: Partial<Task>): TaskDbInput {
   if (input.name !== undefined) result.name = input.name;
   if (input.description !== undefined) result.description = input.description;
   if (input.priority !== undefined) result.priority = input.priority;
-  if (input.category !== undefined) result.category = input.category;
+  // 🔴 `''` (NO_CATEGORY côté TypeScript) devient NULL en base depuis la
+  // mig. 145 : une clé étrangère ne peut pas référencer la chaîne vide.
+  // ⚠️ La conversion vit ICI, et NULLE PART AILLEURS. Propager `null` jusqu'aux
+  // composants imposerait de revoir des dizaines de comparaisons
+  // `t.category === ...` pour un gain nul, et créerait DEUX marqueurs d'absence
+  // à vérifier partout — exactement ce que le commentaire d'`impact.ts`
+  // interdit.
+  if (input.category !== undefined) result.category = input.category === '' ? null : input.category;
   // Échéance facultative : une chaîne vide signifie « pas de date » → NULL
   // en base (la colonne deadline est un timestamp, '' n'est pas valide).
   if (input.deadline !== undefined) result.deadline = input.deadline ? input.deadline : null;

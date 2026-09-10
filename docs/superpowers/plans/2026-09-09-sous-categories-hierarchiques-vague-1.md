@@ -74,7 +74,7 @@ npx vitest run src/modules/categories/tree.test.ts
 | `src/components/TaskFilter.tsx` | **Modifier.** Filtre arborescent, descendants inclus | 12 |
 | `src/components/TaskCategoryIndicator.tsx` | **Modifier.** Chemin en infobulle | 13 |
 | `src/modules/categories/repository.ts` (seeds) | **Modifier.** Seeds démo arborescents | 14 |
-| `supabase/migration/144_categories_fk.sql` | **Créer.** Nettoyage, conversion UUID, clé étrangère | 16 |
+| `supabase/migration/145_categories_fk.sql` | **Créer.** Nettoyage, conversion UUID, clé étrangère | 16 |
 | `src/modules/tasks/supabase.repository.ts` | **Modifier.** `''` ↔ `NULL` au mapping | 16 |
 | `src/modules/okrs/supabase.repository.ts` | **Modifier.** Idem | 16 |
 
@@ -481,15 +481,17 @@ Créer `supabase/migration/143_categories_tree.sql` :
 -- ═══════════════════════════════════════════════════════════════════
 
 ALTER TABLE public.categories
-  ADD COLUMN IF NOT EXISTS parent_id UUID REFERENCES public.categories(id) ON DELETE RESTRICT,
+  ADD COLUMN IF NOT EXISTS parent_id UUID REFERENCES public.categories(id) ON DELETE NO ACTION,
   ADD COLUMN IF NOT EXISTS position  INTEGER NOT NULL DEFAULT 0;
 
--- 🔴 ON DELETE RESTRICT, jamais CASCADE. Supprimer un parent ne doit pas
--- emporter sa branche en silence : la base refuse, ce qui force l'application
--- à avoir pris explicitement la décision « remonter les enfants » ou
--- « supprimer la branche ».
+-- 🔴 NI CASCADE, NI RESTRICT : `NO ACTION`. La nuance decide d'un chemin RGPD.
+-- `RESTRICT` se verifie IMMEDIATEMENT, ligne par ligne, donc il refuse une
+-- suppression groupee ou parent et enfants partent ensemble : `delete-account`
+-- et la cascade depuis `auth.users` echoueraient des qu'un compte a une seule
+-- sous-categorie, bloquant la suppression de compte (regression B9, RGPD art. 17).
+-- `NO ACTION` verifie en FIN DE REQUETE : meme garantie, sans le blocage.
 COMMENT ON COLUMN public.categories.parent_id IS
-  'Catégorie parente. NULL = racine. RESTRICT : la suppression d''un parent est refusée tant qu''il a des enfants.';
+  'Catégorie parente. NULL = racine. NO ACTION : supprimer un parent en laissant ses enfants est refusé en fin de requête, mais une branche entière peut partir dans un seul DELETE (suppression de compte).';
 
 CREATE INDEX IF NOT EXISTS idx_categories_parent
   ON public.categories(user_id, parent_id);
@@ -528,6 +530,7 @@ DECLARE
   ancestor_owner  UUID;
   depth           INTEGER := 1;
   hops            INTEGER := 0;
+  branch_height   INTEGER := 1;
 BEGIN
   IF NEW.parent_id IS NULL THEN
     RETURN NEW;
@@ -559,6 +562,31 @@ BEGIN
     SELECT parent_id INTO ancestor FROM public.categories WHERE id = ancestor;
     hops := hops + 1;
   END LOOP;
+
+  -- 🔴 LA PROFONDEUR DU NŒUD ÉCRIT NE SUFFIT PAS.
+  -- La boucle ci-dessus ne mesure que `NEW`. Déplacer une branche haute de 4
+  -- crans sous un nœud au niveau 8 met ses FEUILLES au niveau 12, alors que
+  -- `NEW` lui-même n'atteint que 9 : le trigger ne se déclenche pas, puisque
+  -- les lignes descendantes ne sont pas écrites et ne le font donc jamais
+  -- partir. Il faut ajouter la HAUTEUR de la branche déplacée.
+  -- (Défaut trouvé en revue de code sur le module client `tree.ts`, qui portait
+  -- exactement la même erreur ; `wouldExceedMaxDepth` en est le miroir.)
+  --
+  -- ⚠️ `depth < 64` borne la descente : le trigger interdit les cycles, mais
+  -- une base restaurée ne doit pas pouvoir faire boucler une CTE récursive.
+  WITH RECURSIVE branch(id, depth) AS (
+    SELECT NEW.id, 1
+    UNION ALL
+    SELECT c.id, b.depth + 1
+      FROM public.categories c
+      JOIN branch b ON c.parent_id = b.id
+     WHERE b.depth < 64
+  )
+  SELECT max(depth) INTO branch_height FROM branch;
+
+  IF depth + COALESCE(branch_height, 1) - 1 > 10 THEN
+    RAISE EXCEPTION 'Category nesting is limited to 10 levels';
+  END IF;
 
   RETURN NEW;
 END;
@@ -654,6 +682,10 @@ BEGIN;
 -- 3. un cycle à trois maillons est refusé
 -- 4. un parent appartenant à un autre compte est refusé
 -- 5. la profondeur 11 est refusée, la 10 acceptée
+-- 5bis. 🔴 DÉPLACER une branche haute de 4 crans sous un nœud au niveau 8 est
+--       REFUSÉ (ses feuilles atteindraient 12). C'est le cas que la seule
+--       profondeur du nœud écrit laisse passer, et il ne se teste QUE par un
+--       UPDATE de `parent_id`, jamais par un INSERT.
 -- 6. deux racines de même nom sont refusées (ux_categories_root_name)
 -- 7. deux sœurs de même nom sont refusées, deux « Design » sous deux parents
 --    différents sont acceptées
@@ -810,7 +842,7 @@ export const DEFAULT_CATEGORY_COLOR = '#3B82F6';
 Dans `src/modules/categories/repository.ts`, ajouter en tête les imports :
 
 ```typescript
-import { CATEGORY_MAX_DEPTH, treeDepth, wouldCreateCycle } from './tree';
+import { wouldCreateCycle, wouldExceedMaxDepth } from './tree';
 import { DEFAULT_CATEGORY_COLOR } from './constants';
 ```
 
@@ -832,11 +864,11 @@ Ajouter dans la classe `LocalStorageCategoriesRepository`, avant `create` :
     if (!categories.some((c) => c.id === parentId)) throw makeApiError('not_found');
     if (wouldCreateCycle(id, parentId, categories)) throw makeApiError('validation');
 
-    const projected = categories.map((c) => (c.id === id ? { ...c, parentId } : c));
-    if (!projected.some((c) => c.id === id)) {
-      projected.push({ id, name: '', color: '', parentId, position: 0 });
-    }
-    if (treeDepth(id, projected) > CATEGORY_MAX_DEPTH) throw makeApiError('validation');
+    // 🔴 `treeDepth(id) > CATEGORY_MAX_DEPTH` NE SUFFIT PAS : ça ne mesure que
+    // le nœud écrit, donc déplacer une branche haute de 4 crans sous un nœud au
+    // niveau 8 passerait, en mettant ses feuilles au niveau 12.
+    // `wouldExceedMaxDepth` ajoute la hauteur de la branche déplacée.
+    if (wouldExceedMaxDepth(id, parentId, categories)) throw makeApiError('validation');
   }
 ```
 
@@ -892,7 +924,7 @@ Remplacer `delete` :
   async delete(id: string): Promise<void> {
     const categories = this.getCategories();
 
-    // Miroir du ON DELETE RESTRICT de la mig. 143 : une branche ne part jamais
+    // Miroir du ON DELETE NO ACTION de la mig. 143 : une branche ne part jamais
     // en silence. L'appelant doit avoir décidé du sort des enfants.
     if (categories.some((c) => c.parentId === id)) {
       throw makeApiError('validation');
@@ -2093,7 +2125,7 @@ Dans `ColorSettingsModal`, `confirmDeleteLocal(reassignTo, childrenMode)` :
 - `promote` : chaque enfant direct prend le `parentId` du supprimé, puis le nœud est retiré de l'état local.
 - `deleteBranch` : le nœud **et tous ses descendants** sont retirés, et **tous leurs identifiants** entrent dans `removed`, donc dans `resolveReassignTargets`. C'est ce qui fait retomber une destination emportée par la branche sur une catégorie qui survit (test de la tâche 6).
 
-🔴 À l'enregistrement, une branche se supprime **des feuilles vers la racine** : `ON DELETE RESTRICT` refuse l'ordre inverse. Trier les suppressions par profondeur **décroissante**, ce qui s'obtient en inversant `orderByDepth`.
+🔴 À l'enregistrement, une branche se supprime **des feuilles vers la racine** : l'application écrit une suppression par catégorie, en requêtes séparées, et `ON DELETE NO ACTION` refuse alors l'ordre inverse. Trier les suppressions par profondeur **décroissante**, ce qui s'obtient en inversant `orderByDepth`.
 
 - [ ] **Step 4: Vérifier dans le navigateur**
 
@@ -2360,9 +2392,16 @@ export function matchesCategoryFilter(
 ): boolean {
   if (selected === '') return true;
   if (taskCategory === selected) return true;
-  return descendantIds(selected, categories).includes(taskCategory);
+  return descendantIdSet(selected, categories).has(taskCategory);
 }
 ```
+
+⚠️ **Hisser le `Set` hors de la boucle** dans le composant. Appelée telle quelle
+pour chaque tâche, cette fonction refait le parcours de la branche à chaque
+élément filtré : le coût devient quadratique en catégories alors qu'il est plat
+si le `Set` est calculé une fois. Dans `TaskFilter`, mémoriser
+`useMemo(() => descendantIdSet(selected, categories), [selected, categories])`
+et passer le `Set` au prédicat.
 
 Remplacer la liste plate de catégories du filtre par le même rendu d'arbre repliable que la modale, en réutilisant `buildTree`.
 
@@ -2537,22 +2576,22 @@ git commit -am "fix(categories): corrections issues de la verification intermedi
 
 ---
 
-## Task 16: Migration `144` · la clé étrangère
+## Task 16: Migration `145` · la clé étrangère
 
 ⚠️ **En dernier, et volontairement séparable.** Si elle doit être reportée, tout ce qui précède reste livrable et cohérent.
 
 **Files:**
-- Create: `supabase/migration/144_categories_fk.sql`
+- Create: `supabase/migration/145_categories_fk.sql`
 - Modify: `src/modules/tasks/supabase.repository.ts`
 - Modify: `src/modules/okrs/supabase.repository.ts`
 
 - [ ] **Step 1: Écrire la migration**
 
-Créer `supabase/migration/144_categories_fk.sql` :
+Créer `supabase/migration/145_categories_fk.sql` :
 
 ```sql
 -- ═══════════════════════════════════════════════════════════════════
--- Migration 144 — `tasks.category` et `okrs.category` deviennent de vraies FK
+-- Migration 145 — `tasks.category` et `okrs.category` deviennent de vraies FK
 --
 -- POURQUOI (risque R-02, revue du 2026-09-02)
 -- Aucune clé étrangère ne pointait vers `categories`. Supprimer une catégorie
@@ -2563,7 +2602,7 @@ Créer `supabase/migration/144_categories_fk.sql` :
 -- La réaffectation avant suppression (`useReassignCategory`) tient cette
 -- garantie côté APPLICATION. Cette migration la fait tenir par la BASE.
 --
--- ⚠️ ON DELETE SET NULL, pas RESTRICT : la réaffectation reste le chemin
+-- ⚠️ ON DELETE SET NULL, pas NO ACTION : la réaffectation reste le chemin
 -- normal, le SET NULL n'est que le filet de dernier recours. Il ne remplace
 -- pas le dialogue qui demande où partent les éléments.
 --
@@ -2625,7 +2664,7 @@ CREATE INDEX IF NOT EXISTS idx_okrs_category  ON public.okrs(category);
 Dans `src/modules/tasks/supabase.repository.ts`, au mapping de lecture :
 
 ```typescript
-      // La base porte NULL depuis la mig. 144 ; le modèle client porte la
+      // La base porte NULL depuis la mig. 145 ; le modèle client porte la
       // chaîne vide (NO_CATEGORY). La conversion vit ICI, et nulle part ailleurs.
       category: row.category ?? '',
 ```
@@ -2643,7 +2682,7 @@ Faire la même chose dans `src/modules/okrs/supabase.repository.ts`.
 Ajouter dans `src/modules/tasks/supabase.repository.test.ts` :
 
 ```typescript
-describe('mapping de category (mig. 144)', () => {
+describe('mapping de category (mig. 145)', () => {
   it('lit NULL comme la chaîne vide', async () => {
     expect((await readSingleRow({ ...ROW, category: null })).category).toBe('');
   });
@@ -2687,7 +2726,7 @@ CREATE TEMP TABLE before_fp AS
   SELECT id, category FROM public.tasks
    WHERE category <> '' AND category IN (SELECT id::text FROM public.categories);
 
--- … jouer ici le contenu de 144_categories_fk.sql …
+-- … jouer ici le contenu de 145_categories_fk.sql …
 
 -- 1. Zéro orphelin après
 -- 2. Aucune tâche non orpheline n'a changé de catégorie :
@@ -2701,8 +2740,8 @@ RAISE EXCEPTION 'rollback volontaire';
 - [ ] **Step 7: Commit**
 
 ```bash
-git add supabase/migration/144_categories_fk.sql src/modules/tasks/supabase.repository.ts src/modules/okrs/supabase.repository.ts src/modules/tasks/supabase.repository.test.ts
-git commit -m "feat(db): migration 144, cle etrangere de category vers categories"
+git add supabase/migration/145_categories_fk.sql src/modules/tasks/supabase.repository.ts src/modules/okrs/supabase.repository.ts src/modules/tasks/supabase.repository.test.ts
+git commit -m "feat(db): migration 145, cle etrangere de category vers categories"
 ```
 
 - [ ] **Step 8: Appliquer en production, hors heure de pointe, après accord d'Axel**
@@ -2783,7 +2822,7 @@ Attendu : code 0, avec `VITE_SENTRY_DSN` défini au build.
 
 - [ ] **Step 6: Mettre la documentation à jour**
 
-Dans `CLAUDE.md`, section « Base de données Supabase », ajouter les migrations `143` et `144` avec leur date d'application réelle et ce qui a été vérifié.
+Dans `CLAUDE.md`, section « Base de données Supabase », ajouter les migrations `143`, `144` et `145` avec leur date d'application réelle et ce qui a été vérifié.
 
 🔴 **Ne jamais écrire « appliquée » sans la date**, et ne jamais recopier un « avant » depuis un tableau plus ancien : il se reconstruit à un commit nommé.
 
@@ -2791,7 +2830,7 @@ Dans `CLAUDE.md`, section « Base de données Supabase », ajouter les migration
 
 ```bash
 git add CLAUDE.md
-git commit -m "docs: migrations 143 et 144 appliquees, sous-categories livrees"
+git commit -m "docs: migrations 143 a 145 appliquees, sous-categories livrees"
 ```
 
 ---
@@ -2804,7 +2843,7 @@ git commit -m "docs: migrations 143 et 144 appliquees, sous-categories livrees"
 | §2.2 absence de clé étrangère | 16 |
 | §2.3 éditeur par lot | 8 |
 | §3.1 migration 143 | 2 |
-| §3.2 migration 144 | 16 |
+| §3.2 migration 145 | 16 |
 | §4.1 types | 3 |
 | §4.2 `tree.ts` | 1 |
 | §4.3 `NO_CATEGORY` reste `''` | 16 |

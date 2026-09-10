@@ -52,6 +52,12 @@ import type { ITeamProjectsRepository } from '@/modules/team-projects/repository
 import type { ITeamOKRsRepository } from '@/modules/team-okrs/repository';
 import type { IOrgTeamsRepository } from '@/modules/org-teams/repository';
 
+import type { ICategoriesRepository } from '@/modules/categories/repository';
+import { LocalStorageCategoriesRepository } from '@/modules/categories/local.repository';
+
+export const createDemoCategoriesRepository = (): ICategoriesRepository =>
+  new LocalStorageCategoriesRepository();
+
 export const createDemoOrganizationsRepository = (): IOrganizationsRepository =>
   new LocalStorageOrganizationsRepository();
 

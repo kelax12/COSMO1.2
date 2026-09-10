@@ -26,6 +26,8 @@
 
 import type { Task } from '@/modules/tasks/types';
 import type { OKR } from '@/modules/okrs/types';
+import type { Category } from './types';
+import { descendantIdSet } from './tree';
 
 export interface CategoryImpact {
   /** Tâches qui portent cette catégorie. */
@@ -73,6 +75,60 @@ export function categoryDependents(
     okrIds: okrs.filter((o) => o.category === categoryId).map((o) => o.id),
   };
 }
+
+/** Impact d'une suppression de BRANCHE : le nœud et tous ses descendants. */
+export interface BranchImpact extends CategoryImpact {
+  /** Sous-catégories emportées, le nœud lui-même exclu. */
+  subcategories: number;
+}
+
+/**
+ * Ce que la suppression de la BRANCHE de `categoryId` laisserait orphelin.
+ *
+ * 🔴 Compter le seul nœud visé donnerait un chiffre faux dans la boîte de
+ * confirmation : supprimer « Travail » emporte aussi les tâches rangées dans
+ * « Travail › SEO ». Annoncer moins que ce qu'on supprime est exactement le
+ * défaut que R-02 ferme, transposé à la profondeur ajoutée par les
+ * sous-catégories.
+ *
+ * La traversée elle-même est déléguée à `descendantIdSet` (`./tree`) : c'est
+ * le seul endroit du dépôt qui connaît les règles de l'arbre (cycles
+ * compris), et une seconde implémentation ici finirait par diverger de la
+ * première changement après changement.
+ */
+export function branchImpact(
+  categoryId: string | null | undefined,
+  tasks: readonly Task[],
+  okrs: readonly OKR[],
+  categories: readonly Category[],
+): BranchImpact {
+  if (!categoryId) return { ...EMPTY_IMPACT, subcategories: 0 };
+
+  const descendants = descendantIdSet(categoryId, categories);
+  const ids = new Set<string>([categoryId, ...descendants]);
+  const taskCount = tasks.filter((t) => ids.has(t.category)).length;
+  const okrCount = okrs.filter((o) => ids.has(o.category)).length;
+
+  return {
+    tasks: taskCount,
+    okrs: okrCount,
+    total: taskCount + okrCount,
+    subcategories: descendants.size,
+  };
+}
+
+// ⚠️ IL N'Y A PAS DE `branchDependents` ICI, ET C'EST VOLONTAIRE.
+//
+// Une fonction de ce nom a existé un temps, écrite pour la suppression de
+// branche. Elle n'a jamais été appelée : `ColorSettingsModal` retire du lot
+// TOUS les identifiants de la branche, puis réaffecte en bouclant
+// `categoryDependents` sur chacun. Le résultat est le même, en une fonction de
+// moins.
+//
+// Elle est retirée plutôt que câblée parce qu'un export que rien ne monte est
+// du code NON ÉPROUVÉ — la règle que `orphan-hooks.guard` applique aux hooks
+// vaut ici. Le message du commit qui l'a introduite affirmait qu'elle était
+// branchée ; elle ne l'était pas, et la revue l'a relevé.
 
 /**
  * Valeur écrite quand on choisit « aucune catégorie ».

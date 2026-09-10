@@ -1,39 +1,18 @@
 // ═══════════════════════════════════════════════════════════════════
-// CATEGORIES MODULE - Repository Pattern Implementation
+// CATEGORIES MODULE - Repository (interface seule)
 // ═══════════════════════════════════════════════════════════════════
+//
+// ⚠️ CE FICHIER NE PORTE PLUS QUE L'INTERFACE, et c'est délibéré.
+// L'implémentation LocalStorage vit dans `./local.repository.ts`, chargée à la
+// demande par `src/lib/demo-repositories.ts`. Les remettre ensemble ferait
+// repartir les seeds de démonstration dans le chunk d'entrée, payé par chaque
+// visiteur. La raison complète est en tête de `local.repository.ts`.
+//
+// 🔴 N'ajouter ici QUE des méthodes asynchrones : le mandataire différé du
+// factory suppose une interface 100 % asynchrone.
 
 import { Category, CreateCategoryInput, UpdateCategoryInput } from './types';
-import { CATEGORIES_STORAGE_KEY } from './constants';
-import { localizeSeed } from '@/lib/seed-i18n';
 import type { CreateOptions } from '@/lib/restore-id';
-import { safeGetItem, safeParseArray, writeJsonOrThrow } from '@/lib/safe-json';
-import { makeApiError } from '@/lib/normalizeApiError';
-
-// ═══════════════════════════════════════════════════════════════════
-// DEMO DATA
-// ═══════════════════════════════════════════════════════════════════
-
-const DEMO_CATEGORIES: Category[] = [
-  { id: 'cat-1', name: 'Travail', color: '#3B82F6' },
-  { id: 'cat-2', name: 'Personnel', color: '#10B981' },
-  { id: 'cat-3', name: 'Santé', color: '#EF4444' },
-  { id: 'cat-4', name: 'Apprentissage', color: '#8B5CF6' },
-  { id: 'cat-5', name: 'Projets', color: '#F97316' },
-];
-
-// Overlay anglais — cf. src/lib/seed-i18n.ts. Ces labels sont la source
-// unique du nom de catégorie : task.category / habit ne stockent qu'un id.
-const DEMO_CATEGORIES_EN: Record<string, Partial<Category>> = {
-  'cat-1': { name: 'Work' },
-  'cat-2': { name: 'Personal' },
-  'cat-3': { name: 'Health' },
-  'cat-4': { name: 'Learning' },
-  'cat-5': { name: 'Projects' },
-};
-
-// ═══════════════════════════════════════════════════════════════════
-// REPOSITORY INTERFACE
-// ═══════════════════════════════════════════════════════════════════
 
 export interface ICategoriesRepository {
   // Read operations
@@ -42,81 +21,4 @@ export interface ICategoriesRepository {
   create(input: CreateCategoryInput, options?: CreateOptions): Promise<Category>;
   update(id: string, updates: UpdateCategoryInput): Promise<Category>;
   delete(id: string): Promise<void>;
-}
-
-// ═══════════════════════════════════════════════════════════════════
-// LOCAL STORAGE REPOSITORY IMPLEMENTATION
-// ═══════════════════════════════════════════════════════════════════
-
-export class LocalStorageCategoriesRepository implements ICategoriesRepository {
-  /**
-   * Get all categories from localStorage (or initialize with demo data)
-   */
-  private getCategories(): Category[] {
-    const stored = safeParseArray<Category>(safeGetItem(CATEGORIES_STORAGE_KEY));
-    // Corrompu ou stockage indisponible : on re-seme plutot que de faire
-    // tomber la page (regle B14, helper `safeParseArray`).
-    if (!stored) {
-      const seeded = localizeSeed(DEMO_CATEGORIES, DEMO_CATEGORIES_EN);
-      this.saveCategories(seeded);
-      return seeded;
-    }
-    return stored;
-  }
-
-  /**
-   * Save categories to localStorage
-   */
-  private saveCategories(categories: Category[]): void {
-    writeJsonOrThrow(CATEGORIES_STORAGE_KEY, categories);
-  }
-
-  // ═══════════════════════════════════════════════════════════════════
-  // READ OPERATIONS
-  // ═══════════════════════════════════════════════════════════════════
-
-  async getAll(): Promise<Category[]> {
-    return this.getCategories();
-  }
-
-  // ═══════════════════════════════════════════════════════════════════
-  // WRITE OPERATIONS
-  // ═══════════════════════════════════════════════════════════════════
-
-  async create(input: CreateCategoryInput, options?: CreateOptions): Promise<Category> {
-    const categories = this.getCategories();
-    const newCategory: Category = {
-      ...input,
-      // Parite avec le repository Supabase : `restoreId` vient d'un
-      // « Annuler », jamais d'un formulaire (R-08).
-      id: options?.restoreId ?? crypto.randomUUID(),
-    };
-    this.saveCategories([...categories, newCategory]);
-    return newCategory;
-  }
-
-  async update(id: string, updates: UpdateCategoryInput): Promise<Category> {
-    const categories = this.getCategories();
-    const index = categories.findIndex(c => c.id === id);
-
-    if (index === -1) {
-      throw makeApiError('not_found');
-    }
-
-    const updatedCategory: Category = { ...categories[index], ...updates };
-    categories[index] = updatedCategory;
-    this.saveCategories(categories);
-    return updatedCategory;
-  }
-
-  async delete(id: string): Promise<void> {
-    const categories = this.getCategories();
-    const filtered = categories.filter(c => c.id !== id);
-
-    if (filtered.length === categories.length) {
-      throw makeApiError('not_found');
-    }
-
-    this.saveCategories(filtered);
-  }
 }

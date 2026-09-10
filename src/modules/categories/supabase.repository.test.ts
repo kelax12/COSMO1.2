@@ -16,14 +16,88 @@ const row = { id: 'cat1', name: 'Travail', color: 'blue', user_id: 'u1' };
 beforeEach(() => supabaseMock.reset());
 
 describe('SupabaseCategoriesRepository', () => {
-  it('getAll: orders by name asc with the documented 200 cap', async () => {
-    supabaseMock.queueTable('categories', { data: [row] });
+  it('getAll: orders by position then name asc, with the documented 200 cap', async () => {
+    supabaseMock.queueTable('categories', {
+      data: [{ ...row, parent_id: null, position: 0 }],
+    });
     const result = await repo.getAll();
 
-    expect(supabaseMock.argsOf('categories', 'order')).toEqual(['name', { ascending: true }]);
+    // Le tri se fait par fratrie (position) puis par nom : deux `.order()`
+    // chaînés. `argsOf` ne renvoie que le PREMIER appel d'une méthode donnée,
+    // donc on relit la chaîne complète pour vérifier les deux, dans l'ordre.
+    const orderCalls = supabaseMock
+      .callsFor('categories')
+      .filter((c) => c.method === 'order')
+      .map((c) => c.args);
+    expect(orderCalls).toEqual([
+      ['position', { ascending: true }],
+      ['name', { ascending: true }],
+    ]);
     expect(supabaseMock.argsOf('categories', 'limit')).toEqual([200]);
     // user_id n'est PAS exposé dans le domaine
-    expect(result).toEqual([{ id: 'cat1', name: 'Travail', color: 'blue' }]);
+    expect(result).toEqual([
+      { id: 'cat1', name: 'Travail', color: 'blue', parentId: null, position: 0 },
+    ]);
+  });
+
+  describe('SupabaseCategoriesRepository — arbre', () => {
+    it('lit parent_id et position depuis la base', async () => {
+      supabaseMock.queueTable('categories', {
+        data: [{ id: 'c1', name: 'SEO', color: '#000', parent_id: 'c0', position: 2 }],
+      });
+      const result = await repo.getAll();
+
+      expect(result).toEqual([
+        { id: 'c1', name: 'SEO', color: '#000', parentId: 'c0', position: 2 },
+      ]);
+    });
+
+    it('rend parentId null quand la colonne est NULL', async () => {
+      supabaseMock.queueTable('categories', {
+        data: [{ id: 'c1', name: 'SEO', color: '#000', parent_id: null, position: 0 }],
+      });
+      const result = await repo.getAll();
+
+      expect(result[0].parentId).toBeNull();
+    });
+
+    it('écrit parent_id et position à la création', async () => {
+      supabaseMock.queueTable('categories', {
+        data: { id: 'c1', name: 'SEO', color: '#000', parent_id: 'c0', position: 3 },
+      });
+      await repo.create({ name: 'SEO', color: '#000', parentId: 'c0', position: 3 });
+
+      const inserted = (supabaseMock.argsOf('categories', 'insert')?.[0] as Record<string, unknown>[])[0];
+      expect(inserted.parent_id).toBe('c0');
+      expect(inserted.position).toBe(3);
+    });
+
+    // 🔴 La whitelist mapToDb reste une FRONTIÈRE : un champ non listé ne doit
+    // jamais atteindre la base, `user_id` en premier lieu.
+    it("n'envoie jamais user_id depuis le payload", async () => {
+      supabaseMock.queueTable('categories', { data: row });
+      const forged = { name: 'X', color: '#000', user_id: 'autre' } as unknown as CreateCategoryInput;
+      await repo.create(forged);
+
+      const inserted = (supabaseMock.argsOf('categories', 'insert')?.[0] as Record<string, unknown>[])[0];
+      expect(inserted.user_id).not.toBe('autre');
+      expect(inserted.user_id).toBe(supabaseMock.user?.id);
+    });
+
+    it('écrit parent_id à null quand on remonte une catégorie à la racine', async () => {
+      supabaseMock.queueTable('categories', {
+        data: { id: 'c1', name: 'SEO', color: '#000', parent_id: null, position: 0 },
+      });
+      // ⚠️ `parentId: null` est une valeur SIGNIFIANTE (« remonter à la
+      // racine »). Un `mapToDb` écrit avec un test de vérité JavaScript
+      // (`if (input.parentId)`) laisserait tomber ce cas — `null` étant
+      // falsy — et cette assertion doit donc échouer contre cette implémentation.
+      await repo.update('c1', { parentId: null });
+
+      const payload = supabaseMock.argsOf('categories', 'update')?.[0] as Record<string, unknown>;
+      expect('parent_id' in payload).toBe(true);
+      expect(payload.parent_id).toBeNull();
+    });
   });
 
   it('create: whitelists fields — extra/forged input keys are dropped, user_id comes from auth', async () => {

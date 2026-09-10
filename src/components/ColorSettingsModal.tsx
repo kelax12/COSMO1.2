@@ -1,6 +1,18 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { X, Plus, Trash2 } from 'lucide-react';
-import { useCategories, useCreateCategory, useUpdateCategory, useDeleteCategory, Category } from '@/modules/categories';
+import { X, Plus } from 'lucide-react';
+import {
+  useCategories,
+  useCreateCategory,
+  useUpdateCategory,
+  useMoveCategory,
+  useDeleteCategory,
+  Category,
+  buildTree,
+  CategoryNode,
+  CATEGORY_MAX_DEPTH,
+  DEFAULT_CATEGORY_COLOR,
+  orderByDepth,
+} from '@/modules/categories';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { useBottomSheet } from '@/hooks/use-bottom-sheet';
@@ -9,15 +21,62 @@ import { useModalA11y } from '@/hooks/use-modal-a11y';
 import { useTasks } from '@/modules/tasks';
 import { useOkrs } from '@/modules/okrs';
 import { resolveReassignTargets } from '@/modules/categories/impact';
+import { descendantIdSet } from '@/modules/categories/tree';
 import { useReassignCategory } from '@/modules/categories/useReassignCategory';
 import DeleteCategoryDialog from '@/components/category/DeleteCategoryDialog';
+import CategoryTreeRow from '@/components/category/CategoryTreeRow';
+import MoveCategoryDialog from '@/components/category/MoveCategoryDialog';
 import { useSheetMotion } from '@/components/mobile/mobile-motion';
+import { useCollapsedCategories } from '@/modules/categories/collapsed.store';
 
 type ColorSettingsModalProps = {
   isOpen: boolean;
   onClose: () => void;
   isNested?: boolean;
 };
+
+/**
+ * Plan d'écriture d'un lot de créations.
+ *
+ * 🔴 POURQUOI. Un enfant créé dans le MÊME lot que son parent porte un
+ * `parentId` en `temp-`, qui ne désigne aucune ligne serveur. Envoyer tout le
+ * lot en parallèle (`Promise.all`) enverrait l'enfant avec une référence
+ * invalide, puisque son parent n'existe pas encore côté serveur au moment de
+ * l'écriture.
+ *
+ * On crée donc par niveau : `orderByDepth` trie les brouillons (préfixe
+ * `temp-`) par profondeur croissante, et lève si le lot contient un cycle
+ * plutôt que de boucler indéfiniment. `handleSave` substitue ensuite chaque
+ * `parentId` en `temp-` par l'identifiant réel rendu par la création du
+ * parent, niveau après niveau.
+ */
+export function planCreations(drafts: readonly Category[]): Category[] {
+  return orderByDepth(drafts.filter((c) => c.id.startsWith('temp-')));
+}
+
+/**
+ * Ordre d'écriture d'un lot de SUPPRESSIONS (tâche 10, suppression de
+ * branche).
+ *
+ * 🔴 POURQUOI feuilles-vers-racine. La FK `categories.parent_id` est
+ * `ON DELETE NO ACTION` (mig. 143) : la contrainte se vérifie À LA FIN DE
+ * CHAQUE INSTRUCTION, et l'app écrit une suppression PAR CATÉGORIE, en
+ * requêtes séparées — jamais une suppression groupée où Postgres verrait la
+ * branche entière partir dans la MÊME instruction. Supprimer un parent avant
+ * ses enfants échoue donc : au moment où l'instruction du parent s'exécute,
+ * l'enfant existe toujours et pointe encore dessus.
+ *
+ * `orderByDepth` trie parent-avant-enfant (profondeur CROISSANTE) — pensé
+ * pour les créations, où le parent doit exister avant qu'on écrive l'enfant
+ * qui le référence. Pour une suppression c'est l'inverse qu'il faut :
+ * l'enfant doit avoir disparu avant qu'on supprime le parent qu'il référence.
+ * On réutilise donc `orderByDepth` tel quel — même arbre, même notion de
+ * profondeur — et on INVERSE le résultat plutôt que de réécrire un second
+ * tri qui finirait par diverger du premier.
+ */
+export function planDeletions(removed: readonly Category[]): Category[] {
+  return [...orderByDepth(removed)].reverse();
+}
 
 /**
  * Contenu de la modale — monté UNIQUEMENT quand elle est ouverte.
@@ -32,6 +91,42 @@ type ColorSettingsModalProps = {
  * suppressions mises en attente puis abandonnées (fermeture sans enregistrer)
  * survivaient à la réouverture, et repartaient à la sauvegarde suivante.
  */
+/**
+ * Ce que la suppression de `targetId` fait à la liste EN COURS D'ÉDITION.
+ *
+ * 🔴 POURQUOI une fonction pure, hors du composant. La revue de la suppression
+ * de branche l'a relevé : rien n'exerçait ce branchement, et c'est le seul
+ * endroit du chantier où se tromper DÉTRUIT des données. Le sortir de l'état
+ * React le rend vérifiable sans monter un écran, comme `planCreations`.
+ *
+ * `promote` : les enfants DIRECTS prennent le parent du supprimé. Leur contenu
+ * ne bouge pas — ce ne sont pas eux qui disparaissent. `handleSave` verra ce
+ * changement de `parentId` comme n'importe quel « Déplacer vers… » et l'écrira
+ * AVANT la suppression du nœud : `ON DELETE NO ACTION` (mig. 143) refuserait
+ * sinon de supprimer un parent dont les enfants pointent encore dessus.
+ *
+ * `deleteBranch` : le nœud ET tous ses descendants partent.
+ */
+export function applyDeleteToDrafts(
+  drafts: readonly Category[],
+  targetId: string,
+  childrenMode: 'promote' | 'deleteBranch',
+): { next: Category[]; removedIds: string[] } {
+  if (childrenMode === 'deleteBranch') {
+    const removedIds = [targetId, ...descendantIdSet(targetId, drafts)];
+    const gone = new Set(removedIds);
+    return { next: drafts.filter((cat) => !gone.has(cat.id)), removedIds };
+  }
+
+  const parentId = drafts.find((c) => c.id === targetId)?.parentId ?? null;
+  return {
+    next: drafts
+      .filter((cat) => cat.id !== targetId)
+      .map((cat) => (cat.parentId === targetId ? { ...cat, parentId } : cat)),
+    removedIds: [targetId],
+  };
+}
+
 const ColorSettingsModalContent: React.FC<Omit<ColorSettingsModalProps, 'isOpen'>> = ({ onClose, isNested }) => {
   const { t } = useT('tasks');
   const { t: tCommon } = useT('common');
@@ -49,15 +144,22 @@ const ColorSettingsModalContent: React.FC<Omit<ColorSettingsModalProps, 'isOpen'
     label: t('colorModal.title'),
   });
   const sheetMotion = useSheetMotion();
+  const { isCollapsed, setCollapsed } = useCollapsedCategories();
   const { data: categories = [] } = useCategories();
   const createCategoryMutation = useCreateCategory();
   const updateCategoryMutation = useUpdateCategory();
+  const moveCategoryMutation = useMoveCategory();
   const deleteCategoryMutation = useDeleteCategory();
-  
+
   // Initialize directly from cached data so the list is populated on first
   // render when categories are already in the React Query cache.
   const [localCategories, setLocalCategories] = useState<Category[]>(categories);
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
+  // « Déplacer vers… » (tâche 9) : la modale reste un éditeur par lot, donc la
+  // confirmation ne fait QUE modifier `localCategories` — rien ne part au
+  // serveur avant « Enregistrer ». C'est `handleSave` qui écrit le déplacement,
+  // via `useMoveCategory` (voir plus bas).
+  const [categoryToMove, setCategoryToMove] = useState<string | null>(null);
   // R-02 : ou partent les elements d'une categorie retiree, par categorie.
   // La modale met les suppressions EN ATTENTE jusqu'a l'enregistrement : la
   // decision de reclassement doit donc etre memorisee avec elles, sinon elle
@@ -76,22 +178,43 @@ const ColorSettingsModalContent: React.FC<Omit<ColorSettingsModalProps, 'isOpen'
   // qui ne sera jamais celui de la ligne creee.
   const reassignOptions = localCategories.filter((c) => !c.id.startsWith('temp-'));
 
-  const handleAddCategory = () => {
+  // Aplatit l'arbre en lignes visibles (ordre d'affichage, profondeur, a-t-il
+  // des enfants), en s'arrêtant sous une catégorie repliée. `AnimatePresence`
+  // a besoin d'une liste À PLAT pour suivre proprement l'entrée/sortie de
+  // chaque ligne : une récursion qui rendrait directement les enfants casserait
+  // ce suivi, chaque niveau devenant un ensemble d'enfants distinct.
+  const flattenVisible = (nodes: CategoryNode[], depth: number, out: Array<{ category: Category; depth: number; hasChildren: boolean }>) => {
+    for (const node of nodes) {
+      const hasChildren = node.children.length > 0;
+      out.push({ category: node.category, depth, hasChildren });
+      if (hasChildren && !isCollapsed(node.category.id)) {
+        flattenVisible(node.children, depth + 1, out);
+      }
+    }
+  };
+  const visibleRows: Array<{ category: Category; depth: number; hasChildren: boolean }> = [];
+  flattenVisible(buildTree(localCategories), 1, visibleRows);
+
+  const handleAddCategory = (parentId: string | null = null) => {
     const newId = `temp-${Date.now()}`;
+    const parent = parentId ? localCategories.find((c) => c.id === parentId) : undefined;
     const newCat: Category = {
       id: newId,
       name: '',
-      color: '#3B82F6'
+      // Couleur héritée du parent : une famille se lit à la teinte. Une
+      // racine sans parent reprend la couleur par défaut du module.
+      color: parent?.color ?? DEFAULT_CATEGORY_COLOR,
+      parentId,
+      position: localCategories.filter((c) => c.parentId === parentId).length,
     };
     setLocalCategories([...localCategories, newCat]);
-    
+    // Un enfant né replié serait invisible sous son parent : le déplier.
+    if (parentId) setCollapsed(parentId, false);
+
     setTimeout(() => {
-      if (scrollRef.current) {
-        scrollRef.current.scrollTo({
-          top: scrollRef.current.scrollHeight,
-          behavior: 'smooth'
-        });
-      }
+      const row = scrollRef.current?.querySelector<HTMLElement>(`[data-category-id="${newId}"]`);
+      row?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      row?.querySelector<HTMLInputElement>('input[type="text"]')?.focus();
     }, 100);
   };
 
@@ -103,14 +226,43 @@ const ColorSettingsModalContent: React.FC<Omit<ColorSettingsModalProps, 'isOpen'
     setCategoryToDelete(id);
   };
 
-  const confirmDeleteLocal = (reassignTo: string) => {
-    if (categoryToDelete) {
-      setReassignTargets(prev => ({ ...prev, [categoryToDelete]: reassignTo }));
-      setLocalCategories(prev => prev.filter(cat => cat.id !== categoryToDelete));
-      setCategoryToDelete(null);
-    }
+  const confirmDeleteLocal = (reassignTo: string, childrenMode: 'promote' | 'deleteBranch') => {
+    if (!categoryToDelete) return;
+    const targetId = categoryToDelete;
+
+    // La transition d'état vit dans `applyDeleteToDrafts`, vérifiable sans
+    // monter d'écran. Ici on ne fait que l'appliquer et enregistrer où part le
+    // contenu de chaque identifiant retiré : c'est cette liste complète que
+    // `resolveReassignTargets` suit à l'enregistrement pour ne jamais renvoyer
+    // vers une catégorie emportée par la même branche.
+    const { next, removedIds } = applyDeleteToDrafts(localCategories, targetId, childrenMode);
+    setLocalCategories(next);
+    setReassignTargets(prev => {
+      const updated = { ...prev };
+      for (const id of removedIds) updated[id] = reassignTo;
+      return updated;
+    });
+
+    setCategoryToDelete(null);
   };
-  
+
+  // « Déplacer vers… » — ne touche QUE l'état local (cf. commentaire sur
+  // `categoryToMove`). La position choisie est la fin de la nouvelle fratrie :
+  // le menu ne propose pas de rang, seulement une destination, exactement
+  // comme `handleAddCategory` place une nouvelle catégorie en dernier.
+  const confirmMoveLocal = (parentId: string | null) => {
+    if (!categoryToMove) return;
+    setLocalCategories(prev => {
+      const siblingsCount = prev.filter(
+        (c) => c.parentId === parentId && c.id !== categoryToMove,
+      ).length;
+      return prev.map((c) =>
+        c.id === categoryToMove ? { ...c, parentId, position: siblingsCount } : c,
+      );
+    });
+    setCategoryToMove(null);
+  };
+
   const handleSave = async () => {
     // Validation : chaque nom de catégorie doit faire ≥ 2 caractères
     const invalid = localCategories.find(lc => lc.name.trim().length < 2);
@@ -138,30 +290,81 @@ const ColorSettingsModalContent: React.FC<Omit<ColorSettingsModalProps, 'isOpen'
         movedTotal += moved;
       }
 
-      const deletePromises = removed.map(cat => deleteCategoryMutation.mutateAsync(cat.id));
-
-      // Create or update categories
-      const savePromises = localCategories.map(lc => {
-        const existing = categories.find(cat => cat.id === lc.id);
-        if (existing) {
-          // Update existing category
-          if (existing.name !== lc.name || existing.color !== lc.color) {
-            return updateCategoryMutation.mutateAsync({ 
-              id: lc.id, 
-              updates: { name: lc.name, color: lc.color } 
+      // Mises à jour nom/couleur : elles visent des lignes qui existent déjà,
+      // et peuvent partir en parallèle entre elles.
+      const updatePromises = localCategories
+        .filter((lc) => !lc.id.startsWith('temp-'))
+        .map((lc) => {
+          const existing = categories.find((cat) => cat.id === lc.id);
+          if (existing && (existing.name !== lc.name || existing.color !== lc.color)) {
+            return updateCategoryMutation.mutateAsync({
+              id: lc.id,
+              updates: { name: lc.name, color: lc.color },
             });
           }
           return Promise.resolve();
-        } else {
-          // Create new category (temp IDs start with 'temp-')
-          return createCategoryMutation.mutateAsync({ 
-            name: lc.name, 
-            color: lc.color 
-          });
-        }
-      });
+        });
 
-      await Promise.all([...deletePromises, ...savePromises]);
+      // « Déplacer vers… » (tâche 9) écrit ici, à l'enregistrement — jamais à
+      // la confirmation du dialogue, qui ne fait que muter `localCategories`.
+      // `useMoveCategory` est LA mutation dédiée au reparentage ET au
+      // réordonnancement : on la distingue de la mise à jour nom/couleur
+      // ci-dessus, qu'elle ne touche jamais, même si les deux ont changé pour
+      // la même catégorie dans le même lot (deux écritures sur des colonnes
+      // disjointes, sans conflit). Ne concerne que les lignes déjà en base :
+      // une création porte déjà son `parentId`/`position` définitifs.
+      const movePromises = localCategories
+        .filter((lc) => !lc.id.startsWith('temp-'))
+        .filter((lc) => {
+          const existing = categories.find((cat) => cat.id === lc.id);
+          return !!existing && (existing.parentId !== lc.parentId || existing.position !== lc.position);
+        })
+        .map((lc) => moveCategoryMutation.mutateAsync({ id: lc.id, parentId: lc.parentId, position: lc.position }));
+
+      // 🔴 Les MOVES doivent être écrits AVANT les suppressions ci-dessous, et
+      // non en parallèle avec elles (contrairement à l'ancien code). Un enfant
+      // « remonté d'un cran » (`confirmDeleteLocal`, choix `promote`) porte un
+      // `movePromises` qui le détache de son ancien parent — celui-là même
+      // qu'on va supprimer. Si la suppression du parent partait EN MÊME TEMPS
+      // que ce déplacement, l'ordre d'arrivée des deux requêtes sur le serveur
+      // n'est pas garanti : la suppression peut arriver alors que l'enfant
+      // pointe ENCORE sur le parent visé, et `ON DELETE NO ACTION` (mig. 143)
+      // la refuse.
+      await Promise.all([...updatePromises, ...movePromises]);
+
+      // Suppressions : DES FEUILLES VERS LA RACINE, et EN SÉQUENCE — jamais en
+      // parallèle. La FK `categories.parent_id` est `ON DELETE NO ACTION`
+      // (mig. 143) : la contrainte se vérifie À LA FIN DE CHAQUE INSTRUCTION,
+      // et cette boucle écrit une suppression PAR CATÉGORIE, en requêtes
+      // séparées (jamais une suppression groupée où Postgres verrait la
+      // branche entière partir dans la MÊME instruction). Supprimer un parent
+      // avant que ses enfants aient disparu échoue donc — et un envoi en
+      // parallèle (`Promise.all`) ne garantirait pas que les suppressions
+      // arrivent sur le serveur dans l'ordre où elles ont été émises.
+      // `planDeletions` inverse `orderByDepth` (parent-avant-enfant, pensé
+      // pour les créations) pour obtenir enfant-avant-parent.
+      for (const cat of planDeletions(removed)) {
+        await deleteCategoryMutation.mutateAsync(cat.id);
+      }
+
+      // Créations : par niveau, en séquence. Un enfant créé dans le même lot
+      // que son parent porte un `parentId` en `temp-` qui ne désigne encore
+      // aucune ligne serveur ; on substitue donc chaque `temp-` par
+      // l'identifiant réel rendu par la création de son parent, au fur et à
+      // mesure qu'on descend les niveaux.
+      const tempToReal = new Map<string, string>();
+      for (const draft of planCreations(localCategories)) {
+        const parentId = draft.parentId?.startsWith('temp-')
+          ? tempToReal.get(draft.parentId) ?? null
+          : draft.parentId;
+        const created = await createCategoryMutation.mutateAsync({
+          name: draft.name,
+          color: draft.color,
+          parentId,
+          position: draft.position,
+        });
+        tempToReal.set(draft.id, created.id);
+      }
       // Le message de reclassement part APRES les ecritures : annoncer un
       // deplacement avant de savoir si la suppression aboutit, c'est promettre
       // un resultat qu'on n'a pas encore.
@@ -226,54 +429,43 @@ const ColorSettingsModalContent: React.FC<Omit<ColorSettingsModalProps, 'isOpen'
             style={{ backgroundColor: 'rgb(var(--color-surface))' }}
           >
             <div className="flex justify-end mb-4">
-              <button 
-                onClick={handleAddCategory}
+              <button
+                onClick={() => handleAddCategory()}
+                aria-label={t('colorModal.addRoot')}
                 className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors p-2 bg-blue-50 dark:bg-blue-900/20 rounded-full shadow-sm"
               >
                 <Plus size={24} strokeWidth={3} />
               </button>
             </div>
 
-            <div className="space-y-4">
+            {/* Arbre des catégories. Rôles ARIA portés par le conteneur et par
+                chaque `CategoryTreeRow` (treeitem/aria-level/aria-expanded) :
+                sans eux un lecteur d'écran lit une liste plate. */}
+            <div role="tree" aria-label={t('colorModal.title')} className="space-y-1">
               <AnimatePresence mode="popLayout">
-                {localCategories.map((category) => (
-                    <motion.div
-                      key={category.id}
-                      layout
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, scale: 0.95 }}
-                      className="flex items-center gap-3"
-                    >
-                      <div className="relative group bg-[rgb(var(--color-surface))] rounded-[15px]">
-                        <div 
-                          className="h-10 w-10 rounded-[15px] flex-shrink-0 cursor-pointer shadow-sm hover:brightness-110 transition-all"
-                          style={{ backgroundColor: category.color }}
-                        />
-                        <input
-                            type="color"
-                            value={category.color}
-                            onChange={(e) => handleUpdateLocal(category.id, { color: e.target.value })}
-                            className="absolute inset-0 opacity-0 cursor-pointer w-full h-full rounded-[15px] bg-transparent"
-                          />
-                      </div>
-                    
-                    <div className="flex-1">
-                      <input
-                        type="text"
-                        value={category.name}
-                        onChange={(e) => handleUpdateLocal(category.id, { name: e.target.value })}
-                        className="w-full bg-[rgb(var(--color-background))] border border-[rgb(var(--color-border))] rounded-xl px-4 py-2 text-[rgb(var(--color-text-primary))] placeholder:text-[rgb(var(--color-text-muted))] focus:outline-none focus:border-[rgb(var(--color-accent-solid))] dark:focus:border-slate-500 transition-all"
-                        placeholder={t('colorModal.namePlaceholder')}
-                      />
-                    </div>
-
-                      <button
-                        onClick={() => handleDeleteLocal(category.id)}
-                        className="p-1 text-red-500 hover:text-red-600 transition-colors"
-                      >
-                        <Trash2 size={20} />
-                      </button>
+                {visibleRows.map(({ category, depth, hasChildren }) => (
+                  <motion.div
+                    key={category.id}
+                    layout
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                  >
+                    <CategoryTreeRow
+                      id={category.id}
+                      name={category.name}
+                      color={category.color}
+                      depth={depth}
+                      hasChildren={hasChildren}
+                      isExpanded={!isCollapsed(category.id)}
+                      onToggle={() => setCollapsed(category.id, !isCollapsed(category.id))}
+                      onNameChange={(name) => handleUpdateLocal(category.id, { name })}
+                      onColorChange={(color) => handleUpdateLocal(category.id, { color })}
+                      onAddChild={() => handleAddCategory(category.id)}
+                      onMove={() => setCategoryToMove(category.id)}
+                      onDelete={() => handleDeleteLocal(category.id)}
+                      atMaxDepth={depth >= CATEGORY_MAX_DEPTH}
+                    />
                   </motion.div>
                 ))}
               </AnimatePresence>
@@ -303,8 +495,19 @@ const ColorSettingsModalContent: React.FC<Omit<ColorSettingsModalProps, 'isOpen'
           open={!!categoryToDelete}
           category={localCategories.find(c => c.id === categoryToDelete) ?? null}
           categories={reassignOptions}
+          categoriesTree={localCategories}
           onCancel={() => setCategoryToDelete(null)}
           onConfirm={confirmDeleteLocal}
+        />
+
+        {/* Rendue en FRÈRE de l'overlay ci-dessus : `useModalA11y` empile les
+            surfaces (`openStack`), seule la dernière ouverte réagit à Échap. */}
+        <MoveCategoryDialog
+          open={!!categoryToMove}
+          category={localCategories.find(c => c.id === categoryToMove) ?? null}
+          categories={localCategories}
+          onCancel={() => setCategoryToMove(null)}
+          onConfirm={confirmMoveLocal}
         />
     </div>
   );

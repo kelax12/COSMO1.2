@@ -6,7 +6,8 @@ import { useModalA11y } from '@/hooks/use-modal-a11y';
 import { useTasks } from '@/modules/tasks';
 import { useOkrs } from '@/modules/okrs';
 import type { Category } from '@/modules/categories';
-import { categoryImpact, NO_CATEGORY } from '@/modules/categories/impact';
+import { branchImpact, categoryImpact, NO_CATEGORY } from '@/modules/categories/impact';
+import { descendantIdSet } from '@/modules/categories/tree';
 
 /**
  * Confirmation de suppression d'une catégorie — avec impact et réaffectation.
@@ -25,6 +26,22 @@ import { categoryImpact, NO_CATEGORY } from '@/modules/categories/impact';
  * parce que les deux points d'entrée n'écrivent pas au même moment : la
  * confirmation OKR supprime tout de suite, la modale de couleurs met en
  * attente jusqu'à l'enregistrement. Ce composant décide, il n'écrit pas.
+ *
+ * 🔴 SUPPRESSION D'UNE BRANCHE (tâche 10). Une catégorie visée peut porter des
+ * sous-catégories. Deux issues, choisies par `childrenMode` :
+ *
+ * - `promote` (défaut) : les enfants DIRECTS prennent le parent du supprimé,
+ *   toute la sous-branche survit avec son contenu intact. C'est l'issue qui
+ *   ne détruit rien, donc la moins surprenante — même raisonnement que
+ *   `NO_CATEGORY` par défaut pour la réaffectation.
+ * - `deleteBranch` : le nœud ET tous ses descendants disparaissent ; leur
+ *   contenu (tâches, OKR) est réaffecté comme celui du nœud seul.
+ *
+ * L'impact annoncé suit le mode choisi : en `promote`, seuls les éléments du
+ * nœud visé sont concernés (ses enfants gardent les leurs) ; en
+ * `deleteBranch`, l'impact porte sur la BRANCHE ENTIÈRE (`branchImpact`).
+ * Annoncer moins que ce qui va réellement disparaître est le défaut R-02,
+ * transposé à la profondeur ajoutée par les sous-catégories.
  */
 interface DeleteCategoryDialogProps {
   open: boolean;
@@ -32,12 +49,33 @@ interface DeleteCategoryDialogProps {
   category: Category | null;
   /** Catégories proposées comme destination (la visée est retirée). */
   categories: Category[];
+  /**
+   * Arbre complet, pour calculer l'impact de la branche.
+   *
+   * Distinct de `categories` : ce dernier peut déjà exclure des candidats
+   * (brouillons non enregistrables comme destination, par exemple), alors que
+   * le calcul de descendance a besoin de CHAQUE catégorie du lot en cours
+   * d'édition pour suivre correctement les liens `parentId`.
+   *
+   * ⚠️ Un appelant qui ne SAIT PAS supprimer une branche doit n'y passer que le
+   * nœud visé. `OKRPage` est dans ce cas : `useDeleteCategoryFlow` ne supprime
+   * qu'un nœud. Lui donner l'arbre entier ferait apparaître le choix
+   * « remonter / supprimer la branche » pour une catégorie qui a des enfants,
+   * sans que le flux sache l'honorer — on annoncerait un geste qu'on ne fait
+   * pas. Restreint au seul nœud, `branchImpact` n'y voit aucun descendant et le
+   * choix reste masqué.
+   */
+  categoriesTree: Category[];
   onCancel: () => void;
   /**
    * `reassignTo` vaut l'id de la catégorie de destination, ou `NO_CATEGORY`
    * (chaîne vide) si les éléments doivent rester sans catégorie.
+   *
+   * `childrenMode` :
+   * - `promote` : les enfants prennent le parent du supprimé.
+   * - `deleteBranch` : toute la branche part, son contenu est réaffecté.
    */
-  onConfirm: (reassignTo: string) => void;
+  onConfirm: (reassignTo: string, childrenMode: 'promote' | 'deleteBranch') => void;
   isWorking?: boolean;
 }
 
@@ -54,22 +92,59 @@ interface DeleteCategoryDialogProps {
 const DeleteCategoryDialogBody: React.FC<{
   category: Category;
   categories: Category[];
+  categoriesTree: Category[];
   onCancel: () => void;
-  onConfirm: (reassignTo: string) => void;
+  onConfirm: (reassignTo: string, childrenMode: 'promote' | 'deleteBranch') => void;
   isWorking: boolean;
-}> = ({ category, categories, onCancel, onConfirm, isWorking }) => {
+}> = ({ category, categories, categoriesTree, onCancel, onConfirm, isWorking }) => {
   const ov = useT('overlays');
   const { data: tasks = [] } = useTasks();
   const { data: okrs = [] } = useOkrs();
 
-  const impact = useMemo(
-    () => categoryImpact(category.id, tasks, okrs),
-    [category.id, tasks, okrs],
+  // `promote` par défaut : l'issue qui ne détruit rien, la moins surprenante —
+  // même raisonnement que `NO_CATEGORY` par défaut pour la réaffectation.
+  const [childrenMode, setChildrenMode] = useState<'promote' | 'deleteBranch'>('promote');
+  useEffect(() => {
+    setChildrenMode('promote');
+  }, [category.id]);
+
+  // Impact de la BRANCHE ENTIÈRE (nœud + descendants), calculé dans tous les
+  // cas : c'est lui qui dit s'il y a des sous-catégories, donc s'il faut
+  // même proposer le choix.
+  const branch = useMemo(
+    () => branchImpact(category.id, tasks, okrs, categoriesTree),
+    [category.id, tasks, okrs, categoriesTree],
   );
+  const showChildrenChoice = branch.subcategories > 0;
+
+  // L'impact AFFICHÉ suit le mode choisi : en `promote`, les enfants
+  // survivent avec leur contenu, seul le nœud visé perd le sien ; en
+  // `deleteBranch`, tout part. Annoncer l'impact de la branche alors que
+  // « promote » ne détruit qu'un nœud mentirait dans l'autre sens (R-02
+  // existe pour empêcher de sous-annoncer, pas pour sur-annoncer).
+  const impact =
+    showChildrenChoice && childrenMode === 'deleteBranch'
+      ? branch
+      : categoryImpact(category.id, tasks, okrs);
+  const hasSubcategoryImpact = showChildrenChoice && childrenMode === 'deleteBranch';
+  const noImpact = impact.total === 0 && !hasSubcategoryImpact;
+
+  // Destinations proposées : en `deleteBranch`, toute la branche disparaît,
+  // donc aucun de ses membres ne peut servir de destination (une sélection
+  // pointant dedans retomberait de toute façon sur « aucune catégorie » via
+  // `resolveReassignTargets`, mais autant ne pas la proposer). En `promote`,
+  // seul le nœud visé disparaît : ses enfants restent des destinations
+  // valides, ils survivent juste un cran plus haut.
+  const excludedIds = useMemo(() => {
+    if (showChildrenChoice && childrenMode === 'deleteBranch') {
+      return new Set<string>([category.id, ...descendantIdSet(category.id, categoriesTree)]);
+    }
+    return new Set<string>([category.id]);
+  }, [category.id, categoriesTree, showChildrenChoice, childrenMode]);
 
   const targets = useMemo(
-    () => categories.filter((c) => c.id !== category.id),
-    [categories, category.id],
+    () => categories.filter((c) => !excludedIds.has(c.id)),
+    [categories, excludedIds],
   );
 
   // `NO_CATEGORY` par défaut : ne rien reclasser est le comportement le moins
@@ -79,6 +154,16 @@ const DeleteCategoryDialogBody: React.FC<{
   useEffect(() => {
     setReassignTo(NO_CATEGORY);
   }, [category.id]);
+
+  // Changer de mode peut retirer la destination choisie de `targets` (un
+  // descendant devient invalide en passant en `deleteBranch`) : la remettre à
+  // « aucune catégorie » plutôt que garder une sélection qui n'est plus
+  // proposée mais résoudrait quand même vers `NO_CATEGORY` en silence.
+  useEffect(() => {
+    if (reassignTo !== NO_CATEGORY && excludedIds.has(reassignTo)) {
+      setReassignTo(NO_CATEGORY);
+    }
+  }, [excludedIds, reassignTo]);
 
   const showReassign = impact.total > 0 && targets.length > 0;
 
@@ -115,17 +200,52 @@ const DeleteCategoryDialogBody: React.FC<{
               </h3>
 
               {/* L'impact AVANT la question : on ne demande pas de décider sans
-                  avoir dit ce qui est en jeu. */}
+                  avoir dit ce qui est en jeu. Réactif au mode choisi plus bas
+                  (`childrenMode`) : « remonter » n'affecte que le nœud visé,
+                  « supprimer la branche » affecte tout ce qu'elle contient. */}
               <div className="text-sm leading-relaxed mb-5 space-y-1 text-[rgb(var(--color-text-secondary))]">
-                {impact.total === 0 ? (
+                {noImpact ? (
                   <p>{ov.t('deleteCategory.noImpact')}</p>
                 ) : (
                   <>
+                    {hasSubcategoryImpact && (
+                      <p>{ov.tp('deleteCategory.impactSubcategories', branch.subcategories)}</p>
+                    )}
                     {impact.tasks > 0 && <p>{ov.tp('deleteCategory.impactTasks', impact.tasks)}</p>}
                     {impact.okrs > 0 && <p>{ov.tp('deleteCategory.impactOkrs', impact.okrs)}</p>}
                   </>
                 )}
               </div>
+
+              {showChildrenChoice && (
+                <fieldset className="mb-6 space-y-2">
+                  <legend className="text-xs font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))] mb-2">
+                    {ov.t('deleteCategory.childrenLabel')}
+                  </legend>
+
+                  <label className="flex items-center gap-2.5 text-sm text-[rgb(var(--color-text-primary))] cursor-pointer min-h-11">
+                    <input
+                      type="radio"
+                      name="children-mode"
+                      className="accent-[rgb(var(--color-accent-solid))]"
+                      checked={childrenMode === 'promote'}
+                      onChange={() => setChildrenMode('promote')}
+                    />
+                    {ov.t('deleteCategory.childrenPromote')}
+                  </label>
+
+                  <label className="flex items-center gap-2.5 text-sm text-[rgb(var(--color-text-primary))] cursor-pointer min-h-11">
+                    <input
+                      type="radio"
+                      name="children-mode"
+                      className="accent-[rgb(var(--color-accent-solid))]"
+                      checked={childrenMode === 'deleteBranch'}
+                      onChange={() => setChildrenMode('deleteBranch')}
+                    />
+                    {ov.t('deleteCategory.childrenDeleteBranch')}
+                  </label>
+                </fieldset>
+              )}
 
               {showReassign && (
                 <fieldset className="mb-6 space-y-2">
@@ -177,7 +297,7 @@ const DeleteCategoryDialogBody: React.FC<{
                 <Button
                   variant="destructive"
                   className="flex-1 min-h-11 bg-red-600 hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700 text-white"
-                  onClick={() => onConfirm(reassignTo)}
+                  onClick={() => onConfirm(reassignTo, childrenMode)}
                   disabled={isWorking}
                 >
                   {isWorking ? ov.t('deleteCategory.working') : ov.t('deleteCategory.confirm')}
@@ -201,6 +321,7 @@ const DeleteCategoryDialog: React.FC<DeleteCategoryDialogProps> = ({
   open,
   category,
   categories,
+  categoriesTree,
   onCancel,
   onConfirm,
   isWorking = false,
@@ -219,6 +340,7 @@ const DeleteCategoryDialog: React.FC<DeleteCategoryDialogProps> = ({
           key={shown.id}
           category={shown}
           categories={categories}
+          categoriesTree={categoriesTree}
           onCancel={onCancel}
           onConfirm={onConfirm}
           isWorking={isWorking}

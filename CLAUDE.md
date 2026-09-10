@@ -295,7 +295,7 @@ Rechargées à chaque `loginDemo()` grâce à `clearDemoStorage()`.
 
 | Module | Fichier seed | Volume |
 |---|---|---|
-| Tasks | `src/modules/tasks/local.repository.ts` | ~100 tâches / 12 mois |
+| Tasks | `src/modules/tasks/local.repository.ts` | **12 tâches** (recompté le 2026-09-10 ; « ~100 » était faux) |
 | Habits | `src/modules/habits/local.repository.ts` | ~100 habitudes / 30–120 j |
 | Events | `src/modules/events/repository.ts` | ~150 événements |
 | OKRs | `src/modules/okrs/repository.ts` | 8 OKRs |
@@ -727,8 +727,48 @@ sans écran, **écrites en dur en français** hors des catalogues i18n.
 ## Base de données Supabase
 
 Migrations dans `supabase/migration/*.sql`, convention `NNN_<feature>.sql`.
-**140 fichiers de migration** (au 2026-09-02, 23 h). La dernière APPLIQUÉE est la
-`135_withdrawal_consents.sql`.
+**149 fichiers de migration** (recompté le 2026-09-10). La dernière APPLIQUÉE est la
+`144_categories_tree_depth_ambiguity.sql` (le 2026-09-09).
+
+### Sous-catégories hiérarchiques (mig. `143`, `144`, `145`)
+
+✅ **La `143` est APPLIQUÉE en prod le 2026-09-09** : `categories` gagne `parent_id` et
+`position`, l'unicité par nom devient **deux index partiels** (en Postgres deux `NULL` ne
+sont jamais égaux, donc une unicité sur `(user_id, parent_id, name)` ne contraint RIEN
+entre racines), et un trigger `enforce_category_tree` refuse l'auto-parentage, un parent
+inexistant, un parent d'un autre compte, les cycles et une profondeur au-delà de 10.
+
+🔴 **`ON DELETE NO ACTION` sur `parent_id`, ni `CASCADE` ni `RESTRICT`.** `RESTRICT` se
+vérifie ligne par ligne et ne voit pas que l'enfant part dans la MÊME requête : or
+`delete-account` et la cascade depuis `auth.users` suppriment les catégories d'un compte
+en un seul `DELETE` groupé. Avec `RESTRICT`, la suppression de compte devenait impossible
+dès qu'un compte avait une sous-catégorie — la régression B9 (RGPD art. 17). `NO ACTION`
+vérifie en fin de requête : même garantie, sans le blocage.
+
+🔴 **La `144` corrige un défaut que la `143` avait mis EN PRODUCTION.** Sa CTE récursive
+déclarait `branch(id, depth)` pendant que le bloc PL/pgSQL déclarait une variable `depth` :
+`column reference "depth" is ambiguous`, et **toute création de sous-catégorie échouait**.
+⚠️ La `143` avait passé `validate:migrations`, `check:rls`, les gardes de
+`migration-guards.test.mjs`, une revue de conformité et une revue de qualité. **Aucune de
+ces cinq vérifications n'exécute le SQL.** Seule la vérification acteur par acteur en
+transaction annulée l'a trouvée. Onze cas y ont été rejoués, prod inchangée.
+
+⚠️ **La `145` est ÉCRITE et NON APPLIQUÉE.** Elle pose la clé étrangère de
+`tasks.category` / `okrs.category` vers `categories` (`ON DELETE SET NULL`), après
+nettoyage des orphelins et conversion `TEXT` → `UUID`. C'est une **conversion de type sur
+`tasks`**, qui prend un `ACCESS EXCLUSIVE` et réécrit la table : à jouer hors heure de
+pointe, et sa preuve en transaction annulée reste à jouer.
+📊 Mesuré en prod le 2026-09-10 : `tasks` **749 lignes**, 125 sans catégorie, **13
+orphelines** ; `okrs` 12 lignes, 0 orpheline. ⚠️ Le chiffre de « 611 tâches » cité
+ailleurs dans ce fichier date du 2026-09-02 et n'est plus vrai.
+
+❌ **Ne jamais dériver une branche par un aller-retour serveur.** Aucune RPC n'est créée :
+un compte porte quelques dizaines de catégories et le client les charge déjà toutes. Les
+règles de l'arbre vivent dans `src/modules/categories/tree.ts`, miroir client du trigger.
+
+⚠️ **Le repository démo des catégories est chargé À LA DEMANDE** (`local.repository.ts` +
+`src/lib/demo-repositories.ts`). Le remettre dans `repository.ts` ferait repartir ses seeds
+dans le chunk d'entrée, payé par chaque visiteur de la landing.
 ⚠️ La `136_work_time_stats_okr_from_completions.sql` est présente dans l'arbre mais **non
 versionnée et NON appliquée** : c'est un travail en cours d'une autre session. Ne pas
 l'appliquer sans l'avoir relue.

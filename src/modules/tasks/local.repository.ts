@@ -39,10 +39,16 @@ const t = (
 });
 
 // 10 tâches — variété de statuts, priorités et catégories
+// ⚠️ Les tâches auparavant rangées sous TRAVAIL (cat-1) sont réaffectées sur
+// ses sous-catégories (cat-6 SEO, cat-7 Backlinks) : la hiérarchie doit se
+// VOIR dans les données de démo, pas seulement dans l'arbre de gestion.
+// Filtrer « Travail » remonte toujours ces tâches (descendants inclus).
 const DEMO_TASKS: Task[] = [
-  // ── TRAVAIL (cat-1) ───────────────────────────────────────────────────
-  t('t002','Préparer présentation Q1 2026',   'Résultats 3 mois + projections',           5,'cat-1',-5,   3,  null, true, 90),
-  t('t013','Envoyer facture client Dupont',   'Facture en retard, relance client',        4,'cat-1',-10,  -3, null, false, 30),
+  // ── TRAVAIL / SEO (cat-6) ─────────────────────────────────────────────
+  t('t002','Préparer présentation Q1 2026',   'Résultats 3 mois + projections',           5,'cat-6',-5,   3,  null, true, 90),
+
+  // ── TRAVAIL / SEO / BACKLINKS (cat-7) ─────────────────────────────────
+  t('t013','Envoyer facture client Dupont',   'Facture en retard, relance client',        4,'cat-7',-10,  -3, null, false, 30),
 
   // ── PROJETS (cat-5) ───────────────────────────────────────────────────
   t('t003','Audit sécurité Q1 2026',          'Pentest + correctifs CVE',                 5,'cat-5',-12,  5,  null),
@@ -68,7 +74,7 @@ const DEMO_TASKS: Task[] = [
     name: 'Réviser le rapport mensuel',
     description: 'Vérifier les chiffres et commenter',
     priority: 3,
-    category: 'cat-1',
+    category: 'cat-6',
     deadline: getDate(5),
     estimatedTime: 45,
     createdAt: getDate(-1),

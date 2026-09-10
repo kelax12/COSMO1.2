@@ -97,3 +97,34 @@ describe('mapTaskToDb (whitelist / anti-mass-assignment)', () => {
     expect(mapTaskToDb({ krId: '' })).toEqual({ kr_id: null });
   });
 });
+
+// ═══════════════════════════════════════════════════════════════════
+// La bascule `''` ↔ NULL de la mig. 145
+// ═══════════════════════════════════════════════════════════════════
+//
+// 🔴 La base porte NULL depuis que `tasks.category` est une clé étrangère : une
+// FK ne peut pas référencer la chaîne vide. Le MODÈLE, lui, garde `''`
+// (`NO_CATEGORY`). Ces tests gardent la frontière : la conversion vit dans les
+// mappers, et nulle part ailleurs. Deux marqueurs d'absence à vérifier partout,
+// c'est ce que le commentaire d'`impact.ts` interdit.
+describe('category — la frontière `` ↔ NULL (mig. 145)', () => {
+  it('lit NULL comme la chaîne vide', () => {
+    expect(mapTaskFromDb({ ...baseRow, category: null }).category).toBe('');
+  });
+
+  it('écrit la chaîne vide comme NULL', () => {
+    expect(mapTaskToDb({ category: '' }).category).toBeNull();
+  });
+
+  it('laisse passer un identifiant tel quel, dans les deux sens', () => {
+    expect(mapTaskFromDb({ ...baseRow, category: 'cat-1' }).category).toBe('cat-1');
+    expect(mapTaskToDb({ category: 'cat-1' }).category).toBe('cat-1');
+  });
+
+  // ⚠️ `category` absent n'est PAS `category: ''`. Le premier veut dire « ne
+  // touche pas à cette colonne », le second « retire la catégorie ». Les
+  // confondre effacerait la catégorie à chaque mise à jour partielle.
+  it('n envoie pas la colonne quand `category` est absent', () => {
+    expect('category' in mapTaskToDb({ name: 'X' })).toBe(false);
+  });
+});

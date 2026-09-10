@@ -155,6 +155,16 @@ export const useLastVisitedPage = () => {
 /** Lecture directe (hors React) — utilisée pour la redirection au démarrage. */
 export const getLastVisitedPage = (): string | null => lastVisitedPageState;
 
+// ═══════════════════════════════════════════════════════════════════
+// CATÉGORIES REPLIÉES — état de l'arbre de gestion
+// ═══════════════════════════════════════════════════════════════════
+//
+// ⚠️ On mémorise ce qui est REPLIÉ, pas ce qui est déplié : une catégorie
+// nouvellement créée n'est dans aucune des deux listes, et le défaut doit être
+// « visible ». Mémoriser les dépliées ferait naître chaque nouvel enfant
+// invisible sous son parent.
+//
+
 // Cross-tab sync (storage event)
 if (typeof window !== 'undefined') {
   window.addEventListener('storage', (e) => {
@@ -194,4 +204,4 @@ export const useColorSettings = () => {
 // ═══════════════════════════════════════════════════════════════════
 // COMBINED UI STATE HOOK
 // ═══════════════════════════════════════════════════════════════════
-
+
