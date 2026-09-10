@@ -49,3 +49,25 @@ describe('mapOkrToDb', () => {
     expect(out).not.toHaveProperty('userId');
   });
 });
+
+// ═══════════════════════════════════════════════════════════════════
+// La bascule `''` ↔ NULL de la mig. 145
+// ═══════════════════════════════════════════════════════════════════
+//
+// Même frontière que côté tâches : la base porte NULL depuis que
+// `okrs.category` est une clé étrangère, le modèle garde `''`.
+describe('category — la frontière `` ↔ NULL (mig. 145)', () => {
+  it('écrit la chaîne vide comme NULL', () => {
+    expect(mapOkrToDb({ category: '' }).category).toBeNull();
+  });
+
+  it('laisse passer un identifiant tel quel', () => {
+    expect(mapOkrToDb({ category: 'cat-1' }).category).toBe('cat-1');
+  });
+
+  // ⚠️ Absent ne veut pas dire vide : le premier laisse la colonne
+  // intacte, le second retire la catégorie.
+  it('n envoie pas la colonne quand `category` est absent', () => {
+    expect('category' in mapOkrToDb({ title: 'X' })).toBe(false);
+  });
+});
