@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 // Couverture métier (audit P0a) : LocalStorageCategoriesRepository (démo).
 import { describe, it, expect, beforeEach } from 'vitest';
-import { LocalStorageCategoriesRepository } from './repository';
+import { LocalStorageCategoriesRepository } from './local.repository';
 import { CATEGORIES_STORAGE_KEY } from './constants';
 import { CATEGORY_MAX_DEPTH } from './tree';
 import type { Category } from './types';
