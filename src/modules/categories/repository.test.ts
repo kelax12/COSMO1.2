@@ -15,7 +15,9 @@ beforeEach(() => {
 describe('LocalStorageCategoriesRepository', () => {
   it('seede les catégories démo au premier accès', async () => {
     const all = await repo.getAll();
-    expect(all.length).toBe(5);
+    // 7 depuis l'introduction des sous-categories demo (cat-6 SEO, cat-7
+    // Backlinks, sous cat-1) : le seed a legitimement grandi de 5 a 7.
+    expect(all.length).toBe(7);
     expect(localStorage.getItem(CATEGORIES_STORAGE_KEY)).not.toBeNull();
   });
 
