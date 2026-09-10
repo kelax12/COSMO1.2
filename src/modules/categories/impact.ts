@@ -117,24 +117,18 @@ export function branchImpact(
   };
 }
 
-/**
- * Identifiants à réaffecter pour toute une BRANCHE (le nœud et ses
- * descendants). Miroir de `categoryDependents`, même raison d'être : l'appel
- * qui répare a besoin des identifiants, pas des totaux de `branchImpact`.
- */
-export function branchDependents(
-  categoryId: string | null | undefined,
-  tasks: readonly Task[],
-  okrs: readonly OKR[],
-  categories: readonly Category[],
-): CategoryDependents {
-  if (!categoryId) return { taskIds: [], okrIds: [] };
-  const ids = new Set<string>([categoryId, ...descendantIdSet(categoryId, categories)]);
-  return {
-    taskIds: tasks.filter((t) => ids.has(t.category)).map((t) => t.id),
-    okrIds: okrs.filter((o) => ids.has(o.category)).map((o) => o.id),
-  };
-}
+// ⚠️ IL N'Y A PAS DE `branchDependents` ICI, ET C'EST VOLONTAIRE.
+//
+// Une fonction de ce nom a existé un temps, écrite pour la suppression de
+// branche. Elle n'a jamais été appelée : `ColorSettingsModal` retire du lot
+// TOUS les identifiants de la branche, puis réaffecte en bouclant
+// `categoryDependents` sur chacun. Le résultat est le même, en une fonction de
+// moins.
+//
+// Elle est retirée plutôt que câblée parce qu'un export que rien ne monte est
+// du code NON ÉPROUVÉ — la règle que `orphan-hooks.guard` applique aux hooks
+// vaut ici. Le message du commit qui l'a introduite affirmait qu'elle était
+// branchée ; elle ne l'était pas, et la revue l'a relevé.
 
 /**
  * Valeur écrite quand on choisit « aucune catégorie ».
