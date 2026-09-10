@@ -8,8 +8,38 @@ import { Separator } from '@/components/ui/separator';
 import { Popover, PopoverTrigger, PopoverContent } from './ui/popover';
 
 import { useCategories } from '@/modules/categories';
+import type { Category } from '@/modules/categories';
+import { descendantIdSet } from '@/modules/categories/tree';
 import { usePriorityRange } from '@/modules/ui-states';
 import { useT } from '@/i18n/useT';
+
+/**
+ * Une tâche classée dans `taskCategory` passe-t-elle le filtre posé sur
+ * `selected` ?
+ *
+ * 🔴 CHANGEMENT DE SÉMANTIQUE ASSUMÉ (2026-09-09). Filtrer « Travail » remonte
+ * désormais aussi les tâches de « Travail › SEO ». C'est l'attente naturelle
+ * d'un arbre ; un compte dont les catégories restent plates ne voit aucune
+ * différence, `descendantIdSet` rendant alors un ensemble vide.
+ *
+ * ⚠️ Cette fonction recalcule la branche de `selected` à CHAQUE appel — c'est
+ * volontaire pour rester une fonction pure et testable en isolation (cf.
+ * `task-filter-branch.test.ts`). Un appelant qui filtre une LISTE de tâches
+ * (une par tâche) doit hisser `descendantIdSet(selected, categories)` hors de
+ * sa boucle et comparer directement au `Set`, jamais rappeler cette fonction
+ * par tâche : c'est ce que fait `filterTasksForPage`
+ * (`src/pages/tasks/task-page-filter.ts`), qui applique la même règle au
+ * filtre multi-sélection réel de cette page.
+ */
+export function matchesCategoryFilter(
+  taskCategory: string,
+  selected: string,
+  categories: readonly Category[],
+): boolean {
+  if (selected === '') return true;
+  if (taskCategory === selected) return true;
+  return descendantIdSet(selected, categories).has(taskCategory);
+}
 
 type TaskFilterProps = {
   onFilterChange: (value: string) => void;
