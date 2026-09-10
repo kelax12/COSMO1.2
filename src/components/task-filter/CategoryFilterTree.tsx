@@ -2,7 +2,7 @@ import React from 'react';
 import { ChevronRight, ChevronDown } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { buildTree, type Category, type CategoryNode } from '@/modules/categories';
-import { useCollapsedCategories } from '@/modules/ui-states';
+import { useCollapsedCategories } from '@/modules/categories/collapsed.store';
 import { useT } from '@/i18n/useT';
 
 interface CategoryFilterTreeProps {

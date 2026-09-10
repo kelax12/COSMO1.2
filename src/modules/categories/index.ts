@@ -41,7 +41,10 @@ export type { CategoryNode } from './tree';
 // ═══════════════════════════════════════════════════════════════════
 
 export type { ICategoriesRepository } from './repository';
-export { LocalStorageCategoriesRepository } from './repository';
+// ⚠️ `LocalStorageCategoriesRepository` n'est PAS ré-exporté : ce baril est
+// importé par une douzaine d'écrans, et l'y remettre ferait repartir les seeds
+// de démonstration dans le chunk d'entrée. Il vit dans `./local.repository`,
+// chargé à la demande par `src/lib/demo-repositories.ts`.
 export { SupabaseCategoriesRepository } from './supabase.repository';
 
 // ═══════════════════════════════════════════════════════════════════

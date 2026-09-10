@@ -27,7 +27,7 @@ import DeleteCategoryDialog from '@/components/category/DeleteCategoryDialog';
 import CategoryTreeRow from '@/components/category/CategoryTreeRow';
 import MoveCategoryDialog from '@/components/category/MoveCategoryDialog';
 import { useSheetMotion } from '@/components/mobile/mobile-motion';
-import { useCollapsedCategories } from '@/modules/ui-states';
+import { useCollapsedCategories } from '@/modules/categories/collapsed.store';
 
 type ColorSettingsModalProps = {
   isOpen: boolean;
