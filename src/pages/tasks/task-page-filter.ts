@@ -46,9 +46,11 @@ export function filterTasksForPage(tasks: Task[], params: TaskPageFilterParams):
   // 🔴 CHANGEMENT DE SÉMANTIQUE ASSUMÉ (2026-09-09, tâche 12 sous-catégories).
   // C'est l'attente naturelle d'un arbre ; un compte dont les catégories
   // restent plates ne voit AUCUNE différence, `descendantIdSet` rendant alors
-  // un ensemble vide pour chaque sélection — voir `matchesCategoryFilter`
-  // (`@/components/TaskFilter`), qui documente la même règle pour le cas
-  // mono-sélection couvert par son propre test.
+  // un ensemble vide pour chaque sélection. Règle exprimée UNE SEULE FOIS,
+  // ici : `TaskFilter` (et son arbre repliable `CategoryFilterTree`) ne fait
+  // que cocher des identifiants, jamais la remontée de branche elle-même —
+  // voir `task-page-filter.test.ts` pour la couverture (mono et
+  // multi-sélection).
   if (selectedCategories.length > 0) {
     // Le `Set` de correspondance est calculé UNE FOIS pour tout l'appel, pas
     // par tâche filtrée : hissé hors de la boucle `.filter`, comme l'exige
