@@ -22,7 +22,6 @@ import { LOCALE_STORAGE_KEY } from '@/i18n/locale';
 
 // Categories
 import { ICategoriesRepository } from '@/modules/categories/repository';
-import { LocalStorageCategoriesRepository } from '@/modules/categories/repository';
 import { SupabaseCategoriesRepository } from '@/modules/categories/supabase.repository';
 
 // Lists
@@ -232,7 +231,8 @@ export function getEventsRepository(): IEventsRepository {
 export function getCategoriesRepository(): ICategoriesRepository {
   if (!categoriesRepository) {
     categoriesRepository = appModeStore.isDemo
-      ? new LocalStorageCategoriesRepository()
+      ? lazyDemoRepository<ICategoriesRepository>(() =>
+          import('./demo-repositories').then((m) => m.createDemoCategoriesRepository()))
       : new SupabaseCategoriesRepository();
   }
   return categoriesRepository;

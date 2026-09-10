@@ -14,6 +14,7 @@ import { useLocation } from 'react-router';
 // Module tasks - Hooks indépendants (MIGRÉ)
 // ═══════════════════════════════════════════════════════════════════
 import { useTasks, useUpdateTask } from '@/modules/tasks';
+import { useCategories } from '@/modules/categories';
 
 // ═══════════════════════════════════════════════════════════════════
 // Module lists - (MIGRÉ)
@@ -57,6 +58,9 @@ const TasksPage: React.FC = () => {
   // TASKS - Depuis le module tasks (MIGRÉ)
   // ═══════════════════════════════════════════════════════════════════
   const { data: tasks = [], isLoading: isTasksLoading, isError: isTasksError, error: tasksError, refetch: refetchTasks } = useTasks();
+  // Nécessaire au filtre par branche de catégorie (tâche 12) : filtrer
+  // « Travail » doit aussi remonter les tâches de ses sous-catégories.
+  const { data: categories = [] } = useCategories();
   const updateTaskMutation = useUpdateTask();
   const { pullY, isRefreshing, threshold } = usePullToRefresh(() => refetchTasks());
 
@@ -215,8 +219,9 @@ const TasksPage: React.FC = () => {
       selectedListId,
       selectingTasksForListId,
       lists,
+      categories,
     }),
-    [tasks, searchTerm, selectedCategories, priorityRange, selectedListId, selectingTasksForListId, lists]
+    [tasks, searchTerm, selectedCategories, priorityRange, selectedListId, selectingTasksForListId, lists, categories]
   );
 
   // Résumé de l'en-tête mobile (maquette 04). Il porte sur la vue COURANTE

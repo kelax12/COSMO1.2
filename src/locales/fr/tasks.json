@@ -17,6 +17,12 @@
     "fallback": "Vérifie ta connexion internet, puis réessaie.",
     "retry": "Réessayer"
   },
+  "fields": {
+    "category": "Catégorie",
+    "categoryNone": "Aucune catégorie",
+    "categorySearch": "Rechercher une catégorie",
+    "categoryNoResult": "Aucune catégorie ne correspond"
+  },
   "actions": {
     "newTask": "Nouvelle tâche",
     "newTaskAria": "Créer une nouvelle tâche",
@@ -341,7 +347,21 @@
     "title": "Modifier les catégories",
     "namePlaceholder": "Nom de la catégorie",
     "deleteTitle": "Supprimer la catégorie",
-    "deleteBody": "Êtes-vous sûr de vouloir supprimer cette catégorie ? Cette action est irréversible."
+    "deleteBody": "Êtes-vous sûr de vouloir supprimer cette catégorie ? Cette action est irréversible.",
+    "expand": "Déplier",
+    "collapse": "Replier",
+    "colorFor": "Couleur de {{name}}",
+    "nameFor": "Nom de {{name}}",
+    "addChildTo": "Ajouter une sous-catégorie à {{name}}",
+    "moveCategory": "Déplacer {{name}}",
+    "deleteCategory": "Supprimer {{name}}",
+    "maxDepthReached": "Profondeur maximale atteinte",
+    "addRoot": "Ajouter une catégorie",
+    "moveTitle": "Déplacer la catégorie",
+    "moveTarget": "Nouvelle catégorie parente",
+    "moveToRoot": "À la racine, sans parent",
+    "moveCancel": "Annuler",
+    "moveConfirm": "Déplacer"
   },
   "desktop": {
     "closeForm": "Fermer le formulaire",

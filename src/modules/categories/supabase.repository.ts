@@ -21,6 +21,8 @@ interface CategoryRow {
   id: string;
   name: string;
   color: string;
+  parent_id: string | null;
+  position: number;
   user_id?: string;
   created_at?: string;
 }
@@ -31,6 +33,8 @@ interface CategoryRow {
 interface CategoryDbInput {
   name?: string;
   color?: string;
+  parent_id?: string | null;
+  position?: number;
   user_id?: string;
 }
 
@@ -48,6 +52,10 @@ export class SupabaseCategoriesRepository implements ICategoriesRepository {
     const { data, error } = await supabase
       .from('categories')
       .select('*')
+      // Tri par fratrie (`position`) puis par nom : deux catégories d'une
+      // même fratrie sans position explicite distincte restent stables et
+      // lisibles au lieu de se mélanger.
+      .order('position', { ascending: true })
       .order('name', { ascending: true })
       .limit(200); // Sécurité — les catégories ne devraient jamais dépasser 200
 
@@ -117,13 +125,25 @@ export class SupabaseCategoriesRepository implements ICategoriesRepository {
       id: row.id,
       name: row.name,
       color: row.color,
+      parentId: row.parent_id ?? null,
+      position: row.position ?? 0,
     };
   }
 
+  /**
+   * Whitelist. ❌ Ne JAMAIS y ajouter `user_id` ni `id` : le premier est posé
+   * par le serveur depuis la session, le second passe par le second argument
+   * de `create()` (R-08).
+   *
+   * ⚠️ `parentId: null` est une valeur SIGNIFIANTE (« remonter à la racine ») :
+   * le test doit être `!== undefined`, jamais une vérité JavaScript.
+   */
   private mapToDb(input: Partial<Category>): CategoryDbInput {
     const result: CategoryDbInput = {};
     if (input.name !== undefined) result.name = input.name;
     if (input.color !== undefined) result.color = input.color;
+    if (input.parentId !== undefined) result.parent_id = input.parentId;
+    if (input.position !== undefined) result.position = input.position;
     return result;
   }
 }

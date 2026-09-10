@@ -1,7 +1,15 @@
 import { describe, it, expect } from 'vitest';
-import { categoryImpact, categoryDependents, EMPTY_IMPACT, NO_CATEGORY, resolveReassignTargets } from './impact';
+import {
+  categoryImpact,
+  categoryDependents,
+  EMPTY_IMPACT,
+  NO_CATEGORY,
+  resolveReassignTargets,
+  branchImpact,
+} from './impact';
 import type { Task } from '@/modules/tasks/types';
 import type { OKR } from '@/modules/okrs/types';
+import type { Category } from './types';
 
 const task = (id: string, category: string): Task => ({
   id,
@@ -118,5 +126,46 @@ describe('resolveReassignTargets', () => {
     const plan = resolveReassignTargets(['a', 'b', 'c'], { a: 'b', b: 'c', c: 'd' });
     expect(plan).toEqual({ a: 'd', b: 'd', c: 'd' });
     expect(new Set(Object.keys(plan)).size).toBe(3);
+  });
+});
+
+const c = (id: string, parentId: string | null): Category => ({
+  id, name: id, color: '#000', parentId, position: 0,
+});
+
+//  cat-a
+//    └── cat-b
+//          └── cat-c
+const CATS: Category[] = [c('cat-a', null), c('cat-b', 'cat-a'), c('cat-c', 'cat-b')];
+
+describe('branchImpact', () => {
+  it('compte les sous-catégories de toute la branche', () => {
+    expect(branchImpact('cat-a', TASKS, OKRS, CATS).subcategories).toBe(2);
+  });
+
+  it('agrège les tâches et objectifs des descendants', () => {
+    const tasks = [task('t1', 'cat-a'), task('t2', 'cat-c')];
+    expect(branchImpact('cat-a', tasks, [], CATS)).toMatchObject({ tasks: 2, subcategories: 2 });
+  });
+
+  it('rend zéro sous-catégorie pour une feuille', () => {
+    expect(branchImpact('cat-c', TASKS, OKRS, CATS).subcategories).toBe(0);
+  });
+});
+
+describe('resolveReassignTargets — destination emportée par sa branche', () => {
+  // 🔴 Supprimer « cat-a » en désignant « cat-b » (son enfant) comme
+  // destination est atteignable en deux décisions. « cat-b » disparaît AVEC la
+  // branche : la destination doit retomber sur une catégorie qui survit.
+  it('ne renvoie pas vers une catégorie emportée par la branche supprimée', () => {
+    const removed = ['cat-a', 'cat-b', 'cat-c'];
+    const chosen = { 'cat-a': 'cat-b' };
+    expect(resolveReassignTargets(removed, chosen)).toMatchObject({ 'cat-a': NO_CATEGORY });
+  });
+
+  it('conserve une destination qui survit', () => {
+    expect(resolveReassignTargets(['cat-a'], { 'cat-a': 'cat-survivante' })).toMatchObject({
+      'cat-a': 'cat-survivante',
+    });
   });
 });

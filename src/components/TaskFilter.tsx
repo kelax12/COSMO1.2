@@ -3,9 +3,9 @@ import { ChevronDown, SlidersHorizontal, X, Search, Plus, ArrowUpDown } from 'lu
 import { motion, AnimatePresence } from 'framer-motion';
 import { Slider } from './ui/slider';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import { Popover, PopoverTrigger, PopoverContent } from './ui/popover';
+import CategoryFilterTree from './task-filter/CategoryFilterTree';
 
 import { useCategories } from '@/modules/categories';
 import { usePriorityRange } from '@/modules/ui-states';
@@ -244,22 +244,11 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
                 {/* Catégories */}
                 <div>
                   <label className="block text-sm font-semibold mb-3" style={{ color: 'rgb(var(--color-text-secondary))' }}>{t('filter.filterCategories')}</label>
-                  <div className="grid max-h-[180px] gap-1 overflow-y-auto pr-1 custom-scrollbar">
-                    {categories.map((category) => (
-                      <label
-                        key={category.id}
-                        className="flex cursor-pointer items-center gap-2 py-1 text-sm"
-                        style={{ color: 'rgb(var(--color-text-primary))' }}
-                      >
-                        <Checkbox
-                          checked={selectedCategories.includes(category.id)}
-                          onCheckedChange={() => toggleCategory(category.id)}
-                        />
-                        <span className="inline-block w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: category.color }} aria-hidden="true" />
-                        <span className="truncate">{category.name}</span>
-                      </label>
-                    ))}
-                  </div>
+                  <CategoryFilterTree
+                    categories={categories}
+                    selectedCategories={selectedCategories}
+                    onToggle={toggleCategory}
+                  />
                 </div>
 
               </div>

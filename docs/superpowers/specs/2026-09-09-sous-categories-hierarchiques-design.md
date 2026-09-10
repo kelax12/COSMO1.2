@@ -89,15 +89,32 @@ d'autres sessions et ne doivent pas être appliquées au passage.
 
 ```sql
 ALTER TABLE public.categories
-  ADD COLUMN IF NOT EXISTS parent_id UUID REFERENCES public.categories(id) ON DELETE RESTRICT,
+  ADD COLUMN IF NOT EXISTS parent_id UUID REFERENCES public.categories(id) ON DELETE NO ACTION,
   ADD COLUMN IF NOT EXISTS position  INTEGER NOT NULL DEFAULT 0;
 
 CREATE INDEX IF NOT EXISTS idx_categories_parent ON public.categories(user_id, parent_id);
 ```
 
-🔴 **`ON DELETE RESTRICT`, jamais `CASCADE`.** Supprimer un parent ne doit pas
-emporter sa branche en silence. La base refuse, ce qui force l'application à avoir
-pris explicitement la décision « remonter les enfants » ou « supprimer la branche ».
+🔴 **NI `CASCADE`, NI `RESTRICT` : `NO ACTION`.** La nuance décide d'un chemin RGPD.
+
+Ce qu'on veut : supprimer un parent en laissant ses enfants doit être refusé, pour
+forcer l'application à trancher « remonter les enfants » ou « supprimer la branche ».
+`CASCADE` emporterait la branche en silence.
+
+Mais `RESTRICT` se vérifie **immédiatement, ligne par ligne** : il ne voit pas que
+l'enfant part dans la MÊME requête. Or deux chemins suppriment les catégories d'un
+compte en un seul `DELETE` groupé : l'Edge Function `delete-account`, qui balaie
+`USER_OWNED_TABLES`, et la cascade de `user_id REFERENCES auth.users(id) ON DELETE
+CASCADE`. Avec `RESTRICT`, les deux échouent dès qu'un compte possède **une seule**
+sous-catégorie, et la suppression de compte est bloquée : la régression B9 (RGPD
+art. 17) que ce dépôt a déjà payée une fois.
+
+`NO ACTION` vérifie en **fin de requête** : la suppression groupée d'une branche
+entière passe, celle d'un parent seul reste refusée. Même garantie, sans le blocage.
+
+⚠️ L'application supprime catégorie par catégorie, en requêtes **séparées** : pour
+elle, l'ordre feuilles vers racine reste obligatoire.
+
 Même esprit que le `ON DELETE SET NULL` de `team_labels` (mig. `093`) : une
 suppression ne détruit jamais ce qui n'était pas visé.
 
@@ -146,7 +163,7 @@ mémoire, côté client. ❌ Ne jamais ajouter d'aller-retour serveur pour déri
 branche : ce serait une lecture de plus sur toutes les pages protégées, exactement ce
 que la règle « agréger des lectures » et le finding C-05 ont fermé ailleurs.
 
-### 3.2 `144_categories_fk.sql`
+### 3.2 `145_categories_fk.sql`
 
 Ferme R-02 au niveau de la base. Ordre impératif :
 
@@ -170,7 +187,7 @@ par un `RAISE` final, comme les `131` et `132` :
 prend un `ACCESS EXCLUSIVE` le temps de la réécriture. À jouer hors heure de pointe,
 et à annoncer comme telle dans le runbook.
 
-⚠️ `ON DELETE SET NULL` et non `RESTRICT` : la réaffectation avant suppression reste
+⚠️ `ON DELETE SET NULL` et non `NO ACTION` : la réaffectation avant suppression reste
 le chemin normal (R-02), et le `SET NULL` n'est que le filet de dernier recours si
 une suppression passe malgré tout. Il ne remplace pas `useReassignCategory`, qui
 continue de demander où partent les éléments.
@@ -219,7 +236,7 @@ donnée inattendue.
 ### 4.3 L'absence de catégorie
 
 🔴 **`NO_CATEGORY` reste la chaîne vide au niveau TypeScript.** La bascule vers
-`NULL` introduite par la migration `144` est absorbée dans `mapTaskToDb` /
+`NULL` introduite par la migration `145` est absorbée dans `mapTaskToDb` /
 `mapDbToTask` et leurs équivalents OKR, et **nulle part ailleurs**. Propager `null`
 jusqu'aux composants imposerait de revoir des dizaines de comparaisons
 `t.category === ...` pour un gain nul, et créerait deux marqueurs d'absence à
@@ -314,7 +331,8 @@ N sous-catégories, M tâches, K OKR. Elle propose deux issues :
   une destination choisie, ou vers « aucune catégorie ».
 
 🔴 **La réaffectation reste AVANT la suppression**, et la suppression d'une branche se
-fait **des feuilles vers la racine** : `ON DELETE RESTRICT` refuse l'ordre inverse, et
+fait **des feuilles vers la racine** : l'application écrit une suppression par
+catégorie, en requêtes séparées, et `ON DELETE NO ACTION` refuse alors l'ordre inverse, et
 c'est voulu, la base doit refuser ce que l'application n'a pas ordonné.
 
 ⚠️ **L'annulation** (`useRestoreCategory`) restaure l'identifiant d'origine **et le
@@ -373,7 +391,7 @@ pour la modale et `common` pour les actions partagées.
 | Restauration | `useRestoreCategory` rend l'`id` **et** le `parentId` d'origine |
 | Parité démo / production | le repository local refuse ce que le trigger refuse |
 | Migrations | `npm run validate:migrations`, `npm run check:rls` |
-| Migration `144` | preuve en transaction annulée, avant application (§3.2) |
+| Migration `145` | preuve en transaction annulée, avant application (§3.2) |
 
 🔴 **Chaque garde ajoutée part avec un témoin.** Quatre gardes de ce dépôt ont été
 prises en train de répondre sans mesurer entre le 08-30 et le 09-03. Une garde qui se
@@ -387,14 +405,14 @@ trompe dans le sens rassurant est pire qu'une garde absente.
 4. Modale de gestion, avec le menu « Déplacer vers… ».
 5. `CategoryField`, filtres, affichage.
 6. Seeds démo.
-7. Migration `144`, prouvée puis appliquée hors heure de pointe.
+7. Migration `145`, prouvée puis appliquée hors heure de pointe.
 
-⚠️ La `144` est **en dernier** et volontairement séparable : si elle doit être
+⚠️ La `145` est **en dernier** et volontairement séparable : si elle doit être
 reportée, tout le reste de la vague reste livrable et cohérent.
 
 ## 10. Réserve portée à la connaissance d'Axel
 
-La vague 1 reste large, la migration `144` étant une conversion de type sur `tasks`.
+La vague 1 reste large, la migration `145` étant une conversion de type sur `tasks`.
 Elle est pour cette raison placée en dernier et rendue séparable (§9).
 
 Le glisser-déposer, envisagé puis **retiré du périmètre le 2026-09-09**, n'est plus un
