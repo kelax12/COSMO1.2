@@ -197,3 +197,141 @@ describe('SupabaseTasksRepository — écriture', () => {
     expect(supabaseMock.queries.filter((q) => q.table === 'tasks')).toHaveLength(0);
   });
 });
+
+// ═══════════════════════════════════════════════════════════════════
+// Dépendances de tâches PERSONNELLES (mig. 132, livrée le 2026-08-30).
+//
+// C'est cette livraison qui a fait tomber la marge `functions` du glob
+// `supabase.repository.ts` de 93,00 à 89,83 % (mesure du 2026-09-08) :
+// trois méthodes ajoutées, aucune couverte. Les tests ci-dessous ne
+// comblent pas un trou de comptage, ils verrouillent les deux invariants
+// que la migration porte, et qui sont invisibles à la lecture du produit.
+// ═══════════════════════════════════════════════════════════════════
+describe('SupabaseTasksRepository — dépendances personnelles (mig. 132)', () => {
+  // ⚠️ Verrou de CHEMIN D'ACCÈS, l'inverse de celui de `getAll`.
+  // `task_dependencies` se lit EN DIRECT, et c'est voulu : sa policy est
+  // `(SELECT auth.uid()) = user_id` sur une colonne dénormalisée, donc
+  // indexable. Déléguer à `tasks` (ou passer par `get_my_tasks`) paierait le
+  // OR non indexable de la mig. 049 PAR ARÊTE — l'erreur que la mig. 117 a dû
+  // rattraper côté entreprise.
+  it('getDependencies: lecture directe de la table, sans RPC de contournement', async () => {
+    supabaseMock.queueTable('task_dependencies', {
+      data: [{ task_id: 't1', depends_on_id: 't2' }],
+    });
+    const result = await repo.getDependencies();
+
+    expect(supabaseMock.queries.map((q) => q.table)).toEqual(['task_dependencies']);
+    expect(supabaseMock.rpcCalls).toEqual([]);
+    expect(result).toEqual([{ taskId: 't1', dependsOnId: 't2' }]);
+  });
+
+  it('getDependencies: ne lit que les deux colonnes de l’arête, jamais select(*)', async () => {
+    supabaseMock.queueTable('task_dependencies', { data: [] });
+    await repo.getDependencies();
+
+    const select = supabaseMock.argsOf('task_dependencies', 'select')?.[0] as string;
+    expect(select).toBe('task_id,depends_on_id');
+  });
+
+  it('getDependencies: data null → tableau vide, jamais une lecture de propriété sur null', async () => {
+    supabaseMock.queueTable('task_dependencies', { data: null });
+    await expect(repo.getDependencies()).resolves.toEqual([]);
+  });
+
+  it('getDependencies: remonte une erreur normalisée', async () => {
+    supabaseMock.queueTable('task_dependencies', {
+      data: null,
+      error: { message: 'permission denied', code: '42501' },
+    });
+    await expect(repo.getDependencies()).rejects.toBeTruthy();
+  });
+
+  // 🔴 GARDE ANTI-MASS-ASSIGNMENT. `user_id` est redérivé par le trigger
+  // `validate_task_dependency` depuis le propriétaire de la tâche bloquée.
+  // L'émettre depuis le client rouvrirait très exactement la porte que ce
+  // trigger existe pour fermer. `org_id` non plus n'a rien à faire ici : le
+  // graphe personnel n'appartient à aucune organisation.
+  it('addDependency: n’envoie QUE task_id et depends_on_id (jamais user_id)', async () => {
+    supabaseMock.queueTable('task_dependencies', { data: null });
+    await repo.addDependency('t1', 't2');
+
+    const inserted = (supabaseMock.argsOf('task_dependencies', 'insert')?.[0] as unknown[])[0];
+    expect(inserted).toEqual({ task_id: 't1', depends_on_id: 't2' });
+    expect(Object.keys(inserted as object)).not.toContain('user_id');
+    expect(Object.keys(inserted as object)).not.toContain('org_id');
+  });
+
+  it('addDependency: un cycle refusé par le trigger remonte, il n’est pas avalé', async () => {
+    // Le trigger de la mig. 132 refuse l'auto-dépendance et les cycles, y
+    // compris indirects. Avaler cette erreur laisserait l'interface afficher
+    // une arête que la base n'a jamais écrite.
+    supabaseMock.queueTable('task_dependencies', {
+      data: null,
+      error: { message: 'dependency cycle detected', code: 'P0001' },
+    });
+    await expect(repo.addDependency('t1', 't2')).rejects.toBeTruthy();
+  });
+
+  it('removeDependency: cible l’arête par ses DEUX extrémités', async () => {
+    supabaseMock.queueTable('task_dependencies', { data: null });
+    await repo.removeDependency('t1', 't2');
+
+    const eqs = supabaseMock
+      .callsFor('task_dependencies')
+      .filter((c) => c.method === 'eq')
+      .map((c) => c.args);
+    expect(eqs).toEqual([['task_id', 't1'], ['depends_on_id', 't2']]);
+    expect(supabaseMock.callsFor('task_dependencies').some((c) => c.method === 'delete')).toBe(true);
+  });
+
+  it('removeDependency: remonte une erreur normalisée', async () => {
+    supabaseMock.queueTable('task_dependencies', {
+      data: null,
+      error: { message: 'permission denied', code: '42501' },
+    });
+    await expect(repo.removeDependency('t1', 't2')).rejects.toBeTruthy();
+  });
+});
+
+describe('SupabaseTasksRepository — partages en attente et suppression', () => {
+  // Depuis la mig. 103, `get_my_tasks()` ne renvoie que les partages ACCEPTÉS.
+  // Cette RPC est donc le SEUL chemin qui montre au destinataire une tâche
+  // qu'il n'a pas encore acceptée : si elle repassait par la table, l'écran
+  // d'acceptation se viderait sans qu'aucun test ne le dise.
+  it('getPendingSharedTasks: passe par la RPC dédiée, borne à 200, colonnes de liste', async () => {
+    supabaseMock.queueRpc('get_pending_shared_tasks', { data: [sharedRow] });
+    supabaseMock.queueTable('profiles', {
+      data: [{ id: 'owner-uid', display_name: 'Bob', email: 'bob@test.dev' }],
+    });
+    const result = await repo.getPendingSharedTasks();
+
+    expect(supabaseMock.rpcCalls.map((c) => c.fn)).toContain('get_pending_shared_tasks');
+    expect(supabaseMock.queries.filter((q) => q.table === 'tasks')).toHaveLength(0);
+    expect(supabaseMock.argsOf('get_pending_shared_tasks', 'limit')).toEqual([200]);
+    expect(supabaseMock.argsOf('get_pending_shared_tasks', 'select')?.[0]).not.toBe('*');
+    // La tâche vient d'un autre compte : elle doit être marquée comme partagée
+    // et porter le nom du partageur, pas son UUID.
+    expect(result[0].sharedBy).toBe('Bob');
+  });
+
+  it('getPendingSharedTasks: remonte une erreur normalisée', async () => {
+    supabaseMock.queueRpc('get_pending_shared_tasks', {
+      data: null,
+      error: { message: 'permission denied', code: '42501' },
+    });
+    await expect(repo.getPendingSharedTasks()).rejects.toBeTruthy();
+  });
+
+  it('delete: cible la tâche par son id et remonte l’échec', async () => {
+    supabaseMock.queueTable('tasks', { data: null });
+    await repo.delete('t1');
+    expect(supabaseMock.argsOf('tasks', 'eq')).toEqual(['id', 't1']);
+
+    supabaseMock.reset();
+    supabaseMock.queueTable('tasks', {
+      data: null,
+      error: { message: 'permission denied', code: '42501' },
+    });
+    await expect(repo.delete('t1')).rejects.toBeTruthy();
+  });
+});

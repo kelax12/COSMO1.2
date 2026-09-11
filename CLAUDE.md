@@ -117,13 +117,26 @@ npm run typecheck  # tsc -b (doit retourner 0 erreur)
 npm test           # Vitest (run once), 2051 tests / 179 fichiers (mesure du 2026-09-02)
 npm run test:watch # Vitest en mode watch
 npm run test:coverage       # + couverture v8, seuils globaux et par fichier
-                            # ✅ VERTE au 2026-08-29 : 29,17 L · 28,81 S · 23,41 F · 24,17 B
+                            # ✅ VERTE au 2026-09-11 : 31,32 L · 30,91 S · 24,56 F · 26,37 B
+                            # (2 470 tests / 221 fichiers, zero echec). Mesure precedente,
+                            # le 2026-08-29 : 29,17 L · 28,81 S · 23,41 F · 24,17 B.
                             # ❌ NE JAMAIS baisser un seuil pour repasser au vert.
-                            # ⚠️ NON RELANCEE depuis, alors que la suite a pris +215 tests ET
-                            # que le denominateur a grossi (onboarding, calendrier, deadline).
-                            # La marge la plus serree est `functions` ; elle etait tombee a
-                            # 0,32 pt le 2026-08-25. La relancer APRES chaque vague de
-                            # features, pas seulement quand on y pense.
+                            # 🔴 Le cliquet du glob `supabase.repository.ts` A MORDU le
+                            # 2026-09-08 : `functions` est tombe a 89,83 %, sous son seuil
+                            # de 90. Il a fait son travail, et les fonctions manquantes
+                            # etaient DATEES, pas dispersees : dependances de taches
+                            # personnelles (mig. 132), `restoreCompletions` (R-08),
+                            # `getMyOrgInbox` (mig. 129 + 142), et les deux ecritures de
+                            # dependances d'equipe. Du code de septembre livre sans test
+                            # de repository. 13 fonctions couvertes (126 tests), glob
+                            # remonte a 95,34 % ; AUCUN seuil baisse.
+                            # ⚠️ La marge la plus serree reste `functions`, mais elle n'est
+                            # plus critique : 3,56 pt contre 0,32 le 2026-08-25. La relancer
+                            # APRES chaque vague de features, pas quand on y pense.
+                            # ⚠️ Sur cette machine le run prend ~11 min et MEURT en silence
+                            # si une autre session fait tourner sa suite en parallele (pas
+                            # de resume, pas de rapport). Mesurer quand la machine est libre,
+                            # ou dans un worktree isole ; `--maxWorkers=4` tient mieux.
                             # Voir docs/TESTING.md
 npm run validate:migrations # Garde statique sur supabase/migration/*.sql (CI)
 npm run check:rls           # Invariants RLS : auth.uid() wrappé, 1 seule policy PERMISSIVE,

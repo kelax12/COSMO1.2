@@ -417,3 +417,104 @@ describe('SupabaseOrganizationsRepository — permissions par membre (mig. 115)'
     });
   });
 });
+
+// ═══════════════════════════════════════════════════════════════════
+// getMyOrgInbox — l'agrégat de la mig. 129, élargi par la mig. 142.
+//
+// Il remplace cinq lectures qui partaient à chaque ouverture de l'app, sur
+// TOUTES les pages protégées (`Layout` monte `useOrgBadges`). Livré après la
+// campagne du 2026-08-25, jamais couvert : il fait partie du code qui a fait
+// tomber la marge `functions` du glob.
+// ═══════════════════════════════════════════════════════════════════
+describe('SupabaseOrganizationsRepository — getMyOrgInbox (mig. 129 + 142)', () => {
+  // ❌ Ne JAMAIS lui donner un `p_org`. Le périmètre vient de `auth.uid()`
+  // seul : un paramètre d'organisation forcerait le client à attendre que
+  // l'organisation active soit résolue, et sérialiserait ce qui part en
+  // parallèle. Les sections couvrent TOUTES mes organisations, le client filtre.
+  it('appelle la RPC SANS aucun paramètre, et ne touche aucune des cinq tables', async () => {
+    supabaseMock.queueRpc('get_my_org_inbox', { data: {} });
+    await repo.getMyOrgInbox();
+
+    expect(supabaseMock.rpcCalls).toHaveLength(1);
+    expect(supabaseMock.rpcCalls[0].fn).toBe('get_my_org_inbox');
+    expect(supabaseMock.rpcCalls[0].args).toBeUndefined();
+    for (const table of ['org_invitations', 'org_join_requests', 'org_notifications', 'profiles', 'team_tasks']) {
+      expect(supabaseMock.queries.filter((q) => q.table === table)).toHaveLength(0);
+    }
+  });
+
+  it('une réponse vide rend six sections vides, jamais undefined', async () => {
+    supabaseMock.queueRpc('get_my_org_inbox', { data: null });
+    const inbox = await repo.getMyOrgInbox();
+
+    expect(inbox).toEqual({
+      invitations: [],
+      removalNotices: [],
+      myJoinRequest: null,
+      joinRequests: [],
+      notifications: [],
+      badgeTasks: [],
+    });
+  });
+
+  it('traduit les six sections, et ne laisse jamais un UUID nu à l’écran', async () => {
+    supabaseMock.queueRpc('get_my_org_inbox', {
+      data: {
+        invitations: [{
+          id: 'i1', org_id: 'org1', org_name: 'ACME',
+          inviter_id: 'u1', inviter_name: null, created_at: '2026-09-01T10:00:00.000Z',
+        }],
+        removal_notices: [{
+          id: 'r1', org_id: 'org1', org_name: 'ACME',
+          actor_name: 'Alice', created_at: '2026-09-02T10:00:00.000Z',
+        }],
+        my_join_request: { id: 'j0', org_id: 'org2', user_id: 'u2', requested_at: '2026-09-03T10:00:00.000Z' },
+        join_requests: [{
+          id: 'j1', org_id: 'org1', user_id: 'u3', requested_at: '2026-09-04T10:00:00.000Z',
+          requester_name: null, requester_email: 'carol@test.dev',
+        }],
+        notifications: [{
+          id: 'n1', org_id: 'org1', actor_id: 'u1', kind: 'task_assigned',
+          task_id: 'tk1', read_at: null, created_at: '2026-09-05T10:00:00.000Z',
+        }],
+        badge_tasks: [
+          { org_id: 'org1', id: 'tk1', name: 'Maquette', created_at: '2026-09-05T10:00:00.000Z', kind: 'assigned' },
+        ],
+      },
+    });
+    const inbox = await repo.getMyOrgInbox();
+
+    // Repli de nom : jamais l'identifiant de l'inviteur.
+    expect(inbox.invitations[0].inviterName).toBe('Un collaborateur');
+    expect(inbox.invitations[0].orgId).toBe('org1');
+    expect(inbox.removalNotices[0].actorName).toBe('Alice');
+    expect(inbox.myJoinRequest).toMatchObject({ id: 'j0', orgId: 'org2', status: 'pending' });
+    // Sans display_name, on montre la partie locale de l'email, pas l'UUID.
+    expect(inbox.joinRequests[0].requesterName).toBe('carol');
+    expect(inbox.notifications[0].taskId).toBe('tk1');
+    expect(inbox.badgeTasks[0].kind).toBe('assigned');
+  });
+
+  // 🔴 `kind` vient d'une colonne TEXT. Un libellé inconnu ne doit JAMAIS
+  // pouvoir gonfler le compteur de la pastille : il retombe sur `notified`,
+  // qui n'est jamais compté (une tâche peut sortir dans les DEUX branches).
+  it('un `kind` inconnu retombe sur `notified`, il ne compte pas comme une assignation', async () => {
+    supabaseMock.queueRpc('get_my_org_inbox', {
+      data: {
+        badge_tasks: [
+          { org_id: 'org1', id: 'tk9', name: 'X', created_at: '2026-09-05T10:00:00.000Z', kind: 'assigned_v2' },
+        ],
+      },
+    });
+    const inbox = await repo.getMyOrgInbox();
+    expect(inbox.badgeTasks[0].kind).toBe('notified');
+  });
+
+  it('remonte une erreur normalisée', async () => {
+    supabaseMock.queueRpc('get_my_org_inbox', {
+      data: null,
+      error: { message: 'permission denied', code: '42501' },
+    });
+    await expect(repo.getMyOrgInbox()).rejects.toBeTruthy();
+  });
+});

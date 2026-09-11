@@ -275,3 +275,52 @@ describe('SupabaseTeamProjectsRepository — dépendances de tâches', () => {
     expect(eqCalls).toEqual([]);
   });
 });
+
+// ═══════════════════════════════════════════════════════════════════
+// Dépendances de tâches d'ÉQUIPE — écritures (mig. 108 + 117).
+//
+// La LECTURE était couverte (elle passe par `get_my_team_task_dependencies`,
+// mig. 117) ; les deux écritures ne l'étaient pas. Elles font partie du code
+// qui a fait tomber la marge `functions` du glob.
+// ═══════════════════════════════════════════════════════════════════
+describe('SupabaseTeamProjectsRepository — écriture des dépendances', () => {
+  // ⚠️ `org_id` est envoyé parce que la colonne est NOT NULL, JAMAIS comme une
+  // source de vérité : le trigger de cohérence (mig. 108) le réécrit depuis la
+  // tâche elle-même. Ce test fixe la forme envoyée, pas l'autorisation.
+  it('addTaskDependency: envoie les trois colonnes de l’arête et rien d’autre', async () => {
+    supabaseMock.queueTable('team_task_dependencies', { data: null });
+    await repo.addTaskDependency('tk1', 'tk2', 'org1');
+
+    const inserted = supabaseMock.argsOf('team_task_dependencies', 'insert')?.[0] as object;
+    expect(inserted).toEqual({ task_id: 'tk1', depends_on_id: 'tk2', org_id: 'org1' });
+    expect(Object.keys(inserted)).not.toContain('user_id');
+    expect(Object.keys(inserted)).not.toContain('created_by');
+  });
+
+  it('addTaskDependency: un cycle refusé par le trigger remonte, il n’est pas avalé', async () => {
+    supabaseMock.queueTable('team_task_dependencies', {
+      data: null,
+      error: { message: 'dependency cycle detected', code: 'P0001' },
+    });
+    await expect(repo.addTaskDependency('tk1', 'tk2', 'org1')).rejects.toBeTruthy();
+  });
+
+  it('removeTaskDependency: cible l’arête par ses DEUX extrémités', async () => {
+    supabaseMock.queueTable('team_task_dependencies', { data: null });
+    await repo.removeTaskDependency('tk1', 'tk2');
+
+    const eqs = supabaseMock
+      .callsFor('team_task_dependencies')
+      .filter((c) => c.method === 'eq')
+      .map((c) => c.args);
+    expect(eqs).toEqual([['task_id', 'tk1'], ['depends_on_id', 'tk2']]);
+  });
+
+  it('removeTaskDependency: remonte une erreur normalisée', async () => {
+    supabaseMock.queueTable('team_task_dependencies', {
+      data: null,
+      error: { message: 'permission denied', code: '42501' },
+    });
+    await expect(repo.removeTaskDependency('tk1', 'tk2')).rejects.toBeTruthy();
+  });
+});

@@ -157,3 +157,39 @@ describe('SupabaseHabitsRepository', () => {
     await expect(repo.deleteHabit('h1')).rejects.toBeTruthy();
   });
 });
+
+describe('SupabaseHabitsRepository — updateHabit', () => {
+  // 🔴 FRONTIÈRE DE SÉCURITÉ. `mapHabitToDb` est une whitelist : `user_id`
+  // n'en sort jamais (faille V1). Un champ inconnu envoyé par un appelant
+  // — ou par des devtools — ne doit pas traverser jusqu'à PostgREST.
+  it('n’émet que les colonnes whitelistées, jamais user_id ni un champ inconnu', async () => {
+    supabaseMock.queueTable('habits', { data: { ...row, name: 'Lire plus' } });
+    await repo.updateHabit('h1', {
+      name: 'Lire plus',
+      user_id: 'someone-else',
+      id: 'forged',
+    } as never);
+
+    const patch = supabaseMock.argsOf('habits', 'update')?.[0] as Record<string, unknown>;
+    expect(patch).toEqual({ name: 'Lire plus' });
+    expect(Object.keys(patch)).not.toContain('user_id');
+    expect(Object.keys(patch)).not.toContain('id');
+  });
+
+  it('cible l’habitude par son id et rend le modèle mappé', async () => {
+    supabaseMock.queueTable('habits', { data: { ...row, estimated_time: 45 } });
+    const result = await repo.updateHabit('h1', { estimatedTime: 45 });
+
+    expect(supabaseMock.argsOf('habits', 'eq')).toEqual(['id', 'h1']);
+    expect(result.estimatedTime).toBe(45);
+    expect(result.id).toBe('h1');
+  });
+
+  it('remonte une erreur normalisée', async () => {
+    supabaseMock.queueTable('habits', {
+      data: null,
+      error: { message: 'permission denied', code: '42501' },
+    });
+    await expect(repo.updateHabit('h1', { name: 'X' })).rejects.toBeTruthy();
+  });
+});
