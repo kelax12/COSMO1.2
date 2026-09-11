@@ -676,6 +676,22 @@ Ce que ça a fermé : le 2026-09-03, les trois sources en ligne divergeaient tou
   `SUPABASE_ACCESS_TOKEN`, absent de la machine de développement. Le premier run de CI est la
   vérification. `assertReadSomething()` refuse un bundle vide ou sans entrypoint reconnaissable :
   une lecture ratée est une **erreur**, jamais un « identique au dépôt ».
+- 🔴 **Un témoin qui ne se joue pas en local n'est joué que par la CI** *(mesuré le 2026-09-09,
+  corrigé le 2026-09-11)*. Ce témoin importait ses helpers depuis `scripts/check-edge-deploy.mjs`,
+  qui commence par un shebang `#!/usr/bin/env node`. Node le retire, la chaîne Vite/vitest non :
+  sur Windows, `npm test` échouait à collecter ce seul fichier
+  (`SyntaxError: Invalid or unexpected token`, **sans localisation**) et **abandonnait le run
+  entier** — 210 autres fichiers et 2 205 tests jamais joués, jamais rapportés. Le noyau pur vit
+  désormais dans `scripts/check-edge-deploy.core.mjs`, **sans shebang** : le témoin l'importe, le
+  CLI le ré-exporte, et le CLI lui-même n'est plus que **spawné** par le cas « secret absent ».
+  ❌ **Ne jamais importer depuis un module qui porte un shebang** : c'est la classe de bug, pas le
+  cas particulier. Les autres guards `.mjs` de `scripts/` n'étaient épargnés que parce qu'ils
+  spawnent leur script au lieu de l'importer.
+  ⚠️ C'est la parente de la règle « une garde se vérifie sur ce qu'elle REGARDE » de `CLAUDE.md` :
+  là, une garde répondait sans mesurer ; ici, un témoin ne pouvait pas être joué **pendant qu'on
+  écrit le code qu'il garde**, donc ne disait rien tant qu'on ne poussait pas. Et il emportait
+  tous les autres avec lui, ce qui installe le réflexe le plus coûteux du dossier : « `npm test`
+  est rouge de toute façon ».
 - Runbook deploy/rollback : [`DEPLOYMENT.md`](./DEPLOYMENT.md).
 
 ## Checklist avant push prod

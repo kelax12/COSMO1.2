@@ -54,6 +54,7 @@ on:
       - .github/edge-deploy.json
       - .github/workflows/edge-deploy-drift.yml
       - scripts/check-edge-deploy.mjs
+      - scripts/check-edge-deploy.core.mjs
 
 permissions:
   contents: read

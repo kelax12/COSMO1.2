@@ -34,8 +34,17 @@ import {
   cleDeployee,
   importsLocaux,
   repoFilesFor,
-} from './check-edge-deploy.mjs';
+} from './check-edge-deploy.core.mjs';
 
+// 🔴 LE NOYAU S'IMPORTE, LE CLI SE SPAWNE, ET JAMAIS L'INVERSE.
+// `check-edge-deploy.mjs` commence par `#!/usr/bin/env node`. Node retire ce
+// shebang, la chaine Vite/vitest ne le retire pas : tant que ce temoin
+// importait le CLI, `npm test` mourait sur ce seul fichier (`SyntaxError:
+// Invalid or unexpected token`, sans localisation) et emportait le run
+// entier — 210 autres fichiers jamais joues. Un temoin qu'on ne peut pas
+// jouer en local n'est joue que par la CI, donc jamais pendant qu'on ecrit
+// le code qu'il garde. Parente de la regle « une garde se verifie sur ce
+// qu'elle REGARDE » (CLAUDE.md).
 const SCRIPT = resolve(process.cwd(), 'scripts/check-edge-deploy.mjs');
 
 /** Construit une arborescence de fichiers a partir d'un objet simple. */
