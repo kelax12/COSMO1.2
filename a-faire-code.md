@@ -2499,11 +2499,15 @@ branches 63 → **65** (67,91). Vérifiés par un second run complet, vert.
 résumé, pas de rapport, pas de message. Mesuré six fois le 2026-09-09. Mesurer machine libre ou
 dans un worktree isolé. ❌ Ne jamais conclure d'un run mort que la couverture a baissé.
 
-### C-27 · Les parcours livrés en septembre n'ont pas de test E2E · **🟡 TROIS SUR QUATRE, le 2026-09-05**
+### C-27 · Les parcours livrés en septembre n'ont pas de test E2E · **🟢 QUATRE SUR QUATRE, le 2026-09-11**
 
 `FirstRunSetup` (25 tests unitaires, aucun parcours), le calendrier COSMO sur ses six surfaces, et
 les dépendances de tâches **personnelles** (les tests E2E existants portent sur l'entreprise). Le
-nombre de cas E2E n'a pas été recompté depuis le 2026-08-25 (124 alors, 16 specs aujourd'hui).
+nombre de cas E2E n'avait pas été recompté depuis le 2026-08-25 (124 alors).
+
+> ✅ **Refermé le 2026-09-11.** Le quatrième parcours — le remboursement — est joué, le décompte est
+> remesuré et inscrit, et la suite complète a été rejouée derrière. Deux défauts produit ont été
+> trouvés **par** ces parcours, et un troisième par celui de `FirstRunSetup` : détail plus bas.
 
 - **Fini quand** : un parcours E2E par écran neuf, et le décompte réel inscrit dans `TESTING.md`.
 
@@ -2514,7 +2518,7 @@ nombre de cas E2E n'a pas été recompté depuis le 2026-08-25 (124 alors, 16 sp
 | `FirstRunSetup` | `e2e/stubbed/first-run.spec.ts` | 5 | ✅ vert, **vu rouge** sous sabotage |
 | Le calendrier COSMO, six surfaces | `e2e/demo-calendar.spec.ts` | 7 | ✅ vert |
 | Dépendances de tâches personnelles | `e2e/demo-task-dependencies.spec.ts` | 2 | ✅ vert |
-| Remboursement (C-65) | `OrgBillingTab.refund.parcours.test.tsx` + `e2e/demo-billing-disarmed.spec.ts` | 5 + 1 | 🟠 **moitié client seulement** |
+| Remboursement (C-65) | `e2e/stubbed/refund.spec.ts` (+ `OrgBillingTab.refund.parcours.test.tsx`, `e2e/demo-billing-disarmed.spec.ts`) | 5 (+ 5 + 1) | ✅ **parcours joué le 2026-09-11** · moitié serveur toujours hors de portée |
 
 🔴 **`FirstRunSetup` n'était pas resté sans parcours par oubli : aucun test ne POUVAIT l'atteindre.**
 Sa garde commence par `!isDemo`, `.env` est vide en local et absent en CI, donc `appModeStore`
@@ -2524,29 +2528,80 @@ sert l'app **hors démo** vers un hôte qui ne résout pas, `e2e/supabase-stub.t
 et intercepte tout, et un troisième project Playwright `supabase-stub` sur le port 3210.
 ⚠️ Ce harnais prouve le parcours CLIENT ; il ne prouve rien de la RLS ni des triggers.
 
+🔴 **Et il a fini par trouver ce pour quoi il existe, le 2026-09-11 : l'accueil se refermait sur
+lui-même.** `shouldOfferFirstRun` était relue à chaque rendu, or `useCreateTask` écrit la tâche créée
+dans le cache React Query : dès la **première** réponse, le compte n'était plus vide, la garde se
+refermait, et l'écran **disparaissait entre la question des tâches et celle de l'habitude**. La
+personne ne voyait jamais les deux dernières questions, et l'écran ne revenait plus — précisément la
+population que cet écran existe pour retenir. `alreadyDone` était déjà figé, avec la bonne raison
+écrite au-dessus de lui ; `taskCount` ne l'était pas.
+⚠️ **Les 25 tests unitaires ne pouvaient pas le voir** : ils passent des valeurs figées aux hooks, donc
+aucun ne voyait un compteur bouger PENDANT le parcours. Le parcours E2E lui-même ne l'a vu qu'une fois
+qu'il a **attendu** que les écritures atterrissent — avant ça, il courait plus vite que le cache.
+Corrigé par un verrou, avec un test unitaire de régression vu rouge sur le code d'avant.
+
 ⚠️ **`demo-calendar` et `demo-task-dependencies` ne sont pas joués sur `mobile-safari`**, et la
 raison est mesurée, pas supposée : sur `/tasks` en 390 px, ni « Tout replanifier » ni
 « Sélectionner » n'existent, et la carte mobile n'a pas de menu de ligne équivalent. C'est un écart
 de PRODUIT, écrit dans `playwright.config.ts` et dans `TESTING.md` plutôt que caché derrière un
 `skip` silencieux.
 
-🔴 **Le remboursement (C-65) n'a toujours PAS été joué contre Stripe, et il ne peut pas l'être
-d'ici.** Trois raisons, toutes indépendantes du temps qu'on y met : le bouton n'est monté nulle part
-tant que `ENTERPRISE_BILLING_ENFORCED` vaut `false` (retourner le drapeau pour un test violerait la
-règle « le flag est la SEULE condition ») ; `STRIPE_SECRET_KEY` est une clé de TEST, `org_subscriptions`
-est vide, il n'existe aucune facture à rembourser ; `APP_URL` épingle l'origine CORS sur la
-production. Ce qui a été livré à la place est la **moitié client, réellement exécutée** — composant
-réel, hook réel, `functions.invoke` intercepté : un seul appel, corps sans montant, montant affiché
-= montant du serveur, rejeu borné à 0 qui ne prétend pas rembourser deux fois, échec qui le dit,
-non-propriétaire qui ne voit rien. ❌ **Ne pas déployer C-65 en s'appuyant là-dessus.**
+✅ **Le parcours de remboursement est livré le 2026-09-11** (`e2e/stubbed/refund.spec.ts`, 5 cas) :
+propriétaire seul, montant annoncé, résiliation qui suit, échec qui ne résilie rien, et un témoin de
+non-fuite. Il joue l'app réelle, avec le vrai routage et le vrai catalogue.
+
+🔴 **Le premier obstacle, celui du drapeau, était réel et il a été levé sans toucher au produit.**
+Le bouton n'est monté nulle part tant que `ENTERPRISE_BILLING_ENFORCED` vaut `false`, et retourner
+le drapeau violerait la règle « le flag est la SEULE condition ». La sortie n'est pas une variable
+d'environnement — ce serait précisément casser cette règle, et dans le produit livré : c'est une
+**substitution de module** par alias Vite, limitée au seul mode `e2e-stub`
+(`e2e/stubs/premium-config.e2e-stub.ts`, `export *` du produit + un booléen). Même geste que le
+`vi.mock(…, importOriginal)` du test unitaire, un cran plus bas.
+
+⚠️ **Les montants ne sont pas écrits dans le test** : il importe
+`supabase/functions/_shared/refund-amount.ts`, le module que l'Edge Function appelle, et vérifie que
+l'écran affiche exactement ce qu'il décide — un cas **mensuel** (échéance entière, `monthly_full`) et
+un cas **annuel** (prorata des mois entiers, `yearly_prorata`, 6 mois sur 12 = 210,00 € sur 420,00 €).
+La `reason` est épinglée dans les deux cas, sans quoi ils pourraient mesurer la même branche.
+
+🔴 **DEUX DÉFAUTS PRODUIT trouvés en écrivant ce parcours, et corrigés avec lui.** Aucun n'était
+visible en test unitaire :
+1. **Le remboursement partait DEUX fois pour un clic.** Le `QueryClient` pose
+   `mutations: { retry: 1 }` globalement : un `refund_failed` faisait repartir un second appel à
+   `stripe-org-refund`, sans geste et sans trace. L'échec arrive **après** le point de non-retour :
+   le second appel peut donc trouver le remboursement déjà posé et résilier un abonnement dont
+   l'écran vient d'annoncer que rien n'avait été résilié. `useCancelAndRefundOrg` pose `retry: 0`.
+2. **Après un remboursement réussi, l'écran gardait le forfait payant et son bouton**, donc invitait
+   le rejeu que la borne serveur existe pour absorber. L'abonnement est désormais relu, et le bloc
+   suit `effectiveTierKey` — un abonnement résilié n'a plus rien à résilier.
+
+🔴 **CE QUI RESTE HORS DE PORTÉE, et le restera depuis ce poste** : `refunds.create`, l'ordre
+« rembourser d'abord, résilier ensuite », la clé d'idempotence dérivée de l'`invoice_id`, le
+pré-contrôle qui retranche, la ligne compensatoire de `payment_records` et la chaîne de
+`verify_payment_chain()`. `STRIPE_SECRET_KEY` est une clé de TEST, `org_subscriptions` est vide, il
+n'existe aucune facture à rembourser, et `APP_URL` épingle l'origine CORS sur la production.
+❌ **Ne pas déployer C-65 en s'appuyant sur ce parcours seul** : il ferme « l'écran fait-il partir la
+bonne requête et dit-il la vérité sur le résultat », pas « Stripe rembourse-t-il, une seule fois ».
 
 #### Le décompte, remesuré
 
-**190 cas, 23 specs, 3 projects** (96 chromium · 87 mobile-safari · 7 supabase-stub), mesuré le
-2026-09-05 par `npx playwright test --list`. Le chiffre de `TESTING.md` (« 62 × 2 = 124 ») datait du
-2026-08-25 et avait été **recopié** ensuite : il était déjà faux de 44 cas et de 2 specs avant tout
-ajout de septembre, et la même ligne annonçait `reduced-motion-sheets` à 3 cas sur chromium là où il
-en porte 5, sur les deux projects.
+**210 cas, 25 specs, 4 projects** (103 chromium · 94 mobile-safari · 12 supabase-stub · 1 préalable
+de chauffe), mesuré le **2026-09-11** par `npx playwright test --list`, et inscrit dans
+`docs/TESTING.md` **et** dans `CLAUDE.md`, qui portait encore le 124.
+
+⚠️ La commande affiche **212** en local : `e2e/_tmp-probe.spec.ts` est une sonde jetable laissée par
+une autre session, **non suivie par git**, donc absente du dépôt et de la CI (2 cas, un par project
+démo). Le chiffre opposable est celui du dépôt.
+
+⚠️ `supabase-stub-warmup` est compté **à part** : ce n'est pas un parcours, c'est la compilation à
+froid des deux écrans du harnais, payée une fois avant les douze autres. Le fondre dans le total
+gonflerait celui-ci d'un test qui ne mesure pas le produit ; le taire rouvrirait un écart entre
+`--list` et la doc.
+
+Mesure précédente : **190 cas, 23 specs, 3 projects** le 2026-09-05. Avant elle, le chiffre de
+`TESTING.md` (« 62 × 2 = 124 ») datait du 2026-08-25 et avait été **recopié** onze jours durant : il
+était déjà faux de 44 cas et de 2 specs avant tout ajout de septembre, et la même ligne annonçait
+`reduced-motion-sheets` à 3 cas sur chromium là où il en porte 5, sur les deux projects.
 
 ❌ **Ne plus jamais écrire ce total en « N × 2 ».** Les projects ne jouent plus le même ensemble ;
 une multiplication redonnerait un chiffre faux, ce qui est très exactement comment le précédent l'est

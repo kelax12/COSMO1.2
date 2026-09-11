@@ -241,8 +241,18 @@ npm run check:bundle        # Budget de bundle sur le build reel (CI, apres npm 
                             # s'initialiser Sentry pour de bon, qui emet vers un hote inexistant
                             # et fait tomber `best-practices` de 100 a 96 dans lighthouse.
 npm run test:rls   # Tests d'intégration RLS (stack Supabase locale), 7 fichiers verts
-npm run test:e2e   # Playwright, 16 specs × 2 projects (+ :ui, :report)
-                   # ⚠️ Nombre de CAS non recompté depuis le 2026-08-25 (124 alors)
+npm run test:e2e   # Playwright (+ :ui, :report)
+                   # 210 cas / 25 specs / 4 projects — RECOMPTE le 2026-09-11 par
+                   # `npx playwright test --list`. Repartition : 103 chromium,
+                   # 94 mobile-safari, 12 supabase-stub, 1 prealable de chauffe.
+                   # ⚠️ La commande affiche 212 en local : `e2e/_tmp-probe.spec.ts`
+                   # est une sonde jetable NON SUIVIE par git (2 cas). Le chiffre
+                   # opposable est celui du depot.
+                   # ❌ Ne JAMAIS ecrire ce total en « N x 2 » : les projects ne
+                   # jouent plus le meme ensemble. C'est exactement comme ca que le
+                   # precedent (« 62 x 2 = 124 », du 2026-08-25) est devenu faux, et
+                   # il a ete RECOPIE pendant onze jours au lieu d'etre remesure.
+                   # Methode et detail par project : docs/TESTING.md § Playwright
 npm run cosmo      # CLI données réelles (cf. plus haut)
 ```
 
@@ -468,14 +478,29 @@ Garde-fous propres à cette zone :
   `getUidFromCustomer` et le pré-contrôle d'idempotence jetaient tous deux leur `error`. Une panne
   de lecture devenait « pas d'utilisateur » ou « jamais traité » : dans le premier cas un paiement
   encaissé sans abonnement appliqué et un marqueur d'idempotence écrit, donc aucune re-livraison ;
-  dans le second un rejeu de `bump_win_streak`, qui incrémente. Les deux relancent maintenant, comme
-  `orgIdFromInvoice` le faisait déjà. **En cas de doute, faire retenter Stripe, jamais deviner.**
+  dans le second le rejeu d'un handler non idempotent (à l'époque `bump_win_streak`, qui
+  incrémentait ; supprimé depuis par C-04). Les deux relancent maintenant, comme `orgIdFromInvoice`
+  le faisait déjà. **En cas de doute, faire retenter Stripe, jamais deviner.**
 - ❌ **Un event Stripe qui DÉGRADE ne s'applique qu'à l'abonnement enregistré** (finding S-5).
   La garde d'`applyOrgSubscription` est asymétrique, et c'est voulu : un event qui **active** fait
   autorité d'où qu'il vienne (une nouvelle souscription supersède la précédente) ; un event
   `cancelled` ou `past_due` venant d'un AUTRE abonnement que celui en base parle d'un abonnement
   abandonné, et remettrait au gratuit une organisation qui vient de repayer. Ne pas remplacer par
   un `.eq()` sur l'upsert : il empêcherait la toute première écriture.
+- ❌ **AUCUN REJEU AUTOMATIQUE sur une mutation qui déplace de l'argent.** Le `QueryClient` de
+  l'app pose `mutations: { retry: 1 }` pour tout le monde : un `refund_failed` faisait donc repartir
+  un **second** appel à `stripe-org-refund`, sans que personne ne clique et sans que rien ne le dise
+  (mesuré le 2026-09-08 par `e2e/stubbed/refund.spec.ts` : deux appels pour un clic).
+  `useCancelAndRefundOrg` pose `retry: 0`. Ce que la borne serveur absorbe (clé d'idempotence sur
+  l'`invoice_id`, pré-contrôle qui retranche) ne rend pas ce rejeu anodin : l'échec arrive **après**
+  le point de non-retour, donc le second appel peut trouver le remboursement déjà posé et résilier
+  un abonnement dont l'écran vient d'annoncer que rien n'avait été résilié. **On fait retenter la
+  PERSONNE, jamais le navigateur.**
+- ⚠️ **Après un remboursement, l'abonnement se RELIT.** Sans invalidation, l'écran continuait
+  d'afficher le forfait payant *et* son bouton de remboursement : il invitait exactement le rejeu
+  que la borne serveur existe pour absorber. Le bloc est par ailleurs conditionné à
+  `effectiveTierKey(subscription)`, pas à `subscription.tierKey` — un abonnement résilié retombe à
+  « Gratuit », il n'y a plus rien à y résilier.
 - ❌ **Ne JAMAIS ouvrir une session de paiement sans la preuve de renonciation** (finding S-6).
   `stripe-org-checkout` exige `immediateExecution` ET `waivesWithdrawal` strictement à `true`, puis
   écrit une ligne dans `withdrawal_consents` (mig. `135`) **avant** de créer la session : l'ordre
@@ -730,6 +755,18 @@ sans écran, **écrites en dur en français** hors des catalogues i18n.
   `SignupPage` : un accueil monté sur une route n'accueillerait qu'un des deux chemins.
 - ❌ **Ne jamais poser d'échéance sur la première tâche.** La personne a donné un intitulé, pas une
   date ; en inventer une la ferait apparaître « en retard » dès le lendemain.
+- 🔴 **UNE GARDE D'ENTRÉE SE FIGE À L'ENTRÉE.** `shouldOfferFirstRun` décide d'OUVRIR l'écran ; elle
+  ne doit pas décider de le garder ouvert. `alreadyDone` était déjà figé pour cette raison exacte
+  (« relire à chaque rendu ferait disparaître l'écran sous les doigts de la personne ») ;
+  `taskCount` ne l'était pas. Or `useCreateTask` écrit la tâche créée dans le cache React Query
+  (`setQueryData`) : dès la PREMIÈRE réponse, `tasks.length` passait à 1, la garde se refermait, et
+  **l'accueil disparaissait entre la question des tâches et celle de l'habitude**. La personne ne
+  voyait jamais les deux dernières questions, et l'écran ne revenait plus — son compte n'était
+  désormais plus vide. Corrigé le 2026-09-08 par un verrou (`latched`).
+  ⚠️ **Aucun test unitaire ne pouvait le voir** : ils passent des valeurs figées aux hooks. C'est le
+  parcours `e2e/stubbed/first-run.spec.ts` qui l'a trouvé, et seulement une fois qu'il a attendu que
+  les écritures atterrissent. Un écran qui se referme **sur son propre effet** ne se voit qu'en le
+  parcourant.
 - ⚠️ L'ancien drapeau `cosmo_onboarding_examples_created` reste **lu, jamais écrit** : qui a eu
   l'ancien accueil puis supprimé ses tâches n'est pas accueilli une seconde fois.
 - Debug : `localStorage.removeItem('cosmo_first_run_done')`, supprimer ses tâches, puis recharger.

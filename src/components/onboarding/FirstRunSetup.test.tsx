@@ -111,6 +111,31 @@ describe('FirstRunSetup', () => {
     expect(localStorage.getItem(FIRST_RUN_FLAG)).toBe('1');
   });
 
+  it("reste ouvert quand la premiere tache creee revient dans le cache", () => {
+    // 🔴 REGRESSION MESUREE LE 2026-09-08, trouvee par le parcours
+    // `e2e/stubbed/first-run.spec.ts` et par lui seul.
+    //
+    // `useCreateTask` ecrit la tache creee dans le cache React Query
+    // (`setQueryData`) : `useTasks().data` n'est donc plus vide des la premiere
+    // reponse. La garde d'ouverture etant relue a chaque rendu, l'accueil se
+    // refermait ENTRE la question des taches et celle de l'habitude — la
+    // personne ne voyait jamais les deux dernieres, et l'ecran ne revenait plus
+    // puisque le compte n'etait plus vide.
+    //
+    // Les autres cas de ce fichier ne pouvaient pas le voir : ils laissent
+    // `tasks` fige a `[]` pendant tout le parcours. Ici on fait ce que le
+    // produit fait vraiment — la liste se remplit pendant que l'ecran est
+    // ouvert.
+    const { rerender } = render(<FirstRunSetup />);
+    type(/faire cette semaine/i, 'Rappeler le comptable');
+    click(/Continuer/);
+
+    tasks = [{ id: 't1', name: 'Rappeler le comptable' }];
+    rerender(<FirstRunSetup />);
+
+    expect(screen.getByLabelText(/habitude que vous voulez tenir/i)).toBeTruthy();
+  });
+
   it("n'ouvre pas d'objectif vide quand seul le resultat cle est rempli", () => {
     // Un OKR sans intitule n'a aucun sens, et le schema zod le refuserait
     // apres coup avec un message d'erreur que personne n'a demande.

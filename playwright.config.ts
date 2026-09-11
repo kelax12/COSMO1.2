@@ -103,9 +103,39 @@ export default defineConfig({
     // que `e2e/supabase-stub.ts` intercepte. Un seul viewport : ce qu'on y
     // vérifie est un enchaînement d'écrans et un corps de requête, pas un
     // comportement responsive.
+    // ─── Le prealable de chauffe, avant les parcours du stub ────────
+    //
+    // 🔴 Ce n'est pas un test du produit : c'est le cout de compilation a froid
+    // du serveur `e2e-stub`, paye UNE fois, sous un nom qui le dit. Il tombait
+    // jusque-la sur le premier cas execute, qui echouait seul pendant que les
+    // onze autres passaient — cf. l'en-tete de `e2e/stubbed/_warmup.spec.ts`.
+    // `supabase-stub` en depend : si la chauffe echoue, rien n'est joue.
+    {
+      name: 'supabase-stub-warmup',
+      testMatch: '**/stubbed/_warmup.spec.ts',
+      use: { ...devices['Desktop Chrome'], baseURL: 'http://127.0.0.1:3210' },
+    },
     {
       name: 'supabase-stub',
       testMatch: '**/stubbed/*.spec.ts',
+      testIgnore: '**/stubbed/_warmup.spec.ts',
+      dependencies: ['supabase-stub-warmup'],
+      // 🔴 240 s, contre 120 s pour les deux autres projects, et ce n'est pas
+      // une rustine sur des tests lents. Ce serveur a son PROPRE cache de
+      // dependances (`cacheDir: node_modules/.vite-e2e-stub`, cf.
+      // `vite.config.ts`) : il ne peut plus profiter de celui que le serveur du
+      // port 3000 a deja chauffe, donc le premier ecran demande a Vite de
+      // pre-empaqueter tout ce qu'il touche. Mesure du 2026-09-08, cache vide :
+      // les cinq cas de `first-run` expiraient a 120 s, tous, y compris le
+      // dernier — apres dix minutes de serveur pourtant deja debout. Le tout
+      // premier cas paie ensuite la compilation des sources de la page (et non
+      // plus des dependances, pre-empaquetees par le `vite optimize` du
+      // webServer) : mesure, 2,7 min pour lui seul, 10 s pour les suivants.
+      //
+      // ⚠️ Ce cache separe n'est pas negociable : partage, les deux serveurs
+      // (dont les alias different par le mode) invalidaient chacun celui de
+      // l'autre et se redemarraient en boucle, servant une page blanche.
+      timeout: 360_000,
       use: { ...devices['Desktop Chrome'], baseURL: 'http://127.0.0.1:3210' },
     },
   ],
@@ -125,8 +155,14 @@ export default defineConfig({
       // Supabase vides par des valeurs non vides. Sans ça, l'app retombe en
       // mode démo automatique et les specs de `e2e/stubbed/` testeraient
       // exactement ce que les autres testent déjà.
+      // ⚠️ Pas de `vite optimize` prealable ici, et c'est une decision mesuree
+      // le 2026-09-08 : la commande est depreciee, elle prend 2 min 48 a elle
+      // seule, et les deux serveurs pre-empaquetant en parallele depassaient
+      // les 600 s d'attente du webServer. Le cout de chauffe est paye la ou il
+      // est visible et borne : le project `supabase-stub-warmup`.
       command: 'npx vite --mode e2e-stub --host 127.0.0.1 --port 3210',
       url: 'http://127.0.0.1:3210',
+      timeout: 120_000,
       // 🔴 Les deux variables sont repassées EXPLICITEMENT, en plus de
       // `.env.e2e-stub`, et ce n'est pas une ceinture-bretelles décorative :
       // le job `e2e` de la CI injecte `VITE_SUPABASE_URL` / `_ANON_KEY` depuis
@@ -147,7 +183,6 @@ export default defineConfig({
       // passeraient en mesurant la mauvaise boîte. Une collision de port doit
       // échouer bruyamment.
       reuseExistingServer: false,
-      timeout: 120_000,
     },
   ],
 });
