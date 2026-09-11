@@ -158,7 +158,23 @@ export default defineConfig({
         //
         // C'est CE cliquet-la qui mord en premier : un nouveau repository livre
         // sans test fera tomber le glob bien avant de bouger le plancher global.
-        'src/modules/**/supabase.repository.ts': { lines: 88, functions: 90, statements: 74, branches: 63 },
+        // 🔴 ET IL A MORDU, le 2026-09-08 : `functions` est tombe a 89,83 %,
+        // sous le seuil de 90. Il a fait exactement son travail. Les fonctions
+        // manquantes n'etaient pas dispersees, elles etaient DATEES : les trois
+        // methodes de dependances personnelles (mig. 132, livree le 08-30),
+        // `restoreCompletions` (contrat useRestoreX, R-08), `getMyOrgInbox`
+        // (mig. 129 + 142) et les deux ecritures de dependances d'equipe. Du
+        // code de septembre, livre sans test de repository.
+        // ❌ Le seuil n'a PAS ete baisse : 13 fonctions ont ete couvertes
+        // (126 tests sur les 6 fichiers), et le glob est passe de 89,83 a
+        // 95,34 % de fonctions.
+        //
+        // Remonte le 2026-09-11. Mesure : 92,99 L / 78,85 S / 95,34 F /
+        // 67,91 B ; seuils poses ~2 pt en dessous, meme convention qu'au 08-25.
+        // Six repositories sont desormais a 100 % de fonctions (tasks,
+        // organizations, team-projects, habits, events, categories) ; les deux
+        // qui restent sous la barre sont `lists` (9/12) et `okrs` (28/33).
+        'src/modules/**/supabase.repository.ts': { lines: 90, functions: 93, statements: 76, branches: 65 },
         'src/lib/app-mode.store.ts': { lines: 70, functions: 75, statements: 70, branches: 75 },
         'src/lib/utils.ts': { lines: 100, functions: 100, statements: 100, branches: 100 },
         'src/lib/hooks/use-habit-pauses.ts': { lines: 90, functions: 100, statements: 90, branches: 75 },

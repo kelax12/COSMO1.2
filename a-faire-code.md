@@ -2436,7 +2436,7 @@ des consommateurs.
 
 ## 8. Tests et gardes
 
-### C-26 · La couverture n'a pas été relancée depuis le 2026-08-29 · **P1 · S**
+### C-26 · La couverture n'a pas été relancée depuis le 2026-08-29 · **✅ FAIT, le 2026-09-11**
 
 Dernière mesure verte : 29,17 L · 28,81 S · 23,41 F · 24,17 B. Depuis, **+215 tests** mais aussi un
 dénominateur qui a grossi (onboarding, calendrier, deadline, catégories). La marge la plus serrée est
@@ -2445,6 +2445,59 @@ dénominateur qui a grossi (onboarding, calendrier, deadline, catégories). La m
 - **Fini quand** : `npm run test:coverage` est vert, les quatre chiffres sont inscrits avec leur
   date, et les seuils du glob `supabase.repository.ts` sont **remontés** si le gain est acquis.
   ❌ Jamais un seuil baissé.
+
+#### Ce qui a été mesuré
+
+✅ **VERTE au 2026-09-11** : 2 470 tests / 221 fichiers, zéro échec.
+
+| | 08-29 | **09-11** | Plancher global |
+|---|---|---|---|
+| Lines | 29,17 | **31,32** | 26 |
+| Statements | 28,81 | **30,91** | 26 |
+| Functions | 23,41 | **24,56** | 21 |
+| Branches | 24,17 | **26,37** | 22 |
+
+🔴 **Le cliquet du glob `supabase.repository.ts` a MORDU** : au premier run, `functions` est tombé
+à **89,83 %**, sous son seuil de 90, et la gate était rouge. C'est le comportement attendu, et
+c'est la valeur de ce cliquet-là : le plancher global, lui, montait tranquillement, il n'aurait
+rien dit.
+
+**Le code qui a fait tomber la marge était daté, pas dispersé.** 24 fonctions non couvertes sur
+236, dont six méthodes livrées après la campagne de tests du 2026-08-25 :
+
+| Repository | Fonctions non couvertes | Livrées par |
+|---|---|---|
+| `tasks` | `getDependencies` · `addDependency` · `removeDependency` | mig. **132**, le 2026-08-30 |
+| `okrs` | `restoreCompletions` | contrat `useRestoreX` (R-08) |
+| `organizations` | `getMyOrgInbox` | mig. **129** + **142** |
+| `team-projects` | `addTaskDependency` · `removeTaskDependency` | mig. **108** + **117** |
+| `tasks` | `getPendingSharedTasks` · `delete` | antérieures, jamais couvertes |
+| `lists` | `getByTaskId` · `delete` | antérieures, jamais couvertes |
+| `habits` | `updateHabit` | antérieure, jamais couverte |
+
+❌ **Aucun seuil n'a été baissé.** 126 tests écrits sur ces six fichiers, 13 fonctions couvertes,
+glob passé de **89,83 → 95,34 %** de fonctions. Six repositories sont maintenant à 100 %
+(`tasks`, `organizations`, `team-projects`, `habits`, `events`, `categories`) ; restent sous la
+barre `lists` (9/12) et `okrs` (28/33).
+
+Les tests ne comblent pas un trou de comptage : ils verrouillent ce que ces méthodes portent :
+`addDependency` n'émet **pas** `user_id` (le trigger le redérive, c'est la garde anti
+mass-assignment), `restoreCompletions` conserve les horodatages d'origine et prend `user_id` de la
+**session**, `getMyOrgInbox` part **sans paramètre** et un `kind` inconnu retombe sur `notified`
+au lieu de gonfler la pastille, `getDependencies` lit la table **en direct** (mig. 132, policy
+indexable).
+
+Seuils du glob remontés à ~2 pt sous le mesuré, convention du fichier :
+lines 88 → **90** (92,99) · statements 74 → **76** (78,85) · functions 90 → **93** (95,34) ·
+branches 63 → **65** (67,91). Vérifiés par un second run complet, vert.
+
+⚠️ **Les planchers GLOBAUX n'ont pas été remontés**, et c'est une décision : leurs marges valent
+5,32 / 4,91 / 3,56 / 4,37 points. C'est la première fois qu'elles sont confortables (0,32 pt le
+2026-08-25). À remonter à la prochaine mesure verte, pas dans le geste qui vient de réparer la gate.
+
+⚠️ **Le run meurt en silence si une autre session fait tourner sa suite en parallèle** : pas de
+résumé, pas de rapport, pas de message. Mesuré six fois le 2026-09-09. Mesurer machine libre ou
+dans un worktree isolé. ❌ Ne jamais conclure d'un run mort que la couverture a baissé.
 
 ### C-27 · Les parcours livrés en septembre n'ont pas de test E2E · **🟡 TROIS SUR QUATRE, le 2026-09-05**
 
@@ -3110,9 +3163,9 @@ Ils se lisent en **deux familles**, et les confondre fait perdre le seul renseig
 | **C-48** identifiants de refus de dépendance | code écrit | la mig. **137** |
 | **C-65** remboursement | fonction, calcul du montant (12 cas exécutés), bouton, garantie écrite aux CGU. ✅ **La branche `charge.refunded` du webhook, elle, EST déployée** (v27, 2026-09-06 à 19:27 UTC, relue en ligne) | `stripe-org-refund` **n'existe pas en production**, et rien n'a été joué contre Stripe |
 
-#### ⬜ Pas commencé (10)
+#### ⬜ Pas commencé (9)
 
-`C-03` `C-06` `C-12` `C-18` `C-25` `C-26` `C-55` `C-58` `C-69` `C-70`
+`C-03` `C-06` `C-12` `C-18` `C-25` `C-55` `C-58` `C-69` `C-70`
 
 - **Décision avant code (1)** : `C-58` le blocage sécurité qui forçait React 19 est levé, la
   migration redevient un arbitrage de coût.
@@ -3121,8 +3174,9 @@ Ils se lisent en **deux familles**, et les confondre fait perdre le seul renseig
 - **Performance (1)** : `C-12` la landing reste la seule page lente.
 - **Accessibilité (3)** : `C-25` le bleu de marque est à 3,34:1 · `C-55` trois surfaces que A-3 n'a
   pas su mesurer · `C-70` 22 cibles sous 44 px dans `TeamTaskModal`.
-- **Dette, tests et gardes (3)** : `C-06` 36 `eslint-disable exhaustive-deps` · `C-18` CVE dev-only ·
-  `C-26` la couverture n'a pas été relancée depuis le 2026-08-29.
+- **Dette, tests et gardes (2)** : `C-06` 36 `eslint-disable exhaustive-deps` · `C-18` CVE dev-only.
+  `C-26` est **sorti de cette liste le 2026-09-11** : couverture remesurée (31,32 L · 30,91 S ·
+  24,56 F · 26,37 B), gate verte, seuils du glob remontés.
 
 ### 11.1 🔴 Trois gestes qui ne sont pas du code, et qui bloquent du code déjà écrit
 

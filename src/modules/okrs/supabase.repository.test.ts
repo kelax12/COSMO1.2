@@ -153,3 +153,87 @@ describe('SupabaseOKRsRepository — updateKeyResult & journal append-only', () 
     expect(supabaseMock.queries[0].table).toBe('okrs');
   });
 });
+
+// ═══════════════════════════════════════════════════════════════════
+// restoreCompletions — livrée avec le contrat `useRestoreX` (R-08).
+//
+// Ajoutée après la campagne de tests du 2026-08-25, jamais couverte : elle
+// fait partie du code qui a fait tomber la marge `functions` du glob.
+// ═══════════════════════════════════════════════════════════════════
+describe('SupabaseOKRsRepository — restoreCompletions (journal append-only)', () => {
+  const completion = (over: Partial<{ id: string; completedAt: string }> = {}) => ({
+    id: over.id ?? 'c1',
+    krId: KR_UUID,
+    okrId: 'okr1',
+    userId: 'someone-else',
+    completedAt: over.completedAt ?? '2026-03-01T08:00:00.000Z',
+    krTitle: 'Lire 10 livres',
+    okrTitle: 'Culture',
+  });
+
+  it('conserve les horodatages D’ORIGINE (restaurer un graphique, pas en inventer un)', async () => {
+    supabaseMock.queueTable('kr_completions', { data: null });
+    await repo.restoreCompletions([
+      completion({ id: 'c1', completedAt: '2026-03-01T08:00:00.000Z' }),
+      completion({ id: 'c2', completedAt: '2026-04-02T09:00:00.000Z' }),
+    ]);
+
+    const rows = supabaseMock.argsOf('kr_completions', 'insert')?.[0] as Array<{ completed_at: string }>;
+    expect(rows.map((r) => r.completed_at)).toEqual([
+      '2026-03-01T08:00:00.000Z',
+      '2026-04-02T09:00:00.000Z',
+    ]);
+  });
+
+  // 🔴 `user_id` vient de la SESSION, jamais du tableau reçu : sans quoi
+  // restaurer deviendrait un chemin pour écrire dans le journal d'autrui.
+  // La RLS le refuserait, mais la garde doit être ici aussi — c'est le même
+  // raisonnement que la whitelist `mapToDb`.
+  it('écrit user_id depuis la session, jamais celui porté par l’entrée restaurée', async () => {
+    supabaseMock.queueTable('kr_completions', { data: null });
+    await repo.restoreCompletions([completion()]);
+
+    const rows = supabaseMock.argsOf('kr_completions', 'insert')?.[0] as Array<{ user_id: string }>;
+    expect(rows[0].user_id).toBe(ME());
+    expect(rows[0].user_id).not.toBe('someone-else');
+  });
+
+  it('n’écrit jamais l’id d’origine : la ligne restaurée est une nouvelle ligne', async () => {
+    supabaseMock.queueTable('kr_completions', { data: null });
+    await repo.restoreCompletions([completion()]);
+
+    const rows = supabaseMock.argsOf('kr_completions', 'insert')?.[0] as Array<object>;
+    expect(Object.keys(rows[0])).not.toContain('id');
+  });
+
+  it('borne à MAX_REPS_PER_WRITE, comme l’écriture normale (faille B18)', async () => {
+    supabaseMock.queueTable('kr_completions', { data: null });
+    await repo.restoreCompletions(
+      Array.from({ length: 250 }, (_, i) => completion({ id: `c${i}` })),
+    );
+
+    const rows = supabaseMock.argsOf('kr_completions', 'insert')?.[0] as unknown[];
+    expect(rows).toHaveLength(100);
+  });
+
+  it('tableau vide : aucune écriture, et pas d’INSERT à zéro ligne', async () => {
+    await repo.restoreCompletions([]);
+    expect(supabaseMock.queries).toHaveLength(0);
+  });
+
+  it('session absente : refuse au lieu d’écrire une ligne orpheline', async () => {
+    supabaseMock.user = null;
+    await expect(repo.restoreCompletions([completion()])).rejects.toMatchObject({
+      code: 'not_authenticated',
+    });
+    expect(supabaseMock.queries).toHaveLength(0);
+  });
+
+  it('remonte une erreur normalisée', async () => {
+    supabaseMock.queueTable('kr_completions', {
+      data: null,
+      error: { message: 'permission denied', code: '42501' },
+    });
+    await expect(repo.restoreCompletions([completion()])).rejects.toBeTruthy();
+  });
+});
