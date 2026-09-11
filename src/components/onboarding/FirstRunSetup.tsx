@@ -56,15 +56,39 @@ const FirstRunSetup: React.FC = () => {
   const [okrDraft, setOkrDraft] = useState('');
   const [krDraft, setKrDraft] = useState('');
 
-  const open =
-    !dismissed &&
-    shouldOfferFirstRun({
-      isDemo,
-      isAuthenticated,
-      tasksLoaded: isSuccess,
-      taskCount: tasks?.length ?? 0,
-      alreadyDone,
-    });
+  const eligible = shouldOfferFirstRun({
+    isDemo,
+    isAuthenticated,
+    tasksLoaded: isSuccess,
+    taskCount: tasks?.length ?? 0,
+    alreadyDone,
+  });
+
+  // 🔴 LA CONDITION D'OUVERTURE EST UN VERROU, PAS UNE CONDITION D'AFFICHAGE.
+  //
+  // `alreadyDone` était déjà figé, avec la bonne raison écrite juste au-dessus :
+  // « relire à chaque rendu ferait disparaître l'écran sous les doigts de la
+  // personne ». `taskCount`, lui, ne l'était pas — et c'est exactement ce qui
+  // arrivait, dès la PREMIÈRE réponse : `useCreateTask` écrit la tâche créée
+  // dans le cache (`setQueryData`), donc `tasks.length` passe à 1, donc la garde
+  // se referme, donc l'accueil DISPARAÎT entre la question des tâches et celle
+  // de l'habitude. La personne ne voit jamais les deux dernières questions, et
+  // l'écran ne revient plus : le compte n'est désormais plus vide.
+  //
+  // Trouvé le 2026-09-08 par le parcours `e2e/stubbed/first-run.spec.ts`, et
+  // par lui seul : les tests unitaires de cet écran passent des valeurs figées
+  // aux hooks, donc aucun ne pouvait voir un compteur bouger PENDANT le
+  // parcours. La règle qui en sort vaut au-delà d'ici : **une garde d'entrée se
+  // fige à l'entrée.** Ce qui décide d'OUVRIR un écran ne doit pas décider de le
+  // garder ouvert, sinon l'écran se referme sur son propre effet.
+  //
+  // ❌ Ne jamais « optimiser » ce verrou en le remplaçant par la condition
+  //    directe : la sortie est un geste de la personne (`close()`), jamais un
+  //    effet de bord de ce qu'elle vient de saisir.
+  const [latched, setLatched] = useState(false);
+  if (eligible && !latched) setLatched(true);
+
+  const open = !dismissed && (eligible || latched);
 
   const close = () => {
     markFirstRunDone();

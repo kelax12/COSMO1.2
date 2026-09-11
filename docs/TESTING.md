@@ -81,7 +81,8 @@
 
 > ⚠️ **La ligne « Tests E2E Playwright » ci-dessus est périmée, et elle l'était déjà quand elle a
 > été écrite le 2026-08-27.** Remesuré le 2026-09-05 : **190 cas, 23 specs, 3 projects** — et
-> `reduced-motion-sheets` en porte 5, sur les DEUX projects, pas 3 sur chromium. Le décompte à
+> `reduced-motion-sheets` en porte 5, sur les DEUX projects, pas 3 sur chromium. Remesuré à
+> nouveau le **2026-09-11** : **210 cas, 25 specs, 4 projects**. Le décompte à
 > jour, avec sa méthode, est au § Playwright. Cette ligne n'est pas corrigée ici : c'est un
 > instantané daté dans un tableau d'évolution, le réécrire falsifierait l'historique.
 
@@ -540,18 +541,41 @@ npm run test:e2e:report  # rapport HTML
 > project ne l'avait donc **jamais** été — la moitié mobile de chaque chiffre de
 > ce fichier venait de la CI, ou de nulle part. Installé depuis.
 
-### Décompte réel — mesuré le 2026-09-05 (`npx playwright test --list`)
+### Décompte réel — mesuré le 2026-09-11 (`npx playwright test --list`)
 
-**190 cas, 23 specs, 3 projects.** Le chiffre précédent (« 62 × 2 = 124, 15/16
-specs ») datait du 2026-08-25 et a été **recopié** ensuite au lieu d'être
-remesuré : il était déjà faux de 44 cas et de 2 specs avant tout ajout de
-septembre. Un total qu'on recopie n'est pas une mesure.
+**210 cas, 25 specs, 4 projects.**
 
 | Project | Cas | Ce qu'il joue |
 |---|---|---|
-| `chromium` | **96** | Desktop Chrome, mode démo |
-| `mobile-safari` | **87** | iPhone 12 / WebKit, mode démo |
-| `supabase-stub` | **7** | Desktop Chrome, **hors mode démo** (cf. plus bas) |
+| `chromium` | **103** | Desktop Chrome, mode démo |
+| `mobile-safari` | **94** | iPhone 12 / WebKit, mode démo |
+| `supabase-stub` | **12** | Desktop Chrome, **hors mode démo** (cf. plus bas) |
+| `supabase-stub-warmup` | **1** | Préalable de chauffe, pas un parcours (cf. plus bas) |
+
+⚠️ **Ce que la commande affiche est 212, pas 210, et l'écart se dit.**
+`e2e/_tmp-probe.spec.ts` est une sonde jetable laissée par une autre session,
+**non suivie par git** : elle est collectée localement (2 cas, un par project
+démo) et n'existe ni dans le dépôt ni en CI. Le chiffre du tableau est celui du
+**dépôt**, seul chiffre opposable. Un décompte local qu'on recopie sans regarder
+ce qui est suivi est exactement la façon dont le précédent est devenu faux.
+
+⚠️ **`supabase-stub-warmup` n'est pas un parcours** : il compile les deux écrans
+du harnais avant que les douze autres cas ne commencent. Le compter avec eux
+gonflerait le total d'un test qui ne mesure pas le produit ; le taire ferait
+réapparaître un écart entre `--list` et ce fichier. Il est donc compté à part.
+
+**Mesures précédentes**, conservées pour montrer la dérive et pas pour être
+recopiées : **190 cas, 23 specs, 3 projects** le 2026-09-05 ; et avant cela
+« 62 × 2 = 124, 15/16 specs », qui datait du **2026-08-25** et a été **recopié**
+pendant onze jours au lieu d'être remesuré — il était déjà faux de 44 cas et de
+2 specs avant tout ajout de septembre. Un total qu'on recopie n'est pas une
+mesure.
+
+**Ce que cette passe a ajoutée, et elle seule** : le parcours de remboursement
+(C-65, 5 cas, cf. plus bas) et son préalable de chauffe (1). Le reste de l'écart
+avec le 2026-09-05 vient des autres chantiers de la fenêtre, et n'a pas été
+attribué ligne par ligne — l'attribuer de tête est précisément ce qui produit un
+chiffre faux qu'on recopie ensuite.
 
 ❌ **Ne jamais écrire ce total sous la forme « N × 2 ».** Les projects ne jouent
 plus le même ensemble : `demo-calendar` et `demo-task-dependencies` sont hors de
@@ -588,10 +612,96 @@ specs contre une app en mode démo, où l'écran testé ne monte jamais.
   quelle requête part avec quel corps). Il ne prouve **rien** du serveur : ni
   RLS, ni triggers, ni forme réelle des réponses PostgREST. Ces frontières-là
   restent celles de `npm run test:rls` et `npm run check:rls`.
-- ⚠️ Les specs y utilisent `goto(..., { waitUntil: 'domcontentloaded' })` : le
-  canal Realtime rouvre en boucle un WebSocket vers l'hôte stub, donc `load`
-  n'arrive jamais. Mesuré : `page.goto` expirait à 120 s sur une page rendue
-  depuis 25 s.
+- ⚠️ Les specs y ouvrent une page par **`gotoStubbed()`** (`e2e/supabase-stub.ts`),
+  jamais par un `page.goto` nu. Trois pièges du serveur de développement y sont
+  absorbés une fois pour toutes, et aucun n'est un comportement du produit :
+  1. **`load` n'arrive jamais** — le canal Realtime rouvre en boucle un WebSocket
+     vers l'hôte stub. Mesuré le 2026-09-05 : `page.goto` expirait à 120 s sur
+     une page rendue depuis 25 s.
+  2. **`domcontentloaded` non plus, au premier passage** — Vite découvre les
+     dépendances de la page, les pré-empaquette et **recharge**, et l'événement
+     se perd dans ce rechargement. Mesuré le 2026-09-08 : 240 s d'attente sur une
+     page qui finissait par s'afficher. D'où `waitUntil: 'commit'`, qui rend la
+     main dès la réponse — c'est ensuite l'attente d'une **ancre réelle** qui dit
+     que la vue est là.
+  3. **Un `import()` de route qui échoue pendant une re-optimisation** (« Failed
+     to fetch dynamically imported module ») : l'`AppErrorBoundary` prend la main
+     et la page reste vide, définitivement. Une nouvelle **tentative** la
+     rattrape — ce n'est pas une attente plus longue qu'il faut.
+  ❌ **Ne jamais transformer ce rattrapage en boucle illimitée** : il est borné
+  (3 tentatives, 5 pour la chauffe), sans quoi il finirait par masquer une vraie
+  panne du produit.
+
+#### Le préalable de chauffe (`supabase-stub-warmup`)
+
+Ce serveur a **son propre cache de dépendances** (`node_modules/.vite-e2e-stub`,
+posé par `vite.config.ts`). Ce n'est pas un confort : partagé avec celui du
+serveur du port 3000, dont le mode et les alias diffèrent, chacun invalidait le
+cache de l'autre et se **redémarrait en boucle**, servant une page blanche
+(« The server is being restarted or closed », mesuré le 2026-09-08).
+
+Conséquence : en CI il démarre toujours à froid, et ce coût tombait entièrement
+sur le **premier cas exécuté**. Mesuré, cache vide : onze cas verts, un rouge,
+toujours le premier — tantôt une page restée vide plus de trois minutes, tantôt
+deux mutations arrivées dans le désordre parce que la machine était saturée. Ce
+n'était pas ce cas-là qui était fragile, c'était **la place qu'il occupait**.
+
+Le project `supabase-stub-warmup` (`e2e/stubbed/_warmup.spec.ts`) compile les
+deux écrans du harnais avant tout, et `supabase-stub` en **dépend** : si la
+chauffe échoue, aucun parcours n'est joué. Coût mesuré le 2026-09-11, cache
+vide : **3,5 min**, puis 6 à 45 s par parcours.
+
+❌ **La mauvaise réponse aurait été de gonfler les tolérances du premier test**
+jusqu'à ce qu'il passe : ça déplace le seuil sans nommer la cause, et ça rend le
+détecteur muet le jour où l'écran est vraiment lent.
+
+#### C-65 — le parcours de REMBOURSEMENT (`e2e/stubbed/refund.spec.ts`, 5 cas)
+
+C-27 exigeait nommément ce parcours : « C-65 touche de l'argent, il ne part pas
+sans son parcours E2E ». Il manquait pour une raison **structurelle** : le bouton
+n'est monté nulle part tant que `ENTERPRISE_BILLING_ENFORCED` vaut `false`, et le
+mode démo rend `null` pour tout abonnement d'organisation.
+
+🔴 **Le drapeau est retourné par une substitution de MODULE, jamais par une
+variable d'environnement.** `vite.config.ts` remplace
+`@/modules/billing/premium-config` par `e2e/stubs/premium-config.e2e-stub.ts`
+**dans le seul mode `e2e-stub`** ; ce module réexporte le produit (`export *`) et
+ne change qu'un booléen. C'est le même geste que le `vi.mock(…, importOriginal)`
+du test unitaire, au niveau du bundler. Faire dériver le drapeau d'un
+`import.meta.env` aurait cassé la règle écrite du dépôt — « le flag est la SEULE
+condition » — dans le produit livré, pas seulement dans les tests.
+
+Ce que les 5 cas prouvent, sur l'app réelle, avec le vrai routage et le vrai
+catalogue :
+
+| Cas | Ce qu'il mesure |
+|---|---|
+| mensuel | un seul appel à `stripe-org-refund`, authentifié, corps `{ orgId }` **sans aucun montant** ; montant affiché = celui du serveur ; résiliation visible **sans rechargement** ; plus aucun bouton pour recommencer ; zéro écriture cliente dans `org_subscriptions` |
+| annuel | même chose au **prorata des mois entiers** restants |
+| échec Stripe | le message dit « rien n'a été résilié », **aucun montant** n'est annoncé, et l'écran reste dans l'état d'avant — donc on peut réessayer |
+| non-propriétaire | `?tab=billing` tapé à la main retombe sur l'aperçu, aucun appel ne part |
+| témoin | rien n'a quitté le stub vers un vrai projet Supabase |
+
+⚠️ **Les deux montants ne sont pas écrits à la main** : la spec importe
+`supabase/functions/_shared/refund-amount.ts` — le module que l'Edge Function
+appelle — et vérifie que l'écran affiche exactement ce qu'il décide. Un montant
+en dur dans le test ferait de lui une **seconde définition** de la règle de
+remboursement, exactement le risque qui a imposé `org-tiers.parity.test.ts`.
+La spec épingle aussi la `reason` rendue (`monthly_full`, `yearly_prorata`), sans
+quoi les deux cas pourraient mesurer la même branche sans que rien ne le dise.
+
+🔴 **Ce que ce parcours NE prouve PAS, et qu'aucun test de ce poste ne peut
+prouver** : `refunds.create`, l'ordre « rembourser d'abord, résilier ensuite », la
+clé d'idempotence dérivée de l'`invoice_id`, le pré-contrôle qui retranche, et la
+ligne compensatoire écrite par `stripe-webhook`. La clé Stripe du projet est une
+clé de **test**, `org_subscriptions` est vide, il n'existe aucune facture à
+rembourser, et `APP_URL` épingle l'origine CORS sur la production.
+❌ **Ne pas déployer C-65 en s'appuyant sur ce fichier seul.**
+
+⚠️ Le cas d'échec se lit deux fois : c'est le **stub** qui décide de ne rien
+résilier, donc il ne mesure pas le serveur. Ce qu'il mesure est une propriété du
+**client**, et elle n'était pas acquise : sur un échec, l'écran ne doit pas
+anticiper une résiliation qui n'a pas eu lieu.
 
 #### Ce qui n'est PAS joué sur `mobile-safari`, et pourquoi
 

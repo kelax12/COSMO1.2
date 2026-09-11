@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { installSupabaseStub, type SupabaseStub } from '../supabase-stub';
+import { gotoStubbed, installSupabaseStub, type SupabaseStub } from '../supabase-stub';
 
 /**
  * ═══════════════════════════════════════════════════════════════════
@@ -34,12 +34,15 @@ async function openDashboard(
   const stub = await installSupabaseStub(page);
   // Le compte est vide par defaut : c'est la condition meme de l'accueil.
   stub.reply('rpc/get_my_tasks', tasks);
-  // ⚠️ `domcontentloaded`, jamais le `load` par defaut : le canal Realtime
-  // ouvre un WebSocket vers l'hote stub, qui ne resout pas et se rouvre en
-  // boucle. La page est parfaitement utilisable, mais `load` n'arrive jamais —
-  // mesure du 2026-09-05 : `page.goto` expirait a 120 s sur une page rendue
-  // depuis 25 s.
-  await page.goto('/dashboard', { waitUntil: 'domcontentloaded' });
+  // ⚠️ Ni `load` ni `domcontentloaded` : les trois pieges du serveur de
+  // developpement sont absorbes par `gotoStubbed`, qui attend une ancre reelle.
+  // Le premier d'entre eux etait deja connu ici (le WebSocket Realtime qui
+  // rouvre en boucle, donc `load` qui n'arrive jamais, mesure du 2026-09-05) ;
+  // les deux autres sont apparus le 2026-09-08, quand le serveur du mode
+  // `e2e-stub` a pris son propre cache de dependances et s'est mis a demarrer
+  // reellement a froid : les deux premiers cas de ce fichier echouaient sur une
+  // page vide, et eux seuls.
+  await gotoStubbed(page, '/dashboard', page.getByRole('heading', { level: 1 }));
   return stub;
 }
 
@@ -70,10 +73,26 @@ test.describe('C-27 — accueil du premier compte (FirstRunSetup)', () => {
     // a commite l'etape suivante, or la mutation part APRES (elle attend
     // `getCurrentUser()`). Lire tout de suite mesurait donc systematiquement
     // zero — un test qui aurait echoue pour une raison qui n'est pas la sienne.
-    await expect.poll(() => stub.writesTo('tasks').length, { timeout: 10_000 }).toBe(2);
+    // ⚠️ 30 s et non 10 : sur un serveur de developpement encore en train de
+    // compiler la page, la mutation part apres `getCurrentUser()`, lui-meme
+    // derriere la file du transformateur. Mesure du 2026-09-08, cache vide :
+    // ce cas-la, et lui seul, echouait ici. Le detecteur n'est pas affaibli —
+    // ce qu'il refuse, c'est une creation DIFFEREE a la derniere etape, et une
+    // creation differee n'arrive jamais, quel que soit le delai accorde.
+    await expect.poll(() => stub.writesTo('tasks').length, { timeout: 30_000 }).toBe(2);
     const taskWrites = stub.writesTo('tasks');
     const created = taskWrites.map((w) => (w.body as Array<Record<string, unknown>>)[0]);
-    expect(created.map((r) => r.name)).toEqual(['Rappeler le comptable', 'Relire le devis']);
+    // ⚠️ On compare des ENSEMBLES, pas une suite. Les deux creations sont deux
+    // mutations independantes — l'une part au clic sur « Ajouter », l'autre au
+    // clic sur « Continuer » — et rien dans le produit ne les serialise : sous
+    // charge, la seconde peut atteindre le reseau la premiere. Mesure du
+    // 2026-09-08, cache Vite vide : c'est arrive, et le test tombait sur un
+    // ordre que le produit n'a jamais promis. Ce qui est verifie ici reste
+    // entier : les DEUX reponses existent, et elles sont parties AVANT l'etape
+    // suivante (`expect.poll` ci-dessus).
+    expect(created.map((r) => r.name).sort()).toEqual(
+      ['Rappeler le comptable', 'Relire le devis'].sort(),
+    );
     // ❌ Aucune echeance : la personne a donne un intitule, pas une date. En
     // inventer une ferait apparaitre sa toute premiere tache « en retard ».
     for (const row of created) {
@@ -85,7 +104,7 @@ test.describe('C-27 — accueil du premier compte (FirstRunSetup)', () => {
     await page.getByRole('button', { name: /^continuer$/i }).click();
 
     await expect(page.getByRole('heading', { name: OKR_QUESTION })).toBeVisible();
-    await expect.poll(() => stub.writesTo('habits').length, { timeout: 10_000 }).toBe(1);
+    await expect.poll(() => stub.writesTo('habits').length, { timeout: 30_000 }).toBe(1);
     const habitWrites = stub.writesTo('habits');
     expect((habitWrites[0].body as Array<Record<string, unknown>>)[0].name).toBe(
       'Marcher 30 minutes',
@@ -97,7 +116,7 @@ test.describe('C-27 — accueil du premier compte (FirstRunSetup)', () => {
     await page.getByRole('button', { name: /entrer dans cosmo/i }).click();
 
     await expect(dialog).toBeHidden();
-    await expect.poll(() => stub.writesTo('okrs').length, { timeout: 10_000 }).toBe(1);
+    await expect.poll(() => stub.writesTo('okrs').length, { timeout: 30_000 }).toBe(1);
     const okrWrites = stub.writesTo('okrs');
     const okr = (okrWrites[0].body as Array<Record<string, unknown>>)[0];
     expect(okr.title).toBe('Lancer la v2 du produit');
@@ -124,8 +143,11 @@ test.describe('C-27 — accueil du premier compte (FirstRunSetup)', () => {
     await page.waitForTimeout(1_000);
     expect(stub.writes.filter((w) => ['tasks', 'habits', 'okrs'].includes(w.path))).toHaveLength(0);
 
-    await page.reload({ waitUntil: 'domcontentloaded' });
-    await expect(page.getByRole('heading', { level: 1 })).toBeVisible({ timeout: 45_000 });
+    // `commit` ici aussi : c'est l'attente du titre juste en dessous qui dit
+    // que la page est revenue, pas un evenement que la re-optimisation de Vite
+    // peut avaler.
+    await page.reload({ waitUntil: 'commit' });
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible({ timeout: 60_000 });
     await expect(dialog).toBeHidden();
   });
 

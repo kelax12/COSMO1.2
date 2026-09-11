@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router';
 import { toast } from 'sonner';
 import { ArrowLeft, CreditCard } from 'lucide-react';
@@ -6,7 +7,7 @@ import { useT } from '@/i18n/useT';
 import { formatDate } from '@/i18n/format';
 import { ENTERPRISE_BILLING_ENFORCED } from '@/modules/billing/premium-config';
 import type { OrgBillingInterval } from '@/modules/billing/premium-config';
-import { useOrgSubscription, useStartOrgCheckout, useOpenOrgPortal, useCancelAndRefundOrg } from '@/modules/billing/org-billing.hooks';
+import { useOrgSubscription, useStartOrgCheckout, useOpenOrgPortal, useCancelAndRefundOrg, orgBillingKeys } from '@/modules/billing/org-billing.hooks';
 import { effectiveQuota, effectiveTierKey } from '@/modules/billing/org-billing.logic';
 import { ORG_TIER_LABEL_KEYS } from '@/modules/billing/org-tier-labels';
 import { EnterpriseTierGrid } from './EnterpriseTierGrid';
@@ -36,7 +37,18 @@ export function OrgBillingTab({ orgId, isOwner, memberCount, onBack }: Props) {
   const checkout = useStartOrgCheckout();
   const portal = useOpenOrgPortal();
   // C-65 — resilier ET se faire rembourser, en un geste.
-  const refund = useCancelAndRefundOrg();
+  //
+  // 🔴 L'ABONNEMENT EST RELU APRES COUP, et ce n'est pas un confort. Le serveur
+  // resilie dans la foulee du remboursement ; sans cette relecture l'ecran
+  // continuait d'afficher le forfait payant ET son bouton de remboursement,
+  // donc invitait exactement le rejeu que la borne serveur existe pour
+  // absorber. Mesure dans `e2e/stubbed/refund.spec.ts` : apres un
+  // remboursement, l'ecran doit dire que l'abonnement est resilie sans qu'on
+  // ait rechargé la page.
+  const queryClient = useQueryClient();
+  const refund = useCancelAndRefundOrg(() => {
+    void queryClient.invalidateQueries({ queryKey: orgBillingKeys.subscription(orgId) });
+  });
   // Périodicité affichée dans la grille. État LOCAL, jamais persisté : c'est
   // une question posée avant l'achat, pas une préférence de l'utilisateur. La
   // périodicité qui compte après coup est celle de l'abonnement, et elle vient
@@ -309,7 +321,12 @@ export function OrgBillingTab({ orgId, isOwner, memberCount, onBack }: Props) {
 
           Meme drapeau que le CTA de paiement : proposer un remboursement quand
           rien n'est encaisse n'aurait aucun sens. */}
-      {canPay && subscription && subscription.tierKey !== 'free' && (
+      {/* ⚠️ `effectiveTierKey` et non `subscription.tierKey` : c'est le palier
+          REELLEMENT accorde, celui que la pastille et le titre annoncent deja.
+          Un abonnement resilie ou impaye retombe a « Gratuit » — proposer d'y
+          resilier quelque chose n'aurait plus d'objet, et remettrait le bouton
+          sous le doigt de quelqu'un qui vient de s'en servir. */}
+      {canPay && subscription && effectiveTierKey(subscription) !== 'free' && (
         <div className="flex flex-col gap-2 rounded-lg border border-[rgb(var(--color-border))] p-3">
           <h3 className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">
             {t('billing.refundTitle')}

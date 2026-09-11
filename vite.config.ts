@@ -31,7 +31,7 @@ const emitVersionFile = (release: string) => ({
 
 const APP_RELEASE = (process.env.VERCEL_GIT_COMMIT_SHA ?? '').slice(0, 7) || 'dev';
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [react(), emitVersionFile(APP_RELEASE)],
   // Release injecté au build pour Sentry (observabilité). Vercel expose
   // VERCEL_GIT_COMMIT_SHA ; fallback 'dev' en local. Statique → tree-shaké.
@@ -52,10 +52,59 @@ export default defineConfig({
     allowedHosts: ['localhost', '127.0.0.1'],
   },
   resolve: {
-    alias: {
-      '@': path.resolve(__dirname, './src')
-    }
+    // ⚠️ L'ORDRE COMPTE : Vite essaie les alias dans l'ordre déclaré, et
+    // `@/modules/billing/premium-config` doit être vu AVANT le `@` générique.
+    alias: [
+      // ─── Le drapeau de facturation, retourné pour le SEUL mode e2e-stub ───
+      //
+      // 🔴 POURQUOI CE DÉTOUR PLUTÔT QU'UNE VARIABLE D'ENVIRONNEMENT.
+      //
+      // `ENTERPRISE_BILLING_ENFORCED` vaut `false`, et la règle écrite du dépôt
+      // est que « le flag est la SEULE condition, jamais “actif si les variables
+      // d'environnement existent” » : on doit pouvoir dire d'un coup d'œil si le
+      // produit facture. Faire dériver le drapeau d'un `import.meta.env` casserait
+      // exactement ça, et pour de bon — dans le produit livré, pas seulement ici.
+      //
+      // Conséquence : le bouton « Résilier et être remboursé » n'est monté NULLE
+      // PART dans l'app servie, donc aucun parcours de bout en bout ne pouvait le
+      // cliquer. C-27 exige pourtant que C-65, qui touche à de l'argent, ne parte
+      // pas sans son parcours. On substitue donc le MODULE ENTIER, dans le seul
+      // mode `e2e-stub`, exactement comme le fait `vi.mock(..., importOriginal)`
+      // du test unitaire : le module de remplacement réexporte le produit et ne
+      // change qu'un booléen. Les paliers, les montants et `ORG_FREE_SEATS`
+      // restent ceux du produit — une grille recopiée serait une seconde grille
+      // de tarifs, ce que `org-tiers.parity.test.ts` existe pour empêcher.
+      //
+      // ❌ Ne jamais étendre cette substitution à un autre mode : `npm run build`
+      //    et `npm run dev` doivent voir le drapeau du produit, sans exception.
+      ...(mode === 'e2e-stub'
+        ? [
+            {
+              find: /^@\/modules\/billing\/premium-config$/,
+              replacement: path.resolve(__dirname, './e2e/stubs/premium-config.e2e-stub.ts'),
+            },
+          ]
+        : []),
+      // Forme chaine, exactement comme l'ancien objet `{'@': …}` : Vite fait le
+      // meme remplacement de prefixe. Une expression reguliere ici obligerait a
+      // recoller le separateur a la main, et sous Windows a melanger `\` et `/`
+      // dans le chemin rendu au scanner d'esbuild.
+      { find: '@', replacement: path.resolve(__dirname, './src') },
+    ],
   },
+  // ─── Un cache de dependances PAR MODE ─────────────────────────────
+  //
+  // 🔴 Les deux serveurs de la suite E2E tournent EN MEME TEMPS (port 3000 en
+  // mode par defaut, port 3210 en mode `e2e-stub`) et partageaient
+  // `node_modules/.vite`. Depuis que leurs alias different — l'un substitue
+  // `premium-config`, l'autre non — leurs dependances pre-empaquetees ne
+  // s'accordent plus : chacun invalidait le cache de l'autre et se redemarrait,
+  // en boucle. Mesure du 2026-09-08 : « The server is being restarted or
+  // closed » a repetition, et une page blanche pour Playwright.
+  //
+  // ⚠️ Ne pas confondre avec un probleme de port : les serveurs demarraient
+  // bien, c'est leur cache commun qui les faisait tourner en rond.
+  cacheDir: mode === 'e2e-stub' ? 'node_modules/.vite-e2e-stub' : 'node_modules/.vite',
   esbuild: {
     drop: ['debugger'],
     // En prod, drop tous les console.* — évite le leak de stack traces / IDs
@@ -168,4 +217,4 @@ export default defineConfig({
     },
     chunkSizeWarningLimit: 400,
   }
-})
+}))

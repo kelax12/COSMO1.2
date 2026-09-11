@@ -169,6 +169,19 @@ export const useStartOrgCheckout = () =>
  */
 export const useCancelAndRefundOrg = (onDone?: () => void) =>
   useMutation({
+    // 🔴 AUCUN REJEU AUTOMATIQUE. Le `QueryClient` de l'app pose
+    // `mutations: { retry: 1 }` pour tout le monde : un `refund_failed` faisait
+    // donc repartir un SECOND appel a `stripe-org-refund`, sans que personne ne
+    // clique et sans que rien ne le dise. Mesure du 2026-09-08, dans
+    // `e2e/stubbed/refund.spec.ts` : deux appels pour un clic.
+    //
+    // Ce que la borne serveur absorbe (cle d'idempotence sur l'`invoice_id`,
+    // pre-controle qui retranche) ne rend pas ce rejeu anodin : l'echec arrive
+    // APRES le point de non-retour, donc le second appel peut trouver le
+    // remboursement deja pose et resilier un abonnement dont l'ecran vient
+    // d'annoncer que rien n'avait ete resilie. Sur un chemin qui deplace de
+    // l'argent, on fait retenter la PERSONNE, jamais le navigateur.
+    retry: 0,
     mutationFn: async ({ orgId }: { orgId: string }) => {
       if (!supabase) throw new Error('Supabase not configured');
       const { data: { session } } = await supabase.auth.getSession();

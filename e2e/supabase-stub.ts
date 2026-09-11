@@ -1,4 +1,4 @@
-import type { Page, Route, Request as PWRequest } from '@playwright/test';
+import type { Locator, Page, Route, Request as PWRequest } from '@playwright/test';
 
 /**
  * ═══════════════════════════════════════════════════════════════════
@@ -72,6 +72,15 @@ export interface CapturedWrite {
   body: unknown;
 }
 
+/** Un appel d'Edge Function capte : de quoi assurer sur le corps ET l'entete. */
+export interface CapturedFunctionCall {
+  /** Nom de la fonction : `stripe-org-refund`, `stripe-org-checkout`... */
+  name: string;
+  body: unknown;
+  /** Vrai si un `Authorization: Bearer ...` accompagnait l'appel. */
+  authorized: boolean;
+}
+
 export interface SupabaseStub {
   /**
    * URLs parties vers un hote Supabase qui N'EST PAS le stub.
@@ -85,6 +94,15 @@ export interface SupabaseStub {
   foreignSupabaseCalls: string[];
   /** Toutes les ecritures (POST/PATCH/DELETE) parties vers le stub, en ordre. */
   writes: CapturedWrite[];
+  /**
+   * Les appels d'Edge Function partis vers le stub, en ordre.
+   *
+   * 🔴 C'est le SEUL detecteur de rejeu dont dispose un parcours de
+   * remboursement : la borne qui empeche de rembourser deux fois vit dans
+   * Stripe et dans la fonction, donc hors de portee d'ici. Ce qu'on peut
+   * mesurer, c'est qu'un clic ne fait partir QU'UN appel.
+   */
+  functionCalls: CapturedFunctionCall[];
   /** Ecritures sur une table donnee. */
   writesTo(table: string): CapturedWrite[];
   /** Force la reponse d'un chemin precis (`rpc/get_my_tasks`, `tasks`…). */
@@ -96,6 +114,7 @@ export interface SupabaseStub {
  */
 export async function installSupabaseStub(page: Page): Promise<SupabaseStub> {
   const writes: CapturedWrite[] = [];
+  const functionCalls: CapturedFunctionCall[] = [];
   const canned = new Map<string, { body: unknown; status: number }>();
 
   const expiresAt = Math.floor(Date.now() / 1000) + 3600;
@@ -146,6 +165,38 @@ export async function installSupabaseStub(page: Page): Promise<SupabaseStub> {
 
     if (method === 'OPTIONS') {
       await route.fulfill({ status: 204, headers: corsHeaders(request) });
+      return;
+    }
+
+    // ─── Edge Functions ────────────────────────────────────────────
+    //
+    // `supabase.functions.invoke` ne passe pas par `/rest/v1/` : son chemin est
+    // `/functions/v1/<nom>`. Sans cette branche, un appel a `stripe-org-refund`
+    // tombait dans le repli generique et repondait `[]` — donc un parcours de
+    // remboursement aurait mesure « le serveur n'a rien rendu » sans jamais
+    // savoir si la requete etait meme partie.
+    if (url.pathname.startsWith('/functions/v1/')) {
+      let fnBody: unknown = null;
+      try {
+        fnBody = request.postDataJSON();
+      } catch {
+        fnBody = request.postData();
+      }
+      functionCalls.push({
+        name: url.pathname.replace('/functions/v1/', ''),
+        body: fnBody,
+        authorized: /^Bearer .+/.test(request.headers()['authorization'] ?? ''),
+      });
+      const cannedFn = canned.get(path);
+      // Pas de repli complaisant : une fonction non decrite repond une ERREUR,
+      // pas un succes vide. Un `{}` ferait lire `refundedCents = 0` a l'ecran,
+      // donc « rien a rembourser » — un stub qui fabrique un resultat plausible.
+      await fulfillJson(
+        route,
+        request,
+        cannedFn?.body ?? { error: 'stub_function_not_declared' },
+        cannedFn?.status ?? 500,
+      );
       return;
     }
 
@@ -210,9 +261,57 @@ export async function installSupabaseStub(page: Page): Promise<SupabaseStub> {
   return {
     foreignSupabaseCalls,
     writes,
+    functionCalls,
     writesTo: (table: string) => writes.filter((w) => w.path === table),
     reply: (path, body, status = 200) => canned.set(path, { body, status }),
   };
+}
+
+/**
+ * Ouvrir une URL sur le serveur du mode `e2e-stub`, et attendre que l'app soit
+ * REELLEMENT peinte.
+ *
+ * 🔴 TROIS PIEGES, tous mesures le 2026-09-08, aucun evitable en ecrivant
+ * simplement `page.goto(url)` :
+ *
+ *  1. `load` n'arrive JAMAIS : le canal Realtime rouvre en boucle un WebSocket
+ *     vers un hote qui ne resout pas.
+ *  2. `domcontentloaded` non plus, au premier passage : Vite decouvre les
+ *     dependances de la page, les pre-empaquette et recharge, et l'evenement se
+ *     perd dans ce rechargement. Mesure : `goto` expirait a 240 s sur une page
+ *     qui finissait par s'afficher. D'ou `commit`, qui rend la main des la
+ *     reponse — c'est ensuite l'ancre qui dit que la vue est la.
+ *  3. Une re-optimisation qui tombe PENDANT le chargement fait echouer un
+ *     `import()` de route (« Failed to fetch dynamically imported module ») :
+ *     l'`AppErrorBoundary` prend la main et la page reste vide, definitivement.
+ *     Un rechargement suffit — mais UN SEUL, borne, jamais une boucle qui
+ *     finirait par masquer une vraie panne du produit.
+ *
+ * ⚠️ Ces trois-la sont des artefacts du SERVEUR DE DEVELOPPEMENT, pas des
+ * comportements du produit. Les absorber ici, une fois, vaut mieux que de les
+ * recopier dans chaque spec — c'est ce qui avait laisse `first-run` rouge au
+ * premier lancement a cache vide pendant que `refund` passait.
+ */
+export async function gotoStubbed(
+  page: Page,
+  url: string,
+  shell: Locator,
+  attempts = 3,
+): Promise<void> {
+  let last: unknown;
+  for (let i = 0; i < attempts; i += 1) {
+    try {
+      // Le `timeout` explicite compte : sans lui, une navigation que Vite
+      // recommence indefiniment consomme le budget du test ENTIER, et on n'a
+      // jamais l'occasion de reessayer.
+      await page.goto(url, { waitUntil: 'commit', timeout: 90_000 });
+      await shell.first().waitFor({ state: 'visible', timeout: 90_000 });
+      return;
+    } catch (err) {
+      last = err;
+    }
+  }
+  throw last;
 }
 
 /** Colonnes que Postgres remplit lui-meme et que les mappers relisent. */
