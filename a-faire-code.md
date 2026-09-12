@@ -1802,6 +1802,7 @@ dans [`docs/MIGRATION-REACT19.md`](./docs/MIGRATION-REACT19.md).
 > | `npm test` | **226 fichiers / 2 500 tests**, zéro échec |
 > | `i18n:check` · `i18n:scan` · `i18n:identical` · `validate:migrations` · `check:rls` · `check:legal` | vertes |
 > | `npm run build` | réussit |
+> | `npx playwright test --project=chromium` | **104 passés, 3 ignorés, 0 échec** (23,8 min). Le seul rouge est `e2e/_tmp-probe.spec.ts`, la sonde jetable NON SUIVIE par git que `CLAUDE.md` documente |
 > | **`npm run check:bundle`** | ❌ **exit 1** — chemin critique **329,8 ko** contre un plafond de **323,0** |
 >
 > **Ce qui coûte** : `vendor-react` passe de **72,1 à 95,4 ko gzip**, soit **+23,3 ko (+32 %)**. Le
