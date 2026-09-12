@@ -8,7 +8,7 @@ import { getColorHex } from '@/components/CategoryManager';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'react-router';
 import { useCreateEvent } from '@/modules/events';
-import { useOkrs, useCreateOkr, useUpdateOkr, useDeleteOkr, useRestoreOkrWithJournal, useUpdateKeyResult, OKR, KeyResult } from '@/modules/okrs';
+import { useOkrs, useCreateOkr, useUpdateOkr, useDeleteOkr, useRestoreOkrWithJournal, useUpdateKeyResult, KeyResult } from '@/modules/okrs';
 import { useKRCompletions } from '@/modules/kr-completions';
 import { showUndoToast } from '@/lib/undo-toast';
 import { useCategories, useCreateCategory, useUpdateCategory } from '@/modules/categories';
@@ -31,6 +31,7 @@ import DeleteObjectiveConfirm from './okr/DeleteObjectiveConfirm';
 import CategoryFilterBar from './okr/CategoryFilterBar';
 import DeleteCategoryDialog from '@/components/category/DeleteCategoryDialog';
 import { useT } from '@/i18n/useT';
+import { useDeadlineReview } from './okr/useDeadlineReview';
 import { useDeleteCategoryFlow } from './okr/useDeleteCategoryFlow';
 import { useTasks } from '@/modules/tasks';
 
@@ -84,8 +85,6 @@ const OKRPage: React.FC = () => {
   // (endDate <= today), on affiche un popup centré demandant de faire le point
   // avant clôture. Au clic Valider, la carte s'anime vers le bouton « OKR
   // terminés » en haut à droite, puis l'OKR est marqué completed.
-  const [deadlineReviewOkrId, setDeadlineReviewOkrId] = useState<string | null>(null);
-  const [reviewedOkrIds, setReviewedOkrIds] = useState<Set<string>>(new Set());
   const [showCompletedModal, setShowCompletedModal] = useState(false);
   const finishedButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -239,33 +238,10 @@ const OKRPage: React.FC = () => {
        (`replaceState`) dans la foulee, donc il ne peut pas etre relu perime. */
   }, [location]);
 
-  // Détection des OKR à reviewer (deadline atteinte, non complétés, non encore
-  // reviewés dans cette session). On affiche le 1er trouvé. Dès que l'user
-  // valide ou ferme, on passe au suivant éventuel.
-  useEffect(() => {
-    if (deadlineReviewOkrId) return;
-    const todayEnd = new Date();
-    todayEnd.setHours(23, 59, 59, 999);
-    const due = objectives.find(o =>
-      !o.completed &&
-      !reviewedOkrIds.has(o.id) &&
-      new Date(o.endDate).getTime() <= todayEnd.getTime()
-    );
-    if (due) setDeadlineReviewOkrId(due.id);
-  }, [objectives, deadlineReviewOkrId, reviewedOkrIds]);
-
-  const deadlineReviewOkr = deadlineReviewOkrId
-    ? objectives.find(o => o.id === deadlineReviewOkrId) ?? null
-    : null;
-
-  const handleCloseDeadlineReview = () => {
-    if (deadlineReviewOkrId) {
-      setReviewedOkrIds(prev => new Set(prev).add(deadlineReviewOkrId));
-    }
-    setDeadlineReviewOkrId(null);
-  };
-
-  const handleValidateDeadlineReview = (updated: OKR) => {
+  // La revue d'échéance est un geste complet (repérer, proposer, clore) : elle
+  // vit dans son propre module. La page garde la MUTATION, le hook n'écrit
+  // rien lui-même (`src/pages/okr/useDeadlineReview.ts`, extrait le 2026-09-12).
+  const deadlineReview = useDeadlineReview(objectives, (updated) => {
     updateOkrMutation.mutate({
       id: updated.id,
       updates: {
@@ -278,8 +254,7 @@ const OKRPage: React.FC = () => {
       },
     });
     toast.success(t('page.okrValidated'));
-    handleCloseDeadlineReview();
-  };
+  });
 
   const completedCount = objectives.filter(o => o.completed).length;
 
@@ -575,11 +550,11 @@ const OKRPage: React.FC = () => {
           complétés dont endDate <= aujourd'hui. Au validate, la carte s'anime
           vers le bouton « OKR terminés ». */}
       <OKRDeadlineReviewModal
-        okr={deadlineReviewOkr}
+        okr={deadlineReview.okr}
         categories={categories}
         flyTargetRef={finishedButtonRef}
-        onClose={handleCloseDeadlineReview}
-        onValidate={handleValidateDeadlineReview}
+        onClose={deadlineReview.close}
+        onValidate={deadlineReview.validate}
         resolveColor={resolveColor}
       />
 
