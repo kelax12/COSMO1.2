@@ -243,8 +243,10 @@ la frontière qui enveloppe les routes **cacherait la page**.
 
 ⚠️ **Ce que l'échec du budget ne remet PAS en cause** : tout le reste de la migration est vert.
 `tsc -b` propre, `npm run lint` 0 erreur, **226 fichiers / 2 500 tests** au vert, `i18n:check`,
-`i18n:scan`, `i18n:identical`, `validate:migrations`, `check:rls`, `check:legal` vertes, et le build
-lui-même réussit. La branche `feat/react-19` porte ce travail, prêt à reprendre le jour où le
+`i18n:scan`, `i18n:identical`, `validate:migrations`, `check:rls`, `check:legal` vertes, le build
+lui-même réussit, et la suite **E2E** est verte : **104 passés, 3 ignorés, 0 échec** sur le project
+`chromium` (23,8 min). Le seul rouge du run est `e2e/_tmp-probe.spec.ts`, la sonde jetable **non
+suivie par git** que `CLAUDE.md` documente — elle n'appartient pas au dépôt. La branche `feat/react-19` porte ce travail, prêt à reprendre le jour où le
 budget le permet.
 
 ---
