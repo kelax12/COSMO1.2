@@ -310,7 +310,7 @@ la vise, et **l'impact n'a jamais été mesuré en base**.
   par un test. ⚠️ Ne pas inverser l'ordre : supprimer d'abord laisse une fenêtre où les éléments
   pointent dans le vide.
 
-### C-03 · Les clés de `habits.completions` ignorent le fuseau choisi · **P2 · M**
+### C-03 · ~~Les clés de `habits.completions` ignorent le fuseau choisi~~ · **P2 · M** · ❄️ GELÉ le 2026-09-12, écrit aux deux endroits
 
 Depuis la revue R-01, la préférence de fuseau pilote le découpage des **journées** pour les tâches
 (`src/lib/timezone.ts`, `dayKeyInTz`). Les habitudes, non : leurs clés restent en date **machine**
@@ -323,6 +323,36 @@ découpées autrement que ses échéances, sur le même écran.
   répondre.
 - **Fini quand** : une décision écrite (migrer, ou geler et documenter), et si migration, une
   vérification acteur par acteur dans une transaction annulée, comme les mig. 130 à 135.
+
+> #### ❄️ Gelé le 2026-09-12 — la décision est rendue, et elle est écrite
+>
+> **Prémisse remesurée avant d'écrire** : `grep` confirme que les clés viennent toujours de
+> `toLocaleDateString('en-CA')` dans `habits/streak.ts`, `habits/supabase.repository.ts`,
+> `habits/local.repository.ts`, `HabitCard`, `HabitGlobalTracking`, `HabitTable` et `TodayHabits`,
+> pendant que `dayKeyInTz` pilote les échéances. L'énoncé était juste.
+>
+> **La décision** : on GÈLE, et on ne migre pas. Écrite dans `CLAUDE.md` § « Fuseau horaire » et
+> dans `docs/ARCHITECTURE.md` § 1.1 (une section propre, parce qu'un arbitrage rangé dans un
+> tableau d'invariants se relit comme un défaut non corrigé).
+>
+> **L'argument, en une phrase** : convertir une clé de jour demande de savoir dans quel fuseau
+> était la personne CE JOUR-LÀ, et la base ne stocke qu'une préférence *courante*. Migrer
+> appliquerait le décalage d'aujourd'hui à des journées vécues ailleurs, et le prix se paierait en
+> **séries** — une seule journée décalée fait perdre la série entière, `streak_best` compris.
+>
+> **Ce que la personne voit**, et l'item ne le disait pas : la divergence n'apparaît qu'en réglage
+> `manual`, et seulement si le décalage la fait changer de jour par rapport à sa machine — donc
+> **jamais en métropole**. Une tâche peut alors être « due aujourd'hui » pendant qu'une habitude
+> cochée compte pour la veille. La série reste cohérente avec elle-même : calée sur un autre jour,
+> jamais cassée.
+>
+> ❌ **La garde qui manquait le plus** : ne jamais corriger une seule des deux moitiés. Basculer
+> l'AFFICHAGE sur `dayKeyInTz` en laissant l'ÉCRITURE en date machine décalerait les jours cochés
+> d'une case — un historique faux présenté comme juste, strictement pire que l'état actuel.
+>
+> ✅ **Ce qui rouvrirait la question** : une colonne qui enregistrerait le décalage AU MOMENT de la
+> complétion. Rien ne l'écrit aujourd'hui, et tant que rien ne l'écrit, aucune migration ne peut
+> savoir ce qu'elle convertit.
 
 ### C-04 · Supprimer le système de jetons premium et le mur-pub Habitudes · **P2 · M** · 🟢 arbitré le 2026-09-03
 

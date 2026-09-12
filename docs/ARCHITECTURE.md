@@ -134,6 +134,45 @@ seules dettes de ce tableau que **rien ne mesure encore**, et donc les deux seul
 de grandir. C'est le motif de fond de cet audit : *une règle qu'aucun script ne mesure recule à
 chaque vague de features.*
 
+### 1.1 Une divergence **GELÉE**, et c'est une décision (C-03, 2026-09-12)
+
+Le dépôt porte deux découpages de la journée, et ils ne coïncident pas toujours. Ce n'est pas une
+dette qui attend son tour : c'est un arbitrage rendu, qui doit se lire ici comme les invariants
+ci-dessus se lisent — sinon il se représentera au prochain audit sous forme de « bug à corriger ».
+
+| Ce qui découpe la journée | Source | Suit la préférence de fuseau ? |
+|---|---|---|
+| échéances de tâches, reports, listes « Aujourd'hui » | `src/lib/timezone.ts` → `dayKeyInTz` / `todayKeyInTz` | ✅ oui, depuis la revue R-01 |
+| clés de `habits.completions`, séries, grilles d'habitudes | `toLocaleDateString('en-CA')` (fuseau de la **machine**) | ❌ **non, et c'est gelé** |
+
+**Pourquoi le gel plutôt que la migration.** Convertir une clé de jour d'un fuseau vers un autre
+demande de savoir dans quel fuseau était la personne **ce jour-là**. La base ne le sait pas : elle
+ne stocke qu'une préférence *courante*, posée aujourd'hui, qui ne dit rien de l'historique derrière.
+Migrer appliquerait donc le décalage d'aujourd'hui à des journées vécues ailleurs, et le prix se
+paierait en **séries** : une seule journée décalée fait perdre la série entière, `streak_best`
+compris. On casserait une donnée que les gens ont construite pour corriger une incohérence qu'ils
+ne voient pas.
+
+**Ce que la personne voit quand les deux divergent.** Uniquement en réglage `manual`, et uniquement
+si le décalage choisi la fait changer de jour par rapport à sa machine — donc **jamais en
+métropole**, où les deux coïncident. Dans ce cas : sur le même écran, une tâche peut être « due
+aujourd'hui » pendant qu'une habitude cochée compte pour la veille, et la case du jour de la grille
+d'habitudes ne correspond pas à la colonne « Aujourd'hui » de la liste de tâches. La série, elle,
+reste **cohérente avec elle-même** — calculée de bout en bout en date machine, elle ne saute pas,
+elle est seulement calée sur un autre jour.
+
+- ❌ **Ne jamais corriger une seule des deux moitiés.** Basculer l'AFFICHAGE sur `dayKeyInTz` en
+  laissant l'ÉCRITURE en date machine ferait apparaître les jours cochés décalés d'une case : un
+  historique faux présenté comme juste, strictement pire que la divergence actuelle, qui est au
+  moins interne à chaque module.
+- ✅ **Ce qui rouvrirait la question** : une colonne qui enregistrerait le décalage AU MOMENT de la
+  complétion. À partir de là, et seulement à partir de là, une migration saurait ce qu'elle
+  convertit. Rien dans le produit ne l'écrit aujourd'hui.
+
+La même décision est écrite dans `CLAUDE.md` § « Fuseau horaire », à côté de la règle qui interdit
+`toLocaleDateString('en-CA')` seul dans un chemin d'échéance — les deux doivent se lire ensemble,
+sinon la seconde donne l'impression que la première est un oubli.
+
 ## 2. ✅ Les deux entorses de `SettingsPage` — réglées, et outillées
 
 **État au 2026-08-24 : les deux invariants sont tenus, et chacun a désormais un outil.**

@@ -1376,9 +1376,36 @@ métropolitain : réglage `manual` + décalage, et ses échéances, ses reports 
 
 - ❌ **Ne jamais faire dépendre un jour de `toLocaleDateString('en-CA')` seul** dans un chemin qui
   touche aux échéances : c'est le fuseau de la MACHINE, pas celui que la personne a choisi.
-- ⚠️ **Les clés de `habits.completions` restent en date machine**, volontairement : elles sont déjà
-  écrites en base sous cette forme et les basculer sur la préférence décalerait tout l'historique
-  existant. À traiter par une migration dédiée, pas en passant.
+- 🔴 **GELÉ le 2026-09-12 (C-03) : les clés de `habits.completions` restent en date MACHINE**, et
+  ce n'est plus « à traiter par une migration dédiée », c'est une décision rendue. Les quatre
+  lectures qui les produisent (`habits/streak.ts`, `habits/supabase.repository.ts`,
+  `HabitCard`, `HabitGlobalTracking`, `HabitTable`, `TodayHabits`) appellent délibérément
+  `toLocaleDateString('en-CA')` et **doivent continuer**.
+
+  **Pourquoi le gel plutôt que la migration.** Convertir une clé de jour d'un fuseau vers un autre
+  demande de savoir dans quel fuseau était la personne **ce jour-là**. La base ne le sait pas : elle
+  ne stocke qu'une préférence COURANTE, posée aujourd'hui, qui ne dit rien des trois ans
+  d'historique derrière. Migrer reviendrait donc à appliquer le décalage d'aujourd'hui à des
+  journées vécues ailleurs — et le prix se paie en **séries** : quelqu'un dont une seule journée se
+  décale perd sa série entière, et `streak_best` avec. On casserait la donnée que les gens ont
+  construite pour corriger une incohérence qu'ils ne voient pas.
+
+  **Ce que la personne voit quand les deux découpages divergent.** Uniquement en réglage `manual`,
+  et uniquement si le décalage choisi la fait changer de jour par rapport à sa machine — donc
+  jamais en métropole, où les deux coïncident. Dans ce cas : sur le même écran, une tâche peut être
+  « due aujourd'hui » pendant qu'une habitude cochée compte pour la veille (ou l'inverse), et la
+  case du jour dans la grille d'habitudes ne correspond pas à la colonne « Aujourd'hui » de la
+  liste de tâches. La série, elle, reste **cohérente avec elle-même** : elle est calculée de bout en
+  bout en date machine, donc elle ne saute pas, elle est seulement calée sur un autre jour.
+
+  ❌ **Ne jamais « corriger » une seule des deux moitiés.** Basculer l'affichage sur
+  `dayKeyInTz` en laissant l'écriture en date machine ferait apparaître des jours cochés **décalés
+  d'une case** dans la grille, c'est-à-dire un historique faux présenté comme juste — strictement
+  pire que la divergence actuelle, qui est au moins interne à chaque module.
+
+  ✅ **Ce qui rouvrirait la question** : une colonne qui enregistrerait le décalage AU MOMENT de la
+  complétion. À partir de là, et seulement à partir de là, une migration saurait ce qu'elle
+  convertit. Rien dans le produit ne l'écrit aujourd'hui.
 
 ### ↩️ « Annuler » restaure l'identifiant (revue du 2026-09-02, R-08)
 
