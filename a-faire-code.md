@@ -1230,7 +1230,7 @@ la prochaine mutation qu'on écrira, et l'erreur ne se verra pas.
 
 ## 3. Performance
 
-### C-12 · T-51 · la landing est la seule page lente du site · **P2 · M** · 🟠 critère atteint deux runs sur trois
+### C-12 · T-51 · ~~la landing est la seule page lente du site~~ · **P2 · M** · ✅ critère TENU le 2026-09-12, trois runs consécutifs
 
 > 🟠 **Remesuré le 2026-09-12 en lisant les runs du job `lighthouse`, et le critère est PRESQUE
 > tenu.** L'item exige « `/` au-dessus de 90 en CI, sur deux passes ». Ce que rendent les trois
@@ -1252,6 +1252,40 @@ la prochaine mutation qu'on écrira, et l'erreur ne se verra pas.
 >
 > **Fini quand** : trois runs CI consécutifs rendent les DEUX passes au-dessus de 90 sur `/`. Si la
 > passe à 64 se reproduit, elle a une cause, et c'est elle l'item — pas le score.
+
+> ### ✅ Le critère est TENU — mesuré le 2026-09-12 sur les runs `lighthouse` de `main`
+>
+> | Run | Commit | Passe 1 | Passe 2 | TBT |
+> |---|---|---|---|---|
+> | 2026-09-11 22:06 | `test(C-27/C-65)` | **91** | **95** | 147 ms · 49 ms |
+> | 2026-09-12 18:06 | `269a5ea2` | **94** | **95** | 69 ms · 57 ms |
+> | 2026-09-12 18:21 | `77b123b0` | **91** | **95** | 152 ms · 56 ms |
+>
+> **Trois runs consécutifs, six passes, toutes au-dessus de 90.** La passe à 64 du 2026-09-11 11:56
+> (TBT 759 ms) ne s'est pas reproduite depuis. Le TBT le plus haut de ces six passes est de
+> **152 ms**, contre 759 ; les cinq autres sont entre 49 et 69 ms.
+>
+> ⚠️ **Trois runs MESURÉS, et il faut le dire ainsi.** Entre ces trois-là, plusieurs runs ont été
+> **annulés** par un push suivant (groupe de concurrence) : ils n'ont produit aucune mesure, ils ne
+> rompent donc pas la série mais ils ne la confirment pas non plus. La série opposable est celle des
+> runs qui ont RENDU un score.
+>
+> 🔴 **Et rien n'a été fait pour l'obtenir.** C'est le point important de cette clôture : aucune
+> ligne n'a été touchée pour le score. Le travail de fond était déjà fait — le fond du hero cuit
+> (C-67), le shader adaptatif (C-68) —, et cet item ne portait plus qu'une **dette de mesure** : on
+> savait que le travail au repos avait disparu, on ne savait pas que la page passait. Trois runs
+> consécutifs le disent maintenant.
+>
+> ❌ **L'arbitrage du § 0 (« couper la chorégraphie GSAP sous la ligne de flottaison ») n'a PAS été
+> exécuté, et il ne doit pas l'être.** Il est antérieur à la mesure du 2026-09-03, qui a montré que
+> couper les 23 `ScrollTrigger` et les 8 tweens infinis ne déplace pas le score d'un point. Le faire
+> aujourd'hui serait du travail sans gain mesurable — précisément ce que la règle 2 de ce fichier
+> appelle une dette de mesure.
+>
+> ⚠️ **Ce que ça ne dit pas** : la page reste BIMODALE par nature (une file GPU qui sature a deux
+> états, pas un coût progressif — cf. C-68). Trois runs ne prouvent pas que la passe basse a
+> disparu, ils prouvent qu'elle ne s'est pas produite six fois de suite. Si elle revient, elle a une
+> cause, et c'est elle qu'il faudra nommer, pas le score.
 
 Mesuré en CI le 2026-09-02 (deux passes) : `/` à **56-63** de performance, TBT **546 à 1 633 ms**,
 contre 96-98 sur toutes les autres pages du même build.
@@ -2158,7 +2192,7 @@ Le seuil est descendu à 0 et `npm run i18n:scan -- --list` est vide. **Cela ne 
 produit n'a plus de chaîne en dur** : c'est exactement le piège que C-38 documente. L'item est clos
 sur son énoncé (« le seuil vaut 25 »), pas sur son intention.
 
-### C-38 · `i18n:scan` annonce ZÉRO, et l'interface anglaise parle français · **P1 · M**
+### C-38 · ~~`i18n:scan` annonce ZÉRO, et l'interface anglaise parle français~~ · **P1 · M** · ✅ 4ᵉ angle mort refermé le 2026-09-12
 
 **Mesuré dans le navigateur le 2026-09-03**, serveur de dev, locale `en`, arbre d'accessibilité lu
 sur la page rendue :
@@ -2329,7 +2363,7 @@ de les REMESURER en soumettant les cas au scanner.
 
 ## 7. Accessibilité
 
-### C-23 · Durcir la gate axe-core de `critical` à `serious` · **P2 · S**
+### C-23 · Durcir la gate axe-core de `critical` à `serious` · **P2 · S** · 🟠 noyau reproductible ramené de 11 à 9 nœuds le 2026-09-12
 
 > 🟠 **Pas clos, mais la gate EST durcie depuis le 2026-09-04**, autrement que ne le prévoyait
 > l'énoncé : tout `serious` casse la CI, **sauf les règles nommées** dans
@@ -3799,6 +3833,59 @@ périmètre, ses questions et ses pièges connus.
 avant que sa note ne change : ledger de migrations et versions déployées lus par API, gardes
 exécutées, sondes jouées. Recopier une note depuis un tableau plus ancien est le défaut que ce
 fichier documente lui-même (§ Documentation de `CLAUDE.md`), et il a déjà frappé trois fois ici.
+
+### 11.0ter Recompté le 2026-09-12 **au soir** — **74 items : 63 clos, 6 commencés, 5 ouverts**
+
+Huit items de plus sont clos depuis le décompte de l'après-midi (§ 11.0bis, conservé dessous, juste
+**à sa date**). Les trois listes s'égrènent, comme toujours : un total qu'on ne peut pas réciter ne
+prouve rien.
+
+#### ✅ Fini (63)
+
+`C-01` `C-02` `C-03` `C-04` `C-05` `C-06` `C-07` `C-08` `C-09` `C-10` `C-11` `C-12` `C-13` `C-14`
+`C-15` `C-16` `C-17` `C-19` `C-20` `C-21` `C-22` `C-25` `C-26` `C-27` `C-29` `C-32` `C-33` `C-34`
+`C-36` `C-37` `C-38` `C-40` `C-41` `C-42` `C-43` `C-44` `C-45` `C-46` `C-47` `C-49` `C-50` `C-51`
+`C-52` `C-53` `C-54` `C-55` `C-56` `C-57` `C-59` `C-60` `C-61` `C-62` `C-63` `C-64` `C-66` `C-67`
+`C-68` `C-70` `C-71` `C-72` `C-73` `C-74`
+
+Les huit entrées du soir, et ce que chacune a rendu **contre son propre énoncé** :
+
+| Item | Entrée | L'énoncé disait | La mesure a dit |
+|---|---|---|---|
+| `C-38` | 4ᵉ angle mort d'`i18n:scan` | deux angles morts, déjà nommés | un **troisième**, jamais nommé : la VALEUR d'une propriété d'objet. 0 → 15 chaînes → 0 |
+| `C-70` | 28 cibles tactiles → 0 | « 22 cibles », « une décision de design » | **28**, et aucune ne demandait de rouvrir la densité : quatre familles, quatre gestes |
+| `C-06` | règle ESLint + 31 → 27 | « 31 endroits non éprouvés » | juste — mais **un** était une vraie fermeture périmée, et **trois** étaient injustifiables (deps en spread, zéro appelant) |
+| `C-03` | gelé, écrit aux deux endroits | « décider : migrer ou geler » | geler, et la raison tient à une donnée que la base **ne stocke pas** |
+| `C-55` | trois surfaces mesurées | trois soupçons | **1 finding réel** (case de sélection sans nom, rôle ni état), **2 artefacts de harnais** |
+| `C-25` | teinte changée sur 2 thèmes | « le bleu de marque est à 3,34 » | **deux** thèmes fautifs, pas un ; et **aucune garde ne les regardait** (axe ne scanne que le thème par défaut) |
+| `C-12` | critère tenu, 3 runs | « deux runs sur trois » | **trois runs consécutifs**, six passes, toutes > 90. Rien n'a été touché pour l'obtenir |
+| `C-23` | noyau réduit de 11 à 9 | « 41 nœuds en trois familles » | « 41 » était un **tirage** : 21 / 41 / 55 sur trois passes. Reproductible : 11, dont 2 corrigés |
+
+#### 🟠 Commencé (6)
+
+`C-23` `C-24` `C-28` `C-30` `C-31` `C-35` — et `C-39` `C-48` `C-65` avec eux, soit **9** si l'on
+compte les items « écrits mais pas en production » séparément. Nominativement, les deux familles :
+
+- **critère non atteint** : `C-23` (9 nœuds de contraste restants, qui demandent un **second**
+  arbitrage de marque sur `--color-accent`), `C-24` (la moitié « appareil réel » de A-4).
+- **écrits, pas en production** : `C-28` `C-30` `C-31` `C-35` `C-39` `C-48` `C-65`. Aucun ne demande
+  de code — ils demandent un **geste** : une migration, un secret, un déploiement.
+
+#### ⬜ Pas commencé (5)
+
+`C-18` `C-58` `C-69`, plus les deux moitiés non engagées de `C-23` et `C-24` déjà comptées
+ci-dessus — donc **trois** items entiers :
+
+- `C-18` (CVE dev-only) : demande un arbre **sans travail non commité**, ce qui n'était pas le cas.
+- `C-58` (React 19) : chantier L, à séquencer sur une branche dédiée, CI verte derrière.
+- `C-69` (la fenêtre produit tourne sans pause) : **arbitré « on garde »** le 2026-09-03. Ne
+  s'exécute que si la décision change.
+
+> 🔴 **Ce que ce décompte ne dit pas.** « 63 clos » ne veut pas dire « 63 problèmes disparus » : six
+> des items restants sont écrits et testés, et n'attendent qu'un geste en production. Tant que ce
+> geste n'est pas fait, le code existe et **ne produit rien**. Le § 11.1 les liste un par un.
+
+---
 
 ### 11.0bis Recompté le 2026-09-12 — **74 items : 55 clos, 11 commencés, 8 ouverts**
 
