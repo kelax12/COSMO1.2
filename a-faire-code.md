@@ -2640,7 +2640,7 @@ Deux défauts de nature différente, à ne pas traiter ensemble :
   passent à 44, et une garde compte les commandes sous la cible sur les routes protégées, avec un
   témoin qui refuse un détecteur qui ne détecterait plus rien.
 
-### C-70 · 22 cibles tactiles sous 44 px dans `TeamTaskModal` · **P2 · M** · 🆕 trouvé le 2026-09-04
+### C-70 · ~~22 cibles tactiles sous 44 px dans `TeamTaskModal`~~ · **P2 · M** · ✅ fermé le 2026-09-12 (28 → 0)
 
 **Trouvé en vérifiant la conformité de C-57 à son arbitrage**, et c'est le vrai résultat de cette
 vérification : la garde de C-57 déclarait « 0 commande sous la cible » en ne mesurant que l'**état
@@ -2674,6 +2674,47 @@ geste que C-57 traitait, les 22 autres non.
 - **Fini quand** : l'arbitrage est rendu (élargir la densité, ou exempter explicitement une famille
   avec sa raison), les commandes retenues passent à 44 px, et le `console.log` du harnais devient
   un `expect`.
+
+> #### ✅ Fermé le 2026-09-12 — 28 → 0, et le `console.log` est devenu un `expect`
+>
+> **Remesuré d'abord** : **28** commandes sous la cible, pas 22. L'énoncé datait du 2026-09-04 et
+> n'avait pas été refait ; la correction de `C-73` avait entre-temps appris au détecteur à lire les
+> pseudo-éléments positionnés, donc à voir des cibles qu'il ratait. Sixième énoncé pris en défaut à
+> la remesure.
+>
+> **L'arbitrage que l'item attendait n'était pas « élargir la densité ».** Aucune des 28 n'a demandé
+> de rouvrir la densité de la modale : elles se rangeaient en quatre familles, et chacune a son
+> geste, désormais écrit dans le message d'échec du harnais —
+>
+> | Famille | Mesure | Geste | Coût visuel |
+> |---|---|---|---|
+> | 6 commandes à **42 px** (les 5 priorités + l'échéance) | `inputHeightClass = h-[2.626275rem]` valait 42,02 px | `h-11` | **2 px**. Le groupe priorité est en `items-stretch` : corriger la constante partagée corrige les six d'un coup et garde la rangée alignée |
+> | 9 rangées à **341 × 42** (équipes et membres) | avatar 26 px + `py-2` | `min-h-11` | 2 px, et un minimum plutôt qu'une hauteur fixe — un nom qui passe à la ligne doit pouvoir grandir |
+> | 8 commandes **assez larges mais trop basses** (chips de catégorie, « Nouvelle catégorie », « + Ajouter », « Assigner la tâche », « Dépendances ») | 14 à 26 px de haut | `TAP_AREA_44_Y` | **aucun** : le débord vit dans un pseudo-élément absolu |
+> | « Agrandir la description », 28 × 28, **isolée** | coin d'un `textarea` | `TAP_AREA_44` (variante deux axes, créée ici) | aucun ; l'agrandir pour de vrai mangerait la zone de saisie qu'elle sert à agrandir |
+> | renommer / supprimer une catégorie, 24 × 24, **adjacentes** | `gap-0.5`, 2 px d'écart | **taille réelle** `w-11 h-11 sm:w-6 sm:h-6` | la rangée de chips passe à deux colonnes sur 375 px |
+>
+> 🔴 **La dernière ligne est la seule décision de fond, et elle dit non au débord.** Deux icônes à
+> 2 px l'une de l'autre, agrandies chacune à 44 px de large, se chevauchent sur 20 px, et c'est la
+> dernière dans l'ordre du DOM qui gagne la zone commune — ici la **suppression**. On ne corrige pas
+> une cible ratée en fabriquant un appui destructeur. L'interdiction est écrite dans `TAP_AREA_44`
+> lui-même, pas seulement ici : c'est la raison d'être de la variante verticale.
+>
+> ⚠️ **Le débord est invisible à la garde par construction** — le détecteur sait lire les
+> pseudo-éléments positionnés depuis `C-73`, donc il ne verra jamais un `TAP_AREA_44` posé à tort
+> sur deux commandes voisines. C'est à la relecture de le voir, et c'est écrit dans la primitive.
+>
+> **Deux corrections dépassent cette modale** : `AddCategoryButton` (16 px de haut) est monté par
+> `TaskModal`, `OKRModalSheet`, `EventModal` et la modale d'équipe, et `DescriptionField` par
+> toutes les surfaces qui portent une description. Les huit balayages de routes restent verts.
+>
+> **Vérifié dans le navigateur**, viewport 375 × 812, modale ouverte : la rangée de chips passe en
+> deux colonnes, le reste du dessin est inchangé.
+>
+> ⚠️ **Ce que ça ne ferme pas** : il reste **57 autres surfaces modales** dont aucune n'est dans un
+> relevé. Les balayages de routes ne mesurent que l'état de repos, et ce test n'ouvre qu'UNE modale.
+> Ne jamais écrire « les cibles tactiles sont conformes » : l'énoncé opposable est la liste des
+> surfaces que `e2e/touch-targets.spec.ts` ouvre réellement.
 
 ### C-69 · La fenêtre produit tourne toute seule, sans pause, y compris en mouvement réduit · **P2 · S** · 🟠 arbitrage rendu : on garde
 

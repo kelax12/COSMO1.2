@@ -10,6 +10,7 @@ import React, { useRef, useState } from 'react';
 import { Maximize2, X } from 'lucide-react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { useT } from '@/i18n/useT';
+import { TAP_AREA_44 } from '@/components/mobile/tap-area';
 
 export interface DescriptionFieldProps {
   value: string;
@@ -62,7 +63,11 @@ const DescriptionField: React.FC<DescriptionFieldProps> = ({
           onClick={() => setIsExpanded(true)}
           aria-label={t('description.expand')}
           title={t('description.expand')}
-          className="absolute bottom-2 right-2 p-1.5 rounded-md transition-colors hover:bg-[rgb(var(--color-hover))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
+          // 28 x 28 px mesurés (C-70). Commande ISOLÉE, dans le coin d'un
+          // textarea : rien ne vit à moins de 22 px autour, la variante deux
+          // axes est donc utilisable. L'agrandir pour de vrai mangerait la zone
+          // de saisie qu'elle sert à agrandir.
+          className={`absolute bottom-2 right-2 p-1.5 rounded-md transition-colors hover:bg-[rgb(var(--color-hover))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))] ${TAP_AREA_44}`}
           style={{ color: 'rgb(var(--color-text-secondary))', backgroundColor: 'rgb(var(--color-surface))' }}
         >
           <Maximize2 size={16} />
