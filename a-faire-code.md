@@ -844,6 +844,33 @@ personne peut donc valider un formulaire dont elle ne voit plus l'intitulé.
 > jamais tourné. Le déploiement était la moitié du geste M-37 ; l'autre moitié
 > demande deux gestes d'Axel, décrits dans `a-faire-manuel.md`.
 >
+> 🔴 **« DÉPLOYÉE » NE VEUT PAS DIRE « IDENTIQUE AU DÉPÔT », ET ÇA N'A PAS PU ÊTRE
+> VÉRIFIÉ.** Le déploiement est passé par l'API Management, en transcrivant les trois
+> fichiers dans l'appel. `npm run check:edge` est la seule chose qui compare octet
+> pour octet — et le job `Edge deploy drift` a **échoué** sur le commit du
+> déploiement (run `34722081210`, 2026-09-12 à 22:12 UTC), pour la raison qu'il
+> échoue **chaque jour depuis le 2026-09-03** : `SUPABASE_ACCESS_TOKEN` est absent
+> des secrets Actions (geste M-33). L'échec n'est donc **pas** une divergence, c'est
+> l'absence de mesure — et la garde a raison d'échouer plutôt que d'avertir.
+> **Ce qui EST vérifié** : les 39 lignes de logique de `_shared/refund-amount.ts` et
+> celles de l'entrypoint ont été relues une par une contre le code rendu par l'API,
+> et elles sont identiques. Le résidu de risque est donc confiné aux **commentaires**,
+> qui ne changent aucun comportement mais rendront `check:edge` rouge le jour où le
+> secret sera posé.
+> ⚠️ **M-33 a changé de nature ce jour-là** : ce n'était qu'un secret manquant sur une
+> garde d'hygiène ; c'est désormais ce qui empêche de prouver que le code en ligne
+> d'un chemin **qui déplace de l'argent** est celui qu'on a relu.
+>
+> ✅ **DÉCISION D'AXEL DU 2026-09-12, sur les deux questions que le test posait** :
+> le remboursement se jouera sur **`cosmoentreprise`** (son organisation réelle, 7
+> membres, propriétaire `axellongatte2@gmail.com`) et **non** sur `entreprisetest` ;
+> et les **deux lignes définitives** que le test écrira dans `payment_records` sont
+> **acceptées en connaissance de cause**. Elles se compensent à zéro, elles seront les
+> deux premières lignes de la vie de ce journal, elles viendront du mode TEST de
+> Stripe, et elles ne s'effaceront jamais — la table est immuable par trigger et
+> exclue des purges, c'est la pièce produite en contrôle (CGI art. 286-I-3° bis).
+> C'est le prix d'éprouver le chemin avant qu'un vrai client l'emprunte.
+>
 > ⚠️ **UN DOUTE MESURABLE, TROUVÉ EN DÉPLOYANT, ET QUI N'EST PAS REFERMÉ.** Le code
 > du webhook traite **six** types d'events ; le dépôt décrit l'endpoint Stripe comme
 > enregistré pour **cinq** (`docs/STRIPE-LIVE.md` § passage en live, `CLAUDE.md`).
