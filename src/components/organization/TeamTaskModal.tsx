@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X, AlertCircle, Trash2, Loader2, Check, Send } from 'lucide-react';
-import { toast } from '@/lib/toast';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { useMyOrgPermissions } from '@/modules/organizations';
 import { useMarkTaskNotificationsRead, type OrgMember } from '@/modules/organizations';
