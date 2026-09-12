@@ -13,7 +13,7 @@ type Props = {
   okr: OKR | null;
   categories: Category[];
   /** Élément cible vers lequel la carte « vole » à la validation (bouton "OKR terminés"). */
-  flyTargetRef: React.RefObject<HTMLElement>;
+  flyTargetRef: React.RefObject<HTMLElement | null>;
   onClose: () => void;
   /** Appelé quand l'utilisateur valide — reçoit l'OKR mis à jour, doit setter completed=true côté caller. */
   onValidate: (updated: OKR) => void;

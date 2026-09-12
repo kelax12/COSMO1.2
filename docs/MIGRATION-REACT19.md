@@ -173,6 +173,82 @@ comme avant.
 
 ---
 
+## 4bis. 🔴 CE QUE CETTE ÉTUDE AVAIT MANQUÉ — mesuré en exécutant la migration (2026-09-12)
+
+L'étude ci-dessus a été écrite en **lisant** : le CHANGELOG de React 19, celui de `react-router` 8,
+et le code du dépôt au `grep`. Elle conclut « aucun pré-requis », « 0,5 à 1 jour », « fix mécanique
+de `useRef<T>()` ». La migration a ensuite été **jouée** sur la branche `feat/react-19`. Deux
+choses qu'aucune lecture n'avait vues, et la seconde bloque.
+
+### a. Une classe de rupture de TYPES que le §2 ne liste pas : `RefObject<T>`
+
+Sous les types React 19, `useRef<T>(null)` ne rend plus `RefObject<T>` mais **`RefObject<T | null>`**
+(`RefObject` y est devenu mutable, et la variante « read-only ref » a disparu). Toute PROP déclarée
+`React.RefObject<HTMLDivElement>` refuse donc le ref qu'on lui passe.
+
+**8 erreurs de compilation, 5 fichiers, 9 déclarations à élargir** :
+`OKRDeadlineReviewModal`, `reactbits/ScrollReveal`, `task-modal/TaskModalDesktopBody`,
+`hooks/use-bottom-sheet`, `hooks/use-modal-a11y` (×2), `pages/agenda/AgendaCalendarSection` (×2),
+`pages/agenda/AgendaDesktopHeader`.
+
+Le correctif est mécanique — `RefObject<T>` → `RefObject<T | null>` — et il est **juste** : c'est
+la réalité du ref depuis toujours, les types la disaient simplement ailleurs. Coût réel : quelques
+minutes. ⚠️ Mais le §2 affirmait « le seul site » à propos de `useRef<T>()` sans argument : c'était
+vrai de CE motif, et faux de la classe. Un `grep` sur un motif ne mesure pas une classe de rupture.
+
+### b. 🔴 LE BLOCAGE : React 19 pèse **+23,3 ko gzip**, et il fait sauter le budget de bundle
+
+Mesuré sur le build de production, `npm run check:bundle` :
+
+| | React 18.3.1 | React 19.3.0 | Écart |
+|---|---|---|---|
+| `vendor-react` (gzip) | 72,1 ko | **95,4 ko** | **+23,3 ko (+32 %)** |
+| chemin critique | 306,3 ko | **329,8 ko** | plafond **323,0** → **dépassé de 6,8 ko** |
+| entrée | 66,9 ko | 67,0 ko | plafond 71,0 → tient |
+
+`check:bundle` rend **exit 1**. Le chunk a été ouvert pour écarter un artefact : aucune trace de
+`react-dom/server`, de `renderToString`, de `__DEV__` ni d'un build de développement. **Le surcoût
+est réel.**
+
+🔴 **Et il ne peut PAS se régler en remontant le plafond.** Ce plafond a été ABAISSÉ à 323,0 ko le
+2026-09-11 pour satisfaire le critère de sortie de C-14, qui exige 5 % de marge sur les deux
+budgets ; la marge était de 5,2 %. React 19 la consomme entièrement et déborde. Remonter le plafond
+rouvrirait C-14 le jour même, et c'est interdit par la règle 1 du dépôt.
+
+**Il faut donc trouver ~7 ko ailleurs sur le chemin critique, ou différer.** Les sept chunks :
+
+```
+95,4 vendor-react · 67,0 index · 56,3 vendor-supabase · 49,0 vendor-animation
+30,8 vendor-utils · 17,6 vendor-query · 13,7 vendor-router
+```
+
+Le seul candidat de taille est **`vendor-animation` (49,0 ko, framer-motion)**, tiré dans le chemin
+critique par un unique import statique : `MotionConfig` dans `src/App.tsx`.
+
+❌ **Et c'est précisément le levier à ne PAS tirer sans y réfléchir.** `MotionConfig
+reducedMotion="user"` est un fournisseur de CONTEXTE : le charger en différé ferait rendre les
+premiers écrans **sans** lui, donc sans respecter `prefers-reduced-motion` — exactement la classe de
+régression qui a déjà coûté deux fois à ce dépôt (feuilles mobiles à 0 px visible, cascades du
+dashboard figées 20 px trop bas). Et `CLAUDE.md` note déjà, à propos du `Toaster`, que suspendre sur
+la frontière qui enveloppe les routes **cacherait la page**.
+
+**Les trois issues, et aucune n'est technique** :
+
+1. **Différer la migration** jusqu'à ce que le chemin critique ait 7 ko de marge de plus par
+   ailleurs. C'est l'option par défaut : rien n'urge, la justification sécurité est tombée (§1).
+2. **Sortir framer-motion du chemin critique pour de vrai** — c'est-à-dire remplacer
+   `MotionConfig` par une lecture CSS/matchMedia de `prefers-reduced-motion`, sans contexte React.
+   Chantier à part entière, avec sa propre mesure au navigateur sous `reduce`.
+3. **Accepter de rouvrir C-14** en remontant le plafond. Décision d'Axel, pas une correction.
+
+⚠️ **Ce que l'échec du budget ne remet PAS en cause** : tout le reste de la migration est vert.
+`tsc -b` propre, `npm run lint` 0 erreur, **226 fichiers / 2 500 tests** au vert, `i18n:check`,
+`i18n:scan`, `i18n:identical`, `validate:migrations`, `check:rls`, `check:legal` vertes, et le build
+lui-même réussit. La branche `feat/react-19` porte ce travail, prêt à reprendre le jour où le
+budget le permet.
+
+---
+
 ## 5. Chiffrage
 
 Étant donné que la quasi-totalité des ruptures listées aux §2 et §4 ne touchent pas ce code, le

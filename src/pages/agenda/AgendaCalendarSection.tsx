@@ -69,8 +69,8 @@ interface AgendaCalendarSectionProps {
   /** Remonte une nouvelle clé pour forcer FullCalendar à se reconstruire. */
   desktopKey: number;
   mobileKey: number;
-  desktopRef: React.RefObject<FullCalendar>;
-  mobileRef: React.RefObject<FullCalendar>;
+  desktopRef: React.RefObject<FullCalendar | null>;
+  mobileRef: React.RefObject<FullCalendar | null>;
   currentView: string;
   mobileViewMode: MobileView;
   mobileSelectedDate: Date;
