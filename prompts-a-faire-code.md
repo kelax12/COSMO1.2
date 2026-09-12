@@ -282,24 +282,44 @@ dit explicitement « rien ». Un audit qui ne rend rien se DIT ; il ne s'omet pa
 
 # P3 — pas commencé
 
-## C-58 · React 19 et `react-router` 8 : la décision, avant le code
+## C-58 · React 19 — la branche existe, elle BUTE sur le budget de bundle
+
+> ⚠️ **Réécrit le 2026-09-12.** La migration a été jouée sur `feat/react-19`. Tout est vert sauf
+> `check:bundle`. Ce prompt ne redemande donc PAS de migrer : il demande de trancher.
 
 ```
-Objectif : C-58. Ce n'est plus une urgence securite, la CVE est fermee sous React 18 depuis le
-2026-07-28. C'est redevenu un arbitrage de cout, et l'arbitrage du 2026-09-03 dit OUI, mais
-« chantier L, a sequencer APRES les P0 ».
+Objectif : C-58, et ce n'est plus un chantier de migration — c'est un arbitrage.
 
-L'argument de fond, qui ne depend d'aucune CVE : sous React 19 `ref` devient une prop ordinaire,
-donc la classe de bug qui a coute Button puis Input (un forwardRef manquant, SILENCIEUX par
-construction, qui a rendu le calendrier impilotable au clavier) disparait. C-19 et C-60 se
-reglent dans la meme PR. Chiffrage composant par composant : docs/MIGRATION-REACT19.md.
+Etat mesure le 2026-09-12, branche `feat/react-19` (poussee, non fusionnable) :
+  tsc -b                 propre, apres 9 corrections de types
+  lint                   0 erreur
+  npm test               226 fichiers / 2 500 tests
+  les six gates          i18n:check/scan/identical, migrations, rls, legal : vertes
+  build                  reussit
+  E2E chromium           104 passes, 3 ignores, 0 echec
+  check:bundle           EXIT 1 — chemin critique 329,8 ko / plafond 323,0
 
-Avant d'ecrire une ligne : verifier que les P0 de ce fichier (C-72, C-73, C-74) sont fermes et
-que la CI de main est VERTE. Migrer sur une CI rouge, c'est perdre le seul signal qui dira si la
-migration a casse quelque chose.
+React 19 pese +23,3 ko gzip (vendor-react 72,1 -> 95,4). Le chunk a ete ouvert :
+pas de react-dom/server, pas de __DEV__, pas de build de developpement. Le surcout est REEL.
 
-Fini quand : branche dediee, les cinq gates vertes, la suite E2E complete verte (210 cas /
-25 specs / 4 projects), et docs/MIGRATION-REACT19.md mis a jour avec ce qui a reellement coute.
+Le plafond a ete ABAISSE a 323,0 le 2026-09-11 pour satisfaire le critere de sortie de C-14
+(5 % de marge, obtenue a 5,2 %). React 19 la consomme entierement et deborde de 6,8 ko.
+NE PAS le remonter : ce serait rouvrir C-14 le jour meme.
+
+Le seul gisement est vendor-animation (49,0 ko), tire dans le chemin critique par UN import
+statique : MotionConfig dans App.tsx. Le differer naivement est EXCLU — c'est un fournisseur
+de CONTEXTE, les premiers ecrans rendraient sans prefers-reduced-motion, la classe de
+regression qui a deja coute deux fois a ce depot.
+
+Trois issues, et ce prompt ne s'execute QUE quand Axel en a choisi une :
+  1. differer (defaut : l'urgence securite est tombee) ;
+  2. sortir framer-motion du chemin critique pour de vrai — remplacer MotionConfig par une
+     lecture CSS/matchMedia de prefers-reduced-motion, sans contexte React. Chantier a part,
+     avec sa mesure au navigateur SOUS `reduce` ;
+  3. accepter de rouvrir C-14.
+
+Detail complet et chiffres : docs/MIGRATION-REACT19.md § 4bis.
+react-router 8 (PR 2) est sequentiel derriere : il exige React >= 19.2.7 en peer.
 ```
 
 ## C-69 · la fenêtre produit de la landing tourne sans pause
