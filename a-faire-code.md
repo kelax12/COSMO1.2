@@ -11,7 +11,7 @@ compte** et **ce qui prouve que c'est fini**.
 
 > ### 🔴 Passe du 2026-09-12 — remesure de bout en bout, et **la CI est rouge sur `main`**
 >
-> **74 items** (`C-72` → `C-74` ajoutés par cette passe). **52 clos, 11 commencés, 11 ouverts.**
+> **74 items** (`C-72` → `C-74` ajoutés par cette passe). **55 clos, 11 commencés, 8 ouverts.**
 > Tout ce qui suit a été **mesuré ce jour-là** — ledger de migrations et versions d'Edge Functions
 > lus par l'API Supabase, runs GitHub Actions lus par `gh`, `npm audit` et les `grep` joués ici.
 > Rien n'a été recopié d'un tableau plus ancien.
@@ -24,6 +24,23 @@ compte** et **ce qui prouve que c'est fini**.
 > | `touch-targets.spec.ts` — **8 routes** | 09-10 et 09-11 | deux commandes de `DemoConversionBanner` sous 44 px, donc sur toutes les pages protégées en démo | **C-73** 🆕 |
 > | `a11y-keyboard-audit.spec.ts` — `ShareListSheet` | 09-10 et 09-11 | le clic sur « Partager la liste » n'aboutit jamais, 180 s de timeout | **C-74** 🆕 |
 > | `demo-calendar.spec.ts` — surface 3 | 09-11 au soir | le calendrier de report en masse **désactive AUJOURD'HUI** : une tâche en retard ne peut plus être reportée au jour même | **C-72** 🆕 |
+>
+> 🟢 **Les trois sont corrigés le 2026-09-12 au soir, et DEUX des trois énoncés ci-dessus se
+> sont révélés faux à l'investigation** — le tableau est laissé tel quel plutôt que réécrit, parce
+> qu'un énoncé corrigé en silence ne s'apprend pas :
+>
+> | Item | Ce que la ligne ci-dessus disait | Ce que la mesure a rendu |
+> |---|---|---|
+> | **C-72** | le produit refuse aujourd'hui | **le produit est juste** ; le test comparait la date de Node (UTC en CI) à celle de la page (`Europe/Paris`), donc il ne pouvait échouer qu'entre 22 h et minuit UTC |
+> | **C-73** | deux commandes du bandeau sous 44 px | **deux faux positifs** (cible en ligne, cible portée par un `::before`) qui MASQUAIENT le vrai défaut : 8 pilules de `/tasks` passées de 44 à 36 px le 2026-09-06 |
+> | **C-74** | timeout de 180 s, cause à trouver | **la cause était dans le journal Playwright** depuis le premier run : un toast Sonner intercepte le clic |
+>
+> 🔴 **Ce que ces trois-là racontent ensemble.** Aucun n'a été trouvé en relisant du code : deux
+> l'ont été en lisant un journal CI que personne n'ouvrait, le troisième en mesurant dans le
+> navigateur avant de corriger. Et sur trois tests rouges, **un seul portait un défaut produit** —
+> les deux autres mesuraient à côté. C'est la sixième fois en dix jours, et ça ne concerne plus
+> seulement les gardes : **un test rouge ne dit pas où est le défaut, il dit qu'il y en a un
+> quelque part entre le produit et sa mesure.**
 >
 > ⚠️ **`C-57` était déclaré clos, et sa propre garde est rouge.** Ce n'est pas une contradiction du
 > décompte, c'est ce que le décompte ne peut pas dire : un item se ferme sur un critère, une garde
@@ -843,7 +860,47 @@ rendent leurs jumeaux `create` et `delete`, jamais eux-mêmes.
 
 ---
 
-### C-72 · Le report en masse d'une tâche en retard REFUSE aujourd'hui · **P1 · S** · 🆕 trouvé le 2026-09-12
+### C-72 · ~~Le report en masse d'une tâche en retard REFUSE aujourd'hui~~ · **P1 · S** · ✅ corrigé le 2026-09-12
+
+> 🔴 **L'ÉNONCÉ CI-DESSOUS ÉTAIT FAUX, et c'est le seul renseignement qui compte ici.** Le
+> produit n'a jamais refusé aujourd'hui. **C'est le test qui comparait deux horloges.**
+>
+> `playwright.config.ts` fait tourner le navigateur en `Europe/Paris` ; le runner CI, lui, est en
+> **UTC**. Ce fichier calculait « aujourd'hui » avec `new Date()` **côté Node**. Entre 22 h et
+> minuit UTC, les deux tombent donc sur des jours différents : le test réclamait que la case du 11
+> soit ouverte pendant que l'application, déjà le 12, la refusait **à juste titre**.
+>
+> | Run | Heure UTC | Heure à Paris | Verdict |
+> |---|---|---|---|
+> | 2026-09-10 21:53 | 21:53 | 23:53, **même jour** | ✅ vert |
+> | 2026-09-11 11:56 | 11:56 | 13:56, même jour | ✅ vert |
+> | 2026-09-11 22:12 | 22:12 | **00:12, jour suivant** | ❌ rouge |
+>
+> **Ce qui a été fait, et prouvé :**
+>
+> 1. Le test lit désormais le jour **dans la page** (`browserDayKey`), plus jamais dans le
+>    processus Node.
+> 2. **Témoin, joué et vu ROUGE avant d'être vert** : le cas est rejoué sous DEUX fuseaux
+>    navigateur, `Pacific/Kiritimati` et `Etc/GMT+12`. Ils sont à **26 h l'un de l'autre**, l'écart
+>    maximal du monde, donc jamais le même jour : quelle que soit l'horloge du runner, elle diverge
+>    d'au moins l'un des deux. En remettant le `new Date()` de Node, **1 des 2 est tombé** — la
+>    preuve que le témoin détecte, et que le produit, lui, est juste.
+> 3. **Le produit est mesuré à part** : `src/components/ui/date-picker.bounds.test.tsx`, 4 tests,
+>    sans navigateur ni horloge partagée. Il pose les deux bords (aujourd'hui ouvert, hier refusé),
+>    plus **deux témoins** — sans borne rien n'est refusé, avec une borne à demain aujourd'hui
+>    tombe. C'est ce fichier qui manquait : rien ne mesurait la borne elle-même, et il a fallu un
+>    run nocturne pour savoir de quel côté était le défaut.
+>
+> ✅ **Un vrai écart produit a quand même été trouvé en chemin, et corrigé** : `OverdueBanner`
+> bornait sur la date **MACHINE** alors que `OverdueQuickActions`, pour le même geste, borne sur le
+> fuseau **CHOISI** (`todayKeyInTz`). Les deux chemins du report pouvaient donc refuser des jours
+> différents pour qui règle un fuseau manuel. `CLAUDE.md` § Fuseau horaire tranche : une échéance
+> suit la préférence. Aligné.
+>
+> ⚠️ **La leçon, et elle dépasse ce cas** : un test qui compare une valeur calculée chez lui à une
+> valeur calculée dans la page ne mesure pas le produit, il mesure l'accord de deux horloges. Sur
+> la machine d'un développeur français, elles concordent **toujours** — c'est exactement pour ça
+> que le défaut a vécu jusqu'au premier run après 22 h UTC.
 
 Trouvé non pas en relisant le code, mais en lisant **le run CI du 2026-09-11 à 22:06**, où
 `e2e/demo-calendar.spec.ts:94` (« surface 3 — le report en masse des tâches en retard borne à
@@ -2615,7 +2672,56 @@ des consommateurs.
 
 ---
 
-### C-73 · Deux commandes du bandeau de démo sous 44 px, sur TOUTES les pages protégées · **P1 · S** · 🆕 trouvé le 2026-09-12
+### C-73 · ~~Deux commandes du bandeau de démo sous 44 px~~ · **P1 · S** · ✅ corrigé le 2026-09-12
+
+> 🔴 **L'énoncé ci-dessous nommait deux faux positifs et taisait le vrai défaut.** Mesuré dans
+> le navigateur avant de toucher à quoi que ce soit :
+>
+> | Commande | Ce que la garde disait | Ce que la mesure rend |
+> |---|---|---|
+> | « Créez un compte » | 93 × 11, défaut | **cible EN LIGNE dans une phrase** — l'exception WCAG 2.5.5 que la garde prétend déjà appliquer |
+> | « Masquer la bannière démo » | 14 × 14, défaut | icône de 14 px, **zone tactile de 44 × 44** portée par un `::before` absolu, centré |
+> | 8 pilules de `/tasks` | *rien* | **36 px de haut. Défaut réel, et il datait du 2026-09-06** |
+>
+> **Deux défauts de MESURE, et un vrai défaut que ces deux-là cachaient.**
+>
+> 1. **L'exception « inline » exigeait un nœud de texte NU**, enfant direct du parent. Elle a tenu
+>    tant que la phrase du bandeau était écrite en clair ; la maquette 02 l'a réorganisée en
+>    `<span>Mode démo</span>` + `<button>Créez un compte</button>` — même phrase, même cible en
+>    ligne, plus un seul nœud de texte nu. Le bouton s'est mis à compter du jour au lendemain, sur
+>    les huit routes, sans que rien du geste n'ait changé. La garde mesure désormais la **prose**
+>    (texte du parent moins celui de ses commandes).
+> 2. **`getBoundingClientRect()` ne voit pas les pseudo-éléments.** La croix porte sa cible dans un
+>    `::before` de 44 × 44 — le motif d'agrandissement que WCAG recommande justement. La garde
+>    rapportait « 14 × 14 » d'une cible qui en fait 44, et exigeait donc de casser le dessin pour
+>    rien. C'est la **deuxième fois** que ce détecteur mesure la mauvaise boîte, après la case à
+>    cocher enveloppée dans son `<label>` le 2026-09-04.
+> 3. 🔴 **Le vrai défaut, que la CI signalait depuis le début sous `/tasks`** : le 2026-09-06, les
+>    pilules de listes sont passées de `h-11` à `h-9` — **de 44 px à 36** — pour un motif assumé et
+>    purement visuel (« 44 px faisait une pilule disproportionnée, Spotify tourne autour de
+>    36-40 px »). Le dessin y a gagné, la cible tactile y a perdu, et `docs/MOBILE.md` interdit
+>    justement les cibles sous 44 × 44.
+>
+> ✅ **L'arbitrage « joli OU accessible » a été refusé** : `TAP_AREA_44_Y`
+> (`src/components/mobile/tap-area.ts`) porte le débord dans un pseudo-élément absolu, donc **hors
+> du flux**. Vérifié dans le navigateur, viewport 375 : la pilule mesure toujours **36 px**, sa
+> cible **44**. Vertical uniquement (`inset-x-0`) — un débord horizontal ferait se chevaucher deux
+> pilules voisines, ce qui volerait un appui au lieu d'en gagner. C'est mot pour mot le contrat que
+> le message d'échec de la garde prescrivait déjà.
+>
+> ✅ **Quatre témoins ajoutés**, par paires, parce qu'un assouplissement sans témoin est un trou
+> qu'on ouvre en croyant corriger une mesure : prose dans un `<span>` voisin → dispensé, mais un
+> `<p>` qui ne contient QUE des boutons → toujours mesuré ; `::before` absolu et dimensionné → il
+> EST la cible, mais `::before` décoratif non positionné → n'agrandit rien.
+>
+> **Résultat mesuré** : `touch-targets.spec.ts` chromium, **10 cas sur 10 verts** (8 routes + le
+> témoin + la modale d'équipe), contre 8 routes rouges depuis le 2026-09-10.
+>
+> ⚠️ **Ce que la mesure ne dit pas, dit une fois** : la croix est en haut de l'écran, donc ~9 px de
+> sa cible débordent **au-dessus du viewport** à la position de défilement 0. La cible *rendue*
+> fait bien 44 × 44 — c'est ce que demande le critère — mais la portion atteignable au doigt en
+> fait 35 de haut. Rabattre la cible vers le bas la ferait mordre de 24 px sur l'en-tête : on
+> volerait des appuis au lieu d'en gagner. Laissé tel quel, et écrit plutôt que tu.
 
 `e2e/touch-targets.spec.ts:175` est rouge sur **huit routes** (`/dashboard`, `/entreprise`, `/okr`,
 `/tasks`, `/habits`, `/settings`, `/agenda`, `/statistics`), dans les deux runs CI examinés
@@ -2645,7 +2751,35 @@ Un seul coupable, dans un composant **partagé** — d'où huit routes pour un d
   éventuelle est **nommée dans le code de la garde avec son motif**, et le job `e2e` de `main`
   repasse au vert. ❌ Ne jamais retirer une route du balayage pour y arriver.
 
-### C-74 · `ShareListSheet` : le clavier n'atteint jamais la feuille de partage · **P2 · S** · 🆕 trouvé le 2026-09-12
+### C-74 · ~~`ShareListSheet` : le clavier n'atteint jamais la feuille de partage~~ · **P2 · S** · ✅ corrigé le 2026-09-12
+
+> ✅ **La cause était écrite dans le journal Playwright depuis le premier run, et personne ne
+> l'avait ouvert.** Ce n'est ni un mouvement ni un défaut d'accessibilité :
+>
+> ```
+> <li data-sonner-toast ...> from <section aria-label="Notifications alt+T">
+> subtree intercepts pointer events
+> ```
+>
+> La confirmation « liste créée » s'affiche **en haut à droite**, exactement là où vit la rangée
+> de puces et son bouton de partage. Playwright réessayait le clic, le survol finissait par se
+> perdre, la commande révélée au survol se démontait — et l'erreur finale, « element was
+> detached », **désignait le symptôme au lieu de la cause**. Trois minutes de timeout par run.
+>
+> Le cas attend désormais que la zone de notification soit vide
+> (`expect(page.locator('[data-sonner-toast]')).toHaveCount(0)`) avant de survoler. ❌ Pas un
+> `waitForTimeout` : la durée d'un toast n'est pas un contrat, une attente fixe redeviendrait
+> fausse au premier réglage.
+>
+> **Mesuré après correctif** : le cas passe en **1,2 min** au lieu d'expirer à 3, et il rend enfin
+> son relevé — `focusMovedIn: true`, `trapped: true`, `escClosed: true`, `role: dialog`,
+> `ariaModal: true`. La surface était conforme depuis le début ; on ne pouvait simplement pas
+> l'atteindre pour le constater.
+>
+> ⚠️ **Ce n'est pas QUE du test, et ça reste une observation ouverte** : pendant ces quelques
+> secondes, la même chose arrive à une vraie personne qui vient de créer une liste et veut la
+> partager — le toast couvre le bouton. Déplacer la position des toasts est une décision de design
+> qu'aucun arbitrage n'a rendue ; elle est notée ici, elle n'a pas été prise en passant.
 
 `e2e/a11y-keyboard-audit.spec.ts:396` échoue sur un **timeout de 180 s** dans les deux runs CI
 examinés. Le clic sur « Partager la liste » ne se résout jamais :
@@ -3385,21 +3519,26 @@ avant que sa note ne change : ledger de migrations et versions déployées lus p
 exécutées, sondes jouées. Recopier une note depuis un tableau plus ancien est le défaut que ce
 fichier documente lui-même (§ Documentation de `CLAUDE.md`), et il a déjà frappé trois fois ici.
 
-### 11.0bis Recompté le 2026-09-12 — **74 items : 52 clos, 11 commencés, 11 ouverts**
+### 11.0bis Recompté le 2026-09-12 — **74 items : 55 clos, 11 commencés, 8 ouverts**
 
 Les trois listes s'égrènent, comme la fois précédente : un total qu'on ne peut pas réciter ne prouve
 rien. Le décompte du 2026-09-08 (§ 11.0, conservé dessous) portait 71 items et reste juste **à sa
 date** ; trois choses l'ont déplacé.
 
-#### ✅ Fini (52)
+#### ✅ Fini (55)
 
 `C-01` `C-02` `C-04` `C-05` `C-07` `C-08` `C-09` `C-10` `C-11` `C-13` `C-14` `C-15` `C-16` `C-17`
 `C-19` `C-20` `C-21` `C-22` `C-26` `C-27` `C-29` `C-32` `C-33` `C-34` `C-36` `C-37` `C-40` `C-41`
 `C-42` `C-43` `C-44` `C-45` `C-46` `C-47` `C-49` `C-50` `C-51` `C-52` `C-53` `C-54` `C-56` `C-57`
-`C-59` `C-60` `C-61` `C-62` `C-63` `C-64` `C-66` `C-67` `C-68` `C-71`
+`C-59` `C-60` `C-61` `C-62` `C-63` `C-64` `C-66` `C-67` `C-68` `C-71` `C-72` `C-73` `C-74`
 
 Trois entrées depuis le 2026-09-08 : **`C-14`** (budget d'entrée, 09-11), **`C-26`** (couverture
 remesurée, 09-11), **`C-27`** (quatre parcours E2E sur quatre, 09-11).
+
+Trois de plus le **2026-09-12 au soir** : **`C-72`**, **`C-73`** et **`C-74`**, les trois causes de
+la CI rouge. Chacun porte, dans sa note, ce que la mesure a rendu **contre** son propre énoncé.
+Vérification jouée ici, project `chromium` : `touch-targets` **10/10**, `demo-calendar` +
+`a11y-keyboard-audit` **23/23**, `date-picker.bounds` **4/4**, `npx tsc -b` propre.
 
 #### 🟠 Commencé (11)
 
@@ -3416,15 +3555,17 @@ Deux mouvements, chacun mesuré :
 Les deux familles du 2026-09-08 tiennent toujours : **critère non atteint** (`C-12` `C-23` `C-24`
 `C-38`) et **écrits mais pas en production** (`C-28` `C-30` `C-31` `C-35` `C-39` `C-48` `C-65`).
 
-#### ⬜ Pas commencé (11)
+#### ⬜ Pas commencé (8)
 
-`C-03` `C-06` `C-18` `C-25` `C-55` `C-58` `C-69` `C-70` `C-72` `C-73` `C-74`
+`C-03` `C-06` `C-18` `C-25` `C-55` `C-58` `C-69` `C-70`
 
-- 🔴 **Trois d'entre eux rendent la CI de `main` rouge** : `C-72` `C-73` `C-74`. Ils passent devant
-  tout le reste, non pour leur gravité produit (une seule est P1 sur le fond, `C-72`) mais parce
-  qu'une suite rouge en permanence cesse d'être lue, et que la prochaine vraie régression y sera
-  invisible.
-- Les huit autres sont ceux du 2026-09-08, moins `C-12` : rien n'y a été engagé.
+Ce sont ceux du 2026-09-08, moins `C-12` : rien n'y a été engagé. Les trois qui rendaient la CI
+rouge (`C-72` `C-73` `C-74`) sont sortis de cette liste le 2026-09-12 au soir.
+
+⚠️ **`C-70` a gagné un voisin qu'il n'avait pas** : la correction de `C-73` a rendu au détecteur de
+cibles tactiles la capacité de voir une zone portée par un pseudo-élément. L'inventaire imprimé
+pour `TeamTaskModal` est donc désormais **fiable** — avant, il pouvait compter comme défauts des
+cibles déjà agrandies. Le chiffre de 22 mérite d'être relu à cette aune avant d'ouvrir le chantier.
 
 ---
 

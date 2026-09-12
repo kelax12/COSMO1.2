@@ -414,6 +414,31 @@ test('MESURE — ShareListSheet (partage d\'une liste manuelle)', async ({ demoP
 
   const chip = page.getByRole('button', { name: /^liste a11y/i }).filter({ visible: true }).first();
   await expect(chip).toBeVisible({ timeout: 15_000 });
+
+  // 🔴 C-74 : attendre que le TOAST de création ait disparu.
+  //
+  // Sans cette attente, ce cas expirait au bout de 180 s dans tous les runs CI
+  // depuis le 2026-09-10, et le journal de Playwright nommait le coupable sans
+  // que personne ne l'ouvre :
+  //
+  //   <li data-sonner-toast ...> from <section aria-label="Notifications alt+T">
+  //   subtree intercepts pointer events
+  //
+  // La confirmation « liste créée » s'affiche en HAUT À DROITE, c'est-à-dire
+  // exactement là où vit la rangée de puces et son bouton de partage. Playwright
+  // réessayait le clic, le survol finissait par se perdre, la commande révélée
+  // au survol se démontait, et l'erreur finale — « element was detached » —
+  // désignait le symptôme au lieu de la cause.
+  //
+  // ⚠️ Ce n'est PAS qu'un défaut de test : pendant ces quelques secondes, la
+  // même chose arrive à une vraie personne qui vient de créer une liste et veut
+  // la partager. Noté dans C-74 ; ici on mesure le clavier, pas la fenêtre de
+  // recouvrement, et un test qui met trois minutes à échouer ne mesure plus rien.
+  //
+  // ❌ Ne pas remplacer par un `waitForTimeout` : la durée d'un toast n'est pas
+  // un contrat, et une attente fixe redeviendrait fausse au premier réglage.
+  await expect(page.locator('[data-sonner-toast]')).toHaveCount(0, { timeout: 30_000 });
+
   // Les actions de la puce sont révélées au SURVOL sur desktop.
   await chip.hover();
   const trigger = page.getByRole('button', { name: /^partager la liste$/i }).filter({ visible: true }).first();
