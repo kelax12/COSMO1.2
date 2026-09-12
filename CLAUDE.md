@@ -778,7 +778,37 @@ sans écran, **écrites en dur en français** hors des catalogues i18n.
 
 Migrations dans `supabase/migration/*.sql`, convention `NNN_<feature>.sql`.
 **149 fichiers de migration** (recompté le 2026-09-10). La dernière APPLIQUÉE est la
+`137_dependency_error_identifiers.sql` (le 2026-09-12) ; avant elle, la
 `144_categories_tree_depth_ambiguity.sql` (le 2026-09-09).
+
+> ⚠️ **Le ledger ne se lit pas comme une suite croissante** : la 137 est appliquée APRÈS les
+> 143/144. C'est la troisième inversion (déjà 131/132), et elle est sans conséquence ici — la
+> 137 ne fait que remplacer le TEXTE des refus de quatre triggers de dépendance.
+
+### Refus de dépendance — un identifiant, jamais une phrase (mig. `137`)
+
+✅ **APPLIQUÉE en prod le 2026-09-12** (C-48). Les quatre triggers de dépendance
+(`validate_task_dependency`, `prevent_task_dependency_cycle`, et leurs jumeaux d'équipe)
+refusaient par des PHRASES anglaises. `normalizeApiError` ne promeut un message serveur en code
+métier que s'il matche `BUSINESS_CODE_RE` (`^[a-z][a-z0-9_]{2,49}$`) : une phrase n'y entre pas,
+donc le refus retombait sur le message générique en production, et arrivait **en anglais dans le
+gabarit français** en mode démo. Ils disent désormais `dependency_task_missing`,
+`dependency_cross_account`, `dependency_cross_project` et `dependency_cycle`, catalogués en
+`errors.api.*` en `fr` et en `en`, et levés à l'identique par les deux repositories de démo.
+
+Vérifiée acteur par acteur, 13 scénarios rejoués **avant et après** dans une transaction annulée :
+verdict identique pour chacun, seul le texte change. Auto-dépendance, doublon, cycle direct,
+cycle indirect à trois maillons, tâche inexistante, arête inter-comptes, projets différents, et la
+redérivation de `user_id` / `org_id` face à une valeur forgée.
+
+- ❌ **Ne jamais séparer « tâche inexistante » de « tâche hors périmètre ».** Les deux rendent
+  `dependency_task_missing`, mesuré : l'écart serait un oracle d'existence sur `team_tasks` hors
+  organisation, refermé par la mig. 109.
+- ❌ **Ne jamais réintroduire une table phrase → identifiant côté client.** Il en a existé une du
+  2026-09-04 au 2026-09-12, le temps que la migration soit appliquée ; c'est « identifier une
+  erreur par son message », que ce fichier interdit par ailleurs. Garde :
+  `src/modules/tasks/dependency-errors.guard.test.ts`, vue rouge sur les deux sabotages (table
+  réintroduite, `RAISE` redevenu une phrase) avant d'être committée.
 
 ### Sous-catégories hiérarchiques (mig. `143`, `144`, `145`)
 

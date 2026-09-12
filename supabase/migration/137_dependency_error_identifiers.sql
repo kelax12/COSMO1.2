@@ -53,11 +53,38 @@
 -- Un identifiant non catalogué retombe sur le message générique : ajouter un
 -- `RAISE` ici sans sa clé là-bas ne casse rien, mais ne dit plus rien non plus.
 --
--- Vérification attendue après application (transaction ANNULÉE) :
---   • auto-dépendance, doublon, cycle direct et indirect toujours refusés ;
---   • arête inter-comptes toujours refusée ;
---   • le message rendu est bien l'identifiant, pas la phrase ;
---   • une tâche inexistante et une tâche hors périmètre rendent le MÊME texte.
+-- ── APPLIQUÉE EN PRODUCTION LE 2026-09-12 ───────────────────────────
+--
+-- Ledger : `137_dependency_error_identifiers`. ⚠️ Appliquée APRÈS les 143/144,
+-- le ledger ne se lit donc pas comme une suite croissante (troisième
+-- inversion, après 131/132).
+--
+-- 13 scénarios rejoués AVANT puis APRÈS, acteur par acteur, dans une
+-- transaction annulée. **Verdict identique pour chacun, seul le texte change.**
+--
+--   scénario                                  avant          après
+--   arête légitime A->B, user_id forgé=U2     ACCEPTÉ, U1    ACCEPTÉ, U1
+--   doublon A->B                              23505          23505
+--   auto-dépendance A->A                      cycle (phrase) dependency_cycle
+--   cycle direct B->A                         cycle (phrase) dependency_cycle
+--   cycle indirect C->A (A->B->C)             cycle (phrase) dependency_cycle
+--   tâche inexistante A->?                    Both tasks…    dependency_task_missing
+--   inter-comptes A->X (authenticated)        Both tasks…    dependency_task_missing
+--   inter-comptes A->X (hors RLS)             single account dependency_cross_account
+--   arête d'équipe QA->QB, org_id forgé=Org2  ACCEPTÉ, Org1  ACCEPTÉ, Org1
+--   cycle d'équipe QB->QA                     cycle (phrase) dependency_cycle
+--   projets différents QA->QC                 single project dependency_cross_project
+--   tâche d'équipe inexistante QA->?          Both tasks…    dependency_task_missing
+--   tâche d'équipe HORS PÉRIMÈTRE QA->QX      Both tasks…    dependency_task_missing
+--
+-- Les deux dernières lignes SONT la convergence de la mig. 109 : même texte
+-- pour « inexistante » et « hors périmètre », avant comme après. Idem pour les
+-- deux lignes personnelles : hors RLS la branche `cross_account` s'exerce,
+-- sous RLS la tâche d'autrui est invisible et converge sur `task_missing`.
+--
+-- Après application, mesuré : 4 triggers toujours attachés, privilèges
+-- inchangés (`{postgres=X,service_role=X}`, ni `anon` ni `authenticated`),
+-- 0 ligne écrite dans les deux tables de dépendances.
 -- ═══════════════════════════════════════════════════════════════════
 
 -- ─── Dépendances PERSONNELLES (mig. 132) ────────────────────────────

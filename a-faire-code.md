@@ -673,7 +673,48 @@ commente pourquoi l'identifiant doit revenir.
 
 ### C-48 · Un refus de dépendance de tâche dit deux choses différentes, aucune lisible · **P2 · S**
 
-> ✅ corrigé le 2026-09-04 (mig. **137**, NON APPLIQUÉE) · quatre identifiants catalogués, chemin ÉQUIPE compris. Table de transition pour que le correctif marche avant l'application, à retirer ensuite.
+> ✅ **CLOS le 2026-09-12** · mig. **137 APPLIQUÉE en production**, table de transition **retirée**,
+> les deux formulations vérifiées **dans le navigateur**, en français et en anglais.
+>
+> **Mesuré avant / après**, mêmes 13 scénarios, acteur par acteur, en transaction annulée (prod) :
+> **verdict identique pour chacun, seul le texte change.** Personnel (mig. 132) : arête légitime
+> acceptée avec `user_id` redérivé malgré un identifiant forgé, doublon `23505`, auto-dépendance
+> `This dependency would create a cycle` → `dependency_cycle`, cycle direct et cycle **indirect à
+> trois maillons** idem, tâche inexistante `Both tasks must exist` → `dependency_task_missing`,
+> arête inter-comptes sous RLS idem (la tâche d'autrui est invisible, elle converge), la même hors
+> RLS `A dependency must stay within a single account` → `dependency_cross_account`. Équipe
+> (mig. 108/109) : arête légitime acceptée avec `org_id` redérivé, cycle, projets différents
+> `…single project` → `dependency_cross_project`, tâche inexistante ET tâche **hors périmètre**
+> rendant le MÊME texte — la convergence de la mig. 109 est intacte, avant comme après.
+> Après application : 4 triggers toujours attachés, privilèges inchangés (ni `anon` ni
+> `authenticated`), 0 ligne écrite.
+>
+> 🔴 **Ce que la remesure a corrigé dans l'énoncé.** L'item annonçait une contrainte
+> `task_dependencies_no_self` pour l'auto-dépendance : **c'est le trigger de cycle qui la refuse**,
+> pas la contrainte (`P0001 dependency_cycle`, pas `23514`). Le repository local disait déjà la
+> même chose ; c'est la description qui avait tort.
+>
+> 🔴 **Le toast de refus n'est atteignable qu'en course, et c'est ce qui a rendu la vérification
+> navigateur difficile** : `TaskDependencyPicker` DÉSACTIVE tout candidat qui créerait une boucle.
+> Le forcer par le DOM ne sert à rien — React lit `props.disabled`, pas l'attribut, donc le
+> `onClick` ne part jamais. La course a donc été jouée pour de vrai, **à deux onglets** : picker
+> ouvert dans l'un (graphe chargé), arête inverse créée dans l'autre, puis validation. Résultat
+> lu à l'écran, en démo :
+> **fr** « Cette dépendance créerait une boucle : la tâche bloquante dépend déjà de la tâche
+> bloquée. » · **en** « This dependency would create a loop: the blocking task already depends on
+> the blocked one. » Aucune phrase anglaise brute, aucun gabarit générique.
+>
+> ❌ La table de transition est retirée, et une garde l'empêche de revenir :
+> `src/modules/tasks/dependency-errors.guard.test.ts` (16 cas) refuse toute chaîne-PHRASE dans
+> `dependency-errors.ts` et tout `RAISE EXCEPTION '<phrase>'` dans une migration ≥ 137 qui touche
+> les quatre fonctions. **Vue ROUGE sur les deux sabotages** (table réintroduite, `RAISE` redevenu
+> une phrase) avant d'être committée, et elle a d'ailleurs commencé par échouer sur un `RAISE`
+> cité en COMMENTAIRE dans l'en-tête de la 137 — une garde qui lit les commentaires juge la
+> documentation, pas le code.
+>
+> ⚠️ **Trouvé au passage, hors périmètre** : en anglais, les menus d'action de la liste de tâches
+> portent `aria-label="Actions pour <tâche>"`. Un mot français dans un libellé anglais, invisible
+> à l'œil, invisible à `i18n:scan`.
 
 Le trigger de la mig. 132 refuse un cycle par `RAISE EXCEPTION 'This dependency would create a
 cycle'`, et `LocalStorageTasksRepository.addDependency` lève la **même phrase anglaise en dur**,
@@ -1935,7 +1976,53 @@ motif, appliqué à une seule des trois tables de preuve.
 
 ### C-31 · `report-bug` est un relais d'e-mail ouvert, sans aucune limite de débit · **P2 · M**
 
-> ✅ code écrit le 2026-09-04 (mig. **139**, NON APPLIQUÉE) · 3/heure/compte et 10/jour/IP, fenêtre glissante, décision atomique. **Aucune IP en base** (hachage salé). ⚠️ Reste à poser le secret `RATE_LIMIT_SALT` — sans lui la fonction REFUSE.
+> 🟠 **mig. `139` APPLIQUÉE en prod le 2026-09-12**, vérifiée acteur par acteur dans une transaction annulée. · 3/heure/compte et 10/jour/IP, fenêtre glissante, décision atomique. **Aucune IP en base** (hachage salé). 🔴 **Le plafond ne s'applique toujours nulle part** : `report-bug` reste en **v8, déployée le 2026-08-29**, et le secret `RATE_LIMIT_SALT` (M-34) n'est pas posé. Les deux gestes restent, **dans cet ordre**.
+
+#### Ce que la passe du 2026-09-12 a mesuré
+
+**La borne, vue ROUGE avant d'être verte.** En prod, transaction annulée, plafond de 3 :
+
+| Appel | Variante `>=` (fausse) | Variante `>` (le dépôt) |
+|---|---|---|
+| 1 · 2 · 3 | accepté (hits 1, 2, 3) | accepté (hits 1, 2, 3) |
+| **4** | **accepté** (hits gelé à 3) | **refusé** (hits 4) |
+| **5** | **accepté** (hits gelé à 3) | **refusé** (hits 4, ne monte plus) |
+
+Les cinq appels passent avec `>=` : le plafond ne refuse **jamais**. C'est bien le quatrième qui
+distingue, et « trois appels passent » est vrai des deux versions. Le reste de la séquence est vert
+sur la fonction réelle : fenêtre expirée → le compteur repart à 1 ; une autre clé ne gêne pas la
+première ; clé vide, clé `NULL` et plafond `0` rendent FALSE. `rate_limits` est restée à **0 ligne**.
+
+🔴 **Un second défaut, trouvé avant d'appliquer, et celui-là n'était écrit nulle part.** La migration
+disait « ❌ PAS de GRANT à `authenticated` » et s'arrêtait là. Mesuré en prod : le schéma `public`
+porte un privilège par défaut (`pg_default_acl`) qui accorde `EXECUTE` à `anon`, `authenticated`
+**et** `service_role` **nommément à la création**. L'ACL d'une fonction neuve vaut
+`{=X/postgres,postgres=X,anon=X,authenticated=X,service_role=X}`, et retirer `PUBLIC` puis `anon` y
+laisse `authenticated=X`. **Ne pas accorder n'est pas retirer.** Telle qu'écrite, la migration aurait
+livré en production le déni de service ciblé que son propre commentaire décrit — n'importe quel
+compte connecté épuisant le compteur d'un autre en devinant sa clé — et sa propre checklist
+(« `authenticated` ne peut PAS appeler la fonction ») serait sortie **rouge**. Corrigé par un
+`REVOKE ... FROM authenticated`, plus un `GRANT` **explicite** à `service_role` : le privilège par
+défaut suffirait aujourd'hui, mais un échec de la RPC n'est **pas** bloquant côté Deno
+(`consumeRateLimits` laisse passer et alerte), donc un droit perdu rendrait le plafond inopérant
+**en silence**. Vérifié après application : `EXECUTE` anon=faux, authenticated=faux,
+service_role=vrai ; table à zéro policy, RLS active, fermée à `anon` comme à `authenticated`.
+
+**La purge n'existait que dans un commentaire.** La migration annonçait `purge_stale_rate_limits`
+« appelée par la Edge Function, une fois sur cent, sans bloquer la réponse ». Aucune ligne ne
+l'appelait. L'appel est posé, et il est **attendu** : une promesse laissée flottante dans une Edge
+Function n'a aucune garantie de survivre au retour de la réponse, et une purge qu'on croit posée et
+qui ne tourne pas est pire que pas de purge.
+
+**Mesure « avant » sur la fonction EN LIGNE** (2026-09-12, v8) : 12 `POST` d'affilée à
+`/functions/v1/report-bug` avec la seule clé anon et un corps invalide — donc **aucun e-mail
+expédié** — rendent **12 × `400`**. Aucun refus, à aucun rang : le relais est ouvert, exactement ce
+que décrit cet item. C'est la mesure à rejouer après déploiement, où le 11ᵉ doit rendre `429` — le
+plafond étant appliqué **avant** le parsing du corps, la même sonde suffit.
+
+Garde de régression : `scripts/migration-guards.test.mjs` § « plafond de debit, mig. 139 », 6 cas
+dont un **témoin** qui refuse une sonde ne détectant plus la variante `>=`. Vue rouge sur les deux
+invariants (borne et `REVOKE authenticated`) avant d'être committée.
 
 Trouvé par l'audit **A-1**. La fonction est en `verify_jwt: true`, mais **la clé anon suffit** (elle
 est dans le bundle client, donc publique) et c'est volontaire : on veut pouvoir signaler un bug
@@ -1956,7 +2043,7 @@ domaine qui porte les e-mails d'authentification et les avis L215-1.
 
 ### C-32 · `report-bug` : l'allowlist de types de pièce jointe est décorative · **P3 · S**
 
-> ✅ corrigé le 2026-09-04 · l'extension du fichier joint est DÉRIVÉE du type validé, jamais reprise du nom envoyé.
+> 🟠 **écrit** le 2026-09-04, **pas en production** · l'extension du fichier joint est DÉRIVÉE du type validé, jamais reprise du nom envoyé. 🔴 La version en ligne reste **`report-bug` v8, déployée le 2026-08-29** (mesuré le 2026-09-12) : un `facture.html` déclaré `image/png` arrive **toujours** en pièce jointe HTML dans la boîte de contact. Part avec le déploiement de C-31.
 
 `ALLOWED_ATTACHMENT_TYPES` valide `attachment.type`… puis **ne le transmet jamais**. Resend ne reçoit
 que `filename` et `content`, et type la pièce jointe d'après le **nom de fichier**, qui n'est borné
@@ -1971,7 +2058,7 @@ qu'en longueur.
 
 ### C-33 · `report-bug` : une panne d'authentification anonymise l'auteur en silence · **P3 · XS**
 
-> ✅ corrigé le 2026-09-04 · l'erreur de `getUser()` est lue, et « auteur non résolu » se distingue de « anonyme ».
+> 🟠 **écrit** le 2026-09-04, **pas en production** · l'erreur de `getUser()` est lue, et « auteur non résolu » se distingue de « anonyme ». 🔴 La version en ligne reste **v8, déployée le 2026-08-29** (mesuré le 2026-09-12). Part avec le déploiement de C-31.
 
 `const { data } = await anon.auth.getUser()` — l'erreur n'est pas lue. Sur panne de l'API auth, un
 utilisateur **connecté** est traité comme anonyme : le rapport part sans son adresse et sans
@@ -4115,14 +4202,18 @@ et sa date** décrit un commit, pas la production.
 > l'absence du hook. C'est le « cimetière de motifs » contre lequel le commentaire de la garde met
 > lui-même en garde, en plus petit.
 
-#### 🟠 Commencé (11)
+#### 🟠 Commencé (9)
 
-`C-23` `C-24` `C-27` `C-28` `C-30` `C-31` `C-38` `C-39` `C-48` `C-65`
+`C-23` `C-24` `C-27` `C-28` `C-30` `C-31` `C-38` `C-39` `C-65`
+
+> ✅ **`C-48` est sorti de cette liste le 2026-09-12** : la mig. `137` est appliquée, la table de
+> transition retirée, et les deux formulations lues dans le navigateur en `fr` et en `en`.
+> `C-30` en était déjà sorti le même jour.
 
 Ils se lisent en **deux familles**, et les confondre fait perdre le seul renseignement utile :
 
 - **critère non atteint, il reste du travail** : `C-23` `C-24` `C-27` `C-38` ;
-- **écrits, testés, mais PAS en production** : `C-28` `C-30` `C-31` `C-39` `C-48` `C-65`. Ce sont
+- **écrits, testés, mais PAS en production** : `C-28` `C-30` `C-31` `C-39` `C-65`. Ce sont
   les gestes du § 11.1 qui les débloquent, pas du travail supplémentaire.
 
 > 🔴 **`C-38` n'est PAS fini, contrairement au décompte d'entrée de cette passe.** Mesuré ici, en
@@ -4163,9 +4254,9 @@ Ils se lisent en **deux familles**, et les confondre fait perdre le seul renseig
 | **C-38** `i18n:scan` | deux angles morts sur trois refermés | le troisième, ci-dessus, et les trois chaînes qu'il cache |
 | **C-28** canal d'alerte d'ops | `ci-alert.yml` écrit et branché | le secret `OPS_ALERT_WEBHOOK_URL` dans les secrets **Actions** (§ 11.1c) |
 | ~~**C-30** preuves qui survivent~~ | ✅ **CLOS le 2026-09-12**, mig. `138` appliquée et vérifiée en dix cas | — |
-| **C-31** plafond de débit | `consumeRateLimits` écrit | la mig. **139**, le secret `RATE_LIMIT_SALT`, et le redéploiement de `report-bug` |
+| **C-31** plafond de débit | `consumeRateLimits` écrit | ~~la mig. **139**~~ (appliquée le 2026-09-12), le secret `RATE_LIMIT_SALT`, et le redéploiement de `report-bug`. **Deux gestes sur trois restent**, dans cet ordre |
 | **C-39** suppression d'organisation | `useDeleteOrgFlow` rembourse avant de supprimer, propriétaire seul, vérifié par mutation. ✅ **mig. `138` appliquée le 2026-09-12** | le déploiement de `stripe-org-refund` (§ 11.1b) — seul reste |
-| **C-48** identifiants de refus de dépendance | code écrit | la mig. **137** |
+| ~~**C-48** identifiants de refus de dépendance~~ | ✅ **CLOS le 2026-09-12**, mig. `137` appliquée, 13 scénarios rejoués avant/après en transaction annulée, table de transition retirée, les deux langues lues dans le navigateur | — |
 | **C-65** remboursement | fonction, calcul du montant (12 cas exécutés), bouton, garantie écrite aux CGU. ✅ **La branche `charge.refunded` du webhook, elle, EST déployée** (v27, 2026-09-06 à 19:27 UTC, relue en ligne) | `stripe-org-refund` **n'existe pas en production**, et rien n'a été joué contre Stripe |
 
 #### ⬜ Pas commencé (9)
@@ -4192,23 +4283,27 @@ Ce sont les seuls endroits où du travail livré ne produit **rien** en producti
 > du 2026-09-04 étaient périmées et ont été corrigées** : la mig. `141` est appliquée, et
 > `stripe-webhook` porte désormais sa branche de remboursement.
 
-**a. Appliquer les migrations `137`, ~~`138`~~, `139`**  ✅ la `138` l'est depuis le 2026-09-12
+**a. Appliquer les migrations ~~`137`~~, ~~`138`~~, ~~`139`~~**  ✅ les trois le sont depuis le 2026-09-12
 
 ⚠️ **Recompté en base le 2026-09-12 : le ledger porte 134 entrées, pas 142.** Le chiffre du
 2026-09-08 était faux et n'a jamais été remesuré ; celui-ci l'est. Sa dernière entrée est désormais
 `138_evidence_survives_org_deletion` (2026-09-12), après `144` et `143` (2026-09-09) puis
 `141_drop_premium_tokens` (2026-09-06), elle-même passée **après** la `142` (2026-09-05) : le ledger
 ne se lit décidément pas comme une suite croissante. Restent hors base la `136` (travail d'une autre
-session), la `137`, la `139` et la `140`.
+session) et la `140` — les `137` et `139` sont appliquées depuis le 2026-09-12, la `137` en dernière
+position du ledger.
 
 | Migration | Ce qui attend derrière | Conséquence tant qu'elle n'est pas appliquée |
 |---|---|---|
-| **137** identifiants de refus de dépendance | C-48 | `dependency-errors.ts` traduit encore via sa **table de transition** sur les phrases anglaises |
+| ~~**137** identifiants de refus de dépendance~~ | C-48 ✅ | ✅ **APPLIQUÉE le 2026-09-12.** La table de transition est retirée dans la foulée, avec la garde qui l'empêche de revenir. ⚠️ L'auto-dépendance est refusée par le **trigger de cycle**, pas par la contrainte `no_self` que l'item nommait — mesuré, pas déduit |
 | ~~**138** preuves qui survivent + propriétaire seul~~ | C-30 ✅, C-39 🟠 | ✅ **APPLIQUÉE le 2026-09-12.** ⚠️ Ce que la ligne annonçait était faux à moitié : la cascade détruisait `renewal_notices`, mais sur `withdrawal_consents` elle **bloquait la suppression** (`23001`) au lieu de détruire la preuve — mesuré au témoin, détail en note de C-30 |
-| **139** plafond de débit | C-31 | `consume_rate_limit` n'existe pas, donc le plafond ne s'applique nulle part |
+| ~~**139** plafond de débit~~ | C-31 🟠 | ✅ **APPLIQUÉE le 2026-09-12**, vérifiée acteur par acteur en transaction annulée. ⚠️ Appliquer ne suffit pas : le plafond ne s'applique **toujours** nulle part tant que `RATE_LIMIT_SALT` (M-34) n'est pas posé **et** `report-bug` pas redéployée. 🔴 Un défaut de plus, trouvé avant application : `REVOKE ... FROM PUBLIC` ne retire **pas** `authenticated`, que le privilège par défaut du schéma accorde nommément (détail en C-31) |
 
 ⚠️ **Ordre imposé** : la `139` avant le déploiement de `report-bug`, sinon la fonction appelle une
-RPC absente. La `138` avant tout usage de la suppression d'organisation.
+RPC absente. ✅ Ce premier maillon est posé depuis le 2026-09-12 ; restent **M-34 puis le
+déploiement**, dans cet ordre — déployer avant le sel couperait le formulaire de signalement de bug
+(`503 rate_limit_not_configured`), ce qui est délibéré : pas de sel, pas de service. La `138`
+avant tout usage de la suppression d'organisation.
 
 🔴 La **`140`** ne rejoint PAS cette liste, et ce n'est pas un oubli : elle se joue **dans** la
 fenêtre de bascule Stripe live, jamais avant. Tant que la clé est une clé de test, chaque checkout
@@ -4225,7 +4320,7 @@ Sept fonctions sont actives. **`stripe-org-refund` n'en fait toujours pas partie
 
 | Fonction | Version déployée | Ce que la prod exécute donc |
 |---|---|---|
-| `report-bug` | v8, **2026-08-29** | sans plafond de débit, sans allowlist réelle de pièces jointes, et elle **anonymise l'auteur** en cas de panne d'authentification (C-31 → C-33, C-36) |
+| `report-bug` | v8, **2026-08-29** — remesuré par API le **2026-09-12** | sans plafond de débit, sans allowlist réelle de pièces jointes, et elle **anonymise l'auteur** en cas de panne d'authentification (C-31 → C-33, C-36). ⚠️ La mig. `139` est en base depuis le 2026-09-12, mais **rien n'a changé en production** : la RPC existe et personne ne l'appelle. Mesuré le même jour, 12 appels d'affilée à corps invalide rendent 12 × `400`, aucun refus |
 | `stripe-org-refund` | **absente** | le remboursement du mois en cours n'existe pas, alors que les CGU le promettent depuis le 2026-09-04 (C-65) |
 
 ✅ **Ce qui est rentré en production depuis la version du 2026-09-04 de ce tableau**, relu dans le
