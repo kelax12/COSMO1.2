@@ -1898,7 +1898,21 @@ organisations de la prod ont d'autres membres que leur propriétaire.
 
 ### C-30 · Supprimer un compte propriétaire détruit les preuves L215-1 et L221-28 de son organisation · **P1 · M**
 
-> ✅ code écrit le 2026-09-04 (mig. **138**, NON APPLIQUÉE) · les deux tables passent en `ON DELETE SET NULL`. ⚠️ `renewal_notices` avait pour PK `(org_id, period_end)` : clé de substitution + contrainte UNIQUE, c'est elle que vise l'`ON CONFLICT` de la Edge Function. ⚠️ Le trigger d'immuabilité de `withdrawal_consents` refusait TOUTE mutation, donc aussi le `SET NULL` : il autorise désormais le seul détachement `org_id → NULL`.
+> ✅ **CLOS le 2026-09-12 — la mig. `138` est APPLIQUÉE en prod**, ledger relu en base avant et après (une seule entrée, pas de doublon). Les deux tables sont en `ON DELETE SET NULL` sur `org_id`, vérifié sur `pg_constraint` : `renewal_notices` porte une clé de substitution `id` et le couple `(org_id, period_end)` redescendu en **contrainte UNIQUE** — c'est elle que vise l'`ON CONFLICT` de la Edge Function, et le `23505` continue bien d'arriver (cas V1). Le trigger d'immuabilité de `withdrawal_consents` autorise désormais le seul détachement `org_id → NULL`, toutes autres colonnes inchangées.
+>
+> 🔴 **L'ÉNONCÉ ÉTAIT FAUX SUR SA MOITIÉ `withdrawal_consents`**, et le témoin du 2026-09-12 le montre. Avant la `138`, en transaction annulée :
+>
+> | Témoin (avant) | Mesure |
+> |---|---|
+> | org supprimée, 1 `renewal_notice` | **0 ligne restante** — la preuve L215-1 était bien détruite ✅ énoncé exact |
+> | org supprimée, 1 `withdrawal_consent` | **suppression BLOQUÉE `23001`**, l'org et la preuve restaient — la preuve n'était PAS détruite |
+> | admin non propriétaire → `delete_organization` | **ACCEPTÉ**, org supprimée (C-39, énoncé exact) |
+>
+> Le trigger append-only refusait aussi le DELETE en cascade : la preuve était protégée **par accident**, au prix d'un défaut plus lourd que celui décrit — dès la **première** ligne de consentement, plus aucune organisation n'aurait été supprimable, ni par l'écran ni par `delete-account` (RGPD art. 17, même famille que la régression B9 de la `143`). La `138` referme les deux à la fois. Exposition mesurée le 2026-09-12 : **0 ligne** dans les deux tables, 0 `org_subscriptions`.
+>
+> ✅ **Vérifié acteur par acteur, dix cas, transaction annulée par un `RAISE` final** (prod inchangée après : 4 organisations, 0/0/0) : V1 même `(org_id, period_end)` → `23505` ; V2 `UPDATE tier_key` → refusé `23001` ; V3 `UPDATE org_id` vers une AUTRE org → refusé `23001` (la falsification reste fermée) ; V4 `DELETE` direct → refusé `23001` ; V5 membre simple, V6 admin non propriétaire → `not_org_owner` ; V7 anonyme → `not_authenticated` ; V8 propriétaire + abonnement `active` → `org_has_active_subscription` ; V9 propriétaire + abonnement résilié → accepté, **org partie, les DEUX preuves restent avec `org_id` à NULL** ; V10 leur contenu probant est intact (destinataire, terme, `sent_at` / `user_id`, palier, intervalle, les deux booléens, `consented_at`).
+>
+> ⚠️ **Une branche morte, laissée telle quelle** : la garde de la RPC teste `status IN ('active','trialing','past_due')` alors que `org_subscriptions_status_check` n'admet que `active | past_due | cancelled`. `'trialing'` ne peut donc jamais exister en base. Sans effet, mais à savoir avant de croire que le cas est couvert.
 
 Trouvé par l'audit **A-1**, mesuré sur `pg_constraint` le 2026-09-03. `renewal_notices` (avis de
 reconduction, Conso. art. L215-1) et `withdrawal_consents` (renonciation au droit de rétractation,
@@ -1969,9 +1983,34 @@ C-29, conséquence bien plus faible.
 
 ### C-39 · N'importe quel ADMIN peut supprimer l'entreprise depuis l'écran, et la cascade emporte tout · **P1 · M**
 
-> 🟠 code écrit le 2026-09-04 (mig. **138**, NON APPLIQUÉE) · la RPC exige le
-> PROPRIÉTAIRE ✅, l'écran monte la zone rouge sur `isOwner` ✅, le dialogue dit ce
-> qu'il advient de l'abonnement et des preuves ✅.
+> 🟠 **TOUJOURS À MOITIÉ au 2026-09-12 — la moitié SQL est livrée, la moitié Stripe non.**
+> La mig. **138 est APPLIQUÉE en prod le 2026-09-12** : `delete_organization` exige
+> désormais le PROPRIÉTAIRE et refuse tant qu'un abonnement court, vérifié acteur par
+> acteur (V5 à V9, détail en note de C-30). L'écran monte la zone rouge sur `isOwner` ✅
+> (`OrganizationPage.tsx:494`), le dialogue dit ce qu'il advient de l'abonnement et des
+> preuves ✅.
+>
+> 🔴 **CE QUI MANQUE, ET POURQUOI C-39 NE SE COCHE PAS AVEC C-30** : `stripe-org-refund`
+> **n'existe toujours pas en production** (§ 11.1b, prompt C-65). Le parcours nominal
+> — rembourser, puis supprimer — appelle une fonction absente : aujourd'hui la
+> suppression échoue à la première étape au lieu de laisser un débit orphelin. C'est le
+> bon sens de l'échec, ce n'est pas l'item fini. C-39 se clôt au déploiement de
+> `stripe-org-refund`, pas avant.
+>
+> ✅ **L'ordre du flux est vérifié PAR MUTATION le 2026-09-12**, pas par relecture.
+> `src/refund.guard.test.ts` (13 cas, verts). Deux mutations posées sur
+> `useDeleteOrgFlow.ts`, chacune **vue rougir** puis défaite :
+> inverser en `remove.mutate` → `refund.mutate` fait échouer « rembourse AVANT de
+> supprimer » (`expected 551 to be less than 502`) ; remplacer `onSuccess:` par
+> `onSettled:` fait échouer l'assertion qui exige que la suppression n'ait lieu QUE si
+> le remboursement a réussi. La garde mesure donc bien les deux propriétés.
+>
+> ⚠️ **L'ordre réel n'est pas « résilier → rembourser »**, contrairement à ce que
+> l'arbitrage du § 0 laisse lire : côté serveur `stripe-org-refund` fait
+> `refunds.create` **puis** `subscriptions.cancel`, décidé et gardé (« rembourser puis
+> échouer à résilier laisse la personne avec son argent et un accès de trop ; l'inverse
+> lui prend les deux »). L'enchaînement mesuré est donc : **rembourser → résilier**
+> (un seul appel) **→ supprimer**.
 >
 > ✅ **La moitié « rembourse » est livrée le 2026-09-04** (C-65). L'écran appelle
 > `stripe-org-refund` et n'enchaîne sur `delete_organization` QUE si le remboursement
@@ -4123,9 +4162,9 @@ Ils se lisent en **deux familles**, et les confondre fait perdre le seul renseig
 | **C-27** parcours de septembre sans E2E | quelques parcours couverts | les parcours livrés en septembre, **C-65** compris, n'ont toujours aucun test E2E |
 | **C-38** `i18n:scan` | deux angles morts sur trois refermés | le troisième, ci-dessus, et les trois chaînes qu'il cache |
 | **C-28** canal d'alerte d'ops | `ci-alert.yml` écrit et branché | le secret `OPS_ALERT_WEBHOOK_URL` dans les secrets **Actions** (§ 11.1c) |
-| **C-30** preuves qui survivent | code écrit | la mig. **138** (§ 11.1a) |
+| ~~**C-30** preuves qui survivent~~ | ✅ **CLOS le 2026-09-12**, mig. `138` appliquée et vérifiée en dix cas | — |
 | **C-31** plafond de débit | `consumeRateLimits` écrit | la mig. **139**, le secret `RATE_LIMIT_SALT`, et le redéploiement de `report-bug` |
-| **C-39** suppression d'organisation | `useDeleteOrgFlow` rembourse avant de supprimer, propriétaire seul, vérifié par mutation | la mig. **138** et le déploiement de `stripe-org-refund` |
+| **C-39** suppression d'organisation | `useDeleteOrgFlow` rembourse avant de supprimer, propriétaire seul, vérifié par mutation. ✅ **mig. `138` appliquée le 2026-09-12** | le déploiement de `stripe-org-refund` (§ 11.1b) — seul reste |
 | **C-48** identifiants de refus de dépendance | code écrit | la mig. **137** |
 | **C-65** remboursement | fonction, calcul du montant (12 cas exécutés), bouton, garantie écrite aux CGU. ✅ **La branche `charge.refunded` du webhook, elle, EST déployée** (v27, 2026-09-06 à 19:27 UTC, relue en ligne) | `stripe-org-refund` **n'existe pas en production**, et rien n'a été joué contre Stripe |
 
@@ -4153,16 +4192,19 @@ Ce sont les seuls endroits où du travail livré ne produit **rien** en producti
 > du 2026-09-04 étaient périmées et ont été corrigées** : la mig. `141` est appliquée, et
 > `stripe-webhook` porte désormais sa branche de remboursement.
 
-**a. Appliquer les migrations `137`, `138`, `139`**
+**a. Appliquer les migrations `137`, ~~`138`~~, `139`**  ✅ la `138` l'est depuis le 2026-09-12
 
-Le ledger porte **142 entrées** et sa dernière est `141_drop_premium_tokens` (2026-09-06), passée
-**après** la `142` (2026-09-05) : il ne se lit toujours pas comme une suite croissante. Restent hors
-base la `136` (travail d'une autre session), les trois ci-dessous, et la `140`.
+⚠️ **Recompté en base le 2026-09-12 : le ledger porte 134 entrées, pas 142.** Le chiffre du
+2026-09-08 était faux et n'a jamais été remesuré ; celui-ci l'est. Sa dernière entrée est désormais
+`138_evidence_survives_org_deletion` (2026-09-12), après `144` et `143` (2026-09-09) puis
+`141_drop_premium_tokens` (2026-09-06), elle-même passée **après** la `142` (2026-09-05) : le ledger
+ne se lit décidément pas comme une suite croissante. Restent hors base la `136` (travail d'une autre
+session), la `137`, la `139` et la `140`.
 
 | Migration | Ce qui attend derrière | Conséquence tant qu'elle n'est pas appliquée |
 |---|---|---|
 | **137** identifiants de refus de dépendance | C-48 | `dependency-errors.ts` traduit encore via sa **table de transition** sur les phrases anglaises |
-| **138** preuves qui survivent + propriétaire seul | C-30, C-39 | supprimer une organisation **détruit** ses preuves L215-1 et sa renonciation au droit de rétractation |
+| ~~**138** preuves qui survivent + propriétaire seul~~ | C-30 ✅, C-39 🟠 | ✅ **APPLIQUÉE le 2026-09-12.** ⚠️ Ce que la ligne annonçait était faux à moitié : la cascade détruisait `renewal_notices`, mais sur `withdrawal_consents` elle **bloquait la suppression** (`23001`) au lieu de détruire la preuve — mesuré au témoin, détail en note de C-30 |
 | **139** plafond de débit | C-31 | `consume_rate_limit` n'existe pas, donc le plafond ne s'applique nulle part |
 
 ⚠️ **Ordre imposé** : la `139` avant le déploiement de `report-bug`, sinon la fonction appelle une
