@@ -1230,7 +1230,7 @@ la prochaine mutation qu'on écrira, et l'erreur ne se verra pas.
 
 ## 3. Performance
 
-### C-12 · T-51 · ~~la landing est la seule page lente du site~~ · **P2 · M** · ✅ critère TENU le 2026-09-12, trois runs consécutifs
+### C-12 · T-51 · ~~la landing est la seule page lente du site~~ · **P2 · M** · ✅ critère TENU le 2026-09-12, quatre runs consécutifs
 
 > 🟠 **Remesuré le 2026-09-12 en lisant les runs du job `lighthouse`, et le critère est PRESQUE
 > tenu.** L'item exige « `/` au-dessus de 90 en CI, sur deux passes ». Ce que rendent les trois
@@ -1260,8 +1260,10 @@ la prochaine mutation qu'on écrira, et l'erreur ne se verra pas.
 > | 2026-09-11 22:06 | `test(C-27/C-65)` | **91** | **95** | 147 ms · 49 ms |
 > | 2026-09-12 18:06 | `269a5ea2` | **94** | **95** | 69 ms · 57 ms |
 > | 2026-09-12 18:21 | `77b123b0` | **91** | **95** | 152 ms · 56 ms |
+> | 2026-09-12 21:5x | `7d4c8db7` | **96** | **93** | 32 ms · 139 ms |
 >
-> **Trois runs consécutifs, six passes, toutes au-dessus de 90.** La passe à 64 du 2026-09-11 11:56
+> **Quatre runs consécutifs, huit passes, toutes au-dessus de 90.** Le quatrième a été lu après
+> coup, sans rien changer entre-temps : c'est une confirmation, pas une mesure de sortie choisie. La passe à 64 du 2026-09-11 11:56
 > (TBT 759 ms) ne s'est pas reproduite depuis. Le TBT le plus haut de ces six passes est de
 > **152 ms**, contre 759 ; les cinq autres sont entre 49 et 69 ms.
 >
