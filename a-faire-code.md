@@ -1785,6 +1785,54 @@ dans [`docs/MIGRATION-REACT19.md`](./docs/MIGRATION-REACT19.md).
 - **Fini quand** : fini — c'est un constat, pas un correctif de code. Le moment de la migration
   (désormais un arbitrage produit, plus une urgence) est dans `a-faire-manuel.md` M-33.
 
+> #### 🔴 La MIGRATION a été jouée le 2026-09-12, et elle BUTE sur le budget de bundle
+>
+> ⚠️ **Deux textes disaient deux choses**, et c'est à corriger en premier : cet item se déclare
+> « fini — c'est un constat », alors que l'arbitrage du § 0 et le prompt de
+> `prompts-a-faire-code.md` traitaient `C-58` comme **le chantier de migration**. Le travail
+> ci-dessous est celui du chantier ; le constat, lui, reste vrai et clos.
+>
+> Branche **`feat/react-19`**, React 18.3.1 → **19.3.0**. Tout est vert **sauf une chose**, et
+> c'est elle qui décide :
+>
+> | Gate | Verdict |
+> |---|---|
+> | `tsc -b` | propre, **après 9 corrections de types** (voir plus bas) |
+> | `npm run lint` | **0 erreur** |
+> | `npm test` | **226 fichiers / 2 500 tests**, zéro échec |
+> | `i18n:check` · `i18n:scan` · `i18n:identical` · `validate:migrations` · `check:rls` · `check:legal` | vertes |
+> | `npm run build` | réussit |
+> | `npx playwright test --project=chromium` | **104 passés, 3 ignorés, 0 échec** (23,8 min). Le seul rouge est `e2e/_tmp-probe.spec.ts`, la sonde jetable NON SUIVIE par git que `CLAUDE.md` documente |
+> | **`npm run check:bundle`** | ❌ **exit 1** — chemin critique **329,8 ko** contre un plafond de **323,0** |
+>
+> **Ce qui coûte** : `vendor-react` passe de **72,1 à 95,4 ko gzip**, soit **+23,3 ko (+32 %)**. Le
+> chunk a été ouvert pour écarter un artefact — pas de `react-dom/server`, pas de `renderToString`,
+> pas de `__DEV__`, pas de build de développement. **Le surcoût est réel.**
+>
+> 🔴 **Et il ne peut pas se régler en remontant le plafond.** Celui-ci a été ABAISSÉ à 323,0 ko le
+> 2026-09-11 pour satisfaire le critère de sortie de **C-14** (5 % de marge sur les deux budgets,
+> obtenue à 5,2 %). React 19 la consomme entièrement et déborde de 6,8 ko. Le remonter rouvrirait
+> C-14 le jour même, et la règle 1 de ce fichier l'interdit.
+>
+> Le seul candidat pour trouver ces 7 ko est `vendor-animation` (49,0 ko), tiré dans le chemin
+> critique par **un seul import statique** : `MotionConfig` dans `App.tsx`. ❌ **Le différer
+> naïvement est exclu** : c'est un fournisseur de CONTEXTE, les premiers écrans rendraient sans
+> `prefers-reduced-motion` — la classe de régression qui a déjà coûté deux fois à ce dépôt.
+>
+> **Trois issues, aucune technique** : (1) différer, l'option par défaut puisque l'urgence sécurité
+> est tombée ; (2) sortir framer-motion du chemin critique pour de vrai, chantier à part avec sa
+> mesure au navigateur sous `reduce` ; (3) accepter de rouvrir C-14 — décision d'Axel.
+>
+> **Ce que la migration a rendu au passage, et qui vaut indépendamment** : l'étude
+> `docs/MIGRATION-REACT19.md` annonçait « un seul site » à corriger (`useRef<T>()` sans argument,
+> déjà fait par C-60). En réalité, sous les types React 19, `useRef<T>(null)` rend
+> `RefObject<T | null>` : **8 erreurs de compilation, 9 déclarations de props à élargir**, dans 5
+> fichiers. Le correctif est juste et mécanique — mais un `grep` sur un MOTIF ne mesure pas une
+> CLASSE de rupture. Le § 4bis du document porte le détail et les chiffres.
+>
+> ⚠️ `react-router` 8 (PR 2) n'a **pas** été tenté : il exige React ≥ 19.2.7 en peer, donc il est
+> séquentiel derrière une PR 1 qui ne peut pas être posée.
+
 ### C-59 · ~~`Input` (`src/components/ui/input.tsx`) n'était pas un `forwardRef`~~ · **P2 · S** · ✅ corrigé le 2026-09-03, trouvé par l'audit A-6
 
 Même classe de bug que `Button` avant lui (C-18 historique) : composant recopié depuis shadcn
