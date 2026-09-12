@@ -11,7 +11,11 @@
     "step3Desc": "Ouvrez la liste des tâches à planifier. Glissez-en une sur un créneau pour l'ajouter à l'agenda.",
     "step4Desc": "Saisissez une tâche, glissez-la sur un créneau. Elle s'ajoute à votre agenda en un geste.",
     "step5Desc": "Attrapez le bas de l'événement et glissez vers le bas pour l'allonger.",
-    "step6Desc": "Sélectionnez un créneau horaire pour y créer un événement"
+    "step6Desc": "Sélectionnez un créneau horaire pour y créer un événement",
+    "ghostWork": "Travail",
+    "ghostCoffee": "Pause café",
+    "ghostTask": "Tâche",
+    "ghostDemoTask": "Tâche démo"
   },
   "agendaMobile": {
     "step1Title": "Votre agenda",

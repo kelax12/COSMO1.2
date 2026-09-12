@@ -300,6 +300,7 @@
   },
   "modal": {
     "createError": "Erreur lors de la création. Veuillez réessayer.",
+    "saveError": "Erreur lors de la sauvegarde. Veuillez réessayer.",
     "deleteError": "Erreur lors de la suppression. Veuillez réessayer.",
     "deleted": "Tâche supprimée",
     "created": "Tâche « {{name}} » créée",

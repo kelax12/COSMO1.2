@@ -14,6 +14,20 @@ import {
 } from './page-tutorial-helpers';
 import TutorialArrow from './TutorialArrow';
 import TutorialCard from './TutorialCard';
+import { translator } from '@/i18n/useT';
+import type { KeyOf } from '@/i18n/catalog';
+
+/**
+ * Libellé du fantôme de drag : la clé portée par l'étape, sinon celle par
+ * défaut. Les quatre appels affichaient une chaîne FRANÇAISE en dur
+ * (« Tâche », « Tâche démo »), invisible à `i18n:scan` jusqu'au motif (9).
+ *
+ * `translator` et non `useT` : ce helper est appelé DANS un effet dont les
+ * dépendances pilotent l'animation — y faire entrer un `t` le ferait
+ * rejouer, et la locale est de toute façon figée au montage (basename).
+ */
+const ghostLabelOf = (step: TutorialStep, fallbackKey: KeyOf<'tutorials'>): string =>
+  translator('tutorials').t(step.ghostLabelKey ?? fallbackKey);
 
 interface PageTutorialProps {
   /** Liste ordonnée des étapes */
@@ -138,7 +152,7 @@ const PageTutorial: React.FC<PageTutorialProps> = ({ steps, isOpen, onClose, acc
     if (anim === 'drag-place') {
       const fromRect = rectOf(step.target);
       if (!fromRect || !placeRect) return;
-      const label = step.ghostLabel || 'Tâche';
+      const label = ghostLabelOf(step, 'agendaDesktop.ghostTask');
       // Apparition discrète sur la tâche source (sidebar)
       setGhost({
         x: fromRect.left + 4,
@@ -162,7 +176,7 @@ const PageTutorial: React.FC<PageTutorialProps> = ({ steps, isOpen, onClose, acc
       );
     } else if (anim === 'resize-grow') {
       if (!placeRect) return;
-      const label = step.ghostLabel || 'Tâche';
+      const label = ghostLabelOf(step, 'agendaDesktop.ghostTask');
       // Force l'état "posé" (au cas où on arrive par back-navigation)
       setGhost({
         x: placeRect.left + 1,
@@ -176,7 +190,7 @@ const PageTutorial: React.FC<PageTutorialProps> = ({ steps, isOpen, onClose, acc
       queue(700, () => setGhost(g => g && { ...g, h: 168 }));
     } else if (anim === 'select-create') {
       if (!placeRect) return;
-      const label = step.ghostLabel || 'Tâche';
+      const label = ghostLabelOf(step, 'agendaDesktop.ghostTask');
       // 1. État initial : événement précédent (depuis step 5)
       setGhost({
         x: placeRect.left + 1,
@@ -437,7 +451,7 @@ const PageTutorial: React.FC<PageTutorialProps> = ({ steps, isOpen, onClose, acc
           const toX = dragGhost.to.left + FC_TIME_AXIS +
             (dragGhost.to.width - FC_TIME_AXIS) / 2 - GHOST_W / 2;
           const toY = dragGhost.to.top + 80; // un peu sous le haut du calendrier (pas au centre vertical)
-          const label = step.ghostLabel || 'Tâche démo';
+          const label = ghostLabelOf(step, 'agendaDesktop.ghostDemoTask');
 
           // 4 phases : 0% appear at from, 30% arrived at to, 65% resized down, 100% fade
           // Pour drag-ghost simple : 3 phases (no resize)

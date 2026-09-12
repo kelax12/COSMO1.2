@@ -286,6 +286,7 @@
   },
   "modal": {
     "createError": "Something went wrong creating it. Please try again.",
+    "saveError": "Something went wrong saving it. Please try again.",
     "deleteError": "Something went wrong deleting it. Please try again.",
     "deleted": "Task deleted",
     "created": "Task “{{name}}” created",

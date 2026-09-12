@@ -517,7 +517,7 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
         },
         onError: (err) => {
           console.error('Error deleting task:', err);
-          setErrors({ general: 'Erreur lors de la suppression. Veuillez réessayer.' });
+          setErrors({ general: translator('tasks').t('modal.deleteError') });
           setShowDeleteConfirm(false);
         }
       });

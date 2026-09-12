@@ -1,4 +1,5 @@
 import { toast } from 'sonner';
+import { translator } from '@/i18n/useT';
 import { deadlineFromDayKey } from '@/lib/deadline';
 import type {
   useCreateTask,
@@ -155,7 +156,7 @@ export async function runTaskSave(deps: TaskSaveDeps) {
       onCreated(newTask);
     } catch (err) {
       console.error('Error creating task:', err);
-      setErrors({ general: 'Erreur lors de la création. Veuillez réessayer.' });
+      setErrors({ general: translator('tasks').t('modal.createError') });
     }
   } else if (task) {
     const taskData: UpdateTaskInput = {
@@ -235,7 +236,7 @@ export async function runTaskSave(deps: TaskSaveDeps) {
         },
         onError: (err) => {
           console.error('Error saving task:', err);
-          setErrors({ general: 'Erreur lors de la sauvegarde. Veuillez réessayer.' });
+          setErrors({ general: translator('tasks').t('modal.saveError') });
         }
       }
     );

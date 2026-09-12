@@ -136,6 +136,27 @@ const DEMO_OKRS_EN: Record<string, { title: string; description: string; keyResu
   },
 };
 
+/**
+ * Titres anglais du seed de démo, pour un couple (OKR, KR).
+ *
+ * Exporté pour `kr-completions`, dont le journal de démo DUPLIQUE ces titres
+ * (`krTitle` / `okrTitle` y sont dénormalisés, comme en base). Les y réécrire à
+ * la main aurait donné deux traductions du même libellé, donc deux occasions de
+ * diverger — c'est la règle « une seule grille » du § facturation, appliquée
+ * ici aux seeds.
+ *
+ * Rend `null` quand le couple n'est pas dans l'overlay : l'appelant garde alors
+ * le français, même repli silencieux que `localizeSeed`.
+ */
+export function demoOkrTitlesEn(
+  okrId: string,
+  krId: string
+): { okrTitle: string; krTitle: string } | null {
+  const patch = DEMO_OKRS_EN[okrId];
+  const krTitle = patch?.keyResults[krId];
+  return patch && krTitle ? { okrTitle: patch.title, krTitle } : null;
+}
+
 /** Applique DEMO_OKRS_EN sur le seed français quand la locale est anglaise. */
 function localizeOkrs(okrs: OKR[]): OKR[] {
   if (!isEnglishSeed()) return okrs;
