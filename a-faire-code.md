@@ -9,6 +9,59 @@ compte** et **ce qui prouve que c'est fini**.
 > (`localStorage` hors `try` dans les dépôts de démo), **C-47** (échecs de tests faux sous charge).
 > **C-22** est clos ; **C-38** est à moitié fait et dit désormais ce qui a été fermé et ce qui reste.
 
+> ### 🔴 Passe du 2026-09-12 — remesure de bout en bout, et **la CI est rouge sur `main`**
+>
+> **74 items** (`C-72` → `C-74` ajoutés par cette passe). **52 clos, 11 commencés, 11 ouverts.**
+> Tout ce qui suit a été **mesuré ce jour-là** — ledger de migrations et versions d'Edge Functions
+> lus par l'API Supabase, runs GitHub Actions lus par `gh`, `npm audit` et les `grep` joués ici.
+> Rien n'a été recopié d'un tableau plus ancien.
+>
+> 🔴 **Ce que personne n'avait vu : la suite E2E échoue sur `main` depuis le 2026-09-10 au moins.**
+> Trois causes distinctes, deux d'entre elles présentes dans **tous** les runs examinés :
+>
+> | Test | Depuis | Cause observée | Item |
+> |---|---|---|---|
+> | `touch-targets.spec.ts` — **8 routes** | 09-10 et 09-11 | deux commandes de `DemoConversionBanner` sous 44 px, donc sur toutes les pages protégées en démo | **C-73** 🆕 |
+> | `a11y-keyboard-audit.spec.ts` — `ShareListSheet` | 09-10 et 09-11 | le clic sur « Partager la liste » n'aboutit jamais, 180 s de timeout | **C-74** 🆕 |
+> | `demo-calendar.spec.ts` — surface 3 | 09-11 au soir | le calendrier de report en masse **désactive AUJOURD'HUI** : une tâche en retard ne peut plus être reportée au jour même | **C-72** 🆕 |
+>
+> ⚠️ **`C-57` était déclaré clos, et sa propre garde est rouge.** Ce n'est pas une contradiction du
+> décompte, c'est ce que le décompte ne peut pas dire : un item se ferme sur un critère, une garde
+> mesure en continu. Les deux commandes fautives sont dans un bandeau **partagé**, hors du périmètre
+> que C-57 avait traité — d'où un item neuf plutôt qu'une réouverture.
+>
+> ✅ **Ce que la remesure a rendu de meilleur que l'attendu :**
+>
+> | Item | Ce que le fichier disait | Ce que la mesure rend |
+> |---|---|---|
+> | **C-12** landing lente | ⬜ pas commencé, « `/` à 56-63 » | **91 et 95** sur les deux passes du run du 09-11 22:06, et 92/94 le 09-10. Le critère est ATTEINT deux runs sur trois — le troisième rend **64** en première passe. Passe en 🟠, il ne manque que la stabilité |
+> | **C-06** `exhaustive-deps` | 36 occurrences, 28 fichiers | **31 occurrences, 25 fichiers**. Le titre de l'item était périmé |
+> | **C-18** CVE dev-only | `fast-uri` + `qs` sous `shadcn` | **encore un autre lot** : 7 avis (2 high, 5 moderate), `vitest` / `@vitest/mocker` / `hono` / `js-yaml` / `qs` / `fast-uri`. `npm audit --omit=dev` rend **0**. L'item avait prévu ce renouvellement, il faut juste ne plus le lire seul |
+>
+> 🔴 **Un QUATRIÈME secret manque, et il rend une garde inerte depuis sa mise en service.**
+> `SUPABASE_ACCESS_TOKEN` n'est pas dans les secrets **Actions** : le job `Edge deploy drift`
+> échoue **tous les jours** sur `SUPABASE_ACCESS_TOKEN absent`, donc **rien n'a jamais comparé** le
+> code déployé au dépôt en CI. La garde de C-35 fait exactement ce qu'on lui demande (échouer fort
+> plutôt qu'avertir), et personne ne lit son échec — c'est le défaut de C-28, appliqué à C-35.
+>
+> ✅ **Rien n'a bougé côté production depuis le 2026-09-08**, vérifié et non supposé : 7 Edge
+> Functions actives (`stripe-org-refund` **toujours absente**), `report-bug` toujours en **v8 du
+> 2026-08-29**, et les migrations `136` à `140` toujours hors base. Les six items « écrits mais pas
+> en production » n'ont donc pas avancé d'un pouce.
+>
+> ⚠️ **Le ledger de prod porte deux migrations que `main` n'a pas** : `143_categories_tree` et
+> `144_categories_tree_depth_ambiguity`, appliquées le 2026-09-09. Elles vivent sur
+> `feature/sous-categories` (travail d'une autre session). Ce n'est pas une dérive au sens de
+> l'encadré `CLAUDE.md`, mais **`main` ne décrit plus la base qu'il prétend reconstruire** tant que
+> cette branche n'est pas fusionnée.
+>
+> ⚠️ **`§ 11.2` annonçait « deux audits » : il n'en reste qu'UN**, `A-4` (mobile sur appareil réel).
+>
+> 📄 **Un prompt par item non clos** — 22 blocs prêts à coller, dans l'ordre où ils devraient être
+> traités, avec un préambule commun portant les règles de méthode :
+> [`prompts-a-faire-code.md`](./prompts-a-faire-code.md). Il ne remplace pas les items : il dit
+> **où c'est** et **ce qui prouve que c'est fini**, les arbitrages restant au § 0.
+
 > ### 🟢 Passe du 2026-09-04 — état au soir, poussé sur `main`
 >
 > **70 items. 35 clos, 4 à moitié, 31 ouverts.** Chaque item concerné porte une
@@ -17,8 +70,8 @@ compte** et **ce qui prouve que c'est fini**.
 >
 > | État | Nombre | Ce que ça veut dire |
 > |---|---|---|
-> | ✅ clos | 34 | 9 l'étaient avant cette passe, 25 le sont depuis |
-> | 🟠 à moitié | 4 | C-14 et C-23 (avancés, critère non atteint) · C-39 et C-65 (le code est écrit, il n'est pas déployé) |
+> | ✅ clos | 35 | 9 l'étaient avant cette passe, 25 le sont depuis, **C-14 le 2026-09-11** |
+> | 🟠 à moitié | 3 | C-23 (avancé, critère non atteint) · C-39 et C-65 (le code est écrit, il n'est pas déployé) |
 > | ⬜ ouvert | 32 | rien n'a été engagé |
 >
 > 🔴 **CE QUI COMPTE PLUS QUE LE DÉCOMPTE : cinq énoncés se sont révélés faux à
@@ -145,17 +198,17 @@ quand ». Une décision écrite ici fait foi contre une piste écrite dans l'ite
 | § | Domaine | Items |
 |---|---|---|
 | [0](#0-arbitrages-tranchés-le-2026-09-03) | 🟢 **Arbitrages tranchés** | 27 décisions du 2026-09-03 |
-| [1](#1-défauts-fonctionnels-connus) | Défauts fonctionnels connus | C-01 → C-08, C-37, C-40 → C-43, C-48, C-56, C-65, C-66, C-71 |
+| [1](#1-défauts-fonctionnels-connus) | Défauts fonctionnels connus | C-01 → C-08, C-37, C-40 → C-43, C-48, C-56, C-65, C-66, C-71, **C-72** |
 | [2](#2-dette-structurelle) | Dette structurelle | C-09 → C-11, C-49, C-50 |
 | [3](#3-performance) | Performance | C-12 → C-14, C-67, C-68 |
 | [4](#4-scalabilité) | Scalabilité | C-15 → C-16 |
 | [5](#5-sécurité-et-dépendances) | Sécurité et dépendances | C-17 → C-19, C-29 → C-33, C-39, C-44 → C-46, C-58 → C-64 |
 | [6](#6-i18n) | i18n | C-20 → C-22, C-38 |
-| [7](#7-accessibilité) | Accessibilité | C-23 → C-25, C-51 → C-55, C-57, C-69, C-70 |
+| [7](#7-accessibilité) | Accessibilité | C-23 → C-25, C-51 → C-55, C-57, C-69, C-70, **C-73**, **C-74** |
 | [8](#8-tests-et-gardes) | Tests et gardes | C-26 → C-28, C-34 → C-36, C-47 |
 | [9](#9-ce-qui-nest-PAS-du-code) | Ce qui n'est PAS du code | renvois |
 | [10](#10-couverture--ce-que-cette-liste-ne-peut-pas-contenir) | 🔴 Couverture et audits à lancer | 2 audits restants |
-| [11](#11-ce-qui-reste-ouvert) | 🔴 **Ce qui reste ouvert** | 3 gestes, 4 à moitié, 27 entiers |
+| [11](#11-ce-qui-reste-ouvert) | 🔴 **Ce qui reste ouvert** | 4 gestes (dont 4 secrets), 12 commencés, 11 entiers |
 
 ---
 
@@ -329,7 +382,13 @@ Identifié le 2026-08-27, explicitement laissé « non engagé ». Le rechargeme
 - **Fini quand** : le compte vient du serveur (RPC de comptage, ou champ agrégé), l'écran affiche le
   même nombre qu'avant, et la trace `edge_logs` d'une vraie session le prouve.
 
-### C-06 · 36 `eslint-disable react-hooks/exhaustive-deps`, dans 28 fichiers · **P2 · L**
+### C-06 · 31 `eslint-disable react-hooks/exhaustive-deps`, dans 25 fichiers · **P2 · L**
+
+> ⚠️ **Recompté le 2026-09-12** : **31** occurrences dans **25** fichiers, et non 36 dans 28.
+> Le titre portait le chiffre du 2026-09-03 sans qu'aucune passe ne l'ait refait. Cinq ont donc
+> disparu en passant, ce qui est la bonne direction — mais un chiffre qu'on ne remesure pas finit
+> par décrire un autre dépôt. Commande de mesure :
+> `grep -rn "exhaustive-deps" src --include=*.ts --include=*.tsx`.
 
 Compté à `HEAD`. Chacun est une dépendance retirée à la main, donc une **fermeture potentiellement
 périmée** : c'est la famille de bug qui produit un écran qui ne se rafraîchit pas, en silence, et le
@@ -784,6 +843,43 @@ rendent leurs jumeaux `create` et `delete`, jamais eux-mêmes.
 
 ---
 
+### C-72 · Le report en masse d'une tâche en retard REFUSE aujourd'hui · **P1 · S** · 🆕 trouvé le 2026-09-12
+
+Trouvé non pas en relisant le code, mais en lisant **le run CI du 2026-09-11 à 22:06**, où
+`e2e/demo-calendar.spec.ts:94` (« surface 3 — le report en masse des tâches en retard borne à
+aujourd'hui ») est rouge trois fois de suite, retries compris.
+
+Ce que le test observe, mot pour mot :
+
+```
+Locator:  locator('td[data-day="2026-09-11"]').first()
+Expected: not "true"      (attribut data-disabled)
+Received: "true"
+<td role="gridcell" data-disabled="true" data-day="2026-09-11" class="… rdp-disabled">
+```
+
+La borne existe pour empêcher de reporter **vers hier** (`CLAUDE.md`, § Saisie de date). Elle
+déborde d'un jour : elle interdit aussi **le jour même**. Conséquence produit, pas seulement de
+test : quelqu'un qui rattrape ses tâches en retard le matin ne peut pas les remettre à aujourd'hui,
+seulement à demain — c'est-à-dire l'inverse du geste que l'écran propose.
+
+- **Où** : `src/components/ui/date-picker.tsx:41` (`floor = new Date(minDate + "T00:00:00")`) et
+  `:89` (`disabled={floor ? { before: floor } : undefined}`), appelé par
+  `src/components/task-table/OverdueBanner.tsx:83` (`minDate` = date **machine**) et
+  `src/components/task-table/OverdueQuickActions.tsx:83` (`minDate` = `todayKeyInTz(tzPref)`,
+  donc le fuseau CHOISI). Les deux sources ne sont pas la même journée pour tout le monde.
+- ⚠️ **Ne pas conclure de la lecture seule.** `{ before: floor }` de `react-day-picker` 9.14 est
+  censé être exclusif du jour-pivot : le test dit qu'il ne l'est pas ici. Les deux hypothèses à
+  départager sont l'heure portée par `floor` et la divergence machine / préférence de fuseau.
+  Le raccourci « Aujourd'hui » de la rangée de presets est filtré par la **même** borne
+  (`p.value >= minDate`, `date-picker.tsx:42`) et survit, lui : c'est déjà une asymétrie.
+- **Fini quand** : le cas de test rendu vert **sans être modifié**, plus un test unitaire sur
+  `DateCalendarPanel` qui vérifie les deux bords (aujourd'hui actif, hier désactivé), et une passe
+  avec une préférence de fuseau **manuelle** différente de celle de la machine — c'est le seul
+  moyen de savoir laquelle des deux sources de `minDate` est la bonne.
+
+---
+
 ## 2. Dette structurelle
 
 ### C-09 · 12 fichiers au-dessus de 600 lignes, budget 9 190 · **P2 · XL**
@@ -1005,7 +1101,28 @@ la prochaine mutation qu'on écrira, et l'erreur ne se verra pas.
 
 ## 3. Performance
 
-### C-12 · T-51 · la landing est la seule page lente du site · **P2 · M**
+### C-12 · T-51 · la landing est la seule page lente du site · **P2 · M** · 🟠 critère atteint deux runs sur trois
+
+> 🟠 **Remesuré le 2026-09-12 en lisant les runs du job `lighthouse`, et le critère est PRESQUE
+> tenu.** L'item exige « `/` au-dessus de 90 en CI, sur deux passes ». Ce que rendent les trois
+> derniers runs de `main` :
+>
+> | Run | Passe 1 | Passe 2 | TBT |
+> |---|---|---|---|
+> | 2026-09-11 22:06 | **91** | **95** | 147 ms · 49 ms |
+> | 2026-09-11 11:56 | **64** | 95 | **759 ms** · 54 ms |
+> | 2026-09-10 21:53 | **92** | **94** | 135 ms · 44 ms |
+>
+> Toutes les autres pages du même build sont à 96-97. **Le travail de fond a bien été fait**
+> (C-67) : la page n'est plus lente *en moyenne*, elle est **bimodale**, exactement le régime que
+> C-68 décrit pour l'autre parcours — une passe s'effondre, les autres sont bonnes.
+>
+> ❌ **Ne pas clore sur le run le plus favorable.** C'est le geste que ce fichier interdit ailleurs
+> (« un échantillon rapporté comme un total »). Le critère demande deux passes ; il faut qu'elles
+> soient deux passes **reproductibles**, pas deux passes choisies.
+>
+> **Fini quand** : trois runs CI consécutifs rendent les DEUX passes au-dessus de 90 sur `/`. Si la
+> passe à 64 se reproduit, elle a une cause, et c'est elle l'item — pas le score.
 
 Mesuré en CI le 2026-09-02 (deux passes) : `/` à **56-63** de performance, TBT **546 à 1 633 ms**,
 contre 96-98 sur toutes les autres pages du même build.
@@ -1047,7 +1164,48 @@ question est donc rouverte, et **maintenant mesurable**.
 
 - **Fini quand** : une décision écrite, appuyée sur une mesure prise avec `VITE_SENTRY_DSN` posée.
 
-### C-14 · Le budget d'entrée est DÉPASSÉ, de 0,1 ko · **P1 · M**
+### C-14 · ~~Le budget d'entrée est DÉPASSÉ, de 0,1 ko~~ · **P1 · M** · ✅ fermé le 2026-09-11
+
+> ✅ **Critère atteint, sur les DEUX budgets, et pour la bonne raison.** Remesuré le 2026-09-11
+> sur un build avec `VITE_SENTRY_DSN` (`sentry-client` 49,3 ko, la garde valide) :
+>
+> | | Avant (remesure) | Après | Plafond | Marge |
+> |---|---|---|---|---|
+> | Chunk d'entrée | 76 954 o | **66 896 o** | 78 000 → **71 000** | 1,34 % → **5,78 %** |
+> | Chemin critique | 316 407 o | **306 347 o** | 370 000 → **323 000** | 14,48 % → **5,16 %** |
+>
+> 🔴 **La mesure du 2026-09-04 (74 903 o, 3,97 %) était PÉRIMÉE.** Elle n'avait pas été refaite
+> depuis, et l'entrée avait repris **2 051 o** entre temps. Il ne manquait donc pas 803 o mais
+> **2 854 o** : le levier annoncé (scinder la section `auth`, ~760 o extrapolés) ne couvrait pas
+> le quart du besoin. Aucun plafond n'a été relevé ; les deux ont été ABAISSÉS.
+>
+> **Le levier retenu n'est pas celui qui était prévu** : `sonner` (10,1 ko gzip) est sorti du
+> chemin critique. Le `<Toaster>` d'`App.tsx` et 58 modules l'importaient statiquement, alors
+> qu'aucun de leurs appels ne peut partir avant que la personne agisse (`onSuccess` / `onError`
+> de mutation, gestionnaires d'évènement). Tout passe par `src/lib/toast.ts`, qui porte le seul
+> `import('sonner')` du dépôt ; le `<Toaster>` est monté en `lazy()` derrière son propre
+> `<Suspense fallback={null}>`.
+>
+> ⚠️ **Le premier état « vert » était un FAUX gain, et la garde du dépôt le dit elle-même.**
+> Sortir `sonner` par un `manualChunks` faisait tomber l'entrée à 66 899 o — donc 14 % de marge,
+> donc un budget vert — pendant que le chemin critique ne bougeait que de **162 octets**, Vite
+> émettant un `<link rel="modulepreload">` sur le chunk nommé. « Sortir un module de l'entrée
+> sans le sortir du chemin critique ne gagne rien » : c'est écrit dans
+> `scripts/check-bundle-budget.mjs`, et c'est exactement ce qui s'est produit. Le gain réel a
+> exigé **zéro import statique de `sonner` dans tout `src/`**, pages lazy comprises — parce que
+> Rollup place un module partagé dans l'ancêtre commun de ses chunks, c'est-à-dire l'entrée.
+>
+> 🔴 **Les deux plafonds sont posés à ~5 % au-dessus du mesuré, pas à ~1,5 % comme les
+> précédents.** Un cliquet à 1,5 % rouvrirait cet item le jour même : le critère de sortie et la
+> convention de cliquet du dépôt sont en tension, et c'est la première fois qu'elle se voit.
+> Trancher autrement (cliquet serré + critère reformulé en octets) est un choix d'Axel.
+>
+> **Ce qui reste sur la table, non pris** : les dépôts LOCAUX et Supabase de quinze modules sont
+> tirés statiquement par `src/lib/repository.factory.ts`, soit **269 ko bruts** dans l'entrée,
+> dont ~72 ko de seeds de démonstration jamais exécutés en production. C'est le plus gros poste
+> restant, et il demande la séparation interface / implémentation locale que six modules n'ont
+> pas — un chantier, pas un geste. Cliquet en place : `src/lib/toast.guard.test.ts` (4 tests,
+> dont un témoin, vu rouge sur un import fautif avant d'être committé).
 
 > 🟠 **Pas clos, mais nettement amélioré.** Le budget d'entrée a **3,97 % de marge au 2026-09-04** (0,25 % le matin), et
 > le chemin critique 15,1 %. Le critère de sortie en demande 5 % sur les DEUX :
@@ -1316,6 +1474,24 @@ n'est donc plus une urgence sécurité. Détail complet, chronologie et preuve :
 et [`docs/MIGRATION-REACT19.md`](./docs/MIGRATION-REACT19.md).
 
 ### C-18 · CVE dev-only · **P3 · S**
+
+> ⚠️ **Remesuré le 2026-09-12, et c'est ENCORE un autre lot** — ce que l'item annonçait lui-même.
+> `npm audit` rend **7 avis : 2 high, 5 moderate**, sur six paquets, et `shadcn` n'en est plus la
+> racine unique :
+>
+> | Paquet | Sévérité | Nature |
+> |---|---|---|
+> | `js-yaml` | **high** | CPU non borné sur les clés de fusion vides |
+> | `fast-uri` | **high** | SSRF et confusions d'hôte (4 avis) |
+> | `vitest` · `@vitest/mocker` · `@vitest/coverage-v8` | moderate | lecture de fichier arbitraire via le mock de redirection |
+> | `hono` | moderate | `toSSG()` écrit hors du répertoire, `parseBody()` non borné |
+> | `qs` | moderate | contournement d'`array-limit`, déni de service |
+>
+> ✅ **Rien n'atteint le navigateur, vérifié et non déduit** : `npm audit --omit=dev` rend
+> **`found 0 vulnerabilities`** (exit 0). La sévérité `high` ne change donc pas la priorité.
+> ⚠️ Quatre PR Dependabot attendent (`vitest` 4.1.11, `hono` 4.13.7, `fast-uri` 3.1.7,
+> `date-fns` 4.4.0) : la montée de `vitest` est la seule qui touche les seuils de couverture, donc
+> la seule qui demande de rejouer `test:coverage` derrière.
 
 **Remesuré le 2026-09-03**, après que GitHub a annoncé « 4 vulnerabilities (4 high) » au push. Les
 paquets ne sont plus ceux de l'énoncé d'origine, et **la conclusion pratique s'inverse**.
@@ -2299,6 +2475,11 @@ faut donc pas croire vérifiées :
 
 ### C-57 · Cibles tactiles sous 44 px : 16 × 16 px pour cocher une tâche sur l'accueil · **P2 · M**
 
+> 🔴 **Clos, et sa garde est ROUGE depuis le 2026-09-10** — les deux sont vrais. Ce que C-57 a
+> traité (cases à cocher de `/dashboard` et `/entreprise`, boutons d'`/okr`) tient ; ce qui échoue
+> est un bandeau **partagé** qui n'était dans aucun de ses relevés. Voir **C-73**, et ne pas
+> rouvrir celui-ci : deux items sur la même garde, c'est deux endroits où l'état diverge.
+
 > ✅ **Refermé le 2026-09-04** · **18 commandes sous la cible → 0**, sur les
 > **huit** routes protégées, par la primitive `TouchTarget` que l'arbitrage nomme.
 >
@@ -2431,6 +2612,62 @@ des consommateurs.
   cliquable-compatible), une commande de pause existe pour les autres, et un test couvre les deux
   préférences. ❌ Ne pas se contenter de ralentir : la conformité demande un **contrôle**, pas une
   cadence plus douce.
+
+---
+
+### C-73 · Deux commandes du bandeau de démo sous 44 px, sur TOUTES les pages protégées · **P1 · S** · 🆕 trouvé le 2026-09-12
+
+`e2e/touch-targets.spec.ts:175` est rouge sur **huit routes** (`/dashboard`, `/entreprise`, `/okr`,
+`/tasks`, `/habits`, `/settings`, `/agenda`, `/statistics`), dans les deux runs CI examinés
+(2026-09-10 et 2026-09-11), retries compris. **La CI de `main` est donc rouge en continu**, et c'est
+la garde de C-57 qui le dit.
+
+Un seul coupable, dans un composant **partagé** — d'où huit routes pour un défaut :
+
+| Mesuré | Commande | Fichier |
+|---|---|---|
+| **93 × 11 px** | « Créez un compte » | `src/components/DemoConversionBanner.tsx:50` et `:63` |
+| **14 × 14 px** | « Masquer la bannière démo » | `src/components/DemoConversionBanner.tsx:77` |
+
+- 🔴 **C-57 est déclaré clos, et il l'est** : il portait les cases à cocher de `/dashboard` et
+  `/entreprise` et les boutons d'`/okr`. Ce bandeau n'était dans aucun de ses relevés. Un item se
+  ferme sur un critère ; une garde, elle, continue de mesurer. **Ne pas rouvrir C-57 : le corriger
+  ici.**
+- ⚠️ **La croix porte DÉJÀ une zone de 44 px, mais seulement sur mobile** :
+  `before:h-11 before:w-11 … md:before:hidden`. À partir de `md`, elle retombe à l'icône plus
+  `p-1.5`. Le choix « la souris n'a pas besoin de 44 px » est défendable, mais alors il se déclare
+  dans la garde avec son motif, il ne se laisse pas échouer tous les jours.
+- ⚠️ **« Créez un compte » est un bouton EN LIGNE dans une phrase.** WCAG 2.5.5 dispense
+  explicitement les commandes en ligne dans un bloc de texte — c'est exactement l'exception que
+  C-57 avait retenue pour l'unique bouton d'`/okr`. Si la dispense vaut ici, **c'est la garde qui
+  doit la connaître**, pas le produit qui doit grossir.
+- **Fini quand** : `npm run test:e2e -- touch-targets` rend zéro sur les huit routes, la dispense
+  éventuelle est **nommée dans le code de la garde avec son motif**, et le job `e2e` de `main`
+  repasse au vert. ❌ Ne jamais retirer une route du balayage pour y arriver.
+
+### C-74 · `ShareListSheet` : le clavier n'atteint jamais la feuille de partage · **P2 · S** · 🆕 trouvé le 2026-09-12
+
+`e2e/a11y-keyboard-audit.spec.ts:396` échoue sur un **timeout de 180 s** dans les deux runs CI
+examinés. Le clic sur « Partager la liste » ne se résout jamais :
+
+```
+Error: locator.click: Test timeout of 180000ms exceeded.
+  - locator resolved to <button data-a11y-trigger="1" aria-label="Partager la liste" …>
+  - attempting click action → element is not stable (×2), puis visible/enabled/stable,
+    scrolled into view, et le clic n'aboutit pas
+```
+
+- ⚠️ **Ce n'est pas la même chose qu'un défaut d'accessibilité mesuré.** Le harnais avait déjà
+  relevé la feuille comme correcte (`{"focusMovedIn":true,"trapped":true,"escClosed":true}`) plus
+  tôt dans le même run : le test qui échoue est celui qui **rouvre** la surface. Deux lectures
+  possibles, et il faut trancher laquelle : un élément qui se remet à bouger (animation de la barre
+  de listes) ou un recouvrement par une surface restée ouverte.
+- 🔴 **Un test qui met 3 minutes à échouer coûte 3 minutes à chaque run**, et il masque le verdict
+  des autres. C'est la deuxième raison de le traiter, indépendamment du fond.
+- **Fini quand** : la cause est nommée (mouvement ou recouvrement), corrigée dans le **produit** si
+  c'en est un, et le cas rend son relevé `[a11y-kbd] ShareListSheet` comme les neuf autres surfaces
+  mesurées. ❌ Ne pas le passer en `skip` : la mesure clavier de cette surface disparaîtrait sans
+  que rien ne le dise, exactement le défaut du § « Une garde se vérifie sur ce qu'elle REGARDE ».
 
 ---
 
@@ -2659,7 +2896,30 @@ aura un. C'est exactement la définition d'une garde qui répond sans mesurer.
 - **Fini quand** : secret absent = `exit 1`, comme pour toute autre garde, et le workflow porte un
   témoin. La pose du secret elle-même est un geste d'Axel : `a-faire-manuel.md`.
 
-### C-35 · Rien ne compare le code déployé des Edge Functions à celui du dépôt · **P1 · M**
+### C-35 · Rien ne compare le code déployé des Edge Functions à celui du dépôt · **P1 · M** · 🔴 la garde est INERTE en CI
+
+> 🔴 **Mesuré le 2026-09-12 : le job `Edge deploy drift` échoue TOUS LES JOURS depuis sa mise en
+> service, et il n'a donc jamais comparé quoi que ce soit.** Le message est exactement celui que la
+> garde doit produire :
+>
+> ```
+> ##[error]SUPABASE_ACCESS_TOKEN absent : le code deploye des Edge Functions N A PAS ete
+> compare au depot. Ce n est pas un avertissement, c est l echec de la garde.
+> ```
+>
+> ✅ **La garde fait son travail** : elle échoue fort plutôt que d'avertir en vert, ce que ce
+> fichier exige partout ailleurs. ❌ **Le dispositif, lui, ne marche pas** : le secret
+> `SUPABASE_ACCESS_TOKEN` n'est pas posé dans les secrets **Actions**, et son échec quotidien n'est
+> lu par personne — c'est le défaut de **C-28** (« une alerte que personne ne lit est une archive »)
+> appliqué à C-35 lui-même.
+>
+> ⚠️ Conséquence directe, et elle vaut pour tout ce fichier : **aucun « ✅ déployé » de cette liste
+> n'est vérifié en continu.** Les versions citées au § 11.1b viennent de lectures manuelles par
+> l'API, refaites le 2026-09-12. Entre deux lectures manuelles, personne ne sait.
+>
+> **Fini quand** : le secret est posé (§ 11.1c, quatrième ligne), le job rend un run **vert** avec
+> ses sept fonctions comparées, et un échec de comparaison est vu arriver sur
+> `OPS_ALERT_WEBHOOK_URL` — sinon on a remplacé un silence par un autre.
 
 > ✅ **La garde est écrite le 2026-09-04** · `npm run check:edge`
 > (`scripts/check-edge-deploy.mjs`), job `Edge deploy drift` (quotidien +
@@ -3109,12 +3369,66 @@ périmètre, ses questions et ses pièges connus.
 
 ## 11. Ce qui reste ouvert
 
-État au **2026-09-08 au soir**. Chaque item déplacé par cette passe a été rouvert **dans le code**
+> ✅ **Tout ce paragraphe a été re-mesuré le 2026-09-12** — ledger de migrations et les 7 Edge
+> Functions relus par l'API Supabase, runs relus par `gh`. **Côté production, rien n'a bougé depuis
+> le 2026-09-08** : `stripe-org-refund` reste absente, `report-bug` reste en v8 du 2026-08-29, et
+> les migrations `136` à `140` restent hors base. Les tableaux ci-dessous sont donc reconduits
+> **parce qu'ils ont été revérifiés**, pas parce qu'ils ont été recopiés.
+>
+> ⚠️ **Une nouveauté dans le ledger** : `143_categories_tree` et
+> `144_categories_tree_depth_ambiguity` sont **appliquées en prod depuis le 2026-09-09** et
+> n'existent pas sur `main` — elles vivent sur `feature/sous-categories`. À fusionner avant que
+> quiconque relise le ledger en croyant y trouver `main`.
+
+État au **2026-09-08 au soir**, revérifié le 2026-09-12. Chaque item déplacé par cette passe a été rouvert **dans le code**
 avant que sa note ne change : ledger de migrations et versions déployées lus par API, gardes
 exécutées, sondes jouées. Recopier une note depuis un tableau plus ancien est le défaut que ce
 fichier documente lui-même (§ Documentation de `CLAUDE.md`), et il a déjà frappé trois fois ici.
 
-### 11.0 Le décompte, nominatif
+### 11.0bis Recompté le 2026-09-12 — **74 items : 52 clos, 11 commencés, 11 ouverts**
+
+Les trois listes s'égrènent, comme la fois précédente : un total qu'on ne peut pas réciter ne prouve
+rien. Le décompte du 2026-09-08 (§ 11.0, conservé dessous) portait 71 items et reste juste **à sa
+date** ; trois choses l'ont déplacé.
+
+#### ✅ Fini (52)
+
+`C-01` `C-02` `C-04` `C-05` `C-07` `C-08` `C-09` `C-10` `C-11` `C-13` `C-14` `C-15` `C-16` `C-17`
+`C-19` `C-20` `C-21` `C-22` `C-26` `C-27` `C-29` `C-32` `C-33` `C-34` `C-36` `C-37` `C-40` `C-41`
+`C-42` `C-43` `C-44` `C-45` `C-46` `C-47` `C-49` `C-50` `C-51` `C-52` `C-53` `C-54` `C-56` `C-57`
+`C-59` `C-60` `C-61` `C-62` `C-63` `C-64` `C-66` `C-67` `C-68` `C-71`
+
+Trois entrées depuis le 2026-09-08 : **`C-14`** (budget d'entrée, 09-11), **`C-26`** (couverture
+remesurée, 09-11), **`C-27`** (quatre parcours E2E sur quatre, 09-11).
+
+#### 🟠 Commencé (11)
+
+`C-12` `C-23` `C-24` `C-28` `C-30` `C-31` `C-35` `C-38` `C-39` `C-48` `C-65`
+
+Deux mouvements, chacun mesuré :
+
+- **`C-12` monte** de ⬜ à 🟠 : `/` rend 91 et 95 en CI, il ne manque que la reproductibilité.
+- 🔴 **`C-35` REDESCEND** de ✅ à 🟠, et c'est la correction la plus importante de cette passe. Le
+  code de la garde existe et il est bon ; le job qui la fait tourner **échoue tous les jours faute
+  de `SUPABASE_ACCESS_TOKEN`**, donc *rien n'a jamais été comparé*. Une garde écrite n'est pas une
+  garde qui mesure — c'est la règle 3 du § Règles de traitement, appliquée à elle-même.
+
+Les deux familles du 2026-09-08 tiennent toujours : **critère non atteint** (`C-12` `C-23` `C-24`
+`C-38`) et **écrits mais pas en production** (`C-28` `C-30` `C-31` `C-35` `C-39` `C-48` `C-65`).
+
+#### ⬜ Pas commencé (11)
+
+`C-03` `C-06` `C-18` `C-25` `C-55` `C-58` `C-69` `C-70` `C-72` `C-73` `C-74`
+
+- 🔴 **Trois d'entre eux rendent la CI de `main` rouge** : `C-72` `C-73` `C-74`. Ils passent devant
+  tout le reste, non pour leur gravité produit (une seule est P1 sur le fond, `C-72`) mais parce
+  qu'une suite rouge en permanence cesse d'être lue, et que la prochaine vraie régression y sera
+  invisible.
+- Les huit autres sont ceux du 2026-09-08, moins `C-12` : rien n'y a été engagé.
+
+---
+
+### 11.0 Le décompte, nominatif · **état au 2026-09-08, conservé pour la traçabilité**
 
 **71 items, aucun trou, aucun doublon**, vérifié en dépliant `C-01` → `C-71`. Les trois listes
 s'égrènent : un total qu'on ne peut pas réciter ne prouve rien. Le « 14 commencés » de la passe
@@ -3167,11 +3481,11 @@ et sa date** décrit un commit, pas la production.
 
 #### 🟠 Commencé (11)
 
-`C-14` `C-23` `C-24` `C-27` `C-28` `C-30` `C-31` `C-38` `C-39` `C-48` `C-65`
+`C-23` `C-24` `C-27` `C-28` `C-30` `C-31` `C-38` `C-39` `C-48` `C-65`
 
 Ils se lisent en **deux familles**, et les confondre fait perdre le seul renseignement utile :
 
-- **critère non atteint, il reste du travail** : `C-14` `C-23` `C-24` `C-27` `C-38` ;
+- **critère non atteint, il reste du travail** : `C-23` `C-24` `C-27` `C-38` ;
 - **écrits, testés, mais PAS en production** : `C-28` `C-30` `C-31` `C-39` `C-48` `C-65`. Ce sont
   les gestes du § 11.1 qui les débloquent, pas du travail supplémentaire.
 
@@ -3206,7 +3520,7 @@ Ils se lisent en **deux familles**, et les confondre fait perdre le seul renseig
 
 | Item | Ce qui est en place | Ce qui manque |
 |---|---|---|
-| **C-14** budget d'entrée | **74 903 o**, soit 3,97 % de marge ; chemin critique 15,1 %. Aucun plafond n'a bougé | l'item exige **≥ 5 % sur les DEUX** : il manque **803 o**, et le levier suivant est extrapolé à ~760 o, donc probablement insuffisant à lui seul |
+| **C-14** budget d'entrée | ✅ **FERMÉ le 2026-09-11.** Entrée 66 896 o (marge 5,78 %), chemin critique 306 347 o (marge 5,16 %). Les deux plafonds ont été ABAISSÉS, 78 000 → 71 000 et 370 000 → 323 000 | la mesure du 09-04 était périmée : l'entrée avait repris 2 051 o, il manquait **2 854 o** et non 803. Le levier n'a pas été la section `auth` mais `sonner`, sorti du chemin critique (−10,1 ko), et il a fallu **zéro** import statique dans tout `src/` — un `manualChunks` rendait l'entrée verte en ne gagnant que 162 o sur le chemin critique |
 | **C-23** gate axe-core | tout `serious` bloque, sauf `color-contrast`, nommément dispensé avec son item. La landing est à **0 violation** | les 41 nœuds restants sont tous du contraste et relèvent de **C-25**, un arbitrage de marque. La dernière dispense tombe quand C-25 est tranché |
 | **C-24** quatre audits jamais faits | partiellement engagé | le reste des audits, avec leur rapport valeur / effort au § 10 |
 | **C-27** parcours de septembre sans E2E | quelques parcours couverts | les parcours livrés en septembre, **C-65** compris, n'ont toujours aucun test E2E |
@@ -3294,18 +3608,19 @@ absent, et la garde échoue bruyamment plutôt que d'avertir, exactement comme e
 versions ci-dessus viennent donc d'une lecture directe du code déployé par l'API Management,
 fonction par fonction. C'est le geste que C-35 a mécanisé pour la CI, et il reste manuel ici.
 
-**c. Poser trois secrets**
+**c. Poser QUATRE secrets** · *le quatrième ajouté le 2026-09-12*
 
 | Secret | Où | Sans lui |
 |---|---|---|
 | `RATE_LIMIT_SALT` | Supabase | `consumeRateLimits` **REFUSE**, choix délibéré : pas de sel, pas de service, plutôt qu'un hachage devinable (C-31) |
 | `CRON_SECRET` | secrets **Actions** | C-34 |
 | `OPS_ALERT_WEBHOOK_URL` | secrets **Actions** | `ci-alert.yml` reste inerte (C-28) |
+| **`SUPABASE_ACCESS_TOKEN`** 🆕 | secrets **Actions** | le job `Edge deploy drift` **échoue tous les jours** sans jamais comparer : le code déployé des Edge Functions n'est confronté au dépôt par **personne** (C-35). Jeton personnel Supabase, portée lecture du projet |
 
 ❌ **Ne jamais rendre une garde conditionnelle à la présence de son propre secret.** Un secret absent
 se solde par un échec visible, jamais par un silence.
 
-### 11.2 Deux audits restent à lancer
+### 11.2 Un audit reste à lancer · *« deux » était périmé, recompté le 2026-09-12*
 
 Ils sont décrits en **[§ 10](#10-couverture--ce-que-cette-liste-ne-peut-pas-contenir)** avec leur
 rapport valeur / effort. Tant que **A-4** n'est pas passé et ses findings versés ici, la phrase
