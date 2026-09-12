@@ -1,9 +1,31 @@
 # Prompts — un par item ouvert de `a-faire-code.md`
 
 **Écrit le 2026-09-12**, après la passe de remesure du même jour. Un prompt par item **non clos**,
-prêt à coller dans une session neuve. **Mis à jour le 2026-09-12 au soir** : les trois prompts P0
-(`C-72`, `C-73`, `C-74`) sont retirés, corrigés le jour même. **19 items restent**, dans l'ordre où
-ils devraient être traités.
+prêt à coller dans une session neuve.
+
+**Mis à jour le 2026-09-12 au soir.** Les trois prompts P0 (`C-72`, `C-73`, `C-74`) étaient déjà
+retirés. **Sept de plus sont retirés ce soir**, traités dans une passe unique :
+
+| Item | Ce qui a été fait |
+|---|---|
+| `C-38` | 4ᵉ angle mort d'`i18n:scan` refermé — la VALEUR d'une propriété d'objet. 0 → 15 chaînes → 0 |
+| `C-70` | 28 cibles tactiles (et non 22) ramenées à 0, le `console.log` du harnais devient un `expect` |
+| `C-06` | règle ESLint locale qui exige la justification ; 31 → 27 désarmements, tous justifiés |
+| `C-03` | gelé, et écrit aux deux endroits exigés (`CLAUDE.md` + `docs/ARCHITECTURE.md`) |
+| `C-55` | les trois surfaces mesurées : **1 finding réel** (la case de sélection sans nom ni rôle), 2 artefacts de harnais |
+| `C-25` | arbitrage rendu par Axel et appliqué : deux thèmes passent AA, cliquet posé sur les quatre |
+| `C-23` | remesuré — « 41 nœuds » était un tirage (21 / 41 / 55 sur trois passes). Noyau reproductible : 11 nœuds, dont 2 corrigés |
+| `C-12` | critère TENU : trois runs CI consécutifs, six passes, toutes au-dessus de 90 sur `/`. Aucune ligne touchée pour l'obtenir |
+
+Et trois correctifs qui n'étaient dans aucun item, tous trouvés **par la CI** :
+la pastille de catégorie portait un `aria-label` sur un `div` sans rôle (11 nœuds, nom ignoré par
+les lecteurs d'écran), le champ « Objectif » de `/statistics` n'avait aucun nom accessible, et un
+fichier committé importait un module que git ne suit pas — ce dernier a désormais sa garde
+(`scripts/tracked-imports.guard.test.mjs`), parce qu'aucun outil local ne peut le voir.
+
+**11 items restent**, dans l'ordre où ils devraient être traités. Six d'entre eux (tout le § P1)
+n'attendent **pas de code** : ils attendent un geste d'Axel — une migration, un secret, un
+déploiement.
 
 > **Comment s'en servir.** Coller le **préambule** puis **un seul** bloc. Ne jamais en coller deux :
 > chacun porte son critère de sortie, et deux critères dans une session font qu'aucun n'est tenu.
@@ -199,51 +221,44 @@ sur OPS_ALERT_WEBHOOK_URL (C-28). Sinon on a remplace un silence par un autre.
 
 # P2 — critère non atteint, il reste du travail
 
-## C-12 · la landing doit tenir 90 en CI, de façon reproductible
+## C-23 · le dernier verrou de la gate axe-core — un SECOND arbitrage de marque
+
+> ⚠️ **Réécrit le 2026-09-12.** `C-25` est clos (les deux thèmes fautifs sont passés AA), et les
+> chiffres de l'ancien prompt étaient faux : « 41 nœuds en trois familles » était un **tirage**,
+> pas un total.
 
 ```
-Objectif : C-12. Le fond a ete corrige (C-67, C-68) et la mesure le montre : sur les trois
-derniers runs CI de main, `/` rend 91 et 95 (09-11 22:06), 64 puis 95 (09-11 11:56), 92 et 94
-(09-10). Toutes les autres pages du meme build sont a 96-97.
+Objectif : C-23. La gate axe-core bloque deja tout `serious` SAUF color-contrast, nommement
+dispense. Ce qu'il reste a decider tient en NEUF noeuds.
 
-Le critere « deux passes au-dessus de 90 » est donc tenu DEUX RUNS SUR TROIS. La page n'est plus
-lente en moyenne, elle est BIMODALE, exactement le regime decrit pour l'autre parcours en C-68 :
-une file qui sature n'a pas un cout progressif, elle a deux etats.
+Mesure d'entree, faite le 2026-09-12, et elle contredit l'ancien enonce : trois passes
+consecutives de e2e/a11y-audit.spec.ts sur le MEME commit rendent 21, 41 puis 55 noeuds
+color-contrast. Le total n'est pas reproductible — axe photographie la page a un instant, et ces
+routes entrent en fondu. Les paires a 1,14 / 1,15 / 1,22 / 1,66 (un gris sur un gris presque
+identique) sont mesurees EN PLEIN FONDU.
 
-A faire : trouver ce qui produit la passe a 64 (TBT 759 ms contre 49 a 147 ms sur les autres).
-La mesure LOCALE ne vaut rien ici : la charge machine domine, la landing et le guide y rendent le
-meme score. Toute attribution vient du runner. `npm run profile:landing` ne sert qu'a comparer un
-AVANT/APRES sur la MEME page.
+Reproductible dans les TROIS passes, et seulement ca :
+  #2563eb sur #e3ebfa = 4,31  x9   <- ce qui reste
+  #60a5fa sur #ffffff = 2,54  x2   <- corrige le 2026-09-12 (AuthForm, un bleu de theme
+                                      SOMBRE pose sur une surface blanche)
 
-Ne pas clore sur le run le plus favorable : un echantillon rapporte comme un total est
-precisement ce que ce fichier reproche a l'enonce d'origine de C-23.
-
-Fini quand : trois runs CI consecutifs rendent les DEUX passes au-dessus de 90 sur `/`.
-```
-
-## C-23 + C-25 · le dernier verrou de la gate axe-core est un arbitrage de marque
-
-```
-Objectif : C-23 et C-25, qui ne se separent plus. La gate axe-core bloque deja tout `serious`
-SAUF color-contrast, nommement dispense. Les 41 noeuds restants sont TOUS du contraste, en trois
-familles mesurees :
-  - le bleu #2563eb sur son fond teinte #e3ebfa : 4,31:1, neuf routes ;
-  - le blanc sur le DEGRADE du bouton principal : 3,49 a 4,48 selon l'echantillonnage ;
-  - des paires transitoires mesurees en plein fondu (1,02:1) : durcir la-dessus rendrait la CI
-    instable sans rien rendre plus lisible.
-
-C-25 est l'arbitrage : le bleu de marque est a 3,34:1, laisse en attente depuis le 2026-08-24.
-Un arbitrage qui ne se rend pas devient un oubli.
-
-Le bleu porte l'identite visuelle : la nouvelle teinte se CHOISIT A L'OEIL sur la landing avant
-d'etre posee en token (src/index.css, --color-accent / --color-accent-solid, quatre themes).
-Proposer 2 ou 3 teintes conformes, les montrer sur la landing, et laisser Axel trancher.
+Les 9 restants sont l'accent du theme CLAIR sur son propre fond teinte a 10 %. Les corriger
+demande de foncer `--color-accent` (#1d4ed8 rendrait 5,59 sur ce fond) — mais c'est la couleur
+des LIENS et du FOCUS, donc un SECOND arbitrage d'identite, distinct de celui rendu pour C-25
+qui ne portait que sur `--color-accent-solid`. Proposer 2 ou 3 teintes, les RENDRE cote a cote
+dans le produit, et laisser Axel trancher. Ne pas le decider a sa place.
 
 Fini quand : soit la teinte change et la dispense color-contrast tombe de SERIOUS_NOT_BLOCKING,
 soit la decision « on garde, voici pourquoi et ou c'est acceptable » est ecrite dans
 docs/ACCESSIBILITY.md, et alors la dispense y renvoie nommement.
-axe-core ne scanne que l'etat INITIAL de chaque route : modales, menus et calendriers ne sont
-dans aucun de ces chiffres. Ne pas ecrire « zero violation » sans cette reserve.
+
+Deux reserves a ne jamais omettre :
+- axe ne scanne que l'ETAT INITIAL de chaque route : modales, menus et calendriers ne sont dans
+  aucun de ces chiffres ;
+- axe ne scanne que LE THEME PAR DEFAUT. C'est ce qui a laisse le bouton principal a 3,34:1
+  pendant dix-neuf jours sans qu'aucun run ne puisse le dire (C-25).
+  `src/theme-contrast.guard.test.ts` couvre desormais les quatre themes, mais seulement pour le
+  couple accent-solid / son texte.
 ```
 
 ## C-24 · le dernier des quatre audits d'accessibilité
@@ -264,79 +279,7 @@ Fini quand : les findings sont verses dans a-faire-code.md avec leurs numeros C-
 dit explicitement « rien ». Un audit qui ne rend rien se DIT ; il ne s'omet pas.
 ```
 
-## C-38 · `i18n:scan` certifie ZÉRO et le produit parle encore français
-
-```
-Objectif : C-38, et c'est la QUATRIEME fois que ce cliquet certifie zero a tort.
-
-Deux angles morts sur trois sont refermes (0724e36) : la forme ternaire et le vocabulaire.
-Le TROISIEME n'a jamais ete nomme : une chaine posee en VALEUR DE PROPRIETE D'OBJET a
-l'interieur d'un appel de fonction. Sonde isolee :
-  setErrors({ general: 'Erreur lors de la suppression...' })  ->  0 fichier, 0 chaine
-alors que le meme texte dans throw new Error(...) est capture.
-
-Ce n'est pas theorique. Les trois chaines que l'item nomme sont TOUJOURS en dur au 2026-09-12,
-verifie par grep, et toutes trois s'affichent dans la modale de tache :
-  src/components/task-modal/save-task.ts:158    Erreur lors de la creation. Veuillez reessayer.
-  src/components/task-modal/save-task.ts:238    Erreur lors de la sauvegarde. Veuillez reessayer.
-  src/components/task-modal/useTaskModal.ts:520 Erreur lors de la suppression. Veuillez reessayer.
-
-A faire, dans cet ordre : ecrire la sonde qui soumet cette forme au scanner et LA VOIR ROUGE ;
-corriger scripts/i18n-scan.mjs ; laisser le cliquet remonter ce qu'il trouve ; passer les trois
-chaines, et tout ce que la correction decouvre, par t(...) ; redescendre le cliquet a 0.
-
-Ne JAMAIS relever MAX_STRINGS pour faire passer la CI.
-Ne jamais reecrire « plus une seule chaine en dur » : la phrase a deja ete vraie de la mesure et
-fausse du produit quatre fois. Le seul enonce opposable est la sortie de `-- --list`.
-
-Fini quand : la sonde remonte la chaine, les trois messages passent par t(...), et /en/login
-comme /en/habits sont relus DANS LE NAVIGATEUR.
-```
-
----
-
 # P3 — pas commencé
-
-## C-03 · les clés de `habits.completions` ignorent le fuseau choisi
-
-```
-Objectif : C-03. La preference de fuseau pilote le decoupage des journees pour les TACHES
-(src/lib/timezone.ts, dayKeyInTz) ; les HABITUDES gardent des cles en date machine
-(toLocaleDateString('en-CA')). Quelqu'un qui regle un fuseau manuel voit donc ses habitudes
-decoupees autrement que ses echeances, sur le meme ecran.
-
-L'arbitrage du 2026-09-03 dit : GELER, et l'ecrire. Migrer supposerait de savoir dans quel fuseau
-etait chaque personne chaque jour, ce que la base ne sait pas, et decalerait des series que les
-gens ont construites.
-
-Ce prompt n'est donc pas « migre » mais « rends la decision opposable » : l'ecrire dans CLAUDE.md
-ET docs/ARCHITECTURE.md, au meme endroit que la regle « ne jamais faire juger aujourd'hui par le
-serveur » (mig. 119 / 122), et dire ce que l'utilisateur voit quand les deux decoupages divergent.
-
-Fini quand : la decision est ecrite aux deux endroits, et l'item porte « gele, le <date>, parce
-que ... ». Un gel non ecrit est un oubli qui se represente au prochain audit.
-```
-
-## C-06 · 31 `eslint-disable exhaustive-deps` dans 25 fichiers
-
-```
-Objectif : C-06. Recompte le 2026-09-12 : 31 occurrences dans 25 fichiers, l'enonce disait 36
-dans 28, il datait du 09-03. Commande de mesure :
-  grep -rn "exhaustive-deps" src --include=*.ts --include=*.tsx
-
-Ce n'est pas 31 bugs, c'est 31 endroits NON EPROUVES : chacun est une dependance retiree a la
-main, donc une fermeture potentiellement perimee, la famille de bug qui produit un ecran qui ne
-se rafraichit pas, en silence. Ce depot en a deja rencontre plusieurs, dont FirstRunSetup, dont
-la garde d'entree se refermait sous les doigts de la personne.
-
-Arbitrage rendu : une regle ESLint qui EXIGE le commentaire. Chaque disable doit dire pourquoi
-la dependance manquante ne peut pas perimer la valeur. Le nombre ne remonte plus, les
-injustifiables partent en passant.
-
-Fini quand : la regle est en place et `npm run lint` rend 0 erreur, chaque occurrence restante
-porte sa justification, celles qui n'en ont pas ont ete supprimees (dependances honnetes,
-useEvent ou ref), et le avant/apres est publie : 31 -> N.
-```
 
 ## C-18 · les CVE dev-only, encore un autre lot
 
@@ -360,27 +303,6 @@ les confondre fait passer l'une pour l'autre.
 
 Fini quand : `npm audit` rend 0, les cinq gates sont rejouees derriere, et le tableau de l'item
 porte sa nouvelle date.
-```
-
-## C-55 · trois surfaces que l'audit clavier n'a PAS réussi à mesurer
-
-```
-Objectif : C-55. Honnetete de couverture, pas finding de produit. Trois choses cherchees sans y
-arriver le 2026-09-03, qu'il ne faut donc pas croire verifiees :
-
-1. Le calendrier ouvert depuis une entree de MENU : OverdueBanner (« Tout replanifier ») et
-   TaskBulkActionsBar (« Modifier la deadline »). C'est la surface la plus risquee des huit : une
-   GRILLE vit a l'interieur d'un role="menu", ce que l'ARIA n'autorise pas, et les correctifs de
-   C-51 (autoFocus) n'ont pas ete eprouves dans ce conteneur.
-   Le premier n'apparaissait pas dans le jeu de demo faute de tache en retard, et le second
-   restait desactive (« 0 selectionnee »). Il faut FABRIQUER l'etat, pas contourner.
-2. Le bouton « Plus d'actions » de la barre de selection n'est jamais juge stable par Playwright,
-   34 tentatives, jamais immobile. A rapprocher de C-74 : meme symptome, autre barre.
-3. En mode selection, les cases a cocher gardent le nom « Marquer comme completee » alors
-   qu'elles selectionnent. Releve dans l'arbre d'accessibilite, non confirme par un clic reussi.
-
-Fini quand : les trois sont mesures DANS LE NAVIGATEUR et rendent un finding ou un « rien ». Un
-« rien » se dit ; il ne s'omet pas.
 ```
 
 ## C-58 · React 19 et `react-router` 8 : la décision, avant le code
@@ -425,23 +347,4 @@ Si la decision change, fini quand : la rotation ne demarre pas sous prefers-redu
 quatre vues restent atteignables par HeroModuleDock, deja cliquable), une commande de pause
 existe pour les autres, et un test couvre les DEUX preferences. Ne pas se contenter de ralentir :
 la conformite demande un CONTROLE, pas une cadence plus douce.
-```
-
-## C-70 · 22 cibles tactiles sous 44 px dans `TeamTaskModal`
-
-```
-Objectif : C-70. 22 commandes sous 44 x 44 px dans
-src/components/organization/TeamTaskModal.tsx, trouvees par l'audit A-4 le 2026-09-04.
-docs/MOBILE.md porte deja « Touch target < 44 x 44 px (WCAG 2.5.5) » comme regle du depot.
-
-Le motif est etabli et il ne se reinvente pas : TouchTarget (src/components/mobile/), zone
-tactile a 44 px, ICONE INCHANGEE, marges negatives pour que la rangee ne grandisse pas avec la
-cible. Onze fichiers l'utilisent deja.
-
-Coordonner : ce fichier est modifie dans l'arbre de travail au 2026-09-12 (facade toast). Relire
-`git status` avant de commencer, ne stager que tes lignes.
-
-Fini quand : le balayage de e2e/touch-targets.spec.ts couvre cette modale OUVERTE (elle n'est
-dans aucun releve actuel, qui ne scannent que l'etat initial des routes) et rend zero. Ajouter la
-surface au balayage FAIT PARTIE du travail : sans ca, on corrige sans cliquet.
 ```
