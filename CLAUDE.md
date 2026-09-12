@@ -566,7 +566,11 @@ Garde-fous propres à cette zone :
   clé de test — les customers des vrais utilisateurs vivent dans le compte « Environnement de
   test COSMO », le compte live est vide. Un checkout n'accepte donc que des **cartes de test**
   : le quota de sièges est réel, l'encaissement ne l'est pas. Passage en live = recréer les 8
-  prix sur le compte live (4 mensuels + 4 annuels), réenregistrer un endpoint webhook live (mêmes 5 events), puis
+  prix sur le compte live (4 mensuels + 4 annuels), réenregistrer un endpoint webhook live (**SIX** events, recomptés dans le code le
+  2026-09-12 : `checkout.session.completed`, `customer.subscription.updated`,
+  `customer.subscription.deleted`, `invoice.payment_succeeded`, `invoice.payment_failed` et
+  `charge.refunded` — ce fichier a écrit « 5 » jusqu'à cette date, chiffre devenu faux avec la
+  v27 du webhook le 2026-09-06 ; en réenregistrer 5 couperait le remboursement en silence), puis
   remplacer `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` et les 8 `STRIPE_ORG_PRICE_*`.
 - ⚠️ `APP_URL` vaut `https://thecosmo.app` et **est la seule origine CORS autorisée** par les
   deux Edge Functions org : le checkout entreprise **ne peut pas être testé depuis

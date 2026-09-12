@@ -21,11 +21,14 @@
     "chemin de plus par lequel la garde pourrait se taire."
   ],
   "projectRef": "ykeugqfgklejcdbrmawy",
-  "notDeployed": [
-    {
-      "slug": "stripe-org-refund",
-      "since": "2026-09-04",
-      "reason": "Livree avec C-65/C-39, jamais deployee. Le deploiement est un geste manuel d'Axel (a-faire-manuel.md), et la facturation entreprise est desarmee : ENTERPRISE_BILLING_ENFORCED = false"
-    }
-  ]
+  "_vide": [
+    "`notDeployed` est VIDE depuis le 2026-09-12 : toute fonction du depot est en",
+    "ligne. `stripe-org-refund` y figurait depuis le 2026-09-04 ; elle est deployee",
+    "en v1 le 2026-09-12, donc la note devait partir le jour meme — laissee en place,",
+    "elle aurait fait ECHOUER la garde, et c'est exactement ce qu'on lui demande.",
+    "",
+    "Une liste vide n'est pas une dispense : chacune des huit fonctions est",
+    "desormais comparee octet pour octet a chaque run."
+  ],
+  "notDeployed": []
 }

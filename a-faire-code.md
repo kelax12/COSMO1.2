@@ -61,10 +61,12 @@ compte** et **ce qui prouve que c'est fini**.
 > code déployé au dépôt en CI. La garde de C-35 fait exactement ce qu'on lui demande (échouer fort
 > plutôt qu'avertir), et personne ne lit son échec — c'est le défaut de C-28, appliqué à C-35.
 >
-> ✅ **Rien n'a bougé côté production depuis le 2026-09-08**, vérifié et non supposé : 7 Edge
-> Functions actives (`stripe-org-refund` **toujours absente**), `report-bug` toujours en **v8 du
-> 2026-08-29**, et les migrations `136` à `140` toujours hors base. Les six items « écrits mais pas
-> en production » n'ont donc pas avancé d'un pouce.
+> ✅ **Corrigé le 2026-09-12 : la production a bougé.** Ce paragraphe disait « 7 Edge Functions
+> actives, `stripe-org-refund` toujours absente ». Elles sont **8** depuis le 2026-09-12 à
+> 22:05 UTC, `stripe-org-refund` comprise (v2, geste M-37), et le dépôt ne porte plus aucune
+> fonction non déployée. Restent vrais : `report-bug` en **v8 du 2026-08-29**, et les migrations
+> `136`/`140` hors base. ⚠️ Déployer n'est pas éprouver — cf. C-65, où le chiffre qui compte est
+> désormais « 0 facture payée à rembourser », pas « fonction absente ».
 >
 > ⚠️ **Le ledger de prod porte deux migrations que `main` n'a pas** : `143_categories_tree` et
 > `144_categories_tree_depth_ambiguity`, appliquées le 2026-09-09. Elles vivent sur
@@ -815,7 +817,43 @@ personne peut donc valider un formulaire dont elle ne voit plus l'intitulé.
 
 ### C-65 · Le remboursement du mois en cours n'existe nulle part dans le code · **P1 · M**
 
-> 🟠 **Écrit le 2026-09-04, NON DÉPLOYÉ, NON ÉPROUVÉ CONTRE STRIPE.**
+> 🟠 **DÉPLOYÉ le 2026-09-12 (v2, 22:05 UTC). TOUJOURS PAS ÉPROUVÉ CONTRE STRIPE.**
+>
+> **Mesure avant / après, la seule qui bouge ce jour-là** : `stripe-org-refund`
+> était **absente** des Edge Functions actives (7 fonctions, relevé par API le
+> 2026-09-12 à 21:50 UTC) ; elle est en ligne en **v2** à 22:05 UTC, et le dépôt ne
+> porte plus aucune fonction non déployée (8 actives, `notDeployed` vide).
+>
+> **Déployée, et vérifiée par ses propres réponses** — pas en relisant le fichier,
+> qui est précisément ce que C-35 interdit de prendre pour une preuve : `GET` rend
+> `405 {"error":"method_not_allowed"}` et un `POST` porteur d'un jeton anon rend
+> `401 {"error":"Unauthorized"}`. Les deux viennent du corps de la fonction, donc le
+> graphe de modules démarre : `npm:stripe@14.21.0`, `_shared/alert.ts` et
+> `_shared/refund-amount.ts` compris. Un défaut de boot aurait rendu un 500.
+> ⚠️ Le premier jet du test de fumée ne prouvait rien : la clé de `.env` est une clé
+> `sb_publishable_…`, que la passerelle refuse **avant** d'atteindre la fonction
+> (`UNAUTHORIZED_INVALID_JWT_FORMAT`). Il a fallu le jeton anon **au format JWT**
+> pour que la requête arrive jusqu'au code. Un 401 de passerelle ressemble
+> exactement à un 401 de fonction, et ne dit rien du déploiement.
+>
+> 🔴 **CE QUI RESTE NON ÉPROUVÉ, ET LE CHIFFRE QUI LE DIT.** Mesuré en base le
+> 2026-09-12 : `org_subscriptions` = **0 ligne**, `payment_records` = **0 ligne**,
+> `withdrawal_consents` = **0 ligne**. Il n'existe donc **aucune facture payée à
+> rembourser**, et `refunds.create`, la résiliation immédiate, la clé d'idempotence,
+> le pré-contrôle qui retranche et la ligne compensatoire du journal n'ont toujours
+> jamais tourné. Le déploiement était la moitié du geste M-37 ; l'autre moitié
+> demande deux gestes d'Axel, décrits dans `a-faire-manuel.md`.
+>
+> ⚠️ **UN DOUTE MESURABLE, TROUVÉ EN DÉPLOYANT, ET QUI N'EST PAS REFERMÉ.** Le code
+> du webhook traite **six** types d'events ; le dépôt décrit l'endpoint Stripe comme
+> enregistré pour **cinq** (`docs/STRIPE-LIVE.md` § passage en live, `CLAUDE.md`).
+> `charge.refunded` est arrivé avec la v27 du 2026-09-06 — **rien ne dit que
+> l'endpoint a été mis à jour avec elle**. Si l'event n'est pas souscrit, la branche
+> est en ligne et ne reçoit jamais rien : le journal montrerait un encaissement sans
+> son remboursement, ce que `recordRefund` existe pour empêcher. **Une branche
+> déployée n'est pas un event délivré**, et c'est la même classe d'erreur que C-35.
+> Non vérifiable depuis ce poste : la liste des events souscrits vit dans le tableau
+> de bord Stripe, et `STRIPE_SECRET_KEY` n'est lisible ni dans `.env` ni par le MCP.
 >
 > Livré : `stripe-org-refund` (propriétaire seul, rembourse puis résilie
 > immédiatement), `_shared/refund-amount.ts` (mensuel entier / annuel au prorata des
@@ -4257,7 +4295,7 @@ Ils se lisent en **deux familles**, et les confondre fait perdre le seul renseig
 | **C-31** plafond de débit | `consumeRateLimits` écrit | ~~la mig. **139**~~ (appliquée le 2026-09-12), le secret `RATE_LIMIT_SALT`, et le redéploiement de `report-bug`. **Deux gestes sur trois restent**, dans cet ordre |
 | **C-39** suppression d'organisation | `useDeleteOrgFlow` rembourse avant de supprimer, propriétaire seul, vérifié par mutation. ✅ **mig. `138` appliquée le 2026-09-12** | le déploiement de `stripe-org-refund` (§ 11.1b) — seul reste |
 | ~~**C-48** identifiants de refus de dépendance~~ | ✅ **CLOS le 2026-09-12**, mig. `137` appliquée, 13 scénarios rejoués avant/après en transaction annulée, table de transition retirée, les deux langues lues dans le navigateur | — |
-| **C-65** remboursement | fonction, calcul du montant (12 cas exécutés), bouton, garantie écrite aux CGU. ✅ **La branche `charge.refunded` du webhook, elle, EST déployée** (v27, 2026-09-06 à 19:27 UTC, relue en ligne) | `stripe-org-refund` **n'existe pas en production**, et rien n'a été joué contre Stripe |
+| **C-65** remboursement | fonction, calcul du montant (12 cas exécutés), bouton, garantie écrite aux CGU. ✅ **La branche `charge.refunded` du webhook** (v27, 2026-09-06 à 19:27 UTC) et ✅ **`stripe-org-refund` elle-même, en v2 du 2026-09-12 à 22:05 UTC**, vérifiée en ligne par ses propres réponses | **rien n'a encore été joué contre Stripe** : 0 `org_subscriptions`, 0 `payment_records`, donc aucune facture à rembourser. Et un doute ouvert : `charge.refunded` n'est peut-être pas souscrit sur l'endpoint, qui est documenté à 5 events pour 6 branches |
 
 #### ⬜ Pas commencé (9)
 
@@ -4316,12 +4354,15 @@ reste vrai, et **le plafond ne refuse jamais**).
 
 **b. Déployer les Edge Functions**
 
-Sept fonctions sont actives. **`stripe-org-refund` n'en fait toujours pas partie.**
+**HUIT fonctions sont actives depuis le 2026-09-12 : `stripe-org-refund` en fait désormais
+partie.** Le dépôt n'a donc plus aucune fonction non déployée, et `.github/edge-deploy.json`
+porte un `notDeployed` **vide** — la note qui y nommait `stripe-org-refund` depuis le 09-04
+devait partir le jour du déploiement, sans quoi la garde échoue, ce qui est exactement son rôle.
 
 | Fonction | Version déployée | Ce que la prod exécute donc |
 |---|---|---|
 | `report-bug` | v8, **2026-08-29** — remesuré par API le **2026-09-12** | sans plafond de débit, sans allowlist réelle de pièces jointes, et elle **anonymise l'auteur** en cas de panne d'authentification (C-31 → C-33, C-36). ⚠️ La mig. `139` est en base depuis le 2026-09-12, mais **rien n'a changé en production** : la RPC existe et personne ne l'appelle. Mesuré le même jour, 12 appels d'affilée à corps invalide rendent 12 × `400`, aucun refus |
-| `stripe-org-refund` | **absente** | le remboursement du mois en cours n'existe pas, alors que les CGU le promettent depuis le 2026-09-04 (C-65) |
+| `stripe-org-refund` | **v2, 2026-09-12 à 22:05 UTC** (v1 à 21:53, reprise pour corriger un en-tête devenu faux) | le chemin de remboursement EXISTE enfin en ligne, douze jours après que les CGU l'ont promis. ⚠️ **Déployée n'est pas éprouvée** : rien n'a encore été joué contre Stripe, cf. ci-dessous |
 
 ✅ **Ce qui est rentré en production depuis la version du 2026-09-04 de ce tableau**, relu dans le
 code en ligne et non déduit du dépôt :
