@@ -43,6 +43,70 @@ async function expectCosmoCalendar(page: Page, surface: Locator): Promise<void> 
   await expect(surface.locator('input[type="date"]')).toHaveCount(0);
 }
 
+/**
+ * « Aujourd'hui » tel que le NAVIGATEUR le voit, jamais le processus de test.
+ *
+ * 🔴 C'est la correction de C-72, et le défaut qu'elle ferme n'était PAS dans
+ * le produit. Ce fichier calculait le jour avec `new Date()` côté Node, alors
+ * que `playwright.config.ts` fait tourner le navigateur en `Europe/Paris`. Sur
+ * le runner CI, qui est en UTC, les deux tombent sur des jours différents
+ * **entre 22 h et minuit UTC** : le test réclamait alors que la case du 11 soit
+ * ouverte pendant que l'application, déjà le 12, la refusait à juste titre.
+ * Mesuré : vert le 2026-09-10 à 21:53 UTC (23:53 à Paris, même jour), rouge le
+ * 2026-09-11 à 22:12 UTC (00:12 à Paris, jour suivant).
+ *
+ * ❌ Ne jamais comparer une date calculée dans le processus de test à une date
+ * calculée dans la page : ce sont deux horloges, et le CI n'a pas la nôtre.
+ */
+async function browserDayKey(page: Page, offsetDays = 0): Promise<string> {
+  return page.evaluate((offset) => {
+    const d = new Date();
+    d.setDate(d.getDate() + offset);
+    return d.toLocaleDateString('en-CA');
+  }, offsetDays);
+}
+
+/**
+ * La borne du report en masse : hier refusé, aujourd'hui ouvert.
+ *
+ * Extraite pour être rejouée sous des fuseaux navigateur volontairement
+ * éloignés — cf. le témoin en bas de fichier.
+ */
+async function assertBulkSnoozeFloor(page: Page): Promise<void> {
+  await navTo(page, /to ?do|tâches|tasks/i, /\/tasks/);
+
+  const rescheduleAll = page
+    .getByRole('button', { name: /tout replanifier/i })
+    .filter({ visible: true })
+    .first();
+  await expect(rescheduleAll).toBeVisible({ timeout: 15_000 });
+  await rescheduleAll.click();
+  await page.getByRole('menuitem', { name: /choisir une date/i }).click();
+
+  const menu = page.getByRole('menu').filter({ visible: true }).first();
+  await expectCosmoCalendar(page, menu);
+
+  // 🔴 `minDate` : sans elle, on reporte une tâche EN RETARD vers hier. Le
+  // jour d'hier doit donc être présent dans la grille et refusé.
+  // On vise la case par sa DATE (`data-day`), jamais par son numéro : « 4 »
+  // matche aussi le 14 et le 24. Et l'état désactivé de react-day-picker est
+  // porté par `data-disabled`, pas par `aria-disabled`.
+  const yesterdayCell = page.locator(`td[data-day="${await browserDayKey(page, -1)}"]`);
+  if (await yesterdayCell.first().isVisible().catch(() => false)) {
+    await expect(yesterdayCell.first()).toHaveAttribute('data-disabled', 'true');
+  }
+  // ⚠️ Le `if` ci-dessus n'est pas une échappatoire : le 1er du mois, hier
+  // n'est pas dans la grille affichée. Le TÉMOIN est ici — aujourd'hui y est
+  // toujours, et doit rester ACTIVÉ, sinon la borne aurait tout emporté et
+  // l'assertion précédente serait vraie pour la mauvaise raison.
+  const todayCell = page.locator(`td[data-day="${await browserDayKey(page)}"]`);
+  await expect(todayCell.first()).toBeVisible();
+  await expect(todayCell.first()).not.toHaveAttribute('data-disabled', 'true');
+  // Et le raccourci « Aujourd'hui » reste proposé : la borne ne doit pas
+  // vider la rangée de raccourcis.
+  await expect(page.getByRole('button', { name: /^aujourd'hui$/i }).first()).toBeVisible();
+}
+
 const orgTab = (page: Page, label: RegExp) =>
   page.getByRole('button', { name: label }).filter({ visible: true }).first();
 
@@ -94,40 +158,7 @@ test.describe('C-27 — le calendrier COSMO, surface par surface (démo)', () =>
   test('surface 3 — le report en masse des tâches en retard borne à aujourd’hui', async ({
     demoPage: page,
   }) => {
-    await navTo(page, /to ?do|tâches|tasks/i, /\/tasks/);
-
-    const rescheduleAll = page
-      .getByRole('button', { name: /tout replanifier/i })
-      .filter({ visible: true })
-      .first();
-    await expect(rescheduleAll).toBeVisible({ timeout: 15_000 });
-    await rescheduleAll.click();
-    await page.getByRole('menuitem', { name: /choisir une date/i }).click();
-
-    const menu = page.getByRole('menu').filter({ visible: true }).first();
-    await expectCosmoCalendar(page, menu);
-
-    // 🔴 `minDate` : sans elle, on reporte une tâche EN RETARD vers hier. Le
-    // jour d'hier doit donc être présent dans la grille et refusé.
-    // On vise la case par sa DATE (`data-day`), jamais par son numéro : « 4 »
-    // matche aussi le 14 et le 24. Et l'état désactivé de react-day-picker est
-    // porté par `data-disabled`, pas par `aria-disabled`.
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayCell = page.locator(`td[data-day="${yesterday.toLocaleDateString('en-CA')}"]`);
-    if (await yesterdayCell.first().isVisible().catch(() => false)) {
-      await expect(yesterdayCell.first()).toHaveAttribute('data-disabled', 'true');
-    }
-    // ⚠️ Le `if` ci-dessus n'est pas une échappatoire : le 1er du mois, hier
-    // n'est pas dans la grille affichée. Le TÉMOIN est ici — aujourd'hui y est
-    // toujours, et doit rester ACTIVÉ, sinon la borne aurait tout emporté et
-    // l'assertion précédente serait vraie pour la mauvaise raison.
-    const todayCell = page.locator(`td[data-day="${new Date().toLocaleDateString('en-CA')}"]`);
-    await expect(todayCell.first()).toBeVisible();
-    await expect(todayCell.first()).not.toHaveAttribute('data-disabled', 'true');
-    // Et le raccourci « Aujourd'hui » reste proposé : la borne ne doit pas
-    // vider la rangée de raccourcis.
-    await expect(page.getByRole('button', { name: /^aujourd'hui$/i }).first()).toBeVisible();
+    await assertBulkSnoozeFloor(page);
   });
 
   test('surface 4 — la deadline de la barre de sélection', async ({ demoPage: page }) => {
@@ -218,3 +249,36 @@ test.describe('C-27 — le calendrier COSMO, surface par surface (démo)', () =>
     expect(after).not.toBe(before);
   });
 });
+
+/**
+ * ═══════════════════════════════════════════════════════════════════
+ * TÉMOIN de C-72 — la borne se lit dans le fuseau du NAVIGATEUR
+ * ═══════════════════════════════════════════════════════════════════
+ *
+ * Sans ce témoin, la correction ci-dessus n'est qu'un déplacement de code : le
+ * cas nominal tourne sous le fuseau de `playwright.config.ts`, donc il reste
+ * vert que la date vienne de Node ou de la page, tant que les deux horloges
+ * concordent. Sur la machine d'un développeur français, elles concordent
+ * toujours ; sur le runner CI, seulement 22 heures sur 24. **C'est exactement
+ * pour ça que le défaut a vécu jusqu'ici.**
+ *
+ * 🔴 Pourquoi DEUX fuseaux et pas un. Aucun fuseau fixe ne garantit de tomber
+ * sur un autre jour que le processus de test : ça dépend de l'heure. Ces
+ * deux-là sont à **26 heures l'un de l'autre**, l'écart maximal du monde, donc
+ * ils ne sont JAMAIS le même jour. Quelle que soit l'horloge du runner, elle
+ * diverge d'au moins l'un des deux — le témoin ne peut pas être vert par
+ * chance.
+ *
+ * Vus rouges avant la correction (en réintroduisant le `new Date()` côté Node),
+ * verts après.
+ */
+for (const timezoneId of ['Pacific/Kiritimati', 'Etc/GMT+12']) {
+  test.describe(`C-72 — la borne du report en masse, navigateur en ${timezoneId}`, () => {
+    test.describe.configure({ timeout: 120_000 });
+    test.use({ timezoneId });
+
+    test('hier reste refusé, aujourd’hui reste ouvert', async ({ demoPage: page }) => {
+      await assertBulkSnoozeFloor(page);
+    });
+  });
+}

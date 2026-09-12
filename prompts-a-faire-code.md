@@ -1,7 +1,9 @@
 # Prompts — un par item ouvert de `a-faire-code.md`
 
 **Écrit le 2026-09-12**, après la passe de remesure du même jour. Un prompt par item **non clos**,
-prêt à coller dans une session neuve : 22 items, dans l'ordre où ils devraient être traités.
+prêt à coller dans une session neuve. **Mis à jour le 2026-09-12 au soir** : les trois prompts P0
+(`C-72`, `C-73`, `C-74`) sont retirés, corrigés le jour même. **19 items restent**, dans l'ordre où
+ils devraient être traités.
 
 > **Comment s'en servir.** Coller le **préambule** puis **un seul** bloc. Ne jamais en coller deux :
 > chacun porte son critère de sortie, et deux critères dans une session font qu'aucun n'est tenu.
@@ -38,86 +40,26 @@ sous quelles reserves), puis commiter et pousser.
 
 ---
 
-# P0 — la CI de `main` est ROUGE. Ces trois-là passent devant tout le reste
+# ~~P0 — la CI de `main` est ROUGE~~ · ✅ les trois sont corrigés le 2026-09-12
 
-## C-72 · Le report en masse d'une tâche en retard refuse AUJOURD'HUI
+Les prompts `C-72`, `C-73` et `C-74` ont été retirés : le travail est fait, et un prompt qui décrit
+un défaut corrigé enverrait une session refaire une mesure déjà rendue.
 
-```
-Objectif : C-72. Le calendrier de report en masse desactive le jour meme, donc une tache en
-retard ne peut etre remise qu'a demain. `e2e/demo-calendar.spec.ts:94` (surface 3) est rouge
-sur main depuis le run du 2026-09-11 22:06, trois fois de suite, retries compris.
+**Ce qu'ils ont appris, et qui vaut pour les prompts qui restent** — deux des trois énoncés étaient
+faux, et l'investigation a coûté plus que la correction :
 
-Ce que le test observe :
-  locator('td[data-day="<aujourd hui>"]') -> data-disabled="true", class rdp-disabled
-  attendu : NON desactive.
+| Item | Ce que l'énoncé disait | Ce qui était vrai |
+|---|---|---|
+| **C-72** | le produit refuse aujourd'hui | le TEST comparait la date de Node (UTC en CI) à celle de la page (`Europe/Paris`) : il ne pouvait échouer qu'entre 22 h et minuit UTC |
+| **C-73** | deux commandes du bandeau sous 44 px | deux FAUX POSITIFS du détecteur, qui masquaient le vrai défaut : 8 pilules de `/tasks` passées de 44 à 36 px le 2026-09-06 |
+| **C-74** | timeout de 180 s, cause à trouver | la cause était écrite dans le journal Playwright depuis le premier run : un toast Sonner intercepte le clic |
 
-Ou regarder :
-  src/components/ui/date-picker.tsx:41   floor = new Date(minDate + "T00:00:00")
-  src/components/ui/date-picker.tsx:89   disabled={floor ? { before: floor } : undefined}
-  src/components/ui/date-picker.tsx:42   presets filtres par p.value >= minDate  (celui-la marche)
-  src/components/task-table/OverdueBanner.tsx:83        minDate = date MACHINE
-  src/components/task-table/OverdueQuickActions.tsx:83  minDate = todayKeyInTz(tzPref)
+🔴 **La règle qui en sort, à appliquer à tous les prompts ci-dessous** : un test rouge ne dit pas
+où est le défaut, il dit qu'il y en a un **quelque part entre le produit et sa mesure**. Avant de
+corriger le produit, prouver que c'est bien lui — sur ces trois-là, un seul l'était.
 
-Deux hypotheses a departager par la mesure, pas par la lecture : (a) { before: floor } de
-react-day-picker 9.14 n'est pas exclusif du jour-pivot tel qu'on le lui passe ; (b) les deux
-sources de minDate ne designent pas la meme journee. L'asymetrie avec la rangee de presets, qui
-survit, est un indice : les deux bornes ne sont pas ecrites pareil.
-
-Fini quand : le cas de test rend vert SANS etre modifie ; un test unitaire sur DateCalendarPanel
-verifie les deux bords (aujourd'hui actif, hier desactive) ; et le cas est rejoue avec une
-preference de fuseau MANUELLE differente de celle de la machine, seul moyen de savoir laquelle
-des deux sources de minDate est la bonne. Voir CLAUDE.md § Saisie de date et § Fuseau horaire.
-```
-
-## C-73 · Deux commandes du bandeau de démo sous 44 px, sur les 8 pages protégées
-
-```
-Objectif : C-73. `e2e/touch-targets.spec.ts:175` est rouge sur HUIT routes (/dashboard,
-/entreprise, /okr, /tasks, /habits, /settings, /agenda, /statistics) dans tous les runs CI
-examines (2026-09-10 et 2026-09-11). Un seul coupable, un composant partage :
-
-  93 x 11 px  « Creez un compte »           src/components/DemoConversionBanner.tsx:50 et :63
-  14 x 14 px  « Masquer la banniere demo »  src/components/DemoConversionBanner.tsx:77
-
-Deux points a trancher, chacun explicitement :
-- La croix porte DEJA une zone de 44 px, mais seulement sur mobile
-  (before:h-11 before:w-11 ... md:before:hidden). Soit on l'etend, soit on declare pourquoi la
-  souris s'en dispense, mais on ne laisse pas une garde echouer tous les jours.
-- « Creez un compte » est un bouton EN LIGNE dans une phrase, et WCAG 2.5.5 dispense
-  explicitement ce cas. C'est la dispense que C-57 avait retenue pour l'unique bouton d'/okr.
-  Si elle vaut ici, c'est LA GARDE qui doit la connaitre, pas le produit qui doit grossir.
-
-Ne pas rouvrir C-57 : il est clos sur son propre perimetre (cases a cocher, boutons d'/okr), ce
-bandeau n'etait dans aucun de ses releves.
-Ne jamais retirer une route du balayage pour faire passer la garde.
-
-Fini quand : `npm run test:e2e -- touch-targets` rend zero sur les huit routes, toute dispense
-est nommee dans le code de la garde AVEC son motif, et le job `e2e` de main repasse au vert.
-```
-
-## C-74 · `ShareListSheet` : le clavier n'atteint jamais la feuille de partage
-
-```
-Objectif : C-74. `e2e/a11y-keyboard-audit.spec.ts:396` echoue sur un TIMEOUT DE 180 s dans tous
-les runs CI examines. Le clic sur « Partager la liste » ne se resout jamais :
-
-  locator resolved to <button data-a11y-trigger="1" aria-label="Partager la liste" ...>
-  attempting click action -> element is not stable (x2), puis visible/enabled/stable,
-  scrolled into view, et le clic n'aboutit pas.
-
-Deux lectures possibles, a trancher DANS le navigateur : un element qui se remet a bouger
-(animation de la barre de listes, src/pages/tasks/TaskListsBar.tsx) ou un recouvrement par une
-surface restee ouverte.
-
-Renseignement utile : plus tot dans le MEME run, le harnais releve la feuille comme correcte
-({"focusMovedIn":true,"trapped":true,"escClosed":true}). Ce qui echoue est la REOUVERTURE.
-
-Ne pas passer le cas en skip : la mesure clavier de cette surface disparaitrait sans que rien ne
-le dise, exactement le defaut du § « Une garde se verifie sur ce qu'elle REGARDE ».
-
-Fini quand : la cause est nommee, corrigee dans le PRODUIT si c'en est un, le cas rend son releve
-[a11y-kbd] ShareListSheet comme les neuf autres surfaces, et il ne coute plus 3 minutes par run.
-```
+⚠️ **Et lire le journal AVANT de raisonner.** Sur `C-74`, trois lignes de log nommaient la cause ;
+elles avaient été produites à chaque run depuis le 2026-09-10.
 
 ---
 

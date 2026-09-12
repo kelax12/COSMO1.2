@@ -18,6 +18,7 @@ export { default as Segmented } from './Segmented';
 export { default as TouchTarget } from './TouchTarget';
 export { default as BottomSheet } from './BottomSheet';
 export type { SegmentedOption } from './Segmented';
+export { TAP_AREA_44_Y } from './tap-area';
 export {
   SHEET_SPRING,
   ITEM_TRANSITION,

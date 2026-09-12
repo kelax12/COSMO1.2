@@ -83,9 +83,21 @@ async function commandsUnderTarget(page: Page, target: number): Promise<UnderTar
       const parent = el.parentElement;
       if (!parent) return false;
       if (!['P', 'SPAN', 'LABEL', 'LI', 'TD'].includes(parent.tagName)) return false;
-      return [...parent.childNodes].some(
-        (n) => n.nodeType === 3 && (n.textContent ?? '').trim().length > 0,
-      );
+      // 🔴 Corrige C-73. La version d'origine exigeait un NOEUD DE TEXTE nu,
+      // enfant direct du parent. Elle a tenu tant que la phrase du bandeau de
+      // demo etait ecrite en clair dans son `<p>` ; la maquette 02 l'a
+      // reorganisee en `<span>Mode demo</span> · <button>Creez un compte</button>`
+      // — la meme phrase, la meme cible en ligne, plus un seul noeud de texte
+      // nu. Le bouton s'est mis a compter comme un defaut du jour au lendemain,
+      // sur les HUIT routes protegees, alors que rien du geste n'avait change.
+      //
+      // Ce qui compte n'est pas la forme du DOM, c'est qu'il y ait de la PROSE
+      // autour de la cible. On mesure donc le texte du parent MOINS celui des
+      // commandes qu'il contient : un `<p>` qui ne contient que des boutons
+      // n'est pas une phrase, et reste mesure (temoin « inline sans prose »).
+      const controls = [...parent.querySelectorAll('button, [role="button"], a')];
+      const controlText = controls.reduce((n, c) => n + (c.textContent ?? '').trim().length, 0);
+      return (parent.textContent ?? '').trim().length > controlText;
     };
 
     /**
@@ -107,6 +119,65 @@ async function commandsUnderTarget(page: Page, target: number): Promise<UnderTar
       return label && label.contains(el) ? label : el;
     };
 
+    /**
+     * La cible telle qu'un DOIGT la rencontre, pseudo-elements compris.
+     *
+     * 🔴 Deuxieme moitie de C-73, et deuxieme fois que ce detecteur mesure la
+     * mauvaise boite (la premiere, le 2026-09-04, etait la case a cocher
+     * enveloppee dans son `<label>`). La croix du bandeau de demo dessine une
+     * icone de 14 px et porte sa zone tactile dans un `::before` absolu de
+     * 44 x 44 centre dessus — le motif classique d'agrandissement de cible,
+     * recommande justement par WCAG 2.5.5. `getBoundingClientRect()` ne voit
+     * pas les pseudo-elements : la garde rapportait « 14 x 14 » d'une cible qui
+     * en fait bien 44, et exigeait donc de casser le dessin pour rien.
+     *
+     * ⚠️ Elle ne fait PAS confiance a n'importe quel `::before`. Seul un
+     * pseudo-element POSITIONNE avec une taille EXPLICITE agrandit la cible :
+     * un pseudo decoratif, statique ou sans dimensions, est ignore. C'est ce
+     * que verifie le temoin « un ::before decoratif n'agrandit rien ».
+     *
+     * ⚠️ Ce que cette mesure ne dit pas : la croix est en haut de l'ecran, donc
+     * ~9 px de sa cible depassent au-dessus du viewport a la position de
+     * defilement 0. La cible RENDUE fait bien 44 x 44 — c'est ce que demande le
+     * critere —, la portion atteignable au doigt en fait 35 de haut. Mesure, et
+     * laisse tel quel : rabattre la cible vers le bas la ferait mordre de 24 px
+     * sur l'en-tete, donc voler des appuis au lieu d'en gagner.
+     */
+    const effectiveRect = (el: Element): { width: number; height: number } => {
+      const base = el.getBoundingClientRect();
+      const cs = getComputedStyle(el);
+      const borderLeft = parseFloat(cs.borderLeftWidth) || 0;
+      const borderTop = parseFloat(cs.borderTopWidth) || 0;
+      let x0 = base.left;
+      let y0 = base.top;
+      let x1 = base.right;
+      let y1 = base.bottom;
+
+      for (const pseudo of ['::before', '::after']) {
+        const ps = getComputedStyle(el, pseudo);
+        if (ps.content === 'none' || ps.content === 'normal') continue;
+        if (ps.position !== 'absolute' && ps.position !== 'fixed') continue;
+        const w = parseFloat(ps.width);
+        const h = parseFloat(ps.height);
+        const left = parseFloat(ps.left);
+        const top = parseFloat(ps.top);
+        if (!isFinite(w) || !isFinite(h) || !isFinite(left) || !isFinite(top)) continue;
+        // `transform` arrive resolu en matrice : les deux dernieres valeurs
+        // portent la translation, c'est la que vit le `-translate-x-1/2`.
+        const m = /matrix\(([^)]+)\)/.exec(ps.transform);
+        const parts = m ? m[1].split(',').map((v) => parseFloat(v)) : [];
+        const tx = parts.length === 6 ? parts[4] : 0;
+        const ty = parts.length === 6 ? parts[5] : 0;
+        const px = base.left + borderLeft + left + tx;
+        const py = base.top + borderTop + top + ty;
+        x0 = Math.min(x0, px);
+        y0 = Math.min(y0, py);
+        x1 = Math.max(x1, px + w);
+        y1 = Math.max(y1, py + h);
+      }
+      return { width: x1 - x0, height: y1 - y0 };
+    };
+
     const out: UnderTarget[] = [];
     const seen = new Set<Element>();
     for (const control of document.querySelectorAll(
@@ -115,10 +186,11 @@ async function commandsUnderTarget(page: Page, target: number): Promise<UnderTar
       const el = effectiveTarget(control);
       if (seen.has(el)) continue;
       seen.add(el);
-      const r = el.getBoundingClientRect();
+      const box = el.getBoundingClientRect();
       // Élément non rendu : ni un défaut, ni une cible.
-      if (r.width === 0 || r.height === 0) continue;
+      if (box.width === 0 || box.height === 0) continue;
       if (isInline(el)) continue;
+      const r = effectiveRect(el);
       if (r.width < min || r.height < min) {
         out.push({
           w: Math.round(r.width),
@@ -146,7 +218,29 @@ test.describe('C-57 — cibles tactiles (WCAG 2.5.5)', () => {
       host.id = 'c57-temoin';
       host.innerHTML =
         '<button style="width:16px;height:16px" aria-label="temoin trop petit"></button>'
-        + '<button style="width:44px;height:44px" aria-label="temoin conforme"></button>';
+        + '<button style="width:44px;height:44px" aria-label="temoin conforme"></button>'
+        // ── Les quatre temoins ajoutes par C-73 ────────────────────
+        //
+        // 🔴 Deux assouplissements sont entres dans le detecteur ce jour-la :
+        // l'exception « inline » ne demande plus un noeud de texte nu, et un
+        // `::before` positionne agrandit la cible. Un assouplissement sans
+        // temoin, c'est un trou qu'on ouvre en croyant corriger une mesure.
+        // Chacun a donc ici sa paire : le cas qu'il doit laisser passer, et le
+        // cas voisin qu'il doit CONTINUER a voir.
+        + '<p>Une phrase autour de '
+        + '<button style="width:90px;height:11px" aria-label="temoin inline avec prose"></button>'
+        + '</p>'
+        + '<p><button style="width:16px;height:16px" aria-label="temoin inline sans prose"></button>'
+        + '<button style="width:16px;height:16px" aria-label="temoin voisin"></button></p>'
+        + '<style>'
+        + '#t-agrandi::before{content:"";position:absolute;left:50%;top:50%;'
+        + 'width:44px;height:44px;transform:translate(-50%,-50%)}'
+        + '#t-decor::before{content:"";width:44px;height:44px;background:red}'
+        + '</style>'
+        + '<button id="t-agrandi" style="width:14px;height:14px;position:relative"'
+        + ' aria-label="temoin cible agrandie"></button>'
+        + '<button id="t-decor" style="width:14px;height:14px"'
+        + ' aria-label="temoin before decoratif"></button>';
       document.body.appendChild(host);
     });
 
@@ -154,6 +248,16 @@ test.describe('C-57 — cibles tactiles (WCAG 2.5.5)', () => {
     const names = seen.map((s) => s.name);
     expect(names).toContain('temoin trop petit');
     expect(names).not.toContain('temoin conforme');
+
+    // Exception « inline » : la prose peut vivre dans un `<span>` voisin…
+    expect(names).not.toContain('temoin inline avec prose');
+    // …mais un `<p>` qui ne contient QUE des commandes n'est pas une phrase.
+    expect(names).toContain('temoin inline sans prose');
+
+    // Un `::before` absolu et dimensionne EST la cible…
+    expect(names).not.toContain('temoin cible agrandie');
+    // …un `::before` decoratif, non positionne, n'agrandit RIEN.
+    expect(names).toContain('temoin before decoratif');
 
     await demoPage.evaluate(() => document.getElementById('c57-temoin')?.remove());
   });

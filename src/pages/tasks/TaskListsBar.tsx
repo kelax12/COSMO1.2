@@ -9,6 +9,7 @@ import CreateListSheet from './CreateListSheet';
 import { useCreateList, useDeleteList, type SmartRulePreset, type TaskList } from '@/modules/lists';
 import { VIRTUAL_TODAY_ID } from './task-page-filter';
 import { useT } from '@/i18n/useT';
+import { TAP_AREA_44_Y } from '@/components/mobile/tap-area';
 
 interface ColorOption { value: string; color: string; name: string }
 
@@ -144,7 +145,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                         // Spotify tourne autour de 36-40px.
                         // Desktop (sm+) : forme d'origine inchangée (rounded-lg,
                         // bordure, shadow-sm) — jamais migrée sur le pattern Spotify.
-                        className={`shrink-0 whitespace-nowrap inline-flex items-center justify-center px-3 sm:px-3.5 h-9 sm:h-auto sm:py-2 rounded-full sm:rounded-lg text-label sm:text-sm font-medium transition-all sm:shadow-sm sm:border ${
+                        className={`shrink-0 whitespace-nowrap inline-flex items-center justify-center px-3 sm:px-3.5 h-9 sm:h-auto sm:py-2 ${TAP_AREA_44_Y} rounded-full sm:rounded-lg text-label sm:text-sm font-medium transition-all sm:shadow-sm sm:border ${
                           !selectedListId
                             ? 'bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] sm:border-[rgb(var(--color-accent-solid))] sm:shadow-md'
                             : 'bg-[rgb(var(--color-chip-bg))] sm:bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] sm:border-[rgb(var(--color-border))]'
@@ -203,7 +204,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                           // est une smart list, pas une liste).
                           // Desktop (sm+) : forme d'origine inchangée, y compris
                           // le traitement vert dédié à cette chip.
-                          className={`shrink-0 whitespace-nowrap inline-flex items-center gap-1.5 px-3 sm:px-3.5 h-9 sm:h-auto sm:py-2 rounded-full sm:rounded-lg text-label sm:text-sm font-medium transition-all sm:shadow-sm sm:border ${
+                          className={`shrink-0 whitespace-nowrap inline-flex items-center gap-1.5 px-3 sm:px-3.5 h-9 sm:h-auto sm:py-2 ${TAP_AREA_44_Y} rounded-full sm:rounded-lg text-label sm:text-sm font-medium transition-all sm:shadow-sm sm:border ${
                             selectedListId === VIRTUAL_TODAY_ID
                               ? 'bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] sm:bg-emerald-600 sm:text-white sm:border-emerald-700 dark:sm:bg-emerald-500 sm:shadow-md'
                               : 'bg-[rgb(var(--color-chip-bg))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] sm:bg-emerald-50 sm:text-emerald-700 sm:hover:bg-emerald-100 sm:border-emerald-200 dark:sm:bg-emerald-900/30 dark:sm:text-emerald-300 dark:sm:hover:bg-emerald-900/50 dark:sm:border-emerald-800'
@@ -403,7 +404,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                                 // remplacement, demandée explicitement.
                                 // Desktop (sm+) : forme d'origine inchangée
                                 // (rounded-lg, bordure, shadow-sm).
-                                className={`flex items-center gap-1.5 px-3 sm:px-3.5 h-9 sm:h-auto sm:py-2 rounded-full sm:rounded-lg text-label sm:text-sm font-medium transition-all sm:shadow-sm sm:border ${
+                                className={`flex items-center gap-1.5 px-3 sm:px-3.5 h-9 sm:h-auto sm:py-2 ${TAP_AREA_44_Y} rounded-full sm:rounded-lg text-label sm:text-sm font-medium transition-all sm:shadow-sm sm:border ${
                                   isSelected
                                     ? 'bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] sm:border-[rgb(var(--color-accent-solid))] sm:shadow-md'
                                     : 'bg-[rgb(var(--color-chip-bg))] sm:bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] sm:border-[rgb(var(--color-border))]'
