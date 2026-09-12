@@ -160,12 +160,25 @@ toute l'application. Ce n'était pas un problème de pills.
 **Trois thèmes sur quatre étaient non conformes AA.** Après correctif : 27 → **4**
 violations sur `/okr`.
 
-> 🟠 **Reste ouvert, et c'est un arbitrage produit, pas technique.** Deux des quatre
-> violations restantes sont le bouton d'action principal : blanc sur
-> `--color-accent-solid` (`rgb(56 139 253)`) = **3,34**, sous les 4,5 requis pour du
-> texte normal. L'amener à 4,5 demande d'assombrir le bleu de marque de 16 %
-> (`#2f75d5`, ratio 4,54). C'est un changement d'identité visuelle : il appartient à
-> Axel, il n'a pas été fait ici.
+> ✅ **ARBITRÉ ET APPLIQUÉ le 2026-09-12 (C-25).** Axel a tranché : **assombrir la
+> teinte au minimum nécessaire**, chaque thème gardant la sienne. Deux thèmes sur
+> quatre étaient concernés — le `gris` à **3,34** (`#388bfd` → `#2f75d5`, **4,54**)
+> et le `sombre` à **3,68** (`#3b82f6` → `#3472d8`, **4,62**) ; `clair` (5,17) et
+> `noir` (17,57) étaient déjà conformes. Deux options écartées, et pourquoi :
+> aligner les deux sur le bleu du thème clair revenait au `#1f6feb` jugé « trop
+> terne sur graphite » quand le thème gris a été réglé ; foncer le TEXTE du bouton
+> au lieu du fond faisait lire le bouton comme désactivé (vérifié à l'œil, les
+> trois options rendues côte à côte dans le produit).
+>
+> 🔴 **Ce que cet épisode apprend, et qui dépasse le contraste** : ce 3,34 venait
+> d'une mesure MANUELLE de l'audit A-8, recopiée ici, et **aucune garde ne pouvait
+> le faire échouer** — `e2e/a11y-audit.spec.ts` fait tourner axe sur onze routes,
+> mais axe ne scanne que **le thème par défaut**. Les trois autres thèmes n'ont
+> jamais été dans un seul de ses totaux. Ce n'est pas une garde qui mesure à côté,
+> c'est une zone que rien ne mesure — et un silence se prend pour un accord.
+> `src/theme-contrast.guard.test.ts` ferme ce trou : il lit `src/index.css` et
+> recalcule le contraste des **quatre** thèmes. Vu rouge sur l'ancienne valeur
+> (3,34) avant d'être committé.
 > La 3ᵉ est une pastille de catégorie dont la couleur est **choisie par l'utilisateur**
 > (contraste non garantissable par construction) ; la 4ᵉ est un bouton à 3,93.
 

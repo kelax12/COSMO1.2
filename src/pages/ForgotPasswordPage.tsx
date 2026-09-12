@@ -84,7 +84,7 @@ const ForgotPasswordPage = () => {
             </p>
             <Link
               to="/login"
-              className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-blue-400 hover:text-blue-300 transition-colors"
+              className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-[rgb(var(--color-accent))] hover:text-[rgb(var(--color-accent-solid-hover))] transition-colors"
             >
               <ArrowLeft size={14} aria-hidden="true" /> {t('auth.backToSignIn')}
             </Link>
@@ -140,7 +140,7 @@ const ForgotPasswordPage = () => {
             <div className="mt-6 pt-6 border-t border-[rgb(var(--color-border))] text-center">
               <Link
                 to="/login"
-                className="inline-flex items-center gap-1.5 text-sm font-semibold text-blue-400 hover:text-blue-300 transition-colors"
+                className="inline-flex items-center gap-1.5 text-sm font-semibold text-[rgb(var(--color-accent))] hover:text-[rgb(var(--color-accent-solid-hover))] transition-colors"
               >
                 <ArrowLeft size={14} aria-hidden="true" /> {t('auth.backToSignIn')}
               </Link>

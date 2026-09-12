@@ -200,7 +200,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onSwitchMode, onSuccess, head
         <button
           type="button"
           onClick={() => onSwitchMode('login')}
-          className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-blue-400 hover:text-blue-300 transition-colors"
+          className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-[rgb(var(--color-accent))] hover:text-[rgb(var(--color-accent-solid-hover))] transition-colors"
         >
           {t('auth.backToLogin')}
         </button>
@@ -327,7 +327,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onSwitchMode, onSuccess, head
             {mode === 'login' && (
               <Link
                 to="/forgot-password"
-                className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
+                className="text-xs text-[rgb(var(--color-accent))] hover:text-[rgb(var(--color-accent-solid-hover))] transition-colors"
               >
                 {t('auth.forgotPassword')}
               </Link>
@@ -433,7 +433,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onSwitchMode, onSuccess, head
         <button
           type="button"
           onClick={() => onSwitchMode(mode === 'login' ? 'register' : 'login')}
-          className="mt-1 text-sm font-semibold text-blue-400 hover:text-blue-300 transition-colors underline underline-offset-2"
+          className="mt-1 text-sm font-semibold text-[rgb(var(--color-accent))] hover:text-[rgb(var(--color-accent-solid-hover))] transition-colors underline underline-offset-2"
         >
           {mode === 'login' ? t('auth.createOne') : t('auth.signIn')}
         </button>
