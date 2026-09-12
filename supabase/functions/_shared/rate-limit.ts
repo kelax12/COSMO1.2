@@ -127,5 +127,24 @@ export async function consumeRateLimits(
     if (data === false) return { allowed: false, misconfigured: false }
   }
 
+  // Purge opportuniste : une fois sur cent, on retire les compteurs dont la
+  // fenetre est finie depuis une semaine. Pas de cron a poser, et la table
+  // reste bornee.
+  //
+  // ⚠️ On ATTEND sa fin, et le commentaire de la mig. 139 disait « sans
+  //    bloquer la reponse ». Une promesse laissee flottante dans une Edge
+  //    Function n'a aucune garantie de survivre au retour de la reponse :
+  //    l'isolat peut etre recycle avant qu'elle parte, et la purge ne se
+  //    ferait alors jamais — une purge qu'on croit posee et qui ne tourne pas
+  //    est pire que pas de purge du tout. Le cout est un DELETE sur colonne
+  //    indexee, sur 1 % des appels.
+  //
+  // ❌ Un echec de purge ne refuse RIEN : la table qui gonfle est un probleme
+  //    d'exploitation, pas une raison de couper le signalement de bugs.
+  if (Math.random() < 0.01) {
+    const { error } = await admin.rpc('purge_stale_rate_limits')
+    if (error) await opsAlert(fnName, `purge des compteurs de debit impossible (${error.message})`)
+  }
+
   return { allowed: true, misconfigured: false }
 }
