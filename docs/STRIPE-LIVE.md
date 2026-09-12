@@ -112,7 +112,18 @@ bloquant pour la résiliation, c'est un point de conformité.
    sans immatriculation est du travail dissimulé. C'est le bloquant, pas la technique.
 2. Poser les 8 secrets `STRIPE_ORG_PRICE_*` sur les IDs ci-dessus, et remplacer
    `STRIPE_SECRET_KEY` + `STRIPE_WEBHOOK_SECRET` par ceux du compte live.
-3. Réenregistrer l'endpoint webhook sur le compte live (mêmes 5 events).
+3. Réenregistrer l'endpoint webhook sur le compte live. 🔴 **SIX events, pas cinq** — recomptés
+   dans `supabase/functions/stripe-webhook/index.ts` le 2026-09-12 :
+   `checkout.session.completed`, `customer.subscription.updated`,
+   `customer.subscription.deleted`, `invoice.payment_succeeded`, `invoice.payment_failed`,
+   `charge.refunded`. Cette ligne disait « mêmes 5 events » : le chiffre est devenu faux le
+   2026-09-06, quand la v27 du webhook a ajouté la branche de remboursement. En réenregistrer
+   cinq laisserait `charge.refunded` non souscrit, donc **aucune ligne compensatoire au journal
+   d'encaissement** : un remboursement réellement versé, et un journal qui ne montre que
+   l'encaissement. C'est ce qu'on produit en contrôle fiscal.
+   ⚠️ **Le même doute porte sur l'endpoint de TEST**, et il n'est pas refermé : rien ne dit que
+   `charge.refunded` y a été ajouté avec la v27. À vérifier au tableau de bord avant de conclure
+   d'un test de remboursement qu'il a marché (geste M-37c).
 4. Mention « TVA non applicable, art. 293 B du CGI » sur les factures tant que la franchise
    en base s'applique.
 5. `tax_code` des produits : non renseigné (comme en test). À poser avec l'expert-comptable

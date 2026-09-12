@@ -61,12 +61,22 @@
 // Secrets attendus : `STRIPE_SECRET_KEY`, `APP_URL`.
 // Déploiement : `supabase functions deploy stripe-org-refund`
 //
-// ⚠️ NON DÉPLOYÉE et NON ÉPROUVÉE CONTRE STRIPE à l'écriture : la clé du projet
-//    est une clé de TEST, il n'existe aucun `org_subscriptions`, et rien n'est
-//    encaissé. Seule la logique de MONTANT est réellement testée
-//    (`src/modules/billing/refund-amount.test.ts`). Le reste attend un
-//    parcours joué contre le compte de test — cf. C-27, qui exige que C-65 ne
-//    parte pas sans son parcours E2E.
+// ✅ DÉPLOYÉE EN v1 LE 2026-09-12. Vérifiée en ligne le jour même, par ses
+//    propres réponses et non par la lecture de ce fichier : `GET` rend
+//    `405 {"error":"method_not_allowed"}` et un POST porteur d'un jeton anon
+//    rend `401 {"error":"Unauthorized"}` — donc le graphe de modules démarre,
+//    `npm:stripe@14.21.0` et les deux `_shared/` compris. Un défaut de boot
+//    aurait rendu un 500.
+//
+// 🔴 DÉPLOYÉE N'EST PAS ÉPROUVÉE. Rien n'a encore été joué contre Stripe :
+//    `refunds.create`, la résiliation immédiate, la clé d'idempotence, le
+//    pré-contrôle qui retranche et la ligne compensatoire du journal n'ont
+//    jamais tourné sur une vraie facture. Seule la logique de MONTANT est
+//    réellement testée (`src/modules/billing/refund-amount.test.ts`, 12 cas),
+//    et le parcours d'écran l'est contre un stub (`e2e/stubbed/refund.spec.ts`).
+//    Ce qui manque tient à trois choses mesurées le 2026-09-12 :
+//    `org_subscriptions` = 0 ligne, `payment_records` = 0 ligne, et aucune
+//    facture payée à rembourser. Cf. C-65 et le geste manuel M-37.
 // ═══════════════════════════════════════════════════════════════════
 
 import Stripe from 'npm:stripe@14.21.0'
