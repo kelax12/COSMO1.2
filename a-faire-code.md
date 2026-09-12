@@ -64,8 +64,9 @@ compte** et **ce qui prouve que c'est fini**.
 > ✅ **Corrigé le 2026-09-12 : la production a bougé.** Ce paragraphe disait « 7 Edge Functions
 > actives, `stripe-org-refund` toujours absente ». Elles sont **8** depuis le 2026-09-12 à
 > 22:05 UTC, `stripe-org-refund` comprise (v2, geste M-37), et le dépôt ne porte plus aucune
-> fonction non déployée. Restent vrais : `report-bug` en **v8 du 2026-08-29**, et les migrations
-> `136`/`140` hors base. ⚠️ Déployer n'est pas éprouver — cf. C-65, où le chiffre qui compte est
+> fonction non déployée. ⚠️ **Cette ligne a vieilli le soir même** : `report-bug` est passée en
+> **v11 le 2026-09-12 à 23:08 UTC**, donc les 8 fonctions en ligne sont désormais toutes à jour.
+> Reste vrai : les migrations `136`/`140` hors base. ⚠️ Déployer n'est pas éprouver — cf. C-65, où le chiffre qui compte est
 > désormais « 0 facture payée à rembourser », pas « fonction absente ».
 >
 > ⚠️ **Le ledger de prod porte deux migrations que `main` n'a pas** : `143_categories_tree` et
@@ -118,7 +119,12 @@ compte** et **ce qui prouve que c'est fini**.
 > en base), `stripe-org-refund` **n'existe pas** en production, `report-bug` y
 > tourne en **v8 du 2026-08-29** donc sans son plafond, et `stripe-webhook` en
 > **v26 du 2026-08-26** donc sans la ligne compensatoire de remboursement. Trois
-> secrets restent à poser. Détail et ordre imposé en **[§ 11.1](#11-ce-qui-reste-ouvert)**.
+> secrets restent à poser.
+>
+> ⚠️ **Instantané du 2026-09-04, conservé pour ce qu'il montre, périmé sur les faits.** Au
+> 2026-09-12 : les `138` et `139` sont en base, `stripe-org-refund` est en ligne (v2),
+> `stripe-webhook` en v27, `report-bug` en **v11 avec son plafond**, et il ne reste que **deux**
+> secrets à poser. Ce qui n'a pas vieilli, c'est la leçon du titre. Détail et ordre imposé en **[§ 11.1](#11-ce-qui-reste-ouvert)**.
 >
 > ⚠️ Il a fallu interroger le projet à la main pour savoir tout ça : **rien ne
 > compare le code déployé à celui du dépôt**, donc rien n'aurait signalé l'écart.
@@ -2041,7 +2047,39 @@ motif, appliqué à une seule des trois tables de preuve.
 
 ### C-31 · `report-bug` est un relais d'e-mail ouvert, sans aucune limite de débit · **P2 · M**
 
-> 🟠 **mig. `139` APPLIQUÉE en prod le 2026-09-12**, vérifiée acteur par acteur dans une transaction annulée. · 3/heure/compte et 10/jour/IP, fenêtre glissante, décision atomique. **Aucune IP en base** (hachage salé). 🔴 **Le plafond ne s'applique toujours nulle part** : `report-bug` reste en **v8, déployée le 2026-08-29**, et le secret `RATE_LIMIT_SALT` (M-34) n'est pas posé. Les deux gestes restent, **dans cet ordre**.
+> ✅ **FERMÉ le 2026-09-12.** Les trois maillons sont posés, dans l'ordre imposé : mig. `139` appliquée en prod, secret `RATE_LIMIT_SALT` posé (M-34), puis **`report-bug` déployée en v11 le 2026-09-12 à 23:08 UTC**. 3/heure/compte et 10/jour/IP, fenêtre glissante, décision atomique. **Aucune IP en base** (hachage salé). La borne a été jouée **sur la fonction en ligne** : le 11ᵉ appel rend `429`.
+
+**Preuve de sortie, 12 appels réels à `/functions/v1/report-bug`** avec la seule clé anon et un corps
+invalide, donc **aucun e-mail expédié**. Même sonde avant et après, le plafond étant appliqué
+**avant** le parsing du corps :
+
+| | v8 (2026-08-29) | v11 (2026-09-12) |
+|---|---|---|
+| appels 1 → 10 | `400` | `400` |
+| **appel 11** | `400` | **`429 too_many_requests`** |
+| **appel 12** | `400` | **`429 too_many_requests`** |
+
+En base après la sonde : **une seule ligne**, `hits = 11`, soit `plafond + 1`. Il refuse et cesse de
+croître, exactement la stabilisation voulue. Sa clé est un opaque de 46 caractères
+(`report-bug:ip:<32 hex>`), **aucune IP**. Le compteur de la sonde a été purgé derrière
+(`rate_limits` est un cache de défense, jamais une preuve) et un 13ᵉ appel rend de nouveau `400` :
+le formulaire n'est pas resté bloqué par la mesure.
+
+✅ **Confirmation indépendante du `REVOKE`** : l'advisor de sécurité liste 52 fonctions
+`SECURITY DEFINER` exécutables par `authenticated`. `consume_rate_limit` et
+`purge_stale_rate_limits` **n'y sont pas**. `rate_limits` rejoint la famille documentée
+« RLS active, aucune policy » (`payment_records`, `renewal_notices`, `admin_users`), qui est le
+comportement voulu : la table est fermée par défaut.
+
+⚠️ **Ce qui n'est PAS prouvé par cette sonde** : le plafond **par compte** (3/heure). Il n'est
+atteint qu'après validation du titre et de la description, donc l'exercer en production
+demanderait d'expédier **trois vrais e-mails** vers la boîte de contact. Il emprunte le même
+`consumeRateLimits` et la même RPC, et la séquence à `p_limit = 3` a été jouée au niveau SQL
+(4ᵉ refusé, 5ᵉ refusé, compteur figé à 4). C'est une preuve de la borne, pas du chemin complet.
+
+⚠️ **La comparaison octet pour octet du déployé contre le dépôt n'a pas été jouée** :
+`npm run check:edge` exige `SUPABASE_ACCESS_TOKEN` (M-33), qui n'est pas posé. Le contenu servi a
+été relu par API et correspond au dépôt, mais c'est une lecture, pas la garde.
 
 #### Ce que la passe du 2026-09-12 a mesuré
 
@@ -2108,7 +2146,7 @@ domaine qui porte les e-mails d'authentification et les avis L215-1.
 
 ### C-32 · `report-bug` : l'allowlist de types de pièce jointe est décorative · **P3 · S**
 
-> 🟠 **écrit** le 2026-09-04, **pas en production** · l'extension du fichier joint est DÉRIVÉE du type validé, jamais reprise du nom envoyé. 🔴 La version en ligne reste **`report-bug` v8, déployée le 2026-08-29** (mesuré le 2026-09-12) : un `facture.html` déclaré `image/png` arrive **toujours** en pièce jointe HTML dans la boîte de contact. Part avec le déploiement de C-31.
+> ✅ **EN PRODUCTION depuis le 2026-09-12** (`report-bug` **v11**, déployée à 23:08 UTC, dans la même passe que C-31) · l'extension du fichier joint est DÉRIVÉE du type validé, jamais reprise du nom envoyé. Un `facture.html` déclaré `image/png` repart désormais en `facture.png`, donc inerte dans un client de messagerie. ⚠️ Le correctif était écrit depuis le 2026-09-04 et portait un « ✅ corrigé » **sans date de déploiement** : il décrivait un commit, pas la production, et le défaut est resté en ligne huit jours.
 
 `ALLOWED_ATTACHMENT_TYPES` valide `attachment.type`… puis **ne le transmet jamais**. Resend ne reçoit
 que `filename` et `content`, et type la pièce jointe d'après le **nom de fichier**, qui n'est borné
@@ -2123,7 +2161,7 @@ qu'en longueur.
 
 ### C-33 · `report-bug` : une panne d'authentification anonymise l'auteur en silence · **P3 · XS**
 
-> 🟠 **écrit** le 2026-09-04, **pas en production** · l'erreur de `getUser()` est lue, et « auteur non résolu » se distingue de « anonyme ». 🔴 La version en ligne reste **v8, déployée le 2026-08-29** (mesuré le 2026-09-12). Part avec le déploiement de C-31.
+> ✅ **EN PRODUCTION depuis le 2026-09-12** (`report-bug` **v11**, déployée à 23:08 UTC, dans la même passe que C-31) · l'erreur de `getUser()` est lue, et « auteur non résolu » se distingue de « anonyme ». ⚠️ Même remarque que C-32 : le « ✅ corrigé le 2026-09-04 » décrivait un commit, pas la production.
 
 `const { data } = await anon.auth.getUser()` — l'erreur n'est pas lue. Sur panne de l'API auth, un
 utilisateur **connecté** est traité comme anonyme : le rapport part sans son adresse et sans
@@ -3799,7 +3837,7 @@ Ce qu'il a rendu, et comment c'est mesuré :
 |---|---|
 | **C-29** · lecture avalée qui détruit une organisation | lecture de code + `pg_constraint` en prod : 22 FK vers `organizations(id)`, 21 en CASCADE |
 | **C-30** · la cascade emporte les preuves L215-1 et L221-28 | même introspection : `renewal_notices` et `withdrawal_consents` en CASCADE, `payment_records` en SET NULL |
-| **C-31** · `report-bug` est un relais d'e-mail sans limite | appel réel avec la seule clé anon → `400 invalid_body` |
+| ~~**C-31**~~ · `report-bug` était un relais d'e-mail sans limite | ✅ **refermé le 2026-09-12**, borne jouée en ligne : 10 appels → `400`, le 11ᵉ → `429` |
 | **C-32** · allowlist de pièce jointe décorative | lecture du contrat Resend : la pièce jointe est typée par son nom |
 | **C-33** · panne d'auth qui anonymise l'auteur | lecture de code, famille C-29 |
 | **C-34** · `renewal-notice.yml` vert sur secret absent | appel réel → `503 cron_secret_not_configured`, donc le secret n'est nulle part |
@@ -4098,9 +4136,10 @@ périmètre, ses questions et ses pièges connus.
 ## 11. Ce qui reste ouvert
 
 > ✅ **Tout ce paragraphe a été re-mesuré le 2026-09-12** — ledger de migrations et les 7 Edge
-> Functions relus par l'API Supabase, runs relus par `gh`. **Côté production, rien n'a bougé depuis
-> le 2026-09-08** : `stripe-org-refund` reste absente, `report-bug` reste en v8 du 2026-08-29, et
-> les migrations `136` à `140` restent hors base. Les tableaux ci-dessous sont donc reconduits
+> Functions relus par l'API Supabase, runs relus par `gh`. ⚠️ **La production a bougé dans la
+> journée, après cette mesure** : `stripe-org-refund` est déployée (v2, 22:05 UTC), `report-bug`
+> est passée en **v11** (23:08 UTC, plafond de débit actif), et les migrations `138` et `139` sont
+> en base. Restent hors base la `136`, la `137` et la `140`. Les tableaux ci-dessous sont donc reconduits
 > **parce qu'ils ont été revérifiés**, pas parce qu'ils ont été recopiés.
 >
 > ⚠️ **Une nouveauté dans le ledger** : `143_categories_tree` et
@@ -4147,7 +4186,7 @@ compte les items « écrits mais pas en production » séparément. Nominativeme
 
 - **critère non atteint** : `C-23` (9 nœuds de contraste restants, qui demandent un **second**
   arbitrage de marque sur `--color-accent`), `C-24` (la moitié « appareil réel » de A-4).
-- **écrits, pas en production** : `C-28` `C-30` `C-31` `C-35` `C-39` `C-48` `C-65`. Aucun ne demande
+- **écrits, pas en production** : `C-28` `C-30` ~~`C-31`~~ (déployé le 2026-09-12) `C-35` `C-39` `C-48` `C-65`. Aucun ne demande
   de code — ils demandent un **geste** : une migration, un secret, un déploiement.
 
 #### ⬜ Pas commencé (5)
@@ -4278,7 +4317,7 @@ et sa date** décrit un commit, pas la production.
 Ils se lisent en **deux familles**, et les confondre fait perdre le seul renseignement utile :
 
 - **critère non atteint, il reste du travail** : `C-23` `C-24` `C-27` `C-38` ;
-- **écrits, testés, mais PAS en production** : `C-28` `C-30` `C-31` `C-39` `C-65`. Ce sont
+- **écrits, testés, mais PAS en production** : `C-28` `C-30` ~~`C-31`~~ (déployé le 2026-09-12) `C-39` `C-65`. Ce sont
   les gestes du § 11.1 qui les débloquent, pas du travail supplémentaire.
 
 > 🔴 **`C-38` n'est PAS fini, contrairement au décompte d'entrée de cette passe.** Mesuré ici, en
@@ -4319,7 +4358,7 @@ Ils se lisent en **deux familles**, et les confondre fait perdre le seul renseig
 | **C-38** `i18n:scan` | deux angles morts sur trois refermés | le troisième, ci-dessus, et les trois chaînes qu'il cache |
 | **C-28** canal d'alerte d'ops | `ci-alert.yml` écrit et branché | le secret `OPS_ALERT_WEBHOOK_URL` dans les secrets **Actions** (§ 11.1c) |
 | ~~**C-30** preuves qui survivent~~ | ✅ **CLOS le 2026-09-12**, mig. `138` appliquée et vérifiée en dix cas | — |
-| **C-31** plafond de débit | `consumeRateLimits` écrit | ~~la mig. **139**~~ (appliquée le 2026-09-12), le secret `RATE_LIMIT_SALT`, et le redéploiement de `report-bug`. **Deux gestes sur trois restent**, dans cet ordre |
+| ~~**C-31** plafond de débit~~ | ✅ **RIEN N'ATTEND PLUS** | ✅ les trois maillons sont posés le 2026-09-12 : mig. `139` appliquée, `RATE_LIMIT_SALT` posé, `report-bug` déployée en **v11**. Borne jouée en ligne : 11ᵉ appel → `429` |
 | **C-39** suppression d'organisation | `useDeleteOrgFlow` rembourse avant de supprimer, propriétaire seul, vérifié par mutation. ✅ **mig. `138` appliquée le 2026-09-12** | le déploiement de `stripe-org-refund` (§ 11.1b) — seul reste |
 | ~~**C-48** identifiants de refus de dépendance~~ | ✅ **CLOS le 2026-09-12**, mig. `137` appliquée, 13 scénarios rejoués avant/après en transaction annulée, table de transition retirée, les deux langues lues dans le navigateur | — |
 | **C-65** remboursement | fonction, calcul du montant (12 cas exécutés), bouton, garantie écrite aux CGU. ✅ **La branche `charge.refunded` du webhook** (v27, 2026-09-06 à 19:27 UTC) et ✅ **`stripe-org-refund` elle-même, en v2 du 2026-09-12 à 22:05 UTC**, vérifiée en ligne par ses propres réponses | **rien n'a encore été joué contre Stripe** : 0 `org_subscriptions`, 0 `payment_records`, donc aucune facture à rembourser. Et un doute ouvert : `charge.refunded` n'est peut-être pas souscrit sur l'endpoint, qui est documenté à 5 events pour 6 branches |
@@ -4362,7 +4401,7 @@ position du ledger.
 |---|---|---|
 | ~~**137** identifiants de refus de dépendance~~ | C-48 ✅ | ✅ **APPLIQUÉE le 2026-09-12.** La table de transition est retirée dans la foulée, avec la garde qui l'empêche de revenir. ⚠️ L'auto-dépendance est refusée par le **trigger de cycle**, pas par la contrainte `no_self` que l'item nommait — mesuré, pas déduit |
 | ~~**138** preuves qui survivent + propriétaire seul~~ | C-30 ✅, C-39 🟠 | ✅ **APPLIQUÉE le 2026-09-12.** ⚠️ Ce que la ligne annonçait était faux à moitié : la cascade détruisait `renewal_notices`, mais sur `withdrawal_consents` elle **bloquait la suppression** (`23001`) au lieu de détruire la preuve — mesuré au témoin, détail en note de C-30 |
-| ~~**139** plafond de débit~~ | C-31 🟠 | ✅ **APPLIQUÉE le 2026-09-12**, vérifiée acteur par acteur en transaction annulée. ⚠️ Appliquer ne suffit pas : le plafond ne s'applique **toujours** nulle part tant que `RATE_LIMIT_SALT` (M-34) n'est pas posé **et** `report-bug` pas redéployée. 🔴 Un défaut de plus, trouvé avant application : `REVOKE ... FROM PUBLIC` ne retire **pas** `authenticated`, que le privilège par défaut du schéma accorde nommément (détail en C-31) |
+| ~~**139** plafond de débit~~ | C-31 ✅ | ✅ **APPLIQUÉE le 2026-09-12**, vérifiée acteur par acteur en transaction annulée, **et le plafond s'applique** : `RATE_LIMIT_SALT` posé et `report-bug` déployée en v11 le même jour. 🔴 Un défaut de plus, trouvé avant application : `REVOKE ... FROM PUBLIC` ne retire **pas** `authenticated`, que le privilège par défaut du schéma accorde nommément (détail en C-31) |
 
 ⚠️ **Ordre imposé** : la `139` avant le déploiement de `report-bug`, sinon la fonction appelle une
 RPC absente. ✅ Ce premier maillon est posé depuis le 2026-09-12 ; restent **M-34 puis le
@@ -4388,7 +4427,7 @@ devait partir le jour du déploiement, sans quoi la garde échoue, ce qui est ex
 
 | Fonction | Version déployée | Ce que la prod exécute donc |
 |---|---|---|
-| `report-bug` | v8, **2026-08-29** — remesuré par API le **2026-09-12** | sans plafond de débit, sans allowlist réelle de pièces jointes, et elle **anonymise l'auteur** en cas de panne d'authentification (C-31 → C-33, C-36). ⚠️ La mig. `139` est en base depuis le 2026-09-12, mais **rien n'a changé en production** : la RPC existe et personne ne l'appelle. Mesuré le même jour, 12 appels d'affilée à corps invalide rendent 12 × `400`, aucun refus |
+| `report-bug` | ✅ **v11, 2026-09-12 à 23:08 UTC** (était v8 du 2026-08-29) | ✅ **à jour**. Cette version porte le plafond de débit (C-31), l'allowlist de pièce jointe réellement appliquée (C-32) et la distinction « auteur non résolu » / « anonyme » (C-33). Borne vérifiée en ligne le jour même : 10 appels → `400`, 11ᵉ et 12ᵉ → `429`. ⚠️ Reste S-4 / C-36 à re-vérifier sur cette version |
 | `stripe-org-refund` | **v2, 2026-09-12 à 22:05 UTC** (v1 à 21:53, reprise pour corriger un en-tête devenu faux) | le chemin de remboursement EXISTE enfin en ligne, douze jours après que les CGU l'ont promis. ⚠️ **Déployée n'est pas éprouvée** : rien n'a encore été joué contre Stripe, cf. ci-dessous |
 
 ✅ **Ce qui est rentré en production depuis la version du 2026-09-04 de ce tableau**, relu dans le
