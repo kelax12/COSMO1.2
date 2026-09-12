@@ -171,20 +171,22 @@ test.describe('C-27 — le calendrier COSMO, surface par surface (démo)', () =>
 
     // Cocher une tâche : sans sélection, « Plus d'actions » reste DÉSACTIVÉ.
     //
-    // ⚠️ La case de sélection du tableau desktop n'a AUCUN nom accessible
-    // (`motion.button` nu, cf. `task-table/list.tsx`) — d'où le passage par sa
-    // position. Sur mobile la même case est nommée. Ce n'est pas une commodité
-    // de test : c'est un défaut d'accessibilité de la version desktop, et le
-    // contournement ici en est la trace.
-    const mobileBox = page
-      .getByRole('button', { name: /^ajouter à la liste$/i })
+    // ✅ Le contournement par POSITION qui vivait ici est parti le 2026-09-12
+    // avec le défaut qu'il tracait (C-55). La case de sélection du tableau
+    // desktop n'avait aucun nom accessible, aucun rôle et aucun état : elle
+    // porte maintenant `role="checkbox"` et un nom qui dit ce qu'elle FAIT
+    // (sélectionner, pas terminer). Le test la désigne donc par son nom, comme
+    // une personne au lecteur d'écran la trouverait.
+    //
+    // ⚠️ Le nom dépend du MODE : « Sélectionner « … » » en mode sélection,
+    // « Ajouter à la liste » quand la même case sert à ranger dans une liste.
+    // Les deux sont acceptés ici — c'est la même commande, pas le même geste.
+    await page
+      .getByRole('checkbox', { name: /^s[ée]lectionner\s+[«"]/i })
+      .or(page.getByRole('button', { name: /^ajouter à la liste$/i }))
       .filter({ visible: true })
-      .first();
-    if (await mobileBox.isVisible({ timeout: 3_000 }).catch(() => false)) {
-      await mobileBox.click();
-    } else {
-      await page.locator('tbody tr').first().locator('td').first().getByRole('button').first().click();
-    }
+      .first()
+      .click();
     const bulkBar = page.getByRole('menu', { name: /actions supplémentaires/i });
 
     await page

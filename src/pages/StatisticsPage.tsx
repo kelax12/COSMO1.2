@@ -478,6 +478,12 @@ export default function StatisticsPage() {
                   value={referenceValue}
                   onChange={(e) => setReferenceValue(Number(e.target.value))}
                   step="5"
+                  // 🔴 Sans ce nom, axe rend un `label` CRITICAL : le « min »
+                  // voisin est un `<span>` frère, il ne nomme rien. Il ne se
+                  // voyait qu'en CI parce que le champ n'existe que si la case
+                  // « Objectif » est cochée, et cet état est persisté — un
+                  // profil local qui l'a décochée ne rend jamais le champ.
+                  aria-label={t('chart.goalValueAria')}
                   className="w-20 px-2 py-1.5 text-sm rounded-lg border"
                   style={{
                     backgroundColor: 'rgb(var(--color-hover))',
