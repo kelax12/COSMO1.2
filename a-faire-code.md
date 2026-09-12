@@ -2379,6 +2379,44 @@ sur son propre fond teinté, cousin de **C-25** : même arbitrage, autre surface
 - **Fini quand** : `assertNoCritical` devient `assertNoSerious`, la CI est verte, et les trois
   violations ci-dessus sont corrigées et non exemptées.
 
+> #### 📐 Remesuré le 2026-09-12 — le chiffre de 41 n'était pas un total, c'était un TIRAGE
+>
+> Trois passes consécutives de `e2e/a11y-audit.spec.ts`, même arbre, même commit, à quelques
+> minutes d'intervalle : **21**, puis **41**, puis **55** nœuds `color-contrast`. Le total de cet
+> item n'est donc pas reproductible, et « 41 nœuds en trois familles » décrivait une passe, pas un
+> état. C'est la même erreur de langage que celle reprochée à l'énoncé d'origine de C-23 : un
+> échantillon rapporté comme un total.
+>
+> **Pourquoi ça bouge** : axe photographie la page à un instant, et ces routes entrent en fondu.
+> Les paires à 1,14 · 1,15 · 1,22 · 1,66 (un gris sur un gris presque identique, un bleu pâle sur
+> un bleu pâle) sont des mesures prises EN PLEIN FONDU. Elles apparaissent et disparaissent d'une
+> passe à l'autre, et durcir sur elles rendrait la CI instable sans rien rendre plus lisible — ce
+> que la dispense disait déjà, sans pouvoir le chiffrer.
+>
+> **Ce qui, lui, est reproductible — identique dans les TROIS passes :**
+>
+> | Paire | Nœuds | Ratio | Nature |
+> |---|---|---|---|
+> | `#2563eb` sur `#e3ebfa` | **9** | 4,31 | l'accent du thème clair sur son propre fond teinté à 10 % — demande de décider du token `--color-accent`, donc un second arbitrage de marque |
+> | `#60a5fa` sur `#ffffff` | **2** | 2,54 | ✅ **corrigé** : deux liens d'`AuthForm` en `text-blue-400` codé en dur, c'est-à-dire un bleu de thème SOMBRE posé sur une surface blanche. Aucun arbitrage à rendre, c'était un défaut |
+>
+> **Le noyau opposable est donc de 11 nœuds, pas 41**, et il vient d'être ramené à **9**.
+> `AuthForm` et `ForgotPasswordPage` passent au token `--color-accent` (5 occurrences) : mesuré
+> dans le navigateur, thème clair, **2,54 → 5,17** sur « Mot de passe oublié ? » et « Créer un
+> compte ». La FAQ de la landing garde son `text-blue-400` — elle vit sur `bg-slate-900/60`, où ce
+> bleu est le bon.
+>
+> **Ce qui reste pour fermer C-23** : les 9 nœuds `#2563eb` sur `#e3ebfa`. Les corriger demande de
+> foncer `--color-accent` du thème clair (`#1d4ed8` rendrait 5,59 sur ce fond) — c'est la couleur
+> des LIENS et du focus, donc une seconde décision d'identité, distincte de celle rendue pour
+> C-25 qui ne portait que sur `--color-accent-solid`. Elle n'est pas prise ici.
+>
+> ❌ **Et la dispense `color-contrast` ne peut PAS encore tomber** — ni sur C-25, qui est pourtant
+> tranché. Les deux mesures ne parlent pas de la même chose : C-25 portait sur des thèmes
+> qu'**axe ne scanne jamais**, donc le corriger ne retire pas un seul nœud du rapport. Écrire
+> « C-25 est fait, donc la gate se durcit » aurait été un raccourci faux, et c'est exactement le
+> genre de raccourci que ce fichier existe pour empêcher.
+
 ### C-24 · Quatre audits d'accessibilité jamais faits · **P2 · L** · 🟠 trois sur quatre faits le 2026-09-03
 
 **A-3 en a passé trois** (parcours clavier, modales, `/agenda`), au clavier et dans le navigateur,
@@ -2430,13 +2468,47 @@ trois corrigés dans la foulée.
 > C-49. Ce n'est pas un défaut d'accessibilité, c'est du code mort qui gonfle le compte des
 > surfaces à auditer.
 
-### C-25 · Le bleu de marque est à 3,34:1 · **P3 · XS**
+### C-25 · ~~Le bleu de marque est à 3,34:1~~ · **P3 · XS** · ✅ arbitré ET appliqué le 2026-09-12
 
 Résiduel de A-8, laissé en **arbitrage produit** depuis le 2026-08-24. Un arbitrage qui ne se rend
 pas devient un oubli.
 
 - **Fini quand** : soit la teinte change, soit la décision « on garde, voici pourquoi et où c'est
   acceptable » est écrite dans `ACCESSIBILITY.md`.
+
+> #### ✅ Tranché le 2026-09-12 — la teinte change, sur **deux** thèmes et pas un
+>
+> **Première surprise à la remesure : l'item parlait d'un thème, il y en avait deux.** Le 3,34 du
+> thème `gris` était documenté ; le `sombre` était à **3,68**, jamais nommé nulle part. `clair`
+> (5,17) et `noir` (17,57) étaient déjà conformes — « le bleu de marque » n'était donc pas à 3,34,
+> **un** de ses quatre réglages l'était.
+>
+> Trois options conformes ont été calculées puis **rendues côte à côte dans le produit**, dans le
+> thème concerné, avant de demander. Axel a choisi **A — assombrir au minimum nécessaire** :
+>
+> | Thème | avant | après | blanc dessus |
+> |---|---|---|---|
+> | `gris` | `#388bfd` | **`#2f75d5`** | 3,34 → **4,54** |
+> | `sombre` | `#3b82f6` | **`#3472d8`** | 3,68 → **4,62** |
+> | `clair` | `#2563eb` | inchangé | 5,17 |
+> | `noir` | `#f0f0f0` | inchangé | 17,57 |
+>
+> Les deux écartées, et pourquoi : aligner sur le bleu du thème clair ramenait au ton jugé « trop
+> terne sur graphite » quand le thème gris a été réglé ; foncer le TEXTE du bouton faisait lire le
+> bouton comme désactivé — visible immédiatement sur le rendu, pas déductible du ratio.
+>
+> 🔴 **Le vrai finding est ailleurs, et il est plus lourd que la teinte.** Ce 3,34 venait d'une
+> mesure MANUELLE d'A-8, recopiée dans `ACCESSIBILITY.md`, et **rien ne pouvait le faire échouer** :
+> `e2e/a11y-audit.spec.ts` fait tourner axe sur onze routes, mais axe ne scanne que **le thème par
+> défaut**. Les trois autres thèmes n'ont jamais été dans un seul de ses totaux. Ce n'est pas une
+> garde qui mesure à côté (le défaut des quatre gardes du 09-03), c'est le cas symétrique : une zone
+> que **rien** ne mesure, donc pas de run rouge à mettre en cause, juste un silence qu'on prend pour
+> un accord.
+>
+> **Cliquet posé** : `src/theme-contrast.guard.test.ts` lit `src/index.css` et recalcule le
+> contraste des **quatre** thèmes, avec un témoin du témoin (si la regex cesse de trouver les
+> thèmes, le tableau vide ferait passer la garde). Vu **rouge sur l'ancienne valeur** avant d'être
+> committé : `{"bg":"56 139 253","ratio":3.34}`.
 
 ### C-51 · ~~Le calendrier COSMO ne se pilotait pas au clavier, sur ses huit surfaces~~ · **P1 · S** · ✅ corrigé le 2026-09-03
 

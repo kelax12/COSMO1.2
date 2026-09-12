@@ -194,7 +194,14 @@
         --color-primary: 148 163 184;
         --color-secondary: 100 116 139;
         --color-accent: 59 130 246;
-        --color-accent-solid: 59 130 246; /* pas de duo dédié en Sombre — repli sur l'accent existant */
+        /* 🔴 C-25 (2026-09-12) — #3472d8 et non plus #3b82f6. Le blanc sur
+           #3b82f6 rendait 3,68:1, sous les 4,5 exigés pour du texte normal :
+           le bouton d'action PRINCIPAL de ce thème n'était pas lisible au
+           sens AA. La teinte est assombrie de 12 %, le minimum qui passe la
+           barre (4,62:1), plutôt qu'alignée sur le bleu du thème clair —
+           chaque thème garde SA teinte, c'est l'arbitrage d'Axel.
+           ❌ Ne jamais la remonter sans remesurer le blanc dessus. */
+        --color-accent-solid: 52 114 216; /* #3472d8 — blanc dessus : 4,62:1 */
         --color-accent-solid-hover: 37 99 235; /* blue-600 — survol des boutons/chips pleins */
         --color-accent-solid-foreground: 255 255 255; /* texte blanc sur les boutons pleins */
         --color-success: 52 211 153;
@@ -294,7 +301,14 @@
     --color-primary: 173 186 199;      /* #adbac7 texte secondaire */
     --color-secondary: 118 131 144;    /* #768390 texte muted */
     --color-accent: 88 166 255;        /* #58a6ff texte / liens / focus / bordures actives */
-    --color-accent-solid: 56 139 253;  /* #388bfd fonds pleins de boutons/chips actifs — intensifié pour rester percutant sur fond graphite (#1f6feb original trop terne) */
+    /* 🔴 C-25 (2026-09-12) — #2f75d5 et non plus #388bfd. C'était le pire des
+       quatre thèmes : blanc sur #388bfd = 3,34:1, mesuré par l'audit A-8 le
+       2026-08-24 et laissé en arbitrage de marque pendant dix-neuf jours. La
+       teinte est assombrie de 16 %, le minimum qui passe la barre (4,54:1).
+       Le motif du choix d'origine (« #1f6feb trop terne sur graphite ») tient
+       toujours : on n'est pas revenu à #1f6feb, on a assombri #388bfd.
+       ❌ Ne jamais la remonter sans remesurer le blanc dessus. */
+    --color-accent-solid: 47 117 213;  /* #2f75d5 fonds pleins de boutons/chips actifs — blanc dessus : 4,54:1 */
     --color-accent-solid-hover: 88 166 255; /* #58a6ff — même teinte que --color-accent, s'éclaircit au survol */
     --color-accent-solid-foreground: 255 255 255; /* texte blanc sur les boutons pleins */
     --color-success: 52 211 153;
