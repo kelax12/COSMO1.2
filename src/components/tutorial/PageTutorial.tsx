@@ -4,7 +4,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { TutorialStep } from './types';
 import {
   TargetRect,
-  GhostState,
   PADDING,
   findTarget,
   getRect,
@@ -14,20 +13,7 @@ import {
 } from './page-tutorial-helpers';
 import TutorialArrow from './TutorialArrow';
 import TutorialCard from './TutorialCard';
-import { translator } from '@/i18n/useT';
-import type { KeyOf } from '@/i18n/catalog';
-
-/**
- * Libellé du fantôme de drag : la clé portée par l'étape, sinon celle par
- * défaut. Les quatre appels affichaient une chaîne FRANÇAISE en dur
- * (« Tâche », « Tâche démo »), invisible à `i18n:scan` jusqu'au motif (9).
- *
- * `translator` et non `useT` : ce helper est appelé DANS un effet dont les
- * dépendances pilotent l'animation — y faire entrer un `t` le ferait
- * rejouer, et la locale est de toute façon figée au montage (basename).
- */
-const ghostLabelOf = (step: TutorialStep, fallbackKey: KeyOf<'tutorials'>): string =>
-  translator('tutorials').t(step.ghostLabelKey ?? fallbackKey);
+import { usePersistentGhost, ghostLabelOf } from './use-persistent-ghost';
 
 interface PageTutorialProps {
   /** Liste ordonnée des étapes */
@@ -46,9 +32,7 @@ const PageTutorial: React.FC<PageTutorialProps> = ({ steps, isOpen, onClose, acc
   const [stepIndex, setStepIndex] = useState(0);
   const [targetRect, setTargetRect] = useState<TargetRect | null>(null);
   const [dragGhost, setDragGhost] = useState<{ from: TargetRect; to: TargetRect } | null>(null);
-  const [ghost, setGhost] = useState<GhostState | null>(null);
   const actionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const ghostTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   // Filtre les étapes selon viewport
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
@@ -122,125 +106,10 @@ const PageTutorial: React.FC<PageTutorialProps> = ({ steps, isOpen, onClose, acc
     };
   }, [isOpen, step, stepIndex]);
 
-  // ─────────────────────────────────────────────────────────────────
-  // Ghost persistant — drive l'animation séquencée à chaque step change.
-  // ─────────────────────────────────────────────────────────────────
-  useEffect(() => {
-    if (!isOpen || !step) return;
-    // Cleanup des timers précédents
-    ghostTimersRef.current.forEach(clearTimeout);
-    ghostTimersRef.current = [];
-
-    const queue = (ms: number, fn: () => void) => {
-      ghostTimersRef.current.push(setTimeout(fn, ms));
-    };
-    const rectOf = (sel: string | undefined): TargetRect | null =>
-      sel ? getRect(findTarget(sel)) : null;
-
-    const anim = step.ghostAnimation;
-    if (!anim) {
-      // Pas de ghost pour cette étape — on l'efface si présent
-      setGhost(null);
-      return;
-    }
-
-    const placeRect = rectOf(step.placeTarget);
-    const gridRect = rectOf(step.dragTo);
-    // Y visible du calendrier (sous les en-têtes de colonnes ~40-60px)
-    const visibleTopY = (gridRect?.top ?? placeRect?.top ?? 100) + 56;
-
-    if (anim === 'drag-place') {
-      const fromRect = rectOf(step.target);
-      if (!fromRect || !placeRect) return;
-      const label = ghostLabelOf(step, 'agendaDesktop.ghostTask');
-      // Apparition discrète sur la tâche source (sidebar)
-      setGhost({
-        x: fromRect.left + 4,
-        y: fromRect.top + 4,
-        w: Math.max(80, fromRect.width - 8),
-        h: 36,
-        opacity: 0,
-        label,
-      });
-      queue(80, () => setGhost(g => g && { ...g, opacity: 1 }));
-      // Voyage vers la colonne mercredi + adopte sa largeur
-      queue(700, () =>
-        setGhost({
-          x: placeRect.left + 1,
-          y: visibleTopY + 40,
-          w: placeRect.width - 2,
-          h: 72,
-          opacity: 0.95,
-          label,
-        })
-      );
-    } else if (anim === 'resize-grow') {
-      if (!placeRect) return;
-      const label = ghostLabelOf(step, 'agendaDesktop.ghostTask');
-      // Force l'état "posé" (au cas où on arrive par back-navigation)
-      setGhost({
-        x: placeRect.left + 1,
-        y: visibleTopY + 40,
-        w: placeRect.width - 2,
-        h: 72,
-        opacity: 0.95,
-        label,
-      });
-      // Étirement vers le bas
-      queue(700, () => setGhost(g => g && { ...g, h: 168 }));
-    } else if (anim === 'select-create') {
-      if (!placeRect) return;
-      const label = ghostLabelOf(step, 'agendaDesktop.ghostTask');
-      // 1. État initial : événement précédent (depuis step 5)
-      setGhost({
-        x: placeRect.left + 1,
-        y: visibleTopY + 40,
-        w: placeRect.width - 2,
-        h: 168,
-        opacity: 0.95,
-        label,
-      });
-      // 2. L'événement précédent disparaît
-      queue(350, () => setGhost(g => g && { ...g, opacity: 0 }));
-      // 3. Rectangle de sélection apparaît plus bas, hauteur minimale
-      queue(900, () =>
-        setGhost({
-          x: placeRect.left + 1,
-          y: visibleTopY + 260,
-          w: placeRect.width - 2,
-          h: 6,
-          opacity: 0.55,
-          label: '',
-          isDashed: true,
-        })
-      );
-      // 4. La sélection grandit (simule le drag pour sélectionner une plage)
-      queue(1200, () => setGhost(g => g && { ...g, h: 120 }));
-      // 5. Solidification en événement créé
-      queue(2050, () =>
-        setGhost(g =>
-          g && {
-            ...g,
-            opacity: 0.95,
-            isDashed: false,
-            label,
-          }
-        )
-      );
-      // 6. Fade out final à la fin de l'étape 6
-      queue(3300, () => setGhost(g => g && { ...g, opacity: 0 }));
-    }
-
-    return () => {
-      ghostTimersRef.current.forEach(clearTimeout);
-      ghostTimersRef.current = [];
-    };
-  }, [isOpen, step, stepIndex]);
-
-  // Cleanup ghost quand le tutoriel se ferme
-  useEffect(() => {
-    if (!isOpen) setGhost(null);
-  }, [isOpen]);
+  // La chorégraphie du fantôme vit dans son propre fichier : elle possède
+  // son état ET ses minuteries, donc ce composant ne peut plus en laisser
+  // filer une (`use-persistent-ghost.ts`, extrait le 2026-09-12).
+  const ghost = usePersistentGhost(isOpen, step, stepIndex);
 
   // Verrou body scroll quand ouvert
   useEffect(() => {
