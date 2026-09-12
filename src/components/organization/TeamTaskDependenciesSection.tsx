@@ -8,6 +8,7 @@ import {
 } from '@/modules/team-projects';
 import TeamTaskDependencyPicker from './TeamTaskDependencyPicker';
 import { useT } from '@/i18n/useT';
+import { TAP_AREA_44_Y } from '@/components/mobile/tap-area';
 
 interface TeamTaskDependenciesSectionProps {
   task: TeamTask;
@@ -100,7 +101,11 @@ const TeamTaskDependenciesSection = ({ task, isManager }: TeamTaskDependenciesSe
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        className="w-full flex items-center gap-2 text-left"
+        // Le titre de section fait 14 px de haut : c'est un en-tête, pas un
+        // bouton, mais il en EST un (il replie la section). `TAP_AREA_44_Y`
+        // porte la cible à 44 px dans un pseudo-élément absolu, donc sans
+        // déplacer d'un pixel le dessin de la section (C-70).
+        className={`w-full flex items-center gap-2 text-left ${TAP_AREA_44_Y}`}
       >
         <Link2 size={13} className="text-[rgb(var(--color-text-muted))]" aria-hidden="true" />
         <span className="text-caption font-bold uppercase tracking-wide text-[rgb(var(--color-text-muted))]">

@@ -10,6 +10,7 @@ import {
 import { useTeamProjects, useTeamTasks } from '@/modules/team-projects';
 import { useMyOrgPermissions } from '@/modules/organizations';
 import { useT } from '@/i18n/useT';
+import { TAP_AREA_44_Y } from '@/components/mobile/tap-area';
 
 interface TeamCategoryPickerProps {
   orgId: string;
@@ -127,7 +128,10 @@ const TeamCategoryPicker = ({ orgId, value, onChange }: TeamCategoryPickerProps)
                 onClick={() => onChange(active ? null : c.id)}
                 // Chip Spotify (docs/MOBILE.md § Chips de filtre) : pilule
                 // pleine sans bordure, pastille de couleur conservée.
-                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
+                // 24 px de haut mesurés (C-70). Même arbitrage que les pilules
+                // de `/tasks` : le dessin de la chip reste celui du § Chips de
+                // filtre, la cible passe à 44 dans un pseudo-élément absolu.
+                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${TAP_AREA_44_Y} ${
                   active ? 'text-white' : 'bg-[rgb(var(--color-chip-bg))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]'
                 }`}
                 style={active ? { backgroundColor: c.color } : undefined}
@@ -144,7 +148,13 @@ const TeamCategoryPicker = ({ orgId, value, onChange }: TeamCategoryPickerProps)
                     type="button"
                     onClick={() => openEdit(c)}
                     aria-label={t('teamCategory.renameAria', { name: c.name })}
-                    className="w-6 h-6 rounded-md flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-blue-500 hover:bg-[rgb(var(--color-hover))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
+                    // 24 x 24 px mesurés (C-70). Ces deux-là sont ADJACENTES et
+                    // l'une est destructrice : le débord en pseudo-élément est
+                    // exclu ici (cf. `TAP_AREA_44`), il ferait gagner à la
+                    // suppression la moitié de la zone du renommage. Elles
+                    // prennent donc leur vraie taille au doigt, et gardent leur
+                    // taille d'origine dès `sm` — l'icône, elle, ne change pas.
+                    className="w-11 h-11 sm:w-6 sm:h-6 rounded-md flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-blue-500 hover:bg-[rgb(var(--color-hover))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
                   >
                     <Pencil size={12} aria-hidden="true" />
                   </button>
@@ -152,7 +162,13 @@ const TeamCategoryPicker = ({ orgId, value, onChange }: TeamCategoryPickerProps)
                     type="button"
                     onClick={() => { closeForm(); setPendingDelete(c.id); }}
                     aria-label={t('teamCategory.deleteAria', { name: c.name })}
-                    className="w-6 h-6 rounded-md flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-red-500 hover:bg-[rgb(var(--color-hover))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
+                    // 24 x 24 px mesurés (C-70). Ces deux-là sont ADJACENTES et
+                    // l'une est destructrice : le débord en pseudo-élément est
+                    // exclu ici (cf. `TAP_AREA_44`), il ferait gagner à la
+                    // suppression la moitié de la zone du renommage. Elles
+                    // prennent donc leur vraie taille au doigt, et gardent leur
+                    // taille d'origine dès `sm` — l'icône, elle, ne change pas.
+                    className="w-11 h-11 sm:w-6 sm:h-6 rounded-md flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-red-500 hover:bg-[rgb(var(--color-hover))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
                   >
                     <Trash2 size={12} aria-hidden="true" />
                   </button>
@@ -165,7 +181,7 @@ const TeamCategoryPicker = ({ orgId, value, onChange }: TeamCategoryPickerProps)
           <button
             type="button"
             onClick={openCreate}
-            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border border-dashed border-[rgb(var(--color-border))] text-[rgb(var(--color-text-muted))] hover:text-blue-500 hover:border-[rgb(var(--color-accent-solid-hover))] transition-colors"
+            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border border-dashed border-[rgb(var(--color-border))] text-[rgb(var(--color-text-muted))] hover:text-blue-500 hover:border-[rgb(var(--color-accent-solid-hover))] transition-colors ${TAP_AREA_44_Y}`}
           >
             <Plus size={12} aria-hidden="true" /> {t('okrCategory.new')}
           </button>

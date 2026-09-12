@@ -29,11 +29,19 @@ import TeamAssigneeGroups from './TeamAssigneeGroups';
 import { PRIORITY_META, projectColor } from './team-projects.helpers';
 
 import { useT } from '@/i18n/useT';
+import { TAP_AREA_44_Y } from '@/components/mobile/tap-area';
 
 const labelClass = 'block text-xs font-semibold uppercase tracking-wider mb-2';
 const labelStyle = { color: 'rgb(var(--color-text-secondary))' };
 // Hauteur extraite pour que le groupe priorité (pas un input, mais aligné à côté) la partage.
-const inputHeightClass = 'h-[2.626275rem]';
+//
+// 🔴 `h-11` (44 px) et non plus `h-[2.626275rem]` (42,02 px) — C-70. Les cinq
+// pilules de priorité ET le sélecteur de date héritent de cette valeur : à
+// 42 px ils étaient SIX commandes sous la cible WCAG 2.5.5, pour deux pixels.
+// La corriger ici les corrige toutes, et garde la rangée alignée — le groupe
+// priorité est en `items-stretch`, donc une hauteur différente de celle des
+// champs se verrait immédiatement.
+const inputHeightClass = 'h-11';
 const inputClass =
   `w-full px-[0.875425rem] ${inputHeightClass} border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none hover:border-[rgb(var(--color-accent-solid-hover))] focus:border-[rgb(var(--color-accent-solid))] focus:border-2 transition-all text-[0.875425rem]`;
 const inputStyle = { backgroundColor: 'rgb(var(--color-surface))', color: 'rgb(var(--color-text-primary))' };
@@ -278,7 +286,9 @@ const TeamTaskFields = ({
             type="button"
             onClick={onToggleAssignees}
             aria-expanded={showAssignees}
-            className="flex items-center gap-2 text-sm font-semibold hover:text-blue-500 transition-colors"
+            // 20 px de haut mesurés : cible portée à 44 sans changer le
+            // dessin ni pousser la liste d'assignés qui suit (C-70).
+            className={`flex items-center gap-2 text-sm font-semibold hover:text-blue-500 transition-colors ${TAP_AREA_44_Y}`}
             style={{ color: 'rgb(var(--color-text-secondary))' }}
           >
             <ChevronRight size={16} aria-hidden="true" className={`transition-transform ${showAssignees ? 'rotate-90' : ''}`} />

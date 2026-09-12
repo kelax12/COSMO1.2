@@ -33,3 +33,30 @@
 export const TAP_AREA_44_Y =
   "relative before:absolute before:inset-x-0 before:top-1/2 before:h-11 "
   + "before:-translate-y-1/2 before:content-[''] sm:before:hidden";
+
+/**
+ * Variante DEUX AXES, pour une commande ISOLÉE.
+ *
+ * Même mécanique que `TAP_AREA_44_Y` — le débord vit dans un pseudo-élément
+ * absolu, donc il ne prend aucune place dans le flux —, mais il s'étend aussi
+ * horizontalement. C'est ce qu'il faut pour un bouton-icône trop petit dans les
+ * DEUX dimensions, là où un débord vertical seul ne suffirait pas.
+ *
+ * ❌ **Ne JAMAIS la poser sur deux commandes voisines.** C'est l'unique raison
+ * pour laquelle `TAP_AREA_44_Y` existe à part : deux icônes séparées de
+ * quelques pixels, agrandies chacune à 44 px de large, se CHEVAUCHENT, et c'est
+ * le dernier dans l'ordre du DOM qui gagne la zone commune. Sur la paire
+ * « renommer / supprimer » de `TeamCategoryPicker`, ça reviendrait à poser la
+ * suppression par-dessus le renommage : on ne corrige pas une cible ratée en
+ * fabriquant un appui destructeur. Une paire d'icônes se corrige par sa TAILLE
+ * RÉELLE et son espacement, jamais par du débord.
+ *
+ * ❌ Même exigence de `relative` que la variante verticale — elle la porte.
+ *
+ * ⚠️ Vérifier qu'aucune commande ne vit à moins de 22 px à gauche ou à droite
+ * avant de l'utiliser. `e2e/touch-targets.spec.ts` sait lire ce pseudo-élément,
+ * donc il ne verra PAS l'erreur : c'est à la relecture de la voir.
+ */
+export const TAP_AREA_44 =
+  "relative before:absolute before:left-1/2 before:top-1/2 before:h-11 before:w-11 "
+  + "before:-translate-x-1/2 before:-translate-y-1/2 before:content-[''] sm:before:hidden";

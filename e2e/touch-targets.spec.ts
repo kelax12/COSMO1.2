@@ -295,15 +295,17 @@ test.describe('C-57 — cibles tactiles (WCAG 2.5.5)', () => {
   }
 
   // ── Une surface OUVERTE, pas seulement l'état de repos ─────────────
-  // 🔴 DEUX RÉGIMES, comme `a11y-keyboard-audit.spec.ts` : ce qui est corrigé
-  // est ASSERTIONNÉ, ce qui reste ouvert est seulement IMPRIMÉ. Figer en
-  // `expect(...).toEqual([])` les 23 commandes que cette modale porte encore
-  // sous la cible ferait rouge une CI qui l'est déjà pour une autre raison, et
-  // surtout forcerait 23 décisions de design qu'aucun arbitrage n'a rendues.
+  // 🔴 LES DEUX RÉGIMES ONT FUSIONNÉ le 2026-09-12 (C-70). Ce test a vécu en
+  // deux moitiés : une commande assertionnée, et un reste seulement IMPRIMÉ
+  // faute d'arbitrage de design. Le reste a été corrigé — remesuré à **28**
+  // commandes sous la cible, pas les 22 de l'énoncé du 2026-09-04 —, donc il
+  // n'y a plus de raison de l'imprimer : une surface corrigée sans cliquet est
+  // une surface qui redeviendra fausse.
   //
-  // Ce qui EST assertionné : le bouton que C-57 a fait passer de 28 à 44 px.
-  // Ce qui est imprimé part dans l item C-70 avec son chiffre.
-  test("modale de tache d equipe : la commande corrigee tient, le reste est mesure", async ({ demoPage }) => {
+  // ⚠️ Ce que ce test NE couvre pas, et qui ne doit pas être écrit autrement :
+  // il ouvre UNE modale. Les 57 autres surfaces modales du produit ne sont dans
+  // aucun relevé, les balayages de routes ne mesurant que l'état de repos.
+  test("modale de tache d equipe : aucune commande sous 44 x 44 px", async ({ demoPage }) => {
     await demoPage.goto('/entreprise');
     await demoPage.waitForLoadState('networkidle');
     await demoPage.waitForTimeout(2000);
@@ -319,16 +321,19 @@ test.describe('C-57 — cibles tactiles (WCAG 2.5.5)', () => {
 
     const under = await commandsUnderTarget(demoPage, TARGET);
 
-    // ── ASSERTIONNÉ : la suppression d'un commentaire d'équipe ─────────
-    // Elle faisait 28 × 28 px, trouvée en vérifiant la conformité de C-57
-    // parce que la garde ne regardait alors que l'état de repos de six routes.
     expect(
-      under.filter((u) => /commentaire/i.test(u.name)).map((u) => `${u.w}x${u.h} « ${u.name} »`),
-      'La suppression d un commentaire d equipe doit rester a 44 px.',
+      under.map((u) => `${u.w}x${u.h} « ${u.name} » ${u.html}`),
+      'Cette modale a ete ramenee de 28 commandes sous la cible a 0 (C-70). '
+        + 'Quatre gestes, dans cet ordre de preference : '
+        + '(1) corriger la HAUTEUR REELLE quand elle est a deux pixels de 44 '
+        + '(`inputHeightClass`, `min-h-11` sur une rangee) ; '
+        + '(2) `TAP_AREA_44_Y` quand la commande est assez LARGE mais trop basse : '
+        + 'le debord vit dans un pseudo-element, la rangee ne grandit pas ; '
+        + '(3) `TAP_AREA_44` seulement pour une commande ISOLEE, trop petite dans '
+        + 'les deux dimensions ; '
+        + '(4) la TAILLE REELLE (`w-11 h-11 sm:w-6 sm:h-6`) des que deux commandes '
+        + 'sont voisines : un debord horizontal poserait l une par-dessus l autre, '
+        + 'et sur la paire renommer/supprimer ca fabriquerait un appui destructeur.',
     ).toEqual([]);
-
-    // ── IMPRIMÉ : le reste, qui appartient à C-70 ──────────────────────
-    console.log(`[C-70] TeamTaskModal : ${under.length} commande(s) sous 44 x 44 px`);
-    for (const u of under) console.log(`  ${u.w}x${u.h}  « ${u.name} »`);
   });
 });

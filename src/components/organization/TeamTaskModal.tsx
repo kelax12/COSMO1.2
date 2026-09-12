@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X, AlertCircle, Trash2, Loader2, Check, Send } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { Button } from '@/components/ui/button';
 import { useMyOrgPermissions } from '@/modules/organizations';
 import { useMarkTaskNotificationsRead, type OrgMember } from '@/modules/organizations';
@@ -226,7 +226,10 @@ const TeamTaskModal = ({
         type="button"
         onClick={() => toggleAssignee(m.userId)}
         aria-pressed={checked}
-        className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-[rgb(var(--color-hover))] transition-colors text-left"
+        // `min-h-11` : l'avatar fait 26 px et `py-2` en ajoute 16, soit 42 —
+        // deux pixels sous la cible WCAG 2.5.5 (C-70). Un minimum plutôt qu'une
+        // hauteur fixe : un nom qui passe à la ligne doit pouvoir grandir.
+        className="w-full flex items-center gap-2.5 px-3 py-2 min-h-11 hover:bg-[rgb(var(--color-hover))] transition-colors text-left"
       >
         <MemberAvatar avatar={m.avatar} name={m.displayName} size={26} />
         <span className="text-sm truncate flex-1" style={{ color: 'rgb(var(--color-text-primary))' }}>
