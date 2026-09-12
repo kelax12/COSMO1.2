@@ -162,7 +162,11 @@ const TextType = ({
     }
 
     return () => clearTimeout(timeout);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    /* eslint-disable-next-line react-hooks/exhaustive-deps --
+    `getRandomSpeed` est redefini a chaque rendu ; il ne lit que
+       `variableSpeed`, qui EST dans la liste. La vitesse tiree ne peut donc pas
+       venir d une plage perimee, et l inclure relancerait la frappe a chaque
+       rendu du parent. */
   }, [
     currentCharIndex,
     displayedText,

@@ -4,63 +4,27 @@
 
 import { useMemo, useEffect, useRef } from 'react';
 
-/**
- * Hook pour filtrer des données avec mémoisation automatique.
- *
- * ⚠️ CONTRACT (faille B16): `filterFn` is intentionally excluded from the
- * memo deps to allow inline arrow predicates without forcing the caller into
- * `useCallback`. As a consequence, callers MUST pass every value the
- * predicate captures via the `deps` array, exactly like the standard
- * `useEffect` rule of "list every captured dep". If you forget, the result
- * will silently go stale until `data` changes identity.
- *
- * Example:
- *   useFilteredData(items, (i) => i.priority >= min, [min])  // ✅
- *   useFilteredData(items, (i) => i.priority >= min, [])     // ❌ stale
- */
-export const useFilteredData = <T>(
-  data: T[],
-  filterFn: (item: T) => boolean,
-  deps: unknown[] = []
-): T[] => {
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  return useMemo(() => data.filter(filterFn), [data, ...deps]);
-};
-
-/**
- * Hook pour filtrer et trier des données avec mémoisation.
- * Même contrat que `useFilteredData` ci-dessus. Faille B16.
- */
-export const useFilteredAndSortedData = <T>(
-  data: T[],
-  filterFn: (item: T) => boolean,
-  sortFn: (a: T, b: T) => number,
-  deps: unknown[] = []
-): T[] => {
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  return useMemo(() => data.filter(filterFn).sort(sortFn), [data, ...deps]);
-};
-
-/**
- * Hook pour grouper des données par clé avec mémoisation
- */
-export const useGroupedData = <T, K extends string | number>(
-  data: T[],
-  keyFn: (item: T) => K,
-  deps: unknown[] = []
-): Record<K, T[]> => {
-  return useMemo(() => {
-    const result = {} as Record<K, T[]>;
-    data.forEach((item) => {
-      const key = keyFn(item);
-      if (!result[key]) result[key] = [];
-      result[key].push(item);
-    });
-    return result;
-    // keyFn is intentionally omitted — caller passes deps explicitly via the deps arg
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data, ...deps]);
-};
+// ── TROIS HOOKS RETIRÉS LE 2026-09-12 (C-06) ───────────────────────
+//
+// `useFilteredData`, `useFilteredAndSortedData` et `useGroupedData` vivaient
+// ici avec, chacun, un `eslint-disable exhaustive-deps` qu'aucune relecture ne
+// pouvait éprouver : leur tableau de dépendances est un SPREAD
+// (`[data, ...deps]`), et le message d'ESLint le dit mot pour mot — « we can't
+// statically verify whether you've passed the correct dependencies ».
+//
+// Leur en-tête portait d'ailleurs le risque en toutes lettres : « If you
+// forget, the result will silently go stale until `data` changes identity. »
+// C'est un contrat qui déplace la charge de la vérification sur l'appelant,
+// donc exactement ce que la règle `cosmo/exhaustive-deps-justified` refuse :
+// la justification ne pouvait pas s'écrire, parce qu'il n'y en avait pas.
+//
+// Et **aucun n'avait d'appelant** — mesuré avant de les retirer, `grep` sur
+// tout `src/` ne remonte que `useVisibilityInterval`, qui reste. Trois
+// désarmements partent donc sans qu'une seule ligne de produit change ;
+// `npm run typecheck` en est la preuve, comme pour C-49.
+//
+// Si le besoin revient, il se réécrira contre un écran réel avec un
+// `useCallback` côté appelant — seule forme qu'ESLint sait vérifier.
 
 /**
  * Hook pour interval qui respecte la visibilité de la page

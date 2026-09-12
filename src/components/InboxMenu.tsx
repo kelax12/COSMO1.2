@@ -153,7 +153,11 @@ const InboxMenu: React.FC = () => {
     for (const t of tasks) if (pendingIds.has(t.id) && !t.completed) byId.set(t.id, t);
     return [...byId.values()];
     // ackVersion en dep : recalcul apres accept/reject (demo).
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    /* eslint-disable-next-line react-hooks/exhaustive-deps --
+    `ackVersion` est declare EN TROP, pas en moins : c est un compteur
+       d invalidation du mode demo, qu ESLint ne peut pas relier au corps. Les
+       trois sources reelles (`tasks`, `pendingShared`, `relatedShares`) sont
+       toutes dans la liste : aucune valeur lue ne peut y perimer. */
   }, [tasks, pendingShared, relatedShares, isDemo, user?.name, user?.id, ackVersion]);
 
   const pendingJoinRequests = isOrgAdmin ? joinRequests : [];

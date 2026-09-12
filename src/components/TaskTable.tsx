@@ -128,7 +128,11 @@ const TaskTable: React.FC<TaskTableProps> = ({
 
   const handleToggleTeamComplete = useCallback((task: TeamTask) => {
     updateTeamTaskMutation.mutate({ taskId: task.id, input: { completed: !task.completed } });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    /* eslint-disable-next-line react-hooks/exhaustive-deps --
+    `updateTeamTaskMutation` est recree a chaque rendu alors que son
+       `.mutate` est stable (React Query) : le mettre en dependance recreerait
+       ce callback a chaque rendu. `orgId` est la seule valeur dont depend la
+       mutation, et elle y est. */
   }, [orgId]);
 
   const modalUpdateTeamTask = (taskId: string, input: UpdateTeamTaskInput) =>
@@ -330,7 +334,11 @@ const TaskTable: React.FC<TaskTableProps> = ({
     } else {
       deleteTaskById(taskId);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    /* eslint-disable-next-line react-hooks/exhaustive-deps --
+    `deleteTaskById` est redefini a chaque rendu ; le mettre en dependance
+       annulerait la memoisation que ce `useCallback` existe pour obtenir. Les
+       trois valeurs LUES pour decider (`tasks`, `isDemo`, `user?.id`) y sont,
+       donc la confirmation ne peut pas se decider sur une donnee perimee. */
   }, [tasks, isDemo, user?.id]);
 
   const handleSelectTask = useCallback((id: string) => {
@@ -342,7 +350,10 @@ const TaskTable: React.FC<TaskTableProps> = ({
   const handleSnooze = useCallback((taskId: string, deadline: string) => {
     updateMutation.mutate({ id: taskId, updates: { deadline } });
     toast.success(t('toast.postponed'));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    /* eslint-disable-next-line react-hooks/exhaustive-deps --
+    `updateMutation.mutate` est stable (React Query) et `t` est fige au
+       montage — la locale est portee par le `basename` du routeur, en changer
+       recharge la page. Ni l un ni l autre ne peut perimer. */
   }, []);
 
   // Section « En retard » (#9) : tâches non complétées à deadline dépassée.

@@ -362,7 +362,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       cacheWriteUnsub?.();
     };
     // Abonnement auth monté une seule fois ; queryClient et les autres deps sont stables.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    /* eslint-disable-next-line react-hooks/exhaustive-deps --
+    abonnement monte UNE FOIS pour la vie de l application : le remonter
+       rejouerait la sequence de session. `queryClient` vient d un provider
+       stable, les autres valeurs lues sont des setters de state, stables par
+       contrat React. */
   }, []);
 
   // Sort proprement du mode démo avant une authentification réelle. Sans ça,

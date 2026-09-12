@@ -136,7 +136,11 @@ export const ActiveOrgProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const value = useMemo(
     () => ({ organizations, activeOrg, setActiveOrgId, isLoading, wasOrgMember }),
     // setActiveOrgId stable par render — dépendances sur les données.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    /* eslint-disable-next-line react-hooks/exhaustive-deps --
+    `setActiveOrgId` est redefini a chaque rendu mais ne lit que `user`,
+       dont l identifiant EST dans la liste. L inclure recreerait la valeur du
+       contexte a chaque rendu, donc ferait re-rendre toute l application
+       authentifiee a chaque frappe. */
     [organizations, activeOrg, isLoading, user?.id, wasOrgMember],
   );
 

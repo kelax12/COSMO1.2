@@ -168,7 +168,10 @@ const TeamTaskModal = ({
   const markTaskNotificationsRead = useMarkTaskNotificationsRead(orgId);
   useEffect(() => {
     if (task) markTaskNotificationsRead.mutate(task.id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    /* eslint-disable-next-line react-hooks/exhaustive-deps --
+    `markTaskNotificationsRead` est une mutation React Query recreee a
+       chaque rendu : la mettre en dependance relancerait l ecriture en boucle.
+       Seule l identite de la tache decide qu il faut marquer lu, et elle y est. */
   }, [task?.id]);
 
   const submitNewProject = () => {

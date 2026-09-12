@@ -399,7 +399,7 @@ Identifié le 2026-08-27, explicitement laissé « non engagé ». Le rechargeme
 - **Fini quand** : le compte vient du serveur (RPC de comptage, ou champ agrégé), l'écran affiche le
   même nombre qu'avant, et la trace `edge_logs` d'une vraie session le prouve.
 
-### C-06 · 31 `eslint-disable react-hooks/exhaustive-deps`, dans 25 fichiers · **P2 · L**
+### C-06 · ~~31 `eslint-disable react-hooks/exhaustive-deps`, dans 25 fichiers~~ · **P2 · L** · ✅ fermé le 2026-09-12 (31 → 27, tous justifiés)
 
 > ⚠️ **Recompté le 2026-09-12** : **31** occurrences dans **25** fichiers, et non 36 dans 28.
 > Le titre portait le chiffre du 2026-09-03 sans qu'aucune passe ne l'ait refait. Cinq ont donc
@@ -416,6 +416,48 @@ dépôt en a déjà rencontré plusieurs.
 - **Fini quand** : chaque occurrence est soit supprimée (dépendances honnêtes, `useEvent` ou `ref`),
   soit accompagnée d'un commentaire disant **pourquoi** la dépendance manquante ne peut pas périmer
   la valeur. Une règle ESLint peut ensuite exiger le commentaire.
+
+> #### ✅ Fermé le 2026-09-12 — **31 → 27**, et le nombre ne peut plus remonter en silence
+>
+> **La règle d'abord, le tri ensuite** : `eslint-rules/exhaustive-deps-justified.js`, un plugin
+> **en ligne** dans `eslint.config.js` plutôt qu'une dépendance de plus
+> (`eslint-plugin-eslint-comments` ferait le même travail, mais réécrire `package-lock.json` pour
+> vingt lignes de règle contredirait C-18, qui demande justement une passe isolée). Elle exige la
+> description native `--` d'ESLint, attachée au désarmement lui-même, et d'au moins 25 caractères :
+> « ok », « voulu » ou « cf. plus haut » sont des réponses, pas des raisons.
+>
+> ❌ **Pourquoi pas « un commentaire quelque part au-dessus »** : le dépôt en avait déjà treize, et
+> ils décrivaient l'INTENTION de l'effet, pas la sûreté du retrait. Un commentaire voisin se
+> déplace, se périme, et se confond avec le commentaire du bloc.
+>
+> **Mesure d'entrée** : 31 dans 25 fichiers, la règle en signale 31. **Mesure de sortie** : 27 dans
+> 23 fichiers, `npm run lint` rend **0 erreur**.
+>
+> | Sort | Combien | Détail |
+> |---|---|---|
+> | justifiés | 27 | chacun répond à UNE question : pourquoi la dépendance retirée ne peut-elle pas périmer la valeur. Les familles réelles : une MotionValue stable, un `.mutate` React Query stable, une liste de deps **plus précise** que ce qu'ESLint sait exprimer (`user?.id`/`name`/`email` plutôt que `user`), une init qui ne doit jouer qu'à l'ouverture, et un handler redéfini à chaque rendu dont toutes les valeurs lues sont déjà listées |
+> | dépendance rendue honnête | 1 | `useTaskLists` lisait `orderedLists` dans le corps de l'effet avec `[lists]` pour seule dépendance. **Vraie fermeture périmée** : le rendu qui suit un glisser-déposer ne rejoue pas l'effet, donc la comparaison suivante portait sur l'ordre d'AVANT. La comparaison passe dans le setter fonctionnel, et le désarmement disparaît avec la lecture |
+> | supprimés | 3 | `useFilteredData`, `useFilteredAndSortedData`, `useGroupedData` (`usePerformance.ts`). Leur tableau de deps est un **spread** — ESLint le dit mot pour mot, « we can't statically verify » — et leur en-tête portait le risque en toutes lettres (« will silently go stale »). La justification ne pouvait pas s'écrire parce qu'il n'y en avait pas. **Aucun n'avait d'appelant**, mesuré avant retrait ; `typecheck` en est la preuve |
+>
+> 🔴 **Le témoin, et ce qu'il ne prouve PAS.** `eslint-rules/exhaustive-deps-justified.guard.test.mjs`
+> soumet 12 sources à la règle réelle. Trois sabotages ont été joués : « ne détecte plus rien »
+> (5 cas rouges), « seuil neutralisé » (2 rouges) — et un troisième, « chercher le nom de la règle
+> dans TOUT le commentaire au lieu de la partie avant `--` », qui laissait les onze premiers cas
+> **verts**. Ce n'est pas un trou du témoin : au seuil par défaut les deux implémentations sont
+> indiscernables, le nom de la règle faisant 27 caractères pour un seuil de 25. Il a fallu écrire
+> un douzième cas qui monte le seuil pour les séparer. **Un témoin qu'on n'a pas vu échouer ne
+> prouve rien** — c'est la règle 3 de ce fichier, et elle s'est vérifiée ici.
+>
+> ⚠️ **Ce que ça ne ferme pas** : 27 endroits restent NON ÉPROUVÉS. La règle ne les rend pas
+> corrects, elle rend leur argument lisible et oblige le suivant à en écrire un. Ne jamais écrire
+> « les dépendances sont saines » : l'énoncé opposable est la sortie de
+> `grep -rn "exhaustive-deps" src`.
+>
+> ➕ Effet de bord assumé : `.worktrees/**` entre dans les `ignores` d'ESLint. `npm run lint` lancé
+> à la racine remontait les erreurs des arbres VOISINS (2 le 2026-09-12, toutes deux dans un
+> `e2e/fixtures.ts` de worktree, que le motif `e2e/**` ne couvre plus une fois préfixé). La règle du
+> dépôt est « 0 erreur avant chaque commit » : une sortie polluée par le travail des autres la rend
+> inapplicable.
 
 ### C-07 · 17 feuilles animées encore écrites à la main · **P2 · M**
 

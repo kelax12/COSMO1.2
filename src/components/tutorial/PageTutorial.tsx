@@ -260,7 +260,11 @@ const PageTutorial: React.FC<PageTutorialProps> = ({ steps, isOpen, onClose, acc
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    /* eslint-disable-next-line react-hooks/exhaustive-deps --
+    `handleClose`, `handleNext` et `handlePrev` sont redefinis a chaque
+       rendu ; ils ne lisent que `stepIndex`, qui EST dans la liste. L abonnement
+       clavier ne peut donc pas tenir un index perime, et le reabonner a chaque
+       rendu ajouterait un cycle add/remove par frame. */
   }, [isOpen, stepIndex]);
 
   // Réinitialise l'index si on rouvre le tuto

@@ -89,17 +89,21 @@ export function useTaskLists({ updateTaskDeadline, t }: Params) {
   // dans son ancien ordre tant que la mutation n'a pas refetch.
   const [orderedLists, setOrderedLists] = useState<TaskList[]>(lists);
   useEffect(() => {
-    const localIds = orderedLists.map((l) => l.id).sort().join(',');
     const incomingIds = lists.map((l) => l.id).sort().join(',');
-    if (localIds !== incomingIds) {
+    // 🔴 La comparaison se fait DANS le setter fonctionnel, pas avant (C-06).
+    // Lire `orderedLists` dans le corps de l'effet avec `[lists]` pour seule
+    // dépendance, c'était une fermeture périmée : le rendu qui suit un
+    // réordonnancement par glisser-déposer ne rejoue pas cet effet, donc la
+    // comparaison suivante portait sur l'ordre d'AVANT. `prev` est toujours
+    // l'état courant, et le désarmement d'ESLint disparaît avec la lecture.
+    setOrderedLists((prev) => {
+      const localIds = prev.map((l) => l.id).sort().join(',');
       // Composition différente (ajout / suppression) → reset complet
-      setOrderedLists(lists);
-    } else {
+      if (localIds !== incomingIds) return lists;
       // Même composition → merger les changements de contenu (nom, couleur…)
       // en préservant l'ordre local (drag-to-reorder).
-      setOrderedLists((prev) => prev.map((l) => lists.find((nl) => nl.id === l.id) ?? l));
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+      return prev.map((l) => lists.find((nl) => nl.id === l.id) ?? l);
+    });
   }, [lists]);
 
   const handleListSelect = (listId: string) => {

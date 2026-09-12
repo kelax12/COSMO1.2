@@ -226,7 +226,10 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
     // showCollaborators → ouvre directement l'étape 2 (Collaborateurs) sur
     // desktop, pour réutiliser cette vue comme popup de partage unique.
     if (isOpen) setStep(showCollaborators ? 2 : 1);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    /* eslint-disable-next-line react-hooks/exhaustive-deps --
+    `showCollaborators` lu a l OUVERTURE seulement : le remettre ramenerait
+       la personne a l etape 1 des qu une mutation invalide le cache, ce qui est
+       exactement le defaut decrit juste au-dessus et qui a motive cet effet. */
   }, [isOpen]);
 
   // Initialize form data when task changes
@@ -316,7 +319,10 @@ export function useTaskModal({ task, isOpen, onClose, isCreating = false, showCo
     // wipe in-flight form edits. Also de-tied from `setStep` (see effect
     // above) so a friend-request mutation no longer kicks the user back
     // to step 1 mid-flow.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    /* eslint-disable-next-line react-hooks/exhaustive-deps --
+    `task` et `lists` entiers churnent a chaque refetch React Query : les
+       inclure effacerait une saisie en cours. Leur identite (`task?.id`) et
+       leur longueur (`lists.length`) suffisent a dire qu il faut reinitialiser. */
   }, [isOpen, task?.id, isCreating, showCollaborators, lists.length]);
 
   // Complète `formData.description` une fois le détail complet chargé

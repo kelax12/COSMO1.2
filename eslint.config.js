@@ -3,9 +3,16 @@ import globals from 'globals';
 import reactHooks from 'eslint-plugin-react-hooks';
 import reactRefresh from 'eslint-plugin-react-refresh';
 import tseslint from 'typescript-eslint';
+import exhaustiveDepsJustified from './eslint-rules/exhaustive-deps-justified.js';
 
 export default tseslint.config(
-  { ignores: ['dist', 'coverage', 'src/__test__/**', 'src/components/showcase/**', 'e2e/**', 'playwright.config.ts', '.agents/**', '.claude/**'] },
+  // `.worktrees/**` : ce depot travaille a plusieurs sessions, chacune dans son
+  // arbre. Sans cette exclusion, `npm run lint` lance a la racine rend les
+  // erreurs des arbres VOISINS — mesure le 2026-09-12 : 2 erreurs, toutes deux
+  // dans un `e2e/fixtures.ts` de worktree, que le motif `e2e/**` ne couvre pas
+  // une fois prefixe. La regle du depot est « 0 erreur avant chaque commit » :
+  // une sortie polluee par le travail des autres la rend inapplicable.
+  { ignores: ['dist', 'coverage', 'src/__test__/**', 'src/components/showcase/**', 'e2e/**', 'playwright.config.ts', '.agents/**', '.claude/**', '.worktrees/**'] },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ['**/*.{ts,tsx}'],
@@ -16,9 +23,20 @@ export default tseslint.config(
     plugins: {
       'react-hooks': reactHooks,
       'react-refresh': reactRefresh,
+      // Regles locales, definies dans `eslint-rules/`. Un plugin en ligne
+      // plutot qu'une dependance : `eslint-plugin-eslint-comments` ferait le
+      // meme travail, mais reecrire `package-lock.json` pour une regle de
+      // vingt lignes n'en vaut pas le prix (cf. C-18, qui demande justement
+      // qu'aucune autre session ne travaille dans l'arbre ce jour-la).
+      cosmo: { rules: { 'exhaustive-deps-justified': exhaustiveDepsJustified } },
     },
     rules: {
       ...reactHooks.configs.recommended.rules,
+      // C-06 — voir l'en-tete de `eslint-rules/exhaustive-deps-justified.js`.
+      // Le desarmement reste possible ; ce qui devient impossible, c'est de le
+      // poser sans avoir ecrit pourquoi la dependance retiree ne peut pas
+      // perimer la valeur.
+      'cosmo/exhaustive-deps-justified': 'error',
       'react-refresh/only-export-components': [
         'warn',
         { allowConstantExport: true },

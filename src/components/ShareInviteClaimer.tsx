@@ -85,7 +85,11 @@ const ShareInviteClaimer: React.FC = () => {
     });
     // claimMutation/queryClient stables (React Query) — on ne déclenche que
     // sur changement d'état d'auth.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    /* eslint-disable-next-line react-hooks/exhaustive-deps --
+    la reclamation ne doit partir qu a un changement d etat d AUTH.
+       `claimMutation`, `queryClient` et `t` sont recrees a chaque rendu ;
+       dependre d eux consommerait l invitation plusieurs fois. Le jeton, lui,
+       est relu dans `localStorage` au declenchement, jamais capture. */
   }, [isAuthenticated, isLoading, isDemo]);
 
   const closeAfter = () => setInvite(null);

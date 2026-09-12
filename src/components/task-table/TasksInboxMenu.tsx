@@ -75,7 +75,10 @@ const TasksInboxMenu: React.FC<TasksInboxMenuProps> = ({ variant = 'mobile' }) =
     for (const t of pendingShared) if (!t.completed) byId.set(t.id, t);
     for (const t of tasks) if (pendingIds.has(t.id) && !t.completed) byId.set(t.id, t);
     return [...byId.values()];
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    /* eslint-disable-next-line react-hooks/exhaustive-deps --
+    `ackVersion` est declare EN TROP, pas en moins : compteur d invalidation
+       du mode demo, qu ESLint ne peut pas relier au corps. Les trois sources
+       reelles sont toutes dans la liste, aucune valeur lue ne peut perimer. */
   }, [tasks, pendingShared, relatedShares, isDemo, user?.name, user?.id, ackVersion]);
 
   const sharerName = (task: Task): string =>

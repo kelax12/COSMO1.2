@@ -47,7 +47,11 @@ const OKRDeadlineReviewModal: React.FC<Props> = ({ okr, categories, flyTargetRef
     validatedRef.current = false;
     // Init uniquement sur okr.id (voir commentaire ci-dessus) — pas l'objet okr
     // entier, sinon double-commit pendant l'animation fly.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    /* eslint-disable-next-line react-hooks/exhaustive-deps --
+    `okr` entier omis : le brouillon s initialise a l OUVERTURE d un
+       objectif. Sur l objet, une invalidation du cache pendant l animation
+       `fly` relancerait l init, donc un second commit et un double toast.
+       L identite de l objectif suffit a dire qu il faut reinitialiser. */
   }, [okr?.id]);
 
   useEffect(() => {

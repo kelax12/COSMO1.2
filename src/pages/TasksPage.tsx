@@ -183,7 +183,10 @@ const TasksPage: React.FC = () => {
     setFilter(pref?.field ?? 'priority');
     setSortDirection(pref?.direction ?? 'asc');
     // Relit uniquement au changement de liste (pas à chaque écriture de pref).
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    /* eslint-disable-next-line react-hooks/exhaustive-deps --
+    `sortPrefs` omis : le tri se relit au CHANGEMENT DE LISTE. Le remettre
+       reecraserait le tri courant a chaque ecriture de preference, donc juste
+       apres que la personne vient de le changer. */
   }, [sortPrefKey]);
 
   const handleFilterChange = (value: string) => {

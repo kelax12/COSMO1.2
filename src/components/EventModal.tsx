@@ -117,7 +117,11 @@ const EventModal: React.FC<EventModalProps> = ({
     if (isOpen) {
       setShowDescription(Boolean(notes && notes.length > 0));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    /* eslint-disable-next-line react-hooks/exhaustive-deps --
+    `notes` hors deps a dessein : la section Description se decide a
+       l OUVERTURE. La relire a chaque frappe replierait la section des que la
+       personne vide le champ, et ferait sauter le focus. `notes` ne peut pas
+       perimer puisqu il n est lu qu a l instant ou `isOpen` passe a vrai. */
   }, [isOpen]);
   const { t } = useT('eventModal');
   const { favoriteColors } = useFavoriteColors();
