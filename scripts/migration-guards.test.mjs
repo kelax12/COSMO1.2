@@ -403,3 +403,78 @@ describe('trigger de garde de l arbre des categories', () => {
     expect(run(VALIDATE).code).toBe(0);
   });
 });
+
+// ══════════════════════════════════════════════════════════════════════
+// mig. 139 — le plafond de debit (C-31)
+//
+// Deux invariants, et les deux ont ete vus ROUGES le 2026-09-12 avant d'etre
+// verts. Ils ne sont pas de meme nature :
+//
+//  1. LA BORNE. `hits > p_limit`, jamais `>=`. Mesure en prod, transaction
+//     annulee : avec `>=` et un plafond de 3, les cinq appels d'affilee sont
+//     ACCEPTES (le compteur gele sur 3, donc `3 <= 3` reste vrai) — le plafond
+//     ne refuse JAMAIS rien. Avec `>`, le 4e ecrit 4 et part en refus.
+//     ❌ « Trois appels passent » est vrai des DEUX versions : c'est le
+//        QUATRIEME qui distingue, et lui seul.
+//
+//  2. LE REVOKE A `authenticated`. Celui-la est contre-intuitif, et la
+//     migration s'y trompait : elle disait « PAS de GRANT a authenticated » et
+//     s'arretait la. Or `REVOKE ... FROM PUBLIC` NE LE RETIRE PAS. Mesure en
+//     prod : le schema `public` porte un privilege par defaut qui accorde
+//     EXECUTE a `anon`, `authenticated` ET `service_role` NOMMEMENT a la
+//     creation. Ne pas accorder n'est pas retirer — il faut REVOKE-er.
+//     Sans lui, n'importe quel compte connecte pouvait epuiser le compteur
+//     d'un autre en devinant sa cle : un deni de service cible offert par la
+//     defense elle-meme.
+// ══════════════════════════════════════════════════════════════════════
+
+describe('plafond de debit, mig. 139 (C-31)', () => {
+  const SQL = () =>
+    readFileSync(resolve(ROOT, 'supabase/migration/139_rate_limits.sql'), 'utf8');
+
+  /** Le corps du `CASE` qui decide de l'increment, commentaires retires. */
+  const borderClause = (sql) => {
+    const body = sql
+      .split('\n')
+      .filter((l) => !l.trim().startsWith('--'))
+      .join('\n');
+    const m = body.match(/WHEN\s+rl\.hits\s*(>=?)\s*p_limit\s+THEN\s+rl\.hits/i);
+    return m ? m[1] : null;
+  };
+
+  it('la borne du compteur est bien trouvee dans le fichier', () => {
+    expect(borderClause(SQL()), 'clause `WHEN rl.hits ? p_limit` introuvable').not.toBeNull();
+  });
+
+  it('la borne est `>`, jamais `>=`', () => {
+    expect(borderClause(SQL())).toBe('>');
+  });
+
+  it('TEMOIN — la sonde refuse bien la variante `>=`', () => {
+    // Sans ce temoin, un detecteur casse (regex qui ne matche plus rien)
+    // laisserait les deux tests ci-dessus passer sur un fichier fautif.
+    const sabote = SQL().replace(/WHEN\s+rl\.hits\s*>\s*p_limit/i, 'WHEN rl.hits >= p_limit');
+    expect(sabote, 'le sabotage n a rien remplace').not.toBe(SQL());
+    expect(borderClause(sabote)).toBe('>=');
+  });
+
+  it('`consume_rate_limit` est REVOKE-ee a `authenticated`, pas seulement non accordee', () => {
+    expect(SQL()).toMatch(
+      /REVOKE\s+ALL\s+ON\s+FUNCTION\s+public\.consume_rate_limit\([^)]*\)\s+FROM\s+authenticated/i);
+  });
+
+  it('`consume_rate_limit` est accordee EXPLICITEMENT a `service_role`', () => {
+    // Le privilege par defaut suffirait aujourd hui. Il ne doit pas etre la
+    // seule chose qui tienne : un echec de la RPC n est PAS bloquant cote Deno
+    // (`consumeRateLimits` laisse passer et alerte), donc un GRANT perdu
+    // rendrait le plafond inoperant EN SILENCE.
+    expect(SQL()).toMatch(
+      /GRANT\s+EXECUTE\s+ON\s+FUNCTION\s+public\.consume_rate_limit\([^)]*\)\s+TO\s+service_role/i);
+  });
+
+  it('la table ne porte aucune policy, et reste fermee a anon comme a authenticated', () => {
+    expect(SQL()).toMatch(/ALTER\s+TABLE\s+public\.rate_limits\s+ENABLE\s+ROW\s+LEVEL\s+SECURITY/i);
+    expect(SQL()).toMatch(/REVOKE\s+ALL\s+ON\s+public\.rate_limits\s+FROM\s+anon,\s*authenticated/i);
+    expect(SQL()).not.toMatch(/CREATE\s+POLICY[\s\S]*public\.rate_limits/i);
+  });
+});
