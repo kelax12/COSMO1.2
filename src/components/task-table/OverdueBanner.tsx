@@ -8,6 +8,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { DateCalendarPanel, DATE_PANEL_CLASS } from '@/components/ui/date-picker';
 import { useT } from '@/i18n/useT';
+import { getTimezonePref, todayKeyInTz } from '@/lib/timezone';
 
 // Le type vient du module de report : le redéclarer ici, c'était deux
 // définitions à garder d'accord, et c'est ce qui a laissé le libellé en dur.
@@ -80,7 +81,14 @@ const OverdueBanner = ({ count, options, onSnoozeAll }: OverdueBannerProps) => {
             <DateCalendarPanel
               // `minDate` reprend l'attribut `min` de l'ancien input natif :
               // reporter une tâche en retard vers hier n'a pas de sens.
-              minDate={new Date().toLocaleDateString('en-CA')}
+              //
+              // 🔴 `todayKeyInTz` et jamais la date MACHINE : la borne écrit une
+              // échéance, et une échéance suit le fuseau CHOISI (CLAUDE.md,
+              // § Fuseau horaire). Le report à la ligne (`OverdueQuickActions`)
+              // le faisait déjà ; ici la borne restait sur l'horloge de
+              // l'appareil, donc les deux chemins du MÊME geste pouvaient
+              // refuser des jours différents pour qui règle un fuseau manuel.
+              minDate={todayKeyInTz(getTimezonePref())}
               allowClear={false}
               onSelect={(date) => {
                 if (!date) return;
