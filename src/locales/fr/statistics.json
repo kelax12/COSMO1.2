@@ -32,7 +32,8 @@
     "goal": "Objectif",
     "minutes": "min",
     "timeSeries": "Temps (min)",
-    "weekRange": "du {{start}} au {{end}}"
+    "weekRange": "du {{start}} au {{end}}",
+    "goalValueAria": "Objectif, en minutes"
   },
   "gate": {
     "title": "Analyses détaillées",
