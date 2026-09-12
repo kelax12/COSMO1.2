@@ -85,22 +85,30 @@ describe('un francophone lit du francais, dans les DEUX modes', () => {
   });
 });
 
-describe('table de transition — le correctif marche AVANT la mig. 137', () => {
-  // Une migration se DEPLOIE : entre le push du front et son application, le
-  // serveur repond encore par les anciennes phrases.
+describe('plus aucune identification par MESSAGE', () => {
+  // La mig. 137 est appliquee en production depuis le 2026-09-12 : les quatre
+  // triggers disent leur identifiant. La table de transition qui traduisait
+  // les anciennes phrases anglaises a donc ete retiree, et elle ne doit pas
+  // revenir — c est exactement « identifier une erreur par son message ».
   it.each([
-    ['This dependency would create a cycle', DEPENDENCY_ERRORS.cycle],
-    ['Both tasks must exist', DEPENDENCY_ERRORS.taskMissing],
-    ['A dependency must stay within a single account', DEPENDENCY_ERRORS.crossAccount],
-    ['A dependency must stay within a single project', DEPENDENCY_ERRORS.crossProject],
-  ])('« %s » est reconnu', (phrase, code) => {
-    expect(dependencyErrorCode(normalizeApiError({ code: 'P0001', message: phrase }))).toBe(code);
+    'This dependency would create a cycle',
+    'Both tasks must exist',
+    'A dependency must stay within a single account',
+    'A dependency must stay within a single project',
+  ])('« %s » n est PLUS une cle', (phrase) => {
+    expect(dependencyErrorCode(normalizeApiError({ code: 'P0001', message: phrase }))).toBeNull();
   });
 
   it('TEMOIN : une erreur quelconque n est PAS prise pour un refus de dependance', () => {
     expect(dependencyErrorCode(new Error('Failed to fetch'))).toBeNull();
     expect(dependencyErrorCode(normalizeApiError({ code: '500', message: 'boom' }))).toBeNull();
     expect(dependencyErrorCode(null)).toBeNull();
+  });
+
+  it('TEMOIN : les quatre identifiants, eux, sont bien reconnus', () => {
+    for (const code of Object.values(DEPENDENCY_ERRORS)) {
+      expect(dependencyErrorCode(normalizeApiError({ code: 'P0001', message: code }))).toBe(code);
+    }
   });
 });
 

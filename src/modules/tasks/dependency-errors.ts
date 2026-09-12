@@ -24,19 +24,19 @@
 // `errors.api.*` en `fr` et en `en`. La migration 137 fait dire ces
 // identifiants aux quatre triggers.
 //
-// ── LA TABLE DE TRANSITION, ET QUAND LA SUPPRIMER ───────────────────
+// ── POURQUOI PLUS AUCUNE PHRASE ICI ─────────────────────────────────
 //
-// 🔴 Une migration se DEPLOIE : entre le push de ce code et l application de
-// la 137 en production, le serveur repond encore par les anciennes phrases.
-// `LEGACY_DEPENDENCY_MESSAGES` les traduit en identifiants pour que le
-// correctif marche des le deploiement du front, sans attendre la base.
+// Une table de transition a existe entre le 2026-09-04 et le 2026-09-12 :
+// elle traduisait les anciennes phrases anglaises en identifiants, pour que
+// le correctif marche avant l application de la 137. La 137 est APPLIQUEE en
+// production depuis le 2026-09-12 (ledger : `137_dependency_error_identifiers`,
+// derniere entree), verifiee acteur par acteur sur 13 scenarios en transaction
+// annulee : les quatre refus rendent leur identifiant, plus aucune phrase.
 //
-// ❌ Ce n est PAS un retour a « identifier une erreur par son message » : ces
-//    phrases sont des constantes anglaises figees d une migration nommee, pas
-//    du texte traduit. C est le meme motif que `CHECKOUT_ERROR_KEYS` dans
-//    `org-billing.hooks.ts` — le texte serveur sert de CLE, jamais d affichage.
-// ✅ A SUPPRIMER une fois la mig. 137 appliquee en production, avec la ligne
-//    correspondante du ledger comme preuve.
+// ❌ Ne JAMAIS reintroduire une table phrase -> identifiant ici : ce serait
+//    identifier une erreur par son message, ce que CLAUDE.md interdit
+//    nommement, et le message serveur d aujourd hui est deja un identifiant.
+//    Garde : `dependency-errors.guard.test.ts`.
 
 import { ApiError, makeApiError } from '@/lib/normalizeApiError';
 
@@ -49,25 +49,12 @@ export const DEPENDENCY_ERRORS = {
 } as const;
 
 /**
- * Phrases des migrations 108, 109 et 132, avant la 137.
- *
- * ⚠️ « Both tasks must exist » couvre DEUX branches du trigger d equipe — tache
- * inexistante ET tache hors perimetre — et c est une propriete de SECURITE
- * (mig. 109) : les separer rouvrirait un oracle d existence sur `team_tasks`.
- * La convergence est donc conservee ici aussi.
- */
-const LEGACY_DEPENDENCY_MESSAGES: Record<string, string> = {
-  'Both tasks must exist': DEPENDENCY_ERRORS.taskMissing,
-  'A dependency must stay within a single account': DEPENDENCY_ERRORS.crossAccount,
-  'A dependency must stay within a single project': DEPENDENCY_ERRORS.crossProject,
-  'This dependency would create a cycle': DEPENDENCY_ERRORS.cycle,
-};
-
-/**
  * Rend l identifiant de refus si l erreur en est un, sinon `null`.
  *
- * Accepte les deux formes : l identifiant rendu par la mig. 137 (via
- * `ApiError.code` ou `originalMessage`), et la phrase d avant.
+ * Une seule forme est acceptee : l identifiant que la mig. 137 fait dire aux
+ * quatre triggers, et que les depots de DEMO levent a l identique — lu sur
+ * `ApiError.code`, `originalMessage` ou `message`, selon l endroit d ou
+ * l erreur arrive.
  */
 export function dependencyErrorCode(error: unknown): string | null {
   if (!error || typeof error !== 'object') return null;
@@ -80,8 +67,6 @@ export function dependencyErrorCode(error: unknown): string | null {
   for (const raw of candidates) {
     if (typeof raw !== 'string') continue;
     if (known.has(raw)) return raw;
-    const legacy = LEGACY_DEPENDENCY_MESSAGES[raw.trim()];
-    if (legacy) return legacy;
   }
   return null;
 }
