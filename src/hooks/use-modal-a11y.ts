@@ -151,7 +151,7 @@ export interface ModalA11yOptions {
   /** Alternative à `label` : l'id du titre déjà affiché. */
   labelledBy?: string;
   /** Élément à focaliser à l'ouverture. Par défaut : le premier focalisable. */
-  initialFocusRef?: React.RefObject<HTMLElement>;
+  initialFocusRef?: React.RefObject<HTMLElement | null>;
   /** Échap ferme-t-il ? Faux seulement pour une surface bloquante assumée. */
   closeOnEscape?: boolean;
   /**
@@ -176,7 +176,7 @@ export interface ModalA11yDialogProps {
 
 export interface ModalA11yResult<T extends HTMLElement> {
   /** À poser sur le conteneur de la modale (l'overlay). */
-  ref: React.RefObject<T>;
+  ref: React.RefObject<T | null>;
   /**
    * À étaler sur ce même conteneur : `role="dialog"`, `aria-modal="true"` et
    * son nom accessible.
