@@ -16,6 +16,7 @@ retirés. **Sept de plus sont retirés ce soir**, traités dans une passe unique
 | `C-25` | arbitrage rendu par Axel et appliqué : deux thèmes passent AA, cliquet posé sur les quatre |
 | `C-23` | remesuré — « 41 nœuds » était un tirage (21 / 41 / 55 sur trois passes). Noyau reproductible : 11 nœuds, dont 2 corrigés |
 | `C-12` | critère TENU : trois runs CI consécutifs, six passes, toutes au-dessus de 90 sur `/`. Aucune ligne touchée pour l'obtenir |
+| `C-18` | `npm audit` 7 avis → **0**, les six gates rejouées derrière, aucun seuil touché |
 
 Et trois correctifs qui n'étaient dans aucun item, tous trouvés **par la CI** :
 la pastille de catégorie portait un `aria-label` sur un `div` sans rôle (11 nœuds, nom ignoré par
@@ -23,7 +24,7 @@ les lecteurs d'écran), le champ « Objectif » de `/statistics` n'avait aucun n
 fichier committé importait un module que git ne suit pas — ce dernier a désormais sa garde
 (`scripts/tracked-imports.guard.test.mjs`), parce qu'aucun outil local ne peut le voir.
 
-**11 items restent**, dans l'ordre où ils devraient être traités. Six d'entre eux (tout le § P1)
+**10 items restent**, dans l'ordre où ils devraient être traités. Six d'entre eux (tout le § P1)
 n'attendent **pas de code** : ils attendent un geste d'Axel — une migration, un secret, un
 déploiement.
 
@@ -280,30 +281,6 @@ dit explicitement « rien ». Un audit qui ne rend rien se DIT ; il ne s'omet pa
 ```
 
 # P3 — pas commencé
-
-## C-18 · les CVE dev-only, encore un autre lot
-
-```
-Objectif : C-18. Remesure le 2026-09-12 : `npm audit` rend 7 avis (2 high, 5 moderate) sur six
-paquets : js-yaml, fast-uri, vitest / @vitest/mocker / @vitest/coverage-v8, hono, qs. Ce n'est
-plus du tout le lot de l'enonce, et ce ne sera pas le tien : RELIRE `npm audit` avant d'agir,
-jamais cet item seul.
-
-Ce qui ne change pas, et qui decide de la priorite : `npm audit --omit=dev` rend
-« found 0 vulnerabilities », exit 0. Rien n'atteint le navigateur.
-
-Quatre PR Dependabot attendent (vitest 4.1.11, hono 4.13.7, fast-uri 3.1.7, date-fns 4.4.0).
-La montee de vitest est la seule qui touche les seuils de couverture : rejouer
-`npm run test:coverage` derriere, quand la machine est libre (le run prend ~11 min et MEURT en
-silence si une autre session fait tourner sa suite en parallele). Ne JAMAIS baisser un seuil.
-
-Reecrit package-lock.json et node_modules : a faire quand AUCUNE autre session ne travaille dans
-l'arbre. Ne jamais meler cette passe a une passe securite produit : deux natures de risque, et
-les confondre fait passer l'une pour l'autre.
-
-Fini quand : `npm audit` rend 0, les cinq gates sont rejouees derriere, et le tableau de l'item
-porte sa nouvelle date.
-```
 
 ## C-58 · React 19 et `react-router` 8 : la décision, avant le code
 
