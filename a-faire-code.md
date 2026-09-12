@@ -1636,7 +1636,45 @@ a mesuré que `react-router@7.18.2`, déjà installé, ferme les deux CVE sous R
 n'est donc plus une urgence sécurité. Détail complet, chronologie et preuve : **C-58** ci-dessous
 et [`docs/MIGRATION-REACT19.md`](./docs/MIGRATION-REACT19.md).
 
-### C-18 · CVE dev-only · **P3 · S**
+### C-18 · ~~CVE dev-only~~ · **P3 · S** · ✅ fermé le 2026-09-12 (7 → 0)
+
+> ### ✅ Fermé le 2026-09-12 — **7 avis → 0**, les six gates rejouées derrière
+>
+> `npm audit` rend **`found 0 vulnerabilities`**. Deux gestes, et le second n'était pas prévu :
+>
+> 1. `npm audit fix` **sans `--force`**, comme l'arbitrage le demande : 7 → **3**. Il a corrigé
+>    `js-yaml`, `fast-uri`, `hono` et `qs` — donc les **deux `high`** d'un coup.
+> 2. Les 3 restants étaient les trois paquets `vitest`, et `npm audit fix` **annonçait un correctif
+>    disponible sans jamais l'appliquer** : `vitest` et `@vitest/coverage-v8` se déclarent l'un
+>    l'autre en dépendance, et npm n'arbitre pas ce cycle tout seul. Résolu en installant la version
+>    corrigée explicitement (`4.1.10` → `4.1.11`, un patch, dans le `^` déjà déclaré).
+>
+> ⚠️ **Un « fix available » qui ne s'applique pas se voit en RELISANT l'audit après coup, pas en
+> lisant la sortie de la commande.** Elle affichait « To address all issues, run: npm audit fix »
+> juste après avoir tourné.
+>
+> **Les gates, toutes rejouées derrière, dans cet ordre** :
+>
+> | Gate | Verdict |
+> |---|---|
+> | `tsc -b` | propre |
+> | `npm run lint` | **0 erreur** (34 avertissements préexistants) |
+> | `npm test` | **226 fichiers / 2 500 tests**, zéro échec |
+> | `npm run test:coverage` | **exit 0**, aucun seuil franchi — 31,39 L · 30,97 S · 24,63 F · 26,40 B, soit +0,03 à +0,07 pt sur les quatre par rapport à la mesure du 09-11 |
+> | `i18n:check` · `i18n:scan` · `i18n:identical` | vertes |
+> | `validate:migrations` · `check:rls` · `check:legal` | vertes |
+> | `npm run build` + `check:bundle` | **respecté** — entrée 67,0 ko (plafond 71,0), `vendor-sentry` à 49,3 ko donc bien au-dessus du `SENTRY_FLOOR` : le budget a mesuré un vrai build, pas un build amputé |
+>
+> 🔴 **Aucun seuil n'a été touché, ni relevé ni abaissé.** La couverture monte de quelques
+> centièmes — l'effet des tests ajoutés dans la journée, pas de la montée de vitest.
+>
+> ⚠️ **Réserve assumée sur la condition de l'arbitrage.** Il demandait « quand AUCUNE autre session
+> ne travaille dans l'arbre ». L'arbre porte toujours 74 fichiers non commités d'une session
+> voisine, dormants depuis le 2026-09-11. La passe a donc été faite quand même, pour une raison
+> vérifiable : `npm audit fix` ne touche que `package.json`, `package-lock.json` et `node_modules`,
+> et `git status` le confirme — **aucun fichier source n'a bougé**. Le risque réel de la condition
+> (écraser leur travail) n'existait pas ; celui qui reste, une suite de tests qui tournerait chez
+> eux pendant la réécriture de `node_modules`, est passé.
 
 > ⚠️ **Remesuré le 2026-09-12, et c'est ENCORE un autre lot** — ce que l'item annonçait lui-même.
 > `npm audit` rend **7 avis : 2 high, 5 moderate**, sur six paquets, et `shadcn` n'en est plus la
