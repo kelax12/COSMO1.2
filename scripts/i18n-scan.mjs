@@ -289,6 +289,34 @@ const PATTERNS = [
   // `['/dashboard', '/agenda', '/entreprise']` et les tableaux de namespaces
   // (`['agenda', 'eventModal', …]`) partagent des mots de la liste fermée.
   [new RegExp(`[\\[,]\\s*${QUOTED(FR)}(?=\\s*[,\\]])`, 'gi'), 2, true],
+  // (9) Valeur d'une propriete d'objet, QUEL QUE SOIT le nom de la propriete.
+  //
+  // Angle mort i (2026-09-12), QUATRIEME fois que ce cliquet certifie ZERO
+  // pendant que le produit parle francais. Les motifs (4) et (5) ne regardent
+  // qu'une liste FERMEE de noms (`label` `title` `name` ... `error` `message`
+  // `description` `reason`) et le motif (7) veut la chaine en PREMIER jeton de
+  // l'appel : une accolade suffit donc a le perdre. La forme
+  //
+  //     setErrors({ general: 'Erreur lors de la suppression. Veuillez...' })
+  //
+  // n'etait vue par AUCUN des huit motifs, et c'est sous cette forme que les
+  // trois messages d'erreur de la modale de tache sont restes en dur, affiches
+  // a l'ecran, pendant que le scan rendait 0.
+  //
+  // Elargir le NOM de la propriete impose de restreindre la VALEUR, sinon
+  // toute la configuration technique du depot entre dans le rapport. D'ou le
+  // quatrieme element, `requireSentence` : la valeur doit commencer par une
+  // MAJUSCULE ou porter un accent. C'est ce qui separe
+  // `banner: 'Votre abonnement arrive a echeance'` de
+  // `fontFamily: 'system-ui, -apple-system, sans-serif'`, dont « sans » matche
+  // le mot-outil de la liste fermee sans etre une phrase.
+  //
+  // La restriction est ASSUMEE et elle a un cout : une phrase francaise qui
+  // commencerait par une minuscule et ne porterait aucun accent reste
+  // invisible a CE motif. Elle reste visible aux huit autres des qu'elle est
+  // rendue en JSX, passee a un toast ou retournee par du code : ce motif-ci ne
+  // couvre que le cas du conteneur objet.
+  [new RegExp(`(?<![A-Za-z0-9_$'"\`.])[A-Za-z_$][A-Za-z0-9_$]*[ \t]*:[ \t]*${QUOTED(FR)}`, 'g'), 2, true, true],
 ];
 
 // ── Ce qui n'est PAS une phrase d'interface ────────────────────────
@@ -402,7 +430,7 @@ for (const f of walk('src')) {
   if (isSeedFile(raw) || isLockedSyntaxFile(raw)) continue;
   const s = stripConsoleCalls(stripComments(raw));
   const hits = new Set();
-  for (const [re, groupOrGroups, requirePhrase] of PATTERNS) {
+  for (const [re, groupOrGroups, requirePhrase, requireSentence] of PATTERNS) {
     re.lastIndex = 0;
     let m;
     // (6) porte DEUX groupes (les deux branches du ternaire) sur un seul
@@ -425,6 +453,11 @@ for (const f of walk('src')) {
         // `entreprise`) y ressemble a une phrase. Une phrase a plusieurs mots ;
         // un identifiant seul n'en a qu'un.
         if (requirePhrase && !/\s/.test(v)) continue;
+        // (9) matche n'importe quel nom de propriete : sans cette borne, toute
+        // la configuration technique du depot (piles de polices, listes de
+        // classes, enumerations kebab-case) entrerait dans le rapport. Une
+        // phrase affichee commence par une majuscule ou porte un accent.
+        if (requireSentence && !/^[A-ZÀ-Þ]/.test(v) && !new RegExp(ACC).test(v)) continue;
         // Motif (6) : la structure du ternaire est verifiee en regex, mais
         // pas le contenu — chaque branche doit prouver ELLE-MEME qu'elle est
         // francaise (accent ou mot-outil), independamment de l'autre.

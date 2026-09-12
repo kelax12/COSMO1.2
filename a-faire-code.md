@@ -2210,6 +2210,49 @@ de les REMESURER en soumettant les cas au scanner.
   réécrire « plus une seule chaîne en dur » : la phrase a déjà été vraie de la mesure et fausse du
   produit **quatre** fois.
 
+> ### ✅ Quatrième angle mort refermé le 2026-09-12 — la VALEUR d'une propriété d'objet
+>
+> **Mesure d'entrée** : `node scripts/i18n-scan.mjs` rendait `FICHIERS: 0 | CHAINES UNIQUES: 0`
+> pendant que `grep` montrait trois messages français en dur dans la modale de tâche. Les deux
+> angles morts de l'énoncé (forme ternaire, vocabulaire fermé) étaient bien fermés par `0724e36` ;
+> le troisième ne l'était pas, et il n'avait jamais été nommé.
+>
+> **Le mécanisme.** Une chaîne posée en valeur de propriété d'objet n'était vue par AUCUN des huit
+> motifs : (4) et (5) ne regardent qu'une liste **fermée** de noms de propriété (`label` `title`
+> `name` `text` … `error` `message` `description` `reason`), et (7) exige la chaîne en **premier
+> jeton** de l'appel, donc une accolade suffit à le perdre. La forme fautive est celle qu'emploie
+> tout ce dépôt pour l'erreur globale d'un formulaire :
+>
+> ```ts
+> setErrors({ general: 'Erreur lors de la suppression. Veuillez réessayer.' });
+> ```
+>
+> **Sonde d'abord, vue ROUGE** (`scripts/i18n-scan.guard.test.mjs`, 3 cas neufs, dont un témoin du
+> témoin qui exige que `route:` / `ns:` / `fontFamily:` restent hors du rapport). Puis motif (9) :
+> valeur de propriété quel que soit le nom, borné par `requireSentence` — la valeur doit commencer
+> par une majuscule ou porter un accent, sinon toute la configuration technique entrerait dans le
+> rapport. **La borne a un coût, et il est assumé** : une phrase française commençant par une
+> minuscule sans accent reste invisible à CE motif (elle reste visible aux huit autres dès qu'elle
+> est rendue en JSX, passée à un toast ou retournée par du code).
+>
+> **Mesure de sortie** : `0` → **15 chaînes dans 4 fichiers**, puis `0` après extraction. Aucun
+> seuil touché, `MAX_STRINGS` reste à 0.
+>
+> Ce que le cliquet élargi a fait remonter, et qui n'était dans aucun énoncé :
+>
+> | Fichier | Ce que voyait un anglophone |
+> |---|---|
+> | `task-modal/save-task.ts` ×2, `useTaskModal.ts` | les trois messages de l'énoncé — et `tasks.modal.createError` / `deleteError` **existaient déjà au catalogue**, avec exactement ce texte : trois doublons jamais câblés (`saveError` créée) |
+> | `modules/kr-completions/repository.ts` | **11 titres de KR et d'OKR en français** — le seul seed de démo branché sur aucun overlay. Corrigé en REPRENANT `DEMO_OKRS_EN` par (okrId, krId) plutôt qu'en réécrivant les libellés : un libellé n'a jamais deux traductions |
+> | `tutorials/agenda.desktop.ts` + `tutorial/PageTutorial.tsx` | le libellé du fantôme de drag du tutoriel agenda, en dur (`'Travail'`, `'Pause café'`, et les deux valeurs par défaut `'Tâche'` / `'Tâche démo'`). `ghostLabel: string` devient `ghostLabelKey: KeyOf<'tutorials'>` |
+>
+> **Vérifié dans le navigateur** (règle 4), serveur de dev, démo en locale `en` : le tutoriel
+> `/en/agenda` à l'étape 4 rend son fantôme **« Work »**, là où il rendait « Travail ».
+>
+> ⚠️ Ce que ça ne prouve **pas** : le seul énoncé opposable reste la sortie de `-- --list`. C'est la
+> quatrième fois que ce cliquet certifie zéro à tort ; rien ne dit qu'il n'y a pas un cinquième
+> angle mort, et la borne `requireSentence` en nomme un par construction.
+
 ---
 
 ## 7. Accessibilité

@@ -11,7 +11,11 @@
     "step3Desc": "Open the list of tasks to schedule. Drag one onto a slot to add it to your calendar.",
     "step4Desc": "Grab a task, drag it onto a slot. It lands in your calendar in one gesture.",
     "step5Desc": "Grab the bottom of the event and drag down to make it longer.",
-    "step6Desc": "Select a time slot to create an event there"
+    "step6Desc": "Select a time slot to create an event there",
+    "ghostWork": "Work",
+    "ghostCoffee": "Coffee break",
+    "ghostTask": "Task",
+    "ghostDemoTask": "Demo task"
   },
   "agendaMobile": {
     "step1Title": "Your calendar",

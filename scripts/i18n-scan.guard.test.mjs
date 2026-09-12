@@ -137,3 +137,48 @@ describe('i18n-scan : angle mort 3 — une chaine passee en argument', () => {
     expect(found).toHaveLength(0);
   });
 });
+
+describe('i18n-scan : angle mort 4 — la chaine est une VALEUR de propriete', () => {
+  // 🔴 QUATRIEME fois que le cliquet certifie ZERO pendant que le produit parle
+  // francais. Les motifs (4) et (5) ne regardent qu'une liste FERMEE de noms de
+  // propriete (`label` `title` `name` `text` … `error` `message` `description`
+  // `reason`) ; le motif (7) veut la chaine en PREMIER jeton de l'appel, donc
+  // une accolade suffit a le perdre. Une propriete nommee autrement — ici
+  // `general`, la cle d'erreur globale des formulaires de ce depot — n'etait
+  // vue par AUCUN des huit motifs.
+  //
+  // Ce n'est pas theorique : les trois messages d'erreur de la modale de tache
+  // (`save-task.ts` x2, `useTaskModal.ts`) etaient en dur sous cette forme,
+  // affiches a l'ecran, pendant que `i18n:scan` rendait 0.
+  it('voit une chaine posee en valeur de propriete dans un appel de fonction', () => {
+    const found = scan(`
+      export function submit() {
+        setErrors({ general: 'Erreur lors de la suppression. Veuillez réessayer.' });
+      }
+    `);
+    expect(found).toContain('Erreur lors de la suppression. Veuillez réessayer.');
+  });
+
+  // La meme forme, hors de tout appel : un objet de configuration pose a plat.
+  it('voit une chaine posee en valeur de propriete dans un objet litteral', () => {
+    const found = scan(`
+      const STATE = { banner: 'Votre abonnement arrive à échéance' };
+    `);
+    expect(found).toContain('Votre abonnement arrive à échéance');
+  });
+
+  // 🔴 TEMOIN du temoin : elargir aux valeurs de propriete ne doit pas faire
+  // entrer les CLES ni les valeurs techniques. Sans ce cas, on refermerait
+  // l'angle mort en cassant le scanner pour tout le reste.
+  it('ne prend pas une valeur technique de propriete pour une phrase', () => {
+    const found = scan(`
+      const CFG = {
+        route: '/entreprise',
+        ns: 'agenda',
+        key: 'taches.liste.vide',
+        fontFamily: 'system-ui, -apple-system, sans-serif',
+      };
+    `);
+    expect(found).toHaveLength(0);
+  });
+});
