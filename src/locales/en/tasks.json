@@ -151,7 +151,9 @@
     "endOfListCompleted_other": "end of list · {{count}} completed tasks",
     "seeCompleted_one": "See the completed task",
     "seeCompleted_many": "See the {{count}} completed",
-    "seeCompleted_other": "See the {{count}} completed"
+    "seeCompleted_other": "See the {{count}} completed",
+    "selectTaskAria": "Select “{{name}}”",
+    "deselectTaskAria": "Deselect “{{name}}”"
   },
   "toast": {
     "leftShared": "You left the shared task",

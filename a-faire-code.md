@@ -2626,7 +2626,7 @@ clavier, et la décision est écrite dans
   `<table>` de FullCalendar garde son `role="grid"` sans descendant focalisable géré, arbitrage
   assumé dans `ACCESSIBILITY.md` plutôt que maquillé par un patch de rôle après chaque rendu.
 
-### C-55 · Trois surfaces que A-3 n'a PAS réussi à mesurer · **P3 · S**
+### C-55 · ~~Trois surfaces que A-3 n'a PAS réussi à mesurer~~ · **P3 · S** · ✅ mesurées le 2026-09-12 · 1 finding réel, 2 artefacts
 
 Honnêteté de couverture, pas finding de produit. Trois choses cherchées sans y arriver, qu'il ne
 faut donc pas croire vérifiées :
@@ -2644,6 +2644,59 @@ faut donc pas croire vérifiées :
    qu'elles sélectionnent. Relevé dans l'arbre d'accessibilité, non confirmé par un clic réussi.
 
 - **Fini quand** : les trois sont mesurés, dans le navigateur, et rendent un finding ou un « rien ».
+
+> #### ✅ Mesurées le 2026-09-12 — **un finding réel sur trois**, et les deux autres étaient des artefacts de harnais
+>
+> Les trois sont désormais joués dans un vrai navigateur par
+> `e2e/a11y-keyboard-audit.spec.ts` (2 cas neufs, tous deux verts), donc ce ne sont plus des trous
+> de couverture : ce sont des mesures, et elles ont un cliquet.
+>
+> 🔴 **La leçon d'abord, parce qu'elle a coûté le plus.** La première tentative a été faite dans le
+> panneau navigateur de l'agent, qui **ne peint pas quand il est caché**. Les animations CSS n'y
+> progressent donc pas, `animationend` n'arrive jamais, et un menu Radix en cours de fermeture reste
+> indéfiniment dans le DOM — `data-state="closed"` et pourtant opaque, cliquable, avec le focus
+> tombé sur `<body>`. On y a « mesuré » un menu impossible à fermer au clavier, sur deux passes
+> reproductibles. **C'était le harnais, pas le produit.** Rejoué sous Playwright, Échap referme et
+> rend le focus au déclencheur. C'est mot pour mot la règle de C-74 : un rouge ne dit pas où est le
+> défaut, il dit qu'il y en a un quelque part **entre le produit et sa mesure**.
+>
+> **1. Le calendrier ouvert depuis une entrée de MENU — il marche, et l'énoncé était faux sur deux points.**
+>
+> | Ce que disait l'énoncé | Ce que rend la mesure |
+> |---|---|
+> | « n'apparaît pas dans le jeu de démo, aucune tâche en retard » | le bandeau **est** là ; l'énoncé décrivait un autre seed |
+> | « les correctifs de C-51 n'ont pas été éprouvés dans ce conteneur » | ils tiennent : `autoFocus` pose le focus sur **aujourd'hui**, `ArrowRight` → 13 sept, `ArrowDown` → **20 sept** (une semaine, donc le menu n'intercepte pas les flèches), Échap referme et **rend le focus au déclencheur** |
+>
+> ⚠️ **L'entorse ARIA, elle, est RÉELLE et reste ouverte** : `gridInsideMenu = true`, une grille
+> vit bien dans un `role="menu"`. Elle est **imprimée, pas assertionnée**, et c'est délibéré : la
+> corriger demande de sortir le calendrier du menu, ce qu'`OverdueBanner` documente comme ayant déjà
+> été essayé **deux fois** et mesuré cassé (course au focus entre le menu et un second
+> `DismissableLayer`). En faire une gate imposerait de rouvrir cet arbitrage sans l'avoir rendu.
+>
+> **2. « Plus d'actions » jamais jugé stable — NE SE REPRODUIT PAS.** Mesuré par la boîte, deux fois
+> à 400 ms : `moreStable = true`, et le menu s'ouvre (`moreOpens = true`). Les 34 tentatives d'A-3
+> étaient un artefact. Un soupçon qui ne se reproduit pas se **dit**, il ne se recopie pas.
+>
+> **3. Les noms en mode sélection — FINDING RÉEL, et plus grave que l'énoncé.**
+>
+> L'énoncé disait « les cases gardent le nom *Marquer comme complétée* alors qu'elles
+> sélectionnent ». La vraie forme est pire : sur la rangée **desktop**, le mode sélection
+> n'**échange** pas la case, il en **ajoute une seconde** à côté — et cette seconde case, celle qui
+> porte toute la sélection multiple, n'avait **ni nom accessible, ni `role`, ni état**. Un lecteur
+> d'écran annonçait « bouton », rien de plus (**WCAG 4.1.2**). Ce qu'A-3 lisait dans l'arbre
+> (« Marquer … comme terminée ») était la case VOISINE, correctement nommée pour ce qu'elle fait.
+>
+> C'est aussi pourquoi A-3 restait à « 0 sélectionnée » : son clic tombait sur la case
+> *terminée*, pas sur celle qui sélectionne — la seule atteignable par un nom.
+>
+> **Corrigé** : la case de sélection prend `role="checkbox"`, `aria-checked` et un nom qui dit ce
+> qu'elle fait. Et comme le rendu est **partagé** entre « ajouter à une liste » et « sélectionner »
+> (`effectiveAddToListMode`), un `selectionKind` dit lequel des deux est actif : une case annoncée
+> « Ajouter à la liste » pendant qu'on sélectionne mentirait tout autant. La carte **mobile**
+> nommait déjà sa case — mais avec le libellé de la liste dans les deux modes ; elle est alignée.
+>
+> Mesure de sortie : `selectionCount` passe de **0 à 1** sur un clic, et le nom relevé est
+> désormais « Sélectionner « … » ». Les 16 cas du harnais restent verts.
 
 ### C-57 · Cibles tactiles sous 44 px : 16 × 16 px pour cocher une tâche sur l'accueil · **P2 · M**
 

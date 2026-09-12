@@ -21,6 +21,8 @@ import { isTaskOverdue } from './helpers';
 interface TaskCardProps {
   task: Task;
   addToListMode: boolean;
+  /** Cf. `list.tsx` : même rendu pour deux modes, pas le même nom (C-55). */
+  selectionKind?: 'list' | 'select';
   selectedForListIds: string[];
   onToggleTaskForList?: (id: string) => void;
   onToggleComplete: (id: string) => void;
@@ -41,6 +43,7 @@ interface TaskCardProps {
 const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
   task,
   addToListMode,
+  selectionKind = 'list',
   selectedForListIds,
   onToggleTaskForList,
   onToggleComplete,
@@ -260,7 +263,16 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
         <button
           onClick={(e) => { e.stopPropagation(); onToggleTaskForList?.(task.id); }}
           className="min-w-11 min-h-11 -my-1 -ml-1 p-2 flex items-center justify-center shrink-0"
-          aria-label={selectedForListIds.includes(task.id) ? t('card.removeFromList') : t('card.addToListShort')}
+          aria-label={
+            selectionKind === 'select'
+              ? t(
+                  selectedForListIds.includes(task.id)
+                    ? 'table.deselectTaskAria'
+                    : 'table.selectTaskAria',
+                  { name: task.name },
+                )
+              : t(selectedForListIds.includes(task.id) ? 'card.removeFromList' : 'card.addToListShort')
+          }
           aria-pressed={selectedForListIds.includes(task.id)}
         >
           <span
