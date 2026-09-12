@@ -157,7 +157,9 @@
     "endOfListCompleted_other": "fin de la liste · {{count}} tâches terminées",
     "seeCompleted_one": "Voir la tâche terminée",
     "seeCompleted_many": "Voir les {{count}} de tâches terminées",
-    "seeCompleted_other": "Voir les {{count}} terminées"
+    "seeCompleted_other": "Voir les {{count}} terminées",
+    "selectTaskAria": "Sélectionner « {{name}} »",
+    "deselectTaskAria": "Désélectionner « {{name}} »"
   },
   "toast": {
     "leftShared": "Vous avez quitté la tâche partagée",

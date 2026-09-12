@@ -50,6 +50,12 @@ const ESTIMATED_CARD_HEIGHT = 76; // mesuré : ~68px card + 8px mb-2
 interface VirtualizedTaskListProps {
   rows: UnifiedTaskRow[];
   addToListMode: boolean;
+  /**
+   * Ce que la case de gauche fait vraiment : ranger dans une LISTE, ou
+   * SÉLECTIONNER pour une action groupée. Les deux modes partagent le rendu,
+   * pas le nom accessible (C-55, WCAG 4.1.2).
+   */
+  selectionKind?: 'list' | 'select';
   selectedForListIds: string[];
   onToggleTaskForList?: (id: string) => void;
   onToggleComplete: (id: string) => void;
@@ -74,6 +80,7 @@ export const VirtualizedTaskList: React.FC<VirtualizedTaskListProps> = (props) =
   const cardProps = (task: Task) => ({
     task,
     addToListMode: props.addToListMode,
+    selectionKind: props.selectionKind,
     selectedForListIds: props.selectedForListIds,
     onToggleTaskForList: props.onToggleTaskForList,
     onToggleComplete: props.onToggleComplete,
@@ -165,6 +172,8 @@ export const VirtualizedTaskList: React.FC<VirtualizedTaskListProps> = (props) =
 interface TaskRowProps {
   task: Task;
   addToListMode: boolean;
+  /** Cf. `VirtualizedTaskListProps` : deux modes, un rendu, deux noms (C-55). */
+  selectionKind?: 'list' | 'select';
   selectedForListIds: string[];
   activeQuickFilter: 'none' | 'bookmarked' | 'completed' | 'overdue' | 'collaboration';
   showCompleted: boolean;
@@ -186,6 +195,7 @@ interface TaskRowProps {
 export const TaskRow = React.memo(({
   task,
   addToListMode,
+  selectionKind = 'list',
   selectedForListIds,
   activeQuickFilter,
   onSelectTask,
@@ -274,6 +284,31 @@ export const TaskRow = React.memo(({
               >
                 <motion.button
                   onClick={() => onToggleTaskForList?.(task.id)}
+                  // 🔴 C-55 — cette case n'avait NI nom, NI rôle, NI état. Un
+                  // lecteur d'écran annonçait « bouton », sans rien d'autre,
+                  // pour le contrôle qui porte toute la sélection multiple
+                  // (WCAG 4.1.2). La carte MOBILE le faisait déjà
+                  // correctement ; c'est le rendu desktop qui, au lieu de
+                  // REMPLACER la case « terminée », en AJOUTE une seconde à
+                  // côté — d'où l'arbre d'accessibilité qui n'annonçait que
+                  // « Marquer … comme terminée », ce qu'A-3 avait relevé sans
+                  // pouvoir le confirmer.
+                  role="checkbox"
+                  aria-checked={selectedForListIds.includes(task.id)}
+                  aria-label={
+                    selectionKind === 'select'
+                      ? t(
+                          selectedForListIds.includes(task.id)
+                            ? 'table.deselectTaskAria'
+                            : 'table.selectTaskAria',
+                          { name: task.name },
+                        )
+                      : t(
+                          selectedForListIds.includes(task.id)
+                            ? 'card.removeFromList'
+                            : 'card.addToListShort',
+                        )
+                  }
                   animate={{}}
                   whileHover={{ scale: 1.15 }}
                   whileTap={{ scale: 0.88 }}

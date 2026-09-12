@@ -370,6 +370,12 @@ const TaskTable: React.FC<TaskTableProps> = ({
 
   // Le mode sélection (#10) réutilise le rendu checkbox du mode addToList.
   const effectiveAddToListMode = addToListMode || selectMode;
+  // 🔴 …mais PAS son libellé (C-55). Les deux modes montrent la même case et
+  // ne font pas la même chose : l'un range dans une liste, l'autre sélectionne
+  // pour une action groupée. Une case annoncée « Ajouter à la liste » pendant
+  // qu'on sélectionne ment sur ce qu'elle fait (WCAG 4.1.2). Le rendu reste
+  // partagé, le NOM ne l'est plus.
+  const selectionKind: 'list' | 'select' = selectMode ? 'select' : 'list';
   const effectiveSelectedForListIds = selectMode ? selectedIds : selectedForListIds;
   const effectiveToggleForList = selectMode ? toggleSelected : onToggleTaskForList;
 
@@ -412,6 +418,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
         sortDirection={sortDirection}
         onSort={handleSort}
         addToListMode={effectiveAddToListMode}
+        selectionKind={selectionKind}
         selectedForListIds={effectiveSelectedForListIds}
         activeQuickFilter={activeQuickFilter}
         showCompleted={showCompleted}
@@ -438,6 +445,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
         <VirtualizedTaskList
           rows={unifiedRows}
           addToListMode={effectiveAddToListMode}
+          selectionKind={selectionKind}
           selectedForListIds={effectiveSelectedForListIds}
           onToggleTaskForList={effectiveToggleForList}
           onToggleComplete={handleToggleComplete}

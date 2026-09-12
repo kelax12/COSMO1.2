@@ -547,6 +547,232 @@ test('MESURE — DatePicker ancré à un champ (modale OKR)', async ({ demoPage:
   expect(english, `noms accessibles anglais: ${JSON.stringify(english)}`).toHaveLength(0);
 });
 
+// ═══════════════════════════════════════════════════════════════════
+// C-55 — les TROIS surfaces que l'audit A-3 n'avait PAS su mesurer
+// ═══════════════════════════════════════════════════════════════════
+//
+// 🔴 Ce n'étaient pas des findings : c'étaient trois trous de COUVERTURE, et
+// l'item les nommait pour qu'on ne les croie pas vérifiés. Ils sont mesurés ici
+// le 2026-09-12, dans un vrai navigateur.
+//
+// ⚠️ Ce que la première tentative a appris, et qui vaut au-delà de C-55 : la
+// mesure a d'abord été faite dans le panneau navigateur de l'agent, qui ne
+// PEINT pas quand il est caché. Les animations CSS n'y progressent donc pas,
+// `animationend` n'arrive jamais, et un menu Radix en cours de fermeture reste
+// indéfiniment dans le DOM, `data-state="closed"` et pourtant opaque. On y
+// « mesurait » un menu impossible à fermer au clavier — un défaut du HARNAIS,
+// pris pour un défaut du produit. C'est très exactement la leçon de C-74 : un
+// rouge ne dit pas où est le défaut, il dit qu'il y en a un quelque part entre
+// le produit et sa mesure.
+//
+// Deux obstacles de décor l'ont aussi retardée, et ils sont traités ici plutôt
+// que contournés : le tutoriel de `/tasks` et le bandeau cookies couvrent
+// littéralement la zone à mesurer.
+
+/**
+ * Ouvre `/tasks` DÉBARRASSÉE de son décor : tutoriel de page, bandeau cookies,
+ * toast de rappel d'échéance.
+ *
+ * 🔴 Les trois recouvrent littéralement la zone à mesurer, et le troisième est
+ * exactement la cause de C-74 (« un toast Sonner intercepte le clic »). Les
+ * contourner par `force: true` aurait mesuré un clic qu'aucune personne ne peut
+ * faire ; on les ferme.
+ *
+ * ⚠️ `goto` et non `navTo` : le parcours de navigation ramenait le tableau de
+ * bord dans `#main-content` alors que l'URL disait `/tasks`. On mesure une
+ * PAGE, pas une navigation — même choix que `e2e/touch-targets.spec.ts`.
+ */
+async function openTasksBare(page: Page): Promise<void> {
+  await page.goto('/tasks');
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(1_200);
+
+  const skip = page.getByRole('button', { name: /passer le tutoriel/i }).first();
+  if (await skip.isVisible({ timeout: 3_000 }).catch(() => false)) {
+    await skip.click().catch(() => {});
+    await page.waitForTimeout(400);
+  }
+  const refuse = page.getByRole('button', { name: /^refuser$/i }).first();
+  if (await refuse.isVisible({ timeout: 3_000 }).catch(() => false)) {
+    await refuse.click().catch(() => {});
+    await page.waitForTimeout(400);
+  }
+  // Le toast de rappel se ferme par sa propre croix, jamais par Échap.
+  for (let i = 0; i < 3; i++) {
+    const close = page.getByRole('button', { name: /close toast/i }).first();
+    if (!(await close.isVisible({ timeout: 1_500 }).catch(() => false))) break;
+    await close.click().catch(() => {});
+    await page.waitForTimeout(300);
+  }
+  await page.waitForTimeout(400);
+}
+
+test('MESURE C-55 — le calendrier ouvert depuis une ENTRÉE DE MENU', async ({ demoPage: page }) => {
+  // La surface que A-3 jugeait « la plus risquée des huit » : une GRILLE vit à
+  // l'intérieur d'un `role="menu"`, ce que l'ARIA n'autorise pas, et les
+  // correctifs de C-51 (`autoFocus`) n'y avaient jamais été éprouvés.
+  await openTasksBare(page);
+
+  const trigger = page.getByRole('button', { name: /tout replanifier/i }).first();
+  // ⚠️ A-3 concluait « n'apparaît pas dans le jeu de démo, aucune tâche en
+  // retard ». REMESURÉ : le bandeau EST là. L'énoncé décrivait un autre seed.
+  const bannerPresent = await trigger.isVisible({ timeout: 8_000 }).catch(() => false);
+  expect(bannerPresent, 'le bandeau « En retard » doit être dans le jeu de démo').toBe(true);
+
+  await trigger.focus();
+  await page.keyboard.press('Enter');
+  await page.waitForTimeout(500);
+
+  const menu = page.locator('[role="menu"]').filter({ visible: true }).first();
+  expect(await menu.isVisible().catch(() => false), "Entrée n'ouvre pas le menu").toBe(true);
+
+  // Descendre jusqu'à « Choisir une date… ».
+  //
+  // 🔴 Surtout PAS un `ArrowUp` « qui va à la dernière entrée » : mesuré, il
+  // pose le focus sur « Demain », et l'Entrée qui suit REPLANIFIE toutes les
+  // tâches en retard au lieu d'ouvrir le calendrier. Le test passait alors à
+  // côté de ce qu'il prétend mesurer, en modifiant les données au passage. On
+  // descend donc jusqu'à l'entrée VOULUE, en vérifiant son nom.
+  let onPick = await describeFocus(page);
+  for (let i = 0; i < 8 && !/choisir une date/i.test(onPick); i++) {
+    await page.keyboard.press('ArrowDown');
+    await page.waitForTimeout(150);
+    onPick = await describeFocus(page);
+  }
+  expect(onPick, "« Choisir une date… » n'est pas atteignable aux flèches").toMatch(/choisir une date/i);
+
+  await page.keyboard.press('Enter');
+  await page.waitForTimeout(600);
+
+  const grid = page.locator('[role="grid"]').filter({ visible: true }).first();
+  const gridVisible = await grid.isVisible().catch(() => false);
+  const gridInsideMenu = gridVisible
+    ? await page.evaluate(() => !!document.querySelector('[role="grid"]')?.closest('[role="menu"]'))
+    : null;
+  const focusInGrid = gridVisible
+    ? await page.evaluate(() => !!document.activeElement?.closest('[role="grid"]'))
+    : false;
+  const dayOnOpen = await describeFocus(page);
+
+  // Les flèches doivent parcourir le calendrier, PAS les entrées du menu :
+  // c'est tout le risque d'une grille dans un `role="menu"`.
+  await page.keyboard.press('ArrowRight');
+  await page.waitForTimeout(250);
+  const afterRight = await describeFocus(page);
+  await page.keyboard.press('ArrowDown');
+  await page.waitForTimeout(250);
+  const afterDown = await describeFocus(page);
+
+  await page.keyboard.press('Escape');
+  const calendarClosed = await grid
+    .waitFor({ state: 'hidden', timeout: 3_000 })
+    .then(() => true)
+    .catch(() => false);
+  await page.waitForTimeout(600);
+  const focusAfterEsc = await describeFocus(page);
+  const menuStillOpen = await menu.isVisible().catch(() => false);
+
+  console.log(
+    '[C-55] calendrier dans un menu',
+    JSON.stringify({ onPick, gridVisible, gridInsideMenu, focusInGrid, dayOnOpen, afterRight, afterDown, calendarClosed, focusAfterEsc, menuStillOpen }),
+  );
+
+  // ── ASSERTIONNÉ : ce que C-51 promet doit tenir DANS ce conteneur ────
+  expect(gridVisible, "Entrée sur « Choisir une date… » n'ouvre pas le calendrier").toBe(true);
+  expect(focusInGrid, `le focus n'entre pas dans la grille (${dayOnOpen})`).toBe(true);
+  expect(afterRight, 'ArrowRight ne déplace pas le focus dans la grille').not.toBe(dayOnOpen);
+  expect(afterDown, 'ArrowDown ne déplace pas le focus (le menu l’intercepte ?)').not.toBe(afterRight);
+  expect(calendarClosed, 'Échap ne referme pas le calendrier').toBe(true);
+
+  // ── IMPRIMÉ, pas assertionné : `gridInsideMenu` ──────────────────────
+  // Une grille dans un `role="menu"` est bien une entorse ARIA, et elle est
+  // RÉELLE. Mais la corriger demande de sortir le calendrier du menu, ce que
+  // `OverdueBanner` documente comme ayant déjà été essayé DEUX fois et mesuré
+  // cassé (course au focus entre le menu et un second `DismissableLayer`). En
+  // faire une gate imposerait de rouvrir cet arbitrage sans l'avoir rendu.
+  console.log('[C-55] grille dans un role="menu" :', gridInsideMenu);
+});
+
+test('MESURE C-55 — barre de sélection : stabilité et noms en mode sélection', async ({ demoPage: page }) => {
+  // Deux des trois trous d'A-3 d'un coup : la barre d'actions groupées n'était
+  // jamais jugée STABLE par Playwright (34 tentatives), et les cases à cocher
+  // gardaient le nom « Marquer … comme terminée » alors qu'elles sélectionnent.
+  await openTasksBare(page);
+
+  const selectMode = page.getByRole('button', { name: /sélectionner/i }).first();
+  const hasSelectMode = await selectMode.isVisible({ timeout: 8_000 }).catch(() => false);
+  if (!hasSelectMode) {
+    // Un « rien » se DIT. A-3 avait échoué sans laisser de trace lisible.
+    console.log('[C-55] mode sélection introuvable sur /tasks — rien mesuré');
+    expect(hasSelectMode, 'le mode sélection doit exister sur /tasks').toBe(true);
+    return;
+  }
+  await selectMode.click();
+  await page.waitForTimeout(500);
+
+  // Nom accessible des cases à cocher UNE FOIS le mode sélection actif.
+  const names = await page.evaluate(() =>
+    [...document.querySelectorAll('input[type="checkbox"], [role="checkbox"], button[aria-pressed]')]
+      .filter((n) => (n as HTMLElement).offsetParent !== null)
+      .map((n) => (n.getAttribute('aria-label') || n.textContent || '').trim().slice(0, 60))
+      .filter((v, i, a) => v && a.indexOf(v) === i)
+      .slice(0, 8),
+  );
+  console.log('[C-55] noms des cases en mode sélection', JSON.stringify(names));
+
+  // Sélectionner une tâche, puis PROUVER que la sélection a pris.
+  //
+  // 🔴 A-3 s'est arrêté ici : « cocher une tâche laissait 0 sélectionnée, donc
+  // la barre restait désactivée ». Sans cette preuve, tout ce qui suit
+  // mesurerait une barre inerte et conclurait à tort.
+  // 🔴 La case de SELECTION, pas celle qui termine la tache. Les deux sont
+  // cote a cote dans la rangee desktop, et A-3 a clique sur la mauvaise : sa
+  // conclusion « 0 selectionnee » decrivait un clic qui cochait « terminee ».
+  const firstCheck = page.getByRole('checkbox', { name: /^s[ée]lectionner/i }).first();
+  await firstCheck.click({ timeout: 10_000 }).catch(() => {});
+  await page.waitForTimeout(700);
+  const selectionCount = await page.evaluate(() => {
+    const m = document.body.innerText.match(/(\d+)\s+s[ée]lectionn/i);
+    return m ? Number(m[1]) : null;
+  });
+  console.log('[C-55] sélection après un clic :', selectionCount);
+
+  const more = page.getByRole('button', { name: /plus d.actions/i }).first();
+  const moreVisible = await more.isVisible({ timeout: 5_000 }).catch(() => false);
+  let moreStable: boolean | null = null;
+  let moreOpens: boolean | null = null;
+  if (moreVisible) {
+    // 🔴 LE point d'A-3 : « jamais jugé stable, 34 tentatives ». On mesure la
+    // stabilité par la boîte, deux fois à 400 ms d'intervalle, plutôt que de
+    // laisser l'auto-attente de Playwright échouer sans rien dire.
+    const b1 = await more.boundingBox();
+    await page.waitForTimeout(400);
+    const b2 = await more.boundingBox();
+    moreStable = !!b1 && !!b2 && b1.x === b2.x && b1.y === b2.y;
+    await more.click({ timeout: 10_000, force: !moreStable }).catch(() => {});
+    await page.waitForTimeout(500);
+    moreOpens = await page.locator('[role="menu"]').filter({ visible: true }).first()
+      .isVisible().catch(() => false);
+  }
+  console.log('[C-55] barre de sélection', JSON.stringify({ moreVisible, moreStable, moreOpens, selectionCount }));
+
+  // ── ASSERTIONNÉ : la stabilité, c'est-à-dire le point 2 de C-55 ───────
+  // A-3 rapportait « jamais jugé stable, 34 tentatives ». Si la mesure le
+  // trouve stable, l'énoncé était un artefact de harnais, et il faut le DIRE
+  // plutôt que laisser l'item porter un soupçon.
+  expect(moreVisible, "la barre d'actions groupées ne s'affiche pas").toBe(true);
+  expect(moreStable, '« Plus d’actions » bouge encore entre deux mesures').toBe(true);
+  expect(selectionCount, 'cocher une tâche en mode sélection ne sélectionne rien').toBeGreaterThan(0);
+
+  // ── ASSERTIONNÉ : une case qui SÉLECTIONNE ne doit pas dire qu'elle termine.
+  const selectors = names.filter((n) => /^s[ée]lectionner\s+[«"]/i.test(n));
+  expect(
+    selectors.length,
+    'en mode sélection, la case qui SÉLECTIONNE doit porter un nom qui le dit. '
+      + 'Noms relevés : ' + JSON.stringify(names),
+  ).toBeGreaterThan(0);
+});
+
 test('MESURE — /agenda FullCalendar au clavier', async ({ demoPage: page }) => {
   await navTo(page, /agenda/i, /\/agenda/);
   await page.waitForLoadState('networkidle');
