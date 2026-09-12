@@ -117,7 +117,11 @@ const SettingsPage: React.FC = () => {
   useEffect(() => {
     if (user) setProfileDraft({ name: user.name, email: user.email });
     // Deps primitives volontaires (plus précises que l'objet user entier).
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    /* eslint-disable-next-line react-hooks/exhaustive-deps --
+    deps primitives plutot que l objet `user` entier : strictement PLUS
+       precises que ce qu ESLint demande. Les trois champs lus (`id`, `name`,
+       `email`) y figurent nommement, aucun ne peut perimer ; l objet, lui,
+       churne a chaque rafraichissement de session. */
   }, [user?.id, user?.name, user?.email]);
 
   if (!user) return null;

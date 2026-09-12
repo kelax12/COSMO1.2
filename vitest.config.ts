@@ -25,6 +25,12 @@ export default defineConfig({
       'src/**/*.{test,spec}.{ts,tsx}',
       'src/**/*.{test,spec}.mjs',
       'scripts/**/*.{test,spec}.mjs',
+      // `eslint-rules/**` : le témoin de la règle locale `C-06`. Une règle
+      // ESLint qui cesserait de détecter laisserait `npm run lint` vert, donc
+      // ne se verrait nulle part — c'est précisément la classe de garde que
+      // `CLAUDE.md` documente sous « une garde se vérifie sur ce qu'elle
+      // REGARDE ». Sans cette entrée, le témoin ne serait jamais joué.
+      'eslint-rules/**/*.{test,spec}.mjs',
     ],
     // L'ancien dossier Vitest jamais activé + les E2E Playwright ne doivent
     // pas être ramassés par Vitest.

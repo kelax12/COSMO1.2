@@ -50,7 +50,10 @@ const SubtaskChecklist: React.FC<SubtaskChecklistProps> = ({ taskId, initialSubt
     setLocalItems(source);
     // Resynchronise uniquement quand on change de tâche ou que le détail
     // arrive (pas à chaque frappe).
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    /* eslint-disable-next-line react-hooks/exhaustive-deps --
+    `detail?.subtasks` et `initialSubtasks` omis : la resynchronisation n a
+       lieu qu au changement de tache ou a l ARRIVEE du detail. Sur le CONTENU,
+       elle ecraserait la frappe en cours dans la checklist. */
   }, [taskId, detail?.id]);
 
   const commit = (next: Subtask[]) => {

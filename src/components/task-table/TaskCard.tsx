@@ -109,7 +109,10 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
       clearTimeout(startTimer);
       controls?.stop();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    /* eslint-disable-next-line react-hooks/exhaustive-deps --
+    `x` est une MotionValue, stable pour la vie du composant. Seul le passage
+       en mode « ajouter a une liste » sur la PREMIERE carte doit rejouer
+       l indice gestuel ; dependre de `x` le relancerait a chaque frame. */
   }, [isFirst, addToListMode]);
 
   const startLongPress = (e: React.PointerEvent) => {

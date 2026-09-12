@@ -61,7 +61,10 @@ const TaskCommentsSection = ({ taskId, members, currentUserId, autoSubmitDraft, 
     const mentions = members.filter((m) => text.includes(`@${m.displayName}`)).map((m) => m.userId);
     addMutation.mutate({ body: text, mentions });
     onAutoSubmitted?.();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    /* eslint-disable-next-line react-hooks/exhaustive-deps --
+    un seul essai, a l arrivee d un vrai `taskId`. `autoSubmitDraft`,
+       `members` et `addMutation` sont lus a cet instant precis ; les mettre en
+       dependance reposterait le brouillon a chaque refetch des membres. */
   }, [taskId]);
 
   // Détection de la mention en cours : « @ » suivi de texte sans espace,

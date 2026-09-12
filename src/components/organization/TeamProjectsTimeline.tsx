@@ -179,7 +179,10 @@ const TeamProjectsTimeline = ({ projects, tasks, members, groupBy, onOpenTask }:
     if (!el || todayOffset === null) return;
     const target = (todayOffset / 100) * el.scrollWidth - 96;
     el.scrollLeft = Math.max(0, target);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    /* eslint-disable-next-line react-hooks/exhaustive-deps --
+    `todayOffset` omis : c est un CADRAGE INITIAL. Le remettre ramenerait la
+       fenetre sur aujourd hui pendant que la personne fait defiler, donc lui
+       reprendrait la main. Il est relu a chaque zoom, ce qui est le besoin. */
   }, [zoom, range.start.getTime()]);
 
   if (rows.length === 0) {

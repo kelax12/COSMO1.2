@@ -94,7 +94,10 @@ const ShinyText: React.FC<ShinyTextProps> = ({
     directionRef.current = direction === 'left' ? 1 : -1;
     elapsedRef.current = 0;
     progress.set(0);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    /* eslint-disable-next-line react-hooks/exhaustive-deps --
+    `progress` est une MotionValue : son identite est stable pour la vie du
+       composant, l ajouter ne changerait rien. Seul un changement de direction
+       doit remettre l animation a zero. */
   }, [direction]);
 
   // Transform: p=0 -> 150% (shine off right), p=100 -> -50% (shine off left)

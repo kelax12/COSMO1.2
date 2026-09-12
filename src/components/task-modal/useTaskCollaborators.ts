@@ -119,7 +119,11 @@ export function useTaskCollaborators({
   useEffect(() => {
     if (!isOpen || !task || isCreating || collaboratorsDirty) return;
     setCollaborators(seedCollaboratorIds);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    /* eslint-disable-next-line react-hooks/exhaustive-deps --
+    la liste porte la VALEUR de `seedCollaboratorIds` (jointe), pas sa
+       reference : le tableau est recree a chaque rendu. C est strictement PLUS
+       precis que ce qu ESLint sait exprimer, rien ne peut y perimer. `task`
+       entier est omis pour la meme raison, son identite y figure. */
   }, [isOpen, task?.id, isCreating, collaboratorsDirty, seedCollaboratorIds.join(',')]);
 
   // Auto-promote pending invites that have since become friends
@@ -154,7 +158,10 @@ export function useTaskCollaborators({
     const newPendingEmails = new Set(toPromote.map((e) => e.toLowerCase()));
     updateTask(task.id, { pendingInvites: pending.filter((e) => !newPendingEmails.has(e.toLowerCase())) });
     toast.success(`🎉 ${promotedNames.join(', ')} ${promotedNames.length > 1 ? 'ont rejoint' : 'a rejoint'} la tâche !`);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    /* eslint-disable-next-line react-hooks/exhaustive-deps --
+    `friends` entier omis : sa reference churne a chaque refetch et
+       rejouerait des partages deja faits. La longueur suffit a detecter
+       l arrivee d un nouvel ami, seul evenement qui doit promouvoir un invite. */
   }, [isOpen, task?.id, friends.length]);
 
   // Helpers d'identité/affichage des collaborateurs — logique pure extraite

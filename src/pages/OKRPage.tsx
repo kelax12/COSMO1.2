@@ -233,7 +233,10 @@ const OKRPage: React.FC = () => {
       window.history.replaceState({}, document.title);
     }
     // Déclenché par la navigation (location) ; handleEditObjective omis à dessein.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    /* eslint-disable-next-line react-hooks/exhaustive-deps --
+    `handleEditObjective` omis : l effet ne doit se rejouer que sur une
+       NAVIGATION. L etat de navigation est consomme puis efface
+       (`replaceState`) dans la foulee, donc il ne peut pas etre relu perime. */
   }, [location]);
 
   // Détection des OKR à reviewer (deadline atteinte, non complétés, non encore

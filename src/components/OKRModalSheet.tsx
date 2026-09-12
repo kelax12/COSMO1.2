@@ -101,7 +101,10 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
       setEndDate(toDateInput(plusDaysIso(90)));
       setKeyResults([newKR()]);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    /* eslint-disable-next-line react-hooks/exhaustive-deps --
+    `categories` omis : il ne sert qu a choisir une categorie PAR DEFAUT a
+       la creation. L ajouter reecrirait le formulaire sous la personne a
+       chaque refetch de categories, y compris apres qu elle a choisi. */
   }, [isOpen, editingObjective]);
 
   const setKR = (id: string, patch: Partial<KRDraft>) =>

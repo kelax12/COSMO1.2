@@ -124,7 +124,11 @@ export function useAgendaEventActions({
     const handler = () => handleOpenAddModal();
     window.addEventListener('open-agenda-create', handler);
     return () => window.removeEventListener('open-agenda-create', handler);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    /* eslint-disable-next-line react-hooks/exhaustive-deps --
+    `handleOpenAddModal` est redefini a chaque rendu ; il lit
+       `calendarEvents`, qui EST dans la liste. L ecouteur ne peut donc pas
+       ouvrir la modale sur un agenda perime, et dependre du handler
+       reabonnerait `open-agenda-create` a chaque rendu. */
   }, [calendarEvents]);
 
   return {
