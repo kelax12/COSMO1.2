@@ -134,6 +134,10 @@ export function compareFunction({ slug, repoFiles, deployedFiles }) {
       chemin,
       genre: 'contenu-different',
       premiereLigne: premiereLigneDifferente(attendu, servi),
+      // Les tailles NORMALISEES des deux cotes : un ecart franc denonce une
+      // troncature ou un encodage, qu'un numero de ligne seul ne montre pas.
+      octetsDepot: attendu.length,
+      octetsProd: servi.length,
     });
   }
 
@@ -630,6 +634,28 @@ async function main() {
   for (const d of divergences.slice(0, 8)) {
     const ou = d.genre === 'contenu-different' ? ` (1re ligne differente : ${d.premiereLigne})` : '';
     annoter('error', `Derive ${d.slug} · ${d.chemin} · ${d.genre}${ou}`);
+  }
+
+  // ⚠️ Les annotations sont PLAFONNEES — GitHub n'en rend qu'une dizaine par
+  // etape, et ce script s'arrete a huit pour laisser la place aux problemes de
+  // garde. Le 2026-09-13, un run a rendu 24 divergences : seize etaient donc
+  // invisibles a qui lit le job, et le resume d'etape n'est pas consultable en
+  // ligne de commande. Une garde qui cache les deux tiers de ce qu'elle a
+  // trouve fait agir sur une image partielle.
+  //
+  // La sortie standard, elle, n'est pas plafonnee. On y ecrit la liste
+  // ENTIERE, avec la taille de chaque cote : un ecart de taille saute aux yeux
+  // quand un fichier est tronque ou lu dans un autre encodage, deux causes qui
+  // ne se lisent pas dans un numero de ligne.
+  if (divergences.length > 0) {
+    console.error('');
+    console.error('Liste complete des divergences :');
+    for (const d of divergences) {
+      const ou = d.genre === 'contenu-different' ? ` · 1re ligne ${d.premiereLigne}` : '';
+      const tailles =
+        d.genre === 'contenu-different' ? ` · depot ${d.octetsDepot} o / prod ${d.octetsProd} o` : '';
+      console.error(`  ${d.slug} · ${d.chemin} · ${d.genre}${ou}${tailles}`);
+    }
   }
 
   if (divergences.length > 0) {
