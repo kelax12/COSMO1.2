@@ -129,11 +129,14 @@ export function compareFunction({ slug, repoFiles, deployedFiles }) {
     const servi = normalizeContent(deployedFiles.get(chemin));
     if (attendu === servi) continue;
 
+    const ecart = premiereLigneDifferente(attendu, servi);
     divergences.push({
       slug,
       chemin,
       genre: 'contenu-different',
-      premiereLigne: premiereLigneDifferente(attendu, servi),
+      premiereLigne: ecart.numero,
+      ligneDepot: ecart.depot,
+      ligneProd: ecart.prod,
       // Les tailles NORMALISEES des deux cotes : un ecart franc denonce une
       // troncature ou un encodage, qu'un numero de ligne seul ne montre pas.
       octetsDepot: attendu.length,
@@ -145,14 +148,31 @@ export function compareFunction({ slug, repoFiles, deployedFiles }) {
 }
 
 /** Numero de la premiere ligne qui differe · pour rendre l'echec lisible. */
-function premiereLigneDifferente(a, b) {
+export function premiereLigneDifferente(a, b) {
   const la = a.split('\n');
   const lb = b.split('\n');
   const n = Math.max(la.length, lb.length);
   for (let i = 0; i < n; i += 1) {
-    if (la[i] !== lb[i]) return i + 1;
+    if (la[i] !== lb[i]) {
+      return { numero: i + 1, depot: extrait(la[i]), prod: extrait(lb[i]) };
+    }
   }
-  return 0;
+  return { numero: 0, depot: '', prod: '' };
+}
+
+/**
+ * Une ligne rendue lisible dans un log : bornee, et les caracteres invisibles
+ * rendus visibles. Un ecart d'espaces ou de fin de ligne ne se voit pas
+ * autrement, et c'est exactement la classe d'ecart qu'on n'a pas su nommer
+ * pendant une heure le 2026-09-13.
+ */
+function extrait(ligne) {
+  // Vide et absente sont deux diagnostics : un ecart de contenu d'un cote,
+  // une troncature de l'autre. Affiches pareil, ils se confondent.
+  if (ligne === undefined) return '<ligne absente>';
+  if (ligne === '') return '<ligne vide>';
+  const visible = String(ligne).split('\t').join('\\t').split('\r').join('\\r');
+  return visible.length > 140 ? visible.slice(0, 140) + '...' : visible;
 }
 
 /**
@@ -655,6 +675,10 @@ async function main() {
       const tailles =
         d.genre === 'contenu-different' ? ` · depot ${d.octetsDepot} o / prod ${d.octetsProd} o` : '';
       console.error(`  ${d.slug} · ${d.chemin} · ${d.genre}${ou}${tailles}`);
+      if (d.genre === 'contenu-different') {
+        console.error(`      depot | ${d.ligneDepot}`);
+        console.error(`      prod  | ${d.ligneProd}`);
+      }
     }
   }
 

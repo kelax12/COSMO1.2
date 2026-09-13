@@ -426,3 +426,57 @@ describe('check:edge · temoin de perimetre de lecture', () => {
     expect(estFichierDuBundle('supabase/functions/delete-account/README.md')).toBe(false);
   });
 });
+
+
+// ═══════════════════════════════════════════════════════════════════
+// TEMOIN DE LISIBILITE
+//
+// 🔴 Le 2026-09-13, la CI a annonce « 1re ligne differente : 19 » sur un
+// fichier que deux lecteurs locaux trouvaient identique au depot. Avec le
+// seul NUMERO, rien ne permettait de trancher entre une vraie derive et un
+// artefact du lecteur — et un doute non tranchable vide une garde de son
+// autorite plus surement qu'un faux negatif.
+//
+// L'en-tete du workflow promet « la fonction, le fichier et la premiere ligne
+// qui differe ». Ces cas exigent qu'il tienne la promesse en TEXTE.
+// ═══════════════════════════════════════════════════════════════════
+describe('check:edge · temoin de lisibilite', () => {
+  const avec = (depot, prod) =>
+    compareFunction({
+      slug: 'report-bug',
+      repoFiles: new Map([['report-bug/index.ts', depot]]),
+      deployedFiles: new Map([['report-bug/index.ts', prod]]),
+    })[0];
+
+  it('rend le TEXTE des deux cotes, pas seulement un numero', () => {
+    const d = avec('const a = 1\nconst b = 2\n', 'const a = 1\nconst b = 3\n');
+    expect(d.premiereLigne).toBe(2);
+    expect(d.ligneDepot).toBe('const b = 2');
+    expect(d.ligneProd).toBe('const b = 3');
+  });
+
+  it('rend visible un ecart qui ne se voit pas · tabulation contre espaces', () => {
+    const d = avec('\tconst a = 1\n', '  const a = 1\n');
+    // Sans mise en visible, les deux lignes s'afficheraient pareil dans un
+    // log : c'est exactement la classe d'ecart qu'on n'a pas su nommer.
+    expect(d.ligneDepot).toContain('\\t');
+    expect(d.ligneProd).toBe('  const a = 1');
+  });
+
+  it('distingue une ligne VIDE d une ligne ABSENTE', () => {
+    // Deux diagnostics differents : l'un est un ecart de contenu,
+    // l'autre une troncature. Affiches pareil, ils se confondent.
+    const vide = avec('const a = 1\nconst b = 2\n', 'const a = 1\n\n');
+    expect(vide.ligneProd).toBe('<ligne vide>');
+    const d = avec('const a = 1\nconst b = 2', 'const a = 1');
+    // Ligne vide et ligne absente sont deux diagnostics differents : l'un est
+    // un ecart de contenu, l'autre une troncature.
+    expect(d.ligneProd).toBe('<ligne absente>');
+  });
+
+  it('borne la ligne rendue · un fichier minifie ne noie pas le log', () => {
+    const d = avec(`${'x'.repeat(400)}\n`, `${'y'.repeat(400)}\n`);
+    expect(d.ligneDepot.length).toBeLessThanOrEqual(143);
+    expect(d.ligneDepot.endsWith('...')).toBe(true);
+  });
+});
