@@ -1,20 +1,20 @@
 // ═══════════════════════════════════════════════════════════════════
-// Sélecteur de catégorie arborescent, avec recherche par chemin.
+// Sélecteur de catégorie arborescent.
 //
 // ⚠️ Un parent reste SÉLECTIONNABLE : une tâche peut vivre dans « Travail »
 // même si « Travail › SEO » existe. C'est une décision produit, pas un oubli.
 //
 // ❌ Pas de menus en cascade : ils sont impraticables au doigt et au clavier.
-// Un panneau unique, indenté, plus une recherche, tient à n'importe quelle
-// profondeur.
+// Un panneau unique, indenté, tient à n'importe quelle profondeur.
 //
-// ⚠️ La recherche filtre sur le CHEMIN COMPLET et l'affiche : chercher
-// « backlinks » doit trouver « Travail › SEO › Backlinks », sinon une feuille
-// profonde est introuvable dès qu'on ne se souvient plus de son parent.
-//
-// Namespace `tasks` (et non `taskModal`) : ce sélecteur est générique, il sert
-// aussi le filtre de tâches (arbre repliable de `TaskFilter`), pas seulement
-// la modale de création.
+// 🔴 Seules les RACINES sont visibles par défaut, repliées sur elles-mêmes.
+// État d'expansion LOCAL au composant (pas `useCollapsedCategories`, partagé
+// par ColorSettingsModal / CategoryFilterTree) : ces deux-là sont des écrans
+// de GESTION ou de FILTRE, où voir l'arbre entier d'emblée est le bon défaut
+// (leur propre magasin le documente). Ici c'est un simple choix ponctuel —
+// repartir replié à chaque ouverture évite qu'un dépliage fait ailleurs (ou
+// la fois précédente) fasse resurgir un arbre profond pour choisir une seule
+// racine.
 //
 // 🔴 Popover Radix, pas un panneau maison. La première version posait le
 // panneau en `position: absolute` dans le flux du champ : à l'intérieur d'une
@@ -29,7 +29,6 @@ import React, { useMemo, useState } from 'react';
 import { ChevronRight, ChevronDown } from 'lucide-react';
 import { useT } from '@/i18n/useT';
 import { buildTree, categoryPath, formatPath } from '@/modules/categories';
-import { useCollapsedCategories } from '@/modules/categories/collapsed.store';
 import type { Category, CategoryNode } from '@/modules/categories';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 
@@ -55,35 +54,34 @@ const CategoryTreeSelect: React.FC<CategoryTreeSelectProps> = ({
 }) => {
   const { t } = useT('tasks');
   const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState('');
-  // Partagé avec ColorSettingsModal / CategoryFilterTree : un même compte a un
-  // seul état de pliage, pas un par sélecteur.
-  const { isCollapsed, setCollapsed } = useCollapsedCategories();
+  // Local, PAS le magasin partagé : identifiants des racines DÉPLIÉES.
+  // Absent = replié, l'inverse de `useCollapsedCategories` (qui mémorise le
+  // replié) — ici le défaut voulu est justement l'inverse du leur.
+  const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set());
 
-  const close = () => { setOpen(false); setQuery(''); };
+  const close = () => { setOpen(false); setExpanded(new Set()); };
 
   const selectedPath = useMemo(
     () => (value ? formatPath(categoryPath(value, categories)) : ''),
     [value, categories],
   );
 
-  const matches = useMemo(() => {
-    const needle = query.trim().toLowerCase();
-    if (needle === '') return null;
-    return categories
-      .map((c) => ({ category: c, path: formatPath(categoryPath(c.id, categories)) }))
-      .filter((m) => m.path.toLowerCase().includes(needle));
-  }, [query, categories]);
-
   const pick = (id: string) => { onChange(id); close(); };
 
-  // Replié/déplié : même état partagé que ColorSettingsModal / CategoryFilterTree
-  // (`useCollapsedCategories`). Le chevron est un bouton séparé du bouton de
-  // sélection — un bouton ne peut pas en contenir un autre — pour que le
-  // repli ne choisisse jamais la catégorie qu'il replie.
+  const toggleExpanded = (id: string) => {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  // Le chevron est un bouton séparé du bouton de sélection — un bouton ne
+  // peut pas en contenir un autre — pour que déplier ne choisisse jamais la
+  // catégorie qu'il déplie.
   const renderNode = (node: CategoryNode, depth: number): React.ReactNode => {
     const hasChildren = node.children.length > 0;
-    const collapsed = hasChildren && isCollapsed(node.category.id);
+    const isExpanded = hasChildren && expanded.has(node.category.id);
     return (
       <React.Fragment key={node.category.id}>
         <div
@@ -95,11 +93,11 @@ const CategoryTreeSelect: React.FC<CategoryTreeSelectProps> = ({
           {hasChildren ? (
             <button
               type="button"
-              onClick={(e) => { e.stopPropagation(); setCollapsed(node.category.id, !collapsed); }}
-              aria-label={collapsed ? t('colorModal.expand') : t('colorModal.collapse')}
+              onClick={(e) => { e.stopPropagation(); toggleExpanded(node.category.id); }}
+              aria-label={isExpanded ? t('colorModal.collapse') : t('colorModal.expand')}
               className="p-1 shrink-0 text-blue-600 dark:text-blue-400"
             >
-              {collapsed ? <ChevronRight size={14} aria-hidden="true" /> : <ChevronDown size={14} aria-hidden="true" />}
+              {isExpanded ? <ChevronDown size={14} aria-hidden="true" /> : <ChevronRight size={14} aria-hidden="true" />}
             </button>
           ) : (
             <span className="w-6 shrink-0" aria-hidden="true" />
@@ -113,7 +111,7 @@ const CategoryTreeSelect: React.FC<CategoryTreeSelectProps> = ({
             <span className="truncate">{node.category.name}</span>
           </button>
         </div>
-        {hasChildren && !collapsed && node.children.map((child) => renderNode(child, depth + 1))}
+        {hasChildren && isExpanded && node.children.map((child) => renderNode(child, depth + 1))}
       </React.Fragment>
     );
   };
@@ -134,54 +132,17 @@ const CategoryTreeSelect: React.FC<CategoryTreeSelectProps> = ({
           {selectedPath || t('fields.categoryNone')}
         </button>
       </PopoverTrigger>
-      {/* 48rem/84vh (x2 largeur, x1,2 hauteur) donnait un panneau démesuré,
-          bien au-delà d'un menu déroulant classique — revenu à une taille de
-          dropdown ordinaire : largeur du CHAMP lui-même
-          (`--radix-popover-trigger-width`, calculée par Radix), hauteur
-          bornée avec défilement interne pour un arbre profond.
-          `align="start"` : ancré au bord gauche du champ, pas centré dessus. */}
+      {/* Largeur du CHAMP lui-même (`--radix-popover-trigger-width`, calculée
+          par Radix), hauteur bornée avec défilement interne pour un arbre
+          profond. `align="start"` : ancré au bord gauche du champ, pas
+          centré dessus. */}
       <PopoverContent
         align="start"
         style={{ width: 'var(--radix-popover-trigger-width)' }}
         className="max-h-80 overflow-y-auto p-2"
       >
-        <input
-          type="search"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder={t('fields.categorySearch')}
-          aria-label={t('fields.categorySearch')}
-          className="w-full min-h-11 rounded-xl px-3 mb-2 text-sm bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-primary))]"
-        />
-
         <div role="listbox" aria-label={t('fields.category')}>
-          <button
-            type="button"
-            role="option"
-            aria-selected={value === ''}
-            onClick={() => pick('')}
-            className="flex w-full items-center min-h-11 px-2 text-left text-sm text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]"
-          >
-            {t('fields.categoryNone')}
-          </button>
-
-          {matches === null
-            ? buildTree(categories).map((node) => renderNode(node, 0))
-            : matches.length === 0
-              ? <p className="px-2 py-3 text-sm text-[rgb(var(--color-text-muted))]">{t('fields.categoryNoResult')}</p>
-              : matches.map((m) => (
-                  <button
-                    key={m.category.id}
-                    type="button"
-                    role="option"
-                    aria-selected={m.category.id === value}
-                    onClick={() => pick(m.category.id)}
-                    className="flex w-full items-center gap-2 min-h-11 px-2 text-left text-sm text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))]"
-                  >
-                    <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: m.category.color }} />
-                    <span className="truncate">{m.path}</span>
-                  </button>
-                ))}
+          {buildTree(categories).map((node) => renderNode(node, 0))}
         </div>
       </PopoverContent>
     </Popover>
