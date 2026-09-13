@@ -151,7 +151,22 @@ npm run check:edge          # Le code DÉPLOYÉ des Edge Functions contre le dé
                             # Job `Edge deploy drift` : quotidien 05:41 UTC + à chaque push
                             # touchant `supabase/functions/`. Branché sur `ci-alert.yml`.
                             # 🔴 EXIGE `SUPABASE_ACCESS_TOKEN`. Secret absent = ÉCHEC, jamais
-                            # un `::warning::` dans un run vert.
+                            # un `::warning::` dans un run vert. ✅ POSÉ le 2026-09-13 à
+                            # 09:34 UTC : le job avait échoué 14 fois d'affilée sans
+                            # JAMAIS avoir comparé quoi que ce soit.
+                            # ✅ **PREMIER RUN VERT le 2026-09-13** (run 34768021931) :
+                            # « 8 fonction(s) verifiee(s) : le code deploye est celui du
+                            # depot ». Avant : 0 fonction comparée, 14 échecs.
+                            # 🔴 `--use-api` EST OBLIGATOIRE sur `functions download`.
+                            # Sans lui la CLI débundle AVEC DOCKER et rend du code
+                            # TRANSPILÉ : le verdict dépendait alors d'un Docker installé
+                            # à côté (poste sans Docker → 4 divergences ; runner avec
+                            # Docker → 24, dont 20 FAUSSES). **Une garde dont le verdict
+                            # dépend de son runner ne mesure pas la production.**
+                            # ⚠️ Un déploiement fait depuis un arbre de travail non
+                            # committé se voit ici, et s'est vu : `stripe-webhook` v31 a
+                            # divergé de `main` d'UN caractère de commentaire. Déployer
+                            # depuis la racine du dépôt, sur `main`.
                             # ⚠️ Le 2026-09-03, les TROIS sources déployées lisibles
                             # divergeaient de `main`, de trois façons différentes. Tant que
                             # rien ne comparait, toute conclusion tirée en lisant

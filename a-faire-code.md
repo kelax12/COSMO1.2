@@ -3831,7 +3831,94 @@ aura un. C'est exactement la définition d'une garde qui répond sans mesurer.
 - **Fini quand** : secret absent = `exit 1`, comme pour toute autre garde, et le workflow porte un
   témoin. La pose du secret elle-même est un geste d'Axel : `a-faire-manuel.md`.
 
-### C-35 · Rien ne compare le code déployé des Edge Functions à celui du dépôt · **P1 · M** · 🔴 la garde est INERTE en CI
+### C-35 · Rien ne compare le code déployé des Edge Functions à celui du dépôt · **P1 · M** · ✅ **REFERMÉ le 2026-09-13 : run VERT, 8 fonctions identiques au dépôt**
+
+> ✅ **2026-09-13 : LA CI COMPARE. Le secret est pose, et le job a lu la production pour la
+> premiere fois de son existence.** Mesure avant / apres, les deux chiffres :
+>
+> | | Avant (2026-09-12) | Apres (2026-09-13) |
+> |---|---|---|
+> | Runs du job | **14 echecs d'affilee**, aucun n'ayant compare | compare a chaque run |
+> | Fonctions comparees | **0** | **8** |
+> | Verdict | « garde non executee » | **2 divergences reelles**, 0 probleme de garde |
+> | Alerte sur `OPS_ALERT_WEBHOOK_URL` | l'echec de la GARDE | l'echec de COMPARAISON, `HTTP 204` |
+>
+> 🔴 **Le chiffre « 7 fonctions » de cet item etait faux : il y en a HUIT en ligne**
+> (`stripe-create-checkout` v22, `stripe-webhook` v31, `delete-account` v16,
+> `stripe-org-checkout` v14, `stripe-org-portal` v11, `renewal-notice` v12, `report-bug` v11,
+> `stripe-org-refund` v4). `notDeployed` est vide, donc les huit sont comparees octet pour octet.
+>
+> ⚠️ **Le premier run qui compare a trouve QUATRE defauts de la garde avant de trouver un seul
+> defaut de la production.** C'est la lecon de la journee, et elle vaut plus que l'item :
+> **une garde qui n'a jamais tourne n'est pas une garde, c'est une intention.** Celle-ci avait
+> 18 cas de temoin, cinq sabotages verifies, et une revue. Elle etait fausse de quatre facons :
+>
+> 1. **Le menage jetait la mesure.** `rmSync` du bac a sable echouait en `EACCES` (la CLI ecrit
+>    ses repertoires en lecture seule, et un `unlink` POSIX exige le droit d'ecriture sur le
+>    PARENT), depuis un `finally`, donc APRES lecture et comparaison. Le job annoncait « 8
+>    problemes de garde » pour une lecture qui avait parfaitement marche.
+> 2. **Elle criait au loup sur ses propres dechets.** `supabase/.temp/linked-project.json`, ecrit
+>    par la CLI, etait signale « absent-du-depot » — le verdict que le script documente comme le
+>    plus grave (du code non versionne qui tourne en prod), sur trois fonctions.
+> 3. **Elle ne montrait que 8 divergences sur 24** (annotations plafonnees), et n'en donnait que
+>    le NUMERO de ligne : impossible de trancher entre une derive et un artefact de lecture.
+> 4. 🔴 **Elle comparait du TypeScript a du JavaScript**, et c'est le defaut grave. `supabase
+>    functions download` debundle **avec Docker** par defaut et rend du code TRANSPILE ; avec
+>    `--use-api`, le debundling est fait cote serveur et rend la SOURCE. Le verdict dependait donc
+>    d'un docker installe a cote :
+>
+>    ```
+>    poste de dev (pas de Docker) -> source     -> 4 divergences
+>    runner GitHub (Docker)       -> transpile  -> 24 divergences, dont 20 FAUSSES
+>    ```
+>
+>    **Une garde dont le verdict depend de son runner ne mesure pas la production.** Et 20 faux
+>    positifs noient 4 vrais : personne ne distingue les uns des autres dans une liste de 24.
+>    Epingler la version de la CLI (faite aussi, `version: latest` n'epinglait rien) n'y changeait
+>    RIEN — seul le drapeau compte.
+>
+> ✅ Les quatre sont corriges, chacun avec son temoin : **43 cas** (1 saute sous Windows), vus
+> rouges sur **dix** sabotages. Deux d'entre eux ont ETE VUS PASSER avant d'etre resserres :
+> le temoin de cablage mesurait la DEFINITION exportee au lieu de l'appel, faute d'un
+> point-virgule. **Un detecteur teste n'est pas un detecteur branche.**
+>
+> ✅ **REFERMÉ le 2026-09-13 à 16:12 UTC.** `stripe-webhook` **v32**, redéployée par
+> `supabase functions deploy` **depuis la racine du dépôt**, est identique à `main`. Run
+> `34768021931` : **`✓ 8 fonction(s) verifiee(s) : le code deploye est celui du depot`**, premier
+> vert de l'histoire de ce job.
+>
+> 🔴 **Ce que l'écart v31 a coûté, et la leçon qu'il laisse.** Il ne portait QUE des caractères de
+> cadre dans des commentaires — cinq lignes, zéro impact fonctionnel — et il a quand même demandé
+> **trois tentatives**. La cause n'est pas un raisonnement : c'est que déployer en RECOPIANT le
+> contenu d'un fichier (ici via l'outil MCP) fait passer 1 300 lignes par un canal qui perd un
+> caractère sur une série de 59 identiques, dans un sens puis dans l'autre.
+> ❌ **Ne jamais déployer une Edge Function en retranscrivant sa source.** `supabase functions
+> deploy` lit le disque : il est exact par construction, et il n'a demandé qu'une commande.
+> ⚠️ Il se lance **depuis la racine du dépôt** : l'entrypoint est résolu relativement au
+> répertoire courant, et depuis `C:\WINDOWS\system32` la CLI répond `400 Entrypoint path does
+> not exist` sans rien déployer.
+> ✅ Le bon côté : **la garde a attrapé un écart d'un caractère dans un commentaire.** Une garde
+> qui voit ça voit tout le reste.
+>
+> ⚠️ **Les trois vraies derives du 09-03/09-04 ont ete refermees le 2026-09-13 par redeploiement**
+> (`delete-account` v16, `renewal-notice` v12, `stripe-webhook` v31). Mesurees juste avant, elles
+> etaient reelles : `renewal-notice` portait encore `BUG_REPORT_FROM ?? 'Cosmo
+> <bug@thecosmo.app>'` (defaut S-4, que `faille.md` declare corrige) ; `delete-account` n'avait ni
+> la purge symetrique de `friends` ni deux controles d'erreur sur les membres d'organisation ;
+> `stripe-webhook` tournait sur un `org-stripe-prices.ts` sans l'invalidation d'index de C-08,
+> soit **80 lignes de code** d'ecart, sur le chemin de l'argent.
+>
+> **Fini quand** : ~~un run VERT sur les 8 fonctions~~ (run `34768021931`, 2026-09-13) ·
+> ~~la comparaison tourne~~ · ~~son échec arrive sur `OPS_ALERT_WEBHOOK_URL`~~ (`HTTP 204`, run
+> 34767795968). **Les trois conditions sont tenues.**
+> ⚠️ Un 204 prouve que l'endpoint accepte, pas qu'un humain lit le salon — c'est la moitié de C-28
+> que seul Axel peut fermer.
+>
+> ⚠️ **Fumée-test après redéploiement**, parce qu'une comparaison d'octets ne dit pas qu'un module
+> se charge : `stripe-webhook` répond **`400 Invalid signature`** (ses trois `_shared` se chargent)
+> et `renewal-notice` **`503 cron_secret_not_configured`** — donc le NOUVEAU code est bien en ligne,
+> et M-12 (`CRON_SECRET`) reste ouvert.
+
 
 > 🔴 **Mesuré le 2026-09-12 : le job `Edge deploy drift` échoue TOUS LES JOURS depuis sa mise en
 > service, et il n'a donc jamais comparé quoi que ce soit.** Le message est exactement celui que la
