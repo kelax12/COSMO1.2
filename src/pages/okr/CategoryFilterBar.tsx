@@ -247,6 +247,33 @@ const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
     );
   };
 
+  /**
+   * Rangées des descendants ACTIFS de `parentId`, à profondeur illimitée.
+   *
+   * 🔴 POURQUOI récursif. Une seule rangée d'enfants ne suffit pas dès qu'une
+   * sous-catégorie a elle-même des enfants (arbre à 3 crans ou plus) : leur
+   * activation cascade bien jusqu'au bout (`toggleRootCategory` couvre tous
+   * les descendants), mais sans ce parcours récursif ils restaient actifs
+   * SANS JAMAIS être rendus — invisibles, alors que le filtre les incluait
+   * déjà. Chaque niveau reste indenté d'un cran de plus (`depth * 24px`),
+   * « en dessous de la parente », qu'elle soit racine ou pas.
+   */
+  const renderDescendantRows = (parentId: string, depth: number): React.ReactNode => {
+    if (!activeCategoryIds.has(parentId)) return null;
+    const children = childrenOfCategory(parentId, categories);
+    if (children.length === 0) return null;
+    return (
+      <React.Fragment key={parentId}>
+        <div className="flex items-center gap-1.5 flex-wrap" style={{ paddingInlineStart: depth * 24 }}>
+          {children.map((child) =>
+            renderChip(child, () => setActiveCategoryIds(toggleLeafCategory(child.id, activeCategoryIds))),
+          )}
+        </div>
+        {children.map((child) => renderDescendantRows(child.id, depth + 1))}
+      </React.Fragment>
+    );
+  };
+
   return (
     <div className="flex flex-col gap-1.5 mb-6" data-tutorial-id="okr-category-filter">
       {/* Rangée des RACINES uniquement — les sous-catégories n'apparaissent
@@ -351,18 +378,7 @@ const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
       {/* Une rangée par racine ACTIVE qui a des enfants, indentée vers la
           droite — « en dessous de la parente ». Une racine désactivée ou sans
           sous-catégorie ne produit aucune rangée. */}
-      {roots.map((root) => {
-        if (!activeCategoryIds.has(root.id)) return null;
-        const children = childrenOfCategory(root.id, categories);
-        if (children.length === 0) return null;
-        return (
-          <div key={root.id} className="flex items-center gap-1.5 flex-wrap pl-6 sm:pl-8">
-            {children.map((child) =>
-              renderChip(child, () => setActiveCategoryIds(toggleLeafCategory(child.id, activeCategoryIds))),
-            )}
-          </div>
-        );
-      })}
+      {roots.map((root) => renderDescendantRows(root.id, 1))}
     </div>
   );
 };
