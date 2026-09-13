@@ -19,24 +19,29 @@
 // l'ensemble des créneaux en attente, et une cinquième action est apparue
 // (« Ignorer »), la seule qui avait besoin d'être écrite quelque part.
 //
-// ⚠️ `handleSlotPostpone` calcule TOUT dans l'espace d'affichage (l'heure du
-// fuseau choisi) puis retire le décalage une seule fois à la fin. C'est le
-// correctif R-18 : la version d'avant lisait l'heure de départ et posait
-// « demain » en heure machine, donc le créneau reporté ne revenait pas à
-// l'heure attendue pour qui a réglé un fuseau manuel.
+// 🔴 `handleSlotPostpone` a changé de NATURE le même jour (retour utilisateur).
+// La version d'avant (R-18) recalculait « demain, même heure, même fuseau » et
+// déplaçait le créneau — donc la tâche restait « ✓ Déjà planifiée » dans la
+// sidebar (`TaskSidebar.isTaskPlacedInCalendar` : un événement existe encore
+// avec ce `taskId`). Ce n'est PAS ce que « Reporter » doit dire : une tâche
+// reportée doit redevenir une tâche NON PLACÉE, à glisser sur un nouveau
+// créneau quand la personne le décide elle-même — pas se voir réattribuer une
+// heure devinée par l'app. « Reporter » DÉTACHE donc le créneau (l'événement
+// est supprimé, la tâche ne l'est pas), avec la même annulation que toute
+// suppression du produit (R-07). Le calcul « demain à la même heure » et ses
+// imports de fuseau (`fromDisplayISO`/`toDisplayISO`/`displayNow`) partent
+// avec lui : il n'y a plus de nouvelle date à poser.
 
-import React from 'react';
-import { findOverdueTaskSlots, type OverdueTaskSlot } from './overdue-slots';
 import { showUndoToast } from '@/lib/undo-toast';
-import { fromDisplayISO, toDisplayISO, displayNow, type TimezonePref } from '@/lib/timezone';
+import { findOverdueTaskSlots, type OverdueTaskSlot } from './overdue-slots';
 import type { Task } from '@/modules/tasks/types';
 import type { CalendarEvent } from '@/modules/events';
+import React from 'react';
 
 /** Ce dont la revue a besoin pour agir, sans rien savoir de React Query. */
 interface OverdueSlotReviewDeps {
   events: CalendarEvent[];
   tasks: Task[];
-  tzPref: TimezonePref;
   /** Bascule la complétion d'une tâche (la file ne contient que des non complétées). */
   toggleTaskComplete: (taskId: string) => void;
   updateEvent: (id: string, updates: Partial<CalendarEvent>) => void;
@@ -46,14 +51,15 @@ interface OverdueSlotReviewDeps {
   restoreEvent: (event: CalendarEvent) => void;
   /** Recree la tache supprimee, sous SON identifiant (annulation). */
   restoreTask: (task: Task) => void;
-  /** Libellé du toast d'annulation, traduit par l'appelant. */
+  /** Libellé du toast d'annulation (suppression tâche + créneau), traduit par l'appelant. */
   deletedLabel: string;
+  /** Libellé du toast d'annulation (créneau détaché par « Reporter »), traduit par l'appelant. */
+  postponedLabel: string;
 }
 
 export function useOverdueSlotReview({
   events,
   tasks,
-  tzPref,
   toggleTaskComplete,
   updateEvent,
   deleteEvent,
@@ -61,11 +67,12 @@ export function useOverdueSlotReview({
   restoreEvent,
   restoreTask,
   deletedLabel,
+  postponedLabel,
 }: OverdueSlotReviewDeps) {
   // ⚠️ Plus AUCUN état local ici, et c'est le cœur du changement. L'ensemble
   // est entièrement dérivé des événements : « ignoré » est une colonne
   // (`reviewDismissedAt`, mig. 146), « validé » est la tâche cochée, « reporté »
-  // est un créneau dont la fin est repassée dans le futur. Un `useState` de
+  // est un créneau qui n'existe plus (détaché, cf. plus haut). Un `useState` de
   // session aurait fait revenir toutes les pastilles au premier rechargement,
   // ce qui est sans conséquence pour une popup qu'on chasse d'un geste mais pas
   // pour un marqueur qui reste peint sur le calendrier.
@@ -89,28 +96,17 @@ export function useOverdueSlotReview({
     if (!slot.task.completed) toggleTaskComplete(slot.task.id);
   };
 
-  // Reporter → replace le créneau à DEMAIN (relatif à maintenant) en conservant
-  // l'heure de début et la durée d'origine. Toujours dans le futur, même pour un
-  // créneau en retard de plusieurs jours (sinon le modal réapparaîtrait).
+  // Reporter → détache le créneau (l'événement est supprimé, la TÂCHE ne
+  // l'est pas). La tâche redevient « non placée » dans la sidebar
+  // (`TaskSidebar.isTaskPlacedInCalendar` ne trouve plus d'événement portant
+  // son id) : à la personne de la glisser sur un nouveau créneau quand elle le
+  // décide, plutôt que de recevoir une heure devinée par l'app. Réversible
+  // (toast « Annuler », R-07) : annuler remet le MÊME événement, à la MÊME
+  // heure, sous SON identifiant (R-08).
   const handleSlotPostpone = (slot: OverdueTaskSlot) => {
-    const origDisplay = new Date(toDisplayISO(slot.event.start, tzPref));
-    const durationMs = Math.max(
-      new Date(slot.event.end).getTime() - new Date(slot.event.start).getTime(),
-      0,
-    );
-    const next = displayNow(tzPref);
-    next.setDate(next.getDate() + 1);
-    next.setHours(origDisplay.getHours(), origDisplay.getMinutes(), 0, 0);
-    const newStart = fromDisplayISO(next.toISOString(), tzPref);
-    const newEnd = fromDisplayISO(
-      new Date(next.getTime() + durationMs).toISOString(),
-      tzPref,
-    );
-    // `reviewDismissedAt: null` part dans la MÊME mise à jour que les horaires :
-    // reporter un créneau qu'on avait ignoré le remet dans la file s'il est
-    // raté une seconde fois. Sans ça, « Ignorer » puis « Reporter » éteindrait
-    // la pastille pour toujours.
-    updateEvent(slot.event.id, { start: newStart, end: newEnd, reviewDismissedAt: null });
+    const eventSnapshot = slot.event;
+    deleteEvent(eventSnapshot.id);
+    showUndoToast(postponedLabel, () => restoreEvent(eventSnapshot));
   };
 
   // Abandonner → supprime la tâche et son créneau agenda, AVEC annulation.
@@ -134,7 +130,7 @@ export function useOverdueSlotReview({
   };
 
   // Ignorer → la seule des quatre actions qui ne laisse aucune trace ailleurs
-  // (valider coche la tâche, reporter déplace le créneau, supprimer supprime).
+  // (valider coche la tâche, reporter détache le créneau, supprimer supprime).
   // Elle a donc sa propre colonne, écrite ici.
   const handleSlotIgnore = (slot: OverdueTaskSlot) => {
     updateEvent(slot.event.id, { reviewDismissedAt: new Date().toISOString() });

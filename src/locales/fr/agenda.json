@@ -39,6 +39,7 @@
     "postpone": "Reporter",
     "delete": "Supprimer",
     "deleted": "Tâche et créneau supprimés",
+    "postponed": "Créneau retiré, à replanifier",
     "ignore": "Ignorer",
     "badgeAria": "Ce créneau attend une décision : {{title}}",
     "panelTitle": "Créneau terminé",
