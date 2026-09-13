@@ -634,3 +634,15 @@ describe('check:edge · temoin de cablage', () => {
     expect(effectif).not.toMatch(/version:\s*latest/);
   });
 });
+
+// Le drapeau qui decide du LANGAGE lu. Statique, pour la meme raison que les
+// cas de cablage : l'executer demanderait un jeton et du reseau.
+describe('check:edge · temoin de mode de lecture', () => {
+  it('telecharge avec --use-api, donc sans dependre de Docker', () => {
+    const source = readFileSync(SCRIPT, 'utf8');
+    expect(source).toContain("'--use-api'");
+    // Et le drapeau doit etre dans les arguments du telechargement, pas
+    // seulement cite dans un commentaire.
+    expect(source).toMatch(/\[\s*'functions',\s*'download',[^\]]*'--use-api'\s*\]/);
+  });
+});
