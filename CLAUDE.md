@@ -1567,11 +1567,26 @@ chaque fois, et personne ne l'a ouverte pendant quatre jours.
 
 - Les échecs de garde sont désormais **poussés** sur `OPS_ALERT_WEBHOOK_URL` (`ci-alert.yml`), même
   format que `opsAlert()` des Edge Functions, avec un exercice à blanc en `workflow_dispatch`.
-- ⚠️ **Le canal reste INERTE** tant que ce secret n'est pas posé dans les secrets **Actions** du
-  dépôt : il n'existe aujourd'hui que côté Supabase.
-- ❌ **Ne jamais rendre une garde conditionnelle à la présence de son propre secret** (règle déjà
-  écrite le 2026-08-26, re-vérifiée ici) : secret absent = avertissement **visible**, jamais un
-  silence.
+- ✅ **Le canal DÉLIVRE, mesuré le 2026-09-13.** Le secret est dans les secrets **Actions** depuis
+  le **2026-09-02 à 09:13:47 UTC** (`gh secret list`), l'exercice à blanc a été joué le 09-02 **et
+  rejoué le 09-13** — `Alerte poussee (HTTP 204)` les deux fois — et **73** alertes réelles sont
+  parties depuis, dont les 14 échecs de `Edge deploy drift`.
+  ⚠️ **Ce fichier a écrit « le canal reste INERTE » pendant onze jours après la pose du secret**,
+  parce que la phrase a été recopiée au lieu d'être relue à sa source : une commande d'une seconde.
+  ⚠️ **Un HTTP 204 ne prouve pas qu'on lit le salon.** Il prouve que l'endpoint a accepté. La seule
+  preuve de bout en bout reste quelqu'un qui dit avoir vu le message.
+- 🔴 **Ne jamais rendre une garde conditionnelle à la présence de son propre secret**, et la règle
+  s'est appliquée à `ci-alert.yml` lui-même le **2026-09-13** : son étape de push sortait en **0**
+  dans les deux cas où rien n'était parti (secret absent, webhook qui refuse), avec un `::warning::`
+  dans un run vert — le motif exact retiré d'`uptime.yml` le 09-03 et de `renewal-notice.yml` le
+  09-04, resté dans le seul fichier dont le métier EST d'alerter. La logique vit désormais dans
+  `scripts/ops-alert.mjs` : secret absent ou refus après 3 tentatives = **`exit 1`**.
+  ❌ L'argument « on ne peut pas alerter sur l'alerting » ne tient pas : **un job ROUGE est l'alerte
+  sur l'alerting** (GitHub notifie l'échec d'un run sur son propre dépôt), le vert ne notifie rien,
+  et l'issue `ci-red` étant écrite par une étape antérieure, échouer à la fin ne perd aucun filet.
+  ⚠️ **Pas de shebang** sur `scripts/ops-alert.mjs` : son témoin l'importe, et la chaîne Vite/vitest
+  ne retire pas le shebang que Node retire. Témoin : `scripts/ops-alert.guard.test.mjs`, 14 cas, vu
+  rouge sur **six** sabotages, dont un `deliver` qui répond 204 sans rien poster.
 
 ### 📆 Saisie de date — le calendrier COSMO, sauf sur téléphone
 
