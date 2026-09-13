@@ -540,13 +540,21 @@ le 02/07, 4 `customer.subscription.deleted` le 31/07), 0 ligne dans `payment_rec
 > de TEST), donc aucune obligation n'a été manquée — mais « le journal couvre tout » est faux, et
 > une phrase pareille se dit vite devant un contrôleur.
 
+> 🔴 **Chaque état ci-dessous cite désormais la VERSION DÉPLOYÉE, pas le commit.** Jusqu'au
+> 2026-09-13 ils disaient « ✅ corrigé » en décrivant `main`, et trois d'entre eux étaient FAUX
+> de la production : `renewal-notice` en ligne portait encore le défaut S-4, et `stripe-webhook`
+> tournait sur un `org-stripe-prices.ts` antérieur. C'est la règle de `CLAUDE.md` — *un « ✅ corrigé »
+> qui ne dit pas « déployé le … » décrit un commit, pas la production* — et elle n'était tenue
+> nulle part ici. Depuis le 2026-09-13, `npm run check:edge` rend **8 fonctions identiques au
+> dépôt** et le job `Edge deploy drift` est vert : ces dates sont désormais vérifiées en continu.
+
 | # | Finding | Gravité | État |
 |---|---|---|---|
-| S-1 | Le pré-contrôle d'idempotence avalait son erreur → rejeu possible de `bump_win_streak` | 🟡 | ✅ corrigé |
-| S-2 | `getUidFromCustomer` avalait son erreur → paiement encaissé, abonnement jamais appliqué | 🟠 | ✅ corrigé |
+| S-1 | Le pré-contrôle d'idempotence avalait son erreur → rejeu possible de `bump_win_streak` | 🟡 | ✅ corrigé · **`stripe-webhook` v32, déployée le 2026-09-13 à 16:12 UTC** |
+| S-2 | `getUidFromCustomer` avalait son erreur → paiement encaissé, abonnement jamais appliqué | 🟠 | ✅ corrigé · **`stripe-webhook` v32, déployée le 2026-09-13 à 16:12 UTC** |
 | S-3 | `subscriptions.stripe_customer_id` sans contrainte UNIQUE, alors que le code en dépend | ✅ | mig. `134` **appliquée en prod le 2026-09-02**, doublon refusé en 23505 (vérifié) |
-| S-4 | `renewal-notice` : expéditeur par défaut sur un domaine que Resend ne signera jamais | 🟠 | ✅ corrigé |
-| S-5 | Un event tardif d'un ANCIEN abonnement peut dégrader l'org qui vient de repayer | 🟠 | ✅ corrigé |
+| S-4 | `renewal-notice` : expéditeur par défaut sur un domaine que Resend ne signera jamais | 🟠 | ✅ corrigé · **`renewal-notice` v12, déployée le 2026-09-13 à 10:52 UTC**. 🔴 Ce « ✅ corrigé » était écrit depuis le 2026-09-02 et la PROD portait toujours le défaut : mesuré le 09-13, la v11 en ligne avait encore `?? 'Cosmo <bug@thecosmo.app>'` |
+| S-5 | Un event tardif d'un ANCIEN abonnement peut dégrader l'org qui vient de repayer | 🟠 | ✅ corrigé · **`stripe-webhook` v32, déployée le 2026-09-13 à 16:12 UTC** |
 | S-6 | La renonciation au droit de rétractation ne quitte jamais le navigateur | ✅ | corrigé · mig. `135` **appliquée en prod le 2026-09-02**, immuabilité et cloisonnement vérifiés |
 
 ### ✅ S-1 · le pré-contrôle d'idempotence avalait son erreur
