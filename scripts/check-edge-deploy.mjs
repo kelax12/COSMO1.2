@@ -279,6 +279,67 @@ export function cleDeployee(nom, slug) {
  * rend zero fichier donneraient « aucune divergence » avec la meme serenite.
  * Une lecture vide est donc une ERREUR, jamais un succes.
  */
+/**
+ * Marqueurs que la TRANSPILATION efface. Ils ne servent pas a juger du code :
+ * ils servent a savoir dans quel LANGAGE on vient de lire.
+ */
+const MARQUEURS_TS = [
+  /:\s*(?:string|number|boolean|void|unknown|Request|Response)/,
+  /interface\s+\w+\s*\{/,
+  /as\s+const/,
+  /Promise<[^>\s]/,
+];
+
+/** Combien de marqueurs TypeScript ce texte porte-t-il ? */
+export function compteMarqueursTs(source) {
+  const texte = String(source);
+  return MARQUEURS_TS.filter((motif) => motif.test(texte)).length;
+}
+
+/**
+ * 🔴 LE SECOND GARDE-FOU CENTRAL · refuse une comparaison entre deux LANGAGES.
+ *
+ * Mesure du 2026-09-13, premier jour ou la CI a pu lire la prod : elle
+ * annoncait 24 divergences sur 8 fonctions, dont `_shared/alert.ts` que DEUX
+ * lecteurs locaux independants — la CLI Supabase 2.117.0 et l'API Management —
+ * rendaient identique au depot. La CLI installee par `version: latest` rendait
+ * le bundle TRANSPILE :
+ *
+ *   depot | export async function opsAlert(source: string, summary: string)
+ *   prod  | export async function opsAlert(source, summary) {
+ *
+ * La garde comparait du TypeScript a du JavaScript. Elle « trouvait » donc une
+ * derive sur presque chaque fichier, ce qui est la pire forme d'echec possible
+ * ici : elle noyait les 4 vraies derives dans 20 fausses, et aucun operateur
+ * ne distingue les unes des autres dans une liste de 24.
+ *
+ * La version de la CLI est desormais epinglee dans le workflow. Ce detecteur
+ * est ce qui rend le pin VERIFIABLE : le jour ou une CLI se remet a transpiler,
+ * le job dit « lecture transpilee », il n'invente pas vingt derives.
+ *
+ * ❌ Ne jamais assouplir ca en normalisant le TypeScript avant comparaison.
+ * Retirer les types des deux cotes rendrait la garde AVEUGLE a toute derive
+ * portant sur un type — et un type est du code : c'est lui qui dit qu'un
+ * montant est un nombre.
+ */
+export function assertMemeLangage(slug, repoFiles, deployedFiles) {
+  for (const [chemin, attendu] of repoFiles) {
+    const servi = deployedFiles.get(chemin);
+    // Un fichier present d'un seul cote est une DIVERGENCE, pas un probleme de
+    // lecture : c'est le travail du comparateur, pas le notre.
+    if (servi === undefined) continue;
+    if (compteMarqueursTs(attendu) > 0 && compteMarqueursTs(servi) === 0) {
+      throw new Error(
+        `Lecture TRANSPILEE pour « ${slug} » (${chemin}) : le depot porte du TypeScript, ` +
+          `le cote prod n'en porte AUCUNE trace. Ce n'est pas une derive, c'est un lecteur ` +
+          `qui rend autre chose que la source — verifier la version de la CLI epinglee dans ` +
+          `.github/workflows/edge-deploy-drift.yml. Comparer deux langages « trouve » une ` +
+          `derive sur presque chaque fichier et noie les vraies.`,
+      );
+    }
+  }
+}
+
 export function assertReadSomething(slug, deployedFiles) {
   if (!(deployedFiles instanceof Map) || deployedFiles.size === 0) {
     throw new Error(
@@ -611,6 +672,7 @@ async function main() {
       repoFiles = repoFilesFor(slug);
       deployedFiles = telechargerBundle(slug, projectRef, token);
       assertReadSomething(slug, deployedFiles);
+      assertMemeLangage(slug, repoFiles, deployedFiles);
     } catch (e) {
       problemes.push(`« ${slug} » (${version}) : ${e.message}`);
       continue;
