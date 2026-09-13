@@ -27,7 +27,6 @@ export {
   useTeamOKRs,
   useCreateTeamOKR,
   useEditTeamOKR,
-  useReassignTeamOKRCategory,
   useDeleteTeamOKR,
   useUpdateTeamKR,
 } from './hooks';

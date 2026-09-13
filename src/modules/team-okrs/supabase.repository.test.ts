@@ -12,7 +12,7 @@ import { SupabaseTeamOKRsRepository } from './supabase.repository';
 const repo = new SupabaseTeamOKRsRepository();
 
 const okrRow = {
-  id: 'o1', org_id: 'org1', title: 'Croissance', description: 'desc', category: 'business',
+  id: 'o1', org_id: 'org1', title: 'Croissance', description: 'desc', category_id: 'cat1',
   start_date: '2026-07-01', end_date: '2026-09-30', created_by: 'u1',
   created_at: '2026-07-01T10:00:00.000Z',
 };
@@ -41,7 +41,7 @@ describe('SupabaseTeamOKRsRepository — getAll', () => {
     expect(supabaseMock.argsOf('team_okr_teams', 'eq')).toEqual(['org_id', 'org1']);
 
     expect(result).toEqual([{
-      id: 'o1', orgId: 'org1', title: 'Croissance', description: 'desc', category: 'business',
+      id: 'o1', orgId: 'org1', title: 'Croissance', description: 'desc', categoryId: 'cat1',
       startDate: '2026-07-01', endDate: '2026-09-30', createdBy: 'u1',
       createdAt: okrRow.created_at, teamIds: ['t1'],
       keyResults: [{
@@ -104,7 +104,7 @@ describe('SupabaseTeamOKRsRepository — create', () => {
     supabaseMock.queueTable('team_key_results', { data: [krRow] });
 
     const result = await repo.create('org1', {
-      title: 'Croissance', description: 'desc', category: 'business',
+      title: 'Croissance', description: 'desc', categoryId: 'cat1',
       startDate: '2026-07-01', endDate: '2026-09-30',
       teamIds: ['t1', 't1', 't2'], // doublon : dédupliqué
       keyResults: [{ title: 'MRR', targetValue: 10, currentValue: 25, unit: 'k€', weight: 3, estimatedTime: 45.4 }],
@@ -116,7 +116,7 @@ describe('SupabaseTeamOKRsRepository — create', () => {
     expect(okrInsert).toEqual({
       id: okrInsert.id,
       org_id: 'org1', created_by: supabaseMock.user?.id, title: 'Croissance',
-      description: 'desc', category: 'business', start_date: '2026-07-01', end_date: '2026-09-30',
+      description: 'desc', category_id: 'cat1', start_date: '2026-07-01', end_date: '2026-09-30',
     });
 
     const links = supabaseMock.argsOf('team_okr_teams', 'insert')?.[0] as Record<string, unknown>[];
@@ -191,11 +191,11 @@ describe('SupabaseTeamOKRsRepository — create', () => {
 describe('SupabaseTeamOKRsRepository — update / remove', () => {
   it('update: patch whitelisté ciblé par id ; "" → null sur les champs optionnels', async () => {
     supabaseMock.queueTable('team_okrs', { data: null });
-    await repo.update('o1', { title: 'Nouveau', description: '', category: 'ops', startDate: '', endDate: '2026-12-31' });
+    await repo.update('o1', { title: 'Nouveau', description: '', categoryId: 'cat2', startDate: '', endDate: '2026-12-31' });
 
     const patch = supabaseMock.argsOf('team_okrs', 'update')?.[0] as Record<string, unknown>;
     expect(patch).toEqual({
-      title: 'Nouveau', description: null, category: 'ops', start_date: null, end_date: '2026-12-31',
+      title: 'Nouveau', description: null, category_id: 'cat2', start_date: null, end_date: '2026-12-31',
     });
     expect(supabaseMock.argsOf('team_okrs', 'eq')).toEqual(['id', 'o1']);
   });

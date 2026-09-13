@@ -13,6 +13,8 @@ interface CategoryRow {
   org_id: string;
   name: string;
   color: string;
+  parent_id: string | null;
+  position: number;
   created_by: string | null;
   created_at: string;
 }
@@ -22,6 +24,8 @@ const mapCategory = (r: CategoryRow): TeamCategory => ({
   orgId: r.org_id,
   name: r.name,
   color: r.color,
+  parentId: r.parent_id,
+  position: r.position,
   createdBy: r.created_by,
   createdAt: r.created_at,
 });
@@ -46,7 +50,14 @@ export class SupabaseTeamCategoriesRepository implements ITeamCategoriesReposito
     // Whitelist explicite — org_id/created_by jamais depuis l'input.
     const { data, error } = await supabase
       .from('team_categories')
-      .insert({ org_id: orgId, created_by: uid, name: input.name, color: input.color ?? '#6366f1' })
+      .insert({
+        org_id: orgId,
+        created_by: uid,
+        name: input.name,
+        color: input.color ?? '#6366f1',
+        parent_id: input.parentId ?? null,
+        position: input.position ?? 0,
+      })
       .select('*')
       .single();
     if (error) throw normalizeApiError(error);
@@ -59,6 +70,8 @@ export class SupabaseTeamCategoriesRepository implements ITeamCategoriesReposito
     const patch: Record<string, unknown> = {};
     if (input.name !== undefined) patch.name = input.name;
     if (input.color !== undefined) patch.color = input.color;
+    if (input.parentId !== undefined) patch.parent_id = input.parentId;
+    if (input.position !== undefined) patch.position = input.position;
     const { data, error } = await supabase
       .from('team_categories')
       .update(patch)

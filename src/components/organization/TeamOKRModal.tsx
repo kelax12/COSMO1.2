@@ -28,7 +28,7 @@ import {
   type SyncTeamKRInput,
 } from '@/modules/team-okrs';
 import { useOrgTeams, useCreateOrgTeam } from '@/modules/org-teams';
-import OKRCategoryPicker from './OKRCategoryPicker';
+import TeamCategoryTreeSelect from './TeamCategoryTreeSelect';
 import { TEAM_COLORS } from './CreateTeamModal';
 import { useT } from '@/i18n/useT';
 
@@ -77,7 +77,7 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
   useEffect(() => { setOpen(true); }, []);
   const [title, setTitle] = useState(editingOKR?.title ?? '');
   const [description, setDescription] = useState(editingOKR?.description ?? '');
-  const [category, setCategory] = useState(editingOKR?.category ?? '');
+  const [categoryId, setCategoryId] = useState<string | null>(editingOKR?.categoryId ?? null);
   const [endDate, setEndDate] = useState(editingOKR?.endDate ? editingOKR.endDate.slice(0, 10) : '');
   const [teamIds, setTeamIds] = useState<string[]>(editingOKR?.teamIds ?? []);
   const [keyResults, setKeyResults] = useState<KRDraft[]>(
@@ -101,8 +101,8 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
   const toggleTeam = (teamId: string) =>
     setTeamIds((prev) => (prev.includes(teamId) ? prev.filter((t) => t !== teamId) : [...prev, teamId]));
 
-  // Même geste que « + Nouvelle catégorie » (OKRCategoryPicker) : créer sans
-  // quitter le modal, puis sélectionner immédiatement la nouvelle équipe.
+  // Même geste que « + Nouvelle catégorie » (TeamCategoryTreeSelect) : créer
+  // sans quitter le modal, puis sélectionner immédiatement la nouvelle équipe.
   const handleCreateTeam = () => {
     const name = newTeamName.trim();
     if (!name) return;
@@ -147,7 +147,7 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
           okrId: editingOKR.id,
           meta: {
             title: title.trim(),
-            category: category.trim(),
+            categoryId,
             description: description.trim(),
             endDate: endDate || undefined,
             teamIds,
@@ -169,7 +169,7 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
     createOKR.mutate(
       {
         title: title.trim(),
-        category: category.trim() || undefined,
+        categoryId,
         description: description.trim() || undefined,
         endDate: endDate || undefined,
         teamIds,
@@ -213,7 +213,7 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
             {/* Catégorie — vrai système partagé (parité mode perso, #C) */}
             <div className="grid gap-2">
               <Label>{t('okrModal.category')}</Label>
-              <OKRCategoryPicker orgId={orgId} value={category} onChange={setCategory} />
+              <TeamCategoryTreeSelect orgId={orgId} value={categoryId} onChange={setCategoryId} />
             </div>
 
             <div className="grid gap-2">

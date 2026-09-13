@@ -43,8 +43,8 @@ const EXEMPTS: Record<string, string> = {
   'components/task-table/TasksInboxMenu.tsx': 'meme popover, cote page Taches.',
   'components/organization/OrgNotificationsBell.tsx':
     'popover de notifications ancre a la cloche, non modal.',
-  'components/organization/TeamCategoryPicker.tsx':
-    "confirmation EN LIGNE (une bande dans le flux, pas un calque) : elle porte alertdialog pour etre annoncee, mais elle ne recouvre rien.",
+  'components/organization/TeamCategoryTreeSelect.tsx':
+    "confirmation EN LIGNE (une bande dans le flux d'un Popover Radix deja piege, pas un calque) : elle porte alertdialog pour etre annoncee, mais elle ne recouvre rien et un second piege se disputerait le focus avec celui du Popover.",
   'components/tutorial/TutorialCard.tsx':
     'carton de tutoriel ancre, rendu dans PageTutorial qui est en pointer-events-none : il commente la page, il ne la capture pas.',
 };

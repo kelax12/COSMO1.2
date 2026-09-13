@@ -33,6 +33,8 @@ const row = {
   org_id: ORG,
   name: 'Client',
   color: '#3b82f6',
+  parent_id: null,
+  position: 0,
   created_by: 'u-1',
   created_at: '2026-08-01T10:00:00.000Z',
 };
@@ -56,6 +58,8 @@ describe('SupabaseTeamCategoriesRepository', () => {
         orgId: ORG,
         name: 'Client',
         color: '#3b82f6',
+        parentId: null,
+        position: 0,
         createdBy: 'u-1',
         createdAt: '2026-08-01T10:00:00.000Z',
       },
@@ -91,9 +95,11 @@ describe('SupabaseTeamCategoriesRepository', () => {
       created_by: supabaseMock.user?.id,
       name: 'Client',
       color: '#3b82f6',
+      parent_id: null,
+      position: 0,
     });
     // La preuve que la whitelist tient : aucune clé de l'input hostile.
-    expect(Object.keys(inserted)).toHaveLength(4);
+    expect(Object.keys(inserted)).toHaveLength(6);
   });
 
   it('createCategory: couleur par defaut quand elle n’est pas fournie', async () => {

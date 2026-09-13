@@ -60,14 +60,9 @@ import { SupabaseTeamOKRsRepository } from '@/modules/team-okrs/supabase.reposit
 import { IOrgTeamsRepository } from '@/modules/org-teams/repository';
 import { SupabaseOrgTeamsRepository } from '@/modules/org-teams/supabase.repository';
 
-// Org OKR categories (catégories d'OKR d'entreprise, partagées)
-import {
-  IOrgOKRCategoriesRepository,
-  LocalStorageOrgOKRCategoriesRepository,
-} from '@/modules/org-okr-categories/repository';
-import { SupabaseOrgOKRCategoriesRepository } from '@/modules/org-okr-categories/supabase.repository';
-
-// Team categories (catégories d'entreprise — distinctes des projets, mig. 111)
+// Team categories (catégories d'entreprise, hiérarchiques — mig. 111 + 148 :
+// partagées par tâches/projets/OKR d'équipe. Fusionne l'ancien
+// org-okr-categories, mig. 148.)
 import {
   ITeamCategoriesRepository,
   LocalStorageTeamCategoriesRepository,
@@ -160,7 +155,6 @@ let organizationsRepository: IOrganizationsRepository | null = null;
 let teamProjectsRepository: ITeamProjectsRepository | null = null;
 let teamOKRsRepository: ITeamOKRsRepository | null = null;
 let orgTeamsRepository: IOrgTeamsRepository | null = null;
-let orgOKRCategoriesRepository: IOrgOKRCategoriesRepository | null = null;
 let teamCategoriesRepository: ITeamCategoriesRepository | null = null;
 let statsRepository: IStatsRepository | null = null;
 
@@ -180,7 +174,6 @@ appModeStore.subscribe(() => {
   teamProjectsRepository = null;
   teamOKRsRepository = null;
   orgTeamsRepository = null;
-  orgOKRCategoriesRepository = null;
   teamCategoriesRepository = null;
   statsRepository = null;
 });
@@ -347,18 +340,6 @@ export function getOrgTeamsRepository(): IOrgTeamsRepository {
 }
 
 /**
- * Get the Org OKR categories repository based on current mode.
- */
-export function getOrgOKRCategoriesRepository(): IOrgOKRCategoriesRepository {
-  if (!orgOKRCategoriesRepository) {
-    orgOKRCategoriesRepository = appModeStore.isDemo
-      ? new LocalStorageOrgOKRCategoriesRepository()
-      : new SupabaseOrgOKRCategoriesRepository();
-  }
-  return orgOKRCategoriesRepository;
-}
-
-/**
  * Get the Team categories repository based on current mode.
  */
 export function getTeamCategoriesRepository(): ITeamCategoriesRepository {
@@ -415,7 +396,6 @@ export function resetRepositories(): void {
   teamProjectsRepository = null;
   teamOKRsRepository = null;
   orgTeamsRepository = null;
-  orgOKRCategoriesRepository = null;
   teamCategoriesRepository = null;
   statsRepository = null;
 }

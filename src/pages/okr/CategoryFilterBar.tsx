@@ -9,12 +9,12 @@ interface CategoryLite {
   id: string;
   name: string;
   color: string;
-  /** Absent = catégorie plate (ex. org_okr_categories) : traitée comme racine. */
+  /** Absent = catégorie sans hiérarchie renseignée : traitée comme racine. */
   parentId?: string | null;
 }
 
 // Minimal structural type — satisfait par useCreateCategory (perso) ET par
-// useCreateOrgOKRCategory (entreprise). Le composant n'utilise que .mutate.
+// useCreateTeamCategory (entreprise, mig. 148). Le composant n'utilise que .mutate.
 interface CreateCategoryMutationLike {
   mutate: (
     variables: { name: string; color: string },

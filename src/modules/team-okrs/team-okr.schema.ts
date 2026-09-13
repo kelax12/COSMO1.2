@@ -15,7 +15,7 @@ export const createTeamKRSchema = z.object({
 export const createTeamOKRSchema = z.object({
   title: z.string().trim().min(1, "validation.okr.objectiveTitleRequired").max(200, 'validation.okr.titleTooLong'),
   description: z.string().max(2000).optional(),
-  category: z.string().max(60).optional(),
+  categoryId: z.string().nullable().optional(),
   startDate: z.string().optional(),
   endDate: z.string().optional(),
   // Rattachement d'équipes (cloisonnement) — 20 max par garde-fou.
@@ -26,7 +26,7 @@ export const createTeamOKRSchema = z.object({
 export const updateTeamOKRSchema = z.object({
   title: z.string().trim().min(1).max(200).optional(),
   description: z.string().max(2000).optional(),
-  category: z.string().max(60).optional(),
+  categoryId: z.string().nullable().optional(),
   startDate: z.string().optional(),
   endDate: z.string().optional(),
   teamIds: z.array(z.string()).max(20).optional(),
