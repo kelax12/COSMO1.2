@@ -837,14 +837,34 @@ déclarait `branch(id, depth)` pendant que le bloc PL/pgSQL déclarait une varia
 ces cinq vérifications n'exécute le SQL.** Seule la vérification acteur par acteur en
 transaction annulée l'a trouvée. Onze cas y ont été rejoués, prod inchangée.
 
-⚠️ **La `145` est ÉCRITE et NON APPLIQUÉE.** Elle pose la clé étrangère de
-`tasks.category` / `okrs.category` vers `categories` (`ON DELETE SET NULL`), après
-nettoyage des orphelins et conversion `TEXT` → `UUID`. C'est une **conversion de type sur
-`tasks`**, qui prend un `ACCESS EXCLUSIVE` et réécrit la table : à jouer hors heure de
-pointe, et sa preuve en transaction annulée reste à jouer.
-📊 Mesuré en prod le 2026-09-10 : `tasks` **749 lignes**, 125 sans catégorie, **13
-orphelines** ; `okrs` 12 lignes, 0 orpheline. ⚠️ Le chiffre de « 611 tâches » cité
-ailleurs dans ce fichier date du 2026-09-02 et n'est plus vrai.
+✅ **La `145` est APPLIQUÉE en prod le 2026-09-13.** `tasks.category` et `okrs.category`
+sont désormais des `UUID` avec une vraie clé étrangère vers `categories`, en
+`ON DELETE SET NULL` : supprimer une catégorie DÉTACHE, elle ne supprime jamais la tâche.
+R-02 est refermé **par la base**, plus seulement par l'application.
+
+🔴 **La preuve a été jouée AVANT, en transaction annulée**, et la production remesurée
+intacte entre les deux (type encore `text`, aucune contrainte). Les six invariants :
+zéro orphelin après ; **zéro tâche non orpheline déplacée, sur 611 comparées** ;
+138 tâches sans catégorie = 125 vides + 13 orphelines ; type `uuid` ; contrainte
+présente ; action `SET NULL`. Après application, mêmes chiffres, 749 tâches intactes,
+zéro advisor.
+
+📊 Mesuré en prod le 2026-09-13 : `tasks` **749 lignes**, `okrs` 12. ⚠️ Le chiffre de
+« 611 tâches » cité ailleurs dans ce fichier n'a jamais désigné le total : c'est le
+nombre de tâches PORTANT une catégorie valide, ce que la preuve a confirmé en les
+comparant une à une.
+
+⚠️ **Appliquée par le CLI (`supabase db query -f`), pas par `apply_migration`** : le
+connecteur MCP était invalidé ce jour-là. Le CLI n'inscrit RIEN au ledger, contrairement
+à `apply_migration` — la ligne `145_categories_fk` y a donc été insérée à la main. Refaire
+ce chemin sans l'insertion laisserait une migration appliquée et invisible du ledger.
+
+⚠️ **`NO_CATEGORY` reste la chaîne vide côté TypeScript.** La base porte NULL ; la
+conversion vit dans les DEUX mappers (`tasks/mappers.ts`, `okrs/mappers.ts`) et nulle part
+ailleurs. ❌ Ne jamais propager `null` jusqu'aux composants : ce serait un second marqueur
+d'absence à vérifier partout. Un test garde aussi la distinction entre « colonne absente »
+(ne pas y toucher) et « chaîne vide » (retirer la catégorie) : les confondre effacerait la
+catégorie à chaque mise à jour partielle.
 
 ❌ **Ne jamais dériver une branche par un aller-retour serveur.** Aucune RPC n'est créée :
 un compte porte quelques dizaines de catégories et le client les charge déjà toutes. Les
