@@ -18,7 +18,10 @@
 import React, { useMemo, useState } from 'react';
 import { ChevronRight, ChevronDown, Plus, FolderInput, Trash2, Pencil, MoreHorizontal, X } from 'lucide-react';
 import { useT } from '@/i18n/useT';
-import { toast } from '@/lib/toast';
+// ⚠️ `sonner` et non `@/lib/toast` : la façade différée n'est pas encore
+// committée (chantier en cours d'une autre session) — importer un module
+// absent du dépôt casse le build (même défaut que le commit 43b781b7).
+import { toast } from 'sonner';
 import {
   useTeamCategories,
   useCreateTeamCategory,
