@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { Plus, Target, Trash2, Pencil, Users, Building2 } from 'lucide-react';
 import {
   useTeamOKRs,
@@ -142,9 +142,10 @@ const TeamOKRTab = ({ orgId }: TeamOKRTabProps) => {
   const deleteOKR = useDeleteTeamOKR(orgId);
 
   // ── Filtre + gestion des catégories (UI identique au mode perso) ────
-  // Sélection = id de catégorie ('all' = toutes). Le filtrage des OKR se fait
-  // ensuite par NOM (team_okrs.category stocke le nom).
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  // Filtre multi-select par id (`org_okr_categories` est PLAT, sans hiérarchie
+  // — cf. CategoryFilterBar). Le filtrage des OKR se fait ensuite par NOM
+  // (team_okrs.category stocke le nom).
+  const [activeCategoryIds, setActiveCategoryIds] = useState<Set<string>>(new Set());
   const [hoveredCategoryId, setHoveredCategoryId] = useState<string | null>(null);
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
   const [editCategoryName, setEditCategoryName] = useState('');
@@ -163,7 +164,12 @@ const TeamOKRTab = ({ orgId }: TeamOKRTabProps) => {
     categories,
     okrs,
     onDeleted: (deletedId) => {
-      if (selectedCategory === deletedId) setSelectedCategory('all');
+      setActiveCategoryIds((prev) => {
+        if (!prev.has(deletedId)) return prev;
+        const next = new Set(prev);
+        next.delete(deletedId);
+        return next;
+      });
     },
   });
 
@@ -180,13 +186,14 @@ const TeamOKRTab = ({ orgId }: TeamOKRTabProps) => {
   const setCurrent = (kr: TeamKeyResult, value: number) =>
     updateKR.mutate({ krId: kr.id, input: { currentValue: value } });
 
-  // Filtrage par catégorie sélectionnée (id → nom).
-  const selectedName = selectedCategory === 'all'
-    ? null
-    : categories.find((c) => c.id === selectedCategory)?.name ?? null;
+  // Filtrage par catégories actives (ids → noms, team_okrs.category stocke le nom).
+  const activeNames = useMemo(
+    () => new Set(categories.filter((c) => activeCategoryIds.has(c.id)).map((c) => c.name)),
+    [categories, activeCategoryIds],
+  );
   const visibleOKRs = useMemo(
-    () => (selectedCategory === 'all' ? okrs : okrs.filter((o) => o.category === selectedName)),
-    [okrs, selectedCategory, selectedName],
+    () => (activeCategoryIds.size === 0 ? okrs : okrs.filter((o) => !!o.category && activeNames.has(o.category))),
+    [okrs, activeCategoryIds, activeNames],
   );
 
   // ── Handlers catégories (mêmes noms/comportements que OKRPage) ──────
@@ -240,8 +247,8 @@ const TeamOKRTab = ({ orgId }: TeamOKRTabProps) => {
         {(
           <CategoryFilterBar
             categories={categories.map((c) => ({ id: c.id, name: c.name, color: c.color }))}
-            selectedCategory={selectedCategory}
-            setSelectedCategory={setSelectedCategory}
+            activeCategoryIds={activeCategoryIds}
+            setActiveCategoryIds={setActiveCategoryIds}
             hoveredCategoryId={hoveredCategoryId}
             setHoveredCategoryId={setHoveredCategoryId}
             editingCategoryId={editingCategoryId}
@@ -292,7 +299,7 @@ const TeamOKRTab = ({ orgId }: TeamOKRTabProps) => {
           <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">{t('okrTab.emptyCategory')}</p>
           <button
             type="button"
-            onClick={() => setSelectedCategory('all')}
+            onClick={() => setActiveCategoryIds(new Set())}
             className="mt-2 text-xs font-semibold text-blue-500 hover:text-blue-600"
           >
             {t('okrTab.seeAll')}

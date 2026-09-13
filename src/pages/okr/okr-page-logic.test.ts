@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getProgress, filterObjectivesByCategory } from './okr-page-logic';
+import { getProgress, filterObjectivesByCategories } from './okr-page-logic';
 import type { KeyResult } from '@/modules/okrs';
 
 const kr = (currentValue: number, targetValue: number): KeyResult =>
@@ -20,20 +20,23 @@ describe('getProgress', () => {
   });
 });
 
-describe('filterObjectivesByCategory', () => {
+describe('filterObjectivesByCategories', () => {
   const objs = [
     { id: 'a', completed: false, category: 'work' },
     { id: 'b', completed: true, category: 'work' },
     { id: 'c', completed: false, category: 'home' },
   ];
 
-  it("'finished' returns completed objectives", () => {
-    expect(filterObjectivesByCategory(objs, 'finished').map(o => o.id)).toEqual(['b']);
+  it('an empty set returns every non-completed objective', () => {
+    expect(filterObjectivesByCategories(objs, new Set()).map(o => o.id)).toEqual(['a', 'c']);
   });
-  it("'all' returns non-completed objectives", () => {
-    expect(filterObjectivesByCategory(objs, 'all').map(o => o.id)).toEqual(['a', 'c']);
+  it('a completed objective is excluded even if its category is active', () => {
+    expect(filterObjectivesByCategories(objs, new Set(['work'])).map(o => o.id)).toEqual(['a']);
   });
-  it('a category id returns non-completed objectives of that category', () => {
-    expect(filterObjectivesByCategory(objs, 'work').map(o => o.id)).toEqual(['a']);
+  it('several active categories act as an OR', () => {
+    expect(filterObjectivesByCategories(objs, new Set(['work', 'home'])).map(o => o.id)).toEqual(['a', 'c']);
+  });
+  it('a category absent from the active set is excluded', () => {
+    expect(filterObjectivesByCategories(objs, new Set(['home'])).map(o => o.id)).toEqual(['c']);
   });
 });

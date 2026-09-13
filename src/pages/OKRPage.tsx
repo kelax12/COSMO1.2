@@ -18,13 +18,13 @@ import EventModal from '@/components/EventModal';
 import OKRModalSheet from '@/components/OKRModalSheet';
 import OKRDeadlineReviewModal from '@/components/OKRDeadlineReviewModal';
 import CompletedOKRsModal from '@/components/CompletedOKRsModal';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import PageTutorial from '@/components/tutorial/PageTutorial';
 import { useTutorial } from '@/components/tutorial/useTutorial';
 import { okrTutorialStepsDesktop } from '@/tutorials/okr.desktop';
 import { okrTutorialStepsMobile } from '@/tutorials/okr.mobile';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
-import { filterObjectivesByCategory, type Objective } from './okr/okr-page-logic';
+import { filterObjectivesByCategories, type Objective } from './okr/okr-page-logic';
 import OKRCard from './okr/OKRCard';
 import { OKRListSkeleton } from '@/components/skeletons';
 import DeleteObjectiveConfirm from './okr/DeleteObjectiveConfirm';
@@ -71,7 +71,8 @@ const OKRPage: React.FC = () => {
   const [selectedKeyResultForModal, setSelectedKeyResultForModal] = useState<{kr: KeyResult;obj: Objective;} | null>(null);
   const [editingObjective, setEditingObjective] = useState<Objective | null>(null);
   const [showAddObjective, setShowAddObjective] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  // Filtre multi-select hiérarchique (cf. CategoryFilterBar) : vide = tous.
+  const [activeCategoryIds, setActiveCategoryIds] = useState<Set<string>>(new Set());
   const [deletingObjective, setDeletingObjective] = useState<string | null>(null);
   const [hoveredCategoryId, setHoveredCategoryId] = useState<string | null>(null);
   // États d'édition inline d'une catégorie (nom + couleur). Activés via le
@@ -125,7 +126,12 @@ const OKRPage: React.FC = () => {
     tasks,
     objectives,
     onDeleted: (deletedId) => {
-      if (selectedCategory === deletedId) setSelectedCategory('all');
+      setActiveCategoryIds((prev) => {
+        if (!prev.has(deletedId)) return prev;
+        const next = new Set(prev);
+        next.delete(deletedId);
+        return next;
+      });
     },
   });
 
@@ -193,7 +199,7 @@ const OKRPage: React.FC = () => {
     setEditingObjective(null);
   };
 
-  const filteredObjectives = filterObjectivesByCategory(objectives, selectedCategory);
+  const filteredObjectives = filterObjectivesByCategories(objectives, activeCategoryIds);
 
   const colorOptions = [
     { value: 'blue', color: '#3B82F6' },
@@ -373,8 +379,8 @@ const OKRPage: React.FC = () => {
 
       <CategoryFilterBar
         categories={categories}
-        selectedCategory={selectedCategory}
-        setSelectedCategory={setSelectedCategory}
+        activeCategoryIds={activeCategoryIds}
+        setActiveCategoryIds={setActiveCategoryIds}
         hoveredCategoryId={hoveredCategoryId}
         setHoveredCategoryId={setHoveredCategoryId}
         editingCategoryId={editingCategoryId}
@@ -418,14 +424,12 @@ const OKRPage: React.FC = () => {
             <Target className="w-10 h-10 text-green-500 dark:text-green-400" strokeWidth={1.75} />
           </div>
           <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-2">
-            {selectedCategory === 'all'
+            {activeCategoryIds.size === 0
               ? t('page.empty.allTitle')
-              : selectedCategory === 'completed'
-              ? t('page.empty.noneTitle')
               : t('page.empty.filteredTitle')}
           </h3>
           <p className="text-sm text-slate-500 dark:text-slate-400 max-w-md mb-6">
-            {selectedCategory === 'all'
+            {activeCategoryIds.size === 0
               ? t('page.empty.noneDescription')
               : t('page.empty.filteredDescription')}
           </p>
