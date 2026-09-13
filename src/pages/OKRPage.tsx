@@ -18,7 +18,7 @@ import EventModal from '@/components/EventModal';
 import OKRModalSheet from '@/components/OKRModalSheet';
 import OKRDeadlineReviewModal from '@/components/OKRDeadlineReviewModal';
 import CompletedOKRsModal from '@/components/CompletedOKRsModal';
-import { toast } from '@/lib/toast';
+import { toast } from 'sonner';
 import PageTutorial from '@/components/tutorial/PageTutorial';
 import { useTutorial } from '@/components/tutorial/useTutorial';
 import { okrTutorialStepsDesktop } from '@/tutorials/okr.desktop';
