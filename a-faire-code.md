@@ -3926,6 +3926,9 @@ aura un. C'est exactement la définition d'une garde qui répond sans mesurer.
 > répond désormais `200` au bon secret et `401` à un mauvais.
 
 
+> ⚠️ **CE QUI SUIT EST L'ÉTAT D'AVANT, conservé pour mémoire.** Il décrit le job avant la pose du
+> secret le 2026-09-13. Ne pas le lire comme l'état courant : la garde compare depuis.
+>
 > 🔴 **Mesuré le 2026-09-12 : le job `Edge deploy drift` échoue TOUS LES JOURS depuis sa mise en
 > service, et il n'a donc jamais comparé quoi que ce soit.** Le message est exactement celui que la
 > garde doit produire :
@@ -4718,7 +4721,7 @@ fonction par fonction. C'est le geste que C-35 a mécanisé pour la CI, et il re
 | `RATE_LIMIT_SALT` | Supabase | `consumeRateLimits` **REFUSE**, choix délibéré : pas de sel, pas de service, plutôt qu'un hachage devinable (C-31) |
 | `CRON_SECRET` | secrets **Actions** | C-34 |
 | ~~`OPS_ALERT_WEBHOOK_URL`~~ | secrets **Actions** | ✅ **posé le 2026-09-02**, 73 alertes poussées depuis (C-28) |
-| **`SUPABASE_ACCESS_TOKEN`** 🆕 | secrets **Actions** | le job `Edge deploy drift` **échoue tous les jours** sans jamais comparer : le code déployé des Edge Functions n'est confronté au dépôt par **personne** (C-35). Jeton personnel Supabase, portée lecture du projet |
+| ~~**`SUPABASE_ACCESS_TOKEN`**~~ ✅ | secrets **Actions** | **POSÉ le 2026-09-13 à 09:34 UTC.** Le job avait échoué **14 fois d'affilée** sans jamais rien comparer ; il compare les 8 fonctions depuis, et le premier run vert est tombé le jour même (`34768021931`). Jeton personnel Supabase — ⚠️ un PAT porte TOUS les droits du compte, il n'existe pas de portée « lecture d'un projet » : celui-là est dédié à ce job et révocable seul |
 
 ❌ **Ne jamais rendre une garde conditionnelle à la présence de son propre secret.** Un secret absent
 se solde par un échec visible, jamais par un silence.
