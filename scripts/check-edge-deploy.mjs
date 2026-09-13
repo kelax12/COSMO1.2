@@ -313,6 +313,33 @@ async function listerDeployees(projectRef, token) {
  * `supabase functions download` ecrit dans `<cwd>/supabase/functions/<slug>`,
  * d'ou le repertoire temporaire : on ne touche jamais l'arbre de travail.
  */
+/**
+ * Ce fichier vient-il du BUNDLE, ou la CLI l'a-t-elle depose elle-meme ?
+ *
+ * 🔴 POURQUOI · le premier run qui a compare pour de bon (2026-09-13) a
+ * signale `supabase/.temp/linked-project.json` comme « absent-du-depot »
+ * pour TROIS fonctions. Or ce fichier n'est pas du code deploye : c'est la
+ * CLI qui l'ecrit dans le bac a sable en s'y liant, avec `.temp/cli-latest`.
+ *
+ * Ce n'etait pas un faux positif anodin : « absent du depot » est le verdict
+ * que ce script documente comme le plus grave — du code qui s'execute en
+ * production sans source versionnee. Une garde qui crie au loup sur ses
+ * propres dechets finit par etre lue en diagonale, puis plus du tout.
+ *
+ * Le critere est POSITIF, jamais une liste de choses a ignorer : seul ce que
+ * la CLI ecrit sous `supabase/functions/` fait partie du bundle. Une liste
+ * noire aurait demande de deviner les prochains fichiers de service ; ici,
+ * un nouveau dechet est hors perimetre d'office. Et si la CLI se mettait un
+ * jour a ecrire ailleurs, la lecture deviendrait VIDE, donc une erreur franche
+ * (`assertReadSomething`) — jamais un « identique au depot ».
+ */
+export function estFichierDuBundle(cheminRelatif) {
+  const parts = String(cheminRelatif).split(/[\\/]/).filter((p) => p && p !== '.');
+  if (parts.length < 3) return false;
+  if (parts[0] !== 'supabase' || parts[1] !== 'functions') return false;
+  return /\.(ts|tsx|js|mjs|json)$/.test(parts[parts.length - 1]);
+}
+
 function telechargerBundle(slug, projectRef, token) {
   const bac = mkdtempSync(join(tmpdir(), `edge-deploy-${slug}-`));
   try {
@@ -344,7 +371,7 @@ function telechargerBundle(slug, projectRef, token) {
 
     const fichiers = new Map();
     for (const chemin of parcourir(join(bac, 'supabase'))) {
-      if (!/\.(ts|tsx|js|mjs|json)$/.test(chemin)) continue;
+      if (!estFichierDuBundle(relative(bac, chemin))) continue;
       fichiers.set(cleDeployee(relative(bac, chemin), slug), readFileSync(chemin, 'utf8'));
     }
     return fichiers;
