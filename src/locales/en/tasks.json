@@ -343,6 +343,8 @@
     "addChildTo": "Add a subcategory to {{name}}",
     "moveCategory": "Move {{name}}",
     "deleteCategory": "Delete {{name}}",
+    "moreActions": "More actions for {{name}}",
+    "createSubcategory": "Create a subcategory",
     "maxDepthReached": "Maximum depth reached",
     "addRoot": "Add a category",
     "moveTitle": "Move category",

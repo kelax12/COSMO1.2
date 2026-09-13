@@ -358,6 +358,8 @@
     "addChildTo": "Ajouter une sous-catégorie à {{name}}",
     "moveCategory": "Déplacer {{name}}",
     "deleteCategory": "Supprimer {{name}}",
+    "moreActions": "Plus d'actions pour {{name}}",
+    "createSubcategory": "Créer une sous-catégorie",
     "maxDepthReached": "Profondeur maximale atteinte",
     "addRoot": "Ajouter une catégorie",
     "moveTitle": "Déplacer la catégorie",
