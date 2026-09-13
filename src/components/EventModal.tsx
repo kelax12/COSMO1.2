@@ -63,6 +63,21 @@ type EventModalProps = {
   onDuplicateEvent?: (eventId: string) => void;
   onConvert?: (eventData: EventData) => void;
   /**
+   * Panneau rendu À GAUCHE du formulaire, sur écran large uniquement.
+   *
+   * C'est un emplacement, pas une fonctionnalité : l'EventModal ne sait pas ce
+   * qu'on y met (aujourd'hui, la décision à prendre sur un créneau de tâche
+   * terminé). Il est rendu DANS l'overlay, donc à l'intérieur du piège de focus
+   * déjà posé par cette modale. ❌ Ne jamais le sortir en frère de l'overlay
+   * avec son propre `useModalA11y` : la pile du hook fait que seule la
+   * dernière surface empilée réagit, et le panneau reprendrait le focus au
+   * formulaire (C-53).
+   *
+   * Masqué sous `md` : sur téléphone il n'y a pas de place à gauche, et la
+   * pastille du calendrier reste le seul accès.
+   */
+  sidePanel?: React.ReactNode;
+  /**
    * Liste des champs à verrouiller (lecture seule). Valeurs supportées :
    * 'title', 'startDate', 'endDate'. Permet à l'appelant de figer certains
    * champs pré-remplis (cas d'usage : planifier une habitude → titre +
@@ -99,6 +114,7 @@ const EventModal: React.FC<EventModalProps> = ({
   onDeleteEvent,
   onDuplicateEvent,
   onConvert,
+  sidePanel,
   lockedFields = [],
   enterprisePublic = false,
   categoriesOverride,
@@ -446,6 +462,14 @@ const EventModal: React.FC<EventModalProps> = ({
         className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/30 backdrop-blur-md md:p-4 opacity-0 animate-modal-backdrop"
         onClick={guardedClose}
       >
+        {sidePanel && (
+          <div
+            className="mr-3 hidden md:block"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {sidePanel}
+          </div>
+        )}
         <EventModalForm
           mode={mode}
           onClose={guardedClose}

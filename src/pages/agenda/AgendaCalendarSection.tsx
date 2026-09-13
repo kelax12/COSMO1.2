@@ -40,6 +40,7 @@ import { DateSelectArg, EventClickArg, EventDropArg, DatesSetArg, EventInput, Ev
 import allCalendarLocales from '@fullcalendar/core/locales-all';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
+import { ListChecks } from 'lucide-react';
 import MemberAvatar from '@/components/organization/MemberAvatar';
 import { getDateLocale, getIntlTag } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
@@ -88,6 +89,16 @@ interface AgendaCalendarSectionProps {
   onEventReceive: (receiveInfo: EventReceiveArg) => void;
   onDesktopDatesSet: (info: DatesSetArg) => void;
   onMobileDatesSet: (info: DatesSetArg) => void;
+  /**
+   * Pastille « ce créneau attend une décision », rendue par la PAGE.
+   *
+   * C'est un emplacement, pas un rappel : ce fichier place la pastille et ne
+   * sait rien de ce qu'elle ouvre. La frontière du haut de fichier tient donc
+   * toujours, alors qu'un `onReviewClick(eventId)` aurait fait entrer ici la
+   * notion de créneau à passer en revue. Rend `null` pour un événement qui
+   * n'attend rien.
+   */
+  renderReviewBadge?: (eventId: string) => React.ReactNode;
 }
 
 const UNSELECT_CANCEL =
@@ -116,6 +127,7 @@ const AgendaCalendarSection = ({
   onEventReceive,
   onDesktopDatesSet,
   onMobileDatesSet,
+  renderReviewBadge,
 }: AgendaCalendarSectionProps) => {
   const { t } = useT('agenda');
   const { user } = useAuth();
@@ -163,18 +175,53 @@ const AgendaCalendarSection = ({
     return ids;
   }, [calendarEvents]);
 
-  // Rendu du contenu d'un événement : titre + avatar de l'auteur si l'événement
-  // a été ajouté par quelqu'un d'autre que moi (mon manager, mode entreprise).
-  const renderEventInner = (title: string, createdBy: string | undefined, centered: boolean) => {
+  // Rendu du contenu d'un événement : titre, avatar de l'auteur si l'événement a
+  // été ajouté par quelqu'un d'autre que moi (mon manager, mode entreprise), et
+  // la colonne d'indicateurs en haut à droite.
+  //
+  // Deux indicateurs empilés, jamais fusionnés :
+  //   • l'icône TÂCHE dit « cet événement est un créneau de travail sur une
+  //     tâche », elle est purement informative et ne se clique pas ;
+  //   • la pastille « ! » dit « ce créneau est terminé et personne n'a dit s'il
+  //     avait servi », elle PORTE une action.
+  // Les confondre ferait d'un état permanent (être lié à une tâche) et d'un état
+  // transitoire (attendre une décision) le même signal.
+  const renderEventInner = (
+    title: string,
+    createdBy: string | undefined,
+    centered: boolean,
+    eventId: string,
+    hasTask: boolean,
+    needsReview: boolean,
+  ) => {
     const author = createdBy && createdBy !== user?.id ? memberById.get(createdBy) : undefined;
     return (
-      <div className={`h-full w-full flex items-center gap-1 p-1 text-xs cursor-pointer ${centered ? 'justify-center' : ''}`}>
+      <div className={`relative h-full w-full flex items-center gap-1 p-1 text-xs cursor-pointer ${centered ? 'justify-center' : ''}`}>
         {author && (
           <span className="shrink-0 rounded-full ring-1 ring-white/70" title={t('event.addedBy', { name: author.displayName })}>
             <MemberAvatar avatar={author.avatar} name={author.displayName} size={16} />
           </span>
         )}
-        <span className={`font-medium text-white truncate leading-tight ${centered ? 'text-center' : ''}`}>{title}</span>
+        <span
+          className={`font-medium text-white truncate leading-tight ${centered ? 'text-center' : ''} ${hasTask ? 'pr-5' : ''}`}
+        >
+          {title}
+        </span>
+        {hasTask && (
+          <span className="absolute top-0.5 right-0.5 flex flex-col items-center gap-0.5">
+            {/* Informatif : `pointer-events-none` pour que le clic traverse
+                jusqu'au bloc, qui ouvre l'événement comme partout ailleurs. */}
+            <ListChecks
+              className="h-3 w-3 shrink-0 text-white/75 pointer-events-none"
+              aria-label={t('event.linkedToTask')}
+            />
+            {/* Le clic ne doit pas remonter au bloc : il ouvrirait l'EventModal
+                par-dessus le menu qu'on vient juste de demander. */}
+            {needsReview && renderReviewBadge && (
+              <span onClick={(e) => e.stopPropagation()}>{renderReviewBadge(eventId)}</span>
+            )}
+          </span>
+        )}
       </div>
     );
   };
@@ -258,7 +305,14 @@ const AgendaCalendarSection = ({
             unselectCancel={UNSELECT_CANCEL}
             datesSet={onMobileDatesSet}
             eventContent={(eventInfo) =>
-              renderEventInner(eventInfo.event.title, eventInfo.event.extendedProps?.createdBy as string | undefined, false)
+              renderEventInner(
+                eventInfo.event.title,
+                eventInfo.event.extendedProps?.createdBy as string | undefined,
+                false,
+                eventInfo.event.id,
+                Boolean(eventInfo.event.extendedProps?.taskId),
+                Boolean(eventInfo.event.extendedProps?.needsReview),
+              )
             }
             eventClassNames={(arg) => [
               'rounded-lg shadow-sm border-0 cursor-pointer',
@@ -323,7 +377,14 @@ const AgendaCalendarSection = ({
               unselectAuto={true}
               unselectCancel={UNSELECT_CANCEL}
               eventContent={(eventInfo) =>
-                renderEventInner(eventInfo.event.title, eventInfo.event.extendedProps?.createdBy as string | undefined, true)
+                renderEventInner(
+                  eventInfo.event.title,
+                  eventInfo.event.extendedProps?.createdBy as string | undefined,
+                  true,
+                  eventInfo.event.id,
+                  Boolean(eventInfo.event.extendedProps?.taskId),
+                  Boolean(eventInfo.event.extendedProps?.needsReview),
+                )
               }
               eventClassNames={(arg) => [
                 'rounded-lg shadow-sm border-0 cursor-pointer hover:shadow-md transition-all hover:scale-105',

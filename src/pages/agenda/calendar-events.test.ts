@@ -55,7 +55,30 @@ describe('buildCalendarEvents', () => {
 
   it('carries notes and taskId into extendedProps', () => {
     const [out] = buildCalendarEvents([ev({ notes: 'hello', taskId: 't9' })], now);
-    expect(out.extendedProps).toEqual({ notes: 'hello', taskId: 't9', isRecurringInstance: false });
+    expect(out.extendedProps).toEqual({
+      notes: 'hello',
+      taskId: 't9',
+      isRecurringInstance: false,
+      needsReview: false,
+    });
+  });
+
+  // La pastille « ce créneau attend une décision » est peinte à partir de ce
+  // seul drapeau. L'ensemble est passé en argument parce que le calcul a besoin
+  // des TÂCHES, que ce module ne connaît pas : une seconde dérivation ici
+  // finirait par diverger de celle qui peint le panneau de l'EventModal.
+  it('marque needsReview pour les seuls identifiants fournis', () => {
+    const events = [ev({ id: 'a', taskId: 't1' }), ev({ id: 'b', taskId: 't2' })];
+    const out = buildCalendarEvents(events, now, new Set(['a']));
+    expect(out.find((e) => e.id === 'a')!.extendedProps.needsReview).toBe(true);
+    expect(out.find((e) => e.id === 'b')!.extendedProps.needsReview).toBe(false);
+  });
+
+  it('sans ensemble fourni, aucun evenement n attend de decision', () => {
+    // Cas de `MemberAgendaBody` : un manager qui consulte l'agenda d'un
+    // subordonne ne doit voir aucune pastille, il n'a pas a trancher a sa place.
+    const out = buildCalendarEvents([ev({ id: 'a', taskId: 't1' })], now);
+    expect(out[0].extendedProps.needsReview).toBe(false);
   });
 
   it('returns an array', () => {

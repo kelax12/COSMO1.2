@@ -22,7 +22,8 @@
     "addedBy": "Ajouté par {{name}}",
     "occurrenceDeleted": "Occurrence supprimée",
     "eventDeleted": "Événement supprimé",
-    "copySuffix": "(copie)"
+    "copySuffix": "(copie)",
+    "linkedToTask": "Lié à une tâche"
   },
   "quickCreate": {
     "aria": "Création rapide d'un événement",
@@ -32,24 +33,16 @@
     "cancel": "Annuler",
     "create": "Créer"
   },
-  "eventToTask": {
-    "title": "Que faire de cet événement ?",
-    "subtitle": "Il n'est rattaché à aucune tâche",
-    "close": "Fermer",
-    "delete": "Supprimer",
-    "convert": "Transformer en tâche"
-  },
   "slotReview": {
-    "title": "Créneau terminé",
     "question": "Cette tâche a-t-elle été réalisée ?",
-    "snooze": "Plus tard",
-    "remaining_one": "{{count}} créneau à passer en revue",
-    "remaining_many": "{{count}} de créneaux à passer en revue",
-    "remaining_other": "{{count}} créneaux à passer en revue",
     "validate": "Oui, valider la tâche",
     "postpone": "Reporter",
     "delete": "Supprimer",
-    "deleted": "Tâche et créneau supprimés"
+    "deleted": "Tâche et créneau supprimés",
+    "ignore": "Ignorer",
+    "badgeAria": "Ce créneau attend une décision : {{title}}",
+    "panelTitle": "Créneau terminé",
+    "panelAction": "Que faire de ce créneau ?"
   },
   "sidebar": {
     "title": "Tâches disponibles",

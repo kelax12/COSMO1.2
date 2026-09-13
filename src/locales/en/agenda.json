@@ -22,7 +22,8 @@
     "addedBy": "Added by {{name}}",
     "occurrenceDeleted": "Occurrence deleted",
     "eventDeleted": "Event deleted",
-    "copySuffix": "(copy)"
+    "copySuffix": "(copy)",
+    "linkedToTask": "Linked to a task"
   },
   "quickCreate": {
     "aria": "Quick event creation",
@@ -32,23 +33,16 @@
     "cancel": "Cancel",
     "create": "Create"
   },
-  "eventToTask": {
-    "title": "What should happen to this event?",
-    "subtitle": "It isn't linked to any task",
-    "close": "Close",
-    "delete": "Delete",
-    "convert": "Turn into a task"
-  },
   "slotReview": {
-    "title": "Time slot finished",
     "question": "Did you get this task done?",
-    "snooze": "Later",
-    "remaining_one": "{{count}} slot left to review",
-    "remaining_other": "{{count}} slots left to review",
     "validate": "Yes, complete the task",
     "postpone": "Reschedule",
     "delete": "Delete",
-    "deleted": "Task and time slot deleted"
+    "deleted": "Task and time slot deleted",
+    "ignore": "Dismiss",
+    "badgeAria": "This time slot needs a decision: {{title}}",
+    "panelTitle": "Time slot ended",
+    "panelAction": "What about this slot?"
   },
   "sidebar": {
     "title": "Available tasks",

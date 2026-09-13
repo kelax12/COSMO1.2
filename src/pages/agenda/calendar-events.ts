@@ -57,13 +57,31 @@ export interface FullCalendarEvent {
   borderColor?: string;
   textColor: string;
   editable: boolean;
-  extendedProps: { notes?: string; taskId?: string; isRecurringInstance: boolean; createdBy?: string };
+  extendedProps: {
+    notes?: string;
+    taskId?: string;
+    isRecurringInstance: boolean;
+    createdBy?: string;
+    /** Créneau de tâche terminé qui attend une décision (pastille « ! »). */
+    needsReview: boolean;
+  };
 }
 
 // Étend les événements récurrents sur ±13 mois autour de `now`, puis les mappe
 // au format attendu par FullCalendar. Les instances récurrentes (id contenant
 // '::') sont non éditables.
-export function buildCalendarEvents(events: CalendarEvent[], now: Date = new Date()): FullCalendarEvent[] {
+export function buildCalendarEvents(
+  events: CalendarEvent[],
+  now: Date = new Date(),
+  /**
+   * Identifiants des événements qui attendent une décision. Passé en argument
+   * plutôt que recalculé ici : `findOverdueTaskSlots` a besoin des TÂCHES, que
+   * ce module ne connaît pas et n'a aucune raison de connaître. Une seconde
+   * dérivation de « ce créneau attend une décision » finirait par diverger de
+   * celle qui peint le panneau de l'EventModal.
+   */
+  reviewEventIds: ReadonlySet<string> = new Set(),
+): FullCalendarEvent[] {
   const projectionFrom = new Date(now);
   projectionFrom.setMonth(projectionFrom.getMonth() - 13);
   const projectionTo = new Date(now);
@@ -79,7 +97,13 @@ export function buildCalendarEvents(events: CalendarEvent[], now: Date = new Dat
     borderColor: event.color,
     textColor: '#ffffff',
     editable: !event.id.includes('::'),
-    extendedProps: { notes: event.notes, taskId: event.taskId, isRecurringInstance: event.id.includes('::'), createdBy: event.createdBy },
+    extendedProps: {
+      notes: event.notes,
+      taskId: event.taskId,
+      isRecurringInstance: event.id.includes('::'),
+      createdBy: event.createdBy,
+      needsReview: reviewEventIds.has(event.id),
+    },
   }));
 }
 
