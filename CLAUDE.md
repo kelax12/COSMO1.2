@@ -155,7 +155,7 @@ npm run check:edge          # Le code DÉPLOYÉ des Edge Functions contre le dé
                             # ⚠️ Le 2026-09-03, les TROIS sources déployées lisibles
                             # divergeaient de `main`, de trois façons différentes. Tant que
                             # rien ne comparait, toute conclusion tirée en lisant
-                            # `supabase/functions/` était fausse d'avance, y compris les
+                            # `supabase/functions/` était fausse d'avance — y compris les
                             # statuts de `faille.md`. **Un « ✅ corrigé » sur une Edge Function
                             # ne veut rien dire sans sa date de déploiement.**
                             # `.github/edge-deploy.json` ne déclare que l'EXISTENCE (quelle
@@ -226,8 +226,16 @@ npm run profile:landing     # Profil du fil principal d'une page (CPU bride, via
                             # dominant tout. Un ecart entre deux PAGES ne se lit donc que sur le
                             # runner ; l'outil sert a comparer un AVANT/APRES sur la meme page.
 npm run check:bundle        # Budget de bundle sur le build reel (CI, apres npm run build)
-                            # Plafonds au 2026-09-02 : chemin critique < 379 000 o gzip
-                            # (mesure 367,1 ko, marge 11,9), entree < 79 000 o (mesure 78,4).
+                            # Plafonds au 2026-09-11 : chemin critique < 323 000 o gzip
+                            # (mesure 306,3 ko, marge 5,2 %), entree < 71 000 o
+                            # (mesure 66,9 ko, marge 5,8 %). Les deux ont ETE
+                            # ABAISSES ce jour-la, la mesure ayant baisse de
+                            # 10,1 ko des deux cotes (sonner sort du chemin
+                            # critique, cf. § Toasts).
+                            # ⚠️ Ils sont poses a ~5 % au-dessus du mesure, pas
+                            # a ~1,5 % comme les precedents : le critere de sortie
+                            # de C-14 exige 5 % de marge sur les DEUX budgets, et
+                            # un cliquet a 1,5 % rouvrirait l'item le jour meme.
                             # ❌ Ne jamais remonter un plafond.
                             # 🔴 EXIGE `VITE_SENTRY_DSN` AU BUILD. Sans elle, Vite remplace la
                             # variable A LA COMPILATION, la branche `if (sentryDsn)` de main.tsx
@@ -396,7 +404,7 @@ const { user, isAuthenticated, isDemo, isLoading, login, logout, register, login
 
 ```typescript
 import { useBilling } from '@/modules/billing/billing.context';
-const { isPremium, addTokens, subscription, stats, isLoading } = useBilling();
+const { isPremium, subscription, stats, isLoading } = useBilling();
 // isPremium est une FONCTION : isPremium() retourne boolean
 ```
 
@@ -404,8 +412,8 @@ const { isPremium, addTokens, subscription, stats, isLoading } = useBilling();
 
 > 🟢 **Premium NON APPLIQUÉ** — kill-switch `PREMIUM_ENFORCED = false` dans
 > `src/modules/billing/premium-config.ts` (vérifié 2026-08-14). Tant qu'il vaut `false` :
-> `isPremium()` renvoie `true` pour tous, le mur-pub Habitudes est masqué, et la route
-> `/premium` **redirige vers `/`**. Aucun code premium n'est supprimé (dormant).
+> `isPremium()` renvoie `true` pour tous et la route `/premium` **redirige vers `/`**.
+> Le code de gating reste dormant, il n'est pas supprimé.
 > Réactivation : passer le flag à `true`, puis finaliser Stripe (`docs/POST-AUDIT-GUIDE.md`).
 
 Comportement **quand `PREMIUM_ENFORCED = true`** :
@@ -413,19 +421,29 @@ Comportement **quand `PREMIUM_ENFORCED = true`** :
 - **Partage de tâches → 100 % gratuit** (acquisition virale). Aucun gate `isPremium()` sur la
   collaboration. **Ne PAS réintroduire** ces gates.
 - **Statistiques → premium** (`StatisticsPage`).
-- **Habitudes → mur-pub quotidien** : `HabitsPage` monte `<HabitsAdGate>` une fois par jour pour
-  les non-abonnés. Piloté par un flag localStorage daté
-  (`useDailyAdGate('habits')` → `src/lib/hooks/use-daily-ad-gate.ts`, clé `cosmo_adwall_habits`),
-  **pas** par `isPremium()` (dette : `consume_premium_token` non câblé client).
-- **Abonnés payants** et **mode démo** ne voient jamais le mur.
-- Le client ne peut plus écrire `subscriptions` (mig. 015) : `addTokens(1)` passe par la RPC
-  `credit_premium_token_from_ad` (cap 20 crédits/24 h).
+- **Habitudes → gratuites pour tout le monde**, sans condition.
+- 🗑️ **Le système de jetons premium et le mur-pub Habitudes N'EXISTENT PLUS** (C-04, supprimés le
+  2026-09-04 sur décision d'Axel du 09-03). Sont partis ensemble : `HabitsAdGate`, `AdModal` et
+  tout AdSense (y compris ses origines dans la CSP), `useDailyAdGate` et la clé
+  `cosmo_adwall_habits`, `addTokens`, les RPC `consume_premium_token` /
+  `credit_premium_token_from_ad` / `bump_win_streak`, et les colonnes `premium_tokens` /
+  `win_streak` / `ad_credits_*` de `subscriptions` (mig. **141**).
+  ❌ **Ne jamais réintroduire une monnaie interne** : elle n'a jamais été câblée, un jeton crédité
+  ne servait à rien, et le mur qu'elle prétendait garder était piloté par un flag `localStorage`,
+  donc contournable en une manipulation le jour où `PREMIUM_ENFORCED` passerait à `true`.
+- ⚠️ **La définition de « premium » a changé avec** : c'est désormais `plan='premium'` +
+  `status='active'` + période non dépassée (`subscription.logic.ts`), les jetons n'y entrent plus.
+  Vérifiée ligne par ligne contre les 54 lignes de prod avant la bascule : **même verdict pour
+  chacune**. 8 comptes portent un `premium` sans fin de période, hérité des jetons gagnés par pub ;
+  ils restent premium, et aucune écriture ne produit plus cette forme.
+- Le client ne peut pas écrire `subscriptions` : aucune policy UPDATE, et l'INSERT ne permet
+  qu'une ligne gratuite sans identifiant Stripe.
 
 #### Facturation entreprise — plomberie Stripe COMPLÈTE, facturation DÉSACTIVÉE (2026-08-24)
 
 `org_subscriptions` (mig. 101) porte l'abonnement d'une **organisation** : un palier
 (`ENTERPRISE_PRICING_TIERS`), un quota de sièges (`max_members`), un statut. Ne jamais la
-confondre avec `subscriptions`, qui porte l'abonnement **particulier** (jetons, `win_streak`) —
+confondre avec `subscriptions`, qui porte l'abonnement **particulier** (plan, statut, période) —
 les deux ne partagent aucune colonne.
 
 - La table n'a **aucune policy d'écriture**. Seul le webhook Stripe (`service_role`) écrit ;
@@ -510,7 +528,16 @@ Garde-fous propres à cette zone :
 - 🔴 **Le passage en compte live doit remettre à zéro les identifiants Stripe en base.**
   `stripe-org-checkout` et `stripe-org-portal` réutilisent `stripe_customer_id` et
   `stripe_subscription_id` tels quels ; un identifiant du compte de TEST présenté à une clé live
-  répond 404, donc 500. Les tables sont vides aujourd'hui — c'est le moment le moins cher.
+  répond 404, donc 500. Outillé par la mig. `140` (NON APPLIQUÉE) :
+  `SELECT * FROM public.reset_stripe_identifiers(true);`, à jouer **dans** la fenêtre de bascule,
+  jamais avant : tant que la clé est une clé de test, chaque checkout réécrit un identifiant de
+  test. À blanc sans argument.
+  ⚠️ **« Les tables sont vides » était faux d'une table sur deux.** Mesuré le 2026-09-04 :
+  `org_subscriptions` = 0 ligne, mais `subscriptions` porte **5 `cus_…` et 2 `sub_…`** du compte
+  de test. Le geste a donc un objet réel dès aujourd'hui.
+  ⚠️ Effacer les deux colonnes d'une org PAYANTE sans la redescendre au palier gratuit
+  créerait un état sans issue : quota conservé, plus rien pour le payer, et un portail qui répond
+  `no_subscription` faute de customer. La fonction rétrograde ces lignes-là, et elles seules.
 - ❌ **Ne jamais laisser un event d'organisation retomber sur la branche particulier.** Le
   customer Stripe d'une org porte `org_owner_uid` (jamais `supabase_uid`) et
   `getUidFromCustomer` refuse tout customer portant `org_id` — sinon la facture d'une entreprise
@@ -605,7 +632,7 @@ QueryClientProvider
       BillingProvider        ← dépend de useAuth
         TooltipProvider
           MotionConfig reducedMotion="user"   ← WCAG 2.3.3 pour tout Framer Motion
-            Toaster (Sonner, theme="system") + Routes
+            Toaster (Sonner, theme="system", monte en lazy) + Routes
 ```
 
 React Query : 5 min stale, 30 min gc, retry 1, pas de `refetchOnWindowFocus`.
@@ -620,8 +647,7 @@ ré-exporte sans le redéfinir) :
 ```typescript
 export type User = {
   id: string; name: string; email: string;
-  avatar?: string; premiumTokens?: number; premiumWinStreak?: number;
-  lastTokenConsumption?: string; subscriptionEndDate?: string; autoValidation?: boolean;
+  avatar?: string; provider?: string; autoValidation?: boolean;
 };
 ```
 
@@ -690,8 +716,7 @@ La landing n'est plus une page linéaire. Après le header, un **aiguillage**
   le temps qu'il passe **dans** `render`, et descend d'un palier tant que ça ne tient pas :
   demi-résolution (le **départ**) → un huitième des pixels → 20 img/s → **gel**, la dernière frame
   restant affichée. **Les rayons restent visibles dans tous les cas** ; c'est le mouvement qui se
-  retire, jamais l'image. Le mécanisme et ses mesures vivent dans
-  `src/components/reactbits/light-rays-budget.ts`, avec leurs tests.
+  retire, jamais l'image.
   ❌ **Ne jamais remplacer ça par une détection de rastériseur logiciel** (`SwiftShader`,
   `llvmpipe`) : ça verdit la sonde sans rien rendre à un téléphone d'entrée de gamme, qui a bien un
   GPU et n'en sature pas moins.
@@ -781,38 +806,9 @@ sans écran, **écrites en dur en français** hors des catalogues i18n.
 ## Base de données Supabase
 
 Migrations dans `supabase/migration/*.sql`, convention `NNN_<feature>.sql`.
-**149 fichiers de migration** (recompté le 2026-09-10). La dernière APPLIQUÉE est la
-`137_dependency_error_identifiers.sql` (le 2026-09-12) ; avant elle, la
-`144_categories_tree_depth_ambiguity.sql` (le 2026-09-09).
-
-> ⚠️ **Le ledger ne se lit pas comme une suite croissante** : la 137 est appliquée APRÈS les
-> 143/144. C'est la troisième inversion (déjà 131/132), et elle est sans conséquence ici — la
-> 137 ne fait que remplacer le TEXTE des refus de quatre triggers de dépendance.
-
-### Refus de dépendance — un identifiant, jamais une phrase (mig. `137`)
-
-✅ **APPLIQUÉE en prod le 2026-09-12** (C-48). Les quatre triggers de dépendance
-(`validate_task_dependency`, `prevent_task_dependency_cycle`, et leurs jumeaux d'équipe)
-refusaient par des PHRASES anglaises. `normalizeApiError` ne promeut un message serveur en code
-métier que s'il matche `BUSINESS_CODE_RE` (`^[a-z][a-z0-9_]{2,49}$`) : une phrase n'y entre pas,
-donc le refus retombait sur le message générique en production, et arrivait **en anglais dans le
-gabarit français** en mode démo. Ils disent désormais `dependency_task_missing`,
-`dependency_cross_account`, `dependency_cross_project` et `dependency_cycle`, catalogués en
-`errors.api.*` en `fr` et en `en`, et levés à l'identique par les deux repositories de démo.
-
-Vérifiée acteur par acteur, 13 scénarios rejoués **avant et après** dans une transaction annulée :
-verdict identique pour chacun, seul le texte change. Auto-dépendance, doublon, cycle direct,
-cycle indirect à trois maillons, tâche inexistante, arête inter-comptes, projets différents, et la
-redérivation de `user_id` / `org_id` face à une valeur forgée.
-
-- ❌ **Ne jamais séparer « tâche inexistante » de « tâche hors périmètre ».** Les deux rendent
-  `dependency_task_missing`, mesuré : l'écart serait un oracle d'existence sur `team_tasks` hors
-  organisation, refermé par la mig. 109.
-- ❌ **Ne jamais réintroduire une table phrase → identifiant côté client.** Il en a existé une du
-  2026-09-04 au 2026-09-12, le temps que la migration soit appliquée ; c'est « identifier une
-  erreur par son message », que ce fichier interdit par ailleurs. Garde :
-  `src/modules/tasks/dependency-errors.guard.test.ts`, vue rouge sur les deux sabotages (table
-  réintroduite, `RAISE` redevenu une phrase) avant d'être committée.
+**150 fichiers de migration** (recompté le 2026-09-13, à l'ajout de la `146`). La
+dernière APPLIQUÉE est la `146_event_review_dismissed.sql` (le 2026-09-13) ; `145` l'a
+été le même jour (cf. section dédiée ci-dessous).
 
 ### Sous-catégories hiérarchiques (mig. `143`, `144`, `145`)
 
@@ -858,6 +854,25 @@ comparant une à une.
 connecteur MCP était invalidé ce jour-là. Le CLI n'inscrit RIEN au ledger, contrairement
 à `apply_migration` — la ligne `145_categories_fk` y a donc été insérée à la main. Refaire
 ce chemin sans l'insertion laisserait une migration appliquée et invisible du ledger.
+
+### « Ignorer » un créneau de tâche à passer en revue (mig. `146`)
+
+✅ **APPLIQUÉE en prod le 2026-09-13**, via `apply_migration` (ledger à jour cette
+fois). `events` gagne `review_dismissed_at` (`timestamptz`, nullable, `NULL` = jamais
+ignoré) : colonne purement informative, aucune policy ni trigger n'en dépend, RLS
+inchangée (une ligne qu'on peut déjà réécrire au complet peut écrire cette colonne).
+Vérifiée après coup : type `timestamp with time zone`, nullable, et `get_advisors`
+(security) ne montre **aucun nouveau finding** — uniquement les avertissements déjà
+documentés ailleurs dans ce fichier (fonctions `SECURITY DEFINER` existantes, RLS sans
+policy sur des tables déjà connues, protection mot de passe compromis).
+
+🔴 **Elle devait être appliquée AVANT le déploiement du front** (même ordre que la
+mig. 113) : `mapEventToDb` émet cette colonne à CHAQUE mise à jour d'événement. Le
+front avait été déployé en premier — écart constaté en usage réel (« Reporter » sur un
+créneau échouait avec le message générique, `review_dismissed_at` inconnu de Postgres),
+pas en test. `Reporter` et `Ignorer` (les deux seules actions qui écrivent la colonne)
+sont opérationnelles depuis l'application de cette migration ; `Valider` et
+`Supprimer` n'y touchent pas et n'avaient jamais été affectées.
 
 ⚠️ **`NO_CATEGORY` reste la chaîne vide côté TypeScript.** La base porte NULL ; la
 conversion vit dans les DEUX mappers (`tasks/mappers.ts`, `okrs/mappers.ts`) et nulle part
@@ -967,7 +982,7 @@ Toutes les tables ont **RLS activée**. Pattern obligatoire + checklist migratio
 [`docs/SECURITY.md`](./docs/SECURITY.md).
 
 Fonctions SECURITY DEFINER clés : `accept_friend_request_v2`, `accept_shared_task`,
-`consume_premium_token` / `credit_premium_token_from_ad`, `remove_friendship` /
+`remove_friendship` /
 `resolve_profile_by_email`, `handle_new_user_profile`, `prevent_user_id_change`, `owns_task`,
 `claim_share_link`, `sanitize_display_name`, `get_my_tasks`, `toggle_task_complete_v2`,
 `get_work_time_stats`, `get_admin_stats`. Schéma `friend_requests` = `sender_id` / `receiver_id`.
@@ -1134,7 +1149,6 @@ coupé le 2026-08-27 (`background`), la **lecture** pas.
   compteur TOMBE quand la source serveur est vidée — sans lui, le fichier passerait encore si plus
   aucune source n'alimentait rien).
 
-
 ## 🔐 Permissions entreprise — surcharge, jamais remplacement (mig. 115)
 
 Les droits du mode entreprise sont **dérivés par défaut** (`is_org_admin`, `is_org_manager`) et
@@ -1289,10 +1303,38 @@ import { gsap } from 'gsap';                                            // ❌ j
 ### Toasts
 
 ```typescript
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';   // ✅ façade différée
+import { toast } from 'sonner';        // ❌ jamais, y compris dans une page lazy
 toast.success('Message'); toast.error('Erreur');
 // Jamais depuis un repository ni depuis normalizeApiError
 ```
+
+🔴 **`sonner` ne s'importe que dans `src/lib/toast.ts`, et seulement en
+`import()` dynamique.** La façade expose la même surface (`toast(...)`,
+`.success` / `.error` / `.info` / `.warning` / `.message` / `.loading` /
+`.custom` / `.dismiss`) ; elle ne rend pas d'identifiant, parce qu'avant
+chargement il n'y en a pas — `toast.custom` reçoit le sien dans son rendu,
+c'est le seul usage qu'en faisait le dépôt.
+
+⚠️ **Retirer l'import du seul SHELL ne sert à rien, et c'est contre-intuitif.**
+Tant qu'UNE page lazy garde `import { toast } from 'sonner'`, Rollup place le
+module dans l'ancêtre commun des chunks qui le partagent, c'est-à-dire
+l'ENTRÉE. Mesuré le 2026-09-11, même arbre, trois formes :
+
+| Forme | Entrée | Chemin critique |
+|---|---|---|
+| 57 imports statiques, shell nettoyé | 77,0 ko | 316,4 ko |
+| idem + `manualChunks: 'vendor-toast'` | 66,9 ko | **316,2 ko** — Vite le `modulepreload`e |
+| **zéro import statique**, un seul `import()` | **66,9 ko** | **306,3 ko** |
+
+La deuxième ligne est le piège : l'entrée maigrit de 10 ko et le chemin
+critique de **162 octets**. Sortir un module de l'entrée sans le sortir du
+chemin critique ne gagne rien. Cliquet : `src/lib/toast.guard.test.ts`
+(4 tests, dont un témoin, vu rouge sur un import fautif avant d'être committé).
+
+⚠️ Le `<Toaster>` d'`App.tsx` est monté en `lazy()` derrière son PROPRE
+`<Suspense fallback={null}>` : il ne peint rien tant qu'aucun toast n'est émis,
+et suspendre sur la frontière qui enveloppe les routes cacherait la page.
 
 ### TypeScript
 
@@ -1502,8 +1544,10 @@ Mesuré avant correctif : **13 tâches sur 611 et 2 objectifs sur 14 déjà orph
 - ❌ `habit.completedDates` — canonique : `habit.completions: Record<string, boolean>` (B5)
 - ❌ `task.status` / `task.title` / `task.dueDate` / `task.isBookmarked` — utiliser
   `task.completed` / `task.name` / `task.deadline` / `task.bookmarked` (B6)
-- ❌ Réintroduire `premiumTokens` / `subscriptionEndDate` / `premiumWinStreak` en source de
-  vérité dans le type `User` — `useBilling()` only (N5)
+- ❌ Faire porter au type `User` un état d'abonnement — il ne porte QUE l'identité ; l'état
+  premium vient de `useBilling()`, jamais d'ailleurs (ex-N5). Les champs que cette règle nommait
+  (`premiumTokens`, `premiumWinStreak`, `lastTokenConsumption`) n'existent plus nulle part depuis
+  C-04 : la règle survit sur sa forme, pas sur ces trois noms
 - ❌ Stocker un collaborateur par `friend.name` — utiliser `friend.id` partout (B6, B22)
 
 ### Architecture & imports
@@ -1534,6 +1578,55 @@ Mesuré avant correctif : **13 tâches sur 611 et 2 objectifs sur 14 déjà orph
   porte que sur l'opacité. Détail : [`docs/MOBILE.md`](./docs/MOBILE.md).
 - ⚠️ `prefers-reduced-motion` est **actif sur la machine d'Axel** : si une animation « ne
   s'affiche pas », vérifier ce réglage avant de suspecter le code.
+
+### 🪟 Une surface modale maison passe par `useModalA11y` (C-53)
+
+`src/hooks/use-modal-a11y.ts` porte le piège de focus, la restitution du focus au déclencheur,
+Échap et `role="dialog" aria-modal="true"`. **58 fichiers** montent une surface modale hors
+`ui/dialog`, et le dépôt ne contenait avant lui **aucun** utilitaire de piège ni **aucune** capture
+de `document.activeElement`.
+
+```tsx
+const { ref, dialogProps } = useModalA11y({ open: isOpen, onClose, label: t('title') });
+<div ref={ref} {...dialogProps} className="fixed inset-0 …" onClick={onClose}>
+```
+
+- ❌ **Ne jamais écrire un Échap de modale en `onKeyDown` sur l'overlay.** C'était le défaut de
+  `HabitModal` : un gestionnaire React dépend de la remontée d'un évènement depuis l'élément
+  focalisé, donc il meurt dès que le focus est sorti — précisément le cas qu'il existe pour
+  rattraper. Le hook écoute `document` en **capture** (un champ de date natif appelle
+  `stopPropagation` sur ses touches).
+- ❌ **Ne jamais poser un piège sur un parent sans en poser un sur ses modales enfants.**
+  `EventModal` rend `ConfirmDiscardDialog`, `ColorSettingsModal` et `RecurrenceDaysModal` en
+  **frères** de son overlay : le piège du parent leur reprendrait le focus. La pile interne du
+  hook (`openStack`) fait que seule la dernière surface empilée réagit.
+- ❌ **Ne jamais relire `ref.current` dans le nettoyage d'un `useEffect`.** Un effet passif tourne
+  APRÈS que React a détaché les refs : `ref.current` y vaut `null`. C'est ce qui cassait la
+  restitution du focus (`focusReturned: false` sur `HabitModal`), et ESLint le disait.
+- ⚠️ **`focusReturned` n'est pas une gate**, et ce n'est pas de la complaisance : le témoin Radix
+  lui-même le rend `false`. Un détecteur que la bibliothèque de référence ne passe pas mesure le
+  détecteur, pas la modale. Les trois détecteurs opposables sont `focusMovedIn`, `trapped` et
+  `escClosed`.
+- ✅ **Les 53 surfaces modales maison sont câblées** (2026-09-08), et un CLIQUET les tient :
+  `src/components/modal-a11y.guard.test.ts` balaie `src/**/*.tsx` et refuse toute surface non
+  câblée. Les exceptions y sont déclarées une par une, avec leur motif.
+  ❌ **Ne JAMAIS y ajouter une entrée pour faire passer la CI.** Une surface qui capture l'écran se
+  câble ; une surface qui n'en est pas une se déclare, et la déclaration doit dire pourquoi.
+- ⚠️ **Câblé n'est pas mesuré.** 10 surfaces sont mesurées au clavier dans un vrai navigateur
+  (`e2e/a11y-keyboard-audit.spec.ts`), les 43 autres sont câblées et gardées par le cliquet.
+  Ne jamais écrire « les 53 piègent le focus » : l'énoncé vérifiable reste la liste de
+  `docs/ACCESSIBILITY.md` § « C-53 refermé ».
+- ❌ **Le chemin de fermeture n'est pas toujours `onClose`** — c'est `onCancel`, `onSnooze`,
+  `closeAfter`, `onOpenChange(false)`, ou un `setState`. Échap doit emprunter EXACTEMENT le chemin
+  du voile et de la croix. Et une surface qui refuse de fermer pendant une opération
+  (`pending`, `sending`) refuse aussi Échap : sinon la touche fait ce qu'aucun clic ne peut faire.
+- ❌ **Ne jamais laisser un Échap maison à côté de celui du hook.** Cinq surfaces en gardaient un,
+  avec le même comportement, donc invisible — deux propriétaires pour une touche, ce sont deux
+  endroits où la règle diverge. L'une portait une fermeture À ÉTAGES (annuler un sous-formulaire
+  avant de fermer) : la déplacer sans déplacer l'escalade aurait perdu une saisie en silence.
+- Gardes : `src/components/modal-a11y.guard.test.ts` (4 tests, dont un témoin qui refuse un
+  détecteur ne détectant plus rien), `src/hooks/use-modal-a11y.guard.test.tsx` (11 tests, dont
+  **3 témoins** montant la même modale sans le hook) et les `expect` du harnais clavier.
 
 ### 🛡️ Une garde se vérifie sur ce qu'elle REGARDE (passe du 2026-09-03)
 
