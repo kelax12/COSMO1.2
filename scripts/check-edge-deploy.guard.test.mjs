@@ -27,6 +27,9 @@
 import { describe, it, expect } from 'vitest';
 import { spawnSync } from 'node:child_process';
 import { resolve } from 'node:path';
+import { mkdtempSync, mkdirSync, writeFileSync, existsSync, chmodSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import {
   compareFunction,
   normalizeContent,
@@ -34,6 +37,8 @@ import {
   cleDeployee,
   importsLocaux,
   repoFilesFor,
+  nettoyerBac,
+  rendreEffacable,
 } from './check-edge-deploy.mjs';
 
 const SCRIPT = resolve(process.cwd(), 'scripts/check-edge-deploy.mjs');
@@ -255,4 +260,124 @@ describe('check:edge · temoin de perimetre', () => {
   it('echoue franchement sur une fonction inexistante, plutot que de rendre un arbre vide', () => {
     expect(() => repoFilesFor('fonction-qui-nexiste-pas')).toThrow(/Entrypoint introuvable/);
   });
+});
+
+
+// ═══════════════════════════════════════════════════════════════════
+// TEMOIN DE MENAGE
+//
+// 🔴 Ces cas viennent d'un echec REEL, pas d'une hypothese. Le 2026-09-13,
+// le tout premier run de CI capable de lire la prod a perdu ses HUIT
+// fonctions sur `EACCES: permission denied, unlink` en effacant son bac a
+// sable — `_shared/` etant ecrit en lecture seule par la CLI Supabase, et
+// un `unlink` POSIX exigeant le droit d'ecriture sur le repertoire PARENT.
+//
+// Les fichiers avaient pourtant ete lus et compares. Le menage vivait dans
+// un `finally` : il a jete un resultat juste, et le job a annonce « 8
+// problemes de garde » pour une comparaison qui avait fonctionne. Une garde
+// peut donc aussi echouer sur ce qu'elle fait APRES avoir mesure.
+//
+// Les cas ci-dessous n'utilisent pas les permissions POSIX : elles sont
+// muettes sous Windows, ou ce depot se developpe. Ils injectent les echecs.
+// ═══════════════════════════════════════════════════════════════════
+describe('check:edge · temoin de menage', () => {
+  it('relache les permissions AVANT d effacer, jamais apres', () => {
+    const ordre = [];
+    nettoyerBac('/bac', {
+      relacher: () => ordre.push('relacher'),
+      rm: () => ordre.push('rm'),
+      journal: () => {},
+    });
+    // Un `rm` sans relachement prealable est exactement le run du 09-13.
+    expect(ordre).toEqual(['relacher', 'rm']);
+  });
+
+  it('n interrompt PAS la comparaison quand l effacement echoue', () => {
+    const dits = [];
+    expect(() =>
+      nettoyerBac('/bac', {
+        relacher: () => {},
+        rm: () => {
+          throw new Error("EACCES: permission denied, unlink '/tmp/x/_shared/alert.ts'");
+        },
+        journal: (m) => dits.push(m),
+      }),
+    ).not.toThrow();
+    // Il doit le DIRE : avale en silence, on ne saurait pas que le runner
+    // se remplit.
+    expect(dits.join(' ')).toMatch(/EACCES/);
+  });
+
+  it('tente quand meme d effacer si le relachement a echoue', () => {
+    let tente = false;
+    expect(() =>
+      nettoyerBac('/bac', {
+        relacher: () => {
+          throw new Error('chmod refuse');
+        },
+        rm: () => {
+          tente = true;
+        },
+        journal: () => {},
+      }),
+    ).not.toThrow();
+    expect(tente).toBe(true);
+  });
+
+  it('relache CHAQUE repertoire de l arbre, pas seulement la racine', () => {
+    // C'est `_shared/`, imbrique a deux niveaux, qui bloquait. Un chmod
+    // pose sur le seul bac aurait laisse l erreur mesuree intacte.
+    const arbre = {
+      '/bac': ['supabase'],
+      '/bac/supabase': ['functions'],
+      '/bac/supabase/functions': ['_shared'],
+      '/bac/supabase/functions/_shared': ['alert.ts'],
+    };
+    // `join` rend des separateurs Windows sur la machine d'Axel : la fixture
+    // se lit en chemins POSIX des les deux bouts, sinon ce temoin ne
+    // mesurerait que la plateforme sur laquelle il tourne.
+    const posix = (c) => String(c).split('\\').join('/');
+    const chmodes = [];
+    rendreEffacable('/bac', {
+      existe: () => true,
+      estDossier: (c) => posix(c) in arbre,
+      lister: (c) => arbre[posix(c)] ?? [],
+      chmod: (c, mode) => chmodes.push([posix(c), mode]),
+    });
+    const vus = chmodes.map(([c]) => c);
+    expect(vus).toContain('/bac');
+    expect(vus).toContain('/bac/supabase/functions/_shared');
+    expect(vus).toContain('/bac/supabase/functions/_shared/alert.ts');
+    for (const [, mode] of chmodes) expect(mode).toBe(0o700);
+  });
+
+  it('ne jette pas sur un bac deja disparu', () => {
+    expect(() => rendreEffacable('/bac', { existe: () => false })).not.toThrow();
+  });
+
+  // Le cas REEL, sur un vrai systeme de fichiers. Il ne prouve rien sous
+  // Windows, ou les permissions POSIX sont muettes : c'est la CI Linux qui
+  // le joue pour de bon, et c'est la que l'echec du 09-13 s'est produit.
+  it.skipIf(process.platform === 'win32')(
+    'efface un arbre dont un sous-repertoire est en lecture seule',
+    () => {
+      const bac = mkdtempSync(join(tmpdir(), 'temoin-menage-'));
+      const partage = join(bac, 'supabase', 'functions', '_shared');
+      mkdirSync(partage, { recursive: true });
+      writeFileSync(join(partage, 'alert.ts'), 'export const x = 1;', 'utf8');
+      // Reproduit ce que `supabase functions download` laisse derriere lui.
+      chmodSync(partage, 0o500);
+      try {
+        nettoyerBac(bac);
+        expect(existsSync(bac)).toBe(false);
+      } finally {
+        try {
+          chmodSync(partage, 0o700);
+          rmSync(bac, { recursive: true, force: true });
+        } catch {
+          /* deja efface : c'est le cas nominal */
+        }
+      }
+    },
+  );
 });

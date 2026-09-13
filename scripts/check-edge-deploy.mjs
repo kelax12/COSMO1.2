@@ -68,7 +68,7 @@
 //   node scripts/check-edge-deploy.mjs --list    (que la liste deployee)
 // ═══════════════════════════════════════════════════════════════════
 
-import { readFileSync, existsSync, readdirSync, statSync, mkdtempSync, rmSync, mkdirSync, writeFileSync } from 'node:fs';
+import { readFileSync, existsSync, readdirSync, statSync, mkdtempSync, rmSync, mkdirSync, writeFileSync, chmodSync } from 'node:fs';
 import { join, resolve, dirname, relative, sep } from 'node:path';
 import { tmpdir } from 'node:os';
 import { spawnSync } from 'node:child_process';
@@ -349,7 +349,93 @@ function telechargerBundle(slug, projectRef, token) {
     }
     return fichiers;
   } finally {
-    rmSync(bac, { recursive: true, force: true });
+    nettoyerBac(bac);
+  }
+}
+
+/**
+ * Efface le bac a sable, et ne peut JAMAIS faire echouer la comparaison.
+ *
+ * 🔴 POURQUOI CE CODE EXISTE · le premier run qui a REELLEMENT lu la prod
+ * (2026-09-13, apres la pose de `SUPABASE_ACCESS_TOKEN`) a perdu ses HUIT
+ * fonctions sur la meme erreur, et aucune ne portait sur la lecture :
+ *
+ *   EACCES: permission denied, unlink
+ *   '/tmp/edge-deploy-delete-account-VJgasB/supabase/functions/_shared/alert.ts'
+ *
+ * `supabase functions download` ecrit ses repertoires en lecture seule, et
+ * sous Linux un `unlink` demande le droit d'ecriture sur le REPERTOIRE
+ * parent, jamais sur le fichier. Le menage echouait donc, et comme il vivait
+ * dans un `finally`, il detruisait un resultat DEJA CALCULE : les fichiers
+ * etaient lus, compares... et jetes. Le job annoncait « 8 problemes de
+ * garde » pour une comparaison qui avait marche.
+ *
+ * D'ou les deux regles portees ici :
+ *   1. on RELACHE les permissions avant d'effacer, sinon l'effacement ne
+ *      peut pas aboutir ;
+ *   2. un menage rate ne remonte JAMAIS. Un repertoire temporaire oublie sur
+ *      un runner jetable ne coute rien ; confondre « je n'ai pas su ranger »
+ *      avec « je n'ai pas su mesurer » coute une garde entiere.
+ *
+ * ❌ Ne jamais elargir cette indulgence a la LECTURE : une lecture vide reste
+ * une erreur (`assertReadSomething`). Ce qui est avale ici, c'est le menage,
+ * et rien d'autre.
+ *
+ * Les dependances sont injectables pour que le temoin puisse provoquer les
+ * deux echecs sans dependre des permissions POSIX, absentes sous Windows.
+ */
+export function nettoyerBac(bac, io = {}) {
+  const relacher = io.relacher ?? rendreEffacable;
+  const rm = io.rm ?? ((c) => rmSync(c, { recursive: true, force: true }));
+  const journal = io.journal ?? ((m) => annoter('notice', m));
+
+  // Best effort : un chmod refuse ne doit pas empecher d'ESSAYER d'effacer.
+  try {
+    relacher(bac);
+  } catch {
+    /* voir plus bas : seul le resultat de `rm` merite d'etre dit */
+  }
+
+  try {
+    rm(bac);
+  } catch (e) {
+    journal(
+      `Bac a sable non efface (${e?.message ?? e}). Sans effet sur la comparaison : ` +
+        `les fichiers ont deja ete lus, et ce repertoire est temporaire.`,
+    );
+  }
+}
+
+/**
+ * Rend un arbre effacable : `chmod 0700` sur chaque entree, du haut vers le
+ * bas. C'est le repertoire `_shared/` imbrique qui bloquait, pas la racine —
+ * un chmod sur le seul bac aurait laisse exactement l'erreur mesuree.
+ *
+ * Sous Windows `chmod` est un quasi no-op ; ce code n'y sert a rien et n'y
+ * nuit pas. Le bac est temporaire et nous appartient : il n'y a aucune
+ * permission d'autrui a pietiner.
+ */
+export function rendreEffacable(racine, io = {}) {
+  const existe = io.existe ?? ((c) => existsSync(c));
+  const lister = io.lister ?? ((c) => readdirSync(c));
+  const estDossier = io.estDossier ?? ((c) => statSync(c).isDirectory());
+  const chmod = io.chmod ?? ((c, mode) => chmodSync(c, mode));
+
+  if (!existe(racine)) return;
+
+  const pile = [racine];
+  while (pile.length > 0) {
+    const chemin = pile.pop();
+    try {
+      chmod(chemin, 0o700);
+    } catch {
+      /* on continue : les autres entrees restent a relacher */
+    }
+    try {
+      if (estDossier(chemin)) for (const e of lister(chemin)) pile.push(join(chemin, e));
+    } catch {
+      /* un repertoire illisible ne bloque pas le reste de l'arbre */
+    }
   }
 }
 
