@@ -438,7 +438,21 @@ function telechargerBundle(slug, projectRef, token) {
 
     const r = spawnSync(
       'supabase',
-      ['functions', 'download', slug, '--project-ref', projectRef],
+      // 🔴 `--use-api` N'EST PAS UNE OPTIMISATION, c'est la CORRECTION du
+      // 2026-09-13. Sans lui, la CLI debundle LOCALEMENT avec Docker et rend
+      // du code TRANSPILE ; avec lui, le debundling est fait cote serveur et
+      // rend la SOURCE. Le comportement par defaut depend donc de la presence
+      // de Docker sur la machine :
+      //
+      //   poste de dev (pas de Docker) → source      → 4 divergences
+      //   runner GitHub (Docker)       → transpile   → 24 divergences, dont 20
+      //                                                fausses
+      //
+      // C'est ce qui a fait dire a la CI qu'elle trouvait une derive sur
+      // presque chaque fichier pendant que deux lecteurs locaux les trouvaient
+      // identiques. Une garde dont le VERDICT depend d'un docker installe a
+      // cote ne mesure pas la production, elle mesure son runner.
+      ['functions', 'download', slug, '--project-ref', projectRef, '--use-api'],
       {
         cwd: bac,
         encoding: 'utf8',
