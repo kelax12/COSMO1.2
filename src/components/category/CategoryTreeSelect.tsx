@@ -134,13 +134,16 @@ const CategoryTreeSelect: React.FC<CategoryTreeSelectProps> = ({
           {selectedPath || t('fields.categoryNone')}
         </button>
       </PopoverTrigger>
-      {/* w-[48rem] / max-h-[84vh] : x2 largeur, x1,2 hauteur du panneau
-          d'origine (24rem / 70vh) — demande explicite, le panneau était trop
-          exigu pour un arbre profond. `align="start"` : ancré au bord gauche
-          du champ, comme un menu déroulant classique, pas centré dessus. */}
+      {/* 48rem/84vh (x2 largeur, x1,2 hauteur) donnait un panneau démesuré,
+          bien au-delà d'un menu déroulant classique — revenu à une taille de
+          dropdown ordinaire : largeur du CHAMP lui-même
+          (`--radix-popover-trigger-width`, calculée par Radix), hauteur
+          bornée avec défilement interne pour un arbre profond.
+          `align="start"` : ancré au bord gauche du champ, pas centré dessus. */}
       <PopoverContent
         align="start"
-        className="w-[48rem] max-w-[calc(100vw-2rem)] max-h-[84vh] overflow-y-auto p-2"
+        style={{ width: 'var(--radix-popover-trigger-width)' }}
+        className="max-h-80 overflow-y-auto p-2"
       >
         <input
           type="search"
