@@ -40,7 +40,7 @@ import { DateSelectArg, EventClickArg, EventDropArg, DatesSetArg, EventInput, Ev
 import allCalendarLocales from '@fullcalendar/core/locales-all';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
-import { CheckSquare } from 'lucide-react';
+import { CheckSquare, Check } from 'lucide-react';
 import MemberAvatar from '@/components/organization/MemberAvatar';
 import { getDateLocale, getIntlTag } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
@@ -193,6 +193,7 @@ const AgendaCalendarSection = ({
     eventId: string,
     hasTask: boolean,
     needsReview: boolean,
+    taskDone: boolean,
   ) => {
     const author = createdBy && createdBy !== user?.id ? memberById.get(createdBy) : undefined;
     return (
@@ -224,6 +225,23 @@ const AgendaCalendarSection = ({
                 par-dessus le menu qu'on vient juste de demander. */}
             {needsReview && renderReviewBadge && (
               <span onClick={(e) => e.stopPropagation()}>{renderReviewBadge(eventId)}</span>
+            )}
+            {/* Tâche déjà validée : check vert à la place de la pastille.
+                Les deux conditions ne sont jamais vraies ensemble
+                (`findDoneTaskEvents` exige `task.completed`,
+                `findOverdueTaskSlots` l'exclut) — pas de `!needsReview` requis
+                ici, mais explicite pour que ça reste vrai si l'une des deux
+                définitions bouge un jour. Purement informatif, comme l'icône
+                tâche au-dessus : pas de menu, rien à décider une fois la tâche
+                faite. */}
+            {!needsReview && taskDone && (
+              <span
+                className="flex h-[19.2px] w-[19.2px] shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white shadow ring-1 ring-emerald-900/30"
+                title={t('event.taskDone')}
+                aria-label={t('event.taskDone')}
+              >
+                <Check className="h-3 w-3 pointer-events-none" aria-hidden="true" strokeWidth={3} />
+              </span>
             )}
           </span>
         )}
@@ -317,6 +335,7 @@ const AgendaCalendarSection = ({
                 eventInfo.event.id,
                 Boolean(eventInfo.event.extendedProps?.taskId),
                 Boolean(eventInfo.event.extendedProps?.needsReview),
+                Boolean(eventInfo.event.extendedProps?.taskDone),
               )
             }
             eventClassNames={(arg) => [
@@ -389,6 +408,7 @@ const AgendaCalendarSection = ({
                   eventInfo.event.id,
                   Boolean(eventInfo.event.extendedProps?.taskId),
                   Boolean(eventInfo.event.extendedProps?.needsReview),
+                  Boolean(eventInfo.event.extendedProps?.taskDone),
                 )
               }
               eventClassNames={(arg) => [

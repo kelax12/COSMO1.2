@@ -59,3 +59,26 @@ export function findOverdueTaskSlots(
   result.sort((a, b) => new Date(a.event.end).getTime() - new Date(b.event.end).getTime());
   return result;
 }
+
+/**
+ * Identifiants des événements dont la TÂCHE liée est déjà validée.
+ *
+ * Sert à peindre un check vert à la place de la pastille « ! » : les deux
+ * conditions se distinguent par `task.completed` seul (`findOverdueTaskSlots`
+ * exige `!task.completed`, celle-ci l'inverse), donc jamais vraies en même
+ * temps pour un même événement — pas besoin de les faire s'exclure
+ * explicitement à l'affichage.
+ *
+ * ⚠️ Volontairement PLUS LARGE que `findOverdueTaskSlots` : aucune exclusion
+ * de fenêtre, de récurrence ni de créneau futur. Une fois la tâche validée,
+ * son check reste vrai pour TOUS ses événements, qu'ils soient passés ou à
+ * venir — contrairement à la pastille, ce n'est pas une question qui expire.
+ */
+export function findDoneTaskEvents(events: CalendarEvent[], tasks: Task[]): Set<string> {
+  const completedTaskIds = new Set(tasks.filter((t) => t.completed).map((t) => t.id));
+  const result = new Set<string>();
+  for (const event of events) {
+    if (event.taskId && completedTaskIds.has(event.taskId)) result.add(event.id);
+  }
+  return result;
+}
