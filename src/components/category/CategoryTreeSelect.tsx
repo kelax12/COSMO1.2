@@ -15,14 +15,23 @@
 // Namespace `tasks` (et non `taskModal`) : ce sélecteur est générique, il sert
 // aussi le filtre de tâches (arbre repliable de `TaskFilter`), pas seulement
 // la modale de création.
+//
+// 🔴 Popover Radix, pas un panneau maison. La première version posait le
+// panneau en `position: absolute` dans le flux du champ : à l'intérieur d'une
+// modale/sheet qui coupe le débordement (`overflow-hidden`, nécessaire pour
+// ses coins arrondis), le panneau élargi se faisait ROGNER — visible seulement
+// sur la portion qui restait dans les bornes de la modale. `PopoverContent`
+// rend dans un PORTAIL (hors de cet arbre DOM), donc hors de portée de tout
+// `overflow-hidden` ancêtre ; Radix gère aussi la collision de bord d'écran,
+// ce qu'un `position: absolute` fait à la main ne fait pas.
 // ═══════════════════════════════════════════════════════════════════
 import React, { useMemo, useState } from 'react';
 import { ChevronRight, ChevronDown } from 'lucide-react';
 import { useT } from '@/i18n/useT';
-import { useModalA11y } from '@/hooks/use-modal-a11y';
 import { buildTree, categoryPath, formatPath } from '@/modules/categories';
 import { useCollapsedCategories } from '@/modules/categories/collapsed.store';
 import type { Category, CategoryNode } from '@/modules/categories';
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 
 interface CategoryTreeSelectProps {
   value: string;
@@ -52,13 +61,6 @@ const CategoryTreeSelect: React.FC<CategoryTreeSelectProps> = ({
   const { isCollapsed, setCollapsed } = useCollapsedCategories();
 
   const close = () => { setOpen(false); setQuery(''); };
-
-  // Échap emprunte EXACTEMENT le chemin du clic à l'extérieur : `close`.
-  const { ref, dialogProps } = useModalA11y<HTMLDivElement>({
-    open,
-    onClose: close,
-    label: t('fields.category'),
-  });
 
   const selectedPath = useMemo(
     () => (value ? formatPath(categoryPath(value, categories)) : ''),
@@ -117,73 +119,69 @@ const CategoryTreeSelect: React.FC<CategoryTreeSelectProps> = ({
   };
 
   return (
-    <div className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        aria-haspopup="listbox"
-        aria-expanded={open}
-        className={`w-full min-h-11 rounded-xl border px-3 text-left text-sm truncate text-[rgb(var(--color-text-primary))] ${
-          hasError || shaking
-            ? 'border-[rgb(var(--color-error))]'
-            : (fromOkr ? 'border-[rgb(var(--color-accent-solid))]' : 'border-[rgb(var(--color-border))]')
-        } ${fromOkr ? 'bg-blue-50/50 dark:bg-blue-900/20' : 'bg-[rgb(var(--color-hover))]'}`}
+    <Popover open={open} onOpenChange={(next) => (next ? setOpen(true) : close())}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          aria-haspopup="listbox"
+          aria-expanded={open}
+          className={`w-full min-h-11 rounded-xl border px-3 text-left text-sm truncate text-[rgb(var(--color-text-primary))] ${
+            hasError || shaking
+              ? 'border-[rgb(var(--color-error))]'
+              : (fromOkr ? 'border-[rgb(var(--color-accent-solid))]' : 'border-[rgb(var(--color-border))]')
+          } ${fromOkr ? 'bg-blue-50/50 dark:bg-blue-900/20' : 'bg-[rgb(var(--color-hover))]'}`}
+        >
+          {selectedPath || t('fields.categoryNone')}
+        </button>
+      </PopoverTrigger>
+      {/* w-[48rem] / max-h-[84vh] : x2 largeur, x1,2 hauteur du panneau
+          d'origine (24rem / 70vh) — demande explicite, le panneau était trop
+          exigu pour un arbre profond. `align="start"` : ancré au bord gauche
+          du champ, comme un menu déroulant classique, pas centré dessus. */}
+      <PopoverContent
+        align="start"
+        className="w-[48rem] max-w-[calc(100vw-2rem)] max-h-[84vh] overflow-y-auto p-2"
       >
-        {selectedPath || t('fields.categoryNone')}
-      </button>
+        <input
+          type="search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder={t('fields.categorySearch')}
+          aria-label={t('fields.categorySearch')}
+          className="w-full min-h-11 rounded-xl px-3 mb-2 text-sm bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-primary))]"
+        />
 
-      {/* ⚠️ 90 est un cran PUBLIÉ de l'échelle, pas une valeur inventée au cas par
-          cas : cette habitude-là avait produit 16 valeurs pour 7 paliers
-          documentés (`design-system.guard`). C'est le cran « au-dessus d'un
-          modal ouvert », et ce panneau s'ouvre depuis le modal de tâche.
-          ⚠️ La garde lit AUSSI les commentaires : ne jamais y écrire une valeur
-          hors échelle, même pour l'expliquer. */}
-      {open && (
-        <div ref={ref} {...dialogProps} className="fixed inset-0 z-[90] flex items-end sm:items-center justify-center">
-          <div className="absolute inset-0 bg-black/30 backdrop-blur-md" onClick={close} />
-          <div className="relative w-full sm:max-w-sm max-h-[70vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] p-2">
-            <input
-              type="search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder={t('fields.categorySearch')}
-              aria-label={t('fields.categorySearch')}
-              className="w-full min-h-11 rounded-xl px-3 mb-2 text-sm bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-primary))]"
-            />
+        <div role="listbox" aria-label={t('fields.category')}>
+          <button
+            type="button"
+            role="option"
+            aria-selected={value === ''}
+            onClick={() => pick('')}
+            className="flex w-full items-center min-h-11 px-2 text-left text-sm text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]"
+          >
+            {t('fields.categoryNone')}
+          </button>
 
-            <div role="listbox" aria-label={t('fields.category')}>
-              <button
-                type="button"
-                role="option"
-                aria-selected={value === ''}
-                onClick={() => pick('')}
-                className="flex w-full items-center min-h-11 px-2 text-left text-sm text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]"
-              >
-                {t('fields.categoryNone')}
-              </button>
-
-              {matches === null
-                ? buildTree(categories).map((node) => renderNode(node, 0))
-                : matches.length === 0
-                  ? <p className="px-2 py-3 text-sm text-[rgb(var(--color-text-muted))]">{t('fields.categoryNoResult')}</p>
-                  : matches.map((m) => (
-                      <button
-                        key={m.category.id}
-                        type="button"
-                        role="option"
-                        aria-selected={m.category.id === value}
-                        onClick={() => pick(m.category.id)}
-                        className="flex w-full items-center gap-2 min-h-11 px-2 text-left text-sm text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))]"
-                      >
-                        <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: m.category.color }} />
-                        <span className="truncate">{m.path}</span>
-                      </button>
-                    ))}
-            </div>
-          </div>
+          {matches === null
+            ? buildTree(categories).map((node) => renderNode(node, 0))
+            : matches.length === 0
+              ? <p className="px-2 py-3 text-sm text-[rgb(var(--color-text-muted))]">{t('fields.categoryNoResult')}</p>
+              : matches.map((m) => (
+                  <button
+                    key={m.category.id}
+                    type="button"
+                    role="option"
+                    aria-selected={m.category.id === value}
+                    onClick={() => pick(m.category.id)}
+                    className="flex w-full items-center gap-2 min-h-11 px-2 text-left text-sm text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))]"
+                  >
+                    <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: m.category.color }} />
+                    <span className="truncate">{m.path}</span>
+                  </button>
+                ))}
         </div>
-      )}
-    </div>
+      </PopoverContent>
+    </Popover>
   );
 };
 
