@@ -39,6 +39,7 @@
     "postpone": "Reschedule",
     "delete": "Delete",
     "deleted": "Task and time slot deleted",
+    "postponed": "Time slot removed, to reschedule",
     "ignore": "Dismiss",
     "badgeAria": "This time slot needs a decision: {{title}}",
     "panelTitle": "Time slot ended",

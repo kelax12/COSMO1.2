@@ -301,7 +301,6 @@ const AgendaPage: React.FC = () => {
   } = useOverdueSlotReview({
     events,
     tasks,
-    tzPref,
     toggleTaskComplete: (taskId) => toggleTaskComplete.mutate(taskId),
     updateEvent: (id, updates) => updateEventMutation.mutate({ id, updates }),
     deleteEvent: (id) => deleteEventMutation.mutate(id),
@@ -309,6 +308,7 @@ const AgendaPage: React.FC = () => {
     restoreEvent: (event) => restoreEventMutation.mutate(event),
     restoreTask: (task) => restoreTaskMutation.mutate(task),
     deletedLabel: t('slotReview.deleted'),
+    postponedLabel: t('slotReview.postponed'),
   });
 
   /** Les quatre actions, passées telles quelles aux DEUX accès. */
