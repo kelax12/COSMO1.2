@@ -23,7 +23,8 @@
     "occurrenceDeleted": "Occurrence supprimée",
     "eventDeleted": "Événement supprimé",
     "copySuffix": "(copie)",
-    "linkedToTask": "Lié à une tâche"
+    "linkedToTask": "Lié à une tâche",
+    "taskDone": "Tâche réalisée"
   },
   "quickCreate": {
     "aria": "Création rapide d'un événement",

@@ -60,6 +60,7 @@ describe('buildCalendarEvents', () => {
       taskId: 't9',
       isRecurringInstance: false,
       needsReview: false,
+      taskDone: false,
     });
   });
 
@@ -79,6 +80,21 @@ describe('buildCalendarEvents', () => {
     // subordonne ne doit voir aucune pastille, il n'a pas a trancher a sa place.
     const out = buildCalendarEvents([ev({ id: 'a', taskId: 't1' })], now);
     expect(out[0].extendedProps.needsReview).toBe(false);
+  });
+
+  // Même motif que needsReview : calculé par `findDoneTaskEvents`, qui a
+  // besoin des tâches. Un check vert remplace la pastille une fois la tâche
+  // validée — jamais les deux en même temps (vérifié côté rendu, pas ici).
+  it('marque taskDone pour les seuls identifiants fournis', () => {
+    const events = [ev({ id: 'a', taskId: 't1' }), ev({ id: 'b', taskId: 't2' })];
+    const out = buildCalendarEvents(events, now, new Set(), new Set(['a']));
+    expect(out.find((e) => e.id === 'a')!.extendedProps.taskDone).toBe(true);
+    expect(out.find((e) => e.id === 'b')!.extendedProps.taskDone).toBe(false);
+  });
+
+  it('sans ensemble taskDone fourni, aucun evenement n est marque valide', () => {
+    const out = buildCalendarEvents([ev({ id: 'a', taskId: 't1' })], now);
+    expect(out[0].extendedProps.taskDone).toBe(false);
   });
 
   it('returns an array', () => {

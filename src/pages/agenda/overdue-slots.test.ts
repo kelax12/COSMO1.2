@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { findOverdueTaskSlots } from './overdue-slots';
+import { findOverdueTaskSlots, findDoneTaskEvents } from './overdue-slots';
 import type { CalendarEvent } from '@/modules/events';
 import type { Task } from '@/modules/tasks';
 
@@ -110,5 +110,40 @@ describe('findOverdueTaskSlots', () => {
       end: '2026-07-21T11:00:00.000Z',
     });
     expect(findOverdueTaskSlots([reported], [task({ id: 't1' })], NOW)).toHaveLength(1);
+  });
+});
+
+describe('findDoneTaskEvents', () => {
+  it("retourne les evenements dont la tache liee est validee", () => {
+    const events = [
+      ev({ id: 'e1', taskId: 't1' }),
+      ev({ id: 'e2', taskId: 't2' }),
+      ev({ id: 'e3', taskId: 't1' }), // deuxieme creneau de la MEME tache
+    ];
+    const tasks = [task({ id: 't1', completed: true }), task({ id: 't2', completed: false })];
+    expect(findDoneTaskEvents(events, tasks)).toEqual(new Set(['e1', 'e3']));
+  });
+
+  it('ignore un evenement sans tache liee', () => {
+    const events = [ev({ id: 'e1' })];
+    expect(findDoneTaskEvents(events, [])).toEqual(new Set());
+  });
+
+  it('ignore une tache inexistante', () => {
+    const events = [ev({ id: 'e1', taskId: 'ghost' })];
+    expect(findDoneTaskEvents(events, [])).toEqual(new Set());
+  });
+
+  it("n'exclut ni la recurrence ni un creneau futur, contrairement a findOverdueTaskSlots", () => {
+    // La question « la tache est-elle faite ? » ne dépend pas du moment où
+    // l'événement tombe : une fois validée, tous ses créneaux le disent.
+    const events = [
+      ev({ id: 'future', taskId: 't1', start: '2026-08-01T09:00:00.000Z', end: '2026-08-01T10:00:00.000Z' }),
+      ev({ id: 'recurring-master', taskId: 't1', recurrence: 'weekly' }),
+      ev({ id: 'recurring-instance::2026-07-14', taskId: 't1' }),
+    ];
+    expect(findDoneTaskEvents(events, [task({ id: 't1', completed: true })])).toEqual(
+      new Set(['future', 'recurring-master', 'recurring-instance::2026-07-14']),
+    );
   });
 });

@@ -33,7 +33,7 @@
 // avec lui : il n'y a plus de nouvelle date à poser.
 
 import { showUndoToast } from '@/lib/undo-toast';
-import { findOverdueTaskSlots, type OverdueTaskSlot } from './overdue-slots';
+import { findOverdueTaskSlots, findDoneTaskEvents, type OverdueTaskSlot } from './overdue-slots';
 import type { Task } from '@/modules/tasks/types';
 import type { CalendarEvent } from '@/modules/events';
 import React from 'react';
@@ -85,6 +85,12 @@ export function useOverdueSlotReview({
   const reviewEventIds = React.useMemo(
     () => new Set(overdueSlots.map((s) => s.event.id)),
     [overdueSlots],
+  );
+
+  /** Les identifiants d'événement qui portent un check (tâche déjà validée). */
+  const doneEventIds = React.useMemo(
+    () => findDoneTaskEvents(events, tasks),
+    [events, tasks],
   );
 
   const findSlot = (eventId: string) =>
@@ -139,6 +145,7 @@ export function useOverdueSlotReview({
   return {
     overdueSlots,
     reviewEventIds,
+    doneEventIds,
     findSlot,
     handleSlotValidate,
     handleSlotPostpone,

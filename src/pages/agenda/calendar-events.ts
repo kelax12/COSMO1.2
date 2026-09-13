@@ -64,6 +64,8 @@ export interface FullCalendarEvent {
     createdBy?: string;
     /** Créneau de tâche terminé qui attend une décision (pastille « ! »). */
     needsReview: boolean;
+    /** Tâche liée déjà validée (check vert, à la place de la pastille). */
+    taskDone: boolean;
   };
 }
 
@@ -81,6 +83,10 @@ export function buildCalendarEvents(
    * celle qui peint le panneau de l'EventModal.
    */
   reviewEventIds: ReadonlySet<string> = new Set(),
+  /** Identifiants des événements dont la tâche liée est déjà validée. Même
+   * motif que `reviewEventIds` : calculé par `findDoneTaskEvents`, qui a
+   * besoin des tâches. */
+  doneEventIds: ReadonlySet<string> = new Set(),
 ): FullCalendarEvent[] {
   const projectionFrom = new Date(now);
   projectionFrom.setMonth(projectionFrom.getMonth() - 13);
@@ -103,6 +109,7 @@ export function buildCalendarEvents(
       isRecurringInstance: event.id.includes('::'),
       createdBy: event.createdBy,
       needsReview: reviewEventIds.has(event.id),
+      taskDone: doneEventIds.has(event.id),
     },
   }));
 }

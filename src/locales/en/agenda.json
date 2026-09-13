@@ -23,7 +23,8 @@
     "occurrenceDeleted": "Occurrence deleted",
     "eventDeleted": "Event deleted",
     "copySuffix": "(copy)",
-    "linkedToTask": "Linked to a task"
+    "linkedToTask": "Linked to a task",
+    "taskDone": "Task completed"
   },
   "quickCreate": {
     "aria": "Quick event creation",

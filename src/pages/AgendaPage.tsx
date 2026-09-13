@@ -293,6 +293,7 @@ const AgendaPage: React.FC = () => {
   // reprise dans l'EventModal, au lieu de s'imposer en plein écran à l'arrivée.
   const {
     reviewEventIds,
+    doneEventIds,
     findSlot,
     handleSlotValidate,
     handleSlotPostpone,
@@ -319,7 +320,7 @@ const AgendaPage: React.FC = () => {
     onDelete: handleSlotDelete,
   };
 
-  const calendarEvents = buildCalendarEvents(events, new Date(), reviewEventIds);
+  const calendarEvents = buildCalendarEvents(events, new Date(), reviewEventIds, doneEventIds);
 
   // Déplacer, redimensionner, déposer une tâche : les trois gestes qui écrivent
   // depuis la grille retirent le décalage du fuseau d'affichage au même endroit.
