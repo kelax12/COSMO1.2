@@ -76,4 +76,39 @@ describe('findOverdueTaskSlots', () => {
     const res = findOverdueTaskSlots(events, tasks, NOW);
     expect(res.map((r) => r.event.id)).toEqual(['older', 'recent']);
   });
+  // ── « Ignorer » (mig. 146) ────────────────────────────────────────────────
+  // Cet état est la SEULE des quatre actions qui ne se relit pas depuis la
+  // donnée existante : valider coche la tâche, reporter déplace le créneau,
+  // supprimer supprime. D'où une colonne, et d'où ces tests.
+
+  it('exclut un créneau que la personne a demandé à ignorer', () => {
+    const events = [ev({ id: 'e1', taskId: 't1', reviewDismissedAt: '2026-07-21T11:00:00.000Z' })];
+    expect(findOverdueTaskSlots(events, [task({ id: 't1' })], NOW)).toHaveLength(0);
+  });
+
+  it('garde un créneau dont reviewDismissedAt est null', () => {
+    // `null` et `undefined` disent la même chose (jamais ignoré) : le mapper
+    // rend `null` pour une colonne vide, le repository local ne pose rien.
+    const events = [
+      ev({ id: 'nul', taskId: 't1', reviewDismissedAt: null }),
+      ev({ id: 'absent', taskId: 't2' }),
+    ];
+    const res = findOverdueTaskSlots(events, [task({ id: 't1' }), task({ id: 't2' })], NOW);
+    expect(res.map((r) => r.event.id).sort()).toEqual(['absent', 'nul']);
+  });
+
+  it('un créneau ignoré PUIS reporté redevient éligible', () => {
+    // Le report écrit `reviewDismissedAt: null` dans la même mise à jour que
+    // les nouveaux horaires (`useOverdueSlotReview`). Sans ça, « Ignorer » puis
+    // « Reporter » éteindrait la pastille pour toujours, y compris si le
+    // nouveau créneau est raté à son tour — ce que ce cas rejoue.
+    const reported = ev({
+      id: 'e1',
+      taskId: 't1',
+      reviewDismissedAt: null,
+      start: '2026-07-21T10:30:00.000Z',
+      end: '2026-07-21T11:00:00.000Z',
+    });
+    expect(findOverdueTaskSlots([reported], [task({ id: 't1' })], NOW)).toHaveLength(1);
+  });
 });

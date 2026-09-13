@@ -22,6 +22,7 @@ export interface EventRow {
   created_by?: string;
   created_at?: string;
   is_private?: boolean;
+  review_dismissed_at?: string | null;
 }
 
 /** DB input type for insert/update operations (snake_case). */
@@ -38,6 +39,7 @@ export interface EventDbInput {
   exceptions?: string[];
   user_id?: string;
   is_private?: boolean;
+  review_dismissed_at?: string | null;
 }
 
 export function mapEventFromDb(row: EventRow): CalendarEvent {
@@ -55,6 +57,7 @@ export function mapEventFromDb(row: EventRow): CalendarEvent {
     exceptions: row.exceptions ?? [],
     createdBy: row.created_by,
     isPrivate: row.is_private ?? false,
+    reviewDismissedAt: row.review_dismissed_at ?? null,
   };
 }
 
@@ -71,5 +74,8 @@ export function mapEventToDb(input: Partial<CalendarEvent>): EventDbInput {
   if (input.recurrenceDays !== undefined) result.recurrence_days = input.recurrenceDays;
   if (input.exceptions !== undefined) result.exceptions = input.exceptions;
   if (input.isPrivate !== undefined) result.is_private = input.isPrivate;
+  // `null` est une valeur SIGNIFIANTE ici (« ne plus ignorer ce créneau »), pas
+  // une absence : la garde reste `!== undefined`, jamais un test de vérité.
+  if (input.reviewDismissedAt !== undefined) result.review_dismissed_at = input.reviewDismissedAt;
   return result;
 }

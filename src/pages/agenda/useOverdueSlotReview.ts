@@ -10,9 +10,14 @@
 // découpage. Ce bloc était le meilleur candidat : quatre gestionnaires, un
 // état et un dérivé, qui ne parlent qu'entre eux.
 //
-// Ce fichier ne change AUCUN comportement : le corps de chaque gestionnaire
-// est repris à l'identique, seules les dépendances passent désormais par des
-// paramètres au lieu d'être capturées par fermeture.
+// ⚠️ Le 2026-09-13, la POPUP que ce hook alimentait a disparu. Elle s'ouvrait
+// seule, par-dessus ce que la personne était en train de faire, et coupait son
+// geste pour poser une question qui pouvait attendre. La demande est désormais
+// portée par une pastille peinte sur le bloc d'événement, plus un panneau dans
+// l'EventModal : deux accès à la MÊME question, tous deux dérivés de
+// `findOverdueTaskSlots`. Le hook ne rend donc plus « le créneau courant » mais
+// l'ensemble des créneaux en attente, et une cinquième action est apparue
+// (« Ignorer »), la seule qui avait besoin d'être écrite quelque part.
 //
 // ⚠️ `handleSlotPostpone` calcule TOUT dans l'espace d'affichage (l'heure du
 // fuseau choisi) puis retire le décalage une seule fois à la fin. C'est le
@@ -20,7 +25,7 @@
 // « demain » en heure machine, donc le créneau reporté ne revenait pas à
 // l'heure attendue pour qui a réglé un fuseau manuel.
 
-import React, { useState } from 'react';
+import React from 'react';
 import { findOverdueTaskSlots, type OverdueTaskSlot } from './overdue-slots';
 import { showUndoToast } from '@/lib/undo-toast';
 import { fromDisplayISO, toDisplayISO, displayNow, type TimezonePref } from '@/lib/timezone';
@@ -34,7 +39,7 @@ interface OverdueSlotReviewDeps {
   tzPref: TimezonePref;
   /** Bascule la complétion d'une tâche (la file ne contient que des non complétées). */
   toggleTaskComplete: (taskId: string) => void;
-  updateEvent: (id: string, updates: { start: string; end: string }) => void;
+  updateEvent: (id: string, updates: Partial<CalendarEvent>) => void;
   deleteEvent: (id: string) => void;
   deleteTask: (taskId: string) => void;
   /** Recree l'evenement supprime, sous SON identifiant (annulation). */
@@ -57,23 +62,31 @@ export function useOverdueSlotReview({
   restoreTask,
   deletedLabel,
 }: OverdueSlotReviewDeps) {
-  // Créneaux écartés pendant CETTE session : on ne les repropose pas.
-  const [snoozedSlotIds, setSnoozedSlotIds] = useState<Set<string>>(new Set());
-
+  // ⚠️ Plus AUCUN état local ici, et c'est le cœur du changement. L'ensemble
+  // est entièrement dérivé des événements : « ignoré » est une colonne
+  // (`reviewDismissedAt`, mig. 146), « validé » est la tâche cochée, « reporté »
+  // est un créneau dont la fin est repassée dans le futur. Un `useState` de
+  // session aurait fait revenir toutes les pastilles au premier rechargement,
+  // ce qui est sans conséquence pour une popup qu'on chasse d'un geste mais pas
+  // pour un marqueur qui reste peint sur le calendrier.
   const overdueSlots = React.useMemo(
-    () => findOverdueTaskSlots(events, tasks).filter((s) => !snoozedSlotIds.has(s.event.id)),
-    [events, tasks, snoozedSlotIds],
+    () => findOverdueTaskSlots(events, tasks),
+    [events, tasks],
   );
-  const currentReviewSlot = overdueSlots[0] ?? null;
 
-  const dismissReviewSlot = (eventId: string) =>
-    setSnoozedSlotIds((prev) => new Set(prev).add(eventId));
+  /** Les identifiants d'événement qui portent une pastille. */
+  const reviewEventIds = React.useMemo(
+    () => new Set(overdueSlots.map((s) => s.event.id)),
+    [overdueSlots],
+  );
+
+  const findSlot = (eventId: string) =>
+    overdueSlots.find((s) => s.event.id === eventId) ?? null;
 
   // Réalisée → valide la tâche côté tâche (comme partout ailleurs : toggle +
   // toast d'annulation). Filtrée à « non complétée », donc le toggle = valider.
   const handleSlotValidate = (slot: OverdueTaskSlot) => {
     if (!slot.task.completed) toggleTaskComplete(slot.task.id);
-    dismissReviewSlot(slot.event.id);
   };
 
   // Reporter → replace le créneau à DEMAIN (relatif à maintenant) en conservant
@@ -93,8 +106,11 @@ export function useOverdueSlotReview({
       new Date(next.getTime() + durationMs).toISOString(),
       tzPref,
     );
-    updateEvent(slot.event.id, { start: newStart, end: newEnd });
-    dismissReviewSlot(slot.event.id);
+    // `reviewDismissedAt: null` part dans la MÊME mise à jour que les horaires :
+    // reporter un créneau qu'on avait ignoré le remet dans la file s'il est
+    // raté une seconde fois. Sans ça, « Ignorer » puis « Reporter » éteindrait
+    // la pastille pour toujours.
+    updateEvent(slot.event.id, { start: newStart, end: newEnd, reviewDismissedAt: null });
   };
 
   // Abandonner → supprime la tâche et son créneau agenda, AVEC annulation.
@@ -111,23 +127,26 @@ export function useOverdueSlotReview({
     const taskSnapshot = slot.task;
     deleteEvent(eventSnapshot.id);
     deleteTask(taskSnapshot.id);
-    dismissReviewSlot(eventSnapshot.id);
     showUndoToast(deletedLabel, () => {
       restoreTask(taskSnapshot);
       restoreEvent(eventSnapshot);
     });
   };
 
-  const handleSlotSnooze = () => {
-    if (currentReviewSlot) dismissReviewSlot(currentReviewSlot.event.id);
+  // Ignorer → la seule des quatre actions qui ne laisse aucune trace ailleurs
+  // (valider coche la tâche, reporter déplace le créneau, supprimer supprime).
+  // Elle a donc sa propre colonne, écrite ici.
+  const handleSlotIgnore = (slot: OverdueTaskSlot) => {
+    updateEvent(slot.event.id, { reviewDismissedAt: new Date().toISOString() });
   };
 
   return {
     overdueSlots,
-    currentReviewSlot,
+    reviewEventIds,
+    findSlot,
     handleSlotValidate,
     handleSlotPostpone,
     handleSlotDelete,
-    handleSlotSnooze,
+    handleSlotIgnore,
   };
 }

@@ -20,12 +20,16 @@ export interface FindOverdueOptions {
 
 /**
  * Retourne les événements liés à une tâche dont le créneau est terminé et dont
- * la tâche existe encore et n'est pas validée. Trié du plus ancien au plus
+ * la tâche existe encore et n'est pas validée. C'est la définition de « ce
+ * créneau attend une décision » : elle pilote À LA FOIS la pastille peinte sur
+ * le bloc d'événement et le panneau latéral de l'EventModal, qui sont deux
+ * accès à la même question et ne doivent donc jamais diverger. Trié du plus ancien au plus
  * récent (on vide le backlog en commençant par le plus vieux).
  *
  * Exclus : événements récurrents (masters ou instances virtuelles `::`), dont la
  * fin est dans le futur, plus anciens que `windowDays`, sans tâche associée
- * existante, ou dont la tâche est déjà complétée.
+ * existante, dont la tâche est déjà complétée, ou que la personne a demandé
+ * d'ignorer (`reviewDismissedAt`, mig. 146).
  */
 export function findOverdueTaskSlots(
   events: CalendarEvent[],
@@ -40,6 +44,7 @@ export function findOverdueTaskSlots(
   const result: OverdueTaskSlot[] = [];
   for (const event of events) {
     if (!event.taskId) continue;
+    if (event.reviewDismissedAt) continue; // « Ignorer » : ne plus rien demander
     if (event.id.includes('::')) continue; // instance récurrente virtuelle
     if (event.recurrence && event.recurrence !== 'none') continue; // master récurrent
     const endMs = new Date(event.end).getTime();
