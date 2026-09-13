@@ -3828,6 +3828,11 @@ depuis sa création, en vert. La fonction, elle, échoue fermé — c'est le seu
 Sans conséquence aujourd'hui (0 `org_subscriptions`, mesuré), et sans aucun signal le jour où il y en
 aura un. C'est exactement la définition d'une garde qui répond sans mesurer.
 
+- ✅ **REFERMÉ le 2026-09-13** : le secret est posé des deux côtés et le workflow sort VERT en
+  `HTTP 200` (run `34768378680`). Le témoin du cas négatif est joué en ligne : une MAUVAISE valeur
+  rend `401`, donc la fonction compare vraiment au lieu de s'ouvrir dès que le secret existe.
+  ⚠️ `{"due":0}` : aucun avis n'était dû, il n'y a donc aucun envoi à constater. Ce qui est prouvé,
+  c'est le CHEMIN, pas l'envoi — la première vraie échéance annuelle le prouvera, pas avant.
 - **Fini quand** : secret absent = `exit 1`, comme pour toute autre garde, et le workflow porte un
   témoin. La pose du secret elle-même est un geste d'Axel : `a-faire-manuel.md`.
 
@@ -3917,7 +3922,8 @@ aura un. C'est exactement la définition d'une garde qui répond sans mesurer.
 > ⚠️ **Fumée-test après redéploiement**, parce qu'une comparaison d'octets ne dit pas qu'un module
 > se charge : `stripe-webhook` répond **`400 Invalid signature`** (ses trois `_shared` se chargent)
 > et `renewal-notice` **`503 cron_secret_not_configured`** — donc le NOUVEAU code est bien en ligne,
-> et M-12 (`CRON_SECRET`) reste ouvert.
+> et M-12 (`CRON_SECRET`) était alors ouvert — ✅ **posé le 2026-09-13 à 16:21 UTC**, la fonction
+> répond désormais `200` au bon secret et `401` à un mauvais.
 
 
 > 🔴 **Mesuré le 2026-09-12 : le job `Edge deploy drift` échoue TOUS LES JOURS depuis sa mise en
@@ -4060,7 +4066,7 @@ pas les dupliquer** :
 | Mot de passe historique du `.env` fuité (T-09, seconde moitié) | `ROADMAP-60J.md` | Axel seul |
 | Passer l'audit **A-4** sur un vrai téléphone (§10) | `a-faire-manuel.md` §7, M-25 | appareil en main |
 | Déployer les 3 Edge Functions (C-29, C-35) | `a-faire-manuel.md` §8, M-30 | ligne de commande |
-| Poser le secret `CRON_SECRET` (C-34) — ~~`OPS_ALERT_WEBHOOK_URL`~~ est posé depuis le 2026-09-02 | `a-faire-manuel.md` §3, M-12 | console |
+| ~~Poser les secrets d'ops~~ ✅ **les quatre sont posés au 2026-09-13** : `OPS_ALERT_WEBHOOK_URL` (09-02), `RATE_LIMIT_SALT` (09-12), `SUPABASE_ACCESS_TOKEN` (09-13), `CRON_SECRET` (09-13) | `a-faire-manuel.md` §3 | console |
 
 ---
 
