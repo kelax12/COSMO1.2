@@ -46,6 +46,9 @@ const channel = (c: number): number => {
 const luminance = ([r, g, b]: Rgb): number =>
   0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b);
 
+/** Exposée pour C-23 : sert à vérifier qu'on lit bien un thème CLAIR. */
+const luminanceOf = (c: Rgb): number => luminance(c);
+
 export const contrast = (a: Rgb, b: Rgb): number => {
   const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
   return (hi + 0.05) / (lo + 0.05);
@@ -102,5 +105,65 @@ describe('C-25 — le bouton principal tient AA dans les QUATRE thèmes', () => 
     expect(contrast([255, 255, 255], [255, 255, 255])).toBeCloseTo(1, 5);
     // #2f75d5, la teinte retenue pour le thème gris (C-25, option A).
     expect(contrast([255, 255, 255], [47, 117, 213])).toBeCloseTo(4.54, 1);
+  });
+});
+
+/**
+ * C-23 / M-42 — le bleu du theme CLAIR sur son propre fond teinte a 10 %.
+ *
+ * 🔴 CE N'EST PAS UN SEUIL AA, ET C'EST VOULU. La paire mesuree vaut 4,31:1,
+ * sous les 4,5 requis, et Axel a tranche le 2026-09-13 : **on garde #2563eb**.
+ * La justification et son perimetre d'acceptabilite sont ecrits dans
+ * `docs/ACCESSIBILITY.md` § « C-23 — pourquoi le bleu du theme clair reste a
+ * 4,31:1 », et la dispense `color-contrast` d'`e2e/a11y-audit.spec.ts` y
+ * renvoie nommement.
+ *
+ * Ce que ce cas garde, c'est la DECISION, pas le seuil : « on garde » est
+ * defendable a 4,31, il ne l'est plus a 3,2. Sans cliquet, eclaircir le texte
+ * ou foncer le fond ferait glisser la paire sans qu'aucune garde ne le dise —
+ * axe la voit, mais elle est justement dispensee, donc son silence ne prouve
+ * rien. C'est le meme angle mort que celui qui a laisse le bouton principal a
+ * 3,34:1 pendant dix-neuf jours.
+ *
+ * ❌ Ne JAMAIS baisser `KEPT_FLOOR`. Le rebaisser ne ferme pas C-23, il efface
+ * la seule chose qui rend la decision tenable. Toute amelioration du ratio doit
+ * au contraire faire MONTER ce plancher, et au-dela de 4,5 le cas devient un
+ * vrai seuil AA et la dispense tombe.
+ */
+describe('C-23 — le bleu du theme clair sur son fond teinte reste au niveau arbitre', () => {
+  /** Le ratio MESURE dans le navigateur le 2026-09-13, pas un objectif. */
+  const KEPT_FLOOR = 4.31;
+
+  /** `rgb(<fg> / 0.1)` peint sur `--color-background`, comme le fait le bandeau. */
+  const tint = (fg: Rgb, bg: Rgb, alpha = 0.1): Rgb =>
+    bg.map((v, i) => Math.round(v + (fg[i] - v) * alpha)) as Rgb;
+
+  it('lit bien le theme clair, et pas un autre', () => {
+    // Temoin : sans lui, une regex qui ne trouverait plus rien rendrait le cas
+    // suivant vert sur un tableau vide.
+    expect(declarations('color-accent-solid').length, 'aucun accent-solid lu').toBeGreaterThan(0);
+    expect(declarations('color-background').length, 'aucun background lu').toBeGreaterThan(0);
+    // Le cas suivant lit la PREMIERE declaration parce que `:root` (le theme
+    // clair) ouvre le fichier. Reordonner les themes ferait mesurer un fond
+    // sombre sans que rien ne le dise : on verifie la FORME, pas la valeur —
+    // recopier `248 250 252` ici serait une seconde definition de la couleur,
+    // ce que ce fichier refuse par ailleurs.
+    expect(
+      luminanceOf(declarations('color-background')[0]),
+      'la premiere declaration de --color-background n est plus celle d un theme CLAIR : '
+        + 'le cliquet ci-dessous mesure alors le mauvais theme',
+    ).toBeGreaterThan(0.5);
+  });
+
+  it('ne descend pas sous le ratio arbitre le 2026-09-13', () => {
+    const accentSolid = declarations('color-accent-solid')[0];
+    const background = declarations('color-background')[0];
+    const ratio = Number(contrast(accentSolid, tint(accentSolid, background)).toFixed(2));
+    expect(
+      ratio,
+      'Le bleu du theme clair a glisse sous le ratio sur lequel la decision '
+        + '« on garde » a ete rendue (docs/ACCESSIBILITY.md, C-23). Mesure : '
+        + `${ratio}:1, plancher ${KEPT_FLOOR}:1.`,
+    ).toBeGreaterThanOrEqual(KEPT_FLOOR);
   });
 });
