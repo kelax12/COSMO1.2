@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronRight, ChevronDown, Plus, Trash2, MoreHorizontal } from 'lucide-react';
+import { ChevronRight, ChevronDown, Plus, FolderInput, Trash2, MoreHorizontal } from 'lucide-react';
 import { useT } from '@/i18n/useT';
 import {
   DropdownMenu,
@@ -108,10 +108,14 @@ const CategoryTreeRow: React.FC<CategoryTreeRowProps> = ({
             <Plus size={14} aria-hidden="true" /> {t('colorModal.createSubcategory')}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={onMove}>
-            {t('colorModal.moveTitle')}
+            <FolderInput size={14} aria-hidden="true" /> {t('colorModal.moveTitle')}
           </DropdownMenuItem>
+          {/* !text-red-500 : même correctif que list.tsx (rowMenu.delete) —
+              le sélecteur Tailwind data-[variant=destructive]:*:[svg]:!text-destructive
+              de dropdown-menu.tsx ne s'applique pas, l'icône reste grise au
+              survol sans cet override explicite (cf. f563586d). */}
           <DropdownMenuItem onClick={onDelete} variant="destructive">
-            <Trash2 size={14} aria-hidden="true" /> {t('colorModal.deleteTitle')}
+            <Trash2 size={14} aria-hidden="true" className="!text-red-500" /> {t('colorModal.deleteTitle')}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
