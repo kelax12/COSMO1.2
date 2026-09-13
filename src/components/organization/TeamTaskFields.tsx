@@ -24,7 +24,7 @@ import type { OrgMember } from '@/modules/organizations';
 import { DatePicker } from '@/components/ui/date-picker';
 import DescriptionField from '@/components/DescriptionField';
 import AddCategoryButton from '@/components/AddCategoryButton';
-import TeamCategoryPicker from './TeamCategoryPicker';
+import TeamCategoryTreeSelect from './TeamCategoryTreeSelect';
 import TeamAssigneeGroups from './TeamAssigneeGroups';
 import { PRIORITY_META, projectColor } from './team-projects.helpers';
 
@@ -162,7 +162,7 @@ const TeamTaskFields = ({
           lui : une tâche porte sa propre catégorie. */}
       <div>
         <span className={labelClass} style={labelStyle}>{t('project.category')}</span>
-        <TeamCategoryPicker orgId={orgId} value={categoryId} onChange={onCategoryChange} />
+        <TeamCategoryTreeSelect orgId={orgId} value={categoryId} onChange={onCategoryChange} />
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

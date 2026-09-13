@@ -21,7 +21,7 @@ interface OkrRow {
   org_id: string;
   title: string;
   description: string | null;
-  category: string | null;
+  category_id: string | null;
   start_date: string | null;
   end_date: string | null;
   created_by: string;
@@ -111,7 +111,7 @@ export class SupabaseTeamOKRsRepository implements ITeamOKRsRepository {
       orgId: o.org_id,
       title: o.title,
       description: o.description ?? undefined,
-      category: o.category ?? undefined,
+      categoryId: o.category_id,
       startDate: o.start_date ?? undefined,
       endDate: o.end_date ?? undefined,
       createdBy: o.created_by,
@@ -140,7 +140,7 @@ export class SupabaseTeamOKRsRepository implements ITeamOKRsRepository {
         created_by: uid,
         title: input.title,
         description: input.description ?? null,
-        category: input.category ?? null,
+        category_id: input.categoryId ?? null,
         start_date: input.startDate || null,
         end_date: input.endDate || null,
       });
@@ -185,7 +185,7 @@ export class SupabaseTeamOKRsRepository implements ITeamOKRsRepository {
       orgId,
       title: input.title,
       description: input.description || undefined,
-      category: input.category || undefined,
+      categoryId: input.categoryId ?? undefined,
       startDate: input.startDate || undefined,
       endDate: input.endDate || undefined,
       createdBy: uid,
@@ -200,7 +200,7 @@ export class SupabaseTeamOKRsRepository implements ITeamOKRsRepository {
     const patch: Record<string, unknown> = {};
     if (input.title !== undefined) patch.title = input.title;
     if (input.description !== undefined) patch.description = input.description || null;
-    if (input.category !== undefined) patch.category = input.category || null;
+    if (input.categoryId !== undefined) patch.category_id = input.categoryId;
     if (input.startDate !== undefined) patch.start_date = input.startDate || null;
     if (input.endDate !== undefined) patch.end_date = input.endDate || null;
     if (Object.keys(patch).length > 0) {

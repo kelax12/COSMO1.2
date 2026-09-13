@@ -7,7 +7,7 @@ import type { OrgTeam } from '@/modules/org-teams';
 import type { CreateTeamProjectInput } from '@/modules/team-projects';
 import { PROJECT_COLOR_NAMES, PROJECT_COLORS, PRIORITY_META } from './team-projects.helpers';
 import AssigneesPicker from './AssigneesPicker';
-import TeamCategoryPicker from './TeamCategoryPicker';
+import TeamCategoryTreeSelect from './TeamCategoryTreeSelect';
 import { useT } from '@/i18n/useT';
 import { useModalA11y } from '@/hooks/use-modal-a11y';
 
@@ -169,7 +169,7 @@ const NewTeamProjectModal = ({ orgId, teams, members, defaultTeamId, onSubmit, o
               transverse, pas une unité de travail. Facultative. */}
           <div>
             <span className={labelClass} style={labelStyle}>{t('project.category')}</span>
-            <TeamCategoryPicker orgId={orgId} value={categoryId} onChange={setCategoryId} />
+            <TeamCategoryTreeSelect orgId={orgId} value={categoryId} onChange={setCategoryId} />
           </div>
 
           {/* Équipe / collaborateurs */}

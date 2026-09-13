@@ -25,7 +25,8 @@ export interface TeamOKR {
   orgId: string;
   title: string;
   description?: string;
-  category?: string;
+  /** Catégorie d'entreprise (mig. 148) — FK vers `team_categories`. null/absent = aucune. */
+  categoryId?: string | null;
   startDate?: string;
   endDate?: string;
   createdBy: string;
@@ -58,7 +59,7 @@ export interface SyncTeamKRInput extends CreateTeamKRInput {
 export interface CreateTeamOKRInput {
   title: string;
   description?: string;
-  category?: string;
+  categoryId?: string | null;
   startDate?: string;
   endDate?: string;
   /** [] ou absent = objectif d'entreprise (toutes équipes). */
@@ -69,7 +70,7 @@ export interface CreateTeamOKRInput {
 export interface UpdateTeamOKRInput {
   title?: string;
   description?: string;
-  category?: string;
+  categoryId?: string | null;
   startDate?: string;
   endDate?: string;
   teamIds?: string[];

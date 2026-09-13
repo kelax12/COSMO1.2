@@ -28,7 +28,7 @@ const DEMO_OKRS: TeamOKR[] = [
     orgId: DEMO_ORG_ID,
     title: 'Réussir le lancement produit',
     description: 'Faire du lancement un succès mesurable sur le trimestre.',
-    category: 'Croissance',
+    categoryId: 'teamcat-croissance',
     startDate: new Date(Date.now() - 20 * 86400000).toISOString().slice(0, 10),
     endDate: new Date(Date.now() + 40 * 86400000).toISOString().slice(0, 10),
     createdBy: DEMO_USER_ID,
@@ -45,7 +45,7 @@ const DEMO_OKRS: TeamOKR[] = [
     orgId: DEMO_ORG_ID,
     title: 'Livrer la refonte du site',
     description: 'Mettre en ligne le nouveau site, rapide et accessible.',
-    category: 'Produit',
+    categoryId: 'teamcat-produit',
     startDate: new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10),
     endDate: new Date(Date.now() + 20 * 86400000).toISOString().slice(0, 10),
     createdBy: 'friend-1',
@@ -61,7 +61,7 @@ const DEMO_OKRS: TeamOKR[] = [
     orgId: DEMO_ORG_ID,
     title: 'Renforcer la culture d\'équipe',
     description: 'Améliorer l\'engagement et l\'onboarding interne.',
-    category: 'Interne',
+    categoryId: 'teamcat-interne',
     startDate: new Date(Date.now() - 10 * 86400000).toISOString().slice(0, 10),
     endDate: new Date(Date.now() + 50 * 86400000).toISOString().slice(0, 10),
     createdBy: DEMO_USER_ID,
@@ -77,14 +77,16 @@ const DEMO_OKRS: TeamOKR[] = [
 // Overlay anglais — cf. src/lib/seed-i18n.ts. `TeamOKR` imbrique `keyResults`
 // (chacun avec son propre `id`), ce que `localizeSeed` ne parcourt pas : patch
 // ad hoc à deux niveaux plutôt que forcer le helper générique.
+// `categoryId` n'a pas d'overlay ici : c'est un identifiant, pas du texte —
+// sa traduction vit dans l'overlay de `team-categories/repository.ts`
+// (DEMO_CATEGORIES_EN), une seule fois pour tous les modules qui le portent.
 const DEMO_OKRS_EN: Record<string, {
-  title?: string; description?: string; category?: string;
+  title?: string; description?: string;
   keyResults?: Record<string, { title?: string; unit?: string }>;
 }> = {
   'tokr-1': {
     title: 'Make the product launch a success',
     description: 'Turn the launch into a measurable success this quarter.',
-    category: 'Growth',
     keyResults: {
       'tkr-1': { title: 'Reach 1,000 sign-ups', unit: 'sign-ups' },
       'tkr-2': { title: 'Get 15 press mentions', unit: 'articles' },
@@ -94,7 +96,6 @@ const DEMO_OKRS_EN: Record<string, {
   'tokr-2': {
     title: 'Ship the website redesign',
     description: 'Launch the new site, fast and accessible.',
-    category: 'Product',
     keyResults: {
       'tkr-4': { title: 'Lighthouse score ≥ 95', unit: 'pts' },
       'tkr-5': { title: '100% of pages migrated', unit: '%' },
@@ -103,7 +104,6 @@ const DEMO_OKRS_EN: Record<string, {
   'tokr-3': {
     title: 'Strengthen team culture',
     description: 'Improve engagement and internal onboarding.',
-    category: 'Internal',
     keyResults: {
       'tkr-6': { title: 'Onboard 3 new hires', unit: 'people' },
       'tkr-7': { title: 'eNPS score ≥ 40', unit: 'pts' },
@@ -120,7 +120,6 @@ function localizeOkrs(okrs: TeamOKR[]): TeamOKR[] {
       ...okr,
       title: patch.title ?? okr.title,
       description: patch.description ?? okr.description,
-      category: patch.category ?? okr.category,
       keyResults: okr.keyResults.map((kr) => {
         const krPatch = patch.keyResults?.[kr.id];
         return krPatch ? { ...kr, ...krPatch } : kr;
@@ -166,7 +165,7 @@ export class LocalStorageTeamOKRsRepository implements ITeamOKRsRepository {
       orgId,
       title: input.title,
       description: input.description,
-      category: input.category,
+      categoryId: input.categoryId ?? null,
       startDate: input.startDate,
       endDate: input.endDate,
       createdBy: DEMO_USER_ID,
@@ -201,7 +200,7 @@ export class LocalStorageTeamOKRsRepository implements ITeamOKRsRepository {
     if (!okr) throw makeApiError('not_found');
     if (input.title !== undefined) okr.title = input.title;
     if (input.description !== undefined) okr.description = input.description;
-    if (input.category !== undefined) okr.category = input.category;
+    if (input.categoryId !== undefined) okr.categoryId = input.categoryId;
     if (input.startDate !== undefined) okr.startDate = input.startDate;
     if (input.endDate !== undefined) okr.endDate = input.endDate;
     if (input.teamIds !== undefined) okr.teamIds = input.teamIds;
