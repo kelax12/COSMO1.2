@@ -806,11 +806,12 @@ sans écran, **écrites en dur en français** hors des catalogues i18n.
 ## Base de données Supabase
 
 Migrations dans `supabase/migration/*.sql`, convention `NNN_<feature>.sql`.
-**150 fichiers de migration** (recompté le 2026-09-13, à l'ajout de la `146`). La
-dernière APPLIQUÉE est la `146_event_review_dismissed.sql` (le 2026-09-13) ; `145` l'a
-été le même jour (cf. section dédiée ci-dessous).
+**151 fichiers de migration** (recompté le 2026-09-13, à l'ajout de la `147`). La
+dernière APPLIQUÉE est la `147_categories_tree_depth_ambiguity_redo.sql` (le 2026-09-13,
+réapplication du correctif de la `144` — cf. section dédiée) ; `146` et `145` l'ont été le
+même jour.
 
-### Sous-catégories hiérarchiques (mig. `143`, `144`, `145`)
+### Sous-catégories hiérarchiques (mig. `143`, `144`, `145`, `147`)
 
 ✅ **La `143` est APPLIQUÉE en prod le 2026-09-09** : `categories` gagne `parent_id` et
 `position`, l'unicité par nom devient **deux index partiels** (en Postgres deux `NULL` ne
@@ -825,13 +826,30 @@ en un seul `DELETE` groupé. Avec `RESTRICT`, la suppression de compte devenait 
 dès qu'un compte avait une sous-catégorie — la régression B9 (RGPD art. 17). `NO ACTION`
 vérifie en fin de requête : même garantie, sans le blocage.
 
-🔴 **La `144` corrige un défaut que la `143` avait mis EN PRODUCTION.** Sa CTE récursive
-déclarait `branch(id, depth)` pendant que le bloc PL/pgSQL déclarait une variable `depth` :
-`column reference "depth" is ambiguous`, et **toute création de sous-catégorie échouait**.
+🔴 **La `144` corrige un défaut que la `143` avait mis EN PRODUCTION** — et la `147` a dû
+la RÉAPPLIQUER, la `144` n'ayant jamais réellement pris malgré sa ligne au ledger. Sa CTE
+récursive déclarait `branch(id, depth)` pendant que le bloc PL/pgSQL déclarait une variable
+`depth` : `column reference "depth" is ambiguous`, et **toute création de sous-catégorie
+échouait**.
 ⚠️ La `143` avait passé `validate:migrations`, `check:rls`, les gardes de
 `migration-guards.test.mjs`, une revue de conformité et une revue de qualité. **Aucune de
 ces cinq vérifications n'exécute le SQL.** Seule la vérification acteur par acteur en
 transaction annulée l'a trouvée. Onze cas y ont été rejoués, prod inchangée.
+
+🔴 **`147` — LA `144` NE SUFFISAIT PAS : une ligne au ledger ne prouve pas qu'un `CREATE OR
+REPLACE FUNCTION` a réellement remplacé le corps vivant.** Signalé par Axel le 2026-09-13
+(« la création de sous-catégorie vient de se casser », toast connexion générique) alors que
+`144` était marquée appliquée depuis le 2026-09-09. `pg_get_functiondef()` sur la fonction
+EN PROD a montré qu'elle portait toujours `branch(id, depth)` — le corps exact de la `143`,
+jamais remplacé par celui de la `144`. Reproduit dans une transaction annulée AVANT
+correctif (`column reference "depth" is ambiguous`), corrigé en réappliquant le même SQL
+sous la `147` (`apply_migration`, donc au ledger cette fois), reprouvé après coup dans une
+transaction annulée : insertion réussie, garde anti-auto-parentage toujours active.
+⚠️ Même famille de défaut que le drift des Edge Functions (finding C-35) : le dépôt (et ici
+le ledger) décrit ce qu'on a voulu écrire, jamais garanti ce qui s'exécute. **Une note
+« ✅ appliquée » sur une fonction SQL ne vaut que si `pg_get_functiondef()` (ou une
+transaction annulée qui rejoue le chemin réel) l'a vérifié après coup — jamais la lecture du
+ledger seule.**
 
 ✅ **La `145` est APPLIQUÉE en prod le 2026-09-13.** `tasks.category` et `okrs.category`
 sont désormais des `UUID` avec une vraie clé étrangère vers `categories`, en
