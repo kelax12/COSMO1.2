@@ -1719,8 +1719,13 @@ chaque fois, et personne ne l'a ouverte pendant quatre jours.
   parties depuis, dont les 14 échecs de `Edge deploy drift`.
   ⚠️ **Ce fichier a écrit « le canal reste INERTE » pendant onze jours après la pose du secret**,
   parce que la phrase a été recopiée au lieu d'être relue à sa source : une commande d'une seconde.
-  ⚠️ **Un HTTP 204 ne prouve pas qu'on lit le salon.** Il prouve que l'endpoint a accepté. La seule
-  preuve de bout en bout reste quelqu'un qui dit avoir vu le message.
+  ✅ **LU PAR UN HUMAIN, le 2026-09-13 à 18:28 (heure de Paris).** Capture du salon `#général` à
+  l'appui, et les DEUX sources y arrivent : `ci-alert.yml` (« [cosmo/ci] Edge deploy drift en echec
+  sur main ») et `opsAlert()` **depuis une Edge Function** (« [cosmo/renewal-notice] CRON_SECRET
+  absent »). Le second chemin n'avait jamais été vu délivrer non plus.
+  ⚠️ **Un HTTP 204 ne prouvait pas qu'on lit le salon**, il prouvait que l'endpoint acceptait. Le
+  204 reste la mesure automatique ; la lecture, elle, ne se prouve qu'ainsi — quelqu'un qui montre
+  le message. Aucune garde ne rendra jamais ce verdict-là.
 - 🔴 **Ne jamais rendre une garde conditionnelle à la présence de son propre secret**, et la règle
   s'est appliquée à `ci-alert.yml` lui-même le **2026-09-13** : son étape de push sortait en **0**
   dans les deux cas où rien n'était parti (secret absent, webhook qui refuse), avec un `::warning::`

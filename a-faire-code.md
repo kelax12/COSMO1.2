@@ -3803,8 +3803,20 @@ exactement le genre d'énoncé que cette liste passe son temps à démentir.
 
 - **Fini quand** : ~~le secret est posé~~ (2026-09-02) · ~~l'exercice à blanc a été joué~~
   (2026-09-02, rejoué le 09-13, HTTP 204 les deux fois) · ~~aucune branche ne sort en vert sans
-  avoir livré~~ (2026-09-13, avec témoin) · **reste à Axel : confirmer que le message est bien
-  arrivé dans le salon Discord.** Un HTTP 204 prouve que l'endpoint a accepté, pas qu'on l'a lu.
+  avoir livré~~ (2026-09-13, avec témoin) · ~~le message est arrivé dans le salon~~ — **confirmé
+  par capture le 2026-09-13 à 18:28 (Paris)**. ✅ **C-28 EST REFERMÉ, les quatre conditions.**
+
+⚠️ **Ce que la capture montre en plus, et qui n'était pas demandé** : les DEUX émetteurs
+fonctionnent. `ci-alert.yml` a poussé « [cosmo/ci] Edge deploy drift en echec sur main (6d758da) »,
+et **`opsAlert()` depuis l'Edge Function** a poussé « [cosmo/renewal-notice] CRON_SECRET absent ».
+Le chemin Edge n'avait jamais été observé en train de délivrer : il l'est maintenant, et sur le
+même salon, avec le même format.
+
+⚠️ L'alerte `CRON_SECRET absent` visible sur la capture est **périmée par construction** : elle a
+été déclenchée par le fumée-test de `renewal-notice` v12, AVANT la pose du secret à 16:21 UTC.
+Depuis, les trois appels de contrôle ont rendu `401` / `401` / `200` et le workflow `200` — aucun
+ne peut la refaire partir. 🔴 **Un nouveau « CRON_SECRET absent » serait donc un vrai incident**,
+pas un écho.
 
 ### C-34 · `renewal-notice.yml` sort en VERT quand son secret est absent · **P1 · XS**
 
