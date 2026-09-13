@@ -214,7 +214,7 @@ quand ». Une décision écrite ici fait foi contre une piste écrite dans l'ite
 | Item | Décision | Ce que ça engage |
 |---|---|---|
 | **C-20** | ✅ **Traduire les 15 pages éditoriales et ouvrir l'anglais à l'indexation** | 11 articles de blog et 4 pages cas d'usage prennent une dimension de locale, puis `en` entre dans `INDEXABLE_LOCALES` en suivant `docs/SEO.md`. ❌ Ne jamais ouvrir la locale avant le contenu. Engage aussi la **maintenance** de deux versions de chaque article |
-| **C-58 · C-19 · C-60** | ✅ **Migrer vers React 19 et `react-router` 8, maintenant** | Ce n'est plus une urgence sécurité (la CVE est fermée sous React 18 depuis le 2026-07-28), c'est un choix de fond : `ref` devient une prop ordinaire, donc la classe de bug qui a coûté `Button` puis `Input`, **silencieuse par construction**, disparaît. C-60 se règle dans la même PR. ⚠️ Chantier L à séquencer **après les P0**, sur une branche, avec la suite E2E derrière. Chiffrage : `docs/MIGRATION-REACT19.md` |
+| **C-58 · C-19 · C-60** | ⏸️ **Migration JOUÉE, fusion DIFFÉRÉE** (arbitrage du 2026-09-13, M-41). L'arbitrage d'origine, conservé ci-contre, disait « migrer maintenant » | Ce n'est plus une urgence sécurité (la CVE est fermée sous React 18 depuis le 2026-07-28), c'est un choix de fond : `ref` devient une prop ordinaire, donc la classe de bug qui a coûté `Button` puis `Input`, **silencieuse par construction**, disparaît. C-60 se règle dans la même PR. ⚠️ Chantier L à séquencer **après les P0**, sur une branche, avec la suite E2E derrière. Chiffrage : `docs/MIGRATION-REACT19.md` |
 
 ---
 
@@ -1946,6 +1946,40 @@ dans [`docs/MIGRATION-REACT19.md`](./docs/MIGRATION-REACT19.md).
 >
 > ⚠️ `react-router` 8 (PR 2) n'a **pas** été tenté : il exige React ≥ 19.2.7 en peer, donc il est
 > séquentiel derrière une PR 1 qui ne peut pas être posée.
+
+> #### ✅ ARBITRAGE RENDU le 2026-09-13 : **on DIFFÈRE** (issue 1), et le seuil de reprise est chiffré
+>
+> Décision d'Axel sur M-41. `feat/react-19` reste **poussée et non fusionnée**. Rien n'est annulé.
+>
+> 🔴 **Ce que la remesure du jour a rendu, et qui corrige la lecture du blocage** : le plafond de
+> **323 000 o n'est dans AUCUN commit**. `git log -S"323_000" -- scripts/check-bundle-budget.mjs`
+> ne rend rien, et `git show HEAD:scripts/check-bundle-budget.mjs` porte encore `critical: 370_000`
+> / `entry: 78_000`. L'abaissement du 2026-09-11 et la sortie de `sonner` qui le finance vivent dans
+> l'arbre de travail **non commité** d'une session voisine. Contre `main` tel qu'il est commité,
+> React 19 à 329,8 ko **passerait la garde en silence**. Le blocage est réel, mais il s'appuie sur un
+> cliquet qui n'est pas encore dans l'histoire du dépôt : raison de plus de ne pas fusionner.
+>
+> **Deux seuils, pas un.** Un seul ne suffit pas, et le premier est un piège :
+>
+> | Seuil | Chemin critique React 18 exigé | Coupe à trouver | Résultat |
+> |---|---|---|---|
+> | `check:bundle` simplement verte | ≤ **299,7 ko** | 6,8 ko | garde verte, **0 %** de marge |
+> | Critère de sortie de **C-14** préservé (5 %) | ≤ **283,5 ko** | **22,8 ko** | React 19 fusionné sans rouvrir C-14 |
+>
+> Départ : 306,3 ko (2026-09-11). Une garde qui passe à 0,0 % de marge rouvre C-14 le jour même,
+> exactement comme un plafond relevé. **Le seuil opposable est 283,5 ko.**
+>
+> Le seul gisement de cette taille reste `vendor-animation` (49,0 ko). **L'issue 2 n'est donc pas une
+> alternative à l'issue 1, c'est sa condition de reprise.**
+>
+> **Ce que différer coûte, écrit pour que personne ne le redécouvre** : `react-router` 8 reste bloqué
+> derrière (sans conséquence sécurité, cf. le constat ci-dessus) ; la classe de bug « composant
+> shadcn recopié de l'amont React 19, `ref` jamais attaché » reste ouverte et **silencieuse par
+> construction** (elle a coûté `Button` puis `Input`) ; et les 9 corrections de types de la branche
+> (`RefObject<T>` → `RefObject<T | null>`) sont justes indépendamment de React 19, donc portables sur
+> `main` à part si on veut alléger la reprise.
+>
+> Détail et calculs : `docs/MIGRATION-REACT19.md` § 4bis.c.
 
 ### C-59 · ~~`Input` (`src/components/ui/input.tsx`) n'était pas un `forwardRef`~~ · **P2 · S** · ✅ corrigé le 2026-09-03, trouvé par l'audit A-6
 

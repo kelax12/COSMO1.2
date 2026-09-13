@@ -249,6 +249,55 @@ lui-même réussit, et la suite **E2E** est verte : **104 passés, 3 ignorés, 0
 suivie par git** que `CLAUDE.md` documente — elle n'appartient pas au dépôt. La branche `feat/react-19` porte ce travail, prêt à reprendre le jour où le
 budget le permet.
 
+### c. ARBITRAGE RENDU le 2026-09-13 : on DIFFÈRE (option 1)
+
+Décision d'Axel, en réponse à `a-faire-manuel.md` M-41. La branche `feat/react-19` reste poussée et
+non fusionnée. Rien n'est annulé, rien n'est fusionné.
+
+**Ce qui a été REMESURÉ ce jour-là, et qui corrige la façon de lire le blocage ci-dessus.**
+Le plafond de 323 000 o n'existe dans **aucun commit** : `git log -S"323_000"` sur
+`scripts/check-bundle-budget.mjs` ne rend rien, et `git show HEAD:scripts/check-bundle-budget.mjs`
+porte encore `critical: 370_000` / `entry: 78_000`. L'abaissement du 2026-09-11, comme la sortie de
+`sonner` qui le finance, vit uniquement dans l'arbre de travail **non commité** d'une session
+voisine (86 fichiers modifiés au 2026-09-13).
+
+Conséquence à ne pas se cacher : contre `main` **tel qu'il est commité**, React 19 à 329,8 ko
+passerait la garde sans rien dire, le plafond commité étant 370 000. Le blocage est donc réel mais
+il s'appuie sur un cliquet qui n'est pas encore dans l'histoire du dépôt. C'est un argument de plus
+pour différer plutôt que pour fusionner : fusionner React 19 avant que le lot C-14 soit commité
+reviendrait à passer sous un plafond périmé.
+
+**Les deux seuils de reprise, calculés, parce qu'un seul ne suffit pas :**
+
+| Seuil | Chemin critique React 18 exigé | Coupe à trouver | Ce que ça obtient |
+|---|---|---|---|
+| `check:bundle` simplement VERTE | ≤ 299,7 ko (323 000 − 23 300) | **6,8 ko** | la garde passe, avec **0 %** de marge restante |
+| Critère de sortie de **C-14** préservé (5 %) | ≤ 283,5 ko (323 000 × 0,95 − 23 300) | **22,8 ko** | React 19 fusionné SANS rouvrir C-14 |
+
+Mesure de départ : 306,3 ko (2026-09-11). Le premier seuil est un piège : une garde qui passe à
+0,0 % de marge rouvre C-14 le jour même, exactement comme le ferait un plafond relevé. **Le seuil
+opposable est 283,5 ko.**
+
+Or le seul gisement de cette taille sur le chemin critique reste `vendor-animation` (49,0 ko).
+**L'option 2 n'est donc pas une alternative à l'option 1, c'est sa condition de reprise** : tant que
+`MotionConfig` n'est pas remplacé par une lecture CSS/`matchMedia` de `prefers-reduced-motion`, sans
+contexte React et avec sa mesure au navigateur **sous `reduce`**, il n'y a pas 22,8 ko à prendre
+ailleurs.
+
+**Ce que différer coûte, écrit pour que personne n'ait à le redécouvrir :**
+
+- `react-router` 8 (PR 2) reste bloqué derrière, peer `react >= 19.2.7`. Sans conséquence sécurité :
+  `react-router@7.18.2` est installé et ferme les deux CVE (§1).
+- La classe de bug « composant shadcn recopié depuis l'amont React 19, `ref` jamais attaché » reste
+  ouverte, et elle est **silencieuse par construction**. Elle a déjà coûté `Button` puis `Input`.
+  Tant que le dépôt est sous React 18, tout composant repris de l'amont se relit à la main.
+- La branche vieillit. Elle porte 9 corrections de types justes et mécaniques (§4bis.a) qui, elles,
+  ne dépendent pas de React 19 : `RefObject<T>` → `RefObject<T | null>` est la réalité du ref depuis
+  toujours. Elles pourraient être portées sur `main` séparément pour réduire la dette de la reprise.
+
+⚠️ **Ne pas relire ce § comme un abandon.** La migration est faite et verte sur onze gates ; ce qui
+est différé, c'est sa FUSION, et la condition est chiffrée ci-dessus.
+
 ---
 
 ## 5. Chiffrage
