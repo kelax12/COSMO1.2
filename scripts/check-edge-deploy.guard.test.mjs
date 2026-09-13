@@ -39,6 +39,7 @@ import {
   repoFilesFor,
   nettoyerBac,
   rendreEffacable,
+  estFichierDuBundle,
 } from './check-edge-deploy.mjs';
 
 const SCRIPT = resolve(process.cwd(), 'scripts/check-edge-deploy.mjs');
@@ -380,4 +381,48 @@ describe('check:edge · temoin de menage', () => {
       }
     },
   );
+});
+
+
+// ═══════════════════════════════════════════════════════════════════
+// TEMOIN DE PERIMETRE DE LECTURE
+//
+// 🔴 Ces cas viennent d'un faux positif REEL. Le run du 2026-09-13 qui a
+// compare pour de bon a signale `supabase/.temp/linked-project.json` comme
+// « absent-du-depot » sur TROIS fonctions. Ce fichier n'est pas du code
+// deploye : c'est la CLI qui l'ecrit dans le bac a sable en s'y liant.
+//
+// Le verdict « absent du depot » est celui que le script documente comme le
+// plus grave — du code qui tourne en prod sans source versionnee. Une garde
+// qui le prononce sur ses propres dechets s'use elle-meme.
+// ═══════════════════════════════════════════════════════════════════
+describe('check:edge · temoin de perimetre de lecture', () => {
+  it('retient ce que le bundle porte reellement', () => {
+    expect(estFichierDuBundle('supabase/functions/delete-account/index.ts')).toBe(true);
+    expect(estFichierDuBundle('supabase/functions/_shared/alert.ts')).toBe(true);
+  });
+
+  it('ecarte les fichiers que la CLI depose elle-meme dans le bac', () => {
+    // Les deux vus le 2026-09-13, plus le config.toml que le script ECRIT.
+    expect(estFichierDuBundle('supabase/.temp/linked-project.json')).toBe(false);
+    expect(estFichierDuBundle('supabase/.temp/cli-latest')).toBe(false);
+    expect(estFichierDuBundle('supabase/config.toml')).toBe(false);
+  });
+
+  it('lit les chemins Windows comme les chemins POSIX', () => {
+    const sep = String.fromCharCode(92);
+    expect(estFichierDuBundle(['supabase', 'functions', 'report-bug', 'index.ts'].join(sep))).toBe(true);
+    expect(estFichierDuBundle(['supabase', '.temp', 'linked-project.json'].join(sep))).toBe(false);
+  });
+
+  it('reste un critere POSITIF, pas une liste de choses a ignorer', () => {
+    // Un fichier de service INCONNU doit etre hors perimetre d'office : une
+    // liste noire aurait demande de deviner le prochain.
+    expect(estFichierDuBundle('supabase/.futur-fichier-de-service/x.json')).toBe(false);
+    expect(estFichierDuBundle('ailleurs/functions/x/index.ts')).toBe(false);
+  });
+
+  it('ne retient pas un fichier qui n est pas du code', () => {
+    expect(estFichierDuBundle('supabase/functions/delete-account/README.md')).toBe(false);
+  });
 });
