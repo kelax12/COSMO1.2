@@ -67,7 +67,9 @@ const SlotReviewMenu: React.FC<SlotReviewMenuProps> = ({
             type="button"
             aria-label={label}
             title={label}
-            className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-amber-400 text-[11px] font-bold leading-none text-amber-950 shadow ring-1 ring-amber-900/30 transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+            // +20% en diagonale par rapport au premier jet (16px de côté →
+            // 19,2px), même facteur que l'icône tâche au-dessus.
+            className="flex h-[19.2px] w-[19.2px] shrink-0 items-center justify-center rounded-full bg-amber-400 text-[13px] font-bold leading-none text-amber-950 shadow ring-1 ring-amber-900/30 transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
           >
             !
           </button>

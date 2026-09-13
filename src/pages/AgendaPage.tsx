@@ -541,7 +541,11 @@ const AgendaPage: React.FC = () => {
             // n'attend rien, ni manquer sur un créneau qui attend.
             const slot = findSlot(selectedEvent.id);
             return slot ? (
-              <SlotReviewPanel slot={slot} tzPref={tzPref} {...slotReviewActions} />
+              <SlotReviewPanel
+                slot={slot}
+                onValidate={slotReviewActions.onValidate}
+                onPostpone={slotReviewActions.onPostpone}
+              />
             ) : null;
           })()}
         />

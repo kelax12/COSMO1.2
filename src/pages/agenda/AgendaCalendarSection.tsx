@@ -40,7 +40,7 @@ import { DateSelectArg, EventClickArg, EventDropArg, DatesSetArg, EventInput, Ev
 import allCalendarLocales from '@fullcalendar/core/locales-all';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
-import { ListChecks } from 'lucide-react';
+import { CheckSquare } from 'lucide-react';
 import MemberAvatar from '@/components/organization/MemberAvatar';
 import { getDateLocale, getIntlTag } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
@@ -211,8 +211,13 @@ const AgendaCalendarSection = ({
           <span className="absolute top-0.5 right-0.5 flex flex-col items-center gap-0.5">
             {/* Informatif : `pointer-events-none` pour que le clic traverse
                 jusqu'au bloc, qui ouvre l'événement comme partout ailleurs. */}
-            <ListChecks
-              className="h-3 w-3 shrink-0 text-white/75 pointer-events-none"
+            {/* Même icône que l'entrée « Tâches » de la barre de navigation
+                (`Layout.tsx`) : c'est la même notion, elle doit se reconnaître.
+                Taille +20% en diagonale par rapport au premier jet (12px de
+                côté → 14,4px) — demandé explicitement, la pastille en dessous
+                reçoit le même facteur. */}
+            <CheckSquare
+              className="h-[14.4px] w-[14.4px] shrink-0 text-white/75 pointer-events-none"
               aria-label={t('event.linkedToTask')}
             />
             {/* Le clic ne doit pas remonter au bloc : il ouvrirait l'EventModal
