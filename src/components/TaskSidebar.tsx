@@ -18,7 +18,8 @@ import { useEvents, useDeleteEvent, useRestoreEvent } from '@/modules/events';
 // ═══════════════════════════════════════════════════════════════════
 // Module categories - (MIGRÉ)
 // ═══════════════════════════════════════════════════════════════════
-import { useCategories } from '@/modules/categories';
+import { useCategories, buildTree } from '@/modules/categories';
+import type { Category, CategoryNode } from '@/modules/categories';
 
 import { useColorSettings, usePriorityRange } from '@/modules/ui-states';
 import { useFriends, useCollaboratorsByTask } from '@/modules/friends';
@@ -68,6 +69,16 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
   // CATEGORIES - Depuis le module categories (MIGRÉ)
   // ═══════════════════════════════════════════════════════════════════
   const { data: categories = [] } = useCategories();
+  // Ordre parent-puis-enfants pour l'indentation du <select> natif du filtre
+  // (aucun repli possible dans un <option>, cf. le commentaire au rendu).
+  const categoryOptionRows: Array<{ category: Category; depth: number }> = [];
+  const flattenCategoryOptions = (nodes: CategoryNode[], depth: number) => {
+    for (const node of nodes) {
+      categoryOptionRows.push({ category: node.category, depth });
+      flattenCategoryOptions(node.children, depth + 1);
+    }
+  };
+  flattenCategoryOptions(buildTree(categories), 0);
 
   const { colorSettings } = useColorSettings();
   const { priorityRange } = usePriorityRange();
@@ -277,8 +288,15 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
               }}
             >
               <option value="">{t('sidebar.allCategories')}</option>
-              {categories.map((category) => (
-                <option key={category.id} value={category.id}>{category.name}</option>
+              {/* Un `<option>` natif ne peut porter ni icône ni bouton : un
+                  chevron repliable est impossible ici, contrairement aux
+                  autres sélecteurs de catégorie de l'app. Seule l'indentation
+                  (espaces insécables, `depth * 2`) reste possible pour
+                  signaler une sous-catégorie. */}
+              {categoryOptionRows.map(({ category, depth }) => (
+                <option key={category.id} value={category.id}>
+                  {'  '.repeat(depth)}{category.name}
+                </option>
               ))}
             </select>
             <ChevronDown size={16} className="absolute right-2 top-1/2 transform -translate-y-1/2 pointer-events-none" style={{ color: 'rgb(var(--color-text-muted))' }} />

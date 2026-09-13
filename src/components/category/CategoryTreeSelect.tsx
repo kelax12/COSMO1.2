@@ -17,9 +17,11 @@
 // la modale de création.
 // ═══════════════════════════════════════════════════════════════════
 import React, { useMemo, useState } from 'react';
+import { ChevronRight, ChevronDown } from 'lucide-react';
 import { useT } from '@/i18n/useT';
 import { useModalA11y } from '@/hooks/use-modal-a11y';
 import { buildTree, categoryPath, formatPath } from '@/modules/categories';
+import { useCollapsedCategories } from '@/modules/categories/collapsed.store';
 import type { Category, CategoryNode } from '@/modules/categories';
 
 interface CategoryTreeSelectProps {
@@ -45,6 +47,9 @@ const CategoryTreeSelect: React.FC<CategoryTreeSelectProps> = ({
   const { t } = useT('tasks');
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
+  // Partagé avec ColorSettingsModal / CategoryFilterTree : un même compte a un
+  // seul état de pliage, pas un par sélecteur.
+  const { isCollapsed, setCollapsed } = useCollapsedCategories();
 
   const close = () => { setOpen(false); setQuery(''); };
 
@@ -70,22 +75,46 @@ const CategoryTreeSelect: React.FC<CategoryTreeSelectProps> = ({
 
   const pick = (id: string) => { onChange(id); close(); };
 
-  const renderNode = (node: CategoryNode, depth: number): React.ReactNode => (
-    <React.Fragment key={node.category.id}>
-      <button
-        type="button"
-        role="option"
-        aria-selected={node.category.id === value}
-        onClick={() => pick(node.category.id)}
-        style={{ paddingInlineStart: `${8 + depth * 16}px` }}
-        className="flex w-full items-center gap-2 min-h-11 text-left text-sm text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))]"
-      >
-        <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: node.category.color }} />
-        <span className="truncate">{node.category.name}</span>
-      </button>
-      {node.children.map((child) => renderNode(child, depth + 1))}
-    </React.Fragment>
-  );
+  // Replié/déplié : même état partagé que ColorSettingsModal / CategoryFilterTree
+  // (`useCollapsedCategories`). Le chevron est un bouton séparé du bouton de
+  // sélection — un bouton ne peut pas en contenir un autre — pour que le
+  // repli ne choisisse jamais la catégorie qu'il replie.
+  const renderNode = (node: CategoryNode, depth: number): React.ReactNode => {
+    const hasChildren = node.children.length > 0;
+    const collapsed = hasChildren && isCollapsed(node.category.id);
+    return (
+      <React.Fragment key={node.category.id}>
+        <div
+          role="option"
+          aria-selected={node.category.id === value}
+          style={{ paddingInlineStart: `${8 + depth * 16}px` }}
+          className="flex w-full items-center gap-1 min-h-11 text-sm text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))]"
+        >
+          {hasChildren ? (
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); setCollapsed(node.category.id, !collapsed); }}
+              aria-label={collapsed ? t('colorModal.expand') : t('colorModal.collapse')}
+              className="p-1 shrink-0 text-blue-600 dark:text-blue-400"
+            >
+              {collapsed ? <ChevronRight size={14} aria-hidden="true" /> : <ChevronDown size={14} aria-hidden="true" />}
+            </button>
+          ) : (
+            <span className="w-6 shrink-0" aria-hidden="true" />
+          )}
+          <button
+            type="button"
+            onClick={() => pick(node.category.id)}
+            className="flex flex-1 min-w-0 items-center gap-2 min-h-11 text-left"
+          >
+            <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: node.category.color }} />
+            <span className="truncate">{node.category.name}</span>
+          </button>
+        </div>
+        {hasChildren && !collapsed && node.children.map((child) => renderNode(child, depth + 1))}
+      </React.Fragment>
+    );
+  };
 
   return (
     <div className="relative">

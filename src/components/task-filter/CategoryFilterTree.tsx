@@ -70,7 +70,7 @@ const CategoryFilterTree: React.FC<CategoryFilterTreeProps> = ({
               type="button"
               onClick={() => setCollapsed(category.id, !isCollapsed(category.id))}
               aria-label={isCollapsed(category.id) ? t('colorModal.expand') : t('colorModal.collapse')}
-              className="p-1 shrink-0"
+              className="p-1 shrink-0 text-blue-600 dark:text-blue-400"
             >
               {isCollapsed(category.id)
                 ? <ChevronRight size={14} aria-hidden="true" />
