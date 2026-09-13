@@ -40,7 +40,7 @@
     "delete": "Supprimer",
     "deleted": "Tâche et créneau supprimés",
     "postponed": "Créneau retiré, à replanifier",
-    "ignore": "Ignorer",
+    "ignore": "Tâche non réalisée",
     "badgeAria": "Ce créneau attend une décision : {{title}}",
     "panelTitle": "Créneau terminé",
     "panelAction": "Que faire de ce créneau ?"
