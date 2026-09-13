@@ -79,9 +79,17 @@ jobs:
       # existe pour refermer.
       # ⚠️ Epingle sur un SHA, comme tous les `uses:` du depot : `@v1` etait
       # une BRANCHE, qui avance a chaque release.
+      #
+      # La VERSION DE LA CLI est epinglee, et c'est le correctif du 2026-09-13.
+      # Avec `version: latest`, la CLI installee ici rendait le bundle
+      # TRANSPILE et non la source : `export async function opsAlert(source,
+      # summary)` la ou le depot ecrit `opsAlert(source: string, summary:
+      # string)`. La garde comparait donc du TypeScript a du JavaScript, et
+      # annoncait 24 divergences quand il y en a 4. Epingler l'action par SHA
+      # sans epingler la version qu'elle installe, c'est ne rien epingler.
       - uses: supabase/setup-cli@46f7f98c7f948ad727d22c1e67fab04c223a0520 # v3.0.0
         with:
-          version: latest
+          version: 2.117.0
 
       # Le temoin est une suite Vitest : il lui faut les dependances. Elles
       # sont installees AVANT la comparaison, pour que l'etape qui mesure et

@@ -27,7 +27,7 @@
 import { describe, it, expect } from 'vitest';
 import { spawnSync } from 'node:child_process';
 import { resolve } from 'node:path';
-import { mkdtempSync, mkdirSync, writeFileSync, existsSync, chmodSync, rmSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, existsSync, chmodSync, rmSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
@@ -40,6 +40,8 @@ import {
   nettoyerBac,
   rendreEffacable,
   estFichierDuBundle,
+  assertMemeLangage,
+  compteMarqueursTs,
 } from './check-edge-deploy.mjs';
 
 const SCRIPT = resolve(process.cwd(), 'scripts/check-edge-deploy.mjs');
@@ -478,5 +480,157 @@ describe('check:edge · temoin de lisibilite', () => {
     const d = avec(`${'x'.repeat(400)}\n`, `${'y'.repeat(400)}\n`);
     expect(d.ligneDepot.length).toBeLessThanOrEqual(143);
     expect(d.ligneDepot.endsWith('...')).toBe(true);
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════
+// TEMOIN DE LANGAGE
+//
+// 🔴 Le defaut le plus grave de la journee du 2026-09-13, et il ne portait ni
+// sur le produit ni sur la detection : la CI comparait du TypeScript a du
+// JavaScript. La CLI installee par `version: latest` rendait le bundle
+// TRANSPILE, donc presque chaque fichier « divergeait » — 24 divergences
+// annoncees pour 4 reelles, ce qui est la pire forme d'echec ici : personne ne
+// distingue les vraies des fausses dans une liste de 24.
+//
+// La version de la CLI est desormais epinglee. Ces cas sont ce qui rend le pin
+// VERIFIABLE : le jour ou un lecteur se remet a transpiler, le job doit dire
+// « lecture transpilee », jamais inventer vingt derives.
+//
+// Les chaines ci-dessous sont celles REELLEMENT lues ce jour-la, pas des
+// fixtures inventees.
+// ═══════════════════════════════════════════════════════════════════
+describe('check:edge · temoin de langage', () => {
+  const SOURCE_TS = [
+    'export async function opsAlert(source: string, summary: string): Promise<void> {',
+    "  const url = Deno.env.get('OPS_ALERT_WEBHOOK_URL')",
+    '  if (!url) return',
+    '}',
+  ].join('\n');
+
+  // Le meme fichier tel que la CI le lisait : types effaces, points-virgules
+  // ajoutes par la transpilation.
+  const TRANSPILE = [
+    'export async function opsAlert(source, summary) {',
+    "  const url = Deno.env.get('OPS_ALERT_WEBHOOK_URL');",
+    '  if (!url) return;',
+    '}',
+  ].join('\n');
+
+  it('reconnait du TypeScript, et n en voit pas dans du JavaScript', () => {
+    expect(compteMarqueursTs(SOURCE_TS)).toBeGreaterThan(0);
+    expect(compteMarqueursTs(TRANSPILE)).toBe(0);
+  });
+
+  it('REFUSE de comparer une source TypeScript a une lecture transpilee', () => {
+    expect(() =>
+      assertMemeLangage(
+        'delete-account',
+        new Map([['_shared/alert.ts', SOURCE_TS]]),
+        new Map([['_shared/alert.ts', TRANSPILE]]),
+      ),
+    ).toThrow(/TRANSPILEE/);
+  });
+
+  it('laisse passer deux cotes ecrits dans le meme langage', () => {
+    expect(() =>
+      assertMemeLangage(
+        'delete-account',
+        new Map([['_shared/alert.ts', SOURCE_TS]]),
+        new Map([['_shared/alert.ts', SOURCE_TS]]),
+      ),
+    ).not.toThrow();
+  });
+
+  it('laisse passer une VRAIE derive, qui garde ses types', () => {
+    // Le cas des 4 derives reelles du 09-13 : le code differe, le langage non.
+    // Les confondre ferait taire la garde sur ce qu'elle doit trouver.
+    const derive = SOURCE_TS.replace('if (!url) return', 'if (!url) return false');
+    expect(() =>
+      assertMemeLangage(
+        'delete-account',
+        new Map([['_shared/alert.ts', SOURCE_TS]]),
+        new Map([['_shared/alert.ts', derive]]),
+      ),
+    ).not.toThrow();
+  });
+
+  it('ne confond pas un fichier ABSENT avec un fichier transpile', () => {
+    // Une asymetrie est une divergence, le travail du comparateur. La traiter
+    // ici masquerait « la prod execute un fichier que le depot n'a plus ».
+    expect(() =>
+      assertMemeLangage('delete-account', new Map([['_shared/alert.ts', SOURCE_TS]]), new Map()),
+    ).not.toThrow();
+  });
+
+  it('cas REEL du depot · _shared/alert.ts porte bien des marqueurs TS', () => {
+    // Si ce fichier cessait un jour d'etre typé, le detecteur deviendrait muet
+    // sans que rien ne le dise. Ce cas le tient sur la source reelle.
+    const reel = repoFilesFor('delete-account').get('_shared/alert.ts');
+    expect(compteMarqueursTs(reel)).toBeGreaterThan(0);
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════
+// TEMOIN DE CABLAGE
+//
+// 🔴 Ce cas vient d'un sabotage qui est PASSE. Le 2026-09-13, les cas de
+// « temoin de langage » ci-dessus ont ete verifies en sabotant le detecteur :
+// deux rouges, bien. Puis on a retire son APPEL du script — et les 38 cas
+// sont restes verts. Les tests exercaient la fonction ; rien ne disait qu'elle
+// etait branchee.
+//
+// C'est la forme la plus discrete du defaut que ce dossier traque : une garde
+// qui existe, qui se teste, et que personne n'appelle. Le detecteur aurait pu
+// etre debranche par une refonte sans qu'aucune suite ne bronche.
+//
+// ⚠️ Ce cas est STATIQUE, et c'est un aveu assume : verifier l'appel en
+// EXECUTANT le script demanderait un jeton Supabase, donc du reseau, donc une
+// suite qui ne tourne plus hors CI. On lit le source. C'est plus faible qu'un
+// parcours, et infiniment plus fort que rien.
+// ═══════════════════════════════════════════════════════════════════
+describe('check:edge · temoin de cablage', () => {
+  const source = readFileSync(SCRIPT, 'utf8');
+
+  // ⚠️ Le POINT-VIRGULE final n'est pas un detail : sans lui, l'expression
+  //    correspond aussi a la DEFINITION exportee (`export function
+  //    assertMemeLangage(slug, repoFiles, deployedFiles) {`). La premiere
+  //    version de ces deux cas est passee sur un sabotage qui avait retire
+  //    l'appel — elle mesurait la declaration de la garde, pas son cablage.
+  it('le script APPELLE le detecteur de langage sur chaque fonction lue', () => {
+    expect(source).toContain('assertMemeLangage(slug, repoFiles, deployedFiles);');
+  });
+
+  it('le script APPELLE la garde de lecture vide', () => {
+    expect(source).toContain('assertReadSomething(slug, deployedFiles);');
+  });
+
+  it('les deux gardes sont appelees AVANT la comparaison', () => {
+    // L'ordre compte : comparer d'abord, ce serait produire la liste de 24
+    // fausses divergences avant de s'apercevoir qu'on lisait autre chose.
+    const iLangage = source.indexOf('assertMemeLangage(slug, repoFiles, deployedFiles);');
+    // ⚠️ On cherche l'APPEL, pas la DEFINITION : `compareFunction({ slug,
+    //    repoFiles` correspond d'abord a la signature exportee, 8 000
+    //    caracteres plus haut, et le test echouait sur sa propre imprecision.
+    const iCompare = source.search(/const ecarts = compareFunction\(/);
+    expect(iLangage).toBeGreaterThan(-1);
+    expect(iCompare).toBeGreaterThan(-1);
+    expect(iLangage).toBeLessThan(iCompare);
+  });
+
+  it('la version de la CLI est EPINGLEE dans le workflow', () => {
+    // `version: latest` est la cause racine de la comparaison entre langages.
+    // Epingler l'action par SHA sans epingler ce qu'elle installe n'epingle
+    // rien.
+    const wf = readFileSync(resolve(process.cwd(), '.github/workflows/edge-deploy-drift.yml'), 'utf8');
+    // ⚠️ Les COMMENTAIRES sont retires avant de chercher : le fichier explique
+    //    justement pourquoi `version: latest` etait la cause racine, et le
+    //    test echouait sur cette explication.
+    const effectif = wf
+      .split('\n')
+      .filter((l) => !l.trim().startsWith('#'))
+      .join('\n');
+    expect(effectif).toMatch(/version:\s*\d+\.\d+\.\d+/);
+    expect(effectif).not.toMatch(/version:\s*latest/);
   });
 });
