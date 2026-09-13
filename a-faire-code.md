@@ -3729,6 +3729,18 @@ dépôt. Le vert, lui, ne notifie rien. Et l'issue `ci-red` étant écrite par u
   mordait pas**, sa fenêtre de regex étant trop courte de 800 caractères, vu en rejouant le
   sabotage et pas en la relisant.
 
+**Mesure APRÈS, sur le code corrigé** (et pas sur une relecture) : exercice à blanc rejoué une
+troisième fois le **2026-09-13 à 09:52 UTC**, run `34750041468`, cette fois contre
+`node scripts/ops-alert.mjs` sur `main` → **`Alerte poussee (HTTP 204)`**, job vert. Et les 14 cas
+du témoin ont tourné **aussi sur Linux** dans la CI du même commit (`lint-test-build`), les cinq
+jobs verts.
+
+⚠️ **Ce qui est prouvé en ligne, et ce qui ne l'est que par le témoin** : la branche 2xx → `exit 0`
+est jouée sur le runner. Les branches `exit 1` ne peuvent pas l'être sans retirer le secret du
+dépôt ; elles sont prouvées par les six sabotages, sur le **même module** que celui qu'exécute le
+runner. La distinction est écrite ici plutôt que tue : un « tout est vérifié en ligne » serait
+exactement le genre d'énoncé que cette liste passe son temps à démentir.
+
 - **Fini quand** : ~~le secret est posé~~ (2026-09-02) · ~~l'exercice à blanc a été joué~~
   (2026-09-02, rejoué le 09-13, HTTP 204 les deux fois) · ~~aucune branche ne sort en vert sans
   avoir livré~~ (2026-09-13, avec témoin) · **reste à Axel : confirmer que le message est bien
