@@ -90,8 +90,8 @@ compte** et **ce qui prouve que c'est fini**.
 >
 > | État | Nombre | Ce que ça veut dire |
 > |---|---|---|
-> | ✅ clos | 35 | 9 l'étaient avant cette passe, 25 le sont depuis, **C-14 le 2026-09-11** |
-> | 🟠 à moitié | 3 | C-23 (avancé, critère non atteint) · C-39 et C-65 (le code est écrit, il n'est pas déployé) |
+> | ✅ clos | 36 | 9 l'étaient avant cette passe, 25 le sont depuis, **C-14 le 2026-09-11**, **C-23 le 2026-09-13** |
+> | 🟠 à moitié | 2 | C-39 et C-65 (le code est écrit, il n'est pas déployé). **C-23 est sorti de cette ligne le 2026-09-13**, tranché par M-42 |
 > | ⬜ ouvert | 32 | rien n'a été engagé |
 >
 > 🔴 **CE QUI COMPTE PLUS QUE LE DÉCOMPTE : cinq énoncés se sont révélés faux à
@@ -193,7 +193,7 @@ quand ». Une décision écrite ici fait foi contre une piste écrite dans l'ite
 | **C-65** | **Annuel remboursé au prorata des mois non consommés** | Transposition littérale de la règle mensuelle. Referme l'exposition annuelle en entier, donc C-34 reste en P1 |
 | **C-39** | **Propriétaire seul, et la suppression résilie et rembourse** | La RPC `delete_organization` exige le propriétaire, et le chemin de suppression appelle celui de C-65 : on résilie, on rembourse la période en cours, puis on supprime. Un seul geste, aucun débit orphelin |
 | **C-53** | **Un hook unique, les surfaces avec saisie d'abord** | `useModalA11y` porte le piège de focus, la restitution au déclencheur, Échap et `role="dialog" aria-modal="true"`. Ordre : `EventModal`, `HabitModal`, les feuilles mobiles, puis le reste des 58. Radix n'est PAS généralisé |
-| **C-23 · C-25** | **Les deux tokens changent, puis la gate passe en `serious`** | `--color-error` → `red-600` (4,83:1, calculé), et le bleu de marque à une teinte conforme. ⚠️ Le bleu porte l'identité visuelle : la nouvelle teinte se choisit à l'œil sur la landing avant d'être posée en token |
+| **C-23 · C-25** | ⚠️ **SUPERSÉDÉ pour la moitié C-23, le 2026-09-13** — la gate est passée en `serious` le 09-04, `--color-error` est à `red-600`, mais le bleu de marque **ne change pas** : Axel a tranché « on garde `#2563eb` » après avoir vu trois teintes rendues côte à côte. Motif dans `docs/ACCESSIBILITY.md` § C-23. La ligne d'origine suit → | `--color-error` → `red-600` (4,83:1, calculé), et le bleu de marque à une teinte conforme. ⚠️ Le bleu porte l'identité visuelle : la nouvelle teinte se choisit à l'œil sur la landing avant d'être posée en token |
 | **C-57** | **`TouchTarget` sur les trois routes fautives** | Cases à cocher de `/dashboard` et `/entreprise` à 44 px de zone tactile (l'icône reste petite), les 42 boutons d'`/okr` de 40 à 44. Puis une garde compte les commandes sous la cible |
 | **C-41 · C-42 · C-43** | **Toast « Annuler » partout, et le libellé dit combien** | Les trois modales `add-to-list` passent par le flux de `TasksPage` (à extraire), `useRestoreEvent` sert les événements liés, et il faut écrire un `useRestoreComment` |
 | **C-62** | **Fermer le tuyau, pas seulement traduire** | Les refus des repositories deviennent des identifiants métier catalogués, comme les `RAISE` du SQL ; `{{message}}` ne reçoit plus que du texte de catalogue ; une garde le verrouille avec son témoin |
@@ -2714,7 +2714,67 @@ de les REMESURER en soumettant les cas au scanner.
 
 ## 7. Accessibilité
 
-### C-23 · Durcir la gate axe-core de `critical` à `serious` · **P2 · S** · 🟠 noyau reproductible ramené de 11 à 9 nœuds le 2026-09-12
+### C-23 · Durcir la gate axe-core de `critical` à `serious` · **P2 · S** · ✅ clos le 2026-09-13 (gate durcie le 09-04, dispense tranchée et motivée le 09-13)
+> #### ✅ TRANCHÉ le 2026-09-13 (M-42) — on garde `#2563eb`, et la dispense est désormais MOTIVÉE
+>
+> **L'item est clos.** Pas parce que les 9 nœuds ont disparu — ils sont toujours là — mais parce
+> que la seule chose qui manquait était une **décision**, et qu'elle est rendue. Le « fini quand »
+> de cet item prévoyait exactement cette branche : « soit la teinte change, soit la décision "on
+> garde, voici pourquoi et où c'est acceptable" est écrite dans `docs/ACCESSIBILITY.md`, et la
+> dispense y renvoie nommément ».
+>
+> **Remesuré le 2026-09-13**, une passe complète : **18 nœuds** `color-contrast` (contre 21 / 41 / 55
+> la veille). Le total reste un **tirage**, jamais un état. Le noyau reproductible est inchangé :
+> `#2563eb` sur `#e3ebfa`, **4,31:1**, **×9**.
+>
+> 🔴 **Et la mesure a corrigé l'énoncé une fois de plus — le dixième de cette liste.** Deux
+> affirmations étaient fausses, toutes deux recopiées sans être relues à leur source :
+>
+> | Ce que l'item (et M-42) disaient | Ce que la mesure rend |
+> |---|---|
+> | « 9 nœuds sur neuf routes » | **un seul composant**, `DemoConversionBanner`, compté une fois par route |
+> | « corriger demande de foncer `--color-accent`, donc la couleur des LIENS et du FOCUS » | le texte fautif est peint par **`--color-accent-solid`**, sur un fond fait du **même token à 10 %**. `--color-accent` (liens, focus) n'est flaggé **nulle part** : il vaut 5,17:1 sur blanc |
+>
+> Les deux tokens valent la même chose en thème clair, donc l'énoncé n'était pas absurde — mais il
+> annonçait un arbitrage d'identité bien plus large que celui réellement en jeu.
+>
+> **Quatre options rendues côte ô côte dans le produit** (`/dashboard` en mode démo, thème clair,
+> tokens surchargés sur le vrai bandeau), ratios **mesurés dans le navigateur** :
+>
+> | Option | Teinte | Sur la teinte | Ce que ça déplace ailleurs |
+> |---|---|---|---|
+> | **retenue** | `#2563eb` inchangé | 4,31 | rien |
+> | T1 | `#1d4ed8` sur ce seul texte | 5,59 | rien (token dédié « accent sur fond teinté ») |
+> | T2 | `#1d4ed8` sur les deux tokens | 5,50 | liens, focus, boutons pleins, chips |
+> | T3 | `#1e40af` sur les deux tokens | 7,05 | idem, bleu presque marine |
+>
+> ⚠️ Le `5,59` que cet item annonçait pour `#1d4ed8` était juste **à fond constant** (T1). Dès que
+> le token bouge, le fond teinté bouge avec lui et le ratio retombe à **5,50** (T2) : un fond
+> dérivé de la couleur qu'on corrige ne se calcule pas une fois pour toutes.
+>
+> **Décision d'Axel : on garde `#2563eb`.** Écrite, avec son périmètre d'acceptabilité et ce qu'elle
+> ne couvre pas, dans [`docs/ACCESSIBILITY.md`](./docs/ACCESSIBILITY.md) § « C-23 — pourquoi le bleu
+> du thème clair reste à 4,31:1 ». La dispense `color-contrast` d'`e2e/a11y-audit.spec.ts` y renvoie
+> nommément et cesse d'être provisoire.
+>
+> 🔴 **Une dispense définitive sans cliquet serait un chèque en blanc**, et c'est le seul vrai
+> risque que cette décision crée : le seul outil qui voit cette paire est précisément celui qu'on
+> dispense, donc une dérive passerait en silence. `src/theme-contrast.guard.test.ts` gagne un
+> plancher à **4,31:1** sur la paire gardée, plus un contrôle que la première déclaration lue est
+> bien celle d'un thème CLAIR (réordonner `index.css` ferait sinon mesurer un fond sombre sans que
+> rien ne le dise). Les **deux** cas ont été **vus rouges** avant d'être commités, par sabotage du
+> CSS : `2,25:1` sur un accent éclairci, `3,16:1` sur un fond assombri.
+> ❌ Ce plancher ne se baisse jamais. Toute amélioration le fait MONTER ; au-delà de 4,5 il devient
+> un vrai seuil AA et la dispense tombe.
+>
+> **Sortie mesurée** : `npx playwright test e2e/a11y-audit.spec.ts --project=chromium` → **11/11
+> verts** ; `src/theme-contrast.guard.test.ts` → **5/5** ; `tsc -b` et ESLint → 0.
+>
+> ⚠️ **Les deux réserves ne tombent pas avec l'item, et ne doivent jamais être omises** : axe ne
+> scanne que l'**état initial** de chaque route (aucune modale, aucun menu, aucun calendrier), et que
+> le **thème par défaut** — c'est ce qui a laissé le bouton principal à 3,34:1 pendant dix-neuf
+> jours. `theme-contrast.guard` couvre les quatre thèmes, mais seulement pour le couple
+> `accent-solid` / son texte, plus ce cliquet-ci.
 
 > 🟠 **Pas clos, mais la gate EST durcie depuis le 2026-09-04**, autrement que ne le prévoyait
 > l'énoncé : tout `serious` casse la CI, **sauf les règles nommées** dans

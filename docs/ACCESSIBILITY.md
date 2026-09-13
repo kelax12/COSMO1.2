@@ -477,6 +477,88 @@ fond teinté), toutes dans le bandeau d'échéances. Passer la gate à `serious`
 mais pas gratuit** : `red-600` (`#dc2626`, 4,83:1) suffit pour les deux premières, la troisième est
 le même arbitrage que le bleu de marque.
 
+> ⚠️ **Cette mesure a été DÉPASSÉE deux fois, et ce paragraphe est conservé pour l'historique du
+> chiffrage, pas comme état courant.** La gate est passée à `serious` le **2026-09-04**,
+> `--color-error` est à `red-600` depuis, et le troisième cas a été tranché le **2026-09-13** :
+> cf. « C-23 — pourquoi le bleu du thème clair reste à 4,31:1 » ci-dessous, qui fait foi. Le
+> « trois violations distinctes » ci-dessus vient par ailleurs d'un rapport tronqué à trois
+> échantillons — le rapport ne tronque plus.
+
+### C-23 — pourquoi le bleu du thème clair reste à 4,31:1 (décidé le 2026-09-13)
+
+**C'est une décision, pas un oubli, et c'est ici qu'elle se lit.** La dispense `color-contrast` de
+`e2e/a11y-audit.spec.ts` renvoie nommément à cette section, et le cliquet qui la tient est
+`src/theme-contrast.guard.test.ts` § « C-23 ».
+
+**Ce qui est mesuré.** Trois passes de `e2e/a11y-audit.spec.ts` sur le même commit rendent des
+totaux `color-contrast` différents — 21, 41 puis 55 nœuds le 2026-09-12, 18 le 2026-09-13. Le total
+n'est **pas** reproductible : axe photographie chaque route à un instant, et ces pages entrent en
+fondu. Les ratios de ces couples-là s'étalent **de 1,02 à 4,44** selon l'instant où l'opacité est
+photographiée, et le même élément y apparaît sous des couleurs différentes d'une passe à l'autre
+(`#2563eb` devient `#2573eb`, `#487cee`, `#729af1`…). ⚠️ C'est ce qui a fait croire à une famille
+« blanc sur le **dégradé** du bouton principal, 3,49 à 4,48 », longtemps citée comme distincte :
+c'est le même bleu, photographié plus tôt. ❌ **Ne jamais citer un total de ce rapport comme un
+état** : c'est un tirage.
+
+Reproductible dans toutes les passes, une seule paire :
+
+| Paire | Nœuds | Ratio mesuré | Ce que c'est |
+|---|---|---|---|
+| `#2563eb` sur `#e3ebfa` | **9** | **4,31:1** (AA en demande 4,5) | le lien « Créez un compte » du bandeau de mode démo |
+
+🔴 **Les 9 nœuds sont UN SEUL composant**, `DemoConversionBanner`, rendu sur les 9 routes protégées.
+Le rapport les compte par route, ce qui fait lire « neuf endroits » là où il n'y en a qu'un. Et il
+est peint par **`--color-accent-solid`**, sur un fond fait du **même token à 10 %** posé sur
+`--color-background` — pas par `--color-accent`. Les deux valent la même chose en thème clair, mais
+la distinction change le périmètre de la décision : **les liens et l'anneau de focus, qui sont
+`--color-accent`, ne sont flaggés nulle part** (le lien sur blanc vaut 5,17:1). Le backlog a écrit
+pendant plusieurs jours que corriger « demanderait de foncer la couleur des liens et du focus » :
+c'était faux, et c'est ce que la mesure a corrigé.
+
+**Les options ont été rendues côte à côte dans le produit** le 2026-09-13 — `/dashboard` en mode
+démo, thème clair, tokens surchargés sur le vrai bandeau — puis mesurées dans le navigateur, pas
+calculées :
+
+| Option | Teinte | Ratio sur la teinte | Ce que ça déplace ailleurs |
+|---|---|---|---|
+| **retenue** | `#2563eb` inchangé | 4,31 | rien |
+| T1 | `#1d4ed8` sur ce seul texte | 5,59 | rien (token dédié « accent sur fond teinté ») |
+| T2 | `#1d4ed8` sur les deux tokens | 5,50 | liens, focus, boutons pleins, chips |
+| T3 | `#1e40af` sur les deux tokens | 7,05 | idem, bleu nettement plus profond |
+
+**Décision d'Axel : on garde `#2563eb`.** Le bleu est l'identité visuelle du produit, et aucune des
+trois variantes ne l'a emporté à l'œil sur un écart de 0,19 point de ratio.
+
+**Où c'est acceptable, et où ça ne le serait pas.** L'écart porte sur **un lien secondaire d'un
+bandeau informatif de mode démo** : le texte qu'il accompagne (`--color-text-secondary` et
+`--color-text-primary`) est conforme, le lien est **souligné** — donc il ne dépend pas de la
+couleur pour être identifié comme lien (WCAG 1.4.1) — il fait 14 px semi-gras, et le même geste
+(« créer un compte ») est atteignable depuis l'écran de connexion, où il est conforme. Aucune
+information, aucune action et aucun message d'erreur ne repose sur cet écart.
+
+❌ **Ce raisonnement ne se transporte nulle part ailleurs.** Il ne couvre PAS un libellé de bouton,
+un message d'erreur, un texte porteur d'information, ni une couleur sémantique — `--color-error`
+est justement passé à `red-600` (4,83:1) pour cette raison, et ce n'était pas un arbitrage de
+marque. Une nouvelle paire sous 4,5:1 est une régression, pas un précédent.
+
+⚠️ **Deux réserves qui valent pour tous les chiffres de cette section**, et qu'il ne faut jamais
+omettre en les citant :
+
+1. **axe ne scanne que l'ÉTAT INITIAL de chaque route.** Aucune modale, aucun menu, aucun
+   calendrier ouvert n'entre dans ces totaux.
+2. **axe ne scanne que le THÈME PAR DÉFAUT.** C'est ce qui a laissé le bouton principal à 3,34:1
+   pendant dix-neuf jours sans qu'aucun run ne puisse le dire. `src/theme-contrast.guard.test.ts`
+   couvre désormais les quatre thèmes, mais **seulement** pour le couple `--color-accent-solid` /
+   son texte, plus ce cliquet-ci.
+
+**Ce que la décision engage.** La dispense `color-contrast` reste en place — c'est la seule règle
+`serious` non bloquante — et elle ne tombera pas. En échange, le cliquet de
+`src/theme-contrast.guard.test.ts` refuse que la paire descende **sous 4,31:1** : « on garde » est
+défendable à 4,31, il ne l'est plus à 3,2, et sans cliquet une dérive passerait sous silence
+puisque le seul outil qui la voit est précisément celui qu'on a dispensé. ❌ **Ne jamais baisser ce
+plancher.** Toute amélioration doit le faire monter ; au-delà de 4,5 il devient un vrai seuil AA et
+la dispense tombe.
+
 ## Findings résiduels de l'audit du 2026-05-29
 
 L'audit d'origine listait A-1 → A-11. Vérifié dans le code le **2026-08-14** :
@@ -506,9 +588,11 @@ clavier) sont couverts par la section « A-3 » ci-dessus, avec leurs findings o
 **Sa check-list est prête depuis le 2026-09-04** et se joue d'une traite, témoin compris :
 [`AUDIT-VOICEOVER-IOS.md`](./AUDIT-VOICEOVER-IOS.md). Ce qui manque n'est plus le protocole, c'est
 l'appareil et l'heure.
-Objectif de durcissement : la gate peut passer de `critical` à `serious` **au prix de deux tokens**,
-chiffrés ci-dessus — et non « gratuitement », comme cette page l'a écrit du 2026-08-24 au 2026-09-03
-sans jamais compter les violations concernées.
+Durcissement : **fait le 2026-09-04**. La gate casse la CI sur tout `serious` sauf les règles
+nommées dans `SERIOUS_NOT_BLOCKING`, où il n'en reste qu'une, `color-contrast`, désormais motivée et
+définitive (section C-23 ci-dessus). Ce n'était pas « gratuit », comme cette page l'a écrit du
+2026-08-24 au 2026-09-03 sans jamais compter les violations concernées : ça a coûté un token
+(`--color-error` → `red-600`) et un arbitrage rendu.
 
 ## Règles
 
