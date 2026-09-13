@@ -21,17 +21,18 @@ export function getProgress(keyResults: KeyResult[]): number {
   return totalWeight > 0 ? Math.round(weightedSum / totalWeight) : 0;
 }
 
-// Filtre les objectifs selon la catégorie sélectionnée :
-//  - 'finished' → objectifs complétés
-//  - 'all'      → objectifs non complétés
-//  - <id>       → objectifs non complétés de cette catégorie
-export function filterObjectivesByCategory<T extends Pick<OKR, 'completed' | 'category'>>(
+// Filtre les objectifs NON COMPLÉTÉS (les complétés vivent dans leur propre
+// écran, « OKR terminés ») selon l'ensemble de catégories actives :
+//  - vide  → tous les objectifs non complétés
+//  - sinon → ceux dont la catégorie est dans l'ensemble (filtre multi-select,
+//            cf. CategoryFilterBar — une racine active y entraîne toutes ses
+//            sous-catégories)
+export function filterObjectivesByCategories<T extends Pick<OKR, 'completed' | 'category'>>(
   objectives: T[],
-  selectedCategory: string
+  activeCategoryIds: ReadonlySet<string>,
 ): T[] {
-  return selectedCategory === 'finished'
-    ? objectives.filter((obj) => obj.completed)
-    : selectedCategory === 'all'
-    ? objectives.filter((obj) => !obj.completed)
-    : objectives.filter((obj) => !obj.completed && obj.category === selectedCategory);
+  const notCompleted = objectives.filter((obj) => !obj.completed);
+  return activeCategoryIds.size === 0
+    ? notCompleted
+    : notCompleted.filter((obj) => activeCategoryIds.has(obj.category));
 }
