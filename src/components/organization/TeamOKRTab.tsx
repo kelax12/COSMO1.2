@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { toast } from '@/lib/toast';
+import { toast } from 'sonner';
 import { Plus, Target, Trash2, Pencil, Users, Building2 } from 'lucide-react';
 import {
   useTeamOKRs,
