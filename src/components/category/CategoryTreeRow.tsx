@@ -56,7 +56,7 @@ const CategoryTreeRow: React.FC<CategoryTreeRowProps> = ({
           type="button"
           onClick={onToggle}
           aria-label={isExpanded ? t('colorModal.collapse') : t('colorModal.expand')}
-          className="p-1 shrink-0"
+          className="p-1 shrink-0 text-blue-600 dark:text-blue-400"
         >
           {isExpanded ? <ChevronDown size={14} aria-hidden="true" /> : <ChevronRight size={14} aria-hidden="true" />}
         </button>

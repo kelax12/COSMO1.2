@@ -21,13 +21,7 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Slider } from '@/components/ui/slider';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import CategoryTreeSelect from '@/components/category/CategoryTreeSelect';
 import type { Category } from '@/modules/categories';
 import type { KeyResult } from '@/modules/okrs';
 import { getProgress, type Objective } from '@/pages/okr/okr-page-logic';
@@ -177,20 +171,11 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
             <div className="grid grid-cols-2 gap-3">
               <div className="grid gap-2">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="okr-cat">{t('modal.category')}</Label>
+                  <Label>{t('modal.category')}</Label>
                   {/* Créer une catégorie sans quitter le modal (pattern unifié). */}
                   <AddCategoryButton onClick={() => setShowColorSettings(true)} />
                 </div>
-                <Select value={category} onValueChange={setCategory}>
-                  <SelectTrigger id="okr-cat" className="w-full">
-                    <SelectValue placeholder={t('modalSheet.pickPlaceholder')} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <CategoryTreeSelect value={category} onChange={setCategory} categories={categories} />
               </div>
               <div className="grid gap-2">
                 <Label>{t('modal.deadline')}</Label>
