@@ -3661,15 +3661,78 @@ d'un élément, valeur d'attribut, ternaire d'attribut), après les quatre déj�
 Le seuil est à 0 et la gate est verte — c'est encore « une garde qui répond sans mesurer », dans
 celle-là même dont le compteur avait déjà été faux une fois.
 
-### C-28 · Le canal d'alerte d'ops est inerte · **P1 · XS (code) + geste d'Axel**
+### C-28 · Le canal d'alerte d'ops · **P1 · XS** · ✅ le canal DÉLIVRE, la garde est refermée
 
-`ci-alert.yml` pousse désormais les échecs de garde sur `OPS_ALERT_WEBHOOK_URL`, **et ce secret
-n'existe pas dans les secrets Actions du dépôt** (il n'existe que côté Supabase). Tant qu'il manque,
-la seule voie restante est l'issue GitHub, c'est-à-dire le canal qui n'a **pas** été lu pendant
-quatre jours pendant qu'un script tiers exfiltrait email et nom.
+> 🔴 **L'énoncé de cet item était FAUX, et depuis onze jours.** Il affirmait que le secret
+> `OPS_ALERT_WEBHOOK_URL` « n'existe pas dans les secrets Actions du dépôt ». Remesuré le
+> **2026-09-13** par `gh secret list` : il y est depuis le **2026-09-02 à 09:13:47 UTC**. C'est le
+> **dixième** énoncé de cette liste démenti par sa propre remesure, et le motif est toujours le
+> même : il a été **recopié** d'une version antérieure au lieu d'être relu à sa source, qui est ici
+> une seule commande.
 
-- **Fini quand** : le secret est posé (Axel), l'exercice à blanc `workflow_dispatch` a été joué, et
-  le message est arrivé dans le salon.
+**Ce qui était déjà vrai avant cette passe, mesuré le 2026-09-13 :**
+
+| Ce qu'on a mesuré | Chiffre | Source |
+|---|---|---|
+| Secret posé dans les secrets **Actions** | 2026-09-02, 09:13:47 UTC | `gh secret list` |
+| Exercice à blanc joué | 2026-09-02, 09:16:11 UTC, trois minutes après | run `33613177985` |
+| Ce que l'exercice a obtenu | **`Alerte poussee (HTTP 204)`** | log du run |
+| Alertes réelles poussées depuis | **73** sur `workflow_run` | 200 derniers runs de `CI alert` |
+| Alertes perdues avant le secret | 8 | même inventaire, `success` antérieurs au 09-02 |
+
+Le canal **délivre**, y compris les échecs de `Edge deploy drift` (**14** depuis le 2026-09-05, tous
+poussés). Rejoué le **2026-09-13 à 09:25:06 UTC** (run `34749470125`) pour ne pas conclure d'un
+HTTP 204 vieux de onze jours : **HTTP 204** à nouveau. Un webhook Discord supprimé répondrait 404,
+donc l'endpoint est vivant.
+
+⚠️ **Ce qu'un 204 ne prouve pas** : que quelqu'un LIT le salon. C'est la moitié du « fini quand »
+que seul Axel peut fermer, et c'est exactement la raison d'être de l'item, l'issue `#44` s'étant
+mise à jour 73 fois sans être ouverte.
+
+**Ce qui restait réellement à faire, et qui est fait le 2026-09-13.** L'étape qui pousse sortait en
+**0 dans les deux cas où rien n'était parti** :
+
+```yaml
+if [ -z "${WEBHOOK:-}" ]; then
+  echo "::warning::Secret OPS_ALERT_WEBHOOK_URL absent…"
+  exit 0                      # ❌ un run vert sur un canal muet
+fi
+# … et plus bas, un webhook qui refuse :
+*) echo "::warning::Le webhook ops n'a pas accepte l'alerte (HTTP $CODE)…" ;;   # ❌ vert aussi
+```
+
+C'est le motif **exact** retiré d'`uptime.yml` le 2026-09-03 puis de `renewal-notice.yml` le 09-04,
+resté en place dans le seul fichier dont le métier EST d'alerter. Et c'est pire ici qu'ailleurs :
+l'exercice à blanc existe pour PROUVER la livraison, donc un exercice vert qui n'a rien envoyé ne
+dit pas « je ne sais pas », il dit « ça marche ».
+
+L'ancienne justification écrite dans le fichier, « on ne peut pas alerter sur l'alerting », ne tient
+pas : **un job ROUGE est l'alerte sur l'alerting**, GitHub notifiant l'échec d'un run sur son propre
+dépôt. Le vert, lui, ne notifie rien. Et l'issue `ci-red` étant écrite par une étape **antérieure**,
+échouer à la fin ne fait perdre aucun filet.
+
+- La logique vit désormais dans **`scripts/ops-alert.mjs`**, pas dans un `run:` de dix lignes, pour
+  une seule raison : en shell, elle n'avait **pas de témoin jouable**.
+- Secret absent → `exit 1`. Webhook qui refuse après **3 tentatives** → `exit 1`. Un 2xx → 0.
+- 🔴 **Pas de shebang** sur ce module : le témoin l'importe, et la chaîne Vite/vitest ne retire pas
+  le shebang que Node retire (incident du 2026-09-09, qui avait emporté les 2 205 autres tests).
+- Témoin : **`scripts/ops-alert.guard.test.mjs`, 14 cas**, **vu rouge sur six sabotages** avant
+  d'être commité : secret absent dégradé en `exit 0` (3 rouges) · webhook refusé dégradé en `exit 0`
+  (3) · un `deliver` qui répond 204 **sans rien poster** (6) · message d'exercice identique à celui
+  d'incident (1) · workflow rebranché sur l'ancien shell (2) · URL du webhook recopiée dans une
+  annotation publique (1).
+  ⚠️ Le cas « 204 sans rien poster » est celui qui compte : sans lui, un `deliver` en panne aurait
+  fait passer tous les autres. C'est la classe de défaut de `restore-drill.yml`, dont le contrôle
+  **ne pouvait pas** échouer.
+  ⚠️ Deux cas lisent `.github/workflows/ci-alert.yml` lui-même : une garde testée mais **non
+  branchée** est une garde absente. Et le premier jet de l'assertion « plus d'`exit 0` » **ne
+  mordait pas**, sa fenêtre de regex étant trop courte de 800 caractères, vu en rejouant le
+  sabotage et pas en la relisant.
+
+- **Fini quand** : ~~le secret est posé~~ (2026-09-02) · ~~l'exercice à blanc a été joué~~
+  (2026-09-02, rejoué le 09-13, HTTP 204 les deux fois) · ~~aucune branche ne sort en vert sans
+  avoir livré~~ (2026-09-13, avec témoin) · **reste à Axel : confirmer que le message est bien
+  arrivé dans le salon Discord.** Un HTTP 204 prouve que l'endpoint a accepté, pas qu'on l'a lu.
 
 ### C-34 · `renewal-notice.yml` sort en VERT quand son secret est absent · **P1 · XS**
 
@@ -3838,7 +3901,7 @@ pas les dupliquer** :
 | Mot de passe historique du `.env` fuité (T-09, seconde moitié) | `ROADMAP-60J.md` | Axel seul |
 | Passer l'audit **A-4** sur un vrai téléphone (§10) | `a-faire-manuel.md` §7, M-25 | appareil en main |
 | Déployer les 3 Edge Functions (C-29, C-35) | `a-faire-manuel.md` §8, M-30 | ligne de commande |
-| Poser les secrets `CRON_SECRET` et `OPS_ALERT_WEBHOOK_URL` (C-28, C-34) | `a-faire-manuel.md` §3, M-11 et M-12 | console |
+| Poser le secret `CRON_SECRET` (C-34) — ~~`OPS_ALERT_WEBHOOK_URL`~~ est posé depuis le 2026-09-02 | `a-faire-manuel.md` §3, M-12 | console |
 
 ---
 
@@ -4342,7 +4405,7 @@ et sa date** décrit un commit, pas la production.
 
 #### 🟠 Commencé (9)
 
-`C-23` `C-24` `C-27` `C-28` `C-30` `C-31` `C-38` `C-39` `C-65`
+`C-23` `C-24` `C-27` ~~`C-28`~~ (le secret y était depuis le 2026-09-02, mesuré le 09-13) `C-30` `C-31` `C-38` `C-39` `C-65`
 
 > ✅ **`C-48` est sorti de cette liste le 2026-09-12** : la mig. `137` est appliquée, la table de
 > transition retirée, et les deux formulations lues dans le navigateur en `fr` et en `en`.
@@ -4351,7 +4414,7 @@ et sa date** décrit un commit, pas la production.
 Ils se lisent en **deux familles**, et les confondre fait perdre le seul renseignement utile :
 
 - **critère non atteint, il reste du travail** : `C-23` `C-24` `C-27` `C-38` ;
-- **écrits, testés, mais PAS en production** : `C-28` `C-30` ~~`C-31`~~ (déployé le 2026-09-12) `C-39` `C-65`. Ce sont
+- **écrits, testés, mais PAS en production** : ~~`C-28`~~ (en production depuis le 2026-09-02, mesuré le 09-13) `C-30` ~~`C-31`~~ (déployé le 2026-09-12) `C-39` `C-65`. Ce sont
   les gestes du § 11.1 qui les débloquent, pas du travail supplémentaire.
 
 > 🔴 **`C-38` n'est PAS fini, contrairement au décompte d'entrée de cette passe.** Mesuré ici, en
@@ -4390,7 +4453,7 @@ Ils se lisent en **deux familles**, et les confondre fait perdre le seul renseig
 | **C-24** quatre audits jamais faits | partiellement engagé | le reste des audits, avec leur rapport valeur / effort au § 10 |
 | **C-27** parcours de septembre sans E2E | quelques parcours couverts | les parcours livrés en septembre, **C-65** compris, n'ont toujours aucun test E2E |
 | **C-38** `i18n:scan` | deux angles morts sur trois refermés | le troisième, ci-dessus, et les trois chaînes qu'il cache |
-| **C-28** canal d'alerte d'ops | `ci-alert.yml` écrit et branché | le secret `OPS_ALERT_WEBHOOK_URL` dans les secrets **Actions** (§ 11.1c) |
+| ~~**C-28** canal d'alerte d'ops~~ | ✅ **Le secret était posé depuis le 2026-09-02** (09:13:47 UTC, `gh secret list` le 09-13) : l'item se trompait. Exercice à blanc joué le 09-02 **et rejoué le 09-13**, HTTP **204** les deux fois ; **73** alertes réelles poussées depuis. Les deux `exit 0` sur non-livraison sont retirés le 09-13, avec témoin (14 cas, 6 sabotages) | seulement la confirmation d'Axel qu'il **voit** le message dans le salon : un 204 prouve l'acceptation, pas la lecture |
 | ~~**C-30** preuves qui survivent~~ | ✅ **CLOS le 2026-09-12**, mig. `138` appliquée et vérifiée en dix cas | — |
 | ~~**C-31** plafond de débit~~ | ✅ **RIEN N'ATTEND PLUS** | ✅ les trois maillons sont posés le 2026-09-12 : mig. `139` appliquée, `RATE_LIMIT_SALT` posé, `report-bug` déployée en **v11**. Borne jouée en ligne : 11ᵉ appel → `429` |
 | **C-39** suppression d'organisation | `useDeleteOrgFlow` rembourse avant de supprimer, propriétaire seul, vérifié par mutation. ✅ **mig. `138` appliquée le 2026-09-12** | le déploiement de `stripe-org-refund` (§ 11.1b) — seul reste |
@@ -4489,7 +4552,7 @@ fonction par fonction. C'est le geste que C-35 a mécanisé pour la CI, et il re
 |---|---|---|
 | `RATE_LIMIT_SALT` | Supabase | `consumeRateLimits` **REFUSE**, choix délibéré : pas de sel, pas de service, plutôt qu'un hachage devinable (C-31) |
 | `CRON_SECRET` | secrets **Actions** | C-34 |
-| `OPS_ALERT_WEBHOOK_URL` | secrets **Actions** | `ci-alert.yml` reste inerte (C-28) |
+| ~~`OPS_ALERT_WEBHOOK_URL`~~ | secrets **Actions** | ✅ **posé le 2026-09-02**, 73 alertes poussées depuis (C-28) |
 | **`SUPABASE_ACCESS_TOKEN`** 🆕 | secrets **Actions** | le job `Edge deploy drift` **échoue tous les jours** sans jamais comparer : le code déployé des Edge Functions n'est confronté au dépôt par **personne** (C-35). Jeton personnel Supabase, portée lecture du projet |
 
 ❌ **Ne jamais rendre une garde conditionnelle à la présence de son propre secret.** Un secret absent
