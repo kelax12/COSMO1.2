@@ -80,6 +80,14 @@ const billingTab = read('src/components/organization/OrgBillingTab.tsx');
 // une garde qui continue de lire l'ancien fichier passe au vert en ne
 // regardant plus rien.
 const deleteFlow = read('src/pages/organization/useDeleteOrgFlow.ts');
+// ⚠️ Meme raison, seconde occurrence : l'ARITHMETIQUE du verrou anti-rejeu a
+// ete extraite de l'entrypoint le 2026-09-14 (C-65), parce qu'au milieu des
+// appels Stripe elle n'etait executable par AUCUN test. Elle a desormais les
+// siens (`src/modules/billing/refund-replay.test.ts`, 10 cas dont un temoin).
+// La garde suit le code : continuer a la chercher dans `index.ts` la rendrait
+// verte en ne regardant plus rien — et c'est litteralement ce qu'elle a fait
+// echouer ici, ce qui est le comportement qu'on lui demande.
+const refundReplay = read('supabase/functions/_shared/refund-replay.ts');
 
 describe('la BORNE — un remboursement rejouable est une perte d argent', () => {
   it('porte une cle d idempotence DERIVEE DE LA FACTURE, pas un booleen', () => {
@@ -91,16 +99,39 @@ describe('la BORNE — un remboursement rejouable est une perte d argent', () =>
 
   it('verifie les remboursements DEJA poses avant d en creer un', () => {
     const code = codeOnly(refundFn);
+    // L'entrypoint LIT ce qui existe deja chez Stripe...
     expect(code).toContain('stripe.refunds.list');
-    // Et il retranche ce qui a deja ete rendu, au lieu de comparer a zero :
-    // un remboursement PARTIEL laisse un reste, et l'ignorer rendrait deux fois.
-    expect(code).toMatch(/already/);
+    // ...et le passe a la borne, au lieu d'en faire quoi que ce soit lui-meme.
+    expect(code).toMatch(/remainingRefundableCents\(/);
+    expect(code).toMatch(/priorRefunds:\s*existing\.data/);
+    // Et la borne RETRANCHE ce qui a deja ete rendu, au lieu de comparer a
+    // zero : un remboursement PARTIEL laisse un reste, et l'ignorer rendrait
+    // deux fois.
+    expect(codeOnly(refundReplay)).toMatch(/already/);
   });
 
   it('ne rembourse JAMAIS plus que ce qui a ete encaisse', () => {
     // Deux bornes independantes : celle du calcul (testee pour de vrai dans
-    // refund-amount.test.ts) et ce clamp au moment de l'appel.
-    expect(codeOnly(refundFn)).toMatch(/Math\.min\(decision\.amountCents,/);
+    // refund-amount.test.ts) et ce clamp au moment de l'appel, desormais dans
+    // `_shared/refund-replay.ts` et couvert par refund-replay.test.ts.
+    const replay = codeOnly(refundReplay);
+    expect(replay).toMatch(/Math\.min\(/);
+    expect(replay).toMatch(/amountPaidCents/);
+    // L'entrypoint doit lui DONNER l'encaisse : sans cet argument, la borne ne
+    // borne rien et le clamp porterait sur une valeur que personne ne fournit.
+    expect(codeOnly(refundFn)).toMatch(/amountPaidCents:\s*invoice\.amount_paid/);
+  });
+
+  it("l arithmetique du verrou n est PAS recopiee dans l entrypoint", () => {
+    // 🔴 La raison d'etre de l'extraction : melangee aux appels Stripe, cette
+    // arithmetique n'est executable par aucun test, et elle ne l'a pas ete
+    // pendant tout le temps ou C-65 declarait avoir une borne. La reecrire sur
+    // place la rendrait intestable a nouveau, en silence, et les tests de
+    // `refund-replay.test.ts` mesureraient alors un module que plus personne
+    // n'appelle.
+    const code = codeOnly(refundFn);
+    expect(code).not.toMatch(/existing\.data\.reduce/);
+    expect(code).not.toMatch(/Math\.min\(decision\.amountCents/);
   });
 });
 
