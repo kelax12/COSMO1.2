@@ -416,15 +416,20 @@ const TeamCategoryTreeSelect: React.FC<TeamCategoryTreeSelectProps> = ({ orgId, 
           type="button"
           aria-haspopup="listbox"
           aria-expanded={open}
-          className="w-full min-h-11 rounded-xl border px-3 text-left text-sm truncate text-[rgb(var(--color-text-primary))] border-[rgb(var(--color-border))] bg-[rgb(var(--color-hover))]"
+          className="w-full min-h-11 rounded-xl border px-3 text-left text-sm truncate text-[rgb(var(--color-text-primary))] border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))]"
         >
           {selectedPath || t('teamCategory.noCategory')}
         </button>
       </PopoverTrigger>
+      {/* z-[10000] : TeamTaskModal est une modale custom (hors Radix) montée à
+          z-[9999] — sans ce cran au-dessus, le popover s'ouvrait bien (état
+          `open` correct) mais rendait DERRIÈRE elle, donc invisible et
+          incliquable (même défaut que `DatePicker` dans TeamTaskFields, déjà
+          corrigé). */}
       <PopoverContent
         align="start"
         style={{ width: 'var(--radix-popover-trigger-width)' }}
-        className="max-h-80 overflow-y-auto p-2"
+        className="z-[10000] max-h-80 overflow-y-auto p-2"
       >
         <div role="listbox" aria-label={t('teamCategory.picker')}>
           {buildTree(categories).map((node) => renderNode(node, 0))}

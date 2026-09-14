@@ -67,7 +67,11 @@ const DescriptionField: React.FC<DescriptionFieldProps> = ({
           // textarea : rien ne vit à moins de 22 px autour, la variante deux
           // axes est donc utilisable. L'agrandir pour de vrai mangerait la zone
           // de saisie qu'elle sert à agrandir.
-          className={`absolute bottom-2 right-2 p-1.5 rounded-md transition-colors hover:bg-[rgb(var(--color-hover))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))] ${TAP_AREA_44}`}
+          // `!absolute` : TAP_AREA_44 porte sa propre `relative` (nécessaire à
+          // son pseudo-élément avant), qui gagne sinon la cascade sur `absolute`
+          // — le bouton retombait dans le flux normal, sous le textarea au lieu
+          // du coin bas-droit (C-74).
+          className={`!absolute bottom-2 right-2 p-1.5 rounded-md transition-colors hover:bg-[rgb(var(--color-hover))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))] ${TAP_AREA_44}`}
           style={{ color: 'rgb(var(--color-text-secondary))', backgroundColor: 'rgb(var(--color-surface))' }}
         >
           <Maximize2 size={16} />
