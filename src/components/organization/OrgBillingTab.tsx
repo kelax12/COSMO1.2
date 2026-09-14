@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { ArrowLeft, CreditCard } from 'lucide-react';
 import { useT } from '@/i18n/useT';
 import { formatDate } from '@/i18n/format';

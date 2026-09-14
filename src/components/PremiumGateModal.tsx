@@ -6,7 +6,7 @@ import { useBilling } from '@/modules/billing/billing.context';
 import { PREMIUM_MONTHLY_EUR } from '@/modules/billing/premium-config';
 import { formatCurrency } from '@/i18n/format';
 import { supabase } from '@/lib/supabase';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { useT } from '@/i18n/useT';
 import { RichText } from '@/components/ui/rich-text';
 import { useSheetMotion } from '@/components/mobile/mobile-motion';

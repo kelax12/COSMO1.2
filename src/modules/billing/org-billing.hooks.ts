@@ -8,7 +8,7 @@
 // sémantique démo à simuler pour un abonnement Stripe.
 // ═══════════════════════════════════════════════════════════════════
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { supabase } from '@/lib/supabase';
 import { useIsDemo } from '@/lib/app-mode.store';
 import { translator } from '@/i18n/useT';

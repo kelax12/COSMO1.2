@@ -3,7 +3,7 @@ import { AppErrorBoundary } from '@/components/AppErrorBoundary';
 import { Routes, Route, Navigate } from 'react-router';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Toaster } from 'sonner';
+import { loadSonner } from '@/lib/toast';
 import { MotionConfig } from 'framer-motion';
 import { installMobileFocusRecovery } from '@/lib/mobileFocus';
 import { shouldRetryQuery } from '@/lib/query-retry';
@@ -38,6 +38,15 @@ import ShareInviteClaimer from '@/components/ShareInviteClaimer';
 // land in the entry chunk. Suspense fallback is null because the palette
 // itself is invisible until opened.
 const CommandPalette = lazy(() => import('@/components/CommandPalette'));
+
+// Sonner sort du chemin critique (66,6 ko bruts dans l'entrée, payés par tout
+// visiteur qui arrive sur la landing et repart). Le `<Toaster>` ne peint rien
+// tant qu'aucun toast n'est émis : le monter un tick plus tard ne change rien à
+// l'écran. L'import passe par `loadSonner()`, le MÊME que la façade
+// `@/lib/toast`, donc un seul chunk et une seule instance du store de toasts.
+// ⚠️ Il lui faut son PROPRE `<Suspense>` : suspendre sur la frontière qui
+// enveloppe les routes cacherait la page pendant le chargement.
+const Toaster = lazy(() => loadSonner().then((m) => ({ default: m.Toaster })));
 
 // Lazy load pages for code splitting.
 //
@@ -393,15 +402,17 @@ const App: React.FC = () => {
                 pour TOUTES les animations Framer Motion (transforms réduits, pas
                 de mouvement décoratif). Exigence WCAG 2.3.3 / EAA. */}
             <MotionConfig reducedMotion="user">
-            <Toaster
-              position="top-right"
-              richColors
-              closeButton
-              theme="system"
-              toastOptions={{
-                duration: 3000,
-              }}
-            />
+            <Suspense fallback={null}>
+              <Toaster
+                position="top-right"
+                richColors
+                closeButton
+                theme="system"
+                toastOptions={{
+                  duration: 3000,
+                }}
+              />
+            </Suspense>
             {/* Défense en profondeur autour des SATELLITES de l'app.
                 Ces trois-là sont montés au niveau App, donc au-dessus de tout
                 boundary de page : un throw dans l'un d'eux emportait

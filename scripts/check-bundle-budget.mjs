@@ -64,7 +64,23 @@ const BUDGETS = {
   // sans jamais se connecter. Le reste des dépôts de démo, 72 ko bruts encore
   // dans l'entrée, attend la séparation interface / implémentation locale que
   // six modules n'ont pas.
-  critical: 370_000,
+  // 2026-09-11 : 316 407 → **306 347 o**, et le plafond REDESCEND de 370 000 à
+  // 323 000. `sonner` (10,1 ko gzip) sort du chemin critique : le `<Toaster>`
+  // d'`App.tsx` est différé et tous les appels passent par la façade
+  // `src/lib/toast.ts`, qui fait le SEUL `import('sonner')` du dépôt.
+  //
+  // 🔴 Le piège, mesuré, parce qu'il se reproduira : nettoyer le SHELL ne
+  // suffit pas. Tant qu'une page lazy garde un import statique de `sonner`,
+  // Rollup place le module dans l'ancêtre commun des chunks qui le partagent,
+  // c'est-à-dire l'ENTRÉE. Et l'en sortir par `manualChunks` fait émettre à
+  // Vite un `<link rel="modulepreload">` : l'entrée maigrit de 10 ko, le
+  // chemin critique de 162 OCTETS. Le gain n'existe qu'avec zéro import
+  // statique dans tout `src/`. Cliquet : `src/lib/toast.guard.test.ts`.
+  //
+  // ⚠️ Le plafond est posé ~5 % au-dessus du mesuré, et non ~1,5 % comme les
+  // précédents : le critère de sortie de C-14 exige 5 % de marge sur les DEUX
+  // budgets. Reposer le cliquet à 1,5 % rouvrirait l'item le jour même.
+  critical: 323_000,
 
   // Mesure secondaire, conservée pour attraper le cas inverse : une entrée qui
   // enfle sans que le nombre de préchargements bouge. Le plafond est passé de
@@ -92,7 +108,15 @@ const BUDGETS = {
   // a continué de grossir de 1,6 ko pendant la nuit. Un plafond posé sur une
   // mesure périmée est un plafond faux, même quand il est plus bas — celui-ci
   // aurait fait échouer la CI sur une valeur que plus rien ne mesurait.
-  entry: 78_000,
+  // 2026-09-11 : 76 954 → **66 896 o**, plafond de 78 000 à 71 000. Même coupe
+  // que ci-dessus, et `critique` a baissé d'autant (−10 060 o des deux côtés) :
+  // c'est ce qui la distingue d'un déplacement.
+  //
+  // ⚠️ La mesure du 2026-09-04 annonçait 74 903 o (3,97 % de marge). Elle
+  // n'avait pas été refaite depuis, et l'entrée avait REPRIS 2 051 o entre
+  // temps — marge réelle au 2026-09-11 avant coupe : **1,34 %**. Un budget
+  // qu'on ne remesure pas dérive dans le sens qui arrange.
+  entry: 71_000,
 
   // Le plus gros chunk de page. `OrganizationPage` mesure ~64 ko.
   page: 70_000,

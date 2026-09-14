@@ -19,7 +19,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Bug, Paperclip, Loader2, CheckCircle2, Send } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { supabase } from '@/lib/supabase';
 import { CONTACT_EMAIL } from '@/lib/contact.mjs';
 import {

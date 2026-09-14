@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { getFriendsRepository, getListsRepository, getTasksRepository } from '@/lib/repository.factory';
 import { listKeys } from '@/modules/lists';
 import { taskKeys, type CreateTaskInput } from '@/modules/tasks';

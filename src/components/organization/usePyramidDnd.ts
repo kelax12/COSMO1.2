@@ -15,7 +15,7 @@
 // permet à « Annuler » de rétablir dans l'ordre inverse.
 // ═══════════════════════════════════════════════════════════════════
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { showUndoToast } from '@/lib/undo-toast';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
 import {

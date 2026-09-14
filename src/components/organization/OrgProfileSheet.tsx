@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Camera, Building2, Trash2 } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { validateAvatarFile, computeAvatarDimensions } from '@/lib/avatar-upload';
 import { useUpdateOrganization, type MyOrganization } from '@/modules/organizations';
 import { useT } from '@/i18n/useT';

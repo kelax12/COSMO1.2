@@ -14,7 +14,7 @@ import {
   orderByDepth,
 } from '@/modules/categories';
 import { motion, AnimatePresence } from 'framer-motion';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { useBottomSheet } from '@/hooks/use-bottom-sheet';
 import { useT } from '@/i18n/useT';
 import { useModalA11y } from '@/hooks/use-modal-a11y';

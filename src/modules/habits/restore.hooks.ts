@@ -20,7 +20,7 @@ import { getHabitsRepository } from '@/lib/repository.factory';
 import { splitRestore } from '@/lib/restore-id';
 import { habitKeys } from './constants';
 import type { CreateHabitInput, Habit } from './types';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 // Sentry n'est PLUS importe statiquement : il est charge apres le premier
 // rendu (arbitrage C-13/C-14). `monitoring` est la seule porte, et elle
 // tamponne ce qui arrive avant le chargement.

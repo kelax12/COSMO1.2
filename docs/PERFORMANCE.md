@@ -412,13 +412,49 @@ Réencodage reproductible : `npm run images:check` (mesure) puis
 
 ## Budget bundle (objectif)
 
-- Chunk `index` : au 2026-08-27, **106,9 kB gzip** (2026-08-25 soir : 87,2 kB).
-- **Cliquet** : `npm run check:bundle` refuse un chunk d'entrée au-dessus de **112 kB gzip** et un
-  chemin critique au-dessus de **400 kB gzip**. Bloquant dans le job CI `lint-test-build`, juste
-  après le build.
+- **Mesure du 2026-09-11** (build avec `VITE_SENTRY_DSN`, arbre propre) : chunk d'entrée
+  **66 896 o gzip**, chemin critique **306 347 o gzip** sur 7 chunks.
+- **Cliquet** : `npm run check:bundle` refuse un chunk d'entrée au-dessus de **71 000 o gzip** et
+  un chemin critique au-dessus de **323 000 o gzip**. Bloquant dans le job CI `lint-test-build`,
+  juste après le build.
 - 🔴 **Le plafond d'entrée est passé de 92 à 112 kB le 2026-08-26**, seule remontée de plafond du
   dépôt, justifiée en commentaire dans `scripts/check-bundle-budget.mjs`. Une seconde remontée
-  ferait du budget une formalité : la marge se regagne en descendant la mesure.
+  ferait du budget une formalité : la marge se regagne en descendant la mesure. Depuis, il n'a
+  fait que descendre : 112 000 → 79 000 → 78 000 → **71 000**.
+
+### 🔴 Le levier du 2026-09-11 : `sonner` sort du chemin critique (−10,1 ko pour tout le monde)
+
+| | Avant | Après | Plafond |
+|---|---|---|---|
+| Chunk d'entrée | 76 954 o (marge **1,34 %**) | **66 896 o** (marge 5,78 %) | 78 000 → 71 000 |
+| Chemin critique | 316 407 o (marge 14,48 %) | **306 347 o** (marge 5,16 %) | 370 000 → 323 000 |
+
+Le `<Toaster>` d'`App.tsx` et 58 modules appelaient `sonner` par un import statique. Or aucun de
+ces appels ne peut partir avant que la personne agisse : ce sont des `onSuccess` / `onError` de
+mutation et des gestionnaires d'évènement. Tout passe désormais par `src/lib/toast.ts`, qui porte
+le **seul** `import('sonner')` du dépôt, et le `<Toaster>` est monté en `lazy()` derrière son
+propre `<Suspense fallback={null}>`.
+
+⚠️ **Le piège, mesuré, parce qu'il se reproduira.** Nettoyer le SHELL ne suffit pas, et sortir le
+module par `manualChunks` non plus :
+
+| Forme | Entrée | Chemin critique |
+|---|---|---|
+| 57 imports statiques dans des pages lazy, shell nettoyé | 77 017 o | 316 470 o |
+| idem + `manualChunks` vers `vendor-toast` | 66 899 o | **316 245 o** |
+| **zéro import statique**, un seul `import()` | 66 896 o | **306 347 o** |
+
+La deuxième ligne est le piège : l'entrée maigrit de 10 ko et le chemin critique de **162
+octets**. Tant qu'une page lazy garde l'import statique, Rollup place le module dans l'ancêtre
+commun des chunks qui le partagent, c'est-à-dire l'entrée ; l'en sortir par un chunk nommé fait
+émettre à Vite un `<link rel="modulepreload">` dans `index.html`, donc le navigateur le télécharge
+exactement comme avant. **C'est le même piège que celui documenté pour `@sentry` dans
+`vite.config.ts`.** Cliquet : `src/lib/toast.guard.test.ts`.
+
+⚠️ **La mesure précédente (74 903 o, 3,97 % de marge, 2026-09-04) n'avait pas été refaite.** Entre
+les deux, l'entrée avait REPRIS 2 051 o (refonte mobile, extraction i18n, 53 surfaces modales).
+La marge réelle au moment de reprendre l'item n'était pas 3,97 % mais **1,34 %** : un budget qu'on
+ne remesure pas dérive dans le sens qui arrange.
 
 > ✅ **Ce budget a enfin sa garde (2026-08-25).** Il était le seul du dépôt à n'être mesuré par
 > aucun script, et le seul à avoir reculé sans que personne le voie : +5 kB gzip en une journée,

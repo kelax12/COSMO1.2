@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useBottomSheet } from '@/hooks/use-bottom-sheet';
 import { useModalA11y } from '@/hooks/use-modal-a11y';
 import { X, ChevronRight, Check } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { useActiveOkrs, useUpdateKeyResult } from '@/modules/okrs';
 import { useT } from '@/i18n/useT';
 import { useSheetMotion } from '@/components/mobile/mobile-motion';

@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { showUndoToast } from '@/lib/undo-toast';
 import { CheckSquare, Clock, Bookmark, AlertCircle, Calendar, MoreHorizontal, UserPlus, Trash2 } from 'lucide-react';
 import CollaboratorAvatars from './CollaboratorAvatars';

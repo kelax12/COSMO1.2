@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Link as LinkIcon, UserRound, ListTodo, TrendingUp, CalendarDays } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { isManagerOf, type OrgMember } from '@/modules/organizations';
 import type { OrgTeam } from '@/modules/org-teams';
 import MemberAvatar from './MemberAvatar';

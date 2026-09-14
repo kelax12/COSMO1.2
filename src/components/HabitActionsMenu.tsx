@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MoreHorizontal, CalendarPlus, ListPlus, CircleSlash, CirclePlay, Copy } from 'lucide-react';
 import { useHabitPauses } from '@/lib/hooks/use-habit-pauses';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { useCreateTask } from '@/modules/tasks';
 import { useCategories } from '@/modules/categories';
 import { useCreateEvent, type CreateEventInput } from '@/modules/events';

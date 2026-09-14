@@ -60,7 +60,7 @@
 // rendu (arbitrage C-13/C-14). `monitoring` est la seule porte, et elle
 // tamponne ce qui arrive avant le chargement.
 import * as monitoring from '@/lib/monitoring';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { translator } from '@/i18n/useT';
 
 /** Options de création. Le champ n'est renseigné que par une restauration. */

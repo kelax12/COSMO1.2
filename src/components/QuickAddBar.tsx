@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { Zap, CalendarDays, Tag, Flag, Clock, CornerDownLeft, Repeat } from 'lucide-react';
 import { parseQuickAdd } from '@/lib/quick-add-parser';
 import { QUICK_ADD_EXAMPLES, QUICK_ADD_EXAMPLES_MOBILE, QUICK_ADD_DATE_TOKEN } from '@/lib/quick-add-examples';
