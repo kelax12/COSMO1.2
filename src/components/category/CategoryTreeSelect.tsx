@@ -135,7 +135,7 @@ const CategoryTreeSelect: React.FC<CategoryTreeSelectProps> = ({
             hasError || shaking
               ? 'border-[rgb(var(--color-error))]'
               : (fromOkr ? 'border-[rgb(var(--color-accent-solid))]' : 'border-[rgb(var(--color-border))]')
-          } ${fromOkr ? 'bg-blue-50/50 dark:bg-blue-900/20' : 'bg-[rgb(var(--color-hover))]'}`}
+          } ${fromOkr ? 'bg-blue-50/50 dark:bg-blue-900/20' : 'bg-[rgb(var(--color-surface))]'}`}
         >
           {selectedPath || t('fields.categoryNone')}
         </button>
