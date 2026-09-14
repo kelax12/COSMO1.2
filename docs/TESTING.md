@@ -41,7 +41,7 @@
 > plus haut, à propos de `supabase-stub` :
 >
 > > « le laisser hors de la CI reviendrait à poser sur `main` des gardes qui ne tournent nulle part
-> > — la faute que ce dépôt s'est déjà faite deux fois. »
+> > la faute que ce dépôt s'est déjà faite deux fois. »
 >
 > Puis, immédiatement après :
 >
@@ -54,7 +54,7 @@
 >
 > **Ce que ça laisse sans filet, nommément** : les 19 fichiers concernés portent les feuilles
 > mobiles, les gestes tactiles, `reduced-motion-sheets`, les cibles tactiles WCAG 2.5.5, et les
-> suites d'accessibilité au clavier — donc **tout le périmètre iOS Safari** que
+> suites d'accessibilité au clavier, donc **tout le périmètre iOS Safari** que
 > [`MOBILE.md`](./MOBILE.md) documente sur des dizaines de pages, et le moteur sur lequel tourne
 > VoiceOver, plafond déclaré de [`ACCESSIBILITY.md`](./ACCESSIBILITY.md).
 >

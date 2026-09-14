@@ -92,7 +92,7 @@ Free n'est pas connu, donc son plateau à elle n'est pas celui de ce tableau.
 
 ---
 
-## Mise à jour du 2026-09-14 (soir) · passe COMPLÈTE : onze domaines, aucun `·`, sept angles morts
+## Mise à jour du 2026-09-14 (soir) · passe COMPLÈTE : onze domaines, aucun `·`, huit angles morts
 
 **Contexte** : Axel s'apprête à lancer le produit. Consigne, mot pour mot : « refais tous les
 audits de 0, vérifie chaque chose qui est marquée, cherche des angles morts ». Cette passe ne relit
@@ -112,6 +112,9 @@ les domaines que la passe du matin avait laissés à `·`.
 | `i18n:check` · `i18n:scan` · `i18n:identical` | **23 namespaces**, 0 erreur · **0** chaîne en dur · 3 898 couples, 92 identiques, **0** non déclarée |
 | E2E a11y + cibles tactiles (Chromium) | **37 cas, 37 passés**, 8,9 min, exit 0 |
 | Advisors Supabase (sécurité) | **9 / 52 / 2 / 1**, à l'unité ce qui était annoncé |
+| Couverture RLS en base | **50 tables dans `public`, 50 avec RLS activée** · 126 policies, 117 fonctions |
+| Ledger de migrations | **138 entrées** pour **152 fichiers** au dépôt : 32 sans correspondance |
+| `npm run check:mail` | vert, 1 avertissement (DMARC `p=none`) |
 | Production HTTP | `/`, `/entreprise-presentation`, `/en`, `/blog`, `/sitemap.xml` : **200** |
 | Plans d'exécution en prod (rôle `authenticated` simulé) | `tasks` en direct **45,3 ms** (Seq Scan) contre `get_my_tasks()` **9,96 ms** |
 | WebKit / iPhone 12 contre la production | `load` à **2 159 ms**, 0 requête en vol |
@@ -132,12 +135,12 @@ les domaines que la passe du matin avait laissés à `·`.
 | [i18n](./I18N.md) | 90 | **90** | 0, VÉRIFIÉE | Les trois gates rendent les mêmes chiffres à l'unité. Ce document avait raison contre `CLAUDE.md` sur le nombre de namespaces |
 | [Mobile / DA](./MOBILE.md) | 79 | **76** | **−3** | Le « **0** cible tactile trop petite » du matin ne vaut que des 8 routes protégées. En production, sur iPhone : **24** cibles sous 44 px sur `/`, dont le bouton « Commencer » du header (**115 × 36**) et un curseur de forfait de **308 × 6 px**. Et les trois suites mobiles rejouées sur WebKit rendent **9 passés sur 18** |
 
-**Bilan : +4, −12 — huit points nets en moins.** Une passe qui rend huit points de moins que le matin n'est pas un échec de
+**Bilan : +4, −12, soit huit points nets en moins.** Une passe qui rend huit points de moins que le matin n'est pas un échec de
 la journée : c'est ce qui arrive quand on remplace des vérifications de gardes par des mesures de
 résultats. Les **cinq** baisses viennent toutes de choses **qui existaient déjà** et qu'aucune note ne
 portait : rien n'a cassé aujourd'hui, on a simplement regardé ailleurs que là où les gardes pointent.
 
-### Les sept angles morts
+### Les huit angles morts
 
 | # | Angle mort | Comment il a été trouvé |
 |---|---|---|
@@ -146,6 +149,7 @@ portait : rien n'a cassé aujourd'hui, on a simplement regardé ailleurs que là
 | **3** | **Le ledger de migrations ne prouve pas ce qu'on lui fait dire.** « 148 entrées » était le NUMÉRO de la dernière migration ; il y en a **138**. Et 32 des 152 fichiers du dépôt n'y ont aucune correspondance. Ils SONT appliqués, mais ce n'est pas le ledger qui l'établit, et aucune garde ne surveille ce recouvrement | Comparaison nom à nom, puis vérification objet par objet dans le catalogue Postgres |
 | **4** | **`email_confirmed_at` est posé pour 28 comptes sur 28, dont 26 à la seconde de leur création.** La confirmation d'adresse étant désactivée, la colonne qui sert à répondre « cette adresse est-elle vérifiée ? » répond **oui** pour **18 adresses que personne n'a vérifiées** | Requête sur `auth.users`, écart `email_confirmed_at` moins `created_at` |
 | **5** | **Deux des 28 comptes ne sont pas des utilisateurs** : `demo@cosmo.app` (jamais connecté, et pourtant porteur de **120 tâches, 67 événements, 6 habitudes, 4 OKR en production**) et `testemail@gmail.com`. `get_admin_stats` **ne les exclut pas** : **16 % des tâches de la plateforme** appartiennent au compte de démonstration | Comptage par compte, puis lecture de la définition de `get_admin_stats` |
+| **8** | **Le runbook de bascule Stripe live listait CINQ events webhook, il en faut SIX.** `CLAUDE.md` et `STRIPE-LIVE.md` avaient été corrigés le 2026-09-12, **pas `POST-AUDIT-GUIDE.md`** : le seul document qu'on EXÉCUTE le jour J. En souscrire cinq laisse `charge.refunded` de côté, donc un remboursement versé sans ligne compensatoire au journal d'encaissement | `grep "case '"` dans `stripe-webhook/index.ts`, six branches, puis comparaison des trois documents |
 | **7** | **La garde « cibles tactiles » ne regarde que huit routes protégées**, et son résultat est lu comme une propriété du produit. Les pages publiques, celles qui reçoivent le trafic, en portent **24** et **23** sous 44 px, dont un `input[type=range]` de **6 px de haut** sur la page qui vend l'offre entreprise | Sonde WebKit / iPhone 12 contre la production, après lecture de la boucle de routes du spec |
 | **6** | **Trois tables de contenu libre manquaient à l'inventaire RGPD §1** (`team_task_comments`, `team_task_activity`, `org_notifications`), alors que le registre art. 30 les liste. Leur `author_id` / `actor_id` est en `SET NULL` : le contenu **survit** au départ de son auteur | Croisement des FK de `pg_constraint` avec l'inventaire, puis avec le registre |
 
@@ -154,6 +158,17 @@ portait : rien n'a cassé aujourd'hui, on a simplement regardé ailleurs que là
 Mesuré en base ce soir, sur `auth.users` : **28 comptes, 1 seule inscription sur 30 jours, 0 sur
 7 jours, 2 connexions sur 7 jours.** Le plan d'acquisition du 2026-08-13 en comptait 27. **Un mois
 de travail a produit un inscrit**, et deux des 28 comptes sont des comptes de test.
+
+**Le haut du funnel est pire que le taux de conversion**, et c'est là que se joue la campagne :
+appareils distincts ayant ouvert la démo, **19 en juillet, 25 en août, 1 du 1ᵉʳ au 14 septembre**.
+Ce n'est pas un problème de conversion, c'est une absence de visiteurs, et aucune retouche de page
+n'a prise dessus.
+
+✅ **La machine à mesurer, elle, fonctionne** : le parcours a été PARCOURU en production sur iPhone
+émulé (clic sur « Essayer la démo gratuite » → `/dashboard`, interface rendue, `POST
+record_demo_visit` observé dans le trafic). ⚠️ **Cette vérification a écrit une ligne en
+production** : un appareil de plus dans `demo_devices` (45 → 46). Elle est anonyme, mais elle est de
+moi ; les chiffres de septembre ci-dessus l'excluent. Détail : [`ACQUISITION.md`](./ACQUISITION.md).
 
 Aucune note de ce tableau ne mesure cela, et c'est normal : elles notent ce que le dépôt contrôle.
 Mais un lecteur qui verrait onze notes entre 84 et 95 juste avant une campagne en tirerait une

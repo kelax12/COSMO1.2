@@ -3,7 +3,7 @@
 Guide de travail dans ce dépôt. **Vérifié dans le code ET contre la production le 2026-09-14 au
 soir** : passe d'audit complète des onze domaines, gardes rejouées, base interrogée (ledger,
 advisors, plans d'exécution, versions d'Edge Functions), production sondée en HTTP et sur WebKit /
-iPhone. **Cinq notes baissent, une monte, et sept angles morts en sortent** : le tableau et les
+iPhone. **Cinq notes baissent, une monte, et huit angles morts en sortent** : le tableau et les
 preuves sont dans [`docs/README.md`](./docs/README.md) § « Mise à jour du 2026-09-14 (soir) ».
 Passes antérieures conservées à leur date (2026-08-24 contre la prod, 2026-09-03 sur le code seul).
 

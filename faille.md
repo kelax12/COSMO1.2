@@ -31,6 +31,12 @@ Légende : 🔴 bloquant · 🟠 important · 🟡 à planifier · ✅ corrigé
 > exit 0), et les advisors Supabase : **9 / 52 / 2 / 1**, à l'unité près ce que ce fichier
 > annonçait. Aucune régression.
 >
+> **Et l'invariant fondamental du projet est reconfirmé en base, pas déduit d'une migration** :
+> `public` porte **50 tables**, et **les 50 ont `relrowsecurity = true`**. C'est la même forme de
+> preuve que celle du 2026-08-25 (« 0 table sans RLS »), rejouée sur un schéma qui a gagné des
+> tables depuis. La base porte par ailleurs **126 policies** actives et **117 fonctions** dans
+> `public`.
+>
 > **Une vérification d'isolation en prod s'y ajoute, et elle n'avait jamais été faite sous cette
 > forme.** Dans une transaction annulée, en se plaçant dans le rôle `authenticated` avec les claims
 > d'un compte réel, `select * from tasks` rend **289 lignes sur les 750 de la base**, et le plan

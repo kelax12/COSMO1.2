@@ -66,7 +66,7 @@ Conséquences pratiques, à tenir :
 > |---|---|---|
 > | `/` | **24** | « Commencer » du header **115 × 36**, « Cosmo » **116 × 36** |
 > | `/entreprise-presentation` | **23** | curseur de forfait `input[type=range]` **308 × 6** (`appearance: none`, `height: 6px`) |
-> | `/blog` | 2 | — |
+> | `/blog` | 2 | · |
 >
 > ⚠️ **À trier, pas à agiter** : la plupart sont des liens de pied de page d'environ 20 px de haut,
 > qui échouent au **AAA** (2.5.5, 44 px) et non au **AA** (2.5.8, 24 px). Trois cas sortent du lot :
@@ -82,7 +82,7 @@ Conséquences pratiques, à tenir :
 >
 > 🔴 **Angle mort · toutes ces mesures sont faites sur Chromium de bureau, et rien ne les rejoue
 > sur WebKit.** Le project Playwright `mobile-safari` (iPhone 12, moteur WebKit) porte **96 cas
-> dans 19 fichiers**, dont ces trois mêmes suites, et il est **exclu de la CI** — la ligne est
+> dans 19 fichiers**, dont ces trois mêmes suites, et il est **exclu de la CI**, la ligne est
 > explicite dans `.github/workflows/ci.yml` : « `mobile-safari` reste hors CI (WebKit, ~1 min
 > d'installation en plus) ». Conséquence directe pour ce domaine : **le piège de focus, l'ordre de
 > tabulation, Échap et les cibles tactiles ne sont vérifiés automatiquement sur aucun moteur
@@ -93,7 +93,7 @@ Conséquences pratiques, à tenir :
 > en détecter un. **Le coût en points est porté par [`TESTING.md`](./TESTING.md)**, là où la
 > décision se prend ; il est nommé ici parce que ce domaine en est le premier bénéficiaire le jour
 > où il sera comblé. ⚠️ Rejouées sur `mobile-safari` ce soir, les trois suites mobiles rendent
-> **9 passés sur 18** — dont sept échecs d'attente de fixture, non de produit (détail dans
+> **9 passés sur 18**, dont sept échecs d'attente de fixture, non de produit (détail dans
 > [`MOBILE.md`](./MOBILE.md)).
 
 

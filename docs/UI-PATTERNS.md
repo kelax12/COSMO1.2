@@ -26,12 +26,12 @@
 >
 > `a-faire-manuel.md` pose M-44 comme indécidable par un agent : « ce sont deux lectures du
 > produit, pas deux états du code ». **Ce n'en est pas une** : le changement non commité retire la
-> pastille « Aujourd'hui » du report rapide avec ce motif, écrit en commentaire dans le fichier —
+> pastille « Aujourd'hui » du report rapide avec ce motif, écrit en commentaire dans le fichier :
 >
 > > « Reporter une tâche en retard à AUJOURD'HUI n'a pas de sens (elle est déjà due aujourd'hui ou
 > > avant) »
 >
-> — et la moitié qui porte l'argument est **fausse**. `isOverdue` (`src/lib/deadline.ts`) rend vrai
+> et la moitié qui porte l'argument est **fausse**. `isOverdue` (`src/lib/deadline.ts`) rend vrai
 > si et seulement si `daysUntilDeadline < 0`, **strictement avant aujourd'hui** ; `isDueToday` est
 > la fonction voisine, pour `=== 0`. Une tâche qui affiche ces raccourcis n'est donc **jamais** due
 > aujourd'hui, et « la reporter à aujourd'hui » est exactement le geste le plus courant : *je m'en

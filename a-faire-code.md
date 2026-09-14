@@ -9,7 +9,7 @@ compte** et **ce qui prouve que c'est fini**.
 > (`localStorage` hors `try` dans les dépôts de démo), **C-47** (échecs de tests faux sous charge).
 > **C-22** est clos ; **C-38** est à moitié fait et dit désormais ce qui a été fermé et ce qui reste.
 
-> ### 🔴 Passe d'AUDIT du 2026-09-14 **tard le soir** — trois items NEUFS, tous trouvés en interrogeant la production
+> ### 🔴 Passe d'AUDIT du 2026-09-14 **tard le soir** : trois items NEUFS, tous trouvés en interrogeant la production
 >
 > Passe demandée avant le lancement : « refais tous les audits de 0, vérifie chaque chose qui est
 > marquée, cherche des angles morts ». Les onze audits de `docs/` ont été renotés sur des mesures
@@ -25,7 +25,7 @@ compte** et **ce qui prouve que c'est fini**.
 
 ---
 
-### 🔴 C-77 — `okrTime` vaut 0 en production, et la démo affiche juste
+### 🔴 C-77 · `okrTime` vaut 0 en production, et la démo affiche juste
 
 **Où** : `supabase/migration/136_work_time_stats_okr_from_completions.sql` (présent, **non versionné
 et non appliqué** depuis le 2026-09-02) · fonction `public.get_work_time_stats` en prod ·
@@ -45,7 +45,7 @@ investi » de `/statistics` est **plate à zéro pour 100 % des comptes réels**
 
 🔴 **Ce qui rend l'item coûteux : il a déjà été corrigé, à moitié.** La revue du 2026-09-02 a trouvé
 le défaut, réparé `src/lib/workTimeCalculator.ts` (qui lit désormais `kr_completions`) et écrit le
-constat **au passé** — « la page affichait 0 en démo COMME en production ». La moitié production est
+constat **au passé** : « la page affichait 0 en démo COMME en production ». La moitié production est
 restée vraie. Résultat : **le mode démo, celui qu'on montre, est juste ; le produit, celui qu'on
 vend, affiche zéro.** C'est le pire des deux sens.
 
@@ -69,7 +69,7 @@ correctif se termine quand les trois sont traités, pas quand les tests du premi
 
 ---
 
-### 🟠 C-78 — 96 cas E2E ne sont joués par aucun workflow
+### 🟠 C-78 · 96 cas E2E ne sont joués par aucun workflow
 
 **Où** : `.github/workflows/ci.yml`, job `e2e` · `playwright.config.ts`, project `mobile-safari`.
 
@@ -82,12 +82,12 @@ correctif se termine quand les trois sont traités, pas quand les tests du premi
 | **`mobile-safari`** (iPhone 12, WebKit) | **96** | **19** | ❌ |
 
 La CI lance `--project=chromium --project=supabase-stub`, soit **124 cas sur 220**. Le motif est
-écrit : « `mobile-safari` reste hors CI (WebKit, ~1 min d'installation en plus) » — **trois lignes
+écrit : « `mobile-safari` reste hors CI (WebKit, ~1 min d'installation en plus) », **trois lignes
 sous** la règle inverse, posée pour `supabase-stub` : « le laisser hors de la CI reviendrait à poser
 sur `main` des gardes qui ne tournent nulle part ».
 
 **Ce que ça laisse sans filet** : feuilles mobiles, gestes tactiles, `reduced-motion-sheets`, cibles
-tactiles WCAG 2.5.5 et les deux suites d'accessibilité au clavier — donc tout le périmètre iOS
+tactiles WCAG 2.5.5 et les deux suites d'accessibilité au clavier, donc tout le périmètre iOS
 Safari, et le moteur sur lequel tourne VoiceOver.
 
 ⚠️ **L'item n'est PAS « ajouter un flag ».** Rejoués depuis ce poste, ces cas échouent, et pas
@@ -101,11 +101,11 @@ depuis la **production**, rend `load` en **2 159 ms avec zéro requête en vol**
 
 **Ce qui prouve que c'est fini** : `webkit` installé dans le job `e2e`, `--project=mobile-safari`
 ajouté, **un run CI vert**, et pour chaque cas retiré du project une ligne de `testIgnore` qui dit
-POURQUOI — jamais un `skip` silencieux.
+POURQUOI, jamais un `skip` silencieux.
 
 ---
 
-### 🟠 C-80 — la garde des cibles tactiles ne regarde aucune page publique
+### 🟠 C-80 · la garde des cibles tactiles ne regarde aucune page publique
 
 **Où** : `e2e/touch-targets.spec.ts`, la boucle `for (const route of [...])` (ligne ~265).
 
@@ -123,7 +123,7 @@ est écrite en clair : `/dashboard`, `/entreprise`, `/okr`, `/tasks`, `/habits`,
 
 Les cas qui comptent, une fois les liens de pied de page mis de côté (~20 px de haut, AAA seulement) :
 
-- **« Commencer »** dans le header : `115 × 36` — le CTA le plus visible du produit, 8 px sous un
+- **« Commencer »** dans le header : `115 × 36`, le CTA le plus visible du produit, 8 px sous un
   plancher que le reste de l'application respecte ;
 - **le curseur de forfait** de `/entreprise-presentation` : `input[type=range]`, `appearance: none`,
   `height: 6px`, mesuré **308 × 6**. Stylé par l'auteur, donc **hors** de l'exemption « contrôle du
@@ -143,7 +143,7 @@ régression qu'on a choisi de ne plus voir.
 
 ---
 
-### 🟡 C-79 — rien ne relie les migrations du dépôt au ledger de production
+### 🟡 C-79 · rien ne relie les migrations du dépôt au ledger de production
 
 **Où** : `supabase/migration/*.sql` · `supabase_migrations.schema_migrations` en prod ·
 `scripts/` (aucune garde existante) · `npm run check:drift` (compare un schéma, pas un journal).
@@ -159,8 +159,8 @@ Conséquence : l'énoncé « tout le dépôt est appliqué, ledger relu », écr
 entrées » était le NUMÉRO de la dernière migration recopié comme un total.
 
 **Ce qui prouve que c'est fini** : un script qui, pour chaque fichier du dépôt, rend l'un des trois
-verdicts — *au ledger* · *absent du ledger mais l'objet qu'il crée existe en base* · *absent des
-deux* — et qui échoue sur le troisième. ❌ Ne pas se contenter d'un comptage : c'est précisément le
+verdicts : *au ledger* · *absent du ledger mais l'objet qu'il crée existe en base* · *absent des
+deux*, et qui échoue sur le troisième. ❌ Ne pas se contenter d'un comptage : c'est précisément le
 comptage qui a menti.
 
 ---

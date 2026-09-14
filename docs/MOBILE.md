@@ -6,8 +6,8 @@
 >
 > L'entrée de ce matin inscrit « **Cibles tactiles < 44×44 px : 0**, 10/10 cas E2E verts ». La
 > mesure est juste. **Ce qu'elle couvre ne l'est pas.** `e2e/touch-targets.spec.ts` boucle sur une
-> liste écrite en clair — `/dashboard`, `/entreprise`, `/okr`, `/tasks`, `/habits`, `/settings`,
-> `/agenda`, `/statistics` — soit **huit routes protégées, et aucune page publique**.
+> liste écrite en clair : `/dashboard`, `/entreprise`, `/okr`, `/tasks`, `/habits`, `/settings`,
+> `/agenda`, `/statistics`, soit **huit routes protégées, et aucune page publique**.
 >
 > **Mesuré ce soir contre la PRODUCTION**, WebKit / iPhone 12, bandeau cookies refusé, après
 > stabilisation :
