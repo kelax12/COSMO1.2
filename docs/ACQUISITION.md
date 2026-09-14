@@ -7,7 +7,61 @@ valable comme stratégie — ce document ne le refait pas. Il répond à une aut
 
 ---
 
-## 1. Les chiffres réels
+> ### 🔴 Remesure du 2026-09-14 (soir) · un mois plus tard, la machine marche et le funnel est vide
+>
+> L'audit du 2026-08-14 posait la bonne question : « est-ce que la machine à mesurer fonctionne, et
+> que dit-elle ? » Un mois plus tard, les deux moitiés ont été revérifiées **contre la production**,
+> et il faut les séparer, parce qu'elles ne disent pas la même chose.
+>
+> **La machine fonctionne, et ce n'est pas une déduction.** Le parcours d'entrée a été PARCOURU en
+> production, dans un navigateur, sur un iPhone 12 émulé : clic sur « Essayer la démo gratuite » sur
+> `/` → arrivée sur `/dashboard`, interface rendue, et **`POST record_demo_visit` part réellement**
+> (observé dans le trafic réseau). Le compteur d'appareils n'est donc pas en panne.
+>
+> ⚠️ **Cette vérification a elle-même écrit une ligne en production** : un appareil de plus dans
+> `demo_devices` (45 → 46, et septembre passe de 1 à 2). C'est une ligne anonyme, un UUID sans
+> rattachement, mais elle est de moi et pas d'un visiteur. **Tout chiffre de septembre ci-dessous
+> est donné hors cette ligne.**
+>
+> **Ce que la machine dit, elle, est mauvais :**
+>
+> | | Juillet 2026 | Août 2026 | **Sept. 2026** (1 au 14) |
+> |---|---|---|---|
+> | Appareils distincts ayant ouvert la démo | 19 | 25 | **1** |
+> | Dont convertis en compte | 14 | 8 | **1** |
+> | Inscriptions (`auth.users`) | 8 | · | **1 sur 30 jours glissants, 0 sur 7 jours** |
+> | Comptes actifs sur 30 jours | · | 15 | **9** (58 jours-activité cumulés) |
+> | Connexions sur 7 jours | · | 0 | **2** |
+>
+> 🔴 **Le chiffre à retenir n'est pas le taux de conversion, c'est le haut du funnel.** Un appareil
+> qui ouvre la démo en deux semaines, contre 25 le mois précédent : ce n'est pas un problème de
+> conversion, c'est une absence de visiteurs. Travailler la page, le CTA ou l'onboarding n'a aucune
+> prise sur ce chiffre-là.
+>
+> ⚠️ **Deux précautions de lecture, parce que ce compteur est facile à mal lire** :
+>
+> - `demo_devices` compte des appareils **distincts et une seule fois** (la clé est préservée par
+>   `clearDemoStorage`). Un visiteur d'août qui revient en septembre n'apparaît pas en septembre.
+>   Le chiffre mesure donc l'arrivée de NOUVEAUX visiteurs, ce qui est précisément ce qu'on veut
+>   ici, mais il ne dit rien de la rétention.
+> - **Deux des 28 comptes ne sont pas des utilisateurs** : `demo@cosmo.app`
+>   (`aaaaaaaa-aaaa-…`, créé le 2026-01-10, jamais connecté, et porteur de 120 tâches, 67 événements,
+>   6 habitudes et 4 OKR **en production**) et `testemail@gmail.com`. La base compte donc **26
+>   comptes réels**, et **16 % des tâches de la plateforme appartiennent au compte de
+>   démonstration**. 🔴 `get_admin_stats` **ne les exclut ni l'un ni l'autre** (vérifié dans sa
+>   définition en base) : la console `/admin` compte des fantômes, et toute décision prise sur ses
+>   chiffres avant une campagne est biaisée d'autant.
+>
+> ✅ **Ce qui n'est pas en cause** : la délivrabilité (`npm run check:mail` vert, DKIM, SPF et MX du
+> Return-Path en place, un seul avertissement DMARC `p=none`), la production (`/`,
+> `/entreprise-presentation`, `/en`, `/blog`, `/sitemap.xml` répondent **200**), ni le SEO technique
+> (40 URLs au sitemap, 80 `hreflang`, 0 page `noindex`, revérifiés sur un build neuf). **Tout est
+> prêt et personne ne vient.** Le levier reste celui nommé le 2026-08-19, et il est hors du dépôt :
+> [`ACQUISITION-BACKLINKS.md`](./ACQUISITION-BACKLINKS.md).
+
+---
+
+## 1. Les chiffres réels · *état du 2026-08-14, conservé à sa date*
 
 | Métrique | Valeur |
 |---|---|

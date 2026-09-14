@@ -299,10 +299,34 @@ avec la périodicité ET la dérivation du prix annuel. `stripe-org-portal` n'a 
 reste valide. Il ne reste que la création des 4 prix annuels dans Stripe (§5.1) : aucun secret,
 aucun redéploiement derrière.
 
+> ⚠️ **Ces trois numéros de version sont ceux du 2026-08-25 et ne décrivent plus la production.**
+> Relevés par l'API le 2026-09-14 au soir : `stripe-org-checkout` **v15**, `stripe-webhook` **v33**,
+> `stripe-org-portal` **v12**. Ils sont conservés ici parce qu'ils datent le geste, pas l'état.
+
 `supabase/config.toml` déclare déjà les deux nouvelles fonctions en `verify_jwt = true`.
-Ajouter à l'endpoint webhook, s'ils n'y sont pas : `checkout.session.completed`,
-`customer.subscription.updated`, `customer.subscription.deleted`, `invoice.payment_succeeded`,
-`invoice.payment_failed`.
+
+🔴 **SIX events à souscrire sur l'endpoint webhook, pas cinq.** Recomptés dans
+`supabase/functions/stripe-webhook/index.ts` le 2026-09-14 (`grep "case '"`, six branches
+d'événement Stripe) :
+
+- `checkout.session.completed`
+- `customer.subscription.updated`
+- `customer.subscription.deleted`
+- `invoice.payment_succeeded`
+- `invoice.payment_failed`
+- **`charge.refunded`**
+
+⚠️ **Cette liste en comptait CINQ jusqu'au 2026-09-14**, et c'est le seul endroit du dépôt où elle
+était encore fausse : `CLAUDE.md` et [`STRIPE-LIVE.md`](./STRIPE-LIVE.md) avaient été corrigés le
+2026-09-12, **pas le runbook**, c'est-à-dire le document qu'on suit le jour de la bascule. Le
+chiffre est devenu faux le 2026-09-06, quand la v27 du webhook a ajouté la branche de
+remboursement. En réenregistrer cinq laisserait `charge.refunded` non souscrit : un remboursement
+réellement versé, et **aucune ligne compensatoire au journal d'encaissement**, donc un journal qui
+ne montre que l'encaissement. C'est exactement ce qu'on ne veut pas produire en contrôle fiscal.
+
+❌ **Ne jamais corriger un chiffre dans les documents d'explication sans le corriger dans le
+runbook.** Une note périmée dans un document qu'on lit coûte une relecture ; une note périmée dans
+un document qu'on EXÉCUTE coûte l'opération.
 
 ### 5.4 — Recette en mode test (`stripe listen --forward-to ...`)
 

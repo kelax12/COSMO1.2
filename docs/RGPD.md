@@ -34,7 +34,7 @@ traitée par fragments dans les audits sécurité. Mesuré sur le schéma de pro
 >
 > ✅ **Ce n'est pas une non-conformité** : [`RGPD-REGISTRE.md`](./RGPD-REGISTRE.md), qui est la
 > pièce opposable au titre de l'art. 30, **liste bien les trois**. C'est l'inventaire de cet audit
-> qui est en retard sur son propre registre — l'inverse serait grave, celui-ci est réparable, et
+> qui est en retard sur son propre registre, l'inverse serait grave, celui-ci est réparable, et
 > il l'est ci-dessous au §1.
 >
 > ⚠️ **Ce qui reste non remesuré ce soir, et doit se lire comme tel** : les durées de conservation,
