@@ -92,6 +92,34 @@ Free n'est pas connu, donc son plateau à elle n'est pas celui de ce tableau.
 
 ---
 
+## Mise à jour du 2026-09-14 · **aucune note n'est attribuée, et c'est délibéré**
+
+🔴 **Cette entrée ne porte pas de colonne de notes, parce qu'aucun audit n'a été rejoué.** La
+journée a livré du code et corrigé de la documentation ; elle n'a pas repassé les onze domaines
+écran par écran. Inventer onze notes à partir de ce qui a bougé serait exactement le défaut que ce
+tableau documente trois fois — *un « avant » se relit à sa source, il ne se recopie pas* — avec une
+variante pire : un « après » qu'on déduit au lieu de le mesurer.
+
+**Les notes du 2026-09-03 restent donc les dernières attribuées.** Ce qui suit dit ce qui a changé
+sous elles, avec sa preuve, pour que personne ne lise une note de 09-03 comme couvrant ce travail.
+
+| Domaine | Ce qui a bougé le 2026-09-14 | Preuve opposable |
+|---|---|---|
+| [Performance](./PERFORMANCE.md) | **C-14 fermé** : les deux budgets ont ≥ 5 % de marge, et les deux plafonds ont été **ABAISSÉS** (78 000 → 71 000, 370 000 → 323 000). ⚠️ Ils avaient vécu **trois jours hors du dépôt**, annoncés en vigueur par ce dossier alors que `main` portait les anciens | commit `7134d7fe`, run `34846164939` (5 jobs verts) · entrée 66,9 ko, critique 306,6 ko |
+| [Tests / CI](./TESTING.md) | Suite **2 051 / 179 → 2 586 / 228**. Trois gardes neuves ou durcies : `toast.guard`, `refund-replay` (10 cas, 1 témoin), `refund.guard` qui **interdit** désormais de recopier l'arithmétique du verrou. Playwright **210 / 25 → 220 / 26**, la sonde jetable non suivie est supprimée | `test:coverage` exit 0 · runs `34846164939`, `34865013726`, `34876197317` |
+| [Sécurité](../faille.md) | Le verrou anti-rejeu du remboursement devient **testable** et est **déployé** (v6). Quatre versions d'Edge Functions citées étaient décalées d'une unité. Un angle mort (« 404 donc 500 », « les tables sont vides ») était faux. Table des gardes remesurée : elle datait du 08-25 | `Edge deploy drift` run `34861975638` : 8 fonctions identiques au dépôt · advisors relus |
+| [Accessibilité](./ACCESSIBILITY.md) | **53 → 52 surfaces câblées** : `CategoryManager` était câblée sur `useModalA11y` et montée nulle part. Elle allongeait la check-list VoiceOver d'un écran qu'aucun doigt ne peut ouvrir | `git grep` : 3 imports, tous pour un helper · 50 fichiers importent réellement le hook |
+| [Architecture](./ARCHITECTURE.md) | 452 lignes de code mort en moins. Aucun effet sur le cliquet de taille (le fichier était sous le budget de 600) | `architecture.guard` verte |
+
+⚠️ **Ce que cette journée a surtout produit, et qui ne se note pas** : quatre affirmations de la
+documentation ont été **démenties par leur propre remesure** — la portabilité des corrections de
+types React 19 (72 erreurs `tsc`), les cinq events du webhook (il y en a six), « un admin non
+propriétaire peut supprimer l'entreprise » (faux depuis la mig. 138), et les versions déployées.
+Aucune n'a été trouvée en relisant : toutes en comptant dans le code, en lisant le ledger ou en
+interrogeant l'API.
+
+---
+
 ## Mise à jour du 2026-09-03 · les journées 08-30 à 09-01 n'avaient jamais été notées
 
 La passe du 2026-09-02 a noté **les deux campagnes de sa propre journée**, et rien d'autre : elle

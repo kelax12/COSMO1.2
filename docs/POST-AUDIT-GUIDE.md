@@ -89,65 +89,30 @@ de config Auth, **pas du code** → rien à committer.
 
 ---
 
-## Point 3 — Trancher la décision produit Premium
+## Point 3 — Décision produit Premium · **TRANCHÉE le 2026-09-03, exécutée le 2026-09-04**
 
-**Problème** : le revenu est aujourd'hui structurellement nul. Cause technique
-(documentée, assumée) : `consume_premium_token` n'est **pas câblé** côté client
-(`incrementTokenUsage` est un no-op), et le mur-pub Habitudes est piloté par un
-flag `localStorage` daté (`useDailyAdGate('habits')`), pas par `isPremium()`.
-Conséquence : un gratuit qui regarde **une** pub gagne un token **permanent** →
-débloque aussi les **stats** à vie. Le seul vrai différenciateur payant actuel est
-« sans pub ». Réf. : `CLAUDE.md → Modèle Premium`.
+🟢 **Décision d'Axel** : *« Ce système est une archive du passé, supprime-le afin de ne pas
+complexifier le code avec des choses inutiles. »* Les jetons premium et le mur-pub des Habitudes
+ont été **supprimés** (item C-04). Les Habitudes sont gratuites pour tout le monde et la
+monétisation ne repose plus que sur l'abonnement. C'est l'option C des trois que ce guide
+proposait ; les deux autres (garder la pub, ou câbler des jetons consommables) sont écartées.
 
-⚠️ Ce point est une **décision de produit**, pas un bug à patcher. Ce guide structure
-la décision ; il ne tranche pas à ta place.
+**Le défaut qui a motivé la décision, et qu'elle referme** : `consume_premium_token` n'était pas
+câblé, le mur était piloté par un flag `localStorage` daté, et un gratuit qui regardait UNE pub
+gagnait un jeton permanent, donc les statistiques à vie. Le jour où `PREMIUM_ENFORCED` serait
+passé à `true`, c'était un contournement de paywall en une manipulation.
 
-### Fichiers concernés (pour situer l'impact de chaque option)
-- `src/modules/billing/billing.context.tsx` — `isPremium()`, `addTokens`.
-- `src/components/HabitsAdGate.tsx` — mur-pub quotidien, appelle `addTokens(1)`.
-- `src/lib/hooks/useDailyAdGate.ts` (clé `cosmo_adwall_habits`) — le flag daté.
-- `src/modules/billing/subscription.logic.ts` — logique premium pure (testée 100 %).
-- RPC SQL : `consume_premium_token` / `credit_premium_token_from_ad` (mig. 015/016/039).
-- `src/pages/StatisticsPage.tsx` — gate `isPremium()` (stats).
+**Ce qui est parti** : `HabitsAdGate`, `AdModal` et tout AdSense (script, et ses origines dans la
+CSP de `vercel.json`), `useDailyAdGate` et la clé `cosmo_adwall_habits`, `addTokens`, les RPC
+`consume_premium_token` / `credit_premium_token_from_ad` / `bump_win_streak`, et les colonnes
+`premium_tokens` / `win_streak` / `ad_credits_*` de `subscriptions` (mig. **141**).
 
-### Trois options (choisir UNE)
+**Ce qui reste**, et n'est PAS dans ce périmètre : `PREMIUM_ENFORCED`, qui garde les statistiques
+premium et la route `/premium`. Le reste de ce guide en décrit toujours la réactivation.
 
-**Option A — « Sans pub » assumé (le moins de travail, cohérent avec l'existant)**
-- On accepte que les stats soient gratuites après 1 pub ; le payant = *aucune pub*.
-- Action : **retirer l'appel `addTokens(1)` dans `HabitsAdGate`** pour que la pub ne
-  crédite plus un token permanent (sinon « gratuit » = « premium » après 1 pub).
-  Le mur reste piloté par le flag daté (1×/jour). Les stats redeviennent réellement
-  premium (gate `isPremium()` non franchi par la pub).
-- Risque : faible. Pas de SQL. Bien tester `StatisticsPage` gate + abonnés payants
-  (Stripe `current_period_end` futur) qui ne voient jamais le mur.
-
-**Option B — Tokens consommables réels (modèle « freemium à crédits »)**
-- Câbler `consume_premium_token` côté client (aujourd'hui no-op) + repenser la
-  péremption. ⚠️ CLAUDE.md avertit : le premium des abonnés payants dépend AUSSI de
-  `tokens > 0` → brancher la consommation peut casser leur accès. **Ne pas faire
-  sans** dissocier « premium par abonnement » (Stripe) de « premium par tokens ».
-- Action : refonte de `subscription.logic.ts` pour séparer les deux sources de
-  vérité, migration SQL pour le décompte atomique, tests unitaires + intégration.
-- Risque : élevé. Effort : 2–4 j. À ne lancer qu'après le harnais RLS (point 4).
-
-**Option C — Stripe d'abord (monétisation directe)**
-- Finaliser le flux Stripe (Edge Functions déjà solides : checkout + webhook +
-  idempotence) et faire du **paiement** le seul différenciateur ; la pub disparaît.
-- Action : configurer `VITE_STRIPE_PUBLISHABLE_KEY` (Vercel) + secrets Edge
-  (`STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `APP_URL`), déployer les 3 Edge
-  Functions (avec `supabase/config.toml`), tester un checkout réel en mode test
-  Stripe, puis retirer le mur-pub + le crédit token.
-- Risque : moyen (paiement réel). Prérequis fort : **tests sur les Edge Functions**
-  (gap actuel = 0 test sur le code financier).
-
-### Recommandation de séquencement
-A (quick win cohérent) **maintenant** → puis C (Stripe) quand on veut encaisser →
-B seulement si le modèle à crédits devient un vrai besoin. **Ne pas** câbler les
-tokens (B) tant que premium-abonnement et premium-token ne sont pas dissociés.
-
-### Décision à acter
-Écrire le choix retenu dans `CLAUDE.md → Modèle Premium`
-avec la date, pour que la dette « assumée » devienne une décision tracée.
+⚠️ **La définition de « premium » a changé** : `plan='premium'` + `status='active'` + période non
+dépassée. Vérifiée ligne par ligne contre les 54 lignes de `subscriptions` en prod avant la
+bascule, verdict identique pour chacune.
 
 ---
 

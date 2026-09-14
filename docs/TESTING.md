@@ -11,7 +11,7 @@
 >
 > | | 08-29 | **09-03** |
 > |---|---|---|
-> | Suite unitaire | 1 836 / 166, verte | **2 051 / 179, verte** (mesurée le 2026-09-02) |
+> | Suite unitaire | 1 836 / 166, verte | **2 051 / 179, verte** (mesurée le 2026-09-02) · ⚠️ **2 586 / 228 au 2026-09-14** — instantané daté, non réécrit |
 > | Jobs CI verts sur `main` | 5 sur 5 | **5 sur 5**, une rougeur `e2e` du 08-30 au 09-01 refermée |
 > | Fichiers de garde (`*guard*`, comptés dans l'arbre) | 6 | **9** |
 >
@@ -455,7 +455,15 @@ npm run test:coverage # + couverture v8 (seuils par fichier — bloquant CI)
 
 ### Couverture · mesure du 2026-09-11
 
-✅ **VERTE** : 2 470 tests / 221 fichiers, zéro échec, aucun seuil franchi.
+✅ **VERTE au 2026-09-14** : **2 586 tests / 228 fichiers**, zéro échec, `exit 0`, aucun seuil
+franchi — 31,15 L · 30,73 S · 24,41 F · 26,31 B.
+
+⚠️ **Les pourcentages BAISSENT alors que 116 tests ont été ajoutés** depuis le 09-11 (31,32 L pour
+2 470 / 221). Ce n'est pas une régression : le **dénominateur** bouge aussi, du code neuf étant
+arrivé avec. Un taux de couverture ne se lit jamais seul, toujours avec le nombre de lignes qu'il
+rapporte — sans quoi on « corrige » une baisse qui n'en est pas une, ou on rate une vraie.
+
+*Mesure précédente, conservée :* ✅ **VERTE** : 2 470 tests / 221 fichiers, zéro échec, aucun seuil franchi.
 
 | | 2026-08-29 | **2026-09-11** | Seuil global |
 |---|---|---|---|
@@ -541,23 +549,31 @@ npm run test:e2e:report  # rapport HTML
 > project ne l'avait donc **jamais** été — la moitié mobile de chaque chiffre de
 > ce fichier venait de la CI, ou de nulle part. Installé depuis.
 
-### Décompte réel — mesuré le 2026-09-11 (`npx playwright test --list`)
+### Décompte réel — mesuré le 2026-09-14 (`npx playwright test --list`)
 
-**210 cas, 25 specs, 4 projects.**
+**220 cas, 26 specs, 4 projects.**
 
 | Project | Cas | Ce qu'il joue |
 |---|---|---|
-| `chromium` | **103** | Desktop Chrome, mode démo |
-| `mobile-safari` | **94** | iPhone 12 / WebKit, mode démo |
-| `supabase-stub` | **12** | Desktop Chrome, **hors mode démo** (cf. plus bas) |
+| `chromium` | **107** | Desktop Chrome, mode démo |
+| `mobile-safari` | **96** | iPhone 12 / WebKit, mode démo |
+| `supabase-stub` | **16** | Desktop Chrome, **hors mode démo** (cf. plus bas) |
 | `supabase-stub-warmup` | **1** | Préalable de chauffe, pas un parcours (cf. plus bas) |
 
-⚠️ **Ce que la commande affiche est 212, pas 210, et l'écart se dit.**
-`e2e/_tmp-probe.spec.ts` est une sonde jetable laissée par une autre session,
-**non suivie par git** : elle est collectée localement (2 cas, un par project
-démo) et n'existe ni dans le dépôt ni en CI. Le chiffre du tableau est celui du
-**dépôt**, seul chiffre opposable. Un décompte local qu'on recopie sans regarder
-ce qui est suivi est exactement la façon dont le précédent est devenu faux.
+**Ce que la passe du 2026-09-14 a ajouté** : `e2e/stubbed/delete-org.spec.ts`
+(4 cas), le parcours nominal de suppression d'entreprise — rembourser, résilier,
+supprimer — exigé par **C-39** et jamais joué jusque-là. Il prouve l'ordre en
+**retenant la réponse** de l'Edge Function : tant qu'elle ne part pas, aucune
+`rpc/delete_organization` ne doit exister. Vu ROUGE sur une mutation de
+`useDeleteOrgFlow` avant d'être commité.
+
+✅ **La sonde jetable `e2e/_tmp-probe.spec.ts` est SUPPRIMÉE** (2026-09-14). Elle
+était non suivie par git, rouge, et faussait de 2 cas tout recomptage local : la
+commande affichait 212 quand le dépôt en portait 210, et l'écart devait être
+expliqué à chaque mesure. Local et dépôt disent désormais le même nombre.
+⚠️ Ce que cet écart enseignait reste vrai : **un décompte local qu'on recopie
+sans regarder ce qui est SUIVI** est exactement la façon dont le précédent est
+devenu faux.
 
 ⚠️ **`supabase-stub-warmup` n'est pas un parcours** : il compile les deux écrans
 du harnais avant que les douze autres cas ne commencent. Le compter avec eux

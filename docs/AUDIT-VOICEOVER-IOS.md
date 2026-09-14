@@ -12,7 +12,7 @@ prouvent, et ce qu'elles ne prouvent pas ». Cette page existe pour qu'une seule
 iPhone réel la referme.
 
 > **Révision du 2026-09-08.** La version du 2026-09-04 (commit `7008bc6`) précédait le câblage
-> C-53. Depuis, **53 surfaces modales maison** passent par `useModalA11y`, chacune avec un **nom
+> C-53. Depuis, **52 surfaces modales maison** passent par `useModalA11y`, chacune avec un **nom
 > accessible connu**, et 8 autres sont déclarées non modales avec leur motif
 > (`src/components/modal-a11y.guard.test.ts`). La check-list a été reprise sur ce périmètre :
 > chaque surface atteignable sur iPhone a désormais sa ligne, avec le nom qu'elle **doit** dire.
@@ -246,7 +246,7 @@ sur téléphone. Trois chemins suffisent, et ce sont trois **façons d'ouvrir** 
 ## 9. `/entreprise` · 10 min · thème noir, et la zone la moins mesurée du produit
 
 Les correctifs D4, D5 et E2 du 2026-08-27 ont été écrits **sans qu'un lecteur d'écran les
-vérifie**. Et **quinze** des 53 surfaces câblées vivent ici.
+vérifie**. Et **quinze** des 52 surfaces câblées vivent ici.
 
 | # | Geste | Attendu | Piège connu |
 |---|---|---|---|
@@ -293,7 +293,7 @@ Se déconnecter (feuille « Plus »), puis `/login`.
 - **Quelque chose est-il lu deux fois ?** Un texte à la fois visible et en `sr-only` s'entend en
   double. C'est précisément le risque introduit par les correctifs D4 et D5.
 - **Une surface maison se comporte-t-elle comme une surface Radix ?** `TaskModal` (4.12) et
-  `OKRModalSheet` (8.8) viennent de la bibliothèque, les 53 autres de `useModalA11y`. Si les deux
+  `OKRModalSheet` (8.8) viennent de la bibliothèque, les 52 autres de `useModalA11y`. Si les deux
   familles ne s'annoncent pas pareil, la différence est le finding.
   ⚠️ Ne pas en conclure que Radix est la référence : au clavier, le témoin Radix lui-même échoue sur
   la restitution du focus. On compare, on ne suppose pas.
@@ -323,7 +323,7 @@ Se déconnecter (feuille « Plus »), puis `/login`.
 
 ---
 
-## Annexe A · les 53 surfaces câblées, et ce que chacune doit dire
+## Annexe A · les 52 surfaces câblées, et ce que chacune doit dire
 
 Source : `grep -rl "useModalA11y" src --include=*.tsx`, croisée avec le nom accessible lu dans le
 code et résolu dans `src/locales/fr/`. **Ce n'est pas une liste de cases à cocher de plus** : c'est
@@ -380,15 +380,20 @@ la référence des noms attendus, pour que « M1 » ait un contenu vérifiable �
 | `RemoveFriendConfirm` | boîte de réception › retirer un ami | Confirmer la suppression de l'ami | à jouer si tu passes par la boîte de réception |
 | `ShareInviteClaimer` | ouvrir un lien `/invite/:token` | Tâche partagée avec vous | à jouer si tu as un lien sous la main |
 
-**Sept surfaces câblées ne figurent pas dans ce tableau**, parce qu'aucune séance sur iPhone ne peut
+**Six surfaces câblées ne figurent pas dans ce tableau**, parce qu'aucune séance sur iPhone ne peut
 les ouvrir : `DesktopAddToList`, `BottomSheet`, `PremiumGateModal`, `CommandPalette`,
-`ShortcutsHelp`, `QuickAddBar` et `CategoryManager`. Leur motif est en annexe B. 46 + 7 = 53.
+`ShortcutsHelp` et `QuickAddBar`. Leur motif est en annexe B. **46 + 6 = 52.**
 
-🔴 **`CategoryManager` n'est monté nulle part.** Vérifié le 2026-09-08 : seul son helper
-`getColorHex` est importé (par `OKRPage` et `TeamOKRTab`), le composant modal ne l'est par personne.
-Il est **câblé** sur `useModalA11y` et **inatteignable**. Ce n'est pas un finding d'accessibilité,
-c'est un orphelin de la même famille que ceux supprimés par C-49 : à traiter ailleurs, à noter ⬜
-ici.
+✅ **`CategoryManager` est SUPPRIMÉE, le 2026-09-14** — et c'est ce qui fait passer le total de 53 à
+**52**. Elle était câblée sur `useModalA11y` et montée **nulle part** : 452 lignes, trois imports
+dans tout le dépôt et tous pour le seul helper `getColorHex`. Signalée ⬜ ici le 2026-09-08, « à
+traiter ailleurs » — elle n'a été traitée que six jours plus tard, parce qu'un défaut sans item n'a
+pas de propriétaire. Ce qui survit vit dans `src/lib/category-colors.ts`.
+
+⚠️ **Ce qu'un composant mort mais CÂBLÉ coûtait, et c'est le sujet de cette check-list** : il
+comptait comme une surface à auditer. Quelqu'un aurait fini par chercher au doigt, sur un iPhone,
+une modale qu'aucun écran n'ouvre. **Du code mort ne coûte pas des octets, il coûte du temps à qui
+le prend pour vivant** — et il allongeait précisément la séance que ce document organise.
 
 ## Annexe B · ce qu'un iPhone ne peut pas atteindre, et pourquoi
 
@@ -402,7 +407,6 @@ ici.
 | `DesktopAddToList` | `AddToListModal` aiguille sur `useIsMobile()` : au-dessus du point de rupture seulement |
 | `BottomSheet` | `WeeklyRecapSheet`, son unique consommateur produit, est derrière `WEEKLY_RECAP_ENABLED = false` |
 | `PremiumGateModal` | `PREMIUM_ENFORCED = false` : `isPremium()` répond `true` pour tout le monde, le mur ne s'ouvre jamais |
-| `CategoryManager` | jamais monté (cf. annexe A) |
 
 ⚠️ **Les trois premières se rouvrent avec un clavier Bluetooth.** Si tu en branches un, elles
 rentrent dans le périmètre, et il faut le dire dans le compte-rendu : « joué avec clavier externe »

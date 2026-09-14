@@ -414,6 +414,15 @@ Réencodage reproductible : `npm run images:check` (mesure) puis
 
 - **Mesure du 2026-09-11** (build avec `VITE_SENTRY_DSN`, arbre propre) : chunk d'entrée
   **66 896 o gzip**, chemin critique **306 347 o gzip** sur 7 chunks.
+
+  ✅ **Ces deux chiffres sont COMMITÉS et vérifiés par la CI depuis le 2026-09-14** — commit
+  `7134d7fe`, run `34846164939` vert sur les cinq jobs, étape `Budget de bundle` comprise :
+  entrée **66,9 ko**, chemin critique **306,6 ko** sur le build du runner.
+  🔴 **Ils ont vécu trois jours dans un arbre de travail NON COMMITÉ**, pendant lesquels ce
+  document et `CLAUDE.md` les annonçaient comme en vigueur alors que `main` portait encore
+  78 000 / 370 000. Une branche entière (`feat/react-19`) a été arbitrée contre un plafond qui
+  n'existait nulle part, et trois commits `fix(build)` d'autres sessions sont revenus à `sonner`
+  faute de trouver la façade dans le dépôt. **Un plafond se relit dans le fichier commité.**
 - **Cliquet** : `npm run check:bundle` refuse un chunk d'entrée au-dessus de **71 000 o gzip** et
   un chemin critique au-dessus de **323 000 o gzip**. Bloquant dans le job CI `lint-test-build`,
   juste après le build.

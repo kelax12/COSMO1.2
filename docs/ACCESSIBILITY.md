@@ -266,7 +266,7 @@ reprend encore ; le chiffre opposable est celui de la garde, pas celui-là.
 
 ⚠️ **Câblé n'est pas mesuré, et les deux ne se confondent pas.** 10 surfaces sont mesurées au
 clavier dans un vrai navigateur (liste ci-dessous) ; les 43 autres sont câblées et couvertes par le
-cliquet, pas par une mesure. Écrire « les 53 piègent le focus » serait exactement le glissement que
+cliquet, pas par une mesure. Écrire « les 52 piègent le focus » serait exactement le glissement que
 ce paragraphe existe pour empêcher.
 
 #### Ce que la garde a trouvé que l'inventaire manuel avait raté (2026-09-08)
@@ -395,7 +395,13 @@ ont donc été écrites, et chacune a été **vue échouer** avant d'être reten
 - ⚠️ **`focusReturned` est mesuré et imprimé, jamais assertionné** : le témoin Radix lui-même le
   rend `false`. Un détecteur que la bibliothèque de référence ne passe pas mesure le détecteur,
   pas la modale.
-- ⚠️ **Le hook existe, 53 surfaces y passent, et un cliquet le tient** (2026-09-08). Ce n'était
+- ⚠️ **Le hook existe, 52 surfaces y passent, et un cliquet le tient** (2026-09-08, **recompté le
+  2026-09-14** : 53 → 52, `CategoryManager` étant supprimée — elle était câblée et montée nulle
+  part). 🔴 **Compter ces surfaces par un `grep` sur le NOM du hook donne un faux chiffre** : il
+  attrape les commentaires qui le citent, et c'est arrivé ici même le 09-14 (53 fichiers annoncés,
+  dont un qui ne fait que le mentionner). Le compte opposable est celui des fichiers qui
+  **importent** `@/hooks/use-modal-a11y` — **50** — et des surfaces qu'ils montent, certains en
+  portant plusieurs. Ce n'était
   pas le cas pendant les trois premières passes : le câblage s'est fait par vagues, et la liste des
   surfaces restantes vivait dans un fichier Markdown. Elle vit maintenant dans un test. **Câblé
   n'est toujours pas mesuré** : 10 surfaces sont mesurées au clavier, 43 sont câblées et gardées.

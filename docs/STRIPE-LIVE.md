@@ -124,6 +124,23 @@ bloquant pour la résiliation, c'est un point de conformité.
    ⚠️ **Le même doute porte sur l'endpoint de TEST**, et il n'est pas refermé : rien ne dit que
    `charge.refunded` y a été ajouté avec la v27. À vérifier au tableau de bord avant de conclure
    d'un test de remboursement qu'il a marché (geste M-37c).
+3bis. **Effacer les identifiants Stripe du compte de TEST restés en base**, JUSTE APRÈS le
+   remplacement des secrets et AVANT de rebasculer les drapeaux de facturation :
+
+   ```sql
+   SELECT * FROM public.reset_stripe_identifiers();      -- essai à blanc, ne compte que
+   SELECT * FROM public.reset_stripe_identifiers(true);  -- applique
+   ```
+
+   Sans ce geste, `stripe-org-checkout` et `stripe-org-portal` présentent un `cus_…` / `sub_…`
+   de test à une clé live : Stripe répond 404, les deux fonctions rendent 500, et un client
+   n'a plus ni bouton pour payer ni bouton pour résilier. Mesuré en base le 2026-09-04 :
+   `org_subscriptions` est vide, mais `subscriptions` porte 5 customers et 2 subscriptions du
+   compte de test. La fonction est installée par la mig. `140`, qui documente ce qu'elle
+   n'efface JAMAIS (journal fiscal, preuves de renonciation, marqueurs d'idempotence).
+
+   ⚠️ Ce geste ne s'anticipe pas : tant que la clé est une clé de test, chaque checkout
+   réécrit un identifiant de test. Il se joue DANS la fenêtre de bascule, pas avant.
 4. Mention « TVA non applicable, art. 293 B du CGI » sur les factures tant que la franchise
    en base s'applique.
 5. `tax_code` des produits : non renseigné (comme en test). À poser avec l'expert-comptable
