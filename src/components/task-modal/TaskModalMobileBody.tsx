@@ -10,16 +10,16 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
 import { getDateLocale } from '@/i18n/format';
-import { Bookmark, Loader2, Plus, Check, ChevronRight, ChevronDown } from 'lucide-react';
+import { Bookmark, Loader2 } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { useBottomSheet } from '@/hooks/use-bottom-sheet';
 import { useInvalidShake } from '@/hooks/use-invalid-shake';
-import { useCreateCategory, buildTree } from '@/modules/categories';
-import type { Category, CategoryNode } from '@/modules/categories';
-import { useCollapsedCategories } from '@/modules/categories/collapsed.store';
+import { useCreateCategory } from '@/modules/categories';
+import type { Category } from '@/modules/categories';
 import AddToListModal from '@/components/AddToListModal';
 import { SectionTitle, SectionCard, CellSeparator, Cell } from './primitives';
-import { MobileActionSheet, MobileChoiceSheet } from './MobileActionSheet';
+import { MobileChoiceSheet } from './MobileActionSheet';
+import TaskModalCategorySheet from './TaskModalCategorySheet';
 import DurationStepper from './DurationStepper';
 import MobileCollaboratorsSheet from './MobileCollaboratorsSheet';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -113,9 +113,6 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
   const { t } = useT('taskModal');
   const { t: tCommon } = useT('common');
   const { t: tOv } = useT('overlays');
-  // colorModal.expand / colorModal.collapse — même arbre replié que
-  // ColorSettingsModal / CategoryFilterTree, namespace `tasks`.
-  const { t: tTasks } = useT('tasks');
   const [showPrioritySheet, setShowPrioritySheet] = useState(false);
   const [showCategorySheet, setShowCategorySheet] = useState(false);
   const [showRecurrenceSheet, setShowRecurrenceSheet] = useState(false);
@@ -128,50 +125,10 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
   }, [autoOpenCollaborators]);
   const [showDeadlinePicker, setShowDeadlinePicker] = useState(false);
   const [cellErrors, setCellErrors] = useState<Record<string, boolean>>({});
-  const [showNewCatInput, setShowNewCatInput] = useState(false);
-  const [newCatName, setNewCatName] = useState('');
-  const [newCatColor, setNewCatColor] = useState('blue');
   const { sheetRef, sheetDragProps } = useBottomSheet(handleClose);
   const { register, trigger, clear, isInvalid } = useInvalidShake();
-  // Partagé avec ColorSettingsModal / CategoryTreeSelect : un même compte a un
-  // seul état de pliage, pas un par sélecteur.
-  const { isCollapsed, setCollapsed } = useCollapsedCategories();
 
   const isValid = isFormValid();
-
-  // Création de catégorie depuis la feuille : sélectionne la catégorie créée,
-  // efface l'erreur du champ, referme la saisie ET la feuille.
-  const submitNewCategory = () => {
-    const name = newCatName.trim();
-    if (name.length < 2) return;
-    createCategoryMutation.mutate(
-      { name, color: listColorOptions.find((c) => c.value === newCatColor)?.color ?? '#3B82F6' },
-      {
-        onSuccess: (created) => {
-          handleInputChange('category', created.id);
-          setCellErrors((prev) => ({ ...prev, category: false }));
-          setShowNewCatInput(false);
-          setNewCatName('');
-          setNewCatColor('blue');
-          setShowCategorySheet(false);
-        },
-      },
-    );
-  };
-
-  // Feuille « Catégorie » : arbre repliable, même chevron bleu et même
-  // indentation que ColorSettingsModal / CategoryTreeSelect. Aplatit en
-  // lignes visibles (s'arrête sous un nœud replié), même technique que
-  // `CategoryFilterTree` / `ColorSettingsModal`.
-  const visibleCategoryRows: Array<{ node: CategoryNode; depth: number; hasChildren: boolean }> = [];
-  const flattenVisibleCategories = (nodes: CategoryNode[], depth: number) => {
-    for (const node of nodes) {
-      const hasChildren = node.children.length > 0;
-      visibleCategoryRows.push({ node, depth, hasChildren });
-      if (hasChildren && !isCollapsed(node.category.id)) flattenVisibleCategories(node.children, depth + 1);
-    }
-  };
-  flattenVisibleCategories(buildTree(categories), 0);
 
   const handleCreateOrSave = () => {
     const nameOk = formData.name.trim().length >= 1;
@@ -542,75 +499,23 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
       />
 
       {/* ── Action sheet : Catégorie — arbre repliable (chevron bleu, indenté),
-          contrairement aux feuilles Priorité/Récurrence ci-dessus qui restent
-          des listes plates : seule celle-ci a une hiérarchie à représenter. */}
-      <MobileActionSheet
+          contrairement aux feuilles Priorité/Répéter ci-dessus qui restent des
+          listes plates : seule celle-ci a une hiérarchie à représenter, et c'est
+          ce qui lui vaut son propre fichier (C-75). */}
+      <TaskModalCategorySheet
         open={showCategorySheet}
-        title={t('fields.category')}
-        onClose={() => { setShowCategorySheet(false); setShowNewCatInput(false); }}
-        scrollable
-      >
-        {visibleCategoryRows.map((row, i) => (
-          <React.Fragment key={row.node.category.id}>
-            {i > 0 && <CellSeparator />}
-            <div className="flex items-center gap-1 min-h-11" style={{ paddingInlineStart: `${16 + row.depth * 16}px` }}>
-              {row.hasChildren ? (
-                <button
-                  type="button"
-                  onClick={() => setCollapsed(row.node.category.id, !isCollapsed(row.node.category.id))}
-                  aria-label={isCollapsed(row.node.category.id) ? tTasks('colorModal.expand') : tTasks('colorModal.collapse')}
-                  className="p-1 shrink-0 text-blue-600 dark:text-blue-400"
-                >
-                  {isCollapsed(row.node.category.id)
-                    ? <ChevronRight size={14} aria-hidden="true" />
-                    : <ChevronDown size={14} aria-hidden="true" />}
-                </button>
-              ) : (
-                <span className="w-6 shrink-0" aria-hidden="true" />
-              )}
-              <button
-                type="button"
-                onClick={() => { handleInputChange('category', formData.category === row.node.category.id ? '' : row.node.category.id); setShowCategorySheet(false); }}
-                className="flex-1 min-w-0 flex items-center justify-between pr-4 min-h-11 active:bg-[rgb(var(--color-hover))]"
-              >
-                <span className="flex items-center gap-2.5">
-                  <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: row.node.category.color }} />
-                  <span className="text-[15px] text-[rgb(var(--color-text-primary))] truncate">{row.node.category.name}</span>
-                </span>
-                {formData.category === row.node.category.id && <Check size={16} className="text-blue-500 shrink-0" />}
-              </button>
-            </div>
-          </React.Fragment>
-        ))}
-        {categories.length > 0 && <CellSeparator />}
-        {!showNewCatInput ? (
-          <button type="button" onClick={() => setShowNewCatInput(true)} className="w-full flex items-center gap-2 px-4 min-h-11 text-blue-500">
-            <Plus size={16} /><span className="text-[15px]">{t('fields.createCategory')}</span>
-          </button>
-        ) : (
-          <div className="px-4 py-3 flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => { const idx = listColorOptions.findIndex((c) => c.value === newCatColor); setNewCatColor(listColorOptions[(idx + 1) % listColorOptions.length].value); }}
-              className="w-6 h-6 rounded-full shrink-0"
-              style={{ backgroundColor: listColorOptions.find((c) => c.value === newCatColor)?.color ?? '#3B82F6' }}
-            />
-            <input
-              autoFocus type="text" value={newCatName} onChange={(e) => setNewCatName(e.target.value)}
-              placeholder={t('fields.categoryNamePlaceholder')}
-              className="flex-1 text-[15px] bg-transparent focus:outline-none text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-muted))]"
-            />
-            <button
-              type="button"
-              disabled={newCatName.trim().length < 2 || createCategoryMutation.isPending}
-              onClick={submitNewCategory}
-              className="text-[15px] text-blue-500 font-semibold disabled:text-blue-300"
-            >
-              {createCategoryMutation.isPending ? '…' : t('common.create')}
-            </button>
-          </div>
-        )}
-      </MobileActionSheet>
+        onClose={() => setShowCategorySheet(false)}
+        categories={categories}
+        selectedId={formData.category}
+        onSelect={(categoryId) => { handleInputChange('category', categoryId); setShowCategorySheet(false); }}
+        onCreated={(categoryId) => {
+          handleInputChange('category', categoryId);
+          setCellErrors((prev) => ({ ...prev, category: false }));
+          setShowCategorySheet(false);
+        }}
+        createCategoryMutation={createCategoryMutation}
+        listColorOptions={listColorOptions}
+      />
 
       {/* ── Modal Listes (composant existant) ── */}
       {taskId && (

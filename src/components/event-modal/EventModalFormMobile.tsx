@@ -290,7 +290,7 @@ const EventModalFormMobile: React.FC<EventModalFormBodyProps> = ({
                         aria-label={t('subcategoriesOf', { name: cat.name })}
                       >
                         <p
-                          className="text-[10px] font-bold uppercase tracking-widest mb-1.5 px-0.5"
+                          className="text-caption font-bold uppercase tracking-widest mb-1.5 px-0.5"
                           style={{ color: "rgb(var(--color-text-muted))" }}
                         >
                           {cat.name}
