@@ -14,6 +14,7 @@
   "descriptionPlaceholder": "description de l'événement",
   "descriptionTitle": "Description de l'événement",
   "color": "Couleur de l'événement",
+  "subcategoriesOf": "Sous-catégories de {{name}}",
   "showLegend": "Voir la légende des catégories",
   "hideLegend": "Masquer la légende des catégories",
   "legend": "Légende des catégories",
