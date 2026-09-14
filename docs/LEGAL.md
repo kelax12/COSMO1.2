@@ -1,7 +1,10 @@
 # LEGAL.md — obligations légales de COSMO
 
 > **Vivant.** Établi le 2026-08-26 à partir de l'état réel du code, de la base et des comptes
-> Stripe et Supabase. Décrit la situation courante, pas une cible.
+> Stripe et Supabase. Décrit la situation courante, pas une cible. **Repassé le 2026-09-14** sur
+> le seul point de la chaîne de paiement entreprise (§ État au 2026-09-14 et ligne E9) : la
+> facturation est désarmée, vérifiée en base. Les autres sections n'ont pas été revérifiées à
+> cette date et portent encore le statut du 2026-08-26.
 
 > 🔴 **Ce document n'est pas un avis juridique.** Il est rédigé par un assistant, pas par un
 > avocat ni un expert-comptable. Il sert à ne rien oublier et à savoir quoi demander. Aucune
@@ -122,11 +125,11 @@ Par l'effet de la décision structurante ci-dessous : aucun client n'est vérifi
 | E2 | Information précontractuelle | ✅ | Ajoutée le 2026-08-26 au-dessus des cases de consentement, là où le regard se pose avant l'engagement, et non seulement dans des CGU que personne n'ouvre : durée indéterminée, prix TTC, reconduction automatique, résiliation sans motif ni frais. Le montant exact est porté par la carte de palier juste en dessous. |
 | E3 | Rétractation 14 jours et double consentement | ✅ | Implémenté le 2026-08-26 dans `OrgBillingTab` : **deux cases distinctes**, jamais pré-cochées, demande expresse d'exécution immédiate **et** reconnaissance de renonciation. Sans les deux, `onSelect` n'est pas monté, donc aucun paiement ne peut être engagé. Recueilli côté COSMO et non via `consent_collection` de Stripe, qui exige une URL de CGV au Dashboard dont l'absence ferait **échouer** la création de session. CGU alignées (section 5 bis). |
 | E4 | Médiateur de la consommation | ❌ | Adhésion **payante et obligatoire**, coordonnées à publier dans les CGV et sur le site. Oubli classique, sanctionné par la DGCCRF. |
-| E5 | Résiliation en ligne (L215-1-1) | ❌ | 🔴 **Dégradé de 🟡 à ❌ le 2026-08-26 après vérification.** `/v1/billing_portal/configurations` renvoie **vide sur les DEUX comptes**, test et live : le portail client n'a jamais été configuré. `stripe-org-portal` ne passe aucun `configuration`, il compte donc sur un défaut inexistant, et Stripe refuse de créer la session tant que les réglages n'ont pas été enregistrés au Dashboard. La fonction porte d'ailleurs déjà l'alerte « customer cannot manage or cancel ». **Le bouton existe, la résiliation ne marche pas.** Correctif : Dashboard Stripe → Settings → Billing → Customer portal, activer l'annulation d'abonnement, enregistrer, sur les deux comptes. Non faisable par API depuis ici. |
+| E5 | Résiliation en ligne (L215-1-1) | ❌ | 🔴 **Dégradé de 🟡 à ❌ le 2026-08-26 après vérification.** `/v1/billing_portal/configurations` renvoie **vide sur les DEUX comptes**, test et live : le portail client n'a jamais été configuré. `stripe-org-portal` ne passe aucun `configuration`, il compte donc sur un défaut inexistant, et Stripe refuse de créer la session tant que les réglages n'ont pas été enregistrés au Dashboard. La fonction porte d'ailleurs déjà l'alerte « customer cannot manage or cancel ». **Le bouton existe, la résiliation ne marche pas.** Correctif : Dashboard Stripe → Settings → Billing → Customer portal, activer l'annulation d'abonnement, enregistrer, sur les deux comptes. Non faisable par API depuis ici. ⚠️ **Dormant depuis le 2026-09-14** (`ENTERPRISE_BILLING_ENFORCED = false`, vérifié en base) : aucun abonnement Stripe n'existe, donc personne ne peut se heurter à ce défaut aujourd'hui. Le défaut lui-même n'a pas été corrigé — voir § État au 2026-09-14. |
 | E6 | Information de reconduction tacite | 🟡 | Construit et **déployé** le 2026-08-26. Mig. 126 appliquée (`renewal_notices`, clé primaire `(org_id, period_end)` qui rend l'envoi idempotent) + Edge Function `renewal-notice` + workflow CI quotidien. Fenêtre J+30 à J+60, dans les bornes légales de 1 à 3 mois. Preuve enregistrée **après** l'envoi, jamais avant. ⚠️ **Passe au vert quand deux secrets sont posés** : `CRON_SECRET` (Supabase et GitHub) et `RESEND_API_KEY`. Sans eux la fonction refuse tout appel, en échec fermé. |
 | E7 | Affichage des prix TTC | ✅ | Les 8 prix live sont en `tax_behavior: inclusive`, et la mention « Tous les prix sont affichés TTC » est rendue sous la grille publique (`PricingSection.tsx`) **et** sous la grille produit (`OrgBillingTab.tsx`), en fr et en en. Corrigé le 2026-08-26. |
 | E8 | Bouton de commande explicite | 🟡 | `custom_text.submit.message` ajouté dans `stripe-org-checkout` le 2026-08-26 : « commande avec obligation de paiement », reconduction et résiliation annoncées avant le clic. `submit_type` n'existe pas en `mode: 'subscription'`, le libellé du bouton Stripe n'est donc pas réécrivable. ⚠️ **Passe au vert au redéploiement de la fonction**, la prod tourne encore sur l'ancienne version. |
-| E9 | Garantie de conformité du service numérique | 🟡 | Audit fait le 2026-08-26 sur les 216 chaînes du parcours entreprise. **Bonne nouvelle** : aucune intégration inexistante n'est promise (ni SSO, ni API, ni Slack), et les réponses de la FAQ sur le cloisonnement et le non-retrait de membres sont exactes. **Deux promesses non tenues** : `pricing.i5` « résiliable à tout moment » et `hero.reassurance` « réversible à tout moment », alors que la résiliation ne fonctionne pas (E5). Le correctif est E5, pas un retrait de la phrase. |
+| E9 | Garantie de conformité du service numérique | ✅ | Audit fait le 2026-08-26 sur les 216 chaînes du parcours entreprise. **Bonne nouvelle** : aucune intégration inexistante n'est promise (ni SSO, ni API, ni Slack), et les réponses de la FAQ sur le cloisonnement et le non-retrait de membres sont exactes. **Deux promesses citées comme non tenues à l'époque** : `pricing.i5` « résiliable à tout moment » et `hero.reassurance` « réversible à tout moment », parce que la résiliation Stripe ne fonctionnait pas (E5). ✅ **Repassé au vert le 2026-09-14** : ces deux phrases sont désormais **vraies par construction**, le mode entreprise étant gratuit et sans abonnement (`ENTERPRISE_BILLING_ENFORCED = false` vérifié en base) — il n'y a rien à résilier, donc pas besoin du portail Stripe pour que la promesse tienne. Le jour où la facturation est réarmée, cette ligne redevient 🟡 tant qu'E5 n'est pas corrigé. |
 
 ### F. Produit, marque et dépendances
 
@@ -148,14 +151,18 @@ Par l'effet de la décision structurante ci-dessous : aucun client n'est vérifi
 
 | Statut | Nombre |
 |---|---|
-| ✅ Bon | **12** |
-| 🟡 Partiellement bon | **13** |
+| ✅ Bon | **13** |
+| 🟡 Partiellement bon | **12** |
 | ❌ À faire | **16** |
 | ⬜ Sans objet aujourd'hui | **5** |
 | **Total** | **46** |
 
+> ⚠️ Seule la ligne E9 a été revérifiée et recomptée le 2026-09-14 (🟡 → ✅, cf. § État au
+> 2026-09-14). Les 45 autres lignes portent encore leur statut du 2026-08-26, **non revérifié**
+> depuis : ne pas les lire comme un état courant sans repasser par leur source.
+
 **Point de départ le matin du 2026-08-26 : 0 vert.** Sont passées au vert dans la journée :
-A1, A2, A4, A7, A8, A9, C9, C10, E2, E3, E7, F3.
+A1, A2, A4, A7, A8, A9, C9, C10, E2, E3, E7, F3. **E9 les a rejointes le 2026-09-14.**
 
 **Les 16 lignes rouges se répartissent en trois familles**, et une seule dépend encore de moi :
 
@@ -171,38 +178,67 @@ médiateur, ou un déploiement.
 
 ---
 
-## 🔴 État d'alerte au 2026-08-26 : la chaîne de paiement est ARMÉE
+## 🟢 État au 2026-09-14 : la chaîne de paiement est DÉSARMÉE, mode entreprise gratuit sans plafond
 
-Vérifié en base et dans le code le même jour, pas déduit :
+> Remplace la section « État d'alerte au 2026-08-26 » ci-dessous, conservée pour l'historique.
+> Reverifié le 2026-09-14 par lecture du code (`src/modules/billing/premium-config.ts`) **et**
+> requête SQL en lecture seule sur la base de prod (`SELECT key, enabled FROM billing_flags`) —
+> pas déduit d'une note plus ancienne.
 
 | Vérification | Valeur réelle |
 |---|---|
-| `ENTERPRISE_BILLING_ENFORCED` (client) | **`true`** |
-| `billing_flags.enterprise_seat_limit` (serveur) | **`true`** |
-| `STRIPE_SECRET_KEY` en prod | clé de **TEST** |
-| Configuration du portail de résiliation | **absente**, sur les deux comptes |
-| Organisations | 4, dont **1 déjà au plafond** |
-| Abonnements souscrits | **0** |
+| `ENTERPRISE_BILLING_ENFORCED` (client) | **`false`** |
+| `billing_flags.enterprise_seat_limit` (serveur) | **`false`** |
+| Quota de sièges appliqué | **Aucun** — `org_seats_allowed()` ne bloque plus personne |
+| Landing entreprise (`ENTERPRISE_FREE_OFFER`) | Affiche « Gratuit » partout, offre de lancement en cours |
+| CTA de paiement (Stripe Checkout) | **Non monté** — personne ne peut arriver sur un Stripe Checkout |
+| Abonnements souscrits | 0 |
 
-**Le parcours réel d'un client aujourd'hui :** son organisation atteint cinq membres, l'invitation
+**Conséquence directe sur ce document.** Tant que ce couple de drapeaux reste à `false`, tout le
+bloc « premier euro encaissé » et le droit de la consommation lié au **paiement** (§3, E1, E4 à
+E8) sont **dormants, pas résolus** : rien ne les déclenche parce qu'aucune transaction ne peut
+avoir lieu. Ce n'est pas une mise en conformité, c'est l'absence du fait générateur — le jour où
+`ENTERPRISE_BILLING_ENFORCED` repasse à `true`, la liste de réserves ci-dessous (E5 portail de
+résiliation non configuré, STRIPE_SECRET_KEY de test, etc.) redevient intégralement valable.
+
+- ✅ **E9 (garantie de conformité) n'est plus en défaut pour les deux phrases citées** :
+  `enterprise.hero.reassuranceFree` et `enterprise.pricing.i5` (« résiliable/réversible à tout
+  moment ») sont désormais **vraies par construction** — il n'y a pas d'abonnement à quitter,
+  donc pas besoin d'un portail Stripe pour ça. La fonctionnalité de sortie (quitter/supprimer une
+  organisation) existe indépendamment de la facturation (`src/modules/organizations/`).
+- ⚠️ **Ne pas en conclure que E5/E6/E8 sont corrigées** : elles sont sans objet **aujourd'hui**
+  parce qu'il n'y a rien à vendre, pas parce que le portail Stripe a été configuré ou que le
+  webhook annuel a été câblé. Rien n'a changé côté Stripe depuis le 2026-08-26.
+- ❌ **Ne jamais réarmer `ENTERPRISE_BILLING_ENFORCED` sans repasser par ce document.** Le
+  réarmer sans avoir réglé E5 (portail) reproduit exactement l'impasse du 2026-08-26 : un client
+  qui grandit se voit proposer de payer, tombe sur une clé Stripe de TEST, et ne peut pas non
+  plus résilier.
+
+### Historique — État d'alerte au 2026-08-26 (chaîne de paiement ARMÉE, depuis corrigé)
+
+Vérifié en base et dans le code le même jour, pas déduit :
+
+| Vérification | Valeur réelle au 2026-08-26 |
+|---|---|
+| `ENTERPRISE_BILLING_ENFORCED` (client) | `true` |
+| `billing_flags.enterprise_seat_limit` (serveur) | `true` |
+| `STRIPE_SECRET_KEY` en prod | clé de TEST |
+| Configuration du portail de résiliation | absente, sur les deux comptes |
+| Organisations | 4, dont 1 déjà au plafond |
+| Abonnements souscrits | 0 |
+
+**Le parcours réel d'un client à cette date :** son organisation atteint cinq membres, l'invitation
 suivante est refusée par `org_seats_allowed`, l'écran lui propose de payer, il clique, arrive sur
 un Stripe Checkout en **mode test**, et sa vraie carte est refusée. Il ne peut ni grandir, ni
 payer. Et s'il voulait partir, la résiliation échouerait aussi.
 
-Une seule organisation est concernée à cette date, mais le chemin est ouvert pour toutes.
+**Issue retenue** : l'option 1 des trois proposées alors (« repasser `ENTERPRISE_BILLING_ENFORCED`
+à `false` et le drapeau serveur à `false` ») a été appliquée — c'est l'état décrit dans la section
+du dessus, vérifié à nouveau le 2026-09-14.
 
-**Trois issues, à choisir en connaissance de cause :**
-
-1. **Repasser `ENTERPRISE_BILLING_ENFORCED` à `false` et le drapeau serveur à `false`** en attendant
-   l'immatriculation. Les deux se déplacent ENSEMBLE, jamais l'un sans l'autre. C'est le retour
-   à l'état sûr, et c'est réversible en deux minutes.
-2. **Configurer le portail Stripe** pour qu'au moins la résiliation fonctionne, en acceptant que
-   le paiement reste en mode test.
-3. **Immatriculer, passer Stripe en live**, et tout devient cohérent.
-
-> ⚠️ Aucune de ces issues n'est urgente au sens du risque juridique : **aucun euro n'est encaissé**,
-> donc il n'y a ni travail dissimulé ni TVA due. Le problème est d'abord une impasse produit pour
-> le client qui essaie de payer, et une promesse de résiliation non tenue.
+> ⚠️ Cet épisode n'a jamais présenté de risque juridique au sens strict : **aucun euro n'a été
+> encaissé**, donc ni travail dissimulé ni TVA due. Le problème était une impasse produit pour le
+> client qui essayait de payer, et une promesse de résiliation non tenue.
 
 ---
 
@@ -525,6 +561,10 @@ existe pour qu'aucun de ces engagements ne soit découvert le jour où il est in
 | **Conserver le journal d'encaissement dix ans** | Aucune suppression, jamais. Une purge de compte **anonymise** `user_id`. | Perte d'une pièce comptable obligatoire |
 
 ### Engagements envers tes clients, dès le premier paiement
+
+> ⚠️ **Sans objet aujourd'hui** : `ENTERPRISE_BILLING_ENFORCED = false` (vérifié le 2026-09-14),
+> aucun paiement n'est possible, donc aucun de ces engagements n'est actuellement dû. Ce tableau
+> redevient actif le jour où la facturation est réarmée — voir § État au 2026-09-14.
 
 | Engagement | Ce que ça t'oblige à faire | Coût si tu l'oublies |
 |---|---|---|
