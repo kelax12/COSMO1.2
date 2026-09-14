@@ -22,7 +22,7 @@ import { useBottomSheet } from '@/hooks/use-bottom-sheet';
 // Module tasks - Hooks indépendants (MIGRÉ)
 // ═══════════════════════════════════════════════════════════════════
 import { showUndoToast } from '@/lib/undo-toast';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   useTasks,
@@ -64,6 +64,8 @@ type TaskTableProps = {
   searchTerm?: string;
   /** Bascule « voir les terminées », proposée par le marqueur de fin de liste. */
   onShowCompletedChange?: (value: boolean) => void;
+  /** Une liste perso filtre la page : aucune tâche d'équipe n'en fait jamais partie. */
+  listFilterActive?: boolean;
 };
 
 
@@ -81,6 +83,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
   showQuickFilters = true,
   searchTerm = '',
   onShowCompletedChange,
+  listFilterActive = false,
 }) => {
   const { t, tp } = useT('tasks');
 
@@ -266,6 +269,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
     sortField: localSortField,
     sortDirection,
     searchTerm,
+    listFilterActive,
   });
 
   const selectedTaskData = tasks.find(task => task.id === selectedTask);
