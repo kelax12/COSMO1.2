@@ -9,6 +9,162 @@ compte** et **ce qui prouve que c'est fini**.
 > (`localStorage` hors `try` dans les dépôts de démo), **C-47** (échecs de tests faux sous charge).
 > **C-22** est clos ; **C-38** est à moitié fait et dit désormais ce qui a été fermé et ce qui reste.
 
+> ### 🔴 Passe d'AUDIT du 2026-09-14 **tard le soir** — trois items NEUFS, tous trouvés en interrogeant la production
+>
+> Passe demandée avant le lancement : « refais tous les audits de 0, vérifie chaque chose qui est
+> marquée, cherche des angles morts ». Les onze audits de `docs/` ont été renotés sur des mesures
+> rejouées ce soir (tableau dans [`docs/README.md`](./docs/README.md) § « Mise à jour du 2026-09-14
+> (soir) »). Trois défauts en sortent qui demandent **du code**, et aucun n'était suivi ici.
+>
+> | Item | Ce que c'est | Pourquoi ce n'était pas vu |
+> |---|---|---|
+> | **C-77** 🔴 | `okrTime` vaut **0 en production** sur `/statistics` | Le correctif du 09-02 n'a réparé que la moitié client. La moitié serveur était classée « travail d'une autre session », jamais « défaut ouvert » |
+> | **C-78** 🟠 | **96 cas E2E sur 220** ne tournent dans aucun workflow | Aucun run rouge ne signale une zone que rien ne mesure |
+> | **C-79** 🟡 | Rien ne relie les migrations du dépôt au ledger de prod | Le comptage du ledger passait pour la preuve qu'il n'est pas |
+> | **C-80** 🟠 | La garde des **cibles tactiles** ne couvre aucune page publique | Son résultat (« 0 ») est lu comme une propriété du produit, pas de ses huit routes |
+
+---
+
+### 🔴 C-77 — `okrTime` vaut 0 en production, et la démo affiche juste
+
+**Où** : `supabase/migration/136_work_time_stats_okr_from_completions.sql` (présent, **non versionné
+et non appliqué** depuis le 2026-09-02) · fonction `public.get_work_time_stats` en prod ·
+`src/pages/StatisticsPage.tsx` · `src/components/DashboardBarChart.tsx` (`okrs: r.okrTime`).
+
+**Ce qui est mesuré**, en base, ce soir, par `pg_get_functiondef` sur la fonction VIVANTE :
+
+```sql
+okr_days AS MATERIALIZED (
+  SELECT ... FROM okrs o
+  CROSS JOIN LATERAL jsonb_array_elements(COALESCE(kr.elem->'history', '[]'::jsonb)) AS hist(elem)
+```
+
+Le champ `history` n'est écrit par aucun écrivain du produit (absent de l'interface `KeyResult`,
+absent des mappers). `okr_days` est donc toujours vide, et la série « OKR » du graphique « temps
+investi » de `/statistics` est **plate à zéro pour 100 % des comptes réels**.
+
+🔴 **Ce qui rend l'item coûteux : il a déjà été corrigé, à moitié.** La revue du 2026-09-02 a trouvé
+le défaut, réparé `src/lib/workTimeCalculator.ts` (qui lit désormais `kr_completions`) et écrit le
+constat **au passé** — « la page affichait 0 en démo COMME en production ». La moitié production est
+restée vraie. Résultat : **le mode démo, celui qu'on montre, est juste ; le produit, celui qu'on
+vend, affiche zéro.** C'est le pire des deux sens.
+
+⚠️ **La prémisse de la mig. `136` est fausse d'un mot, sans que sa conclusion bouge.** Son en-tête
+dit « ce champ n'existe pas », vérifié par `grep` dans `src` et jamais en base. Mesuré : **12 Key
+Results sur 28 portent un `history` non vide**, exactement de la forme `{date, increment}`. Ils
+appartiennent tous au compte de seed `aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa`, donc aucun compte réel
+n'est concerné et le correctif reste le bon. Mais l'argument doit être reformulé avant d'être
+committé : c'est un argument de données, il se prouve par une requête.
+
+**Ce qui prouve que c'est fini** :
+1. la `136` est **versionnée** (`git ls-files` la voit) et **appliquée**, avec sa ligne au ledger ;
+2. `pg_get_functiondef('get_work_time_stats')` ne contient plus `history` et contient
+   `kr_completions` ;
+3. la valeur rendue est **comparée** à celle du calcul client sur un compte portant des
+   `kr_completions` : les deux chemins donnent le même nombre. ❌ Un « la fonction s'exécute sans
+   erreur » ne vaut rien ici : c'est exactement ce que fait la version fausse.
+
+❌ **Ne jamais reproduire la faute d'origine** : quand un même calcul vit en trois endroits, un
+correctif se termine quand les trois sont traités, pas quand les tests du premier repassent au vert.
+
+---
+
+### 🟠 C-78 — 96 cas E2E ne sont joués par aucun workflow
+
+**Où** : `.github/workflows/ci.yml`, job `e2e` · `playwright.config.ts`, project `mobile-safari`.
+
+**Mesuré** (`npx playwright test --list --project=…`, puis `grep` sur les neuf workflows) :
+
+| Project | Cas | Fichiers | Joué en CI |
+|---|---|---|---|
+| `chromium` | 107 | 21 | ✅ |
+| `supabase-stub` (+ warmup) | 17 | 5 | ✅ |
+| **`mobile-safari`** (iPhone 12, WebKit) | **96** | **19** | ❌ |
+
+La CI lance `--project=chromium --project=supabase-stub`, soit **124 cas sur 220**. Le motif est
+écrit : « `mobile-safari` reste hors CI (WebKit, ~1 min d'installation en plus) » — **trois lignes
+sous** la règle inverse, posée pour `supabase-stub` : « le laisser hors de la CI reviendrait à poser
+sur `main` des gardes qui ne tournent nulle part ».
+
+**Ce que ça laisse sans filet** : feuilles mobiles, gestes tactiles, `reduced-motion-sheets`, cibles
+tactiles WCAG 2.5.5 et les deux suites d'accessibilité au clavier — donc tout le périmètre iOS
+Safari, et le moteur sur lequel tourne VoiceOver.
+
+⚠️ **L'item n'est PAS « ajouter un flag ».** Rejoués depuis ce poste, ces cas échouent, et pas
+seulement par lenteur : `reduced-motion-sheets.spec.ts` cherche des commandes (« Nouvelle ») qui
+n'existent pas au viewport 390 px. C'est le même écart de produit que `playwright.config.ts`
+documente déjà pour `demo-calendar` et `demo-task-dependencies`. Autrement dit, **une partie de ces
+96 cas n'est pas écrite pour ce project**, et personne ne le savait parce que rien ne les joue.
+
+✅ **Ce n'est pas un défaut produit** : la landing chargée sur le même moteur WebKit / iPhone 12,
+depuis la **production**, rend `load` en **2 159 ms avec zéro requête en vol** (sonde dédiée).
+
+**Ce qui prouve que c'est fini** : `webkit` installé dans le job `e2e`, `--project=mobile-safari`
+ajouté, **un run CI vert**, et pour chaque cas retiré du project une ligne de `testIgnore` qui dit
+POURQUOI — jamais un `skip` silencieux.
+
+---
+
+### 🟠 C-80 — la garde des cibles tactiles ne regarde aucune page publique
+
+**Où** : `e2e/touch-targets.spec.ts`, la boucle `for (const route of [...])` (ligne ~265).
+
+La garde force bien un viewport de 375 × 812, donc elle mesure en mobile. Mais sa liste de routes
+est écrite en clair : `/dashboard`, `/entreprise`, `/okr`, `/tasks`, `/habits`, `/settings`,
+`/agenda`, `/statistics`. **Huit routes protégées, aucune page publique.**
+
+**Mesuré ce soir contre la production**, WebKit / iPhone 12, bandeau cookies refusé :
+
+| Page | Cibles sous 44 × 44 px |
+|---|---|
+| `/` | **24** |
+| `/entreprise-presentation` | **23** |
+| `/blog` | 2 |
+
+Les cas qui comptent, une fois les liens de pied de page mis de côté (~20 px de haut, AAA seulement) :
+
+- **« Commencer »** dans le header : `115 × 36` — le CTA le plus visible du produit, 8 px sous un
+  plancher que le reste de l'application respecte ;
+- **le curseur de forfait** de `/entreprise-presentation` : `input[type=range]`, `appearance: none`,
+  `height: 6px`, mesuré **308 × 6**. Stylé par l'auteur, donc **hors** de l'exemption « contrôle du
+  navigateur » de WCAG 2.5.8 ;
+- un bouton « Plus d'options (démonstration) » à `16 × 24`, sous 24 px en largeur donc sous le
+  critère **AA**.
+
+⚠️ **La zone tactile réelle d'un `input[type=range]` peut excéder sa piste** selon le moteur : à
+mesurer avant de conclure à une violation AA. Le défaut d'ergonomie, lui, ne dépend d'aucune norme.
+
+**Ce qui prouve que c'est fini** : les pages publiques (`/`, `/entreprise-presentation`, `/guide`,
+`/blog`, les quatre pages cas d'usage) sont dans la boucle, la suite est **verte**, et chaque
+exception éventuelle porte son motif écrit. ❌ Ne pas se contenter d'élargir la liste puis de
+dispenser en masse : c'est ce que la dispense `color-contrast` de `a11y-audit.spec.ts` fait
+légitimement, mais elle renvoie à une décision nommée (C-23). Une dispense sans décision est une
+régression qu'on a choisi de ne plus voir.
+
+---
+
+### 🟡 C-79 — rien ne relie les migrations du dépôt au ledger de production
+
+**Où** : `supabase/migration/*.sql` · `supabase_migrations.schema_migrations` en prod ·
+`scripts/` (aucune garde existante) · `npm run check:drift` (compare un schéma, pas un journal).
+
+**Mesuré ce soir**, nom à nom : **152 fichiers** au dépôt, **138 entrées** au ledger, dont
+**32 fichiers sans aucune correspondance** et **17 entrées sans fichier**. Les 32 SONT appliquées
+(vérifié objet par objet dans le catalogue Postgres : `events.exceptions`, `team_task_comments`,
+`tasks.recurrence*`, `events.is_private`), mais **ce n'est jamais le ledger qui l'établit** : ce
+sont les migrations précoces, passées avant qu'il serve.
+
+Conséquence : l'énoncé « tout le dépôt est appliqué, ledger relu », écrit cinq fois dans
+`CLAUDE.md`, reposait sur une lecture qui ne recouvre que 120 fichiers sur 152. Et « ledger à 148
+entrées » était le NUMÉRO de la dernière migration recopié comme un total.
+
+**Ce qui prouve que c'est fini** : un script qui, pour chaque fichier du dépôt, rend l'un des trois
+verdicts — *au ledger* · *absent du ledger mais l'objet qu'il crée existe en base* · *absent des
+deux* — et qui échoue sur le troisième. ❌ Ne pas se contenter d'un comptage : c'est précisément le
+comptage qui a menti.
+
+---
+
 > ### 🟢 Passe du 2026-09-14 **au soir** — **76 items : 71 clos, 4 commencés, 1 ouvert**
 >
 > Mesuré entre 12:50 et 15:30 UTC. Trois mouvements, chacun avec sa preuve opposable :

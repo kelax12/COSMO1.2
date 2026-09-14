@@ -1,8 +1,76 @@
 # Mobile-first — patterns et conventions
 
-## Note mobile / DA : 62 → 72 → 74 → 76 → **79 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-14) · inchangée au 2026-09-03
+## Note mobile / DA : 62 → 72 → 74 → 76 → 79 → **76 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-14 → 2026-09-14 soir)
 
-> ### 🟢 2026-09-14 · +3, sur des métriques REJOUÉES, pas des affirmations
+> ### 🔴 2026-09-14 (soir) · −3 : « 0 cible tactile trop petite » ne vaut que des 8 routes protégées, et les pages publiques en portent 24
+>
+> L'entrée de ce matin inscrit « **Cibles tactiles < 44×44 px : 0**, 10/10 cas E2E verts ». La
+> mesure est juste. **Ce qu'elle couvre ne l'est pas.** `e2e/touch-targets.spec.ts` boucle sur une
+> liste écrite en clair — `/dashboard`, `/entreprise`, `/okr`, `/tasks`, `/habits`, `/settings`,
+> `/agenda`, `/statistics` — soit **huit routes protégées, et aucune page publique**.
+>
+> **Mesuré ce soir contre la PRODUCTION**, WebKit / iPhone 12, bandeau cookies refusé, après
+> stabilisation :
+>
+> | Page publique | Cibles sous 44 × 44 px |
+> |---|---|
+> | `/` (landing, parcours perso) | **24** |
+> | `/entreprise-presentation` | **23** |
+> | `/blog` | 2 |
+>
+> ⚠️ **Toutes ne se valent pas, et il faut les trier au lieu d'agiter le total** :
+>
+> - **Les liens de pied de page** (~20 px de haut : « Guide d'utilisation », « Pour les
+>   freelances », « FAQ », …) représentent la majorité du compte. Ils échouent au critère AAA
+>   (2.5.5, 44 px) mais relèvent d'un usage courant et passent le critère AA (2.5.8, 24 px) sur leur
+>   largeur. C'est une dette de confort, pas un blocage.
+> - 🔴 **Le bouton « Commencer » du header fait 115 × 36 px**, et « Cosmo » 116 × 36. Ce sont les
+>   deux commandes les plus en vue de la page la plus visitée du produit, et elles sont **8 px sous
+>   le plancher** que le reste de l'application respecte partout.
+> - 🔴 **Le curseur « Nombre de membres de votre organisation » de `/entreprise-presentation` fait
+>   308 × 6 px** : `input[type=range]`, `appearance: none`, `height: 6px` en CSS calculé. Il est
+>   **stylé par l'auteur**, donc l'exemption « contrôle du navigateur » de WCAG 2.5.8 ne le couvre
+>   pas. ⚠️ Non mesuré : la zone tactile réelle du curseur peut excéder la piste selon le moteur.
+>   **À vérifier avant de conclure**, mais une piste de 6 px sur l'outil qui sert à choisir un
+>   forfait est au minimum un défaut d'ergonomie tactile.
+> - `16 × 24 px` pour un bouton « Plus d'options (démonstration) » : sous 24 px en largeur, donc
+>   sous le critère **AA**.
+>
+> 🔴 **Ce qui coûte les 3 points, ce n'est pas le nombre, c'est le périmètre.** La garde a été
+> élargie de six à huit routes le 2026-09-04, et son propre commentaire dit alors : « en couvrir six
+> et parler des routes protégées, c'est le même écart de langage que les énoncés que cette passe a
+> trouvés faux ». Le raisonnement a été appliqué **à l'intérieur** du périmètre et jamais **au
+> périmètre lui-même** : le tableau de bord lit « cibles tactiles : 0 » comme une propriété du
+> produit, alors que c'est une propriété de huit routes derrière authentification. Les pages non
+> couvertes sont exactement celles qui reçoivent le trafic d'acquisition.
+>
+> ### Et les cas mobiles, joués sur le moteur mobile, échouent à moitié
+>
+> Les trois specs les plus mobiles du dépôt rejouées sur le project `mobile-safari` (iPhone 12,
+> WebKit), dev-server chaud, 2 workers : **9 passés, 9 échoués, 11,4 min.**
+>
+> | Spec | Cas |
+> |---|---|
+> | `touch-targets.spec.ts` | 3 échecs (`/dashboard`, `/entreprise`, `/habits`) |
+> | `reduced-motion-sheets.spec.ts` | 4 échecs, dont le **TÉMOIN** de la suite |
+> | `demo-touch-gestures.spec.ts` | 2 échecs (swipe sur une TaskCard, bottom-sheet « Plus ») |
+>
+> ⚠️ **Ce ne sont pas des défauts produit démontrés, et il serait malhonnête de les présenter
+> ainsi.** Sept des neuf sont des attentes de fixture qui expirent : le CTA « Essayer la démo
+> gratuite » de la landing n'est pas visible dans les 30 s contre un serveur Vite de développement
+> sur WebKit. **Vérifié en contre-épreuve** : la même page, même moteur, même appareil émulé, mais
+> chargée depuis la **production**, rend ce CTA **visible, 358 × 56 px, en moins de 6 s**, et son
+> événement `load` tombe à **2 159 ms** avec zéro requête en vol.
+>
+> **Le fait établi est donc celui-ci, et il suffit** : ces cas ne sont joués par personne (cf.
+> [`TESTING.md`](./TESTING.md), les 96 cas hors CI), et dans leur état actuel ils ne peuvent pas
+> l'être sans travail. Une suite mobile qu'on ne peut pas lancer ne protège rien.
+>
+> ✅ **Ce qui reste vrai et vérifié ce soir** : `KNOWN_SUB_11PX = 69` et `ARBITRARY_BUDGET = 192`
+> sont bien les valeurs en vigueur dans `src/design-system.guard.test.ts`, et la suite unitaire
+> complète (2 586 cas) est verte, cliquets compris.
+
+> ### 🟢 2026-09-14 (matin) · +3, sur des métriques REJOUÉES, pas des affirmations
 >
 > Trois choses mesurées ce jour, sur le code réel, aucune sur un appareil (la limite « aucun
 > appareil réel accessible » reste entière, cf. A-4 / M-25) :

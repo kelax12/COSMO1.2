@@ -9,7 +9,54 @@ s'est révélée fausse.
 Toutes les mesures de ce document sont **reproductibles** : les requêtes sont en
 [§10 Runbook](#10-runbook--refaire-cet-audit).
 
-## Note de scalabilité : 71 → 84 → 86 → 89 → **91 / 100** (2026-08-24 → 2026-08-25 → 2026-08-29 → 2026-09-03 → 2026-09-08) · inchangée au 2026-08-27 et au 2026-09-14
+## Note de scalabilité : 71 → 84 → 86 → 89 → **91 / 100** (2026-08-24 → 2026-08-25 → 2026-08-29 → 2026-09-03 → 2026-09-08) · inchangée au 2026-08-27, et au 2026-09-14 (soir) où l'invariant a été REVÉRIFIÉ en production
+
+> ### 🟢 2026-09-14 (soir) · note inchangée, mais le « non remesurable ici » de ce matin était trop large
+>
+> L'entrée du 09-14 (matin, conservée ci-dessous) conclut que rien n'est mesurable depuis ce poste
+> faute de Docker. **C'est vrai de la charge, et faux de l'invariant.** Les deux ne demandent pas le
+> même outil :
+>
+> | Ce qu'on veut savoir | Outil | Depuis ce poste |
+> |---|---|---|
+> | À quel débit ça sature, et comment ça dégrade | stack locale + `scalability-concurrency.mjs` | ❌ Docker absent |
+> | Le chemin de lecture est-il toujours **indexable** | `EXPLAIN (ANALYZE)` contre la prod, rôle `authenticated` simulé | ✅ **fait ce soir** |
+>
+> **Mesuré en production ce soir**, dans une transaction annulée, en se plaçant dans le rôle
+> `authenticated` avec les claims JWT d'un compte réel portant 289 tâches (`0490e82a…`) :
+>
+> | Chemin | Plan | Exécution | Planification | Total |
+> |---|---|---|---|---|
+> | `select * from tasks` (lecture directe) | **Seq Scan**, `Rows Removed by Filter: 461` | 19,97 ms | **25,33 ms** | **45,3 ms** |
+> | `select * from get_my_tasks()` (mig. 085) | Function Scan | 9,83 ms | 0,13 ms | **9,96 ms** |
+>
+> Les deux rendent **exactement les mêmes 289 lignes**, ce qui vaut aussi comme vérification
+> d'isolation : sur les 750 tâches de la base, le rôle simulé n'en voit que les siennes, et le
+> `Rows Removed by Filter: 461` est littéralement le compte de celles des autres, examinées puis
+> rejetées.
+>
+> **Trois choses que cette mesure établit, et qu'aucune n'avait été revérifiée depuis le
+> 2026-08-07 :**
+>
+> 1. **Le défaut de la policy `tasks_select_own_or_shared` est toujours là, intact.** Le `OR` entre
+>    une égalité et un `EXISTS` rend `idx_tasks_user_id` inutilisable : Postgres balaie la table
+>    ENTIÈRE. La règle « ne jamais lire `tasks` en direct pour une vue de liste » n'est donc pas une
+>    précaution héritée, c'est une contrainte en vigueur, mesurée aujourd'hui.
+> 2. **Le coût de la lecture directe croît avec le volume de la PLATEFORME**, pas avec celui du
+>    compte : 461 des 750 lignes examinées appartiennent à d'autres. À 28 comptes ça coûte 45 ms ;
+>    c'est ce rapport-là, et non le temps absolu, qui est la projection.
+> 3. **Le facteur mesuré ici est 4,5×, pas 354×.** Les deux chiffres sont justes et ne parlent pas
+>    de la même chose : le 354× / 532× de §9ter et §9quater porte sur les tables d'ÉQUIPE
+>    (prédicat-fonction + CTE récursive par ligne) à volume élevé et sous charge ; le 4,5× d'ici
+>    porte sur les tâches personnelles, à 750 lignes, une session. ❌ **Ne jamais les citer l'un pour
+>    l'autre** : c'est exactement le genre de report qui a déjà fait vivre un chiffre périmé vingt
+>    jours dans ce dépôt.
+>
+> ⚠️ **Ce que ce soir ne mesure PAS, et pourquoi la note ne bouge pas** : le chemin d'équipe reste
+> invérifiable à ce volume (la base prod ne porte que **6 `team_tasks`** au total, mesuré), et la
+> tenue sous charge exige toujours Docker. Une vérification d'invariant confirme qu'on n'a pas
+> régressé ; elle ne vaut aucun point de plus.
+
 
 > ### ⚪ 2026-09-14 · non remesurée, et la raison est nommée plutôt que tue
 >

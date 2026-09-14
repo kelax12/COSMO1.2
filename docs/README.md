@@ -92,6 +92,85 @@ Free n'est pas connu, donc son plateau à elle n'est pas celui de ce tableau.
 
 ---
 
+## Mise à jour du 2026-09-14 (soir) · passe COMPLÈTE : onze domaines, aucun `·`, sept angles morts
+
+**Contexte** : Axel s'apprête à lancer le produit. Consigne, mot pour mot : « refais tous les
+audits de 0, vérifie chaque chose qui est marquée, cherche des angles morts ». Cette passe ne relit
+donc pas le changelog : elle **rejoue les mesures** et **interroge la production**, y compris sur
+les domaines que la passe du matin avait laissés à `·`.
+
+### Ce qui a réellement tourné ce soir
+
+| Mesure | Résultat |
+|---|---|
+| `npm run build` | exit 0, `VITE_SENTRY_DSN` posée (`vendor-sentry` 49,3 ko, donc au-dessus du plancher de la garde) |
+| `npm run check:bundle` | **306,6 / 323,0 ko** critique · **66,9 / 71,0 ko** entrée |
+| `npm test` | **228 fichiers, 2 586 passés, 1 sauté**, exit 0, 305,65 s |
+| `npm run test:coverage` | verte, exit 0 : **31,15 L · 30,73 S · 24,48 F · 26,35 B** |
+| `npm run typecheck` · `npm run lint` | 0 erreur · 0 erreur, **31** warnings |
+| `check:rls` · `validate:migrations` · `check:legal` | 132/106, 0 violation · 152 fichiers, 0 erreur, 6 avertissements · tableau cohérent, 46 lignes |
+| `i18n:check` · `i18n:scan` · `i18n:identical` | **23 namespaces**, 0 erreur · **0** chaîne en dur · 3 898 couples, 92 identiques, **0** non déclarée |
+| E2E a11y + cibles tactiles (Chromium) | **37 cas, 37 passés**, 8,9 min, exit 0 |
+| Advisors Supabase (sécurité) | **9 / 52 / 2 / 1**, à l'unité ce qui était annoncé |
+| Production HTTP | `/`, `/entreprise-presentation`, `/en`, `/blog`, `/sitemap.xml` : **200** |
+| Plans d'exécution en prod (rôle `authenticated` simulé) | `tasks` en direct **45,3 ms** (Seq Scan) contre `get_my_tasks()` **9,96 ms** |
+| WebKit / iPhone 12 contre la production | `load` à **2 159 ms**, 0 requête en vol |
+
+### Les notes
+
+| Domaine | 09-14 matin | **09-14 soir** | Δ | Ce qui l'a décidé |
+|---|---|---|---|---|
+| [Architecture](./ARCHITECTURE.md) | 84 | **88** | **+4** | Le motif explicite du plafond (« aucun god component n'a disparu ») est **mort le 2026-09-05** avec C-09, et aucune note ne l'avait vu en neuf jours. Plus gros fichier gardé : 1 046 → **598** lignes ; stock hors budget 9 190 → **0** |
+| [Tests / CI](./TESTING.md) | 97 | **94** | **−3** | **96 cas E2E sur 220, soit 44 %, tout le project `mobile-safari` / WebKit, ne sont joués par aucun workflow.** Le commentaire de `ci.yml` qui les exclut se trouve trois lignes sous la règle inverse, posée pour `supabase-stub` |
+| [Performance](./PERFORMANCE.md) | 97 | **95** | **−2** | La mig. `127`, créditée ici d'un gain de 854 → 12 ms, rend **0** sur une de ses quatre colonnes en production. Un gain de temps a été crédité sans qu'on compare jamais ce que la fonction REND |
+| [UI / UX](./UI-PATTERNS.md) | · | **85** | **−2** vs 87 (09-03) | Même cause, vue depuis l'écran : la série « OKR » du graphique « temps investi » de `/statistics` est **plate à zéro** pour tous les comptes réels. Et **M-44 est tranché** : l'argument du retrait de la pastille « Aujourd'hui » est faux, pas discutable |
+| [Sécurité](../faille.md) | 88 | **88** | 0, VÉRIFIÉE | Toutes les gardes rejouées, advisors identiques, et une preuve d'isolation inédite : en prod, un compte réel voit **289 lignes sur 750**, les 461 autres rejetées par la policy |
+| [Scalabilité](./SCALABILITY.md) | · | **91** | 0, VÉRIFIÉE | Le « non remesurable ici » du matin était trop large : la **charge** exige Docker, l'**invariant** non. Plans rejoués en production, le Seq Scan de `tasks` est toujours là |
+| [RGPD](./RGPD.md) | 87 | **87** | 0, VÉRIFIÉE | Sémantique d'effacement relue dans `pg_constraint` : **51** FK vers `auth.users`, **32 CASCADE / 19 SET NULL**, répartition conforme à l'intention |
+| [Accessibilité](./ACCESSIBILITY.md) | 84 | **82** | **−2** | 37 cas verts dans un vrai navigateur, mais **WCAG 2.5.5 n'est vérifié que sur 8 routes PROTÉGÉES** : mesurées en prod sur iPhone, `/` en porte **24** sous 44 px et `/entreprise-presentation` **23**. Énoncé honnête par ailleurs : **1 violation `color-contrast` par page**, dispensée nommément par C-23, jamais « 0 violation » |
+| [SEO](./SEO.md) | 80 | **80** | 0, VÉRIFIÉE | 40 URLs, 80 `hreflang`, 0 `noindex`, et les **10** pages prérendues hors sitemap expliquées une par une |
+| [i18n](./I18N.md) | 90 | **90** | 0, VÉRIFIÉE | Les trois gates rendent les mêmes chiffres à l'unité. Ce document avait raison contre `CLAUDE.md` sur le nombre de namespaces |
+| [Mobile / DA](./MOBILE.md) | 79 | **76** | **−3** | Le « **0** cible tactile trop petite » du matin ne vaut que des 8 routes protégées. En production, sur iPhone : **24** cibles sous 44 px sur `/`, dont le bouton « Commencer » du header (**115 × 36**) et un curseur de forfait de **308 × 6 px**. Et les trois suites mobiles rejouées sur WebKit rendent **9 passés sur 18** |
+
+**Bilan : +4, −12 — huit points nets en moins.** Une passe qui rend huit points de moins que le matin n'est pas un échec de
+la journée : c'est ce qui arrive quand on remplace des vérifications de gardes par des mesures de
+résultats. Les **cinq** baisses viennent toutes de choses **qui existaient déjà** et qu'aucune note ne
+portait : rien n'a cassé aujourd'hui, on a simplement regardé ailleurs que là où les gardes pointent.
+
+### Les sept angles morts
+
+| # | Angle mort | Comment il a été trouvé |
+|---|---|---|
+| **1** | **`okrTime` vaut 0 en production sur `/statistics`.** La RPC `get_work_time_stats` lit un champ JSON que rien n'écrit. Le correctif du 2026-09-02 n'a touché que le calcul **client** : la démo affiche juste, le produit affiche zéro. La mig. `136` qui répare est dans l'arbre depuis douze jours, ni versionnée ni appliquée, décrite partout comme « travail d'une autre session » et jamais comme un défaut ouvert | `pg_get_functiondef` sur la fonction vivante, pas la lecture du dépôt |
+| **2** | **44 % des cas E2E ne tournent nulle part** (96 cas WebKit / iPhone), pour un coût affiché d'une minute d'installation | `--list` par project, puis `grep` sur les neuf workflows |
+| **3** | **Le ledger de migrations ne prouve pas ce qu'on lui fait dire.** « 148 entrées » était le NUMÉRO de la dernière migration ; il y en a **138**. Et 32 des 152 fichiers du dépôt n'y ont aucune correspondance. Ils SONT appliqués, mais ce n'est pas le ledger qui l'établit, et aucune garde ne surveille ce recouvrement | Comparaison nom à nom, puis vérification objet par objet dans le catalogue Postgres |
+| **4** | **`email_confirmed_at` est posé pour 28 comptes sur 28, dont 26 à la seconde de leur création.** La confirmation d'adresse étant désactivée, la colonne qui sert à répondre « cette adresse est-elle vérifiée ? » répond **oui** pour **18 adresses que personne n'a vérifiées** | Requête sur `auth.users`, écart `email_confirmed_at` moins `created_at` |
+| **5** | **Deux des 28 comptes ne sont pas des utilisateurs** : `demo@cosmo.app` (jamais connecté, et pourtant porteur de **120 tâches, 67 événements, 6 habitudes, 4 OKR en production**) et `testemail@gmail.com`. `get_admin_stats` **ne les exclut pas** : **16 % des tâches de la plateforme** appartiennent au compte de démonstration | Comptage par compte, puis lecture de la définition de `get_admin_stats` |
+| **7** | **La garde « cibles tactiles » ne regarde que huit routes protégées**, et son résultat est lu comme une propriété du produit. Les pages publiques, celles qui reçoivent le trafic, en portent **24** et **23** sous 44 px, dont un `input[type=range]` de **6 px de haut** sur la page qui vend l'offre entreprise | Sonde WebKit / iPhone 12 contre la production, après lecture de la boucle de routes du spec |
+| **6** | **Trois tables de contenu libre manquaient à l'inventaire RGPD §1** (`team_task_comments`, `team_task_activity`, `org_notifications`), alors que le registre art. 30 les liste. Leur `author_id` / `actor_id` est en `SET NULL` : le contenu **survit** au départ de son auteur | Croisement des FK de `pg_constraint` avec l'inventaire, puis avec le registre |
+
+### Le chiffre qui n'est dans aucune note, et qui devrait décider de la semaine
+
+Mesuré en base ce soir, sur `auth.users` : **28 comptes, 1 seule inscription sur 30 jours, 0 sur
+7 jours, 2 connexions sur 7 jours.** Le plan d'acquisition du 2026-08-13 en comptait 27. **Un mois
+de travail a produit un inscrit**, et deux des 28 comptes sont des comptes de test.
+
+Aucune note de ce tableau ne mesure cela, et c'est normal : elles notent ce que le dépôt contrôle.
+Mais un lecteur qui verrait onze notes entre 84 et 95 juste avant une campagne en tirerait une
+conclusion fausse. *Une note d'infrastructure n'est pas une note d'audience.* Le levier reste celui
+nommé le 2026-08-19, et il est hors du dépôt : [`ACQUISITION-BACKLINKS.md`](./ACQUISITION-BACKLINKS.md).
+
+### Deux limites de cette passe, à ne pas lire comme des vérifications
+
+- **La tenue sous charge n'a pas été rejouée** : elle exige Docker, absent de ce poste. Seuls les
+  plans d'exécution l'ont été.
+- **`npm run check:edge` n'a pas tourné** : il exige `SUPABASE_ACCESS_TOKEN`, absent de cet
+  environnement. La non-dérive des 8 Edge Functions reste établie par le job CI du matin
+  (`34861975638`), pas par une mesure de ce soir. Les **versions en ligne** ont en revanche été
+  relues par l'API : `stripe-webhook` v33, `delete-account` v17, `stripe-org-refund` v6.
+
+---
+
 ## Mise à jour du 2026-09-14 · neuf domaines REMESURÉS, deux honnêtement hors de portée d'ici
 
 🔴 **Une première version de cette entrée refusait toute note**, puis une deuxième en notait cinq
@@ -428,22 +507,22 @@ testées** (`scripts/migration-guards.test.mjs`).
 | Doc | Périmètre |
 |---|---|
 | [`../CLAUDE.md`](../CLAUDE.md) | Point d'entrée : stack, modules, conventions, garde-fous |
-| [`../faille.md`](../faille.md) | Sécurité : findings **ouverts**, priorités avant prod, règles durables · **note 86 au 2026-09-03** |
-| [`ARCHITECTURE.md`](./ARCHITECTURE.md) | Invariants du projet et leur état vérifié · **note 84 au 2026-09-03** |
+| [`../faille.md`](../faille.md) | Sécurité : findings **ouverts**, priorités avant prod, règles durables · **note 88 au 2026-09-14 (soir)**, vérifiée inchangée |
+| [`ARCHITECTURE.md`](./ARCHITECTURE.md) | Invariants du projet et leur état vérifié · **note 88 au 2026-09-14 (soir)** (+4 : les douze derniers god components sont tombés le 2026-09-05, jamais noté) |
 | [`SECURITY.md`](./SECURITY.md) | RLS, migrations SQL, repositories, Edge Functions, Stripe, CSP, secrets · **les 4 Edge Functions Stripe auditées le 2026-09-02**, cf. [`../faille.md`](../faille.md) |
-| [`TESTING.md`](./TESTING.md) | Vitest, Playwright, a11y, i18n, CI, **checklist avant push prod** · **note 95 au 2026-09-03**, les cinq jobs CI verts · couverture relancée et verte le 2026-08-29 |
+| [`TESTING.md`](./TESTING.md) | Vitest, Playwright, a11y, i18n, CI, **checklist avant push prod** · **note 94 au 2026-09-14 (soir)** (−3 : **96 cas E2E sur 220 ne tournent dans aucun workflow**) · suite 2 586 / 228 verte, couverture verte |
 | [`DEPLOYMENT.md`](./DEPLOYMENT.md) | Runbook deploy / rollback Vercel + Supabase, drill de restauration |
-| [`MOBILE.md`](./MOBILE.md) | Pages et composants mobiles, bottom-sheets, pièges iOS Safari · **note 76 au 2026-08-29**, inchangée au 2026-09-03 |
-| [`UI-PATTERNS.md`](./UI-PATTERNS.md) | Listes, modals, tutoriels, onboarding, thèmes · **note 87 au 2026-09-03** |
-| [`PERFORMANCE.md`](./PERFORMANCE.md) | `manualChunks`, lazy loading, images et polices, budget bundle · **note 92 au 2026-09-03**, gardé par `npm run check:bundle` et par le job `lighthouse` · et depuis le 2026-08-26 **le coût serveur d'une ouverture de session**, ramené de 29 à 21 requêtes REST |
-| [`ACCESSIBILITY.md`](./ACCESSIBILITY.md) | WCAG / EAA, aria, contraste, gates axe-core + Lighthouse · **note 82 au 2026-09-03**, la gate Lighthouse mesure et bloque enfin |
+| [`MOBILE.md`](./MOBILE.md) | Pages et composants mobiles, bottom-sheets, pièges iOS Safari · **note 76 au 2026-09-14 (soir)** (−3 : les pages **publiques** portent 24 cibles tactiles sous 44 px, hors du périmètre de la garde) |
+| [`UI-PATTERNS.md`](./UI-PATTERNS.md) | Listes, modals, tutoriels, onboarding, thèmes · **note 85 au 2026-09-14 (soir)** (−2 : `/statistics` affiche un zéro faux en production ; **M-44 tranché**) |
+| [`PERFORMANCE.md`](./PERFORMANCE.md) | `manualChunks`, lazy loading, images et polices, budget bundle · **note 95 au 2026-09-14 (soir)** (−2 : la mig. `127` a été créditée d'un gain sans qu'on regarde ce qu'elle REND), gardé par `npm run check:bundle` et par le job `lighthouse` · et depuis le 2026-08-26 **le coût serveur d'une ouverture de session**, ramené de 29 à 21 requêtes REST |
+| [`ACCESSIBILITY.md`](./ACCESSIBILITY.md) | WCAG / EAA, aria, contraste, gates axe-core + Lighthouse · **note 82 au 2026-09-14 (soir)** (−2 : WCAG 2.5.5 n'est vérifié que sur huit routes protégées) · 37 cas a11y verts rejoués |
 | [`AUDIT-VOICEOVER-IOS.md`](./AUDIT-VOICEOVER-IOS.md) | Check-list du **quatrième** audit d'accessibilité, à jouer d'une traite sur un iPhone (12 étapes, ~60 min, témoin en tête). Le seul instrument qui mesure l'**annonce** : le dépôt ne prouve aujourd'hui que le **focus** |
-| [`SCALABILITY.md`](./SCALABILITY.md) | Montée en charge · **note 91 au 2026-09-08**, coût par ligne mesuré, éprouvé à volume (§9ter) **et en concurrence** (1 → 16 sessions, §9quater) |
-| [`SEO.md`](./SEO.md) | Prérendu, sitemap, hreflang, indexation par locale · **note 75 au 2026-08-29**, inchangée au 2026-09-03 · données Search Console du 2026-08-19, non remesurées |
+| [`SCALABILITY.md`](./SCALABILITY.md) | Montée en charge · **note 91, vérifiée au 2026-09-14 (soir)** (plans d'exécution rejoués en production), coût par ligne mesuré, éprouvé à volume (§9ter) **et en concurrence** (1 → 16 sessions, §9quater) |
+| [`SEO.md`](./SEO.md) | Prérendu, sitemap, hreflang, indexation par locale · **note 80, vérifiée au 2026-09-14 (soir)** · données Search Console du 2026-08-19, non remesurées · ⚠️ **1 inscription sur 30 jours** mesurée en base le 09-14 |
 | [`ACQUISITION-BACKLINKS.md`](./ACQUISITION-BACKLINKS.md) | 🔴 Le chantier qui débloque le SEO : kit de soumission annuaires, prêt à coller — **100 % manuel** |
 | [`ACQUISITION.md`](./ACQUISITION.md) | Attribution `?ref=`, funnel mesuré en prod, runbook — **audit du 2026-08-14** |
-| [`I18N.md`](./I18N.md) | Qualité réelle des traductions, périmètre bilingue — **audit du 2026-08-14**, non renoté · `i18n:scan` est une gate bloquante depuis le 2026-09-02 (seuil 25, cf. la note du 09-03 en tête du fichier) |
-| [`RGPD.md`](./RGPD.md) | Inventaire des données personnelles, droits, rétention · **note 86 au 2026-08-29**, inchangée au 2026-09-03, durées de conservation publiées |
+| [`I18N.md`](./I18N.md) | Qualité réelle des traductions, périmètre bilingue · **note 90, vérifiée au 2026-09-14 (soir)** · les trois gates sont bloquantes et à **0** (`i18n:check` **23 namespaces**, `i18n:scan`, `i18n:identical`) |
+| [`RGPD.md`](./RGPD.md) | Inventaire des données personnelles, droits, rétention · **note 87, vérifiée au 2026-09-14 (soir)** (51 FK vers `auth.users` relues : 32 CASCADE / 19 SET NULL), durées de conservation publiées |
 | [`RGPD-REGISTRE.md`](./RGPD-REGISTRE.md) | Registre des activites de traitement (RGPD art. 30) · **cree le 2026-08-26** |
 | [`RGPD-VIOLATION.md`](./RGPD-VIOLATION.md) | Procedure de violation de donnees sous 72 h (RGPD art. 33-34) · **cree le 2026-08-26** |
 | [`LEGAL.md`](./LEGAL.md) | Obligations légales du fondateur : statut, TVA, droit de la consommation, marque, sous-traitants · **créé le 2026-08-26**, non noté (ce n'est pas un audit) |

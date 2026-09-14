@@ -1,6 +1,65 @@
 # Performance bundle — `vite.config.ts manualChunks`
 
-## Note de performance : 68 → 64 → 88 → 91 → 94 → 92 → **97 / 100** (2026-08-24 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14)
+## Note de performance : 68 → 64 → 88 → 91 → 94 → 92 → 97 → **95 / 100** (2026-08-24 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 → 2026-09-14 soir)
+
+> ### 🔴 2026-09-14 (soir) · −2 : une RPC créditée d'un gain de 71× rend un chiffre faux en production
+>
+> **Le budget de bundle est revérifié et il tient** : `npm run check:bundle` rejoué ce soir sur un
+> build neuf (`npm run build`, exit 0, `VITE_SENTRY_DSN` posée, `vendor-sentry` à 49,3 ko donc
+> au-dessus du `SENTRY_FLOOR`) rend **306,6 ko de chemin critique pour 323,0 de plafond** et
+> **66,9 ko d'entrée pour 71,0**. Les marges annoncées ce matin sont exactes. Le −2 ne vient pas de
+> là.
+>
+> **Il vient de ce que cet audit a crédité sans jamais le vérifier.** La migration `127` a été
+> portée à cette note le 2026-08-27 pour avoir ramené la page Statistiques de **854 ms à 12,0 ms**.
+> Ce gain est réel. Ce que personne n'a mesuré, c'est si la fonction accélérée rendait des chiffres
+> justes : **elle en rend un faux, sur une de ses quatre colonnes, pour 100 % des comptes réels.**
+>
+> Mesuré ce soir directement en base, par `pg_get_functiondef` sur la fonction VIVANTE, pas par
+> lecture du dépôt :
+>
+> ```sql
+> okr_days AS MATERIALIZED (
+>   SELECT ... FROM okrs o
+>   CROSS JOIN LATERAL jsonb_array_elements(COALESCE(kr.elem->'history', '[]'::jsonb)) AS hist(elem)
+> ```
+>
+> Le champ `history` n'est écrit par aucun écrivain du produit : il est absent de l'interface
+> `KeyResult`, absent des mappers. `okr_days` est donc toujours vide et **`okrTime` vaut
+> structurellement 0** sur `/statistics` en production.
+>
+> 🔴 **Ce qui rend ce point coûteux, c'est qu'il a DÉJÀ été corrigé, à moitié.** La revue du
+> 2026-09-02 a trouvé ce défaut, l'a réparé côté client (`src/lib/workTimeCalculator.ts` lit
+> désormais `kr_completions`) et a écrit le constat **au passé** : « la page Statistiques affichait 0
+> pour les OKR en démo COMME en production ». La moitié production est restée vraie. Conséquence
+> exacte, et elle est la pire des deux :
+>
+> | Mode | Source de `okrTime` | État |
+> |---|---|---|
+> | **Démo** (ce que voit un visiteur) | `workTimeCalculator.ts` → `kr_completions` | ✅ juste depuis le 09-02 |
+> | **Production** (ce que voit un inscrit) | RPC `get_work_time_stats` (mig. 127) | 🔴 **0, toujours** |
+>
+> La vitrine montre le bon chiffre, le produit montre zéro. C'est littéralement la règle que
+> `CLAUDE.md` écrit pour les fuseaux des habitudes : *ne jamais corriger une seule des deux
+> moitiés*.
+>
+> ⚠️ **La migration qui répare existe et n'est ni versionnée ni appliquée** :
+> `136_work_time_stats_okr_from_completions.sql` traîne dans l'arbre depuis le 2026-09-02, décrite
+> partout comme « travail en cours d'une autre session », jamais comme **un défaut ouvert en
+> production**. Aucun des onze audits ne la portait.
+>
+> ⚠️ **Et sa propre prémisse est fausse d'un mot, ce qui ne change pas sa conclusion.** Son en-tête
+> affirme « ce champ n'existe pas », vérifié par `grep` dans `src` et jamais en base. Mesuré ce
+> soir : **12 Key Results sur 28 portent bien un `history` non vide**, avec exactement la forme
+> `{date, increment}` attendue. Ils appartiennent tous au compte de seed
+> `aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa`, donc aucun compte réel n'est concerné et le verdict tient.
+> Mais l'argument « le champ n'existe pas » est un argument de code présenté comme un argument de
+> données, et il aurait suffi d'une requête pour le formuler juste.
+>
+> ❌ **Ne jamais créditer une RPC d'un gain de temps sans avoir comparé ce qu'elle REND.** La
+> mig. `127` a été mesurée sur son plan d'exécution et sur son temps, jamais sur ses valeurs. Une
+> fonction qui rend zéro très vite est la plus rapide de toutes.
+
 
 > ### 🟢 2026-09-14 · +5 : le défaut qui avait fait perdre les 2 points du 09-03 est refermé, et COMMITÉ
 >
@@ -508,6 +567,11 @@ ne remesure pas dérive dans le sens qui arrange.
 
 > ✅ **Le levier i18n est APPLIQUÉ (2026-08-25 soir).** Le catalogue `fr` était importé
 > **statiquement** en entier par `src/i18n/catalog.ts` : 19 namespaces, **178 ko de JSON brut**
+> *(chiffres du 2026-08-25, conservés à leur date : c'est l'état AVANT le levier. Remesuré le
+> 2026-09-14 : le dépôt porte désormais **23 namespaces** et **244 ko** de JSON `fr` sur disque,
+> 215 ko pour `en`. Le levier n'est donc pas « un gain de 178 ko » acquis une fois pour toutes,
+> c'est une digue dont la pression augmente : +66 ko de catalogue en vingt jours, tous tenus hors
+> du chunk d'entrée par la seule règle des deux namespaces eager.)*
 > dans le chunk `index`, dont `org` 50 ko, `landing` 34 ko, `guide` 14 ko, `tutorials` 8 ko, des
 > pages que la plupart des sessions n'ouvrent jamais.
 >

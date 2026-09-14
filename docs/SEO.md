@@ -13,7 +13,59 @@ cause n'est pas dans le dépôt.
 > liens et les Core Web Vitals terrain. Ces données vivent dans Search Console, Ahrefs et
 > PageSpeed Insights.
 
-## Note SEO : 73 → 73 → 75 → **80 / 100** (2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-14) · inchangée au 2026-09-03
+## Note SEO : 73 → 73 → 75 → **80 / 100** (2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-14) · inchangée au 2026-09-03, **VÉRIFIÉE inchangée le 2026-09-14 au soir**
+
+> ### ⚪ 2026-09-14 (soir) · 0 : l'infrastructure tient, et le seul chiffre de RÉSULTAT disponible est mauvais
+>
+> **Rejoué sur un build neuf de ce soir**, et complété par ce que l'entrée du matin n'avait pas
+> regardé : le rapport entre les pages prérendues et le sitemap, et la production elle-même.
+>
+> | Contrôle | Résultat |
+> |---|---|
+> | Pages HTML prérendues dans `dist/` | **50** |
+> | URLs déclarées au sitemap | **40** |
+> | Écart, page par page | **exactement 10** : les 6 pages contractuelles (CGU, confidentialité, mentions légales × 2 locales) et les 4 pages d'authentification (`/login`, `/signup` × 2 locales) |
+> | Pages prérendues portant `noindex` | **0** |
+> | Production : `/`, `/entreprise-presentation`, `/en`, `/blog`, `/sitemap.xml` | **200** sur les cinq |
+>
+> ✅ **L'écart de 10 est cohérent et voulu** : ces pages sont désindexées par en-tête
+> (`X-Robots-Tag` dans `vercel.json`) et non par `robots.txt`, précisément pour que Google puisse
+> les crawler et LIRE le `noindex`. La vérification manquait : compter 40 URLs ne dit rien tant
+> qu'on n'a pas expliqué les 10 qui n'y sont pas.
+>
+> 🔴 **Ce que ce document doit maintenant porter, parce que la question se pose cette semaine.**
+> Mesuré en base ce soir, sur `auth.users` : **28 comptes au total, 1 seule inscription sur les 30
+> derniers jours, 0 sur les 7 derniers**, et **2 connexions** sur 7 jours. Le plan d'acquisition du
+> 2026-08-13 mesurait 27 comptes lifetime. **Un mois de travail SEO, d'i18n et de produit a produit
+> un inscrit.**
+>
+> ⚠️ **Ce n'est pas une baisse de note, et il faut dire pourquoi**, sinon c'est de la complaisance.
+> Cette note mesure ce que le dépôt contrôle : le prérendu, le sitemap, les `hreflang`,
+> `robots.txt`, la structure éditoriale. Tout cela est mesuré et tenu. Le facteur limitant est
+> nommé depuis le 2026-08-19 et il est **hors du dépôt** : l'autorité de domaine, donc les
+> backlinks, donc [`ACQUISITION-BACKLINKS.md`](./ACQUISITION-BACKLINKS.md) et des gestes manuels
+> d'Axel. Faire payer ce chiffre à la note SEO reviendrait à noter le travail par un levier qu'il
+> ne tient pas.
+>
+> **Mais l'inscrire ici est nécessaire** : un 80/100 sur un domaine qui rend un inscrit par mois
+> doit se lire avec son résultat à côté, sans quoi la note dit « tout va bien » à qui s'apprête à
+> lancer une campagne. *Une note d'infrastructure n'est pas une note d'audience.*
+>
+> ⚠️ **Deux comptes sur 28 ne sont pas des utilisateurs** : `demo@cosmo.app`
+> (`aaaaaaaa-aaaa-…`, créé le 2026-01-10, **jamais connecté**, et pourtant porteur de 120 tâches,
+> 67 événements, 6 habitudes et 4 OKR en PRODUCTION) et `testemail@gmail.com`. La base compte donc
+> **26 comptes réels**, et **16 % des tâches de la plateforme appartiennent au compte de
+> démonstration**. Toute statistique tirée de `/admin` ou d'un comptage brut avant une campagne doit
+> retrancher ces deux lignes, sous peine de mesurer un fantôme.
+>
+> 🟠 **Angle mort · les onze articles anglais portent des slugs français**
+> (`/en/blog/combien-de-temps-prendre-habitude`, …). C'est un arbitrage écrit et défendable, posé
+> dans `src/content/blog/*.mjs` (« une seule publication traduite, pas deux articles »), mais il
+> n'était consigné dans **aucun audit**. Un slug est un signal de pertinence : la décision est sans
+> coût tant que l'anglais n'a pas de trafic, et doit être rouverte le jour où il en a. Le prix d'un
+> changement ultérieur est une table de redirections 301. Même constat côté
+> [`I18N.md`](./I18N.md).
+
 
 > ### 🟢 2026-09-14 · +5, et c'est un rattrapage : la bascule C-20 (09-08) n'avait jamais été notée
 >

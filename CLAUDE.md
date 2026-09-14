@@ -1,10 +1,17 @@
 # CLAUDE.md — COSMO 1.2
 
-Guide de travail dans ce dépôt. **Vérifié dans le code et contre la prod le 2026-08-24**, relu
-contre le code de `main` et les 71 commits des 08-30 → 09-03 lors de la **passe d'audit du
-2026-09-03** (chiffres des scripts, gardes, CSP, saisie de date). ⚠️ Cette relecture-là **n'a pas
-remesuré la production** : ce qui en vient porte la date du commit qui l'a mesuré. Détail et notes
-par domaine : [`docs/README.md`](./docs/README.md).
+Guide de travail dans ce dépôt. **Vérifié dans le code ET contre la production le 2026-09-14 au
+soir** : passe d'audit complète des onze domaines, gardes rejouées, base interrogée (ledger,
+advisors, plans d'exécution, versions d'Edge Functions), production sondée en HTTP et sur WebKit /
+iPhone. **Cinq notes baissent, une monte, et sept angles morts en sortent** : le tableau et les
+preuves sont dans [`docs/README.md`](./docs/README.md) § « Mise à jour du 2026-09-14 (soir) ».
+Passes antérieures conservées à leur date (2026-08-24 contre la prod, 2026-09-03 sur le code seul).
+
+🔴 **Le défaut le plus coûteux trouvé ce soir n'est pas dans ce fichier, il est en
+production** : `okrTime` vaut **0** sur `/statistics` pour tous les comptes réels, parce que le
+correctif du 2026-09-02 n'a réparé que la moitié cliente et que la mig. `136` n'est ni versionnée
+ni appliquée. La **démo affiche juste, le produit affiche zéro**. Item `C-77` de
+[`a-faire-code.md`](./a-faire-code.md).
 
 **Plan** : [Docs](#-carte-de-la-documentation) · [CLI données réelles](#-tu-peux-écrire-dans-le-vrai-compte-cosmo-daxel) · [Stack](#stack-technique) · [Scripts](#scripts) · [Env](#variables-denvironnement) · [Double mode](#architecture--double-mode-démo--production) · [Modules](#structure-des-modules) · [Hooks](#hooks-essentiels) · [Providers / Routing](#hiérarchie-des-providers-srcapptsx) · [Supabase](#base-de-données-supabase) · [Conventions](#conventions-de-code) · [i18n](#i18n--catalogues-maison-fr--en) · [🚫 Garde-fous](#-garde-fous--à-ne-jamais-faire)
 
@@ -853,12 +860,36 @@ sans écran, **écrites en dur en français** hors des catalogues i18n.
 Migrations dans `supabase/migration/*.sql`, convention `NNN_<feature>.sql`.
 **152 fichiers de migration** (recompté en base et sur disque le 2026-09-14). La
 dernière APPLIQUÉE est la `148_team_categories_tree_merge` (le 2026-09-13) ; le ledger
-porte **148 entrées**, et les deux seules migrations du dépôt hors base sont la `136`
+porte **138 entrées** (recompté en base le 2026-09-14 au soir ; ce fichier a écrit « 148 », qui
+est le NUMÉRO de la dernière migration, jamais un total), et les deux seules migrations du dépôt
+dont le CONTENU manque en base sont la `136`
 (travail d'une autre session) et la `140` (délibéré : elle se joue DANS la fenêtre de
 bascule Stripe live). ⚠️ La ligne précédente disait « 151 fichiers, dernière appliquée la
 `147` » : périmée d'une migration au lendemain de son écriture. La `147`
 (`_categories_tree_depth_ambiguity_redo.sql`, réapplication du correctif de la `144` —
 cf. section dédiée), la `146` et la `145` ont toutes été appliquées le 2026-09-13.
+
+🔴 **UNE ABSENCE AU LEDGER NE PROUVE RIEN, ET UNE PRÉSENCE NON PLUS.** Mesuré le 2026-09-14 au
+soir, en comparant nom à nom les 152 fichiers du dépôt aux 138 entrées de la base :
+**32 fichiers du dépôt n'ont AUCUNE entrée correspondante**, et **17 entrées du ledger n'ont aucun
+fichier**. L'énoncé « tout le dépôt est appliqué en prod, ledger relu » a donc été écrit cinq fois
+dans ce fichier sur une lecture qui ne recouvre que 120 fichiers sur 152.
+
+**Ce que ça veut dire, et ce que ça ne veut pas dire.** Les 32 sont presque tous les migrations
+PRÉCOCES (`000` à `058`, plus la `081` et la `082`), passées avant que le ledger serve, ou par un
+chemin qui n'y inscrit rien. Elles SONT appliquées : vérifié objet par objet sur un échantillon
+(`events.exceptions` de la `029`, `team_task_comments` de la `082`, `tasks.recurrence*` de la
+`058`, `events.is_private` de la `081`, tous présents). Symétriquement, les 17 entrées orphelines
+sont d'anciens noms libres (`create_subscriptions_table`, `fix_task_sharing_unified`, …) et les
+correctifs `…b` / `…c` repliés dans leur fichier d'origine.
+
+❌ **Ne jamais conclure d'un comptage de lignes du ledger que le dépôt est appliqué.** Le ledger
+est un journal de NOMS, pas un état de schéma : il ne sait rien dire d'une migration passée
+autrement, ni d'un `CREATE OR REPLACE` qui n'a pas pris (c'est exactement le défaut de la `144`,
+cf. la `147`). La seule preuve qui vaille reste celle qui a servi ici : interroger le CATALOGUE
+(`information_schema`, `pg_get_functiondef`) sur l'objet que la migration prétend créer.
+⚠️ Et `npm run check:drift` ne comble pas ce trou : il compare le schéma, pas le ledger, et il
+exige deux étapes manuelles. **Aucune garde de ce dépôt ne surveille ce recouvrement.**
 
 ### Sous-catégories hiérarchiques (mig. `143`, `144`, `145`, `147`)
 
@@ -1435,8 +1466,11 @@ schémas par module. Câblé dans les `mutationFn` create/update.
 ## i18n — catalogues maison (fr + en)
 
 L'app est **bilingue fr/en**, sans framework i18n (pas d'i18next). Socle dans `src/i18n/`,
-catalogues JSON par namespace dans `src/locales/{fr,en}/*.json` (19 namespaces : `common`,
-`tasks`, `org`, `landing`, `seo`, `settings`…).
+catalogues JSON par namespace dans `src/locales/{fr,en}/*.json` (**23 namespaces** : `common`,
+`tasks`, `org`, `landing`, `seo`, `settings`…). ⚠️ Ce fichier a écrit « 19 » jusqu'au 2026-09-14 :
+le chiffre datait du levier de chargement paresseux du 2026-08-25 et n'a jamais été recompté
+pendant que quatre catalogues entraient. Il se relit en une commande, `npm run i18n:check` l'annonce
+à chaque exécution, et il figurait exact dans le tableau de gardes de `faille.md`, jamais ici.
 
 ```typescript
 import { useT } from '@/i18n/useT';
