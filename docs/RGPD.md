@@ -4,7 +4,25 @@
 119 : effacement et portabilité). Premier audit dédié de ce domaine. Jusqu'ici, la conformité était
 traitée par fragments dans les audits sécurité. Mesuré sur le schéma de prod et le code.
 
-## Note RGPD : 78 → 84 → **86 / 100** (2026-08-24 → 2026-08-25 → 2026-08-29) · inchangée aux 2026-08-27, 2026-09-02 et 2026-09-03
+## Note RGPD : 78 → 84 → 86 → **87 / 100** (2026-08-24 → 2026-08-25 → 2026-08-29 → 2026-09-14) · inchangée aux 2026-08-27, 2026-09-02 et 2026-09-03
+
+> ### 🟢 2026-09-14 · +1, une garantie d'effacement enfin vérifiée contre le code DÉPLOYÉ
+>
+> Ce document décrit la purge par `delete-account` (12 tables) et sa garde de non-régression
+> (`src/rgpd-erasure.guard.test.ts`, 5 cas, rejouée aujourd'hui : verte), mais n'avait jamais dit
+> si le code **testé** est le code **en ligne**. C'est précisément le défaut que
+> [`faille.md`](../faille.md) documente ailleurs (« un ✅ corrigé qui ne dit pas déployé décrit un
+> commit, pas la production ») — jamais appliqué ici, sur le droit à l'effacement lui-même.
+>
+> **Vérifié aujourd'hui** : `delete-account` est en **v17** (2026-09-13, 10:16 UTC), et le job
+> `Edge deploy drift` du 09-14 (run `34861975638`) confirme les **8** fonctions identiques au
+> dépôt, `delete-account` comprise. La garantie d'effacement testée dans ce dépôt est bien celle
+> qui s'exécute pour un utilisateur réel qui demande la suppression de son compte.
+>
+> ⚠️ **Ce qui n'a pas bougé, et reste le plafond de la note** : le DPA du fournisseur d'analytics
+> (finding V-1) n'est toujours pas obtenu — c'est une pièce administrative, hors de portée d'une
+> session de code. Rien d'autre n'a été remesuré aujourd'hui dans ce domaine (registre, durées de
+> conservation, export de portabilité).
 
 > ### 🔴 2026-09-03 · une correction de base, puis une journée qui s'annule elle-même
 >

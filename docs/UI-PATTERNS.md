@@ -1,6 +1,18 @@
 # Patterns UI — COSMO
 
-## Note UI / UX : 70 → 80 → 82 → 84 → **87 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03)
+## Note UI / UX : 70 → 80 → 82 → 84 → **87 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03) · non remesurée au 2026-09-14
+
+> ### ⚪ 2026-09-14 · non remesurée — et un changement PENDING mérite d'être nommé ici aussi
+>
+> Aucune revue de pattern n'a été rejouée aujourd'hui (pas de passe visuelle, `scripts/visual-audit.mjs`
+> non exécuté). La note reste celle du 09-03.
+>
+> ⚠️ **Un fichier non commité d'une autre session change un pattern d'interaction sans que
+> personne ne l'ait arbitré** : `OverdueQuickActions.tsx` retire le bouton de report rapide
+> « Aujourd'hui » du menu de retard, en tension directe avec la conclusion de C-72
+> (« le produit est juste ») documentée dans `a-faire-code.md`. Tant qu'il n'est pas commité, il
+> n'existe ni comme un gain ni comme une régression pour ce document. Décision suivie :
+> `a-faire-manuel.md` **M-44**.
 
 > ### 2026-09-03 · +3, et deux des trois défauts avaient été introduits par leur propre correctif
 >

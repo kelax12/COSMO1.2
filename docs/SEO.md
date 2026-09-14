@@ -13,7 +13,32 @@ cause n'est pas dans le dépôt.
 > liens et les Core Web Vitals terrain. Ces données vivent dans Search Console, Ahrefs et
 > PageSpeed Insights.
 
-## Note SEO : 73 → 73 → **75 / 100** (2026-08-25 → 2026-08-27 → 2026-08-29) · inchangée au 2026-09-03
+## Note SEO : 73 → 73 → 75 → **80 / 100** (2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-14) · inchangée au 2026-09-03
+
+> ### 🟢 2026-09-14 · +5, et c'est un rattrapage : la bascule C-20 (09-08) n'avait jamais été notée
+>
+> La § 2 de ce document décrit une bascule technique majeure — l'anglais ouvert à l'indexation, et
+> trois vrais défauts trouvés au passage (sitemap muet sur `/` et `/guide`, `robots.txt` aveugle
+> aux routes applicatives sous `/en`, et surtout `Disallow: /entreprise` qui bloquait par PRÉFIXE
+> la page publique payante `/entreprise-presentation`). Elle est datée du **2026-09-08** et n'a
+> **jamais reçu de point** : le score est resté « inchangée » pendant six jours sur un domaine qui
+> venait de doubler de taille.
+>
+> **Revérifié aujourd'hui sur un build réel** (`npm run build`, `dist/`, pas déduit de la lecture
+> de `prerender.mjs`), et c'est tenu, pas seulement écrit :
+>
+> | Contrôle | Résultat le 2026-09-14 |
+> |---|---|
+> | URLs au sitemap | **40**, dont 61 occurrences `/en/` (URLs + alternates) |
+> | Entrées `hreflang` dans le sitemap | **80** |
+> | Pages prérendues portant `noindex` | **0** |
+> | `robots.txt` : `/entreprise-presentation` | déclarée au sitemap, **hors** de toute règle `Disallow` — vérifié, `/entreprise$` et `/entreprise/` ne la couvrent pas |
+>
+> **Pourquoi +5 et pas plus** : ce que ce domaine ne peut toujours pas mesurer reste le facteur
+> limitant, et il n'a pas bougé — position moyenne, clics non-marque et domaines référents vivent
+> dans Search Console, lue pour la dernière fois le **2026-08-19**. Ouvrir une locale à
+> l'indexation crée l'OPPORTUNITÉ d'un classement, elle ne le prouve pas. C'est le même écart que
+> l'accessibilité pose entre « câblé » et « annoncé ».
 
 > ### 2026-09-03 · toujours 75, et la raison n'a pas changé depuis le 2026-08-19
 >

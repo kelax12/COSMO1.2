@@ -1,6 +1,40 @@
 # Mobile-first — patterns et conventions
 
-## Note mobile / DA : 62 → 72 → 74 → **76 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29) · inchangée au 2026-09-03
+## Note mobile / DA : 62 → 72 → 74 → 76 → **79 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-14) · inchangée au 2026-09-03
+
+> ### 🟢 2026-09-14 · +3, sur des métriques REJOUÉES, pas des affirmations
+>
+> Trois choses mesurées ce jour, sur le code réel, aucune sur un appareil (la limite « aucun
+> appareil réel accessible » reste entière, cf. A-4 / M-25) :
+>
+> | Métrique | 08-27 (dernière mesure) | **09-14** |
+> |---|---|---|
+> | Libellés sous le plancher de 11 px | 75 | **69** |
+> | Stock de tailles arbitraires | 196 | **192** |
+> | Cibles tactiles < 44×44 px (8 routes protégées + modale d'équipe) | — | **0**, 10/10 cas E2E verts |
+> | Consommateurs réels de `MobileHeader` (imports, pas mentions) | « 8 » (non recompté depuis) | **7**, recompté par import statement |
+>
+> Les deux premières viennent de **C-75** (fermé le 2026-09-14 au matin, avant cette passe) :
+> `src/design-system.guard.test.ts` porte désormais ces plafonds en dur (`KNOWN_SUB_11PX = 69`,
+> `ARBITRARY_BUDGET = 192`) et refuse toute remontée. Ce document ne les avait jamais absorbés —
+> sa dernière table de métriques s'arrêtait au 08-27. Les deux dernières sont une remesure propre
+> à cette passe : `e2e/touch-targets.spec.ts` rejoué en entier (10 cas, dont le témoin), et le
+> compte de `MobileHeader` refait par `import { MobileHeader } from` plutôt que par mention.
+>
+> ⚠️ **Le 7 n'est pas une régression du 8** : c'est un recomptage plus strict (imports réels, pas
+> `grep` sur le nom), et personne n'avait revérifié depuis le 2026-08-25. Sept pages : Dashboard,
+> Habitudes, OKR, Entreprise, Réglages, Statistiques, Tâches (via `TasksHeader`).
+>
+> 🔴 **Ce qui N'ENTRE PAS dans ce +3, et pourquoi** : un fichier non commité d'une autre session
+> (`OverdueQuickActions.tsx`) retire le report rapide « Aujourd'hui » du menu de retard, en
+> tension directe avec la conclusion de C-72 (« le produit est juste »). Tant qu'il n'est pas
+> commité, il n'existe pas pour ce document — ni en positif, ni en négatif. Décision suivie :
+> `a-faire-manuel.md` **M-44**.
+>
+> **Ce qui reste hors de portée d'ici, inchangé depuis le 08-27** : aucun appareil réel n'a été
+> ouvert. L'adhérence à l'échelle typographique (dernière mesure : 13 %, le 08-25) n'a pas été
+> recomptée — le script qui la produit n'a pas tourné aujourd'hui, faute de temps, pas faute
+> d'outil.
 
 > ### 2026-09-03 · note inchangée, et rien de mobile n'a été mesuré
 >
