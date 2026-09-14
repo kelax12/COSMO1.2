@@ -38,9 +38,15 @@
 //
 //   1. une clé d'idempotence Stripe dérivée de l'`invoice_id` — deux appels
 //      concurrents ne créent qu'un remboursement ;
-//   2. un pré-contrôle des remboursements DÉJÀ posés sur ce `payment_intent` ;
+//   2. un pré-contrôle des remboursements DÉJÀ posés sur ce `payment_intent`
+//      (`_shared/refund-replay.ts`, testé : nominal, rejeu, période déjà
+//      remboursée — 10 cas, dont un témoin qui refuse un zéro constant) ;
 //   3. le montant est borné par ce qui a été encaissé
 //      (`_shared/refund-amount.ts`, testé).
+//
+// ⚠️ Le verrou 1 et le verrou 2 ne se remplacent pas : la clé d'idempotence
+// Stripe EXPIRE, donc elle n'arrête que deux appels concurrents. Un rejeu
+// tardif n'est arrêté que par le verrou 2.
 //
 // ⚠️ Le pré-contrôle NE DOIT PAS AVALER SON ERREUR. C'est la règle écrite du
 // dépôt après l'audit Stripe du 2026-09-02 : « une lecture qui décide d'un
@@ -69,11 +75,14 @@
 //    aurait rendu un 500.
 //
 // 🔴 DÉPLOYÉE N'EST PAS ÉPROUVÉE. Rien n'a encore été joué contre Stripe :
-//    `refunds.create`, la résiliation immédiate, la clé d'idempotence, le
-//    pré-contrôle qui retranche et la ligne compensatoire du journal n'ont
-//    jamais tourné sur une vraie facture. Seule la logique de MONTANT est
-//    réellement testée (`src/modules/billing/refund-amount.test.ts`, 12 cas),
-//    et le parcours d'écran l'est contre un stub (`e2e/stubbed/refund.spec.ts`).
+//    `refunds.create`, la résiliation immédiate et la ligne compensatoire du
+//    journal n'ont jamais tourné sur une vraie facture. Ce qui EST exécuté par
+//    des tests, et depuis le 2026-09-14 pour la seconde ligne :
+//      • le MONTANT (`src/modules/billing/refund-amount.test.ts`, 12 cas) ;
+//      • le VERROU ANTI-REJEU (`src/modules/billing/refund-replay.test.ts`,
+//        10 cas : nominal, rejeu, période déjà remboursée, plus un témoin) ;
+//      • le parcours d'écran, contre un stub (`e2e/stubbed/refund.spec.ts`),
+//        et l'enchaînement avec la suppression (`e2e/stubbed/delete-org.spec.ts`).
 //    Ce qui manque tient à trois choses mesurées le 2026-09-12 :
 //    `org_subscriptions` = 0 ligne, `payment_records` = 0 ligne, et aucune
 //    facture payée à rembourser. Cf. C-65 et le geste manuel M-37.
@@ -83,6 +92,7 @@ import Stripe from 'npm:stripe@14.21.0'
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { opsAlert } from '../_shared/alert.ts'
 import { refundAmount, type BillingInterval } from '../_shared/refund-amount.ts'
+import { remainingRefundableCents } from '../_shared/refund-replay.ts'
 
 const APP_URL = Deno.env.get('APP_URL') ?? 'http://localhost:5173'
 const ALLOWED_ORIGINS = new Set([APP_URL])
@@ -190,13 +200,20 @@ Deno.serve(async (req) => {
           payment_intent: invoice.payment_intent as string,
           limit: 100,
         })
-        const already = existing.data.reduce(
-          (sum, r) => sum + (r.status === 'failed' || r.status === 'canceled' ? 0 : r.amount),
-          0,
-        )
-        // Ce qu'il RESTE à rendre. Un rejeu trouve `already` égal au montant et
-        // ne rembourse rien de plus.
-        const toRefund = Math.max(0, Math.min(decision.amountCents, (invoice.amount_paid ?? 0) - already))
+        // Ce qu'il RESTE à rendre. Un rejeu trouve le montant déjà rendu et ne
+        // rembourse rien de plus.
+        //
+        // 🔴 L'arithmétique vit dans `_shared/refund-replay.ts`, PAS ici, et
+        // c'est la seule chose qui la rende testable : au milieu des appels
+        // Stripe elle ne l'était pas, et elle ne l'a pas été pendant tout le
+        // temps où C-65 déclarait avoir une borne. Ses trois cas (nominal,
+        // rejeu, période déjà remboursée) sont exécutés par
+        // `src/modules/billing/refund-replay.test.ts`.
+        const toRefund = remainingRefundableCents({
+          decidedCents: decision.amountCents,
+          amountPaidCents: invoice.amount_paid ?? 0,
+          priorRefunds: existing.data,
+        })
 
         if (toRefund > 0) {
           await stripe.refunds.create(
