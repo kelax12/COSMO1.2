@@ -92,7 +92,7 @@ Free n'est pas connu, donc son plateau à elle n'est pas celui de ce tableau.
 
 ---
 
-## Mise à jour du 2026-09-14 (soir) · passe COMPLÈTE : onze domaines, aucun `·`, huit angles morts
+## Mise à jour du 2026-09-14 (soir) · passe COMPLÈTE : onze domaines, aucun `·`, dix angles morts
 
 **Contexte** : Axel s'apprête à lancer le produit. Consigne, mot pour mot : « refais tous les
 audits de 0, vérifie chaque chose qui est marquée, cherche des angles morts ». Cette passe ne relit
@@ -140,7 +140,7 @@ la journée : c'est ce qui arrive quand on remplace des vérifications de gardes
 résultats. Les **cinq** baisses viennent toutes de choses **qui existaient déjà** et qu'aucune note ne
 portait : rien n'a cassé aujourd'hui, on a simplement regardé ailleurs que là où les gardes pointent.
 
-### Les huit angles morts
+### Les dix angles morts
 
 | # | Angle mort | Comment il a été trouvé |
 |---|---|---|
@@ -149,6 +149,8 @@ portait : rien n'a cassé aujourd'hui, on a simplement regardé ailleurs que là
 | **3** | **Le ledger de migrations ne prouve pas ce qu'on lui fait dire.** « 148 entrées » était le NUMÉRO de la dernière migration ; il y en a **138**. Et 32 des 152 fichiers du dépôt n'y ont aucune correspondance. Ils SONT appliqués, mais ce n'est pas le ledger qui l'établit, et aucune garde ne surveille ce recouvrement | Comparaison nom à nom, puis vérification objet par objet dans le catalogue Postgres |
 | **4** | **`email_confirmed_at` est posé pour 28 comptes sur 28, dont 26 à la seconde de leur création.** La confirmation d'adresse étant désactivée, la colonne qui sert à répondre « cette adresse est-elle vérifiée ? » répond **oui** pour **18 adresses que personne n'a vérifiées** | Requête sur `auth.users`, écart `email_confirmed_at` moins `created_at` |
 | **5** | **Deux des 28 comptes ne sont pas des utilisateurs** : `demo@cosmo.app` (jamais connecté, et pourtant porteur de **120 tâches, 67 événements, 6 habitudes, 4 OKR en production**) et `testemail@gmail.com`. `get_admin_stats` **ne les exclut pas** : **16 % des tâches de la plateforme** appartiennent au compte de démonstration | Comptage par compte, puis lecture de la définition de `get_admin_stats` |
+| **10** | **La check-list VoiceOver promet « les 52 surfaces » et en oublie deux**, toutes deux câblées et atteignables au doigt : `MoveCategoryDialog` (ouverte depuis `ColorSettingsModal`) et `DeleteTeamCategoryConfirm` (onglet OKR d'équipe). C'est le **seul** instrument du dépôt qui mesure l'ANNONCE, par opposition au focus | Comptage des APPELS du hook (54, dont 3 témoins) croisé avec les noms de l'annexe A |
+| **9** | **Deux titres de `DEPLOYMENT.md` décrivaient comme « à faire » des choses faites depuis des semaines** : « emails d'authentification, **non configurés** » alors que le SMTP est en service depuis le 2026-08-29 au soir (16 jours), et « second facteur sur `/admin`, **mig. `131` non appliquée** » alors qu'elle l'est depuis le 2026-08-31 et que le TOTP est enrôlé depuis le 09-01 (15 jours). Même famille que l'angle mort 8 : le fait est corrigé là où on l'explique, jamais là où on l'exécute | `npm run check:mail` rejoué, puis ledger et `auth.mfa_factors` relus en base |
 | **8** | **Le runbook de bascule Stripe live listait CINQ events webhook, il en faut SIX.** `CLAUDE.md` et `STRIPE-LIVE.md` avaient été corrigés le 2026-09-12, **pas `POST-AUDIT-GUIDE.md`** : le seul document qu'on EXÉCUTE le jour J. En souscrire cinq laisse `charge.refunded` de côté, donc un remboursement versé sans ligne compensatoire au journal d'encaissement | `grep "case '"` dans `stripe-webhook/index.ts`, six branches, puis comparaison des trois documents |
 | **7** | **La garde « cibles tactiles » ne regarde que huit routes protégées**, et son résultat est lu comme une propriété du produit. Les pages publiques, celles qui reçoivent le trafic, en portent **24** et **23** sous 44 px, dont un `input[type=range]` de **6 px de haut** sur la page qui vend l'offre entreprise | Sonde WebKit / iPhone 12 contre la production, après lecture de la boucle de routes du spec |
 | **6** | **Trois tables de contenu libre manquaient à l'inventaire RGPD §1** (`team_task_comments`, `team_task_activity`, `org_notifications`), alors que le registre art. 30 les liste. Leur `author_id` / `actor_id` est en `SET NULL` : le contenu **survit** au départ de son auteur | Croisement des FK de `pg_constraint` avec l'inventaire, puis avec le registre |

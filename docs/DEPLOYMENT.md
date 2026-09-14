@@ -153,7 +153,29 @@ l'utilisateur, et son identité vient du JWT, jamais du corps de la requête.
 
 ---
 
-## 2ter. Emails d'authentification (Supabase Auth) — **non configurés, re-mesuré le 2026-08-29**
+## 2ter. Emails d'authentification (Supabase Auth) · **SMTP EN SERVICE depuis le 2026-08-29 au soir ; les confirmations restent désactivées**
+
+> 🔴 **CE TITRE A DIT « NON CONFIGURÉS » PENDANT SEIZE JOURS APRÈS LA MISE EN SERVICE.**
+> Corrigé le 2026-09-14 au soir. La section qui suit décrit l'état du **27-29 août au matin** ;
+> la mise en service a eu lieu **le 29 au soir**, et elle est inscrite dans `faille.md` (ligne
+> 1quater de l'ordre de priorité) sans que ce runbook soit repassé derrière.
+>
+> **Mesuré ce soir, `npm run check:mail`** : DKIM Resend présent sur `send.thecosmo.app`, SPF du
+> Return-Path `v=spf1 include:amazonses.com ~all`, MX `feedback-smtp.eu-west-1.amazonses.com`, MX et
+> SPF de la racine intacts, DMARC présent. **Un seul avertissement : `p=none`**, surveillance seule,
+> correct pour démarrer. Le domaine d'envoi est donc en état de signer.
+>
+> ⚠️ **Ce qui reste VRAI dans la section ci-dessous, et ne doit pas être lu comme corrigé** : les
+> **confirmations d'inscription sont toujours désactivées**, par décision d'Axel (finding `G-2`).
+> Remesuré ce soir : **28 comptes sur 28 portent `email_confirmed_at`, dont 26 à la seconde même de
+> leur création**, et **18 comptes sont créés par email + mot de passe**. Aucune de ces 18 adresses
+> n'a jamais été prouvée : la colonne dit « confirmé » parce que personne n'a demandé de
+> confirmation. Le point 1 des « deux conséquences » ci-dessous tient donc intégralement ; le
+> point 2, lui, ne tient plus : **le SMTP qui manquait est là**, activer les confirmations ne
+> dépend plus que d'une décision.
+>
+> ⚠️ Le DNS ne prouve toujours pas qu'un email ARRIVE. La preuve reste un compte jetable vérifié
+> sur Gmail ET Outlook (§ « Vérification » plus bas).
 
 > 🔴 **Ce sont les emails que Supabase envoie AUX UTILISATEURS**, pas ceux qu'envoient les Edge
 > Functions. Les deux passent par Resend, mais ce sont deux chemins distincts, avec deux
@@ -161,7 +183,7 @@ l'utilisateur, et son identité vient du JWT, jamais du corps de la requête.
 > code que nous écrivons ; GoTrue, lui, envoie en **SMTP** depuis un serveur que nous ne
 > contrôlons pas. Poser `RESEND_API_KEY` ne configure QUE le premier.
 
-### Ce qui est vrai aujourd'hui — mesuré, pas supposé
+### Ce qui était vrai les 27-29 août au matin · *état conservé à sa date, cf. l'encadré ci-dessus*
 
 > **Re-mesuré le 2026-08-29** : rien n'a changé. Même `28 / 1 / 3` en base, même DKIM absent.
 > Le sous-domaine d'envoi `send.thecosmo.app` **n'existe pas encore du tout** : ni `MX`, ni `SPF`,
@@ -335,7 +357,18 @@ depuis un navigateur.
 
 ---
 
-## 2quinquies. Second facteur sur `/admin` — **livré le 2026-08-30, mig. `131` non appliquée**
+## 2quinquies. Second facteur sur `/admin` · **EN VIGUEUR : mig. `131` appliquée le 2026-08-31, TOTP enrôlé le 2026-09-01**
+
+> 🔴 **CE TITRE A DIT « NON APPLIQUéE » PENDANT QUINZE JOURS.** Corrigé le 2026-09-14 au soir.
+> La mig. `131` est au ledger de production, et `auth.mfa_factors` porte un facteur `totp` en statut
+> `verified` sur le compte admin depuis le 2026-09-01 à 14:20:27 UTC.
+>
+> 🔴 **Et elle a été appliquée dans l'ordre que la procédure ci-dessous déconseille**, à la
+> demande explicite d'Axel : migration d'abord, enrôlement ensuite. Le coût a été réel et il est
+> exactement celui que l'avertissement de bas de section annonçait à moitié : `/admin` est resté
+> **inaccessible du 2026-08-31 au 2026-09-01**, parce que l'écran d'enrôlement, censé rester
+> atteignable, levait en phase de rendu. La procédure ci-dessous reste la bonne ; c'est de ne pas
+> l'avoir suivie qui a coûté une journée.
 
 `/admin` rend toute la volumétrie business du produit. Depuis T-06 (b), la garde serveur
 `public.is_admin()` exige que la **session** ait présenté un second facteur (`aal2`), pas
