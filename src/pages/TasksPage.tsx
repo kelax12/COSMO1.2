@@ -463,6 +463,7 @@ const TasksPage: React.FC = () => {
                   onToggleTaskForList={toggleTaskForList}
                   showQuickFilters={showQuickFilters}
                   searchTerm={searchTerm}
+                  listFilterActive={!!selectedListId}
                 />
                 )}
               </motion.div>

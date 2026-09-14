@@ -37,6 +37,9 @@ interface Params {
   sortField?: string;
   sortDirection: 'asc' | 'desc';
   searchTerm?: string;
+  /** Une liste perso est active en filtre : les tâches d'équipe n'appartiennent
+   * jamais à une liste perso, donc aucune n'y correspond — cf. en-tête. */
+  listFilterActive?: boolean;
 }
 
 export function useUnifiedTaskRows({
@@ -51,6 +54,7 @@ export function useUnifiedTaskRows({
   sortField,
   sortDirection,
   searchTerm,
+  listFilterActive = false,
 }: Params): { unifiedRows: UnifiedTaskRow[]; hiddenCompletedCount: number } {
   // Filtrage et tri mémoïsés — logique pure extraite (task-filtering.ts, testée).
   const sortedTasks = useMemo(
@@ -85,8 +89,8 @@ export function useUnifiedTaskRows({
     [scopeFilter, sortedTasks],
   );
   const scopedTeamTasks = useMemo(
-    () => (scopeFilter === 'perso' ? [] : myTeamTasks),
-    [scopeFilter, myTeamTasks],
+    () => (scopeFilter === 'perso' || listFilterActive ? [] : myTeamTasks),
+    [scopeFilter, myTeamTasks, listFilterActive],
   );
 
   // Maquette 50 — « La fin de la liste se dit ». Le décompte porte sur les
