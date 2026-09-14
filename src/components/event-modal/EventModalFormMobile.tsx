@@ -4,7 +4,7 @@
 // Extrait verbatim de EventModalForm (branche isMobile), piloté par props.
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Plus } from 'lucide-react';
+import { Plus, Ban } from 'lucide-react';
 import { format } from 'date-fns';
 import { getDateLocale } from '@/i18n/format';
 import type { EventRecurrence } from '@/modules/events';
@@ -296,6 +296,35 @@ const EventModalFormMobile: React.FC<EventModalFormBodyProps> = ({
                           {cat.name}
                         </p>
                         <div className="grid grid-cols-2 gap-1.5">
+                          {/* « Aucune » — reste sur la couleur simple de la racine,
+                              sans se raffiner vers une sous-catégorie. Toujours en
+                              premier : c'est le choix le moins engageant. */}
+                          {(() => {
+                            const noneSelected = color === cat.color;
+                            return (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  handleFieldChange("color", setColor, cat.color);
+                                  setOpenSubcategoriesFor(null);
+                                }}
+                                aria-label={t('subcategoryNoneAria', { name: cat.name })}
+                                aria-pressed={noneSelected}
+                                className={`flex items-center gap-2 px-2.5 py-2 rounded-lg border transition-all active:scale-95 ${
+                                  noneSelected
+                                    ? 'border-[rgb(var(--color-accent-solid))] bg-blue-50 dark:bg-blue-900/20'
+                                    : 'border-[rgb(var(--color-border))]'
+                                }`}
+                              >
+                                <span className="w-5 h-5 rounded-md shrink-0 flex items-center justify-center" style={{ backgroundColor: "rgb(var(--color-hover))" }}>
+                                  <Ban size={12} style={{ color: "rgb(var(--color-text-muted))" }} aria-hidden="true" />
+                                </span>
+                                <span className="flex-1 text-left text-[12px] font-medium text-[rgb(var(--color-text-primary))] truncate">
+                                  {t('subcategoryNone')}
+                                </span>
+                              </button>
+                            );
+                          })()}
                           {subs.map((sub) => {
                             const subSelected = color === sub.color;
                             return (
