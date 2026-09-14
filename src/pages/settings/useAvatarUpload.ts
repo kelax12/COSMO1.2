@@ -22,7 +22,7 @@
 // public, donc s'arrêter à `avatar_url = null` laissait la photo accessible
 // sans authentification à une URL stable et devinable.
 
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { supabase } from '@/lib/supabase';
 import { getCurrentUser } from '@/lib/auth-user';
 import { mirrorAvatarToProfile } from '@/modules/user/profile.repository';

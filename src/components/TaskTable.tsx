@@ -22,7 +22,7 @@ import { useBottomSheet } from '@/hooks/use-bottom-sheet';
 // Module tasks - Hooks indépendants (MIGRÉ)
 // ═══════════════════════════════════════════════════════════════════
 import { showUndoToast } from '@/lib/undo-toast';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   useTasks,

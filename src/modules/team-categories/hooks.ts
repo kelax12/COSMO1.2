@@ -3,7 +3,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { getTeamCategoriesRepository } from '@/lib/repository.factory';
 import { teamCategoryKeys } from './constants';
 import type { CreateTeamCategoryInput, UpdateTeamCategoryInput } from './types';

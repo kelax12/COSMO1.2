@@ -22,7 +22,7 @@ import {
   exportProfileCSV,
   exportAllCSV,
 } from '@/lib/csv-export';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { useT } from '@/i18n/useT';
 
 export function DataTab() {

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Copy, Check, RotateCcw } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { useCreateInviteLink } from '@/modules/organizations';
 import { useT } from '@/i18n/useT';
 

@@ -9,7 +9,7 @@
 // input recherche/ajout → grille d'amis → demandes d'amis pending (mig. 036).
 import React from 'react';
 import { X, Search, UserPlus, Clock, Plus, Check } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { Button } from '@/components/ui/button';
 import CollaboratorItem from '@/components/CollaboratorItem';
 import ShareLinkField from '@/components/ShareLinkField';

@@ -1,4 +1,4 @@
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { translator } from '@/i18n/useT';
 import { deadlineFromDayKey } from '@/lib/deadline';
 import type {

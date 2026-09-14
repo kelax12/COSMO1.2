@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { getListsRepository } from '@/lib/repository.factory';
 import type { TaskList, CreateListInput, UpdateListInput } from './types';
 import { listKeys } from './constants';

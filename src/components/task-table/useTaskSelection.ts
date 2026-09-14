@@ -13,7 +13,7 @@
 // Extrait le 2026-09-05 (C-09).
 // ═══════════════════════════════════════════════════════════════════
 import { useCallback, useState } from 'react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { showUndoToast } from '@/lib/undo-toast';
 import type { Task } from '@/modules/tasks';
 import type { TaskList } from '@/modules/lists';

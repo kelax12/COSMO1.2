@@ -20,7 +20,7 @@
 // écrit un identifiant de catégorie qui n'existe pas encore.
 
 import { useState } from 'react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { showUndoToast } from '@/lib/undo-toast';
 import { useT } from '@/i18n/useT';
 import type { Category } from '@/modules/categories';

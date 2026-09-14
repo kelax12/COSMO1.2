@@ -1,7 +1,7 @@
 import React from 'react';
 import { Plus, Edit2, X, Trash } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { useT } from '@/i18n/useT';
 import { rootCategories, childrenOfCategory, toggleRootCategory, toggleLeafCategory } from './category-filter-logic';
 

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Building2, Users, ArrowLeft, Copy, Check, Clock } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import {
   useCreateOrganization,
   useRequestJoinOrganization,

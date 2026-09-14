@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import * as monitoring from '@/lib/monitoring';
 import { reportRestoreFailure, splitRestore, type CreateOptions } from './restore-id';
 
-vi.mock('sonner', () => ({ toast: { error: vi.fn() } }));
+vi.mock('@/lib/toast', () => ({ toast: { error: vi.fn() } }));
 // ⚠️ On mocke `@/lib/monitoring`, plus `@sentry/react` directement : depuis
 // l'arbitrage C-13 · C-14, Sentry est charge APRES le premier rendu et
 // `monitoring` est la seule porte (elle tamponne ce qui arrive avant). Ce qui

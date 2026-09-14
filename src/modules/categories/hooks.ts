@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { getCategoriesRepository } from '@/lib/repository.factory';
 import type { Category, CreateCategoryInput, UpdateCategoryInput } from './types';
 import { categoryKeys, DEFAULT_CATEGORY_COLOR } from './constants';

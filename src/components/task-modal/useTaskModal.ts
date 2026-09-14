@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useInvalidShake } from '@/hooks/use-invalid-shake';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
 import { useFormDraft } from '@/lib/hooks/use-form-draft';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { showUndoToast } from '@/lib/undo-toast';
 
 // ═══════════════════════════════════════════════════════════════════

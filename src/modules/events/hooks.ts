@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
 import { getEventsRepository } from '@/lib/repository.factory';
 import type { CalendarEvent, CreateEventInput, UpdateEventInput } from './types';
 import { eventsKeys } from './constants';
