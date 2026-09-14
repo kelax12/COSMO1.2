@@ -42,6 +42,13 @@ interface CategoryTreeSelectProps {
   shaking?: boolean;
   /** Le champ a-t-il été pré-rempli depuis un OKR (fond et bordure accentués) ? */
   fromOkr?: boolean;
+  /**
+   * Classes ajoutées au panneau (`PopoverContent`), typiquement pour relever
+   * son `z-index` : rendu dans un PORTAIL, il hérite du z-50 par défaut de
+   * `PopoverContent`, ce qui le fait passer SOUS un conteneur hôte à z-index
+   * plus élevé (ex. `QuickEventCard`, z-[60]).
+   */
+  panelClassName?: string;
 }
 
 const CategoryTreeSelect: React.FC<CategoryTreeSelectProps> = ({
@@ -51,6 +58,7 @@ const CategoryTreeSelect: React.FC<CategoryTreeSelectProps> = ({
   hasError = false,
   shaking = false,
   fromOkr = false,
+  panelClassName = '',
 }) => {
   const { t } = useT('tasks');
   const [open, setOpen] = useState(false);
@@ -139,7 +147,7 @@ const CategoryTreeSelect: React.FC<CategoryTreeSelectProps> = ({
       <PopoverContent
         align="start"
         style={{ width: 'var(--radix-popover-trigger-width)' }}
-        className="max-h-80 overflow-y-auto p-2"
+        className={`max-h-80 overflow-y-auto p-2 ${panelClassName}`}
       >
         <div role="listbox" aria-label={t('fields.category')}>
           {buildTree(categories).map((node) => renderNode(node, 0))}

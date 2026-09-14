@@ -1,33 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { Plus } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectSeparator,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import AddCategoryButton from '@/components/AddCategoryButton';
+import CategoryTreeSelect from '@/components/category/CategoryTreeSelect';
+import type { Category } from '@/modules/categories';
 import { formatTimeInTz, toDisplayISO, getTimezonePref, type TimezonePref } from '@/lib/timezone';
 import { formatDate } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
 import { useModalA11y } from '@/hooks/use-modal-a11y';
 
-// Valeur factice interceptée par onValueChange pour ouvrir le gestionnaire de
-// catégories au lieu de sélectionner une catégorie (#option "+ Ajouter").
-const ADD_CATEGORY_VALUE = '__add_category__';
-
 // ── Petite popup de création rapide depuis une plage horaire ────────────────
 interface QuickEventCardProps {
   slot: { start: string; end: string; x: number; y: number };
-  categories: { id: string; name: string; color: string }[];
+  categories: Category[];
   /** Fuseau d'affichage choisi (heure locale par défaut). */
   tzPref?: TimezonePref;
   onCreate: (title: string, color?: string) => void;
   onClose: () => void;
-  /** Ouvre le gestionnaire de catégories (option « + Ajouter une catégorie »). */
+  /** Ouvre le gestionnaire de catégories (bouton « + Ajouter »). */
   onAddCategory?: () => void;
 }
 
@@ -85,36 +75,20 @@ const QuickEventCard: React.FC<QuickEventCardProps> = ({ slot, categories, tzPre
           onKeyDown={(e) => { if (e.key === 'Enter') submit(); if (e.key === 'Escape') onClose(); }}
         />
         {(categories.length > 0 || onAddCategory) && (
-          <Select
-            value={cat}
-            onValueChange={(value) => {
-              if (value === ADD_CATEGORY_VALUE) { onAddCategory?.(); return; }
-              setCat(value);
-            }}
-          >
-            <SelectTrigger className="mb-2 h-8 w-full"><SelectValue placeholder={t('quickCreate.categoryPlaceholder')} /></SelectTrigger>
-            <SelectContent className="z-[70]">
-              {categories.map((c) => (
-                <SelectItem key={c.id} value={c.id}>
-                  <span className="inline-flex items-center gap-2">
-                    <span className="inline-block size-2.5 rounded-full" style={{ backgroundColor: c.color }} />
-                    {c.name}
-                  </span>
-                </SelectItem>
-              ))}
+          <div className="mb-2">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-muted-foreground text-[11px] font-semibold uppercase tracking-wider">
+                {t('quickCreate.categoryPlaceholder')}
+              </span>
               {onAddCategory && (
-                <>
-                  {categories.length > 0 && <SelectSeparator />}
-                  <SelectItem value={ADD_CATEGORY_VALUE} className="group">
-                    <span className="inline-flex items-center gap-2 text-blue-600 dark:text-blue-400 group-focus:text-inherit font-medium">
-                      <Plus size={12} aria-hidden="true" />
-                      {t('quickCreate.addCategory')}
-                    </span>
-                  </SelectItem>
-                </>
+                <AddCategoryButton onClick={onAddCategory} ariaLabel={t('quickCreate.addCategory')} />
               )}
-            </SelectContent>
-          </Select>
+            </div>
+            {/* z-[70] : le panneau se porte en PORTAIL (Radix), donc hors de
+                cette popup ; son z-50 par défaut passerait sous l'overlay
+                z-[60] de QuickEventCard. */}
+            <CategoryTreeSelect value={cat} onChange={setCat} categories={categories} panelClassName="z-[70]" />
+          </div>
         )}
         <div className="flex justify-end gap-2">
           <Button type="button" variant="ghost" size="sm" onClick={onClose}>{t('quickCreate.cancel')}</Button>
