@@ -9,6 +9,27 @@ compte** et **ce qui prouve que c'est fini**.
 > (`localStorage` hors `try` dans les dépôts de démo), **C-47** (échecs de tests faux sous charge).
 > **C-22** est clos ; **C-38** est à moitié fait et dit désormais ce qui a été fermé et ce qui reste.
 
+> ### 🟢 Passe du 2026-09-14 **au soir** — **76 items : 71 clos, 4 commencés, 1 ouvert**
+>
+> Mesuré entre 12:50 et 15:30 UTC. Trois mouvements, chacun avec sa preuve opposable :
+>
+> | Item | Ce qui a bougé | Preuve |
+> |---|---|---|
+> | `C-14` + `C-76` | la façade `toast`, sa garde, **62** consommateurs et les deux plafonds abaissés entrent dans le dépôt — **un seul commit**, comme C-76 l'exigeait | commit `7134d7fe`, run CI **`34846164939`** : `completed success`, **les cinq jobs**. Entrée 66,9 ko / 71 000 · critique 306,6 ko / 323 000, build **avec** `VITE_SENTRY_DSN` |
+> | `C-39` | le parcours « rembourser → résilier → supprimer » est **joué dans un navigateur**, et **vu rougir** sur une mutation avant d'être commité | `e2e/stubbed/delete-org.spec.ts`, 4 cas, commit `31433705` |
+> | `C-34` | sa réserve tombe : **le premier run PLANIFIÉ est vert** | run `34852499705`, `event: schedule`, 13:57:42 UTC |
+>
+> 🔴 **Ce que cette passe a démenti, et qui venait de ce fichier même** : `C-58` affirmait que les
+> 9 corrections de types de `feat/react-19` étaient « justes indépendamment de React 19, donc
+> portables sur `main` ». **Mesuré : 72 erreurs `tsc`.** Sous React 18, `RefObject<T | null>` n'est
+> pas assignable à `LegacyRef<T>`. Port défait, `main` propre. Onzième énoncé démenti par sa propre
+> remesure.
+>
+> ⚠️ **Les 5 items non clos ne demandent plus une ligne de code** : un iPhone (`C-24`), un tableau
+> de bord Stripe et une facture payée (`C-65`), une décision déjà rendue (`C-58`, `C-69`), et pour
+> `C-39` le seul reste est l'épreuve contre Stripe, donc `C-65`. Les écrire comme des tâches de
+> code laisserait croire qu'une session de plus les fermerait.
+
 > ### 🟢 Passe du 2026-09-14 — **76 items : 69 clos, 6 commencés, 1 ouvert**, et `main` est REDEVENUE VERTE
 >
 > Tout ce qui suit est **mesuré le 2026-09-14**, entre 11:40 et 12:15 UTC : ledger de migrations et
@@ -1522,7 +1543,34 @@ question est donc rouverte, et **maintenant mesurable**.
 
 - **Fini quand** : une décision écrite, appuyée sur une mesure prise avec `VITE_SENTRY_DSN` posée.
 
-### C-14 · Le budget d'entrée est DÉPASSÉ · **P1 · M** · 🔴 **RÉOUVERT le 2026-09-14 — le correctif n'a jamais été commité**
+### C-14 · ~~Le budget d'entrée est DÉPASSÉ~~ · **P1 · M** · ✅ **REFERMÉ le 2026-09-14 — commité, et vérifié par un run CI**
+
+> ✅ **Le correctif est dans le dépôt, et la CI l'a pesé.** Commit **`7134d7fe`**, run CI
+> **`34846164939`** : `completed success`, **les cinq jobs**, dont `lint-test-build` (qui porte
+> `Budget de bundle`) et `e2e`. C'est la première fois que cet item s'appuie sur une mesure
+> opposable plutôt que sur un arbre de travail local.
+>
+> | | Mesure du build commité | Plafond en vigueur | Marge |
+> |---|---|---|---|
+> | Chunk d'entrée | **66,9 ko** | **71 000 o** | **5,8 %** |
+> | Chemin critique (7 chunks) | **306,6 ko** | **323 000 o** | **5,1 %** |
+>
+> Build fait **avec** `VITE_SENTRY_DSN` (`sentry-client` 49,3 ko, donc le plancher `SENTRY_FLOOR`
+> de la garde est franchi et elle pèse bien l'artefact qui part en prod). Les deux plafonds ont
+> été **ABAISSÉS**, jamais relevés. Le critère de sortie — 5 % sur les DEUX budgets — est tenu.
+>
+> ⚠️ **Ce que la fermeture ne dit pas** : les 5 fichiers produit que d'autres sessions avaient
+> remis sur `sonner` depuis le 09-11 ont dû être repassés à `@/lib/toast` dans le même commit. La
+> garde `src/lib/toast.guard.test.ts` tourne désormais en CI : c'est elle, et non cette note, qui
+> empêchera la sixième occurrence.
+>
+> **Ce qui reste sur la table, non pris** : les dépôts LOCAUX et Supabase de quinze modules tirés
+> statiquement par `src/lib/repository.factory.ts`, soit 269 ko bruts dans l'entrée dont ~72 ko de
+> seeds de démonstration jamais exécutés en production. C'est un chantier (séparation interface /
+> implémentation locale que six modules n'ont pas), pas un geste — et il n'est pas exigé par le
+> critère de sortie.
+
+> 🔴 **Ce qui suivait décrivait un arbre de travail local, pas `main`** — conservé à sa date.
 
 > 🔴 **Ce qui suit décrit un arbre de travail local, pas `main`.** Mesuré le 2026-09-14 :
 > `src/lib/toast.ts` n'existe dans **aucun** commit du dépôt, et `scripts/check-bundle-budget.mjs`
@@ -1627,7 +1675,30 @@ un arbre propre, pas en le supposant.
 
 ---
 
-### C-76 · La façade `toast` et les deux plafonds abaissés ne sont dans AUCUN commit · **P1 · S** · 🆕 2026-09-14
+### C-76 · ~~La façade `toast` et les deux plafonds abaissés ne sont dans AUCUN commit~~ · **P1 · S** · ✅ **clos le 2026-09-14, le jour de son ouverture**
+
+> ✅ **Commit `7134d7fe`, run CI `34846164939` vert sur les cinq jobs.** Le critère de sortie est
+> tenu point par point, et chaque point est vérifiable sans rejouer quoi que ce soit :
+>
+> | Ce que le critère exigeait | Ce qui le prouve |
+> |---|---|
+> | la façade et sa garde **suivies par git** | `7134d7fe` les ajoute ; `git ls-files src/lib/toast*` les rend |
+> | `toast.guard.test.ts` passe **en CI** | job `lint-test-build` vert sur ce commit — le fichier n'existait pas en CI avant |
+> | `check:bundle` sur **71 000 / 323 000**, build **avec** `VITE_SENTRY_DSN` | étape `Budget de bundle` verte : entrée 66,9 ko, chemin critique 306,6 ko |
+> | `grep -rl "from 'sonner'" src/` ne rend plus que la façade et sa garde | vérifié avant commit ; les **5 fichiers produit** que d'autres sessions avaient remis sur `sonner` depuis le 09-11 sont repassés à `@/lib/toast` dans le même commit |
+> | **C-14** cite un commit et un run, pas une mesure locale | fait, cf. sa note |
+>
+> ⚠️ **Un commentaire mensonger est parti avec.** `TeamCategoryTreeSelect.tsx` portait
+> « ⚠️ `sonner` et non `@/lib/toast` : la façade différée n'est pas encore committée » — vrai le
+> jour où il a été écrit, faux à la minute du commit. Une note qui justifie un contournement doit
+> mourir avec lui, sinon elle enseigne durablement l'inverse de la règle.
+>
+> ⚠️ **Ce que ça n'a pas réglé** : rien n'empêche structurellement qu'un travail fini reste trois
+> jours hors du dépôt. `scripts/tracked-imports.guard.test.mjs` attrape le SYMPTÔME (un import vers
+> un module non suivi) et l'a fait trois fois ; il ne pouvait pas dire la cause. Le seul remède est
+> de commiter, et il n'a pas de garde.
+
+### C-76 — l'état du 2026-09-14 au matin, conservé à sa date
 
 Trouvé en vérifiant `C-14` à sa source plutôt qu'en relisant sa note. Ce n'est pas un défaut de
 code : **le code est écrit, testé, et il n'est pas dans le dépôt.**
@@ -2023,13 +2094,31 @@ dormir ailleurs.
 
 ### C-58 · Le blocage sécurité qui forçait React 19 est déjà levé · **P3 · XS** · trouvé par l'audit A-6
 
-> 🟠 **Ce n'est plus un chantier, c'est un arbitrage — et la branche prend du retard.** Mesuré le
-> 2026-09-14 : `feat/react-19` porte la migration jouée (`b101be9f`, `7a1b9940`), tout est vert
-> **sauf `check:bundle`**, et elle est désormais **2 commits devant `main` mais 48 derrière**.
-> Plus elle attend, plus le rebase coûte. ⚠️ Son chiffre de sortie (chemin critique 329,8 ko contre
-> un plafond de 323,0) a été mesuré contre un plafond **qui n'est pas celui de `main`** : `main`
-> porte encore 370 000 (cf. **C-76**). Retrancher la décision tant que C-76 n'est pas commité
-> reviendrait à arbitrer sur un plafond fictif.
+> 🟠 **Ce n'est plus un chantier, c'est un arbitrage — et DEUX affirmations de cet item sont
+> devenues fausses le 2026-09-14. Corrigées ici, pas en silence.**
+>
+> **1. Le plafond de 323 000 EST désormais dans l'histoire du dépôt.** Commit `7134d7fe`, run CI
+> `34846164939` vert (C-76). La phrase « contre `main` tel qu'il est commité, React 19 à 329,8 ko
+> passerait la garde en silence » ne décrit plus rien : la garde de `main` est à 323 000, et React
+> 19 y **échouerait**, comme il le doit. Le blocage n'est plus adossé à un cliquet fantôme — il est
+> opposable. **Le seuil de reprise chiffré plus bas (283,5 ko) est inchangé et devient la seule
+> lecture valable.**
+>
+> **2. Les 9 corrections de types NE SONT PAS portables sur `main`, contrairement à ce que dit le
+> paragraphe « ce que différer coûte ».** Mesuré, pas déduit : les sept fichiers de la branche ont
+> été appliqués sur `main` et `tsc -b` rend **72 erreurs** dans une soixantaine de fichiers. Sous
+> les types **React 18**, `RefObject<T | null>` n'est pas assignable à `LegacyRef<T>` — donc chaque
+> `ref={...}` qui consomme un de ces refs élargis casse. Le port a été **défait** ; `main` est
+> propre (`tsc -b` sans erreur). Ces 9 lignes sont justes **sous React 19 et seulement là** : elles
+> ne sont pas un acompte qu'on pourrait verser d'avance pour alléger la reprise.
+>
+> ⚠️ **Ce que ce deuxième point apprend au-delà de React 19** : « un correctif de types est
+> mécanique, donc portable » est une intuition, pas une mesure. Élargir un type de prop est une
+> rupture de contrat dans le sens des CONSOMMATEURS, et ils étaient soixante.
+>
+> **Ce qui reste vrai** : `feat/react-19` porte la migration jouée (`b101be9f`, `7a1b9940`), tout
+> est vert **sauf `check:bundle`** (chemin critique 329,8 ko), et elle est **2 commits devant
+> `main` et ~50 derrière**. Plus elle attend, plus le rebase coûte.
 
 `CLAUDE.md` et `faille.md` décrivaient un piège à deux CVE (`GHSA-qwww-vcr4-c8h2`,
 `GHSA-wrjc-x8rr-h8h6`) sans issue sous React 18. **Mesuré contre trois sources indépendantes**,
@@ -2361,7 +2450,36 @@ C-29, conséquence bien plus faible.
 - **Fini quand** : l'échec est distingué de l'absence de session, et le corps du message dit
   « auteur non résolu » plutôt que « non connecté (anonyme) ».
 
-### C-39 · N'importe quel ADMIN peut supprimer l'entreprise depuis l'écran, et la cascade emporte tout · **P1 · M** · 🟠 **bloqueur LEVÉ le 2026-09-12**
+### C-39 · N'importe quel ADMIN peut supprimer l'entreprise depuis l'écran, et la cascade emporte tout · **P1 · M** · 🟢 **parcours JOUÉ le 2026-09-14**
+
+> ✅ **Le parcours nominal est joué de bout en bout, dans un navigateur** — ce que la note du
+> 09-14 au matin donnait comme le dernier manque. `e2e/stubbed/delete-org.spec.ts` (4 cas,
+> commit `31433705`), sur l'app réelle, avec le vrai routage et le vrai composant :
+>
+> | Cas | Ce qu'il mesure |
+> |---|---|
+> | la suppression **attend** le remboursement | la réponse de l'Edge Function est **retenue** ; tant qu'elle ne part pas, **zéro** `rpc/delete_organization`. Libérée, la suppression suit, une seule fois, sur le bon `p_org` |
+> | un remboursement **refusé** ne supprime rien | aucune RPC de suppression, l'écran reste réessayable, et **un seul** appel (le `retry: 0` de `useCancelAndRefundOrg` tient) |
+> | un **ADMIN non propriétaire** | n'atteint ni la zone de danger ni le bouton — le scénario d'échec de cet item, mot pour mot |
+> | **TÉMOIN** | exige que le détecteur de suppression voie bien partir une suppression, sans quoi les deux assertions négatives seraient vertes pour la mauvaise raison |
+>
+> 🔴 **Vu ROUGE avant d'être commité.** Mutation posée sur `useDeleteOrgFlow` — `remove.mutate()`
+> avant `refund.mutate()`, sans attendre le succès : **les deux cas d'ordre tombent**, le témoin et
+> le cas non-propriétaire restent verts. La sonde mesure donc la propriété qu'elle annonce, et elle
+> ne mesure pas seulement « l'écran s'affiche ».
+>
+> ⚠️ **La première version du cas 1 a échoué sur un produit JUSTE**, et ça vaut d'être écrit :
+> `stub.functionCalls` n'enregistre l'appel qu'au moment où le stub **répond**, or c'est exactement
+> ce que le cas retient. Septième fois en douze jours qu'un rouge désigne la mesure et non le
+> produit.
+>
+> 🔴 **Ce qui reste, et qui ne peut pas se faire d'ici** : rien n'a jamais été joué **contre
+> Stripe**. Ce test prouve le client ; la garde PROPRIÉTAIRE qui compte vit dans
+> `delete_organization` (mig. 138) et a été prouvée en SQL acteur par acteur le 2026-09-12.
+> `refunds.create` et la résiliation réelle restent suspendus aux deux gestes d'Axel décrits en
+> `C-65` — clé Stripe live, ou une facture payée en mode test à rembourser.
+
+> 🟠 **L'état du 2026-09-14 au matin, conservé à sa date** · bloqueur LEVÉ le 2026-09-12
 
 > ✅ **Remesuré le 2026-09-14 : `stripe-org-refund` EST en production**, v5 du 2026-09-12 à
 > 22:05 UTC, et le job `Edge deploy drift` du 09-14 à 10:57 confirme qu'elle est identique au
@@ -3989,9 +4107,15 @@ pas un écho.
 > `gh secret list` le 09-14. Le `workflow_dispatch` joué 62 secondes plus tard est **vert**
 > (`34768378680`), et la garde échoue désormais bruyamment quand le secret manque.
 >
-> ⚠️ **Réserve, dite plutôt que tue : aucun run PLANIFIÉ n'a encore été vert.** Les six derniers
-> `schedule` (09-09 au 09-13 12:41) ont tous échoué — tous **antérieurs** à la pose du secret. Le
-> prochain tombe vers 12:10 UTC. Un dispatch prouve le chemin, il ne prouve pas le cron.
+> ✅ **LA RÉSERVE EST LEVÉE le 2026-09-14 : le premier run PLANIFIÉ depuis la pose du secret est
+> VERT.** Run `34852499705`, `event: schedule`, `conclusion: success`, **2026-09-14 à 13:57:42
+> UTC**. Les six `schedule` d'avant (09-09 → 09-13 12:41) avaient tous échoué, et ils étaient tous
+> **antérieurs** à la pose du secret : la bascule tombe exactement où elle doit tomber. Un dispatch
+> prouvait le chemin ; celui-ci prouve le cron.
+>
+> ⚠️ **Réserve d'origine, conservée pour ce qu'elle enseigne** : elle disait « aucun run planifié
+> n'a encore été vert », et c'était la bonne façon de l'écrire — citer un `workflow_dispatch` comme
+> preuve d'un cron aurait fermé l'item sur autre chose que ce qu'il mesure.
 
 > ✅ corrigé le 2026-09-04 · secret absent = `exit 1`, plus un témoin qui refuse un run où `curl` n'a rendu aucun code HTTP.
 
@@ -4699,6 +4823,61 @@ périmètre, ses questions et ses pièges connus.
 avant que sa note ne change : ledger de migrations et versions déployées lus par API, gardes
 exécutées, sondes jouées. Recopier une note depuis un tableau plus ancien est le défaut que ce
 fichier documente lui-même (§ Documentation de `CLAUDE.md`), et il a déjà frappé trois fois ici.
+
+### 11.0sexies Recompté le 2026-09-14 **au soir** — **76 items : 71 clos, 4 commencés, 1 ouvert**
+
+Deux items passent de 🟠 à ✅ (`C-14`, `C-76`), et `C-39` passe à 🟢 sur tout ce qu'une session
+peut fermer. Tout ce qui suit est mesuré ce soir-là, `gh` et Playwright joués ici.
+
+#### ✅ Fini (71)
+
+Les 69 du matin, **plus `C-14` et `C-76`**.
+
+| Item | Preuve opposable |
+|---|---|
+| `C-14` `C-76` | commit **`7134d7fe`**, run CI **`34846164939`** : `completed success`, **les cinq jobs**. Entrée **66,9 ko** / plafond 71 000 (marge 5,8 %), chemin critique **306,6 ko** / plafond 323 000 (marge 5,1 %), sur un build **avec** `VITE_SENTRY_DSN`. Les deux plafonds ont été ABAISSÉS |
+
+⚠️ **Un item de plus a vu sa RÉSERVE tomber sans changer de statut** : `C-34` était clos avec la
+mention « aucun run planifié n'a encore été vert ». Le run `34852499705` (`event: schedule`,
+`success`, 2026-09-14 13:57:42 UTC) est le premier vert depuis la pose du secret. Le cron est
+prouvé, pas seulement le chemin.
+
+#### 🟢 Fermé de tout ce qu'une session peut fermer (1)
+
+`C-39` — le parcours nominal « rembourser → résilier → supprimer » est **joué dans un navigateur**
+(`e2e/stubbed/delete-org.spec.ts`, 4 cas, commit `31433705`), et **vu rougir** sur une mutation de
+`useDeleteOrgFlow` avant d'être commité. Ce qui reste n'est pas du code : rien n'a jamais été joué
+**contre Stripe**, et ça dépend des deux gestes de `C-65`.
+
+#### 🟠 Commencé (4)
+
+`C-24` `C-58` `C-65` — plus `C-39` ci-dessus si on le compte ici. **Aucun des trois n'est bloqué
+par du code manquant**, et c'est le seul renseignement utile de ce décompte :
+
+| Item | Ce qui manque, exactement | Qui peut le faire |
+|---|---|---|
+| `C-24` | une mesure VoiceOver **sur un iPhone réel** : un modèle, une version d'iOS, des verbatims. La check-list est prête et à jour (`docs/AUDIT-VOICEOVER-IOS.md`, 12 étapes, témoin compris) | Axel, appareil en main. **Aucune session ne peut le simuler** |
+| `C-58` | **rien** : l'arbitrage « on diffère » a été rendu le 2026-09-13. La reprise est conditionnée à un seuil chiffré (chemin critique React 18 ≤ **283,5 ko**), pas à un correctif | décision, pas code |
+| `C-65` | une facture réellement payée à rembourser, et la liste des events souscrits lue **dans le tableau de bord Stripe** (`charge.refunded` : 6 branches, endpoint documenté à 5) | Axel |
+
+🔴 **Deux affirmations de `C-58` ont été corrigées ce soir, et l'une l'a été par une mesure qui
+contredit l'item** : les 9 corrections de types `RefObject<T | null>` ne sont **PAS** portables sur
+`main`. Appliquées, `tsc -b` rend **72 erreurs** — sous React 18, `RefObject<T | null>` n'est pas
+assignable à `LegacyRef<T>`. Le port a été défait, `main` est propre. « Un correctif de types est
+mécanique, donc portable » était une intuition ; élargir un type de prop est une rupture de contrat
+du côté des consommateurs, et ils étaient soixante.
+
+#### ⬜ Pas commencé (1)
+
+`C-69` — la fenêtre produit tourne sans pause : **arbitré « on garde »** le 2026-09-03. Ne
+s'exécute que si la décision change. Ce n'est pas un reste, c'est une décision.
+
+> 🔴 **Ce que ce décompte ne dit toujours pas.** Les quatre items non clos ne demandent plus une
+> ligne de code : ils demandent un iPhone, un tableau de bord Stripe, une facture payée et une
+> décision. Continuer à les écrire comme des tâches de code laisse croire qu'une session de plus
+> les fermerait. **Aucune ne le fera.**
+
+---
 
 ### 11.0quinquies Recompté le 2026-09-14 **après la réparation de la CI** — **76 items : 69 clos, 6 commencés, 1 ouvert**
 
