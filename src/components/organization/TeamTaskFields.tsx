@@ -232,7 +232,7 @@ const TeamTaskFields = ({
                 className={`flex-1 rounded-lg border text-xs font-semibold inline-flex items-center justify-center gap-1 transition-colors ${
                   priority === p
                     ? 'border-[rgb(var(--color-accent-solid))] bg-[rgb(var(--color-accent-solid))]/10'
-                    : 'border-slate-200 dark:border-slate-700 hover:bg-[rgb(var(--color-hover))]'
+                    : 'border-slate-200 dark:border-slate-700 bg-[rgb(var(--color-surface))] hover:bg-[rgb(var(--color-hover))]'
                 }`}
                 style={{ color: priority === p ? 'rgb(var(--color-text-primary))' : 'rgb(var(--color-text-muted))' }}
               >
