@@ -9,7 +9,7 @@ compte** et **ce qui prouve que c'est fini**.
 > (`localStorage` hors `try` dans les dépôts de démo), **C-47** (échecs de tests faux sous charge).
 > **C-22** est clos ; **C-38** est à moitié fait et dit désormais ce qui a été fermé et ce qui reste.
 
-> ### 🔴 Passe du 2026-09-14 — **76 items : 68 clos, 6 commencés, 2 ouverts**, et `main` est ROUGE depuis quatorze heures
+> ### 🟢 Passe du 2026-09-14 — **76 items : 69 clos, 6 commencés, 1 ouvert**, et `main` est REDEVENUE VERTE
 >
 > Tout ce qui suit est **mesuré le 2026-09-14**, entre 11:40 et 12:15 UTC : ledger de migrations et
 > les **8** Edge Functions lus par l'API Supabase, runs et secrets lus par `gh`, `npm audit`,
@@ -35,6 +35,15 @@ compte** et **ce qui prouve que c'est fini**.
 > exactement le défaut que `scripts/tracked-imports.guard.test.mjs` a été écrit pour attraper, et
 > il l'a attrapé trois fois — **personne n'a remonté la cause**, qui est que la façade n'est pas
 > dans le dépôt. Item **C-76**.
+>
+> 🟢 **`C-75` est corrigé le 2026-09-14 dans la journée** : run `34843788268` sur `35d69298`,
+> **`completed success` — les cinq jobs**, dont `lint-test-build` (celui qui échouait) vert de
+> bout en bout, ses **18 étapes**, et `e2e`. Les deux
+> fichiers hors budget sont découpés (**2 → 0**) et les deux cliquets de tailles **abaissés**
+> (76 → 69 sous 11 px, 200 → 192 arbitraires) — aucun chiffre de garde relevé. Détail en **C-75**.
+> ⚠️ **`Build` et `Budget de bundle` avaient cessé de tourner** pendant ces quatorze heures : un
+> échec de tests les court-circuite. Une CI rouge ne suspend pas une garde, elle en suspend
+> **toutes celles qui viennent après**.
 >
 > 🔴 **`main` est ROUGE depuis le 2026-09-13 à 21:38 UTC : sept runs CI d'affilée.** Le dernier
 > vert est `34783058643`. Trois assertions, toutes dans `lint-test-build`, mesurées sur `82584af8` :
@@ -293,10 +302,10 @@ quand ». Une décision écrite ici fait foi contre une piste écrite dans l'ite
 | [5](#5-sécurité-et-dépendances) | Sécurité et dépendances | C-17 → C-19, C-29 → C-33, C-39, C-44 → C-46, C-58 → C-64 |
 | [6](#6-i18n) | i18n | C-20 → C-22, C-38 |
 | [7](#7-accessibilité) | Accessibilité | C-23 → C-25, C-51 → C-55, C-57, C-69, C-70, **C-73**, **C-74** |
-| [8](#8-tests-et-gardes) | Tests et gardes | C-26 → C-28, C-34 → C-36, C-47, **C-75** |
+| [8](#8-tests-et-gardes) | Tests et gardes | C-26 → C-28, C-34 → C-36, C-47, **C-75** ✅ |
 | [9](#9-ce-qui-nest-PAS-du-code) | Ce qui n'est PAS du code | renvois |
 | [10](#10-couverture--ce-que-cette-liste-ne-peut-pas-contenir) | 🔴 Couverture et audits à lancer | 1 audit restant (A-4) |
-| [11](#11-ce-qui-reste-ouvert) | 🔴 **Ce qui reste ouvert** | **76 items au 2026-09-14 : 68 clos, 6 commencés, 2 ouverts** |
+| [11](#11-ce-qui-reste-ouvert) | 🔴 **Ce qui reste ouvert** | **76 items au 2026-09-14 : 69 clos, 6 commencés, 1 ouvert** |
 
 ---
 
@@ -1631,6 +1640,21 @@ code : **le code est écrit, testé, et il n'est pas dans le dépôt.**
 | `src/lib/toast.guard.test.ts` (4 tests, dont un témoin) | idem — **la garde ne tourne donc jamais en CI** |
 | `scripts/check-bundle-budget.mjs` | commité, mais dans sa version du **2026-09-04** : plafonds 78 000 / 370 000 |
 | 57 fichiers passés à `@/lib/toast` | **non commités** ; 5 fichiers produit de `main` importent encore `sonner` directement |
+
+> 📊 **Mesuré sur `main` le 2026-09-14**, run `34843788268`, première exécution de `check:bundle`
+> depuis le 09-13 à 21:13 :
+>
+> | | Mesure sur `main` | Plafond de `main` | Plafond que **C-14 dit avoir posé** |
+> |---|---|---|---|
+> | Chemin critique | **316,6 ko** (7 chunks) | 370,0 | 323,0 — **passerait** |
+> | Chunk d'entrée | **76,9 ko** | 78,0 | 71,0 — **NE passerait PAS**, 5,9 ko au-dessus |
+>
+> 🔴 **Ce que ce tableau interdit : commiter les deux plafonds abaissés SANS la façade.** Le chemin
+> critique tiendrait, l'entrée non — la CI repasserait rouge dans la minute. Les 57 fichiers, la
+> façade et les deux plafonds sont **un seul commit**, pas trois.
+>
+> ⚠️ `vendor-animation` pèse **49,0 ko** du chemin critique, et c'est le gisement que `C-58` vise.
+> Chiffre relu ici, pas repris de la note de C-58.
 
 **Ce que ça a déjà coûté**, et qui rend l'item urgent plutôt que cosmétique : trois commits
 `fix(build)` d'autres sessions — `9f641e27` (09-13), `9d4039a5` et `82584af8` (09-14) — **reviennent**
@@ -4207,6 +4231,15 @@ différentes**.
 > fait rougir les **deux** assertions de taille, puis a été défait. Un cliquet qu'on abaisse sans
 > vérifier qu'il mord toujours est un cliquet qu'on désarme.
 >
+>
+> ✅ **PREUVE CI, run `34843788268` sur `35d69298`** (2026-09-14, 12:30 UTC) : le job
+> `lint-test-build` — celui qui échouait depuis sept runs — est **vert de bout en bout, ses 18
+> étapes**, `Unit tests + coverage` comprise. Et surtout, **`Build` et `Budget de bundle` ont de
+> nouveau tourné** : ils étaient muets depuis le 2026-09-13 à 21:13, puisqu'un échec de tests les
+> court-circuitait. `lighthouse`, `audit` et `rls-integration` sont verts dans le même run.
+> ✅ **Et le run ENTIER est `completed success`**, `e2e` compris — relu à la fin, pas déduit de
+> ses quatre premiers jobs. La première version de cette ligne portait la réserve « `e2e`
+> tournait encore » : elle est levée par la mesure, pas par l'attente.
 > ⚠️ **Ce que cet item ne dit pas.** Les trois gardes mesuraient juste ; c'est le produit qui avait
 > bougé. Pour une fois, le test rouge désignait bien le défaut — contrairement à `C-72` et `C-73`.
 > La vérification a quand même commencé par là, et c'est ce qui doit rester.
@@ -4667,7 +4700,44 @@ avant que sa note ne change : ledger de migrations et versions déployées lus p
 exécutées, sondes jouées. Recopier une note depuis un tableau plus ancien est le défaut que ce
 fichier documente lui-même (§ Documentation de `CLAUDE.md`), et il a déjà frappé trois fois ici.
 
-### 11.0quater Recompté le 2026-09-14 — **76 items : 68 clos, 6 commencés, 2 ouverts**
+### 11.0quinquies Recompté le 2026-09-14 **après la réparation de la CI** — **76 items : 69 clos, 6 commencés, 1 ouvert**
+
+Un seul mouvement depuis le décompte du matin (§ 11.0quater, conservé dessous à sa date) :
+**`C-75` passe de ⬜ à ✅**, et c'est le seul P0 que le fichier portait.
+
+#### ✅ Fini (69)
+
+Les 68 du matin, **plus `C-75`**.
+
+| Ce qui le ferme | Mesure |
+|---|---|
+| les trois assertions rouges | `architecture.guard` **2 → 0** fichiers hors budget · `design-system.guard` **76 → 69** sous 11 px · **200 → 192** tailles arbitraires |
+| aucun cliquet relevé | les deux budgets de tailles ont été **ABAISSÉS** à la mesure obtenue, jamais l'inverse |
+| preuve CI | run **`34843788268`** sur `35d69298` : **`completed success`, les cinq jobs**, dont `lint-test-build` et ses **18 étapes** — `Build` et `Budget de bundle` de nouveau exécutés |
+
+#### 🟠 Commencé (6)
+
+`C-14` `C-24` `C-39` `C-58` `C-65` `C-76` — **inchangés**, et la lecture du matin tient :
+
+- **écrit, mais pas dans le dépôt** : `C-14` + `C-76`, un seul geste, un **commit**. ⚠️ Cet item
+  est désormais **le seul échec de la suite en local** : `npm test` rend **2 574 passés / 1 échec**,
+  et cet échec unique est `src/lib/toast.guard.test.ts`, fichier **non suivi par git** qui n'existe
+  donc pas en CI. La CI est verte *et* la façade est absente : les deux sont vrais en même temps,
+  et c'est exactement ce que C-76 décrit.
+- **critère non atteint** : `C-24`, `C-39`, `C-58`, `C-65`.
+
+#### ⬜ Pas commencé (1)
+
+`C-69` — la fenêtre produit tourne sans pause : **arbitré « on garde »** le 2026-09-03. Ne
+s'exécute que si la décision change.
+
+> ⚠️ **Ce que ce décompte ne dit toujours pas.** `C-75` a vécu **quatorze heures** sans qu'aucune
+> ligne de ce fichier ne le sache : il a été trouvé en lisant `gh run list`, pas en relisant du
+> code. Le décompte d'un fichier ne mesure rien tant que personne n'ouvre le journal de la CI.
+
+---
+
+### 11.0quater Recompté le 2026-09-14 — **76 items : 68 clos, 6 commencés, 2 ouverts** · *conservé à sa date*
 
 Deux items neufs (`C-75`, `C-76`), un item **rouvert** (`C-14`), six fermés depuis le 09-12. Les
 trois listes s'égrènent, comme toujours : un total qu'on ne peut pas réciter ne prouve rien.

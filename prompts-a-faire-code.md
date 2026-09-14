@@ -14,11 +14,11 @@
 | `C-34` | `CRON_SECRET` posé le 09-13 à 16:21:34 UTC, dispatch vert — prompt retiré |
 | `C-35` | `SUPABASE_ACCESS_TOKEN` posé le 09-13, job **vert** le 09-14 à 10:57, 8 fonctions comparées — prompt retiré |
 | **`C-14`** | 🔴 **ROUVERT** : rien de son correctif n'est dans le dépôt — nouveau prompt, fusionné avec `C-76` |
-| **`C-75`** 🆕 | la CI de `main` est rouge depuis le 09-13 à 21:38, sept runs — nouveau prompt, **P0** |
+| **`C-75`** | la CI de `main` était rouge depuis le 09-13 à 21:38, sept runs — ✅ **corrigé le 2026-09-14**, prompt retiré |
 | **`C-76`** 🆕 | la façade `toast` n'est suivie par git sur aucune branche — nouveau prompt, **P0** |
 | `C-39` `C-65` | `stripe-org-refund` **est déployée** (v5, 09-12 22:05) : le prompt ne demande plus un déploiement mais une **épreuve** |
 
-**Sept blocs**, dans l'ordre où ils devraient être traités.
+**Six blocs**, dans l'ordre où ils devraient être traités — `C-75` est sorti le 2026-09-14.
 
 > **Comment s'en servir.** Coller le **préambule** puis **un seul** bloc. Ne jamais en coller deux :
 > chacun porte son critère de sortie, et deux critères dans une session font qu'aucun n'est tenu.
@@ -63,44 +63,31 @@ sous quelles reserves), puis commiter et pousser.
 
 ---
 
-# P0 — la CI de `main` est ROUGE, et un correctif entier n'est pas dans le dépôt
+# P0 — ~~la CI de `main` est ROUGE~~ ✅, et un correctif entier n'est pas dans le dépôt
 
-## C-75 · sept runs CI rouges d'affilée sur `main`
+## ~~C-75 · sept runs CI rouges d'affilée sur `main`~~ · ✅ **corrigé le 2026-09-14**
 
-```
-Objectif : C-75. La CI de main echoue depuis le 2026-09-13 a 21:38 UTC. Dernier run vert :
-34783058643 (09-13 21:11). Sept runs rouges depuis, tous a la MEME etape,
-« Unit tests + coverage » de lint-test-build — donc Build et « Budget de bundle » ne tournent
-meme plus, et plus rien ne mesure le bundle depuis quatorze heures.
+Le prompt est retiré : le travail est fait, et un prompt qui décrit un défaut corrigé enverrait une
+session refaire une mesure déjà rendue.
 
-Trois assertions, relevees dans le journal du run 34838656203 (commit 82584af8) :
-  architecture.guard   EventModalFormDesktop.tsx 662 lignes, TaskModalMobileBody.tsx 651,
-                       budget 600
-  design-system.guard  76 tailles sous 11px (reference 75)
-  design-system.guard  stock de tailles arbitraires 200 > budget 196
+**Ce qu'il a rendu**, et qui vaut pour les prompts restants :
 
-Les deux fichiers font 661 et 650 lignes a HEAD (la garde compte une ligne de plus). Les trois
-cliquets ont mordu sur la vague sous-categories / agenda des 09-13 et 09-14 (b0416b38,
-981ba288, 2428fd56, 1d241398, e6a887df).
+| | |
+|---|---|
+| fichiers > 600 lignes | **2 → 0**, par deux découpes qui suivent une frontière réelle (les deux colonnes d'un formulaire ; une surface avec son état de saisie) |
+| tailles sous 11 px | **76 → 69**, référence **abaissée** |
+| stock de tailles arbitraires | **200 → 192**, budget **abaissé** |
+| preuve | run **`34843788268`** sur `35d69298` : `completed success`, les cinq jobs |
 
-A faire, dans cet ordre :
-1. LIRE le journal du dernier run avant de raisonner
-   (gh run view -R kelax12/COSMO1.2 --job <id> --log-failed), et confirmer que l'echec de HEAD
-   est bien le meme que celui de 82584af8.
-2. Sur les TAILLES : verifier d'abord que les 76 et les 200 sont bien de NOUVELLES chaines de
-   cette vague. Le detecteur a gagne en vue depuis C-73 (il voit les pseudo-elements) ; si un
-   detecteur voit mieux, le chiffre monte sans que le produit ait bouge. Le dire si c'est le
-   cas, plutot que de corriger a l'aveugle.
-3. Sur les DEUX fichiers : decouper. Chercher la frontiere — un geste, une surface, une
-   derivation, un domaine. Citer le nombre de lignes avant / apres pour chacun.
+🔴 **Pour une fois, le test rouge désignait bien le défaut** — contrairement à `C-72` et `C-73`, où
+deux énoncés sur trois mesuraient à côté. La vérification a quand même commencé par là, et c'est ce
+qui doit rester : trois minutes pour écarter l'hypothèse « c'est la mesure qui a bougé ».
 
-INTERDIT : relever un des trois chiffres. C-09 a coute quinze mois pour revenir a zero, et les
-douze fichiers repris sont TOUS arrives « juste au-dessus ». Le plancher de 11px est le plancher
-mobile, pas une preference.
+⚠️ **Et un enseignement neuf** : `Build` et `Budget de bundle` n'avaient pas tourné pendant ces
+quatorze heures, parce qu'un échec de tests les court-circuite. **Une CI rouge ne suspend pas une
+garde, elle suspend toutes celles qui viennent après.**
 
-Fini quand : un run CI VERT sur main, aucun des trois chiffres de garde releve, et l'etape
-« Budget de bundle » a de nouveau tourne — elle est muette depuis le 09-13 a 21:13.
-```
+---
 
 ## C-76 + C-14 · la façade `toast` et les deux plafonds abaissés ne sont dans AUCUN commit
 
@@ -116,10 +103,17 @@ et il n'est PAS dans le depot. Mesure du 2026-09-14 (git ls-files, git log --all
   57 fichiers passes a @/lib/toast   non commites ; 5 fichiers PRODUIT de main importent
                                encore `sonner` directement
 
-Consequence mesuree : le dernier run vert de main (34783058643) rend une entree a 76,9 ko,
-c'est-a-dire AU-DESSUS du plafond de 71 000 que C-14 declare avoir pose le 2026-09-11. C-14
-etait donc compte clos depuis trois jours sans qu'une ligne de son correctif existe dans le
-depot.
+Consequence mesuree sur main le 2026-09-14, run 34843788268 (premiere execution de check:bundle
+depuis le 09-13 a 21:13) :
+
+                     mesure main   plafond main   plafond que C-14 dit avoir pose
+  chemin critique    316,6 ko      370,0          323,0  -> passerait
+  chunk d'entree      76,9 ko       78,0           71,0  -> NE passerait PAS (+5,9 ko)
+
+C-14 etait donc compte clos depuis trois jours sans qu'une ligne de son correctif existe dans le
+depot. 🔴 Et ce tableau interdit une demi-mesure : commiter les deux plafonds abaisses SANS la
+facade rendrait la CI rouge dans la minute — le chemin critique tiendrait, l'entree non. Les 57
+fichiers, la facade et les deux plafonds sont UN SEUL commit, pas trois.
 
 Et ca a deja coute trois commits a d'autres sessions : 9f641e27, 9d4039a5 et 82584af8 sont tous
 des fix(build) qui REVIENNENT d'un import @/lib/toast vers sonner, parce qu'un fichier commite
