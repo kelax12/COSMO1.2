@@ -914,6 +914,37 @@ personne peut donc valider un formulaire dont elle ne voit plus l'intitulé.
 - **Fini quand** : les trois conteneurs sont corrigés, et un test mesure qu'à 375 × 350 le haut de
   la carte est atteignable (`scrollTop = 0` donne un `top >= 0`), vu **rouge** avant d'être vert.
 
+### C-65 · Le remboursement du mois en cours n'existe nulle part dans le code · **P1 · M** · 🟠 **le code est fini ; l'épreuve contre Stripe ne l'est pas**
+
+> ✅ **2026-09-14 — le dernier morceau TESTABLE du critère de sortie est livré et déployé.** Le
+> critère demandait « un test [qui] couvre les trois : le cas nominal, le rejeu, et la période déjà
+> remboursée ». Seul le MONTANT en avait. Le verrou anti-rejeu — celui qui décide du montant FINAL
+> — vivait en ligne dans l'entrypoint Deno, entre deux appels Stripe, **donc n'avait aucun test**,
+> pendant tout le temps où cet item déclarait « une borne ».
+>
+> | | |
+> |---|---|
+> | Livré | `_shared/refund-replay.ts` (TS pur, zéro API Deno, zéro type Stripe importé) + `src/modules/billing/refund-replay.test.ts`, **10 cas dont un témoin**. L'entrypoint l'APPELLE : un test qui mesurerait une copie ne mesurerait rien |
+> | Vu rouge | **trois sabotages** : soustraction retirée → 6 cas tombent · un `failed` compté comme rendu → 2 · borne remplacée par un zéro constant → 7, **dont le témoin** (c'est le seul sabotage qui passerait tous les cas « rejeu » sans lui) |
+> | Déployé | **v6, 2026-09-14 à 15:24 UTC**, sur autorisation explicite d'Axel |
+> | Prouvé identique au dépôt | run **`34861975638`** du job `Edge deploy drift` : « **8 fonction(s) verifiee(s) : le code deploye est celui du depot** ». Première fois que ce chemin-là est comparé octet pour octet après un déploiement, et non relu |
+>
+> ⚠️ **Ce que l'extraction a rendu explicite, et qui n'était écrit nulle part** : la clé
+> d'idempotence Stripe (verrou 1) **expire**, donc elle n'arrête que deux appels CONCURRENTS. Un
+> rejeu tardif n'est arrêté que par le verrou 2. Les deux ne se remplacent pas — l'en-tête de la
+> fonction le dit désormais.
+>
+> ⚠️ Deux subtilités sont couvertes nommément parce qu'elles coûtent de l'argent **dans les deux
+> sens** : un remboursement `pending` compte comme rendu (sinon on rembourse par-dessus un virement
+> en vol) ; un `failed` ou `canceled` ne compte pas (sinon on prive la personne de son argent après
+> un échec bancaire, définitivement, sans qu'aucun écran ne le dise).
+>
+> 🔴 **CE QUI RESTE, ET QUI N'EST PLUS DU CODE.** `refunds.create`, la résiliation réelle et la
+> ligne compensatoire du journal n'ont **jamais tourné sur une vraie facture** — `org_subscriptions`
+> et `payment_records` sont à zéro ligne. Les deux gestes sont **M-37c** (vérifier au tableau de
+> bord Stripe que `charge.refunded` est souscrit : six branches dans le code, cinq events
+> documentés) puis **M-37b** (jouer le remboursement contre le compte de TEST). Cf. § 11.3.
+
 ### C-65 · Le remboursement du mois en cours n'existe nulle part dans le code · **P1 · M** · 🟠 **déployée le 2026-09-12, jamais éprouvée**
 
 > ✅ **Remesuré le 2026-09-14** : `stripe-org-refund` est active en **v5** (2026-09-12 22:05 UTC),
@@ -5296,6 +5327,31 @@ fonction par fonction. C'est le geste que C-35 a mécanisé pour la CI, et il re
 
 ❌ **Ne jamais rendre une garde conditionnelle à la présence de son propre secret.** Un secret absent
 se solde par un échec visible, jamais par un silence.
+
+### 11.3 Ce qui a quitté le périmètre du CODE · **tranché le 2026-09-14**
+
+Quatre des cinq items non clos ne demandent plus une ligne de code, et les écrire comme des tâches
+de code laisse croire qu'une session de plus les fermerait. **Le geste** vit désormais dans
+[`a-faire-manuel.md`](./a-faire-manuel.md) ; **le statut** reste ici, conformément à la règle de ce
+couple de fichiers — un fichier de courses ne porte pas de statut.
+
+| Item | Ce que le code doit encore faire | Le geste, et où il est suivi |
+|---|---|---|
+| `C-24` | **rien** — la check-list est prête et à jour (`docs/AUDIT-VOICEOVER-IOS.md`, 12 étapes, témoin compris, remise au niveau du produit le 2026-09-08) | **M-40** (+ **M-25**, même séance) : jouer VoiceOver sur un **iPhone réel**. Un modèle, une version d'iOS, des verbatims. Ne se simule pas : ce que le dépôt prouve, c'est le FOCUS, jamais l'ANNONCE |
+| `C-65` | **rien de mesurable d'ici**, et le dernier morceau qui l'était est fait ce jour (verrou anti-rejeu extrait et testé, cf. la note de l'item) | **M-37c** puis **M-37b** : vérifier au tableau de bord Stripe que `charge.refunded` est souscrit, puis jouer un remboursement réel contre le compte de TEST. Deux gestes d'Axel : un code reçu par e-mail, une saisie de carte |
+| `C-39` | **rien** — le parcours est joué dans un navigateur et vu rougir sur une mutation (`e2e/stubbed/delete-org.spec.ts`) | **M-37b**, le même : rien n'a jamais été joué contre Stripe |
+| `C-58` | **rien** — l'arbitrage « on diffère » est rendu le 2026-09-13 | aucun geste : une **décision**, dont la reprise est conditionnée à un seuil chiffré (chemin critique React 18 ≤ **283,5 ko**) |
+
+🔴 **Et une chose que cette passe a mesurée contre l'item lui-même** : les 9 corrections de types de
+`feat/react-19` ne sont **pas** portables sur `main` (72 erreurs `tsc`). Il n'y a donc **aucun**
+acompte à verser d'avance sur cette migration. Le port a été tenté, mesuré, défait.
+
+⚠️ **Ce que ce classement ne fait PAS** : il ne ferme aucun item. `C-24`, `C-39` et `C-65` restent
+ouverts, et le resteront tant qu'un iPhone et une facture payée ne les auront pas mesurés. Le
+classement dit seulement **qui peut les fermer**, ce qui est la seule chose que douze passes
+successives n'avaient jamais écrit.
+
+---
 
 ### 11.2 Un audit reste à lancer · *« deux » était périmé, recompté le 2026-09-12*
 
