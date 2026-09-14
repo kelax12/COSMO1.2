@@ -14,6 +14,7 @@
   "descriptionPlaceholder": "event description",
   "descriptionTitle": "Event description",
   "color": "Event colour",
+  "subcategoriesOf": "Subcategories of {{name}}",
   "showLegend": "Show the category legend",
   "hideLegend": "Hide the category legend",
   "legend": "Category legend",

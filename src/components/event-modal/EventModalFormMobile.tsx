@@ -2,13 +2,14 @@
 // EventModalFormMobile — corps iOS bottom-sheet de EventModal
 // ═══════════════════════════════════════════════════════════════════
 // Extrait verbatim de EventModalForm (branche isMobile), piloté par props.
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Plus } from 'lucide-react';
 import { format } from 'date-fns';
 import { getDateLocale } from '@/i18n/format';
 import type { EventRecurrence } from '@/modules/events';
 import DescriptionField from '@/components/DescriptionField';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { DAY_LABEL_KEYS } from './helpers';
 import type { EventModalFormBodyProps } from './event-modal-form.types';
 import { useT } from '@/i18n/useT';
@@ -25,6 +26,13 @@ const EventModalFormMobile: React.FC<EventModalFormBodyProps> = ({
 }) => {
   const { t } = useT('eventModal');
   const { t: tCommon } = useT('common');
+  // Bulle de sous-catégories — même comportement que EventModalFormDesktop :
+  // ouverte pour au plus une racine, sur sélection (pas au survol, absent au
+  // toucher). Grille RACINES seules : une sous-catégorie n'apparaît que dans
+  // la bulle de sa racine, jamais dans la grille elle-même.
+  const [openSubcategoriesFor, setOpenSubcategoriesFor] = useState<string | null>(null);
+  const rootCategories = categories.filter((cat) => !cat.parentId);
+  const subcategoriesOf = (parentId: string) => categories.filter((cat) => cat.parentId === parentId);
   return (
   <div className="flex flex-col bg-[rgb(var(--color-background))] h-full">
     {/* Drag handle */}
@@ -233,29 +241,90 @@ const EventModalFormMobile: React.FC<EventModalFormBodyProps> = ({
           </p>
           <div className="bg-[rgb(var(--color-surface))] rounded-2xl shadow-sm overflow-hidden px-4 py-4">
             <div className="grid grid-cols-2 gap-2">
-              {categories.map((cat) => {
-                const isSelected = color === cat.color;
+              {rootCategories.map((cat) => {
+                const subs = subcategoriesOf(cat.id);
+                const hasSubs = subs.length > 0;
+                const isSelected = color === cat.color || subs.some((s) => s.color === color);
                 return (
-                  <button
+                  <Popover
                     key={cat.id}
-                    type="button"
-                    onClick={() => handleFieldChange("color", setColor, cat.color)}
-                    aria-label={cat.name}
-                    aria-pressed={isSelected}
-                    className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl border transition-all active:scale-95 ${
-                      isSelected
-                        ? 'border-[rgb(var(--color-accent-solid))] bg-blue-50 dark:bg-blue-900/20'
-                        : 'border-[rgb(var(--color-border))]'
-                    }`}
+                    open={openSubcategoriesFor === cat.id}
+                    onOpenChange={(next) => setOpenSubcategoriesFor(next ? cat.id : null)}
                   >
-                    <span
-                      className="w-6 h-6 rounded-lg shrink-0"
-                      style={{ backgroundColor: cat.color }}
-                    />
-                    <span className="flex-1 text-left text-[13px] font-medium text-[rgb(var(--color-text-primary))] truncate">
-                      {cat.name}
-                    </span>
-                  </button>
+                    <PopoverTrigger asChild>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          handleFieldChange("color", setColor, cat.color);
+                          setOpenSubcategoriesFor(hasSubs ? cat.id : null);
+                        }}
+                        aria-label={cat.name}
+                        aria-pressed={isSelected}
+                        className={`relative flex items-center gap-2.5 px-3 py-2.5 rounded-xl border transition-all active:scale-95 ${
+                          isSelected
+                            ? 'border-[rgb(var(--color-accent-solid))] bg-blue-50 dark:bg-blue-900/20'
+                            : 'border-[rgb(var(--color-border))]'
+                        }`}
+                      >
+                        <span
+                          className="relative w-6 h-6 rounded-lg shrink-0"
+                          style={{ backgroundColor: cat.color }}
+                        >
+                          {hasSubs && (
+                            <span
+                              className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full border-2"
+                              style={{ backgroundColor: 'rgb(59 130 246)', borderColor: 'rgb(var(--color-surface))' }}
+                              aria-hidden="true"
+                            />
+                          )}
+                        </span>
+                        <span className="flex-1 text-left text-[13px] font-medium text-[rgb(var(--color-text-primary))] truncate">
+                          {cat.name}
+                        </span>
+                      </button>
+                    </PopoverTrigger>
+                    {hasSubs && (
+                      <PopoverContent
+                        align="start"
+                        className="w-auto p-2 z-[100]"
+                        aria-label={t('subcategoriesOf', { name: cat.name })}
+                      >
+                        <p
+                          className="text-[10px] font-bold uppercase tracking-widest mb-1.5 px-0.5"
+                          style={{ color: "rgb(var(--color-text-muted))" }}
+                        >
+                          {cat.name}
+                        </p>
+                        <div className="grid grid-cols-2 gap-1.5">
+                          {subs.map((sub) => {
+                            const subSelected = color === sub.color;
+                            return (
+                              <button
+                                key={sub.id}
+                                type="button"
+                                onClick={() => {
+                                  handleFieldChange("color", setColor, sub.color);
+                                  setOpenSubcategoriesFor(null);
+                                }}
+                                aria-label={sub.name}
+                                aria-pressed={subSelected}
+                                className={`flex items-center gap-2 px-2.5 py-2 rounded-lg border transition-all active:scale-95 ${
+                                  subSelected
+                                    ? 'border-[rgb(var(--color-accent-solid))] bg-blue-50 dark:bg-blue-900/20'
+                                    : 'border-[rgb(var(--color-border))]'
+                                }`}
+                              >
+                                <span className="w-5 h-5 rounded-md shrink-0" style={{ backgroundColor: sub.color }} />
+                                <span className="flex-1 text-left text-[12px] font-medium text-[rgb(var(--color-text-primary))] truncate">
+                                  {sub.name}
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </PopoverContent>
+                    )}
+                  </Popover>
                 );
               })}
               <button

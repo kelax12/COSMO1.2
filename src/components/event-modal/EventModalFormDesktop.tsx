@@ -36,6 +36,13 @@ const EventModalFormDesktop: React.FC<EventModalFormBodyProps> = ({
     : duration.kind === 'invalid' ? t('endBeforeStart') : duration.text;
   // Légende des catégories masquée par défaut (épure l'UI) — révélée à la demande.
   const [showCategoryLegend, setShowCategoryLegend] = useState(false);
+  // Bulle de sous-catégories : ouverte pour AU PLUS une racine à la fois,
+  // sur sélection (pas au survol) — cf. EventModalFormDesktop.
+  const [openSubcategoriesFor, setOpenSubcategoriesFor] = useState<string | null>(null);
+  // Grille RACINES seules : une sous-catégorie ne doit jamais s'y afficher,
+  // elle ne vit que dans la bulle ouverte depuis sa racine.
+  const rootCategories = categories.filter((cat) => !cat.parentId);
+  const subcategoriesOf = (parentId: string) => categories.filter((cat) => cat.parentId === parentId);
 
   return (
     <>
@@ -421,47 +428,121 @@ const EventModalFormDesktop: React.FC<EventModalFormBodyProps> = ({
               </div>
 
               <div className="grid grid-cols-4 gap-1.5 mb-6 pb-1 pr-1">
-                {categories.map((cat) => (
-                  <div key={cat.id} className="relative group" style={{ zIndex: 'auto' }}>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        handleFieldChange("color", setColor, cat.color)
-                      }
-                      className="relative w-full h-10 rounded-lg border-2 transition-all hover:scale-105 shrink-0"
-                      style={{
-                        backgroundColor: cat.color,
-                        borderColor:
-                          color === cat.color
-                            ? "rgb(var(--color-text-primary))"
-                            : "rgb(var(--color-border))",
-                        boxShadow:
-                          color === cat.color
-                            ? "0 4px 10px rgba(0,0,0,0.15)"
-                            : "none",
-                      }}
-                      title={cat.name}
+                {rootCategories.map((cat) => {
+                  const subs = subcategoriesOf(cat.id);
+                  const hasSubs = subs.length > 0;
+                  // Sélectionnée si elle porte la couleur courante, OU si
+                  // l'une de ses sous-catégories la porte (la racine reste le
+                  // repère visuel de la « famille » choisie).
+                  const isSelected = color === cat.color || subs.some((s) => s.color === color);
+                  return (
+                    <Popover
+                      key={cat.id}
+                      open={openSubcategoriesFor === cat.id}
+                      onOpenChange={(next) => setOpenSubcategoriesFor(next ? cat.id : null)}
                     >
-                      {color === cat.color && (
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <div
-                            className="w-3.5 h-3.5 rounded-full"
-                            style={{
-                              backgroundColor: "rgb(var(--color-surface))",
-                              boxShadow: "0 2px 6px rgba(0,0,0,0.25)",
+                      <PopoverTrigger asChild>
+                        <div className="relative group" style={{ zIndex: 'auto' }}>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              handleFieldChange("color", setColor, cat.color);
+                              // Racine sans enfants : choix immédiat, pas de bulle.
+                              setOpenSubcategoriesFor(hasSubs ? cat.id : null);
                             }}
-                          />
+                            className="relative w-full h-10 rounded-lg border-2 transition-all hover:scale-105 shrink-0"
+                            style={{
+                              backgroundColor: cat.color,
+                              borderColor: isSelected
+                                ? "rgb(var(--color-text-primary))"
+                                : "rgb(var(--color-border))",
+                              boxShadow: isSelected
+                                ? "0 4px 10px rgba(0,0,0,0.15)"
+                                : "none",
+                            }}
+                            title={cat.name}
+                          >
+                            {color === cat.color && (
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <div
+                                  className="w-3.5 h-3.5 rounded-full"
+                                  style={{
+                                    backgroundColor: "rgb(var(--color-surface))",
+                                    boxShadow: "0 2px 6px rgba(0,0,0,0.25)",
+                                  }}
+                                />
+                              </div>
+                            )}
+                            {/* Repère « a des sous-catégories » — même bleu que le
+                                chevron d'expansion partout ailleurs dans l'app. */}
+                            {hasSubs && (
+                              <span
+                                className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full border-2"
+                                style={{
+                                  backgroundColor: 'rgb(59 130 246)',
+                                  borderColor: 'rgb(var(--color-surface))',
+                                }}
+                                aria-hidden="true"
+                              />
+                            )}
+                          </button>
+                          <span
+                            className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[10px] font-medium opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none"
+                            style={{ color: "rgb(var(--color-text-muted))", zIndex: 9999 }}
+                          >
+                            {cat.name}
+                          </span>
                         </div>
+                      </PopoverTrigger>
+                      {hasSubs && (
+                        <PopoverContent
+                          align="start"
+                          className="w-auto p-2 z-[100]"
+                          aria-label={t('subcategoriesOf', { name: cat.name })}
+                        >
+                          <p
+                            className="text-[10px] font-bold uppercase tracking-widest mb-1.5 px-0.5"
+                            style={{ color: "rgb(var(--color-text-muted))" }}
+                          >
+                            {cat.name}
+                          </p>
+                          <div className="grid grid-cols-4 gap-1.5">
+                            {subs.map((sub) => (
+                              <button
+                                key={sub.id}
+                                type="button"
+                                onClick={() => {
+                                  handleFieldChange("color", setColor, sub.color);
+                                  setOpenSubcategoriesFor(null);
+                                }}
+                                className="relative w-9 h-9 rounded-lg border-2 transition-all hover:scale-105 shrink-0"
+                                style={{
+                                  backgroundColor: sub.color,
+                                  borderColor: color === sub.color
+                                    ? "rgb(var(--color-text-primary))"
+                                    : "rgb(var(--color-border))",
+                                }}
+                                title={sub.name}
+                              >
+                                {color === sub.color && (
+                                  <div className="absolute inset-0 flex items-center justify-center">
+                                    <div
+                                      className="w-3 h-3 rounded-full"
+                                      style={{
+                                        backgroundColor: "rgb(var(--color-surface))",
+                                        boxShadow: "0 2px 6px rgba(0,0,0,0.25)",
+                                      }}
+                                    />
+                                  </div>
+                                )}
+                              </button>
+                            ))}
+                          </div>
+                        </PopoverContent>
                       )}
-                    </button>
-                    <span
-                      className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[10px] font-medium opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none"
-                      style={{ color: "rgb(var(--color-text-muted))", zIndex: 9999 }}
-                    >
-                      {cat.name}
-                    </span>
-                  </div>
-                ))}
+                    </Popover>
+                  );
+                })}
               </div>
 
               {categories.length > 0 && (

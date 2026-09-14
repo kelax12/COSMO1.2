@@ -99,7 +99,7 @@ type EventModalProps = {
    * n'ont rien à voir avec celles du manager qui planifie l'événement, elles
    * ne doivent donc jamais leur être substituées.
    */
-  categoriesOverride?: { id: string; name: string; color: string }[];
+  categoriesOverride?: { id: string; name: string; color: string; parentId: string | null }[];
 };
 
 const EventModal: React.FC<EventModalProps> = ({
