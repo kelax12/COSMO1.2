@@ -493,10 +493,12 @@ sont connues et documentées dans le code :
    JavaScript exécuté. Fenêtre étroite mais réelle, décrite dans `src/lib/audience.ts`.
 2. **`style-src 'unsafe-inline'`** reste nécessaire à la chaîne de styles. C'est un
    assouplissement conscient de la CSP.
-3. **La CSP autorise les domaines publicitaires Google.** Aucun n'est chargé aujourd'hui,
-   `AdModal` injectant le script à la demande et `PREMIUM_ENFORCED` valant `false`. 🔴 **Le jour
-   où ce drapeau passe à `true`, de la publicité se charge, et la publicité n'est JAMAIS
-   exemptée de consentement** : voir la ligne A4.
+3. ~~**La CSP autorise les domaines publicitaires Google.**~~ **Refermé le 2026-09-04** (C-04) :
+   le système de jetons et le mur-pub ont été supprimés, AdSense n'est plus chargé nulle part, et
+   les origines publicitaires ont été **retirées de la CSP** de `vercel.json`. La réserve portait
+   sur ce qui se serait passé le jour où `PREMIUM_ENFORCED` serait passé à `true` ; il n'y a plus
+   de publicité à charger. ❌ Réintroduire un script publicitaire rouvrirait la question du
+   consentement (ligne A4) : la publicité n'en est JAMAIS exemptée.
 4. **Aucun exercice de restauration n'a été conduit.** Les sauvegardes dépendent du plan
    Supabase souscrit ; leur existence et leur délai de restauration restent à vérifier.
 5. **Pas de journal d'accès applicatif** distinct des logs d'infrastructure.

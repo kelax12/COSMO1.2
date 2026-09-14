@@ -191,10 +191,23 @@ Sous les types React 19, `useRef<T>(null)` ne rend plus `RefObject<T>` mais **`R
 `hooks/use-bottom-sheet`, `hooks/use-modal-a11y` (×2), `pages/agenda/AgendaCalendarSection` (×2),
 `pages/agenda/AgendaDesktopHeader`.
 
-Le correctif est mécanique — `RefObject<T>` → `RefObject<T | null>` — et il est **juste** : c'est
-la réalité du ref depuis toujours, les types la disaient simplement ailleurs. Coût réel : quelques
-minutes. ⚠️ Mais le §2 affirmait « le seul site » à propos de `useRef<T>()` sans argument : c'était
-vrai de CE motif, et faux de la classe. Un `grep` sur un motif ne mesure pas une classe de rupture.
+Le correctif est mécanique — `RefObject<T>` → `RefObject<T | null>` — et il est juste **sous React
+19**. Coût réel : quelques minutes. ⚠️ Mais le §2 affirmait « le seul site » à propos de
+`useRef<T>()` sans argument : c'était vrai de CE motif, et faux de la classe. Un `grep` sur un motif
+ne mesure pas une classe de rupture.
+
+> 🔴 **ET CES 9 CORRECTIONS NE SONT PAS PORTABLES SUR `main`.** Ce document a affirmé le contraire
+> (« elles ne dépendent pas de React 19 », « portées séparément pour réduire la dette de la
+> reprise ») — **mesuré le 2026-09-14, c'est faux** : les sept fichiers appliqués sur `main`, puis
+> `tsc -b`, rendent **72 erreurs** dans une soixantaine de fichiers. Sous les types **React 18**,
+> `RefObject<T | null>` n'est pas assignable à `LegacyRef<T>`, donc **chaque `ref={...}` qui
+> consomme un de ces refs élargis casse**. Le port a été tenté, mesuré, puis **défait** ; `main` est
+> propre (`tsc -b` sans erreur).
+>
+> ⚠️ **La leçon dépasse React 19** : « un correctif de types est mécanique, donc portable » est une
+> intuition, pas une mesure. Élargir un type de prop est une rupture de contrat dans le sens des
+> **consommateurs**, et ils étaient soixante. **Il n'y a donc aucun acompte à verser d'avance pour
+> alléger la reprise** : la migration se prend en bloc, ou pas.
 
 ### b. 🔴 LE BLOCAGE : React 19 pèse **+23,3 ko gzip**, et il fait sauter le budget de bundle
 
@@ -254,8 +267,15 @@ budget le permet.
 Décision d'Axel, en réponse à `a-faire-manuel.md` M-41. La branche `feat/react-19` reste poussée et
 non fusionnée. Rien n'est annulé, rien n'est fusionné.
 
-**Ce qui a été REMESURÉ ce jour-là, et qui corrige la façon de lire le blocage ci-dessus.**
-Le plafond de 323 000 o n'existe dans **aucun commit** : `git log -S"323_000"` sur
+> ✅ **MISE À JOUR DU 2026-09-14 : le plafond de 323 000 o EST commité** (`7134d7fe`, run CI
+> `34846164939` vert sur les cinq jobs), avec la façade `toast` qui le finance. Le paragraphe qui
+> suit décrivait l'état du 09-13 et **ne décrit plus la réalité** : contre `main` tel qu'il est
+> commité aujourd'hui, React 19 à 329,8 ko **échouerait** à la garde, comme il le doit. Le blocage
+> n'est plus adossé à un cliquet fantôme — il est opposable, et **le seuil de reprise de 283,5 ko
+> reste la seule lecture valable**. Conservé ci-dessous à sa date.
+
+**Ce qui avait été REMESURÉ le 2026-09-13, et qui corrigeait la façon de lire le blocage.**
+Le plafond de 323 000 o n'existait alors dans **aucun commit** : `git log -S"323_000"` sur
 `scripts/check-bundle-budget.mjs` ne rend rien, et `git show HEAD:scripts/check-bundle-budget.mjs`
 porte encore `critical: 370_000` / `entry: 78_000`. L'abaissement du 2026-09-11, comme la sortie de
 `sonner` qui le finance, vit uniquement dans l'arbre de travail **non commité** d'une session
@@ -291,9 +311,12 @@ ailleurs.
 - La classe de bug « composant shadcn recopié depuis l'amont React 19, `ref` jamais attaché » reste
   ouverte, et elle est **silencieuse par construction**. Elle a déjà coûté `Button` puis `Input`.
   Tant que le dépôt est sous React 18, tout composant repris de l'amont se relit à la main.
-- La branche vieillit. Elle porte 9 corrections de types justes et mécaniques (§4bis.a) qui, elles,
-  ne dépendent pas de React 19 : `RefObject<T>` → `RefObject<T | null>` est la réalité du ref depuis
-  toujours. Elles pourraient être portées sur `main` séparément pour réduire la dette de la reprise.
+- La branche vieillit, et **rien ne peut être versé d'avance**. Elle porte 9 corrections de types
+  (§4bis.a) que ce document donnait comme portables sur `main` : **mesuré le 2026-09-14, elles ne le
+  sont pas** — appliquées sous React 18, `tsc -b` rend **72 erreurs**, `RefObject<T | null>` n'étant
+  pas assignable à `LegacyRef<T>`. Port tenté, défait, `main` propre. La reprise coûtera donc son
+  prix entier le jour venu, et le seul moyen de réduire la dette est de **rebaser régulièrement**,
+  pas d'extraire des morceaux.
 
 ⚠️ **Ne pas relire ce § comme un abandon.** La migration est faite et verte sur onze gates ; ce qui
 est différé, c'est sa FUSION, et la condition est chiffrée ci-dessus.

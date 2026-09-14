@@ -104,7 +104,7 @@ Pour toute requête `subscriptions` (et tables sensibles à la propriété) :
 ### Pas d'écriture client directe sur tables financières
 
 ❌ **Interdit** : `supabase.from('subscriptions').update({plan: 'premium', ...})` côté client.
-✅ État actuel : la policy UPDATE client est **supprimée** (mig. 015) et l'INSERT est verrouillé sur la ligne d'amorçage `free`/zéro token (mig. 041). Les seules écritures client passent par les RPCs `consume_premium_token` / `credit_premium_token_from_ad` ; le webhook Stripe écrit en service_role.
+✅ État actuel : la policy UPDATE client est **supprimée** (mig. 015) et l'INSERT est verrouillé sur la ligne d'amorçage `free`, sans identifiant Stripe (mig. 041, réécrite par la mig. 141). Depuis la suppression du système de jetons (mig. **141**, C-04), **le client n'a plus AUCUN chemin d'écriture** sur `subscriptions` : les deux RPC `consume_premium_token` / `credit_premium_token_from_ad` n'existent plus, et seul le webhook Stripe écrit, en service_role.
 
 ### Sources de vérité authentification & premium
 
