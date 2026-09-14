@@ -4158,7 +4158,59 @@ différentes**.
   diffère du dépôt, avec un témoin ; et chaque statut de finding portant sur une Edge Function cite
   sa version déployée. Les déploiements eux-mêmes sont des gestes d'Axel : `a-faire-manuel.md`.
 
-### C-75 · La CI de `main` est ROUGE depuis le 2026-09-13 à 21:38, sept runs d'affilée · **P0 · S** · 🆕 2026-09-14
+### C-75 · ~~La CI de `main` est ROUGE depuis le 2026-09-13 à 21:38, sept runs d'affilée~~ · **P0 · S** · 🟢 **corrigé le 2026-09-14**
+
+> 🟢 **Les trois assertions sont vertes, et AUCUN des trois chiffres de garde n'a été relevé** —
+> les deux cliquets de tailles ont au contraire été **abaissés**, comme la règle l'exige.
+>
+> | Garde | Avant | Après |
+> |---|---|---|
+> | `architecture.guard` · fichiers > 600 lignes | **2** (`EventModalFormDesktop` 661, `TaskModalMobileBody` 650) | **0** |
+> | `design-system.guard` · tailles sous 11 px | **76** (réf. 75) | **69**, référence abaissée à 69 |
+> | `design-system.guard` · stock de tailles arbitraires | **200** (budget 196) | **192**, budget abaissé à 192 |
+>
+> **Deux découpes, deux frontières réelles** — pas un déplacement de lignes pour faire baisser un
+> compte :
+>
+> | Fichier | Avant | Après | Ce qui est parti, et pourquoi là |
+> |---|---|---|---|
+> | `event-modal/EventModalFormDesktop.tsx` | 661 | **457** | `EventModalDesktopCategoryPicker.tsx` (**253**) : la colonne DROITE du formulaire. La frontière est celle des deux colonnes — à gauche ce que l'événement **est** (titre, dates, récurrence, description), à droite comment on le **classe** (catégorie, bulle de sous-catégories, légende). Les deux états qui ne servaient qu'à droite (`openSubcategoriesFor`, `showCategoryLegend`) partent avec |
+> | `task-modal/TaskModalMobileBody.tsx` | 650 | **555** | `TaskModalCategorySheet.tsx` (**159**) : une SURFACE, la feuille « Catégorie », avec son arbre repliable et sa création de catégorie à la volée. Le corps du modal garde ce qu'il est seul à savoir — quelle catégorie est choisie et ce qu'il en fait |
+>
+> ⚠️ **La feuille Catégorie est la seule des trois à avoir une hiérarchie** : Priorité et Répéter
+> restent des `MobileChoiceSheet` plats, dans le parent. C'est cette asymétrie qui en fait une
+> frontière et pas un découpage arbitraire.
+>
+> **Les sept tailles migrées**, et le tri suit la règle des passes précédentes — on migre les
+> violations **franches** (sous le plancher de 11 px), on ne casse pas un système **local**
+> cohérent :
+>
+> | Fichier | Ce qui change |
+> |---|---|
+> | `EventModalDesktopCategoryPicker` | 2× `text-[10px]` → `text-caption` (étiquette au survol d'une pastille, titre de la bulle) |
+> | `EventModalFormMobile` | 1× `text-[10px]` → `text-caption` |
+> | `TeamOKRTab` | 1× `text-[9px]` + 3× `text-[10px]` → `text-caption` |
+> | `QuickEventCard` | 1× `text-[11px]` → `text-caption` — **0 px d'écart**, c'est le même 11 px |
+>
+> 🔴 **TROISIÈME fois que le mode entreprise contourne l'échelle badge par badge** :
+> `TeamProjectCard` le 2026-08-24, `OrgEventsTimeline` le 08-27, `TeamOKRTab` aujourd'hui. Il n'a
+> jamais été migré sur l'échelle typographique ; il est rattrapé à chaque vague, badge par badge.
+> C'est une dette nommée, pas une coïncidence.
+>
+> ⚠️ **Sept, et pas douze : quatre `text-[15px]` et trois `[12px]`/`[13px]` ont été LAISSÉS**, et
+> c'est motivé. `TaskModalCategorySheet` (extrait de `TaskModalMobileBody`) et
+> `EventModalFormMobile` portent un système local aligné sur les métriques natives iOS
+> (11/12/13/15/17) ; les migrer isolément produirait un fichier à moitié sur chaque échelle, pire
+> que le statu quo. Même arbitrage qu'au 2026-08-07, cité dans la garde.
+>
+> ✅ **Le cliquet mord encore, vérifié par MUTATION** : un `text-[8px]` posé dans `QuickEventCard`
+> fait rougir les **deux** assertions de taille, puis a été défait. Un cliquet qu'on abaisse sans
+> vérifier qu'il mord toujours est un cliquet qu'on désarme.
+>
+> ⚠️ **Ce que cet item ne dit pas.** Les trois gardes mesuraient juste ; c'est le produit qui avait
+> bougé. Pour une fois, le test rouge désignait bien le défaut — contrairement à `C-72` et `C-73`.
+> La vérification a quand même commencé par là, et c'est ce qui doit rester.
+
 
 Aucune ligne de ce fichier ne le disait : le dernier run vert de `main` est `34783058643`
 (2026-09-13 21:11 UTC). Les sept suivants échouent, tous au même endroit — l'étape

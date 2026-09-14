@@ -77,7 +77,7 @@ const QuickEventCard: React.FC<QuickEventCardProps> = ({ slot, categories, tzPre
         {(categories.length > 0 || onAddCategory) && (
           <div className="mb-2">
             <div className="flex items-center justify-between mb-1">
-              <span className="text-muted-foreground text-[11px] font-semibold uppercase tracking-wider">
+              <span className="text-muted-foreground text-caption font-semibold uppercase tracking-wider">
                 {t('quickCreate.categoryPlaceholder')}
               </span>
               {onAddCategory && (

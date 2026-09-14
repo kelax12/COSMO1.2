@@ -111,7 +111,26 @@ const EXCLUDED_DIRS = new Set(['ui', 'showcase']);
 // ne le voie : la garde etait rouge depuis la veille.
 // ⚠️ Les quatre `text-[10px]` passent donc de 10 a 11 px. Changement voulu :
 // 11 px EST le plancher lisible de l'echelle, c'est tout l'objet de ce budget.
-const ARBITRARY_BUDGET = 196;
+// 2026-09-14 (C-75) : 200 (ROUGE) -> 192, et sous-11px 76 -> 69.
+// La garde etait rouge sur `main` depuis le 2026-09-13 a 21:38, SEPT runs CI
+// d'affilee, sur la vague sous-categories / agenda. Sept tailles migrees, et le
+// tri suit exactement la regle des passes precedentes — on migre les violations
+// FRANCHES (sous le plancher), on ne casse pas un systeme LOCAL coherent :
+//   • EventModalDesktopCategoryPicker  2x text-[10px] -> text-caption
+//     (etiquette au survol d'une pastille, titre de la bulle de sous-categories)
+//   • EventModalFormMobile             1x text-[10px] -> text-caption
+//   • TeamOKRTab                       1x text-[9px] + 3x text-[10px] -> text-caption
+//   • QuickEventCard                   1x text-[11px] -> text-caption (0 px d'ecart)
+// 🔴 TROISIEME fois que le mode entreprise contourne l'echelle badge par badge
+// (TeamProjectCard le 2026-08-24, OrgEventsTimeline le 08-27, TeamOKRTab
+// aujourd'hui) : il n'a jamais ete migre, il est rattrape a chaque vague.
+// ⚠️ NON migrees, et c'est motive : les 4 `text-[15px]` arrives dans
+// `TaskModalCategorySheet` (extrait de TaskModalMobileBody) et les 2
+// `text-[12px]` / 1 `text-[13px]` d'`EventModalFormMobile`. Ces deux fichiers
+// portent un systeme local aligne sur les metriques natives iOS (11/12/13/15/17)
+// — les migrer isolement produirait un fichier a moitie sur chaque echelle,
+// pire que le statu quo. Meme arbitrage qu'au 2026-08-07.
+const ARBITRARY_BUDGET = 192;
 
 /** `text-[10px]` → capture "10". Ignore rem/%/var — seul le px pose problème. */
 const ARBITRARY_TEXT_SIZE = /text-\[(\d+(?:\.\d+)?)px\]/g;
@@ -165,7 +184,9 @@ describe('design system mobile — échelle typographique', () => {
     // Le plancher bas s'applique même hors zone migrée : personne ne doit
     // AJOUTER un nouveau text-[8px]. Les occurrences historiques sont listées
     // ici — cette liste ne doit que rétrécir.
-    const KNOWN_SUB_11PX = 75;
+    // 2026-09-14 (C-75) : 76 (ROUGE) -> 69. Sept migrations, detail au-dessus
+    // de `ARBITRARY_BUDGET`. Ce nombre ne peut que baisser.
+    const KNOWN_SUB_11PX = 69;
 
     const count = files.reduce(
       (sum, file) =>

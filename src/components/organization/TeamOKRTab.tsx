@@ -95,7 +95,7 @@ const TeamKRRow = ({ kr, onCommit }: TeamKRRowProps) => {
           </p>
           {krWeight(kr) !== 1 && (
             <span
-              className="shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400"
+              className="shrink-0 text-caption font-bold px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400"
               title={`Coefficient d'importance ×${krWeight(kr)}`}
             >
               ×{krWeight(kr)}
@@ -312,7 +312,7 @@ const TeamOKRTab = ({ orgId }: TeamOKRTabProps) => {
                   <div className="flex flex-wrap items-center gap-2">
                     {cat && (
                       <span
-                        className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded uppercase tracking-wide"
+                        className="inline-flex items-center gap-1 text-caption font-semibold px-1.5 py-0.5 rounded uppercase tracking-wide"
                         style={{ backgroundColor: `${cat.color}1a`, color: cat.color }}
                       >
                         <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: cat.color }} aria-hidden="true" />
@@ -327,12 +327,12 @@ const TeamOKRTab = ({ orgId }: TeamOKRTabProps) => {
                   {/* Rattachement d'équipes (cloisonnement) */}
                   <div className="flex flex-wrap items-center gap-1.5 mt-2">
                     {okr.teamIds.length === 0 ? (
-                      <span className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-muted))]">
+                      <span className="inline-flex items-center gap-1 text-caption font-medium px-2 py-0.5 rounded-full border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-muted))]">
                         <Building2 size={11} aria-hidden="true" /> {t('common.orgWideBadge')}
                       </span>
                     ) : (
                       okr.teamIds.map((tid) => (
-                        <span key={tid} className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-[rgb(var(--color-accent-solid))]/10 text-blue-600 dark:text-blue-400">
+                        <span key={tid} className="inline-flex items-center gap-1 text-caption font-medium px-2 py-0.5 rounded-full bg-[rgb(var(--color-accent-solid))]/10 text-blue-600 dark:text-blue-400">
                           <Users size={11} aria-hidden="true" /> {teamName(tid)}
                         </span>
                       ))
