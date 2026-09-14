@@ -72,7 +72,7 @@ limité. Ce n'est pas la même dépense qu'une mission annuelle.
 | A2 | Politique de confidentialité (art. 12 à 14) | ✅ | Complétée le 2026-08-26. Trois trous comblés : **Sentry et Vercel Analytics** étaient absents de la liste des sous-traitants, une section **7 bis sur les transferts hors UE** manquait entièrement (art. 13.1.f), et la section Cookies affirmait que Vesk ne requiert pas de consentement, phrase devenue **fausse** depuis A4. **Reprise le 2026-09-01** : la politique affirmait encore « Vesk n'écrit rien sur votre appareil » et rangeait la mesure d'audience sous l'**intérêt légitime**, alors que le script dépose un identifiant persistant en `localStorage` et que la base retenue est le **consentement** — deux sections du même document se contredisaient. La section Cookies distingue désormais ce qui est strictement nécessaire de ce qui n'est déposé qu'après acceptation, et les pages exclues de la mesure sont nommées. Détail : `faille.md` § V-1. Délai de réponse aligné sur « un mois » (art. 12) au lieu de 30 jours. |
 | A3 | Mentions légales (LCEN art. 6-III) | 🟡 | `MentionsLegalesPage.tsx` existe, avec email éditeur et les deux hébergeurs. Manque l'identité complète, à ajouter **après immatriculation** (dénomination, SIREN, RCS, TVA, directeur de publication). |
 | A4 | Consentement aux traceurs (art. 82) | ✅ | Corrigé le 2026-08-26. Un store unique (`src/lib/cookie-consent.ts`) conditionne les **trois** surfaces : le script Vesk (`audience.ts`), `<Analytics />` de Vercel (`App.tsx`) et le bandeau. Rien ne se charge tant que la réponse n'est pas donnée, `null` n'étant pas une acceptation tacite ; accepter monte la mesure sans rechargement ; refuser ne la monte jamais. 5 tests dédiés. |
-| A5 | Contrats de sous-traitance (art. 28) | ❌ | Aucun DPA collecté ni archivé. Voir §6 pour la liste. |
+| A5 | Contrats de sous-traitance (art. 28) | 🟡 | **Vérifié pour les 3 sous-traitants critiques le 2026-09-14** (lecture des DPA publics, pas déduit). Détail : § « DPA des sous-traitants — vérifié le 2026-09-14 » sous le tableau F. |
 | A6 | Transferts hors UE (chap. V) | 🟡 | ✅ Supabase en `eu-west-1`, donc dans l'Union, et l'**information** due à la personne est faite (section 7 bis de la politique, art. 13.1.f). ❌ Reste la **preuve contractuelle** : les clauses types vivent dans les DPA de Vercel et Sentry, qu'il faut accepter et archiver en tant qu'entreprise. Dépend donc de A5, donc de l'immatriculation. |
 | A7 | Notification de violation sous 72 h (art. 33) | ✅ | [`RGPD-VIOLATION.md`](./RGPD-VIOLATION.md), rédigée **à froid** le 2026-08-26. Qualification des trois types d'atteinte, six heures de marche à suivre, arbre de décision de notification, sources à consulter, et registre des violations (obligatoire même sans notification, art. 33.5). Recense trois manques réels : pas d'astreinte, pas d'exercice de restauration, pas de DPA pour être alerté d'une violation chez un sous-traitant. |
 | A8 | Droits des personnes (art. 15 à 22) | ✅ | Complété le 2026-08-26. L'export ne couvrait que tâches, habitudes, événements et OKR : **profil, catégories et listes manquaient**, alors que le nom et l'adresse sont les données les plus évidemment « fournies par la personne ». Sept fichiers désormais, et le périmètre exact est annoncé dans la politique. Effacement par `delete-account`. Délai d'un mois documenté, prolongation de deux mois prévue. |
@@ -142,6 +142,20 @@ Par l'effet de la décision structurante ci-dessous : aucun client n'est vérifi
 | F5 | Transparence des systèmes d'IA | ⬜ | ⚠️ Se déclenche si la direction produit vers des agents IA se concrétise. À prévoir dès la conception. |
 | F6 | Obligations liées au partage entre utilisateurs | ⬜ | Micro et petites entreprises largement exemptées, mais pas de tout. Qualification à faire. |
 
+### DPA des sous-traitants — vérifié le 2026-09-14
+
+> Lecture des trois DPA publics (Supabase, Vercel, Sentry), pas déduite d'une note antérieure.
+> **Les trois fonctionnent différemment** : un seul reste réellement à faire.
+
+| Sous-traitant | Ce que dit leur DPA | Action requise |
+|---|---|---|
+| **Supabase** | Le DPA (`supabase.com/legal/dpa`, clause 12.2) dit explicitement : *« acceptance of the Agreement shall have the same effect as signing the SCCs »*. Il « forme partie » des Terms of Service dès leur acceptation. **Aucune signature séparée n'est requise** : avoir un compte Supabase suffit à le rendre contractuellement applicable. | ✅ **Rien à faire.** Juste archiver une copie/capture du DPA daté comme preuve documentaire (ce que réclame un acheteur B2B). |
+| **Sentry** | Leur DPA dit l'inverse : *« entered into by ... the party that electronically accepts or otherwise agrees or opts-in »* — il faut un **acte d'acceptation explicite**, disponible dans Sentry (section « Legal & Compliance » du menu de l'organisation) ou par un lien DocuSign. **Seul un membre au rôle Owner ou Billing peut l'accepter/signer** ; les autres membres peuvent seulement le consulter. | ❌ **Manuel, pour Axel seul** : se connecter au compte Sentry (rôle Owner), ouvrir Legal & Compliance, accepter le DPA (ou signer via DocuSign). Deux minutes, aucune donnée sensible à saisir. |
+| **Vercel** | Leur DPA (`vercel.com/legal/dpa`) dit explicitement : *« forms part of Vercel Enterprise Terms and Conditions ... for Customers who are on Enterprise and Pro plans »* — **le texte ne mentionne pas le plan Hobby (gratuit)**. Si le projet `cosmo1` tourne sur Hobby, rien ne dit que ce DPA s'applique contractuellement aujourd'hui. | ⚠️ **À vérifier par Axel** : quel plan Vercel héberge `cosmo1` ? Si Hobby, contacter le support Vercel ou passer sur Pro pour obtenir une couverture DPA contractuelle. Non vérifiable depuis ici (accès au compte Vercel refusé, cf. état des lieux). |
+
+- ❌ **Ne pas conclure que A5 est réglée** : sur les trois, une seule (Supabase) l'est réellement sans action ; Sentry et Vercel restent, pour des raisons différentes, entre les mains d'Axel.
+- Ce relevé ne couvre que les **trois sous-traitants cités par ce document** (Supabase, Vercel, Sentry) — pas Stripe (DPA propre à leur relation processeur de paiement) ni un futur sous-traitant.
+
 ### Où en es-tu
 
 > Recompté **par script** dans ce fichier le 2026-08-26 en fin de journée, avec vérification que
@@ -152,17 +166,19 @@ Par l'effet de la décision structurante ci-dessous : aucun client n'est vérifi
 | Statut | Nombre |
 |---|---|
 | ✅ Bon | **13** |
-| 🟡 Partiellement bon | **12** |
-| ❌ À faire | **16** |
+| 🟡 Partiellement bon | **13** |
+| ❌ À faire | **15** |
 | ⬜ Sans objet aujourd'hui | **5** |
 | **Total** | **46** |
 
-> ⚠️ Seule la ligne E9 a été revérifiée et recomptée le 2026-09-14 (🟡 → ✅, cf. § État au
-> 2026-09-14). Les 45 autres lignes portent encore leur statut du 2026-08-26, **non revérifié**
-> depuis : ne pas les lire comme un état courant sans repasser par leur source.
+> ⚠️ Seules les lignes E9 (🟡 → ✅) et A5 (❌ → 🟡) ont été revérifiées et recomptées le
+> 2026-09-14 (cf. § État au 2026-09-14 et § DPA des sous-traitants). Les 44 autres lignes portent
+> encore leur statut du 2026-08-26, **non revérifié** depuis : ne pas les lire comme un état
+> courant sans repasser par leur source.
 
 **Point de départ le matin du 2026-08-26 : 0 vert.** Sont passées au vert dans la journée :
-A1, A2, A4, A7, A8, A9, C9, C10, E2, E3, E7, F3. **E9 les a rejointes le 2026-09-14.**
+A1, A2, A4, A7, A8, A9, C9, C10, E2, E3, E7, F3. **E9 les a rejointes le 2026-09-14** (A5 reste
+🟡 : le DPA Supabase est acquis sans action, mais Sentry et Vercel dépendent encore d'Axel).
 
 **Les 16 lignes rouges se répartissent en trois familles**, et une seule dépend encore de moi :
 
@@ -467,10 +483,10 @@ le statut est « Enregistrée » ou « Déposée ».
 
 | Prestataire | Rôle | Localisation | À faire |
 |---|---|---|---|
-| Supabase | base de données, auth | **`eu-west-1`, Irlande** | DPA à archiver. Données dans l'UE, c'est le point le plus confortable du dossier. |
-| Vercel | hébergement front | société américaine, région du projet non vérifiée | DPA + mécanisme de transfert. Traite au minimum les adresses IP et les logs, qui sont des données personnelles. |
+| Supabase | base de données, auth | **`eu-west-1`, Irlande** | ✅ **DPA déjà applicable** (vérifié 2026-09-14) : auto-incorporé aux ToS dès l'acceptation du compte, rien à signer. Reste à en archiver une copie datée comme preuve. Données dans l'UE, c'est le point le plus confortable du dossier. |
+| Vercel | hébergement front | société américaine, région du projet non vérifiée | ⚠️ **Le DPA publié ne couvre explicitement que les plans Enterprise et Pro** (vérifié 2026-09-14). À vérifier : plan Vercel du projet `cosmo1` — si Hobby, la couverture contractuelle n'est pas acquise. Traite au minimum les adresses IP et les logs, qui sont des données personnelles. |
 | Stripe | paiement | Irlande et États-Unis | DPA. Devient responsable de traitement pour ses propres finalités antifraude. |
-| Sentry | monitoring | société américaine | DPA + transfert. `beforeSend` retire déjà emails et UUID, à documenter comme mesure de minimisation. |
+| Sentry | monitoring | société américaine | ❌ **Signature manuelle requise** (vérifié 2026-09-14) : DPA disponible dans Sentry → Legal & Compliance, acceptable uniquement par un membre au rôle Owner/Billing (ou via DocuSign). `beforeSend` retire déjà emails et UUID, à documenter comme mesure de minimisation. |
 | Analytics | mesure d'audience | à qualifier | Déterminer si l'exemption CNIL de consentement s'applique, sinon passer derrière le bandeau. |
 
 - ❌ **Ne jamais ajouter un prestataire traitant des données sans archiver son DPA.** C'est la
