@@ -927,6 +927,7 @@ personne peut donc valider un formulaire dont elle ne voit plus l'intitulé.
 > | Livré | `_shared/refund-replay.ts` (TS pur, zéro API Deno, zéro type Stripe importé) + `src/modules/billing/refund-replay.test.ts`, **10 cas dont un témoin**. L'entrypoint l'APPELLE : un test qui mesurerait une copie ne mesurerait rien |
 > | Vu rouge | **trois sabotages** : soustraction retirée → 6 cas tombent · un `failed` compté comme rendu → 2 · borne remplacée par un zéro constant → 7, **dont le témoin** (c'est le seul sabotage qui passerait tous les cas « rejeu » sans lui) |
 > | Déployé | **v6, 2026-09-14 à 15:24 UTC**, sur autorisation explicite d'Axel |
+> | CI verte après | run **`34865013726`** sur `2e10baac` : les **cinq** jobs |
 > | Prouvé identique au dépôt | run **`34861975638`** du job `Edge deploy drift` : « **8 fonction(s) verifiee(s) : le code deploye est celui du depot** ». Première fois que ce chemin-là est comparé octet pour octet après un déploiement, et non relu |
 >
 > ⚠️ **Ce que l'extraction a rendu explicite, et qui n'était écrit nulle part** : la clé
@@ -939,6 +940,21 @@ personne peut donc valider un formulaire dont elle ne voit plus l'intitulé.
 > en vol) ; un `failed` ou `canceled` ne compte pas (sinon on prive la personne de son argent après
 > un échec bancaire, définitivement, sans qu'aucun écran ne le dise).
 >
+> ⚠️ **L'extraction a fait ROUGIR une garde, et elle avait raison.** `src/refund.guard.test.ts` est
+> une garde TEXTUELLE : elle cherchait `already` et `Math.min(decision.amountCents,` dans le source
+> de l'entrypoint, où l'arithmétique ne vit plus. Le défaut était dans la garde, pas dans le
+> produit — et c'est le comportement qu'on lui demande : une garde qui continue de lire l'ancien
+> emplacement passe au vert **en ne regardant plus rien**. Seconde occurrence dans ce même fichier,
+> après l'extraction de `useDeleteOrgFlow`. Elle mesure désormais **plus** qu'avant : un cas neuf
+> **interdit** de recopier l'arithmétique dans l'entrypoint, sans quoi un retour en arrière la
+> rendrait intestable en silence et `refund-replay.test.ts` mesurerait un module que plus personne
+> n'appelle.
+>
+> 🔴 **Et ce rouge vient d'une étape sautée, pas d'une surprise** : la suite complète n'avait pas
+> été rejouée après l'extraction, seulement les deux fichiers de test billing. Rejouée en entier
+> ensuite, comme la CI la joue : **228 fichiers / 2 586 tests, zéro échec**. Huitième fois en
+> treize jours qu'un rouge désigne la mesure et non le produit.
+
 > 🔴 **CE QUI RESTE, ET QUI N'EST PLUS DU CODE.** `refunds.create`, la résiliation réelle et la
 > ligne compensatoire du journal n'ont **jamais tourné sur une vraie facture** — `org_subscriptions`
 > et `payment_records` sont à zéro ligne. Les deux gestes sont **M-37c** (vérifier au tableau de
