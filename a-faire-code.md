@@ -3237,11 +3237,26 @@ trois corrigés dans la foulée.
 - **Fini quand** : le quatrième est fait **sur un appareil réel** et ses findings sont ici, chacun
   avec son modèle, sa version d'iOS et son verbatim.
 
-> 🟡 **Trouvé en passant, à traiter ailleurs** : `CategoryManager` est **câblé** sur `useModalA11y`
-> et **monté nulle part**. Seul son helper `getColorHex` est importé (`OKRPage`, `TeamOKRTab`) ;
-> le composant modal, lui, n'a aucun consommateur. Même famille que les orphelins supprimés par
-> C-49. Ce n'est pas un défaut d'accessibilité, c'est du code mort qui gonfle le compte des
-> surfaces à auditer.
+> ✅ **Le « trouvé en passant » est TRAITÉ, le 2026-09-14.** `CategoryManager` — une modale de
+> **452 lignes**, câblée sur `useModalA11y` et montée nulle part — est supprimée. Mesuré avant :
+> trois imports dans tout le dépôt, tous pour le seul `getColorHex`, zéro import dynamique ; le
+> composant, `ICONS`, `getColorFr` et le type `Category` n'avaient aucun consommateur. Ce qui
+> survit vit sous son vrai nom, `src/lib/category-colors.ts`.
+>
+> 🔴 **Il était classé « à traiter ailleurs » depuis le 2026-09-03 et personne ne l'a traité, parce
+> qu'un défaut sans item n'a pas de propriétaire.** C'est la leçon de la note, plus que le code
+> qu'elle désignait.
+>
+> ⚠️ **Le coût n'était pas le poids, il était la lecture** : un composant mort mais CÂBLÉ compte
+> comme une surface modale. Il gonflait l'inventaire de C-53 et de `docs/AUDIT-VOICEOVER-IOS.md`, et
+> quelqu'un aurait fini par chercher au doigt, sur un iPhone, une modale qu'aucun écran n'ouvre.
+> **Du code mort ne coûte pas des octets, il coûte du temps à qui le prend pour vivant** — et il
+> allongeait précisément la check-list que cet item attend.
+>
+> 🔴 **La garde `tracked-imports` a mordu sur ce correctif** : les trois imports repointés vers un
+> fichier pas encore suivi par git ont fait tomber le test — le défaut exact des trois `fix(build)`
+> du 09-13/09-14. Suite complète après coup : **228 fichiers / 2 586 tests, exit 0**, et la
+> couverture MONTE (30,67 → 30,73 % de statements), le code mort quittant le dénominateur.
 
 ### C-25 · ~~Le bleu de marque est à 3,34:1~~ · **P3 · XS** · ✅ arbitré ET appliqué le 2026-09-12
 
