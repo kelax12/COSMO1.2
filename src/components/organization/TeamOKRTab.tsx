@@ -18,7 +18,7 @@ import {
   teamCategoryImpact,
 } from '@/modules/team-categories';
 import { useTeamProjects, useTeamTasks } from '@/modules/team-projects';
-import { getColorHex } from '@/components/CategoryManager';
+import { getColorHex } from '@/lib/category-colors';
 import CategoryFilterBar from '@/pages/okr/CategoryFilterBar';
 import DeleteTeamCategoryConfirm from './DeleteTeamCategoryConfirm';
 import TeamOKRModal from './TeamOKRModal';

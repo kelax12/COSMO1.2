@@ -38,7 +38,7 @@ import {
 import { useTeamProjects, useTeamTasks } from '@/modules/team-projects';
 import { useTeamOKRs } from '@/modules/team-okrs';
 import { useMyOrgPermissions } from '@/modules/organizations';
-import { getColorHex } from '@/components/CategoryManager';
+import { getColorHex } from '@/lib/category-colors';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import {
   DropdownMenu,
