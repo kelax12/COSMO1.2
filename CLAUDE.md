@@ -114,7 +114,9 @@ npm run build      # Build prod → dist/ (vite build + node prerender.mjs)
 npm run preview    # Prévisualiser le build
 npm run lint       # ESLint (doit retourner 0 erreur)
 npm run typecheck  # tsc -b (doit retourner 0 erreur)
-npm test           # Vitest (run once), 2051 tests / 179 fichiers (mesure du 2026-09-02)
+npm test           # Vitest (run once), 2 576 tests / 227 fichiers, ZERO echec
+                   # (mesure du 2026-09-14, machine libre, ~5 min).
+                   # Mesure precedente : 2 051 / 179, le 2026-09-02.
 npm run test:watch # Vitest en mode watch
 npm run test:coverage       # + couverture v8, seuils globaux et par fichier
                             # ✅ VERTE au 2026-09-11 : 31,32 L · 30,91 S · 24,56 F · 26,37 B
@@ -265,12 +267,13 @@ npm run check:bundle        # Budget de bundle sur le build reel (CI, apres npm 
                             # et fait tomber `best-practices` de 100 a 96 dans lighthouse.
 npm run test:rls   # Tests d'intégration RLS (stack Supabase locale), 7 fichiers verts
 npm run test:e2e   # Playwright (+ :ui, :report)
-                   # 210 cas / 25 specs / 4 projects — RECOMPTE le 2026-09-11 par
-                   # `npx playwright test --list`. Repartition : 103 chromium,
-                   # 94 mobile-safari, 12 supabase-stub, 1 prealable de chauffe.
-                   # ⚠️ La commande affiche 212 en local : `e2e/_tmp-probe.spec.ts`
-                   # est une sonde jetable NON SUIVIE par git (2 cas). Le chiffre
-                   # opposable est celui du depot.
+                   # 220 cas / 26 specs / 4 projects — RECOMPTE le 2026-09-14 par
+                   # `npx playwright test --list`. Repartition : 107 chromium,
+                   # 96 mobile-safari, 16 supabase-stub, 1 prealable de chauffe.
+                   # Mesure precedente, le 2026-09-11 : 210 / 25 (103 / 94 / 12 / 1).
+                   # ⚠️ La sonde jetable `e2e/_tmp-probe.spec.ts`, non suivie par
+                   # git, a ete SUPPRIMEE le 2026-09-14 : elle faussait tout
+                   # recomptage local de 2 cas, et elle etait rouge.
                    # ❌ Ne JAMAIS ecrire ce total en « N x 2 » : les projects ne
                    # jouent plus le meme ensemble. C'est exactement comme ca que le
                    # precedent (« 62 x 2 = 124 », du 2026-08-25) est devenu faux, et
