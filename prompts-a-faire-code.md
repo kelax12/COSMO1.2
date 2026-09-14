@@ -1,32 +1,24 @@
 # Prompts — un par item ouvert de `a-faire-code.md`
 
-**Écrit le 2026-09-12**, après la passe de remesure du même jour. Un prompt par item **non clos**,
-prêt à coller dans une session neuve.
+**Réécrit le 2026-09-14**, après la passe de remesure du même jour (encadré en tête de
+`a-faire-code.md`). Un prompt par item **non clos**, prêt à coller dans une session neuve.
 
-**Mis à jour le 2026-09-12 au soir.** Les trois prompts P0 (`C-72`, `C-73`, `C-74`) étaient déjà
-retirés. **Sept de plus sont retirés ce soir**, traités dans une passe unique :
+**Ce qui a changé depuis la version du 2026-09-12 :**
 
-| Item | Ce qui a été fait |
+| Item | Ce qui s'est passé |
 |---|---|
-| `C-38` | 4ᵉ angle mort d'`i18n:scan` refermé — la VALEUR d'une propriété d'objet. 0 → 15 chaînes → 0 |
-| `C-70` | 28 cibles tactiles (et non 22) ramenées à 0, le `console.log` du harnais devient un `expect` |
-| `C-06` | règle ESLint locale qui exige la justification ; 31 → 27 désarmements, tous justifiés |
-| `C-03` | gelé, et écrit aux deux endroits exigés (`CLAUDE.md` + `docs/ARCHITECTURE.md`) |
-| `C-55` | les trois surfaces mesurées : **1 finding réel** (la case de sélection sans nom ni rôle), 2 artefacts de harnais |
-| `C-25` | arbitrage rendu par Axel et appliqué : deux thèmes passent AA, cliquet posé sur les quatre |
-| `C-23` | remesuré — « 41 nœuds » était un tirage (21 / 41 / 55 sur trois passes). Noyau reproductible : 11 nœuds, dont 2 corrigés |
-| `C-12` | critère TENU : trois runs CI consécutifs, six passes, toutes au-dessus de 90 sur `/`. Aucune ligne touchée pour l'obtenir |
-| `C-18` | `npm audit` 7 avis → **0**, les six gates rejouées derrière, aucun seuil touché |
+| `C-18` | `npm audit` rend **0** avis, dev compris — prompt retiré |
+| `C-23` | dispense `color-contrast` tranchée et motivée le 09-13 — prompt retiré |
+| `C-28` | secret présent depuis le 09-02, canal **lu par un humain** le 09-13 — prompt retiré |
+| `C-30` `C-31` `C-48` | migrations `137` `138` `139` au ledger de prod — prompts retirés |
+| `C-34` | `CRON_SECRET` posé le 09-13 à 16:21:34 UTC, dispatch vert — prompt retiré |
+| `C-35` | `SUPABASE_ACCESS_TOKEN` posé le 09-13, job **vert** le 09-14 à 10:57, 8 fonctions comparées — prompt retiré |
+| **`C-14`** | 🔴 **ROUVERT** : rien de son correctif n'est dans le dépôt — nouveau prompt, fusionné avec `C-76` |
+| **`C-75`** 🆕 | la CI de `main` est rouge depuis le 09-13 à 21:38, sept runs — nouveau prompt, **P0** |
+| **`C-76`** 🆕 | la façade `toast` n'est suivie par git sur aucune branche — nouveau prompt, **P0** |
+| `C-39` `C-65` | `stripe-org-refund` **est déployée** (v5, 09-12 22:05) : le prompt ne demande plus un déploiement mais une **épreuve** |
 
-Et trois correctifs qui n'étaient dans aucun item, tous trouvés **par la CI** :
-la pastille de catégorie portait un `aria-label` sur un `div` sans rôle (11 nœuds, nom ignoré par
-les lecteurs d'écran), le champ « Objectif » de `/statistics` n'avait aucun nom accessible, et un
-fichier committé importait un module que git ne suit pas — ce dernier a désormais sa garde
-(`scripts/tracked-imports.guard.test.mjs`), parce qu'aucun outil local ne peut le voir.
-
-**10 items restent**, dans l'ordre où ils devraient être traités. Six d'entre eux (tout le § P1)
-n'attendent **pas de code** : ils attendent un geste d'Axel — une migration, un secret, un
-déploiement.
+**Sept blocs**, dans l'ordre où ils devraient être traités.
 
 > **Comment s'en servir.** Coller le **préambule** puis **un seul** bloc. Ne jamais en coller deux :
 > chacun porte son critère de sortie, et deux critères dans une session font qu'aucun n'est tenu.
@@ -47,15 +39,23 @@ Regles de methode non negociables, elles viennent de defauts reels de ce depot :
 1. Mesurer avant, mesurer apres, et publier les deux chiffres. Un correctif dont on ne peut
    pas montrer le gain est une dette de mesure, pas un progres.
 2. Ne JAMAIS relever un plafond ni baisser un seuil pour faire passer une garde
-   (check:bundle, architecture.guard, i18n:scan, i18n:identical, test:coverage, touch-targets).
+   (check:bundle, architecture.guard, design-system.guard, i18n:scan, i18n:identical,
+   test:coverage, touch-targets).
 3. Tout correctif de garde repart avec un TEMOIN : une sonde qui refuse un detecteur qui ne
    detecterait plus rien. Le voir echouer avant de le commiter.
 4. Un defaut d'interface se verifie en OUVRANT l'ecran, pas en relisant le code.
-5. Plusieurs sessions travaillent dans cet arbre. Relire `git status` avant de commiter, ne
-   stager que tes propres fichiers, et relire le ledger de migrations avant d'en appliquer une.
-6. Quand la mesure contredit l'enonce de l'item, c'est l'enonce qui a tort : le corriger dans
-   a-faire-code.md, avec le chiffre mesure et sa date. Cinq enonces se sont deja reveles faux
-   a la remesure.
+5. Plusieurs sessions travaillent dans cet arbre, et il porte aujourd'hui ~69 fichiers modifies
+   non commites plus 2 fichiers NON SUIVIS. Relire `git status` avant de commiter, ne stager que
+   tes propres fichiers, ne JAMAIS faire `git reset --hard`, et relire le ledger de migrations
+   EN BASE avant d'en appliquer une.
+6. Une preuve est OPPOSABLE ou elle n'existe pas : un commit, un run CI, une version deployee
+   avec sa date. Jamais un arbre de travail local. C-14 a ete compte clos pendant trois jours
+   alors qu'aucune ligne de son correctif n'etait dans le depot.
+7. Quand la mesure contredit l'enonce de l'item, c'est l'enonce qui a tort : le corriger dans
+   a-faire-code.md, avec le chiffre mesure et sa date.
+8. Un test rouge ne dit pas OU est le defaut, il dit qu'il y en a un quelque part entre le
+   produit et sa mesure. Sur C-72/C-73/C-74, deux enonces sur trois etaient faux. Et lire le
+   JOURNAL avant de raisonner.
 
 A la fin : mettre a jour la note de l'item dans a-faire-code.md (ce qui est fait, ce qui reste,
 sous quelles reserves), puis commiter et pousser.
@@ -63,256 +63,191 @@ sous quelles reserves), puis commiter et pousser.
 
 ---
 
-# ~~P0 — la CI de `main` est ROUGE~~ · ✅ les trois sont corrigés le 2026-09-12
+# P0 — la CI de `main` est ROUGE, et un correctif entier n'est pas dans le dépôt
 
-Les prompts `C-72`, `C-73` et `C-74` ont été retirés : le travail est fait, et un prompt qui décrit
-un défaut corrigé enverrait une session refaire une mesure déjà rendue.
+## C-75 · sept runs CI rouges d'affilée sur `main`
 
-**Ce qu'ils ont appris, et qui vaut pour les prompts qui restent** — deux des trois énoncés étaient
-faux, et l'investigation a coûté plus que la correction :
+```
+Objectif : C-75. La CI de main echoue depuis le 2026-09-13 a 21:38 UTC. Dernier run vert :
+34783058643 (09-13 21:11). Sept runs rouges depuis, tous a la MEME etape,
+« Unit tests + coverage » de lint-test-build — donc Build et « Budget de bundle » ne tournent
+meme plus, et plus rien ne mesure le bundle depuis quatorze heures.
 
-| Item | Ce que l'énoncé disait | Ce qui était vrai |
-|---|---|---|
-| **C-72** | le produit refuse aujourd'hui | le TEST comparait la date de Node (UTC en CI) à celle de la page (`Europe/Paris`) : il ne pouvait échouer qu'entre 22 h et minuit UTC |
-| **C-73** | deux commandes du bandeau sous 44 px | deux FAUX POSITIFS du détecteur, qui masquaient le vrai défaut : 8 pilules de `/tasks` passées de 44 à 36 px le 2026-09-06 |
-| **C-74** | timeout de 180 s, cause à trouver | la cause était écrite dans le journal Playwright depuis le premier run : un toast Sonner intercepte le clic |
+Trois assertions, relevees dans le journal du run 34838656203 (commit 82584af8) :
+  architecture.guard   EventModalFormDesktop.tsx 662 lignes, TaskModalMobileBody.tsx 651,
+                       budget 600
+  design-system.guard  76 tailles sous 11px (reference 75)
+  design-system.guard  stock de tailles arbitraires 200 > budget 196
 
-🔴 **La règle qui en sort, à appliquer à tous les prompts ci-dessous** : un test rouge ne dit pas
-où est le défaut, il dit qu'il y en a un **quelque part entre le produit et sa mesure**. Avant de
-corriger le produit, prouver que c'est bien lui — sur ces trois-là, un seul l'était.
+Les deux fichiers font 661 et 650 lignes a HEAD (la garde compte une ligne de plus). Les trois
+cliquets ont mordu sur la vague sous-categories / agenda des 09-13 et 09-14 (b0416b38,
+981ba288, 2428fd56, 1d241398, e6a887df).
 
-⚠️ **Et lire le journal AVANT de raisonner.** Sur `C-74`, trois lignes de log nommaient la cause ;
-elles avaient été produites à chaque run depuis le 2026-09-10.
+A faire, dans cet ordre :
+1. LIRE le journal du dernier run avant de raisonner
+   (gh run view -R kelax12/COSMO1.2 --job <id> --log-failed), et confirmer que l'echec de HEAD
+   est bien le meme que celui de 82584af8.
+2. Sur les TAILLES : verifier d'abord que les 76 et les 200 sont bien de NOUVELLES chaines de
+   cette vague. Le detecteur a gagne en vue depuis C-73 (il voit les pseudo-elements) ; si un
+   detecteur voit mieux, le chiffre monte sans que le produit ait bouge. Le dire si c'est le
+   cas, plutot que de corriger a l'aveugle.
+3. Sur les DEUX fichiers : decouper. Chercher la frontiere — un geste, une surface, une
+   derivation, un domaine. Citer le nombre de lignes avant / apres pour chacun.
+
+INTERDIT : relever un des trois chiffres. C-09 a coute quinze mois pour revenir a zero, et les
+douze fichiers repris sont TOUS arrives « juste au-dessus ». Le plancher de 11px est le plancher
+mobile, pas une preference.
+
+Fini quand : un run CI VERT sur main, aucun des trois chiffres de garde releve, et l'etape
+« Budget de bundle » a de nouveau tourne — elle est muette depuis le 09-13 a 21:13.
+```
+
+## C-76 + C-14 · la façade `toast` et les deux plafonds abaissés ne sont dans AUCUN commit
+
+```
+Objectif : C-76, qui rouvre C-14. Ce n'est pas un chantier de code : le code est ecrit, teste,
+et il n'est PAS dans le depot. Mesure du 2026-09-14 (git ls-files, git log --all) :
+
+  src/lib/toast.ts             present sur le disque, NON SUIVI par git, aucun commit sur
+                               aucune branche
+  src/lib/toast.guard.test.ts  idem — la garde ne tourne donc JAMAIS en CI
+  scripts/check-bundle-budget.mjs  commite, mais dans sa version du 2026-09-04 : plafonds
+                               78 000 / 370 000, et non 71 000 / 323 000
+  57 fichiers passes a @/lib/toast   non commites ; 5 fichiers PRODUIT de main importent
+                               encore `sonner` directement
+
+Consequence mesuree : le dernier run vert de main (34783058643) rend une entree a 76,9 ko,
+c'est-a-dire AU-DESSUS du plafond de 71 000 que C-14 declare avoir pose le 2026-09-11. C-14
+etait donc compte clos depuis trois jours sans qu'une ligne de son correctif existe dans le
+depot.
+
+Et ca a deja coute trois commits a d'autres sessions : 9f641e27, 9d4039a5 et 82584af8 sont tous
+des fix(build) qui REVIENNENT d'un import @/lib/toast vers sonner, parce qu'un fichier commite
+importait un module que git ne suit pas — vert en local, rouge au build Vercel. La garde
+scripts/tracked-imports.guard.test.mjs a fait son travail les trois fois ; personne n'a remonte
+la cause, qui est en amont.
+
+A faire :
+1. Relire `git status` EN ENTIER avant quoi que ce soit. L'arbre porte ~69 fichiers modifies
+   d'au moins deux chantiers. N'indexer QUE la facade toast, sa garde, ses 57 consommateurs,
+   check-bundle-budget.mjs et docs/PERFORMANCE.md. Indexer le fichier d'une autre session peut
+   commiter un import vers un module non suivi : c'est litteralement le defaut ci-dessus.
+2. Verifier que la facade est complete AVANT de commiter : meme surface que sonner
+   (toast(...), .success .error .info .warning .message .loading .custom .dismiss), sonner en
+   import() dynamique et nulle part ailleurs.
+3. Jouer `npm test src/lib/toast.guard.test.ts` (4 tests, dont un temoin) et le VOIR rougir sur
+   un import fautif avant de le commiter.
+4. Construire AVEC VITE_SENTRY_DSN — sans elle Rollup jette @sentry/react, vendor-sentry tombe
+   a 3,8 ko et la garde sous-estime le chemin critique d'environ 45 ko (SENTRY_FLOOR refuse deja
+   ce build). Puis `npm run check:bundle` sur les plafonds 71 000 / 323 000.
+5. Relire le § Toasts de CLAUDE.md : la regle qu'il enonce ne decrit pas main aujourd'hui.
+
+Fini quand : la facade et sa garde sont SUIVIES par git, toast.guard.test.ts passe en CI,
+check:bundle tourne sur 71 000 / 323 000 et sort vert dans un RUN CI (pas en local),
+`grep -rl "from 'sonner'" src/` ne rend plus que la facade et sa garde, et la note de C-14 cite
+le commit et le numero du run qui l'a verifie.
+
+Ordre : ce prompt passe APRES C-75 tant que la CI est rouge — sinon le run qui doit prouver
+check:bundle n'atteindra jamais l'etape Build.
+```
 
 ---
 
-# P1 — du code écrit qui ne produit RIEN en production
+# P1 — déployé, jamais éprouvé
 
-> Ces sept-là ne demandent pas de travail supplémentaire : ils demandent un **geste**
-> (une migration, un déploiement, un secret). Les gestes sont listés au **§ 11.1** de
-> `a-faire-code.md` et repris dans `a-faire-manuel.md`.
+> 🔴 **Plus aucun geste de production n'est en attente** (remesure du 2026-09-14 : quatre secrets
+> posés, 8 Edge Functions en ligne et identiques au dépôt, 148 migrations au ledger). Ce qui reste
+> sur ces deux items n'est plus un déploiement, c'est une **épreuve**.
 
-## C-30 + C-39 · les preuves qui survivent à la suppression d'une organisation (mig. 138)
+## C-65 + C-39 · rembourser, résilier, supprimer — jamais joué une seule fois
 
 ```
-Objectif : C-30 et C-39, qui se debloquent ensemble par la migration 138.
+Objectif : C-65 et C-39, qui se ferment ensemble par une EPREUVE, pas par un geste.
 
-Etat mesure le 2026-09-12 : le ledger de prod porte 143 et 144 mais les 136 a 140 n'y sont pas.
-Tant que la 138 n'est pas appliquee, supprimer une organisation DETRUIT ses preuves L215-1
-(renewal_notices) et sa renonciation au droit de retractation (withdrawal_consents), toutes deux
-en CASCADE depuis organizations(id).
+Etat mesure le 2026-09-14 a la source (API Supabase ; job « Edge deploy drift » VERT le 09-14 a
+10:57, qui prouve que les 8 fonctions en ligne sont identiques au depot) :
+  stripe-org-refund   ACTIVE, v5, deployee le 2026-09-12 a 22:05 UTC
+  stripe-webhook      ACTIVE, v33, 2026-09-13 a 16:12 UTC, branche charge.refunded incluse
+  migrations          148 entrees au ledger ; seules la 136 (autre session) et la 140 (fenetre
+                      de bascule Stripe, deliberement differee) sont hors base
+
+Le blocage que a-faire-code.md opposait a ces deux items depuis le 09-04 est donc TOMBE. Ce qui
+reste : RIEN n'a jamais ete joue contre Stripe. 0 org_subscriptions, 0 payment_records.
 
 A faire :
-1. Relire supabase/migration/138_evidence_survives_org_deletion.sql en entier, sans l'appliquer.
-2. Relire le ledger EN BASE avant d'appliquer : ce depot a deja applique deux fois la meme
-   migration parce qu'une session voisine etait passee avant.
-3. Appliquer, puis verifier ACTEUR PAR ACTEUR dans une transaction annulee par un RAISE final,
-   comme les mig. 130 a 135 : supprimer une org de test et prouver que les deux tables gardent
-   leurs lignes, que le proprietaire seul peut supprimer, et qu'un admin non proprietaire est
-   refuse. Ne JAMAIS conclure d'un « success ».
-4. Verifier ensuite que useDeleteOrgFlow (C-39) fait bien : resilier -> rembourser -> supprimer,
-   dans cet ordre, et que rien ne s'execute si le remboursement echoue.
+1. Verifier DANS LE TABLEAU DE BORD STRIPE que l'endpoint webhook souscrit bien charge.refunded.
+   Le doute est ecrit depuis le 09-12 : l'endpoint est documente a 5 events pour SIX branches
+   dans le code. En reenregistrer 5 couperait le remboursement en silence. C'est une lecture de
+   console, pas une lecture de code.
+2. Jouer un remboursement REEL de bout en bout contre le compte Stripe de TEST : creer un
+   abonnement d'organisation avec une carte de test, puis passer par l'ecran.
+   Rappel : APP_URL vaut https://thecosmo.app et c'est la SEULE origine CORS autorisee par les
+   deux Edge Functions org — le checkout entreprise ne se teste pas depuis localhost:5173.
+3. Verifier, dans l'ordre : le montant au prorata des mois non consommes ; la ligne
+   compensatoire ecrite au journal d'encaissement (payment_records est append-only : rejouer
+   verify_payment_chain() apres) ; l'abonnement RELU par l'ecran (sans invalidation il continue
+   d'afficher le forfait payant ET son bouton de remboursement, donc il invite au rejeu que la
+   borne serveur existe pour absorber) ; et l'absence de SECOND appel (useCancelAndRefundOrg
+   doit poser retry: 0 — le QueryClient pose retry: 1 pour tout le monde, et
+   e2e/stubbed/refund.spec.ts a deja mesure deux appels pour un clic).
+4. Enchainer sur C-39 dans la meme passe : le parcours nominal complet est
+   rembourser -> resilier (un seul appel serveur) -> supprimer, et la suppression ne s'execute
+   QUE si le remboursement a reussi. Verifier aussi en base que delete_organization exige le
+   PROPRIETAIRE et refuse tant qu'un abonnement court, et que renewal_notices et
+   withdrawal_consents SURVIVENT a la suppression (mig. 138).
 
-C-39 depend AUSSI du deploiement de stripe-org-refund (prompt C-65) : la 138 seule ne ferme que
-C-30. Le dire dans la note de l'item plutot que de cocher les deux.
-```
-
-## C-31 · plafond de débit sur `report-bug` (mig. 139 + secret + déploiement)
-
-```
-Objectif : C-31. report-bug est un relais d'e-mail ouvert, sans aucune limite de debit, et la
-version DEPLOYEE en production est la v8 du 2026-08-29, donc sans le plafond ecrit depuis.
-
-Ordre IMPOSE, ne pas l'inverser :
-1. Appliquer supabase/migration/139_rate_limits.sql (relue d'abord, ledger relu d'abord).
-   Piege qui ne se voit qu'en jouant la borne : le refus doit etre `hits > p_limit`, jamais
-   `>=`. Avec `>=`, le compteur gele sur la limite, `hits <= limit` reste vrai, et le plafond ne
-   refuse JAMAIS. Ecrire le test qui montre la borne ROUGE avant de la voir verte.
-2. Poser le secret RATE_LIMIT_SALT cote Supabase. Sans lui consumeRateLimits REFUSE, et c'est
-   delibere : pas de sel, pas de service, plutot qu'un hachage devinable.
-3. Seulement ensuite, deployer report-bug, sinon la fonction appelle une RPC absente.
-4. Le meme deploiement emporte C-32 (allowlist de piece jointe reellement appliquee) et C-33
-   (une panne d'authentification ne doit plus anonymiser l'auteur en silence). Les traiter dans
-   la meme passe, et le dire.
-
-Ordre de grandeur arbitre : 3 rapports / heure / compte, 10 / jour / IP. Le CAPTCHA n'est PAS
-retenu : il ne protege pas d'un appel direct a la fonction.
-
-Fini quand : la version deployee est citee AVEC SA DATE dans a-faire-code.md (un « corrige »
-sans version deployee decrit un commit, pas la production), et un appel reel depassant la borne
-rend un refus.
-```
-
-## C-48 · identifiants de refus de dépendance (mig. 137)
-
-```
-Objectif : C-48. Un refus de dependance de tache dit deux choses differentes, aucune lisible.
-Le code est ecrit ; la migration 137 (dependency_error_identifiers) n'est pas appliquee, donc
-src/.../dependency-errors.ts traduit encore via une TABLE DE TRANSITION sur des phrases
-ANGLAISES, c'est-a-dire en identifiant une erreur par son message, ce que CLAUDE.md interdit.
-
-A faire : relire la 137, relire le ledger en base, appliquer, verifier acteur par acteur dans
-une transaction annulee que chaque refus rend bien son identifiant, puis retirer la table de
-transition et son repli. Un test doit echouer si un message anglais reapparait comme cle.
-
-Fini quand : plus aucune identification par message dans ce chemin, et les deux formulations
-divergentes disent la meme chose, en francais comme en anglais, verifie DANS le navigateur.
-```
-
-## C-65 · déployer `stripe-org-refund`
-
-```
-Objectif : C-65. Le remboursement du mois en cours est promis aux CGU depuis le 2026-09-04, la
-fonction est ecrite et testee (12 cas de calcul, parcours E2E livre le 2026-09-11), et
-stripe-org-refund N'EXISTE PAS en production : verifie le 2026-09-12, 7 Edge Functions actives,
-elle n'en fait pas partie.
-
-Bonne nouvelle mesuree : la dependance croisee est levee. stripe-webhook est en v27 depuis le
-2026-09-06 avec sa branche charge.refunded, donc la ligne compensatoire au journal
-d'encaissement est en ligne. stripe-org-refund peut partir SEULE.
-
-A faire : deployer, puis jouer un remboursement reel contre le compte Stripe de TEST : rien n'a
-jamais ete joue contre Stripe. Verifier dans l'ordre : le montant au prorata des mois non
-consommes, la ligne compensatoire ecrite au journal, l'abonnement RELU par l'ecran (sans
-invalidation il continue d'afficher le forfait payant et son bouton de remboursement), et
-l'absence de second appel (useCancelAndRefundOrg doit poser retry: 0 ; une mutation qui deplace
-de l'argent ne rejoue JAMAIS toute seule).
-
-Fini quand : la version deployee et sa DATE sont ecrites dans a-faire-code.md, et un
-remboursement de test est passe de bout en bout.
-```
-
-## C-28 · le canal d'alerte d'ops est inerte (secret `OPS_ALERT_WEBHOOK_URL`)
-
-```
-Objectif : C-28. ci-alert.yml est ecrit et branche ; le secret OPS_ALERT_WEBHOOK_URL n'est pas
-dans les secrets ACTIONS du depot (il n'existe que cote Supabase). Tant qu'il manque, tout echec
-de garde reste une archive que personne ne lit.
-
-Preuve que ca compte, et elle est neuve : le job « Edge deploy drift » echoue TOUS LES JOURS
-depuis sa mise en service (voir C-35), et personne ne l'a vu.
-
-A faire : poser le secret, puis DECLENCHER l'exercice a blanc en workflow_dispatch et verifier
-que le message arrive. Un canal qu'on n'a pas vu delivrer n'est pas un canal.
-
-Ne jamais rendre une garde conditionnelle a la presence de son propre secret.
-```
-
-## C-35 · la garde de dérive des Edge Functions n'a JAMAIS comparé (secret `SUPABASE_ACCESS_TOKEN`)
-
-```
-Objectif : C-35, REDESCENDU de fini a commence le 2026-09-12. Le code de la garde est bon ; le
-job « Edge deploy drift » echoue quotidiennement sur :
-
-  ##[error]SUPABASE_ACCESS_TOKEN absent : le code deploye des Edge Functions N A PAS ete
-  compare au depot. Ce n est pas un avertissement, c est l echec de la garde.
-
-Donc RIEN n'a jamais ete compare en CI, et aucun « deploye » de a-faire-code.md n'est verifie en
-continu : les versions citees viennent de lectures manuelles par l'API Management.
-
-A faire : poser SUPABASE_ACCESS_TOKEN dans les secrets ACTIONS (jeton personnel Supabase, portee
-lecture du projet), relancer le job, et lire ce qu'il rend sur les 7 fonctions. Il est probable
-qu'il trouve de vraies divergences des le premier run qui compare : c'est le but.
-
-Fini quand : un run VERT avec ses 7 fonctions comparees, et un echec de comparaison vu arriver
-sur OPS_ALERT_WEBHOOK_URL (C-28). Sinon on a remplace un silence par un autre.
+Fini quand : un remboursement de test est passe de bout en bout, chaque verification ci-dessus
+porte son resultat MESURE dans la note de l'item, et la reponse a « charge.refunded est-il
+souscrit ? » est ecrite noir sur blanc. Une fonction deployee n'est pas une fonction eprouvee.
 ```
 
 ---
 
 # P2 — critère non atteint, il reste du travail
 
-## C-23 · le dernier verrou de la gate axe-core — un SECOND arbitrage de marque
-
-> ⚠️ **Réécrit le 2026-09-12.** `C-25` est clos (les deux thèmes fautifs sont passés AA), et les
-> chiffres de l'ancien prompt étaient faux : « 41 nœuds en trois familles » était un **tirage**,
-> pas un total.
-
-```
-Objectif : C-23. La gate axe-core bloque deja tout `serious` SAUF color-contrast, nommement
-dispense. Ce qu'il reste a decider tient en NEUF noeuds.
-
-Mesure d'entree, faite le 2026-09-12, et elle contredit l'ancien enonce : trois passes
-consecutives de e2e/a11y-audit.spec.ts sur le MEME commit rendent 21, 41 puis 55 noeuds
-color-contrast. Le total n'est pas reproductible — axe photographie la page a un instant, et ces
-routes entrent en fondu. Les paires a 1,14 / 1,15 / 1,22 / 1,66 (un gris sur un gris presque
-identique) sont mesurees EN PLEIN FONDU.
-
-Reproductible dans les TROIS passes, et seulement ca :
-  #2563eb sur #e3ebfa = 4,31  x9   <- ce qui reste
-  #60a5fa sur #ffffff = 2,54  x2   <- corrige le 2026-09-12 (AuthForm, un bleu de theme
-                                      SOMBRE pose sur une surface blanche)
-
-Les 9 restants sont l'accent du theme CLAIR sur son propre fond teinte a 10 %. Les corriger
-demande de foncer `--color-accent` (#1d4ed8 rendrait 5,59 sur ce fond) — mais c'est la couleur
-des LIENS et du FOCUS, donc un SECOND arbitrage d'identite, distinct de celui rendu pour C-25
-qui ne portait que sur `--color-accent-solid`. Proposer 2 ou 3 teintes, les RENDRE cote a cote
-dans le produit, et laisser Axel trancher. Ne pas le decider a sa place.
-
-Fini quand : soit la teinte change et la dispense color-contrast tombe de SERIOUS_NOT_BLOCKING,
-soit la decision « on garde, voici pourquoi et ou c'est acceptable » est ecrite dans
-docs/ACCESSIBILITY.md, et alors la dispense y renvoie nommement.
-
-Deux reserves a ne jamais omettre :
-- axe ne scanne que l'ETAT INITIAL de chaque route : modales, menus et calendriers ne sont dans
-  aucun de ces chiffres ;
-- axe ne scanne que LE THEME PAR DEFAUT. C'est ce qui a laisse le bouton principal a 3,34:1
-  pendant dix-neuf jours sans qu'aucun run ne puisse le dire (C-25).
-  `src/theme-contrast.guard.test.ts` couvre desormais les quatre themes, mais seulement pour le
-  couple accent-solid / son texte.
-```
-
-## C-24 · le dernier des quatre audits d'accessibilité
+## C-24 · le dernier des quatre audits d'accessibilité (A-4, appareil réel)
 
 ```
 Objectif : C-24. Trois audits sur quatre sont passes le 2026-09-03. Il reste la moitie
-« appareil reel » de A-4 (voir § 10 et a-faire-manuel.md §7, M-25) : aucune mesure n'a jamais ete
-prise sur un vrai telephone, seulement en viewport emule.
+« appareil reel » de A-4 (voir § 10 de a-faire-code.md et a-faire-manuel.md §7, M-25) : aucune
+mesure n'a jamais ete prise sur un vrai telephone, seulement en viewport emule.
 
 Les pieges WebKit documentes dans docs/MOBILE.md viennent JUSTEMENT de bugs invisibles en
 emulation. Ce qu'on attend : les bugs de feuille, de clavier virtuel, de 100vh et de gestes, et
 la confirmation iOS de C-56, dont le mecanisme differe d'Android.
 
-Le prompt complet est deja ecrit : prompts-audits.md, section A-4. Le lire plutot que d'improviser
-un perimetre.
+Le prompt complet est deja ecrit : prompts-audits.md, section A-4. Le lire plutot que
+d'improviser un perimetre.
 
-Fini quand : les findings sont verses dans a-faire-code.md avec leurs numeros C-NN, ou le rapport
-dit explicitement « rien ». Un audit qui ne rend rien se DIT ; il ne s'omet pas.
+Fini quand : les findings sont verses dans a-faire-code.md avec leurs numeros C-NN, ou le
+rapport dit explicitement « rien ». Un audit qui ne rend rien se DIT ; il ne s'omet pas.
 ```
 
-# P3 — pas commencé
-
-## C-58 · React 19 — la branche existe, elle BUTE sur le budget de bundle
-
-> ⚠️ **Réécrit le 2026-09-12.** La migration a été jouée sur `feat/react-19`. Tout est vert sauf
-> `check:bundle`. Ce prompt ne redemande donc PAS de migrer : il demande de trancher.
+## C-58 · React 19 — la branche existe, elle bute sur un plafond qui n'est pas celui de `main`
 
 ```
 Objectif : C-58, et ce n'est plus un chantier de migration — c'est un arbitrage.
 
-Etat mesure le 2026-09-12, branche `feat/react-19` (poussee, non fusionnable) :
-  tsc -b                 propre, apres 9 corrections de types
-  lint                   0 erreur
-  npm test               226 fichiers / 2 500 tests
-  les six gates          i18n:check/scan/identical, migrations, rls, legal : vertes
-  build                  reussit
-  E2E chromium           104 passes, 3 ignores, 0 echec
-  check:bundle           EXIT 1 — chemin critique 329,8 ko / plafond 323,0
+Etat mesure le 2026-09-14, branche `feat/react-19` :
+  tsc -b / lint / 226 fichiers de tests / les six gates / build / E2E chromium : TOUT VERT
+  check:bundle : EXIT 1 — chemin critique 329,8 ko contre un plafond de 323,0
+  la branche est 2 commits DEVANT main et 48 DERRIERE : plus elle attend, plus le rebase coute
 
-React 19 pese +23,3 ko gzip (vendor-react 72,1 -> 95,4). Le chunk a ete ouvert :
-pas de react-dom/server, pas de __DEV__, pas de build de developpement. Le surcout est REEL.
+React 19 pese +23,3 ko gzip (vendor-react 72,1 -> 95,4). Le chunk a ete ouvert : pas de
+react-dom/server, pas de __DEV__, pas de build de developpement. Le surcout est REEL.
 
-Le plafond a ete ABAISSE a 323,0 le 2026-09-11 pour satisfaire le critere de sortie de C-14
-(5 % de marge, obtenue a 5,2 %). React 19 la consomme entierement et deborde de 6,8 ko.
-NE PAS le remonter : ce serait rouvrir C-14 le jour meme.
+PIEGE, a lire avant de trancher : le plafond de 323,0 contre lequel cette mesure a ete prise
+N'EST PAS celui de main. main porte encore 370 000 — les plafonds abaisses n'ont jamais ete
+commites (C-76). Arbitrer maintenant reviendrait a arbitrer sur un plafond fictif. Faire passer
+C-76 d'abord, remesurer, puis seulement poser la question.
 
 Le seul gisement est vendor-animation (49,0 ko), tire dans le chemin critique par UN import
-statique : MotionConfig dans App.tsx. Le differer naivement est EXCLU — c'est un fournisseur
-de CONTEXTE, les premiers ecrans rendraient sans prefers-reduced-motion, la classe de
-regression qui a deja coute deux fois a ce depot.
+statique : MotionConfig dans App.tsx. Le differer naivement est EXCLU — c'est un fournisseur de
+CONTEXTE, les premiers ecrans rendraient sans prefers-reduced-motion, la classe de regression
+qui a deja coute deux fois a ce depot.
 
 Trois issues, et ce prompt ne s'execute QUE quand Axel en a choisi une :
-  1. differer (defaut : l'urgence securite est tombee) ;
+  1. differer (defaut : l'urgence securite est tombee, cf. la note de C-58) ;
   2. sortir framer-motion du chemin critique pour de vrai — remplacer MotionConfig par une
      lecture CSS/matchMedia de prefers-reduced-motion, sans contexte React. Chantier a part,
      avec sa mesure au navigateur SOUS `reduce` ;
@@ -322,14 +257,17 @@ Detail complet et chiffres : docs/MIGRATION-REACT19.md § 4bis.
 react-router 8 (PR 2) est sequentiel derriere : il exige React >= 19.2.7 en peer.
 ```
 
+---
+
+# P3 — arbitré, ne s'exécute que si la décision change
+
 ## C-69 · la fenêtre produit de la landing tourne sans pause
 
 ```
 Objectif : C-69. AppWindowShowcase (src/components/showcase/AppWindowShowcase.tsx) change de vue
 toutes les 2,5 s indefiniment (ROTATE_MS ligne 57, setInterval ligne 139), gate par le seul
-useInView ligne 119. Verifie le 2026-09-12 : rien n'a change depuis le constat. Ni bouton de
-pause, ni arret au survol, ni au focus, et AUCUN egard pour prefers-reduced-motion : mesure, la
-rotation est identique sous reduce.
+useInView ligne 119. Ni bouton de pause, ni arret au survol, ni au focus, et AUCUN egard pour
+prefers-reduced-motion : mesure, la rotation est identique sous reduce.
 
 C'est un echec WCAG 2.2.2 « Pause, Stop, Hide », NIVEAU A, sur la premiere page du site, a cote
 du H1 et des CTA, c'est-a-dire exactement le texte qu'un visiteur essaie de lire. L'EAA
