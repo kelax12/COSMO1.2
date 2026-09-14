@@ -29,6 +29,7 @@
 // zod à tout fichier important le barrel pour une autre raison.
 
 import type { z } from 'zod';
+import { withChunkRetry } from '@/lib/chunk-retry';
 
 /**
  * Registre clé → schéma. Une clé par couple (entité, opération).
@@ -93,7 +94,14 @@ export async function validateAsync<K extends SchemaKey>(
   //
   // La frontière est honnête : c'est le registre ci-dessus qui apparie clé et
   // schéma, et il est la seule chose à relire si un doute survient.
+  // `withChunkRetry` : après un déploiement, le chunk `validate-*.js` (ou celui
+  // du schéma) référencé par un `index.html` désormais périmé n'existe plus
+  // sur le CDN. Sans cette garde, « Créer la tâche » échouait avec un message
+  // technique (« Failed to fetch dynamically imported module ») au lieu de
+  // recharger la page pour repartir sur un bundle frais.
   const load = loaders[key] as () => Promise<z.ZodType<unknown>>;
-  const [{ validateOrThrow }, schema] = await Promise.all([import('./validate'), load()]);
+  const [{ validateOrThrow }, schema] = await withChunkRetry(() =>
+    Promise.all([import('./validate'), load()]),
+  );
   return validateOrThrow(schema, input) as z.infer<SchemaOf<K>>;
 }
