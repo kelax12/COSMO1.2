@@ -35,7 +35,7 @@ Conséquences pratiques, à tenir :
 
 ## Note d'accessibilité : 76 → 79 → 80 → 81 → 82 → 83 → 84 → **82 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-04 → 2026-09-14 → 2026-09-14 soir)
 
-> ### 🔴 2026-09-14 (soir) · −2 : 37 cas verts, et deux angles morts de COUVERTURE derrière ce vert
+> ### 🔴 2026-09-14 (soir) · −2 : 37 cas verts, et trois angles morts de COUVERTURE derrière ce vert
 >
 > L'entrée du matin notait la suppression d'une modale inatteignable, sans rejouer une seule
 > mesure. Ce soir, les trois suites qui portent réellement ce domaine ont tourné dans Chromium :
@@ -54,6 +54,24 @@ Conséquences pratiques, à tenir :
 > qu'elle est déclarée dans `SERIOUS_NOT_BLOCKING` avec sa décision, et le ratio est tenu par un
 > cliquet (`src/theme-contrast.guard.test.ts`). C'est une dispense adossée à un arbitrage écrit,
 > pas un zéro.
+>
+> 🔴 **Angle mort · la check-list VoiceOver promet « les 52 surfaces » et en oublie deux.**
+> Recompté ce soir sur les APPELS du hook et non sur les fichiers qui le mentionnent :
+> `grep -rn "= useModalA11y" src --include=*.tsx` rend **54** sites, dont **3** témoins dans
+> `use-modal-a11y.guard.test.tsx`, soit **51 surfaces de production**. Deux d'entre elles ne
+> figuraient nulle part dans l'annexe A de
+> [`AUDIT-VOICEOVER-IOS.md`](./AUDIT-VOICEOVER-IOS.md) : **`MoveCategoryDialog`** (ouverte depuis
+> `ColorSettingsModal`) et **`DeleteTeamCategoryConfirm`** (onglet OKR d'équipe). Les deux sont
+> montées et atteignables au doigt, vérifié par leurs points de montage.
+>
+> **Pourquoi ce n'est pas un détail de comptage** : cette annexe est le **seul** instrument du
+> dépôt qui mesure l'ANNONCE, par opposition au focus que les tests savent déjà vérifier. Deux
+> surfaces absentes de la liste sont deux écrans que personne ne fera parler le jour où la
+> check-list sera jouée. Elles y sont ajoutées, avec la mention « jamais auditée ».
+>
+> ⚠️ **L'écart n'est pas entièrement résolu** : l'annexe énumérait 52 lignes pour 51 appels, dont
+> 2 manquants. Deux lignes au moins ne correspondent donc à aucun appel du hook. Ce sera tranché en
+> JOUANT la check-list, pas en la recomptant.
 >
 > 🔴 **Angle mort · WCAG 2.5.5 n'est vérifié que derrière l'authentification.**
 > `e2e/touch-targets.spec.ts` force bien un viewport de 375 × 812 (donc la mesure est mobile), mais

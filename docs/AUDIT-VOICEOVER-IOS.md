@@ -323,9 +323,27 @@ Se déconnecter (feuille « Plus »), puis `/login`.
 
 ---
 
-## Annexe A · les 52 surfaces câblées, et ce que chacune doit dire
+## Annexe A · les surfaces câblées, et ce que chacune doit dire
 
-Source : `grep -rl "useModalA11y" src --include=*.tsx`, croisée avec le nom accessible lu dans le
+> 🔴 **Recompté le 2026-09-14 au soir : deux surfaces câblées manquaient à cette annexe.**
+> Le comptage de référence est désormais le nombre d'APPELS du hook, pas de fichiers qui le
+> mentionnent : `grep -rn "= useModalA11y\|useModalA11y<" src --include=*.tsx` rend **54** sites,
+> dont **3** dans `use-modal-a11y.guard.test.tsx` (les témoins), soit **51 surfaces de production**
+> réparties sur 51 fichiers.
+>
+> **Les deux absentes, ajoutées ci-dessous**, sont l'une et l'autre atteignables au doigt :
+> `MoveCategoryDialog` (ouverte depuis `ColorSettingsModal`) et `DeleteTeamCategoryConfirm`
+> (ouverte depuis `TeamOKRTab`). Une check-list qui promet « les 52 surfaces » et en oublie deux
+> laisse deux écrans non annoncés le jour où on la joue, **et c'est le seul instrument qui mesure
+> l'annonce**.
+>
+> ⚠️ **L'écart de comptage n'est pas entièrement résolu** : cette annexe énumérait 52 lignes alors
+> que 51 appels existent, et il manquait 2 de ces 51. Il y a donc au moins deux lignes qui ne
+> correspondent pas à un appel du hook (surface Radix rangée ici, ou doublon). À trancher en
+> jouant la check-list, ligne par ligne, plutôt qu'en recomptant de tête : c'est exactement ce que
+> ce document existe pour faire.
+
+Source : `grep -rn "= useModalA11y" src --include=*.tsx`, croisée avec le nom accessible lu dans le
 code et résolu dans `src/locales/fr/`. **Ce n'est pas une liste de cases à cocher de plus** : c'est
 la référence des noms attendus, pour que « M1 » ait un contenu vérifiable à chaque ligne.
 
@@ -333,6 +351,8 @@ la référence des noms attendus, pour que « M1 » ait un contenu vérifiable �
 
 | Surface | Où l'ouvrir | Nom attendu (M1) | § |
 |---|---|---|---|
+| **`MoveCategoryDialog`** 🆕 | `ColorSettingsModal` › déplacer une catégorie | à relire dans le code · **jamais auditée** | · |
+| **`DeleteTeamCategoryConfirm`** 🆕 | onglet OKR d'équipe › supprimer une catégorie | à relire dans le code · **jamais auditée** | · |
 | `MobileMoreSheet` | barre d'onglets, « Plus » | Plus d'options | 3.3 |
 | `FirstRunSetup` | premier lancement, compte vide | Bienvenue dans COSMO | 2.4 |
 | `TaskActionsSheet` | carte de tâche, bouton « ⋯ » | Actions pour \<nom\> | 4.6 |
