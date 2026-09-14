@@ -92,35 +92,38 @@ Free n'est pas connu, donc son plateau à elle n'est pas celui de ce tableau.
 
 ---
 
-## Mise à jour du 2026-09-14 · cinq domaines REMESURÉS, six non touchés — et ça se dit dans le tableau
+## Mise à jour du 2026-09-14 · neuf domaines REMESURÉS, deux honnêtement hors de portée d'ici
 
-🔴 **Une première version de cette entrée refusait toute note**, au motif qu'« aucun audit n'a été
-rejoué ». C'était vrai à moitié : les onze domaines n'ont pas tous été repassés écran par écran,
-mais **cinq l'ont réellement été**, avec des mesures opposables (commit, run CI, `git grep`,
-guard rejouée) — refuser de les noter par prudence excessive n'est pas plus honnête que d'inventer
-un chiffre, c'est juste refuser de rendre un service que la mesure permettait. La colonne « Δ » dit
-maintenant, domaine par domaine, lequel des deux cas c'est : un chiffre mesuré, ou un `·` qui dit
-franchement « non remesuré aujourd'hui » plutôt qu'un score deviné.
+🔴 **Une première version de cette entrée refusait toute note**, puis une deuxième en notait cinq
+et laissait les six autres à `·`. Trois des six étaient de la fausse prudence : **RGPD, Mobile et
+SEO** portaient chacun un fait vérifiable ce jour-là — une version d'Edge Function relue et
+confrontée à la garde de dérive, des cliquets de taille déjà abaissés mais jamais absorbés par ce
+document, une bascule d'indexation du 09-08 jamais notée — que refuser de mesurer n'était pas plus
+honnête que de l'inventer. **i18n** n'avait simplement jamais reçu de première note : les trois
+gates existent et sont vertes, rien ne justifiait de continuer à la taire. Restent deux domaines
+**réellement** hors de portée d'ici, et la raison de chacun est écrite dans son propre fichier,
+pas seulement ici : la charge de **Scalabilité** exige Docker, absent de ce poste ; **UI/UX**
+porte un changement non commité d'une autre session que je ne peux pas trancher à sa place.
 
 | Domaine | dernière note | **09-14** | Δ | Ce qui a bougé, et sa preuve |
 |---|---|---|---|---|
 | [Performance](./PERFORMANCE.md) | 92 (09-03) | **97** | **+5** | **C-14 fermé** : le rouge du 09-03 (entrée 78,1 ko pour un plafond de 78,0) devient une marge de 5,78 %, chemin critique 5,16 %. Les deux plafonds ABAISSÉS (78 000→71 000, 370 000→323 000), sonner sorti du chemin critique. Vécu 3 jours hors dépôt avant d'être commité — la note ne compte qu'à partir de `7134d7fe`, run `34846164939` |
 | [Tests / CI](./TESTING.md) | 95 (09-03) | **97** | **+2** | `toast.guard.test.ts` tourne enfin EN CI (3 jours non suivie par git). `e2e/stubbed/delete-org.spec.ts` (4 cas) prouve le parcours nominal de C-39, vu rouge sur une mutation. `refund.guard.test.ts` a mordu sur ma propre extraction du verrou anti-rejeu — et avait raison. Suite 2 470/221 → **2 586/228**, Playwright 210/25 → **220/26** |
+| [SEO](./SEO.md) | 75 (08-29) | **80** | **+5** | Rattrapage : la bascule C-20 (09-08, anglais ouvert à l'indexation + 3 défauts fermés) n'avait jamais été notée. Revérifié aujourd'hui sur un build réel : 40 URLs au sitemap, 80 entrées `hreflang`, 0 page `noindex`, `/entreprise-presentation` déclarée et non bloquée par `robots.txt` |
 | [Sécurité](../faille.md) | 86 (09-03) | **88** | **+2** | Le seul verrou anti-rejeu jamais testé (pré-contrôle qui retranche le déjà-remboursé, sur un chemin qui déplace de l'argent) est extrait, couvert par 10 cas, vu rouge sur 3 sabotages, déployé en v6, vérifié identique au dépôt (`Edge deploy drift` `34861975638`) |
+| [Mobile / DA](./MOBILE.md) | 76 (08-29) | **79** | **+3** | Libellés sous 11 px 75→**69**, stock de tailles arbitraires 196→**192** (C-75, jamais absorbé par ce document), cibles tactiles rejouées sur 8 routes + modale d'équipe : **0** violation, 10/10 cas E2E verts |
+| [i18n](./I18N.md) | · | **90** | **première note** | Les trois gates existent et sont vertes : `i18n:check` 0 erreur, `i18n:scan` 0 chaîne en dur, `i18n:identical` 3 898 couples, 92 identiques, **0 non déclarée**. 11/11 articles et 4/4 pages cas d'usage bilingues, vérifié dans `src/content/` |
+| [RGPD](./RGPD.md) | 86 (08-29) | **87** | **+1** | La garantie d'effacement testée par `rgpd-erasure.guard.test.ts` est désormais vérifiée contre le code **déployé** : `delete-account` v17, identique au dépôt (`Edge deploy drift`). Jamais confirmé jusqu'ici |
 | [Accessibilité](./ACCESSIBILITY.md) | 83 (09-04) | **84** | **+1** | `CategoryManager` — câblée sur `useModalA11y`, montée nulle part — supprimée. 53 → **52** surfaces à auditer sur iPhone, une de moins qu'aucun doigt ne pouvait jamais atteindre |
 | [Architecture](./ARCHITECTURE.md) | 84 (09-03) | **84** | **0**, VÉRIFIÉ | 452 lignes de code mort en moins, guard rejouée : `OVERSIZED_BUDGET` reste à 0. Le fichier était déjà sous 600 lignes, la métrique ne bouge pas — vérifié, pas supposé |
-| [Scalabilité](./SCALABILITY.md) | 91 (09-08) | **·** | non remesuré | Aucune charge rejouée aujourd'hui |
-| [RGPD](./RGPD.md) | 86 (08-29) | **·** | non remesuré | Aucun chemin de purge/portabilité rejoué aujourd'hui |
-| [Mobile / DA](./MOBILE.md) | 76 (08-29) | **·** | non remesuré | Aucun appareil, aucun viewport rejoué aujourd'hui |
-| [SEO](./SEO.md) | 75 (08-29) | **·** | non remesuré | Search Console non relue |
-| [UI / UX](./UI-PATTERNS.md) | 87 (09-03) | **·** | non remesuré | Un changement UI (retrait de la pastille « Aujourd'hui » sur le report rapide) traîne **non commité** dans l'arbre de travail d'une autre session ; il contredit C-72 et attend l'arbitrage M-44. Ne compte dans aucun sens tant qu'il n'est pas tranché |
-| [i18n](./I18N.md) | · | **·** | · | Toujours non attribuée |
+| [Scalabilité](./SCALABILITY.md) | 91 (09-08) | **·** | non remesurable ici | La charge se rejoue contre une stack Supabase LOCALE montée par Docker sur le runner CI (§9ter). Ce poste n'a pas Docker : `docker --version` introuvable. Ce n'est pas un choix, c'est une limite d'environnement, nommée dans `SCALABILITY.md` |
+| [UI / UX](./UI-PATTERNS.md) | 87 (09-03) | **·** | non tranchable ici | Un changement UI (retrait de la pastille « Aujourd'hui » sur le report rapide) traîne **non commité** dans l'arbre de travail d'une autre session ; il contredit C-72 et attend l'arbitrage M-44. Aucune passe visuelle rejouée par ailleurs |
 
 ⚠️ **Ce que ce tableau ne fait toujours pas** : il ne recompte pas onze domaines à partir d'un
-changelog de code. Les cinq notes ci-dessus viennent chacune d'une mesure prise ce jour — commit
-cité, run CI cité, ou garde rejouée avec son résultat — écrite dans le fichier du domaine avant
-d'être reportée ici. Les six `·` ne sont pas des « rien n'a changé » : ce sont des « je ne l'ai pas
-vérifié », ce qui n'est pas la même chose et ne doit jamais se lire comme tel.
+changelog de code. Les neuf notes ci-dessus viennent chacune d'une mesure prise ce jour — commit
+cité, run CI cité, build vérifié, ou garde rejouée avec son résultat — écrite dans le fichier du
+domaine avant d'être reportée ici. Les deux `·` restants ne sont pas des « rien n'a changé » : ce
+sont des limites nommées (Docker absent, arbitrage en attente), pas des refus de regarder.
 
 ⚠️ **Quatre affirmations de la documentation ont par ailleurs été démenties par leur propre
 remesure**, sans lien direct avec une note ci-dessus : la portabilité des corrections de types

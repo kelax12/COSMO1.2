@@ -9,7 +9,15 @@ s'est révélée fausse.
 Toutes les mesures de ce document sont **reproductibles** : les requêtes sont en
 [§10 Runbook](#10-runbook--refaire-cet-audit).
 
-## Note de scalabilité : 71 → 84 → 86 → 89 → **91 / 100** (2026-08-24 → 2026-08-25 → 2026-08-29 → 2026-09-03 → 2026-09-08) · inchangée au 2026-08-27
+## Note de scalabilité : 71 → 84 → 86 → 89 → **91 / 100** (2026-08-24 → 2026-08-25 → 2026-08-29 → 2026-09-03 → 2026-09-08) · inchangée au 2026-08-27 et au 2026-09-14
+
+> ### ⚪ 2026-09-14 · non remesurée, et la raison est nommée plutôt que tue
+>
+> La mesure à volume de ce document tourne contre une stack Supabase **locale**, montée par le
+> runner de CI via Docker (§9ter) — c'est délibérément **jamais** contre la production. Ce poste
+> ne porte pas Docker (`docker --version` : introuvable), donc `scripts/scalability-concurrency.mjs`
+> n'est pas rejouable d'ici. La note reste celle du 09-08, et rien dans cette phrase ne doit se
+> lire comme « rien n'a changé » — seulement « non vérifié aujourd'hui ».
 
 > ### 2026-09-08 · +2, la mesure cesse d'être mono-session et C-15 est tranchée
 >
