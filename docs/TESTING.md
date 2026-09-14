@@ -1,6 +1,34 @@
 # Tests — COSMO
 
-## Note de tests / CI : 80 → 83 → 88 → 89 → 93 → 94 → **95 / 100** (2026-08-24 → 2026-08-25 soir → 2026-08-27 soir → 2026-08-29 → 2026-09-02 → 2026-09-03)
+## Note de tests / CI : 80 → 83 → 88 → 89 → 93 → 94 → 95 → **97 / 100** (2026-08-24 → 2026-08-25 soir → 2026-08-27 soir → 2026-08-29 → 2026-09-02 → 2026-09-03 → 2026-09-14)
+
+> ### 🟢 2026-09-14 · +2 : une garde qui était écrite mais n'existait pas en CI y tourne enfin, et une autre a mordu SUR elle-même
+>
+> `src/lib/toast.guard.test.ts` (4 cas, dont un témoin) vivait depuis trois jours sur un disque,
+> non suivi par git : elle **ne tournait jamais** en CI. Commitée avec la façade qu'elle garde
+> (`7134d7fe`), elle tourne désormais à chaque run — et le job qu'elle protège (`Budget de bundle`)
+> est passé du rouge (3 fois, par d'autres sessions) au vert opposable.
+>
+> **220 cas Playwright** (210 → 220, +10) : `e2e/stubbed/delete-org.spec.ts` (4 cas) prouve pour la
+> première fois le parcours nominal « rembourser → résilier → supprimer » (C-39), en **retenant**
+> la réponse de l'Edge Function pour distinguer « avant » de « en même temps ». Vu rouge sur une
+> mutation du hook avant d'être commité.
+>
+> **`src/refund.guard.test.ts` a rougi SUR l'extraction du verrou anti-rejeu, et avait raison** : une
+> garde textuelle qui cherche du code à son ancien emplacement doit échouer quand le code déménage,
+> sinon elle passe au vert en ne regardant plus rien. Corrigée pour suivre le code — et
+> **renforcée** : un cas neuf interdit désormais explicitement de recopier l'arithmétique dans
+> l'entrypoint. Neuvième occurrence de cette classe de défaut en deux semaines, et la première où
+> c'est MOI qui l'ai provoquée en développant.
+>
+> Coverage : **2 586 tests / 228 fichiers**, zéro échec, `exit 0` — 31,15 L / 30,73 S / 24,41 F /
+> 26,31 B. ⚠️ Le pourcentage baisse légèrement malgré 116 tests de plus : le dénominateur a bougé
+> aussi. Un taux ne se lit jamais seul.
+>
+> **Pourquoi +2 et pas plus** : rien de tout ça n'est une capacité neuve du harnais — c'est la
+> correction d'une garde qui n'existait pas encore où on la croyait, et le comblement d'un trou de
+> couverture sur un chemin qui déplace de l'argent. Le mérite structurel appartient aux gardes du
+> 09-11/09-13 (`toast.guard`, `tracked-imports`), pas à cette passe.
 
 > ### 2026-09-03 · +1, quatre cliquets de plus et quatre gardes prises en défaut
 >

@@ -1,6 +1,38 @@
 # Performance bundle — `vite.config.ts manualChunks`
 
-## Note de performance : 68 → 64 → 88 → 91 → 94 → **92 / 100** (2026-08-24 → 2026-08-27 → 2026-08-29 → 2026-09-03)
+## Note de performance : 68 → 64 → 88 → 91 → 94 → 92 → **97 / 100** (2026-08-24 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14)
+
+> ### 🟢 2026-09-14 · +5 : le défaut qui avait fait perdre les 2 points du 09-03 est refermé, et COMMITÉ
+>
+> Le 09-03, la note perdait 2 points parce que la marge réelle sous les deux plafonds n'était pas
+> celle annoncée : l'entrée était **ROUGE** (78,1 ko pour un plafond de 78,0), et le chemin
+> critique n'avait que 3,2 ko de marge. C'est exactement ce point qui se referme aujourd'hui :
+>
+> | | 09-03 | **09-14** | Plafond |
+> |---|---|---|---|
+> | Chunk d'entrée | **78,1 ko, ROUGE** (−0,1 ko) | **66,9 ko** (marge **5,78 %**) | 78 000 → **71 000** |
+> | Chemin critique | 366,8 ko (marge 3,2 ko) | **306,6 ko** (marge **5,16 %**) | 370 000 → **323 000** |
+>
+> Le levier n'est pas celui qui était prévu (scinder un catalogue i18n) : c'est `sonner`
+> (10,1 ko gzip) qui sort intégralement du chemin critique, derrière une façade `@/lib/toast` au
+> seul `import()` dynamique du dépôt. **Les deux plafonds ont été ABAISSÉS**, jamais relevés — le
+> critère de sortie (5 % de marge sur les deux) est tenu, pas contourné.
+>
+> ⚠️ **Ce gain a failli ne jamais compter.** Le travail a vécu **trois jours dans un arbre non
+> commité** : ce document l'annonçait comme acquis pendant que `main` portait encore 78 000 /
+> 370 000, et une branche entière (`feat/react-19`) a été arbitrée contre un plafond fictif. La note
+> ne monte qu'à partir du commit **`7134d7fe`** et du run CI **`34846164939`** (cinq jobs verts,
+> `Budget de bundle` compris) — la seule chose qui rend +5 opposable plutôt que déclaré.
+>
+> **Pourquoi +5 et pas seulement +2** (l'inverse exact de la baisse du 09-03) : la marge de sortie
+> n'est pas revenue au niveau d'avant, elle le dépasse — 5,78 % contre 0 (rouge) sur l'entrée, et le
+> défaut structurel (`sonner` statique dans des pages lazy, qui avait déjà produit un premier
+> « faux vert » à 66,9 ko d'entrée mais 316,2 ko de critique) est fermé par une garde dédiée
+> (`src/lib/toast.guard.test.ts`, vue rouge sur un import fautif) et non par une mesure ponctuelle.
+>
+> **Ce qui reste hors de portée d'une note** : les dépôts locaux/Supabase de quinze modules tirés
+> statiquement par `repository.factory.ts` (269 ko bruts dans l'entrée, ~72 ko de seeds démo jamais
+> exécutés en prod). C'est un chantier, pas un geste — non pris en compte dans ce +5.
 
 > ### 🟠 2026-09-03 · la note BAISSE de 2 : la garde mesurait un artefact qui n'existe nulle part
 >

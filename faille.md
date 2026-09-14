@@ -20,7 +20,33 @@ Légende : 🔴 bloquant · 🟠 important · 🟡 à planifier · ✅ corrigé
 
 ---
 
-## Note de sécurité : 82 → 86 → 84 → **86 / 100** (2026-08-24 → 2026-09-02 → 2026-09-03)
+## Note de sécurité : 82 → 86 → 84 → 86 → **88 / 100** (2026-08-24 → 2026-09-02 → 2026-09-03 → 2026-09-14)
+
+> ### 🟢 2026-09-14 · +2 : le seul verrou non testé d'un chemin qui déplace de l'argent l'est désormais
+>
+> `stripe-org-refund` a trois verrous anti-rejeu. Jusqu'à ce jour, **un seul des trois n'avait
+> jamais été exécuté par quoi que ce soit** : le pré-contrôle qui retranche le déjà-remboursé
+> vivait en ligne dans l'entrypoint Deno, entre deux appels réseau — structurellement intestable
+> depuis n'importe quel poste. Il est extrait (`_shared/refund-replay.ts`, TS pur), couvert par
+> **10 cas** (nominal, rejeu, période déjà remboursée, plus un témoin), **vu rouge sur trois
+> sabotages** avant d'être commité, et **déployé en v6**, identique au dépôt
+> (`Edge deploy drift` run `34861975638` : « 8 fonction(s) verifiee(s) »).
+>
+> ⚠️ **Ce que ça change concrètement** : avant ce jour, rien ne garantissait que la borne « ce qui
+> reste à rendre = décidé − déjà rendu » calculait juste. Un mutant qui inverserait la soustraction
+> ou compterait un remboursement `failed` comme rendu serait passé inaperçu — les 3 sabotages joués
+> ici le prouvent, ils faisaient tous tomber des cas précis, jamais tous en même temps.
+>
+> ⚠️ **Ce qui n'est PAS nouveau et ne doit pas gonfler ce +2** : la clé d'idempotence Stripe
+> (verrou 1) et le clamp par l'encaissé (verrou 3) existaient déjà et sont inchangés. Et rien n'a
+> encore tourné **contre Stripe** : `refunds.create` et la résiliation réelle restent non
+> éprouvées, `org_subscriptions` à zéro ligne. Ce +2 porte sur la preuve d'un verrou, pas sur
+> l'encaissement.
+>
+> **Ce qui ne relève PAS d'un score** : quatre numéros de version d'Edge Functions cités par ce
+> fichier étaient décalés d'une unité, et un angle mort affirmait deux choses fausses. Corrigés
+> aujourd'hui — c'est une correction de documentation, pas un changement de posture, et ça n'entre
+> pas dans le delta.
 
 > ### 2026-09-03 · +2, et pour la première fois depuis longtemps ce sont des protections EN VIGUEUR
 >

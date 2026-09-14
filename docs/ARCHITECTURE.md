@@ -10,7 +10,15 @@ dit ligne par ligne. Mesuré contre le code de `main` et la prod. Remplace
 Ce document ne redécrit pas l'architecture — c'est le rôle de [`../CLAUDE.md`](../CLAUDE.md). Il
 répond à une seule question : **les invariants qu'on s'est donnés tiennent-ils encore ?**
 
-## Note d'architecture : 74 → 79 → 81 → 83 → **84 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03)
+## Note d'architecture : 74 → 79 → 81 → 83 → **84 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03) · inchangée au 2026-09-14, VÉRIFIÉE
+
+> ### ⚪ 2026-09-14 · 0 : `CategoryManager` (452 lignes) supprimée, la garde reste à zéro sans bouger
+>
+> `src/architecture.guard.test.ts` rejouée : `OVERSIZED_BUDGET` reste à **0**, aucun fichier
+> au-dessus de 600 lignes, le stock hors budget ne remonte pas. Le fichier supprimé faisait 452
+> lignes — déjà sous le seuil — donc sa disparition ne déplace pas la métrique que ce cliquet garde.
+> ⚠️ **La note reste inchangée parce qu'elle a été VÉRIFIÉE inchangée, pas parce qu'elle n'a pas été
+> regardée** : c'est la distinction que ce document exige de tout autre domaine.
 
 > ### 2026-09-03 · +1, le cliquet a mordu quatre fois et a été resserré quatre fois
 >
