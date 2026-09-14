@@ -821,10 +821,14 @@ sans écran, **écrites en dur en français** hors des catalogues i18n.
 ## Base de données Supabase
 
 Migrations dans `supabase/migration/*.sql`, convention `NNN_<feature>.sql`.
-**151 fichiers de migration** (recompté le 2026-09-13, à l'ajout de la `147`). La
-dernière APPLIQUÉE est la `147_categories_tree_depth_ambiguity_redo.sql` (le 2026-09-13,
-réapplication du correctif de la `144` — cf. section dédiée) ; `146` et `145` l'ont été le
-même jour.
+**152 fichiers de migration** (recompté en base et sur disque le 2026-09-14). La
+dernière APPLIQUÉE est la `148_team_categories_tree_merge` (le 2026-09-13) ; le ledger
+porte **148 entrées**, et les deux seules migrations du dépôt hors base sont la `136`
+(travail d'une autre session) et la `140` (délibéré : elle se joue DANS la fenêtre de
+bascule Stripe live). ⚠️ La ligne précédente disait « 151 fichiers, dernière appliquée la
+`147` » : périmée d'une migration au lendemain de son écriture. La `147`
+(`_categories_tree_depth_ambiguity_redo.sql`, réapplication du correctif de la `144` —
+cf. section dédiée), la `146` et la `145` ont toutes été appliquées le 2026-09-13.
 
 ### Sous-catégories hiérarchiques (mig. `143`, `144`, `145`, `147`)
 

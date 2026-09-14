@@ -9,6 +9,69 @@ compte** et **ce qui prouve que c'est fini**.
 > (`localStorage` hors `try` dans les dépôts de démo), **C-47** (échecs de tests faux sous charge).
 > **C-22** est clos ; **C-38** est à moitié fait et dit désormais ce qui a été fermé et ce qui reste.
 
+> ### 🔴 Passe du 2026-09-14 — **76 items : 68 clos, 6 commencés, 2 ouverts**, et `main` est ROUGE depuis quatorze heures
+>
+> Tout ce qui suit est **mesuré le 2026-09-14**, entre 11:40 et 12:15 UTC : ledger de migrations et
+> les **8** Edge Functions lus par l'API Supabase, runs et secrets lus par `gh`, `npm audit`,
+> `git log` et `git ls-files` joués ici. Rien n'a été recopié du tableau du 2026-09-12. Deux items
+> sont ajoutés, **C-75** et **C-76**, et **un item déclaré clos est rouvert**.
+>
+> 🔴 **La découverte de cette passe ne porte pas sur le produit : `C-14` n'a JAMAIS été commité.**
+> Le travail du 2026-09-11 — la façade `src/lib/toast.ts`, sa garde, les 57 fichiers passés à
+> `@/lib/toast`, et les deux plafonds ABAISSÉS — vit **uniquement dans l'arbre de travail local**,
+> non commité, depuis trois jours. Mesuré, pas déduit :
+>
+> | Ce que `a-faire-code.md` déclarait depuis le 09-11 | Ce que `main` porte réellement au 2026-09-14 |
+> |---|---|
+> | `src/lib/toast.ts` (façade, `import()` différé) | **jamais commitée, sur aucune branche** (`git log --all -- src/lib/toast.ts` : vide) |
+> | plafond d'entrée **71 000** o | **78 000** o — `scripts/check-bundle-budget.mjs` n'a pas bougé depuis `65c3e21c` (2026-09-04) |
+> | plafond de chemin critique **323 000** o | **370 000** o, même commit |
+> | entrée mesurée **66 896** o (marge 5,78 %) | **76,9 ko** au dernier run vert (34783058643, 09-13 21:13), soit **au-dessus** du plafond que C-14 dit avoir posé |
+> | « zéro import statique de `sonner` dans tout `src/` » | **5 fichiers produit** importent encore `sonner` directement |
+>
+> ⚠️ **Et ça a déjà coûté trois commits à d'autres sessions.** `9f641e27`, `9d4039a5` et `82584af8`
+> sont tous des `fix(build)` qui **reviennent** d'un import `@/lib/toast` vers `sonner`, parce que
+> le fichier importé n'est pas suivi par git : vert en local, rouge au build Vercel. C'est
+> exactement le défaut que `scripts/tracked-imports.guard.test.mjs` a été écrit pour attraper, et
+> il l'a attrapé trois fois — **personne n'a remonté la cause**, qui est que la façade n'est pas
+> dans le dépôt. Item **C-76**.
+>
+> 🔴 **`main` est ROUGE depuis le 2026-09-13 à 21:38 UTC : sept runs CI d'affilée.** Le dernier
+> vert est `34783058643`. Trois assertions, toutes dans `lint-test-build`, mesurées sur `82584af8` :
+>
+> | Garde | Ce qu'elle rend | Item |
+> |---|---|---|
+> | `architecture.guard.test.ts` | `EventModalFormDesktop.tsx` **662 lignes** et `TaskModalMobileBody.tsx` **651**, budget 600 | **C-75** 🆕 |
+> | `design-system.guard.test.ts` | **76** tailles sous 11 px, référence 75 | **C-75** 🆕 |
+> | `design-system.guard.test.ts` | stock de tailles arbitraires **200**, budget 196 | **C-75** 🆕 |
+>
+> ⚠️ **Les trois cliquets font exactement leur travail** : ils ont mordu sur la vague
+> sous-catégories / agenda livrée les 09-13 et 09-14. ❌ Ne JAMAIS relever un des trois chiffres
+> pour reverdir la CI — c'est la règle 2 du préambule des prompts, et `C-09` a coûté quinze mois.
+>
+> ✅ **Ce qui s'est fermé depuis le 2026-09-12, vérifié à sa source et non repris d'un tableau :**
+>
+> | Item | Preuve mesurée le 2026-09-14 |
+> |---|---|
+> | `C-18` CVE dev-only | `npm audit` : **0** avis, dev compris (`{"info":0,"low":0,"moderate":0,"high":0,"critical":0}`). `npm audit --omit=dev` : 0 aussi |
+> | `C-28` canal d'alerte | secret `OPS_ALERT_WEBHOOK_URL` présent depuis le **2026-09-02 09:13:47 UTC**, et le salon a été **lu par un humain** le 09-13 |
+> | `C-34` `CRON_SECRET` | **posé le 2026-09-13 à 16:21:34 UTC**, dispatch vert 62 secondes plus tard. ⚠️ Réserve honnête : **aucun run PLANIFIÉ n'a encore été vert** — les six derniers `schedule` ont échoué, le prochain tombe ce jour vers 12:10 UTC |
+> | `C-35` dérive des Edge Functions | `SUPABASE_ACCESS_TOKEN` posé le 09-13 à 09:34 UTC, et le job `Edge deploy drift` est **vert ce matin** (`34835729819`, 2026-09-14 10:57) : les **8** fonctions en ligne sont identiques au dépôt |
+> | `C-30` `C-31` `C-48` | migrations `137`, `138`, `139` au ledger de prod (2026-09-12), relues en base ce jour |
+> | `C-23` | clos le 2026-09-13, dispense tranchée et motivée |
+>
+> ✅ **La production, relue ce jour** : ledger à **148 entrées**, dernière
+> `148_team_categories_tree_merge` (2026-09-13). Le dépôt porte **152** fichiers de migration ;
+> restent hors base la **`136`** (travail d'une autre session) et la **`140`** (délibéré : elle se
+> joue DANS la fenêtre de bascule Stripe live). ⚠️ `CLAUDE.md` dit encore « 151 fichiers, dernière
+> appliquée la `147` » : périmé d'une migration, à corriger.
+> Les **8** Edge Functions sont actives et à jour : `stripe-org-refund` **v5** (2026-09-12 22:05),
+> `report-bug` **v12** (09-12 23:08), `stripe-webhook` **v33** (09-13 16:12), `delete-account`
+> **v17** et `renewal-notice` **v13** (09-13 10:1x). Le drift vert de ce matin le confirme.
+>
+> 📄 **Prompts refaits le 2026-09-14** — un par item non clos, sept blocs :
+> [`prompts-a-faire-code.md`](./prompts-a-faire-code.md).
+
 > ### 🔴 Passe du 2026-09-12 — remesure de bout en bout, et **la CI est rouge sur `main`**
 >
 > **74 items** (`C-72` → `C-74` ajoutés par cette passe). **55 clos, 11 commencés, 8 ouverts.**
@@ -225,15 +288,15 @@ quand ». Une décision écrite ici fait foi contre une piste écrite dans l'ite
 | [0](#0-arbitrages-tranchés-le-2026-09-03) | 🟢 **Arbitrages tranchés** | 27 décisions du 2026-09-03 |
 | [1](#1-défauts-fonctionnels-connus) | Défauts fonctionnels connus | C-01 → C-08, C-37, C-40 → C-43, C-48, C-56, C-65, C-66, C-71, **C-72** |
 | [2](#2-dette-structurelle) | Dette structurelle | C-09 → C-11, C-49, C-50 |
-| [3](#3-performance) | Performance | C-12 → C-14, C-67, C-68 |
+| [3](#3-performance) | Performance | C-12 → C-14, C-67, C-68, **C-76** |
 | [4](#4-scalabilité) | Scalabilité | C-15 → C-16 |
 | [5](#5-sécurité-et-dépendances) | Sécurité et dépendances | C-17 → C-19, C-29 → C-33, C-39, C-44 → C-46, C-58 → C-64 |
 | [6](#6-i18n) | i18n | C-20 → C-22, C-38 |
 | [7](#7-accessibilité) | Accessibilité | C-23 → C-25, C-51 → C-55, C-57, C-69, C-70, **C-73**, **C-74** |
-| [8](#8-tests-et-gardes) | Tests et gardes | C-26 → C-28, C-34 → C-36, C-47 |
+| [8](#8-tests-et-gardes) | Tests et gardes | C-26 → C-28, C-34 → C-36, C-47, **C-75** |
 | [9](#9-ce-qui-nest-PAS-du-code) | Ce qui n'est PAS du code | renvois |
-| [10](#10-couverture--ce-que-cette-liste-ne-peut-pas-contenir) | 🔴 Couverture et audits à lancer | 2 audits restants |
-| [11](#11-ce-qui-reste-ouvert) | 🔴 **Ce qui reste ouvert** | 4 gestes (dont 4 secrets), 12 commencés, 11 entiers |
+| [10](#10-couverture--ce-que-cette-liste-ne-peut-pas-contenir) | 🔴 Couverture et audits à lancer | 1 audit restant (A-4) |
+| [11](#11-ce-qui-reste-ouvert) | 🔴 **Ce qui reste ouvert** | **76 items au 2026-09-14 : 68 clos, 6 commencés, 2 ouverts** |
 
 ---
 
@@ -821,7 +884,16 @@ personne peut donc valider un formulaire dont elle ne voit plus l'intitulé.
 - **Fini quand** : les trois conteneurs sont corrigés, et un test mesure qu'à 375 × 350 le haut de
   la carte est atteignable (`scrollTop = 0` donne un `top >= 0`), vu **rouge** avant d'être vert.
 
-### C-65 · Le remboursement du mois en cours n'existe nulle part dans le code · **P1 · M**
+### C-65 · Le remboursement du mois en cours n'existe nulle part dans le code · **P1 · M** · 🟠 **déployée le 2026-09-12, jamais éprouvée**
+
+> ✅ **Remesuré le 2026-09-14** : `stripe-org-refund` est active en **v5** (2026-09-12 22:05 UTC),
+> `stripe-webhook` en **v33** (2026-09-13 16:12 UTC) avec sa branche `charge.refunded`, et les 8
+> fonctions en ligne sont identiques au dépôt (`Edge deploy drift` vert le 09-14 à 10:57).
+>
+> 🔴 **Rien n'a encore été joué contre Stripe** : 0 `org_subscriptions`, 0 `payment_records`, donc
+> aucune facture à rembourser. Et le doute du 09-12 reste ouvert : `charge.refunded` est-il
+> réellement souscrit sur l'endpoint webhook, documenté à 5 events pour **6** branches ?
+> Le vérifier **dans le tableau de bord Stripe**, pas dans le code.
 
 > 🟠 **DÉPLOYÉ le 2026-09-12 (v2, 22:05 UTC). TOUJOURS PAS ÉPROUVÉ CONTRE STRIPE.**
 >
@@ -1441,7 +1513,17 @@ question est donc rouverte, et **maintenant mesurable**.
 
 - **Fini quand** : une décision écrite, appuyée sur une mesure prise avec `VITE_SENTRY_DSN` posée.
 
-### C-14 · ~~Le budget d'entrée est DÉPASSÉ, de 0,1 ko~~ · **P1 · M** · ✅ fermé le 2026-09-11
+### C-14 · Le budget d'entrée est DÉPASSÉ · **P1 · M** · 🔴 **RÉOUVERT le 2026-09-14 — le correctif n'a jamais été commité**
+
+> 🔴 **Ce qui suit décrit un arbre de travail local, pas `main`.** Mesuré le 2026-09-14 :
+> `src/lib/toast.ts` n'existe dans **aucun** commit du dépôt, et `scripts/check-bundle-budget.mjs`
+> n'a pas bougé depuis `65c3e21c` (2026-09-04), donc les plafonds en vigueur sont **78 000** et
+> **370 000**, pas 71 000 et 323 000. Le dernier run vert de `main` (`34783058643`, 09-13 21:13)
+> rend une entrée à **76,9 ko** : au-dessus du plafond que cet item déclare avoir posé.
+> **Le critère de sortie n'est donc pas tenu sur `main`.** Cause et geste : **C-76**.
+>
+> ⚠️ Le tableau ci-dessous reste juste **de la mesure qui a été faite le 09-11**, sur cet arbre de
+> travail. Il est conservé tel quel : il dit quel gain attend d'être commité, et par quel levier.
 
 > ✅ **Critère atteint, sur les DEUX budgets, et pour la bonne raison.** Remesuré le 2026-09-11
 > sur un build avec `VITE_SENTRY_DSN` (`sentry-client` 49,3 ko, la garde valide) :
@@ -1533,6 +1615,48 @@ un arbre propre, pas en le supposant.
   i18n de l'entrée, les dépendances tirées par le shell, et C-13.
 - **Fini quand** : `npm run check:bundle` rend au moins 5 % de marge sur les deux budgets, sur un
   build avec `VITE_SENTRY_DSN`.
+
+---
+
+### C-76 · La façade `toast` et les deux plafonds abaissés ne sont dans AUCUN commit · **P1 · S** · 🆕 2026-09-14
+
+Trouvé en vérifiant `C-14` à sa source plutôt qu'en relisant sa note. Ce n'est pas un défaut de
+code : **le code est écrit, testé, et il n'est pas dans le dépôt.**
+
+**Mesuré le 2026-09-14**, `git ls-files` et `git log --all` :
+
+| Fichier | État |
+|---|---|
+| `src/lib/toast.ts` (façade, `sonner` en `import()` différé) | présent sur le disque, **non suivi par git**, aucun commit sur aucune branche |
+| `src/lib/toast.guard.test.ts` (4 tests, dont un témoin) | idem — **la garde ne tourne donc jamais en CI** |
+| `scripts/check-bundle-budget.mjs` | commité, mais dans sa version du **2026-09-04** : plafonds 78 000 / 370 000 |
+| 57 fichiers passés à `@/lib/toast` | **non commités** ; 5 fichiers produit de `main` importent encore `sonner` directement |
+
+**Ce que ça a déjà coûté**, et qui rend l'item urgent plutôt que cosmétique : trois commits
+`fix(build)` d'autres sessions — `9f641e27` (09-13), `9d4039a5` et `82584af8` (09-14) — **reviennent**
+chacun d'un import `@/lib/toast` vers `sonner`, parce qu'un fichier commité importait un module que
+git ne suit pas : vert en local, **rouge au build Vercel**. La garde
+`scripts/tracked-imports.guard.test.mjs` a fait son travail les trois fois ; personne n'a remonté la
+cause, qui est en amont.
+
+⚠️ **Conséquence sur `CLAUDE.md`** : la section « Toasts » énonce une règle (« `sonner` ne s'importe
+que dans `src/lib/toast.ts`, en `import()` dynamique ») qui **ne décrit pas `main`**. Tant que le
+commit n'est pas fait, la règle est invérifiable et invérifiée.
+
+⚠️ **L'arbre de travail porte 69 fichiers modifiés et 2 non suivis**, et plusieurs sessions
+travaillent ici. Ne rien commiter en bloc : n'indexer que les fichiers de cette passe, après avoir
+relu `git status`. Indexer le fichier d'une autre session peut commiter un import vers un module
+non suivi — c'est littéralement le défaut ci-dessus.
+
+- **Où** : `src/lib/toast.ts`, `src/lib/toast.guard.test.ts`, `scripts/check-bundle-budget.mjs`,
+  les 57 consommateurs, `docs/PERFORMANCE.md`.
+- **Fini quand** : la façade et sa garde sont **suivies par git**, `npm test` passe
+  `toast.guard.test.ts` en CI, `npm run check:bundle` tourne sur les plafonds **71 000 / 323 000**
+  et sort vert sur un build fait **avec** `VITE_SENTRY_DSN`, `grep -rl "from 'sonner'" src/` ne rend
+  plus que `src/lib/toast.ts` et sa garde, et la note de **C-14** cite le commit et la mesure du run
+  CI qui l'a vérifié — pas une mesure locale.
+
+---
 
 ### C-67 · ~~La landing bloque le fil principal **71 % du temps AU REPOS**, et ce sont ses flous~~ · **P1 · M** · ✅ corrigé le 2026-09-03
 
@@ -1875,6 +1999,14 @@ dormir ailleurs.
 
 ### C-58 · Le blocage sécurité qui forçait React 19 est déjà levé · **P3 · XS** · trouvé par l'audit A-6
 
+> 🟠 **Ce n'est plus un chantier, c'est un arbitrage — et la branche prend du retard.** Mesuré le
+> 2026-09-14 : `feat/react-19` porte la migration jouée (`b101be9f`, `7a1b9940`), tout est vert
+> **sauf `check:bundle`**, et elle est désormais **2 commits devant `main` mais 48 derrière**.
+> Plus elle attend, plus le rebase coûte. ⚠️ Son chiffre de sortie (chemin critique 329,8 ko contre
+> un plafond de 323,0) a été mesuré contre un plafond **qui n'est pas celui de `main`** : `main`
+> porte encore 370 000 (cf. **C-76**). Retrancher la décision tant que C-76 n'est pas commité
+> reviendrait à arbitrer sur un plafond fictif.
+
 `CLAUDE.md` et `faille.md` décrivaient un piège à deux CVE (`GHSA-qwww-vcr4-c8h2`,
 `GHSA-wrjc-x8rr-h8h6`) sans issue sous React 18. **Mesuré contre trois sources indépendantes**,
 ce n'est plus vrai depuis le 2026-07-28 :
@@ -2205,7 +2337,16 @@ C-29, conséquence bien plus faible.
 - **Fini quand** : l'échec est distingué de l'absence de session, et le corps du message dit
   « auteur non résolu » plutôt que « non connecté (anonyme) ».
 
-### C-39 · N'importe quel ADMIN peut supprimer l'entreprise depuis l'écran, et la cascade emporte tout · **P1 · M**
+### C-39 · N'importe quel ADMIN peut supprimer l'entreprise depuis l'écran, et la cascade emporte tout · **P1 · M** · 🟠 **bloqueur LEVÉ le 2026-09-12**
+
+> ✅ **Remesuré le 2026-09-14 : `stripe-org-refund` EST en production**, v5 du 2026-09-12 à
+> 22:05 UTC, et le job `Edge deploy drift` du 09-14 à 10:57 confirme qu'elle est identique au
+> dépôt. Le seul blocage que la note du 09-12 opposait à la fermeture de cet item est donc tombé.
+>
+> 🔴 **Ce qui reste n'est plus un geste, c'est une épreuve** : le parcours nominal
+> (rembourser → résilier → supprimer) **n'a jamais été joué une seule fois de bout en bout**, ni
+> en démo ni contre le compte Stripe de test. Tant qu'il ne l'a pas été, cet item ne se coche pas :
+> « déployée » n'est pas « éprouvée », et c'est précisément la distinction que `C-65` porte.
 
 > 🟠 **TOUJOURS À MOITIÉ au 2026-09-12 — la moitié SQL est livrée, la moitié Stripe non.**
 > La mig. **138 est APPLIQUÉE en prod le 2026-09-12** : `delete_organization` exige
@@ -3818,7 +3959,15 @@ Depuis, les trois appels de contrôle ont rendu `401` / `401` / `200` et le work
 ne peut la refaire partir. 🔴 **Un nouveau « CRON_SECRET absent » serait donc un vrai incident**,
 pas un écho.
 
-### C-34 · `renewal-notice.yml` sort en VERT quand son secret est absent · **P1 · XS**
+### C-34 · `renewal-notice.yml` sort en VERT quand son secret est absent · **P1 · XS** · ✅ **fermé le 2026-09-13**
+
+> ✅ **`CRON_SECRET` est posé dans les secrets Actions le 2026-09-13 à 16:21:34 UTC**, lu par
+> `gh secret list` le 09-14. Le `workflow_dispatch` joué 62 secondes plus tard est **vert**
+> (`34768378680`), et la garde échoue désormais bruyamment quand le secret manque.
+>
+> ⚠️ **Réserve, dite plutôt que tue : aucun run PLANIFIÉ n'a encore été vert.** Les six derniers
+> `schedule` (09-09 au 09-13 12:41) ont tous échoué — tous **antérieurs** à la pose du secret. Le
+> prochain tombe vers 12:10 UTC. Un dispatch prouve le chemin, il ne prouve pas le cron.
 
 > ✅ corrigé le 2026-09-04 · secret absent = `exit 1`, plus un témoin qui refuse un run où `curl` n'a rendu aucun code HTTP.
 
@@ -4008,6 +4157,43 @@ différentes**.
 - **Fini quand** : un script de CI lit les sources déployées (API Management) et échoue si l'une
   diffère du dépôt, avec un témoin ; et chaque statut de finding portant sur une Edge Function cite
   sa version déployée. Les déploiements eux-mêmes sont des gestes d'Axel : `a-faire-manuel.md`.
+
+### C-75 · La CI de `main` est ROUGE depuis le 2026-09-13 à 21:38, sept runs d'affilée · **P0 · S** · 🆕 2026-09-14
+
+Aucune ligne de ce fichier ne le disait : le dernier run vert de `main` est `34783058643`
+(2026-09-13 21:11 UTC). Les sept suivants échouent, tous au même endroit — l'étape
+**« Unit tests + coverage »** de `lint-test-build` — donc **`Build` et `Budget de bundle` ne
+tournent même plus**, et personne ne mesure plus le bundle depuis quatorze heures.
+
+**Trois assertions, relevées dans le journal du run `34838656203` (commit `82584af8`)** :
+
+| Garde | Assertion |
+|---|---|
+| `src/architecture.guard.test.ts` | `src/components/event-modal/EventModalFormDesktop.tsx` **662 lignes** et `src/components/task-modal/TaskModalMobileBody.tsx` **651**, budget **600** |
+| `src/design-system.guard.test.ts` | « **76** tailles sous 11px détectées (référence : 75) » |
+| `src/design-system.guard.test.ts` | « Stock de tailles arbitraires : **200** > budget 196 » |
+
+Les deux fichiers pèsent **661** et **650** lignes à `HEAD` comme dans l'arbre de travail (le
+décompte de la garde ajoute la ligne finale). Les trois cliquets ont mordu sur la vague
+**sous-catégories / agenda** livrée les 2026-09-13 et 09-14 (`b0416b38`, `981ba288`, `2428fd56`,
+`1d241398`, `e6a887df`).
+
+- 🔴 **Ce sont des cliquets qui font leur travail, pas des faux positifs.** ❌ Ne JAMAIS relever un
+  des trois chiffres pour reverdir la CI : `C-09` dit ce que coûtent les god components (« les
+  douze qu'il a fallu reprendre en 2026 sont TOUS arrivés juste au-dessus », quinze mois pour
+  revenir à zéro), et le plancher de 11 px est le plancher **mobile**, pas une préférence.
+- ⚠️ **Un test rouge ne dit pas où est le défaut** (leçon de `C-72` / `C-73` / `C-74`, trois fois en
+  une journée) : sur les tailles, vérifier d'abord que les 76 et les 200 sont bien de **nouvelles**
+  chaînes de cette vague, et non un détecteur qui voit mieux depuis la correction de `C-73`.
+- ⚠️ Le run de `HEAD` (`34839855435`) échoue au même endroit : ce n'est pas un commit isolé.
+
+- **Où** : les deux composants ci-dessus, plus les tailles introduites par la vague
+  sous-catégories (`TeamCategoryTreeSelect`, `CategoryFilterBar`, les sélecteurs arborescents).
+- **Fini quand** : un run CI **vert sur `main`**, sans qu'aucun des trois chiffres de garde ait été
+  relevé, et `Budget de bundle` a de nouveau tourné (il est resté muet depuis le 09-13 21:13).
+  Chaque découpe cite le nombre de lignes avant / après.
+
+---
 
 ### C-36 · `report-bug` et `renewal-notice` n'ont aucune garde, d'aucune sorte · **P2 · S**
 
@@ -4429,6 +4615,62 @@ avant que sa note ne change : ledger de migrations et versions déployées lus p
 exécutées, sondes jouées. Recopier une note depuis un tableau plus ancien est le défaut que ce
 fichier documente lui-même (§ Documentation de `CLAUDE.md`), et il a déjà frappé trois fois ici.
 
+### 11.0quater Recompté le 2026-09-14 — **76 items : 68 clos, 6 commencés, 2 ouverts**
+
+Deux items neufs (`C-75`, `C-76`), un item **rouvert** (`C-14`), six fermés depuis le 09-12. Les
+trois listes s'égrènent, comme toujours : un total qu'on ne peut pas réciter ne prouve rien.
+
+#### ✅ Fini (68)
+
+`C-01` `C-02` `C-03` `C-04` `C-05` `C-06` `C-07` `C-08` `C-09` `C-10` `C-11` `C-12` `C-13` `C-15`
+`C-16` `C-17` `C-18` `C-19` `C-20` `C-21` `C-22` `C-23` `C-25` `C-26` `C-27` `C-28` `C-29` `C-30`
+`C-31` `C-32` `C-33` `C-34` `C-35` `C-36` `C-37` `C-38` `C-40` `C-41` `C-42` `C-43` `C-44` `C-45`
+`C-46` `C-47` `C-48` `C-49` `C-50` `C-51` `C-52` `C-53` `C-54` `C-55` `C-56` `C-57` `C-59` `C-60`
+`C-61` `C-62` `C-63` `C-64` `C-66` `C-67` `C-68` `C-70` `C-71` `C-72` `C-73` `C-74`
+
+Les six entrées depuis le 2026-09-12, chacune vérifiée à sa source ce jour :
+
+| Item | Ce qui le ferme | Mesure du 2026-09-14 |
+|---|---|---|
+| `C-18` | les 7 avis `npm audit` sont tombés (`99a9a939`, sur `main`) | `npm audit` rend **0**, dev compris |
+| `C-23` | dispense `color-contrast` tranchée et motivée le 09-13 | — |
+| `C-28` | le canal d'alerte DÉLIVRE et il est **lu** | secret présent depuis le 09-02 09:13:47 UTC |
+| `C-31` `C-48` `C-30` | migrations `137` `138` `139` | les trois au ledger de prod, relu en base ce jour |
+| `C-34` | `CRON_SECRET` **posé le 09-13 à 16:21:34 UTC**, dispatch vert 62 s plus tard | ⚠️ aucun run **planifié** n'a encore été vert : les six derniers `schedule` ont échoué, le prochain tombe ce jour vers 12:10 UTC. Le relire avant de citer cet item comme preuve |
+| `C-35` | `SUPABASE_ACCESS_TOKEN` posé le 09-13 à 09:34 UTC | job `Edge deploy drift` **vert ce matin** (`34835729819`, 10:57) : **8** fonctions identiques au dépôt |
+
+#### 🟠 Commencé (6)
+
+`C-14` `C-24` `C-39` `C-58` `C-65` `C-76`
+
+Deux familles, et les confondre fait perdre le seul renseignement utile :
+
+- **écrit, mais pas dans le dépôt** : `C-14` + `C-76` — un seul et même geste, un **commit**. C'est
+  le seul endroit du fichier où du travail fini ne produit rien *parce qu'il n'a pas été poussé*,
+  et non parce qu'il attend la production.
+- **critère non atteint** : `C-24` (moitié « appareil réel » de A-4), `C-58` (React 19 : branche
+  verte sauf `check:bundle`, **48 commits de retard** sur `main`), `C-39` (son seul bloqueur est
+  **levé** — `stripe-org-refund` est en ligne en v5 depuis le 09-12 22:05 — il reste à rejouer le
+  parcours une fois de bout en bout), `C-65` (déployée, **jamais éprouvée contre Stripe**).
+
+🔴 **`C-39` et `C-65` : plus aucun geste n'est en attente.** Le § 11.1b du 09-12 disait
+« `stripe-org-refund` n'existe pas en production » ; elle y est. Ce qui reste n'est plus un
+déploiement, c'est une **épreuve** : rien n'a jamais été joué contre Stripe, sur aucun des deux.
+
+#### ⬜ Pas commencé (2)
+
+- `C-75` — la CI de `main` est rouge depuis le 09-13 21:38, **sept runs**. Neuf, rien n'y a été
+  engagé. C'est le seul P0 du fichier.
+- `C-69` — la fenêtre produit tourne sans pause : **arbitré « on garde »** le 2026-09-03. Ne
+  s'exécute que si la décision change.
+
+> 🔴 **Ce que ce décompte ne dit pas.** « 68 clos » ne veut pas dire « 68 problèmes disparus » :
+> `C-14` était compté clos depuis trois jours sans qu'une ligne de son correctif soit dans le
+> dépôt. Un item se ferme sur une preuve **opposable** — un commit, un run, une version déployée
+> avec sa date — jamais sur un arbre de travail local.
+
+---
+
 ### 11.0ter Recompté le 2026-09-12 **au soir** — **74 items : 63 clos, 6 commencés, 5 ouverts**
 
 Huit items de plus sont clos depuis le décompte de l'après-midi (§ 11.0bis, conservé dessous, juste
@@ -4655,7 +4897,23 @@ Ils se lisent en **deux familles**, et les confondre fait perdre le seul renseig
   `C-26` est **sorti de cette liste le 2026-09-11** : couverture remesurée (31,32 L · 30,91 S ·
   24,56 F · 26,37 B), gate verte, seuils du glob remontés.
 
-### 11.1 🔴 Trois gestes qui ne sont pas du code, et qui bloquent du code déjà écrit
+### 11.1 ~~🔴 Trois gestes qui ne sont pas du code, et qui bloquent du code déjà écrit~~ · ✅ **les gestes sont faits, remesuré le 2026-09-14**
+
+> ✅ **Plus aucun geste de production n'est en attente.** Mesuré le 2026-09-14, à la source :
+> les **quatre** secrets sont posés (`RATE_LIMIT_SALT`, `CRON_SECRET` le 09-13 16:21:34 UTC,
+> `OPS_ALERT_WEBHOOK_URL` le 09-02, `SUPABASE_ACCESS_TOKEN` le 09-13 09:34) ; les **8** Edge
+> Functions sont actives et **identiques au dépôt** (job `Edge deploy drift` vert le 09-14 à
+> 10:57) ; le ledger porte **148** entrées, et les deux seules migrations hors base sont la
+> **`136`** (travail d'une autre session) et la **`140`** (délibéré, fenêtre de bascule Stripe).
+>
+> 🔴 **Le geste qui reste n'est pas en production, il est dans le dépôt : `git commit`.** Voir
+> **C-76** — la façade `toast`, sa garde et les deux plafonds abaissés ne sont dans aucun commit.
+>
+> ⚠️ **Ce qui reste après les gestes n'est pas « fini », c'est « non éprouvé »** : `C-65` et
+> `C-39` sont en ligne et **rien n'a jamais été joué contre Stripe**. Déployer n'est pas éprouver.
+>
+> Les tableaux ci-dessous sont conservés **à leur date** (2026-09-12), pour la traçabilité.
+
 
 Ce sont les seuls endroits où du travail livré ne produit **rien** en production.
 
