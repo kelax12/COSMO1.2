@@ -114,14 +114,19 @@ npm run build      # Build prod → dist/ (vite build + node prerender.mjs)
 npm run preview    # Prévisualiser le build
 npm run lint       # ESLint (doit retourner 0 erreur)
 npm run typecheck  # tsc -b (doit retourner 0 erreur)
-npm test           # Vitest (run once), 2 576 tests / 227 fichiers, ZERO echec
-                   # (mesure du 2026-09-14, machine libre, ~5 min).
+npm test           # Vitest (run once), 2 586 tests / 228 fichiers, ZERO echec
+                   # (mesure du 2026-09-14 au soir, machine libre, ~5 min).
                    # Mesure precedente : 2 051 / 179, le 2026-09-02.
 npm run test:watch # Vitest en mode watch
 npm run test:coverage       # + couverture v8, seuils globaux et par fichier
-                            # ✅ VERTE au 2026-09-11 : 31,32 L · 30,91 S · 24,56 F · 26,37 B
-                            # (2 470 tests / 221 fichiers, zero echec). Mesure precedente,
-                            # le 2026-08-29 : 29,17 L · 28,81 S · 23,41 F · 24,17 B.
+                            # ✅ VERTE au 2026-09-14 : 31,15 L · 30,73 S · 24,41 F · 26,31 B
+                            # (2 586 tests / 228 fichiers, zero echec, exit 0).
+                            # Mesures precedentes : 31,32 L le 2026-09-11 (2 470 / 221),
+                            # 29,17 L le 2026-08-29.
+                            # ⚠️ Les pourcentages BAISSENT legerement alors que 116 tests
+                            # ont ete AJOUTES : le denominateur a bouge aussi (code neuf
+                            # non couvert). Un taux de couverture ne se lit jamais seul,
+                            # toujours avec le nombre de lignes qu'il rapporte.
                             # ❌ NE JAMAIS baisser un seuil pour repasser au vert.
                             # 🔴 Le cliquet du glob `supabase.repository.ts` A MORDU le
                             # 2026-09-08 : `functions` est tombe a 89,83 %, sous son seuil
@@ -243,12 +248,20 @@ npm run profile:landing     # Profil du fil principal d'une page (CPU bride, via
                             # dominant tout. Un ecart entre deux PAGES ne se lit donc que sur le
                             # runner ; l'outil sert a comparer un AVANT/APRES sur la meme page.
 npm run check:bundle        # Budget de bundle sur le build reel (CI, apres npm run build)
-                            # Plafonds au 2026-09-11 : chemin critique < 323 000 o gzip
-                            # (mesure 306,3 ko, marge 5,2 %), entree < 71 000 o
-                            # (mesure 66,9 ko, marge 5,8 %). Les deux ont ETE
-                            # ABAISSES ce jour-la, la mesure ayant baisse de
-                            # 10,1 ko des deux cotes (sonner sort du chemin
-                            # critique, cf. § Toasts).
+                            # Plafonds EN VIGUEUR DANS LE DEPOT depuis le 2026-09-14
+                            # (commit `7134d7fe`, run CI `34846164939` vert) :
+                            # chemin critique < 323 000 o gzip (mesure 306,6 ko,
+                            # marge 5,1 %), entree < 71 000 o (mesure 66,9 ko,
+                            # marge 5,8 %). Les deux ont ETE ABAISSES, la mesure
+                            # ayant baisse de 10,1 ko des deux cotes (sonner sort
+                            # du chemin critique, cf. § Toasts).
+                            # 🔴 CES DEUX CHIFFRES ONT VECU TROIS JOURS DANS UN
+                            # ARBRE NON COMMITE. Ce fichier les annoncait comme
+                            # en vigueur pendant que `main` portait encore
+                            # 78 000 / 370 000, et une branche a ete arbitree
+                            # contre un plafond qui n'existait nulle part
+                            # (cf. C-58). Un plafond se relit dans le fichier
+                            # COMMITE, jamais dans celui qu'on vient d'editer.
                             # ⚠️ Ils sont poses a ~5 % au-dessus du mesure, pas
                             # a ~1,5 % comme les precedents : le critere de sortie
                             # de C-14 exige 5 % de marge sur les DEUX budgets, et
@@ -532,6 +545,20 @@ Garde-fous propres à cette zone :
   le point de non-retour, donc le second appel peut trouver le remboursement déjà posé et résilier
   un abonnement dont l'écran vient d'annoncer que rien n'avait été résilié. **On fait retenter la
   PERSONNE, jamais le navigateur.**
+- 🔴 **Les deux verrous anti-rejeu du remboursement ne se remplacent PAS, et c'est contre-intuitif.**
+  La clé d'idempotence Stripe dérivée de l'`invoice_id` (verrou 1) **expire** : elle n'arrête que
+  deux appels **concurrents**. Un rejeu à quelques minutes n'est arrêté que par le pré-contrôle qui
+  RETRANCHE le déjà-rendu (verrou 2), dont l'arithmétique vit dans
+  `supabase/functions/_shared/refund-replay.ts`.
+  ❌ **Ne jamais remettre cette arithmétique dans l'entrypoint Deno.** Mélangée aux appels Stripe,
+  elle n'est exécutable par aucun test — et elle ne l'a été par aucun jusqu'au 2026-09-14, pendant
+  tout le temps où le dépôt déclarait « une borne ». C'est un module TS pur, couvert par 10 cas
+  (`src/modules/billing/refund-replay.test.ts`), et `src/refund.guard.test.ts` **interdit** de le
+  recopier sur place. Déployée en **v6** le 2026-09-14, identique au dépôt (`check:edge` vert).
+  ⚠️ **Deux erreurs symétriques y sont couvertes nommément** : un remboursement `pending` compte
+  comme rendu (sinon on rembourse par-dessus un virement en vol), un `failed` ou `canceled` ne
+  compte pas (sinon on prive la personne de son argent après un échec bancaire). ❌ Ne jamais
+  l'écrire « par exclusion » (`status !== 'succeeded'`) : `pending` serait alors ignoré.
 - ⚠️ **Après un remboursement, l'abonnement se RELIT.** Sans invalidation, l'écran continuait
   d'afficher le forfait payant *et* son bouton de remboursement : il invitait exactement le rejeu
   que la borne serveur existe pour absorber. Le bloc est par ailleurs conditionné à
@@ -1348,6 +1375,14 @@ import { toast } from 'sonner';        // ❌ jamais, y compris dans une page la
 toast.success('Message'); toast.error('Erreur');
 // Jamais depuis un repository ni depuis normalizeApiError
 ```
+
+✅ **Cette règle décrit `main` depuis le 2026-09-14** — commit `7134d7fe`, run CI
+`34846164939` vert sur les cinq jobs. ⚠️ Elle ne le décrivait PAS pendant les
+trois jours précédents : la façade existait sur un disque et dans aucun commit,
+donc la règle était **invérifiable**, et trois `fix(build)` d'autres sessions
+sont revenus à `sonner` parce que le module importé n'était pas suivi par git
+(vert en local, rouge au build Vercel). Une règle qui ne s'appuie sur rien de
+commité n'est pas une règle, c'est une intention.
 
 🔴 **`sonner` ne s'importe que dans `src/lib/toast.ts`, et seulement en
 `import()` dynamique.** La façade expose la même surface (`toast(...)`,

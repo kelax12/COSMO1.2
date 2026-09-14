@@ -153,7 +153,38 @@ d'autorisation** :
 
 ---
 
-## Gardes automatiques · état au 2026-08-25
+## Gardes automatiques · **remesurées le 2026-09-14**
+
+🔴 **Le tableau qui suivait datait du 2026-08-25 et affichait « 1 736 tests / 151 fichiers » — la
+suite en compte 2 586 sur 228.** Vingt jours de dérive, sur une page dont le métier est de dire
+où on en est. Il est conservé sous celui-ci, à sa date. Tout ce qui suit a été **joué ce jour**,
+advisors compris.
+
+| Garde | Résultat au 2026-09-14 | Au 2026-08-25 |
+|---|---|---|
+| `npm run check:rls` | ✅ **132 policies sur 106 migrations, 0 violation** | 128 / 81 |
+| `npm run validate:migrations` | ✅ **152 fichiers, 0 erreur, 6 avertissements** — les **mêmes** 6 qu'au 08-25, aucune des 29 migrations depuis n'en a ajouté | 127 fichiers, mêmes 6 |
+| `npm run typecheck` · `npm run lint` | ✅ 0 erreur (35 warnings Fast-refresh tolérés) | 0 erreur, 27 warnings |
+| `npm run i18n:check` | ✅ **23 namespaces**, 0 erreur, 0 avertissement | 19 namespaces |
+| `npm test` | ✅ **2 586 tests / 228 fichiers**, zéro échec | 1 736 / 151 |
+| `npm run test:coverage` | ✅ verte, exit 0 — 31,15 L · 30,73 S · 24,41 F · 26,31 B | 26,96 L / 26,65 S |
+| `npm run check:edge` | ✅ **8 fonctions vérifiées, le code déployé est celui du dépôt** (job `Edge deploy drift`, run `34861975638`) | n'existait pas |
+| Advisors Supabase (sécurité) | **9** INFO `rls_enabled_no_policy`, **52** WARN `authenticated_security_definer_…`, **2** WARN `anon_security_definer_…`, **1** WARN `auth_leaked_password_protection` | 5 / 51 / 2 / 1 |
+| Migrations appliquées en prod | ✅ ledger à **148 entrées**, dernière `148_team_categories_tree_merge` (2026-09-13). Hors base : la `136` (travail d'une autre session) et la `140` (délibéré, elle se joue DANS la fenêtre de bascule Stripe) | jusqu'à `123` |
+
+⚠️ **Les quatre `rls_enabled_no_policy` de plus ne sont pas une régression** : ce sont
+`payment_records`, `payment_closures`, `rate_limits` et `renewal_notices`, toutes créées depuis, et
+toutes en **deny-all volontaire** — un journal scellé et un cache de défense n'ont aucune raison
+d'être lisibles par le client. Les cinq autres sont les tables analytiques déjà documentées.
+
+⚠️ **La 52ᵉ fonction `SECURITY DEFINER` exécutable par `authenticated`** est `my_org_badge_tasks`
+(mig. `142`). Elle l'est pour la seule raison qui vaut : appeler `my_team_project_ids`, dont
+`EXECUTE` est révoqué à `authenticated`. Son autorisation est celle de `get_my_team_tasks`, reprise
+mot pour mot.
+
+---
+
+## Gardes automatiques · état au 2026-08-25 · *conservé à sa date*
 
 | Garde | Résultat |
 |---|---|
@@ -540,6 +571,19 @@ le 02/07, 4 `customer.subscription.deleted` le 31/07), 0 ligne dans `payment_rec
 > de TEST), donc aucune obligation n'a été manquée — mais « le journal couvre tout » est faux, et
 > une phrase pareille se dit vite devant un contrôleur.
 
+> ⚠️ **Les numéros de version de ce tableau ont été RECORRIGÉS le 2026-09-14**, relus par l'API
+> Management : `stripe-webhook` est en **v33** et `renewal-notice` en **v13**, pas v32 et v12. Ils
+> étaient décalés d'une unité — et c'est un défaut instructif : la règle « cite la version
+> déployée » a bien été appliquée, mais le chiffre a été **écrit de mémoire juste après un
+> déploiement**, donc avant que l'API ne le confirme. Une version se relit, elle ne se déduit pas
+> d'un « je viens de déployer ». Le CONTENU, lui, était juste : le job `Edge deploy drift` est vert.
+>
+> 📋 **Les huit fonctions, relevées par l'API le 2026-09-14 à 15:30 UTC** — `stripe-webhook` **v33**
+> (09-13 16:12) · `delete-account` **v17** (09-13 10:16) · `renewal-notice` **v13** (09-13 10:12) ·
+> `report-bug` **v12** (09-12 23:08) · `stripe-org-refund` **v6** (**09-14 15:24**) ·
+> `stripe-org-checkout` **v15** (09-08 06:31) · `stripe-org-portal` **v12** (09-08 06:32) ·
+> `stripe-create-checkout` **v23** (09-06 19:28).
+>
 > 🔴 **Chaque état ci-dessous cite désormais la VERSION DÉPLOYÉE, pas le commit.** Jusqu'au
 > 2026-09-13 ils disaient « ✅ corrigé » en décrivant `main`, et trois d'entre eux étaient FAUX
 > de la production : `renewal-notice` en ligne portait encore le défaut S-4, et `stripe-webhook`
@@ -550,11 +594,11 @@ le 02/07, 4 `customer.subscription.deleted` le 31/07), 0 ligne dans `payment_rec
 
 | # | Finding | Gravité | État |
 |---|---|---|---|
-| S-1 | Le pré-contrôle d'idempotence avalait son erreur → rejeu possible de `bump_win_streak` | 🟡 | ✅ corrigé · **`stripe-webhook` v32, déployée le 2026-09-13 à 16:12 UTC** |
-| S-2 | `getUidFromCustomer` avalait son erreur → paiement encaissé, abonnement jamais appliqué | 🟠 | ✅ corrigé · **`stripe-webhook` v32, déployée le 2026-09-13 à 16:12 UTC** |
+| S-1 | Le pré-contrôle d'idempotence avalait son erreur → rejeu possible de `bump_win_streak` | 🟡 | ✅ corrigé · **`stripe-webhook` v33, déployée le 2026-09-13 à 16:12 UTC** |
+| S-2 | `getUidFromCustomer` avalait son erreur → paiement encaissé, abonnement jamais appliqué | 🟠 | ✅ corrigé · **`stripe-webhook` v33, déployée le 2026-09-13 à 16:12 UTC** |
 | S-3 | `subscriptions.stripe_customer_id` sans contrainte UNIQUE, alors que le code en dépend | ✅ | mig. `134` **appliquée en prod le 2026-09-02**, doublon refusé en 23505 (vérifié) |
-| S-4 | `renewal-notice` : expéditeur par défaut sur un domaine que Resend ne signera jamais | 🟠 | ✅ corrigé · **`renewal-notice` v12, déployée le 2026-09-13 à 10:52 UTC**. 🔴 Ce « ✅ corrigé » était écrit depuis le 2026-09-02 et la PROD portait toujours le défaut : mesuré le 09-13, la v11 en ligne avait encore `?? 'Cosmo <bug@thecosmo.app>'` |
-| S-5 | Un event tardif d'un ANCIEN abonnement peut dégrader l'org qui vient de repayer | 🟠 | ✅ corrigé · **`stripe-webhook` v32, déployée le 2026-09-13 à 16:12 UTC** |
+| S-4 | `renewal-notice` : expéditeur par défaut sur un domaine que Resend ne signera jamais | 🟠 | ✅ corrigé · **`renewal-notice` v13, déployée le 2026-09-13 à 10:12 UTC**. 🔴 Ce « ✅ corrigé » était écrit depuis le 2026-09-02 et la PROD portait toujours le défaut : mesuré le 09-13, la v11 en ligne avait encore `?? 'Cosmo <bug@thecosmo.app>'` |
+| S-5 | Un event tardif d'un ANCIEN abonnement peut dégrader l'org qui vient de repayer | 🟠 | ✅ corrigé · **`stripe-webhook` v33, déployée le 2026-09-13 à 16:12 UTC** |
 | S-6 | La renonciation au droit de rétractation ne quitte jamais le navigateur | ✅ | corrigé · mig. `135` **appliquée en prod le 2026-09-02**, immuabilité et cloisonnement vérifiés |
 
 ### ✅ S-1 · le pré-contrôle d'idempotence avalait son erreur
@@ -681,15 +725,66 @@ encaisser sans preuve.
 - `allow_promotion_codes` délègue les coupons à Stripe : aucune surface de brute-force côté COSMO.
 - Aucun message d'erreur brut n'est renvoyé à l'appelant.
 
+### 🆕 Hors périmètre de l'audit du 09-02 : `stripe-org-refund` — le chemin qui REND de l'argent
+
+Cette fonction **n'existait pas** le 2026-09-02 : elle est née le 09-12. L'audit ne pouvait donc
+pas la voir, et il ne faut pas lire son « aucun finding critique » comme couvrant ce chemin-là.
+État relevé le **2026-09-14**, version déployée **v6** (09-14 15:24 UTC), identique au dépôt
+(`Edge deploy drift` vert, run `34861975638`).
+
+**Ce qui la protège, et ce que chaque verrou couvre exactement** — ils ne se remplacent pas :
+
+| Verrou | Ce qu'il arrête | Ce qu'il n'arrête PAS |
+|---|---|---|
+| clé d'idempotence Stripe dérivée de l'`invoice_id` | deux appels **concurrents** | un rejeu tardif : **la clé d'idempotence Stripe expire** |
+| pré-contrôle qui RETRANCHE le déjà-rendu (`_shared/refund-replay.ts`) | le rejeu tardif, et le remboursement partiel réémis | rien de ce qui précède l'appel |
+| double bornage par l'encaissé (ici + `refundAmount`) | rendre plus que perçu | — |
+
+🔴 **Le deuxième verrou n'a eu AUCUN test jusqu'au 2026-09-14**, alors que cet item déclarait
+« une borne » depuis le 09-04. Son arithmétique vivait en ligne dans l'entrypoint Deno, entre deux
+appels réseau : inexécutable par quoi que ce soit. Elle est désormais un module TS pur, couvert
+par 10 cas (nominal, rejeu, période déjà remboursée, plus un **témoin** qui refuse un zéro
+constant), et **vu rouge sur trois sabotages** avant d'être commité.
+
+⚠️ **Deux erreurs symétriques y sont couvertes nommément**, parce qu'elles coûtent de l'argent dans
+les deux sens : un remboursement `pending` compte comme rendu (sinon on rembourse par-dessus un
+virement en vol) ; un `failed` ou `canceled` ne compte pas (sinon on prive la personne de son
+argent après un échec bancaire, définitivement, sans qu'aucun écran ne le dise).
+
+🔴 **Ce qui reste NON PROUVÉ, et qu'aucun test de ce dépôt ne peut prouver** : `refunds.create`, la
+résiliation immédiate et la ligne compensatoire négative du journal **n'ont jamais tourné contre
+Stripe**. `org_subscriptions` et `payment_records` sont à zéro ligne, il n'existe aucune facture à
+rembourser. Et un doute mesurable reste ouvert : le webhook traite **six** types d'events, or
+`charge.refunded` n'est arrivé qu'avec la v27 du 09-06 — **rien ne dit que l'endpoint a été mis à
+jour avec elle**. Si l'event n'est pas souscrit, la branche est en ligne et ne reçoit jamais rien :
+le journal montrerait un encaissement sans son remboursement. Gestes : `a-faire-manuel.md`
+**M-37c** puis **M-37b**.
+
+---
+
 ### ⚠️ Deux angles morts que cet audit ne pouvait pas couvrir
 
 1. **Le passage en compte live.** `stripe-org-checkout` et `stripe-org-portal` réutilisent le
    `stripe_customer_id` et le `stripe_subscription_id` enregistrés. Ceux d'aujourd'hui vivent dans
-   le compte de TEST : le jour où `STRIPE_SECRET_KEY` devient une clé live, chaque appel
-   `subscriptions.retrieve` / `billingPortal.sessions.create` sur un identifiant de test répondra
-   404, donc 500. **Le basculement doit donc s'accompagner d'une remise à zéro des identifiants
-   Stripe en base**, sans quoi les organisations existantes ne pourront ni souscrire ni gérer.
-   Aujourd'hui `org_subscriptions` est vide, donc le coût est nul — c'est le bon moment.
+   le compte de TEST : le jour où `STRIPE_SECRET_KEY` devient une clé live, un identifiant de test
+   présenté à une clé live répond `resource_missing` (404).
+
+   ✅ **Le CODE n'en fait plus un 500** (finding C-71, livré) : `_shared/stripe-errors.ts` expose
+   `isResourceMissing`, et les deux fonctions traitent ce cas-là comme « pas de customer » /
+   « pas d'abonnement en cours » plutôt que de lever. **Toute autre** erreur Stripe continue de
+   relancer — « en cas de doute, faire retenter Stripe, jamais deviner ». Testé
+   (`src/modules/billing/stripe-errors.test.ts`).
+
+   🔴 **La DONNÉE, elle, reste à nettoyer**, et c'est la mig. `140` (`reset_stripe_identifiers`),
+   **non appliquée**, à jouer DANS la fenêtre de bascule — jamais avant : tant que la clé est une
+   clé de test, chaque checkout réécrit un identifiant de test. Geste suivi en `a-faire-manuel.md`
+   **M-43**.
+
+   🔴 **« Aujourd'hui `org_subscriptions` est vide, donc le coût est nul » était FAUX d'une table
+   sur deux**, et cette phrase portait la décision. Mesuré en prod le 2026-09-04 : `org_subscriptions`
+   = 0 ligne, mais **`subscriptions` porte 5 `cus_…` et 2 `sub_…`** du compte de test. Le coût
+   n'est pas nul, il est faible — ce qui ne change pas la conclusion (« c'est le bon moment »)
+   mais change ce qu'il faut vérifier après la bascule.
 2. **Le cache `productIndex`** (`org-stripe-prices.ts`) n'est jamais invalidé en production
    (`resetProductIndex` n'a aucun appelant hors test). Un isolate Deno survit longtemps : après une
    rotation des secrets de prix, il continue d'indexer les anciens produits jusqu'à son recyclage.
