@@ -4,7 +4,7 @@
 // Extrait verbatim de EventModalForm (branche desktop), piloté par props.
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { X, Clock, CalendarIcon } from 'lucide-react';
+import { X, Clock, CalendarIcon, Ban } from 'lucide-react';
 import { format } from 'date-fns';
 import { getDateLocale } from '@/i18n/format';
 import { Button } from '@/components/ui/button';
@@ -507,6 +507,27 @@ const EventModalFormDesktop: React.FC<EventModalFormBodyProps> = ({
                             {cat.name}
                           </p>
                           <div className="grid grid-cols-4 gap-1.5">
+                            {/* « Aucune » — reste sur la couleur simple de la racine,
+                                sans se raffiner vers une sous-catégorie. Toujours en
+                                premier : c'est le choix le moins engageant. */}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                handleFieldChange("color", setColor, cat.color);
+                                setOpenSubcategoriesFor(null);
+                              }}
+                              className="relative w-9 h-9 rounded-lg border-2 transition-all hover:scale-105 shrink-0 flex items-center justify-center"
+                              style={{
+                                backgroundColor: "rgb(var(--color-hover))",
+                                borderColor: color === cat.color
+                                  ? "rgb(var(--color-text-primary))"
+                                  : "rgb(var(--color-border))",
+                              }}
+                              title={t('subcategoryNone')}
+                              aria-label={t('subcategoryNoneAria', { name: cat.name })}
+                            >
+                              <Ban size={16} style={{ color: "rgb(var(--color-text-muted))" }} aria-hidden="true" />
+                            </button>
                             {subs.map((sub) => (
                               <button
                                 key={sub.id}
