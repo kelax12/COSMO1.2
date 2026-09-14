@@ -20,7 +20,59 @@ Légende : 🔴 bloquant · 🟠 important · 🟡 à planifier · ✅ corrigé
 
 ---
 
-## Note de sécurité : 82 → 86 → 84 → 86 → **88 / 100** (2026-08-24 → 2026-09-02 → 2026-09-03 → 2026-09-14)
+## Note de sécurité : 82 → 86 → 84 → 86 → **88 / 100** (2026-08-24 → 2026-09-02 → 2026-09-03 → 2026-09-14) · **VÉRIFIÉE inchangée le 2026-09-14 au soir**
+
+> ### ⚪ 2026-09-14 (soir) · 0 : tout ce que cette note affirme a été rejoué, et deux angles morts s'ouvrent
+>
+> **Rejoué ce soir, contre le code de l'arbre ET contre la prod `ykeugqfgklejcdbrmawy`** :
+> `check:rls` (**132 policies sur 106 migrations, 0 violation**), `validate:migrations`
+> (**152 fichiers, 0 erreur, les 6 mêmes avertissements**), `typecheck` (0), `lint` (0 erreur,
+> **31** warnings), `npm test` (**228 fichiers / 2 586 passés**, exit 0), `test:coverage` (verte,
+> exit 0), et les advisors Supabase : **9 / 52 / 2 / 1**, à l'unité près ce que ce fichier
+> annonçait. Aucune régression.
+>
+> **Une vérification d'isolation en prod s'y ajoute, et elle n'avait jamais été faite sous cette
+> forme.** Dans une transaction annulée, en se plaçant dans le rôle `authenticated` avec les claims
+> d'un compte réel, `select * from tasks` rend **289 lignes sur les 750 de la base**, et le plan
+> affiche `Rows Removed by Filter: 461` : les 461 lignes des autres comptes sont examinées puis
+> **rejetées par la policy**. C'est une preuve directe, sur données réelles, que
+> `tasks_select_own_or_shared` filtre ce qu'elle doit filtrer.
+>
+> 🔴 **Angle mort D-1 · le ledger de migrations ne prouve pas ce qu'on lui fait dire.** Ce fichier
+> écrivait « ledger à 148 entrées ». Recompté : **138**. « 148 » est le NUMÉRO de la dernière
+> migration, recopié comme un total. Pire que l'erreur de chiffre, le raisonnement : comparé nom à
+> nom, **32 des 152 fichiers du dépôt n'ont aucune entrée au ledger** et **17 entrées n'ont aucun
+> fichier**. Les 32 SONT appliquées (vérifié objet par objet sur un échantillon dans le catalogue
+> Postgres), mais ce n'est jamais le ledger qui l'établit. **Aucune garde de ce dépôt ne surveille
+> ce recouvrement**, et `check:drift` ne le couvre pas : il compare un schéma, pas un journal.
+> C'est la version symétrique du défaut de la mig. `144` : là, une ligne au ledger ne prouvait pas
+> qu'un `CREATE OR REPLACE` avait pris ; ici, l'absence de ligne ne prouve pas qu'une migration
+> manque.
+>
+> 🔴 **Angle mort D-2 · `email_confirmed_at` est rempli pour tout le monde, et ne vérifie rien.**
+> Mesuré ce soir : **28 comptes sur 28 portent `email_confirmed_at`**, dont **26 à la seconde même
+> de leur création**, et **18 comptes sont créés par email + mot de passe** (10 par Google). La
+> confirmation d'adresse étant désactivée (décision d'Axel, cf. G-2), Supabase pose la colonne
+> d'office : **aucune de ces 18 adresses n'a jamais été prouvée**. Le danger n'est pas la décision,
+> qui est assumée et documentée ; c'est que la colonne qui sert partout à répondre « cette adresse
+> est-elle vérifiée ? » réponde **oui** pour des adresses que personne n'a vérifiées. ❌ Ne jamais
+> conclure de `email_confirmed_at IS NOT NULL` que l'adresse existe, tant que G-2 est ouvert : le
+> seul signal exploitable ici est `raw_app_meta_data->>'provider' = 'google'`, où c'est Google qui
+> a fait la vérification.
+>
+> ⚠️ **Ce que ce poste ne peut pas vérifier, et qui est donc repris de la CI, pas remesuré** :
+> `npm run check:edge` exige `SUPABASE_ACCESS_TOKEN`, absent de cet environnement. La non-dérive
+> des 8 Edge Functions reste établie par le job `Edge deploy drift` (run `34861975638`), pas par
+> une mesure d'aujourd'hui. Les **versions en ligne ont en revanche été relues ce soir par l'API**
+> et sont : `stripe-webhook` **v33**, `stripe-create-checkout` v23, `delete-account` **v17**,
+> `stripe-org-checkout` v15, `renewal-notice` v13, `report-bug` v12, `stripe-org-portal` v12,
+> `stripe-org-refund` **v6**.
+>
+> **La note ne bouge pas, et c'est le bon résultat** : rien n'a été durci aujourd'hui, rien n'a
+> cédé. Les deux angles morts ci-dessus sont des défauts de PREUVE, pas des vulnérabilités : ils ne
+> retirent pas de point parce que rien n'indique qu'ils masquent une faille, et ils n'en donnent
+> évidemment aucun.
+
 
 > ### 🟢 2026-09-14 · +2 : le seul verrou non testé d'un chemin qui déplace de l'argent l'est désormais
 >
@@ -190,13 +242,13 @@ advisors compris.
 |---|---|---|
 | `npm run check:rls` | ✅ **132 policies sur 106 migrations, 0 violation** | 128 / 81 |
 | `npm run validate:migrations` | ✅ **152 fichiers, 0 erreur, 6 avertissements** — les **mêmes** 6 qu'au 08-25, aucune des 29 migrations depuis n'en a ajouté | 127 fichiers, mêmes 6 |
-| `npm run typecheck` · `npm run lint` | ✅ 0 erreur (35 warnings Fast-refresh tolérés) | 0 erreur, 27 warnings |
+| `npm run typecheck` · `npm run lint` | ✅ 0 erreur, **31 warnings** Fast-refresh tolérés (rejoués le 2026-09-14 au soir ; « 35 » datait d'avant la suppression de `CategoryManager`) | 0 erreur, 27 warnings |
 | `npm run i18n:check` | ✅ **23 namespaces**, 0 erreur, 0 avertissement | 19 namespaces |
-| `npm test` | ✅ **2 586 tests / 228 fichiers**, zéro échec | 1 736 / 151 |
-| `npm run test:coverage` | ✅ verte, exit 0 — 31,15 L · 30,73 S · 24,41 F · 26,31 B | 26,96 L / 26,65 S |
+| `npm test` | ✅ **2 586 passés / 228 fichiers**, zéro échec, **+ 1 sauté** : le cas POSIX du témoin de `check:edge`, que `it.skipIf(win32)` neutralise sur ce poste. Rejoué le 2026-09-14 au soir, exit 0 | 1 736 / 151 |
+| `npm run test:coverage` | ✅ verte, exit 0, rejouée le 2026-09-14 au soir : **31,15 L · 30,73 S · 24,48 F · 26,35 B** (les deux dernières valeurs étaient données à 24,41 et 26,31) | 26,96 L / 26,65 S |
 | `npm run check:edge` | ✅ **8 fonctions vérifiées, le code déployé est celui du dépôt** (job `Edge deploy drift`, run `34861975638`) | n'existait pas |
 | Advisors Supabase (sécurité) | **9** INFO `rls_enabled_no_policy`, **52** WARN `authenticated_security_definer_…`, **2** WARN `anon_security_definer_…`, **1** WARN `auth_leaked_password_protection` | 5 / 51 / 2 / 1 |
-| Migrations appliquées en prod | ✅ ledger à **148 entrées**, dernière `148_team_categories_tree_merge` (2026-09-13). Hors base : la `136` (travail d'une autre session) et la `140` (délibéré, elle se joue DANS la fenêtre de bascule Stripe) | jusqu'à `123` |
+| Migrations appliquées en prod | ⚠️ **RECOMPTÉ le 2026-09-14 au soir : le ledger porte 138 entrées, pas 148.** La dernière appliquée est bien `148_team_categories_tree_merge` (2026-09-13) : c'est son NUMÉRO qui avait été recopié comme un total. Et le ledger ne recouvre que 120 des 152 fichiers du dépôt, cf. l'angle mort **D-1** ci-dessous | jusqu'à `123` |
 
 ⚠️ **Les quatre `rls_enabled_no_policy` de plus ne sont pas une régression** : ce sont
 `payment_records`, `payment_closures`, `rate_limits` et `renewal_notices`, toutes créées depuis, et

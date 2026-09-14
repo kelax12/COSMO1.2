@@ -28,14 +28,14 @@
 // `CatalogShapes` est ce qui donne à `t()` ses clés typées. Aucune des deux ne
 // peut être dérivée du glob, dont le type est `Record<string, unknown>`.
 //
-// ─── Chargement : deux namespaces eager, les 17 autres à la demande ───
+// ─── Chargement : deux namespaces eager, les 21 autres à la demande ───
 //
 // Le repli `fr` doit être disponible SYNCHRONIQUEMENT, `t()` ne renvoie pas de
 // promesse, donc un namespace absent afficherait sa clé brute. Mais tous les
 // namespaces ne sont pas nécessaires au même moment : seuls `common` et
 // `errors` sont atteignables depuis le SHELL de l'application (mesuré par
 // `scripts/i18n-shell-namespaces.mjs`, verrouillé par
-// `src/i18n/lazy-namespaces.guard.test.ts`). Les 17 autres appartiennent à une
+// `src/i18n/lazy-namespaces.guard.test.ts`). Les 21 autres appartiennent à une
 // page lazy, et sont chargés en même temps QU'ELLE.
 //
 // Ce que ça change, mesuré (docs/PERFORMANCE.md) : le catalogue `fr` pesait

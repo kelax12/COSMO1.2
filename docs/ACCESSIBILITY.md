@@ -33,7 +33,69 @@ Conséquences pratiques, à tenir :
   La check-list est prête et se joue d'une traite :
   [`AUDIT-VOICEOVER-IOS.md`](./AUDIT-VOICEOVER-IOS.md).
 
-## Note d'accessibilité : 76 → 79 → 80 → 81 → 82 → 83 → **84 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-04 → 2026-09-14)
+## Note d'accessibilité : 76 → 79 → 80 → 81 → 82 → 83 → 84 → **82 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-04 → 2026-09-14 → 2026-09-14 soir)
+
+> ### 🔴 2026-09-14 (soir) · −2 : 37 cas verts, et deux angles morts de COUVERTURE derrière ce vert
+>
+> L'entrée du matin notait la suppression d'une modale inatteignable, sans rejouer une seule
+> mesure. Ce soir, les trois suites qui portent réellement ce domaine ont tourné dans Chromium :
+> `a11y-audit.spec.ts`, `a11y-keyboard-audit.spec.ts` et `touch-targets.spec.ts`,
+> **37 cas, 37 passés, 8,9 min, exit 0.**
+>
+> | Suite | Ce qui a été mesuré |
+> |---|---|
+> | `a11y-audit` (axe-core) | 11 pages, publiques et démo : Landing, Login, Dashboard, Tasks, Habits, OKR, Agenda, Entreprise, Statistics, Settings, Premium |
+> | `a11y-keyboard-audit` | 10 surfaces modales au clavier + le témoin Radix + le calendrier : `focusMovedIn`, `trapped`, `escClosed` **vrais partout**, flèches vérifiées case par case dans le `DatePicker` (13 → 14 → 15 → 22 décembre) |
+> | `touch-targets` (WCAG 2.5.5) | 6 routes + le témoin qui sait voir une cible trop petite : **aucune commande sous 44 × 44 px** |
+>
+> ⚠️ **Le chiffre honnête n'est pas « 0 violation », c'est « 1 violation par page, dispensée
+> nommément ».** Chacune des 11 pages remonte exactement **une** violation `color-contrast`, celle
+> que **C-23** a tranché le 2026-09-13 (garder `#2563eb` à 4,31:1). La gate ne la bloque pas parce
+> qu'elle est déclarée dans `SERIOUS_NOT_BLOCKING` avec sa décision, et le ratio est tenu par un
+> cliquet (`src/theme-contrast.guard.test.ts`). C'est une dispense adossée à un arbitrage écrit,
+> pas un zéro.
+>
+> 🔴 **Angle mort · WCAG 2.5.5 n'est vérifié que derrière l'authentification.**
+> `e2e/touch-targets.spec.ts` force bien un viewport de 375 × 812 (donc la mesure est mobile), mais
+> sa boucle de routes est écrite en clair : `/dashboard`, `/entreprise`, `/okr`, `/tasks`,
+> `/habits`, `/settings`, `/agenda`, `/statistics`. **Huit routes protégées, zéro page publique.**
+>
+> Mesuré ce soir contre la **production**, WebKit / iPhone 12, cookies refusés :
+>
+> | Page | Cibles sous 44 × 44 px | Les plus gênantes |
+> |---|---|---|
+> | `/` | **24** | « Commencer » du header **115 × 36**, « Cosmo » **116 × 36** |
+> | `/entreprise-presentation` | **23** | curseur de forfait `input[type=range]` **308 × 6** (`appearance: none`, `height: 6px`) |
+> | `/blog` | 2 | — |
+>
+> ⚠️ **À trier, pas à agiter** : la plupart sont des liens de pied de page d'environ 20 px de haut,
+> qui échouent au **AAA** (2.5.5, 44 px) et non au **AA** (2.5.8, 24 px). Trois cas sortent du lot :
+> les deux commandes du header, 8 px sous un plancher que le reste du produit respecte, et le
+> curseur de forfait, stylé par l'auteur donc **hors de l'exemption « contrôle du navigateur »** de
+> 2.5.8. ⚠️ La zone tactile réelle d'un curseur peut excéder sa piste selon le moteur : **à mesurer
+> avant de conclure à une violation AA**, mais une piste de 6 px sur l'outil qui sert à choisir un
+> abonnement est en soi un défaut d'ergonomie tactile.
+>
+> **Le −2 porte sur le périmètre, pas sur le nombre.** Le tableau de bord lit « cibles tactiles :
+> 0 » comme une propriété du produit ; c'est une propriété de huit écrans derrière connexion. Les
+> pages qui n'y sont pas sont celles qu'un visiteur voit en premier.
+>
+> 🔴 **Angle mort · toutes ces mesures sont faites sur Chromium de bureau, et rien ne les rejoue
+> sur WebKit.** Le project Playwright `mobile-safari` (iPhone 12, moteur WebKit) porte **96 cas
+> dans 19 fichiers**, dont ces trois mêmes suites, et il est **exclu de la CI** — la ligne est
+> explicite dans `.github/workflows/ci.yml` : « `mobile-safari` reste hors CI (WebKit, ~1 min
+> d'installation en plus) ». Conséquence directe pour ce domaine : **le piège de focus, l'ordre de
+> tabulation, Échap et les cibles tactiles ne sont vérifiés automatiquement sur aucun moteur
+> mobile**, alors que M-40 (l'audit VoiceOver sur iPhone réel) est justement le plafond de cette
+> note, et que VoiceOver tourne sur WebKit.
+>
+> Ce n'est pas un défaut d'accessibilité de plus : c'est l'absence de la seule garde qui pourrait
+> en détecter un. **Le coût en points est porté par [`TESTING.md`](./TESTING.md)**, là où la
+> décision se prend ; il est nommé ici parce que ce domaine en est le premier bénéficiaire le jour
+> où il sera comblé. ⚠️ Rejouées sur `mobile-safari` ce soir, les trois suites mobiles rendent
+> **9 passés sur 18** — dont sept échecs d'attente de fixture, non de produit (détail dans
+> [`MOBILE.md`](./MOBILE.md)).
+
 
 > ### 🟢 2026-09-14 · +1 : un écran inatteignable qui gonflait la check-list VoiceOver est supprimé
 >

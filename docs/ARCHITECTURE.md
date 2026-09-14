@@ -10,7 +10,63 @@ dit ligne par ligne. Mesuré contre le code de `main` et la prod. Remplace
 Ce document ne redécrit pas l'architecture — c'est le rôle de [`../CLAUDE.md`](../CLAUDE.md). Il
 répond à une seule question : **les invariants qu'on s'est donnés tiennent-ils encore ?**
 
-## Note d'architecture : 74 → 79 → 81 → 83 → **84 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03) · inchangée au 2026-09-14, VÉRIFIÉE
+## Note d'architecture : 74 → 79 → 81 → 83 → 84 → **88 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 soir)
+
+> ### 🟢 2026-09-14 (soir) · +4 : le motif qui plafonnait cette note est mort le 2026-09-05, et personne n'était revenu le constater
+>
+> **Ce que la note du 09-03 donnait comme plafond, mot pour mot** : « ce qui plafonne à 84, et n'a
+> pas bougé d'un pouce : aucun god component n'a disparu. Le plus gros fichier du dépôt est le même
+> qu'au 08-29, et les extractions sont des compensations, pas un assainissement. »
+>
+> **Mesuré ce soir, sur l'arbre de travail, fichier par fichier** (`wc -l` sur tout `src`, hors
+> tests) :
+>
+> | | 09-03 | **09-14 (soir)** |
+> |---|---|---|
+> | Fichiers hors budget (`KNOWN_OVERSIZED`) | 12 | **0**, la liste est vide |
+> | Stock de lignes hors budget (`OVERSIZED_BUDGET`) | 9 190 | **0**, structurellement |
+> | Plus gros fichier du périmètre gardé | `PyramidTab` **1 046** | `PersoTrack.tsx` **598** |
+>
+> C'est **C-09**, livré le 2026-09-05 en dix commits (`a6dfd85a` → `7653d398`), qui a fait tomber
+> les douze derniers : `PyramidTab` 1 045 → 573, `AgendaPage` 867 → 584, `InboxMenu` 805 → 565,
+> `SettingsPage` 756 → 508, et huit autres. **Neuf jours plus tard, aucune note ne l'avait vu** :
+> l'entrée du 09-14 (matin) de ce fichier écrivait « la métrique ne bouge pas, vérifié pas supposé »
+> à propos de la suppression d'un fichier de 452 lignes, sans regarder que la métrique VOISINE,
+> celle qui portait explicitement le plafond, était passée de 9 190 à 0.
+>
+> ⚠️ **La leçon porte sur la forme de la vérification, pas sur le chiffre.** Rejouer la garde
+> (`OVERSIZED_BUDGET` toujours à 0, test vert) était juste et ne pouvait rien apprendre : un
+> cliquet à zéro rend le même vert qu'il reste zéro fichier ou douze qu'on vient de retirer de la
+> liste. **Une garde dit si l'invariant tient ; elle ne dit jamais ce qu'il a coûté de le tenir.**
+> Le delta ne se lit que dans la valeur précédente, ici `KNOWN_OVERSIZED` et son commentaire daté.
+>
+> 🔴 **Ce qui retient à 88, et chaque point est mesuré :**
+>
+> 1. **Aucune garde ne relie les migrations du dépôt à la base.** Comparé nom à nom ce soir : les
+>    152 fichiers du dépôt contre les **138** entrées du ledger prod, **32 fichiers sans aucune
+>    correspondance** et **17 entrées sans fichier**. Les 32 sont bien appliquées (vérifié objet par
+>    objet sur un échantillon : `events.exceptions`, `team_task_comments`, `tasks.recurrence*`,
+>    `events.is_private`), mais ce n'est pas le ledger qui le prouve, et cinq énoncés « tout le
+>    dépôt est appliqué, ledger relu » reposaient sur ce recouvrement partiel. `check:drift` compare
+>    le schéma, jamais le recouvrement, et demande deux étapes manuelles.
+> 2. **Le même calcul vit toujours en trois endroits, et le correctif du 09-02 n'en a touché que
+>    deux.** `okrTime` (temps passé sur les OKR) est dérivé par `src/lib/workTimeCalculator.ts`
+>    (corrigé), par les deux graphiques du tableau de bord (justes depuis toujours) et par la RPC
+>    `get_work_time_stats` (mig. 127). **Cette dernière sert la production, et elle lit encore le
+>    champ mort.** Vérifié en base ce soir par `pg_get_functiondef` : sa CTE `okr_days` fait toujours
+>    `jsonb_array_elements(COALESCE(kr.elem->'history', '[]'))`. Détail et conséquence produit dans
+>    [`PERFORMANCE.md`](./PERFORMANCE.md) § « okrTime ».
+> 3. **Un fichier source de 613 lignes vit hors de tout périmètre** :
+>    `src/components/showcase/MobileShowcases.tsx`, exclu à la fois d'ESLint (`eslint.config.js`) et
+>    de la garde de taille (`EXCLUDED_DIRS` contient `showcase`). C'est un arbitrage défendable, une
+>    vitrine n'est pas du produit ; ce qui ne l'est pas, c'est que l'énoncé « aucun fichier source
+>    au-dessus de 600 lignes » soit écrit sans dire de quel périmètre il parle.
+>
+> ✅ **Ce qui a été vérifié inchangé, et l'est vraiment** : `npm run typecheck` 0 erreur,
+> `npm run lint` 0 erreur (31 warnings Fast-refresh tolérés, contre 35 avant la suppression de
+> `CategoryManager`), `npm test` 228 fichiers / 2 586 passés, `npm run validate:migrations`
+> 152 fichiers / 0 erreur / 6 avertissements (les mêmes six depuis le 08-24).
+
 
 > ### ⚪ 2026-09-14 · 0 : `CategoryManager` (452 lignes) supprimée, la garde reste à zéro sans bouger
 >

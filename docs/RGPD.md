@@ -4,7 +4,43 @@
 119 : effacement et portabilité). Premier audit dédié de ce domaine. Jusqu'ici, la conformité était
 traitée par fragments dans les audits sécurité. Mesuré sur le schéma de prod et le code.
 
-## Note RGPD : 78 → 84 → 86 → **87 / 100** (2026-08-24 → 2026-08-25 → 2026-08-29 → 2026-09-14) · inchangée aux 2026-08-27, 2026-09-02 et 2026-09-03
+## Note RGPD : 78 → 84 → 86 → **87 / 100** (2026-08-24 → 2026-08-25 → 2026-08-29 → 2026-09-14) · inchangée aux 2026-08-27, 2026-09-02 et 2026-09-03, **VÉRIFIÉE inchangée le 2026-09-14 au soir**
+
+> ### ⚪ 2026-09-14 (soir) · 0 : la sémantique d'effacement est relue EN BASE, une omission d'inventaire apparaît
+>
+> L'entrée de ce matin vérifiait que le code d'effacement **déployé** est celui du dépôt. Ce soir,
+> c'est la moitié qu'elle laissait de côté : ce que la BASE fait, elle, quand une ligne
+> `auth.users` disparaît. Relevé exhaustivement dans `pg_constraint` (jamais dans le dépôt) :
+>
+> | Règle sur les FK qui pointent vers `auth.users` | Nombre |
+> |---|---|
+> | `ON DELETE CASCADE` | **32** |
+> | `ON DELETE SET NULL` | **19** |
+> | Total des clés étrangères vers `auth.users` | **51** |
+>
+> **La répartition est la bonne, et elle est délibérée.** Les 32 CASCADE portent les données du
+> compte (`tasks`, `habits`, `events`, `okrs`, `categories`, `lists`, `profiles`, `friends` dans
+> les deux sens, `subscriptions`, …) : elles tombent avec lui. Les 19 SET NULL portent des colonnes
+> d'ATTRIBUTION dans le mode entreprise (`created_by`, `actor_id`, `author_id`, `assignee_id`,
+> `manager_id`, …) : un départ désattribue le travail d'équipe, il ne le détruit pas, ce qui est le
+> comportement attendu et l'équilibre art. 17 / intérêt légitime du responsable de traitement.
+>
+> 🟠 **Angle mort · trois tables de CONTENU LIBRE manquent à l'inventaire du §1.**
+> `team_task_comments` (texte écrit par une personne), `team_task_activity` et `org_notifications`
+> n'y figurent pas, alors que le §1 prend la peine d'y lister `team_task_dependencies` pour son
+> seul `created_by`. Elles portent pourtant plus : le contenu du commentaire **survit** au
+> départ de son auteur, `author_id` passant à NULL. Volumes en prod ce soir : **5** commentaires,
+> **8** lignes d'activité, **77** notifications.
+>
+> ✅ **Ce n'est pas une non-conformité** : [`RGPD-REGISTRE.md`](./RGPD-REGISTRE.md), qui est la
+> pièce opposable au titre de l'art. 30, **liste bien les trois**. C'est l'inventaire de cet audit
+> qui est en retard sur son propre registre — l'inverse serait grave, celui-ci est réparable, et
+> il l'est ci-dessous au §1.
+>
+> ⚠️ **Ce qui reste non remesuré ce soir, et doit se lire comme tel** : les durées de conservation,
+> l'export de portabilité, et le DPA du fournisseur d'analytics (V-1), qui reste le plafond de
+> cette note et ne se règle pas depuis un éditeur de code.
+
 
 > ### 🟢 2026-09-14 · +1, une garantie d'effacement enfin vérifiée contre le code DÉPLOYÉ
 >
@@ -137,6 +173,15 @@ rédaction, et c'est le seul point qui sépare le dossier d'une réponse tenable
 | **`org_invitations`** *(mig. 105, 2026-08-23)* | **UUID d'un tiers invité, et trace d'un refus (`declined_at`)** | saisie d'un membre de l'organisation |
 | `org_removal_notices` *(mig. 106)* | UUID du membre retiré et de l'auteur du retrait | action d'un admin |
 | `team_task_dependencies` *(mig. 108)* | `created_by` | action utilisateur |
+| **`team_task_comments`** *(mig. 082)* | **contenu libre écrit par une personne** + `author_id` | saisie utilisateur |
+| `team_task_activity` *(mig. 094)* | `actor_id`, nature de l'action, horodatage | trace applicative |
+| `org_notifications` *(mig. 095, 110)* | `user_id`, `actor_id`, libellé de l'événement | trace applicative |
+
+> ⚠️ **Les trois dernières lignes ont été ajoutées le 2026-09-14 au soir.** Elles figuraient déjà
+> dans [`RGPD-REGISTRE.md`](./RGPD-REGISTRE.md) (la pièce art. 30), jamais ici. Leur `author_id` /
+> `actor_id` est en `ON DELETE SET NULL`, donc **le contenu survit au départ de son auteur, désormais
+> anonyme**. C'est le régime voulu pour du travail d'équipe, et il n'est défendable que s'il est
+> écrit : une donnée dont on ne sait pas qu'on la garde n'a pas de durée de conservation.
 
 > ✅ **Traité et APPLIQUÉ en prod le 2026-08-24 — migration `112`.** Elle ajoute une purge
 > quotidienne (pg_cron, 03:30 UTC) des invitations **refusées** de plus de 30 jours, sur le

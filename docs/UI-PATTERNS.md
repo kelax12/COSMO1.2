@@ -1,6 +1,59 @@
 # Patterns UI — COSMO
 
-## Note UI / UX : 70 → 80 → 82 → 84 → **87 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03) · non remesurée au 2026-09-14
+## Note UI / UX : 70 → 80 → 82 → 84 → 87 → **85 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 soir)
+
+> ### 🔴 2026-09-14 (soir) · −2 : un écran du produit affiche un zéro qui n'est pas vrai
+>
+> **Sur `/statistics`, la série « OKR » du graphique « temps investi » est plate à zéro pour tous
+> les comptes réels, en production.** Ce n'est pas une impression : `okrTime` alimente cette série
+> (`DashboardBarChart.tsx`, `okrs: r.okrTime`, vert `#22c55e`), il vient de la RPC
+> `get_work_time_stats`, et cette fonction, **relue en base ce soir** par `pg_get_functiondef`, lit
+> toujours un champ JSON que rien n'écrit (`kr.elem->'history'`). Mécanique complète et preuve dans
+> [`PERFORMANCE.md`](./PERFORMANCE.md) § « okrTime ».
+>
+> 🔴 **Le mode démo, lui, affiche le bon chiffre depuis le 2026-09-02.** Le correctif de cette date
+> n'a touché que le calcul client (`workTimeCalculator.ts`), pas la RPC. La vitrine que voit un
+> visiteur est donc juste, et l'écran que voit un inscrit est faux. **Pour un audit d'interface,
+> c'est le pire des deux sens possibles** : le défaut est invisible de la seule surface qu'on
+> regarde en démonstration.
+>
+> **Pourquoi c'est compté ici et pas seulement en performance** : un écran qui affiche « 0 » là où
+> il y a du travail ne dit pas « je ne sais pas », il dit « tu n'as rien fait ». Une donnée fausse
+> présentée comme sûre est un défaut d'interface avant d'être un défaut de SQL, et aucune des
+> onze notes ne le portait.
+>
+> ### 🟢 Et M-44 est tranché : l'argument du retrait est faux, pas discutable
+>
+> `a-faire-manuel.md` pose M-44 comme indécidable par un agent : « ce sont deux lectures du
+> produit, pas deux états du code ». **Ce n'en est pas une** : le changement non commité retire la
+> pastille « Aujourd'hui » du report rapide avec ce motif, écrit en commentaire dans le fichier —
+>
+> > « Reporter une tâche en retard à AUJOURD'HUI n'a pas de sens (elle est déjà due aujourd'hui ou
+> > avant) »
+>
+> — et la moitié qui porte l'argument est **fausse**. `isOverdue` (`src/lib/deadline.ts`) rend vrai
+> si et seulement si `daysUntilDeadline < 0`, **strictement avant aujourd'hui** ; `isDueToday` est
+> la fonction voisine, pour `=== 0`. Une tâche qui affiche ces raccourcis n'est donc **jamais** due
+> aujourd'hui, et « la reporter à aujourd'hui » est exactement le geste le plus courant : *je m'en
+> occupe aujourd'hui.*
+>
+> S'y ajoute l'intention du composant, écrite dans son propre en-tête (maquette 16, « Le retard
+> porte sa solution ») : sortir la tâche du rouge **en un geste**. Après le retrait, les deux
+> options restantes sont « Demain » et « Choisir » : la première laisse la tâche en retard pour
+> toute la journée en cours, la seconde coûte deux gestes de plus. Le raccourci qui remplissait
+> l'objectif du composant est précisément celui qu'on enlève.
+>
+> ✅ **Conclusion : C-72 avait raison, le produit est juste, la pastille reste.** Ce qui restait à
+> arbitrer n'était pas un goût mais un fait, et le fait est vérifiable en trois lignes de
+> `deadline.ts`. ⚠️ **Le fichier n'a PAS été modifié par cette session** : il appartient à l'arbre
+> de travail d'une autre, et indexer le fichier d'une autre session est la faute qui a produit
+> trois `fix(build)` les 09-13 et 09-14. Ce qui est livré ici, c'est l'élément qui rend la décision
+> possible ; le geste de revert reste à qui tient cet arbre.
+>
+> ⚠️ **Ce qui n'a PAS été remesuré ce soir** : aucune passe visuelle (`scripts/visual-audit.mjs`
+> non exécuté), aucune revue de pattern écran par écran. Le −2 porte sur un défaut trouvé en base,
+> pas sur une dégradation des patterns eux-mêmes.
+
 
 > ### ⚪ 2026-09-14 · non remesurée — et un changement PENDING mérite d'être nommé ici aussi
 >

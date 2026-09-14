@@ -1,6 +1,80 @@
 # Tests — COSMO
 
-## Note de tests / CI : 80 → 83 → 88 → 89 → 93 → 94 → 95 → **97 / 100** (2026-08-24 → 2026-08-25 soir → 2026-08-27 soir → 2026-08-29 → 2026-09-02 → 2026-09-03 → 2026-09-14)
+## Note de tests / CI : 80 → 83 → 88 → 89 → 93 → 94 → 95 → 97 → **94 / 100** (2026-08-24 → 2026-08-25 soir → 2026-08-27 soir → 2026-08-29 → 2026-09-02 → 2026-09-03 → 2026-09-14 → 2026-09-14 soir)
+
+> ### 🔴 2026-09-14 (soir) · −3 : 44 % des cas E2E ne tournent nulle part, et le commentaire qui l'acte contredit la règle écrite juste au-dessus
+>
+> **Tout ce que la note du matin affirme a d'abord été rejoué, et tient** :
+>
+> | Mesure | Résultat ce soir | Annoncé ce matin |
+> |---|---|---|
+> | `npm test` | **228 fichiers, 2 586 passés, 1 sauté**, exit 0, 305,65 s | 2 586 / 228 ✅ |
+> | `npm run test:coverage` | verte, exit 0 : **31,15 L · 30,73 S · 24,48 F · 26,35 B** | 24,41 F · 26,31 B (deux valeurs légèrement décalées) |
+> | `npx playwright test --list` | **220 cas / 26 fichiers** | 220 / 26 ✅ |
+> | `npm run typecheck` · `lint` | 0 erreur · 0 erreur, 31 warnings | ✅ / 35 warnings |
+> | `check:rls` · `validate:migrations` | 132 / 106, 0 violation · 152 fichiers, 0 erreur | ✅ |
+>
+> ⚠️ Le **1 test sauté** n'avait jamais été nommé : c'est le cas POSIX du témoin de `check:edge`
+> (`scripts/check-edge-deploy.guard.test.mjs:364`, `it.skipIf(process.platform === 'win32')`), qui
+> efface un arbre dont un sous-répertoire est en lecture seule. Il est justifié et commenté dans le
+> code ; il reste que sur la machine de développement, **la suite annonce « zéro échec » en ne
+> jouant pas le cas qui a effectivement échoué le 09-13**.
+>
+> ## 🔴 Le −3 : les 96 cas WebKit
+>
+> `playwright.config.ts` déclare quatre projects. Comptés un par un ce soir
+> (`--list --project=…`) :
+>
+> | Project | Cas | Fichiers | Joué par la CI ? |
+> |---|---|---|---|
+> | `chromium` | 107 | 21 | ✅ |
+> | `supabase-stub` (+ warmup) | 17 | 5 | ✅ |
+> | **`mobile-safari`** (iPhone 12, **WebKit**) | **96** | **19** | ❌ **jamais** |
+>
+> Le job `e2e` de `.github/workflows/ci.yml` lance exactement
+> `npx playwright test --project=chromium --project=supabase-stub`, soit **124 cas sur 220**.
+> **96 cas, soit 44 % de la suite E2E, ne sont joués par aucun workflow** : ni `ci.yml`, ni
+> `uptime`, ni `scalability-volume`, ni aucun autre (vérifié par `grep` sur
+> `.github/workflows/`, seule occurrence : le commentaire qui les exclut).
+>
+> 🔴 **Et le motif est écrit dans le même commentaire que la règle qu'il enfreint.** Trois lignes
+> plus haut, à propos de `supabase-stub` :
+>
+> > « le laisser hors de la CI reviendrait à poser sur `main` des gardes qui ne tournent nulle part
+> > — la faute que ce dépôt s'est déjà faite deux fois. »
+>
+> Puis, immédiatement après :
+>
+> > « `mobile-safari` reste hors CI (WebKit, ~1 min d'installation en plus). »
+>
+> Le raisonnement est juste, il est appliqué à un project et pas à l'autre, et le prix est
+> **une minute d'installation** contre 96 cas. C'est la définition même du défaut que ce document
+> traque depuis le 2026-09-03 : non pas une garde qui mesure à côté, mais **une zone que rien ne
+> mesure**, sans run rouge pour la signaler.
+>
+> **Ce que ça laisse sans filet, nommément** : les 19 fichiers concernés portent les feuilles
+> mobiles, les gestes tactiles, `reduced-motion-sheets`, les cibles tactiles WCAG 2.5.5, et les
+> suites d'accessibilité au clavier — donc **tout le périmètre iOS Safari** que
+> [`MOBILE.md`](./MOBILE.md) documente sur des dizaines de pages, et le moteur sur lequel tourne
+> VoiceOver, plafond déclaré de [`ACCESSIBILITY.md`](./ACCESSIBILITY.md).
+>
+> ⚠️ **Rejoués depuis ce poste, et voici l'état HONNÊTE** : le run complet des 96 cas a été lancé
+> puis **interrompu** après 5 cas (2 échecs, tous deux `page.goto` en timeout de 120 s au démarrage
+> à froid du serveur Vite). **Ce n'est pas un défaut produit** : la même page, sur le même moteur
+> WebKit / iPhone 12, chargée depuis la **production**, rend `load` en **2 159 ms avec zéro requête
+> en vol** (sonde dédiée, `webkit.launch()` + `devices['iPhone 12']`). Le résultat utile est donc :
+> **personne ne sait si ces 96 cas passent**, et les rejouer à la main bute sur un coût de
+> démarrage que la CI, elle, absorberait sans s'en apercevoir.
+>
+> **Pourquoi −3 et pas −1** : ce n'est pas une lacune de couverture parmi d'autres, c'est la
+> couverture d'un des deux moteurs de rendu du web et de la totalité du périmètre mobile, dans un
+> produit dont la documentation mobile est le deuxième plus gros document du dépôt. Et c'est
+> réparable en une ligne (`--project=mobile-safari` ajouté au job `e2e`, plus `webkit` dans le
+> `playwright install`), donc le coût du défaut est très supérieur au coût du correctif.
+>
+> ✅ **Ce qui, en revanche, tourne vraiment et a été vu vert ce soir** : `a11y-audit`,
+> `a11y-keyboard-audit` et `touch-targets` sur Chromium, **37 cas, 37 passés, 8,9 min, exit 0**.
+
 
 > ### 🟢 2026-09-14 · +2 : une garde qui était écrite mais n'existait pas en CI y tourne enfin, et une autre a mordu SUR elle-même
 >
