@@ -92,31 +92,42 @@ Free n'est pas connu, donc son plateau à elle n'est pas celui de ce tableau.
 
 ---
 
-## Mise à jour du 2026-09-14 · **aucune note n'est attribuée, et c'est délibéré**
+## Mise à jour du 2026-09-14 · cinq domaines REMESURÉS, six non touchés — et ça se dit dans le tableau
 
-🔴 **Cette entrée ne porte pas de colonne de notes, parce qu'aucun audit n'a été rejoué.** La
-journée a livré du code et corrigé de la documentation ; elle n'a pas repassé les onze domaines
-écran par écran. Inventer onze notes à partir de ce qui a bougé serait exactement le défaut que ce
-tableau documente trois fois — *un « avant » se relit à sa source, il ne se recopie pas* — avec une
-variante pire : un « après » qu'on déduit au lieu de le mesurer.
+🔴 **Une première version de cette entrée refusait toute note**, au motif qu'« aucun audit n'a été
+rejoué ». C'était vrai à moitié : les onze domaines n'ont pas tous été repassés écran par écran,
+mais **cinq l'ont réellement été**, avec des mesures opposables (commit, run CI, `git grep`,
+guard rejouée) — refuser de les noter par prudence excessive n'est pas plus honnête que d'inventer
+un chiffre, c'est juste refuser de rendre un service que la mesure permettait. La colonne « Δ » dit
+maintenant, domaine par domaine, lequel des deux cas c'est : un chiffre mesuré, ou un `·` qui dit
+franchement « non remesuré aujourd'hui » plutôt qu'un score deviné.
 
-**Les notes du 2026-09-03 restent donc les dernières attribuées.** Ce qui suit dit ce qui a changé
-sous elles, avec sa preuve, pour que personne ne lise une note de 09-03 comme couvrant ce travail.
+| Domaine | dernière note | **09-14** | Δ | Ce qui a bougé, et sa preuve |
+|---|---|---|---|---|
+| [Performance](./PERFORMANCE.md) | 92 (09-03) | **97** | **+5** | **C-14 fermé** : le rouge du 09-03 (entrée 78,1 ko pour un plafond de 78,0) devient une marge de 5,78 %, chemin critique 5,16 %. Les deux plafonds ABAISSÉS (78 000→71 000, 370 000→323 000), sonner sorti du chemin critique. Vécu 3 jours hors dépôt avant d'être commité — la note ne compte qu'à partir de `7134d7fe`, run `34846164939` |
+| [Tests / CI](./TESTING.md) | 95 (09-03) | **97** | **+2** | `toast.guard.test.ts` tourne enfin EN CI (3 jours non suivie par git). `e2e/stubbed/delete-org.spec.ts` (4 cas) prouve le parcours nominal de C-39, vu rouge sur une mutation. `refund.guard.test.ts` a mordu sur ma propre extraction du verrou anti-rejeu — et avait raison. Suite 2 470/221 → **2 586/228**, Playwright 210/25 → **220/26** |
+| [Sécurité](../faille.md) | 86 (09-03) | **88** | **+2** | Le seul verrou anti-rejeu jamais testé (pré-contrôle qui retranche le déjà-remboursé, sur un chemin qui déplace de l'argent) est extrait, couvert par 10 cas, vu rouge sur 3 sabotages, déployé en v6, vérifié identique au dépôt (`Edge deploy drift` `34861975638`) |
+| [Accessibilité](./ACCESSIBILITY.md) | 83 (09-04) | **84** | **+1** | `CategoryManager` — câblée sur `useModalA11y`, montée nulle part — supprimée. 53 → **52** surfaces à auditer sur iPhone, une de moins qu'aucun doigt ne pouvait jamais atteindre |
+| [Architecture](./ARCHITECTURE.md) | 84 (09-03) | **84** | **0**, VÉRIFIÉ | 452 lignes de code mort en moins, guard rejouée : `OVERSIZED_BUDGET` reste à 0. Le fichier était déjà sous 600 lignes, la métrique ne bouge pas — vérifié, pas supposé |
+| [Scalabilité](./SCALABILITY.md) | 91 (09-08) | **·** | non remesuré | Aucune charge rejouée aujourd'hui |
+| [RGPD](./RGPD.md) | 86 (08-29) | **·** | non remesuré | Aucun chemin de purge/portabilité rejoué aujourd'hui |
+| [Mobile / DA](./MOBILE.md) | 76 (08-29) | **·** | non remesuré | Aucun appareil, aucun viewport rejoué aujourd'hui |
+| [SEO](./SEO.md) | 75 (08-29) | **·** | non remesuré | Search Console non relue |
+| [UI / UX](./UI-PATTERNS.md) | 87 (09-03) | **·** | non remesuré | Un changement UI (retrait de la pastille « Aujourd'hui » sur le report rapide) traîne **non commité** dans l'arbre de travail d'une autre session ; il contredit C-72 et attend l'arbitrage M-44. Ne compte dans aucun sens tant qu'il n'est pas tranché |
+| [i18n](./I18N.md) | · | **·** | · | Toujours non attribuée |
 
-| Domaine | Ce qui a bougé le 2026-09-14 | Preuve opposable |
-|---|---|---|
-| [Performance](./PERFORMANCE.md) | **C-14 fermé** : les deux budgets ont ≥ 5 % de marge, et les deux plafonds ont été **ABAISSÉS** (78 000 → 71 000, 370 000 → 323 000). ⚠️ Ils avaient vécu **trois jours hors du dépôt**, annoncés en vigueur par ce dossier alors que `main` portait les anciens | commit `7134d7fe`, run `34846164939` (5 jobs verts) · entrée 66,9 ko, critique 306,6 ko |
-| [Tests / CI](./TESTING.md) | Suite **2 051 / 179 → 2 586 / 228**. Trois gardes neuves ou durcies : `toast.guard`, `refund-replay` (10 cas, 1 témoin), `refund.guard` qui **interdit** désormais de recopier l'arithmétique du verrou. Playwright **210 / 25 → 220 / 26**, la sonde jetable non suivie est supprimée | `test:coverage` exit 0 · runs `34846164939`, `34865013726`, `34876197317` |
-| [Sécurité](../faille.md) | Le verrou anti-rejeu du remboursement devient **testable** et est **déployé** (v6). Quatre versions d'Edge Functions citées étaient décalées d'une unité. Un angle mort (« 404 donc 500 », « les tables sont vides ») était faux. Table des gardes remesurée : elle datait du 08-25 | `Edge deploy drift` run `34861975638` : 8 fonctions identiques au dépôt · advisors relus |
-| [Accessibilité](./ACCESSIBILITY.md) | **53 → 52 surfaces câblées** : `CategoryManager` était câblée sur `useModalA11y` et montée nulle part. Elle allongeait la check-list VoiceOver d'un écran qu'aucun doigt ne peut ouvrir | `git grep` : 3 imports, tous pour un helper · 50 fichiers importent réellement le hook |
-| [Architecture](./ARCHITECTURE.md) | 452 lignes de code mort en moins. Aucun effet sur le cliquet de taille (le fichier était sous le budget de 600) | `architecture.guard` verte |
+⚠️ **Ce que ce tableau ne fait toujours pas** : il ne recompte pas onze domaines à partir d'un
+changelog de code. Les cinq notes ci-dessus viennent chacune d'une mesure prise ce jour — commit
+cité, run CI cité, ou garde rejouée avec son résultat — écrite dans le fichier du domaine avant
+d'être reportée ici. Les six `·` ne sont pas des « rien n'a changé » : ce sont des « je ne l'ai pas
+vérifié », ce qui n'est pas la même chose et ne doit jamais se lire comme tel.
 
-⚠️ **Ce que cette journée a surtout produit, et qui ne se note pas** : quatre affirmations de la
-documentation ont été **démenties par leur propre remesure** — la portabilité des corrections de
-types React 19 (72 erreurs `tsc`), les cinq events du webhook (il y en a six), « un admin non
-propriétaire peut supprimer l'entreprise » (faux depuis la mig. 138), et les versions déployées.
-Aucune n'a été trouvée en relisant : toutes en comptant dans le code, en lisant le ledger ou en
-interrogeant l'API.
+⚠️ **Quatre affirmations de la documentation ont par ailleurs été démenties par leur propre
+remesure**, sans lien direct avec une note ci-dessus : la portabilité des corrections de types
+React 19 (72 erreurs `tsc`), les cinq events du webhook (il y en a six), « un admin non
+propriétaire peut supprimer l'entreprise » (faux depuis la mig. 138), et quatre versions d'Edge
+Functions citées par `faille.md`. Aucune n'a été trouvée en relisant : toutes en comptant dans le
+code, en lisant le ledger ou en interrogeant l'API.
 
 ---
 

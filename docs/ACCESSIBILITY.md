@@ -33,7 +33,20 @@ Conséquences pratiques, à tenir :
   La check-list est prête et se joue d'une traite :
   [`AUDIT-VOICEOVER-IOS.md`](./AUDIT-VOICEOVER-IOS.md).
 
-## Note d'accessibilité : 76 → 79 → 80 → 81 → 82 → **83 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-04)
+## Note d'accessibilité : 76 → 79 → 80 → 81 → 82 → 83 → **84 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-04 → 2026-09-14)
+
+> ### 🟢 2026-09-14 · +1 : un écran inatteignable qui gonflait la check-list VoiceOver est supprimé
+>
+> `CategoryManager` était câblée sur `useModalA11y` — donc comptée comme une des surfaces modales à
+> vérifier — et montée **nulle part** : 452 lignes, trois imports dans tout le dépôt, tous pour le
+> seul helper `getColorHex`. Supprimée ; ce qui survit vit dans `src/lib/category-colors.ts`.
+> **53 → 52 surfaces câblées**, annexe A de `docs/AUDIT-VOICEOVER-IOS.md` recomptée en conséquence
+> (46 + 6 au lieu de 46 + 7).
+>
+> Ce n'était pas un défaut d'accessibilité en soi — une modale inatteignable ne peut annoncer rien
+> de faux à personne. Le coût était la **lecture** : quelqu'un aurait fini par chercher au doigt,
+> sur un iPhone, un écran qu'aucun geste n'ouvre. +1, pas plus : ça n'a rien fermé de M-40
+> (l'audit VoiceOver réel reste entier, aucune ligne de la check-list n'est cochée).
 
 > ### 2026-09-04 · +1, un critère A qui n'était couvert nulle part
 >
