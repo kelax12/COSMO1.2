@@ -1447,6 +1447,39 @@ rendent leurs jumeaux `create` et `delete`, jamais eux-mêmes.
 
 ### C-72 · ~~Le report en masse d'une tâche en retard REFUSE aujourd'hui~~ · **P1 · S** · ✅ corrigé le 2026-09-12
 
+> ### 🟠 2026-09-15 · M-44 est TRANCHÉ contre le retrait de la pastille, et le geste est EN ATTENTE
+>
+> `src/components/task-table/OverdueQuickActions.tsx` est **modifié et non commité** dans l'arbre
+> de travail, par **une autre session**. Le changement retire le bouton de report rapide
+> « Aujourd'hui », avec ce motif écrit en commentaire :
+>
+> > « Reporter une tache en retard a AUJOURD'HUI n'a pas de sens (elle est deja due aujourd'hui ou
+> > avant) »
+>
+> 🔴 **La moitié de l'argument qui le porte est FAUSSE.** `isOverdue` (`src/lib/deadline.ts`) rend
+> vrai **si et seulement si** `daysUntilDeadline < 0`, donc **strictement avant aujourd'hui** ;
+> `isDueToday` est la fonction voisine, pour `=== 0`. Une tâche qui affiche ces raccourcis n'est
+> donc **jamais** due aujourd'hui, et « la reporter à aujourd'hui » est le geste le plus courant.
+>
+> S'y ajoute l'intention du composant, écrite dans son propre en-tête (maquette 16, « Le retard
+> porte sa solution ») : sortir la tâche du rouge **en un geste**. Après le retrait, les deux
+> options restantes sont « Demain », qui laisse la tâche en retard toute la journée, et
+> « Choisir », qui demande deux gestes de plus.
+>
+> **Conclusion : C-72 avait raison, le produit est juste, la pastille reste.**
+>
+> ⏸️ **Le geste n'est PAS fait**, sur décision d'Axel du 2026-09-15 : le fichier appartient à
+> l'arbre d'une autre session, et l'indexer est exactement ce qui a produit trois commits
+> `fix(build)` les 2026-09-13 et 09-14. La commande, à jouer quand cette session-là aura rendu
+> la main :
+>
+> ```bash
+> git checkout -- src/components/task-table/OverdueQuickActions.tsx
+> ```
+>
+> ⚠️ **Tant que ce n'est pas fait, `main` est juste et l'arbre local ne l'est pas.** Rien n'est
+> déployé : le changement n'existe dans aucun commit.
+
 > 🔴 **L'ÉNONCÉ CI-DESSOUS ÉTAIT FAUX, et c'est le seul renseignement qui compte ici.** Le
 > produit n'a jamais refusé aujourd'hui. **C'est le test qui comparait deux horloges.**
 >
