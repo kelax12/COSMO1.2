@@ -63,8 +63,30 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      testIgnore: '**/stubbed/**',
+      // ⚠️ `_warmup-mobile` est le prealable de chauffe de `mobile-safari`, pas
+      // un test du produit. L'inclure ici gonflerait le compte de ce project
+      // d'un cas qui ne mesure rien, et ferait payer deux fois la meme chauffe.
+      testIgnore: ['**/stubbed/**', '**/_warmup-mobile.spec.ts'],
       use: { ...devices['Desktop Chrome'] },
+    },
+    // ─── Le prealable de chauffe, avant les parcours WebKit ─────────
+    //
+    // 🔴 Meme motif que `supabase-stub-warmup`, pour le serveur du port 3000 :
+    // le cout de compilation a froid de Vite tombait entierement sur le premier
+    // cas execute. Rejoue depuis un poste le 2026-09-14, SEPT des neuf premiers
+    // echecs de ce project etaient des attentes de fixture qui expirent, le CTA
+    // de la landing n'etant pas visible dans les 30 s contre un serveur de
+    // DEVELOPPEMENT. La meme page chargee depuis la PRODUCTION, meme moteur,
+    // meme appareil emule, rend `load` en 2 159 ms.
+    //
+    // ⚠️ En CI ce cout est souvent INVISIBLE : `workers: 1` fait passer
+    // `chromium` avant, qui a deja chauffe le port 3000. Le jour ou l'on joue
+    // `mobile-safari` seul, la facture entiere retombe sur son premier cas. Un
+    // prealable explicite est la seule forme qui ne depende pas de l'ordre.
+    {
+      name: 'mobile-safari-warmup',
+      testMatch: '**/_warmup-mobile.spec.ts',
+      use: { ...devices['iPhone 12'] },
     },
     {
       name: 'mobile-safari',
@@ -87,7 +109,11 @@ export default defineConfig({
         '**/stubbed/**',
         '**/demo-calendar.spec.ts',
         '**/demo-task-dependencies.spec.ts',
+        // Son propre prealable : joue par le project `mobile-safari-warmup`,
+        // dont celui-ci depend. L'inclure ici le rejouerait en plein milieu.
+        '**/_warmup-mobile.spec.ts',
       ],
+      dependencies: ['mobile-safari-warmup'],
       use: { ...devices['iPhone 12'] },
     },
     // ─── Parcours HORS mode démo ────────────────────────────────────
