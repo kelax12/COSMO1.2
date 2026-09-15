@@ -21,12 +21,12 @@ interface CategoryFilterTreeProps {
  * PARTAGÉ avec cette modale via `useCollapsedCategories` — un même compte a
  * un seul état de pliage, pas un par écran.
  *
- * ⚠️ Cocher un PARENT ne coche PAS ses enfants ici. La règle « une catégorie
- * cochée remonte toute sa branche » vit déjà dans `filterTasksForPage`
- * (`src/pages/tasks/task-page-filter.ts`) via `descendantIdSet` — l'exprimer
- * une seconde fois ici (en cochant visuellement les enfants) créerait deux
- * endroits où la même règle pourrait diverger. La case à cocher ne reflète
- * QUE la sélection explicite de l'utilisateur.
+ * ⚠️ Cocher un PARENT coche aussi toute sa branche (géré par `onToggle`,
+ * dans `TaskFilter`, via `descendantIds`) : la case reflète la sélection
+ * explicite ET ce qu'elle a entraîné, pour rester cohérente avec le filtre
+ * (`filterTasksForPage` / `descendantIdSet` dans
+ * `src/pages/tasks/task-page-filter.ts`), qui inclut déjà toute la branche
+ * d'un parent sélectionné.
  */
 const CategoryFilterTree: React.FC<CategoryFilterTreeProps> = ({
   categories, selectedCategories, onToggle,
@@ -83,6 +83,7 @@ const CategoryFilterTree: React.FC<CategoryFilterTreeProps> = ({
             <Checkbox
               checked={selectedCategories.includes(category.id)}
               onCheckedChange={() => onToggle(category.id)}
+              className="data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500 dark:data-[state=checked]:bg-blue-500"
             />
             <span className="inline-block w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: category.color }} aria-hidden="true" />
             <span className="truncate">{category.name}</span>
