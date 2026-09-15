@@ -139,6 +139,13 @@ bloquant pour la résiliation, c'est un point de conformité.
    compte de test. La fonction est installée par la mig. `140`, qui documente ce qu'elle
    n'efface JAMAIS (journal fiscal, preuves de renonciation, marqueurs d'idempotence).
 
+   ✅ **Remesuré le 2026-09-14 au soir, inchangé** : toujours **5 `stripe_customer_id`** et
+   **2 `stripe_subscription_id`** sur 54 lignes de `subscriptions`, `org_subscriptions` toujours à
+   **0 ligne**, `payment_records` à **0**, et **8** events dans `processed_stripe_events`. La
+   fonction `reset_stripe_identifiers` est bien **absente de la base** (mig. `140` non appliquée),
+   ce qui est l'état voulu : elle se pose dans la fenêtre de bascule. ⚠️ Ce geste a donc un objet
+   réel et il n'a pas disparu avec le temps.
+
    ⚠️ Ce geste ne s'anticipe pas : tant que la clé est une clé de test, chaque checkout
    réécrit un identifiant de test. Il se joue DANS la fenêtre de bascule, pas avant.
 4. Mention « TVA non applicable, art. 293 B du CGI » sur les factures tant que la franchise
