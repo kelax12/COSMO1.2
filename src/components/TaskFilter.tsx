@@ -7,7 +7,7 @@ import { Separator } from '@/components/ui/separator';
 import { Popover, PopoverTrigger, PopoverContent } from './ui/popover';
 import CategoryFilterTree from './task-filter/CategoryFilterTree';
 
-import { useCategories } from '@/modules/categories';
+import { useCategories, descendantIds } from '@/modules/categories';
 import { usePriorityRange } from '@/modules/ui-states';
 import { useT } from '@/i18n/useT';
 
@@ -61,9 +61,13 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
   const toggleCategory = (category: string) => {
-    const newCategories = selectedCategories.includes(category) 
-      ? selectedCategories.filter(c => c !== category)
-      : [...selectedCategories, category];
+    // Cocher/décocher un parent entraîne toute sa branche : sans ça,
+    // sélectionner un parent laissait ses enfants visuellement décochés
+    // alors que le filtre (descendantIdSet) les incluait déjà.
+    const branch = [category, ...descendantIds(category, categories)];
+    const newCategories = selectedCategories.includes(category)
+      ? selectedCategories.filter(c => !branch.includes(c))
+      : [...new Set([...selectedCategories, ...branch])];
     setSelectedCategories(newCategories);
   };
 
