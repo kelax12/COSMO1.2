@@ -140,6 +140,46 @@ la journée : c'est ce qui arrive quand on remplace des vérifications de gardes
 résultats. Les **cinq** baisses viennent toutes de choses **qui existaient déjà** et qu'aucune note ne
 portait : rien n'a cassé aujourd'hui, on a simplement regardé ailleurs que là où les gardes pointent.
 
+### Ce qui bloque un lancement, ce qui attend : le tri
+
+**Aucun des dix angles morts de cette passe n'empêche de déployer.** La CI est verte, le build
+passe, la production répond 200 sur les cinq URLs testées, et `main` est déployable en l'état. Les
+bloquants réels sont **antérieurs** à cette passe et déjà écrits dans
+[`../faille.md`](../faille.md). Le tri, pour ne pas confondre les trois :
+
+#### 🔴 Bloquant, et rien de tout cela n'a été découvert ce soir
+
+| # | Quoi | Mesuré |
+|---|---|---|
+| A-9 | **Aucune sauvegarde, aucun PITR.** Le plan de l'organisation Supabase est `free` (relu par l'API le 2026-09-15). Le dump quotidien de `db-backup.yml` est **la seule copie de la base qui existe** | `plan: "free"` |
+| Encaissement | **On ne peut pas vendre.** `STRIPE_SECRET_KEY` est une clé de test, `ENTERPRISE_BILLING_ENFORCED` et `billing_flags.enterprise_seat_limit` sont **tous deux à `false`**, `org_subscriptions` porte **0 ligne** et `payment_records` **0** | relus en base |
+| Juridique | **Pas de micro-entreprise.** Encaisser sans immatriculation est du travail dissimulé : c'est ce qui bloque le point précédent, pas la technique | [`STRIPE-LIVE.md`](./STRIPE-LIVE.md) |
+
+⚠️ **Ces trois-là ne bloquent que si le lancement VEND.** Le produit est gratuit pour tout le
+monde aujourd'hui (`PREMIUM_ENFORCED = false`), et les deux drapeaux de facturation sont alignés,
+donc personne ne tombe sur un mur de paiement. Pour une campagne d'acquisition sans encaissement,
+seul **A-9** compte vraiment : amener du trafic sur une base sans sauvegarde, c'est augmenter ce
+qu'on perd le jour où on la perd.
+
+#### 🟠 À traiter AVANT d'envoyer du trafic, pas après
+
+| Quoi | Pourquoi maintenant | Coût |
+|---|---|---|
+| **`C-77` · `okrTime` à 0 sur `/statistics`** | C'est la seule chose de cette passe qu'un utilisateur VOIT. Un graphique qui affiche zéro ne dit pas « je ne sais pas », il dit « tu n'as rien fait », sur une page qui sert d'argument produit | **faible** : la mig. `136` est écrite, relue et **déjà commitée**. Reste à l'appliquer et à comparer ce qu'elle rend au calcul client |
+| **`C-80` · le curseur de forfait à 6 px** | Il est sur `/entreprise-presentation`, c'est-à-dire la page qui présente l'offre payante, et il fait **308 × 6 px** sur iPhone. C'est l'outil avec lequel un prospect choisit son palier | **faible** : une hauteur de piste et une zone tactile |
+| **Confirmations d'inscription (`G-2`)** | Décision déjà prise et assumée, mais elle change de portée sous trafic : 18 comptes sur 28 ont une adresse que personne n'a jamais prouvée. Une faute de frappe crée un compte définitivement injoignable | décision, pas code. Le SMTP qui manquait est en service depuis le 2026-08-29 |
+
+#### 🟡 Reportable sans risque, mais à savoir avant de lire les chiffres d'une campagne
+
+- **`C-78`** · les 96 cas WebKit hors CI : dette de mesure, pas de défaut constaté. La landing
+  chargée sur le même moteur depuis la production rend `load` en 2 159 ms, zéro requête en vol.
+  Le risque est de ne pas voir une régression iOS, pas d'en avoir une.
+- **`C-79`** · la garde de recouvrement du ledger : aucun effet utilisateur.
+- **Les deux comptes de test** (`demo@cosmo.app`, `testemail@gmail.com`) que `get_admin_stats`
+  ne retranche pas : **16 % des tâches de la plateforme** appartiennent au compte de démonstration.
+  Rien à réparer dans le produit ; tout à retrancher avant de lire une statistique de campagne.
+- **Les cibles tactiles du pied de page** (~20 px de haut) : critère **AAA**, pas AA. Confort.
+
 ### Pourquoi cinq notes baissent : ce n'est pas une casse récente, et voici les dates
 
 La question se pose d'elle-même en lisant le tableau : ou bien les notes précédentes étaient
@@ -203,7 +243,7 @@ voir un progrès sur une garde déjà satisfaite.
 
 | # | Angle mort | Comment il a été trouvé |
 |---|---|---|
-| **1** | **`okrTime` vaut 0 en production sur `/statistics`.** La RPC `get_work_time_stats` lit un champ JSON que rien n'écrit. Le correctif du 2026-09-02 n'a touché que le calcul **client** : la démo affiche juste, le produit affiche zéro. La mig. `136` qui répare est dans l'arbre depuis douze jours, ni versionnée ni appliquée, décrite partout comme « travail d'une autre session » et jamais comme un défaut ouvert | `pg_get_functiondef` sur la fonction vivante, pas la lecture du dépôt |
+| **1** | **`okrTime` vaut 0 en production sur `/statistics`.** La RPC `get_work_time_stats` lit un champ JSON que rien n'écrit. Le correctif du 2026-09-02 n'a touché que le calcul **client** : la démo affiche juste, le produit affiche zéro. La mig. `136` qui répare est **commitée depuis le 2026-09-03** (`31482a3f`) et n'a jamais été appliquée, décrite partout comme « travail d'une autre session » et jamais comme un défaut ouvert | `pg_get_functiondef` sur la fonction vivante, pas la lecture du dépôt |
 | **2** | **44 % des cas E2E ne tournent nulle part** (96 cas WebKit / iPhone), pour un coût affiché d'une minute d'installation | `--list` par project, puis `grep` sur les neuf workflows |
 | **3** | **Le ledger de migrations ne prouve pas ce qu'on lui fait dire.** « 148 entrées » était le NUMÉRO de la dernière migration ; il y en a **138**. Et 32 des 152 fichiers du dépôt n'y ont aucune correspondance. Ils SONT appliqués, mais ce n'est pas le ledger qui l'établit, et aucune garde ne surveille ce recouvrement | Comparaison nom à nom, puis vérification objet par objet dans le catalogue Postgres |
 | **4** | **`email_confirmed_at` est posé pour 28 comptes sur 28, dont 26 à la seconde de leur création.** La confirmation d'adresse étant désactivée, la colonne qui sert à répondre « cette adresse est-elle vérifiée ? » répond **oui** pour **18 adresses que personne n'a vérifiées** | Requête sur `auth.users`, écart `email_confirmed_at` moins `created_at` |
