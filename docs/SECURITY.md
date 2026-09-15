@@ -4,6 +4,22 @@
 > [`archive/faille-historique.md`](./archive/faille-historique.md) = historique des corrections (archive, non maintenue).
 > Ce document = règles permanentes à respecter. Les codes `(V1)`, `(N9)`, `(M-6)`… réfèrent aux fiches `faille.md`.
 
+> ✅ **Confronté à la production le 2026-09-14 au soir.** Les affirmations de ce document qui
+> portent sur un ÉTAT (par opposition aux règles) ont été vérifiées dans le catalogue Postgres, pas
+> relues :
+>
+> | Affirmation | Mesure en base |
+> |---|---|
+> | Toute table `public` a RLS activée | **50 tables, 50 avec `relrowsecurity`** · 126 policies |
+> | Le client n'a AUCUN chemin d'écriture sur `subscriptions` | **0 policy UPDATE**, 2 policies au total |
+> | Le système de jetons n'existe plus (mig. `141`, C-04) | **0** RPC `consume_premium_token` / `credit_premium_token_from_ad` / `bump_win_streak`, **0** colonne `premium_tokens` / `win_streak` |
+> | Les journaux scellés sont en deny-all | `payment_records`, `payment_closures`, `renewal_notices` : **aucune policy**. `withdrawal_consents` en porte **une seule**, `SELECT` pour `authenticated`, c'est la lecture de sa propre preuve |
+> | `npm run check:rls` | **132 policies dans 106 migrations, 0 violation** |
+>
+> Les advisors Supabase rendent **9 / 52 / 2 / 1**, à l'unité ce qu'annonce le tableau de gardes de
+> [`../faille.md`](../faille.md). Détail de la passe : [`README.md`](./README.md) § « Mise à jour du
+> 2026-09-14 (soir) ».
+
 ## Règles de sécurité (non négociables)
 
 Ces règles découlent d'audits de sécurité et de failles déjà corrigées. Les

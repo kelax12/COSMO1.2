@@ -177,6 +177,23 @@ Mais un lecteur qui verrait onze notes entre 84 et 95 juste avant une campagne e
 conclusion fausse. *Une note d'infrastructure n'est pas une note d'audience.* Le levier reste celui
 nommé le 2026-08-19, et il est hors du dépôt : [`ACQUISITION-BACKLINKS.md`](./ACQUISITION-BACKLINKS.md).
 
+### Les documents NON notés ont aussi été confrontés à la production
+
+Un audit noté attire l'attention ; un runbook non noté est ce qu'on exécute. **Deux des trois
+angles morts les plus graves de cette passe vivaient dans des documents sans note.**
+
+| Document | Ce qui a été vérifié | Résultat |
+|---|---|---|
+| [`SECURITY.md`](./SECURITY.md) | Les affirmations d'ÉTAT, dans le catalogue Postgres | ✅ toutes exactes : 50/50 tables avec RLS, 0 policy UPDATE sur `subscriptions`, 0 vestige du système de jetons, journaux scellés en deny-all |
+| [`DEPLOYMENT.md`](./DEPLOYMENT.md) | Les deux titres de section qui annoncent un état | 🔴 **deux faux**, de 16 et 15 jours (angle mort 9) |
+| [`POST-AUDIT-GUIDE.md`](./POST-AUDIT-GUIDE.md) | La liste des events webhook à souscrire | 🔴 **cinq au lieu de six** (angle mort 8) |
+| [`AUDIT-VOICEOVER-IOS.md`](./AUDIT-VOICEOVER-IOS.md) | L'annexe A contre les appels réels du hook | 🔴 **deux surfaces manquantes** (angle mort 10) |
+| [`STRIPE-LIVE.md`](./STRIPE-LIVE.md) | Les identifiants de test restés en base | ✅ inchangé : 5 `cus_`, 2 `sub_`, `org_subscriptions` à 0, `reset_stripe_identifiers` bien absente |
+| [`ACQUISITION.md`](./ACQUISITION.md) | Le funnel, un mois après l'audit du 08-14 | 🔴 remesuré, et mauvais : 1 appareil de démo en septembre contre 25 en août |
+
+⚠️ **Une erreur de plus, sans conséquence mais du même genre** : `CLAUDE.md` annonçait « 8 comptes
+portent un premium sans fin de période ». Recompté : **7** (et 3 avec une fin, sur 54 lignes).
+
 ### Deux limites de cette passe, à ne pas lire comme des vérifications
 
 - **La tenue sous charge n'a pas été rejouée** : elle exige Docker, absent de ce poste. Seuls les

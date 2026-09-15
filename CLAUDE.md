@@ -472,7 +472,9 @@ Comportement **quand `PREMIUM_ENFORCED = true`** :
 - ⚠️ **La définition de « premium » a changé avec** : c'est désormais `plan='premium'` +
   `status='active'` + période non dépassée (`subscription.logic.ts`), les jetons n'y entrent plus.
   Vérifiée ligne par ligne contre les 54 lignes de prod avant la bascule : **même verdict pour
-  chacune**. 8 comptes portent un `premium` sans fin de période, hérité des jetons gagnés par pub ;
+  chacune**. ⚠️ **7** comptes portent un `premium` sans fin de période, hérité des jetons gagnés par
+  pub, et non 8 : recompté en base le 2026-09-14 au soir (`plan='premium'`, `status='active'`,
+  `current_period_end IS NULL`), contre 3 qui portent bien une fin de période, sur **54** lignes ;
   ils restent premium, et aucune écriture ne produit plus cette forme.
 - Le client ne peut pas écrire `subscriptions` : aucune policy UPDATE, et l'INSERT ne permet
   qu'une ligne gratuite sans identifiant Stripe.
