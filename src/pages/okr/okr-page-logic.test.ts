@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getProgress, filterObjectivesByCategories } from './okr-page-logic';
+import { getProgress, filterObjectivesByCategories, shouldReopenOnDeadlineExtension } from './okr-page-logic';
 import type { KeyResult } from '@/modules/okrs';
 
 const kr = (currentValue: number, targetValue: number): KeyResult =>
@@ -38,5 +38,41 @@ describe('filterObjectivesByCategories', () => {
   });
   it('a category absent from the active set is excluded', () => {
     expect(filterObjectivesByCategories(objs, new Set(['home'])).map(o => o.id)).toEqual(['c']);
+  });
+});
+
+describe('shouldReopenOnDeadlineExtension', () => {
+  const NOW = new Date('2026-06-10T12:00:00.000Z');
+
+  it('rouvre un OKR terminé, dont la deadline était dépassée, repoussée dans le futur', () => {
+    expect(shouldReopenOnDeadlineExtension(
+      { completed: true, endDate: '2026-06-01T00:00:00.000Z' },
+      '2026-07-01T00:00:00.000Z',
+      NOW,
+    )).toBe(true);
+  });
+
+  it('ne rouvre pas un OKR non complété (rien à rouvrir)', () => {
+    expect(shouldReopenOnDeadlineExtension(
+      { completed: false, endDate: '2026-06-01T00:00:00.000Z' },
+      '2026-07-01T00:00:00.000Z',
+      NOW,
+    )).toBe(false);
+  });
+
+  it('ne rouvre pas un OKR complété EN AVANCE (deadline pas encore dépassée)', () => {
+    expect(shouldReopenOnDeadlineExtension(
+      { completed: true, endDate: '2026-07-01T00:00:00.000Z' },
+      '2026-08-01T00:00:00.000Z',
+      NOW,
+    )).toBe(false);
+  });
+
+  it('ne rouvre pas si la nouvelle date reste dans le passé', () => {
+    expect(shouldReopenOnDeadlineExtension(
+      { completed: true, endDate: '2026-06-01T00:00:00.000Z' },
+      '2026-06-05T00:00:00.000Z',
+      NOW,
+    )).toBe(false);
   });
 });

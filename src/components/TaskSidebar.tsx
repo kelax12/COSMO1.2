@@ -1,6 +1,6 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Search, Clock, Bookmark, Filter, X, CheckCircle2, Info, ChevronDown, Pencil, Trash2, CalendarX, MoreHorizontal, Copy, Lightbulb, Plus } from 'lucide-react';
+import { Search, Clock, Bookmark, Filter, X, CheckCircle2, Info, ChevronDown, Pencil, Trash2, CalendarX, MoreHorizontal, Copy, Lightbulb, Plus, Building2 } from 'lucide-react';
 import TaskModal from './TaskModal';
 import CollaboratorAvatars from './CollaboratorAvatars';
 import { showUndoToast } from '@/lib/undo-toast';
@@ -26,6 +26,14 @@ import { useFriends, useCollaboratorsByTask } from '@/modules/friends';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { formatDate } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
+
+// ═══════════════════════════════════════════════════════════════════
+// Tâches d'équipe assignées — mode entreprise (item 4)
+// ═══════════════════════════════════════════════════════════════════
+import { useActiveOrganization } from '@/modules/organizations';
+import { useTeamTasks, type TeamTask } from '@/modules/team-projects';
+import { useTeamCategories } from '@/modules/team-categories';
+import { myAssignedTasks } from './organization/team-projects.helpers';
 
 type TaskSidebarProps = {
   onClose?: () => void;
@@ -88,9 +96,25 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
   // propriétaire, propriétaire si je suis destinataire d'une tâche partagée.
   const collaboratorsByTask = useCollaboratorsByTask(user?.id);
 
+  // ═══════════════════════════════════════════════════════════════════
+  // TÂCHES D'ÉQUIPE ASSIGNÉES (mode entreprise) — scope à l'organisation
+  // ACTIVE, comme `useTodayItems` (src/modules/today/hooks.ts). `[]` sans
+  // organisation active : le hook reste inerte (`enabled: !!orgId`).
+  // ═══════════════════════════════════════════════════════════════════
+  const { activeOrg } = useActiveOrganization();
+  const orgId = activeOrg?.id;
+  const { data: allTeamTasks = [] } = useTeamTasks(orgId);
+  const { data: teamCategories = [] } = useTeamCategories(orgId);
+  const myTeamTasks = useMemo(
+    () => (user ? myAssignedTasks(allTeamTasks, user.id).filter((t) => !t.completed) : []),
+    [allTeamTasks, user],
+  );
+
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
   const [filterPriority, setFilterPriority] = useState('');
+  /** Chips « Tout / Perso / Pro » — origine des tâches affichées. */
+  const [sourceFilter, setSourceFilter] = useState<'all' | 'perso' | 'pro'>('all');
   const [showTutorial, setShowTutorialState] = useState<boolean>(() => {
     try { return localStorage.getItem(TUTORIAL_KEY) === '1'; } catch { return false; }
   });
@@ -194,7 +218,7 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
   };
 
   // Filter tasks (exclude completed ones and respect priority range)
-  const availableTasks = tasks.filter(task => 
+  const availableTasks = tasks.filter(task =>
     !task.completed &&
     task.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
     (filterCategory === '' || task.category === filterCategory) &&
@@ -203,9 +227,34 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
     (task.priority === 0 || (task.priority >= priorityRange[0] && task.priority <= priorityRange[1]))
   );
 
+  // Tâches d'équipe assignées — mêmes filtres de recherche/priorité que les
+  // tâches perso ; `filterCategory` référence un id de catégorie PERSO, donc
+  // il ne matche jamais une tâche d'équipe (sa catégorie vient d'une autre
+  // table) — comportement voulu : filtrer par catégorie perso exclut le pro.
+  const availableTeamTasks = filterCategory === '' ? myTeamTasks.filter(task =>
+    task.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
+    (filterPriority === '' || task.priority.toString() === filterPriority) &&
+    (task.priority === 0 || (task.priority >= priorityRange[0] && task.priority <= priorityRange[1]))
+  ) : [];
+
+  type SidebarItem =
+    | { source: 'perso'; id: string; task: Task }
+    | { source: 'pro'; id: string; task: TeamTask };
+
+  const sidebarItems: SidebarItem[] = [
+    ...(sourceFilter !== 'pro' ? availableTasks.map((task): SidebarItem => ({ source: 'perso', id: task.id, task })) : []),
+    ...(sourceFilter !== 'perso' ? availableTeamTasks.map((task): SidebarItem => ({ source: 'pro', id: task.id, task })) : []),
+  ];
+
   const getCategoryColor = (category: string) => {
     return categories.find(cat => cat.id === category)?.color || '#6B7280';
   };
+
+  const getTeamCategoryColor = (categoryId: string | null | undefined) =>
+    teamCategories.find(cat => cat.id === categoryId)?.color || '#6B7280';
+
+  const getTeamCategoryName = (categoryId: string | null | undefined) =>
+    teamCategories.find(cat => cat.id === categoryId)?.name || t('sidebar.uncategorized');
 
   const getPriorityColor = (priority: number) => {
     const colors = {
@@ -233,16 +282,9 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold" style={{ color: 'rgb(var(--color-text-primary))' }}>{t('sidebar.title')}</h2>
           <div className="flex items-center gap-1">
-            <button
-              type="button"
-              onClick={() => setShowCreateTask(true)}
-              aria-label={t('sidebar.addTask')}
-              title={t('sidebar.addTask')}
-              className="p-1 rounded-md hover:bg-[rgb(var(--color-hover))] transition-colors"
-              style={{ color: 'rgb(var(--color-text-secondary))' }}
-            >
-              <Plus size={20} aria-hidden="true" />
-            </button>
+            {/* Le bouton d'ajout n'est plus ici : il vit maintenant en haut à
+                droite de la section où les tâches s'affichent (juste au-dessus
+                de la liste), à côté des chips Tout/Perso/Pro. */}
             {onClose && (
               <button
                 onClick={onClose}
@@ -326,15 +368,136 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
         </div>
       </div>
 
+      {/* Barre « Tout / Perso / Pro » + ajout — au-dessus de la liste, pas
+          dans l'en-tête (déplacement demandé : le + reste près de ce sur
+          quoi il agit). */}
+      <div className="px-4 pt-3 pb-1 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-1" role="group" aria-label={t('sidebar.sourceFilterAria')}>
+          {([
+            ['all', t('sidebar.sourceAll')],
+            ['perso', t('sidebar.sourcePerso')],
+            ['pro', t('sidebar.sourcePro')],
+          ] as const).map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              onClick={() => setSourceFilter(value)}
+              aria-pressed={sourceFilter === value}
+              className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
+                sourceFilter === value
+                  ? 'bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))]'
+                  : 'hover:bg-[rgb(var(--color-hover))]'
+              }`}
+              style={sourceFilter === value ? undefined : { color: 'rgb(var(--color-text-secondary))' }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        <button
+          type="button"
+          onClick={() => setShowCreateTask(true)}
+          aria-label={t('sidebar.addTask')}
+          title={t('sidebar.addTask')}
+          className="shrink-0 p-1.5 rounded-md hover:bg-[rgb(var(--color-hover))] transition-colors"
+          style={{ color: 'rgb(var(--color-text-secondary))' }}
+        >
+          <Plus size={20} aria-hidden="true" />
+        </button>
+      </div>
+
       {/* Tasks List Container for External Events */}
-      <div id="external-events-container" className="flex-1 overflow-y-auto p-4 space-y-3">
-        {availableTasks.length === 0 ? (
+      <div id="external-events-container" className="flex-1 overflow-y-auto p-4 pt-2 space-y-3">
+        {sidebarItems.length === 0 ? (
           <div className="text-center py-8" style={{ color: 'rgb(var(--color-text-muted))' }}>
             <Filter size={48} className="mx-auto mb-2" style={{ color: 'rgb(var(--color-text-muted))' }} />
             <p>{t('sidebar.noResults')}</p>
           </div>
         ) : (
-          availableTasks.map((task, idx) => {
+          sidebarItems.map((item, idx) => {
+            if (item.source === 'pro') {
+              const task = item.task;
+              const catColor = getTeamCategoryColor(task.categoryId);
+              // Payload de drag consommé par `AgendaPage` (Draggable.eventData) :
+              // couleur/nom de catégorie déjà résolus ICI (ce composant connaît
+              // à la fois les catégories perso ET d'équipe), pour qu'`AgendaPage`
+              // n'ait pas besoin de connaître `team_categories`.
+              const dragPayload = {
+                id: task.id,
+                name: task.name,
+                priority: task.priority,
+                estimatedTime: task.estimatedTime,
+                categoryColor: catColor,
+                categoryName: getTeamCategoryName(task.categoryId),
+                // 🔴 PAS de `taskId` réutilisable côté `events.task_id` : cette
+                // colonne porte une FK vers `tasks` (perso), jamais vers
+                // `team_tasks` (migration 004) — un id d'équipe la ferait
+                // échouer. `source: 'pro'` dit à `handleEventReceive` de ne
+                // jamais l'assigner (cf. useCalendarGridGestures.ts).
+                source: 'pro' as const,
+              };
+
+              return (
+                <div
+                  key={task.id}
+                  data-tutorial-id={idx === 0 ? 'agenda-first-task' : undefined}
+                  className="external-event rounded-lg p-3 border-2 border-dashed group select-none cursor-move hover:shadow-md"
+                  style={{
+                    backgroundColor: 'rgb(var(--color-surface))',
+                    borderColor: 'rgb(var(--color-border))',
+                    borderLeftWidth: '4px',
+                    borderLeftStyle: 'solid',
+                    borderLeftColor: catColor,
+                    position: 'relative',
+                    touchAction: 'pan-y',
+                    transition: 'background-color 0.2s, border-color 0.2s, box-shadow 0.2s',
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'rgb(var(--color-hover))')}
+                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'rgb(var(--color-surface))')}
+                  onPointerDown={() => onDragStart?.()}
+                  data-task={JSON.stringify(dragPayload)}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Building2 size={14} className="shrink-0" style={{ color: catColor }} aria-label={t('sidebar.proTaskBadge')} />
+                      <span className="font-medium text-sm truncate" style={{ color: 'rgb(var(--color-text-primary))' }}>{task.name}</span>
+                    </div>
+                    {task.priority > 0 && (
+                      <span className={`shrink-0 px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(task.priority)}`}>
+                        P{task.priority}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex items-center justify-between text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
+                    <div className="flex items-center gap-1">
+                      <Clock size={12} />
+                      <span>{formatDuration(task.estimatedTime)}</span>
+                    </div>
+                    <span className="text-xs px-2 py-1 rounded border" style={{
+                      backgroundColor: 'rgb(var(--color-surface))',
+                      borderColor: 'rgb(var(--color-border))',
+                      color: 'rgb(var(--color-text-secondary))',
+                    }}>
+                      {getTeamCategoryName(task.categoryId)}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-rows-[0fr] group-hover:grid-rows-[1fr] transition-[grid-template-rows] duration-200 ease-out">
+                    <div className="overflow-hidden">
+                      <div
+                        className="mt-2 text-xs opacity-0 group-hover:opacity-100 transition-opacity duration-150 group-hover:delay-75"
+                        style={{ color: 'rgb(var(--color-accent))' }}
+                      >
+                        {t('sidebar.dragHint')}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            }
+
+            const task = item.task;
             const isPlaced = isTaskPlacedInCalendar(task.id);
 
             return (
@@ -374,7 +537,7 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
                     onPointerMove={onPressMove}
                     onPointerUp={cancelLongPress}
                     onPointerCancel={cancelLongPress}
-                    data-task={JSON.stringify(task)}
+                    data-task={JSON.stringify({ ...task, source: 'perso' })}
                   >
                 {isPlaced && (
                   <div className="absolute inset-0 bg-black bg-opacity-10 rounded-lg flex items-center justify-center pointer-events-none">
@@ -383,7 +546,7 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
                     </div>
                   </div>
                 )}
-                
+
                     <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2 min-w-0">
                       <div
@@ -407,7 +570,7 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
                     </div>
                   </div>
 
-                
+
                 <div className="flex items-center justify-between text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
                   <div className="flex items-center gap-1">
                     <Clock size={12} />
@@ -442,13 +605,13 @@ const TaskSidebar: React.FC<TaskSidebarProps> = ({ onClose, onDragStart }) => {
                     </button>
                   </div>
                 </div>
-                
+
                 <div className="mt-2 text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
                   {task.deadline
                     ? t('sidebar.deadline', { date: formatDate(new Date(task.deadline)) })
                     : t('sidebar.noDeadline')}
                 </div>
-                
+
                 {/* Drag indicator — masqué par défaut (n'occupe aucune place) et
                     révélé au survol de la carte, pour supprimer l'espace vide
                     sous la deadline hors survol. Animation grid-rows 0fr→1fr

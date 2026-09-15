@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import type { OrgMember } from '@/modules/organizations';
 import type { OrgTeam } from '@/modules/org-teams';
 import type { CreateTeamProjectInput } from '@/modules/team-projects';
-import { PROJECT_COLOR_NAMES, PROJECT_COLORS, PRIORITY_META } from './team-projects.helpers';
+import { PRIORITY_META, projectColorFromCategory } from './team-projects.helpers';
+import { useTeamCategories } from '@/modules/team-categories';
 import AssigneesPicker from './AssigneesPicker';
 import TeamCategoryTreeSelect from './TeamCategoryTreeSelect';
 import { useT } from '@/i18n/useT';
@@ -36,13 +37,16 @@ const inputStyle = { backgroundColor: 'rgb(var(--color-surface))', color: 'rgb(v
 
 /**
  * Popup de création de projet d'équipe (même langage visuel que TeamTaskModal) :
- * nom, couleur, équipe de rattachement (= collaborateurs qui y ont accès) et une
- * liste de tâches initiales, chacune assignable à des membres.
+ * nom, catégorie, équipe de rattachement (= collaborateurs qui y ont accès) et
+ * une liste de tâches initiales, chacune assignable à des membres.
+ *
+ * ⚠️ Pas de sélecteur de couleur : la couleur du projet est DÉRIVÉE de sa
+ * catégorie (`projectColorFromCategory`), jamais choisie à la main.
  */
 const NewTeamProjectModal = ({ orgId, teams, members, defaultTeamId, onSubmit, onClose }: NewTeamProjectModalProps) => {
   const { t, tp } = useT('org');
+  const { data: categories = [] } = useTeamCategories(orgId);
   const [name, setName] = useState('');
-  const [color, setColor] = useState('blue');
   const [categoryId, setCategoryId] = useState<string | null>(null);
   const [teamId, setTeamId] = useState(defaultTeamId ?? '');
   const [tasks, setTasks] = useState<DraftTask[]>([]);
@@ -71,6 +75,7 @@ const NewTeamProjectModal = ({ orgId, teams, members, defaultTeamId, onSubmit, o
       ? [...tasks, { name: composerName.trim(), assigneeIds: composerAssignees }]
       : tasks;
     try {
+      const color = projectColorFromCategory(categoryId, categories);
       await onSubmit({ name: name.trim(), color, teamId: teamId || null, categoryId }, pendingDraft);
       onClose();
     } catch {
@@ -143,26 +148,6 @@ const NewTeamProjectModal = ({ orgId, teams, members, defaultTeamId, onSubmit, o
               className={inputClass}
               style={inputStyle}
             />
-          </div>
-
-          {/* Couleur */}
-          <div>
-            <span className={labelClass} style={labelStyle}>{t('project.color')}</span>
-            <div className="flex items-center gap-2 flex-wrap" role="radiogroup" aria-label={t('project.colorAria')}>
-              {PROJECT_COLOR_NAMES.map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  role="radio"
-                  aria-checked={color === c}
-                  aria-label={`Couleur ${c}`}
-                  onClick={() => setColor(c)}
-                  className={`w-8 h-8 rounded-full flex items-center justify-center transition-transform hover:scale-110 ${color === c ? 'ring-2 ring-offset-2 ring-offset-[rgb(var(--color-background))] ring-blue-500' : ''}`}
-                >
-                  <span className={`w-5 h-5 rounded-full ${PROJECT_COLORS[c].dot}`} />
-                </button>
-              ))}
-            </div>
           </div>
 
           {/* Catégorie — distincte du projet (mig. 111) : une étiquette

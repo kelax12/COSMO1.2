@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import {
   Plus, ChevronDown, ChevronRight, UsersRound, MoreHorizontal,
-  Pencil, Archive, ArchiveRestore, Palette, Clock, ListChecks, Tag,
+  Pencil, Archive, ArchiveRestore, Clock, ListChecks, Tag,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -17,7 +17,7 @@ import type { OrgMember } from '@/modules/organizations';
 import type { OrgTeam } from '@/modules/org-teams';
 import type { TeamProject, TeamTask, UpdateTeamProjectInput } from '@/modules/team-projects';
 import {
-  projectColor, PROJECT_COLOR_NAMES, PROJECT_COLORS,
+  projectColor, projectColorFromCategory,
   sortOpenTasks, sortCompletedTasks, isTaskOverdue,
   sumEstimatedTime, formatDuration,
 } from './team-projects.helpers';
@@ -225,26 +225,6 @@ const TeamProjectCard = ({
                   <Pencil size={14} aria-hidden="true" /> {t('project.rename')}
                 </DropdownMenuItem>
               )}
-              {canEditProject && (
-              <DropdownMenuSub>
-                <DropdownMenuSubTrigger>
-                  <Palette size={14} aria-hidden="true" /> {t('project.color')}
-                </DropdownMenuSubTrigger>
-                <DropdownMenuSubContent className="grid grid-cols-3 gap-1 p-2">
-                  {PROJECT_COLOR_NAMES.map((c) => (
-                    <button
-                      key={c}
-                      type="button"
-                      onClick={() => onUpdateProject({ color: c })}
-                      aria-label={t('project.colorAria', { name: c })}
-                      className={`w-8 h-8 rounded-lg flex items-center justify-center hover:bg-[rgb(var(--color-hover))] ${project.color === c ? 'ring-2 ring-indigo-500' : ''}`}
-                    >
-                      <span className={`w-4 h-4 rounded-full ${PROJECT_COLORS[c].dot}`} />
-                    </button>
-                  ))}
-                </DropdownMenuSubContent>
-              </DropdownMenuSub>
-              )}
               {canEditProject && teams.length > 0 && (
                 <DropdownMenuSub>
                   <DropdownMenuSubTrigger>
@@ -269,11 +249,14 @@ const TeamProjectCard = ({
                     <Tag size={14} aria-hidden="true" /> {t('project.category')}
                   </DropdownMenuSubTrigger>
                   <DropdownMenuSubContent className="w-48">
-                    <DropdownMenuItem onClick={() => onUpdateProject({ categoryId: null })}>
+                    {/* La couleur suit la catégorie (plus de sélecteur manuel,
+                        cf. team-projects.helpers.ts § projectColorFromCategory) :
+                        chaque choix ici recalcule aussi `color`. */}
+                    <DropdownMenuItem onClick={() => onUpdateProject({ categoryId: null, color: projectColorFromCategory(null, categories) })}>
                       {t('project.noCategory')} {!project.categoryId && <span className="ml-auto text-xs">✓</span>}
                     </DropdownMenuItem>
                     {categories.map((c) => (
-                      <DropdownMenuItem key={c.id} onClick={() => onUpdateProject({ categoryId: c.id })}>
+                      <DropdownMenuItem key={c.id} onClick={() => onUpdateProject({ categoryId: c.id, color: projectColorFromCategory(c.id, categories) })}>
                         <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: c.color }} aria-hidden="true" />
                         <span className="truncate">{c.name}</span>
                         {project.categoryId === c.id && <span className="ml-auto text-xs">✓</span>}

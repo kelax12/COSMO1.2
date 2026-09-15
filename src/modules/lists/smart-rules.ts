@@ -21,6 +21,8 @@ export interface SmartPresetDef {
   color: string;       // valeur du champ color de la TaskList
   descriptionKey: string; // pour le sélecteur de preset
   matches: (task: Task, now: Date, pref?: TimezonePref) => boolean;
+  /** Tri optionnel appliqué APRÈS le filtre, propre à ce preset. */
+  sort?: (a: Task, b: Task) => number;
 }
 
 // 🔴 Les règles comparent des JOURS, pas des instants (risque R-01).
@@ -61,10 +63,16 @@ export const SMART_PRESETS: SmartPresetDef[] = [
     labelKey: 'smartPreset.highPriority',
     color: 'orange',
     descriptionKey: 'smartPreset.highPriorityDescription',
+    // Uniquement P1 et P2. 🔴 `task.priority <= 2` incluait aussi les tâches
+    // SANS priorité : `0` est la valeur « facultative, non renseignée »
+    // (convention du module, cf. `withinPriorityRange`), et `0 <= 2` est vrai
+    // en JS — une tâche sans priorité passait alors pour « haute priorité ».
     matches: (task) => {
       if (task.completed) return false;
-      return task.priority <= 2;
+      return task.priority === 1 || task.priority === 2;
     },
+    // P1 avant P2, indépendamment du tri choisi par ailleurs sur la page.
+    sort: (a, b) => a.priority - b.priority,
   },
 ];
 
@@ -81,7 +89,8 @@ export const tasksInList = (
   if (list.type === 'smart' && list.smartRule) {
     const preset = SMART_PRESETS.find(p => p.preset === list.smartRule);
     if (!preset) return [];
-    return allTasks.filter(t => preset.matches(t, now, pref));
+    const matched = allTasks.filter(t => preset.matches(t, now, pref));
+    return preset.sort ? [...matched].sort(preset.sort) : matched;
   }
   // Manuelle : intersection avec taskIds
   const ids = new Set(list.taskIds);

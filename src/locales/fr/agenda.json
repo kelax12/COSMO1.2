@@ -73,6 +73,11 @@
     "deleteTask": "Supprimer la tâche",
     "taskDeleted": "Tâche supprimée",
     "copySuffix": "{{name}} (copie)",
+    "sourceFilterAria": "Filtrer par origine des tâches",
+    "sourceAll": "Tout",
+    "sourcePerso": "Perso",
+    "sourcePro": "Pro",
+    "proTaskBadge": "Tâche d'équipe",
     "help": {
       "closeTutorial": "Fermer le tutoriel",
       "showGuide": "Afficher le guide",
