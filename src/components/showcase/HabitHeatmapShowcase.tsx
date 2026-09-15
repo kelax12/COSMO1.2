@@ -187,30 +187,33 @@ const HabitTableShowcase: React.FC = () => {
 
           {/* Period nav */}
           <div className="flex items-center gap-1.5">
-            <button
-              type="button"
-              aria-label="Semaine précédente (démo)"
-              tabIndex={-1}
+            {/* 🔴 CE SONT DES DESSINS, PAS DES COMMANDES (C-80). Les deux
+                fleches etaient des `button` avec `tabIndex={-1}`,
+                `cursor-default` et aucun `onClick` : elles rendaient 28 x 28 px
+                a la garde des cibles tactiles, pour un geste qui n'existe pas.
+                Elles sont VOISINES a 6 px, donc meme `TAP_AREA_44` serait faux
+                ici. Un element non interactif se retire de l'arbre
+                d'accessibilite, il ne se met pas aux normes. */}
+            <div
+              aria-hidden="true"
               className="p-1.5 rounded-md border cursor-default"
               style={{ color: textSecondary, borderColor: border }}
             >
               <ChevronLeft size={14} aria-hidden="true" />
-            </button>
+            </div>
             <div
               className="text-xs font-medium min-w-[110px] text-center"
               style={{ color: textPrimary }}
             >
               Semaine du 20 avr.
             </div>
-            <button
-              type="button"
-              aria-label="Semaine suivante (démo)"
-              tabIndex={-1}
+            <div
+              aria-hidden="true"
               className="p-1.5 rounded-md border cursor-default"
               style={{ color: textMuted, borderColor: border }}
             >
               <ChevronRight size={14} aria-hidden="true" />
-            </button>
+            </div>
           </div>
 
           {/* Period selector */}

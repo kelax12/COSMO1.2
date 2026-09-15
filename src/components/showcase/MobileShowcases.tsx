@@ -105,15 +105,25 @@ export const TaskCardMobileShowcase: React.FC = () => {
           <div className="self-center px-2 py-0.5 rounded text-[10px] font-bold" style={{ backgroundColor: SHOWCASE_TASKS[2].color + '30', color: SHOWCASE_TASKS[2].color }}>
             P{SHOWCASE_TASKS[2].pri}
           </div>
-          <motion.button
+          {/* 🔴 C'EST UN DESSIN, PAS UNE COMMANDE (C-80). C'était un
+              `motion.button` avec `tabIndex={-1}` et aucun `onClick` : le seul
+              élément de ces maquettes à porter un rôle interactif, tous ses
+              voisins étant des `div`. Il rendait donc 16 x 24 px à la garde des
+              cibles tactiles, donc SOUS le plancher AA de WCAG 2.5.8 (24 px),
+              pour un geste qui n'existe pas.
+
+              ❌ Ne pas « corriger » ça en l'agrandissant à 44 px : ce serait
+              poser une cible tactile sur une image de téléphone, c'est-à-dire
+              promettre un appui qui ne fait rien. Un élément non interactif se
+              retire de l'arbre d'accessibilité, il ne se met pas aux normes. */}
+          <motion.div
             animate={{ scale: [1, 1.2, 1], color: ['#94a3b8', '#3b82f6', '#94a3b8'] }}
             transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
             className="self-center p-1.5 rounded-lg"
-            aria-label="Plus d'options (démonstration)"
-            tabIndex={-1}
+            aria-hidden="true"
           >
             <MoreHorizontal size={16} aria-hidden="true" />
-          </motion.button>
+          </motion.div>
         </div>
       </div>
 

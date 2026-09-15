@@ -1,6 +1,42 @@
 # Mobile-first — patterns et conventions
 
-## Note mobile / DA : 62 → 72 → 74 → 76 → 79 → **76 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-14 → 2026-09-14 soir)
+## Note mobile / DA : 62 → 72 → 74 → 76 → 79 → 76 → **78 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-14 → 2026-09-14 soir → 2026-09-15)
+
+> ### 🟢 2026-09-15 · +2 sur les 3 retirés : le périmètre est élargi, le moteur mobile ne l'est pas encore
+>
+> **Deux des trois points reviennent, pas les trois**, et la différence se lit dans l'entrée
+> d'hier : elle retirait 3 points pour DEUX défauts distincts, le périmètre de la garde et le fait
+> qu'aucune suite mobile ne tourne sur un moteur mobile. Le premier est refermé (C-80), le second
+> ne l'est pas a cette date (C-78, en cours).
+>
+> `e2e/touch-targets.spec.ts` couvre désormais **8 pages publiques** en plus de ses 8 routes
+> protégées : `/`, `/entreprise-presentation`, `/guide`, `/blog` et les quatre pages cas d'usage.
+> **18 cas sur 18 verts** sur Chromium, contre 15 verts / 3 rouges au premier passage de la boucle
+> élargie.
+>
+> 🔴 **Le curseur de forfait est le correctif qui comptait, et il est MESURÉ dans WebKit / iPhone
+> 12, pas dans un Chrome rétréci** : `{"w":308,"h":6}` avant, `{"w":308,"h":44,"appearance":"none"}`
+> après. C'est l'outil avec lequel un prospect choisit son palier, sur la page qui vend l'offre.
+>
+> ✅ **La réserve d'hier est levée dans le sens qu'elle redoutait** : « la zone tactile réelle du
+> curseur peut excéder la piste selon le moteur, à vérifier avant de conclure ». Vérifié : elle ne
+> l'excédait pas.
+>
+> ❌ **La piste visuelle n'a PAS grossi**, et ne doit jamais grossir : c'est la hauteur de
+> l'ÉLÉMENT qui monte à 44 px, fond transparent, la piste descendant dans
+> `::-webkit-slider-runnable-track` / `::-moz-range-track` où elle garde ses 6 px. Capture WebKit à
+> l'appui.
+>
+> ⚠️ **Trois des huit défauts n'étaient pas des cibles trop petites, c'étaient de FAUSSES
+> COMMANDES** : un `button` de maquette à `tabIndex={-1}` sans `onClick`, et deux flèches « Semaine
+> (démo) » du `/guide`, dans des dessins de téléphone dont tous les autres éléments sont des `div`.
+> ❌ Ne jamais « corriger » ce cas-la en agrandissant a 44 px : ce serait poser une cible tactile
+> sur une image, donc promettre un appui qui ne fait rien. Un élément non interactif se retire de
+> l'arbre d'accessibilité, il ne se met pas aux normes.
+>
+> 🔴 **Ce qui NE bouge pas** : aucune de ces mesures n'est rejouée par la CI sur WebKit. Le project
+> `mobile-safari` reste hors CI à cette date. Le troisieme point ne reviendra qu'avec C-78.
+
 
 > ### 🔴 2026-09-14 (soir) · −3 : « 0 cible tactile trop petite » ne vaut que des 8 routes protégées, et les pages publiques en portent 24
 >

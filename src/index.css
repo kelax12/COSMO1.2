@@ -1550,21 +1550,54 @@ a:focus-visible:not([class*="ring-"]):not([class*="focus-visible:"]),
    `input[type=range]` n'a aucun style commun entre navigateurs : sans ces
    règles, WebKit affiche sa piste bleue système, ce qui casse la palette
    graphite/cyan du track entreprise. La piste est peinte en dégradé, la
-   poignée en pastille cyan avec un halo au survol. */
+   poignée en pastille cyan avec un halo au survol.
+
+   🔴 LA ZONE TACTILE FAIT 44 px, LA PISTE EN FAIT TOUJOURS 6 (C-80).
+   Mesuré le 2026-09-14 contre la production, WebKit / iPhone 12 : cet élément
+   rendait 308 x 6 px. C'est l'outil avec lequel un prospect choisit son
+   palier, sur la page qui vend l'offre, et il demandait de poser le doigt
+   dans une bande de six pixels. Stylé par l'auteur (`appearance: none`), il
+   est donc HORS de l'exemption « contrôle du navigateur » de WCAG 2.5.8 : la
+   norme s'applique, et l'ergonomie ne dépendait de toute façon d'aucune norme.
+
+   ❌ Ne JAMAIS corriger ça en grossissant la piste : une barre de 44 px
+   défigure la section et n'est pas ce que le dessin veut dire. C'est la
+   HAUTEUR DE L'ELEMENT qui monte à 44 px (fond transparent), et la piste qui
+   descend dans `::-webkit-slider-runnable-track` / `::-moz-range-track`, où
+   elle garde ses 6 px, centrée verticalement par le navigateur.
+
+   ⚠️ Conséquence à ne pas défaire : le dégradé ne peut plus vivre sur
+   `.ent-range` lui-même. L'y remettre repeindrait toute la bande de 44 px. */
 .ent-range {
   -webkit-appearance: none;
   appearance: none;
+  /* La cible, pas la piste. */
+  height: 44px;
+  background: transparent;
+  outline: none;
+}
+
+.ent-range::-webkit-slider-runnable-track {
   height: 6px;
   border-radius: 9999px;
   background: linear-gradient(to right, rgba(34, 211, 238, 0.55), rgba(245, 185, 66, 0.5));
-  outline: none;
+}
+
+.ent-range::-moz-range-track {
+  height: 6px;
+  border-radius: 9999px;
+  background: linear-gradient(to right, rgba(34, 211, 238, 0.55), rgba(245, 185, 66, 0.5));
 }
 
 .ent-range::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 20px;
-  height: 20px;
+  /* 24 px : le plancher AA de WCAG 2.5.8 pour la poignée elle-même. */
+  width: 24px;
+  height: 24px;
+  /* Recentre la poignée sur une piste de 6 px : (6 - 24) / 2. WebKit ne le
+     fait pas tout seul dès que `-webkit-appearance: none` est posé. */
+  margin-top: -9px;
   border-radius: 9999px;
   background: #22d3ee;
   border: 3px solid #08090c;
@@ -1580,19 +1613,13 @@ a:focus-visible:not([class*="ring-"]):not([class*="focus-visible:"]),
 .ent-range::-webkit-slider-thumb:active { cursor: grabbing; }
 
 .ent-range::-moz-range-thumb {
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
   border-radius: 9999px;
   background: #22d3ee;
   border: 3px solid #08090c;
   box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.6), 0 0 16px -2px rgba(34, 211, 238, 0.8);
   cursor: grab;
-}
-
-.ent-range::-moz-range-track {
-  height: 6px;
-  border-radius: 9999px;
-  background: transparent;
 }
 
 .ent-range:focus-visible::-webkit-slider-thumb {

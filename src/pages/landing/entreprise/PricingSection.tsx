@@ -11,6 +11,7 @@ import { useT } from '@/i18n/useT';
 import type { KeyOf } from '@/i18n/catalog';
 import ScrollHighlight from './ScrollHighlight';
 import { ENTERPRISE_FREE_OFFER } from './free-offer';
+import { TAP_AREA_44_Y } from '@/components/mobile';
 
 type Tier = (typeof ENTERPRISE_PRICING_TIERS)[number];
 
@@ -143,7 +144,12 @@ const PricingSection: React.FC<{ onRegister: () => void }> = ({ onRegister }) =>
                   role="radio"
                   aria-checked={isSelected}
                   onClick={() => setBillingInterval(option)}
-                  className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition-[background-color,color] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#08090C] ${
+                  /* `TAP_AREA_44_Y` (C-80) : mesurés 90 x 36 et 140 x 36 px.
+                     Deux commandes VOISINES dans la même pilule, donc débord
+                     vertical seulement. C'est le choix mensuel / annuel, donc
+                     le geste qui décide du montant facturé : le rater doit être
+                     difficile. */
+                  className={`${TAP_AREA_44_Y} inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition-[background-color,color] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#08090C] ${
                     isSelected ? 'bg-cyan-400/15 text-cyan-300' : 'text-slate-400 hover:text-slate-200'
                   }`}
                 >

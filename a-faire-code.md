@@ -105,6 +105,46 @@ POURQUOI, jamais un `skip` silencieux.
 
 ---
 
+### 🟠 C-80 · ~~la garde des cibles tactiles ne regarde aucune page publique~~ · ✅ **corrigé le 2026-09-15**
+
+> **Fait, et mesuré.** La boucle couvre désormais **8 pages publiques** en plus des 8 routes
+> protégées, et le détecteur voit un objet qu'il ne voyait pas : `input[type=range]`.
+> Suite **verte, 18 cas sur 18** (`--project=chromium`), contre 15 verts / 3 rouges au premier
+> passage de la boucle élargie.
+>
+> | Défaut | Avant | Après | Geste |
+> |---|---|---|---|
+> | curseur de forfait `/entreprise-presentation` | **308 × 6 px** | **308 × 44 px** | hauteur de l'élément portée à 44 px, piste descendue dans `::-webkit-slider-runnable-track` / `::-moz-range-track` où elle garde ses 6 px ; poignée 20 → 24 px |
+> | CTA « Commencer » du header | 115 × 36 | ≥ 44 px de haut | `min-h-touch` |
+> | logo / « Retour en haut de la page » | 116 × 36 | ≥ 44 px | `min-h-touch`, sans changer la hauteur de l'en-tête |
+> | 4 × « En savoir plus » (cartes personas) | 121 × 20 | 44 px tactiles | `TAP_AREA_44_Y` |
+> | 3 onglets de vue (`ProjectsSection`) | 28 px de haut | 44 px tactiles | `TAP_AREA_44_Y`, vertical seulement (voisins) |
+> | Mensuel / Annuel (`PricingSection`) | 36 px | 44 px tactiles | `TAP_AREA_44_Y` |
+> | « Plus d'options (démonstration) » | 16 × 24 | **retiré de la mesure** | ce n'était pas une commande : `tabIndex={-1}`, aucun `onClick`, tous ses voisins sont des `div`. Passé en `div aria-hidden` |
+> | 2 flèches « Semaine (démo) » du `/guide` | 28 × 28 | **retirées de la mesure** | même cas, et voisines à 6 px donc même `TAP_AREA_44` aurait été faux |
+>
+> 🔴 **Le curseur mesuré dans un VRAI WebKit / iPhone 12, pas dans un Chrome rétréci** : sonde
+> jetable jouée sur `--project=mobile-safari`, qui rend `{"w":308,"h":44,"appearance":"none"}`,
+> plus une capture de la section confirmant que la piste visuelle n'a pas bougé.
+>
+> ⚠️ **Le détecteur s'élargit, donc il repart avec DEUX témoins** (un curseur natif, exempté par
+> 2.5.5 / 2.5.8 comme « contrôle du navigateur » ; un curseur en `appearance: none`, qui ne l'est
+> plus). Un assouplissement sans témoin est un trou qu'on ouvre en croyant élargir une mesure.
+>
+> 🔴 **Le sort des liens de pied de page est TRANCHÉ, par son nom, dans l'en-tête du spec.** Ils
+> échouent au critère **AAA 2.5.5** (44 px) et tiennent le **AA 2.5.8** par son exception
+> d'espacement, pas par leur taille. Les corriger voudrait dire 44 px de haut sur chaque ligne d'un
+> pied de page de plusieurs dizaines de liens, donc un écran entier sur téléphone. **Dette de
+> confort assumée**, portée par le périmètre du détecteur (aucun lien n'est compté). ❌ Un lien de
+> pied de page qui deviendrait un BOUTON rentre dans la mesure et la dispense ne le couvre plus.
+>
+> ⚠️ **Ce que le vert ne dit toujours pas** : la boucle mesure l'ÉTAT DE REPOS de chaque page. Rien
+> de ce qui s'ouvre au clic sur une page publique n'est mesuré, et une seule modale du produit sur
+> 58 l'est.
+
+<details>
+<summary>L'état du 2026-09-14, conservé à sa date</summary>
+
 ### 🟠 C-80 · la garde des cibles tactiles ne regarde aucune page publique
 
 **Où** : `e2e/touch-targets.spec.ts`, la boucle `for (const route of [...])` (ligne ~265).
@@ -141,7 +181,61 @@ dispenser en masse : c'est ce que la dispense `color-contrast` de `a11y-audit.sp
 légitimement, mais elle renvoie à une décision nommée (C-23). Une dispense sans décision est une
 régression qu'on a choisi de ne plus voir.
 
+</details>
+
 ---
+
+### 🟡 C-79 · ~~rien ne relie les migrations du dépôt au ledger de production~~ · ✅ **corrigé le 2026-09-15**
+
+> **Fait.** `scripts/check-migration-coverage.mjs` + son témoin
+> (`scripts/check-migration-coverage.guard.test.mjs`, **16 cas**) + le workflow
+> `.github/workflows/migration-coverage.yml` (quotidien 05:17 UTC, et à chaque push touchant
+> `supabase/migration/`), branché sur `ci-alert.yml`.
+>
+> **Premier passage, contre la production du 2026-09-15 : 152 fichiers, 0 absent.**
+>
+> | Verdict | Fichiers |
+> |---|---|
+> | AU LEDGER | **118** |
+> | OBJET EN BASE | **27** |
+> | OBJET RETIRÉ DEPUIS | **3** |
+> | SUPPRESSION VÉRIFIÉE | **1** |
+> | SANS OBJET VÉRIFIABLE (déclaré) | **2** |
+> | NON APPLIQUÉE (déclarée) | **1** |
+> | **ABSENT DES DEUX** | **0** |
+>
+> 🔴 **Deux verdicts ne figuraient pas dans l'énoncé de l'item, et ils sont MESURÉS, pas déclarés.**
+> Sans eux, la garde réclamait quatre migrations bel et bien appliquées, et il aurait fallu les
+> dispenser à la main, donc écrire une liste là où une mesure suffit :
+> - **objet retiré depuis** : les mig. `013`, `015` et `016` créent `subscriptions_guard`,
+>   `consume_premium_token` et `credit_premium_token_from_ad`, que la mig. `141` a supprimées le
+>   2026-09-04 (C-04). Le script relit les `DROP` des migrations **ultérieures**, dans l'ordre des
+>   fichiers ;
+> - **suppression vérifiée** : la mig. `090` ne crée rien et ne fait que supprimer. Son effet est
+>   négatif, il se mesure quand même, par l'absence de ses cibles.
+>
+> ⚠️ **Deux fichiers seulement sont déclarés non vérifiables**, et c'est un aveu de limite, pas une
+> dispense : `000_default_privileges` (des GRANT, dont le catalogue ne garde aucune trace) et
+> `038_backfill_okr_key_results` (une migration de DONNÉES, dont l'effet est un nombre de lignes).
+> La `140` est déclarée non appliquée, délibérément (fenêtre de bascule Stripe live).
+>
+> 🔴 **Une dispense qui se révèle FAUSSE fait échouer la garde** : une migration déclarée « non
+> appliquée » qui est en fait au ledger, ou dont les objets sont en base, décrit un état périmé. La
+> déclaration doit tomber, pas survivre en silence. Même contrat que `.github/edge-deploy.json`.
+>
+> ✅ **Les témoins ont été VUS ROUGES avant d'être commités**, sur quatre sabotages du script :
+> retrait du refus de lecture vide (2 cas rouges), `supprimeApres` qui ignore l'ordre des fichiers
+> (1), plus de retranchement du `DROP`-puis-`CREATE` dans un même fichier (1), dispense périmée
+> tolérée (1).
+>
+> ⚠️ **Ce que ce vert NE DIT PAS, et le script l'imprime à chaque exécution** : une ligne au ledger
+> ne prouve pas qu'un `CREATE OR REPLACE` a remplacé le corps vivant (mig. `144`, rejouée par la
+> `147` après que `pg_get_functiondef` a montré l'ancien corps), et « objet en base » ne prouve pas
+> que tout le fichier est passé. Le rapport liste d'ailleurs les **9 fichiers partiels**, dont la
+> `136`, dont l'index `idx_kr_completions_user_completed_at` manque, ce qui est exactement C-77.
+
+<details>
+<summary>L'état du 2026-09-14, conservé à sa date</summary>
 
 ### 🟡 C-79 · rien ne relie les migrations du dépôt au ledger de production
 
@@ -162,6 +256,8 @@ entrées » était le NUMÉRO de la dernière migration recopié comme un total.
 verdicts : *au ledger* · *absent du ledger mais l'objet qu'il crée existe en base* · *absent des
 deux*, et qui échoue sur le troisième. ❌ Ne pas se contenter d'un comptage : c'est précisément le
 comptage qui a menti.
+
+</details>
 
 ---
 

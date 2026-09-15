@@ -5,6 +5,7 @@ import { gsap, useGSAP } from '@/lib/gsap';
 import { useT } from '@/i18n/useT';
 import type { KeyOf } from '@/i18n/catalog';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
+import { TAP_AREA_44_Y } from '@/components/mobile';
 import AppShot from './AppShot';
 import ScrollHighlight from './ScrollHighlight';
 import StepSection from './StepSection';
@@ -213,7 +214,13 @@ const ProjectsSection: React.FC = () => {
                     type="button"
                     aria-pressed={index === viewIndex}
                     onClick={() => goToView(index)}
-                    className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 font-mono text-caption uppercase tracking-[0.16em] transition-colors duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 ${
+                    /* `TAP_AREA_44_Y` (C-80) : ces trois onglets mesuraient
+                       28 px de haut. Ils sont VOISINS dans une rangée, donc le
+                       débord doit rester vertical (`inset-x-0`) : l'élargir
+                       poserait « Tableau » par-dessus « Liste ». Et leur donner
+                       44 px pour de vrai ferait une rangée d'onglets plus haute
+                       que la capture qu'elle légende. */
+                    className={`${TAP_AREA_44_Y} inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 font-mono text-caption uppercase tracking-[0.16em] transition-colors duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 ${
                       index === viewIndex
                         ? 'border-cyan-300/40 bg-cyan-400/10 text-cyan-200'
                         : 'border-white/[0.08] text-slate-500 hover:text-slate-300'
