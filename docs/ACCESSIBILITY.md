@@ -33,7 +33,55 @@ Conséquences pratiques, à tenir :
   La check-list est prête et se joue d'une traite :
   [`AUDIT-VOICEOVER-IOS.md`](./AUDIT-VOICEOVER-IOS.md).
 
-## Note d'accessibilité : 76 → 79 → 80 → 81 → 82 → 83 → 84 → **82 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-04 → 2026-09-14 → 2026-09-14 soir)
+## Note d'accessibilité : 76 → 79 → 80 → 81 → 82 → 83 → 84 → 82 → **84 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-04 → 2026-09-14 → 2026-09-14 soir → 2026-09-15)
+
+> ### 🟢 2026-09-15 · +2 : le premier des trois angles morts de couverture est refermé (C-80)
+>
+> **Les deux points retirés hier portaient sur le PÉRIMÈTRE, pas sur le nombre.** C'est le
+> périmètre qui bouge, donc ils reviennent, et pas un de plus : les deux autres angles morts de
+> l'entrée du 2026-09-14 (aucun moteur mobile en CI, VoiceOver jamais joué) sont intacts à cette
+> date.
+>
+> `e2e/touch-targets.spec.ts` couvre désormais **8 pages publiques** en plus de ses 8 routes
+> protégées : `/`, `/entreprise-presentation`, `/guide`, `/blog` et les quatre pages cas d'usage.
+> Suite **verte, 18 cas sur 18** sur Chromium, contre 15 verts / 3 rouges au premier passage de la
+> boucle élargie, ce qui est la mesure qui compte : **la garde a trouvé des défauts réels le jour
+> où on l'a fait regarder ailleurs.**
+>
+> | Défaut trouvé par l'élargissement | Avant | Après |
+> |---|---|---|
+> | curseur de forfait de `/entreprise-presentation` | **308 × 6 px** | **308 × 44 px**, mesuré dans WebKit / iPhone 12 |
+> | CTA « Commencer » du header | 115 × 36 | ≥ 44 px de haut |
+> | logo / « Retour en haut de la page » | 116 × 36 | ≥ 44 px |
+> | 4 × « En savoir plus » | 121 × 20 | 44 px tactiles (`TAP_AREA_44_Y`) |
+> | 3 onglets de vue + 2 boutons de périodicité | 28 et 36 px | 44 px tactiles |
+> | 3 commandes DÉCORATIVES (maquettes de téléphone) | 16 × 24 et 28 × 28 | retirées de l'arbre d'accessibilité |
+>
+> 🔴 **Le curseur ne se corrige pas en grossissant sa piste.** C'est la HAUTEUR DE L'ÉLÉMENT qui
+> monte à 44 px, fond transparent, la piste descendant dans
+> `::-webkit-slider-runnable-track` / `::-moz-range-track` où elle garde ses 6 px. Une barre de
+> 44 px défigurerait la section, et l'arbitrage « joli OU accessible » est celui que
+> `src/components/mobile/tap-area.ts` existe pour refuser.
+>
+> ✅ **La réserve du 2026-09-14 sur ce curseur est LEVÉE, et dans le sens qu'elle redoutait** :
+> « la zone tactile réelle d'un `input[type=range]` peut excéder sa piste selon le moteur, à
+> mesurer avant de conclure ». Mesuré : elle ne l'excédait pas. WebKit / iPhone 12 rendait
+> `{"w":308,"h":6}` ; il rend `{"w":308,"h":44,"appearance":"none"}`.
+>
+> ⚠️ **Le détecteur voit un objet de plus, donc il repart avec DEUX témoins** : un curseur natif,
+> que 2.5.5 et 2.5.8 exemptent comme « contrôle du navigateur », et un curseur en
+> `appearance: none`, qui ne l'est plus. Un assouplissement sans témoin est un trou qu'on ouvre en
+> croyant élargir une mesure.
+>
+> 🔴 **Le sort des liens de pied de page est TRANCHÉ et écrit** dans l'en-tête du spec, par son
+> nom (C-80), sur le modèle de la dispense `color-contrast` qui renvoie à C-23 : ils échouent au
+> **AAA 2.5.5** et tiennent le **AA 2.5.8** par son exception d'espacement. Dette de confort
+> assumée, portée par le périmètre du détecteur, qui ne compte aucun lien. ❌ Un lien de pied de
+> page devenu BOUTON rentre dans la mesure, et la dispense ne le couvre plus.
+>
+> ⚠️ **Ce que ce vert ne dit toujours pas** : la boucle mesure l'ÉTAT DE REPOS. Rien de ce qui
+> s'ouvre au clic sur une page publique n'est mesuré, et une seule modale du produit sur 58 l'est.
+
 
 > ### 🔴 2026-09-14 (soir) · −2 : 37 cas verts, et trois angles morts de COUVERTURE derrière ce vert
 >
@@ -46,7 +94,7 @@ Conséquences pratiques, à tenir :
 > |---|---|
 > | `a11y-audit` (axe-core) | 11 pages, publiques et démo : Landing, Login, Dashboard, Tasks, Habits, OKR, Agenda, Entreprise, Statistics, Settings, Premium |
 > | `a11y-keyboard-audit` | 10 surfaces modales au clavier + le témoin Radix + le calendrier : `focusMovedIn`, `trapped`, `escClosed` **vrais partout**, flèches vérifiées case par case dans le `DatePicker` (13 → 14 → 15 → 22 décembre) |
-> | `touch-targets` (WCAG 2.5.5) | 6 routes + le témoin qui sait voir une cible trop petite : **aucune commande sous 44 × 44 px** |
+> | `touch-targets` (WCAG 2.5.5) | 8 routes PROTÉGÉES + une modale ouverte + le témoin qui sait voir une cible trop petite : **aucune commande sous 44 × 44 px**. ⚠️ Zéro page publique, cf. l'angle mort ci-dessous, refermé le 2026-09-15 |
 >
 > ⚠️ **Le chiffre honnête n'est pas « 0 violation », c'est « 1 violation par page, dispensée
 > nommément ».** Chacune des 11 pages remonte exactement **une** violation `color-contrast`, celle

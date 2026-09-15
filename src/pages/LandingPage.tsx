@@ -205,7 +205,10 @@ const LandingPage: React.FC = () => {
           <div className="flex items-center justify-between gap-3 px-3 sm:px-4 py-2.5">
             {/* Logo */}
             <button
-              className="group flex items-center gap-2.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 rounded-xl pr-2"
+              /* `min-h-touch` : la cible faisait 116 x 36 px (C-80). Elle ne
+                 change PAS la hauteur de l'en-tête, le CTA « Commencer » de la
+                 même rangée étant déjà à 44 px. */
+              className="group flex items-center gap-2.5 min-h-touch cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 rounded-xl pr-2"
               onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
               aria-label={t('nav.backToTop')}
             >
@@ -243,7 +246,15 @@ const LandingPage: React.FC = () => {
               </a>
               <button
                 onClick={handleRegisterClick}
-                className={`group relative overflow-hidden px-4 py-2 lg:px-5 rounded-xl font-semibold transition-[box-shadow,color,background-color] duration-300 text-sm whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 ${
+                /* `min-h-touch` (44 px) et pas `py-3` : la hauteur de la CIBLE
+                   monte au plancher WCAG 2.5.5 sans que le dessin bouge, le
+                   texte restant centré par `inline-flex items-center`. Mesuré
+                   le 2026-09-14 contre la production, WebKit / iPhone 12 :
+                   115 x 36 px, soit 8 px sous le plancher, pour le CTA le plus
+                   visible du produit, JUSTE A COTE d'un bouton de menu déjà en
+                   `w-11 h-11`. La cible tactile avait été traitée pour le menu
+                   et pas pour lui (C-80). */
+                className={`group relative inline-flex items-center justify-center overflow-hidden px-4 py-2 min-h-touch lg:px-5 rounded-xl font-semibold transition-[box-shadow,color,background-color] duration-300 text-sm whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 ${
                   isEnterprise
                     ? 'bg-cyan-400 text-[#04141A] shadow-lg shadow-cyan-500/25 hover:bg-cyan-300 hover:shadow-cyan-400/50 focus-visible:ring-cyan-300'
                     : 'bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] shadow-lg shadow-blue-500/25 hover:shadow-blue-500/50 focus-visible:ring-blue-400'

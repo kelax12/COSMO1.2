@@ -7,6 +7,7 @@ import { motion, useReducedMotion } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
 import { gsap, SplitText, useGSAP } from '@/lib/gsap';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
+import { TAP_AREA_44_Y } from '@/components/mobile';
 import { USE_CASES, ENTRY_OFFSETS } from './data';
 import { useT } from '@/i18n/useT';
 
@@ -74,9 +75,16 @@ const UseCaseCardContent: React.FC<{
         ))}
       </ul>
 
+      {/* `TAP_AREA_44_Y` et pas `min-h-touch` (C-80) : ce bouton est un lien
+          d'action en fin de carte, mesuré 121 x 20 px. Il est déjà LARGE ; ce
+          qui lui manque est de la hauteur, et la lui donner pour de vrai
+          décollerait le texte du bas de la carte de 24 px sur les quatre
+          cartes à la fois. Le débord vit donc dans un pseudo-élément, qui ne
+          prend aucune place dans le flux. Aucune commande ne le jouxte : la
+          réserve d'espacement de `tap-area.ts` est vérifiée. */}
       <button
         onClick={onClick}
-        className="relative inline-flex items-center gap-2 text-sm font-semibold tracking-wide transition-all duration-300 hover:gap-3"
+        className={`${TAP_AREA_44_Y} inline-flex items-center gap-2 text-sm font-semibold tracking-wide transition-all duration-300 hover:gap-3`}
         style={{ color: useCase.accent }}
       >
         {t('solutions.learnMore')}

@@ -92,6 +92,73 @@ Free n'est pas connu, donc son plateau à elle n'est pas celui de ce tableau.
 
 ---
 
+## Mise à jour du 2026-09-15 · P1 et P3 du prompt de correction : deux angles morts refermés
+
+Suite directe de la passe du 2026-09-14 au soir, dont le tableau est conservé plus bas à sa date.
+Deux des dix angles morts sont traités, **avec leur mesure avant et après**.
+
+| Domaine | 09-14 soir | **09-15** | Δ | Ce qui l'a décidé |
+|---|---|---|---|---|
+| [Accessibilité](./ACCESSIBILITY.md) | 82 | **84** | **+2** | **C-80 refermé.** `touch-targets` couvre 8 pages publiques en plus de ses 8 routes protégées : **18 cas sur 18 verts**, contre 15 / 3 au premier passage de la boucle élargie. Le curseur de forfait passe de **308 × 6** à **308 × 44 px**, mesuré dans WebKit / iPhone 12 |
+| [Mobile / DA](./MOBILE.md) | 76 | **78** | **+2** | Même correctif, vu depuis le téléphone. **+2 et non +3** : l'entrée d'hier retirait 3 points pour DEUX défauts, et le second (aucune suite mobile jouée sur un moteur mobile, C-78) n'est pas refermé à cette date |
+| [Architecture](./ARCHITECTURE.md) | 88 | **88** | 0 | **C-79 refermé**, mais il ne change aucune mesure du produit : c'est une garde de vérité documentaire. Elle est notée ici parce qu'elle referme un énoncé faux de `CLAUDE.md`, pas un défaut de code |
+
+### C-80 · ce que l'élargissement a trouvé
+
+🔴 **La garde a trouvé des défauts réels le jour où on l'a fait regarder ailleurs.** C'est la seule
+mesure qui compte : trois routes rouges au premier passage, huit défauts distincts.
+
+| Défaut | Avant | Après |
+|---|---|---|
+| curseur de forfait `/entreprise-presentation` | **308 × 6 px** | **308 × 44 px** (WebKit / iPhone 12) |
+| CTA « Commencer » du header | 115 × 36 | ≥ 44 px |
+| logo / « Retour en haut de la page » | 116 × 36 | ≥ 44 px |
+| 4 × « En savoir plus » | 121 × 20 | 44 px tactiles |
+| 3 onglets de vue + 2 boutons de périodicité | 28 et 36 px | 44 px tactiles |
+| 3 commandes **décoratives** (maquettes) | 16 × 24 et 28 × 28 | retirées de l'arbre d'accessibilité |
+
+⚠️ **Le détecteur voit un objet de plus** (`input[type=range]`), donc il repart avec deux témoins :
+un curseur natif, exempté par 2.5.5 / 2.5.8 comme « contrôle du navigateur », et un curseur en
+`appearance: none`, qui ne l'est plus.
+
+🔴 **Le sort des liens de pied de page est TRANCHÉ**, par son nom, dans l'en-tête du spec : ils
+échouent au AAA 2.5.5 et tiennent le AA 2.5.8 par son exception d'espacement. Dette de confort
+assumée. ❌ Un lien de pied de page devenu BOUTON rentre dans la mesure.
+
+### C-79 · le premier recouvrement dépôt ↔ ledger, et il est complet
+
+`npm run check:migration-coverage`, joué contre la production le 2026-09-15 : **152 fichiers,
+0 absent.**
+
+| Verdict | Fichiers |
+|---|---|
+| AU LEDGER | **118** |
+| OBJET EN BASE | **27** |
+| OBJET RETIRÉ DEPUIS | **3** |
+| SUPPRESSION VÉRIFIÉE | **1** |
+| SANS OBJET VÉRIFIABLE (déclaré) | **2** |
+| NON APPLIQUÉE (déclarée) | **1** |
+| **ABSENT DES DEUX** | **0** |
+
+🔴 **Deux de ces verdicts sont MESURÉS, pas déclarés**, et ils n'étaient pas dans l'énoncé de
+l'item. Sans eux, la garde réclamait quatre migrations bel et bien appliquées : les mig. `013`,
+`015` et `016` ont été **vidées par la `141`** (C-04, 2026-09-04), et la `090` ne fait que
+supprimer, donc son effet se vérifie par l'absence de ses cibles. Une mesure vaut mieux qu'une
+liste écrite à la main.
+
+⚠️ **Deux fichiers seulement sont déclarés non vérifiables**, et c'est un aveu de limite :
+`000_default_privileges` (des GRANT, invisibles du catalogue) et `038_backfill_okr_key_results`
+(une migration de DONNÉES). La `140` est déclarée non appliquée, délibérément.
+
+✅ **Les témoins ont été VUS ROUGES** avant d'être commités, sur quatre sabotages du script.
+
+⚠️ **Ce que ce vert ne dit pas, et le script l'imprime à chaque exécution** : une ligne au ledger
+ne prouve pas qu'un `CREATE OR REPLACE` a remplacé le corps vivant (mig. `144`, rejouée par la
+`147`). Le rapport liste d'ailleurs **9 fichiers partiels**, dont la `136` : son index manque, ce
+qui est exactement **C-77**, toujours ouvert à cette date.
+
+---
+
 ## Mise à jour du 2026-09-14 (soir) · passe COMPLÈTE : onze domaines, aucun `·`, dix angles morts
 
 **Contexte** : Axel s'apprête à lancer le produit. Consigne, mot pour mot : « refais tous les

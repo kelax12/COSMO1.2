@@ -178,10 +178,39 @@ async function commandsUnderTarget(page: Page, target: number): Promise<UnderTar
       return { width: x1 - x0, height: y1 - y0 };
     };
 
+    /**
+     * L'exemption « controle du navigateur » de WCAG 2.5.5 et 2.5.8.
+     *
+     * 🔴 Elle ne couvre QUE ce que l'auteur n'a pas redessine. Un
+     * `input[type=range]` laisse par defaut est peint par le moteur, qui
+     * choisit lui-meme sa zone tactile : le critere l'exempte, et exiger
+     * 44 px reviendrait a demander de le restyler, donc a sortir de
+     * l'exemption pour la respecter.
+     *
+     * Des que `appearance` vaut `none`, le dessin appartient a l'auteur, et
+     * la taille de la cible avec. C'est exactement le cas de `.ent-range`.
+     */
+    const isBrowserDefaultControl = (el: Element): boolean => {
+      if (!(el instanceof HTMLInputElement) || el.type !== 'range') return false;
+      const cs = getComputedStyle(el);
+      const appearance = cs.appearance || (cs as unknown as Record<string, string>).webkitAppearance;
+      return appearance !== 'none';
+    };
+
     const out: UnderTarget[] = [];
     const seen = new Set<Element>();
     for (const control of document.querySelectorAll(
-      'button, [role="button"], input[type="checkbox"]',
+      // 🔴 `input[type="range"]` AJOUTE le 2026-09-15 (C-80). Sans lui, le
+      // detecteur ne pouvait pas voir le seul defaut de cette passe qui
+      // EMPECHE UN GESTE : le curseur de forfait de
+      // /entreprise-presentation, mesure 308 x 6 px contre la production.
+      //
+      // ⚠️ Un `input[type=range]` NON style reste un controle du navigateur,
+      // que WCAG 2.5.8 exempte explicitement. Celui-ci porte
+      // `appearance: none`, donc son dessin est celui de l'auteur, donc
+      // l'exemption tombe. La distinction est faite ci-dessous, pas ici :
+      // on collecte, et `isBrowserDefaultControl` dispense.
+      'button, [role="button"], input[type="checkbox"], input[type="range"]',
     )) {
       const el = effectiveTarget(control);
       if (seen.has(el)) continue;
@@ -190,6 +219,7 @@ async function commandsUnderTarget(page: Page, target: number): Promise<UnderTar
       // Élément non rendu : ni un défaut, ni une cible.
       if (box.width === 0 || box.height === 0) continue;
       if (isInline(el)) continue;
+      if (isBrowserDefaultControl(el)) continue;
       const r = effectiveRect(el);
       if (r.width < min || r.height < min) {
         out.push({
@@ -240,7 +270,19 @@ test.describe('C-57 — cibles tactiles (WCAG 2.5.5)', () => {
         + '<button id="t-agrandi" style="width:14px;height:14px;position:relative"'
         + ' aria-label="temoin cible agrandie"></button>'
         + '<button id="t-decor" style="width:14px;height:14px"'
-        + ' aria-label="temoin before decoratif"></button>';
+        + ' aria-label="temoin before decoratif"></button>'
+        // ── Les deux temoins ajoutes par C-80 ──────────────────────
+        //
+        // 🔴 `input[type=range]` entre dans le detecteur le 2026-09-15, et
+        // avec lui une DISPENSE (« controle du navigateur »). Une dispense
+        // sans temoin est un trou qu'on ouvre en croyant elargir une mesure.
+        // Sa paire est donc ici : le cas qu'elle doit laisser passer, et le
+        // cas voisin que le detecteur doit desormais VOIR.
+        + '<input type="range" id="t-range-natif" style="height:6px"'
+        + ' aria-label="temoin range natif">'
+        + '<input type="range" id="t-range-style"'
+        + ' style="-webkit-appearance:none;appearance:none;height:6px"'
+        + ' aria-label="temoin range style">';
       document.body.appendChild(host);
     });
 
@@ -258,6 +300,11 @@ test.describe('C-57 — cibles tactiles (WCAG 2.5.5)', () => {
     expect(names).not.toContain('temoin cible agrandie');
     // …un `::before` decoratif, non positionne, n'agrandit RIEN.
     expect(names).toContain('temoin before decoratif');
+
+    // Un curseur laisse au navigateur est EXEMPTE par WCAG 2.5.5 / 2.5.8…
+    expect(names).not.toContain('temoin range natif');
+    // …un curseur redessine par l'auteur (`appearance: none`) ne l'est PLUS.
+    expect(names).toContain('temoin range style');
 
     await demoPage.evaluate(() => document.getElementById('c57-temoin')?.remove());
   });
@@ -290,6 +337,94 @@ test.describe('C-57 — cibles tactiles (WCAG 2.5.5)', () => {
           + 'elle, reste petite : c est le contrat de `TouchTarget` '
           + '(src/components/mobile/). Marges negatives pour que la rangee ne '
           + 'grandisse pas avec la cible.',
+      ).toEqual([]);
+    });
+  }
+
+  // ── Les pages PUBLIQUES ────────────────────────────────────────────
+  //
+  // 🔴 AJOUTEES LE 2026-09-15 (C-80). Jusqu'a cette date, la boucle ci-dessus
+  // etait TOUTE la garde, et ses huit routes sont toutes PROTEGEES. Le spec
+  // est ne le 2026-09-04 avec cette liste : il n'a jamais regarde une seule
+  // page publique. Son « 0 » etait donc lu comme une propriete du produit
+  // alors qu'il ne disait rien que de ses huit routes.
+  //
+  // C'est la lecon « une garde se verifie sur ce qu'elle REGARDE, pas sur le
+  // fait qu'elle tourne » appliquee a ce fichier meme.
+  //
+  // Mesure contre la PRODUCTION le 2026-09-14, WebKit / iPhone 12, bandeau
+  // cookies refuse, qui a motive l'elargissement :
+  //   /                        24 cibles sous 44 x 44 px
+  //   /entreprise-presentation 23
+  //   /blog                     2
+  //
+  // ── CE QUI EST COMPTE ICI, ET CE QUI NE L'EST PAS ──────────────────
+  //
+  // ⚠️ Ce relevé de 24 / 23 / 2 a ete pris par une sonde AD HOC qui comptait
+  // aussi les LIENS. Le detecteur de ce fichier n'en compte aucun, et c'est
+  // une decision, pas un oubli : cf. son en-tete, « uniquement les VRAIES
+  // commandes ». Les chiffres ci-dessus ne sont donc PAS ce que cette boucle
+  // mesure, et il ne faut pas les lire comme une cible a ramener a zero.
+  //
+  // 🔴 LE SORT DES LIENS DE PIED DE PAGE, TRANCHE ICI, PAR SON NOM (C-80).
+  // La majorite du releve ci-dessus, sur les trois pages, sont les liens du
+  // pied de page : environ 20 px de haut, empiles en colonnes.
+  //   • Ils ECHOUENT au critere AAA 2.5.5 (44 px), qui est celui que ce
+  //     fichier vise et annonce dans son titre.
+  //   • Ils tiennent le critere AA 2.5.8 (24 px) par son exception
+  //     d'ESPACEMENT, pas par leur taille : ce sont des liens de texte, dont
+  //     la hauteur est celle de leur interligne.
+  //   • Les corriger voudrait dire poser 44 px de hauteur sur chaque ligne
+  //     d'un pied de page de plusieurs dizaines de liens, ce qui le
+  //     transformerait en un ecran entier sur telephone.
+  // DECISION : dette de confort assumee, PAS un blocage. Elle est portee par
+  // le perimetre du detecteur (aucun lien n'est compte), et elle vaut pour le
+  // seul critere AAA. ❌ Si un lien de pied de page devient un BOUTON, il
+  // rentre dans la mesure et cette dispense ne le couvre plus.
+  //
+  // ⚠️ Ce que cette boucle ne fait PAS : elle mesure l'etat de repos de
+  // chaque page, comme celle des routes protegees. Rien de ce qui s'ouvre au
+  // clic sur une page publique n'est ici.
+  for (const route of [
+    '/',
+    '/entreprise-presentation',
+    '/guide',
+    '/blog',
+    // Les quatre pages « cas d'usage », servies par leurs slugs FR.
+    '/pour-freelances',
+    '/pour-etudiants',
+    '/pour-managers',
+    '/pour-equipes',
+  ]) {
+    test(`page publique ${route} : aucune commande sous 44 x 44 px`, async ({ page, context }) => {
+      await context.clearCookies();
+      await page.goto(route);
+      // 🔴 Le bandeau cookies RECOUVRE des commandes sur telephone
+      // (`left-4 right-4`, z-[200], ancre en bas) : mesurer sans l'ecarter
+      // rend un comptage faux dans les deux sens, en cachant des cibles et en
+      // en ajoutant les siennes. On le REFUSE, l'option la plus protectrice,
+      // puis on recharge pour partir d'une page propre.
+      await page.evaluate(() => {
+        try {
+          localStorage.setItem('cosmo_cookie_consent', 'refused');
+        } catch { /* ignore */ }
+      });
+      await page.goto(route);
+      await page.waitForLoadState('networkidle');
+      // La landing est lazy-loadee et animee : son etat final n'est pas celui
+      // du premier rendu, et une cible mesuree en cours d'animation ment.
+      await page.waitForTimeout(2500);
+
+      const under = await commandsUnderTarget(page, TARGET);
+      expect(
+        under.map((u) => `${u.w}x${u.h} « ${u.name} » ${u.html}`),
+        'Page PUBLIQUE : c est la premiere chose qu un visiteur touche, et la '
+          + 'seule qu il touche avant d avoir un compte. Memes quatre gestes '
+          + 'que pour les routes protegees, par ordre de preference : hauteur '
+          + 'reelle (`min-h-touch`), puis `TAP_AREA_44_Y`, puis `TAP_AREA_44`, '
+          + 'puis la taille reelle des que deux commandes sont voisines. '
+          + 'Un element qui n est PAS une commande (une maquette, un dessin) se '
+          + 'retire de l arbre d accessibilite, il ne se met pas aux normes.',
       ).toEqual([]);
     });
   }
