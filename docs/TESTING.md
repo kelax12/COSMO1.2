@@ -1,6 +1,101 @@
 # Tests — COSMO
 
-## Note de tests / CI : 80 → 83 → 88 → 89 → 93 → 94 → 95 → 97 → **94 / 100** (2026-08-24 → 2026-08-25 soir → 2026-08-27 soir → 2026-08-29 → 2026-09-02 → 2026-09-03 → 2026-09-14 → 2026-09-14 soir)
+## Note de tests / CI : 80 → 83 → 88 → 89 → 93 → 94 → 95 → 97 → 94 → **95 / 100** (2026-08-24 → 2026-08-25 soir → 2026-08-27 soir → 2026-08-29 → 2026-09-02 → 2026-09-03 → 2026-09-14 → 2026-09-14 soir → 2026-09-15)
+
+> ### 🟡 2026-09-15 · +1 sur les 3 retirés, et le reste attend d'être COMMITÉ
+>
+> **Ce qui revient, et c'est mesuré** : la boucle de `e2e/touch-targets.spec.ts` passe de 8 à
+> **16 routes** (C-80, commit `ede8d7e6`), donc la suite E2E gagne de vrais cas sur de vraies pages
+> publiques, et un job CI s'ajoute, `couverture` (C-79, commit `52d23937`), avec **16 cas de témoin
+> vus rouges sur quatre sabotages** avant d'être commités.
+>
+> | | 09-14 soir | **09-15** |
+> |---|---|---|
+> | Fichiers de test unitaires, **en CI** | 228 | **229** |
+> | Cas unitaires, **en CI** | 2 586 | **2 603** |
+> | Couverture, en CI | 31,15 L · 30,73 S | **31,15 L · 30,73 S**, inchangée |
+> | Cas Playwright listés | 220 / 26 fichiers | **237 / 27**, arbre de travail |
+> | dont `chromium` | 107 | **115** |
+> | dont `mobile-safari` | 96 | **105** |
+> | dont `supabase-stub` | 17 | 17 |
+> | Jobs CI | 5 | **6** (`couverture` s'ajoute) |
+> | Dernier run vert | `34935509652` | **`34945082906`** sur `66c7d4ff`, les cinq jobs |
+>
+> ⚠️ **Le 237 est celui de l'ARBRE, pas du dépôt.** À `HEAD` le compte est **236 / 26** : le
+> project `mobile-safari-warmup` et son fichier `e2e/_warmup-mobile.spec.ts` (1 cas) ne sont connus
+> de git sur aucune branche. C'est une déduction, pas une mesure, et elle est écrite comme telle.
+>
+> ## 🔴 Angle mort trouvé en mesurant : `npm test` sort en exit 0 après avoir SAUTé des fichiers
+>
+> La suite lancée depuis ce poste ce jour a annoncé **« 225 passed (225) » et sorti en exit 0**.
+> La CI, sur le même commit, en joue **229**. Quatre fichiers n'ont jamais démarré :
+>
+> ```
+> Error: [vitest-pool]: Failed to start forks worker for test files
+>   src/components/AuthForm.confirmation.test.tsx
+>   src/components/onboarding/FirstRunSetup.test.tsx
+>   src/components/organization/OrgBillingTab.refund.parcours.test.tsx
+>   src/hooks/use-modal-a11y.guard.test.tsx
+> Caused by: [vitest-pool-runner]: Timeout waiting for worker to respond
+> ```
+>
+> 🔴 **Le total affiché est celui des fichiers COLLECTÉS, pas des fichiers EXISTANTS**, et le
+> code de sortie ne distingue pas les deux. Le seul signe est un bloc `Unhandled Errors` plus haut
+> dans la sortie, avec sa propre mise en garde : « *This might cause false positive tests* ». Qui
+> lit la dernière ligne, c'est-à-dire tout le monde, voit un vert.
+>
+> ⚠️ **Ce n'est pas une régression du produit** : les quatre fichiers passent en CI, et ils
+> passaient ici même la veille (228 / 228, suite complète). C'est un aléa de charge machine. Mais
+> il coûte cher **à la mesure**, et l'un des quatre est `use-modal-a11y.guard.test.tsx`, qui porte
+> les **trois témoins** de `C-53` : une session pressée aurait conclu « suite verte » en n'ayant pas
+> joué les témoins qui garantissent que la garde détecte encore quelque chose.
+>
+> ❌ **Ne JAMAIS conclure d'un exit 0 de `npm test` que la suite est complète.** Comparer le
+> nombre de fichiers annoncé au nombre de fichiers du périmètre : `src/**` + `scripts/**` +
+> `eslint-rules/**`, soit **229** à cette date. Un écart est un saut silencieux, pas une
+> suppression.
+> ⚠️ `CLAUDE.md` décrit déjà le voisin de ce défaut (« le run MEURT en silence si une autre
+> session fait tourner sa suite en parallèle »). Celui-ci est **pire** : il ne meurt pas, il rend un
+> vert incomplet. `--maxWorkers=4` ne suffit pas à l'éviter, il était posé sur ce run.
+>
+> ✅ **La note s'appuie donc sur la CI, pas sur le poste** : run `34945082906`, 229 fichiers,
+> 2 603 cas, couverture 31,15 L. C'est ce que « une preuve est opposable ou elle n'existe pas »
+> veut dire, appliqué à la mesure elle-même.
+>
+> ## 🔴 Pourquoi seulement +1 : C-78 est écrit et n'est PAS dans le dépôt
+>
+> Le travail existe et il est sérieux : `--project=mobile-safari` ajouté au job `e2e`, `webkit`
+> ajouté au `playwright install`, et un project de chauffe dédié (`mobile-safari-warmup`) qui
+> répond au vrai problème mesuré la veille, à savoir que le coût de compilation à froid de Vite
+> tombait entièrement sur le premier cas WebKit.
+>
+> **Mais `main` ne le porte pas.** Vérifié ce jour, pas déduit :
+>
+> ```
+> git show HEAD:.github/workflows/ci.yml | grep -A1 "Run E2E"
+>   run: npx playwright test --project=chromium --project=supabase-stub
+>
+> git ls-files --error-unmatch e2e/_warmup-mobile.spec.ts
+>   error: pathspec ... did not match any file(s) known to git
+> ```
+>
+> Les 105 cas WebKit ne sont donc joués par **aucun workflow**, exactement comme la veille. Le
+> périmètre a changé sur le disque, pas en CI.
+>
+> 🔴 **C'est la deuxième fois en cinq jours que ce dépôt se fait la même chose.** `C-14` avait vécu
+> trois jours dans un arbre non commité pendant que trois documents l'annonçaient acquis, et trois
+> `fix(build)` d'autres sessions ont payé la facture. La règle qui en était sortie est la sixième du
+> prompt de correction : **une preuve est opposable ou elle n'existe pas**. Elle vaut ici sans
+> atténuation : tant que `ci.yml` n'est pas commité, C-78 n'a rien changé pour personne.
+>
+> ⚠️ **Ce n'est pas un reproche au travail, c'est un constat sur son état.** Rien n'indique qu'il
+> soit fini : une session peut avoir été interrompue. Le point mesurable est que la note ne peut
+> pas le créditer, et que le jour où le commit arrive, le +2 restant suit dans la même heure.
+>
+> ✅ **Ce qui a été revérifié inchangé** : run CI `34945082906` vert sur `lint-test-build`, `audit`,
+> `e2e`, `rls-integration` et `lighthouse`. La boucle élargie de `touch-targets` passe donc bien en
+> CI, sur Chromium au viewport 375 x 812.
+
 
 > ### 🔴 2026-09-14 (soir) · −3 : 44 % des cas E2E ne tournent nulle part, et le commentaire qui l'acte contredit la règle écrite juste au-dessus
 >

@@ -69,6 +69,37 @@ correctif se termine quand les trois sont traités, pas quand les tests du premi
 
 ---
 
+### 🟠 C-78 · le correctif est ECRIT et n'est PAS dans le depot (verifie le 2026-09-15)
+
+> 🔴 **Mesure du 2026-09-15, pas une lecture** : le travail existe sur le disque et `main` ne le
+> porte pas.
+>
+> ```
+> git show HEAD:.github/workflows/ci.yml | grep -A1 "Run E2E"
+>   run: npx playwright test --project=chromium --project=supabase-stub
+>
+> git ls-files --error-unmatch e2e/_warmup-mobile.spec.ts
+>   error: pathspec ... did not match any file(s) known to git
+> ```
+>
+> Quatre fichiers portent le correctif dans l'arbre, aucun n'est commité : `.github/workflows/ci.yml`
+> (ajoute `webkit` à l'installation et `--project=mobile-safari` au job), `playwright.config.ts`
+> (déclare le project de chauffe `mobile-safari-warmup` et l'exclut de `chromium`),
+> `e2e/fixtures.ts`, et `e2e/_warmup-mobile.spec.ts`, **non suivi par git**.
+>
+> ✅ **Le travail lui-même répond au vrai problème**, celui mesuré la veille : le coût de
+> compilation à froid de Vite tombait entièrement sur le premier cas WebKit, et sept des neuf
+> échecs constatés étaient des attentes de fixture qui expirent. Un préalable de chauffe explicite
+> est la bonne forme, parce qu'il ne dépend pas de l'ordre des projects.
+>
+> 🔴 **Mais les 105 cas `mobile-safari` ne sont toujours joués par AUCUN workflow**, donc la note
+> de [`TESTING.md`](./docs/TESTING.md) ne peut rien créditer. C'est la deuxième fois en cinq jours
+> que ce dépôt laisse un correctif entier hors du dépôt : `C-14` avait vécu trois jours ainsi, et
+> trois `fix(build)` d'autres sessions ont payé la facture.
+>
+> ⚠️ **Rien n'indique que le travail soit fini** : une session a pu être interrompue. Le geste qui
+> reste est un `git add` sur ces quatre fichiers, puis un run CI vert à citer.
+
 ### 🟠 C-78 · 96 cas E2E ne sont joués par aucun workflow
 
 **Où** : `.github/workflows/ci.yml`, job `e2e` · `playwright.config.ts`, project `mobile-safari`.

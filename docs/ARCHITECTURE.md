@@ -10,7 +10,60 @@ dit ligne par ligne. Mesuré contre le code de `main` et la prod. Remplace
 Ce document ne redécrit pas l'architecture — c'est le rôle de [`../CLAUDE.md`](../CLAUDE.md). Il
 répond à une seule question : **les invariants qu'on s'est donnés tiennent-ils encore ?**
 
-## Note d'architecture : 74 → 79 → 81 → 83 → 84 → **88 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 soir)
+## Note d'architecture : 74 → 79 → 81 → 83 → 84 → 88 → **90 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 soir → 2026-09-15)
+
+> ### 🟢 2026-09-15 · +2 : le premier des trois points qui retenaient à 88 est refermé, et par une garde
+>
+> L'entrée d'hier nommait trois choses. La première, mot pour mot : « **aucune garde ne relie les
+> migrations du dépôt à la base** ». Elle existe depuis aujourd'hui.
+>
+> `npm run check:migration-coverage` (item **C-79**, commit `52d23937`) interroge le CATALOGUE sur
+> l'objet que chaque migration prétend créer, exactement ce que le paragraphe d'hier prescrivait, et
+> refuse de conclure d'un comptage. Chaque fichier reçoit un verdict, et **un seul fait échouer** :
+>
+> | Verdict | Fichiers |
+> |---|---|
+> | AU LEDGER | 118 |
+> | OBJET EN BASE (migration précoce, hors ledger) | 27 |
+> | OBJET RETIRÉ DEPUIS (les `013` / `015` / `016`, vidées par la `141`) | 3 |
+> | SUPPRESSION VÉRIFIÉE (la `090`, purement suppressive) | 1 |
+> | SANS OBJET VÉRIFIABLE, déclaré | 2 |
+> | NON APPLIQUÉE, déclarée | 1 |
+> | **ABSENT DES DEUX** | **0** |
+>
+> Premier run CI **`34941970659`**, job `couverture` vert, sur **152 fichiers et les 138 entrées de
+> ledger lues en production**. Elle tourne aussi quotidiennement à 05:17 UTC et à chaque push
+> touchant `supabase/migration/`, branchée sur `ci-alert.yml`.
+>
+> ✅ **Deux verdicts sont MESURÉS et non déclarés, et sans eux la garde réclamait quatre migrations
+> bel et bien appliquées.** C'est la différence entre une garde et une liste de dispenses : les
+> `013` / `015` / `016` ont été VIDÉES par la `141` (suppression du système de jetons), et la `090`
+> ne fait que supprimer, donc son effet se prouve par l'absence de ses cibles. Une garde qui aurait
+> traité ces quatre cas par une allowlist aurait été verte sans rien établir.
+>
+> ✅ **Les témoins ont été vus rouges sur quatre sabotages** avant d'être commités, dont une
+> dispense périmée tolérée. C'est la règle du dépôt appliquée à la lettre.
+>
+> 🔴 **Et la garde trouve immédiatement quelque chose que personne ne lui avait demandé** : elle
+> liste **9 fichiers PARTIELS**, dont la `136`, à laquelle manque l'index
+> `idx_kr_completions_user_completed_at`. C'est exactement `C-77`, vu depuis un autre angle. Une
+> garde utile est une garde qui rend un verdict qu'on n'avait pas anticipé.
+>
+> ⚠️ **Elle reste modeste et le dit à chaque exécution** : une ligne au ledger ne prouve toujours
+> pas qu'un `CREATE OR REPLACE` a remplacé le corps vivant, et « objet en base » ne prouve pas que
+> tout le fichier est passé. C'est la leçon de la `144`, rejouée par la `147`, et la garde ne
+> prétend pas la couvrir.
+>
+> 🔴 **Ce qui retient encore à 90, et ce sont les deux autres points d'hier, inchangés :**
+>
+> 1. **Le même calcul vit toujours en trois endroits, et le correctif du 09-02 n'en a touché que
+>    deux.** Vérifié en base ce jour par `pg_get_functiondef` : `get_work_time_stats` lit
+>    **toujours** `kr.elem->'history'` et **jamais** `kr_completions`. La migration qui répare est
+>    commitée depuis le 2026-09-03 et **n'est toujours pas appliquée** : le ledger porte 138
+>    entrées, la dernière est la `148`. `C-77` est ouvert.
+> 2. **Un fichier source de 613 lignes vit hors de tout périmètre** :
+>    `src/components/showcase/MobileShowcases.tsx`, exclu d'ESLint et de la garde de taille.
+
 
 > ### 🟢 2026-09-14 (soir) · +4 : le motif qui plafonnait cette note est mort le 2026-09-05, et personne n'était revenu le constater
 >
