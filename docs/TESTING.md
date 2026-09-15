@@ -75,6 +75,24 @@
 > 31,15 L. Et la suite relancée ici **sans drapeau** est complète, cf. l'encadré de vérification
 > ci-dessous.
 >
+> ### La preuve, avant et après, sur la même machine et le même arbre
+>
+> | | `npm test -- --maxWorkers=4` | **`npm test`** (borne de la config) |
+> |---|---|---|
+> | Code de sortie | **1** | **0** |
+> | Fichiers joués | **225** | **229**, le périmètre entier |
+> | Cas | 2 574 + 1 sauté | **2 603 + 1 sauté** |
+> | Workers morts | **4** | **0** |
+> | Blocs `Unhandled Errors` | 1 (« 4 unhandled errors ») | **0** |
+> | Durée | ~5 min, incomplète | **576,6 s**, complète |
+>
+> ✅ **Le compte local sans drapeau est exactement celui de la CI** : 229 fichiers, 2 603 cas. Le
+> seul écart restant est le cas POSIX de `check:edge`, sauté sur Windows par `it.skipIf(win32)` et
+> joué sur le runner Linux.
+>
+> ⚠️ **Le drapeau ne rendait pas la suite plus rapide, il la rendait incomplète.** Un run de 5 min
+> qui saute 4 fichiers n'est pas deux fois plus rapide qu'un run de 9,6 min : c'est un autre run.
+>
 > 🔴 **La leçon porte sur la méthode, pas sur vitest** : l'outil a signalé correctement, un
 > conseil périmé a créé la panne, et une lecture pressée a produit un diagnostic faux publié dans
 > trois documents. Les trois se corrigent ; le troisième est le plus coûteux, parce qu'il avait
