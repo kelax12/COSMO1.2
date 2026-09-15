@@ -140,6 +140,65 @@ la journée : c'est ce qui arrive quand on remplace des vérifications de gardes
 résultats. Les **cinq** baisses viennent toutes de choses **qui existaient déjà** et qu'aucune note ne
 portait : rien n'a cassé aujourd'hui, on a simplement regardé ailleurs que là où les gardes pointent.
 
+### Pourquoi cinq notes baissent : ce n'est pas une casse récente, et voici les dates
+
+La question se pose d'elle-même en lisant le tableau : ou bien les notes précédentes étaient
+surévaluées, ou bien quelque chose a été cassé depuis. **Réponse mesurée, cause par cause, par
+`git log -S` sur le code qui porte chaque défaut** :
+
+| Baisse | Le défaut existe depuis | Durée avant d'être vu |
+|---|---|---|
+| Tests / CI −3 · 96 cas WebKit hors CI | le job `e2e` ne lance que `--project=chromium` depuis sa création, **2026-06-06** (`a163c2b3`). Le project `mobile-safari`, lui, existe depuis le **2026-05-21** | **3 mois, jamais joué** |
+| Performance −2 et UI / UX −2 · `okrTime` à zéro | la lecture de `kr.elem->'history'` est dans `get_work_time_stats` depuis la mig. **074**, entrée au dépôt le **2026-07-16** (`f4c73db3`) | **2 mois** |
+| Mobile −3 et Accessibilité −2 · cibles tactiles | `e2e/touch-targets.spec.ts` est né le **2026-09-04** avec sa liste de huit routes protégées, et n'a **jamais** couvert une page publique. Le curseur de forfait à 6 px date du **2026-08-15** (`c834412d`), le CTA « Commencer » à 36 px d'avant le **2026-08-03** | **depuis l'origine de la garde** |
+
+**Aucune des cinq baisses ne vient d'une régression récente.** Rien n'a été cassé : ces défauts
+étaient tous là pendant que les notes montaient.
+
+#### Le mécanisme, qui n'est pas de la complaisance
+
+Dire « les notes étaient gonflées » est juste sur le résultat et faux sur la cause. À chaque fois,
+**le travail crédité était réel** : la garde de cibles tactiles existe et ses 8 routes sont
+réellement propres ; la mig. `127` fait réellement passer la page Statistiques de 854 ms à 12 ms ;
+la suite E2E compte réellement 220 cas. Ce qui était faux, c'est la **portée** que la note leur
+prêtait :
+
+- « cibles tactiles : **0** » est vrai de huit écrans derrière connexion, et se lisait comme une
+  propriété du produit ;
+- « 220 cas E2E » est vrai du dépôt, et se lisait comme une couverture de la CI ;
+- « 854 ms → 12 ms » est vrai du temps d'exécution, et se lisait comme la santé de la page.
+
+C'est **exactement la faute que ce dépôt a nommée le 2026-09-03** (« une garde se vérifie sur ce
+qu'elle REGARDE, pas sur le fait qu'elle tourne »), appliquée depuis aux gardes et **jamais aux
+notes qui s'appuient dessus**. Une note crédite ce qu'une garde DIT ; il faut qu'elle crédite ce
+que la garde COUVRE.
+
+#### Ce qui prouve que le biais n'est pas orienté vers le haut
+
+Le même défaut de méthode a joué **à l'envers** sur Architecture, et coûtait 4 points depuis neuf
+jours : C-09 avait supprimé les douze derniers god components le 2026-09-05, mais rejouer la garde
+rendait le même vert qu'avant (un cliquet à zéro ne dit rien du delta), donc personne ne l'avait
+crédité. Le biais n'est pas « se donner de bonnes notes », il est « suivre l'instrument sans
+regarder sa portée », et il se trompe dans les deux sens.
+
+#### Le cas le plus net, parce qu'il tient dans une journée
+
+**Mobile a gagné 3 points le matin du 2026-09-14 et les a perdus le soir, sur la même métrique.**
+Le matin : « cibles tactiles < 44 × 44 px : **0**, 10/10 cas E2E verts », +3. Le soir : la même
+garde, relue dans son code, ne visite aucune page publique, et la production en porte 24 sur `/`.
+Rien n'a changé dans le produit entre les deux mesures ; ce qui a changé, c'est qu'on a lu la
+boucle `for (const route of [...])` au lieu du résultat du test.
+
+#### Ce qu'il faut en faire pour la prochaine passe
+
+❌ **Ne jamais créditer une note sur le verdict d'une garde sans avoir lu son PÉRIMÈTRE** : la liste
+de routes, la liste de projects, la liste de colonnes. Le verdict dit « vert » ; le périmètre dit
+« de quoi ».
+❌ **Ne jamais créditer un gain de performance sans comparer ce que la fonction REND.** Une
+fonction qui rend zéro très vite est la plus rapide de toutes.
+✅ **Relire la valeur PRÉCÉDENTE d'un cliquet, pas seulement son vert.** C'est la seule façon de
+voir un progrès sur une garde déjà satisfaite.
+
 ### Les dix angles morts
 
 | # | Angle mort | Comment il a été trouvé |
