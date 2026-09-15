@@ -27,8 +27,8 @@ compte** et **ce qui prouve que c'est fini**.
 
 ### 🔴 C-77 · `okrTime` vaut 0 en production, et la démo affiche juste
 
-**Où** : `supabase/migration/136_work_time_stats_okr_from_completions.sql` (présent, **non versionné
-et non appliqué** depuis le 2026-09-02) · fonction `public.get_work_time_stats` en prod ·
+**Où** : `supabase/migration/136_work_time_stats_okr_from_completions.sql` (**commitée** le
+2026-09-03 par `31482a3f`, présente à `HEAD`, **jamais appliquée**) · fonction `public.get_work_time_stats` en prod ·
 `src/pages/StatisticsPage.tsx` · `src/components/DashboardBarChart.tsx` (`okrs: r.okrTime`).
 
 **Ce qui est mesuré**, en base, ce soir, par `pg_get_functiondef` sur la fonction VIVANTE :
@@ -57,7 +57,7 @@ n'est concerné et le correctif reste le bon. Mais l'argument doit être reformu
 committé : c'est un argument de données, il se prouve par une requête.
 
 **Ce qui prouve que c'est fini** :
-1. la `136` est **versionnée** (`git ls-files` la voit) et **appliquée**, avec sa ligne au ledger ;
+1. la `136` est **appliquée**, avec sa ligne au ledger (elle est déjà versionnée) ;
 2. `pg_get_functiondef('get_work_time_stats')` ne contient plus `history` et contient
    `kr_completions` ;
 3. la valeur rendue est **comparée** à celle du calcul client sur un compte portant des

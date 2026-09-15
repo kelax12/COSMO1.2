@@ -9,8 +9,8 @@ Passes antérieures conservées à leur date (2026-08-24 contre la prod, 2026-09
 
 🔴 **Le défaut le plus coûteux trouvé ce soir n'est pas dans ce fichier, il est en
 production** : `okrTime` vaut **0** sur `/statistics` pour tous les comptes réels, parce que le
-correctif du 2026-09-02 n'a réparé que la moitié cliente et que la mig. `136` n'est ni versionnée
-ni appliquée. La **démo affiche juste, le produit affiche zéro**. Item `C-77` de
+correctif du 2026-09-02 n'a réparé que la moitié cliente et que la mig. `136`, **pourtant commitée
+depuis le 2026-09-03**, n'a jamais été appliquée. La **démo affiche juste, le produit affiche zéro**. Item `C-77` de
 [`a-faire-code.md`](./a-faire-code.md).
 
 **Plan** : [Docs](#-carte-de-la-documentation) · [CLI données réelles](#-tu-peux-écrire-dans-le-vrai-compte-cosmo-daxel) · [Stack](#stack-technique) · [Scripts](#scripts) · [Env](#variables-denvironnement) · [Double mode](#architecture--double-mode-démo--production) · [Modules](#structure-des-modules) · [Hooks](#hooks-essentiels) · [Providers / Routing](#hiérarchie-des-providers-srcapptsx) · [Supabase](#base-de-données-supabase) · [Conventions](#conventions-de-code) · [i18n](#i18n--catalogues-maison-fr--en) · [🚫 Garde-fous](#-garde-fous--à-ne-jamais-faire)
@@ -988,9 +988,15 @@ règles de l'arbre vivent dans `src/modules/categories/tree.ts`, miroir client d
 ⚠️ **Le repository démo des catégories est chargé À LA DEMANDE** (`local.repository.ts` +
 `src/lib/demo-repositories.ts`). Le remettre dans `repository.ts` ferait repartir ses seeds
 dans le chunk d'entrée, payé par chaque visiteur de la landing.
-⚠️ La `136_work_time_stats_okr_from_completions.sql` est présente dans l'arbre mais **non
-versionnée et NON appliquée** : c'est un travail en cours d'une autre session. Ne pas
-l'appliquer sans l'avoir relue.
+🔴 **La `136_work_time_stats_okr_from_completions.sql` est COMMITÉE (`31482a3f`, 2026-09-03) et
+présente à `HEAD`, mais elle n'a JAMAIS été appliquée.** Cette ligne a dit « non versionnée »
+jusqu'au 2026-09-15 : `git ls-files` la voit, et la phrase a été recopiée par trois documents avant
+que quelqu'un lance la commande.
+⚠️ **Et la classer « travail en cours d'une autre session » a coûté plus cher que l'erreur de
+suivi** : tant qu'elle portait cette étiquette, personne n'a lu ce qu'elle répare. Elle répare un
+**défaut ouvert en production** : `get_work_time_stats` lit un champ JSON que rien n'écrit, donc
+`okrTime` vaut **0** sur `/statistics` pour tous les comptes réels, et ce depuis la mig. `074`
+(2026-07-16). Item `C-77` de [`a-faire-code.md`](./a-faire-code.md).
 ✅ **Tout le dépôt est appliqué en prod**, ledger relu le 2026-09-02 : la `133` (échéance récurrente
 en INSTANT, R-01), la `134` (un customer Stripe ne désigne qu'un seul compte, S-3) et la `135`
 (preuve de renonciation au droit de rétractation, S-6) sont en base, vérifiées acteur par acteur

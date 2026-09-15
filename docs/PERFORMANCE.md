@@ -43,10 +43,18 @@
 > `CLAUDE.md` écrit pour les fuseaux des habitudes : *ne jamais corriger une seule des deux
 > moitiés*.
 >
-> ⚠️ **La migration qui répare existe et n'est ni versionnée ni appliquée** :
-> `136_work_time_stats_okr_from_completions.sql` traîne dans l'arbre depuis le 2026-09-02, décrite
-> partout comme « travail en cours d'une autre session », jamais comme **un défaut ouvert en
-> production**. Aucun des onze audits ne la portait.
+> ⚠️ **La migration qui répare est dans le dépôt et n'a jamais été appliquée** :
+> `136_work_time_stats_okr_from_completions.sql` est **commitée** (`31482a3f`, 2026-09-03) et présente
+> à `HEAD`, mais elle n'a jamais été jouée contre la base. Elle est décrite partout comme « travail
+> en cours d'une autre session », jamais comme **un défaut ouvert en production**, et aucun des onze
+> audits ne la portait.
+>
+> 🔴 **Correction du 2026-09-15 : ce paragraphe a d'abord écrit « ni versionnée ni appliquée »**,
+> en recopiant `CLAUDE.md` § Base de données au lieu de lancer `git ls-files`. La moitié « non
+> versionnée » était fausse. **C'est la même faute que celle que cette passe documente**, commise
+> pendant qu'elle la documentait : un fait repris d'un document voisin plutôt que mesuré à sa
+> source. La bonne nouvelle est pratique : le SQL est relu et dans le dépôt, fermer `C-77` ne
+> demande que de l'appliquer et de vérifier ce qu'elle rend.
 >
 > ⚠️ **Et sa propre prémisse est fausse d'un mot, ce qui ne change pas sa conclusion.** Son en-tête
 > affirme « ce champ n'existe pas », vérifié par `grep` dans `src` et jamais en base. Mesuré ce
