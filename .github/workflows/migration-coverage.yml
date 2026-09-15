@@ -1,0 +1,142 @@
+# ──────────────────────────────────────────────────────────────────────
+# Les migrations du DEPOT, reliees au ledger de PRODUCTION.
+#
+# 🔴 POURQUOI (finding C-79, passe d'audit du 2026-09-14)
+#
+# Comparaison nom a nom le 2026-09-14 : 152 fichiers dans
+# `supabase/migration/`, 138 entrees dans
+# `supabase_migrations.schema_migrations`, dont 32 fichiers SANS aucune
+# correspondance et 17 entrees SANS fichier.
+#
+# Consequence, et c'est la seule qui compte : l'enonce « tout le depot est
+# applique en prod, ledger relu » a ete ecrit CINQ FOIS dans CLAUDE.md sur
+# une lecture qui ne recouvre que 120 fichiers sur 152. Et « ledger a 148
+# entrees » etait le NUMERO de la derniere migration, recopie comme un
+# total. Personne n'avait menti : personne n'avait mesure.
+#
+# ❌ Ne pas se contenter d'un comptage : c'est precisement le comptage qui a
+# menti. Le script RANGE chaque fichier dans un verdict et nomme ceux qu'il
+# ne sait pas couvrir.
+#
+# ── CE QUE CE JOB NE PROUVE PAS, ET IL LE DIT A CHAQUE RUN ────────────
+#
+# Une LIGNE au ledger ne prouve pas qu'un `CREATE OR REPLACE` a remplace le
+# corps vivant. La mig. 144 portait sa ligne depuis le 2026-09-09 et
+# `pg_get_functiondef()` montrait encore le corps de la 143 : il a fallu la
+# rejouer sous la 147. Ce job automatise le grossier, jamais le fin.
+#
+# ── CE QU'IL FAUT FAIRE QUAND CE JOB CASSE ────────────────────────────
+#
+# La sortie nomme le fichier et dit POURQUOI. Deux cas, deux gestes :
+#   · la migration n'est pas appliquee -> l'appliquer, par `apply_migration`
+#     (le chemin qui inscrit la ligne au ledger), jamais par le CLI seul :
+#     la mig. 145 a ete appliquee au CLI le 2026-09-13 et sa ligne a du
+#     etre inseree a la main.
+#   · son absence est DELIBEREE -> la declarer dans
+#     `NON_APPLIQUEES_DELIBEREMENT`, avec son motif et sa date.
+# ❌ Jamais un silence, et jamais une entree ajoutee pour faire passer la CI.
+#
+# ── PLANIFIE, ET PAS SEULEMENT SUR PUSH ───────────────────────────────
+#
+# Une derive de ledger ne nait pas d'un commit : elle nait d'une APPLICATION
+# (ou de son oubli), qui n'evenemente rien ici. Meme raison que
+# `edge-deploy-drift.yml`.
+# ──────────────────────────────────────────────────────────────────────
+name: Migration coverage
+
+on:
+  schedule:
+    - cron: '17 5 * * *' # tous les jours, 05:17 UTC (decale des autres crons)
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - supabase/migration/**
+      - scripts/check-migration-coverage.mjs
+      - scripts/check-migration-coverage.guard.test.mjs
+      - .github/workflows/migration-coverage.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: migration-coverage-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  couverture:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - run: npm ci
+
+      # Le client 17 se pose A COTE du 16 preinstalle, et c'est le 16 qui
+      # gagne dans le PATH. Meme correctif que `db-backup.yml`, pour la meme
+      # raison : `psql` 16 refuse de parler a un serveur 17.6.
+      - name: Installer psql 17
+        run: |
+          set -euo pipefail
+          sudo sh -c 'echo "deb https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+          curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/pgdg.gpg
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client-17
+          echo /usr/lib/postgresql/17/bin >> "$GITHUB_PATH"
+
+      # 🔴 PAS de `if: secrets.X != ''`, PAS de valeur de repli, PAS de
+      # `continue-on-error`. « Ne jamais rendre une garde conditionnelle a la
+      # presence de son propre secret » est une regle ecrite de CLAUDE.md,
+      # violee deux fois (`renewal-notice` le 2026-08-26, `uptime.yml` qui
+      # SAUTAIT toute sa moitie backend en restant VERT). Le secret est pose
+      # depuis le 2026-08-29 ; s'il disparait, ce job doit ROUGIR, pas se
+      # taire.
+      - name: Lire le ledger et le catalogue de production
+        env:
+          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          set -euo pipefail
+          if [ -z "${DB_URL:-}" ]; then
+            echo "::error::SUPABASE_DB_URL absent. Une garde ne rend pas de verdict sans avoir lu."
+            exit 1
+          fi
+          node scripts/check-migration-coverage.mjs --print-sql > /tmp/introspection.sql
+          # -A -t : sortie brute, sans en-tete ni alignement, donc du JSON pur.
+          psql "$DB_URL" -A -t -f /tmp/introspection.sql > introspection.json
+          # Un fichier vide serait un echec SILENCIEUX, le mode de defaillance
+          # exact de `restore-drill.yml`. Le script refuse deja un ledger vide ;
+          # cette borne-ci attrape le cas ou psql n'a rien rendu du tout.
+          test -s introspection.json || {
+            echo "::error::L'introspection est VIDE. Aucune conclusion n'en sera tiree."
+            exit 1
+          }
+          echo "Introspection : $(wc -c < introspection.json) octets"
+
+      - name: Recouvrement depot <-> ledger
+        run: node scripts/check-migration-coverage.mjs introspection.json
+
+      # Le TEMOIN, rejoue a chaque run et pas seulement dans `npm test` : il
+      # soumet au classeur des cas qu'il DOIT ranger correctement (un objet
+      # inexistant, un DROP anterieur, un DROP-puis-CREATE, une dispense
+      # perimee, une lecture vide) et echoue s'il ne les voit plus.
+      #
+      # ⚠️ Il tourne APRES le classement, et en `always()` : un temoin qui ne
+      # s'execute que quand la garde est verte ne dit rien le jour ou elle est
+      # rouge, et c'est ce jour-la qu'on se demande si c'est la prod qui a
+      # bouge ou la garde qui delire.
+      - name: Temoin · le classeur classe-t-il encore quelque chose ?
+        if: ${{ always() }}
+        run: npx vitest run scripts/check-migration-coverage.guard.test.mjs
+
+      # ⚠️ L'introspection contient des NOMS D'OBJETS, jamais de donnees
+      # personnelles : pas de ligne, pas d'email, pas de contenu de tache.
+      # Elle reste neanmoins un artefact de run, donc non public.
+      - name: Deposer l'introspection
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: introspection
+          path: introspection.json
+          retention-days: 7
