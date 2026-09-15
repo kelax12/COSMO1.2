@@ -1,4 +1,14 @@
-# Prompts — un par item ouvert de `a-faire-code.md`
+# Prompts · un par item ouvert de `a-faire-code.md`
+
+> 🆕 **Passe d'audit du 2026-09-14 au soir : quatre items neufs, `C-77` a `C-80`.** Leurs
+> prompts ne sont PAS dans ce fichier : ils vivent dans
+> [`prompt-correctifs-audit-2026-09-15.md`](./prompt-correctifs-audit-2026-09-15.md), en un seul
+> bloc decoupe en phases P0 a P5, avec l'etat deja mesure en tete pour qu'une session n'ait pas a
+> tout remesurer.
+>
+> **P0 (`C-77`, `okrTime` a zero sur `/statistics` en production) et P1 (`C-80`, le curseur de
+> forfait a 6 px) sont a traiter AVANT d'envoyer du trafic** : ce sont les deux seuls defauts de
+> cette passe qu'un utilisateur voit.
 
 **Réécrit le 2026-09-14**, après la passe de remesure du même jour (encadré en tête de
 `a-faire-code.md`). Un prompt par item **non clos**, prêt à coller dans une session neuve.
