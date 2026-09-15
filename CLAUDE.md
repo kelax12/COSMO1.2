@@ -156,6 +156,40 @@ npm run validate:migrations # Garde statique sur supabase/migration/*.sql (CI)
 npm run check:rls           # Invariants RLS : auth.uid() wrappé, 1 seule policy PERMISSIVE,
                             # + toute fonction citée par une policy exécutable par authenticated (CI)
 npm run check:drift         # Dérive repo ↔ prod (2 étapes : --print-sql puis <introspection.json>)
+npm run check:migration-coverage # Recouvrement des 152 fichiers de migration ↔ ledger de PROD.
+                            # Répond à C-79. GATE CI depuis le 2026-09-15
+                            # (`migration-coverage.yml`, quotidien 05:17 UTC + à
+                            # chaque push touchant `supabase/migration/`), branchée
+                            # sur `ci-alert.yml`.
+                            # ❌ Ne se contente PAS d'un comptage : c'est le comptage
+                            # qui a menti. Chaque fichier reçoit un VERDICT, et seul
+                            # le dernier fait échouer :
+                            #   AU LEDGER · OBJET EN BASE · OBJET RETIRÉ DEPUIS ·
+                            #   SUPPRESSION VÉRIFIÉE · SANS OBJET VÉRIFIABLE
+                            #   (déclaré) · NON APPLIQUÉE (déclarée) · ABSENT DES DEUX
+                            # ✅ Premier run CI, `34941970659` : 152 fichiers lus,
+                            # 138 entrées de ledger lues EN PROD, et
+                            # 118 / 27 / 3 / 1 / 2 / 1 / **0**.
+                            # 🔴 Deux verdicts sont MESURÉS, pas déclarés, et sans eux
+                            # la garde réclamait quatre migrations bel et bien
+                            # appliquées : les mig. 013, 015 et 016 ont été VIDÉES par
+                            # la 141 (C-04), et la 090 ne fait que supprimer, donc son
+                            # effet se vérifie par l'absence de ses cibles.
+                            # ⚠️ CE QUE SON VERT NE DIT PAS, et il l'imprime à chaque
+                            # exécution : une LIGNE au ledger ne prouve pas qu'un
+                            # `CREATE OR REPLACE` a remplacé le corps vivant (mig. 144,
+                            # rejouée par la 147). Il liste donc aussi les 9 fichiers
+                            # PARTIELS, dont la 136.
+                            # 🔴 EXIGE `SUPABASE_DB_URL`. Secret absent = ÉCHEC, jamais
+                            # un `::warning::` dans un run vert.
+                            # ❌ Ne JAMAIS ajouter une entrée à
+                            # `NON_APPLIQUEES_DELIBEREMENT` ou `SANS_OBJET_VERIFIABLE`
+                            # pour faire passer la CI. Une dispense qui se révèle FAUSSE
+                            # (la migration est en fait appliquée) fait échouer la garde,
+                            # comme `.github/edge-deploy.json`.
+                            # Témoin : `scripts/check-migration-coverage.guard.test.mjs`
+                            # (16 cas), vu ROUGE sur quatre sabotages du script avant
+                            # d'être committé.
 npm run i18n:check          # Parité des clés fr ↔ en (CI, bloquant)
 npm run check:legal         # Cohérence du tableau de conformité de docs/LEGAL.md :
                             # lignes collées, identifiants en double, et surtout que la
@@ -860,13 +894,21 @@ sans écran, **écrites en dur en français** hors des catalogues i18n.
 ## Base de données Supabase
 
 Migrations dans `supabase/migration/*.sql`, convention `NNN_<feature>.sql`.
-**152 fichiers de migration** (recompté en base et sur disque le 2026-09-14). La
-dernière APPLIQUÉE est la `148_team_categories_tree_merge` (le 2026-09-13) ; le ledger
-porte **138 entrées** (recompté en base le 2026-09-14 au soir ; ce fichier a écrit « 148 », qui
-est le NUMÉRO de la dernière migration, jamais un total), et les deux seules migrations du dépôt
-dont le CONTENU manque en base sont la `136`
-(travail d'une autre session) et la `140` (délibéré : elle se joue DANS la fenêtre de
-bascule Stripe live). ⚠️ La ligne précédente disait « 151 fichiers, dernière appliquée la
+**153 fichiers de migration** au 2026-09-15 (la `149` s'ajoute, cf. plus bas : elle est
+**écrite et NON APPLIQUÉE**). La dernière APPLIQUÉE est la
+`148_team_categories_tree_merge` (le 2026-09-13) ; le ledger porte **138 entrées**
+(recompté en base le 2026-09-14 au soir ; ce fichier a écrit « 148 », qui est le NUMÉRO de la
+dernière migration, jamais un total), et les trois seules migrations du dépôt dont le CONTENU
+manque en base sont la `136` (défaut OUVERT en production, item `C-77` : ce fichier l'a classée
+« travail d'une autre session » pendant douze jours, et tant qu'elle portait cette étiquette
+personne n'a lu ce qu'elle répare), la `140` (délibéré : elle se joue DANS la fenêtre de bascule
+Stripe live) et la `149` (écrite le 2026-09-15, en attente d'application).
+
+🟢 **CE COMPTE N'EST PLUS À TENIR À LA MAIN DEPUIS LE 2026-09-15.**
+`npm run check:migration-coverage` (finding C-79) relie chaque fichier au ledger de production
+et échoue sur ceux qu'il ne peut ranger nulle part. Premier run CI **`34941970659`**, vert :
+152 fichiers, **138 entrées de ledger lues en prod**, **0 absent des deux**.
+❌ Ne plus jamais écrire un état de ce paragraphe de tête : le relire à la sortie de la garde. ⚠️ La ligne précédente disait « 151 fichiers, dernière appliquée la
 `147` » : périmée d'une migration au lendemain de son écriture. La `147`
 (`_categories_tree_depth_ambiguity_redo.sql`, réapplication du correctif de la `144` —
 cf. section dédiée), la `146` et la `145` ont toutes été appliquées le 2026-09-13.
@@ -891,7 +933,18 @@ autrement, ni d'un `CREATE OR REPLACE` qui n'a pas pris (c'est exactement le dé
 cf. la `147`). La seule preuve qui vaille reste celle qui a servi ici : interroger le CATALOGUE
 (`information_schema`, `pg_get_functiondef`) sur l'objet que la migration prétend créer.
 ⚠️ Et `npm run check:drift` ne comble pas ce trou : il compare le schéma, pas le ledger, et il
-exige deux étapes manuelles. **Aucune garde de ce dépôt ne surveille ce recouvrement.**
+exige deux étapes manuelles.
+
+🟢 **UNE GARDE SURVEILLE CE RECOUVREMENT DEPUIS LE 2026-09-15** (`check:migration-coverage`,
+C-79). Elle fait exactement ce que le paragraphe ci-dessus prescrit : elle interroge le
+catalogue sur l'objet que chaque migration prétend créer, et elle refuse de conclure d'un
+comptage. Elle range les 32 fichiers « sans entrée » en **27 dont l'objet est en base**, **3
+vidés par une migration ultérieure** (les 013 / 015 / 016, par la `141`), **1 purement
+suppressif** (la `090`, vérifié par l'absence de ses cibles) et **2 déclarés non vérifiables**
+(des GRANT, une migration de données).
+⚠️ **Elle reste modeste, et le dit à chaque exécution** : une ligne au ledger ne prouve toujours
+pas qu'un `CREATE OR REPLACE` a remplacé le corps vivant. Elle liste pour cette raison les
+fichiers **PARTIELS**, dont la `136`.
 
 ### Sous-catégories hiérarchiques (mig. `143`, `144`, `145`, `147`)
 
@@ -997,6 +1050,24 @@ suivi** : tant qu'elle portait cette étiquette, personne n'a lu ce qu'elle rép
 **défaut ouvert en production** : `get_work_time_stats` lit un champ JSON que rien n'écrit, donc
 `okrTime` vaut **0** sur `/statistics` pour tous les comptes réels, et ce depuis la mig. `074`
 (2026-07-16). Item `C-77` de [`a-faire-code.md`](./a-faire-code.md).
+⚠️ **Sa prémisse a été corrigée le 2026-09-15, et elle était fausse d'un mot** : l'en-tête
+affirmait « ce champ n'existe pas », vérifié par `grep` dans `src` et **jamais en base**. Mesuré :
+**12 Key Results sur 28 portent bien un `history` non vide**, tous sur le seul compte de seed
+`aaaaaaaa-…`, jamais connecté. La conclusion tient, mais c'est un argument de **données**, et il
+se prouve par une requête, désormais recopiée dans l'en-tête avec son résultat.
+🔴 **Conséquence à connaître AVANT de l'appliquer** : le compte de seed est le seul dont `okrTime`
+va **baisser**, ses `history` cessant d'être lus alors qu'il n'a aucune ligne dans
+`kr_completions`. Ce n'est pas une régression, c'est la fin d'un chiffre qui ne reposait que sur
+une donnée morte.
+🔴 **La `149_admin_stats_excludes_non_users.sql` est ÉCRITE et NON APPLIQUÉE** (2026-09-15).
+`get_admin_stats` comptait les **28** comptes d'`auth.users`, dont `demo@cosmo.app` (jamais
+connecté, porteur de **120 tâches en production**) et `testemail@gmail.com` : la console `/admin`
+annonçait **28 utilisateurs là où il y en a 26**, et **16 % des tâches de la plateforme**
+appartenaient au compte de démonstration. La migration retranche les deux de toutes les sources
+keyées par un compte, et **rend leur NOMBRE** dans une clé `excluded_accounts` (un chiffre corrigé
+sans mention de sa correction ne se recoupe plus avec le tableau de bord Supabase).
+❌ **Ne JAMAIS recopier un de ces deux UUID ailleurs** : la liste vit dans la seule fonction
+`admin_stats_excluded_uids()`, et deux listes finiraient par diverger.
 ✅ **Tout le dépôt est appliqué en prod**, ledger relu le 2026-09-02 : la `133` (échéance récurrente
 en INSTANT, R-01), la `134` (un customer Stripe ne désigne qu'un seul compte, S-3) et la `135`
 (preuve de renonciation au droit de rétractation, S-6) sont en base, vérifiées acteur par acteur
