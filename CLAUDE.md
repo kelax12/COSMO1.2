@@ -121,7 +121,26 @@ npm run build      # Build prod → dist/ (vite build + node prerender.mjs)
 npm run preview    # Prévisualiser le build
 npm run lint       # ESLint (doit retourner 0 erreur)
 npm run typecheck  # tsc -b (doit retourner 0 erreur)
-npm test           # Vitest (run once), 2 586 tests / 228 fichiers, ZERO echec
+npm test           # Vitest (run once), **2 603 tests / 229 fichiers**, ZERO echec
+                   # (mesure du 2026-09-15 EN CI, run 34945082906, job lint-test-build).
+                   # 🔴 LE TOTAL AFFICHE EST CELUI DES FICHIERS COLLECTES, PAS DES
+                   # FICHIERS EXISTANTS, et exit 0 ne distingue pas les deux. Mesure du
+                   # 2026-09-15 sur ce poste : « 225 passed (225) », exit 0, et QUATRE
+                   # fichiers n'avaient jamais demarre :
+                   #   Failed to start forks worker ... Timeout waiting for worker
+                   #   AuthForm.confirmation · FirstRunSetup · OrgBillingTab.refund.parcours
+                   #   · use-modal-a11y.guard  (ce dernier porte les TROIS temoins de C-53)
+                   # Le seul signe est un bloc `Unhandled Errors` plus haut dans la sortie,
+                   # avec sa propre mise en garde (« this might cause false positive
+                   # tests »). Qui lit la derniere ligne voit un vert.
+                   # ❌ NE JAMAIS conclure d'un exit 0 que la suite est complete : comparer
+                   # le nombre annonce au perimetre du glob (src/** + scripts/** +
+                   # eslint-rules/**), soit 229 a cette date. Un ecart est un SAUT
+                   # silencieux, jamais une suppression.
+                   # ⚠️ `--maxWorkers=4` n'evite pas ce defaut : il etait pose sur ce run.
+                   # C'est le voisin du defaut deja documente plus bas (« le run MEURT en
+                   # silence »), en PIRE : il ne meurt pas, il rend un vert incomplet.
+                   # Mesure precedente : 2 586 / 228, le 2026-09-14 au soir (suite complete).
                    # (mesure du 2026-09-14 au soir, machine libre, ~5 min).
                    # Mesure precedente : 2 051 / 179, le 2026-09-02.
 npm run test:watch # Vitest en mode watch
@@ -321,7 +340,16 @@ npm run check:bundle        # Budget de bundle sur le build reel (CI, apres npm 
                             # et fait tomber `best-practices` de 100 a 96 dans lighthouse.
 npm run test:rls   # Tests d'intégration RLS (stack Supabase locale), 7 fichiers verts
 npm run test:e2e   # Playwright (+ :ui, :report)
-                   # 220 cas / 26 specs / 4 projects — RECOMPTE le 2026-09-14 par
+                   # 236 cas / 26 specs a HEAD, 237 / 27 dans l'arbre (le project
+                   # `mobile-safari-warmup` et son fichier ne sont pas suivis par git).
+                   # RECOMPTE le 2026-09-15 : chromium 115, mobile-safari 105,
+                   # supabase-stub 17. Les +16 viennent de C-80 : 8 pages publiques
+                   # entrent dans `touch-targets.spec.ts`.
+                   # 🔴 LES 105 CAS `mobile-safari` NE TOURNENT DANS AUCUN WORKFLOW a
+                   # cette date. C-78 est ECRIT mais PAS COMMITE : `git show
+                   # HEAD:.github/workflows/ci.yml` lance toujours
+                   # `--project=chromium --project=supabase-stub`.
+                   # Mesure precedente : 220 cas / 26 specs / 4 projects, RECOMPTE le 2026-09-14 par
                    # `npx playwright test --list`. Repartition : 107 chromium,
                    # 96 mobile-safari, 16 supabase-stub, 1 prealable de chauffe.
                    # Mesure precedente, le 2026-09-11 : 210 / 25 (103 / 94 / 12 / 1).

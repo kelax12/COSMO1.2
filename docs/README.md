@@ -92,6 +92,90 @@ Free n'est pas connu, donc son plateau à elle n'est pas celui de ce tableau.
 
 ---
 
+## Mise à jour du 2026-09-15 (suite) · vérification de la passe de correction, et deux notes révisées
+
+Passe de **vérification** de la section précédente : chaque item du prompt de correction a été
+confronté à la production et au dépôt, pas relu. Deux notes bougent, un arbitrage est révisé, et
+**un angle mort neuf apparaît, dans la mesure elle-même**.
+
+### Ce qui a été vérifié, item par item
+
+| Item | État annoncé | **État mesuré le 2026-09-15** |
+|---|---|---|
+| **C-80** cibles tactiles | corrigé | ✅ **confirmé** : la boucle du spec porte bien **16 routes** (8 protégées + 8 publiques), `.ent-range` fait 44 px de cible pour 6 px de piste et 24 px de poignée, le CTA du header a `min-h-touch`. Run CI `34945082906`, job `e2e` vert |
+| **C-79** recouvrement du ledger | corrigé | ✅ **confirmé** : `check:migration-coverage` existe, son job `couverture` est vert (run `34941970659`), et il embarque 16 cas de témoin |
+| **C-78** WebKit en CI | en cours | 🔴 **écrit, PAS dans le dépôt.** `git show HEAD:.github/workflows/ci.yml` lance toujours `--project=chromium --project=supabase-stub`, et `e2e/_warmup-mobile.spec.ts` est **inconnu de git sur toute branche** |
+| **C-77** `okrTime` à 0 | ouvert | 🔴 **toujours ouvert en production.** `pg_get_functiondef('get_work_time_stats')` lit **encore** `kr.elem->'history'` et jamais `kr_completions`. Ledger à **138** entrées, dernière la `148` : la mig. `136` n'est pas appliquée |
+| **P5** mig. `149` (`/admin`) | écrite | 🟠 **écrite, non appliquée** : `admin_stats_excluded_uids()` n'existe pas en base |
+| **P4** M-44 | à arbitrer | ⬜ le retrait de la pastille « Aujourd'hui » est **toujours dans l'arbre**, non défait. C'était prévu : le prompt demandait de ne pas toucher au fichier d'une autre session sans demander |
+
+### Les deux notes qui bougent
+
+| Domaine | 09-15 | **09-15 (suite)** | Δ | Motif |
+|---|---|---|---|---|
+| [Architecture](./ARCHITECTURE.md) | 88 | **90** | **+2** | **Arbitrage révisé**, cf. ci-dessous |
+| [Tests / CI](./TESTING.md) | 94 | **95** | **+1** | La suite E2E gagne 8 routes réellement mesurées (220 → 236 cas à `HEAD`), et un sixième job CI apparaît avec ses 16 témoins. **+1 et non +3** : les 105 cas WebKit ne sont toujours joués par aucun workflow |
+
+### 🔴 L'arbitrage révisé, et pourquoi
+
+La section précédente laisse Architecture à **88** avec ce motif : « C-79 ne change aucune mesure du
+produit, c'est une garde de vérité documentaire ». **C'est vrai et ce n'est pas le bon critère.**
+
+L'entrée du 2026-09-14 (soir) de [`ARCHITECTURE.md`](./ARCHITECTURE.md) nomme **trois** choses qui
+retiennent la note à 88, et la première, mot pour mot, est : « **aucune garde ne relie les
+migrations du dépôt à la base** ». Cette phrase est devenue fausse aujourd'hui.
+
+**Un motif de plafonnement qu'on lève sans rien créditer n'était pas un motif de plafonnement.**
+C'est exactement le raisonnement qui a fait monter cette même note de +4 la veille : le motif écrit
+le 09-03 (« aucun god component n'a disparu ») était mort depuis neuf jours, et ne rien créditer
+aurait rendu la note insincère dans l'autre sens.
+
+S'y ajoute un fait, pas un principe : **la garde a rendu un verdict que personne ne lui avait
+demandé.** Elle liste 9 fichiers partiels, dont la `136` à laquelle manque
+`idx_kr_completions_user_completed_at`. Un instrument qui trouve ce qu'on ne cherchait pas n'est
+plus de la documentation.
+
+⚠️ **Restent les deux autres motifs du 09-14, tous deux intacts** : le même calcul vit en trois
+endroits et un seul des trois sert la production (C-77), et un fichier source de 613 lignes vit
+hors de tout périmètre. D'où **90 et pas davantage**.
+
+### 🔴 L'angle mort neuf : `npm test` sort en exit 0 après avoir SAUTÉ des fichiers
+
+Trouvé en mesurant, pas en cherchant. La suite lancée depuis ce poste annonce **« 225 passed
+(225) »** et sort en **exit 0**. La CI, sur le même commit, en joue **229**. Quatre fichiers n'ont
+jamais démarré, dont `src/hooks/use-modal-a11y.guard.test.tsx`, qui porte les **trois témoins** de
+C-53 :
+
+```
+Error: [vitest-pool]: Failed to start forks worker for test files ...
+Caused by: [vitest-pool-runner]: Timeout waiting for worker to respond
+```
+
+**Le total affiché est celui des fichiers COLLECTÉS, pas des fichiers EXISTANTS**, et le code de
+sortie ne distingue pas les deux. Le seul signe est un bloc `Unhandled Errors` plus haut dans la
+sortie, qui porte lui-même l'avertissement « *this might cause false positive tests* ».
+
+⚠️ **Ce n'est pas une régression du produit** : les quatre passent en CI, et ils passaient sur ce
+poste la veille (228 / 228). C'est un aléa de charge. Mais il coûte à la mesure, et il est du même
+genre que ceux que cette campagne traque depuis deux jours : **un vert qui ne recouvre pas ce qu'on
+croit**. ❌ Ne jamais conclure d'un exit 0 de `npm test` que la suite est complète : comparer le
+nombre annoncé au périmètre réel du glob (`src/**` + `scripts/**` + `eslint-rules/**`, soit **229**
+à cette date).
+
+### Ce qui n'a pas bougé, et pourquoi
+
+**Performance 95** et **UI / UX 85** restent où elles sont : les deux avaient perdu des points pour
+`C-77`, et `C-77` est toujours ouvert en production. **Sécurité 88, Scalabilité 91, RGPD 87,
+SEO 80, i18n 90** n'ont pas été remesurées ce jour ; la CI verte sur les cinq jobs établit que
+leurs gardes tiennent, pas que leur note a changé.
+
+⚠️ **Le seul défaut que cette campagne devait fermer AVANT d'envoyer du trafic est celui qui reste
+ouvert.** `C-77` est P0 du prompt de correction, et c'est le seul de la liste qu'un utilisateur
+voit. La migration qui le répare est commitée depuis le 2026-09-03 ; il ne manque que son
+application et la vérification de ce qu'elle rend.
+
+---
+
 ## Mise à jour du 2026-09-15 · P1 et P3 du prompt de correction : deux angles morts refermés
 
 Suite directe de la passe du 2026-09-14 au soir, dont le tableau est conservé plus bas à sa date.
@@ -708,14 +792,14 @@ testées** (`scripts/migration-guards.test.mjs`).
 |---|---|
 | [`../CLAUDE.md`](../CLAUDE.md) | Point d'entrée : stack, modules, conventions, garde-fous |
 | [`../faille.md`](../faille.md) | Sécurité : findings **ouverts**, priorités avant prod, règles durables · **note 88 au 2026-09-14 (soir)**, vérifiée inchangée |
-| [`ARCHITECTURE.md`](./ARCHITECTURE.md) | Invariants du projet et leur état vérifié · **note 88 au 2026-09-14 (soir)** (+4 : les douze derniers god components sont tombés le 2026-09-05, jamais noté) |
+| [`ARCHITECTURE.md`](./ARCHITECTURE.md) | Invariants du projet et leur état vérifié · **note 90 au 2026-09-15** (+2 : `check:migration-coverage` referme le premier des trois motifs de plafonnement) |
 | [`SECURITY.md`](./SECURITY.md) | RLS, migrations SQL, repositories, Edge Functions, Stripe, CSP, secrets · **les 4 Edge Functions Stripe auditées le 2026-09-02**, cf. [`../faille.md`](../faille.md) |
-| [`TESTING.md`](./TESTING.md) | Vitest, Playwright, a11y, i18n, CI, **checklist avant push prod** · **note 94 au 2026-09-14 (soir)** (−3 : **96 cas E2E sur 220 ne tournent dans aucun workflow**) · suite 2 586 / 228 verte, couverture verte |
+| [`TESTING.md`](./TESTING.md) | Vitest, Playwright, a11y, i18n, CI, **checklist avant push prod** · **note 95 au 2026-09-15** (+1 : 8 routes publiques entrent dans la garde E2E, un 6ᵉ job CI apparaît ; les **105 cas WebKit** ne tournent toujours dans aucun workflow) · suite **2 603 / 229** verte en CI, couverture verte |
 | [`DEPLOYMENT.md`](./DEPLOYMENT.md) | Runbook deploy / rollback Vercel + Supabase, drill de restauration |
-| [`MOBILE.md`](./MOBILE.md) | Pages et composants mobiles, bottom-sheets, pièges iOS Safari · **note 76 au 2026-09-14 (soir)** (−3 : les pages **publiques** portent 24 cibles tactiles sous 44 px, hors du périmètre de la garde) |
-| [`UI-PATTERNS.md`](./UI-PATTERNS.md) | Listes, modals, tutoriels, onboarding, thèmes · **note 85 au 2026-09-14 (soir)** (−2 : `/statistics` affiche un zéro faux en production ; **M-44 tranché**) |
-| [`PERFORMANCE.md`](./PERFORMANCE.md) | `manualChunks`, lazy loading, images et polices, budget bundle · **note 95 au 2026-09-14 (soir)** (−2 : la mig. `127` a été créditée d'un gain sans qu'on regarde ce qu'elle REND), gardé par `npm run check:bundle` et par le job `lighthouse` · et depuis le 2026-08-26 **le coût serveur d'une ouverture de session**, ramené de 29 à 21 requêtes REST |
-| [`ACCESSIBILITY.md`](./ACCESSIBILITY.md) | WCAG / EAA, aria, contraste, gates axe-core + Lighthouse · **note 82 au 2026-09-14 (soir)** (−2 : WCAG 2.5.5 n'est vérifié que sur huit routes protégées) · 37 cas a11y verts rejoués |
+| [`MOBILE.md`](./MOBILE.md) | Pages et composants mobiles, bottom-sheets, pièges iOS Safari · **note 78 au 2026-09-15** (+2 : C-80 refermé, le curseur de forfait passe de 308 × 6 à 308 × 44 px ; le 3ᵉ point attend que WebKit entre en CI) |
+| [`UI-PATTERNS.md`](./UI-PATTERNS.md) | Listes, modals, tutoriels, onboarding, thèmes · **note 85 au 2026-09-15**, inchangée (−2 du 09-14 : `/statistics` affiche **toujours** un zéro faux en production, C-77 ouvert ; **M-44 tranché**) |
+| [`PERFORMANCE.md`](./PERFORMANCE.md) | `manualChunks`, lazy loading, images et polices, budget bundle · **note 95 au 2026-09-15**, inchangée (−2 du 09-14 : la mig. `127` rend **toujours** 0 sur `okrTime` en production, C-77 ouvert), gardé par `npm run check:bundle` et par le job `lighthouse` · et depuis le 2026-08-26 **le coût serveur d'une ouverture de session**, ramené de 29 à 21 requêtes REST |
+| [`ACCESSIBILITY.md`](./ACCESSIBILITY.md) | WCAG / EAA, aria, contraste, gates axe-core + Lighthouse · **note 84 au 2026-09-15** (+2 : la garde couvre 8 pages publiques de plus, 18 cas sur 18 verts) · 37 cas a11y verts rejoués le 09-14 |
 | [`AUDIT-VOICEOVER-IOS.md`](./AUDIT-VOICEOVER-IOS.md) | Check-list du **quatrième** audit d'accessibilité, à jouer d'une traite sur un iPhone (12 étapes, ~60 min, témoin en tête). Le seul instrument qui mesure l'**annonce** : le dépôt ne prouve aujourd'hui que le **focus** |
 | [`SCALABILITY.md`](./SCALABILITY.md) | Montée en charge · **note 91, vérifiée au 2026-09-14 (soir)** (plans d'exécution rejoués en production), coût par ligne mesuré, éprouvé à volume (§9ter) **et en concurrence** (1 → 16 sessions, §9quater) |
 | [`SEO.md`](./SEO.md) | Prérendu, sitemap, hreflang, indexation par locale · **note 80, vérifiée au 2026-09-14 (soir)** · données Search Console du 2026-08-19, non remesurées · ⚠️ **1 inscription sur 30 jours** mesurée en base le 09-14 |
