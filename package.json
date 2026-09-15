@@ -20,6 +20,7 @@
     "validate:migrations": "node scripts/validate-migrations.mjs",
     "check:rls": "node scripts/check-rls-advisors.mjs",
     "check:drift": "node scripts/check-prod-drift.mjs",
+    "check:migration-coverage": "node scripts/check-migration-coverage.mjs",
     "i18n:check": "node scripts/i18n-check.mjs",
     "cosmo": "node scripts/cosmo/cli.mjs",
     "cosmo:login": "node scripts/cosmo/login.mjs",
