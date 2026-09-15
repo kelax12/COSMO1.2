@@ -25,9 +25,15 @@
 > project `mobile-safari-warmup` et son fichier `e2e/_warmup-mobile.spec.ts` (1 cas) ne sont connus
 > de git sur aucune branche. C'est une déduction, pas une mesure, et elle est écrite comme telle.
 >
-> ## 🔴 Angle mort trouvé en mesurant : `npm test` sort en exit 0 après avoir SAUTé des fichiers
+> ## 🔴 Le défaut trouvé en mesurant, et sa correction : un CONSEIL de `CLAUDE.md` désarmait C-47
 >
-> La suite lancée depuis ce poste ce jour a annoncé **« 225 passed (225) » et sorti en exit 0**.
+> ⚠️ **Ce paragraphe a d'abord affirmé « `npm test` sort en exit 0 après avoir sauté des
+> fichiers ». C'est FAUX, et la correction est ci-dessous.** L'affirmation a vécu quelques minutes
+> dans trois documents avant que le code de sortie, pourtant imprimé par la commande elle-même, soit
+> relu : **`EXIT=1`**. Vitest signale. C'est la lecture qui avait failli, sur la seule ligne de
+> résumé.
+>
+> La suite lancée depuis ce poste ce jour a annoncé **« 225 passed (225) » et sorti en exit 1**.
 > La CI, sur le même commit, en joue **229**. Quatre fichiers n'ont jamais démarré :
 >
 > ```
@@ -39,28 +45,40 @@
 > Caused by: [vitest-pool-runner]: Timeout waiting for worker to respond
 > ```
 >
-> 🔴 **Le total affiché est celui des fichiers COLLECTÉS, pas des fichiers EXISTANTS**, et le
-> code de sortie ne distingue pas les deux. Le seul signe est un bloc `Unhandled Errors` plus haut
-> dans la sortie, avec sa propre mise en garde : « *This might cause false positive tests* ». Qui
-> lit la dernière ligne, c'est-à-dire tout le monde, voit un vert.
+> ### La cause, et elle est dans la documentation de ce dépôt
 >
-> ⚠️ **Ce n'est pas une régression du produit** : les quatre fichiers passent en CI, et ils
-> passaient ici même la veille (228 / 228, suite complète). C'est un aléa de charge machine. Mais
-> il coûte cher **à la mesure**, et l'un des quatre est `use-modal-a11y.guard.test.tsx`, qui porte
-> les **trois témoins** de `C-53` : une session pressée aurait conclu « suite verte » en n'ayant pas
-> joué les témoins qui garantissent que la garde détecte encore quelque chose.
+> 🔴 **`CLAUDE.md` conseillait `--maxWorkers=4`**, et la session a suivi le conseil. Or
+> `vitest.config.ts` fixe **`maxWorkers: 2`**, et le commentaire qui l'accompagne explique
+> précisément pourquoi (finding **C-47**, 2026-09-03) : 4 cœurs et 8 Go, la majorité des fichiers
+> montent jsdom, et **quatre jsdom concurrents saturent la RAM**. Un worker qui ne répond plus est
+> alors compté comme un échec sans avoir exécuté un seul cas.
 >
-> ❌ **Ne JAMAIS conclure d'un exit 0 de `npm test` que la suite est complète.** Comparer le
-> nombre de fichiers annoncé au nombre de fichiers du périmètre : `src/**` + `scripts/**` +
-> `eslint-rules/**`, soit **229** à cette date. Un écart est un saut silencieux, pas une
-> suppression.
-> ⚠️ `CLAUDE.md` décrit déjà le voisin de ce défaut (« le run MEURT en silence si une autre
-> session fait tourner sa suite en parallèle »). Celui-ci est **pire** : il ne meurt pas, il rend un
-> vert incomplet. `--maxWorkers=4` ne suffit pas à l'éviter, il était posé sur ce run.
+> Le conseil était **antérieur à C-47** et n'avait jamais été retiré. Un drapeau de ligne de
+> commande écrase la config : **suivre la documentation désarmait la garde**. Corrigé le
+> 2026-09-15, avec l'interdiction écrite à sa place.
 >
-> ✅ **La note s'appuie donc sur la CI, pas sur le poste** : run `34945082906`, 229 fichiers,
-> 2 603 cas, couverture 31,15 L. C'est ce que « une preuve est opposable ou elle n'existe pas »
-> veut dire, appliqué à la mesure elle-même.
+> ### Ce qui reste vrai, et qui vaut d'être retenu
+>
+> ⚠️ **Le total affiché est celui des fichiers COLLECTÉS, pas des fichiers EXISTANTS.** « 225
+> passed (225) » ne dit pas qu'il en manque quatre : c'est le **code de sortie** qui le dit, et le
+> bloc `Unhandled Errors` plus haut. Un résumé ne remplace pas `$?`.
+>
+> ⚠️ **L'un des quatre fichiers sabordés est `use-modal-a11y.guard.test.tsx`**, qui porte les
+> **trois témoins** de `C-53`. Une session qui n'aurait lu que le résumé aurait conclu « suite
+> verte » sans avoir joué les témoins qui garantissent que la garde détecte encore quelque chose.
+>
+> ❌ **Ne jamais passer `--maxWorkers` en ligne de commande sur ce dépôt.** La borne est mesurée,
+> elle est dans la config, et elle a une raison écrite. Si la durée devient le problème, la remonter
+> **dans `vitest.config.ts` en remesurant la stabilité**, jamais par un drapeau.
+>
+> ✅ **La note s'appuie sur la CI** : run `34945082906`, 229 fichiers, 2 603 cas, couverture
+> 31,15 L. Et la suite relancée ici **sans drapeau** est complète, cf. l'encadré de vérification
+> ci-dessous.
+>
+> 🔴 **La leçon porte sur la méthode, pas sur vitest** : l'outil a signalé correctement, un
+> conseil périmé a créé la panne, et une lecture pressée a produit un diagnostic faux publié dans
+> trois documents. Les trois se corrigent ; le troisième est le plus coûteux, parce qu'il avait
+> l'air d'une découverte.
 >
 > ## 🔴 Pourquoi seulement +1 : C-78 est écrit et n'est PAS dans le dépôt
 >
@@ -69,7 +87,7 @@
 > répond au vrai problème mesuré la veille, à savoir que le coût de compilation à froid de Vite
 > tombait entièrement sur le premier cas WebKit.
 >
-> **Mais `main` ne le porte pas.** Vérifié ce jour, pas déduit :
+> **Mais `main` ne le portait pas au moment de la mesure.** Vérifié, pas déduit :
 >
 > ```
 > git show HEAD:.github/workflows/ci.yml | grep -A1 "Run E2E"
@@ -79,8 +97,30 @@
 >   error: pathspec ... did not match any file(s) known to git
 > ```
 >
-> Les 105 cas WebKit ne sont donc joués par **aucun workflow**, exactement comme la veille. Le
-> périmètre a changé sur le disque, pas en CI.
+> ⚠️ **ET LA MOITIÉ EN A ÉTÉ COMMITÉE PENDANT L'ÉCRITURE DE CE PARAGRAPHE**, par une autre
+> session : `a71180a0`, « trois causes racines qui rendaient WebKit injouable, et aucune n'était le
+> produit (**C-78, 1/2**) ». Remesuré immédiatement après :
+>
+> | | état |
+> |---|---|
+> | `e2e/_warmup-mobile.spec.ts` | ✅ **suivi par git** |
+> | `playwright.config.ts`, `e2e/fixtures.ts` | ✅ **commités** |
+> | `.github/workflows/ci.yml` | ❌ **toujours non commité** : `main` lance encore deux projects |
+>
+> **Le fond ne bouge pas, le détail si** : les 105 cas WebKit ne sont toujours joués par aucun
+> workflow, donc la note ne peut rien créditer de plus. Mais la phrase « inconnu de git » est
+> devenue fausse en une heure, et elle est corrigée plutôt que laissée. C'est la version dépôt de
+> la règle que ce projet applique à la production : **l'état n'est jamais celui qu'on a laissé**,
+> parce que plusieurs sessions travaillent dans le même arbre.
+>
+> ✅ **Ce que la moitié 1/2 a réellement résolu, et c'est important** : le project n'était pas
+> seulement absent de la CI, **il était injouable**. Un cas mesuré à **54,7 minutes** tourne
+> désormais en **3,4 s** (`navTo` 2 550 ms, `networkidle` 11 ms, `axe.analyze` 3 462 ms), et les
+> trois causes sont nommées : un `page.goto` à 30 s pendant que Vite compile la landing, un
+> `load` **qui n'arrive jamais** sous WebKit sur la landing, et le coût de chauffe non isolé.
+> ⚠️ Le deuxième point recoupe la mesure du 09-14 depuis un autre angle : contre la
+> **production**, `load` tombait en 2 159 ms. En **développement**, il n'arrive pas. La différence
+> n'est pas le moteur, c'est Vite qui compile à la demande.
 >
 > 🔴 **C'est la deuxième fois en cinq jours que ce dépôt se fait la même chose.** `C-14` avait vécu
 > trois jours dans un arbre non commité pendant que trois documents l'annonçaient acquis, et trois
