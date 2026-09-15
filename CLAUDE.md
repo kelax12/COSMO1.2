@@ -188,6 +188,13 @@ npm run test:coverage       # + couverture v8, seuils globaux et par fichier
                             # documents avant de relire le code de sortie qu'elle avait
                             # elle-meme imprime.
                             # ❌ Ne JAMAIS conclure d'une ligne de resume : lire `$?`.
+                            # ✅ PREUVE, meme machine, meme arbre, le 2026-09-15 :
+                            #   avec --maxWorkers=4 : exit 1, 225 fichiers, 4 workers morts
+                            #   sans drapeau        : exit 0, 229 fichiers, 2 603 cas,
+                            #                         0 unhandled error, 576,6 s
+                            # Le drapeau ne rendait pas la suite plus rapide, il la rendait
+                            # INCOMPLETE. Et le compte sans drapeau est exactement celui de
+                            # la CI.
                             # Voir docs/TESTING.md
 npm run validate:migrations # Garde statique sur supabase/migration/*.sql (CI)
 npm run check:rls           # Invariants RLS : auth.uid() wrappé, 1 seule policy PERMISSIVE,
