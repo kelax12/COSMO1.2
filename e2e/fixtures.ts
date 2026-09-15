@@ -3,20 +3,71 @@ import { test as base, expect, Page } from '@playwright/test';
 /**
  * Fixture commune : démarre chaque test en mode démo authentifié sur /dashboard.
  *
- * Le mode démo est instantané (pas de réseau Supabase, seed local) — parfait
- * pour les tests E2E. On clique le bouton "Essayer maintenant — sans
+ * Le mode démo est instantané (pas de réseau Supabase, seed local), parfait
+ * pour les tests E2E. On clique le bouton "Essayer maintenant, sans
  * inscription" sur la landing, puis on attend que le dashboard soit affiché.
  *
  * Note : si l'onboarding overlay s'affiche (premier loginDemo), on le ferme
  * pour ne pas interférer avec les assertions du test.
  */
+/**
+ * `page.goto` qui survit à un re-empaquetage de Vite.
+ *
+ * 🔴 D'OÙ ÇA VIENT (C-78, 2026-09-15). En faisant entrer le project
+ * `mobile-safari` dans la CI, les premiers cas échouaient dans cette fixture
+ * même, sur deux modes de défaillance QUI NE SONT PAS DES DÉFAUTS PRODUIT :
+ *
+ *   · `page.goto: Timeout was reached`, le défaut de `page.goto` est **30 s**,
+ *     intenable contre un serveur de développement qui compile la landing
+ *     (lazy + GSAP) pour la première fois ;
+ *   · `Navigation to "/" is interrupted by another navigation to "/"`, Vite
+ *     découvre une dépendance, se ré-empaquette et **recharge la page**, ce qui
+ *     annule la navigation en cours.
+ *
+ * 🔴 ET SURTOUT : `waitUntil: 'domcontentloaded'`, JAMAIS le `'load'` par
+ * défaut. Mesuré le 2026-09-15 sur WebKit : `page.goto('/')` a dépassé
+ * **180 000 ms** en attendant `load` sur la landing, une page qui était
+ * pourtant rendue et interactive depuis longtemps. C'est le même piège que
+ * celui déjà rencontré le 2026-09-05 sur le harnais hors mode démo, où `load`
+ * n'arrivait jamais.
+ *
+ * ❌ Ne jamais « corriger » ça en montant encore le timeout : `load` attend la
+ *    dernière ressource subordonnée, et rien ne garantit qu'elle arrive. La
+ *    vraie attente de disponibilité est faite JUSTE APRÈS, sur le CTA de la
+ *    landing, qui est un signal du produit et non du réseau.
+ *
+ * ❌ La mauvaise réponse serait de monter les timeouts jusqu'à ce que ça
+ *    passe : le second cas n'est pas une question d'attente, la navigation est
+ *    ANNULÉE et n'aboutira jamais, quelle que soit la patience.
+ * ✅ La bonne réponse est de RETENTER, et de le borner.
+ *
+ * ⚠️ Cette tolérance ne masque aucune lenteur réelle du produit : un serveur
+ * qui ne sert pas la page épuise les trois tentatives et le test échoue. Et
+ * c'est le project `mobile-safari-warmup` qui paie le gros de la compilation,
+ * une fois, sous un nom qui le dit.
+ */
+async function gotoTolerant(page: Page, url: string): Promise<void> {
+  let derniere: unknown;
+  for (let essai = 0; essai < 3; essai += 1) {
+    try {
+      await page.goto(url, { timeout: 180_000, waitUntil: 'domcontentloaded' });
+      return;
+    } catch (e) {
+      derniere = e;
+      // Une navigation interrompue laisse la page sur un état intermédiaire :
+      // on retente immédiatement, sans attendre davantage.
+    }
+  }
+  throw derniere;
+}
+
 export const test = base.extend<{ demoPage: Page }>({
   demoPage: async ({ page, context }, use) => {
-    // 1. État propre — clear cookies + storage Supabase + flags démo
+    // 1. État propre, clear cookies + storage Supabase + flags démo
     //    (sinon RootRoute redirige immédiatement vers /dashboard si session
     //     déjà active, et le CTA "Essayer maintenant" n'existe pas).
     await context.clearCookies();
-    await page.goto('/');
+    await gotoTolerant(page, '/');
     await page.evaluate(() => {
       try {
         localStorage.clear();
@@ -31,14 +82,14 @@ export const test = base.extend<{ demoPage: Page }>({
     //    échouaient dans la fixture (« <aside aria-label="Bannière cookies">
     //    subtree intercepts pointer events »). Sur desktop elle est réduite à
     //    une carte en bas à droite (`sm:left-auto sm:max-w-sm`) et ne gênait
-    //    pas — d'où un échec 100 % mobile.
+    //    pas, d'où un échec 100 % mobile.
     //    'refused' = option la plus respectueuse (aucun cookie non essentiel).
     //    Cette clé est préservée par clearDemoStorage() (PRESERVE_KEYS), elle
     //    survit donc au loginDemo() qui balaye le reste des clés cosmo_*.
     //    Neutraliser aussi le pont démo → compte : il apparaît au bout de 90 s
     //    d'usage démo OU à la 3ᵉ création, en carte ancrée en bas (au-dessus de
     //    la MobileTabBar). Un test long ou qui crée 3 entités le verrait
-    //    surgir et intercepter des clics — exactement le mode d'échec que la
+    //    surgir et intercepter des clics, exactement le mode d'échec que la
     //    bannière cookies a déjà provoqué sur les 27 tests mobile-safari.
     //    Comme `cosmo_cookie_consent`, cette clé est dans PRESERVE_KEYS : elle
     //    survit au clearDemoStorage() du loginDemo().
@@ -50,11 +101,11 @@ export const test = base.extend<{ demoPage: Page }>({
     });
 
     // Reload pour repartir d'une LandingPage propre
-    await page.goto('/');
+    await gotoTolerant(page, '/');
 
     // 2. Cliquer le CTA démo principal
     //    Le bouton a aria-label "Essayer la démo sans inscription"
-    //    et un texte visible "Essayer maintenant — sans inscription"
+    //    et un texte visible "Essayer maintenant, sans inscription"
     //    30 s : la LandingPage est lazy-loadée et animée par GSAP ; au premier
     //    test d'un serveur Vite froid son rendu dépasse largement 10 s.
     const demoBtn = page.getByRole('button', { name: /essayer.*sans inscription/i }).first();
@@ -67,15 +118,15 @@ export const test = base.extend<{ demoPage: Page }>({
     //     (`sticky top-0 z-50`), qui capte alors le clic.
     // On remonte en haut pour dégager le header, puis on retombe si besoin sur
     // un dispatch direct. `{ force: true }` ne suffit PAS ici : il saute le
-    // test d'interception mais tape toujours au point central — c'est-à-dire
-    // sur le header — et la navigation n'avait donc jamais lieu.
+    // test d'interception mais tape toujours au point central, c'est-à-dire
+    // sur le header, et la navigation n'avait donc jamais lieu.
     await page.evaluate(() => window.scrollTo(0, 0));
     try {
       await demoBtn.click({ timeout: 15_000 });
     } catch {
       // Le clic peut avoir DÉCLENCHÉ la navigation puis rejeté quand même
       // (la page se démonte sous les vérifications post-clic de Playwright).
-      // Sans ce garde, on relançait un clic sur un bouton déjà disparu — qui
+      // Sans ce garde, on relançait un clic sur un bouton déjà disparu, qui
       // n'aboutit jamais et bloque le test jusqu'au timeout (observé : 60 s
       // à 2 min figés au lieu d'un échec net).
       if (!/\/dashboard/.test(page.url())) {
@@ -98,13 +149,13 @@ export const test = base.extend<{ demoPage: Page }>({
     //    est écrit `hidden md:block` (DashboardPage.tsx) : sous 768 px le h1
     //    est LA DATE, choix produit délibéré et commenté à sa source. Attendre
     //    `/bonjour/i` était donc STRUCTURELLEMENT impossible à tenir sur un
-    //    viewport mobile — la fixture y échouait au bout de 45 s, avant le
+    //    viewport mobile, la fixture y échouait au bout de 45 s, avant le
     //    moindre test, sur tous les specs à la fois.
     //
     //    Mesuré le 2026-09-06 : le h1 rendu en 390 px est « dimanche 6 sept. ».
     //    C'est ce qui rendait le project `mobile-safari` intégralement rouge,
     //    et ce qui empêchait `e2e/reduced-motion-sheets.spec.ts` de mesurer
-    //    `MobileMoreSheet` — la seule feuille dont on sache qu'elle a vraiment
+    //    `MobileMoreSheet`, la seule feuille dont on sache qu'elle a vraiment
     //    été cassée.
     //
     // ❌ Ne pas « corriger » ça en acceptant n'importe quel h1 : un h1 vide ou
@@ -125,7 +176,7 @@ export const test = base.extend<{ demoPage: Page }>({
     await page.evaluate(() => {
       try {
         localStorage.removeItem('cosmo_onboarding_pending');
-        // Désormais 2 flags par page (desktop + mobile) — neutraliser les deux
+        // Désormais 2 flags par page (desktop + mobile), neutraliser les deux
         for (const page of ['tasks', 'agenda', 'habits', 'okr']) {
           localStorage.setItem(`cosmo_tutorial_seen_${page}_desktop`, '1');
           localStorage.setItem(`cosmo_tutorial_seen_${page}_mobile`, '1');
@@ -153,13 +204,13 @@ export const test = base.extend<{ demoPage: Page }>({
 export { expect };
 
 /**
- * Case de complétion d'une tâche — sélecteurs valables sur les DEUX viewports.
+ * Case de complétion d'une tâche, sélecteurs valables sur les DEUX viewports.
  *
  * Les deux implémentations ont divergé sémantiquement lors de la refonte
  * mobile et n'ont plus AUCUN rôle ARIA commun :
  *   - desktop (`task-table/list.tsx`)  : role="checkbox" + aria-checked
  *   - mobile  (`task-table/TaskCard.tsx`) : <button> + aria-pressed
- * En revanche elles partagent le même `aria-label` — c'est donc le seul
+ * En revanche elles partagent le même `aria-label`, c'est donc le seul
  * contrat stable commun, et il est sémantique (pas un hook de test).
  *
  * ⚠️ Ne PAS revenir à `[role="checkbox"]` pour les tâches : ce sélecteur ne
@@ -177,10 +228,10 @@ export const TASK_TOGGLE_CHECKED = '[aria-label="Marquer comme non complétée"]
  * Si le clic vient d'ouvrir un menu déroulant (Radix `role="menu"`), clique
  * le premier item.
  *
- * Cas réel : « Entreprise » — la démo place l'utilisateur dans DEUX
+ * Cas réel : « Entreprise », la démo place l'utilisateur dans DEUX
  * organisations (Nova Studio + Atelier Lune, cf. `organizations/local.repository.ts`),
  * donc `NavItemLink` (Layout.tsx) rend un `role="button"` déclenchant un
- * `DropdownMenu` de choix d'organisation, PAS un `<a>` de navigation directe —
+ * `DropdownMenu` de choix d'organisation, PAS un `<a>` de navigation directe -
  * sur desktop ET mobile, c'est le comportement voulu (plusieurs organisations
  * → il faut choisir). Peu importe laquelle pour un test qui vérifie juste que
  * `/entreprise` rend sans erreur : le premier item convient.
@@ -197,11 +248,11 @@ async function clickThroughOrgMenuIfAny(page: Page): Promise<void> {
  * desktop ou tab bar mobile). `.first()` seul peut résoudre un contrôle caché
  * par le CSS responsive (sidebar `hidden` sur mobile) → timeout. Sur mobile,
  * les sections absentes de la tab bar (OKR, Statistiques…) vivent dans le
- * sheet « Plus » — on l'ouvre d'abord. On privilégie le clic (il teste au
+ * sheet « Plus », on l'ouvre d'abord. On privilégie le clic (il teste au
  * passage que le contrôle de nav existe et pointe au bon endroit) plutôt que
  * page.goto().
  * NB : le mode démo SURVIT à un full reload (`cosmo_demo_active`, cf.
- * app-mode.store.ts) — l'ancien avertissement « goto = perte du mode démo »
+ * app-mode.store.ts), l'ancien avertissement « goto = perte du mode démo »
  * était périmé ; goto reste utilisable pour une route sans lien de nav.
  */
 export async function navTo(page: Page, name: RegExp, urlPattern: RegExp): Promise<void> {
@@ -211,12 +262,12 @@ export async function navTo(page: Page, name: RegExp, urlPattern: RegExp): Promi
       await visibleLink.click({ timeout: 10_000 });
     } catch {
       // Même garde que le CTA démo (cf. plus haut) : le premier clic peut
-      // avoir abouti et navigué avant de rejeter — sans ce check, le clic
+      // avoir abouti et navigué avant de rejeter, sans ce check, le clic
       // forcé retente sur un lien déjà démonté et bloque jusqu'au timeout.
       if (urlPattern.test(page.url())) return;
       // WebKit/Windows : les animations continues (curseur TextType, charts)
       // font flapper le check « stable » de Playwright sur la tab bar fixe.
-      // Le lien est visible et cliquable — on force le dispatch. Timeout
+      // Le lien est visible et cliquable, on force le dispatch. Timeout
       // explicite : un `force` sans timeout hérite du timeout du TEST entier
       // et un lien redevenu inaccessible entre-temps bloquait jusqu'à 2 min
       // au lieu d'échouer proprement.
@@ -229,13 +280,13 @@ export async function navTo(page: Page, name: RegExp, urlPattern: RegExp): Promi
 
   // Pas de <a> visible : sur desktop, certaines entrées de nav (Entreprise
   // avec plusieurs organisations démo) sont un role="button" qui ouvre un
-  // menu au lieu de naviguer directement — cf. clickThroughOrgMenuIfAny.
+  // menu au lieu de naviguer directement, cf. clickThroughOrgMenuIfAny.
   const visibleButton = page.getByRole('button', { name }).filter({ visible: true }).first();
   if (await visibleButton.isVisible().catch(() => false)) {
     // ⚠️ Ce déclencheur peut se DÉTACHER en boucle : le trigger d'organisation
     // est re-rendu par les données de nav qui arrivent (notifications d'org,
     // badges), et Playwright re-résout alors indéfiniment jusqu'au timeout
-    // (« element was detached from the DOM, retrying » — échec mobile-safari
+    // (« element was detached from the DOM, retrying », échec mobile-safari
     // observé sur /entreprise). Un échec ici n'est donc PAS une preuve que la
     // nav est cassée : on retombe sur le sheet « Plus », qui est le chemin
     // légitime sur mobile de toute façon.
@@ -254,7 +305,7 @@ export async function navTo(page: Page, name: RegExp, urlPattern: RegExp): Promi
   }
 
   // Mobile : la section est dans le sheet « Plus » de la MobileTabBar.
-  // Les items du sheet sont des <button> (navigate()), pas des <a> — sauf
+  // Les items du sheet sont des <button> (navigate()), pas des <a>, sauf
   // « Entreprise » multi-org, qui est elle aussi un déclencheur de menu.
   await page.getByRole('button', { name: /plus d'options/i }).click();
   // ⚠️ Scoper au sheet est OBLIGATOIRE : la page reste montée DERRIÈRE lui et
