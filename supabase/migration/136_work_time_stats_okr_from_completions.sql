@@ -5,12 +5,40 @@
 -- `kr.elem->'history'`, un tableau `{date, increment}` porté par chaque Key
 -- Result dans le JSONB `okrs.key_results`.
 --
--- **Ce champ n'existe pas.** Il est absent de l'interface `KeyResult`
--- (`src/modules/okrs/types.ts`), absent des mappers, et aucun écrivain du
--- produit ne le pose (vérifié le 2026-09-02 : `grep "history:" src` rend zéro
--- résultat). `COALESCE(kr.elem->'history', '[]'::jsonb)` rendait donc toujours
--- un tableau vide, `okr_days` était toujours vide, et **`okrTime` valait
--- structurellement 0** — pour tout le monde, depuis que la fonction existe.
+-- **Aucun écrivain du produit ne pose ce champ.** Il est absent de l'interface
+-- `KeyResult` (`src/modules/okrs/types.ts`), absent des mappers, et
+-- `grep "history:" src` rend zéro résultat (vérifié le 2026-09-02).
+--
+-- ⚠️ La première version de cet en-tête en concluait « ce champ n'existe pas »,
+-- et c'était faux d'un mot : un argument de CODE avait été présenté comme un
+-- argument de DONNÉES. Mesuré en base le 2026-09-15, la question étant enfin
+-- posée à la base plutôt qu'au dépôt :
+--
+--     WITH kr AS (SELECT o.user_id, e.elem FROM okrs o
+--                 CROSS JOIN LATERAL jsonb_array_elements(o.key_results) AS e(elem))
+--     SELECT count(*) AS kr_total,
+--            count(*) FILTER (WHERE jsonb_array_length(
+--              COALESCE(elem->'history','[]'::jsonb)) > 0) AS kr_avec_history,
+--            count(DISTINCT user_id) FILTER (WHERE jsonb_array_length(
+--              COALESCE(elem->'history','[]'::jsonb)) > 0) AS comptes
+--     FROM kr;
+--     -- 28 | 12 | 1
+--
+-- **12 Key Results sur 28 portent bien un `history` non vide**, de la forme
+-- `{date, increment}` que la mig. 127 attendait. Mais ils appartiennent tous au
+-- SEUL compte `aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa`, le compte de seed de la
+-- démonstration, créé le 2026-01-10 et JAMAIS connecté. Ce sont des restes d'un
+-- écrivain disparu ; aucun compte réel n'en porte.
+--
+-- La conclusion ne bouge donc pas, mais elle se dit autrement :
+-- `COALESCE(kr.elem->'history', '[]'::jsonb)` rend un tableau vide **pour tout
+-- compte réel**, `okr_days` est toujours vide chez eux, et **`okrTime` vaut 0
+-- pour 100 % des utilisateurs du produit**, depuis que la fonction existe.
+--
+-- ⚠️ Conséquence à connaître avant d'appliquer : le compte de seed est le SEUL
+-- dont `okrTime` va BAISSER (ses `history` cessent d'être lus, et il n'a aucune
+-- ligne dans `kr_completions`). Ce n'est pas une régression, c'est la fin d'un
+-- chiffre qui ne reposait que sur une donnée morte.
 --
 -- La page Statistiques affichait donc « 0 min » sur les OKR en production,
 -- pendant que les deux graphiques du tableau de bord affichaient le bon
