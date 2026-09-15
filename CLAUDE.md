@@ -124,22 +124,24 @@ npm run typecheck  # tsc -b (doit retourner 0 erreur)
 npm test           # Vitest (run once), **2 603 tests / 229 fichiers**, ZERO echec
                    # (mesure du 2026-09-15 EN CI, run 34945082906, job lint-test-build).
                    # 🔴 LE TOTAL AFFICHE EST CELUI DES FICHIERS COLLECTES, PAS DES
-                   # FICHIERS EXISTANTS, et exit 0 ne distingue pas les deux. Mesure du
-                   # 2026-09-15 sur ce poste : « 225 passed (225) », exit 0, et QUATRE
-                   # fichiers n'avaient jamais demarre :
+                   # FICHIERS EXISTANTS. Mesure du 2026-09-15 sur ce poste, avec un
+                   # `--maxWorkers=4` qui ecrasait la borne de C-47 : « 225 passed
+                   # (225) », **exit 1**, et QUATRE fichiers n'avaient jamais demarre :
                    #   Failed to start forks worker ... Timeout waiting for worker
                    #   AuthForm.confirmation · FirstRunSetup · OrgBillingTab.refund.parcours
                    #   · use-modal-a11y.guard  (ce dernier porte les TROIS temoins de C-53)
-                   # Le seul signe est un bloc `Unhandled Errors` plus haut dans la sortie,
-                   # avec sa propre mise en garde (« this might cause false positive
-                   # tests »). Qui lit la derniere ligne voit un vert.
-                   # ❌ NE JAMAIS conclure d'un exit 0 que la suite est complete : comparer
+                   # ✅ VITEST FAIT SON TRAVAIL : il sort en **exit 1** et imprime un bloc
+                   # `Unhandled Errors` (« this might cause false positive tests »). Ce qui
+                   # a failli le 2026-09-15, c'est la LECTURE : la ligne de resume dit
+                   # « 225 passed » et ne dit pas qu'il en manque quatre. La meme session a
+                   # publie « exit 0 » dans trois documents avant de relire le `$?` qu'elle
+                   # avait elle-meme imprime.
+                   # ❌ NE JAMAIS conclure d'une ligne de resume. Lire `$?`, puis comparer
                    # le nombre annonce au perimetre du glob (src/** + scripts/** +
-                   # eslint-rules/**), soit 229 a cette date. Un ecart est un SAUT
-                   # silencieux, jamais une suppression.
-                   # ⚠️ `--maxWorkers=4` n'evite pas ce defaut : il etait pose sur ce run.
-                   # C'est le voisin du defaut deja documente plus bas (« le run MEURT en
-                   # silence »), en PIRE : il ne meurt pas, il rend un vert incomplet.
+                   # eslint-rules/**), soit 229 a cette date.
+                   # 🔴 LA CAUSE ETAIT UN CONSEIL DE CE FICHIER : `--maxWorkers=4`,
+                   # ecrit plus bas, ecrasait le `maxWorkers: 2` que C-47 a pose exactement
+                   # pour empecher ca. Corrige le 2026-09-15.
                    # Mesure precedente : 2 586 / 228, le 2026-09-14 au soir (suite complete).
                    # (mesure du 2026-09-14 au soir, machine libre, ~5 min).
                    # Mesure precedente : 2 051 / 179, le 2026-09-02.
@@ -166,10 +168,26 @@ npm run test:coverage       # + couverture v8, seuils globaux et par fichier
                             # ⚠️ La marge la plus serree reste `functions`, mais elle n'est
                             # plus critique : 3,56 pt contre 0,32 le 2026-08-25. La relancer
                             # APRES chaque vague de features, pas quand on y pense.
-                            # ⚠️ Sur cette machine le run prend ~11 min et MEURT en silence
-                            # si une autre session fait tourner sa suite en parallele (pas
-                            # de resume, pas de rapport). Mesurer quand la machine est libre,
-                            # ou dans un worktree isole ; `--maxWorkers=4` tient mieux.
+                            # ⚠️ Sur cette machine le run prend ~11 min. Mesurer quand la
+                            # machine est libre, ou dans un worktree isole.
+                            # 🔴 NE JAMAIS PASSER `--maxWorkers` EN LIGNE DE COMMANDE.
+                            # Cette ligne a conseille `--maxWorkers=4` jusqu'au 2026-09-15,
+                            # et c'est un conseil ANTERIEUR au finding C-47 qui ECRASE la
+                            # borne que C-47 a posee : `vitest.config.ts` fixe
+                            # `maxWorkers: 2` parce que 4 jsdom concurrents saturent les
+                            # 8 Go de cette machine, et qu'un worker qui ne repond plus est
+                            # compte comme un echec sans avoir execute un seul cas.
+                            # Le 2026-09-15, une session a suivi ce conseil : QUATRE fichiers
+                            # n'ont jamais demarre (`Failed to start forks worker ... Timeout
+                            # waiting for worker`), dont `use-modal-a11y.guard.test.tsx` qui
+                            # porte trois TEMOINS. La suite a rendu « 225 passed (225) » et
+                            # EXIT 1.
+                            # ✅ Vitest a fait son travail : il SIGNALE (exit 1, et un bloc
+                            # `Unhandled Errors`). C'est la lecture qui a failli, pas l'outil,
+                            # et la meme session a d'abord publie « exit 0 » dans trois
+                            # documents avant de relire le code de sortie qu'elle avait
+                            # elle-meme imprime.
+                            # ❌ Ne JAMAIS conclure d'une ligne de resume : lire `$?`.
                             # Voir docs/TESTING.md
 npm run validate:migrations # Garde statique sur supabase/migration/*.sql (CI)
 npm run check:rls           # Invariants RLS : auth.uid() wrappé, 1 seule policy PERMISSIVE,

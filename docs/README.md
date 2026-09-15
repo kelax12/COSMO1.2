@@ -139,28 +139,46 @@ plus de la documentation.
 endroits et un seul des trois sert la production (C-77), et un fichier source de 613 lignes vit
 hors de tout périmètre. D'où **90 et pas davantage**.
 
-### 🔴 L'angle mort neuf : `npm test` sort en exit 0 après avoir SAUTÉ des fichiers
+### 🔴 Un diagnostic FAUX publié ici même, puis corrigé : la lecture avait failli, pas l'outil
 
-Trouvé en mesurant, pas en cherchant. La suite lancée depuis ce poste annonce **« 225 passed
-(225) »** et sort en **exit 0**. La CI, sur le même commit, en joue **229**. Quatre fichiers n'ont
-jamais démarré, dont `src/hooks/use-modal-a11y.guard.test.tsx`, qui porte les **trois témoins** de
-C-53 :
+⚠️ **Ce paragraphe a d'abord annoncé un « angle mort neuf : `npm test` sort en exit 0 après avoir
+sauté des fichiers ». C'était faux.** Il est conservé sous cette forme corrigée parce qu'une
+erreur retirée sans trace est une erreur qu'on refera.
+
+**Les faits, dans l'ordre.** La suite lancée depuis ce poste annonce « 225 passed (225) » quand la
+CI en joue 229. Quatre fichiers n'ont jamais démarré, dont
+`src/hooks/use-modal-a11y.guard.test.tsx`, qui porte les **trois témoins** de C-53 :
 
 ```
 Error: [vitest-pool]: Failed to start forks worker for test files ...
 Caused by: [vitest-pool-runner]: Timeout waiting for worker to respond
 ```
 
-**Le total affiché est celui des fichiers COLLECTÉS, pas des fichiers EXISTANTS**, et le code de
-sortie ne distingue pas les deux. Le seul signe est un bloc `Unhandled Errors` plus haut dans la
-sortie, qui porte lui-même l'avertissement « *this might cause false positive tests* ».
+✅ **Mais vitest a sorti EXIT 1.** Le code de sortie était imprimé par la commande elle-même et
+n'a pas été relu : seule la ligne de résumé l'a été. L'outil signale, correctement.
 
-⚠️ **Ce n'est pas une régression du produit** : les quatre passent en CI, et ils passaient sur ce
-poste la veille (228 / 228). C'est un aléa de charge. Mais il coûte à la mesure, et il est du même
-genre que ceux que cette campagne traque depuis deux jours : **un vert qui ne recouvre pas ce qu'on
-croit**. ❌ Ne jamais conclure d'un exit 0 de `npm test` que la suite est complète : comparer le
-nombre annoncé au périmètre réel du glob (`src/**` + `scripts/**` + `eslint-rules/**`, soit **229**
-à cette date).
+🔴 **Et la cause était un conseil de `CLAUDE.md`.** La commande portait `--maxWorkers=4`,
+suivant une ligne de ce fichier. Or `vitest.config.ts` fixe **`maxWorkers: 2`**, posé par le
+finding **C-47** (2026-09-03) pour cette raison exacte : 4 cœurs, 8 Go, et la plupart des fichiers
+montent jsdom. Le conseil était **antérieur à C-47** et n'avait jamais été retiré. Un drapeau de
+ligne de commande écrase la config : **suivre la documentation désarmait la garde.**
+
+**Les trois défauts réels, et ils sont tous corrigés :**
+
+| # | Défaut | Correction |
+|---|---|---|
+| 1 | `CLAUDE.md` conseillait `--maxWorkers=4`, qui désarme C-47 | conseil **retiré**, interdiction écrite à sa place avec le récit du dégât |
+| 2 | Le résumé de vitest ne dit pas combien de fichiers MANQUENT | règle écrite : lire `$?`, puis comparer au périmètre du glob (**229** à cette date) |
+| 3 | Un diagnostic faux a été publié dans trois documents | corrigé aux trois endroits, sans effacer la trace |
+
+❌ **Ne jamais passer `--maxWorkers` en ligne de commande sur ce dépôt.** Si la durée devient le
+problème, remonter la borne **dans `vitest.config.ts`, en remesurant la stabilité**.
+
+🔴 **La leçon la plus coûteuse des trois est la troisième.** Un faux positif de diagnostic
+ressemble à une découverte : il est circonstancié, il cite une sortie réelle, et il flatte la passe
+qui le trouve. Le seul garde-fou est celui que ce dépôt applique déjà aux gardes, retourné contre
+soi : **vérifier ce qu'on a sous les yeux avant de conclure, y compris quand la conclusion est
+intéressante.**
 
 ### Ce qui n'a pas bougé, et pourquoi
 
