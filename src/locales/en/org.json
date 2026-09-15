@@ -472,6 +472,8 @@
     "deadline": "Due date",
     "deadlinePlaceholder": "Pick a date",
     "estimatedTime": "Estimated time (min)",
+    "estimatedTimeDecrease": "Decrease by 5 minutes",
+    "estimatedTimeIncrease": "Increase by 5 minutes",
     "creating": "Creating...",
     "saving": "Saving...",
     "create": "Create task",

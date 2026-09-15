@@ -24,7 +24,7 @@ import { useTutorial } from '@/components/tutorial/useTutorial';
 import { okrTutorialStepsDesktop } from '@/tutorials/okr.desktop';
 import { okrTutorialStepsMobile } from '@/tutorials/okr.mobile';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
-import { filterObjectivesByCategories, type Objective } from './okr/okr-page-logic';
+import { filterObjectivesByCategories, shouldReopenOnDeadlineExtension, type Objective } from './okr/okr-page-logic';
 import OKRCard from './okr/OKRCard';
 import { OKRListSkeleton } from '@/components/skeletons';
 import DeleteObjectiveConfirm from './okr/DeleteObjectiveConfirm';
@@ -178,7 +178,14 @@ const OKRPage: React.FC = () => {
 
     const handleModalSubmit = (data: Omit<Objective, 'id'>, isEditing: boolean) => {
     if (isEditing && editingObjective) {
-      updateOkrMutation.mutate({ id: editingObjective.id, updates: data });
+      // Un OKR complété parce qu'il était en retard doit redevenir « en
+      // cours » dès qu'on repousse sa deadline dans le futur — sinon il
+      // reste coincé dans « OKR terminés » (OKRModalSheet reconduit
+      // `completed` tel quel, aucune case à cocher pour le décompléter).
+      const updates = shouldReopenOnDeadlineExtension(editingObjective, data.endDate)
+        ? { ...data, completed: false }
+        : data;
+      updateOkrMutation.mutate({ id: editingObjective.id, updates });
     } else {
       createOkrMutation.mutate({
         title: data.title,

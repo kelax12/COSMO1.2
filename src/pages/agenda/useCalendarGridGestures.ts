@@ -70,6 +70,12 @@ export function useCalendarGridGestures({ events, tzPref, createEvent, updateEve
     const rawEnd = eventData.end
       ? eventData.end.toISOString()
       : new Date((eventData.start?.getTime() ?? Date.now()) + taskEventDurationMinutes(eventData.extendedProps.estimatedTime as number) * 60000).toISOString();
+    // 🔴 `taskId` d'une tâche d'ÉQUIPE JAMAIS transmis : `events.task_id`
+    // référence `tasks` (perso) par clé étrangère (migration 004), pas
+    // `team_tasks` — l'écriture échouerait. L'événement se crée quand même
+    // (planifier un créneau pour une tâche d'équipe reste utile), seulement
+    // sans lien retour vers la tâche.
+    const isTeamTask = eventData.extendedProps.isTeamTask === true;
     const newEvent: CreateEventInput = {
       title: eventData.title,
       // Retire le décalage d'affichage (la tâche est déposée sur la grille
@@ -78,7 +84,7 @@ export function useCalendarGridGestures({ events, tzPref, createEvent, updateEve
       end: fromDisplayISO(rawEnd, tzPref),
       color: eventData.backgroundColor ?? undefined,
       notes: `Priorité: ${eventData.extendedProps.priority} | Catégorie: ${eventData.extendedProps.categoryName}`,
-      taskId: eventData.extendedProps.taskId as string,
+      taskId: isTeamTask ? undefined : (eventData.extendedProps.taskId as string),
     };
     const isDuplicate = events.some((e) =>
       (newEvent.taskId && e.taskId === newEvent.taskId) ||

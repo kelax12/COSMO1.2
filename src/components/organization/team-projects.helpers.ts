@@ -51,6 +51,52 @@ export const PROJECT_COLOR_HEX: Record<string, string> = {
 export const projectColorHex = (color: string): string =>
   PROJECT_COLOR_HEX[color] ?? PROJECT_COLOR_HEX.blue;
 
+/**
+ * Couleur d'un projet = couleur de sa catégorie (mode entreprise). Plus de
+ * sélecteur manuel : `project.color` reste un NOM de la petite palette fixe
+ * (`PROJECT_COLOR_NAMES`) — tout le rendu existant (`projectColor(...).dot`
+ * en classe Tailwind, dans une dizaine d'écrans) continue de fonctionner sans
+ * y toucher — mais sa VALEUR est désormais dérivée automatiquement du hex
+ * libre de la catégorie liée, par plus proche voisin dans l'espace RVB.
+ *
+ * 🔴 POURQUOI pas stocker le hex de la catégorie tel quel dans `project.color`.
+ * Tailwind ne génère que les classes présentes LITTÉRALEMENT dans le code
+ * source au build : une classe construite à l'exécution à partir d'un hex de
+ * base (`bg-[#a1b2c3]`) n'existe dans aucun fichier source, donc jamais dans
+ * le CSS compilé — elle ne colorerait rien. Rester sur les 9 noms fixes est
+ * ce qui permet à `TeamProjectCard`, `TeamTasksTab`, `TeamProjectsKanban`,
+ * `TeamProjectsTimeline`, `TeamOverviewTab`, `MyWorkTab`, `AssignTaskSheet`,
+ * `TeamTaskFields` et `MemberAgendaBody` de rester inchangés.
+ */
+const hexToRgb = (hex: string): [number, number, number] => {
+  const clean = hex.replace('#', '').trim();
+  const full = clean.length === 3 ? clean.split('').map((c) => c + c).join('') : clean;
+  const n = parseInt(full, 16);
+  if (full.length !== 6 || Number.isNaN(n)) return [59, 130, 246]; // repli : bleu
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+};
+
+export const nearestProjectColorName = (hex: string): string => {
+  const [r, g, b] = hexToRgb(hex);
+  let best = 'blue';
+  let bestDist = Infinity;
+  for (const [name, candidateHex] of Object.entries(PROJECT_COLOR_HEX)) {
+    const [cr, cg, cb] = hexToRgb(candidateHex);
+    const dist = (r - cr) ** 2 + (g - cg) ** 2 + (b - cb) ** 2;
+    if (dist < bestDist) { bestDist = dist; best = name; }
+  }
+  return best;
+};
+
+/** Couleur du projet dérivée de sa catégorie ; repli `slate` sans catégorie. */
+export const projectColorFromCategory = (
+  categoryId: string | null | undefined,
+  categories: readonly { id: string; color: string }[],
+): string => {
+  const cat = categoryId ? categories.find((c) => c.id === categoryId) : undefined;
+  return cat ? nearestProjectColorName(cat.color) : 'slate';
+};
+
 // ─── Fusion avec la page Tâches perso ─────────────────────────────────
 
 /** Tâches d'équipe assignées à `userId` — toutes, sans filtre de statut. */

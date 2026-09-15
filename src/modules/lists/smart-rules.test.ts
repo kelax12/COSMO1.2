@@ -72,8 +72,21 @@ describe('SMART_PRESETS.high-priority', () => {
   it('ne match pas priorité 3+', () => {
     expect(matches(task({ priority: 3 }))).toBe(false);
   });
+  it('ne match pas une tâche sans priorité (0, facultative)', () => {
+    expect(matches(task({ priority: 0 }))).toBe(false);
+  });
   it('ne match pas une tâche complétée même prioritaire', () => {
     expect(matches(task({ priority: 1, completed: true }))).toBe(false);
+  });
+  it('trie P1 avant P2', () => {
+    const p2 = task({ priority: 2 });
+    const p1 = task({ priority: 1 });
+    const result = tasksInList(
+      { id: 'l1', name: 'Liste', color: 'orange', taskIds: [], type: 'smart', smartRule: 'high-priority' } as TaskList,
+      [p2, p1],
+      NOW,
+    );
+    expect(result).toEqual([p1, p2]);
   });
 });
 

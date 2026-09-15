@@ -16,7 +16,7 @@ import { showUndoToast } from '@/lib/undo-toast';
 import { formatDeadlineSmart } from '@/components/task-table/helpers';
 import {
   projectColor, isTaskOverdue, filterByStatus, formatDuration,
-  STATUS_ORDER, STATUS_META, taskDisplayStatus, PROJECT_COLOR_NAMES,
+  STATUS_ORDER, STATUS_META, taskDisplayStatus,
   type TaskStatusFilter,
 } from './team-projects.helpers';
 import TeamTaskModal from './TeamTaskModal';
@@ -121,10 +121,11 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
   const [schedulingTask, setSchedulingTask] = useState<TeamTask | null>(null);
   // Chip « + Nouveau projet » de l'accès rapide — même pattern que la barre
   // de listes personnelle (TaskListsBar) : chip pointillée → formulaire
-  // inline (couleur cyclique + nom), pas de modal séparée.
+  // inline (nom seul), pas de modal séparée. Pas de couleur à choisir ici :
+  // ce raccourci ne propose pas de catégorie, le projet créé reste donc sans
+  // catégorie et prend la couleur de repli (`projectColorFromCategory`).
   const [showCreateProject, setShowCreateProject] = useState(false);
   const [newProjectName, setNewProjectName] = useState('');
-  const [newProjectColor, setNewProjectColor] = useState(PROJECT_COLOR_NAMES[0]);
 
   // Compteur par projet (chips) : tâches OUVERTES uniquement — même
   // convention que les chips de listes personnelles, qui comptent le reste
@@ -269,24 +270,14 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
                   e.preventDefault();
                   const name = newProjectName.trim();
                   if (!name) return;
-                  createProject.mutate({ name, color: newProjectColor }, {
+                  createProject.mutate({ name, color: 'slate' }, {
                     onSuccess: () => {
                       setNewProjectName('');
-                      setNewProjectColor(PROJECT_COLOR_NAMES[0]);
                       setShowCreateProject(false);
                     },
                   });
                 }}
               >
-                <button
-                  type="button"
-                  onClick={() => {
-                    const idx = PROJECT_COLOR_NAMES.indexOf(newProjectColor);
-                    setNewProjectColor(PROJECT_COLOR_NAMES[(idx + 1) % PROJECT_COLOR_NAMES.length]);
-                  }}
-                  className={`w-6 h-6 rounded-full border-2 border-white dark:border-slate-700 shadow-sm shrink-0 transition-transform hover:scale-110 ${projectColor(newProjectColor).dot}`}
-                  title={t('project.colorAria')}
-                />
                 <input
                   autoFocus
                   type="text"

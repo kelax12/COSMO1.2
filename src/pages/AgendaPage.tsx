@@ -169,7 +169,17 @@ const AgendaPage: React.FC = () => {
           longPressDelay: 250,
           eventData: function (eventEl) {
             const taskData = JSON.parse(eventEl.getAttribute('data-task') || '{}');
-            const catColor = categoriesRef.current.find(cat => cat.id === taskData.category)?.color || '#6B7280';
+            // Tâche d'équipe (TaskSidebar, item 4) : couleur/nom de catégorie
+            // déjà résolus par l'appelant (il connaît `team_categories`, ce
+            // composant ne les connaît pas) — sinon repli sur la résolution
+            // perso habituelle.
+            const isTeamTask = taskData.source === 'pro';
+            const catColor = isTeamTask
+              ? (taskData.categoryColor || '#6B7280')
+              : (categoriesRef.current.find(cat => cat.id === taskData.category)?.color || '#6B7280');
+            const catName = isTeamTask
+              ? (taskData.categoryName || tRef.current('event.uncategorized'))
+              : (categoriesRef.current.find(c => c.id === taskData.category)?.name || tRef.current('event.uncategorized'));
             return {
               title: taskData.name,
               // Garde anti-aperçu-invisible : une tâche sans durée estimée
@@ -180,11 +190,17 @@ const AgendaPage: React.FC = () => {
               borderColor: catColor,
               textColor: '#ffffff',
               extendedProps: {
-                taskId: taskData.id,
+                // 🔴 `taskId` reste UNDEFINED pour une tâche d'équipe :
+                // `events.task_id` référence `tasks` (perso) par clé étrangère
+                // (migration 004), jamais `team_tasks` — la définir ferait
+                // échouer l'écriture. `handleEventReceive`
+                // (useCalendarGridGestures.ts) s'appuie sur cette absence.
+                taskId: isTeamTask ? undefined : taskData.id,
+                isTeamTask,
                 priority: taskData.priority,
                 category: taskData.category,
                 estimatedTime: taskData.estimatedTime,
-                categoryName: categoriesRef.current.find(c => c.id === taskData.category)?.name || tRef.current('event.uncategorized'),
+                categoryName: catName,
               },
             };
           },

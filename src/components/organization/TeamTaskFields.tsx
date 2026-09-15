@@ -18,7 +18,7 @@
 // Extrait le 2026-09-05 (C-09).
 // ═══════════════════════════════════════════════════════════════════
 import React from 'react';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, Minus, Plus } from 'lucide-react';
 import type { TeamProject } from '@/modules/team-projects';
 import type { OrgMember } from '@/modules/organizations';
 import { DatePicker } from '@/components/ui/date-picker';
@@ -262,17 +262,46 @@ const TeamTaskFields = ({
 
         <div>
           <label htmlFor="team-task-time" className={labelClass} style={labelStyle}>{t('taskModal.estimatedTime')}</label>
-          <input
-            id="team-task-time"
-            type="number"
-            min={0}
-            max={100000}
-            value={estimatedTime}
-            onChange={(e) => onEstimatedTimeChange(e.target.value)}
-            placeholder={t('taskModal.timePlaceholder')}
-            className={`${inputClass} appearance-none`}
-            style={inputStyle}
-          />
+          {/* Même design +/- que son homologue en mode personnel
+              (DesktopDetailsStep) : un pas de 5 min de chaque côté du champ,
+              jamais sous 0. */}
+          <div className="flex items-stretch gap-2">
+            <input
+              id="team-task-time"
+              type="number"
+              min={0}
+              max={100000}
+              value={estimatedTime}
+              onChange={(e) => onEstimatedTimeChange(e.target.value)}
+              placeholder={t('taskModal.timePlaceholder')}
+              className={`flex-1 min-w-0 ${inputClass} appearance-none`}
+              style={inputStyle}
+            />
+            <button
+              type="button"
+              onClick={() => {
+                const cur = Number(estimatedTime) || 0;
+                onEstimatedTimeChange(String(Math.max(0, cur - 5)));
+              }}
+              className={`w-11 ${inputHeightClass} flex items-center justify-center border rounded-lg hover:border-[rgb(var(--color-accent-solid-hover))] transition-colors shrink-0`}
+              style={{ borderColor: 'rgb(var(--color-border))', color: 'rgb(var(--color-text-primary))', backgroundColor: 'rgb(var(--color-surface))' }}
+              aria-label={t('taskModal.estimatedTimeDecrease')}
+            >
+              <Minus size={18} aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const cur = Number(estimatedTime) || 0;
+                onEstimatedTimeChange(String(cur + 5));
+              }}
+              className={`w-11 ${inputHeightClass} flex items-center justify-center border rounded-lg hover:border-[rgb(var(--color-accent-solid-hover))] transition-colors shrink-0`}
+              style={{ borderColor: 'rgb(var(--color-border))', color: 'rgb(var(--color-text-primary))', backgroundColor: 'rgb(var(--color-surface))' }}
+              aria-label={t('taskModal.estimatedTimeIncrease')}
+            >
+              <Plus size={18} aria-hidden="true" />
+            </button>
+          </div>
         </div>
       </div>
 

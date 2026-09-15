@@ -71,6 +71,11 @@
     "deleteTask": "Delete task",
     "taskDeleted": "Task deleted",
     "copySuffix": "{{name}} (copy)",
+    "sourceFilterAria": "Filter tasks by origin",
+    "sourceAll": "All",
+    "sourcePerso": "Personal",
+    "sourcePro": "Team",
+    "proTaskBadge": "Team task",
     "help": {
       "closeTutorial": "Close the tips",
       "showGuide": "Show the guide",
