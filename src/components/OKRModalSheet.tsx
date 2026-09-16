@@ -139,7 +139,14 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
         title: title.trim(),
         description: description.trim(),
         category,
-        progress: getProgress(krs),
+        // `getProgress` rend volontairement une moyenne BRUTE (un KR
+        // sur-atteint peut la faire dépasser 100, cf. okr-page-logic.test.ts) :
+        // c'est le bon calcul pour l'AFFICHAGE, mais `updateOKRSchema` borne
+        // `progress` à [0, 100] (okr.schema.ts). Sans ce clamp, sauvegarder
+        // N'IMPORTE QUELLE modification d'un OKR dont un KR dépasse sa cible
+        // échouait avec « La progression doit être entre 0 et 100 » — y
+        // compris repousser sa deadline pour le rouvrir.
+        progress: Math.min(100, getProgress(krs)),
         completed: editingObjective?.completed ?? false,
         keyResults: krs,
         // Date de début non éditable : aujourd'hui à la création, préservée en édition.
