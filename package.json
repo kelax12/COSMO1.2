@@ -38,7 +38,8 @@
     "check:legal": "node scripts/check-legal-table.mjs",
     "check:mail": "node scripts/check-auth-email.mjs",
     "check:edge": "node scripts/check-edge-deploy.mjs",
-    "check:docs": "node scripts/check-docs-budget.mjs"
+    "check:docs": "node scripts/check-docs-budget.mjs",
+    "check:deploy": "node scripts/check-deploy-sha.mjs"
   },
   "dependencies": {
     "@fullcalendar/core": "^6.1.10",

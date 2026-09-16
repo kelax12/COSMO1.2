@@ -1,0 +1,89 @@
+# ──────────────────────────────────────────────────────────────────────
+# Le commit SERVI en production, contre le dépôt. Finding T-8.
+#
+# 🔴 POURQUOI (angles morts du 2026-09-16)
+#
+# C'est le défaut `C-35` des Edge Functions, CÔTÉ FRONT, resté sans nom
+# jusqu'à cette date. `npm run check:edge` compare le code déployé des Edge
+# Functions au dépôt ; il n'existait AUCUN équivalent pour l'application
+# elle-même, celle que tous les visiteurs exécutent.
+#
+# Ce que le dépôt savait dire avant ce job :
+#   · `uptime.yml` : « thecosmo.app répond HTTP 200 ». Une coquille SPA vide
+#     répond 200. Un build vieux de trois semaines aussi.
+#   · la CI        : que `main` COMPILE, jamais qu'il soit SERVI.
+#
+# Entre les deux, personne ne pouvait dire QUEL COMMIT tourne en production.
+# Un déploiement Vercel qui échoue en silence, une promotion oubliée, un
+# rollback laissé en place : tout cela laissait la CI verte et le site debout.
+#
+# ── PLANIFIÉ, ET PAS SUR PUSH ─────────────────────────────────────────
+#
+# Un `push` déclencherait ce job AVANT que Vercel ait fini de construire : il
+# rendrait « déploiement en vol », donc vert, donc rien. C'est le déploiement
+# qui doit être observé, et il n'événemente rien ici. Même raison que
+# `edge-deploy-drift.yml` et `migration-coverage.yml`.
+#
+# ── CE QU'IL NE PROUVE PAS ────────────────────────────────────────────
+#
+# Que le bon commit soit servi ne dit rien de ce qu'il FAIT. Ce job ferme la
+# question « quel code tourne », jamais « ce code est-il correct ».
+#
+# ✅ AUCUN SECRET REQUIS : `/version.json` est public. Ce job ne peut donc pas
+# « sauter silencieusement faute de secret », le défaut qui a fait échouer
+# `Edge deploy drift` quatorze fois sans jamais rien comparer.
+# ──────────────────────────────────────────────────────────────────────
+name: Deploy SHA drift
+
+on:
+  schedule:
+    - cron: '23 * * * *' # toutes les heures, minute 23 (décalée des autres crons)
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - scripts/check-deploy-sha.mjs
+      - scripts/check-deploy-sha.guard.test.mjs
+      - .github/workflows/deploy-sha-drift.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-sha-drift-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  derive:
+    runs-on: ubuntu-latest
+    steps:
+      # 🔴 `fetch-depth: 0` EST OBLIGATOIRE, et son absence serait invisible.
+      # Le défaut d'`actions/checkout` est un clone SUPERFICIEL, qui ne
+      # contient pas l'historique : `git merge-base --is-ancestor` échouerait,
+      # la garde rangerait un ancêtre parfaitement sain dans « inconnu », et
+      # crierait à la dérive sur une production correcte. Une garde qui se
+      # trompe dans le sens ALARMANT finit désarmée, donc aussi inutile qu'une
+      # garde qui se trompe dans le sens rassurant.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - run: npm ci
+
+      # ⚠️ Sur un `schedule`, le runner est sur le dernier commit de `main` :
+      # la comparaison porte donc bien sur la branche par défaut.
+      - name: Le commit servi en production
+        run: node scripts/check-deploy-sha.mjs
+
+      # Le TÉMOIN, rejoué à chaque run et pas seulement dans `npm test`.
+      #
+      # ⚠️ `always()` : un témoin qui ne s'exécute que quand la garde est verte
+      # ne dit rien le jour où elle est rouge, et c'est ce jour-là qu'on se
+      # demande si c'est la production qui a bougé ou la garde qui délire.
+      - name: Témoin · la garde distingue-t-elle encore les trois cas ?
+        if: ${{ always() }}
+        run: npx vitest run scripts/check-deploy-sha.guard.test.mjs
