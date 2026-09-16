@@ -1,5 +1,40 @@
 # Documentation COSMO — carte
 
+## 🗺️ Trois niveaux, depuis le 2026-09-16
+
+La documentation de travail est organisee en **trois niveaux**, et le niveau decide de ce que ca
+coute en contexte a chaque session :
+
+| Niveau | Repond a | Quand c est charge |
+|---|---|---|
+| `CLAUDE.md` racine | « qu est-ce que je ne dois pas casser partout ? » et « ou est ecrit le reste ? » | **a chaque session** |
+| `<dossier>/CLAUDE.md` | « qu est-ce que je dois savoir avant de toucher CE code ? » | seulement quand un fichier de ce sous-arbre est lu ou edite |
+| `docs/*.md` | « pourquoi cette regle existe, et qu est-ce qui a ete mesure ? » | sur demande |
+
+**Pourquoi.** `CLAUDE.md` est le seul fichier qui se paie a chaque message. Le 2026-09-16 il pesait
+2 070 lignes et ~43 000 tokens, contre 17,8 ko dix semaines plus tot, avec 78 commits en trente
+jours. Il avait cesse d etre un guide pour devenir un journal : 146 dates, 114 lignes-marqueurs,
+une section `## Scripts` de 281 lignes pour 20 commandes. Et sur dix sujets sondes, huit etaient
+ecrits deux fois, dans `CLAUDE.md` **et** dans le doc qui declare faire foi.
+
+Il a ete ramene a 373 lignes **sans une coupe** : des 1 672 lignes significatives de l ancien
+fichier, une seule reste introuvable dans les `.md` du depot, et c est un artefact de coupure de
+ligne. Les 16 `CLAUDE.md` de dossier et les docs de domaine portent tout le reste.
+
+❌ **Ne jamais reecrire un recit d incident dans `CLAUDE.md`.** Un incident s ecrit **une fois**,
+dans le doc de son domaine ; le `CLAUDE.md` concerne n en garde que l interdit, en une ligne.
+C est l absence de cette regle qui a produit la courbe ci-dessus, et des affirmations fausses
+restees en place pendant des jours parce que le fichier etait trop gros pour etre relu.
+
+✅ Cliquet : `npm run check:docs` (gate CI) plafonne le racine et chaque `CLAUDE.md` de dossier,
+**et** verifie que chaque fichier de dossier est cite par le racine. Une regle qui descend dans un
+fichier que personne ne cite est perdue sans qu un octet ne manque : c est le seul risque du
+decoupage, et c est ce que la garde mesure. Temoin : `scripts/check-docs-budget.guard.test.mjs`,
+vu rouge sur cinq sabotages.
+
+---
+
+
 **Dernière revue de cohérence complète : 2026-08-25**, tous les documents notés ci-dessous ont été
 confrontés au code de `main`, au build du jour et à la prod à cette date.
 
