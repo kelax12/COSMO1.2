@@ -157,3 +157,236 @@ bloquant pour la résiliation, c'est un point de conformité.
 
 > Stripe Tax ne connaît que les VENTES. La TVA sur les ACHATS (autoliquidation sur Supabase,
 > Vercel, Sentry, prestataires hors France) est entièrement hors de son champ et reste due.
+
+---
+
+## Règles et récits repris de `CLAUDE.md` (déplacés le 2026-09-16)
+
+> Ce bloc vivait dans `CLAUDE.md`, donc chargé à chaque session. Il est déplacé ici
+> **sans une coupe**, dans le doc qui fait foi sur Stripe. La version courte, celle des
+> interdits, vit dans [`src/modules/billing/CLAUDE.md`](../src/modules/billing/CLAUDE.md),
+> chargée automatiquement dès que le code de facturation est touché.
+
+### Billing — vérification premium
+
+```typescript
+import { useBilling } from '@/modules/billing/billing.context';
+const { isPremium, subscription, stats, isLoading } = useBilling();
+// isPremium est une FONCTION : isPremium() retourne boolean
+```
+
+#### Modèle Premium
+
+> 🟢 **Premium NON APPLIQUÉ** — kill-switch `PREMIUM_ENFORCED = false` dans
+> `src/modules/billing/premium-config.ts` (vérifié 2026-08-14). Tant qu'il vaut `false` :
+> `isPremium()` renvoie `true` pour tous et la route `/premium` **redirige vers `/`**.
+> Le code de gating reste dormant, il n'est pas supprimé.
+> Réactivation : passer le flag à `true`, puis finaliser Stripe (`docs/POST-AUDIT-GUIDE.md`).
+
+Comportement **quand `PREMIUM_ENFORCED = true`** :
+
+- **Partage de tâches → 100 % gratuit** (acquisition virale). Aucun gate `isPremium()` sur la
+  collaboration. **Ne PAS réintroduire** ces gates.
+- **Statistiques → premium** (`StatisticsPage`).
+- **Habitudes → gratuites pour tout le monde**, sans condition.
+- 🗑️ **Le système de jetons premium et le mur-pub Habitudes N'EXISTENT PLUS** (C-04, supprimés le
+  2026-09-04 sur décision d'Axel du 09-03). Sont partis ensemble : `HabitsAdGate`, `AdModal` et
+  tout AdSense (y compris ses origines dans la CSP), `useDailyAdGate` et la clé
+  `cosmo_adwall_habits`, `addTokens`, les RPC `consume_premium_token` /
+  `credit_premium_token_from_ad` / `bump_win_streak`, et les colonnes `premium_tokens` /
+  `win_streak` / `ad_credits_*` de `subscriptions` (mig. **141**).
+  ❌ **Ne jamais réintroduire une monnaie interne** : elle n'a jamais été câblée, un jeton crédité
+  ne servait à rien, et le mur qu'elle prétendait garder était piloté par un flag `localStorage`,
+  donc contournable en une manipulation le jour où `PREMIUM_ENFORCED` passerait à `true`.
+- ⚠️ **La définition de « premium » a changé avec** : c'est désormais `plan='premium'` +
+  `status='active'` + période non dépassée (`subscription.logic.ts`), les jetons n'y entrent plus.
+  Vérifiée ligne par ligne contre les 54 lignes de prod avant la bascule : **même verdict pour
+  chacune**. ⚠️ **7** comptes portent un `premium` sans fin de période, hérité des jetons gagnés par
+  pub, et non 8 : recompté en base le 2026-09-14 au soir (`plan='premium'`, `status='active'`,
+  `current_period_end IS NULL`), contre 3 qui portent bien une fin de période, sur **54** lignes ;
+  ils restent premium, et aucune écriture ne produit plus cette forme.
+- Le client ne peut pas écrire `subscriptions` : aucune policy UPDATE, et l'INSERT ne permet
+  qu'une ligne gratuite sans identifiant Stripe.
+
+#### Facturation entreprise — plomberie Stripe COMPLÈTE, facturation DÉSACTIVÉE (2026-08-24)
+
+`org_subscriptions` (mig. 101) porte l'abonnement d'une **organisation** : un palier
+(`ENTERPRISE_PRICING_TIERS`), un quota de sièges (`max_members`), un statut. Ne jamais la
+confondre avec `subscriptions`, qui porte l'abonnement **particulier** (plan, statut, période) —
+les deux ne partagent aucune colonne.
+
+- La table n'a **aucune policy d'écriture**. Seul le webhook Stripe (`service_role`) écrit ;
+  la lecture est réservée aux membres. Pas de trigger-guard : rien n'est écrivable, il n'y a
+  rien à garder.
+- Souscription et gestion : **propriétaire de l'org uniquement**, vérifié dans
+  `stripe-org-checkout` / `stripe-org-portal`. Le front ne fait que masquer un onglet.
+- Coupons : **promotion codes Stripe natifs** (`allow_promotion_codes`). COSMO ne valide aucun
+  code et ne recalcule aucun montant — donc aucune surface de brute-force côté COSMO.
+- **Périodicité mensuelle ou annuelle** (2026-08-25), sélecteur dans `/entreprise?tab=billing`.
+  L'annuel vaut le mensuel **moins 30 %** (`ENTERPRISE_YEARLY_DISCOUNT`) : 14/35/70/140 € par mois
+  en équivalent, débités 168/420/840/1 680 € une fois par an. Huit price IDs Stripe au total
+  (`STRIPE_ORG_PRICE_*` et `STRIPE_ORG_PRICE_*_YEARLY`). La colonne descriptive
+  `org_subscriptions.billing_interval` (mig. **123**) dit laquelle est facturée.
+- Le quota réel est `org_seats_allowed()` (mig. 101), déjà appelé par `claim_org_invite` et
+  `respond_join_request`. Un abonnement `past_due` ou `cancelled` retombe au palier gratuit
+  **sans jamais retirer de membre** : on bloque la croissance, on ne retire rien.
+- UI : vue `/entreprise?tab=billing` (`OrgBillingTab`), grille `EnterpriseTierGrid`. **Ce n'est
+  pas un onglet** — la barre d'onglets est lue par toute l'organisation alors qu'un seul compte
+  peut payer. L'entrée est la pastille de forfait de l'en-tête (`OrgPlanChip`), montée pour le
+  seul propriétaire ; `?tab=billing` reste une valeur d'URL valide (les Edge Functions Stripe y
+  renvoient) et un non-propriétaire qui l'ouvre retombe sur l'aperçu.
+  Le CTA de paiement n'est monté que si `ENTERPRISE_BILLING_ENFORCED === true` — le flag est la
+  **seule** condition, jamais « actif si les variables d'environnement existent ».
+
+Garde-fous propres à cette zone :
+
+- 🟢 **Le price ID ANNUEL se dérive, il ne se configure pas** (`_shared/org-stripe-prices.ts`) :
+  c'est le prix récurrent `year`, actif, de la devise du mensuel et **du montant exact annoncé**,
+  porté par le MÊME produit Stripe que le prix mensuel. Zéro candidate ou plusieurs → on n'ouvre
+  aucune session de paiement (`yearly_unavailable`). Conséquence directe : les 4
+  `STRIPE_ORG_PRICE_*_YEARLY` ne sont **pas** nécessaires, et le jour du passage en compte live il
+  n'y a que les 4 mensuels à re-poser. Le secret annuel reste lu en premier, comme porte de sortie
+  pour épingler un prix qui vivrait ailleurs.
+- ❌ **Ne jamais faire deviner un prix à la résolution annuelle.** Le montant est vérifié contre
+  `yearlyTotalEur` AVANT toute session, dans les deux sens (checkout et webhook). C'est le seul
+  endroit où COSMO choisit un prix au lieu de se le faire désigner, donc le seul endroit où il
+  peut se tromper de montant.
+- ❌ **Ne jamais écrire une grille de tarifs annuels à la main.** Le montant annuel est DÉRIVÉ du
+  mensuel, front et Deno, par la même formule. Deux grilles, c'est une seconde occasion d'annoncer
+  un prix et d'en facturer un autre, le risque qui a déjà imposé `org-tiers.parity.test.ts`.
+- ❌ **Ne jamais faire dépendre le quota de sièges de la périodicité.** `max_members` est porté par
+  le palier SEUL : un client annuel achète le même palier moins cher, pas plus de sièges. Un
+  « palier annuel » distinct côté Stripe casserait `tierFromPriceId`, donc le portail.
+- ❌ **Ne jamais dériver le palier des metadata Stripe.** Un changement de palier OU DE PÉRIODICITÉ
+  fait depuis le Billing Portal ne repasse pas par notre checkout : les deux se redérivent du
+  **price ID** (`tierFromPriceId`, `supabase/functions/_shared/org-tiers.ts`, qui rend le palier ET
+  la périodicité). Sans ça, un client paie 100 € et reste bloqué au quota de 20 sièges.
+- ❌ **Ne jamais avaler l'erreur d'une lecture qui décide d'un routage** (audit Stripe 2026-09-02).
+  `getUidFromCustomer` et le pré-contrôle d'idempotence jetaient tous deux leur `error`. Une panne
+  de lecture devenait « pas d'utilisateur » ou « jamais traité » : dans le premier cas un paiement
+  encaissé sans abonnement appliqué et un marqueur d'idempotence écrit, donc aucune re-livraison ;
+  dans le second le rejeu d'un handler non idempotent (à l'époque `bump_win_streak`, qui
+  incrémentait ; supprimé depuis par C-04). Les deux relancent maintenant, comme `orgIdFromInvoice`
+  le faisait déjà. **En cas de doute, faire retenter Stripe, jamais deviner.**
+- ❌ **Un event Stripe qui DÉGRADE ne s'applique qu'à l'abonnement enregistré** (finding S-5).
+  La garde d'`applyOrgSubscription` est asymétrique, et c'est voulu : un event qui **active** fait
+  autorité d'où qu'il vienne (une nouvelle souscription supersède la précédente) ; un event
+  `cancelled` ou `past_due` venant d'un AUTRE abonnement que celui en base parle d'un abonnement
+  abandonné, et remettrait au gratuit une organisation qui vient de repayer. Ne pas remplacer par
+  un `.eq()` sur l'upsert : il empêcherait la toute première écriture.
+- ❌ **AUCUN REJEU AUTOMATIQUE sur une mutation qui déplace de l'argent.** Le `QueryClient` de
+  l'app pose `mutations: { retry: 1 }` pour tout le monde : un `refund_failed` faisait donc repartir
+  un **second** appel à `stripe-org-refund`, sans que personne ne clique et sans que rien ne le dise
+  (mesuré le 2026-09-08 par `e2e/stubbed/refund.spec.ts` : deux appels pour un clic).
+  `useCancelAndRefundOrg` pose `retry: 0`. Ce que la borne serveur absorbe (clé d'idempotence sur
+  l'`invoice_id`, pré-contrôle qui retranche) ne rend pas ce rejeu anodin : l'échec arrive **après**
+  le point de non-retour, donc le second appel peut trouver le remboursement déjà posé et résilier
+  un abonnement dont l'écran vient d'annoncer que rien n'avait été résilié. **On fait retenter la
+  PERSONNE, jamais le navigateur.**
+- 🔴 **Les deux verrous anti-rejeu du remboursement ne se remplacent PAS, et c'est contre-intuitif.**
+  La clé d'idempotence Stripe dérivée de l'`invoice_id` (verrou 1) **expire** : elle n'arrête que
+  deux appels **concurrents**. Un rejeu à quelques minutes n'est arrêté que par le pré-contrôle qui
+  RETRANCHE le déjà-rendu (verrou 2), dont l'arithmétique vit dans
+  `supabase/functions/_shared/refund-replay.ts`.
+  ❌ **Ne jamais remettre cette arithmétique dans l'entrypoint Deno.** Mélangée aux appels Stripe,
+  elle n'est exécutable par aucun test — et elle ne l'a été par aucun jusqu'au 2026-09-14, pendant
+  tout le temps où le dépôt déclarait « une borne ». C'est un module TS pur, couvert par 10 cas
+  (`src/modules/billing/refund-replay.test.ts`), et `src/refund.guard.test.ts` **interdit** de le
+  recopier sur place. Déployée en **v6** le 2026-09-14, identique au dépôt (`check:edge` vert).
+  ⚠️ **Deux erreurs symétriques y sont couvertes nommément** : un remboursement `pending` compte
+  comme rendu (sinon on rembourse par-dessus un virement en vol), un `failed` ou `canceled` ne
+  compte pas (sinon on prive la personne de son argent après un échec bancaire). ❌ Ne jamais
+  l'écrire « par exclusion » (`status !== 'succeeded'`) : `pending` serait alors ignoré.
+- ⚠️ **Après un remboursement, l'abonnement se RELIT.** Sans invalidation, l'écran continuait
+  d'afficher le forfait payant *et* son bouton de remboursement : il invitait exactement le rejeu
+  que la borne serveur existe pour absorber. Le bloc est par ailleurs conditionné à
+  `effectiveTierKey(subscription)`, pas à `subscription.tierKey` — un abonnement résilié retombe à
+  « Gratuit », il n'y a plus rien à y résilier.
+- ❌ **Ne JAMAIS ouvrir une session de paiement sans la preuve de renonciation** (finding S-6).
+  `stripe-org-checkout` exige `immediateExecution` ET `waivesWithdrawal` strictement à `true`, puis
+  écrit une ligne dans `withdrawal_consents` (mig. `135`) **avant** de créer la session : l'ordre
+  est la preuve. Les deux drapeaux sont exigés SÉPARÉMENT — l'art. L221-28, 13° demande deux
+  manifestations distinctes, pas un accord global. La table est append-only, immuable par trigger,
+  et se lit comme `renewal_notices` : **c'est une pièce à produire, jamais un cache.**
+- 🔴 **Le passage en compte live doit remettre à zéro les identifiants Stripe en base.**
+  `stripe-org-checkout` et `stripe-org-portal` réutilisent `stripe_customer_id` et
+  `stripe_subscription_id` tels quels ; un identifiant du compte de TEST présenté à une clé live
+  répond 404, donc 500. Outillé par la mig. `140` (NON APPLIQUÉE) :
+  `SELECT * FROM public.reset_stripe_identifiers(true);`, à jouer **dans** la fenêtre de bascule,
+  jamais avant : tant que la clé est une clé de test, chaque checkout réécrit un identifiant de
+  test. À blanc sans argument.
+  ⚠️ **« Les tables sont vides » était faux d'une table sur deux.** Mesuré le 2026-09-04 :
+  `org_subscriptions` = 0 ligne, mais `subscriptions` porte **5 `cus_…` et 2 `sub_…`** du compte
+  de test. Le geste a donc un objet réel dès aujourd'hui.
+  ⚠️ Effacer les deux colonnes d'une org PAYANTE sans la redescendre au palier gratuit
+  créerait un état sans issue : quota conservé, plus rien pour le payer, et un portail qui répond
+  `no_subscription` faute de customer. La fonction rétrograde ces lignes-là, et elles seules.
+- ❌ **Ne jamais laisser un event d'organisation retomber sur la branche particulier.** Le
+  customer Stripe d'une org porte `org_owner_uid` (jamais `supabase_uid`) et
+  `getUidFromCustomer` refuse tout customer portant `org_id` — sinon la facture d'une entreprise
+  écrit dans l'abonnement personnel de son propriétaire, et le marqueur d'idempotence empêche
+  Stripe de réessayer.
+- ❌ **Ne jamais écrire un montant en dur** côté Deno : `_shared/org-tiers.ts` est verrouillé sur
+  `ENTERPRISE_PRICING_TIERS` par `src/modules/billing/org-tiers.parity.test.ts`.
+- Les **noms** des paliers (Gratuit · Équipe · Département · Entreprise · Illimité) vivent dans le
+  namespace `common` (`orgTier.*`), pas dans `org` ni `landing` : la landing et le produit doivent
+  dire le même mot pour le même palier, comme ils annoncent déjà le même montant. Le mapping
+  palier → clé est `src/modules/billing/org-tier-labels.ts` (`Record<OrgTierKey, …>`, donc un
+  palier ajouté sans nom ne compile pas).
+- 🔴 **DÉSARMÉ le 2026-08-26** (mig. `124` appliquée en prod). `ENTERPRISE_BILLING_ENFORCED = false`
+  **et** `billing_flags.enterprise_seat_limit = false`, rebasculés ensemble. **Pourquoi** : les
+  deux étaient à `true` avec une clé Stripe de TEST, et une organisation sur quatre était déjà au
+  plafond. Son parcours : invitation refusée, écran qui propose de payer, clic, checkout en mode
+  test, vraie carte refusée. Ni grandir, ni payer, ni résilier. Impasse produit, pas risque
+  juridique — aucun euro n'étant encaissé, ni travail dissimulé ni TVA due.
+  Réarmement : les deux drapeaux, **après** immatriculation et passage de Stripe en compte live.
+  Contexte du 2026-08-25 conservé ci-dessous pour mémoire, il décrivait l'état activé où
+  `org_seats_allowed()` renvoyait `false` pour la seule
+  organisation qui dépasse le palier gratuit. Aucun membre n'est retiré, c'est la croissance qui
+  est bloquée.
+- 🔴 **Deux réserves restent ouvertes à cette date :**
+  1. `STRIPE_SECRET_KEY` est une clé de TEST, donc le checkout n'accepte que des cartes de test.
+     **Le quota est réel, l'encaissement ne l'est pas.**
+  2. Les 4 prix ANNUELS n'existent pas encore côté Stripe. Il n'y a **aucun secret à poser** (cf.
+     règle de dérivation ci-dessous) : il suffit d'ajouter, sur chacun des 4 produits qui portent
+     déjà un prix mensuel, un prix récurrent `year` de 168 / 420 / 840 / 1 680 €. Le checkout
+     annuel répond `yearly_unavailable` d'ici là, la grille rebascule seule sur le mensuel, et
+     l'annuel se met à marcher tout seul dès que les prix existent.
+- **La plomberie reste entière et déployée** : `stripe-org-checkout` / `stripe-org-portal`, les
+  `org_subscriptions` (mig. 101 + 123), `org_seats_allowed()`, et `stripe-webhook`. Les deux
+  fonctions qui portent la périodicité, `stripe-org-checkout` (v2) et `stripe-webhook` (v17), ont
+  été **redéployées en prod le 2026-08-25** et fument-testées (webhook : 400 « Invalid
+  signature » ; checkout : 401 JSON de la fonction elle-même, donc les modules `_shared` se
+  chargent). Réactiver = rebasculer les deux drapeaux, rien à reconstruire.
+- ⚠️ **Corrigé le 2026-08-26 : les 4 prix ANNUELS existent bel et bien** dans le compte de test
+  (168 / 420 / 840 / 1 680 €), contrairement à ce que ce fichier affirmait depuis le 2026-08-25.
+  Vérifié par API, pas déduit. La dérivation `resolveYearlyPriceId` n'a donc pas besoin des
+  secrets `STRIPE_ORG_PRICE_*_YEARLY`.
+- 🔴 **Le compte Stripe LIVE est désormais équipé** (2026-08-26) : 4 produits et 8 prix créés,
+  tous en `tax_behavior: inclusive`, réglage **DÉFINITIF** chez Stripe. Les 8 prix du compte de
+  TEST restent sur `unspecified`, valeur à ne jamais reproduire. Détail et identifiants :
+  [`docs/STRIPE-LIVE.md`](./docs/STRIPE-LIVE.md).
+  ❌ **Ne jamais créer un prix Stripe sans `tax_behavior` explicite** : il ne se modifie plus, il
+  faut créer un nouveau prix et migrer les abonnements.
+- 🔴 **Les deux drapeaux se déplacent ensemble.** Le flag TS ne masque que les CTA ; le blocage
+  réel est `billing_flags.enterprise_seat_limit`. Serveur `true` + client `false` = un
+  propriétaire se voit refuser une invitation (`seat_limit_reached`) sans qu'aucun écran ne lui
+  propose de payer : impasse. Client `true` + serveur `false` = on encaisse sans rien débloquer.
+- 🔴 **La grille branchée est celle du SANDBOX DE TEST.** `STRIPE_SECRET_KEY` en prod est une
+  clé de test — les customers des vrais utilisateurs vivent dans le compte « Environnement de
+  test COSMO », le compte live est vide. Un checkout n'accepte donc que des **cartes de test**
+  : le quota de sièges est réel, l'encaissement ne l'est pas. Passage en live = recréer les 8
+  prix sur le compte live (4 mensuels + 4 annuels), réenregistrer un endpoint webhook live (**SIX** events, recomptés dans le code le
+  2026-09-12 : `checkout.session.completed`, `customer.subscription.updated`,
+  `customer.subscription.deleted`, `invoice.payment_succeeded`, `invoice.payment_failed` et
+  `charge.refunded` — ce fichier a écrit « 5 » jusqu'à cette date, chiffre devenu faux avec la
+  v27 du webhook le 2026-09-06 ; en réenregistrer 5 couperait le remboursement en silence), puis
+  remplacer `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` et les 8 `STRIPE_ORG_PRICE_*`.
+- ⚠️ `APP_URL` vaut `https://thecosmo.app` et **est la seule origine CORS autorisée** par les
+  deux Edge Functions org : le checkout entreprise **ne peut pas être testé depuis
+  `localhost:5173`**. Tester depuis la prod, ou changer `APP_URL` le temps du test.
+- Réactivation (immédiate, réversible) : `ENTERPRISE_BILLING_ENFORCED = true` +
+  `UPDATE billing_flags SET enabled = true WHERE key = 'enterprise_seat_limit'` — **après** la
+  création de la micro-entreprise et le passage du compte Stripe en live.
+  Contexte historique : [`docs/POST-AUDIT-GUIDE.md`](./docs/POST-AUDIT-GUIDE.md).
+

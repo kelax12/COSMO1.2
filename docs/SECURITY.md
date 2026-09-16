@@ -351,3 +351,309 @@ Variables sensibles **jamais côté client** : `SUPABASE_SERVICE_ROLE_KEY`, `STR
 - ❌ Envoyer `error.message` brut à Sentry sans `beforeSend` qui strip emails/UUIDs (M-9)
 - ❌ Laisser `cosmo:qcache:*` survivre à un `SIGNED_OUT` — purge prefix-sweep (L-11)
 - ❌ Passer une chaîne user-contrôlée dans `dangerouslySetInnerHTML` d'un `<style>` sans whitelist regex (`#[0-9a-f]{3,8}`, `var(--…)`, `hsl()`, `rgb()`) — cf. `chart.tsx` (M-11)
+
+---
+
+## Base de données · état et récits repris de `CLAUDE.md` (déplacés le 2026-09-16)
+
+> Ces blocs vivaient dans `CLAUDE.md`, chargés à chaque session. Déplacés ici **sans une
+> coupe**. Les règles courtes vivent dans
+> [`supabase/migration/CLAUDE.md`](../supabase/migration/CLAUDE.md).
+
+## Base de données Supabase
+
+Migrations dans `supabase/migration/*.sql`, convention `NNN_<feature>.sql`.
+**153 fichiers de migration** au 2026-09-15 (la `149` s'ajoute, cf. plus bas : elle est
+**écrite et NON APPLIQUÉE**). La dernière APPLIQUÉE est la
+`148_team_categories_tree_merge` (le 2026-09-13) ; le ledger porte **138 entrées**
+(recompté en base le 2026-09-14 au soir ; ce fichier a écrit « 148 », qui est le NUMÉRO de la
+dernière migration, jamais un total), et les trois seules migrations du dépôt dont le CONTENU
+manque en base sont la `136` (défaut OUVERT en production, item `C-77` : ce fichier l'a classée
+« travail d'une autre session » pendant douze jours, et tant qu'elle portait cette étiquette
+personne n'a lu ce qu'elle répare), la `140` (délibéré : elle se joue DANS la fenêtre de bascule
+Stripe live) et la `149` (écrite le 2026-09-15, en attente d'application).
+
+🟢 **CE COMPTE N'EST PLUS À TENIR À LA MAIN DEPUIS LE 2026-09-15.**
+`npm run check:migration-coverage` (finding C-79) relie chaque fichier au ledger de production
+et échoue sur ceux qu'il ne peut ranger nulle part. Premier run CI **`34941970659`**, vert :
+152 fichiers, **138 entrées de ledger lues en prod**, **0 absent des deux**.
+❌ Ne plus jamais écrire un état de ce paragraphe de tête : le relire à la sortie de la garde. ⚠️ La ligne précédente disait « 151 fichiers, dernière appliquée la
+`147` » : périmée d'une migration au lendemain de son écriture. La `147`
+(`_categories_tree_depth_ambiguity_redo.sql`, réapplication du correctif de la `144` —
+cf. section dédiée), la `146` et la `145` ont toutes été appliquées le 2026-09-13.
+
+🔴 **UNE ABSENCE AU LEDGER NE PROUVE RIEN, ET UNE PRÉSENCE NON PLUS.** Mesuré le 2026-09-14 au
+soir, en comparant nom à nom les 152 fichiers du dépôt aux 138 entrées de la base :
+**32 fichiers du dépôt n'ont AUCUNE entrée correspondante**, et **17 entrées du ledger n'ont aucun
+fichier**. L'énoncé « tout le dépôt est appliqué en prod, ledger relu » a donc été écrit cinq fois
+dans ce fichier sur une lecture qui ne recouvre que 120 fichiers sur 152.
+
+**Ce que ça veut dire, et ce que ça ne veut pas dire.** Les 32 sont presque tous les migrations
+PRÉCOCES (`000` à `058`, plus la `081` et la `082`), passées avant que le ledger serve, ou par un
+chemin qui n'y inscrit rien. Elles SONT appliquées : vérifié objet par objet sur un échantillon
+(`events.exceptions` de la `029`, `team_task_comments` de la `082`, `tasks.recurrence*` de la
+`058`, `events.is_private` de la `081`, tous présents). Symétriquement, les 17 entrées orphelines
+sont d'anciens noms libres (`create_subscriptions_table`, `fix_task_sharing_unified`, …) et les
+correctifs `…b` / `…c` repliés dans leur fichier d'origine.
+
+❌ **Ne jamais conclure d'un comptage de lignes du ledger que le dépôt est appliqué.** Le ledger
+est un journal de NOMS, pas un état de schéma : il ne sait rien dire d'une migration passée
+autrement, ni d'un `CREATE OR REPLACE` qui n'a pas pris (c'est exactement le défaut de la `144`,
+cf. la `147`). La seule preuve qui vaille reste celle qui a servi ici : interroger le CATALOGUE
+(`information_schema`, `pg_get_functiondef`) sur l'objet que la migration prétend créer.
+⚠️ Et `npm run check:drift` ne comble pas ce trou : il compare le schéma, pas le ledger, et il
+exige deux étapes manuelles.
+
+🟢 **UNE GARDE SURVEILLE CE RECOUVREMENT DEPUIS LE 2026-09-15** (`check:migration-coverage`,
+C-79). Elle fait exactement ce que le paragraphe ci-dessus prescrit : elle interroge le
+catalogue sur l'objet que chaque migration prétend créer, et elle refuse de conclure d'un
+comptage. Elle range les 32 fichiers « sans entrée » en **27 dont l'objet est en base**, **3
+vidés par une migration ultérieure** (les 013 / 015 / 016, par la `141`), **1 purement
+suppressif** (la `090`, vérifié par l'absence de ses cibles) et **2 déclarés non vérifiables**
+(des GRANT, une migration de données).
+⚠️ **Elle reste modeste, et le dit à chaque exécution** : une ligne au ledger ne prouve toujours
+pas qu'un `CREATE OR REPLACE` a remplacé le corps vivant. Elle liste pour cette raison les
+fichiers **PARTIELS**, dont la `136`.
+
+
+### « Ignorer » un créneau de tâche à passer en revue (mig. `146`)
+
+✅ **APPLIQUÉE en prod le 2026-09-13**, via `apply_migration` (ledger à jour cette
+fois). `events` gagne `review_dismissed_at` (`timestamptz`, nullable, `NULL` = jamais
+ignoré) : colonne purement informative, aucune policy ni trigger n'en dépend, RLS
+inchangée (une ligne qu'on peut déjà réécrire au complet peut écrire cette colonne).
+Vérifiée après coup : type `timestamp with time zone`, nullable, et `get_advisors`
+(security) ne montre **aucun nouveau finding** — uniquement les avertissements déjà
+documentés ailleurs dans ce fichier (fonctions `SECURITY DEFINER` existantes, RLS sans
+policy sur des tables déjà connues, protection mot de passe compromis).
+
+🔴 **Elle devait être appliquée AVANT le déploiement du front** (même ordre que la
+mig. 113) : `mapEventToDb` émet cette colonne à CHAQUE mise à jour d'événement. Le
+front avait été déployé en premier — écart constaté en usage réel (« Reporter » sur un
+créneau échouait avec le message générique, `review_dismissed_at` inconnu de Postgres),
+pas en test. `Reporter` et `Ignorer` (les deux seules actions qui écrivent la colonne)
+sont opérationnelles depuis l'application de cette migration ; `Valider` et
+`Supprimer` n'y touchent pas et n'avaient jamais été affectées.
+
+⚠️ **`NO_CATEGORY` reste la chaîne vide côté TypeScript.** La base porte NULL ; la
+conversion vit dans les DEUX mappers (`tasks/mappers.ts`, `okrs/mappers.ts`) et nulle part
+ailleurs. ❌ Ne jamais propager `null` jusqu'aux composants : ce serait un second marqueur
+d'absence à vérifier partout. Un test garde aussi la distinction entre « colonne absente »
+(ne pas y toucher) et « chaîne vide » (retirer la catégorie) : les confondre effacerait la
+catégorie à chaque mise à jour partielle.
+
+❌ **Ne jamais dériver une branche par un aller-retour serveur.** Aucune RPC n'est créée :
+un compte porte quelques dizaines de catégories et le client les charge déjà toutes. Les
+règles de l'arbre vivent dans `src/modules/categories/tree.ts`, miroir client du trigger.
+
+⚠️ **Le repository démo des catégories est chargé À LA DEMANDE** (`local.repository.ts` +
+`src/lib/demo-repositories.ts`). Le remettre dans `repository.ts` ferait repartir ses seeds
+dans le chunk d'entrée, payé par chaque visiteur de la landing.
+🔴 **La `136_work_time_stats_okr_from_completions.sql` est COMMITÉE (`31482a3f`, 2026-09-03) et
+présente à `HEAD`, mais elle n'a JAMAIS été appliquée.** Cette ligne a dit « non versionnée »
+jusqu'au 2026-09-15 : `git ls-files` la voit, et la phrase a été recopiée par trois documents avant
+que quelqu'un lance la commande.
+⚠️ **Et la classer « travail en cours d'une autre session » a coûté plus cher que l'erreur de
+suivi** : tant qu'elle portait cette étiquette, personne n'a lu ce qu'elle répare. Elle répare un
+**défaut ouvert en production** : `get_work_time_stats` lit un champ JSON que rien n'écrit, donc
+`okrTime` vaut **0** sur `/statistics` pour tous les comptes réels, et ce depuis la mig. `074`
+(2026-07-16). Item `C-77` de [`a-faire-code.md`](./a-faire-code.md).
+⚠️ **Sa prémisse a été corrigée le 2026-09-15, et elle était fausse d'un mot** : l'en-tête
+affirmait « ce champ n'existe pas », vérifié par `grep` dans `src` et **jamais en base**. Mesuré :
+**12 Key Results sur 28 portent bien un `history` non vide**, tous sur le seul compte de seed
+`aaaaaaaa-…`, jamais connecté. La conclusion tient, mais c'est un argument de **données**, et il
+se prouve par une requête, désormais recopiée dans l'en-tête avec son résultat.
+🔴 **Conséquence à connaître AVANT de l'appliquer** : le compte de seed est le seul dont `okrTime`
+va **baisser**, ses `history` cessant d'être lus alors qu'il n'a aucune ligne dans
+`kr_completions`. Ce n'est pas une régression, c'est la fin d'un chiffre qui ne reposait que sur
+une donnée morte.
+🔴 **La `149_admin_stats_excludes_non_users.sql` est ÉCRITE et NON APPLIQUÉE** (2026-09-15).
+`get_admin_stats` comptait les **28** comptes d'`auth.users`, dont `demo@cosmo.app` (jamais
+connecté, porteur de **120 tâches en production**) et `testemail@gmail.com` : la console `/admin`
+annonçait **28 utilisateurs là où il y en a 26**, et **16 % des tâches de la plateforme**
+appartenaient au compte de démonstration. La migration retranche les deux de toutes les sources
+keyées par un compte, et **rend leur NOMBRE** dans une clé `excluded_accounts` (un chiffre corrigé
+sans mention de sa correction ne se recoupe plus avec le tableau de bord Supabase).
+❌ **Ne JAMAIS recopier un de ces deux UUID ailleurs** : la liste vit dans la seule fonction
+`admin_stats_excluded_uids()`, et deux listes finiraient par diverger.
+✅ **Tout le dépôt est appliqué en prod**, ledger relu le 2026-09-02 : la `133` (échéance récurrente
+en INSTANT, R-01), la `134` (un customer Stripe ne désigne qu'un seul compte, S-3) et la `135`
+(preuve de renonciation au droit de rétractation, S-6) sont en base, vérifiées acteur par acteur
+dans des transactions annulées.
+🔴 **`stripe-org-checkout` ne peut PAS créer de session sans la table `withdrawal_consents`.** Elle
+existe désormais ; mais un environnement monté sans elle coupe l'encaissement. C'est le bon sens de
+l'échec, il faut juste le savoir.
+⚠️ **Lire le ledger AVANT d'appliquer une migration, pas seulement après.** Le 2026-09-02, les `134`
+et `135` ont été appliquées DEUX fois : une session voisine les avait déjà passées à 16:24 UTC, et
+une seconde application a suivi à 21:14. Sans effet sur le schéma — elles sont idempotentes — mais
+le ledger a porté les seuls doublons de ses 127 entrées, retirés depuis. Ce dépôt a plusieurs
+sessions actives : l'état de la prod n'est jamais celui qu'on a laissé.
+Ledger prod relu le 2026-08-31 : **tout le dépôt est appliqué**, `131` et `132` comprises.
+⚠️ Elles l'ont été dans l'ordre INVERSE de leur numéro (la `132` le 08-30, la `131` le 08-31) —
+elles ne se touchent pas, mais le ledger ne se lit donc pas comme une suite croissante.
+✅ **La `132` a été appliquée en prod le 2026-08-30** (dépendances entre tâches PERSONNELLES,
+jumelle de la `108`), et vérifiée invariant par invariant plutôt que sur un « success » :
+`user_id` bien redérivé alors qu'on envoyait exprès celui d'un autre compte, doublon refusé
+par la PK (23505), auto-dépendance et cycles direct **et indirect à trois maillons** refusés,
+arête inter-comptes refusée, tâche inexistante refusée, `ON DELETE CASCADE` vérifié (2 arêtes
+→ 0). Isolation mesurée acteur par acteur : le propriétaire voit son arête, un autre compte
+en voit **zéro**, et son insertion est refusée. Tests joués dans une transaction annulée par
+un `RAISE` final — la table est restée à 0 ligne. Zéro advisor de sécurité sur cette table.
+Elle n'a modifié aucune table existante.
+✅ **La `131` a été appliquée en prod le 2026-08-31** (`/admin` exige une session `aal2`),
+et vérifiée acteur par acteur dans une transaction annulée : admin en `aal1` →
+`admin_allowlisted()` vrai mais `is_admin()` FAUX et `get_admin_stats()` refusée **42501** ;
+admin dont le jeton n'a **aucune** claim `aal` → `is_admin()` faux (la garde ne se relâche pas
+sur une valeur manquante) ; admin en `aal2` → garde ouverte, statistiques rendues ; compte non
+admin en `aal2` → tout faux, inchangé.
+🔴 **ELLE A ÉTÉ APPLIQUÉE AVANT L'ENRÔLEMENT**, à la demande explicite d'Axel, donc dans
+l'ordre que l'en-tête de la migration déconseille. Mesuré juste avant : le compte admin a
+**zéro facteur MFA**. Conséquence, tant qu'aucun code TOTP n'a été vérifié : `/admin`
+n'affiche plus de statistiques. Ce n'est pas un verrouillage — `AdminMfaGate` reste
+atteignable parce que `admin_allowlisted()` ignore volontairement le niveau d'assurance.
+✅ **L'enrôlement a eu lieu le 2026-09-01**, mesuré en base le 2026-09-02 : `auth.mfa_factors`
+porte **1 facteur `totp` en statut `verified`** sur le compte admin, créé à 14:20:27 UTC et
+vérifié 46 secondes plus tard. Accès à `/admin` confirmé le 2026-09-02. Le verrouillage
+a donc duré **du 2026-08-31 au 2026-09-01**, pas au-delà.
+⚠️ **Un seul compte au monde ouvre cette console** : `public.admin_users` ne contient qu'une
+ligne, l'adresse Gmail personnelle d'Axel, pas l'adresse pro. Téléphone perdu →
+`DELETE FROM auth.mfa_factors WHERE user_id = '<uid>';` depuis le SQL editor, seule porte de
+sortie, et elle n'a pas d'autre gardien.
+🔴 **La porte de sortie était elle-même cassée, et ça a bel et bien produit un verrouillage
+(2026-09-01).** Le raisonnement ci-dessus — « ce n'est pas un verrouillage, `AdminMfaGate`
+reste atteignable » — était juste sur la garde et faux dans les faits : l'écran d'enrôlement
+levait une exception **en phase de rendu**, donc l'`AppErrorBoundary` affichait « Une erreur
+inattendue s'est produite » au lieu du QR code. Atteignable, mais inutilisable : `/admin` est
+resté inaccessible du 2026-08-31 au 2026-09-01, mesuré (`auth.mfa_factors` = 0 ligne).
+Corrigé (`formatSecret` rendue totale, réponse d'enrôlement validée à la frontière), avec les
+tests de régression qui manquaient — ils mockaient `startTotpEnrolment` sans jamais le
+résoudre, donc le QR n'était **jamais rendu**.
+**La leçon, qui vaut au-delà de cet écran** : quand une migration crée une dépendance à un
+chemin de récupération, ce chemin se PARCOURT avant d'appliquer la migration, il ne se
+raisonne pas. Ici il suffisait d'ouvrir l'écran une fois. ✅ La `130` a été appliquée
+le 2026-08-29, vérifiée acteur par acteur (membre simple : 0 ligne).
+✅ **Les `127`, `128` et `129` ont été appliquées en prod le 2026-08-27**, dans cet ordre, chacune
+vérifiée après coup : la `127` rend un résultat identique pour les 18 comptes qui ont des données
+(comparaison par empreinte, prise avant application), la `128` laisse **une seule policy
+PERMISSIVE** sur `events`, et un manager voit toujours exactement les 30 événements non privés de
+son subordonné, zéro de celui qu’il ne gère pas ; la `129` est `SECURITY INVOKER` et un membre
+simple ne voit toujours aucune des demandes d’adhésion réservées aux admins.
+**Tout le reste est en prod**, ledger relu en base le 2026-08-27 : la `129` est la dernière
+appliquée. La `123` l’a été avant le redéploiement de `stripe-webhook`, qui écrit
+désormais `billing_interval`.
+
+> ⚠️ **Le ledger porte une entrée de plus que le dépôt** :
+> `119b_habits_bounded_payload_future_guard`, appliquée en prod, sans fichier correspondant. Son
+> contenu a été relu et comparé au fichier `119` du dépôt : **identique**, le correctif a été
+> replié dans le fichier d'origine au lieu d'être versionné à part. Rejouer le dépôt sur base
+> vierge donne donc le même état final. **Règle : un correctif appliqué en prod se versionne sous
+> son propre numéro**, jamais par édition d'un fichier déjà appliqué.
+
+> ⚠️ Quatre migrations ne portent pas de fonctionnalité : elles **formalisent
+> l'existant**. `subscriptions`, trois colonnes et les privilèges par défaut du
+> schéma `public` existaient en prod sans qu'aucune migration ne les crée — le
+> dépôt ne décrivait donc pas la base qu'il prétend reconstruire, et le replay
+> sur base vierge échouait. Elles sont **no-op en production** (`IF NOT EXISTS`,
+> `CREATE OR REPLACE`) : elles alignent le dépôt sur la prod, jamais l'inverse.
+> Deux d'entre elles sont numérotées `000_` parce qu'elles précèdent réellement
+> l'historique. Le job CI `rls-integration` est vert depuis (run #713) — il ne
+> l'avait **jamais** été depuis sa création le 2026-06-21.
+>
+> 🔴 **Ne jamais ajouter une colonne ou un GRANT depuis le dashboard Supabase.**
+> C'est ce qui a produit cette dérive : la prod avance, le dépôt non, et
+> personne ne le voit tant que rien ne rejoue les migrations à blanc.
+
+Toutes les tables ont **RLS activée**. Pattern obligatoire + checklist migration →
+[`docs/SECURITY.md`](./docs/SECURITY.md).
+
+Fonctions SECURITY DEFINER clés : `accept_friend_request_v2`, `accept_shared_task`,
+`remove_friendship` /
+`resolve_profile_by_email`, `handle_new_user_profile`, `prevent_user_id_change`, `owns_task`,
+`claim_share_link`, `sanitize_display_name`, `get_my_tasks`, `toggle_task_complete_v2`,
+`get_work_time_stats`, `get_admin_stats`. Schéma `friend_requests` = `sender_id` / `receiver_id`.
+
+> **Une seule policy PERMISSIVE par rôle+action** (mig. 049). Les anciens splits `tasks`
+> (own / collaborator) et `friend_requests` (sender / receiver) sont **fusionnés en une policy
+> `OR` unique**, sémantique préservée. **Ne jamais recréer deux policies permissives** pour le
+> même rôle+action : élargir le `OR` existant. `npm run check:rls` est la gate.
+
+
+---
+
+## Gardes SQL et Edge Functions · repris de `CLAUDE.md` (déplacé le 2026-09-16)
+
+> Commentaires de la section `## Scripts` de `CLAUDE.md`, où ils étaient chargés à chaque
+> session. Déplacés ici **sans une coupe**. La racine ne garde que la commande.
+
+```bash
+npm run validate:migrations # Garde statique sur supabase/migration/*.sql (CI)
+npm run check:rls           # Invariants RLS : auth.uid() wrappé, 1 seule policy PERMISSIVE,
+                            # + toute fonction citée par une policy exécutable par authenticated (CI)
+npm run check:drift         # Dérive repo ↔ prod (2 étapes : --print-sql puis <introspection.json>)
+npm run check:migration-coverage # Recouvrement des 152 fichiers de migration ↔ ledger de PROD.
+                            # Répond à C-79. GATE CI depuis le 2026-09-15
+                            # (`migration-coverage.yml`, quotidien 05:17 UTC + à
+                            # chaque push touchant `supabase/migration/`), branchée
+                            # sur `ci-alert.yml`.
+                            # ❌ Ne se contente PAS d'un comptage : c'est le comptage
+                            # qui a menti. Chaque fichier reçoit un VERDICT, et seul
+                            # le dernier fait échouer :
+                            #   AU LEDGER · OBJET EN BASE · OBJET RETIRÉ DEPUIS ·
+                            #   SUPPRESSION VÉRIFIÉE · SANS OBJET VÉRIFIABLE
+                            #   (déclaré) · NON APPLIQUÉE (déclarée) · ABSENT DES DEUX
+                            # ✅ Premier run CI, `34941970659` : 152 fichiers lus,
+                            # 138 entrées de ledger lues EN PROD, et
+                            # 118 / 27 / 3 / 1 / 2 / 1 / **0**.
+                            # 🔴 Deux verdicts sont MESURÉS, pas déclarés, et sans eux
+                            # la garde réclamait quatre migrations bel et bien
+                            # appliquées : les mig. 013, 015 et 016 ont été VIDÉES par
+                            # la 141 (C-04), et la 090 ne fait que supprimer, donc son
+                            # effet se vérifie par l'absence de ses cibles.
+                            # ⚠️ CE QUE SON VERT NE DIT PAS, et il l'imprime à chaque
+                            # exécution : une LIGNE au ledger ne prouve pas qu'un
+                            # `CREATE OR REPLACE` a remplacé le corps vivant (mig. 144,
+                            # rejouée par la 147). Il liste donc aussi les 9 fichiers
+                            # PARTIELS, dont la 136.
+                            # 🔴 EXIGE `SUPABASE_DB_URL`. Secret absent = ÉCHEC, jamais
+                            # un `::warning::` dans un run vert.
+                            # ❌ Ne JAMAIS ajouter une entrée à
+                            # `NON_APPLIQUEES_DELIBEREMENT` ou `SANS_OBJET_VERIFIABLE`
+                            # pour faire passer la CI. Une dispense qui se révèle FAUSSE
+                            # (la migration est en fait appliquée) fait échouer la garde,
+                            # comme `.github/edge-deploy.json`.
+                            # Témoin : `scripts/check-migration-coverage.guard.test.mjs`
+                            # (16 cas), vu ROUGE sur quatre sabotages du script avant
+                            # d'être committé.
+npm run check:edge          # Le code DÉPLOYÉ des Edge Functions contre le dépôt (finding C-35).
+                            # Job `Edge deploy drift` : quotidien 05:41 UTC + à chaque push
+                            # touchant `supabase/functions/`. Branché sur `ci-alert.yml`.
+                            # 🔴 EXIGE `SUPABASE_ACCESS_TOKEN`. Secret absent = ÉCHEC, jamais
+                            # un `::warning::` dans un run vert. ✅ POSÉ le 2026-09-13 à
+                            # 09:34 UTC : le job avait échoué 14 fois d'affilée sans
+                            # JAMAIS avoir comparé quoi que ce soit.
+                            # ✅ **PREMIER RUN VERT le 2026-09-13** (run 34768021931) :
+                            # « 8 fonction(s) verifiee(s) : le code deploye est celui du
+                            # depot ». Avant : 0 fonction comparée, 14 échecs.
+                            # 🔴 `--use-api` EST OBLIGATOIRE sur `functions download`.
+                            # Sans lui la CLI débundle AVEC DOCKER et rend du code
+                            # TRANSPILÉ : le verdict dépendait alors d'un Docker installé
+                            # à côté (poste sans Docker → 4 divergences ; runner avec
+                            # Docker → 24, dont 20 FAUSSES). **Une garde dont le verdict
+                            # dépend de son runner ne mesure pas la production.**
+                            # ⚠️ Un déploiement fait depuis un arbre de travail non
+                            # committé se voit ici, et s'est vu : `stripe-webhook` v31 a
+                            # divergé de `main` d'UN caractère de commentaire. Déployer
+                            # depuis la racine du dépôt, sur `main`.
+                            # ⚠️ Le 2026-09-03, les TROIS sources déployées lisibles
+                            # divergeaient de `main`, de trois façons différentes. Tant que
+                            # rien ne comparait, toute conclusion tirée en lisant
+                            # `supabase/functions/` était fausse d'avance — y compris les
+                            # statuts de `faille.md`. **Un « ✅ corrigé » sur une Edge Function
+                            # ne veut rien dire sans sa date de déploiement.**
+                            # `.github/edge-deploy.json` ne déclare que l'EXISTENCE (quelle
+                            # fonction n'est pas encore en ligne, pourquoi, depuis quand).
+                            # ❌ Il ne peut pas faire taire une divergence de CONTENU, et une
+                            # fonction qu'il dit non déployée alors qu'elle est en ligne fait
+                            # échouer la garde : sinon la note périme en silence.
+                            # Témoin : `scripts/check-edge-deploy.guard.test.mjs`.
+```

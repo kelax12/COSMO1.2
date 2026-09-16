@@ -866,3 +866,18 @@ corrections 2026-04 → 2026-08, audits datés, anciens ordres de priorité.
    sinon il devient un piège silencieux.
 4. **Un doc vivant qui n'a plus rien d'ouvert** part en archive ou disparaît — il ne reste pas à la
    racine à faire croire qu'il y a du travail en cours.
+
+---
+
+## Préambule repris de `CLAUDE.md` (déplacé le 2026-09-16)
+
+Guide de travail dans ce dépôt. **Vérifié dans le code ET contre la production le 2026-09-14 au
+soir** : passe d'audit complète des onze domaines, gardes rejouées, base interrogée (ledger,
+advisors, plans d'exécution, versions d'Edge Functions), production sondée en HTTP et sur WebKit /
+iPhone. **Cinq notes baissent, une monte, et dix angles morts en sortent** : le tableau et les
+preuves sont dans [`docs/README.md`](./docs/README.md) § « Mise à jour du 2026-09-14 (soir) ».
+Passes antérieures conservées à leur date (2026-08-24 contre la prod, 2026-09-03 sur le code seul).
+
+🔴 **Le défaut le plus coûteux trouvé ce soir n'est pas dans ce fichier, il est en
+production** : `okrTime` vaut **0** sur `/statistics` pour tous les comptes réels, parce que le
+correctif du 2026-09-02 n'a réparé que la moitié cliente et que la mig. `136`, **pourtant commitée
