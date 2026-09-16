@@ -61,6 +61,30 @@ valable comme stratégie — ce document ne le refait pas. Il répond à une aut
 
 ---
 
+
+## 🕳️ Angles morts · ce que ce document NE mesure PAS (2026-09-16)
+
+> **Pourquoi cette section existe.** Demande d'Axel, après le constat qui a ouvert la journée :
+> `CLAUDE.md` a pesé 150 ko sans qu'aucune note ne bouge, parce qu'il était **cité comme source**
+> par les audits et **jamais mesuré par eux**. Il était le mètre, jamais l'objet.
+>
+> 🔴 **Ce document n'a PAS de note, et c'est son premier angle mort.** Les onze documents notés
+> entrent dans le tableau de bord de [`README.md`](./README.md) et peuvent donc monter ou baisser.
+> Celui-ci ne le peut pas : rien ne le pèse, donc rien ne signale qu'il a vieilli. Les angles morts
+> ci-dessous ne sont **pas** des défauts du produit ; ce sont les endroits où **ce document affirme
+> sans que rien ne vérifie**.
+>
+> Chaque ligne est vérifiée par une commande, jamais supposée. Elle se **referme** ou se
+> **reconduit avec sa date**, jamais ne se recopie.
+
+| # | Angle mort | Vérifié le 2026-09-16 | Outillable ? |
+|---|---|---|---|
+| AM-1 | 🔴 **Les chiffres datent du 2026-08-14 et ne sont rejoués par rien.** Un audit d'acquisition dont les mesures ont un mois décrit un marché qui a bougé, et il n'existe aucun job qui les remesure | mesures datées dans l'en-tête, aucun workflow d'acquisition | oui : un job planifié sur les compteurs de la base |
+| AM-2 | **Aucune action n'est reliée à son résultat.** Ce document liste des leviers ; rien n'attribue une inscription à un levier. C'est le même motif que T-5 du tableau de bord : on mesure la conformité, pas le résultat | le tracking `?ref=` reste un développement ouvert | oui, et c'est peu coûteux |
+| AM-3 | **Les comptes de TEST ne sont retranchés d'aucun chiffre.** `demo@cosmo.app` porte **120 tâches** en production, soit 16 % des tâches de la plateforme, et `get_admin_stats` les compte encore : la mig. `149` qui les retranche est **écrite et non appliquée** | mig. `149`, item ouvert | oui, immédiatement |
+
+---
+
 ## 1. Les chiffres réels · *état du 2026-08-14, conservé à sa date*
 
 | Métrique | Valeur |

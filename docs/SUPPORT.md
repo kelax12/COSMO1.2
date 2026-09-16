@@ -10,6 +10,30 @@
 
 ---
 
+
+## 🕳️ Angles morts · ce que ce document NE mesure PAS (2026-09-16)
+
+> **Pourquoi cette section existe.** Demande d'Axel, après le constat qui a ouvert la journée :
+> `CLAUDE.md` a pesé 150 ko sans qu'aucune note ne bouge, parce qu'il était **cité comme source**
+> par les audits et **jamais mesuré par eux**. Il était le mètre, jamais l'objet.
+>
+> 🔴 **Ce document n'a PAS de note, et c'est son premier angle mort.** Les onze documents notés
+> entrent dans le tableau de bord de [`README.md`](./README.md) et peuvent donc monter ou baisser.
+> Celui-ci ne le peut pas : rien ne le pèse, donc rien ne signale qu'il a vieilli. Les angles morts
+> ci-dessous ne sont **pas** des défauts du produit ; ce sont les endroits où **ce document affirme
+> sans que rien ne vérifie**.
+>
+> Chaque ligne est vérifiée par une commande, jamais supposée. Elle se **referme** ou se
+> **reconduit avec sa date**, jamais ne se recopie.
+
+| # | Angle mort | Vérifié le 2026-09-16 | Outillable ? |
+|---|---|---|---|
+| AM-1 | 🔴 **Aucune mesure du support lui-même** : ni volume reçu, ni délai de première réponse, ni taux de résolution. Un canal de support qu'on n'instrumente pas ne se distingue pas d'un canal que personne n'utilise | aucun job, aucun compteur | oui : compter les messages reçus |
+| AM-2 | **Rien ne vérifie que l'adresse de contact publiée reçoit vraiment.** `check:mail` vérifie SPF, DKIM et DMARC de l'expédition **sortante** ; la réception n'est testée par rien | `scripts/check-auth-email.mjs` mesure le DNS d'envoi | oui : un envoi de bout en bout, daté |
+| AM-3 | **`report-bug` est déployée, mais ce que ses rapports deviennent n'est mesuré par rien.** `notDeployed` est vide depuis le 2026-09-12, donc la fonction est en ligne ; aucun compteur ne dit si un rapport a été lu | `.github/edge-deploy.json` | oui |
+
+---
+
 ## 1. Par où arrivent les demandes
 
 | Canal | Comment | État |
