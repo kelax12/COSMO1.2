@@ -630,3 +630,17 @@ existe pour qu'aucun de ces engagements ne soit découvert le jour où il est in
 5. Création de la structure.
 6. Bloc consommation du §4, avant tout paiement réel.
 7. Bascule Stripe en live, selon [`STRIPE-LIVE.md`](./STRIPE-LIVE.md).
+
+---
+
+## Garde du tableau de conformité · repris de `CLAUDE.md` (déplacé le 2026-09-16)
+
+> Commentaires de la section `## Scripts` de `CLAUDE.md`, où ils étaient chargés à chaque
+> session. Déplacés ici **sans une coupe**. La racine ne garde que la commande.
+
+```bash
+npm run check:legal         # Cohérence du tableau de conformité de docs/LEGAL.md :
+                            # lignes collées, identifiants en double, et surtout que la
+                            # synthèse corresponde aux lignes. Ce total a été faux TROIS
+                            # fois le 2026-08-26, toujours pour l'avoir additionné de tête.
+```

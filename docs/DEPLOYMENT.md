@@ -666,3 +666,22 @@ d'attente : il dérive de dizaines de minutes et peut sauter une exécution. Sur
 hébergée chez GitHub ne détecte pas une panne de GitHub. La granularité réelle est « prévenu
 dans l'heure ». C'est le passage de « personne n'est prévenu » à « quelqu'un est prévenu », pas
 la fin du sujet.
+
+---
+
+## Délivrabilité des emails Auth · repris de `CLAUDE.md` (déplacé le 2026-09-16)
+
+> Commentaires de la section `## Scripts` de `CLAUDE.md`, où ils étaient chargés à chaque
+> session. Déplacés ici **sans une coupe**. La racine ne garde que la commande.
+
+```bash
+npm run check:mail          # Délivrabilité des emails Auth : MX, SPF, DKIM Resend, DMARC.
+                            # ✅ VERT au 2026-09-02 (remesuré) : DKIM, SPF et MX du Return-Path
+                            # en place sur `send.thecosmo.app`. Reste 1 avertissement, DMARC
+                            # `p=none` (surveillance seule), correct pour démarrer.
+                            # ⚠️ Le DNS ne prouve pas qu'un email ARRIVE : la preuve reste un
+                            # compte jetable vérifié sur Gmail ET Outlook (docs/DEPLOYMENT.md §2ter).
+                            # 🔴 Les confirmations d'inscription restent DÉSACTIVÉES, décision
+                            # d'Axel — cf. finding G-2 de faille.md.
+                            # PAS une gate CI — dépend d'un état DNS externe.
+```

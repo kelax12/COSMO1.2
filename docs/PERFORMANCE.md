@@ -857,3 +857,141 @@ Les `getAll()` à fort volume (**tasks, events, habits, okrs**) utilisent l'auto
 | **Brotli + fonts** | Vérifié en prod le 2026-07-16 : `Content-Encoding: br` servi par Vercel sur `/assets/*` (fallback gzip), cache immuable 1 an. `display=swap` déjà présent sur la feuille Google Fonts (`index.html`). Rien à changer. |
 
 - ⚠️ La sémantique de la RPC `get_work_time_stats` doit rester **identique** à `calculateWorkTimeForPeriod` (dates locales inclusives via `p_tz`) — les deux modes démo/prod doivent afficher les mêmes chiffres à données égales.
+
+---
+
+## Chemins de lecture indexables · repris de `CLAUDE.md` (déplacé le 2026-09-16)
+
+> Ce bloc vivait dans `CLAUDE.md`, chargé à chaque session. Déplacé ici **sans une coupe**.
+> La règle courte vit dans [`src/modules/CLAUDE.md`](../src/modules/CLAUDE.md).
+
+## ⚡ Lecture des tâches — passer par `get_my_tasks()`
+
+**Ne jamais lire `tasks` en direct pour une vue de liste.** La policy
+`tasks_select_own_or_shared` (mig. 049) est un `OR` entre une égalité et un `EXISTS` : Postgres
+ne peut pas utiliser `idx_tasks_user_id` et fait un **`Seq Scan` de la table globale** (vérifié
+par `EXPLAIN` en prod le 2026-08-07). Le coût d'une lecture croît alors avec le volume de TOUTE
+la plateforme, pas avec celui de l'utilisateur.
+
+```typescript
+supabase.from('tasks').select(...)          // ❌ Seq Scan global
+supabase.rpc('get_my_tasks').select(...)    // ✅ Index Scan (mig. 085)
+```
+
+`get_my_tasks()` ne prend **aucun paramètre** : son périmètre vient de `auth.uid()` seul. Les
+policies RLS restent en place (défense en profondeur) ; l'isolation est prouvée par
+`e2e/rls/get-my-tasks.test.ts`. Exception légitime : `getById` (accès par clé primaire).
+
+> ⚠️ **`task_dependencies` (mig. 132) se lit en direct, et c'est voulu.** Sa policy est
+> `(SELECT auth.uid()) = user_id`, pas un `EXISTS` sur `tasks` : le périmètre est porté par une
+> colonne dénormalisée (redérivée par trigger, jamais envoyée par le client), donc indexable dès
+> le premier jour. Déléguer à `tasks` aurait payé le `OR` ci-dessus **par arête** — l'erreur que
+> la mig. 117 a dû rattraper côté entreprise. Second motif, suffisant à lui seul : une tâche
+> personnelle peut être **partagée**, et déléguer à « les tâches que je vois » ferait entrer dans
+> le graphe des arêtes entre deux tâches d'un autre compte. Le graphe personnel est celui de son
+> propriétaire ; la version partagée du graphe, c'est le mode entreprise.
+
+### ⚡ Tables entreprise — même règle, même correctif (mig. 113)
+
+`team_tasks` et `team_projects` avaient exactement le même défaut : les policies les filtrent par
+`USING (can_access_team_project(...))`, un prédicat-fonction sur une colonne, qui **ne peut pas
+utiliser d'index** — donc `Seq Scan` de toute la table et une CTE récursive (`get_subtree`)
+évaluée **par ligne**. Mesuré en prod le 2026-08-14 : **≈ 60× le coût par ligne** du prédicat de
+`tasks`.
+
+```typescript
+supabase.from('team_tasks').select(...)                                // ❌ Seq Scan + CTE par ligne
+supabase.rpc('get_my_team_tasks',             { p_org: orgId })        // ✅ mig. 113
+supabase.rpc('get_my_team_projects',          { p_org: orgId })        // ✅ mig. 113
+supabase.rpc('get_my_team_task_dependencies', { p_org: orgId })        // ✅ mig. 117
+```
+
+- Le périmètre vient de `auth.uid()` seul : **`p_org` est un filtre, pas une portée.** Forger un
+  `p_org` étranger renvoie 0 ligne (les trois branches exigent l'appartenance de l'appelant).
+- Le gain tient en une phrase : `get_subtree()` est appelée **une fois par organisation** au lieu
+  d'une fois par ligne lue.
+- Les policies restent en place, inchangées (défense en profondeur). Le déploiement est donc
+  réversible sans downtime — mais la **mig. 113 doit être appliquée AVANT** de déployer le front,
+  sinon la RPC n'existe pas. **Appliquée en prod le 2026-08-24**, avant que `main` (qui appelle
+  déjà ces RPC) ne soit déployé sur Vercel.
+- Le chemin d'accès est verrouillé par test (`src/modules/team-projects/supabase.repository.test.ts`) :
+  un retour à `.from('team_tasks')` échoue en CI.
+
+> ⚠️ **Ne pas ajouter de nouvelle table entreprise sur le modèle prédicat-fonction.** Exprimer
+> l'appartenance en **jointure indexable** dans une RPC, en réutilisant `my_team_project_ids()`
+> plutôt qu'en déléguant à `team_tasks` : c'est la délégation qui a fait hériter
+> `team_task_dependencies` du coût qu'on venait d'éliminer (mig. 108, refermé par la mig. 117).
+> Détail et projections : [`docs/SCALABILITY.md`](./docs/SCALABILITY.md) §2.
+
+### ⚡ `events` : un ensemble calculé une fois, jamais une fonction par ligne (mig. 128)
+
+Troisième occurrence de la même classe, la première hors du mode entreprise. La policy de lecture
+d'`events` appelait `manages_user(user_id)`, donc une fonction **sur une colonne**, donc un appel
+par ligne examinée, chacun joignant deux fois `organization_members` puis évaluant `get_subtree`.
+
+```sql
+-- ❌ dépend de la ligne : rappelée pour chaque ligne, index inutilisable
+USING ((SELECT auth.uid()) = user_id OR (manages_user(user_id) AND NOT is_private))
+-- ✅ ne dépend PAS de la ligne : hissée en InitPlan, et devient condition d'index
+USING ((SELECT auth.uid()) = user_id
+       OR (NOT is_private AND user_id = ANY (public.my_managed_user_ids())))
+```
+
+Mesuré en prod le 2026-08-26, lecture de l'agenda d'un membre non géré : **17,19 ms → 0,61 ms**,
+et zéro ligne remontée du tas pour être rejetée ensuite (`Rows Removed by Filter: 128` → BitmapOr
+de deux Index Scan). Lire son propre agenda ne changeait rien et ne change rien : la branche
+« own » court-circuitait déjà le `OR`.
+
+- ❌ **Ne jamais faire dépendre un prédicat de policy d'un argument pris dans la ligne.** La règle
+  couvre `tasks` (085), `team_tasks` / `team_projects` (113), `team_task_dependencies` (117) et
+  maintenant `events` (128). Un helper sans argument, dont le périmètre vient de `auth.uid()`
+  seul, est évalué une fois par requête, exactement comme `(SELECT auth.uid())` depuis la 043.
+- 🔴 **Une policy réécrite « pour aller plus vite » se prouve AVANT d'être écrite.** Pour la 128 :
+  parité booléenne sur chaque couple (acteur, cible) de `organization_members`, puis égalité de
+  l'ensemble des `events.id` visibles pour **chaque** compte de `auth.users`. C'est une frontière
+  de sécurité, pas un plan d'exécution.
+- ⚠️ `manages_user` survit, redéfinie **en fonction** de `my_managed_user_ids()` : deux
+  définitions concurrentes de « qui je gère » finiraient par diverger.
+- Garde : `scripts/migration-guards.test.mjs`, vue rouge sur la régression avant d'être committée.
+
+
+---
+
+## Budget de bundle · repris de `CLAUDE.md` (déplacé le 2026-09-16)
+
+> Commentaires de la section `## Scripts` de `CLAUDE.md`, où ils étaient chargés à chaque
+> session. Déplacés ici **sans une coupe**. La racine ne garde que la commande.
+
+```bash
+npm run check:bundle        # Budget de bundle sur le build reel (CI, apres npm run build)
+                            # Plafonds EN VIGUEUR DANS LE DEPOT depuis le 2026-09-14
+                            # (commit `7134d7fe`, run CI `34846164939` vert) :
+                            # chemin critique < 323 000 o gzip (mesure 306,6 ko,
+                            # marge 5,1 %), entree < 71 000 o (mesure 66,9 ko,
+                            # marge 5,8 %). Les deux ont ETE ABAISSES, la mesure
+                            # ayant baisse de 10,1 ko des deux cotes (sonner sort
+                            # du chemin critique, cf. § Toasts).
+                            # 🔴 CES DEUX CHIFFRES ONT VECU TROIS JOURS DANS UN
+                            # ARBRE NON COMMITE. Ce fichier les annoncait comme
+                            # en vigueur pendant que `main` portait encore
+                            # 78 000 / 370 000, et une branche a ete arbitree
+                            # contre un plafond qui n'existait nulle part
+                            # (cf. C-58). Un plafond se relit dans le fichier
+                            # COMMITE, jamais dans celui qu'on vient d'editer.
+                            # ⚠️ Ils sont poses a ~5 % au-dessus du mesure, pas
+                            # a ~1,5 % comme les precedents : le critere de sortie
+                            # de C-14 exige 5 % de marge sur les DEUX budgets, et
+                            # un cliquet a 1,5 % rouvrirait l'item le jour meme.
+                            # ❌ Ne jamais remonter un plafond.
+                            # 🔴 EXIGE `VITE_SENTRY_DSN` AU BUILD. Sans elle, Vite remplace la
+                            # variable A LA COMPILATION, la branche `if (sentryDsn)` de main.tsx
+                            # devient du code mort, et Rollup jette presque tout @sentry/react :
+                            # vendor-sentry passe de 49,3 a 3,8 ko gzip. La garde sous-estimait
+                            # alors le chemin critique de ~45 ko, et annoncait 57,8 ko de marge
+                            # la ou il en restait 11,9. Elle REFUSE desormais de valider un build
+                            # dont vendor-sentry pese moins de 20 ko (`SENTRY_FLOOR`).
+                            # ⚠️ Un job qui PESE un artefact et un job qui l'EXECUTE n'ont pas
+                            # les memes besoins : un faux DSN suffit a peser, mais il fait
+                            # s'initialiser Sentry pour de bon, qui emet vers un hote inexistant
+                            # et fait tomber `best-practices` de 100 a 96 dans lighthouse.
+```
