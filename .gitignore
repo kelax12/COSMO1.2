@@ -125,3 +125,12 @@ graphify-out/
 
 # Rapports Lighthouse CI (regeneres a chaque run)
 .lighthouseci/
+
+# Sorties d outillage local : logs de vitest/playwright, copies de deploiement,
+# critiques du skill impeccable. Toutes reproductibles par une commande, aucune
+# n est une preuve : le drift des Edge Functions se mesure par `npm run check:edge`,
+# jamais en relisant une copie laissee sur le disque (elle perime en silence).
+.tmp-*
+full-run.txt
+.deploy-tmp/
+.impeccable/
