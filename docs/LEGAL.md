@@ -19,6 +19,31 @@
 
 ---
 
+
+## 🕳️ Angles morts · ce que ce document NE mesure PAS (2026-09-16)
+
+> **Pourquoi cette section existe.** Demande d'Axel, après le constat qui a ouvert la journée :
+> `CLAUDE.md` a pesé 150 ko sans qu'aucune note ne bouge, parce qu'il était **cité comme source**
+> par les audits et **jamais mesuré par eux**. Il était le mètre, jamais l'objet.
+>
+> 🔴 **Ce document n'a PAS de note, et c'est son premier angle mort.** Les onze documents notés
+> entrent dans le tableau de bord de [`README.md`](./README.md) et peuvent donc monter ou baisser.
+> Celui-ci ne le peut pas : rien ne le pèse, donc rien ne signale qu'il a vieilli. Les angles morts
+> ci-dessous ne sont **pas** des défauts du produit ; ce sont les endroits où **ce document affirme
+> sans que rien ne vérifie**.
+>
+> Chaque ligne est vérifiée par une commande, jamais supposée. Elle se **referme** ou se
+> **reconduit avec sa date**, jamais ne se recopie.
+
+| # | Angle mort | Vérifié le 2026-09-16 | Outillable ? |
+|---|---|---|---|
+| AM-1 | 🔴 **`npm run check:legal` vérifie l'ARITHMÉTIQUE du tableau, jamais la CONFORMITÉ.** Il recompte les lignes et refuse un total faux, parce que ce total l'a été trois fois dans la même journée. Mais **une ligne marquée ✅ à tort laisse la garde verte** : rien ne confronte une ligne à la réalité | en-tête de `scripts/check-legal-table.mjs` : « Garde du tableau de conformité », sur le **bloc de synthèse** | non par un script : la conformité se vérifie à la main, mais la **date** de chaque ligne peut être exigée |
+| AM-2 | **Les échéances légales ne sont surveillées par rien.** 15 lignes sont ❌ au tableau ; aucune ne porte de date butoir opposable dans un outil | tableau : ✅ 13 · 🟡 13 · ❌ 15 · ⬜ 5 | oui : une colonne « échéance » vérifiée par la garde existante |
+| AM-3 | **Rien ne relie une modification des documents contractuels à leur préavis de 30 jours.** Les CGU, la politique de confidentialité et les mentions légales vivent dans le namespace `legal` : une modification de fond est un **changement de contrat**, et le préavis de l'article 11 ne se déclenche pas tout seul | `src/locales/{fr,en}/legal.json` est un catalogue i18n ordinaire pour la CI | oui : une garde qui exige une entrée de journal à chaque modification de `legal.json` |
+| AM-4 | **Ce document n'a pas de note**, donc il ne peut ni monter ni baisser, alors qu'il porte les obligations dont le non-respect coûte le plus cher | absent du tableau de bord de [`README.md`](./README.md) | oui |
+
+---
+
 ## État des lieux au 2026-08-26
 
 | Sujet | État vérifié |

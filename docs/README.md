@@ -296,7 +296,7 @@ qui est exactement **C-77**, toujours ouvert à cette date.
 
 ---
 
-## Mise à jour du 2026-09-16 · les onze audits disent désormais ce qu'ils NE mesurent PAS
+## Mise à jour du 2026-09-16 · les 23 documents disent désormais ce qu'ils NE mesurent PAS
 
 **Contexte.** Axel, après la découpe de `CLAUDE.md` du jour : « comment ça se fait que cette
 ancienne architecture ne poussait pas à la baisse le score `ARCHITECTURE.md`, alors que
@@ -349,6 +349,9 @@ comblée, soit reconduite avec sa date.
 | T-5 | **La CONFORMITÉ est mesurée, le RÉSULTAT presque jamais.** Le SEO note 80 avec **0 clic non marqué** depuis le 2026-08-19 ; l'UI note 85 sans savoir quel écran est ouvert. Un audit peut monter pendant que rien ne se passe | notes contre GSC et Vesk | SEO, UI / UX, Mobile |
 | T-6 | **Deux gardes ne tournent JAMAIS toutes seules.** `scalability-volume.yml` et `restore-drill.yml` n'ont qu'un `workflow_dispatch` : la charge et l'épreuve de restauration ne sont jouées que si quelqu'un y pense | relevé sur les 10 workflows | Scalabilité, Sécurité |
 | T-7 | **Les advisors Supabase ne sont lus qu'à la main.** Dans `ci.yml`, le mot « advisor » désigne `npm audit`, pas les advisors de la base | aucun workflow n'interroge l'API Management | Sécurité, RGPD |
+| T-8 | 🔴 **RIEN NE COMPARE LE COMMIT DÉPLOYÉ SUR VERCEL À `main`.** C'est le défaut C-35 des Edge Functions, **côté front**, et il n'avait jamais été nommé. `check:edge` compare le code déployé des fonctions au dépôt ; **aucun équivalent n'existe pour l'application**. `uptime.yml` fait un `curl` et lit un **code HTTP**, jamais ce qui est servi | aucun workflow ne lit l'API de déploiement Vercel | Déploiement, Architecture, Sécurité |
+| T-9 | 🔴 **Les réglages du Dashboard Supabase ne sont surveillés par AUCUNE garde.** Protection des mots de passe compromis, expiration des OTP, politiques d'auth : ils vivent **hors du dépôt**, se modifient en deux clics, sans commit et sans trace. Plusieurs sont pourtant cochés ✅ dans [`POST-AUDIT-GUIDE.md`](./POST-AUDIT-GUIDE.md) : **un ✅ daté décrit un instant, pas un état** | aucun script ne les lit ; seul un commentaire contient le mot « dashboard » | Sécurité, Déploiement, RGPD |
+| T-10 | 🔴 **Douze documents de fond ne sont notés par RIEN**, dont [`SECURITY.md`](./SECURITY.md) et [`LEGAL.md`](./LEGAL.md). Seuls onze documents portent une note et entrent dans ce tableau de bord. Les autres ne peuvent ni monter ni baisser : **rien ne signale qu'ils ont vieilli**. Or `faille.md` porte les **findings** de sécurité, pas les **règles** : un finding qui se ferme fait monter la note, une règle qui se périme ne coûte rien | 11 documents notés sur 23 traités | Tous |
 
 ### Ce que chaque audit déclare maintenant ne pas mesurer
 
@@ -365,6 +368,34 @@ comblée, soit reconduite avec sa date.
 | [SEO](./SEO.md) | 80 | Rien ne relie le **sitemap** aux pages réellement prérendues |
 | [Mobile / DA](./MOBILE.md) | 78 | Un seul téléphone, un seul moteur, **aucun Android** |
 | [i18n](./I18N.md) | 90 | Les trois gates mesurent les clés et les copies, **jamais la qualité** |
+
+### Et les douze documents de fond que RIEN ne note
+
+Ils n'entrent dans aucun tableau de bord (T-10). Leur premier angle mort est donc le même pour
+tous : **rien ne les pèse, donc rien ne signale qu'ils ont vieilli.** Les suivants sont propres à
+chacun, et vérifiés.
+
+| Document | Son angle mort le plus lourd |
+|---|---|
+| [SECURITY.md](./SECURITY.md) | Les **règles** de sécurité ne sont notées nulle part · et **aucun SAST** sur un dépôt **public**, où CodeQL serait gratuit |
+| [DEPLOYMENT.md](./DEPLOYMENT.md) | T-8, rien ne compare le commit déployé à `main` · et le **rollback n'a jamais été éprouvé** |
+| [LEGAL.md](./LEGAL.md) | `check:legal` vérifie l'**arithmétique** du tableau, jamais la **conformité** : une ligne ✅ à tort laisse la garde verte |
+| [STRIPE-LIVE.md](./STRIPE-LIVE.md) | **Aucune garde ne compare la grille Stripe au code** : `org-tiers.parity.test.ts` confronte deux copies du dépôt l'une à l'autre |
+| [RGPD-REGISTRE.md](./RGPD-REGISTRE.md) | Les durées de conservation déclarées ne sont confrontées à **aucune donnée réelle** |
+| [RGPD-VIOLATION.md](./RGPD-VIOLATION.md) | La procédure n'a **jamais été éprouvée à blanc**, et le délai de 72 h court à partir d'une **détection** que rien ne mesure |
+| [POST-AUDIT-GUIDE.md](./POST-AUDIT-GUIDE.md) | T-9, les points ✅ sont des réglages de dashboard qui se désactivent sans trace |
+| [MIGRATION-REACT19.md](./MIGRATION-REACT19.md) | Une **étude périme** : écrite le 2026-09-03 contre les versions de ce jour-là, rien ne signale qu'une majeure a bougé |
+| [ACQUISITION.md](./ACQUISITION.md) | Chiffres du 2026-08-14 jamais rejoués · et les comptes de **test** ne sont retranchés d'aucune statistique (mig. `149` non appliquée) |
+| [ACQUISITION-BACKLINKS.md](./ACQUISITION-BACKLINKS.md) | Aucun suivi des backlinks **perdus**, alors que c'est le seul levier déclaré débloquant |
+| [AUDIT-VOICEOVER-IOS.md](./AUDIT-VOICEOVER-IOS.md) | 🔴 **Il EST un angle mort** : « rien dans ce fichier n'est coché », et son absence ne fait baisser aucune note |
+| [SUPPORT.md](./SUPPORT.md) | Aucune mesure du support : ni volume, ni délai de réponse · et **la réception** de l'adresse publiée n'est testée par rien |
+
+⚠️ **Quatre documents sont volontairement laissés de côté** : `COSMO-CLI.md` et
+`AGENT-AJOUTER-TACHE.md` (modes d'emploi d'un outil), `DEMO-DATA-EXPORT.md` (un export généré pour
+revue) et `ROADMAP-60J.md` (un plan). Les backlogs (`a-faire-*.md`, `prompts-*.md`) et les
+`CLAUDE.md` non plus : les premiers sont des listes de tâches, les seconds sont des règles déjà
+plafonnées par `check:docs`. **Y coller une section « angles morts » en ferait le rituel contre
+lequel cette passe met en garde.**
 
 ⚠️ **Aucune note n'est modifiée par cette passe, et c'est délibéré.** Nommer un angle mort n'est
 pas le mesurer : on ne sait pas encore ce que chacun coûte. Les noter reviendrait à refaire
