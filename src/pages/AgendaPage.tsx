@@ -16,7 +16,7 @@ import PageTutorial from '@/components/tutorial/PageTutorial';
 import { useTutorial } from '@/components/tutorial/useTutorial';
 import { agendaTutorialStepsDesktop } from '@/tutorials/agenda.desktop';
 import { agendaTutorialStepsMobile } from '@/tutorials/agenda.mobile';
-import { buildCalendarEvents, defaultEventsWindow, bufferedWindow, taskEventDurationMinutes } from './agenda/calendar-events';
+import { buildCalendarEvents, defaultEventsWindow, bufferedWindow, resolveDraggedTaskEventData, type DraggedTaskData } from './agenda/calendar-events';
 import { useTimezonePref, fromDisplayISO } from '@/lib/timezone';
 import SlotReviewMenu from './agenda/SlotReviewMenu';
 import SlotReviewPanel from './agenda/SlotReviewPanel';
@@ -167,42 +167,12 @@ const AgendaPage: React.FC = () => {
           // au lieu de démarrer un drag → permet de scroller sans sélectionner
           // une tâche sur mobile (combiné à touch-action: pan-y sur les cartes).
           longPressDelay: 250,
+          // Tâche d'équipe (TaskSidebar, item 4) : couleur/nom de catégorie
+          // déjà résolus par l'appelant dans le payload — voir
+          // `resolveDraggedTaskEventData` (agenda/calendar-events.ts).
           eventData: function (eventEl) {
-            const taskData = JSON.parse(eventEl.getAttribute('data-task') || '{}');
-            // Tâche d'équipe (TaskSidebar, item 4) : couleur/nom de catégorie
-            // déjà résolus par l'appelant (il connaît `team_categories`, ce
-            // composant ne les connaît pas) — sinon repli sur la résolution
-            // perso habituelle.
-            const isTeamTask = taskData.source === 'pro';
-            const catColor = isTeamTask
-              ? (taskData.categoryColor || '#6B7280')
-              : (categoriesRef.current.find(cat => cat.id === taskData.category)?.color || '#6B7280');
-            const catName = isTeamTask
-              ? (taskData.categoryName || tRef.current('event.uncategorized'))
-              : (categoriesRef.current.find(c => c.id === taskData.category)?.name || tRef.current('event.uncategorized'));
-            return {
-              title: taskData.name,
-              // Garde anti-aperçu-invisible : une tâche sans durée estimée
-              // (estimatedTime = 0, défaut du formulaire) donnerait duration:0 →
-              // mirror FullCalendar de hauteur nulle. On retombe sur 60 min.
-              duration: { minutes: taskEventDurationMinutes(taskData.estimatedTime) },
-              backgroundColor: catColor,
-              borderColor: catColor,
-              textColor: '#ffffff',
-              extendedProps: {
-                // 🔴 `taskId` reste UNDEFINED pour une tâche d'équipe :
-                // `events.task_id` référence `tasks` (perso) par clé étrangère
-                // (migration 004), jamais `team_tasks` — la définir ferait
-                // échouer l'écriture. `handleEventReceive`
-                // (useCalendarGridGestures.ts) s'appuie sur cette absence.
-                taskId: isTeamTask ? undefined : taskData.id,
-                isTeamTask,
-                priority: taskData.priority,
-                category: taskData.category,
-                estimatedTime: taskData.estimatedTime,
-                categoryName: catName,
-              },
-            };
+            const taskData: DraggedTaskData = JSON.parse(eventEl.getAttribute('data-task') || '{}');
+            return resolveDraggedTaskEventData(taskData, categoriesRef.current, tRef.current('event.uncategorized'));
           },
         });
       }
