@@ -77,7 +77,7 @@ sans écran, **écrites en dur en français** hors des catalogues i18n.
   **reste appliquée**. Un `initial={{ y: 120 }} animate={{ y: 0 }}` sur un élément `fixed` le
   laisse 120 px trop bas, définitivement. Mesuré le 2026-08-14 sur `CookieBanner` et
   `DemoBridgePrompt` : leur CTA sortait de l'écran. La position vient du CSS, l'animation ne
-  porte que sur l'opacité. Détail : [`docs/MOBILE.md`](./docs/MOBILE.md).
+  porte que sur l'opacité. Détail : [`docs/MOBILE.md`](../../docs/MOBILE.md).
 - ⚠️ `prefers-reduced-motion` est **actif sur la machine d'Axel** : si une animation « ne
   s'affiche pas », vérifier ce réglage avant de suspecter le code.
 

@@ -37,7 +37,8 @@
     "images:check": "node scripts/optimize-images.mjs --check",
     "check:legal": "node scripts/check-legal-table.mjs",
     "check:mail": "node scripts/check-auth-email.mjs",
-    "check:edge": "node scripts/check-edge-deploy.mjs"
+    "check:edge": "node scripts/check-edge-deploy.mjs",
+    "check:docs": "node scripts/check-docs-budget.mjs"
   },
   "dependencies": {
     "@fullcalendar/core": "^6.1.10",

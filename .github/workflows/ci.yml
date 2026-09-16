@@ -55,6 +55,9 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: Budget des CLAUDE.md
+        run: npm run check:docs
+
       - name: Type-check (tsc -b)
         run: npx tsc -b
 
@@ -157,16 +160,38 @@ jobs:
           node-version: '22'
           cache: 'npm'
       - run: npm ci
-      - name: Install Playwright Chromium
-        run: npx playwright install --with-deps chromium
+      - name: Install Playwright Chromium + WebKit
+        run: npx playwright install --with-deps chromium webkit
       # 🔴 `supabase-stub` DOIT figurer ici. Il utilise Desktop Chrome, donc
       # l'installation ci-dessus suffit, et il porte les parcours qui ne sont
       # PAS atteignables en mode démo (`FirstRunSetup`, retour OAuth) : le
       # laisser hors de la CI reviendrait à poser sur `main` des gardes qui ne
       # tournent nulle part — la faute que ce dépôt s'est déjà faite deux fois.
-      # `mobile-safari` reste hors CI (WebKit, ~1 min d'installation en plus).
-      - name: Run E2E (Chromium + supabase-stub)
-        run: npx playwright test --project=chromium --project=supabase-stub
+      #
+      # 🔴 `mobile-safari` A REJOINT CETTE LIGNE LE 2026-09-15 (C-78), et il y
+      # manquait depuis la CRÉATION de ce job, le 2026-06-06 (`a163c2b3`). Le
+      # project, lui, existe depuis le 2026-05-21 : **trois mois sans jamais
+      # tourner**, soit 96 cas sur 220 joués par aucun des neuf workflows.
+      #
+      # Ce qui était sans filet : les feuilles mobiles, les gestes tactiles,
+      # `reduced-motion-sheets`, les cibles tactiles WCAG et les deux suites
+      # d'accessibilité au clavier. Donc tout le périmètre iOS Safari, et le
+      # moteur sur lequel tourne VoiceOver.
+      #
+      # ⚠️ Le motif de l'exclusion (« WebKit, ~1 min d'installation en plus »)
+      # était écrit TROIS LIGNES sous la règle inverse, posée pour
+      # `supabase-stub` dans le même diff. Le raisonnement juste et son
+      # exception ont vécu côte à côte pendant dix jours.
+      #
+      # ⚠️ L'ordre des `--project` compte : `workers: 1` et
+      # `fullyParallel: false` les jouent l'un après l'autre, donc `chromium`
+      # chauffe le serveur du port 3000 avant que WebKit n'y touche. Le project
+      # `mobile-safari-warmup` rend ce bénéfice explicite au lieu de le faire
+      # dépendre de l'ordre.
+      - name: Run E2E (Chromium + supabase-stub + mobile-safari)
+        run: >-
+          npx playwright test
+          --project=chromium --project=supabase-stub --project=mobile-safari
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
