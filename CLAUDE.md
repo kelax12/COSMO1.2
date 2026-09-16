@@ -170,6 +170,7 @@ npm run check:bundle        # Budget de bundle (CI)               → docs/PERFO
 npm run check:mail          # SPF / DKIM / DMARC (pas une gate)   → docs/DEPLOYMENT.md
 npm run check:legal         # Tableau de conformité               → docs/LEGAL.md
 npm run check:docs          # Plafonds des CLAUDE.md (CI)         → scripts/CLAUDE.md
+npm run check:deploy        # Commit SERVI en prod vs depot (CI)   → docs/DEPLOYMENT.md
 npm run i18n:check          # Parité des clés fr ↔ en (CI)        → docs/I18N.md
 npm run i18n:scan           # Chaînes en dur, cliquet à 0 (CI)    → docs/I18N.md
 npm run i18n:identical      # Valeurs en == fr, cliquet à 0 (CI)  → docs/I18N.md

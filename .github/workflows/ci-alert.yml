@@ -29,7 +29,7 @@ name: CI alert
 
 on:
   workflow_run:
-    workflows: [CI, Vendor script watch, Edge deploy drift, Migration coverage]
+    workflows: [CI, Vendor script watch, Edge deploy drift, Migration coverage, Deploy SHA drift]
     types: [completed]
   # Exercice à blanc du canal d'alerte, sans casser une garde pour le tester.
   workflow_dispatch:
