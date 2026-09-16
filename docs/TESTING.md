@@ -2,6 +2,31 @@
 
 ## Note de tests / CI : 80 → 83 → 88 → 89 → 93 → 94 → 95 → 97 → 94 → **95 / 100** (2026-08-24 → 2026-08-25 soir → 2026-08-27 soir → 2026-08-29 → 2026-09-02 → 2026-09-03 → 2026-09-14 → 2026-09-14 soir → 2026-09-15)
 
+### 🕳️ Angles morts · ce que cet audit NE mesure PAS (2026-09-16)
+
+> **Pourquoi cette section existe.** Cette note est justifiée par des points **nommés** (« ce qui
+> retient à N », suivi d'une liste). Une note construite ainsi ne peut baisser que sur un défaut
+> que quelqu'un a d'abord nommé : **un angle mort ne pèse rien tant qu'il reste anonyme**, et ce
+> n'est pas un oubli d'auditeur, c'est une propriété de la méthode de notation.
+>
+> Le prototype du problème est daté : `CLAUDE.md` a pesé 150 ko et ~43 000 tokens sans qu'aucune
+> note ne bouge, alors qu'il est cité **13 fois** dans [`ARCHITECTURE.md`](./ARCHITECTURE.md), dont **9**
+> dans la seule colonne « Où il est écrit » du tableau des invariants, et **jamais** dans ce
+> qui est mesuré. Il était le mètre,
+> jamais l'objet.
+>
+> Ces lignes entrent donc **dans ce qui est mesuré**. La prochaine passe les traite comme les
+> invariants ci-dessus : chacune est soit comblée, soit reconduite avec sa date.
+
+| # | Angle mort | Vérifié le 2026-09-16 | Outillable ? |
+|---|---|---|---|
+| AM-1 | 🔴 **Les 36 témoins ne sont jamais rejoués.** Ce dépôt a une culture du témoin remarquable : chaque garde arrive avec un fichier `*.guard.test.*` **vu rouge sur des sabotages**. Mais ce sabotage est **manuel et unique**, joué le jour de sa création. Rien ne vérifie qu'un témoin détecte **encore** | `git ls-files` rend **36** fichiers `*.guard.test.{ts,tsx,mjs}`. **Aucun mutation testing** : ni `stryker`, ni équivalent, dans `package.json` ni dans un workflow | oui : Stryker sur `scripts/**` et les gardes, ou un job qui rejoue N sabotages connus |
+| AM-2 | **La couverture ne porte que sur `src/**`.** En sont donc absents : `scripts/**` (les gardes elles-mêmes, c'est-à-dire le code qui décide si la CI est verte) et `supabase/functions/**` (le code qui déplace de l'argent) | `vitest.config.ts` : `include: ['src/**/*.{ts,tsx}']`. Les seuils par fichier ne visent que `src/` | oui : étendre `include`, avec des seuils propres |
+| AM-3 | **Un taux de couverture ne dit rien de la force des assertions.** Une ligne exécutée par un test qui n'assure rien compte comme couverte | par construction de la couverture v8 | AM-1 y répond en partie : la mutation mesure ce que la couverture ne voit pas |
+| AM-4 | **Les 105 cas `mobile-safari` ne tournent dans aucun workflow** (item `C-78`, déjà nommé le 2026-09-14, **toujours ouvert**) | `git show HEAD:.github/workflows/ci.yml` lance `--project=chromium --project=supabase-stub` | oui, et le correctif est écrit mais non commité |
+| AM-5 | **Aucune garde ne relie un test à sa raison d'être.** Un test supprimé avec le code qu'il gardait ne laisse aucune trace : le total baisse, et un total qui baisse ne fait échouer aucun job | il n'existe pas de plancher sur le nombre de fichiers ni de cas | oui : un plancher à cliquet, comme les budgets |
+
+
 > ### 🟡 2026-09-15 · +1 sur les 3 retirés, et le reste attend d'être COMMITÉ
 >
 > **Ce qui revient, et c'est mesuré** : la boucle de `e2e/touch-targets.spec.ts` passe de 8 à

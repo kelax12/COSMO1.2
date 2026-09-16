@@ -15,6 +15,31 @@ cause n'est pas dans le dépôt.
 
 ## Note SEO : 73 → 73 → 75 → **80 / 100** (2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-14) · inchangée au 2026-09-03, **VÉRIFIÉE inchangée le 2026-09-14 au soir**
 
+### 🕳️ Angles morts · ce que cet audit NE mesure PAS (2026-09-16)
+
+> **Pourquoi cette section existe.** Cette note est justifiée par des points **nommés** (« ce qui
+> retient à N », suivi d'une liste). Une note construite ainsi ne peut baisser que sur un défaut
+> que quelqu'un a d'abord nommé : **un angle mort ne pèse rien tant qu'il reste anonyme**, et ce
+> n'est pas un oubli d'auditeur, c'est une propriété de la méthode de notation.
+>
+> Le prototype du problème est daté : `CLAUDE.md` a pesé 150 ko et ~43 000 tokens sans qu'aucune
+> note ne bouge, alors qu'il est cité **13 fois** dans [`ARCHITECTURE.md`](./ARCHITECTURE.md), dont **9**
+> dans la seule colonne « Où il est écrit » du tableau des invariants, et **jamais** dans ce
+> qui est mesuré. Il était le mètre,
+> jamais l'objet.
+>
+> Ces lignes entrent donc **dans ce qui est mesuré**. La prochaine passe les traite comme les
+> invariants ci-dessus : chacune est soit comblée, soit reconduite avec sa date.
+
+| # | Angle mort | Vérifié le 2026-09-16 | Outillable ? |
+|---|---|---|---|
+| AM-1 | **Lighthouse note le SEO de 4 URLs sur les 45 du sitemap** | `lighthouserc.json` vs `dist/sitemap.xml` (**45** `<loc>`) | oui, au prix du temps de job |
+| AM-2 | 🔴 **Rien ne relie le SITEMAP aux pages réellement prérendues.** Une route ajoutée à l'un sans l'autre ne fait échouer aucun job, et les 10 pages prérendues hors sitemap ont dû être expliquées à la main le 2026-09-14 | aucun script ne compare `dist/sitemap.xml` à la sortie de `prerender.mjs` | oui, et c'est peu coûteux |
+| AM-3 | **Aucune garde sur les balises par page.** `title`, `description`, `canonical` et `hreflang` sont vérifiés lors des passes manuelles, pas en CI (Lighthouse n'en voit que 4) | 40 `hreflang` recomptés à la main le 2026-09-14 | oui : une garde sur `dist/**/*.html` |
+| AM-4 | **Le résultat n'est pas mesuré, seulement la conformité.** Position, impressions et clics viennent de la Search Console, à la main. Un audit peut donc monter pendant que le trafic reste nul, ce qui est l'état constaté depuis le 2026-08-19 | note 80 et 0 clic non marqué coexistent | partiellement : l'API GSC |
+| AM-5 | **`robots.txt` et les `noindex` ne sont vérifiés qu'au moment où on ouvre une locale.** Entre deux passes, rien ne signale un `Disallow` devenu trop large | aucune garde | oui |
+
+
 > ### ⚪ 2026-09-14 (soir) · 0 : l'infrastructure tient, et le seul chiffre de RÉSULTAT disponible est mauvais
 >
 > **Rejoué sur un build neuf de ce soir**, et complété par ce que l'entrée du matin n'avait pas

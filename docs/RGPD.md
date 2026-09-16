@@ -6,6 +6,30 @@ traitée par fragments dans les audits sécurité. Mesuré sur le schéma de pro
 
 ## Note RGPD : 78 → 84 → 86 → **87 / 100** (2026-08-24 → 2026-08-25 → 2026-08-29 → 2026-09-14) · inchangée aux 2026-08-27, 2026-09-02 et 2026-09-03, **VÉRIFIÉE inchangée le 2026-09-14 au soir**
 
+### 🕳️ Angles morts · ce que cet audit NE mesure PAS (2026-09-16)
+
+> **Pourquoi cette section existe.** Cette note est justifiée par des points **nommés** (« ce qui
+> retient à N », suivi d'une liste). Une note construite ainsi ne peut baisser que sur un défaut
+> que quelqu'un a d'abord nommé : **un angle mort ne pèse rien tant qu'il reste anonyme**, et ce
+> n'est pas un oubli d'auditeur, c'est une propriété de la méthode de notation.
+>
+> Le prototype du problème est daté : `CLAUDE.md` a pesé 150 ko et ~43 000 tokens sans qu'aucune
+> note ne bouge, alors qu'il est cité **13 fois** dans [`ARCHITECTURE.md`](./ARCHITECTURE.md), dont **9**
+> dans la seule colonne « Où il est écrit » du tableau des invariants, et **jamais** dans ce
+> qui est mesuré. Il était le mètre,
+> jamais l'objet.
+>
+> Ces lignes entrent donc **dans ce qui est mesuré**. La prochaine passe les traite comme les
+> invariants ci-dessus : chacune est soit comblée, soit reconduite avec sa date.
+
+| # | Angle mort | Vérifié le 2026-09-16 | Outillable ? |
+|---|---|---|---|
+| AM-1 | 🔴 **La garde d'effacement s'appuie sur une LISTE EN DUR.** `SYMMETRIC_TABLES` est écrite à la main dans le test : une table symétrique ajoutée demain n'y entre pas toute seule, et la garde reste verte | `src/rgpd-erasure.guard.test.ts:42` : `const SYMMETRIC_TABLES: Record<string, [string, string]> = {` | oui : dériver la liste du schéma (`information_schema`) plutôt que de l'écrire |
+| AM-2 | **Rien ne relie une NOUVELLE table portant `user_id` à `delete-account`.** Une migration peut créer une table de données personnelles sans qu'aucun job ne demande ce qu'il advient de ces lignes à la suppression du compte | ni `validate:migrations` ni `check:rls` ne testent ce lien | oui, et c'est le complément naturel d'AM-1 |
+| AM-3 | **Les DURÉES de rétention ne sont vérifiées par rien.** Le registre art. 30 en annonce pour dix traitements ; aucune mesure ne confronte ces durées aux données réellement présentes | [`RGPD-REGISTRE.md`](./RGPD-REGISTRE.md) les déclare, aucun script ne les contrôle | oui : une requête planifiée par traitement |
+| AM-4 | **L'export de portabilité (art. 20) n'est comparé à aucun inventaire.** Une colonne ajoutée à une table exportée n'entre pas dans l'export, et rien ne le signale | aucune garde ne confronte l'export au schéma | oui |
+
+
 > ### ⚪ 2026-09-14 (soir) · 0 : la sémantique d'effacement est relue EN BASE, une omission d'inventaire apparaît
 >
 > L'entrée de ce matin vérifiait que le code d'effacement **déployé** est celui du dépôt. Ce soir,

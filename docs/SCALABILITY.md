@@ -11,6 +11,30 @@ Toutes les mesures de ce document sont **reproductibles** : les requêtes sont e
 
 ## Note de scalabilité : 71 → 84 → 86 → 89 → **91 / 100** (2026-08-24 → 2026-08-25 → 2026-08-29 → 2026-09-03 → 2026-09-08) · inchangée au 2026-08-27, et au 2026-09-14 (soir) où l'invariant a été REVÉRIFIÉ en production
 
+### 🕳️ Angles morts · ce que cet audit NE mesure PAS (2026-09-16)
+
+> **Pourquoi cette section existe.** Cette note est justifiée par des points **nommés** (« ce qui
+> retient à N », suivi d'une liste). Une note construite ainsi ne peut baisser que sur un défaut
+> que quelqu'un a d'abord nommé : **un angle mort ne pèse rien tant qu'il reste anonyme**, et ce
+> n'est pas un oubli d'auditeur, c'est une propriété de la méthode de notation.
+>
+> Le prototype du problème est daté : `CLAUDE.md` a pesé 150 ko et ~43 000 tokens sans qu'aucune
+> note ne bouge, alors qu'il est cité **13 fois** dans [`ARCHITECTURE.md`](./ARCHITECTURE.md), dont **9**
+> dans la seule colonne « Où il est écrit » du tableau des invariants, et **jamais** dans ce
+> qui est mesuré. Il était le mètre,
+> jamais l'objet.
+>
+> Ces lignes entrent donc **dans ce qui est mesuré**. La prochaine passe les traite comme les
+> invariants ci-dessus : chacune est soit comblée, soit reconduite avec sa date.
+
+| # | Angle mort | Vérifié le 2026-09-16 | Outillable ? |
+|---|---|---|---|
+| AM-1 | 🔴 **La garde de charge n'est JAMAIS jouée automatiquement.** `scalability-volume.yml` n'a qu'un déclencheur `workflow_dispatch` : elle ne tourne que si quelqu'un y pense | relevé sur les 10 workflows : `scalability-volume.yml` et `restore-drill.yml` sont les deux seuls sans `schedule` ni `push` | oui : un `schedule`, même mensuel |
+| AM-2 | **Les invariants de coût de lecture ne sont vérifiés qu'à la main.** Le `Seq Scan` de `tasks` est reconstaté à chaque passe, jamais surveillé entre deux | aucun workflow ne joue d'`EXPLAIN` contre la production | partiellement |
+| AM-3 | **Aucune alerte sur la CROISSANCE.** Le dépôt sait dire « combien coûte une lecture aujourd'hui », jamais « à quelle vitesse ce coût monte ». Les volumes sont recomptés ponctuellement (749 tâches, 54 abonnements) | aucune série temporelle stockée | oui : un job planifié qui écrit les compteurs |
+| AM-4 | **Le plan Supabase est `free`, et rien ne surveille son changement d'état** (pause pour inactivité, quotas) | `plan: "free"` relu par l'API le 2026-09-15. `uptime.yml` teste la réponse HTTP, pas les quotas | oui |
+
+
 > ### 🟢 2026-09-14 (soir) · note inchangée, mais le « non remesurable ici » de ce matin était trop large
 >
 > L'entrée du 09-14 (matin, conservée ci-dessous) conclut que rien n'est mesurable depuis ce poste
