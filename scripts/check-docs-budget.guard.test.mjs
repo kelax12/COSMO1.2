@@ -25,6 +25,9 @@ import { tmpdir } from 'node:os'
 
 const SCRIPT = resolve(process.cwd(), 'scripts/check-docs-budget.mjs')
 
+/** Retour a la ligne, pour garder les fixtures lisibles sur une ligne. */
+const NL = String.fromCharCode(10)
+
 let dir
 
 beforeEach(() => {
@@ -62,7 +65,7 @@ describe('check-docs-budget · le cliquet des CLAUDE.md', () => {
     arbreSain()
     const { code, out } = run()
     expect(code, out).toBe(0)
-    expect(out).toMatch(/2 CLAUDE\.md verifie/)
+    expect(out).toMatch(/2 CLAUDE\.md \+ \d+ doc/)
   })
 
   it('compte REELLEMENT les fichiers : un CLAUDE.md de plus se voit dans le verdict', () => {
@@ -73,7 +76,7 @@ describe('check-docs-budget · le cliquet des CLAUDE.md', () => {
     expect(code, out).toBe(0)
     // Un script qui rendrait un total fige, ou qui aurait cesse de parcourir
     // l arbre, resterait bloque sur « 2 ».
-    expect(out).toMatch(/3 CLAUDE\.md verifie/)
+    expect(out).toMatch(/3 CLAUDE\.md \+ \d+ doc/)
   })
 
   // ─── LES PLAFONDS ─────────────────────────────────────────────────
@@ -156,7 +159,29 @@ describe('check-docs-budget · le cliquet des CLAUDE.md', () => {
     put('node_modules/paquet/CLAUDE.md', `# Dependance\n${'n'.repeat(40_000)}`)
     const { code, out } = run()
     expect(code, out).toBe(0)
-    expect(out).toMatch(/2 CLAUDE\.md verifie/)
+    expect(out).toMatch(/2 CLAUDE\.md \+ \d+ doc/)
+  })
+
+  it('ROUGE quand un doc VIVANT de `docs/` porte un lien mort', () => {
+    // Ajoute le 2026-09-16 : la decoupe de CLAUDE.md a produit SIX liens
+    // morts d'un coup, des chemins ecrits pour la racine (`./docs/X.md`)
+    // recopies dans `docs/`, ou ils visent `docs/docs/`. Trouves a la main,
+    // donc ils seraient revenus.
+    arbreSain()
+    put('docs/SECURITY.md', '# Securite' + NL + NL + 'Voir [`a-faire-code.md`](./a-faire-code.md).' + NL)
+    const { code, out } = run()
+    expect(code, out).toBe(1)
+    expect(out).toMatch(/docs\/SECURITY\.md pointe vers \.\/a-faire-code\.md/)
+  })
+
+  it('IGNORE les liens morts de `docs/archive/`, qui n est pas maintenu', () => {
+    // Le depot interdit deja de lire une archive comme un etat courant : un
+    // lien mort y est une trace d'epoque, pas une regression. Sans ce cas,
+    // la garde rougirait sur 27 instantanes dates et finirait desarmee.
+    arbreSain()
+    put('docs/archive/AUDIT-2026-01-01.md', '# Vieil audit' + NL + NL + '[parti](./DISPARU.md)' + NL)
+    const { code, out } = run()
+    expect(code, out).toBe(0)
   })
 
   it('ROUGE si le CLAUDE.md racine disparait', () => {

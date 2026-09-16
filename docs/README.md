@@ -355,19 +355,41 @@ comblée, soit reconduite avec sa date.
 
 ### Ce que chaque audit déclare maintenant ne pas mesurer
 
-| Audit | Note inchangée | Son angle mort le plus lourd |
-|---|---|---|
-| [Architecture](./ARCHITECTURE.md) | 90 | Le référentiel lui-même n'était mesuré par rien (**comblé ce jour** par `check:docs`) |
-| [Tests / CI](./TESTING.md) | 95 | T-1, les 36 témoins jamais rejoués |
-| [Performance](./PERFORMANCE.md) | 95 | T-4, aucune mesure de perf **mobile** en continu |
-| [Scalabilité](./SCALABILITY.md) | 91 | T-6, la garde de charge n'est jamais jouée automatiquement |
-| [Sécurité](../faille.md) | 88 | T-7, les advisors Supabase lus à la main · et aucun SAST sur un dépôt **public** |
-| [RGPD](./RGPD.md) | 87 | T-2, la garde d'effacement lit une liste en dur, jamais le schéma |
-| [UI / UX](./UI-PATTERNS.md) | 85 | Aucune garde de régression **visuelle** en CI |
-| [Accessibilité](./ACCESSIBILITY.md) | 82 | axe ne couvre qu'une partie de WCAG, et 10 surfaces modales sur 53 sont mesurées |
-| [SEO](./SEO.md) | 80 | Rien ne relie le **sitemap** aux pages réellement prérendues |
-| [Mobile / DA](./MOBILE.md) | 78 | Un seul téléphone, un seul moteur, **aucun Android** |
-| [i18n](./I18N.md) | 90 | Les trois gates mesurent les clés et les copies, **jamais la qualité** |
+| Audit | Avant | **09-16** | Δ | Son angle mort le plus lourd |
+|---|---|---|---|---|
+| [Architecture](./ARCHITECTURE.md) | 90 | **89** | −1 | Le référentiel lui-même n'était mesuré par rien. **Seul audit à encaisser deux `+1`** : `check:docs` et `check:deploy`, posés le jour même |
+| [Tests / CI](./TESTING.md) | 95 | **91** | −4 | T-1, les **36 témoins jamais rejoués**, aucun mutation testing |
+| [Performance](./PERFORMANCE.md) | 95 | **90** | −5 | T-4, aucune mesure de perf **mobile** en continu |
+| [Scalabilité](./SCALABILITY.md) | 91 | **87** | −4 | T-6, la garde de charge n'est jamais jouée automatiquement |
+| [Sécurité](../faille.md) | 88 | **83** | −5 | T-7, advisors Supabase lus à la main · et aucun SAST sur un dépôt **public** |
+| [RGPD](./RGPD.md) | 87 | **82** | −5 | T-2, la garde d'effacement lit une liste en dur, jamais le schéma |
+| [UI / UX](./UI-PATTERNS.md) | 85 | **81** | −4 | Aucune garde de régression **visuelle** en CI |
+| [Accessibilité](./ACCESSIBILITY.md) | 84 | **80** | −4 | axe ne couvre qu'une partie de WCAG, 10 surfaces modales mesurées sur 53, aucun lecteur d'écran |
+| [SEO](./SEO.md) | 80 | **75** | −5 | Rien ne relie le **sitemap** aux pages réellement prérendues |
+| [Mobile / DA](./MOBILE.md) | 78 | **73** | −5 | Un seul téléphone, un seul moteur, **aucun Android** |
+| [i18n](./I18N.md) | 90 | **86** | −4 | Les trois gates mesurent les clés et les copies, **jamais la qualité** |
+
+**Bilan : −46 points sur onze audits, dont +2 rendus par les deux gardes posées le jour même.**
+
+🔴 **Aucune de ces baisses ne vient d'une régression.** Rien n'a cassé depuis le 2026-09-14 :
+ces angles morts existaient tous pendant que les notes montaient. Une note qui ne compte que ce que
+les gardes regardent **surévalue par construction**, et onze notes étaient dans ce cas. C'est le
+même constat que le 2026-09-14 (−8 net), poussé d'un cran : ce jour-là on avait mesuré **ailleurs
+que là où les gardes pointent** ; ici on compte **ce qu'aucune garde ne regarde**.
+
+**Barème, identique pour les onze et déclaré dans chaque document** : −2 pour un angle mort
+structurel de portée large, −1 pour un angle mort réel mais limité, 0 pour un arbitrage assumé ou
+déjà payé dans une passe antérieure, **+1** pour un angle mort comblé le jour même avec garde
+**et** témoin. Le détail ligne par ligne est en tête de chaque audit, pour être contesté.
+
+🔴 **Une note baisse UNE FOIS, quand l'angle mort est nommé ; elle remonte quand il est
+outillé.** Sans cette règle, nommer un angle mort deviendrait punitif et cette passe serait la
+dernière à en chercher. Un angle mort reconduit sans être comblé ne re-coûte rien : **il est déjà
+payé.**
+
+⚠️ **Les douze documents sans note ne sont PAS notés par cette passe** (T-10). Leur donner une note
+demanderait d'auditer leur domaine, ce qui n'a pas été fait : en inventer une reviendrait à
+créditer ou débiter une mesure qu'on n'a pas prise, exactement l'erreur que ce tableau corrige.
 
 ### Et les douze documents de fond que RIEN ne note
 
@@ -1023,7 +1045,7 @@ Guide de travail dans ce dépôt. **Vérifié dans le code ET contre la producti
 soir** : passe d'audit complète des onze domaines, gardes rejouées, base interrogée (ledger,
 advisors, plans d'exécution, versions d'Edge Functions), production sondée en HTTP et sur WebKit /
 iPhone. **Cinq notes baissent, une monte, et dix angles morts en sortent** : le tableau et les
-preuves sont dans [`docs/README.md`](./docs/README.md) § « Mise à jour du 2026-09-14 (soir) ».
+preuves sont dans [§ Mise à jour du 2026-09-14 (soir)](#mise-à-jour-du-2026-09-14-soir--passe-complète--onze-domaines-aucun---dix-angles-morts).
 Passes antérieures conservées à leur date (2026-08-24 contre la prod, 2026-09-03 sur le code seul).
 
 🔴 **Le défaut le plus coûteux trouvé ce soir n'est pas dans ce fichier, il est en
