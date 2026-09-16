@@ -22,6 +22,31 @@ Légende : 🔴 bloquant · 🟠 important · 🟡 à planifier · ✅ corrigé
 
 ## Note de sécurité : 82 → 86 → 84 → 86 → **88 / 100** (2026-08-24 → 2026-09-02 → 2026-09-03 → 2026-09-14) · **VÉRIFIÉE inchangée le 2026-09-14 au soir**
 
+### 🕳️ Angles morts · ce que cet audit NE mesure PAS (2026-09-16)
+
+> **Pourquoi cette section existe.** Cette note est justifiée par des points **nommés** (« ce qui
+> retient à N », suivi d'une liste). Une note construite ainsi ne peut baisser que sur un défaut
+> que quelqu'un a d'abord nommé : **un angle mort ne pèse rien tant qu'il reste anonyme**, et ce
+> n'est pas un oubli d'auditeur, c'est une propriété de la méthode de notation.
+>
+> Le prototype du problème est daté : `CLAUDE.md` a pesé 150 ko et ~43 000 tokens sans qu'aucune
+> note ne bouge, alors qu'il est cité **13 fois** dans [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md), dont **9**
+> dans la seule colonne « Où il est écrit » du tableau des invariants, et **jamais** dans ce
+> qui est mesuré. Il était le mètre,
+> jamais l'objet.
+>
+> Ces lignes entrent donc **dans ce qui est mesuré**. La prochaine passe les traite comme les
+> invariants ci-dessus : chacune est soit comblée, soit reconduite avec sa date.
+
+| # | Angle mort | Vérifié le 2026-09-16 | Outillable ? |
+|---|---|---|---|
+| AM-1 | 🔴 **Les advisors Supabase ne sont lus qu'à LA MAIN.** Ils sont la seule source qui voit une policy manquante ou une fonction `SECURITY DEFINER` exposée après coup, et aucun workflow ne les interroge | le mot « advisor » dans `ci.yml` désigne **`npm audit`**, pas les advisors de la base. `9 / 52 / 2 / 1` au 2026-09-14, relevé manuellement | oui : un job planifié via l'API Management, branché sur `ci-alert.yml` |
+| AM-2 | **`check:edge` compare le CODE déployé, jamais le COMPORTEMENT.** Une fonction identique au dépôt mais dont un **secret** a changé de valeur, ou dont une dépendance distante a bougé, rend la garde verte | `scripts/check-edge-deploy.mjs` compare des sources | partiellement : une sonde de fumée par fonction |
+| AM-3 | **`npm audit` ne couvre que les dépendances de PRODUCTION** (`--omit=dev`). Une vulnérabilité dans la chaîne de build n'est vue par rien | `ci.yml:148` : `npm audit --omit=dev --audit-level=high` | arbitrage assumé et documenté, mais c'est un angle mort |
+| AM-4 | **Aucune analyse statique de sécurité (SAST) sur le code du dépôt.** Les gardes existantes vérifient des invariants nommés, jamais des motifs inconnus | aucun CodeQL, Semgrep ou équivalent dans `.github/workflows/` | oui : CodeQL est gratuit sur un dépôt public, et celui-ci l'est |
+| AM-5 | **Les 36 témoins ne sont jamais rejoués** (cf. [`docs/TESTING.md`](./docs/TESTING.md) AM-1). Plusieurs gardent des frontières de sécurité : `csp.guard`, `rgpd-erasure.guard`, `refund.guard`, `org-deletion.guard` | 36 fichiers `*.guard.test.*`, aucun mutation testing | oui |
+
+
 > ### ⚪ 2026-09-14 (soir) · 0 : tout ce que cette note affirme a été rejoué, et deux angles morts s'ouvrent
 >
 > **Rejoué ce soir, contre le code de l'arbre ET contre la prod `ykeugqfgklejcdbrmawy`** :

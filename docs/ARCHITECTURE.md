@@ -12,6 +12,31 @@ répond à une seule question : **les invariants qu'on s'est donnés tiennent-il
 
 ## Note d'architecture : 74 → 79 → 81 → 83 → 84 → 88 → **90 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 soir → 2026-09-15)
 
+### 🕳️ Angles morts · ce que cet audit NE mesure PAS (2026-09-16)
+
+> **Pourquoi cette section existe.** Cette note est justifiée par des points **nommés** (« ce qui
+> retient à N », suivi d'une liste). Une note construite ainsi ne peut baisser que sur un défaut
+> que quelqu'un a d'abord nommé : **un angle mort ne pèse rien tant qu'il reste anonyme**, et ce
+> n'est pas un oubli d'auditeur, c'est une propriété de la méthode de notation.
+>
+> Le prototype du problème est daté : `CLAUDE.md` a pesé 150 ko et ~43 000 tokens sans qu'aucune
+> note ne bouge, alors qu'il est cité **13 fois** dans [`ARCHITECTURE.md`](./ARCHITECTURE.md), dont **9**
+> dans la seule colonne « Où il est écrit » du tableau des invariants, et **jamais** dans ce
+> qui est mesuré. Il était le mètre,
+> jamais l'objet.
+>
+> Ces lignes entrent donc **dans ce qui est mesuré**. La prochaine passe les traite comme les
+> invariants ci-dessus : chacune est soit comblée, soit reconduite avec sa date.
+
+| # | Angle mort | Vérifié le 2026-09-16 | Outillable ? |
+|---|---|---|---|
+| AM-1 | ✅ **Le référentiel lui-même n'était mesuré par rien.** `CLAUDE.md` est la source citée par 8 des 16 invariants ci-dessous, et rien ne le jugeait | 2 070 lignes / 150 044 o / ~43 000 tokens chargés à chaque session, contre 17,8 ko le 2026-07-01. **78 commits en 30 jours**, jamais un raccourcissement | **Comblé le 2026-09-16** par `npm run check:docs` (gate CI) |
+| AM-2 | **`e2e/**` et `src/components/showcase/**` sont hors de TOUS les invariants d'import.** Aucune des règles vérifiées dans le tableau ci-dessous ne s'y applique | `eslint.config.js:15` les liste dans `ignores`, avec `.agents/**`, `.claude/**`, `.worktrees/**` | oui : une passe ESLint dédiée, ou les retirer de `ignores` |
+| AM-3 | **Aucune garde de dépendances circulaires.** Un cycle d'imports entre modules ne casse ni le build ni un test | aucun `madge`, `dpdm` ou règle `import/no-cycle` dans le dépôt | oui : `import/no-cycle` ou `madge --circular` |
+| AM-4 | **Le nombre de lignes est le SEUL proxy de complexité.** Un fichier de 400 lignes à 20 imports croisés passe la garde de taille sans réserve | §3 ne mesure que `wc -l` | oui, mais l'arbitrage coût/valeur est à faire |
+| AM-5 | **`supabase/functions/**` n'entre dans aucun invariant de ce document.** Les règles d'import, de taille et de couplage s'arrêtent à `src/` | les 16 invariants du §1 ne citent que `src/` et les migrations | oui |
+
+
 > ### 🟢 2026-09-15 · +2 : le premier des trois points qui retenaient à 88 est refermé, et par une garde
 >
 > L'entrée d'hier nommait trois choses. La première, mot pour mot : « **aucune garde ne relie les

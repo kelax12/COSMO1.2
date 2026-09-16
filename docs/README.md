@@ -296,6 +296,88 @@ qui est exactement **C-77**, toujours ouvert à cette date.
 
 ---
 
+## Mise à jour du 2026-09-16 · les onze audits disent désormais ce qu'ils NE mesurent PAS
+
+**Contexte.** Axel, après la découpe de `CLAUDE.md` du jour : « comment ça se fait que cette
+ancienne architecture ne poussait pas à la baisse le score `ARCHITECTURE.md`, alors que
+l'organisation des fichiers `.md` fait partie de l'architecture ? ». Puis : « pour chaque audit,
+repère les angles morts et ajoute-les à ce qui est mesuré ».
+
+**La question était juste, et la cause est structurelle.** `CLAUDE.md` est cité **13 fois** dans
+`ARCHITECTURE.md`, dont **9** dans la seule colonne « Où il est écrit » du tableau des invariants,
+et **jamais** dans ce qui est mesuré. L'audit se pose explicitement en aval de son référentiel (« Ce document ne redécrit pas
+l'architecture, c'est le rôle de `CLAUDE.md` », ligne 10). **Il était le mètre, jamais l'objet**,
+et on ne mesure pas son propre mètre.
+
+Le document avait pourtant pris `CLAUDE.md` en faute **quatre fois**, et avait traité chacune comme
+un incident de contenu isolé :
+
+| Où | Ce qui avait été constaté |
+|---|---|
+| `ARCHITECTURE.md` § 2026-08-25 | « aucun `refetchInterval` permanent », il en restait **trois** |
+| `ARCHITECTURE.md` §4 | `useMessages`, un hook décrit qui n'existait pas |
+| Ce tableau de bord, 2026-09-14 | « Ce document avait raison **contre** `CLAUDE.md` sur le nombre de namespaces » |
+| Ce tableau de bord, 2026-09-15 | `C-79` referme « un énoncé faux de `CLAUDE.md` » |
+
+**La fréquence était la donnée, et personne ne l'avait agrégée.**
+
+### 🔴 Le mécanisme, et il vaut pour les onze audits
+
+Ces notes sont justifiées par des points **nommés** (« ce qui retient à 88, et chaque point est
+mesuré », suivi d'une liste), pas par une grille pondérée. **Une note construite ainsi ne peut
+baisser que sur un défaut que quelqu'un a d'abord nommé.** Un angle mort ne peut donc, par
+construction, jamais la faire bouger : il doit cesser d'être un angle mort pour compter.
+
+C'est la même loi que `ARCHITECTURE.md` porte déjà, écrite deux fois, appliquée à elle-même :
+*« une règle qu'aucun script ne mesure recule à chaque vague de features »*. `CLAUDE.md` était la
+seule chose du dépôt qu'aucun script ne mesurait. La loi s'appliquait à lui ; il n'était pas dans
+la liste des choses auxquelles on applique la loi.
+
+**Correctif** : les onze documents notés portent désormais, **juste sous leur note**, une section
+« 🕳️ Angles morts · ce que cet audit NE mesure PAS ». Chaque ligne est **vérifiée**, jamais
+supposée, et dit si elle est outillable. La prochaine passe les traite comme les invariants : soit
+comblée, soit reconduite avec sa date.
+
+### Les angles morts TRANSVERSAUX, ceux qu'aucun document seul ne pouvait voir
+
+| # | Angle mort | Mesuré le 2026-09-16 | Touche |
+|---|---|---|---|
+| T-1 | 🔴 **Les 36 témoins ne sont jamais rejoués.** Le dépôt exige qu'une garde arrive avec un témoin « vu rouge sur des sabotages ». Ce sabotage est **manuel et unique**, joué le jour de la création. Rien ne vérifie qu'un témoin détecte **encore** : c'est « une garde se vérifie sur ce qu'elle REGARDE » appliqué aux témoins eux-mêmes | **36** fichiers `*.guard.test.*`. **Aucun** mutation testing dans `package.json` ni dans un workflow | Tests, Sécurité, et toute garde |
+| T-2 | **14 gardes sur 36 reposent sur une liste ÉCRITE À LA MAIN.** Certaines sont des **dispenses assumées** et documentées (`modal-a11y.guard`), c'est légitime. D'autres devraient être **dérivées** du schéma ou du code, et décrivent l'état du jour où elles ont été tapées : `rgpd-erasure.guard` en est le cas net | relevé par `grep` sur les 36 témoins | RGPD, Architecture, UI |
+| T-3 | **Tout ce qui n'est pas `src/` échappe à presque tout.** `scripts/**` (le code qui décide si la CI est verte), `supabase/functions/**` (le code qui déplace de l'argent) et `e2e/**` sont hors couverture ; `e2e/**` et `showcase/**` sont hors ESLint | `vitest.config.ts` : `include: ['src/**']` · `eslint.config.js:15` | Tests, Architecture, Sécurité |
+| T-4 | **Lighthouse tourne en preset DESKTOP, sur 4 URLs.** C'est la seule mesure continue de perf, d'a11y et de SEO en conditions réelles, et elle ignore le mobile, qui est le terminal du trafic visé | `lighthouserc.json` : `"preset": "desktop"`, 4 URLs contre **45** dans `dist/sitemap.xml` | Performance, Mobile, SEO, Accessibilité |
+| T-5 | **La CONFORMITÉ est mesurée, le RÉSULTAT presque jamais.** Le SEO note 80 avec **0 clic non marqué** depuis le 2026-08-19 ; l'UI note 85 sans savoir quel écran est ouvert. Un audit peut monter pendant que rien ne se passe | notes contre GSC et Vesk | SEO, UI / UX, Mobile |
+| T-6 | **Deux gardes ne tournent JAMAIS toutes seules.** `scalability-volume.yml` et `restore-drill.yml` n'ont qu'un `workflow_dispatch` : la charge et l'épreuve de restauration ne sont jouées que si quelqu'un y pense | relevé sur les 10 workflows | Scalabilité, Sécurité |
+| T-7 | **Les advisors Supabase ne sont lus qu'à la main.** Dans `ci.yml`, le mot « advisor » désigne `npm audit`, pas les advisors de la base | aucun workflow n'interroge l'API Management | Sécurité, RGPD |
+
+### Ce que chaque audit déclare maintenant ne pas mesurer
+
+| Audit | Note inchangée | Son angle mort le plus lourd |
+|---|---|---|
+| [Architecture](./ARCHITECTURE.md) | 90 | Le référentiel lui-même n'était mesuré par rien (**comblé ce jour** par `check:docs`) |
+| [Tests / CI](./TESTING.md) | 95 | T-1, les 36 témoins jamais rejoués |
+| [Performance](./PERFORMANCE.md) | 95 | T-4, aucune mesure de perf **mobile** en continu |
+| [Scalabilité](./SCALABILITY.md) | 91 | T-6, la garde de charge n'est jamais jouée automatiquement |
+| [Sécurité](../faille.md) | 88 | T-7, les advisors Supabase lus à la main · et aucun SAST sur un dépôt **public** |
+| [RGPD](./RGPD.md) | 87 | T-2, la garde d'effacement lit une liste en dur, jamais le schéma |
+| [UI / UX](./UI-PATTERNS.md) | 85 | Aucune garde de régression **visuelle** en CI |
+| [Accessibilité](./ACCESSIBILITY.md) | 82 | axe ne couvre qu'une partie de WCAG, et 10 surfaces modales sur 53 sont mesurées |
+| [SEO](./SEO.md) | 80 | Rien ne relie le **sitemap** aux pages réellement prérendues |
+| [Mobile / DA](./MOBILE.md) | 78 | Un seul téléphone, un seul moteur, **aucun Android** |
+| [i18n](./I18N.md) | 90 | Les trois gates mesurent les clés et les copies, **jamais la qualité** |
+
+⚠️ **Aucune note n'est modifiée par cette passe, et c'est délibéré.** Nommer un angle mort n'est
+pas le mesurer : on ne sait pas encore ce que chacun coûte. Les noter reviendrait à refaire
+l'erreur inverse, créditer ou débiter une mesure qu'on n'a pas prise. **L'arbitrage appartient à
+Axel**, et le dépôt a déjà tranché dans les deux sens : `C-79` a valu **0** point, `C-09` en a valu
+**4**.
+
+🔴 **Le piège à éviter maintenant** : ces sections peuvent devenir un rituel, listé puis recopié,
+exactement comme les « avant » recopiés au lieu d'être relus (trois occurrences déjà). Un angle
+mort se **referme** ou se **reconduit avec sa date**, jamais ne se recopie.
+
+---
+
 ## Mise à jour du 2026-09-14 (soir) · passe COMPLÈTE : onze domaines, aucun `·`, dix angles morts
 
 **Contexte** : Axel s'apprête à lancer le produit. Consigne, mot pour mot : « refais tous les

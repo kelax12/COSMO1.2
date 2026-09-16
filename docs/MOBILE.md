@@ -2,6 +2,31 @@
 
 ## Note mobile / DA : 62 → 72 → 74 → 76 → 79 → 76 → **78 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-14 → 2026-09-14 soir → 2026-09-15)
 
+### 🕳️ Angles morts · ce que cet audit NE mesure PAS (2026-09-16)
+
+> **Pourquoi cette section existe.** Cette note est justifiée par des points **nommés** (« ce qui
+> retient à N », suivi d'une liste). Une note construite ainsi ne peut baisser que sur un défaut
+> que quelqu'un a d'abord nommé : **un angle mort ne pèse rien tant qu'il reste anonyme**, et ce
+> n'est pas un oubli d'auditeur, c'est une propriété de la méthode de notation.
+>
+> Le prototype du problème est daté : `CLAUDE.md` a pesé 150 ko et ~43 000 tokens sans qu'aucune
+> note ne bouge, alors qu'il est cité **13 fois** dans [`ARCHITECTURE.md`](./ARCHITECTURE.md), dont **9**
+> dans la seule colonne « Où il est écrit » du tableau des invariants, et **jamais** dans ce
+> qui est mesuré. Il était le mètre,
+> jamais l'objet.
+>
+> Ces lignes entrent donc **dans ce qui est mesuré**. La prochaine passe les traite comme les
+> invariants ci-dessus : chacune est soit comblée, soit reconduite avec sa date.
+
+| # | Angle mort | Vérifié le 2026-09-16 | Outillable ? |
+|---|---|---|---|
+| AM-1 | 🔴 **Les 105 cas `mobile-safari` ne tournent dans aucun workflow** (item `C-78`). C'est le seul project qui mesure WebKit, donc iOS | `git show HEAD:.github/workflows/ci.yml` lance `--project=chromium --project=supabase-stub`. Le correctif est écrit, **non commité** | oui, immédiatement |
+| AM-2 | **Un seul modèle de téléphone, un seul moteur.** Tout est mesuré sur iPhone 12 / WebKit. **Aucun Android réel**, alors que Chrome Android est le premier navigateur mobile du marché | `playwright.config.ts` : un seul device mobile | oui : un project `Pixel` |
+| AM-3 | **La performance mobile n'est mesurée par rien en continu.** Lighthouse tourne en preset **desktop** (cf. [`PERFORMANCE.md`](./PERFORMANCE.md) AM-1) | `lighthouserc.json` : `"preset": "desktop"` | oui |
+| AM-4 | **Aucune mesure sur appareil réel ni sur réseau bridé.** Un émulateur de bureau ne reproduit ni le GPU d'un téléphone d'entrée de gamme, ni la 4G. C'est précisément la classe de défaut de `C-68` (le shader qui saturait le tampon GPU) | `C-68` n'a été trouvé qu'en bridant le CPU à la main | partiellement : bridage CPU/réseau dans Playwright |
+| AM-5 | **Le mode paysage et les grandes tailles de police système ne sont testés nulle part** | aucun cas ne change d'orientation ni de `font-size` racine | oui |
+
+
 > ### 🟢 2026-09-15 · +2 sur les 3 retirés : le périmètre est élargi, le moteur mobile ne l'est pas encore
 >
 > **Deux des trois points reviennent, pas les trois**, et la différence se lit dans l'entrée
