@@ -84,6 +84,29 @@ function linksOf(root, rel) {
   return found
 }
 
+/**
+ * Les documents VIVANTS dont les liens doivent tenir.
+ *
+ * `docs/archive/**` en est exclu : ce sont des instantanes dates, non
+ * maintenus, et le depot interdit deja de les lire comme un etat courant.
+ * Un lien mort y est une trace d'epoque, pas une regression.
+ */
+export function findLivingDocs(root) {
+  const out = []
+  const dir = join(root, 'docs')
+  try {
+    for (const e of readdirSync(dir)) {
+      if (e.endsWith('.md') && statSync(join(dir, e)).isFile()) out.push(`docs/${e}`)
+    }
+  } catch {
+    /* pas de docs/ : rien a verifier */
+  }
+  for (const f of ['faille.md', 'a-faire-code.md']) {
+    if (existsSync(join(root, f))) out.push(f)
+  }
+  return out.sort()
+}
+
 export function audit(root = process.cwd()) {
   const errors = []
   const rows = []
@@ -139,6 +162,24 @@ export function audit(root = process.cwd()) {
     }
   }
 
+  // ── 5 · les liens des DOCS vivants ───────────────────────────────
+  //
+  // Ajoute le 2026-09-16, apres que la decoupe de `CLAUDE.md` a produit SIX
+  // liens morts d'un coup : des chemins ecrits pour la racine (`./docs/X.md`)
+  // recopies tels quels dans `docs/`, ou ils visent `docs/docs/`. Ils ont ete
+  // trouves A LA MAIN, donc ils seraient revenus.
+  //
+  // ⚠️ Un lien mort dans un doc n'est pas cosmetique : c'est la carte qui
+  // envoie dans le vide, et ce depot RENVOIE au doc de domaine pour presque
+  // toute regle depuis la meme decoupe.
+  for (const f of findLivingDocs(root)) {
+    for (const l of linksOf(root, f)) {
+      if (!existsSync(join(root, l.rel))) {
+        errors.push(`${f} pointe vers ${l.href}, qui n existe pas.`)
+      }
+    }
+  }
+
   return { errors, rows, files }
 }
 
@@ -163,8 +204,9 @@ if (isMain) {
   }
 
   const root = rows.find((r) => r.file === 'CLAUDE.md')
+  const docs = findLivingDocs(process.cwd()).length
   console.log(
-    `${rows.length} CLAUDE.md verifie(s) : racine a ${root.bytes} o (${root.pct} % du plafond), ` +
-      `pointeurs coherents, aucun lien mort.`,
+    `${rows.length} CLAUDE.md + ${docs} doc(s) vivant(s) verifie(s) : racine a ${root.bytes} o ` +
+      `(${root.pct} % du plafond), pointeurs coherents, aucun lien mort.`,
   )
 }

@@ -390,7 +390,7 @@ Garde-fous propres à cette zone :
 - 🔴 **Le compte Stripe LIVE est désormais équipé** (2026-08-26) : 4 produits et 8 prix créés,
   tous en `tax_behavior: inclusive`, réglage **DÉFINITIF** chez Stripe. Les 8 prix du compte de
   TEST restent sur `unspecified`, valeur à ne jamais reproduire. Détail et identifiants :
-  [`docs/STRIPE-LIVE.md`](./docs/STRIPE-LIVE.md).
+  ce document.
   ❌ **Ne jamais créer un prix Stripe sans `tax_behavior` explicite** : il ne se modifie plus, il
   faut créer un nouveau prix et migrer les abonnements.
 - 🔴 **Les deux drapeaux se déplacent ensemble.** Le flag TS ne masque que les CTA ; le blocage
@@ -413,5 +413,5 @@ Garde-fous propres à cette zone :
 - Réactivation (immédiate, réversible) : `ENTERPRISE_BILLING_ENFORCED = true` +
   `UPDATE billing_flags SET enabled = true WHERE key = 'enterprise_seat_limit'` — **après** la
   création de la micro-entreprise et le passage du compte Stripe en live.
-  Contexte historique : [`docs/POST-AUDIT-GUIDE.md`](./docs/POST-AUDIT-GUIDE.md).
+  Contexte historique : [`POST-AUDIT-GUIDE.md`](./POST-AUDIT-GUIDE.md).
 

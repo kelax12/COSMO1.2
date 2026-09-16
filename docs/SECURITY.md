@@ -484,7 +484,7 @@ que quelqu'un lance la commande.
 suivi** : tant qu'elle portait cette étiquette, personne n'a lu ce qu'elle répare. Elle répare un
 **défaut ouvert en production** : `get_work_time_stats` lit un champ JSON que rien n'écrit, donc
 `okrTime` vaut **0** sur `/statistics` pour tous les comptes réels, et ce depuis la mig. `074`
-(2026-07-16). Item `C-77` de [`a-faire-code.md`](./a-faire-code.md).
+(2026-07-16). Item `C-77` de [`a-faire-code.md`](../a-faire-code.md).
 ⚠️ **Sa prémisse a été corrigée le 2026-09-15, et elle était fausse d'un mot** : l'en-tête
 affirmait « ce champ n'existe pas », vérifié par `grep` dans `src` et **jamais en base**. Mesuré :
 **12 Key Results sur 28 portent bien un `history` non vide**, tous sur le seul compte de seed
@@ -591,7 +591,7 @@ désormais `billing_interval`.
 > personne ne le voit tant que rien ne rejoue les migrations à blanc.
 
 Toutes les tables ont **RLS activée**. Pattern obligatoire + checklist migration →
-[`docs/SECURITY.md`](./docs/SECURITY.md).
+ce document.
 
 Fonctions SECURITY DEFINER clés : `accept_friend_request_v2`, `accept_shared_task`,
 `remove_friendship` /

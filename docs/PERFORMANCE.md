@@ -1,6 +1,43 @@
 # Performance bundle — `vite.config.ts manualChunks`
 
-## Note de performance : 68 → 64 → 88 → 91 → 94 → 92 → 97 → **95 / 100** (2026-08-24 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 → 2026-09-14 soir)
+## Note de performance : 68 → 64 → 88 → 91 → 94 → 92 → 97 → 95 → **90 / 100** (2026-08-24 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 → 2026-09-14 soir → 2026-09-16)
+
+> ### 🟠 2026-09-16 · -5 : la note comptait ce qui était mesuré, jamais ce qui ne l'était pas
+>
+> **Ce n'est pas une régression.** Rien n'a cassé depuis la dernière passe. Les angles morts
+> listés juste en dessous **existaient tous** pendant que cette note montait : elle était
+> surévaluée parce qu'elle ne comptait que ce que les gardes regardent. C'est exactement ce qui
+> s'est produit le 2026-09-14, où cinq notes ont baissé sans qu'aucun défaut ne soit récent.
+>
+> **Barème, déclaré pour être contestable ligne par ligne :**
+>
+> | Situation | Effet |
+> |---|---|
+> | angle mort **structurel**, de portée large, qu'aucun outil ne regarde | −2 |
+> | angle mort réel mais de portée limitée, ou partiellement couvert | −1 |
+> | angle mort **assumé** (arbitrage documenté), ou déjà compté dans une passe antérieure | 0 |
+> | angle mort **comblé** le jour même, avec garde **et** témoin | +1 |
+>
+> **Le calcul pour cette note :**
+>
+> | Angle mort | Effet | Pourquoi |
+> |---|---|---|
+> | AM-1 · **aucune mesure de performance MOBILE en continu** | −2 | `lighthouserc.json` est en preset `desktop`, et le trafic visé est mobile |
+> | AM-3 · les chunks lazy n'ont aucun plafond | −1 | `BUDGETS` ne porte que `critical` et `entry` |
+> | AM-4 · 4 URLs mesurées sur les 45 du sitemap | −1 | `lighthouserc.json` vs `dist/sitemap.xml` |
+> | AM-5 · aucune mesure du coût SERVEUR en continu | −1 | les plans sont rejoués à la main, à chaque passe |
+> | AM-2 · `categories:performance` en `warn` | 0 | arbitrage assumé : le runner varie |
+>
+> 🔴 **Une note baisse UNE FOIS, quand l'angle mort est nommé ; elle remonte quand il est
+> outillé.** Sans cette règle, nommer un angle mort deviendrait punitif, et la passe du
+> 2026-09-16 serait la dernière à en chercher. Un angle mort reconduit sans être comblé ne
+> re-coûte rien : il est **déjà payé**.
+>
+> ⚠️ Un transversal (T-1 à T-10 du [tableau de bord](./README.md)) est compté dans **chaque** audit
+> qu'il touche, parce que chaque note prétend quelque chose de différent. Les 36 témoins jamais
+> rejoués coûtent donc à la fois aux tests et à la sécurité, et ce n'est pas un double comptage.
+
+
 
 ### 🕳️ Angles morts · ce que cet audit NE mesure PAS (2026-09-16)
 
@@ -946,7 +983,7 @@ supabase.rpc('get_my_team_task_dependencies', { p_org: orgId })        // ✅ mi
 > l'appartenance en **jointure indexable** dans une RPC, en réutilisant `my_team_project_ids()`
 > plutôt qu'en déléguant à `team_tasks` : c'est la délégation qui a fait hériter
 > `team_task_dependencies` du coût qu'on venait d'éliminer (mig. 108, refermé par la mig. 117).
-> Détail et projections : [`docs/SCALABILITY.md`](./docs/SCALABILITY.md) §2.
+> Détail et projections : [`SCALABILITY.md`](./SCALABILITY.md) §2.
 
 ### ⚡ `events` : un ensemble calculé une fois, jamais une fonction par ligne (mig. 128)
 

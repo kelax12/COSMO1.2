@@ -20,7 +20,44 @@ Légende : 🔴 bloquant · 🟠 important · 🟡 à planifier · ✅ corrigé
 
 ---
 
-## Note de sécurité : 82 → 86 → 84 → 86 → **88 / 100** (2026-08-24 → 2026-09-02 → 2026-09-03 → 2026-09-14) · **VÉRIFIÉE inchangée le 2026-09-14 au soir**
+## Note de sécurité : 82 → 86 → 84 → 86 → 88 → **83 / 100** (2026-08-24 → 2026-09-02 → 2026-09-03 → 2026-09-14 → 2026-09-16) · **VÉRIFIÉE inchangée le 2026-09-14 au soir**
+
+> ### 🟠 2026-09-16 · -5 : la note comptait ce qui était mesuré, jamais ce qui ne l'était pas
+>
+> **Ce n'est pas une régression.** Rien n'a cassé depuis la dernière passe. Les angles morts
+> listés juste en dessous **existaient tous** pendant que cette note montait : elle était
+> surévaluée parce qu'elle ne comptait que ce que les gardes regardent. C'est exactement ce qui
+> s'est produit le 2026-09-14, où cinq notes ont baissé sans qu'aucun défaut ne soit récent.
+>
+> **Barème, déclaré pour être contestable ligne par ligne :**
+>
+> | Situation | Effet |
+> |---|---|
+> | angle mort **structurel**, de portée large, qu'aucun outil ne regarde | −2 |
+> | angle mort réel mais de portée limitée, ou partiellement couvert | −1 |
+> | angle mort **assumé** (arbitrage documenté), ou déjà compté dans une passe antérieure | 0 |
+> | angle mort **comblé** le jour même, avec garde **et** témoin | +1 |
+>
+> **Le calcul pour cette note :**
+>
+> | Angle mort | Effet | Pourquoi |
+> |---|---|---|
+> | AM-1 · **les advisors Supabase ne sont lus qu'à la main** | −2 | seule source qui voit une policy manquante après coup ; « advisor » dans `ci.yml` désigne `npm audit` |
+> | AM-4 · aucun SAST, sur un dépôt **public** où CodeQL serait gratuit | −1 | filet manquant, pas une faille : les invariants nommés tiennent |
+> | AM-2 · `check:edge` compare le CODE, jamais le COMPORTEMENT | −1 | un secret qui change rend la garde verte |
+> | AM-5 · les témoins de sécurité ne sont jamais rejoués | −1 | `csp.guard`, `rgpd-erasure.guard`, `refund.guard`, `org-deletion.guard` |
+> | AM-3 · `npm audit` ne couvre que les dépendances de production | 0 | arbitrage assumé et documenté |
+>
+> 🔴 **Une note baisse UNE FOIS, quand l'angle mort est nommé ; elle remonte quand il est
+> outillé.** Sans cette règle, nommer un angle mort deviendrait punitif, et la passe du
+> 2026-09-16 serait la dernière à en chercher. Un angle mort reconduit sans être comblé ne
+> re-coûte rien : il est **déjà payé**.
+>
+> ⚠️ Un transversal (T-1 à T-10 du [tableau de bord](./docs/README.md)) est compté dans **chaque** audit
+> qu'il touche, parce que chaque note prétend quelque chose de différent. Les 36 témoins jamais
+> rejoués coûtent donc à la fois aux tests et à la sécurité, et ce n'est pas un double comptage.
+
+
 
 ### 🕳️ Angles morts · ce que cet audit NE mesure PAS (2026-09-16)
 

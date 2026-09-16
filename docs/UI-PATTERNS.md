@@ -1,6 +1,42 @@
 # Patterns UI — COSMO
 
-## Note UI / UX : 70 → 80 → 82 → 84 → 87 → **85 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 soir)
+## Note UI / UX : 70 → 80 → 82 → 84 → 87 → 85 → **81 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 soir → 2026-09-16)
+
+> ### 🟠 2026-09-16 · -4 : la note comptait ce qui était mesuré, jamais ce qui ne l'était pas
+>
+> **Ce n'est pas une régression.** Rien n'a cassé depuis la dernière passe. Les angles morts
+> listés juste en dessous **existaient tous** pendant que cette note montait : elle était
+> surévaluée parce qu'elle ne comptait que ce que les gardes regardent. C'est exactement ce qui
+> s'est produit le 2026-09-14, où cinq notes ont baissé sans qu'aucun défaut ne soit récent.
+>
+> **Barème, déclaré pour être contestable ligne par ligne :**
+>
+> | Situation | Effet |
+> |---|---|
+> | angle mort **structurel**, de portée large, qu'aucun outil ne regarde | −2 |
+> | angle mort réel mais de portée limitée, ou partiellement couvert | −1 |
+> | angle mort **assumé** (arbitrage documenté), ou déjà compté dans une passe antérieure | 0 |
+> | angle mort **comblé** le jour même, avec garde **et** témoin | +1 |
+>
+> **Le calcul pour cette note :**
+>
+> | Angle mort | Effet | Pourquoi |
+> |---|---|---|
+> | AM-1 · **aucune garde de régression VISUELLE en CI** | −2 | rien ne voit un écran qui se déforme tant qu'aucun test fonctionnel ne casse |
+> | AM-2 · les quatre thèmes ne sont balayés par aucun run | −1 | c'est la classe de bug du 2026-07-23, 17 fichiers |
+> | AM-5 · aucune mesure d'usage réel des écrans | −1 | un écran soigné que personne n'atteint pèse autant qu'un écran négligé très vu |
+> | AM-3 et AM-4 | 0 | gardés statiquement, ou partiellement couverts |
+>
+> 🔴 **Une note baisse UNE FOIS, quand l'angle mort est nommé ; elle remonte quand il est
+> outillé.** Sans cette règle, nommer un angle mort deviendrait punitif, et la passe du
+> 2026-09-16 serait la dernière à en chercher. Un angle mort reconduit sans être comblé ne
+> re-coûte rien : il est **déjà payé**.
+>
+> ⚠️ Un transversal (T-1 à T-10 du [tableau de bord](./README.md)) est compté dans **chaque** audit
+> qu'il touche, parce que chaque note prétend quelque chose de différent. Les 36 témoins jamais
+> rejoués coûtent donc à la fois aux tests et à la sécurité, et ce n'est pas un double comptage.
+
+
 
 ### 🕳️ Angles morts · ce que cet audit NE mesure PAS (2026-09-16)
 

@@ -1,6 +1,43 @@
 # Tests — COSMO
 
-## Note de tests / CI : 80 → 83 → 88 → 89 → 93 → 94 → 95 → 97 → 94 → **95 / 100** (2026-08-24 → 2026-08-25 soir → 2026-08-27 soir → 2026-08-29 → 2026-09-02 → 2026-09-03 → 2026-09-14 → 2026-09-14 soir → 2026-09-15)
+## Note de tests / CI : 80 → 83 → 88 → 89 → 93 → 94 → 95 → 97 → 94 → 95 → **91 / 100** (2026-08-24 → 2026-08-25 soir → 2026-08-27 soir → 2026-08-29 → 2026-09-02 → 2026-09-03 → 2026-09-14 → 2026-09-14 soir → 2026-09-15 → 2026-09-16)
+
+> ### 🟠 2026-09-16 · -4 : la note comptait ce qui était mesuré, jamais ce qui ne l'était pas
+>
+> **Ce n'est pas une régression.** Rien n'a cassé depuis la dernière passe. Les angles morts
+> listés juste en dessous **existaient tous** pendant que cette note montait : elle était
+> surévaluée parce qu'elle ne comptait que ce que les gardes regardent. C'est exactement ce qui
+> s'est produit le 2026-09-14, où cinq notes ont baissé sans qu'aucun défaut ne soit récent.
+>
+> **Barème, déclaré pour être contestable ligne par ligne :**
+>
+> | Situation | Effet |
+> |---|---|
+> | angle mort **structurel**, de portée large, qu'aucun outil ne regarde | −2 |
+> | angle mort réel mais de portée limitée, ou partiellement couvert | −1 |
+> | angle mort **assumé** (arbitrage documenté), ou déjà compté dans une passe antérieure | 0 |
+> | angle mort **comblé** le jour même, avec garde **et** témoin | +1 |
+>
+> **Le calcul pour cette note :**
+>
+> | Angle mort | Effet | Pourquoi |
+> |---|---|---|
+> | AM-1 · **les 36 témoins ne sont jamais rejoués**, aucun mutation testing | −2 | c'est le plus lourd du dépôt : la garde qui garde les gardes n'existe pas |
+> | AM-2 · la couverture ignore `scripts/**` et `supabase/functions/**` | −1 | le code qui décide si la CI est verte, et celui qui déplace de l'argent |
+> | AM-5 · aucun plancher sur le nombre de tests | −1 | un total qui baisse ne fait échouer aucun job |
+> | AM-3 · la couverture ne dit rien de la force des assertions | 0 | couvert par AM-1 |
+> | AM-4 · les 105 cas `mobile-safari` hors CI | 0 | déjà payé le 2026-09-14 (−3) |
+>
+> 🔴 **Une note baisse UNE FOIS, quand l'angle mort est nommé ; elle remonte quand il est
+> outillé.** Sans cette règle, nommer un angle mort deviendrait punitif, et la passe du
+> 2026-09-16 serait la dernière à en chercher. Un angle mort reconduit sans être comblé ne
+> re-coûte rien : il est **déjà payé**.
+>
+> ⚠️ Un transversal (T-1 à T-10 du [tableau de bord](./README.md)) est compté dans **chaque** audit
+> qu'il touche, parce que chaque note prétend quelque chose de différent. Les 36 témoins jamais
+> rejoués coûtent donc à la fois aux tests et à la sécurité, et ce n'est pas un double comptage.
+
+
 
 ### 🕳️ Angles morts · ce que cet audit NE mesure PAS (2026-09-16)
 

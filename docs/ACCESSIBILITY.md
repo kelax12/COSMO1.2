@@ -33,7 +33,44 @@ Conséquences pratiques, à tenir :
   La check-list est prête et se joue d'une traite :
   [`AUDIT-VOICEOVER-IOS.md`](./AUDIT-VOICEOVER-IOS.md).
 
-## Note d'accessibilité : 76 → 79 → 80 → 81 → 82 → 83 → 84 → 82 → **84 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-04 → 2026-09-14 → 2026-09-14 soir → 2026-09-15)
+## Note d'accessibilité : 76 → 79 → 80 → 81 → 82 → 83 → 84 → 82 → 84 → **80 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-04 → 2026-09-14 → 2026-09-14 soir → 2026-09-15 → 2026-09-16)
+
+> ### 🟠 2026-09-16 · -4 : la note comptait ce qui était mesuré, jamais ce qui ne l'était pas
+>
+> **Ce n'est pas une régression.** Rien n'a cassé depuis la dernière passe. Les angles morts
+> listés juste en dessous **existaient tous** pendant que cette note montait : elle était
+> surévaluée parce qu'elle ne comptait que ce que les gardes regardent. C'est exactement ce qui
+> s'est produit le 2026-09-14, où cinq notes ont baissé sans qu'aucun défaut ne soit récent.
+>
+> **Barème, déclaré pour être contestable ligne par ligne :**
+>
+> | Situation | Effet |
+> |---|---|
+> | angle mort **structurel**, de portée large, qu'aucun outil ne regarde | −2 |
+> | angle mort réel mais de portée limitée, ou partiellement couvert | −1 |
+> | angle mort **assumé** (arbitrage documenté), ou déjà compté dans une passe antérieure | 0 |
+> | angle mort **comblé** le jour même, avec garde **et** témoin | +1 |
+>
+> **Le calcul pour cette note :**
+>
+> | Angle mort | Effet | Pourquoi |
+> |---|---|---|
+> | AM-1 · axe-core ne couvre qu'une partie des critères WCAG | −1 | structurel : seule une revue humaine datée le comble |
+> | AM-2 · 10 surfaces modales mesurées au clavier sur 53 | −1 | câblé n'est pas mesuré |
+> | AM-3 · aucun test avec un lecteur d'écran | −1 | et l'audit VoiceOver dédié n'a jamais été joué |
+> | AM-5 · le contraste n'est vérifié que dans un thème sur quatre | −1 | les runs axe ne changent pas de thème |
+> | AM-4 · WCAG 2.5.5 sur 8 routes protégées | 0 | déjà payé le 2026-09-14 |
+>
+> 🔴 **Une note baisse UNE FOIS, quand l'angle mort est nommé ; elle remonte quand il est
+> outillé.** Sans cette règle, nommer un angle mort deviendrait punitif, et la passe du
+> 2026-09-16 serait la dernière à en chercher. Un angle mort reconduit sans être comblé ne
+> re-coûte rien : il est **déjà payé**.
+>
+> ⚠️ Un transversal (T-1 à T-10 du [tableau de bord](./README.md)) est compté dans **chaque** audit
+> qu'il touche, parce que chaque note prétend quelque chose de différent. Les 36 témoins jamais
+> rejoués coûtent donc à la fois aux tests et à la sécurité, et ce n'est pas un double comptage.
+
+
 
 ### 🕳️ Angles morts · ce que cet audit NE mesure PAS (2026-09-16)
 
