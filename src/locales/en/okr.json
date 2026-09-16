@@ -40,6 +40,7 @@
     "progressOf": "{{title}} progress out of {{target}}"
   },
   "categories": {
+    "mobileLabel": "Category:",
     "all": "All",
     "edit": "Edit category",
     "delete": "Delete category",

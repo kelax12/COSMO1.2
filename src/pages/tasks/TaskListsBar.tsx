@@ -119,19 +119,22 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                       )}
                     </div>
 
-                    {/* `pt-8` réserve l'espace des boutons +/corbeille de la
-                        chip « Aujourd'hui » (en -top-8) — nécessaire sur
-                        mobile AUSSI : `selectedListId === VIRTUAL_TODAY_ID`
-                        (ligne plus bas) les révèle aussi bien au TAP qu'au
-                        survol, et ce conteneur est en `overflow-x-auto` —
-                        qui, sans `overflow-y` explicite, calcule l'axe Y en
-                        `auto` lui aussi (règle CSS : "visible" ne peut pas
-                        cohabiter avec un axe non-visible). Avec `pt-2`
-                        (l'ancien réglage, qui supposait ces boutons
-                        « hover only »), les boutons révélés par un TAP
-                        étaient donc rognés en haut du conteneur — invisibles,
-                        pas juste discrets. */}
-                    <div className="flex sm:flex-wrap gap-3 pt-8 overflow-x-auto sm:overflow-visible -mx-3 px-3 sm:mx-0 sm:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [mask-image:linear-gradient(to_right,black_calc(100%-16px),transparent)] sm:[mask-image:none]">
+                    {/* `pt-*` réserve l'espace des boutons +/corbeille de la
+                        chip « Aujourd'hui » (en `-top-*`, ligne plus bas) —
+                        nécessaire sur mobile AUSSI : `selectedListId ===
+                        VIRTUAL_TODAY_ID` (ligne plus bas) les révèle aussi
+                        bien au TAP qu'au survol, et ce conteneur est en
+                        `overflow-x-auto` — qui, sans `overflow-y` explicite,
+                        calcule l'axe Y en `auto` lui aussi (règle CSS :
+                        "visible" ne peut pas cohabiter avec un axe
+                        non-visible). Les deux valeurs (`pt-2` ici et
+                        `-top-2` plus bas) DOIVENT rester égales en valeur
+                        absolue : un `pt-2` avec des boutons à `-top-4`
+                        (l'ancien réglage) les rognerait à nouveau, invisibles
+                        plutôt que juste discrets — c'est le bug qui a motivé
+                        `pt-8` avant que le couple ne soit réduit de moitié
+                        (2026-09-16, gap « Liste » → chips jugé trop grand). */}
+                    <div className="flex sm:flex-wrap gap-3 pt-2 sm:pt-8 overflow-x-auto sm:overflow-visible -mx-3 px-3 sm:mx-0 sm:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [mask-image:linear-gradient(to_right,black_calc(100%-16px),transparent)] sm:[mask-image:none]">
                       <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
@@ -174,7 +177,7 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                               animate={{ opacity: 1, y: 0 }}
                               exit={{ opacity: 0, y: 4 }}
                               transition={{ duration: 0.15 }}
-                              className="absolute -top-8 inset-x-0 flex justify-center gap-2.5 z-20"
+                              className="absolute -top-2 sm:-top-8 inset-x-0 flex justify-center gap-2.5 z-20"
                             >
                               <button
                                 onClick={(e) => { e.stopPropagation(); startSelectingTasks(VIRTUAL_TODAY_ID); }}

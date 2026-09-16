@@ -93,7 +93,17 @@ const MobileTabBar: React.FC = () => {
       <nav
         aria-label={t('nav.mobileNavLabel')}
         className="fixed bottom-0 inset-x-0 z-40 bg-[rgb(var(--color-surface))] border-t border-[rgb(var(--color-border))] pb-safe"
-        style={{ boxShadow: '0 -1px 3px rgba(0,0,0,0.04)' }}
+        // `translateZ(0)` + `will-change` : force son propre calque de
+        // composition. Aucun ancêtre à transform n'a été trouvé dans
+        // Layout.tsx/index.css (la barre est déjà `position: fixed` correcte
+        // en théorie) — ceci est le correctif standard contre le bug WebKit
+        // connu où un `position: fixed` "glisse" brièvement pendant le
+        // scroll/momentum sur iOS Safari, faute de calque dédié.
+        style={{
+          boxShadow: '0 -1px 3px rgba(0,0,0,0.04)',
+          transform: 'translateZ(0)',
+          willChange: 'transform',
+        }}
       >
         <ul className="flex items-stretch h-16">
           {tabs.map(({ to, labelKey, icon: Icon, end }) => (

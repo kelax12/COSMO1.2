@@ -68,7 +68,7 @@ const MoveCategoryDialog: React.FC<MoveCategoryDialogProps> = ({
           value={target}
           onChange={(e) => setTarget(e.target.value)}
           aria-label={t('colorModal.moveTarget')}
-          className="w-full min-h-11 rounded-xl border px-3 text-sm bg-[rgb(var(--color-hover))] border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))]"
+          className="w-full min-h-11 max-sm:min-h-14 rounded-xl border px-3 text-sm bg-[rgb(var(--color-hover))] border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))]"
         >
           <option value="">{t('colorModal.moveToRoot')}</option>
           {options.map((c) => (
@@ -78,11 +78,22 @@ const MoveCategoryDialog: React.FC<MoveCategoryDialogProps> = ({
           ))}
         </select>
 
+        {/* max-sm: — `Button` par défaut/`outline` s'appuie sur les tokens
+            shadcn (`--primary`, `--border`…), pas ceux de l'app : gris
+            neutre au lieu du bleu de marque. Override mobile uniquement,
+            desktop inchangé. */}
         <div className="flex gap-3 mt-6">
-          <Button variant="outline" className="flex-1 min-h-11" onClick={onCancel}>
+          <Button
+            variant="outline"
+            className="flex-1 min-h-11 max-sm:!bg-[rgb(var(--color-hover))] max-sm:!border-[rgb(var(--color-border))] max-sm:!text-[rgb(var(--color-text-primary))]"
+            onClick={onCancel}
+          >
             {t('colorModal.moveCancel')}
           </Button>
-          <Button className="flex-1 min-h-11" onClick={() => onConfirm(target === '' ? null : target)}>
+          <Button
+            className="flex-1 min-h-11 max-sm:!bg-[rgb(var(--color-accent-solid))] max-sm:hover:!bg-[rgb(var(--color-accent-solid-hover))] max-sm:!text-[rgb(var(--color-accent-solid-foreground))]"
+            onClick={() => onConfirm(target === '' ? null : target)}
+          >
             {t('colorModal.moveConfirm')}
           </Button>
         </div>

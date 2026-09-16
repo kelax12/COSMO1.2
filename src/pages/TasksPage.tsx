@@ -464,6 +464,7 @@ const TasksPage: React.FC = () => {
                   showQuickFilters={showQuickFilters}
                   searchTerm={searchTerm}
                   listFilterActive={!!selectedListId}
+                  hasActiveFilter={!!selectedListId || selectedCategories.length > 0 || searchTerm.trim() !== ''}
                 />
                 )}
               </motion.div>

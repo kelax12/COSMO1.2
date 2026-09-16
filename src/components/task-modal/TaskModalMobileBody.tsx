@@ -10,7 +10,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
 import { getDateLocale } from '@/i18n/format';
-import { Bookmark, Loader2 } from 'lucide-react';
+import { Bookmark } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { useBottomSheet } from '@/hooks/use-bottom-sheet';
 import { useInvalidShake } from '@/hooks/use-invalid-shake';
@@ -20,7 +20,6 @@ import AddToListModal from '@/components/AddToListModal';
 import { SectionTitle, SectionCard, CellSeparator, Cell } from './primitives';
 import { MobileChoiceSheet } from './MobileActionSheet';
 import TaskModalCategorySheet from './TaskModalCategorySheet';
-import DurationStepper from './DurationStepper';
 import MobileCollaboratorsSheet from './MobileCollaboratorsSheet';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { isImageAvatar, isEmojiAvatar } from '@/lib/avatar';
@@ -99,6 +98,20 @@ const MiniAvatar: React.FC<{ name: string; avatar?: string }> = ({ name, avatar 
   );
 };
 
+/** Minutes → `HH:MM` pour l'input natif `type="time"` (roue OS, comme les
+ *  champs Début/Fin d'EventModalFormMobile). */
+const minutesToTimeValue = (minutes: number | string): string => {
+  const total = typeof minutes === 'number' ? minutes : Number(minutes) || 0;
+  const h = Math.floor(total / 60).toString().padStart(2, '0');
+  const m = (total % 60).toString().padStart(2, '0');
+  return `${h}:${m}`;
+};
+
+const timeValueToMinutes = (value: string): number => {
+  const [h, m] = value.split(':').map((n) => Number(n) || 0);
+  return h * 60 + m;
+};
+
 const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
   formData, handleInputChange, onSubtasksChange,
   showDescription, setShowDescription,
@@ -107,7 +120,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
   friends: _friends, filteredFriends, sentRequests: _sentRequests, collabIdOf, displayInfo,
   handleAddEmail, handleRemoveCollaborator, toggleCollaborator,
   createCategoryMutation,
-  handleSave, handleClose, handleDelete, isCreating, isLoading, isFormValid,
+  handleSave, handleClose, handleDelete: _handleDelete, isCreating, isLoading, isFormValid,
   taskId, autoOpenCollaborators, isTaskOwner, ownerId, pendingShareIds, onGenerateShareLink,
 }) => {
   const { t } = useT('taskModal');
@@ -162,7 +175,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
             disabled={isLoading}
             className={`text-[15px] font-semibold min-w-[64px] text-right transition-colors ${isValid ? 'text-blue-500' : 'text-blue-300 dark:text-blue-700'}`}
           >
-            {isLoading ? '…' : isCreating ? t('common.create') : t('common.ok')}
+            {isLoading ? '…' : isCreating ? t('common.create') : t('common.validate')}
           </button>
         </div>
       </div>
@@ -193,7 +206,9 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
           </div>
 
           {/* ── Section DÉTAILS ── */}
-          <SectionTitle>{t('sections.details')}</SectionTitle>
+          <SectionTitle>
+            {t('sections.details')} <span className="normal-case font-normal">({t('sections.detailsHint')})</span>
+          </SectionTitle>
           <div ref={register('details')} className={`rounded-2xl transition-[box-shadow] ${isInvalid('details') ? 'ring-2 ring-red-500' : ''}`}>
           <SectionCard>
             {/* Priorité */}
@@ -309,12 +324,18 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
               </>
             )}
             <CellSeparator />
-            {/* Durée */}
-            <DurationStepper
-              value={formData.estimatedTime}
-              onChange={(minutes) => handleInputChange('estimatedTime', minutes)}
-              label={t('fields.duration')}
-            />
+            {/* Durée — sélecteur heure/minute natif du système (ouvre la roue
+                OS au tap), même pattern que Début/Fin d'EventModalFormMobile. */}
+            <div className="flex items-center justify-between px-4 min-h-11">
+              <span className="text-[15px] text-[rgb(var(--color-text-primary))]">{t('fields.duration')}</span>
+              <input
+                type="time"
+                value={minutesToTimeValue(formData.estimatedTime)}
+                onChange={(e) => handleInputChange('estimatedTime', timeValueToMinutes(e.target.value))}
+                className="text-[15px] text-blue-500 bg-transparent focus:outline-none text-right"
+                style={{ border: 'none', minWidth: 0 }}
+              />
+            </div>
           </SectionCard>
           </div>
 
@@ -433,49 +454,15 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
             />
           </SectionCard>
 
-          {/* ── Supprimer (édition uniquement) ── */}
-          {!isCreating && (
-            <>
-              <div className="h-2" />
-              <SectionCard>
-                <button
-                  type="button"
-                  onClick={handleDelete}
-                  disabled={isLoading}
-                  className="w-full flex items-center justify-center min-h-11 text-red-500 text-[15px] active:bg-[rgb(var(--color-hover))] disabled:opacity-50 transition-colors"
-                >
-                  {t('form.deleteTask')}
-                </button>
-              </SectionCard>
-            </>
-          )}
-
-          <div className="h-4" />
+          {/* ── Boutons Supprimer + CTA « Enregistrer » retirés (mobile,
+              2026-09-16, demande utilisateur) : seuls les boutons du header
+              (Annuler / Valider) restent, et pilotent la sauvegarde comme la
+              fermeture. Il n'y a donc plus de suppression accessible depuis
+              cette modale sur mobile. `handleDelete` reste dans les props
+              (desktop en a besoin, via `_handleDelete` ici pour ne pas le
+              perdre côté interface). */}
+          <div style={{ height: 'max(env(safe-area-inset-bottom), 16px)' }} />
         </div>
-      </div>
-
-      {/* ── Footer CTA ── */}
-      <div
-        className="shrink-0 px-4 pt-3 border-t border-[rgb(var(--color-border))] bg-[rgb(var(--color-background))]/95 backdrop-blur-sm"
-        style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 12px)' }}
-      >
-        <button
-          type="button"
-          onClick={handleCreateOrSave}
-          disabled={isLoading}
-          className={`w-full h-[50px] rounded-2xl text-[17px] font-semibold transition-colors ${
-            isValid && !isLoading ? 'bg-[rgb(var(--color-accent-solid))] active:bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))]' : 'bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] opacity-40'
-          }`}
-        >
-          {isLoading ? (
-            <span className="flex items-center justify-center gap-2">
-              <Loader2 size={18} className="animate-spin" />
-              {isCreating ? t('common.creatingEllipsis') : t('common.saving')}
-            </span>
-          ) : (
-            isCreating ? t('mobile.createTask') : t('common.save')
-          )}
-        </button>
       </div>
 
       {/* ── Action sheet : Priorité ── */}

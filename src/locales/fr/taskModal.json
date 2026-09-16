@@ -2,6 +2,7 @@
   "common": {
     "create": "Créer",
     "ok": "OK",
+    "validate": "Valider",
     "save": "Sauvegarder",
     "creating": "Création...",
     "creatingEllipsis": "Création…",
@@ -47,6 +48,7 @@
   },
   "sections": {
     "details": "Détails",
+    "detailsHint": "champs facultatifs",
     "description": "Description",
     "organisation": "Organisation",
     "subtasks": "Sous-tâches",

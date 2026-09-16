@@ -93,11 +93,19 @@ const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
   // bordure — l'ancien style (fond transparent + bordure) est retiré, la
   // pastille de couleur (juste en dessous) reste, seule exception demandée.
   // Taille des chips — la page OKR perso les agrandit (~+20%) via `large`.
+  // Mobile : hauteur fixe `h-9`, reprise de la pilule Spotify de
+  // TaskListsBar (accès rapide aux listes) — `large` ne joue plus qu'au-delà
+  // de `sm` (desktop inchangé), au lieu d'agrandir aussi le mobile via
+  // `min-h-touch`.
   const chipCls = large
-    ? 'inline-flex items-center gap-2 px-3 min-h-touch sm:min-h-0 sm:py-1.5 rounded-full text-sm font-medium transition-colors'
-    : 'inline-flex items-center gap-1.5 px-2.5 min-h-touch sm:min-h-0 sm:py-1 rounded-full text-xs font-medium transition-colors';
+    ? 'inline-flex items-center gap-1.5 px-2.5 h-9 sm:h-auto sm:gap-2 sm:px-3 sm:min-h-0 sm:py-1.5 rounded-full text-xs sm:text-sm font-medium transition-colors'
+    : 'inline-flex items-center gap-1.5 px-2.5 h-9 sm:h-auto sm:min-h-0 sm:py-1 rounded-full text-xs font-medium transition-colors';
   const dotCls = large ? 'w-2.5 h-2.5' : 'w-2 h-2';
-  const addChipCls = `inline-flex items-center rounded-full font-medium border border-dashed border-[rgb(var(--color-border))] text-[rgb(var(--color-text-muted))] hover:text-blue-500 hover:border-[rgb(var(--color-accent))] transition-colors min-h-touch sm:min-h-0 ${
+  // `hidden sm:inline-flex` : sur mobile, ce déclencheur est remplacé par le
+  // bouton « + » du bandeau « Catégorie : » ajouté plus bas (même formulaire
+  // `showCreateCategory` en dessous, seul le déclencheur change). Desktop
+  // inchangé.
+  const addChipCls = `hidden sm:inline-flex items-center rounded-full font-medium border border-dashed border-[rgb(var(--color-border))] text-[rgb(var(--color-text-muted))] hover:text-blue-500 hover:border-[rgb(var(--color-accent))] transition-colors sm:min-h-0 ${
     large ? 'gap-1.5 px-3 sm:py-1.5 text-sm' : 'gap-1 px-2.5 sm:py-1 text-xs'
   }`;
   // `chip-accent-solid` plutot qu'un `bg-[#1f6feb]` en dur (cf. index.css) :
@@ -276,6 +284,25 @@ const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
 
   return (
     <div className="flex flex-col gap-1.5 mb-6" data-tutorial-id="okr-category-filter">
+      {/* Bandeau mobile — reprend le système de TaskListsBar (« Liste » +
+          bouton « + ») : un label et un déclencheur compact au lieu de la
+          pilule en pointillés « + Nouvelle catégorie » dans la rangée de
+          chips. Desktop inchangé (chips + pilule pointillée intactes). */}
+      {canManage && (
+        <div className="sm:hidden flex items-center justify-between">
+          <h2 className="text-label font-semibold text-[rgb(var(--color-text-secondary))]">
+            {t('categories.mobileLabel')}
+          </h2>
+          <button
+            onClick={() => setShowCreateCategory(true)}
+            aria-label={t('categories.new')}
+            className="flex items-center justify-center min-w-touch min-h-touch rounded-lg text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 active:bg-blue-100 dark:active:bg-blue-900/40 transition-colors"
+          >
+            <Plus size={20} />
+          </button>
+        </div>
+      )}
+
       {/* Rangée des RACINES uniquement — les sous-catégories n'apparaissent
           qu'une fois leur parent activé (rangées ci-dessous). Style
           « pastilles » du mode entreprise, appliqué aux deux modes : « Tous »

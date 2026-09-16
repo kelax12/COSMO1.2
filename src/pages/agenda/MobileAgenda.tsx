@@ -48,6 +48,7 @@ const MobileAgendaHeaderBase: React.FC<MobileAgendaHeaderProps> = ({
   onToday,
 }) => {
   const { t } = useT('agenda');
+  const { t: tCommon } = useT('common');
   const monthYear = format(currentDate, 'MMMM yyyy', { locale: getDateLocale() });
   const capitalMonthYear = monthYear.charAt(0).toUpperCase() + monthYear.slice(1);
   const isMonthView = viewMode === 'dayGridMonth';
@@ -65,38 +66,53 @@ const MobileAgendaHeaderBase: React.FC<MobileAgendaHeaderProps> = ({
       style={{ backgroundColor: 'rgb(var(--color-surface))', borderColor: 'rgb(var(--color-border))' }}
     >
       {/* Row 1: main controls */}
-      <div className="flex items-center justify-between px-3 py-1">
-        {/* Left: Tâches toggle */}
-        <button
-          onClick={onToggleSidebar}
-          data-tutorial-id="agenda-mobile-tasks-toggle"
-          className={`flex items-center gap-1 px-2 min-h-touch rounded-lg text-xs font-medium transition-colors`}
-          style={{
-            // bleu fonce (pas --color-accent) : #58a6ff ne passe pas le contraste AA (2.5:1) avec du texte blanc
-            backgroundColor: showTaskSidebar ? '#1f6feb' : 'transparent',
-            color: showTaskSidebar ? 'white' : 'rgb(var(--color-text-secondary))',
-          }}
-        >
-          <Calendar size={15} />
-          <span>{t('nav.tasks')}</span>
-        </button>
+      <div className="flex items-center justify-between px-3 py-1.5 gap-2">
+        {/* Left: titre de page + Tâches toggle */}
+        <div className="flex items-center gap-2 min-w-0">
+          <span
+            className="text-sm font-semibold shrink-0"
+            style={{ color: 'rgb(var(--color-text-primary))' }}
+          >
+            {tCommon('nav.agenda')}
+          </span>
+          {/* Libellé masqué sous 480px (`xs`) : avec le titre "Agenda" ajouté à
+              gauche, la rangée n'a plus la place pour "Tâches" en toutes
+              lettres sur les plus petits téléphones (375px) — l'icône seule
+              + aria-label reste identifiable. */}
+          <button
+            onClick={onToggleSidebar}
+            data-tutorial-id="agenda-mobile-tasks-toggle"
+            aria-label={t('nav.tasks')}
+            className={`flex items-center gap-1 px-2 min-h-touch rounded-lg text-xs font-medium transition-colors shrink-0`}
+            style={{
+              // bleu fonce (pas --color-accent) : #58a6ff ne passe pas le contraste AA (2.5:1) avec du texte blanc
+              backgroundColor: showTaskSidebar ? '#1f6feb' : 'transparent',
+              color: showTaskSidebar ? 'white' : 'rgb(var(--color-text-secondary))',
+            }}
+          >
+            <Calendar size={15} />
+            <span className="hidden xs:inline">{t('nav.tasks')}</span>
+          </button>
+        </div>
 
         {/* Right */}
-        <div className="flex items-center gap-1">
-          {/* 3-way view selector */}
+        <div className="flex items-center gap-1.5 shrink-0">
+          {/* 3-way view selector — pilule segmentée (redesign #épuré) : chaque
+              segment est SON PROPRE rounded-full sur fond transparent plutôt
+              qu'un bloc rounded-lg plein, l'enveloppe extérieure porte le seul
+              fond visible. Couleur active inchangée (#1f6feb, AA voir plus haut). */}
           <div
             data-tutorial-id="agenda-mobile-view-switcher"
-            className="flex rounded-lg overflow-hidden text-xs"
+            className="flex items-center gap-0.5 rounded-full p-0.5 text-xs"
+            style={{ backgroundColor: 'rgb(var(--color-chip-bg))' }}
           >
             {views.map(({ key, label }) => (
               <button
                 key={key}
                 onClick={() => onSetView(key)}
-                className="px-2 min-h-touch min-w-touch flex items-center justify-center font-medium transition-colors"
+                className="px-2.5 min-h-touch min-w-touch flex items-center justify-center rounded-full font-medium transition-colors"
                 style={{
-                  // bleu fonce (pas --color-accent) : #58a6ff ne passe pas le contraste AA (2.5:1) avec du texte blanc
-                  backgroundColor:
-                    viewMode === key ? '#1f6feb' : 'rgb(var(--color-chip-bg))',
+                  backgroundColor: viewMode === key ? '#1f6feb' : 'transparent',
                   color: viewMode === key ? 'white' : 'rgb(var(--color-text-secondary))',
                 }}
               >
@@ -108,11 +124,10 @@ const MobileAgendaHeaderBase: React.FC<MobileAgendaHeaderProps> = ({
           {/* Aujourd'hui (#16) */}
           <button
             onClick={onToday}
-            aria-label={t('nav.backToToday')}
-            className="px-2 min-h-touch min-w-touch flex items-center justify-center rounded-lg text-xs font-semibold border"
+            className="px-2.5 min-h-touch min-w-touch flex items-center justify-center rounded-full text-xs font-semibold border shrink-0"
             style={{ borderColor: 'rgb(var(--color-border))', color: 'rgb(var(--color-text-secondary))' }}
           >
-            Auj.
+            {t('nav.today')}
           </button>
         </div>
       </div>
