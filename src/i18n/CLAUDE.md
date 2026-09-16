@@ -45,7 +45,7 @@ t('project.name')                // clé plate dans le namespace
   sitemap. `npm run i18n:check` est la gate qui refuse cet état.
   ⚠️ Ouvrir une locale découvre aussi les routes applicatives sous son préfixe : `Disallow:`
   est un **préfixe**, `/dashboard` ne couvre pas `/en/dashboard`, et c'est le `noindex` retiré
-  qui les bouchait. Procédure complète dans [`docs/SEO.md`](./docs/SEO.md).
+  qui les bouchait. Procédure complète dans [`docs/SEO.md`](../../docs/SEO.md).
 - ❌ **Ne jamais écrire un slug localisé en dur dans un `to=`.** Le préfixe de locale est porté par
   le `basename` : `<Link to="/politique-confidentialite">` devient `/en/politique-confidentialite`,
   qui rend une **404** (une seule URL canonique par langue, comportement voulu). Mesuré dans le
