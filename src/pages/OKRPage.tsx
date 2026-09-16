@@ -372,18 +372,6 @@ const OKRPage: React.FC = () => {
         </motion.button>
       </div>
 
-      {/* Bouton mobile — affiché sous le H1, disponible en démo ET en production */}
-      <div className="sm:hidden mb-4">
-        <button
-          type="button"
-          onClick={() => setShowCheckin(true)}
-          className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold border-2 border-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid))] bg-[rgb(var(--color-surface))]"
-        >
-          <CalendarCheck size={18} />
-          <span>{t('page.openWeeklyCheckin')}</span>
-        </button>
-      </div>
-
       <CategoryFilterBar
         categories={categories}
         activeCategoryIds={activeCategoryIds}

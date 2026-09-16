@@ -110,11 +110,17 @@ const CategoryTreeRow: React.FC<CategoryTreeRowProps> = ({
           <DropdownMenuItem onClick={onMove}>
             <FolderInput size={14} aria-hidden="true" /> {t('colorModal.moveTitle')}
           </DropdownMenuItem>
-          {/* !text-red-500 : même correctif que list.tsx (rowMenu.delete) —
+          {/* !text-red-500 (icône) : même correctif que list.tsx (rowMenu.delete) —
               le sélecteur Tailwind data-[variant=destructive]:*:[svg]:!text-destructive
               de dropdown-menu.tsx ne s'applique pas, l'icône reste grise au
-              survol sans cet override explicite (cf. f563586d). */}
-          <DropdownMenuItem onClick={onDelete} variant="destructive">
+              survol sans cet override explicite (cf. f563586d).
+              max-sm:!text-[rgb(var(--color-error))] (texte, mobile) : le rouge
+              par défaut de `variant="destructive"` vient de `--destructive`
+              (hsl(0 84% 60%) ≈ red-500), la teinte que C-23 (index.css) a
+              écartée pour le texte faute de contraste WCAG AA — `--color-error`
+              (red-600, 4,83:1) est la bonne. Desktop laissé tel quel : demande
+              mobile uniquement. */}
+          <DropdownMenuItem onClick={onDelete} variant="destructive" className="max-sm:!text-[rgb(var(--color-error))]">
             <Trash2 size={14} aria-hidden="true" className="!text-red-500" /> {t('colorModal.deleteTitle')}
           </DropdownMenuItem>
         </DropdownMenuContent>

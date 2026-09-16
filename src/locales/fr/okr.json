@@ -40,6 +40,7 @@
     "progressOf": "Avancement de {{title}} sur {{target}}"
   },
   "categories": {
+    "mobileLabel": "Catégorie :",
     "all": "Tous",
     "edit": "Modifier la catégorie",
     "delete": "Supprimer la catégorie",

@@ -354,7 +354,13 @@ const NavItems = () =>
         <main
           id={MAIN_CONTENT_ID}
           tabIndex={-1}
-          className="flex-1 overflow-y-auto overflow-x-hidden pb-20 focus:outline-none"
+          // Agenda : le SEUL scroll voulu est celui interne à FullCalendar
+          // (`.fc-scroller`). `overflow-y-auto` ici en faisait un second —
+          // `pb-20` reste constant (dégage la tab bar `fixed`, cf. MobileTabBar),
+          // seul l'overflow change.
+          className={`flex-1 overflow-x-hidden pb-20 focus:outline-none ${
+            location.pathname === '/agenda' ? 'overflow-hidden' : 'overflow-y-auto'
+          }`}
           style={{ backgroundColor: 'rgb(var(--color-background))' }}
         >
           <Outlet />

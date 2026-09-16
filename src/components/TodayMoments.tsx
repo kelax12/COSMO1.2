@@ -176,7 +176,9 @@ const TodayMoments = () => {
                 key={entry.key}
                 // Le filet plutôt que la carte, comme les lignes de tâches
                 // (arbitrage du 2026-09-05).
-                className="flex items-center gap-2.5 border-b border-[rgb(var(--color-border))] last:border-b-0"
+                // `py-2` (tâches uniquement) : +20% de hauteur demandé côté
+                // mobile — desktop n'affiche pas ce composant (cf. TodayUnified).
+                className={`flex items-center gap-2.5 border-b border-[rgb(var(--color-border))] last:border-b-0 ${entry.task ? 'py-2' : ''}`}
               >
                 {entry.task ? (
                   <>
@@ -210,7 +212,7 @@ const TodayMoments = () => {
                       onClick={() => handleOpen(entry.task!)}
                       className="flex-1 min-w-0 min-h-touch flex flex-col justify-center text-left"
                     >
-                      <span className="block text-label text-[rgb(var(--color-text-primary))] truncate">
+                      <span className="block text-body text-[rgb(var(--color-text-primary))] truncate">
                         {entry.task.name}
                       </span>
                       <span className="flex items-center gap-1.5 text-caption text-[rgb(var(--color-text-muted))]">

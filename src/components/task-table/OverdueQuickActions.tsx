@@ -52,13 +52,9 @@ export const OverdueQuickActions: React.FC<OverdueQuickActionsProps> = ({
       onClick={(e) => e.stopPropagation()}
       onPointerDown={(e) => e.stopPropagation()}
     >
-      <button
-        type="button"
-        onClick={() => onReschedule(todayKey)}
-        className={`${CHIP} text-red-600 dark:text-red-300 bg-red-500/10 hover:bg-red-500/20`}
-      >
-        {t('snooze.today')}
-      </button>
+      {/* Reporter une tâche en retard à AUJOURD'HUI n'a pas de sens (elle est
+          déjà due aujourd'hui ou avant) : seuls « Demain » et « Choisir »
+          restent. */}
       <button
         type="button"
         onClick={() => onReschedule(addDaysToKey(todayKey, 1))}

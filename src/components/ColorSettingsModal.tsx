@@ -413,10 +413,20 @@ const ColorSettingsModalContent: React.FC<Omit<ColorSettingsModalProps, 'isOpen'
 
           <div className="flex items-center justify-between px-4 sm:px-6 py-[0.420204rem] sm:py-[0.560272rem] border-b border-[rgb(var(--color-border))] shrink-0">
             <h2 className="text-base sm:text-xl font-medium text-[rgb(var(--color-text-primary))]">{t('colorModal.title')}</h2>
+            {/* Mobile : le bouton « Enregistrer » du footer est retiré — cette
+                action prend sa place ET ferme, comme la croix le faisait sans
+                enregistrer avant. Desktop inchangé (croix + footer). */}
+            <button
+              onClick={handleSave}
+              disabled={isSaving}
+              className="sm:hidden min-h-11 px-2 flex items-center justify-center text-blue-500 text-[15px] font-semibold disabled:opacity-50"
+            >
+              {isSaving ? '…' : tCommon('actions.confirm')}
+            </button>
             <button
               onClick={onClose}
               aria-label={tCommon('actions.close')}
-              className="min-w-11 min-h-11 flex items-center justify-center rounded-lg text-[rgb(var(--color-text-muted))] hover:text-blue-600 hover:bg-[rgb(var(--color-hover))] transition-colors"
+              className="hidden sm:flex min-w-11 min-h-11 items-center justify-center rounded-lg text-[rgb(var(--color-text-muted))] hover:text-blue-600 hover:bg-[rgb(var(--color-hover))] transition-colors"
             >
               <X size={22} strokeWidth={2.5} />
             </button>
@@ -434,7 +444,10 @@ const ColorSettingsModalContent: React.FC<Omit<ColorSettingsModalProps, 'isOpen'
                 aria-label={t('colorModal.addRoot')}
                 className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors p-2 bg-blue-50 dark:bg-blue-900/20 rounded-full shadow-sm"
               >
-                <Plus size={24} strokeWidth={3} />
+                {/* Icône plus petite sur mobile (18px, contre 24 desktop) — 24px
+                    dans un rond p-2 fait une cible disproportionnée sur un
+                    petit écran. */}
+                <Plus className="w-[18px] h-[18px] sm:w-6 sm:h-6" strokeWidth={3} />
               </button>
             </div>
 
@@ -472,7 +485,9 @@ const ColorSettingsModalContent: React.FC<Omit<ColorSettingsModalProps, 'isOpen'
             </div>
           </div>
 
-            <div className="px-4 sm:px-6 pt-[0.6555rem] pb-[0.6555rem] sm:pb-[1.311rem] border-t border-[rgb(var(--color-border))] shrink-0 flex justify-center">
+            {/* Footer « Enregistrer » — desktop uniquement. Sur mobile, le
+                bouton « Valider » du header sauvegarde ET ferme. */}
+            <div className="hidden sm:flex px-4 sm:px-6 pt-[0.6555rem] pb-[0.6555rem] sm:pb-[1.311rem] border-t border-[rgb(var(--color-border))] shrink-0 justify-center">
               <button
                 onClick={handleSave}
                 disabled={isSaving}

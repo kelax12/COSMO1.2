@@ -64,10 +64,18 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                       <span>{category?.name ?? t('card.uncategorized')}</span>
                     </span>
 
+                    {/* Année masquée sur mobile (redesign 2026-09-16) — affichage
+                        seulement, `objective.startDate`/`endDate` inchangées. */}
                     <div className="flex-1 flex items-center justify-center gap-2 text-caption" style={{ color: 'rgb(var(--color-text-muted))' }}>
-                      <span>{formatDate(new Date(objective.startDate), { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                      <span>
+                        {formatDate(new Date(objective.startDate), { day: 'numeric', month: 'long' })}
+                        <span className="hidden sm:inline"> {formatDate(new Date(objective.startDate), { year: 'numeric' })}</span>
+                      </span>
                       <span>→</span>
-                      <span>{formatDate(new Date(objective.endDate), { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                      <span>
+                        {formatDate(new Date(objective.endDate), { day: 'numeric', month: 'long' })}
+                        <span className="hidden sm:inline"> {formatDate(new Date(objective.endDate), { year: 'numeric' })}</span>
+                      </span>
                     </div>
 
                     <div className="flex items-center gap-1 sm:gap-2 shrink-0">
@@ -122,7 +130,9 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                   </div>
 
                 <div className="mb-6 flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
-                  <div className="relative w-16 h-16 sm:w-20 sm:h-20 shrink-0">
+                  {/* Cercle retiré sur mobile (redesign 2026-09-16) : seule la
+                      barre linéaire ci-dessous reste, desktop inchangé. */}
+                  <div className="hidden sm:block relative w-16 h-16 sm:w-20 sm:h-20 shrink-0">
                     <svg className="transform -rotate-90" width="100%" height="100%" viewBox="0 0 80 80">
                       <circle cx="40" cy="40" r="32" stroke="rgb(var(--color-border-muted))" strokeWidth="8" fill="none" />
                       <circle cx="40" cy="40" r="32" stroke="rgb(var(--color-accent))" strokeWidth="8" fill="none" strokeLinecap="round" strokeDasharray={`${2 * Math.PI * 32}`} strokeDashoffset={2 * Math.PI * 32 * (1 - Math.min(progress, 100) / 100)} />
@@ -131,7 +141,7 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                       <span className="text-lg sm:text-xl font-bold" style={{ color: 'rgb(var(--color-text-primary))' }}>{progress}%</span>
                     </div>
                   </div>
-                  
+
                   <div className="flex-1 w-full">
                     <div className="flex justify-between items-center mb-2">
                       <span className="text-xs sm:text-sm font-medium" style={{ color: 'rgb(var(--color-text-secondary))' }}>{t('card.overallProgress')}</span>
@@ -201,15 +211,16 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                           </div>
                         </div>
 
-                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
-                          <div className="flex items-center gap-1.5 w-full sm:w-auto">
-                            {/* Incrément rapide (#27) : passer de 4 à 5 sans ouvrir de modal */}
+                        {/* Desktop (sm+, inchangé) : boutons -/+ incrément rapide (#27) +
+                            input + barre, sur deux rangées. */}
+                        <div className="hidden sm:flex sm:flex-row items-center gap-3">
+                          <div className="flex items-center gap-1.5">
                             <button
                               type="button"
                               onClick={() => updateKeyResult(objective.id, keyResult.id, Math.max(0, keyResult.currentValue - 1))}
                               disabled={keyResult.currentValue <= 0}
                               aria-label={t('card.decrease', { title: keyResult.title })}
-                              className="w-11 h-11 sm:w-7 sm:h-7 rounded-md border flex items-center justify-center text-sm font-bold transition-colors hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-30"
+                              className="w-7 h-7 rounded-md border flex items-center justify-center text-sm font-bold transition-colors hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-30"
                               style={{ borderColor: 'rgb(var(--color-border))', color: 'rgb(var(--color-text-secondary))' }}
                             >
                               −
@@ -219,26 +230,46 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                               aria-label={t('card.progressOf', { title: keyResult.title, target: keyResult.targetValue })}
                               value={keyResult.currentValue}
                               onChange={(e) => updateKeyResult(objective.id, keyResult.id, Number(e.target.value))}
-                              className="w-14 sm:w-16 px-2 py-1 text-xs sm:text-sm border rounded focus:outline-none text-center"
+                              className="w-16 px-2 py-1 text-sm border rounded focus:outline-none text-center"
                               style={{ backgroundColor: 'rgb(var(--color-surface))', color: 'rgb(var(--color-text-primary))', borderColor: 'rgb(var(--color-border))' }} />
                             <button
                               type="button"
                               onClick={() => updateKeyResult(objective.id, keyResult.id, keyResult.currentValue + 1)}
                               aria-label={t('card.increase', { title: keyResult.title })}
-                              className="w-11 h-11 sm:w-7 sm:h-7 rounded-md border flex items-center justify-center text-sm font-bold transition-colors hover:bg-slate-200 dark:hover:bg-slate-700"
+                              className="w-7 h-7 rounded-md border flex items-center justify-center text-sm font-bold transition-colors hover:bg-slate-200 dark:hover:bg-slate-700"
                               style={{ borderColor: 'rgb(var(--color-border))', color: 'rgb(var(--color-text-secondary))' }}
                             >
                               +
                             </button>
-
-                            <span className="text-xs sm:text-sm whitespace-nowrap" style={{ color: 'rgb(var(--color-text-secondary))' }}>/ {keyResult.targetValue}</span>
+                            <span className="text-sm whitespace-nowrap" style={{ color: 'rgb(var(--color-text-secondary))' }}>/ {keyResult.targetValue}</span>
                           </div>
-                          
-                          <div className="flex items-center gap-3 w-full">
+
+                          <div className="flex items-center gap-3 flex-1">
                             <div className="flex-1 rounded-full h-1.5" style={{ backgroundColor: 'rgb(var(--color-border-muted))' }}>
                               <div className={`h-1.5 rounded-full transition-all duration-500 ${keyResult.completed ? 'bg-green-500' : 'bg-[rgb(var(--color-accent-solid))]'}`} style={{ width: `${Math.min(krProgress, 100)}%` }} />
                             </div>
-                            <span className="text-caption sm:text-xs font-medium w-8 text-right" style={{ color: 'rgb(var(--color-text-secondary))' }}>{Math.round(krProgress)}%</span>
+                            <span className="text-xs font-medium w-8 text-right" style={{ color: 'rgb(var(--color-text-secondary))' }}>{Math.round(krProgress)}%</span>
+                          </div>
+                        </div>
+
+                        {/* Mobile (redesign 2026-09-16) : plus de -/+ (le clavier
+                            numérique du champ suffit), input réduit, sur la MÊME
+                            ligne que la barre plutôt que sur deux rangées. */}
+                        <div className="flex sm:hidden items-center gap-2">
+                          <input
+                            type="number"
+                            aria-label={t('card.progressOf', { title: keyResult.title, target: keyResult.targetValue })}
+                            value={keyResult.currentValue}
+                            onChange={(e) => updateKeyResult(objective.id, keyResult.id, Number(e.target.value))}
+                            className="w-11 shrink-0 px-1 py-1 text-xs border rounded focus:outline-none text-center"
+                            style={{ backgroundColor: 'rgb(var(--color-surface))', color: 'rgb(var(--color-text-primary))', borderColor: 'rgb(var(--color-border))' }} />
+                          <span className="text-xs shrink-0 whitespace-nowrap" style={{ color: 'rgb(var(--color-text-secondary))' }}>/ {keyResult.targetValue}</span>
+
+                          <div className="flex items-center gap-2 flex-1">
+                            <div className="flex-1 rounded-full h-1.5" style={{ backgroundColor: 'rgb(var(--color-border-muted))' }}>
+                              <div className={`h-1.5 rounded-full transition-all duration-500 ${keyResult.completed ? 'bg-green-500' : 'bg-[rgb(var(--color-accent-solid))]'}`} style={{ width: `${Math.min(krProgress, 100)}%` }} />
+                            </div>
+                            <span className="text-caption font-medium w-8 text-right shrink-0" style={{ color: 'rgb(var(--color-text-secondary))' }}>{Math.round(krProgress)}%</span>
                           </div>
                         </div>
                       </div>);

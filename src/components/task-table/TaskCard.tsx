@@ -317,17 +317,6 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
         </button>
       )}
 
-      {/* Pin de couleur — catégorie, entre la case à cocher et le titre
-          (remplace l'ancienne bande colorée pleine hauteur, cf. demande
-          redesign mobile 2026-09-07). */}
-      {!addToListMode && (
-        <span
-          className="self-center shrink-0 w-2 h-2 rounded-full"
-          style={{ backgroundColor: categoryColor }}
-          aria-hidden="true"
-        />
-      )}
-
       {/* Title + meta */}
       <div className="flex-1 min-w-0 flex flex-col justify-center gap-0.5">
         {/* Titre */}
@@ -351,6 +340,20 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
           >
             {task.name}
           </p>
+
+          {/* Catégorie — déplacée après le titre (redesign 2026-09-16) : nom
+              en clair plutôt qu'une pastille seule avant le titre, la pastille
+              ne portant plus que la couleur, accolée au nom. */}
+          {!addToListMode && category && (
+            <span className="mt-0.5 shrink-0 inline-flex items-center gap-1 text-caption font-medium text-[rgb(var(--color-text-primary))]">
+              <span
+                className="w-2 h-2 rounded-full shrink-0"
+                style={{ backgroundColor: categoryColor }}
+                aria-hidden="true"
+              />
+              {category.name}
+            </span>
+          )}
 
           {/* Maquette 15 — « Le collaborateur en avatar, pas en texte ».
               « Reçu de Jean Martin » prenait une ligne entière sous le titre,

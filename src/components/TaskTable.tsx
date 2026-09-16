@@ -66,6 +66,8 @@ type TaskTableProps = {
   onShowCompletedChange?: (value: boolean) => void;
   /** Une liste perso filtre la page : aucune tâche d'équipe n'en fait jamais partie. */
   listFilterActive?: boolean;
+  /** Liste, catégorie(s) OU recherche active — gate « Voir les terminées ». */
+  hasActiveFilter?: boolean;
 };
 
 
@@ -84,6 +86,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
   searchTerm = '',
   onShowCompletedChange,
   listFilterActive = false,
+  hasActiveFilter = false,
 }) => {
   const { t, tp } = useT('tasks');
 
@@ -480,7 +483,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
                 ? tp('table.endOfListCompleted', unifiedRows.length)
                 : tp('table.endOfList', unifiedRows.length)}
             </p>
-            {hiddenCompletedCount > 0 && onShowCompletedChange && (
+            {hasActiveFilter && hiddenCompletedCount > 0 && onShowCompletedChange && (
               <button
                 type="button"
                 onClick={() => onShowCompletedChange(true)}

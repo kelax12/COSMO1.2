@@ -253,7 +253,7 @@ const AgendaCalendarSection = ({
 
   // Label du jour sélectionné
   const mobileDayLabel = (() => {
-    const raw = format(mobileSelectedDate, 'EEEE - d MMMM yyyy', { locale: getDateLocale() });
+    const raw = format(mobileSelectedDate, 'EEEE d MMMM yyyy', { locale: getDateLocale() });
     return raw.charAt(0).toUpperCase() + raw.slice(1);
   })();
 
