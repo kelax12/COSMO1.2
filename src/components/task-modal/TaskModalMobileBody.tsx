@@ -120,7 +120,7 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
   friends: _friends, filteredFriends, sentRequests: _sentRequests, collabIdOf, displayInfo,
   handleAddEmail, handleRemoveCollaborator, toggleCollaborator,
   createCategoryMutation,
-  handleSave, handleClose, handleDelete: _handleDelete, isCreating, isLoading, isFormValid,
+  handleSave, handleClose, handleDelete, isCreating, isLoading, isFormValid,
   taskId, autoOpenCollaborators, isTaskOwner, ownerId, pendingShareIds, onGenerateShareLink,
 }) => {
   const { t } = useT('taskModal');
@@ -454,13 +454,25 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
             />
           </SectionCard>
 
-          {/* ── Boutons Supprimer + CTA « Enregistrer » retirés (mobile,
-              2026-09-16, demande utilisateur) : seuls les boutons du header
-              (Annuler / Valider) restent, et pilotent la sauvegarde comme la
-              fermeture. Il n'y a donc plus de suppression accessible depuis
-              cette modale sur mobile. `handleDelete` reste dans les props
-              (desktop en a besoin, via `_handleDelete` ici pour ne pas le
-              perdre côté interface). */}
+          {/* ── Supprimer (édition uniquement) — remis le 2026-09-17 à la
+              demande utilisateur, après Collaboration, même gabarit que la
+              cellule Collaborateurs ci-dessus (min-h-11, pleine largeur). */}
+          {!isCreating && (
+            <>
+              <div className="h-2" />
+              <SectionCard>
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  disabled={isLoading}
+                  className="w-full flex items-center justify-center min-h-11 text-red-500 text-[15px] active:bg-[rgb(var(--color-hover))] disabled:opacity-50 transition-colors"
+                >
+                  {t('form.deleteTask')}
+                </button>
+              </SectionCard>
+            </>
+          )}
+
           <div style={{ height: 'max(env(safe-area-inset-bottom), 16px)' }} />
         </div>
       </div>

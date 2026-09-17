@@ -8,7 +8,7 @@ interface CollaboratorAvatarsProps {
   collaboratorIds?: string[];
   friends: Friend[];
   className?: string;
-  size?: 'sm' | 'md';
+  size?: 'sm' | 'md' | 'lg';
   maxVisible?: number;
 }
 
@@ -28,7 +28,9 @@ const CollaboratorAvatars: React.FC<CollaboratorAvatarsProps> = ({
   );
   if (resolvedIds.length === 0) return null;
 
-  const sizeClasses = size === 'sm' ? 'size-7 text-caption' : 'size-9 text-xs';
+  // `lg` = size-9 (md) +70% de diamètre (36px → 61px) — TaskCard mobile
+  // uniquement (redesign 2026-09-17), aucun autre appelant n'utilise `lg`.
+  const sizeClasses = size === 'sm' ? 'size-7 text-caption' : size === 'lg' ? 'size-[61px] text-sm' : 'size-9 text-xs';
   const visible = resolvedIds.slice(0, maxVisible);
   const overflow = resolvedIds.length - maxVisible;
 
@@ -49,7 +51,7 @@ const CollaboratorAvatars: React.FC<CollaboratorAvatarsProps> = ({
             ) : null}
             <AvatarFallback className="bg-muted text-muted-foreground font-bold">
               {isEmojiAvatar(friend?.avatar) ? (
-                <span className={size === 'sm' ? 'text-xs' : 'text-base'}>{friend?.avatar}</span>
+                <span className={size === 'sm' ? 'text-xs' : size === 'lg' ? 'text-2xl' : 'text-base'}>{friend?.avatar}</span>
               ) : (
                 initials
               )}

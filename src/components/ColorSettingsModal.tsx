@@ -264,8 +264,15 @@ const ColorSettingsModalContent: React.FC<Omit<ColorSettingsModalProps, 'isOpen'
   };
 
   const handleSave = async () => {
-    // Validation : chaque nom de catégorie doit faire ≥ 2 caractères
-    const invalid = localCategories.find(lc => lc.name.trim().length < 2);
+    // Catégorie créée puis jamais nommée : silencieuse, pas de blocage
+    // (2026-09-17, demande utilisateur — l'ancien comportement bloquait
+    // « Valider » avec un toast d'erreur tant qu'elle traînait sans nom).
+    // Seule une catégorie EXISTANTE renommée trop court reste bloquante :
+    // là, silencieux effacerait un nom qu'on avait déjà en base.
+    const categoriesToSave = localCategories.filter(
+      (lc) => !(lc.id.startsWith('temp-') && lc.name.trim().length < 2),
+    );
+    const invalid = categoriesToSave.find(lc => lc.name.trim().length < 2);
     if (invalid) {
       toast.error(t('colorModal.nameTooShort'));
       return;
@@ -277,7 +284,7 @@ const ColorSettingsModalContent: React.FC<Omit<ColorSettingsModalProps, 'isOpen'
       // fenetre ou les elements pointent dans le vide, et un echec du
       // reclassement deviendrait irrattrapable : plus rien ne dirait quels
       // elements portaient la categorie disparue.
-      const removed = categories.filter(cat => !localCategories.find(lc => lc.id === cat.id));
+      const removed = categories.filter(cat => !categoriesToSave.find(lc => lc.id === cat.id));
       // On peut supprimer DEUX categories d'un coup et designer la seconde comme
       // destination de la premiere. `resolveReassignTargets` suit la chaine
       // jusqu'a une categorie qui survit : sans lui, des elements partaient vers
@@ -292,7 +299,7 @@ const ColorSettingsModalContent: React.FC<Omit<ColorSettingsModalProps, 'isOpen'
 
       // Mises à jour nom/couleur : elles visent des lignes qui existent déjà,
       // et peuvent partir en parallèle entre elles.
-      const updatePromises = localCategories
+      const updatePromises = categoriesToSave
         .filter((lc) => !lc.id.startsWith('temp-'))
         .map((lc) => {
           const existing = categories.find((cat) => cat.id === lc.id);
@@ -313,7 +320,7 @@ const ColorSettingsModalContent: React.FC<Omit<ColorSettingsModalProps, 'isOpen'
       // la même catégorie dans le même lot (deux écritures sur des colonnes
       // disjointes, sans conflit). Ne concerne que les lignes déjà en base :
       // une création porte déjà son `parentId`/`position` définitifs.
-      const movePromises = localCategories
+      const movePromises = categoriesToSave
         .filter((lc) => !lc.id.startsWith('temp-'))
         .filter((lc) => {
           const existing = categories.find((cat) => cat.id === lc.id);
@@ -353,7 +360,7 @@ const ColorSettingsModalContent: React.FC<Omit<ColorSettingsModalProps, 'isOpen'
       // l'identifiant réel rendu par la création de son parent, au fur et à
       // mesure qu'on descend les niveaux.
       const tempToReal = new Map<string, string>();
-      for (const draft of planCreations(localCategories)) {
+      for (const draft of planCreations(categoriesToSave)) {
         const parentId = draft.parentId?.startsWith('temp-')
           ? tempToReal.get(draft.parentId) ?? null
           : draft.parentId;
@@ -439,15 +446,24 @@ const ColorSettingsModalContent: React.FC<Omit<ColorSettingsModalProps, 'isOpen'
             style={{ backgroundColor: 'rgb(var(--color-surface))' }}
           >
             <div className="flex justify-end mb-4">
+              {/* Refonte mobile (2026-09-17) : le rond bleu plein (24px dans un
+                  cercle `p-2`) devient un bouton icône simple — même gabarit
+                  que le « + » de TaskListsBar (accès rapide aux listes) —
+                  plutôt qu'un simple rétrécissement du même style. Desktop
+                  inchangé (rond bleu plein). */}
               <button
                 onClick={() => handleAddCategory()}
                 aria-label={t('colorModal.addRoot')}
-                className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors p-2 bg-blue-50 dark:bg-blue-900/20 rounded-full shadow-sm"
+                className="sm:hidden flex items-center justify-center min-w-touch min-h-touch rounded-lg text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 active:bg-blue-100 dark:active:bg-blue-900/40 transition-colors"
               >
-                {/* Icône plus petite sur mobile (18px, contre 24 desktop) — 24px
-                    dans un rond p-2 fait une cible disproportionnée sur un
-                    petit écran. */}
-                <Plus className="w-[18px] h-[18px] sm:w-6 sm:h-6" strokeWidth={3} />
+                <Plus size={20} />
+              </button>
+              <button
+                onClick={() => handleAddCategory()}
+                aria-label={t('colorModal.addRoot')}
+                className="hidden sm:flex text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors p-2 bg-blue-50 dark:bg-blue-900/20 rounded-full shadow-sm"
+              >
+                <Plus size={24} strokeWidth={3} />
               </button>
             </div>
 

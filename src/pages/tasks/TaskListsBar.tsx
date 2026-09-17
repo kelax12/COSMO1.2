@@ -254,9 +254,17 @@ const TaskListsBar: React.FC<TaskListsBarProps> = ({
                             //     = scroll attendu ; drag-to-reorder rentrerait en conflit avec le scroll).
                             // En usage desktop, framer-motion distingue click (mouvement < 4px) du drag.
                             drag={isEditing || isMobile ? false : 'x'}
+                            dragDirectionLock
                             onDragEnd={commitReorderLists}
                             whileDrag={{ scale: 1.05, zIndex: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.18)' }}
                             className={`relative shrink-0 ${isMobile ? '' : 'cursor-grab active:cursor-grabbing'}`}
+                            // `touch-action: pan-y` explicite (mobile) : sans lui, ce
+                            // `Reorder.Item` (composant pensé pour le drag-to-reorder,
+                            // même avec `drag={false}`) peut encore intercepter le
+                            // geste tactile et empêcher le scroll vertical NATIF de la
+                            // page de passer à travers la chip — elle « résiste » au
+                            // doigt au lieu de le laisser scroller la page derrière elle.
+                            style={{ touchAction: 'pan-y' }}
                             onMouseEnter={() => setHoveredListId(list.id)}
                             onMouseLeave={() => setHoveredListId(null)}
                           >
