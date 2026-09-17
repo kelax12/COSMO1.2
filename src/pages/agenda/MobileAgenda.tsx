@@ -48,7 +48,6 @@ const MobileAgendaHeaderBase: React.FC<MobileAgendaHeaderProps> = ({
   onToday,
 }) => {
   const { t } = useT('agenda');
-  const { t: tCommon } = useT('common');
   const monthYear = format(currentDate, 'MMMM yyyy', { locale: getDateLocale() });
   const capitalMonthYear = monthYear.charAt(0).toUpperCase() + monthYear.slice(1);
   const isMonthView = viewMode === 'dayGridMonth';
@@ -67,22 +66,13 @@ const MobileAgendaHeaderBase: React.FC<MobileAgendaHeaderProps> = ({
     >
       {/* Row 1: main controls */}
       <div className="flex items-center justify-between px-3 py-1.5 gap-2">
-        {/* Left: titre de page + Tâches toggle */}
+        {/* Left: Tâches toggle — titre "Agenda" retiré (2026-09-17, demande
+            utilisateur) ; le libellé "Tâches" redevient visible sur tous les
+            écrans, la rangée ayant récupéré l'espace. */}
         <div className="flex items-center gap-2 min-w-0">
-          <span
-            className="text-sm font-semibold shrink-0"
-            style={{ color: 'rgb(var(--color-text-primary))' }}
-          >
-            {tCommon('nav.agenda')}
-          </span>
-          {/* Libellé masqué sous 480px (`xs`) : avec le titre "Agenda" ajouté à
-              gauche, la rangée n'a plus la place pour "Tâches" en toutes
-              lettres sur les plus petits téléphones (375px) — l'icône seule
-              + aria-label reste identifiable. */}
           <button
             onClick={onToggleSidebar}
             data-tutorial-id="agenda-mobile-tasks-toggle"
-            aria-label={t('nav.tasks')}
             className={`flex items-center gap-1 px-2 min-h-touch rounded-lg text-xs font-medium transition-colors shrink-0`}
             style={{
               // bleu fonce (pas --color-accent) : #58a6ff ne passe pas le contraste AA (2.5:1) avec du texte blanc
@@ -91,7 +81,7 @@ const MobileAgendaHeaderBase: React.FC<MobileAgendaHeaderProps> = ({
             }}
           >
             <Calendar size={15} />
-            <span className="hidden xs:inline">{t('nav.tasks')}</span>
+            <span>{t('nav.tasks')}</span>
           </button>
         </div>
 

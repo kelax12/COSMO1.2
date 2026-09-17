@@ -55,7 +55,13 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                   exit={{ opacity: 0, scale: 0.9 }}
                   transition={{ delay: index * 0.05 }}
                   data-tutorial-id={index === 0 ? 'okr-first-card' : undefined}
-                  className="card-plain-mobile rounded-lg border md:p-6 p-gutter transition-all relative overflow-hidden group">
+                  // Séparation visuelle entre cartes sur mobile (2026-09-17) :
+                  // `.card-plain-mobile` rend fond ET bordure transparents
+                  // sous 768px (par design, pour d'autres écrans) — ici on la
+                  // contredit explicitement, chaque OKR doit rester une boîte
+                  // distincte plutôt que de se fondre dans la suivante à 24px
+                  // d'écart. Desktop déjà bordé, inchangé.
+                  className="card-plain-mobile max-sm:!bg-[rgb(var(--color-surface))] max-sm:!border-[rgb(var(--color-border))] rounded-lg border md:p-6 p-gutter transition-all relative overflow-hidden group">
                   <div className="flex justify-between items-center mb-4 gap-4">
                     <span className="flex items-center gap-1.5 px-2 py-1 rounded-full text-caption sm:text-xs font-medium whitespace-nowrap shrink-0" style={{ backgroundColor: category ? resolveColor(category.color) + '20' : 'rgb(var(--color-accent) / 0.1)', color: category ? resolveColor(category.color) : 'rgb(var(--color-accent))' }}>
                       {category && (
@@ -153,7 +159,9 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                   </div>
                 </div>
 
-                <div className="space-y-3">
+                {/* Espaces réduits sur mobile (2026-09-17) : `space-y-3`/`p-3`
+                    (12px) → `space-y-1.5`/`p-2` (6-8px), desktop inchangé. */}
+                <div className="space-y-1.5 sm:space-y-3">
                   <h3 className="text-xs sm:text-sm font-medium mb-2" style={{ color: 'rgb(var(--color-text-secondary))' }}>{t('card.keyResults')}</h3>
                   {objective.keyResults.map((keyResult) => {
                     // Guard targetValue > 0 (B17) : évite NaN quand la cible vaut 0.
@@ -162,7 +170,7 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                       : 0;
 
                     return (
-                      <div key={keyResult.id} className="rounded-lg p-3 transition-all" style={{ backgroundColor: 'rgb(var(--color-hover))' }}>
+                      <div key={keyResult.id} className="rounded-lg p-2 sm:p-3 transition-all" style={{ backgroundColor: 'rgb(var(--color-hover))' }}>
                         <div className="flex justify-between items-center mb-3 gap-2">
                           <span className="flex items-center gap-1.5 min-w-0">
                             <span className="text-xs sm:text-sm font-medium truncate" style={{ color: 'rgb(var(--color-text-primary))' }}>{keyResult.title}</span>
@@ -256,13 +264,24 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                             numérique du champ suffit), input réduit, sur la MÊME
                             ligne que la barre plutôt que sur deux rangées. */}
                         <div className="flex sm:hidden items-center gap-2">
+                          {/* Largeur adaptée au nombre de chiffres affichés
+                              (redesign 2026-09-17) : `size` (fallback universel,
+                              en caractères) + `field-sizing: content` (Chrome
+                              123+, natif) — même duo que TaskListsBar/
+                              CategoryFilterBar pour un input auto-dimensionné. */}
                           <input
                             type="number"
                             aria-label={t('card.progressOf', { title: keyResult.title, target: keyResult.targetValue })}
                             value={keyResult.currentValue}
                             onChange={(e) => updateKeyResult(objective.id, keyResult.id, Number(e.target.value))}
-                            className="w-11 shrink-0 px-1 py-1 text-xs border rounded focus:outline-none text-center"
-                            style={{ backgroundColor: 'rgb(var(--color-surface))', color: 'rgb(var(--color-text-primary))', borderColor: 'rgb(var(--color-border))' }} />
+                            size={Math.max(String(keyResult.currentValue).length, 1)}
+                            className="shrink-0 px-1 py-1 text-xs border rounded focus:outline-none text-center"
+                            style={{
+                              backgroundColor: 'rgb(var(--color-surface))',
+                              color: 'rgb(var(--color-text-primary))',
+                              borderColor: 'rgb(var(--color-border))',
+                              fieldSizing: 'content',
+                            } as React.CSSProperties} />
                           <span className="text-xs shrink-0 whitespace-nowrap" style={{ color: 'rgb(var(--color-text-secondary))' }}>/ {keyResult.targetValue}</span>
 
                           <div className="flex items-center gap-2 flex-1">

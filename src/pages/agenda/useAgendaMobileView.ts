@@ -42,8 +42,17 @@ export function useAgendaMobileView({ onDateSelect, applyVisibleRange }: Params)
     setMobileSelectedDate(date);
     const api = mobileCalendarRef.current?.getApi();
     if (!api) return;
+    // 🔴 Ne PAS passer par `handleMobileSetView` ici : son `setMobileCalendarKey`
+    // force un REMONTAGE complet de `<FullCalendar key={mobileKey}>` — le
+    // `api.gotoDate(date)` juste en dessous s'exécute alors sur la référence
+    // de l'instance qui va être démontée (React n'a pas encore ré-attaché la
+    // ref à la nouvelle instance dans ce même appel synchrone), une course
+    // qui laissait parfois la vue Jour s'ouvrir sans se caler sur le jour
+    // cliqué en vue Mois. `api.changeView` change la vue SANS démonter —
+    // seul `mobileViewMode` (état d'affichage du sélecteur) est mis à jour.
     if (mobileViewMode !== 'timeGridDay' && mobileViewMode !== 'timeGrid2Day') {
-      handleMobileSetView('timeGridDay');
+      api.changeView('timeGridDay');
+      setMobileViewMode('timeGridDay');
     }
     api.gotoDate(date);
   };

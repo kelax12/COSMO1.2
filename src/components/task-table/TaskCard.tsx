@@ -289,33 +289,11 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
             )}
           </span>
         </button>
-      ) : (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            cancelLongPress();
-            onToggleComplete(task.id);
-          }}
-          onPointerDown={(e) => { e.stopPropagation(); }}
-          className="min-w-11 min-h-11 -my-1 -ml-1 p-2 flex items-center justify-center shrink-0"
-          aria-label={task.completed ? t('card.markUndone') : t('card.markDone')}
-          aria-pressed={task.completed}
-        >
-          <span
-            className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
-              task.completed
-                ? 'bg-[rgb(var(--color-accent-solid))] border-[rgb(var(--color-accent-solid))]'
-                : 'border-[rgb(var(--color-text-muted))]'
-            }`}
-          >
-            {task.completed && (
-              <svg className="w-4 h-4 text-[rgb(var(--color-accent-solid-foreground))]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-              </svg>
-            )}
-          </span>
-        </button>
-      )}
+      ) : null}
+      {/* Case à cocher retirée (redesign 2026-09-17, demande utilisateur) :
+          une tâche ne se valide plus que par swipe horizontal vers la droite
+          (`onDragEnd` ci-dessus, seuil 80px) — `onToggleComplete` reste le
+          même handler, juste sans ce second déclencheur. */}
 
       {/* Title + meta */}
       <div className="flex-1 min-w-0 flex flex-col justify-center gap-0.5">
@@ -341,44 +319,47 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
             {task.name}
           </p>
 
-          {/* Catégorie — déplacée après le titre (redesign 2026-09-16) : nom
-              en clair plutôt qu'une pastille seule avant le titre, la pastille
-              ne portant plus que la couleur, accolée au nom. */}
+          {/* Catégorie — déplacée après le titre (redesign 2026-09-16),
+              rendue en rectangle arrondi plein (redesign 2026-09-17) : nom
+              en blanc directement dans le fond coloré de la catégorie,
+              plutôt qu'un texte neutre accolé à une pastille. */}
           {!addToListMode && category && (
-            <span className="mt-0.5 shrink-0 inline-flex items-center gap-1 text-caption font-medium text-[rgb(var(--color-text-primary))]">
-              <span
-                className="w-2 h-2 rounded-full shrink-0"
-                style={{ backgroundColor: categoryColor }}
-                aria-hidden="true"
-              />
+            <span
+              className="mt-0.5 shrink-0 inline-flex items-center px-1.5 py-0.5 rounded-md text-caption font-medium text-white"
+              style={{ backgroundColor: categoryColor }}
+            >
               {category.name}
             </span>
           )}
 
-          {/* Maquette 15 — « Le collaborateur en avatar, pas en texte ».
-              « Reçu de Jean Martin » prenait une ligne entière sous le titre,
-              sur toutes les tâches partagées. Le rond porte les initiales ; la
-              phrase complète reste le nom accessible, elle n'est pas perdue —
-              elle cesse juste d'occuper une ligne de liste. */}
-          {task.sharedBy && (
-            <span
-              className="mt-0.5 shrink-0 inline-flex size-4 items-center justify-center rounded-full bg-[rgb(var(--color-accent))]/15 text-caption font-bold leading-none text-[rgb(var(--color-accent))]"
-              title={t('card.receivedFrom', { name: task.sharedBy })}
-              aria-hidden="true"
-            >
-              {sharedByInitials}
-            </span>
-          )}
-          {task.sharedBy && (
-            <span className="sr-only">{t('card.receivedFrom', { name: task.sharedBy })}</span>
-          )}
         </div>
+        {/* Maquette 15 — « Le collaborateur en avatar, pas en texte » —
+            déplacé sous la rangée titre/catégorie (redesign 2026-09-17,
+            comme CollaboratorAvatars ci-dessous) et agrandi de 70%
+            (16px → 27px) : le rond porte les initiales ; la phrase complète
+            reste le nom accessible, elle n'est pas perdue — elle cesse
+            juste d'occuper une ligne de liste. */}
+        {task.sharedBy && (
+          <span
+            className="shrink-0 inline-flex size-[27px] items-center justify-center rounded-full bg-[rgb(var(--color-accent))]/15 text-xs font-bold leading-none text-[rgb(var(--color-accent))]"
+            title={t('card.receivedFrom', { name: task.sharedBy })}
+            aria-hidden="true"
+          >
+            {sharedByInitials}
+          </span>
+        )}
+        {task.sharedBy && (
+          <span className="sr-only">{t('card.receivedFrom', { name: task.sharedBy })}</span>
+        )}
         {!task.sharedBy && task.isCollaborative && (collaboratorsByTask.get(task.id)?.length ?? 0) > 0 && (
           <span className="inline-flex items-center gap-1.5">
+            {/* size="lg" (+70% de diamètre, redesign 2026-09-17) : déjà sous
+                la rangée titre/catégorie ci-dessus, structurellement en
+                dessous du rectangle de catégorie. */}
             <CollaboratorAvatars
               collaboratorIds={collaboratorsByTask.get(task.id)}
               friends={friends}
-              size="md"
+              size="lg"
               maxVisible={3}
             />
             {pendingCollaboratorTaskIds.has(task.id) && (
