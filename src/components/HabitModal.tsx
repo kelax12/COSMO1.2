@@ -20,6 +20,20 @@ interface HabitModalProps {
   habit?: Habit;
 }
 
+/** Minutes → `HH:MM` pour l'input natif `type="time"` (roue OS), même
+ *  pattern que le champ Durée de TaskModalMobileBody. */
+const minutesToTimeValue = (minutes: number | string): string => {
+  const total = typeof minutes === 'number' ? minutes : Number(minutes) || 0;
+  const h = Math.floor(total / 60).toString().padStart(2, '0');
+  const m = (total % 60).toString().padStart(2, '0');
+  return `${h}:${m}`;
+};
+
+const timeValueToMinutes = (value: string): number => {
+  const [h, m] = value.split(':').map((n) => Number(n) || 0);
+  return h * 60 + m;
+};
+
 const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
   const { t } = useT('habits');
   const { t: tCommon } = useT('common');
@@ -164,8 +178,14 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                     </button>
                   </div>
 
-                  {/* Scroll area */}
-                  <div data-scroll-area className="flex-1 overflow-y-auto px-4 py-4">
+                  {/* Scroll area — le padding bas remplace celui de l'ancien
+                      CTA plein-largeur (supprimé) pour garder le contenu au-
+                      dessus de l'indicateur d'accueil iOS. */}
+                  <div
+                    data-scroll-area
+                    className="flex-1 overflow-y-auto px-4 pt-4"
+                    style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 1rem)' }}
+                  >
 
                     {/* Groupe 1 — Nom (sans overflow-hidden pour iOS selection handles) */}
                     <div
@@ -190,33 +210,17 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                       {t('modal.details')}
                     </p>
                     <div className="bg-[rgb(var(--color-surface))] rounded-2xl shadow-sm overflow-hidden">
-                      <div className="flex items-center px-4 min-h-11">
-                        <span className="flex-1 text-[15px] text-[rgb(var(--color-text-primary))]">{t('modal.duration')}</span>
-                        <div className="flex items-center gap-2.5">
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setFormData({ ...formData, estimatedTime: Math.max(5, formData.estimatedTime - 5) })
-                            }
-                            aria-label={t('modal.decreaseDuration')}
-                            className="w-7 h-7 rounded-full bg-[rgb(var(--color-hover))] flex items-center justify-center text-[rgb(var(--color-text-secondary))] text-lg leading-none"
-                          >
-                            −
-                          </button>
-                          <span className="text-[15px] text-blue-500 w-16 text-center">
-                            {formData.estimatedTime} min
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setFormData({ ...formData, estimatedTime: formData.estimatedTime + 5 })
-                            }
-                            aria-label={t('modal.increaseDuration')}
-                            className="w-7 h-7 rounded-full bg-[rgb(var(--color-hover))] flex items-center justify-center text-[rgb(var(--color-text-secondary))] text-lg leading-none"
-                          >
-                            +
-                          </button>
-                        </div>
+                      {/* Durée — sélecteur heure/minute natif du système (ouvre
+                          la roue OS au tap), même pattern que TaskModalMobileBody. */}
+                      <div className="flex items-center justify-between px-4 min-h-11">
+                        <span className="text-[15px] text-[rgb(var(--color-text-primary))]">{t('modal.duration')}</span>
+                        <input
+                          type="time"
+                          value={minutesToTimeValue(formData.estimatedTime)}
+                          onChange={(e) => setFormData({ ...formData, estimatedTime: timeValueToMinutes(e.target.value) })}
+                          className="text-[15px] text-blue-500 bg-transparent focus:outline-none text-right"
+                          style={{ border: 'none', minWidth: 0 }}
+                        />
                       </div>
                     </div>
 
@@ -225,7 +229,7 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                         couleur appartient. Fallback sur favoriteColors si aucune
                         catégorie n'existe encore. */}
                     <p className="text-[11px] font-semibold uppercase tracking-wider text-[rgb(var(--color-text-muted))] px-4 pb-1 pt-5">
-                      Couleur
+                      Catégorie
                     </p>
                     <div className="bg-[rgb(var(--color-surface))] rounded-2xl shadow-sm overflow-hidden px-4 py-4">
                       {categories.length > 0 ? (
@@ -292,24 +296,6 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                         </div>
                       )}
                     </div>
-                  </div>
-
-                  {/* Footer CTA */}
-                  <div
-                    className="px-4 pt-3 border-t border-[rgb(var(--color-border))] shrink-0"
-                    style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 0.75rem)' }}
-                  >
-                    <button
-                      type="button"
-                      onClick={doSave}
-                      className={`w-full h-[50px] rounded-2xl text-[17px] font-semibold transition-colors ${
-                        formData.name.trim()
-                          ? 'bg-[rgb(var(--color-accent-solid))] active:bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))]'
-                          : 'bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] opacity-40'
-                      }`}
-                    >
-                      {isEditing ? t('modal.save') : t('modal.createHabit')}
-                    </button>
                   </div>
                 </div>
               ) : (
