@@ -447,7 +447,8 @@ export default function StatisticsPage() {
           </React.Suspense>
         </div>
       ) : (
-      <div className="card p-6 mb-8">
+      // Masqué sur mobile (2026-09-18) : desktop inchangé.
+      <div className="hidden md:block card p-6 mb-8">
         <div className={(!isMobile && selectedSection === 'habits') ? 'relative' : ''} style={(!isMobile && selectedSection === 'habits') ? { paddingRight: 'calc(25% + 20px)' } : undefined}>
         <div className="flex flex-wrap justify-between items-center gap-3 mb-6">
           <div>
