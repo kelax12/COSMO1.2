@@ -43,12 +43,10 @@
   },
   "habitsMobile": {
     "step1Title": "Construire vos habitudes",
-    "step2Title": "Trois vues",
     "step3Title": "Créer une habitude",
     "step4Title": "Valider d'un tap",
     "step5Title": "Mini heatmap",
     "step1Desc": "Une habitude = un comportement à répéter chaque jour ou plusieurs fois par semaine. Un tap suffit pour valider la journée.",
-    "step2Desc": "Liste (recommandée mobile) : une carte par habitude. Tableau : grille 30 jours scrollable horizontalement. Suivi global : stats.",
     "step3Desc": "Le bouton flottant en bas à droite ouvre le formulaire. Nom, couleur, cadence : 30 secondes pour configurer.",
     "step4Desc": "Touchez le bouton ✓ sur une habitude pour marquer aujourd'hui comme fait. La carte change de couleur. Re-tapez pour défaire en cas d'erreur.",
     "step5Desc": "Sous chaque habitude, une bande montre vos 30 derniers jours : plus c'est rempli, plus votre constance est élevée. Coup d'œil rapide sur votre régularité."

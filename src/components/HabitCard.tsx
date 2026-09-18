@@ -76,11 +76,15 @@ const HabitCard: React.FC<HabitCardProps> = React.memo(({ habit }) => {
     size?: 'normal' | 'small';
   }) => {
     const isCompleted = habit.completions[day.date];
-    const btnSize = size === 'normal' ? 'w-11 h-11 md:w-10 md:h-10' : 'w-11 h-11 md:w-9 md:h-9';
+    // Sur mobile, la rangée compacte (7 cases) tient sur une grille pleine
+    // largeur (pas de scroll) : la case s'étire à la colonne au lieu d'une
+    // taille fixe. Le desktop garde exactement sa taille fixe d'avant.
+    const btnSize =
+      size === 'normal' ? 'w-full aspect-square md:w-10 md:h-10' : 'w-11 h-11 md:w-9 md:h-9';
     const iconSize = size === 'normal' ? 18 : 14;
 
     return (
-      <div className="flex flex-col items-center">
+      <div className="flex flex-col items-center w-full md:w-auto">
         <div className="text-caption md:text-xs text-slate-500 mb-1 font-medium">{day.dayName}</div>
         <button
           onClick={() => handleDayClick(day.date)}
@@ -137,18 +141,17 @@ const HabitCard: React.FC<HabitCardProps> = React.memo(({ habit }) => {
             </div>
           </div>
 
-          <div className="flex items-center justify-between sm:justify-end gap-1 w-full sm:w-auto border-t sm:border-t-0 pt-2 sm:pt-0">
-            {/* Historique — gauche sur mobile, inline sur desktop */}
+          <div className="flex items-center justify-end gap-1 w-full sm:w-auto border-t sm:border-t-0 pt-2 sm:pt-0">
+            {/* Historique — desktop uniquement, retiré sur mobile pour une carte plus sobre */}
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setShowDetails(!showDetails)}
-              className={`flex items-center gap-1.5 px-2 h-11 sm:h-9 min-w-11 sm:min-w-0 ${
+              className={`hidden md:flex items-center gap-1.5 px-2 h-9 min-w-0 ${
                 showDetails ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300' : ''
               }`}
             >
               <Calendar size={16} />
-              <span className="text-xs font-medium md:hidden">{t('card.history')}</span>
             </Button>
             {/* Ordre demandé : crayon (édition) → « ... » (actions) → corbeille (suppression) */}
             <div className="flex items-center gap-1">
@@ -164,14 +167,15 @@ const HabitCard: React.FC<HabitCardProps> = React.memo(({ habit }) => {
           </div>
         </div>
 
-        {/* Calendrier compact 7 jours */}
-        <div className="mb-4 overflow-x-auto pb-2 -mx-1 px-1 hide-scrollbar">
+        {/* Calendrier compact 7 jours — grille pleine largeur sur mobile (pas
+            de scroll horizontal), rangée scrollable inchangée sur desktop. */}
+        <div className="mb-4 pb-2 -mx-1 px-1 hide-scrollbar md:overflow-x-auto">
           <div className="flex items-center gap-2 mb-3">
             <span className="text-xs md:text-sm font-medium text-slate-700 dark:text-slate-300">
               7 derniers jours
             </span>
           </div>
-          <div className="flex gap-2 min-w-max">
+          <div className="grid grid-cols-7 gap-1.5 md:flex md:gap-2 md:min-w-max">
             {compactDays.map((day) => (
               <DayButton key={day.date} day={day} size="normal" />
             ))}
