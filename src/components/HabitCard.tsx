@@ -112,7 +112,7 @@ const HabitCard: React.FC<HabitCardProps> = React.memo(({ habit }) => {
   return (
     <>
       <div className="card p-4 md:p-6 hover:shadow-md transition-all">
-        <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-6">
+        <div className="flex flex-row justify-between items-start gap-4 mb-6">
           <div className="flex items-center gap-3">
             <div className="w-4 h-4 rounded-full flex-shrink-0" style={{ backgroundColor: habitColor }} />
             <div>
@@ -141,7 +141,7 @@ const HabitCard: React.FC<HabitCardProps> = React.memo(({ habit }) => {
             </div>
           </div>
 
-          <div className="flex items-center justify-end gap-1 w-full sm:w-auto border-t sm:border-t-0 pt-2 sm:pt-0">
+          <div className="flex items-center justify-end gap-1 flex-shrink-0">
             {/* Historique — desktop uniquement, retiré sur mobile pour une carte plus sobre */}
             <Button
               variant="ghost"
