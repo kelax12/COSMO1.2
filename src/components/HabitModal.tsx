@@ -199,7 +199,6 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                         value={formData.name}
                         onChange={(e) => { setFormData({ ...formData, name: e.target.value }); clear('name'); }}
                         placeholder={t('modal.namePlaceholder')}
-                        autoFocus
                         className="w-full px-4 min-h-12 text-[17px] bg-transparent focus:outline-none focus:ring-0 text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-muted))]"
                         style={{ border: 'none' }}
                       />
