@@ -269,9 +269,9 @@ export default function StatisticsPage() {
         <p style={{ color: 'rgb(var(--color-text-secondary))' }}>{t('page.subtitle')}</p>
       </div>
 
-      {/* Insights (#34) — masqués sur mobile (2026-09-18), desktop inchangé. */}
+      {/* Insights en langage naturel (#34) — la conclusion avant les graphes */}
       {insights.length > 0 && (
-        <div className="hidden md:block card p-4 mb-8 space-y-1.5" role="status">
+        <div className="card p-4 mb-8 space-y-1.5" role="status">
           {insights.map((insight) => (
             <p key={insight.kind} className="text-sm flex items-start gap-2" style={{ color: 'rgb(var(--color-text-primary))' }}>
               <span className="text-blue-500 shrink-0" aria-hidden="true">→</span>
@@ -436,8 +436,7 @@ export default function StatisticsPage() {
         </div>
       )}
 
-      {/* Graphique principal (AreaChart) — masqué sur mobile (2026-09-18). */}
-      <div className="hidden md:block">
+      {/* Graphique principal */}
       {selectedSection === 'all' && overviewDetail ? (
         <div className="mb-8">
           <React.Suspense fallback={<div className="card p-6 h-[340px] animate-pulse" />}>
@@ -565,7 +564,6 @@ export default function StatisticsPage() {
 
       </div>
       )}
-      </div>
 
       {/* Heatmap habitudes sur mobile — card standalone sous le graphique */}
       {isMobile && selectedSection === 'habits' && (
