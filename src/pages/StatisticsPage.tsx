@@ -446,10 +446,9 @@ export default function StatisticsPage() {
             <DashboardChart viewMode={selectedPeriod === 'year' ? 'month' : selectedPeriod} />
           </React.Suspense>
         </div>
-      ) : (
-      // Masqué sur mobile (2026-09-18) : desktop inchangé.
-      <div className="hidden md:block card p-6 mb-8">
-        <div className={(!isMobile && selectedSection === 'habits') ? 'relative' : ''} style={(!isMobile && selectedSection === 'habits') ? { paddingRight: 'calc(25% + 20px)' } : undefined}>
+      ) : !isMobile ? (
+      <div className="card p-6 mb-8">
+        <div className={selectedSection === 'habits' ? 'relative' : ''} style={selectedSection === 'habits' ? { paddingRight: 'calc(25% + 20px)' } : undefined}>
         <div className="flex flex-wrap justify-between items-center gap-3 mb-6">
           <div>
             <h2 className="text-lg font-semibold mb-1" style={{ color: 'rgb(var(--color-text-primary))' }}>
@@ -552,7 +551,7 @@ export default function StatisticsPage() {
             />
           </AreaChart>
         </ChartContainer>
-        {!isMobile && selectedSection === 'habits' && (
+        {selectedSection === 'habits' && (
           <div className="absolute top-0 right-0 bottom-0 border-l pl-5 flex flex-col overflow-hidden"
             style={{ width: '25%', borderColor: 'rgb(var(--color-border))' }}>
             <p className="text-sm font-semibold mb-3 flex-shrink-0" style={{ color: 'rgb(var(--color-text-secondary))' }}>{t('page.calendar')}</p>
@@ -562,9 +561,8 @@ export default function StatisticsPage() {
           </div>
         )}
         </div>
-
       </div>
-      )}
+      ) : null}
 
       {/* Heatmap habitudes sur mobile — card standalone sous le graphique */}
       {isMobile && selectedSection === 'habits' && (
