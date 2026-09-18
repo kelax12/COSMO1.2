@@ -9,13 +9,6 @@ export const habitsTutorialStepsMobile: TutorialStep[] = [
     descriptionKey: 'habitsMobile.step1Desc',
   },
   {
-    titleKey: 'habitsMobile.step2Title',
-    descriptionKey: 'habitsMobile.step2Desc',
-    target: '[data-tutorial-id="habits-view-switcher"]',
-    cardPlacement: 'bottom',
-    action: 'pulse',
-  },
-  {
     titleKey: 'habitsMobile.step3Title',
     descriptionKey: 'habitsMobile.step3Desc',
     target: '[data-tutorial-id="habits-fab"]',

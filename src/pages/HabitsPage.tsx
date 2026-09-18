@@ -53,6 +53,10 @@ const HabitsPage: React.FC = () => {
   const [showRecap, setShowRecap] = useState(false);
   // Vue par défaut = Tableau (vue dense, panorama 30 jours d'un coup d'œil)
   const [viewMode, setViewMode] = useState<ViewMode>('table');
+  // Mobile : une seule vue (Liste), sobre — le switcheur Tableau/Suivi global
+  // reste desktop uniquement. Ne PAS modifier `viewMode`/`setViewMode` eux-mêmes :
+  // le desktop doit garder son état et son comportement inchangés.
+  const effectiveViewMode: ViewMode = isMobile ? 'list' : viewMode;
 
   // Ouverture directe du modal de création depuis la palette ⌘K (#19).
   const location = useLocation();
@@ -130,7 +134,7 @@ const HabitsPage: React.FC = () => {
         <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
           {habits.length > 0 && (
             <div
-              className="flex items-center rounded-xl p-1 border transition-colors"
+              className="hidden md:flex items-center rounded-xl p-1 border transition-colors"
               style={{
                 backgroundColor: 'rgb(var(--color-surface))',
                 borderColor: 'rgb(var(--color-border))',
@@ -186,7 +190,7 @@ const HabitsPage: React.FC = () => {
         </div>
       </div>
 
-      {viewMode === 'list' && (
+      {effectiveViewMode === 'list' && (
         <div className="space-y-4 md:space-y-6" data-tutorial-id="habits-list">
           {isLoading && habits.length === 0 && <HabitListSkeleton count={4} />}
 
@@ -224,7 +228,7 @@ const HabitsPage: React.FC = () => {
         </div>
       )}
 
-      {viewMode === 'table' && (
+      {effectiveViewMode === 'table' && (
         habits.length === 0 && !isLoading ? (
           <div className="card p-8 text-center">
             <div
@@ -253,7 +257,7 @@ const HabitsPage: React.FC = () => {
           </div>
         ) : <HabitTable />
       )}
-      {viewMode === 'global' && (
+      {effectiveViewMode === 'global' && (
         habits.length === 0 && !isLoading ? (
           <div className="card p-8 text-center">
             <div

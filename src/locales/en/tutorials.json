@@ -43,12 +43,10 @@
   },
   "habitsMobile": {
     "step1Title": "Building your habits",
-    "step2Title": "Three views",
     "step3Title": "Create a habit",
     "step4Title": "Tick it off with one tap",
     "step5Title": "Mini heatmap",
     "step1Desc": "A habit is a behaviour you repeat every day, or several times a week. One tap is enough to tick off the day.",
-    "step2Desc": "List (recommended on mobile): one card per habit. Board: a 30-day grid you can scroll sideways. Overall tracking: stats.",
     "step3Desc": "The floating button at the bottom right opens the form. Name, colour, cadence: 30 seconds to set up.",
     "step4Desc": "Tap the ✓ button on a habit to mark today as done. The card changes colour. Tap again to undo if you slipped.",
     "step5Desc": "Under each habit, a strip shows your last 30 days: the fuller it is, the more consistent you've been. A quick read on your regularity."
