@@ -289,11 +289,33 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
             )}
           </span>
         </button>
-      ) : null}
-      {/* Case à cocher retirée (redesign 2026-09-17, demande utilisateur) :
-          une tâche ne se valide plus que par swipe horizontal vers la droite
-          (`onDragEnd` ci-dessus, seuil 80px) — `onToggleComplete` reste le
-          même handler, juste sans ce second déclencheur. */}
+      ) : (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            cancelLongPress();
+            onToggleComplete(task.id);
+          }}
+          onPointerDown={(e) => { e.stopPropagation(); }}
+          className="min-w-11 min-h-11 -my-1 -ml-1 p-2 flex items-center justify-center shrink-0"
+          aria-label={task.completed ? t('card.markUndone') : t('card.markDone')}
+          aria-pressed={task.completed}
+        >
+          <span
+            className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
+              task.completed
+                ? 'bg-[rgb(var(--color-accent-solid))] border-[rgb(var(--color-accent-solid))]'
+                : 'border-[rgb(var(--color-text-muted))]'
+            }`}
+          >
+            {task.completed && (
+              <svg className="w-4 h-4 text-[rgb(var(--color-accent-solid-foreground))]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            )}
+          </span>
+        </button>
+      )}
 
       {/* Title + meta */}
       <div className="flex-1 min-w-0 flex flex-col justify-center gap-0.5">
