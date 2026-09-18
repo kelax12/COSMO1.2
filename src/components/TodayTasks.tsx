@@ -329,7 +329,10 @@ const TodayTasks: React.FC = () => {
             className="bg-[rgb(var(--color-surface))] rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden border border-[rgb(var(--color-border))]"
           >
             <div className="p-6">
-              <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-4">
+              {/* Icône retirée sur mobile (demande utilisateur), même choix
+                  que DeleteTaskConfirm / ConfirmDeleteSheet / ConfirmDiscardDialog :
+                  le titre porte déjà toute l'information. Desktop inchangé. */}
+              <div className="hidden sm:flex w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 items-center justify-center mb-4">
                 <Trash2 className="text-red-600 dark:text-red-400" size={24} />
               </div>
               <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">{t('todayTasks.deleteDialog.title')}</h3>
