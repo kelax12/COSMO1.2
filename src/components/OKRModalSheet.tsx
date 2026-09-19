@@ -22,7 +22,7 @@ import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Slider } from '@/components/ui/slider';
 import CategoryTreeSelect from '@/components/category/CategoryTreeSelect';
-import { SectionTitle, SectionCard, CellSeparator, Cell } from '@/components/task-modal/primitives';
+import { SectionCard, CellSeparator, Cell } from '@/components/task-modal/primitives';
 import type { Category } from '@/modules/categories';
 import type { KeyResult } from '@/modules/okrs';
 import { getProgress, type Objective } from '@/pages/okr/okr-page-logic';
@@ -234,13 +234,17 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
                 « cellule » dans une carte, pattern repris de
                 TaskModalMobileBody (task-modal/primitives) — remplace la
                 grille de deux champs encadrés. Desktop inchangé ci-dessus. */}
-            <div className="sm:hidden flex items-center justify-between px-4 pb-1 pt-5">
+            {/* Espacement resserré (2026-09-19, 2e passe) : `pt-2` au lieu de
+                `pt-5` (moins d'écart avec le champ Objectif au-dessus), et la
+                carte juste en dessous colle à cette ligne (`-mt-4` annule le
+                `gap-4` du parent — ne reste que le `pb-1` de la ligne). */}
+            <div className="sm:hidden flex items-center justify-between px-4 pb-1 pt-2">
               <span className="text-[11px] font-semibold uppercase tracking-wider text-[rgb(var(--color-text-muted))]">
                 {t('modal.detailsSection')}
               </span>
               <AddCategoryButton onClick={() => setShowColorSettings(true)} />
             </div>
-            <SectionCard className="sm:hidden">
+            <SectionCard className="sm:hidden max-sm:-mt-4">
               <CategoryTreeSelect
                 value={category}
                 onChange={setCategory}
@@ -269,11 +273,16 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
               />
             </div>
 
-            {/* Mobile (redesign 2026-09-19) : même carte « cellule » que
-                Catégorie/Échéance ci-dessus — repliée derrière un lien tant
-                qu'elle est vide, comme TaskModalMobileBody. */}
-            <div className="sm:hidden">
-              <SectionTitle>{t('modal.descriptionLabel')}</SectionTitle>
+            {/* Mobile (redesign 2026-09-19, resserré) : même carte « cellule »
+                que Catégorie/Échéance ci-dessus — repliée derrière un lien
+                tant qu'elle est vide, comme TaskModalMobileBody. Label
+                propre (pas `SectionTitle`, dont le `pt-5` intégré double
+                l'écart déjà posé par le `-mt-2` ci-dessous) pour resserrer
+                l'espace avec la carte Catégorie/Échéance au-dessus. */}
+            <div className="sm:hidden max-sm:-mt-2">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-[rgb(var(--color-text-muted))] px-4 pb-1">
+                {t('modal.descriptionLabel')}
+              </p>
               <SectionCard>
                 {showDescriptionMobile ? (
                   <div className="px-4 py-3">
