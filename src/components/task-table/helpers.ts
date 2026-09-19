@@ -50,6 +50,25 @@ export const formatDeadlineSmart = (dateString: string | undefined): string => {
   return formatDateIntl(d, { day: 'numeric', month: 'long' });
 };
 
+/**
+ * Retard EXPRIMÉ, pas déduit — maquette 87.
+ *
+ * La carte mobile affichait « 17/09/2026 » en rouge : elle demandait au
+ * lecteur de faire lui-même la soustraction pour savoir de combien il est en
+ * retard, sur chaque ligne. Le calcul est fait ici.
+ *
+ * ⚠️ N'a de sens que sur une tâche RÉELLEMENT en retard (`isTaskOverdue`) :
+ * appelée sur une échéance future, elle rendrait « en retard de -3 j ».
+ * L'appelant décide, cette fonction se contente de formater.
+ */
+export const formatOverdueSince = (dateString: string | null | undefined): string => {
+  if (!dateString) return '—';
+  const lateBy = -daysUntilDeadline(dateString);
+  if (!Number.isFinite(lateBy) || lateBy <= 0) return formatDeadlineSmart(dateString);
+  const { tp } = translator('common');
+  return tp('relativeDay.overdueBy', lateBy);
+};
+
 // Durée « x h xx min » / « 45 min » / « 2 h ».
 export const formatDuration = (minutes: number | undefined): string => {
   if (!minutes || minutes <= 0) return '—';

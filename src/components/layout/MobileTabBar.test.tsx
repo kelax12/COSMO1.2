@@ -25,7 +25,13 @@ vi.mock('@/modules/organizations', () => ({
     activeOrg, organizations: [], setActiveOrgId: vi.fn(), isLoading: orgLoading, wasOrgMember,
   }),
 }));
-vi.mock('@/lib/hooks/use-org-notifications', () => ({ useOrgNotificationCount: () => 0 }));
+// Maquette 84 : la barre lit les compteurs VENTILÉS (`members` / `projects`),
+// plus le total — le mock suit, sinon le composant lit `undefined.members`.
+let orgBadges = { projects: 0, members: 0, total: 0, projectItems: [], memberItems: [] };
+vi.mock('@/lib/hooks/use-org-notifications', () => ({
+  useOrgBadges: () => orgBadges,
+  useOrgNotificationCount: () => orgBadges.total,
+}));
 vi.mock('@/modules/friends', () => ({ usePendingRequestCount: () => 0 }));
 vi.mock('@/modules/tasks', () => ({ useTasks: () => ({ data: [] }) }));
 // La feuille « Plus » monte des providers dont ce test n'a pas besoin.
@@ -45,6 +51,7 @@ describe('MobileTabBar — place de l’espace entreprise', () => {
     activeOrg = null;
     orgLoading = false;
     wasOrgMember = false;
+    orgBadges = { projects: 0, members: 0, total: 0, projectItems: [], memberItems: [] };
   });
 
   it('sans organisation : les 4 onglets d’origine, pas d’Entreprise', () => {
@@ -109,5 +116,55 @@ describe('MobileTabBar — place de l’espace entreprise', () => {
     render(<MemoryRouter><MobileTabBar /></MemoryRouter>);
     const link = screen.getAllByRole('link').find((a) => /Entreprise/.test(a.textContent ?? ''));
     expect(link?.getAttribute('href')).toBe('/entreprise');
+  });
+});
+
+// ── Maquette 84 : deux niveaux de signal, jamais les deux ensemble ────────
+//
+// Ce qui est gardé ici n'est pas un style, c'est une DÉCISION : le rouge est
+// réservé à ce qui attend une réponse. Sans ce test, « le point suffit » se
+// reperdrait au premier ajout de compteur, et la barre redeviendrait rouge en
+// permanence — l'état exact mesuré le 2026-09-19.
+describe('MobileTabBar — badges de l’onglet Entreprise (maquette 84)', () => {
+  beforeAll(async () => {
+    await ensureNamespaces(['common'], 'fr');
+  });
+
+  beforeEach(() => {
+    activeOrg = { id: 'org-1' };
+    orgLoading = false;
+    wasOrgMember = false;
+    orgBadges = { projects: 0, members: 0, total: 0, projectItems: [], memberItems: [] };
+  });
+
+  it('demande d’adhésion en attente : un NOMBRE, parce qu’il faut trancher', () => {
+    orgBadges = { ...orgBadges, members: 2, total: 2 };
+    render(<MemoryRouter><MobileTabBar /></MemoryRouter>);
+    expect(screen.getByLabelText(/2 demandes d’adhésion/i).textContent).toBe('2');
+  });
+
+  it('seulement du nouveau : un POINT, et aucun chiffre', () => {
+    orgBadges = { ...orgBadges, projects: 4, total: 4 };
+    render(<MemoryRouter><MobileTabBar /></MemoryRouter>);
+    const dot = screen.getByLabelText(/nouveautés/i);
+    expect(dot).toBeTruthy();
+    expect(dot.textContent).toBe('');
+  });
+
+  it('les deux à la fois : la décision gagne, le point ne s’affiche pas', () => {
+    orgBadges = { ...orgBadges, members: 1, projects: 9, total: 10 };
+    render(<MemoryRouter><MobileTabBar /></MemoryRouter>);
+    expect(screen.getByLabelText(/1 demande d’adhésion/i).textContent).toBe('1');
+    expect(screen.queryByLabelText(/nouveautés/i)).toBeNull();
+    // 🔴 Et surtout : le total (10) ne doit apparaître NULLE PART. C'est lui
+    // qui s'affichait avant, et il additionnait deux choses de nature
+    // différente pour produire un nombre que rien ne permettait d'expliquer.
+    expect(screen.queryByText('10')).toBeNull();
+  });
+
+  it('rien en attente : aucune marque du tout', () => {
+    render(<MemoryRouter><MobileTabBar /></MemoryRouter>);
+    expect(screen.queryByLabelText(/demande d’adhésion/i)).toBeNull();
+    expect(screen.queryByLabelText(/nouveautés/i)).toBeNull();
   });
 });

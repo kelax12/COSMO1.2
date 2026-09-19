@@ -98,6 +98,31 @@ const PAGE_TITLE_KEYS: Record<string, KeyOf<'common'>> = {
   '/entreprise': 'nav.enterprise',
 };
 
+/**
+ * ── Maquette 83 : le FAB ne recouvre plus le contenu ──────────────────────
+ *
+ * Le FAB global était rendu par une liste NOIRE (« partout sauf dashboard,
+ * habitudes, OKR »). Une liste noire accueille par défaut toute route future,
+ * et c'est ce qui l'avait posé sur des pages où « créer une tâche » n'a aucun
+ * sens. Mesuré le 2026-09-19 en 390 × 844, thème Gris :
+ *
+ * - `/settings` : le FAB recouvre le bouton **Sauvegarder** du formulaire de
+ *   profil. L'action principale d'un écran était cachée sous une action qui
+ *   n'appartient pas à cet écran.
+ * - `/statistics` : il recouvre une valeur du graphique, sur une page de
+ *   LECTURE, qui ne crée rien.
+ * - `/premium`, `/admin`, `/entreprise` : même chose, sans le dommage visible.
+ *
+ * D'où une liste BLANCHE : le FAB n'existe que là où créer une tâche est
+ * l'action attendue. `/habits` et `/okr` n'y sont pas parce qu'ils portent
+ * DÉJÀ leur propre FAB dédié (z-30) ; ce FAB-ci (z-40) passait au-dessus et
+ * interceptait leurs taps.
+ *
+ * ❌ Ne pas revenir à une liste noire : une route ajoutée demain hériterait
+ * d'un bouton que personne n'a décidé d'y mettre.
+ */
+const FAB_ROUTES = new Set(['/tasks', '/agenda']);
+
 const Layout: React.FC = () => {
   const { t, tp } = useT('common');
   const { t: tOrg } = useT('org');
@@ -177,6 +202,8 @@ const Layout: React.FC = () => {
   useEffect(() => {
     setLastVisitedPage(location.pathname);
   }, [location.pathname, setLastVisitedPage]);
+  // Maquette 83 — cf. FAB_ROUTES.
+  const showGlobalFab = FAB_ROUTES.has(location.pathname);
 
   // Titre d'onglet par page (#15).
   useEffect(() => {
@@ -356,8 +383,16 @@ const NavItems = () =>
           tabIndex={-1}
           // Agenda : le SEUL scroll voulu est celui interne à FullCalendar
           // (`.fc-scroller`). `overflow-y-auto` ici en faisait un second —
-          // `pb-20` reste constant (dégage la tab bar `fixed`, cf. MobileTabBar),
-          // seul l'overflow change.
+          // seul l'overflow change pour l'agenda.
+          //
+          // `pb-20` reste constant (dégage la tab bar `fixed`).
+          //
+          // ⚠️ Maquette 83 : NE PAS y ajouter de padding pour le FAB. Chaque
+          // page qui en porte un réserve déjà `64px + safe-area + 88px` en bas
+          // (TasksPage, HabitsPage, OKRPage) : le faire une seconde fois ici
+          // empilerait 232 px de vide en fin de liste. Le seul endroit où le
+          // FAB recouvrait vraiment du contenu était `/settings`, qui ne
+          // réserve rien — et qui n'a plus de FAB du tout.
           className={`flex-1 overflow-x-hidden pb-20 focus:outline-none ${
             location.pathname === '/agenda' ? 'overflow-hidden' : 'overflow-y-auto'
           }`}
@@ -365,14 +400,9 @@ const NavItems = () =>
         >
           <Outlet />
         </main>
-        {/* FAB de capture rapide global (#43) — au-dessus de la tab bar, sur
-            toutes les pages protégées SAUF le Dashboard (déjà un widget
-            "Tâches prioritaires" en haut, pas besoin d'un raccourci flottant
-            en plus), et SAUF Habitudes/OKR qui ont déjà leur propre FAB dédié
-            (même position, z-30) — le garder ici les rendait inutilisables :
-            ce FAB (z-40) passait au-dessus et interceptait tous les taps,
-            ouvrant la capture rapide générique au lieu du bon modal. */}
-        {location.pathname !== '/dashboard' && location.pathname !== '/habits' && location.pathname !== '/okr' && (
+        {/* FAB de capture rapide global (#43) — au-dessus de la tab bar.
+            Maquette 83 : LISTE BLANCHE, plus liste noire. */}
+        {showGlobalFab && (
           <button
             type="button"
             onClick={() => {

@@ -3,6 +3,7 @@ import { Circle, AlertTriangle, Building2, User } from 'lucide-react';
 import { useTodayItems, useCompleteTodayItem } from '@/modules/today';
 import { useT } from '@/i18n/useT';
 import TouchTarget from '@/components/mobile/TouchTarget';
+import { formatOverdueSince } from '@/components/task-table/helpers';
 
 /**
  * Vue « Aujourd'hui » unifiée (item #29) — section du tableau de bord.
@@ -115,10 +116,15 @@ const TodayUnified = () => {
                 </span>
               </button>
 
+              {/* Maquette 87 : `item.deadline` est une CLÉ DE JOUR
+                  (« 2026-09-16 ») et elle était affichée telle quelle — de la
+                  donnée brute dans l'interface, dans un format que /tasks
+                  n'utilise nulle part. Le retard se dit maintenant en
+                  français, et de la même façon partout. */}
               {item.overdue && (
                 <span className="flex items-center gap-1 shrink-0 text-caption font-semibold text-[rgb(var(--color-error))]">
                   <AlertTriangle size={12} aria-hidden="true" />
-                  {item.deadline}
+                  {formatOverdueSince(item.deadline)}
                 </span>
               )}
             </div>

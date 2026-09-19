@@ -46,7 +46,10 @@
       "taskDueToday_one": "{{count}} task due today",
       "taskDueToday_other": "{{count}} tasks due today",
       "orgNotification_one": "{{count}} company notification",
-      "orgNotification_other": "{{count}} company notifications"
+      "orgNotification_other": "{{count}} company notifications",
+      "orgJoinRequest_one": "{{count}} join request to review",
+      "orgJoinRequest_other": "{{count}} join requests to review",
+      "orgNews": "New activity in the company space"
     },
     "descriptions": {
       "okr": "Objectives & key results",
@@ -317,7 +320,9 @@
     "today": "Today",
     "tomorrow": "Tomorrow",
     "yesterday": "Yesterday",
-    "daysAgo": "{{count}}d ago"
+    "daysAgo": "{{count}}d ago",
+    "overdueBy_one": "{{count}}d late",
+    "overdueBy_other": "{{count}}d late"
   },
   "pullToRefresh": {
     "pull": "Pull to refresh",

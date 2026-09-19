@@ -14,7 +14,7 @@ import CollaboratorAvatars from "@/components/CollaboratorAvatars";
 import { useCategoryLookup } from "@/modules/categories";
 import { Task } from "@/modules/tasks";
 import { Friend } from "@/modules/friends";
-import { formatDate, formatDuration } from "./helpers";
+import { formatDeadlineSmart, formatDuration, formatOverdueSince } from "./helpers";
 import { useT } from '@/i18n/useT';
 import { isTaskOverdue } from './helpers';
 
@@ -331,76 +331,57 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
         {/* Maquette 16 — « Le retard porte sa solution » : la tâche en retard
             est la SEULE à s'agrandir. Un cran d'échelle suffit à la faire
             sortir de la liste sans la déguiser en bloc à part. */}
-        <div className="flex items-start gap-1.5">
-          <p
-            className={`flex-1 min-w-0 font-medium leading-tight line-clamp-2 ${
-              isOverdue ? 'text-body' : 'text-label'
-            } ${task.completed ? 'line-through' : ''}`}
-            style={{ color: 'rgb(var(--color-text-primary))' }}
-          >
-            {task.name}
-          </p>
+        {/* ── Maquette 85 (mix arbitré par Axel le 2026-09-19) ─────────────
+            Le titre reprend la LARGEUR ENTIÈRE de la ligne. Mesuré la veille
+            en 390 px : la pilule de catégorie prenait ~80 px, celle de
+            priorité ~48, le « ⋯ » ~56 — il restait 150 px sur 390 pour le
+            seul élément qui permet de reconnaître sa tâche, d'où « Préparer
+            la réunion de… » coupé.
 
-          {/* Catégorie — déplacée après le titre (redesign 2026-09-16),
-              rendue en rectangle arrondi plein (redesign 2026-09-17) : nom
-              en blanc directement dans le fond coloré de la catégorie,
-              plutôt qu'un texte neutre accolé à une pastille. */}
-          {!addToListMode && category && (
-            <span
-              className="mt-0.5 shrink-0 inline-flex items-center px-1.5 py-0.5 rounded-md text-caption font-medium text-white"
-              style={{ backgroundColor: categoryColor }}
-            >
-              {category.name}
-            </span>
-          )}
+            La catégorie descend dans la ligne méta, en point + nom (elle ne
+            vole plus de largeur au titre) et l'avatar passe à droite de la
+            ligne, dans la colonne libérée par le « ⋯ » (maquette 86).
 
-        </div>
-        {/* Maquette 15 — « Le collaborateur en avatar, pas en texte » —
-            déplacé sous la rangée titre/catégorie (redesign 2026-09-17,
-            comme CollaboratorAvatars ci-dessous) et agrandi de 70%
-            (16px → 27px) : le rond porte les initiales ; la phrase complète
-            reste le nom accessible, elle n'est pas perdue — elle cesse
-            juste d'occuper une ligne de liste. */}
-        {task.sharedBy && (
-          <span
-            className="shrink-0 inline-flex size-[27px] items-center justify-center rounded-full bg-[rgb(var(--color-accent))]/15 text-xs font-bold leading-none text-[rgb(var(--color-accent))]"
-            title={t('card.receivedFrom', { name: task.sharedBy })}
-            aria-hidden="true"
-          >
-            {sharedByInitials}
-          </span>
-        )}
-        {task.sharedBy && (
-          <span className="sr-only">{t('card.receivedFrom', { name: task.sharedBy })}</span>
-        )}
-        {!task.sharedBy && task.isCollaborative && (collaboratorsByTask.get(task.id)?.length ?? 0) > 0 && (
-          <span className="inline-flex items-center gap-1.5">
-            {/* size="lg" (+70% de diamètre, redesign 2026-09-17) : déjà sous
-                la rangée titre/catégorie ci-dessus, structurellement en
-                dessous du rectangle de catégorie. */}
-            <CollaboratorAvatars
-              collaboratorIds={collaboratorsByTask.get(task.id)}
-              friends={friends}
-              size="lg"
-              maxVisible={3}
-            />
-            {pendingCollaboratorTaskIds.has(task.id) && (
-              <span title="En attente d'acceptation" className="inline-flex shrink-0">
-                <Hourglass
-                  size={13}
-                  className="text-amber-500"
-                  aria-label={t('card.pendingInvite')}
-                />
-              </span>
-            )}
-          </span>
-        )}
+            ❌ PAS de liseré de priorité à gauche : arbitrage explicite
+            d'Axel, « garder l'absence de barre colorée ». La priorité reste
+            dite par sa pilule `P{n}`, plus bas. */}
+        <p
+          className={`min-w-0 font-medium leading-tight line-clamp-2 ${
+            isOverdue ? 'text-body' : 'text-label'
+          } ${task.completed ? 'line-through' : ''}`}
+          style={{ color: 'rgb(var(--color-text-primary))' }}
+        >
+          {task.name}
+        </p>
 
-        {/* Méta : date · durée — toujours sur une ligne propre */}
+        {/* Méta : catégorie · échéance · durée — toujours sur une ligne propre */}
         <div className="flex items-center gap-1.5 text-caption" style={{ color: 'rgb(var(--color-text-muted))' }}>
+          {!addToListMode && category && (
+            <>
+              <span className="inline-flex min-w-0 items-center gap-1">
+                <span
+                  className="size-2 shrink-0 rounded-full"
+                  style={{ backgroundColor: categoryColor }}
+                  aria-hidden="true"
+                />
+                <span className="truncate">{category.name}</span>
+              </span>
+              <span aria-hidden="true">·</span>
+            </>
+          )}
+          {/* Maquette 87 — l'échéance en français, pas en chiffres.
+              `formatDate` rendait « 26/09/2026 » : dix caractères pour dire
+              « vendredi », dont quatre d'année que TOUTES les tâches
+              partagent. `formatDeadlineSmart` existait déjà et servait
+              partout ailleurs (ligne desktop, onglet équipe) — cette carte
+              était la seule à ne pas l'utiliser.
+              En retard, le calcul est fait pour le lecteur : « en retard de
+              2 j » au lieu d'une date rouge à soustraire soi-même. */}
           <span className={isOverdue ? 'text-red-500 font-semibold inline-flex items-center gap-0.5' : ''}>
             {isOverdue && <AlertTriangle size={12} aria-hidden="true" />}
-            {task.deadline ? formatDate(task.deadline) : "Pas d'échéance"}
+            {task.deadline
+              ? (isOverdue ? formatOverdueSince(task.deadline) : formatDeadlineSmart(task.deadline))
+              : t('card.noDeadline')}
             {isOverdue && <span className="sr-only"> {t('card.overdue')}</span>}
           </span>
           <span aria-hidden="true">·</span>
@@ -442,23 +423,53 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
         <Bookmark size={16} className="self-center shrink-0 text-amber-500" fill="currentColor" />
       )}
 
-      {/* Affordance permanente — bouton "…" pour révéler les actions sans devoir swipe/long-press.
-          Améliore la découvrabilité tout en gardant l'épuration : icône discrète, taille 44×44. */}
-      {!addToListMode && (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            cancelLongPress();
-            setActionsVisible(v => !v);
-          }}
-          onPointerDown={(e) => { e.stopPropagation(); }}
-          className="self-center shrink-0 min-w-11 min-h-11 -my-1 -mr-1 p-2 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700/40 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-          aria-label={actionsVisible ? t('card.hideActions') : t('card.showActions')}
-          aria-expanded={actionsVisible}
+      {/* ── Maquette 85 : le partage se dit à DROITE, par un seul signe ────
+          L'avatar vivait sous le titre, dans la colonne du texte, où il
+          poussait la ligne méta vers le bas et rognait le titre. Il occupe
+          maintenant la colonne libérée par le « ⋯ » : même information,
+          zéro largeur prise au libellé. */}
+      {task.sharedBy && (
+        <span
+          className="self-center shrink-0 inline-flex size-7 items-center justify-center rounded-full bg-[rgb(var(--color-accent))]/15 text-xs font-bold leading-none text-[rgb(var(--color-accent))]"
+          title={t('card.receivedFrom', { name: task.sharedBy })}
+          aria-hidden="true"
         >
-          <MoreHorizontal size={18} />
-        </button>
+          {sharedByInitials}
+        </span>
       )}
+      {task.sharedBy && (
+        <span className="sr-only">{t('card.receivedFrom', { name: task.sharedBy })}</span>
+      )}
+      {!task.sharedBy && task.isCollaborative && (collaboratorsByTask.get(task.id)?.length ?? 0) > 0 && (
+        <span className="self-center shrink-0 inline-flex items-center gap-1.5">
+          <CollaboratorAvatars
+            collaboratorIds={collaboratorsByTask.get(task.id)}
+            friends={friends}
+            size="lg"
+            maxVisible={3}
+          />
+          {pendingCollaboratorTaskIds.has(task.id) && (
+            <span title={t('card.pendingInvite')} className="inline-flex shrink-0">
+              <Hourglass
+                size={13}
+                className="text-amber-500"
+                aria-label={t('card.pendingInvite')}
+              />
+            </span>
+          )}
+        </span>
+      )}
+
+      {/* ── Maquette 86 : plus de « ⋯ » au repos ──────────────────────────
+          Il était présent sur CHAQUE ligne — onze cibles permanentes pour
+          une action rare — et occupait la colonne la plus précieuse, celle
+          du pouce droit, en doublant un geste que l'app enseigne elle-même
+          dans son bandeau d'astuce.
+          Les trois chemins vers `TaskActionsSheet` subsistent : appui long,
+          glissement vers la gauche, et le menu de la ligne desktop
+          (`TaskTableDesktop`), où la souris n'a pas d'appui long.
+          ❌ Ne pas le réintroduire « pour la découvrabilité » sans retirer
+          d'abord quelque chose d'autre de cette colonne. */}
     </motion.div>
     </div>
 

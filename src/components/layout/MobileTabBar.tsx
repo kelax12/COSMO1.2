@@ -14,7 +14,7 @@ import { prefetchRoute } from '@/lib/route-prefetch';
 import { usePendingRequestCount } from '@/modules/friends';
 import { useTasks } from '@/modules/tasks';
 import { useActiveOrganization } from '@/modules/organizations';
-import { useOrgNotificationCount } from '@/lib/hooks/use-org-notifications';
+import { useOrgBadges } from '@/lib/hooks/use-org-notifications';
 import MobileMoreSheet from './MobileMoreSheet';
 import { useT } from '@/i18n/useT';
 import type { KeyOf } from '@/i18n/catalog';
@@ -68,6 +68,55 @@ const ENTERPRISE_TAB: TabConfig = { to: '/entreprise', labelKey: 'nav.enterprise
 const tabBaseClasses =
   'flex flex-col items-center justify-center gap-0.5 flex-1 min-h-touch text-caption font-medium transition-colors active:scale-95 transform-gpu';
 
+/**
+ * ── Maquette 84 : la barre dit QUOI, pas COMBIEN ──────────────────────────
+ *
+ * Deux niveaux de signal, et un seul par onglet :
+ *
+ * - **Nombre en rouge** — quelque chose T'ATTEND et ne se résoudra pas sans
+ *   toi : une demande d'ami, une demande d'adhésion qu'un admin doit trancher.
+ *   Le nombre a un sens parce qu'on peut le faire tomber en agissant.
+ * - **Point discret** — il y a du NOUVEAU, rien à trancher : une tâche qu'on
+ *   t'a assignée, une notification d'équipe non lue. Le compte n'apprend rien
+ *   de plus que l'existence, et le point s'éteint à l'ouverture de l'onglet.
+ *
+ * 🔴 Ce qui a motivé la règle (mesuré le 2026-09-19) : « Accueil » portait un
+ * « 2 » rouge et « Entreprise » un « 4 » rouge, en permanence, dans la couleur
+ * de l'ERREUR, sans qu'aucun des deux ne dise ce qu'il comptait. Le rouge
+ * devient un décor dès qu'il est toujours allumé, et il n'en reste plus pour
+ * ce qui est réellement bloquant.
+ *
+ * ❌ Ne jamais mettre en rouge un compteur qui ne peut pas tomber par une
+ * action de l'utilisateur dans cet onglet.
+ */
+const BADGE_POSITION = 'absolute -top-1.5 -right-1.5';
+
+/** Nombre en rouge — pour ce qui attend une décision (cf. maquette 84). */
+const BlockingBadge: React.FC<{ count: number; label: string }> = ({ count, label }) => (
+  <span
+    aria-label={label}
+    className={cn(
+      BADGE_POSITION,
+      'bg-red-600 text-white text-caption leading-none rounded-full min-w-4 h-4 px-1 flex items-center justify-center',
+    )}
+  >
+    {count}
+  </span>
+);
+
+/** Point discret — pour ce qui est seulement nouveau (cf. maquette 84). */
+const NewsDot: React.FC<{ label: string }> = ({ label }) => (
+  <span
+    aria-label={label}
+    // Le liseré à la couleur de la barre détache le point de l'icône quand
+    // les deux se superposent ; sans lui il se lit comme une partie du dessin.
+    className={cn(
+      BADGE_POSITION,
+      'size-2.5 rounded-full bg-[rgb(var(--color-accent))] ring-2 ring-[rgb(var(--color-surface))]',
+    )}
+  />
+);
+
 const MobileTabBar: React.FC = () => {
   const { t, tp } = useT('common');
   const [moreOpen, setMoreOpen] = useState(false);
@@ -75,7 +124,10 @@ const MobileTabBar: React.FC = () => {
   // Badge neutre « tâches restantes aujourd'hui » sur l'onglet Tâches (#49).
   const { data: allTasks = [] } = useTasks();
   const { activeOrg, isLoading: orgLoading, wasOrgMember } = useActiveOrganization();
-  const orgNotificationCount = useOrgNotificationCount();
+  // Maquette 84 : la pastille entreprise se lit VENTILÉE, pas en total.
+  // `members` (demandes d'adhésion) attend une décision → nombre rouge ;
+  // `projects` (assignations, notifications non lues) est du nouveau → point.
+  const orgBadges = useOrgBadges();
   // `wasOrgMember` : la barre du bas ne doit pas changer d'identité sous le
   // doigt. Sans l'indice, elle affichait « Habitudes » le temps de la requête,
   // puis la remplaçait par « Entreprise » — un onglet qui bouge pendant qu'on
@@ -139,21 +191,24 @@ const MobileTabBar: React.FC = () => {
                         size={24}
                         className={cn('transition-transform', isActive && 'scale-110')}
                       />
+                      {/* Accueil — une demande d'ami attend une réponse. */}
                       {end && pendingRequestCount > 0 && (
-                        <span
-                          aria-label={tp('nav.badge.pendingRequest', pendingRequestCount)}
-                          className="absolute -top-1.5 -right-1.5 bg-red-600 text-white text-caption leading-none rounded-full min-w-4 h-4 px-1 flex items-center justify-center"
-                        >
-                          {pendingRequestCount}
-                        </span>
+                        <BlockingBadge
+                          count={pendingRequestCount}
+                          label={tp('nav.badge.pendingRequest', pendingRequestCount)}
+                        />
                       )}
-                      {to === '/entreprise' && orgNotificationCount > 0 && (
-                        <span
-                          aria-label={tp('nav.badge.orgNotification', orgNotificationCount)}
-                          className="absolute -top-1.5 -right-1.5 bg-red-600 text-white text-caption leading-none rounded-full min-w-4 h-4 px-1 flex items-center justify-center"
-                        >
-                          {orgNotificationCount}
-                        </span>
+                      {/* Entreprise — la décision d'abord, la nouveauté sinon.
+                          Jamais les deux : deux marques sur une icône de 24 px
+                          se chevauchent, et la plus urgente perdrait. */}
+                      {to === '/entreprise' && orgBadges.members > 0 && (
+                        <BlockingBadge
+                          count={orgBadges.members}
+                          label={tp('nav.badge.orgJoinRequest', orgBadges.members)}
+                        />
+                      )}
+                      {to === '/entreprise' && orgBadges.members === 0 && orgBadges.projects > 0 && (
+                        <NewsDot label={t('nav.badge.orgNews')} />
                       )}
                       {to === '/tasks' && tasksDueTodayCount > 0 && (
                         <span

@@ -116,7 +116,7 @@
     "colDeadline": "Dead line",
     "colDuration": "Durée",
     "colActions": "Actions",
-    "gestureHint": "Glissez à droite pour valider · maintenez (ou « ⋯ ») pour les options",
+    "gestureHint": "Glissez à droite pour valider · à gauche ou maintenez pour les options",
     "dismissHint": "Masquer l'astuce",
     "emptyCompleted": "Aucune tâche complétée",
     "empty": "Aucune tâche",

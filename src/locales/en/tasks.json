@@ -113,7 +113,7 @@
     "colDeadline": "Due date",
     "colDuration": "Duration",
     "colActions": "Actions",
-    "gestureHint": "Swipe right to complete · hold (or “⋯”) for options",
+    "gestureHint": "Swipe right to complete · left or hold for options",
     "dismissHint": "Dismiss the hint",
     "emptyCompleted": "No completed tasks",
     "empty": "No tasks",
