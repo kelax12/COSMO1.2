@@ -94,6 +94,11 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
   // masquée tant qu'elle est vide, auto-affichée si l'objectif édité en a déjà
   // une. Desktop inchangé (toujours visible).
   const [showDescriptionMobile, setShowDescriptionMobile] = useState(false);
+  // Repli mobile de Durée/Coef. par KR (redesign 2026-09-19) derrière
+  // « Fonctionnalité avancée » — un Set plutôt qu'un booléen unique : chaque
+  // résultat clé garde son propre état de repli. Desktop inchangé (toujours
+  // visibles dans la grille à 4 colonnes).
+  const [advancedKrIds, setAdvancedKrIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (!isOpen) return;
@@ -354,13 +359,55 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
             <div className="grid gap-3">
               {keyResults.map((kr, index) => (
                 <div key={kr.id} className="border-border grid gap-3 rounded-lg border p-3">
-                  <div className="flex items-end gap-2">
+                  {/* Desktop (sm+, inchangé) : nom seul sur sa ligne. */}
+                  <div className="hidden sm:flex items-end gap-2">
+                    <Input value={kr.title} placeholder={t('modal.keyResultPlaceholder')} className="h-8 min-w-0" onChange={(e) => setKR(kr.id, { title: e.target.value })} />
+                    {index > 0 && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon-sm"
+                        aria-label={t('modal.moveUp')}
+                        title="Faire remonter"
+                        onClick={() => moveKR(index, index - 1)}
+                      >
+                        <ArrowUpDown aria-hidden="true" />
+                      </Button>
+                    )}
+                    {keyResults.length > 1 && (
+                      <Button type="button" variant="destructive" size="icon-sm" aria-label={tCommon('actions.remove')} onClick={() => setKeyResults((p) => p.filter((k) => k.id !== kr.id))}>
+                        <Trash2 aria-hidden="true" />
+                      </Button>
+                    )}
+                  </div>
+
+                  {/* Mobile (redesign 2026-09-19) : nom (80%) + cible/unité
+                      fusionnés dans un seul champ (20%) sur la même ligne —
+                      Cible et Unité n'ont plus de ligne à elles. */}
+                  <div className="flex sm:hidden items-end gap-2">
+                    <div className="flex-[4] min-w-0 grid gap-1">
+                      <Label className="text-muted-foreground text-xs">{t('modal.keyResultName')}</Label>
+                      <Input value={kr.title} placeholder={t('modal.keyResultPlaceholder')} className="h-8 min-w-0 !bg-[rgb(var(--color-surface))]" onChange={(e) => setKR(kr.id, { title: e.target.value })} />
+                    </div>
                     <div className="flex-1 min-w-0 grid gap-1">
-                      {/* Label mobile (redesign 2026-09-19), même style que
-                          Cible/Unité/Durée ci-dessous — desktop inchangé
-                          (pas de label, juste le placeholder). */}
-                      <Label className="sm:hidden text-muted-foreground text-xs">{t('modal.keyResultName')}</Label>
-                      <Input value={kr.title} placeholder={t('modal.keyResultPlaceholder')} className="h-8 min-w-0 max-sm:!bg-[rgb(var(--color-surface))]" onChange={(e) => setKR(kr.id, { title: e.target.value })} />
+                      <Label className="text-muted-foreground text-xs">{t('modal.target')}</Label>
+                      <div className="h-8 flex items-center rounded-md border border-[rgb(var(--color-border))] !bg-[rgb(var(--color-surface))] overflow-hidden">
+                        <input
+                          type="number"
+                          aria-label={t('modal.target')}
+                          value={kr.targetValue}
+                          onChange={(e) => setKR(kr.id, { targetValue: Number(e.target.value) })}
+                          className="min-w-0 flex-1 h-full bg-transparent px-1 text-sm text-center outline-none text-[rgb(var(--color-text-primary))]"
+                        />
+                        <input
+                          type="text"
+                          aria-label={t('modal.unit')}
+                          value={kr.unit}
+                          placeholder="%"
+                          onChange={(e) => setKR(kr.id, { unit: e.target.value })}
+                          className="w-6 shrink-0 h-full bg-transparent px-0.5 text-xs text-center outline-none border-l border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))]"
+                        />
+                      </div>
                     </div>
                     {index > 0 && (
                       <Button
@@ -380,6 +427,7 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
                       </Button>
                     )}
                   </div>
+
                   <div className="grid gap-1.5">
                     <div className="text-muted-foreground flex items-center justify-between text-xs">
                       <span>{t('modal.progress')}</span>
@@ -394,35 +442,25 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
                       className="[&_[data-slot=slider-track]]:bg-blue-200 dark:[&_[data-slot=slider-track]]:bg-blue-900/40 [&_[data-slot=slider-range]]:bg-blue-500 [&_[data-slot=slider-thumb]]:border-blue-500 [&_[data-slot=slider-thumb]]:bg-blue-500"
                     />
                   </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+
+                  {/* Desktop (sm+, inchangé) : grille à 4 colonnes complète. */}
+                  <div className="hidden sm:grid sm:grid-cols-4 gap-2">
                     <div className="grid gap-1">
                       <Label className="text-muted-foreground text-xs">{t('modal.target')}</Label>
-                      <Input type="number" className="h-8 max-sm:!bg-[rgb(var(--color-surface))] max-sm:w-1/2" value={kr.targetValue} onChange={(e) => setKR(kr.id, { targetValue: Number(e.target.value) })} />
+                      <Input type="number" className="h-8" value={kr.targetValue} onChange={(e) => setKR(kr.id, { targetValue: Number(e.target.value) })} />
                     </div>
                     <div className="grid gap-1">
                       <Label className="text-muted-foreground text-xs">{t('modal.unit')}</Label>
-                      <Input className="h-8 max-sm:!bg-[rgb(var(--color-surface))] max-sm:w-1/2" value={kr.unit} placeholder="%" onChange={(e) => setKR(kr.id, { unit: e.target.value })} />
+                      <Input className="h-8" value={kr.unit} placeholder="%" onChange={(e) => setKR(kr.id, { unit: e.target.value })} />
                     </div>
                     <div className="grid gap-1">
                       <Label className="text-muted-foreground text-xs whitespace-nowrap">{t('modal.duration')} <span className="normal-case font-normal opacity-70">{t('modal.optional')}</span></Label>
-                      {/* Desktop (sm+, inchangé) : champ numérique en minutes. */}
                       <Input
                         type="number"
-                        className="hidden sm:flex h-8"
+                        className="h-8"
                         placeholder="0"
                         value={kr.estimatedTime === 0 ? '' : kr.estimatedTime}
                         onChange={(e) => setKR(kr.id, { estimatedTime: e.target.value === '' ? 0 : Number(e.target.value) })}
-                      />
-                      {/* Mobile (redesign 2026-09-19) : `type="time"` ouvre la
-                          roue de sélection native du système au tap, au lieu du
-                          clavier numérique — même pattern que la durée de
-                          TaskModalMobileBody/HabitModal. */}
-                      <input
-                        type="time"
-                        aria-label={`${t('modal.duration')} (${t('modal.optional')})`}
-                        value={minutesToTimeValue(kr.estimatedTime)}
-                        onChange={(e) => setKR(kr.id, { estimatedTime: timeValueToMinutes(e.target.value) })}
-                        className="sm:hidden h-8 w-1/2 min-w-0 rounded-md border px-2 text-sm border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] focus:outline-none focus:border-[rgb(var(--color-accent))] focus:ring-1 focus:ring-[rgb(var(--color-accent))] max-sm:!bg-[rgb(var(--color-surface))]"
                       />
                     </div>
                     <div className="grid gap-1">
@@ -432,11 +470,52 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
                         min={1}
                         max={10}
                         step={1}
-                        className="h-8 max-sm:!bg-[rgb(var(--color-surface))] max-sm:w-1/2"
+                        className="h-8"
                         value={kr.weight}
                         onChange={(e) => setKR(kr.id, { weight: Number(e.target.value) })}
                       />
                     </div>
+                  </div>
+
+                  {/* Mobile (redesign 2026-09-19) : Durée + Coef. repliés
+                      derrière « Fonctionnalité avancée », sous la barre de
+                      progression — réglages secondaires, sortis du parcours
+                      par défaut. Desktop inchangé (toujours visibles ci-dessus). */}
+                  <div className="sm:hidden">
+                    {advancedKrIds.has(kr.id) ? (
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="grid gap-1">
+                          <Label className="text-muted-foreground text-xs whitespace-nowrap">{t('modal.duration')} <span className="normal-case font-normal opacity-70">{t('modal.optional')}</span></Label>
+                          <input
+                            type="time"
+                            aria-label={`${t('modal.duration')} (${t('modal.optional')})`}
+                            value={minutesToTimeValue(kr.estimatedTime)}
+                            onChange={(e) => setKR(kr.id, { estimatedTime: timeValueToMinutes(e.target.value) })}
+                            className="h-8 w-full min-w-0 rounded-md border px-2 text-sm border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] focus:outline-none focus:border-[rgb(var(--color-accent))] focus:ring-1 focus:ring-[rgb(var(--color-accent))] !bg-[rgb(var(--color-surface))]"
+                          />
+                        </div>
+                        <div className="grid gap-1">
+                          <Label className="text-muted-foreground text-xs" title={t('modal.weightHint')}>{t('modal.weight')}</Label>
+                          <Input
+                            type="number"
+                            min={1}
+                            max={10}
+                            step={1}
+                            className="h-8 !bg-[rgb(var(--color-surface))]"
+                            value={kr.weight}
+                            onChange={(e) => setKR(kr.id, { weight: Number(e.target.value) })}
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setAdvancedKrIds((prev) => new Set(prev).add(kr.id))}
+                        className="text-sm font-semibold text-[rgb(var(--color-accent-solid))]"
+                      >
+                        {t('modal.advancedFeature')}
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}

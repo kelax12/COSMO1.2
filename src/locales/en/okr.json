@@ -95,6 +95,7 @@
     "unit": "Unit",
     "duration": "Duration",
     "optional": "(Optional)",
+    "advancedFeature": "Advanced feature",
     "weight": "Weight (1–10)",
     "weightHint": "How much this KR counts towards overall progress",
     "needOneKr": "Add at least 1 key result to create the objective.",
