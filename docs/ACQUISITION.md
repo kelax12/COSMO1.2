@@ -81,7 +81,7 @@ valable comme stratégie — ce document ne le refait pas. Il répond à une aut
 |---|---|---|---|
 | AM-1 | 🔴 **Les chiffres datent du 2026-08-14 et ne sont rejoués par rien.** Un audit d'acquisition dont les mesures ont un mois décrit un marché qui a bougé, et il n'existe aucun job qui les remesure | mesures datées dans l'en-tête, aucun workflow d'acquisition | oui : un job planifié sur les compteurs de la base |
 | AM-2 | **Aucune action n'est reliée à son résultat.** Ce document liste des leviers ; rien n'attribue une inscription à un levier. C'est le même motif que T-5 du tableau de bord : on mesure la conformité, pas le résultat | le tracking `?ref=` reste un développement ouvert | oui, et c'est peu coûteux |
-| AM-3 | **Les comptes de TEST ne sont retranchés d'aucun chiffre.** `demo@cosmo.app` porte **120 tâches** en production, soit 16 % des tâches de la plateforme, et `get_admin_stats` les compte encore : la mig. `149` qui les retranche est **écrite et non appliquée** | mig. `149`, item ouvert | oui, immédiatement |
+| AM-3 | **Les comptes de TEST ne sont retranchés d'aucun chiffre.** `demo@cosmo.app` porte **120 tâches** en production, soit 16 % des tâches de la plateforme, et `get_admin_stats` les compte encore : la mig. `149` qui les retranche est **écrite et non appliquée** | 🔴 **Remesuré le 2026-09-20 : pire que « non appliquée », elle n'est pas COMMITÉE.** `supabase/migration/149_admin_stats_excludes_non_users.sql` est un fichier **non suivi** de l'arbre de travail, et `admin_stats_excluded_uids()` n'existe pas en base | oui, immédiatement · `a-faire-code.md` **C-100**, `a-faire-manuel.md` **M-46** |
 
 ---
 
