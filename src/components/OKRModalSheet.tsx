@@ -393,7 +393,7 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
                         30% de la ligne (flex-[3] contre flex-[7] pour le nom,
                         soit 70/30) — +50% de largeur pour cette colonne. */}
                     <div className="flex-[3] min-w-0 flex items-end gap-1">
-                      <div className="min-w-0 flex-[2] grid gap-1">
+                      <div className="min-w-0 flex-1 grid gap-1">
                         <Label className="text-muted-foreground text-xs">{t('modal.target')}</Label>
                         <Input
                           type="number"
@@ -403,14 +403,22 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
                           className="h-8 min-w-0 px-1 text-center !bg-[rgb(var(--color-surface))]"
                         />
                       </div>
-                      <div className="min-w-0 flex-1 grid gap-1">
+                      {/* Unité : largeur auto-ajustée au contenu — `size`
+                          (fallback universel, en caractères) + `field-sizing:
+                          content` (Chrome 123+, natif), même duo que
+                          TaskListsBar/CategoryFilterBar. `2` = la largeur
+                          d'origine pour 0 ou 1 caractère (« laisse-le comme
+                          ça ») ; au-delà, l'input grandit avec le texte. */}
+                      <div className="shrink-0 grid gap-1">
                         <Label className="sr-only">{t('modal.unit')}</Label>
                         <Input
                           aria-label={t('modal.unit')}
                           value={kr.unit}
                           placeholder="%"
                           onChange={(e) => setKR(kr.id, { unit: e.target.value })}
-                          className="h-8 min-w-0 px-1 text-center !bg-[rgb(var(--color-surface))]"
+                          size={Math.max(kr.unit.length, 2)}
+                          className="h-8 px-1 text-center !bg-[rgb(var(--color-surface))]"
+                          style={{ fieldSizing: 'content' } as React.CSSProperties}
                         />
                       </div>
                     </div>
