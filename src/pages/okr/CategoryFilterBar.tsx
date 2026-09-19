@@ -58,6 +58,16 @@ interface CategoryFilterBarProps {
   large?: boolean;
   /** true = bouton « Tous » actif en bleu (DA Cosmo) plutôt qu'en neutre. */
   accentAllActive?: boolean;
+  /**
+   * Fourni = sur mobile, ajouter/modifier/supprimer une catégorie ne se fait
+   * plus DIRECTEMENT sur la page (formulaire inline, barre flottante crayon/
+   * corbeille) mais uniquement via cette popup de gestion (typiquement
+   * `ColorSettingsModal`). Le déclencheur « + » mobile l'appelle à la place
+   * d'ouvrir le formulaire inline, et la barre flottante crayon/corbeille est
+   * masquée sous `sm`. Desktop inchangé dans les deux cas — cette prop ne
+   * change rien au-delà de `sm`. Absent (TeamOKRTab) = comportement d'origine.
+   */
+  onManageCategories?: () => void;
 }
 
 const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
@@ -87,6 +97,7 @@ const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
   canManage = true,
   large = false,
   accentAllActive = false,
+  onManageCategories,
 }) => {
   const { t } = useT('okr');
   // Chip Spotify (docs/MOBILE.md § Chips de filtre) : pilule pleine, sans
@@ -144,7 +155,9 @@ const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 4 }}
               transition={{ duration: 0.15 }}
-              className="absolute -top-7 inset-x-0 mx-auto w-fit flex items-center gap-1 z-10"
+              className={`absolute -top-7 inset-x-0 mx-auto w-fit flex items-center gap-1 z-10 ${
+                onManageCategories ? 'hidden sm:flex' : ''
+              }`}
             >
               {/* Crayon — modifier la catégorie (nom + couleur) */}
               <button
@@ -294,7 +307,7 @@ const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
             {t('categories.mobileLabel')}
           </h2>
           <button
-            onClick={() => setShowCreateCategory(true)}
+            onClick={() => (onManageCategories ? onManageCategories() : setShowCreateCategory(true))}
             aria-label={t('categories.new')}
             className="flex items-center justify-center min-w-touch min-h-touch rounded-lg text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 active:bg-blue-100 dark:active:bg-blue-900/40 transition-colors"
           >
