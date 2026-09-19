@@ -20,8 +20,6 @@ import HabitTable from '@/components/HabitTable';
 import HabitGlobalTracking from '@/components/HabitGlobalTracking';
 import { useHabits } from '@/modules/habits';
 import { HabitListSkeleton } from '@/components/skeletons';
-import { usePullToRefresh } from '@/lib/hooks/use-pull-to-refresh';
-import PullToRefreshIndicator from '@/components/PullToRefreshIndicator';
 import PageTutorial from '@/components/tutorial/PageTutorial';
 import { useTutorial } from '@/components/tutorial/useTutorial';
 import { useT } from '@/i18n/useT';
@@ -48,7 +46,6 @@ const HabitsPage: React.FC = () => {
   // `error` n'est volontairement plus destructuré : le message brut du backend
   // ne s'affiche jamais (règle « faille V7 »), seul un texte traduit est rendu.
   const { data: habits = [], isLoading, isError, refetch } = useHabits();
-  const { pullY, isRefreshing, threshold } = usePullToRefresh(() => refetch());
   const [showModal, setShowModal] = useState(false);
   const [showRecap, setShowRecap] = useState(false);
   // Vue par défaut = Tableau (vue dense, panorama 30 jours d'un coup d'œil)
@@ -97,7 +94,6 @@ const HabitsPage: React.FC = () => {
 
   return (
     <div className="min-h-[100dvh] p-4 md:p-8 pb-[calc(64px+env(safe-area-inset-bottom)+88px)] md:pb-8" style={{ backgroundColor: 'rgb(var(--color-background))' }}>
-      <PullToRefreshIndicator pullY={pullY} isRefreshing={isRefreshing} threshold={threshold} />
 
       {/* ── Mobile : en-tête canonique, partagé par toutes les pages ──
           Le titre se compacte au scroll dans une barre collante. Le bloc

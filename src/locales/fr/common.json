@@ -329,11 +329,6 @@
     "overdueBy_many": "en retard de {{count}} j",
     "overdueBy_other": "en retard de {{count}} j"
   },
-  "pullToRefresh": {
-    "pull": "Tirer pour actualiser",
-    "release": "Relâcher pour actualiser",
-    "refreshing": "Actualisation…"
-  },
   "offline": {
     "label": "Hors ligne",
     "text": " · vos modifications ne seront pas enregistrées tant que le réseau n'est pas revenu."
