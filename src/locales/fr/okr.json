@@ -97,6 +97,7 @@
     "duration": "Durée",
     "optional": "(Facultatif)",
     "advancedFeature": "Fonctionnalité avancée",
+    "advancedFeatureHide": "Masquer",
     "weight": "Coef. (1–10)",
     "weightHint": "Importance du KR dans la progression globale",
     "needOneKr": "Ajoute au moins 1 résultat clé pour créer l'objectif.",

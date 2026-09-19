@@ -293,9 +293,6 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
                 l'écart déjà posé par le `-mt-2` ci-dessous) pour resserrer
                 l'espace avec la carte Catégorie/Échéance au-dessus. */}
             <div className="sm:hidden max-sm:-mt-2">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-[rgb(var(--color-text-muted))] px-4 pb-1">
-                {t('modal.descriptionLabel')}
-              </p>
               <SectionCard>
                 {showDescriptionMobile ? (
                   <div className="px-4 py-3">
@@ -389,23 +386,29 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
                       <Label className="text-muted-foreground text-xs">{t('modal.keyResultName')}</Label>
                       <Input value={kr.title} placeholder={t('modal.keyResultPlaceholder')} className="h-8 min-w-0 !bg-[rgb(var(--color-surface))]" onChange={(e) => setKR(kr.id, { title: e.target.value })} />
                     </div>
-                    <div className="flex-1 min-w-0 grid gap-1">
-                      <Label className="text-muted-foreground text-xs">{t('modal.target')}</Label>
-                      <div className="h-8 flex items-center rounded-md border border-[rgb(var(--color-border))] !bg-[rgb(var(--color-surface))] overflow-hidden">
-                        <input
+                    {/* Plus de bordure commune (2e retouche) : Cible et Unité
+                        reprennent chacun leur propre `Input` bordé au lieu
+                        d'un seul cadre partagé, et gagnent +50% de hauteur
+                        (h-8 -> h-12). */}
+                    <div className="flex-1 min-w-0 flex items-end gap-1">
+                      <div className="min-w-0 flex-[2] grid gap-1">
+                        <Label className="text-muted-foreground text-xs">{t('modal.target')}</Label>
+                        <Input
                           type="number"
                           aria-label={t('modal.target')}
                           value={kr.targetValue}
                           onChange={(e) => setKR(kr.id, { targetValue: Number(e.target.value) })}
-                          className="min-w-0 flex-1 h-full bg-transparent px-1 text-sm text-center outline-none text-[rgb(var(--color-text-primary))]"
+                          className="h-12 min-w-0 px-1 text-center !bg-[rgb(var(--color-surface))]"
                         />
-                        <input
-                          type="text"
+                      </div>
+                      <div className="min-w-0 flex-1 grid gap-1">
+                        <Label className="sr-only">{t('modal.unit')}</Label>
+                        <Input
                           aria-label={t('modal.unit')}
                           value={kr.unit}
                           placeholder="%"
                           onChange={(e) => setKR(kr.id, { unit: e.target.value })}
-                          className="w-6 shrink-0 h-full bg-transparent px-0.5 text-xs text-center outline-none border-l border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))]"
+                          className="h-12 min-w-0 px-1 text-center !bg-[rgb(var(--color-surface))]"
                         />
                       </div>
                     </div>
@@ -483,29 +486,40 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
                       par défaut. Desktop inchangé (toujours visibles ci-dessus). */}
                   <div className="sm:hidden">
                     {advancedKrIds.has(kr.id) ? (
-                      <div className="grid grid-cols-2 gap-2">
-                        <div className="grid gap-1">
-                          <Label className="text-muted-foreground text-xs whitespace-nowrap">{t('modal.duration')} <span className="normal-case font-normal opacity-70">{t('modal.optional')}</span></Label>
-                          <input
-                            type="time"
-                            aria-label={`${t('modal.duration')} (${t('modal.optional')})`}
-                            value={minutesToTimeValue(kr.estimatedTime)}
-                            onChange={(e) => setKR(kr.id, { estimatedTime: timeValueToMinutes(e.target.value) })}
-                            className="h-8 w-full min-w-0 rounded-md border px-2 text-sm border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] focus:outline-none focus:border-[rgb(var(--color-accent))] focus:ring-1 focus:ring-[rgb(var(--color-accent))] !bg-[rgb(var(--color-surface))]"
-                          />
+                      <div className="grid gap-2">
+                        {/* Dimensions normales (2e retouche) : -40% de largeur
+                            (w-3/5) au lieu de remplir toute leur colonne. */}
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className="grid gap-1">
+                            <Label className="text-muted-foreground text-xs whitespace-nowrap">{t('modal.duration')} <span className="normal-case font-normal opacity-70">{t('modal.optional')}</span></Label>
+                            <input
+                              type="time"
+                              aria-label={`${t('modal.duration')} (${t('modal.optional')})`}
+                              value={minutesToTimeValue(kr.estimatedTime)}
+                              onChange={(e) => setKR(kr.id, { estimatedTime: timeValueToMinutes(e.target.value) })}
+                              className="h-8 w-3/5 min-w-0 rounded-md border px-2 text-sm border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] focus:outline-none focus:border-[rgb(var(--color-accent))] focus:ring-1 focus:ring-[rgb(var(--color-accent))] !bg-[rgb(var(--color-surface))]"
+                            />
+                          </div>
+                          <div className="grid gap-1">
+                            <Label className="text-muted-foreground text-xs" title={t('modal.weightHint')}>{t('modal.weight')}</Label>
+                            <Input
+                              type="number"
+                              min={1}
+                              max={10}
+                              step={1}
+                              className="h-8 w-3/5 !bg-[rgb(var(--color-surface))]"
+                              value={kr.weight}
+                              onChange={(e) => setKR(kr.id, { weight: Number(e.target.value) })}
+                            />
+                          </div>
                         </div>
-                        <div className="grid gap-1">
-                          <Label className="text-muted-foreground text-xs" title={t('modal.weightHint')}>{t('modal.weight')}</Label>
-                          <Input
-                            type="number"
-                            min={1}
-                            max={10}
-                            step={1}
-                            className="h-8 !bg-[rgb(var(--color-surface))]"
-                            value={kr.weight}
-                            onChange={(e) => setKR(kr.id, { weight: Number(e.target.value) })}
-                          />
-                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setAdvancedKrIds((prev) => { const next = new Set(prev); next.delete(kr.id); return next; })}
+                          className="text-sm font-semibold text-[rgb(var(--color-text-muted))]"
+                        >
+                          {t('modal.advancedFeatureHide')}
+                        </button>
                       </div>
                     ) : (
                       <button
