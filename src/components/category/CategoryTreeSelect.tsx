@@ -49,6 +49,14 @@ interface CategoryTreeSelectProps {
    * plus élevé (ex. `QuickEventCard`, z-[60]).
    */
   panelClassName?: string;
+  /**
+   * Fourni = trigger rendu en ligne « cellule » (label à gauche, valeur +
+   * chevron à droite, pleine largeur, sans bordure) au lieu du champ encadré
+   * par défaut — pattern des `Cell` de `task-modal/primitives` (redesign
+   * OKR mobile 2026-09-19). Absent = comportement d'origine, inchangé pour
+   * tous les autres appelants.
+   */
+  cellLabel?: React.ReactNode;
 }
 
 const CategoryTreeSelect: React.FC<CategoryTreeSelectProps> = ({
@@ -59,6 +67,7 @@ const CategoryTreeSelect: React.FC<CategoryTreeSelectProps> = ({
   shaking = false,
   fromOkr = false,
   panelClassName = '',
+  cellLabel,
 }) => {
   const { t } = useT('tasks');
   const [open, setOpen] = useState(false);
@@ -127,18 +136,33 @@ const CategoryTreeSelect: React.FC<CategoryTreeSelectProps> = ({
   return (
     <Popover open={open} onOpenChange={(next) => (next ? setOpen(true) : close())}>
       <PopoverTrigger asChild>
-        <button
-          type="button"
-          aria-haspopup="listbox"
-          aria-expanded={open}
-          className={`w-full min-h-11 rounded-xl border px-3 text-left text-sm truncate text-[rgb(var(--color-text-primary))] ${
-            hasError || shaking
-              ? 'border-[rgb(var(--color-error))]'
-              : (fromOkr ? 'border-[rgb(var(--color-accent-solid))]' : 'border-[rgb(var(--color-border))]')
-          } ${fromOkr ? 'bg-blue-50/50 dark:bg-blue-900/20' : 'bg-[rgb(var(--color-surface))]'}`}
-        >
-          {selectedPath || t('fields.categoryNone')}
-        </button>
+        {cellLabel !== undefined ? (
+          <button
+            type="button"
+            aria-haspopup="listbox"
+            aria-expanded={open}
+            className="w-full flex items-center justify-between gap-2 min-h-11 px-4 text-left text-[15px] text-[rgb(var(--color-text-primary))]"
+          >
+            <span>{cellLabel}</span>
+            <span className="flex items-center gap-1.5 shrink-0 text-[rgb(var(--color-text-muted))]">
+              <span className="truncate max-w-[9rem]">{selectedPath || t('fields.categoryNone')}</span>
+              <ChevronRight size={16} aria-hidden="true" />
+            </span>
+          </button>
+        ) : (
+          <button
+            type="button"
+            aria-haspopup="listbox"
+            aria-expanded={open}
+            className={`w-full min-h-11 rounded-xl border px-3 text-left text-sm truncate text-[rgb(var(--color-text-primary))] ${
+              hasError || shaking
+                ? 'border-[rgb(var(--color-error))]'
+                : (fromOkr ? 'border-[rgb(var(--color-accent-solid))]' : 'border-[rgb(var(--color-border))]')
+            } ${fromOkr ? 'bg-blue-50/50 dark:bg-blue-900/20' : 'bg-[rgb(var(--color-surface))]'}`}
+          >
+            {selectedPath || t('fields.categoryNone')}
+          </button>
+        )}
       </PopoverTrigger>
       {/* Largeur du CHAMP lui-même (`--radix-popover-trigger-width`, calculée
           par Radix), hauteur bornée avec défilement interne pour un arbre

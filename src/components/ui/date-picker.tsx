@@ -165,6 +165,14 @@ interface DatePickerProps {
   id?: string
   /** Borne basse ('YYYY-MM-DD') — cf. `DateCalendarPanel`. */
   minDate?: string
+  /**
+   * Fourni = trigger rendu en ligne « cellule » (label à gauche, valeur +
+   * icône à droite, pleine largeur, sans bordure ni fond) au lieu du champ
+   * encadré par défaut — pattern des `Cell` de `task-modal/primitives`
+   * (redesign OKR mobile 2026-09-19). Absent = comportement d'origine,
+   * inchangé pour tous les autres appelants.
+   */
+  cellLabel?: React.ReactNode
 }
 
 export function DatePicker({
@@ -178,6 +186,7 @@ export function DatePicker({
   disabled = false,
   id,
   minDate,
+  cellLabel,
 }: DatePickerProps) {
   const ov = useT('overlays')
   // Defaut traduit au rendu : dans la signature, il serait fige en francais.
@@ -199,22 +208,43 @@ export function DatePicker({
           id={id}
           disabled={disabled}
           className={cn(
-            buttonVariants({ variant: "outline" }),
-            "w-full justify-between font-normal",
+            cellLabel !== undefined
+              ? "w-full flex items-center justify-between gap-2 min-h-11 px-4 text-[15px] font-normal"
+              : cn(buttonVariants({ variant: "outline" }), "w-full justify-between font-normal"),
             disabled && "cursor-not-allowed opacity-60",
             className
           )}
-          style={{
-            backgroundColor: 'rgb(var(--color-surface))',
-            color: selectedDate ? 'rgb(var(--color-text-primary))' : 'rgb(var(--color-text-muted))',
-          }}
+          style={
+            cellLabel !== undefined
+              ? { color: 'rgb(var(--color-text-primary))' }
+              : {
+                  backgroundColor: 'rgb(var(--color-surface))',
+                  color: selectedDate ? 'rgb(var(--color-text-primary))' : 'rgb(var(--color-text-muted))',
+                }
+          }
         >
-          <span>
-            {selectedDate
-              ? format(selectedDate, displayFormat, { locale: getDateLocale() })
-              : placeholderText}
-          </span>
-          <CalendarIcon size={16} className="shrink-0" style={{ color: 'rgb(var(--color-text-muted))' }} />
+          {cellLabel !== undefined ? (
+            <>
+              <span>{cellLabel}</span>
+              <span className="flex items-center gap-1.5 shrink-0 text-[rgb(var(--color-text-muted))]">
+                <span className="truncate">
+                  {selectedDate
+                    ? format(selectedDate, displayFormat, { locale: getDateLocale() })
+                    : placeholderText}
+                </span>
+                <CalendarIcon size={16} className="shrink-0" aria-hidden="true" />
+              </span>
+            </>
+          ) : (
+            <>
+              <span>
+                {selectedDate
+                  ? format(selectedDate, displayFormat, { locale: getDateLocale() })
+                  : placeholderText}
+              </span>
+              <CalendarIcon size={16} className="shrink-0" style={{ color: 'rgb(var(--color-text-muted))' }} />
+            </>
+          )}
         </button>
       </PopoverTrigger>
 
