@@ -72,16 +72,23 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
 
                     {/* Année masquée sur mobile (redesign 2026-09-16) — affichage
                         seulement, `objective.startDate`/`endDate` inchangées.
-                        Date de début masquée sur mobile (redesign 2026-09-19) :
-                        seule la date de fin reste affichée, pour moins charger
-                        l'espace. Desktop inchangé (plage complète). */}
+                        Date de fin remplacée sur mobile (redesign 2026-09-19) par
+                        « X jours restants » — les deux pastilles qui portaient
+                        cette info (et le % de temps écoulé) sont retirées sous
+                        `sm` (cf. plus bas). Desktop inchangé (plage complète +
+                        pastilles). */}
                     <div className="flex-1 flex items-center justify-center gap-2 text-caption" style={{ color: 'rgb(var(--color-text-muted))' }}>
+                      <span className="sm:hidden">
+                        {remainingDays > 0
+                          ? `${remainingDays} jour${remainingDays > 1 ? 's' : ''} restant${remainingDays > 1 ? 's' : ''}`
+                          : formatDate(new Date(objective.endDate), { day: 'numeric', month: 'long' })}
+                      </span>
                       <span className="hidden sm:inline">
                         {formatDate(new Date(objective.startDate), { day: 'numeric', month: 'long' })}
                         <span className="hidden sm:inline"> {formatDate(new Date(objective.startDate), { year: 'numeric' })}</span>
                       </span>
                       <span className="hidden sm:inline">→</span>
-                      <span>
+                      <span className="hidden sm:inline">
                         {formatDate(new Date(objective.endDate), { day: 'numeric', month: 'long' })}
                         <span className="hidden sm:inline"> {formatDate(new Date(objective.endDate), { year: 'numeric' })}</span>
                       </span>
@@ -105,8 +112,12 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                     </div>
                   </div>
 
+                  {/* Pastilles « X j restants » / « % du temps écoulé » retirées
+                      sur mobile (redesign 2026-09-19) — l'info « jours restants »
+                      vit désormais dans l'en-tête (cf. plus haut). Desktop
+                      inchangé. */}
                   {(remainingDays > 0 || totalTime > 0) && (
-                    <div className="mb-4 flex flex-wrap items-center gap-2">
+                    <div className="hidden sm:flex sm:mb-4 flex-wrap items-center gap-2">
                       {remainingDays > 0 && (
                         <div
                           className="px-2.5 py-1 text-caption md:text-[10px] font-bold uppercase tracking-widest rounded-full border shadow-sm transition-transform group-hover:scale-105 w-fit"
