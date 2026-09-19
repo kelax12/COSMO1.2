@@ -382,15 +382,17 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
                       fusionnés dans un seul champ (20%) sur la même ligne —
                       Cible et Unité n'ont plus de ligne à elles. */}
                   <div className="flex sm:hidden items-end gap-2">
-                    <div className="flex-[4] min-w-0 grid gap-1">
+                    <div className="flex-[7] min-w-0 grid gap-1">
                       <Label className="text-muted-foreground text-xs">{t('modal.keyResultName')}</Label>
                       <Input value={kr.title} placeholder={t('modal.keyResultPlaceholder')} className="h-8 min-w-0 !bg-[rgb(var(--color-surface))]" onChange={(e) => setKR(kr.id, { title: e.target.value })} />
                     </div>
-                    {/* Plus de bordure commune (2e retouche) : Cible et Unité
-                        reprennent chacun leur propre `Input` bordé au lieu
-                        d'un seul cadre partagé, et gagnent +50% de hauteur
-                        (h-8 -> h-12). */}
-                    <div className="flex-1 min-w-0 flex items-end gap-1">
+                    {/* Plus de bordure commune : Cible et Unité reprennent
+                        chacun leur propre `Input` bordé au lieu d'un seul
+                        cadre partagé. Taille HORIZONTALE (pas verticale,
+                        hauteur h-8 inchangée) : la colonne passe de 20% à
+                        30% de la ligne (flex-[3] contre flex-[7] pour le nom,
+                        soit 70/30) — +50% de largeur pour cette colonne. */}
+                    <div className="flex-[3] min-w-0 flex items-end gap-1">
                       <div className="min-w-0 flex-[2] grid gap-1">
                         <Label className="text-muted-foreground text-xs">{t('modal.target')}</Label>
                         <Input
@@ -398,7 +400,7 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
                           aria-label={t('modal.target')}
                           value={kr.targetValue}
                           onChange={(e) => setKR(kr.id, { targetValue: Number(e.target.value) })}
-                          className="h-12 min-w-0 px-1 text-center !bg-[rgb(var(--color-surface))]"
+                          className="h-8 min-w-0 px-1 text-center !bg-[rgb(var(--color-surface))]"
                         />
                       </div>
                       <div className="min-w-0 flex-1 grid gap-1">
@@ -408,7 +410,7 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
                           value={kr.unit}
                           placeholder="%"
                           onChange={(e) => setKR(kr.id, { unit: e.target.value })}
-                          className="h-12 min-w-0 px-1 text-center !bg-[rgb(var(--color-surface))]"
+                          className="h-8 min-w-0 px-1 text-center !bg-[rgb(var(--color-surface))]"
                         />
                       </div>
                     </div>
