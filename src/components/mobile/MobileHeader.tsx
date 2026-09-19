@@ -4,6 +4,17 @@ import { cn } from '@/lib/utils';
 interface MobileHeaderProps {
   /** `ReactNode` et non `string` : le Dashboard y met une salutation animée. */
   title: React.ReactNode;
+  /**
+   * Titre affiché une fois compacté, à la place de `title` (redesign
+   * 2026-09-19, OKR). Absent = `title` reste affiché tel quel dans les deux
+   * états (comportement d'origine, inchangé pour tous les autres appelants).
+   * Utile quand `title` est trop long pour le `text-display` du grand
+   * titre — un texte qui tient en `text-headline` (compact) ne tient pas
+   * forcément en `text-display` (repos), et inversement un texte raccourci
+   * pour le repos perdrait de l'information une fois compacté, où la police
+   * plus petite laisse la place de le dire en entier.
+   */
+  compactTitle?: React.ReactNode;
   /** Ligne de contexte sous le titre — un compte, une date. Courte. */
   subtitle?: React.ReactNode;
   /** Actions à droite. Chaque enfant doit faire ≥ 44×44px (cf. TouchTarget). */
@@ -27,6 +38,7 @@ interface MobileHeaderProps {
  */
 const MobileHeader: React.FC<MobileHeaderProps> = ({
   title,
+  compactTitle,
   subtitle,
   actions,
   compactAt = 32,
@@ -99,7 +111,7 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
               compact ? 'text-headline' : 'text-display',
             )}
           >
-            {title}
+            {compact && compactTitle !== undefined ? compactTitle : title}
           </h1>
           {subtitle && !compact && (
             <p className="mt-0.5 text-label text-[rgb(var(--color-text-muted))] truncate">

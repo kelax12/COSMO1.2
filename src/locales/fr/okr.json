@@ -1,6 +1,7 @@
 {
   "page": {
     "title": "OKR - Objectifs & Résultats Clés",
+    "titleShort": "OKR - Objectifs",
     "subtitle": "Définissez et suivez vos objectifs avec des résultats mesurables",
     "completedOkrs": "OKR terminés",
     "seeCompleted": "Voir la liste des OKR terminés",
