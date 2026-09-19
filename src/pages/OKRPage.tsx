@@ -16,6 +16,7 @@ import PageErrorState from '@/components/PageErrorState';
 import TaskModal from '@/components/TaskModal';
 import EventModal from '@/components/EventModal';
 import OKRModalSheet from '@/components/OKRModalSheet';
+import ColorSettingsModal from '@/components/ColorSettingsModal';
 import OKRDeadlineReviewModal from '@/components/OKRDeadlineReviewModal';
 import CompletedOKRsModal from '@/components/CompletedOKRsModal';
 import { toast } from '@/lib/toast';
@@ -64,6 +65,10 @@ const OKRPage: React.FC = () => {
   // Restauration d'un « Annuler » : recree la categorie sous SON identifiant,
   // sinon les taches et objectifs qui la portaient restent orphelins (R-08).
   const [showCreateCategory, setShowCreateCategory] = useState(false);
+  // Popup de gestion des catégories — seul chemin mobile pour ajouter,
+  // modifier ou supprimer une catégorie (redesign 2026-09-19). Desktop garde
+  // le formulaire inline + la barre flottante crayon/corbeille.
+  const [showCategoryManage, setShowCategoryManage] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newCategoryColor, setNewCategoryColor] = useState('blue');
   const [showAddTaskModal, setShowAddTaskModal] = useState(false);
@@ -398,6 +403,12 @@ const OKRPage: React.FC = () => {
         createCategoryMutation={createCategoryMutation}
         large
         accentAllActive
+        onManageCategories={() => setShowCategoryManage(true)}
+      />
+
+      <ColorSettingsModal
+        isOpen={showCategoryManage}
+        onClose={() => setShowCategoryManage(false)}
       />
 
       {/* État d'erreur (#39) : sans lui, un échec réseau laissait la page

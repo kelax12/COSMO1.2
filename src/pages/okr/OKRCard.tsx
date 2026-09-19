@@ -71,13 +71,16 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                     </span>
 
                     {/* Année masquée sur mobile (redesign 2026-09-16) — affichage
-                        seulement, `objective.startDate`/`endDate` inchangées. */}
+                        seulement, `objective.startDate`/`endDate` inchangées.
+                        Date de début masquée sur mobile (redesign 2026-09-19) :
+                        seule la date de fin reste affichée, pour moins charger
+                        l'espace. Desktop inchangé (plage complète). */}
                     <div className="flex-1 flex items-center justify-center gap-2 text-caption" style={{ color: 'rgb(var(--color-text-muted))' }}>
-                      <span>
+                      <span className="hidden sm:inline">
                         {formatDate(new Date(objective.startDate), { day: 'numeric', month: 'long' })}
                         <span className="hidden sm:inline"> {formatDate(new Date(objective.startDate), { year: 'numeric' })}</span>
                       </span>
-                      <span>→</span>
+                      <span className="hidden sm:inline">→</span>
                       <span>
                         {formatDate(new Date(objective.endDate), { day: 'numeric', month: 'long' })}
                         <span className="hidden sm:inline"> {formatDate(new Date(objective.endDate), { year: 'numeric' })}</span>
@@ -171,7 +174,9 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
 
                     return (
                       <div key={keyResult.id} className="rounded-lg p-2 sm:p-3 transition-all" style={{ backgroundColor: 'rgb(var(--color-hover))' }}>
-                        <div className="flex justify-between items-center mb-3 gap-2">
+                        {/* Espace réduit sur mobile (2026-09-19) entre le nom du
+                            KR et la ligne de complétion — desktop inchangé. */}
+                        <div className="flex justify-between items-center mb-1.5 sm:mb-3 gap-2">
                           <span className="flex items-center gap-1.5 min-w-0">
                             <span className="text-xs sm:text-sm font-medium truncate" style={{ color: 'rgb(var(--color-text-primary))' }}>{keyResult.title}</span>
                             {(keyResult.weight ?? 1) !== 1 && (
@@ -262,26 +267,32 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
 
                         {/* Mobile (redesign 2026-09-16) : plus de -/+ (le clavier
                             numérique du champ suffit), input réduit, sur la MÊME
-                            ligne que la barre plutôt que sur deux rangées. */}
+                            ligne que la barre plutôt que sur deux rangées.
+                            🔴 Le nombre de KR réalisés s'édite désormais via un
+                            `<select>` natif (redesign 2026-09-19) : au tap, un
+                            `<select>` ouvre la roue de sélection du système
+                            (iOS)/le menu natif (Android) au lieu du clavier
+                            numérique — même logique que les champs de durée
+                            (`type="time"`, cf. TaskModalMobileBody), transposée
+                            à un compteur borné par `targetValue`. */}
                         <div className="flex sm:hidden items-center gap-2">
-                          {/* Largeur adaptée au nombre de chiffres affichés
-                              (redesign 2026-09-17) : `size` (fallback universel,
-                              en caractères) + `field-sizing: content` (Chrome
-                              123+, natif) — même duo que TaskListsBar/
-                              CategoryFilterBar pour un input auto-dimensionné. */}
-                          <input
-                            type="number"
+                          <select
                             aria-label={t('card.progressOf', { title: keyResult.title, target: keyResult.targetValue })}
                             value={keyResult.currentValue}
                             onChange={(e) => updateKeyResult(objective.id, keyResult.id, Number(e.target.value))}
-                            size={Math.max(String(keyResult.currentValue).length, 1)}
-                            className="shrink-0 px-1 py-1 text-xs border rounded focus:outline-none text-center"
+                            className="shrink-0 max-w-[4.5rem] px-1 py-1 text-xs border rounded focus:outline-none text-center max-sm:!bg-[rgb(var(--color-surface))]"
                             style={{
-                              backgroundColor: 'rgb(var(--color-surface))',
                               color: 'rgb(var(--color-text-primary))',
                               borderColor: 'rgb(var(--color-border))',
-                              fieldSizing: 'content',
-                            } as React.CSSProperties} />
+                            }}
+                          >
+                            {Array.from(
+                              { length: Math.min(Math.max(keyResult.targetValue, keyResult.currentValue) + 1, 1001) },
+                              (_, n) => n,
+                            ).map((n) => (
+                              <option key={n} value={n}>{n}</option>
+                            ))}
+                          </select>
                           <span className="text-xs shrink-0 whitespace-nowrap" style={{ color: 'rgb(var(--color-text-secondary))' }}>/ {keyResult.targetValue}</span>
 
                           <div className="flex items-center gap-2 flex-1">

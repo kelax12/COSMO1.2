@@ -60,6 +60,20 @@ const newKR = (): KRDraft => ({
   weight: 1,
 });
 
+/** Minutes → `HH:MM` pour l'input natif `type="time"` (roue OS sur mobile,
+ *  même pattern que TaskModalMobileBody / HabitModal). */
+const minutesToTimeValue = (minutes: number | string): string => {
+  const total = typeof minutes === 'number' ? minutes : Number(minutes) || 0;
+  const h = Math.floor(total / 60).toString().padStart(2, '0');
+  const m = (total % 60).toString().padStart(2, '0');
+  return `${h}:${m}`;
+};
+
+const timeValueToMinutes = (value: string): number => {
+  const [h, m] = value.split(':').map((n) => Number(n) || 0);
+  return h * 60 + m;
+};
+
 const todayIso = () => new Date().toISOString();
 const plusDaysIso = (n: number) => { const d = new Date(); d.setDate(d.getDate() + n); return d.toISOString(); };
 const toDateInput = (iso: string) => (iso ? new Date(iso).toISOString().slice(0, 10) : '');
@@ -160,7 +174,9 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
 
   return (
     <Sheet open={isOpen} onOpenChange={(o) => { if (!o) onClose(); }}>
-      <SheetContent className="flex w-full flex-col gap-0 p-0 sm:max-w-lg rounded-l-2xl border-l-0 overflow-hidden">
+      {/* Plein écran sur mobile (redesign 2026-09-19) : ni coin arrondi ni
+          bordure gauche sous `sm`, desktop inchangé (sheet latérale). */}
+      <SheetContent className="flex w-full flex-col gap-0 p-0 rounded-none border-0 sm:max-w-lg sm:rounded-l-2xl sm:border-l-0 overflow-hidden">
         <SheetHeader>
           <SheetTitle>{isEdit ? t('card.editObjective') : t('page.newObjective')}</SheetTitle>
           <SheetDescription>{t('modal.description')}</SheetDescription>
@@ -172,7 +188,18 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
           <div className="grid gap-4 px-4 pb-4">
             <div className="grid gap-2">
               <Label htmlFor="okr-title">{t('modal.objective')}</Label>
-              <Input id="okr-title" value={title} autoFocus placeholder={t('modalSheet.titlePlaceholder')} onChange={(e) => setTitle(e.target.value)} />
+              <Input
+                id="okr-title"
+                value={title}
+                autoFocus
+                placeholder={t('modalSheet.titlePlaceholder')}
+                onChange={(e) => setTitle(e.target.value)}
+                // Fond éclairci sur mobile (redesign 2026-09-19) : `bg-transparent`
+                // se confondait avec le fond du sheet, comme l'input « Choix
+                // catégorie » (`bg-[rgb(var(--color-surface))]`) juste en dessous.
+                // Desktop inchangé.
+                className="max-sm:!bg-[rgb(var(--color-surface))]"
+              />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
@@ -186,18 +213,28 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
               </div>
               <div className="grid gap-2">
                 <Label>{t('modal.deadline')}</Label>
+                {/* Taille augmentée sur mobile (redesign 2026-09-19) — champ
+                    tactile plus généreux, desktop inchangé. */}
                 <DatePicker
                   value={endDate}
                   onChange={setEndDate}
                   displayFormat="d MMMM yyyy"
                   allowClear={false}
+                  className="max-sm:h-12 max-sm:text-base"
                 />
               </div>
             </div>
 
             <div className="grid gap-2">
               <Label htmlFor="okr-desc">{t('modal.descriptionLabel')}</Label>
-              <Textarea id="okr-desc" rows={2} value={description} placeholder="Facultatif…" onChange={(e) => setDescription(e.target.value)} />
+              <Textarea
+                id="okr-desc"
+                rows={2}
+                value={description}
+                placeholder="Facultatif…"
+                onChange={(e) => setDescription(e.target.value)}
+                className="max-sm:!bg-[rgb(var(--color-surface))]"
+              />
             </div>
 
             <Separator />
@@ -218,7 +255,7 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
               {keyResults.map((kr, index) => (
                 <div key={kr.id} className="border-border grid gap-3 rounded-lg border p-3">
                   <div className="flex items-center gap-2">
-                    <Input value={kr.title} placeholder={t('modal.keyResultPlaceholder')} className="h-8 min-w-0" onChange={(e) => setKR(kr.id, { title: e.target.value })} />
+                    <Input value={kr.title} placeholder={t('modal.keyResultPlaceholder')} className="h-8 min-w-0 max-sm:!bg-[rgb(var(--color-surface))]" onChange={(e) => setKR(kr.id, { title: e.target.value })} />
                     {index > 0 && (
                       <Button
                         type="button"
@@ -254,20 +291,32 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                     <div className="grid gap-1">
                       <Label className="text-muted-foreground text-xs">{t('modal.target')}</Label>
-                      <Input type="number" className="h-8" value={kr.targetValue} onChange={(e) => setKR(kr.id, { targetValue: Number(e.target.value) })} />
+                      <Input type="number" className="h-8 max-sm:!bg-[rgb(var(--color-surface))]" value={kr.targetValue} onChange={(e) => setKR(kr.id, { targetValue: Number(e.target.value) })} />
                     </div>
                     <div className="grid gap-1">
                       <Label className="text-muted-foreground text-xs">{t('modal.unit')}</Label>
-                      <Input className="h-8" value={kr.unit} placeholder="%" onChange={(e) => setKR(kr.id, { unit: e.target.value })} />
+                      <Input className="h-8 max-sm:!bg-[rgb(var(--color-surface))]" value={kr.unit} placeholder="%" onChange={(e) => setKR(kr.id, { unit: e.target.value })} />
                     </div>
                     <div className="grid gap-1">
                       <Label className="text-muted-foreground text-xs whitespace-nowrap">{t('modal.duration')} <span className="normal-case font-normal opacity-70">{t('modal.optional')}</span></Label>
+                      {/* Desktop (sm+, inchangé) : champ numérique en minutes. */}
                       <Input
                         type="number"
-                        className="h-8"
+                        className="hidden sm:flex h-8"
                         placeholder="0"
                         value={kr.estimatedTime === 0 ? '' : kr.estimatedTime}
                         onChange={(e) => setKR(kr.id, { estimatedTime: e.target.value === '' ? 0 : Number(e.target.value) })}
+                      />
+                      {/* Mobile (redesign 2026-09-19) : `type="time"` ouvre la
+                          roue de sélection native du système au tap, au lieu du
+                          clavier numérique — même pattern que la durée de
+                          TaskModalMobileBody/HabitModal. */}
+                      <input
+                        type="time"
+                        aria-label={`${t('modal.duration')} (${t('modal.optional')})`}
+                        value={minutesToTimeValue(kr.estimatedTime)}
+                        onChange={(e) => setKR(kr.id, { estimatedTime: timeValueToMinutes(e.target.value) })}
+                        className="sm:hidden h-8 w-full min-w-0 rounded-md border px-2 text-sm border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] focus:outline-none focus:border-[rgb(var(--color-accent))] focus:ring-1 focus:ring-[rgb(var(--color-accent))] max-sm:!bg-[rgb(var(--color-surface))]"
                       />
                     </div>
                     <div className="grid gap-1">
@@ -277,7 +326,7 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
                         min={1}
                         max={10}
                         step={1}
-                        className="h-8"
+                        className="h-8 max-sm:!bg-[rgb(var(--color-surface))]"
                         value={kr.weight}
                         onChange={(e) => setKR(kr.id, { weight: Number(e.target.value) })}
                       />
