@@ -189,7 +189,12 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
           à angle droit collait directement sous la barre de statut du
           téléphone, transition brutale ; même traitement que le coin
           arrondi de TaskModalMobileBody (`rounded-t-3xl`). */}
-      <SheetContent className="flex w-full flex-col gap-0 p-0 border-0 rounded-t-3xl sm:rounded-tr-none sm:rounded-tl-2xl sm:rounded-bl-2xl sm:max-w-lg sm:border-l-0 overflow-hidden">
+      <SheetContent
+        className="flex w-full flex-col gap-0 p-0 border-0 rounded-t-3xl sm:rounded-tr-none sm:rounded-tl-2xl sm:rounded-bl-2xl sm:max-w-lg sm:border-l-0 overflow-hidden"
+        // Croix de fermeture agrandie sur mobile (2026-09-19), desktop inchangé.
+        closeButtonClassName="max-sm:top-5 max-sm:right-5 max-sm:p-1"
+        closeIconClassName="max-sm:size-6"
+      >
         <SheetHeader>
           {/* Titre agrandi sur mobile (redesign 2026-09-19), desktop inchangé. */}
           <SheetTitle className="max-sm:text-xl">{isEdit ? t('card.editObjective') : t('page.newObjective')}</SheetTitle>
@@ -392,11 +397,11 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                     <div className="grid gap-1">
                       <Label className="text-muted-foreground text-xs">{t('modal.target')}</Label>
-                      <Input type="number" className="h-8 max-sm:!bg-[rgb(var(--color-surface))]" value={kr.targetValue} onChange={(e) => setKR(kr.id, { targetValue: Number(e.target.value) })} />
+                      <Input type="number" className="h-8 max-sm:!bg-[rgb(var(--color-surface))] max-sm:w-1/2" value={kr.targetValue} onChange={(e) => setKR(kr.id, { targetValue: Number(e.target.value) })} />
                     </div>
                     <div className="grid gap-1">
                       <Label className="text-muted-foreground text-xs">{t('modal.unit')}</Label>
-                      <Input className="h-8 max-sm:!bg-[rgb(var(--color-surface))]" value={kr.unit} placeholder="%" onChange={(e) => setKR(kr.id, { unit: e.target.value })} />
+                      <Input className="h-8 max-sm:!bg-[rgb(var(--color-surface))] max-sm:w-1/2" value={kr.unit} placeholder="%" onChange={(e) => setKR(kr.id, { unit: e.target.value })} />
                     </div>
                     <div className="grid gap-1">
                       <Label className="text-muted-foreground text-xs whitespace-nowrap">{t('modal.duration')} <span className="normal-case font-normal opacity-70">{t('modal.optional')}</span></Label>
@@ -417,7 +422,7 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
                         aria-label={`${t('modal.duration')} (${t('modal.optional')})`}
                         value={minutesToTimeValue(kr.estimatedTime)}
                         onChange={(e) => setKR(kr.id, { estimatedTime: timeValueToMinutes(e.target.value) })}
-                        className="sm:hidden h-8 w-full min-w-0 rounded-md border px-2 text-sm border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] focus:outline-none focus:border-[rgb(var(--color-accent))] focus:ring-1 focus:ring-[rgb(var(--color-accent))] max-sm:!bg-[rgb(var(--color-surface))]"
+                        className="sm:hidden h-8 w-1/2 min-w-0 rounded-md border px-2 text-sm border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] focus:outline-none focus:border-[rgb(var(--color-accent))] focus:ring-1 focus:ring-[rgb(var(--color-accent))] max-sm:!bg-[rgb(var(--color-surface))]"
                       />
                     </div>
                     <div className="grid gap-1">
@@ -427,7 +432,7 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
                         min={1}
                         max={10}
                         step={1}
-                        className="h-8 max-sm:!bg-[rgb(var(--color-surface))]"
+                        className="h-8 max-sm:!bg-[rgb(var(--color-surface))] max-sm:w-1/2"
                         value={kr.weight}
                         onChange={(e) => setKR(kr.id, { weight: Number(e.target.value) })}
                       />
