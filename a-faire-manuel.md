@@ -48,6 +48,30 @@ décision. Rien ici ne se corrige en écrivant du code.
 
 ---
 
+> ### 🕳️ Mise à jour du 2026-09-20 — **12 gestes neufs, dont un qui débloque le défaut P0 du dépôt**
+>
+> Consigne d'Axel : « reprends tous les audits et classe les choses à faire, soit dans
+> `a-faire-code.md` si tout se fait avec du code sans mon intervention, soit dans
+> `a-faire-manuel.md` si ça nécessite mon intervention ».
+>
+> Les **23 sections « 🕳️ Angles morts »** du 2026-09-16 (`faille.md` + 22 documents de `docs/`) et
+> les dix angles morts transversaux `T-1` → `T-10` du tableau de bord **n'étaient suivis nulle
+> part**. Tri fait : **30 items de code** dans [`a-faire-code.md`](./a-faire-code.md) § 12 (`C-81`
+> → `C-110`), **12 gestes** ici au **[§ 9](#9-angles-morts-du-2026-09-16--ce-que-seules-tes-mains-ferment)**.
+>
+> 🔴 **Le plus lourd des douze n'est pas un angle mort, c'est un trou de ce fichier.**
+> **`M-45` : appliquer la mig. `136`.** Le mot « 136 » n'apparaissait pas **une seule fois** dans
+> ce document, alors que c'est le geste qui ferme `C-77`, le seul défaut ouvert qu'un utilisateur
+> VOIT, et qu'il attend depuis le 2026-09-03. Relu EN BASE le 2026-09-20 : ledger à **138**
+> entrées, dernière `20260913223918`, et `get_work_time_stats` lit toujours `history`.
+>
+> ⚠️ **Trois angles morts n'ont produit AUCUNE ligne**, parce que ce fichier les portait déjà
+> (`M-15`/`M-16`/`M-17`, `M-25`, `M-40`) : le détail et la raison sont au § 9.5. C'est la règle de
+> l'en-tête appliquée à une passe de classement, et c'est le seul moyen qu'une liste de gestes ne
+> double pas de taille sans gagner un geste.
+
+---
+
 ## Sommaire
 
 | § | Domaine | Nature |
@@ -60,6 +84,7 @@ décision. Rien ici ne se corrige en écrivant du code.
 | [6](#6-acquisition-et-seo) | Annuaires, Search Console | manuel, répétitif |
 | [7](#7-vérifications-quaucune-gate-ne-peut-faire) | Ce qu'il faut ouvrir soi-même | appareil réel |
 | [8](#8-déploiements-quun-git-push-ne-fait-pas) | 🔴 Edge Functions **et migrations** : le dépôt ≠ la production | ligne de commande |
+| [9](#9-angles-morts-du-2026-09-16--ce-que-seules-tes-mains-ferment) | 🕳️ **Angles morts du 2026-09-16**, versés le 2026-09-20 | M-45 → M-56, **12 gestes neufs** |
 
 ---
 
@@ -257,3 +282,76 @@ le fait de **raisonner depuis un dépôt qui ne décrit pas la production**.
 > ⚠️ Le numéro M-39 ne se réutilise pas : il reste lisible dans l'historique git et dans les commits
 > qui le citent. Et un « fait » se coche **dans le fichier de statut** nommé en face, pas ici : ce
 > fichier est une liste de courses, pas un tableau de bord.
+
+---
+
+## 9. Angles morts du 2026-09-16 · ce que seules tes mains ferment
+
+**Versé ici le 2026-09-20.** Les **23 sections « 🕳️ Angles morts »** posées le 2026-09-16 dans
+`faille.md` et les 22 documents de `docs/`, plus les dix angles morts transversaux `T-1` → `T-10`
+du tableau de bord, **n'étaient suivis nulle part**. Ils ont été triés selon ta règle : ce qu'une
+modification du dépôt ferme est parti dans [`a-faire-code.md`](./a-faire-code.md) § 12 (`C-81` →
+`C-110`, **30 items**) ; les **douze** ci-dessous n'ont pas d'autre porte que toi.
+
+⚠️ **Aucun de ces douze n'est un défaut neuf.** Ce sont des gestes que les audits réclamaient déjà,
+chacun à l'intérieur du document qui le réclamait, donc à l'endroit le moins susceptible d'être
+relu au moment de décider quoi faire.
+
+### 9.1 Deux gestes qui débloquent du code déjà écrit
+
+| # | À faire | Pourquoi c'est toi | Statut tenu dans |
+|---|---|---|---|
+| **M-45** 🔴 | **Appliquer la migration `136`** (`136_work_time_stats_okr_from_completions.sql`), commitée depuis le 2026-09-03, puis vérifier ce qu'elle REND : `pg_get_functiondef('get_work_time_stats')` ne doit plus contenir `history` et doit contenir `kr_completions`, et la valeur rendue doit **égaler** le calcul client sur un compte portant des `kr_completions`. ⚠️ La `136` est par ailleurs listée « partielle » par `check:migration-coverage` : il lui manque `idx_kr_completions_user_completed_at`, à poser avec elle | 🔴 **Aucune ligne de ce fichier ne portait ce geste**, vérifié : « 136 » n'y apparaissait pas une seule fois avant ce jour. C'est le défaut P0 du dépôt, le seul qu'un utilisateur VOIT, et il attend une application de migration depuis dix-sept jours. **Relu en base le 2026-09-20** : ledger à **138 entrées**, dernière `20260913223918`, la fonction vivante lit encore `history`. ❌ « la fonction s'exécute sans erreur » ne prouve rien : c'est exactement ce que fait la version fausse | `a-faire-code.md` C-77 |
+| **M-46** | **Commiter puis appliquer la migration `149`** (`149_admin_stats_excludes_non_users.sql`), qui retranche les comptes de test de `get_admin_stats` | 🔴 **Elle n'est pas seulement non appliquée : elle n'est pas COMMITÉE.** Fichier **non suivi** par git au 2026-09-20, et `admin_stats_excluded_uids()` absente de la base. `demo@cosmo.app` porte **120 tâches**, soit 16 % des tâches de la plateforme : toute statistique de campagne lue avant ce geste est fausse de 16 % sans le dire. ⚠️ Relire le ledger **avant** d'appliquer : ce dépôt a déjà appliqué deux fois la même migration parce qu'une session voisine était passée avant | `a-faire-code.md` C-100 · `docs/ACQUISITION.md` AM-3 |
+
+### 9.2 Trois chemins de récupération jamais parcourus
+
+🔴 **Même famille, et le dépôt l'a déjà payée au prix fort** : la mig. `131` a rendu `/admin`
+inaccessible deux jours parce que le chemin d'enrôlement TOTP n'avait jamais été ouvert.
+**Un chemin de récupération qui n'a pas été parcouru est une hypothèse.**
+
+| # | À faire | Pourquoi c'est toi | Statut tenu dans |
+|---|---|---|---|
+| **M-47** | **Éprouver le ROLLBACK une fois**, pour de vrai : repromouvoir le déploiement Vercel précédent, et dérouler la contrepartie côté Supabase. Relever le temps réel, et ce qui a manqué dans le runbook | Le runbook le décrit et **personne ne l'a jamais parcouru**. La partie automatisable est `restore-drill.yml`, dont la planification est `C-86` ; la promotion d'un déploiement Vercel est un geste de console, et la décision de rollback n'appartient qu'à toi | `docs/DEPLOYMENT.md` AM-2 |
+| **M-48** | **Répéter à blanc la bascule Stripe live**, sur le compte de TEST : remettre à zéro les identifiants (mig. `140`), recréer les prix, réenregistrer le webhook avec ses **SIX** events, remplacer les secrets. Dans cet ordre, chronométré | La séquence n'a **jamais** été parcourue, et chaque étape manquante échoue **après** encaissement. Elle recoupe `M-43`, `M-06`, `M-07` et `M-08` : la répétition à blanc est ce qui transforme ces quatre lignes en une séquence éprouvée au lieu de quatre gestes espérés | `docs/STRIPE-LIVE.md` AM-4 |
+| **M-49** | **Jouer à blanc la procédure de violation RGPD des 72 h**, une fois, et dater l'exercice dans `RGPD-VIOLATION.md` | La procédure n'a jamais été éprouvée, et elle se parcourt **sous 72 heures, en situation de panique**. ⚠️ Son second angle mort ne se ferme pas par cet exercice : le délai court à partir d'une **détection** que rien ne mesure, et un registre des violations VIDE ne distingue pas « aucune violation » de « aucune détection » | `docs/RGPD-VIOLATION.md` AM-1, AM-2, AM-3 |
+
+### 9.3 Quatre mesures qu'aucun script ne prendra jamais
+
+Elles complètent le § 7. Comme lui, elles ne produisent pas de correctif : elles produisent des
+**findings**, qui rejoignent ensuite `a-faire-code.md`.
+
+| # | À faire | Pourquoi aucune CI ne le remplace |
+|---|---|---|
+| **M-50** | **Relire la qualité des traductions `en`**, catalogue par catalogue, et dater la relecture | 🔴 Les trois gates mesurent les **clés** et les **copies**, jamais la **qualité** : `i18n:check` compare des clés, `i18n:identical` détecte un `en` recopié du `fr`. Une traduction **fausse mais différente** passe les trois sans un bruit, et elles sont vertes sur 3 898 couples. Aucun script ne lira l'anglais à ta place. Le volet outillable, le volume de texte par page et par locale, est `C-99` |
+| **M-51** | **Passer la partie de WCAG qu'axe-core ne voit pas** : ordre de lecture, pertinence d'un libellé, sens porté par une couleur seule. Daté, écran par écran | Ce sont les critères **non automatisables par nature**, hors de portée de tout run vert. Ça recoupe `M-28` (clavier seul) et `M-40` (VoiceOver), sans les remplacer : `M-28` mesure l'atteignabilité, `M-40` l'annonce, et celle-ci le **sens**. Les trois se jouent dans la même séance |
+| **M-52** | **Fixer une date à l'audit VoiceOver iOS, et la tenir** | 🔴 `AUDIT-VOICEOVER-IOS.md` écrit lui-même « rien dans ce fichier n'est coché », et son absence ne fait baisser **aucune** note : `ACCESSIBILITY.md` est noté sans que ce quatrième audit ait été passé. « À jouer » sans date se reconduit indéfiniment, et c'est ce qui s'est produit depuis le 2026-09-03. La check-list est prête, 12 étapes, témoin compris. L'exécution est `M-40` ; ce qui manque ici est **la date** |
+| **M-53** | **Vérifier que `contact@thecosmo.app` REÇOIT vraiment**, en t'écrivant depuis une adresse extérieure, et relever le délai | `check:mail` vérifie SPF, DKIM et DMARC de l'**expédition sortante**. La **réception** n'est testée par rien, et c'est l'adresse publiée dans les mentions légales et dans le support. ⚠️ Distinct de `M-32`, qui prouve qu'un rapport de bug **part** ; celui-ci prouve qu'un message **arrive** |
+
+### 9.4 Trois décisions qui n'appartiennent qu'à toi
+
+| # | Décision | Ce qui en dépend | Statut tenu dans |
+|---|---|---|---|
+| **M-54** | **Fixer une échéance de rotation des secrets**, et la porter quelque part de vérifiable | Le § « Rotation des secrets » de `SECURITY.md` dit **comment** faire, jamais **quand**, et rien ne mesure l'âge d'un secret. Une échéance décidée rend l'item outillable (un job qui rappelle l'âge) ; sans elle il n'y a rien à outiller | `docs/SECURITY.md` AM-3 |
+| **M-55** | **Relever les backlinks obtenus ET PERDUS**, et donner une date et un état à chaque action d'annuaire | 🔴 Aucun suivi des backlinks perdus, alors que c'est **le seul levier que `ACQUISITION-BACKLINKS.md` déclare débloquant**. Un lien retiré est aujourd'hui invisible. Complète `M-23` (soumettre) et `M-24` (relever dans Search Console) : celui-ci porte la **persistance**, pas l'obtention. La colonne d'état dans le tableau est `C-101` ; ce qui la remplit est toi | `docs/ACQUISITION-BACKLINKS.md` AM-1, AM-2, AM-3 |
+| **M-56** | **Arbitrer ce que chacun des 77 angles morts COÛTE en points de note**, ou décider qu'on ne les note pas | Le 2026-09-16 a refusé de le faire, explicitement et à raison : « nommer un angle mort n'est pas le mesurer ; les noter reviendrait à créditer ou débiter une mesure qu'on n'a pas prise ». Le dépôt a déjà tranché dans les deux sens, `C-79` a valu **0** point et `C-09` en a valu **4**. Tant que cet arbitrage n'est pas rendu, les 30 items de `a-faire-code.md` § 12 n'ont **ni priorité ni taille**, et c'est délibéré : leur en poser une sans chiffrage serait le « avant » recopié au lieu d'être relu, pour la quatrième fois | `docs/README.md` § 2026-09-16 · `a-faire-code.md` § 12.8 |
+
+---
+
+### 9.5 Ce qui a été écarté de ce tableau, et pourquoi
+
+⚠️ **Trois angles morts du 09-16 ne produisent aucune ligne ici**, parce qu'ils sont **déjà**
+portés par ce fichier et qu'en refaire une ligne serait exactement le doublon que l'en-tête
+interdit :
+
+| Angle mort | Déjà porté par |
+|---|---|
+| `POST-AUDIT-GUIDE.md` AM-1 et `SECURITY.md` AM-2, les réglages de Dashboard qui se désactivent sans trace | **M-15**, **M-16**, **M-17** (§ 4). Le volet outillable, les lire par l'API Management, est `C-88` |
+| `MOBILE.md` AM-4, aucune mesure sur appareil réel | **M-25** (§ 7), tenté le 2026-09-03, moitié appareil non faite |
+| `ACCESSIBILITY.md` AM-3, aucun test avec un lecteur d'écran | **M-40** (§ 7). Ce qui manquait n'était pas le geste mais sa **date** : c'est `M-52` |
+
+🔴 **Et un énoncé du 09-16 était périmé**, remesuré avant classement : `MOBILE.md` AM-1 et
+`TESTING.md` AM-4 annonçaient les cas `mobile-safari` « écrits, non commités ». Ils sont dans
+`ci.yml` à `HEAD` depuis `af0190bd`, le 2026-09-16, **le jour même**. `a-faire-code.md` `C-78` est
+clos ; ce qui reste de mobile non mesuré est `C-97` (Android, bridage, paysage) et `M-25`
+(l'appareil réel).

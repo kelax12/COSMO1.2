@@ -429,6 +429,40 @@ Axel**, et le dépôt a déjà tranché dans les deux sens : `C-79` a valu **0**
 exactement comme les « avant » recopiés au lieu d'être relus (trois occurrences déjà). Un angle
 mort se **referme** ou se **reconduit avec sa date**, jamais ne se recopie.
 
+### ✅ Mise à jour du 2026-09-20 · les 77 angles morts ont désormais un propriétaire
+
+Ils n'en avaient aucun : chacun vivait dans le document qui l'avait nommé, donc à l'endroit le
+moins susceptible d'être relu au moment de décider quoi faire. C'est le même mécanisme que celui
+décrit plus haut pour `CLAUDE.md`, appliqué à cette passe elle-même.
+
+Ils sont **dédoublonnés et classés**, selon une règle unique : un item part dans
+[`../a-faire-code.md`](../a-faire-code.md) si une modification du dépôt le ferme sans geste hors de
+l'éditeur, dans [`../a-faire-manuel.md`](../a-faire-manuel.md) sinon.
+
+| Destination | Items | Où |
+|---|---|---|
+| `a-faire-code.md` | **30**, `C-81` → `C-110`, tous ouverts | § 12 |
+| `a-faire-manuel.md` | **12**, `M-45` → `M-56` | § 9 |
+| Déjà portés, aucune ligne créée | 3 (`M-15`/`M-16`/`M-17`, `M-25`, `M-40`) | `a-faire-manuel.md` § 9.5 |
+
+🔴 **Trois énoncés du 09-16 étaient FAUX, et le remesurage les a pris** :
+
+| Énoncé | Mesuré le 2026-09-20 |
+|---|---|
+| `MOBILE.md` AM-1 et `TESTING.md` AM-4 : les cas `mobile-safari` « écrits, non commités » | ✅ **Dans `ci.yml` à `HEAD` depuis `af0190bd`, le 2026-09-16, le jour même.** `C-78` est **clos** |
+| `TESTING.md` AM-1 : « 36 témoins » | **39**, `git ls-files` |
+| `ACQUISITION.md` AM-3 : mig. `149` « écrite et non appliquée » | **Pas même commitée** : fichier non suivi, et `admin_stats_excluded_uids()` absente de la base |
+
+⚠️ **Le classement ne note rien et ne hiérarchise rien**, délibérément : les 30 items de code n'ont
+ni priorité ni taille, parce qu'aucun n'a été chiffré. L'arbitrage sur ce que chacun vaut en points
+appartient à Axel, et il porte un numéro pour cesser d'être implicite : **`M-56`**.
+
+🔴 **Ce que cette passe a trouvé en classant, et qui ne venait d'aucun audit** : le geste qui ferme
+`C-77`, le défaut P0 du dépôt, **n'était écrit nulle part**. Le mot « 136 » n'apparaissait pas une
+seule fois dans `a-faire-manuel.md`. Il y entre sous **`M-45`**. Relu en base le 2026-09-20, le
+défaut est inchangé : ledger à **138** entrées, dernière `20260913223918`, et
+`get_work_time_stats` lit encore `history`.
+
 ---
 
 ## Mise à jour du 2026-09-14 (soir) · passe COMPLÈTE : onze domaines, aucun `·`, dix angles morts
