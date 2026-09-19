@@ -184,9 +184,12 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
 
   return (
     <Sheet open={isOpen} onOpenChange={(o) => { if (!o) onClose(); }}>
-      {/* Plein écran sur mobile (redesign 2026-09-19) : ni coin arrondi ni
-          bordure gauche sous `sm`, desktop inchangé (sheet latérale). */}
-      <SheetContent className="flex w-full flex-col gap-0 p-0 rounded-none border-0 sm:max-w-lg sm:rounded-l-2xl sm:border-l-0 overflow-hidden">
+      {/* Plein écran sur mobile (redesign 2026-09-19), desktop inchangé
+          (sheet latérale). Coin haut arrondi (2e retouche) — un plein écran
+          à angle droit collait directement sous la barre de statut du
+          téléphone, transition brutale ; même traitement que le coin
+          arrondi de TaskModalMobileBody (`rounded-t-3xl`). */}
+      <SheetContent className="flex w-full flex-col gap-0 p-0 border-0 rounded-t-3xl sm:rounded-tr-none sm:rounded-tl-2xl sm:rounded-bl-2xl sm:max-w-lg sm:border-l-0 overflow-hidden">
         <SheetHeader>
           {/* Titre agrandi sur mobile (redesign 2026-09-19), desktop inchangé. */}
           <SheetTitle className="max-sm:text-xl">{isEdit ? t('card.editObjective') : t('page.newObjective')}</SheetTitle>
@@ -293,7 +296,14 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
                       value={description}
                       placeholder="Facultatif…"
                       onChange={(e) => setDescription(e.target.value)}
-                      className="!border-0 !shadow-none !bg-transparent !p-0 !rounded-none resize-none focus:!ring-0 focus-visible:!ring-0"
+                      // `no-input-chrome` (index.css) : classe dédiée aux
+                      // champs imbriqués dans un conteneur déjà bordé (ici la
+                      // `SectionCard`) — sans elle, le style global focus
+                      // `input/textarea:focus` (plus spécifique, en
+                      // `!important`) continue de poser sa bordure + son
+                      // ring bleus malgré des classes `!border-0`/`!ring-0`
+                      // locales (mesuré). Même classe que DescriptionField.
+                      className="no-input-chrome resize-none bg-transparent p-0"
                     />
                   </div>
                 ) : (
@@ -388,7 +398,13 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
                       <Label className="text-muted-foreground text-xs">{t('modal.unit')}</Label>
                       <Input className="h-8 max-sm:!bg-[rgb(var(--color-surface))]" value={kr.unit} placeholder="%" onChange={(e) => setKR(kr.id, { unit: e.target.value })} />
                     </div>
-                    <div className="grid gap-1">
+                    {/* Réorganisé sur mobile (2026-09-19) : Durée passe sur sa
+                        propre ligne pleine largeur (`max-sm:col-span-2`) —
+                        la roue native `type="time"` rend son texte plus
+                        gros/centré qu'un champ texte normal, la coller à
+                        Coef. dans une demi-colonne les faisait mal
+                        s'aligner. Desktop inchangé (grille à 4 colonnes). */}
+                    <div className="grid gap-1 max-sm:col-span-2">
                       <Label className="text-muted-foreground text-xs whitespace-nowrap">{t('modal.duration')} <span className="normal-case font-normal opacity-70">{t('modal.optional')}</span></Label>
                       {/* Desktop (sm+, inchangé) : champ numérique en minutes. */}
                       <Input
@@ -410,7 +426,7 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
                         className="sm:hidden h-8 w-full min-w-0 rounded-md border px-2 text-sm border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] focus:outline-none focus:border-[rgb(var(--color-accent))] focus:ring-1 focus:ring-[rgb(var(--color-accent))] max-sm:!bg-[rgb(var(--color-surface))]"
                       />
                     </div>
-                    <div className="grid gap-1">
+                    <div className="grid gap-1 max-sm:col-span-2">
                       <Label className="text-muted-foreground text-xs" title={t('modal.weightHint')}>{t('modal.weight')}</Label>
                       <Input
                         type="number"
