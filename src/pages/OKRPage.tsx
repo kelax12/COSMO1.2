@@ -293,8 +293,14 @@ const OKRPage: React.FC = () => {
           bordure/pilule au profit d'un `TouchTarget` icône seule, même
           traitement que la boîte de réception du Dashboard et de
           `TasksInboxMenu`. */}
+      {/* Titre raccourci au repos (redesign 2026-09-19) : le titre complet
+          (`page.title`) ne tient pas dans le `text-display` du grand titre
+          et tronquait en « OKR - Objectifs & R... ». `page.titleShort` reste
+          seul au repos ; le titre complet ne réapparaît qu'une fois compacté
+          (`text-headline`, plus petit, où il tient). */}
       <MobileHeader
-        title={t('page.title')}
+        title={t('page.titleShort')}
+        compactTitle={t('page.title')}
         subtitle={t('page.subtitle')}
         actions={
           <TouchTarget
