@@ -22,6 +22,7 @@ import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Slider } from '@/components/ui/slider';
 import CategoryTreeSelect from '@/components/category/CategoryTreeSelect';
+import { SectionTitle, SectionCard, CellSeparator, Cell } from '@/components/task-modal/primitives';
 import type { Category } from '@/modules/categories';
 import type { KeyResult } from '@/modules/okrs';
 import { getProgress, type Objective } from '@/pages/okr/okr-page-logic';
@@ -187,7 +188,8 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
           bordure gauche sous `sm`, desktop inchangé (sheet latérale). */}
       <SheetContent className="flex w-full flex-col gap-0 p-0 rounded-none border-0 sm:max-w-lg sm:rounded-l-2xl sm:border-l-0 overflow-hidden">
         <SheetHeader>
-          <SheetTitle>{isEdit ? t('card.editObjective') : t('page.newObjective')}</SheetTitle>
+          {/* Titre agrandi sur mobile (redesign 2026-09-19), desktop inchangé. */}
+          <SheetTitle className="max-sm:text-xl">{isEdit ? t('card.editObjective') : t('page.newObjective')}</SheetTitle>
           <SheetDescription>{t('modal.description')}</SheetDescription>
         </SheetHeader>
 
@@ -203,15 +205,17 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
                 autoFocus
                 placeholder={t('modalSheet.titlePlaceholder')}
                 onChange={(e) => setTitle(e.target.value)}
-                // Fond éclairci sur mobile (redesign 2026-09-19) : `bg-transparent`
-                // se confondait avec le fond du sheet, comme l'input « Choix
-                // catégorie » (`bg-[rgb(var(--color-surface))]`) juste en dessous.
-                // Desktop inchangé.
-                className="max-sm:!bg-[rgb(var(--color-surface))]"
+                // Fond éclairci et taille agrandie sur mobile (redesign
+                // 2026-09-19) : `bg-transparent` se confondait avec le fond du
+                // sheet, comme l'input « Choix catégorie »
+                // (`bg-[rgb(var(--color-surface))]`) juste en dessous. Desktop
+                // inchangé.
+                className="max-sm:!bg-[rgb(var(--color-surface))] max-sm:h-12 max-sm:text-lg"
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            {/* Desktop (sm+, inchangé) : grille de deux champs encadrés. */}
+            <div className="hidden sm:grid sm:grid-cols-2 gap-3">
               <div className="grid gap-2">
                 <div className="flex items-center justify-between">
                   <Label>{t('modal.category')}</Label>
@@ -222,17 +226,36 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
               </div>
               <div className="grid gap-2">
                 <Label>{t('modal.deadline')}</Label>
-                {/* Taille augmentée sur mobile (redesign 2026-09-19) — champ
-                    tactile plus généreux, desktop inchangé. */}
-                <DatePicker
-                  value={endDate}
-                  onChange={setEndDate}
-                  displayFormat="d MMMM yyyy"
-                  allowClear={false}
-                  className="max-sm:h-12 max-sm:text-base"
-                />
+                <DatePicker value={endDate} onChange={setEndDate} displayFormat="d MMMM yyyy" allowClear={false} />
               </div>
             </div>
+
+            {/* Mobile (redesign 2026-09-19) : catégorie + échéance en lignes
+                « cellule » dans une carte, pattern repris de
+                TaskModalMobileBody (task-modal/primitives) — remplace la
+                grille de deux champs encadrés. Desktop inchangé ci-dessus. */}
+            <div className="sm:hidden flex items-center justify-between px-4 pb-1 pt-5">
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-[rgb(var(--color-text-muted))]">
+                {t('modal.detailsSection')}
+              </span>
+              <AddCategoryButton onClick={() => setShowColorSettings(true)} />
+            </div>
+            <SectionCard className="sm:hidden">
+              <CategoryTreeSelect
+                value={category}
+                onChange={setCategory}
+                categories={categories}
+                cellLabel={t('modal.category')}
+              />
+              <CellSeparator />
+              <DatePicker
+                value={endDate}
+                onChange={setEndDate}
+                displayFormat="d MMMM yyyy"
+                allowClear={false}
+                cellLabel={t('modal.deadline')}
+              />
+            </SectionCard>
 
             {/* Desktop (sm+, inchangé) : champ toujours visible. */}
             <div className="hidden sm:grid gap-2">
@@ -246,33 +269,38 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
               />
             </div>
 
-            {/* Mobile (redesign 2026-09-19) : repliée derrière un lien tant
-                qu'elle est vide, comme TaskModalMobileBody — gagne le
-                défilement qu'une textarea presque toujours vide coûtait à
-                chaque création. */}
-            {showDescriptionMobile ? (
-              <div className="grid gap-2 sm:hidden">
-                <Label htmlFor="okr-desc-mobile">{t('modal.descriptionLabel')}</Label>
-                <Textarea
-                  id="okr-desc-mobile"
-                  rows={2}
-                  autoFocus={!description}
-                  value={description}
-                  placeholder="Facultatif…"
-                  onChange={(e) => setDescription(e.target.value)}
-                  className="!bg-[rgb(var(--color-surface))]"
-                />
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setShowDescriptionMobile(true)}
-                className="sm:hidden flex items-center gap-2 min-h-11 text-sm font-semibold text-[rgb(var(--color-accent-solid))]"
-              >
-                <Plus size={16} aria-hidden="true" />
-                {t('modal.addDescription')}
-              </button>
-            )}
+            {/* Mobile (redesign 2026-09-19) : même carte « cellule » que
+                Catégorie/Échéance ci-dessus — repliée derrière un lien tant
+                qu'elle est vide, comme TaskModalMobileBody. */}
+            <div className="sm:hidden">
+              <SectionTitle>{t('modal.descriptionLabel')}</SectionTitle>
+              <SectionCard>
+                {showDescriptionMobile ? (
+                  <div className="px-4 py-3">
+                    <Textarea
+                      id="okr-desc-mobile"
+                      rows={2}
+                      autoFocus={!description}
+                      value={description}
+                      placeholder="Facultatif…"
+                      onChange={(e) => setDescription(e.target.value)}
+                      className="!border-0 !shadow-none !bg-transparent !p-0 !rounded-none resize-none focus:!ring-0 focus-visible:!ring-0"
+                    />
+                  </div>
+                ) : (
+                  <Cell
+                    label={
+                      <span className="flex items-center gap-1.5 font-semibold text-[rgb(var(--color-accent-solid))]">
+                        <Plus size={16} aria-hidden="true" />
+                        {t('modal.addDescription')}
+                      </span>
+                    }
+                    onTap={() => setShowDescriptionMobile(true)}
+                    showChevron={false}
+                  />
+                )}
+              </SectionCard>
+            </div>
 
             <Separator />
 
@@ -302,8 +330,14 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
             <div className="grid gap-3">
               {keyResults.map((kr, index) => (
                 <div key={kr.id} className="border-border grid gap-3 rounded-lg border p-3">
-                  <div className="flex items-center gap-2">
-                    <Input value={kr.title} placeholder={t('modal.keyResultPlaceholder')} className="h-8 min-w-0 max-sm:!bg-[rgb(var(--color-surface))]" onChange={(e) => setKR(kr.id, { title: e.target.value })} />
+                  <div className="flex items-end gap-2">
+                    <div className="flex-1 min-w-0 grid gap-1">
+                      {/* Label mobile (redesign 2026-09-19), même style que
+                          Cible/Unité/Durée ci-dessous — desktop inchangé
+                          (pas de label, juste le placeholder). */}
+                      <Label className="sm:hidden text-muted-foreground text-xs">{t('modal.keyResultName')}</Label>
+                      <Input value={kr.title} placeholder={t('modal.keyResultPlaceholder')} className="h-8 min-w-0 max-sm:!bg-[rgb(var(--color-surface))]" onChange={(e) => setKR(kr.id, { title: e.target.value })} />
+                    </div>
                     {index > 0 && (
                       <Button
                         type="button"
