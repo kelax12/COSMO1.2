@@ -398,13 +398,7 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
                       <Label className="text-muted-foreground text-xs">{t('modal.unit')}</Label>
                       <Input className="h-8 max-sm:!bg-[rgb(var(--color-surface))]" value={kr.unit} placeholder="%" onChange={(e) => setKR(kr.id, { unit: e.target.value })} />
                     </div>
-                    {/* Réorganisé sur mobile (2026-09-19) : Durée passe sur sa
-                        propre ligne pleine largeur (`max-sm:col-span-2`) —
-                        la roue native `type="time"` rend son texte plus
-                        gros/centré qu'un champ texte normal, la coller à
-                        Coef. dans une demi-colonne les faisait mal
-                        s'aligner. Desktop inchangé (grille à 4 colonnes). */}
-                    <div className="grid gap-1 max-sm:col-span-2">
+                    <div className="grid gap-1">
                       <Label className="text-muted-foreground text-xs whitespace-nowrap">{t('modal.duration')} <span className="normal-case font-normal opacity-70">{t('modal.optional')}</span></Label>
                       {/* Desktop (sm+, inchangé) : champ numérique en minutes. */}
                       <Input
@@ -426,7 +420,7 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
                         className="sm:hidden h-8 w-full min-w-0 rounded-md border px-2 text-sm border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] focus:outline-none focus:border-[rgb(var(--color-accent))] focus:ring-1 focus:ring-[rgb(var(--color-accent))] max-sm:!bg-[rgb(var(--color-surface))]"
                       />
                     </div>
-                    <div className="grid gap-1 max-sm:col-span-2">
+                    <div className="grid gap-1">
                       <Label className="text-muted-foreground text-xs" title={t('modal.weightHint')}>{t('modal.weight')}</Label>
                       <Input
                         type="number"
