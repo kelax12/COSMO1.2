@@ -80,7 +80,7 @@ const toDateInput = (iso: string) => (iso ? new Date(iso).toISOString().slice(0,
 const fromDateInput = (v: string) => (v ? new Date(v + 'T00:00:00').toISOString() : '');
 
 export default function OKRModalSheet({ isOpen, onClose, categories, editingObjective, onSubmit }: OKRModalSheetProps) {
-  const { t } = useT('okr');
+  const { t, tp } = useT('okr');
   const { t: tCommon } = useT('common');
   const isEdit = !!editingObjective;
   const [title, setTitle] = useState('');
@@ -89,6 +89,10 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
   const [endDate, setEndDate] = useState('');
   const [keyResults, setKeyResults] = useState<KRDraft[]>([newKR()]);
   const [showColorSettings, setShowColorSettings] = useState(false);
+  // Repli mobile de la description (redesign 2026-09-19, cf. TaskModalMobileBody) :
+  // masquée tant qu'elle est vide, auto-affichée si l'objectif édité en a déjà
+  // une. Desktop inchangé (toujours visible).
+  const [showDescriptionMobile, setShowDescriptionMobile] = useState(false);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -102,12 +106,14 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
           ? editingObjective.keyResults.map((k) => ({ ...k, weight: k.weight ?? 1, completedAt: k.completedAt ?? undefined }))
           : [newKR()]
       );
+      setShowDescriptionMobile(!!editingObjective.description?.trim());
     } else {
       setTitle('');
       setDescription('');
       setCategory(categories[0]?.id ?? '');
       setEndDate(toDateInput(plusDaysIso(90)));
       setKeyResults([newKR()]);
+      setShowDescriptionMobile(false);
     }
     /* eslint-disable-next-line react-hooks/exhaustive-deps --
     `categories` omis : il ne sert qu a choisir une categorie PAR DEFAUT a
@@ -132,6 +138,9 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
   // Un objectif sans résultat clé n'est pas mesurable : au moins 1 KR nommé requis.
   const hasKeyResult = keyResults.some((k) => k.title.trim().length > 0);
   const canSave = title.trim().length > 0 && hasKeyResult;
+  // Badge mobile à côté de « Résultats clés » (redesign 2026-09-19) : ne
+  // compte que les KR effectivement nommés, comme `hasKeyResult`.
+  const filledKrCount = keyResults.filter((k) => k.title.trim().length > 0).length;
 
   const handleSave = () => {
     if (!canSave) return;
@@ -225,7 +234,8 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
               </div>
             </div>
 
-            <div className="grid gap-2">
+            {/* Desktop (sm+, inchangé) : champ toujours visible. */}
+            <div className="hidden sm:grid gap-2">
               <Label htmlFor="okr-desc">{t('modal.descriptionLabel')}</Label>
               <Textarea
                 id="okr-desc"
@@ -233,14 +243,52 @@ export default function OKRModalSheet({ isOpen, onClose, categories, editingObje
                 value={description}
                 placeholder="Facultatif…"
                 onChange={(e) => setDescription(e.target.value)}
-                className="max-sm:!bg-[rgb(var(--color-surface))]"
               />
             </div>
+
+            {/* Mobile (redesign 2026-09-19) : repliée derrière un lien tant
+                qu'elle est vide, comme TaskModalMobileBody — gagne le
+                défilement qu'une textarea presque toujours vide coûtait à
+                chaque création. */}
+            {showDescriptionMobile ? (
+              <div className="grid gap-2 sm:hidden">
+                <Label htmlFor="okr-desc-mobile">{t('modal.descriptionLabel')}</Label>
+                <Textarea
+                  id="okr-desc-mobile"
+                  rows={2}
+                  autoFocus={!description}
+                  value={description}
+                  placeholder="Facultatif…"
+                  onChange={(e) => setDescription(e.target.value)}
+                  className="!bg-[rgb(var(--color-surface))]"
+                />
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setShowDescriptionMobile(true)}
+                className="sm:hidden flex items-center gap-2 min-h-11 text-sm font-semibold text-[rgb(var(--color-accent-solid))]"
+              >
+                <Plus size={16} aria-hidden="true" />
+                {t('modal.addDescription')}
+              </button>
+            )}
 
             <Separator />
 
             <div className="flex items-center justify-between">
-              <Label>{t('modal.keyResults')}</Label>
+              <div className="flex items-center gap-2">
+                <Label>{t('modal.keyResults')}</Label>
+                {/* Repère mobile (redesign 2026-09-19) : combien de KR sont
+                    déjà nommés, utile dès qu'on en empile plusieurs — remplace
+                    en partie le message d'erreur qui n'apparaît qu'au pied du
+                    formulaire. Desktop inchangé. */}
+                {filledKrCount > 0 && (
+                  <span className="sm:hidden text-[11px] font-bold px-2 py-0.5 rounded-full bg-[rgb(var(--color-accent-solid))]/10 text-[rgb(var(--color-accent-solid))]">
+                    {tp('modal.krCount', filledKrCount)}
+                  </span>
+                )}
+              </div>
               <Button
                 type="button"
                 size="sm"
