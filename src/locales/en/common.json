@@ -324,11 +324,6 @@
     "overdueBy_one": "{{count}}d late",
     "overdueBy_other": "{{count}}d late"
   },
-  "pullToRefresh": {
-    "pull": "Pull to refresh",
-    "release": "Release to refresh",
-    "refreshing": "Refreshing…"
-  },
   "offline": {
     "label": "Offline",
     "text": " · your changes will not be saved until the network is back."

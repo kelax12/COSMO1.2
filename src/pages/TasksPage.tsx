@@ -34,8 +34,6 @@ import { tasksTutorialStepsDesktop } from '@/tutorials/tasks.desktop';
 import { tasksTutorialStepsMobile } from '@/tutorials/tasks.mobile';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
 import { TaskListSkeleton } from '@/components/skeletons';
-import { usePullToRefresh } from '@/lib/hooks/use-pull-to-refresh';
-import PullToRefreshIndicator from '@/components/PullToRefreshIndicator';
 import { filterTasksForPage, VIRTUAL_TODAY_ID } from './tasks/task-page-filter';
 import TaskListsBar from './tasks/TaskListsBar';
 import { colorOptions, resolveListColor } from './tasks/list-colors';
@@ -62,7 +60,6 @@ const TasksPage: React.FC = () => {
   // « Travail » doit aussi remonter les tâches de ses sous-catégories.
   const { data: categories = [] } = useCategories();
   const updateTaskMutation = useUpdateTask();
-  const { pullY, isRefreshing, threshold } = usePullToRefresh(() => refetchTasks());
 
 
   // ═══════════════════════════════════════════════════════════════════
@@ -263,7 +260,6 @@ const TasksPage: React.FC = () => {
       // `sm:p-8` reprend la main dès 640px : le desktop est inchangé.
       className="p-gutter sm:p-8 h-fit pb-[calc(64px+env(safe-area-inset-bottom)+88px)] md:pb-8"
     >
-      <PullToRefreshIndicator pullY={pullY} isRefreshing={isRefreshing} threshold={threshold} />
       <div className="flex flex-col gap-row sm:gap-8">
         <TasksHeader
           showDeadlineCalendar={showDeadlineCalendar}
