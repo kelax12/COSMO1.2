@@ -77,8 +77,10 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                         cette info (et le % de temps écoulé) sont retirées sous
                         `sm` (cf. plus bas). Desktop inchangé (plage complète +
                         pastilles). */}
-                    <div className="flex-1 flex items-center justify-center gap-2 text-caption" style={{ color: 'rgb(var(--color-text-muted))' }}>
-                      <span className="sm:hidden">
+                    <div className="flex-1 min-w-0 flex items-center justify-center gap-2 text-caption" style={{ color: 'rgb(var(--color-text-muted))' }}>
+                      {/* Police agrandie (2026-09-19) par rapport au
+                          `text-caption` hérité du conteneur — desktop inchangé. */}
+                      <span className="sm:hidden text-sm font-medium whitespace-nowrap">
                         {remainingDays > 0
                           ? `${remainingDays} jour${remainingDays > 1 ? 's' : ''} restant${remainingDays > 1 ? 's' : ''}`
                           : formatDate(new Date(objective.endDate), { day: 'numeric', month: 'long' })}
