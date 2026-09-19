@@ -734,6 +734,28 @@ Hover  : bg-[rgb(var(--color-hover))] (repos uniquement — l'état actif ne cha
 
 `src/pages/agenda/MobileAgenda.tsx` exporte `mobileCalendarStyles`, un bloc `<style>` brut injecté pour surcharger le CSS interne de FullCalendar (les classes `.fc-*` ne sont pas atteignables en Tailwind). Le garde-fou `design-system.guard.test.ts` ne voit **pas** ces occurrences (ce n'est pas la syntaxe `text-[Npx]`) — `font-size: 11px !important` sur `.fc-timegrid-slot-label` a été corrigé manuellement (était 10px). Si une autre valeur y est ajoutée, l'aligner à la main sur l'échelle mobile ; le garde-fou ne le fera pas pour vous.
 
+### FullCalendar · au doigt, `select` n'existe pas au tap court (2026-09-19)
+
+Les deux calendriers posent `selectLongPressDelay={250}`. Sur une surface tactile, cela veut dire
+qu'un `select` **n'est émis qu'après 250 ms d'appui MAINTENU** : le tap court, le seul geste qu'on
+fait sur une case de mois, ne produit aucun `select`. Une bascule Mois → Jour branchée sur `select`
+ne s'est donc jamais déclenchée sur un vrai téléphone, alors qu'à la souris `select` part au clic
+et que tout paraissait fonctionner.
+
+C'est un défaut **invisible en largeur mobile tant que l'émulation tactile n'est pas active** : il
+a survécu à trois tentatives de correction, chacune validée à la souris. Un geste tactile se
+vérifie avec des événements `Touch`, pas avec une fenêtre étroite.
+
+Un tap se branche sur **`dateClick`**, qui part au doigt comme à la souris. À la souris les deux
+rappels partent sur le même clic : la bascule a donc besoin d'un miroir **synchrone** du mode de
+vue (une ref, pas l'état React, encore périmé dans le second appel) pour ne pas s'exécuter deux
+fois. Câblage : `src/pages/agenda/useAgendaMobileView.ts`, témoin à côté.
+
+⚠️ Animer cette bascule ne doit **pas** passer par une `key` sur le conteneur : elle remonterait
+`<FullCalendar>`, alors que la bascule s'appuie justement sur `api.changeView` pour ne PAS
+démonter (la course qui laissait la vue Jour s'ouvrir sur le mauvais jour). Contrôles impératifs
+(`useAnimationControls`), et aucune clé de transform sous `prefers-reduced-motion`.
+
 ### Tutoriels et rendus mobile/desktop séparés
 
 Quand une page rend deux en-têtes (`md:hidden` + `hidden md:flex`), un même `data-tutorial-id` existe deux fois. `findTarget` (`src/components/tutorial/page-tutorial-helpers.ts`) renvoie le premier élément **visible** (rect non nul), pas le premier du DOM — sinon le spotlight vise la version masquée.
@@ -888,6 +910,8 @@ if (supabaseUrl) {
 - ❌ `100vh` pour un modal full-screen (utiliser `100dvh`)
 - ❌ Action (validation, suppression) accessible **que** par swipe — toujours un fallback visible
 - ❌ Faire diverger mobile/desktop dans le même composant sans `md:hidden` / `md:flex` / `useIsMobile()`
+- ❌ **Valider un geste tactile à la souris** — `selectLongPressDelay` rend `select` inatteignable
+  au tap ; vérifier avec de vrais événements `Touch` (cf. § FullCalendar ci-dessus)
 - ❌ Modifier `<TaskCard>` (`md:hidden`) sans vérifier que la table desktop reste intacte (`hidden md:block`)
 - ❌ Réintroduire `TaskCategoryIndicator` ou des icônes inline sur la TaskCard mobile
 - ❌ Retirer le warmup `fetch()` iOS Safari, le cache `cosmo:qcache:*`, ou le skip-retry sur timeout
