@@ -26,7 +26,7 @@ import React from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
-import interactionPlugin, { EventReceiveArg, EventResizeDoneArg } from '@fullcalendar/interaction';
+import interactionPlugin, { DateClickArg, EventReceiveArg, EventResizeDoneArg } from '@fullcalendar/interaction';
 import { DateSelectArg, EventClickArg, EventDropArg, DatesSetArg, EventInput, EventApi } from '@fullcalendar/core';
 // Données de locale FullCalendar. SANS elles, une locale non enregistrée
 // retombe sur les défauts anglais pour `firstDay` : l'agenda français
@@ -38,7 +38,7 @@ import { DateSelectArg, EventClickArg, EventDropArg, DatesSetArg, EventInput, Ev
 // obligerait à éditer ce fichier à chaque nouvelle langue — exactement ce que
 // le reste du socle i18n évite. Ici, toute langue future fonctionne sans code.
 import allCalendarLocales from '@fullcalendar/core/locales-all';
-import { motion } from 'framer-motion';
+import { motion, useAnimationControls, useReducedMotion } from 'framer-motion';
 import { format } from 'date-fns';
 import { CheckSquare, Check } from 'lucide-react';
 import MemberAvatar from '@/components/organization/MemberAvatar';
@@ -49,6 +49,7 @@ import { useAuth } from '@/modules/auth/AuthContext';
 import { getInitialScrollTime, shiftEventsForDisplay, type FullCalendarEvent } from './calendar-events';
 import { useTimezonePref, displayNow } from '@/lib/timezone';
 import { type MobileView, mobileCalendarStyles, MobileDayStrip } from './MobileAgenda';
+import type { MobileZoomOrder } from './useAgendaMobileView';
 
 /**
  * Cible du lien d'évitement du panneau des tâches. Portée par le conteneur du
@@ -76,11 +77,19 @@ interface AgendaCalendarSectionProps {
   mobileViewMode: MobileView;
   mobileSelectedDate: Date;
   onMobileSelectDate: (date: Date) => void;
+  /**
+   * Ordre de zoom Mois → Jour. Change à chaque bascule ; porte le point touché
+   * en coordonnées viewport, que ce composant — seul à connaître son DOM —
+   * convertit en origine de transformation.
+   */
+  mobileZoom: MobileZoomOrder | null;
   /** Pas de temps du zoom desktop, et son intervalle d'étiquettes. */
   slotDuration: string;
   slotLabelInterval: string;
   onDateSelect: (selectInfo: DateSelectArg) => void;
   onMobileDateSelect: (selectInfo: DateSelectArg) => void;
+  /** Tap sur une case : c'est LUI qui bascule Mois → Jour au doigt (cf. hook). */
+  onMobileDateClick: (info: DateClickArg) => void;
   onEventClick: (clickInfo: EventClickArg) => void;
   onEventDragStart: (info: EventDragArg) => void;
   onEventDragStop: (info: EventDragArg) => void;
@@ -115,10 +124,12 @@ const AgendaCalendarSection = ({
   mobileViewMode,
   mobileSelectedDate,
   onMobileSelectDate,
+  mobileZoom,
   slotDuration,
   slotLabelInterval,
   onDateSelect,
   onMobileDateSelect,
+  onMobileDateClick,
   onEventClick,
   onEventDragStart,
   onEventDragStop,
@@ -251,6 +262,60 @@ const AgendaCalendarSection = ({
 
   const isMonthView = mobileViewMode === 'dayGridMonth';
 
+  // ── Animation de bascule Mois → Jour (MOBILE UNIQUEMENT) ───────────────────
+  //
+  // La grille du jour ENTRE en s'ouvrant depuis la case touchée : on part d'un
+  // agrandissement centré sur le doigt, et on revient à l'échelle 1. L'œil
+  // relie ainsi la case du mois à la journée qui la remplace, au lieu de subir
+  // un remplacement sec.
+  //
+  // Pourquoi des contrôles impératifs plutôt qu'une `key` sur un `motion.div` :
+  // une `key` qui change REMONTE `<FullCalendar>`, or la bascule s'appuie
+  // justement sur `api.changeView` pour ne PAS démonter (cf. le commentaire de
+  // `handleMobileSelectDate`). L'animation ne doit rien coûter à la correction
+  // qu'elle accompagne.
+  const mobileShellRef = React.useRef<HTMLDivElement>(null);
+  const zoomControls = useAnimationControls();
+  const reduceMotion = useReducedMotion();
+  const zoomToken = mobileZoom?.token ?? 0;
+  // Miroir du point touché. Il n'est lu QUE dans l'effet ci-dessous, déclenché
+  // par le token ; le mettre en dépendance rejouerait l'animation à chaque
+  // nouvel objet identique. Une ref ne peut pas périmer : elle est réassignée
+  // au rendu qui précède l'effet, donc toujours du même passage que le token.
+  const zoomPointRef = React.useRef(mobileZoom);
+  zoomPointRef.current = mobileZoom;
+
+  React.useEffect(() => {
+    if (!zoomToken) return;
+    // 🔴 Sous `prefers-reduced-motion`, `<MotionConfig reducedMotion="user">`
+    // n'EXÉCUTE PAS les animations de transform mais laisse la valeur de
+    // départ posée : un `set({ scale: 1.6 })` resterait appliqué pour de bon,
+    // et la grille du jour resterait agrandie hors de l'écran. On ne pose donc
+    // aucune clé de transform dans ce cas (cf. src/lib/motion-safe.ts).
+    if (reduceMotion) {
+      zoomControls.set({ opacity: 1 });
+      return;
+    }
+    const shell = mobileShellRef.current;
+    const rect = shell?.getBoundingClientRect();
+    const point = zoomPointRef.current;
+    // Origine = le doigt, ramené dans le repère du conteneur. Sans point
+    // exploitable (clavier, ou tap hors cadre), on retombe au centre.
+    const origin =
+      rect && rect.width > 0 && rect.height > 0 && point && point.x >= 0
+        ? `${clampPercent(((point.x - rect.left) / rect.width) * 100)}% ${clampPercent(
+            ((point.y - rect.top) / rect.height) * 100,
+          )}%`
+        : '50% 50%';
+    zoomControls.set({ opacity: 0, scale: 1.14, transformOrigin: origin });
+    void zoomControls.start({
+      opacity: 1,
+      scale: 1,
+      transition: { duration: 0.34, ease: [0.22, 1, 0.36, 1] },
+    });
+  }, [zoomToken, reduceMotion, zoomControls]);
+
+
   // Label du jour sélectionné
   const mobileDayLabel = (() => {
     const raw = format(mobileSelectedDate, 'EEEE d MMMM yyyy', { locale: getDateLocale() });
@@ -278,7 +343,9 @@ const AgendaCalendarSection = ({
 
       {/* ── MOBILE CALENDAR ── */}
       {isMobile && (
-        <div
+        <motion.div
+          ref={mobileShellRef}
+          animate={zoomControls}
           data-tutorial-id="agenda-mobile-calendar"
           // Pas de `pb` : le conteneur `flex-1` s'arrête déjà pile au-dessus
           // de la tab bar. L'ancien `pb-64px` (réservé pour dégager le FAB)
@@ -318,6 +385,12 @@ const AgendaCalendarSection = ({
             snapDuration="00:15:00"
             slotLabelFormat={{ hour: '2-digit', minute: '2-digit', hour12: false }}
             select={onMobileDateSelect}
+            // 🔴 Indispensable : au doigt, un tap court ne produit AUCUN
+            // `select` (`selectLongPressDelay={250}` exige un appui maintenu).
+            // C'est ce seul rappel qui fait basculer Mois → Jour sur un vrai
+            // téléphone. Ne pas le retirer en croyant `select` suffisant : à la
+            // souris il l'est, au doigt non.
+            dateClick={onMobileDateClick}
             eventClick={onEventClick}
             eventDragStart={onEventDragStart}
             eventDragStop={onEventDragStop}
@@ -344,7 +417,7 @@ const AgendaCalendarSection = ({
             ]}
           />
           <style>{mobileCalendarStyles}</style>
-        </div>
+        </motion.div>
       )}
 
       {/* ── DESKTOP CALENDAR (hidden on mobile) ── */}
@@ -432,5 +505,11 @@ const AgendaCalendarSection = ({
     </>
   );
 };
+
+/** Borne un pourcentage d'origine de transformation dans [0, 100]. */
+function clampPercent(value: number): number {
+  if (!Number.isFinite(value)) return 50;
+  return Math.min(100, Math.max(0, Math.round(value)));
+}
 
 export default AgendaCalendarSection;

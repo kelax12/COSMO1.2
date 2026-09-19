@@ -136,8 +136,10 @@ const AgendaPage: React.FC = () => {
     mobileCalendarKey,
     setMobileCalendarKey,
     mobileViewMode,
+    mobileZoom,
     handleMobileSetView,
     handleMobileSelectDate,
+    handleMobileDateClick,
     handleMobileDateSelect,
     handleMobileMonthPrev,
     handleMobileMonthNext,
@@ -456,10 +458,12 @@ const AgendaPage: React.FC = () => {
           mobileViewMode={mobileViewMode}
           mobileSelectedDate={mobileSelectedDate}
           onMobileSelectDate={handleMobileSelectDate}
+          mobileZoom={mobileZoom}
           slotDuration={zoomDurations[zoomLevel]}
           slotLabelInterval={zoomLevel === zoomDurations.length - 1 ? '02:00:00' : '01:00:00'}
           onDateSelect={handleDateSelect}
           onMobileDateSelect={handleMobileDateSelect}
+          onMobileDateClick={handleMobileDateClick}
           onEventClick={handleEventClick}
           onEventDragStart={handleEventDragStart}
           onEventDragStop={handleEventDragStop}
