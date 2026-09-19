@@ -173,10 +173,11 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                       : 0;
 
                     return (
-                      <div key={keyResult.id} className="rounded-lg p-2 sm:p-3 transition-all" style={{ backgroundColor: 'rgb(var(--color-hover))' }}>
-                        {/* Espace réduit sur mobile (2026-09-19) entre le nom du
-                            KR et la ligne de complétion — desktop inchangé. */}
-                        <div className="flex justify-between items-center mb-1.5 sm:mb-3 gap-2">
+                      <div key={keyResult.id} className="rounded-lg py-1 px-2 sm:p-3 transition-all" style={{ backgroundColor: 'rgb(var(--color-hover))' }}>
+                        {/* Espace réduit sur mobile (2026-09-19, resserré) entre
+                            le nom du KR et la ligne de complétion — desktop
+                            inchangé. */}
+                        <div className="flex justify-between items-center mb-1 sm:mb-3 gap-2">
                           <span className="flex items-center gap-1.5 min-w-0">
                             <span className="text-xs sm:text-sm font-medium truncate" style={{ color: 'rgb(var(--color-text-primary))' }}>{keyResult.title}</span>
                             {(keyResult.weight ?? 1) !== 1 && (
