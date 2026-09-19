@@ -3,7 +3,7 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { PageHeading } from '@/components/ui/typography';
 import { MobileHeader } from '@/components/mobile';
-import { BarChart3, Target, CheckSquare, Repeat, CalendarDays } from 'lucide-react';
+import { BarChart3, Target, CheckSquare, Repeat, CalendarDays, ChevronRight } from 'lucide-react';
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis, ReferenceLine } from 'recharts';
 import {
   ChartContainer,
@@ -258,7 +258,10 @@ export default function StatisticsPage() {
   }), [sectionColor, t]);
 
   return (
-    <div className="p-4 md:p-8 max-w-7xl mx-auto pb-[calc(64px+env(safe-area-inset-bottom)+88px)] md:pb-8" style={{ backgroundColor: 'rgb(var(--color-background))' }}>
+    // Maquette 83 : les 88 px du fond réservaient la place du FAB « créer une
+    // tâche ». Il n'existe plus ici — c'est une page de LECTURE, elle ne crée
+    // rien, et il recouvrait une valeur du graphique. Reste la tab bar.
+    <div className="p-4 md:p-8 max-w-7xl mx-auto pb-[calc(64px+env(safe-area-inset-bottom))] md:pb-8" style={{ backgroundColor: 'rgb(var(--color-background))' }}>
       {/* ── Mobile : en-tête canonique (cf. docs/MOBILE.md) ──
           Titre grand au repos, compacté au scroll. Le bloc desktop ci-dessous
           est l'ancien rendu, masqué sous `md`. */}
@@ -354,7 +357,17 @@ export default function StatisticsPage() {
         </div>
       ) : (
       <>
-      <div className="mb-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 md:gap-4">
+      {/* ── Maquette 91 : un réglage de page, pas trois ───────────────────
+          Mesuré le 2026-09-19 en 390 px : trois sélecteurs EMPILÉS entre deux
+          blocs de données, 170 px de commandes avant le graphique, douze
+          combinaisons sur une page qu'on ouvre pour lire un chiffre.
+          `flex-col-reverse` remonte la PÉRIODE en premier sur mobile : c'est
+          le seul réglage qui vaut pour toute la page. La bande de sections
+          descend contre le graphique qu'elle pilote.
+          ⚠️ Elle RESTE : c'est la navigation entre cinq jeux de données, pas
+          un doublon de la période — les empiler monterait cinq graphiques
+          recharts d'un coup. Desktop inchangé (`md:flex-row`). */}
+      <div className="mb-6 flex flex-col-reverse md:flex-row items-start md:items-center justify-between gap-3 md:gap-4">
         {/* Sélecteur de section */}
         <div className="flex items-center gap-2 md:gap-4 w-full md:w-auto">
           <span className="hidden md:inline text-sm font-medium shrink-0" style={{ color: 'rgb(var(--color-text-secondary))' }}>{t('page.analyse')}</span>
@@ -404,35 +417,22 @@ export default function StatisticsPage() {
         </div>
       </div>
 
-      {/* Vue d'ensemble : toggle Tout / voir le détail */}
+      {/* Maquette 91 — ce troisième sélecteur encadré avait la taille et la
+          couleur des deux réglages de page au-dessus, alors qu'il ne change
+          que le graphique juste en dessous. Il redevient un lien ; la cible
+          de 44 px reste portée par `min-h-touch`. */}
       {selectedSection === 'all' && (
         <div className="flex justify-end mb-3">
-          <div className="inline-flex rounded-xl border p-1" style={{ backgroundColor: 'rgb(var(--color-surface))', borderColor: 'rgb(var(--color-border))' }}>
-            <button
-              type="button"
-              onClick={() => setOverviewDetail(false)}
-              aria-pressed={!overviewDetail}
-              className="px-4 min-h-touch md:min-h-0 md:py-1.5 rounded-lg text-sm font-medium transition-all"
-              style={{
-                backgroundColor: !overviewDetail ? '#1f6feb' : 'transparent', // #58a6ff ne passe pas le contraste AA avec du texte blanc
-                color: !overviewDetail ? 'white' : 'rgb(var(--color-text-secondary))',
-              }}
-            >
-              {t('overview.showAll')}
-            </button>
-            <button
-              type="button"
-              onClick={() => setOverviewDetail(true)}
-              aria-pressed={overviewDetail}
-              className="px-4 min-h-touch md:min-h-0 md:py-1.5 rounded-lg text-sm font-medium transition-all"
-              style={{
-                backgroundColor: overviewDetail ? '#1f6feb' : 'transparent', // #58a6ff ne passe pas le contraste AA avec du texte blanc
-                color: overviewDetail ? 'white' : 'rgb(var(--color-text-secondary))',
-              }}
-            >
-              {t('page.seeDetail')}
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={() => setOverviewDetail(!overviewDetail)}
+            aria-pressed={overviewDetail}
+            className="inline-flex items-center gap-1 min-h-touch md:min-h-0 px-1 text-sm font-medium underline-offset-4 hover:underline transition-colors"
+            style={{ color: 'rgb(var(--color-accent))' }}
+          >
+            {overviewDetail ? t('overview.showAll') : t('page.seeDetail')}
+            <ChevronRight size={15} aria-hidden="true" />
+          </button>
         </div>
       )}
 

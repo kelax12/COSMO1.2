@@ -49,7 +49,11 @@
       "taskDueToday_other": "{{count}} tâches pour aujourd'hui",
       "orgNotification_one": "{{count}} notification entreprise",
       "orgNotification_many": "{{count}} de notifications entreprise",
-      "orgNotification_other": "{{count}} notifications entreprise"
+      "orgNotification_other": "{{count}} notifications entreprise",
+      "orgJoinRequest_one": "{{count}} demande d’adhésion à traiter",
+      "orgJoinRequest_many": "{{count}} de demandes d’adhésion à traiter",
+      "orgJoinRequest_other": "{{count}} demandes d’adhésion à traiter",
+      "orgNews": "Nouveautés dans l’espace entreprise"
     },
     "descriptions": {
       "okr": "Objectifs & résultats",
@@ -320,7 +324,10 @@
     "today": "Aujourd'hui",
     "tomorrow": "Demain",
     "yesterday": "Hier",
-    "daysAgo": "il y a {{count}} j"
+    "daysAgo": "il y a {{count}} j",
+    "overdueBy_one": "en retard de {{count}} j",
+    "overdueBy_many": "en retard de {{count}} j",
+    "overdueBy_other": "en retard de {{count}} j"
   },
   "pullToRefresh": {
     "pull": "Tirer pour actualiser",

@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { AlertTriangle, Check } from 'lucide-react';
+import { formatOverdueSince } from '@/components/task-table/helpers';
 import { useEvents } from '@/modules/events';
 import { useHabits } from '@/modules/habits';
 import { useTasks, type Task } from '@/modules/tasks';
@@ -234,7 +235,8 @@ const TodayMoments = () => {
                     {entry.task.overdue && (
                       <span className="flex shrink-0 items-center gap-1 text-caption font-semibold text-[rgb(var(--color-error))]">
                         <AlertTriangle size={12} aria-hidden="true" />
-                        {entry.task.deadline}
+                        {/* Maquette 87 — cf. TodayUnified : clé de jour brute. */}
+                        {formatOverdueSince(entry.task.deadline)}
                       </span>
                     )}
                   </>

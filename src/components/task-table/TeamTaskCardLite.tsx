@@ -8,7 +8,7 @@ import React from 'react';
 import { CalendarClock, UsersRound } from 'lucide-react';
 import type { TeamProject, TeamTask } from '@/modules/team-projects';
 import { isTaskOverdue, projectColor, formatDuration, taskDisplayStatus } from '@/components/organization/team-projects.helpers';
-import { formatDate } from './helpers';
+import { formatDeadlineSmart, formatOverdueSince } from './helpers';
 import { useT } from '@/i18n/useT';
 
 interface TeamTaskCardLiteProps {
@@ -30,16 +30,27 @@ const TeamTaskCardLiteInner = React.forwardRef<HTMLDivElement, TeamTaskCardLiteP
       <div
         ref={ref}
         data-testid="team-task-card"
-        // Alignée sur `TaskCard` : plus de carte, un filet de séparation.
-        // Ces lignes cohabitent avec les tâches personnelles dans la MÊME
-        // liste — en garder la moitié en cartes aurait juste eu l'air cassé.
-        // L'appartenance à une équipe reste dite par le fond indigo, la
-        // pastille de projet et la barre de couleur, pas par un cadre.
-        className="relative flex items-stretch gap-3 px-3 py-2.5 cursor-pointer border-b border-[rgb(var(--color-border))] bg-indigo-500/[0.07] dark:bg-indigo-500/[0.12]"
-        style={{ minHeight: '60px' }}
+        // ── Maquette 88 : une tâche partagée reste une ligne comme les autres ──
+        //
+        // Cette ligne portait TROIS marques d'appartenance à la fois : un fond
+        // indigo, une barre de couleur de projet, et une pilule de projet. À
+        // quoi s'ajoutaient un titre d'un cran plus gros que celui des tâches
+        // personnelles et une pastille de statut. Résultat mesuré le
+        // 2026-09-19 en 390 px : dans une liste de onze lignes, la SEULE ligne
+        // d'équipe était la plus voyante de l'écran, avec sa durée cassée sur
+        // deux lignes — la variante rare criait plus fort que la règle.
+        //
+        // Il en reste UNE : le nom du projet, dit comme une catégorie l'est
+        // sur `TaskCard` (point + nom dans la ligne méta). Même gabarit, même
+        // hauteur, même grille.
+        //
+        // ❌ Ne pas réintroduire le fond teinté : il n'ajoutait rien que la
+        // pastille de projet ne dise, et il entrait en conflit avec le fond de
+        // sélection du mode « ajouter à une liste ».
+        className="relative flex items-stretch gap-3 px-3 py-2.5 cursor-pointer border-b border-[rgb(var(--color-border-muted))]"
+        style={{ minHeight: '60px', backgroundColor: 'rgb(var(--color-background))' }}
         onClick={() => onEdit(task)}
       >
-        <div className={`w-1.5 self-stretch rounded-full shrink-0 ${color.dot}`} />
 
         <button
           onClick={(e) => { e.stopPropagation(); onToggleComplete(task); }}
@@ -63,29 +74,40 @@ const TeamTaskCardLiteInner = React.forwardRef<HTMLDivElement, TeamTaskCardLiteP
         </button>
 
         <div className="flex-1 min-w-0 flex flex-col justify-center gap-0.5">
-          <p className={`font-medium text-body leading-tight truncate ${task.completed ? 'line-through' : ''}`} style={{ color: 'rgb(var(--color-text-primary))' }}>
+          {/* Maquette 88 : `text-label`, comme une tâche personnelle. Le cran
+              au-dessus (`text-body`) est réservé au RETARD sur `TaskCard` —
+              l'accorder aussi à l'appartenance à une équipe rendait les deux
+              signaux indiscernables. */}
+          <p className={`font-medium text-label leading-tight line-clamp-2 ${task.completed ? 'line-through' : ''}`} style={{ color: 'rgb(var(--color-text-primary))' }}>
             {task.name}
           </p>
           <div className="flex items-center gap-1.5 text-caption" style={{ color: 'rgb(var(--color-text-muted))' }}>
-            <span className="inline-flex items-center gap-1 text-caption font-semibold px-1.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-500 shrink-0">
-              <UsersRound size={10} aria-hidden="true" /> {project?.name ?? t('team.badge')}
+            {/* Le projet se dit comme une catégorie : point de la couleur du
+                projet + nom. L'icône « équipe » reste, en 10 px, parce que
+                c'est ELLE qui distingue un projet d'une catégorie perso. */}
+            <span className="inline-flex min-w-0 items-center gap-1 shrink-0">
+              <UsersRound size={10} aria-hidden="true" />
+              <span className={`size-2 shrink-0 rounded-full ${color.dot}`} aria-hidden="true" />
+              <span className="truncate">{project?.name ?? t('team.badge')}</span>
             </span>
-            <span className="inline-flex items-center gap-1 shrink-0">
-              <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${status.dot}`} aria-hidden="true" />
-              {tOrg(status.labelKey as Parameters<typeof tOrg>[0])}
-            </span>
+            <span aria-hidden="true">·</span>
+            {/* Maquette 87 : « 22/09/2026 » → « lundi » / « en retard de 2 j ». */}
             {task.deadline && (
-              <span className={overdue ? 'text-red-500 font-semibold inline-flex items-center gap-0.5' : 'inline-flex items-center gap-0.5'}>
-                <CalendarClock size={11} aria-hidden="true" />
-                {formatDate(task.deadline)}
-              </span>
-            )}
-            {formatDuration(task.estimatedTime ?? 0) && (
               <>
+                <span className={overdue ? 'text-red-500 font-semibold inline-flex items-center gap-0.5' : 'inline-flex items-center gap-0.5'}>
+                  <CalendarClock size={11} aria-hidden="true" />
+                  {overdue ? formatOverdueSince(task.deadline) : formatDeadlineSmart(task.deadline)}
+                </span>
                 <span aria-hidden="true">·</span>
-                <span>{formatDuration(task.estimatedTime ?? 0)}</span>
               </>
             )}
+            <span>{formatDuration(task.estimatedTime ?? 0)}</span>
+            {/* ⚠️ Le statut d'équipe (« À faire », « En cours »…) a quitté la
+                ligne : il ne se lit que dans `TeamTaskModal`, où on le change.
+                Sur une liste, il ajoutait un quatrième signal coloré à une
+                ligne qui en portait déjà trois. Le libellé reste accessible,
+                il n'est plus dessiné. */}
+            <span className="sr-only">{tOrg(status.labelKey as Parameters<typeof tOrg>[0])}</span>
           </div>
         </div>
 
