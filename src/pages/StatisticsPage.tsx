@@ -41,10 +41,29 @@ import {
   OKRStatistics,
   HabitsStatistics,
 } from './statistics/sections';
-import type { StatSection, TimePeriod, WorkTimePeriodData } from './statistics/types';
+import type { TimePeriod, WorkTimePeriodData } from './statistics/types';
 import { formatDate } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
 
+
+/**
+ * En-tête d'une famille de statistiques.
+ *
+ * La page empile ses cinq familles depuis le 2026-09-21 : sans repère, elles
+ * se lisent comme une seule liste de cartes. L'icône et la couleur sont
+ * exactement celles que le sélecteur donnait à l'onglet correspondant.
+ */
+const StatSectionHeading = ({ section }: { section: { label: string; icon: typeof BarChart3; color: string } }) => {
+  const Icon = section.icon;
+  return (
+    <div className="flex items-center gap-2.5 mt-10 mb-4">
+      <Icon size={18} aria-hidden="true" style={{ color: section.color }} />
+      <h2 className="text-headline md:text-lg font-bold" style={{ color: 'rgb(var(--color-text-primary))' }}>
+        {section.label}
+      </h2>
+    </div>
+  );
+};
 
 // ═══════════════════════════════════════════════════════════════════
 // PAGE PRINCIPALE
@@ -64,7 +83,6 @@ export default function StatisticsPage() {
   const { data: categories = [] } = useCategories();
   const { data: habits = [] } = useHabits();
   const { isPremium } = useBilling();
-  const [selectedSection, setSelectedSection] = useState<StatSection>('all');
   const [selectedPeriod, setSelectedPeriod] = useState<TimePeriod>('week');
   // Vue d'ensemble : bascule entre le graphique « Tout » (une courbe agrégée)
   // et « voir le détail » (multi-courbes par catégorie, ex-Dashboard).
@@ -148,14 +166,9 @@ export default function StatisticsPage() {
   const fixedBuckets = workTimeBuckets?.slice(0, fixedRanges.length);
   const chartBuckets = workTimeBuckets?.slice(fixedRanges.length);
 
-  const pickBucketTime = useCallback((bucket?: WorkTimeBucket) => {
-    if (!bucket) return 0;
-    if (selectedSection === 'tasks') return bucket.tasksTime;
-    if (selectedSection === 'agenda') return bucket.eventsTime;
-    if (selectedSection === 'habits') return bucket.habitsTime;
-    if (selectedSection === 'okr') return bucket.okrTime;
-    return bucket.totalTime;
-  }, [selectedSection]);
+  // La page n'a plus de sélecteur de section (cf. plus bas) : le graphique
+  // principal porte le TOTAL, et chaque famille a sa propre section empilée.
+  const pickBucketTime = useCallback((bucket?: WorkTimeBucket) => bucket?.totalTime ?? 0, []);
 
   const workTimeData = useMemo(
     () => chartRangeDefs.map((def, index) => ({ label: def.label, tooltipLabel: def.tooltipLabel, totalTime: pickBucketTime(chartBuckets?.[index]) })),
@@ -244,11 +257,8 @@ export default function StatisticsPage() {
     { id: 'year', label: t('periods.year') },
   ];
 
-  const sectionColor =
-    selectedSection === 'tasks' ? '#3B82F6' :
-    selectedSection === 'agenda' ? '#ef4444' :
-    selectedSection === 'habits' ? '#EAB308' :
-    selectedSection === 'okr' ? '#22C55E' : '#8B5CF6';
+  // Violet de la vue d'ensemble : c'est désormais la seule série tracée.
+  const sectionColor = '#8B5CF6';
 
   const areaChartData = workTimeData.map(d => ({ label: d.label, tooltipLabel: d.tooltipLabel ?? d.label, minutes: d.totalTime }));
 
@@ -334,44 +344,28 @@ export default function StatisticsPage() {
         </div>
       ) : (
       <>
-      {/* ── Maquette 91 : un réglage de page, pas trois ───────────────────
-          Mesuré le 2026-09-19 en 390 px : trois sélecteurs EMPILÉS entre deux
-          blocs de données, 170 px de commandes avant le graphique, douze
-          combinaisons sur une page qu'on ouvre pour lire un chiffre.
-          `flex-col-reverse` remonte la PÉRIODE en premier sur mobile : c'est
-          le seul réglage qui vaut pour toute la page. La bande de sections
-          descend contre le graphique qu'elle pilote.
-          ⚠️ Elle RESTE : c'est la navigation entre cinq jeux de données, pas
-          un doublon de la période — les empiler monterait cinq graphiques
-          recharts d'un coup. Desktop inchangé (`md:flex-row`). */}
-      <div className="mb-4 md:mb-6 flex flex-col-reverse md:flex-row items-start md:items-center justify-between gap-3 md:gap-4">
-        {/* Sélecteur de section */}
-        <div className="flex items-center gap-2 md:gap-4 w-full md:w-auto">
-          <span className="hidden md:inline text-sm font-medium shrink-0" style={{ color: 'rgb(var(--color-text-secondary))' }}>{t('page.analyse')}</span>
-          <div className="flex rounded-xl p-1 overflow-x-auto flex-nowrap flex-1 md:flex-none" style={{ backgroundColor: 'rgb(var(--color-hover))' }}>
-            {sections.map(section => {
-              const Icon = section.icon;
-              const isSelected = selectedSection === section.id;
-              return (
-                <button
-                  key={section.id}
-                  onClick={() => setSelectedSection(section.id as StatSection)}
-                  aria-label={section.label}
-                  aria-pressed={isSelected}
-                  className={`flex items-center gap-2 px-3 min-h-touch md:min-h-0 md:py-2 text-sm font-medium rounded-lg transition-all duration-200 whitespace-nowrap ${isSelected ? 'shadow-sm' : ''}`}
-                  style={{
-                    backgroundColor: isSelected ? 'rgb(var(--color-surface))' : 'transparent',
-                    color: isSelected ? section.color : 'rgb(var(--color-text-secondary))',
-                  }}
-                >
-                  <Icon size={16} aria-hidden="true" style={{ color: isSelected ? section.color : 'rgb(var(--color-text-secondary))' }} />
-                  <span>{section.label}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
+      {/* ── Une seule commande de page (arbitrage d'Axel, 2026-09-21) ─────
+          La page portait DEUX sélecteurs empilés qui ne règlent pas la même
+          chose : la période (un réglage, il vaut pour tout) et la section
+          (une navigation entre cinq jeux de données). Empilés, ils avaient le
+          même poids visuel, d'où l'impression de doublon, pour 118 px.
 
+          La navigation par section disparaît : la page DÉFILE à travers ses
+          cinq familles, chacune avec son en-tête. Il ne reste que la période.
+
+          ⚠️ J'avais écrit ici que les empiler « monterait cinq graphiques
+          recharts d'un coup ». C'était FAUX, vérifié le 2026-09-21 :
+          `statistics/sections.tsx` n'importe pas recharts du tout. Le seul
+          graphique lourd est celui de cette page, et il reste unique.
+
+          ❌ Ne pas réintroduire un sélecteur de section : ce qui rendait les
+          cinq vues nécessaires, c'était l'idée qu'un écran ne montre qu'une
+          famille à la fois. Elles tiennent à la suite. */}
+      <div className="mb-4 md:mb-6 flex items-center justify-between gap-3 md:gap-4">
+        {/* « Analyser : » présentait le sélecteur de SECTION, qui n'existe
+            plus. Devant « Jour / Semaine / Mois / Année » il annonçait autre
+            chose que ce qui suit. Un segmented de quatre durées n'a besoin
+            d'aucune étiquette. La clé `page.analyse` reste au catalogue. */}
         {/* Sélecteur de période — droite, style Agenda */}
         <div className="flex gap-1 p-1 rounded-xl border flex-nowrap overflow-x-auto w-full md:w-auto"
           style={{ backgroundColor: 'rgb(var(--color-surface))', borderColor: 'rgb(var(--color-border))' }}>
@@ -411,7 +405,7 @@ export default function StatisticsPage() {
         <span className="md:hidden text-caption font-semibold uppercase tracking-wider" style={{ color: 'rgb(var(--color-text-muted))' }}>
           {periodDescriptiveText[selectedPeriod]}
         </span>
-        {selectedSection === 'all' && (
+        {(
           <button
             type="button"
             onClick={() => setOverviewDetail(!overviewDetail)}
@@ -426,7 +420,7 @@ export default function StatisticsPage() {
       </div>
 
       {/* Graphique principal */}
-      {selectedSection === 'all' && overviewDetail ? (
+      {overviewDetail ? (
         <div className="mb-8">
           <React.Suspense fallback={<div className="card p-6 h-[340px] animate-pulse" />}>
             {/* `TimePeriod` a un cran de plus que `ViewMode` (`year`), rabattu
@@ -437,11 +431,11 @@ export default function StatisticsPage() {
         </div>
       ) : !isMobile ? (
       <div className="card p-6 mb-8">
-        <div className={selectedSection === 'habits' ? 'relative' : ''} style={selectedSection === 'habits' ? { paddingRight: 'calc(25% + 20px)' } : undefined}>
+        <div>
         <div className="flex flex-wrap justify-between items-center gap-3 mb-6">
           <div>
             <h2 className="text-lg font-semibold mb-1" style={{ color: 'rgb(var(--color-text-primary))' }}>
-              {selectedSection === 'agenda' ? t('chart.eventsDuration') : t('chart.timeInvested')}
+              {t('chart.timeInvested')}
             </h2>
             <p className="text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>
               {t('chart.averageAndTotal', { average: formatTime(avgWorkTime), total: formatTime(totalWorkTime) })}
@@ -540,25 +534,10 @@ export default function StatisticsPage() {
             />
           </AreaChart>
         </ChartContainer>
-        {selectedSection === 'habits' && (
-          <div className="absolute top-0 right-0 bottom-0 border-l pl-5 flex flex-col overflow-hidden"
-            style={{ width: '25%', borderColor: 'rgb(var(--color-border))' }}>
-            <p className="text-sm font-semibold mb-3 flex-shrink-0" style={{ color: 'rgb(var(--color-text-secondary))' }}>{t('page.calendar')}</p>
-            <div className="flex-1 min-h-0 flex flex-col">
-              <HabitHeatmap habits={habits} now={now} embedded />
-            </div>
-          </div>
-        )}
         </div>
       </div>
       ) : null}
 
-      {/* Heatmap habitudes sur mobile — card standalone sous le graphique */}
-      {isMobile && selectedSection === 'habits' && (
-        <div className="mb-6">
-          <HabitHeatmap habits={habits} now={now} />
-        </div>
-      )}
 
       {/* Maquette 91 : sur mobile, cette étiquette vit dans la rangée du lien
           ci-dessus. Ici elle n'existe plus qu'au-delà de `md`. */}
@@ -568,11 +547,25 @@ export default function StatisticsPage() {
         </span>
       </div>
 
-      {selectedSection === 'tasks' && <TasksStatistics tasks={rollingTasks} colorSettings={colorSettings} categories={categories} />}
-      {selectedSection === 'agenda' && <AgendaStatistics events={rollingEvents} categories={categories} />}
-      {selectedSection === 'okr' && <OKRStatistics objectives={okrs} krCompletions={krCompletions} rollingRange={rollingRange} />}
-      {selectedSection === 'habits' && <HabitsStatistics habits={habits} rollingRange={rollingRange} selectedPeriod={selectedPeriod} now={now} />}
-      {selectedSection === 'all' && <OverviewStatistics workTimeData={rollingWorkTimeData} />}
+      {/* Les cinq familles, à la suite. Chaque en-tête porte l'icône et la
+          couleur que le sélecteur donnait à son onglet : ce qui distinguait
+          les vues devient ce qui sépare les sections. */}
+      <OverviewStatistics workTimeData={rollingWorkTimeData} />
+
+      <StatSectionHeading section={sections[1]} />
+      <TasksStatistics tasks={rollingTasks} colorSettings={colorSettings} categories={categories} />
+
+      <StatSectionHeading section={sections[2]} />
+      <AgendaStatistics events={rollingEvents} categories={categories} />
+
+      <StatSectionHeading section={sections[3]} />
+      <OKRStatistics objectives={okrs} krCompletions={krCompletions} rollingRange={rollingRange} />
+
+      <StatSectionHeading section={sections[4]} />
+      <HabitsStatistics habits={habits} rollingRange={rollingRange} selectedPeriod={selectedPeriod} now={now} />
+      <div className="mt-6">
+        <HabitHeatmap habits={habits} now={now} />
+      </div>
       </>
       )}
 
