@@ -336,7 +336,7 @@ export default function StatisticsPage() {
           ⚠️ Elle RESTE : c'est la navigation entre cinq jeux de données, pas
           un doublon de la période — les empiler monterait cinq graphiques
           recharts d'un coup. Desktop inchangé (`md:flex-row`). */}
-      <div className="mb-6 flex flex-col-reverse md:flex-row items-start md:items-center justify-between gap-3 md:gap-4">
+      <div className="mb-4 md:mb-6 flex flex-col-reverse md:flex-row items-start md:items-center justify-between gap-3 md:gap-4">
         {/* Sélecteur de section */}
         <div className="flex items-center gap-2 md:gap-4 w-full md:w-auto">
           <span className="hidden md:inline text-sm font-medium shrink-0" style={{ color: 'rgb(var(--color-text-secondary))' }}>{t('page.analyse')}</span>
@@ -386,24 +386,36 @@ export default function StatisticsPage() {
         </div>
       </div>
 
-      {/* Maquette 91 — ce troisième sélecteur encadré avait la taille et la
-          couleur des deux réglages de page au-dessus, alors qu'il ne change
-          que le graphique juste en dessous. Il redevient un lien ; la cible
-          de 44 px reste portée par `min-h-touch`. */}
-      {selectedSection === 'all' && (
-        <div className="flex justify-end mb-3">
+      {/* ── Maquette 91 : une seule rangée avant les données ─────────────
+          Il y avait ici DEUX blocs pour presque rien : une rangée de 44 px ne
+          portant qu'un lien, puis un titre « 7 DERNIERS JOURS » en capitales
+          noires centrées de 20 px, le texte le plus fort de la page pour son
+          étiquette la moins actionnable. Mesuré le 2026-09-21 en 390 px :
+          73 px de hauteur et 44 px de gouttières, avant le premier graphique.
+
+          Sur mobile les deux fusionnent : la période à gauche en `caption`
+          sourd, comme tout autre en-tête de section, le lien à droite. Le
+          grand titre centré reste au-delà de `md`, où la place existe.
+
+          Le troisième sélecteur encadré, lui, était devenu ce lien le 20 :
+          il ne change que le graphique juste en dessous, pas la page. */}
+      <div className="flex items-center justify-between gap-3 mb-3 md:mb-0 md:justify-end">
+        <span className="md:hidden text-caption font-semibold uppercase tracking-wider" style={{ color: 'rgb(var(--color-text-muted))' }}>
+          {periodDescriptiveText[selectedPeriod]}
+        </span>
+        {selectedSection === 'all' && (
           <button
             type="button"
             onClick={() => setOverviewDetail(!overviewDetail)}
             aria-pressed={overviewDetail}
-            className="inline-flex items-center gap-1 min-h-touch md:min-h-0 px-1 text-sm font-medium underline-offset-4 hover:underline transition-colors"
+            className="inline-flex items-center gap-1 min-h-touch md:min-h-0 px-1 text-sm font-medium underline-offset-4 hover:underline transition-colors shrink-0"
             style={{ color: 'rgb(var(--color-accent))' }}
           >
             {overviewDetail ? t('overview.showAll') : t('page.seeDetail')}
             <ChevronRight size={15} aria-hidden="true" />
           </button>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Graphique principal */}
       {selectedSection === 'all' && overviewDetail ? (
@@ -540,7 +552,9 @@ export default function StatisticsPage() {
         </div>
       )}
 
-      <div className="mb-8 text-center">
+      {/* Maquette 91 : sur mobile, cette étiquette vit dans la rangée du lien
+          ci-dessus. Ici elle n'existe plus qu'au-delà de `md`. */}
+      <div className="hidden md:block mb-8 text-center">
         <span className="text-xl md:text-2xl font-black text-slate-400 dark:text-white not-italic uppercase tracking-tight">
           {periodDescriptiveText[selectedPeriod]}
         </span>
