@@ -11,8 +11,8 @@ import {
   type AssuranceLevel,
 } from '@/modules/auth/mfa';
 import { adminKeys } from './constants';
-import { fetchAdminStats, fetchIsAdmin } from './repository';
-import type { AdminStats } from './types';
+import { fetchAdminStats, fetchIsAdmin, fetchSupportStats } from './repository';
+import type { AdminStats, AdminSupport } from './types';
 
 /**
  * Stats globales du dashboard admin. La RPC rejette (42501 →
@@ -24,6 +24,28 @@ export function useAdminStats() {
   return useQuery<AdminStats, Error>({
     queryKey: adminKeys.stats(),
     queryFn: fetchAdminStats,
+    enabled: isAuthenticated && !isDemo && isSupabaseConfigured,
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+  });
+}
+
+/**
+ * Compteurs du support (C-110, mig. 150).
+ *
+ * 🔴 Requête SÉPARÉE de `useAdminStats`, et pour la même raison que la RPC
+ * l'est : tant que la mig. 150 n'est pas appliquée, cette requête rend
+ * `null`, et le reste de la console continue de s'afficher. Les mêler aurait
+ * fait dépendre un tableau de bord entier d'une migration qui peut dormir
+ * dans le dépôt — ce qui est arrivé dix-sept jours à la mig. 136 (C-77).
+ *
+ * `retry: false` comme `useAdminStats` : un 42501 ne se rejoue pas.
+ */
+export function useSupportStats() {
+  const { isAuthenticated, isDemo } = useAuth();
+  return useQuery<AdminSupport | null, Error>({
+    queryKey: adminKeys.support(),
+    queryFn: fetchSupportStats,
     enabled: isAuthenticated && !isDemo && isSupabaseConfigured,
     staleTime: 5 * 60 * 1000,
     retry: false,

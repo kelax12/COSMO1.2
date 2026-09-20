@@ -5897,6 +5897,181 @@ Il y entre ce jour sous **M-45**.
 
 ---
 
+### 🔴 C-111 · LE JOB `e2e` EST ROUGE SUR `main`, 25 échecs, et rien ne le disait
+
+> **Trouvé le 2026-09-20 au soir en jouant la suite pour vérifier la passe du § 12.9.** Aucun de
+> ces échecs ne vient de cette passe : les fichiers en cause sont à `HEAD`, non modifiés, et la
+> liste locale correspond **exactement** à celle de la CI.
+
+**La mesure, et elle vient de deux sources indépendantes qui concordent :**
+
+| Source | Résultat |
+|---|---|
+| CI, run `35532009156`, commit `53583d3f`, 2026-09-20 19:21 UTC | job `e2e` **FAILURE** — **25 échecs, 204 réussites** (1 h 36) |
+| Poste local, project `chromium`, même arbre | **5 échecs, 107 réussites** — et ce sont **exactement** les 5 cas `chromium` de la CI |
+
+🔴 **Les quatre autres jobs de `ci.yml` sont VERTS** (`lint-test-build`, `lighthouse`,
+`rls-integration`, `audit`). Un seul job rouge, donc, et il l'est depuis assez longtemps pour que
+les 30 items du § 12 aient été classés le matin même sans que personne le mentionne.
+
+⚠️ **Ce que ça dit du dispositif est plus grave que les défauts eux-mêmes.** `ci-alert.yml`
+surveille `CI` et ouvre une issue à chaque échec sur `main`. Soit l'issue existe et personne ne
+l'a ouverte — le scénario `vendor-watch` du 2026-08-29, quatre jours d'échecs quotidiens ignorés
+—, soit elle n'existe pas et c'est l'alerte qui est cassée. **Un job rouge est un job muet : il
+rend inaudibles les gardes du même job**, ici les 204 cas qui passent.
+
+#### Les 30 cas distincts, en quatre familles
+
+**1. `touch-targets` — 8 cas (3 chromium, 5 WebKit). Des défauts de PRODUIT, mesurés.**
+
+| Route | Cible | Mesure |
+|---|---|---|
+| `/settings` | « Changer la photo de profil » | **24 × 24 px** — `w-6 h-6` sous `sm:`, la pastille d'avatar sur téléphone (`src/pages/SettingsPage.tsx:288`) |
+| `/okr` | Puces de catégorie (« Tous », « Travail », « Personnel »…) | **36 px de haut** |
+| `/habits` | 5+ commandes, plusieurs **sans nom accessible**, dont une portant « 18 » | **39 × 39 px** — vraisemblablement les cases d'une grille de calendrier |
+
+**2. `a11y-keyboard-audit` — 11 cas (2 chromium, 9 WebKit).** Les deux `chromium` expirent au même
+endroit : `locator.focus` / `locator.click` sur le déclencheur `afficher les actions|^actions
+pour ` d'une carte de tâche, à 375 px. Le bouton n'est jamais trouvé visible.
+⚠️ Ces deux-là sont les surfaces que `src/keyboard-audit-coverage.guard.test.ts` compte comme
+**MESURÉES** (C-96) : le compte de 10 sur 51 suppose qu'elles mesurent quelque chose. Tant qu'elles
+expirent, la couverture réelle est de **8 sur 51**, pas 10.
+
+**3. Parcours de démo — 7 cas, WebKit uniquement** (`demo-create-task`, `demo-create-okr`,
+`demo-journeys` ×2, `demo-entreprise` ×3).
+
+**4. `reduced-motion-sheets` — 3 cas, WebKit.** 🔴 Et les **mêmes trois** échouent sur Pixel 7 /
+Chromium, mesuré le même jour en les jouant sous le project `mobile-chrome` : ils sont donc cassés
+sur **les deux moteurs mobiles**, pas sur un seul. C'est pour ça qu'ils ne sont PAS entrés dans
+`mobile-chrome` (cf. son commentaire dans `playwright.config.ts`) : y faire porter une dette
+préexistante aurait attribué à C-97 un rouge qui ne lui appartient pas.
+
+#### Pourquoi ce n'est pas corrigé ici
+
+Ces 30 cas ne font partie d'aucun des trente items du § 12, et ils ne se corrigent pas
+mécaniquement : les trois de `touch-targets` demandent trois **arbitrages d'interface** (la
+pastille d'avatar peut prendre 44 px sans grandir, via le `::before` déjà utilisé pour C-73 ; les
+puces `/okr` rallongeraient une rangée de filtres déjà dense ; les cases `/habits` à 39 px sont la
+heatmap, l'écran même du module — le genre d'arbitrage que C-80 a rendu par écrit pour les liens
+de pied de page). Les 22 autres demandent un diagnostic par famille.
+
+❌ **Ne pas « corriger » en retirant des routes de la boucle**, ni en passant les specs en `skip` :
+c'est exactement ce que `touch-targets` reproche à sa propre première version, qui ne regardait que
+six routes.
+
+**Ce qui prouve que c'est fini** : le job `e2e` **vert sur `main`**, ou chaque écart déclaré dans
+son fichier avec sa raison et son critère (AA / AAA), comme l'a fait C-80. ❌ Et surtout pas un
+`e2e` qu'on cesse de regarder.
+
+#### ✅ L'ALERTE A FONCTIONNÉ. C'est la LECTURE qui manque.
+
+Vérifié avant d'accuser le dispositif : l'issue `ci-red` **#54** est ouverte et sa dernière mise à
+jour date du **2026-09-20 à 21:00:36 UTC**, soit **dix-neuf secondes** après la fin du job `e2e`
+en échec (21:00:17). `ci-alert.yml` a donc fait exactement son travail, et le webhook avec lui.
+
+🔴 **C'est le scénario `vendor-watch` du 2026-08-29, à l'identique** : la garde détecte, l'issue
+se met à jour, et personne ne l'ouvre. `scripts/CLAUDE.md` l'a déjà écrit — *« un HTTP 204 ne
+prouve pas qu'on lit le salon »*, et *« aucune garde ne rendra jamais ce verdict-là »*. Il n'y a
+donc rien à outiller de plus ici : le correctif est de **corriger les 30 cas**, pas d'ajouter une
+alerte à l'alerte.
+
+⚠️ **Et l'issue #54 s'intitule « Edge deploy drift en echec sur main »** : elle est PARTAGÉE entre
+tous les workflows surveillés, chacun venant y commenter. Un titre qui nomme un seul workflow sur
+une issue qui en porte cinq est une invitation à la refermer en croyant traiter un seul sujet.
+C'est un défaut de lisibilité de `ci-alert.yml`, pas de la détection — et il coûte moins cher que
+les 30 cas, mais il coûte quelque chose.
+
+---
+
+### 12.9 ✅ PASSE DU 2026-09-20 au soir — les 28 items ouverts sont traités
+
+> **Consigne d'Axel** : « fais-les tous, puis lance des tests indépendants pour vérifier ».
+> Les 30 items de ce paragraphe étaient ouverts, moins `C-78` et `C-100` déjà refermés.
+> Les **28 restants** sont traités. Ce qui suit dit **ce qui a été livré** et, surtout,
+> **ce que chaque garde ne prouve pas** — c'est la moitié qui manque d'habitude.
+
+#### Ce que la passe a TROUVÉ, et qui n'était pas dans l'énoncé
+
+🔴 **Sept défauts réels, tous trouvés par une garde neuve à sa première exécution.** Aucun
+n'aurait été vu par une relecture ; c'est l'argument de ce paragraphe entier.
+
+| Trouvé par | Ce qui était faux |
+|---|---|
+| `check:sabotages` (C-81) | 🔴 **`src/monitoring.guard.test.ts` ne détectait plus rien.** Il cherchait `installEarlyHandlers()` par un `indexOf` sur la source brute : la première occurrence est l'**import**, toujours avant `function mount()`. Commenter l'APPEL laissait le cas VERT. Corrigé, et le sabotage exact est désormais un cas du témoin |
+| `test:coverage:tooling` (C-82) | **Trois scripts sortaient du rapport de couverture EN SILENCE** (`apply-migrations`, `check-rls-advisors`, `i18n-check` — deux gardes de CI). Cause isolée par expérience et non par lecture : le **shebang**. Les 15 shebangs de `scripts/**` ont été retirés — ils étaient décoratifs, chaque script étant lancé par `node` |
+| `check:edge-coverage` (C-82) | **`stripe-create-checkout` n'était nommée par AUCUN témoin.** C'est la fonction qui ouvre la session de paiement particulier. Témoin écrit : 10 cas, 4 sabotages |
+| `check:cycles` (C-103) | **Sept cycles d'imports**, tous par `workTimeCalculator` important quatre barils de modules en VALEUR alors qu'il ne s'en sert que comme TYPES. `import type` : sept cycles → zéro |
+| `check:portability` (C-94) | **Quatre colonnes SAISIES absentes de l'export art. 20** : `habits.icon`, `categories.parent_id` (l'ARBRE des catégories, donc l'organisation perdue), `key_results.estimated_time` et `weight`. Ajoutées |
+| `i18n:pages` (C-99) | **23 formes plurielles MORTES en `en`** (`_many` recopié du français, que `Intl.PluralRules('en')` ne demandera jamais). Retirées |
+| `check:test-floor` (C-83) | **Le plancher des témoins était posé DEUX trop bas** : deux témoins existants portent un TIRET (`en-ca-guard.test.ts`, `stripe-org-404-guard.test.ts`) et l'expression n'acceptait que le point |
+
+⚠️ **Et cinq énoncés du 09-16 étaient PÉRIMÉS**, remesurés avant d'être traités :
+
+- **C-101** — « le tracking `?ref=` reste un développement ouvert » est **FAUX**. La chaîne est
+  complète et testée : capture first-touch (`main.tsx`), préservée par `clearDemoStorage`, passée
+  en metadata à l'inscription, **re-validée côté serveur** par le trigger de la mig. `097`, et
+  rendue par `get_admin_stats` v3. Ce qui manquait n'était pas le tracking, c'était de **regarder
+  les chiffres**.
+- **C-85** — « les chunks lazy n'ont aucun plafond » : il y en avait un, générique (70 ko). Ce qui
+  manquait était un plafond **par chunk**, posé au poids du jour.
+- **C-96** — « 10 surfaces sur 53 » : recompté par le détecteur, **51**, pas 53.
+- **C-104** — `uptime.yml` avait déjà un marqueur de contenu (`grep -i cosmo`)… qui **ne pouvait
+  pas échouer** : la coquille SPA contient le mot « cosmo » vingt-et-une fois.
+- **C-93** — le registre ne déclare **aucune durée** pour `rate_limits` ni `email_lookup_quota`.
+  La première écriture de la garde y avait posé 7 jours « parce que ça paraît raisonnable » :
+  un chiffre **inventé**, et la table portait justement une ligne de 7 jours pile. Remplacé par
+  `null` = « non déclaré au registre », imprimé à chaque run.
+
+#### Ce qui a été livré, item par item
+
+| # | Livré | 🔴 Ce que ça ne prouve PAS |
+|---|---|---|
+| **C-81** | `scripts/replay-sabotages.mjs` + `sabotages.yml` (hebdo + sur PR touchant un témoin). 11 sabotages, 9 témoins, restauration octet pour octet vérifiée | Que les 39 témoins détectent. Le rapport **couvert / total** est imprimé à chaque run, exprès |
+| **C-82** | `vitest.tooling.config.ts` + `check-tooling-coverage.mjs` (complétude AVANT seuils) + `edge-function-coverage.mjs` | `supabase/functions/**` n'est **pas** couvert en lignes et ne peut pas l'être (Deno, jamais importé). Le plancher de témoins par fonction est ce qui en tient lieu, et il est annoncé comme tel |
+| **C-83** | `check-test-floor.mjs`, cliquet sur fichiers / témoins / cas | Qu'un test teste quelque chose. Un plancher interdit la disparition, pas la complaisance |
+| **C-84** | `lighthouserc.mobile.json` + passe mobile dans `ci.yml` ; 4 → **8 URLs** | Les seuils mobiles sont une **première pose**, prudente faute de Chrome sur le poste. À rabaisser au mesuré au premier run réel |
+| **C-85** | 30 plafonds **par chunk** posés au poids du jour ; une exemption sans plafond est refusée | — |
+| **C-86** | `scalability-volume` mensuel ; `restore-drill` coupé en deux : `dump-check` **trimestriel et automatique**, `drill` manuel | Un dump relisible n'est **pas** un dump restauré. `pg_restore --list` lit une table des matières |
+| **C-87** | `check-db-cost.mjs` : EXPLAIN **sous RLS**, rôle `authenticated`, transaction annulée ; série commitée ; alerte sur la **pente** | Le coût FACTURÉ (Supabase ne l'expose pas), et la charge réelle (c'est `scalability-volume`) |
+| **C-88** | `check-supabase-posture.mjs` + référence commitée ; juge un **écart**, pas un absolu | ⚠️ `reglages_auth` est à `null` : la référence des réglages exige un jeton, elle se pose par `--update` **et se commite**. La garde ÉCHOUE tant que c'est le cas, exprès |
+| **C-89** | `codeql.yml`, `security-extended`, JS/TS **et** `actions` | Un job vert. L'item n'est fini que quand **chaque alerte ouverte porte une décision** |
+| **C-90** | Second `npm audit` sur la chaîne de build, **non bloquant mais LU** (compte par sévérité au résumé) | Rien : c'est un arbitrage assumé, écrit comme tel |
+| **C-91** | `check-edge-smoke.mjs`, 8 sondes, dans `edge-deploy-drift.yml`. **Vertes contre la production** ce jour | Que la fonction fait son travail. On touche ses premiers mètres |
+| **C-92** | `check-erasure-coverage.mjs` : périmètre **dérivé** des migrations, 22 tables, 4 décisions possibles, `cascade` et `conserve` **vérifiées contre le SQL** | Dérivé des MIGRATIONS, pas de la base — et le dépôt a déjà constaté des objets en base qu'aucune migration ne crée |
+| **C-93** | `check-retention.mjs` : orphelines (0 en prod) + âges. Dans `posture.yml` | Que le REGISTRE est juste. Ça dit que la base respecte ce qu'il déclare |
+| **C-94** | `check-portability-export.mjs` : chaque colonne exportée ou **exclue avec sa raison** | La justesse des valeurs. Un export complet mais faux resterait vert |
+| **C-95** | `e2e/visual-regression.spec.ts` (4 thèmes × 3 routes, états vide et erreur, 3 pages publiques) + project `visual` + `visual.yml` qui **produit et commite** ses références au premier run | 🔴 La première référence fige l'écran **défauts compris**. Elle ne dit pas qu'il est juste, elle dit qu'on saura qu'il a changé |
+| **C-96** | `src/keyboard-audit-coverage.guard.test.ts` : **51 surfaces**, 10 mesurées, 41 déclarées non mesurées **une par une avec leur raison** | Elle ne mesure aucune accessibilité. Elle CHIFFRE l'écart et l'empêche de grandir en silence |
+| **C-97** | Projects `mobile-chrome` (Pixel 7) + `e2e/mobile-android.spec.ts` : paysage, police à **200 %**, **CPU bridé ×4 par CDP** — avec son témoin qui vérifie que le bridage s'applique | Un appareil émulé sur un runner. Ni thermique, ni GPU mobile |
+| **C-98** | `check-seo-pages.mjs` : prérendu ↔ sitemap dans les deux sens, 4 balises, `canonical` autoréférent, **réciprocité des `hreflang`**, `noindex` hors sitemap. 13 cas de témoin | La qualité d'un `title`. Ici : présence et cohérence |
+| **C-99** | `check-i18n-pages.mjs` : pluriels CLDR (formes manquantes **et mortes**), locales déclarées non servies, volume par page **et par locale** avec appariement des slugs localisés | La QUALITÉ des traductions, qui reste un geste |
+| **C-101** | Colonne **État** (5 valeurs, date obligatoire sur `fait`/`refuse`) + `check-acquisition.mjs` + marqueur `<!-- chiffres-remesures: -->` | Qu'un backlink posé **existe encore** : ça demande l'API Search Console, donc un geste |
+| **C-102** | `e2e/`, `showcase/` et `supabase/functions/` **entrent** dans ESLint. Dette mesurée AVANT : 1 erreur (un faux positif React sur une fixture Playwright), 1 avertissement, 0 | — |
+| **C-103** | `check-import-cycles.mjs`, sans dépendance. Couplage **rapporté**, non bloquant | Le plafond de couplage reste un arbitrage non rendu. Le chiffre est imprimé pour être lu deux fois d'abord |
+| **C-104** | Trois marqueurs ABSENTS de la coquille SPA (`seo-fallback`, `FAQPage`, `/assets/`), une **seconde page** prérendue sondée, et le corps de `/auth/v1/health` vérifié (un projet en PAUSE répond 200) | — |
+| **C-105** | `check-env-contract.mjs` : contrat statique des 8 `VITE_*` avec l'**effet d'absence** de chacune ; moitié Vercel dans `posture.yml`, **présence seulement, jamais une valeur** | — |
+| **C-106** | `check-stripe-prices.mjs` : grille **lue** dans `premium-config.ts`, doublon et `tax_behavior` vérifiés. `stripe-prices.yml` **non planifié** | 🔴 Le jour de la bascule : poser `STRIPE_SECRET_KEY`, **décommenter le `schedule:`**, et ajouter `Grille Stripe` à `ci-alert.yml`. Les deux derniers sont ceux qu'on oublie |
+| **C-107** | Une ligne ✅ doit porter une DATE (`C10` était la seule sans — sa relecture a trouvé une affirmation **fausse**, contredite depuis le 09-02) + cliquet à 21 lignes datées + `docs/LEGAL-JOURNAL.md` | La CONFORMITÉ. Une ligne ✅ à tort **et datée** reste verte |
+| **C-108** | `check-study-freshness.mjs` : échoue si une majeure citée par `MIGRATION-REACT19.md` bouge | Le coût de NE PAS migrer, qui se compte en incidents |
+| **C-109** | Les **28** documents de `docs/` déclarent leur note, celle qui les couvre, ou `non-note` **avec sa raison**. Chaîne de couverture vérifiée, cycles refusés | Que les notes soient justes ni fraîches. `non-note` **ouvre** un audit, il ne le remplace pas — `LEGAL.md` reste le plus coûteux des onze |
+| **C-110** | Mig. `150` (table **sans aucune donnée personnelle**), `report-bug` compte sans jamais bloquer l'envoi, encart « Support » sur `/admin` avec trois états distincts (`null` ≠ `0`) | ⚠️ **La mig. 150 n'est pas appliquée.** `/admin` affiche « compteur non installé » jusque-là, et c'est délibéré : le dépôt a déjà payé une migration commitée et dormante **dix-sept jours** (C-77) |
+
+#### Ce qui reste, et qui n'est PAS du code
+
+🔴 **Quatre gestes, sans lesquels quatre de ces gardes ne mesureront rien** :
+
+1. **appliquer la mig. `150`** (C-110) — sinon `/admin` affiche « non installé » ;
+2. **poser la référence des réglages d'auth** (C-88) :
+   `SUPABASE_ACCESS_TOKEN=… node scripts/check-supabase-posture.mjs --update`, **puis commiter** ;
+3. **poser `VERCEL_TOKEN` / `VERCEL_PROJECT_ID`** (C-105), sinon le job `vercel-env` échoue ;
+4. **trier les premières alertes CodeQL** (C-89) — l'item n'est pas fini quand le job est vert.
+
+⚠️ Et **redéployer `report-bug`** : sa source a changé (C-110), donc `check:edge` signalera une
+dérive **légitime** entre le dépôt et le déployé tant que ce n'est pas fait. C'est exactement ce
+que cette garde existe pour dire ; ce n'est pas un faux positif.
+
+---
+
 ### 12.8 Ce que ce classement ne fait PAS
 
 ❌ **Il ne ferme rien**, à une exception mesurée : `C-78`, dont le correctif est à `HEAD` depuis le

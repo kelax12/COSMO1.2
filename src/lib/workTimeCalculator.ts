@@ -1,7 +1,24 @@
-import { Task } from '@/modules/tasks';
-import { CalendarEvent } from '@/modules/events';
-import { Habit } from '@/modules/habits';
-import { OKR } from '@/modules/okrs';
+// 🔴 `import type`, et ce n'est pas une coquetterie de style (C-103).
+// Ces quatre noms ne sont utilisés QUE comme types dans ce fichier, et les
+// importer en valeur créait SEPT cycles d'imports, tous de la même forme :
+//
+//   repository.factory → stats/repository → workTimeCalculator
+//     → modules/<x> (baril) → modules/<x>/hooks → repository.factory
+//
+// Un cycle ne casse ni le build ni un test : Rollup le résout. Il rend un
+// `undefined` à l'exécution, au moment où un module lit l'export d'un module
+// pas encore évalué — donc un bug qui dépend de l'ordre d'évaluation, donc du
+// découpage en chunks, donc du build. Celui qu'on ne reproduit pas.
+//
+// `import type` est effacé à la compilation : les quatre arêtes disparaissent
+// du graphe d'exécution, et les sept cycles avec. Trouvé le 2026-09-20 par
+// `npm run check:cycles`, jamais par la lecture.
+// ❌ Ne pas les repasser en import de valeur : le baril d'un module tire ses
+//    hooks, donc `repository.factory`, donc tout le graphe.
+import type { Task } from '@/modules/tasks';
+import type { CalendarEvent } from '@/modules/events';
+import type { Habit } from '@/modules/habits';
+import type { OKR } from '@/modules/okrs';
 import type { KRCompletion } from '@/modules/kr-completions/types';
 
 export function parseLocalDate(dateString: string): Date {

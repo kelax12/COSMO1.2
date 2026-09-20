@@ -123,11 +123,85 @@ const BUDGETS = {
 };
 
 /**
- * Chunks vendor autorisés à dépasser le budget de page, avec la raison.
+ * ═══ C-85 · UN PLAFOND PAR CHUNK, POSÉ AU POIDS DU JOUR ═══════════
  *
- * Chacun est LAZY : il ne touche pas le chemin critique. La liste est
- * explicite pour qu'ajouter une grosse dépendance demande de l'écrire ici,
- * c'est-à-dire de la justifier.
+ * 🔴 CE QUI MANQUAIT. Avant le 2026-09-20, un chunk hors chemin critique était
+ * jugé par UN SEUL nombre (`BUDGETS.page`, 70 ko) — et cinq vendors en étaient
+ * carrément dispensés, donc sans aucune borne. Conséquence : `TasksPage`
+ * pouvait passer de 35 à 69 ko sans qu'un seul job bronche, et `vendor-charts`
+ * de 117 à 400 sans qu'aucun ne le puisse. Le budget protégeait ce que tout le
+ * monde télécharge, et laissait dériver ce que la moitié des visiteurs
+ * téléchargent.
+ *
+ * CE QUE C'EST : un CLIQUET par chunk, posé au poids MESURÉ le 2026-09-20,
+ * arrondi ~5 % au-dessus. Pas une cible ronde — la convention du dépôt, la
+ * même que `vitest.config.ts` et que `critical` ci-dessus. Un plafond très
+ * au-dessus du réel ne mesure rien.
+ *
+ * 🔴 NE JAMAIS REMONTER UN CHIFFRE POUR FAIRE PASSER LA CI. Il descend quand
+ * la mesure descend, jamais l'inverse. La seule remontée légitime est celle
+ * qu'`entry` documente : un chunk qui ABSORBE du code venu d'un autre, avec la
+ * preuve que le total, lui, a baissé.
+ *
+ * ⚠️ LA CLÉ EST LE NOM DE BASE, ET LA MESURE EST UNE SOMME. Vite émet
+ * plusieurs fichiers sous le même nom de base (huit `index-*`, deux `org-*`,
+ * deux `landing-*`, deux `legal-*` au 2026-09-20 : ce sont des barils de
+ * modules). Juger le plus gros laisserait un neuvième baril arriver
+ * gratuitement. On somme donc tous les fichiers d'un même nom, et le compte
+ * est affiché dans le rapport.
+ *
+ * ⚠️ LE CHUNK D'ENTRÉE EST EXCLU de cette somme : il a son propre budget
+ * (`BUDGETS.entry`), et il porte lui aussi le nom de base `index`. Le compter
+ * deux fois ferait échouer la garde sur une addition, pas sur une dérive.
+ *
+ * Un chunk SANS entrée ici reste jugé par `BUDGETS.page` : un écran neuf n'a
+ * pas à être déclaré pour exister, il a seulement à rester sous la borne
+ * générique. Le jour où il la dépasse, c'est ici qu'on décide.
+ */
+const PLAFONDS_PAR_CHUNK = {
+  'vendor-charts': 123_500, // 117 533 o — recharts + d3, lazy (Statistiques, dashboard, guide)
+  'vendor-calendar': 89_500, // 85 067 o — @fullcalendar + locales-all, lazy, /agenda
+  index: 89_500, // 84 893 o sur 8 barils de modules, chunk d'entrée EXCLU
+  'vendor-react': 76_000, // 72 074 o — socle non découpable
+  'vendor-supabase': 59_500, // 56 254 o — requis dès la première requête
+  'vendor-gsap': 57_500, // 54 737 o — gsap + plugins, lazy, landing uniquement
+  'sentry-client': 52_000, // 49 320 o — chargé APRÈS le premier rendu (C-13 · C-14)
+  'vendor-animation': 52_000, // 49 245 o — framer-motion
+  TasksPage: 37_000, // 35 039 o — la plus grosse page du produit
+  'vendor-utils': 33_000, // 31 053 o
+  org: 30_000, // 28 494 o sur 2 chunks
+  TaskModal: 29_000, // 27 183 o
+  landing: 24_000, // 22 853 o sur 2 chunks
+  'dropdown-menu': 22_000, // 20 526 o
+  HabitsPage: 21_000, // 19 873 o
+  LandingPage: 21_000, // 19 740 o
+  DashboardPage: 20_500, // 19 175 o
+  'vendor-query': 18_500, // 17 599 o
+  AgendaPage: 18_500, // 17 468 o
+  OrganizationPage: 18_000, // 16 686 o
+  TeamProjectsTab: 17_000, // 15 992 o
+  UseCasePage: 16_500, // 15 591 o
+  legal: 15_500, // 14 593 o sur 2 chunks
+  OKRPage: 15_000, // 14 192 o
+  'vendor-router': 14_500, // 13 729 o
+  TeamTaskModal: 14_500, // 13 345 o
+  EnterpriseTrack: 13_500, // 12 790 o
+  'vendor-ogl': 13_500, // 12 643 o
+  types: 13_000, // 12 304 o
+  StatisticsPage: 13_000, // 12 015 o
+};
+
+/**
+ * Chunks vendor autorisés à dépasser `BUDGETS.page`, avec la raison.
+ *
+ * ⚠️ « Exempt » NE VEUT PLUS DIRE « sans borne » depuis C-85. Chacun de ces
+ * cinq a désormais son plafond dans `PLAFONDS_PAR_CHUNK`, et une exemption
+ * sans plafond est refusée par le contrôle de cohérence plus bas : c'était la
+ * porte par laquelle 117 ko pouvaient en devenir 400.
+ *
+ * Chacun est LAZY ou incompressible : il ne touche pas le chemin critique, ou
+ * il n'est pas découpable. La liste reste explicite pour qu'ajouter une grosse
+ * dépendance demande de l'écrire ici, c'est-à-dire de la justifier.
  */
 const EXEMPT = {
   'vendor-charts': 'recharts + d3, lazy : Statistiques, graphique du dashboard, guide',
@@ -218,17 +292,66 @@ if (entry) {
   }
 }
 
+// ── C-85 · jugement PAR NOM DE BASE, somme des fichiers, entrée exclue ──
+const parBase = new Map();
 for (const m of measured) {
-  if (entry && m.name === entry.name) continue;
-  if (EXEMPT[m.base]) {
-    report.push(`exempt ${m.base.padEnd(22)} ${KB(m.gzip)}  (${EXEMPT[m.base]})`);
-    continue;
-  }
-  if (m.gzip > BUDGETS.page) {
+  if (entry && m.name === entry.name) continue; // budget propre : `BUDGETS.entry`
+  const e = parBase.get(m.base) ?? { gzip: 0, fichiers: 0 };
+  e.gzip += m.gzip;
+  e.fichiers += 1;
+  parBase.set(m.base, e);
+}
+
+// Une exemption SANS plafond est le trou que C-85 vient de fermer : elle
+// rendait le chunk illimité. Ce contrôle interdit de le rouvrir par distraction.
+for (const base of Object.keys(EXEMPT)) {
+  if (!(base in PLAFONDS_PAR_CHUNK)) {
     errors.push(
-      `Chunk \`${m.base}\` : ${KB(m.gzip)} > ${KB(BUDGETS.page)}.\n` +
-        `  Soit il faut le découper, soit c'est une dépendance vendor à ajouter\n` +
-        `  à EXEMPT dans ce fichier : AVEC sa raison.`
+      `\`${base}\` est EXEMPT du budget de page sans plafond propre dans\n` +
+        `  PLAFONDS_PAR_CHUNK : il serait alors SANS AUCUNE BORNE. Lui poser un\n` +
+        `  plafond au poids mesuré, ou retirer son exemption.`
+    );
+  }
+}
+// Un plafond qui ne correspond plus à aucun chunk décrit un état périmé, et
+// une liste qu'on ne peut plus relire est une liste qu'on cesse de croire.
+//
+// ⚠️ Le contrôle d'EXISTENCE regarde TOUS les chunks, entrée comprise, alors
+// que la SOMME budgétée l'exclut. Sans cette distinction, le jour où Vite
+// n'émettrait plus qu'un seul `index-*` (celui de l'entrée), la garde
+// annoncerait que le chunk `index` « n'existe plus » alors qu'il est sous nos
+// yeux — et on retirerait son plafond pour faire taire la CI.
+const basesPresentes = new Set(measured.map((m) => m.base));
+for (const base of Object.keys(PLAFONDS_PAR_CHUNK)) {
+  if (!basesPresentes.has(base)) {
+    errors.push(
+      `\`${base}\` a un plafond dans PLAFONDS_PAR_CHUNK mais n'existe plus dans\n` +
+        `  le build : retirer la ligne (ou vérifier que le chunk n'a pas été renommé).`
+    );
+  }
+}
+
+for (const [base, { gzip, fichiers }] of [...parBase].sort((a, b) => b[1].gzip - a[1].gzip)) {
+  const propre = PLAFONDS_PAR_CHUNK[base];
+  const plafond = propre ?? BUDGETS.page;
+  const suffixe = fichiers > 1 ? ` (${fichiers} chunks)` : '';
+  if (propre && gzip >= 12_000) {
+    const marge = (((plafond - gzip) / plafond) * 100).toFixed(1);
+    report.push(
+      `chunk  ${base.padEnd(22)} ${KB(gzip).padStart(9)}${suffixe}  ` +
+        `(plafond ${KB(plafond)}, marge ${marge} %)${EXEMPT[base] ? ` — ${EXEMPT[base]}` : ''}`
+    );
+  }
+  if (gzip > plafond) {
+    errors.push(
+      propre
+        ? `Chunk \`${base}\` : ${KB(gzip)} > son plafond propre ${KB(plafond)}${suffixe}.\n` +
+            `  🔴 Ce plafond est un CLIQUET posé au poids mesuré le 2026-09-20.\n` +
+            `  Ne pas le remonter : c'est le chunk qui doit maigrir. Leviers dans\n` +
+            `  docs/PERFORMANCE.md.`
+        : `Chunk \`${base}\` : ${KB(gzip)} > ${KB(BUDGETS.page)}${suffixe}.\n` +
+            `  Soit il faut le découper, soit c'est une dépendance vendor à ajouter\n` +
+            `  à EXEMPT dans ce fichier : AVEC sa raison ET son plafond propre.`
     );
   }
 }

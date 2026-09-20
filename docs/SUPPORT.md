@@ -1,3 +1,15 @@
+<!-- note-audit: non-note -->
+<!--
+  🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
+  Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
+  ni baisser, donc **rien ne signalait qu'ils avaient vieilli**.
+  Chaque document de `docs/` déclare donc soit sa note, soit la note qui le
+  couvre, soit qu'il n'est pas noté ET pourquoi.
+  ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
+     une réponse honnête, un chiffre faux ne l'est pas.
+-->
+> **Note d'audit** — **NON NOTÉ** : aucun audit du support n'a été fait. Son volume et son âge sont désormais comptés (mig. 150, encart « Support » de `/admin`, C-110).
+
 # Support — qui répond, sous quel délai, et avec quoi
 
 **Créé le 2026-08-28** (T-31 de [`ROADMAP-60J.md`](./ROADMAP-60J.md)). Document **vivant**.

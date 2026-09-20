@@ -1,3 +1,15 @@
+<!-- note-audit: note=73 -->
+<!--
+  🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
+  Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
+  ni baisser, donc **rien ne signalait qu'ils avaient vieilli**.
+  Chaque document de `docs/` déclare donc soit sa note, soit la note qui le
+  couvre, soit qu'il n'est pas noté ET pourquoi.
+  ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
+     une réponse honnête, un chiffre faux ne l'est pas.
+-->
+> **Note d'audit** — Note **73 / 100**, au tableau de bord de [`README.md`](./README.md).
+
 # SEO — état mesuré, règles et dette
 
 **Audit refait le 2026-08-14** contre le **prérendu réel** (`dist/` après `npm run build`), le

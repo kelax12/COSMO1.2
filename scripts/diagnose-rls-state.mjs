@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 // ═══════════════════════════════════════════════════════════════════
 // diagnose-rls-state.mjs — décrit l'état RLS RÉEL d'une base fraîche.
 //

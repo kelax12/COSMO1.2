@@ -21,7 +21,31 @@
 # ══════════════════════════════════════════════════════════════════
 name: scalability-volume
 
+# 🔴 C-86 · CE WORKFLOW NE TOURNAIT JAMAIS TOUT SEUL.
+# Vérifié le 2026-09-20 sur les onze workflows du dépôt : avec `restore-drill`,
+# c'était le seul à n'avoir ni `schedule` ni `push`. La charge n'était donc
+# mesurée que si quelqu'un y pensait, et personne n'y pense — la dernière
+# mesure du §9ter de `docs/SCALABILITY.md` date du 2026-08-14.
+#
+# L'en-tête ci-dessus dit « on se pose la question une fois par trimestre ».
+# Le `schedule` ci-dessous dit la même chose, mais il le FAIT : mensuel, le 3 à
+# 03:11 UTC (minute décalée des autres crons, cf. `uptime.yml`). Un mois plutôt
+# qu'un trimestre parce que la valeur de cette mesure est une PENTE, pas un
+# point : quatre points par an ne dessinent rien.
+#
+# ⚠️ CE N'EST TOUJOURS PAS UNE GATE : le cron ne s'exécute que sur `main`, ce
+# job ne bloque aucune PR, et il ne touche QUE la stack jetable du runner.
+# Ses échecs remontent par `ci-alert.yml` comme les autres.
+#
+# ⚠️ Sur un déclenchement `schedule`, `inputs.*` est VIDE : les valeurs par
+# défaut déclarées ci-dessous ne s'appliquent qu'au `workflow_dispatch`. Les
+# étapes utilisent donc `${{ inputs.x || '<defaut>' }}`, et les deux listes de
+# valeurs par défaut doivent rester identiques. Sans cette précaution, le run
+# planifié passerait `--steps=` vide et mesurerait zéro palier en sortant vert :
+# exactement la garde qui répond sans mesurer.
 on:
+  schedule:
+    - cron: '11 3 3 * *'
   workflow_dispatch:
     inputs:
       steps:
@@ -94,8 +118,8 @@ jobs:
         run: |
           set -o pipefail
           if node scripts/scalability-volume.mjs \
-               --steps="${{ inputs.steps }}" \
-               --members="${{ inputs.members }}" 2>&1 | tee volume.log; then
+               --steps="${{ inputs.steps || '200,2000' }}" \
+               --members="${{ inputs.members || '50' }}" 2>&1 | tee volume.log; then
             exit 0
           fi
           {
@@ -122,9 +146,9 @@ jobs:
         run: |
           set -o pipefail
           if node scripts/scalability-concurrency.mjs \
-               --sessions="${{ inputs.sessions }}" \
-               --iterations="${{ inputs.iterations }}" \
-               --members="${{ inputs.members }}" 2>&1 | tee concurrency.log; then
+               --sessions="${{ inputs.sessions || '1,2,4,8,16' }}" \
+               --iterations="${{ inputs.iterations || '30' }}" \
+               --members="${{ inputs.members || '50' }}" 2>&1 | tee concurrency.log; then
             exit 0
           fi
           {

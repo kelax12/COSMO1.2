@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 // ═══════════════════════════════════════════════════════════════════
 // scalability-concurrency.mjs — mesurer le mode entreprise EN CONCURRENCE
 //

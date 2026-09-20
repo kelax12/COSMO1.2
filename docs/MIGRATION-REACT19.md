@@ -1,3 +1,15 @@
+<!-- note-audit: non-note -->
+<!--
+  🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
+  Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
+  ni baisser, donc **rien ne signalait qu'ils avaient vieilli**.
+  Chaque document de `docs/` déclare donc soit sa note, soit la note qui le
+  couvre, soit qu'il n'est pas noté ET pourquoi.
+  ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
+     une réponse honnête, un chiffre faux ne l'est pas.
+-->
+> **Note d'audit** — **NON NOTÉ** : c'est une ÉTUDE, écrite contre les versions du 2026-09-03. Elle ne se note pas, elle périme — et `npm run check:study` échoue si une majeure qu'elle cite a bougé (C-108).
+
 # Étude de faisabilité — React 19 + `react-router` 8
 
 **Écrite le 2026-09-03**, audit **A-6** de `a-faire-code.md` §10. C'est une ÉTUDE : rien n'a été

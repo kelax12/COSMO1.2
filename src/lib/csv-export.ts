@@ -159,7 +159,13 @@ export function exportTasksCSV(tasks: Task[]): void {
 }
 
 export function exportHabitsCSV(habits: Habit[]): void {
-  const headers = cols('id', 'name', 'description', 'frequency', 'durationMin', 'color', 'completions', 'createdAt');
+  // ⚠️ `icon` AJOUTÉE le 2026-09-20 (C-94). Elle manquait depuis la création de
+  // l'export, et personne ne l'avait vu : c'est un choix de la personne
+  // (`Habit.icon`, écrit par `mapToDb`), donc une donnée « fournie par la
+  // personne concernée » au sens de l'article 20. Trouvée par
+  // `npm run check:portability`, qui confronte l'export au schéma — pas par
+  // une relecture.
+  const headers = cols('id', 'name', 'description', 'frequency', 'durationMin', 'color', 'icon', 'completions', 'createdAt');
   const rows = habits.map(h => {
     // ⚠️ `completionsTotal` d'abord : depuis la mig. 119, `h.completions` est
     // borné à une fenêtre glissante en mode Supabase. Compter dessus donnerait
@@ -183,6 +189,7 @@ export function exportHabitsCSV(habits: Habit[]): void {
       h.frequency,
       h.estimatedTime,
       h.color,
+      h.icon,
       completionsCount,
       h.createdAt || '',
     ];
@@ -236,11 +243,18 @@ export function exportOKRsCSV(okrs: OKR[]): void {
     'krTarget',
     'krUnit',
     'krCompleted',
+    // ⚠️ AJOUTÉES le 2026-09-20 (C-94). `estimatedTime` est saisi par la
+    // personne et c'est LUI qui porte le temps investi sur les OKR
+    // (cf. `workTimeCalculator`, C-77) ; `weight` est la pondération qu'elle
+    // a choisie entre ses résultats clés. Les omettre rendait un export d'où
+    // la progression réelle n'est pas recalculable.
+    'krDurationMin',
+    'krWeight',
   );
   const rows: unknown[][] = [];
   okrs.forEach(okr => {
     if (okr.keyResults.length === 0) {
-      rows.push([okr.id, okr.title, okr.description, okr.category, okr.progress, okr.startDate, okr.endDate, '', '', '', '', '']);
+      rows.push([okr.id, okr.title, okr.description, okr.category, okr.progress, okr.startDate, okr.endDate, '', '', '', '', '', '', '']);
     } else {
       okr.keyResults.forEach(kr => {
         rows.push([
@@ -256,6 +270,8 @@ export function exportOKRsCSV(okrs: OKR[]): void {
           kr.targetValue,
           kr.unit,
           bool(kr.completed),
+          kr.estimatedTime,
+          kr.weight ?? '',
         ]);
       });
     }
@@ -295,8 +311,12 @@ export function exportProfileCSV(profile: {
 
 /** Catégories — créées par la personne, donc portables. */
 export function exportCategoriesCSV(categories: Category[]): void {
-  const headers = cols('id', 'name', 'color');
-  const rows = categories.map((c) => [c.id, c.name, c.color]);
+  // ⚠️ `parent` AJOUTÉE le 2026-09-20 (C-94). L'ARBRE des catégories est
+  // construit par la personne (mig. 143, `parentId`) : l'exporter sans lui
+  // rendait une liste plate, donc une organisation perdue. Même origine que
+  // l'ajout d'`icon` aux habitudes.
+  const headers = cols('id', 'name', 'color', 'parent');
+  const rows = categories.map((c) => [c.id, c.name, c.color, c.parentId ?? '']);
   download(fileName('categories'), rowsToCSV(headers, rows));
 }
 

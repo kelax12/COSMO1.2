@@ -1,0 +1,12 @@
+{
+  "_comment": [
+    "C-83 — planchers à cliquet sur le nombre de tests. Écrits par",
+    "`node scripts/check-test-floor.mjs --update`, jamais à la main.",
+    "🔴 Ne JAMAIS baisser un de ces nombres pour faire passer la CI : la",
+    "suppression d un test est une décision, elle s écrit avec sa raison."
+  ],
+  "pose_le": "2026-09-20",
+  "fichiers": 275,
+  "temoins": 46,
+  "cas": 2714
+}

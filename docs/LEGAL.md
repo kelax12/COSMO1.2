@@ -1,3 +1,15 @@
+<!-- note-audit: non-note -->
+<!--
+  🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
+  Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
+  ni baisser, donc **rien ne signalait qu'ils avaient vieilli**.
+  Chaque document de `docs/` déclare donc soit sa note, soit la note qui le
+  couvre, soit qu'il n'est pas noté ET pourquoi.
+  ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
+     une réponse honnête, un chiffre faux ne l'est pas.
+-->
+> **Note d'audit** — 🔴 **NON NOTÉ, et c'est le plus coûteux des douze.** Ce document porte les obligations dont le non-respect se paie le plus cher (TVA, droit de la consommation, marque, sous-traitants), et il ne peut donc ni monter ni baisser : **rien ne signale qu'il a vieilli**. Lui inventer une note sans auditer le domaine serait un chiffre faux dans le document qu'on produit en contrôle. Ouvrir cet audit est un geste, pas du code.
+
 # LEGAL.md — obligations légales de COSMO
 
 > **Vivant.** Établi le 2026-08-26 à partir de l'état réel du code, de la base et des comptes
@@ -128,7 +140,7 @@ limité. Ce n'est pas la même dépense qu'une mission annuelle.
 | C7 | Facturation électronique | ❌ | ⚠️ Calendrier décalé plusieurs fois. Chantier plus lourd que C9. |
 | C8 | Guichet OSS (ventes B2C dans l'UE) | ⬜ | Sans objet tant que le marché reste français. Se déclenche au-delà de 10 000 € de ventes numériques à des consommateurs européens. |
 | C9 | Conformité du logiciel d'encaissement | ✅ | Journal append-only livré le 2026-08-26 (**mig. 125, appliquée en prod**). **I** : trigger `BEFORE UPDATE OR DELETE` qui lève, choisi plutôt que la RLS parce que `service_role` contourne la RLS mais pas les triggers. **S** : chaînage de hash SHA-256, `verify_payment_chain()` détecte toute altération. **C** : aucune purge possible par construction. **A** : `seal_payment_period()` fige un total mensuel, et refuse le mois en cours. Webhook câblé et redéployé. Prouvé en transaction annulée : UPDATE bloqué, DELETE bloqué, rejeu bloqué, falsification détectée. |
-| C10 | Conservation des pièces | ✅ | Garantie **par construction** depuis la mig. 125 : le journal n'accepte ni UPDATE ni DELETE, donc aucune purge ne peut l'atteindre, RGPD comprise. La migration porte le garde-fou explicite : le droit à l'effacement cède devant l'obligation de conservation (RGPD art. 17.3.b), une purge de compte doit **anonymiser** `user_id`, jamais supprimer la ligne. |
+| C10 | Conservation des pièces | ✅ | **Vérifié le 2026-09-20**, en relisant `supabase/migration/125_payment_journal_inalterable.sql`. Garantie **par construction** : `trg_forbid_payment_mutation` et `trg_forbid_closure_mutation` sont des triggers `BEFORE UPDATE OR DELETE` qui lèvent (« journal append-only : ni UPDATE ni DELETE. Pour corriger, inserer une ligne compensatoire »). C'est un TRIGGER et pas la RLS, parce que `service_role` contourne la RLS et pas les triggers. Le droit à l'effacement cède devant l'obligation de conservation (RGPD art. 17.3.b). 🔴 **Cette ligne disait « une purge doit anonymiser `user_id` » — c'est FAUX et inapplicable**, corrigé ici le 2026-09-20 pour s'aligner sur `CLAUDE.md` § Journal fiscal, qui l'a redressé le 2026-09-02 : `row_hash` scelle `user_id` dans le chaînage et `verify_payment_chain()` recalcule chaque hash depuis les colonnes, donc écrire NULL casserait la chaîne et produirait le signal de falsification qu'on montre à un contrôleur. Le trigger refuse d'ailleurs l'UPDATE. Ce qui rend la conservation acceptable est ailleurs : `user_id` cesse d'identifier quiconque dès que la ligne `auth.users` disparaît. `delete-account` ne touche donc PAS cette table. |
 | C11 | Comptabilité (livre des recettes ou complète) | 🟡 | **Livre des recettes** seul, conséquence du régime micro. Le journal d'encaissement (C9) en fournit désormais la matière, horodatée et scellée. Reste à tenir le registre lui-même après immatriculation. |
 | C12 | Déclarations fiscales annuelles | ❌ | Selon la forme retenue en B1. |
 

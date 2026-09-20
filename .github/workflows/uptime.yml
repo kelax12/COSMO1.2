@@ -71,20 +71,62 @@ jobs:
 
           # ── 1. Le site ──────────────────────────────────────────────
           # Un code 200 ne suffit PAS : Vercel sert la SPA sur toutes les URLs,
-          # et une page d'erreur repond 200 comme le reste. On verifie donc que
-          # le corps contient bien la page prerendue, ce qui distingue « le site
-          # repond » de « le site fonctionne ».
+          # et une page d'erreur repond 200 comme le reste.
+          #
+          # 🔴 C-104, corrige le 2026-09-20. Le marqueur precedent etait
+          # `grep -i cosmo`, et il ne pouvait PAS echouer sur le defaut qu'il
+          # pretendait detecter : la coquille SPA de `index.html` contient le
+          # mot « cosmo » VINGT-ET-UNE fois (titre, meta, manifest, JSON-LD
+          # Organization). Une prod servant la coquille vide, prerendu casse et
+          # app morte, passait donc au vert. C'est exactement le piege deja paye
+          # par la garde Lighthouse qui mesurait une 404 (T-50).
+          #
+          # Les marqueurs ci-dessous sont choisis pour ETRE ABSENTS de la
+          # coquille, verifie le 2026-09-20 sur `index.html` a la racine du
+          # depot :
+          #   · `id="seo-fallback"` — le bloc de contenu indexable, injecte par
+          #     `prerender.mjs` et par lui seul. Absent si le prerendu n'a pas
+          #     tourne ou si Vercel sert le fallback SPA.
+          #   · `"FAQPage"` — le JSON-LD propre a la HOME, injecte lui aussi au
+          #     prerendu. Il distingue « la home » de « une page prerendue
+          #     quelconque servie a sa place ».
+          #   · `/assets/` — au moins une reference d'actif hashe, donc un
+          #     bundle reellement publie et non un HTML orphelin.
+          # ❌ Ne jamais remplacer ces marqueurs par un mot du contenu
+          #    editorial : le contenu se reecrit, et une garde qui rougit a
+          #    chaque relecture de la landing finit desarmee.
           CODE_APP=$(curl -sS --max-time 20 --retry 2 --retry-delay 5 \
             -o /tmp/app.html -w '%{http_code}' https://thecosmo.app/ || echo 000)
           # `--retry` fait ecrire le code une fois PAR tentative : trois echecs
           # donnent « 000000000 ». On ne garde que la derniere, la seule qui
           # decrit l'etat final.
           CODE_APP=${CODE_APP: -3}
-          echo "app : HTTP $CODE_APP"
+          echo "app : HTTP $CODE_APP ($(wc -c < /tmp/app.html) octets)"
           if [ "$CODE_APP" != "200" ]; then
             PANNES="$PANNES\n- **Site** \`https://thecosmo.app/\` : HTTP \`$CODE_APP\`"
-          elif ! grep -qi 'cosmo' /tmp/app.html; then
-            PANNES="$PANNES\n- **Site** : HTTP 200 mais la page ne contient plus le contenu prerendu (page d'erreur servie a la place ?)"
+          else
+            ABSENTS=""
+            grep -q 'id="seo-fallback"' /tmp/app.html || ABSENTS="$ABSENTS seo-fallback"
+            grep -q '"FAQPage"'         /tmp/app.html || ABSENTS="$ABSENTS FAQPage"
+            grep -q '/assets/'          /tmp/app.html || ABSENTS="$ABSENTS assets"
+            if [ -n "$ABSENTS" ]; then
+              PANNES="$PANNES\n- **Site** : HTTP 200 mais la home ne contient plus :\`$ABSENTS\`. La coquille SPA est servie a la place du prerendu (voir C-104)."
+            fi
+          fi
+
+          # ── 1 bis. Une SECONDE page prerendue ────────────────────────
+          # La home a un chemin a elle dans `prerender.mjs` (FAQPage, contenu
+          # statique). Une seule page ne dit rien du reste du site : si le
+          # prerendu a tourne a moitie, seules les autres routes manquent. Le
+          # guide est la page la plus stable du site et la deuxieme du sitemap.
+          CODE_GUIDE=$(curl -sS --max-time 20 --retry 2 --retry-delay 5 \
+            -o /tmp/guide.html -w '%{http_code}' https://thecosmo.app/guide || echo 000)
+          CODE_GUIDE=${CODE_GUIDE: -3}
+          echo "guide : HTTP $CODE_GUIDE"
+          if [ "$CODE_GUIDE" != "200" ]; then
+            PANNES="$PANNES\n- **Page /guide** : HTTP \`$CODE_GUIDE\`"
+          elif ! grep -q 'id="seo-fallback"' /tmp/guide.html; then
+            PANNES="$PANNES\n- **Page /guide** : HTTP 200 sans bloc prerendu — le prerendu n'a couvert que la home."
           fi
 
           # ── 2. L'API d'authentification ─────────────────────────────
@@ -103,13 +145,24 @@ jobs:
             exit 1
           else
             CODE_AUTH=$(curl -sS --max-time 20 --retry 2 --retry-delay 5 \
-              -o /dev/null -w '%{http_code}' "$SUPABASE_URL/auth/v1/health" || echo 000)
+              -o /tmp/auth.json -w '%{http_code}' "$SUPABASE_URL/auth/v1/health" || echo 000)
             CODE_AUTH=${CODE_AUTH: -3}
             echo "auth : HTTP $CODE_AUTH"
             case "$CODE_AUTH" in
               200|401) ;;
               *) PANNES="$PANNES\n- **API Auth** \`$SUPABASE_URL/auth/v1/health\` : HTTP \`$CODE_AUTH\` (attendu 200 ou 401)" ;;
             esac
+            # 🔴 C-104, meme raison que pour le site : un projet Supabase EN
+            # PAUSE repond 200 en servant une page HTML d'information. Le code
+            # seul ne distingue donc pas « GoTrue tourne » de « le projet
+            # dort », et la pause pour inactivite est le mode de defaillance
+            # attendu sur un plan `free` (cf. C-87).
+            # Un 401 est une preuve de vie : GoTrue a lu la requete et l'a
+            # refusee faute d'`apikey`. On n'exige le marqueur JSON que sur un
+            # 200, ou le corps est cense etre `{"name":"GoTrue",...}`.
+            if [ "$CODE_AUTH" = "200" ] && ! grep -qiE 'gotrue|"version"' /tmp/auth.json; then
+              PANNES="$PANNES\n- **API Auth** : HTTP 200 mais la reponse n'est pas celle de GoTrue (projet en PAUSE, ou page d'information servie a la place)."
+            fi
           fi
 
           if [ -n "$PANNES" ]; then

@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 // ═══════════════════════════════════════════════════════════════════
 // check-edge-deploy.mjs · le code DEPLOYE des Edge Functions contre le depot
 //

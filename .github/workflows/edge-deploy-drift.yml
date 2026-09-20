@@ -122,6 +122,33 @@ jobs:
       # un temoin qui ne s'execute que quand la garde est verte ne dit rien
       # le jour ou elle est rouge, et c'est ce jour-la qu'on se demande si
       # c'est la prod qui a bouge ou la garde qui delire.
+      # ═══ C-91 · LE COMPORTEMENT, PAS SEULEMENT LE CODE ═══════════
+      #
+      # 🔴 L'étape ci-dessus compare du TEXTE. Une fonction identique au dépôt
+      # reste verte alors qu'un SECRET a changé de valeur, qu'une dépendance
+      # distante a bougé, ou qu'un déploiement a échoué et que c'est une
+      # version antérieure qui répond.
+      #
+      # Ces sondes APPELLENT les huit fonctions et vérifient une réponse que
+      # seul leur CORPS peut produire (un code ET un marqueur de contenu).
+      # Le motif existait déjà, joué à la main pour `stripe-org-refund` : un
+      # `405` puis un `401` émis par la fonction.
+      #
+      # ⚠️ Aucune sonde n'écrit : toutes visent une branche de REFUS.
+      # `delete-account` et `stripe-org-refund` ne sont jamais appelées en
+      # POST — l'une supprime un compte, l'autre rembourse.
+      #
+      # 🔴 La clé ANON est indispensable, et elle est PUBLIQUE (elle est dans
+      # le bundle client). Sans elle, `verify_jwt` refuse AVANT la fonction et
+      # la sonde mesurerait Supabase, pas notre code. Le script échoue si elle
+      # manque — pas de `::warning::` dans un run vert.
+      - name: Sondes de fumee · les fonctions repondent-elles vraiment ?
+        if: ${{ !cancelled() }}
+        env:
+          SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        run: npm run check:edge-smoke
+
       - name: Temoin · le comparateur compare-t-il encore quelque chose ?
         if: ${{ always() }}
         run: npx vitest run scripts/check-edge-deploy.guard.test.mjs

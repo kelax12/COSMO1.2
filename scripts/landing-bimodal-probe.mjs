@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 // ═══════════════════════════════════════════════════════════════════
 // Pourquoi la meme URL rend deux mesures — sonde de discrimination (C-68).
 //

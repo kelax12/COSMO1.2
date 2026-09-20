@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 // ═══════════════════════════════════════════════════════════════════
 // i18n-scan.mjs — inventaire des chaînes NON traduites
 //

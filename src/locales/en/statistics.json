@@ -62,7 +62,6 @@
     "periodMonth": "(30d)",
     "periodYear": "(365d)",
     "taskCount_one": "{{count}} task",
-    "taskCount_many": "{{count}} tasks",
     "taskCount_other": "{{count}} tasks"
   },
   "heatmap": {

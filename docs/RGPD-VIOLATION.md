@@ -1,3 +1,15 @@
+<!-- note-audit: couvert-par=RGPD.md -->
+<!--
+  🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
+  Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
+  ni baisser, donc **rien ne signalait qu'ils avaient vieilli**.
+  Chaque document de `docs/` déclare donc soit sa note, soit la note qui le
+  couvre, soit qu'il n'est pas noté ET pourquoi.
+  ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
+     une réponse honnête, un chiffre faux ne l'est pas.
+-->
+> **Note d'audit** — Couvert par la note de [`RGPD.md`](./RGPD.md) : procédure du même domaine.
+
 # Procédure de violation de données
 
 **Articles 33 et 34 du RGPD.** Établie le 2026-08-26, **à froid**, parce que le délai ne permet

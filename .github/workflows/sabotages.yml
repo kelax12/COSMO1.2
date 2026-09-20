@@ -1,0 +1,111 @@
+# ══════════════════════════════════════════════════════════════════
+# C-81 — REJOUER LES SABOTAGES : qui garde les gardes ?
+# ══════════════════════════════════════════════════════════════════
+#
+# 🔴 LE DÉFAUT QUE CE WORKFLOW FERME. Le dépôt compte 42 fichiers
+# `*guard.test.*`. Chacun est arrivé avec la même phrase : « vu rouge sur N
+# sabotages ». Ce sabotage a été joué UNE FOIS, à la main, le jour de
+# l'écriture. Rien, ensuite, ne disait qu'un témoin détecte ENCORE.
+#
+# Un témoin qui ne détecte plus est pire qu'un témoin absent : il produit un
+# vert, et ce vert est lu comme une preuve.
+#
+# ⚠️ ET ÇA N'EST PAS THÉORIQUE. À la première exécution, le 2026-09-20, le
+# rejeu a trouvé `src/monitoring.guard.test.ts` VERT sur son sabotage : il
+# cherchait `installEarlyHandlers()` par un `indexOf` sur la source brute, et
+# la première occurrence est l'IMPORT — toujours avant `function mount()`.
+# Commenter l'APPEL laissait le cas vert. Le témoin a été corrigé le jour même.
+#
+# ── POURQUOI PAS DANS `ci.yml` ──────────────────────────────────────
+#
+# Ce script ÉCRIT dans l'arbre de travail (il sabote un fichier, joue un
+# témoin, restaure). Sur une machine partagée par plusieurs sessions, c'est un
+# geste à faire dans un espace à soi — le runner en est un. Et il joue une
+# suite par sabotage : plusieurs minutes, pour une question qu'on se pose une
+# fois par semaine, pas à chaque push.
+#
+# 🔴 Il REFUSE de démarrer si une cible est déjà modifiée, restaure dans un
+# `finally` ET sur signal, et vérifie à la fin que tout est revenu octet pour
+# octet.
+#
+# Les échecs remontent par `ci-alert.yml`.
+# ══════════════════════════════════════════════════════════════════
+name: Sabotages
+
+on:
+  schedule:
+    # Hebdomadaire, le lundi à 06:13 UTC. Minute décalée des autres crons.
+    - cron: '13 6 * * 1'
+  workflow_dispatch:
+  # 🔴 AUSSI SUR LES PULL REQUESTS QUI TOUCHENT UN TÉMOIN OU SA CIBLE.
+  # C'est le moment où un témoin se désarme : on le modifie, on le voit vert,
+  # on conclut. Attendre le lundi suivant, c'est laisser une garde morte sur
+  # `main` pendant six jours.
+  pull_request:
+    paths:
+      - '**/*guard.test.*'
+      - 'scripts/replay-sabotages.mjs'
+      - 'vercel.json'
+      - 'src/main.tsx'
+      - 'src/App.tsx'
+      - 'supabase/functions/**'
+      - 'supabase/migration/**'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sabotages-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  rejouer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - run: npm ci
+
+      - name: Rejouer les sabotages connus
+        run: |
+          set -o pipefail
+          if npm run check:sabotages 2>&1 | tee sabotages.log; then
+            {
+              echo '### Rejeu des sabotages'
+              echo ''
+              echo '```'
+              cat sabotages.log
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          {
+            echo '### ✖ Un temoin ne detecte plus'
+            echo ''
+            echo '```'
+            tail -n 60 sabotages.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          tail -n 25 sabotages.log | while IFS= read -r LIGNE; do
+            echo "::error title=sabotage::${LIGNE}"
+          done
+          exit 1
+
+      # 🔴 LE CONTRÔLE QUI COMPTE AUTANT QUE LE REJEU. Le script restaure ses
+      # cibles et le vérifie lui-même, mais un `git status` sale en fin de job
+      # dirait qu'il s'est trompé — et sur un runner, personne ne le verrait.
+      - name: L arbre est-il revenu intact ?
+        if: ${{ always() }}
+        run: |
+          set -euo pipefail
+          SALE=$(git status --porcelain)
+          if [ -n "$SALE" ]; then
+            echo "::error title=sabotage::L arbre n a PAS ete restaure :"
+            echo "$SALE"
+            exit 1
+          fi
+          echo "Arbre de travail intact."

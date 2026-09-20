@@ -315,8 +315,7 @@
     "dueToday_other": "{{count}} tasks due today",
     "overdue": "{{count}} overdue",
     "description": "Tap to see your tasks",
-    "action": "View",
-    "dueToday_many": "{{count}} tasks due today"
+    "action": "View"
   },
   "relativeDay": {
     "today": "Today",

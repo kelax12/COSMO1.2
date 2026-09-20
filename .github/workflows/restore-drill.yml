@@ -39,7 +39,42 @@
 # ══════════════════════════════════════════════════════════════════
 name: restore-drill
 
+# ═══ C-86 · CE QUI A ÉTÉ TRANCHÉ LE 2026-09-20 ═════════════════════
+#
+# 🔴 Ce workflow n'avait qu'un `workflow_dispatch` : l'épreuve de restauration
+# n'était jouée que si quelqu'un y pensait. Avec `scalability-volume`, c'étaient
+# les deux seuls des onze workflows du dépôt sans `schedule` ni `push`.
+#
+# LE PROBLÈME, ET LA DÉCISION. On ne peut pas planifier ce workflow tel quel :
+# il ÉCRIT dans une base, il exige une confirmation tapée à la main et un
+# secret `DRILL_DB_URL` qui ne doit exister QUE le jour du drill. Un cron
+# dessus serait rouge chaque trimestre sans rien avoir mesuré.
+#
+# Le workflow est donc coupé en DEUX jobs, et la coupure est celle de l'écriture :
+#
+#   · `dump-check` — TRIMESTRIEL ET AUTOMATIQUE. Ne se connecte à aucune base et
+#     n'écrit nulle part. Il télécharge le dernier dump de `db-backup.yml`, le
+#     relit avec `pg_restore --list`, et ÉCHOUE si le fichier est tronqué, vide,
+#     ou s'il ne contient plus les tables attendues. C'est la moitié du drill
+#     qui répond à « le dump existe-t-il et est-il relisible », et c'est la
+#     moitié qui échouait en silence : un dump quotidien qui produit depuis
+#     trois semaines un fichier de 200 octets ne fait rougir personne.
+#
+#   · `drill` — MANUEL, inchangé. C'est la moitié qui restaure, chronomètre et
+#     vérifie la RLS. Elle reste humaine parce qu'elle exige un projet jetable
+#     créé pour l'occasion, et un plan Free plafonné à 2 projets actifs.
+#
+# ❌ NE PAS CROIRE QUE `dump-check` REMPLACE LE DRILL. Un dump relisible n'est
+# pas un dump restauré : `pg_restore --list` lit une table des matières, il ne
+# rejoue pas une ligne. Ce que le trimestriel gagne, c'est de ne plus découvrir
+# le jour du drill que le fichier était inutilisable depuis des semaines.
+#
+# Les échecs de ce workflow remontent par `ci-alert.yml`.
 on:
+  schedule:
+    # Trimestriel : le 5 janvier, avril, juillet et octobre à 04:29 UTC. Minute
+    # décalée des autres crons du dépôt (cf. `uptime.yml`).
+    - cron: '29 4 5 1,4,7,10 *'
   workflow_dispatch:
     inputs:
       confirmation:
@@ -57,7 +92,98 @@ permissions:
   actions: read
 
 jobs:
+  # ── La moitié AUTOMATIQUE : le dump est-il relisible ? ──────────────
+  #
+  # Aucune connexion, aucune écriture, aucun secret. Tourne sur le cron ET sur
+  # un déclenchement manuel (il précède alors le drill, cf. `needs`).
+  dump-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # Même piège que `db-backup.yml` : le paquet 17 se pose À CÔTÉ du client
+      # 16 préinstallé, et c'est le 16 qui gagne dans le PATH.
+      - name: Installer le client PostgreSQL 17
+        run: |
+          set -euo pipefail
+          sudo sh -c 'echo "deb https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+          curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/pgdg.gpg
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client-17
+          BIN=/usr/lib/postgresql/17/bin
+          [ -x "$BIN/pg_restore" ] || { echo "::error::$BIN/pg_restore absent."; exit 1; }
+          echo "$BIN" >> "$GITHUB_PATH"
+          "$BIN/pg_restore" --version | grep -q ' 17[.]' || {
+            echo "::error::Le binaire impose n'est pas en version 17."; exit 1; }
+
+      - name: Relire le dernier dump
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          RUN_ID: ${{ inputs.run_id }}
+          # Les tables sans lesquelles un dump ne vaut rien. Elles portent les
+          # données du produit ET le journal fiscal inaltérable
+          # (`payment_records`, mig. 125, CGI art. 286-I-3° bis) : un dump qui
+          # ne le contient pas ne restaure pas une obligation légale.
+          ATTENDUES: 'profiles tasks habits events okrs categories payment_records'
+        run: |
+          set -euo pipefail
+          if [ -z "${RUN_ID:-}" ]; then
+            RUN_ID=$(gh run list --repo "$REPO" --workflow db-backup.yml \
+                       --status success --limit 1 --json databaseId \
+                       --jq '.[0].databaseId')
+            [ -n "$RUN_ID" ] || { echo "::error::Aucun run db-backup reussi trouve."; exit 1; }
+          fi
+          echo "Run db-backup : $RUN_ID"
+          gh run download "$RUN_ID" --repo "$REPO" --name db-dump --dir dump
+          DUMP=$(ls dump/*.dump 2>/dev/null | head -1)
+          [ -n "$DUMP" ] || { echo "::error::Artefact db-dump vide ou absent."; exit 1; }
+          TAILLE=$(stat -c%s "$DUMP")
+          echo "Fichier : $DUMP ($TAILLE octets)"
+
+          # 🔴 Un plancher de taille, parce que c'est le mode de defaillance
+          # silencieux de cette chaine : `pg_dump` qui echoue a mi-parcours rend
+          # un fichier VALIDE et minuscule. 100 ko est tres en dessous du reel
+          # (plusieurs Mo) : ce n'est pas une cible, c'est un detecteur de
+          # troncature.
+          if [ "$TAILLE" -lt 100000 ]; then
+            echo "::error title=dump-check::Dump de $TAILLE octets : trop petit pour etre complet."
+            exit 1
+          fi
+
+          # La table des matieres. Elle echoue sur un fichier corrompu.
+          pg_restore --list "$DUMP" > toc.txt
+          LIGNES=$(wc -l < toc.txt)
+          echo "Table des matieres : $LIGNES lignes"
+
+          MANQUANTES=""
+          for T in $ATTENDUES; do
+            grep -qE "TABLE (DATA )?public $T " toc.txt || MANQUANTES="$MANQUANTES $T"
+          done
+          {
+            echo '### Relecture du dump (trimestriel, sans restauration)'
+            echo ''
+            echo '```'
+            echo "run db-backup : $RUN_ID"
+            echo "fichier       : $(basename "$DUMP") ($TAILLE octets)"
+            echo "objets        : $LIGNES"
+            echo "tables        : ${MANQUANTES:+MANQUANTES ->$MANQUANTES}${MANQUANTES:-toutes presentes}"
+            echo '```'
+            echo ''
+            echo 'Ceci ne remplace PAS le drill : un dump relisible n est pas un dump restaure.'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          if [ -n "$MANQUANTES" ]; then
+            echo "::error title=dump-check::Tables absentes du dump :$MANQUANTES"
+            exit 1
+          fi
+          echo "::notice title=dump-check::Dump relisible, $LIGNES objets, toutes les tables attendues presentes."
+
+  # ── La moitié MANUELLE : celle qui écrit ───────────────────────────
   drill:
+    if: github.event_name == 'workflow_dispatch'
+    needs: dump-check
     runs-on: ubuntu-latest
     steps:
       # ── Garde 1 : intention, secret, et surtout PAS la production ───────
