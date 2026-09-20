@@ -828,12 +828,19 @@ hors de portée du pouce, et poussaient la liste vers le bas. Modèle repris : N
   Fait, Retard, Collaboration, Sélectionner), qui sont les pastilles de `TaskQuickFilters` et rien
   d'autre. Une suggestion applique **et referme**. Voile **plat** (`bg-black/40`, jamais de
   `backdrop-blur`), sortie par une **croix ronde** — le modèle est copié, pas adapté.
-- 🔴 **Replier le clavier referme la recherche**, comme dans Notes. Sur iOS, la touche « fermer le
-  clavier » ne rend **aucun** évènement au champ : ni `blur`, ni `keydown`. Le seul signal est
-  `visualViewport` (`use-keyboard-inset.ts`), et il faut **deux seuils** — un simple `> 0` prendrait
-  la barre d'outils de Safari (~60 px) pour un clavier et refermerait l'overlay à son ouverture.
-  La fermeture ne s'arme qu'après avoir vu un vrai clavier, sinon un appareil qui n'en montre
-  jamais (clavier physique, émulateur) refermerait au premier rendu.
+- 🔴 **Replier le clavier referme la recherche**, comme dans Notes. Le signal est le champ qui
+  **perd le focus** (`onBlur`) : la touche « OK » de la barre d'accessoires iOS comme le repli du
+  clavier le déclenchent. ❌ **Un `blur` nu rendrait les suggestions intouchables** — sur un appui,
+  le champ se défocalise AVANT que le `click` n'atteigne la ligne : un garde posé au `pointerdown`
+  du panneau neutralise le blur pendant un appui.
+- 🔴 **`visualViewport` ne sert QU'À PLACER le champ, jamais à juger « clavier ouvert ».** Première
+  version livrée, puis retirée le 2026-09-21 : elle comparait `innerHeight - visualViewport.height`
+  à des constantes (`> 60` = clavier). **Cette mesure ne vaut pas 0 au repos** — la barre d'outils
+  de Safari en prend déjà ~60 à 100 px. Verte sur l'émulateur, qui repose à 0 ; sur un téléphone,
+  le champ flottait à l'ouverture et replier le clavier ne refermait plus rien. Ce qui reste est
+  **relatif** : une ligne de base mesurée à l'ouverture (`measureKeyboardInset()`, lecture
+  **synchrone** — l'état du hook vaut encore 0 à cet instant), et le clavier est tenu pour ouvert
+  au-delà de `ligne de base + 80 px`.
 - ⚠️ **Clavier ouvert, le champ se pose DESSUS sans gouttière** : la zone sûre est déjà couverte par
   le clavier, l'additionner creusait une bande vide entre les deux.
 - ❌ **Ne pas laisser la barre fermée montée pendant l'overlay.** Elle réapparaît derrière le voile
