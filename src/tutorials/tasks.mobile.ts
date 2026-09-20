@@ -46,12 +46,11 @@ export const tasksTutorialStepsMobile: TutorialStep[] = [
     action: 'pulse',
     dimLevel: 'light',
   },
-  {
-    titleKey: 'tasksMobile.step7Title',
-    descriptionKey: 'tasksMobile.step7Desc',
-    target: '[data-tutorial-id="tasks-list"]',
-    cardPlacement: 'top',
-    action: 'pulse',
-    dimLevel: 'light',
-  },
+  // 🔴 L'étape 7 (« Plus simple : le bouton « … » ») a été RETIREE le
+  // 2026-09-20. Elle enseignait le bouton « ⋯ » de chaque ligne, que la
+  // maquette 86 avait supprimé la veille : le tutoriel apprenait à chercher
+  // une commande absente, et c'était la première chose qu'un nouvel arrivant
+  // lisait. Défaut introduit par mon propre correctif — retirer une commande,
+  // c'est aussi relire ce qui en parle.
+  // Les deux clés `tasksMobile.step7*` restent dans les catalogues, inutilisées.
 ];

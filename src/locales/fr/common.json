@@ -65,7 +65,9 @@
       "bugReport": "Nous aider à corriger Cosmo"
     },
     "bugReport": "Signaler un bug",
-    "seePremium": "Voir Premium"
+    "seePremium": "Voir Premium",
+    "sheetGoTo": "Aller à",
+    "sheetOther": "Autre"
   },
   "actions": {
     "all": "Tous",
@@ -331,7 +333,8 @@
   },
   "offline": {
     "label": "Hors ligne",
-    "text": " · vos modifications ne seront pas enregistrées tant que le réseau n'est pas revenu."
+    "text": " · vous pouvez consulter vos données, mais vos modifications ne seront pas enregistrées tant que le réseau n'est pas revenu.",
+    "back": "Connexion rétablie"
   },
   "sync": {
     "offline": "Hors ligne",

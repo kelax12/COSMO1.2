@@ -7,8 +7,10 @@ interface WorkSummaryCardProps {
   completed: number;
   inProgress: number;
   overdue: number;
-  /** Taux de complétion 0..100 → sous-titre « X% terminées ». */
-  completionRate: number;
+  /* ⚠️ `completionRate` a été RETIRÉ (maquette 106) : le sous-titre dit
+     maintenant « X terminée(s) sur N », qui se dérive de `completed` et du
+     total. Garder un pourcentage en prop, c'était garder deux définitions du
+     même chiffre. */
   /** Colonne de droite : anneau OKR (Statistiques) ou prochaine échéance (Aperçu). */
   aside: ReactNode;
   /** Message affiché quand il n'y a aucune tâche. */
@@ -69,9 +71,9 @@ export const ProgressRing = ({ value, label }: { value: number; label: string })
  * Statistiques du mode entreprise.
  */
 const WorkSummaryCard = ({
-  title, completed, inProgress, overdue, completionRate, aside, emptyLabel,
+  title, completed, inProgress, overdue, aside, emptyLabel,
 }: WorkSummaryCardProps) => {
-  const { t } = useT('org');
+  const { t, tp } = useT('org');
   const total = completed + inProgress + overdue;
   const barLabel = t('summary.barLabel', { completed, inProgress, overdue });
 
@@ -80,8 +82,11 @@ const WorkSummaryCard = ({
       <div>
         <div className="flex items-baseline justify-between gap-3 mb-3.5">
           <span className="text-sm font-bold text-[rgb(var(--color-text-primary))]">{title}</span>
+          {/* « 0 terminée sur 3 » plutôt que « 0 % terminées » : sur trois
+              éléments, le pourcentage est une précision que personne n'a
+              demandée, et il efface le nombre qu'on cherchait. */}
           {total > 0 && (
-            <span className="text-xs text-[rgb(var(--color-text-muted))] shrink-0 tabular-nums">{t('summary.completedPercent', { percent: completionRate })}</span>
+            <span className="text-xs text-[rgb(var(--color-text-muted))] shrink-0 tabular-nums">{tp('summary.completedOf', completed, { total })}</span>
           )}
         </div>
 
@@ -89,10 +94,25 @@ const WorkSummaryCard = ({
           <p className="text-xs text-[rgb(var(--color-text-muted))] py-4 text-center">{emptyLabel ?? t('summary.empty')}</p>
         ) : (
           <>
-            <div className="flex h-3 rounded-full overflow-hidden gap-0.5" role="img" aria-label={barLabel}>
+            {/* ── Maquette 106 : une barre d'avancement montre l'avancement ──
+                La barre était SEGMENTÉE (terminées / en cours / en retard) et
+                remplissait donc toute sa largeur en permanence. Mesuré le
+                2026-09-20 sur l'onglet Aperçu : « Mes 3 tâches assignées ·
+                0 % terminées » s'illustrait d'une barre PLEINE, grise puis
+                rouge. Une barre pleine se lit comme un avancement ; celle-ci
+                était pleine alors que rien n'était fait, et sa légende disait
+                le contraire d'elle.
+
+                Elle ne porte plus que la part TERMINÉE, sur une piste neutre.
+                À 0 %, elle est vide, et c'est exactement l'information.
+                « En cours » et « en retard » sont des ÉTATS, pas des portions
+                d'avancement : ils restent dans la légende, où le rouge garde
+                son sens.
+
+                ❌ Ne pas y remettre de segment : le jour où les trois couleurs
+                reviennent dans la barre, « 0 % » redevient illisible. */}
+            <div className="h-3 rounded-full overflow-hidden bg-[rgb(var(--color-border))]" role="img" aria-label={barLabel}>
               <Segment ratio={completed / total} colorClass="bg-emerald-500" />
-              <Segment ratio={inProgress / total} colorClass="bg-[rgb(var(--color-text-muted))]" />
-              <Segment ratio={overdue / total} colorClass="bg-red-500" />
             </div>
             <div className="flex flex-wrap gap-x-5 gap-y-1.5 mt-3.5">
               <LegendDot colorClass="bg-emerald-500" label={t('summary.legendCompleted')} value={completed} />

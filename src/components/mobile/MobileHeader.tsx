@@ -113,8 +113,16 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
           >
             {compact && compactTitle !== undefined ? compactTitle : title}
           </h1>
+          {/* ── Maquette 110 : un sous-titre coupé en plein mot ──────────
+              `truncate` le bornait à UNE ligne : « Définissez et suivez vos
+              objectifs avec des rés… » sur /okr, et la même coupure sur
+              /statistics et /settings, qui partagent cet en-tête. La partie
+              tronquée était justement celle qui portait l'information.
+              Deux lignes au plus, et plus de mot coupé.
+              ❌ Ne pas revenir à `truncate` : un en-tête n'a pas de contrainte
+              de hauteur, il est au sommet d'une page qui défile. */}
           {subtitle && !compact && (
-            <p className="mt-0.5 text-label text-[rgb(var(--color-text-muted))] truncate">
+            <p className="mt-0.5 text-label text-[rgb(var(--color-text-muted))] line-clamp-2">
               {subtitle}
             </p>
           )}

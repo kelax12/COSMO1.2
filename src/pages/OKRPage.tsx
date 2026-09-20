@@ -37,10 +37,10 @@ import { useDeleteCategoryFlow } from './okr/useDeleteCategoryFlow';
 import { useTasks } from '@/modules/tasks';
 
 const OKRPage: React.FC = () => {
-  const { t } = useT('okr');
+  const { t, tp } = useT('okr');
   const { t: tCommon } = useT('common');
   const isMobile = useIsMobile();
-  const tutorial = useTutorial(isMobile ? 'okr_mobile' : 'okr_desktop');
+  const tutorial = useTutorial(isMobile ? 'okr_mobile' : 'okr_desktop', 600, !isMobile);
   const tutorialSteps = isMobile ? okrTutorialStepsMobile : okrTutorialStepsDesktop;
   const location = useLocation();
   // Le check-in hebdo peut aussi être ouvert manuellement (bouton), en plus de
@@ -298,10 +298,14 @@ const OKRPage: React.FC = () => {
           et tronquait en « OKR - Objectifs & R... ». `page.titleShort` reste
           seul au repos ; le titre complet ne réapparaît qu'une fois compacté
           (`text-headline`, plus petit, où il tient). */}
+      {/* Maquette 110 : « OKR - Objectifs » disait deux fois la même chose,
+          avec un tiret en plein titre, et l'onglet dit déjà « OKR ». Le
+          sous-titre devient un ÉTAT (combien d'objectifs actifs) : une phrase
+          de brochure n'apprend rien à quelqu'un qui revient tous les jours. */}
       <MobileHeader
         title={t('page.titleShort')}
         compactTitle={t('page.title')}
-        subtitle={t('page.subtitle')}
+        subtitle={tp('page.activeCount', objectives.filter((o) => !o.completed).length)}
         actions={
           <TouchTarget
             // `flyTargetRef` (OKRDeadlineReviewModal, ligne plus bas) anime un

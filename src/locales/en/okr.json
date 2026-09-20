@@ -1,7 +1,7 @@
 {
   "page": {
     "title": "OKRs - Objectives & Key Results",
-    "titleShort": "OKRs - Objectives",
+    "titleShort": "Objectives",
     "subtitle": "Set and track your objectives with measurable results",
     "completedOkrs": "Completed OKRs",
     "seeCompleted": "See the completed OKRs",
@@ -22,7 +22,9 @@
       "allTitle": "No OKRs yet"
     },
     "openCheckinAria": "Open the weekly check-in",
-    "openCheckinTitle": "Review your OKRs. It also opens on its own on Monday and Tuesday from the dashboard."
+    "openCheckinTitle": "Review your OKRs. It also opens on its own on Monday and Tuesday from the dashboard.",
+    "activeCount_one": "{{count}} active objective",
+    "activeCount_other": "{{count}} active objectives"
   },
   "card": {
     "uncategorized": "Uncategorized",

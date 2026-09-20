@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { WifiOff } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { WifiOff, Wifi } from 'lucide-react';
 import { useIsDemo } from '@/lib/app-mode.store';
 import { useT } from '@/i18n/useT';
 
@@ -37,9 +37,32 @@ const OfflineBanner: React.FC = () => {
     typeof navigator === 'undefined' ? true : navigator.onLine,
   );
 
+  // ── Maquette 104 : le RETOUR se dit aussi ────────────────────────────
+  //
+  // Le bandeau annonçait la panne et se taisait ensuite : il disparaissait, ce
+  // qui laisse exactement la question qu'on se pose en le lisant (« est-ce que
+  // ce que j'ai fait est parti ? ») sans réponse. Une confirmation brève vaut
+  // mieux qu'un silence, et elle ne coûte qu'un état.
+  //
+  // ⚠️ `wasOffline` et pas un simple `online` : sans lui, la confirmation
+  // s'afficherait au PREMIER rendu de toute session normale, où l'on a
+  // toujours été en ligne.
+  const wasOffline = useRef(false);
+  const [justBack, setJustBack] = useState(false);
+
   useEffect(() => {
-    const goOnline = () => setOnline(true);
-    const goOffline = () => setOnline(false);
+    const goOnline = () => {
+      setOnline(true);
+      if (wasOffline.current) {
+        wasOffline.current = false;
+        setJustBack(true);
+      }
+    };
+    const goOffline = () => {
+      wasOffline.current = true;
+      setJustBack(false);
+      setOnline(false);
+    };
     window.addEventListener('online', goOnline);
     window.addEventListener('offline', goOffline);
     return () => {
@@ -48,7 +71,32 @@ const OfflineBanner: React.FC = () => {
     };
   }, []);
 
-  if (online || isDemo) return null;
+  // La confirmation s'efface seule. Le minuteur est nettoyé au démontage comme
+  // à tout nouveau passage hors ligne, sinon deux coupures rapprochées
+  // laisseraient un `setJustBack(false)` en vol.
+  useEffect(() => {
+    if (!justBack) return;
+    const id = setTimeout(() => setJustBack(false), 3000);
+    return () => clearTimeout(id);
+  }, [justBack]);
+
+  if (isDemo) return null;
+
+  if (online) {
+    if (!justBack) return null;
+    return (
+      <div
+        role="status"
+        aria-live="polite"
+        className="md:hidden flex items-center gap-2 px-gutter py-1.5 border-b border-emerald-500/25 bg-emerald-500/10 text-caption leading-snug text-[rgb(var(--color-text-secondary))]"
+      >
+        <Wifi size={13} className="shrink-0 text-emerald-500" aria-hidden="true" />
+        <p className="min-w-0 flex-1 font-medium text-[rgb(var(--color-text-primary))]">
+          {t('offline.back')}
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div

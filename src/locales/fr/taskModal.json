@@ -98,6 +98,7 @@
     "deleteTask": "Supprimer la tâche",
     "collaboratorPlaceholder": "Email ou nom…",
     "addCollaborator": "Ajouter",
-    "userNotFound": "Utilisateur introuvable"
+    "userNotFound": "Utilisateur introuvable",
+    "bookmark": "Favori"
   }
 }

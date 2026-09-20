@@ -4,7 +4,7 @@
     "launchFree": "COSMO for companies is free",
     "launchFreeRest": " until 1 August, enjoy it with your whole team, no limits.",
     "freemiumOver": "Beyond 5 collaborators, a company subscription is required to accept new members.",
-    "freemiumInfo": "COSMO Enterprise stays free up to 5 collaborators. A paid offer will follow beyond that: the owner can review the tiers from the plan shown at the top of the page. Nothing changes for you today.",
+    "freemiumInfo": "Free up to 5 collaborators. Nothing changes today.",
     "dangerZone": "Danger zone",
     "dangerHint": "Permanently deletes the company, its projects, OKRs and teams.",
     "transferOwnership": "Transfer ownership",
@@ -773,7 +773,9 @@
     "legendOverdue": "overdue",
     "overdueTasks": "Overdue tasks ({{count}})",
     "taskTotal_one": "{{count}} task · {{period}}",
-    "taskTotal_other": "{{count}} tasks · {{period}}"
+    "taskTotal_other": "{{count}} tasks · {{period}}",
+    "completedOf_one": "{{count}} of {{total}} done",
+    "completedOf_other": "{{count}} of {{total}} done"
   },
   "comments": {
     "loading": "Loading…",

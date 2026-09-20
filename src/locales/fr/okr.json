@@ -1,7 +1,7 @@
 {
   "page": {
     "title": "OKR - Objectifs & Résultats Clés",
-    "titleShort": "OKR - Objectifs",
+    "titleShort": "Objectifs",
     "subtitle": "Définissez et suivez vos objectifs avec des résultats mesurables",
     "completedOkrs": "OKR terminés",
     "seeCompleted": "Voir la liste des OKR terminés",
@@ -22,7 +22,10 @@
       "allTitle": "Aucun OKR pour le moment"
     },
     "openCheckinAria": "Ouvrir le check-in hebdo",
-    "openCheckinTitle": "Faire le point sur vos OKR : s'ouvre aussi automatiquement lundi/mardi depuis le Dashboard"
+    "openCheckinTitle": "Faire le point sur vos OKR : s'ouvre aussi automatiquement lundi/mardi depuis le Dashboard",
+    "activeCount_one": "{{count}} objectif actif",
+    "activeCount_many": "{{count}} d’objectifs actifs",
+    "activeCount_other": "{{count}} objectifs actifs"
   },
   "card": {
     "uncategorized": "Sans catégorie",

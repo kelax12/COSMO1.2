@@ -181,10 +181,26 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.9 }}
               >
+                {/* ── Maquette 101 : un filtre se dit une fois ───────────
+                    Dès qu'une recherche était saisie, l'écran ajoutait d'un
+                    coup TROIS objets qui disent la même chose : ce bouton
+                    rouge, une pilule « Recherche : … ✕ » et une ligne
+                    « 0 / 12 tâches affichées ». Trois rangées, ~150 px, pour
+                    « un filtre est actif et tu peux l'enlever ».
+
+                    Sur mobile il disparaît : la pilule porte déjà sa croix, et
+                    « tout retirer » vit désormais en fin de ligne de compte
+                    (TasksPage), à partir de DEUX filtres seulement.
+                    Desktop inchangé : la place ne manque pas, et la rangée de
+                    commandes y est déjà horizontale.
+
+                    ❌ Et il n'était pas rouge par hasard nulle part : retirer
+                    un filtre est ANNULABLE. Le rouge est réservé à ce qui est
+                    irréversible ou en retard (maquette 121). */}
                 <Button
                   variant="outline"
                   onClick={clearAllFilters}
-                  className="flex items-center justify-center gap-2 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40 border-red-200 dark:border-red-800/50 shrink-0"
+                  className="hidden sm:flex items-center justify-center gap-2 text-[rgb(var(--color-text-secondary))] shrink-0"
                   aria-label={t('sort.resetAria')}
                 >
                   <X size={16} data-icon="inline-start" aria-hidden="true" />

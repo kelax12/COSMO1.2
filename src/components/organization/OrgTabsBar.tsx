@@ -158,7 +158,7 @@ const OrgTabsBar: React.FC<Props> = ({ items, activeId, onSelect }) => {
       <div
         ref={scroller}
         data-org-tabs=""
-        className="border-b border-[rgb(var(--color-border))] overflow-x-auto hide-scrollbar"
+        className="overflow-x-auto hide-scrollbar"
       >
         {/* Rail interne : c'est LUI dont la largeur suit le contenu, et c'est
             lui que la ResizeObserver surveille. Le conteneur, lui, garde la
@@ -171,10 +171,22 @@ const OrgTabsBar: React.FC<Props> = ({ items, activeId, onSelect }) => {
             data-active={activeId === id}
             onClick={() => onSelect(id)}
             aria-current={activeId === id ? 'page' : undefined}
-            className={`inline-flex items-center gap-1.5 px-4 min-h-11 py-2.5 text-sm font-medium border-b-2 -mb-px whitespace-nowrap transition-colors ${
+            /* ── Maquette 108 : une seule famille de sélection ────────────
+               C'était la SEULE surface de l'app à utiliser des onglets
+               soulignés : /tasks, /okr, /statistics et /settings choisissent
+               tous par pilule. Cinq façons de dessiner « choisir parmi n »
+               dans un même produit, c'est cinq composants à corriger quand un
+               contraste ne passe pas.
+
+               ⚠️ La maquette affirmait aussi que « rien ne signale qu'il y en
+               a d'autres » : FAUX. Ce fichier porte déjà deux dégradés de
+               continuation et ramène l'onglet actif dans le champ, avec une
+               ResizeObserver. Seul le STYLE change ici, pas le comportement,
+               qui était déjà le bon. */
+            className={`inline-flex items-center gap-1.5 px-4 min-h-11 py-2 rounded-full border text-sm font-medium whitespace-nowrap transition-colors ${
               activeId === id
-                ? 'border-[rgb(var(--color-accent))] text-[rgb(var(--color-text-primary))]'
-                : 'border-transparent text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-secondary))]'
+                ? 'bg-[rgb(var(--color-accent-solid))] border-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))]'
+                : 'bg-[rgb(var(--color-surface))] border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))]'
             }`}
           >
             <Icon size={16} aria-hidden={true} /> {label}

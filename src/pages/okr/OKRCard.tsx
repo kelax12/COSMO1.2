@@ -190,9 +190,24 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                         {/* Espace réduit sur mobile (2026-09-19, resserré) entre
                             le nom du KR et la ligne de complétion — desktop
                             inchangé. */}
-                        <div className="flex justify-between items-center mb-1 sm:mb-3 gap-2">
+                        {/* ── Maquette 111 : le titre d'abord ───────────────
+                            Mesuré le 2026-09-20 en 390 px : deux résultats clés
+                            sur trois étaient coupés (« Terminer 8 semaines
+                            san… », « Pratiquer la méthode Po… »), pour la même
+                            raison que les tâches l'étaient avant la maquette 85
+                            — trois icônes et une durée occupaient la moitié
+                            droite de la ligne, et le titre prenait ce qui
+                            restait.
+
+                            Sur mobile, la rangée passe en COLONNE : le titre
+                            occupe toute la largeur sur deux lignes au plus, les
+                            commandes descendent en dessous. `sm:` remet la
+                            rangée horizontale, où la place existe.
+                            ❌ Ne pas y remettre `truncate` : c'est ce mot qui
+                            rendait le libellé illisible. */}
+                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-1 sm:mb-3 gap-1 sm:gap-2">
                           <span className="flex items-center gap-1.5 min-w-0">
-                            <span className="text-xs sm:text-sm font-medium truncate" style={{ color: 'rgb(var(--color-text-primary))' }}>{keyResult.title}</span>
+                            <span className="text-xs sm:text-sm font-medium line-clamp-2 sm:truncate" style={{ color: 'rgb(var(--color-text-primary))' }}>{keyResult.title}</span>
                             {(keyResult.weight ?? 1) !== 1 && (
                               <span
                                 className="shrink-0 text-caption sm:text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400"
@@ -202,7 +217,7 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                               </span>
                             )}
                           </span>
-                          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+                          <div className="flex items-center gap-1 sm:gap-2 shrink-0 self-end sm:self-auto">
                             <button
                               onClick={() => {
                                 setSelectedKeyResultForModal({ kr: keyResult, obj: objective });
