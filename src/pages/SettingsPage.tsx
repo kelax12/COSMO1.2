@@ -13,6 +13,7 @@ import ThemeToggle from '@/components/ThemeToggle';
 import LocaleToggle from '@/components/LocaleToggle';
 import { SUPPORTED_LOCALES } from '@/i18n/locale';
 import { useT } from '@/i18n/useT';
+import { TAP_AREA_44_Y } from '@/components/mobile/tap-area';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
 import {
   AlertDialog,
@@ -215,16 +216,27 @@ const SettingsPage: React.FC = () => {
         </div>
 
         {/* mobile nav tabs */}
-        <div className="lg:hidden flex gap-1 p-1 bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-xl mb-6 overflow-x-auto">
+        {/* ── Maquette 83 : la bande de pilules commune ─────────────────
+            Les onglets vivaient dans une boîte bordée qui défile, dont le
+            quatrième élément (« Mes données ») était coupé net par le bord de
+            l'écran, sans rien pour dire qu'il y en avait d'autres. Ils
+            reprennent la forme utilisée par /tasks, /okr, /statistics et
+            l'espace entreprise : des pilules pleines, hauteur 36 px, cible
+            tactile 44 portée par `TAP_AREA_44_Y`.
+            ❌ Ne pas remettre de conteneur bordé : c'est lui qui donnait
+            l'impression d'un cadre dont le contenu dépasse. */}
+        <div className="lg:hidden flex gap-2 mb-6 overflow-x-auto hide-scrollbar -mx-gutter px-gutter">
           {NAV_GROUPS.flatMap(g => g.items).map((item) => {
             const Icon = item.icon;
             const active = activeTab === item.id;
             return (
               <button key={item.id} onClick={() => setActiveTab(item.id)}
-                className={`shrink-0 flex items-center gap-1.5 px-3 min-h-touch rounded-lg text-xs font-semibold transition-all duration-150 ${
-                  active ? 'bg-[#1f6feb] text-white shadow-sm' // #58a6ff ne passe pas le contraste AA (2.5:1) avec du texte blanc
-                    : 'text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))]'}`}>
-                <Icon size={13} />
+                aria-current={active ? 'page' : undefined}
+                className={`${TAP_AREA_44_Y} shrink-0 flex items-center gap-1.5 px-3.5 h-9 rounded-full border text-label font-medium transition-colors ${
+                  active
+                    ? 'bg-[rgb(var(--color-accent-solid))] border-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))]'
+                    : 'bg-[rgb(var(--color-surface))] border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))]'}`}>
+                <Icon size={14} aria-hidden="true" />
                 {t(item.labelKey)}
               </button>
             );
@@ -251,9 +263,17 @@ const SettingsPage: React.FC = () => {
               className="max-w-2xl lg:max-w-5xl grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] gap-5 items-start">
               <div className="flex flex-col gap-5">
               <SectionCard>
-                <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5">
+                {/* ── Maquette 83 : le profil en une rangée sur mobile ───────
+                    Le bloc faisait ~155 px : un carré d'avatar de 80, le nom,
+                    l'email et un bouton « Changer la photo », tous CENTRÉS,
+                    pour trois informations qu'on ne vient pas lire. Sur mobile
+                    il redevient une rangée : avatar 48, nom et email à gauche,
+                    la photo se change par l'avatar lui-même (la pastille
+                    d'appareil photo, désormais toujours visible au doigt).
+                    `sm:` rend le bloc centré d'origine. */}
+                <div className="flex flex-row sm:flex-col md:flex-row items-center sm:items-start gap-3.5 sm:gap-5">
                   <div className="relative group/av shrink-0">
-                    <div className="w-20 h-20 rounded-2xl overflow-hidden bg-gradient-to-br bg-[rgb(var(--color-accent-solid))] to-violet-600 flex items-center justify-center text-[rgb(var(--color-accent-solid-foreground))] text-2xl font-bold shadow-sm select-none">
+                    <div className="w-12 h-12 sm:w-20 sm:h-20 rounded-2xl overflow-hidden bg-gradient-to-br bg-[rgb(var(--color-accent-solid))] to-violet-600 flex items-center justify-center text-[rgb(var(--color-accent-solid-foreground))] text-headline sm:text-2xl font-bold shadow-sm select-none">
                       {user.avatar ? <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
                         : <span>{initials}</span>}
                     </div>
@@ -262,16 +282,23 @@ const SettingsPage: React.FC = () => {
                         et le guard a11y CI casse. */}
                     <button onClick={() => fileInputRef.current?.click()}
                       aria-label={t('profile.changePhotoAria')}
-                      className="absolute inset-0 rounded-2xl bg-black/45 opacity-0 group-hover/av:opacity-100 transition-opacity flex items-center justify-center">
-                      <Camera size={18} className="text-white" aria-hidden="true" />
+                      // Sur mobile il n'y a pas de survol : la pastille est
+                      // toujours là, en bas à droite de l'avatar. Au-delà de
+                      // `sm`, le voile au survol reprend la main, inchangé.
+                      className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-[rgb(var(--color-accent-solid))] border-2 border-[rgb(var(--color-surface))] flex items-center justify-center sm:inset-0 sm:w-auto sm:h-auto sm:rounded-2xl sm:border-0 sm:bg-black/45 sm:opacity-0 sm:group-hover/av:opacity-100 sm:transition-opacity">
+                      <Camera size={12} className="text-white sm:hidden" aria-hidden="true" />
+                      <Camera size={18} className="text-white hidden sm:block" aria-hidden="true" />
                     </button>
                   </div>
-                  <div className="flex-1 text-center sm:text-left">
-                    <h2 className="text-lg font-bold text-[rgb(var(--color-text-primary))]">{user.name}</h2>
-                    <p className="text-sm text-[rgb(var(--color-text-secondary))] mt-0.5">{user.email}</p>
-                    <div className="flex flex-wrap justify-center sm:justify-start gap-2 mt-3">
+                  <div className="flex-1 min-w-0 text-left sm:text-center md:text-left">
+                    <h2 className="text-body sm:text-lg font-bold text-[rgb(var(--color-text-primary))] truncate">{user.name}</h2>
+                    <p className="text-caption sm:text-sm text-[rgb(var(--color-text-secondary))] mt-0.5 truncate">{user.email}</p>
+                    <div className="flex flex-wrap justify-start sm:justify-center md:justify-start gap-2 mt-3">
+                      {/* Le bouton « Changer la photo » disparaît sous `sm` :
+                          la pastille sur l'avatar fait la même chose, à deux
+                          centimètres du regard. */}
                       <button onClick={() => fileInputRef.current?.click()}
-                        className="inline-flex items-center gap-1.5 px-4 min-h-touch sm:min-h-[36px] border border-[rgb(var(--color-border))] rounded-lg text-xs font-semibold text-[rgb(var(--color-text-secondary))] hover:border-[rgb(var(--color-accent))] hover:text-[rgb(var(--color-accent))] transition-all duration-150">
+                        className="hidden sm:inline-flex items-center gap-1.5 px-4 min-h-touch sm:min-h-[36px] border border-[rgb(var(--color-border))] rounded-lg text-xs font-semibold text-[rgb(var(--color-text-secondary))] hover:border-[rgb(var(--color-accent))] hover:text-[rgb(var(--color-accent))] transition-all duration-150">
                         <Camera size={12} /> {t('profile.changePhoto')}
                       </button>
                       {user.avatar && (
@@ -290,7 +317,12 @@ const SettingsPage: React.FC = () => {
                   <LabeledInput label={t('profile.fullName')} icon={User} value={profileDraft.name} onChange={(e) => setProfileDraft(p => ({ ...p, name: e.target.value }))} placeholder={t('profile.yourNamePlaceholder')} />
                   <LabeledInput label={t('profile.emailLabel')} type="email" icon={Mail} value={profileDraft.email} onChange={(e) => setProfileDraft(p => ({ ...p, email: e.target.value }))} placeholder={t('profile.emailPlaceholder')} disabled={isThirdParty} hint={isThirdParty ? t('profile.emailManaged') : undefined} />
                 </div>
-                <div className="flex justify-end mt-5">
+                {/* Maquette 83 : pleine largeur sur mobile. C'est l'action
+                    principale de l'écran, et c'est elle que le FAB recouvrait
+                    avant d'être retiré de cette route — un bouton aligné à
+                    droite sur 390 px est exactement ce qu'un bouton flottant
+                    vient masquer. */}
+                <div className="flex justify-stretch sm:justify-end mt-5 [&>button]:w-full [&>button]:sm:w-auto">
                   <PrimaryButton onClick={() => saveProfile(profileDraft)} loading={savingProfile}>{savingProfile ? t('profile.saving') : t('profile.save')}</PrimaryButton>
                 </div>
               </SectionCard>
