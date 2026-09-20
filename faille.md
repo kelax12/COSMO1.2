@@ -54,8 +54,9 @@ Légende : 🔴 bloquant · 🟠 important · 🟡 à planifier · ✅ corrigé
 > re-coûte rien : il est **déjà payé**.
 >
 > ⚠️ Un transversal (T-1 à T-10 du [tableau de bord](./docs/README.md)) est compté dans **chaque** audit
-> qu'il touche, parce que chaque note prétend quelque chose de différent. Les 36 témoins jamais
+> qu'il touche, parce que chaque note prétend quelque chose de différent. Les témoins jamais
 > rejoués coûtent donc à la fois aux tests et à la sécurité, et ce n'est pas un double comptage.
+> (Ils étaient 36 ce jour-là, **39 au 2026-09-20** ; le calcul de la note ne change pas.)
 
 
 
@@ -81,7 +82,7 @@ Légende : 🔴 bloquant · 🟠 important · 🟡 à planifier · ✅ corrigé
 | AM-2 | **`check:edge` compare le CODE déployé, jamais le COMPORTEMENT.** Une fonction identique au dépôt mais dont un **secret** a changé de valeur, ou dont une dépendance distante a bougé, rend la garde verte | `scripts/check-edge-deploy.mjs` compare des sources | partiellement : une sonde de fumée par fonction |
 | AM-3 | **`npm audit` ne couvre que les dépendances de PRODUCTION** (`--omit=dev`). Une vulnérabilité dans la chaîne de build n'est vue par rien | `ci.yml:148` : `npm audit --omit=dev --audit-level=high` | arbitrage assumé et documenté, mais c'est un angle mort |
 | AM-4 | **Aucune analyse statique de sécurité (SAST) sur le code du dépôt.** Les gardes existantes vérifient des invariants nommés, jamais des motifs inconnus | aucun CodeQL, Semgrep ou équivalent dans `.github/workflows/` | oui : CodeQL est gratuit sur un dépôt public, et celui-ci l'est |
-| AM-5 | **Les 36 témoins ne sont jamais rejoués** (cf. [`docs/TESTING.md`](./docs/TESTING.md) AM-1). Plusieurs gardent des frontières de sécurité : `csp.guard`, `rgpd-erasure.guard`, `refund.guard`, `org-deletion.guard` | 36 fichiers `*.guard.test.*`, aucun mutation testing | oui |
+| AM-5 | **Les 39 témoins ne sont jamais rejoués** (cf. [`docs/TESTING.md`](./docs/TESTING.md) AM-1). Plusieurs gardent des frontières de sécurité : `csp.guard`, `rgpd-erasure.guard`, `refund.guard`, `org-deletion.guard` | **39** fichiers `*.guard.test.*` (`git ls-files`, **recomptés le 2026-09-20** ; « 36 » datait du 09-16 et n'avait pas suivi les trois ajouts), aucun mutation testing | oui |
 
 
 > ### ⚪ 2026-09-14 (soir) · 0 : tout ce que cette note affirme a été rejoué, et deux angles morts s'ouvrent
@@ -299,7 +300,35 @@ d'autorisation** :
 
 ---
 
-## Gardes automatiques · **remesurées le 2026-09-14**
+## Gardes automatiques · **rejouées le 2026-09-20**
+
+Toutes jouées ce jour, sur cet arbre, contre la prod `ykeugqfgklejcdbrmawy` pour les advisors et
+le ledger. Le tableau du 2026-09-14 est conservé sous celui-ci, à sa date.
+
+| Garde | Résultat au 2026-09-20 | Au 2026-09-14 |
+|---|---|---|
+| `npm run check:rls` | ✅ **132 policies sur 107 migration(s)**, 0 violation | 132 / 106 |
+| `npm run validate:migrations` | ✅ **153 fichiers**, 0 erreur, **les mêmes 6** avertissements | 152 fichiers, mêmes 6 |
+| `npm run typecheck` · `npm run lint` | ✅ 0 erreur, **31** warnings | identique |
+| `npm run i18n:check` | ✅ 23 namespaces, 0 erreur | identique |
+| `npm run i18n:scan` | 🔴 **ROUGE, puis corrigé le jour même** : 1 chaîne en dur, `Catégorie` dans `HabitModal.tsx`, entrée avec `6a25071c`. Externalisée en `habits.modal.category`, la gate est revenue à **0** | non mesurée ce jour-là |
+| `npm run i18n:identical` | ✅ 3 916 couples, 92 identiques **tous déclarés**, 0 non déclarée | — |
+| `npm test` | ✅ **2 653 passés / 232 fichiers**, + 1 sauté (cas POSIX du témoin de `check:edge`), exit 0 | 2 586 / 228 |
+| `npx playwright test --list` | **237 cas dans 27 fichiers** (recomptés, jamais « N × 2 ») | 236 à `HEAD` le 09-15 |
+| `npm run check:legal` | ✅ cohérent : 13 ✅ · 13 🟡 · 15 ❌ · 5 ⬜, total 46 | — |
+| `npm run check:docs` | ✅ **18 CLAUDE.md**, racine à 96,3 % du plafond, aucun lien mort | 17 |
+| `npm run check:deploy` | ✅ `egal` : la prod sert `ebb1dec`, le commit du dépôt | — |
+| Advisors Supabase (sécurité) | **9 / 52 / 2 / 1**, à l'unité près les mêmes | 9 / 52 / 2 / 1 |
+| Invariant RLS en base | ✅ **50 tables `public`, les 50 en `relrowsecurity = true`**, 126 policies, 117 fonctions | identique |
+| Ledger de migrations | ⚠️ **138 entrées pour 153 fichiers.** Toujours pas de `136`, ni de `140`, ni de `149`. Et une confirmation NEUVE de l'angle mort D-1 : la `146` n'a **aucune entrée** alors que `events.review_dismissed_at` **existe en base** | 138 pour 152 |
+
+🔴 **`okrTime` reste à 0 en production, remesuré ce jour** : `pg_get_functiondef` sur la fonction
+vivante `get_work_time_stats` ne contient **aucune** occurrence de `kr_completions`, et lit encore
+`kr.elem->'history'`. C'est `C-77`, et c'est le seul défaut ouvert que voit un utilisateur.
+
+---
+
+## Gardes automatiques · état au 2026-09-14 · *conservé à sa date*
 
 🔴 **Le tableau qui suivait datait du 2026-08-25 et affichait « 1 736 tests / 151 fichiers » — la
 suite en compte 2 586 sur 228.** Vingt jours de dérive, sur une page dont le métier est de dire
@@ -1011,10 +1040,29 @@ relit contre la console et contre `docs/ROADMAP-60J.md`, jamais de mémoire.
 
 ---
 
-## Ordre de priorité avant déploiement prod (à jour 2026-09-02)
+## Ordre de priorité avant déploiement prod (**relue le 2026-09-20**)
 
 Section référencée par [`CLAUDE.md`](./CLAUDE.md) — elle n'existait plus depuis la refonte
 documentaire du 2026-08-14, le lien pointait dans le vide. Restaurée ici.
+
+> 🔴 **Cette table est restée « à jour 2026-09-02 » pendant dix-huit jours, et TROIS migrations
+> écrites depuis n'y figuraient pas** — dont celle qui répare le seul défaut ouvert que voie un
+> utilisateur. C'est le défaut exact que la ligne `Migrations écrites, non appliquées : 0` du
+> tableau de composition de la note affichait encore, à sa date de 09-02 : vraie ce jour-là,
+> recopiée comme un état courant par quiconque ouvrait la page pour savoir quoi déployer.
+> **Une checklist de déploiement qui ne se relit pas à chaque migration écrite n'est pas une
+> checklist.** Les trois lignes manquantes sont ajoutées en tête ci-dessous.
+
+| # | Migration écrite et **NON APPLIQUÉE** | Ce que ça laisse ouvert | Vérifié le 2026-09-20 |
+|---|---|---|---|
+| **P0** | **`136_work_time_stats_okr_from_completions`** (commitée le 2026-09-03) | 🔴 **`okrTime` vaut 0 sur `/statistics` pour tous les comptes réels.** La démo affiche juste, le produit affiche zéro. Item `C-77` | `pg_get_functiondef('get_work_time_stats')` ne cite **jamais** `kr_completions` ; aucune entrée `136` au ledger |
+| **P1** | **`140_reset_stripe_identifiers`** | Identifiants Stripe de TEST en base. À jouer **DANS** la fenêtre de bascule live, jamais avant | déclarée non appliquée **délibérément** par `check:migration-coverage` |
+| **P2** | **`149_admin_stats_excludes_non_users`** (⚠️ fichier **non suivi par git** au 2026-09-20) | Les comptes de test gonflent les statistiques `/admin` | `admin_stats_excluded_uids()` **absente** de la base ; aucune entrée au ledger |
+
+⚠️ **La `146` est le contre-exemple, et il est instructif** : elle n'a **aucune entrée au ledger**
+mais `events.review_dismissed_at` existe bel et bien en base. Une absence au ledger ne prouve donc
+pas qu'une migration manque, exactement ce que dit l'angle mort **D-1**. Seul
+`npm run check:migration-coverage` tranche, fichier par fichier.
 
 | # | Action | Nature | Qui | État |
 |---|---|---|---|---|

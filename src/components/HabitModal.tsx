@@ -228,7 +228,7 @@ const HabitModal: React.FC<HabitModalProps> = ({ isOpen, onClose, habit }) => {
                         couleur appartient. Fallback sur favoriteColors si aucune
                         catégorie n'existe encore. */}
                     <p className="text-[11px] font-semibold uppercase tracking-wider text-[rgb(var(--color-text-muted))] px-4 pb-1 pt-5">
-                      Catégorie
+                      {t('modal.category')}
                     </p>
                     <div className="bg-[rgb(var(--color-surface))] rounded-2xl shadow-sm overflow-hidden px-4 py-4">
                       {categories.length > 0 ? (

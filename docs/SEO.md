@@ -70,7 +70,7 @@ cause n'est pas dans le dépôt.
 
 | # | Angle mort | Vérifié le 2026-09-16 | Outillable ? |
 |---|---|---|---|
-| AM-1 | **Lighthouse note le SEO de 4 URLs sur les 45 du sitemap** | `lighthouserc.json` vs `dist/sitemap.xml` (**45** `<loc>`) | oui, au prix du temps de job |
+| AM-1 | **Lighthouse note le SEO de 4 URLs sur les 40 du sitemap** | `lighthouserc.json` (4 URLs, `preset: desktop`) vs le sitemap : 🔴 **40 `<loc>`, pas 45**, recomptés le 2026-09-20 **sur la production** (`https://thecosmo.app/sitemap.xml`) **et** sur le build local du 09-17, qui donnaient déjà 40. Aucune source du sitemap n'a bougé depuis le 2026-09-10 : **« 45 » n'a jamais été mesuré**, c'est un chiffre estimé le 09-16, dans la passe même qui interdit de recopier un « avant ». La proportion, elle, ne change pas | oui, au prix du temps de job |
 | AM-2 | 🔴 **Rien ne relie le SITEMAP aux pages réellement prérendues.** Une route ajoutée à l'un sans l'autre ne fait échouer aucun job, et les 10 pages prérendues hors sitemap ont dû être expliquées à la main le 2026-09-14 | aucun script ne compare `dist/sitemap.xml` à la sortie de `prerender.mjs` | oui, et c'est peu coûteux |
 | AM-3 | **Aucune garde sur les balises par page.** `title`, `description`, `canonical` et `hreflang` sont vérifiés lors des passes manuelles, pas en CI (Lighthouse n'en voit que 4) | 40 `hreflang` recomptés à la main le 2026-09-14 | oui : une garde sur `dist/**/*.html` |
 | AM-4 | **Le résultat n'est pas mesuré, seulement la conformité.** Position, impressions et clics viennent de la Search Console, à la main. Un audit peut donc monter pendant que le trafic reste nul, ce qui est l'état constaté depuis le 2026-08-19 | note 80 et 0 clic non marqué coexistent | partiellement : l'API GSC |
