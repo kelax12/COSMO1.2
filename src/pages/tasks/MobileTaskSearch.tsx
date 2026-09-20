@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AlertTriangle, Bookmark, CheckCircle2, CheckSquare, Search, Users, X } from 'lucide-react';
 import { useModalA11y } from '@/hooks/use-modal-a11y';
-import { useKeyboardInset } from '@/lib/hooks/use-keyboard-inset';
+import { measureKeyboardInset, useKeyboardInset } from '@/lib/hooks/use-keyboard-inset';
 import { useQuickFilter, setQuickFilter } from '@/components/task-table/quick-filter.store';
 import { requestSelectMode, useSelectModeActive } from '@/components/task-table/select-mode.store';
 import type { QuickFilter } from '@/components/task-table/TaskQuickFilters';
@@ -57,9 +57,12 @@ const ACTIVE_LABEL_KEY: Record<Exclude<QuickFilter, 'none'>, KeyOf<'tasks'>> = {
   collaboration: 'table.quickFilter.collaboration',
 };
 
-/** Au-dessus : c'est un clavier. En dessous de l'autre : il est replié. */
-const KEYBOARD_OPEN_PX = 120;
-const KEYBOARD_CLOSED_PX = 60;
+/**
+ * Montée du viewport visuel, AU-DESSUS de sa valeur au repos, à partir de
+ * laquelle on tient un clavier pour ouvert. Relatif, jamais absolu : la valeur
+ * au repos vaut 0 sur un émulateur et ~60 à 100 px dans Safari iOS.
+ */
+const KEYBOARD_LIFT_PX = 80;
 
 const MobileTaskSearch: React.FC<Props> = ({ searchTerm, onSearchTermChange }) => {
   const { t } = useT('tasks');
@@ -80,27 +83,44 @@ const MobileTaskSearch: React.FC<Props> = ({ searchTerm, onSearchTermChange }) =
     initialFocusRef: inputRef,
   });
 
+  // ── Ligne de base du viewport visuel ────────────────────────────────
+  //
+  // 🔴 Mesurée À L'OUVERTURE, sur l'appareil, clavier encore fermé. Elle vaut
+  // 0 sur un émulateur et ~60 à 100 px dans Safari iOS, dont la barre d'outils
+  // rogne déjà le viewport visuel. Une première version comparait la mesure
+  // brute à des constantes (« > 60 = clavier ouvert ») : verte ici, fausse sur
+  // un vrai téléphone, où le champ flottait et où replier le clavier ne
+  // refermait plus rien.
+  //
+  // ⚠️ Lue par `measureKeyboardInset()`, PAS dans l'état du hook : celui-ci ne
+  // publie sa première valeur qu'après son effet, donc il vaut encore 0 à
+  // l'instant où l'overlay s'ouvre. Mesuré : ligne de base à 0 au lieu de 90,
+  // donc un repos pris pour un clavier, donc le champ posé 90 px trop haut
+  // dès l'ouverture.
+  const restingInset = useRef(0);
+  useEffect(() => {
+    if (open) restingInset.current = measureKeyboardInset();
+  }, [open]);
+
+  const keyboardUp = keyboardInset - restingInset.current > KEYBOARD_LIFT_PX;
+
   // ── Le clavier se referme, la recherche aussi (modèle Notes) ────────
   //
-  // Sur iOS, replier le clavier depuis sa propre touche ne rend AUCUN
-  // évènement au champ : ni `blur`, ni `keydown`. Le seul signal est le
-  // viewport visuel qui reprend sa hauteur — celui-là même qui sert déjà à
-  // coller le champ au clavier.
+  // Le signal est le champ qui PERD LE FOCUS : la touche « OK » de la barre
+  // d'accessoires iOS, comme le repli du clavier, le déclenchent. Le viewport
+  // visuel ne sert plus qu'à placer le champ — le faire arbitrer la fermeture
+  // demandait de savoir à quelle hauteur repose un appareil qu'on n'a pas.
   //
-  // ⚠️ Deux seuils, pas un : un `> 0` prendrait pour un clavier la barre
-  // d'outils du navigateur (~60 px sur Safari iOS), et refermerait l'overlay
-  // dès son ouverture. Et on n'arme la fermeture qu'APRÈS avoir vu un vrai
-  // clavier : sans cette mémoire, un appareil qui n'en montre jamais (souris,
-  // clavier physique, émulateur) fermerait l'overlay au premier rendu.
-  const keyboardWasOpen = useRef(false);
-  useEffect(() => {
-    if (!open) {
-      keyboardWasOpen.current = false;
-      return;
-    }
-    if (keyboardInset > KEYBOARD_OPEN_PX) keyboardWasOpen.current = true;
-    else if (keyboardWasOpen.current && keyboardInset < KEYBOARD_CLOSED_PX) close();
-  }, [open, keyboardInset, close]);
+  // ⚠️ Un `blur` nu rendrait les suggestions INTOUCHABLES : sur un appui, le
+  // champ perd le focus AVANT que le `click` n'atteigne la ligne. D'où le
+  // garde `pointerInPanel`, posé au `pointerdown` n'importe où dans le
+  // panneau et levé après coup : pendant un appui, le blur ne ferme rien, et
+  // c'est le gestionnaire de la ligne qui décide.
+  const pointerInPanel = useRef(false);
+  const handleBlur = () => {
+    if (pointerInPanel.current) return;
+    close();
+  };
 
   const pick = (suggestion: Suggestion) => {
     if (suggestion.kind === 'select') requestSelectMode();
@@ -191,13 +211,16 @@ const MobileTaskSearch: React.FC<Props> = ({ searchTerm, onSearchTermChange }) =
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 16 }}
               transition={{ duration: 0.2 }}
+              onPointerDownCapture={() => { pointerInPanel.current = true; }}
+              onPointerUp={() => { window.setTimeout(() => { pointerInPanel.current = false; }, 0); }}
+              onPointerCancel={() => { pointerInPanel.current = false; }}
               className="md:hidden fixed inset-x-0 bottom-0 z-50 flex flex-col gap-3 px-gutter pt-3"
               // Clavier ouvert : le champ se pose DESSUS, sans gouttière — la
               // zone sûre est déjà couverte par le clavier, l'ajouter creusait
               // une bande vide entre les deux. Clavier replié : gouttière
               // normale + zone sûre.
               style={{
-                paddingBottom: keyboardInset > KEYBOARD_CLOSED_PX
+                paddingBottom: keyboardUp
                   ? `${keyboardInset}px`
                   : 'calc(env(safe-area-inset-bottom) + 0.75rem)',
               }}
@@ -254,6 +277,7 @@ const MobileTaskSearch: React.FC<Props> = ({ searchTerm, onSearchTermChange }) =
                     value={searchTerm}
                     onChange={(e) => onSearchTermChange(e.target.value)}
                     onKeyDown={(e) => { if (e.key === 'Enter') close(); }}
+                    onBlur={handleBlur}
                     placeholder={t('filter.searchPlaceholder')}
                     aria-label={t('filter.searchByName')}
                     className="w-full h-12 rounded-full border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] pl-11 pr-4 text-label text-[rgb(var(--color-text-primary))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))]"
