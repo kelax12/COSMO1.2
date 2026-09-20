@@ -84,5 +84,18 @@
   "withFriends": "Ont ≥1 ami",
   "withFriendsHint": "{{count}} comptes ({{pct}})",
   "providerHint": "{{count}} comptes ({{pct}})",
-  "activeToday": "Actifs aujourd'hui"
+  "activeToday": "Actifs aujourd'hui",
+  "support": "Support",
+  "supportNote": "Rapports de bug reçus. Un canal qu'on n'instrumente pas ne se distingue pas d'un canal que personne n'utilise.",
+  "supportNotInstalled": "Compteur non installé : la migration 150 n'est pas appliquée en production.",
+  "supportLoading": "Lecture des compteurs…",
+  "supportNone": "Aucun rapport reçu depuis la pose du compteur.",
+  "supportReceived": "Reçus",
+  "supportReceived30d": "30 derniers jours",
+  "supportAwaiting": "Sans réponse",
+  "supportResolved": "Résolus",
+  "supportOldest": "Le plus ancien sans réponse attend depuis {{days}} jour(s).",
+  "supportAllAnswered": "Tous les rapports ont reçu une réponse.",
+  "supportMedian": "Délai médian de première réponse : {{hours}} h.",
+  "supportNoResponseRecorded": "Aucune date de réponse enregistrée : elle se pose à la main, la réponse partant d'une boîte mail."
 }

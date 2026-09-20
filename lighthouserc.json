@@ -1,4 +1,16 @@
 {
+  "_comment": [
+    "C-84 · La liste d'URL est passée de 4 à 8 le 2026-09-20, et elle est CHIFFRÉE :",
+    "8 URLs sur les 40 <loc> du sitemap, choisies pour couvrir chaque GABARIT une",
+    "fois plutôt que pour couvrir beaucoup de pages. Une neuvième page de blog ne",
+    "mesurerait rien de neuf ; la home anglaise, elle, n'avait jamais été mesurée",
+    "alors qu'elle est indexable depuis C-20. Coût : 8 URLs × 2 runs = 16 mesures",
+    "desktop, plus 8 mesures mobile (lighthouserc.mobile.json, numberOfRuns 1).",
+    "Les gabarits couverts : home fr, home en, guide, index blog, ARTICLE de blog,",
+    "cas d'usage, page entreprise (le sujet de C-68), page éditoriale longue.",
+    "❌ Ne pas retirer /en/ pour gagner du temps de job : c'est la seule mesure",
+    "continue de la moitié anglaise du site."
+  ],
   "ci": {
     "collect": {
       "staticDistDir": "dist",
@@ -7,7 +19,11 @@
         "http://localhost/",
         "http://localhost/guide/",
         "http://localhost/blog/",
-        "http://localhost/pour-freelances/"
+        "http://localhost/blog/methode-okr-exemples/",
+        "http://localhost/pour-freelances/",
+        "http://localhost/entreprise-presentation/",
+        "http://localhost/a-propos/",
+        "http://localhost/en/"
       ],
       "settings": {
         "preset": "desktop",

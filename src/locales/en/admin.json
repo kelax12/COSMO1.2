@@ -84,5 +84,18 @@
   "withFriends": "Have ≥1 friend",
   "withFriendsHint": "{{count}} accounts ({{pct}})",
   "providerHint": "{{count}} accounts ({{pct}})",
-  "activeToday": "Active today"
+  "activeToday": "Active today",
+  "support": "Support",
+  "supportNote": "Bug reports received. A channel you do not instrument looks exactly like a channel nobody uses.",
+  "supportNotInstalled": "Counter not installed: migration 150 has not been applied in production.",
+  "supportLoading": "Reading the counters…",
+  "supportNone": "No report received since the counter was installed.",
+  "supportReceived": "Received",
+  "supportReceived30d": "Last 30 days",
+  "supportAwaiting": "Unanswered",
+  "supportResolved": "Resolved",
+  "supportOldest": "The oldest unanswered report has been waiting {{days}} day(s).",
+  "supportAllAnswered": "Every report has had a reply.",
+  "supportMedian": "Median time to first reply: {{hours}} h.",
+  "supportNoResponseRecorded": "No reply date recorded: it is set by hand, since the reply goes out from a mailbox."
 }

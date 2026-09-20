@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 // ═══════════════════════════════════════════════════════════════════
 // check-rls-advisors.mjs — garde CI sur les invariants RLS documentés
 //

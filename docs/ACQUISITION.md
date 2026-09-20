@@ -1,3 +1,31 @@
+<!-- note-audit: non-note -->
+<!--
+  🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
+  Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
+  ni baisser, donc **rien ne signalait qu'ils avaient vieilli**.
+  Chaque document de `docs/` déclare donc soit sa note, soit la note qui le
+  couvre, soit qu'il n'est pas noté ET pourquoi.
+  ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
+     une réponse honnête, un chiffre faux ne l'est pas.
+-->
+> **Note d'audit** — **NON NOTÉ** : aucun audit du domaine acquisition n'a jamais été fait. Ses chiffres sont gardés autrement — `npm run check:acquisition` échoue quand ils dépassent 45 jours (C-101).
+
+<!-- chiffres-remesures: 2026-09-14 -->
+<!--
+  🔴 C-101 · CE MARQUEUR EST LU PAR `npm run check:acquisition`, qui ÉCHOUE
+  au-delà de 45 jours. Il porte la date de la dernière REMESURE DES CHIFFRES
+  contre la production, et rien d'autre.
+
+  ❌ Ne pas le confondre avec les autres dates de ce document. La garde a
+  d'abord été écrite pour prendre « la date la plus récente citée quelque
+  part » : elle trouvait alors le 2026-09-20 d'une note sur une migration, et
+  déclarait les chiffres frais alors qu'ils dataient du 09-14. Une garde qui
+  prend la première date venue répond sans mesurer.
+
+  ❌ Ne JAMAIS avancer cette date sans avoir rejoué les compteurs :
+       SUPABASE_ACCESS_TOKEN=… node scripts/check-acquisition.mjs --live
+-->
+
 # Acquisition — instrumentation, chiffres réels et runbook
 
 **Audit du 2026-08-14**, mesuré directement en prod (`ykeugqfgklejcdbrmawy`) et dans le code.

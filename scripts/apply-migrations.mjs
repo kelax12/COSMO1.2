@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 // ═══════════════════════════════════════════════════════════════════
 // apply-migrations.mjs — applique supabase/migration/*.sql DANS L'ORDRE
 // contre une base Postgres (DATABASE_URL).

@@ -134,3 +134,8 @@ graphify-out/
 full-run.txt
 .deploy-tmp/
 .impeccable/
+
+# C-82 — rapport de couverture de l outillage (scripts/), config jumelle
+# vitest.tooling.config.ts. Meme raison que `coverage/` : c est un artefact.
+coverage-tooling
+.lighthouseci-mobile

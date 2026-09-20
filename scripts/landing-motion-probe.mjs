@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 // ═══════════════════════════════════════════════════════════════════
 // Ce qu'une page coute AU REPOS — harnais de l'audit A-8.
 //

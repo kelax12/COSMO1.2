@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 // ═══════════════════════════════════════════════════════════════════
 // i18n-check.mjs — garde CI sur les catalogues de traduction
 //

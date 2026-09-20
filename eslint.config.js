@@ -12,7 +12,31 @@ export default tseslint.config(
   // dans un `e2e/fixtures.ts` de worktree, que le motif `e2e/**` ne couvre pas
   // une fois prefixe. La regle du depot est « 0 erreur avant chaque commit » :
   // une sortie polluee par le travail des autres la rend inapplicable.
-  { ignores: ['dist', 'coverage', 'src/__test__/**', 'src/components/showcase/**', 'e2e/**', 'playwright.config.ts', '.agents/**', '.claude/**', '.worktrees/**'] },
+  // ═══ C-102 · CE QUI ÉTAIT HORS DE TOUT INVARIANT D'IMPORT ═══════
+  //
+  // 🔴 Jusqu'au 2026-09-20, cette ligne ignorait `e2e/**` et
+  // `src/components/showcase/**`, et `supabase/functions/**` n'était couvert
+  // par aucun `files:`. Trois arbres entiers hors de TOUTES les règles du
+  // tableau d'`ARCHITECTURE.md` : pas d'alias `@/` imposé, pas de
+  // `no-empty`, pas de `no-unused-vars`. Le troisième est le code qui déplace
+  // de l'argent.
+  //
+  // LA DETTE, MESURÉE avant de retirer l'exclusion, et elle est petite :
+  //   · `e2e/`                     1 erreur, 0 avertissement
+  //   · `src/components/showcase/` 0 erreur, 1 avertissement
+  //   · `supabase/functions/`      0 erreur, 0 avertissement (15 fichiers)
+  // L'unique erreur est un FAUX POSITIF de `react-hooks/rules-of-hooks` sur la
+  // fixture Playwright `e2e/fixtures.ts`, où `use` est le paramètre de
+  // `base.extend` — rien à voir avec le hook React `use`. Elle est traitée par
+  // le bloc dédié plus bas, qui désarme les règles React sur un arbre qui n'a
+  // pas de React, et non par une entrée d'allowlist.
+  //
+  // ⚠️ `.worktrees/**` RESTE exclu, et ce n'est pas la même chose : ce dépôt
+  // travaille à plusieurs sessions, chacune dans son arbre, et `npm run lint`
+  // lancé à la racine rendait les erreurs des arbres VOISINS. La règle
+  // « 0 erreur avant chaque commit » devient inapplicable quand la sortie est
+  // polluée par le travail des autres.
+  { ignores: ['dist', 'coverage', 'coverage-tooling', 'src/__test__/**', '.agents/**', '.claude/**', '.worktrees/**'] },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ['**/*.{ts,tsx}'],
@@ -87,6 +111,57 @@ export default tseslint.config(
           ],
         },
       ],
+    },
+  },
+
+  // ── C-102 · l'arbre Playwright : du Node, pas du React ────────────
+  //
+  // 🔴 `react-hooks/rules-of-hooks` y produit un FAUX POSITIF structurel :
+  // `base.extend({ demoPage: async ({ page }, use) => …})` appelle `use()`, le
+  // paramètre de la fixture, et la règle y lit le hook React `use`. Ce n'est
+  // pas une dispense de confort — la règle ne peut pas être vraie ici, il n'y
+  // a pas un composant React dans cet arbre.
+  //
+  // ❌ Ne pas désarmer autre chose : `no-unused-vars`, `no-empty` et l'alias
+  //    `@/` s'appliquent à `e2e/` comme au reste, et y passent déjà.
+  //
+  // `globals.node` : ces fichiers tournent sous Node (`process.env.CI`,
+  // `__dirname`), pas dans un navigateur.
+  {
+    files: ['e2e/**/*.ts', 'playwright.config.ts'],
+    languageOptions: {
+      globals: { ...globals.node, ...globals.browser },
+    },
+    rules: {
+      'react-hooks/rules-of-hooks': 'off',
+      'react-refresh/only-export-components': 'off',
+    },
+  },
+
+  // ── C-102 · les Edge Functions : du Deno ──────────────────────────
+  //
+  // Elles n'étaient couvertes par aucun `files:` — ni ignorées, ni lintées :
+  // le silence le plus discret des trois. Mesuré à leur entrée : 15 fichiers,
+  // 0 erreur, 0 avertissement. Elles entrent donc SANS dette.
+  //
+  // ⚠️ `Deno` est déclaré en global : sans lui, une règle qui s'appuierait sur
+  // `no-undef` accuserait chaque fichier. `globals.node` n'est PAS posé — ces
+  // modules ne tournent pas sous Node, et laisser croire le contraire ferait
+  // passer un `process.env` pour légitime alors qu'il est vide en Deno.
+  //
+  // ⚠️ L'alias `@/` ne vaut pas ici : ces fonctions vivent hors de `src/` et
+  // importent leurs voisines en relatif (`../_shared/alert.ts`). La règle
+  // `no-restricted-imports` de `src/` ne les vise pas, ses motifs étant écrits
+  // pour l'arborescence de `src/`.
+  {
+    files: ['supabase/functions/**/*.ts'],
+    languageOptions: {
+      globals: { Deno: 'readonly' },
+    },
+    rules: {
+      'react-hooks/rules-of-hooks': 'off',
+      'react-hooks/exhaustive-deps': 'off',
+      'react-refresh/only-export-components': 'off',
     },
   }
 );

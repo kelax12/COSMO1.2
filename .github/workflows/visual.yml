@@ -1,0 +1,181 @@
+# ══════════════════════════════════════════════════════════════════
+# C-95 — RÉGRESSION VISUELLE : quatre thèmes, états vides et d'erreur
+# ══════════════════════════════════════════════════════════════════
+#
+# 🔴 L'ANGLE MORT LE PLUS LARGE d'`UI-PATTERNS.md`. Rien ne voit un écran qui
+# se déforme tant qu'aucun test fonctionnel ne casse. Et le produit a QUATRE
+# thèmes dont les parcours e2e n'en jouent qu'UN — alors que la classe de bug
+# du 2026-07-23 (dix-sept fichiers aux couleurs codées en dur) vient
+# exactement de là : `.dark` est posée pour `sombre`, `gris` ET `noir`, donc
+# un thème testé n'en teste pas trois.
+#
+# ── LE BOOTSTRAP, ET POURQUOI IL EST ÉCRIT ICI ─────────────────────
+#
+# Une garde visuelle a besoin de RÉFÉRENCES, et les références n'existent pas
+# avant le premier run. Trois façons de s'en sortir, deux mauvaises :
+#
+#   ❌ les produire sur un poste de développement — le rendu des polices
+#      diffère entre Windows et Linux bien au-delà du seuil de tolérance, la
+#      CI serait rouge sur CHAQUE capture, et la réponse serait de désarmer
+#      la garde ;
+#   ❌ laisser le job rouge jusqu'à ce que quelqu'un y pense — un rouge
+#      permanent finit ignoré, et il rend muets les jobs voisins ;
+#   ✅ LES PRODUIRE ICI, sur `main`, au premier run, et les COMMITER.
+#
+# ⚠️ CE QUE CE BOOTSTRAP NE GARANTIT PAS, et il faut le dire : la première
+# référence fige l'écran TEL QU'IL EST, défauts compris. Elle ne dit pas que
+# l'écran est juste, elle dit qu'à partir de maintenant on saura qu'il a
+# changé. C'est la nature de cette famille de gardes, pas une faiblesse de
+# celle-ci.
+#
+# ── COMMENT LIRE UN ROUGE ───────────────────────────────────────────
+#
+# Il dit « ça a changé », jamais « c'est cassé ». Trois suites, à choisir
+# explicitement :
+#   1. changement VOULU → `Run workflow` avec `regenerer = true`, et dire
+#      dans le commit ce qui a changé et pourquoi ;
+#   2. changement NON VOULU → c'est une régression, corriger le produit ;
+#   3. BRUIT de rendu → discuter le seuil (`maxDiffPixelRatio`, justifié dans
+#      l'en-tête du spec), et surtout pas écraser la référence.
+# ❌ Ne JAMAIS régénérer « pour faire passer la CI » : on efface alors la
+#    seule trace de ce qui a bougé.
+#
+# Les rapports (images attendues, obtenues, et leur diff) sont téléversés en
+# artefact à chaque échec : c'est là qu'on regarde avant de décider.
+# ══════════════════════════════════════════════════════════════════
+name: Visual
+
+on:
+  pull_request:
+    branches: [main]
+    # Uniquement quand quelque chose de VISIBLE bouge. Une garde visuelle qui
+    # tourne sur un changement de script CI coûte du temps sans jamais rien
+    # dire.
+    paths:
+      - 'src/**'
+      - 'e2e/visual-regression.spec.ts'
+      - 'playwright.config.ts'
+      - 'tailwind.config.js'
+      - 'index.html'
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      regenerer:
+        description: 'Régénérer les références et les committer (changement VOULU uniquement)'
+        type: boolean
+        required: false
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: visual-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  captures:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      # Nécessaire au bootstrap et à la régénération, qui committent les
+      # références. Le job n'écrit QUE dans `e2e/__screenshots__/`, et le
+      # commit le dit.
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - run: npm ci
+      - name: Installer Chromium
+        run: npx playwright install --with-deps chromium
+
+      # Le project `visual` dépend de `mobile-safari-warmup`, qui paie la
+      # compilation à froid de Vite une fois, sous un nom qui le dit. Il
+      # tourne en Desktop Chrome ici : WebKit n'est donc pas installé, et le
+      # warmup ne le demande pas — il ne fait qu'ouvrir la landing.
+      - name: Existe-t-il des references ?
+        id: ref
+        run: |
+          set -euo pipefail
+          if [ -d e2e/__screenshots__/linux ] && [ -n "$(ls -A e2e/__screenshots__/linux 2>/dev/null)" ]; then
+            echo "existent=true" >> "$GITHUB_OUTPUT"
+            echo "$(ls e2e/__screenshots__/linux | wc -l) reference(s) presente(s)."
+          else
+            echo "existent=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=visual::Aucune reference : bootstrap."
+          fi
+
+      # ── Comparer ──────────────────────────────────────────────────
+      - name: Comparer aux references
+        if: ${{ steps.ref.outputs.existent == 'true' && !inputs.regenerer }}
+        run: |
+          set -o pipefail
+          if npx playwright test --project=visual 2>&1 | tee visual.log; then
+            {
+              echo '### Regression visuelle — aucun ecart'
+              echo ''
+              echo '```'
+              tail -n 15 visual.log
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          {
+            echo '### ✖ Un ecran a CHANGE'
+            echo ''
+            echo 'Un rouge ici dit « ca a change », jamais « c est casse ». Ouvrir'
+            echo 'l artefact `visual-report` pour voir attendu / obtenu / diff, PUIS decider :'
+            echo 'regression a corriger, changement voulu a regenerer, ou bruit de rendu.'
+            echo ''
+            echo '```'
+            tail -n 60 visual.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          tail -n 20 visual.log | while IFS= read -r LIGNE; do
+            echo "::error title=visual::${LIGNE}"
+          done
+          exit 1
+
+      # ── Produire ou régénérer ─────────────────────────────────────
+      - name: Produire les references
+        if: ${{ steps.ref.outputs.existent == 'false' || inputs.regenerer }}
+        run: |
+          set -o pipefail
+          # ⚠️ Deux passes. `--update-snapshots` ÉCRIT les références ; la
+          # seconde passe les COMPARE, et c'est elle qui prouve qu'elles sont
+          # reproductibles. Sans ça, on committerait des références qu'un
+          # second run ne saurait pas reproduire — une garde rouge dès le
+          # lendemain, donc désarmée la semaine suivante.
+          npx playwright test --project=visual --update-snapshots 2>&1 | tee visual.log
+          echo '--- seconde passe : les references sont-elles reproductibles ? ---'
+          npx playwright test --project=visual 2>&1 | tee -a visual.log
+
+      - name: Commiter les references
+        if: ${{ (steps.ref.outputs.existent == 'false' || inputs.regenerer) && github.ref == 'refs/heads/main' }}
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- e2e/__screenshots__; then
+            echo "Aucune reference modifiee."
+            exit 0
+          fi
+          git config user.name  'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git add e2e/__screenshots__
+          COMBIEN=$(git diff --cached --name-only | wc -l)
+          git commit -m "chore(visual): ${COMBIEN} reference(s) de capture (C-95)"
+          git pull --rebase --autostash
+          git push
+
+      - name: Rapport Playwright
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: visual-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7

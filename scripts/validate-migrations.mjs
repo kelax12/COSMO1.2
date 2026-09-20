@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 // ═══════════════════════════════════════════════════════════════════
 // validate-migrations.mjs — garde CI statique sur supabase/migration/*.sql
 //

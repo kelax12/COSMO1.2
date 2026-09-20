@@ -1,0 +1,112 @@
+{
+  "_comment": [
+    "C-99 — plancher de VOLUME de texte indexable, par page et par locale.",
+    "Écrit par `node scripts/check-i18n-pages.mjs --pages --update`.",
+    "🔴 Ne JAMAIS baisser un nombre pour faire passer la CI : une page qui",
+    "maigrit est soit une traduction perdue, soit une décision éditoriale —",
+    "et une décision se recale explicitement, en sachant ce qu on recale."
+  ],
+  "pose_le": "2026-09-20",
+  "pages": {
+    "/": {
+      "en": 692,
+      "fr": 722
+    },
+    "/a-propos/": {
+      "fr": 517,
+      "en": 492
+    },
+    "/blog/": {
+      "fr": 563,
+      "en": 526
+    },
+    "/blog/combien-de-temps-prendre-habitude/": {
+      "fr": 1024,
+      "en": 991
+    },
+    "/blog/cosmo-vs-todoist/": {
+      "fr": 1028,
+      "en": 970
+    },
+    "/blog/gestion-du-temps-efficace/": {
+      "fr": 1212,
+      "en": 1156
+    },
+    "/blog/glossaire-productivite/": {
+      "fr": 795,
+      "en": 760
+    },
+    "/blog/matrice-eisenhower/": {
+      "fr": 864,
+      "en": 796
+    },
+    "/blog/methode-okr-exemples/": {
+      "fr": 1681,
+      "en": 1603
+    },
+    "/blog/okr-vs-smart-vs-kpi/": {
+      "fr": 781,
+      "en": 786
+    },
+    "/blog/suivi-des-habitudes/": {
+      "fr": 1260,
+      "en": 1242
+    },
+    "/blog/tableau-de-bord-productivite/": {
+      "fr": 1231,
+      "en": 1153
+    },
+    "/blog/template-okr-gratuit/": {
+      "fr": 2152,
+      "en": 2090
+    },
+    "/blog/time-blocking-guide/": {
+      "fr": 1257,
+      "en": 1142
+    },
+    "/cgu/": {
+      "fr": 67,
+      "en": 71
+    },
+    "/entreprise-presentation/": {
+      "en": 697,
+      "fr": 711
+    },
+    "/guide/": {
+      "en": 498,
+      "fr": 521
+    },
+    "/login/": {
+      "en": 74,
+      "fr": 74
+    },
+    "/mentions-legales/": {
+      "en": 68,
+      "fr": 67
+    },
+    "/politique-confidentialite/": {
+      "en": 68,
+      "fr": 67
+    },
+    "/pour-equipes/": {
+      "en": 927,
+      "fr": 965
+    },
+    "/pour-etudiants/": {
+      "en": 695,
+      "fr": 744
+    },
+    "/pour-freelances/": {
+      "en": 679,
+      "fr": 745
+    },
+    "/pour-managers/": {
+      "en": 689,
+      "fr": 740
+    },
+    "/signup/": {
+      "en": 91,
+      "fr": 87
+    }
+  }
+}

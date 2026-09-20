@@ -1,0 +1,58 @@
+{
+  "_comment": [
+    "C-88 — référence de POSTURE Supabase : advisors de sécurité et réglages",
+    "d'authentification. Se recale par `node scripts/check-supabase-posture.mjs --update`,",
+    "jamais à la main.",
+    "🔴 La garde juge sur un ÉCART à ces valeurs, pas sur un absolu : les 52",
+    "fonctions SECURITY DEFINER exposées à `authenticated` sont un choix",
+    "d'architecture (les helpers RLS en sont, cf. mig. 100). Ce qui doit alerter",
+    "est la 53e, ou une policy qui disparaît.",
+    "❌ Ne jamais relever un compte ici pour faire passer la CI : répondre",
+    "d'abord à la question « quel objet est apparu ? »."
+  ],
+  "pose_le": "2026-09-20",
+  "_securite_source": [
+    "Relevé le 2026-09-20 sur le projet ykeugqfgklejcdbrmawy, par l'API",
+    "Management (advisors/security). Il reproduit le 9 / 52 / 2 / 1 que",
+    "l'audit du 2026-09-14 avait relevé À LA MAIN — c'est précisément ce",
+    "relevé manuel que cette garde remplace."
+  ],
+  "securite": {
+    "rls_enabled_no_policy": {
+      "niveau": "INFO",
+      "compte": 9,
+      "_note": "admin_users, demo_devices, email_lookup_global, email_lookup_quota, payment_closures, payment_records, rate_limits, renewal_notices, user_activity_days. Tables sans policy VOLONTAIREMENT : elles ne sont jamais lues par un client, seulement par service_role ou par une fonction SECURITY DEFINER. RLS activée sans policy = personne ne passe, ce qui est le réglage voulu."
+    },
+    "anon_security_definer_function_executable": {
+      "niveau": "WARN",
+      "compte": 2,
+      "_note": "preview_share_link et record_demo_visit. Les deux sont appelées AVANT connexion par conception (aperçu d'un lien de partage, comptage d'une visite de démo)."
+    },
+    "authenticated_security_definer_function_executable": {
+      "niveau": "WARN",
+      "compte": 52,
+      "_note": "Les helpers RLS et les RPC métier. 🔴 C'est ce compte qu'il faut surveiller : la 53e fonction exposée est celle qu'on n'a pas décidée. ⚠️ Trois d'entre eux (get_subtree, has_subordinates, org_admin_count) ont eu leur EXECUTE révoqué par la mig. 100 pour fermer une fuite inter-organisations : ils ne doivent PAS réapparaître ici."
+    },
+    "auth_leaked_password_protection": {
+      "niveau": "WARN",
+      "compte": 1,
+      "_note": "🔴 La protection contre les mots de passe compromis (HaveIBeenPwned) est DÉSACTIVÉE. Ce n'est pas du code : c'est un interrupteur du Dashboard (Authentication → Attack Protection). Il reste ouvert tant que personne ne le ferme, et cette ligne est ce qui l'empêche d'être oublié."
+    }
+  },
+  "_reglages_auth_source": [
+    "🔴 NON POSÉE. La lecture de `/v1/projects/{ref}/config/auth` exige",
+    "SUPABASE_ACCESS_TOKEN, qui n'est pas disponible sur le poste de",
+    "développement — il vit dans les secrets Actions.",
+    "",
+    "`null` fait ÉCHOUER la garde avec un message unique et une commande à",
+    "jouer, plutôt que de la laisser verte sur un périmètre qu'elle n'a pas",
+    "lu. C'est délibéré : un « ✓ » qui ne couvre que la moitié des réglages",
+    "serait exactement la garde à moitié aveugle que `uptime.yml` a été le",
+    "2026-09-02.",
+    "",
+    "POUR LA POSER, une fois :",
+    "  SUPABASE_ACCESS_TOKEN=… node scripts/check-supabase-posture.mjs --update",
+    "puis COMMITER ce fichier. La garde gate à partir de là."
+  ],
+  "reglages_auth": null
+}

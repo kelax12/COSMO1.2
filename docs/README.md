@@ -1,3 +1,15 @@
+<!-- note-audit: tableau-de-bord -->
+<!--
+  🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
+  Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
+  ni baisser, donc **rien ne signalait qu'ils avaient vieilli**.
+  Chaque document de `docs/` déclare donc soit sa note, soit la note qui le
+  couvre, soit qu'il n'est pas noté ET pourquoi.
+  ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
+     une réponse honnête, un chiffre faux ne l'est pas.
+-->
+> **Note d'audit** — Ce document EST le tableau de bord des notes. Il ne s'en attribue pas une.
+
 # Documentation COSMO — carte
 
 ## 🗺️ Trois niveaux, depuis le 2026-09-16

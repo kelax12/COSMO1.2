@@ -6,10 +6,8 @@
     "showCalendar": "Show the calendar",
     "hideCalendar": "Hide the calendar",
     "openCount_one": "{{count}} task to do",
-    "openCount_many": "{{count}} tasks to do",
     "openCount_other": "{{count}} tasks to do",
     "overdueCount_one": "{{count}} overdue",
-    "overdueCount_many": "{{count}} overdue",
     "overdueCount_other": "{{count}} overdue",
     "overdueFilter_one": "Show the overdue task",
     "overdueFilter_other": "Show the {{count}} overdue tasks"
@@ -147,13 +145,10 @@
     "rescheduleAllBtn": "Reschedule all",
     "colName": "Task name",
     "endOfList_one": "end of list · {{count}} task",
-    "endOfList_many": "end of list · {{count}} tasks",
     "endOfList_other": "end of list · {{count}} tasks",
     "endOfListCompleted_one": "end of list · {{count}} completed task",
-    "endOfListCompleted_many": "end of list · {{count}} completed tasks",
     "endOfListCompleted_other": "end of list · {{count}} completed tasks",
     "seeCompleted_one": "See the completed task",
-    "seeCompleted_many": "See the {{count}} completed",
     "seeCompleted_other": "See the {{count}} completed",
     "selectTaskAria": "Select “{{name}}”",
     "deselectTaskAria": "Deselect “{{name}}”"
@@ -372,7 +367,6 @@
     "add": "Add a dependency",
     "remove": "Remove this dependency",
     "blockedWarning_one": "Waiting on {{count}} unfinished task",
-    "blockedWarning_many": "Waiting on {{count}} unfinished tasks",
     "blockedWarning_other": "Waiting on {{count}} unfinished tasks",
     "helpBlockedBy": "The selected tasks will have to be finished before this one.",
     "helpBlocks": "This one will have to be finished before the selected tasks.",
@@ -383,10 +377,8 @@
     "wouldCycle": "Would create a loop",
     "addEmpty": "Add",
     "addCount_one": "Add {{count}} dependency",
-    "addCount_many": "Add {{count}} dependencies",
     "addCount_other": "Add {{count}} dependencies",
     "added_one": "{{count}} dependency added",
-    "added_many": "{{count}} dependencies added",
     "added_other": "{{count}} dependencies added",
     "createNew": "Create a task",
     "createName": "Task name",
@@ -444,7 +436,6 @@
   },
   "bulk": {
     "deleteCount_one": "Delete {{count}} task",
-    "deleteCount_many": "Delete {{count}} tasks",
     "deleteCount_other": "Delete {{count}} tasks"
   },
   "snooze": {

@@ -27,6 +27,14 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   workers: 1,
   reporter: [['list'], ['html', { open: 'never' }]],
+  // 🔴 C-95 · LES RÉFÉRENCES VISUELLES SONT PAR PLATEFORME, et c'est le
+  // réglage sans lequel la garde ne peut pas exister. Le rendu des polices
+  // diffère entre Windows et Linux bien au-delà du seuil de tolérance : une
+  // référence produite sur un poste de développement rendrait le job CI rouge
+  // sur CHAQUE capture, et la réponse serait de désarmer la garde.
+  // Seules les références `linux` comptent ; elles sont produites par la CI
+  // (`.github/workflows/visual.yml`).
+  snapshotPathTemplate: '{testDir}/__screenshots__/{platform}/{arg}{ext}',
   use: {
     // baseURL aligné sur le script `npm start` (port 3000 réseau)
     // pour réutiliser un dev server existant sans en redémarrer un.
@@ -66,7 +74,20 @@ export default defineConfig({
       // ⚠️ `_warmup-mobile` est le prealable de chauffe de `mobile-safari`, pas
       // un test du produit. L'inclure ici gonflerait le compte de ce project
       // d'un cas qui ne mesure rien, et ferait payer deux fois la meme chauffe.
-      testIgnore: ['**/stubbed/**', '**/_warmup-mobile.spec.ts'],
+      testIgnore: [
+        '**/stubbed/**',
+        '**/_warmup-mobile.spec.ts',
+        // C-97 : specs qui n'ont de sens que sur un appareil mobile emule
+        // (paysage, texte agrandi, CPU bride). Les jouer en Desktop Chrome
+        // mesurerait un viewport de bureau sous un nom qui dit « mobile ».
+        '**/mobile-android.spec.ts',
+        // C-95 : la regression visuelle a son PROPRE project (`visual`), pour
+        // deux raisons. Ses references sont lourdes et par plateforme, donc
+        // elle ne doit tourner que la ou on sait les regenerer ; et un rouge
+        // visuel ne veut pas dire la meme chose qu'un rouge fonctionnel — le
+        // melanger aux parcours rendrait le job `e2e` illisible.
+        '**/visual-regression.spec.ts',
+      ],
       use: { ...devices['Desktop Chrome'] },
     },
     // ─── Le prealable de chauffe, avant les parcours WebKit ─────────
@@ -109,6 +130,11 @@ export default defineConfig({
         '**/stubbed/**',
         '**/demo-calendar.spec.ts',
         '**/demo-task-dependencies.spec.ts',
+        // C-97 : ce spec bride le CPU par CDP (`Emulation.setCPUThrottlingRate`),
+        // un protocole que WebKit n'expose pas. Il appartient a `mobile-chrome`.
+        '**/mobile-android.spec.ts',
+        // C-95 : project `visual`, cf. son commentaire dans `chromium`.
+        '**/visual-regression.spec.ts',
         // Son propre prealable : joue par le project `mobile-safari-warmup`,
         // dont celui-ci depend. L'inclure ici le rejouerait en plein milieu.
         '**/_warmup-mobile.spec.ts',
@@ -116,6 +142,97 @@ export default defineConfig({
       dependencies: ['mobile-safari-warmup'],
       use: { ...devices['iPhone 12'] },
     },
+    // ═══ C-95 · RÉGRESSION VISUELLE ════════════════════════════════
+    //
+    // 🔴 POURQUOI UN PROJECT À PART, et pas quelques cas dans `chromium` :
+    //   · ses références sont des IMAGES, lourdes et PAR PLATEFORME. Une
+    //     référence produite sous Windows ne vaut rien pour un runner Linux,
+    //     les polices n'étant pas les mêmes (cf. `snapshotPathTemplate`) ;
+    //   · un rouge visuel ne veut pas dire la même chose qu'un rouge
+    //     fonctionnel : le premier dit « ça a changé », le second « c'est
+    //     cassé ». Les mêler rendrait le job `e2e` illisible, et une garde
+    //     illisible finit désarmée.
+    //
+    // ⚠️ `deviceScaleFactor: 1` explicite : un facteur non entier fabrique du
+    // bruit sub-pixel à chaque capture, et c'est la première cause de garde
+    // visuelle abandonnée.
+    {
+      name: 'visual',
+      testMatch: '**/visual-regression.spec.ts',
+      dependencies: ['mobile-safari-warmup'],
+      use: {
+        ...devices['Desktop Chrome'],
+        viewport: { width: 1280, height: 800 },
+        deviceScaleFactor: 1,
+      },
+    },
+
+    // ═══ C-97 · ANDROID, PAYSAGE, TEXTE AGRANDI, CPU BRIDÉ ══════════
+    //
+    // 🔴 CE QUI MANQUAIT, vérifié le 2026-09-20 : un seul modèle de téléphone
+    // (iPhone 12), un seul moteur (WebKit), aucun Android. Or Chrome Android
+    // est le premier navigateur mobile du marché, et rien de ce que le dépôt
+    // mesure en mobile ne tournait dessus. Ni paysage, ni grande taille de
+    // police système, ni CPU bridé.
+    //
+    // ⚠️ LE BRIDAGE CPU EST LE POINT QUI COMPTE, et c'est lui qui impose le
+    // moteur. C-68 (fil principal bloqué 3 637 ms sur 4 000) a été trouvé À LA
+    // MAIN parce qu'aucun project ne bride quoi que ce soit : un émulateur qui
+    // tourne à pleine vitesse sur un runner ne reverra jamais cette classe de
+    // défaut. `Emulation.setCPUThrottlingRate` passe par CDP, que seul
+    // Chromium expose — c'est donc `mobile-chrome`, et pas `mobile-safari`,
+    // qui peut porter ce cas. Les deux projects ne sont pas redondants : ils
+    // répondent à deux questions différentes.
+    //
+    // ⚠️ CE QUE CE PROJECT NE FAIT PAS : il ne rejoue PAS toute la suite sur
+    // un second moteur. Il joue `mobile-android.spec.ts`, plus les deux specs
+    // qui mesurent une propriété du RENDU mobile et non un parcours
+    // (`touch-targets`, `reduced-motion-sheets`). Rejouer les ~40 parcours de
+    // démo une troisième fois tripleraient le job `e2e` pour re-mesurer des
+    // sélecteurs identiques ; le coût s'écrit ici plutôt que de se cacher
+    // derrière un `--project` de plus.
+    //
+    // Même préalable de chauffe que `mobile-safari`, et pour la même raison :
+    // le coût de compilation à froid de Vite tombe sinon entièrement sur le
+    // premier cas exécuté.
+    {
+      name: 'mobile-chrome-warmup',
+      testMatch: '**/_warmup-mobile.spec.ts',
+      use: { ...devices['Pixel 7'] },
+    },
+    {
+      name: 'mobile-chrome',
+      // 🔴 UN SEUL SPEC, ET C'EST UNE DÉCISION MESURÉE, pas un repli.
+      //
+      // La première écriture y ajoutait `touch-targets` et
+      // `reduced-motion-sheets`, pour « rejouer le mobile sur un second
+      // moteur ». Les deux ont été jouées le 2026-09-20, et le résultat
+      // tranche :
+      //
+      //   · `reduced-motion-sheets` : 3 échecs, tous des `locator.click` qui
+      //     expirent. ⚠️ ET CE N'EST PAS UN ARTEFACT DU PIXEL 7 : les MÊMES
+      //     trois cas échouent sur `mobile-safari` dans la CI de `main`
+      //     (run 35532009156, 2026-09-20). Ils sont donc cassés sur les deux
+      //     moteurs mobiles, indépendamment de ce project. Les faire porter
+      //     par un project neuf aurait attribué à C-97 une dette qui ne lui
+      //     appartient pas — ils sont suivis sous **C-111**.
+      //
+      //   · `touch-targets` : 3 échecs — et ils sont VRAIS. Rejoués sous
+      //     `chromium` (même viewport 375 px), ils échouent À L'IDENTIQUE :
+      //     ce sont des défauts du PRODUIT, présents sur `main`, qu'aucun de
+      //     mes changements n'a causés. Les faire porter par ce project neuf
+      //     aurait attribué à C-97 une dette qui ne lui appartient pas.
+      //     Ils sont nommés dans `a-faire-code.md` sous **C-111**, avec leur
+      //     mesure.
+      //
+      // ❌ Ne pas relire cette liste comme « le mobile Android est couvert ».
+      //    Elle couvre ce que WebKit NE PEUT PAS couvrir : le bridage CPU par
+      //    CDP, le paysage et la police système à 200 %.
+      testMatch: ['**/mobile-android.spec.ts'],
+      dependencies: ['mobile-chrome-warmup'],
+      use: { ...devices['Pixel 7'] },
+    },
+
     // ─── Parcours HORS mode démo ────────────────────────────────────
     //
     // Les deux projects ci-dessus passent tous par `e2e/fixtures.ts`, donc par

@@ -1,3 +1,15 @@
+<!-- note-audit: couvert-par=COSMO-CLI.md -->
+<!--
+  🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
+  Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
+  ni baisser, donc **rien ne signalait qu'ils avaient vieilli**.
+  Chaque document de `docs/` déclare donc soit sa note, soit la note qui le
+  couvre, soit qu'il n'est pas noté ET pourquoi.
+  ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
+     une réponse honnête, un chiffre faux ne l'est pas.
+-->
+> **Note d'audit** — Couvert par [`COSMO-CLI.md`](./COSMO-CLI.md) : c'en est le mémo court.
+
 # Ajouter une tâche COSMO — mémo pour une session Claude
 
 Tu peux écrire dans le vrai compte COSMO d'Axel depuis ce dépôt. Doc complète :

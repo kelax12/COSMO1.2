@@ -1,0 +1,95 @@
+# ══════════════════════════════════════════════════════════════════
+# C-106 — la grille STRIPE confrontée au code
+# ══════════════════════════════════════════════════════════════════
+#
+# 🔴 CE QUI MANQUAIT. `org-tiers.parity.test.ts` verrouille la grille du Deno
+# sur celle du TypeScript : DEUX COPIES DU DÉPÔT l'une contre l'autre. Elles
+# peuvent être d'accord et toutes les deux fausses. Rien ne confrontait l'une
+# ou l'autre aux prix réellement enregistrés chez Stripe, vérifiés UNE fois le
+# 2026-08-26.
+#
+# Et le mode de défaillance est SILENCIEUX : la dérivation annuelle refuse de
+# choisir entre deux candidates et rend `yearly_unavailable`. Un DOUBLON de
+# prix — trois clics dans le Dashboard — coupe donc l'encaissement annuel sans
+# rien casser, sans rien logger, et sans qu'un client comprenne pourquoi le
+# bouton ne marche pas.
+#
+# ══════════════════════════════════════════════════════════════════
+# 🔴 CE WORKFLOW N'EST PAS PLANIFIÉ AUJOURD'HUI, ET C'EST UNE DÉCISION
+# ══════════════════════════════════════════════════════════════════
+#
+# Il exige `STRIPE_SECRET_KEY` en secret Actions, et l'énoncé de C-106 le dit :
+# « à poser avec la bascule, pas avant ». La facturation entreprise est
+# DÉSACTIVÉE (décision 2026-08-24 : pas de micro-entreprise), et la production
+# tourne sur une clé Stripe de TEST.
+#
+# Le planifier maintenant produirait un job ROUGE chaque jour sur un secret
+# qu'on a choisi de ne pas poser. Un rouge permanent finit ignoré, et il rend
+# muets les jobs voisins — c'est le mécanisme exact que `ci-alert.yml` existe
+# pour combattre, et qui a laissé `rls-integration` rouge pendant des mois.
+#
+# ⚠️ LE JOUR DE LA BASCULE LIVE, DEUX GESTES, PAS UN :
+#
+#   1. poser `STRIPE_SECRET_KEY` dans Settings → Secrets → Actions ;
+#   2. DÉCOMMENTER le bloc `schedule:` ci-dessous ;
+#   3. ajouter `Grille Stripe` à la liste `workflows:` de `ci-alert.yml`.
+#
+# Le deuxième et le troisième sont ceux qu'on oublie. Ils sont écrits ici, et
+# dans `docs/STRIPE-LIVE.md`, pour cette raison — et parce que ce dépôt a déjà
+# payé un correctif ÉCRIT et jamais mis en service (C-76, C-78).
+#
+# En attendant, « Run workflow » permet de jouer le contrôle à la demande,
+# avec une clé de test : il dira alors lui-même qu'il n'a rien mesuré de la
+# grille live.
+# ══════════════════════════════════════════════════════════════════
+name: Grille Stripe
+
+on:
+  # schedule:
+  #   # À DÉCOMMENTER AVEC LA BASCULE LIVE, en même temps que le secret.
+  #   - cron: '31 7 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  grille:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - run: npm ci
+
+      # 🔴 PAS de `if: secrets.X != ''`. Une garde qui se rend conditionnelle à
+      # la présence de son propre secret ne se protège que quand elle est déjà
+      # protégée. Si ce job tourne, il mesure ou il échoue.
+      - name: Comparer la grille Stripe au code
+        env:
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+        run: |
+          set -o pipefail
+          if npm run check:stripe-prices 2>&1 | tee stripe.log; then
+            {
+              echo '### Grille Stripe'
+              echo ''
+              echo '```'
+              cat stripe.log
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          {
+            echo '### ✖ Grille Stripe'
+            echo ''
+            echo '```'
+            tail -n 60 stripe.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          tail -n 25 stripe.log | while IFS= read -r LIGNE; do
+            echo "::error title=stripe-grille::${LIGNE}"
+          done
+          exit 1

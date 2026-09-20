@@ -58,6 +58,10 @@
     "autoValidation": "Automatic validation",
     "type": "Type",
     "smartRule": "Smart rule",
-    "taskCount": "Task count"
+    "taskCount": "Task count",
+    "icon": "Icon",
+    "parent": "Parent category",
+    "krDurationMin": "KR duration (min)",
+    "krWeight": "KR weight"
   }
 }

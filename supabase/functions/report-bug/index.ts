@@ -190,6 +190,7 @@ Deno.serve(async (req) => {
     description?: unknown
     attachment?: unknown
     context?: unknown
+    category?: unknown
   }
   try {
     payload = await req.json()
@@ -205,6 +206,19 @@ Deno.serve(async (req) => {
   if (description.length < DESCRIPTION_MIN || description.length > DESCRIPTION_MAX) {
     return json({ error: 'invalid_description' }, 400, req)
   }
+
+  // ── C-110 · la CATÉGORIE, seule chose qu'on compte ────────────────
+  //
+  // 🔴 Énumération FERMÉE, et une valeur inconnue retombe sur `other` au lieu
+  // d'être refusée. Le raisonnement : ce champ ne sert qu'à un COMPTEUR, il
+  // n'a aucun effet sur le rapport lui-même, et refuser un signalement de bug
+  // parce que sa catégorie est mal orthographiée serait faire perdre
+  // l'information utile pour protéger la statistique. La contrainte SQL de la
+  // mig. 150, elle, reste stricte : c'est ici qu'on normalise.
+  const CATEGORIES = ['bug', 'idea', 'question', 'other']
+  const category = typeof payload.category === 'string' && CATEGORIES.includes(payload.category)
+    ? payload.category
+    : 'other'
 
   // Pièce jointe — optionnelle, base64 sans préfixe `data:`.
   let attachment: { filename: string; content: string } | null = null
@@ -343,6 +357,35 @@ Deno.serve(async (req) => {
   } catch {
     await opsAlert('report-bug', 'Resend injoignable (timeout ou erreur réseau).')
     return json({ error: 'send_failed' }, 502, req)
+  }
+
+  // ── C-110 · le compteur, APRÈS l'envoi et sans jamais le bloquer ──
+  //
+  // 🔴 L'ORDRE COMPTE, ET L'ISOLATION AUSSI. Le rapport est déjà parti : la
+  // seule chose qui reste est de le COMPTER. Si le compteur échoue, on ne
+  // rend surtout pas une erreur au client — il croirait son signalement
+  // perdu et le renverrait, alors que l'e-mail est bien arrivé. On perd une
+  // statistique, jamais un rapport.
+  //
+  // ⚠️ Ce que cette écriture NE contient PAS : ni `user_id`, ni e-mail, ni
+  // titre, ni description. La table n'a pas ces colonnes, par conception
+  // (mig. 150) — le contenu du rapport vit dans la boîte mail du
+  // destinataire, qui est le seul endroit déclaré au registre art. 30 (T7).
+  // ❌ Ne jamais enrichir cet appel : ce serait créer une seconde copie des
+  //    données de support, hors registre, sans durée ni chemin d'effacement.
+  try {
+    const compteur = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+    )
+    const { error } = await compteur.rpc('record_support_report', { p_category: category })
+    if (error) {
+      // Un `console.error` seul serait invisible : le build de prod drope les
+      // `console.*` côté client, et côté Edge personne ne lit les journaux.
+      await opsAlert('report-bug', 'rapport envoye mais NON COMPTE (record_support_report a echoue)')
+    }
+  } catch {
+    await opsAlert('report-bug', 'rapport envoye mais NON COMPTE (compteur injoignable)')
   }
 
   return json({ ok: true }, 200, req)

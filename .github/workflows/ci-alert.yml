@@ -29,7 +29,30 @@ name: CI alert
 
 on:
   workflow_run:
-    workflows: [CI, Vendor script watch, Edge deploy drift, Migration coverage, Deploy SHA drift]
+    # 🔴 CETTE LISTE EST LA MOITIÉ DU DISPOSITIF. Un workflow qui n'y figure
+    # pas peut rester rouge des semaines sans que personne le sache — c'est
+    # exactement ce qui est arrivé à `rls-integration`, jamais verte depuis sa
+    # création. Les six ajoutés le 2026-09-20 sont ceux du § 12
+    # d'`a-faire-code.md` : ils tournent tous SANS déclencheur humain, donc
+    # leur rouge n'a aucun autre chemin pour se faire voir.
+    # ⚠️ `Grille Stripe` n'y est PAS, et c'est cohérent : il n'est pas encore
+    # planifié (cf. son en-tête). Il y entre AVEC la bascule live.
+    workflows:
+      - CI
+      - Vendor script watch
+      - Edge deploy drift
+      - Migration coverage
+      - Deploy SHA drift
+      - CodeQL
+      - Posture
+      - Sabotages
+      - Visual
+      - scalability-volume
+      - restore-drill
+      # ⚠️ `Uptime` n'y est PAS NON PLUS, et ce n'est pas un oubli : il ouvre
+      # DÉJÀ sa propre issue, qui se referme seule au retour du vert.
+      # L'ajouter ici doublerait chaque panne d'une seconde alerte, et deux
+      # alertes pour un incident apprennent à en ignorer une.
     types: [completed]
   # Exercice à blanc du canal d'alerte, sans casser une garde pour le tester.
   workflow_dispatch:

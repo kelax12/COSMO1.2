@@ -10,6 +10,7 @@ import { PageHeading } from '@/components/ui/typography';
 import { useAuth } from '@/modules/auth/AuthContext';
 import {
   useAdminStats,
+  useSupportStats,
   chooseGranularity,
   fillMissingDays,
   aggregateWeekly,
@@ -123,6 +124,11 @@ const AdminDashboard: React.FC = () => {
   const { t } = useT('admin');
   const { isDemo } = useAuth();
   const { data, isLoading, error } = useAdminStats();
+  // 🔴 REQUÊTE SÉPARÉE (C-110). Elle rend `null` tant que la mig. 150 n'est
+  // pas appliquée, et le reste de la console s'affiche quand même. Le dépôt a
+  // déjà payé l'inverse : la mig. 136 a dormi commitée dix-sept jours pendant
+  // que `/statistics` affichait zéro (C-77).
+  const { data: support } = useSupportStats();
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -397,6 +403,51 @@ const AdminDashboard: React.FC = () => {
         </ChartCard>
         <ChartCard title="Collaboration" note="Le partage de tâches est le levier d'acquisition virale">
           <CountBars data={collabData} />
+        </ChartCard>
+
+        {/* ═══ C-110 · LE SUPPORT, ENFIN COMPTÉ ════════════════════
+          *
+          * 🔴 `report-bug` est en ligne depuis le 2026-09-12 et AUCUN
+          * compteur ne disait si un rapport avait été lu. Un canal de support
+          * qu'on n'instrumente pas ne se distingue pas d'un canal que
+          * personne n'utilise : les deux rendent le même silence, et ils
+          * appellent des décisions opposées.
+          *
+          * ⚠️ TROIS ÉTATS, et il ne faut pas les confondre :
+          *   · `undefined` → la requête n'a pas encore répondu ;
+          *   · `null`      → la mig. 150 n'est pas appliquée. On le DIT, au
+          *                   lieu d'afficher des zéros qui se liraient
+          *                   « aucun rapport » ;
+          *   · des chiffres → et là `awaiting` est le premier à lire.
+          */}
+        <ChartCard title={t('support')} note={t('supportNote')}>
+          {support === null ? (
+            <EmptyChart>{t('supportNotInstalled')}</EmptyChart>
+          ) : support === undefined ? (
+            <EmptyChart>{t('supportLoading')}</EmptyChart>
+          ) : support.received === 0 ? (
+            <EmptyChart>{t('supportNone')}</EmptyChart>
+          ) : (
+            <div className="space-y-3">
+              <CountBars
+                data={[
+                  { label: t('supportReceived'), value: support.received },
+                  { label: t('supportReceived30d'), value: support.received30d },
+                  { label: t('supportAwaiting'), value: support.awaiting },
+                  { label: t('supportResolved'), value: support.resolved },
+                ]}
+              />
+              <p className="text-xs" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+                {support.awaiting > 0
+                  ? t('supportOldest', { days: support.oldestAwaitingDays })
+                  : t('supportAllAnswered')}
+                {' · '}
+                {support.answered > 0
+                  ? t('supportMedian', { hours: support.medianResponseHours })
+                  : t('supportNoResponseRecorded')}
+              </p>
+            </div>
+          )}
         </ChartCard>
 
         <ChartCard title={t('demoConversion')} note={t('demoConversionNote', { pct: demo.visitors > 0 ? `${demo.conversionPct}%` : '·' })}>

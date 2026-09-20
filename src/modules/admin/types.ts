@@ -93,6 +93,31 @@ export interface AdminOrgs {
   with3plusMembers30d: number;
 }
 
+/**
+ * Compteurs du support (C-110, mig. 150).
+ *
+ * 🔴 `awaiting` et `oldestAwaitingDays` sont les deux chiffres qui comptent.
+ * Un volume seul dirait « on reçoit cinq rapports par semaine » sans dire
+ * qu'aucun n'a jamais reçu de réponse — et un canal de support qu'on
+ * n'instrumente pas ne se distingue pas d'un canal que personne n'utilise.
+ *
+ * ⚠️ `answered`, `resolved` et `medianResponseHours` restent à zéro tant que
+ * personne ne pose `first_response_at` : la réponse part d'une boîte mail que
+ * ce dépôt ne lit pas. Un zéro ici veut dire « non renseigné », pas
+ * « instantané ».
+ */
+export interface AdminSupport {
+  received: number;
+  received30d: number;
+  answered: number;
+  resolved: number;
+  awaiting: number;
+  oldestAwaitingDays: number;
+  medianResponseHours: number;
+  byCategory: Record<string, number>;
+  byDay: DailyPoint[];
+}
+
 export interface AdminStats {
   generatedAt: string;
   totals: AdminTotals;
@@ -113,4 +138,12 @@ export interface AdminStats {
   activation48h: AdminActivation48h;
   retentionD7BySource: Record<string, SourceRetention>;
   orgs: AdminOrgs;
+  // ── C-110 (mig. 150) — le support, enfin compté ────────────────────
+  //
+  // ⚠️ `null` tant que la mig. 150 n'est pas APPLIQUÉE en production : la RPC
+  // `get_support_stats` n'existe alors pas, et le dépôt a déjà payé une
+  // migration commitée et dormante pendant dix-sept jours (C-77). Le `null`
+  // est donc une valeur ATTENDUE, que la console affiche comme telle — pas un
+  // zéro, qui se lirait « aucun rapport ».
+  support: AdminSupport | null;
 }

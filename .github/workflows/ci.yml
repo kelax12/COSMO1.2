@@ -71,6 +71,85 @@ jobs:
       - name: Validate RLS invariants
         run: npm run check:rls
 
+      # ═══ LES GARDES POSÉES LE 2026-09-20 (§ 12 d'a-faire-code.md) ═══
+      #
+      # Toutes statiques : aucune ne demande de secret, aucune ne touche au
+      # réseau. Elles tiennent dans le job existant plutôt que d'en ouvrir un,
+      # parce qu'un job de plus est un job de plus à surveiller.
+
+      # C-103 — un cycle d'imports ne casse ni le build ni un test : il rend
+      # un `undefined` à l'exécution, au moment où un module lit l'export d'un
+      # module pas encore évalué. Sept cycles existaient le jour de la pose.
+      - name: Cycles d imports
+        run: npm run check:cycles
+
+      # C-83 — un test supprimé avec le code qu'il gardait ne laisse aucune
+      # trace : le total baisse, et un total qui baisse ne fait rougir rien.
+      - name: Plancher de tests
+        run: npm run check:test-floor
+
+      # C-92 — aucune table portant `user_id` ne peut exister sans décision
+      # d'effacement écrite (RGPD art. 17). Le périmètre est DÉRIVÉ des
+      # migrations, pas recopié.
+      - name: Effacement de compte (perimetre derive)
+        run: npm run check:erasure
+
+      # C-94 — l'export de portabilité (art. 20) confronté au schéma : une
+      # colonne ajoutée à une table exportée doit y entrer ou être déclarée
+      # exclue. Trois colonnes saisies manquaient à la pose.
+      - name: Export de portabilite
+        run: npm run check:portability
+
+      # C-82 — aucune Edge Function déployée sans au moins un témoin qui la
+      # nomme. `stripe-create-checkout` était à zéro.
+      - name: Temoins des Edge Functions
+        run: npm run check:edge-coverage
+
+      # C-105 — le contrat des variables `VITE_*`. Moitié STATIQUE seulement
+      # ici (la moitié Vercel demande un jeton, cf. `env-drift.yml`).
+      - name: Contrat des variables d environnement
+        run: npm run check:env
+
+      # C-108 — une étude périme sans que rien ne le signale. Échoue si une
+      # majeure citée par `docs/MIGRATION-REACT19.md` a bougé.
+      - name: Fraicheur des etudes
+        run: npm run check:study
+
+      # C-107 — les CGU vivent dans un catalogue i18n ordinaire pour la CI.
+      # Une modification de fond est un changement de CONTRAT (préavis de
+      # 30 jours, CGU art. 11) : elle doit passer par le journal.
+      - name: Journal des documents contractuels
+        run: npm run check:legal-journal
+
+      # C-99, PREMIÈRE MOITIÉ — les pluriels et les locales déclarées. Le
+      # moteur retombe clé par clé sur le français : une forme plurielle
+      # anglaise manquante affiche une phrase FRANÇAISE dans l'interface
+      # anglaise, sans jamais ressembler à une clé brute. `i18n:check`
+      # vérifiait déjà la complétude ; ce qu'il ne voyait pas, ce sont les
+      # formes MORTES — 23 `_many` recopiés du français, que
+      # `Intl.PluralRules('en')` ne demandera jamais.
+      # ⚠️ La SECONDE moitié (volume par page) exige un build : elle tourne
+      # dans le job `lighthouse`, à côté de `check:seo`.
+      - name: i18n · pluriels et locales declarees
+        run: npm run i18n:pages
+
+      # C-109 — douze documents de fond n'étaient notés par RIEN, donc ils ne
+      # pouvaient ni monter ni baisser : rien ne signalait qu'ils avaient
+      # vieilli. Chacun déclare désormais sa note, celle qui le couvre, ou
+      # qu'il n'est pas noté ET pourquoi.
+      # ❌ `non-note` est une réponse honnête ; un chiffre inventé sans audit
+      #    ne l'est pas — il vivrait dans un document qu'on produit en contrôle.
+      - name: Notes d audit declarees
+        run: npm run check:docs-scored
+
+      # C-101 — une liste d'actions manuelles sans colonne d'état ne distingue
+      # pas « pas encore tenté » de « tenté sans effet », et les deux appellent
+      # des décisions opposées. Vérifie aussi que les chiffres d'acquisition
+      # n'ont pas plus de 45 jours.
+      # ⚠️ La moitié qui REJOUE les compteurs en base est dans `posture.yml`.
+      - name: Acquisition · etats et fraicheur
+        run: npm run check:acquisition
+
       # Le moteur de traduction retombe sur le français clé par clé : un
       # catalogue traduit incomplet ne casse rien visiblement et partirait donc
       # en prod à moitié traduit. Ce check est la seule protection réelle.
@@ -92,6 +171,19 @@ jobs:
 
       - name: Unit tests + coverage (enforced thresholds)
         run: npm run test:coverage
+
+      # C-82 — la couverture s'arrêtait à `src/`. En étaient absents
+      # `scripts/` (le code qui décide si la CI est verte) et
+      # `supabase/functions/`. Périmètre et seuils PROPRES, jamais mêlés à
+      # ceux de `src/` : les mêler aurait obligé à BAISSER les seuils
+      # existants pour absorber le nouveau périmètre.
+      #
+      # ⚠️ Le script qui suit ne juge pas que les seuils : il vérifie d'abord
+      # que le rapport est COMPLET. Trois fichiers en étaient sortis en
+      # silence à la pose (shebang non analysable par le provider v8), et le
+      # pourcentage affiché en était plus FLATTEUR que la réalité.
+      - name: Couverture de l outillage (scripts/)
+        run: npm run test:coverage:tooling
 
       - name: Upload coverage report
         if: ${{ !cancelled() }}
@@ -147,6 +239,60 @@ jobs:
       - name: npm audit (prod deps, high+)
         run: npm audit --omit=dev --audit-level=high
 
+      # ── C-90 · le second passage, sur la chaine de BUILD ─────────
+      #
+      # L'etape ci-dessus ne regarde que ce qui part dans le navigateur. La
+      # chaine de build (vite, vitest, jsdom, playwright) n'etait vue par RIEN,
+      # sur un depot PUBLIC qui publie ses artefacts : une dependance de build
+      # compromise reecrit le bundle sans toucher une ligne de `src/`.
+      #
+      # 🔴 NON BLOQUANTE, et c'est un arbitrage ecrit, pas un oubli (cf. C-18) :
+      # les advisories dev-only de ce depot demandent des majeures cassantes,
+      # et une gate rouge en permanence finit ignoree — la regle du dossier.
+      # Ce qui CHANGE par rapport a l'absence de garde, c'est que le resultat
+      # est LU : compte par severite dans le resume du job, et une annotation
+      # quand il y en a. Un « 0 » ici est une mesure, pas un silence.
+      #
+      # ⚠️ `|| true` sur `npm audit` seul : il sort en 1 des qu'il trouve
+      # quelque chose. C'est `node` qui juge ensuite, et LUI doit echouer si le
+      # JSON est illisible — sinon cette etape deviendrait la garde qui repond
+      # sans mesurer que `scripts/CLAUDE.md` decrit.
+      - name: npm audit (chaine de build, non bloquant, resultat LU)
+        run: |
+          set -uo pipefail
+          npm audit --json > audit-all.json || true
+          node -e '
+            const fs = require("fs");
+            const NL = String.fromCharCode(10);
+            let j;
+            try { j = JSON.parse(fs.readFileSync("audit-all.json", "utf8")); }
+            catch (e) {
+              console.log("::error title=audit-dev::sortie de npm audit illisible : " + e.message);
+              process.exit(1);
+            }
+            const v = (j.metadata && j.metadata.vulnerabilities) || null;
+            if (!v) {
+              console.log("::error title=audit-dev::npm audit n a pas rendu metadata.vulnerabilities");
+              process.exit(1);
+            }
+            const ordre = ["critical", "high", "moderate", "low", "info"];
+            const ligne = ordre.map((k) => k + "=" + (v[k] ?? 0)).join(" ");
+            const graves = (v.critical ?? 0) + (v.high ?? 0);
+            const noms = Object.keys(j.vulnerabilities || {})
+              .filter((n) => ["critical", "high"].includes(j.vulnerabilities[n].severity))
+              .sort();
+            console.log("::notice title=audit-dev::toutes deps · " + ligne);
+            if (graves > 0) {
+              console.log("::warning title=audit-dev::" + graves +
+                " advisory high/critical sur la chaine de build (non bloquant) : " + noms.join(", "));
+            }
+            fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,
+              "### npm audit · toutes dependances (non bloquant)" + NL + NL +
+              "```" + NL + ligne + NL +
+              (noms.length ? "high/critical : " + noms.join(", ") + NL : "aucun high/critical" + NL) +
+              "```" + NL);
+          '
+
   # ──────────────────────────────────────────────────────────────────
   # Tests E2E Playwright (3 parcours démo + scan a11y axe-core, bloquant
   # sur impact=critical). Job séparé : Chromium ~150 MB, plus lent.
@@ -188,10 +334,22 @@ jobs:
       # chauffe le serveur du port 3000 avant que WebKit n'y touche. Le project
       # `mobile-safari-warmup` rend ce bénéfice explicite au lieu de le faire
       # dépendre de l'ordre.
-      - name: Run E2E (Chromium + supabase-stub + mobile-safari)
+      #
+      # 🔴 `mobile-chrome` A REJOINT CETTE LIGNE LE 2026-09-20 (C-97). Jusque-là
+      # tout ce que le dépôt mesurait en mobile tournait sur UN modèle
+      # (iPhone 12), UN moteur (WebKit), et AUCUN Android — alors que Chrome
+      # Android est le premier navigateur mobile du marché.
+      #
+      # Il porte ce que WebKit ne peut pas porter : le mode PAYSAGE, une taille
+      # de police système à 200 %, et surtout un CPU BRIDÉ par CDP, protocole
+      # que WebKit n'expose pas. Sans ce dernier, la classe de défaut de C-68
+      # (fil principal bloqué 3 637 ms sur 4 000) reste hors de portée de la
+      # CI : elle avait été trouvée à la main.
+      - name: Run E2E (Chromium + supabase-stub + mobile-safari + mobile-chrome)
         run: >-
           npx playwright test
-          --project=chromium --project=supabase-stub --project=mobile-safari
+          --project=chromium --project=supabase-stub
+          --project=mobile-safari --project=mobile-chrome
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
@@ -378,6 +536,27 @@ jobs:
           # plutot que corrige par un faux qui fausserait le score.
           VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
 
+      # C-98 — rien ne reliait le SITEMAP aux pages réellement PRÉRENDUES, et
+      # aucune garde ne vérifiait les balises par page. Une route ajoutée à
+      # l'un sans l'autre ne faisait échouer aucun job ; le 2026-09-14, dix
+      # pages prérendues hors sitemap ont dû être expliquées À LA MAIN.
+      #
+      # Ici plutôt que dans `lint-test-build` : la garde lit `dist/**`, et ce
+      # job est le seul qui construise AVEC le prérendu déjà en place.
+      - name: Sitemap, prerendu et balises par page
+        run: npm run check:seo
+
+      # C-99, SECONDE MOITIÉ — le volume de texte indexable par page ET par
+      # locale. Les 50 pages avaient été mesurées UNE fois avant l'ouverture
+      # d'`en` à l'indexation (C-20), jamais depuis. Une traduction tronquée
+      # ne casse rien : la page s'affiche, le prérendu tourne, `i18n:check`
+      # est vert. Google, lui, la traite comme du contenu mince.
+      # ⚠️ Les slugs LOCALISÉS sont appariés par `route-slugs.json` : sans ça
+      # le rapport fr↔en ne se calculerait jamais sur les neuf pages
+      # éditoriales, c'est-à-dire celles qui portent le contenu.
+      - name: i18n · volume de texte par page et par locale
+        run: npm run i18n:pages -- --pages
+
       # Quel Chrome, et existe-t-il ? Une phase `collect` qui ne produit AUCUN
       # rapport echoue le plus souvent avant d'ouvrir un navigateur, et la
       # difference entre « Chrome absent » et « Chrome refuse de demarrer » ne
@@ -494,4 +673,71 @@ jobs:
         with:
           name: lighthouse
           path: .lighthouseci/
+          retention-days: 7
+
+      # ═══ C-84 · LA PASSE MOBILE ════════════════════════════
+      #
+      # 🔴 Jusqu'au 2026-09-20, la SEULE mesure continue de perf, d'a11y et de
+      # SEO en conditions reelles tournait en preset DESKTOP. Elle ignorait donc
+      # le terminal du trafic vise, et ne pouvait structurellement pas voir la
+      # classe de defaut de C-68 : un preset desktop ne bride ni le CPU ni le
+      # reseau.
+      #
+      # `!cancelled()` sur le collect : la passe desktop peut echouer sur une
+      # assertion, et c'est exactement le moment ou l'on veut AUSSI le chiffre
+      # mobile. Meme raison que la separation collect/assert/upload au-dessus.
+      - name: Lighthouse collect (mobile)
+        if: ${{ !cancelled() }}
+        run: |
+          set -o pipefail
+          npx --yes @lhci/cli@0.15.x collect --config=lighthouserc.mobile.json 2>&1 | tee lhci-mobile.log
+
+      - name: Scores mesures (mobile)
+        if: ${{ !cancelled() }}
+        run: |
+          node -e '
+            const fs = require("fs");
+            const NL = String.fromCharCode(10);
+            const d = ".lighthouseci-mobile";
+            if (!fs.existsSync(d)) { console.log("::warning title=lhci-mobile::aucun rapport mobile produit"); process.exit(0); }
+            const lignes = [];
+            for (const f of fs.readdirSync(d).filter((f) => f.startsWith("lhr-") && f.endsWith(".json"))) {
+              const r = JSON.parse(fs.readFileSync(d + "/" + f, "utf8"));
+              const c = r.categories;
+              const n = (k) => (c[k] ? Math.round(c[k].score * 100) : "-");
+              lignes.push(r.finalDisplayedUrl + " perf=" + n("performance") + " a11y=" + n("accessibility") +
+                " bp=" + n("best-practices") + " seo=" + n("seo") +
+                " lcp=" + Math.round(r.audits["largest-contentful-paint"].numericValue) + "ms" +
+                " tbt=" + Math.round(r.audits["total-blocking-time"].numericValue) + "ms" +
+                " cls=" + r.audits["cumulative-layout-shift"].numericValue);
+            }
+            for (const l of lignes) console.log("::notice title=lhci-mobile::" + l);
+            fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,
+              "### Scores Lighthouse — MOBILE" + NL + NL + "```" + NL + lignes.join(NL) + NL + "```" + NL);
+          '
+
+      - name: Lighthouse assert (mobile)
+        if: ${{ !cancelled() }}
+        run: |
+          set -o pipefail
+          if npx --yes @lhci/cli@0.15.x assert --config=lighthouserc.mobile.json 2>&1 | tee -a lhci-mobile.log; then exit 0; fi
+          {
+            echo '### ✖ Lighthouse CI MOBILE : echec'
+            echo ''
+            echo '```'
+            tail -n 80 lhci-mobile.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          tail -n 25 lhci-mobile.log | while IFS= read -r LIGNE; do
+            case "$LIGNE" in *LH:status*) continue;; esac
+            echo "::error title=lhci-mobile::${LIGNE}"
+          done
+          exit 1
+
+      - name: Upload Lighthouse reports (mobile)
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: lighthouse-mobile
+          path: .lighthouseci-mobile/
           retention-days: 7
