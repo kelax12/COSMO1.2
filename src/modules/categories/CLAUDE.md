@@ -8,23 +8,45 @@
 
 ### 🗂️ Supprimer une catégorie annonce son impact (R-02)
 
-Aucune clé étrangère ne pointe vers `categories` (vérifié en prod : zéro contrainte enfant).
-Mesuré avant correctif : **13 tâches sur 611 et 2 objectifs sur 14 déjà orphelins**.
+🔴 **CORRIGÉ le 2026-09-20 : cette section a affirmé « aucune clé étrangère ne pointe vers
+`categories` (zéro contrainte enfant) » alors que le §`145` juste dessous décrit la FK qui la
+dément.** Remesuré en prod, `pg_constraint` rend **trois** enfants : `categories_parent_id_fkey`
+(NO ACTION, mig. `143`), `tasks_category_fkey` et `okrs_category_fkey` (SET NULL, mig. `145`).
+Le fichier se contredisait depuis le 2026-09-13, parce que la nouvelle section a été **ajoutée
+par le bas** sans que la première soit relue. L'état d'origine, lui, reste vrai à sa date :
+mesuré avant correctif, **13 tâches sur 611 et 2 objectifs sur 14 déjà orphelins**.
+
+**Ce que ça change pour l'application** : l'intégrité est désormais tenue **par la base**, rien ne
+peut plus pointer dans le vide. La réaffectation reste, mais comme un **choix offert à la
+personne**, plus comme un filet d'intégrité.
 
 - `categoryImpact()` (`modules/categories/impact.ts`) compte les dépendants, `useReassignCategory`
-  les déplace. Les deux points d'entrée (`ColorSettingsModal`, `OKRPage`) réaffectent **avant** de
-  supprimer.
+  les déplace. Les deux points d'entrée (`ColorSettingsModal`, `OKRPage` via
+  `pages/okr/useDeleteCategoryFlow.ts`) réaffectent **avant** de supprimer.
+- ⚠️ **Supprimer une catégorie qui a des enfants emporte toute la BRANCHE** : c'est
+  `branchImpact()` qu'il faut alors, jamais `categoryImpact()` seul, qui ne compte que le nœud
+  visé et rendrait un chiffre faux sous les yeux de la personne au moment de confirmer.
 - ❌ **Ne jamais inverser l'ordre.** Supprimer d'abord laisse une fenêtre où les éléments pointent
   dans le vide, et un échec du reclassement devient irrattrapable : plus rien ne dit quels
   éléments portaient la catégorie disparue.
-- ⚠️ `DeleteCategoryConfirm` (`pages/okr/`) ne sert plus qu'aux catégories d'ÉQUIPE
-  (`org_okr_categories`), dont l'impact n'a pas été mesuré. Ne pas le confondre avec
-  `components/category/DeleteCategoryDialog`.
+- 🔴 **PÉRIMÉ, corrigé le 2026-09-20** : ce fichier renvoyait à `DeleteCategoryConfirm`
+  (`pages/okr/`) « pour les catégories d'ÉQUIPE (`org_okr_categories`), dont l'impact n'a pas été
+  mesuré ». Le composant n'existe plus, la table non plus (droppée par la mig. `148`), et l'impact
+  d'équipe **est** mesuré depuis. Le composant d'équipe est
+  `components/organization/DeleteTeamCategoryConfirm.tsx`, sur `team_categories` :
+  [`../team-categories/CLAUDE.md`](../team-categories/CLAUDE.md).
+- ⚠️ Ne pas confondre `components/category/DeleteCategoryDialog` (**perso**, réaffecte) et
+  `components/organization/DeleteTeamCategoryConfirm` (**équipe**, annonce seulement : les trois
+  FK d'équipe sont en `SET NULL`).
 
 
 ---
 
 ### Sous-catégories hiérarchiques (mig. `143`, `144`, `145`, `147`)
+
+> ⚠️ **Ces quatre migrations ne portent que le versant PERSONNEL.** Le versant entreprise a le
+> sien, la mig. `148`, appliquée le 2026-09-13 : [`../team-categories/CLAUDE.md`](../team-categories/CLAUDE.md).
+> Les arbitrages sont les mêmes, les tables non.
 
 ✅ **La `143` est APPLIQUÉE en prod le 2026-09-09** : `categories` gagne `parent_id` et
 `position`, l'unicité par nom devient **deux index partiels** (en Postgres deux `NULL` ne
