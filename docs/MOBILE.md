@@ -818,8 +818,29 @@ Layout style "agenda" :
 
 ## TaskFilter mobile (`src/components/TaskFilter.tsx`)
 
-- Lien `+ d'options` (texte bleu, `md:hidden`) toggle `showQuickFilters` (Favoris/Terminées/Retard/Collaboration dans `<TaskTable>`).
-- Sur desktop (`md:flex`), ces 4 boutons sont **toujours** visibles.
+🔴 **Depuis le 2026-09-20, la recherche n'est plus dans cette rangée sur mobile**, et le lien
+`+ d'options` **n'existe plus** (il toggait `showQuickFilters`). Les deux étaient en HAUT de page,
+hors de portée du pouce, et poussaient la liste vers le bas. Modèle repris : Notes (iOS).
+
+- **`MobileTaskSearch`** (`src/pages/tasks/MobileTaskSearch.tsx`, `md:hidden`) : barre de recherche
+  `fixed` à `calc(4rem + safe-area + 0.5rem)`, **elle ne défile jamais**. Au tap, un overlay plein
+  écran reprend le champ au-dessus du clavier ; **champ vide → « Filtres suggérés »** (Favoris,
+  Fait, Retard, Collaboration, Sélectionner), qui sont les pastilles de `TaskQuickFilters` et rien
+  d'autre. Une suggestion applique **et referme**.
+- ❌ **Ne jamais dupliquer l'état du filtre rapide.** Il vit dans `quick-filter.store.ts`
+  (`useSyncExternalStore`), lu ET écrit par les deux surfaces. Un évènement `window` ne suffisait
+  pas : il ne va que dans un sens, la barre serait aveugle au filtre courant.
+- 🔴 **La pilule du filtre actif dans la barre est le SEUL moyen de l'enlever sur mobile** : la
+  rangée de pastilles y est masquée (`hidden md:flex`). La retirer enfermerait dans une liste
+  filtrée.
+- ⚠️ **Trois surfaces se disputent le bas de l'écran** : la barre de recherche (`safe + 72px`), la
+  barre d'actions groupées de la sélection (`safe + 84px`) et le FAB de `Layout`. La recherche
+  s'efface en mode sélection (`select-mode.store.ts`), et le FAB monte à `bottom-[8.5rem]` **sur
+  `/tasks` uniquement**. Toute 4ᵉ surface ancrée doit se placer dans cette liste, pas à côté.
+- ⚠️ Réserve de défilement de `/tasks` portée à `+144px` (au lieu de `+88px`) : la barre ancrée
+  masquerait sinon la dernière tâche.
+- ⚠️ `#search-tasks-main` (cible du raccourci « / ») reste le champ **desktop** : il n'y a pas de
+  clavier physique en face de la barre mobile.
 - Bouton "Filtres" caché sur mobile (`hidden sm:inline-flex`).
 - Label de tri compacté : `<span className="hidden sm:inline">Trier par :</span><span className="sm:hidden">Tri :</span>`.
 

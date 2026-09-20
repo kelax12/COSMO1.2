@@ -40,6 +40,7 @@ import { colorOptions, resolveListColor } from './tasks/list-colors';
 import TasksHeader from './tasks/TasksHeader';
 import { isTaskOverdue } from '@/components/task-table/helpers';
 import TasksErrorState from './tasks/TasksErrorState';
+import MobileTaskSearch from './tasks/MobileTaskSearch';
 import { useChipLongPress } from './tasks/useChipLongPress';
 import { useTaskLists } from './tasks/useTaskLists';
 import { useT } from '@/i18n/useT';
@@ -134,7 +135,6 @@ const TasksPage: React.FC = () => {
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [showCompleted, setShowCompleted] = useState(false);
   const [showDeadlineCalendar, setShowDeadlineCalendar] = useState(false);
-  const [showQuickFilters, setShowQuickFilters] = useState(false);
   const [showAddTaskForm, setShowAddTaskForm] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [summaryAtBottom, setSummaryAtBottom] = useState(true);
@@ -258,7 +258,7 @@ const TasksPage: React.FC = () => {
       animate={{ opacity: 1 }}
       // Gouttière mobile = --gutter (16px), unique pour toute l'app.
       // `sm:p-8` reprend la main dès 640px : le desktop est inchangé.
-      className="p-gutter sm:p-8 h-fit pb-[calc(64px+env(safe-area-inset-bottom)+88px)] md:pb-8"
+      className="p-gutter sm:p-8 h-fit pb-[calc(64px+env(safe-area-inset-bottom)+144px)] md:pb-8"
     >
       <div className="flex flex-col gap-row sm:gap-8">
         <TasksHeader
@@ -360,8 +360,6 @@ const TasksPage: React.FC = () => {
                       onSearchTermChange={setSearchTerm}
                       selectedCategories={selectedCategories}
                       onSelectedCategoriesChange={setSelectedCategories}
-                      showQuickFilters={showQuickFilters}
-                      onShowQuickFiltersChange={setShowQuickFilters}
                     />
                   </div>
                   {!showCompleted && (
@@ -476,7 +474,10 @@ const TasksPage: React.FC = () => {
                   addToListMode={!!selectingTasksForListId}
                   selectedForListIds={selectedTasksForList}
                   onToggleTaskForList={toggleTaskForList}
-                  showQuickFilters={showQuickFilters}
+                  // Mobile : la barre de pastilles ne s'ouvre plus par « + d'options »
+                  // (retiré) — ses cinq entrées sont les suggestions de
+                  // MobileTaskSearch. `md:flex` la garde intacte sur desktop.
+                  showQuickFilters={false}
                   searchTerm={searchTerm}
                   listFilterActive={!!selectedListId}
                   hasActiveFilter={!!selectedListId || selectedCategories.length > 0 || searchTerm.trim() !== ''}
@@ -538,6 +539,11 @@ const TasksPage: React.FC = () => {
           même intention créaient une hésitation à chaque création. Le modal
           complet reste accessible en tapant une tâche existante (enrichir
           après capture). */}
+
+      {/* Recherche ancrée en bas (mobile) — hors du flux, ne défile jamais.
+          Montée ici et pas dans `TaskFilter` : une barre `fixed` n'a rien à
+          faire dans une rangée qui défile avec la page. */}
+      <MobileTaskSearch searchTerm={searchTerm} onSearchTermChange={setSearchTerm} />
 
       {/* Menu d'actions de liste (mobile) — appui long sur une chip */}
       <ListActionsSheet

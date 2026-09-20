@@ -18,10 +18,14 @@ export const tasksTutorialStepsMobile: TutorialStep[] = [
     dimLevel: 'light',
   },
   {
+    // 🔴 Visait `tasks-filter` (rangée du haut) et enseignait « + d'options »,
+    // retiré le 2026-09-20 avec la descente de la recherche en bas d'écran.
+    // Même erreur que l'étape 7 : un tutoriel qui apprend à chercher une
+    // commande absente. Retirer une commande, c'est relire ce qui en parle.
     titleKey: 'tasksMobile.step3Title',
     descriptionKey: 'tasksMobile.step3Desc',
-    target: '[data-tutorial-id="tasks-filter"]',
-    cardPlacement: 'bottom',
+    target: '[data-tutorial-id="tasks-search"]',
+    cardPlacement: 'top',
     action: 'pulse',
   },
   {
