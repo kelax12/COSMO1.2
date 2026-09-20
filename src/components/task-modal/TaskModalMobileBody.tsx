@@ -206,9 +206,15 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
           </div>
 
           {/* ── Section DÉTAILS ── */}
-          <SectionTitle>
-            {t('sections.details')} <span className="normal-case font-normal">({t('sections.detailsHint')})</span>
-          </SectionTitle>
+          {/* Maquette 97 : « DÉTAILS (champs facultatifs) » est redevenu
+              « Détails ». La parenthèse répondait à une question que l'écran
+              ne pose pas : les cinq lignes affichent déjà toutes une valeur ou
+              « Jamais », et le seul champ obligatoire (le titre) est seul en
+              haut, sans section. La distinction se voit, elle n'a pas besoin
+              d'être écrite, et elle doublait la longueur du titre.
+              ⚠️ La clé `sections.detailsHint` reste dans les catalogues : le
+              corps DESKTOP l'utilise encore, où la place ne manque pas. */}
+          <SectionTitle>{t('sections.details')}</SectionTitle>
           <div ref={register('details')} className={`rounded-2xl transition-[box-shadow] ${isInvalid('details') ? 'ring-2 ring-red-500' : ''}`}>
           <SectionCard>
             {/* Priorité */}
@@ -392,7 +398,12 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
             <div className="flex items-center justify-between px-4 min-h-11">
               <span className="flex items-center gap-2 text-[15px] text-[rgb(var(--color-text-primary))]">
                 <Bookmark size={16} className="text-[rgb(var(--color-text-muted))]" />
-                Favori
+                {/* 🔴 Ce libellé était écrit EN DUR, en français, au milieu
+                    d'un corps de modale par ailleurs entièrement traduit.
+                    `i18n:scan` ne pouvait pas le voir : il exige une PHRASE
+                    (au moins deux mots) pour ne pas remonter la moitié de la
+                    configuration du dépôt. Un mot seul lui échappe. */}
+                {t('form.bookmark')}
               </span>
               <button
                 type="button"
@@ -400,8 +411,18 @@ const TaskModalMobileBody: React.FC<MobileBodyProps> = ({
                 aria-checked={formData.bookmarked}
                 aria-label={formData.bookmarked ? t('form.bookmarkRemove') : t('form.bookmarkAdd')}
                 onClick={() => handleInputChange('bookmarked', !formData.bookmarked)}
+                // Maquette 98 : la piste ÉTEINTE était `--color-hover`
+                // (#2f353b en thème Gris) sur une surface de carte à #2b3137,
+                // soit quatre points d'écart : les deux états ne se
+                // distinguaient que par la POSITION de la pastille, un écart
+                // de 20 px sur le seul interrupteur de l'écran. La piste
+                // éteinte passe à `--color-border-strong`, qui se voit.
+                // ❌ Ne pas la remettre sur `--color-hover` : c'est la couleur
+                // d'un survol, pas celle d'un contour.
                 className={`relative w-[51px] h-[31px] rounded-full transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
-                  formData.bookmarked ? 'bg-[rgb(var(--color-accent-solid))]' : 'bg-[rgb(var(--color-hover))]'
+                  formData.bookmarked
+                    ? 'bg-[rgb(var(--color-accent-solid))]'
+                    : 'bg-[rgb(var(--color-border-strong))]'
                 }`}
               >
                 <motion.span

@@ -41,7 +41,7 @@ const HabitsPage: React.FC = () => {
   const { t } = useT('habits');
   const { t: tCommon } = useT('common');
   const isMobile = useIsMobile();
-  const tutorial = useTutorial(isMobile ? 'habits_mobile' : 'habits_desktop');
+  const tutorial = useTutorial(isMobile ? 'habits_mobile' : 'habits_desktop', 600, !isMobile);
   const tutorialSteps = isMobile ? habitsTutorialStepsMobile : habitsTutorialStepsDesktop;
   // `error` n'est volontairement plus destructuré : le message brut du backend
   // ne s'affiche jamais (règle « faille V7 »), seul un texte traduit est rendu.

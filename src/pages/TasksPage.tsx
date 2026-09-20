@@ -50,7 +50,7 @@ const TasksPage: React.FC = () => {
   // Tutoriel séparé desktop / mobile : flag localStorage distinct par variante
   // pour que basculer de l'un à l'autre (rotation tablette) ré-affiche le tour
   // adapté au viewport courant.
-  const tutorial = useTutorial(isMobile ? 'tasks_mobile' : 'tasks_desktop');
+  const tutorial = useTutorial(isMobile ? 'tasks_mobile' : 'tasks_desktop', 600, !isMobile);
   const tutorialSteps = isMobile ? tasksTutorialStepsMobile : tasksTutorialStepsDesktop;
   // ═══════════════════════════════════════════════════════════════════
   // TASKS - Depuis le module tasks (MIGRÉ)
@@ -424,9 +424,28 @@ const TasksPage: React.FC = () => {
                       <X size={14} aria-hidden="true" />
                     </button>
                   )}
-                  <span className="text-sm text-[rgb(var(--color-text-secondary))]">
+                  {/* Maquette 101 : le compte est une PRÉCISION, pas un
+                      message — `text-caption` et non `text-sm`. Et « tout
+                      retirer » n'apparaît qu'à partir de deux filtres : avec un
+                      seul, la croix de la pilule fait déjà exactement ça. */}
+                  <span className="text-caption text-[rgb(var(--color-text-muted))]">
                     {tp('filters.shown', tasks.length, { shown: filteredTasks.length })}
                   </span>
+                  {[selectedListId, selectedCategories.length > 0, searchTerm.trim() !== '']
+                    .filter(Boolean).length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        clearListFilter();
+                        setSelectedCategories([]);
+                        setSearchTerm('');
+                      }}
+                      className="sm:hidden text-caption font-medium text-[rgb(var(--color-accent))] underline-offset-4 hover:underline min-h-touch px-1"
+                      aria-label={t('sort.resetAria')}
+                    >
+                      {t('filters.clearAll')}
+                    </button>
+                  )}
                 </div>
               )}
 

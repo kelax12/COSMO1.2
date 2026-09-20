@@ -61,7 +61,9 @@
       "bugReport": "Help us fix Cosmo"
     },
     "bugReport": "Report a bug",
-    "seePremium": "See Premium"
+    "seePremium": "See Premium",
+    "sheetGoTo": "Go to",
+    "sheetOther": "Other"
   },
   "actions": {
     "all": "All",
@@ -326,7 +328,8 @@
   },
   "offline": {
     "label": "Offline",
-    "text": " · your changes will not be saved until the network is back."
+    "text": " · you can keep browsing, but your changes will not be saved until the network is back.",
+    "back": "Back online"
   },
   "sync": {
     "offline": "Offline",

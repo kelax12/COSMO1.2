@@ -41,7 +41,8 @@
     "searchPrefix": "Recherche : « {{term}} »",
     "shown_one": "{{shown}} / {{count}} tâche affichée",
     "shown_many": "{{shown}} / {{count}} de tâches affichées",
-    "shown_other": "{{shown}} / {{count}} tâches affichées"
+    "shown_other": "{{shown}} / {{count}} tâches affichées",
+    "clearAll": "tout retirer"
   },
   "lists": {
     "sectionTitle": "Accès rapide aux listes",

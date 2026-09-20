@@ -40,7 +40,8 @@
     "listPrefix": "List: {{name}}",
     "searchPrefix": "Search: “{{term}}”",
     "shown_one": "{{shown}} / {{count}} task shown",
-    "shown_other": "{{shown}} / {{count}} tasks shown"
+    "shown_other": "{{shown}} / {{count}} tasks shown",
+    "clearAll": "clear all"
   },
   "lists": {
     "sectionTitle": "Quick access to lists",

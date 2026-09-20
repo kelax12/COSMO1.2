@@ -234,7 +234,6 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
         completed={summary.completed}
         inProgress={Math.max(0, summary.total - summary.completed - summary.overdueCount)}
         overdue={summary.overdueCount}
-        completionRate={summary.completionRate}
         emptyLabel={t('overview.emptyPeriod')}
         aside={<ProgressRing value={okrProgress} label="Progression OKR" />}
       />

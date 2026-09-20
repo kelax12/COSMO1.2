@@ -41,7 +41,7 @@ const AgendaPage: React.FC = () => {
   const { t } = useT('agenda');
   const { t: tCommon } = useT('common');
   const tutorialIsMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-  const tutorial = useTutorial(tutorialIsMobile ? 'agenda_mobile' : 'agenda_desktop', 800);
+  const tutorial = useTutorial(tutorialIsMobile ? 'agenda_mobile' : 'agenda_desktop', 800, !tutorialIsMobile);
   const tutorialSteps = tutorialIsMobile ? agendaTutorialStepsMobile : agendaTutorialStepsDesktop;
   // Pagination serveur de l'agenda : on ne charge que les événements de la
   // fenêtre visible (+ tous les récurrents, cf. window.ts). La fenêtre est

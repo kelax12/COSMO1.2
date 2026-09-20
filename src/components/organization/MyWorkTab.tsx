@@ -134,7 +134,9 @@ const AgendaEventsCard = ({ events }: { events: CalendarEvent[] }) => {
   const { t } = useT('org');
   const groups = groupEventsByDay(events);
   return (
-    <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4">
+    // `min-w-0` : second enfant de la même grille que « Mes tâches », donc
+    // même borne `min-width: auto` à lever (cf. maquette 105 juste en dessous).
+    <div className="min-w-0 rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4">
       <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))] mb-3">
         {t('myWork.agendaSection')}
       </h3>
@@ -249,7 +251,6 @@ const MyWorkTab = ({ orgId, members, currentUserId }: MyWorkTabProps) => {
   const overdue = open.filter(isOverdue);
   /** Mon reste à faire estimé — le champ était saisi puis jamais restitué. */
   const myEstimated = useMemo(() => sumEstimatedTime(open), [open]);
-  const completionRate = mine.length ? Math.round((done.length / mine.length) * 100) : 0;
 
   // Échéances à venir (mes tâches ouvertes datées, triées).
   const scheduled = useMemo(
@@ -326,7 +327,6 @@ const MyWorkTab = ({ orgId, members, currentUserId }: MyWorkTabProps) => {
         completed={done.length}
         inProgress={Math.max(0, open.length - overdue.length)}
         overdue={overdue.length}
-        completionRate={completionRate}
         emptyLabel={t('myWork.emptyLabel')}
         aside={<NextDeadline task={nextDeadline} />}
       />
@@ -343,8 +343,25 @@ const MyWorkTab = ({ orgId, members, currentUserId }: MyWorkTabProps) => {
         </div>
       ) : (
         <div className="grid lg:grid-cols-2 gap-5 items-start">
+        {/* ── Maquette 105 : du contenu sortait de l'écran ──────────────────
+            Mesuré le 2026-09-20 en 390 px : cette carte faisait **403 px** de
+            large dans une cellule de grille de 358, et la date de la dernière
+            tâche (« 18 sept. ») se terminait à x = 398, soit 8 px au-delà du
+            téléphone. Comme `<main>` est en `overflow-x-hidden`, le débord
+            n'était pas défilable : il était COUPÉ. Du texte définitivement
+            inatteignable, pas seulement serré.
+
+            🔴 La cause n'est PAS la rangée : elle mesure 369 px et tient. Un
+            élément de grille (comme un élément flex) a `min-width: auto` par
+            défaut, ce qui lui INTERDIT de descendre sous la largeur intrinsèque
+            de son contenu. La carte refusait donc de rétrécir et débordait de
+            sa cellule. `min-w-0` lève exactement cette borne.
+
+            ❌ Ne pas retirer `min-w-0` de ces deux enfants : la grille passe en
+            deux colonnes seulement à partir de `lg`, donc sous cette largeur le
+            défaut revient immédiatement, et il ne se voit que sur téléphone. */}
           {/* Mes tâches */}
-          <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4">
+          <div className="min-w-0 rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4">
             <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))] mb-3">
               {t('myWork.myTasksSection', { count: open.length })}
               {myEstimated > 0 && (
