@@ -459,7 +459,7 @@
     "dialogAria": "Search for a task",
     "open": "Open search",
     "suggestions": "Suggested filters",
-    "cancel": "Cancel",
-    "clearQuickFilter": "Remove the {{name}} filter"
+    "clearQuickFilter": "Remove the {{name}} filter",
+    "close": "Close search"
   }
 }

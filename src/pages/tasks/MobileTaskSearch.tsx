@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AlertTriangle, Bookmark, CheckCircle2, CheckSquare, Search, Users, X } from 'lucide-react';
 import { useModalA11y } from '@/hooks/use-modal-a11y';
@@ -57,6 +57,10 @@ const ACTIVE_LABEL_KEY: Record<Exclude<QuickFilter, 'none'>, KeyOf<'tasks'>> = {
   collaboration: 'table.quickFilter.collaboration',
 };
 
+/** Au-dessus : c'est un clavier. En dessous de l'autre : il est replié. */
+const KEYBOARD_OPEN_PX = 120;
+const KEYBOARD_CLOSED_PX = 60;
+
 const MobileTaskSearch: React.FC<Props> = ({ searchTerm, onSearchTermChange }) => {
   const { t } = useT('tasks');
   const [open, setOpen] = useState(false);
@@ -76,6 +80,28 @@ const MobileTaskSearch: React.FC<Props> = ({ searchTerm, onSearchTermChange }) =
     initialFocusRef: inputRef,
   });
 
+  // ── Le clavier se referme, la recherche aussi (modèle Notes) ────────
+  //
+  // Sur iOS, replier le clavier depuis sa propre touche ne rend AUCUN
+  // évènement au champ : ni `blur`, ni `keydown`. Le seul signal est le
+  // viewport visuel qui reprend sa hauteur — celui-là même qui sert déjà à
+  // coller le champ au clavier.
+  //
+  // ⚠️ Deux seuils, pas un : un `> 0` prendrait pour un clavier la barre
+  // d'outils du navigateur (~60 px sur Safari iOS), et refermerait l'overlay
+  // dès son ouverture. Et on n'arme la fermeture qu'APRÈS avoir vu un vrai
+  // clavier : sans cette mémoire, un appareil qui n'en montre jamais (souris,
+  // clavier physique, émulateur) fermerait l'overlay au premier rendu.
+  const keyboardWasOpen = useRef(false);
+  useEffect(() => {
+    if (!open) {
+      keyboardWasOpen.current = false;
+      return;
+    }
+    if (keyboardInset > KEYBOARD_OPEN_PX) keyboardWasOpen.current = true;
+    else if (keyboardWasOpen.current && keyboardInset < KEYBOARD_CLOSED_PX) close();
+  }, [open, keyboardInset, close]);
+
   const pick = (suggestion: Suggestion) => {
     if (suggestion.kind === 'select') requestSelectMode();
     else toggleQuickFilter(suggestion.value);
@@ -84,20 +110,23 @@ const MobileTaskSearch: React.FC<Props> = ({ searchTerm, onSearchTermChange }) =
     close();
   };
 
-  // La barre du bas se cache pendant que l'overlay est ouvert : son champ y
-  // est repris, à la même place, au-dessus du clavier.
   const barBottom = 'calc(4rem + env(safe-area-inset-bottom) + 0.5rem)';
 
   if (selectModeActive) return null;
 
   return (
     <>
+      {/* La barre fermée s'efface pendant que l'overlay est ouvert : son champ
+          y est repris, plus bas, au-dessus du clavier. Sans ce retrait elle
+          réapparaît DERRIÈRE le voile dès qu'un caractère est saisi (la carte
+          de suggestions, qui la masquait, disparaît alors) : deux champs de
+          recherche l'un au-dessus de l'autre, dont un inerte. */}
       <div
-        className="md:hidden fixed inset-x-0 z-30 px-gutter"
+        className={`${open ? 'hidden' : ''} md:hidden fixed inset-x-0 z-30 px-gutter`}
         style={{ bottom: barBottom }}
         data-tutorial-id="tasks-search"
       >
-        <div className="flex items-center gap-2 rounded-full border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))]/95 backdrop-blur-md shadow-lg shadow-black/10 pl-4 pr-2 h-12">
+        <div className="flex items-center gap-2 rounded-full border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] shadow-lg shadow-black/10 pl-4 pr-2 h-12">
           <button
             type="button"
             onClick={() => setOpen(true)}
@@ -151,7 +180,8 @@ const MobileTaskSearch: React.FC<Props> = ({ searchTerm, onSearchTermChange }) =
               transition={{ duration: 0.18 }}
               onClick={close}
               role="presentation"
-              className="md:hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm"
+              // Voile PLAT, sans `backdrop-blur` : le modèle assombrit, il ne dépolit pas.
+              className="md:hidden fixed inset-0 z-50 bg-black/40"
             />
             <motion.div
               key="search-panel"
@@ -162,7 +192,15 @@ const MobileTaskSearch: React.FC<Props> = ({ searchTerm, onSearchTermChange }) =
               exit={{ opacity: 0, y: 16 }}
               transition={{ duration: 0.2 }}
               className="md:hidden fixed inset-x-0 bottom-0 z-50 flex flex-col gap-3 px-gutter pt-3"
-              style={{ paddingBottom: `calc(env(safe-area-inset-bottom) + 0.75rem + ${keyboardInset}px)` }}
+              // Clavier ouvert : le champ se pose DESSUS, sans gouttière — la
+              // zone sûre est déjà couverte par le clavier, l'ajouter creusait
+              // une bande vide entre les deux. Clavier replié : gouttière
+              // normale + zone sûre.
+              style={{
+                paddingBottom: keyboardInset > KEYBOARD_CLOSED_PX
+                  ? `${keyboardInset}px`
+                  : 'calc(env(safe-area-inset-bottom) + 0.75rem)',
+              }}
             >
               {searchTerm.trim() === '' && (
                 <div className="rounded-2xl bg-[rgb(var(--color-surface))] overflow-hidden shadow-2xl">
@@ -224,9 +262,10 @@ const MobileTaskSearch: React.FC<Props> = ({ searchTerm, onSearchTermChange }) =
                 <button
                   type="button"
                   onClick={close}
-                  className="shrink-0 px-2 min-h-touch text-label font-medium text-[rgb(var(--color-accent))]"
+                  aria-label={t('search.close')}
+                  className="shrink-0 flex h-12 w-12 items-center justify-center rounded-full bg-[rgb(var(--color-chip-bg))] text-[rgb(var(--color-text-secondary))] active:bg-[rgb(var(--color-hover))]"
                 >
-                  {t('search.cancel')}
+                  <X size={20} aria-hidden="true" />
                 </button>
               </div>
             </motion.div>

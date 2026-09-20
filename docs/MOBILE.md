@@ -826,7 +826,19 @@ hors de portée du pouce, et poussaient la liste vers le bas. Modèle repris : N
   `fixed` à `calc(4rem + safe-area + 0.5rem)`, **elle ne défile jamais**. Au tap, un overlay plein
   écran reprend le champ au-dessus du clavier ; **champ vide → « Filtres suggérés »** (Favoris,
   Fait, Retard, Collaboration, Sélectionner), qui sont les pastilles de `TaskQuickFilters` et rien
-  d'autre. Une suggestion applique **et referme**.
+  d'autre. Une suggestion applique **et referme**. Voile **plat** (`bg-black/40`, jamais de
+  `backdrop-blur`), sortie par une **croix ronde** — le modèle est copié, pas adapté.
+- 🔴 **Replier le clavier referme la recherche**, comme dans Notes. Sur iOS, la touche « fermer le
+  clavier » ne rend **aucun** évènement au champ : ni `blur`, ni `keydown`. Le seul signal est
+  `visualViewport` (`use-keyboard-inset.ts`), et il faut **deux seuils** — un simple `> 0` prendrait
+  la barre d'outils de Safari (~60 px) pour un clavier et refermerait l'overlay à son ouverture.
+  La fermeture ne s'arme qu'après avoir vu un vrai clavier, sinon un appareil qui n'en montre
+  jamais (clavier physique, émulateur) refermerait au premier rendu.
+- ⚠️ **Clavier ouvert, le champ se pose DESSUS sans gouttière** : la zone sûre est déjà couverte par
+  le clavier, l'additionner creusait une bande vide entre les deux.
+- ❌ **Ne pas laisser la barre fermée montée pendant l'overlay.** Elle réapparaît derrière le voile
+  dès la première frappe — la carte de suggestions, qui la masquait, disparaît alors — et on lit
+  deux champs de recherche empilés, dont un inerte.
 - ❌ **Ne jamais dupliquer l'état du filtre rapide.** Il vit dans `quick-filter.store.ts`
   (`useSyncExternalStore`), lu ET écrit par les deux surfaces. Un évènement `window` ne suffisait
   pas : il ne va que dans un sens, la barre serait aveugle au filtre courant.
