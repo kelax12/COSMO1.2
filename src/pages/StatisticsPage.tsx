@@ -25,6 +25,7 @@ import { useIsMobile } from '@/lib/hooks/use-mobile';
 import { useBilling } from '@/modules/billing/billing.context';
 import PremiumGateModal from '@/components/PremiumGateModal';
 import { formatTime, formatTimeShort } from './statistics/format';
+import PeriodSummaryCard from './statistics/PeriodSummaryCard';
 import { buildInsights } from '@/lib/stats-insights';
 import { useInsightText } from './statistics/insights';
 
@@ -284,39 +285,7 @@ export default function StatisticsPage() {
         </div>
       )}
 
-      {/* Synthèse temps par période — tableau à barres (barre = part relative au max) */}
-      <div className="card p-4 md:p-6 mb-8">
-        {(() => {
-          // Libellés courts : la colonne fait 84-120px — « 365 derniers jours »
-          // était tronqué en « 365 derniers jo… » sur mobile.
-          const rows = [
-            { label: t('summary.today'), val: fixedStats.today },
-            { label: t('summary.days7'), val: fixedStats.week },
-            { label: t('summary.days30'), val: fixedStats.month },
-            { label: t('summary.days365'), val: fixedStats.year },
-          ];
-          const max = Math.max(rows[0].val, rows[1].val, rows[2].val, rows[3].val);
-          return rows.map((r, idx) => {
-            const pct = max > 0 ? (r.val / max) * 100 : 0;
-            const width = r.val > 0 ? Math.max(pct, 2) : 0;
-            return (
-              <div
-                key={idx}
-                className="grid grid-cols-[minmax(84px,120px)_1fr_auto] items-center gap-3 md:gap-4 py-3"
-                style={idx < rows.length - 1 ? { borderBottom: '1px solid rgb(var(--color-border-muted))' } : undefined}
-              >
-                <span className="text-sm truncate" style={{ color: 'rgb(var(--color-text-secondary))' }}>{r.label}</span>
-                <span aria-hidden="true" className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: 'rgb(var(--color-hover))' }}>
-                  <span className="block h-full rounded-full transition-[width] duration-500" style={{ width: `${width}%`, backgroundColor: sectionColor }} />
-                </span>
-                <span className="text-sm font-semibold tabular-nums text-right tracking-tight" style={{ color: 'rgb(var(--color-text-primary))' }}>
-                  {formatTimeShort(r.val)}
-                </span>
-              </div>
-            );
-          });
-        })()}
-      </div>
+      <PeriodSummaryCard fixedStats={fixedStats} sectionColor={sectionColor} />
 
       {/* Gate premium — graphiques et détails */}
       {!isPremium() ? (
