@@ -48,6 +48,7 @@
     "details": "Details",
     "nameLabel": "Habit name",
     "legend": "Legend",
+    "category": "Category",
     "customize": "Customise"
   },
   "actions": {

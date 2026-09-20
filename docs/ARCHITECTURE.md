@@ -296,7 +296,7 @@ mais le cliquet les fait baisser) et la taille du chunk `index`
 | Toutes les tables `public` ont RLS activée | `SECURITY.md` | ✅ **Tenu**, vérifié en prod : 0 table avec `relrowsecurity = false` |
 | **Jamais de `supabase.from()` hors d'un repository** | `SCALABILITY.md` §5 + garde | ✅ **Tenu** · invariant **outillé** (§2) |
 | Imports toujours via l'alias `@/` | CLAUDE.md + ESLint | ✅ **Tenu** · outillé par `no-restricted-imports` (§2) |
-| Aucun fichier source > 600 LOC | refactor de juin 2026 + cliquet | ❌ **Toujours violé · 14 fichiers au 2026-08-27**, mais le budget a **encore baissé** : 13 103 → 12 503 → 11 452 → **10 811** (§3) |
+| Aucun fichier source > 600 LOC | refactor de juin 2026 + cliquet | ❌ **Violé au 2026-08-27 · 14 fichiers**, budget 13 103 → 12 503 → 11 452 → **10 811**. → ✅ **TENU depuis le 2026-09-06** (`C-09`) : plus aucun fichier hors budget dans le périmètre audité, cliquet à **0** (§3) |
 | **Les lectures de liste entreprise passent par une RPC indexable** | CLAUDE.md ⚡ + test | ✅ **Tenu** · `get_my_team_projects` / `get_my_team_tasks` (mig. 113), `get_my_team_task_dependencies` (mig. 117). Verrouillé par `team-projects/supabase.repository.test.ts` |
 | **Un droit entreprise se lit dans `permissions.ts`, jamais recalculé** | CLAUDE.md 🔐 + garde | ✅ **Tenu depuis le 2026-08-25** : une seule source de vérité cliente (`useMyOrgPermissions`), miroir du SQL, 205 tests |
 | **Aucune position d'arrivée portée par une animation de transform** | CLAUDE.md + garde | 🟠 **17 feuilles encore écrites à la main**, mais les 5 réellement cassées sont corrigées et un cliquet interdit toute nouvelle (cf. [`MOBILE.md`](./MOBILE.md) §1) |
@@ -400,7 +400,30 @@ Deux choix méritent d'être relus avant d'être « simplifiés » :
 `supabase.from(`. Les commentaires sont retirés avant la recherche — sans ça, la phrase qui
 explique la règle déclenchait la règle.
 
-## 3. 🟠 L'objectif « aucun fichier > 600 LOC » · 17 → 14 fichiers, 13 103 → 10 811 lignes
+## 3. ✅ L'objectif « aucun fichier > 600 LOC » · 17 → **0** fichier, 13 103 → **0** ligne
+
+> ✅ **ATTEINT le 2026-09-06** (`7653d398`, item `C-09`), et **remesuré le 2026-09-20** :
+> `KNOWN_OVERSIZED` est un `Set` **vide** et `OVERSIZED_BUDGET` vaut **0** dans
+> `src/architecture.guard.test.ts`. Plus aucun fichier du périmètre audité ne dépasse 600 lignes,
+> et le budget n'est plus « en baisse », il est **structurellement nul** : il n'y a plus de stock
+> à autoriser. La constante reste à zéro pour que la garde échoue si quelqu'un rouvre la liste.
+>
+> 🔴 **Ce titre a annoncé « 🟠 14 fichiers, 10 811 lignes » pendant quatorze jours après la
+> fermeture.** Le tableau des invariants du §1 porte la même phrase (« ❌ Toujours violé · 14
+> fichiers au 2026-08-27 »), et le bilan du 2026-08-27 range encore cette dette parmi « les deux
+> que rien ne mesure encore » — alors qu'elle est **outillée depuis le 2026-08-24** et **fermée
+> depuis le 09-06**. Les deux passages sont datés, donc conservés tels quels ; c'est ce titre-ci,
+> qui n'est daté de rien, qui les faisait lire comme l'état courant.
+>
+> ⚠️ **Un seul fichier du dépôt dépasse encore 600 lignes** : `components/showcase/MobileShowcases.tsx`,
+> **623** au 2026-09-20 (« 613 » ailleurs dans ce document date du 08-25). Il est **hors périmètre
+> de la garde** (`EXCLUDED_DIRS` y met `showcase`, comme ESLint), ce qui n'est pas un oubli mais
+> **l'angle mort AM-2 de ce document**, nommé plus haut. ❌ Ne jamais lire « 0 fichier hors budget »
+> comme « 0 fichier long » : la première phrase parle d'un périmètre, la seconde du dépôt.
+
+### Historique de la fermeture · *conservé à sa date*
+
+**Ce qui suit décrit la descente, pas l'état courant** (17 → 14 fichiers, 13 103 → 10 811 lignes).
 
 > **Remesuré le 2026-08-25 : 15 fichiers, 11 452 lignes.** Le budget a baissé de **1 651 lignes
 > en deux jours**, alors que ces deux jours ont livré sept migrations et un système de permissions
