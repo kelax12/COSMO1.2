@@ -417,7 +417,11 @@ const NavItems = () =>
             }}
             data-tutorial-id="global-quick-add-fab"
             aria-label={t('nav.createTask')}
-            className="fixed bottom-20 right-4 z-40 w-14 h-14 rounded-2xl bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] shadow-lg shadow-black/30 flex items-center justify-center active:scale-95 transition-transform"
+            // `/tasks` porte depuis la refonte mobile une barre de recherche
+            // ancrée au-dessus de la tab bar (MobileTaskSearch, 48 px + 8 px
+            // d'écart) : le FAB monte d'autant, sinon il la recouvre. Partout
+            // ailleurs, `bottom-20` inchangé.
+            className={`fixed ${location.pathname === '/tasks' ? 'bottom-[8.5rem]' : 'bottom-20'} right-4 z-40 w-14 h-14 rounded-2xl bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] shadow-lg shadow-black/30 flex items-center justify-center active:scale-95 transition-transform`}
             style={{ marginBottom: 'env(safe-area-inset-bottom)' }}
           >
             <Plus size={26} aria-hidden="true" />

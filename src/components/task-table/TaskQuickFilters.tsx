@@ -3,6 +3,7 @@ import { Bookmark, BookmarkCheck, CheckCircle2, CheckSquare, AlertTriangle, User
 import { Button } from '@/components/ui/button';
 import { useT } from '@/i18n/useT';
 import { useOverdueFocus } from '@/lib/hooks/use-overdue-focus';
+import { useSelectModeBridge } from './select-mode.store';
 import type { KeyOf } from '@/i18n/catalog';
 
 export type QuickFilter = 'none' | 'bookmarked' | 'completed' | 'overdue' | 'collaboration';
@@ -79,6 +80,17 @@ const TaskQuickFilters: React.FC<Props> = ({
   useOverdueFocus(React.useCallback(() => {
     if (active !== 'overdue') onToggle('overdue');
   }, [active, onToggle]));
+
+  // Pont avec la barre de recherche mobile : elle DEMANDE l'entrée en mode
+  // sélection (suggestion « Sélectionner »), et elle LIT l'état pour s'effacer
+  // pendant la sélection — la barre d'actions groupées occupe sa place exacte.
+  // Ici et pas dans `TaskTable`, à son plafond de LOC ; ce composant porte déjà
+  // la pastille et reçoit `selectMode`.
+  // ⚠️ On n'ENTRE que si on n'y est pas déjà : `onToggleSelectMode` bascule, et
+  // une demande d'entrée qui ferait SORTIR du mode serait un contresens.
+  useSelectModeBridge(selectMode, React.useCallback(() => {
+    if (!selectMode) onToggleSelectMode();
+  }, [selectMode, onToggleSelectMode]));
 
   return (
     <div className={`${visible ? 'flex' : 'hidden'} md:flex flex-col gap-4 mb-6`}>

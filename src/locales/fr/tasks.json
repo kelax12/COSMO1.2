@@ -470,5 +470,12 @@
     "nextWeek": "Semaine prochaine",
     "today": "Aujourd'hui",
     "chooseDate": "Choisir"
+  },
+  "search": {
+    "dialogAria": "Rechercher une tâche",
+    "open": "Ouvrir la recherche",
+    "suggestions": "Filtres suggérés",
+    "cancel": "Annuler",
+    "clearQuickFilter": "Retirer le filtre {{name}}"
   }
 }

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronDown, SlidersHorizontal, X, Search, Plus, ArrowUpDown } from 'lucide-react';
+import { ChevronDown, SlidersHorizontal, X, Search, ArrowUpDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Slider } from './ui/slider';
 import { Button } from '@/components/ui/button';
@@ -23,9 +23,6 @@ type TaskFilterProps = {
   onSearchTermChange?: (value: string) => void;
   selectedCategories?: string[];
   onSelectedCategoriesChange?: (categories: string[]) => void;
-  // Toggle visibility of TaskTable's quick filter buttons
-  showQuickFilters?: boolean;
-  onShowQuickFiltersChange?: (show: boolean) => void;
 };
 
 const TaskFilter: React.FC<TaskFilterProps> = ({
@@ -40,9 +37,6 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
   onSearchTermChange,
   selectedCategories: controlledSelectedCategories,
   onSelectedCategoriesChange,
-  // Toggle visibility of TaskTable's quick filter buttons
-  showQuickFilters = false,
-  onShowQuickFiltersChange,
 }) => {
   const { t } = useT('tasks');
   const { data: categories = [] } = useCategories();
@@ -89,8 +83,16 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
       <div className="space-y-3">
         {/* Single row: Search + Sort + Filters + Reset */}
         <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-          {/* Search Bar — flexible : absorbe l'espace restant et repousse les contrôles à droite */}
-          <div className="relative flex-1 min-w-[150px]">
+          {/* ── Recherche : DESKTOP uniquement ─────────────────────────
+              Sur mobile elle est descendue tout en bas de l'écran, ancrée et
+              non défilante (`MobileTaskSearch`, modèle Notes d'iOS) : ici,
+              en haut de page, elle était hors de portée du pouce et poussait
+              la liste vers le bas. `hidden md:block` et non un `isMobile` en
+              JS — le rendu ne doit pas dépendre d'une mesure de viewport qui
+              n'existe qu'après le premier rendu.
+              ⚠️ Le raccourci « / » vise `#search-tasks-main`, qui reste ICI :
+              il n'y a pas de clavier physique en face de la barre mobile. */}
+          <div className="relative flex-1 min-w-[150px] hidden md:block">
             <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2" style={{ color: 'rgb(var(--color-text-muted))' }} aria-hidden="true" />
             <input
               id="search-tasks-main"
@@ -274,23 +276,6 @@ const TaskFilter: React.FC<TaskFilterProps> = ({
               </div>
             </PopoverContent>
           </Popover>
-
-          {/* + d'options — mobile only, clickable blue text */}
-          <button
-            type="button"
-            onClick={() => onShowQuickFiltersChange?.(!showQuickFilters)}
-            aria-label={showQuickFilters ? t('sort.hideOptions') : t('sort.showOptions')}
-            aria-pressed={showQuickFilters}
-            className={`md:hidden shrink-0 flex items-center gap-1 px-2 min-h-touch text-label font-medium transition-colors hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded ${
-              showQuickFilters
-                ? 'text-blue-700 dark:text-blue-300'
-                : 'text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300'
-            }`}
-          >
-            <Plus size={14} aria-hidden="true" />
-            <span>d'options</span>
-            <ChevronDown size={14} aria-hidden="true" className={`transition-transform ${showQuickFilters ? 'rotate-180' : ''}`} />
-          </button>
 
         </div>
 

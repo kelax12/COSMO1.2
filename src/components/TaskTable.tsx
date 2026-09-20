@@ -12,6 +12,7 @@ import ConfirmDeleteSheet from './task-table/ConfirmDeleteSheet';
 import TaskListPlaceholders from './task-table/TaskListPlaceholders';
 import { useTaskSelection } from './task-table/useTaskSelection';
 import TaskQuickFilters from './task-table/TaskQuickFilters';
+import { useQuickFilter } from './task-table/quick-filter.store';
 import OverdueBanner from './task-table/OverdueBanner';
 import SwipeHintBanner from './task-table/SwipeHintBanner';
 import TaskBulkActionsBar from './task-table/TaskBulkActionsBar';
@@ -204,11 +205,10 @@ const TaskTable: React.FC<TaskTableProps> = ({
   // par feuille : `useBottomSheet` ne sait fermer qu'une seule surface.
   const deleteSheet = useBottomSheet(useCallback(() => setTaskToDelete(null), []));
   const bulkDeleteSheet = useBottomSheet(useCallback(() => setShowBulkDeleteConfirm(false), [setShowBulkDeleteConfirm]));
-  const [activeQuickFilter, setActiveQuickFilter] = useState<'none' | 'bookmarked' | 'completed' | 'overdue' | 'collaboration'>('none');
-
-  const toggleQuickFilter = (filter: 'bookmarked' | 'completed' | 'overdue' | 'collaboration') => {
-    setActiveQuickFilter(prev => prev === filter ? 'none' : filter);
-  };
+  // Filtre rapide : store externe, et non `useState` local. La barre de
+  // recherche mobile (`MobileTaskSearch`, ancree hors de cet arbre) le pilote
+  // ET le lit pour marquer la suggestion active. Cf. `quick-filter.store.ts`.
+  const { activeQuickFilter, toggleQuickFilter } = useQuickFilter();
 
   useEffect(() => {
     if (externalSelectedTaskId) {
