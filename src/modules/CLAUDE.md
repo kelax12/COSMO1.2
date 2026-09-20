@@ -3,7 +3,7 @@
 > Chargé dès qu un fichier de `src/modules/**` est lu ou édité. Chaque module a en plus
 > son propre `CLAUDE.md` : [billing](billing/CLAUDE.md) · [tasks](tasks/CLAUDE.md) ·
 > [habits](habits/CLAUDE.md) · [okrs](okrs/CLAUDE.md) · [categories](categories/CLAUDE.md) ·
-> [organizations](organizations/CLAUDE.md).
+> [team-categories](team-categories/CLAUDE.md) · [organizations](organizations/CLAUDE.md).
 
 ## Architecture : double mode (démo / production)
 
@@ -84,7 +84,7 @@ src/modules/{module}/
 | `user` | Profil utilisateur, messages inbox |
 | `admin` | Console `/admin` (RPC `get_admin_stats`) |
 | `organizations` / `org-teams` | **Mode entreprise** : organisation, pyramide managériale, équipes |
-| `team-projects` / `team-okrs` / `org-okr-categories` | **Mode entreprise** : projets, OKR d'équipe |
+| `team-projects` / `team-okrs` / `team-categories` | **Mode entreprise** : projets, OKR d'équipe, catégories |
 
 ### Règle d'import par zone
 
@@ -95,7 +95,7 @@ src/modules/{module}/
 | Habitudes | `habits`, `categories` |
 | OKR | `okrs`, `kr-completions` |
 | Amis / Collaboration | `friends` |
-| Entreprise | `organizations`, `org-teams`, `team-projects`, `team-okrs` |
+| Entreprise | `organizations`, `org-teams`, `team-projects`, `team-okrs`, `team-categories` |
 | UI / Filtres | `ui-states` |
 | Dashboard | `tasks`, `habits`, `events`, `kr-completions`, `okrs`, `auth` |
 
@@ -231,16 +231,21 @@ createMutation.mutate(rest);
 restoreCategoryMutation.mutate(snapshot); // ✅ useRestoreX, id d'origine conservé
 ```
 
-- Un `useRestoreX` existe pour `tasks`, `categories`, `events`, `lists` et `okrs`. Il passe
-  l'identifiant par le **second argument** de `create()`, jamais par le payload.
+- Un `useRestoreX` existe pour `tasks`, `categories`, `events`, `lists`, `okrs`, **`habits`**
+  (`habits/restore.hooks.ts`) et les **commentaires de tâche d'équipe**
+  (`team-projects/restore-comment.hooks.ts`). Il passe l'identifiant par le **second argument** de
+  `create()`, jamais par le payload.
+  ⚠️ Cette liste est **nominative exprès**, comme celle des `refetchInterval` : un total ne prouve
+  rien, et elle a déjà été fausse (les deux derniers manquaient, ajoutés le 2026-09-20). La
+  recompter, jamais la recopier : `grep -rn "export const useRestore" src/`.
 - 🔴 **Pourquoi pas un champ `id` dans l'input** : le payload vient d'un état de formulaire, donc
   d'un objet que des devtools peuvent enrichir. Un `id` forgé y ouvrait un **oracle d'existence**
   (collision de clé primaire = 23505 au lieu d'un succès, donc la ligne d'autrui existe). Le test
   de garde `categories/supabase.repository.test.ts` a refusé la première version du correctif, et
   il avait raison. Contrat complet : `src/lib/restore-id.ts`.
-- ⚠️ **Ce que ça ne rattrape pas** : `kr_completions` cascade depuis `okrs` ET `key_results`.
-  Restaurer un OKR ramène l'objectif, ses KR et les `task.krId` qui les visent, mais pas le
-  journal des complétions. Le graphique « KR réalisés » garde son trou.
+- ✅ **Restaurer un OKR ramène AUSSI son journal `kr_completions`, depuis C-01.** Ce paragraphe a
+  décrit ce trou comme une limite acceptée jusqu'au 2026-09-20 : les règles sont dans
+  [`okrs/CLAUDE.md`](okrs/CLAUDE.md), il n'y a plus rien à en dire ici.
 
 
 ---

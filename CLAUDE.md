@@ -35,6 +35,7 @@ le produit affiche zéro.** Item `C-77` de [`a-faire-code.md`](./a-faire-code.md
 | Habitudes, `completions`, fuseaux gelés | [`src/modules/habits/CLAUDE.md`](./src/modules/habits/CLAUDE.md) |
 | OKR, journal `kr_completions` | [`src/modules/okrs/CLAUDE.md`](./src/modules/okrs/CLAUDE.md) |
 | Catégories, arbre, impact de suppression | [`src/modules/categories/CLAUDE.md`](./src/modules/categories/CLAUDE.md) |
+| Catégories d'ENTREPRISE (table unique, mig. `148`) | [`src/modules/team-categories/CLAUDE.md`](./src/modules/team-categories/CLAUDE.md) |
 | Mode entreprise, permissions, boîte de réception | [`src/modules/organizations/CLAUDE.md`](./src/modules/organizations/CLAUDE.md) |
 | Modales a11y, animations, design system mobile, onboarding | [`src/components/CLAUDE.md`](./src/components/CLAUDE.md) |
 | Landing, deux parcours, GSAP, shader | [`src/pages/landing/CLAUDE.md`](./src/pages/landing/CLAUDE.md) |
@@ -167,6 +168,8 @@ npm run check:drift         # Dérive repo ↔ prod (2 étapes)       → docs/S
 npm run check:migration-coverage # Fichiers ↔ ledger PROD (CI)    → docs/SECURITY.md
 npm run check:edge          # Code DÉPLOYÉ vs dépôt (CI)          → supabase/functions/CLAUDE.md
 npm run check:bundle        # Budget de bundle (CI)               → docs/PERFORMANCE.md
+npm run analyze:entry       # Qui pèse dans le chunk d'entrée     → docs/PERFORMANCE.md
+npm run images:check        # Images non optimisées (pas une gate)→ docs/PERFORMANCE.md
 npm run check:mail          # SPF / DKIM / DMARC (pas une gate)   → docs/DEPLOYMENT.md
 npm run check:legal         # Tableau de conformité               → docs/LEGAL.md
 npm run check:docs          # Plafonds des CLAUDE.md (CI)         → scripts/CLAUDE.md

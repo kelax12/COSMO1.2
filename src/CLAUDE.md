@@ -12,12 +12,28 @@ QueryClientProvider
   AuthProvider
     ActiveOrgProvider        ← organisation courante (mode entreprise)
       BillingProvider        ← dépend de useAuth
-        TooltipProvider
-          MotionConfig reducedMotion="user"   ← WCAG 2.3.3 pour tout Framer Motion
-            Toaster (Sonner, theme="system", monte en lazy) + Routes
+        MotionConfig reducedMotion="user"   ← WCAG 2.3.3 pour tout Framer Motion
+          Toaster (Sonner, theme="system", monte en lazy) + Routes
 ```
 
-React Query : 5 min stale, 30 min gc, retry 1, pas de `refetchOnWindowFocus`.
+🔴 **Il n'y a PLUS de `TooltipProvider` ici, et ce n'est pas un oubli** (ce schéma en a montré un
+jusqu'au 2026-09-20). `ui/tooltip.tsx` fournit déjà le sien, avec le même `delayDuration = 0` :
+celui de la racine était redondant et traînait tout `@radix-ui/react-tooltip` + `floating-ui`,
+113 ko bruts, dans le **chunk d'entrée**, pour un seul consommateur réel (`OrgTabBadge`, déjà lazy).
+❌ **Ne pas le remettre « par sécurité »** : un tooltip sans provider lève à l'affichage, ça se voit
+tout de suite.
+
+React Query : 5 min stale, 30 min gc, pas de `refetchOnWindowFocus`.
+⚠️ **`retry` n'est plus `1` sur les requêtes** : c'est le prédicat `shouldRetryQuery`
+(`@/lib/query-retry`, testé), plus un `retryDelay` exponentiel plafonné à 3 s. On ne retente
+qu'**une** fois, et seulement quand on ignore la cause : un échec **nommé** par le serveur
+(`42501`, `PGRST116`, `seat_limit_reached`…) rendra le même nom, et un dépassement de délai
+enchaînerait 8 s + 1 s + 8 s avant d'afficher quoi que ce soit.
+❌ **Ne jamais identifier une erreur par une sous-chaîne de son message** : il vient du catalogue
+i18n, il est traduit. Le code vit dans `.code`. C'est ce bug-là qui a fait vivre le prédicat
+d'origine sans qu'il puisse matcher une seule fois.
+`retry: 1` ne vaut plus que pour les **mutations**, et `useCancelAndRefundOrg` y met `retry: 0` :
+on ne rejoue jamais une mutation qui déplace de l'argent.
 
 `useSharedTasksRealtime` est monté **une seule fois** ici (composant `SharedTasksRealtime`).
 
