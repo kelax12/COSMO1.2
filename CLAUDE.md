@@ -14,11 +14,12 @@ fausses restées en place pendant des jours parce que le fichier était trop gro
 
 ✅ Cliquet : `npm run check:docs` refuse ce fichier au-delà de son plafond.
 
-🔴 **Un défaut est OUVERT en production à cette date** : `okrTime` vaut **0** sur `/statistics`
-pour tous les comptes réels. La mig. `136`, commitée depuis le 2026-09-03, n a jamais été
-appliquée, et le correctif du 09-02 n avait réparé que la moitié cliente. **La démo affiche juste,
-le produit affiche zéro.** Item `C-77` de [`a-faire-code.md`](./a-faire-code.md), détail dans
-[`docs/SECURITY.md`](./docs/SECURITY.md).
+✅ **`C-77` est REFERMÉ le 2026-09-20** : la mig. `136` est **appliquée en production** (ledger
+`20260920105113`), vérifiée par `pg_get_functiondef` et non par le ledger. `okrTime` a valu **0**
+sur `/statistics` pour tous les comptes réels pendant dix-sept jours pendant que la migration
+dormait, commitée, dans le dépôt.
+⚠️ **Un KR sans `estimated_time` compte toujours 0 minute**, et c est juste : le temps OKR vaut
+`Σ minutes estimées du KR` par complétion. Ne pas relire un mois à zéro comme une panne.
 
 ---
 

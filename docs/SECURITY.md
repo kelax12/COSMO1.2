@@ -390,15 +390,28 @@ Variables sensibles **jamais côté client** : `SUPABASE_SERVICE_ROLE_KEY`, `STR
 ## Base de données Supabase
 
 Migrations dans `supabase/migration/*.sql`, convention `NNN_<feature>.sql`.
-**153 fichiers de migration** au 2026-09-15 (la `149` s'ajoute, cf. plus bas : elle est
-**écrite et NON APPLIQUÉE**). La dernière APPLIQUÉE est la
-`148_team_categories_tree_merge` (le 2026-09-13) ; le ledger porte **138 entrées**
-(recompté en base le 2026-09-14 au soir ; ce fichier a écrit « 148 », qui est le NUMÉRO de la
-dernière migration, jamais un total), et les trois seules migrations du dépôt dont le CONTENU
-manque en base sont la `136` (défaut OUVERT en production, item `C-77` : ce fichier l'a classée
-« travail d'une autre session » pendant douze jours, et tant qu'elle portait cette étiquette
-personne n'a lu ce qu'elle répare), la `140` (délibéré : elle se joue DANS la fenêtre de bascule
-Stripe live) et la `149` (écrite le 2026-09-15, en attente d'application).
+**153 fichiers de migration**, ledger à **140 entrées** (recompté en base le **2026-09-20** ; ce
+fichier a écrit « 148 », qui est le NUMÉRO de la dernière migration, jamais un total).
+
+✅ **Le 2026-09-20, deux des trois migrations manquantes ont été APPLIQUÉES et vérifiées** :
+
+- **`136_work_time_stats_okr_from_completions`** (ledger `20260920105113`), qui referme `C-77`.
+  Ce fichier l'a classée « travail d'une autre session » pendant douze jours, et tant qu'elle
+  portait cette étiquette personne n'a lu ce qu'elle répare : `okrTime` valait **0** pour tous les
+  comptes réels. Prouvée en transaction annulée avant application, rejouée après :
+  `pg_get_functiondef` sur la fonction vivante cite `kr_completions` et plus une seule fois
+  `history` ; `okrTime` passe de `0/0/0/0/0` à `300/180/0/0/0` sur mai→septembre pour un compte
+  réel, les trois autres catégories **inchangées au chiffre près**.
+  ⚠️ Un KR sans `estimated_time` compte 0 minute, et c'est la formule : les mois portés par des
+  KR à 0 restent à zéro légitimement.
+- **`149_admin_stats_excludes_non_users`** (ledger `20260920105522`), appliquée **par le CLI**
+  verbatim depuis le fichier, **donc avec insertion manuelle de la ligne de ledger** — même chemin
+  et même piège que la mig. `145`. `/admin` annonce désormais 28 utilisateurs, 658 tâches,
+  387 événements et 26 habitudes, contre 30 · 779 · 454 · 32, plus une clé `excluded_accounts = 2`.
+  Un non-admin reste refusé en **42501**.
+
+🔴 **La seule migration du dépôt dont le contenu manque encore en base est la `140`**, et c'est
+**délibéré** : elle se joue DANS la fenêtre de bascule Stripe live, jamais avant.
 
 🟢 **CE COMPTE N'EST PLUS À TENIR À LA MAIN DEPUIS LE 2026-09-15.**
 `npm run check:migration-coverage` (finding C-79) relie chaque fichier au ledger de production
@@ -494,7 +507,10 @@ se prouve par une requête, désormais recopiée dans l'en-tête avec son résul
 va **baisser**, ses `history` cessant d'être lus alors qu'il n'a aucune ligne dans
 `kr_completions`. Ce n'est pas une régression, c'est la fin d'un chiffre qui ne reposait que sur
 une donnée morte.
-🔴 **La `149_admin_stats_excludes_non_users.sql` est ÉCRITE et NON APPLIQUÉE** (2026-09-15).
+✅ **La `149_admin_stats_excludes_non_users.sql` est APPLIQUÉE le 2026-09-20** (ledger
+`20260920105522`), après cinq jours passés **hors de git** : le fichier n'était même pas suivi.
+Ce qui suit décrit ce qu'elle a corrigé, et les chiffres d'origine sont conservés à leur date.
+Elle était ÉCRITE et NON APPLIQUÉE depuis le 2026-09-15.
 `get_admin_stats` comptait les **28** comptes d'`auth.users`, dont `demo@cosmo.app` (jamais
 connecté, porteur de **120 tâches en production**) et `testemail@gmail.com` : la console `/admin`
 annonçait **28 utilisateurs là où il y en a 26**, et **16 % des tâches de la plateforme**

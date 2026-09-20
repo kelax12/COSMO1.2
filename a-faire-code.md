@@ -18,7 +18,7 @@ compte** et **ce qui prouve que c'est fini**.
 >
 > | Item | Ce que c'est | Pourquoi ce n'était pas vu |
 > |---|---|---|
-> | **C-77** 🔴 | `okrTime` vaut **0 en production** sur `/statistics` | Le correctif du 09-02 n'a réparé que la moitié client. La moitié serveur était classée « travail d'une autre session », jamais « défaut ouvert » |
+> | **C-77** ✅ | `okrTime` valait **0 en production** sur `/statistics` · **REFERMÉ le 2026-09-20**, mig. `136` appliquée | Le correctif du 09-02 n'a réparé que la moitié client. La moitié serveur était classée « travail d'une autre session », jamais « défaut ouvert » |
 > | **C-78** 🟠 | **96 cas E2E sur 220** ne tournent dans aucun workflow | Aucun run rouge ne signale une zone que rien ne mesure |
 > | **C-79** 🟡 | Rien ne relie les migrations du dépôt au ledger de prod | Le comptage du ledger passait pour la preuve qu'il n'est pas |
 > | **C-80** 🟠 | La garde des **cibles tactiles** ne couvre aucune page publique | Son résultat (« 0 ») est lu comme une propriété du produit, pas de ses huit routes |
@@ -39,13 +39,47 @@ compte** et **ce qui prouve que c'est fini**.
 > (les cas `mobile-safari` sont dans `ci.yml` à `HEAD` depuis `af0190bd`), les témoins sont **39**
 > et non 36, et la mig. `149` n'est pas seulement non appliquée, elle n'est **pas commitée**.
 >
-> 🔴 **`C-77` reste ouvert, relu EN BASE le 2026-09-20** : ledger à **138** entrées, dernière
-> `20260913223918`, et `get_work_time_stats` lit encore `history`. Le geste qui le ferme n'existait
-> dans aucune liste ; il s'appelle désormais **`M-45`**.
+> 🔴 **`C-77` était ouvert quand cette ligne a été écrite le 2026-09-20 au matin** : ledger à
+> **138** entrées, dernière `20260913223918`, et `get_work_time_stats` lisait encore `history`.
+> Le geste qui le ferme n'existait dans aucune liste ; il s'appelait **`M-45`**.
+> ✅ **Il a été fait le même jour** : voir ci-dessous.
 
 ---
 
-### 🔴 C-77 · `okrTime` vaut 0 en production, et la démo affiche juste
+### ✅ C-77 · REFERMÉ le 2026-09-20 · `okrTime` valait 0 en production, et la démo affichait juste
+
+> ✅ **Mig. `136` APPLIQUÉE en production le 2026-09-20**, ledger `20260920105113`, après
+> **dix-sept jours** passée commitée et dormante. `M-45` est fait, `M-46` (mig. `149`) aussi.
+>
+> **La preuve, dans l'ordre où elle a été prise :** la définition vivante de `get_work_time_stats`
+> capturée avant (empreinte `a5acef21`) comme artefact de retour arrière · la nouvelle version
+> jouée dans une **transaction annulée**, sous le rôle `authenticated` avec les claims d'un compte
+> réel, donc RLS active · production remesurée **intacte** entre les deux (même empreinte) ·
+> application par `apply_migration`, donc au ledger · vérification **après** par
+> `pg_get_functiondef` et jamais par la lecture du ledger.
+>
+> | Mois | tasksTime | eventsTime | habitsTime | okrTime **avant** | okrTime **après** |
+> |---|---|---|---|---|---|
+> | 2026-05 | 0 | 1 800 | 755 | 0 | **300** |
+> | 2026-06 | 190 | 2 725 | 1 563 | 0 | **180** |
+> | 2026-07 | 0 | 0 | 0 | 0 | 0 |
+> | 2026-08 | 0 | 3 120 | 40 | 0 | **0** |
+> | 2026-09 | 0 | 1 319 | 0 | 0 | **0** |
+>
+> Les trois autres colonnes sont **identiques au chiffre près**, ce qui est exactement le critère 4
+> du bloc de vérification de la migration. Droits inchangés (`anon` **f**, `authenticated` **t**),
+> `SECURITY INVOKER` conservé, index `idx_kr_completions_user_completed_at` posé.
+>
+> 🔴 **Ce que la migration ne dit pas, et que seule la mesure a trouvé : août et septembre restent
+> à ZÉRO, et c'est juste.** Le temps OKR vaut `Σ minutes estimées du KR` par complétion ; or
+> **3 Key Results sur 5 du compte principal portent `estimated_time = 0`**, et ce sont eux qui
+> portent les **95 complétions** de ces deux mois. Les deux KR à 60 min sont ceux de mai et juin.
+> ❌ **Ne jamais relire ce zéro comme un échec du correctif** : sans cette phrase, on ouvre
+> `/statistics` sur le mois courant, on voit zéro, et on rouvre un défaut qui n'existe plus.
+> Le geste qui donnerait un chiffre à ces mois n'est pas du code, c'est une saisie de durée
+> estimée sur ces trois KR.
+
+**Ce qui suit est l'énoncé d'origine, conservé à sa date.**
 
 **Où** : `supabase/migration/136_work_time_stats_okr_from_completions.sql` (**commitée** le
 2026-09-03 par `31482a3f`, présente à `HEAD`, **jamais appliquée**) · fonction `public.get_work_time_stats` en prod ·
@@ -5844,7 +5878,7 @@ Il y entre ce jour sous **M-45**.
 |---|---|---|---|---|
 | **C-98** | 🔴 **Rien ne relie le SITEMAP aux pages réellement PRÉRENDUES**, et aucune garde ne vérifie les balises par page. Une route ajoutée à l'un sans l'autre ne fait échouer aucun job : les 10 pages prérendues hors sitemap ont dû être expliquées **à la main** le 2026-09-14. `title`, `description`, `canonical`, `hreflang`, `robots.txt` et les `noindex` ne sont vus qu'au moment où on ouvre une locale | aucun script ne compare `dist/sitemap.xml` à la sortie de `prerender.mjs` · 40 `hreflang` recomptés à la main | Une garde sur `dist/**/*.html` après build : chaque page prérendue est au sitemap ou **déclarée hors sitemap avec sa raison**, et chaque page porte ses quatre balises. Peu coûteux, et c'est l'angle mort le mieux outillable des onze | `SEO.md` AM-2, AM-3, AM-5 |
 | **C-99** | **Le CORPS des pages prérendues en `en` n'est comparé à rien.** Les 50 pages ont été mesurées **une fois** avant l'ouverture d'`en` à l'indexation (`C-20`), jamais depuis. Les pluriels et les formats de date n'ont pas de garde dédiée balayant les deux locales, et `es` figure dans `route-slugs.json` sans être servie ni indexable | aucune garde ne rejoue la comparaison · aucun test de parité de pluriels | Une garde de volume de texte par page **et par locale**, plus une parité de pluriels et de formats sur les deux locales servies. ⚠️ Elle ne mesure pas la **qualité**, qui reste `M-50` | `I18N.md` AM-2, AM-3, AM-4 |
-| **C-100** | **Les comptes de TEST ne sont retranchés d'aucune statistique.** `demo@cosmo.app` porte **120 tâches** en production, soit 16 % des tâches de la plateforme, et `get_admin_stats` les compte encore | 🔴 La mig. `149` qui les retranche est **écrite, NON COMMITÉE** : fichier non suivi au 2026-09-20, et `admin_stats_excluded_uids()` absente de la base | La migration est **commitée**, puis appliquée (`M-46`), puis `get_admin_stats` rend deux nombres distincts sur la plateforme avec et sans les comptes de test. ❌ Un « la fonction s'exécute » ne vaut rien : c'est ce que fait déjà la version qui les compte | `ACQUISITION.md` AM-3 |
+| **C-100** ✅ | **Les comptes de TEST ne sont retranchés d'aucune statistique.** `demo@cosmo.app` porte **120 tâches** en production, soit 16 % des tâches de la plateforme, et `get_admin_stats` les comptait encore | ✅ **REFERMÉ le 2026-09-20** : mig. `149` **commitée** (`297ddd14`) puis **appliquée** (ledger `20260920105522`). Était : fichier non suivi par git, `admin_stats_excluded_uids()` absente de la base | ✅ **Le critère de sortie est tenu, et c'est bien deux nombres distincts** : `/admin` annonçait 30 utilisateurs · 779 tâches · 454 événements · 32 habitudes, il annonce 28 · 658 · 387 · 26, plus une clé `excluded_accounts = 2` qui **dit** la correction. Un non-admin reste refusé en 42501 | `ACQUISITION.md` AM-3 |
 | **C-101** | **Aucune action d'acquisition n'est reliée à son résultat.** Le tracking `?ref=` reste un développement ouvert, les chiffres de `ACQUISITION.md` datent du 2026-08-14 et rien ne les rejoue, et les actions manuelles de `ACQUISITION-BACKLINKS.md` n'ont ni date ni état : une liste sans colonne « fait le » ne distingue pas « pas encore tenté » de « tenté sans effet », et les deux appellent des décisions opposées | aucun workflow d'acquisition · pas de colonne d'état dans le tableau des annuaires | L'attribution `?ref=` posée de bout en bout, un job planifié qui rejoue les compteurs de la base, et une colonne d'état dans le tableau des annuaires. ⚠️ La vérification de bout en bout exige une vraie inscription : elle reste côté Axel, `faille.md` § « Ordre de priorité », ligne 4 | `ACQUISITION.md` AM-1 et AM-2 · `ACQUISITION-BACKLINKS.md` AM-3 |
 
 ### 12.7 Architecture, déploiement, conformité outillée
