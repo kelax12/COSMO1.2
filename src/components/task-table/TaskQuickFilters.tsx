@@ -2,6 +2,7 @@ import React from 'react';
 import { Bookmark, BookmarkCheck, CheckCircle2, CheckSquare, AlertTriangle, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useT } from '@/i18n/useT';
+import { useOverdueFocus } from '@/lib/hooks/use-overdue-focus';
 import type { KeyOf } from '@/i18n/catalog';
 
 export type QuickFilter = 'none' | 'bookmarked' | 'completed' | 'overdue' | 'collaboration';
@@ -62,6 +63,22 @@ const TaskQuickFilters: React.FC<Props> = ({
 }) => {
   const { t } = useT('tasks');
   const { t: tCommon } = useT('common');
+
+  // ── Maquette 122 : « N en retard » mène à la liste qu'il compte ──────
+  //
+  // L'en-tête mobile émet `focus-overdue-tasks` ; c'est ICI qu'on l'écoute,
+  // dans le composant qui porte déjà la pastille « Retard » — et non dans
+  // `TaskTable`, qui détient l'état mais se trouvait à UNE ligne de son
+  // plafond de 600 (`architecture.guard`). Un budget se respecte en déplaçant,
+  // jamais en relevant la borne.
+  //
+  // ⚠️ `onToggle` bascule : appelé alors que le filtre est déjà actif, il
+  // l'éteindrait. On ne l'appelle donc que si « Retard » n'est pas déjà
+  // sélectionné — un appui sur « 1 en retard » demande à VOIR le retard, pas
+  // à l'inverser.
+  useOverdueFocus(React.useCallback(() => {
+    if (active !== 'overdue') onToggle('overdue');
+  }, [active, onToggle]));
 
   return (
     <div className={`${visible ? 'flex' : 'hidden'} md:flex flex-col gap-4 mb-6`}>

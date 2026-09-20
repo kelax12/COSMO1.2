@@ -94,13 +94,11 @@
     "step4Title": "Mini-calendrier",
     "step5Title": "Créer une tâche",
     "step6Title": "Geste : glisser à droite pour valider",
-    "step7Title": "Plus simple : le bouton « … »",
     "step1Desc": "Ici vous gérez toutes vos tâches. Glissez une ligne vers la droite pour la valider, vers la gauche pour les options.",
     "step2Desc": "Vos listes (Travail, Courses, Voyage…) se trouvent ici. Touchez une liste pour filtrer. Faites glisser le carrousel pour voir toutes vos listes.",
     "step3Desc": "Tapez pour chercher. Touchez « + d'options » pour révéler les filtres rapides : Favoris, Terminées, En retard, Collaboration.",
     "step4Desc": "Affiche vos échéances sur une semaine. Touchez ce bouton pour l'afficher ou le masquer.",
     "step5Desc": "Ce bouton flottant est accessible depuis toutes les pages. Il ouvre la création rapide : tapez « Appeler le dentiste jeudi 10h » et la date est comprise automatiquement.",
-    "step6Desc": "Sur une tâche, glissez votre doigt vers la droite. Une zone verte « Valider » apparaît. Lâchez : la tâche est cochée (avec une légère vibration).",
-    "step7Desc": "Pas envie de glisser ? Le bouton « … » à droite de chaque tâche ouvre le panneau d'actions : favori, partage, planifier, supprimer."
+    "step6Desc": "Sur une tâche, glissez votre doigt vers la droite. Une zone verte « Valider » apparaît. Lâchez : la tâche est cochée (avec une légère vibration)."
   }
 }

@@ -41,7 +41,8 @@
     "weight": "Coefficient d'importance ×{{weight}}",
     "decrease": "Diminuer {{title}}",
     "increase": "Augmenter {{title}}",
-    "progressOf": "Avancement de {{title}} sur {{target}}"
+    "progressOf": "Avancement de {{title}} sur {{target}}",
+    "objectiveActions": "Actions de l'objectif"
   },
   "categories": {
     "mobileLabel": "Catégorie :",

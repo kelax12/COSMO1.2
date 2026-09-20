@@ -85,8 +85,23 @@ const TutorialCard: React.FC<TutorialCardProps> = ({
         </span>
       </div>
 
-      {/* Boutons */}
-      <div className="flex items-center justify-between gap-2 mt-3">
+      {/* ── Maquette 117 : refuser coûte le même geste qu'accepter ────────
+          « Passer » n'existait que sous la forme d'une CROIX de 16 px en haut
+          à droite, pendant que « Suivant » occupait un bouton plein et coloré.
+          La sortie était l'élément le moins visible de l'écran qui bloque
+          l'écran. Elle devient un vrai bouton, à 44 px, dans la même rangée.
+          La croix reste : elle n'est simplement plus la seule.
+
+          ⚠️ La maquette affirmait aussi que la carte était « semi-transparente,
+          les lignes passent derrière le texte ». MESURÉ au navigateur le
+          2026-09-21 : `opacity: 1`, fond plein. C'était FAUX, comme la mesure
+          de la maquette 93 — une capture assombrie par le voile du tutoriel
+          n'est pas une carte translucide. Rien n'a donc changé sur le fond.
+
+          `justify-between` laissé de côté : à trois boutons, « Précédent » et
+          « Passer » se groupent à gauche, l'action d'avancement reste seule à
+          droite, là où le pouce la cherche. */}
+      <div className="flex items-center gap-2 mt-3">
         <button
           type="button"
           onClick={onPrev}
@@ -95,6 +110,14 @@ const TutorialCard: React.FC<TutorialCardProps> = ({
         >
           {t('tutorial.previous')}
         </button>
+        <button
+          type="button"
+          onClick={onClose}
+          className="px-3 min-h-touch sm:min-h-0 sm:py-2 rounded-lg border border-[rgb(var(--color-border-strong))] font-medium text-sm text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] transition-colors"
+        >
+          {t('tutorial.skip')}
+        </button>
+        <span className="flex-1" />
         <button
           type="button"
           onClick={onNext}
