@@ -320,11 +320,11 @@ le ledger. Le tableau du 2026-09-14 est conservé sous celui-ci, à sa date.
 | `npm run check:deploy` | ✅ `egal` : la prod sert `ebb1dec`, le commit du dépôt | — |
 | Advisors Supabase (sécurité) | **9 / 52 / 2 / 1**, à l'unité près les mêmes | 9 / 52 / 2 / 1 |
 | Invariant RLS en base | ✅ **50 tables `public`, les 50 en `relrowsecurity = true`**, 126 policies, 117 fonctions | identique |
-| Ledger de migrations | ⚠️ **138 entrées pour 153 fichiers.** Toujours pas de `136`, ni de `140`, ni de `149`. Et une confirmation NEUVE de l'angle mort D-1 : la `146` n'a **aucune entrée** alors que `events.review_dismissed_at` **existe en base** | 138 pour 152 |
+| Ledger de migrations | ⚠️ **140 entrées pour 153 fichiers** après application de la `136` et de la `149` ce jour (138 au début de la passe). Reste la `140`, non appliquée **délibérément**. Et une confirmation NEUVE de l'angle mort D-1 : la `146` n'a **aucune entrée** alors que `events.review_dismissed_at` **existe en base** | 138 pour 152 |
 
-🔴 **`okrTime` reste à 0 en production, remesuré ce jour** : `pg_get_functiondef` sur la fonction
-vivante `get_work_time_stats` ne contient **aucune** occurrence de `kr_completions`, et lit encore
-`kr.elem->'history'`. C'est `C-77`, et c'est le seul défaut ouvert que voit un utilisateur.
+✅ **`okrTime` n'est plus à 0 : `C-77` est REFERMÉ le 2026-09-20**, mig. `136` appliquée et
+vérifiée par `pg_get_functiondef`. Détail, preuve avant/après et la réserve sur les KR sans
+`estimated_time` : § « Ordre de priorité avant déploiement prod ».
 
 ---
 
@@ -1051,13 +1051,25 @@ documentaire du 2026-08-14, le lien pointait dans le vide. Restaurée ici.
 > tableau de composition de la note affichait encore, à sa date de 09-02 : vraie ce jour-là,
 > recopiée comme un état courant par quiconque ouvrait la page pour savoir quoi déployer.
 > **Une checklist de déploiement qui ne se relit pas à chaque migration écrite n'est pas une
-> checklist.** Les trois lignes manquantes sont ajoutées en tête ci-dessous.
+> checklist.** Les trois lignes manquantes sont ci-dessous, **deux refermées le jour même**.
 
-| # | Migration écrite et **NON APPLIQUÉE** | Ce que ça laisse ouvert | Vérifié le 2026-09-20 |
+| # | Migration | État au 2026-09-20 | Preuve |
 |---|---|---|---|
-| **P0** | **`136_work_time_stats_okr_from_completions`** (commitée le 2026-09-03) | 🔴 **`okrTime` vaut 0 sur `/statistics` pour tous les comptes réels.** La démo affiche juste, le produit affiche zéro. Item `C-77` | `pg_get_functiondef('get_work_time_stats')` ne cite **jamais** `kr_completions` ; aucune entrée `136` au ledger |
-| **P1** | **`140_reset_stripe_identifiers`** | Identifiants Stripe de TEST en base. À jouer **DANS** la fenêtre de bascule live, jamais avant | déclarée non appliquée **délibérément** par `check:migration-coverage` |
-| **P2** | **`149_admin_stats_excludes_non_users`** (⚠️ fichier **non suivi par git** au 2026-09-20) | Les comptes de test gonflent les statistiques `/admin` | `admin_stats_excluded_uids()` **absente** de la base ; aucune entrée au ledger |
+| **P0** | **`136_work_time_stats_okr_from_completions`** (commitée le 2026-09-03) | ✅ **APPLIQUÉE**, ledger `20260920105113` | `pg_get_functiondef` : la fonction vivante cite `kr_completions` et **plus une seule fois** `history`. `SECURITY INVOKER` conservé, `anon` **f** / `authenticated` **t**, index `idx_kr_completions_user_completed_at` posé. Prouvée **AVANT** en transaction annulée, puis rejouée après : sur un compte réel, `okrTime` passe de `0/0/0/0/0` à `300/180/0/0/0` sur mai→septembre, et `tasksTime`, `eventsTime`, `habitsTime` sont **identiques au chiffre près** (critère 4 de la migration) |
+| **P1** | **`140_reset_stripe_identifiers`** | ⏳ **non appliquée, délibérément** | À jouer **DANS** la fenêtre de bascule live, jamais avant : tant que la clé est une clé de test, chaque checkout réécrit un identifiant de test |
+| **P2** | **`149_admin_stats_excludes_non_users`** | ✅ **COMMITÉE** (`297ddd14`) **puis APPLIQUÉE**, ledger `20260920105522` | `/admin` annonçait **30 utilisateurs, 779 tâches, 454 événements, 32 habitudes** ; il annonce désormais **28 · 658 · 387 · 26**, plus une clé `excluded_accounts = 2`. Un non-admin est toujours refusé en **42501**. Prouvée en transaction annulée avant application, prod remesurée intacte entre les deux |
+
+> ⚠️ **La `149` a été appliquée par le CLI** (`supabase db query --linked -f`, verbatim depuis le
+> fichier, pour qu'aucune recopie ne s'interpose sur 374 lignes), **donc sa ligne de ledger a été
+> insérée à la main** : le CLI n'inscrit rien, contrairement à `apply_migration`. C'est le même
+> chemin que la mig. `145`, avec le même piège — refaire ce chemin sans l'insertion laisserait une
+> migration appliquée et invisible du ledger. Le ledger porte **140** entrées après coup.
+>
+> ⚠️ **Ce que la `136` ne répare pas, et qui se verra tout de suite** : le temps OKR vaut
+> `Σ minutes estimées du KR` par complétion. Sur le compte principal, **3 Key Results sur 5
+> portent `estimated_time = 0`**, et ce sont ceux des 95 complétions d'août et septembre :
+> ces deux mois **restent à zéro**, légitimement. ❌ Ne pas relire ce zéro comme un échec du
+> correctif. Mai et juin, portés par les deux KR à 60 min, passent bien à 300 et 180.
 
 ⚠️ **La `146` est le contre-exemple, et il est instructif** : elle n'a **aucune entrée au ledger**
 mais `events.review_dismissed_at` existe bel et bien en base. Une absence au ledger ne prouve donc
