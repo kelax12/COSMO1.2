@@ -274,8 +274,16 @@ export default function StatisticsPage() {
       </div>
 
       {/* Insights en langage naturel (#34) — la conclusion avant les graphes */}
+      {/* ── Insights (#34) : retirés du MOBILE, arbitrage d'Axel le 2026-09-21 ──
+          « Habitude la plus fragile : Méditation, 7 oublis cette semaine »
+          occupait une carte pleine largeur au-dessus des chiffres, sur un
+          écran qu'on ouvre pour lire un total. C'est un commentaire, pas une
+          donnée, et il passait avant la donnée.
+          ⚠️ Le bloc VIT TOUJOURS au-delà de `md` : rien n'a été mesuré ni
+          reproché côté desktop, où il ne pousse rien hors de l'écran.
+          `buildInsights` et `insightText` restent donc montés. */}
       {insights.length > 0 && (
-        <div className="card p-4 mb-8 space-y-1.5" role="status">
+        <div className="hidden md:block card p-4 mb-8 space-y-1.5" role="status">
           {insights.map((insight) => (
             <p key={insight.kind} className="text-sm flex items-start gap-2" style={{ color: 'rgb(var(--color-text-primary))' }}>
               <span className="text-blue-500 shrink-0" aria-hidden="true">→</span>
