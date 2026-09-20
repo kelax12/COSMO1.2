@@ -59,10 +59,17 @@ const PeriodSummaryCard = ({ fixedStats, sectionColor }: PeriodSummaryCardProps)
             <span className="md:hidden block text-title font-bold tabular-nums tracking-tight" style={{ color: 'rgb(var(--color-text-primary))' }}>
               {formatTimeShort(r.val)}
             </span>
-            <span className="md:hidden block text-caption mt-0.5 mb-2" style={{ color: 'rgb(var(--color-text-muted))' }}>
+            <span className="md:hidden block text-caption mt-0.5" style={{ color: 'rgb(var(--color-text-muted))' }}>
               {r.label}
             </span>
-            <span aria-hidden="true" className="block h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: 'rgb(var(--color-hover))' }}>
+            {/* ── Barres retirées du MOBILE, arbitrage d'Axel le 2026-09-21 ──
+                Elles ne comparaient que ces quatre plages ENTRE ELLES, et
+                « 365 jours » écrase toujours tout : « Aujourd'hui » y rendait
+                un trait de deux pixels, quelle que soit la journée. Une barre
+                dont une seule valeur est jamais visible ne mesure rien.
+                Elle reste sous `md`, où la rangée est large et où les quatre
+                plages se lisent côte à côte. */}
+            <span aria-hidden="true" className="hidden md:block h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: 'rgb(var(--color-hover))' }}>
               <span className="block h-full rounded-full transition-[width] duration-500" style={{ width: `${width}%`, backgroundColor: sectionColor }} />
             </span>
             <span className="hidden md:block text-sm font-semibold tabular-nums text-right tracking-tight" style={{ color: 'rgb(var(--color-text-primary))' }}>
