@@ -52,5 +52,7 @@ export const tasksTutorialStepsMobile: TutorialStep[] = [
   // une commande absente, et c'était la première chose qu'un nouvel arrivant
   // lisait. Défaut introduit par mon propre correctif — retirer une commande,
   // c'est aussi relire ce qui en parle.
-  // Les deux clés `tasksMobile.step7*` restent dans les catalogues, inutilisées.
+  // Les deux clés `tasksMobile.step7*` ont été retirées des catalogues le
+  // 2026-09-21 : une clé qu'aucun code ne lit finit par être retraduite,
+  // relue en revue, et par faire croire que l'étape existe encore.
 ];

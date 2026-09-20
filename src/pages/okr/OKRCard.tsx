@@ -1,12 +1,13 @@
 // Carte d'un objectif (OKR) — extraite verbatim de OKRPage, prop-driven + mémoïsée.
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Edit2, Trash2, Clock, CheckCircle, Calendar } from 'lucide-react';
+import { Edit2, Trash2, Clock, CheckCircle, Calendar, MoreHorizontal } from 'lucide-react';
 import type { KeyResult } from '@/modules/okrs';
 import { useTasks } from '@/modules/tasks';
 import { getProgress, type Objective } from './okr-page-logic';
 import { formatDate } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
+import BottomSheet from '@/components/mobile/BottomSheet';
 
 interface OKRCardProps {
   objective: Objective;
@@ -28,6 +29,11 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
   updateKeyResult,
 }) => {
   const { t } = useT('okr');
+  const { t: tCommon } = useT('common');
+  // Maquette 119 : identifiant de l'objectif dont la feuille d'actions est
+  // ouverte. Null = fermée. Un identifiant plutôt qu'un booléen parce que
+  // `OKRCardBase` est rendu par objectif, mais l'état reste local à la carte.
+  const [actionsFor, setActionsFor] = useState<string | null>(null);
               const progress = getProgress(objective.keyResults);
               const category = getCategoryById(objective.category);
 
@@ -96,18 +102,38 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                       </span>
                     </div>
 
+                    {/* ── Maquette 119 : aucune suppression au repos ────────
+                        Même défaut que la carte d'habitude, au même endroit :
+                        un crayon et une CORBEILLE côte à côte, en permanence,
+                        sur une carte dont il ne tient guère plus d'une par
+                        écran. Sur mobile les deux passent dans une feuille
+                        d'actions ouverte par « ⋯ » ; la suppression y est
+                        dernière, séparée, en rouge, et emprunte la même
+                        confirmation (`DeleteObjectiveConfirm`) qu'avant.
+
+                        Desktop (`sm:`) inchangé. Une carte n'a pas de
+                        glissement, contrairement à une ligne de liste
+                        (maquette 86) : c'est pourquoi le « ⋯ » reste ici,
+                        alors qu'il a disparu des lignes de tâches. */}
                     <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+                      <button
+                        onClick={() => setActionsFor(objective.id)}
+                        aria-label={t('card.objectiveActions')}
+                        className="sm:hidden min-w-touch min-h-touch flex items-center justify-center p-1.5 transition-colors hover:bg-hover rounded-md"
+                        style={{ color: 'rgb(var(--color-text-muted))' }}>
+                        <MoreHorizontal size={18} />
+                      </button>
                       <button
                         onClick={() => handleEditObjective(objective.id)}
                         aria-label={t('card.editObjective')}
-                        className="min-w-touch min-h-touch sm:min-w-0 sm:min-h-0 flex items-center justify-center p-1.5 transition-colors hover:bg-hover rounded-md"
+                        className="hidden sm:flex min-w-0 min-h-0 items-center justify-center p-1.5 transition-colors hover:bg-hover rounded-md"
                         style={{ color: 'rgb(var(--color-text-muted))' }}>
                         <Edit2 size={16} />
                       </button>
                       <button
                         onClick={() => setDeletingObjective(objective.id)}
                         aria-label={t('card.deleteObjective')}
-                        className="min-w-touch min-h-touch sm:min-w-0 sm:min-h-0 flex items-center justify-center p-1.5 transition-colors hover:bg-hover rounded-md text-red-500/70 hover:text-red-500"
+                        className="hidden sm:flex min-w-0 min-h-0 items-center justify-center p-1.5 transition-colors hover:bg-hover rounded-md text-red-500/70 hover:text-red-500"
                         style={{ color: 'rgb(var(--color-text-muted))' }}>
                         <Trash2 size={16} />
                       </button>
@@ -351,6 +377,35 @@ const OKRCardBase: React.FC<OKRCardProps> = ({
                     </div>
                   ) : null;
                 })()}
+            {/* Maquette 119 : la feuille d'actions de la carte, mobile seule.
+                `BottomSheet` rend un dialogue centré au-delà de `sm`, mais ce
+                chemin n'y est jamais ouvert (le bouton est `sm:hidden`). */}
+            <BottomSheet
+              open={actionsFor === objective.id}
+              onClose={() => setActionsFor(null)}
+              ariaLabel={t('card.objectiveActions')}
+            >
+              <p className="px-4 pb-2 text-headline font-bold text-[rgb(var(--color-text-primary))] line-clamp-2">
+                {objective.title}
+              </p>
+              <button
+                type="button"
+                onClick={() => { setActionsFor(null); handleEditObjective(objective.id); }}
+                className="w-full flex items-center gap-3 px-4 min-h-touch text-left text-body text-[rgb(var(--color-text-primary))] active:bg-[rgb(var(--color-hover))] transition-colors"
+              >
+                <Edit2 size={18} className="shrink-0 text-[rgb(var(--color-text-muted))]" aria-hidden="true" />
+                {tCommon('actions.edit')}
+              </button>
+              <div className="h-px bg-[rgb(var(--color-border-muted))] mx-4 my-1" />
+              <button
+                type="button"
+                onClick={() => { setActionsFor(null); setDeletingObjective(objective.id); }}
+                className="w-full flex items-center gap-3 px-4 min-h-touch text-left text-body text-[rgb(var(--color-error))] active:bg-red-500/10 transition-colors"
+              >
+                <Trash2 size={18} className="shrink-0" aria-hidden="true" />
+                {tCommon('actions.delete')}
+              </button>
+            </BottomSheet>
             </motion.div>);
 };
 

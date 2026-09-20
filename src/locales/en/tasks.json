@@ -10,7 +10,9 @@
     "openCount_other": "{{count}} tasks to do",
     "overdueCount_one": "{{count}} overdue",
     "overdueCount_many": "{{count}} overdue",
-    "overdueCount_other": "{{count}} overdue"
+    "overdueCount_other": "{{count}} overdue",
+    "overdueFilter_one": "Show the overdue task",
+    "overdueFilter_other": "Show the {{count}} overdue tasks"
   },
   "error": {
     "title": "Could not load your tasks",

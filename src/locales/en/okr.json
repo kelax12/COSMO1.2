@@ -40,7 +40,8 @@
     "weight": "Importance weight ×{{weight}}",
     "decrease": "Decrease {{title}}",
     "increase": "Increase {{title}}",
-    "progressOf": "{{title}} progress out of {{target}}"
+    "progressOf": "{{title}} progress out of {{target}}",
+    "objectiveActions": "Objective actions"
   },
   "categories": {
     "mobileLabel": "Category:",

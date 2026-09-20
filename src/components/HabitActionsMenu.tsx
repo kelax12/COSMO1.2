@@ -1,7 +1,7 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MoreHorizontal, CalendarPlus, ListPlus, CircleSlash, CirclePlay, Copy } from 'lucide-react';
+import { MoreHorizontal, CalendarPlus, ListPlus, CircleSlash, CirclePlay, Copy, Pencil, Trash2 } from 'lucide-react';
 import { useHabitPauses } from '@/lib/hooks/use-habit-pauses';
 import { toast } from '@/lib/toast';
 import { useCreateTask } from '@/modules/tasks';
@@ -13,6 +13,17 @@ import { useT } from '@/i18n/useT';
 
 interface HabitActionsMenuProps {
   habit: Habit;
+  /**
+   * Maquette 119 — sur MOBILE, ce menu porte aussi « Modifier » et
+   * « Supprimer », parce que la carte ne les expose plus au repos. Sur
+   * desktop ils restent des boutons de la carte et ces entrées n'apparaissent
+   * pas : les montrer aux deux endroits, ce serait deux chemins pour une même
+   * action, donc deux endroits où la règle diverge.
+   */
+  onEdit?: () => void;
+  onDelete?: () => void;
+  /** true → le menu ajoute les deux entrées ci-dessus, en dernier. */
+  withEditDelete?: boolean;
 }
 
 /**
@@ -27,8 +38,9 @@ interface HabitActionsMenuProps {
  * Le popover est rendu via createPortal vers <body> pour échapper aux
  * overflows parents et z-index conflicts.
  */
-const HabitActionsMenu: React.FC<HabitActionsMenuProps> = ({ habit }) => {
+const HabitActionsMenu: React.FC<HabitActionsMenuProps> = ({ habit, onEdit, onDelete, withEditDelete = false }) => {
   const { t } = useT('habits');
+  const { t: tCommon } = useT('common');
   const [open, setOpen] = useState(false);
   const [eventModalOpen, setEventModalOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -264,6 +276,41 @@ const HabitActionsMenu: React.FC<HabitActionsMenuProps> = ({ habit }) => {
                 )}
               </button>
             </li>
+
+            {/* ── Maquette 119 : aucune suppression au repos ────────────────
+                La carte exposait en permanence crayon · ⋯ · corbeille, soit une
+                commande DESTRUCTIVE à 40 px d'une commande courante, sur un
+                écran qui n'affiche que deux cartes et demie. Les deux extrêmes
+                descendent ici, « Supprimer » en DERNIER, séparé et en rouge.
+                Il emprunte la même confirmation qu'avant.
+                ❌ Ne jamais le remonter dans la carte. */}
+            {withEditDelete && (
+              <>
+                <li className="my-1 mx-3 border-t border-[rgb(var(--color-border))]" />
+                <li>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => { setOpen(false); onEdit?.(); }}
+                    className="w-full flex items-center gap-3 px-3 py-2 hover:bg-[rgb(var(--color-hover))] transition-colors text-left focus-visible:outline-none focus-visible:bg-[rgb(var(--color-hover))]"
+                  >
+                    <Pencil size={17} strokeWidth={1.75} className="shrink-0 text-[rgb(var(--color-text-secondary))]" />
+                    <span className="text-sm text-[rgb(var(--color-text-primary))]">{tCommon('actions.edit')}</span>
+                  </button>
+                </li>
+                <li>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => { setOpen(false); onDelete?.(); }}
+                    className="w-full flex items-center gap-3 px-3 py-2 hover:bg-[rgb(var(--color-hover))] transition-colors text-left focus-visible:outline-none focus-visible:bg-[rgb(var(--color-hover))]"
+                  >
+                    <Trash2 size={17} strokeWidth={1.75} className="shrink-0 text-[rgb(var(--color-error))]" />
+                    <span className="text-sm text-[rgb(var(--color-error))]">{tCommon('actions.delete')}</span>
+                  </button>
+                </li>
+              </>
+            )}
           </ul>
         </motion.div>
       )}

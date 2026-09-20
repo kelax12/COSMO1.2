@@ -5,6 +5,7 @@ import { format } from 'date-fns';
 import { formatDate, getDateLocale } from '@/i18n/format';
 import { Habit, useDeleteHabit, useToggleHabitCompletion, useRestoreHabit } from '@/modules/habits';
 import { useT } from '@/i18n/useT';
+import { useIsMobile } from '@/lib/hooks/use-mobile';
 import { habitStreak } from '@/modules/habits/streak';
 import { showUndoToast } from '@/lib/undo-toast';
 import { Button } from '@/components/ui/button';
@@ -17,6 +18,8 @@ interface HabitCardProps {
 
 const HabitCard: React.FC<HabitCardProps> = React.memo(({ habit }) => {
   const { t } = useT('habits');
+  const { t: tCommon } = useT('common');
+  const isMobile = useIsMobile();
   const deleteHabitMutation = useDeleteHabit();
   // « Annuler » uniquement : rend l'habitude sous SON identifiant, sinon sa
   // pause (keyee par id) et son historique restent orphelins (R-08, C-37).
@@ -153,14 +156,26 @@ const HabitCard: React.FC<HabitCardProps> = React.memo(({ habit }) => {
             >
               <Calendar size={16} />
             </Button>
-            {/* Ordre demandé : crayon (édition) → « ... » (actions) → corbeille (suppression) */}
+            {/* ── Maquette 119 : aucune suppression au repos ─────────────
+                Sur MOBILE, crayon et corbeille quittent la carte : ils vivent
+                désormais dans la feuille d'actions du « ⋯ », la suppression en
+                dernier et en rouge. Une poubelle à 40 px d'un crayon, sur une
+                carte dont il ne tient que deux et demie par écran, SERA touchée
+                par erreur — ce n'est pas une question d'encombrement.
+                Desktop (`sm:`) inchangé : la souris vise, et la carte y a la
+                place des trois commandes. */}
             <div className="flex items-center gap-1">
-              <Button variant="ghost" size="icon" className="h-11 w-11 sm:h-9 sm:w-9" onClick={() => setEditOpen(true)}>
+              <Button variant="ghost" size="icon" className="hidden sm:flex h-11 w-11 sm:h-9 sm:w-9" onClick={() => setEditOpen(true)} aria-label={tCommon('actions.edit')}>
                 <Edit2 size={18} className="md:w-4 md:h-4" />
               </Button>
               {/* Menu « ... » — popover avec « Créer une tâche » + « Planifier dans l'agenda » */}
-              <HabitActionsMenu habit={habit} />
-              <Button variant="ghost" size="icon" className="h-11 w-11 sm:h-9 sm:w-9" onClick={handleDelete}>
+              <HabitActionsMenu
+                habit={habit}
+                withEditDelete={isMobile}
+                onEdit={() => setEditOpen(true)}
+                onDelete={handleDelete}
+              />
+              <Button variant="ghost" size="icon" className="hidden sm:flex h-11 w-11 sm:h-9 sm:w-9" onClick={handleDelete} aria-label={tCommon('actions.delete')}>
                 <Trash2 size={18} className="md:w-4 md:h-4" />
               </Button>
             </div>

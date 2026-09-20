@@ -5,6 +5,7 @@ import { PageHeading } from '@/components/ui/typography';
 import { MobileHeader, TouchTarget } from '@/components/mobile';
 import TasksInboxMenu from '@/components/task-table/TasksInboxMenu';
 import { useT } from '@/i18n/useT';
+import { OVERDUE_FOCUS_EVENT } from '@/lib/hooks/use-overdue-focus';
 
 interface TasksHeaderProps {
   showDeadlineCalendar: boolean;
@@ -42,15 +43,43 @@ const TasksHeader: React.FC<TasksHeaderProps> = ({
   // ce qu'il y a à faire, au premier défilement il ne reste que « Tâches ».
   // Deux phrases complètes séparées par un point médian, jamais une phrase
   // recousue à partir de fragments : « en retard » n'existe pas seul.
+  //
+  // ── Maquette 122 : un nombre nu ne mène nulle part ───────────────────
+  //
+  // Relevé sur les captures du 2026-09-20 : la barre d'onglets affiche « 2 »
+  // et « 1 », l'en-tête entreprise « 3 », la boîte de réception « 5 » ici et
+  // « 8 » sur l'accueil, et ce sous-titre dit « 1 en retard ». Tous ces
+  // compteurs portent déjà un libellé accessible complet — vérifié un par un
+  // le 2026-09-21 : `MobileTabBar`, `TasksInboxMenu` (`inbox.withCount`, badge
+  // `aria-hidden`) et `OrgNotificationsBell` (`notifications.bellUnread`).
+  // La moitié accessibilité de la maquette était donc DÉJÀ faite.
+  //
+  // Ce qui manquait est l'autre moitié : « 1 en retard » obligeait à chercher
+  // soi-même ce qu'il désignait. Il devient TAPABLE et applique le filtre
+  // rapide « Retard », qui existait déjà dans `TaskQuickFilters`.
+  //
+  // ⚠️ L'état de ce filtre vit dans `TaskTable`, deux niveaux plus bas. On
+  // passe donc par un évènement, comme `open-task-create` ou `open-quick-add`
+  // le font déjà dans ce dépôt, plutôt que de remonter l'état jusqu'ici pour
+  // un seul appui.
+  const focusOverdue = () => {
+    window.dispatchEvent(new CustomEvent(OVERDUE_FOCUS_EVENT));
+  };
+
   const mobileSummary = (
     <>
       <span>{tp('header.openCount', openCount)}</span>
       {overdueCount > 0 && (
         <>
           <span aria-hidden="true"> · </span>
-          <span className="text-red-500 font-medium">
+          <button
+            type="button"
+            onClick={focusOverdue}
+            className="text-red-500 font-medium underline-offset-2 hover:underline focus-visible:outline-none focus-visible:underline"
+            aria-label={tp('header.overdueFilter', overdueCount)}
+          >
             {tp('header.overdueCount', overdueCount)}
-          </span>
+          </button>
         </>
       )}
     </>
