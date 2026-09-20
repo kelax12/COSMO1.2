@@ -43,7 +43,7 @@ const PeriodSummaryCard = ({ fixedStats, sectionColor }: PeriodSummaryCardProps)
   return (
     // Le filet de séparation ne vaut qu'en PILE : en grille il dessinerait des
     // traits au milieu de nulle part, d'où `[&>div]:!border-b-0` sous `md`.
-    <div className="card p-4 md:p-6 mb-8 grid grid-cols-2 gap-x-4 gap-y-1 [&>div]:!border-b-0 md:block md:gap-0">
+    <div className="card p-4 md:p-6 mb-4 md:mb-8 grid grid-cols-2 gap-x-4 gap-y-1 [&>div]:!border-b-0 md:block md:gap-0">
       {rows.map((r, idx) => {
         const pct = max > 0 ? (r.val / max) * 100 : 0;
         const width = r.val > 0 ? Math.max(pct, 2) : 0;
