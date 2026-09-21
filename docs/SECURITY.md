@@ -35,25 +35,18 @@
 
 ## 🕳️ Angles morts · ce que ce document NE mesure PAS (2026-09-16)
 
-> ## ✅ Relu le 2026-09-21 · **3 lignes de ce tableau sont désormais OUTILLÉES**
+> 🔎 **Colonne « État » réécrite le 2026-09-21.** La quatrième colonne posait « Outillable ? »,
+> c'est-à-dire une **prédiction** faite le 2026-09-16. La passe du 2026-09-20 au soir (`2b4c4304`)
+> y a répondu : elle porte donc maintenant l'**état réel**, la garde qui couvre la ligne, et
+> 🔴 **ce que cette garde ne prouve pas** — la moitié qui manque d'habitude.
 >
-> La passe du 2026-09-20 au soir (`2b4c4304`) a traité les 30 items du § 12
-> d'[`a-faire-code.md`](../a-faire-code.md), qui sont nés de ces angles morts.
+> ❌ **La colonne « Angle mort » n'est PAS touchée.** C'est l'énoncé, daté du 2026-09-16, et
+> c'est lui qui, nommé, a permis d'outiller : le réécrire effacerait la seule chose qui explique
+> pourquoi la garde existe. Un seul endroit porte l'état, et c'est la colonne de droite.
 >
-> ❌ **Le tableau ci-dessous n'est PAS réécrit.** Il décrit le 2026-09-16, et c'est sa date qui
-> lui donne sa valeur : un angle mort nommé est ce qui a permis de l'outiller. Ce bandeau dit ce
-> qui le couvre aujourd'hui, et surtout **ce que la garde ne prouve pas** — la moitié qui manque
-> d'habitude.
->
-> | Angle mort | Couvert par | 🔴 Ce que ça ne prouve PAS |
-> |---|---|---|
-> | AM-1 | `npm run check:docs-scored` (`C-109`) | Que les notes soient justes ni fraîches. `non-note` **ouvre** un audit, il ne le remplace pas |
-> | AM-2 · AM-5 | `npm run check:supabase-posture` (`C-88`) : juge un **écart** à une référence commitée, pas un absolu | 🔴 `reglages_auth` est à `null` : la référence exige un jeton, elle se pose par `--update` **et se commite**. **La garde ÉCHOUE tant que ce n'est pas fait, exprès** — c'est `M-58` |
-> | AM-6 | `codeql.yml`, `security-extended`, JS/TS **et** `actions` (`C-89`) | Un job vert. L'item n'est fini que quand **chaque alerte ouverte porte une décision** : c'est `M-60` |
->
-> ⚠️ **Les lignes du tableau qui ne sont pas citées ici restent OUVERTES**, et une garde posée
-> n'est pas un angle mort fermé : `M-56` (« ce que chaque angle mort coûte en points ») n'est
-> toujours pas tranché, donc aucune note ne bouge sur cette base.
+> ⚠️ **Une garde posée n'est pas un angle mort fermé**, et `M-56` (« ce que chaque angle mort
+> coûte en points ») ne change rien ici : **aucune note ne bouge** sur cette base.
+
 
 
 > **Pourquoi cette section existe.** Demande d'Axel, après le constat qui a ouvert la journée :
@@ -69,14 +62,14 @@
 > Chaque ligne est vérifiée par une commande, jamais supposée. Elle se **referme** ou se
 > **reconduit avec sa date**, jamais ne se recopie.
 
-| # | Angle mort | Vérifié le 2026-09-16 | Outillable ? |
+| # | Angle mort · **énoncé du 2026-09-16, non réécrit** | Vérifié le 2026-09-16 | 🔎 État au 2026-09-21 |
 |---|---|---|---|
-| AM-1 | 🔴 **Les RÈGLES de sécurité ne sont notées nulle part.** La note de sécurité (88) vit dans [`../faille.md`](../faille.md), qui porte les **findings ouverts**. Ce document porte les **règles** : RLS, migrations, Edge Functions, secrets, CSP. Un finding se ferme et fait monter la note ; une règle qui se périme ici ne coûte rien à personne | `faille.md` porte la note, `SECURITY.md` n'en a aucune | oui : noter ce document, ou expliciter qu'il est couvert par celle de `faille.md` |
-| AM-2 | 🔴 **Les réglages du Dashboard Supabase ne sont surveillés par AUCUNE garde.** Protection des mots de passe compromis, expiration des OTP, politiques d'auth : ils se modifient **hors du dépôt**, sans commit, sans revue et sans trace. Un réglage désactivé par erreur ne se voit qu'au prochain audit manuel | aucun workflow ni script ne lit ces réglages ; seul un commentaire contient le mot « dashboard » | oui : l'API Management les expose |
-| AM-3 | **La rotation des secrets n'a ni échéance ni rappel.** Le § « Rotation des secrets » dit comment faire, jamais quand, et rien ne mesure l'âge d'un secret | aucune date d'émission stockée, aucun job | oui : un job planifié qui rappelle l'âge |
-| AM-4 | **La checklist « avant tout commit qui touche `supabase/migration/*.sql` » est MANUELLE.** `validate:migrations` et `check:rls` en couvrent une partie ; le reste repose sur la lecture | les deux gardes vérifient des motifs nommés, pas la checklist entière | partiellement |
-| AM-5 | **Les advisors Supabase ne sont lus qu'à la main** (T-7 du tableau de bord). Dans `ci.yml`, le mot « advisor » désigne `npm audit` | aucun workflow n'interroge l'API Management | oui |
-| AM-6 | **Aucune analyse statique de sécurité (SAST).** Les gardes vérifient des invariants **nommés**, jamais des motifs inconnus. Le dépôt est **public**, donc CodeQL y serait gratuit | aucun CodeQL ni Semgrep dans `.github/workflows/` | oui, et à coût nul |
+| AM-1 | 🔴 **Les RÈGLES de sécurité ne sont notées nulle part.** La note de sécurité (88) vit dans [`../faille.md`](../faille.md), qui porte les **findings ouverts**. Ce document porte les **règles** : RLS, migrations, Edge Functions, secrets, CSP. Un finding se ferme et fait monter la note ; une règle qui se périme ici ne coûte rien à personne | `faille.md` porte la note, `SECURITY.md` n'en a aucune | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:docs-scored` (`C-109`) — 🔴 ne prouve PAS : que les notes soient **justes ni fraîches** : `non-note` OUVRE un audit, il ne le remplace pas |
+| AM-2 | 🔴 **Les réglages du Dashboard Supabase ne sont surveillés par AUCUNE garde.** Protection des mots de passe compromis, expiration des OTP, politiques d'auth : ils se modifient **hors du dépôt**, sans commit, sans revue et sans trace. Un réglage désactivé par erreur ne se voit qu'au prochain audit manuel | aucun workflow ni script ne lit ces réglages ; seul un commentaire contient le mot « dashboard » | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:supabase-posture` · juge un **écart** à une référence commitée, jamais un absolu (`C-88`) — 🔴 ne prouve PAS : 🔴 rien pour l'instant : `reglages_auth` est à `null`, la référence exige un jeton. **La garde ÉCHOUE tant que ce n'est pas fait, exprès** — c'est **`M-58`** |
+| AM-3 | **La rotation des secrets n'a ni échéance ni rappel.** Le § « Rotation des secrets » dit comment faire, jamais quand, et rien ne mesure l'âge d'un secret | aucune date d'émission stockée, aucun job | 🟠 **TOUJOURS OUVERT** au 2026-09-21 · **`M-54`** : le § dit *comment* faire tourner un secret, jamais *quand*, et rien ne mesure l'âge d'un secret. Tant que l'échéance n'est pas décidée, il n'y a rien à outiller — c'est une décision, pas un script — *(jugé outillable le 09-16 : oui : un job planifié qui rappelle l'âge)* |
+| AM-4 | **La checklist « avant tout commit qui touche `supabase/migration/*.sql` » est MANUELLE.** `validate:migrations` et `check:rls` en couvrent une partie ; le reste repose sur la lecture | les deux gardes vérifient des motifs nommés, pas la checklist entière | 🟠 **TOUJOURS OUVERT** au 2026-09-21 · **aucun item ne le porte.** `validate:migrations` et `check:rls` en couvrent une partie ; le reste repose sur la lecture. ⚠️ La preuve en transaction annulée, elle, a servi le 2026-09-21 sur la mig. `150` — mais c'est une discipline, pas une garde — *(jugé outillable le 09-16 : partiellement)* |
+| AM-5 | **Les advisors Supabase ne sont lus qu'à la main** (T-7 du tableau de bord). Dans `ci.yml`, le mot « advisor » désigne `npm audit` | aucun workflow n'interroge l'API Management | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:supabase-posture` · advisors relus par l'API Management (`C-88`) — 🔴 ne prouve PAS : idem AM-2 : elle échoue tant que `M-58` n'est pas fait. ⚠️ Écart **attendu** depuis la mig. `150` : 9 → 10 et 52 → 53 |
+| AM-6 | **Aucune analyse statique de sécurité (SAST).** Les gardes vérifient des invariants **nommés**, jamais des motifs inconnus. Le dépôt est **public**, donc CodeQL y serait gratuit | aucun CodeQL ni Semgrep dans `.github/workflows/` | ✅ **OUTILLÉ le 2026-09-20** · `codeql.yml`, `security-extended`, JS/TS **et** `actions` (`C-89`) — 🔴 ne prouve PAS : 🔴 un job vert. L'item n'est fini que quand **chaque alerte ouverte porte une décision** — c'est **`M-60`** |
 
 ---
 

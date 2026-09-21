@@ -52,23 +52,18 @@
 
 ### 🕳️ Angles morts · ce que cet audit NE mesure PAS (2026-09-16)
 
-> ## ✅ Relu le 2026-09-21 · **une ligne de ce tableau est désormais OUTILLÉE**
+> 🔎 **Colonne « État » réécrite le 2026-09-21.** La quatrième colonne posait « Outillable ? »,
+> c'est-à-dire une **prédiction** faite le 2026-09-16. La passe du 2026-09-20 au soir (`2b4c4304`)
+> y a répondu : elle porte donc maintenant l'**état réel**, la garde qui couvre la ligne, et
+> 🔴 **ce que cette garde ne prouve pas** — la moitié qui manque d'habitude.
 >
-> La passe du 2026-09-20 au soir (`2b4c4304`) a traité les 30 items du § 12
-> d'[`a-faire-code.md`](../a-faire-code.md), qui sont nés de ces angles morts.
+> ❌ **La colonne « Angle mort » n'est PAS touchée.** C'est l'énoncé, daté du 2026-09-16, et
+> c'est lui qui, nommé, a permis d'outiller : le réécrire effacerait la seule chose qui explique
+> pourquoi la garde existe. Un seul endroit porte l'état, et c'est la colonne de droite.
 >
-> ❌ **Le tableau ci-dessous n'est PAS réécrit.** Il décrit le 2026-09-16, et c'est sa date qui
-> lui donne sa valeur : un angle mort nommé est ce qui a permis de l'outiller. Ce bandeau dit ce
-> qui le couvre aujourd'hui, et surtout **ce que la garde ne prouve pas** — la moitié qui manque
-> d'habitude.
->
-> | Angle mort | Couvert par | 🔴 Ce que ça ne prouve PAS |
-> |---|---|---|
-> | AM-1 · AM-2 · AM-3 | `e2e/visual-regression.spec.ts` (`C-95`) : 4 thèmes × 3 routes, états vide et erreur, 3 pages publiques, project `visual` + `visual.yml` | 🔴 **La première référence fige l'écran défauts compris.** Elle ne dit pas qu'il est juste : elle dit qu'on saura qu'il a changé |
->
-> ⚠️ **Les lignes du tableau qui ne sont pas citées ici restent OUVERTES**, et une garde posée
-> n'est pas un angle mort fermé : `M-56` (« ce que chaque angle mort coûte en points ») n'est
-> toujours pas tranché, donc aucune note ne bouge sur cette base.
+> ⚠️ **Une garde posée n'est pas un angle mort fermé**, et `M-56` (« ce que chaque angle mort
+> coûte en points ») ne change rien ici : **aucune note ne bouge** sur cette base.
+
 
 
 > **Pourquoi cette section existe.** Cette note est justifiée par des points **nommés** (« ce qui
@@ -85,13 +80,13 @@
 > Ces lignes entrent donc **dans ce qui est mesuré**. La prochaine passe les traite comme les
 > invariants ci-dessus : chacune est soit comblée, soit reconduite avec sa date.
 
-| # | Angle mort | Vérifié le 2026-09-16 | Outillable ? |
+| # | Angle mort · **énoncé du 2026-09-16, non réécrit** | Vérifié le 2026-09-16 | 🔎 État au 2026-09-21 |
 |---|---|---|---|
-| AM-1 | 🔴 **Aucune garde de régression VISUELLE en CI.** C'est l'angle mort le plus large de ce document : rien ne voit un écran qui se déforme tant qu'aucun test fonctionnel ne casse | aucun workflow ne contient `visual-audit`, `percy`, `chromatic` ni comparaison de captures. `scripts/visual-audit*.mjs` existe et n'est lancé qu'à la main | oui : captures de référence par route, comparées au pixel |
-| AM-2 | **Les quatre thèmes ne sont balayés par aucun run.** Clair, sombre, gris et noir : les parcours e2e n'en jouent qu'un. C'est pourtant la classe de bug du 2026-07-23 (17 fichiers aux couleurs codées en dur) | aucun cas e2e ne change de thème | oui |
-| AM-3 | **Les états VIDES, de chargement et d'ERREUR ne sont vus qu'au hasard des parcours.** `loading-empty-state.guard.test.ts` vérifie leur présence statiquement, jamais leur rendu | garde statique | oui, avec AM-1 |
-| AM-4 | **La cohérence entre la landing et le produit n'est gardée que sur les PRIX et les NOMS de paliers.** Le reste (vocabulaire, promesses, captures) diverge sans alerte | `org-tiers.parity.test.ts` et `org-tier-labels.ts` ne couvrent que ça | partiellement |
-| AM-5 | **Aucune mesure d'usage réel.** Le document note des écrans sans jamais savoir lesquels sont ouverts : un écran soigné que personne n'atteint et un écran négligé très fréquenté pèsent pareil | Vesk mesure l'audience des pages publiques, pas les écrans protégés | partiellement |
+| AM-1 | 🔴 **Aucune garde de régression VISUELLE en CI.** C'est l'angle mort le plus large de ce document : rien ne voit un écran qui se déforme tant qu'aucun test fonctionnel ne casse | aucun workflow ne contient `visual-audit`, `percy`, `chromatic` ni comparaison de captures. `scripts/visual-audit*.mjs` existe et n'est lancé qu'à la main | ✅ **OUTILLÉ le 2026-09-20** · `e2e/visual-regression.spec.ts` · 4 thèmes × 3 routes + états vide et erreur + 3 pages publiques, project `visual` et `visual.yml` (`C-95`) — 🔴 ne prouve PAS : 🔴 **la première référence fige l'écran DÉFAUTS COMPRIS.** Elle ne dit pas qu'il est juste : elle dit qu'on saura qu'il a changé |
+| AM-2 | **Les quatre thèmes ne sont balayés par aucun run.** Clair, sombre, gris et noir : les parcours e2e n'en jouent qu'un. C'est pourtant la classe de bug du 2026-07-23 (17 fichiers aux couleurs codées en dur) | aucun cas e2e ne change de thème | ✅ **OUTILLÉ le 2026-09-20** · `visual.yml`, qui **produit et commite** ses références au premier run (`C-95`) — 🔴 ne prouve PAS : idem AM-1 |
+| AM-3 | **Les états VIDES, de chargement et d'ERREUR ne sont vus qu'au hasard des parcours.** `loading-empty-state.guard.test.ts` vérifie leur présence statiquement, jamais leur rendu | garde statique | ✅ **OUTILLÉ le 2026-09-20** · états **vide** et **erreur** capturés, pas seulement l'état nominal (`C-95`) — 🔴 ne prouve PAS : idem AM-1 |
+| AM-4 | **La cohérence entre la landing et le produit n'est gardée que sur les PRIX et les NOMS de paliers.** Le reste (vocabulaire, promesses, captures) diverge sans alerte | `org-tiers.parity.test.ts` et `org-tier-labels.ts` ne couvrent que ça | 🟠 **TOUJOURS OUVERT** au 2026-09-21 · **aucun item ne le porte.** Seuls les PRIX et les NOMS de paliers sont gardés (`org-tiers.parity.test.ts`, et `check:stripe-prices` depuis `C-106`) ; vocabulaire, promesses et captures divergent toujours sans alerte — *(jugé outillable le 09-16 : partiellement)* |
+| AM-5 | **Aucune mesure d'usage réel.** Le document note des écrans sans jamais savoir lesquels sont ouverts : un écran soigné que personne n'atteint et un écran négligé très fréquenté pèsent pareil | Vesk mesure l'audience des pages publiques, pas les écrans protégés | 🟠 **TOUJOURS OUVERT** au 2026-09-21 · **aucun item ne le porte**, et c'est délibéré : mesurer l'usage réel demande de l'analytique produit, que ce dépôt n'a pas voulue. Un écran soigné que personne n'atteint pèse toujours autant qu'un écran négligé très fréquenté — *(jugé outillable le 09-16 : partiellement)* |
 
 
 > ### 🔴 2026-09-14 (soir) · −2 : un écran du produit affiche un zéro qui n'est pas vrai

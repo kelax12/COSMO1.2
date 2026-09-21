@@ -23,23 +23,18 @@
 
 ## 🕳️ Angles morts · ce que ce document NE mesure PAS (2026-09-16)
 
-> ## ✅ Relu le 2026-09-21 · **une ligne de ce tableau est désormais OUTILLÉE**
+> 🔎 **Colonne « État » réécrite le 2026-09-21.** La quatrième colonne posait « Outillable ? »,
+> c'est-à-dire une **prédiction** faite le 2026-09-16. La passe du 2026-09-20 au soir (`2b4c4304`)
+> y a répondu : elle porte donc maintenant l'**état réel**, la garde qui couvre la ligne, et
+> 🔴 **ce que cette garde ne prouve pas** — la moitié qui manque d'habitude.
 >
-> La passe du 2026-09-20 au soir (`2b4c4304`) a traité les 30 items du § 12
-> d'[`a-faire-code.md`](../a-faire-code.md), qui sont nés de ces angles morts.
+> ❌ **La colonne « Angle mort » n'est PAS touchée.** C'est l'énoncé, daté du 2026-09-16, et
+> c'est lui qui, nommé, a permis d'outiller : le réécrire effacerait la seule chose qui explique
+> pourquoi la garde existe. Un seul endroit porte l'état, et c'est la colonne de droite.
 >
-> ❌ **Le tableau ci-dessous n'est PAS réécrit.** Il décrit le 2026-09-16, et c'est sa date qui
-> lui donne sa valeur : un angle mort nommé est ce qui a permis de l'outiller. Ce bandeau dit ce
-> qui le couvre aujourd'hui, et surtout **ce que la garde ne prouve pas** — la moitié qui manque
-> d'habitude.
->
-> | Angle mort | Couvert par | 🔴 Ce que ça ne prouve PAS |
-> |---|---|---|
-> | AM-3 | `npm run check:acquisition` (`C-101`) + colonne **État** datée | 🔴 Qu'un backlink **existe encore**. Un lien retiré reste invisible sans l'API Search Console : c'est `M-55`, et c'est toi |
->
-> ⚠️ **Les lignes du tableau qui ne sont pas citées ici restent OUVERTES**, et une garde posée
-> n'est pas un angle mort fermé : `M-56` (« ce que chaque angle mort coûte en points ») n'est
-> toujours pas tranché, donc aucune note ne bouge sur cette base.
+> ⚠️ **Une garde posée n'est pas un angle mort fermé**, et `M-56` (« ce que chaque angle mort
+> coûte en points ») ne change rien ici : **aucune note ne bouge** sur cette base.
+
 
 
 > **Pourquoi cette section existe.** Demande d'Axel, après le constat qui a ouvert la journée :
@@ -55,11 +50,11 @@
 > Chaque ligne est vérifiée par une commande, jamais supposée. Elle se **referme** ou se
 > **reconduit avec sa date**, jamais ne se recopie.
 
-| # | Angle mort | Vérifié le 2026-09-16 | Outillable ? |
+| # | Angle mort · **énoncé du 2026-09-16, non réécrit** | Vérifié le 2026-09-16 | 🔎 État au 2026-09-21 |
 |---|---|---|---|
-| AM-1 | 🔴 **Aucun suivi des backlinks obtenus ni PERDUS.** Ce document liste des actions manuelles ; rien ne vérifie qu'un lien posé existe encore. Un backlink retiré est invisible, alors que c'est le seul levier que ce document déclare débloquant | données Search Console lues à la main le 2026-08-19, jamais depuis | partiellement : l'API GSC |
-| AM-2 | **L'autorité de domaine n'est mesurée par rien en continu**, alors que le document en fait le blocage principal | aucun job | partiellement |
-| AM-3 | **Les actions d'Axel n'ont ni date ni état.** Une liste d'actions manuelles sans colonne « fait le » ne permet pas de distinguer « pas encore tenté » de « tenté sans effet », et les deux appellent des décisions opposées | relevé dans ce document | oui : une colonne d'état |
+| AM-1 | 🔴 **Aucun suivi des backlinks obtenus ni PERDUS.** Ce document liste des actions manuelles ; rien ne vérifie qu'un lien posé existe encore. Un backlink retiré est invisible, alors que c'est le seul levier que ce document déclare débloquant | données Search Console lues à la main le 2026-08-19, jamais depuis | 🟠 **TOUJOURS OUVERT** au 2026-09-21 · **`M-55`** : un lien retiré reste invisible sans l'API Search Console. `C-101` a posé la colonne d'état ; **la remplir est un geste**, et c'est le seul levier que ce document déclare débloquant — *(jugé outillable le 09-16 : partiellement : l'API GSC)* |
+| AM-2 | **L'autorité de domaine n'est mesurée par rien en continu**, alors que le document en fait le blocage principal | aucun job | 🟠 **TOUJOURS OUVERT** au 2026-09-21 · **aucun item ne le porte.** L'autorité de domaine n'est mesurée par rien en continu, alors que ce document en fait le blocage principal — *(jugé outillable le 09-16 : partiellement)* |
+| AM-3 | **Les actions d'Axel n'ont ni date ni état.** Une liste d'actions manuelles sans colonne « fait le » ne permet pas de distinguer « pas encore tenté » de « tenté sans effet », et les deux appellent des décisions opposées | relevé dans ce document | ✅ **OUTILLÉ le 2026-09-20** · colonne **État** (5 valeurs, date obligatoire) + `npm run check:acquisition` (`C-101`) — 🔴 ne prouve PAS : que l'état déclaré soit vrai : la garde exige une date, pas une vérification |
 
 ---
 

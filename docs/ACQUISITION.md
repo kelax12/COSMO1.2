@@ -92,24 +92,18 @@ valable comme stratégie — ce document ne le refait pas. Il répond à une aut
 
 ## 🕳️ Angles morts · ce que ce document NE mesure PAS (2026-09-16)
 
-> ## ✅ Relu le 2026-09-21 · **2 lignes de ce tableau sont désormais OUTILLÉES**
+> 🔎 **Colonne « État » réécrite le 2026-09-21.** La quatrième colonne posait « Outillable ? »,
+> c'est-à-dire une **prédiction** faite le 2026-09-16. La passe du 2026-09-20 au soir (`2b4c4304`)
+> y a répondu : elle porte donc maintenant l'**état réel**, la garde qui couvre la ligne, et
+> 🔴 **ce que cette garde ne prouve pas** — la moitié qui manque d'habitude.
 >
-> La passe du 2026-09-20 au soir (`2b4c4304`) a traité les 30 items du § 12
-> d'[`a-faire-code.md`](../a-faire-code.md), qui sont nés de ces angles morts.
+> ❌ **La colonne « Angle mort » n'est PAS touchée.** C'est l'énoncé, daté du 2026-09-16, et
+> c'est lui qui, nommé, a permis d'outiller : le réécrire effacerait la seule chose qui explique
+> pourquoi la garde existe. Un seul endroit porte l'état, et c'est la colonne de droite.
 >
-> ❌ **Le tableau ci-dessous n'est PAS réécrit.** Il décrit le 2026-09-16, et c'est sa date qui
-> lui donne sa valeur : un angle mort nommé est ce qui a permis de l'outiller. Ce bandeau dit ce
-> qui le couvre aujourd'hui, et surtout **ce que la garde ne prouve pas** — la moitié qui manque
-> d'habitude.
->
-> | Angle mort | Couvert par | 🔴 Ce que ça ne prouve PAS |
-> |---|---|---|
-> | AM-1 · AM-2 | `npm run check:acquisition` (`C-101`) + colonne **État** (5 valeurs, date obligatoire) + marqueur `<!-- chiffres-remesures: -->` | ⚠️ **Un énoncé du 09-16 était FAUX** : « le tracking `?ref=` reste un développement ouvert ». La chaîne est complète depuis la mig. `097`. Ce qui manquait était de **regarder les chiffres**. 🔴 Qu'un backlink posé existe **encore** demande l'API Search Console : c'est `M-55` |
-> | AM-3 | ✅ **fermé** : mig. `149` appliquée le 2026-09-20 (ledger `20260920105522`), `C-100` | `/admin` passe de 30·779·454·32 à 28·658·387·26, avec une clé `excluded_accounts = 2` qui **dit** la correction |
->
-> ⚠️ **Les lignes du tableau qui ne sont pas citées ici restent OUVERTES**, et une garde posée
-> n'est pas un angle mort fermé : `M-56` (« ce que chaque angle mort coûte en points ») n'est
-> toujours pas tranché, donc aucune note ne bouge sur cette base.
+> ⚠️ **Une garde posée n'est pas un angle mort fermé**, et `M-56` (« ce que chaque angle mort
+> coûte en points ») ne change rien ici : **aucune note ne bouge** sur cette base.
+
 
 
 > **Pourquoi cette section existe.** Demande d'Axel, après le constat qui a ouvert la journée :
@@ -125,11 +119,11 @@ valable comme stratégie — ce document ne le refait pas. Il répond à une aut
 > Chaque ligne est vérifiée par une commande, jamais supposée. Elle se **referme** ou se
 > **reconduit avec sa date**, jamais ne se recopie.
 
-| # | Angle mort | Vérifié le 2026-09-16 | Outillable ? |
+| # | Angle mort · **énoncé du 2026-09-16, non réécrit** | Vérifié le 2026-09-16 | 🔎 État au 2026-09-21 |
 |---|---|---|---|
-| AM-1 | 🔴 **Les chiffres datent du 2026-08-14 et ne sont rejoués par rien.** Un audit d'acquisition dont les mesures ont un mois décrit un marché qui a bougé, et il n'existe aucun job qui les remesure | mesures datées dans l'en-tête, aucun workflow d'acquisition | oui : un job planifié sur les compteurs de la base |
-| AM-2 | **Aucune action n'est reliée à son résultat.** Ce document liste des leviers ; rien n'attribue une inscription à un levier. C'est le même motif que T-5 du tableau de bord : on mesure la conformité, pas le résultat | le tracking `?ref=` reste un développement ouvert | oui, et c'est peu coûteux |
-| AM-3 | ✅ **COMBLÉ le 2026-09-20.** Était : les comptes de TEST ne sont retranchés d'aucun chiffre, `demo@cosmo.app` portant **120 tâches** en production, soit 16 % des tâches de la plateforme | 🔴 Le 2026-09-20 au matin, **pire que « non appliquée » : la mig. `149` n'était pas COMMITÉE**, fichier non suivi de l'arbre de travail, et `admin_stats_excluded_uids()` absente de la base. ✅ **Commitée (`297ddd14`) puis appliquée le jour même** (ledger `20260920105522`), prouvée d'abord en transaction annulée : `/admin` passe de 30 · 779 · 454 · 32 à **28 utilisateurs · 658 tâches · 387 événements · 26 habitudes**, avec une clé `excluded_accounts = 2` qui **dit** la correction, et un non-admin toujours refusé en 42501 | ✅ fait · `a-faire-code.md` **C-100**, `a-faire-manuel.md` **M-46** |
+| AM-1 | 🔴 **Les chiffres datent du 2026-08-14 et ne sont rejoués par rien.** Un audit d'acquisition dont les mesures ont un mois décrit un marché qui a bougé, et il n'existe aucun job qui les remesure | mesures datées dans l'en-tête, aucun workflow d'acquisition | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:acquisition` + marqueur `<!-- chiffres-remesures: -->` (`C-101`) — 🔴 ne prouve PAS : ⚠️ **un énoncé du 09-16 était FAUX** : « le tracking `?ref=` reste un développement ouvert ». La chaîne est complète depuis la mig. `097`, testée de bout en bout. Ce qui manquait était de **regarder les chiffres** |
+| AM-2 | **Aucune action n'est reliée à son résultat.** Ce document liste des leviers ; rien n'attribue une inscription à un levier. C'est le même motif que T-5 du tableau de bord : on mesure la conformité, pas le résultat | le tracking `?ref=` reste un développement ouvert | ✅ **OUTILLÉ le 2026-09-20** · colonne **État** (5 valeurs, date obligatoire sur `fait` / `refuse`) (`C-101`) — 🔴 ne prouve PAS : qu'un backlink posé **existe encore** : ça demande l'API Search Console, donc un geste — **`M-55`** |
+| AM-3 | ✅ **COMBLÉ le 2026-09-20.** Était : les comptes de TEST ne sont retranchés d'aucun chiffre, `demo@cosmo.app` portant **120 tâches** en production, soit 16 % des tâches de la plateforme | 🔴 Le 2026-09-20 au matin, **pire que « non appliquée » : la mig. `149` n'était pas COMMITÉE**, fichier non suivi de l'arbre de travail, et `admin_stats_excluded_uids()` absente de la base. ✅ **Commitée (`297ddd14`) puis appliquée le jour même** (ledger `20260920105522`), prouvée d'abord en transaction annulée : `/admin` passe de 30 · 779 · 454 · 32 à **28 utilisateurs · 658 tâches · 387 événements · 26 habitudes**, avec une clé `excluded_accounts = 2` qui **dit** la correction, et un non-admin toujours refusé en 42501 | ✅ **FERMÉ le 2026-09-20** · mig. `149` au ledger `20260920105522` (`C-100`, `M-46`) — `/admin` passe de 30·779·454·32 à 28·658·387·26, plus une clé `excluded_accounts = 2` qui **dit** la correction |
 
 ---
 

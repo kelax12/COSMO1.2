@@ -66,24 +66,18 @@ cause n'est pas dans le dépôt.
 
 ### 🕳️ Angles morts · ce que cet audit NE mesure PAS (2026-09-16)
 
-> ## ✅ Relu le 2026-09-21 · **2 lignes de ce tableau sont désormais OUTILLÉES**
+> 🔎 **Colonne « État » réécrite le 2026-09-21.** La quatrième colonne posait « Outillable ? »,
+> c'est-à-dire une **prédiction** faite le 2026-09-16. La passe du 2026-09-20 au soir (`2b4c4304`)
+> y a répondu : elle porte donc maintenant l'**état réel**, la garde qui couvre la ligne, et
+> 🔴 **ce que cette garde ne prouve pas** — la moitié qui manque d'habitude.
 >
-> La passe du 2026-09-20 au soir (`2b4c4304`) a traité les 30 items du § 12
-> d'[`a-faire-code.md`](../a-faire-code.md), qui sont nés de ces angles morts.
+> ❌ **La colonne « Angle mort » n'est PAS touchée.** C'est l'énoncé, daté du 2026-09-16, et
+> c'est lui qui, nommé, a permis d'outiller : le réécrire effacerait la seule chose qui explique
+> pourquoi la garde existe. Un seul endroit porte l'état, et c'est la colonne de droite.
 >
-> ❌ **Le tableau ci-dessous n'est PAS réécrit.** Il décrit le 2026-09-16, et c'est sa date qui
-> lui donne sa valeur : un angle mort nommé est ce qui a permis de l'outiller. Ce bandeau dit ce
-> qui le couvre aujourd'hui, et surtout **ce que la garde ne prouve pas** — la moitié qui manque
-> d'habitude.
->
-> | Angle mort | Couvert par | 🔴 Ce que ça ne prouve PAS |
-> |---|---|---|
-> | AM-1 | Passe mobile Lighthouse, 4 → **8 URLs** (`C-84`) | Huit URLs sur 40 restent huit URLs sur 40 : la proportion s'améliore, elle ne se ferme pas |
-> | AM-2 · AM-3 · AM-5 | `npm run check:seo` (`C-98`) : sitemap ↔ pages prérendues, et les quatre balises par page | La **qualité** d'un `title`. Ici : présence et cohérence. Mesuré à la pose : 50 pages, 150 `hreflang` réciproques |
->
-> ⚠️ **Les lignes du tableau qui ne sont pas citées ici restent OUVERTES**, et une garde posée
-> n'est pas un angle mort fermé : `M-56` (« ce que chaque angle mort coûte en points ») n'est
-> toujours pas tranché, donc aucune note ne bouge sur cette base.
+> ⚠️ **Une garde posée n'est pas un angle mort fermé**, et `M-56` (« ce que chaque angle mort
+> coûte en points ») ne change rien ici : **aucune note ne bouge** sur cette base.
+
 
 
 > **Pourquoi cette section existe.** Cette note est justifiée par des points **nommés** (« ce qui
@@ -100,13 +94,13 @@ cause n'est pas dans le dépôt.
 > Ces lignes entrent donc **dans ce qui est mesuré**. La prochaine passe les traite comme les
 > invariants ci-dessus : chacune est soit comblée, soit reconduite avec sa date.
 
-| # | Angle mort | Vérifié le 2026-09-16 | Outillable ? |
+| # | Angle mort · **énoncé du 2026-09-16, non réécrit** | Vérifié le 2026-09-16 | 🔎 État au 2026-09-21 |
 |---|---|---|---|
-| AM-1 | **Lighthouse note le SEO de 4 URLs sur les 40 du sitemap** | `lighthouserc.json` (4 URLs, `preset: desktop`) vs le sitemap : 🔴 **40 `<loc>`, pas 45**, recomptés le 2026-09-20 **sur la production** (`https://thecosmo.app/sitemap.xml`) **et** sur le build local du 09-17, qui donnaient déjà 40. Aucune source du sitemap n'a bougé depuis le 2026-09-10 : **« 45 » n'a jamais été mesuré**, c'est un chiffre estimé le 09-16, dans la passe même qui interdit de recopier un « avant ». La proportion, elle, ne change pas | oui, au prix du temps de job |
-| AM-2 | 🔴 **Rien ne relie le SITEMAP aux pages réellement prérendues.** Une route ajoutée à l'un sans l'autre ne fait échouer aucun job, et les 10 pages prérendues hors sitemap ont dû être expliquées à la main le 2026-09-14 | aucun script ne compare `dist/sitemap.xml` à la sortie de `prerender.mjs` | oui, et c'est peu coûteux |
-| AM-3 | **Aucune garde sur les balises par page.** `title`, `description`, `canonical` et `hreflang` sont vérifiés lors des passes manuelles, pas en CI (Lighthouse n'en voit que 4) | 40 `hreflang` recomptés à la main le 2026-09-14 | oui : une garde sur `dist/**/*.html` |
-| AM-4 | **Le résultat n'est pas mesuré, seulement la conformité.** Position, impressions et clics viennent de la Search Console, à la main. Un audit peut donc monter pendant que le trafic reste nul, ce qui est l'état constaté depuis le 2026-08-19 | note 80 et 0 clic non marqué coexistent | partiellement : l'API GSC |
-| AM-5 | **`robots.txt` et les `noindex` ne sont vérifiés qu'au moment où on ouvre une locale.** Entre deux passes, rien ne signale un `Disallow` devenu trop large | aucune garde | oui |
+| AM-1 | **Lighthouse note le SEO de 4 URLs sur les 40 du sitemap** | `lighthouserc.json` (4 URLs, `preset: desktop`) vs le sitemap : 🔴 **40 `<loc>`, pas 45**, recomptés le 2026-09-20 **sur la production** (`https://thecosmo.app/sitemap.xml`) **et** sur le build local du 09-17, qui donnaient déjà 40. Aucune source du sitemap n'a bougé depuis le 2026-09-10 : **« 45 » n'a jamais été mesuré**, c'est un chiffre estimé le 09-16, dans la passe même qui interdit de recopier un « avant ». La proportion, elle, ne change pas | ✅ **OUTILLÉ le 2026-09-20** · passe mobile Lighthouse, 4 → **8 URLs** (`C-84`) — 🔴 ne prouve PAS : la couverture : 8 sur 40 restent 8 sur 40 |
+| AM-2 | 🔴 **Rien ne relie le SITEMAP aux pages réellement prérendues.** Une route ajoutée à l'un sans l'autre ne fait échouer aucun job, et les 10 pages prérendues hors sitemap ont dû être expliquées à la main le 2026-09-14 | aucun script ne compare `dist/sitemap.xml` à la sortie de `prerender.mjs` | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:seo` (`C-98`) — 🔴 ne prouve PAS : rien ici : chaque page prérendue est au sitemap ou **déclarée hors sitemap avec sa raison** |
+| AM-3 | **Aucune garde sur les balises par page.** `title`, `description`, `canonical` et `hreflang` sont vérifiés lors des passes manuelles, pas en CI (Lighthouse n'en voit que 4) | 40 `hreflang` recomptés à la main le 2026-09-14 | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:seo` · les 4 balises par page (`C-98`) — 🔴 ne prouve PAS : la **qualité** d'un `title` ; ici, présence et cohérence. Mesuré à la pose : 50 pages, 150 `hreflang` réciproques |
+| AM-4 | **Le résultat n'est pas mesuré, seulement la conformité.** Position, impressions et clics viennent de la Search Console, à la main. Un audit peut donc monter pendant que le trafic reste nul, ce qui est l'état constaté depuis le 2026-08-19 | note 80 et 0 clic non marqué coexistent | 🟠 **TOUJOURS OUVERT** au 2026-09-21 · **aucune garde, et c'est le vrai sujet du document** : position, impressions et clics restent un relevé Search Console à la main (`M-24`), et leur persistance est `M-55`. Un audit peut monter pendant que le trafic reste nul — état constaté depuis le 2026-08-19 — *(jugé outillable le 09-16 : partiellement : l'API GSC)* |
+| AM-5 | **`robots.txt` et les `noindex` ne sont vérifiés qu'au moment où on ouvre une locale.** Entre deux passes, rien ne signale un `Disallow` devenu trop large | aucune garde | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:seo` · `robots.txt` et les `noindex` relus à chaque build (`C-98`) — 🔴 ne prouve PAS : qu'un `Disallow` soit *pertinent* : la garde voit qu'il a changé, pas qu'il a raison |
 
 
 > ### ⚪ 2026-09-14 (soir) · 0 : l'infrastructure tient, et le seul chiffre de RÉSULTAT disponible est mauvais

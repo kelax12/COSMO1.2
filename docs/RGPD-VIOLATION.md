@@ -25,17 +25,18 @@ pas d'improviser.
 
 ## 🕳️ Angles morts · ce que ce document NE mesure PAS (2026-09-16)
 
-> ## 🟠 Relu le 2026-09-21 · **aucune de ces lignes ne se ferme par du code**
+> 🔎 **Colonne « État » réécrite le 2026-09-21.** La quatrième colonne posait « Outillable ? »,
+> c'est-à-dire une **prédiction** faite le 2026-09-16. La passe du 2026-09-20 au soir (`2b4c4304`)
+> y a répondu : elle porte donc maintenant l'**état réel**, la garde qui couvre la ligne, et
+> 🔴 **ce que cette garde ne prouve pas** — la moitié qui manque d'habitude.
 >
-> La passe du 2026-09-20 au soir a outillé la rétention (`check:retention`, `C-93`), l'effacement
-> (`check:erasure`, `C-92`) et la portabilité (`check:portability`, `C-94`) — c'est-à-dire
-> `RGPD.md` et `RGPD-REGISTRE.md`. **Rien ici.** Une procédure de crise ne se prouve qu'en la
-> parcourant : c'est `M-49`, et elle ne l'a **jamais** été.
+> ❌ **La colonne « Angle mort » n'est PAS touchée.** C'est l'énoncé, daté du 2026-09-16, et
+> c'est lui qui, nommé, a permis d'outiller : le réécrire effacerait la seule chose qui explique
+> pourquoi la garde existe. Un seul endroit porte l'état, et c'est la colonne de droite.
 >
-> 🔴 **Le second angle mort ne se ferme pas non plus par l'exercice** : le délai de 72 h court à
-> partir d'une **détection** que rien ne mesure. Un registre des violations **vide** ne distingue
-> pas « aucune violation » de « aucune détection », et ces deux états appellent des décisions
-> opposées.
+> ⚠️ **Une garde posée n'est pas un angle mort fermé**, et `M-56` (« ce que chaque angle mort
+> coûte en points ») ne change rien ici : **aucune note ne bouge** sur cette base.
+
 
 
 > **Pourquoi cette section existe.** Demande d'Axel, après le constat qui a ouvert la journée :
@@ -51,11 +52,11 @@ pas d'improviser.
 > Chaque ligne est vérifiée par une commande, jamais supposée. Elle se **referme** ou se
 > **reconduit avec sa date**, jamais ne se recopie.
 
-| # | Angle mort | Vérifié le 2026-09-16 | Outillable ? |
+| # | Angle mort · **énoncé du 2026-09-16, non réécrit** | Vérifié le 2026-09-16 | 🔎 État au 2026-09-21 |
 |---|---|---|---|
-| AM-1 | 🔴 **La procédure n'a JAMAIS été éprouvée à blanc.** Même famille que le rollback et que la mig. `131` : **un chemin de récupération qui n'a pas été parcouru est une hypothèse**, et celui-ci se parcourt sous 72 heures, en situation de panique | aucune répétition tracée dans ce document | oui : un exercice annuel daté, comme `restore-drill` |
-| AM-2 | 🔴 **Le délai de 72 h court à partir de la DÉTECTION, et rien ne mesure la détection.** Le dépôt sait alerter sur l'échec d'une garde ; il ne sait rien dire d'un accès anormal aux données. Une violation non détectée ne déclenche aucun compte à rebours | aucun job ne lit les logs d'accès à cette fin | partiellement : les logs Supabase existent |
-| AM-3 | **Un registre des violations VIDE ne prouve rien.** Il peut vouloir dire « aucune violation » comme « aucune détection », et les deux se ressemblent depuis ce document | registre vide à cette date | non : seul AM-2 lève l'ambiguïté |
+| AM-1 | 🔴 **La procédure n'a JAMAIS été éprouvée à blanc.** Même famille que le rollback et que la mig. `131` : **un chemin de récupération qui n'a pas été parcouru est une hypothèse**, et celui-ci se parcourt sous 72 heures, en situation de panique | aucune répétition tracée dans ce document | 🟠 **TOUJOURS OUVERT** au 2026-09-21 · **`M-49`** : la procédure n'a **jamais** été parcourue, même à blanc, et elle se déroule sous 72 h en situation de panique — *(jugé outillable le 09-16 : oui : un exercice annuel daté, comme `restore-drill`)* |
+| AM-2 | 🔴 **Le délai de 72 h court à partir de la DÉTECTION, et rien ne mesure la détection.** Le dépôt sait alerter sur l'échec d'une garde ; il ne sait rien dire d'un accès anormal aux données. Une violation non détectée ne déclenche aucun compte à rebours | aucun job ne lit les logs d'accès à cette fin | 🟠 **TOUJOURS OUVERT** au 2026-09-21 · **aucun item ne le porte**, et c'est le plus lourd des trois. Le dépôt sait alerter sur l'échec d'une garde ; il ne sait rien dire d'un accès anormal aux données. Le délai court à partir d'une **détection** que rien ne mesure — *(jugé outillable le 09-16 : partiellement : les logs Supabase existent)* |
+| AM-3 | **Un registre des violations VIDE ne prouve rien.** Il peut vouloir dire « aucune violation » comme « aucune détection », et les deux se ressemblent depuis ce document | registre vide à cette date | 🟠 **TOUJOURS OUVERT** au 2026-09-21 · **dépend d'AM-2** : un registre vide ne distinguera « aucune violation » de « aucune détection » tant que la détection n'existe pas — *(jugé outillable le 09-16 : non : seul AM-2 lève l'ambiguïté)* |
 
 ---
 

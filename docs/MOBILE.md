@@ -53,25 +53,18 @@
 
 ### 🕳️ Angles morts · ce que cet audit NE mesure PAS (2026-09-16)
 
-> ## ✅ Relu le 2026-09-21 · **3 lignes de ce tableau sont désormais OUTILLÉES**
+> 🔎 **Colonne « État » réécrite le 2026-09-21.** La quatrième colonne posait « Outillable ? »,
+> c'est-à-dire une **prédiction** faite le 2026-09-16. La passe du 2026-09-20 au soir (`2b4c4304`)
+> y a répondu : elle porte donc maintenant l'**état réel**, la garde qui couvre la ligne, et
+> 🔴 **ce que cette garde ne prouve pas** — la moitié qui manque d'habitude.
 >
-> La passe du 2026-09-20 au soir (`2b4c4304`) a traité les 30 items du § 12
-> d'[`a-faire-code.md`](../a-faire-code.md), qui sont nés de ces angles morts.
+> ❌ **La colonne « Angle mort » n'est PAS touchée.** C'est l'énoncé, daté du 2026-09-16, et
+> c'est lui qui, nommé, a permis d'outiller : le réécrire effacerait la seule chose qui explique
+> pourquoi la garde existe. Un seul endroit porte l'état, et c'est la colonne de droite.
 >
-> ❌ **Le tableau ci-dessous n'est PAS réécrit.** Il décrit le 2026-09-16, et c'est sa date qui
-> lui donne sa valeur : un angle mort nommé est ce qui a permis de l'outiller. Ce bandeau dit ce
-> qui le couvre aujourd'hui, et surtout **ce que la garde ne prouve pas** — la moitié qui manque
-> d'habitude.
->
-> | Angle mort | Couvert par | 🔴 Ce que ça ne prouve PAS |
-> |---|---|---|
-> | AM-1 | ✅ **fermé** : `C-78` est clos depuis `af0190bd` (2026-09-16) — l'énoncé « écrit, non commité » était périmé **le jour de sa publication** | Un moteur mobile en CI n'est pas un appareil |
-> | AM-2 · AM-4 · AM-5 | Projects `mobile-chrome` (Pixel 7) + `e2e/mobile-android.spec.ts` (`C-97`) : paysage, police à **200 %**, CPU bridé ×4 par CDP, avec son témoin | Un appareil **émulé** sur un runner. Ni thermique, ni GPU mobile. La moitié appareil réel reste `M-25` |
-> | AM-3 | `lighthouserc.mobile.json` (`C-84`) | Première pose de seuils, à rabaisser au mesuré |
->
-> ⚠️ **Les lignes du tableau qui ne sont pas citées ici restent OUVERTES**, et une garde posée
-> n'est pas un angle mort fermé : `M-56` (« ce que chaque angle mort coûte en points ») n'est
-> toujours pas tranché, donc aucune note ne bouge sur cette base.
+> ⚠️ **Une garde posée n'est pas un angle mort fermé**, et `M-56` (« ce que chaque angle mort
+> coûte en points ») ne change rien ici : **aucune note ne bouge** sur cette base.
+
 
 
 > **Pourquoi cette section existe.** Cette note est justifiée par des points **nommés** (« ce qui
@@ -88,13 +81,13 @@
 > Ces lignes entrent donc **dans ce qui est mesuré**. La prochaine passe les traite comme les
 > invariants ci-dessus : chacune est soit comblée, soit reconduite avec sa date.
 
-| # | Angle mort | Vérifié le 2026-09-16 | Outillable ? |
+| # | Angle mort · **énoncé du 2026-09-16, non réécrit** | Vérifié le 2026-09-16 | 🔎 État au 2026-09-21 |
 |---|---|---|---|
-| AM-1 | ✅ **COMBLÉ le 2026-09-16, vérifié le 2026-09-20.** Était : « les 105 cas `mobile-safari` ne tournent dans aucun workflow » (item `C-78`), le seul project qui mesure WebKit, donc iOS | 🔴 **Cet énoncé était périmé le jour où il a été écrit.** `git show HEAD:.github/workflows/ci.yml` lance `--project=chromium --project=supabase-stub --project=mobile-safari`, et `e2e/_warmup-mobile.spec.ts` est suivi par git : entré avec `af0190bd`, **le 2026-09-16**. ⚠️ Un moteur mobile joué en CI n'est ni un appareil réel, ni Android, ni un réseau bridé : cf. AM-2 et AM-4, ouverts | ✅ fait · `a-faire-code.md` `C-78`, **clos** |
-| AM-2 | **Un seul modèle de téléphone, un seul moteur.** Tout est mesuré sur iPhone 12 / WebKit. **Aucun Android réel**, alors que Chrome Android est le premier navigateur mobile du marché | `playwright.config.ts` : un seul device mobile | oui : un project `Pixel` |
-| AM-3 | **La performance mobile n'est mesurée par rien en continu.** Lighthouse tourne en preset **desktop** (cf. [`PERFORMANCE.md`](./PERFORMANCE.md) AM-1) | `lighthouserc.json` : `"preset": "desktop"` | oui |
-| AM-4 | **Aucune mesure sur appareil réel ni sur réseau bridé.** Un émulateur de bureau ne reproduit ni le GPU d'un téléphone d'entrée de gamme, ni la 4G. C'est précisément la classe de défaut de `C-68` (le shader qui saturait le tampon GPU) | `C-68` n'a été trouvé qu'en bridant le CPU à la main | partiellement : bridage CPU/réseau dans Playwright |
-| AM-5 | **Le mode paysage et les grandes tailles de police système ne sont testés nulle part** | aucun cas ne change d'orientation ni de `font-size` racine | oui |
+| AM-1 | ✅ **COMBLÉ le 2026-09-16, vérifié le 2026-09-20.** Était : « les 105 cas `mobile-safari` ne tournent dans aucun workflow » (item `C-78`), le seul project qui mesure WebKit, donc iOS | 🔴 **Cet énoncé était périmé le jour où il a été écrit.** `git show HEAD:.github/workflows/ci.yml` lance `--project=chromium --project=supabase-stub --project=mobile-safari`, et `e2e/_warmup-mobile.spec.ts` est suivi par git : entré avec `af0190bd`, **le 2026-09-16**. ⚠️ Un moteur mobile joué en CI n'est ni un appareil réel, ni Android, ni un réseau bridé : cf. AM-2 et AM-4, ouverts | ✅ **FERMÉ le 2026-09-16** · `C-78`, `af0190bd`. ⚠️ L'énoncé « écrit, non commité » était périmé **le jour même de sa publication** |
+| AM-2 | **Un seul modèle de téléphone, un seul moteur.** Tout est mesuré sur iPhone 12 / WebKit. **Aucun Android réel**, alors que Chrome Android est le premier navigateur mobile du marché | `playwright.config.ts` : un seul device mobile | ✅ **OUTILLÉ le 2026-09-20** · project `mobile-chrome` (Pixel 7) + `e2e/mobile-android.spec.ts` (`C-97`) — 🔴 ne prouve PAS : un appareil **émulé** sur un runner : ni thermique, ni GPU mobile |
+| AM-3 | **La performance mobile n'est mesurée par rien en continu.** Lighthouse tourne en preset **desktop** (cf. [`PERFORMANCE.md`](./PERFORMANCE.md) AM-1) | `lighthouserc.json` : `"preset": "desktop"` | ✅ **OUTILLÉ le 2026-09-20** · `lighthouserc.mobile.json` (`C-84`) — 🔴 ne prouve PAS : que les seuils soient justes : première pose, à rabaisser au mesuré |
+| AM-4 | **Aucune mesure sur appareil réel ni sur réseau bridé.** Un émulateur de bureau ne reproduit ni le GPU d'un téléphone d'entrée de gamme, ni la 4G. C'est précisément la classe de défaut de `C-68` (le shader qui saturait le tampon GPU) | `C-68` n'a été trouvé qu'en bridant le CPU à la main | ✅ **OUTILLÉ le 2026-09-20** · CPU bridé **×4 par CDP**, avec son témoin qui vérifie que le bridage s'applique (`C-97`) — 🔴 ne prouve PAS : l'appareil réel, qui reste **`M-25`** — un bridage n'est pas un téléphone |
+| AM-5 | **Le mode paysage et les grandes tailles de police système ne sont testés nulle part** | aucun cas ne change d'orientation ni de `font-size` racine | ✅ **OUTILLÉ le 2026-09-20** · paysage et police à **200 %** mesurés dans `e2e/mobile-android.spec.ts` (`C-97`) — 🔴 ne prouve PAS : rien de plus que ce qu'il mesure : 2 routes débordent en paysage et 3 à 200 %, cliquets posés **au mesuré**, ils ne peuvent que descendre |
 
 
 > ### 🟢 2026-09-15 · +2 sur les 3 retirés : le périmètre est élargi, le moteur mobile ne l'est pas encore

@@ -64,24 +64,18 @@ répond à une seule question : **les invariants qu'on s'est donnés tiennent-il
 
 ### 🕳️ Angles morts · ce que cet audit NE mesure PAS (2026-09-16)
 
-> ## ✅ Relu le 2026-09-21 · **2 lignes de ce tableau sont désormais OUTILLÉES**
+> 🔎 **Colonne « État » réécrite le 2026-09-21.** La quatrième colonne posait « Outillable ? »,
+> c'est-à-dire une **prédiction** faite le 2026-09-16. La passe du 2026-09-20 au soir (`2b4c4304`)
+> y a répondu : elle porte donc maintenant l'**état réel**, la garde qui couvre la ligne, et
+> 🔴 **ce que cette garde ne prouve pas** — la moitié qui manque d'habitude.
 >
-> La passe du 2026-09-20 au soir (`2b4c4304`) a traité les 30 items du § 12
-> d'[`a-faire-code.md`](../a-faire-code.md), qui sont nés de ces angles morts.
+> ❌ **La colonne « Angle mort » n'est PAS touchée.** C'est l'énoncé, daté du 2026-09-16, et
+> c'est lui qui, nommé, a permis d'outiller : le réécrire effacerait la seule chose qui explique
+> pourquoi la garde existe. Un seul endroit porte l'état, et c'est la colonne de droite.
 >
-> ❌ **Le tableau ci-dessous n'est PAS réécrit.** Il décrit le 2026-09-16, et c'est sa date qui
-> lui donne sa valeur : un angle mort nommé est ce qui a permis de l'outiller. Ce bandeau dit ce
-> qui le couvre aujourd'hui, et surtout **ce que la garde ne prouve pas** — la moitié qui manque
-> d'habitude.
->
-> | Angle mort | Couvert par | 🔴 Ce que ça ne prouve PAS |
-> |---|---|---|
-> | AM-2 · AM-5 | `e2e/`, `showcase/` et `supabase/functions/` **entrent** dans ESLint (`C-102`). Dette mesurée AVANT : 1 erreur, 1 avertissement | — |
-> | AM-3 · AM-4 | `npm run check:cycles` (`C-103`), sans dépendance ; couplage **rapporté**, non bloquant | Le plafond de couplage reste un **arbitrage non rendu** : le chiffre est imprimé pour être lu deux fois d'abord. 🔴 Première exécution : **sept cycles**, tous par un baril importé en valeur là où seuls les types servaient |
->
-> ⚠️ **Les lignes du tableau qui ne sont pas citées ici restent OUVERTES**, et une garde posée
-> n'est pas un angle mort fermé : `M-56` (« ce que chaque angle mort coûte en points ») n'est
-> toujours pas tranché, donc aucune note ne bouge sur cette base.
+> ⚠️ **Une garde posée n'est pas un angle mort fermé**, et `M-56` (« ce que chaque angle mort
+> coûte en points ») ne change rien ici : **aucune note ne bouge** sur cette base.
+
 
 
 > **Pourquoi cette section existe.** Cette note est justifiée par des points **nommés** (« ce qui
@@ -98,13 +92,13 @@ répond à une seule question : **les invariants qu'on s'est donnés tiennent-il
 > Ces lignes entrent donc **dans ce qui est mesuré**. La prochaine passe les traite comme les
 > invariants ci-dessus : chacune est soit comblée, soit reconduite avec sa date.
 
-| # | Angle mort | Vérifié le 2026-09-16 | Outillable ? |
+| # | Angle mort · **énoncé du 2026-09-16, non réécrit** | Vérifié le 2026-09-16 | 🔎 État au 2026-09-21 |
 |---|---|---|---|
-| AM-1 | ✅ **Le référentiel lui-même n'était mesuré par rien.** `CLAUDE.md` est la source citée par 8 des 16 invariants ci-dessous, et rien ne le jugeait | 2 070 lignes / 150 044 o / ~43 000 tokens chargés à chaque session, contre 17,8 ko le 2026-07-01. **78 commits en 30 jours**, jamais un raccourcissement | **Comblé le 2026-09-16** par `npm run check:docs` (gate CI) |
-| AM-2 | **`e2e/**` et `src/components/showcase/**` sont hors de TOUS les invariants d'import.** Aucune des règles vérifiées dans le tableau ci-dessous ne s'y applique | `eslint.config.js:15` les liste dans `ignores`, avec `.agents/**`, `.claude/**`, `.worktrees/**` | oui : une passe ESLint dédiée, ou les retirer de `ignores` |
-| AM-3 | **Aucune garde de dépendances circulaires.** Un cycle d'imports entre modules ne casse ni le build ni un test | aucun `madge`, `dpdm` ou règle `import/no-cycle` dans le dépôt | oui : `import/no-cycle` ou `madge --circular` |
-| AM-4 | **Le nombre de lignes est le SEUL proxy de complexité.** Un fichier de 400 lignes à 20 imports croisés passe la garde de taille sans réserve | §3 ne mesure que `wc -l` | oui, mais l'arbitrage coût/valeur est à faire |
-| AM-5 | **`supabase/functions/**` n'entre dans aucun invariant de ce document.** Les règles d'import, de taille et de couplage s'arrêtent à `src/` | les 16 invariants du §1 ne citent que `src/` et les migrations | oui |
+| AM-1 | ✅ **Le référentiel lui-même n'était mesuré par rien.** `CLAUDE.md` est la source citée par 8 des 16 invariants ci-dessous, et rien ne le jugeait | 2 070 lignes / 150 044 o / ~43 000 tokens chargés à chaque session, contre 17,8 ko le 2026-07-01. **78 commits en 30 jours**, jamais un raccourcissement | ✅ **COMBLÉ le 2026-09-16** · `npm run check:docs` (gate CI) — le référentiel est enfin mesuré au lieu d'être seulement cité |
+| AM-2 | **`e2e/**` et `src/components/showcase/**` sont hors de TOUS les invariants d'import.** Aucune des règles vérifiées dans le tableau ci-dessous ne s'y applique | `eslint.config.js:15` les liste dans `ignores`, avec `.agents/**`, `.claude/**`, `.worktrees/**` | ✅ **OUTILLÉ le 2026-09-20** · `e2e/`, `showcase/` et `supabase/functions/` **entrent** dans ESLint (`C-102`) — 🔴 ne prouve PAS : rien : la dette a été mesurée **avant** de les faire entrer — 1 erreur (faux positif React sur une fixture Playwright), 1 avertissement |
+| AM-3 | **Aucune garde de dépendances circulaires.** Un cycle d'imports entre modules ne casse ni le build ni un test | aucun `madge`, `dpdm` ou règle `import/no-cycle` dans le dépôt | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:cycles`, sans dépendance externe (`C-103`) — 🔴 ne prouve PAS : rien sur les cycles. 1ʳᵉ exécution : **sept**, tous par `workTimeCalculator` important quatre barils **en valeur** là où seuls les types servaient — `import type` : 7 → 0 |
+| AM-4 | **Le nombre de lignes est le SEUL proxy de complexité.** Un fichier de 400 lignes à 20 imports croisés passe la garde de taille sans réserve | §3 ne mesure que `wc -l` | ✅ **OUTILLÉ le 2026-09-20** · couplage **rapporté** par `npm run check:cycles`, non bloquant (`C-103`) — 🔴 ne prouve PAS : 🔴 le plafond de couplage reste un **arbitrage non rendu** : le chiffre est imprimé pour être lu deux fois d'abord |
+| AM-5 | **`supabase/functions/**` n'entre dans aucun invariant de ce document.** Les règles d'import, de taille et de couplage s'arrêtent à `src/` | les 16 invariants du §1 ne citent que `src/` et les migrations | ✅ **OUTILLÉ le 2026-09-20** · périmètre ESLint élargi (`C-102`) — 🔴 ne prouve PAS : idem AM-2 |
 
 
 > ### 🟢 2026-09-15 · +2 : le premier des trois points qui retenaient à 88 est refermé, et par une garde

@@ -50,19 +50,18 @@ iPhone réel la referme.
 
 ## 🕳️ Angles morts · ce que ce document NE mesure PAS (2026-09-16)
 
-> ## 🟠 Relu le 2026-09-21 · **aucune de ces lignes ne se ferme par du code, et c'est le point**
+> 🔎 **Colonne « État » réécrite le 2026-09-21.** La quatrième colonne posait « Outillable ? »,
+> c'est-à-dire une **prédiction** faite le 2026-09-16. La passe du 2026-09-20 au soir (`2b4c4304`)
+> y a répondu : elle porte donc maintenant l'**état réel**, la garde qui couvre la ligne, et
+> 🔴 **ce que cette garde ne prouve pas** — la moitié qui manque d'habitude.
 >
-> La passe du 2026-09-20 au soir a outillé 28 angles morts du dépôt. **Aucun n'est ici**, et ce
-> n'est pas un oubli : ce document mesure l'**annonce** d'un lecteur d'écran, que rien n'automatise.
-> `axe-core` voit des attributs, pas ce que VoiceOver prononce.
+> ❌ **La colonne « Angle mort » n'est PAS touchée.** C'est l'énoncé, daté du 2026-09-16, et
+> c'est lui qui, nommé, a permis d'outiller : le réécrire effacerait la seule chose qui explique
+> pourquoi la garde existe. Un seul endroit porte l'état, et c'est la colonne de droite.
 >
-> **Ce qui a changé, et c'est tout** : le geste porte désormais un numéro, donc il peut être
-> réclamé. **L'exécution est `M-40`** (passer la check-list, 12 étapes, ~60 min) et **la date est
-> `M-52`** — parce que « à jouer » sans date se reconduit indéfiniment, et c'est ce qui s'est
-> produit depuis le 2026-09-03.
->
-> 🔴 **Son premier angle mort reste entier** : l'absence de ce quatrième audit ne fait baisser
-> **aucune** note. `ACCESSIBILITY.md` est noté 84 sans qu'il ait jamais été passé.
+> ⚠️ **Une garde posée n'est pas un angle mort fermé**, et `M-56` (« ce que chaque angle mort
+> coûte en points ») ne change rien ici : **aucune note ne bouge** sur cette base.
+
 
 
 > **Pourquoi cette section existe.** Demande d'Axel, après le constat qui a ouvert la journée :
@@ -78,11 +77,11 @@ iPhone réel la referme.
 > Chaque ligne est vérifiée par une commande, jamais supposée. Elle se **referme** ou se
 > **reconduit avec sa date**, jamais ne se recopie.
 
-| # | Angle mort | Vérifié le 2026-09-16 | Outillable ? |
+| # | Angle mort · **énoncé du 2026-09-16, non réécrit** | Vérifié le 2026-09-16 | 🔎 État au 2026-09-21 |
 |---|---|---|---|
-| AM-1 | 🔴 **CE DOCUMENT EST LUI-MÊME UN ANGLE MORT.** Il l'écrit en tête : « Statut : à jouer. Rien dans ce fichier n'est coché ». Un audit jamais joué ne peut rien révéler, et il ne fait baisser aucune note : [`ACCESSIBILITY.md`](./ACCESSIBILITY.md) est noté 82 **sans** que ce quatrième audit ait été passé | statut inchangé depuis le 2026-09-03 | non : il se **joue**, il ne s'outille pas |
-| AM-2 | **Le coût de son absence n'est pas nommé dans la note d'accessibilité.** VoiceOver est la seule mesure de ce que le produit **annonce réellement** à une personne aveugle, et c'est aussi AM-3 de [`ACCESSIBILITY.md`](./ACCESSIBILITY.md) | ce document n'est cité par aucun point de plafond | oui : le nommer dans le plafond de la note |
-| AM-3 | **Aucune échéance.** « À jouer » sans date se reconduit indéfiniment, et c'est exactement ce qui s'est produit depuis le 2026-09-03 | 13 jours | oui |
+| AM-1 | 🔴 **CE DOCUMENT EST LUI-MÊME UN ANGLE MORT.** Il l'écrit en tête : « Statut : à jouer. Rien dans ce fichier n'est coché ». Un audit jamais joué ne peut rien révéler, et il ne fait baisser aucune note : [`ACCESSIBILITY.md`](./ACCESSIBILITY.md) est noté 82 **sans** que ce quatrième audit ait été passé | statut inchangé depuis le 2026-09-03 | 🟠 **TOUJOURS OUVERT** au 2026-09-21 · **`M-40`** (jouer la check-list) et **`M-52`** (lui donner une date). ❌ Il ne s'outille pas : `axe-core` voit des attributs, pas ce que VoiceOver prononce — *(jugé outillable le 09-16 : non : il se **joue**, il ne s'outille pas)* |
+| AM-2 | **Le coût de son absence n'est pas nommé dans la note d'accessibilité.** VoiceOver est la seule mesure de ce que le produit **annonce réellement** à une personne aveugle, et c'est aussi AM-3 de [`ACCESSIBILITY.md`](./ACCESSIBILITY.md) | ce document n'est cité par aucun point de plafond | 🟠 **TOUJOURS OUVERT** au 2026-09-21 · **`M-56`** : tant que le coût d'un angle mort en points n'est pas arbitré, l'absence de ce quatrième audit ne fait baisser **aucune** note — `ACCESSIBILITY.md` est noté 84 sans qu'il ait jamais été passé — *(jugé outillable le 09-16 : oui : le nommer dans le plafond de la note)* |
+| AM-3 | **Aucune échéance.** « À jouer » sans date se reconduit indéfiniment, et c'est exactement ce qui s'est produit depuis le 2026-09-03 | 13 jours | 🟠 **TOUJOURS OUVERT** au 2026-09-21 · **`M-52`**, et c'est le seul des trois qui se ferme sans matériel : « à jouer » sans date se reconduit indéfiniment, et c'est ce qui s'est produit depuis le 2026-09-03 — *(jugé outillable le 09-16 : oui)* |
 
 ---
 
