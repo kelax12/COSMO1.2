@@ -476,6 +476,7 @@
     "open": "Ouvrir la recherche",
     "suggestions": "Filtres suggérés",
     "clearQuickFilter": "Retirer le filtre {{name}}",
-    "close": "Fermer la recherche"
+    "close": "Fermer la recherche",
+    "placeholder": "Rechercher"
   }
 }
