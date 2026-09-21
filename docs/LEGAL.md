@@ -34,24 +34,18 @@
 
 ## 🕳️ Angles morts · ce que ce document NE mesure PAS (2026-09-16)
 
-> ## ✅ Relu le 2026-09-21 · **2 lignes de ce tableau sont désormais OUTILLÉES**
+> 🔎 **Colonne « État » réécrite le 2026-09-21.** La quatrième colonne posait « Outillable ? »,
+> c'est-à-dire une **prédiction** faite le 2026-09-16. La passe du 2026-09-20 au soir (`2b4c4304`)
+> y a répondu : elle porte donc maintenant l'**état réel**, la garde qui couvre la ligne, et
+> 🔴 **ce que cette garde ne prouve pas** — la moitié qui manque d'habitude.
 >
-> La passe du 2026-09-20 au soir (`2b4c4304`) a traité les 30 items du § 12
-> d'[`a-faire-code.md`](../a-faire-code.md), qui sont nés de ces angles morts.
+> ❌ **La colonne « Angle mort » n'est PAS touchée.** C'est l'énoncé, daté du 2026-09-16, et
+> c'est lui qui, nommé, a permis d'outiller : le réécrire effacerait la seule chose qui explique
+> pourquoi la garde existe. Un seul endroit porte l'état, et c'est la colonne de droite.
 >
-> ❌ **Le tableau ci-dessous n'est PAS réécrit.** Il décrit le 2026-09-16, et c'est sa date qui
-> lui donne sa valeur : un angle mort nommé est ce qui a permis de l'outiller. Ce bandeau dit ce
-> qui le couvre aujourd'hui, et surtout **ce que la garde ne prouve pas** — la moitié qui manque
-> d'habitude.
->
-> | Angle mort | Couvert par | 🔴 Ce que ça ne prouve PAS |
-> |---|---|---|
-> | AM-1 · AM-2 · AM-3 | `npm run check:legal-journal` (`C-107`) : une ligne ✅ doit porter une **date**, cliquet à 21 lignes datées, + `docs/LEGAL-JOURNAL.md` | La **conformité**. Une ligne ✅ à tort **et datée** reste verte. 🔴 Première exécution : `C10` était la seule ligne sans date, et sa relecture a trouvé une affirmation **fausse** |
-> | AM-4 | `npm run check:docs-scored` (`C-109`) | ⚠️ `LEGAL.md` reste **le plus coûteux des onze** documents non notés : `non-note` ouvre un audit, il ne le remplace pas |
->
-> ⚠️ **Les lignes du tableau qui ne sont pas citées ici restent OUVERTES**, et une garde posée
-> n'est pas un angle mort fermé : `M-56` (« ce que chaque angle mort coûte en points ») n'est
-> toujours pas tranché, donc aucune note ne bouge sur cette base.
+> ⚠️ **Une garde posée n'est pas un angle mort fermé**, et `M-56` (« ce que chaque angle mort
+> coûte en points ») ne change rien ici : **aucune note ne bouge** sur cette base.
+
 
 
 > **Pourquoi cette section existe.** Demande d'Axel, après le constat qui a ouvert la journée :
@@ -67,12 +61,12 @@
 > Chaque ligne est vérifiée par une commande, jamais supposée. Elle se **referme** ou se
 > **reconduit avec sa date**, jamais ne se recopie.
 
-| # | Angle mort | Vérifié le 2026-09-16 | Outillable ? |
+| # | Angle mort · **énoncé du 2026-09-16, non réécrit** | Vérifié le 2026-09-16 | 🔎 État au 2026-09-21 |
 |---|---|---|---|
-| AM-1 | 🔴 **`npm run check:legal` vérifie l'ARITHMÉTIQUE du tableau, jamais la CONFORMITÉ.** Il recompte les lignes et refuse un total faux, parce que ce total l'a été trois fois dans la même journée. Mais **une ligne marquée ✅ à tort laisse la garde verte** : rien ne confronte une ligne à la réalité | en-tête de `scripts/check-legal-table.mjs` : « Garde du tableau de conformité », sur le **bloc de synthèse** | non par un script : la conformité se vérifie à la main, mais la **date** de chaque ligne peut être exigée |
-| AM-2 | **Les échéances légales ne sont surveillées par rien.** 15 lignes sont ❌ au tableau ; aucune ne porte de date butoir opposable dans un outil | tableau : ✅ 13 · 🟡 13 · ❌ 15 · ⬜ 5 | oui : une colonne « échéance » vérifiée par la garde existante |
-| AM-3 | **Rien ne relie une modification des documents contractuels à leur préavis de 30 jours.** Les CGU, la politique de confidentialité et les mentions légales vivent dans le namespace `legal` : une modification de fond est un **changement de contrat**, et le préavis de l'article 11 ne se déclenche pas tout seul | `src/locales/{fr,en}/legal.json` est un catalogue i18n ordinaire pour la CI | oui : une garde qui exige une entrée de journal à chaque modification de `legal.json` |
-| AM-4 | **Ce document n'a pas de note**, donc il ne peut ni monter ni baisser, alors qu'il porte les obligations dont le non-respect coûte le plus cher | absent du tableau de bord de [`README.md`](./README.md) | oui |
+| AM-1 | 🔴 **`npm run check:legal` vérifie l'ARITHMÉTIQUE du tableau, jamais la CONFORMITÉ.** Il recompte les lignes et refuse un total faux, parce que ce total l'a été trois fois dans la même journée. Mais **une ligne marquée ✅ à tort laisse la garde verte** : rien ne confronte une ligne à la réalité | en-tête de `scripts/check-legal-table.mjs` : « Garde du tableau de conformité », sur le **bloc de synthèse** | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:legal-journal` · une ligne ✅ doit porter une **date** (`C-107`) — 🔴 ne prouve PAS : 🔴 **la CONFORMITÉ.** Une ligne ✅ à tort **et datée** reste verte. 1ʳᵉ exécution : `C10` était la seule sans date, et sa relecture a trouvé une affirmation **fausse** |
+| AM-2 | **Les échéances légales ne sont surveillées par rien.** 15 lignes sont ❌ au tableau ; aucune ne porte de date butoir opposable dans un outil | tableau : ✅ 13 · 🟡 13 · ❌ 15 · ⬜ 5 | ✅ **OUTILLÉ le 2026-09-20** · cliquet à **21 lignes datées** (`C-107`) — 🔴 ne prouve PAS : idem AM-1 : la traçabilité, jamais le fond |
+| AM-3 | **Rien ne relie une modification des documents contractuels à leur préavis de 30 jours.** Les CGU, la politique de confidentialité et les mentions légales vivent dans le namespace `legal` : une modification de fond est un **changement de contrat**, et le préavis de l'article 11 ne se déclenche pas tout seul | `src/locales/{fr,en}/legal.json` est un catalogue i18n ordinaire pour la CI | ✅ **OUTILLÉ le 2026-09-20** · `docs/LEGAL-JOURNAL.md` + empreinte de `src/locales/{fr,en}/legal.json` exigée à chaque modification (`C-107`) — 🔴 ne prouve PAS : que le préavis de 30 jours de l'article 11 ait été servi : le journal date le changement, il ne notifie personne |
+| AM-4 | **Ce document n'a pas de note**, donc il ne peut ni monter ni baisser, alors qu'il porte les obligations dont le non-respect coûte le plus cher | absent du tableau de bord de [`README.md`](./README.md) | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:docs-scored` (`C-109`) — 🔴 ne prouve PAS : ⚠️ `LEGAL.md` reste **le plus coûteux des onze** documents non notés : `non-note` OUVRE un audit, il ne le remplace pas |
 
 ---
 

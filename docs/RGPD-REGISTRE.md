@@ -23,24 +23,18 @@ CNIL ou d'un client dans le cadre d'une due diligence.
 
 ## 🕳️ Angles morts · ce que ce document NE mesure PAS (2026-09-16)
 
-> ## ✅ Relu le 2026-09-21 · **2 lignes de ce tableau sont désormais OUTILLÉES**
+> 🔎 **Colonne « État » réécrite le 2026-09-21.** La quatrième colonne posait « Outillable ? »,
+> c'est-à-dire une **prédiction** faite le 2026-09-16. La passe du 2026-09-20 au soir (`2b4c4304`)
+> y a répondu : elle porte donc maintenant l'**état réel**, la garde qui couvre la ligne, et
+> 🔴 **ce que cette garde ne prouve pas** — la moitié qui manque d'habitude.
 >
-> La passe du 2026-09-20 au soir (`2b4c4304`) a traité les 30 items du § 12
-> d'[`a-faire-code.md`](../a-faire-code.md), qui sont nés de ces angles morts.
+> ❌ **La colonne « Angle mort » n'est PAS touchée.** C'est l'énoncé, daté du 2026-09-16, et
+> c'est lui qui, nommé, a permis d'outiller : le réécrire effacerait la seule chose qui explique
+> pourquoi la garde existe. Un seul endroit porte l'état, et c'est la colonne de droite.
 >
-> ❌ **Le tableau ci-dessous n'est PAS réécrit.** Il décrit le 2026-09-16, et c'est sa date qui
-> lui donne sa valeur : un angle mort nommé est ce qui a permis de l'outiller. Ce bandeau dit ce
-> qui le couvre aujourd'hui, et surtout **ce que la garde ne prouve pas** — la moitié qui manque
-> d'habitude.
->
-> | Angle mort | Couvert par | 🔴 Ce que ça ne prouve PAS |
-> |---|---|---|
-> | AM-1 | `npm run check:retention` (`C-93`) : orphelines (**0** en prod) + âges | Que ce registre soit juste |
-> | AM-2 | `npm run check:erasure` (`C-92`) | Dérivé des migrations, pas de la base |
->
-> ⚠️ **Les lignes du tableau qui ne sont pas citées ici restent OUVERTES**, et une garde posée
-> n'est pas un angle mort fermé : `M-56` (« ce que chaque angle mort coûte en points ») n'est
-> toujours pas tranché, donc aucune note ne bouge sur cette base.
+> ⚠️ **Une garde posée n'est pas un angle mort fermé**, et `M-56` (« ce que chaque angle mort
+> coûte en points ») ne change rien ici : **aucune note ne bouge** sur cette base.
+
 
 
 > **Pourquoi cette section existe.** Demande d'Axel, après le constat qui a ouvert la journée :
@@ -56,11 +50,11 @@ CNIL ou d'un client dans le cadre d'une due diligence.
 > Chaque ligne est vérifiée par une commande, jamais supposée. Elle se **referme** ou se
 > **reconduit avec sa date**, jamais ne se recopie.
 
-| # | Angle mort | Vérifié le 2026-09-16 | Outillable ? |
+| # | Angle mort · **énoncé du 2026-09-16, non réécrit** | Vérifié le 2026-09-16 | 🔎 État au 2026-09-21 |
 |---|---|---|---|
-| AM-1 | 🔴 **Les durées de conservation déclarées ne sont confrontées à AUCUNE donnée réelle.** Dix traitements annoncent une durée ; rien ne vérifie qu'aucune ligne ne la dépasse. C'est pourtant la pièce produite en contrôle CNIL, donc celle où un écart se paie | aucun script ne lit les dates de création par table | oui : une requête planifiée par traitement |
-| AM-2 | **Un traitement NOUVEAU n'entre pas au registre tout seul.** Une table de données personnelles ajoutée par migration, ou un sous-traitant ajouté par une dépendance, ne déclenche rien | ni `validate:migrations` ni la CI ne testent ce lien | oui : une garde qui exige une entrée pour toute table portant `user_id` |
-| AM-3 | **La liste des sous-traitants est tenue à la main.** Un service SaaS ajouté au produit (analytics, mail, hébergement d'images) est un sous-traitant au sens de l'art. 28, et rien ne le signale | liste statique dans ce document | partiellement : croiser avec les origines autorisées par la CSP |
+| AM-1 | 🔴 **Les durées de conservation déclarées ne sont confrontées à AUCUNE donnée réelle.** Dix traitements annoncent une durée ; rien ne vérifie qu'aucune ligne ne la dépasse. C'est pourtant la pièce produite en contrôle CNIL, donc celle où un écart se paie | aucun script ne lit les dates de création par table | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:retention` (`C-93`) — 🔴 ne prouve PAS : que ce registre soit juste : la garde confronte la base à ce qu'il déclare, pas l'inverse |
+| AM-2 | **Un traitement NOUVEAU n'entre pas au registre tout seul.** Une table de données personnelles ajoutée par migration, ou un sous-traitant ajouté par une dépendance, ne déclenche rien | ni `validate:migrations` ni la CI ne testent ce lien | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:erasure` (`C-92`) — 🔴 ne prouve PAS : dérivé des migrations, pas de la base |
+| AM-3 | **La liste des sous-traitants est tenue à la main.** Un service SaaS ajouté au produit (analytics, mail, hébergement d'images) est un sous-traitant au sens de l'art. 28, et rien ne le signale | liste statique dans ce document | 🟠 **TOUJOURS OUVERT** au 2026-09-21 · **aucun item ne le porte.** La liste des sous-traitants reste tenue à la main : un SaaS ajouté au produit est un sous-traitant art. 28, et rien ne le signale. Le geste de collecte est `M-04` — *(jugé outillable le 09-16 : partiellement : croiser avec les origines autorisées par la CSP)* |
 
 ---
 

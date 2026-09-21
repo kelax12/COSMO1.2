@@ -25,23 +25,18 @@
 
 ## 🕳️ Angles morts · ce que ce document NE mesure PAS (2026-09-16)
 
-> ## ✅ Relu le 2026-09-21 · **une ligne de ce tableau est désormais OUTILLÉE**
+> 🔎 **Colonne « État » réécrite le 2026-09-21.** La quatrième colonne posait « Outillable ? »,
+> c'est-à-dire une **prédiction** faite le 2026-09-16. La passe du 2026-09-20 au soir (`2b4c4304`)
+> y a répondu : elle porte donc maintenant l'**état réel**, la garde qui couvre la ligne, et
+> 🔴 **ce que cette garde ne prouve pas** — la moitié qui manque d'habitude.
 >
-> La passe du 2026-09-20 au soir (`2b4c4304`) a traité les 30 items du § 12
-> d'[`a-faire-code.md`](../a-faire-code.md), qui sont nés de ces angles morts.
+> ❌ **La colonne « Angle mort » n'est PAS touchée.** C'est l'énoncé, daté du 2026-09-16, et
+> c'est lui qui, nommé, a permis d'outiller : le réécrire effacerait la seule chose qui explique
+> pourquoi la garde existe. Un seul endroit porte l'état, et c'est la colonne de droite.
 >
-> ❌ **Le tableau ci-dessous n'est PAS réécrit.** Il décrit le 2026-09-16, et c'est sa date qui
-> lui donne sa valeur : un angle mort nommé est ce qui a permis de l'outiller. Ce bandeau dit ce
-> qui le couvre aujourd'hui, et surtout **ce que la garde ne prouve pas** — la moitié qui manque
-> d'habitude.
->
-> | Angle mort | Couvert par | 🔴 Ce que ça ne prouve PAS |
-> |---|---|---|
-> | AM-1 · AM-3 | Mig. `150` (table **sans aucune donnée personnelle**), `report-bug` compte sans jamais bloquer l'envoi, encart « Support » sur `/admin` à trois états (`null` ≠ `0`) — `C-110` | ✅ **La mig. `150` est APPLIQUÉE le 2026-09-21** (ledger `20260921075529`, vérifiée au catalogue) : `/admin` cesse d'afficher « compteur non installé ». 🔴 **Mais le compteur rend ZÉRO, et zéro n'est pas une mesure du support** — `report-bug` n'a pas encore été redéployée (`M-61`), donc **rien n'appelle `record_support_report`** : la table restera vide quoi qu'il arrive. ⚠️ C'est l'état le plus trompeur des trois que `C-110` distingue : `null` disait « on ne sait pas », `0` dit « aucun rapport », et c'est faux tant que l'écriture n'est pas en ligne. ⚠️ **Et `first_response_at` / `resolved_at` resteront NULL** : ils se posent à la main, la réponse partant d'une boîte mail que ce dépôt ne lit pas |
->
-> ⚠️ **Les lignes du tableau qui ne sont pas citées ici restent OUVERTES**, et une garde posée
-> n'est pas un angle mort fermé : `M-56` (« ce que chaque angle mort coûte en points ») n'est
-> toujours pas tranché, donc aucune note ne bouge sur cette base.
+> ⚠️ **Une garde posée n'est pas un angle mort fermé**, et `M-56` (« ce que chaque angle mort
+> coûte en points ») ne change rien ici : **aucune note ne bouge** sur cette base.
+
 
 
 > **Pourquoi cette section existe.** Demande d'Axel, après le constat qui a ouvert la journée :
@@ -57,11 +52,11 @@
 > Chaque ligne est vérifiée par une commande, jamais supposée. Elle se **referme** ou se
 > **reconduit avec sa date**, jamais ne se recopie.
 
-| # | Angle mort | Vérifié le 2026-09-16 | Outillable ? |
+| # | Angle mort · **énoncé du 2026-09-16, non réécrit** | Vérifié le 2026-09-16 | 🔎 État au 2026-09-21 |
 |---|---|---|---|
-| AM-1 | 🔴 **Aucune mesure du support lui-même** : ni volume reçu, ni délai de première réponse, ni taux de résolution. Un canal de support qu'on n'instrumente pas ne se distingue pas d'un canal que personne n'utilise | aucun job, aucun compteur | oui : compter les messages reçus |
-| AM-2 | **Rien ne vérifie que l'adresse de contact publiée reçoit vraiment.** `check:mail` vérifie SPF, DKIM et DMARC de l'expédition **sortante** ; la réception n'est testée par rien | `scripts/check-auth-email.mjs` mesure le DNS d'envoi | oui : un envoi de bout en bout, daté |
-| AM-3 | **`report-bug` est déployée, mais ce que ses rapports deviennent n'est mesuré par rien.** `notDeployed` est vide depuis le 2026-09-12, donc la fonction est en ligne ; aucun compteur ne dit si un rapport a été lu | `.github/edge-deploy.json` | oui |
+| AM-1 | 🔴 **Aucune mesure du support lui-même** : ni volume reçu, ni délai de première réponse, ni taux de résolution. Un canal de support qu'on n'instrumente pas ne se distingue pas d'un canal que personne n'utilise | aucun job, aucun compteur | ✅ **OUTILLÉ le 2026-09-20** · mig. `150` · `support_reports` + `record_support_report` + `get_support_stats`, **appliquée le 2026-09-21** (ledger `20260921075529`) (`C-110`) — 🔴 ne prouve PAS : 🔴 **que le compteur compte.** `report-bug` n'est pas redéployée (**`M-61`**), donc **rien n'appelle `record_support_report`** : la table restera vide. `/admin` passe de « non installé » à **zéro**, et zéro se lit « aucun rapport » — c'est le plus trompeur des trois états |
+| AM-2 | **Rien ne vérifie que l'adresse de contact publiée reçoit vraiment.** `check:mail` vérifie SPF, DKIM et DMARC de l'expédition **sortante** ; la réception n'est testée par rien | `scripts/check-auth-email.mjs` mesure le DNS d'envoi | 🟠 **TOUJOURS OUVERT** au 2026-09-21 · **`M-53`** : `check:mail` vérifie SPF / DKIM / DMARC de l'expédition **sortante**. Que `contact@thecosmo.app` **reçoive** n'est testé par rien, et c'est l'adresse publiée dans les mentions légales — *(jugé outillable le 09-16 : oui : un envoi de bout en bout, daté)* |
+| AM-3 | **`report-bug` est déployée, mais ce que ses rapports deviennent n'est mesuré par rien.** `notDeployed` est vide depuis le 2026-09-12, donc la fonction est en ligne ; aucun compteur ne dit si un rapport a été lu | `.github/edge-deploy.json` | ✅ **OUTILLÉ le 2026-09-20** · encart « Support » sur `/admin`, à **trois états distincts** (`null` ≠ `0` ≠ n) (`C-110`) — 🔴 ne prouve PAS : idem AM-1. ⚠️ Et `first_response_at` / `resolved_at` resteront **NULL** : ils se posent à la main, la réponse partant d'une boîte mail que ce dépôt ne lit pas |
 
 ---
 
@@ -69,7 +64,7 @@
 
 | Canal | Comment | État |
 |---|---|---|
-| **Formulaire « Signaler un bug »** | Icône insecte dans la navigation → Edge Function `report-bug` → email vers `contact@thecosmo.app`. Le contexte technique (page, navigateur, version) est joint automatiquement | 🔴 **La fonction n'est pas déployée** (T-12). Le formulaire bascule sur un `mailto:` pré-rempli : rien n'est perdu, mais l'utilisateur voit d'abord une erreur |
+| **Formulaire « Signaler un bug »** | Icône insecte dans la navigation → Edge Function `report-bug` → email vers `contact@thecosmo.app`. Le contexte technique (page, navigateur, version) est joint automatiquement | ✅ **En service.** 🔴 **Cette case disait « la fonction n'est pas déployée » — c'était faux depuis le 2026-09-12**, corrigé le 09-21 : `report-bug` est en ligne en **v11** (2026-09-12, 23:08 UTC), avec son plafond de débit prouvé sur la fonction en ligne (le 11ᵉ appel rend `429`, `C-31`). Le repli `mailto:` reste le filet, il n'est plus le chemin normal. ⚠️ **Mais elle doit être REDÉPLOYÉE** : sa source a changé le 09-21 (compteur de `C-110`), donc `check:edge` signale une dérive **légitime** — `M-61` |
 | **Email direct** | `contact@thecosmo.app`, boîte IONOS | ✅ En service |
 | **Adresse de l'éditeur** | `axellongattepro@gmail.com`, publiée dans les mentions légales et la politique de confidentialité | ✅ En service |
 | Réseaux sociaux | Aucun compte produit à ce jour | ⬜ |
@@ -157,7 +152,7 @@ Deux chiffres suffisent à ce stade, à relever au même moment que les autres :
 
 | Quand | Quoi |
 |---|---|
-| **Avant d'ouvrir l'acquisition** | Déployer `report-bug` (T-12) — c'est le seul canal *dans* le produit |
+| ~~**Avant d'ouvrir l'acquisition**~~ ✅ | ~~Déployer `report-bug` (T-12)~~ — **fait le 2026-09-12** (v11). ⚠️ Ce qui reste : **la redéployer** pour que le compteur de la mig. `150` reçoive quelque chose (`M-61`), et **vérifier que `contact@thecosmo.app` REÇOIT** (`M-53`) — un canal qui part sans arriver est pire qu'un canal absent |
 | À ~100 utilisateurs | Une FAQ ou une page d'aide, alimentée par les questions réellement posées. **Pas avant** : écrire une FAQ sans demandes réelles, c'est deviner |
 | Aux premiers clients payants | Une adresse de facturation distincte, et un délai annoncé dans les CGV |
 | À ~1 000 utilisateurs | Un outil de suivi. Le signal n'est pas le nombre d'utilisateurs mais le moment où une demande se perd |

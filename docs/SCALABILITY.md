@@ -61,24 +61,18 @@ Toutes les mesures de ce document sont **reproductibles** : les requêtes sont e
 
 ### 🕳️ Angles morts · ce que cet audit NE mesure PAS (2026-09-16)
 
-> ## ✅ Relu le 2026-09-21 · **2 lignes de ce tableau sont désormais OUTILLÉES**
+> 🔎 **Colonne « État » réécrite le 2026-09-21.** La quatrième colonne posait « Outillable ? »,
+> c'est-à-dire une **prédiction** faite le 2026-09-16. La passe du 2026-09-20 au soir (`2b4c4304`)
+> y a répondu : elle porte donc maintenant l'**état réel**, la garde qui couvre la ligne, et
+> 🔴 **ce que cette garde ne prouve pas** — la moitié qui manque d'habitude.
 >
-> La passe du 2026-09-20 au soir (`2b4c4304`) a traité les 30 items du § 12
-> d'[`a-faire-code.md`](../a-faire-code.md), qui sont nés de ces angles morts.
+> ❌ **La colonne « Angle mort » n'est PAS touchée.** C'est l'énoncé, daté du 2026-09-16, et
+> c'est lui qui, nommé, a permis d'outiller : le réécrire effacerait la seule chose qui explique
+> pourquoi la garde existe. Un seul endroit porte l'état, et c'est la colonne de droite.
 >
-> ❌ **Le tableau ci-dessous n'est PAS réécrit.** Il décrit le 2026-09-16, et c'est sa date qui
-> lui donne sa valeur : un angle mort nommé est ce qui a permis de l'outiller. Ce bandeau dit ce
-> qui le couvre aujourd'hui, et surtout **ce que la garde ne prouve pas** — la moitié qui manque
-> d'habitude.
->
-> | Angle mort | Couvert par | 🔴 Ce que ça ne prouve PAS |
-> |---|---|---|
-> | AM-1 | `scalability-volume` **mensuel** ; `restore-drill` coupé en deux, `dump-check` trimestriel et automatique (`C-86`) | Un dump **relisible** n'est pas un dump **restauré** : `pg_restore --list` lit une table des matières. Le vrai rollback reste `M-47` |
-> | AM-2 · AM-3 · AM-4 | `npm run check:db-cost` (`C-87`), série commitée, alerte sur la **pente** | Le coût facturé, et la charge réelle |
->
-> ⚠️ **Les lignes du tableau qui ne sont pas citées ici restent OUVERTES**, et une garde posée
-> n'est pas un angle mort fermé : `M-56` (« ce que chaque angle mort coûte en points ») n'est
-> toujours pas tranché, donc aucune note ne bouge sur cette base.
+> ⚠️ **Une garde posée n'est pas un angle mort fermé**, et `M-56` (« ce que chaque angle mort
+> coûte en points ») ne change rien ici : **aucune note ne bouge** sur cette base.
+
 
 
 > **Pourquoi cette section existe.** Cette note est justifiée par des points **nommés** (« ce qui
@@ -95,12 +89,12 @@ Toutes les mesures de ce document sont **reproductibles** : les requêtes sont e
 > Ces lignes entrent donc **dans ce qui est mesuré**. La prochaine passe les traite comme les
 > invariants ci-dessus : chacune est soit comblée, soit reconduite avec sa date.
 
-| # | Angle mort | Vérifié le 2026-09-16 | Outillable ? |
+| # | Angle mort · **énoncé du 2026-09-16, non réécrit** | Vérifié le 2026-09-16 | 🔎 État au 2026-09-21 |
 |---|---|---|---|
-| AM-1 | 🔴 **La garde de charge n'est JAMAIS jouée automatiquement.** `scalability-volume.yml` n'a qu'un déclencheur `workflow_dispatch` : elle ne tourne que si quelqu'un y pense | relevé sur les 10 workflows : `scalability-volume.yml` et `restore-drill.yml` sont les deux seuls sans `schedule` ni `push` | oui : un `schedule`, même mensuel |
-| AM-2 | **Les invariants de coût de lecture ne sont vérifiés qu'à la main.** Le `Seq Scan` de `tasks` est reconstaté à chaque passe, jamais surveillé entre deux | aucun workflow ne joue d'`EXPLAIN` contre la production | partiellement |
-| AM-3 | **Aucune alerte sur la CROISSANCE.** Le dépôt sait dire « combien coûte une lecture aujourd'hui », jamais « à quelle vitesse ce coût monte ». Les volumes sont recomptés ponctuellement (749 tâches, 54 abonnements) | aucune série temporelle stockée | oui : un job planifié qui écrit les compteurs |
-| AM-4 | **Le plan Supabase est `free`, et rien ne surveille son changement d'état** (pause pour inactivité, quotas) | `plan: "free"` relu par l'API le 2026-09-15. `uptime.yml` teste la réponse HTTP, pas les quotas | oui |
+| AM-1 | 🔴 **La garde de charge n'est JAMAIS jouée automatiquement.** `scalability-volume.yml` n'a qu'un déclencheur `workflow_dispatch` : elle ne tourne que si quelqu'un y pense | relevé sur les 10 workflows : `scalability-volume.yml` et `restore-drill.yml` sont les deux seuls sans `schedule` ni `push` | ✅ **OUTILLÉ le 2026-09-20** · `scalability-volume` **mensuel** ; `restore-drill` coupé en deux, `dump-check` **trimestriel et automatique** (`C-86`) — 🔴 ne prouve PAS : qu'un dump soit **restaurable** : `pg_restore --list` lit une table des matières. Le vrai rollback reste **`M-47`**, jamais parcouru |
+| AM-2 | **Les invariants de coût de lecture ne sont vérifiés qu'à la main.** Le `Seq Scan` de `tasks` est reconstaté à chaque passe, jamais surveillé entre deux | aucun workflow ne joue d'`EXPLAIN` contre la production | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:db-cost` (`C-87`) — 🔴 ne prouve PAS : le coût **facturé**, que Supabase n'expose pas |
+| AM-3 | **Aucune alerte sur la CROISSANCE.** Le dépôt sait dire « combien coûte une lecture aujourd'hui », jamais « à quelle vitesse ce coût monte ». Les volumes sont recomptés ponctuellement (749 tâches, 54 abonnements) | aucune série temporelle stockée | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:db-cost` · série commitée, alerte sur la **pente** (`C-87`) — 🔴 ne prouve PAS : la charge réelle : c'est `scalability-volume`, et il mesure un runner, pas la production |
+| AM-4 | **Le plan Supabase est `free`, et rien ne surveille son changement d'état** (pause pour inactivité, quotas) | `plan: "free"` relu par l'API le 2026-09-15. `uptime.yml` teste la réponse HTTP, pas les quotas | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:db-cost` · EXPLAIN **sous RLS**, rôle `authenticated`, transaction annulée (`C-87`) — 🔴 ne prouve PAS : le comportement à plusieurs millions de lignes : le plan est relu à chaud, sur le volume du jour |
 
 
 > ### 🟢 2026-09-14 (soir) · note inchangée, mais le « non remesurable ici » de ce matin était trop large

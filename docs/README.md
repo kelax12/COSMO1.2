@@ -1119,11 +1119,18 @@ Cinq y sont descendus le **2026-09-21** : Stripe entreprise (plan + spec, livré
 landing track entreprise, et sous-catégories hiérarchiques vague 1 (plan + spec, **en production**).
 ⚠️ **Aucun de leurs plans n'avait une seule case cochée** — le code fait foi contre elles.
 
-🔴 **Et `docs/superpowers/` n'est PAS vide, ni une archive** : trois documents y restent parce
-qu'ils ne sont **pas** exécutés, et le dire est le seul rangement honnête — le pattern de liste
-mobile (plan + spec, **jamais implémenté**, et sa prémisse a changé avec la refonte du 09-16 → 09-20)
-et le flux de relecture des tâches d'équipe (**toujours à faire**, et son numéro de migration `113`
-est pris depuis : ce sera `151`). Chacun porte son bandeau daté.
+⚠️ **Deux d'entre eux ne sont pas « exécutés », ils sont ABANDONNÉS**, et ce dossier porte donc
+les deux natures. Le pattern de liste mobile (plan + spec) n'a **jamais été implémenté** —
+`ListRow` avait été supprimé la veille de son écriture, et sa prémisse est morte avec la refonte
+mobile du 09-16 → 09-20. Arbitrage rendu par Axel le **2026-09-21** : archivé avec sa raison,
+plutôt que laissé à faire croire qu'il reste du travail en cours. 🔴 **Un plan abandonné se range,
+il ne se supprime pas** : ce qu'on a décidé de ne pas faire est une information, et sans elle le
+même plan se réécrit dans six mois.
+
+🔴 **`docs/superpowers/` n'est donc PAS vide, et ce qui y reste est vivant pour de bon** : le flux
+de relecture des tâches d'équipe (`specs/2026-08-24`), **toujours à faire**, vérifié dans le code
+le 09-21 — aucun composant ne rend « Valider » / « Renvoyer ». ⚠️ Son numéro de migration `113`
+est pris depuis : ce sera la **`151`**, le dépôt étant allé jusqu'à `150`.
 
 ## Règles d'entretien
 

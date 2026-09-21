@@ -86,24 +86,18 @@ Conséquences pratiques, à tenir :
 
 ### 🕳️ Angles morts · ce que cet audit NE mesure PAS (2026-09-16)
 
-> ## ✅ Relu le 2026-09-21 · **2 lignes de ce tableau sont désormais OUTILLÉES**
+> 🔎 **Colonne « État » réécrite le 2026-09-21.** La quatrième colonne posait « Outillable ? »,
+> c'est-à-dire une **prédiction** faite le 2026-09-16. La passe du 2026-09-20 au soir (`2b4c4304`)
+> y a répondu : elle porte donc maintenant l'**état réel**, la garde qui couvre la ligne, et
+> 🔴 **ce que cette garde ne prouve pas** — la moitié qui manque d'habitude.
 >
-> La passe du 2026-09-20 au soir (`2b4c4304`) a traité les 30 items du § 12
-> d'[`a-faire-code.md`](../a-faire-code.md), qui sont nés de ces angles morts.
+> ❌ **La colonne « Angle mort » n'est PAS touchée.** C'est l'énoncé, daté du 2026-09-16, et
+> c'est lui qui, nommé, a permis d'outiller : le réécrire effacerait la seule chose qui explique
+> pourquoi la garde existe. Un seul endroit porte l'état, et c'est la colonne de droite.
 >
-> ❌ **Le tableau ci-dessous n'est PAS réécrit.** Il décrit le 2026-09-16, et c'est sa date qui
-> lui donne sa valeur : un angle mort nommé est ce qui a permis de l'outiller. Ce bandeau dit ce
-> qui le couvre aujourd'hui, et surtout **ce que la garde ne prouve pas** — la moitié qui manque
-> d'habitude.
->
-> | Angle mort | Couvert par | 🔴 Ce que ça ne prouve PAS |
-> |---|---|---|
-> | AM-2 | `npm run check:keyboard-coverage` (`C-96`) : **51 surfaces**, 10 mesurées, 41 déclarées non mesurées une par une avec leur raison | 🔴 **Elle ne mesure aucune accessibilité.** Elle CHIFFRE l'écart et l'empêche de grandir en silence. ⚠️ L'énoncé du 09-16 disait 53 surfaces : le détecteur en compte **51** |
-> | AM-5 | `e2e/visual-regression.spec.ts` (`C-95`) | La première référence fige l'écran défauts compris |
->
-> ⚠️ **Les lignes du tableau qui ne sont pas citées ici restent OUVERTES**, et une garde posée
-> n'est pas un angle mort fermé : `M-56` (« ce que chaque angle mort coûte en points ») n'est
-> toujours pas tranché, donc aucune note ne bouge sur cette base.
+> ⚠️ **Une garde posée n'est pas un angle mort fermé**, et `M-56` (« ce que chaque angle mort
+> coûte en points ») ne change rien ici : **aucune note ne bouge** sur cette base.
+
 
 
 > **Pourquoi cette section existe.** Cette note est justifiée par des points **nommés** (« ce qui
@@ -120,13 +114,13 @@ Conséquences pratiques, à tenir :
 > Ces lignes entrent donc **dans ce qui est mesuré**. La prochaine passe les traite comme les
 > invariants ci-dessus : chacune est soit comblée, soit reconduite avec sa date.
 
-| # | Angle mort | Vérifié le 2026-09-16 | Outillable ? |
+| # | Angle mort · **énoncé du 2026-09-16, non réécrit** | Vérifié le 2026-09-16 | 🔎 État au 2026-09-21 |
 |---|---|---|---|
-| AM-1 | **axe-core ne couvre qu'une PARTIE des critères WCAG, et c'est structurel.** Les critères non automatisables (ordre de lecture, pertinence d'un libellé, sens d'une couleur) sont hors de portée de tout run vert | limite connue de l'outil, jamais écrite ici comme angle mort | non, par nature : seule une revue humaine datée le comble |
-| AM-2 | **10 surfaces modales mesurées au clavier sur 53.** Les 43 autres sont **câblées et gardées par un cliquet**, ce qui n'est pas la même chose que mesurées | `e2e/a11y-keyboard-audit.spec.ts` : 19 cas, 10 surfaces. `modal-a11y.guard.test.ts` câble les 53 | oui, au prix du temps de job |
-| AM-3 | **Aucun test avec un lecteur d'écran.** Ce que NVDA ou VoiceOver annonce réellement n'est vérifié nulle part | aucun outil de ce type dans le dépôt | difficilement : c'est un test manuel daté |
-| AM-4 | **WCAG 2.5.5 n'est mesuré que sur 8 routes protégées** (élargi à 8 pages publiques par `C-80`, à revérifier après coup) | `e2e/touch-targets.spec.ts`, cf. l'entrée du 2026-09-14 | oui |
-| AM-5 | **Le contraste n'est vérifié que dans le thème par défaut.** Le dépôt porte quatre thèmes (clair, sombre, gris, noir) ; les runs axe n'en balaient qu'un | `theme-contrast.guard.test.ts` est statique, les runs e2e ne changent pas de thème | oui |
+| AM-1 | **axe-core ne couvre qu'une PARTIE des critères WCAG, et c'est structurel.** Les critères non automatisables (ordre de lecture, pertinence d'un libellé, sens d'une couleur) sont hors de portée de tout run vert | limite connue de l'outil, jamais écrite ici comme angle mort | 🟠 **TOUJOURS OUVERT** au 2026-09-21 · **`M-51`**, et il n'est pas outillable **par nature** : ordre de lecture, pertinence d'un libellé, sens porté par une couleur seule. Aucun run vert ne les atteint — *(jugé outillable le 09-16 : non, par nature : seule une revue humaine datée le comble)* |
+| AM-2 | **10 surfaces modales mesurées au clavier sur 53.** Les 43 autres sont **câblées et gardées par un cliquet**, ce qui n'est pas la même chose que mesurées | `e2e/a11y-keyboard-audit.spec.ts` : 19 cas, 10 surfaces. `modal-a11y.guard.test.ts` câble les 53 | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:keyboard-coverage` · **51 surfaces**, 10 mesurées, 41 déclarées non mesurées **une par une avec leur raison** (`C-96`) — 🔴 ne prouve PAS : 🔴 **elle ne mesure AUCUNE accessibilité.** Elle CHIFFRE l'écart et l'empêche de grandir en silence. ⚠️ L'énoncé du 09-16 disait 53 surfaces : le détecteur en compte **51**. ⚠️ Et la couverture réelle est **8 sur 51, pas 10** — deux des cas comptés échouent dans le job `e2e` rouge (`C-111`) |
+| AM-3 | **Aucun test avec un lecteur d'écran.** Ce que NVDA ou VoiceOver annonce réellement n'est vérifié nulle part | aucun outil de ce type dans le dépôt | 🟠 **TOUJOURS OUVERT** au 2026-09-21 · **`M-40`** (l'exécution) et **`M-52`** (la date). Ce que VoiceOver ou NVDA **annonce** n'est vérifié nulle part, et aucune garde ne le fera — *(jugé outillable le 09-16 : difficilement : c'est un test manuel daté)* |
+| AM-4 | **WCAG 2.5.5 n'est mesuré que sur 8 routes protégées** (élargi à 8 pages publiques par `C-80`, à revérifier après coup) | `e2e/touch-targets.spec.ts`, cf. l'entrée du 2026-09-14 | ✅ **OUTILLÉ le 2026-09-20** · `C-80` a élargi la boucle à **8 pages publiques** en plus des 8 routes protégées (`C-80`) — 🔴 ne prouve PAS : 🔴 la revérification demandée par cet énoncé est **faite et elle est mauvaise** : le job `e2e` est rouge, 8 défauts de cibles tactiles mesurés (`/settings` 24 × 24 px, `/okr` 36 px, `/habits` 39 × 39 px). C'est `C-111` |
+| AM-5 | **Le contraste n'est vérifié que dans le thème par défaut.** Le dépôt porte quatre thèmes (clair, sombre, gris, noir) ; les runs axe n'en balaient qu'un | `theme-contrast.guard.test.ts` est statique, les runs e2e ne changent pas de thème | ✅ **OUTILLÉ le 2026-09-20** · `e2e/visual-regression.spec.ts` (`C-95`) — 🔴 ne prouve PAS : la première référence fige l'écran défauts compris |
 
 
 > ### 🟢 2026-09-15 · +2 : le premier des trois angles morts de couverture est refermé (C-80)

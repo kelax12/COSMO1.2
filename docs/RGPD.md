@@ -56,25 +56,18 @@ traitée par fragments dans les audits sécurité. Mesuré sur le schéma de pro
 
 ### 🕳️ Angles morts · ce que cet audit NE mesure PAS (2026-09-16)
 
-> ## ✅ Relu le 2026-09-21 · **3 lignes de ce tableau sont désormais OUTILLÉES**
+> 🔎 **Colonne « État » réécrite le 2026-09-21.** La quatrième colonne posait « Outillable ? »,
+> c'est-à-dire une **prédiction** faite le 2026-09-16. La passe du 2026-09-20 au soir (`2b4c4304`)
+> y a répondu : elle porte donc maintenant l'**état réel**, la garde qui couvre la ligne, et
+> 🔴 **ce que cette garde ne prouve pas** — la moitié qui manque d'habitude.
 >
-> La passe du 2026-09-20 au soir (`2b4c4304`) a traité les 30 items du § 12
-> d'[`a-faire-code.md`](../a-faire-code.md), qui sont nés de ces angles morts.
+> ❌ **La colonne « Angle mort » n'est PAS touchée.** C'est l'énoncé, daté du 2026-09-16, et
+> c'est lui qui, nommé, a permis d'outiller : le réécrire effacerait la seule chose qui explique
+> pourquoi la garde existe. Un seul endroit porte l'état, et c'est la colonne de droite.
 >
-> ❌ **Le tableau ci-dessous n'est PAS réécrit.** Il décrit le 2026-09-16, et c'est sa date qui
-> lui donne sa valeur : un angle mort nommé est ce qui a permis de l'outiller. Ce bandeau dit ce
-> qui le couvre aujourd'hui, et surtout **ce que la garde ne prouve pas** — la moitié qui manque
-> d'habitude.
->
-> | Angle mort | Couvert par | 🔴 Ce que ça ne prouve PAS |
-> |---|---|---|
-> | AM-1 · AM-2 | `npm run check:erasure` (`C-92`) : périmètre **dérivé des migrations**, 22 tables, 4 décisions possibles | Dérivé des **migrations**, pas de la base — et ce dépôt a déjà constaté des objets en base qu'aucune migration ne crée |
-> | AM-3 | `npm run check:retention` (`C-93`) | Que le **registre** soit juste. Ça dit que la base respecte ce qu'il déclare. ⚠️ `rate_limits` et `email_lookup_quota` n'y ont **aucune durée déclarée**, et la garde l'imprime au lieu d'en inventer une |
-> | AM-4 | `npm run check:portability` (`C-94`) | La **justesse** des valeurs : un export complet mais faux resterait vert. 🔴 Première exécution : **quatre colonnes saisies** manquaient, dont `categories.parent_id`, donc l'arbre entier |
->
-> ⚠️ **Les lignes du tableau qui ne sont pas citées ici restent OUVERTES**, et une garde posée
-> n'est pas un angle mort fermé : `M-56` (« ce que chaque angle mort coûte en points ») n'est
-> toujours pas tranché, donc aucune note ne bouge sur cette base.
+> ⚠️ **Une garde posée n'est pas un angle mort fermé**, et `M-56` (« ce que chaque angle mort
+> coûte en points ») ne change rien ici : **aucune note ne bouge** sur cette base.
+
 
 
 > **Pourquoi cette section existe.** Cette note est justifiée par des points **nommés** (« ce qui
@@ -91,12 +84,12 @@ traitée par fragments dans les audits sécurité. Mesuré sur le schéma de pro
 > Ces lignes entrent donc **dans ce qui est mesuré**. La prochaine passe les traite comme les
 > invariants ci-dessus : chacune est soit comblée, soit reconduite avec sa date.
 
-| # | Angle mort | Vérifié le 2026-09-16 | Outillable ? |
+| # | Angle mort · **énoncé du 2026-09-16, non réécrit** | Vérifié le 2026-09-16 | 🔎 État au 2026-09-21 |
 |---|---|---|---|
-| AM-1 | 🔴 **La garde d'effacement s'appuie sur une LISTE EN DUR.** `SYMMETRIC_TABLES` est écrite à la main dans le test : une table symétrique ajoutée demain n'y entre pas toute seule, et la garde reste verte | `src/rgpd-erasure.guard.test.ts:42` : `const SYMMETRIC_TABLES: Record<string, [string, string]> = {` | oui : dériver la liste du schéma (`information_schema`) plutôt que de l'écrire |
-| AM-2 | **Rien ne relie une NOUVELLE table portant `user_id` à `delete-account`.** Une migration peut créer une table de données personnelles sans qu'aucun job ne demande ce qu'il advient de ces lignes à la suppression du compte | ni `validate:migrations` ni `check:rls` ne testent ce lien | oui, et c'est le complément naturel d'AM-1 |
-| AM-3 | **Les DURÉES de rétention ne sont vérifiées par rien.** Le registre art. 30 en annonce pour dix traitements ; aucune mesure ne confronte ces durées aux données réellement présentes | [`RGPD-REGISTRE.md`](./RGPD-REGISTRE.md) les déclare, aucun script ne les contrôle | oui : une requête planifiée par traitement |
-| AM-4 | **L'export de portabilité (art. 20) n'est comparé à aucun inventaire.** Une colonne ajoutée à une table exportée n'entre pas dans l'export, et rien ne le signale | aucune garde ne confronte l'export au schéma | oui |
+| AM-1 | 🔴 **La garde d'effacement s'appuie sur une LISTE EN DUR.** `SYMMETRIC_TABLES` est écrite à la main dans le test : une table symétrique ajoutée demain n'y entre pas toute seule, et la garde reste verte | `src/rgpd-erasure.guard.test.ts:42` : `const SYMMETRIC_TABLES: Record<string, [string, string]> = {` | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:erasure` · périmètre **dérivé des migrations**, 22 tables, 4 décisions possibles (`C-92`) — 🔴 ne prouve PAS : dérivé des **migrations**, pas de la base — et ce dépôt a déjà constaté des objets en base qu'aucune migration ne crée |
+| AM-2 | **Rien ne relie une NOUVELLE table portant `user_id` à `delete-account`.** Une migration peut créer une table de données personnelles sans qu'aucun job ne demande ce qu'il advient de ces lignes à la suppression du compte | ni `validate:migrations` ni `check:rls` ne testent ce lien | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:erasure` · `cascade` et `conserve` **vérifiées contre le SQL** (`C-92`) — 🔴 ne prouve PAS : idem AM-1 : la source est le dépôt, pas le catalogue |
+| AM-3 | **Les DURÉES de rétention ne sont vérifiées par rien.** Le registre art. 30 en annonce pour dix traitements ; aucune mesure ne confronte ces durées aux données réellement présentes | [`RGPD-REGISTRE.md`](./RGPD-REGISTRE.md) les déclare, aucun script ne les contrôle | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:retention` · orphelines (**0** en prod) + âges (`C-93`) — 🔴 ne prouve PAS : que le **registre** soit juste : ça dit que la base respecte ce qu'il déclare. ⚠️ `rate_limits` et `email_lookup_quota` n'y ont **aucune durée déclarée**, et la garde l'imprime au lieu d'en inventer une |
+| AM-4 | **L'export de portabilité (art. 20) n'est comparé à aucun inventaire.** Une colonne ajoutée à une table exportée n'entre pas dans l'export, et rien ne le signale | aucune garde ne confronte l'export au schéma | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:portability` · chaque colonne exportée **ou exclue avec sa raison** (`C-94`) — 🔴 ne prouve PAS : la **justesse** des valeurs : un export complet mais faux resterait vert. 1ʳᵉ exécution : **4 colonnes saisies** manquaient, dont `categories.parent_id`, donc l'arbre entier |
 
 
 > ### ⚪ 2026-09-14 (soir) · 0 : la sémantique d'effacement est relue EN BASE, une omission d'inventaire apparaît

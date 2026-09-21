@@ -53,26 +53,18 @@
 
 ### 🕳️ Angles morts · ce que cet audit NE mesure PAS (2026-09-16)
 
-> ## ✅ Relu le 2026-09-21 · **4 lignes de ce tableau sont désormais OUTILLÉES**
+> 🔎 **Colonne « État » réécrite le 2026-09-21.** La quatrième colonne posait « Outillable ? »,
+> c'est-à-dire une **prédiction** faite le 2026-09-16. La passe du 2026-09-20 au soir (`2b4c4304`)
+> y a répondu : elle porte donc maintenant l'**état réel**, la garde qui couvre la ligne, et
+> 🔴 **ce que cette garde ne prouve pas** — la moitié qui manque d'habitude.
 >
-> La passe du 2026-09-20 au soir (`2b4c4304`) a traité les 30 items du § 12
-> d'[`a-faire-code.md`](../a-faire-code.md), qui sont nés de ces angles morts.
+> ❌ **La colonne « Angle mort » n'est PAS touchée.** C'est l'énoncé, daté du 2026-09-16, et
+> c'est lui qui, nommé, a permis d'outiller : le réécrire effacerait la seule chose qui explique
+> pourquoi la garde existe. Un seul endroit porte l'état, et c'est la colonne de droite.
 >
-> ❌ **Le tableau ci-dessous n'est PAS réécrit.** Il décrit le 2026-09-16, et c'est sa date qui
-> lui donne sa valeur : un angle mort nommé est ce qui a permis de l'outiller. Ce bandeau dit ce
-> qui le couvre aujourd'hui, et surtout **ce que la garde ne prouve pas** — la moitié qui manque
-> d'habitude.
->
-> | Angle mort | Couvert par | 🔴 Ce que ça ne prouve PAS |
-> |---|---|---|
-> | AM-1 | `npm run check:sabotages` (`C-81`) · 11 sabotages rejoués, `sabotages.yml` hebdo | Que les **39** témoins détectent. Le rapport couvert / total est imprimé à chaque run, exprès. 🔴 Première exécution : `src/monitoring.guard.test.ts` ne détectait **plus rien** |
-> | AM-2 | `npm run test:coverage:tooling` et `check:edge-coverage` (`C-82`) | `supabase/functions/**` n'est pas couvert en lignes et ne peut pas l'être (Deno, jamais importé). 🔴 Première exécution : **trois scripts** sortaient du rapport en silence, à cause de leur shebang |
-> | AM-4 | ✅ **fermé** : `C-78` est clos depuis `af0190bd` (2026-09-16), `mobile-safari` est joué en CI | Ni un appareil réel, ni Android, ni un réseau bridé — c'est `C-97` et `M-25` |
-> | AM-5 | `npm run check:test-floor` (`C-83`) | Qu'un test teste quelque chose. Un plancher interdit la disparition, pas la complaisance |
->
-> ⚠️ **Les lignes du tableau qui ne sont pas citées ici restent OUVERTES**, et une garde posée
-> n'est pas un angle mort fermé : `M-56` (« ce que chaque angle mort coûte en points ») n'est
-> toujours pas tranché, donc aucune note ne bouge sur cette base.
+> ⚠️ **Une garde posée n'est pas un angle mort fermé**, et `M-56` (« ce que chaque angle mort
+> coûte en points ») ne change rien ici : **aucune note ne bouge** sur cette base.
+
 
 
 > **Pourquoi cette section existe.** Cette note est justifiée par des points **nommés** (« ce qui
@@ -89,13 +81,13 @@
 > Ces lignes entrent donc **dans ce qui est mesuré**. La prochaine passe les traite comme les
 > invariants ci-dessus : chacune est soit comblée, soit reconduite avec sa date.
 
-| # | Angle mort | Vérifié le 2026-09-16 | Outillable ? |
+| # | Angle mort · **énoncé du 2026-09-16, non réécrit** | Vérifié le 2026-09-16 | 🔎 État au 2026-09-21 |
 |---|---|---|---|
-| AM-1 | 🔴 **Les 39 témoins ne sont jamais rejoués** (« 36 » le 2026-09-16, **recomptés le 2026-09-20** : trois de plus en quatre jours, et aucun n'est rejoué davantage). Ce dépôt a une culture du témoin remarquable : chaque garde arrive avec un fichier `*.guard.test.*` **vu rouge sur des sabotages**. Mais ce sabotage est **manuel et unique**, joué le jour de sa création. Rien ne vérifie qu'un témoin détecte **encore** | `git ls-files` rend **39** fichiers `*.guard.test.{ts,tsx,mjs}` au 2026-09-20 (36 le 09-16). **Aucun mutation testing** : ni `stryker`, ni équivalent, dans `package.json` ni dans un workflow | oui : Stryker sur `scripts/**` et les gardes, ou un job qui rejoue N sabotages connus |
-| AM-2 | **La couverture ne porte que sur `src/**`.** En sont donc absents : `scripts/**` (les gardes elles-mêmes, c'est-à-dire le code qui décide si la CI est verte) et `supabase/functions/**` (le code qui déplace de l'argent) | `vitest.config.ts` : `include: ['src/**/*.{ts,tsx}']`. Les seuils par fichier ne visent que `src/` | oui : étendre `include`, avec des seuils propres |
-| AM-3 | **Un taux de couverture ne dit rien de la force des assertions.** Une ligne exécutée par un test qui n'assure rien compte comme couverte | par construction de la couverture v8 | AM-1 y répond en partie : la mutation mesure ce que la couverture ne voit pas |
-| AM-4 | ✅ **COMBLÉ le 2026-09-16, vérifié le 2026-09-20.** Était : « les 105 cas `mobile-safari` ne tournent dans aucun workflow » (item `C-78`) | 🔴 **Périmé le jour même où il a été écrit** : `git show HEAD:.github/workflows/ci.yml` lance `--project=chromium --project=supabase-stub --project=mobile-safari` depuis `af0190bd`, 2026-09-16, et `e2e/_warmup-mobile.spec.ts` est suivi par git | ✅ fait · `a-faire-code.md` `C-78`, **clos** |
-| AM-5 | **Aucune garde ne relie un test à sa raison d'être.** Un test supprimé avec le code qu'il gardait ne laisse aucune trace : le total baisse, et un total qui baisse ne fait échouer aucun job | il n'existe pas de plancher sur le nombre de fichiers ni de cas | oui : un plancher à cliquet, comme les budgets |
+| AM-1 | 🔴 **Les 39 témoins ne sont jamais rejoués** (« 36 » le 2026-09-16, **recomptés le 2026-09-20** : trois de plus en quatre jours, et aucun n'est rejoué davantage). Ce dépôt a une culture du témoin remarquable : chaque garde arrive avec un fichier `*.guard.test.*` **vu rouge sur des sabotages**. Mais ce sabotage est **manuel et unique**, joué le jour de sa création. Rien ne vérifie qu'un témoin détecte **encore** | `git ls-files` rend **39** fichiers `*.guard.test.{ts,tsx,mjs}` au 2026-09-20 (36 le 09-16). **Aucun mutation testing** : ni `stryker`, ni équivalent, dans `package.json` ni dans un workflow | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:sabotages` (`C-81`) — 🔴 ne prouve PAS : que les **39** témoins détectent ; le rapport couvert / total est imprimé exprès. À sa 1ʳᵉ exécution : `monitoring.guard.test.ts` ne détectait **plus rien** |
+| AM-2 | **La couverture ne porte que sur `src/**`.** En sont donc absents : `scripts/**` (les gardes elles-mêmes, c'est-à-dire le code qui décide si la CI est verte) et `supabase/functions/**` (le code qui déplace de l'argent) | `vitest.config.ts` : `include: ['src/**/*.{ts,tsx}']`. Les seuils par fichier ne visent que `src/` | ✅ **OUTILLÉ le 2026-09-20** · `npm run test:coverage:tooling` · `check:edge-coverage` (`C-82`) — 🔴 ne prouve PAS : `supabase/functions/**` en lignes — impossible (Deno, jamais importé) ; le plancher de témoins en tient lieu. 1ʳᵉ exécution : **3 scripts** sortaient du rapport en silence, à cause de leur shebang |
+| AM-3 | **Un taux de couverture ne dit rien de la force des assertions.** Une ligne exécutée par un test qui n'assure rien compte comme couverte | par construction de la couverture v8 | 🟠 **TOUJOURS OUVERT** au 2026-09-21 · **aucun item ne le porte**, et c'est le dernier trou de ce tableau. `C-81` rejoue des témoins, ce qui n'est PAS du test de mutation : un témoin prouve qu'une garde mord, pas qu'une assertion est forte — *(jugé outillable le 09-16 : AM-1 y répond en partie : la mutation mesure ce que la couverture ne voit pas)* |
+| AM-4 | ✅ **COMBLÉ le 2026-09-16, vérifié le 2026-09-20.** Était : « les 105 cas `mobile-safari` ne tournent dans aucun workflow » (item `C-78`) | 🔴 **Périmé le jour même où il a été écrit** : `git show HEAD:.github/workflows/ci.yml` lance `--project=chromium --project=supabase-stub --project=mobile-safari` depuis `af0190bd`, 2026-09-16, et `e2e/_warmup-mobile.spec.ts` est suivi par git | ✅ **FERMÉ le 2026-09-16** · `C-78`, `af0190bd` — `mobile-safari` est joué en CI. 🔴 ne prouve PAS : ni appareil réel, ni Android, ni réseau bridé (`C-97`, `M-25`) |
+| AM-5 | **Aucune garde ne relie un test à sa raison d'être.** Un test supprimé avec le code qu'il gardait ne laisse aucune trace : le total baisse, et un total qui baisse ne fait échouer aucun job | il n'existe pas de plancher sur le nombre de fichiers ni de cas | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:test-floor` (`C-83`) — 🔴 ne prouve PAS : qu'un test teste quelque chose : un plancher interdit la disparition, pas la complaisance. 1ʳᵉ exécution : le plancher était posé **deux trop bas** (deux témoins portent un tiret) |
 
 
 > ### 🟡 2026-09-15 · +1 sur les 3 retirés, et le reste attend d'être COMMITÉ

@@ -23,25 +23,18 @@ réagir à un incident. À lire avant toute mise en prod.
 
 ## 🕳️ Angles morts · ce que ce document NE mesure PAS (2026-09-16)
 
-> ## ✅ Relu le 2026-09-21 · **3 lignes de ce tableau sont désormais OUTILLÉES**
+> 🔎 **Colonne « État » réécrite le 2026-09-21.** La quatrième colonne posait « Outillable ? »,
+> c'est-à-dire une **prédiction** faite le 2026-09-16. La passe du 2026-09-20 au soir (`2b4c4304`)
+> y a répondu : elle porte donc maintenant l'**état réel**, la garde qui couvre la ligne, et
+> 🔴 **ce que cette garde ne prouve pas** — la moitié qui manque d'habitude.
 >
-> La passe du 2026-09-20 au soir (`2b4c4304`) a traité les 30 items du § 12
-> d'[`a-faire-code.md`](../a-faire-code.md), qui sont nés de ces angles morts.
+> ❌ **La colonne « Angle mort » n'est PAS touchée.** C'est l'énoncé, daté du 2026-09-16, et
+> c'est lui qui, nommé, a permis d'outiller : le réécrire effacerait la seule chose qui explique
+> pourquoi la garde existe. Un seul endroit porte l'état, et c'est la colonne de droite.
 >
-> ❌ **Le tableau ci-dessous n'est PAS réécrit.** Il décrit le 2026-09-16, et c'est sa date qui
-> lui donne sa valeur : un angle mort nommé est ce qui a permis de l'outiller. Ce bandeau dit ce
-> qui le couvre aujourd'hui, et surtout **ce que la garde ne prouve pas** — la moitié qui manque
-> d'habitude.
->
-> | Angle mort | Couvert par | 🔴 Ce que ça ne prouve PAS |
-> |---|---|---|
-> | AM-2 | `dump-check` trimestriel (`C-86`) | Un dump relisible n'est pas un dump restauré. **Le rollback n'a toujours jamais été parcouru** : `M-47` |
-> | AM-3 · AM-4 | `npm run check:env` (`C-105`) : contrat statique des 8 `VITE_*` avec l'effet d'absence de chacune | ⚠️ La moitié Vercel vérifie une **présence, jamais une valeur**, et elle dort tant que `VERCEL_TOKEN` / `VERCEL_PROJECT_ID` ne sont pas posés (`M-59`) |
-> | AM-5 | Trois marqueurs **absents** de la coquille SPA + une seconde page prérendue sondée (`C-104`) | ⚠️ L'énoncé du 09-16 était périmé dans le sens inverse : `uptime.yml` avait un marqueur (`grep -i cosmo`) qui **ne pouvait pas échouer**, la coquille contenant le mot 21 fois |
->
-> ⚠️ **Les lignes du tableau qui ne sont pas citées ici restent OUVERTES**, et une garde posée
-> n'est pas un angle mort fermé : `M-56` (« ce que chaque angle mort coûte en points ») n'est
-> toujours pas tranché, donc aucune note ne bouge sur cette base.
+> ⚠️ **Une garde posée n'est pas un angle mort fermé**, et `M-56` (« ce que chaque angle mort
+> coûte en points ») ne change rien ici : **aucune note ne bouge** sur cette base.
+
 
 
 > **Pourquoi cette section existe.** Demande d'Axel, après le constat qui a ouvert la journée :
@@ -57,13 +50,13 @@ réagir à un incident. À lire avant toute mise en prod.
 > Chaque ligne est vérifiée par une commande, jamais supposée. Elle se **referme** ou se
 > **reconduit avec sa date**, jamais ne se recopie.
 
-| # | Angle mort | Vérifié le 2026-09-16 | Outillable ? |
+| # | Angle mort · **énoncé du 2026-09-16, non réécrit** | Vérifié le 2026-09-16 | 🔎 État au 2026-09-21 |
 |---|---|---|---|
-| AM-1 | ✅ **COMBLÉ le 2026-09-16 par `npm run check:deploy`** (job `Deploy SHA drift`, horaire, branché sur `ci-alert.yml`). Était : **rien ne comparait le commit déployé sur Vercel à `main`.** C'est exactement le défaut C-35 des Edge Functions, **côté front**, et il n'a jamais été nommé. `check:edge` compare le code déployé des fonctions au dépôt ; **aucun équivalent n'existe pour l'application elle-même** | la garde lit `/version.json` **sur la production**, écrit au build par `VERCEL_GIT_COMMIT_SHA`, et distingue **à jour / retard / dérive** : un `!=` confondrait un déploiement en vol avec une dérive, et une prod **en avance** avec un simple retard | ✅ **Cycle complet observé le 2026-09-16** : `fa0b019` égal au dépôt, puis `ancetre` (déploiement en vol) juste après un push, puis `egal` à nouveau une fois Vercel passé. Premier run CI **`35075874315`**, vert : il a rendu `ancetre` sur un commit d'**1 min**, ce qui prouve au passage que `fetch-depth: 0` est effectif — un clone superficiel aurait rangé cet ancêtre dans `inconnu` et le run serait ROUGE. Témoin rejoué dans le même run : 17 passés. ✅ fait, **sans aucun secret** (le marqueur est public), donc la garde ne peut pas sauter en silence |
-| AM-2 | 🔴 **Le ROLLBACK n'a jamais été éprouvé.** Le runbook le décrit ; `restore-drill.yml` n'a qu'un `workflow_dispatch` avec confirmation. **Un chemin de récupération qui n'a pas été parcouru est une hypothèse**, et ce dépôt l'a déjà appris au prix fort avec la mig. `131` (`/admin` inaccessible deux jours) | `restore-drill.yml` : `on: workflow_dispatch` | oui : un `schedule`, même trimestriel |
-| AM-3 | **Les variables d'environnement Vercel ne sont comparées à rien.** Une `VITE_*` manquante ou périmée ne se voit qu'à l'exécution. Le cas a déjà mordu : `VITE_SENTRY_DSN` absente changeait la forme du bundle et rendait la garde de budget aveugle à ~45 ko | aucun job ne lit la configuration Vercel | oui |
-| AM-4 | **L'état réel de Turnstile n'est écrit nulle part de vérifiable.** Le code existe (`TurnstileWidget.tsx`, `AuthForm.tsx`) ; son activation dépend d'une variable posée **hors du dépôt**. Ce document le dit « inerte au 2026-08-28 », et rien ne dirait qu'il a changé | 3 fichiers sources le référencent, 0 garde | oui (AM-3 le couvre) |
-| AM-5 | **`uptime.yml` mesure qu'une page RÉPOND, jamais qu'elle FONCTIONNE.** Un HTTP 200 sur une coquille SPA vide est vert. C'est le même piège que la garde Lighthouse qui mesurait une 404 (`T-50`, corrigé le 2026-08-29) | `uptime.yml` : `-w '%{http_code}'` sur `/` et `/auth/v1/health` | oui : un marqueur de contenu attendu |
+| AM-1 | ✅ **COMBLÉ le 2026-09-16 par `npm run check:deploy`** (job `Deploy SHA drift`, horaire, branché sur `ci-alert.yml`). Était : **rien ne comparait le commit déployé sur Vercel à `main`.** C'est exactement le défaut C-35 des Edge Functions, **côté front**, et il n'a jamais été nommé. `check:edge` compare le code déployé des fonctions au dépôt ; **aucun équivalent n'existe pour l'application elle-même** | la garde lit `/version.json` **sur la production**, écrit au build par `VERCEL_GIT_COMMIT_SHA`, et distingue **à jour / retard / dérive** : un `!=` confondrait un déploiement en vol avec une dérive, et une prod **en avance** avec un simple retard | ✅ **COMBLÉ le 2026-09-16** · `npm run check:deploy` (`T-8`), job horaire branché sur `ci-alert.yml`. Cycle complet observé le même jour |
+| AM-2 | 🔴 **Le ROLLBACK n'a jamais été éprouvé.** Le runbook le décrit ; `restore-drill.yml` n'a qu'un `workflow_dispatch` avec confirmation. **Un chemin de récupération qui n'a pas été parcouru est une hypothèse**, et ce dépôt l'a déjà appris au prix fort avec la mig. `131` (`/admin` inaccessible deux jours) | `restore-drill.yml` : `on: workflow_dispatch` | ✅ **OUTILLÉ le 2026-09-20** · `dump-check` **trimestriel et automatique** (`C-86`) — 🔴 ne prouve PAS : qu'un dump soit restaurable, et surtout pas que le **rollback** fonctionne : personne ne l'a jamais parcouru, c'est **`M-47`** |
+| AM-3 | **Les variables d'environnement Vercel ne sont comparées à rien.** Une `VITE_*` manquante ou périmée ne se voit qu'à l'exécution. Le cas a déjà mordu : `VITE_SENTRY_DSN` absente changeait la forme du bundle et rendait la garde de budget aveugle à ~45 ko | aucun job ne lit la configuration Vercel | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:env` · contrat statique des 8 `VITE_*` avec l'**effet d'absence** de chacune (`C-105`) — 🔴 ne prouve PAS : les **valeurs** : la moitié Vercel vérifie une présence, jamais un contenu. ⚠️ Et elle dort tant que `VERCEL_TOKEN` / `VERCEL_PROJECT_ID` ne sont pas posés (**`M-59`**) |
+| AM-4 | **L'état réel de Turnstile n'est écrit nulle part de vérifiable.** Le code existe (`TurnstileWidget.tsx`, `AuthForm.tsx`) ; son activation dépend d'une variable posée **hors du dépôt**. Ce document le dit « inerte au 2026-08-28 », et rien ne dirait qu'il a changé | 3 fichiers sources le référencent, 0 garde | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:env` (`C-105`) — 🔴 ne prouve PAS : rien de plus qu'AM-3 : même garde, même réserve |
+| AM-5 | **`uptime.yml` mesure qu'une page RÉPOND, jamais qu'elle FONCTIONNE.** Un HTTP 200 sur une coquille SPA vide est vert. C'est le même piège que la garde Lighthouse qui mesurait une 404 (`T-50`, corrigé le 2026-08-29) | `uptime.yml` : `-w '%{http_code}'` sur `/` et `/auth/v1/health` | ✅ **OUTILLÉ le 2026-09-20** · 3 marqueurs **absents de la coquille SPA** + une 2ᵉ page prérendue sondée + le corps de `/auth/v1/health` (`C-104`) — 🔴 ne prouve PAS : rien — mais ⚠️ **l'énoncé du 09-16 était périmé dans l'autre sens** : `uptime.yml` avait un marqueur (`grep -i cosmo`) qui **ne pouvait pas échouer**, la coquille contenant le mot 21 fois |
 
 ---
 

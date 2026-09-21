@@ -33,24 +33,18 @@
 
 ## 🕳️ Angles morts · ce que ce document NE mesure PAS (2026-09-16)
 
-> ## ✅ Relu le 2026-09-21 · **2 lignes de ce tableau sont désormais OUTILLÉES**
+> 🔎 **Colonne « État » réécrite le 2026-09-21.** La quatrième colonne posait « Outillable ? »,
+> c'est-à-dire une **prédiction** faite le 2026-09-16. La passe du 2026-09-20 au soir (`2b4c4304`)
+> y a répondu : elle porte donc maintenant l'**état réel**, la garde qui couvre la ligne, et
+> 🔴 **ce que cette garde ne prouve pas** — la moitié qui manque d'habitude.
 >
-> La passe du 2026-09-20 au soir (`2b4c4304`) a traité les 30 items du § 12
-> d'[`a-faire-code.md`](../a-faire-code.md), qui sont nés de ces angles morts.
+> ❌ **La colonne « Angle mort » n'est PAS touchée.** C'est l'énoncé, daté du 2026-09-16, et
+> c'est lui qui, nommé, a permis d'outiller : le réécrire effacerait la seule chose qui explique
+> pourquoi la garde existe. Un seul endroit porte l'état, et c'est la colonne de droite.
 >
-> ❌ **Le tableau ci-dessous n'est PAS réécrit.** Il décrit le 2026-09-16, et c'est sa date qui
-> lui donne sa valeur : un angle mort nommé est ce qui a permis de l'outiller. Ce bandeau dit ce
-> qui le couvre aujourd'hui, et surtout **ce que la garde ne prouve pas** — la moitié qui manque
-> d'habitude.
->
-> | Angle mort | Couvert par | 🔴 Ce que ça ne prouve PAS |
-> |---|---|---|
-> | AM-1 | `npm run check:supabase-posture` (`C-88`) | 🔴 Elle échoue tant que la référence des réglages d'auth n'est pas posée (`M-58`). Le volet purement manuel reste `M-15` / `M-16` / `M-17` |
-> | AM-3 | `npm run check:docs-scored` (`C-109`) | Que les notes soient justes ni fraîches |
->
-> ⚠️ **Les lignes du tableau qui ne sont pas citées ici restent OUVERTES**, et une garde posée
-> n'est pas un angle mort fermé : `M-56` (« ce que chaque angle mort coûte en points ») n'est
-> toujours pas tranché, donc aucune note ne bouge sur cette base.
+> ⚠️ **Une garde posée n'est pas un angle mort fermé**, et `M-56` (« ce que chaque angle mort
+> coûte en points ») ne change rien ici : **aucune note ne bouge** sur cette base.
+
 
 
 > **Pourquoi cette section existe.** Demande d'Axel, après le constat qui a ouvert la journée :
@@ -66,11 +60,11 @@
 > Chaque ligne est vérifiée par une commande, jamais supposée. Elle se **referme** ou se
 > **reconduit avec sa date**, jamais ne se recopie.
 
-| # | Angle mort | Vérifié le 2026-09-16 | Outillable ? |
+| # | Angle mort · **énoncé du 2026-09-16, non réécrit** | Vérifié le 2026-09-16 | 🔎 État au 2026-09-21 |
 |---|---|---|---|
-| AM-1 | 🔴 **Les points cochés ✅ sont des réglages de DASHBOARD, et rien ne vérifie qu'ils le sont ENCORE.** « Leaked Password Protection », l'index `048` : tout cela vit hors du dépôt, se désactive en deux clics, sans commit et sans trace. Un ✅ daté décrit un instant, pas un état | aucun workflow ne lit les réglages Supabase (cf. [`SECURITY.md`](./SECURITY.md) AM-2) | oui : l'API Management les expose |
-| AM-2 | **Un guide de chantiers ne dit pas lesquels sont périmés.** Le point 3 a été tranché le 2026-09-03 et exécuté le 09-04 (suppression des jetons, C-04) : ce qui reste ici en décrit le **contexte**, pas l'état | « Point 3 · TRANCHÉE le 2026-09-03 » | oui : une date de dernière revérification par point |
-| AM-3 | **Ce document n'a pas de note et n'entre dans aucun tableau de bord**, alors qu'il porte la séquence de réactivation du premium | absent du tableau de bord de [`README.md`](./README.md) | oui |
+| AM-1 | 🔴 **Les points cochés ✅ sont des réglages de DASHBOARD, et rien ne vérifie qu'ils le sont ENCORE.** « Leaked Password Protection », l'index `048` : tout cela vit hors du dépôt, se désactive en deux clics, sans commit et sans trace. Un ✅ daté décrit un instant, pas un état | aucun workflow ne lit les réglages Supabase (cf. [`SECURITY.md`](./SECURITY.md) AM-2) | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:supabase-posture` (`C-88`) — 🔴 ne prouve PAS : 🔴 elle échoue tant que la référence n'est pas posée (**`M-58`**). Le volet purement manuel reste `M-15` / `M-16` / `M-17` |
+| AM-2 | **Un guide de chantiers ne dit pas lesquels sont périmés.** Le point 3 a été tranché le 2026-09-03 et exécuté le 09-04 (suppression des jetons, C-04) : ce qui reste ici en décrit le **contexte**, pas l'état | « Point 3 · TRANCHÉE le 2026-09-03 » | 🟠 **TOUJOURS OUVERT** au 2026-09-21 · **aucun item ne le porte.** Un guide de chantiers ne dit toujours pas lesquels sont périmés, et le point 3 en est l'exemple : tranché le 09-03, exécuté le 09-04 — *(jugé outillable le 09-16 : oui : une date de dernière revérification par point)* |
+| AM-3 | **Ce document n'a pas de note et n'entre dans aucun tableau de bord**, alors qu'il porte la séquence de réactivation du premium | absent du tableau de bord de [`README.md`](./README.md) | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:docs-scored` (`C-109`) — 🔴 ne prouve PAS : que les notes soient justes ni fraîches |
 
 ---
 

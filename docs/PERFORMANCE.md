@@ -53,25 +53,18 @@
 
 ### 🕳️ Angles morts · ce que cet audit NE mesure PAS (2026-09-16)
 
-> ## ✅ Relu le 2026-09-21 · **3 lignes de ce tableau sont désormais OUTILLÉES**
+> 🔎 **Colonne « État » réécrite le 2026-09-21.** La quatrième colonne posait « Outillable ? »,
+> c'est-à-dire une **prédiction** faite le 2026-09-16. La passe du 2026-09-20 au soir (`2b4c4304`)
+> y a répondu : elle porte donc maintenant l'**état réel**, la garde qui couvre la ligne, et
+> 🔴 **ce que cette garde ne prouve pas** — la moitié qui manque d'habitude.
 >
-> La passe du 2026-09-20 au soir (`2b4c4304`) a traité les 30 items du § 12
-> d'[`a-faire-code.md`](../a-faire-code.md), qui sont nés de ces angles morts.
+> ❌ **La colonne « Angle mort » n'est PAS touchée.** C'est l'énoncé, daté du 2026-09-16, et
+> c'est lui qui, nommé, a permis d'outiller : le réécrire effacerait la seule chose qui explique
+> pourquoi la garde existe. Un seul endroit porte l'état, et c'est la colonne de droite.
 >
-> ❌ **Le tableau ci-dessous n'est PAS réécrit.** Il décrit le 2026-09-16, et c'est sa date qui
-> lui donne sa valeur : un angle mort nommé est ce qui a permis de l'outiller. Ce bandeau dit ce
-> qui le couvre aujourd'hui, et surtout **ce que la garde ne prouve pas** — la moitié qui manque
-> d'habitude.
->
-> | Angle mort | Couvert par | 🔴 Ce que ça ne prouve PAS |
-> |---|---|---|
-> | AM-1 · AM-4 | `lighthouserc.mobile.json` + passe mobile dans `ci.yml` (`C-84`), 4 → **8 URLs** | Les seuils mobiles sont une **première pose**, prudente faute de Chrome sur le poste. À rabaisser au mesuré au premier run réel |
-> | AM-3 | **30 plafonds par chunk** posés au poids du jour (`C-85`) ; une exemption sans plafond est refusée | ⚠️ L'énoncé du 09-16 était périmé : un plafond générique de 70 ko existait. Ce qui manquait était un plafond **par chunk** |
-> | AM-5 | `npm run check:db-cost` (`C-87`) : EXPLAIN sous RLS, rôle `authenticated`, transaction annulée | Le coût **facturé** (Supabase ne l'expose pas) ni la charge réelle (c'est `scalability-volume`) |
->
-> ⚠️ **Les lignes du tableau qui ne sont pas citées ici restent OUVERTES**, et une garde posée
-> n'est pas un angle mort fermé : `M-56` (« ce que chaque angle mort coûte en points ») n'est
-> toujours pas tranché, donc aucune note ne bouge sur cette base.
+> ⚠️ **Une garde posée n'est pas un angle mort fermé**, et `M-56` (« ce que chaque angle mort
+> coûte en points ») ne change rien ici : **aucune note ne bouge** sur cette base.
+
 
 
 > **Pourquoi cette section existe.** Cette note est justifiée par des points **nommés** (« ce qui
@@ -88,13 +81,13 @@
 > Ces lignes entrent donc **dans ce qui est mesuré**. La prochaine passe les traite comme les
 > invariants ci-dessus : chacune est soit comblée, soit reconduite avec sa date.
 
-| # | Angle mort | Vérifié le 2026-09-16 | Outillable ? |
+| # | Angle mort · **énoncé du 2026-09-16, non réécrit** | Vérifié le 2026-09-16 | 🔎 État au 2026-09-21 |
 |---|---|---|---|
-| AM-1 | 🔴 **Lighthouse tourne en preset DESKTOP uniquement.** Aucune mesure de performance **mobile** en continu, alors que c'est le terminal du trafic visé et que [`MOBILE.md`](./MOBILE.md) est le document le moins bien noté du dépôt | `lighthouserc.json` : `"preset": "desktop"` | oui : un second `collect` en preset mobile |
-| AM-2 | **La performance n'est PAS bloquante, et LCP / TBT non plus.** Seuls `accessibility`, `seo` et `cumulative-layout-shift` sont en `error` | `lighthouserc.json` : `"categories:performance": ["warn", …]`, `largest-contentful-paint` et `total-blocking-time` en `warn` | arbitrage assumé (le runner varie), mais l'angle mort doit être nommé |
-| AM-3 | **Les chunks LAZY n'ont aucun plafond.** Le budget ne couvre que le chemin critique et l'entrée. Une page lazy peut grossir sans limite | `scripts/check-bundle-budget.mjs` : « Les chunks lazy ne sont payés que par ceux qui ouvrent l'écran correspondant ». `BUDGETS` ne porte que `critical` et `entry` | oui : un plafond par chunk de page |
-| AM-4 | **4 URLs mesurées sur les 45 du sitemap** | `lighthouserc.json` : `/`, `/guide/`, `/blog/`, `/pour-freelances/`. `dist/sitemap.xml` en porte **45** | oui, au prix du temps de job |
-| AM-5 | **Aucune mesure du coût SERVEUR en continu.** Les plans d'exécution et les temps de RPC sont rejoués à la main, à chaque passe | aucun workflow ne joue d'`EXPLAIN` | partiellement : un job planifié sur la prod |
+| AM-1 | 🔴 **Lighthouse tourne en preset DESKTOP uniquement.** Aucune mesure de performance **mobile** en continu, alors que c'est le terminal du trafic visé et que [`MOBILE.md`](./MOBILE.md) est le document le moins bien noté du dépôt | `lighthouserc.json` : `"preset": "desktop"` | ✅ **OUTILLÉ le 2026-09-20** · `lighthouserc.mobile.json` + passe mobile de `ci.yml` (`C-84`) — 🔴 ne prouve PAS : que les seuils soient justes : **première pose**, prudente faute de Chrome sur le poste, à rabaisser au mesuré dès le 1ᵉʳ run réel |
+| AM-2 | **La performance n'est PAS bloquante, et LCP / TBT non plus.** Seuls `accessibility`, `seo` et `cumulative-layout-shift` sont en `error` | `lighthouserc.json` : `"categories:performance": ["warn", …]`, `largest-contentful-paint` et `total-blocking-time` en `warn` | 🟠 **TOUJOURS OUVERT** au 2026-09-21 · **arbitrage assumé, non rendu** : rendre `performance`, LCP et TBT bloquants suppose d'accepter que le runner varie. Aucun item ne le porte — *(jugé outillable le 09-16 : arbitrage assumé (le runner varie), mais l'angle mort doit être nommé)* |
+| AM-3 | **Les chunks LAZY n'ont aucun plafond.** Le budget ne couvre que le chemin critique et l'entrée. Une page lazy peut grossir sans limite | `scripts/check-bundle-budget.mjs` : « Les chunks lazy ne sont payés que par ceux qui ouvrent l'écran correspondant ». `BUDGETS` ne porte que `critical` et `entry` | ✅ **OUTILLÉ le 2026-09-20** · **30 plafonds par chunk**, posés au poids du jour (`C-85`) — 🔴 ne prouve PAS : rien — mais ⚠️ **l'énoncé du 09-16 était périmé** : un plafond générique de 70 ko existait ; ce qui manquait était un plafond **par chunk** |
+| AM-4 | **4 URLs mesurées sur les 45 du sitemap** | `lighthouserc.json` : `/`, `/guide/`, `/blog/`, `/pour-freelances/`. `dist/sitemap.xml` en porte **45** | ✅ **OUTILLÉ le 2026-09-20** · passe mobile Lighthouse, 4 → **8 URLs** (`C-84`) — 🔴 ne prouve PAS : la couverture : 8 URLs restent 8 URLs, la proportion s'améliore sans se fermer |
+| AM-5 | **Aucune mesure du coût SERVEUR en continu.** Les plans d'exécution et les temps de RPC sont rejoués à la main, à chaque passe | aucun workflow ne joue d'`EXPLAIN` | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:db-cost` · EXPLAIN sous RLS, rôle `authenticated`, transaction annulée (`C-87`) — 🔴 ne prouve PAS : le coût **facturé** (Supabase ne l'expose pas) ni la charge réelle (c'est `scalability-volume`) |
 
 
 > ### 🔴 2026-09-14 (soir) · −2 : une RPC créditée d'un gain de 71× rend un chiffre faux en production
