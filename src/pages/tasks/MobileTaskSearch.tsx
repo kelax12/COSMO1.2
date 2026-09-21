@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AlertTriangle, Bookmark, CheckCircle2, CheckSquare, Search, Users, X } from 'lucide-react';
 import { useModalA11y } from '@/hooks/use-modal-a11y';
@@ -74,6 +75,23 @@ const MobileTaskSearch: React.FC<Props> = ({ searchTerm, onSearchTermChange }) =
   // pose exactement à sa place (`safe-area + 84px`), et on ne cherche pas une
   // tâche pendant qu'on en coche cinq.
   const selectModeActive = useSelectModeActive();
+
+  // ── Ouvrir DOIT lever le clavier ────────────────────────────────────
+  //
+  // 🔴 Sur iOS, `focus()` n'ouvre le clavier que s'il est appelé PENDANT la
+  // tâche du geste. `useModalA11y` pose le focus dans un `useEffect`, donc
+  // après la peinture, donc dans une autre tâche : le champ était bien
+  // focalisé (curseur visible) et le clavier restait fermé. Il fallait un
+  // second appui pour écrire.
+  //
+  // `flushSync` commite l'ouverture SANS rendre la main au navigateur : le
+  // champ existe déjà quand on le focalise, et on est toujours dans le clic.
+  // `useModalA11y` ne le déplacera pas ensuite, il s'abstient quand le focus
+  // est déjà dans la surface.
+  const openAndFocus = useCallback(() => {
+    flushSync(() => setOpen(true));
+    inputRef.current?.focus();
+  }, []);
 
   const close = useCallback(() => setOpen(false), []);
   const { ref: panelRef, dialogProps } = useModalA11y<HTMLDivElement>({
@@ -174,7 +192,7 @@ const MobileTaskSearch: React.FC<Props> = ({ searchTerm, onSearchTermChange }) =
         <div className="flex items-center gap-2 rounded-full border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] shadow-lg shadow-black/10 pl-4 pr-2 h-12">
           <button
             type="button"
-            onClick={() => setOpen(true)}
+            onClick={openAndFocus}
             className="flex flex-1 items-center gap-2 min-w-0 h-full text-left"
             aria-label={t('search.open')}
             aria-haspopup="dialog"

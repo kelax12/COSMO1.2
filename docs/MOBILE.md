@@ -873,6 +873,13 @@ hors de portée du pouce, et poussaient la liste vers le bas. Modèle repris : N
   modales de l'app, c'est une propriété de ce composant. `z-[195]` a été écrit puis retiré le
   2026-09-21, refusé par `design-system.guard` — l'échelle est fermée, et c'est ce qui l'empêche de
   redevenir seize valeurs pour sept paliers.
+- 🔴 **Taper la barre doit LEVER le clavier, et un `focus()` dans un effet ne le fait pas.** Sur
+  iOS, le clavier ne s'ouvre que si `focus()` est appelé **pendant la tâche du geste**.
+  `useModalA11y` pose le focus dans un `useEffect`, donc après la peinture : le champ était
+  focalisé, curseur visible, clavier fermé, et il fallait un second appui pour écrire.
+  L'ouverture passe donc par `flushSync(() => setOpen(true))` **puis** `inputRef.current.focus()`,
+  dans le gestionnaire de clic. `useModalA11y` ne le déplace pas ensuite : il s'abstient quand le
+  focus est déjà dans la surface.
 - 🔴 **Replier le clavier referme la recherche**, comme dans Notes. Le signal est le champ qui
   **perd le focus** (`onBlur`) : la touche « OK » de la barre d'accessoires iOS comme le repli du
   clavier le déclenchent. ❌ **Un `blur` nu rendrait les suggestions intouchables** — sur un appui,
