@@ -1245,7 +1245,17 @@ Avant `git push` sur `main` (qui déclenche le deploy Vercel) :
 > session. Déplacés ici **sans une coupe**. La racine ne garde que la commande.
 
 ```bash
-npm test           # Vitest (run once), **2 603 tests / 229 fichiers**, ZERO echec
+npm test           # Vitest (run once) — CHAQUE chiffre ci-dessous porte sa date.
+                   # 🔵 MESURE DU 2026-09-21, 09:44 -> 09:50 (379 s) :
+                   #    240 fichiers, 2 759 cas + 1 saute, exit 0.
+                   #    ⚠️ MESUREE SUR UN ARBRE SALE, et ca compte : cinq fichiers d'une
+                   #    session voisine etaient modifies et non commités (HabitActionsMenu,
+                   #    les deux catalogues habits, demo-profile.test.ts, restore.hooks.ts,
+                   #    restore-id.guard.test.ts). Ce n'est donc PAS une mesure de `main`,
+                   #    et l'ecart avec les 239 / 2 720 annonces par 2b4c4304 s'explique
+                   #    par la, pas par une regression. Une mesure avant/apres ne vaut que
+                   #    si HEAD est identique aux deux bouts.
+                   # Mesure precedente : **2 603 tests / 229 fichiers**, ZERO echec
                    # (mesure du 2026-09-15 EN CI, run 34945082906, job lint-test-build).
                    # 🔴 LE TOTAL AFFICHE EST CELUI DES FICHIERS COLLECTES, PAS DES
                    # FICHIERS EXISTANTS. Mesure du 2026-09-15 sur ce poste, avec un
