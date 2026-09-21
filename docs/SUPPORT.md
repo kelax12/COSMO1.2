@@ -37,7 +37,7 @@
 >
 > | Angle mort | Couvert par | 🔴 Ce que ça ne prouve PAS |
 > |---|---|---|
-> | AM-1 · AM-3 | Mig. `150` (table **sans aucune donnée personnelle**), `report-bug` compte sans jamais bloquer l'envoi, encart « Support » sur `/admin` à trois états (`null` ≠ `0`) — `C-110` | 🔴 **La mig. `150` n'est PAS appliquée**, relu au ledger le 2026-09-21 (dernière entrée : `20260920105522`). `/admin` affiche « compteur non installé » jusque-là. C'est `M-57`, et le dépôt a déjà payé une migration dormante **dix-sept jours** (`C-77`). ⚠️ **Et `report-bug` doit être REDÉPLOYÉE** : sa source a changé, donc `check:edge` signale une dérive **légitime** (`M-61`) |
+> | AM-1 · AM-3 | Mig. `150` (table **sans aucune donnée personnelle**), `report-bug` compte sans jamais bloquer l'envoi, encart « Support » sur `/admin` à trois états (`null` ≠ `0`) — `C-110` | ✅ **La mig. `150` est APPLIQUÉE le 2026-09-21** (ledger `20260921075529`, vérifiée au catalogue) : `/admin` cesse d'afficher « compteur non installé ». 🔴 **Mais le compteur rend ZÉRO, et zéro n'est pas une mesure du support** — `report-bug` n'a pas encore été redéployée (`M-61`), donc **rien n'appelle `record_support_report`** : la table restera vide quoi qu'il arrive. ⚠️ C'est l'état le plus trompeur des trois que `C-110` distingue : `null` disait « on ne sait pas », `0` dit « aucun rapport », et c'est faux tant que l'écriture n'est pas en ligne. ⚠️ **Et `first_response_at` / `resolved_at` resteront NULL** : ils se posent à la main, la réponse partant d'une boîte mail que ce dépôt ne lit pas |
 >
 > ⚠️ **Les lignes du tableau qui ne sont pas citées ici restent OUVERTES**, et une garde posée
 > n'est pas un angle mort fermé : `M-56` (« ce que chaque angle mort coûte en points ») n'est
