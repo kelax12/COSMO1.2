@@ -44,6 +44,35 @@ compte** et **ce qui prouve que c'est fini**.
 > Le geste qui le ferme n'existait dans aucune liste ; il s'appelait **`M-45`**.
 > ✅ **Il a été fait le même jour** : voir ci-dessous.
 
+> ### ✅ Passe d'EXÉCUTION du 2026-09-20 **au soir** : les 28 items ouverts sont traités
+>
+> Consigne d'Axel : « fais-les tous, puis lance des tests indépendants pour vérifier ».
+>
+> Des 30 items classés le matin, `C-78` et `C-100` étaient déjà refermés. Les **28 restants** sont
+> outillés : 14 scripts de garde, 5 workflows, 1 migration, 8 témoins, un encart sur `/admin`.
+> Le détail, item par item — et **ce que chaque garde ne prouve pas** — est en
+> **[§ 12.9](#129--passe-du-2026-09-20-au-soir--les-28-items-ouverts-sont-traités)**.
+>
+> 🔴 **SEPT défauts réels trouvés par une garde neuve à sa première exécution**, aucun visible à la
+> relecture. Le plus parlant : `src/monitoring.guard.test.ts` **ne détectait plus rien** — il
+> cherchait `installEarlyHandlers()` par un `indexOf` sur la source brute, et la première
+> occurrence est l'**import**, toujours avant `function mount()`. Commenter l'appel laissait le cas
+> vert. C'est le rejeu de sabotages (`C-81`) qui l'a trouvé, pas une lecture.
+>
+> ⚠️ **CINQ énoncés du 09-16 étaient périmés**, remesurés avant d'être traités — dont
+> « le tracking `?ref=` reste un développement ouvert », qui est **faux** : la chaîne est complète
+> depuis la mig. `097`, du paramètre d'URL au tableau de bord. Ce qui manquait n'était pas le
+> tracking, c'était de **regarder les chiffres**.
+>
+> 🔴 **ET LA VÉRIFICATION A TROUVÉ PIRE QUE CE QU'ELLE VENAIT CONTRÔLER** : le job `e2e` est
+> **ROUGE sur `main`**, 25 échecs sur 229, et aucun ne vient de cette passe. L'alerte a pourtant
+> fonctionné — l'issue `ci-red` #54 a été mise à jour dix-neuf secondes après. C'est la LECTURE
+> qui manque. Ouvert en **[§ 12.10 · `C-111`](#1210--c-111--le-job-e2e-est-rouge-sur-main-25-échecs-et-rien-ne-le-disait)**.
+>
+> **Quatre gestes** restent, sans lesquels quatre de ces gardes ne mesurent rien : appliquer la
+> mig. `150`, poser la référence des réglages d'auth, poser les jetons Vercel, trier les premières
+> alertes CodeQL. Et **redéployer `report-bug`**, dont la source a changé.
+
 ---
 
 ### ✅ C-77 · REFERMÉ le 2026-09-20 · `okrTime` valait 0 en production, et la démo affichait juste
@@ -683,10 +712,10 @@ quand ». Une décision écrite ici fait foi contre une piste écrite dans l'ite
 | [6](#6-i18n) | i18n | C-20 → C-22, C-38 |
 | [7](#7-accessibilité) | Accessibilité | C-23 → C-25, C-51 → C-55, C-57, C-69, C-70, **C-73**, **C-74** |
 | [8](#8-tests-et-gardes) | Tests et gardes | C-26 → C-28, C-34 → C-36, C-47, **C-75** ✅ |
-| [9](#9-ce-qui-nest-PAS-du-code) | Ce qui n'est PAS du code | renvois |
+| [9](#9-ce-qui-nest-pas-du-code) | Ce qui n'est PAS du code | renvois |
 | [10](#10-couverture--ce-que-cette-liste-ne-peut-pas-contenir) | 🔴 Couverture et audits à lancer | 1 audit restant (A-4) |
-| [11](#11-ce-qui-reste-ouvert) | 🔴 **Ce qui reste ouvert** | **76 items au 2026-09-14 : 69 clos, 6 commencés, 1 ouvert** |
-| [12](#12-angles-morts-du-2026-09-16--ce-quaucune-garde-ne-regarde) | 🕳️ **Angles morts du 2026-09-16**, versés le 2026-09-20 | C-81 → C-110, **30 items neufs, tous ouverts** |
+| [11](#11-ce-qui-reste-ouvert) | 🔴 **Ce qui reste ouvert** | **111 identifiants**, `C-1` → `C-111`, aucun numéro manquant. ⚠️ Dernier décompte COMPLET : 2026-09-14 (76 items suivis alors) |
+| [12](#12-angles-morts-du-2026-09-16--ce-quaucune-garde-ne-regarde) | 🕳️ **Angles morts du 2026-09-16**, versés le 2026-09-20 | `C-81` → `C-110` ✅ **traités le 2026-09-20 au soir** · `C-111` 🔴 **ouvert** |
 
 ---
 
@@ -5279,6 +5308,45 @@ avant que sa note ne change : ledger de migrations et versions déployées lus p
 exécutées, sondes jouées. Recopier une note depuis un tableau plus ancien est le défaut que ce
 fichier documente lui-même (§ Documentation de `CLAUDE.md`), et il a déjà frappé trois fois ici.
 
+### 11.0septies Le 2026-09-20 **au soir** — ce qui a bougé, et ce qui N'A PAS été recompté
+
+> 🔴 **CE PARAGRAPHE NE RECOMPTE PAS LES 111 ITEMS, et c'est délibéré.** Les six recomptes
+> précédents portaient sur l'ensemble du fichier parce qu'ils suivaient une passe qui l'avait
+> parcouru. Celle-ci a traité **les trente items du § 12**, et elle n'a pas rouvert les quatre-
+> vingts autres.
+>
+> Écrire « 111 items : N clos » supposerait d'avoir revérifié les N. Le faire depuis le tableau du
+> 09-14 serait exactement le défaut que `CLAUDE.md` documente — **un « avant » recopié au lieu
+> d'être relu**, et ce fichier l'a déjà payé quatre fois. Le dernier décompte complet reste donc
+> celui du **2026-09-14 au soir** ([§ 11.0sexies](#110sexies-recompté-le-2026-09-14-au-soir--76-items--71-clos-4-commencés-1-ouvert)).
+
+**Le périmètre du fichier, lui, est MESURÉ** (et non estimé) : `C-1` → `C-111`, **111
+identifiants distincts, aucun numéro manquant**, comptés sur les titres et les lignes de table du
+fichier le 2026-09-20.
+
+#### Ce que cette passe a mesuré, et rien d'autre
+
+| Items | Avant (matin du 09-20) | Après (soir du 09-20) | Preuve |
+|---|---|---|---|
+| **`C-77`** | 🔴 ouvert · ledger à 138 entrées, `get_work_time_stats` lisait encore `history` | ✅ **REFERMÉ** | mig. `136` appliquée, ledger `20260920105113`, vérifiée par `pg_get_functiondef` et non par le ledger |
+| **`C-78`, `C-100`** | ✅ déjà clos le matin | ✅ inchangés | — |
+| **`C-81` → `C-110`** (28 items) | 🔴 ouverts, aucun correctif écrit | ✅ **traités** | [§ 12.9](#129--passe-du-2026-09-20-au-soir--les-28-items-ouverts-sont-traités), avec pour chacun ce que sa garde **ne prouve pas** |
+| **`C-111`** | n'existait pas | 🔴 **OUVERT** | [§ 12.10](#1210--c-111--le-job-e2e-est-rouge-sur-main-25-échecs-et-rien-ne-le-disait) — job `e2e` rouge sur `main`, 25 échecs sur 229 |
+
+⚠️ **« Traité » n'est pas « fermé », et la nuance coûte quatre gestes.** Quatre de ces gardes ne
+mesureront rien tant que quelqu'un n'a pas : appliqué la mig. `150` (`C-110`), posé **et commité**
+la référence des réglages d'auth (`C-88`), posé les jetons Vercel (`C-105`), trié les premières
+alertes CodeQL (`C-89`). Et `report-bug` doit être **redéployée** : sa source a changé, donc
+`check:edge` signalera une dérive **légitime** d'ici là.
+
+🔴 **Ce que la vérification a trouvé, et qui pèse plus que les trente items** : le job `e2e` était
+rouge sur `main` **pendant que les trente étaient classés le matin même**, et personne ne l'a
+mentionné. L'issue `ci-red` #54 avait pourtant été mise à jour **dix-neuf secondes** après
+l'échec. Le dispositif d'alerte fonctionne ; c'est la lecture qui manque — le scénario
+`vendor-watch` du 2026-08-29, à l'identique.
+
+---
+
 ### 11.0sexies Recompté le 2026-09-14 **au soir** — **76 items : 71 clos, 4 commencés, 1 ouvert**
 
 Deux items passent de 🟠 à ✅ (`C-14`, `C-76`), et `C-39` passe à 🟢 sur tout ce qu'une session
@@ -5791,6 +5859,22 @@ produit affiche encore.
 
 ## 12. Angles morts du 2026-09-16 · ce qu'aucune garde ne regarde
 
+> ### ✅ ÉTAT AU 2026-09-20 AU SOIR — lire ceci avant les tableaux
+>
+> Les tableaux de **§ 12.1 → § 12.7** décrivent chaque angle mort **tel qu'il était le matin**, et
+> ils sont conservés ainsi : c'est l'énoncé du problème, et il ne se réécrit pas une fois le
+> problème traité. Chaque ligne porte désormais un ✅.
+>
+> | Où | Quoi |
+> |---|---|
+> | [§ 12.8](#128-ce-que-ce-classement-ne-fait-pas) | Ce que le classement du matin ne faisait pas · **avec la correction datée de ce qui a cessé d'être vrai le soir** |
+> | [§ 12.9](#129--passe-du-2026-09-20-au-soir--les-28-items-ouverts-sont-traités) | ✅ Les 28 items traités, **ce qui a été livré** et — surtout — **ce que chaque garde ne prouve pas** |
+> | [§ 12.10](#1210--c-111--le-job-e2e-est-rouge-sur-main-25-échecs-et-rien-ne-le-disait) | 🔴 `C-111`, trouvé EN VÉRIFIANT : le job `e2e` est rouge sur `main`, 25 échecs, et rien ne le disait |
+>
+> ⚠️ **« Traité » n'est pas « fermé ».** Quatre de ces gardes ne mesureront rien tant que quatre
+> gestes n'auront pas été faits (mig. `150`, référence des réglages d'auth, jetons Vercel, tri des
+> alertes CodeQL), et `report-bug` doit être redéployée. La liste est en fin de § 12.9.
+
 **Versé ici le 2026-09-20**, en reprenant les **23 sections « 🕳️ Angles morts »** posées le
 2026-09-16 dans `faille.md` et les 22 documents de `docs/`, plus les **dix angles morts
 transversaux** `T-1` → `T-10` du tableau de bord ([`docs/README.md`](./docs/README.md) § « Mise à
@@ -5834,70 +5918,223 @@ Il y entre ce jour sous **M-45**.
 
 | # | Angle mort | Où c'est | Ce qui prouve que c'est fini | Sources |
 |---|---|---|---|---|
-| **C-81** | 🔴 **Les 39 témoins ne sont jamais rejoués.** Chaque garde arrive avec un `*.guard.test.*` vu rouge sur des sabotages, mais ce sabotage est **manuel et unique**, joué le jour de sa création. Rien ne dit qu'un témoin détecte **encore** | 39 fichiers `*.guard.test.{ts,tsx,mjs}` · aucun mutation testing dans `package.json` ni dans un workflow | Un job rejoue N sabotages connus, ou Stryker sur `scripts/**` et les gardes, et **échoue** si un sabotage passe au vert. ❌ « le job existe » ne vaut rien : il doit être vu rouge sur un témoin volontairement désarmé | `T-1` · `TESTING.md` AM-1 · `faille.md` AM-5 |
-| **C-82** | **La couverture s'arrête à `src/`.** En sont absents `scripts/` (le code qui décide si la CI est verte) et `supabase/functions/` (le code qui déplace de l'argent) | `vitest.config.ts:100` · `include: ['src/**/*.{ts,tsx}']` | `include` étendu, avec des **seuils propres** à chaque périmètre. ❌ Ne pas abaisser un seuil existant pour absorber le nouveau périmètre | `T-3` · `TESTING.md` AM-2 |
-| **C-83** | **Aucune garde ne relie un test à sa raison d'être.** Un test supprimé avec le code qu'il gardait ne laisse aucune trace : le total baisse, et un total qui baisse ne fait échouer aucun job | aucun plancher sur le nombre de fichiers ni de cas | Un plancher à cliquet, comme les budgets de bundle, vu rouge sur une suppression de fichier | `TESTING.md` AM-5 |
+| **C-81** ✅ | 🔴 **Les 39 témoins ne sont jamais rejoués.** Chaque garde arrive avec un `*.guard.test.*` vu rouge sur des sabotages, mais ce sabotage est **manuel et unique**, joué le jour de sa création. Rien ne dit qu'un témoin détecte **encore** | 39 fichiers `*.guard.test.{ts,tsx,mjs}` · aucun mutation testing dans `package.json` ni dans un workflow | Un job rejoue N sabotages connus, ou Stryker sur `scripts/**` et les gardes, et **échoue** si un sabotage passe au vert. ❌ « le job existe » ne vaut rien : il doit être vu rouge sur un témoin volontairement désarmé | `T-1` · `TESTING.md` AM-1 · `faille.md` AM-5 |
+| **C-82** ✅ | **La couverture s'arrête à `src/`.** En sont absents `scripts/` (le code qui décide si la CI est verte) et `supabase/functions/` (le code qui déplace de l'argent) | `vitest.config.ts:100` · `include: ['src/**/*.{ts,tsx}']` | `include` étendu, avec des **seuils propres** à chaque périmètre. ❌ Ne pas abaisser un seuil existant pour absorber le nouveau périmètre | `T-3` · `TESTING.md` AM-2 |
+| **C-83** ✅ | **Aucune garde ne relie un test à sa raison d'être.** Un test supprimé avec le code qu'il gardait ne laisse aucune trace : le total baisse, et un total qui baisse ne fait échouer aucun job | aucun plancher sur le nombre de fichiers ni de cas | Un plancher à cliquet, comme les budgets de bundle, vu rouge sur une suppression de fichier | `TESTING.md` AM-5 |
+
+✅ **Les 3 items de ce paragraphe sont traités** le 2026-09-20 au soir : C-81 (rejeu des sabotages), C-82 (couverture de `scripts/`), C-83 (plancher de tests).
+Ce qui a été livré, et **ce que chaque garde ne prouve pas** : [§ 12.9](#129--passe-du-2026-09-20-au-soir--les-28-items-ouverts-sont-traités).
 
 ### 12.2 Performance, scalabilité, coût serveur
 
 | # | Angle mort | Où c'est | Ce qui prouve que c'est fini | Sources |
 |---|---|---|---|---|
-| **C-84** | 🔴 **Lighthouse tourne en preset DESKTOP, sur 4 URLs.** C'est la seule mesure continue de perf, d'a11y et de SEO en conditions réelles, et elle ignore le **mobile**, qui est le terminal du trafic visé. `MOBILE.md` est le document le moins bien noté du dépôt | `lighthouserc.json` · `"preset": "desktop"`, 4 `url` contre **45** `<loc>` dans `dist/sitemap.xml` | Un second bloc `collect` en preset mobile, et un élargissement chiffré de la liste d'URL. Le coût en temps de job est l'arbitrage, et il s'écrit | `T-4` · `PERFORMANCE.md` AM-1 et AM-4 · `MOBILE.md` AM-3 · `SEO.md` AM-1 |
-| **C-85** | **Les chunks LAZY n'ont aucun plafond.** Le budget ne couvre que le chemin critique et l'entrée : une page paresseuse peut grossir sans limite | `scripts/check-bundle-budget.mjs` · `BUDGETS` ne porte que `critical` et `entry` | Un plafond par chunk de page, posé **au poids du jour** et non à une cible ronde, avec son témoin | `PERFORMANCE.md` AM-3 |
-| **C-86** | 🔴 **Deux gardes ne tournent JAMAIS toutes seules.** `scalability-volume.yml` et `restore-drill.yml` n'ont qu'un `workflow_dispatch` : la charge et l'épreuve de restauration ne sont jouées que si quelqu'un y pense | vérifié sur les 11 workflows le 2026-09-20 : ce sont les deux seuls sans `schedule` ni `push` | Un `schedule`, même mensuel pour l'un et trimestriel pour l'autre, branché sur `ci-alert.yml`. ⚠️ `restore-drill` porte une confirmation `RESTAURER` : le planifier demande de trancher ce qu'il fait sans saisie | `T-6` · `SCALABILITY.md` AM-1 · `DEPLOYMENT.md` AM-2 |
-| **C-87** | **Aucune mesure du coût SERVEUR ni de la CROISSANCE en continu.** Les plans d'exécution et les temps de RPC sont rejoués à la main à chaque passe ; le dépôt sait dire ce que coûte une lecture aujourd'hui, jamais à quelle vitesse ce coût monte. Et rien ne surveille l'état du plan Supabase `free` : pause pour inactivité, quotas | aucun workflow ne joue d'`EXPLAIN` · aucune série temporelle stockée | Un job planifié qui joue les `EXPLAIN` de référence contre la production, **écrit** les compteurs dans une série, et alerte sur une pente et non sur une valeur | `SCALABILITY.md` AM-2, AM-3, AM-4 · `PERFORMANCE.md` AM-5 |
+| **C-84** ✅ | 🔴 **Lighthouse tourne en preset DESKTOP, sur 4 URLs.** C'est la seule mesure continue de perf, d'a11y et de SEO en conditions réelles, et elle ignore le **mobile**, qui est le terminal du trafic visé. `MOBILE.md` est le document le moins bien noté du dépôt | `lighthouserc.json` · `"preset": "desktop"`, 4 `url` contre **45** `<loc>` dans `dist/sitemap.xml` | Un second bloc `collect` en preset mobile, et un élargissement chiffré de la liste d'URL. Le coût en temps de job est l'arbitrage, et il s'écrit | `T-4` · `PERFORMANCE.md` AM-1 et AM-4 · `MOBILE.md` AM-3 · `SEO.md` AM-1 |
+| **C-85** ✅ | **Les chunks LAZY n'ont aucun plafond.** Le budget ne couvre que le chemin critique et l'entrée : une page paresseuse peut grossir sans limite | `scripts/check-bundle-budget.mjs` · `BUDGETS` ne porte que `critical` et `entry` | Un plafond par chunk de page, posé **au poids du jour** et non à une cible ronde, avec son témoin | `PERFORMANCE.md` AM-3 |
+| **C-86** ✅ | 🔴 **Deux gardes ne tournent JAMAIS toutes seules.** `scalability-volume.yml` et `restore-drill.yml` n'ont qu'un `workflow_dispatch` : la charge et l'épreuve de restauration ne sont jouées que si quelqu'un y pense | vérifié sur les 11 workflows le 2026-09-20 : ce sont les deux seuls sans `schedule` ni `push` | Un `schedule`, même mensuel pour l'un et trimestriel pour l'autre, branché sur `ci-alert.yml`. ⚠️ `restore-drill` porte une confirmation `RESTAURER` : le planifier demande de trancher ce qu'il fait sans saisie | `T-6` · `SCALABILITY.md` AM-1 · `DEPLOYMENT.md` AM-2 |
+| **C-87** ✅ | **Aucune mesure du coût SERVEUR ni de la CROISSANCE en continu.** Les plans d'exécution et les temps de RPC sont rejoués à la main à chaque passe ; le dépôt sait dire ce que coûte une lecture aujourd'hui, jamais à quelle vitesse ce coût monte. Et rien ne surveille l'état du plan Supabase `free` : pause pour inactivité, quotas | aucun workflow ne joue d'`EXPLAIN` · aucune série temporelle stockée | Un job planifié qui joue les `EXPLAIN` de référence contre la production, **écrit** les compteurs dans une série, et alerte sur une pente et non sur une valeur | `SCALABILITY.md` AM-2, AM-3, AM-4 · `PERFORMANCE.md` AM-5 |
+
+✅ **Les 4 items de ce paragraphe sont traités** le 2026-09-20 au soir : C-84 (Lighthouse mobile), C-85 (plafond par chunk), C-86 (deux crons), C-87 (coût serveur et sa pente).
+Ce qui a été livré, et **ce que chaque garde ne prouve pas** : [§ 12.9](#129--passe-du-2026-09-20-au-soir--les-28-items-ouverts-sont-traités).
 
 ### 12.3 Sécurité
 
 | # | Angle mort | Où c'est | Ce qui prouve que c'est fini | Sources |
 |---|---|---|---|---|
-| **C-88** | 🔴 **Les advisors Supabase et les réglages du Dashboard ne sont lus par AUCUN job.** Les advisors sont la seule source qui voit une policy manquante ou une fonction `SECURITY DEFINER` exposée après coup. Les réglages d'auth, protection des mots de passe compromis et expiration des OTP, vivent **hors du dépôt** et se modifient en deux clics, sans commit et sans trace : plusieurs sont cochés ✅ dans `POST-AUDIT-GUIDE.md`, et **un ✅ daté décrit un instant, pas un état** | dans `ci.yml`, le mot « advisor » désigne **`npm audit`** · `9 / 52 / 2 / 1` au 2026-09-14, relevé à la main | Un job planifié sur l'API Management qui lit **les deux**, advisors et réglages Auth, branché sur `ci-alert.yml`, avec une **référence commitée** : il échoue sur un écart, pas sur une valeur absolue | `T-7` · `T-9` · `faille.md` AM-1 · `SECURITY.md` AM-2 et AM-5 · `POST-AUDIT-GUIDE.md` AM-1 |
-| **C-89** | 🔴 **Aucune analyse statique de sécurité.** Les gardes vérifient des invariants **nommés**, jamais des motifs inconnus. Le dépôt est **public**, donc CodeQL y est **gratuit** | aucun CodeQL, Semgrep ni équivalent dans `.github/`, vérifié le 2026-09-20 | CodeQL actif sur `main` et sur les PR, avec le tri de ses premières alertes écrit. ⚠️ Un SAST rend du bruit : l'item n'est pas fini quand le job est vert, mais quand **chaque alerte ouverte porte une décision** | `faille.md` AM-4 · `SECURITY.md` AM-6 |
-| **C-90** | **`npm audit` ne couvre que les dépendances de PRODUCTION.** Une vulnérabilité dans la chaîne de build n'est vue par rien, sur un dépôt qui publie ses artefacts | `ci.yml:148` · `npm audit --omit=dev --audit-level=high` | Un second passage **non bloquant** sur les dev, dont le résultat est lu. C'est aujourd'hui un arbitrage assumé, cf. `C-18` : le fermer peut vouloir dire **l'écrire comme tel**, avec sa raison, plutôt que l'outiller | `faille.md` AM-3 |
-| **C-91** | **`check:edge` compare le CODE déployé, jamais le COMPORTEMENT.** Une fonction identique au dépôt mais dont un **secret** a changé de valeur, ou dont une dépendance distante a bougé, laisse la garde verte | `scripts/check-edge-deploy.mjs` compare des sources | Une sonde de fumée par fonction, qui **appelle** et lit la réponse. Le motif existe déjà, écrit à la main pour `stripe-org-refund` (`405` puis `401` émis par le corps de la fonction) : il s'agit de l'automatiser | `faille.md` AM-2 |
+| **C-88** ✅ | 🔴 **Les advisors Supabase et les réglages du Dashboard ne sont lus par AUCUN job.** Les advisors sont la seule source qui voit une policy manquante ou une fonction `SECURITY DEFINER` exposée après coup. Les réglages d'auth, protection des mots de passe compromis et expiration des OTP, vivent **hors du dépôt** et se modifient en deux clics, sans commit et sans trace : plusieurs sont cochés ✅ dans `POST-AUDIT-GUIDE.md`, et **un ✅ daté décrit un instant, pas un état** | dans `ci.yml`, le mot « advisor » désigne **`npm audit`** · `9 / 52 / 2 / 1` au 2026-09-14, relevé à la main | Un job planifié sur l'API Management qui lit **les deux**, advisors et réglages Auth, branché sur `ci-alert.yml`, avec une **référence commitée** : il échoue sur un écart, pas sur une valeur absolue | `T-7` · `T-9` · `faille.md` AM-1 · `SECURITY.md` AM-2 et AM-5 · `POST-AUDIT-GUIDE.md` AM-1 |
+| **C-89** ✅ | 🔴 **Aucune analyse statique de sécurité.** Les gardes vérifient des invariants **nommés**, jamais des motifs inconnus. Le dépôt est **public**, donc CodeQL y est **gratuit** | aucun CodeQL, Semgrep ni équivalent dans `.github/`, vérifié le 2026-09-20 | CodeQL actif sur `main` et sur les PR, avec le tri de ses premières alertes écrit. ⚠️ Un SAST rend du bruit : l'item n'est pas fini quand le job est vert, mais quand **chaque alerte ouverte porte une décision** | `faille.md` AM-4 · `SECURITY.md` AM-6 |
+| **C-90** ✅ | **`npm audit` ne couvre que les dépendances de PRODUCTION.** Une vulnérabilité dans la chaîne de build n'est vue par rien, sur un dépôt qui publie ses artefacts | `ci.yml:148` · `npm audit --omit=dev --audit-level=high` | Un second passage **non bloquant** sur les dev, dont le résultat est lu. C'est aujourd'hui un arbitrage assumé, cf. `C-18` : le fermer peut vouloir dire **l'écrire comme tel**, avec sa raison, plutôt que l'outiller | `faille.md` AM-3 |
+| **C-91** ✅ | **`check:edge` compare le CODE déployé, jamais le COMPORTEMENT.** Une fonction identique au dépôt mais dont un **secret** a changé de valeur, ou dont une dépendance distante a bougé, laisse la garde verte | `scripts/check-edge-deploy.mjs` compare des sources | Une sonde de fumée par fonction, qui **appelle** et lit la réponse. Le motif existe déjà, écrit à la main pour `stripe-org-refund` (`405` puis `401` émis par le corps de la fonction) : il s'agit de l'automatiser | `faille.md` AM-2 |
+
+✅ **Les 4 items de ce paragraphe sont traités** le 2026-09-20 au soir : C-88 (advisors et réglages d'auth), C-89 (CodeQL), C-90 (audit de la chaîne de build), C-91 (sondes de fumée).
+Ce qui a été livré, et **ce que chaque garde ne prouve pas** : [§ 12.9](#129--passe-du-2026-09-20-au-soir--les-28-items-ouverts-sont-traités).
 
 ### 12.4 RGPD et données personnelles
 
 | # | Angle mort | Où c'est | Ce qui prouve que c'est fini | Sources |
 |---|---|---|---|---|
-| **C-92** | 🔴 **La garde d'effacement s'appuie sur une LISTE EN DUR**, et rien ne relie une **nouvelle** table portant `user_id` à `delete-account` ni au registre art. 30. Une migration peut créer une table de données personnelles sans qu'aucun job ne demande ce qu'il advient de ces lignes à la suppression du compte | `src/rgpd-erasure.guard.test.ts:42` · `const SYMMETRIC_TABLES: Record<string, [string, string]>` | La liste est **dérivée** du schéma (`information_schema`), et `validate:migrations` refuse une table portant `user_id` sans décision d'effacement écrite. Témoin : une table ajoutée à blanc doit faire **rougir** la garde | `T-2` · `RGPD.md` AM-1 et AM-2 · `RGPD-REGISTRE.md` AM-2 |
-| **C-93** | 🔴 **Les DURÉES de conservation ne sont confrontées à AUCUNE donnée réelle.** Dix traitements en annoncent une ; rien ne vérifie qu'aucune ligne ne la dépasse. C'est la pièce produite en contrôle CNIL, donc celle où un écart se paie | `RGPD-REGISTRE.md` les déclare, aucun script ne les contrôle | Une requête planifiée **par traitement**, qui rend l'âge de la plus vieille ligne et échoue au-delà de la durée déclarée | `RGPD.md` AM-3 · `RGPD-REGISTRE.md` AM-1 |
-| **C-94** | **L'export de portabilité (art. 20) n'est comparé à aucun inventaire.** Une colonne ajoutée à une table exportée n'entre pas dans l'export, et rien ne le signale | aucune garde ne confronte l'export au schéma | Une garde qui compare les colonnes exportées au schéma et **nomme** chaque exclusion. ⚠️ Des exclusions légitimes existent, secrets et hachages : l'item est fini quand elles sont **déclarées**, pas quand il n'y en a plus | `RGPD.md` AM-4 |
+| **C-92** ✅ | 🔴 **La garde d'effacement s'appuie sur une LISTE EN DUR**, et rien ne relie une **nouvelle** table portant `user_id` à `delete-account` ni au registre art. 30. Une migration peut créer une table de données personnelles sans qu'aucun job ne demande ce qu'il advient de ces lignes à la suppression du compte | `src/rgpd-erasure.guard.test.ts:42` · `const SYMMETRIC_TABLES: Record<string, [string, string]>` | La liste est **dérivée** du schéma (`information_schema`), et `validate:migrations` refuse une table portant `user_id` sans décision d'effacement écrite. Témoin : une table ajoutée à blanc doit faire **rougir** la garde | `T-2` · `RGPD.md` AM-1 et AM-2 · `RGPD-REGISTRE.md` AM-2 |
+| **C-93** ✅ | 🔴 **Les DURÉES de conservation ne sont confrontées à AUCUNE donnée réelle.** Dix traitements en annoncent une ; rien ne vérifie qu'aucune ligne ne la dépasse. C'est la pièce produite en contrôle CNIL, donc celle où un écart se paie | `RGPD-REGISTRE.md` les déclare, aucun script ne les contrôle | Une requête planifiée **par traitement**, qui rend l'âge de la plus vieille ligne et échoue au-delà de la durée déclarée | `RGPD.md` AM-3 · `RGPD-REGISTRE.md` AM-1 |
+| **C-94** ✅ | **L'export de portabilité (art. 20) n'est comparé à aucun inventaire.** Une colonne ajoutée à une table exportée n'entre pas dans l'export, et rien ne le signale | aucune garde ne confronte l'export au schéma | Une garde qui compare les colonnes exportées au schéma et **nomme** chaque exclusion. ⚠️ Des exclusions légitimes existent, secrets et hachages : l'item est fini quand elles sont **déclarées**, pas quand il n'y en a plus | `RGPD.md` AM-4 |
+
+✅ **Les 3 items de ce paragraphe sont traités** le 2026-09-20 au soir : C-92 (effacement dérivé du schéma), C-93 (durées de conservation), C-94 (export de portabilité).
+Ce qui a été livré, et **ce que chaque garde ne prouve pas** : [§ 12.9](#129--passe-du-2026-09-20-au-soir--les-28-items-ouverts-sont-traités).
 
 ### 12.5 Interface, accessibilité, mobile
 
 | # | Angle mort | Où c'est | Ce qui prouve que c'est fini | Sources |
 |---|---|---|---|---|
-| **C-95** | 🔴 **Aucune garde de régression VISUELLE, et les quatre thèmes ne sont balayés par aucun run.** C'est l'angle mort le plus large de `UI-PATTERNS.md` : rien ne voit un écran qui se déforme tant qu'aucun test fonctionnel ne casse. Clair, sombre, gris, noir : les parcours e2e n'en jouent qu'un, alors que c'est la classe de bug du 2026-07-23, 17 fichiers aux couleurs codées en dur. Les états vides, de chargement et d'erreur ne sont vus qu'au hasard des parcours | aucun `percy`, `chromatic` ni comparaison de captures dans un workflow · `scripts/visual-audit*.mjs` existe et n'est lancé **qu'à la main** | Des captures de référence par route **et par thème**, comparées au pixel en CI, avec les états vides et d'erreur dans le jeu. ⚠️ Le piège connu est le bruit : un seuil de tolérance se pose et se justifie | `UI-PATTERNS.md` AM-1, AM-2, AM-3 · `ACCESSIBILITY.md` AM-5 |
-| **C-96** | **10 surfaces modales mesurées au clavier sur 53.** Les 43 autres sont **câblées et gardées par un cliquet**, ce qui n'est pas la même chose que mesurées | `e2e/a11y-keyboard-audit.spec.ts` · 19 cas, 10 surfaces · `modal-a11y.guard.test.ts` en câble 53 | La boucle du spec couvre les 53, ou l'écart est **nommé surface par surface** avec sa raison. C'est exactement ce que `C-80` a fait pour les cibles tactiles, et ce que l'élargissement a trouvé ce jour-là plaide pour le refaire ici | `ACCESSIBILITY.md` AM-2 |
-| **C-97** | **Un seul modèle de téléphone, un seul moteur, aucun Android.** Tout est mesuré sur iPhone 12 / WebKit alors que Chrome Android est le premier navigateur mobile du marché. Ni réseau bridé, ni CPU bridé, ni mode **paysage**, ni grande taille de police système | `playwright.config.ts` · un seul device mobile, `iPhone 12`, sur deux projects ; aucun `Pixel` | Un project `Pixel` joué en CI, plus des cas en paysage et à `font-size` racine augmentée. ⚠️ Le bridage CPU reste la classe de défaut de `C-68`, trouvée **à la main** : un project qui ne bride rien ne la reverra pas | `MOBILE.md` AM-2, AM-4, AM-5 |
+| **C-95** ✅ | 🔴 **Aucune garde de régression VISUELLE, et les quatre thèmes ne sont balayés par aucun run.** C'est l'angle mort le plus large de `UI-PATTERNS.md` : rien ne voit un écran qui se déforme tant qu'aucun test fonctionnel ne casse. Clair, sombre, gris, noir : les parcours e2e n'en jouent qu'un, alors que c'est la classe de bug du 2026-07-23, 17 fichiers aux couleurs codées en dur. Les états vides, de chargement et d'erreur ne sont vus qu'au hasard des parcours | aucun `percy`, `chromatic` ni comparaison de captures dans un workflow · `scripts/visual-audit*.mjs` existe et n'est lancé **qu'à la main** | Des captures de référence par route **et par thème**, comparées au pixel en CI, avec les états vides et d'erreur dans le jeu. ⚠️ Le piège connu est le bruit : un seuil de tolérance se pose et se justifie | `UI-PATTERNS.md` AM-1, AM-2, AM-3 · `ACCESSIBILITY.md` AM-5 |
+| **C-96** ✅ | **10 surfaces modales mesurées au clavier sur 53.** Les 43 autres sont **câblées et gardées par un cliquet**, ce qui n'est pas la même chose que mesurées | `e2e/a11y-keyboard-audit.spec.ts` · 19 cas, 10 surfaces · `modal-a11y.guard.test.ts` en câble 53 | La boucle du spec couvre les 53, ou l'écart est **nommé surface par surface** avec sa raison. C'est exactement ce que `C-80` a fait pour les cibles tactiles, et ce que l'élargissement a trouvé ce jour-là plaide pour le refaire ici | `ACCESSIBILITY.md` AM-2 |
+| **C-97** ✅ | **Un seul modèle de téléphone, un seul moteur, aucun Android.** Tout est mesuré sur iPhone 12 / WebKit alors que Chrome Android est le premier navigateur mobile du marché. Ni réseau bridé, ni CPU bridé, ni mode **paysage**, ni grande taille de police système | `playwright.config.ts` · un seul device mobile, `iPhone 12`, sur deux projects ; aucun `Pixel` | Un project `Pixel` joué en CI, plus des cas en paysage et à `font-size` racine augmentée. ⚠️ Le bridage CPU reste la classe de défaut de `C-68`, trouvée **à la main** : un project qui ne bride rien ne la reverra pas | `MOBILE.md` AM-2, AM-4, AM-5 |
+
+✅ **Les 3 items de ce paragraphe sont traités** le 2026-09-20 au soir : C-95 (régression visuelle), C-96 (couverture clavier chiffrée), C-97 (Android, paysage, 200 %, CPU bridé).
+Ce qui a été livré, et **ce que chaque garde ne prouve pas** : [§ 12.9](#129--passe-du-2026-09-20-au-soir--les-28-items-ouverts-sont-traités).
 
 ### 12.6 SEO, i18n, contenu
 
 | # | Angle mort | Où c'est | Ce qui prouve que c'est fini | Sources |
 |---|---|---|---|---|
-| **C-98** | 🔴 **Rien ne relie le SITEMAP aux pages réellement PRÉRENDUES**, et aucune garde ne vérifie les balises par page. Une route ajoutée à l'un sans l'autre ne fait échouer aucun job : les 10 pages prérendues hors sitemap ont dû être expliquées **à la main** le 2026-09-14. `title`, `description`, `canonical`, `hreflang`, `robots.txt` et les `noindex` ne sont vus qu'au moment où on ouvre une locale | aucun script ne compare `dist/sitemap.xml` à la sortie de `prerender.mjs` · 40 `hreflang` recomptés à la main | Une garde sur `dist/**/*.html` après build : chaque page prérendue est au sitemap ou **déclarée hors sitemap avec sa raison**, et chaque page porte ses quatre balises. Peu coûteux, et c'est l'angle mort le mieux outillable des onze | `SEO.md` AM-2, AM-3, AM-5 |
-| **C-99** | **Le CORPS des pages prérendues en `en` n'est comparé à rien.** Les 50 pages ont été mesurées **une fois** avant l'ouverture d'`en` à l'indexation (`C-20`), jamais depuis. Les pluriels et les formats de date n'ont pas de garde dédiée balayant les deux locales, et `es` figure dans `route-slugs.json` sans être servie ni indexable | aucune garde ne rejoue la comparaison · aucun test de parité de pluriels | Une garde de volume de texte par page **et par locale**, plus une parité de pluriels et de formats sur les deux locales servies. ⚠️ Elle ne mesure pas la **qualité**, qui reste `M-50` | `I18N.md` AM-2, AM-3, AM-4 |
+| **C-98** ✅ | 🔴 **Rien ne relie le SITEMAP aux pages réellement PRÉRENDUES**, et aucune garde ne vérifie les balises par page. Une route ajoutée à l'un sans l'autre ne fait échouer aucun job : les 10 pages prérendues hors sitemap ont dû être expliquées **à la main** le 2026-09-14. `title`, `description`, `canonical`, `hreflang`, `robots.txt` et les `noindex` ne sont vus qu'au moment où on ouvre une locale | aucun script ne compare `dist/sitemap.xml` à la sortie de `prerender.mjs` · 40 `hreflang` recomptés à la main | Une garde sur `dist/**/*.html` après build : chaque page prérendue est au sitemap ou **déclarée hors sitemap avec sa raison**, et chaque page porte ses quatre balises. Peu coûteux, et c'est l'angle mort le mieux outillable des onze | `SEO.md` AM-2, AM-3, AM-5 |
+| **C-99** ✅ | **Le CORPS des pages prérendues en `en` n'est comparé à rien.** Les 50 pages ont été mesurées **une fois** avant l'ouverture d'`en` à l'indexation (`C-20`), jamais depuis. Les pluriels et les formats de date n'ont pas de garde dédiée balayant les deux locales, et `es` figure dans `route-slugs.json` sans être servie ni indexable | aucune garde ne rejoue la comparaison · aucun test de parité de pluriels | Une garde de volume de texte par page **et par locale**, plus une parité de pluriels et de formats sur les deux locales servies. ⚠️ Elle ne mesure pas la **qualité**, qui reste `M-50` | `I18N.md` AM-2, AM-3, AM-4 |
 | **C-100** ✅ | **Les comptes de TEST ne sont retranchés d'aucune statistique.** `demo@cosmo.app` porte **120 tâches** en production, soit 16 % des tâches de la plateforme, et `get_admin_stats` les comptait encore | ✅ **REFERMÉ le 2026-09-20** : mig. `149` **commitée** (`297ddd14`) puis **appliquée** (ledger `20260920105522`). Était : fichier non suivi par git, `admin_stats_excluded_uids()` absente de la base | ✅ **Le critère de sortie est tenu, et c'est bien deux nombres distincts** : `/admin` annonçait 30 utilisateurs · 779 tâches · 454 événements · 32 habitudes, il annonce 28 · 658 · 387 · 26, plus une clé `excluded_accounts = 2` qui **dit** la correction. Un non-admin reste refusé en 42501 | `ACQUISITION.md` AM-3 |
-| **C-101** | **Aucune action d'acquisition n'est reliée à son résultat.** Le tracking `?ref=` reste un développement ouvert, les chiffres de `ACQUISITION.md` datent du 2026-08-14 et rien ne les rejoue, et les actions manuelles de `ACQUISITION-BACKLINKS.md` n'ont ni date ni état : une liste sans colonne « fait le » ne distingue pas « pas encore tenté » de « tenté sans effet », et les deux appellent des décisions opposées | aucun workflow d'acquisition · pas de colonne d'état dans le tableau des annuaires | L'attribution `?ref=` posée de bout en bout, un job planifié qui rejoue les compteurs de la base, et une colonne d'état dans le tableau des annuaires. ⚠️ La vérification de bout en bout exige une vraie inscription : elle reste côté Axel, `faille.md` § « Ordre de priorité », ligne 4 | `ACQUISITION.md` AM-1 et AM-2 · `ACQUISITION-BACKLINKS.md` AM-3 |
+| **C-101** ✅ | **Aucune action d'acquisition n'est reliée à son résultat.** Le tracking `?ref=` reste un développement ouvert, les chiffres de `ACQUISITION.md` datent du 2026-08-14 et rien ne les rejoue, et les actions manuelles de `ACQUISITION-BACKLINKS.md` n'ont ni date ni état : une liste sans colonne « fait le » ne distingue pas « pas encore tenté » de « tenté sans effet », et les deux appellent des décisions opposées | aucun workflow d'acquisition · pas de colonne d'état dans le tableau des annuaires | L'attribution `?ref=` posée de bout en bout, un job planifié qui rejoue les compteurs de la base, et une colonne d'état dans le tableau des annuaires. ⚠️ La vérification de bout en bout exige une vraie inscription : elle reste côté Axel, `faille.md` § « Ordre de priorité », ligne 4 | `ACQUISITION.md` AM-1 et AM-2 · `ACQUISITION-BACKLINKS.md` AM-3 |
+
+✅ **Les 4 items de ce paragraphe sont traités** le 2026-09-20 au soir : C-98 (sitemap ↔ prérendu), C-99 (pluriels et volume par locale), C-100 (comptes de test, fermé le matin), C-101 (états des annuaires).
+Ce qui a été livré, et **ce que chaque garde ne prouve pas** : [§ 12.9](#129--passe-du-2026-09-20-au-soir--les-28-items-ouverts-sont-traités).
 
 ### 12.7 Architecture, déploiement, conformité outillée
 
 | # | Angle mort | Où c'est | Ce qui prouve que c'est fini | Sources |
 |---|---|---|---|---|
-| **C-102** | **`e2e/`, `src/components/showcase/` et `supabase/functions/` sont hors de TOUS les invariants d'import.** Aucune des règles du tableau d'`ARCHITECTURE.md` ne s'y applique, et les règles de taille et de couplage s'arrêtent à `src/` | `eslint.config.js:15` les liste dans `ignores`, avec `.agents/`, `.claude/`, `.worktrees/` | Soit une passe ESLint dédiée à ces arbres, soit leur retrait d'`ignores` avec la dette chiffrée. ❌ Ne pas ajouter d'entrée d'allowlist pour faire passer la CI | `T-3` · `ARCHITECTURE.md` AM-2 et AM-5 |
-| **C-103** | **Aucune garde de dépendances circulaires**, et **le nombre de lignes est le seul proxy de complexité**. Un cycle d'imports entre modules ne casse ni le build ni un test ; un fichier de 400 lignes à 20 imports croisés passe la garde de taille sans réserve | aucun `madge`, `dpdm` ni `import/no-cycle` dans le dépôt · `ARCHITECTURE.md` §3 ne mesure que `wc -l` | `import/no-cycle` ou `madge --circular` en CI, vu rouge sur un cycle introduit à blanc. Le second volet, une mesure de couplage, est un **arbitrage coût/valeur** à rendre avant d'être outillé | `ARCHITECTURE.md` AM-3 et AM-4 |
-| **C-104** | **`uptime.yml` mesure qu'une page RÉPOND, jamais qu'elle FONCTIONNE.** Un HTTP 200 sur une coquille SPA vide est vert. C'est le piège déjà payé par la garde Lighthouse qui mesurait une 404, `T-50`, corrigé le 2026-08-29 | `uptime.yml` · `-w '%{http_code}'` sur `/` et `/auth/v1/health` | Un **marqueur de contenu attendu** dans la réponse, choisi pour qu'il disparaisse si le rendu casse. Témoin : la garde doit rougir sur une page servie vide | `DEPLOYMENT.md` AM-5 |
-| **C-105** | **Les variables d'environnement Vercel ne sont comparées à rien**, et l'état réel de Turnstile n'est écrit nulle part de vérifiable. Le cas a déjà mordu : `VITE_SENTRY_DSN` absente changeait la forme du bundle et rendait la garde de budget aveugle à ~45 ko | aucun job ne lit la configuration Vercel · `TurnstileWidget.tsx` et `AuthForm.tsx` référencent une variable posée hors du dépôt, 0 garde | Un job qui compare la liste des `VITE_*` attendues à celles réellement configurées, et **imprime** l'état de Turnstile. La valeur d'un secret n'est jamais lue : seule sa **présence** l'est | `DEPLOYMENT.md` AM-3 et AM-4 |
-| **C-106** | 🔴 **AUCUNE garde ne compare la grille STRIPE au code.** `org-tiers.parity.test.ts` verrouille le Deno sur le TypeScript, donc **deux copies du dépôt l'une contre l'autre** ; rien ne confronte l'une ou l'autre aux prix réellement enregistrés chez Stripe. Les 8 prix live ont été vérifiés **une fois**, le 2026-08-26. La dérivation annuelle refuse de choisir entre deux candidates (`yearly_unavailable`), donc un doublon **coupe l'encaissement annuel en silence** | aucun workflow ne contient `STRIPE_ORG_PRICE` ni d'appel à l'API Stripe | Un job planifié qui lit les prix **actifs** chez Stripe et les compare à `ENTERPRISE_PRICING_TIERS`, en échouant sur un doublon comme sur un écart. ⚠️ Il exige `STRIPE_SECRET_KEY` en secret Actions : à poser avec la bascule, pas avant | `STRIPE-LIVE.md` AM-1, AM-2, AM-3 |
-| **C-107** | **`check:legal` vérifie l'ARITHMÉTIQUE du tableau, jamais la CONFORMITÉ**, aucune échéance légale n'est surveillée, et rien ne relie une modification des documents contractuels à leur **préavis de 30 jours**. Une ligne ✅ à tort laisse la garde verte ; les CGU vivent dans `legal.json`, un catalogue i18n ordinaire pour la CI | `scripts/check-legal-table.mjs` porte sur le bloc de synthèse · tableau : ✅ 13 · 🟡 13 · ❌ 15 · ⬜ 5 | La garde exige une **date de dernière vérification** par ligne et une colonne d'échéance, et refuse une modification de fond de `legal.json` sans entrée de journal. La conformité elle-même reste humaine, `M-53` | `LEGAL.md` AM-1, AM-2, AM-3 |
-| **C-108** | **Une ÉTUDE périme sans que rien ne le signale.** `MIGRATION-REACT19.md` est écrite le 2026-09-03 contre les versions de ce jour-là : composants shadcn audités ref par ref, chiffrage, chronologie CVE. Dependabot alerte sur une vulnérabilité déclarée, jamais sur « React 18 approche de sa fin de support », qui est l'argument central de l'étude | aucune garde ne relit `package.json` contre ce document | Une garde qui **échoue** si une majeure citée par l'étude a bougé, en nommant laquelle. Le coût de NE PAS migrer reste non chiffré, et c'est le volet non outillable : il se compte en incidents, pas en garde | `MIGRATION-REACT19.md` AM-1, AM-2, AM-3 |
-| **C-109** | **Douze documents de fond ne sont notés par RIEN**, dont `SECURITY.md` et `LEGAL.md`. Ils ne peuvent ni monter ni baisser : **rien ne signale qu'ils ont vieilli**. `faille.md` porte les **findings** de sécurité, pas les **règles** : un finding qui se ferme fait monter la note, une règle qui se périme ne coûte rien | 11 documents notés sur 23 traités le 2026-09-16 | Soit chaque document porte une note et entre au tableau de bord, soit il déclare **explicitement** par quelle note il est couvert. ⚠️ Le 09-16 refuse de leur inventer une note sans auditer leur domaine, et il a raison : cet item **ouvre** l'audit, il ne le remplace pas | `T-10` · `SECURITY.md` AM-1 · `LEGAL.md` AM-4 · `POST-AUDIT-GUIDE.md` AM-3 |
-| **C-110** | **Rien ne mesure le support ni le sort des rapports de bug.** Ni volume reçu, ni délai de première réponse, ni taux de résolution ; `report-bug` est en ligne depuis le 2026-09-12 et aucun compteur ne dit si un rapport a été lu. Un canal de support qu'on n'instrumente pas ne se distingue pas d'un canal que personne n'utilise | aucun job, aucun compteur | Un compteur des rapports reçus et de leur âge, lisible depuis `/admin`. La **réception** de l'adresse publiée reste un geste, `M-54` | `SUPPORT.md` AM-1 et AM-3 |
+| **C-102** ✅ | **`e2e/`, `src/components/showcase/` et `supabase/functions/` sont hors de TOUS les invariants d'import.** Aucune des règles du tableau d'`ARCHITECTURE.md` ne s'y applique, et les règles de taille et de couplage s'arrêtent à `src/` | `eslint.config.js:15` les liste dans `ignores`, avec `.agents/`, `.claude/`, `.worktrees/` | Soit une passe ESLint dédiée à ces arbres, soit leur retrait d'`ignores` avec la dette chiffrée. ❌ Ne pas ajouter d'entrée d'allowlist pour faire passer la CI | `T-3` · `ARCHITECTURE.md` AM-2 et AM-5 |
+| **C-103** ✅ | **Aucune garde de dépendances circulaires**, et **le nombre de lignes est le seul proxy de complexité**. Un cycle d'imports entre modules ne casse ni le build ni un test ; un fichier de 400 lignes à 20 imports croisés passe la garde de taille sans réserve | aucun `madge`, `dpdm` ni `import/no-cycle` dans le dépôt · `ARCHITECTURE.md` §3 ne mesure que `wc -l` | `import/no-cycle` ou `madge --circular` en CI, vu rouge sur un cycle introduit à blanc. Le second volet, une mesure de couplage, est un **arbitrage coût/valeur** à rendre avant d'être outillé | `ARCHITECTURE.md` AM-3 et AM-4 |
+| **C-104** ✅ | **`uptime.yml` mesure qu'une page RÉPOND, jamais qu'elle FONCTIONNE.** Un HTTP 200 sur une coquille SPA vide est vert. C'est le piège déjà payé par la garde Lighthouse qui mesurait une 404, `T-50`, corrigé le 2026-08-29 | `uptime.yml` · `-w '%{http_code}'` sur `/` et `/auth/v1/health` | Un **marqueur de contenu attendu** dans la réponse, choisi pour qu'il disparaisse si le rendu casse. Témoin : la garde doit rougir sur une page servie vide | `DEPLOYMENT.md` AM-5 |
+| **C-105** ✅ | **Les variables d'environnement Vercel ne sont comparées à rien**, et l'état réel de Turnstile n'est écrit nulle part de vérifiable. Le cas a déjà mordu : `VITE_SENTRY_DSN` absente changeait la forme du bundle et rendait la garde de budget aveugle à ~45 ko | aucun job ne lit la configuration Vercel · `TurnstileWidget.tsx` et `AuthForm.tsx` référencent une variable posée hors du dépôt, 0 garde | Un job qui compare la liste des `VITE_*` attendues à celles réellement configurées, et **imprime** l'état de Turnstile. La valeur d'un secret n'est jamais lue : seule sa **présence** l'est | `DEPLOYMENT.md` AM-3 et AM-4 |
+| **C-106** ✅ | 🔴 **AUCUNE garde ne compare la grille STRIPE au code.** `org-tiers.parity.test.ts` verrouille le Deno sur le TypeScript, donc **deux copies du dépôt l'une contre l'autre** ; rien ne confronte l'une ou l'autre aux prix réellement enregistrés chez Stripe. Les 8 prix live ont été vérifiés **une fois**, le 2026-08-26. La dérivation annuelle refuse de choisir entre deux candidates (`yearly_unavailable`), donc un doublon **coupe l'encaissement annuel en silence** | aucun workflow ne contient `STRIPE_ORG_PRICE` ni d'appel à l'API Stripe | Un job planifié qui lit les prix **actifs** chez Stripe et les compare à `ENTERPRISE_PRICING_TIERS`, en échouant sur un doublon comme sur un écart. ⚠️ Il exige `STRIPE_SECRET_KEY` en secret Actions : à poser avec la bascule, pas avant | `STRIPE-LIVE.md` AM-1, AM-2, AM-3 |
+| **C-107** ✅ | **`check:legal` vérifie l'ARITHMÉTIQUE du tableau, jamais la CONFORMITÉ**, aucune échéance légale n'est surveillée, et rien ne relie une modification des documents contractuels à leur **préavis de 30 jours**. Une ligne ✅ à tort laisse la garde verte ; les CGU vivent dans `legal.json`, un catalogue i18n ordinaire pour la CI | `scripts/check-legal-table.mjs` porte sur le bloc de synthèse · tableau : ✅ 13 · 🟡 13 · ❌ 15 · ⬜ 5 | La garde exige une **date de dernière vérification** par ligne et une colonne d'échéance, et refuse une modification de fond de `legal.json` sans entrée de journal. La conformité elle-même reste humaine, `M-53` | `LEGAL.md` AM-1, AM-2, AM-3 |
+| **C-108** ✅ | **Une ÉTUDE périme sans que rien ne le signale.** `MIGRATION-REACT19.md` est écrite le 2026-09-03 contre les versions de ce jour-là : composants shadcn audités ref par ref, chiffrage, chronologie CVE. Dependabot alerte sur une vulnérabilité déclarée, jamais sur « React 18 approche de sa fin de support », qui est l'argument central de l'étude | aucune garde ne relit `package.json` contre ce document | Une garde qui **échoue** si une majeure citée par l'étude a bougé, en nommant laquelle. Le coût de NE PAS migrer reste non chiffré, et c'est le volet non outillable : il se compte en incidents, pas en garde | `MIGRATION-REACT19.md` AM-1, AM-2, AM-3 |
+| **C-109** ✅ | **Douze documents de fond ne sont notés par RIEN**, dont `SECURITY.md` et `LEGAL.md`. Ils ne peuvent ni monter ni baisser : **rien ne signale qu'ils ont vieilli**. `faille.md` porte les **findings** de sécurité, pas les **règles** : un finding qui se ferme fait monter la note, une règle qui se périme ne coûte rien | 11 documents notés sur 23 traités le 2026-09-16 | Soit chaque document porte une note et entre au tableau de bord, soit il déclare **explicitement** par quelle note il est couvert. ⚠️ Le 09-16 refuse de leur inventer une note sans auditer leur domaine, et il a raison : cet item **ouvre** l'audit, il ne le remplace pas | `T-10` · `SECURITY.md` AM-1 · `LEGAL.md` AM-4 · `POST-AUDIT-GUIDE.md` AM-3 |
+| **C-110** ✅ | **Rien ne mesure le support ni le sort des rapports de bug.** Ni volume reçu, ni délai de première réponse, ni taux de résolution ; `report-bug` est en ligne depuis le 2026-09-12 et aucun compteur ne dit si un rapport a été lu. Un canal de support qu'on n'instrumente pas ne se distingue pas d'un canal que personne n'utilise | aucun job, aucun compteur | Un compteur des rapports reçus et de leur âge, lisible depuis `/admin`. La **réception** de l'adresse publiée reste un geste, `M-54` | `SUPPORT.md` AM-1 et AM-3 |
+
+✅ **Les 9 items de ce paragraphe sont traités** le 2026-09-20 au soir : C-102 (ESLint sur `e2e/`, `showcase/`, `supabase/functions/`), C-103 (cycles d'imports), C-104 (marqueurs de contenu d'`uptime`), C-105 (contrat des variables), C-106 (grille Stripe), C-107 (dates du tableau légal + journal contractuel), C-108 (fraîcheur des études), C-109 (notes déclarées), C-110 (compteur du support).
+Ce qui a été livré, et **ce que chaque garde ne prouve pas** : [§ 12.9](#129--passe-du-2026-09-20-au-soir--les-28-items-ouverts-sont-traités).
 
 ---
 
-### 🔴 C-111 · LE JOB `e2e` EST ROUGE SUR `main`, 25 échecs, et rien ne le disait
+### 12.8 Ce que ce classement ne fait PAS
+
+> ### 🔴 CORRECTION DATÉE — ce paragraphe a été écrit le 2026-09-20 AU MATIN
+>
+> Trois de ses affirmations ont cessé d'être vraies **le soir même**, et elles sont corrigées
+> ci-dessous plutôt qu'effacées : ce paragraphe décrit ce que la passe de CLASSEMENT ne faisait
+> pas, et c'est exact **à sa date**.
+>
+> | Affirmation du matin | État au soir |
+> |---|---|
+> | « Il ne ferme rien » | ❌ **Les 28 items ouverts sont traités**, cf. [§ 12.9](#129--passe-du-2026-09-20-au-soir--les-28-items-ouverts-sont-traités) |
+> | « `C-77` toujours ouvert, le geste qui le ferme s'appelle `M-45` » | ✅ **`M-45` est fait** : la mig. `136` est appliquée (ledger `20260920105113`). `C-77` est REFERMÉ |
+> | « aucun n'a de correctif écrit » | ❌ Chacun a désormais son script, son workflow ou sa migration, et son témoin |
+>
+> ⚠️ **Ce qui reste VRAI, et qui est le plus important des trois** : ce classement **ne note
+> rien** et **ne hiérarchise rien**. Aucun des trente ne porte de `P1`/`P2` ni de taille, et la
+> passe du soir ne leur en a pas donné non plus — elle les a outillés dans l'ordre où ils
+> tombaient, ce qui n'est pas un rang.
+
+❌ **Il ne ferme rien**, à une exception mesurée : `C-78`, dont le correctif est à `HEAD` depuis le
+2026-09-16. Les trente items ci-dessus sont **ouverts**, et aucun n'a de correctif écrit.
+
+❌ **Il ne note rien.** Le 2026-09-16 a déjà payé ces angles morts en points, −46 sur onze audits,
+et la règle qu'il pose tient : *une note baisse UNE FOIS, quand l'angle mort est nommé ; elle
+remonte quand il est outillé*. Chaque fermeture d'item de ce paragraphe rend donc des points, et
+une reconduction n'en coûte pas.
+
+⚠️ **Il ne hiérarchise pas non plus.** Aucun de ces trente ne porte de `P1`/`P2` ni de taille,
+parce qu'aucun n'a été chiffré : leur poser un rang depuis cette table serait exactement le
+« avant » recopié au lieu d'être relu, pour la quatrième fois. **Le rang se pose quand chacun est
+estimé**, et l'arbitrage sur ce que chacun vaut appartient à Axel (`M-56`).
+
+🔴 **Le seul ordre déjà tranché est celui du 2026-09-14, et il n'a pas bougé** : `C-77` avant tout
+le reste, parce que c'est le seul défaut ouvert qu'un utilisateur VOIT. Remesuré en base le
+2026-09-20 : toujours ouvert, et le geste qui le ferme s'appelle désormais `M-45`.
+✅ **Fait le jour même**, quelques heures après cette phrase : mig. `136` appliquée, ledger
+`20260920105113`. Le rang qu'il occupait est donc libre — et aucun des trente ne l'a repris,
+puisqu'aucun n'est chiffré.
+
+---
+
+### 12.9 ✅ PASSE DU 2026-09-20 au soir — les 28 items ouverts sont traités
+
+> **Consigne d'Axel** : « fais-les tous, puis lance des tests indépendants pour vérifier ».
+> Les 30 items de ce paragraphe étaient ouverts, moins `C-78` et `C-100` déjà refermés.
+> Les **28 restants** sont traités. Ce qui suit dit **ce qui a été livré** et, surtout,
+> **ce que chaque garde ne prouve pas** — c'est la moitié qui manque d'habitude.
+
+#### Ce que la passe a TROUVÉ, et qui n'était pas dans l'énoncé
+
+🔴 **Sept défauts réels, tous trouvés par une garde neuve à sa première exécution.** Aucun
+n'aurait été vu par une relecture ; c'est l'argument de ce paragraphe entier.
+
+| Trouvé par | Ce qui était faux |
+|---|---|
+| `check:sabotages` (C-81) | 🔴 **`src/monitoring.guard.test.ts` ne détectait plus rien.** Il cherchait `installEarlyHandlers()` par un `indexOf` sur la source brute : la première occurrence est l'**import**, toujours avant `function mount()`. Commenter l'APPEL laissait le cas VERT. Corrigé, et le sabotage exact est désormais un cas du témoin |
+| `test:coverage:tooling` (C-82) | **Trois scripts sortaient du rapport de couverture EN SILENCE** (`apply-migrations`, `check-rls-advisors`, `i18n-check` — deux gardes de CI). Cause isolée par expérience et non par lecture : le **shebang**. Les 15 shebangs de `scripts/**` ont été retirés — ils étaient décoratifs, chaque script étant lancé par `node` |
+| `check:edge-coverage` (C-82) | **`stripe-create-checkout` n'était nommée par AUCUN témoin.** C'est la fonction qui ouvre la session de paiement particulier. Témoin écrit : 10 cas, 4 sabotages |
+| `check:cycles` (C-103) | **Sept cycles d'imports**, tous par `workTimeCalculator` important quatre barils de modules en VALEUR alors qu'il ne s'en sert que comme TYPES. `import type` : sept cycles → zéro |
+| `check:portability` (C-94) | **Quatre colonnes SAISIES absentes de l'export art. 20** : `habits.icon`, `categories.parent_id` (l'ARBRE des catégories, donc l'organisation perdue), `key_results.estimated_time` et `weight`. Ajoutées |
+| `i18n:pages` (C-99) | **23 formes plurielles MORTES en `en`** (`_many` recopié du français, que `Intl.PluralRules('en')` ne demandera jamais). Retirées |
+| `check:test-floor` (C-83) | **Le plancher des témoins était posé DEUX trop bas** : deux témoins existants portent un TIRET (`en-ca-guard.test.ts`, `stripe-org-404-guard.test.ts`) et l'expression n'acceptait que le point |
+
+⚠️ **Et cinq énoncés du 09-16 étaient PÉRIMÉS**, remesurés avant d'être traités :
+
+- **C-101** — « le tracking `?ref=` reste un développement ouvert » est **FAUX**. La chaîne est
+  complète et testée : capture first-touch (`main.tsx`), préservée par `clearDemoStorage`, passée
+  en metadata à l'inscription, **re-validée côté serveur** par le trigger de la mig. `097`, et
+  rendue par `get_admin_stats` v3. Ce qui manquait n'était pas le tracking, c'était de **regarder
+  les chiffres**.
+- **C-85** — « les chunks lazy n'ont aucun plafond » : il y en avait un, générique (70 ko). Ce qui
+  manquait était un plafond **par chunk**, posé au poids du jour.
+- **C-96** — « 10 surfaces sur 53 » : recompté par le détecteur, **51**, pas 53.
+- **C-104** — `uptime.yml` avait déjà un marqueur de contenu (`grep -i cosmo`)… qui **ne pouvait
+  pas échouer** : la coquille SPA contient le mot « cosmo » vingt-et-une fois.
+- **C-93** — le registre ne déclare **aucune durée** pour `rate_limits` ni `email_lookup_quota`.
+  La première écriture de la garde y avait posé 7 jours « parce que ça paraît raisonnable » :
+  un chiffre **inventé**, et la table portait justement une ligne de 7 jours pile. Remplacé par
+  `null` = « non déclaré au registre », imprimé à chaque run.
+
+#### Ce qui a été livré, item par item
+
+| # | Livré | 🔴 Ce que ça ne prouve PAS |
+|---|---|---|
+| **C-81** ✅ | `scripts/replay-sabotages.mjs` + `sabotages.yml` (hebdo + sur PR touchant un témoin). 11 sabotages, 9 témoins, restauration octet pour octet vérifiée | Que les 39 témoins détectent. Le rapport **couvert / total** est imprimé à chaque run, exprès |
+| **C-82** ✅ | `vitest.tooling.config.ts` + `check-tooling-coverage.mjs` (complétude AVANT seuils) + `edge-function-coverage.mjs` | `supabase/functions/**` n'est **pas** couvert en lignes et ne peut pas l'être (Deno, jamais importé). Le plancher de témoins par fonction est ce qui en tient lieu, et il est annoncé comme tel |
+| **C-83** ✅ | `check-test-floor.mjs`, cliquet sur fichiers / témoins / cas | Qu'un test teste quelque chose. Un plancher interdit la disparition, pas la complaisance |
+| **C-84** ✅ | `lighthouserc.mobile.json` + passe mobile dans `ci.yml` ; 4 → **8 URLs** | Les seuils mobiles sont une **première pose**, prudente faute de Chrome sur le poste. À rabaisser au mesuré au premier run réel |
+| **C-85** ✅ | 30 plafonds **par chunk** posés au poids du jour ; une exemption sans plafond est refusée | — |
+| **C-86** ✅ | `scalability-volume` mensuel ; `restore-drill` coupé en deux : `dump-check` **trimestriel et automatique**, `drill` manuel | Un dump relisible n'est **pas** un dump restauré. `pg_restore --list` lit une table des matières |
+| **C-87** ✅ | `check-db-cost.mjs` : EXPLAIN **sous RLS**, rôle `authenticated`, transaction annulée ; série commitée ; alerte sur la **pente** | Le coût FACTURÉ (Supabase ne l'expose pas), et la charge réelle (c'est `scalability-volume`) |
+| **C-88** ✅ | `check-supabase-posture.mjs` + référence commitée ; juge un **écart**, pas un absolu | ⚠️ `reglages_auth` est à `null` : la référence des réglages exige un jeton, elle se pose par `--update` **et se commite**. La garde ÉCHOUE tant que c'est le cas, exprès |
+| **C-89** ✅ | `codeql.yml`, `security-extended`, JS/TS **et** `actions` | Un job vert. L'item n'est fini que quand **chaque alerte ouverte porte une décision** |
+| **C-90** ✅ | Second `npm audit` sur la chaîne de build, **non bloquant mais LU** (compte par sévérité au résumé) | Rien : c'est un arbitrage assumé, écrit comme tel |
+| **C-91** ✅ | `check-edge-smoke.mjs`, 8 sondes, dans `edge-deploy-drift.yml`. **Vertes contre la production** ce jour | Que la fonction fait son travail. On touche ses premiers mètres |
+| **C-92** ✅ | `check-erasure-coverage.mjs` : périmètre **dérivé** des migrations, 22 tables, 4 décisions possibles, `cascade` et `conserve` **vérifiées contre le SQL** | Dérivé des MIGRATIONS, pas de la base — et le dépôt a déjà constaté des objets en base qu'aucune migration ne crée |
+| **C-93** ✅ | `check-retention.mjs` : orphelines (0 en prod) + âges. Dans `posture.yml` | Que le REGISTRE est juste. Ça dit que la base respecte ce qu'il déclare |
+| **C-94** ✅ | `check-portability-export.mjs` : chaque colonne exportée ou **exclue avec sa raison** | La justesse des valeurs. Un export complet mais faux resterait vert |
+| **C-95** ✅ | `e2e/visual-regression.spec.ts` (4 thèmes × 3 routes, états vide et erreur, 3 pages publiques) + project `visual` + `visual.yml` qui **produit et commite** ses références au premier run | 🔴 La première référence fige l'écran **défauts compris**. Elle ne dit pas qu'il est juste, elle dit qu'on saura qu'il a changé |
+| **C-96** ✅ | `src/keyboard-audit-coverage.guard.test.ts` : **51 surfaces**, 10 mesurées, 41 déclarées non mesurées **une par une avec leur raison** | Elle ne mesure aucune accessibilité. Elle CHIFFRE l'écart et l'empêche de grandir en silence |
+| **C-97** ✅ | Projects `mobile-chrome` (Pixel 7) + `e2e/mobile-android.spec.ts` : paysage, police à **200 %**, **CPU bridé ×4 par CDP** — avec son témoin qui vérifie que le bridage s'applique | Un appareil émulé sur un runner. Ni thermique, ni GPU mobile |
+| **C-98** ✅ | `check-seo-pages.mjs` : prérendu ↔ sitemap dans les deux sens, 4 balises, `canonical` autoréférent, **réciprocité des `hreflang`**, `noindex` hors sitemap. 13 cas de témoin | La qualité d'un `title`. Ici : présence et cohérence |
+| **C-99** ✅ | `check-i18n-pages.mjs` : pluriels CLDR (formes manquantes **et mortes**), locales déclarées non servies, volume par page **et par locale** avec appariement des slugs localisés | La QUALITÉ des traductions, qui reste un geste |
+| **C-101** ✅ | Colonne **État** (5 valeurs, date obligatoire sur `fait`/`refuse`) + `check-acquisition.mjs` + marqueur `<!-- chiffres-remesures: -->` | Qu'un backlink posé **existe encore** : ça demande l'API Search Console, donc un geste |
+| **C-102** ✅ | `e2e/`, `showcase/` et `supabase/functions/` **entrent** dans ESLint. Dette mesurée AVANT : 1 erreur (un faux positif React sur une fixture Playwright), 1 avertissement, 0 | — |
+| **C-103** ✅ | `check-import-cycles.mjs`, sans dépendance. Couplage **rapporté**, non bloquant | Le plafond de couplage reste un arbitrage non rendu. Le chiffre est imprimé pour être lu deux fois d'abord |
+| **C-104** ✅ | Trois marqueurs ABSENTS de la coquille SPA (`seo-fallback`, `FAQPage`, `/assets/`), une **seconde page** prérendue sondée, et le corps de `/auth/v1/health` vérifié (un projet en PAUSE répond 200) | — |
+| **C-105** ✅ | `check-env-contract.mjs` : contrat statique des 8 `VITE_*` avec l'**effet d'absence** de chacune ; moitié Vercel dans `posture.yml`, **présence seulement, jamais une valeur** | — |
+| **C-106** ✅ | `check-stripe-prices.mjs` : grille **lue** dans `premium-config.ts`, doublon et `tax_behavior` vérifiés. `stripe-prices.yml` **non planifié** | 🔴 Le jour de la bascule : poser `STRIPE_SECRET_KEY`, **décommenter le `schedule:`**, et ajouter `Grille Stripe` à `ci-alert.yml`. Les deux derniers sont ceux qu'on oublie |
+| **C-107** ✅ | Une ligne ✅ doit porter une DATE (`C10` était la seule sans — sa relecture a trouvé une affirmation **fausse**, contredite depuis le 09-02) + cliquet à 21 lignes datées + `docs/LEGAL-JOURNAL.md` | La CONFORMITÉ. Une ligne ✅ à tort **et datée** reste verte |
+| **C-108** ✅ | `check-study-freshness.mjs` : échoue si une majeure citée par `MIGRATION-REACT19.md` bouge | Le coût de NE PAS migrer, qui se compte en incidents |
+| **C-109** ✅ | Les **28** documents de `docs/` déclarent leur note, celle qui les couvre, ou `non-note` **avec sa raison**. Chaîne de couverture vérifiée, cycles refusés | Que les notes soient justes ni fraîches. `non-note` **ouvre** un audit, il ne le remplace pas — `LEGAL.md` reste le plus coûteux des onze |
+| **C-110** ✅ | Mig. `150` (table **sans aucune donnée personnelle**), `report-bug` compte sans jamais bloquer l'envoi, encart « Support » sur `/admin` avec trois états distincts (`null` ≠ `0`) | ⚠️ **La mig. 150 n'est pas appliquée.** `/admin` affiche « compteur non installé » jusque-là, et c'est délibéré : le dépôt a déjà payé une migration commitée et dormante **dix-sept jours** (C-77) |
+
+#### Ce qui reste, et qui n'est PAS du code
+
+🔴 **Quatre gestes, sans lesquels quatre de ces gardes ne mesureront rien** :
+
+1. **appliquer la mig. `150`** (C-110) — sinon `/admin` affiche « non installé » ;
+2. **poser la référence des réglages d'auth** (C-88) :
+   `SUPABASE_ACCESS_TOKEN=… node scripts/check-supabase-posture.mjs --update`, **puis commiter** ;
+3. **poser `VERCEL_TOKEN` / `VERCEL_PROJECT_ID`** (C-105), sinon le job `vercel-env` échoue ;
+4. **trier les premières alertes CodeQL** (C-89) — l'item n'est pas fini quand le job est vert.
+
+⚠️ Et **redéployer `report-bug`** : sa source a changé (C-110), donc `check:edge` signalera une
+dérive **légitime** entre le dépôt et le déployé tant que ce n'est pas fait. C'est exactement ce
+que cette garde existe pour dire ; ce n'est pas un faux positif.
+
+---
+
+---
+
+### 12.10 🔴 C-111 · LE JOB `e2e` EST ROUGE SUR `main`, 25 échecs, et rien ne le disait
 
 > **Trouvé le 2026-09-20 au soir en jouant la suite pour vérifier la passe du § 12.9.** Aucun de
 > ces échecs ne vient de cette passe : les fichiers en cause sont à `HEAD`, non modifiés, et la
@@ -5982,111 +6219,3 @@ C'est un défaut de lisibilité de `ci-alert.yml`, pas de la détection — et i
 les 30 cas, mais il coûte quelque chose.
 
 ---
-
-### 12.9 ✅ PASSE DU 2026-09-20 au soir — les 28 items ouverts sont traités
-
-> **Consigne d'Axel** : « fais-les tous, puis lance des tests indépendants pour vérifier ».
-> Les 30 items de ce paragraphe étaient ouverts, moins `C-78` et `C-100` déjà refermés.
-> Les **28 restants** sont traités. Ce qui suit dit **ce qui a été livré** et, surtout,
-> **ce que chaque garde ne prouve pas** — c'est la moitié qui manque d'habitude.
-
-#### Ce que la passe a TROUVÉ, et qui n'était pas dans l'énoncé
-
-🔴 **Sept défauts réels, tous trouvés par une garde neuve à sa première exécution.** Aucun
-n'aurait été vu par une relecture ; c'est l'argument de ce paragraphe entier.
-
-| Trouvé par | Ce qui était faux |
-|---|---|
-| `check:sabotages` (C-81) | 🔴 **`src/monitoring.guard.test.ts` ne détectait plus rien.** Il cherchait `installEarlyHandlers()` par un `indexOf` sur la source brute : la première occurrence est l'**import**, toujours avant `function mount()`. Commenter l'APPEL laissait le cas VERT. Corrigé, et le sabotage exact est désormais un cas du témoin |
-| `test:coverage:tooling` (C-82) | **Trois scripts sortaient du rapport de couverture EN SILENCE** (`apply-migrations`, `check-rls-advisors`, `i18n-check` — deux gardes de CI). Cause isolée par expérience et non par lecture : le **shebang**. Les 15 shebangs de `scripts/**` ont été retirés — ils étaient décoratifs, chaque script étant lancé par `node` |
-| `check:edge-coverage` (C-82) | **`stripe-create-checkout` n'était nommée par AUCUN témoin.** C'est la fonction qui ouvre la session de paiement particulier. Témoin écrit : 10 cas, 4 sabotages |
-| `check:cycles` (C-103) | **Sept cycles d'imports**, tous par `workTimeCalculator` important quatre barils de modules en VALEUR alors qu'il ne s'en sert que comme TYPES. `import type` : sept cycles → zéro |
-| `check:portability` (C-94) | **Quatre colonnes SAISIES absentes de l'export art. 20** : `habits.icon`, `categories.parent_id` (l'ARBRE des catégories, donc l'organisation perdue), `key_results.estimated_time` et `weight`. Ajoutées |
-| `i18n:pages` (C-99) | **23 formes plurielles MORTES en `en`** (`_many` recopié du français, que `Intl.PluralRules('en')` ne demandera jamais). Retirées |
-| `check:test-floor` (C-83) | **Le plancher des témoins était posé DEUX trop bas** : deux témoins existants portent un TIRET (`en-ca-guard.test.ts`, `stripe-org-404-guard.test.ts`) et l'expression n'acceptait que le point |
-
-⚠️ **Et cinq énoncés du 09-16 étaient PÉRIMÉS**, remesurés avant d'être traités :
-
-- **C-101** — « le tracking `?ref=` reste un développement ouvert » est **FAUX**. La chaîne est
-  complète et testée : capture first-touch (`main.tsx`), préservée par `clearDemoStorage`, passée
-  en metadata à l'inscription, **re-validée côté serveur** par le trigger de la mig. `097`, et
-  rendue par `get_admin_stats` v3. Ce qui manquait n'était pas le tracking, c'était de **regarder
-  les chiffres**.
-- **C-85** — « les chunks lazy n'ont aucun plafond » : il y en avait un, générique (70 ko). Ce qui
-  manquait était un plafond **par chunk**, posé au poids du jour.
-- **C-96** — « 10 surfaces sur 53 » : recompté par le détecteur, **51**, pas 53.
-- **C-104** — `uptime.yml` avait déjà un marqueur de contenu (`grep -i cosmo`)… qui **ne pouvait
-  pas échouer** : la coquille SPA contient le mot « cosmo » vingt-et-une fois.
-- **C-93** — le registre ne déclare **aucune durée** pour `rate_limits` ni `email_lookup_quota`.
-  La première écriture de la garde y avait posé 7 jours « parce que ça paraît raisonnable » :
-  un chiffre **inventé**, et la table portait justement une ligne de 7 jours pile. Remplacé par
-  `null` = « non déclaré au registre », imprimé à chaque run.
-
-#### Ce qui a été livré, item par item
-
-| # | Livré | 🔴 Ce que ça ne prouve PAS |
-|---|---|---|
-| **C-81** | `scripts/replay-sabotages.mjs` + `sabotages.yml` (hebdo + sur PR touchant un témoin). 11 sabotages, 9 témoins, restauration octet pour octet vérifiée | Que les 39 témoins détectent. Le rapport **couvert / total** est imprimé à chaque run, exprès |
-| **C-82** | `vitest.tooling.config.ts` + `check-tooling-coverage.mjs` (complétude AVANT seuils) + `edge-function-coverage.mjs` | `supabase/functions/**` n'est **pas** couvert en lignes et ne peut pas l'être (Deno, jamais importé). Le plancher de témoins par fonction est ce qui en tient lieu, et il est annoncé comme tel |
-| **C-83** | `check-test-floor.mjs`, cliquet sur fichiers / témoins / cas | Qu'un test teste quelque chose. Un plancher interdit la disparition, pas la complaisance |
-| **C-84** | `lighthouserc.mobile.json` + passe mobile dans `ci.yml` ; 4 → **8 URLs** | Les seuils mobiles sont une **première pose**, prudente faute de Chrome sur le poste. À rabaisser au mesuré au premier run réel |
-| **C-85** | 30 plafonds **par chunk** posés au poids du jour ; une exemption sans plafond est refusée | — |
-| **C-86** | `scalability-volume` mensuel ; `restore-drill` coupé en deux : `dump-check` **trimestriel et automatique**, `drill` manuel | Un dump relisible n'est **pas** un dump restauré. `pg_restore --list` lit une table des matières |
-| **C-87** | `check-db-cost.mjs` : EXPLAIN **sous RLS**, rôle `authenticated`, transaction annulée ; série commitée ; alerte sur la **pente** | Le coût FACTURÉ (Supabase ne l'expose pas), et la charge réelle (c'est `scalability-volume`) |
-| **C-88** | `check-supabase-posture.mjs` + référence commitée ; juge un **écart**, pas un absolu | ⚠️ `reglages_auth` est à `null` : la référence des réglages exige un jeton, elle se pose par `--update` **et se commite**. La garde ÉCHOUE tant que c'est le cas, exprès |
-| **C-89** | `codeql.yml`, `security-extended`, JS/TS **et** `actions` | Un job vert. L'item n'est fini que quand **chaque alerte ouverte porte une décision** |
-| **C-90** | Second `npm audit` sur la chaîne de build, **non bloquant mais LU** (compte par sévérité au résumé) | Rien : c'est un arbitrage assumé, écrit comme tel |
-| **C-91** | `check-edge-smoke.mjs`, 8 sondes, dans `edge-deploy-drift.yml`. **Vertes contre la production** ce jour | Que la fonction fait son travail. On touche ses premiers mètres |
-| **C-92** | `check-erasure-coverage.mjs` : périmètre **dérivé** des migrations, 22 tables, 4 décisions possibles, `cascade` et `conserve` **vérifiées contre le SQL** | Dérivé des MIGRATIONS, pas de la base — et le dépôt a déjà constaté des objets en base qu'aucune migration ne crée |
-| **C-93** | `check-retention.mjs` : orphelines (0 en prod) + âges. Dans `posture.yml` | Que le REGISTRE est juste. Ça dit que la base respecte ce qu'il déclare |
-| **C-94** | `check-portability-export.mjs` : chaque colonne exportée ou **exclue avec sa raison** | La justesse des valeurs. Un export complet mais faux resterait vert |
-| **C-95** | `e2e/visual-regression.spec.ts` (4 thèmes × 3 routes, états vide et erreur, 3 pages publiques) + project `visual` + `visual.yml` qui **produit et commite** ses références au premier run | 🔴 La première référence fige l'écran **défauts compris**. Elle ne dit pas qu'il est juste, elle dit qu'on saura qu'il a changé |
-| **C-96** | `src/keyboard-audit-coverage.guard.test.ts` : **51 surfaces**, 10 mesurées, 41 déclarées non mesurées **une par une avec leur raison** | Elle ne mesure aucune accessibilité. Elle CHIFFRE l'écart et l'empêche de grandir en silence |
-| **C-97** | Projects `mobile-chrome` (Pixel 7) + `e2e/mobile-android.spec.ts` : paysage, police à **200 %**, **CPU bridé ×4 par CDP** — avec son témoin qui vérifie que le bridage s'applique | Un appareil émulé sur un runner. Ni thermique, ni GPU mobile |
-| **C-98** | `check-seo-pages.mjs` : prérendu ↔ sitemap dans les deux sens, 4 balises, `canonical` autoréférent, **réciprocité des `hreflang`**, `noindex` hors sitemap. 13 cas de témoin | La qualité d'un `title`. Ici : présence et cohérence |
-| **C-99** | `check-i18n-pages.mjs` : pluriels CLDR (formes manquantes **et mortes**), locales déclarées non servies, volume par page **et par locale** avec appariement des slugs localisés | La QUALITÉ des traductions, qui reste un geste |
-| **C-101** | Colonne **État** (5 valeurs, date obligatoire sur `fait`/`refuse`) + `check-acquisition.mjs` + marqueur `<!-- chiffres-remesures: -->` | Qu'un backlink posé **existe encore** : ça demande l'API Search Console, donc un geste |
-| **C-102** | `e2e/`, `showcase/` et `supabase/functions/` **entrent** dans ESLint. Dette mesurée AVANT : 1 erreur (un faux positif React sur une fixture Playwright), 1 avertissement, 0 | — |
-| **C-103** | `check-import-cycles.mjs`, sans dépendance. Couplage **rapporté**, non bloquant | Le plafond de couplage reste un arbitrage non rendu. Le chiffre est imprimé pour être lu deux fois d'abord |
-| **C-104** | Trois marqueurs ABSENTS de la coquille SPA (`seo-fallback`, `FAQPage`, `/assets/`), une **seconde page** prérendue sondée, et le corps de `/auth/v1/health` vérifié (un projet en PAUSE répond 200) | — |
-| **C-105** | `check-env-contract.mjs` : contrat statique des 8 `VITE_*` avec l'**effet d'absence** de chacune ; moitié Vercel dans `posture.yml`, **présence seulement, jamais une valeur** | — |
-| **C-106** | `check-stripe-prices.mjs` : grille **lue** dans `premium-config.ts`, doublon et `tax_behavior` vérifiés. `stripe-prices.yml` **non planifié** | 🔴 Le jour de la bascule : poser `STRIPE_SECRET_KEY`, **décommenter le `schedule:`**, et ajouter `Grille Stripe` à `ci-alert.yml`. Les deux derniers sont ceux qu'on oublie |
-| **C-107** | Une ligne ✅ doit porter une DATE (`C10` était la seule sans — sa relecture a trouvé une affirmation **fausse**, contredite depuis le 09-02) + cliquet à 21 lignes datées + `docs/LEGAL-JOURNAL.md` | La CONFORMITÉ. Une ligne ✅ à tort **et datée** reste verte |
-| **C-108** | `check-study-freshness.mjs` : échoue si une majeure citée par `MIGRATION-REACT19.md` bouge | Le coût de NE PAS migrer, qui se compte en incidents |
-| **C-109** | Les **28** documents de `docs/` déclarent leur note, celle qui les couvre, ou `non-note` **avec sa raison**. Chaîne de couverture vérifiée, cycles refusés | Que les notes soient justes ni fraîches. `non-note` **ouvre** un audit, il ne le remplace pas — `LEGAL.md` reste le plus coûteux des onze |
-| **C-110** | Mig. `150` (table **sans aucune donnée personnelle**), `report-bug` compte sans jamais bloquer l'envoi, encart « Support » sur `/admin` avec trois états distincts (`null` ≠ `0`) | ⚠️ **La mig. 150 n'est pas appliquée.** `/admin` affiche « compteur non installé » jusque-là, et c'est délibéré : le dépôt a déjà payé une migration commitée et dormante **dix-sept jours** (C-77) |
-
-#### Ce qui reste, et qui n'est PAS du code
-
-🔴 **Quatre gestes, sans lesquels quatre de ces gardes ne mesureront rien** :
-
-1. **appliquer la mig. `150`** (C-110) — sinon `/admin` affiche « non installé » ;
-2. **poser la référence des réglages d'auth** (C-88) :
-   `SUPABASE_ACCESS_TOKEN=… node scripts/check-supabase-posture.mjs --update`, **puis commiter** ;
-3. **poser `VERCEL_TOKEN` / `VERCEL_PROJECT_ID`** (C-105), sinon le job `vercel-env` échoue ;
-4. **trier les premières alertes CodeQL** (C-89) — l'item n'est pas fini quand le job est vert.
-
-⚠️ Et **redéployer `report-bug`** : sa source a changé (C-110), donc `check:edge` signalera une
-dérive **légitime** entre le dépôt et le déployé tant que ce n'est pas fait. C'est exactement ce
-que cette garde existe pour dire ; ce n'est pas un faux positif.
-
----
-
-### 12.8 Ce que ce classement ne fait PAS
-
-❌ **Il ne ferme rien**, à une exception mesurée : `C-78`, dont le correctif est à `HEAD` depuis le
-2026-09-16. Les trente items ci-dessus sont **ouverts**, et aucun n'a de correctif écrit.
-
-❌ **Il ne note rien.** Le 2026-09-16 a déjà payé ces angles morts en points, −46 sur onze audits,
-et la règle qu'il pose tient : *une note baisse UNE FOIS, quand l'angle mort est nommé ; elle
-remonte quand il est outillé*. Chaque fermeture d'item de ce paragraphe rend donc des points, et
-une reconduction n'en coûte pas.
-
-⚠️ **Il ne hiérarchise pas non plus.** Aucun de ces trente ne porte de `P1`/`P2` ni de taille,
-parce qu'aucun n'a été chiffré : leur poser un rang depuis cette table serait exactement le
-« avant » recopié au lieu d'être relu, pour la quatrième fois. **Le rang se pose quand chacun est
-estimé**, et l'arbitrage sur ce que chacun vaut appartient à Axel (`M-56`).
-
-🔴 **Le seul ordre déjà tranché est celui du 2026-09-14, et il n'a pas bougé** : `C-77` avant tout
-le reste, parce que c'est le seul défaut ouvert qu'un utilisateur VOIT. Remesuré en base le
-2026-09-20 : toujours ouvert, et le geste qui le ferme s'appelle désormais `M-45`.
