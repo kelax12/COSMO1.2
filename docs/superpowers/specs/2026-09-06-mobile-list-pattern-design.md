@@ -1,3 +1,11 @@
+> # 🔴 NON IMPLÉMENTÉ — relu le 2026-09-21
+>
+> Le statut « validé avec Axel le 2026-09-06, vivant jusqu'à implémentation » porté plus bas
+> décrit le 09-06. **Rien n'a été implémenté** : ni `ListRow` ni `FilterChips` n'existent dans
+> `src/components/mobile/`, et l'interface mobile a entièrement été refondue depuis (2026-09-16 →
+> 09-20). Le détail de la mesure est en tête du
+> [plan](../plans/2026-09-06-mobile-list-pattern-plan.md), avec l'arbitrage qui reste à rendre.
+
 # Pattern mobile "pas de card" — design
 
 Statut : validé avec Axel le 2026-09-06. Vivant jusqu'à implémentation, puis archivable.

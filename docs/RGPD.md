@@ -56,6 +56,27 @@ traitée par fragments dans les audits sécurité. Mesuré sur le schéma de pro
 
 ### 🕳️ Angles morts · ce que cet audit NE mesure PAS (2026-09-16)
 
+> ## ✅ Relu le 2026-09-21 · **3 lignes de ce tableau sont désormais OUTILLÉES**
+>
+> La passe du 2026-09-20 au soir (`2b4c4304`) a traité les 30 items du § 12
+> d'[`a-faire-code.md`](../a-faire-code.md), qui sont nés de ces angles morts.
+>
+> ❌ **Le tableau ci-dessous n'est PAS réécrit.** Il décrit le 2026-09-16, et c'est sa date qui
+> lui donne sa valeur : un angle mort nommé est ce qui a permis de l'outiller. Ce bandeau dit ce
+> qui le couvre aujourd'hui, et surtout **ce que la garde ne prouve pas** — la moitié qui manque
+> d'habitude.
+>
+> | Angle mort | Couvert par | 🔴 Ce que ça ne prouve PAS |
+> |---|---|---|
+> | AM-1 · AM-2 | `npm run check:erasure` (`C-92`) : périmètre **dérivé des migrations**, 22 tables, 4 décisions possibles | Dérivé des **migrations**, pas de la base — et ce dépôt a déjà constaté des objets en base qu'aucune migration ne crée |
+> | AM-3 | `npm run check:retention` (`C-93`) | Que le **registre** soit juste. Ça dit que la base respecte ce qu'il déclare. ⚠️ `rate_limits` et `email_lookup_quota` n'y ont **aucune durée déclarée**, et la garde l'imprime au lieu d'en inventer une |
+> | AM-4 | `npm run check:portability` (`C-94`) | La **justesse** des valeurs : un export complet mais faux resterait vert. 🔴 Première exécution : **quatre colonnes saisies** manquaient, dont `categories.parent_id`, donc l'arbre entier |
+>
+> ⚠️ **Les lignes du tableau qui ne sont pas citées ici restent OUVERTES**, et une garde posée
+> n'est pas un angle mort fermé : `M-56` (« ce que chaque angle mort coûte en points ») n'est
+> toujours pas tranché, donc aucune note ne bouge sur cette base.
+
+
 > **Pourquoi cette section existe.** Cette note est justifiée par des points **nommés** (« ce qui
 > retient à N », suivi d'une liste). Une note construite ainsi ne peut baisser que sur un défaut
 > que quelqu'un a d'abord nommé : **un angle mort ne pèse rien tant qu'il reste anonyme**, et ce

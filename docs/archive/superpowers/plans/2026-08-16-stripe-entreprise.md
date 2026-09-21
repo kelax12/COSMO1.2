@@ -1,3 +1,11 @@
+> ⚠️ **ARCHIVE — plan/spec exécuté, instantané du 2026-08-16, non maintenu.**
+> **Archivé le 2026-09-21.** La plomberie est **livrée, et dormante derrière ses deux drapeaux** :
+> `org_subscriptions` (mig. `101`, `123`), les trois Edge Functions `stripe-org-checkout`,
+> `stripe-org-portal` et `stripe-org-refund`, et le webhook à six branches. Les cases de ce plan
+> n'ont jamais été cochées — le code fait foi contre elles, pas l'inverse.
+> 🔴 **Ce qui n'est PAS fait est ailleurs, et volontairement** : la bascule live est une suite de
+> gestes (`M-06` → `M-09`, `M-43`, `M-48`) dans [`a-faire-manuel.md`](../../../../a-faire-manuel.md),
+> et la production tourne toujours sur une clé Stripe de **test**.
 # Stripe entreprise — Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.

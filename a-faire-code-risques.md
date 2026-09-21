@@ -1,7 +1,38 @@
 # Tableau de risque · `a-faire-code.md`
 
 **Dressé le 2026-09-03**, à partir des 66 items C-01 → C-66 de
-[`a-faire-code.md`](./a-faire-code.md). **8 sont clos**, **58 sont ouverts** et notés ci-dessous.
+[`a-faire-code.md`](./a-faire-code.md). **8 étaient clos**, **58 ouverts** et notés ci-dessous.
+
+> ## 🔄 Relu le 2026-09-21 · **ce tableau cote 66 items sur 111, et neuf de ses lignes les plus hautes sont fermées**
+>
+> ⚠️ **Il n'est PAS recoté ici, et c'est délibéré.** Recoter supposerait un chiffrage que personne
+> n'a fait : c'est `M-56` (« arbitrer ce que chaque angle mort coûte en points »), et poser une
+> note sans lui serait le « avant » recopié au lieu d'être relu, pour la cinquième fois dans ce
+> dépôt. Ce bandeau dit donc **ce qui a bougé**, jamais ce que ça vaut.
+>
+> **1 · Son périmètre s'est réduit de moitié sans que rien ne le dise.** Il cote `C-01` → `C-66`.
+> Le dépôt porte aujourd'hui **111 identifiants**, `C-1` → `C-111`. Les **45 suivants ne sont
+> cotés nulle part**, dont les 30 angles morts du § 12 et `C-111` (le job `e2e` rouge sur `main`).
+>
+> **2 · Neuf lignes de 🔴 P0 et 🟠 P1 sont refermées** — relu dans `a-faire-code.md` le 09-21 :
+>
+> | Coté ici | État réel |
+> |---|---|
+> | `C-35` **P0, risque 25** | ✅ refermé le 2026-09-13, run vert, 8 fonctions comparées |
+> | `C-39` **P0, risque 10** | 🟢 parcours joué le 2026-09-14, mig. `138` en prod |
+> | `C-34` P1 · `C-28` P1 | ✅ fermés le 2026-09-13 (secret posé et prouvé · canal LU par un humain) |
+> | `C-53` P1 | ✅ corrigé le 2026-09-05 |
+> | `C-31` P1 · `C-56` P1 · `C-57` P1 · `C-12` P1 | ✅ fermés entre le 09-04 et le 09-12 |
+>
+> **3 · `C-65` (P0, risque 20) n'est ni ouvert ni clos** : le code est fini et déployé, l'épreuve
+> contre Stripe ne l'est pas. C'est `M-08`, et aucune cotation ne remplace une carte réelle.
+>
+> **4 · Restent ouverts et cotés ici** : `C-37`, `C-45`, `C-08`, `C-47`, `C-46`, `C-05`. Ce
+> sont les seules lignes de ce tableau qu'on peut lire aujourd'hui sans correction.
+>
+> 🔴 **Et l'hypothèse de cotation reste celle du § suivant**, c'est-à-dire **pas celle d'aujourd'hui** :
+> elle suppose 10 000 comptes gratuits, 1 000 payants et un encaissement actif. La production
+> COSMO tourne toujours sur une clé Stripe de **test**.
 
 Ce fichier ne porte **aucun statut** : il ne fait que classer. Le statut de chaque item reste dans
 `a-faire-code.md`, la sécurité dans `faille.md`, les gestes manuels dans `a-faire-manuel.md`.

@@ -62,6 +62,47 @@ code de `main` et les dix-neuf commits du jour. Les mesures **contre la producti
 refaites ce jour-là, sauf celles inscrites dans les commits eux-mêmes. Détail dans le second
 tableau ci-dessous.
 
+## Mise à jour du 2026-09-21 · passe de documentation · **aucune note ne bouge, et c'est le résultat**
+
+Consigne d'Axel : « remets à jour tous les fichiers `.md`, il ne doit y avoir aucun fichier de
+contexte périmé ». **90 fichiers** relus : les backlogs de la racine, les 18 `CLAUDE.md`, les
+documents vivants de `docs/`, et les bandeaux d'archive.
+
+❌ **Aucune note n'est touchée, délibérément.** Cette passe n'a **mesuré aucun domaine** : elle a
+confronté ce qui est *écrit* à ce qui est *vrai*. Bouger une note sur cette base serait créditer
+une mesure qu'on n'a pas prise, et `M-56` n'est toujours pas tranché.
+
+### Ce que la relecture a trouvé de FAUX, et qui ne venait d'aucune garde
+
+| Où | Ce qui était écrit | Ce que la relecture rend |
+|---|---|---|
+| `CLAUDE.md` (racine) · `a-faire-manuel.md` `M-45` | mig. `136` appliquée, **ledger `20260920105113`** | 🔴 **Ce numéro n'existe au ledger d'AUCUNE migration.** Relu en base : c'est `20260920104729`. Un chiffre recopié, dans le fichier le plus lu du dépôt |
+| `a-faire-code.md` § 4, § 1, § 2… | **13 items** dont le titre ne portait aucun statut alors que leur corps disait ✅ | Le sommaire du fichier les donnait pour ouverts. Corrigés : `C-09`, `C-10`, `C-13`, `C-15`, `C-16`, `C-30`, `C-31`, `C-40`, `C-48`, `C-56`, `C-57`, `C-62`, `C-68` |
+| `a-faire-code.md` `C-20` et `C-71` | ouverts | ✅ **Tous deux clos**, relus dans le code : `INDEXABLE_LOCALES = ['fr', 'en']` depuis le 09-08, et les deux Edge Functions Stripe distinguent `resource_missing` avec leur témoin (`src/stripe-org-404-guard.test.ts`) |
+| `a-faire-manuel.md` `M-44` | « défaire un fichier **non commité** d'une autre session » | 🔴 **INVERSÉ.** L'arbitrage du 09-15 a été rendu CONTRE le retrait de la pastille « Aujourd'hui », et le retrait est entré dans `main` le **09-16** (`ab72cd39`). Il n'y a plus rien à défaire : il y a du code à réécrire |
+| `docs/README.md`, fin de fichier | — | 🔴 **Le préambule était COUPÉ en plein milieu de phrase** depuis son déplacement du 09-16. Restitué depuis `7785e12d^` |
+| `CLAUDE.md` § Scripts | 20 commandes | **24 gardes posées le 09-21 n'y figuraient pas**, et la racine était à 96,7 % de son plafond. L'inventaire complet (36 commandes) descend dans `scripts/CLAUDE.md` ; la racine passe à 92,4 % |
+| `docs/DEMO-DATA-EXPORT.md` | dans `docs/`, donc **vivant** | Il se déclarait lui-même « à lire comme une archive ». Parti en `docs/archive/` |
+| 5 plans / specs de `docs/superpowers/` | vivants, **0 case cochée** | Exécutés et en production. Archivés. ⚠️ **Les cases n'ont jamais été cochées : le code fait foi contre elles** |
+
+### Ce qui a été refusé, et pourquoi
+
+- ❌ **Recoter `a-faire-code-risques.md`.** Il cote 66 items sur 111 et neuf de ses lignes P0/P1
+  sont fermées. Le recompter supposerait le chiffrage de `M-56`. Il porte donc un bandeau qui dit
+  **ce qui a bougé**, jamais ce que ça vaut.
+- ❌ **Réécrire les tableaux « 🕳️ Angles morts » des 21 documents.** Ils décrivent le 2026-09-16,
+  et c'est leur date qui leur donne leur valeur : un angle mort **nommé** est ce qui a permis de
+  l'outiller. Chacun reçoit un bandeau disant ce qui le couvre **et ce que la garde ne prouve pas**.
+- ❌ **Archiver le plan de pattern mobile.** `docs/archive/**` est réservé aux plans **exécutés** ;
+  celui-là ne l'a jamais été, et sa prémisse a changé. Il porte un bandeau, et l'arbitrage reste
+  à rendre.
+
+⚠️ **Ce que cette passe ne prouve pas** : elle a relu des affirmations, pas le produit. Un document
+peut être exact et décrire un écran cassé. Et `C-111` — le job `e2e` **rouge sur `main`** — n'a
+pas bougé : aucune relecture ne rend un test vert.
+
+---
+
 ## Tableau de bord des audits · avant / après (2026-08-24 → 2026-08-25)
 
 Chaque note est justifiée, critère par critère, en tête du document correspondant. Elles ne se
@@ -426,7 +467,8 @@ chacun, et vérifiés.
 
 ⚠️ **Quatre documents sont volontairement laissés de côté** : `COSMO-CLI.md` et
 `AGENT-AJOUTER-TACHE.md` (modes d'emploi d'un outil), `DEMO-DATA-EXPORT.md` (un export généré pour
-revue) et `ROADMAP-60J.md` (un plan). Les backlogs (`a-faire-*.md`, `prompts-*.md`) et les
+revue — ⚠️ **parti en `docs/archive/` le 2026-09-21** : il se déclarait lui-même archive tout en
+vivant dans `docs/`) et `ROADMAP-60J.md` (un plan). Les backlogs (`a-faire-*.md`, `prompts-*.md`) et les
 `CLAUDE.md` non plus : les premiers sont des listes de tâches, les seconds sont des règles déjà
 plafonnées par `check:docs`. **Y coller une section « angles morts » en ferait le rituel contre
 lequel cette passe met en garde.**
@@ -1028,11 +1070,11 @@ testées** (`scripts/migration-guards.test.mjs`).
 | [`../faille.md`](../faille.md) | Sécurité : findings **ouverts**, priorités avant prod, règles durables · **note 88 au 2026-09-14 (soir)**, vérifiée inchangée |
 | [`ARCHITECTURE.md`](./ARCHITECTURE.md) | Invariants du projet et leur état vérifié · **note 90 au 2026-09-15** (+2 : `check:migration-coverage` referme le premier des trois motifs de plafonnement) |
 | [`SECURITY.md`](./SECURITY.md) | RLS, migrations SQL, repositories, Edge Functions, Stripe, CSP, secrets · **les 4 Edge Functions Stripe auditées le 2026-09-02**, cf. [`../faille.md`](../faille.md) |
-| [`TESTING.md`](./TESTING.md) | Vitest, Playwright, a11y, i18n, CI, **checklist avant push prod** · **note 95 au 2026-09-15** (+1 : 8 routes publiques entrent dans la garde E2E, un 6ᵉ job CI apparaît ; les **105 cas WebKit** ne tournent toujours dans aucun workflow) · suite **2 603 / 229** verte en CI, couverture verte |
+| [`TESTING.md`](./TESTING.md) | Vitest, Playwright, a11y, i18n, CI, **checklist avant push prod** · **note 95 au 2026-09-15** (+1 : 8 routes publiques entrent dans la garde E2E, un 6ᵉ job CI apparaît) · ✅ **les cas WebKit tournent en CI depuis `af0190bd`, 2026-09-16** — la mention « aucun workflow » est corrigée le 09-21. 🔴 **Et le job `e2e` est ROUGE sur `main`**, 25 échecs, `C-111` · suite **2 603 / 229** verte en CI, couverture verte |
 | [`DEPLOYMENT.md`](./DEPLOYMENT.md) | Runbook deploy / rollback Vercel + Supabase, drill de restauration |
-| [`MOBILE.md`](./MOBILE.md) | Pages et composants mobiles, bottom-sheets, pièges iOS Safari · **note 78 au 2026-09-15** (+2 : C-80 refermé, le curseur de forfait passe de 308 × 6 à 308 × 44 px ; le 3ᵉ point attend que WebKit entre en CI) |
-| [`UI-PATTERNS.md`](./UI-PATTERNS.md) | Listes, modals, tutoriels, onboarding, thèmes · **note 85 au 2026-09-15**, inchangée (−2 du 09-14 : `/statistics` affiche **toujours** un zéro faux en production, C-77 ouvert ; **M-44 tranché**) |
-| [`PERFORMANCE.md`](./PERFORMANCE.md) | `manualChunks`, lazy loading, images et polices, budget bundle · **note 95 au 2026-09-15**, inchangée (−2 du 09-14 : la mig. `127` rend **toujours** 0 sur `okrTime` en production, C-77 ouvert), gardé par `npm run check:bundle` et par le job `lighthouse` · et depuis le 2026-08-26 **le coût serveur d'une ouverture de session**, ramené de 29 à 21 requêtes REST |
+| [`MOBILE.md`](./MOBILE.md) | Pages et composants mobiles, bottom-sheets, pièges iOS Safari · **note 78 au 2026-09-15** (+2 : C-80 refermé, le curseur de forfait passe de 308 × 6 à 308 × 44 px) · ✅ **WebKit est en CI depuis le 2026-09-16**, et Android émulé depuis le 09-20 (`C-97`) ; l'appareil réel reste `M-25` |
+| [`UI-PATTERNS.md`](./UI-PATTERNS.md) | Listes, modals, tutoriels, onboarding, thèmes · **note 85 au 2026-09-15**, inchangée · ✅ **C-77 refermé le 2026-09-20**, le zéro de `/statistics` n'est plus faux (corrigé ici le 09-21) · 🔴 **M-44 s'est inversé** : le retrait tranché CONTRE est entré dans `main` le 09-16 |
+| [`PERFORMANCE.md`](./PERFORMANCE.md) | `manualChunks`, lazy loading, images et polices, budget bundle · **note 95 au 2026-09-15**, inchangée · ✅ **C-77 refermé le 2026-09-20** (mig. `136` au ledger `20260920104729`), la mention « rend toujours 0 » est corrigée le 09-21, gardé par `npm run check:bundle` et par le job `lighthouse` · et depuis le 2026-08-26 **le coût serveur d'une ouverture de session**, ramené de 29 à 21 requêtes REST |
 | [`ACCESSIBILITY.md`](./ACCESSIBILITY.md) | WCAG / EAA, aria, contraste, gates axe-core + Lighthouse · **note 84 au 2026-09-15** (+2 : la garde couvre 8 pages publiques de plus, 18 cas sur 18 verts) · 37 cas a11y verts rejoués le 09-14 |
 | [`AUDIT-VOICEOVER-IOS.md`](./AUDIT-VOICEOVER-IOS.md) | Check-list du **quatrième** audit d'accessibilité, à jouer d'une traite sur un iPhone (12 étapes, ~60 min, témoin en tête). Le seul instrument qui mesure l'**annonce** : le dépôt ne prouve aujourd'hui que le **focus** |
 | [`SCALABILITY.md`](./SCALABILITY.md) | Montée en charge · **note 91, vérifiée au 2026-09-14 (soir)** (plans d'exécution rejoués en production), coût par ligne mesuré, éprouvé à volume (§9ter) **et en concurrence** (1 → 16 sessions, §9quater) |
@@ -1050,6 +1092,8 @@ testées** (`scripts/migration-guards.test.mjs`).
 | [`MIGRATION-REACT19.md`](./MIGRATION-REACT19.md) | Étude de faisabilité React 19 + `react-router` 8 · **créée le 2026-09-03** (audit A-6), non notée (ce n'est pas un audit de domaine) |
 | [`COSMO-CLI.md`](./COSMO-CLI.md) | CLI d'accès aux données COSMO réelles (`scripts/cosmo/`) |
 | [`AGENT-AJOUTER-TACHE.md`](./AGENT-AJOUTER-TACHE.md) | Mémo court : ajouter une tâche dans le vrai compte |
+| [`ROADMAP-60J.md`](./ROADMAP-60J.md) | Plan à 60 jours, 47 tâches · **non noté** (c'est un plan, pas un audit) — ajouté à ce tableau le 2026-09-21, il n'y figurait pas |
+| [`LEGAL-JOURNAL.md`](./LEGAL-JOURNAL.md) | Journal des documents contractuels : une ligne ✅ doit porter sa **date** · couvert par `LEGAL.md`, gardé par `npm run check:legal-journal` (`C-107`) — ajouté le 2026-09-21 |
 | [`../supabase/migration/README.md`](../supabase/migration/README.md) | Convention de nommage et ledger des migrations |
 
 ## Archives (`docs/archive/`)
@@ -1070,7 +1114,16 @@ corrections 2026-04 → 2026-08, audits datés, anciens ordres de priorité.
 `OUTREACH-SEO-2026-07.md`, `RAPPORT-MODE-ENTREPRISE-2026-08-12.md`,
 `ENTREPRISE-MANQUEMENTS-2026-08-12.md`, `text-landingpage.md`.
 
-**Plans et specs exécutés** — `superpowers/plans/*`, `superpowers/specs/*`.
+**Plans et specs exécutés** — `archive/superpowers/plans/*`, `archive/superpowers/specs/*`.
+Cinq y sont descendus le **2026-09-21** : Stripe entreprise (plan + spec, livré **dormant**),
+landing track entreprise, et sous-catégories hiérarchiques vague 1 (plan + spec, **en production**).
+⚠️ **Aucun de leurs plans n'avait une seule case cochée** — le code fait foi contre elles.
+
+🔴 **Et `docs/superpowers/` n'est PAS vide, ni une archive** : trois documents y restent parce
+qu'ils ne sont **pas** exécutés, et le dire est le seul rangement honnête — le pattern de liste
+mobile (plan + spec, **jamais implémenté**, et sa prémisse a changé avec la refonte du 09-16 → 09-20)
+et le flux de relecture des tâches d'équipe (**toujours à faire**, et son numéro de migration `113`
+est pris depuis : ce sera `151`). Chacun porte son bandeau daté.
 
 ## Règles d'entretien
 
@@ -1097,3 +1150,21 @@ Passes antérieures conservées à leur date (2026-08-24 contre la prod, 2026-09
 🔴 **Le défaut le plus coûteux trouvé ce soir n'est pas dans ce fichier, il est en
 production** : `okrTime` vaut **0** sur `/statistics` pour tous les comptes réels, parce que le
 correctif du 2026-09-02 n'a réparé que la moitié cliente et que la mig. `136`, **pourtant commitée
+depuis le 2026-09-03**, n'a jamais été appliquée. La **démo affiche juste, le produit affiche zéro**.
+Item `C-77` de [`../a-faire-code.md`](../a-faire-code.md).
+
+> ## ✅ 2026-09-21 · les deux défauts de ce préambule
+>
+> **1 · Il était COUPÉ EN PLEIN MILIEU depuis son déplacement** (`55940fad`, 2026-09-16) : le
+> fichier s'arrêtait sur « pourtant commitée », sans point. La fin a été retrouvée dans
+> `CLAUDE.md` avant sa coupe (`7785e12d^`) et restituée mot pour mot ci-dessus. ⚠️ Aucune garde
+> ne voyait ça : `check:docs` mesure des octets, des pointeurs et des liens, jamais une phrase.
+>
+> **2 · Son contenu s'est inversé.** `C-77` est **REFERMÉ depuis le 2026-09-20** : la mig. `136`
+> est au ledger (`20260920104729`, relu en base le 09-21) et `get_work_time_stats` lit
+> `kr_completions`. Le paragraphe est conservé à sa date parce qu'il enseigne ce que coûte une
+> migration commitée et dormante — **dix-sept jours**.
+>
+> 🔴 **Ne pas relire un mois à zéro comme une panne** : le temps OKR vaut `Σ minutes estimées` par
+> complétion, et trois KR sur cinq du compte principal portent `estimated_time = 0`. Août et
+> septembre restent donc à zéro, et c'est **juste**.

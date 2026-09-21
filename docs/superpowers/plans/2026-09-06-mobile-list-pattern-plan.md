@@ -1,3 +1,28 @@
+> # 🔴 NON IMPLÉMENTÉ, et sa prémisse a changé — relu le 2026-09-21
+>
+> **Ce document n'est ni vivant ni archivable, et il faut le dire plutôt que de choisir.**
+> `docs/archive/**` est réservé aux plans **exécutés** ; celui-ci ne l'a jamais été.
+>
+> **Ce qui est mesuré, dans le code, le 2026-09-21 :**
+>
+> - `ListRow` et `FilterChips` **n'existent pas** dans `src/components/mobile/`. Le baril
+>   `index.ts` porte même la trace inverse : « `MobileScreen` et `ListRow` ont été SUPPRIMÉS le
+>   2026-09-05 (C-10) ». Ce plan a été écrit **le lendemain de leur suppression**, et propose de
+>   recréer l'une des deux.
+> - Le seul commit qui le cite est `3bd8f864`, qui **ajoute ce fichier** et rien d'autre. Aucune
+>   de ses 52 cases n'a été cochée.
+> - Le correctif d'accès aux Habitudes qu'il embarquait, lui, a bien été livré — séparément, par
+>   `80916684`.
+>
+> 🔴 **Et sa prémisse ne tient plus.** L'interface mobile a été refondue du 2026-09-16 au 09-20
+> (`ab72cd39` et une trentaine de commits derrière) : tableau de bord, tâches, agenda, OKR,
+> catégories, habitudes, statistiques, recherche. Exécuter ce plan tel quel reviendrait à poser un
+> pattern sur des écrans qui n'existent plus sous cette forme.
+>
+> ⚠️ **Arbitrage à rendre par Axel**, et il n'est pas rendu ici : soit le pattern est repris contre
+> les écrans d'aujourd'hui, et ce plan se réécrit ; soit il est abandonné, et il part en archive
+> avec la raison. ❌ Ne pas le coller à une session en l'état.
+
 # Pattern mobile "pas de card" (ListRow + FilterChips) — plan d'implémentation
 
 > **Pour un exécutant agentique :** SOUS-SKILL REQUIS : utiliser

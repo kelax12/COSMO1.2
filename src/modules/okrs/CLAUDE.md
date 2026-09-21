@@ -20,6 +20,26 @@ Dashboard.
 
 ---
 
+### ⏱️ Le TEMPS OKR se calcule en base, depuis `kr_completions` (C-77)
+
+`get_work_time_stats` alimente `okrTime` sur `/statistics`. Depuis la mig. `136`, **appliquée en
+production le 2026-09-20** (ledger `20260920104729`, relu par `pg_get_functiondef` le 09-21), elle
+lit `kr_completions` et **plus** `history`.
+
+- 🔴 **Elle est restée commitée et DORMANTE dix-sept jours** (2026-09-03 → 09-20). Pendant ce
+  temps `okrTime` valait **0** pour tous les comptes réels, et la **démo affichait juste** : le
+  correctif du 09-02 n'avait réparé que la moitié cliente. ❌ Ne jamais valider un calcul à deux
+  implémentations sur la seule démo.
+- ⚠️ **Un KR sans `estimated_time` compte 0 minute, et c'est JUSTE.** Le temps OKR vaut
+  `Σ minutes estimées du KR` par complétion. Trois KR sur cinq du compte principal portent
+  `estimated_time = 0`, et ce sont eux qui portent les **95 complétions** d'août et septembre :
+  ces deux mois restent donc à zéro **après** le correctif.
+  ❌ **Ne jamais relire ce zéro comme une panne** — sans cette phrase, on ouvre `/statistics` sur
+  le mois courant, on voit zéro, et on rouvre un défaut qui n'existe plus. Ce qui donnerait un
+  chiffre à ces mois est une **saisie de durée**, pas du code.
+
+---
+
 ### ↩️ « Annuler » rend AUSSI le journal (C-01)
 
 `kr_completions` cascade depuis `okrs` **ET** `key_results`. `useRestoreOkr` ramenait l'objectif,

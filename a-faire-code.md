@@ -636,6 +636,12 @@ ne vive à deux endroits.
    relecture et à toute gate.
 5. ⚠️ **Ce dépôt a plusieurs sessions actives.** Relire le ledger avant d'appliquer une migration,
    et `git status` avant de commiter.
+6. ❌ **Ne jamais attribuer un delta à son propre geste sans revérifier `HEAD` aux deux bouts de la
+   mesure.** Une mesure avant / après ne vaut dans ce dépôt que si `HEAD` est identique aux deux
+   instants, ou si l'écart est expliqué. Le 2026-09-08, `HEAD` a bougé **deux fois** pendant une
+   seule passe (`d12a161` → `c9456ad` → `79e7fe0`), et une des trois améliorations mesurées
+   venait d'une session voisine. C'est le pendant de la règle 2 : publier les deux chiffres ne
+   suffit pas s'ils n'ont pas été pris sur le même arbre.
 
 ---
 
@@ -1030,7 +1036,23 @@ Les deux sont du code, et les deux tombent pile pendant le basculement (T-36) :
 - **Fini quand** : un script de bascule (ou une migration) vide les deux colonnes, et le cache porte
   une invalidation par TTL ou par version de secret.
 
-### C-71 · Les deux Edge Functions Stripe rendent 500 sur un identifiant périmé · **P2 · S**
+### C-71 · ~~Les deux Edge Functions Stripe rendent 500 sur un identifiant périmé~~ · **P2 · S** · ✅ clos, relu le 2026-09-21
+
+> ✅ **Le critère de sortie est tenu, et il a été relu dans le code, pas dans un statut.** Les deux
+> fonctions distinguent `resource_missing` du reste : `stripe-org-checkout` repart sur une
+> souscription neuve (`if (!isResourceMissing(err)) throw err`), `stripe-org-portal` fait de même
+> côté customer, et **toute autre erreur Stripe relance**, comme l'exige la règle « en cas de doute,
+> faire retenter Stripe, jamais deviner ».
+>
+> **Le test que le critère réclame existe pour chacune** : le verdict lui-même est éprouvé dans
+> `src/modules/billing/stripe-errors.test.ts`, et `src/stripe-org-404-guard.test.ts` (9 cas)
+> vérifie que les deux fonctions appellent bien le helper au bon endroit et ne relancent PAS ce
+> cas-là.
+>
+> ⚠️ **Ce que cette fermeture ne dit PAS.** La garde est **textuelle** — pas de Docker, pas de
+> stack locale — donc elle prouve la forme du code, jamais la réponse de Stripe. Et un code juste
+> dans le dépôt n'est pas un code en ligne : c'est `npm run check:edge` qui fait ce lien, et lui
+> seul. La mig. `140` (`C-08`) reste nécessaire : elle traite la DONNÉE, celui-ci traite le CODE.
 
 Détaché de C-08, dont la migration `140` traite la DONNÉE sans rendre le CODE tolérant.
 
@@ -1089,7 +1111,7 @@ juste** : ce sont des DUPLICATIONS, pas des annulations. Ne pas les « corriger 
   et `HabitCard` l'utilise, et un test refuse le retour du motif dans `src/components` (le témoin
   doit lister les deux duplications légitimes, sinon il redeviendra faux).
 
-### C-40 · Douze écrans affichent « il n'y a rien » pendant le premier chargement · **P2 · S**
+### C-40 · ~~Douze écrans affichent « il n'y a rien » pendant le premier chargement~~ · **P2 · S** · ✅ refermé le 2026-09-04 (7 corrigés, 5 écartés après relecture)
 
 > ✅ **Refermé le 2026-09-04.** Sept écrans corrigés, et **cinq écartés après
 > relecture** : ils ne mentent pas (deux rendent `null`, deux ne choisissent
@@ -1161,7 +1183,7 @@ commente pourquoi l'identifiant doit revenir.
 - **Fini quand** : le libellé dit combien d'événements partent, et un « Annuler » les restaure par
   `useRestoreEvent`.
 
-### C-48 · Un refus de dépendance de tâche dit deux choses différentes, aucune lisible · **P2 · S**
+### C-48 · ~~Un refus de dépendance de tâche dit deux choses différentes, aucune lisible~~ · **P2 · S** · ✅ clos le 2026-09-12 (mig. `137` en prod)
 
 > ✅ **CLOS le 2026-09-12** · mig. **137 APPLIQUÉE en production**, table de transition **retirée**,
 > les deux formulations vérifiées **dans le navigateur**, en français et en anglais.
@@ -1237,7 +1259,7 @@ le message tel quel plutôt qu'une erreur anonyme, parce que l'utilisateur peut 
   française **dans les deux modes**. ❌ Ne pas se contenter de traduire la chaîne du repository
   local : les deux chemins doivent converger, sinon la divergence revient au prochain message.
 
-### C-56 · Clavier ouvert, le haut de trois écrans devient inatteignable · **P2 · S**
+### C-56 · ~~Clavier ouvert, le haut de trois écrans devient inatteignable~~ · **P2 · S** · ✅ refermé le 2026-09-04 (UN seul des trois écrans l'était)
 
 > ✅ **Refermé le 2026-09-04**, mais **UN SEUL des trois écrans était cassé**.
 > Remesuré à 375×350 dans l'application : `BugReportModal` et `InviteOrJoinModal`
@@ -1584,7 +1606,30 @@ rendent leurs jumeaux `create` et `delete`, jamais eux-mêmes.
 
 ### C-72 · ~~Le report en masse d'une tâche en retard REFUSE aujourd'hui~~ · **P1 · S** · ✅ corrigé le 2026-09-12
 
-> ### 🟠 2026-09-15 · M-44 est TRANCHÉ contre le retrait de la pastille, et le geste est EN ATTENTE
+> ### 🔴 2026-09-21 · M-44 : l'arbitrage a été rendu, et le retrait est ENTRÉ DANS `main` quand même
+>
+> **Relu dans le code le 2026-09-21, pas dans un statut.** Le paragraphe ci-dessous décrivait un
+> fichier « modifié et non commité » dont il suffisait de défaire l'arbre. C'est **faux depuis le
+> 2026-09-16** : le retrait est dans `ab72cd39` (`feat(mobile): refonte UI mobile`), et
+> `src/components/task-table/OverdueQuickActions.tsx` à `HEAD` ne rend plus que « Demain » et
+> « Choisir ». Le commentaire qui porte l'argument démenti ci-dessous est, lui aussi, commité
+> (lignes 55-57).
+>
+> 🔴 **Donc l'inverse de ce qui était écrit : `main` porte le retrait, et c'est la production qui
+> n'est plus juste.** Le geste n'est plus un `git checkout` sur l'arbre d'une session voisine —
+> c'est **du code à réécrire**, et il n'a plus rien de manuel. Il reste à trancher par Axel,
+> parce que l'arbitrage du 09-15 a été rendu contre un changement qui n'était alors pas commité :
+> soit on remet la pastille et on retire le commentaire, soit on rouvre l'arbitrage en sachant
+> cette fois que `isOverdue` est **strictement** `< 0`.
+>
+> ⚠️ **Ce que cet écart enseigne, et qui vaut plus que l'item** : un arbitrage rendu sur un
+> fichier non suivi ne protège rien. Six jours ont passé entre la décision et sa contradiction,
+> et aucune garde ne pouvait le voir, puisque le produit compile et que la suite passe.
+>
+> *L'arbitrage du 2026-09-15 est conservé ci-dessous à sa date : son raisonnement reste juste,
+> c'est seulement sa description de l'état du dépôt qui a cessé de l'être.*
+>
+> ### 🟠 2026-09-15 · l'arbitrage, conservé à sa date
 >
 > `src/components/task-table/OverdueQuickActions.tsx` est **modifié et non commité** dans l'arbre
 > de travail, par **une autre session**. Le changement retire le bouton de report rapide
@@ -1605,17 +1650,13 @@ rendent leurs jumeaux `create` et `delete`, jamais eux-mêmes.
 >
 > **Conclusion : C-72 avait raison, le produit est juste, la pastille reste.**
 >
-> ⏸️ **Le geste n'est PAS fait**, sur décision d'Axel du 2026-09-15 : le fichier appartient à
+> ⏸️ **Le geste n'était PAS fait** au 2026-09-15, sur décision d'Axel : le fichier appartenait à
 > l'arbre d'une autre session, et l'indexer est exactement ce qui a produit trois commits
-> `fix(build)` les 2026-09-13 et 09-14. La commande, à jouer quand cette session-là aura rendu
-> la main :
+> `fix(build)` les 2026-09-13 et 09-14. La commande écrite alors était
+> `git checkout -- src/components/task-table/OverdueQuickActions.tsx`.
 >
-> ```bash
-> git checkout -- src/components/task-table/OverdueQuickActions.tsx
-> ```
->
-> ⚠️ **Tant que ce n'est pas fait, `main` est juste et l'arbre local ne l'est pas.** Rien n'est
-> déployé : le changement n'existe dans aucun commit.
+> 🔴 **Elle ne s'applique plus** : il n'y a plus rien à défaire dans l'arbre, le retrait est à
+> `HEAD`. La phrase « tant que ce n'est pas fait, `main` est juste » s'est inversée le 09-16.
 
 > 🔴 **L'ÉNONCÉ CI-DESSOUS ÉTAIT FAUX, et c'est le seul renseignement qui compte ici.** Le
 > produit n'a jamais refusé aujourd'hui. **C'est le test qui comparait deux horloges.**
@@ -1694,7 +1735,7 @@ seulement à demain — c'est-à-dire l'inverse du geste que l'écran propose.
 
 ## 2. Dette structurelle
 
-### C-09 · 12 fichiers au-dessus de 600 lignes, budget 9 190 · **P2 · XL**
+### C-09 · ~~12 fichiers au-dessus de 600 lignes, budget 9 190~~ · **P2 · XL** · ✅ fait le 2026-09-05 (`KNOWN_OVERSIZED` vide, budget **0**)
 
 > ✅ **Fait le 2026-09-05.** `KNOWN_OVERSIZED` est **vide**, `OVERSIZED_BUDGET` vaut **0**, et
 > l'invariant de juin 2026 tient à nouveau : aucun fichier de `src/` au-dessus de 600 lignes.
@@ -1749,7 +1790,7 @@ répondait sans mesurer, ici une garde qui mesurait sans être lue.
   ✅ Les deux conditions sont tenues : liste vide, budget à 0. Le message d'échec de la garde ne parle
   plus d'un stock à ne pas dépasser mais d'une frontière à chercher.
 
-### C-10 · Deux primitives livrées sans aucun consommateur · **P3 · S**
+### C-10 · ~~Deux primitives livrées sans aucun consommateur~~ · **P3 · S** · ✅ fait le 2026-09-05 (`MobileScreen` et `ListRow` supprimés)
 
 > ✅ **Fait le 2026-09-05** · `MobileScreen` et `ListRow` **supprimés**, conformément à
 > l'arbitrage du 2026-09-03 (§0). 163 lignes de composant + 67 lignes de test, `src/` compile et
@@ -1995,7 +2036,7 @@ contre 96-98 sur toutes les autres pages du même build.
 > job `lighthouse` n'a pas rendu deux passes au-dessus de 90, on sait que le travail au repos a
 > disparu, pas que la page est passée. Relève : `a-faire-manuel.md` **M-39**.
 
-### C-13 · T-47 · trancher `vendor-sentry` sur le chemin critique · **P3 · S**
+### C-13 · T-47 · ~~trancher `vendor-sentry` sur le chemin critique~~ · **P3 · S** · ✅ tranché ET exécuté le 2026-09-04 (366,3 → 317,2 ko)
 
 > ✅ **Tranché ET exécuté le 2026-09-04.** La décision demandée est prise : Sentry est
 > **différé après le premier rendu**. Mesure sur build de prod avec `VITE_SENTRY_DSN` :
@@ -2297,7 +2338,7 @@ personne ne l'a jamais vu. Toute l'ambiance venait des trois aplats opaques flou
   de 300 ms au repos **sans** rien neutraliser. ❌ Ne jamais remettre un `filter: blur()` animé dans
   le premier écran de `/`.
 
-### C-68 · `/entreprise-presentation` bloque autant, pour une cause que l'audit n'a PAS su isoler · **P2 · M**
+### C-68 · ~~`/entreprise-presentation` bloque autant, pour une cause que l'audit n'a PAS su isoler~~ · **P2 · M** · ✅ corrigé le 2026-09-05 (0 ms sur trois passes)
 
 > ✅ **corrigé le 2026-09-05.** Bimodalité expliquée, cause nommée, page mesurée à
 > **0 ms sur trois passes consécutives** avec la sonde de garde. Le mécanisme est
@@ -2381,7 +2422,7 @@ C-67.
 
 ## 4. Scalabilité
 
-### C-15 · Le tableau de bord charge le jeu de données complet · **P3 · M**
+### C-15 · ~~Le tableau de bord charge le jeu de données complet~~ · **P3 · M** · ✅ tranchée le 2026-09-08 : on ne fait rien, seuils de réouverture écrits
 
 > ✅ **tranchée le 2026-09-08** · on ne fait rien, et pour la première fois sur une mesure plutôt
 > que sur une intuition. `SCALABILITY.md` §9quater a mesuré la concurrence : le plafond de montée
@@ -2400,7 +2441,7 @@ Aucune pagination : la page lit tout et agrège côté client. **Mesuré le 2026
   rien tant que X » est écrite avec son seuil de réouverture (comme T-01). → **la seconde branche**,
   ci-dessus.
 
-### C-16 · La mesure à volume est mono-session · **P3 · M**
+### C-16 · ~~La mesure à volume est mono-session~~ · **P3 · M** · ✅ fermée le 2026-09-08 (`SCALABILITY.md` §9quater)
 
 > ✅ **fermée le 2026-09-08** · le workflow `scalability-volume` joue désormais N sessions
 > parallèles (`-f sessions=1,2,4,8,16`, N paramétrable), sur des **acteurs distincts**, et rend un
@@ -2756,7 +2797,7 @@ organisations de la prod ont d'autres membres que leur propriétaire.
 - ⚠️ **Le correctif n'est pas en production tant que `supabase functions deploy delete-account`
   n'a pas été joué** : un push ne déploie aucune Edge Function. Cf. `a-faire-manuel.md`.
 
-### C-30 · Supprimer un compte propriétaire détruit les preuves L215-1 et L221-28 de son organisation · **P1 · M**
+### C-30 · ~~Supprimer un compte propriétaire détruit les preuves L215-1 et L221-28 de son organisation~~ · **P1 · M** · ✅ clos le 2026-09-12 (mig. `138` en prod)
 
 > ✅ **CLOS le 2026-09-12 — la mig. `138` est APPLIQUÉE en prod**, ledger relu en base avant et après (une seule entrée, pas de doublon). Les deux tables sont en `ON DELETE SET NULL` sur `org_id`, vérifié sur `pg_constraint` : `renewal_notices` porte une clé de substitution `id` et le couple `(org_id, period_end)` redescendu en **contrainte UNIQUE** — c'est elle que vise l'`ON CONFLICT` de la Edge Function, et le `23505` continue bien d'arriver (cas V1). Le trigger d'immuabilité de `withdrawal_consents` autorise désormais le seul détachement `org_id → NULL`, toutes autres colonnes inchangées.
 >
@@ -2793,7 +2834,7 @@ motif, appliqué à une seule des trois tables de preuve.
   `payment_records`), une migration numérotée le pose, et la vérification est faite acteur par
   acteur dans une transaction annulée. À faire **avant** la bascule Stripe live (C-08).
 
-### C-31 · `report-bug` est un relais d'e-mail ouvert, sans aucune limite de débit · **P2 · M**
+### C-31 · ~~`report-bug` est un relais d'e-mail ouvert, sans aucune limite de débit~~ · **P2 · M** · ✅ fermé le 2026-09-12 (v11 en ligne, `429` au 11ᵉ appel)
 
 > ✅ **FERMÉ le 2026-09-12.** Les trois maillons sont posés, dans l'ordre imposé : mig. `139` appliquée en prod, secret `RATE_LIMIT_SALT` posé (M-34), puis **`report-bug` déployée en v11 le 2026-09-12 à 23:08 UTC**. 3/heure/compte et 10/jour/IP, fenêtre glissante, décision atomique. **Aucune IP en base** (hachage salé). La borne a été jouée **sur la fonction en ligne** : le 11ᵉ appel rend `429`.
 
@@ -3132,7 +3173,7 @@ nommait depuis longtemps — le helper `safeParse` / `readJson` existait déjà.
   dépôt ont été inventoriés un par un — tous portent un accès au stockage déjà protégé, aucun
   n'avale un échec de mutation.
 
-### C-62 · Une centaine de messages d'erreur atteignent l'écran sans passer par aucun catalogue · **P2 · M**
+### C-62 · ~~Une centaine de messages d'erreur atteignent l'écran sans passer par aucun catalogue~~ · **P2 · M** · ✅ refermé le 2026-09-04 (94 des 98, 4 dispensés nommés)
 
 > ✅ **Refermé le 2026-09-04.** 94 des 98 `throw new Error('<littéral>')` de
 > `src/modules` passent à `makeApiError('<code>')` : le code sert de clé, le
@@ -3255,7 +3296,17 @@ C-61. L'utilisateur n'a alors aucun geste disponible.
 
 ## 6. i18n
 
-### C-20 · Le contenu éditorial est monolingue · **P2 · XL**
+### C-20 · ~~Le contenu éditorial est monolingue~~ · **P2 · XL** · ✅ clos le 2026-09-08
+
+> ✅ **Les deux moitiés du critère sont tenues, et relues dans le code le 2026-09-21, pas dans un
+> statut.** Le contenu porte sa locale — `src/content/use-cases.mjs` et les articles de
+> `src/content/blog/` sont structurés par `locales: { fr, en }` — et `src/i18n/seo-urls.mjs`
+> déclare `INDEXABLE_LOCALES = ['fr', 'en']` depuis `3c9501a4` (2026-09-08). L'ordre imposé par
+> `docs/SEO.md` a bien été suivi : le contenu d'abord, la locale ensuite.
+>
+> ⚠️ **Ce que cette fermeture ne dit PAS** : `es` figure toujours dans `route-slugs.json` sans
+> être ni servie ni indexable, et la **qualité** des traductions n'est mesurée par rien — c'est
+> `M-50`, pas du code. L'item ferme sur son critère écrit, pas sur « l'i18n est finie ».
 
 11 articles de blog (`src/content/blog/*.mjs`) et 4 pages cas d'usage (`src/content/use-cases.mjs`)
 n'ont **aucune dimension de locale**, soit 15 des 24 pages prérendues. C'est ce qui interdit
@@ -3982,7 +4033,7 @@ faut donc pas croire vérifiées :
 > Mesure de sortie : `selectionCount` passe de **0 à 1** sur un clic, et le nom relevé est
 > désormais « Sélectionner « … » ». Les 16 cas du harnais restent verts.
 
-### C-57 · Cibles tactiles sous 44 px : 16 × 16 px pour cocher une tâche sur l'accueil · **P2 · M**
+### C-57 · ~~Cibles tactiles sous 44 px : 16 × 16 px pour cocher une tâche sur l'accueil~~ · **P2 · M** · ✅ refermé le 2026-09-04 · 🔴 sa garde est rouge depuis le 09-10, et c'est **C-73**, pas celui-ci
 
 > 🔴 **Clos, et sa garde est ROUGE depuis le 2026-09-10** — les deux sont vrais. Ce que C-57 a
 > traité (cases à cocher de `/dashboard` et `/entreprise`, boutons d'`/okr`) tient ; ce qui échoue

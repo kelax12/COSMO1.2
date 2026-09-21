@@ -1,3 +1,7 @@
+> ⚠️ **ARCHIVE — plan/spec exécuté, instantané du 2026-09-09, non maintenu.**
+> **Archivé le 2026-09-21.** Le statut « validée, NON implémentée » porté plus bas décrit le
+> 2026-09-09 : la vague 1 a été livrée les 09-09 et 09-10.
+> État courant : [`src/modules/categories/CLAUDE.md`](../../../../src/modules/categories/CLAUDE.md).
 # Sous-catégories hiérarchiques · spécification de la vague 1
 
 > **Statut** : spécification validée, non implémentée. Écrite le 2026-09-09.

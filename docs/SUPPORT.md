@@ -25,6 +25,25 @@
 
 ## 🕳️ Angles morts · ce que ce document NE mesure PAS (2026-09-16)
 
+> ## ✅ Relu le 2026-09-21 · **une ligne de ce tableau est désormais OUTILLÉE**
+>
+> La passe du 2026-09-20 au soir (`2b4c4304`) a traité les 30 items du § 12
+> d'[`a-faire-code.md`](../a-faire-code.md), qui sont nés de ces angles morts.
+>
+> ❌ **Le tableau ci-dessous n'est PAS réécrit.** Il décrit le 2026-09-16, et c'est sa date qui
+> lui donne sa valeur : un angle mort nommé est ce qui a permis de l'outiller. Ce bandeau dit ce
+> qui le couvre aujourd'hui, et surtout **ce que la garde ne prouve pas** — la moitié qui manque
+> d'habitude.
+>
+> | Angle mort | Couvert par | 🔴 Ce que ça ne prouve PAS |
+> |---|---|---|
+> | AM-1 · AM-3 | Mig. `150` (table **sans aucune donnée personnelle**), `report-bug` compte sans jamais bloquer l'envoi, encart « Support » sur `/admin` à trois états (`null` ≠ `0`) — `C-110` | 🔴 **La mig. `150` n'est PAS appliquée**, relu au ledger le 2026-09-21 (dernière entrée : `20260920105522`). `/admin` affiche « compteur non installé » jusque-là. C'est `M-57`, et le dépôt a déjà payé une migration dormante **dix-sept jours** (`C-77`). ⚠️ **Et `report-bug` doit être REDÉPLOYÉE** : sa source a changé, donc `check:edge` signale une dérive **légitime** (`M-61`) |
+>
+> ⚠️ **Les lignes du tableau qui ne sont pas citées ici restent OUVERTES**, et une garde posée
+> n'est pas un angle mort fermé : `M-56` (« ce que chaque angle mort coûte en points ») n'est
+> toujours pas tranché, donc aucune note ne bouge sur cette base.
+
+
 > **Pourquoi cette section existe.** Demande d'Axel, après le constat qui a ouvert la journée :
 > `CLAUDE.md` a pesé 150 ko sans qu'aucune note ne bouge, parce qu'il était **cité comme source**
 > par les audits et **jamais mesuré par eux**. Il était le mètre, jamais l'objet.

@@ -1,3 +1,7 @@
+> ⚠️ **ARCHIVE — plan/spec exécuté, instantané du 2026-08-15, non maintenu.**
+> **Archivé le 2026-09-21.** L'aiguillage perso / entreprise est en ligne depuis août 2026.
+> Le statut « validé, en implémentation » porté plus bas décrit le 2026-08-15.
+> État courant : [`src/pages/landing/CLAUDE.md`](../../../../src/pages/landing/CLAUDE.md).
 # Landing — track Entreprise (l'aiguillage)
 
 **Date** : 2026-08-15 · **Statut** : validé, en implémentation

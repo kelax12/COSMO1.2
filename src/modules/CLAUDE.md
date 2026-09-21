@@ -99,6 +99,9 @@ src/modules/{module}/
 | UI / Filtres | `ui-states` |
 | Dashboard | `tasks`, `habits`, `events`, `kr-completions`, `okrs`, `auth` |
 
+🔴 **Un baril importé pour un TYPE s'importe en `import type`**, sinon le module entier est
+chargé en valeur. Sept cycles ainsi trouvés le 2026-09-20 — `npm run check:cycles`, C-103.
+
 ---
 
 ## Hooks essentiels

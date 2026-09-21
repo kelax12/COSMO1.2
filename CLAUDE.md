@@ -15,7 +15,7 @@ fausses restées en place pendant des jours parce que le fichier était trop gro
 ✅ Cliquet : `npm run check:docs` refuse ce fichier au-delà de son plafond.
 
 ✅ **`C-77` est REFERMÉ le 2026-09-20** : la mig. `136` est **appliquée en production** (ledger
-`20260920105113`), vérifiée par `pg_get_functiondef` et non par le ledger. `okrTime` a valu **0**
+`20260920104729`), vérifiée par `pg_get_functiondef` et non par le ledger. `okrTime` a valu **0**
 sur `/statistics` pour tous les comptes réels pendant dix-sept jours pendant que la migration
 dormait, commitée, dans le dépôt.
 ⚠️ **Un KR sans `estimated_time` compte toujours 0 minute**, et c est juste : le temps OKR vaut
@@ -147,9 +147,11 @@ Détail des options : [`docs/AGENT-AJOUTER-TACHE.md`](./docs/AGENT-AJOUTER-TACHE
 
 ## Scripts
 
-> ⚠️ **Cette liste ne porte QUE les commandes.** Ce que chaque garde mesure, ses pièges et ses
-> mesures datées vivent dans le doc de son domaine, cité en fin de ligne. Cette section a pesé
-> 281 lignes pour 20 commandes.
+> ⚠️ **Cette liste ne porte que les commandes du QUOTIDIEN.** Les **36 gardes** (`check:*`,
+> `i18n:*`, `validate:*`) sont descendues dans [`scripts/CLAUDE.md`](./scripts/CLAUDE.md) le
+> 2026-09-21, avec ce que chacune regarde et où est son détail : la racine était à 96,7 % de son
+> plafond et **24 gardes posées le 2026-09-21 n'y figuraient pas**. Cette section a pesé 281 lignes
+> pour 20 commandes.
 
 ```bash
 npm run dev        # Serveur dev local (port 5173)
@@ -163,25 +165,12 @@ npm run test:watch # Vitest en mode watch
 npm run test:coverage       # + couverture v8, seuils par fichier → docs/TESTING.md
 npm run test:rls            # Intégration RLS (stack locale)      → docs/TESTING.md
 npm run test:e2e            # Playwright (+ :ui, :report)         → e2e/CLAUDE.md
-npm run validate:migrations # Garde statique sur les .sql (CI)    → docs/SECURITY.md
-npm run check:rls           # Invariants RLS (CI)                 → docs/SECURITY.md
-npm run check:drift         # Dérive repo ↔ prod (2 étapes)       → docs/SECURITY.md
-npm run check:migration-coverage # Fichiers ↔ ledger PROD (CI)    → docs/SECURITY.md
-npm run check:edge          # Code DÉPLOYÉ vs dépôt (CI)          → supabase/functions/CLAUDE.md
-npm run check:bundle        # Budget de bundle (CI)               → docs/PERFORMANCE.md
-npm run analyze:entry       # Qui pèse dans le chunk d'entrée     → docs/PERFORMANCE.md
-npm run images:check        # Images non optimisées (pas une gate)→ docs/PERFORMANCE.md
-npm run check:mail          # SPF / DKIM / DMARC (pas une gate)   → docs/DEPLOYMENT.md
-npm run check:legal         # Tableau de conformité               → docs/LEGAL.md
-npm run check:docs          # Plafonds des CLAUDE.md (CI)         → scripts/CLAUDE.md
-npm run check:deploy        # Commit SERVI en prod vs depot (CI)   → docs/DEPLOYMENT.md
-npm run i18n:check          # Parité des clés fr ↔ en (CI)        → docs/I18N.md
-npm run i18n:scan           # Chaînes en dur, cliquet à 0 (CI)    → docs/I18N.md
-npm run i18n:identical      # Valeurs en == fr, cliquet à 0 (CI)  → docs/I18N.md
-npm run i18n:namespaces     # Catalogues rendus par le SHELL      → docs/I18N.md
-npm run profile:landing     # Profil du fil principal (Playwright)→ docs/PERFORMANCE.md
 npm run cosmo               # CLI données réelles (cf. plus haut)
 ```
+
+> 🛡️ **Les 36 gardes, une ligne chacune** : [`scripts/CLAUDE.md`](./scripts/CLAUDE.md) § Inventaire.
+> Quatre d'entre elles ne mesurent rien tant qu'un geste manuel n'est pas fait (`C-88`, `C-89`,
+> `C-105`, `C-110`) — § 9 d'[`a-faire-manuel.md`](./a-faire-manuel.md).
 
 > Le build prod **drope** `console.*` et `debugger` (`vite.config.ts → esbuild.pure/drop`).
 > Les erreurs remontent via Sentry (`VITE_SENTRY_DSN`).
@@ -251,7 +240,10 @@ schémas par module. Câblé dans les `mutationFn` create/update.
 ### ESLint
 
 - Config `eslint.config.js`. **0 erreur** avant chaque commit.
-- Ignorés : `dist`, `src/components/showcase/**`, `e2e/**`, `playwright.config.ts`
+- Ignorés : `dist`, `coverage`, `coverage-tooling`, `src/__test__/**`, `.agents/**`, `.claude/**`, `.worktrees/**`
+  🔴 **Relu dans `eslint.config.js` le 2026-09-21 : cette ligne disait l'inverse.** `e2e/**`,
+  `src/components/showcase/**` et `supabase/functions/**` **ENTRENT** dans ESLint depuis `C-102`
+  (2026-09-20). La dette a été mesurée avant de les faire entrer : 1 erreur, 1 avertissement.
 - Warnings tolérés : Fast refresh sur les contextes + fichiers ui shadcn (préexistants)
 
 ---

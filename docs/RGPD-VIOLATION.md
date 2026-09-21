@@ -25,6 +25,19 @@ pas d'improviser.
 
 ## 🕳️ Angles morts · ce que ce document NE mesure PAS (2026-09-16)
 
+> ## 🟠 Relu le 2026-09-21 · **aucune de ces lignes ne se ferme par du code**
+>
+> La passe du 2026-09-20 au soir a outillé la rétention (`check:retention`, `C-93`), l'effacement
+> (`check:erasure`, `C-92`) et la portabilité (`check:portability`, `C-94`) — c'est-à-dire
+> `RGPD.md` et `RGPD-REGISTRE.md`. **Rien ici.** Une procédure de crise ne se prouve qu'en la
+> parcourant : c'est `M-49`, et elle ne l'a **jamais** été.
+>
+> 🔴 **Le second angle mort ne se ferme pas non plus par l'exercice** : le délai de 72 h court à
+> partir d'une **détection** que rien ne mesure. Un registre des violations **vide** ne distingue
+> pas « aucune violation » de « aucune détection », et ces deux états appellent des décisions
+> opposées.
+
+
 > **Pourquoi cette section existe.** Demande d'Axel, après le constat qui a ouvert la journée :
 > `CLAUDE.md` a pesé 150 ko sans qu'aucune note ne bouge, parce qu'il était **cité comme source**
 > par les audits et **jamais mesuré par eux**. Il était le mètre, jamais l'objet.
