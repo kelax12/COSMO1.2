@@ -85,17 +85,38 @@ une mesure qu'on n'a pas prise, et `M-56` n'est toujours pas tranché.
 | `docs/DEMO-DATA-EXPORT.md` | dans `docs/`, donc **vivant** | Il se déclarait lui-même « à lire comme une archive ». Parti en `docs/archive/` |
 | 5 plans / specs de `docs/superpowers/` | vivants, **0 case cochée** | Exécutés et en production. Archivés. ⚠️ **Les cases n'ont jamais été cochées : le code fait foi contre elles** |
 
-### Ce qui a été refusé, et pourquoi
+### Les trois refus de la matinée, et ce qu'ils ont donné une fois levés
 
-- ❌ **Recoter `a-faire-code-risques.md`.** Il cote 66 items sur 111 et neuf de ses lignes P0/P1
-  sont fermées. Le recompter supposerait le chiffrage de `M-56`. Il porte donc un bandeau qui dit
-  **ce qui a bougé**, jamais ce que ça vaut.
-- ❌ **Réécrire les tableaux « 🕳️ Angles morts » des 21 documents.** Ils décrivent le 2026-09-16,
-  et c'est leur date qui leur donne leur valeur : un angle mort **nommé** est ce qui a permis de
-  l'outiller. Chacun reçoit un bandeau disant ce qui le couvre **et ce que la garde ne prouve pas**.
-- ❌ **Archiver le plan de pattern mobile.** `docs/archive/**` est réservé aux plans **exécutés** ;
-  celui-là ne l'a jamais été, et sa prémisse a changé. Il porte un bandeau, et l'arbitrage reste
-  à rendre.
+Ils l'ont été l'après-midi même, sur demande d'Axel. **Les trois étaient défendables et les trois
+ont produit quelque chose**, ce qui mérite d'être écrit : un refus prudent n'est pas gratuit.
+
+| Refusé le matin | Fait l'après-midi | Ce que ça a rendu |
+|---|---|---|
+| **Recoter `a-faire-code-risques.md`** — il aurait fallu le chiffrage de `M-56` | ✅ **Recoté sur les 111 items** | 🔴 **44 items étaient CLOS dans leur corps sans que leur titre le dise.** Le décompte passe de « 58 ouverts sur 66 » à **8 ouverts sur 111**. Coter d'abord aurait produit un classement soigneux de **cinquante problèmes résolus** |
+| **Réécrire les 23 tableaux « Angles morts »** — leur date leur donne leur valeur | ✅ **95 lignes réécrites**, mais **seulement la 4ᵉ colonne** | Elle posait « Outillable ? », une **prédiction** du 09-16 ; elle porte maintenant l'état réel, la garde, et 🔴 ce qu'elle ne prouve pas. **L'énoncé, lui, n'est pas touché** : c'est ce qui explique pourquoi la garde existe. 73 lignes outillées, **22 toujours ouvertes**, dont **8 que rien ne porte** |
+| **Archiver le plan de pattern mobile** — `archive/` est pour les plans exécutés | ✅ **Archivé comme ABANDONNÉ**, avec sa raison | `docs/archive/` porte désormais les deux natures. 🔴 **Un plan abandonné se range, il ne se supprime pas** : ce qu'on a décidé de ne pas faire est une information, et sans elle le même plan se réécrit dans six mois |
+
+🔴 **Le renseignement de la journée n'est aucun de ces trois-là.** Une fois les statuts vrais,
+**cinq des huit items ouverts ne se ferment pas en écrivant du code** : trois attendent un geste
+d'Axel (`M-08`, `M-40`/`M-52`, les réglages de console), un attend une décision. Le travail de
+développement disponible immédiatement, c'est **`C-111`** (le job `e2e` rouge, 8 défauts produit
+de cibles tactiles mesurés), **`C-69`** et **`C-07`**.
+
+⚠️ **`M-56` n'est rendu qu'à moitié, et c'est dit sur la ligne.** Classer des **items** est fait ;
+**tarifer un angle mort en points de note d'audit** ne l'est pas, et les 22 lignes encore ouvertes
+ne pèsent sur aucune note. Ce sont deux gestes différents.
+
+### La migration `150` est appliquée (`M-57`)
+
+Ledger `20260921075529`. Prouvée avant en transaction annulée — insertion, catégorie hors
+énumération refusée (`23514`), non-admin refusé (`42501`), droits effectifs — puis l'annulation
+elle-même vérifiée, puis relue **au catalogue** et jamais au ledger. Plus aucune migration du dépôt
+ne dort.
+
+🔴 **Et le compteur rend ZÉRO, ce qui n'est pas une mesure du support** : `report-bug` n'est pas
+redéployée (`M-61`), donc rien n'appelle `record_support_report`. `/admin` passe de « non
+installé » à **0**, et `0` se lit « aucun rapport » alors que la vérité est « rien ne compte
+encore ». Des trois états que `C-110` distingue, c'est le plus trompeur.
 
 ⚠️ **Ce que cette passe ne prouve pas** : elle a relu des affirmations, pas le produit. Un document
 peut être exact et décrire un écran cassé. Et `C-111` — le job `e2e` **rouge sur `main`** — n'a

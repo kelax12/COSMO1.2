@@ -1,41 +1,11 @@
 # Tableau de risque · `a-faire-code.md`
 
-**Dressé le 2026-09-03**, à partir des 66 items C-01 → C-66 de
-[`a-faire-code.md`](./a-faire-code.md). **8 étaient clos**, **58 ouverts** et notés ci-dessous.
-
-> ## 🔄 Relu le 2026-09-21 · **ce tableau cote 66 items sur 111, et neuf de ses lignes les plus hautes sont fermées**
->
-> ⚠️ **Il n'est PAS recoté ici, et c'est délibéré.** Recoter supposerait un chiffrage que personne
-> n'a fait : c'est `M-56` (« arbitrer ce que chaque angle mort coûte en points »), et poser une
-> note sans lui serait le « avant » recopié au lieu d'être relu, pour la cinquième fois dans ce
-> dépôt. Ce bandeau dit donc **ce qui a bougé**, jamais ce que ça vaut.
->
-> **1 · Son périmètre s'est réduit de moitié sans que rien ne le dise.** Il cote `C-01` → `C-66`.
-> Le dépôt porte aujourd'hui **111 identifiants**, `C-1` → `C-111`. Les **45 suivants ne sont
-> cotés nulle part**, dont les 30 angles morts du § 12 et `C-111` (le job `e2e` rouge sur `main`).
->
-> **2 · Neuf lignes de 🔴 P0 et 🟠 P1 sont refermées** — relu dans `a-faire-code.md` le 09-21 :
->
-> | Coté ici | État réel |
-> |---|---|
-> | `C-35` **P0, risque 25** | ✅ refermé le 2026-09-13, run vert, 8 fonctions comparées |
-> | `C-39` **P0, risque 10** | 🟢 parcours joué le 2026-09-14, mig. `138` en prod |
-> | `C-34` P1 · `C-28` P1 | ✅ fermés le 2026-09-13 (secret posé et prouvé · canal LU par un humain) |
-> | `C-53` P1 | ✅ corrigé le 2026-09-05 |
-> | `C-31` P1 · `C-56` P1 · `C-57` P1 · `C-12` P1 | ✅ fermés entre le 09-04 et le 09-12 |
->
-> **3 · `C-65` (P0, risque 20) n'est ni ouvert ni clos** : le code est fini et déployé, l'épreuve
-> contre Stripe ne l'est pas. C'est `M-08`, et aucune cotation ne remplace une carte réelle.
->
-> **4 · Restent ouverts et cotés ici** : `C-37`, `C-45`, `C-08`, `C-47`, `C-46`, `C-05`. Ce
-> sont les seules lignes de ce tableau qu'on peut lire aujourd'hui sans correction.
->
-> 🔴 **Et l'hypothèse de cotation reste celle du § suivant**, c'est-à-dire **pas celle d'aujourd'hui** :
-> elle suppose 10 000 comptes gratuits, 1 000 payants et un encaissement actif. La production
-> COSMO tourne toujours sur une clé Stripe de **test**.
+**Dressé le 2026-09-03** sur les 66 items C-01 → C-66, **RECOTÉ le 2026-09-21** sur les **111**
+de [`a-faire-code.md`](./a-faire-code.md), à la demande d'Axel. C'est la réponse à **`M-56`**.
 
 Ce fichier ne porte **aucun statut** : il ne fait que classer. Le statut de chaque item reste dans
 `a-faire-code.md`, la sécurité dans `faille.md`, les gestes manuels dans `a-faire-manuel.md`.
+
 
 ---
 
@@ -131,6 +101,77 @@ une question de droit : détail et la seconde option dans C-65.
 | ⚪ **P3** | **Fond de tableau, ou arbitrage à écrire.** Un arbitrage qui ne se rend pas devient un oubli. |
 
 ---
+
+## Recotation du 2026-09-21 — **8 items ouverts sur 111**
+
+> 🔴 **Ce qui a rendu cette recotation possible n'est pas une méthode, c'est un ménage.**
+> La cotation du 2026-09-03 portait « 58 ouverts sur 66 ». Le décompte réel au 2026-09-21 est
+> **8 ouverts sur 111**. L'écart ne vient pas de 50 corrections faites ce jour : il vient de ce que
+> **44 items étaient clos dans leur corps sans que leur titre le dise** — 13 corrigés le matin du
+> 09-21, **23 de plus** l'après-midi, 8 déjà marqués. Le sommaire du fichier les donnait tous pour
+> ouverts, et ce tableau les cotait.
+>
+> ❌ **C'est le défaut que ce dépôt paie le plus souvent** : un statut écrit à deux endroits finit
+> par diverger, et c'est toujours le plus visible qui a tort. Coter avant de vérifier aurait produit
+> un classement soigneux de cinquante problèmes résolus.
+
+### Ce qui reste, coté
+
+**Risque = Gravité × Exposition**, barème inchangé (§ Méthode), **hypothèse de charge inchangée**
+et toujours pas celle d'aujourd'hui.
+
+| Item | Défaut résiduel | G | E | Risque | Niveau | Ce qui le débloque |
+|---|---|---|---|---|---|---|
+| **C-111** | **Le job `e2e` est ROUGE sur `main`** — 25 échecs / 204, les quatre autres jobs verts. Et il ne s'agit pas de bruit : **8 défauts produit mesurés** (cibles tactiles 24 × 24 px sur `/settings`, 36 px sur `/okr`, 39 × 39 px sur `/habits`) | 4 | 5 | **20** | 🟠 **P1** | du code · **le seul des huit qu'une session peut traiter de bout en bout aujourd'hui** |
+| **C-69** | La fenêtre produit du hero tourne toutes les 2,5 s, **sans pause, sans arrêt au survol ni au focus, et sans égard pour `prefers-reduced-motion`**. Relu dans `AppWindowShowcase.tsx` le 09-21 : `setInterval`, gaté par le seul `useInView` | 4 | 4 | **16** | 🟠 **P1** | du code. WCAG 2.2.2, donc opposable sous l'EAA dès qu'on vend |
+| **C-45** | `loginWithGoogle` vise des URL que l'allowlist Supabase ne couvre **peut-être** pas. Le code EST en production ; le réglage de console qui le rend valide n'a jamais été vérifié | 3 | 4 | **12** | 🟠 **P1** | un **geste de console** (`M-15`/`M-16`/`M-17`). ⚠️ Le volet outillable est `C-88`, dont la garde **échoue exprès** faute de référence (`M-58`) |
+| **C-24** | Le quatrième audit d'accessibilité — **VoiceOver iOS sur un appareil réel** — n'a jamais été passé. Les trois autres l'ont été le 2026-09-03 | 4 | 3 | **12** | 🟡 **P2** | un **appareil et une heure** : `M-40` (le jouer) et `M-52` (lui donner une date) |
+| **C-65** + **C-39** | **L'épreuve contre Stripe n'a jamais eu lieu.** Le code de remboursement est écrit, testé et **déployé** (`stripe-org-refund`) ; rien n'a jamais été joué contre une vraie carte | 4 | 2 | **8** | 🟡 **P2** | `M-08`, et rien d'autre. ✅ **La moitié « n'importe quel admin supprime l'entreprise » de C-39 est FERMÉE** : relu en base le 09-21, `delete_organization` exige `owner_id = auth.uid()` (`not_org_owner`) **et** refuse tant qu'un abonnement est actif |
+| **C-07** | 17 feuilles animées n'utilisent toujours pas `useSheetMotion()` / `useSheetDrag()`. ⚠️ Les **5 réellement cassées** sous `prefers-reduced-motion` sont corrigées, et un cliquet interdit la récidive | 2 | 3 | **6** | ⚪ **P3** | du code, sans urgence : c'est de la dette, plus un défaut |
+| **C-58** | React 19 + `react-router` 8 : **arbitrage différé**, seuil de reprise écrit (283,5 ko) | 2 | 1 | **2** | ⚪ **P3** | une décision d'Axel. L'étude est **fraîche**, vérifiée par `npm run check:study` |
+
+### Synthèse au 2026-09-21
+
+| Niveau | Items | Dont traitables par du code seul |
+|---|---|---|
+| 🔴 **P0** | **0** | — |
+| 🟠 **P1** | 3 · `C-111` `C-69` `C-45` | **2** |
+| 🟡 **P2** | 2 · `C-24` `C-65`+`C-39` | **0** |
+| ⚪ **P3** | 2 · `C-07` `C-58` | 1 (+1 arbitrage) |
+| ✅ clos | **101** | — |
+
+🔴 **Le résultat le plus utile de cette recotation est là, et il n'est pas dans les chiffres :**
+**cinq des huit items ouverts ne se ferment pas en écrivant du code.** Trois attendent un geste
+d'Axel (`M-08`, `M-40`/`M-52`, les réglages de console), un attend une décision, et un seul —
+`C-111` — est du travail de développement disponible immédiatement. Le deuxième, `C-69`, l'est
+aussi et coûte peu.
+
+⚠️ **Il n'y a plus de P0**, et c'est vérifié plutôt que déclaré : les trois P0 du 2026-09-03 sont
+fermés (`C-35` le 09-13, `C-39` pour sa moitié destructrice le 09-12 par la mig. `138`, `C-65`
+pour tout ce qui est testable le 09-14).
+
+### Ce que cette recotation ne dit toujours pas
+
+- ❌ **Elle ne note aucun angle mort.** `M-56` demandait « ce que chaque angle mort coûte en
+  points » ; ce qui est rendu ici est le classement des **items**, pas la tarification des angles
+  morts dans les notes d'audit. Les 22 lignes encore ouvertes des tableaux « Angles morts » ne
+  pèsent toujours sur **aucune note**, et c'est toujours délibéré.
+- ❌ **Elle ne couvre pas ce qui n'a jamais été cherché.** `A-4` n'a jamais été passé. Le nombre
+  d'items ouverts remontera, et une remontée n'est pas une régression.
+- ⚠️ **L'hypothèse de charge reste une hypothèse.** 10 000 comptes gratuits, 1 000 payants, un
+  encaissement actif : rien de tout cela n'est vrai aujourd'hui, la production tournant sur une clé
+  Stripe de **test**. Le classement est utile, ses fréquences ne sont pas mesurées.
+
+---
+
+## Cotation du 2026-09-03 — **conservée à sa date, périmée pour ses chiffres**
+
+> ⚠️ **Tout ce qui suit décrit le 2026-09-03**, sur les 66 items d'alors. **51 des 58 lignes qu'elle
+> cote sont fermées depuis.** Elle est conservée parce que son raisonnement — pourquoi tel défaut
+> vaut 5 en gravité, pourquoi telle exposition est de 1 000 personnes — ne se réécrit pas : c'est
+> lui qu'on relit quand on cote le suivant.
+> ❌ **Ne jamais y lire un statut.**
+
 
 ## Synthèse
 
