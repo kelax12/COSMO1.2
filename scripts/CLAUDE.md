@@ -54,12 +54,18 @@
 | `check:mail` | SPF / DKIM / DMARC — **pas une gate** | | `docs/DEPLOYMENT.md` |
 | `images:check` | images non optimisées — **pas une gate** | | `docs/PERFORMANCE.md` |
 
-🔴 **Quatre de ces gardes ne mesurent rien tant qu'un geste manuel n'est pas fait**, et elles sont
+🔴 **Trois de ces gardes ne mesurent rien tant qu'un geste manuel n'est pas fait**, et elles sont
 vertes ou rouges pour des raisons qui ne parlent pas du produit : `check:supabase-posture` attend
 la référence des réglages d'auth (`C-88`, **échoue exprès** tant qu'elle n'est pas posée),
-`check:env` attend `VERCEL_TOKEN` / `VERCEL_PROJECT_ID` (`C-105`), le tri des premières alertes
-CodeQL reste à faire (`C-89`), et la mig. `150` n'est **pas appliquée** (`C-110` : `/admin`
-affiche « non installé »). Ces quatre gestes sont au § 9 d'[`a-faire-manuel.md`](../a-faire-manuel.md).
+`check:env` attend `VERCEL_TOKEN` / `VERCEL_PROJECT_ID` (`C-105`), et le tri des premières
+alertes CodeQL reste à faire (`C-89`). Ces gestes sont au § 9 d'[`a-faire-manuel.md`](../a-faire-manuel.md).
+
+✅ **La quatrième est tombée le 2026-09-21** : la mig. `150` est **appliquée** (ledger
+`20260921075529`), `/admin` cesse d'afficher « compteur non installé ».
+⚠️ **Effet de bord attendu sur `check:supabase-posture`** : la référence doit passer de **9 → 10**
+sur `rls_enabled_no_policy` et de **52 → 53** sur `authenticated_security_definer_function_executable`.
+Les deux objets sont `support_reports` et `get_support_stats`, tous deux décidés et écrits dans la
+migration. ❌ Un **troisième** compte qui bougerait ne serait pas un effet de la `150`.
 
 ---
 

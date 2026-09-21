@@ -40,9 +40,14 @@ compilait, la suite passait.
 - ⚠️ **Et citer la bonne entrée** : le numéro publié le 2026-09-20 pour la `136` était
   `20260920105113`, qui n existe au ledger d **aucune** migration. Le vrai est `20260920104729`,
   relu en base le 09-21. Un numéro de ledger se copie depuis la base, jamais depuis une note.
-- 🔴 **État au 2026-09-21** : la mig. **`150`** (`150_support_reports_counter.sql`) est commitée et
-  **PAS appliquée** — dernière entrée du ledger : `20260920105522` (mig. `149`). `/admin` affiche
-  « compteur non installé » jusque-là. C est `M-57`.
+- ✅ **État au 2026-09-21** : la mig. **`150`** est **appliquée**, ledger `20260921075529`, et
+  vérifiée par le catalogue (table, RLS sans policy, deux fonctions, droits effectifs). Plus aucune
+  migration du dépôt ne dort. Le dépôt va de `000` à `150`, la prochaine est la **`151`**.
+- ✅ **La preuve AVANT a servi à quelque chose, et c est l argument de cette section** : la `150` a
+  été jouée dans une transaction annulée, acteur par acteur, avant d être appliquée — insertion,
+  catégorie hors énumération refusée (`23514`), non-admin refusé (`42501`), droits effectifs
+  relevés. Puis l annulation elle-même a été vérifiée : ni table ni fonction laissées derrière.
+  ⚠️ Un `ROLLBACK` qu on ne contrôle pas est une hypothèse comme une autre.
 
 ## Interdits
 
