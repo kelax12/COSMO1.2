@@ -26,6 +26,13 @@ t('project.name')                // clé plate dans le namespace
   ⚠️ Il ne regarde jamais le CONTENU d'une valeur : une valeur `en` recopiée du français passe
   sans bruit. C'est `npm run i18n:identical` (bloquant CI, cliquet à **0**) qui ferme cet
   angle-là. ❌ Ne jamais conclure d'un `i18n:check` vert que l'anglais est traduit.
+  ✅ **Quatrième gate depuis le 2026-09-20** : `npm run i18n:pages` (`C-99`) compare le **CORPS**
+  des pages prérendues locale par locale, plus les pluriels et les formats de date. À sa première
+  exécution elle a trouvé **23 formes plurielles MORTES en `en`** — des `_many` recopiés du
+  français, que `Intl.PluralRules('en')` ne demandera jamais. Retirées.
+  🔴 **Et les quatre gates ensemble ne mesurent toujours PAS la QUALITÉ.** Elles comparent des
+  clés, des copies, des volumes et des formes. Une traduction **fausse mais différente** les passe
+  toutes les quatre sans un bruit. Lire l'anglais est un geste humain : c'est `M-50`.
 - **Slugs de routes localisés** : `src/i18n/routes.ts` + `route-slugs.json`. Une seule URL
   canonique par langue et par page (`/en/about` répond, `/en/a-propos` → 404, voulu).
 - Le préfixe de locale est porté par le `basename` du routeur, **figé au montage** — changer de
@@ -59,6 +66,11 @@ t('project.name')                // clé plate dans le namespace
   🔴 **Le français fait foi** : chaque document porte une clause de langue disant que la version
   française prévaut. Modifier le fond d'un de ces documents n'est pas une tâche de traduction —
   c'est modifier un contrat, avec le préavis de 30 jours prévu à son article 11.
+  ✅ **Et ça laisse désormais une trace obligatoire** : `npm run check:legal-journal` (`C-107`,
+  2026-09-20) exige qu'une empreinte de `src/locales/{fr,en}/legal.json` soit inscrite et **datée**
+  dans [`docs/LEGAL-JOURNAL.md`](../../docs/LEGAL-JOURNAL.md). Modifier un de ces deux catalogues
+  sans journaliser fait échouer la CI. ⚠️ Elle vérifie la **traçabilité**, jamais la conformité :
+  une ligne fausse **et datée** reste verte.
 - ❌ **Ne jamais identifier une erreur par son message en français** — il est traduit.
 - ❌ Ne jamais concaténer des fragments traduits : une clé = une phrase complète.
 

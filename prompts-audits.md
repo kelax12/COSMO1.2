@@ -4,6 +4,21 @@
 prompt par session, à coller tel quel. Ils sont indépendants : n'importe quel ordre marche, mais
 l'ordre du tableau est celui du rapport valeur / effort.
 
+> ## ✅ Relu le 2026-09-21 · **sept des huit sont passés, un seul reste à coller**
+>
+> | Audit | État, tenu au § 10 de `a-faire-code.md` |
+> |---|---|
+> | `A-1` `A-2` `A-3` `A-5` `A-6` `A-7` `A-8` | ✅ **passés le 2026-09-03**, tous le même jour. Ce qu'ils ont rendu est devenu `C-29` → `C-68`, et ce qu'ils ont **infirmé** est écrit au même endroit |
+> | `A-4` · un vrai téléphone (iOS Safari, Android) | 🟠 **TENTÉ le 2026-09-03, moitié appareil NON FAITE.** C'est le seul prompt de ce fichier encore à coller |
+>
+> ⚠️ **Un audit passé ne rend pas son prompt inutile** : il dit ce qui a été cherché, et c'est la
+> seule façon de savoir ce qui ne l'a pas été. Les sept sont conservés tels quels.
+>
+> 🔴 **Ce que leur passage n'a PAS produit, et qui est le point aveugle de ce fichier** : aucun de
+> ces huit prompts ne regardait ce qu'**aucune garde** ne mesure. Ce recensement-là est venu le
+> 2026-09-16, et il a rendu 77 angles morts — 30 items de code (`C-81` → `C-110`, traités le
+> 09-20) et 12 gestes. Un audit qui lit le produit ne voit pas les trous de son propre outillage.
+
 **Chaque prompt est en deux parties** : le **préambule commun** (à coller en tête, il porte les
 règles du dépôt qui ont coûté cher à apprendre) puis le **corps de l'audit**. Coller les deux.
 

@@ -1,3 +1,10 @@
+> ⚠️ **ARCHIVE — plan/spec exécuté, instantané du 2026-09-09, non maintenu.**
+> **Archivé le 2026-09-21 : la vague 1 est livrée et EN PRODUCTION.** Migrations `143`, `144`,
+> `145` et `147` au ledger, `src/modules/categories/tree.ts` et ses témoins dans le dépôt, PR #51
+> fusionnée (`cfa0f552`). Les 93 cases de ce plan n'ont jamais été cochées : **le code fait foi
+> contre elles.**
+> ⚠️ Les vagues 2 et 3 ne sont **pas** spécifiées. L'arbre d'ENTREPRISE, lui, est une table unique
+> (mig. `148`) et se lit dans [`src/modules/team-categories/CLAUDE.md`](../../../../src/modules/team-categories/CLAUDE.md).
 # Sous-catégories hiérarchiques (vague 1) · plan d'implémentation
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.

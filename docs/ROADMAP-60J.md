@@ -45,6 +45,30 @@ garde que ce qui reste à faire.
 
 **Décompte au 2026-09-02**, recompté **par script** sur les tableaux ci-dessous, jamais de tête.
 
+> ### 🔄 Correction du 2026-09-21 · **trois lignes seulement, et il faut dire lesquelles**
+>
+> ⚠️ **Ce n'est PAS un recomptage.** La règle 4 de ce document exige un script ; celui-ci n'a pas
+> tourné. Trois tâches ont été **relues une par une** contre `a-faire-code.md` et les commits, et
+> elles seules. Les 49 autres gardent l'état du 2026-09-02, **sans avoir été revérifiées**.
+>
+> | Tâche | État au 09-02 | Relu le 2026-09-21 |
+> |---|---|---|
+> | **T-40** · poser `CRON_SECRET` | ⬜ ouvert | ✅ **FAIT le 2026-09-13 à 16:21 UTC**, des deux côtés, prouvé par les trois cas (sans en-tête → 401, **mauvais secret → 401**, bon secret → 200) et par un `workflow_dispatch` vert. `a-faire-code.md` `C-34` |
+> | **T-47** · trancher `vendor-sentry` | ⬜ ouvert | ✅ **TRANCHÉ ET EXÉCUTÉ le 2026-09-04** : Sentry différé après le premier rendu, chemin critique **366,3 → 317,2 ko** sur un build avec `VITE_SENTRY_DSN`. `a-faire-code.md` `C-13` |
+> | **T-51** · la landing est la seule page lente | 🟡 partiel | ✅ **critère TENU le 2026-09-12**, quatre runs consécutifs. `a-faire-code.md` `C-12` |
+>
+> **Décompte qui en découle, à la main et dit comme tel** : ✅ **34** · 🟡 **4** (T-05, T-09, T-14,
+> T-23) · ⚪ 3 · ⬜ **11** (T-17, T-21, T-22, T-32, T-33, T-34, T-36, T-37, T-38, T-39, T-43).
+>
+> ⚠️ **T-43 (DPA des sous-traitants) reste ouvert** bien que les DPA Supabase / Vercel / Sentry
+> aient été **vérifiés** le 2026-09-14 (`5d773af9`, A5 passe à 🟡) : les collecter et les archiver
+> exige d'être une entreprise, donc T-32. Le geste vit en `M-04`.
+>
+> 🔴 **Et le vrai décalage de ce document n'est pas dans ses cases** : il planifie 2026-08-28 →
+> 2026-10-26 « du lancement à 10 000 utilisateurs », et **rien n'est lancé**. La production tourne
+> sur une clé Stripe de **test**, les cinq bloquants de `M-01` → `M-05` sont administratifs, et
+> la mesure la plus récente de `SEO.md` donne **1 inscription sur 30 jours**.
+
 | | Nombre | Lesquelles |
 |---|---|---|
 | ✅ Fait et vérifié | **31** | T-02 · T-03 · T-04 · T-06 · T-07 · T-08 · T-10 · T-11 · T-12 · T-13 · T-15 · T-16 · T-18 · T-19 · T-20 · T-24 · T-25 · T-26 · T-28 · T-29 · T-30 · T-31 · T-35 · T-41 · T-42 · T-44 · T-45 · T-46 · T-48 · T-49 · T-50 |
@@ -341,7 +365,7 @@ drapeaux ne bougent qu'ici, et ensemble.
   palier et le bon `billing_interval` ; un changement de palier depuis le portail se reflète en
   base (le palier se redérive du **price ID**, jamais des metadata) ; une résiliation fonctionne ;
   `verify_payment_chain()` renvoie vrai.
-- [ ] **T-40** — poser `CRON_SECRET` · P2 · XS · X
+- [x] **T-40** — poser `CRON_SECRET` · P2 · XS · X — fait le 2026-09-13
 - [ ] **T-43** — collecter les DPA · P2 · M · X
 - [ ] **T-27** — frise entreprise, exclure `currentUserId` · P3 · S · B
 
@@ -364,7 +388,7 @@ question redevient « à quelle vitesse peut-on avancer », donc la dette du soc
 - [x] **T-46** — sauvegarde `pg_dump` hors fournisseur · P0 · S · A livre / X pose le secret
   **Done** : secret `SUPABASE_DB_URL` posé le 2026-08-29, et **4 exécutions quotidiennes vertes**
   vérifiées le 2026-09-02 (dernière le jour même à 08:51 UTC), artefact produit à chaque fois.
-- [ ] **T-47** — trancher `vendor-sentry` · P3 · S · X décide
+- [x] **T-47** — trancher `vendor-sentry` · P3 · S · X décide — tranché et exécuté le 2026-09-04
 - [ ] **Revue de fin de cycle** : remesurer les dix notes d'audit, mettre à jour
   `docs/README.md`, archiver cette roadmap et en écrire une nouvelle. Une roadmap ne se met pas à
   jour, c'est un instantané — même règle que les audits.

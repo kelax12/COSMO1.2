@@ -53,6 +53,28 @@
 
 ### 🕳️ Angles morts · ce que cet audit NE mesure PAS (2026-09-16)
 
+> ## ✅ Relu le 2026-09-21 · **4 lignes de ce tableau sont désormais OUTILLÉES**
+>
+> La passe du 2026-09-20 au soir (`2b4c4304`) a traité les 30 items du § 12
+> d'[`a-faire-code.md`](../a-faire-code.md), qui sont nés de ces angles morts.
+>
+> ❌ **Le tableau ci-dessous n'est PAS réécrit.** Il décrit le 2026-09-16, et c'est sa date qui
+> lui donne sa valeur : un angle mort nommé est ce qui a permis de l'outiller. Ce bandeau dit ce
+> qui le couvre aujourd'hui, et surtout **ce que la garde ne prouve pas** — la moitié qui manque
+> d'habitude.
+>
+> | Angle mort | Couvert par | 🔴 Ce que ça ne prouve PAS |
+> |---|---|---|
+> | AM-1 | `npm run check:sabotages` (`C-81`) · 11 sabotages rejoués, `sabotages.yml` hebdo | Que les **39** témoins détectent. Le rapport couvert / total est imprimé à chaque run, exprès. 🔴 Première exécution : `src/monitoring.guard.test.ts` ne détectait **plus rien** |
+> | AM-2 | `npm run test:coverage:tooling` et `check:edge-coverage` (`C-82`) | `supabase/functions/**` n'est pas couvert en lignes et ne peut pas l'être (Deno, jamais importé). 🔴 Première exécution : **trois scripts** sortaient du rapport en silence, à cause de leur shebang |
+> | AM-4 | ✅ **fermé** : `C-78` est clos depuis `af0190bd` (2026-09-16), `mobile-safari` est joué en CI | Ni un appareil réel, ni Android, ni un réseau bridé — c'est `C-97` et `M-25` |
+> | AM-5 | `npm run check:test-floor` (`C-83`) | Qu'un test teste quelque chose. Un plancher interdit la disparition, pas la complaisance |
+>
+> ⚠️ **Les lignes du tableau qui ne sont pas citées ici restent OUVERTES**, et une garde posée
+> n'est pas un angle mort fermé : `M-56` (« ce que chaque angle mort coûte en points ») n'est
+> toujours pas tranché, donc aucune note ne bouge sur cette base.
+
+
 > **Pourquoi cette section existe.** Cette note est justifiée par des points **nommés** (« ce qui
 > retient à N », suivi d'une liste). Une note construite ainsi ne peut baisser que sur un défaut
 > que quelqu'un a d'abord nommé : **un angle mort ne pèse rien tant qu'il reste anonyme**, et ce

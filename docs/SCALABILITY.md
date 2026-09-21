@@ -61,6 +61,26 @@ Toutes les mesures de ce document sont **reproductibles** : les requêtes sont e
 
 ### 🕳️ Angles morts · ce que cet audit NE mesure PAS (2026-09-16)
 
+> ## ✅ Relu le 2026-09-21 · **2 lignes de ce tableau sont désormais OUTILLÉES**
+>
+> La passe du 2026-09-20 au soir (`2b4c4304`) a traité les 30 items du § 12
+> d'[`a-faire-code.md`](../a-faire-code.md), qui sont nés de ces angles morts.
+>
+> ❌ **Le tableau ci-dessous n'est PAS réécrit.** Il décrit le 2026-09-16, et c'est sa date qui
+> lui donne sa valeur : un angle mort nommé est ce qui a permis de l'outiller. Ce bandeau dit ce
+> qui le couvre aujourd'hui, et surtout **ce que la garde ne prouve pas** — la moitié qui manque
+> d'habitude.
+>
+> | Angle mort | Couvert par | 🔴 Ce que ça ne prouve PAS |
+> |---|---|---|
+> | AM-1 | `scalability-volume` **mensuel** ; `restore-drill` coupé en deux, `dump-check` trimestriel et automatique (`C-86`) | Un dump **relisible** n'est pas un dump **restauré** : `pg_restore --list` lit une table des matières. Le vrai rollback reste `M-47` |
+> | AM-2 · AM-3 · AM-4 | `npm run check:db-cost` (`C-87`), série commitée, alerte sur la **pente** | Le coût facturé, et la charge réelle |
+>
+> ⚠️ **Les lignes du tableau qui ne sont pas citées ici restent OUVERTES**, et une garde posée
+> n'est pas un angle mort fermé : `M-56` (« ce que chaque angle mort coûte en points ») n'est
+> toujours pas tranché, donc aucune note ne bouge sur cette base.
+
+
 > **Pourquoi cette section existe.** Cette note est justifiée par des points **nommés** (« ce qui
 > retient à N », suivi d'une liste). Une note construite ainsi ne peut baisser que sur un défaut
 > que quelqu'un a d'abord nommé : **un angle mort ne pèse rien tant qu'il reste anonyme**, et ce

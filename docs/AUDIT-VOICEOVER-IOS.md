@@ -50,6 +50,21 @@ iPhone réel la referme.
 
 ## 🕳️ Angles morts · ce que ce document NE mesure PAS (2026-09-16)
 
+> ## 🟠 Relu le 2026-09-21 · **aucune de ces lignes ne se ferme par du code, et c'est le point**
+>
+> La passe du 2026-09-20 au soir a outillé 28 angles morts du dépôt. **Aucun n'est ici**, et ce
+> n'est pas un oubli : ce document mesure l'**annonce** d'un lecteur d'écran, que rien n'automatise.
+> `axe-core` voit des attributs, pas ce que VoiceOver prononce.
+>
+> **Ce qui a changé, et c'est tout** : le geste porte désormais un numéro, donc il peut être
+> réclamé. **L'exécution est `M-40`** (passer la check-list, 12 étapes, ~60 min) et **la date est
+> `M-52`** — parce que « à jouer » sans date se reconduit indéfiniment, et c'est ce qui s'est
+> produit depuis le 2026-09-03.
+>
+> 🔴 **Son premier angle mort reste entier** : l'absence de ce quatrième audit ne fait baisser
+> **aucune** note. `ACCESSIBILITY.md` est noté 84 sans qu'il ait jamais été passé.
+
+
 > **Pourquoi cette section existe.** Demande d'Axel, après le constat qui a ouvert la journée :
 > `CLAUDE.md` a pesé 150 ko sans qu'aucune note ne bouge, parce qu'il était **cité comme source**
 > par les audits et **jamais mesuré par eux**. Il était le mètre, jamais l'objet.

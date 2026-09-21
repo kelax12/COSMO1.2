@@ -1,3 +1,10 @@
+> ⚠️ **ARCHIVE — instantané daté du 2026-08-21, non maintenu.**
+> **Déplacé ici le 2026-09-21.** Il vivait dans `docs/`, c'est-à-dire parmi les documents
+> **vivants**, tout en déclarant lui-même « à lire comme une archive, pas comme l'état courant ».
+> Les deux ne peuvent pas être vrais en même temps, et c'est le rangement qui était faux :
+> `docs/archive/**` est exactement l'endroit prévu pour un instantané daté.
+> Le marqueur `non-note` qu'il porte reste juste — ce n'est pas un audit.
+
 <!-- note-audit: non-note -->
 <!--
   🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.

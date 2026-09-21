@@ -28,6 +28,22 @@
   remplacé, création de sous-catégorie cassée en production pendant quatre jours (rejouée par la 147).
 - ✅ `npm run check:migration-coverage` fait ce travail en CI et rend un VERDICT par fichier.
 
+## 🔴 Commiter n est pas appliquer, et le dépôt l a payé dix-sept jours
+
+**`C-77`** : la mig. `136` est restée **commitée et dormante du 2026-09-03 au 09-20**. Pendant
+tout ce temps `okrTime` valait **0** sur `/statistics` pour tous les comptes réels, la démo
+affichait juste, et **aucune garde ne pouvait le voir** — le fichier était au dépôt, le produit
+compilait, la suite passait.
+
+- ❌ **Ne jamais écrire « la migration est faite » en parlant d un commit.** Le seul énoncé qui
+  vaut cite une **entrée de ledger** ET une relecture par `pg_get_functiondef` / `information_schema`.
+- ⚠️ **Et citer la bonne entrée** : le numéro publié le 2026-09-20 pour la `136` était
+  `20260920105113`, qui n existe au ledger d **aucune** migration. Le vrai est `20260920104729`,
+  relu en base le 09-21. Un numéro de ledger se copie depuis la base, jamais depuis une note.
+- 🔴 **État au 2026-09-21** : la mig. **`150`** (`150_support_reports_counter.sql`) est commitée et
+  **PAS appliquée** — dernière entrée du ledger : `20260920105522` (mig. `149`). `/admin` affiche
+  « compteur non installé » jusque-là. C est `M-57`.
+
 ## Interdits
 
 - 🔴 **Ne jamais ajouter une colonne, un GRANT ou une policy depuis le dashboard Supabase.** C est

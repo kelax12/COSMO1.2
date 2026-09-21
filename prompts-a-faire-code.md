@@ -1,5 +1,23 @@
 # Prompts · un par item ouvert de `a-faire-code.md`
 
+> ## 🔄 Relu le 2026-09-21 · **la moitié des blocs de ce fichier est périmée**
+>
+> Vérifié item par item contre `a-faire-code.md` et contre le code, pas repris du tableau qui suit.
+>
+> | Bloc | État au 2026-09-21 |
+> |---|---|
+> | `C-76` + `C-14` | ✅ **CLOS le 2026-09-14**, le jour même où ce prompt a été écrit (`7134d7fe` pour la façade et ses deux plafonds, `b542e69d` pour la note). Le bloc est **barré**, conservé pour ce qu'il enseigne |
+> | `C-77` → `C-80` | ✅ **tous clos** (`C-80` et `C-79` le 09-15, `C-78` le 09-16, `C-77` le 09-20). Le fichier de phases que l'encadré ci-dessous renvoie porte désormais son propre bandeau |
+> | `C-71` | ✅ **clos**, relu dans le code le 09-21 — il n'a jamais eu de prompt ici, et n'en a plus besoin |
+> | `C-65` + `C-39` · `C-24` · `C-58` · `C-69` | 🟠 **toujours ouverts**, prompts valables tels quels |
+>
+> 🔴 **Et il manque des prompts, délibérément.** `C-111` (le job `e2e` rouge sur `main`, 25 échecs
+> au run 35532009156) n'en a pas, et les 30 items du § 12 non plus. La raison est au § 12.8 de
+> `a-faire-code.md` : ils n'ont **ni priorité ni taille** tant que `M-56` n'est pas tranché, et
+> leur en poser une sans chiffrage serait le « avant » recopié au lieu d'être relu, pour la
+> cinquième fois. ❌ Ne pas combler ce trou en inventant un ordre.
+
+
 > 🆕 **Passe d'audit du 2026-09-14 au soir : quatre items neufs, `C-77` a `C-80`.** Leurs
 > prompts ne sont PAS dans ce fichier : ils vivent dans
 > [`prompt-correctifs-audit-2026-09-15.md`](./prompt-correctifs-audit-2026-09-15.md), en un seul
@@ -99,7 +117,13 @@ garde, elle suspend toutes celles qui viennent après.**
 
 ---
 
-## C-76 + C-14 · la façade `toast` et les deux plafonds abaissés ne sont dans AUCUN commit
+## ~~C-76 + C-14 · la façade `toast` et les deux plafonds abaissés ne sont dans AUCUN commit~~ · ✅ **clos le 2026-09-14**
+
+> ✅ **Réglé le jour même où ce prompt a été écrit.** `7134d7fe` fait entrer la façade, sa garde et
+> ses 57 consommateurs dans le dépôt avec les deux plafonds abaissés, en **un seul commit** comme
+> le prompt l'exigeait ; `b542e69d` clôt `C-14` et `C-76` sur un run CI. Le prompt reste ici,
+> **barré** : il porte la seule description écrite de ce que coûte un correctif complet laissé hors
+> du dépôt trois jours, et des trois `fix(build)` que d'autres sessions ont payés pour lui.
 
 ```
 Objectif : C-76, qui rouvre C-14. Ce n'est pas un chantier de code : le code est ecrit, teste,

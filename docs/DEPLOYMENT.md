@@ -23,6 +23,27 @@ réagir à un incident. À lire avant toute mise en prod.
 
 ## 🕳️ Angles morts · ce que ce document NE mesure PAS (2026-09-16)
 
+> ## ✅ Relu le 2026-09-21 · **3 lignes de ce tableau sont désormais OUTILLÉES**
+>
+> La passe du 2026-09-20 au soir (`2b4c4304`) a traité les 30 items du § 12
+> d'[`a-faire-code.md`](../a-faire-code.md), qui sont nés de ces angles morts.
+>
+> ❌ **Le tableau ci-dessous n'est PAS réécrit.** Il décrit le 2026-09-16, et c'est sa date qui
+> lui donne sa valeur : un angle mort nommé est ce qui a permis de l'outiller. Ce bandeau dit ce
+> qui le couvre aujourd'hui, et surtout **ce que la garde ne prouve pas** — la moitié qui manque
+> d'habitude.
+>
+> | Angle mort | Couvert par | 🔴 Ce que ça ne prouve PAS |
+> |---|---|---|
+> | AM-2 | `dump-check` trimestriel (`C-86`) | Un dump relisible n'est pas un dump restauré. **Le rollback n'a toujours jamais été parcouru** : `M-47` |
+> | AM-3 · AM-4 | `npm run check:env` (`C-105`) : contrat statique des 8 `VITE_*` avec l'effet d'absence de chacune | ⚠️ La moitié Vercel vérifie une **présence, jamais une valeur**, et elle dort tant que `VERCEL_TOKEN` / `VERCEL_PROJECT_ID` ne sont pas posés (`M-59`) |
+> | AM-5 | Trois marqueurs **absents** de la coquille SPA + une seconde page prérendue sondée (`C-104`) | ⚠️ L'énoncé du 09-16 était périmé dans le sens inverse : `uptime.yml` avait un marqueur (`grep -i cosmo`) qui **ne pouvait pas échouer**, la coquille contenant le mot 21 fois |
+>
+> ⚠️ **Les lignes du tableau qui ne sont pas citées ici restent OUVERTES**, et une garde posée
+> n'est pas un angle mort fermé : `M-56` (« ce que chaque angle mort coûte en points ») n'est
+> toujours pas tranché, donc aucune note ne bouge sur cette base.
+
+
 > **Pourquoi cette section existe.** Demande d'Axel, après le constat qui a ouvert la journée :
 > `CLAUDE.md` a pesé 150 ko sans qu'aucune note ne bouge, parce qu'il était **cité comme source**
 > par les audits et **jamais mesuré par eux**. Il était le mètre, jamais l'objet.

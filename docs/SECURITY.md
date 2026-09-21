@@ -35,6 +35,27 @@
 
 ## 🕳️ Angles morts · ce que ce document NE mesure PAS (2026-09-16)
 
+> ## ✅ Relu le 2026-09-21 · **3 lignes de ce tableau sont désormais OUTILLÉES**
+>
+> La passe du 2026-09-20 au soir (`2b4c4304`) a traité les 30 items du § 12
+> d'[`a-faire-code.md`](../a-faire-code.md), qui sont nés de ces angles morts.
+>
+> ❌ **Le tableau ci-dessous n'est PAS réécrit.** Il décrit le 2026-09-16, et c'est sa date qui
+> lui donne sa valeur : un angle mort nommé est ce qui a permis de l'outiller. Ce bandeau dit ce
+> qui le couvre aujourd'hui, et surtout **ce que la garde ne prouve pas** — la moitié qui manque
+> d'habitude.
+>
+> | Angle mort | Couvert par | 🔴 Ce que ça ne prouve PAS |
+> |---|---|---|
+> | AM-1 | `npm run check:docs-scored` (`C-109`) | Que les notes soient justes ni fraîches. `non-note` **ouvre** un audit, il ne le remplace pas |
+> | AM-2 · AM-5 | `npm run check:supabase-posture` (`C-88`) : juge un **écart** à une référence commitée, pas un absolu | 🔴 `reglages_auth` est à `null` : la référence exige un jeton, elle se pose par `--update` **et se commite**. **La garde ÉCHOUE tant que ce n'est pas fait, exprès** — c'est `M-58` |
+> | AM-6 | `codeql.yml`, `security-extended`, JS/TS **et** `actions` (`C-89`) | Un job vert. L'item n'est fini que quand **chaque alerte ouverte porte une décision** : c'est `M-60` |
+>
+> ⚠️ **Les lignes du tableau qui ne sont pas citées ici restent OUVERTES**, et une garde posée
+> n'est pas un angle mort fermé : `M-56` (« ce que chaque angle mort coûte en points ») n'est
+> toujours pas tranché, donc aucune note ne bouge sur cette base.
+
+
 > **Pourquoi cette section existe.** Demande d'Axel, après le constat qui a ouvert la journée :
 > `CLAUDE.md` a pesé 150 ko sans qu'aucune note ne bouge, parce qu'il était **cité comme source**
 > par les audits et **jamais mesuré par eux**. Il était le mètre, jamais l'objet.

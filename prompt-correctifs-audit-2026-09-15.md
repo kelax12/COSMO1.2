@@ -1,5 +1,24 @@
 # Prompt de correction · passe d'audit du 2026-09-14 au soir
 
+> ## ✅ Relu le 2026-09-21 · **les six phases sont traitées, et une s'est INVERSÉE**
+>
+> Ce prompt a été exécuté. Il reste ici parce qu'un prompt porte l'état mesuré qui l'a produit, et
+> que cet état est la seule trace de ce qui a été prouvé. **Ne pas le recoller tel quel.**
+>
+> | Phase | État au 2026-09-21 |
+> |---|---|
+> | **P0** · `C-77`, `okrTime` à 0 en production | ✅ **refermé le 2026-09-20** · mig. `136` au ledger `20260920104729`, `get_work_time_stats` relu par `pg_get_functiondef` : il lit `kr_completions` et plus `history`. ⚠️ Août et septembre **restent à zéro, et c'est juste** — trois KR sur cinq portent `estimated_time = 0` |
+> | **P1** · `C-80`, cibles tactiles sur les pages publiques | ✅ corrigé le 2026-09-15 (`ede8d7e6`) · 8 pages publiques en plus, 18 cas verts |
+> | **P2** · `C-78`, 96 cas E2E hors CI | ✅ clos le 2026-09-16 (`af0190bd`) · `mobile-safari` joué en CI. ⚠️ Un moteur mobile en CI n'est ni un appareil réel ni Android : c'est `C-97` et `M-25` |
+> | **P3** · `C-79`, migrations ↔ ledger | ✅ corrigé le 2026-09-15 (`52d23937`) · `npm run check:migration-coverage` |
+> | **P4** · `M-44`, la pastille « Aujourd'hui » | 🔴 **INVERSÉ.** Le prompt demandait de défaire un fichier **non commité**. Le retrait est entré dans `main` le 2026-09-16 par `ab72cd39`, six jours après l'arbitrage rendu contre lui. Il n'y a plus rien à défaire : il y a du code à réécrire, et une décision à reprendre. Détail dans `a-faire-code.md` sous `C-72`, geste dans `a-faire-manuel.md` `M-44` |
+> | **P5** · les deux comptes qui ne sont pas des utilisateurs | ✅ refermé le 2026-09-20 · mig. `149` au ledger `20260920105522`, `/admin` passe de 30·779·454·32 à 28·658·387·26 avec une clé `excluded_accounts = 2` |
+>
+> 🔴 **Ce que P4 enseigne, et qui dépasse cet item** : un arbitrage rendu sur un fichier que git ne
+> suit pas ne protège rien. Aucune garde ne pouvait voir l'inversion — le produit compile, la suite
+> passe, et le commentaire qui porte l'argument démenti est parti en production avec le reste.
+
+
 **Écrit le 2026-09-15.** Il couvre **tout ce que la passe d'audit complète a trouvé** et qui demande
 du code. Chaque item porte : où c'est, ce qui a été mesuré, ce qui prouve que c'est fini, et les
 pièges connus.

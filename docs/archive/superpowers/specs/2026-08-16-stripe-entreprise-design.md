@@ -1,3 +1,8 @@
+> ⚠️ **ARCHIVE — plan/spec exécuté, instantané du 2026-08-16, non maintenu.**
+> **Archivé le 2026-09-21**, avec son plan. Le statut « validé, en implémentation » qu'il porte
+> plus bas décrit le 2026-08-16, pas aujourd'hui : l'implémentation est livrée et dormante.
+> État courant de la facturation : [`src/modules/billing/CLAUDE.md`](../../../../src/modules/billing/CLAUDE.md)
+> et [`docs/STRIPE-LIVE.md`](../../../STRIPE-LIVE.md).
 # Stripe entreprise — abonnement par organisation + coupons
 
 **Date** : 2026-08-16 · **Statut** : validé, en implémentation

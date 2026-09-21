@@ -64,6 +64,26 @@ répond à une seule question : **les invariants qu'on s'est donnés tiennent-il
 
 ### 🕳️ Angles morts · ce que cet audit NE mesure PAS (2026-09-16)
 
+> ## ✅ Relu le 2026-09-21 · **2 lignes de ce tableau sont désormais OUTILLÉES**
+>
+> La passe du 2026-09-20 au soir (`2b4c4304`) a traité les 30 items du § 12
+> d'[`a-faire-code.md`](../a-faire-code.md), qui sont nés de ces angles morts.
+>
+> ❌ **Le tableau ci-dessous n'est PAS réécrit.** Il décrit le 2026-09-16, et c'est sa date qui
+> lui donne sa valeur : un angle mort nommé est ce qui a permis de l'outiller. Ce bandeau dit ce
+> qui le couvre aujourd'hui, et surtout **ce que la garde ne prouve pas** — la moitié qui manque
+> d'habitude.
+>
+> | Angle mort | Couvert par | 🔴 Ce que ça ne prouve PAS |
+> |---|---|---|
+> | AM-2 · AM-5 | `e2e/`, `showcase/` et `supabase/functions/` **entrent** dans ESLint (`C-102`). Dette mesurée AVANT : 1 erreur, 1 avertissement | — |
+> | AM-3 · AM-4 | `npm run check:cycles` (`C-103`), sans dépendance ; couplage **rapporté**, non bloquant | Le plafond de couplage reste un **arbitrage non rendu** : le chiffre est imprimé pour être lu deux fois d'abord. 🔴 Première exécution : **sept cycles**, tous par un baril importé en valeur là où seuls les types servaient |
+>
+> ⚠️ **Les lignes du tableau qui ne sont pas citées ici restent OUVERTES**, et une garde posée
+> n'est pas un angle mort fermé : `M-56` (« ce que chaque angle mort coûte en points ») n'est
+> toujours pas tranché, donc aucune note ne bouge sur cette base.
+
+
 > **Pourquoi cette section existe.** Cette note est justifiée par des points **nommés** (« ce qui
 > retient à N », suivi d'une liste). Une note construite ainsi ne peut baisser que sur un défaut
 > que quelqu'un a d'abord nommé : **un angle mort ne pèse rien tant qu'il reste anonyme**, et ce

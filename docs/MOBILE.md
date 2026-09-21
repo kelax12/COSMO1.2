@@ -53,6 +53,27 @@
 
 ### 🕳️ Angles morts · ce que cet audit NE mesure PAS (2026-09-16)
 
+> ## ✅ Relu le 2026-09-21 · **3 lignes de ce tableau sont désormais OUTILLÉES**
+>
+> La passe du 2026-09-20 au soir (`2b4c4304`) a traité les 30 items du § 12
+> d'[`a-faire-code.md`](../a-faire-code.md), qui sont nés de ces angles morts.
+>
+> ❌ **Le tableau ci-dessous n'est PAS réécrit.** Il décrit le 2026-09-16, et c'est sa date qui
+> lui donne sa valeur : un angle mort nommé est ce qui a permis de l'outiller. Ce bandeau dit ce
+> qui le couvre aujourd'hui, et surtout **ce que la garde ne prouve pas** — la moitié qui manque
+> d'habitude.
+>
+> | Angle mort | Couvert par | 🔴 Ce que ça ne prouve PAS |
+> |---|---|---|
+> | AM-1 | ✅ **fermé** : `C-78` est clos depuis `af0190bd` (2026-09-16) — l'énoncé « écrit, non commité » était périmé **le jour de sa publication** | Un moteur mobile en CI n'est pas un appareil |
+> | AM-2 · AM-4 · AM-5 | Projects `mobile-chrome` (Pixel 7) + `e2e/mobile-android.spec.ts` (`C-97`) : paysage, police à **200 %**, CPU bridé ×4 par CDP, avec son témoin | Un appareil **émulé** sur un runner. Ni thermique, ni GPU mobile. La moitié appareil réel reste `M-25` |
+> | AM-3 | `lighthouserc.mobile.json` (`C-84`) | Première pose de seuils, à rabaisser au mesuré |
+>
+> ⚠️ **Les lignes du tableau qui ne sont pas citées ici restent OUVERTES**, et une garde posée
+> n'est pas un angle mort fermé : `M-56` (« ce que chaque angle mort coûte en points ») n'est
+> toujours pas tranché, donc aucune note ne bouge sur cette base.
+
+
 > **Pourquoi cette section existe.** Cette note est justifiée par des points **nommés** (« ce qui
 > retient à N », suivi d'une liste). Une note construite ainsi ne peut baisser que sur un défaut
 > que quelqu'un a d'abord nommé : **un angle mort ne pèse rien tant qu'il reste anonyme**, et ce
