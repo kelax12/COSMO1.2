@@ -849,11 +849,30 @@ Layout style "agenda" :
 hors de portée du pouce, et poussaient la liste vers le bas. Modèle repris : Notes (iOS).
 
 - **`MobileTaskSearch`** (`src/pages/tasks/MobileTaskSearch.tsx`, `md:hidden`) : barre de recherche
-  `fixed` à `calc(4rem + safe-area + 0.5rem)`, **elle ne défile jamais**. Au tap, un overlay plein
-  écran reprend le champ au-dessus du clavier ; **champ vide → « Filtres suggérés »** (Favoris,
-  Fait, Retard, Collaboration, Sélectionner), qui sont les pastilles de `TaskQuickFilters` et rien
-  d'autre. Une suggestion applique **et referme**. Voile **plat** (`bg-black/40`, jamais de
-  `backdrop-blur`), sortie par une **croix ronde** — le modèle est copié, pas adapté.
+  `fixed` à `calc(4rem + safe-area + 0.5rem)`, **elle ne défile jamais**. Au tap, un écran de
+  recherche **plein et opaque** (`z-[195]`, fond de l'app) remplace la page ; **champ vide →
+  « Filtres suggérés »** (Favoris, Fait, Retard, Collaboration, Sélectionner), qui sont les
+  pastilles de `TaskQuickFilters` et rien d'autre. Une suggestion applique **et referme**. Sortie
+  par la **croix ronde**, par le repli du clavier ou par Échap.
+- 🔴 **L'UI a été refaite le 2026-09-21 en comparant les captures au modèle**, écart par écart, après
+  deux passes de consignes verbales qui n'avaient pas suffi. Ce qui doit rester : titre **hors** de
+  la carte, casse normale, `text-title` gras ; séparateurs **en retrait** (ils commencent à
+  l'aplomb du libellé, s'arrêtent à 16 px du bord droit, aucun sous la dernière ligne) ; champ en
+  **pilule pleine** ; carte **en haut**, champ **en bas**, le vide entre les deux.
+- ❌ **Ne jamais compter sur `focus:ring-*` ou `border-0` pour désarmer l'anneau bleu d'un champ.**
+  `index.css` impose à **tout** `input` une bordure 1px et, au focus, une bordure + un halo à la
+  couleur d'accent, en `!important`. L'échappatoire est la classe **`no-input-chrome`**, mais elle
+  force aussi `border-radius: 0` : un champ arrondi doit donc être **transparent à l'intérieur d'un
+  conteneur** qui porte la forme et le fond.
+- ⚠️ **Dès la première frappe, le fond s'efface** (`pointer-events-none`, seule la rangée du champ
+  reste cliquable) : le modèle remplit cet espace avec ses résultats, COSMO ne le peut pas sans
+  remonter toute sa liste dans l'overlay. Chercher derrière un fond opaque revenait à chercher à
+  l'aveugle. Décision du 2026-09-21.
+- ⚠️ **`z-50`, le cran publié des modales**, et pas une valeur choisie pour l'occasion. En mode
+  démo, `DemoBridgePrompt` (`z-[190]`) flotte par-dessus : il flotte par-dessus **toutes** les
+  modales de l'app, c'est une propriété de ce composant. `z-[195]` a été écrit puis retiré le
+  2026-09-21, refusé par `design-system.guard` — l'échelle est fermée, et c'est ce qui l'empêche de
+  redevenir seize valeurs pour sept paliers.
 - 🔴 **Replier le clavier referme la recherche**, comme dans Notes. Le signal est le champ qui
   **perd le focus** (`onBlur`) : la touche « OK » de la barre d'accessoires iOS comme le repli du
   clavier le déclenchent. ❌ **Un `blur` nu rendrait les suggestions intouchables** — sur un appui,
@@ -869,9 +888,13 @@ hors de portée du pouce, et poussaient la liste vers le bas. Modèle repris : N
   au-delà de `ligne de base + 80 px`.
 - ⚠️ **Clavier ouvert, le champ se pose DESSUS sans gouttière** : la zone sûre est déjà couverte par
   le clavier, l'additionner creusait une bande vide entre les deux.
-- ❌ **Ne pas laisser la barre fermée montée pendant l'overlay.** Elle réapparaît derrière le voile
-  dès la première frappe — la carte de suggestions, qui la masquait, disparaît alors — et on lit
-  deux champs de recherche empilés, dont un inerte.
+- ❌ **Ne pas laisser la barre fermée montée pendant l'overlay.** Elle réapparaît dès la première
+  frappe, quand la carte de suggestions qui la masquait disparaît, et on lit deux champs de
+  recherche empilés, dont un inerte.
+- ❌ **Ne jamais lever le garde de pointeur (`pointerInPanel`) sur le panneau lui-même.** Taper une
+  suggestion le DÉMONTE depuis le gestionnaire de clic : son `onPointerUp` n'arrive jamais, le
+  garde reste levé, et le repli du clavier ne referme plus rien pour le reste de la session. Il se
+  lève sur `window`, et se remet à zéro à chaque ouverture.
 - ❌ **Ne jamais dupliquer l'état du filtre rapide.** Il vit dans `quick-filter.store.ts`
   (`useSyncExternalStore`), lu ET écrit par les deux surfaces. Un évènement `window` ne suffisait
   pas : il ne va que dans un sens, la barre serait aveugle au filtre courant.

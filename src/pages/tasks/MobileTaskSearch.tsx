@@ -122,6 +122,24 @@ const MobileTaskSearch: React.FC<Props> = ({ searchTerm, onSearchTermChange }) =
     close();
   };
 
+  // 🔴 Le garde se lève sur `window`, jamais sur le panneau. Taper une
+  // suggestion DÉMONTE le panneau depuis le gestionnaire de clic : son
+  // `onPointerUp` n'arrive alors jamais, le garde resterait levé pour de bon,
+  // et le repli du clavier ne refermerait plus rien pour le reste de la
+  // session. Remise à zéro aussi à chaque ouverture, pour ne rien devoir au
+  // cycle de vie d'une surface qui va et vient.
+  useEffect(() => {
+    if (!open) return;
+    pointerInPanel.current = false;
+    const release = () => { pointerInPanel.current = false; };
+    window.addEventListener('pointerup', release);
+    window.addEventListener('pointercancel', release);
+    return () => {
+      window.removeEventListener('pointerup', release);
+      window.removeEventListener('pointercancel', release);
+    };
+  }, [open]);
+
   const pick = (suggestion: Suggestion) => {
     if (suggestion.kind === 'select') requestSelectMode();
     else toggleQuickFilter(suggestion.value);
@@ -131,6 +149,13 @@ const MobileTaskSearch: React.FC<Props> = ({ searchTerm, onSearchTermChange }) =
   };
 
   const barBottom = 'calc(4rem + env(safe-area-inset-bottom) + 0.5rem)';
+
+  // Champ vide = l'écran du modèle (plein, opaque, suggestions). Dès la
+  // première frappe, le fond s'efface : le modèle remplit cet espace avec ses
+  // résultats, et COSMO ne le peut pas sans remonter toute sa liste de tâches
+  // ici. Plutôt que de chercher à l'aveugle derrière un fond opaque, on rend
+  // la liste à la vue et on ne garde que le champ ancré.
+  const showSuggestions = searchTerm.trim() === '';
 
   if (selectModeActive) return null;
 
@@ -160,7 +185,7 @@ const MobileTaskSearch: React.FC<Props> = ({ searchTerm, onSearchTermChange }) =
                 searchTerm ? 'text-[rgb(var(--color-text-primary))]' : 'text-[rgb(var(--color-text-muted))]'
               }`}
             >
-              {searchTerm || t('filter.searchPlaceholder')}
+              {searchTerm || t('search.placeholder')}
             </span>
           </button>
 
@@ -191,109 +216,142 @@ const MobileTaskSearch: React.FC<Props> = ({ searchTerm, onSearchTermChange }) =
 
       <AnimatePresence>
         {open && (
-          <>
-            <motion.div
-              key="search-backdrop"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.18 }}
-              onClick={close}
-              role="presentation"
-              // Voile PLAT, sans `backdrop-blur` : le modèle assombrit, il ne dépolit pas.
-              className="md:hidden fixed inset-0 z-50 bg-black/40"
-            />
-            <motion.div
-              key="search-panel"
-              ref={panelRef}
-              {...dialogProps}
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 16 }}
-              transition={{ duration: 0.2 }}
-              onPointerDownCapture={() => { pointerInPanel.current = true; }}
-              onPointerUp={() => { window.setTimeout(() => { pointerInPanel.current = false; }, 0); }}
-              onPointerCancel={() => { pointerInPanel.current = false; }}
-              className="md:hidden fixed inset-x-0 bottom-0 z-50 flex flex-col gap-3 px-gutter pt-3"
-              // Clavier ouvert : le champ se pose DESSUS, sans gouttière — la
-              // zone sûre est déjà couverte par le clavier, l'ajouter creusait
-              // une bande vide entre les deux. Clavier replié : gouttière
-              // normale + zone sûre.
-              style={{
-                paddingBottom: keyboardUp
-                  ? `${keyboardInset}px`
-                  : 'calc(env(safe-area-inset-bottom) + 0.75rem)',
-              }}
-            >
-              {searchTerm.trim() === '' && (
-                <div className="rounded-2xl bg-[rgb(var(--color-surface))] overflow-hidden shadow-2xl">
-                  <p className="px-4 pt-3 pb-2 text-caption font-semibold uppercase tracking-wider text-[rgb(var(--color-text-muted))]">
-                    {t('search.suggestions')}
-                  </p>
+          <motion.div
+            key="search-panel"
+            ref={panelRef}
+            {...dialogProps}
+            // ⚠️ `initial` porte l'opacité ET `y`, jamais `y` seul : sous
+            // `prefers-reduced-motion`, `MotionConfig reducedMotion="user"` ne
+            // joue pas les transforms et la valeur initiale RESTE appliquée.
+            // Une surface `fixed` resterait 16 px trop bas, définitivement.
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 16 }}
+            transition={{ duration: 0.2 }}
+            onPointerDownCapture={() => { pointerInPanel.current = true; }}
+            // 🔴 Surface PLEINE et OPAQUE, pas un voile sur la liste. Dans le
+            // modèle, chercher REMPLACE l'écran : la liste de notes disparaît,
+            // le fond est celui de l'app, et rien ne transparaît derrière. Il
+            // n'y a donc plus de « taper à côté pour fermer » : on sort par la
+            // croix, par le repli du clavier, ou par Échap.
+            // `z-50` : le cran PUBLIÉ des modales et feuilles
+            // (`docs/UI-PATTERNS.md`), et rien d'autre. En mode démo, la carte
+            // « Gardez votre organisation » (`z-[190]`) se pose par-dessus,
+            // mais elle se pose par-dessus TOUTES les modales de l'app : c'est
+            // une propriété de ce composant-là, pas un défaut de cet écran, et
+            // inventer un cran de plus pour la contourner rouvrirait ce que la
+            // garde `design-system.guard` a fermé.
+            className={`md:hidden fixed inset-0 z-50 flex flex-col px-gutter ${
+              showSuggestions
+                ? 'bg-[rgb(var(--color-background))]'
+                // Transparent ET transparent aux gestes : la liste derrière
+                // reste lisible et touchable, seul le champ capte les appuis.
+                : 'pointer-events-none'
+            }`}
+            style={{
+              paddingTop: 'calc(env(safe-area-inset-top) + 0.75rem)',
+              // Clavier ouvert : on remonte du hauteur-clavier, PLUS la même
+              // gouttière de 12 px qu'au repos. Le modèle garde cette
+              // respiration au-dessus des touches ; la coller à 0 ne retirait
+              // rien à la barre d'outils de Safari, qui n'appartient pas à la
+              // page et qu'aucune règle CSS n'atteint.
+              paddingBottom: keyboardUp
+                ? `calc(${keyboardInset}px + 0.75rem)`
+                : 'calc(env(safe-area-inset-bottom) + 0.75rem)',
+            }}
+          >
+            {showSuggestions && (
+              <>
+                {/* Le titre vit AU-DESSUS de la carte, pas dedans : casse
+                    normale, 22 px, gras. L'en-tête gris en capitales qui
+                    occupait la première ligne de la carte est supprimé. */}
+                <p className="px-1 pb-3 text-title font-bold text-[rgb(var(--color-text-primary))]">
+                  {t('search.suggestions')}
+                </p>
+                <div className="rounded-2xl bg-[rgb(var(--color-surface))] overflow-hidden">
                   <ul>
-                    {SUGGESTIONS.map((suggestion) => {
+                    {SUGGESTIONS.map((suggestion, index) => {
                       const Icon = suggestion.icon;
                       const isActive = suggestion.kind === 'filter' && activeQuickFilter === suggestion.value;
+                      // Séparateur EN RETRAIT : il commence à l'aplomb du
+                      // libellé et s'arrête avant le bord droit, jamais bord à
+                      // bord, et jamais sous la dernière ligne. Il est donc
+                      // porté par un conteneur INTÉRIEUR au bouton : posé sur
+                      // le `<li>`, il traverserait aussi la colonne d'icônes.
+                      const separated = index < SUGGESTIONS.length - 1;
                       return (
-                        <li key={suggestion.labelKey} className="border-t border-[rgb(var(--color-border))]">
+                        <li key={suggestion.labelKey}>
                           <button
                             type="button"
                             onClick={() => pick(suggestion)}
                             aria-pressed={suggestion.kind === 'filter' ? isActive : undefined}
-                            className="flex w-full items-center gap-3 px-4 min-h-touch text-left active:bg-[rgb(var(--color-hover))]"
+                            className="flex w-full items-center gap-3 pl-4 text-left active:bg-[rgb(var(--color-hover))]"
                           >
                             <Icon
                               size={20}
                               aria-hidden="true"
                               className="shrink-0 text-[rgb(var(--color-accent))]"
                             />
-                            <span className="flex-1 text-label text-[rgb(var(--color-text-primary))]">
-                              {t(suggestion.labelKey)}
+                            <span
+                              className={`flex flex-1 items-center gap-3 min-h-touch py-3 mr-4 ${
+                                separated ? 'border-b border-[rgb(var(--color-border))]' : ''
+                              }`}
+                            >
+                              <span className="flex-1 text-body text-[rgb(var(--color-text-primary))]">
+                                {t(suggestion.labelKey)}
+                              </span>
+                              {isActive && (
+                                <CheckCircle2 size={18} aria-hidden="true" className="shrink-0 text-[rgb(var(--color-accent))]" />
+                              )}
                             </span>
-                            {isActive && (
-                              <CheckCircle2 size={18} aria-hidden="true" className="shrink-0 text-[rgb(var(--color-accent))]" />
-                            )}
                           </button>
                         </li>
                       );
                     })}
                   </ul>
                 </div>
-              )}
+              </>
+            )}
 
-              <div className="flex items-center gap-2">
-                <div className="relative flex-1">
-                  <Search
-                    size={18}
-                    aria-hidden="true"
-                    className="absolute left-4 top-1/2 -translate-y-1/2 text-[rgb(var(--color-text-muted))]"
-                  />
-                  <input
-                    ref={inputRef}
-                    id="search-tasks-mobile"
-                    type="search"
-                    inputMode="search"
-                    enterKeyHint="search"
-                    value={searchTerm}
-                    onChange={(e) => onSearchTermChange(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === 'Enter') close(); }}
-                    onBlur={handleBlur}
-                    placeholder={t('filter.searchPlaceholder')}
-                    aria-label={t('filter.searchByName')}
-                    className="w-full h-12 rounded-full border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] pl-11 pr-4 text-label text-[rgb(var(--color-text-primary))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-accent))]"
-                  />
-                </div>
-                <button
-                  type="button"
-                  onClick={close}
-                  aria-label={t('search.close')}
-                  className="shrink-0 flex h-12 w-12 items-center justify-center rounded-full bg-[rgb(var(--color-chip-bg))] text-[rgb(var(--color-text-secondary))] active:bg-[rgb(var(--color-hover))]"
-                >
-                  <X size={20} aria-hidden="true" />
-                </button>
+            {/* Le vide du modèle : la carte reste en haut, le champ en bas. */}
+            <div className="flex-1" aria-hidden="true" />
+
+            <div className="flex items-center gap-2 pointer-events-auto">
+              {/* 🔴 La PILULE est portée par ce conteneur, pas par l'input.
+                  `index.css` impose à TOUT `input` une bordure 1px et, au
+                  focus, une bordure + un halo à la couleur d'accent, en
+                  `!important` : c'est de là que venait l'anneau bleu, pas d'une
+                  classe Tailwind qu'on pourrait retirer. L'échappatoire prévue
+                  est `no-input-chrome`, mais elle force aussi
+                  `border-radius: 0` : le champ doit donc être transparent à
+                  l'intérieur d'un conteneur qui porte la forme. */}
+              <div className="flex flex-1 items-center gap-2 h-12 rounded-full bg-[rgb(var(--color-chip-bg))] px-4">
+                <Search size={18} aria-hidden="true" className="shrink-0 text-[rgb(var(--color-text-muted))]" />
+                <input
+                  ref={inputRef}
+                  id="search-tasks-mobile"
+                  type="search"
+                  inputMode="search"
+                  enterKeyHint="search"
+                  value={searchTerm}
+                  onChange={(e) => onSearchTermChange(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') close(); }}
+                  onBlur={handleBlur}
+                  placeholder={t('search.placeholder')}
+                  aria-label={t('filter.searchByName')}
+                  className="no-input-chrome flex-1 min-w-0 bg-transparent text-body text-[rgb(var(--color-text-primary))] placeholder:text-[rgb(var(--color-text-muted))] focus:outline-none"
+                />
               </div>
-            </motion.div>
-          </>
+              <button
+                type="button"
+                onClick={close}
+                aria-label={t('search.close')}
+                className="shrink-0 flex h-12 w-12 items-center justify-center rounded-full bg-[rgb(var(--color-chip-bg))] text-[rgb(var(--color-text-secondary))] active:bg-[rgb(var(--color-hover))]"
+              >
+                <X size={20} aria-hidden="true" />
+              </button>
+            </div>
+          </motion.div>
         )}
       </AnimatePresence>
     </>

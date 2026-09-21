@@ -451,6 +451,7 @@
     "open": "Open search",
     "suggestions": "Suggested filters",
     "clearQuickFilter": "Remove the {{name}} filter",
-    "close": "Close search"
+    "close": "Close search",
+    "placeholder": "Search"
   }
 }
