@@ -720,14 +720,14 @@ quand ». Une décision écrite ici fait foi contre une piste écrite dans l'ite
 | [8](#8-tests-et-gardes) | Tests et gardes | C-26 → C-28, C-34 → C-36, C-47, **C-75** ✅ |
 | [9](#9-ce-qui-nest-pas-du-code) | Ce qui n'est PAS du code | renvois |
 | [10](#10-couverture--ce-que-cette-liste-ne-peut-pas-contenir) | 🔴 Couverture et audits à lancer | 1 audit restant (A-4) |
-| [11](#11-ce-qui-reste-ouvert) | 🔴 **Ce qui reste ouvert** | **111 identifiants**, `C-1` → `C-111`, aucun numéro manquant. ⚠️ Dernier décompte COMPLET : 2026-09-14 (76 items suivis alors) |
+| [11](#11-ce-qui-reste-ouvert) | ✅ **Ce qui reste ouvert** | **111 identifiants**, `C-1` → `C-111`, aucun numéro manquant · **décompte COMPLET du 2026-09-21 : 103 clos, 8 ouverts**, dont **3 seulement** traitables par du code |
 | [12](#12-angles-morts-du-2026-09-16--ce-quaucune-garde-ne-regarde) | 🕳️ **Angles morts du 2026-09-16**, versés le 2026-09-20 | `C-81` → `C-110` ✅ **traités le 2026-09-20 au soir** · `C-111` 🔴 **ouvert** |
 
 ---
 
 ## 1. Défauts fonctionnels connus
 
-### C-01 · Restaurer un OKR ne restaure pas le journal de ses complétions · **P1 · M**
+### C-01 · ~~Restaurer un OKR ne restaure pas le journal de ses complétions~~ · **P1 · M** · ✅ corrigé le 2026-09-04
 
 > ✅ corrigé le 2026-09-04 · le journal est capturé AVANT le `delete` et rejoué à la
 > restauration. ⚠️ **Corrigé une seconde fois le même jour** : la première version
@@ -750,7 +750,7 @@ jamais traité.
   graphique rend les mêmes N points. En démo **et** en Supabase, les deux repositories portant la
   logique.
 
-### C-02 · Supprimer une catégorie d'ÉQUIPE n'annonce toujours pas son impact · **P1 · S**
+### C-02 · ~~Supprimer une catégorie d'ÉQUIPE n'annonce toujours pas son impact~~ · **P1 · S** · ✅ corrigé le 2026-09-04
 
 > ✅ corrigé le 2026-09-04 · impact mesuré en prod, réaffectation avant suppression, ordre
 > verrouillé par un test.
@@ -850,7 +850,7 @@ découpées autrement que ses échéances, sur le même écran.
 > complétion. Rien ne l'écrit aujourd'hui, et tant que rien ne l'écrit, aucune migration ne peut
 > savoir ce qu'elle convertit.
 
-### C-04 · Supprimer le système de jetons premium et le mur-pub Habitudes · **P2 · M** · 🟢 arbitré le 2026-09-03
+### C-04 · ~~Supprimer le système de jetons premium et le mur-pub Habitudes~~ · **P2 · M** · 🟢 arbitré le 2026-09-03, ✅ **EXÉCUTÉ le 2026-09-06** (`87dd4a06`) — relu le 09-21 : zéro occurrence de `useDailyAdGate` ou `consume_premium_token` dans `src/`
 
 **Le défaut d'origine** : `consume_premium_token` n'est pas câblé côté client, le mur est piloté par
 un flag `localStorage` daté (`useDailyAdGate('habits')`) et non par le solde de jetons. Inoffensif
@@ -883,7 +883,7 @@ l'abonnement.
   passe. ❌ Ne pas retirer `PREMIUM_ENFORCED` au passage : ce drapeau garde les statistiques
   premium et la route `/premium`, qui ne sont pas dans ce périmètre.
 
-### C-05 · Le badge d'organisation lit jusqu'à 1 000 tâches d'équipe pour afficher un nombre · **P2 · S**
+### C-05 · ~~Le badge d'organisation lit jusqu'à 1 000 tâches d'équipe pour afficher un nombre~~ · **P2 · S** · ✅ corrigé le 2026-09-05
 
 > ✅ corrigé le 2026-09-05 · le compte vient du serveur (mig. **142**, `badge_tasks` ajouté à
 > `get_my_org_inbox()`), et `useOrgBadges` ne monte plus `useTeamTasks` hors démo.
@@ -998,7 +998,7 @@ corrigées et un cliquet interdit la récidive, mais 17 feuilles n'utilisent tou
   affiché** (dans un onglet caché, `requestAnimationFrame` ne tourne pas et le harnais rend un
   rapport « tout est cassé » parfaitement convaincant, cf. la rétractation du 2026-08-27).
 
-### C-08 · Deux dettes Stripe à payer AVANT la bascule live · **P1 · S**
+### C-08 · ~~Deux dettes Stripe à payer AVANT la bascule live~~ · **P1 · S** · ✅ traité le 2026-09-04 · ⚠️ le GESTE de bascule reste `M-43`
 
 > ✅ traité le 2026-09-04 · **(1)** la mig. `140` installe
 > `reset_stripe_identifiers(p_apply BOOLEAN DEFAULT false)`, à blanc par défaut, écrite pour être
@@ -1073,7 +1073,7 @@ doute, faire retenter Stripe, jamais deviner » (CLAUDE.md).
 - **Fini quand** : les deux fonctions distinguent `resource_missing` du reste, et un test le
   prouve pour chacune.
 
-### C-37 · Six « Annuler » de `src/components` rendent l'objet sous un NOUVEL identifiant · **P1 · M**
+### C-37 · ~~Six « Annuler » de `src/components` rendent l'objet sous un NOUVEL identifiant~~ · **P1 · M** · ✅ corrigé le 2026-09-04
 
 > ✅ corrigé le 2026-09-04 · les cinq chemins tâche passent par `useRestoreTask`, `useRestoreHabit` est créé. Garde vue ROUGE sur exactement les cinq fichiers.
 
@@ -1148,7 +1148,7 @@ comportement correct, il ne ment pas.
 - **Fini quand** : chaque cas rend un squelette ou rien tant que `isLoading`, et la sonde est
   versionnée en test de garde.
 
-### C-41 · Supprimer une liste depuis les trois modales « Ajouter à une liste » n'a ni annulation ni impact annoncé · **P2 · S**
+### C-41 · ~~Supprimer une liste depuis les trois modales « Ajouter à une liste » n'a ni annulation ni impact annoncé~~ · **P2 · S** · ✅ corrigé le 2026-09-04
 
 > ✅ corrigé le 2026-09-04 · flux `useDeleteListWithUndo` partagé par les trois écrans. ⚠️ `BulkAddToListModal` ne supprime aucune liste, contrairement à l'énoncé.
 
@@ -1161,7 +1161,7 @@ pas de comptage des tâches concernées dans la confirmation.
 - **Fini quand** : les trois modales appellent le même flux que `TasksPage` (à extraire), et la
   confirmation dit combien de tâches sont dans la liste.
 
-### C-42 · Un commentaire d'équipe se supprime en un clic, sans confirmation ni annulation · **P2 · XS**
+### C-42 · ~~Un commentaire d'équipe se supprime en un clic, sans confirmation ni annulation~~ · **P2 · XS** · ✅ corrigé le 2026-09-04
 
 > ✅ corrigé le 2026-09-04 · toast « Annuler » + `useRestoreComment`, conformément à l'arbitrage. **L'horodatage est restauré aussi** : sans lui le commentaire reviendrait à la fin du fil.
 
@@ -1171,7 +1171,7 @@ suppression du mode entreprise sans aucun filet.
 
 - **Fini quand** : confirmation ou toast « Annuler », au choix, mais l'un des deux.
 
-### C-43 · « Supprimer l'événement lié » supprime N événements sans rien demander ni rien dire · **P2 · S**
+### C-43 · ~~« Supprimer l'événement lié » supprime N événements sans rien demander ni rien dire~~ · **P2 · S** · ✅ corrigé le 2026-09-04
 
 > ✅ corrigé le 2026-09-04 · le libellé dit combien, et « Annuler » les rend par `useRestoreEvent`.
 
@@ -1542,7 +1542,7 @@ jusqu'à douze mois. Deux sorties, à trancher :
   couvre les trois : le cas nominal, le rejeu, et la période déjà remboursée. ❌ Ne pas livrer le
   bouton avant la borne : un remboursement rejouable est une perte d'argent, pas un défaut d'UX.
 
-### C-66 · Quatre capacités d'équipe ont leur back-end, leur permission et leur trigger, et aucun écran · **P2 · M**
+### C-66 · ~~Quatre capacités d'équipe ont leur back-end, leur permission et leur trigger, et aucun écran~~ · **P2 · M** · ✅ traité le 2026-09-04 — ⚠️ **deux des quatre lignes de l'énoncé étaient FAUSSES**
 
 > ✅ traité le 2026-09-04 · **deux des quatre lignes du tableau ci-dessous étaient fausses à la
 > remesure**, et une troisième nommait le mauvais module. Le geste manquait pour **deux**
@@ -1825,7 +1825,7 @@ test. Deux faux positifs écartés au passage :
   supprimées. ✅ Supprimées. `ARCHITECTURE.md` §1, `MOBILE.md` (catalogue, tableau de suivi,
   « ne jamais faire ») et le baril mis à jour dans le même geste.
 
-### C-11 · Le picker natif n'a pas de test de non-régression sur les six surfaces · **P3 · S**
+### C-11 · ~~Le picker natif n'a pas de test de non-régression sur les six surfaces~~ · **P3 · S** · ✅ fait le 2026-09-04
 
 > ✅ fait le 2026-09-04 · `src/date-picker.guard.test.ts`, les deux `EventModalForm` nommées une par une, avec un témoin qui refuse une dispense périmée.
 
@@ -1835,7 +1835,7 @@ dans le navigateur**. Rien n'empêche un `input type="date"` de revenir.
 - **Fini quand** : une garde compte les `input[type=date]` de `src/` et n'autorise que les deux
   d'`EventModalForm`, avec la raison en commentaire.
 
-### C-49 · 52 des 206 hooks exportés par `src/modules` n'ont aucun consommateur · **P3 · M**
+### C-49 · ~~52 des 206 hooks exportés par `src/modules` n'ont aucun consommateur~~ · **P3 · M** · ✅ fait le 2026-09-06 (`9fd84fe2`, 49 supprimés) — gardé par `src/modules/orphan-hooks.guard.test.ts`
 
 Compté à `HEAD` par un balayage qui ignore les fichiers de test et les barils `index.ts`, et
 **validé par témoin** : les hooks connus comme vivants (`useTasks`, `useHabits`, `useEvents`,
@@ -1932,7 +1932,7 @@ de repository, `getById` n'ayant **aucun** autre appelant, vérifié), et **5 mu
   ajouté à `lists/hooks.ts` fait bien échouer la garde ; (2) `consumerCount` forcé à rendre `1` fait
   bien tomber le **témoin**. Une garde qu'on n'a pas vue échouer ne vaut rien.
 
-### C-50 · Quatre fabriques de clés React Query survivent à la mig. 129 sans porter de donnée · **P3 · XS**
+### C-50 · ~~Quatre fabriques de clés React Query survivent à la mig. 129 sans porter de donnée~~ · **P3 · XS** · ✅ fait le 2026-09-04
 
 > ✅ fait le 2026-09-04 · les quatre fabriques supprimées, `typecheck` confirme qu'elles n'avaient aucun appelant.
 
@@ -2758,7 +2758,7 @@ puis vérifie `ref.current instanceof HTMLInputElement` — échoue (`null`) ava
   moment de son propre commit. `npm run typecheck`, `npm run lint`, `npm run i18n:check` et la
   suite complète (`npx vitest run`) sont verts derrière.
 
-### C-60 · `useRef<T>()` sans valeur initiale : cassera sous les types React 19 · **P3 · XS** · trouvé par l'audit A-6
+### C-60 · ~~`useRef<T>()` sans valeur initiale : cassera sous les types React 19~~ · **P3 · XS** · trouvé par l'audit A-6 · ✅ corrigé le 2026-09-04
 
 > ✅ corrigé le 2026-09-04 · une seule occurrence, `usePrevious`.
 
@@ -2933,7 +2933,7 @@ domaine qui porte les e-mails d'authentification et les avis L215-1.
   test la montre rouge avant d'être verte. Le CAPTCHA (`VITE_TURNSTILE_SITE_KEY`, T-40) est un
   complément, pas un substitut : il ne protège pas un appel direct à la fonction.
 
-### C-32 · `report-bug` : l'allowlist de types de pièce jointe est décorative · **P3 · S**
+### C-32 · ~~`report-bug` : l'allowlist de types de pièce jointe est décorative~~ · **P3 · S** · ✅ en production depuis le 2026-09-12 (v11)
 
 > ✅ **EN PRODUCTION depuis le 2026-09-12** (`report-bug` **v11**, déployée à 23:08 UTC, dans la même passe que C-31) · l'extension du fichier joint est DÉRIVÉE du type validé, jamais reprise du nom envoyé. Un `facture.html` déclaré `image/png` repart désormais en `facture.png`, donc inerte dans un client de messagerie. ⚠️ Le correctif était écrit depuis le 2026-09-04 et portait un « ✅ corrigé » **sans date de déploiement** : il décrivait un commit, pas la production, et le défaut est resté en ligne huit jours.
 
@@ -2948,7 +2948,7 @@ qu'en longueur.
   test couvre le cas `type` autorisé + extension interdite. C'est la famille « composant qui porte
   une allowlist sans aucun test », déjà rencontrée sur `RichText`.
 
-### C-33 · `report-bug` : une panne d'authentification anonymise l'auteur en silence · **P3 · XS**
+### C-33 · ~~`report-bug` : une panne d'authentification anonymise l'auteur en silence~~ · **P3 · XS** · ✅ en production depuis le 2026-09-12 (v11)
 
 > ✅ **EN PRODUCTION depuis le 2026-09-12** (`report-bug` **v11**, déployée à 23:08 UTC, dans la même passe que C-31) · l'erreur de `getUser()` est lue, et « auteur non résolu » se distingue de « anonyme ». ⚠️ Même remarque que C-32 : le « ✅ corrigé le 2026-09-04 » décrivait un commit, pas la production.
 
@@ -3066,7 +3066,7 @@ false`). C'est ce qui en fait le moment le moins cher, et le jour d'après il es
   applique la même règle, et le dialogue dit ce qu'il advient de l'abonnement. Le correctif de
   cascade reste celui de C-30, à ne pas dupliquer ici. Le tout **avant** T-38.
 
-### C-44 · `ui/chart.tsx` porte une allowlist anti-XSS sans un seul test · **P3 · XS**
+### C-44 · ~~`ui/chart.tsx` porte une allowlist anti-XSS sans un seul test~~ · **P3 · XS** · ✅ fait le 2026-09-04
 
 > ✅ fait le 2026-09-04 · `chart.test.tsx`, 18 cas : les formats réels des quatre appelants, le scénario d'évasion du commentaire, l'évasion par `id` et par clé.
 
@@ -3103,7 +3103,7 @@ avec le correctif en place.
   anglais. Le geste console est dans [`a-faire-manuel.md`](./a-faire-manuel.md) ; la preuve
   attendue est ce parcours, pas la capture du réglage.
 
-### C-46 · Les dépôts de démo touchent `localStorage` hors de tout `try` · **P2 · S**
+### C-46 · ~~Les dépôts de démo touchent `localStorage` hors de tout `try`~~ · **P2 · S** · ✅ corrigé le 2026-09-04 (les 14 dépôts passent par `safe-json`)
 
 > ✅ corrigé le 2026-09-04 · les 14 dépôts passent par `safe-json`. Les écritures sont **classées** : `safeSetItem` pour un seed, `writeJsonOrThrow` (nouveau, message catalogué) pour une donnée de l'utilisateur.
 
@@ -3238,7 +3238,7 @@ français), et 12 qui interpolent un identifiant d'entité.
   texte de catalogue, et une garde le verrouille avec son témoin. ⚠️ Ne pas se contenter de
   traduire les 45 phrases françaises : c'est le **tuyau** qui est le défaut, pas son contenu du jour.
 
-### C-63 · `useClaimShareLink` lance l'erreur PostgREST brute, et l'appelant l'identifie par son message · **P2 · S**
+### C-63 · ~~`useClaimShareLink` lance l'erreur PostgREST brute, et l'appelant l'identifie par son message~~ · **P2 · S** · ✅ corrigé le 2026-09-04
 
 > ✅ corrigé le 2026-09-04 · le hook normalise, l'appelant branche sur le CODE, et la branche par défaut REPOSE le jeton au lieu de le consommer.
 
@@ -3271,7 +3271,7 @@ normaliser ».
   « nous n'avons pas pu vérifier ce lien, réessayez » plutôt que « invalide », et le jeton n'est
   retiré du stockage qu'après un refus **nommé**.
 
-### C-64 · `AppErrorBoundary` n'offre qu'un rechargement, là où `RootErrorBoundary` offre une sortie · **P2 · S**
+### C-64 · ~~`AppErrorBoundary` n'offre qu'un rechargement~~ · **P2 · S** · ✅ corrigé le 2026-09-04 (`hardSignOut` partagée)
 
 > ✅ corrigé le 2026-09-04 · `hardSignOut` partagée par les deux frontières, repli aux tokens de thème. Un test vérifie que deux déclenchements de suite laissent encore un geste.
 
@@ -4414,7 +4414,7 @@ branches 63 → **65** (67,91). Vérifiés par un second run complet, vert.
 résumé, pas de rapport, pas de message. Mesuré six fois le 2026-09-09. Mesurer machine libre ou
 dans un worktree isolé. ❌ Ne jamais conclure d'un run mort que la couverture a baissé.
 
-### C-27 · Les parcours livrés en septembre n'ont pas de test E2E · **🟢 QUATRE SUR QUATRE, le 2026-09-11**
+### C-27 · ~~Les parcours livrés en septembre n'ont pas de test E2E~~ · ✅ **QUATRE SUR QUATRE, le 2026-09-11**
 
 `FirstRunSetup` (25 tests unitaires, aucun parcours), le calendrier COSMO sur ses six surfaces, et
 les dépendances de tâches **personnelles** (les tests E2E existants portent sur l'entreprise). Le
@@ -4939,7 +4939,7 @@ décompte de la garde ajoute la ligne finale). Les trois cliquets ont mordu sur 
 
 ---
 
-### C-36 · `report-bug` et `renewal-notice` n'ont aucune garde, d'aucune sorte · **P2 · S**
+### C-36 · ~~`report-bug` et `renewal-notice` n'ont aucune garde, d'aucune sorte~~ · **P2 · S** · ✅ fait le 2026-09-04
 
 > ✅ fait le 2026-09-04 · `src/edge-mail-functions.guard.test.ts`, trois détecteurs avec témoins. Elle retire les commentaires avant de lire : ces fichiers CITENT leurs anciens défauts.
 
@@ -4951,7 +4951,7 @@ puis corrigée le 2026-08-26) et que rien n'empêche sa réintroduction.
   de `renewal-notice` échoue fermé sur secret absent, `report-bug` n'a pas de valeur par défaut
   d'expéditeur, et aucune des deux ne renvoie un corps d'erreur du fournisseur.
 
-### C-47 · La suite de tests rend des échecs FAUX sous charge, et personne ne peut les distinguer des vrais · **P2 · S**
+### C-47 · ~~La suite de tests rend des échecs FAUX sous charge~~ · **P2 · S** · ✅ corrigé le 2026-09-04 (`maxWorkers: 2`) — ❌ ne JAMAIS l'écraser en ligne de commande
 
 > ✅ corrigé le 2026-09-04 · `maxWorkers: 2` + délais à 20 s. **DIX runs
 > consécutifs sur l'arbre poussé, un seul verdict distinct** — le critère de
@@ -5341,6 +5341,45 @@ périmètre, ses questions et ses pièges connus.
 ---
 
 ## 11. Ce qui reste ouvert
+
+### 11.0octies ✅ **DÉCOMPTE COMPLET du 2026-09-21 — 111 items : 103 clos, 8 ouverts**
+
+> **Le premier décompte complet depuis le 2026-09-14**, et il a été obtenu en relisant les 111
+> titres un par un, pas en reprenant un tableau.
+>
+> 🔴 **44 items étaient CLOS dans leur corps sans que leur titre le dise.** 13 corrigés le matin du
+> 2026-09-21, **23 de plus** l'après-midi, 8 l'étaient déjà. Le sommaire de ce fichier les donnait
+> tous pour ouverts, et `a-faire-code-risques.md` en cotait cinquante qui n'existaient plus.
+> ❌ **C'est le défaut le plus cher de ce dépôt** : un statut écrit à deux endroits diverge, et
+> c'est toujours le plus visible — le titre — qui a tort, parce que c'est le corps qu'on met à jour
+> en corrigeant.
+>
+> ### Les 8 items ouverts, et ce qui les débloque
+>
+> | Item | Ce qui reste | Débloqué par |
+> |---|---|---|
+> | `C-111` | le job `e2e` **ROUGE sur `main`**, 25 échecs, dont **8 défauts produit** de cibles tactiles | **du code** |
+> | `C-69` | la fenêtre du hero tourne sans pause et ignore `prefers-reduced-motion` | **du code** |
+> | `C-07` | 17 feuilles animées n'utilisent pas `useSheetMotion()` — dette, les 5 cassées sont corrigées | **du code** |
+> | `C-45` | le réglage de console qui valide les URL de `loginWithGoogle` | un geste (`M-15`/`M-16`/`M-17`) |
+> | `C-24` | VoiceOver iOS sur un appareil réel | un geste (`M-40`, `M-52`) |
+> | `C-65` + `C-39` | l'épreuve du remboursement **contre une vraie carte** | un geste (`M-08`) |
+> | `C-58` | React 19 : **arbitrage** différé, seuil de reprise écrit (283,5 ko) | une décision |
+>
+> ✅ **La moitié destructrice de `C-39` est FERMÉE**, relue en base le 09-21 :
+> `delete_organization` exige `owner_id = auth.uid()` (`not_org_owner`) **et** refuse tant qu'un
+> abonnement est actif. Ce qui reste de `C-39` est le même que `C-65` : l'épreuve Stripe.
+>
+> 🔴 **Cinq des huit ne se ferment pas en écrivant du code.** C'est le renseignement le plus utile
+> de ce décompte : le backlog de code disponible immédiatement, c'est `C-111`, `C-69` et `C-07`.
+>
+> ⚠️ **Ce décompte ne dit pas que le produit va bien.** Il dit que ce fichier décrit enfin ce qui
+> reste. `A-4` n'a jamais été passé, et un finding qu'on n'a jamais cherché est absent, pas faux :
+> le nombre remontera, et une remontée n'est pas une régression.
+>
+> **Classement et cotation** : [`a-faire-code-risques.md`](./a-faire-code-risques.md), recoté le
+> même jour sur ces 111 items — c'est la réponse à `M-56`.
+
 
 > ✅ **Tout ce paragraphe a été re-mesuré le 2026-09-12** — ledger de migrations et les 7 Edge
 > Functions relus par l'API Supabase, runs relus par `gh`. ⚠️ **La production a bougé dans la
