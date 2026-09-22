@@ -82,8 +82,27 @@ const HabitCard: React.FC<HabitCardProps> = React.memo(({ habit }) => {
     // Sur mobile, la rangée compacte (7 cases) tient sur une grille pleine
     // largeur (pas de scroll) : la case s'étire à la colonne au lieu d'une
     // taille fixe. Le desktop garde exactement sa taille fixe d'avant.
+    // C-111 · la rangée de 7 jours mesurait 38 x 38 px sur téléphone (mesuré
+    // dans le navigateur le 2026-09-22, viewport 375, mode démo : grille de
+    // 301,6 px, gap de 6 px).
+    //
+    // 🔴 SEPT CELLULES DE 44 PX NE TIENNENT PAS, et c'est de l'arithmétique,
+    // pas un arbitrage : il faudrait 7 x 44 + 6 x 6 = 344 px de large, et même
+    // avec un gap NUL, 7 x 44 = 308 > 301,6. La largeur ne peut donc pas
+    // atteindre la cible sans refaire la carte.
+    //
+    // Ce qui est récupérable l'est : `min-h-11` porte la HAUTEUR à 44 px, ce
+    // qui fait passer la cible de 1 444 à 1 672 px². L'écart restant est sur
+    // la seule largeur, il est déclaré et daté dans `e2e/touch-targets.spec.ts`
+    // avec son critère (échoue 2.5.5 AAA, tient 2.5.8 AA à 24 px).
+    // ❌ Ne PAS « corriger » par un débord de `tap-area` : sept cellules
+    // voisines agrandies chacune se chevaucheraient, et le dernier dans l'ordre
+    // du DOM volerait l'appui de son voisin. Une grille se corrige par sa
+    // taille, jamais par du débord.
     const btnSize =
-      size === 'normal' ? 'w-full aspect-square md:w-10 md:h-10' : 'w-11 h-11 md:w-9 md:h-9';
+      size === 'normal'
+        ? 'w-full aspect-square min-h-11 md:min-h-0 md:w-10 md:h-10'
+        : 'w-11 h-11 md:w-9 md:h-9';
     const iconSize = size === 'normal' ? 18 : 14;
 
     return (

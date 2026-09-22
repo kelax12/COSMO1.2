@@ -720,7 +720,7 @@ quand ». Une décision écrite ici fait foi contre une piste écrite dans l'ite
 | [8](#8-tests-et-gardes) | Tests et gardes | C-26 → C-28, C-34 → C-36, C-47, **C-75** ✅ |
 | [9](#9-ce-qui-nest-pas-du-code) | Ce qui n'est PAS du code | renvois |
 | [10](#10-couverture--ce-que-cette-liste-ne-peut-pas-contenir) | 🔴 Couverture et audits à lancer | 1 audit restant (A-4) |
-| [11](#11-ce-qui-reste-ouvert) | ✅ **Ce qui reste ouvert** | **111 identifiants**, `C-1` → `C-111`, aucun numéro manquant · **décompte COMPLET du 2026-09-21 : 103 clos, 8 ouverts**, dont **3 seulement** traitables par du code |
+| [11](#11-ce-qui-reste-ouvert) | ✅ **Ce qui reste ouvert** | **111 identifiants**, `C-1` → `C-111` · **6 ouverts au 2026-09-22** (`C-69` et `C-07` fermés ce jour) · **un seul** relève encore du code : `C-111` |
 | [12](#12-angles-morts-du-2026-09-16--ce-quaucune-garde-ne-regarde) | 🕳️ **Angles morts du 2026-09-16**, versés le 2026-09-20 | `C-81` → `C-110` ✅ **traités le 2026-09-20 au soir** · `C-111` 🔴 **ouvert** |
 
 ---
@@ -985,7 +985,37 @@ dépôt en a déjà rencontré plusieurs.
 > dépôt est « 0 erreur avant chaque commit » : une sortie polluée par le travail des autres la rend
 > inapplicable.
 
-### C-07 · 17 feuilles animées encore écrites à la main · **P2 · M**
+### C-07 · ~~17 feuilles animées encore écrites à la main~~ · **P2 · M** · ✅ **clos le 2026-09-22, en deux moitiés**
+
+> 🔴 **L'ÉNONCÉ ÉTAIT PÉRIMÉ POUR SA PREMIÈRE MOITIÉ, et depuis le 2026-09-04.** « 17 feuilles
+> n'utilisent toujours pas `useSheetMotion()` » est faux : le cliquet de
+> `src/design-system.guard.test.ts` est **à zéro** depuis cette date, plus aucune feuille n'écrit
+> `y: '100%'` à la main, et **23 fichiers** consomment le helper (l'énoncé en comptait 8).
+> ⚠️ Remesuré avant d'écrire une ligne de code : la garde a été jouée, elle est verte.
+>
+> ✅ **LA SECONDE MOITIÉ, ELLE, ÉTAIT VRAIE ET N'AVAIT AUCUNE GARDE.** L'énoncé nommait DEUX
+> helpers ; seul `useSheetMotion` était mesuré. `useSheetDrag` ne l'était nulle part, et l'audit
+> mobile du 2026-08-14 avait pourtant compté **cinq feuilles affichant une poignée de glissement
+> qui ne faisait rien**. Balayage du 2026-09-22 : **trois** surfaces avaient reconstitué le défaut.
+>
+> | Surface | Traitement |
+> |---|---|
+> | `task-modal/MobileActionSheet` | ✅ câblée sur `useSheetDrag(onClose)` |
+> | `OKRDeadlineReviewModal` | ✅ câblée, mais **seulement en phase `edit`** : pendant l'animation de validation, la carte porte un `animate` qui la fait voler : y laisser un `drag` ferait lutter deux sources pour le même transform, et permettrait d'interrompre une validation déjà décidée |
+> | `RemoveFriendConfirm` | 🗑️ poignée **RETIRÉE**, pas câblée : c'est un `alertdialog` de suppression, et une poignée y présente une décision comme une feuille qu'on chasse au pouce |
+>
+> ⚠️ **Deux faux positifs écartés à la mesure** : les « poignées » de `PyramidNodeCard` et
+> `TeamProjectCard` sont des **barres de progression** — même forme, `overflow-hidden` en plus.
+> La première écriture de la garde les accusait, et une garde qui accuse deux fichiers justes est
+> une garde qu'on finit par ignorer : le détecteur raisonne désormais par ÉLÉMENT, jamais par
+> fichier.
+>
+> **Cliquet** : `src/design-system.guard.test.ts` § « une poignée de feuille promet un geste »,
+> **4 témoins**, et **vu rouge sur les trois sabotages** (une surface décâblée à la fois) avant
+> d'être commité.
+> ⚠️ **Ce que la garde ne peut pas dire** : elle compte des chaînes de caractères. Elle ne sait
+> pas si un glissement FERME réellement la feuille — elle dit qu'une poignée dessinée s'accompagne
+> d'un geste déclaré, et rien de plus.
 
 Invariant **explicitement non tenu** (`ARCHITECTURE.md` §1) : « aucune position d'arrivée portée par
 une animation de transform ». Les 5 réellement cassées sous `prefers-reduced-motion` ont été
@@ -4176,7 +4206,37 @@ geste que C-57 traitait, les 22 autres non.
 > Ne jamais écrire « les cibles tactiles sont conformes » : l'énoncé opposable est la liste des
 > surfaces que `e2e/touch-targets.spec.ts` ouvre réellement.
 
-### C-69 · La fenêtre produit tourne toute seule, sans pause, y compris en mouvement réduit · **P2 · S** · 🟠 arbitrage rendu : on garde
+### C-69 · ~~La fenêtre produit tourne toute seule, sans pause, y compris en mouvement réduit~~ · **P2 · S** · ✅ **corrigé le 2026-09-22**
+
+> ✅ **WCAG 2.2.2 tenu, et vérifié DANS LE NAVIGATEUR, pas déduit du code.**
+> `AppWindowShowcase` a désormais trois états — `auto`, `pause`, `lecture` — plus une suspension
+> au survol et au focus qui ne change pas l'état demandé.
+>
+> **Ce qui a été mesuré le 2026-09-22**, sur la landing servie en local, machine d'Axel :
+> `matchMedia('(prefers-reduced-motion: reduce)').matches` vaut **`true`**, et le bouton rend
+> « **Lancer** le défilement » au lieu de « Mettre en pause ». La rotation ne démarre donc plus
+> toute seule chez lui — c'est exactement le comportement visé, constaté plutôt qu'espéré.
+>
+> 🔴 **Pourquoi TROIS états et pas deux.** Avec « auto » et « pause » seulement, une personne en
+> mouvement réduit verrait une fenêtre figée sur « Tâches » pour toujours, et le hero — dont le
+> message entier est « quatre modules, une seule app » — ne dirait plus rien pour elle. WCAG 2.3.3
+> n'interdit pas le mouvement, il interdit le mouvement **non demandé** : appuyer sur « lecture »
+> est une demande.
+>
+> ⚠️ **`aria-hidden="true"` ne dispensait de rien**, et c'est ce qui a fait vivre le défaut : le
+> critère ne parle pas des lecteurs d'écran, il parle des personnes qui ne peuvent pas lire une
+> page pendant que quelque chose bouge à côté. L'attribut est descendu sur le cadre décoratif, et
+> le bouton est le seul élément du composant qui reste annoncé.
+>
+> ✅ **Le bouton fait 44 × 44 px RÉELS**, pas un débord de `tap-area` : `/` est l'une des huit
+> pages publiques mesurées par `e2e/touch-targets.spec.ts`, et corriger un défaut d'accessibilité
+> en en créant un autre aurait été une drôle de façon de compter. La suite `touch-targets` est
+> **verte, 19 sur 19**, bouton compris.
+>
+> **Témoin** : `src/components/showcase/rotation-state.guard.test.ts`, **13 cas** sur la règle
+> pure (les six combinaisons état × mouvement réduit, plus les quatre sabotages nommés).
+> ⚠️ **Ce que le témoin ne prouve pas** : que le bouton existe et qu'il est atteignable. Ça, c'est
+> `touch-targets` et l'audit clavier — un témoin qui prétendrait couvrir les deux mentirait.
 
 Trouvé par l'audit **A-8** en cherchant autre chose. `AppWindowShowcase` (le mockup du hero de `/`)
 change de vue toutes les **2,5 s**, indéfiniment. La rotation n'est gatée que par `useInView` : il
@@ -5342,6 +5402,21 @@ périmètre, ses questions et ses pièges connus.
 
 ## 11. Ce qui reste ouvert
 
+### 11.0nonies ✅ **DÉCOMPTE du 2026-09-22 — 111 items : 105 clos, 6 ouverts**
+
+> **Deux items fermés le 2026-09-22**, tous deux par du code et tous deux avec leur cliquet :
+> `C-69` (WCAG 2.2.2, la vitrine du hero) et `C-07` (la seconde moitié, `useSheetDrag`).
+>
+> 🔴 **Et les deux avaient un énoncé partiellement FAUX**, ce qui est le renseignement le plus
+> utile de la passe : `C-07` annonçait « 17 feuilles sans `useSheetMotion` » alors que ce cliquet
+> était à zéro depuis le **2026-09-04** — le vrai défaut était son AUTRE moitié, qui n'avait
+> jamais eu de garde. Remesurer avant de coder a évité de refaire un travail fait, et a trouvé
+> celui qui restait.
+>
+> 🔴 **`C-111` reste ouvert**, et deux défauts PRODUIT en sont sortis : une cible de 24 × 24 px sur
+> `/settings`, et surtout les actions d'une tâche **inatteignables au clavier sur mobile**
+> (WCAG 2.1.1, niveau A) — que le harnais clavier ne voyait pas, parce qu'il expirait à côté.
+
 ### 11.0octies ✅ **DÉCOMPTE COMPLET du 2026-09-21 — 111 items : 103 clos, 8 ouverts**
 
 > **Le premier décompte complet depuis le 2026-09-14**, et il a été obtenu en relisant les 111
@@ -5358,9 +5433,9 @@ périmètre, ses questions et ses pièges connus.
 >
 > | Item | Ce qui reste | Débloqué par |
 > |---|---|---|
-> | `C-111` | le job `e2e` **ROUGE sur `main`**, 25 échecs, dont **8 défauts produit** de cibles tactiles | **du code** |
-> | `C-69` | la fenêtre du hero tourne sans pause et ignore `prefers-reduced-motion` | **du code** |
-> | `C-07` | 17 feuilles animées n'utilisent pas `useSheetMotion()` — dette, les 5 cassées sont corrigées | **du code** |
+> | `C-111` | le job `e2e` **toujours rouge sur `main`** · ✅ `touch-targets` fermée (19/19) et 2 cas clavier sur 4 le 2026-09-22 · 🔴 restent 2 cas clavier non diagnostiqués, 7 parcours WebKit, 3 `reduced-motion-sheets`, et **rien n'a été rejoué sur WebKit** | **du code** |
+> | ~~`C-69`~~ | ✅ **clos le 2026-09-22** · trois états + suspension au survol et au focus, 44 × 44 px réels, 13 cas de témoin, vérifié dans le navigateur | — |
+> | ~~`C-07`~~ | ✅ **clos le 2026-09-22** · sa 1ʳᵉ moitié l'était depuis le 09-04 (l'énoncé était périmé) ; la 2ᵉ, `useSheetDrag`, n'avait **aucune garde** — 3 poignées muettes trouvées, cliquet posé, 3 sabotages vus rouges | — |
 > | `C-45` | le réglage de console qui valide les URL de `loginWithGoogle` | un geste (`M-15`/`M-16`/`M-17`) |
 > | `C-24` | VoiceOver iOS sur un appareil réel | un geste (`M-40`, `M-52`) |
 > | `C-65` + `C-39` | l'épreuve du remboursement **contre une vraie carte** | un geste (`M-08`) |
@@ -6224,7 +6299,69 @@ que cette garde existe pour dire ; ce n'est pas un faux positif.
 
 ---
 
-### 12.10 🔴 C-111 · LE JOB `e2e` EST ROUGE SUR `main`, 25 échecs, et rien ne le disait
+### 12.10 🟠 C-111 · LE JOB `e2e` EST ROUGE SUR `main` — **deux familles sur quatre traitées le 2026-09-22**
+
+> ## 🔧 Passe du 2026-09-22 · ce qui est fermé, ce qui reste
+>
+> 🔴 **D'ABORD, UN CHIFFRE DE CET ITEM ÉTAIT FAUX.** Il annonçait « 2 cas `chromium` » pour
+> `a11y-keyboard-audit`. Rejoué sur ce poste le 2026-09-22 : **4**, plus les 3 de
+> `touch-targets`, soit **7 échecs `chromium` en local et non 5**. Les deux cas supplémentaires
+> (`ShareListSheet`, `DatePicker` de la modale OKR) n'étaient nommés nulle part.
+>
+> ### ✅ Famille 1 — `touch-targets` : **FERMÉE sur `chromium`, 19 cas sur 19 verts**
+>
+> Les trois défauts étaient réels, et chacun a demandé un traitement différent :
+>
+> | Route | Mesuré | Traitement |
+> |---|---|---|
+> | `/settings` | **24 × 24 px**, la plus petite commande des huit routes | `TAP_AREA_44_ANCRE`, une variante NEUVE du helper : `TAP_AREA_44` porte `relative`, qui aurait écrasé l'`absolute` de la pastille et l'aurait **décrochée du coin de l'avatar** — un défaut d'affichage échangé contre un défaut d'accessibilité |
+> | `/okr` | 3 puces à **36 px de haut** | `TAP_AREA_44_Y` (le cas exact de C-73) + `gap-y-2` sur les rangées : à 36 px, deux zones tactiles de rangées voisines se chevauchaient de 2 px avec l'ancien `gap-1.5` |
+> | `/habits` | ~72 cellules à **38 × 38 px** | `min-h-11` porte la hauteur à 44. 🔴 **La largeur ne PEUT pas suivre** : mesuré dans le navigateur, la grille fait **301,6 px** et sept cellules de 44 en exigeraient **344** — même à gap nul, 308. Écart **déclaré** dans la spec avec son critère (échoue 2.5.5 AAA, tient 2.5.8 AA), comme l'a fait C-80 |
+>
+> ⚠️ **La dispense de `/habits` n'est PAS une allowlist**, et c'est vérifié par un témoin : elle
+> porte sur la **largeur seule**, et une cellule qui perdrait ses 44 px de haut redeviendrait un
+> échec. Elle est bornée par un sélecteur nommé, et elle **doit tomber** si la carte gagne 45 px.
+>
+> ### ✅ Famille 2 — `a11y-keyboard-audit` : **2 cas sur 4**, et la cause racine est un DÉFAUT PRODUIT
+>
+> 🔴 **CE QUI A ÉTÉ TROUVÉ EST PLUS GRAVE QUE LE TEST QUI ÉCHOUAIT.** Les cas cherchaient un bouton
+> « Actions pour … » visible à 375 px. Mesuré dans le navigateur : il existe, avec le bon nom, et
+> il fait **0 × 0 px** — il vit dans `div.hidden md:block`, c'est-à-dire la ligne **desktop**.
+>
+> La maquette 86 a retiré le « ⋯ » des cartes mobiles en laissant trois chemins vers
+> `TaskActionsSheet` : appui long, glissement à gauche, menu de la ligne desktop. **Les trois sont
+> des gestes de pointeur.** Modifier, supprimer, partager ou planifier une tâche était donc
+> **inatteignable au clavier sur mobile** : WCAG 2.1.1 (niveau A), le critère le plus élémentaire
+> du référentiel. Aucun audit ne l'avait vu, et le harnais clavier expirait **à côté** du défaut
+> qu'il aurait dû nommer.
+>
+> ✅ **Corrigé sans reprendre un pixel à la colonne du pouce.** `TaskCard` portait déjà un
+> `onContextMenu` qui ne faisait qu'un `preventDefault()` — il SUPPRIMAIT le menu du navigateur
+> sans rien offrir. Il ouvre désormais la feuille, ce qui donne d'un coup le clic droit ET le
+> clavier : la touche « menu contextuel » et `Shift+F10` émettent toutes deux un évènement
+> `contextmenu` sur l'élément focalisé, et la carte porte déjà `tabIndex={0}`. Annoncé par
+> `aria-keyshortcuts="Shift+F10"`.
+> ✅ **L'interdit de la maquette 86 tient entier** : aucun pixel ajouté, donc rien à retirer en
+> échange. Vérifié dans le navigateur (focus sur la carte → évènement → `role="dialog"` nommé
+> « Actions pour … »), puis par le harnais : `trapped: true`, `escClosed: true`,
+> `focusReturned: true` sur les deux cas.
+> ⚠️ Le harnais mesure désormais le chemin **clavier**, ce qui est plus exigeant que le clic qu'il
+> faisait avant.
+>
+> ### 🔴 CE QUI RESTE, et qui n'a PAS été touché
+>
+> | Reste | Pourquoi |
+> |---|---|
+> | `a11y-keyboard-audit` : `ShareListSheet` et `DatePicker` (modale OKR) | **Non diagnostiqués.** Ils tournent à 1440 px, donc leur cause n'est pas celle des deux autres. Ne pas supposer qu'ils tombent avec elles |
+> | Famille 3 — **7 parcours de démo, WebKit uniquement** | Intacte |
+> | Famille 4 — `reduced-motion-sheets`, 3 cas sur les **deux** moteurs mobiles | Intacte. ⚠️ Ce n'est PAS refermé par C-07 : le cliquet `y: '100%'` était déjà à zéro avant cette passe, donc ces trois échecs ont une autre cause |
+> | **Tout WebKit** | ❌ **Rien n'a été rejoué sur WebKit** dans cette passe. Les 5 `touch-targets` et les 9 `a11y-keyboard` WebKit sont **présumés** suivre leurs homologues chromium, et une présomption n'est pas une mesure |
+>
+> ❌ **NE PAS LIRE CET ITEM COMME REFERMÉ.** Le critère de sortie reste le job `e2e` **vert sur
+> `main`**, et il ne l'est pas. Ce qui est acquis : 19 cas `touch-targets` et 2 cas clavier,
+> mesurés sur ce poste, plus **deux défauts produit réels** corrigés (la cible de 24 px et
+> l'inaccessibilité clavier des actions de tâche).
+
 
 > **Trouvé le 2026-09-20 au soir en jouant la suite pour vérifier la passe du § 12.9.** Aucun de
 > ces échecs ne vient de cette passe : les fichiers en cause sont à `HEAD`, non modifiés, et la

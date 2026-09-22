@@ -3,6 +3,7 @@ import { Plus, Edit2, X, Trash } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from '@/lib/toast';
 import { useT } from '@/i18n/useT';
+import { TAP_AREA_44_Y } from '@/components/mobile/tap-area';
 import { rootCategories, childrenOfCategory, toggleRootCategory, toggleLeafCategory } from './category-filter-logic';
 
 interface CategoryLite {
@@ -108,9 +109,16 @@ const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
   // TaskListsBar (accès rapide aux listes) — `large` ne joue plus qu'au-delà
   // de `sm` (desktop inchangé), au lieu d'agrandir aussi le mobile via
   // `min-h-touch`.
+  // C-111 · les puces mesuraient 36 px de haut (`h-9`) sur `/okr`, soit sous
+  // la cible de 44. Exactement le cas de C-73 : le dessin est volontairement
+  // court — une pilule de 44 px de haut dans une rangée de filtres serait
+  // disproportionnée —, donc la cible vit dans un pseudo-élément vertical qui
+  // ne prend aucune place dans le flux.
+  // ⚠️ Vertical UNIQUEMENT : un débord horizontal ferait se chevaucher deux
+  // puces voisines de la même rangée, et volerait un appui à la voisine.
   const chipCls = large
-    ? 'inline-flex items-center gap-1.5 px-2.5 h-9 sm:h-auto sm:gap-2 sm:px-3 sm:min-h-0 sm:py-1.5 rounded-full text-xs sm:text-sm font-medium transition-colors'
-    : 'inline-flex items-center gap-1.5 px-2.5 h-9 sm:h-auto sm:min-h-0 sm:py-1 rounded-full text-xs font-medium transition-colors';
+    ? `inline-flex items-center gap-1.5 px-2.5 h-9 ${TAP_AREA_44_Y} sm:h-auto sm:gap-2 sm:px-3 sm:min-h-0 sm:py-1.5 rounded-full text-xs sm:text-sm font-medium transition-colors`
+    : `inline-flex items-center gap-1.5 px-2.5 h-9 ${TAP_AREA_44_Y} sm:h-auto sm:min-h-0 sm:py-1 rounded-full text-xs font-medium transition-colors`;
   const dotCls = large ? 'w-2.5 h-2.5' : 'w-2 h-2';
   // `hidden sm:inline-flex` : sur mobile, ce déclencheur est remplacé par le
   // bouton « + » du bandeau « Catégorie : » ajouté plus bas (même formulaire
@@ -285,7 +293,7 @@ const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
     if (children.length === 0) return null;
     return (
       <React.Fragment key={parentId}>
-        <div className="flex items-center gap-1.5 flex-wrap" style={{ paddingInlineStart: depth * 24 }}>
+        <div className="flex items-center gap-x-1.5 gap-y-2 flex-wrap" style={{ paddingInlineStart: depth * 24 }}>
           {children.map((child) =>
             renderChip(child, () => setActiveCategoryIds(toggleLeafCategory(child.id, activeCategoryIds))),
           )}
@@ -320,7 +328,7 @@ const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
           qu'une fois leur parent activé (rangées ci-dessous). Style
           « pastilles » du mode entreprise, appliqué aux deux modes : « Tous »
           + chips colorées (pastille + fond plein si active). */}
-      <div className="flex items-center gap-1.5 flex-wrap">
+      <div className="flex items-center gap-x-1.5 gap-y-2 flex-wrap">
         <button
           onClick={() => setActiveCategoryIds(new Set())}
           className={`${chipCls} ${

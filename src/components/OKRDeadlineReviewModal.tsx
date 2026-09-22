@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useSheetDrag } from '@/components/mobile/mobile-motion';
 import { CheckCircle2, X, Clock } from 'lucide-react';
 import type { OKR, KeyResult } from '@/modules/okrs';
 import { formatDate } from '@/i18n/format';
@@ -75,6 +76,19 @@ const OKRDeadlineReviewModal: React.FC<Props> = ({ okr, categories, flyTargetRef
     onClose: () => { if (phase === 'edit') onClose(); },
     labelledBy: 'okr-deadline-review-title',
   });
+
+  // C-07 · la poignée dessinée sur mobile (« Drag handle mobile », plus bas)
+  // ne faisait RIEN. Elle promettait un geste inexistant, ce que le module
+  // interdit explicitement : on tire, rien ne bouge, et on en conclut que
+  // l'app est cassée. Même course que toutes les feuilles (80 px ou 500 px/s).
+  //
+  // ⚠️ Le geste suit la MÊME règle que le voile et qu'Échap : il ne ferme que
+  // pendant la phase d'édition. Pendant l'animation de validation, la carte
+  // porte un `animate` qui la fait voler vers sa cible — y laisser un `drag`
+  // ferait lutter deux sources pour le même transform, et l'utilisateur
+  // pourrait interrompre une validation déjà décidée. Le spread est donc
+  // conditionnel, pas le helper.
+  const sheetDrag = useSheetDrag(() => { if (phase === 'edit') onClose(); });
 
   if (!okr || !draft) return null;
 
@@ -161,6 +175,7 @@ const OKRDeadlineReviewModal: React.FC<Props> = ({ okr, categories, flyTargetRef
               : { type: 'spring', stiffness: 240, damping: 22 }
           }
           onAnimationComplete={() => { if (phase === 'flying') handleFlyEnd(); }}
+          {...(phase === 'edit' ? sheetDrag : {})}
           onClick={(e) => e.stopPropagation()}
           className="relative w-full sm:max-w-lg sm:rounded-2xl rounded-t-2xl shadow-2xl flex flex-col max-h-[92dvh]"
           style={{

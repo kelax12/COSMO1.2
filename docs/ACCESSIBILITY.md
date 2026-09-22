@@ -324,6 +324,66 @@ Conséquences pratiques, à tenir :
 | Défauts de nom accessible corrigés hors axe-core | · | · | **3** (D4, D5, E2, cf. §2026-08-27) |
 | Libellés sous le plancher de 11 px | 79 | 79 | **75** |
 
+### 🔴 2026-09-22 · **deux défauts de NIVEAU A trouvés en corrigeant autre chose**
+
+**Aucune note ne bouge**, et c'est délibéré : aucun domaine n'a été réaudité. Ce qui suit est ce
+qu'une passe de code (C-69, C-07, C-111) a fait tomber en chemin.
+
+#### 1 · Les actions d'une tâche étaient INATTEIGNABLES AU CLAVIER sur mobile (WCAG 2.1.1, A)
+
+**Mesuré dans le navigateur**, viewport 375 × 812, mode démo. La maquette 86 a retiré le « ⋯ »
+des cartes mobiles en laissant trois chemins vers `TaskActionsSheet` : **appui long, glissement à
+gauche, et le menu de la ligne desktop**. Les trois sont des gestes de pointeur, et le quatrième
+vit dans `div.hidden md:block`, donc à **0 × 0 px** sur téléphone.
+
+Modifier, supprimer, partager ou planifier une tâche — les actions principales du produit — étaient
+donc impossibles au clavier. WCAG 2.1.1 est le critère **le plus élémentaire** du référentiel.
+
+🔴 **Ce que l'épisode enseigne dépasse le défaut.** `e2e/a11y-keyboard-audit.spec.ts` cherchait
+ce bouton depuis des semaines et **expirait** dessus. Un test qui expire ne dit pas ce qu'il
+cherche : son échec passait pour de la lenteur de harnais, et il masquait précisément le défaut
+qu'il existait pour trouver. ❌ **Ne jamais lire un timeout comme une lenteur sans avoir ouvert
+l'écran.**
+
+✅ **Corrigé sans reprendre un pixel à l'interface** : `TaskCard` portait déjà un `onContextMenu`
+qui ne faisait qu'un `preventDefault()` — il supprimait le menu du navigateur sans rien offrir en
+échange. Il ouvre désormais la feuille, ce qui donne d'un coup le clic droit ET le clavier (la
+touche « menu contextuel » et `Shift+F10` émettent le même évènement sur l'élément focalisé, et
+la carte porte déjà `tabIndex={0}`). Annoncé par `aria-keyshortcuts="Shift+F10"`.
+Vérifié dans le navigateur, puis par le harnais : `trapped`, `escClosed` et `focusReturned`
+vrais sur les deux cas remis en marche.
+
+#### 2 · La vitrine du hero ne pouvait pas être arrêtée (WCAG 2.2.2, AA)
+
+`AppWindowShowcase` changeait de vue toutes les 2,5 s, indéfiniment, **sans pause, sans arrêt au
+survol ni au focus, et sans égard pour `prefers-reduced-motion`**.
+
+⚠️ **`aria-hidden="true"` ne dispensait de rien**, et c'est ce qui a fait vivre le défaut si
+longtemps : le critère ne parle pas des lecteurs d'écran, il parle des personnes qui ne peuvent
+pas lire une page pendant que quelque chose bouge à côté — attention, sensibilité vestibulaire.
+
+✅ Trois états (`auto` / `pause` / `lecture`), suspension au survol et au focus, bouton de
+44 × 44 px réels. Le troisième état n'est pas un luxe : sans lui, une personne en mouvement réduit
+verrait la fenêtre figée sur sa première vue pour toujours. **WCAG 2.3.3 interdit le mouvement non
+demandé, pas le mouvement.**
+
+#### 3 · Cibles tactiles : trois routes remises à niveau, un écart DÉCLARÉ
+
+`/settings` (pastille d'avatar à **24 × 24 px**, la plus petite commande des huit routes) et
+`/okr` (puces de catégorie à **36 px** de haut) passent par un pseudo-élément, donc sans que le
+dessin grandisse. Suite `touch-targets` **verte, 19 sur 19** sur chromium.
+
+🔴 **`/habits` ne peut PAS être corrigé, et c'est de l'arithmétique** : la grille de 7 jours fait
+**301,6 px** de large (mesuré), et sept cellules de 44 px en exigeraient **344** — même à gap nul,
+308. La hauteur passe à 44 (`min-h-11`), la largeur reste à ~38. L'écart est **déclaré dans
+`e2e/touch-targets.spec.ts`** avec son critère : il échoue **2.5.5 (AAA)**, il tient **2.5.8
+(AA, 24 px)**, qui est le critère opposable sous l'EAA.
+⚠️ **Cette dispense n'est pas une allowlist** : elle porte sur la **largeur seule**, un témoin
+vérifie qu'une cellule perdant sa hauteur redevient un échec, et elle **doit tomber** si la carte
+gagne 45 px de large.
+
+---
+
 ### 2026-08-27 · +1, et le point est ailleurs que dans les gates
 
 **Trois défauts corrigés, aucun n'était visible par axe-core**, ce qui est exactement le tiers de

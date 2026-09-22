@@ -57,6 +57,36 @@ test.describe.configure({ timeout: 180_000 });
 /** Cible minimale WCAG 2.5.5 (AA), en pixels CSS. */
 const TARGET = 44;
 
+// ═══════════════════════════════════════════════════════════════════
+// LA GRILLE DE 7 JOURS DE `HabitCard` — écart DÉCLARÉ (C-111, 2026-09-22)
+//
+// 🔴 CE N'EST PAS UN ARBITRAGE DE GOÛT, C'EST DE L'ARITHMÉTIQUE. Mesuré dans
+// le navigateur le 2026-09-22 (viewport 375 x 812, mode démo, dix cartes) : la
+// grille `grid-cols-7` fait **301,6 px** de large, gap de 6 px, donc des
+// cellules de **37,94 x 37,94**. Sept cellules de 44 px en exigeraient
+// 7 x 44 + 6 x 6 = **344 px** ; même avec un gap NUL il en faudrait **308**.
+// La largeur ne peut pas atteindre la cible sans refaire la carte.
+//
+// CE QUI A ÉTÉ FAIT, parce que c'était récupérable : `min-h-11` porte la
+// HAUTEUR à 44 px. La cible passe de 1 444 à 1 672 px², et l'axe vertical —
+// celui où le pouce dérape sur une rangée dense — est désormais conforme.
+//
+// CE QUI RESTE, et son critère :
+//   • la LARGEUR (~38 px) échoue au critère **AAA 2.5.5** (44 px), qui est
+//     celui que ce fichier vise et annonce dans son titre ;
+//   • elle tient le critère **AA 2.5.8** (24 px), qui est le critère opposable
+//     sous l'EAA.
+// DÉCISION : dette assumée, PAS un blocage, et elle est bornée à cette grille.
+// ❌ Elle ne couvre RIEN d'autre : la vue détaillée 30 jours est déjà à
+//    44 x 44 (`w-11 h-11`), et toute autre commande sous la cible reste un
+//    échec. ❌ Ne jamais élargir cette dispense « par cohérence ».
+// ⚠️ Si la carte gagne 45 px de large (retrait de padding, pleine largeur),
+//    l'arithmétique change et la dispense doit TOMBER, pas être reconduite.
+//
+// La dispense est portée par un sélecteur NOMMÉ, jamais par un seuil abaissé.
+const HABIT_WEEK_CELL = '.grid.grid-cols-7 > div > button';
+// ═══════════════════════════════════════════════════════════════════
+
 interface UnderTarget {
   w: number;
   h: number;
@@ -73,8 +103,19 @@ interface UnderTarget {
   html: string;
 }
 
-async function commandsUnderTarget(page: Page, target: number): Promise<UnderTarget[]> {
-  return page.evaluate((min) => {
+async function commandsUnderTarget(
+  page: Page,
+  target: number,
+  /**
+   * Sélecteur des commandes dont la seule LARGEUR est dispensée (C-111).
+   *
+   * ❌ Ce n'est JAMAIS un seuil abaissé : la dispense porte un nom, un axe, et
+   * la HAUTEUR reste exigée. Une cellule qui perdrait ses 44 px de haut
+   * redeviendrait un échec, et c'est ce qui la distingue d'une allowlist.
+   */
+  dispenseLargeur = '',
+): Promise<UnderTarget[]> {
+  return page.evaluate(({ min, dispense }) => {
     /**
      * Exception « inline » de WCAG 2.5.5 : une cible prise DANS une phrase,
      * dont la taille est contrainte par l'interligne du texte autour.
@@ -199,6 +240,11 @@ async function commandsUnderTarget(page: Page, target: number): Promise<UnderTar
 
     const out: UnderTarget[] = [];
     const seen = new Set<Element>();
+    // Résolu UNE fois : le sélecteur est nommé en tête de ce fichier, avec sa
+    // mesure, son critère et la condition qui le fait tomber.
+    const largeurDispensee: Set<Element> = dispense
+      ? new Set(document.querySelectorAll(dispense))
+      : new Set();
     for (const control of document.querySelectorAll(
       // 🔴 `input[type="range"]` AJOUTE le 2026-09-15 (C-80). Sans lui, le
       // detecteur ne pouvait pas voir le seul defaut de cette passe qui
@@ -221,6 +267,10 @@ async function commandsUnderTarget(page: Page, target: number): Promise<UnderTar
       if (isInline(el)) continue;
       if (isBrowserDefaultControl(el)) continue;
       const r = effectiveRect(el);
+      // Dispense ÉTROITE : la largeur seule est pardonnée, et seulement si la
+      // hauteur, elle, tient la cible. C'est ce qui en fait un cliquet plutôt
+      // qu'une allowlist — la dispense ne peut pas masquer une régression.
+      if (largeurDispensee.has(el) && r.height >= min) continue;
       if (r.width < min || r.height < min) {
         out.push({
           w: Math.round(r.width),
@@ -233,7 +283,7 @@ async function commandsUnderTarget(page: Page, target: number): Promise<UnderTar
       }
     }
     return out;
-  }, target);
+  }, { min: target, dispense: dispenseLargeur });
 }
 
 test.describe('C-57 — cibles tactiles (WCAG 2.5.5)', () => {
@@ -309,6 +359,51 @@ test.describe('C-57 — cibles tactiles (WCAG 2.5.5)', () => {
     await demoPage.evaluate(() => document.getElementById('c57-temoin')?.remove());
   });
 
+  test('TEMOIN : la dispense de largeur ne masque pas une regression de hauteur', async ({
+    demoPage,
+  }) => {
+    // 🔴 POURQUOI CE TEMOIN. C-111 introduit une DISPENSE (la grille de 7 jours
+    // de `HabitCard`, trop etroite par arithmetique : 7 x 44 ne tient pas dans
+    // 301,6 px). Une dispense sans temoin est une allowlist deguisee — et ce
+    // depot s'interdit d'ajouter une entree d'allowlist pour faire passer la
+    // CI. Ce qui l'en distingue est verifie ici : elle porte sur la LARGEUR
+    // SEULE, et la hauteur reste exigee.
+    await demoPage.evaluate(() => {
+      const host = document.createElement('div');
+      host.id = 'c111-temoin';
+      // Le meme selecteur que la dispense reelle, reproduit a l'identique :
+      // `.grid.grid-cols-7 > div > button`.
+      host.innerHTML =
+        '<div class="grid grid-cols-7">'
+        + '<div><button style="width:38px;height:44px"'
+        + ' aria-label="temoin dispense large 38 haute 44"></button></div>'
+        + '<div><button style="width:38px;height:30px"'
+        + ' aria-label="temoin dispense large 38 haute 30"></button></div>'
+        + '</div>'
+        // Hors de la grille : la dispense ne doit PAS deborder sur son voisin.
+        + '<button style="width:38px;height:44px"'
+        + ' aria-label="temoin hors grille"></button>';
+      document.body.appendChild(host);
+    });
+
+    const seen = await commandsUnderTarget(demoPage, TARGET, HABIT_WEEK_CELL);
+    const names = seen.map((s) => s.name);
+
+    // La cellule conforme en HAUTEUR est dispensee de sa largeur…
+    expect(names).not.toContain('temoin dispense large 38 haute 44');
+    // …celle qui perd sa hauteur redevient un ECHEC, dispense ou pas.
+    expect(names).toContain('temoin dispense large 38 haute 30');
+    // …et une commande de meme taille HORS de la grille n'est pas couverte.
+    expect(names).toContain('temoin hors grille');
+
+    // Et sans la dispense, la cellule conforme en hauteur est bien vue : la
+    // dispense FAIT quelque chose, elle n'est pas decorative.
+    const sansDispense = (await commandsUnderTarget(demoPage, TARGET)).map((s) => s.name);
+    expect(sansDispense).toContain('temoin dispense large 38 haute 44');
+
+    await demoPage.evaluate(() => document.getElementById('c111-temoin')?.remove());
+  });
+
   for (const route of [
     '/dashboard',
     '/entreprise',
@@ -330,7 +425,7 @@ test.describe('C-57 — cibles tactiles (WCAG 2.5.5)', () => {
       await demoPage.waitForLoadState('networkidle');
       await demoPage.waitForTimeout(1500);
 
-      const under = await commandsUnderTarget(demoPage, TARGET);
+      const under = await commandsUnderTarget(demoPage, TARGET, HABIT_WEEK_CELL);
       expect(
         under.map((u) => `${u.w}x${u.h} « ${u.name} » ${u.html}`),
         'La zone tactile doit faire 44 px dans les DEUX dimensions. L ICONE, '

@@ -347,6 +347,38 @@ async function openTasksPage(page: Page): Promise<void> {
   await page.waitForTimeout(400);
 }
 
+/**
+ * Ouvre `TaskActionsSheet` depuis une carte de tâche MOBILE, au CLAVIER.
+ *
+ * 🔴 POURQUOI CE HELPER EXISTE (C-111, 2026-09-22). Ces cas cherchaient
+ * `getByRole('button', { name: /afficher les actions|^actions pour /i })
+ * .filter({ visible: true })`, et ils EXPIRAIENT — pas par lenteur, mais
+ * parce qu'aucun bouton de ce nom n'est visible à 375 px. Mesuré dans le
+ * navigateur : le seul élément qui le porte vit dans
+ * `div.hidden md:block table-container`, soit la ligne DESKTOP, à `0 x 0 px`
+ * sur téléphone. La maquette 86 a retiré le « ⋯ » des cartes mobiles, et
+ * laissé trois chemins qui sont tous des gestes de pointeur.
+ *
+ * Le harnais emprunte donc le chemin CLAVIER, qui est celui que ce fichier a
+ * vocation à mesurer, et qui est plus exigeant qu'un clic : la touche « menu
+ * contextuel » (émulée par `Shift+F10`, comme le fait un vrai clavier) sur la
+ * carte focalisée.
+ *
+ * ⚠️ Ce n'est PAS un contournement de la mesure : si le chemin clavier
+ * disparaît, ce helper échoue, alors que l'ancien sélecteur échouait déjà
+ * pour une raison qui n'avait plus rien à voir avec l'accessibilité.
+ */
+async function ouvrirActionsAuClavier(page: Page) {
+  const carte = page.locator('[tabindex="0"][aria-keyshortcuts="Shift+F10"]').first();
+  await expect(carte).toBeVisible({ timeout: 30_000 });
+  await carte.focus();
+  await markTrigger(page);
+  await carte.press('Shift+F10');
+  const sheet = page.getByRole('dialog', { name: /^actions pour /i });
+  await expect(sheet).toBeVisible({ timeout: 20_000 });
+  return sheet;
+}
+
 test('MESURE — TaskActionsSheet (feuille d\'actions d\'une tâche)', async ({ demoPage: page }) => {
   // ⚠️ Viewport MOBILE : la feuille appartient à `TaskCard`, la carte mobile.
   // Au-dessus du point de rupture, le bouton « Actions pour … » existe encore
@@ -355,12 +387,7 @@ test('MESURE — TaskActionsSheet (feuille d\'actions d\'une tâche)', async ({ 
   await page.setViewportSize({ width: 375, height: 812 });
   await openTasksPage(page);
 
-  const trigger = page.getByRole('button', { name: /afficher les actions|^actions pour /i }).filter({ visible: true }).first();
-  await trigger.focus();
-  await markTrigger(page);
-  await trigger.click();
-  const sheet = page.getByRole('dialog', { name: /^actions pour /i });
-  await expect(sheet).toBeVisible({ timeout: 20_000 });
+  const sheet = await ouvrirActionsAuClavier(page);
 
   const report = await measureFocus(page, sheet, true);
   console.log('[a11y-kbd] TaskActionsSheet', JSON.stringify(report));
@@ -376,10 +403,7 @@ test('MESURE — MobileAddToList (« Ajouter à une liste »)', async ({ demoPag
   await page.setViewportSize({ width: 375, height: 812 });
   await openTasksPage(page);
 
-  const trigger = page.getByRole('button', { name: /afficher les actions|^actions pour /i }).filter({ visible: true }).first();
-  await trigger.click();
-  const actions = page.getByRole('dialog', { name: /^actions pour /i });
-  await expect(actions).toBeVisible({ timeout: 20_000 });
+  const actions = await ouvrirActionsAuClavier(page);
 
   await actions.getByRole('button', { name: /^ajouter à une liste$/i }).first().click();
   // `TaskActionsSheet` se FERME en s'ouvrant sur celle-ci (`open={actionsVisible

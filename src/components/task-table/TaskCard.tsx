@@ -248,7 +248,38 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
       onPointerDown={startLongPress}
       onPointerUp={cancelLongPress}
       onPointerCancel={cancelLongPress}
-      onContextMenu={(e) => { e.preventDefault(); }}
+      // ═══ C-111 · LE SEUL CHEMIN CLAVIER VERS LES ACTIONS ═══
+      //
+      // 🔴 CE QUI ÉTAIT FAUX, mesuré dans le navigateur le 2026-09-22
+      // (viewport 375, mode démo) : les trois chemins vers `TaskActionsSheet`
+      // que la maquette 86 a laissés — appui long, glissement à gauche, menu
+      // de la ligne DESKTOP — sont tous des gestes de POINTEUR, et le
+      // quatrième vit dans `div.hidden md:block`, donc à `0 x 0 px` sur
+      // téléphone. Modifier, supprimer, partager ou planifier une tâche était
+      // donc **inatteignable au clavier** sur mobile : WCAG 2.1.1 (A), le
+      // critère le plus élémentaire du référentiel.
+      //
+      // Cette ligne ne faisait qu'un `preventDefault()` : elle SUPPRIMAIT le
+      // menu du navigateur sans rien offrir à la place. Elle ouvre désormais
+      // la feuille, ce qui donne d'un coup le clic droit ET le clavier — la
+      // touche « menu contextuel » et `Shift+F10` émettent toutes deux un
+      // évènement `contextmenu` sur l'élément focalisé, et la carte porte déjà
+      // `tabIndex={0}`.
+      //
+      // ✅ Elle ne reprend RIEN à la colonne du pouce : aucun pixel n'est
+      // ajouté, donc l'arbitrage de la maquette 86 (« plus de ⋯ au repos »)
+      // tient entier. C'est précisément pour ça que l'interdit écrit plus bas
+      // — ne pas réintroduire le « ⋯ » sans retirer autre chose — n'est pas
+      // enfreint ici.
+      onContextMenu={(e) => {
+        e.preventDefault();
+        if (addToListMode) return;
+        cancelLongPress();
+        setActionsVisible(true);
+      }}
+      // Annonce le raccourci aux technologies d'assistance : sans lui, le
+      // chemin existe mais rien ne le dit.
+      aria-keyshortcuts="Shift+F10"
       style={{
         x,
         backgroundColor: addToListMode && selectedForListIds.includes(task.id)

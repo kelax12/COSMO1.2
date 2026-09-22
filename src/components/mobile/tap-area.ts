@@ -60,3 +60,28 @@ export const TAP_AREA_44_Y =
 export const TAP_AREA_44 =
   "relative before:absolute before:left-1/2 before:top-1/2 before:h-11 before:w-11 "
   + "before:-translate-x-1/2 before:-translate-y-1/2 before:content-[''] sm:before:hidden";
+
+/**
+ * Variante DEUX AXES pour une commande **déjà positionnée** (`absolute`,
+ * `fixed`, `sticky`).
+ *
+ * 🔴 POURQUOI ELLE EXISTE (C-111, 2026-09-22). `TAP_AREA_44` commence par
+ * `relative`, et `relative` comme `absolute` écrivent la MÊME propriété CSS.
+ * Laquelle gagne ne dépend pas de l'ordre des classes dans l'attribut, mais de
+ * l'ordre où Tailwind émet ses utilitaires de `position` — où `relative` vient
+ * APRÈS `absolute`. Poser `TAP_AREA_44` sur la pastille « Changer la photo de
+ * profil » (`absolute -bottom-1 -right-1`) l'aurait donc **décrochée du coin de
+ * l'avatar** pour la renvoyer dans le flux : une cible de 44 px au mauvais
+ * endroit, c'est-à-dire un défaut d'affichage échangé contre un défaut
+ * d'accessibilité.
+ *
+ * ⚠️ Un élément `absolute` établit déjà un bloc conteneur pour ses enfants
+ * absolus : le `::before` se positionne par rapport à lui **sans** `relative`.
+ * C'est la seule différence entre les deux constantes, et elle est entière.
+ *
+ * ❌ Mêmes interdits que `TAP_AREA_44` : jamais sur deux commandes voisines,
+ * et vérifier qu'aucune autre commande ne vit à moins de 22 px.
+ */
+export const TAP_AREA_44_ANCRE =
+  "before:absolute before:left-1/2 before:top-1/2 before:h-11 before:w-11 "
+  + "before:-translate-x-1/2 before:-translate-y-1/2 before:content-[''] sm:before:hidden";
