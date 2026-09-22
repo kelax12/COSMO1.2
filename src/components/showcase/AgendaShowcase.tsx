@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Clock, Bookmark, CheckCircle2, Calendar } from 'lucide-react';
+import { useShowcasePalette } from './showcase-theme';
 
 // ─── Static data ────────────────────────────────────────────────────
 const CATEGORIES: Record<string, { name: string; color: string }> = {
@@ -58,6 +59,7 @@ const durToH  = (d: number) => d * SLOT_H;
 type Phase = 'idle' | 'highlight' | 'dragging' | 'dropped' | 'selecting' | 'selected';
 
 const AgendaShowcase: React.FC = () => {
+  const P = useShowcasePalette();
   const containerRef  = useRef<HTMLDivElement>(null);
   const sourceCardRef = useRef<HTMLDivElement>(null);  // "Réviser le pitch deck" in sidebar
   const dropSlotRef   = useRef<HTMLDivElement>(null);   // LUN 11:00 in calendar
@@ -123,18 +125,18 @@ const AgendaShowcase: React.FC = () => {
     <div
       ref={containerRef}
       className="relative flex overflow-hidden rounded-2xl border border-white/10 shadow-2xl select-none"
-      style={{ height: 520, backgroundColor: '#132237' }}
+      style={{ height: 520, backgroundColor: P.panel }}
     >
 
       {/* ══════════ SIDEBAR ══════════ */}
       <div
         className="flex flex-col border-r border-white/10 shrink-0"
-        style={{ width: 218, backgroundColor: '#132237' }}
+        style={{ width: 218, backgroundColor: P.panel }}
       >
         {/* Header */}
         <div className="px-4 py-3 border-b border-white/10">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-sm font-semibold text-white">Tâches disponibles</span>
+            <span className="text-sm font-semibold text-white sc-ink">Tâches disponibles</span>
           </div>
           {/* Search */}
           <div className="relative mb-2.5">
@@ -160,8 +162,8 @@ const AgendaShowcase: React.FC = () => {
                   isPlaced ? 'opacity-50' : ''
                 } ${isAnimated && phase === 'highlight' ? 'ring-2 ring-orange-400/70' : ''}`}
                 style={{
-                  backgroundColor: '#1E293B',
-                  borderColor: 'rgba(255,255,255,0.08)',
+                  backgroundColor: P.card,
+                  borderColor: P.hairline,
                   borderLeft: `4px solid ${cat.color}`,
                 }}
               >
@@ -178,7 +180,7 @@ const AgendaShowcase: React.FC = () => {
                 <div className="flex items-center justify-between mb-1.5 gap-1">
                   <div className="flex items-center gap-1.5 min-w-0">
                     <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: cat.color }} />
-                    <span className={`text-xs font-medium text-white truncate ${isPlaced ? 'line-through' : ''}`}>
+                    <span className={`text-xs font-medium text-white sc-ink truncate ${isPlaced ? 'line-through' : ''}`}>
                       {task.name}
                     </span>
                     {task.bookmarked && <Bookmark size={11} className="text-yellow-400 fill-yellow-400 shrink-0" />}
@@ -196,7 +198,7 @@ const AgendaShowcase: React.FC = () => {
                   </div>
                   <span
                     className="px-1.5 py-0.5 rounded border text-[10px]"
-                    style={{ backgroundColor: '#0F172A', borderColor: 'rgba(255,255,255,0.08)', color: '#94A3B8' }}
+                    style={{ backgroundColor: P.inset, borderColor: P.hairline, color: P.textSecondary }}
                   >
                     {cat.name}
                   </span>
@@ -236,7 +238,7 @@ const AgendaShowcase: React.FC = () => {
               {/* ── Day headers ── */}
               <div
                 className="sticky top-0 z-20 flex border-b border-white/10"
-                style={{ height: HEADER_H, backgroundColor: '#132237' }}
+                style={{ height: HEADER_H, backgroundColor: P.panel }}
               >
                 {/* Time gutter */}
                 <div className="shrink-0 border-r border-white/10" style={{ width: 48 }} />
@@ -372,7 +374,7 @@ const AgendaShowcase: React.FC = () => {
                       height: durToH(SEL_DUR) - 2,
                       backgroundColor: 'rgba(59,130,246,0.55)',
                       border: '2px solid #3B82F6',
-                      boxShadow: '0 0 0 1px rgba(59,130,246,0.4), inset 0 1px 0 rgba(255,255,255,0.1)',
+                      boxShadow: P.selectionShadow,
                       transformOrigin: 'top',
                     }}
                   >
@@ -434,16 +436,16 @@ const AgendaShowcase: React.FC = () => {
               left: ghostFrom.x,
               top: ghostFrom.y,
               width: ghostFrom.w,
-              backgroundColor: '#1E293B',
+              backgroundColor: P.card,
               borderColor: CATEGORIES['c2'].color,
               borderLeft: `4px solid ${CATEGORIES['c2'].color}`,
-              boxShadow: '0 20px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(249,115,22,0.3)',
+              boxShadow: P.dragShadow,
             }}
           >
             <div className="flex items-center justify-between mb-1.5 gap-1">
               <div className="flex items-center gap-1.5">
                 <div className="w-2.5 h-2.5 rounded-full shrink-0 bg-orange-500" />
-                <span className="text-xs font-medium text-white">{DRAG_TASK.name}</span>
+                <span className="text-xs font-medium text-white sc-ink">{DRAG_TASK.name}</span>
                 <Bookmark size={11} className="text-yellow-400 fill-yellow-400" />
               </div>
               <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold shrink-0 ${P_COLORS[DRAG_TASK.priority]}`}>

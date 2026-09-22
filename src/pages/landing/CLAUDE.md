@@ -63,8 +63,20 @@ La landing n'est plus une page linéaire. Après le header, un **aiguillage**
   `scripts/landing-motion-probe.mjs`).
   Version « lumière » archivée intégralement :
   [`docs/archive/LANDING-MOTION-DA-SOMBRE-2026-09-22.md`](../../../docs/archive/LANDING-MOTION-DA-SOMBRE-2026-09-22.md).
-- ⚠️ **Les `showcase/*` restent en sombre, exprès** : ce sont des captures du produit, encadrées
-  sur la page blanche. Les recolorer en clair ferait disparaître leur cadre.
+- 🔴 **Les vitrines de `FeaturesSection` sont en CLAIR depuis le 2026-09-22**, sous
+  `<ShowcaseTheme theme="light">` (`src/components/showcase/`). Elles étaient restées sombres
+  « pour garder leur cadre » : sur la page blanche, c'étaient cinq trous noirs. Le cadre tient
+  désormais par un filet `slate-900/10` et l'ombre portée.
+  ⚠️ **Le SOMBRE reste la valeur par défaut, au pixel près** : `/guide` monte les mêmes vitrines
+  sans fournisseur. Le JSX garde donc ses classes sombres, et `showcase-light.css` les re-teint
+  une par une sous `[data-sc-theme="light"]` ; les valeurs passées en JS (`style`, Recharts,
+  couleurs animées par Framer) lisent `useShowcasePalette()`.
+  ❌ **Ne jamais re-teindre `.text-white` globalement** : du blanc sur un événement ou une coche
+  d'accent doit rester blanc. L'encre à inverser porte en plus `sc-ink`.
+  ⚠️ **Une classe sombre ajoutée à une vitrine sans sa règle claire reste noire, en silence.**
+  Cliquet : `src/components/showcase/showcase-light.guard.test.ts`, vu rouge sur 3 sabotages.
+  Il comparait d'abord par `includes()` et trouvait `.bg-slate-950` dans `.bg-slate-950\/40` :
+  un cliquet qui compare par préfixe laisse passer exactement la classe qu'on vient d'ajouter.
 - 🔴 **L'entrée du hero perso est en CSS, et elle doit le rester** (refonte du 2026-08-30).
   Mesuré à 4× de bridage CPU : la landing affichait **deux secondes d'écran blanc avec un
   spinner**, puis le hero apparaissait déjà fini. Le fallback de page était clair sur une page
