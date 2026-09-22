@@ -42,7 +42,14 @@ La landing n'est plus une page linéaire. Après le header, un **aiguillage**
   seuil de perception, en boucle permanente.
   ❌ **Ne jamais réintroduire un `filter: blur()` animé ici** : le halo de la CTA était la
   dernière survivance du motif retiré par l'audit A-8, et la DA blanche l'avait rendu presque
-  invisible — il ne restait que la facture.
+  invisible — il ne restait que la facture. ❌ **Ni un flou STATIQUE** : les deux orbes
+  `blur-3xl` de `WhySection` ont survécu à l'audit parce qu'elles ne bougeaient pas, alors que
+  le coût d'A-8 est celui de la *rastérisation*, pas de l'animation. Devenues des
+  `radial-gradient` le 2026-09-22, alphas ramenés de 0,07 à 0,05 pour le blanc.
+  ⚠️ **Aucun des deux harnais ne sait mesurer cet écart-là**, et c'est attendu : le harnais A-8
+  mesure AU REPOS, or `#why` est sous la ligne de flottaison ; et en scrollant à travers la
+  section, une règle CSS SANS EFFET disperse autant que les deux variantes. On retire ce motif
+  parce que son coût est CUMULATIF, pas parce qu'une surface isolée se voit dans une mesure.
   ⚠️ **Un filet animé en `scaleX` ne se centre pas par `-translate-x-1/2`** : GSAP fige alors
   le centrage en pixels, et la ligne se décale au premier redimensionnement. `inset-x-0 mx-auto`.
   ⚠️ **Une opacité Tailwind n'existe qu'en multiples de 5** : `via-slate-900/16` ne produit
