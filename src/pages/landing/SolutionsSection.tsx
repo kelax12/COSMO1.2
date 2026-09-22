@@ -38,7 +38,7 @@ const UseCaseCardContent: React.FC<{
         className="solution-watermark absolute -top-2 -right-2 select-none pointer-events-none font-bold tabular-nums leading-none transition-colors duration-500"
         style={{
           fontSize: '8rem',
-          color: 'rgba(148, 163, 184, 0.06)',
+          color: 'rgba(15, 23, 42, 0.05)',
           letterSpacing: '-0.05em',
         }}
       >
@@ -56,17 +56,17 @@ const UseCaseCardContent: React.FC<{
         <span className="flex-1 h-px" style={{ backgroundColor: useCase.accent, opacity: 0.25 }} />
       </div>
 
-      <h3 className="relative text-3xl lg:text-4xl font-semibold text-white mb-5 leading-[1.1] tracking-tight">
+      <h3 className="relative text-3xl lg:text-4xl font-semibold text-slate-900 mb-5 leading-[1.1] tracking-tight">
         {t(useCase.titleKey)}
       </h3>
 
-      <p className="relative text-base text-slate-400 leading-relaxed mb-8 max-w-md">
+      <p className="relative text-base text-slate-600 leading-relaxed mb-8 max-w-md">
         {t(useCase.descriptionKey)}
       </p>
 
       <ul className="relative space-y-2.5 mb-10">
         {useCase.featureKeys.map((featureKey, i) => (
-          <li key={i} className="flex items-start gap-3 text-sm text-slate-300 leading-relaxed">
+          <li key={i} className="flex items-start gap-3 text-sm text-slate-700 leading-relaxed">
             <span className="select-none mt-[2px]" style={{ color: useCase.accent }}>
               ·
             </span>
@@ -95,8 +95,9 @@ const UseCaseCardContent: React.FC<{
 };
 
 const CARD_STYLE: React.CSSProperties = {
-  backgroundColor: 'rgba(15, 23, 42, 0.55)',
-  border: '1px solid rgba(148, 163, 184, 0.12)',
+  backgroundColor: '#FFFFFF',
+  border: '1px solid rgba(15, 23, 42, 0.10)',
+  boxShadow: '0 1px 2px rgba(15, 23, 42, 0.04), 0 12px 32px -24px rgba(15, 23, 42, 0.35)',
 };
 
 const SolutionsSection: React.FC<SolutionsSectionProps> = ({ handleFeatureClick }) => {
@@ -126,7 +127,7 @@ const SolutionsSection: React.FC<SolutionsSectionProps> = ({ handleFeatureClick 
             // on recopie le gradient du h2 sur chaque ligne.
             self.lines.forEach((line) => {
               (line as HTMLElement).classList.add(
-                'bg-gradient-to-r', 'from-white', 'to-slate-300', 'bg-clip-text', 'text-transparent',
+                'bg-gradient-to-r', 'from-slate-900', 'to-slate-700', 'bg-clip-text', 'text-transparent',
               );
             });
             return gsap.from(self.lines, {
@@ -186,14 +187,14 @@ const SolutionsSection: React.FC<SolutionsSectionProps> = ({ handleFeatureClick 
   // contient un PIN ScrollTrigger (position:fixed) — un filter sur un
   // ancêtre casse le fixed → pin mort + sections qui se chevauchent.
   return (
-    <section ref={sectionRef} id="solutions" className="py-16 bg-black/20 overflow-hidden">
+    <section ref={sectionRef} id="solutions" className="py-16 bg-slate-50 overflow-hidden">
       <div ref={pinRef} className={grid ? undefined : 'min-h-screen flex flex-col justify-center'}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
           <div className="text-center mb-8">
-            <h2 className="solutions-title text-4xl lg:text-5xl font-bold mb-6 bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">
+            <h2 className="solutions-title text-4xl lg:text-5xl font-bold mb-6 bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
               {t('features.heading')}
             </h2>
-            <p className="text-xl text-slate-400 max-w-3xl mx-auto">
+            <p className="text-xl text-slate-600 max-w-3xl mx-auto">
               {t('features.subtitle')}
             </p>
           </div>
