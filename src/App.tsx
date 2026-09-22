@@ -180,34 +180,34 @@ const RESUMABLE_PAGES = ['/dashboard', '/tasks', '/agenda', '/habits', '/okr', '
  */
 const LandingSkeleton = () => (
   <div
-    className="min-h-[100dvh] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900"
+    className="min-h-[100dvh] bg-white"
     aria-hidden="true"
   >
     <div className="mx-auto max-w-5xl px-4 pt-6">
-      <div className="h-14 rounded-2xl bg-white/[0.04]" />
+      <div className="h-14 rounded-2xl bg-slate-900/[0.04]" />
     </div>
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-10 lg:pt-16">
       <div className="grid lg:grid-cols-2 gap-12 lg:gap-8 items-center">
         <div className="space-y-4">
-          <div className="h-12 lg:h-16 w-11/12 rounded-xl bg-white/[0.06]" />
-          <div className="h-12 lg:h-16 w-10/12 rounded-xl bg-white/[0.06]" />
-          <div className="h-12 lg:h-16 w-8/12 rounded-xl bg-blue-500/10" />
+          <div className="h-12 lg:h-16 w-11/12 rounded-xl bg-slate-900/[0.06]" />
+          <div className="h-12 lg:h-16 w-10/12 rounded-xl bg-slate-900/[0.06]" />
+          <div className="h-12 lg:h-16 w-8/12 rounded-xl bg-blue-600/10" />
           <div className="pt-6 space-y-2.5">
-            <div className="h-4 w-11/12 rounded bg-white/[0.04]" />
-            <div className="h-4 w-9/12 rounded bg-white/[0.04]" />
+            <div className="h-4 w-11/12 rounded bg-slate-900/[0.05]" />
+            <div className="h-4 w-9/12 rounded bg-slate-900/[0.05]" />
           </div>
           <div className="pt-6 flex gap-3.5">
-            <div className="h-14 w-52 rounded-2xl bg-blue-500/20" />
-            <div className="h-14 w-48 rounded-2xl bg-white/[0.05]" />
+            <div className="h-14 w-52 rounded-2xl bg-blue-600/20" />
+            <div className="h-14 w-48 rounded-2xl bg-slate-900/[0.06]" />
           </div>
         </div>
         <div className="hidden lg:block">
           <div className="mb-3 flex justify-center gap-2.5">
             {[0, 1, 2, 3].map((i) => (
-              <div key={i} className="h-7 w-24 rounded-full bg-white/[0.05]" />
+              <div key={i} className="h-7 w-24 rounded-full bg-slate-900/[0.05]" />
             ))}
           </div>
-          <div className="h-[26rem] rounded-2xl bg-white/[0.04]" />
+          <div className="h-[26rem] rounded-2xl bg-slate-900/[0.05]" />
         </div>
       </div>
     </div>

@@ -82,10 +82,10 @@ const FEATURES: Feature[] = [
     id: 'tasks',
     path: '/tasks',
     icon: CheckCircle,
-    gradient: 'from-[rgb(var(--color-accent-solid))] to-cyan-500',
+    gradient: 'from-blue-600 to-cyan-500',
     shadow: 'shadow-blue-500/30',
-    glow: 'from-[rgb(var(--color-accent-solid))]/20 to-cyan-500/20',
-    accentText: 'from-[rgb(var(--color-accent-solid))] to-cyan-400',
+    glow: 'from-blue-500/15 to-cyan-500/15',
+    accentText: 'from-blue-600 to-cyan-600',
     Desktop: TaskTableShowcase,
     Mobile: TaskCardMobileShowcase,
   },
@@ -95,8 +95,8 @@ const FEATURES: Feature[] = [
     icon: Calendar,
     gradient: 'from-red-500 to-rose-500',
     shadow: 'shadow-red-500/30',
-    glow: 'from-red-500/20 to-rose-500/20',
-    accentText: 'from-red-400 to-rose-400',
+    glow: 'from-red-500/15 to-rose-500/15',
+    accentText: 'from-red-600 to-rose-600',
     Desktop: AgendaShowcase,
     Mobile: AgendaMobileShowcase,
     fromRight: true,
@@ -107,8 +107,8 @@ const FEATURES: Feature[] = [
     icon: Target,
     gradient: 'from-green-500 to-emerald-500',
     shadow: 'shadow-green-500/30',
-    glow: 'from-green-500/20 to-emerald-500/20',
-    accentText: 'from-green-400 to-emerald-400',
+    glow: 'from-green-500/15 to-emerald-500/15',
+    accentText: 'from-green-600 to-emerald-600',
     Desktop: OKRCardShowcase,
     Mobile: OKRMobileShowcase,
   },
@@ -118,8 +118,8 @@ const FEATURES: Feature[] = [
     icon: Repeat,
     gradient: 'from-yellow-500 to-amber-500',
     shadow: 'shadow-yellow-500/30',
-    glow: 'from-yellow-500/20 to-amber-500/20',
-    accentText: 'from-yellow-400 to-amber-400',
+    glow: 'from-yellow-500/15 to-amber-500/15',
+    accentText: 'from-yellow-600 to-amber-600',
     Desktop: HabitHeatmapShowcase,
     Mobile: HabitMobileShowcase,
     fromRight: true,
@@ -130,8 +130,8 @@ const FEATURES: Feature[] = [
     icon: BarChart2,
     gradient: 'from-violet-500 to-purple-600',
     shadow: 'shadow-violet-500/30',
-    glow: 'from-violet-500/20 to-purple-600/20',
-    accentText: 'from-violet-400 to-purple-400',
+    glow: 'from-violet-500/15 to-purple-600/15',
+    accentText: 'from-violet-600 to-purple-600',
     Desktop: () => (
       <WhenVisible fallback={<ShowcaseSkeleton />}>
         <Suspense fallback={<ShowcaseSkeleton />}>
@@ -162,27 +162,27 @@ const FeatureCopy: React.FC<{ feature: Feature; onCta: () => void }> = ({ featur
       <div className={`inline-flex items-center justify-center w-14 h-14 bg-gradient-to-r ${feature.gradient} rounded-2xl shadow-lg ${feature.shadow}`}>
         <Icon size={28} className="text-white" />
       </div>
-      <h3 className="text-3xl lg:text-4xl font-bold text-white leading-tight">
+      <h3 className="text-3xl lg:text-4xl font-bold text-slate-900 leading-tight">
         {t(key('titleTop'))}
         <br />
         <span className={`bg-gradient-to-r ${feature.accentText} bg-clip-text text-transparent`}>
           {t(key('titleAccent'))}
         </span>
       </h3>
-      <p className="text-lg text-slate-300 leading-relaxed">{t(key('description'))}</p>
+      <p className="text-lg text-slate-600 leading-relaxed">{t(key('description'))}</p>
       <div className="space-y-3">
         {(['b1', 'b2', 'b3', 'b4'] as const).map((b, i) => (
           <div key={i} className="flex items-center gap-3">
             <div className={`w-5 h-5 bg-gradient-to-r ${feature.gradient} rounded-full flex items-center justify-center flex-shrink-0`}>
               <CheckCircle size={11} className="text-white" />
             </div>
-            <span className="text-slate-300 font-medium text-sm">{t(key(b))}</span>
+            <span className="text-slate-700 font-medium text-sm">{t(key(b))}</span>
           </div>
         ))}
       </div>
       <button
         onClick={onCta}
-        className={`group bg-gradient-to-r ${feature.gradient} hover:shadow-lg text-white px-8 py-4 rounded-xl font-semibold transition-all duration-300 hover:scale-105 transform flex items-center gap-2`}
+        className="group bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-xl font-semibold shadow-sm hover:shadow-md transition-all duration-300 hover:scale-105 transform flex items-center gap-2"
       >
         {t(key('cta'))} <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
       </button>
@@ -213,9 +213,9 @@ const FeaturesSection: React.FC<FeaturesSectionProps> = ({ isMobile, handleFeatu
 
       const setActiveDot = (index: number) => {
         dots.forEach((dot, i) => {
-          dot.classList.toggle('bg-white', i === index);
+          dot.classList.toggle('bg-blue-600', i === index);
           dot.classList.toggle('scale-125', i === index);
-          dot.classList.toggle('bg-white/25', i !== index);
+          dot.classList.toggle('bg-slate-900/20', i !== index);
         });
       };
       setActiveDot(0);
@@ -269,11 +269,11 @@ const FeaturesSection: React.FC<FeaturesSectionProps> = ({ isMobile, handleFeatu
             viewport={{ once: true }}
             className="text-4xl lg:text-5xl font-bold mb-6"
           >
-            <span className="bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
               {t('features.headingLine1')}
             </span>
             <br />
-            <span className="bg-gradient-to-r from-[rgb(var(--color-accent-solid))] to-purple-400 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent">
               {t('features.headingLine2')}
             </span>
           </motion.h2>
@@ -282,7 +282,7 @@ const FeaturesSection: React.FC<FeaturesSectionProps> = ({ isMobile, handleFeatu
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
             transition={{ delay: 0.2 }}
-            className="text-xl text-slate-400 max-w-3xl mx-auto"
+            className="text-xl text-slate-600 max-w-3xl mx-auto"
           >
             {t('features.modulesSubtitle')}
           </motion.p>
@@ -337,7 +337,7 @@ const FeaturesSection: React.FC<FeaturesSectionProps> = ({ isMobile, handleFeatu
               {FEATURES.map((f) => (
                 <span
                   key={f.id}
-                  className="feature-dot w-2 h-2 rounded-full bg-white/25 transition-all duration-300"
+                  className="feature-dot w-2 h-2 rounded-full bg-slate-900/20 transition-all duration-300"
                 />
               ))}
             </div>

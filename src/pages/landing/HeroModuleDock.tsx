@@ -30,10 +30,10 @@ interface Module {
 }
 
 const MODULES: Module[] = [
-  { cle: 'tasks', Icone: ListChecks, from: { tx: '-120px', ty: '-70px' }, teinte: 'text-blue-300 ring-blue-400/40 bg-blue-500/10', delai: 260 },
-  { cle: 'habits', Icone: Repeat, from: { tx: '-40px', ty: '-110px' }, teinte: 'text-cyan-300 ring-cyan-400/40 bg-cyan-500/10', delai: 350 },
-  { cle: 'agenda', Icone: CalendarDays, from: { tx: '40px', ty: '-110px' }, teinte: 'text-violet-300 ring-violet-400/40 bg-violet-500/10', delai: 440 },
-  { cle: 'okr', Icone: Target, from: { tx: '120px', ty: '-70px' }, teinte: 'text-fuchsia-300 ring-fuchsia-400/40 bg-fuchsia-500/10', delai: 530 },
+  { cle: 'tasks', Icone: ListChecks, from: { tx: '-120px', ty: '-70px' }, teinte: 'text-blue-700 ring-blue-500/30 bg-blue-500/10', delai: 260 },
+  { cle: 'habits', Icone: Repeat, from: { tx: '-40px', ty: '-110px' }, teinte: 'text-cyan-700 ring-cyan-500/30 bg-cyan-500/10', delai: 350 },
+  { cle: 'agenda', Icone: CalendarDays, from: { tx: '40px', ty: '-110px' }, teinte: 'text-violet-700 ring-violet-500/30 bg-violet-500/10', delai: 440 },
+  { cle: 'okr', Icone: Target, from: { tx: '120px', ty: '-70px' }, teinte: 'text-fuchsia-700 ring-fuchsia-500/30 bg-fuchsia-500/10', delai: 530 },
 ];
 
 /** Retard après lequel les quatre se sont posées : la lueur ponctue l'arrivée. */
@@ -56,7 +56,7 @@ export const HeroModuleDock: React.FC<Props> = ({ actif }) => {
     >
       {/* Lueur d'arrimage — décorative, une seule impulsion, jamais une boucle. */}
       <div
-        className="hero-dock-glow pointer-events-none absolute inset-x-6 -bottom-2 h-10 rounded-full bg-gradient-to-r from-blue-500/0 via-violet-400/70 to-fuchsia-500/0 blur-xl"
+        className="hero-dock-glow pointer-events-none absolute inset-x-6 -bottom-2 h-10 rounded-full bg-gradient-to-r from-blue-500/0 via-violet-500/40 to-fuchsia-500/0 blur-xl"
         style={{ ['--d' as string]: `${DELAI_ARRIMAGE_MS}ms` }}
         aria-hidden="true"
       />

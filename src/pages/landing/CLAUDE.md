@@ -12,7 +12,7 @@ La landing n'est plus une page linéaire. Après le header, un **aiguillage**
 
 | Parcours | Composant | Servi par | DA |
 |---|---|---|---|
-| perso | `landing/PersoTrack` | `/` | slate-900, bleu → violet → fuchsia |
+| perso | `landing/PersoTrack` | `/` | **blanc** (2026-09-22), encre `slate-900`, boutons `blue-600` ; accents bleu → violet → fuchsia |
 | entreprise | `landing/entreprise/EnterpriseTrack` (lazy) | `/entreprise-presentation` | `#08090C`, cyan `#22D3EE`, or `#F5B942` |
 
 - Le parcours affiché est **dérivé de l'URL**, pas d'un état local (`useLandingTrack`) : le
@@ -23,6 +23,16 @@ La landing n'est plus une page linéaire. Après le header, un **aiguillage**
   `landing/anchors.ts` — une par track, pour qu'aucun lien ne vise une section absente.
 - ❌ **Ne jamais ajouter une section entreprise dans `PersoTrack`** (ni l'inverse) : la
   séparation des deux parcours EST la structure de la page.
+- 🔴 **Le parcours perso est BLANC depuis le 2026-09-22, et il ne doit plus dépendre de
+  `--color-accent-solid`.** Ce token suit le thème du visiteur : en thème `noir` il vaut
+  `#F0F0F0`, soit un bouton blanc sur une page blanche. Les surfaces perso écrivent donc
+  `blue-600` / `blue-700` en clair. Deux corollaires : un accent de texte se pose en `-600`
+  ou plus foncé (un `-400` ne passe pas 3:1 sur blanc, cf. `landing/data.ts`), et le squelette
+  de `/` (`LandingSkeleton` dans `App.tsx`) est CLAIR — il est peint avant le chunk de la page,
+  un squelette sombre rouvrirait les deux secondes d'écran noir que la refonte du 2026-08-30 a
+  supprimées.
+- ⚠️ **Les `showcase/*` restent en sombre, exprès** : ce sont des captures du produit, encadrées
+  sur la page blanche. Les recolorer en clair ferait disparaître leur cadre.
 - 🔴 **L'entrée du hero perso est en CSS, et elle doit le rester** (refonte du 2026-08-30).
   Mesuré à 4× de bridage CPU : la landing affichait **deux secondes d'écran blanc avec un
   spinner**, puis le hero apparaissait déjà fini. Le fallback de page était clair sur une page

@@ -248,7 +248,7 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
   // s'en charge, en CSS.
 
   return (
-    <div ref={rootRef} className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+    <div ref={rootRef} className="bg-white text-slate-900">
       {/* Sommaire du parcours — les ancres qui vivaient dans le header avant
           que le sélecteur de parcours n'en prenne le centre. */}
       <TrackAnchors track="perso" label={t('enterprise.gateway.perso.title')} />
@@ -259,10 +259,10 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
           {/* Grille fine type Linear/Vercel, fondue — couche parallax lente (GSAP) */}
           <div
             ref={gridLayerRef}
-            className="absolute inset-0 opacity-[0.16]"
+            className="absolute inset-0 opacity-[0.55]"
             style={{
               backgroundImage:
-                'linear-gradient(to right, rgba(148,163,184,0.18) 1px, transparent 1px), linear-gradient(to bottom, rgba(148,163,184,0.18) 1px, transparent 1px)',
+                'linear-gradient(to right, rgba(15,23,42,0.055) 1px, transparent 1px), linear-gradient(to bottom, rgba(15,23,42,0.055) 1px, transparent 1px)',
               backgroundSize: '56px 56px',
               maskImage: 'radial-gradient(ellipse 80% 70% at 60% 35%, #000 50%, transparent 100%)',
               WebkitMaskImage: 'radial-gradient(ellipse 80% 70% at 60% 35%, #000 50%, transparent 100%)',
@@ -270,11 +270,11 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
           />
           {/* Vie permanente : traceurs lumineux qui balayent la grille +
               orbes qui dérivent en continu (GSAP, gaté reduced-motion) */}
-          <div className="hero-beam-h absolute top-[28%] left-0 h-px w-52 bg-gradient-to-r from-transparent via-blue-400/80 to-transparent" />
-          <div className="hero-beam-v absolute left-[68%] top-0 w-px h-52 bg-gradient-to-b from-transparent via-violet-400/70 to-transparent" />
-          <div className="hero-orb absolute top-[20%] left-[10%] h-3 w-3 rounded-full bg-[rgb(var(--color-accent-solid))]/60 blur-[2px]" />
-          <div className="hero-orb absolute top-[64%] left-[80%] h-2 w-2 rounded-full bg-violet-400/60 blur-[1px]" />
-          <div className="hero-orb absolute top-[40%] left-[52%] h-2.5 w-2.5 rounded-full bg-cyan-300/50 blur-[2px]" />
+          <div className="hero-beam-h absolute top-[28%] left-0 h-px w-52 bg-gradient-to-r from-transparent via-blue-500/70 to-transparent" />
+          <div className="hero-beam-v absolute left-[68%] top-0 w-px h-52 bg-gradient-to-b from-transparent via-violet-500/60 to-transparent" />
+          <div className="hero-orb absolute top-[20%] left-[10%] h-3 w-3 rounded-full bg-blue-500/70 blur-[2px]" />
+          <div className="hero-orb absolute top-[64%] left-[80%] h-2 w-2 rounded-full bg-violet-500/70 blur-[1px]" />
+          <div className="hero-orb absolute top-[40%] left-[52%] h-2.5 w-2.5 rounded-full bg-cyan-500/60 blur-[2px]" />
 
           {/* Couche parallax moyenne (GSAP) : halo + aurores. Les loops
               d'opacité/scale restent en Framer sur les enfants ; GSAP ne
@@ -311,7 +311,7 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
               className="absolute left-1/2 top-[-18%] h-[58rem] w-[58rem] -translate-x-1/2 rounded-full"
               style={{
                 background:
-                  'radial-gradient(circle closest-side, rgba(99,102,241,0.80) 0%, rgba(99,102,241,0.72) 34%, rgba(139,92,246,0.56) 56%, rgba(217,70,239,0.30) 76%, rgba(34,211,238,0.12) 90%, transparent 100%)',
+                  'radial-gradient(circle closest-side, rgba(99,102,241,0.16) 0%, rgba(99,102,241,0.14) 34%, rgba(139,92,246,0.11) 56%, rgba(217,70,239,0.07) 76%, rgba(34,211,238,0.04) 90%, transparent 100%)',
               }}
               whileInView={reduceMotion ? undefined : { opacity: [0.82, 1, 0.82] }}
               transition={reduceMotion ? undefined : { duration: 14, repeat: Infinity, ease: 'easeInOut' }}
@@ -321,34 +321,34 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
               className="absolute -top-40 left-1/2 h-[60rem] w-[60rem] -translate-x-1/2 rounded-full"
               style={{
                 background:
-                  'radial-gradient(circle closest-side, rgb(var(--color-accent-solid) / 0.92) 0%, rgb(var(--color-accent-solid) / 0.88) 34%, rgb(var(--color-accent-solid) / 0.70) 54%, rgba(139,92,246,0.44) 72%, rgba(217,70,239,0.18) 88%, transparent 100%)',
+                  'radial-gradient(circle closest-side, rgba(37,99,235,0.18) 0%, rgba(37,99,235,0.16) 34%, rgba(37,99,235,0.13) 54%, rgba(139,92,246,0.09) 72%, rgba(217,70,239,0.05) 88%, transparent 100%)',
               }}
               whileInView={reduceMotion ? undefined : { opacity: [0.78, 1, 0.78] }}
               transition={reduceMotion ? undefined : { duration: 9, repeat: Infinity, ease: 'easeInOut' }}
             />
             <motion.div
               className="absolute -top-4 -left-40 h-[38rem] w-[38rem] rounded-full"
-              style={{ background: 'radial-gradient(circle closest-side, rgba(6,182,212,0.62) 0%, rgba(6,182,212,0.54) 40%, rgba(6,182,212,0.26) 70%, transparent 100%)' }}
+              style={{ background: 'radial-gradient(circle closest-side, rgba(6,182,212,0.14) 0%, rgba(6,182,212,0.12) 40%, rgba(6,182,212,0.06) 70%, transparent 100%)' }}
               whileInView={reduceMotion ? undefined : { opacity: [0.45, 0.7, 0.45] }}
               transition={reduceMotion ? undefined : { duration: 7, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
             />
             <motion.div
               className="absolute top-8 -right-36 h-[38rem] w-[38rem] rounded-full"
-              style={{ background: 'radial-gradient(circle closest-side, rgba(217,70,239,0.62) 0%, rgba(217,70,239,0.54) 40%, rgba(217,70,239,0.26) 70%, transparent 100%)' }}
+              style={{ background: 'radial-gradient(circle closest-side, rgba(217,70,239,0.13) 0%, rgba(217,70,239,0.11) 40%, rgba(217,70,239,0.055) 70%, transparent 100%)' }}
               whileInView={reduceMotion ? undefined : { opacity: [0.45, 0.72, 0.45] }}
               transition={reduceMotion ? undefined : { duration: 8, repeat: Infinity, ease: 'easeInOut', delay: 2 }}
             />
           </div>
           {/* Texture noise (SVG feTurbulence, ultra-léger) */}
           <div
-            className="absolute inset-0 opacity-[0.04] mix-blend-overlay"
+            className="absolute inset-0 opacity-[0.035] mix-blend-multiply"
             style={{
               backgroundImage:
                 "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")",
             }}
           />
           {/* Fondu vers la section suivante */}
-          <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-b from-transparent to-slate-900" />
+          <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-b from-transparent to-white" />
         </div>
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -371,7 +371,7 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
               >
                 <span className="hero-line-mask">
                   <span
-                    className="hero-line-in block bg-gradient-to-r from-white via-blue-100 to-white bg-clip-text text-transparent"
+                    className="hero-line-in block bg-gradient-to-r from-slate-900 via-slate-700 to-slate-900 bg-clip-text text-transparent"
                     style={{ ['--d' as string]: '80ms' }}
                   >
                     {t('hero.line1')}
@@ -379,7 +379,7 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
                 </span>
                 <span className="hero-line-mask">
                   <span
-                    className="hero-line-in block bg-gradient-to-r from-[rgb(var(--color-accent-solid))] via-violet-400 to-fuchsia-400 bg-clip-text text-transparent"
+                    className="hero-line-in block bg-gradient-to-r from-blue-600 via-violet-600 to-fuchsia-600 bg-clip-text text-transparent"
                     style={{ ['--d' as string]: '200ms' }}
                   >
                     {t('hero.line2')}
@@ -389,7 +389,7 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
 
               <p
                 data-hero-fade
-                className="text-lg lg:text-xl text-slate-400 mb-12 lg:mb-16 max-w-xl leading-relaxed"
+                className="text-lg lg:text-xl text-slate-600 mb-12 lg:mb-16 max-w-xl leading-relaxed"
               >
                 {t('hero.subtitle')}
               </p>
@@ -399,7 +399,7 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
                 <button
                   ref={magneticHeroDemo}
                   onClick={onDemo}
-                  className="group relative overflow-hidden bg-[rgb(var(--color-accent-solid))] to-violet-600 hover:bg-[rgb(var(--color-accent-solid-hover))] hover:to-violet-500 text-[rgb(var(--color-accent-solid-foreground))] px-8 py-4 rounded-2xl font-bold text-base transition-[box-shadow,color,background-color] duration-300 shadow-[0_8px_30px_-6px_rgba(79,70,229,0.6)] hover:shadow-[0_12px_40px_-6px_rgba(79,70,229,0.75)] flex items-center justify-center gap-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
+                  className="group relative overflow-hidden bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-2xl font-bold text-base transition-[box-shadow,color,background-color] duration-300 shadow-[0_8px_30px_-6px_rgba(37,99,235,0.45)] hover:shadow-[0_12px_40px_-6px_rgba(37,99,235,0.6)] flex items-center justify-center gap-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
                   aria-label={t('hero.demoAria')}
                 >
                   <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700" aria-hidden="true" />
@@ -409,7 +409,7 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
                 <button
                   ref={magneticHeroSignup}
                   onClick={onRegister}
-                  className="group bg-white/5 hover:bg-white/10 text-white border border-white/15 px-8 py-4 rounded-2xl font-semibold text-base backdrop-blur-md transition-[box-shadow,color,background-color] duration-300 flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+                  className="group bg-white hover:bg-slate-50 text-slate-900 border border-slate-300 px-8 py-4 rounded-2xl font-semibold text-base shadow-sm transition-[box-shadow,color,background-color] duration-300 flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                 >
                   {t('hero.signupCta')}
                 </button>
@@ -434,7 +434,7 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
                   className="absolute -inset-40 rounded-[50%]"
                   style={{
                     background:
-                      'radial-gradient(ellipse farthest-side, rgb(var(--color-accent-solid) / 0.95) 0%, rgb(var(--color-accent-solid) / 0.82) 40%, rgba(139,92,246,0.52) 64%, rgba(217,70,239,0.20) 84%, transparent 100%)',
+                      'radial-gradient(ellipse farthest-side, rgba(37,99,235,0.20) 0%, rgba(37,99,235,0.17) 40%, rgba(139,92,246,0.11) 64%, rgba(217,70,239,0.05) 84%, transparent 100%)',
                   }}
                   aria-hidden="true"
                 />
@@ -472,12 +472,12 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
 
       {/* ── Marquee infini : les modules défilent en continu (GSAP) ── */}
       <div
-        className="relative overflow-hidden border-y border-white/[0.06] bg-white/[0.02] py-3.5"
+        className="relative overflow-hidden border-y border-slate-200 bg-slate-50 py-3.5"
         aria-hidden="true"
       >
         {/* Fondu latéral pour une entrée/sortie douce des mots */}
-        <div className="pointer-events-none absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-slate-900 to-transparent z-10" />
-        <div className="pointer-events-none absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-slate-900 to-transparent z-10" />
+        <div className="pointer-events-none absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-slate-50 to-transparent z-10" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-slate-50 to-transparent z-10" />
         <div className="marquee-track flex w-max whitespace-nowrap text-sm font-mono uppercase tracking-[0.25em] text-slate-500">
           {[0, 1].map((copy) => (
             <div key={copy} className="flex items-center gap-10 pr-10">
@@ -492,7 +492,7 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
               ].map((word) => (
                 <span key={word} className="flex items-center gap-10">
                   <span>{word}</span>
-                  <span className="text-blue-400/60">✦</span>
+                  <span className="text-blue-500/70">✦</span>
                 </span>
               ))}
             </div>
@@ -515,15 +515,15 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
             initial={{ opacity: 0, scale: 0.9 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
-            className="cta-card bg-gradient-to-r from-[rgb(var(--color-accent-solid))]/20 to-purple-600/20 backdrop-blur-xl border border-[rgb(var(--color-accent-solid))]/30 rounded-3xl p-12 relative overflow-hidden"
+            className="cta-card bg-gradient-to-r from-blue-50 to-violet-50 border border-blue-200 shadow-[0_24px_60px_-30px_rgba(37,99,235,0.45)] rounded-3xl p-12 relative overflow-hidden"
           >
-            <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-[rgb(var(--color-accent-solid))]/5 to-purple-500/5 z-0"></div>
+            <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-blue-500/[0.04] to-violet-500/[0.04] z-0"></div>
             {/* Halo conique rotatif (GSAP) — mouvement ambiant permanent */}
             <div
-              className="cta-halo absolute -inset-[45%] opacity-25 pointer-events-none"
+              className="cta-halo absolute -inset-[45%] opacity-40 pointer-events-none"
               style={{
                 background:
-                  'conic-gradient(from 0deg, rgba(59,130,246,0.35), transparent 30%, rgba(139,92,246,0.3) 50%, transparent 70%, rgba(59,130,246,0.35))',
+                  'conic-gradient(from 0deg, rgba(59,130,246,0.22), transparent 30%, rgba(139,92,246,0.18) 50%, transparent 70%, rgba(59,130,246,0.22))',
                 filter: 'blur(60px)',
               }}
               aria-hidden="true"
@@ -533,17 +533,17 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
               {/* Lignes masquées : révélées par montée décalée (GSAP) */}
               <h2 className="text-4xl lg:text-5xl font-bold mb-6">
                 <span className="block overflow-hidden">
-                  <span className="cta-line block bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">
+                  <span className="cta-line block bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
                     {t('cta.line1')}
                   </span>
                 </span>
                 <span className="block overflow-hidden">
-                  <span className="cta-line block bg-[rgb(var(--color-accent-solid))] to-purple-400 bg-clip-text text-transparent">
+                  <span className="cta-line block bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent">
                     {t('cta.line2')}
                   </span>
                 </span>
               </h2>
-              <p className="text-xl text-slate-300 mb-8 max-w-2xl mx-auto">
+              <p className="text-xl text-slate-600 mb-8 max-w-2xl mx-auto">
                 {t('cta.subtitle')}
               </p>
               {/*
@@ -557,7 +557,7 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
               */}
               <div
                 role="img"
-                className="flex items-center justify-center gap-8 mb-10 text-slate-300"
+                className="flex items-center justify-center gap-8 mb-10 text-slate-600"
                 aria-label={t('cta.statsAria')}
               >
                 {[
@@ -566,7 +566,7 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
                   { value: 150, label: t('cta.events') },
                 ].map(({ value, label }) => (
                   <div key={label} className="flex flex-col items-center">
-                    <span data-countup={value} className="text-3xl lg:text-4xl font-bold tabular-nums bg-[rgb(var(--color-accent-solid))] to-purple-400 bg-clip-text text-transparent" aria-hidden="true">
+                    <span data-countup={value} className="text-3xl lg:text-4xl font-bold tabular-nums bg-gradient-to-r from-blue-600 to-violet-600 bg-clip-text text-transparent" aria-hidden="true">
                       {value}
                     </span>
                     <span className="text-xs uppercase tracking-widest text-slate-500" aria-hidden="true">{label}</span>
@@ -576,13 +576,13 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <button
                   onClick={onDemo}
-                  className="group bg-slate-200 hover:bg-slate-300 text-slate-900 px-8 py-4 rounded-2xl font-bold text-base transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 transform flex items-center justify-center gap-3"
+                  className="group bg-white hover:bg-slate-50 text-slate-900 border border-slate-300 px-8 py-4 rounded-2xl font-bold text-base transition-all duration-300 shadow-sm hover:shadow-md hover:scale-105 transform flex items-center justify-center gap-3"
                 >
                   {t('cta.tryDemo')}
                 </button>
                 <button
                   onClick={onRegister}
-                  className="group bg-[rgb(var(--color-accent-solid))] to-purple-600 hover:bg-[rgb(var(--color-accent-solid-hover))] hover:to-purple-700 text-[rgb(var(--color-accent-solid-foreground))] px-8 py-4 rounded-2xl font-bold text-base transition-all duration-300 shadow-2xl shadow-blue-500/25 hover:shadow-blue-500/40 hover:scale-105 transform flex items-center justify-center"
+                  className="group bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-2xl font-bold text-base transition-all duration-300 shadow-lg shadow-blue-600/25 hover:shadow-blue-600/40 hover:scale-105 transform flex items-center justify-center"
                 >
                   {t('cta.startNow')}
                 </button>
