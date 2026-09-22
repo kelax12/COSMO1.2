@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { CalendarDays } from 'lucide-react';
+import { CalendarDays, Settings } from 'lucide-react';
 import { PageHeading } from '@/components/ui/typography';
 import { MobileHeader, TouchTarget } from '@/components/mobile';
 import TasksInboxMenu from '@/components/task-table/TasksInboxMenu';
+import ColorSettingsModal from '@/components/ColorSettingsModal';
 import { useT } from '@/i18n/useT';
 import { OVERDUE_FOCUS_EVENT } from '@/lib/hooks/use-overdue-focus';
 
@@ -38,6 +39,13 @@ const TasksHeader: React.FC<TasksHeaderProps> = ({
   overdueCount,
 }) => {
   const { t, tp } = useT('tasks');
+  // `colorLegend.edit` vit dans le catalogue `common` : c'est le meme libelle
+  // que l'engrenage de la carte des categories, on ne le duplique pas.
+  const { t: tCommon } = useT('common');
+  // Reglages de couleurs des categories. L'engrenage vivait dans le coin de la
+  // carte « Taches en cours », masquee sur mobile depuis le 2026-09-22 : sans
+  // ce report, la seule porte vers ces reglages disparaissait avec elle.
+  const [showColorSettings, setShowColorSettings] = useState(false);
 
   // Maquette 04 — « En-tête large qui se rétracte » : au repos le titre porte
   // ce qu'il y a à faire, au premier défilement il ne reste que « Tâches ».
@@ -100,6 +108,12 @@ const TasksHeader: React.FC<TasksHeaderProps> = ({
                 qu'en bandeaux inline (cf. TaskTable, masqués sur mobile). */}
             <TasksInboxMenu />
             <TouchTarget
+              aria-label={tCommon('colorLegend.edit')}
+              onClick={() => setShowColorSettings(true)}
+            >
+              <Settings size={20} aria-hidden="true" />
+            </TouchTarget>
+            <TouchTarget
               aria-label={showDeadlineCalendar ? t('header.hideCalendar') : t('header.showCalendar')}
               aria-pressed={showDeadlineCalendar}
               onClick={onToggleCalendar}
@@ -114,6 +128,11 @@ const TasksHeader: React.FC<TasksHeaderProps> = ({
             </TouchTarget>
           </>
         }
+      />
+
+      <ColorSettingsModal
+        isOpen={showColorSettings}
+        onClose={() => setShowColorSettings(false)}
       />
 
       {/* ── Desktop (inchangé) ── */}

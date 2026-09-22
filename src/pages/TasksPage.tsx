@@ -6,7 +6,7 @@ import TasksSummary from '@/components/TasksSummary';
 import DeadlineCalendar from '@/components/DeadlineCalendar';
 import ListActionsSheet from '@/components/ListActionsSheet';
 import ShareListSheet from '@/components/ShareListSheet';
-import { Plus, X } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'react-router';
 
@@ -41,13 +41,14 @@ import TasksHeader from './tasks/TasksHeader';
 import { isTaskOverdue } from '@/components/task-table/helpers';
 import TasksErrorState from './tasks/TasksErrorState';
 import MobileTaskSearch from './tasks/MobileTaskSearch';
+import ActiveFiltersRow from './tasks/ActiveFiltersRow';
 import { useHiddenWhileSearching } from './tasks/search-open.store';
 import { useChipLongPress } from './tasks/useChipLongPress';
 import { useTaskLists } from './tasks/useTaskLists';
 import { useT } from '@/i18n/useT';
 
 const TasksPage: React.FC = () => {
-  const { t, tp } = useT('tasks');
+  const { t } = useT('tasks');
   const isMobile = useIsMobile();
   // Tutoriel séparé desktop / mobile : flag localStorage distinct par variante
   // pour que basculer de l'un à l'autre (rotation tablette) ré-affiche le tour
@@ -359,7 +360,10 @@ const TasksPage: React.FC = () => {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.6 }}
-                  className={`flex flex-col md:flex-row justify-between items-stretch md:items-start mb-3 sm:mb-8 gap-6 ${hiddenWhileSearchingFlex}`}
+                  // `hidden md:flex` : sur mobile cette rangee ne contient plus
+                  // rien. La recherche est descendue en bas d'ecran, « + d'options »
+                  // a ete retire, et le tri est passe dans la barre ancree.
+                  className="hidden md:flex flex-col md:flex-row justify-between items-stretch md:items-start mb-3 sm:mb-8 gap-6"
                 >
                   <div className="flex-1 w-full" data-tutorial-id="tasks-filter">
                     <TaskFilter
@@ -391,73 +395,20 @@ const TasksPage: React.FC = () => {
                 </motion.div>
               )}
 
-              {/* Chip de filtre actif (#35) : rend visible tout filtre qui réduit
-                  la liste (liste, catégories, recherche) + compteur n/N, avec un
-                  ✕ pour le retirer — évite le « où sont passées mes tâches ? ». */}
-              {!showAddTaskForm && (selectedListId || selectedCategories.length > 0 || searchTerm.trim() !== '') && (
-                <div className={`flex flex-wrap items-center gap-2 mb-4 ${hiddenWhileSearchingFlex}`} role="status">
-                  {selectedListId && (
-                    <button
-                      type="button"
-                      onClick={clearListFilter}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium bg-blue-50 dark:bg-[rgb(var(--color-accent-solid))]/10 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-[rgb(var(--color-accent-solid))]/30 hover:bg-blue-100 dark:hover:bg-[rgb(var(--color-accent-solid-hover))]/20 transition-colors"
-                      aria-label={t('actions.clearListFilter')}
-                    >
-                      {t('filters.listPrefix', {
-                        name: selectedListId === VIRTUAL_TODAY_ID
-                          ? t('filters.today')
-                          : lists.find(l => l.id === selectedListId)?.name ?? t('filters.list'),
-                      })}
-                      <X size={14} aria-hidden="true" />
-                    </button>
-                  )}
-                  {selectedCategories.length > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => setSelectedCategories([])}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium bg-blue-50 dark:bg-[rgb(var(--color-accent-solid))]/10 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-[rgb(var(--color-accent-solid))]/30 hover:bg-blue-100 dark:hover:bg-[rgb(var(--color-accent-solid-hover))]/20 transition-colors"
-                      aria-label={t('actions.clearCategoryFilter')}
-                    >
-                      {selectedCategories.length === 1
-                        ? t('filters.category')
-                        : t('filters.categoriesCount', { count: selectedCategories.length })}
-                      <X size={14} aria-hidden="true" />
-                    </button>
-                  )}
-                  {searchTerm.trim() !== '' && (
-                    <button
-                      type="button"
-                      onClick={() => setSearchTerm('')}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium bg-blue-50 dark:bg-[rgb(var(--color-accent-solid))]/10 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-[rgb(var(--color-accent-solid))]/30 hover:bg-blue-100 dark:hover:bg-[rgb(var(--color-accent-solid-hover))]/20 transition-colors"
-                      aria-label={t('actions.clearSearch')}
-                    >
-                      {t('filters.searchPrefix', { term: searchTerm.trim() })}
-                      <X size={14} aria-hidden="true" />
-                    </button>
-                  )}
-                  {/* Maquette 101 : le compte est une PRÉCISION, pas un
-                      message — `text-caption` et non `text-sm`. Et « tout
-                      retirer » n'apparaît qu'à partir de deux filtres : avec un
-                      seul, la croix de la pilule fait déjà exactement ça. */}
-                  <span className="text-caption text-[rgb(var(--color-text-muted))]">
-                    {tp('filters.shown', tasks.length, { shown: filteredTasks.length })}
-                  </span>
-                  {[selectedListId, selectedCategories.length > 0, searchTerm.trim() !== '']
-                    .filter(Boolean).length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        clearListFilter();
-                        setSelectedCategories([]);
-                        setSearchTerm('');
-                      }}
-                      className="sm:hidden text-caption font-medium text-[rgb(var(--color-accent))] underline-offset-4 hover:underline min-h-touch px-1"
-                      aria-label={t('sort.resetAria')}
-                    >
-                      {t('filters.clearAll')}
-                    </button>
-                  )}
-                </div>
+              {/* Ce qui réduit la liste, dit à l'écran (#35) — cf. ActiveFiltersRow. */}
+              {!showAddTaskForm && (
+                <ActiveFiltersRow
+                  selectedListId={selectedListId}
+                  lists={lists}
+                  selectedCategories={selectedCategories}
+                  searchTerm={searchTerm}
+                  shownCount={filteredTasks.length}
+                  totalCount={tasks.length}
+                  onClearList={clearListFilter}
+                  onClearCategories={() => setSelectedCategories([])}
+                  onClearSearch={() => setSearchTerm('')}
+                  className={hiddenWhileSearchingFlex}
+                />
               )}
 
               <TaskModal
@@ -521,7 +472,10 @@ const TasksPage: React.FC = () => {
             initial={{ x: 20, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             transition={{ delay: 0.5 }}
-            className="xl:col-span-1 xl:hidden"
+            // Masque sous 768 px : la legende des categories poussait la liste
+            // vers le bas pour une information de second plan. Son engrenage
+            // (reglages de couleurs) est repris dans l'en-tete mobile.
+            className="xl:col-span-1 hidden md:block xl:hidden"
           >
             <TasksSummary />
           </motion.div>
@@ -557,7 +511,8 @@ const TasksPage: React.FC = () => {
           Montée ici et pas dans `TaskFilter` : une barre `fixed` n'a rien à
           faire dans une rangée qui défile avec la page. */}
       <MobileTaskSearch searchTerm={searchTerm} onSearchTermChange={setSearchTerm}
-        listPicker={{ lists: orderedLists, selectedListId, onSelect: handleListSelect, todayHidden }} />
+        listPicker={{ lists: orderedLists, selectedListId, onSelect: handleListSelect, todayHidden }}
+        sort={{ field: filter, direction: sortDirection, onFieldChange: handleFilterChange, onToggleDirection: toggleSortDirection }} />
 
       {/* Menu d'actions de liste (mobile) — appui long sur une chip */}
       <ListActionsSheet
