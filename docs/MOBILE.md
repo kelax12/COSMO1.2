@@ -363,6 +363,49 @@ pour 760 px de hauteur. Mobile 375 × 812 : **694 = clientHeight**.
 > caractère près, ce qui rend leur bon fonctionnement très probable, **mais probable n'est pas
 > mesuré** : les ajouter au fichier est la dette ouverte de ce point.
 
+### 🔴 2026-09-22 · C-07 était clos à moitié, et l'autre moitié n'avait AUCUNE garde
+
+`C-07` annonçait « 17 feuilles n'utilisent toujours pas `useSheetMotion()` / `useSheetDrag()` ».
+**Remesuré avant d'écrire une ligne** : le volet `useSheetMotion` était fermé depuis le
+**2026-09-04** — cliquet à zéro, 23 fichiers consommateurs, la garde jouée et verte. L'énoncé
+était donc faux de moitié, et le rester lui donnait une taille qu'il n'avait pas.
+
+**Le défaut réel était l'autre helper.** `useSheetDrag` n'était mesuré nulle part, et l'audit
+mobile du 2026-08-14 avait pourtant compté **cinq feuilles affichant une poignée qui ne faisait
+rien**. Balayage du 2026-09-22 : **trois** l'avaient reconstitué.
+
+| Surface | Traitement |
+|---|---|
+| `task-modal/MobileActionSheet` | ✅ câblée sur `useSheetDrag(onClose)` |
+| `OKRDeadlineReviewModal` | ✅ câblée, **en phase `edit` seulement** : pendant l'animation de validation la carte porte un `animate`, et deux sources pour un même transform laisseraient interrompre une validation décidée |
+| `RemoveFriendConfirm` | 🗑️ poignée **RETIRÉE** : c'est un `alertdialog` de suppression, une poignée y présente une décision comme une feuille qu'on chasse au pouce |
+
+⚠️ **Deux faux positifs écartés à la mesure** : les « poignées » de `PyramidNodeCard` et
+`TeamProjectCard` sont des **barres de progression**, même forme, `overflow-hidden` en plus. La
+première écriture de la garde les accusait — une garde qui accuse deux fichiers justes est une
+garde qu'on finit par ignorer. Le détecteur raisonne désormais **par élément**, jamais par fichier.
+
+**Cliquet** : `src/design-system.guard.test.ts`, 4 témoins, **vu rouge sur les trois sabotages**.
+
+### 🔴 2026-09-22 · `/habits` ne peut PAS atteindre 44 px de large, et c'est de l'arithmétique
+
+Mesuré **dans le navigateur** (viewport 375 × 812, mode démo, dix cartes) : la grille des 7 jours
+de `HabitCard` fait **301,6 px**, gap de 6 px, donc des cellules de **37,94 × 37,94**.
+
+Sept cellules de 44 px en exigeraient **7 × 44 + 6 × 6 = 344 px**. Même avec un gap NUL, il en
+faudrait **308**. La largeur ne peut donc pas atteindre la cible sans refaire la carte.
+
+✅ Ce qui était récupérable l'est : `min-h-11` porte la **hauteur** à 44, la cible passe de 1 444
+à 1 672 px². L'écart restant est sur la seule largeur, **déclaré et daté** dans
+`e2e/touch-targets.spec.ts` avec son critère : échoue **2.5.5 (AAA)**, tient **2.5.8 (AA, 24 px)**.
+
+⚠️ **Ce n'est pas une allowlist** : la dispense porte sur la largeur SEULE, un témoin vérifie
+qu'une cellule perdant sa hauteur redevient un échec, et elle **doit tomber** si la carte gagne
+45 px de large.
+❌ **Ne pas « corriger » par un débord de `tap-area`** : sept cellules voisines agrandies chacune
+se chevaucheraient, et le dernier dans l'ordre du DOM volerait l'appui de son voisin. Une grille
+se corrige par sa taille, jamais par du débord.
+
 ### « 0 feuille cassée » : ce que dit la MESURE, et à quelle date (C-07, 2026-09-06)
 
 🔴 **La phrase ne s'appuie plus sur le cliquet statique, et il faut dire pourquoi.** Depuis C-07,

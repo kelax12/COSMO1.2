@@ -4,7 +4,7 @@
 //
 // 🔴 CE QU'IL GARDE. Avant le 2026-09-21, `AppWindowShowcase` changeait de vue
 // toutes les 2,5 s sans bouton de pause, sans arrêt au survol ni au focus, et
-// sans égard pour `prefers-reduced-motion`. WCAG 2.2.2 (AA).
+// sans égard pour `prefers-reduced-motion`. WCAG 2.2.2, **niveau A**.
 //
 // ⚠️ **Ce témoin n'exerce PAS le composant**, et c'est un choix. Monter
 // `AppWindowShowcase` en jsdom demanderait `IntersectionObserver`, `matchMedia`

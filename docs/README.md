@@ -62,6 +62,61 @@ code de `main` et les dix-neuf commits du jour. Les mesures **contre la producti
 refaites ce jour-là, sauf celles inscrites dans les commits eux-mêmes. Détail dans le second
 tableau ci-dessous.
 
+## Mise à jour du 2026-09-22 · **deux items fermés, et deux défauts de NIVEAU A trouvés en chemin**
+
+**Aucune note ne bouge**, et pour la même raison que la veille : aucun domaine n'a été réaudité.
+Cette passe a écrit du code sur les trois items que le décompte du 09-21 donnait comme traitables
+par du code.
+
+### Ce que la remesure a trouvé AVANT de coder
+
+🔴 **Deux énoncés d'items étaient faux**, et c'est le renseignement le plus utile de la journée.
+
+| Item | Ce qu'il disait | Ce que la mesure rend |
+|---|---|---|
+| `C-07` | « 17 feuilles n'utilisent toujours pas `useSheetMotion()` » | **Faux depuis le 2026-09-04** : le cliquet est à zéro et **23** fichiers consomment le helper (l'énoncé en comptait 8). Le vrai défaut était son AUTRE moitié, `useSheetDrag`, qui n'avait **jamais eu de garde** — trois poignées muettes reconstituées |
+| `C-111` | « 2 cas `chromium` » pour `a11y-keyboard-audit` | **4**, soit **7 échecs `chromium` en local et non 5**. Les deux cas supplémentaires n'étaient nommés nulle part |
+
+⚠️ Remesurer avant de coder a donc évité de refaire un travail fait, et a trouvé celui qui restait.
+
+### Les deux défauts de niveau A
+
+| Défaut | Ce qu'il coûtait |
+|---|---|
+| **Les actions d'une tâche étaient inatteignables au clavier sur mobile** (WCAG 2.1.1) | La maquette 86 a retiré le « ⋯ » en laissant trois chemins — appui long, glissement, menu desktop — qui sont **tous des gestes de pointeur**. Le bouton « Actions pour … » existe, porte le bon nom, et fait **0 × 0 px** : il vit dans `div.hidden md:block`. Modifier, supprimer ou partager une tâche était impossible au clavier |
+| **La vitrine du hero ne pouvait pas être arrêtée** (WCAG 2.2.2) | Rotation toutes les 2,5 s, sans pause, sans arrêt au survol ni au focus, et sans égard pour `prefers-reduced-motion` |
+
+🔴 **Et le premier était masqué par le test qui aurait dû le trouver.** `a11y-keyboard-audit`
+cherchait ce bouton invisible depuis des semaines : son **timeout passait pour de la lenteur de
+harnais**. ❌ Ne jamais classer un timeout en « lenteur » sans avoir ouvert l'écran.
+
+⚠️ **Correction d'une erreur de cette passe** : elle a écrit « WCAG 2.2.2 **(AA)** » à cinq
+endroits. Le critère est de **niveau A** — l'énoncé d'origine de `C-69` le disait juste. Corrigé
+partout le soir même. Le défaut était donc **plus grave** que ce que sa fermeture annonçait.
+
+### Ce qui est acquis, et ce qui ne l'est pas
+
+| | |
+|---|---|
+| ✅ `C-69` | Fermé. Trois états, suspension au survol et au focus, bouton de 44 × 44 px réels. **Vérifié dans le navigateur** : sur la machine d'Axel, `prefers-reduced-motion` vaut `true` et le bouton rend « Lancer » — la rotation ne démarre plus seule. Témoin : 13 cas, 4 sabotages |
+| ✅ `C-07` | Fermé. Cliquet neuf sur les poignées, 4 témoins, **vu rouge sur 3 sabotages** |
+| 🟠 `C-111` | **Deux familles sur quatre.** `touch-targets` verte (19/19 sur `chromium`), 2 cas clavier sur 4 |
+| 🔴 Ce qui reste | 2 cas clavier **non diagnostiqués**, 7 parcours WebKit, 3 `reduced-motion-sheets`, et **rien n'a été rejoué sur WebKit** |
+
+❌ **Ne pas lire `C-111` comme refermé** : son critère reste le job `e2e` **vert sur `main`**.
+Le décompte passe à **103 clos / 6 ouverts**, et **un seul** relève encore du code.
+
+### L'arbitrage qui revient à Axel
+
+🔴 **`/habits` ne peut pas atteindre 44 px de large**, et c'est de l'arithmétique : la grille
+mesure **301,6 px** et sept cellules en exigeraient **344** (308 même à gap nul). La hauteur passe
+à 44, la largeur reste à ~38, et l'écart est **déclaré** avec son critère — il échoue 2.5.5 (AAA),
+il tient 2.5.8 (AA). Élargir la carte ferait tomber la dispense, et c'est sa décision.
+⚠️ **La maquette 86 n'a pas été enfreinte** : le chemin clavier ne reprend aucun pixel à la
+colonne du pouce. Remettre un « ⋯ » visible pour la découvrabilité reste une décision à part.
+
+---
+
 ## Mise à jour du 2026-09-21 · passe de documentation · **aucune note ne bouge, et c'est le résultat**
 
 Consigne d'Axel : « remets à jour tous les fichiers `.md`, il ne doit y avoir aucun fichier de
@@ -101,6 +156,8 @@ ont produit quelque chose**, ce qui mérite d'être écrit : un refus prudent n'
 d'Axel (`M-08`, `M-40`/`M-52`, les réglages de console), un attend une décision. Le travail de
 développement disponible immédiatement, c'est **`C-111`** (le job `e2e` rouge, 8 défauts produit
 de cibles tactiles mesurés), **`C-69`** et **`C-07`**.
+
+> ✅ **Les trois ont été traités le lendemain** — cf. § Mise à jour du 2026-09-22 ci-dessous.
 
 ⚠️ **`M-56` n'est rendu qu'à moitié, et c'est dit sur la ligne.** Classer des **items** est fait ;
 **tarifer un angle mort en points de note d'audit** ne l'est pas, et les 22 lignes encore ouvertes
