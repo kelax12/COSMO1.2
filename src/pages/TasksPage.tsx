@@ -556,7 +556,8 @@ const TasksPage: React.FC = () => {
       {/* Recherche ancrée en bas (mobile) — hors du flux, ne défile jamais.
           Montée ici et pas dans `TaskFilter` : une barre `fixed` n'a rien à
           faire dans une rangée qui défile avec la page. */}
-      <MobileTaskSearch searchTerm={searchTerm} onSearchTermChange={setSearchTerm} />
+      <MobileTaskSearch searchTerm={searchTerm} onSearchTermChange={setSearchTerm}
+        listPicker={{ lists: orderedLists, selectedListId, onSelect: handleListSelect, todayHidden }} />
 
       {/* Menu d'actions de liste (mobile) — appui long sur une chip */}
       <ListActionsSheet
