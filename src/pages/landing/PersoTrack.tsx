@@ -1,5 +1,5 @@
 import React, { useCallback, useRef, useState } from 'react';
-import { motion, useReducedMotion } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { gsap, useGSAP } from '@/lib/gsap';
 import { ArrowRight } from 'lucide-react';
 import AppWindowShowcase from '@/components/showcase/AppWindowShowcase';
@@ -32,7 +32,6 @@ interface PersoTrackProps {
  */
 const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureClick }) => {
   const { t } = useT('landing');
-  const reduceMotion = useReducedMotion();
   const isMobile = useIsMobile();
 
   const rootRef = useRef<HTMLDivElement>(null);
@@ -75,13 +74,25 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
           scrollTrigger: { trigger: '.cta-card', start: 'top 80%', once: true },
         });
 
-        // Halo conique qui tourne en continu derrière le contenu de la CTA.
-        // En pause hors écran (blur 60px qui tourne = cher en GPU).
-        const ctaHalo = rootRef.current?.querySelector('.cta-halo');
-        if (ctaHalo) {
-          const haloLoop = gsap.to(ctaHalo, { rotation: 360, ease: 'none', duration: 16, repeat: -1 });
-          pauseWhenOffscreen(ctaHalo, [haloLoop]);
-        }
+        // Deux filets d'encre encadrent le titre de la CTA. Ils se
+        // dessinent UNE FOIS, à l'arrivée de la carte, puis ne coûtent plus
+        // rien — c'est la règle déjà écrite pour le hero (« le hero ne doit
+        // rien coûter une fois l'entrée finie »), enfin appliquée ici.
+        //
+        // 🔴 Ils remplacent un `conic-gradient` en `filter: blur(60px)` mis en
+        // ROTATION INFINIE. C'est exactement le motif que l'audit A-8 du
+        // 2026-09-03 a fait retirer du hero, où neutraliser les seuls
+        // `filter: blur` ramenait la page de 2 856 ms bloquées sur 4 000 à
+        // 259. Il avait survécu dans cette carte, et la DA blanche l'a rendu
+        // presque invisible : il ne restait que la facture. Ne jamais le
+        // remettre, ici pas plus qu'ailleurs.
+        gsap.from('.cta-rule', {
+          scaleX: 0,
+          duration: 0.9,
+          ease: 'power3.out',
+          stagger: 0.12,
+          scrollTrigger: { trigger: '.cta-card', start: 'top 80%', once: true },
+        });
       });
     },
     { scope: rootRef },
@@ -138,28 +149,41 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
           delay: 0.5,
         });
 
-        // Vie permanente du fond : orbes qui dérivent (yoyo aléatoire
-        // re-tiré à chaque cycle) + traceurs lumineux qui balayent la
-        // grille à une hauteur/position aléatoire à chaque passage.
-        gsap.utils.toArray<HTMLElement>('.hero-orb').forEach((orb, i) => {
+        // Vie permanente du fond, version ENCRE (2026-09-22).
+        //
+        // 🔴 Sur une page BLANCHE, un mouvement ne peut pas se faire par la
+        // lumière. Les orbes floutés et les faisceaux translucides qui
+        // vivaient ici avaient été dessinés pour le fond sombre : posés sur
+        // du blanc ils n'émettent plus rien de visible, mais ils coûtent
+        // toujours — un flou se rastérise à chaque frame, qu'on le voie ou
+        // non. Un trait sombre, lui, se voit. Version archivée intégralement :
+        // `docs/archive/LANDING-MOTION-DA-SOMBRE-2026-09-22.md`.
+        //
+        // Les NOEUDS respirent sur place (opacité + échelle) au lieu de
+        // dériver : un point sombre qui glisse hors de la grille se lit
+        // comme un défaut d'alignement, pas comme une animation.
+        gsap.utils.toArray<HTMLElement>('.hero-node').forEach((node, i) => {
           heroLoops.push(
-            gsap.to(orb, {
-              x: () => gsap.utils.random(-70, 70),
-              y: () => gsap.utils.random(-50, 50),
-              duration: () => gsap.utils.random(4, 7),
+            gsap.to(node, {
+              opacity: 0.9,
+              scale: 1.5,
+              duration: 1.6,
               ease: 'sine.inOut',
               repeat: -1,
               yoyo: true,
-              repeatRefresh: true,
-              delay: i * 0.9,
+              delay: i * 1.3,
             }),
           );
         });
-        const beamH = heroRef.current?.querySelector<HTMLElement>('.hero-beam-h');
-        if (beamH) {
+        // Les TRACES gardent la trajectoire des anciens faisceaux — elle est
+        // éprouvée, et mise en pause hors écran. Seule leur matière change :
+        // le dégradé va de transparent à l'encre, donc l'entrée et la sortie
+        // restent portées par le dégradé lui-même, sans tween d'opacité.
+        const traceH = heroRef.current?.querySelector<HTMLElement>('.hero-trace-h');
+        if (traceH) {
           heroLoops.push(
             gsap.fromTo(
-              beamH,
+              traceH,
               { x: -220 },
               {
                 x: () => (heroRef.current?.offsetWidth ?? window.innerWidth) + 220,
@@ -168,17 +192,17 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
                 repeat: -1,
                 repeatDelay: 1.8,
                 onRepeat: () => {
-                  beamH.style.top = `${gsap.utils.random(15, 72)}%`;
+                  traceH.style.top = `${gsap.utils.random(14, 62)}%`;
                 },
               },
             ),
           );
         }
-        const beamV = heroRef.current?.querySelector<HTMLElement>('.hero-beam-v');
-        if (beamV) {
+        const traceV = heroRef.current?.querySelector<HTMLElement>('.hero-trace-v');
+        if (traceV) {
           heroLoops.push(
             gsap.fromTo(
-              beamV,
+              traceV,
               { y: -220 },
               {
                 y: () => (heroRef.current?.offsetHeight ?? window.innerHeight) + 220,
@@ -188,7 +212,7 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
                 repeatDelay: 2.6,
                 delay: 2.2,
                 onRepeat: () => {
-                  beamV.style.left = `${gsap.utils.random(20, 82)}%`;
+                  traceV.style.left = `${gsap.utils.random(20, 82)}%`;
                 },
               },
             ),
@@ -254,8 +278,22 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
       <TrackAnchors track="perso" label={t('enterprise.gateway.perso.title')} />
 
       <section ref={heroRef} className="relative pt-10 pb-20 lg:pt-16 lg:pb-28 overflow-hidden">
-        {/* ── Fond ambiant : grille masquée + noise + aurores + halo conique ── */}
-        <div className="absolute inset-0 -z-10" aria-hidden="true">
+        {/* ── Fond ambiant : grille masquée + noise + aurores + encre ──
+            🔴 `z-0`, JAMAIS `-z-10`. Cette couche a porté `-z-10` depuis
+            l'origine, et elle n'a jamais été VISIBLE : un descendant en z
+            négatif se peint à l'étape 2 d'un contexte d'empilement, le fond
+            des blocs non positionnés à l'étape 3. Le `<div>` racine de ce
+            parcours porte un fond (`bg-white` aujourd'hui, un dégradé
+            `slate-900` avant le 2026-09-22) et ne crée AUCUN contexte
+            d'empilement, la `<section>` étant `relative` sans `z-index` : ce
+            fond se peignait donc PAR-DESSUS la grille, les quatre aurores, le
+            bruit et les traceurs. Mesuré le 2026-09-22 en forçant un traceur
+            en rouge plein de 3 px, invisible — puis visible d'un coup en
+            passant cette seule couche à `z-0`.
+            ⚠️ Le contenu reste au-dessus sans rien changer : il est `relative`
+            et vient APRÈS dans l'arbre, donc il se peint après à la même
+            étape. C'est bien l'ordre du DOM qui tient l'empilement ici. */}
+        <div className="absolute inset-0 z-0" aria-hidden="true">
           {/* Grille fine type Linear/Vercel, fondue — couche parallax lente (GSAP) */}
           <div
             ref={gridLayerRef}
@@ -268,13 +306,6 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
               WebkitMaskImage: 'radial-gradient(ellipse 80% 70% at 60% 35%, #000 50%, transparent 100%)',
             }}
           />
-          {/* Vie permanente : traceurs lumineux qui balayent la grille +
-              orbes qui dérivent en continu (GSAP, gaté reduced-motion) */}
-          <div className="hero-beam-h absolute top-[28%] left-0 h-px w-52 bg-gradient-to-r from-transparent via-blue-500/70 to-transparent" />
-          <div className="hero-beam-v absolute left-[68%] top-0 w-px h-52 bg-gradient-to-b from-transparent via-violet-500/60 to-transparent" />
-          <div className="hero-orb absolute top-[20%] left-[10%] h-3 w-3 rounded-full bg-blue-500/70 blur-[2px]" />
-          <div className="hero-orb absolute top-[64%] left-[80%] h-2 w-2 rounded-full bg-violet-500/70 blur-[1px]" />
-          <div className="hero-orb absolute top-[40%] left-[52%] h-2.5 w-2.5 rounded-full bg-cyan-500/60 blur-[2px]" />
 
           {/* Couche parallax moyenne (GSAP) : halo + aurores. Les loops
               d'opacité/scale restent en Framer sur les enfants ; GSAP ne
@@ -298,8 +329,14 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
               mesurés, aucun ne change quoi que ce soit.
               ✅ Un `radial-gradient` qui s'éteint vers `transparent` EST déjà
               flou : il produit le même halo diffus, mais il se peint comme un
-              dégradé ordinaire. Seule l'opacité reste animée — jamais un
-              transform, cf. la règle `MotionConfig reducedMotion="user"`.
+              dégradé ordinaire.
+              🔴 ET DEPUIS LE 2026-09-22, ces quatre couches sont FIXES. Elles
+              oscillaient en opacité entre 0,82 et 1 — sur des dégradés dont
+              l'alpha maximal vaut 0,16, posés sur du BLANC. L'amplitude réelle
+              était sous le seuil de perception ; la boucle, elle, tournait en
+              continu sur quatre surfaces de la taille du premier écran. Ne pas
+              la remettre « pour donner de la vie au fond » : la vie du fond,
+              sur cette page, c'est la trace d'encre, qui se voit.
               Harnais de non-régression : `scripts/landing-motion-probe.mjs`. */}
           <div ref={auroraLayerRef} className="absolute inset-0">
             {/* Nappe de teintes (remplace le halo conique tournant).
@@ -307,36 +344,32 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
                 sa boîte : sans le flou qui adoucissait les arêtes, un stop
                 encore coloré à 100 % dessine un rectangle visible. C'est le
                 défaut qu'a montré la première capture après correctif. */}
-            <motion.div
+            <div
               className="absolute left-1/2 top-[-18%] h-[58rem] w-[58rem] -translate-x-1/2 rounded-full"
               style={{
                 background:
-                  'radial-gradient(circle closest-side, rgba(99,102,241,0.16) 0%, rgba(99,102,241,0.14) 34%, rgba(139,92,246,0.11) 56%, rgba(217,70,239,0.07) 76%, rgba(34,211,238,0.04) 90%, transparent 100%)',
+                  'radial-gradient(circle closest-side, rgba(99,102,241,0.08) 0%, rgba(99,102,241,0.07) 34%, rgba(139,92,246,0.055) 56%, rgba(217,70,239,0.035) 76%, rgba(34,211,238,0.02) 90%, transparent 100%)',
               }}
-              whileInView={reduceMotion ? undefined : { opacity: [0.82, 1, 0.82] }}
-              transition={reduceMotion ? undefined : { duration: 14, repeat: Infinity, ease: 'easeInOut' }}
             />
-            {/* Aurores */}
-            <motion.div
+            {/* Aurores — alphas DIVISÉS PAR DEUX le 2026-09-22, en même temps
+                que la couche est redevenue visible (cf. `z-0` plus haut). Ils
+                avaient été réglés pour glisser sur un fond `slate-900` ; posés
+                sur du blanc, ils lavaient la page en pastel. Une page blanche
+                doit rester blanche : ce sont des teintes, pas un décor. */}
+            <div
               className="absolute -top-40 left-1/2 h-[60rem] w-[60rem] -translate-x-1/2 rounded-full"
               style={{
                 background:
-                  'radial-gradient(circle closest-side, rgba(37,99,235,0.18) 0%, rgba(37,99,235,0.16) 34%, rgba(37,99,235,0.13) 54%, rgba(139,92,246,0.09) 72%, rgba(217,70,239,0.05) 88%, transparent 100%)',
+                  'radial-gradient(circle closest-side, rgba(37,99,235,0.09) 0%, rgba(37,99,235,0.08) 34%, rgba(37,99,235,0.065) 54%, rgba(139,92,246,0.045) 72%, rgba(217,70,239,0.025) 88%, transparent 100%)',
               }}
-              whileInView={reduceMotion ? undefined : { opacity: [0.78, 1, 0.78] }}
-              transition={reduceMotion ? undefined : { duration: 9, repeat: Infinity, ease: 'easeInOut' }}
             />
-            <motion.div
+            <div
               className="absolute -top-4 -left-40 h-[38rem] w-[38rem] rounded-full"
-              style={{ background: 'radial-gradient(circle closest-side, rgba(6,182,212,0.14) 0%, rgba(6,182,212,0.12) 40%, rgba(6,182,212,0.06) 70%, transparent 100%)' }}
-              whileInView={reduceMotion ? undefined : { opacity: [0.45, 0.7, 0.45] }}
-              transition={reduceMotion ? undefined : { duration: 7, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
+              style={{ background: 'radial-gradient(circle closest-side, rgba(6,182,212,0.07) 0%, rgba(6,182,212,0.06) 40%, rgba(6,182,212,0.03) 70%, transparent 100%)' }}
             />
-            <motion.div
+            <div
               className="absolute top-8 -right-36 h-[38rem] w-[38rem] rounded-full"
-              style={{ background: 'radial-gradient(circle closest-side, rgba(217,70,239,0.13) 0%, rgba(217,70,239,0.11) 40%, rgba(217,70,239,0.055) 70%, transparent 100%)' }}
-              whileInView={reduceMotion ? undefined : { opacity: [0.45, 0.72, 0.45] }}
-              transition={reduceMotion ? undefined : { duration: 8, repeat: Infinity, ease: 'easeInOut', delay: 2 }}
+              style={{ background: 'radial-gradient(circle closest-side, rgba(217,70,239,0.065) 0%, rgba(217,70,239,0.055) 40%, rgba(217,70,239,0.03) 70%, transparent 100%)' }}
             />
           </div>
           {/* Texture noise (SVG feTurbulence, ultra-léger) */}
@@ -349,6 +382,27 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
           />
           {/* Fondu vers la section suivante */}
           <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-b from-transparent to-white" />
+
+          {/* Vie permanente du fond, en ENCRE : une trace sombre se dessine le
+              long d'une ligne de la grille, la traverse, puis s'efface ; les
+              noeuds posés sur les intersections respirent (GSAP, gaté
+              reduced-motion).
+              ⚠️ La trace est un DÉGRADÉ qui part de `transparent` : c'est lui
+              qui fait l'entrée et la sortie. Aucun tween d'opacité, et surtout
+              aucun `blur-[…]` — les orbes qu'ils remplacent en portaient un
+              chacun, cf. l'audit A-8 ci-dessus.
+              🔴 CE BLOC EST LE DERNIER DE LA COUCHE DE FOND, et il doit le
+              rester. Placé à l'endroit des anciens faisceaux — juste après la
+              grille —, il passait SOUS les aurores, sous le bruit et surtout
+              sous le fondu blanc de bas de section, qui est opaque à son bord.
+              Mesuré en forçant la trace en rouge plein de 3 px : invisible. Un
+              effet de fond ne se vérifie pas en relisant sa couleur, seulement
+              en le regardant peint. */}
+          <div className="hero-trace-h absolute top-[28%] left-0 h-px w-52 bg-gradient-to-r from-transparent via-slate-900/20 to-blue-600/45" />
+          <div className="hero-trace-v absolute left-[68%] top-0 w-px h-52 bg-gradient-to-b from-transparent via-slate-900/15 to-violet-600/40" />
+          <div className="hero-node absolute top-[20%] left-[10%] h-1.5 w-1.5 rounded-full bg-slate-900/25 opacity-50" />
+          <div className="hero-node absolute top-[64%] left-[80%] h-1 w-1 rounded-full bg-slate-900/25 opacity-50" />
+          <div className="hero-node absolute top-[40%] left-[52%] h-1.5 w-1.5 rounded-full bg-blue-600/35 opacity-50" />
         </div>
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -518,14 +572,17 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
             className="cta-card bg-gradient-to-r from-blue-50 to-violet-50 border border-blue-200 shadow-[0_24px_60px_-30px_rgba(37,99,235,0.45)] rounded-3xl p-12 relative overflow-hidden"
           >
             <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-blue-500/[0.04] to-violet-500/[0.04] z-0"></div>
-            {/* Halo conique rotatif (GSAP) — mouvement ambiant permanent */}
-            <div
-              className="cta-halo absolute -inset-[45%] opacity-40 pointer-events-none"
-              style={{
-                background:
-                  'conic-gradient(from 0deg, rgba(59,130,246,0.22), transparent 30%, rgba(139,92,246,0.18) 50%, transparent 70%, rgba(59,130,246,0.22))',
-                filter: 'blur(60px)',
-              }}
+            {/* Filets d'encre : ils se dessinent avec la carte, une fois.
+                ⚠️ Le centrage passe par `inset-x-0 mx-auto`, jamais par
+                `-translate-x-1/2` : GSAP anime `scaleX` sur ces éléments, et
+                il fige alors le centrage en pixels — la ligne se décalerait au
+                premier redimensionnement. */}
+            <span
+              className="cta-rule pointer-events-none absolute inset-x-0 top-6 mx-auto h-px w-2/3 origin-center bg-gradient-to-r from-transparent via-blue-600/45 to-transparent"
+              aria-hidden="true"
+            />
+            <span
+              className="cta-rule pointer-events-none absolute inset-x-0 bottom-6 mx-auto h-px w-2/3 origin-center bg-gradient-to-r from-transparent via-violet-600/40 to-transparent"
               aria-hidden="true"
             />
 

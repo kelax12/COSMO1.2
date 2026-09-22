@@ -36,7 +36,7 @@ const MODULES: Module[] = [
   { cle: 'okr', Icone: Target, from: { tx: '120px', ty: '-70px' }, teinte: 'text-fuchsia-700 ring-fuchsia-500/30 bg-fuchsia-500/10', delai: 530 },
 ];
 
-/** Retard après lequel les quatre se sont posées : la lueur ponctue l'arrivée. */
+/** Retard après lequel les quatre se sont posées : le filet ponctue l'arrivée. */
 export const DELAI_ARRIMAGE_MS = 530;
 
 interface Props {
@@ -54,9 +54,12 @@ export const HeroModuleDock: React.FC<Props> = ({ actif }) => {
       // contenu qui compte, pas la mise en scène.
       aria-label={t('hero.modulesLabel')}
     >
-      {/* Lueur d'arrimage — décorative, une seule impulsion, jamais une boucle. */}
+      {/* Trait d'arrimage — décoratif, une seule impulsion, jamais une boucle.
+          C'était une lueur floutée (`blur-xl`), lisible sur le fond sombre
+          d'avant le 2026-09-22 et invisible sur blanc. Un filet qui se dessine
+          dit la même chose — les quatre se sont posées — et se voit. */}
       <div
-        className="hero-dock-glow pointer-events-none absolute inset-x-6 -bottom-2 h-10 rounded-full bg-gradient-to-r from-blue-500/0 via-violet-500/40 to-fuchsia-500/0 blur-xl"
+        className="hero-dock-settle pointer-events-none absolute inset-x-10 -bottom-1 mx-auto h-px origin-center bg-gradient-to-r from-transparent via-slate-900/35 to-transparent"
         style={{ ['--d' as string]: `${DELAI_ARRIMAGE_MS}ms` }}
         aria-hidden="true"
       />

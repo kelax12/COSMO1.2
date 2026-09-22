@@ -1729,22 +1729,30 @@ a:focus-visible:not([class*="ring-"]):not([class*="focus-visible:"]),
 }
 
 /* Une seule impulsion quand les quatre se sont posés, jamais une
-   boucle : le hero ne doit rien coûter une fois l'entrée finie. */
-.hero-dock-glow {
-  animation: hero-dock-glow 1100ms ease-out both;
+   boucle : le hero ne doit rien coûter une fois l'entrée finie.
+
+   C'était une LUEUR (opacité seule, sur un aplat flouté). La page est
+   blanche depuis le 2026-09-22 : une lueur claire posée sur du blanc ne
+   ponctue plus rien. Le trait se DESSINE — même retard, même durée, même
+   rôle — et il se voit. */
+.hero-dock-settle {
+  animation: hero-dock-settle 1100ms cubic-bezier(0.22, 1, 0.36, 1) both;
   animation-delay: var(--d, 0ms);
 }
 
-@keyframes hero-dock-glow {
+@keyframes hero-dock-settle {
   0%,
   55% {
     opacity: 0;
+    transform: scaleX(0);
   }
   72% {
-    opacity: 0.55;
+    opacity: 1;
+    transform: scaleX(1);
   }
   100% {
     opacity: 0;
+    transform: scaleX(1);
   }
 }
 
@@ -1753,12 +1761,12 @@ a:focus-visible:not([class*="ring-"]):not([class*="focus-visible:"]),
   .hero-rise,
   .hero-chip,
   .hero-window,
-  .hero-dock-glow {
+  .hero-dock-settle {
     animation: none;
   }
-  /* La lueur d'arrimage n'a plus de sens sans le mouvement qu'elle
-     ponctue : on la retire au lieu de la figer allumée. */
-  .hero-dock-glow {
+  /* Le trait d'arrimage n'a plus de sens sans le mouvement qu'il
+     ponctue : on le retire au lieu de le figer allumé. */
+  .hero-dock-settle {
     opacity: 0;
   }
 }
