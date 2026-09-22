@@ -3,7 +3,7 @@
 //
 // 🔴 CE QUI ÉTAIT FAUX. `AppWindowShowcase` changeait de vue toutes les 2,5 s,
 // indéfiniment, sans bouton de pause, sans arrêt au survol ni au focus, et
-// **sans le moindre égard pour `prefers-reduced-motion`**. WCAG 2.2.2 (AA)
+// **sans le moindre égard pour `prefers-reduced-motion`**. WCAG 2.2.2 (niveau A)
 // vise exactement ce cas : une information en mouvement qui démarre seule,
 // dure plus de 5 s et coexiste avec d'autres contenus doit offrir un moyen de
 // la mettre en pause, l'arrêter ou la masquer.

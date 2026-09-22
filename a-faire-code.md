@@ -4209,6 +4209,11 @@ geste que C-57 traitait, les 22 autres non.
 ### C-69 · ~~La fenêtre produit tourne toute seule, sans pause, y compris en mouvement réduit~~ · **P2 · S** · ✅ **corrigé le 2026-09-22**
 
 > ✅ **WCAG 2.2.2 tenu, et vérifié DANS LE NAVIGATEUR, pas déduit du code.**
+>
+> ⚠️ **Correction du 2026-09-22 au soir** : la passe qui a fermé cet item a écrit « WCAG 2.2.2
+> (AA) » à cinq endroits. C'est **faux, le critère est de niveau A** — l'énoncé d'origine de
+> C-69, lui, le disait juste. Corrigé partout. Le défaut était donc plus grave que ce que sa
+> fermeture annonçait, ce qui ne change rien au correctif mais beaucoup à la façon de le lire.
 > `AppWindowShowcase` a désormais trois états — `auto`, `pause`, `lecture` — plus une suspension
 > au survol et au focus qui ne change pas l'état demandé.
 >

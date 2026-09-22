@@ -211,13 +211,29 @@ Appareil : iPhone 13, iOS 18.5, Safari 18.5
 ci-dessous sont ceux du produit d'aujourd'hui, pas ceux du 2026-09-04.
 
 | # | Geste | Attendu | Piège connu |
+
+> 🔴 **AVERTISSEMENT DU 2026-09-22, à lire AVANT de jouer le bloc 4.** L'étape 4.5 décrivait un
+> bouton « ⋯ » sur la carte de tâche comme « l'affordance permanente ». **Il n'existe plus sur
+> téléphone** : la maquette 86 l'a retiré, et l'élément qui porte encore ce nom accessible vit
+> dans la ligne DESKTOP (`div.hidden md:block`), donc à **0 × 0 px** au format mobile — mesuré
+> dans le navigateur.
+>
+> Conséquence directe, et c'est un défaut ouvert : sur mobile, les actions d'une tâche n'étaient
+> atteignables que par **appui long ou glissement**, deux gestes de pointeur. Un chemin clavier a
+> été ouvert le 2026-09-22 (évènement `contextmenu`, `Shift+F10`), **mais rien ne dit qu'il est
+> praticable sous VoiceOver iOS**, où il n'y a pas de touche menu contextuel.
+>
+> ⚠️ **C'est donc une QUESTION que cet audit doit trancher, pas un chemin à vérifier.** Noter ce
+> que VoiceOver propose réellement (rotor « Actions », actions personnalisées), et si la réponse
+> est « rien », c'est un finding de niveau A à ouvrir — pas une erreur de manipulation.
+
 |---|---|---|---|
 | 4.1 | atteindre une ligne de tâche | « case à cocher, non cochée », **avec le nom de la tâche** | `role="checkbox"` + `aria-checked` sont posés (`task-table/list.tsx`, `TodayTasks`) : ne jamais entendre « bouton » |
 | 4.2 | double tap dessus | le **nouvel état** est annoncé (« cochée ») sans qu'il faille rebalayer | |
 | 4.3 | juste après | le toast de confirmation est-il lu ? et **sans voler le curseur** ? | Sonner porte sa propre région live ; un toast qui déplace le curseur casse le parcours |
 | 4.4 | atteindre le titre d'une tâche | annoncé comme un contrôle activable, pas comme du texte inerte | |
-| 4.5 | atteindre le bouton « ⋯ » d'une carte | « **Actions pour \<nom de la tâche\>**, bouton » | c'est l'affordance **permanente**, celle qui existe pour que le balayage de carte ne soit pas le seul chemin. Inatteignable, tout le menu d'actions est perdu pour VoiceOver |
-| 4.6 | double tap dessus | `TaskActionsSheet` : M1 « **Actions pour \<nom\>** », puis M2, M3, M4 | |
+| 4.5 | 🔴 **atteindre les actions d'une tâche** — ⚠️ **PAS par un bouton « ⋯ » : il n'y en a plus sur téléphone.** Balayer jusqu'à la ligne de tâche, puis chercher ce que VoiceOver propose (rotor « Actions », geste personnalisé) | la carte doit être atteignable, et ses actions accessibles **sans geste de pointeur** | 🔴 **ÉTAPE RÉÉCRITE LE 2026-09-22, et c'est la plus importante de ce bloc.** Elle décrivait le « ⋯ » comme « l'affordance permanente » : la maquette 86 l'a retiré des cartes mobiles, et le seul élément qui porte encore ce nom vit dans `div.hidden md:block`, donc à **0 × 0 px** sur téléphone. ❌ **Ne pas conclure « VoiceOver est cassé » si rien ne répond « Actions pour … » au balayage : c'est attendu.** Le chemin ouvert le 2026-09-22 est l'évènement `contextmenu` (`Shift+F10` au clavier), annoncé par `aria-keyshortcuts` — **et il n'est PAS vérifié sous VoiceOver iOS, où il n'existe pas de touche menu.** C'est précisément ce que cette étape doit mesurer : par quel geste, s'il en existe un, une personne aveugle ouvre `TaskActionsSheet` sur iPhone |
+| 4.6 | une fois la feuille ouverte (par le chemin trouvé en 4.5) | `TaskActionsSheet` : M1 « **Actions pour \<nom\>** », puis M2, M3, M4 | ⚠️ Le nom de la feuille, lui, est juste : c'est son DÉCLENCHEUR qui a disparu. Si 4.5 échoue, noter l'échec et ouvrir la feuille autrement pour ne pas perdre 4.6 → 4.7 |
 | 4.7 | dans la feuille, « Ajouter à une liste » | `MobileAddToList` : M1 annonce « **Listes** » | ⚠️ son nom accessible pointe sur un paragraphe qui ne contient que le mot « Listes », en dur. Un nom d'une syllabe pour une surface qui recouvre l'écran : à consigner tel quel |
 | 4.8 | 🔴 **appui long sur une chip de liste** (double tap **maintenu**) | `ListActionsSheet` : M1 « **Actions pour la liste \<nom\>** » | 🔴 **le point le plus exposé de l'écran.** Sur mobile, renommer / partager / supprimer / épingler / recolorer une liste n'a **aucun autre chemin** : les boutons flottants sont conditionnés à `!isMobile`, et le menu contextuel natif est neutralisé. Si le double tap maintenu n'ouvre pas la feuille, ces actions sont **inatteignables** sous VoiceOver, et c'est un finding WCAG 2.5.1 |
 | 4.9 | bouton « Nouvelle liste » de la barre de chips | `CreateListSheet` : M1 « **Nouvelle liste** », puis M2 à M4 | |
@@ -405,7 +421,7 @@ la référence des noms attendus, pour que « M1 » ait un contenu vérifiable �
 | **`DeleteTeamCategoryConfirm`** 🆕 | onglet OKR d'équipe › supprimer une catégorie | à relire dans le code · **jamais auditée** | · |
 | `MobileMoreSheet` | barre d'onglets, « Plus » | Plus d'options | 3.3 |
 | `FirstRunSetup` | premier lancement, compte vide | Bienvenue dans COSMO | 2.4 |
-| `TaskActionsSheet` | carte de tâche, bouton « ⋯ » | Actions pour \<nom\> | 4.6 |
+| `TaskActionsSheet` | 🔴 carte de tâche — **plus de bouton « ⋯ » sur téléphone** (maquette 86). Appui long, glissement à gauche, ou évènement `contextmenu` depuis le 2026-09-22 | Actions pour \<nom\> | 4.5, 4.6 |
 | `MobileAddToList` | feuille d'actions › Ajouter à une liste | Listes 🇫🇷 | 4.7 |
 | `ListActionsSheet` | appui long sur une chip de liste | Actions pour la liste \<nom\> 🇫🇷 | 4.8 |
 | `CreateListSheet` | barre de chips, nouvelle liste | Nouvelle liste | 4.9 |

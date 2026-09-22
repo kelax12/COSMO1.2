@@ -89,7 +89,7 @@ sans écran, **écrites en dur en français** hors des catalogues i18n.
   `src/design-system.guard.test.ts`, 4 témoins, vu rouge sur 3 sabotages.
   ⚠️ Une **barre de progression** a exactement la même forme : c'est son `overflow-hidden`, sur le
   MÊME élément, qui la distingue. Le détecteur raisonne par élément, jamais par fichier.
-- ❌ **Une rotation automatique doit pouvoir s'ARRÊTER** (C-69, WCAG 2.2.2, AA). Pause explicite,
+- ❌ **Une rotation automatique doit pouvoir s'ARRÊTER** (C-69, WCAG 2.2.2, **niveau A**). Pause,
   arrêt au survol ET au focus, et `prefers-reduced-motion` respecté.
   🔴 **`aria-hidden="true"` ne dispense de rien** : le critère ne parle pas des lecteurs d'écran,
   il parle des personnes qui ne peuvent pas lire une page pendant que quelque chose bouge à côté.

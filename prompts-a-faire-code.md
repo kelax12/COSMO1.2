@@ -9,7 +9,8 @@
 > | `C-76` + `C-14` | ✅ **CLOS le 2026-09-14**, le jour même où ce prompt a été écrit (`7134d7fe` pour la façade et ses deux plafonds, `b542e69d` pour la note). Le bloc est **barré**, conservé pour ce qu'il enseigne |
 > | `C-77` → `C-80` | ✅ **tous clos** (`C-80` et `C-79` le 09-15, `C-78` le 09-16, `C-77` le 09-20). Le fichier de phases que l'encadré ci-dessous renvoie porte désormais son propre bandeau |
 > | `C-71` | ✅ **clos**, relu dans le code le 09-21 — il n'a jamais eu de prompt ici, et n'en a plus besoin |
-> | `C-65` + `C-39` · `C-24` · `C-58` · `C-69` | 🟠 **toujours ouverts**, prompts valables tels quels |
+> | `C-65` + `C-39` · `C-24` · `C-58` | 🟠 **toujours ouverts**, prompts valables tels quels |
+> | `C-69` | ✅ **CLOS le 2026-09-22** · bloc **barré** plus bas. ⚠️ Son arbitrage « on garde » a été **renversé** : il tenait sur l'idée qu'il fallait choisir entre le mouvement et la conformité, ce qui était faux |
 >
 > 🔴 **Et il manque des prompts, délibérément.** `C-111` (le job `e2e` rouge sur `main`, 25 échecs
 > au run 35532009156) n'en a pas, et les 30 items du § 12 non plus. La raison est au § 12.8 de
@@ -289,7 +290,28 @@ react-router 8 (PR 2) est sequentiel derriere : il exige React >= 19.2.7 en peer
 
 # P3 — arbitré, ne s'exécute que si la décision change
 
-## C-69 · la fenêtre produit de la landing tourne sans pause
+## ~~C-69 · la fenêtre produit de la landing tourne sans pause~~ · ✅ **clos le 2026-09-22**
+
+> ✅ **Fait, et l'arbitrage qui bloquait ce prompt est tombé de lui-même.**
+> Le prompt disait « ne s'exécute QUE si la décision change », parce que la décision du 2026-09-03
+> était « on garde ». Elle reposait sur une alternative qui n'existait pas : **garder le mouvement
+> OU être conforme**.
+>
+> 🔴 **Les trois états lèvent l'alternative.** `auto` tourne comme avant pour tout le monde,
+> `pause` obéit au bouton, et `lecture` rend le mouvement à qui le DEMANDE malgré
+> `prefers-reduced-motion`. Personne ne perd la vitrine, et WCAG 2.2.2 est tenu. Il n'y avait donc
+> rien à redemander à Axel : la question posée le 09-03 n'avait plus d'objet.
+>
+> ⚠️ **Le prompt avait raison sur un point qu'il faut garder** : `MotionConfig reducedMotion="user"`
+> ne couvre PAS ce cas — il neutralise les transforms de Framer, pas un `setInterval`.
+> ✅ **Et il avait raison sur le niveau, là où la passe du 2026-09-22 s'est trompée** : WCAG 2.2.2
+> « Pause, Stop, Hide » est bien de **niveau A**. Cette passe a écrit « AA » à cinq endroits avant
+> de le vérifier ; c'est corrigé partout. Le défaut était donc **plus grave** que ce qu'elle
+> annonçait, pas moins.
+>
+> Détail, mesures et témoin : `a-faire-code.md` § C-69.
+
+*Prompt conservé barré, pour ce qu'il dit de l'arbitrage :*
 
 ```
 Objectif : C-69. AppWindowShowcase (src/components/showcase/AppWindowShowcase.tsx) change de vue

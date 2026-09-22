@@ -1238,7 +1238,27 @@ Avant `git push` sur `main` (qui déclenche le deploy Vercel) :
 
 ```bash
 npm test           # Vitest (run once) — CHAQUE chiffre ci-dessous porte sa date.
-                   # 🔵 MESURE DU 2026-09-21, 09:44 -> 09:50 (379 s) :
+                   # 🔴 2026-09-22 — LE PIEGE DU `$?` APRES UN PIPE A REJOUE,
+                   #    et il a laisse partir un commit qui NE COMPILE PAS.
+                   #    Forme fautive, repetee toute la session :
+                   #        npx tsc -b 2>&1 | tail -3 ; echo "TSC=$?"
+                   #    `$?` rend le code de sortie de `tail`, TOUJOURS 0.
+                   #    Le commit a33005b9 annonce « tsc 0 » et portait deux
+                   #    TS7006 dans design-system.guard.test.ts : le job CI
+                   #    lint-test-build aurait ete ROUGE. Corrige apres coup.
+                   #    ✅ La forme juste, et la seule :
+                   #        npx tsc -b > t.log 2>&1 ; echo "EXIT=$?"
+                   #    ⚠️ C'est la regle 1 de CLAUDE.md (« lire `$?` »), deja
+                   #    ecrite, deja payee. Une regle connue ne protege pas
+                   #    d'une COMMANDE qui la contourne sans en avoir l'air.
+                   # 🔵 MESURE DU 2026-09-22 (545 s) :
+                   #    243 fichiers, 2 789 cas + 1 saute, exit 0.
+                   #    +3 fichiers / +30 cas depuis la veille, dont le temoin
+                   #    de C-69 (rotation-state.guard.test.ts, 13 cas) et les
+                   #    4 cas de la garde « poignee sans geste » (C-07).
+                   #    ⚠️ Meme reserve qu au 09-21 : ARBRE SALE, cinq fichiers
+                   #    d une session voisine. Ce n est pas une mesure de main.
+                   # Mesure precedente : 2026-09-21, 09:44 -> 09:50 (379 s),
                    #    240 fichiers, 2 759 cas + 1 saute, exit 0.
                    #    ⚠️ MESUREE SUR UN ARBRE SALE, et ca compte : cinq fichiers d'une
                    #    session voisine etaient modifies et non commités (HabitActionsMenu,

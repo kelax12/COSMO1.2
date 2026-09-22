@@ -123,11 +123,11 @@ et toujours pas celle d'aujourd'hui.
 | Item | Défaut résiduel | G | E | Risque | Niveau | Ce qui le débloque |
 |---|---|---|---|---|---|---|
 | **C-111** | **Le job `e2e` est ROUGE sur `main`** — 25 échecs / 204, les quatre autres jobs verts. Et il ne s'agit pas de bruit : **8 défauts produit mesurés** (cibles tactiles 24 × 24 px sur `/settings`, 36 px sur `/okr`, 39 × 39 px sur `/habits`) | 4 | 5 | **20** | 🟠 **P1** | du code · **le seul des huit qu'une session peut traiter de bout en bout aujourd'hui** |
-| **C-69** | La fenêtre produit du hero tourne toutes les 2,5 s, **sans pause, sans arrêt au survol ni au focus, et sans égard pour `prefers-reduced-motion`**. Relu dans `AppWindowShowcase.tsx` le 09-21 : `setInterval`, gaté par le seul `useInView` | 4 | 4 | **16** | 🟠 **P1** | du code. WCAG 2.2.2, donc opposable sous l'EAA dès qu'on vend |
+| ~~**C-69**~~ | ~~La fenêtre produit du hero tourne toutes les 2,5 s, sans pause ni égard pour `prefers-reduced-motion`~~ | 4 | 4 | ~~16~~ | ✅ **FERMÉ le 2026-09-22** | Trois états, suspension au survol et au focus, bouton de 44 × 44 px réels. Vérifié DANS LE NAVIGATEUR : sur la machine d'Axel le bouton rend « Lancer », donc la rotation ne démarre plus seule |
 | **C-45** | `loginWithGoogle` vise des URL que l'allowlist Supabase ne couvre **peut-être** pas. Le code EST en production ; le réglage de console qui le rend valide n'a jamais été vérifié | 3 | 4 | **12** | 🟠 **P1** | un **geste de console** (`M-15`/`M-16`/`M-17`). ⚠️ Le volet outillable est `C-88`, dont la garde **échoue exprès** faute de référence (`M-58`) |
 | **C-24** | Le quatrième audit d'accessibilité — **VoiceOver iOS sur un appareil réel** — n'a jamais été passé. Les trois autres l'ont été le 2026-09-03 | 4 | 3 | **12** | 🟡 **P2** | un **appareil et une heure** : `M-40` (le jouer) et `M-52` (lui donner une date) |
 | **C-65** + **C-39** | **L'épreuve contre Stripe n'a jamais eu lieu.** Le code de remboursement est écrit, testé et **déployé** (`stripe-org-refund`) ; rien n'a jamais été joué contre une vraie carte | 4 | 2 | **8** | 🟡 **P2** | `M-08`, et rien d'autre. ✅ **La moitié « n'importe quel admin supprime l'entreprise » de C-39 est FERMÉE** : relu en base le 09-21, `delete_organization` exige `owner_id = auth.uid()` (`not_org_owner`) **et** refuse tant qu'un abonnement est actif |
-| **C-07** | 17 feuilles animées n'utilisent toujours pas `useSheetMotion()` / `useSheetDrag()`. ⚠️ Les **5 réellement cassées** sous `prefers-reduced-motion` sont corrigées, et un cliquet interdit la récidive | 2 | 3 | **6** | ⚪ **P3** | du code, sans urgence : c'est de la dette, plus un défaut |
+| ~~**C-07**~~ | ~~17 feuilles animées n'utilisent toujours pas `useSheetMotion()` / `useSheetDrag()`~~ | 2 | 3 | ~~6~~ | ✅ **FERMÉ le 2026-09-22** | 🔴 **Cette ligne cotait un défaut à moitié inexistant** : le volet `useSheetMotion` était clos depuis le **2026-09-04**. Le vrai défaut était `useSheetDrag`, que rien ne mesurait — trois poignées muettes, cliquet posé |
 | **C-58** | React 19 + `react-router` 8 : **arbitrage différé**, seuil de reprise écrit (283,5 ko) | 2 | 1 | **2** | ⚪ **P3** | une décision d'Axel. L'étude est **fraîche**, vérifiée par `npm run check:study` |
 
 ### Synthèse au 2026-09-21
@@ -135,16 +135,32 @@ et toujours pas celle d'aujourd'hui.
 | Niveau | Items | Dont traitables par du code seul |
 |---|---|---|
 | 🔴 **P0** | **0** | — |
-| 🟠 **P1** | 3 · `C-111` `C-69` `C-45` | **2** |
+| 🟠 **P1** | **1** · `C-111` (~~`C-69`~~ fermé le 09-22) · `C-45` | **1** |
 | 🟡 **P2** | 2 · `C-24` `C-65`+`C-39` | **0** |
-| ⚪ **P3** | 2 · `C-07` `C-58` | 1 (+1 arbitrage) |
-| ✅ clos | **101** | — |
+| ⚪ **P3** | **1** · `C-58` (~~`C-07`~~ fermé le 09-22) | 0 (1 arbitrage) |
+| ✅ clos | **103** au 2026-09-22 | — |
 
 🔴 **Le résultat le plus utile de cette recotation est là, et il n'est pas dans les chiffres :**
 **cinq des huit items ouverts ne se ferment pas en écrivant du code.** Trois attendent un geste
 d'Axel (`M-08`, `M-40`/`M-52`, les réglages de console), un attend une décision, et un seul —
 `C-111` — est du travail de développement disponible immédiatement. Le deuxième, `C-69`, l'est
 aussi et coûte peu.
+
+> ### ✅ Mise à jour du 2026-09-22 · **les deux chantiers de code sont faits, il en reste 6 ouverts sur 111**
+>
+> `C-69` et `C-07` sont fermés le lendemain de cette recotation, tous deux avec leur cliquet.
+> Le décompte passe à **103 clos / 6 ouverts**, et **un seul** relève encore du code : `C-111`.
+>
+> 🔴 **Et la cotation de `C-07` était bâtie sur un énoncé faux**, ce qui vaut d'être noté ici
+> plutôt que dans l'item : elle cotait « 17 feuilles sans `useSheetMotion` » alors que ce cliquet
+> était à **zéro depuis le 2026-09-04**. Coter un défaut à moitié inexistant lui donne une taille
+> qu'il n'a pas — c'est exactement le risque que le ménage du 09-21 avait déjà mis au jour, et il
+> survit à la recotation elle-même.
+>
+> ⚠️ **`C-111` reste 🟠 P1 à 20**, et son G × E n'est PAS recalculé : deux familles sur quatre ont
+> avancé le 09-22, mais son critère de sortie — le job `e2e` **vert sur `main`** — n'est pas
+> tenu, et rien n'a été rejoué sur WebKit. Une famille traitée n'est pas un risque divisé par
+> deux, et prétendre le contraire serait coter une présomption.
 
 ⚠️ **Il n'y a plus de P0**, et c'est vérifié plutôt que déclaré : les trois P0 du 2026-09-03 sont
 fermés (`C-35` le 09-13, `C-39` pour sa moitié destructrice le 09-12 par la mig. `138`, `C-65`

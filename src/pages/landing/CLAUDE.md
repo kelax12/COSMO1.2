@@ -71,6 +71,17 @@ La landing n'est plus une page linéaire. Après le header, un **aiguillage**
   ⚠️ **Une file qui sature n'a pas un coût progressif, elle a deux états.** C'est ce qui rendait la
   mesure BIMODALE, et aucune moyenne ne pouvait l'expliquer. Toute mesure de cette page se lit
   passe par passe, jamais en médiane.
+- 🔴 **La vitrine du hero DOIT pouvoir être arrêtée** (C-69, WCAG 2.2.2, **niveau A**, fermé le
+  2026-09-22). `AppWindowShowcase` porte trois états — `auto` / `pause` / `lecture` —, suspend
+  au survol ET au focus, et n'auto-démarre PAS sous `prefers-reduced-motion`.
+  ⚠️ **Le troisième état n'est pas un luxe** : sans lui, une personne en mouvement réduit verrait
+  la fenêtre figée sur « Tâches » pour toujours, et le message du hero — quatre vues de la même
+  app — ne tiendrait plus pour elle. WCAG 2.3.3 interdit le mouvement **non demandé**.
+  ❌ **`aria-hidden="true"` ne dispense de rien** : le critère parle des gens qui ne peuvent pas
+  lire une page pendant que quelque chose bouge à côté, pas des lecteurs d'écran. L'attribut vit
+  donc sur le cadre décoratif, et le bouton de pause reste annoncé.
+  ⚠️ **Le bouton fait 44 × 44 px RÉELS**, pas un débord de `tap-area` : `/` est mesurée par
+  `e2e/touch-targets.spec.ts`. Règle : `rotation-state.ts` (module pur), témoin 13 cas.
 - ⚠️ **`HeroModuleDock` n'est pas une décoration** : les quatre puces suivent la vue affichée par
   `AppWindowShowcase` (`onSlideChange`), et c'est ce qui fait comprendre que Tâches, Habitudes,
   Agenda et OKR sont quatre vues de la MÊME application. Sous `prefers-reduced-motion` elles sont

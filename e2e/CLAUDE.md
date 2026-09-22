@@ -23,8 +23,31 @@
   dont des **défauts produit mesurés** (cibles tactiles à 24 × 24 px sur `/settings`, 36 px sur
   `/okr`, 39 × 39 px sur `/habits`). ❌ Ne pas lire un échec e2e local comme « la CI est rouge de
   toute façon » : c est ce réflexe qui expédiera une régression.
-  ⚠️ Conséquence à retenir avant de citer un chiffre : **la couverture clavier réelle est 8 surfaces
-  sur 51, pas 10** — les deux cas que `C-96` comptait comme mesurés échouent.
+  ⚠️ Conséquence à retenir avant de citer un chiffre : la couverture clavier réelle était tombée à
+  **8 surfaces sur 51**, les deux cas que `C-96` compte comme mesurés expirant.
+
+- 🟠 **ÉTAT AU 2026-09-22 : deux familles sur quatre traitées, le job reste ROUGE.** Ne pas lire
+  ce qui précède comme périmé — le chiffre de 25 échecs date du run 35532009156 et n a pas été
+  remesuré en CI depuis.
+  · ✅ `touch-targets` : **19 cas sur 19 verts** sur `chromium` (3 échecs avant). Les trois défauts
+    étaient réels ; `/habits` porte désormais un **écart déclaré** dans son fichier, avec son
+    critère (échoue 2.5.5 AAA, tient 2.5.8 AA) — sept cellules de 44 px ne tiennent pas dans
+    301,6 px, c est de l arithmétique.
+  · ✅ `a11y-keyboard-audit` : **2 cas sur 4**. La couverture clavier repasse donc à **10 sur 51**,
+    🔴 mais **sur `chromium` seulement** : leurs homologues WebKit n ont pas été rejoués.
+  · 🔴 Restent : 2 cas clavier **non diagnostiqués** (`ShareListSheet`, `DatePicker` OKR — ils
+    tournent à 1440 px, donc leur cause n est pas celle des deux autres), 7 parcours de démo
+    WebKit, et 3 `reduced-motion-sheets` sur les deux moteurs mobiles.
+  🔴 **RIEN N A ÉTÉ REJOUÉ SUR WEBKIT.** Les 14 échecs WebKit sont PRÉSUMÉS suivre leurs homologues
+  `chromium`, et une présomption n est pas une mesure.
+
+- 🔴 **UN TEST QUI EXPIRE NE DIT PAS CE QU IL CHERCHE**, et ce fichier vient de le payer.
+  `a11y-keyboard-audit` cherchait un bouton « Actions pour … » VISIBLE à 375 px. Mesuré dans le
+  navigateur le 2026-09-22 : il existe, porte le bon nom, et fait **0 × 0 px** — il vit dans
+  `div.hidden md:block`, la ligne DESKTOP. Son timeout passait pour de la lenteur de harnais
+  depuis des semaines, et il masquait le défaut qu il existait pour trouver : les actions d une
+  tâche étaient **inatteignables au clavier sur mobile** (WCAG 2.1.1, niveau A).
+  ❌ **Ne jamais classer un timeout en « lenteur » sans avoir ouvert l écran.**
 
 - 🔴 **L alerte a fonctionné, c est la LECTURE qui a manqué** : l issue `ci-red` #54 a été mise à
   jour **dix-neuf secondes** après l échec. Même scénario que `vendor-watch` en août 2026, à

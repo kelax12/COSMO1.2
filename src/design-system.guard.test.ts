@@ -421,11 +421,11 @@ const HANDLE_IN_CLASS = [
  * `overflow-hidden` — sur le MÊME élément — qui la distingue, parce qu'elle
  * contient un remplissage. Ce n'est pas une affordance.
  */
-const isProgressBar = (cls) => /overflow-hidden/.test(cls);
+const isProgressBar = (cls: string): boolean => /overflow-hidden/.test(cls);
 
 /** Les valeurs de `className` qui dessinent une poignée, élément par élément. */
-function sheetHandleClasses(src) {
-  const out = [];
+function sheetHandleClasses(src: string): string[] {
+  const out: string[] = [];
   for (const m of src.matchAll(/className=(?:"([^"]*)"|{`([^`]*)`}|{'([^']*)'})/g)) {
     const cls = m[1] ?? m[2] ?? m[3] ?? '';
     if (!/rounded-full/.test(cls)) continue;
