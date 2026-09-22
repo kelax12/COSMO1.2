@@ -5407,6 +5407,17 @@ périmètre, ses questions et ses pièges connus.
 
 ## 11. Ce qui reste ouvert
 
+### 11.0decies 🔴 **DÉCOMPTE du 2026-09-22 (soir) · 117 items : 105 clos, 12 ouverts**
+
+> Six items neufs, `C-112` → `C-117`, tous trouvés en **confrontant les ✅ à la CI réelle** et non
+> en relisant ce fichier. Détail au § 12.11, en fin de fichier.
+>
+> 🔴 **Quatre gardes marquées ✅ le 09-20 n'ont jamais rendu un verdict en CI** : `C-81`, `C-91`,
+> `C-93`, `C-95`. Elles ne sont pas rouvertes (le code existe et fait ce qu'il dit hors CI) ;
+> chacune reçoit l'item qui la fait enfin parler, et sa ligne du § 12.9 le dit.
+>
+> 🔴 **Et la CI de `main` n'a pas été verte depuis le 2026-09-16 07:11 UTC**, soit 60 runs.
+
 ### 11.0nonies ✅ **DÉCOMPTE du 2026-09-22 — 111 items : 105 clos, 6 ouverts**
 
 > **Deux items fermés le 2026-09-22**, tous deux par du code et tous deux avec leur cliquet :
@@ -6256,7 +6267,7 @@ n'aurait été vu par une relecture ; c'est l'argument de ce paragraphe entier.
 
 | # | Livré | 🔴 Ce que ça ne prouve PAS |
 |---|---|---|
-| **C-81** ✅ | `scripts/replay-sabotages.mjs` + `sabotages.yml` (hebdo + sur PR touchant un témoin). 11 sabotages, 9 témoins, restauration octet pour octet vérifiée | Que les 39 témoins détectent. Le rapport **couvert / total** est imprimé à chaque run, exprès |
+| **C-81** ✅ | `scripts/replay-sabotages.mjs` + `sabotages.yml` (hebdo + sur PR touchant un témoin). 11 sabotages, 9 témoins, restauration octet pour octet vérifiée | Que les 39 témoins détectent. Le rapport **couvert / total** est imprimé à chaque run, exprès 🔴 **2026-09-22 : `Sabotages` n'a jamais été vert** : son seul run (09-21) échoue sur le contrôle « arbre restauré », à cause du `sabotages.log` qu'il écrit lui-même dans l'arbre. → `C-113` |
 | **C-82** ✅ | `vitest.tooling.config.ts` + `check-tooling-coverage.mjs` (complétude AVANT seuils) + `edge-function-coverage.mjs` | `supabase/functions/**` n'est **pas** couvert en lignes et ne peut pas l'être (Deno, jamais importé). Le plancher de témoins par fonction est ce qui en tient lieu, et il est annoncé comme tel |
 | **C-83** ✅ | `check-test-floor.mjs`, cliquet sur fichiers / témoins / cas | Qu'un test teste quelque chose. Un plancher interdit la disparition, pas la complaisance |
 | **C-84** ✅ | `lighthouserc.mobile.json` + passe mobile dans `ci.yml` ; 4 → **8 URLs** | Les seuils mobiles sont une **première pose**, prudente faute de Chrome sur le poste. À rabaisser au mesuré au premier run réel |
@@ -6266,11 +6277,11 @@ n'aurait été vu par une relecture ; c'est l'argument de ce paragraphe entier.
 | **C-88** ✅ | `check-supabase-posture.mjs` + référence commitée ; juge un **écart**, pas un absolu | ⚠️ `reglages_auth` est à `null` : la référence des réglages exige un jeton, elle se pose par `--update` **et se commite**. La garde ÉCHOUE tant que c'est le cas, exprès |
 | **C-89** ✅ | `codeql.yml`, `security-extended`, JS/TS **et** `actions` | Un job vert. L'item n'est fini que quand **chaque alerte ouverte porte une décision** |
 | **C-90** ✅ | Second `npm audit` sur la chaîne de build, **non bloquant mais LU** (compte par sévérité au résumé) | Rien : c'est un arbitrage assumé, écrit comme tel |
-| **C-91** ✅ | `check-edge-smoke.mjs`, 8 sondes, dans `edge-deploy-drift.yml`. **Vertes contre la production** ce jour | Que la fonction fait son travail. On touche ses premiers mètres |
+| **C-91** ✅ | `check-edge-smoke.mjs`, 8 sondes, dans `edge-deploy-drift.yml`. **Vertes contre la production** ce jour | Que la fonction fait son travail. On touche ses premiers mètres 🔴 **2026-09-22 : jamais joué en CI** : `VITE_SUPABASE_ANON_KEY` absent du job, la sonde s'arrête avant de sonder. « Vertes contre la production » ne vaut que du poste, le 09-20. → `C-114` |
 | **C-92** ✅ | `check-erasure-coverage.mjs` : périmètre **dérivé** des migrations, 22 tables, 4 décisions possibles, `cascade` et `conserve` **vérifiées contre le SQL** | Dérivé des MIGRATIONS, pas de la base — et le dépôt a déjà constaté des objets en base qu'aucune migration ne crée |
-| **C-93** ✅ | `check-retention.mjs` : orphelines (0 en prod) + âges. Dans `posture.yml` | Que le REGISTRE est juste. Ça dit que la base respecte ce qu'il déclare |
+| **C-93** ✅ | `check-retention.mjs` : orphelines (0 en prod) + âges. Dans `posture.yml` | Que le REGISTRE est juste. Ça dit que la base respecte ce qu'il déclare 🔴 **2026-09-22 : plante à chaque run** (`friend_requests.user_id` n'existe pas). « 0 en prod » n'a jamais été produit par la CI. → `C-112` |
 | **C-94** ✅ | `check-portability-export.mjs` : chaque colonne exportée ou **exclue avec sa raison** | La justesse des valeurs. Un export complet mais faux resterait vert |
-| **C-95** ✅ | `e2e/visual-regression.spec.ts` (4 thèmes × 3 routes, états vide et erreur, 3 pages publiques) + project `visual` + `visual.yml` qui **produit et commite** ses références au premier run | 🔴 La première référence fige l'écran **défauts compris**. Elle ne dit pas qu'il est juste, elle dit qu'on saura qu'il a changé |
+| **C-95** ✅ | `e2e/visual-regression.spec.ts` (4 thèmes × 3 routes, états vide et erreur, 3 pages publiques) + project `visual` + `visual.yml` qui **produit et commite** ses références au premier run | 🔴 La première référence fige l'écran **défauts compris**. Elle ne dit pas qu'il est juste, elle dit qu'on saura qu'il a changé 🔴 **2026-09-22 : 19 runs, 19 échecs, aucune référence produite** : `visual.yml` n'installe que Chromium, le project `visual` exige WebKit. → `C-115` |
 | **C-96** ✅ | `src/keyboard-audit-coverage.guard.test.ts` : **51 surfaces**, 10 mesurées, 41 déclarées non mesurées **une par une avec leur raison** | Elle ne mesure aucune accessibilité. Elle CHIFFRE l'écart et l'empêche de grandir en silence |
 | **C-97** ✅ | Projects `mobile-chrome` (Pixel 7) + `e2e/mobile-android.spec.ts` : paysage, police à **200 %**, **CPU bridé ×4 par CDP** — avec son témoin qui vérifie que le bridage s'applique | Un appareil émulé sur un runner. Ni thermique, ni GPU mobile |
 | **C-98** ✅ | `check-seo-pages.mjs` : prérendu ↔ sitemap dans les deux sens, 4 balises, `canonical` autoréférent, **réciprocité des `hreflang`**, `noindex` hors sitemap. 13 cas de témoin | La qualité d'un `title`. Ici : présence et cohérence |
@@ -6451,3 +6462,27 @@ C'est un défaut de lisibilité de `ci-alert.yml`, pas de la détection — et i
 les 30 cas, mais il coûte quelque chose.
 
 ---
+
+### 12.11 🔴 PASSE DU 2026-09-22 AU SOIR · les ✅ confrontés à la CI réelle
+
+Consigne d'Axel : vérifier chaque item marqué, pas le relire. Méthode : `gh run list` et les logs
+de chaque workflow, la production (catalogue, advisors, RPC sous rôle `authenticated`), le dépôt à
+`HEAD` (`3de70651`). Le tableau de bord ([`docs/README.md`](./docs/README.md)) porte les notes.
+
+| Item | Constat | Ce qui prouve que c'est fini |
+|---|---|---|
+| **C-112** 🔴 · P1 · XS | `scripts/check-retention.mjs:66` déclare `friend_requests` avec la colonne `user_id`, qui n'existe pas (`sender_id`, `receiver_id`). La requête UNION entière échoue en `42703` : **aucune** table n'est contrôlée, à chaque run de `posture.yml` | le job `retention` vert, avec les deux colonnes de `friend_requests` contrôlées. ⚠️ Un test du script qui confronterait sa liste au schéma aurait vu l'erreur : c'est le même défaut que la liste en dur de `rgpd-erasure.guard` (T-2) |
+| **C-113** 🔴 · P2 · XS | `sabotages.yml` écrit `sabotages.log` **dans l'arbre de travail**, puis vérifie que l'arbre est intact : il échoue toujours, alors que les 11 sabotages sont vus | log écrit dans `$RUNNER_TEMP`, un run planifié vert. Puis la couverture : **9 témoins sur 47** |
+| **C-114** 🔴 · P2 · XS | `edge-deploy-drift.yml` n'expose pas `VITE_SUPABASE_ANON_KEY` à l'étape `check:edge-smoke` : la sonde s'arrête avant de sonder, depuis sa pose | l'étape sonde les 8 fonctions en CI. ⚠️ Si le secret n'existe pas au dépôt, c'est un geste d'Axel |
+| **C-115** 🔴 · P1 · S | `visual.yml` installe Chromium seul, or le project `visual` dépend de `mobile-safari-warmup` (WebKit) : **19 runs, 19 échecs, aucune référence produite**. Trois angles morts UI et un d'accessibilité restent donc payés | un run vert qui commite ses références, puis un second run qui les **compare** |
+| **C-116** 🔴 · P1 · M | **LCP mobile 5,6 à 8,3 s sur les 8 URLs** de `lighthouserc.mobile.json` (run `35781807229`) ; `/entreprise-presentation/` 8,3 s, `/` 6,5 s, `/en/` 7,3 s. En `warn`, et l'étape de résumé cherche `.lighthouseci-mobile` sans rien y trouver : **mesuré depuis le 09-20, lu par personne** | d'abord le résumé mobile publié (scores lisibles au run), puis un LCP sous 4 s sur les 8. ❌ Ne pas remonter le seuil de 4 500 ms |
+| **C-117** 🔴 · P0 · S | `check:bundle` rouge à `HEAD` : `TasksPage` **37,7 ko** pour un cliquet à 37,0. C'est ce qui garde `lint-test-build` rouge | `TasksPage` ≤ 37,0 ko **sans relever le plafond** (règle de `CLAUDE.md`) |
+
+⚠️ **Nommés, non ouverts faute de mesure suffisante** : une violation axe `button-name` critique
+sur `/habits` sous WebKit, vue une fois sur trois tentatives (`806e7745`) ; et les 11 cas
+`a11y-keyboard-audit` rouges sur `mobile-safari`, à trier entre défaut produit et harnais. Les
+deux relèvent de `C-111`.
+
+🔴 **Les trois cas `mobile-android` « police 200 % » sont ROUGES** (12, 649 et 1 182 px de
+débordement), et non des cliquets verts comme l'écrivait `docs/MOBILE.md` : ils relèvent de
+`C-111`, dont le décompte passe de 25 à **23 échecs + 13 instables** au dernier run complet.

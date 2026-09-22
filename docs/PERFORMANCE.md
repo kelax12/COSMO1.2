@@ -1,4 +1,4 @@
-<!-- note-audit: note=91 -->
+<!-- note-audit: note=93 -->
 <!--
   🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
   Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
@@ -8,11 +8,35 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **91 / 100**, au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **93 / 100** au 2026-09-22 (soir), au tableau de bord de [`README.md`](./README.md).
 
 # Performance bundle — `vite.config.ts manualChunks`
 
-## Note de performance : 68 → 64 → 88 → 91 → 94 → 92 → 97 → 95 → **90 / 100** (2026-08-24 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 → 2026-09-14 soir → 2026-09-16)
+## Note de performance : 68 → 64 → 88 → 91 → 94 → 92 → 97 → 95 → 90 → **93 / 100** (2026-08-24 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 → 2026-09-14 soir → 2026-09-16 → 2026-09-22 soir)
+
+> ### 🟠 2026-09-22 (soir) · +3 : remesure item par item, contre la CI réelle et la production
+>
+> **Règle appliquée**, déclarée au [tableau de bord](./README.md) : un angle mort payé le 2026-09-16
+> n'est remboursé que si sa garde a rendu **au moins un verdict exploitable en CI** (vert, ou
+> rouge sur un vrai défaut). Une garde posée mais jamais jouée, ou cassée, ne rembourse rien.
+> Un défaut nommé ce soir coûte selon le barème du 09-16.
+>
+> | Item | Effet | Mesuré le 2026-09-22 |
+> |---|---|---|
+> | AM-1 · aucune mesure mobile | **+2** | `lighthouserc.mobile.json` joué dans le job `lighthouse`, 8 URLs, verdicts produits |
+> | AM-3 · plafonds par chunk | **+1** | **il a mordu** : voir la ligne `TasksPage` |
+> | AM-4 · 4 URLs sur 40 | **+1** | 8 URLs, une par gabarit, desktop et mobile |
+> | AM-5 · coût serveur en continu | **+1** | `check:db-cost`, job `cout-db` de `posture.yml`, vert le 09-21 et le 09-22 |
+> | `C-77` (−2 le 09-14 soir) | **+2** | fermé et vérifié par sa sortie : `okrTime = 480` pour un compte réel |
+> | 🔴 **LCP mobile « mauvais » sur 8 URLs sur 8** | **−3** | `/` **6,5 s** · `/guide/` 6,7 · `/blog/` 6,0 · article 6,0 · `/pour-freelances/` 5,6 · `/entreprise-presentation/` **8,3** · `/a-propos/` 5,7 · `/en/` 7,3. Seuil Google « mauvais » : 4 s. En `warn`, donc job vert, et le résumé écrit « aucun rapport mobile produit » : **mesuré depuis le 09-20, lu par personne**. → `C-116` |
+> | 🔴 `TasksPage` au-delà de son cliquet, sur `main` | **−1** | **37,7 ko** pour 37,0 (posé au poids du 09-20). → `C-117` |
+> | AM-2 · performance non bloquante | **0** | arbitrage toujours non rendu |
+>
+> ✅ Desktop, à `HEAD` : performance **92 à 97**, LCP **1,1 à 1,6 s**, TBT ≤ 131 ms, CLS 0. Chemin
+> critique **307,0 / 323,0 ko**, entrée **67,0 / 71,0 ko**. 🔴 L'écart desktop / mobile est le
+> renseignement de la passe : **la même page fait 1,4 s sur l'un et 6,5 s sur l'autre**.
+>
+> **90 → 93.** Détail, règle et ordre de réparation : [tableau de bord](./README.md).
 
 > ### 🟠 2026-09-16 · -5 : la note comptait ce qui était mesuré, jamais ce qui ne l'était pas
 >
@@ -83,9 +107,9 @@
 
 | # | Angle mort · **énoncé du 2026-09-16, non réécrit** | Vérifié le 2026-09-16 | 🔎 État au 2026-09-21 |
 |---|---|---|---|
-| AM-1 | 🔴 **Lighthouse tourne en preset DESKTOP uniquement.** Aucune mesure de performance **mobile** en continu, alors que c'est le terminal du trafic visé et que [`MOBILE.md`](./MOBILE.md) est le document le moins bien noté du dépôt | `lighthouserc.json` : `"preset": "desktop"` | ✅ **OUTILLÉ le 2026-09-20** · `lighthouserc.mobile.json` + passe mobile de `ci.yml` (`C-84`) — 🔴 ne prouve PAS : que les seuils soient justes : **première pose**, prudente faute de Chrome sur le poste, à rabaisser au mesuré dès le 1ᵉʳ run réel |
+| AM-1 | 🔴 **Lighthouse tourne en preset DESKTOP uniquement.** Aucune mesure de performance **mobile** en continu, alors que c'est le terminal du trafic visé et que [`MOBILE.md`](./MOBILE.md) est le document le moins bien noté du dépôt | `lighthouserc.json` : `"preset": "desktop"` | ✅ **OUTILLÉ le 2026-09-20** · `lighthouserc.mobile.json` + passe mobile de `ci.yml` (`C-84`) — 🔴 ne prouve PAS : que les seuils soient justes : **première pose**, prudente faute de Chrome sur le poste, à rabaisser au mesuré dès le 1ᵉʳ run réel · 🔎 🔴 **2026-09-22 : LCP mobile 5,6 à 8,3 s sur 8 URLs sur 8**, en `warn` donc job vert, et le résumé CI écrit « aucun rapport mobile produit » : jamais lu. → `C-116` |
 | AM-2 | **La performance n'est PAS bloquante, et LCP / TBT non plus.** Seuls `accessibility`, `seo` et `cumulative-layout-shift` sont en `error` | `lighthouserc.json` : `"categories:performance": ["warn", …]`, `largest-contentful-paint` et `total-blocking-time` en `warn` | 🟠 **TOUJOURS OUVERT** au 2026-09-21 · **arbitrage assumé, non rendu** : rendre `performance`, LCP et TBT bloquants suppose d'accepter que le runner varie. Aucun item ne le porte — *(jugé outillable le 09-16 : arbitrage assumé (le runner varie), mais l'angle mort doit être nommé)* |
-| AM-3 | **Les chunks LAZY n'ont aucun plafond.** Le budget ne couvre que le chemin critique et l'entrée. Une page lazy peut grossir sans limite | `scripts/check-bundle-budget.mjs` : « Les chunks lazy ne sont payés que par ceux qui ouvrent l'écran correspondant ». `BUDGETS` ne porte que `critical` et `entry` | ✅ **OUTILLÉ le 2026-09-20** · **30 plafonds par chunk**, posés au poids du jour (`C-85`) — 🔴 ne prouve PAS : rien — mais ⚠️ **l'énoncé du 09-16 était périmé** : un plafond générique de 70 ko existait ; ce qui manquait était un plafond **par chunk** |
+| AM-3 | **Les chunks LAZY n'ont aucun plafond.** Le budget ne couvre que le chemin critique et l'entrée. Une page lazy peut grossir sans limite | `scripts/check-bundle-budget.mjs` : « Les chunks lazy ne sont payés que par ceux qui ouvrent l'écran correspondant ». `BUDGETS` ne porte que `critical` et `entry` | ✅ **OUTILLÉ le 2026-09-20** · **30 plafonds par chunk**, posés au poids du jour (`C-85`) — 🔴 ne prouve PAS : rien — mais ⚠️ **l'énoncé du 09-16 était périmé** : un plafond générique de 70 ko existait ; ce qui manquait était un plafond **par chunk** · 🔎 ✅ **2026-09-22 : il a mordu** : `TasksPage` 37,7 ko > 37,0 à `HEAD`. → `C-117` |
 | AM-4 | **4 URLs mesurées sur les 45 du sitemap** | `lighthouserc.json` : `/`, `/guide/`, `/blog/`, `/pour-freelances/`. `dist/sitemap.xml` en porte **45** | ✅ **OUTILLÉ le 2026-09-20** · passe mobile Lighthouse, 4 → **8 URLs** (`C-84`) — 🔴 ne prouve PAS : la couverture : 8 URLs restent 8 URLs, la proportion s'améliore sans se fermer |
 | AM-5 | **Aucune mesure du coût SERVEUR en continu.** Les plans d'exécution et les temps de RPC sont rejoués à la main, à chaque passe | aucun workflow ne joue d'`EXPLAIN` | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:db-cost` · EXPLAIN sous RLS, rôle `authenticated`, transaction annulée (`C-87`) — 🔴 ne prouve PAS : le coût **facturé** (Supabase ne l'expose pas) ni la charge réelle (c'est `scalability-volume`) |
 

@@ -1,4 +1,4 @@
-<!-- note-audit: note=90 -->
+<!-- note-audit: note=93 -->
 <!--
   🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
   Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
@@ -8,7 +8,7 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **90 / 100** au 2026-09-15, au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **93 / 100** au 2026-09-22 (soir), au tableau de bord de [`README.md`](./README.md).
 
 # Architecture — invariants, dette et vérification
 
@@ -22,7 +22,32 @@ dit ligne par ligne. Mesuré contre le code de `main` et la prod. Remplace
 Ce document ne redécrit pas l'architecture — c'est le rôle de [`../CLAUDE.md`](../CLAUDE.md). Il
 répond à une seule question : **les invariants qu'on s'est donnés tiennent-ils encore ?**
 
-## Note d'architecture : 74 → 79 → 81 → 83 → 84 → 88 → 90 → **89 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 soir → 2026-09-15 → 2026-09-16)
+## Note d'architecture : 74 → 79 → 81 → 83 → 84 → 88 → 90 → 89 → **93 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir)
+
+> ### 🟢 2026-09-22 (soir) · +4 : remesure item par item, contre la CI réelle et la production
+>
+> **Règle appliquée**, déclarée au [tableau de bord](./README.md) : un angle mort payé le 2026-09-16
+> n'est remboursé que si sa garde a rendu **au moins un verdict exploitable en CI** (vert, ou
+> rouge sur un vrai défaut). Une garde posée mais jamais jouée, ou cassée, ne rembourse rien.
+> Un défaut nommé ce soir coûte selon le barème du 09-16.
+>
+> | Item | Effet | Mesuré le 2026-09-22 |
+> |---|---|---|
+> | AM-2 · `e2e/` et `showcase/` dans ESLint | **+1** | `eslint.config.js` ne les ignore plus ; `npm run lint` 0 erreur en CI à `HEAD` |
+> | AM-3 · cycles d'import | **+1** | `check:cycles` dans `ci.yml`, vert à `HEAD`, avec son témoin `check-import-cycles.guard.test.mjs` |
+> | AM-5 · `supabase/functions/` dans ESLint | **+1** | idem AM-2 |
+> | `C-77`, un des deux motifs qui retenaient à 90 | **+1** | fermé **par ce que la RPC rend** : sous le rôle `authenticated` d'un compte réel, `get_work_time_stats` rend `okrTime = 480`, et sa définition lit `kr_completions` |
+> | AM-4 · lignes comme seul proxy de complexité | **0** | couplage rapporté par `check:cycles`, plafond toujours non arbitré |
+> | `MobileShowcases.tsx` (623 lignes) hors garde de taille | **0** | toujours vrai : `EXCLUDED_DIRS` contient `showcase`. Déjà payé |
+>
+> ✅ **Invariants rejoués ce soir, tous tenus** : `get_my_tasks()` pour les listes (4 `.from('tasks')` =
+> `getById` / `insert` / `update` / `delete`), 0 `supabase.from(` hors repository (la seule occurrence
+> de `billing.context.tsx` est un commentaire), 0 import `gsap` direct, 3 canaux Realtime, aucun
+> `refetchInterval` inconditionnel, **51 tables sur 51** sous RLS en production, `architecture.guard`
+> 5/5. ⚠️ Cette garde a été **rouge** en CI à `806e7745` (un fichier > 600 lignes) : elle a mordu, et
+> personne ne l'a vu parce que la CI de `main` était déjà rouge pour d'autres raisons depuis le 09-16.
+>
+> **89 → 93.** Détail, règle et ordre de réparation : [tableau de bord](./README.md).
 
 > ### 🟠 2026-09-16 · -1 : la note comptait ce qui était mesuré, jamais ce qui ne l'était pas
 >

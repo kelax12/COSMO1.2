@@ -1,4 +1,4 @@
-<!-- note-audit: note=91 -->
+<!-- note-audit: note=90 -->
 <!--
   🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
   Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
@@ -8,7 +8,7 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **91 / 100** au 2026-09-08, au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **90 / 100** au 2026-09-22 (soir), au tableau de bord de [`README.md`](./README.md).
 
 # Scalabilité — audit mesuré, décisions et runbook
 
@@ -21,7 +21,26 @@ s'est révélée fausse.
 Toutes les mesures de ce document sont **reproductibles** : les requêtes sont en
 [§10 Runbook](#10-runbook--refaire-cet-audit).
 
-## Note de scalabilité : 71 → 84 → 86 → 89 → 91 → **87 / 100** (2026-08-24 → 2026-08-25 → 2026-08-29 → 2026-09-03 → 2026-09-08 → 2026-09-16) · inchangée au 2026-08-27, et au 2026-09-14 (soir) où l'invariant a été REVÉRIFIÉ en production
+## Note de scalabilité : 71 → 84 → 86 → 89 → 91 → 87 → **90 / 100** (2026-08-24 → 2026-08-25 → 2026-08-29 → 2026-09-03 → 2026-09-08 → 2026-09-16 → 2026-09-22 soir) · inchangée au 2026-08-27, et au 2026-09-14 (soir) où l'invariant a été REVÉRIFIÉ en production
+
+> ### 🟢 2026-09-22 (soir) · +3 : remesure item par item, contre la CI réelle et la production
+>
+> **Règle appliquée**, déclarée au [tableau de bord](./README.md) : un angle mort payé le 2026-09-16
+> n'est remboursé que si sa garde a rendu **au moins un verdict exploitable en CI** (vert, ou
+> rouge sur un vrai défaut). Une garde posée mais jamais jouée, ou cassée, ne rembourse rien.
+> Un défaut nommé ce soir coûte selon le barème du 09-16.
+>
+> | Item | Effet | Mesuré le 2026-09-22 |
+> |---|---|---|
+> | AM-2 · plans relus à la main | **+1** | `check:db-cost` : EXPLAIN sous RLS, rôle `authenticated`, job `cout-db` vert deux jours de suite |
+> | AM-3 · aucune alerte sur la croissance | **+1** | même garde, série commitée et alerte sur la pente |
+> | AM-1 · charge jamais jouée automatiquement | **+1 sur 2** | `scalability-volume.yml` porte un `cron: '11 3 3 * *'`, mais **aucun run planifié n'a encore eu lieu** (dernier run : dispatch manuel du 09-08). Le second point revient au premier run automatique vert, attendu le **2026-10-03** |
+> | AM-4 · plan `free` non surveillé | **0** | inchangé |
+>
+> ✅ Production relue ce soir : 51 tables, 51 sous RLS, ledger à 141 entrées. ⚠️ `A-9` (aucune
+> sauvegarde gérée, aucun PITR) reste le vrai plafond d'exploitation ; `db-backup` est vert tous les jours.
+>
+> **87 → 90.** Détail, règle et ordre de réparation : [tableau de bord](./README.md).
 
 > ### 🟠 2026-09-16 · -4 : la note comptait ce qui était mesuré, jamais ce qui ne l'était pas
 >
@@ -91,7 +110,7 @@ Toutes les mesures de ce document sont **reproductibles** : les requêtes sont e
 
 | # | Angle mort · **énoncé du 2026-09-16, non réécrit** | Vérifié le 2026-09-16 | 🔎 État au 2026-09-21 |
 |---|---|---|---|
-| AM-1 | 🔴 **La garde de charge n'est JAMAIS jouée automatiquement.** `scalability-volume.yml` n'a qu'un déclencheur `workflow_dispatch` : elle ne tourne que si quelqu'un y pense | relevé sur les 10 workflows : `scalability-volume.yml` et `restore-drill.yml` sont les deux seuls sans `schedule` ni `push` | ✅ **OUTILLÉ le 2026-09-20** · `scalability-volume` **mensuel** ; `restore-drill` coupé en deux, `dump-check` **trimestriel et automatique** (`C-86`) — 🔴 ne prouve PAS : qu'un dump soit **restaurable** : `pg_restore --list` lit une table des matières. Le vrai rollback reste **`M-47`**, jamais parcouru |
+| AM-1 | 🔴 **La garde de charge n'est JAMAIS jouée automatiquement.** `scalability-volume.yml` n'a qu'un déclencheur `workflow_dispatch` : elle ne tourne que si quelqu'un y pense | relevé sur les 10 workflows : `scalability-volume.yml` et `restore-drill.yml` sont les deux seuls sans `schedule` ni `push` | ✅ **OUTILLÉ le 2026-09-20** · `scalability-volume` **mensuel** ; `restore-drill` coupé en deux, `dump-check` **trimestriel et automatique** (`C-86`) — 🔴 ne prouve PAS : qu'un dump soit **restaurable** : `pg_restore --list` lit une table des matières. Le vrai rollback reste **`M-47`**, jamais parcouru · 🔎 ⚠️ **2026-09-22 : aucun run planifié encore observé** (dernier run : dispatch du 09-08) ; premier attendu le 2026-10-03 |
 | AM-2 | **Les invariants de coût de lecture ne sont vérifiés qu'à la main.** Le `Seq Scan` de `tasks` est reconstaté à chaque passe, jamais surveillé entre deux | aucun workflow ne joue d'`EXPLAIN` contre la production | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:db-cost` (`C-87`) — 🔴 ne prouve PAS : le coût **facturé**, que Supabase n'expose pas |
 | AM-3 | **Aucune alerte sur la CROISSANCE.** Le dépôt sait dire « combien coûte une lecture aujourd'hui », jamais « à quelle vitesse ce coût monte ». Les volumes sont recomptés ponctuellement (749 tâches, 54 abonnements) | aucune série temporelle stockée | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:db-cost` · série commitée, alerte sur la **pente** (`C-87`) — 🔴 ne prouve PAS : la charge réelle : c'est `scalability-volume`, et il mesure un runner, pas la production |
 | AM-4 | **Le plan Supabase est `free`, et rien ne surveille son changement d'état** (pause pour inactivité, quotas) | `plan: "free"` relu par l'API le 2026-09-15. `uptime.yml` teste la réponse HTTP, pas les quotas | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:db-cost` · EXPLAIN **sous RLS**, rôle `authenticated`, transaction annulée (`C-87`) — 🔴 ne prouve PAS : le comportement à plusieurs millions de lignes : le plan est relu à chaud, sur le volume du jour |

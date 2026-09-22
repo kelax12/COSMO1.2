@@ -62,6 +62,99 @@ code de `main` et les dix-neuf commits du jour. Les mesures **contre la producti
 refaites ce jour-là, sauf celles inscrites dans les commits eux-mêmes. Détail dans le second
 tableau ci-dessous.
 
+## Mise à jour du 2026-09-22 (soir) · **remesure item par item, onze notes rejouées : +25 net**
+
+Consigne d'Axel : « reprends chaque audit, et pour chaque item marqué, vérifie ce qu'il en est
+réellement, remets-les à jour, remets aussi à jour les notes ». Cette passe n'a pas relu les
+documents : elle a confronté chaque item marqué à **la CI réelle** (`gh run`, logs de jobs), à
+**la production** (catalogue, advisors, appel de RPC sous rôle `authenticated`) et au **dépôt à
+`HEAD`** (`3de70651`).
+
+### 🔴 Le constat qui domine tout le reste : `main` n'a pas eu une CI verte depuis six jours
+
+| Mesure | Résultat |
+|---|---|
+| Dernier run `CI` **vert** sur `main` | **2026-09-16 07:11 UTC**. Aucun des **60** runs suivants ne l'est |
+| `lint-test-build` à `HEAD` | 🔴 **rouge** : `check:bundle`, le chunk `TasksPage` fait **37,7 ko** pour un cliquet à **37,0**. Tout ce qui précède est vert : **243 fichiers, 2 790 tests**, outillage **21 fichiers, 345 tests** |
+| `lint-test-build` à `806e7745` | 🔴 rouge sur `architecture.guard` (un fichier au-dessus de 600 lignes, résorbé depuis : **5/5 vert à `HEAD`**, rejoué en local) |
+| `e2e`, dernier run complet (`806e7745`) | 🔴 **23 échecs, 13 instables, 214 passés**, 1 h 18. **20** échecs sur `mobile-safari`, **3** sur `mobile-chrome` |
+| `Visual` (`C-95`) | 🔴 **19 runs, 19 échecs, jamais une référence produite** : le project `visual` dépend de la chauffe WebKit, et le workflow n'installe que Chromium |
+| `Sabotages` (`C-81`) | 🔴 1 run planifié, rouge. **Les 11 sabotages ont tous été vus** ; l'échec vient du contrôle « arbre restauré », que le propre `sabotages.log` du workflow fait échouer |
+| `Edge deploy drift` | 🔴 rouge depuis le 09-21. `check:edge` : dérive **légitime** de `report-bug` (`M-61`). 🔴 `check:edge-smoke` (`C-91`) : **n'a jamais sondé quoi que ce soit en CI**, `VITE_SUPABASE_ANON_KEY` n'est pas passé au job |
+| `Posture` | 🔴 `supabase` (voulu, `M-58`) · `vercel-env` (jetons Vercel absents) · 🔴 `retention` (`C-93`) **plante à chaque run** : `friend_requests.user_id` n'existe pas (colonnes réelles `sender_id` / `receiver_id`). « 0 orpheline en prod » n'a **jamais** été produit par la CI · `cout-db` ✅ |
+| `CodeQL` (`C-89`) | ✅ vert, **9 alertes ouvertes** (5 `high`, 4 `medium`), aucune triée (`M-60`) |
+| Lighthouse **mobile** (`C-84`) | ✅ tourne. 🔴 **LCP de 5,6 à 8,3 s sur les 8 URLs sur 8**, au-delà même du plafond d'avertissement (4,5 s). En `warn`, donc vert, et le résumé écrit « aucun rapport mobile produit » : **personne ne l'avait lu** |
+| `Migration coverage`, `Deploy SHA drift`, `db-backup`, `Uptime`, `renewal-notice`, `Vendor watch` | ✅ verts |
+
+🔴 **Une CI rouge six jours n'est pas un incident de plus, c'est la perte de l'instrument.** Deux
+régressions sont entrées pendant ce temps (un fichier > 600 lignes, puis `TasksPage` au-delà de son
+cliquet), et **les deux gardes ont mordu** : c'est précisément parce que le job était déjà rouge
+que personne ne l'a vu. C'est `C-75` (2026-09-13) une seconde fois, à plus grande échelle.
+
+### Vérifié en production, et juste
+
+| Item | Mesure du 2026-09-22 |
+|---|---|
+| `C-77` | ✅ `get_work_time_stats` lit `kr_completions`, plus jamais `history` ; l'index `idx_kr_completions_user_completed_at` existe ; **appelée sous le rôle `authenticated` d'un compte réel, elle rend `okrTime = 480`** (et non 0). Fermé **par ce qu'elle rend**, pas par le ledger |
+| Ledger | **141** entrées, dernière `20260921075529` (mig. `150`). La mig. `149` est présente au catalogue |
+| RLS | **51** tables dans `public`, **51** avec RLS, **126** policies |
+| Advisors sécurité | **10 / 53 / 2 / 1**. Les deux comptes qui bougent (9 → 10, 52 → 53) sont **exactement** ceux que `M-58` annonçait, tous deux venus de la mig. `150`. `get_support_stats` appelle bien `is_admin()` (relu dans `pg_get_functiondef`) |
+| Encaissement | `org_subscriptions` **0** ligne, `payment_records` **0** : on ne vend toujours pas |
+
+### La règle appliquée aux notes, déclarée pour être contestée
+
+Le barème du 2026-09-16 dit qu'une note **remonte quand l'angle mort est outillé**. Cette passe
+ajoute la condition qui manquait, et elle vient des mesures ci-dessus : **un angle mort n'est
+remboursé que si sa garde a rendu au moins un verdict exploitable en CI** (vert, ou rouge sur un
+vrai défaut). Une garde posée mais jamais jouée, ou cassée, ne rembourse rien : `C-95`, `C-91`,
+`C-93`, `C-81` et `C-88` restent donc payés. Un défaut **nommé ce soir** coûte selon le même
+barème (−2 structurel, −1 limité).
+
+### Les notes
+
+| Audit | 09-16 | **09-22 soir** | Δ | Ce qui l'a décidé |
+|---|---|---|---|---|
+| [Architecture](./ARCHITECTURE.md) | 89 | **93** | **+4** | AM-2, AM-3, AM-5 outillés et verts en CI (+3) ; `C-77`, l'un des deux motifs qui retenaient à 90, fermé et vérifié par sa sortie (+1) |
+| [Tests / CI](./TESTING.md) | 91 | **92** | **+1** | AM-2 et AM-5 verts (+2) ; WebKit enfin joué en CI, les 2 points dus depuis le 09-15 (+2) ; **CI de `main` rouge depuis six jours** (−2) ; quatre gardes du 09-20 n'ont jamais rendu un verdict et rien ne le signale (−1) ; AM-1 non remboursé (`Sabotages` jamais vert) |
+| [Performance](./PERFORMANCE.md) | 90 | **93** | **+3** | AM-1, AM-3, AM-4, AM-5 outillés et joués (+5) ; `C-77` fermé (+2) ; **LCP mobile « mauvais » sur 8 URLs sur 8** (−3) ; `TasksPage` au-delà de son cliquet sur `main` (−1) |
+| [Scalabilité](./SCALABILITY.md) | 87 | **90** | **+3** | AM-2 et AM-3 (`check:db-cost` vert) (+2) ; AM-1 à moitié (+1) : planifié, mais le premier run automatique tombe le **2026-10-03** |
+| [Sécurité](../faille.md) | 83 | **83** | 0 | AM-4 : CodeQL tourne (+1), mais **9 alertes non triées** (−1). AM-1 (voulu, `M-58`), AM-2 (`edge-smoke` jamais joué) et AM-5 (`Sabotages` rouge) non remboursés. Advisors conformes à l'annonce |
+| [RGPD](./RGPD.md) | 82 | **86** | **+4** | AM-1, AM-2, AM-4 verts en CI (+4). AM-3 **non remboursé** : `check:retention` plante à chaque run |
+| [UI / UX](./UI-PATTERNS.md) | 81 | **83** | **+2** | `C-77` fermé, la série OKR n'est plus plate (+2). AM-1 à AM-3 non remboursés : `Visual` n'a **jamais** produit une référence |
+| [Accessibilité](./ACCESSIBILITY.md) | 80 | **81** | **+1** | AM-2 (`check:keyboard-coverage`) vert (+1). AM-5 non remboursé (`Visual`). Une violation axe `button-name` (**critique**, 4.1.2 A) vue **une fois sur trois tentatives** sous WebKit : à confirmer, **non débitée** |
+| [SEO](./SEO.md) | 75 | **78** | **+3** | AM-1 (+1), AM-2 (+2), AM-3 (+1) verts : `check:seo` rend 50 pages et 150 `hreflang` réciproques ; LCP mobile mauvais sur 8/8, signal *page experience* (−1) |
+| [Mobile / DA](./MOBILE.md) | 73 | **75** | **+2** | `C-78` (+1), AM-2 à AM-5 joués en CI (+5) ; LCP mobile (−2) ; texte à 200 % : **débordement de 12, 649 et 1 182 px**, trois cas ROUGES et non « cliquets au mesuré » (−1) ; 20 parcours rouges sur WebKit (−1) |
+| [i18n](./I18N.md) | 86 | **88** | **+2** | AM-2 et AM-3 (`i18n:pages`) verts en CI, dans deux jobs (+2) |
+
+**Bilan : 917 → 942, soit +25**, dont **+38 remboursés** par des gardes qui tournent vraiment, et
+**−13 débités** pour des défauts que ces mêmes gardes ont trouvés. Les gardes du 09-20 font donc
+exactement ce qu'on leur demandait, **y compris trouver des choses qui font baisser les notes**.
+
+⚠️ **Ce que cette passe ne prouve pas.** Le run CI de `HEAD` (`35781807229`) avait encore son job
+`e2e` en cours à l'écriture : les chiffres e2e sont ceux de `806e7745`, le dernier run complet.
+Les échecs WebKit n'ont pas été triés un par un entre défaut produit et défaut de harnais (Safari
+ne place pas le focus clavier sur un bouton par défaut, ce qui peut expliquer une partie des cas
+`a11y-keyboard-audit`) : c'est pour ça que Mobile ne prend que −1 pour eux et l'accessibilité 0.
+
+### Ce qu'il faut faire, dans l'ordre
+
+1. **Remettre `main` au vert** : `TasksPage` sous 37,0 ko (sans relever le cliquet), puis `C-111`.
+2. **Réparer les quatre gardes qui n'ont jamais parlé** (`C-112` à `C-115` dans
+   [`../a-faire-code.md`](../a-faire-code.md)) : sans ça, cinq angles morts restent payés.
+3. **Lire le LCP mobile** (`C-116`) : c'est le seul résultat de la soirée qui touche un
+   utilisateur, et c'est le terminal du trafic visé.
+4. `M-58`, `M-59` (jetons Vercel de `vercel-env`), `M-60`, `M-61` : quatre gestes d'Axel.
+
+🔴 **Trouvé en écrivant les notes : dix marqueurs `note-audit` sur onze étaient faux.** Architecture
+portait 90 pour une note de 89, Tests 95 pour 91, Scalabilité 91 pour 87, Accessibilité 84 pour 80,
+Mobile 78 pour 73, SEO 73 pour 75, et ainsi de suite ; seul i18n concordait. `check:docs-scored`
+vérifie qu'un marqueur **existe**, jamais qu'il **égale** la note du titre, et il l'imprime lui-même
+(« ne dit PAS que les notes sont justes ni fraîches »). Les onze sont réalignés ce soir. Le
+rapprochement marqueur ↔ titre ↔ tableau de bord est outillable en quelques lignes, et il
+n'est porté par aucun item.
+
+---
+
 ## Mise à jour du 2026-09-22 · **deux items fermés, et deux défauts de NIVEAU A trouvés en chemin**
 
 **Aucune note ne bouge**, et pour la même raison que la veille : aucun domaine n'a été réaudité.

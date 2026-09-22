@@ -1,4 +1,4 @@
-<!-- note-audit: note=84 -->
+<!-- note-audit: note=86 -->
 <!--
   🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
   Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
@@ -8,7 +8,7 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **84 / 100**, au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **86 / 100** au 2026-09-22 (soir), au tableau de bord de [`README.md`](./README.md).
 
 # RGPD — inventaire, droits des personnes et dette
 
@@ -16,7 +16,23 @@
 119 : effacement et portabilité). Premier audit dédié de ce domaine. Jusqu'ici, la conformité était
 traitée par fragments dans les audits sécurité. Mesuré sur le schéma de prod et le code.
 
-## Note RGPD : 78 → 84 → 86 → 87 → **82 / 100** (2026-08-24 → 2026-08-25 → 2026-08-29 → 2026-09-14 → 2026-09-16) · inchangée aux 2026-08-27, 2026-09-02 et 2026-09-03, **VÉRIFIÉE inchangée le 2026-09-14 au soir**
+## Note RGPD : 78 → 84 → 86 → 87 → 82 → **86 / 100** (2026-08-24 → 2026-08-25 → 2026-08-29 → 2026-09-14 → 2026-09-16 → 2026-09-22 soir) · inchangée aux 2026-08-27, 2026-09-02 et 2026-09-03, **VÉRIFIÉE inchangée le 2026-09-14 au soir**
+
+> ### 🟢 2026-09-22 (soir) · +4 : remesure item par item, contre la CI réelle et la production
+>
+> **Règle appliquée**, déclarée au [tableau de bord](./README.md) : un angle mort payé le 2026-09-16
+> n'est remboursé que si sa garde a rendu **au moins un verdict exploitable en CI** (vert, ou
+> rouge sur un vrai défaut). Une garde posée mais jamais jouée, ou cassée, ne rembourse rien.
+> Un défaut nommé ce soir coûte selon le barème du 09-16.
+>
+> | Item | Effet | Mesuré le 2026-09-22 |
+> |---|---|---|
+> | AM-1 · effacement sur liste en dur | **+2** | `check:erasure`, périmètre dérivé des migrations, vert en CI à `HEAD` |
+> | AM-2 · nouvelle table `user_id` sans décision | **+1** | même garde |
+> | AM-4 · portabilité sans inventaire | **+1** | `check:portability` vert en CI à `HEAD` |
+> | AM-3 · durées de rétention | **0** | 🔴 **non remboursé, et l'état écrit était faux** : `check:retention` **plante à chaque run** de `posture.yml` (09-21, 09-22) sur `column x.user_id does not exist` : `friend_requests` porte `sender_id` / `receiver_id`. Le « 0 orpheline en prod » n'a **jamais** été produit par la CI. → `C-112` |
+>
+> **82 → 86.** Détail, règle et ordre de réparation : [tableau de bord](./README.md).
 
 > ### 🟠 2026-09-16 · -5 : la note comptait ce qui était mesuré, jamais ce qui ne l'était pas
 >
@@ -88,7 +104,7 @@ traitée par fragments dans les audits sécurité. Mesuré sur le schéma de pro
 |---|---|---|---|
 | AM-1 | 🔴 **La garde d'effacement s'appuie sur une LISTE EN DUR.** `SYMMETRIC_TABLES` est écrite à la main dans le test : une table symétrique ajoutée demain n'y entre pas toute seule, et la garde reste verte | `src/rgpd-erasure.guard.test.ts:42` : `const SYMMETRIC_TABLES: Record<string, [string, string]> = {` | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:erasure` · périmètre **dérivé des migrations**, 22 tables, 4 décisions possibles (`C-92`) — 🔴 ne prouve PAS : dérivé des **migrations**, pas de la base — et ce dépôt a déjà constaté des objets en base qu'aucune migration ne crée |
 | AM-2 | **Rien ne relie une NOUVELLE table portant `user_id` à `delete-account`.** Une migration peut créer une table de données personnelles sans qu'aucun job ne demande ce qu'il advient de ces lignes à la suppression du compte | ni `validate:migrations` ni `check:rls` ne testent ce lien | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:erasure` · `cascade` et `conserve` **vérifiées contre le SQL** (`C-92`) — 🔴 ne prouve PAS : idem AM-1 : la source est le dépôt, pas le catalogue |
-| AM-3 | **Les DURÉES de rétention ne sont vérifiées par rien.** Le registre art. 30 en annonce pour dix traitements ; aucune mesure ne confronte ces durées aux données réellement présentes | [`RGPD-REGISTRE.md`](./RGPD-REGISTRE.md) les déclare, aucun script ne les contrôle | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:retention` · orphelines (**0** en prod) + âges (`C-93`) — 🔴 ne prouve PAS : que le **registre** soit juste : ça dit que la base respecte ce qu'il déclare. ⚠️ `rate_limits` et `email_lookup_quota` n'y ont **aucune durée déclarée**, et la garde l'imprime au lieu d'en inventer une |
+| AM-3 | **Les DURÉES de rétention ne sont vérifiées par rien.** Le registre art. 30 en annonce pour dix traitements ; aucune mesure ne confronte ces durées aux données réellement présentes | [`RGPD-REGISTRE.md`](./RGPD-REGISTRE.md) les déclare, aucun script ne les contrôle | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:retention` · orphelines (**0** en prod) + âges (`C-93`) — 🔴 ne prouve PAS : que le **registre** soit juste : ça dit que la base respecte ce qu'il déclare. ⚠️ `rate_limits` et `email_lookup_quota` n'y ont **aucune durée déclarée**, et la garde l'imprime au lieu d'en inventer une · 🔎 🔴 **2026-09-22 : FAUX à l'usage.** `check:retention` plante à chaque run de `posture.yml` (`friend_requests.user_id` n'existe pas : `sender_id` / `receiver_id`). « 0 en prod » n'a jamais été produit par la CI. → `C-112` |
 | AM-4 | **L'export de portabilité (art. 20) n'est comparé à aucun inventaire.** Une colonne ajoutée à une table exportée n'entre pas dans l'export, et rien ne le signale | aucune garde ne confronte l'export au schéma | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:portability` · chaque colonne exportée **ou exclue avec sa raison** (`C-94`) — 🔴 ne prouve PAS : la **justesse** des valeurs : un export complet mais faux resterait vert. 1ʳᵉ exécution : **4 colonnes saisies** manquaient, dont `categories.parent_id`, donc l'arbre entier |
 
 
