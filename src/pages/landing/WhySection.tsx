@@ -7,6 +7,9 @@ import { motion } from 'framer-motion';
 import { gsap, SplitText, useGSAP } from '@/lib/gsap';
 import { useT } from '@/i18n/useT';
 
+const ORBE_BLEUE = { background: 'radial-gradient(circle closest-side, rgba(37,99,235,0.05) 0%, rgba(37,99,235,0.045) 36%, rgba(37,99,235,0.03) 58%, rgba(37,99,235,0.014) 76%, rgba(37,99,235,0.005) 88%, transparent 100%)' };
+const ORBE_VIOLETTE = { background: 'radial-gradient(circle closest-side, rgba(124,58,237,0.05) 0%, rgba(124,58,237,0.045) 36%, rgba(139,92,246,0.03) 58%, rgba(139,92,246,0.014) 76%, rgba(139,92,246,0.005) 88%, transparent 100%)' };
+
 const WhySection: React.FC = () => {
   const { t } = useT('landing');
   const sectionRef = useRef<HTMLElement>(null);
@@ -106,9 +109,9 @@ const WhySection: React.FC = () => {
   // plein écran à chaque frame de scroll.
   return (
       <section ref={sectionRef} id="why" className="py-24 bg-white relative overflow-hidden">
-        {/* Ambient blobs */}
-        <div className="absolute -top-20 -left-20 w-[500px] h-[500px] bg-blue-500/[0.07] rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-20 -right-20 w-[500px] h-[500px] bg-violet-500/[0.07] rounded-full blur-3xl pointer-events-none" />
+        {/* Teintes d'ambiance en `radial-gradient`, jamais en flou (audit A-8) : chaque dégradé atteint `transparent` avant le bord de sa boîte. */}
+        <div className="absolute -top-32 -left-32 h-[40rem] w-[40rem] rounded-full pointer-events-none" style={ORBE_BLEUE} />
+        <div className="absolute -bottom-32 -right-32 h-[40rem] w-[40rem] rounded-full pointer-events-none" style={ORBE_VIOLETTE} />
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header */}

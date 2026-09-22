@@ -16,6 +16,7 @@ Après le header, `landing/LandingGateway` aiguille vers l'un des deux :
 - ✅ `TrackSwitcher` et `TrackAnchors` empêchent de rester coincé ; ancres dans `landing/anchors.ts`, une liste par parcours.
 - ❌ Une section entreprise dans `PersoTrack` (ou l'inverse) : la séparation EST la structure.
 - ❌ Un état périodique dans `PersoTrack` : la rotation de la tuile passe par `hero-module-actif.ts`, sinon tout le parcours se re-rend toutes les 2,6 s (TBT mobile).
+- ❌ Un flou, même statique (`blur-3xl`, `filter: blur()`), dans le parcours perso : son coût est la rastérisation (audit A-8). Les orbes de `WhySection` sont des `radial-gradient` qui atteignent `transparent` avant le bord de leur boîte.
 
 ## Header
 
