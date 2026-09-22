@@ -14,12 +14,23 @@ type HeatmapCell = { date: Date; dateStr: string; completed: number; total: numb
 export const HabitHeatmap = React.memo<{ habits: Habit[]; now: Date; embedded?: boolean }>(({ habits, now, embedded = false }) => {
   const { t } = useT('statistics');
   const WEEKS = 26;
+  // Bornes desktop (non-embedded) : 26 lignes sans hauteur maximale poussaient
+  // le reste de la page vers le bas au lieu de défiler dans la carte — le
+  // conteneur portait `overflow-y-auto` mais aucune hauteur pour lui donner
+  // prise (un overflow n'a d'effet que sur un axe borné). N'affecte pas
+  // `embedded` : ce mode vit déjà dans un parent à hauteur fixée (`h-full`).
+  const VISIBLE_ROWS = 10;
   const GAP = embedded ? 3 : 2;
   const MONTH_W = embedded ? 24 : 14;
   const scrollRef = useRef<HTMLDivElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [cellSize, setCellSize] = useState(embedded ? 28 : 13);
   const CELL = cellSize;
+  // Rayon proportionnel à la taille de la cellule : un rayon fixe de 3 px
+  // (l'ancienne valeur) restait quasi invisible une fois CELL monté à 40+ px
+  // par le ResizeObserver ci-dessous — les carrés paraissaient à angles vifs
+  // alors qu'ils portaient déjà un `border-radius`.
+  const CELL_RADIUS = Math.min(10, Math.max(3, Math.round(CELL * 0.22)));
   // Tooltip rendu via portail (document.body) pour ne jamais être découpé
   // par l'overflow-y-auto du conteneur défilant (bug : tooltip masqué en arrière-plan).
   const [hovered, setHovered] = useState<{ cell: HeatmapCell; rect: DOMRect } | null>(null);
@@ -127,14 +138,14 @@ export const HabitHeatmap = React.memo<{ habits: Habit[]; now: Date; embedded?: 
     <div className="flex items-center gap-1.5 mt-3 justify-end flex-shrink-0">
       <span className="text-[9px] font-medium select-none" style={{ color: 'rgb(var(--color-text-muted))' }}>{t('heatmap.less')}</span>
       {[0, 0.1, 0.3, 0.55, 0.8, 1].map((r, i) => (
-        <div key={i} style={{ width: CELL, height: CELL, borderRadius: 3, backgroundColor: getCellColor(r), border: `1px solid ${CELL_BORDER}`, flexShrink: 0 }} />
+        <div key={i} style={{ width: CELL, height: CELL, borderRadius: CELL_RADIUS, backgroundColor: getCellColor(r), border: `1px solid ${CELL_BORDER}`, flexShrink: 0 }} />
       ))}
       <span className="text-[9px] font-medium select-none" style={{ color: 'rgb(var(--color-text-muted))' }}>{t('heatmap.more')}</span>
     </div>
   );
 
   // Vertical layout (rows = weeks, cols = days)
-  const grid = (scrollClass: string) => (
+  const grid = (scrollClass: string, scrollStyle?: React.CSSProperties) => (
     <>
       {/* Day headers */}
       <div className="flex flex-shrink-0" style={{ gap: GAP, paddingLeft: MONTH_W + GAP, marginBottom: GAP }}>
@@ -145,7 +156,7 @@ export const HabitHeatmap = React.memo<{ habits: Habit[]; now: Date; embedded?: 
         ))}
       </div>
       {/* Scrollable weeks (rows) */}
-      <div ref={scrollRef} className={scrollClass}>
+      <div ref={scrollRef} className={scrollClass} style={scrollStyle}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: GAP }}>
           {weeks.map((week, wi) => (
             <div key={wi} style={{ display: 'flex', gap: GAP, alignItems: 'center', flexShrink: 0 }}>
@@ -170,8 +181,8 @@ export const HabitHeatmap = React.memo<{ habits: Habit[]; now: Date; embedded?: 
                   onMouseLeave={() => setHovered(null)}
                 >
                   <div
-                    className="w-full h-full rounded-[3px] transition-transform duration-100 group-hover:scale-110"
-                    style={{ backgroundColor: getCellColor(cell.rate), border: `1px solid ${cell.isFuture ? 'transparent' : CELL_BORDER}` }}
+                    className="w-full h-full transition-transform duration-100 group-hover:scale-110"
+                    style={{ borderRadius: CELL_RADIUS, backgroundColor: getCellColor(cell.rate), border: `1px solid ${cell.isFuture ? 'transparent' : CELL_BORDER}` }}
                   />
                 </div>
               ))}
@@ -198,7 +209,7 @@ export const HabitHeatmap = React.memo<{ habits: Habit[]; now: Date; embedded?: 
         {t('heatmap.title')}
       </h3>
       <div ref={wrapperRef}>
-        {grid('overflow-y-auto')}
+        {grid('overflow-y-auto', { maxHeight: VISIBLE_ROWS * CELL + (VISIBLE_ROWS - 1) * GAP })}
       </div>
       {legend}
       {tooltipPortal}
