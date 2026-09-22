@@ -1756,11 +1756,27 @@ a:focus-visible:not([class*="ring-"]):not([class*="focus-visible:"]),
   }
 }
 
+/* Le filet qui relie une puce flottante au titre (hero centré, 2026-09-22).
+   Il se DESSINE depuis la puce vers le centre, une seule fois, puis reste
+   posé : contrairement au filet d'arrimage, il ne ponctue pas une arrivée,
+   il montre un lien qui doit rester lisible tant que la page est là. */
+.hero-link {
+  animation: hero-link-draw 900ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: var(--d, 0ms);
+}
+
+@keyframes hero-link-draw {
+  from {
+    transform: scaleX(0);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .hero-line-in,
   .hero-rise,
   .hero-chip,
   .hero-window,
+  .hero-link,
   .hero-dock-settle {
     animation: none;
   }
@@ -1807,4 +1823,24 @@ a:focus-visible:not([class*="ring-"]):not([class*="focus-visible:"]),
   .dashboard-mobile-text-boost .text-2xl { font-size: calc(1.5rem + 1px); }
   .dashboard-mobile-text-boost .text-3xl { font-size: calc(1.875rem + 1px); }
   .dashboard-mobile-text-boost .text-4xl { font-size: calc(2.25rem + 1px); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Titre d'une tache dans la liste mobile — +1px
+   ═══════════════════════════════════════════════════════════════════
+   Meme mecanique que `.dashboard-mobile-text-boost` juste au-dessus, et
+   pour la meme raison : hors de tout `@layer`, sinon les classes `.text-*`
+   de Tailwind (layer `utilities`) gagneraient quelle que soit la
+   specificite. On redefinit les TOKENS plutot que `font-size`, donc la
+   regle suit le cran applique par le composant sans avoir a le connaitre.
+
+   Deux crans, et c'est voulu : `TaskCard` monte a `text-body` quand la
+   tache est EN RETARD, et reste a `text-label` sinon (`TeamTaskCardLite`
+   aussi, maquette 88). Ne redefinir qu'un seul des deux ferait disparaitre
+   cet ecart, qui est le signal du retard. */
+@media (max-width: 767px) {
+  .task-title-boost {
+    --t-label: calc(0.8125rem + 1px);
+    --t-body: calc(0.9375rem + 1px);
+  }
 }

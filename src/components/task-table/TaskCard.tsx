@@ -377,7 +377,11 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
             d'Axel, « garder l'absence de barre colorée ». La priorité reste
             dite par sa pilule `P{n}`, plus bas. */}
         <p
-          className={`min-w-0 font-medium leading-tight line-clamp-2 ${
+          // `task-title-boost` (index.css) : +1px sur le cran applique, sous
+          // 768 px seulement. Le titre d'une tache est ce qu'on lit en
+          // premier dans la liste ; il gagne un pixel sans deplacer l'echelle
+          // pour tout le reste de l'app.
+          className={`task-title-boost min-w-0 font-medium leading-tight line-clamp-2 ${
             isOverdue ? 'text-body' : 'text-label'
           } ${task.completed ? 'line-through' : ''}`}
           style={{ color: 'rgb(var(--color-text-primary))' }}
