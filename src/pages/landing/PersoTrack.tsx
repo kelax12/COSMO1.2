@@ -2,7 +2,6 @@ import React, { useCallback, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { gsap, useGSAP } from '@/lib/gsap';
 import { ArrowRight } from 'lucide-react';
-import AppWindowShowcase from '@/components/showcase/AppWindowShowcase';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
 import { useMagnetic } from '@/lib/hooks/use-magnetic';
 import { useT } from '@/i18n/useT';
@@ -12,7 +11,9 @@ import WhySection from './WhySection';
 import FaqSection from './FaqSection';
 import { pauseWhenOffscreen } from './pause-offscreen';
 import HeroModuleDock, { DELAI_ARRIMAGE_MS } from './HeroModuleDock';
+import HeroAppIcon from './HeroAppIcon';
 import TrackAnchors from './TrackAnchors';
+import HeroBackdrop from './HeroBackdrop';
 
 interface PersoTrackProps {
   onDemo: () => void;
@@ -39,7 +40,6 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
   const headingRef = useRef<HTMLHeadingElement>(null);
   const gridLayerRef = useRef<HTMLDivElement>(null);
   const auroraLayerRef = useRef<HTMLDivElement>(null);
-  const mockupLayerRef = useRef<HTMLDivElement>(null);
   const ctaRef = useRef<HTMLElement>(null);
 
   // W7 — CTAs magnétiques (no-op tactile / reduced-motion, cf. hook).
@@ -238,8 +238,13 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
           scrollTrigger: { trigger: heroRef.current, start: 'top top', end: '+=200', scrub: true },
         });
 
-        // W3 — Parallax multi-couches scrubbé : grille lente, aurores
-        // moyennes, mockup rapide. ease none obligatoire (scrub).
+        // W3 — Parallax de fond scrubbé : grille lente, aurores moyennes.
+        // ease none obligatoire (scrub).
+        //
+        // La troisième couche — le mockup, qui remontait de 110 px — a disparu
+        // avec la colonne de droite (hero centré, 2026-09-22). Un parallax sur
+        // le bloc de texte lui-même serait un contresens : c'est la promesse de
+        // la page, elle ne doit pas glisser par rapport à son propre fond.
         if (heroRef.current) {
           const tl = gsap.timeline({
             defaults: { ease: 'none' },
@@ -250,9 +255,7 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
               scrub: true,
             },
           });
-          tl.to(gridLayerRef.current, { yPercent: 8 }, 0)
-            .to(auroraLayerRef.current, { yPercent: 18 }, 0)
-            .to(mockupLayerRef.current, { y: -110 }, 0);
+          tl.to(gridLayerRef.current, { yPercent: 8 }, 0).to(auroraLayerRef.current, { yPercent: 18 }, 0);
         }
       });
     },
@@ -278,137 +281,20 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
       <TrackAnchors track="perso" label={t('enterprise.gateway.perso.title')} />
 
       <section ref={heroRef} className="relative pt-10 pb-20 lg:pt-16 lg:pb-28 overflow-hidden">
-        {/* ── Fond ambiant : grille masquée + noise + aurores + encre ──
-            🔴 `z-0`, JAMAIS `-z-10`. Cette couche a porté `-z-10` depuis
-            l'origine, et elle n'a jamais été VISIBLE : un descendant en z
-            négatif se peint à l'étape 2 d'un contexte d'empilement, le fond
-            des blocs non positionnés à l'étape 3. Le `<div>` racine de ce
-            parcours porte un fond (`bg-white` aujourd'hui, un dégradé
-            `slate-900` avant le 2026-09-22) et ne crée AUCUN contexte
-            d'empilement, la `<section>` étant `relative` sans `z-index` : ce
-            fond se peignait donc PAR-DESSUS la grille, les quatre aurores, le
-            bruit et les traceurs. Mesuré le 2026-09-22 en forçant un traceur
-            en rouge plein de 3 px, invisible — puis visible d'un coup en
-            passant cette seule couche à `z-0`.
-            ⚠️ Le contenu reste au-dessus sans rien changer : il est `relative`
-            et vient APRÈS dans l'arbre, donc il se peint après à la même
-            étape. C'est bien l'ordre du DOM qui tient l'empilement ici. */}
-        <div className="absolute inset-0 z-0" aria-hidden="true">
-          {/* Grille fine type Linear/Vercel, fondue — couche parallax lente (GSAP) */}
-          <div
-            ref={gridLayerRef}
-            className="absolute inset-0 opacity-[0.55]"
-            style={{
-              backgroundImage:
-                'linear-gradient(to right, rgba(15,23,42,0.055) 1px, transparent 1px), linear-gradient(to bottom, rgba(15,23,42,0.055) 1px, transparent 1px)',
-              backgroundSize: '56px 56px',
-              maskImage: 'radial-gradient(ellipse 80% 70% at 60% 35%, #000 50%, transparent 100%)',
-              WebkitMaskImage: 'radial-gradient(ellipse 80% 70% at 60% 35%, #000 50%, transparent 100%)',
-            }}
-          />
-
-          {/* Couche parallax moyenne (GSAP) : halo + aurores. Les loops
-              d'opacité/scale restent en Framer sur les enfants ; GSAP ne
-              translate que ce wrapper (pas de conflit de transform). */}
-          {/* ── Aurores CUITES : des dégradés déjà doux, zéro `filter: blur()` ──
-              Ces quatre couches étaient des aplats floutés à 90-110 px, animés
-              en boucle. Mesuré le 2026-09-03 (audit A-8, build de prod, fenêtre
-              de 4 s AU REPOS, sans scroll ni clic) : la page bloquait le fil
-              principal 2 856 ms sur 4 000, et neutraliser les seuls
-              `filter: blur` la ramenait à 259 ms. `/guide`, sur le même build,
-              en bloque 0.
-              🔴 Le coût n'était PAS les bibliothèques d'animation, contrairement
-              à ce que le bootup Lighthouse laissait croire : couper les 23
-              ScrollTrigger, les 8 tweens infinis ou la rotation de la fenêtre
-              produit ne déplaçait pas la mesure d'un point. C'était la
-              rastérisation d'une pile de surfaces floutées, refaite à chaque
-              frame — et le coût est CUMULATIF, les couches se superposant.
-              ❌ Ne pas « réoptimiser » en remettant un `filter: blur()` ici, ni
-              espérer le rattraper par un `will-change`, un `translateZ(0)`, un
-              `contain: paint` ou un rayon plus petit : les quatre ont été
-              mesurés, aucun ne change quoi que ce soit.
-              ✅ Un `radial-gradient` qui s'éteint vers `transparent` EST déjà
-              flou : il produit le même halo diffus, mais il se peint comme un
-              dégradé ordinaire.
-              🔴 ET DEPUIS LE 2026-09-22, ces quatre couches sont FIXES. Elles
-              oscillaient en opacité entre 0,82 et 1 — sur des dégradés dont
-              l'alpha maximal vaut 0,16, posés sur du BLANC. L'amplitude réelle
-              était sous le seuil de perception ; la boucle, elle, tournait en
-              continu sur quatre surfaces de la taille du premier écran. Ne pas
-              la remettre « pour donner de la vie au fond » : la vie du fond,
-              sur cette page, c'est la trace d'encre, qui se voit.
-              Harnais de non-régression : `scripts/landing-motion-probe.mjs`. */}
-          <div ref={auroraLayerRef} className="absolute inset-0">
-            {/* Nappe de teintes (remplace le halo conique tournant).
-                ⚠️ Chaque dégradé DOIT atteindre `transparent` avant le bord de
-                sa boîte : sans le flou qui adoucissait les arêtes, un stop
-                encore coloré à 100 % dessine un rectangle visible. C'est le
-                défaut qu'a montré la première capture après correctif. */}
-            <div
-              className="absolute left-1/2 top-[-18%] h-[58rem] w-[58rem] -translate-x-1/2 rounded-full"
-              style={{
-                background:
-                  'radial-gradient(circle closest-side, rgba(99,102,241,0.08) 0%, rgba(99,102,241,0.07) 34%, rgba(139,92,246,0.055) 56%, rgba(217,70,239,0.035) 76%, rgba(34,211,238,0.02) 90%, transparent 100%)',
-              }}
-            />
-            {/* Aurores — alphas DIVISÉS PAR DEUX le 2026-09-22, en même temps
-                que la couche est redevenue visible (cf. `z-0` plus haut). Ils
-                avaient été réglés pour glisser sur un fond `slate-900` ; posés
-                sur du blanc, ils lavaient la page en pastel. Une page blanche
-                doit rester blanche : ce sont des teintes, pas un décor. */}
-            <div
-              className="absolute -top-40 left-1/2 h-[60rem] w-[60rem] -translate-x-1/2 rounded-full"
-              style={{
-                background:
-                  'radial-gradient(circle closest-side, rgba(37,99,235,0.09) 0%, rgba(37,99,235,0.08) 34%, rgba(37,99,235,0.065) 54%, rgba(139,92,246,0.045) 72%, rgba(217,70,239,0.025) 88%, transparent 100%)',
-              }}
-            />
-            <div
-              className="absolute -top-4 -left-40 h-[38rem] w-[38rem] rounded-full"
-              style={{ background: 'radial-gradient(circle closest-side, rgba(6,182,212,0.07) 0%, rgba(6,182,212,0.06) 40%, rgba(6,182,212,0.03) 70%, transparent 100%)' }}
-            />
-            <div
-              className="absolute top-8 -right-36 h-[38rem] w-[38rem] rounded-full"
-              style={{ background: 'radial-gradient(circle closest-side, rgba(217,70,239,0.065) 0%, rgba(217,70,239,0.055) 40%, rgba(217,70,239,0.03) 70%, transparent 100%)' }}
-            />
-          </div>
-          {/* Texture noise (SVG feTurbulence, ultra-léger) */}
-          <div
-            className="absolute inset-0 opacity-[0.035] mix-blend-multiply"
-            style={{
-              backgroundImage:
-                "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")",
-            }}
-          />
-          {/* Fondu vers la section suivante */}
-          <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-b from-transparent to-white" />
-
-          {/* Vie permanente du fond, en ENCRE : une trace sombre se dessine le
-              long d'une ligne de la grille, la traverse, puis s'efface ; les
-              noeuds posés sur les intersections respirent (GSAP, gaté
-              reduced-motion).
-              ⚠️ La trace est un DÉGRADÉ qui part de `transparent` : c'est lui
-              qui fait l'entrée et la sortie. Aucun tween d'opacité, et surtout
-              aucun `blur-[…]` — les orbes qu'ils remplacent en portaient un
-              chacun, cf. l'audit A-8 ci-dessus.
-              🔴 CE BLOC EST LE DERNIER DE LA COUCHE DE FOND, et il doit le
-              rester. Placé à l'endroit des anciens faisceaux — juste après la
-              grille —, il passait SOUS les aurores, sous le bruit et surtout
-              sous le fondu blanc de bas de section, qui est opaque à son bord.
-              Mesuré en forçant la trace en rouge plein de 3 px : invisible. Un
-              effet de fond ne se vérifie pas en relisant sa couleur, seulement
-              en le regardant peint. */}
-          <div className="hero-trace-h absolute top-[28%] left-0 h-px w-52 bg-gradient-to-r from-transparent via-slate-900/20 to-blue-600/45" />
-          <div className="hero-trace-v absolute left-[68%] top-0 w-px h-52 bg-gradient-to-b from-transparent via-slate-900/15 to-violet-600/40" />
-          <div className="hero-node absolute top-[20%] left-[10%] h-1.5 w-1.5 rounded-full bg-slate-900/25 opacity-50" />
-          <div className="hero-node absolute top-[64%] left-[80%] h-1 w-1 rounded-full bg-slate-900/25 opacity-50" />
-          <div className="hero-node absolute top-[40%] left-[52%] h-1.5 w-1.5 rounded-full bg-blue-600/35 opacity-50" />
-        </div>
+        {/* Grille, bruit, aurores et encre : cf. HeroBackdrop. Les deux
+            couches que la timeline translate arrivent par ref. */}
+        <HeroBackdrop gridRef={gridLayerRef} auroraRef={auroraLayerRef} />
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-12 lg:gap-8 items-center">
-            {/* ── Colonne gauche : copy ── */}
-            <div className="flex flex-col items-center text-center lg:items-start lg:text-left">
+          {/* Les quatre puces : rangee centree sous le sommaire jusqu'a `xl`,
+              flottantes de part et d'autre du titre au-dela. Posees ICI et pas
+              dans le bloc de texte : leurs positions sont en POURCENTAGE
+              (`xl:left-[1%]`, `xl:right-[4%]`, cf. hero-modules.ts), donc leur
+              ancetre positionne doit etre la pleine largeur, pas la colonne de
+              lecture. */}
+          <HeroModuleDock actif={moduleAffiche} />
+
+          <div className="mx-auto max-w-3xl flex flex-col items-center text-center">
               {/* W1 — H1 révélé ligne par ligne, en CSS.
                   Ce bloc utilisait SplitText : découpe en mots, re-split au
                   chargement des fontes, et recopie des classes de gradient sur
@@ -419,6 +305,12 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
                   Ici le gradient et le transform sont portés par le MÊME
                   élément, ce qui est le cas que `bg-clip-text` supporte, et le
                   masque est une simple div en `overflow: hidden`. */}
+              {/* La tuile remplace la fenetre de 540 px : elle dit « une seule
+                  app, quatre modules » sans repousser la promesse sous la ligne
+                  de flottaison. Le meme retard d'entree que la fenetre d'avant,
+                  pour que les puces se posent avant elle. */}
+              <HeroAppIcon onModuleChange={onSlideChange} delaiEntree={DELAI_ARRIMAGE_MS + 120} />
+
               <h1
                 ref={headingRef}
                 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tight mb-6 leading-[1.05]"
@@ -474,41 +366,6 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
                 {t('hero.reassurance')}
               </p>
             </div>
-
-            {/* ── Colonne droite : mockup produit ──
-                Wrapper externe = couche parallax rapide (GSAP, scroll) ;
-                le motion.div interne garde l'entrée + le tilt Framer
-                (1 élément = 1 propriétaire de transform). */}
-            <div ref={mockupLayerRef} className="relative w-full">
-              <div className="relative w-full" style={{ perspective: 1400 }}>
-                {/* Glow derrière le frame — cuit lui aussi (cf. les aurores
-                    ci-dessus) : c'était la plus grande surface floutée restante
-                    du premier écran, 640 x 670 px en `blur-3xl`. */}
-                <div
-                  className="absolute -inset-40 rounded-[50%]"
-                  style={{
-                    background:
-                      'radial-gradient(ellipse farthest-side, rgba(37,99,235,0.20) 0%, rgba(37,99,235,0.17) 40%, rgba(139,92,246,0.11) 64%, rgba(217,70,239,0.05) 84%, transparent 100%)',
-                  }}
-                  aria-hidden="true"
-                />
-
-                <div className="relative max-w-[34rem] mx-auto lg:max-w-none lg:ml-auto">
-                  {/* Les quatre modules arrivent de quatre directions et se
-                      posent sur la fenêtre : le visuel dit ce que dit le
-                      titre. Sans mouvement, ils sont déjà là, et le message
-                      tient toujours. */}
-                  <HeroModuleDock actif={moduleAffiche} />
-                  <div
-                    className="hero-window relative"
-                    style={{ ['--d' as string]: `${DELAI_ARRIMAGE_MS + 120}ms` }}
-                  >
-                    <AppWindowShowcase compact={isMobile} onSlideChange={onSlideChange} />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
 
           {/* Indicateur de scroll : chevron qui rebondit + fond au scroll */}
           <div
