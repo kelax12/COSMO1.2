@@ -132,7 +132,7 @@ const TaskTableShowcase: React.FC = () => (
                 <td className="px-3 py-3.5">
                   <div className="flex items-center gap-2">
                     <span
-                      className={`font-medium text-sm ${task.completed ? 'line-through text-slate-500' : 'text-white'}`}
+                      className={`font-medium text-sm ${task.completed ? 'line-through text-slate-500' : 'text-white sc-ink'}`}
                     >
                       {task.name}
                     </span>

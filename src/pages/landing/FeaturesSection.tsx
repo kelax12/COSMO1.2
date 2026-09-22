@@ -21,6 +21,7 @@ import {
 } from '@/components/showcase/MobileShowcases';
 import { useT } from '@/i18n/useT';
 import WhenVisible from '@/components/showcase/WhenVisible';
+import ShowcaseTheme from '@/components/showcase/ShowcaseTheme';
 
 // Audit perf 2026-05-29 — StatsShowcase pulls Recharts (≈ 320 kB). Landing
 // page should never block on it: lazy-load with a lightweight skeleton so
@@ -317,7 +318,12 @@ const FeaturesSection: React.FC<FeaturesSectionProps> = ({ isMobile, handleFeatu
                     >
                       <div className={`absolute -inset-3 bg-gradient-to-r ${feature.glow} rounded-3xl blur-2xl`} />
                       <div className="relative">
-                        <Showcase />
+                        {/* Parcours perso BLANC : les vitrines passent en clair.
+                            Sans ce fournisseur elles restent sombres, comme sur
+                            `/guide`. */}
+                        <ShowcaseTheme theme="light">
+                          <Showcase />
+                        </ShowcaseTheme>
                       </div>
                     </motion.div>
                   </div>
@@ -360,7 +366,9 @@ const FeaturesSection: React.FC<FeaturesSectionProps> = ({ isMobile, handleFeatu
                       <div className="feature-mockup relative">
                         <div className={`absolute -inset-3 bg-gradient-to-r ${feature.glow} rounded-3xl blur-2xl`} />
                         <div className="relative">
-                          <Showcase />
+                          <ShowcaseTheme theme="light">
+                            <Showcase />
+                          </ShowcaseTheme>
                         </div>
                       </div>
                     </div>

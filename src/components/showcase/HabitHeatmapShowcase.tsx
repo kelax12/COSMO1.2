@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Flame, CheckCircle, Circle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { formatDate } from '@/i18n/format';
+import { useShowcasePalette } from './showcase-theme';
 
 // ─── Static demo data (Habit Table replication) ─────────────────────
 type Habit = {
@@ -161,14 +162,16 @@ const HabitTableShowcase: React.FC = () => {
     return () => clearInterval(id);
   }, []);
 
-  // Hardcoded surface tokens to match landing page dark theme
-  const surface = 'rgba(30, 41, 59, 0.85)';
-  const hoverBg = 'rgba(255,255,255,0.04)';
-  const border = 'rgba(255,255,255,0.08)';
-  const textPrimary = '#F1F5F9';
-  const textSecondary = '#94A3B8';
-  const textMuted = '#64748B';
-  const accent = '#3B82F6';
+  // Jetons de surface : sombres par défaut, clairs sous `<ShowcaseTheme
+  // theme="light">` (cf. `showcase-theme.ts`).
+  const P = useShowcasePalette();
+  const surface = P.surface;
+  const hoverBg = P.hairlineSoft;
+  const border = P.hairline;
+  const textPrimary = P.textPrimary;
+  const textSecondary = P.textSecondary;
+  const textMuted = P.textMuted;
+  const accent = P.accentText;
 
   return (
     <div
@@ -284,14 +287,14 @@ const HabitTableShowcase: React.FC = () => {
                 className="border-b"
                 style={{
                   borderColor: border,
-                  backgroundColor: index % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.015)',
+                  backgroundColor: index % 2 === 0 ? 'transparent' : P.zebra,
                 }}
               >
                 <td
                   className="p-3 sticky left-0 z-10 border-r"
                   style={{
                     borderColor: border,
-                    backgroundColor: index % 2 === 0 ? surface : 'rgba(30, 41, 59, 0.92)',
+                    backgroundColor: index % 2 === 0 ? surface : P.surfaceAlt,
                   }}
                 >
                   <div className="flex items-center gap-3">

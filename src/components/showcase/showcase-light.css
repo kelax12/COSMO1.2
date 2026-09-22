@@ -1,0 +1,94 @@
+/* ═══════════════════════════════════════════════════════════════════
+   Vitrines animées — THÈME CLAIR
+   ═══════════════════════════════════════════════════════════════════
+   Les vitrines sont écrites en classes SOMBRES, et le restent : c'est ce qui
+   garantit que `/guide` (qui ne demande rien) ne bouge pas d'un pixel. Cette
+   feuille ne s'applique que sous `[data-sc-theme="light"]`, posé par
+   `ShowcaseTheme`, et re-teinte chaque classe sombre employée par les vitrines.
+
+   Trois règles :
+   1. ELLE N'INVERSE JAMAIS `.text-white`. Du blanc sur un aplat coloré (un
+      événement, une pastille d'accent, une coche sur fond bleu) doit rester
+      blanc. L'encre à inverser porte en plus `.sc-ink`.
+   2. UN TEXTE D'ACCENT SUR BLANC SE POSE EN `-600` OU PLUS FONCÉ. Un `-300` /
+      `-400`, lisible sur `slate-900`, ne tient pas 3:1 sur blanc (même règle
+      que la landing, cf. `src/pages/landing/data.ts`).
+   3. L'ACCENT PLEIN EST FIGÉ EN `blue-600`. `--color-accent-solid` suit le
+      thème du VISITEUR : en thème `noir` il vaut `#F0F0F0`, soit une pastille
+      blanche sur une vitrine blanche. Même piège, même remède que les boutons
+      du parcours perso.
+
+   Une classe sombre ajoutée à une vitrine SANS sa ligne ici restera sombre sur
+   la page blanche : c'est l'endroit à compléter.
+   ═══════════════════════════════════════════════════════════════════ */
+
+[data-sc-theme='light'] {
+  --color-accent-solid: 37 99 235;
+  --color-accent-solid-hover: 29 78 216;
+  --color-accent-solid-foreground: 255 255 255;
+}
+
+/* ── Encre ── */
+[data-sc-theme='light'] .sc-ink { color: #0f172a; }
+[data-sc-theme='light'] .text-slate-300 { color: #334155; }
+[data-sc-theme='light'] .text-slate-400 { color: #475569; }
+/* `slate-500` reste `slate-500` : 4,76:1 sur blanc, il passe tel quel. */
+[data-sc-theme='light'] .text-slate-600 { color: #64748b; }
+
+/* ── Surfaces : du plus profond au plus haut ── */
+[data-sc-theme='light'] .bg-slate-950\/40 { background-color: #f8fafc; }
+[data-sc-theme='light'] .bg-slate-900 { background-color: #ffffff; }
+[data-sc-theme='light'] .bg-slate-900\/70,
+[data-sc-theme='light'] .bg-slate-900\/60 { background-color: #f8fafc; }
+[data-sc-theme='light'] .bg-slate-800\/80,
+[data-sc-theme='light'] .bg-slate-800\/50 { background-color: #ffffff; }
+[data-sc-theme='light'] .bg-slate-800,
+[data-sc-theme='light'] .bg-slate-800\/70,
+[data-sc-theme='light'] .bg-slate-800\/60 { background-color: #f1f5f9; }
+[data-sc-theme='light'] .bg-slate-700 { background-color: #e2e8f0; }
+/* Fond du geste « Options » : du texte blanc y est posé, donc slate-500
+   (4,76:1) et pas un gris clair. */
+[data-sc-theme='light'] .bg-slate-600 { background-color: #64748b; }
+[data-sc-theme='light'] .bg-black\/20 { background-color: rgba(255, 255, 255, 0.45); }
+/* Jour sélectionné de l'agenda mobile : pastille blanche sur fond sombre en
+   sombre, donc pastille d'encre sur fond blanc en clair. */
+[data-sc-theme='light'] .bg-white.text-black {
+  background-color: #0f172a;
+  color: #ffffff;
+}
+
+/* ── Filets ── */
+[data-sc-theme='light'] .border-white\/10 { border-color: rgba(15, 23, 42, 0.1); }
+[data-sc-theme='light'] .border-white\/5 { border-color: rgba(15, 23, 42, 0.06); }
+[data-sc-theme='light'] .border-white\/\[0\.04\] { border-color: rgba(15, 23, 42, 0.05); }
+[data-sc-theme='light'] .divide-white\/5 > :not([hidden]) ~ :not([hidden]) {
+  border-color: rgba(15, 23, 42, 0.06);
+}
+[data-sc-theme='light'] .border-slate-800\/60 { border-color: #f1f5f9; }
+[data-sc-theme='light'] .border-slate-700,
+[data-sc-theme='light'] .border-slate-700\/60,
+[data-sc-theme='light'] .border-slate-800 { border-color: #e2e8f0; }
+/* Cercles de case à cocher : ils doivent se voir vides. */
+[data-sc-theme='light'] .border-slate-500 { border-color: #94a3b8; }
+
+/* ── Textes et icônes d'accent : du `-300/-400` au `-600/-700` ── */
+[data-sc-theme='light'] .text-blue-300,
+[data-sc-theme='light'] .text-blue-400 { color: #1d4ed8; }
+[data-sc-theme='light'] .text-green-300,
+[data-sc-theme='light'] .text-green-400 { color: #15803d; }
+[data-sc-theme='light'] .text-red-400,
+[data-sc-theme='light'] .text-red-500\/70 { color: #dc2626; }
+[data-sc-theme='light'] .text-orange-400 { color: #c2410c; }
+[data-sc-theme='light'] .text-orange-400\/60 { color: rgba(194, 65, 12, 0.85); }
+[data-sc-theme='light'] .text-purple-400 { color: #7c3aed; }
+[data-sc-theme='light'] .text-yellow-300 { color: #a16207; }
+/* Signets : ce sont des ICÔNES (3:1 suffit) et ils doivent rester jaunes.
+   amber-600 tient 3,2:1 là où un yellow-600 tombe à 2,9. */
+[data-sc-theme='light'] .text-yellow-400 { color: #d97706; }
+[data-sc-theme='light'] .fill-yellow-400 { fill: #d97706; }
+
+/* ── Pastilles de priorité du tableau des tâches ── */
+[data-sc-theme='light'] .bg-yellow-900\/20 { background-color: #fef9c3; }
+[data-sc-theme='light'] .bg-blue-900\/20 { background-color: #dbeafe; }
+[data-sc-theme='light'] .border-yellow-800 { border-color: #eab308; }
+[data-sc-theme='light'] .border-blue-800 { border-color: #93c5fd; }

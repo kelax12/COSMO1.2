@@ -24,6 +24,7 @@ import {
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react';
+import { useShowcasePalette } from './showcase-theme';
 
 // ═══════════════════════════════════════════════════════════════════
 // SHOWCASE 1 — TaskCardMobile (inchangé : l'utilisateur l'a validé)
@@ -35,10 +36,11 @@ const SHOWCASE_TASKS = [
 ];
 
 export const TaskCardMobileShowcase: React.FC = () => {
+  const P = useShowcasePalette();
   return (
     <div className="w-full max-w-sm mx-auto rounded-2xl overflow-hidden border border-white/10 bg-slate-950/40 backdrop-blur p-3 shadow-2xl">
       <div className="flex items-center justify-between px-2 py-2 mb-2">
-        <span className="text-base font-bold text-white">Tâches</span>
+        <span className="text-base font-bold text-white sc-ink">Tâches</span>
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg bg-[rgb(var(--color-accent-solid))]/20 flex items-center justify-center">
             <Calendar size={14} className="text-blue-400" />
@@ -63,10 +65,10 @@ export const TaskCardMobileShowcase: React.FC = () => {
             <div className="w-1 self-stretch rounded-full" style={{ backgroundColor: SHOWCASE_TASKS[0].color }} />
             <div className="w-5 h-5 rounded-full border-2 border-slate-500 mt-0.5 shrink-0" />
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-white truncate">{SHOWCASE_TASKS[0].name}</p>
+              <p className="text-sm font-semibold text-white sc-ink truncate">{SHOWCASE_TASKS[0].name}</p>
               <p className="text-[11px] text-slate-400">{SHOWCASE_TASKS[0].meta}</p>
             </div>
-            <div className="self-center px-2 py-0.5 rounded text-[10px] font-bold" style={{ backgroundColor: SHOWCASE_TASKS[0].color + '30', color: SHOWCASE_TASKS[0].color }}>
+            <div className="self-center px-2 py-0.5 rounded text-[10px] font-bold" style={{ backgroundColor: SHOWCASE_TASKS[0].color + '30', color: P.tintText(SHOWCASE_TASKS[0].color) }}>
               P{SHOWCASE_TASKS[0].pri}
             </div>
             <Bookmark size={14} className="self-center text-amber-500" fill="currentColor" />
@@ -86,10 +88,10 @@ export const TaskCardMobileShowcase: React.FC = () => {
             <div className="w-1 self-stretch rounded-full" style={{ backgroundColor: SHOWCASE_TASKS[1].color }} />
             <div className="w-5 h-5 rounded-full border-2 border-slate-500 mt-0.5 shrink-0" />
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-white truncate">{SHOWCASE_TASKS[1].name}</p>
+              <p className="text-sm font-semibold text-white sc-ink truncate">{SHOWCASE_TASKS[1].name}</p>
               <p className="text-[11px] text-slate-400">{SHOWCASE_TASKS[1].meta}</p>
             </div>
-            <div className="self-center px-2 py-0.5 rounded text-[10px] font-bold" style={{ backgroundColor: SHOWCASE_TASKS[1].color + '30', color: SHOWCASE_TASKS[1].color }}>
+            <div className="self-center px-2 py-0.5 rounded text-[10px] font-bold" style={{ backgroundColor: SHOWCASE_TASKS[1].color + '30', color: P.tintText(SHOWCASE_TASKS[1].color) }}>
               P{SHOWCASE_TASKS[1].pri}
             </div>
           </motion.div>
@@ -99,10 +101,10 @@ export const TaskCardMobileShowcase: React.FC = () => {
           <div className="w-1 self-stretch rounded-full" style={{ backgroundColor: SHOWCASE_TASKS[2].color }} />
           <div className="w-5 h-5 rounded-full border-2 border-slate-500 mt-0.5 shrink-0" />
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-white truncate">{SHOWCASE_TASKS[2].name}</p>
+            <p className="text-sm font-semibold text-white sc-ink truncate">{SHOWCASE_TASKS[2].name}</p>
             <p className="text-[11px] text-slate-400">{SHOWCASE_TASKS[2].meta}</p>
           </div>
-          <div className="self-center px-2 py-0.5 rounded text-[10px] font-bold" style={{ backgroundColor: SHOWCASE_TASKS[2].color + '30', color: SHOWCASE_TASKS[2].color }}>
+          <div className="self-center px-2 py-0.5 rounded text-[10px] font-bold" style={{ backgroundColor: SHOWCASE_TASKS[2].color + '30', color: P.tintText(SHOWCASE_TASKS[2].color) }}>
             P{SHOWCASE_TASKS[2].pri}
           </div>
           {/* 🔴 C'EST UN DESSIN, PAS UNE COMMANDE (C-80). C'était un
@@ -117,7 +119,7 @@ export const TaskCardMobileShowcase: React.FC = () => {
               promettre un appui qui ne fait rien. Un élément non interactif se
               retire de l'arbre d'accessibilité, il ne se met pas aux normes. */}
           <motion.div
-            animate={{ scale: [1, 1.2, 1], color: ['#94a3b8', '#3b82f6', '#94a3b8'] }}
+            animate={{ scale: [1, 1.2, 1], color: [P.iconIdle, P.iconActive, P.iconIdle] }}
             transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
             className="self-center p-1.5 rounded-lg"
             aria-hidden="true"
@@ -165,7 +167,7 @@ export const AgendaMobileShowcase: React.FC = () => {
       <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
         <div className="flex items-center gap-2">
           <ChevronLeft size={16} className="text-slate-400" />
-          <span className="text-sm font-bold text-white">Avril 2025</span>
+          <span className="text-sm font-bold text-white sc-ink">Avril 2025</span>
           <ChevronRight size={16} className="text-slate-400" />
         </div>
         <div className="w-8 h-8 rounded-lg bg-[rgb(var(--color-accent-solid))] flex items-center justify-center">
@@ -287,10 +289,11 @@ const COMPLETIONS_BY_HABIT = [
 ];
 
 export const HabitMobileShowcase: React.FC = () => {
+  const P = useShowcasePalette();
   return (
     <div className="w-full max-w-sm mx-auto rounded-2xl overflow-hidden border border-white/10 bg-slate-950/40 backdrop-blur shadow-2xl">
       <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
-        <span className="text-sm font-bold text-white">Habitudes</span>
+        <span className="text-sm font-bold text-white sc-ink">Habitudes</span>
         <span className="text-[11px] font-semibold text-slate-400">2/3 aujourd'hui</span>
       </div>
 
@@ -305,7 +308,7 @@ export const HabitMobileShowcase: React.FC = () => {
               <div className="flex items-center gap-2.5 flex-1 min-w-0">
                 <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: habit.color }} />
                 <div className="min-w-0">
-                  <p className="text-sm font-semibold text-white truncate">{habit.name}</p>
+                  <p className="text-sm font-semibold text-white sc-ink truncate">{habit.name}</p>
                   <div className="flex items-center gap-2.5 mt-0.5">
                     <span className="text-[11px] text-slate-400 flex items-center gap-1">
                       <Clock size={10} /> {habit.time} min
@@ -325,7 +328,7 @@ export const HabitMobileShowcase: React.FC = () => {
                   <Edit2 size={14} />
                 </div>
                 <motion.div
-                  animate={hi === 0 ? { color: ['#94a3b8', '#3b82f6', '#94a3b8'], scale: [1, 1.15, 1] } : {}}
+                  animate={hi === 0 ? { color: [P.iconIdle, P.iconActive, P.iconIdle], scale: [1, 1.15, 1] } : {}}
                   transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
                   className="w-7 h-7 flex items-center justify-center"
                 >
@@ -392,6 +395,7 @@ export const HabitMobileShowcase: React.FC = () => {
 //     + barre de progression
 // ═══════════════════════════════════════════════════════════════════
 export const OKRMobileShowcase: React.FC = () => {
+  const P = useShowcasePalette();
   const progress = 68;
   const krs = [
     { name: 'Lancer la v2',           current: 8,  target: 10, time: 120, color: '#3B82F6' },
@@ -407,7 +411,7 @@ export const OKRMobileShowcase: React.FC = () => {
             {/* Chip catégorie */}
             <span
               className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-medium mb-1.5"
-              style={{ backgroundColor: '#3B82F620', color: '#3B82F6' }}
+              style={{ backgroundColor: '#3B82F620', color: P.tintText('#3B82F6') }}
             >
               <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#3B82F6' }} />
               <span>Travail</span>
@@ -419,7 +423,7 @@ export const OKRMobileShowcase: React.FC = () => {
               <span>30/06/2025</span>
             </div>
             {/* Titre + description */}
-            <h3 className="text-sm font-semibold text-white mb-0.5 truncate">
+            <h3 className="text-sm font-semibold text-white sc-ink mb-0.5 truncate">
               Atteindre 1000 utilisateurs
             </h3>
             <p className="text-[11px] text-slate-400 line-clamp-2">
@@ -454,7 +458,7 @@ export const OKRMobileShowcase: React.FC = () => {
           {/* Cercle SVG */}
           <div className="relative w-14 h-14 shrink-0">
             <svg className="transform -rotate-90" width="56" height="56" viewBox="0 0 80 80">
-              <circle cx="40" cy="40" r="32" stroke="#334155" strokeWidth="8" fill="none" />
+              <circle cx="40" cy="40" r="32" stroke={P.ringTrack} strokeWidth="8" fill="none" />
               <motion.circle
                 cx="40" cy="40" r="32"
                 stroke="#3B82F6" strokeWidth="8" fill="none" strokeLinecap="round"
@@ -465,13 +469,13 @@ export const OKRMobileShowcase: React.FC = () => {
               />
             </svg>
             <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-sm font-bold text-white">{progress}%</span>
+              <span className="text-sm font-bold text-white sc-ink">{progress}%</span>
             </div>
           </div>
           <div className="flex-1">
             <div className="flex justify-between items-center mb-1">
               <span className="text-[11px] text-slate-400">Progression globale</span>
-              <span className="text-[11px] font-bold text-white">{progress}%</span>
+              <span className="text-[11px] font-bold text-white sc-ink">{progress}%</span>
             </div>
             <div className="w-full h-1.5 rounded-full bg-slate-700 overflow-hidden">
               <motion.div
@@ -492,7 +496,7 @@ export const OKRMobileShowcase: React.FC = () => {
             return (
               <div key={i} className="p-2.5 rounded-lg bg-slate-800/60">
                 <div className="flex items-center justify-between gap-2 mb-2">
-                  <span className="text-[11px] font-medium text-white truncate flex-1">{kr.name}</span>
+                  <span className="text-[11px] font-medium text-white sc-ink truncate flex-1">{kr.name}</span>
                   <div className="flex items-center gap-1 shrink-0">
                     <CheckCircle size={11} className="text-blue-400" />
                     <Calendar size={11} className="text-purple-400" />
@@ -504,7 +508,7 @@ export const OKRMobileShowcase: React.FC = () => {
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="flex items-center gap-1 text-[10px] text-slate-400 shrink-0">
-                    <span className="px-1.5 py-0.5 rounded bg-slate-700 text-white font-mono text-[10px]">
+                    <span className="px-1.5 py-0.5 rounded bg-slate-700 text-white sc-ink font-mono text-[10px]">
                       {kr.current}
                     </span>
                     <span>/ {kr.target}</span>
@@ -552,7 +556,7 @@ export const StatsMobileShowcase: React.FC = () => {
   return (
     <div className="w-full max-w-sm mx-auto rounded-2xl overflow-hidden border border-white/10 bg-slate-950/40 backdrop-blur shadow-2xl">
       <div className="px-4 py-3 border-b border-white/10">
-        <span className="text-sm font-bold text-white">Statistiques</span>
+        <span className="text-sm font-bold text-white sc-ink">Statistiques</span>
         <p className="text-[11px] text-slate-400 mt-0.5">Analysez votre productivité</p>
       </div>
 
@@ -567,7 +571,7 @@ export const StatsMobileShowcase: React.FC = () => {
             className="p-4 rounded-xl bg-slate-900 border border-slate-800"
           >
             <p className="text-[10px] font-medium text-slate-500">{stat.label}</p>
-            <p className="text-lg font-bold text-white mt-1">{stat.val}</p>
+            <p className="text-lg font-bold text-white sc-ink mt-1">{stat.val}</p>
           </motion.div>
         ))}
       </div>
