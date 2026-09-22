@@ -92,28 +92,36 @@ const HeroBackdrop: React.FC<Props> = ({ gridRef, auroraRef }) => (
             className="absolute left-1/2 top-[-18%] h-[58rem] w-[58rem] -translate-x-1/2 rounded-full"
             style={{
               background:
-                'radial-gradient(circle closest-side, rgba(99,102,241,0.08) 0%, rgba(99,102,241,0.07) 34%, rgba(139,92,246,0.055) 56%, rgba(217,70,239,0.035) 76%, rgba(34,211,238,0.02) 90%, transparent 100%)',
+                'radial-gradient(circle closest-side, rgba(99,102,241,0.04) 0%, rgba(99,102,241,0.035) 34%, rgba(139,92,246,0.028) 56%, rgba(217,70,239,0.018) 76%, rgba(34,211,238,0.01) 90%, transparent 100%)',
             }}
           />
-          {/* Aurores — alphas DIVISÉS PAR DEUX le 2026-09-22, en même temps
-              que la couche est redevenue visible (cf. `z-0` plus haut). Ils
-              avaient été réglés pour glisser sur un fond `slate-900` ; posés
-              sur du blanc, ils lavaient la page en pastel. Une page blanche
-              doit rester blanche : ce sont des teintes, pas un décor. */}
+          {/* Aurores — alphas DIVISÉS PAR DEUX une PREMIÈRE fois le 2026-09-22,
+              quand la couche est redevenue visible (cf. `z-0` plus haut) : ils
+              avaient été réglés pour glisser sur un fond `slate-900`, et posés
+              sur du blanc ils lavaient la page en pastel.
+              🔴 DIVISÉS PAR DEUX UNE SECONDE FOIS avec le hero centré, et pour
+              une raison distincte : le titre est devenu la seule chose du
+              premier écran, il porte lui-même un dégradé bleu → fuchsia sur sa
+              deuxième ligne, et il s'affiche DEVANT ces quatre nappes. Un fond
+              teinté dans les mêmes couleurs que le texte qu'il porte enlève au
+              texte ce qu'il donne au fond. Mesuré sur la page, pas sur les
+              valeurs : le coin haut-droit virait au rose franc.
+              ⚠️ Ce sont des teintes, pas un décor. Si le fond commence à se
+              voir, c'est qu'il est déjà trop fort. */}
           <div
             className="absolute -top-40 left-1/2 h-[60rem] w-[60rem] -translate-x-1/2 rounded-full"
             style={{
               background:
-                'radial-gradient(circle closest-side, rgba(37,99,235,0.09) 0%, rgba(37,99,235,0.08) 34%, rgba(37,99,235,0.065) 54%, rgba(139,92,246,0.045) 72%, rgba(217,70,239,0.025) 88%, transparent 100%)',
+                'radial-gradient(circle closest-side, rgba(37,99,235,0.045) 0%, rgba(37,99,235,0.04) 34%, rgba(37,99,235,0.032) 54%, rgba(139,92,246,0.022) 72%, rgba(217,70,239,0.012) 88%, transparent 100%)',
             }}
           />
           <div
             className="absolute -top-4 -left-40 h-[38rem] w-[38rem] rounded-full"
-            style={{ background: 'radial-gradient(circle closest-side, rgba(6,182,212,0.07) 0%, rgba(6,182,212,0.06) 40%, rgba(6,182,212,0.03) 70%, transparent 100%)' }}
+            style={{ background: 'radial-gradient(circle closest-side, rgba(6,182,212,0.035) 0%, rgba(6,182,212,0.03) 40%, rgba(6,182,212,0.015) 70%, transparent 100%)' }}
           />
           <div
             className="absolute top-8 -right-36 h-[38rem] w-[38rem] rounded-full"
-            style={{ background: 'radial-gradient(circle closest-side, rgba(217,70,239,0.065) 0%, rgba(217,70,239,0.055) 40%, rgba(217,70,239,0.03) 70%, transparent 100%)' }}
+            style={{ background: 'radial-gradient(circle closest-side, rgba(217,70,239,0.032) 0%, rgba(217,70,239,0.028) 40%, rgba(217,70,239,0.015) 70%, transparent 100%)' }}
           />
         </div>
         {/* Texture noise (SVG feTurbulence, ultra-léger) */}

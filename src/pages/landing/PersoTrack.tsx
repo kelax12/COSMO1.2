@@ -294,7 +294,17 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
               lecture. */}
           <HeroModuleDock actif={moduleAffiche} />
 
-          <div className="mx-auto max-w-3xl flex flex-col items-center text-center">
+          {/* La colonne de lecture est plus large que le texte n'en a besoin,
+              et c'est le titre qui fixe sa largeur : `max-w-4xl` est la valeur
+              a laquelle les deux phrases du H1 tiennent chacune sur UNE ligne,
+              en francais comme en anglais. Un titre qui se casse en quatre
+              lignes ne se lit plus comme une promesse, mais comme un
+              paragraphe.
+              ⚠️ Elle est aussi bornee par le haut : au-dela, le titre mordrait
+              sur les puces flottantes, qui vivent dans les marges de ce meme
+              conteneur `max-w-7xl`. Mesure a 1440 px : le titre s'arrete a
+              1168 px, la puce « Agenda » commence a 1254. */}
+          <div className="mx-auto max-w-4xl flex flex-col items-center text-center">
               {/* W1 — H1 révélé ligne par ligne, en CSS.
                   Ce bloc utilisait SplitText : découpe en mots, re-split au
                   chargement des fontes, et recopie des classes de gradient sur
@@ -311,9 +321,35 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
                   pour que les puces se posent avant elle. */}
               <HeroAppIcon onModuleChange={onSlideChange} delaiEntree={DELAI_ARRIMAGE_MS + 120} />
 
+              {/* ── Typographie de la refonte centree (2026-09-22) ──
+                  Le titre est la seule chose que le premier ecran doit reussir,
+                  et son reglage vient de trois valeurs, pas d'une taille :
+                  · `tracking-[-0.045em]` — un display serre. Inter s'espace
+                    pour du corps de texte ; a 80 px, l'espacement par defaut
+                    fait flotter les mots et casse le bloc.
+                  · `leading-[0.98]` — les deux lignes forment UN bloc. Au-dela
+                    de 1,0 elles se lisent comme deux phrases empilees.
+                  🔴 LES QUATRE TAILLES SONT ARBITRAIRES, ET C'EST OBLIGATOIRE.
+                  Les classes nommees de Tailwind (`text-6xl`, `text-7xl`…)
+                  posent AUSSI un `line-height`, et leurs variantes responsives
+                  sont emises APRES `leading-[…]` dans la feuille : a poids egal,
+                  la derniere gagne. Ecrit `lg:text-6xl`, le titre rendait donc
+                  `line-height: 1` a partir de 1024 px — mesure dans le
+                  navigateur a 68 px pour 68 px de corps, la ou 0,98 en demande
+                  66,6. Aucune erreur, aucun avertissement : la classe existe
+                  bien dans la feuille, elle est simplement recouverte. Une
+                  taille arbitraire ne pose que `font-size`, donc `leading`
+                  reste le seul a decider.
+                  · `font-bold` (700) — et pas davantage : les deux `@font-face`
+                    d'Inter declarent `font-weight: 300 700`. Demander 800
+                    ferait SYNTHETISER le gras par le navigateur, qui epaissit
+                    les jambages sans redessiner la lettre.
+                  ⚠️ `leading` < 1 rogne les jambages descendants dans un
+                  `overflow: hidden` : c'est `.hero-line-mask` qui compense, par
+                  son `padding-bottom` de 0,14em. Ne pas le retirer. */}
               <h1
                 ref={headingRef}
-                className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tight mb-6 leading-[1.05]"
+                className="text-[2.35rem] sm:text-[3.25rem] lg:text-[3.75rem] xl:text-[4.25rem] font-bold tracking-[-0.045em] mb-5 leading-[0.98]"
               >
                 <span className="hero-line-mask">
                   <span
@@ -333,36 +369,48 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
                 </span>
               </h1>
 
+              {/* Le sous-titre est en RETRAIT du titre, pas en continuite :
+                  plus petit, plus gris, et surtout plus ETROIT que lui
+                  (`max-w-xl` sous un titre en `max-w-3xl`). C'est ce
+                  retrecissement qui fait lire les deux blocs comme un titre et
+                  sa legende, et non comme deux paragraphes.
+                  ⚠️ `slate-500` sur blanc vaut 4,76:1 — au-dessus du 4,5:1 exige
+                  pour du texte courant. Ne pas descendre a `slate-400` (3,03:1),
+                  qui echouerait a cette taille. */}
               <p
                 data-hero-fade
-                className="text-lg lg:text-xl text-slate-600 mb-12 lg:mb-16 max-w-xl leading-relaxed"
+                className="text-[1rem] sm:text-[1.125rem] text-slate-500 mb-9 max-w-xl leading-[1.55]"
               >
                 {t('hero.subtitle')}
               </p>
 
-              <div data-hero-fade className="flex flex-col sm:flex-row gap-3.5 w-full sm:w-auto">
+              {/* Deux pastilles, et une seule fleche. La fleche vit sur l'action
+                  SECONDAIRE : elle y annonce un deplacement (creer un compte),
+                  alors que l'action principale se joue sur place. En mettre une
+                  sur les deux annulerait la hierarchie que la couleur etablit. */}
+              <div data-hero-fade className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
                 {/* CTA principal : démo sans inscription (friction zéro) */}
                 <button
                   ref={magneticHeroDemo}
                   onClick={onDemo}
-                  className="group relative overflow-hidden bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-2xl font-bold text-base transition-[box-shadow,color,background-color] duration-300 shadow-[0_8px_30px_-6px_rgba(37,99,235,0.45)] hover:shadow-[0_12px_40px_-6px_rgba(37,99,235,0.6)] flex items-center justify-center gap-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
+                  className="group relative overflow-hidden bg-blue-600 hover:bg-blue-700 text-white px-7 py-3.5 rounded-full font-semibold text-[15px] tracking-[-0.01em] transition-[box-shadow,color,background-color] duration-300 shadow-[0_8px_30px_-8px_rgba(37,99,235,0.55)] hover:shadow-[0_12px_38px_-8px_rgba(37,99,235,0.7)] flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
                   aria-label={t('hero.demoAria')}
                 >
                   <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700" aria-hidden="true" />
                   <span className="relative">{t('hero.demoCta')}</span>
-                  <ArrowRight size={18} className="relative group-hover:translate-x-1 transition-transform" aria-hidden="true" />
                 </button>
                 <button
                   ref={magneticHeroSignup}
                   onClick={onRegister}
-                  className="group bg-white hover:bg-slate-50 text-slate-900 border border-slate-300 px-8 py-4 rounded-2xl font-semibold text-base shadow-sm transition-[box-shadow,color,background-color] duration-300 flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                  className="group bg-white hover:bg-slate-50 text-slate-900 border border-slate-300 px-7 py-3.5 rounded-full font-semibold text-[15px] tracking-[-0.01em] shadow-sm transition-[box-shadow,color,background-color] duration-300 flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                 >
                   {t('hero.signupCta')}
+                  <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" aria-hidden="true" />
                 </button>
               </div>
 
               {/* Micro-preuve sous les CTAs */}
-              <p data-hero-fade className="mt-4 text-xs text-slate-500">
+              <p data-hero-fade className="mt-5 text-xs text-slate-500">
                 {t('hero.reassurance')}
               </p>
             </div>

@@ -1083,3 +1083,62 @@ npm run check:bundle        # Budget de bundle sur le build reel (CI, apres npm 
                             # s'initialiser Sentry pour de bon, qui emet vers un hote inexistant
                             # et fait tomber `best-practices` de 100 a 96 dans lighthouse.
 ```
+
+---
+
+## Shader du hero ENTREPRISE (C-68) — une file GPU qui sature bloque le fil principal
+
+> Descendu de [`src/pages/landing/CLAUDE.md`](../src/pages/landing/CLAUDE.md) le 2026-09-22,
+> **sans une coupe** : le fichier de dossier avait depasse son plafond, et ce recit est
+> une mesure de performance avant d'etre une regle de landing.
+
+🔴 **Le shader du hero ENTREPRISE se règle tout seul, et il ne doit jamais redevenir fixe**
+  (finding C-68, corrigé le 2026-09-05). `LightRays` peint le viewport entier dans un fragment
+  shader à chaque frame, indéfiniment. Quand la machine ne tient pas la frame, les commandes
+  s'empilent, le tampon se remplit, et **le fil principal BLOQUE** dans
+  `CommandBufferProxyImpl::WaitForGetOffset` en attendant qu'il se vide. Mesuré sur le build de
+  prod, rastérisation logicielle : **3 637 ms bloquées sur 4 000 au repos**, dont ~2 800 de pure
+  attente. **Aucun de nos JavaScript ne tournait** — c'est pour ça que couper les flous, les 23
+  `ScrollTrigger` et les 8 tweens infinis ne déplaçait pas la mesure d'un point, et pourquoi la
+  cause a mis quatre jours à être nommée. Le composant mesure désormais la cadence qu'il obtient et
+  le temps qu'il passe **dans** `render`, et descend d'un palier tant que ça ne tient pas :
+  demi-résolution (le **départ**) → un huitième des pixels → 20 img/s → **gel**, la dernière frame
+  restant affichée. **Les rayons restent visibles dans tous les cas** ; c'est le mouvement qui se
+  retire, jamais l'image.
+❌ **Ne jamais remplacer ça par une détection de rastériseur logiciel** (`SwiftShader`,
+  `llvmpipe`) : ça verdit la sonde sans rien rendre à un téléphone d'entrée de gamme, qui a bien un
+  GPU et n'en sature pas moins.
+❌ **Ne jamais faire repartir l'échelle de la pleine résolution.** Descendre depuis le haut coûte
+  la descente : mesuré, un résidu **stable** de 315 à 393 ms sur six passes, là où la même page
+  sans canvas rendait 0 sur six. Ces frames-là tombent dans les premières secondes, le seul moment
+  où quelqu'un regarde.
+⚠️ **Une file qui sature n'a pas un coût progressif, elle a deux états.** C'est ce qui rendait la
+  mesure BIMODALE, et aucune moyenne ne pouvait l'expliquer. Toute mesure de cette page se lit
+  passe par passe, jamais en médiane.
+- 🔴 **Le hero perso est CENTRÉ depuis le 2026-09-22** (DA de référence : Mobbin). Plus de
+  colonne de droite : une **tuile produit** (`HeroAppIcon`, 96 px, deux feuilles empilées
+  derrière) tourne sur les quatre modules au-dessus du H1, et les **quatre puces**
+  (`HeroModuleDock`) flottent dans les marges de part et d'autre du titre, chacune reliée au
+  centre par un filet d'encre (`.hero-link`). Les quatre modules sont décrits **une seule fois**,
+  dans `hero-modules.ts` : la tuile et les puces doivent toujours dire la même chose.
+⚠️ **`AppWindowShowcase` n'est plus dans le hero** — 540 px au-dessus du titre repoussaient la
+  promesse sous la ligne de flottaison. Les quatre vitrines qu'elle faisait tourner sont montrées
+  en grand, une par une, dès `FeaturesSection`.
+⚠️ **Deux dispositions, UN seul jeu de puces**, basculé par des classes `xl:`. Rendre deux jeux
+  et en masquer un coûterait soit un doublon annoncé aux lecteurs d'écran, soit un `aria-hidden`
+  sur la seule liste libellée, donc la disparition de `hero.modulesLabel` sur grand écran.
+🔴 **`LandingSkeleton` (dans `App.tsx`) DOIT décalquer ce hero**, pas seulement en occuper la
+  place. Il a décrit la mise en page à deux colonnes pendant que le hero était déjà centré : un
+  squelette qui annonce autre chose fabrique le saut de mise en page qu'il est censé éviter.
+- 🔴 **Les tailles du H1 perso sont ARBITRAIRES (`text-[4.25rem]`), jamais nommées.** Les classes
+  nommées de Tailwind (`text-6xl`, `text-7xl`…) posent **aussi** un `line-height`, et leurs
+  variantes responsives sont émises **après** `leading-[…]` dans la feuille : à poids égal, la
+  dernière gagne. Écrit `lg:text-6xl`, le titre rendait `line-height: 1` à partir de 1024 px —
+  mesuré à 68 px pour 68 px de corps, là où `leading-[0.98]` en demande 66,6. Aucune erreur,
+  aucun avertissement : la classe existe bien dans la feuille, elle est simplement recouverte.
+⚠️ Même piège sur le sous-titre (`sm:text-lg`), corrigé en même temps.
+- ⚠️ **Les alphas des aurores ont été divisés par deux une SECONDE fois** avec le hero centré, et
+  pour une raison distincte de la première : le titre porte lui-même un dégradé bleu → fuchsia et
+  s'affiche devant ces nappes. Un fond teinté dans les couleurs du texte qu'il porte enlève au
+  texte ce qu'il donne au fond — le coin haut-droit virait au rose franc. Si le fond commence à
+  se voir, c'est qu'il est déjà trop fort.

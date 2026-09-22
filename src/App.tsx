@@ -186,28 +186,38 @@ const LandingSkeleton = () => (
     <div className="mx-auto max-w-5xl px-4 pt-6">
       <div className="h-14 rounded-2xl bg-slate-900/[0.04]" />
     </div>
+    {/* 🔴 CE SQUELETTE DOIT DÉCALQUER LE HERO, pas seulement en occuper la
+        place. Il a décrit une mise en page à DEUX COLONNES — texte à gauche,
+        fenêtre produit à droite — jusqu'au 2026-09-22, c'est-à-dire pendant
+        que le hero, lui, était déjà centré. Un squelette qui annonce autre
+        chose que ce qui arrive produit un saut de mise en page à l'endroit
+        exact où il est censé l'éviter : la promesse glisse de la gauche vers
+        le centre sous les yeux du visiteur.
+        ⚠️ Il est peint AVANT le chunk de la page : le relire ne suffit pas à
+        savoir s'il est juste, il faut le regarder pendant qu'il s'affiche
+        (bridage CPU, onglet rechargé). */}
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-10 lg:pt-16">
-      <div className="grid lg:grid-cols-2 gap-12 lg:gap-8 items-center">
-        <div className="space-y-4">
-          <div className="h-12 lg:h-16 w-11/12 rounded-xl bg-slate-900/[0.06]" />
-          <div className="h-12 lg:h-16 w-10/12 rounded-xl bg-slate-900/[0.06]" />
-          <div className="h-12 lg:h-16 w-8/12 rounded-xl bg-blue-600/10" />
-          <div className="pt-6 space-y-2.5">
-            <div className="h-4 w-11/12 rounded bg-slate-900/[0.05]" />
-            <div className="h-4 w-9/12 rounded bg-slate-900/[0.05]" />
-          </div>
-          <div className="pt-6 flex gap-3.5">
-            <div className="h-14 w-52 rounded-2xl bg-blue-600/20" />
-            <div className="h-14 w-48 rounded-2xl bg-slate-900/[0.06]" />
-          </div>
+      <div className="mx-auto flex max-w-4xl flex-col items-center">
+        {/* La rangée de puces (< xl) puis la tuile produit. Au-delà de `xl`
+            les puces partent dans les marges : le squelette ne les y suit pas,
+            elles n'y pèsent aucune hauteur. */}
+        <div className="mb-6 flex gap-2.5 xl:invisible">
+          {[0, 1, 2, 3].map((i) => (
+            <div key={i} className="h-7 w-24 rounded-full bg-slate-900/[0.05]" />
+          ))}
         </div>
-        <div className="hidden lg:block">
-          <div className="mb-3 flex justify-center gap-2.5">
-            {[0, 1, 2, 3].map((i) => (
-              <div key={i} className="h-7 w-24 rounded-full bg-slate-900/[0.05]" />
-            ))}
-          </div>
-          <div className="h-[26rem] rounded-2xl bg-slate-900/[0.05]" />
+        <div className="mb-8 sm:mb-10 h-24 w-24 rounded-[1.7rem] bg-slate-900/[0.06]" />
+        <div className="w-full space-y-3">
+          <div className="mx-auto h-[2.35rem] lg:h-[3.75rem] xl:h-[4.25rem] w-11/12 rounded-xl bg-slate-900/[0.06]" />
+          <div className="mx-auto h-[2.35rem] lg:h-[3.75rem] xl:h-[4.25rem] w-10/12 rounded-xl bg-blue-600/10" />
+        </div>
+        <div className="mt-8 w-full max-w-xl space-y-2.5">
+          <div className="mx-auto h-4 w-11/12 rounded bg-slate-900/[0.05]" />
+          <div className="mx-auto h-4 w-9/12 rounded bg-slate-900/[0.05]" />
+        </div>
+        <div className="mt-9 flex gap-3">
+          <div className="h-[3.25rem] w-52 rounded-full bg-blue-600/20" />
+          <div className="h-[3.25rem] w-48 rounded-full bg-slate-900/[0.06]" />
         </div>
       </div>
     </div>
