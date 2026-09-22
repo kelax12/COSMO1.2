@@ -1,12 +1,15 @@
 import React, { useCallback, useEffect, useRef } from 'react';
 import { flushSync } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { AlertTriangle, Bookmark, CheckCircle2, CheckSquare, Search, Users, X } from 'lucide-react';
+import { AlertTriangle, Bookmark, CheckCircle2, CheckSquare, Search, Sparkles, Users, X } from 'lucide-react';
 import { useModalA11y } from '@/hooks/use-modal-a11y';
 import { measureKeyboardInset, useKeyboardInset } from '@/lib/hooks/use-keyboard-inset';
 import { useQuickFilter, setQuickFilter } from '@/components/task-table/quick-filter.store';
 import { requestSelectMode, useSelectModeActive } from '@/components/task-table/select-mode.store';
 import type { QuickFilter } from '@/components/task-table/TaskQuickFilters';
+import type { TaskList } from '@/modules/lists';
+import { VIRTUAL_TODAY_ID } from './task-page-filter';
+import { resolveListColor } from './list-colors';
 import { setSearchOpen, useSearchOpen } from './search-open.store';
 import { useT } from '@/i18n/useT';
 import type { KeyOf } from '@/i18n/catalog';
@@ -37,6 +40,18 @@ import type { KeyOf } from '@/i18n/catalog';
 interface Props {
   searchTerm: string;
   onSearchTermChange: (value: string) => void;
+  /**
+   * De quoi proposer les listes en plus des filtres. Groupe en un objet : ces
+   * quatre valeurs ne se comprennent qu'ensemble, et `TasksPage` est a trois
+   * lignes de son plafond de 600.
+   */
+  listPicker: {
+    lists: TaskList[];
+    selectedListId: string | null;
+    onSelect: (listId: string) => void;
+    /** « Aujourd'hui » peut etre masquee par la personne : on ne la propose pas. */
+    todayHidden: boolean;
+  };
 }
 
 type Suggestion =
@@ -50,6 +65,17 @@ const SUGGESTIONS: Suggestion[] = [
   { kind: 'filter', value: 'collaboration', labelKey: 'table.quickFilter.collaboration', icon: Users },
   { kind: 'select', labelKey: 'table.select', icon: CheckSquare },
 ];
+
+/** Une ligne de la carte : un filtre rapide, « Aujourd'hui », ou une liste. */
+type Row = {
+  key: string;
+  label: string;
+  active: boolean;
+  onPick: () => void;
+  /** Filtres et « Aujourd'hui » portent une icone, les listes une pastille. */
+  icon?: React.ElementType;
+  dot?: string;
+};
 
 /** Libellé de la pilule « filtre rapide actif », posée dans la barre fermée. */
 const ACTIVE_LABEL_KEY: Record<Exclude<QuickFilter, 'none'>, KeyOf<'tasks'>> = {
@@ -66,7 +92,7 @@ const ACTIVE_LABEL_KEY: Record<Exclude<QuickFilter, 'none'>, KeyOf<'tasks'>> = {
  */
 const KEYBOARD_LIFT_PX = 80;
 
-const MobileTaskSearch: React.FC<Props> = ({ searchTerm, onSearchTermChange }) => {
+const MobileTaskSearch: React.FC<Props> = ({ searchTerm, onSearchTermChange, listPicker }) => {
   const { t } = useT('tasks');
   // L'ouverture vit dans un store : `TasksPage` efface son en-tête, ses listes
   // et son tri pendant la recherche, et `SwipeHintBanner` s'efface aussi, deux
@@ -169,6 +195,37 @@ const MobileTaskSearch: React.FC<Props> = ({ searchTerm, onSearchTermChange }) =
     // rester dans l'overlay obligerait à le fermer pour voir le résultat.
     close();
   };
+
+  // -- Les lignes de la carte : les cinq filtres, puis les listes ------
+  //
+  // Une seule collection, et pas deux boucles : le trait de separation se pose
+  // « sur toutes sauf la derniere », ce qui n'a de sens qu'a l'echelle de la
+  // carte entiere. Les listes rejoignent les filtres ici parce que la barre de
+  // chips s'efface pendant la recherche : sans elles, choisir une liste
+  // demanderait de fermer l'ecran d'abord.
+  const rows: Row[] = [
+    ...SUGGESTIONS.map((suggestion) => ({
+      key: suggestion.labelKey,
+      label: t(suggestion.labelKey),
+      icon: suggestion.icon,
+      active: suggestion.kind === 'filter' && activeQuickFilter === suggestion.value,
+      onPick: () => pick(suggestion),
+    })),
+    ...(listPicker.todayHidden ? [] : [{
+      key: VIRTUAL_TODAY_ID,
+      label: t('filters.today'),
+      icon: Sparkles,
+      active: listPicker.selectedListId === VIRTUAL_TODAY_ID,
+      onPick: () => { listPicker.onSelect(VIRTUAL_TODAY_ID); close(); },
+    }]),
+    ...listPicker.lists.map((list) => ({
+      key: list.id,
+      label: list.name,
+      dot: resolveListColor(list.color),
+      active: listPicker.selectedListId === list.id,
+      onPick: () => { listPicker.onSelect(list.id); close(); },
+    })),
+  ];
 
   const barBottom = 'calc(4rem + env(safe-area-inset-bottom) + 0.5rem)';
 
@@ -290,39 +347,43 @@ const MobileTaskSearch: React.FC<Props> = ({ searchTerm, onSearchTermChange }) =
                 <p className="px-1 pb-3 text-title font-bold text-[rgb(var(--color-text-primary))]">
                   {t('search.suggestions')}
                 </p>
-                <div className="rounded-2xl bg-[rgb(var(--color-surface))] overflow-hidden">
+                <div className="rounded-2xl bg-[rgb(var(--color-surface))] overflow-y-auto overscroll-contain min-h-0">
                   <ul>
-                    {SUGGESTIONS.map((suggestion, index) => {
-                      const Icon = suggestion.icon;
-                      const isActive = suggestion.kind === 'filter' && activeQuickFilter === suggestion.value;
+                    {rows.map((row, index) => {
+                      const Icon = row.icon;
                       // Séparateur EN RETRAIT : il commence à l'aplomb du
                       // libellé et s'arrête avant le bord droit, jamais bord à
                       // bord, et jamais sous la dernière ligne. Il est donc
                       // porté par un conteneur INTÉRIEUR au bouton : posé sur
                       // le `<li>`, il traverserait aussi la colonne d'icônes.
-                      const separated = index < SUGGESTIONS.length - 1;
+                      const separated = index < rows.length - 1;
                       return (
-                        <li key={suggestion.labelKey}>
+                        <li key={row.key}>
                           <button
                             type="button"
-                            onClick={() => pick(suggestion)}
-                            aria-pressed={suggestion.kind === 'filter' ? isActive : undefined}
+                            onClick={row.onPick}
+                            aria-pressed={row.active}
                             className="flex w-full items-center gap-3 pl-4 text-left active:bg-[rgb(var(--color-hover))]"
                           >
-                            <Icon
-                              size={20}
-                              aria-hidden="true"
-                              className="shrink-0 text-[rgb(var(--color-accent))]"
-                            />
+                            {Icon ? (
+                              <Icon size={20} aria-hidden="true" className="shrink-0 text-[rgb(var(--color-accent))]" />
+                            ) : (
+                              // Pastille de couleur : c'est la marque d'une liste
+                              // dans toute la page (chips, feuille d'actions), on
+                              // ne lui invente pas une icone.
+                              <span aria-hidden="true" className="shrink-0 w-5 flex items-center justify-center">
+                                <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: row.dot }} />
+                              </span>
+                            )}
                             <span
                               className={`flex flex-1 items-center gap-3 min-h-touch py-3 mr-4 ${
                                 separated ? 'border-b border-[rgb(var(--color-border))]' : ''
                               }`}
                             >
-                              <span className="flex-1 text-body text-[rgb(var(--color-text-primary))]">
-                                {t(suggestion.labelKey)}
+                              <span className="flex-1 truncate text-body text-[rgb(var(--color-text-primary))]">
+                                {row.label}
                               </span>
-                              {isActive && (
+                              {row.active && (
                                 <CheckCircle2 size={18} aria-hidden="true" className="shrink-0 text-[rgb(var(--color-accent))]" />
                               )}
                             </span>

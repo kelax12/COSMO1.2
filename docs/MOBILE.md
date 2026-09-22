@@ -864,6 +864,12 @@ hors de portée du pouce, et poussaient la liste vers le bas. Modèle repris : N
   couleur d'accent, en `!important`. L'échappatoire est la classe **`no-input-chrome`**, mais elle
   force aussi `border-radius: 0` : un champ arrondi doit donc être **transparent à l'intérieur d'un
   conteneur** qui porte la forme et le fond.
+- **Les LISTES suivent les cinq filtres dans la même carte** (2026-09-22) : « Aujourd'hui » avec son
+  icône, puis chaque liste avec sa pastille de couleur, celle des chips. Sans elles, choisir une
+  liste pendant une recherche obligeait à fermer l'écran d'abord, puisque la barre de chips
+  s'efface. Même geste que les filtres : la ligne applique **et referme**, et un second appui sur la
+  liste active la retire. ⚠️ La carte doit pouvoir **défiler** (`overflow-y-auto` + `min-h-0`) :
+  mesuré à 375x460, elle se réduit et défile au lieu de pousser le champ hors de l'écran.
 - 🔴 **Pendant la recherche, tout ce qui vit AU-DESSUS de la première tâche s'efface** : en-tête de
   page et compteurs, barre des listes, rangée de tri, pilules de filtre actif, et l'astuce de
   balayage (`SwipeHintBanner`). Mesuré : la liste commence à **44 px** du haut au lieu de 267, soit
