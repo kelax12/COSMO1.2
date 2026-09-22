@@ -5,10 +5,10 @@ import TaskModal from '@/components/TaskModal';
 import TasksSummary from '@/components/TasksSummary';
 import DeadlineCalendar from '@/components/DeadlineCalendar';
 import ListActionsSheet from '@/components/ListActionsSheet';
-import ShareListSheet from '@/components/ShareListSheet';
 import { Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'react-router';
+import { useLazyMount } from '@/hooks/use-lazy-mount';
 
 // ═══════════════════════════════════════════════════════════════════
 // Module tasks - Hooks indépendants (MIGRÉ)
@@ -46,6 +46,9 @@ import { useHiddenWhileSearching } from './tasks/search-open.store';
 import { useChipLongPress } from './tasks/useChipLongPress';
 import { useTaskLists } from './tasks/useTaskLists';
 import { useT } from '@/i18n/useT';
+
+// C-117 · feuille ouverte à la demande : son code ne pèse plus sur l'ouverture de /tasks.
+const ShareListSheet = React.lazy(() => import('@/components/ShareListSheet'));
 
 const TasksPage: React.FC = () => {
   const { t } = useT('tasks');
@@ -106,6 +109,7 @@ const TasksPage: React.FC = () => {
   const deleteListMutation = useDeleteList();
   // Liste en cours de partage (ouvre ShareListSheet). null = fermé.
   const [shareListTarget, setShareListTarget] = useState<TaskList | null>(null);
+  const shareSheetMounted = useLazyMount(shareListTarget !== null);
 
   // Menu d'actions de liste (mobile) — ouvert par appui long sur une chip.
   const { actionSheetListId, setActionSheetListId, chipLongPressFired, startChipLongPress, cancelChipLongPress } = useChipLongPress(isMobile);
@@ -528,11 +532,16 @@ const TasksPage: React.FC = () => {
       />
 
       {/* Partage de liste — bottom-sheet avec sélecteur d'ami */}
-      <ShareListSheet
-        list={shareListTarget}
-        tasks={tasks}
-        onClose={() => setShareListTarget(null)}
-      />
+      {/* C-117 · paresseuse : hors du chunk `TasksPage` tant qu'on ne partage rien */}
+      {shareSheetMounted && (
+        <React.Suspense fallback={null}>
+          <ShareListSheet
+            list={shareListTarget}
+            tasks={tasks}
+            onClose={() => setShareListTarget(null)}
+          />
+        </React.Suspense>
+      )}
 
       {/* Tutoriel page Tâches — variante adaptée au viewport */}
       {/* accentColor en bleu foncé : #3B82F6 ne passait pas le contraste AA (3.7:1) avec le texte blanc du bouton "Suivant" */}
