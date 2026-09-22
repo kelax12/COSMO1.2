@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { flushSync } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AlertTriangle, Bookmark, CheckCircle2, CheckSquare, Search, Users, X } from 'lucide-react';
@@ -7,6 +7,7 @@ import { measureKeyboardInset, useKeyboardInset } from '@/lib/hooks/use-keyboard
 import { useQuickFilter, setQuickFilter } from '@/components/task-table/quick-filter.store';
 import { requestSelectMode, useSelectModeActive } from '@/components/task-table/select-mode.store';
 import type { QuickFilter } from '@/components/task-table/TaskQuickFilters';
+import { setSearchOpen, useSearchOpen } from './search-open.store';
 import { useT } from '@/i18n/useT';
 import type { KeyOf } from '@/i18n/catalog';
 
@@ -67,7 +68,10 @@ const KEYBOARD_LIFT_PX = 80;
 
 const MobileTaskSearch: React.FC<Props> = ({ searchTerm, onSearchTermChange }) => {
   const { t } = useT('tasks');
-  const [open, setOpen] = useState(false);
+  // L'ouverture vit dans un store : `TasksPage` efface son en-tête, ses listes
+  // et son tri pendant la recherche, et `SwipeHintBanner` s'efface aussi, deux
+  // niveaux plus bas. Cf. `search-open.store.ts`.
+  const open = useSearchOpen();
   const inputRef = useRef<HTMLInputElement>(null);
   const { activeQuickFilter, toggleQuickFilter } = useQuickFilter();
   const keyboardInset = useKeyboardInset(open);
@@ -89,11 +93,11 @@ const MobileTaskSearch: React.FC<Props> = ({ searchTerm, onSearchTermChange }) =
   // `useModalA11y` ne le déplacera pas ensuite, il s'abstient quand le focus
   // est déjà dans la surface.
   const openAndFocus = useCallback(() => {
-    flushSync(() => setOpen(true));
+    flushSync(() => setSearchOpen(true));
     inputRef.current?.focus();
   }, []);
 
-  const close = useCallback(() => setOpen(false), []);
+  const close = useCallback(() => setSearchOpen(false), []);
   const { ref: panelRef, dialogProps } = useModalA11y<HTMLDivElement>({
     open,
     onClose: close,

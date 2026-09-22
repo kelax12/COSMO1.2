@@ -10,6 +10,7 @@
 import { useState } from 'react';
 import { Lightbulb, X } from 'lucide-react';
 import { useT } from '@/i18n/useT';
+import { useSearchOpen } from '@/pages/tasks/search-open.store';
 
 /** Clé de persistance — un seul écrit, jamais relu ailleurs. */
 const DISMISSED_KEY = 'cosmo_swipe_hint_dismissed';
@@ -23,6 +24,10 @@ interface SwipeHintBannerProps {
 
 export default function SwipeHintBanner({ addToListMode, rowCount }: SwipeHintBannerProps) {
   const { t } = useT('tasks');
+  // Pendant la recherche mobile, rien ne doit rester au-dessus de la première
+  // tâche : cette astuce en fait partie. Lue au store faute de pouvoir ajouter
+  // une prop à `TaskTable`, à son plafond de 600 lignes.
+  const searchOpen = useSearchOpen();
 
   // `localStorage` peut jeter (Safari privé, site data bloqué) : dans ce cas
   // l'astuce revient à chaque visite, ce qui reste préférable à un écran blanc.
@@ -35,7 +40,7 @@ export default function SwipeHintBanner({ addToListMode, rowCount }: SwipeHintBa
     try { localStorage.setItem(DISMISSED_KEY, '1'); } catch { /* ignore */ }
   };
 
-  if (dismissed || addToListMode || rowCount === 0) return null;
+  if (dismissed || addToListMode || rowCount === 0 || searchOpen) return null;
 
   return (
     <div
