@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router';
+import { useLazyMount } from '@/hooks/use-lazy-mount';
+import { BulkAddToListModal, ScheduleEventModal } from './task-table/lazy-dialogs';
 import { useBilling } from '@/modules/billing/billing.context';
 import TaskModal from './TaskModal';
-import BulkAddToListModal from './add-to-list/BulkAddToListModal';
-import ScheduleEventModal from './ScheduleEventModal';
 import AddToListModal from './AddToListModal';
 import { VirtualizedTaskList } from './task-table/list';
 import { useUnifiedTaskRows } from './task-table/useUnifiedTaskRows';
@@ -70,7 +70,6 @@ type TaskTableProps = {
   /** Liste, catégorie(s) OU recherche active — gate « Voir les terminées ». */
   hasActiveFilter?: boolean;
 };
-
 
 const TaskTable: React.FC<TaskTableProps> = ({
   tasks: propTasks,
@@ -199,6 +198,7 @@ const TaskTable: React.FC<TaskTableProps> = ({
     restoreTask: (task) => restoreMutation.mutate(task),
     unshareTask: (taskId, friendId) => unshareTaskMutation.mutate({ taskId, friendId }),
   });
+  const bulkListModalMounted = useLazyMount(showBulkListModal);
 
   // Les deux feuilles de confirmation ci-dessous affichaient une poignee de
   // glissement qui ne declenchait rien (audit mobile 2026-08-14). Un helper
@@ -517,12 +517,12 @@ const TaskTable: React.FC<TaskTableProps> = ({
       />
 
       {/* Modal d'ajout groupé à une liste (#23) */}
-      <BulkAddToListModal
+      {bulkListModalMounted && <React.Suspense fallback={null}><BulkAddToListModal
         isOpen={showBulkListModal}
         onClose={() => setShowBulkListModal(false)}
         count={bulkModalCount}
         onAddToList={bulkAddToList}
-      />
+      /></React.Suspense>}
 
       {/* Création directe depuis l'état vide (#45) */}
       <TaskModal
@@ -549,11 +549,11 @@ const TaskTable: React.FC<TaskTableProps> = ({
       )}
 
       {taskToEventModal && (
-        <ScheduleEventModal
+        <React.Suspense fallback={null}><ScheduleEventModal
           open={true}
           onOpenChange={(o) => { if (!o) setTaskToEventModal(null); }}
           task={taskToEventModal}
-        />
+        /></React.Suspense>
       )}
 
         <ConfirmDeleteSheet
