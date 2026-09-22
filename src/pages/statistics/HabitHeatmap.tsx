@@ -14,17 +14,29 @@ type HeatmapCell = { date: Date; dateStr: string; completed: number; total: numb
 export const HabitHeatmap = React.memo<{ habits: Habit[]; now: Date; embedded?: boolean }>(({ habits, now, embedded = false }) => {
   const { t } = useT('statistics');
   const WEEKS = 26;
-  // Bornes desktop (non-embedded) : 26 lignes sans hauteur maximale poussaient
-  // le reste de la page vers le bas au lieu de défiler dans la carte — le
-  // conteneur portait `overflow-y-auto` mais aucune hauteur pour lui donner
-  // prise (un overflow n'a d'effet que sur un axe borné). N'affecte pas
-  // `embedded` : ce mode vit déjà dans un parent à hauteur fixée (`h-full`).
+  // Bornes desktop (non-embedded, orientation verticale) : 26 lignes sans
+  // hauteur maximale poussaient le reste de la page vers le bas au lieu de
+  // défiler dans la carte — le conteneur portait `overflow-y-auto` mais
+  // aucune hauteur pour lui donner prise (un overflow n'a d'effet que sur un
+  // axe borné). N'affecte pas `embedded` : ce mode vit déjà dans un parent à
+  // hauteur fixée (`h-full`).
   const VISIBLE_ROWS = 10;
+  // Repère desktop : au-delà de cette largeur de conteneur, la grille passe
+  // à l'horizontale (semaines en colonnes, jours en lignes) — même seuil que
+  // le reste de la page (`md:`, 768 px). En deçà, 7 colonnes de jours seules
+  // remplissaient déjà toute la largeur disponible (mobile) ; au-delà, elles
+  // laissaient plus de la moitié d'une carte large vide, signalé par Axel :
+  // la verticale n'a jamais été pensée pour occuper une carte pleine largeur.
+  const HORIZONTAL_BREAKPOINT = 768;
   const GAP = embedded ? 3 : 2;
   const MONTH_W = embedded ? 24 : 14;
+  // Colonne des lettres de jour en orientation horizontale — une seule
+  // lettre, contrairement à `MONTH_W` qui porte un nom de mois abrégé.
+  const DAY_AXIS_W = 16;
   const scrollRef = useRef<HTMLDivElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [cellSize, setCellSize] = useState(embedded ? 28 : 13);
+  const [horizontal, setHorizontal] = useState(false);
   const CELL = cellSize;
   // Rayon proportionnel à la taille de la cellule : un rayon fixe de 3 px
   // (l'ancienne valeur) restait quasi invisible une fois CELL monté à 40+ px
@@ -41,8 +53,17 @@ export const HabitHeatmap = React.memo<{ habits: Habit[]; now: Date; embedded?: 
     if (!el) return;
     const compute = () => {
       const w = el.clientWidth;
-      if (w > 0) {
-        const size = Math.min(42, Math.floor((w - 14 - 7 * 2) / 7));
+      if (w <= 0) return;
+      const wide = w >= HORIZONTAL_BREAKPOINT;
+      setHorizontal(wide);
+      if (wide) {
+        // WEEKS colonnes + l'axe des jours, séparés par WEEKS interstices
+        // (WEEKS + 1 éléments dans la ligne flex → WEEKS gaps).
+        const size = Math.min(42, Math.floor((w - DAY_AXIS_W - WEEKS * GAP) / WEEKS));
+        setCellSize(Math.max(10, size));
+      } else {
+        // 7 colonnes + la colonne de mois, séparés par 7 interstices.
+        const size = Math.min(42, Math.floor((w - MONTH_W - 7 * GAP) / 7));
         setCellSize(Math.max(13, size));
       }
     };
@@ -50,9 +71,14 @@ export const HabitHeatmap = React.memo<{ habits: Habit[]; now: Date; embedded?: 
     const ro = new ResizeObserver(compute);
     ro.observe(el);
     return () => ro.disconnect();
-  }, [embedded]);
+  }, [embedded, GAP, MONTH_W]);
 
-  const { weeks, monthLabelMap } = useMemo(() => {
+  // Semaines en ordre CHRONOLOGIQUE (la plus ancienne d'abord) : c'est ce que
+  // veut l'orientation horizontale (gauche → droite = passé → présent, comme
+  // tout calendrier). L'orientation verticale veut l'inverse (la semaine la
+  // plus récente EN HAUT, pour rester visible sans avoir à défiler) — elle
+  // dérive sa propre vue plutôt que de faire porter cet ordre par les deux.
+  const weeksChrono = useMemo(() => {
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const firstDay = new Date(today);
     firstDay.setDate(today.getDate() - (WEEKS * 7 - 1));
@@ -82,22 +108,25 @@ export const HabitHeatmap = React.memo<{ habits: Habit[]; now: Date; embedded?: 
     for (let w = 0; w < WEEKS; w++) {
       result.push(allCells.slice(w * 7, (w + 1) * 7));
     }
-    result.reverse();
-    const mMap = new Map<number, string>();
-    for (let w = 0; w < WEEKS; w++) {
-      const firstOfMonth = result[w].find(c => c.date.getDate() === 1);
-      if (firstOfMonth) {
-        mMap.set(w, formatDate(firstOfMonth.date, { month: 'short' }));
-      }
-    }
-    return { weeks: result, monthLabelMap: mMap };
+    return result;
   }, [habits, now]);
+
+  const weeksRecentFirst = useMemo(() => [...weeksChrono].reverse(), [weeksChrono]);
+
+  // Étiquette de mois d'une semaine : calculée à la volée sur la semaine
+  // affichée plutôt que pré-indexée par position, pour rester correcte quelle
+  // que soit l'orientation (et l'ordre chronologique ou inversé) sans faire
+  // porter cette synchronisation par deux structures séparées.
+  const monthLabelFor = (week: HeatmapCell[]): string | undefined => {
+    const firstOfMonth = week.find(c => c.date.getDate() === 1);
+    return firstOfMonth ? formatDate(firstOfMonth.date, { month: 'short' }) : undefined;
+  };
 
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = 0;
     }
-  }, [weeks]);
+  }, [weeksChrono]);
 
   // Échelle rouge → vert (même logique que HabitGlobalTracking : haut taux = vert, bas taux = rouge).
   const getCellColor = (rate: number) => {
@@ -144,8 +173,30 @@ export const HabitHeatmap = React.memo<{ habits: Habit[]; now: Date; embedded?: 
     </div>
   );
 
-  // Vertical layout (rows = weeks, cols = days)
-  const grid = (scrollClass: string, scrollStyle?: React.CSSProperties) => (
+  // Cellule d'un jour — identique dans les deux orientations, seule sa
+  // position dans la grille change.
+  const dayCell = (cell: HeatmapCell, key: number) => (
+    <div
+      key={key}
+      className="relative group"
+      style={{ width: CELL, height: CELL, flexShrink: 0 }}
+      onMouseEnter={(e) => {
+        if (cell.isFuture || cell.rate < 0) return;
+        setHovered({ cell, rect: e.currentTarget.getBoundingClientRect() });
+      }}
+      onMouseLeave={() => setHovered(null)}
+    >
+      <div
+        className="w-full h-full transition-transform duration-100 group-hover:scale-110"
+        style={{ borderRadius: CELL_RADIUS, backgroundColor: getCellColor(cell.rate), border: `1px solid ${cell.isFuture ? 'transparent' : CELL_BORDER}` }}
+      />
+    </div>
+  );
+
+  // Orientation verticale (lignes = semaines, colonnes = jours) — mobile, et
+  // desktop sous le seuil `HORIZONTAL_BREAKPOINT`. Semaine la plus récente EN
+  // HAUT (weeksRecentFirst), pour rester visible sans avoir à défiler.
+  const gridVertical = (scrollClass: string, scrollStyle?: React.CSSProperties) => (
     <>
       {/* Day headers */}
       <div className="flex flex-shrink-0" style={{ gap: GAP, paddingLeft: MONTH_W + GAP, marginBottom: GAP }}>
@@ -158,34 +209,55 @@ export const HabitHeatmap = React.memo<{ habits: Habit[]; now: Date; embedded?: 
       {/* Scrollable weeks (rows) */}
       <div ref={scrollRef} className={scrollClass} style={scrollStyle}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: GAP }}>
-          {weeks.map((week, wi) => (
+          {weeksRecentFirst.map((week, wi) => (
             <div key={wi} style={{ display: 'flex', gap: GAP, alignItems: 'center', flexShrink: 0 }}>
               {/* Month label */}
               <div style={{ width: MONTH_W, height: CELL, display: 'flex', alignItems: 'center', flexShrink: 0 }}>
-                {monthLabelMap.has(wi) && (
+                {monthLabelFor(week) && (
                   <span className="text-[8px] font-semibold leading-none select-none" style={{ color: 'rgb(var(--color-text-muted))' }}>
-                    {monthLabelMap.get(wi)}
+                    {monthLabelFor(week)}
                   </span>
                 )}
               </div>
               {/* Day cells */}
-              {week.map((cell, di) => (
-                <div
-                  key={di}
-                  className="relative group"
-                  style={{ width: CELL, height: CELL, flexShrink: 0 }}
-                  onMouseEnter={(e) => {
-                    if (cell.isFuture || cell.rate < 0) return;
-                    setHovered({ cell, rect: e.currentTarget.getBoundingClientRect() });
-                  }}
-                  onMouseLeave={() => setHovered(null)}
-                >
-                  <div
-                    className="w-full h-full transition-transform duration-100 group-hover:scale-110"
-                    style={{ borderRadius: CELL_RADIUS, backgroundColor: getCellColor(cell.rate), border: `1px solid ${cell.isFuture ? 'transparent' : CELL_BORDER}` }}
-                  />
-                </div>
-              ))}
+              {week.map((cell, di) => dayCell(cell, di))}
+            </div>
+          ))}
+        </div>
+      </div>
+    </>
+  );
+
+  // Orientation horizontale (colonnes = semaines, lignes = jours) — desktop,
+  // à partir de `HORIZONTAL_BREAKPOINT`. Ordre CHRONOLOGIQUE gauche → droite
+  // (weeksChrono), comme tout calendrier. Remplit la largeur de la carte au
+  // lieu des 7 colonnes de jours seules, qui laissaient plus de la moitié
+  // d'une carte large vide (signalé par Axel).
+  const gridHorizontal = () => (
+    <>
+      {/* Month headers, un par colonne de semaine */}
+      <div className="flex flex-shrink-0" style={{ gap: GAP, paddingLeft: DAY_AXIS_W + GAP, marginBottom: GAP }}>
+        {weeksChrono.map((week, wi) => (
+          <div key={wi} style={{ width: CELL, height: 12, display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+            {monthLabelFor(week) && (
+              <span className="text-[8px] font-semibold leading-none select-none whitespace-nowrap" style={{ color: 'rgb(var(--color-text-muted))' }}>
+                {monthLabelFor(week)}
+              </span>
+            )}
+          </div>
+        ))}
+      </div>
+      {/* 7 lignes de jour ; défilement horizontal en filet de sécurité si le
+          seuil ci-dessus laisse passer une largeur où CELL a touché son
+          plancher (10 px) sans suffire à tenir WEEKS colonnes. */}
+      <div className="overflow-x-auto">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: GAP }}>
+          {DAY_LABELS.map((d, di) => (
+            <div key={di} style={{ display: 'flex', gap: GAP, alignItems: 'center', flexShrink: 0 }}>
+              <div style={{ width: DAY_AXIS_W, height: CELL, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <span className="text-[8px] font-medium select-none" style={{ color: 'rgb(var(--color-text-muted))' }}>{d}</span>
+              </div>
+              {weeksChrono.map((week, wi) => dayCell(week[di], wi))}
             </div>
           ))}
         </div>
@@ -196,7 +268,7 @@ export const HabitHeatmap = React.memo<{ habits: Habit[]; now: Date; embedded?: 
   if (embedded) {
     return (
       <div className="flex flex-col h-full min-h-0">
-        {grid('overflow-y-auto flex-1 min-h-0')}
+        {gridVertical('overflow-y-auto flex-1 min-h-0')}
         {legend}
         {tooltipPortal}
       </div>
@@ -209,7 +281,9 @@ export const HabitHeatmap = React.memo<{ habits: Habit[]; now: Date; embedded?: 
         {t('heatmap.title')}
       </h3>
       <div ref={wrapperRef}>
-        {grid('overflow-y-auto', { maxHeight: VISIBLE_ROWS * CELL + (VISIBLE_ROWS - 1) * GAP })}
+        {horizontal
+          ? gridHorizontal()
+          : gridVertical('overflow-y-auto', { maxHeight: VISIBLE_ROWS * CELL + (VISIBLE_ROWS - 1) * GAP })}
       </div>
       {legend}
       {tooltipPortal}
