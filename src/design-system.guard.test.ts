@@ -373,3 +373,133 @@ describe('design system — mouvement des feuilles sous mouvement réduit', () =
     expect(SHEET_SLIDE.test(stripComments(withCodeAfterComment))).toBe(true);
   });
 });
+
+// ═══════════════════════════════════════════════════════════════════
+// C-07, SECONDE MOITIÉ — une POIGNÉE promet un geste. Elle doit le tenir.
+//
+// 🔴 CE QUE LA PREMIÈRE MOITIÉ NE COUVRAIT PAS. Le cliquet ci-dessus est à
+// zéro depuis le 2026-09-04 : plus aucune feuille n'écrit `y: '100%'` à la
+// main. Mais il ne regarde que le MOUVEMENT D'OUVERTURE. L'énoncé de C-07
+// portait sur DEUX helpers, et l'audit mobile du 2026-08-14 avait compté
+// **cinq feuilles affichant une poignée de glissement qui ne faisait rien**.
+// Cette moitié-là n'a jamais eu de garde, et elle s'est donc reconstituée.
+//
+// Remesuré le 2026-09-22 par un balayage de `src/components` et `src/pages` :
+// **trois** surfaces dessinaient une poignée sans aucun geste —
+// `MobileActionSheet`, `OKRDeadlineReviewModal` et `RemoveFriendConfirm`.
+// Les deux premières sont câblées sur `useSheetDrag`, la troisième a vu sa
+// poignée RETIRÉE (c'est un `alertdialog` de suppression : une poignée y
+// présente une décision comme une feuille qu'on chasse au pouce).
+//
+// LA RÈGLE : « une affordance qui promet un geste inexistant est moins bonne
+// que pas d'affordance du tout » — elle est écrite dans `useSheetDrag`, elle
+// est désormais mesurée.
+//
+// ⚠️ CE QUE CETTE GARDE NE PEUT PAS DIRE. Elle compte des chaînes de
+// caractères : elle ne sait pas si un glissement FERME réellement la feuille,
+// ni si la poignée est visible. Elle dit qu'une poignée dessinée s'accompagne
+// d'un geste déclaré, et rien de plus.
+// ═══════════════════════════════════════════════════════════════════
+
+/**
+ * Une poignée de feuille, cherchée DANS UNE SEULE valeur de `className`.
+ *
+ * 🔴 La première écriture de ce détecteur raisonnait sur le FICHIER entier, et
+ * elle rougissait sur `PyramidNodeCard` et `TeamProjectCard` — dont la barre
+ * de progression a exactement la forme d'une poignée. L'exclusion
+ * « `overflow-hidden` quelque part dans le fichier » ne pouvait pas marcher :
+ * les deux mots vivaient dans des éléments différents. Une garde qui accuse
+ * deux fichiers justes est une garde qu'on finit par ignorer.
+ */
+const HANDLE_IN_CLASS = [
+  /\bh-1(?:\.5)?\b[^"'`]*\bw-(?:8|9|10|12|14|16)\b/,
+  /\bw-(?:8|9|10|12|14|16)\b[^"'`]*\bh-1(?:\.5)?\b/,
+];
+
+/**
+ * Une BARRE DE PROGRESSION a la même forme qu'une poignée : c'est son
+ * `overflow-hidden` — sur le MÊME élément — qui la distingue, parce qu'elle
+ * contient un remplissage. Ce n'est pas une affordance.
+ */
+const isProgressBar = (cls) => /overflow-hidden/.test(cls);
+
+/** Les valeurs de `className` qui dessinent une poignée, élément par élément. */
+function sheetHandleClasses(src) {
+  const out = [];
+  for (const m of src.matchAll(/className=(?:"([^"]*)"|{`([^`]*)`}|{'([^']*)'})/g)) {
+    const cls = m[1] ?? m[2] ?? m[3] ?? '';
+    if (!/rounded-full/.test(cls)) continue;
+    if (!HANDLE_IN_CLASS.some((r) => r.test(cls))) continue;
+    if (isProgressBar(cls)) continue;
+    out.push(cls);
+  }
+  return out;
+}
+
+/**
+ * Le geste, sous l'une de ses trois formes réelles dans ce dépôt :
+ * le helper, le hook de `BottomSheet`, ou un `drag="y"` écrit sur place.
+ */
+const HAS_DRAG = /useSheetDrag|sheetDragProps|drag=["'{]?y|drag="y"/;
+
+describe('design system — une poignée de feuille promet un geste (C-07)', () => {
+  it("n'affiche aucune poignée sans geste de glissement", () => {
+    const offenders = files
+      .filter((file) => {
+        const src = stripComments(readFileSync(file, 'utf8'));
+        return sheetHandleClasses(src).length > 0 && !HAS_DRAG.test(src);
+      })
+      .map(rel);
+
+    expect(
+      offenders,
+      [
+        'Poignée(s) de feuille sans geste :',
+        ...offenders,
+        'Câbler `useSheetDrag(onClose)` (src/components/mobile/mobile-motion.ts),',
+        'OU retirer la poignée.',
+        "Une affordance qui promet un geste inexistant est moins bonne que pas",
+        "d'affordance du tout : on tire, rien ne bouge, et on en conclut que",
+        "l'app est cassée.",
+      ].join('\n'),
+    ).toEqual([]);
+  });
+
+  // TÉMOIN. Une garde à zéro qui ne détecte plus rien rend le MÊME verdict
+  // qu'une garde saine. Sans ces cas, casser les regex laisserait la suite
+  // verte — c'est la leçon des quatre gardes reprises le 2026-09-03.
+  it('détecte réellement une poignée sans geste (témoin)', () => {
+    const sansGeste = '<div className="w-10 h-1 rounded-full bg-slate-300" />';
+    expect(sheetHandleClasses(sansGeste)).toHaveLength(1);
+    expect(HAS_DRAG.test(sansGeste)).toBe(false);
+  });
+
+  it('ne rougit PAS sur une poignée correctement câblée (témoin)', () => {
+    const avecGeste = [
+      'const drag = useSheetDrag(onClose);',
+      '<motion.div {...drag}>',
+      '  <div className="w-9 h-1 rounded-full bg-slate-400" />',
+      '</motion.div>',
+    ].join('\n');
+    expect(sheetHandleClasses(avecGeste)).toHaveLength(1);
+    expect(HAS_DRAG.test(avecGeste)).toBe(true);
+  });
+
+  it("ne confond pas une BARRE DE PROGRESSION avec une poignée (témoin)", () => {
+    // Le cas EXACT qui a fait rougir la première écriture de cette garde, sur
+    // deux fichiers parfaitement justes.
+    const barre = '<span className="w-16 h-1.5 rounded-full bg-slate-200 overflow-hidden">';
+    expect(sheetHandleClasses(barre)).toHaveLength(0);
+  });
+
+  it("voit la poignée même quand la barre de progression est dans le MÊME fichier (témoin)", () => {
+    // 🔴 C'est ce cas qui distingue un détecteur par ÉLÉMENT d'un détecteur
+    // par FICHIER : le second se taisait dès qu'un `overflow-hidden` traînait
+    // quelque part, donc il aurait dispensé une vraie poignée par accident.
+    const melange = [
+      '<span className="w-16 h-1.5 rounded-full bg-slate-200 overflow-hidden" />',
+      '<div className="w-10 h-1 rounded-full bg-slate-300" />',
+    ].join('\n');
+    expect(sheetHandleClasses(melange)).toHaveLength(1);
+  });
+});

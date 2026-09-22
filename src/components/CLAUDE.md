@@ -80,6 +80,32 @@ sans écran, **écrites en dur en français** hors des catalogues i18n.
   porte que sur l'opacité. Détail : [`docs/MOBILE.md`](../../docs/MOBILE.md).
 - ⚠️ `prefers-reduced-motion` est **actif sur la machine d'Axel** : si une animation « ne
   s'affiche pas », vérifier ce réglage avant de suspecter le code.
+- ❌ **Une POIGNÉE de feuille promet un geste : elle doit le tenir** (C-07, 2026-09-22). Une barre
+  arrondie courte en haut d'une feuille est une affordance. Sans `useSheetDrag(onClose)`, on tire,
+  rien ne bouge, et on en conclut que l'app est cassée — c'est **pire que pas de poignée**.
+  Trois surfaces l'avaient reconstitué ; deux sont câblées, la troisième (`RemoveFriendConfirm`)
+  a vu sa poignée **retirée** : c'est un `alertdialog` de suppression, et une poignée y présente
+  une décision comme une feuille qu'on chasse au pouce. Cliquet :
+  `src/design-system.guard.test.ts`, 4 témoins, vu rouge sur 3 sabotages.
+  ⚠️ Une **barre de progression** a exactement la même forme : c'est son `overflow-hidden`, sur le
+  MÊME élément, qui la distingue. Le détecteur raisonne par élément, jamais par fichier.
+- ❌ **Une rotation automatique doit pouvoir s'ARRÊTER** (C-69, WCAG 2.2.2, AA). Pause explicite,
+  arrêt au survol ET au focus, et `prefers-reduced-motion` respecté.
+  🔴 **`aria-hidden="true"` ne dispense de rien** : le critère ne parle pas des lecteurs d'écran,
+  il parle des personnes qui ne peuvent pas lire une page pendant que quelque chose bouge à côté.
+  ⚠️ Et il faut un **troisième état** : sous mouvement réduit, l'utilisateur doit pouvoir DEMANDER
+  le mouvement, sinon la vitrine reste figée sur sa première vue pour toujours. WCAG 2.3.3
+  interdit le mouvement non demandé, pas le mouvement.
+- 🔴 **Un geste n'est JAMAIS le seul chemin vers une action** (C-111, WCAG 2.1.1, niveau A).
+  Mesuré le 2026-09-22 : les actions d'une tâche (`TaskActionsSheet`) n'étaient atteignables sur
+  mobile que par appui long ou glissement — le bouton « Actions pour … » existe mais vit dans
+  `div.hidden md:block`, donc à **0 × 0 px** sur téléphone. Au clavier, modifier ou supprimer une
+  tâche était **impossible**.
+  ✅ Le chemin standard, et il ne coûte aucun pixel : `onContextMenu` sur l'élément focalisé — la
+  touche « menu contextuel » et `Shift+F10` l'émettent toutes deux. L'annoncer par
+  `aria-keyshortcuts`.
+  ⚠️ **Un test qui expire ne dit pas ce qu'il cherche** : le harnais clavier cherchait ce bouton
+  invisible depuis des semaines, et son timeout passait pour de la lenteur.
 
 
 ---

@@ -13,7 +13,7 @@ import ThemeToggle from '@/components/ThemeToggle';
 import LocaleToggle from '@/components/LocaleToggle';
 import { SUPPORTED_LOCALES } from '@/i18n/locale';
 import { useT } from '@/i18n/useT';
-import { TAP_AREA_44_Y } from '@/components/mobile/tap-area';
+import { TAP_AREA_44_Y, TAP_AREA_44_ANCRE } from '@/components/mobile/tap-area';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
 import {
   AlertDialog,
@@ -285,7 +285,15 @@ const SettingsPage: React.FC = () => {
                       // Sur mobile il n'y a pas de survol : la pastille est
                       // toujours là, en bas à droite de l'avatar. Au-delà de
                       // `sm`, le voile au survol reprend la main, inchangé.
-                      className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-[rgb(var(--color-accent-solid))] border-2 border-[rgb(var(--color-surface))] flex items-center justify-center sm:inset-0 sm:w-auto sm:h-auto sm:rounded-2xl sm:border-0 sm:bg-black/45 sm:opacity-0 sm:group-hover/av:opacity-100 sm:transition-opacity">
+                      // C-111 · la pastille MESURAIT 24 x 24 px, soit la plus
+                      // petite commande des huit routes protégées. Le dessin
+                      // ne peut pas grandir — une pastille de 44 px avalerait
+                      // l'avatar de 48 —, donc la zone tactile passe par un
+                      // pseudo-élément, qui ne prend aucune place dans le flux.
+                      // ⚠️ `TAP_AREA_44_ANCRE` et non `TAP_AREA_44` : ce
+                      // dernier porte `relative`, qui écraserait l'`absolute`
+                      // ci-dessous et décrocherait la pastille du coin.
+                      className={`absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-[rgb(var(--color-accent-solid))] border-2 border-[rgb(var(--color-surface))] flex items-center justify-center ${TAP_AREA_44_ANCRE} sm:inset-0 sm:w-auto sm:h-auto sm:rounded-2xl sm:border-0 sm:bg-black/45 sm:opacity-0 sm:group-hover/av:opacity-100 sm:transition-opacity`}>
                       <Camera size={12} className="text-white sm:hidden" aria-hidden="true" />
                       <Camera size={18} className="text-white hidden sm:block" aria-hidden="true" />
                     </button>
