@@ -31,6 +31,38 @@ La landing n'est plus une page linéaire. Après le header, un **aiguillage**
   de `/` (`LandingSkeleton` dans `App.tsx`) est CLAIR — il est peint avant le chunk de la page,
   un squelette sombre rouvrirait les deux secondes d'écran noir que la refonte du 2026-08-30 a
   supprimées.
+- 🔴 **Le mouvement du parcours perso se fait par le TRAIT, jamais par la lumière**
+  (2026-09-22). Sur blanc, un faisceau translucide, un orbe flouté ou un halo n'émettent plus
+  rien de visible — mais ils coûtent toujours, un flou se rastérisant à chaque frame qu'on le
+  voie ou non. Les faisceaux du hero sont devenus des **traces d'encre** (`.hero-trace-h/v`),
+  les orbes des **noeuds** qui respirent sur place (`.hero-node`), la lueur d'arrimage un
+  **filet** qui se dessine (`.hero-dock-settle`), et le halo conique de la CTA finale **deux
+  filets** révélés une fois (`.cta-rule`). Les quatre aurores sont FIXES : elles oscillaient
+  entre 0,82 et 1 d'opacité sur des dégradés à `alpha 0.16` posés sur du blanc, soit sous le
+  seuil de perception, en boucle permanente.
+  ❌ **Ne jamais réintroduire un `filter: blur()` animé ici** : le halo de la CTA était la
+  dernière survivance du motif retiré par l'audit A-8, et la DA blanche l'avait rendu presque
+  invisible — il ne restait que la facture.
+  ⚠️ **Un filet animé en `scaleX` ne se centre pas par `-translate-x-1/2`** : GSAP fige alors
+  le centrage en pixels, et la ligne se décale au premier redimensionnement. `inset-x-0 mx-auto`.
+  ⚠️ **Une opacité Tailwind n'existe qu'en multiples de 5** : `via-slate-900/16` ne produit
+  AUCUN stop, et le dégradé perd son encre **sans erreur ni avertissement**. Mesuré en relisant
+  le `background-image` calculé, pas en relisant le JSX.
+  🔴 **La couche de fond du hero perso est en `z-0`, JAMAIS en `-z-10`.** Elle a porté
+  `-z-10` depuis l'origine et n'a **jamais été visible** : un descendant en z négatif se peint
+  avant le fond des blocs non positionnés, et le `<div>` racine du parcours porte un fond
+  (`bg-white` aujourd'hui, un dégradé `slate-900` avant) sans créer de contexte d'empilement.
+  Grille, aurores, bruit et traceurs étaient donc **rasterisés puis recouverts** — c'est le
+  coût que l'audit A-8 mesurait sur des couches que personne ne voyait. Les alphas des quatre
+  aurores ont été **divisés par deux** en même temps : réglés pour du `slate-900`, ils
+  lavaient la page blanche en pastel.
+  ⚠️ **Un effet de fond ne se vérifie pas en relisant sa couleur.** Celui-ci a été trouvé en
+  forçant un traceur en rouge plein de 3 px : invisible. Et le forcer par `el.style` ne tient
+  pas sur cette page — React réécrit la prop `style` à chaque rendu, et cette page en déclenche
+  un toutes les 2,5 s. Seule une règle CSS `!important` survit (même piège que
+  `scripts/landing-motion-probe.mjs`).
+  Version « lumière » archivée intégralement :
+  [`docs/archive/LANDING-MOTION-DA-SOMBRE-2026-09-22.md`](../../../docs/archive/LANDING-MOTION-DA-SOMBRE-2026-09-22.md).
 - ⚠️ **Les `showcase/*` restent en sombre, exprès** : ce sont des captures du produit, encadrées
   sur la page blanche. Les recolorer en clair ferait disparaître leur cadre.
 - 🔴 **L'entrée du hero perso est en CSS, et elle doit le rester** (refonte du 2026-08-30).
@@ -41,7 +73,8 @@ La landing n'est plus une page linéaire. Après le header, un **aiguillage**
   keyframes CSS (`src/index.css`, section « Hero de la landing ») pilotées par `--d` / `--tx` ;
   **(2)** chaque règle n'a qu'un `from`, donc **l'état final est l'état par défaut** : une
   animation qui ne joue pas laisse le contenu visible ; **(3)** la route `/` a son propre
-  squelette sombre (`LandingSkeleton` dans `App.tsx`), jamais le `PageLoader` clair.
+  squelette (`LandingSkeleton` dans `App.tsx`), jamais le `PageLoader` générique — il était
+  sombre jusqu'à la refonte blanche, il est CLAIR depuis, cf. la règle de DA plus haut.
 - ❌ **Ne jamais remettre `SplitText` sur le H1 du parcours perso.** Il imposait une re-découpe au
   chargement des fontes et une recopie des classes de gradient sur chaque mot, `bg-clip-text` ne
   survivant pas aux transforms des ENFANTS. Le titre est maintenant révélé ligne par ligne, le
