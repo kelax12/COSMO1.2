@@ -106,9 +106,35 @@ const WhySection: React.FC = () => {
   // plein écran à chaque frame de scroll.
   return (
       <section ref={sectionRef} id="why" className="py-24 bg-white relative overflow-hidden">
-        {/* Ambient blobs */}
-        <div className="absolute -top-20 -left-20 w-[500px] h-[500px] bg-blue-500/[0.07] rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-20 -right-20 w-[500px] h-[500px] bg-violet-500/[0.07] rounded-full blur-3xl pointer-events-none" />
+        {/* Teintes d'ambiance — `radial-gradient`, jamais `filter: blur()`.
+            C'est le motif que l'audit A-8 (2026-09-03) a retiré du hero de ce
+            même parcours : une pile de surfaces floutées se rastérise à chaque
+            frame, et le coût est CUMULATIF. Un dégradé qui s'éteint vers
+            `transparent` produit le même halo diffus en se peignant comme un
+            dégradé ordinaire. Détail et mesures : commentaire au-dessus de
+            `auroraLayerRef` dans `PersoTrack.tsx`.
+            ⚠️ Chaque dégradé DOIT atteindre `transparent` AVANT le bord de sa
+            boîte : sans le flou qui adoucissait les arêtes, un stop encore
+            coloré à 100 % dessine un rectangle visible.
+            ⚠️ Alphas réglés pour la DA BLANCHE (2026-09-22) : `blue-600` /
+            `violet-600` plafonnés à 0,05, comme les aurores du hero dont les
+            valeurs ont été divisées par deux le même jour. Les 0,07 d'avant
+            étaient réglés pour du `slate-900` ; posés sur du blanc, ils
+            lavent la page en pastel. Ce sont des teintes, pas un décor. */}
+        <div
+          className="absolute -top-32 -left-32 h-[40rem] w-[40rem] rounded-full pointer-events-none"
+          style={{
+            background:
+              'radial-gradient(circle closest-side, rgba(37,99,235,0.05) 0%, rgba(37,99,235,0.045) 36%, rgba(37,99,235,0.03) 58%, rgba(37,99,235,0.014) 76%, rgba(37,99,235,0.005) 88%, transparent 100%)',
+          }}
+        />
+        <div
+          className="absolute -bottom-32 -right-32 h-[40rem] w-[40rem] rounded-full pointer-events-none"
+          style={{
+            background:
+              'radial-gradient(circle closest-side, rgba(124,58,237,0.05) 0%, rgba(124,58,237,0.045) 36%, rgba(139,92,246,0.03) 58%, rgba(139,92,246,0.014) 76%, rgba(139,92,246,0.005) 88%, transparent 100%)',
+          }}
+        />
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header */}
