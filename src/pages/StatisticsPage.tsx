@@ -53,13 +53,30 @@ import { useT } from '@/i18n/useT';
  * se lisent comme une seule liste de cartes. L'icône et la couleur sont
  * exactement celles que le sélecteur donnait à l'onglet correspondant.
  */
-const StatSectionHeading = ({ section }: { section: { label: string; icon: typeof BarChart3; color: string } }) => {
+const StatSectionHeading = ({ section, suffix }: {
+  section: { label: string; icon: typeof BarChart3; color: string };
+  // Qualificatif de période (« 7 derniers jours »). Porté par le titre de la
+  // vue globale depuis que l'étiquette centrée en capitales a disparu : la
+  // période était le texte le plus fort de la page pour son étiquette la moins
+  // actionnable, et elle était écrite une fois de plus qu'il n'en faut.
+  suffix?: string;
+}) => {
   const Icon = section.icon;
   return (
-    <div className="flex items-center gap-2.5 mt-10 mb-4">
-      <Icon size={18} aria-hidden="true" style={{ color: section.color }} />
+    <div className="flex items-baseline gap-2.5 mt-10 mb-4">
+      <Icon size={18} aria-hidden="true" style={{ color: section.color }} className="translate-y-0.5 shrink-0" />
       <h2 className="text-headline md:text-lg font-bold" style={{ color: 'rgb(var(--color-text-primary))' }}>
         {section.label}
+        {/* L'espace explicite n'est pas décoratif : `ml-2` ne sépare que les
+            pixels, le nom accessible du titre collait « Vue globale· 7 j ». */}
+        {suffix && (
+          <>
+            {' '}
+            <span className="text-sm font-medium" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+              · {suffix}
+            </span>
+          </>
+        )}
       </h2>
     </div>
   );
@@ -395,16 +412,16 @@ export default function StatisticsPage() {
           étiquette la moins actionnable. Mesuré le 2026-09-21 en 390 px :
           73 px de hauteur et 44 px de gouttières, avant le premier graphique.
 
-          Sur mobile les deux fusionnent : la période à gauche en `caption`
-          sourd, comme tout autre en-tête de section, le lien à droite. Le
-          grand titre centré reste au-delà de `md`, où la place existe.
+          Sur mobile les deux fusionnaient : la période à gauche en `caption`
+          sourd, le lien à droite. La période a changé de porteur depuis :
+          l'en-tête « Vue globale · 7 derniers jours », qui vaut aux DEUX
+          largeurs. La garder ici l'écrivait deux fois à deux lignes d'écart,
+          sur mobile où le graphique ne s'intercale même pas. Il ne reste que
+          le lien, aligné à droite.
 
           Le troisième sélecteur encadré, lui, était devenu ce lien le 20 :
           il ne change que le graphique juste en dessous, pas la page. */}
-      <div className="flex items-center justify-between gap-3 mb-3 md:mb-0 md:justify-end">
-        <span className="md:hidden text-caption font-semibold uppercase tracking-wider" style={{ color: 'rgb(var(--color-text-muted))' }}>
-          {periodDescriptiveText[selectedPeriod]}
-        </span>
+      <div className="flex items-center justify-end gap-3 mb-3 md:mb-0">
         {(
           <button
             type="button"
@@ -539,17 +556,17 @@ export default function StatisticsPage() {
       ) : null}
 
 
-      {/* Maquette 91 : sur mobile, cette étiquette vit dans la rangée du lien
-          ci-dessus. Ici elle n'existe plus qu'au-delà de `md`. */}
-      <div className="hidden md:block mb-8 text-center">
-        <span className="text-xl md:text-2xl font-black text-slate-400 dark:text-white not-italic uppercase tracking-tight">
-          {periodDescriptiveText[selectedPeriod]}
-        </span>
-      </div>
-
       {/* Les cinq familles, à la suite. Chaque en-tête porte l'icône et la
           couleur que le sélecteur donnait à son onglet : ce qui distinguait
-          les vues devient ce qui sépare les sections. */}
+          les vues devient ce qui sépare les sections.
+
+          ── La vue globale a désormais SON en-tête, comme les quatre autres ──
+          Elle ouvrait sur ses deux cartes sans être nommée, précédée d'une
+          étiquette centrée en capitales de 20 px portant la seule période. Ce
+          bloc était à la fois le texte le plus fort de la page et son moins
+          actionnable, et il n'appartenait à aucune section. La période le
+          suit, en qualificatif du titre. */}
+      <StatSectionHeading section={sections[0]} suffix={periodDescriptiveText[selectedPeriod]} />
       <OverviewStatistics workTimeData={rollingWorkTimeData} />
 
       <StatSectionHeading section={sections[1]} />

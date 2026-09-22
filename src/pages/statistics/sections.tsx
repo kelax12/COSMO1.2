@@ -11,6 +11,8 @@ import type { OKR } from '@/modules/okrs';
 import type { KRCompletion } from '@/modules/kr-completions/types';
 import { okrTimeByObjective, parseLocalDate } from '@/lib/workTimeCalculator';
 import type { WorkTimePeriodData } from './types';
+import { okrProgressSplit } from './okr-progress';
+import { completionColor } from './completion-color';
 import { formatDate } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
 
@@ -54,8 +56,15 @@ const HabitStatItem = React.memo<HabitStatItemProps>(({ habit, formatTime }) => 
           <span className="text-xs font-bold" style={{ color: 'rgb(var(--color-text-muted))' }}>{rate}%</span>
         </div>
       </div>
+      {/* La barre suit le taux en teinte continue, rouge → vert : un vert fixe
+          rendait 20 % et 100 % identiques à l'œil. La couleur est REDONDANTE
+          avec le pourcentage affiché juste au-dessus (WCAG 1.4.1) — elle ne
+          porte rien à elle seule, et ne touche donc aucun texte. */}
       <div className="w-full h-2 rounded-full bg-muted overflow-hidden">
-        <div className="h-full bg-emerald-500 transition-all duration-1000" style={{ width: `${rate}%` }} />
+        <div
+          className="h-full transition-all duration-1000"
+          style={{ width: `${rate}%`, backgroundColor: completionColor(rate) }}
+        />
       </div>
     </div>
   );
@@ -370,7 +379,7 @@ export const OKRStatistics: React.FC<{
   krCompletions: KRCompletion[];
   rollingRange: { start: Date; end: Date };
 }> = ({ objectives, krCompletions, rollingRange }) => {
-  const { t } = useT('statistics');
+  const { t, tp } = useT('statistics');
   // ⚠️ Le temps investi vient du journal `kr_completions`, jamais d'un champ
   // `kr.history` : ce champ n'existe pas dans le modele, et le lire rendait
   // toujours 0 (cf. src/lib/workTimeCalculator.ts). Meme parcours que le total
@@ -385,8 +394,22 @@ export const OKRStatistics: React.FC<{
     .map(okr => ({ id: okr.id, title: okr.title, workedTime: byObjective.get(okr.id) ?? 0 }))
     .filter(o => o.workedTime > 0);
 
+  // Avancement scindé « avant la période / gagné depuis » (cf. okr-progress.ts).
+  // ⚠️ La liste ne se filtre PAS sur le seul temps investi : un KR sans
+  // `estimated_time` vaut 0 minute (c'est juste, cf. CLAUDE.md), donc un OKR
+  // peut avoir progressé sans peser une minute. Le filtrer sur le temps le
+  // ferait disparaître d'une carte qui parle désormais d'AVANCEMENT.
+  const progressRows = okrProgressSplit(
+    rollingRange.start,
+    rollingRange.end,
+    krCompletions,
+    objectives,
+    byObjective,
+  )
+    .filter(o => o.workedTime > 0 || o.progressGained > 0)
+    .sort((a, b) => b.progressGained - a.progressGained || b.workedTime - a.workedTime);
+
   const totalWorkedTime = okrWorkTime.reduce((sum, o) => sum + o.workedTime, 0);
-  const maxWorkedTime = Math.max(...okrWorkTime.map(o => o.workedTime), 1);
   const formatTime = (m: number) => {
     const h = Math.floor(m / 60), mins = Math.round(m % 60);
     return h === 0 ? `${mins}min` : `${h}h${mins < 10 ? '0' : ''}${mins}`;
@@ -408,25 +431,48 @@ export const OKRStatistics: React.FC<{
           <p className="text-2xl font-black" style={{ color: 'rgb(var(--color-text-primary))' }}>{formatTime(totalWorkedTime)}</p>
         </div>
       </div>
+      {/* ── Avancement par OKR ───────────────────────────────────────────
+          La barre montrait la PART du temps investi, normalisée au maximum :
+          elle disait qui avait consommé le plus de minutes, jamais où en était
+          l'objectif. Elle porte maintenant l'avancement de l'OKR sur 100, en
+          deux couleurs — vert : déjà acquis au début de la période ; violet :
+          gagné depuis. Le temps investi reste affiché, en chiffre. */}
       <div className="card p-6">
-        <h3 className="text-lg font-semibold mb-6" style={{ color: 'rgb(var(--color-text-primary))' }}>
-          {t('details.effortByOkr')}
+        <h3 className="text-lg font-semibold mb-1" style={{ color: 'rgb(var(--color-text-primary))' }}>
+          {t('details.progressByOkr')}
         </h3>
+        {/* Légende : sans elle, deux couleurs dans une barre sont une devinette. */}
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mb-6 text-caption md:text-xs" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+          <span className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" aria-hidden="true" />
+            {t('details.progressBefore')}
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-violet-500" aria-hidden="true" />
+            {t('details.progressGained')}
+          </span>
+        </div>
         <div className="space-y-6">
-          {okrWorkTime.length > 0 ? okrWorkTime.sort((a, b) => b.workedTime - a.workedTime).map(okr => (
+          {progressRows.length > 0 ? progressRows.map(okr => (
             <div key={okr.id} className="space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="font-medium" style={{ color: 'rgb(var(--color-text-primary))' }}>{okr.title}</span>
-                <div className="flex items-center gap-3">
-                  <span className="text-sm font-bold text-violet-500">{formatTime(okr.workedTime)}</span>
+              <div className="flex justify-between items-center gap-3">
+                <span className="font-medium min-w-0 truncate" style={{ color: 'rgb(var(--color-text-primary))' }}>{okr.title}</span>
+                <div className="flex items-center gap-3 shrink-0">
+                  <span className="text-sm font-bold" style={{ color: 'rgb(var(--color-text-secondary))' }}>{formatTime(okr.workedTime)}</span>
                   <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-violet-100 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400">
-                    {Math.round((okr.workedTime / totalWorkedTime) * 100)}%
+                    {okr.progress}%
                   </span>
                 </div>
               </div>
-              <div className="w-full h-2 rounded-full bg-muted overflow-hidden">
-                <div className="h-full bg-violet-500 transition-all duration-1000"
-                  style={{ width: `${(okr.workedTime / maxWorkedTime) * 100}%` }} />
+              {/* La barre entière vaut 100 % de l'objectif : ce qui reste en
+                  gris est ce qui reste à faire, pas un écart à un autre OKR. */}
+              <div
+                className="w-full h-2 rounded-full bg-muted overflow-hidden flex"
+                role="img"
+                aria-label={tp('details.progressBarAria', okr.progressGained, { total: okr.progress, gained: okr.progressGained })}
+              >
+                <div className="h-full bg-emerald-500 transition-all duration-1000" style={{ width: `${okr.progressBefore}%` }} />
+                <div className="h-full bg-violet-500 transition-all duration-1000" style={{ width: `${okr.progressGained}%` }} />
               </div>
             </div>
           )) : <div className="py-8 text-center text-[rgb(var(--color-text-secondary))]">{t('details.noEffort')}</div>}
