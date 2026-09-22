@@ -1,4 +1,4 @@
-<!-- note-audit: note=95 -->
+<!-- note-audit: note=92 -->
 <!--
   🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
   Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
@@ -8,11 +8,34 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **95 / 100** au 2026-09-15, au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **92 / 100** au 2026-09-22 (soir), au tableau de bord de [`README.md`](./README.md).
 
 # Tests — COSMO
 
-## Note de tests / CI : 80 → 83 → 88 → 89 → 93 → 94 → 95 → 97 → 94 → 95 → **91 / 100** (2026-08-24 → 2026-08-25 soir → 2026-08-27 soir → 2026-08-29 → 2026-09-02 → 2026-09-03 → 2026-09-14 → 2026-09-14 soir → 2026-09-15 → 2026-09-16)
+## Note de tests / CI : 80 → 83 → 88 → 89 → 93 → 94 → 95 → 97 → 94 → 95 → 91 → **92 / 100** (2026-08-24 → 2026-08-25 soir → 2026-08-27 soir → 2026-08-29 → 2026-09-02 → 2026-09-03 → 2026-09-14 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir)
+
+> ### 🟠 2026-09-22 (soir) · +1 : remesure item par item, contre la CI réelle et la production
+>
+> **Règle appliquée**, déclarée au [tableau de bord](./README.md) : un angle mort payé le 2026-09-16
+> n'est remboursé que si sa garde a rendu **au moins un verdict exploitable en CI** (vert, ou
+> rouge sur un vrai défaut). Une garde posée mais jamais jouée, ou cassée, ne rembourse rien.
+> Un défaut nommé ce soir coûte selon le barème du 09-16.
+>
+> | Item | Effet | Mesuré le 2026-09-22 |
+> |---|---|---|
+> | AM-2 · couverture des scripts et des fonctions | **+1** | `test:coverage:tooling` vert en CI à `HEAD` : **21 fichiers, 345 tests** ; `check:edge-coverage` vert |
+> | AM-5 · plancher de tests | **+1** | `check:test-floor` vert en CI |
+> | `C-78` · WebKit joué en CI | **+2** | `--project=mobile-safari` dans `ci.yml` et effectivement joué ; les 2 points dus depuis le 09-15 (« +1 et non +3 ») |
+> | AM-1 · témoins jamais rejoués | **0** | **non remboursé** : `Sabotages` a tourné une fois (09-21), les **11** sabotages ont été vus, mais le job est **rouge** sur son propre contrôle « arbre restauré » : le `sabotages.log` qu'il écrit dans l'arbre le fait échouer. Couverture **9 témoins sur 47**. → `C-113` |
+> | 🔴 **CI de `main` rouge depuis le 2026-09-16 07:11** | **−2** | **aucun des 60 runs suivants n'est vert.** `e2e` : 23 échecs, 13 instables, 214 passés (`806e7745`) ; `lint-test-build` : `check:bundle` à `HEAD`, `architecture.guard` à `806e7745`. Deux régressions sont entrées sans que personne ne les voie, alors que leurs gardes avaient mordu |
+> | 🔴 Quatre gardes du 09-20 n'ont jamais rendu un verdict | **−1** | `Visual` (19 échecs sur 19), `check:edge-smoke` (jamais sondé, clé absente du job), `check:retention` (plante), `Sabotages` (voir AM-1). **Rien ne vérifie qu'une garde neuve a été verte une fois** |
+> | AM-3 · force des assertions | **0** | toujours ouvert, aucun item |
+>
+> ✅ **Ce qui tient** : `npm test` en CI à `HEAD`, **243 fichiers, 2 790 tests**, tous verts ; 39 → **46**
+> fichiers `*.guard.test.*` suivis par git (`git ls-files`, 2026-09-22).
+> 🔴 **Ne pas relire « 5 jobs verts » dans ce document comme l'état courant** : c'est l'état du 09-16.
+>
+> **91 → 92.** Détail, règle et ordre de réparation : [tableau de bord](./README.md).
 
 > ### 🟠 2026-09-16 · -4 : la note comptait ce qui était mesuré, jamais ce qui ne l'était pas
 >
@@ -83,7 +106,7 @@
 
 | # | Angle mort · **énoncé du 2026-09-16, non réécrit** | Vérifié le 2026-09-16 | 🔎 État au 2026-09-21 |
 |---|---|---|---|
-| AM-1 | 🔴 **Les 39 témoins ne sont jamais rejoués** (« 36 » le 2026-09-16, **recomptés le 2026-09-20** : trois de plus en quatre jours, et aucun n'est rejoué davantage). Ce dépôt a une culture du témoin remarquable : chaque garde arrive avec un fichier `*.guard.test.*` **vu rouge sur des sabotages**. Mais ce sabotage est **manuel et unique**, joué le jour de sa création. Rien ne vérifie qu'un témoin détecte **encore** | `git ls-files` rend **39** fichiers `*.guard.test.{ts,tsx,mjs}` au 2026-09-20 (36 le 09-16). **Aucun mutation testing** : ni `stryker`, ni équivalent, dans `package.json` ni dans un workflow | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:sabotages` (`C-81`) — 🔴 ne prouve PAS : que les **39** témoins détectent ; le rapport couvert / total est imprimé exprès. À sa 1ʳᵉ exécution : `monitoring.guard.test.ts` ne détectait **plus rien** |
+| AM-1 | 🔴 **Les 39 témoins ne sont jamais rejoués** (« 36 » le 2026-09-16, **recomptés le 2026-09-20** : trois de plus en quatre jours, et aucun n'est rejoué davantage). Ce dépôt a une culture du témoin remarquable : chaque garde arrive avec un fichier `*.guard.test.*` **vu rouge sur des sabotages**. Mais ce sabotage est **manuel et unique**, joué le jour de sa création. Rien ne vérifie qu'un témoin détecte **encore** | `git ls-files` rend **39** fichiers `*.guard.test.{ts,tsx,mjs}` au 2026-09-20 (36 le 09-16). **Aucun mutation testing** : ni `stryker`, ni équivalent, dans `package.json` ni dans un workflow | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:sabotages` (`C-81`) — 🔴 ne prouve PAS : que les **39** témoins détectent ; le rapport couvert / total est imprimé exprès. À sa 1ʳᵉ exécution : `monitoring.guard.test.ts` ne détectait **plus rien** · 🔎 🔴 **2026-09-22 : job rouge**, 1 seul run (09-21) : les 11 sabotages vus, mais échec sur le contrôle « arbre restauré » (`sabotages.log` écrit dans l'arbre). Couverture **9 témoins sur 47**. → `C-113` |
 | AM-2 | **La couverture ne porte que sur `src/**`.** En sont donc absents : `scripts/**` (les gardes elles-mêmes, c'est-à-dire le code qui décide si la CI est verte) et `supabase/functions/**` (le code qui déplace de l'argent) | `vitest.config.ts` : `include: ['src/**/*.{ts,tsx}']`. Les seuils par fichier ne visent que `src/` | ✅ **OUTILLÉ le 2026-09-20** · `npm run test:coverage:tooling` · `check:edge-coverage` (`C-82`) — 🔴 ne prouve PAS : `supabase/functions/**` en lignes — impossible (Deno, jamais importé) ; le plancher de témoins en tient lieu. 1ʳᵉ exécution : **3 scripts** sortaient du rapport en silence, à cause de leur shebang |
 | AM-3 | **Un taux de couverture ne dit rien de la force des assertions.** Une ligne exécutée par un test qui n'assure rien compte comme couverte | par construction de la couverture v8 | 🟠 **TOUJOURS OUVERT** au 2026-09-21 · **aucun item ne le porte**, et c'est le dernier trou de ce tableau. `C-81` rejoue des témoins, ce qui n'est PAS du test de mutation : un témoin prouve qu'une garde mord, pas qu'une assertion est forte — *(jugé outillable le 09-16 : AM-1 y répond en partie : la mutation mesure ce que la couverture ne voit pas)* |
 | AM-4 | ✅ **COMBLÉ le 2026-09-16, vérifié le 2026-09-20.** Était : « les 105 cas `mobile-safari` ne tournent dans aucun workflow » (item `C-78`) | 🔴 **Périmé le jour même où il a été écrit** : `git show HEAD:.github/workflows/ci.yml` lance `--project=chromium --project=supabase-stub --project=mobile-safari` depuis `af0190bd`, 2026-09-16, et `e2e/_warmup-mobile.spec.ts` est suivi par git | ✅ **FERMÉ le 2026-09-16** · `C-78`, `af0190bd` — `mobile-safari` est joué en CI. 🔴 ne prouve PAS : ni appareil réel, ni Android, ni réseau bridé (`C-97`, `M-25`) |

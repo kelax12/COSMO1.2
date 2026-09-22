@@ -1,4 +1,4 @@
-<!-- note-audit: note=84 -->
+<!-- note-audit: note=81 -->
 <!--
   🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
   Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
@@ -8,7 +8,7 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **84 / 100** au 2026-09-15, au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **81 / 100** au 2026-09-22 (soir), au tableau de bord de [`README.md`](./README.md).
 
 # Accessibilité (a11y) — COSMO
 
@@ -45,7 +45,26 @@ Conséquences pratiques, à tenir :
   La check-list est prête et se joue d'une traite :
   [`AUDIT-VOICEOVER-IOS.md`](./AUDIT-VOICEOVER-IOS.md).
 
-## Note d'accessibilité : 76 → 79 → 80 → 81 → 82 → 83 → 84 → 82 → 84 → **80 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-04 → 2026-09-14 → 2026-09-14 soir → 2026-09-15 → 2026-09-16)
+## Note d'accessibilité : 76 → 79 → 80 → 81 → 82 → 83 → 84 → 82 → 84 → 80 → **81 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-04 → 2026-09-14 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir)
+
+> ### 🟢 2026-09-22 (soir) · +1 : remesure item par item, contre la CI réelle et la production
+>
+> **Règle appliquée**, déclarée au [tableau de bord](./README.md) : un angle mort payé le 2026-09-16
+> n'est remboursé que si sa garde a rendu **au moins un verdict exploitable en CI** (vert, ou
+> rouge sur un vrai défaut). Une garde posée mais jamais jouée, ou cassée, ne rembourse rien.
+> Un défaut nommé ce soir coûte selon le barème du 09-16.
+>
+> | Item | Effet | Mesuré le 2026-09-22 |
+> |---|---|---|
+> | AM-2 · surfaces clavier mesurées | **+1** | `keyboard-audit-coverage.guard` dans la suite CI, verte à `HEAD` |
+> | AM-5 · contraste dans un thème sur quatre | **0** | **non remboursé** : il reposait sur `Visual`, qui n'a jamais produit une référence (cf. `UI-PATTERNS.md`) |
+> | ⚠️ `button-name` **critique** sur `/habits` sous WebKit | **0** | vu **une fois** sur trois tentatives en CI (`806e7745`), les deux autres ont expiré. WCAG 4.1.2, niveau A. **Non débité** tant qu'il n'est pas reproduit, et nommé ici pour ne pas se perdre |
+> | `C-111`, famille clavier sous WebKit | **0** | 11 cas `a11y-keyboard-audit` rouges sur `mobile-safari`. Non triés entre défaut produit et harnais (Safari ne focalise pas un bouton à la tabulation par défaut) : **non débité** |
+> | AM-1, AM-3 | **0** | revue humaine et lecteur d'écran, toujours `M-51`, `M-40` / `M-52` |
+>
+> ✅ Desktop, Lighthouse à `HEAD` : accessibilité **92 à 100** sur les 8 URLs.
+>
+> **80 → 81.** Détail, règle et ordre de réparation : [tableau de bord](./README.md).
 
 > ### 🟠 2026-09-16 · -4 : la note comptait ce qui était mesuré, jamais ce qui ne l'était pas
 >
@@ -120,7 +139,7 @@ Conséquences pratiques, à tenir :
 | AM-2 | **10 surfaces modales mesurées au clavier sur 53.** Les 43 autres sont **câblées et gardées par un cliquet**, ce qui n'est pas la même chose que mesurées | `e2e/a11y-keyboard-audit.spec.ts` : 19 cas, 10 surfaces. `modal-a11y.guard.test.ts` câble les 53 | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:keyboard-coverage` · **51 surfaces**, 10 mesurées, 41 déclarées non mesurées **une par une avec leur raison** (`C-96`) — 🔴 ne prouve PAS : 🔴 **elle ne mesure AUCUNE accessibilité.** Elle CHIFFRE l'écart et l'empêche de grandir en silence. ⚠️ L'énoncé du 09-16 disait 53 surfaces : le détecteur en compte **51**. ⚠️ La couverture réelle est repassée à **10 sur 51 le 2026-09-22** : les deux cas qui expiraient (`TaskActionsSheet`, `MobileAddToList`) mesurent à nouveau, et par le chemin **clavier** cette fois. 🔴 **Sur `chromium` uniquement** — leurs homologues WebKit n'ont pas été rejoués, donc « 10 » vaut pour un moteur sur deux |
 | AM-3 | **Aucun test avec un lecteur d'écran.** Ce que NVDA ou VoiceOver annonce réellement n'est vérifié nulle part | aucun outil de ce type dans le dépôt | 🟠 **TOUJOURS OUVERT** au 2026-09-21 · **`M-40`** (l'exécution) et **`M-52`** (la date). Ce que VoiceOver ou NVDA **annonce** n'est vérifié nulle part, et aucune garde ne le fera — *(jugé outillable le 09-16 : difficilement : c'est un test manuel daté)* |
 | AM-4 | **WCAG 2.5.5 n'est mesuré que sur 8 routes protégées** (élargi à 8 pages publiques par `C-80`, à revérifier après coup) | `e2e/touch-targets.spec.ts`, cf. l'entrée du 2026-09-14 | ✅ **OUTILLÉ le 2026-09-20** · `C-80` a élargi la boucle à **8 pages publiques** en plus des 8 routes protégées (`C-80`) — 🔴 ne prouve PAS : 🔴 la revérification demandée par cet énoncé est **faite et elle est mauvaise** : le job `e2e` est rouge, 8 défauts de cibles tactiles mesurés (`/settings` 24 × 24 px, `/okr` 36 px, `/habits` 39 × 39 px). C'est `C-111` |
-| AM-5 | **Le contraste n'est vérifié que dans le thème par défaut.** Le dépôt porte quatre thèmes (clair, sombre, gris, noir) ; les runs axe n'en balaient qu'un | `theme-contrast.guard.test.ts` est statique, les runs e2e ne changent pas de thème | ✅ **OUTILLÉ le 2026-09-20** · `e2e/visual-regression.spec.ts` (`C-95`) — 🔴 ne prouve PAS : la première référence fige l'écran défauts compris |
+| AM-5 | **Le contraste n'est vérifié que dans le thème par défaut.** Le dépôt porte quatre thèmes (clair, sombre, gris, noir) ; les runs axe n'en balaient qu'un | `theme-contrast.guard.test.ts` est statique, les runs e2e ne changent pas de thème | ✅ **OUTILLÉ le 2026-09-20** · `e2e/visual-regression.spec.ts` (`C-95`) — 🔴 ne prouve PAS : la première référence fige l'écran défauts compris · 🔎 🔴 **2026-09-22 : repose sur `Visual`, qui n'a jamais produit une référence** (cf. `UI-PATTERNS.md` AM-1) |
 
 
 > ### 🟢 2026-09-15 · +2 : le premier des trois angles morts de couverture est refermé (C-80)

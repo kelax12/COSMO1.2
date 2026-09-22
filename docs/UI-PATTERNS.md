@@ -1,4 +1,4 @@
-<!-- note-audit: note=80 -->
+<!-- note-audit: note=83 -->
 <!--
   🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
   Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
@@ -8,11 +8,26 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **80 / 100**, au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **83 / 100** au 2026-09-22 (soir), au tableau de bord de [`README.md`](./README.md).
 
 # Patterns UI — COSMO
 
-## Note UI / UX : 70 → 80 → 82 → 84 → 87 → 85 → **81 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 soir → 2026-09-16)
+## Note UI / UX : 70 → 80 → 82 → 84 → 87 → 85 → 81 → **83 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-03 → 2026-09-14 soir → 2026-09-16 → 2026-09-22 soir)
+
+> ### 🟢 2026-09-22 (soir) · +2 : remesure item par item, contre la CI réelle et la production
+>
+> **Règle appliquée**, déclarée au [tableau de bord](./README.md) : un angle mort payé le 2026-09-16
+> n'est remboursé que si sa garde a rendu **au moins un verdict exploitable en CI** (vert, ou
+> rouge sur un vrai défaut). Une garde posée mais jamais jouée, ou cassée, ne rembourse rien.
+> Un défaut nommé ce soir coûte selon le barème du 09-16.
+>
+> | Item | Effet | Mesuré le 2026-09-22 |
+> |---|---|---|
+> | `C-77` (−2 le 09-14 soir, série OKR plate) | **+2** | fermé et vérifié par sa sortie : `okrTime = 480` pour un compte réel |
+> | AM-1 à AM-3 · régression visuelle, thèmes, états | **0** | 🔴 **non remboursés** : `Visual` a tourné **19 fois, échoué 19 fois**, et n'a **jamais produit une seule référence**. Le project `visual` dépend de `mobile-safari-warmup`, et `visual.yml` n'installe que Chromium (`Executable doesn't exist ... webkit`). → `C-115` |
+> | AM-4, AM-5 | **0** | toujours ouverts, aucun item |
+>
+> **81 → 83.** Détail, règle et ordre de réparation : [tableau de bord](./README.md).
 
 > ### 🟠 2026-09-16 · -4 : la note comptait ce qui était mesuré, jamais ce qui ne l'était pas
 >
@@ -82,9 +97,9 @@
 
 | # | Angle mort · **énoncé du 2026-09-16, non réécrit** | Vérifié le 2026-09-16 | 🔎 État au 2026-09-21 |
 |---|---|---|---|
-| AM-1 | 🔴 **Aucune garde de régression VISUELLE en CI.** C'est l'angle mort le plus large de ce document : rien ne voit un écran qui se déforme tant qu'aucun test fonctionnel ne casse | aucun workflow ne contient `visual-audit`, `percy`, `chromatic` ni comparaison de captures. `scripts/visual-audit*.mjs` existe et n'est lancé qu'à la main | ✅ **OUTILLÉ le 2026-09-20** · `e2e/visual-regression.spec.ts` · 4 thèmes × 3 routes + états vide et erreur + 3 pages publiques, project `visual` et `visual.yml` (`C-95`) — 🔴 ne prouve PAS : 🔴 **la première référence fige l'écran DÉFAUTS COMPRIS.** Elle ne dit pas qu'il est juste : elle dit qu'on saura qu'il a changé |
-| AM-2 | **Les quatre thèmes ne sont balayés par aucun run.** Clair, sombre, gris et noir : les parcours e2e n'en jouent qu'un. C'est pourtant la classe de bug du 2026-07-23 (17 fichiers aux couleurs codées en dur) | aucun cas e2e ne change de thème | ✅ **OUTILLÉ le 2026-09-20** · `visual.yml`, qui **produit et commite** ses références au premier run (`C-95`) — 🔴 ne prouve PAS : idem AM-1 |
-| AM-3 | **Les états VIDES, de chargement et d'ERREUR ne sont vus qu'au hasard des parcours.** `loading-empty-state.guard.test.ts` vérifie leur présence statiquement, jamais leur rendu | garde statique | ✅ **OUTILLÉ le 2026-09-20** · états **vide** et **erreur** capturés, pas seulement l'état nominal (`C-95`) — 🔴 ne prouve PAS : idem AM-1 |
+| AM-1 | 🔴 **Aucune garde de régression VISUELLE en CI.** C'est l'angle mort le plus large de ce document : rien ne voit un écran qui se déforme tant qu'aucun test fonctionnel ne casse | aucun workflow ne contient `visual-audit`, `percy`, `chromatic` ni comparaison de captures. `scripts/visual-audit*.mjs` existe et n'est lancé qu'à la main | ✅ **OUTILLÉ le 2026-09-20** · `e2e/visual-regression.spec.ts` · 4 thèmes × 3 routes + états vide et erreur + 3 pages publiques, project `visual` et `visual.yml` (`C-95`) — 🔴 ne prouve PAS : 🔴 **la première référence fige l'écran DÉFAUTS COMPRIS.** Elle ne dit pas qu'il est juste : elle dit qu'on saura qu'il a changé · 🔎 🔴 **2026-09-22 : `Visual` n'a JAMAIS produit une référence**, 19 runs, 19 échecs : le project `visual` dépend de la chauffe WebKit, et `visual.yml` n'installe que Chromium. → `C-115` |
+| AM-2 | **Les quatre thèmes ne sont balayés par aucun run.** Clair, sombre, gris et noir : les parcours e2e n'en jouent qu'un. C'est pourtant la classe de bug du 2026-07-23 (17 fichiers aux couleurs codées en dur) | aucun cas e2e ne change de thème | ✅ **OUTILLÉ le 2026-09-20** · `visual.yml`, qui **produit et commite** ses références au premier run (`C-95`) — 🔴 ne prouve PAS : idem AM-1 · 🔎 🔴 **2026-09-22 : idem AM-1, jamais joué avec succès** |
+| AM-3 | **Les états VIDES, de chargement et d'ERREUR ne sont vus qu'au hasard des parcours.** `loading-empty-state.guard.test.ts` vérifie leur présence statiquement, jamais leur rendu | garde statique | ✅ **OUTILLÉ le 2026-09-20** · états **vide** et **erreur** capturés, pas seulement l'état nominal (`C-95`) — 🔴 ne prouve PAS : idem AM-1 · 🔎 🔴 **2026-09-22 : idem AM-1, jamais joué avec succès** |
 | AM-4 | **La cohérence entre la landing et le produit n'est gardée que sur les PRIX et les NOMS de paliers.** Le reste (vocabulaire, promesses, captures) diverge sans alerte | `org-tiers.parity.test.ts` et `org-tier-labels.ts` ne couvrent que ça | 🟠 **TOUJOURS OUVERT** au 2026-09-21 · **aucun item ne le porte.** Seuls les PRIX et les NOMS de paliers sont gardés (`org-tiers.parity.test.ts`, et `check:stripe-prices` depuis `C-106`) ; vocabulaire, promesses et captures divergent toujours sans alerte — *(jugé outillable le 09-16 : partiellement)* |
 | AM-5 | **Aucune mesure d'usage réel.** Le document note des écrans sans jamais savoir lesquels sont ouverts : un écran soigné que personne n'atteint et un écran négligé très fréquenté pèsent pareil | Vesk mesure l'audience des pages publiques, pas les écrans protégés | 🟠 **TOUJOURS OUVERT** au 2026-09-21 · **aucun item ne le porte**, et c'est délibéré : mesurer l'usage réel demande de l'analytique produit, que ce dépôt n'a pas voulue. Un écran soigné que personne n'atteint pèse toujours autant qu'un écran négligé très fréquenté — *(jugé outillable le 09-16 : partiellement)* |
 

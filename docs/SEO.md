@@ -1,4 +1,4 @@
-<!-- note-audit: note=73 -->
+<!-- note-audit: note=78 -->
 <!--
   🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
   Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
@@ -8,7 +8,7 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **73 / 100**, au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **78 / 100** au 2026-09-22 (soir), au tableau de bord de [`README.md`](./README.md).
 
 # SEO — état mesuré, règles et dette
 
@@ -25,7 +25,24 @@ cause n'est pas dans le dépôt.
 > liens et les Core Web Vitals terrain. Ces données vivent dans Search Console, Ahrefs et
 > PageSpeed Insights.
 
-## Note SEO : 73 → 73 → 75 → 80 → **75 / 100** (2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-14 → 2026-09-16) · inchangée au 2026-09-03, **VÉRIFIÉE inchangée le 2026-09-14 au soir**
+## Note SEO : 73 → 73 → 75 → 80 → 75 → **78 / 100** (2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-14 → 2026-09-16 → 2026-09-22 soir) · inchangée au 2026-09-03, **VÉRIFIÉE inchangée le 2026-09-14 au soir**
+
+> ### 🟢 2026-09-22 (soir) · +3 : remesure item par item, contre la CI réelle et la production
+>
+> **Règle appliquée**, déclarée au [tableau de bord](./README.md) : un angle mort payé le 2026-09-16
+> n'est remboursé que si sa garde a rendu **au moins un verdict exploitable en CI** (vert, ou
+> rouge sur un vrai défaut). Une garde posée mais jamais jouée, ou cassée, ne rembourse rien.
+> Un défaut nommé ce soir coûte selon le barème du 09-16.
+>
+> | Item | Effet | Mesuré le 2026-09-22 |
+> |---|---|---|
+> | AM-2 · sitemap ↔ prérendu | **+2** | `check:seo` vert à `HEAD` : **50 pages, 150 `hreflang` réciproques**, sitemap et prérendu se correspondent |
+> | AM-1 · 4 URLs sur 40 | **+1** | 8 URLs ; SEO Lighthouse **100** sur 7, **92** sur `/en/`, soit exactement le seuil bloquant |
+> | AM-3 · balises par page | **+1** | même garde |
+> | 🔴 LCP mobile « mauvais » sur 8 URLs sur 8 | **−1** | 5,6 à 8,3 s en labo (cf. `PERFORMANCE.md`). Signal *page experience*, sans donnée terrain pour le confirmer |
+> | AM-4 · le résultat n'est pas mesuré | **0** | toujours vrai, `M-24` / `M-55` |
+>
+> **75 → 78.** Détail, règle et ordre de réparation : [tableau de bord](./README.md).
 
 > ### 🟠 2026-09-16 · -5 : la note comptait ce qui était mesuré, jamais ce qui ne l'était pas
 >

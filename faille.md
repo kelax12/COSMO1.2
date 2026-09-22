@@ -20,7 +20,27 @@ Légende : 🔴 bloquant · 🟠 important · 🟡 à planifier · ✅ corrigé
 
 ---
 
-## Note de sécurité : 82 → 86 → 84 → 86 → 88 → **83 / 100** (2026-08-24 → 2026-09-02 → 2026-09-03 → 2026-09-14 → 2026-09-16) · **VÉRIFIÉE inchangée le 2026-09-14 au soir**
+## Note de sécurité : 82 → 86 → 84 → 86 → 88 → 83 → **83 / 100** (2026-08-24 → 2026-09-02 → 2026-09-03 → 2026-09-14 → 2026-09-16 → 2026-09-22 soir) · **VÉRIFIÉE inchangée le 2026-09-14 au soir**
+
+> ### ⚪ 2026-09-22 (soir) · 0 : remesure item par item, contre la CI réelle et la production
+>
+> **Règle appliquée**, déclarée au [tableau de bord](./docs/README.md) : un angle mort payé le 2026-09-16
+> n'est remboursé que si sa garde a rendu **au moins un verdict exploitable en CI** (vert, ou
+> rouge sur un vrai défaut). Une garde posée mais jamais jouée, ou cassée, ne rembourse rien.
+> Un défaut nommé ce soir coûte selon le barème du 09-16.
+>
+> | Item | Effet | Mesuré le 2026-09-22 |
+> |---|---|---|
+> | AM-4 · aucun SAST | **+1** | `codeql.yml` tourne et est vert sur chaque push |
+> | 🔴 9 alertes CodeQL ouvertes, aucune triée | **−1** | **5 `high`** (`js/file-system-race` ×4 dans `scripts/`, `js/bad-tag-filter` dans `check-i18n-pages.mjs`), **4 `medium`** (dont `actions/missing-workflow-permissions` sur `renewal-notice.yml`). Toutes hors du bundle client, aucune n'est une faille produit démontrée. C'est `M-60` |
+> | AM-1 · advisors lus à la main | **0** | **non remboursé** : `check:supabase-posture` échoue exprès tant que `M-58` n'est pas fait. ✅ Relus ce soir par l'API : **10 / 53 / 2 / 1**, les deux comptes qui bougent sont **exactement** ceux que `M-58` annonçait (mig. `150`) |
+> | AM-2 · comportement des fonctions | **0** | **non remboursé** : `check:edge-smoke` **n'a jamais sondé en CI**, `VITE_SUPABASE_ANON_KEY` n'est pas passé au job. → `C-114`. Et `check:edge` est rouge depuis le 09-21 sur une dérive **légitime** de `report-bug` (`M-61`) |
+> | AM-5 · témoins de sécurité jamais rejoués | **0** | **non remboursé** : `Sabotages` rouge (cf. `docs/TESTING.md`) |
+>
+> ✅ Vérifié en base ce soir : 51 tables / 51 sous RLS / 126 policies ; `get_support_stats` et
+> `get_admin_stats` appellent `is_admin()` ; `org_subscriptions` et `payment_records` à 0 ligne.
+>
+> **83 → 83.** Détail, règle et ordre de réparation : [tableau de bord](./docs/README.md).
 
 > ### 🟠 2026-09-16 · -5 : la note comptait ce qui était mesuré, jamais ce qui ne l'était pas
 >
@@ -93,10 +113,10 @@ Légende : 🔴 bloquant · 🟠 important · 🟡 à planifier · ✅ corrigé
 | # | Angle mort · **énoncé du 2026-09-16, non réécrit** | Vérifié le 2026-09-16 | 🔎 État au 2026-09-21 |
 |---|---|---|---|
 | AM-1 | 🔴 **Les advisors Supabase ne sont lus qu'à LA MAIN.** Ils sont la seule source qui voit une policy manquante ou une fonction `SECURITY DEFINER` exposée après coup, et aucun workflow ne les interroge | le mot « advisor » dans `ci.yml` désigne **`npm audit`**, pas les advisors de la base. `9 / 52 / 2 / 1` au 2026-09-14, relevé manuellement | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:supabase-posture` · advisors lus par l'API Management (`C-88`) — 🔴 ne prouve PAS : 🔴 rien pour l'instant : **elle échoue exprès** tant que la référence des réglages d'auth n'est pas posée **et commitée** — **`M-58`** |
-| AM-2 | **`check:edge` compare le CODE déployé, jamais le COMPORTEMENT.** Une fonction identique au dépôt mais dont un **secret** a changé de valeur, ou dont une dépendance distante a bougé, rend la garde verte | `scripts/check-edge-deploy.mjs` compare des sources | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:edge-smoke` · **8 sondes**, dans `edge-deploy-drift.yml`, **vertes contre la production** le jour de leur pose (`C-91`) — 🔴 ne prouve PAS : que la fonction fasse son travail : on touche ses premiers mètres, on ne parcourt pas le chemin |
+| AM-2 | **`check:edge` compare le CODE déployé, jamais le COMPORTEMENT.** Une fonction identique au dépôt mais dont un **secret** a changé de valeur, ou dont une dépendance distante a bougé, rend la garde verte | `scripts/check-edge-deploy.mjs` compare des sources | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:edge-smoke` · **8 sondes**, dans `edge-deploy-drift.yml`, **vertes contre la production** le jour de leur pose (`C-91`) — 🔴 ne prouve PAS : que la fonction fasse son travail : on touche ses premiers mètres, on ne parcourt pas le chemin · 🔎 🔴 **2026-09-22 : jamais joué en CI.** `VITE_SUPABASE_ANON_KEY` n'est pas passé au job, la sonde s'arrête avant de sonder. → `C-114` |
 | AM-3 | **`npm audit` ne couvre que les dépendances de PRODUCTION** (`--omit=dev`). Une vulnérabilité dans la chaîne de build n'est vue par rien | `ci.yml:148` : `npm audit --omit=dev --audit-level=high` | ✅ **OUTILLÉ le 2026-09-20** · second `npm audit` sur la chaîne de build, **non bloquant mais LU** (compte par sévérité au résumé) (`C-90`) — 🔴 ne prouve PAS : rien, et c'est assumé : c'est un **arbitrage** écrit comme tel, pas une garde |
-| AM-4 | **Aucune analyse statique de sécurité (SAST) sur le code du dépôt.** Les gardes existantes vérifient des invariants nommés, jamais des motifs inconnus | aucun CodeQL, Semgrep ou équivalent dans `.github/workflows/` | ✅ **OUTILLÉ le 2026-09-20** · `codeql.yml`, `security-extended`, JS/TS **et** `actions` (`C-89`) — 🔴 ne prouve PAS : 🔴 un job vert. Fini quand **chaque alerte ouverte porte une décision** — **`M-60`** |
-| AM-5 | **Les 39 témoins ne sont jamais rejoués** (cf. [`docs/TESTING.md`](./docs/TESTING.md) AM-1). Plusieurs gardent des frontières de sécurité : `csp.guard`, `rgpd-erasure.guard`, `refund.guard`, `org-deletion.guard` | **39** fichiers `*.guard.test.*` (`git ls-files`, **recomptés le 2026-09-20** ; « 36 » datait du 09-16 et n'avait pas suivi les trois ajouts), aucun mutation testing | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:sabotages` · 11 sabotages rejoués, restauration octet pour octet vérifiée (`C-81`) — 🔴 ne prouve PAS : que les **39** témoins détectent : le rapport couvert / total est imprimé exprès |
+| AM-4 | **Aucune analyse statique de sécurité (SAST) sur le code du dépôt.** Les gardes existantes vérifient des invariants nommés, jamais des motifs inconnus | aucun CodeQL, Semgrep ou équivalent dans `.github/workflows/` | ✅ **OUTILLÉ le 2026-09-20** · `codeql.yml`, `security-extended`, JS/TS **et** `actions` (`C-89`) — 🔴 ne prouve PAS : 🔴 un job vert. Fini quand **chaque alerte ouverte porte une décision** — **`M-60`** · 🔎 🟠 **2026-09-22 : 9 alertes ouvertes** (5 `high`, 4 `medium`), aucune triée |
+| AM-5 | **Les 39 témoins ne sont jamais rejoués** (cf. [`docs/TESTING.md`](./docs/TESTING.md) AM-1). Plusieurs gardent des frontières de sécurité : `csp.guard`, `rgpd-erasure.guard`, `refund.guard`, `org-deletion.guard` | **39** fichiers `*.guard.test.*` (`git ls-files`, **recomptés le 2026-09-20** ; « 36 » datait du 09-16 et n'avait pas suivi les trois ajouts), aucun mutation testing | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:sabotages` · 11 sabotages rejoués, restauration octet pour octet vérifiée (`C-81`) — 🔴 ne prouve PAS : que les **39** témoins détectent : le rapport couvert / total est imprimé exprès · 🔎 🔴 **2026-09-22 : job rouge.** Les 11 sabotages sont vus, mais le contrôle « arbre restauré » échoue sur le `sabotages.log` du workflow. → `C-113` |
 
 
 > ### ⚪ 2026-09-14 (soir) · 0 : tout ce que cette note affirme a été rejoué, et deux angles morts s'ouvrent

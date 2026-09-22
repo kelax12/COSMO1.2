@@ -1,4 +1,4 @@
-<!-- note-audit: note=78 -->
+<!-- note-audit: note=75 -->
 <!--
   🔴 C-109 · CE MARQUEUR EST LU PAR `npm run check:docs-scored`.
   Douze documents de fond n'étaient notés par RIEN : ils ne pouvaient ni monter
@@ -8,11 +8,31 @@
   ❌ Ne JAMAIS inventer une note sans avoir audité le domaine : `non-note` est
      une réponse honnête, un chiffre faux ne l'est pas.
 -->
-> **Note d'audit** — Note **78 / 100** au 2026-09-15, au tableau de bord de [`README.md`](./README.md).
+> **Note d'audit** — Note **75 / 100** au 2026-09-22 (soir), au tableau de bord de [`README.md`](./README.md).
 
 # Mobile-first — patterns et conventions
 
-## Note mobile / DA : 62 → 72 → 74 → 76 → 79 → 76 → 78 → **73 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-14 → 2026-09-14 soir → 2026-09-15 → 2026-09-16)
+## Note mobile / DA : 62 → 72 → 74 → 76 → 79 → 76 → 78 → 73 → **75 / 100** (2026-08-24 → 2026-08-25 → 2026-08-27 → 2026-08-29 → 2026-09-14 → 2026-09-14 soir → 2026-09-15 → 2026-09-16 → 2026-09-22 soir)
+
+> ### 🟢 2026-09-22 (soir) · +2 : remesure item par item, contre la CI réelle et la production
+>
+> **Règle appliquée**, déclarée au [tableau de bord](./README.md) : un angle mort payé le 2026-09-16
+> n'est remboursé que si sa garde a rendu **au moins un verdict exploitable en CI** (vert, ou
+> rouge sur un vrai défaut). Une garde posée mais jamais jouée, ou cassée, ne rembourse rien.
+> Un défaut nommé ce soir coûte selon le barème du 09-16.
+>
+> | Item | Effet | Mesuré le 2026-09-22 |
+> |---|---|---|
+> | `C-78` · WebKit en CI | **+1** | le point laissé le 09-15 (« +2 et non +3 ») |
+> | AM-2 · aucun Android | **+2** | project `mobile-chrome` (Pixel 7) joué dans le job `e2e` |
+> | AM-3 · perf mobile | **+1** | Lighthouse mobile joué (et il mesure mal, ligne suivante) |
+> | AM-4 · réseau / CPU bridés | **+1** | CPU ×4 par CDP, joué dans `mobile-android.spec.ts` |
+> | AM-5 · paysage et police 200 % | **+1** | joués |
+> | 🔴 LCP mobile « mauvais » sur 8 URLs sur 8 | **−2** | 5,6 à 8,3 s ; `/entreprise-presentation/` **8,3 s** |
+> | 🔴 Texte à 200 % : trois cas ROUGES, pas des cliquets | **−1** | `/dashboard` déborde de **12 px**, `/settings` de **649 px**, `/tasks` de **1 182 px**. Ce document les disait « cliquets posés au mesuré » : ils **échouent** en CI (WCAG 1.4.4) |
+> | 🔴 Parcours rouges sur WebKit | **−1** | **20** échecs `mobile-safari` à `806e7745`, dont créer une tâche, persistance d'une habitude, carte OKR, 3 `reduced-motion-sheets`. Part produit / harnais non triée, d'où −1 et non −2 |
+>
+> **73 → 75.** Détail, règle et ordre de réparation : [tableau de bord](./README.md).
 
 > ### 🟠 2026-09-16 · -5 : la note comptait ce qui était mesuré, jamais ce qui ne l'était pas
 >
@@ -85,9 +105,9 @@
 |---|---|---|---|
 | AM-1 | ✅ **COMBLÉ le 2026-09-16, vérifié le 2026-09-20.** Était : « les 105 cas `mobile-safari` ne tournent dans aucun workflow » (item `C-78`), le seul project qui mesure WebKit, donc iOS | 🔴 **Cet énoncé était périmé le jour où il a été écrit.** `git show HEAD:.github/workflows/ci.yml` lance `--project=chromium --project=supabase-stub --project=mobile-safari`, et `e2e/_warmup-mobile.spec.ts` est suivi par git : entré avec `af0190bd`, **le 2026-09-16**. ⚠️ Un moteur mobile joué en CI n'est ni un appareil réel, ni Android, ni un réseau bridé : cf. AM-2 et AM-4, ouverts | ✅ **FERMÉ le 2026-09-16** · `C-78`, `af0190bd`. ⚠️ L'énoncé « écrit, non commité » était périmé **le jour même de sa publication** |
 | AM-2 | **Un seul modèle de téléphone, un seul moteur.** Tout est mesuré sur iPhone 12 / WebKit. **Aucun Android réel**, alors que Chrome Android est le premier navigateur mobile du marché | `playwright.config.ts` : un seul device mobile | ✅ **OUTILLÉ le 2026-09-20** · project `mobile-chrome` (Pixel 7) + `e2e/mobile-android.spec.ts` (`C-97`) — 🔴 ne prouve PAS : un appareil **émulé** sur un runner : ni thermique, ni GPU mobile |
-| AM-3 | **La performance mobile n'est mesurée par rien en continu.** Lighthouse tourne en preset **desktop** (cf. [`PERFORMANCE.md`](./PERFORMANCE.md) AM-1) | `lighthouserc.json` : `"preset": "desktop"` | ✅ **OUTILLÉ le 2026-09-20** · `lighthouserc.mobile.json` (`C-84`) — 🔴 ne prouve PAS : que les seuils soient justes : première pose, à rabaisser au mesuré |
+| AM-3 | **La performance mobile n'est mesurée par rien en continu.** Lighthouse tourne en preset **desktop** (cf. [`PERFORMANCE.md`](./PERFORMANCE.md) AM-1) | `lighthouserc.json` : `"preset": "desktop"` | ✅ **OUTILLÉ le 2026-09-20** · `lighthouserc.mobile.json` (`C-84`) — 🔴 ne prouve PAS : que les seuils soient justes : première pose, à rabaisser au mesuré · 🔎 🔴 **2026-09-22 : il mesure, et c'est mauvais** : LCP 5,6 à 8,3 s sur les 8 URLs (cf. `PERFORMANCE.md`) |
 | AM-4 | **Aucune mesure sur appareil réel ni sur réseau bridé.** Un émulateur de bureau ne reproduit ni le GPU d'un téléphone d'entrée de gamme, ni la 4G. C'est précisément la classe de défaut de `C-68` (le shader qui saturait le tampon GPU) | `C-68` n'a été trouvé qu'en bridant le CPU à la main | ✅ **OUTILLÉ le 2026-09-20** · CPU bridé **×4 par CDP**, avec son témoin qui vérifie que le bridage s'applique (`C-97`) — 🔴 ne prouve PAS : l'appareil réel, qui reste **`M-25`** — un bridage n'est pas un téléphone |
-| AM-5 | **Le mode paysage et les grandes tailles de police système ne sont testés nulle part** | aucun cas ne change d'orientation ni de `font-size` racine | ✅ **OUTILLÉ le 2026-09-20** · paysage et police à **200 %** mesurés dans `e2e/mobile-android.spec.ts` (`C-97`) — 🔴 ne prouve PAS : rien de plus que ce qu'il mesure : 2 routes débordent en paysage et 3 à 200 %, cliquets posés **au mesuré**, ils ne peuvent que descendre |
+| AM-5 | **Le mode paysage et les grandes tailles de police système ne sont testés nulle part** | aucun cas ne change d'orientation ni de `font-size` racine | ✅ **OUTILLÉ le 2026-09-20** · paysage et police à **200 %** mesurés dans `e2e/mobile-android.spec.ts` (`C-97`) — 🔴 ne prouve PAS : rien de plus que ce qu'il mesure : 2 routes débordent en paysage et 3 à 200 %, cliquets posés **au mesuré**, ils ne peuvent que descendre · 🔎 🔴 **2026-09-22 : les trois cas « 200 % » sont ROUGES en CI**, pas des cliquets verts : débordement de 12 px (`/dashboard`), 649 px (`/settings`), 1 182 px (`/tasks`) |
 
 
 > ### 🟢 2026-09-15 · +2 sur les 3 retirés : le périmètre est élargi, le moteur mobile ne l'est pas encore
