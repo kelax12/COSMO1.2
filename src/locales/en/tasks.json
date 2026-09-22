@@ -222,7 +222,12 @@
     "advanced": "Show advanced filters",
     "filters": "Filters",
     "showOptions": "Show options",
-    "hideOptions": "Hide options"
+    "hideOptions": "Hide options",
+    "shortPriority": "Priority",
+    "shortDeadline": "Due date",
+    "shortCreatedAt": "Created",
+    "shortName": "Name",
+    "shortCategory": "Category"
   },
   "quickAdd": {
     "create": "Create",

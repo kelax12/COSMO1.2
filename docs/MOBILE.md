@@ -913,6 +913,20 @@ hors de portée du pouce, et poussaient la liste vers le bas. Modèle repris : N
   s'efface. Même geste que les filtres : la ligne applique **et referme**, et un second appui sur la
   liste active la retire. ⚠️ La carte doit pouvoir **défiler** (`overflow-y-auto` + `min-h-0`) :
   mesuré à 375x460, elle se réduit et défile au lieu de pousser le champ hors de l'écran.
+- **La barre ancrée porte AUSSI le tri** (2026-09-22) : `[🔍 Rechercher] [⇅ Priorité]`. Le
+  `<select>` de `TaskFilter` était le dernier rescapé d'une rangée dont la recherche et
+  « + d'options » étaient déjà partis ; cette rangée est donc `hidden md:flex`, elle n'a plus rien à
+  montrer sous 768 px. La pilule **affiche le critère courant** : une icône seule aurait retiré
+  l'information en même temps que la commande. Un appui ouvre une `BottomSheet` avec les cinq
+  critères et le sens.
+  ⚠️ **Ni le critère ni le sens ne referment la feuille**, contrairement aux suggestions de
+  recherche : trier est un choix en deux temps, et changer de critère remet le sens en croissant
+  (`handleFilterChange`). Refermer au premier appui obligerait à rouvrir pour la moitié du réglage.
+- **La carte « Tâches en cours » (légende des catégories) est masquée sous 768 px**, et son
+  engrenage est repris dans l'en-tête mobile, à côté de la boîte de réception. 🔴 Déplacer une
+  surface, c'est déplacer ses COMMANDES : masquée sans ce report, la seule porte vers les réglages
+  de couleurs des catégories disparaissait avec elle. Le libellé reste `common → colorLegend.edit`,
+  jamais recopié.
 - 🔴 **Pendant la recherche, tout ce qui vit AU-DESSUS de la première tâche s'efface** : en-tête de
   page et compteurs, barre des listes, rangée de tri, pilules de filtre actif, et l'astuce de
   balayage (`SwipeHintBanner`). Mesuré : la liste commence à **44 px** du haut au lieu de 267, soit

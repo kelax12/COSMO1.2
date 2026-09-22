@@ -11,6 +11,7 @@ import type { TaskList } from '@/modules/lists';
 import { VIRTUAL_TODAY_ID } from './task-page-filter';
 import { resolveListColor } from './list-colors';
 import { setSearchOpen, useSearchOpen } from './search-open.store';
+import MobileSortButton from './MobileSortButton';
 import { useT } from '@/i18n/useT';
 import type { KeyOf } from '@/i18n/catalog';
 
@@ -52,6 +53,16 @@ interface Props {
     /** « Aujourd'hui » peut etre masquee par la personne : on ne la propose pas. */
     todayHidden: boolean;
   };
+  /**
+   * Le tri, qui vivait dans un `<select>` en haut de page. Meme raison de
+   * grouper que `listPicker` : quatre valeurs qui ne se comprennent qu'ensemble.
+   */
+  sort: {
+    field: string;
+    direction: 'asc' | 'desc';
+    onFieldChange: (value: string) => void;
+    onToggleDirection: () => void;
+  };
 }
 
 type Suggestion =
@@ -92,7 +103,7 @@ const ACTIVE_LABEL_KEY: Record<Exclude<QuickFilter, 'none'>, KeyOf<'tasks'>> = {
  */
 const KEYBOARD_LIFT_PX = 80;
 
-const MobileTaskSearch: React.FC<Props> = ({ searchTerm, onSearchTermChange, listPicker }) => {
+const MobileTaskSearch: React.FC<Props> = ({ searchTerm, onSearchTermChange, listPicker, sort }) => {
   const { t } = useT('tasks');
   // L'ouverture vit dans un store : `TasksPage` efface son en-tête, ses listes
   // et son tri pendant la recherche, et `SwipeHintBanner` s'efface aussi, deux
@@ -246,11 +257,11 @@ const MobileTaskSearch: React.FC<Props> = ({ searchTerm, onSearchTermChange, lis
           de suggestions, qui la masquait, disparaît alors) : deux champs de
           recherche l'un au-dessus de l'autre, dont un inerte. */}
       <div
-        className={`${open ? 'hidden' : ''} md:hidden fixed inset-x-0 z-30 px-gutter`}
+        className={`${open ? 'hidden' : ''} md:hidden fixed inset-x-0 z-30 px-gutter flex items-center gap-2`}
         style={{ bottom: barBottom }}
         data-tutorial-id="tasks-search"
       >
-        <div className="flex items-center gap-2 rounded-full border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] shadow-lg shadow-black/10 pl-4 pr-2 h-12">
+        <div className="flex flex-1 min-w-0 items-center gap-2 rounded-full border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] shadow-lg shadow-black/10 pl-4 pr-2 h-12">
           <button
             type="button"
             onClick={openAndFocus}
@@ -291,6 +302,14 @@ const MobileTaskSearch: React.FC<Props> = ({ searchTerm, onSearchTermChange, lis
             </button>
           )}
         </div>
+
+        {/* Le tri quitte la rangee du haut pour se poser ici, sous le pouce. */}
+        <MobileSortButton
+          field={sort.field}
+          direction={sort.direction}
+          onFieldChange={sort.onFieldChange}
+          onToggleDirection={sort.onToggleDirection}
+        />
       </div>
 
       <AnimatePresence>

@@ -241,7 +241,12 @@
     "advanced": "Afficher les filtres avancés",
     "filters": "Filtres",
     "showOptions": "Afficher les options",
-    "hideOptions": "Masquer les options"
+    "hideOptions": "Masquer les options",
+    "shortPriority": "Priorité",
+    "shortDeadline": "Échéance",
+    "shortCreatedAt": "Création",
+    "shortName": "Nom",
+    "shortCategory": "Catégorie"
   },
   "quickAdd": {
     "create": "Créer",
