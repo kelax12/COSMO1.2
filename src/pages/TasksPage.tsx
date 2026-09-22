@@ -41,6 +41,7 @@ import TasksHeader from './tasks/TasksHeader';
 import { isTaskOverdue } from '@/components/task-table/helpers';
 import TasksErrorState from './tasks/TasksErrorState';
 import MobileTaskSearch from './tasks/MobileTaskSearch';
+import { useHiddenWhileSearching } from './tasks/search-open.store';
 import { useChipLongPress } from './tasks/useChipLongPress';
 import { useTaskLists } from './tasks/useTaskLists';
 import { useT } from '@/i18n/useT';
@@ -109,6 +110,13 @@ const TasksPage: React.FC = () => {
   const { actionSheetListId, setActionSheetListId, chipLongPressFired, startChipLongPress, cancelChipLongPress } = useChipLongPress(isMobile);
 
   const { priorityRange } = usePriorityRange();
+
+  // Recherche mobile ouverte : tout ce qui vit AU-DESSUS de la première tâche
+  // s'efface (en-tête, listes, tri, pilules de filtre). Sans ça, la liste
+  // filtrée est repoussée sous le champ et il n'en reste qu'une ligne et demie
+  // entre le dernier bandeau et le clavier. `md:block` : le desktop n'ouvre
+  // jamais cet écran, mais une largeur qui change ne doit rien pouvoir cacher.
+  const { block: hiddenWhileSearching, flex: hiddenWhileSearchingFlex } = useHiddenWhileSearching();
 
   // ═══════════════════════════════════════════════════════════════════
   // État de filtrage LOCAL (migrés depuis TaskContext)
@@ -261,12 +269,14 @@ const TasksPage: React.FC = () => {
       className="p-gutter sm:p-8 h-fit pb-[calc(64px+env(safe-area-inset-bottom)+144px)] md:pb-8"
     >
       <div className="flex flex-col gap-row sm:gap-8">
+        <div className={hiddenWhileSearching}>
         <TasksHeader
           showDeadlineCalendar={showDeadlineCalendar}
           onToggleCalendar={() => setShowDeadlineCalendar(!showDeadlineCalendar)}
           openCount={headerCounts.openCount}
           overdueCount={headerCounts.overdueCount}
         />
+        </div>
 
         <AnimatePresence>
           {showDeadlineCalendar && (
@@ -275,6 +285,7 @@ const TasksPage: React.FC = () => {
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.3 }}
+              className={hiddenWhileSearching}
             >
               <DeadlineCalendar />
             </motion.div>
@@ -293,6 +304,7 @@ const TasksPage: React.FC = () => {
                 2ᵉ gouttière et volait ~24px de largeur utile par ligne. */}
             <div className="card card-plain-mobile p-0 sm:p-6">
               {!showCompleted && !showAddTaskForm && (
+              <div className={hiddenWhileSearching}>
               <TaskListsBar
                 lists={lists}
                 orderedLists={orderedLists}
@@ -339,6 +351,7 @@ const TasksPage: React.FC = () => {
                 startChipLongPress={startChipLongPress}
                 cancelChipLongPress={cancelChipLongPress}
               />
+              </div>
               )}
 
               {!showAddTaskForm && (
@@ -346,7 +359,7 @@ const TasksPage: React.FC = () => {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.6 }}
-                  className="flex flex-col md:flex-row justify-between items-stretch md:items-start mb-3 sm:mb-8 gap-6"
+                  className={`flex flex-col md:flex-row justify-between items-stretch md:items-start mb-3 sm:mb-8 gap-6 ${hiddenWhileSearchingFlex}`}
                 >
                   <div className="flex-1 w-full" data-tutorial-id="tasks-filter">
                     <TaskFilter
@@ -382,7 +395,7 @@ const TasksPage: React.FC = () => {
                   la liste (liste, catégories, recherche) + compteur n/N, avec un
                   ✕ pour le retirer — évite le « où sont passées mes tâches ? ». */}
               {!showAddTaskForm && (selectedListId || selectedCategories.length > 0 || searchTerm.trim() !== '') && (
-                <div className="flex flex-wrap items-center gap-2 mb-4" role="status">
+                <div className={`flex flex-wrap items-center gap-2 mb-4 ${hiddenWhileSearchingFlex}`} role="status">
                   {selectedListId && (
                     <button
                       type="button"

@@ -864,6 +864,15 @@ hors de portée du pouce, et poussaient la liste vers le bas. Modèle repris : N
   couleur d'accent, en `!important`. L'échappatoire est la classe **`no-input-chrome`**, mais elle
   force aussi `border-radius: 0` : un champ arrondi doit donc être **transparent à l'intérieur d'un
   conteneur** qui porte la forme et le fond.
+- 🔴 **Pendant la recherche, tout ce qui vit AU-DESSUS de la première tâche s'efface** : en-tête de
+  page et compteurs, barre des listes, rangée de tri, pilules de filtre actif, et l'astuce de
+  balayage (`SwipeHintBanner`). Mesuré : la liste commence à **44 px** du haut au lieu de 267, soit
+  trois tâches de plus entre le haut de l'écran et le champ. L'état vit dans
+  `pages/tasks/search-open.store.ts` : `SwipeHintBanner` est deux niveaux plus bas, dans
+  `TaskTable`, qui ne peut pas recevoir une prop de plus sans dépasser son plafond de 600 lignes.
+  ⚠️ La classe de retour doit rendre à chaque bloc son affichage **naturel** (`md:flex` pour une
+  rangée `flex`, `md:block` sinon) : l'écran est `md:hidden`, mais l'état d'ouverture, lui, survit à
+  un élargissement de fenêtre.
 - ⚠️ **Dès la première frappe, le fond s'efface** (`pointer-events-none`, seule la rangée du champ
   reste cliquable) : le modèle remplit cet espace avec ses résultats, COSMO ne le peut pas sans
   remonter toute sa liste dans l'overlay. Chercher derrière un fond opaque revenait à chercher à
