@@ -78,7 +78,7 @@ const TeamTaskCardLiteInner = React.forwardRef<HTMLDivElement, TeamTaskCardLiteP
               au-dessus (`text-body`) est réservé au RETARD sur `TaskCard` —
               l'accorder aussi à l'appartenance à une équipe rendait les deux
               signaux indiscernables. */}
-          <p className={`font-medium text-label leading-tight line-clamp-2 ${task.completed ? 'line-through' : ''}`} style={{ color: 'rgb(var(--color-text-primary))' }}>
+          <p className={`task-title-boost font-medium text-label leading-tight line-clamp-2 ${task.completed ? 'line-through' : ''}`} style={{ color: 'rgb(var(--color-text-primary))' }}>
             {task.name}
           </p>
           <div className="flex items-center gap-1.5 text-caption" style={{ color: 'rgb(var(--color-text-muted))' }}>

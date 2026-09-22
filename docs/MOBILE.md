@@ -703,6 +703,15 @@ Tokens dans `src/index.css` (`:root`), exposés en utilitaires Tailwind (`tailwi
 | `text-label` | `--t-label` | 13 px | Labels, boutons, chips |
 | `text-caption` | `--t-caption` | 11 px | Meta, badges, labels de tab bar |
 
+> **Deux sous-arbres montent d'un pixel, et c'est la SEULE façon de le faire.** `.dashboard-mobile-text-boost`
+> (accueil) et `.task-title-boost` (titre d'une tâche dans la liste mobile) redéfinissent les
+> **tokens** `--t-*` sous 768 px, hors de tout `@layer` : les classes `.text-*` de Tailwind vivent
+> dans son layer `utilities`, qui gagnerait quelle que soit la spécificité. Redéfinir le token
+> plutôt que `font-size` laisse la règle suivre le cran appliqué par le composant sans avoir à le
+> connaître. ❌ Ni `text-[14px]` (le cliquet le refuse), ni un 7ᵉ cran dans l'échelle.
+> ⚠️ `.task-title-boost` couvre `--t-label` ET `--t-body` : `TaskCard` monte d'un cran quand la
+> tâche est EN RETARD, n'en décaler qu'un effacerait ce signal.
+
 > **11 px est le plancher absolu.** Le test `src/design-system.guard.test.ts` échoue si une taille sous 11 px apparaît, et plafonne le stock de `text-[Npx]` restants (budget qui ne doit que baisser).
 
 ### Grille, rayons, cible tactile
