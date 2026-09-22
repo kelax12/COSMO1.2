@@ -7,7 +7,7 @@
     "calendar": "Calendrier"
   },
   "sections": {
-    "all": "Vue d'ensemble",
+    "all": "Vue globale",
     "tasks": "Tâches",
     "agenda": "Agenda",
     "okr": "OKR",
@@ -53,7 +53,12 @@
     "totalObjectives": "Total Objectifs",
     "workedObjectives": "Objectifs travaillés",
     "totalRealTime": "Temps total réel",
-    "effortByOkr": "Répartition de l'effort par OKR",
+    "progressByOkr": "Avancement par OKR",
+    "progressBefore": "Acquis avant la période",
+    "progressGained": "Gagné sur la période",
+    "progressBarAria_one": "Avancement {{total}} %, dont {{gained}} point gagné sur la période.",
+    "progressBarAria_many": "Avancement {{total}} %, dont {{gained}} de points gagnés sur la période.",
+    "progressBarAria_other": "Avancement {{total}} %, dont {{gained}} points gagnés sur la période.",
     "noEffort": "Aucun effort enregistré.",
     "byHabit": "Détail par habitude {{period}}",
     "noHabit": "Aucune habitude complétée ou active sur cette période.",
