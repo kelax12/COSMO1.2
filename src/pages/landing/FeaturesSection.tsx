@@ -22,6 +22,7 @@ import {
 import { useT } from '@/i18n/useT';
 import WhenVisible from '@/components/showcase/WhenVisible';
 import ShowcaseTheme from '@/components/showcase/ShowcaseTheme';
+import { basisColonneAgenda } from '@/components/showcase/agenda-geometrie';
 
 // Audit perf 2026-05-29 — StatsShowcase pulls Recharts (≈ 320 kB). Landing
 // page should never block on it: lazy-load with a lightweight skeleton so
@@ -76,7 +77,15 @@ interface Feature {
   Mobile: React.ComponentType;
   /** sens d'entrée du texte en mode empilé */
   fromRight?: boolean;
+  /**
+   * `flex-basis` de la colonne de la vitrine quand elle ne doit PAS prendre
+   * la moitié de la rangée. Absent : les deux colonnes se partagent la place.
+   */
+  basisMaquette?: string;
 }
+
+/** `gap-16` : l'écart entre le texte et la vitrine, dans les deux mises en page. */
+const ECART_COLONNES_PX = 64;
 
 const FEATURES: Feature[] = [
   {
@@ -101,6 +110,9 @@ const FEATURES: Feature[] = [
     Desktop: AgendaShowcase,
     Mobile: AgendaMobileShowcase,
     fromRight: true,
+    // Le calendrier est 30 % plus large ; la barre des tâches garde sa taille.
+    // C'est le texte d'à côté qui cède la place (cf. `agenda-geometrie.ts`).
+    basisMaquette: basisColonneAgenda(ECART_COLONNES_PX),
   },
   {
     id: 'okr',
@@ -308,7 +320,10 @@ const FeaturesSection: React.FC<FeaturesSectionProps> = ({ isMobile, handleFeatu
                   >
                     <FeatureCopy feature={feature} onCta={() => handleFeatureClick(feature.path)} />
                   </motion.div>
-                  <div className="flex-1 w-full px-4 lg:px-0" style={{ perspective: 1200 }}>
+                  <div
+                    className={`flex-1 w-full px-4 lg:px-0 ${feature.basisMaquette ? 'lg:flex-none lg:basis-[var(--basis-maquette)]' : ''}`}
+                    style={{ perspective: 1200, ['--basis-maquette' as string]: feature.basisMaquette }}
+                  >
                     <motion.div
                       initial={reduceMotion ? false : { rotateY: feature.fromRight ? -48 : 48, opacity: 0, scale: 0.78, y: 50 }}
                       whileInView={{ rotateY: 0, opacity: 1, scale: 1, y: 0 }}
@@ -362,7 +377,10 @@ const FeaturesSection: React.FC<FeaturesSectionProps> = ({ isMobile, handleFeatu
                     <div className="flex-1">
                       <FeatureCopy feature={feature} onCta={() => handleFeatureClick(feature.path)} />
                     </div>
-                    <div className="flex-1 w-full" style={{ perspective: 1200 }}>
+                    <div
+                      className="flex-1 w-full"
+                      style={{ perspective: 1200, ...(feature.basisMaquette ? { flex: `0 0 ${feature.basisMaquette}` } : {}) }}
+                    >
                       <div className="feature-mockup relative">
                         <div className={`absolute -inset-3 bg-gradient-to-r ${feature.glow} rounded-3xl blur-2xl`} />
                         <div className="relative">

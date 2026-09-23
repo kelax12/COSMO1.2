@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Clock, Bookmark, CheckCircle2, Calendar } from 'lucide-react';
 import { useShowcasePalette } from './showcase-theme';
+import { LARGEUR_BARRE_TACHES } from './agenda-geometrie';
 
 // ─── Static data ────────────────────────────────────────────────────
 const CATEGORIES: Record<string, { name: string; color: string }> = {
@@ -131,7 +132,7 @@ const AgendaShowcase: React.FC = () => {
       {/* ══════════ SIDEBAR ══════════ */}
       <div
         className="flex flex-col border-r border-white/10 shrink-0"
-        style={{ width: 218, backgroundColor: P.panel }}
+        style={{ width: LARGEUR_BARRE_TACHES, backgroundColor: P.panel }}
       >
         {/* Header */}
         <div className="px-4 py-3 border-b border-white/10">
