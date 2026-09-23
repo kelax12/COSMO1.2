@@ -138,8 +138,14 @@ test.describe('Espace entreprise · navigation', () => {
 
     await nav.getByRole('button', { name: /replier la navigation/i }).click();
     await expect(nav).toHaveAttribute('data-collapsed', 'true');
+    // La carte glisse hors de l'écran : il n'en reste que 10 px au bord.
     await expect
-      .poll(async () => nav.evaluate((el) => Math.round(el.getBoundingClientRect().width)))
+      .poll(async () =>
+        nav.evaluate((el) => {
+          const card = el.lastElementChild as HTMLElement;
+          return Math.round(window.innerWidth - card.getBoundingClientRect().left);
+        }),
+      )
       .toBeLessThanOrEqual(10);
 
     // L'état replié survit au rechargement.
@@ -147,7 +153,8 @@ test.describe('Espace entreprise · navigation', () => {
     await expect(nav).toHaveAttribute('data-collapsed', 'true', { timeout: 20_000 });
 
     // Le curseur sur la bande rouvre le panneau.
-    await nav.getByRole('button', { name: /afficher la navigation/i }).hover();
+    // En haut de la zone d'approche, hors de la hauteur de la carte.
+    await nav.getByRole('button', { name: /afficher la navigation/i }).hover({ position: { x: 10, y: 10 } });
     await expect(nav).toHaveAttribute('data-collapsed', 'false');
     await expect(nav.getByRole('link', { name: /^membres/i })).toBeVisible();
   });
