@@ -108,6 +108,10 @@ La landing n'est plus une page linéaire. Après le header, un **aiguillage**
   gradient et le transform portés par le **même** élément — le seul cas que `bg-clip-text`
   supporte. C'est ce qui a fait réapparaître le dégradé bleu → fuchsia, affiché en bleu plat
   depuis le passage à SplitText.
+- 🔴 **Hero ENTREPRISE : un seul axe, celui de la lumière** (maquette 124, 2026-09-23). Titre,
+  CTA et pile (`HeroStack`) centrés SOUS l'origine `top-center` du faisceau, la pile remonte
+  vers elle. ❌ Pas de mise en page en deux colonnes sans déplacer l'origine ; le cyan n'a que deux
+  rôles (lumière, CTA). La pile a sa pause (C-69). Pourquoi : en-tête d'`EnterpriseHero`.
 - 🔴 **Le shader du hero ENTREPRISE (`LightRays`) se regle tout seul, et il ne doit jamais
   redevenir fixe** (C-68). Il descend d'un palier tant que la frame ne tient pas, et les rayons
   restent visibles dans tous les cas : c'est le mouvement qui se retire, jamais l'image.

@@ -337,10 +337,11 @@
       "tasksAlt": "Onglet Tâches : toutes les tâches d'équipe réunies dans un tableau unique, triable par statut, échéance ou assigné."
     },
     "hero": {
-      "line1": "Pilotez",
-      "line2": "votre entreprise",
-      "line3": "avec facilité.",
-      "subtitle": "Cosmo Entreprise se met en place en <hl>cinq étapes</hl>, de l'organigramme à la statistique d'équipe. Et chaque collaborateur garde <hl>le Cosmo personnel</hl> qu'il utilise déjà.",
+      "line1": "Qui fait quoi.",
+      "line2": "Où on en est.",
+      "subtitle": "Organigramme, projets, OKR et statistiques d'équipe, dans le Cosmo que chacun utilise déjà. En place en <hl>cinq étapes</hl>.",
+      "stackLabel": "Trois écrans du mode entreprise",
+      "showView": "Afficher l'écran {{name}}",
       "cta": "Ouvrir la démo entreprise",
       "ctaAria": "Ouvrir la démonstration du mode entreprise, sans inscription",
       "ctaSecondary": "Voir les tarifs",

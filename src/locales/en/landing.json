@@ -337,10 +337,11 @@
       "tasksAlt": "Tasks tab: every team task gathered in a single sortable table, by status, deadline or assignee."
     },
     "hero": {
-      "line1": "Run",
-      "line2": "your business",
-      "line3": "with ease.",
-      "subtitle": "Cosmo for companies sets up in <hl>five steps</hl>, from the org chart to team statistics. And every collaborator keeps <hl>the personal Cosmo</hl> they already use.",
+      "line1": "Who does what.",
+      "line2": "Where things stand.",
+      "subtitle": "Org chart, projects, OKRs and team statistics, inside the Cosmo everyone already uses. Set up in <hl>five steps</hl>.",
+      "stackLabel": "Three screens of the company mode",
+      "showView": "Show the {{name}} screen",
       "cta": "Open the company demo",
       "ctaAria": "Open the company mode demonstration, no sign-up",
       "ctaSecondary": "See pricing",

@@ -49,6 +49,15 @@ export default {
 				DEFAULT: 'hsl(var(--border))',
 			},
 			colors: {
+				// Hero de la landing ENTREPRISE (maquette 124, 2026-09-23) : cinq
+				// couleurs nommées. Le cyan n'a que deux rôles, la lumière et le CTA.
+				ent: {
+					nuit: '#08090C', // fond
+					faisceau: '#22D3EE', // lumière + CTA, seul accent
+					lune: '#EDF2F7', // titres, texte appuyé
+					brume: '#8B96A8', // texte courant : 6,5:1 sur la nuit
+					acier: '#1A1F27', // chrome des fenêtres
+				},
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
 				ring: 'hsl(var(--ring))',
@@ -107,6 +116,11 @@ export default {
 			},
 			fontFamily: {
 				sans: ['Inter', 'system-ui', 'sans-serif'],
+				// Titre du hero ENTREPRISE uniquement. Auto-hébergée (CSP
+				// `font-src 'self'`), cf. `src/index.css` § polices d'affichage.
+				display: ['"Instrument Serif"', 'Georgia', '"Times New Roman"', 'serif'],
+				// Petites mentions « données » du même hero (réassurance, adresses).
+				data: ['"Geist Mono"', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
 			},
 			boxShadow: {
 				'sm': '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
