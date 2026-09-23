@@ -88,6 +88,10 @@ La landing n'est plus une page linéaire. Après le header, un **aiguillage**
   Cliquet : `src/components/showcase/showcase-light.guard.test.ts`, vu rouge sur 3 sabotages.
   Il comparait d'abord par `includes()` et trouvait `.bg-slate-950` dans `.bg-slate-950\/40` :
   un cliquet qui compare par préfixe laisse passer exactement la classe qu'on vient d'ajouter.
+- 🔴 **`TaskTableShowcase` suit `TaskTableDesktop` / `TaskRow`** : l'UI desktop change, la
+  vitrine se refait (dans l'app, la priorité **1** est la plus urgente). ❌ Pas de `layout`
+  Framer dans une maquette mise à l'échelle. ⚠️ Son bouton de pause vit hors de la maquette.
+  Pourquoi : en-tête du composant.
 - 🔴 **L'entrée du hero perso est en CSS, et elle doit le rester** (refonte du 2026-08-30).
   Mesuré à 4× de bridage CPU : la landing affichait **deux secondes d'écran blanc avec un
   spinner**, puis le hero apparaissait déjà fini. Le fallback de page était clair sur une page
