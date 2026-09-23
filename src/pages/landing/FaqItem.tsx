@@ -7,23 +7,32 @@ interface FaqItemProps {
   question: string;
   answer: string;
   index: number;
+  /** DA du parcours porteur — `light` (perso, défaut) ou `dark` (entreprise). */
+  theme?: 'light' | 'dark';
 }
 
-const FaqItemBase: React.FC<FaqItemProps> = ({ question, answer, index }) => {
+const FaqItemBase: React.FC<FaqItemProps> = ({ question, answer, index, theme = 'light' }) => {
   const [open, setOpen] = useState(false);
+  const isDark = theme === 'dark';
   return (
-    <div className="border-b border-slate-200 last:border-0">
+    <div className={isDark ? 'border-b border-white/[0.08] last:border-0' : 'border-b border-slate-200 last:border-0'}>
       <button
         onClick={() => setOpen(v => !v)}
         className="w-full flex items-center justify-between gap-4 py-5 text-left group"
         aria-expanded={open}
       >
-        <span className="text-base font-medium text-slate-900 group-hover:text-blue-700 transition-colors leading-snug">
+        <span
+          className={
+            isDark
+              ? 'text-base font-medium text-white group-hover:text-[#22D3EE] transition-colors leading-snug'
+              : 'text-base font-medium text-slate-900 group-hover:text-blue-700 transition-colors leading-snug'
+          }
+        >
           {question}
         </span>
         <ChevronDown
           size={18}
-          className="shrink-0 text-slate-500 transition-transform duration-300"
+          className={isDark ? 'shrink-0 text-white/50 transition-transform duration-300' : 'shrink-0 text-slate-500 transition-transform duration-300'}
           style={{ transform: open ? 'rotate(180deg)' : 'rotate(0deg)' }}
         />
       </button>
@@ -37,7 +46,9 @@ const FaqItemBase: React.FC<FaqItemProps> = ({ question, answer, index }) => {
             transition={{ duration: 0.25, ease: 'easeInOut' }}
             className="overflow-hidden"
           >
-            <p className="pb-5 text-sm text-slate-600 leading-relaxed">{answer}</p>
+            <p className={isDark ? 'pb-5 text-sm text-white/70 leading-relaxed' : 'pb-5 text-sm text-slate-600 leading-relaxed'}>
+              {answer}
+            </p>
           </motion.div>
         )}
       </AnimatePresence>
