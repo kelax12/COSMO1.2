@@ -93,10 +93,11 @@ jobs:
       - name: Installer Chromium
         run: npx playwright install --with-deps chromium
 
-      # Le project `visual` dépend de `mobile-safari-warmup`, qui paie la
-      # compilation à froid de Vite une fois, sous un nom qui le dit. Il
-      # tourne en Desktop Chrome ici : WebKit n'est donc pas installé, et le
-      # warmup ne le demande pas — il ne fait qu'ouvrir la landing.
+      # Le project `visual` dépend de `mobile-chrome-warmup`, qui paie la
+      # compilation à froid de Vite une fois, sous un nom qui le dit, et sous
+      # CHROMIUM. 🔴 C-115 : il dépendait de `mobile-safari-warmup`, et ce
+      # commentaire affirmait que ce warmup ne demandait pas WebKit. Il tourne
+      # sur un iPhone 12 : 19 runs, 19 échecs, aucune référence produite.
       - name: Existe-t-il des references ?
         id: ref
         run: |

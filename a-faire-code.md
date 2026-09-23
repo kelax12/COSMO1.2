@@ -6317,6 +6317,28 @@ que cette garde existe pour dire ; ce n'est pas un faux positif.
 
 ### 12.10 🟠 C-111 · LE JOB `e2e` EST ROUGE SUR `main` — **deux familles sur quatre traitées le 2026-09-22**
 
+> ## 🔧 Passe du 2026-09-23 · les 23 échecs du dernier run complet, un par un
+>
+> Diagnostic à partir des logs du run `35724587420` (`806e7745`), puis rejoué sur ce poste. **Un
+> seul motif pour la plupart : des specs écrites pour le bureau, que `mobile-safari` ne joue que
+> depuis le 2026-09-16.** Chacune a été rendue adaptative, sauf une, retirée avec sa raison.
+>
+> | Famille | Cause mesurée | Traitement |
+> |---|---|---|
+> | `mobile-android` « police 200 % » ×3 | plafonds posés sous Windows, la CI Linux mesurait 1 à 5 px de plus (13 / 650 / 1 187) ; et le détecteur comptait les **carrousels défilants** (puces de listes, onglets de réglages) comme une perte | détecteur corrigé avec deux témoins ; **vrai défaut produit trouvé dessous** : 218 px de métadonnées de tâche qui ne passaient pas à la ligne (`flex-wrap`) ; en-tête mobile du tableau de bord aligné sur sa marge. Plafonds **1 182 / 649 / 12 → 0 / 0 / 0**, paysage `/tasks` **619 → 0** |
+> | `a11y-audit` `/habits` | **vrai défaut produit** : les cases cochées de la grille mobile n'avaient **aucun nom accessible** (axe `button-name`, critique, 4.1.2 A), et leur état n'était porté que par la couleur | `HabitCard` : `role="checkbox"`, `aria-checked`, nommées par l'habitude et le jour, comme `HabitTable` |
+> | `a11y-keyboard-audit` ×10 | assertions calibrées sur la navigation séquentielle de Chromium ; rouges sous WebKit y compris à 1 280 px | **retiré de `mobile-safari`**, raison écrite dans `playwright.config.ts` ; le trou est nommé : `C-118` |
+> | `demo-create-task` | bouton « Créer » (pas « Créer la tâche ») dans l'en-tête mobile ; champ de recherche derrière « Ouvrir la recherche », de rôle `searchbox` | spec adaptative |
+> | `demo-journeys` ×2 · `demo-toggle-habit` | cases d'habitude sans rôle `checkbox` sur mobile (cf. plus haut) ; premier « % » du DOM masqué sous `md:` | corrigés par le produit, et un pourcentage **visible** de la carte |
+> | `demo-entreprise-session-fixes` ×2 | la liste de tâches de l'agenda d'un membre est repliée sous 640 px, par conception | le test l'ouvre comme une personne le ferait |
+> | `reduced-motion-sheets` ×3 | deux déclencheurs n'existent qu'au-dessus de 768 px ; et des mesures prises à **800 ms fixes**, alors que WebKit sur ce poste montre `LoginModal` à opacité 0 à 2 s, opaque à 5 s | viewport de bureau porté par le test pour ces deux cas ; attente de **stabilisation bornée à 8 s** : une feuille bloquée échoue toujours |
+>
+> ✅ **Mesuré sur ce poste** : les specs corrigées passent sous `mobile-safari` (27 cas, puis les
+> deux derniers rejoués), sous `chromium` (**45 / 45**) et `mobile-chrome` (**15 / 15**).
+> 🔴 **Ce qui n'est PAS prouvé** : un run CI complet vert sur Linux. Les 13 cas « instables » du
+> dernier run n'ont pas été traités un par un ; un instable qui repasse au 2ᵉ essai ne rend pas
+> le job rouge, mais il reste une dette.
+
 > ## 🔧 Passe du 2026-09-22 · ce qui est fermé, ce qui reste
 >
 > 🔴 **D'ABORD, UN CHIFFRE DE CET ITEM ÉTAIT FAUX.** Il annonçait « 2 cas `chromium` » pour
@@ -6474,9 +6496,10 @@ de chaque workflow, la production (catalogue, advisors, RPC sous rôle `authenti
 | **C-112** 🔴 · P1 · XS | `scripts/check-retention.mjs:66` déclare `friend_requests` avec la colonne `user_id`, qui n'existe pas (`sender_id`, `receiver_id`). La requête UNION entière échoue en `42703` : **aucune** table n'est contrôlée, à chaque run de `posture.yml` | le job `retention` vert, avec les deux colonnes de `friend_requests` contrôlées. ⚠️ Un test du script qui confronterait sa liste au schéma aurait vu l'erreur : c'est le même défaut que la liste en dur de `rgpd-erasure.guard` (T-2) |
 | **C-113** 🔴 · P2 · XS | `sabotages.yml` écrit `sabotages.log` **dans l'arbre de travail**, puis vérifie que l'arbre est intact : il échoue toujours, alors que les 11 sabotages sont vus | log écrit dans `$RUNNER_TEMP`, un run planifié vert. Puis la couverture : **9 témoins sur 47** |
 | **C-114** 🔴 · P2 · XS | `edge-deploy-drift.yml` n'expose pas `VITE_SUPABASE_ANON_KEY` à l'étape `check:edge-smoke` : la sonde s'arrête avant de sonder, depuis sa pose | l'étape sonde les 8 fonctions en CI. ⚠️ Si le secret n'existe pas au dépôt, c'est un geste d'Axel |
-| **C-115** 🔴 · P1 · S | `visual.yml` installe Chromium seul, or le project `visual` dépend de `mobile-safari-warmup` (WebKit) : **19 runs, 19 échecs, aucune référence produite**. Trois angles morts UI et un d'accessibilité restent donc payés | un run vert qui commite ses références, puis un second run qui les **compare** |
+| **C-115** 🟠 **corrigé le 2026-09-23, à vérifier au premier run** : le project `visual` dépend désormais de `mobile-chrome-warmup` (Chromium, même spec de chauffe). Critère inchangé : une référence produite, puis comparée · P1 · S | `visual.yml` installe Chromium seul, or le project `visual` dépend de `mobile-safari-warmup` (WebKit) : **19 runs, 19 échecs, aucune référence produite**. Trois angles morts UI et un d'accessibilité restent donc payés | un run vert qui commite ses références, puis un second run qui les **compare** |
 | **C-116** 🔴 · P1 · M | **LCP mobile 5,6 à 8,3 s sur les 8 URLs** de `lighthouserc.mobile.json` (run `35781807229`) ; `/entreprise-presentation/` 8,3 s, `/` 6,5 s, `/en/` 7,3 s. En `warn`, et l'étape de résumé cherche `.lighthouseci-mobile` sans rien y trouver : **mesuré depuis le 09-20, lu par personne** | d'abord le résumé mobile publié (scores lisibles au run), puis un LCP sous 4 s sur les 8. ❌ Ne pas remonter le seuil de 4 500 ms |
 | ~~**C-117**~~ ✅ **FERMÉ le 2026-09-23** : **37,70 → 35,7 ko**, plafond NON relevé. Trois fenêtres ouvertes à la demande sortent en `React.lazy` (`ShareListSheet` 2,1 ko, `BulkAddToListModal` 2,0, `ScheduleEventModal` 1,6), montées à leur première ouverture puis gardées montées (`useLazyMount`, pour l'animation de sortie). Vérifié dans le navigateur, les trois s'ouvrent et se ferment · P0 · S | `check:bundle` rouge à `HEAD` : `TasksPage` **37,7 ko** pour un cliquet à 37,0. C'est ce qui garde `lint-test-build` rouge | `TasksPage` ≤ 37,0 ko **sans relever le plafond** (règle de `CLAUDE.md`) |
+| **C-118** 🔴 · P2 · M | **Aucun audit clavier Safari n'existe.** `a11y-keyboard-audit` sort de `mobile-safari` le 2026-09-23 (`C-111`) : ses assertions encodent la navigation séquentielle de Chromium, et **11 cas** y étaient rouges depuis le 2026-09-16, dont des cas à 1 280 px, donc sur l'interface de bureau. Une partie peut être un vrai défaut pour quelqu'un qui navigue au clavier sous Safari (macOS, ou iPhone avec « Accès complet au clavier ») | un harnais clavier propre à WebKit, ou une revue manuelle datée sous Safari macOS, qui trie les 11 cas un par un. ❌ Le retrait de la config n'est pas une conclusion |
 
 ⚠️ **Nommés, non ouverts faute de mesure suffisante** : une violation axe `button-name` critique
 sur `/habits` sous WebKit, vue une fois sur trois tentatives (`806e7745`) ; et les 11 cas

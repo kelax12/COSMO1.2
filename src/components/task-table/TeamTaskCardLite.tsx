@@ -81,7 +81,7 @@ const TeamTaskCardLiteInner = React.forwardRef<HTMLDivElement, TeamTaskCardLiteP
           <p className={`task-title-boost font-medium text-label leading-tight line-clamp-2 ${task.completed ? 'line-through' : ''}`} style={{ color: 'rgb(var(--color-text-primary))' }}>
             {task.name}
           </p>
-          <div className="flex items-center gap-1.5 text-caption" style={{ color: 'rgb(var(--color-text-muted))' }}>
+          <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-caption" style={{ color: 'rgb(var(--color-text-muted))' }}>
             {/* Le projet se dit comme une catégorie : point de la couleur du
                 projet + nom. L'icône « équipe » reste, en 10 px, parce que
                 c'est ELLE qui distingue un projet d'une catégorie perso. */}
