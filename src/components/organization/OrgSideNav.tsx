@@ -6,19 +6,24 @@ import { useT } from '@/i18n/useT';
 import { PAGE_RIGHT_RAIL_ID } from '@/components/layout/page-right-rail';
 import { orgSectionPath } from './deep-link.helpers';
 import { ORG_SECTION_GROUPS, type OrgNavItem } from './org-sections';
+import type { OrgNavMode } from './use-org-nav-mode';
 
 interface Props {
   items: OrgNavItem[];
   activeId: string;
-  /** État porté par la page (`useOrgNavCollapsed`) : elle réserve la place du panneau ouvert. */
-  collapsed: boolean;
-  onCollapsedChange: (collapsed: boolean) => void;
+  /** État porté par la page (`useOrgNavMode`) : elle réserve la place de la carte ouverte à l'arrivée. */
+  mode: OrgNavMode;
+  onModeChange: (mode: OrgNavMode) => void;
 }
 
 /** Largeur de la carte, marge au bord, et ce qu'il en reste de visible une fois repliée. */
 const ORG_NAV_WIDTH = 208;
 const EDGE_GAP = 12;
 const PEEK = 10;
+/** Marge de tolérance autour de la carte avant de la considérer quittée. */
+const LEAVE_SLACK = 12;
+/** Largeur de la zone d'approche au bord droit. */
+const EDGE_ZONE = 20;
 
 /**
  * Courbe de sortie franche : le panneau part vite et se pose en douceur. Posée
@@ -33,11 +38,21 @@ const EASE = 'cubic-bezier(0.22, 1, 0.36, 1)';
  * Une carte FLOTTANTE aux coins arrondis, centrée verticalement (demande d'Axel
  * du 2026-09-23 : « format pop-up », plutôt qu'une vraie barre pleine hauteur).
  *
- * - **Ouverte** (défaut) : la carte entière, groupes nommés.
- * - **Repliée** : la carte glisse hors de l'écran et n'en laisse que 10 px au
- *   bord. Dès que le curseur approche du bord, elle ressort, SANS délai : un
- *   délai de 150 ms rendait l'ouverture pâteuse. Une zone d'approche invisible
- *   pleine hauteur rattrape le curseur même hors de la hauteur de la carte.
+ * - **Ouverte à l'arrivée**, toujours : la page lui réserve sa place.
+ * - **Repliée** dès que le curseur QUITTE la carte : elle glisse hors de
+ *   l'écran et n'en laisse que 10 px au bord.
+ * - **Ressortie** dès que le curseur touche le bord, SANS délai (150 ms
+ *   rendaient l'ouverture pâteuse), par-dessus le contenu. La quitter la replie.
+ *
+ * ⚠️ « Quitter » est mesuré sur le document (`pointermove`), pas par un
+ * `pointerleave` sur la carte : ressortie depuis le bord, la carte n'a jamais
+ * vu entrer le curseur (il est dans la marge de 12 px, à sa droite), donc elle
+ * ne le verrait jamais sortir. Dedans = la carte élargie de 12 px, ou la zone
+ * d'approche au bord.
+ *
+ * ⚠️ À l'arrivée, la carte ne se replie qu'après avoir été VISITÉE : sinon le
+ * premier mouvement de souris n'importe où dans la page la fermerait, et
+ * « ouverte par défaut » ne durerait pas une seconde.
  *
  * ⚠️ Le mouvement ne passe que par `transform` (composité par le GPU, aucune
  * remise en page pendant l'animation). Une transition de LARGEUR recalculait
@@ -56,7 +71,8 @@ const EASE = 'cubic-bezier(0.22, 1, 0.36, 1)';
  * ⚠️ Pas de `role="tablist"` : ce sont des liens vers des routes, et
  * `aria-current="page"` dit lequel est actif, ce qui est exact.
  */
-const OrgSideNav: React.FC<Props> = ({ items, activeId, collapsed, onCollapsedChange }) => {
+const OrgSideNav: React.FC<Props> = ({ items, activeId, mode, onModeChange }) => {
+  const collapsed = mode === 'collapsed';
   const { t } = useT('org');
   const card = useRef<HTMLDivElement>(null);
   // L'emplacement est posé par `Layout` dans le même commit que cette page :
@@ -74,7 +90,37 @@ const OrgSideNav: React.FC<Props> = ({ items, activeId, collapsed, onCollapsedCh
     else el.removeAttribute('inert');
   }, [collapsed, slot]);
 
-  const open = () => onCollapsedChange(false);
+  // Le curseur est-il passé sur la carte depuis qu'elle est ouverte ? Une carte
+  // ressortie au bord l'est par construction (le curseur est déjà là).
+  const visited = useRef(false);
+  useEffect(() => {
+    visited.current = mode === 'peek';
+  }, [mode]);
+
+  useEffect(() => {
+    if (collapsed) return;
+    const onMove = (e: PointerEvent) => {
+      if (e.pointerType !== 'mouse') return;
+      const el = card.current;
+      if (!el) return;
+      const r = el.getBoundingClientRect();
+      const inCard =
+        e.clientX >= r.left - LEAVE_SLACK &&
+        e.clientX <= r.right + LEAVE_SLACK &&
+        e.clientY >= r.top - LEAVE_SLACK &&
+        e.clientY <= r.bottom + LEAVE_SLACK;
+      const inEdge = e.clientX >= window.innerWidth - EDGE_ZONE;
+      if (inCard || inEdge) {
+        visited.current = true;
+      } else if (visited.current) {
+        onModeChange('collapsed');
+      }
+    };
+    document.addEventListener('pointermove', onMove, { passive: true });
+    return () => document.removeEventListener('pointermove', onMove);
+  }, [collapsed, onModeChange]);
+
+  const open = () => onModeChange('peek');
   const hasNews = items.some((item) => item.badgeCount > 0);
 
   if (!slot) return null;
@@ -125,7 +171,7 @@ const OrgSideNav: React.FC<Props> = ({ items, activeId, collapsed, onCollapsedCh
           </span>
           <button
             type="button"
-            onClick={() => onCollapsedChange(true)}
+            onClick={() => onModeChange('collapsed')}
             aria-label={t('sideNav.collapse')}
             aria-expanded={true}
             title={`${t('sideNav.collapse')} (])`}

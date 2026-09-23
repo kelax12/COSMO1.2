@@ -20,7 +20,7 @@ import { MobileHeader } from '@/components/mobile';
 import OrgNotificationsBell from '@/components/organization/OrgNotificationsBell';
 import OrgTabBadge from '@/components/organization/OrgTabBadge';
 import OrgSideNav from '@/components/organization/OrgSideNav';
-import { useOrgNavCollapsed } from '@/components/organization/use-org-nav-collapsed';
+import { useOrgNavMode } from '@/components/organization/use-org-nav-mode';
 import OrgSectionSwitcher from '@/components/organization/OrgSectionSwitcher';
 import { ORG_SECTIONS, type OrgSection, type OrgNavItem } from '@/components/organization/org-sections';
 import {
@@ -123,9 +123,10 @@ const OrganizationPage = () => {
   const [launchBannerDismissed, setLaunchBannerDismissed] = useState(false);
   const { activeOrg: myOrg, isLoading } = useActiveOrganization();
   const badges = useOrgBadges();
-  // Navigation de droite repliée ? Porté ici : la page réserve la place de la
-  // carte ouverte, sinon elle recouvrirait la colonne de droite du contenu.
-  const [navCollapsed, setNavCollapsed] = useOrgNavCollapsed();
+  // Navigation de droite (ouverte à l'arrivée, repliée, ou ressortie au
+  // survol). Porté ici : la page réserve la place de la carte ouverte à
+  // l'arrivée, sinon elle recouvrirait la colonne de droite du contenu.
+  const [navMode, setNavMode] = useOrgNavMode();
 
   // Badge nav (reco #7) : on marque « vu » en QUITTANT la page, pas en y
   // arrivant. Marquer au montage remettait `lastSeen` à `now` avant le premier
@@ -265,7 +266,7 @@ const OrganizationPage = () => {
     // suit la même courbe que la carte, pour que les deux bougent ensemble.
     <div
       className={`max-w-[1600px] mx-auto px-4 sm:px-6 py-6 md:transition-[padding] md:duration-300 motion-reduce:transition-none ${
-        navCollapsed ? '' : 'md:pr-[232px]'
+        navMode === 'open' ? 'md:pr-[232px]' : ''
       }`}
       style={{ transitionTimingFunction: 'cubic-bezier(0.22, 1, 0.36, 1)' }}
     >
@@ -603,8 +604,8 @@ const OrganizationPage = () => {
       <OrgSideNav
         items={navItems}
         activeId={tab}
-        collapsed={navCollapsed}
-        onCollapsedChange={setNavCollapsed}
+        mode={navMode}
+        onModeChange={setNavMode}
       />
     </div>
   );
