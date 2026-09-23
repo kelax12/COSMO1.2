@@ -287,6 +287,11 @@
 >
 > Vérifié dans le navigateur et par deux tests Playwright, **avec témoin** : les deux échouent
 > contre l'ancienne barre.
+>
+> ⚠️ **Remplacé le 2026-09-23** : `OrgTabsBar` n'existe plus. Sur mobile, la section courante est
+> un bouton (`OrgSectionSwitcher`) qui ouvre une feuille en grille ; le défaut ci-dessus disparaît
+> par construction, puisque le libellé du bouton EST la section active. Sur desktop, la navigation
+> vit à droite (`OrgSideNav`). Détail : `src/modules/organizations/CLAUDE.md` § Navigation.
 
 | Ce qui compose la note | 08-24 | 08-25 | **08-27** |
 |---|---|---|---|

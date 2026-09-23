@@ -61,7 +61,7 @@ export type User = {
 | `/invite/:token` · `/org-invite/:token` | Claim d'invitation (partage / entreprise) | public |
 | `/dashboard` · `/tasks` · `/settings` | Socle | protégé |
 | `/agenda` · `/habits` · `/okr` · `/statistics` | **Toujours visibles pour tout le monde** depuis le 2026-08-23, plus aucun réglage ne les masque | protégé |
-| `/entreprise` · `/entreprise/onboarding` | Mode entreprise (onboarding hors Layout) | protégé |
+| `/entreprise` · `/entreprise/:section` · `/entreprise/onboarding` | Mode entreprise, une route par section ; `?tab=` redirigé (onboarding hors Layout) | protégé |
 | `/admin` | Console admin — URL non référencée, gating **serveur** (`get_admin_stats` rejette les non-admins) | protégé |
 | `/premium` | Redirige `/` tant que `PREMIUM_ENFORCED = false` | protégé |
 | `/welcome` | Redirection permanente vers `/` (ancienne URL) | public |

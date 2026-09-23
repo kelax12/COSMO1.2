@@ -59,7 +59,7 @@ describe("contrat d'URL de la fiche membre", () => {
     // si le nom du paramètre change d'un côté, le lien partagé ouvre le
     // mauvais onglet sans que rien n'échoue visiblement.
     const link = buildOrgLink('pyramid', { member: 'u1' }, { [MEMBER_TAB_PARAM]: 'contribution' });
-    expect(link).toBe('/entreprise?tab=pyramid&member=u1&memberTab=contribution');
+    expect(link).toBe('/entreprise/pyramid?member=u1&memberTab=contribution');
     const params = new URLSearchParams(link.split('?')[1]);
     expect(resolveMemberTab(params.get(MEMBER_TAB_PARAM), ['profile', 'tasks', 'contribution'])).toBe(
       'contribution',

@@ -103,7 +103,7 @@ describe('mergeTodayItems — fusion des deux sources', () => {
   it("route chaque élément vers SON écran d'origine", () => {
     const items = merge([task({ id: 'p1' })], [teamTask({ id: 'e1' })]);
     expect(items.find((i) => i.source === 'personal')!.href).toBe('/tasks?task=p1');
-    expect(items.find((i) => i.source === 'team')!.href).toBe('/entreprise?tab=projects&task=e1');
+    expect(items.find((i) => i.source === 'team')!.href).toBe('/entreprise/projects?task=e1');
   });
 
   it('affiche le projet comme contexte des tâches d\'équipe', () => {

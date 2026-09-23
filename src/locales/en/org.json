@@ -857,6 +857,18 @@
     "members": "Members",
     "tasks": "Tasks"
   },
+  "sideNav": {
+    "groupMine": "My work",
+    "groupSteer": "Steering",
+    "groupOrg": "Organization",
+    "title": "Company",
+    "label": "Company sections",
+    "collapse": "Collapse navigation",
+    "expand": "Show navigation",
+    "hasNews": "Updates in a section",
+    "switchSection": "Switch section, current section: {{section}}",
+    "sheetTitle": "Go to"
+  },
   "colors": {
     "indigo": "Indigo",
     "blue": "Blue",

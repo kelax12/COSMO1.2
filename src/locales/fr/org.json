@@ -895,6 +895,18 @@
     "members": "Membres",
     "tasks": "Tâches"
   },
+  "sideNav": {
+    "groupMine": "Mon travail",
+    "groupSteer": "Pilotage",
+    "groupOrg": "Organisation",
+    "title": "Entreprise",
+    "label": "Sections de l’entreprise",
+    "collapse": "Replier la navigation",
+    "expand": "Afficher la navigation",
+    "hasNews": "Nouveautés dans une section",
+    "switchSection": "Changer de section, section actuelle : {{section}}",
+    "sheetTitle": "Aller à"
+  },
   "colors": {
     "indigo": "Indigo",
     "blue": "Bleu",

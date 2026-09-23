@@ -6,6 +6,20 @@
 
 ---
 
+## 🧭 Navigation : une route par section (2026-09-23)
+
+`/entreprise/<section>` (`tasks`, `projects`, `okr`, `stats`, `pyramid`, `members`, `billing`),
+l'Aperçu restant `/entreprise`. Desktop : panneau à droite (`OrgSideNav`), monté par portail dans
+l'emplacement que `Layout` pose hors de `<main>` (`page-right-rail.ts`). Mobile : `OrgSectionSwitcher`.
+Liste des sections : `org-sections.ts` ; chemins et liens : `deep-link.helpers.ts` (`buildOrgLink`).
+
+- 🔴 **Ne JAMAIS retirer la redirection `?tab=`** (`legacyOrgTabRedirect`). Stripe
+  (`stripe-org-checkout`, `stripe-org-portal`) et les e-mails déjà envoyés par `renewal-notice`
+  pointent sur `/entreprise?tab=billing` : ces URLs vivent hors du dépôt.
+- ❌ Ne jamais écrire un lien entreprise à la main : passer par `buildOrgLink`.
+
+---
+
 ## 🔐 Permissions entreprise — surcharge, jamais remplacement (mig. 115)
 
 Les droits du mode entreprise sont **dérivés par défaut** (`is_org_admin`, `is_org_manager`) et

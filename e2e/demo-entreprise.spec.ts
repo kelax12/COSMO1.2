@@ -6,12 +6,12 @@ import { test, expect, navTo } from './fixtures';
  * (6 membres, 3 projets, ~20 tâches, OKR, 1 demande d'adhésion).
  *
  * Couvre les régressions majeures de la zone : la page se monte, les onglets
- * naviguent (état dans l'URL ?tab=), l'Aperçu affiche ses sections (activité,
+ * naviguent (une section = une route, `/entreprise/projects`), l'Aperçu affiche ses sections (activité,
  * échéances entreprise), le modal de tâche s'ouvre avec son fil de
  * commentaires, l'onglet Membres liste l'annuaire et les cartes d'invitation.
  */
 /**
- * Onglet de la barre entreprise (OrganizationPage).
+ * Entrée de la navigation entreprise (`OrgSideNav`, à droite sur desktop).
  *
  * ⚠️ Ne PAS ancrer sur la fin du libellé (`/^projets$/i`) : depuis les badges
  * de nouveautés (vague 1 entreprise, 2026-08-08), le compteur porte un
@@ -21,7 +21,7 @@ import { test, expect, navTo } from './fixtures';
  * On ancre au début : « Nouveau projet » ne matche pas, le badge ne gêne plus.
  */
 const orgTab = (page: Page, label: RegExp) =>
-  page.getByRole('button', { name: label }).filter({ visible: true }).first();
+  page.getByRole('navigation', { name: /sections de l.entreprise/i }).getByRole('link', { name: label });
 
 test.describe('Espace entreprise (démo)', () => {
   test.describe.configure({ timeout: 120_000 });
@@ -50,17 +50,17 @@ test.describe('Espace entreprise (démo)', () => {
     await expect(page.locator('[data-sonner-toast][data-type="error"]')).toHaveCount(0);
   });
 
-  test('Onglets : navigation + état dans l\'URL (?tab=)', async ({ demoPage: page }) => {
+  test('Sections : navigation + une route par section', async ({ demoPage: page }) => {
     await navTo(page, /entreprise/i, /\/entreprise/);
     await expect(page.getByRole('heading', { name: /nova studio/i })).toBeVisible({ timeout: 15_000 });
 
     // Projets
     await orgTab(page, /^projets/i).click();
-    await page.waitForURL(/tab=projects/);
+    await page.waitForURL(/\/entreprise\/projects/);
 
     // OKR — le bouton « Nouvel objectif » confirme le contenu de l'onglet
     await orgTab(page, /^okr/i).click();
-    await page.waitForURL(/tab=okr/);
+    await page.waitForURL(/\/entreprise\/okr/);
     await expect(
       page.getByRole('button', { name: /nouvel objectif/i }).filter({ visible: true }).first()
     ).toBeVisible({ timeout: 10_000 });
@@ -100,7 +100,7 @@ test.describe('Espace entreprise (démo)', () => {
     await expect(page.getByRole('heading', { name: /nova studio/i })).toBeVisible({ timeout: 15_000 });
 
     await orgTab(page, /^membres/i).click();
-    await page.waitForURL(/tab=members/);
+    await page.waitForURL(/\/entreprise\/members/);
 
     // Annuaire des 6 membres seedés + les deux moyens d'inviter
     await expect(page.getByRole('heading', { name: /annuaire/i })).toBeVisible({ timeout: 10_000 });
@@ -112,85 +112,61 @@ test.describe('Espace entreprise (démo)', () => {
 });
 
 // ═══════════════════════════════════════════════════════════════════
-// Barre d'onglets sur petit écran — finding P1 du 2026-08-27.
+// Navigation entreprise (2026-09-23) : panneau à droite sur desktop, sélecteur
+// + feuille sur mobile, et une route par section.
 //
-// Mesuré à 375 px : le rail fait **832 px pour 335 visibles**, soit QUATRE
-// destinations sur sept hors champ, dans un conteneur `hide-scrollbar` — donc
-// sans barre de défilement ni le moindre indice qu'il y a autre chose.
-//
-// Le cas qui comptait le plus n'était pas le confort mais un vrai défaut :
-// ouvrir un lien profond `?tab=members` laissait l'onglet ACTIF hors de l'écran.
-// L'utilisateur voyait le contenu de Membres avec « Aperçu » comme seul onglet
-// visible, sans pouvoir dire lequel était coché.
-//
-// ⚠️ Ce test vit en e2e et pas en unitaire, et ce n'est pas un choix de
-// commodité : jsdom ne calcule aucune mise en page — `scrollWidth`,
-// `clientWidth` et `offsetLeft` y valent 0. Un test jsdom passerait quoi qu'il
-// arrive, y compris avec le bug. **Un test qui ne peut pas échouer n'est pas un
-// test.**
+// La rangée d'onglets qu'elle remplace cachait quatre destinations sur sept à
+// 375 px (finding P1 du 2026-08-27). Le sélecteur n'a plus ce défaut par
+// construction : la section courante EST son libellé.
 // ═══════════════════════════════════════════════════════════════════
-test.describe('Espace entreprise — navigation sur petit écran', () => {
-  test("un lien profond laisse l'onglet actif dans le champ", async ({ demoPage: page }) => {
-    await page.setViewportSize({ width: 375, height: 812 });
-    await page.goto('/entreprise?tab=members');
+test.describe('Espace entreprise · navigation', () => {
+  test.describe.configure({ timeout: 120_000 });
 
-    const bar = page.locator('[data-org-tabs]');
-    await expect(bar).toBeVisible({ timeout: 20_000 });
-
-    // On attend que le rail déborde réellement : sans ça, le test ne vérifierait
-    // rien sur un écran où tout tient.
-    await expect
-      .poll(async () => bar.evaluate((el) => el.scrollWidth - el.clientWidth), { timeout: 15_000 })
-      .toBeGreaterThan(0);
-
-    // D'abord : le bon onglet est-il actif ? Sans cette étape, un échec du
-    // `poll` suivant ne dit pas s'il s'agit du défilement ou d'un lien profond
-    // qui n'a pas pris — deux causes opposées derrière la même ligne rouge.
-    await expect
-      .poll(async () => bar.evaluate((el) => el.querySelector('[data-active="true"]')?.textContent?.trim() ?? ''), {
-        timeout: 15_000,
-      })
-      .toMatch(/membres/i);
-
-    // Le centrage se rejoue quand une pastille de compteur arrive et élargit le
-    // rail — c'est le decalage de 8 px trouvé en mesurant, d'où le `poll`.
-    // ⚠️ On sonde un OBJET, pas un booléen : un `false` qui expire ne dit rien,
-    // alors que ces cinq nombres désignent la cause en une lecture.
-    await expect
-      .poll(
-        async () =>
-          bar.evaluate((el) => {
-            const actif = el.querySelector<HTMLElement>('[data-active="true"]');
-            return JSON.stringify({
-              actif: actif?.textContent?.trim().slice(0, 14) ?? null,
-              scrollLeft: Math.round(el.scrollLeft),
-              scrollMax: el.scrollWidth - el.clientWidth,
-              gauche: actif?.offsetLeft ?? -1,
-              droite: (actif?.offsetLeft ?? 0) + (actif?.offsetWidth ?? 0),
-              fenetre: Math.round(el.scrollLeft) + el.clientWidth,
-              visible: !!actif
-                && actif.offsetLeft >= el.scrollLeft - 1
-                && actif.offsetLeft + actif.offsetWidth <= el.scrollLeft + el.clientWidth + 1,
-            });
-          }),
-        { timeout: 15_000 },
-      )
-      .toContain('"visible":true');
+  test('une ancienne URL ?tab= arrive sur la route, paramètres conservés', async ({ demoPage: page }) => {
+    // Contrat avec Stripe et les e-mails de renewal-notice : ces URLs existent
+    // hors du dépôt, elles ne changeront plus.
+    await page.goto('/entreprise?tab=members&ref=e2e');
+    await page.waitForURL(/\/entreprise\/members\?ref=e2e/, { timeout: 20_000 });
   });
 
-  test('les dégradés de bord disent où il reste des onglets', async ({ demoPage: page }) => {
+  test('desktop : replier ne laisse que la bande, le survol la rouvre', async ({ demoPage: page }) => {
+    await page.goto('/entreprise/okr');
+    const nav = page.getByRole('navigation', { name: /sections de l.entreprise/i });
+    await expect(nav.getByRole('link', { name: /^okr/i })).toHaveAttribute('aria-current', 'page', {
+      timeout: 20_000,
+    });
+
+    await nav.getByRole('button', { name: /replier la navigation/i }).click();
+    await expect(nav).toHaveAttribute('data-collapsed', 'true');
+    await expect
+      .poll(async () => nav.evaluate((el) => Math.round(el.getBoundingClientRect().width)))
+      .toBeLessThanOrEqual(10);
+
+    // L'état replié survit au rechargement.
+    await page.reload();
+    await expect(nav).toHaveAttribute('data-collapsed', 'true', { timeout: 20_000 });
+
+    // Le curseur sur la bande rouvre le panneau.
+    await nav.getByRole('button', { name: /afficher la navigation/i }).hover();
+    await expect(nav).toHaveAttribute('data-collapsed', 'false');
+    await expect(nav.getByRole('link', { name: /^membres/i })).toBeVisible();
+  });
+
+  test('mobile : le sélecteur ouvre une feuille, choisir navigue', async ({ demoPage: page }) => {
     await page.setViewportSize({ width: 375, height: 812 });
-    await page.goto('/entreprise?tab=overview');
+    await page.goto('/entreprise/members');
 
-    const bar = page.locator('[data-org-tabs]');
-    await expect(bar).toBeVisible({ timeout: 20_000 });
+    const switcher = page.locator('[data-org-section-switcher]');
+    await expect(switcher).toBeVisible({ timeout: 20_000 });
+    await expect(switcher).toContainText(/membres/i);
 
-    // Sur le premier onglet : rien à gauche, tout à droite.
-    const etat = await bar.evaluate((el) => ({
-      gauche: el.scrollLeft > 1,
-      droite: el.scrollLeft + el.clientWidth < el.scrollWidth - 1,
-    }));
-    expect(etat.gauche).toBe(false);
-    expect(etat.droite).toBe(true);
+    await switcher.click();
+    const sheet = page.locator('[data-org-section-sheet]');
+    await expect(sheet).toBeVisible();
+    await sheet.getByRole('button', { name: /^okr/i }).click();
+
+    await page.waitForURL(/\/entreprise\/okr/);
+    await expect(sheet).toHaveCount(0);
+    await expect(switcher).toContainText(/okr/i);
   });
 });

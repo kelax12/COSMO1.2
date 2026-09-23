@@ -1,11 +1,53 @@
 // ═══════════════════════════════════════════════════════════════════
 // Deep-links de l'espace entreprise
 //
-// `?tab=` ouvrait déjà le bon onglet ; `?task=` / `?project=` / `?member=`
-// ouvrent en plus la bonne entité. C'est ce qui rend une tâche collable dans
-// une conversation — sans ça, « regarde cette tâche » se termine toujours par
-// « cherche-la dans l'onglet Projets ».
+// Chaque section est une ROUTE (`/entreprise/projects`) depuis le 2026-09-23 ;
+// `?task=` / `?project=` / `?member=` ouvrent en plus la bonne entité. C'est ce
+// qui rend une tâche collable dans une conversation — sans ça, « regarde cette
+// tâche » se termine toujours par « cherche-la dans l'onglet Projets ».
+//
+// ⚠️ L'ancienne forme `/entreprise?tab=…` reste servie, par redirection
+// (`OrganizationPage`), et DOIT le rester : les Edge Functions Stripe
+// (`stripe-org-checkout`, `stripe-org-portal`) et les e-mails déjà envoyés par
+// `renewal-notice` pointent sur `/entreprise?tab=billing`.
+//
+// Ce module ne tire aucune icône : `App.tsx` l'importe pour valider la
+// dernière page visitée, il vit donc dans le chunk d'entrée.
 // ═══════════════════════════════════════════════════════════════════
+
+/** Sections adressables par un segment de chemin. L'Aperçu est `/entreprise` lui-même. */
+export const ORG_SECTION_SEGMENTS = [
+  'tasks',
+  'projects',
+  'okr',
+  'stats',
+  'pyramid',
+  'members',
+  'billing',
+] as const;
+
+export type OrgSectionSegment = (typeof ORG_SECTION_SEGMENTS)[number];
+
+/** Vrai si `value` est un segment de section connu (jamais un préfixe libre). */
+export const isOrgSectionSegment = (value: string | null | undefined): value is OrgSectionSegment =>
+  !!value && (ORG_SECTION_SEGMENTS as readonly string[]).includes(value);
+
+/** Chemin d'une section. `overview`, vide ou inconnu → `/entreprise`. */
+export const orgSectionPath = (section: string | null | undefined): string =>
+  isOrgSectionSegment(section) ? `/entreprise/${section}` : '/entreprise';
+
+/**
+ * Chemin `/entreprise` ou `/entreprise/<section connue>` ?
+ *
+ * Sert à `RESUMABLE_PAGES` : la dernière page visitée est une valeur relue du
+ * stockage local, donc une entrée non fiable. On la valide contre la liste des
+ * sections, jamais contre un préfixe (cf. `no-open-redirect.test.ts`).
+ */
+export const isOrgPath = (pathname: string): boolean => {
+  if (pathname === '/entreprise') return true;
+  const prefix = '/entreprise/';
+  return pathname.startsWith(prefix) && isOrgSectionSegment(pathname.slice(prefix.length));
+};
 
 /** Entités adressables par l'URL de /entreprise. */
 export type EntityParam = 'task' | 'project' | 'member';
@@ -28,7 +70,7 @@ export const readEntityParam = (
 };
 
 /**
- * Construit un lien /entreprise (onglet + entité optionnelle).
+ * Construit un lien /entreprise (section + entité optionnelle).
  *
  * `extra` porte les paramètres qui précisent l'ÉTAT d'une entité déjà ciblée,
  * pas une entité de plus — `?memberTab=agenda` sur une fiche membre (#18).
@@ -37,15 +79,30 @@ export const readEntityParam = (
  * ce que l'utilisateur a le DROIT de voir, pas contre un alphabet d'id.
  */
 export const buildOrgLink = (
-  tab: string,
+  section: string,
   entity?: Partial<Record<EntityParam, string>>,
   extra?: Record<string, string>,
 ): string => {
   const params = new URLSearchParams();
-  if (tab && tab !== 'overview') params.set('tab', tab);
   for (const [key, value] of Object.entries({ ...entity, ...extra })) {
     if (value) params.set(key, value);
   }
   const qs = params.toString();
-  return qs ? `/entreprise?${qs}` : '/entreprise';
+  const path = orgSectionPath(section);
+  return qs ? `${path}?${qs}` : path;
+};
+
+/**
+ * Traduit une ancienne URL `/entreprise?tab=X&…` en `/entreprise/X?…`, en
+ * gardant tous les autres paramètres (`checkout` au retour de Stripe, `task`,
+ * `member`, `memberTab`). Renvoie null quand il n'y a rien à traduire.
+ */
+export const legacyOrgTabRedirect = (params: URLSearchParams): string | null => {
+  const tab = params.get('tab');
+  if (tab === null) return null;
+  const rest = new URLSearchParams(params);
+  rest.delete('tab');
+  const qs = rest.toString();
+  const path = orgSectionPath(tab);
+  return qs ? `${path}?${qs}` : path;
 };

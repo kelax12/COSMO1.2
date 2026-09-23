@@ -33,6 +33,7 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import CookieBanner from '@/components/CookieBanner';
 import NewVersionBanner from '@/components/NewVersionBanner';
 import ShareInviteClaimer from '@/components/ShareInviteClaimer';
+import { isOrgPath } from '@/components/organization/deep-link.helpers';
 // Audit perf 2026-05-29 — CommandPalette only renders on Ctrl/Cmd+K. Lazy-load
 // it so its imports (framer-motion subset, lucide icons, fuzzy search) don't
 // land in the entry chunk. Suspense fallback is null because the palette
@@ -160,6 +161,11 @@ const PageWithSuspense: React.FC<{ children: React.ReactNode }> = ({ children })
 // Pages protégées éligibles à la réouverture « dernière page visitée » (#34).
 const RESUMABLE_PAGES = ['/dashboard', '/tasks', '/agenda', '/habits', '/okr', '/statistics', '/settings', '/entreprise'];
 
+// Les sections entreprise sont des routes (`/entreprise/projects`) : validées
+// contre la liste des sections, jamais contre un préfixe libre — la valeur
+// relue vient du stockage local (cf. no-open-redirect.test.ts).
+const isResumablePage = (path: string) => RESUMABLE_PAGES.includes(path) || isOrgPath(path);
+
 /**
  * Squelette de la landing — le fallback qu'elle mérite.
  *
@@ -240,7 +246,7 @@ const RootRoute = () => {
     // Rouvre l'app sur la dernière page quittée (mémorisée par Layout),
     // fallback dashboard si inconnue ou invalide.
     const last = getLastVisitedPage();
-    const target = last && RESUMABLE_PAGES.includes(last) ? last : '/dashboard';
+    const target = last && isResumablePage(last) ? last : '/dashboard';
     return <Navigate to={target} replace />;
   }
   // Fallback dédié : la landing est sombre, le fallback par défaut est clair.
@@ -360,7 +366,11 @@ const AppRoutes = () => {
         <Route path="statistics" element={<PageWithSuspense><StatisticsPage /></PageWithSuspense>} />
         <Route path="settings" element={<PageWithSuspense><SettingsPage /></PageWithSuspense>} />
         {/* Espace entreprise — visible pour les membres d'une organisation */}
-        <Route path="entreprise" element={<PageWithSuspense><OrganizationPage /></PageWithSuspense>} />
+        {/* Une section = une route (`/entreprise/projects`), segment OPTIONNEL :
+            une seule route, donc changer de section ne remonte pas la page.
+            `entreprise/onboarding`, plus haut, est un segment STATIQUE : le
+            routeur le préfère toujours à ce segment dynamique. */}
+        <Route path="entreprise/:section?" element={<PageWithSuspense><OrganizationPage /></PageWithSuspense>} />
         {/* Admin — URL non référencée (aucun lien dans l'UI), gating réel
             côté serveur : la RPC get_admin_stats rejette les non-admins. */}
         <Route path="admin" element={<PageWithSuspense><AdminPage /></PageWithSuspense>} />
