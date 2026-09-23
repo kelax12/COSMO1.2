@@ -26,6 +26,7 @@ import { MyWorkSkeleton } from './OrgLoadingSkeletons';
 import OrgEventsTimeline from './OrgEventsTimeline';
 import { buildOrgEvents } from './org-events.helpers';
 import { useT } from '@/i18n/useT';
+import { buildOrgLink } from './deep-link.helpers';
 import TouchTarget from '@/components/mobile/TouchTarget';
 
 interface MyWorkTabProps {
@@ -106,7 +107,7 @@ const NewcomerHints = () => {
           <li key={h.id}>
             <button
               type="button"
-              onClick={() => navigate(`/entreprise?tab=${h.tab}`)}
+              onClick={() => navigate(buildOrgLink(h.tab))}
               className="w-full flex items-center gap-2.5 py-2 px-2 rounded-xl text-left transition-colors hover:bg-[rgb(var(--color-hover))]"
             >
               <ChevronRight size={15} className="text-[rgb(var(--color-text-muted))] shrink-0" aria-hidden="true" />
@@ -198,7 +199,7 @@ const StartChecklist = ({ steps }: { steps: StartStep[] }) => {
             <button
               type="button"
               disabled={s.done}
-              onClick={() => navigate(`/entreprise?tab=${s.tab}`)}
+              onClick={() => navigate(buildOrgLink(s.tab))}
               className={`w-full flex items-center gap-2.5 py-2 px-2 rounded-xl text-left transition-colors ${
                 s.done ? 'opacity-60' : 'hover:bg-[rgb(var(--color-hover))]'
               }`}

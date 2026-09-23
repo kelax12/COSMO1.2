@@ -1,7 +1,7 @@
 import { Suspense, useEffect, useState } from 'react';
-import { Navigate, useSearchParams } from 'react-router';
+import { Navigate, useNavigate, useParams, useSearchParams } from 'react-router';
 import { markOrgSeen, useOrgBadges } from '@/lib/hooks/use-org-notifications';
-import { LayoutDashboard, Users, FolderKanban, Target, LogOut, Building2, Pencil, Network, Trash2, BarChart3, X, ArrowRightLeft, ListTodo } from 'lucide-react';
+import { LogOut, Building2, Pencil, Trash2, X, ArrowRightLeft } from 'lucide-react';
 import { useAuth } from '@/modules/auth/AuthContext';
 import {
   useActiveOrganization,
@@ -19,7 +19,15 @@ import { PageHeading } from '@/components/ui/typography';
 import { MobileHeader } from '@/components/mobile';
 import OrgNotificationsBell from '@/components/organization/OrgNotificationsBell';
 import OrgTabBadge from '@/components/organization/OrgTabBadge';
-import OrgTabsBar from '@/components/organization/OrgTabsBar';
+import OrgSideNav from '@/components/organization/OrgSideNav';
+import OrgSectionSwitcher from '@/components/organization/OrgSectionSwitcher';
+import { ORG_SECTIONS, type OrgSection, type OrgNavItem } from '@/components/organization/org-sections';
+import {
+  isOrgSectionSegment,
+  legacyOrgTabRedirect,
+  orgSectionPath,
+} from '@/components/organization/deep-link.helpers';
+import { safeRedirectPath } from '@/lib/safe-redirect';
 import MyWorkTab from '@/components/organization/MyWorkTab';
 import OrgPlanChip from '@/components/organization/OrgPlanChip';
 import { MyWorkSkeleton, TeamTasksSkeleton, TeamOverviewSkeleton, OrgTabSkeleton } from '@/components/organization/OrgLoadingSkeletons';
@@ -64,43 +72,16 @@ const DeleteOrganizationDialog = lazyWithRetry(() => import('@/components/organi
 const ConfirmLeaveOrgDialog = lazyWithRetry(() => import('@/components/organization/ConfirmLeaveOrgDialog'));
 const TransferOwnershipDialog = lazyWithRetry(() => import('@/components/organization/TransferOwnershipDialog'));
 
-type OrgTab = 'overview' | 'pyramid' | 'tasks' | 'projects' | 'okr' | 'stats' | 'members' | 'billing';
-
-// Libellés = CLÉS : cette constante est évaluée au premier import, y écrire du
-// texte figerait les onglets en français pour toute la session.
-//
-// ⚠️ `billing` n'est PAS un onglet : la facturation ne concerne qu'un seul
-// compte sur toute l'organisation, elle ne mérite pas une place permanente dans
-// une barre que tout le monde lit. Elle reste une vue (`?tab=billing`, URL de
-// retour de Stripe) atteinte depuis la pastille de forfait de l'en-tête.
-const TABS: {
-  id: OrgTab;
-  labelKey: KeyOf<'org'>;
-  Icon: typeof Users;
-  managerOnly?: boolean;
-}[] = [
-  { id: 'overview', labelKey: 'tabs.overview', Icon: LayoutDashboard },
-  // Réservé à ceux qui encadrent au moins une personne : un membre sans
-  // subordonné n'a rien à y arbitrer (même logique que `isManager` plus bas).
-  { id: 'pyramid', labelKey: 'tabs.pyramid', Icon: Network, managerOnly: true },
-  { id: 'tasks', labelKey: 'tabs.tasks', Icon: ListTodo },
-  { id: 'projects', labelKey: 'tabs.projects', Icon: FolderKanban },
-  { id: 'okr', labelKey: 'tabs.okr', Icon: Target },
-  // #13 : statistiques collectives — admin (toute l'org) / manager (son périmètre).
-  { id: 'stats', labelKey: 'tabs.stats', Icon: BarChart3, managerOnly: true },
-  { id: 'members', labelKey: 'tabs.members', Icon: Users },
-];
+type OrgTab = OrgSection;
 
 /**
- * Espace entreprise — onglets Aperçu / Projets / OKR / Membres (state local,
- * routing plat cohérent avec l'app). Réservé aux membres d'une organisation :
- * un non-membre est redirigé vers le dashboard.
+ * Espace entreprise. Chaque section est une ROUTE depuis le 2026-09-23
+ * (`/entreprise/projects`) : le bouton précédent passe d'une section à
+ * l'autre et l'onglet du navigateur porte son nom. La navigation vit à
+ * droite (`OrgSideNav`) sur desktop, dans un sélecteur (`OrgSectionSwitcher`)
+ * sur mobile. Réservé aux membres d'une organisation : un non-membre est
+ * redirigé vers le dashboard.
  */
-// `billing` s'ajoute à la main : il est absent de TABS (aucun onglet) mais
-// reste une valeur d'URL valide — les Edge Functions Stripe renvoient sur
-// `/entreprise?tab=billing`, l'oublier ferait atterrir un paiement sur l'aperçu.
-const TAB_IDS: readonly string[] = [...TABS.map((t) => t.id), 'billing'];
-
 /**
  * Squelette d'attente d'un onglet dont le chunk est encore en vol.
  *
@@ -125,12 +106,14 @@ const LAUNCH_FREE_UNTIL = new Date('2026-08-01T00:00:00');
 const OrganizationPage = () => {
   const { t, tp } = useT('org');
   const { user } = useAuth();
-  // #1 — onglet actif dans l'URL (?tab=okr) : survit au refresh et se partage.
-  const [searchParams, setSearchParams] = useSearchParams();
-  const rawTab = searchParams.get('tab');
-  const urlTab: OrgTab = rawTab && TAB_IDS.includes(rawTab) ? (rawTab as OrgTab) : 'overview';
-  const setTab = (id: OrgTab) =>
-    setSearchParams(id === 'overview' ? {} : { tab: id }, { replace: true });
+  // Section active = segment de chemin. `billing` en fait partie : c'est une
+  // route sans entrée de navigation, où Stripe renvoie après un paiement.
+  const { section } = useParams<{ section?: string }>();
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const urlTab: OrgTab = isOrgSectionSegment(section) ? section : 'overview';
+  // Sans `replace` : chaque section est une page, le bouton précédent y revient.
+  const setTab = (id: OrgTab) => navigate(orgSectionPath(id));
   const [editProfile, setEditProfile] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [confirmingLeave, setConfirmingLeave] = useState(false);
@@ -165,6 +148,21 @@ const OrganizationPage = () => {
   const deleteFlow = useDeleteOrgFlow(() => setConfirmingDelete(false));
   const transferMutation = useTransferOwnership();
 
+  // Ancienne forme `/entreprise?tab=X` → `/entreprise/X`, les autres
+  // paramètres conservés. ⚠️ À GARDER POUR TOUJOURS : Stripe renvoie sur
+  // `/entreprise?tab=billing&checkout=success`, et les e-mails de
+  // `renewal-notice` déjà envoyés portent `?tab=billing`. Placé avant l'attente
+  // de l'organisation : rien à charger pour réécrire une URL.
+  // Passe par `safeRedirectPath` comme toute destination lue dans l'URL,
+  // même si le chemin vient ici d'une liste fermée (cf. no-open-redirect.test.ts).
+  const legacyTarget = safeRedirectPath(legacyOrgTabRedirect(searchParams));
+  if (legacyTarget) return <Navigate to={legacyTarget} replace />;
+  // Segment inconnu (`/entreprise/xyz`, `/entreprise/overview`) : l'aperçu,
+  // à sa vraie adresse plutôt qu'un contenu d'aperçu sous une URL fausse.
+  if (section !== undefined && !isOrgSectionSegment(section)) {
+    return <Navigate to="/entreprise" replace />;
+  }
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -184,11 +182,42 @@ const OrganizationPage = () => {
   // HIÉRARCHIQUES (onglets Pyramide et Statistiques) : voir l'équipe qu'on
   // encadre n'est pas une permission réglable, c'est une position.
   const canInvite = myPermissions.can['member.invite'];
-  // Un membre qui arrive sur `?tab=billing` (lien partagé, ancien favori) ou
-  // `?tab=pyramid` (favori d'un ancien manager, ou lien copié) sans en avoir
-  // le droit ne voit pas un écran vide : il retombe sur l'aperçu.
+  // Un membre qui arrive sur `/entreprise/billing` (lien partagé, ancien
+  // favori) ou sur `pyramid` / `stats` (favori d'un ancien manager, lien
+  // copié) sans en avoir le droit ne voit pas un écran vide : il retombe sur
+  // l'aperçu.
   const tab: OrgTab =
-    (rawTab === 'billing' && !isOwner) || (urlTab === 'pyramid' && !isManager) ? 'overview' : urlTab;
+    (urlTab === 'billing' && !isOwner) || ((urlTab === 'pyramid' || urlTab === 'stats') && !isManager)
+      ? 'overview'
+      : urlTab;
+
+  // Entrées de navigation, partagées par le panneau desktop et le sélecteur
+  // mobile. Seuls Projets (tâches nouvellement assignées) et Membres (demandes
+  // d'adhésion en attente) portent un compteur.
+  const navItems: OrgNavItem[] = ORG_SECTIONS.filter((item) => !item.managerOnly || isManager).map(
+    ({ id, labelKey, Icon, group }) => {
+      const badgeCount = id === 'projects' ? badges.projects : id === 'members' ? badges.members : 0;
+      const badgeAriaLabel = badgeCount > 0 ? tp('page.badgeCount', badgeCount) : undefined;
+      return {
+        id,
+        label: t(labelKey),
+        Icon,
+        group,
+        badgeCount,
+        badgeAriaLabel,
+        badge: badgeCount > 0 ? (
+          <OrgTabBadge
+            count={badgeCount}
+            items={id === 'projects' ? badges.projectItems : badges.memberItems}
+            title={t(id === 'projects' ? 'page.badgePreviewProjects' : 'page.badgePreviewMembers')}
+            ariaLabel={badgeAriaLabel ?? ''}
+            side="left"
+            onAccent={tab === id}
+          />
+        ) : undefined,
+      };
+    },
+  );
 
   // Quota de sièges RÉELLEMENT bloquant : le gate serveur (`org_seats_allowed`,
   // mig. 067) ne refuse que si le drapeau `enterprise_seat_limit` est activé en
@@ -364,32 +393,9 @@ const OrganizationPage = () => {
         </div>
       )}
 
-      {/* Onglets — la barre vit dans `OrgTabsBar` : elle porte son propre
-          comportement de défilement (onglet actif ramené dans le champ,
-          dégradés de continuation), et sept destinations dans 375 px n'est pas
-          un problème de page. */}
-      <OrgTabsBar
-        activeId={tab}
-        onSelect={(id) => setTab(id as OrgTab)}
-        items={TABS.filter((item) => !item.managerOnly || isManager).map(({ id, labelKey, Icon }) => {
-          // Seuls Projets (tâches nouvellement assignées) et Membres (demandes
-          // d'adhésion en attente) portent un compteur.
-          const badge = id === 'projects' ? badges.projects : id === 'members' ? badges.members : 0;
-          return {
-            id,
-            label: t(labelKey),
-            Icon,
-            badge: badge > 0 ? (
-              <OrgTabBadge
-                count={badge}
-                items={id === 'projects' ? badges.projectItems : badges.memberItems}
-                title={t(id === 'projects' ? 'page.badgePreviewProjects' : 'page.badgePreviewMembers')}
-                ariaLabel={tp('page.badgeCount', badge)}
-              />
-            ) : undefined,
-          };
-        })}
-      />
+      {/* Mobile : la section courante devient un sélecteur (maquette M1).
+          Desktop : la navigation vit à droite, dans `OrgSideNav`. */}
+      <OrgSectionSwitcher items={navItems} activeId={tab} />
 
       {/* Contenu */}
       {/* Une seule frontière Suspense pour tout le contenu : les onglets sont
@@ -579,6 +585,11 @@ const OrganizationPage = () => {
         />
       )}
       </Suspense>
+
+      {/* Desktop : la navigation vit à DROITE, hors de la zone qui défile.
+          Rendue par portail dans l'emplacement de `Layout`, donc sa place
+          dans cet arbre ne dit rien de sa place à l'écran. */}
+      <OrgSideNav items={navItems} activeId={tab} />
     </div>
   );
 };

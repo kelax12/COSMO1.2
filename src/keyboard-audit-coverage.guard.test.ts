@@ -83,6 +83,9 @@ const NON_MESUREES: Record<string, string> = {
     'dette, et la plus gênante des trois : une palette de commandes EST un '
     + 'geste clavier. Elle devrait être la première mesurée.',
   'components/CompletedOKRsModal.tsx': 'dette : atteignable depuis /okr.',
+  'components/organization/OrgSectionSwitcher.tsx':
+    'dette : atteignable en démo sur mobile (/entreprise, sélecteur de section). '
+    + 'Échap vérifié à la main le 2026-09-23, piège de focus jamais mesuré.',
   'components/LoginModal.tsx':
     'inatteignable en démo : elle ne s ouvre que sur une session expirée.',
   'components/OKRDeadlineReviewModal.tsx':

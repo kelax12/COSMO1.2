@@ -76,6 +76,7 @@ const CHART_COLORS = {
 } as const;
 
 import NavItemLink from './layout/NavItemLink';
+import { PAGE_RIGHT_RAIL_ID } from './layout/page-right-rail';
 // Titres d'onglet par route (#15) — « Tâches – Cosmo » plutôt qu'un titre
 // statique : retrouvable parmi les onglets du navigateur.
 //
@@ -96,6 +97,17 @@ const PAGE_TITLE_KEYS: Record<string, KeyOf<'common'>> = {
   '/premium': 'nav.premium',
   '/admin': 'nav.admin',
   '/entreprise': 'nav.enterprise',
+};
+
+// Sections entreprise (`/entreprise/projects`) : « Projets – Entreprise – Cosmo ».
+// `billing` n'a pas d'entrée ici : il retombe sur « Entreprise – Cosmo ».
+const ORG_SECTION_TITLE_KEYS: Record<string, KeyOf<'org'>> = {
+  '/entreprise/tasks': 'tabs.tasks',
+  '/entreprise/projects': 'tabs.projects',
+  '/entreprise/okr': 'tabs.okr',
+  '/entreprise/stats': 'tabs.stats',
+  '/entreprise/pyramid': 'tabs.pyramid',
+  '/entreprise/members': 'tabs.members',
 };
 
 /**
@@ -208,8 +220,15 @@ const Layout: React.FC = () => {
   // Titre d'onglet par page (#15).
   useEffect(() => {
     const key = PAGE_TITLE_KEYS[location.pathname];
-    document.title = key ? t('nav.documentTitle', { page: t(key) }) : 'Cosmo';
-  }, [location.pathname, t]);
+    const orgKey = ORG_SECTION_TITLE_KEYS[location.pathname];
+    if (orgKey) {
+      document.title = t('nav.documentTitle', { page: `${tOrg(orgKey)} – ${t('nav.enterprise')}` });
+    } else if (location.pathname.startsWith('/entreprise/')) {
+      document.title = t('nav.documentTitle', { page: t('nav.enterprise') });
+    } else {
+      document.title = key ? t('nav.documentTitle', { page: t(key) }) : 'Cosmo';
+    }
+  }, [location.pathname, t, tOrg]);
 
 const NavItems = () =>
   <>
@@ -511,6 +530,11 @@ const NavItems = () =>
           <Outlet />
         </main>
       </div>
+
+      {/* Navigation propre à une page, collée au bord droit de la fenêtre et
+          hors de la zone qui défile (cf. page-right-rail.ts). Vide, il ne
+          prend aucune place. */}
+      <div id={PAGE_RIGHT_RAIL_ID} className="flex shrink-0" />
 
       {globalOverlays}
     </div>);

@@ -3,7 +3,7 @@
 //
 // Un collaborateur membre d'une organisation a DEUX listes de tâches sans
 // jonction : `tasks` (perso, /tasks) et `team_tasks` (équipe,
-// /entreprise?tab=projects). Aucun écran ne répondait à « qu'est-ce que je
+// /entreprise/projects). Aucun écran ne répondait à « qu'est-ce que je
 // dois faire aujourd'hui ? ».
 //
 // 🔴 On ne fusionne PAS les deux tables. Leurs règles de sécurité, cycles de
