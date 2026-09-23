@@ -17,6 +17,8 @@ const LightRays = lazy(() => import('@/components/reactbits/LightRays'));
 
 interface EnterpriseHeroProps {
   onDemo: () => void;
+  /** Rangée des CTA, remontée au header (cf. `PersoTrack.onHeroCtaRef`). */
+  onCtaRef?: (el: HTMLElement | null) => void;
 }
 
 /**
@@ -25,7 +27,7 @@ interface EnterpriseHeroProps {
  * lignes masquées, et une pile qui fait défiler les VRAIES captures des trois
  * écrans qui intéressent un décideur : Projets, OKR, Statistiques.
  */
-const EnterpriseHero: React.FC<EnterpriseHeroProps> = ({ onDemo }) => {
+const EnterpriseHero: React.FC<EnterpriseHeroProps> = ({ onDemo, onCtaRef }) => {
   const { t } = useT('landing');
   const isMobile = useIsMobile();
   const heroRef = useRef<HTMLElement>(null);
@@ -158,7 +160,7 @@ const EnterpriseHero: React.FC<EnterpriseHeroProps> = ({ onDemo }) => {
               <ScrollHighlight text={t('enterprise.hero.subtitle')} delay={1.3} />
             </p>
 
-            <div data-ent-hero-fade className="flex w-full flex-col gap-3.5 sm:w-auto sm:flex-row">
+            <div ref={onCtaRef} data-ent-hero-fade className="flex w-full flex-col gap-3.5 sm:w-auto sm:flex-row">
               <button
                 ref={magneticDemo}
                 onClick={onDemo}
