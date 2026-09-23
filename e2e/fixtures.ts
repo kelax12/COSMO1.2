@@ -1,4 +1,4 @@
-import { test as base, expect, Page } from '@playwright/test';
+import { test as base, expect, Page, Locator } from '@playwright/test';
 
 /**
  * Fixture commune : démarre chaque test en mode démo authentifié sur /dashboard.
@@ -255,9 +255,42 @@ async function clickThroughOrgMenuIfAny(page: Page): Promise<void> {
  * app-mode.store.ts), l'ancien avertissement « goto = perte du mode démo »
  * était périmé ; goto reste utilisable pour une route sans lien de nav.
  */
+/**
+ * Un élément « visible » au sens de Playwright (boîte non vide, pas
+ * `visibility: hidden`) n'est pas forcément ATTEIGNABLE : hors de l'écran,
+ * recouvert, ou dans un panneau garé à côté. On le vérifie au point exact où
+ * le clic tomberait.
+ *
+ * 🔴 2026-09-23 · sous `mobile-safari` en CI, `navTo` choisissait un lien
+ * « Paramètres » vu comme visible mais que personne ne pouvait toucher, et
+ * attendait 10 s qu'il le devienne (18 cas instables, 1 échec, run
+ * `35826477521`). Sur téléphone, le vrai chemin passe par la feuille « Plus ».
+ */
+async function isReachable(target: Locator): Promise<boolean> {
+  return target
+    .evaluate((el) => {
+      const r = el.getBoundingClientRect();
+      const x = r.left + r.width / 2;
+      const y = r.top + r.height / 2;
+      if (r.width === 0 || r.height === 0) return false;
+      if (x < 0 || y < 0 || x > window.innerWidth || y > window.innerHeight) return false;
+      const hit = document.elementFromPoint(x, y);
+      return !!hit && (hit === el || el.contains(hit));
+    })
+    .catch(() => false);
+}
+
 export async function navTo(page: Page, name: RegExp, urlPattern: RegExp): Promise<void> {
-  const visibleLink = page.getByRole('link', { name }).filter({ visible: true }).first();
-  if (await visibleLink.isVisible().catch(() => false)) {
+  // Premier lien de ce nom qui soit réellement ATTEIGNABLE, pas seulement le
+  // premier du DOM : un lien injoignable peut précéder un lien valable (la
+  // barre d'onglets du bas vient après le reste de la page).
+  const candidats = page.getByRole('link', { name }).filter({ visible: true });
+  let visibleLink: Locator | null = null;
+  const nbCandidats = await candidats.count().catch(() => 0);
+  for (let i = 0; i < nbCandidats; i++) {
+    if (await isReachable(candidats.nth(i))) { visibleLink = candidats.nth(i); break; }
+  }
+  if (visibleLink) {
     try {
       await visibleLink.click({ timeout: 10_000 });
     } catch {
@@ -320,7 +353,16 @@ export async function navTo(page: Page, name: RegExp, urlPattern: RegExp): Promi
     .or(sheet.getByRole('button', { name }))
     .filter({ visible: true })
     .first();
-  await sheetItem.click({ timeout: 10_000 });
+  try {
+    await sheetItem.click({ timeout: 10_000 });
+  } catch {
+    if (urlPattern.test(page.url())) return;
+    // Même repli que le chemin par lien : sous WebKit, la feuille peut encore
+    // s'animer (mesuré sur un poste : ~1 image/s), et le test « stable » de
+    // Playwright n'aboutit jamais sur un élément qui glisse. L'élément est
+    // résolu et visible ; on force le dispatch, avec un délai explicite.
+    await sheetItem.click({ force: true, timeout: 10_000 });
+  }
   await clickThroughOrgMenuIfAny(page);
   await page.waitForURL(urlPattern);
 }
