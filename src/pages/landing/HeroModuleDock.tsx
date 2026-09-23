@@ -41,7 +41,11 @@ export const HeroModuleDock: React.FC<Props> = ({ actif }) => {
 
   return (
     <div
-      className="relative mb-6 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center sm:justify-center sm:gap-2.5 xl:pointer-events-none xl:absolute xl:inset-0 xl:m-0 xl:block"
+      // MASQUÉES sous `lg` (demande d'Axel, 2026-09-23) : sur téléphone et
+      // tablette, la rangée de quatre pastilles s'empilait au-dessus de l'icône
+      // du hero et n'y ajoutait rien — la tuile fait déjà défiler les quatre
+      // modules, et c'est elle qui porte le message.
+      className="relative mb-6 hidden lg:flex lg:flex-wrap lg:items-center lg:justify-center lg:gap-2.5 xl:pointer-events-none xl:absolute xl:inset-0 xl:m-0 xl:block"
       // Une liste de quatre libellés : pour un lecteur d'écran, c'est le
       // contenu qui compte, pas la mise en scène.
       aria-label={t('hero.modulesLabel')}
