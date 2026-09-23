@@ -1,9 +1,7 @@
 import React, { Suspense, lazy, useRef } from 'react';
 import { ArrowRight } from 'lucide-react';
 import { gsap, SplitText, useGSAP } from '@/lib/gsap';
-import CardSwap, { Card } from '@/components/reactbits/CardSwap';
-import AppShot from './AppShot';
-import ScrollHighlight from './ScrollHighlight';
+import HeroStack from './HeroStack';
 import { HERO_SHOTS } from './data';
 import { ENTERPRISE_FREE_OFFER } from './free-offer';
 import { useT } from '@/i18n/useT';
@@ -21,11 +19,34 @@ interface EnterpriseHeroProps {
   onCtaRef?: (el: HTMLElement | null) => void;
 }
 
+/** Rend les segments `<hl>…</hl>` en encre appuyée — sans surligneur. */
+const avecAppui = (texte: string) =>
+  texte.split(/(<hl>.*?<\/hl>)/g).map((part, i) => {
+    const m = part.match(/^<hl>(.*)<\/hl>$/);
+    return m ? (
+      <span key={i} className="font-medium text-ent-lune">
+        {m[1]}
+      </span>
+    ) : (
+      <React.Fragment key={i}>{part}</React.Fragment>
+    );
+  });
+
 /**
- * Hero du track entreprise — la première seconde doit dire « ce n'est plus le
- * même produit ». Rayons volumétriques cyan sur graphite, titre en trois
- * lignes masquées, et une pile qui fait défiler les VRAIES captures des trois
- * écrans qui intéressent un décideur : Projets, OKR, Statistiques.
+ * Hero du track entreprise — refait le 2026-09-23 (maquettes 123 à 127,
+ * `Documents/COSMO-maquettes/landing-entreprise-hero.html`). L'ancienne
+ * version est archivée : `docs/archive/LANDING-HERO-ENTREPRISE-2026-09-23.md`.
+ *
+ * 🔴 UN SEUL AXE, CELUI DE LA LUMIÈRE. Le faisceau (`LightRays`, origine
+ * `top-center`) tombait entre deux colonnes, sur du vide : la signature de la
+ * page n'éclairait rien. Le titre, le CTA et la pile sont maintenant centrés
+ * SOUS l'origine, et la pile remonte vers elle (`HeroStack`). Ne pas revenir à
+ * une mise en page en deux colonnes sans déplacer l'origine du faisceau.
+ *
+ * ❌ Plus de titre en trois couleurs (blanc / gris / dégradé cyan), plus de
+ * dégradé sur le texte, plus de liseré, plus de lueur sur le CTA : le cyan n'a
+ * que deux rôles, la lumière et le bouton. C'était le gabarit des landings
+ * générées, et deux sources de lumière qui se disputaient la page.
  */
 const EnterpriseHero: React.FC<EnterpriseHeroProps> = ({ onDemo, onCtaRef }) => {
   const { t } = useT('landing');
@@ -37,26 +58,21 @@ const EnterpriseHero: React.FC<EnterpriseHeroProps> = ({ onDemo, onCtaRef }) => 
     () => {
       const mm = gsap.matchMedia();
       mm.add('(prefers-reduced-motion: no-preference)', () => {
-        // Les trois lignes du titre montent depuis leur masque.
-        //
-        // ⚠️ `bg-clip-text` ne survit pas au split : le dégradé reste sur le
-        // span parent, les mots deviennent des enfants transparents, et la
-        // troisième ligne disparaît purement et simplement. On recopie donc les
-        // classes de couleur du parent sur chaque mot — même correctif que le
-        // hero du track perso, cf. `PersoTrack`.
+        // Les deux lignes du titre montent mot par mot depuis leur masque.
+        // Plus de dégradé sur le texte, donc plus de classes à recopier sur
+        // chaque mot : c'était le correctif qu'imposait `bg-clip-text`.
         SplitText.create('.ent-hero-line', {
           type: 'lines,words',
           mask: 'lines',
           autoSplit: true,
           onSplit: (self) => {
-            self.words.forEach((word) => {
-              const el = word as HTMLElement;
-              const line = el.closest<HTMLElement>('.ent-hero-line');
-              if (!line) return;
-              const painted = Array.from(line.classList).filter(
-                (name) => name !== 'ent-hero-line' && name !== 'block',
-              );
-              el.classList.add(...painted);
+            // Une sérif italique DÉBORDE de sa boîte (l'attaque du « O », la
+            // traîne du point final), et un masque en `overflow: clip` la
+            // couperait : on élargit chaque masque sans rien déplacer.
+            self.masks.forEach((mask) => {
+              const el = mask as HTMLElement;
+              el.style.padding = '0 0.14em 0.16em';
+              el.style.margin = '0 -0.14em -0.16em';
             });
             return gsap.from(self.words, {
               yPercent: 118,
@@ -64,7 +80,7 @@ const EnterpriseHero: React.FC<EnterpriseHeroProps> = ({ onDemo, onCtaRef }) => 
               rotation: 3,
               duration: 0.95,
               ease: 'expo.out',
-              stagger: 0.04,
+              stagger: 0.05,
             });
           },
         });
@@ -77,37 +93,31 @@ const EnterpriseHero: React.FC<EnterpriseHeroProps> = ({ onDemo, onCtaRef }) => 
           stagger: 0.1,
           delay: 0.45,
         });
-
-        // Le liseré cyan du bas se dessine une fois le titre posé.
-        gsap.from('.ent-hero-rule', {
-          scaleX: 0,
-          transformOrigin: 'left center',
-          duration: 1.2,
-          ease: 'expo.out',
-          delay: 0.6,
-        });
       });
     },
     { scope: heroRef },
   );
 
   return (
-    <section ref={heroRef} className="relative isolate overflow-hidden pb-20 pt-14 lg:pb-28 lg:pt-20">
+    <section ref={heroRef} className="relative isolate overflow-hidden pb-16 pt-14 lg:pb-24 lg:pt-20">
       {/* ── Fond : rayons WebGL + grille d'ingénieur + halo cyan ── */}
       <div className="absolute inset-0 -z-10" aria-hidden="true">
-        <div className="absolute inset-0 bg-[#08090C]" />
+        <div className="absolute inset-0 bg-ent-nuit" />
         <div
-          className="absolute inset-0 opacity-[0.5]"
+          className="absolute inset-0 opacity-[0.45]"
           style={{
             backgroundImage:
-              'linear-gradient(to right, rgba(148,163,184,0.09) 1px, transparent 1px), linear-gradient(to bottom, rgba(148,163,184,0.09) 1px, transparent 1px)',
+              'linear-gradient(to right, rgba(148,163,184,0.08) 1px, transparent 1px), linear-gradient(to bottom, rgba(148,163,184,0.08) 1px, transparent 1px)',
             backgroundSize: '64px 64px',
-            maskImage: 'radial-gradient(ellipse 85% 70% at 40% 30%, #000 45%, transparent 100%)',
-            WebkitMaskImage: 'radial-gradient(ellipse 85% 70% at 40% 30%, #000 45%, transparent 100%)',
+            // Centrée sur l'axe du faisceau, comme tout le reste.
+            maskImage: 'radial-gradient(ellipse 70% 60% at 50% 20%, #000 30%, transparent 100%)',
+            WebkitMaskImage: 'radial-gradient(ellipse 70% 60% at 50% 20%, #000 30%, transparent 100%)',
           }}
         />
         {/* Le shader ne tourne ni sur mobile ni en reduced-motion : la classe
-            `motion-reduce:hidden` suffit ici, le fond dégradé tient tout seul. */}
+            `motion-reduce:hidden` suffit ici, le halo fixe tient tout seul.
+            Réglages INCHANGÉS, palier adaptatif C-68 compris : c'est la mise en
+            page qui a bougé, pas la lumière. */}
         {!isMobile && (
           <div className="absolute inset-0 opacity-60 motion-reduce:hidden">
             <Suspense fallback={null}>
@@ -126,119 +136,58 @@ const EnterpriseHero: React.FC<EnterpriseHeroProps> = ({ onDemo, onCtaRef }) => 
           </div>
         )}
         <div className="absolute inset-x-0 top-0 h-[36rem] bg-[radial-gradient(ellipse_50%_50%_at_50%_0%,rgba(34,211,238,0.16),transparent_70%)]" />
-        <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-[#08090C]" />
+        <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-ent-nuit" />
       </div>
 
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="grid items-center gap-14 lg:grid-cols-[1.05fr_0.95fr] lg:gap-8">
-          {/* ── Colonne gauche : la promesse ── */}
-          <div className="flex flex-col items-start text-left">
-            {/* Pas de pastille « disponible aujourd'hui » avec son point qui
-                clignote : c'est le badge que porte toute page de SaaS générée,
-                et il annonce une nouveauté là où la page doit annoncer un
-                produit. Le titre commence directement. */}
-            <h1 className="mb-7 text-[2.6rem] font-bold leading-[1.02] tracking-[-0.03em] sm:text-6xl lg:text-[4.2rem]">
-              <span className="ent-hero-line block text-white">{t('enterprise.hero.line1')}</span>
-              <span className="ent-hero-line block text-slate-500">{t('enterprise.hero.line2')}</span>
-              <span className="ent-hero-line block bg-gradient-to-r from-cyan-200 via-cyan-300 to-teal-200 bg-clip-text text-transparent">
-                {t('enterprise.hero.line3')}
-              </span>
-            </h1>
+      {/* ── La promesse, centrée sous l'origine du faisceau ── */}
+      <div className="mx-auto max-w-5xl px-4 text-center sm:px-6 lg:px-8">
+        <h1 className="font-display text-[3.15rem] font-normal leading-[0.98] tracking-[-0.012em] text-ent-lune sm:text-7xl lg:text-[5.75rem]">
+          <span className="ent-hero-line block">{t('enterprise.hero.line1')}</span>
+          <span className="ent-hero-line block italic">{t('enterprise.hero.line2')}</span>
+        </h1>
 
-            <div
-              className="ent-hero-rule mb-7 h-px w-40 bg-gradient-to-r from-cyan-400/80 to-transparent"
-              aria-hidden="true"
-            />
+        <p data-ent-hero-fade className="mx-auto mt-6 max-w-[38rem] text-base leading-relaxed text-ent-brume lg:text-lg">
+          {avecAppui(t('enterprise.hero.subtitle'))}
+        </p>
 
-            <p
-              data-ent-hero-fade
-              className="mb-10 max-w-xl text-base leading-relaxed text-slate-400 lg:text-lg"
-            >
-              {/* delay 1,3 s : laisse le fondu `data-ent-hero-fade` du hero
-                  (délai 0,45 s + durée 0,8 s) se terminer avant le coup de
-                  surligneur, sinon il se joue sur un texte encore transparent. */}
-              <ScrollHighlight text={t('enterprise.hero.subtitle')} delay={1.3} />
-            </p>
-
-            <div ref={onCtaRef} data-ent-hero-fade className="flex w-full flex-col gap-3.5 sm:w-auto sm:flex-row">
-              <button
-                ref={magneticDemo}
-                onClick={onDemo}
-                aria-label={t('enterprise.hero.ctaAria')}
-                className="group relative flex items-center justify-center gap-2.5 overflow-hidden rounded-xl bg-cyan-400 px-7 py-4 text-base font-bold text-[#04141A] shadow-[0_10px_40px_-10px_rgba(34,211,238,0.8)] transition-[box-shadow,background-color] duration-300 hover:bg-cyan-300 hover:shadow-[0_14px_48px_-8px_rgba(34,211,238,0.95)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#08090C]"
-              >
-                <span
-                  className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/40 to-transparent transition-transform duration-700 group-hover:translate-x-full"
-                  aria-hidden="true"
-                />
-                <span className="relative">{t('enterprise.hero.cta')}</span>
-                <ArrowRight size={18} className="relative transition-transform group-hover:translate-x-1" aria-hidden="true" />
-              </button>
-              <a
-                href="#tarifs"
-                className="flex items-center justify-center rounded-xl border border-white/15 bg-white/[0.04] px-7 py-4 text-base font-semibold text-white backdrop-blur-md transition-colors duration-300 hover:border-white/25 hover:bg-white/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
-              >
-                {t('enterprise.hero.ctaSecondary')}
-              </a>
-            </div>
-
-            {/* « Jusqu'à 5 membres gratuitement » deviendrait faux pendant
-                l'offre de lancement : il n'y a aucun plafond tant que rien
-                n'est facturé. */}
-            <p data-ent-hero-fade className="mt-4 text-xs text-slate-600">
-              {t(
-                ENTERPRISE_FREE_OFFER
-                  ? 'enterprise.hero.reassuranceFree'
-                  : 'enterprise.hero.reassurance',
-              )}
-            </p>
-          </div>
-
-          {/* ── Colonne droite : la pile de cartes qui tourne ── */}
-          {/* `CardSwap` se place en `absolute bottom-0 right-0` et étale les
-              cartes du dessous VERS LA DROITE (une par `cardDistance`). Sans
-              marge, la dernière carte sortait de l'écran et on n'en voyait plus
-              que ses barres cyan, lues comme un artefact. La marge droite rend
-              la place que la pile réclame. */}
-          <div
-            className="relative hidden h-[26rem] w-full lg:mr-28 lg:block xl:mr-20"
-            aria-hidden="true"
+        <div
+          ref={onCtaRef}
+          data-ent-hero-fade
+          className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-7"
+        >
+          <button
+            ref={magneticDemo}
+            onClick={onDemo}
+            aria-label={t('enterprise.hero.ctaAria')}
+            className="group flex w-full items-center justify-center gap-2.5 rounded-[11px] bg-ent-faisceau px-6 py-4 text-base font-semibold text-[#04141A] transition-colors duration-300 hover:bg-cyan-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 focus-visible:ring-offset-2 focus-visible:ring-offset-ent-nuit sm:w-auto"
           >
-            {/* Pas de `pauseOnHover` : la pile occupe tout le quart droit du
-                hero, et `mouseenter` y arrête la rotation JUSQU'AU `mouseleave`.
-                Un visiteur qui lit le hero avec la souris posée à droite — ou
-                qui scrolle à la molette sans bouger le curseur — voit une pile
-                définitivement figée. Ces cartes ne contiennent aucun lien, la
-                mise en pause au survol n'apportait donc rien.
-
-                `easing="linear"` (0,8 s) plutôt que l'élastique par défaut
-                (~4,6 s) : au-delà de `delay`, deux timelines se chevauchent sur
-                les mêmes éléments et se disputent leurs transforms. */}
-            <CardSwap
-              width={392}
-              height={272}
-              cardDistance={44}
-              verticalDistance={54}
-              delay={3800}
-              skewAmount={5}
-              easing="linear"
-            >
-              {HERO_SHOTS.map((tab, index) => (
-                <Card key={tab.id} customClass="!border-0 !bg-transparent overflow-visible">
-                  <AppShot
-                    src={tab.image}
-                    alt={t(tab.altKey)}
-                    label={t(tab.labelKey)}
-                    // La première carte de la pile est visible dès le premier
-                    // paint du hero : la charger paresseusement la ferait
-                    // apparaître en retard, au milieu de l'animation d'entrée.
-                    loading={index === 0 ? 'eager' : 'lazy'}
-                  />
-                </Card>
-              ))}
-            </CardSwap>
-          </div>
+            {t('enterprise.hero.cta')}
+            <ArrowRight size={18} className="transition-transform group-hover:translate-x-1" aria-hidden="true" />
+          </button>
+          <a
+            href="#tarifs"
+            className="inline-flex min-h-11 items-center rounded-md px-1 text-base font-medium text-ent-lune underline decoration-ent-lune/30 underline-offset-[6px] transition-colors hover:decoration-ent-lune/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+          >
+            {t('enterprise.hero.ctaSecondary')}
+          </a>
         </div>
+
+        {/* « Jusqu'à 5 membres gratuitement » deviendrait faux pendant
+            l'offre de lancement : il n'y a aucun plafond tant que rien
+            n'est facturé.
+            Brume (#8B96A8, 6,5:1) : c'était `slate-600`, 2,6:1 sur ce fond. */}
+        <p data-ent-hero-fade className="mt-4 font-data text-xs text-ent-brume">
+          {t(
+            ENTERPRISE_FREE_OFFER
+              ? 'enterprise.hero.reassuranceFree'
+              : 'enterprise.hero.reassurance',
+          )}
+        </p>
+      </div>
+
+      {/* ── La pile, DANS le cône : elle remonte vers la lumière ── */}
+      <div data-ent-hero-fade className="mx-auto mt-10 w-full max-w-[55rem] px-4 sm:px-6 lg:mt-14">
+        <HeroStack shots={HERO_SHOTS} simple={isMobile} />
       </div>
     </section>
   );
