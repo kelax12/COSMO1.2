@@ -335,5 +335,9 @@
     "syncing": "Syncing…",
     "synced": "Synced",
     "savedLocal": "Saved (local)"
+  },
+  "showcase": {
+    "pause": "Pause the animation",
+    "play": "Play the animation"
   }
 }

@@ -341,5 +341,9 @@
     "syncing": "Synchronisation…",
     "synced": "Synchronisé",
     "savedLocal": "Enregistré (local)"
+  },
+  "showcase": {
+    "pause": "Mettre l'animation en pause",
+    "play": "Lancer l'animation"
   }
 }
