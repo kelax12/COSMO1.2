@@ -18,9 +18,20 @@ La landing n'est plus une page linéaire. Après le header, un **aiguillage**
 - Le parcours affiché est **dérivé de l'URL**, pas d'un état local (`useLandingTrack`) : le
   bouton retour marche sans code de synchronisation. Les deux routes rendent le **même
   composant à la même profondeur**, donc basculer ne remonte pas la page.
-- `TrackSwitcher` (header) et `TrackAnchors` (sommaire collant, par parcours) garantissent
+- `TrackSwitcher` (header) et `TrackAnchors` (sommaire, par parcours) garantissent
   qu'on ne peut jamais rester coincé dans un parcours. Les listes d'ancres vivent dans
   `landing/anchors.ts` — une par track, pour qu'aucun lien ne vise une section absente.
+- 🔴 **Le header est rendu par `LandingPage`, pas par les parcours** (2026-09-23). Le sommaire
+  perso est DANS la rangée du header dès `lg`. Le sommaire entreprise n'y tient pas (7 ancres),
+  il reste une capsule collée dessous, calée sur `--landing-header-h`, mesurée par
+  `ResizeObserver`. ❌ Jamais de `top-[…]` en dur sous le header : le `4.5rem` d'avant
+  passait 9,6 px sous l'îlot. ❌ Jamais de hauteur variable sur le header collant : il est
+  dans le flux, donc tout changement de sa hauteur fait sauter la page au scroll.
+  La rangée mobile du sélecteur est hors du header pour cette raison.
+  ⚠️ Pastille active du sommaire : en `left`/`width`, mesurée par `offsetLeft` depuis le
+  `<ul>`. Un `<li>` en `relative` ramène `offsetLeft` à 0.
+  ⚠️ Le suivi de section (`use-active-anchor.ts`) tourne sur `requestAnimationFrame`, qui ne
+  se déclenche pas dans un panneau de navigateur masqué : mesurer en Playwright headless.
 - ❌ **Ne jamais ajouter une section entreprise dans `PersoTrack`** (ni l'inverse) : la
   séparation des deux parcours EST la structure de la page.
 - 🔴 **Le parcours perso est BLANC depuis le 2026-09-22, et il ne doit plus dépendre de

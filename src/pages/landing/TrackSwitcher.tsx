@@ -7,6 +7,11 @@ interface TrackSwitcherProps {
   track: LandingTrack;
   onSelect: (track: LandingTrack) => void;
   className?: string;
+  /**
+   * `touch` : onglets de 44 px de haut RÉELS, pour la rangée visible sur mobile
+   * sans ouvrir le menu (`/` est mesurée par `e2e/touch-targets.spec.ts`).
+   */
+  size?: 'default' | 'touch';
 }
 
 const TRACKS: { id: LandingTrack; Icon: typeof User }[] = [
@@ -25,7 +30,7 @@ const TRACKS: { id: LandingTrack; Icon: typeof User }[] = [
  * transform : sous `prefers-reduced-motion`, Framer laisserait un transform à
  * sa valeur initiale et la pastille resterait bloquée sous le mauvais onglet.
  */
-const TrackSwitcher: React.FC<TrackSwitcherProps> = ({ track, onSelect, className = '' }) => {
+const TrackSwitcher: React.FC<TrackSwitcherProps> = ({ track, onSelect, className = '', size = 'default' }) => {
   const { t } = useT('landing');
   const activeIndex = TRACKS.findIndex(({ id }) => id === track);
   const isEnterprise = track === 'entreprise';
@@ -58,7 +63,7 @@ const TrackSwitcher: React.FC<TrackSwitcherProps> = ({ track, onSelect, classNam
             role="tab"
             aria-selected={active}
             onClick={() => onSelect(id)}
-            className={`relative z-10 flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-[10px] px-2.5 py-1.5 text-xs font-semibold transition-colors duration-300 focus-visible:outline-none focus-visible:ring-2 sm:px-3.5 ${
+            className={`relative z-10 flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-[10px] px-2.5 ${size === 'touch' ? 'min-h-touch text-sm' : 'py-1.5 text-xs'} font-semibold transition-colors duration-300 focus-visible:outline-none focus-visible:ring-2 sm:px-3.5 ${
               isEnterprise
                 ? `focus-visible:ring-white/40 ${active ? 'text-white' : 'text-slate-400 hover:text-slate-200'}`
                 : `focus-visible:ring-blue-500 ${active ? 'text-blue-700' : 'text-slate-500 hover:text-slate-800'}`

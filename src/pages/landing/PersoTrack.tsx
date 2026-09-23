@@ -12,13 +12,14 @@ import FaqSection from './FaqSection';
 import { pauseWhenOffscreen } from './pause-offscreen';
 import HeroModuleDock, { DELAI_ARRIMAGE_MS } from './HeroModuleDock';
 import HeroAppIcon from './HeroAppIcon';
-import TrackAnchors from './TrackAnchors';
 import HeroBackdrop from './HeroBackdrop';
 
 interface PersoTrackProps {
   onDemo: () => void;
   onRegister: () => void;
   onFeatureClick: (path: string) => void;
+  /** Rangée des CTA du hero : le header bascule son CTA quand elle sort de l'écran. */
+  onHeroCtaRef?: (el: HTMLElement | null) => void;
 }
 
 /**
@@ -31,7 +32,7 @@ interface PersoTrackProps {
  * conique, hero) vivent désormais dans son propre scope GSAP, pour qu'ils
  * soient créés et nettoyés en même temps que lui.
  */
-const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureClick }) => {
+const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureClick, onHeroCtaRef }) => {
   const { t } = useT('landing');
   const isMobile = useIsMobile();
 
@@ -276,10 +277,7 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
 
   return (
     <div ref={rootRef} className="bg-white text-slate-900">
-      {/* Sommaire du parcours — les ancres qui vivaient dans le header avant
-          que le sélecteur de parcours n'en prenne le centre. */}
-      <TrackAnchors track="perso" label={t('enterprise.gateway.perso.title')} />
-
+      {/* Le sommaire du parcours vit dans le header de `LandingPage`. */}
       <section ref={heroRef} className="relative pt-10 pb-20 lg:pt-16 lg:pb-28 overflow-hidden">
         {/* Grille, bruit, aurores et encre : cf. HeroBackdrop. Les deux
             couches que la timeline translate arrivent par ref. */}
@@ -388,7 +386,7 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
                   SECONDAIRE : elle y annonce un deplacement (creer un compte),
                   alors que l'action principale se joue sur place. En mettre une
                   sur les deux annulerait la hierarchie que la couleur etablit. */}
-              <div data-hero-fade className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+              <div ref={onHeroCtaRef} data-hero-fade className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
                 {/* CTA principal : démo sans inscription (friction zéro) */}
                 <button
                   ref={magneticHeroDemo}
@@ -535,18 +533,22 @@ const PersoTrack: React.FC<PersoTrackProps> = ({ onDemo, onRegister, onFeatureCl
                   </div>
                 ))}
               </div>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              {/* Même hiérarchie que le hero : la démo en bleu plein, l'inscription
+                  en blanc avec la seule flèche. Cette carte l'inversait, et un
+                  `hover:scale-105` sur les deux faisait bouger le texte au survol. */}
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <button
                   onClick={onDemo}
-                  className="group bg-white hover:bg-slate-50 text-slate-900 border border-slate-300 px-8 py-4 rounded-2xl font-bold text-base transition-all duration-300 shadow-sm hover:shadow-md hover:scale-105 transform flex items-center justify-center gap-3"
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-full font-semibold text-base tracking-[-0.01em] transition-[box-shadow,background-color] duration-300 shadow-[0_8px_30px_-8px_rgba(37,99,235,0.55)] hover:shadow-[0_12px_38px_-8px_rgba(37,99,235,0.7)] flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
                 >
                   {t('cta.tryDemo')}
                 </button>
                 <button
                   onClick={onRegister}
-                  className="group bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-2xl font-bold text-base transition-all duration-300 shadow-lg shadow-blue-600/25 hover:shadow-blue-600/40 hover:scale-105 transform flex items-center justify-center"
+                  className="group bg-white hover:bg-slate-50 text-slate-900 border border-slate-300 px-8 py-4 rounded-full font-semibold text-base tracking-[-0.01em] shadow-sm transition-[box-shadow,background-color] duration-300 flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                 >
                   {t('cta.startNow')}
+                  <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" aria-hidden="true" />
                 </button>
               </div>
             </div>

@@ -1,6 +1,4 @@
 import React from 'react';
-import { useT } from '@/i18n/useT';
-import TrackAnchors from '@/pages/landing/TrackAnchors';
 import EnterpriseHero from './EnterpriseHero';
 import ProblemSection from './ProblemSection';
 import PyramidSection from './PyramidSection';
@@ -18,6 +16,8 @@ interface EnterpriseTrackProps {
   /** Ouvre la démo puis la fiche du membre réel, sur l'onglet demandé — cf. `PyramidSection`. */
   onMemberDemo: (demoUserId: string, tab: 'tasks' | 'agenda' | 'contribution') => void;
   onRegister: () => void;
+  /** Rangée des CTA du hero, cf. `PersoTrack`. */
+  onHeroCtaRef?: (el: HTMLElement | null) => void;
 }
 
 /**
@@ -38,15 +38,11 @@ interface EnterpriseTrackProps {
  * est portée ici, à la racine du track : les sections héritent du fond et ne
  * repeignent que leurs propres surfaces.
  */
-const EnterpriseTrack: React.FC<EnterpriseTrackProps> = ({ onDemo, onMemberDemo, onRegister }) => {
-  const { t } = useT('landing');
-
+const EnterpriseTrack: React.FC<EnterpriseTrackProps> = ({ onDemo, onMemberDemo, onRegister, onHeroCtaRef }) => {
   return (
     <div className="bg-[#08090C] text-white">
-      {/* Sommaire du parcours : accès direct aux tarifs pour le visiteur pressé. */}
-      <TrackAnchors track="entreprise" label={t('enterprise.gateway.entreprise.title')} />
-
-      <EnterpriseHero onDemo={onDemo} />
+      {/* Le sommaire du parcours vit dans le header de `LandingPage`. */}
+      <EnterpriseHero onDemo={onDemo} onCtaRef={onHeroCtaRef} />
 
       <ProblemSection />
 
