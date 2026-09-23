@@ -183,7 +183,7 @@ const FeatureCopy: React.FC<{ feature: Feature; onCta: () => void }> = ({ featur
       </div>
       <button
         onClick={onCta}
-        className="group bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-xl font-semibold shadow-sm hover:shadow-md transition-all duration-300 hover:scale-105 transform flex items-center gap-2"
+        className={`group bg-gradient-to-r ${feature.gradient} text-white px-8 py-4 rounded-xl font-semibold shadow-sm hover:shadow-lg ${feature.shadow} transition-all duration-300 hover:scale-105 transform flex items-center gap-2`}
       >
         {t(key('cta'))} <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
       </button>
