@@ -20,6 +20,7 @@ import { MobileHeader } from '@/components/mobile';
 import OrgNotificationsBell from '@/components/organization/OrgNotificationsBell';
 import OrgTabBadge from '@/components/organization/OrgTabBadge';
 import OrgSideNav from '@/components/organization/OrgSideNav';
+import { useOrgNavCollapsed } from '@/components/organization/use-org-nav-collapsed';
 import OrgSectionSwitcher from '@/components/organization/OrgSectionSwitcher';
 import { ORG_SECTIONS, type OrgSection, type OrgNavItem } from '@/components/organization/org-sections';
 import {
@@ -122,6 +123,9 @@ const OrganizationPage = () => {
   const [launchBannerDismissed, setLaunchBannerDismissed] = useState(false);
   const { activeOrg: myOrg, isLoading } = useActiveOrganization();
   const badges = useOrgBadges();
+  // Navigation de droite repliée ? Porté ici : la page réserve la place de la
+  // carte ouverte, sinon elle recouvrirait la colonne de droite du contenu.
+  const [navCollapsed, setNavCollapsed] = useOrgNavCollapsed();
 
   // Badge nav (reco #7) : on marque « vu » en QUITTANT la page, pas en y
   // arrivant. Marquer au montage remettait `lastSeen` à `now` avant le premier
@@ -257,7 +261,14 @@ const OrganizationPage = () => {
   const showLaunchBanner = !launchDismissed && Date.now() < LAUNCH_FREE_UNTIL.getTime();
 
   return (
-    <div className="max-w-[1600px] mx-auto px-4 sm:px-6 py-6">
+    // `md:pr-[232px]` = carte (208) + ses deux marges (12 + 12). La transition
+    // suit la même courbe que la carte, pour que les deux bougent ensemble.
+    <div
+      className={`max-w-[1600px] mx-auto px-4 sm:px-6 py-6 md:transition-[padding] md:duration-300 motion-reduce:transition-none ${
+        navCollapsed ? '' : 'md:pr-[232px]'
+      }`}
+      style={{ transitionTimingFunction: 'cubic-bezier(0.22, 1, 0.36, 1)' }}
+    >
       {/* ── Mobile : en-tête canonique (cf. docs/MOBILE.md) ──
           L'avatar de l'organisation n'y est PAS repris : une vignette de 48 px
           dans une barre qui se compacte à 17 px ne tient pas, et la réduire
@@ -589,7 +600,12 @@ const OrganizationPage = () => {
       {/* Desktop : la navigation vit à DROITE, hors de la zone qui défile.
           Rendue par portail dans l'emplacement de `Layout`, donc sa place
           dans cet arbre ne dit rien de sa place à l'écran. */}
-      <OrgSideNav items={navItems} activeId={tab} />
+      <OrgSideNav
+        items={navItems}
+        activeId={tab}
+        collapsed={navCollapsed}
+        onCollapsedChange={setNavCollapsed}
+      />
     </div>
   );
 };
