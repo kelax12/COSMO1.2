@@ -16,6 +16,10 @@ import { extendTailwindMerge } from "tailwind-merge"
  */
 const twMerge = extendTailwindMerge({
   extend: {
+    // `gutter` (--gutter, 1rem) est une valeur d'espacement maison : sans
+    // cette ligne, `-mx-gutter` et `-mx-3` passaient TOUS LES DEUX, et l'ordre
+    // de la feuille CSS décidait seul (vu le 2026-09-23 sur `MobileHeader`).
+    theme: { spacing: ['gutter'] },
     classGroups: {
       'font-size': [
         { text: ['display', 'title', 'headline', 'body', 'label', 'caption'] },

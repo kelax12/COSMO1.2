@@ -138,6 +138,17 @@ export default defineConfig({
         // Son propre prealable : joue par le project `mobile-safari-warmup`,
         // dont celui-ci depend. L'inclure ici le rejouerait en plein milieu.
         '**/_warmup-mobile.spec.ts',
+        // 🔴 2026-09-23 · l'audit CLAVIER (A-3, C-53, C-55) ne se joue pas ici.
+        // Ses assertions encodent la navigation sequentielle de CHROMIUM : le
+        // point de depart de la tabulation apres un lien d'evitement, l'entree
+        // du focus dans une confirmation empilee. WebKit les implemente
+        // autrement : 11 cas rouges en CI depuis le 2026-09-16, dont des cas a
+        // 1 280 px, donc sur l'interface de BUREAU. Et sur iPhone, Tab n'existe
+        // qu'avec « Acces complet au clavier », que Playwright n'emule pas.
+        // ❌ Ce n'est PAS un constat que Safari est accessible au clavier :
+        // aucun audit clavier Safari n'existe, c'est `C-118`. Ses cas a 375 px
+        // restent joues sous `chromium`.
+        '**/a11y-keyboard-audit.spec.ts',
       ],
       dependencies: ['mobile-safari-warmup'],
       use: { ...devices['iPhone 12'] },
@@ -159,7 +170,12 @@ export default defineConfig({
     {
       name: 'visual',
       testMatch: '**/visual-regression.spec.ts',
-      dependencies: ['mobile-safari-warmup'],
+      // 🔴 C-115 (2026-09-23) : dépendait de `mobile-safari-warmup`, qui tourne
+      // sur un iPhone 12, donc sous WEBKIT. `visual.yml` n'installe que
+      // Chromium : 19 runs, 19 échecs sur « Executable doesn't exist ...
+      // webkit », et AUCUNE référence jamais produite. Même spec de chauffe,
+      // sous Chromium.
+      dependencies: ['mobile-chrome-warmup'],
       use: {
         ...devices['Desktop Chrome'],
         viewport: { width: 1280, height: 800 },

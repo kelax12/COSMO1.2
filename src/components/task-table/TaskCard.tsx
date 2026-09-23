@@ -389,8 +389,10 @@ const TaskCardInner = React.forwardRef<HTMLDivElement, TaskCardProps>(({
           {task.name}
         </p>
 
-        {/* Méta : catégorie · échéance · durée — toujours sur une ligne propre */}
-        <div className="flex items-center gap-1.5 text-caption" style={{ color: 'rgb(var(--color-text-muted))' }}>
+        {/* Méta : catégorie · échéance · durée, sur une ligne propre à taille normale.
+            `flex-wrap` : à 200 % de police (WCAG 1.4.4), la rangée sortait de
+            l'écran de 218 px, durée comprise, sans défilement pour l'atteindre. */}
+        <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-caption" style={{ color: 'rgb(var(--color-text-muted))' }}>
           {!addToListMode && category && (
             <>
               <span className="inline-flex min-w-0 items-center gap-1">

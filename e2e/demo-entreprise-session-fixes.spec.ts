@@ -18,6 +18,21 @@ import { test, expect, navTo } from './fixtures';
 const orgTab = (page: Page, label: RegExp) =>
   page.getByRole('button', { name: label }).filter({ visible: true }).first();
 
+/**
+ * La liste de tâches de l'agenda d'un membre est REPLIÉE par défaut sous
+ * 640 px (`MemberAgendaBody` : `showTasks` initialisé sur la largeur), derrière
+ * le bouton bascule « Tâches ». Sous `mobile-safari` (390 px), les deux cas qui
+ * la lisent expiraient sur une liste que personne n'avait ouverte, depuis que
+ * le project tourne en CI (2026-09-16). On l'ouvre comme une personne le
+ * ferait sur téléphone ; au-dessus de 640 px elle l'est déjà, on n'y touche pas.
+ */
+async function ouvrirListeDesTachesSiRepliee(page: Page) {
+  const liste = page.locator('#member-external-events');
+  if (await liste.isVisible().catch(() => false)) return;
+  await page.getByRole('button', { name: /^tâches$/i }).filter({ visible: true }).last().click();
+  await expect(liste).toBeVisible({ timeout: 5_000 });
+}
+
 test.describe('Entreprise — correctifs de session (démo)', () => {
   test.describe.configure({ timeout: 120_000 });
 
@@ -90,6 +105,7 @@ test.describe('Entreprise — correctifs de session (démo)', () => {
 
     await actionsBtn.click();
     await page.getByRole('menuitem', { name: /assigner l'événement/i }).click();
+    await ouvrirListeDesTachesSiRepliee(page);
 
     const sidebarItems = page.locator('#member-external-events .member-external-event');
     await expect(sidebarItems).toHaveCount(1, { timeout: 10_000 });
@@ -111,6 +127,7 @@ test.describe('Entreprise — correctifs de session (démo)', () => {
     await page.getByRole('button', { name: /^Actions pour Jean Martin/ }).click();
     await page.getByRole('menuitem', { name: /voir son agenda/i }).click();
     await page.getByRole('tab', { name: /^agenda$/i }).click();
+    await ouvrirListeDesTachesSiRepliee(page);
 
     const sidebarItems = page.locator('#member-external-events .member-external-event');
     await expect(sidebarItems.first()).toBeVisible({ timeout: 10_000 });

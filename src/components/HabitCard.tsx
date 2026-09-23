@@ -108,8 +108,18 @@ const HabitCard: React.FC<HabitCardProps> = React.memo(({ habit }) => {
     return (
       <div className="flex flex-col items-center w-full md:w-auto">
         <div className="text-caption md:text-xs text-slate-500 mb-1 font-medium">{day.dayName}</div>
+        {/* 2026-09-23 · une case COCHÉE n'était qu'une icône : aucun nom
+            accessible (axe `button-name`, critique, WCAG 4.1.2 A), vu sous
+            WebKit en CI. Non cochée, elle s'annonçait « 18 », et l'état
+            « faite » n'était porté que par la couleur. Même sémantique que
+            les cases de `HabitTable` : une case à cocher, nommée par
+            l'habitude et le jour, dont l'état est `aria-checked`. */}
         <button
+          type="button"
+          role="checkbox"
+          aria-checked={!!isCompleted}
           onClick={() => handleDayClick(day.date)}
+          aria-label={t('table.dayCell', { name: habit.name, date: `${day.dayName} ${day.dayNumber}` })}
           className={`${btnSize} rounded-lg border-2 transition-all flex items-center justify-center ${
             day.isToday
               ? 'border-slate-900 dark:border-slate-100 bg-slate-50 dark:bg-slate-800 shadow-sm'
@@ -169,6 +179,8 @@ const HabitCard: React.FC<HabitCardProps> = React.memo(({ habit }) => {
               variant="ghost"
               size="sm"
               onClick={() => setShowDetails(!showDetails)}
+              aria-label={t('card.history')}
+              aria-pressed={showDetails}
               className={`hidden md:flex items-center gap-1.5 px-2 h-9 min-w-0 ${
                 showDetails ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300' : ''
               }`}

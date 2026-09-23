@@ -245,6 +245,29 @@ async function assertPageIsPainting(page: Page): Promise<void> {
   ).toBe(true);
 }
 
+/**
+ * Mesure la feuille jusqu'à ce qu'elle soit STABLE et utilisable, dans une
+ * borne de 8 s ; rend la dernière mesure, que l'assertion juge.
+ *
+ * 🔴 2026-09-23 · les 800 ms fixes d'avant mesuraient un INSTANT, pas un état.
+ * Sous WebKit, sur ce poste, la landing produit ses images 12 à 20 fois plus
+ * lentement que sous Chromium (10 images : ~2 à 12 s contre ~0,16 s, mesuré),
+ * et `LoginModal` y est encore à opacité 0 à 2 s, opaque à 5 s. Le défaut que
+ * ce fichier garde est une feuille qui reste hors écran POUR TOUJOURS (0 px
+ * visible le 2026-08-24) : une feuille bloquée échoue toujours ici, au bout de
+ * 8 s au lieu de 0,8. ❌ Ne pas relever la borne pour faire passer un cas :
+ * au-delà de 8 s, ce n'est plus de la lenteur, c'est une feuille cassée.
+ */
+async function attendreFeuilleStable(mesurer: () => Promise<SheetMeasure>): Promise<SheetMeasure> {
+  const fin = Date.now() + 8_000;
+  let m = await mesurer();
+  while ((m.opacity <= 0.9 || m.visibleRatio <= 0.9) && Date.now() < fin) {
+    await new Promise((r) => setTimeout(r, 200));
+    m = await mesurer();
+  }
+  return m;
+}
+
 /** Une feuille ouverte doit être VUE : opaque, et majoritairement à l'écran. */
 function expectSheetIsUsable(m: SheetMeasure, label: string): void {
   expect(
@@ -264,6 +287,16 @@ function expectSheetIsUsable(m: SheetMeasure, label: string): void {
 }
 
 test.describe('mouvement réduit — les feuilles s’ouvrent réellement', () => {
+  // 🔴 2026-09-23 · DEUX déclencheurs de ce fichier n'existent qu'au-dessus de
+  // 768 px : le lien « Se connecter » du bandeau de la landing, et « Supprimer
+  // l'objectif » sur la carte OKR. Sous `mobile-safari` (390 px), ces deux cas
+  // expiraient sur un bouton absent depuis que le project tourne en CI
+  // (2026-09-16), et un échec de navigation se lisait comme un échec de
+  // mouvement réduit. Le viewport est donc porté par le TEST, comme le bloc
+  // mobile plus bas : la mesure reste jouée sous WebKit, sur le bon gabarit.
+  const BUREAU = { viewport: { width: 1280, height: 800 } };
+
+  test.describe(() => { test.use(BUREAU);
   test('TÉMOIN : une feuille migrée sur useSheetMotion est visible', async ({ page }) => {
     // `LoginModal` est le témoin POSITIF du harnais : migrée le 2026-08-27,
     // elle DOIT passer. Un échec ici invalide tous les autres résultats du
@@ -288,18 +321,25 @@ test.describe('mouvement réduit — les feuilles s’ouvrent réellement', () =
     // attendre, c'est justement le point.
     await page.waitForTimeout(800);
 
-    expectSheetIsUsable(await measureTopSheet(page), 'LoginModal (témoin)');
+    expectSheetIsUsable(await attendreFeuilleStable(() => measureTopSheet(page)), 'LoginModal (témoin)');
+  });
   });
 
   test('HabitModal s’ouvre visible', async ({ demoPage: page }) => {
     await assertPageIsPainting(page);
     await page.goto('/habits');
 
-    await page.getByRole('button', { name: /^nouvelle$/i }).first().click();
+    // « Nouvelle » dans l'en-tête de bureau, le bouton flottant « Nouvelle
+    // habitude » sous 768 px : la MÊME HabitModal derrière les deux.
+    await page
+      .getByRole('button', { name: /^nouvelle( habitude)?$/i })
+      .filter({ visible: true })
+      .first()
+      .click();
 
     await page.waitForTimeout(800);
 
-    expectSheetIsUsable(await measureTopSheet(page), 'HabitModal');
+    expectSheetIsUsable(await attendreFeuilleStable(() => measureTopSheet(page)), 'HabitModal');
   });
 
   test('CompletedOKRsModal s’ouvre visible', async ({ demoPage: page }) => {
@@ -314,7 +354,7 @@ test.describe('mouvement réduit — les feuilles s’ouvrent réellement', () =
 
     await page.waitForTimeout(800);
 
-    expectSheetIsUsable(await measureTopSheet(page), 'CompletedOKRsModal');
+    expectSheetIsUsable(await attendreFeuilleStable(() => measureTopSheet(page)), 'CompletedOKRsModal');
   });
   // ── C-07 (2026-09-04) : les 16 feuilles ecrites a la main sont passees sur
   //    `useSheetMotion()`, et le cliquet statique est a ZERO.
@@ -381,12 +421,13 @@ test.describe('mouvement réduit — les feuilles s’ouvrent réellement', () =
       ).toBeGreaterThan(0.1);
 
       expectSheetIsUsable(
-        await measureBySelector(page, '[data-mobile-more-sheet]'),
+        await attendreFeuilleStable(() => measureBySelector(page, '[data-mobile-more-sheet]')),
         'MobileMoreSheet',
       );
     });
   });
 
+  test.describe(() => { test.use(BUREAU);
   test('DeleteObjectiveConfirm s’ouvre visible', async ({ demoPage: page }) => {
     // Feuille migree le 2026-09-04 : elle combine `useSheetMotion` (mouvement)
     // et `useSheetDrag` (geste), la paire que C-07 demandait.
@@ -399,6 +440,7 @@ test.describe('mouvement réduit — les feuilles s’ouvrent réellement', () =
 
     await page.waitForTimeout(800);
 
-    expectSheetIsUsable(await measureTopSheet(page), 'DeleteObjectiveConfirm');
+    expectSheetIsUsable(await attendreFeuilleStable(() => measureTopSheet(page)), 'DeleteObjectiveConfirm');
+  });
   });
 });

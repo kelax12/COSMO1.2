@@ -1095,6 +1095,24 @@ mobile n'offre pas de menu de ligne équivalent. 🔴 **C'est un écart de produ
 pas un verdict de conformité mobile** — il est nommé dans `playwright.config.ts`
 plutôt que caché derrière un `skip` silencieux.
 
+🔴 **Depuis le 2026-09-23, `a11y-keyboard-audit` non plus** (`C-111`). Ses assertions encodent la
+navigation séquentielle de **Chromium** : point de départ de la tabulation après un lien
+d'évitement, entrée du focus dans une confirmation empilée. WebKit les implémente autrement :
+**11 cas rouges** en CI depuis que `mobile-safari` y tourne (2026-09-16), dont des cas à 1 280 px,
+donc sur l'interface de bureau. Et sur iPhone, Tab n'existe qu'avec « Accès complet au clavier »,
+que Playwright n'émule pas. Ses cas à 375 px restent joués sous `chromium`.
+❌ **Ce retrait ne dit PAS que Safari est accessible au clavier** : aucun audit clavier Safari
+n'existe, et une partie de ces 11 échecs peut être un vrai défaut. C'est `C-118`.
+
+⚠️ **Six autres specs supposaient le bureau, et ont été rendues adaptatives plutôt que retirées**
+(2026-09-23) : le bouton « Créer » de l'en-tête mobile (`demo-create-task`), un pourcentage OKR
+**visible** plutôt que le premier du DOM (`demo-journeys`), la liste de tâches repliée de l'agenda
+d'un membre (`demo-entreprise-session-fixes`), le bouton flottant « Nouvelle habitude » et un
+viewport de bureau porté par le test pour les deux déclencheurs qui n'existent qu'au-dessus de
+768 px (`reduced-motion-sheets`). Et un vrai défaut en est sorti : les cases de la grille
+d'habitudes mobile n'avaient **aucun nom accessible une fois cochées**, ni d'état exposé
+(`HabitCard`, corrigé : `role="checkbox"`, `aria-checked`, nommées par l'habitude et le jour).
+
 Les 4 specs de la vague entreprise couvrent le mode entreprise, arrivé jusque-là
 sans E2E : `demo-entreprise-dependencies` (9), `demo-entreprise-tasks-tab` (5),
 `demo-entreprise-session-fixes` (5), `demo-entreprise-okr-modal` (2).

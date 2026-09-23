@@ -64,7 +64,17 @@ test.describe.configure({ timeout: 240_000 });
  *     fermées, menus repliés, panneaux à `translateX(-100%)`) sont ignorés :
  *     ils sont *censés* être à côté ;
  *   · tolérance de 1 px, pour les arrondis sub-pixel d'un
- *     `deviceScaleFactor` non entier.
+ *     `deviceScaleFactor` non entier ;
+ *   · 🔴 (2026-09-23) un élément rangé dans un CARROUSEL de composant n'est
+ *     pas perdu : une rangée de puces ou d'onglets en `overflow-x: auto`,
+ *     qui tient elle-même dans l'écran, se fait défiler au doigt. C'est ce
+ *     qui a fait mesurer 1 182 px à `/tasks` et 649 à `/settings` le
+ *     2026-09-20 : les puces de listes et les onglets de réglages, pas une
+ *     perte de contenu. Le vrai défaut de `/tasks` était ailleurs, 218 px de
+ *     métadonnées de tâche qui refusaient de passer à la ligne, et ce bruit le
+ *     noyait. ❌ `main`, `body` et `html` ne comptent PAS comme carrousel :
+ *     le `<main overflow-auto>` de `Layout` excuserait sinon toute la page.
+ *     Et un carrousel qui sort LUI-MÊME de l'écran reste un débordement.
  */
 async function horizontalOverflow(page: Page): Promise<number> {
   return page.evaluate(() => {
@@ -78,7 +88,15 @@ async function horizontalOverflow(page: Page): Promise<number> {
       if (cs.position === 'fixed' && cs.transform !== 'none') continue;
       const r = el.getBoundingClientRect();
       if (r.width === 0 || r.height === 0) continue;
-      if (r.right > largeur + 1) deborde = Math.max(deborde, Math.round(r.right - largeur));
+      if (r.right <= largeur + 1) continue;
+      let dansUnCarrousel = false;
+      for (let a = el.parentElement; a && !['MAIN', 'BODY', 'HTML'].includes(a.tagName); a = a.parentElement) {
+        if (/(auto|scroll)/.test(getComputedStyle(a).overflowX)) {
+          dansUnCarrousel = a.getBoundingClientRect().right <= largeur + 1;
+          break;
+        }
+      }
+      if (!dansUnCarrousel) deborde = Math.max(deborde, Math.round(r.right - largeur));
     }
     return deborde;
   });
@@ -142,6 +160,23 @@ test.describe('C-97 — mode paysage', () => {
     expect(await horizontalOverflow(demoPage)).toBe(0);
   });
 
+  test('TEMOIN : un carrousel qui tient dans l ecran est excuse, pas un carrousel qui en sort', async ({ demoPage }) => {
+    // Les deux moitiés de l'exception du 2026-09-23, chacune vue.
+    await demoPage.evaluate(() => {
+      const c = document.createElement('div');
+      c.id = 'c97-temoin-carrousel';
+      c.style.cssText = 'position:absolute;left:0;top:0;width:200px;overflow-x:auto;display:flex';
+      c.innerHTML = '<span style="flex:none;width:3000px;height:10px;display:block"></span>';
+      document.body.appendChild(c);
+    });
+    expect(await horizontalOverflow(demoPage), 'un carrousel qui tient dans l ecran se fait defiler : rien n est perdu').toBe(0);
+    // Le même carrousel, élargi au-delà de l'écran : son propre bord est coupé.
+    await demoPage.evaluate(() => { document.getElementById('c97-temoin-carrousel')!.style.width = '3000px'; });
+    expect(await horizontalOverflow(demoPage), 'un carrousel qui sort lui-meme de l ecran reste un debordement').toBeGreaterThan(1000);
+    await demoPage.evaluate(() => document.getElementById('c97-temoin-carrousel')?.remove());
+    expect(await horizontalOverflow(demoPage)).toBe(0);
+  });
+
   /**
    * 🔴 LE PLAFOND PAR ROUTE, POSÉ AU MESURÉ DU 2026-09-20 — et ce que ces
    * chiffres veulent dire.
@@ -173,7 +208,9 @@ test.describe('C-97 — mode paysage', () => {
     '/habits': 0,
     '/settings': 0,
     '/agenda': 447,
-    '/tasks': 619,
+    // 619 → 0 le 2026-09-23 : c'était la rangée de puces de listes, un
+    // carrousel qui se fait défiler (cf. `horizontalOverflow`), pas une perte.
+    '/tasks': 0,
   };
 
   for (const [route, plafond] of Object.entries(PLAFOND_PAYSAGE)) {
@@ -275,10 +312,23 @@ test.describe('C-97 — texte agrandi', () => {
    * Même raisonnement que pour le paysage : cliquet au mesuré plutôt que zéro
    * permanent. ❌ Ces trois nombres ne remontent pas.
    */
+  /*
+   * 🔴 2026-09-23 · les trois à ZÉRO, et ce que la baisse doit à chacun :
+   *   /settings 649 → 0  la rangée d'onglets, un carrousel défilant : le
+   *                      détecteur la comptait comme une perte
+   *   /tasks   1182 → 0  même cause (les puces de listes), qui NOYAIT le vrai
+   *                      défaut : 218 px de métadonnées de tâche qui ne
+   *                      passaient pas à la ligne. Corrigé (`flex-wrap`)
+   *   /dashboard 12 → 0  l'en-tête mobile compensait une gouttière de 1rem
+   *                      sur une page à `p-3` : 4 px de trop, 8 à 200 %
+   * Ils avaient aussi un défaut de pose : mesurés sous Windows, ils rendaient
+   * 13 / 650 / 1 187 sous Linux en CI, et le job e2e restait rouge sur 1 à
+   * 5 px de rendu de police. À zéro, il n'y a plus d'écart à arrondir.
+   */
   const PLAFOND_TEXTE: Record<string, number> = {
-    '/dashboard': 12,
-    '/settings': 649,
-    '/tasks': 1182,
+    '/dashboard': 0,
+    '/settings': 0,
+    '/tasks': 0,
   };
 
   for (const [route, plafond] of Object.entries(PLAFOND_TEXTE)) {

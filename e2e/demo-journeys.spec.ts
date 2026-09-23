@@ -88,7 +88,10 @@ test('démo : la page OKR rend la première carte avec sa progression', async ({
   await expect(firstCard).toBeVisible({ timeout: 15_000 });
 
   // La carte affiche une progression (seeds démo : 3 OKRs actifs avec %).
-  await expect(page.locator('text=/%/').first()).toBeVisible({ timeout: 5_000 });
+  // ⚠️ Le premier « % » du DOM (« 67% du temps écoulé ») est masqué sous
+  // `md:` : sur téléphone le cas expirait sur un élément que personne ne voit.
+  // On cherche un pourcentage VISIBLE, dans la carte.
+  await expect(firstCard.locator('text=/%/').filter({ visible: true }).first()).toBeVisible({ timeout: 5_000 });
 
   await expect(page.locator('[data-sonner-toast][data-type="error"]')).toHaveCount(0);
 });

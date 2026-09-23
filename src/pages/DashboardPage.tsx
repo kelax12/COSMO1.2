@@ -130,6 +130,10 @@ const DashboardPage: React.FC = () => {
           rendu desktop, où le header est invisible mais compte encore comme
           premier enfant. */}
       <MobileHeader
+        // La page a `p-3` sous `sm:`, pas la gouttière (1rem) que l'en-tête
+        // compense par défaut : sans cet alignement il débordait de 4 px à
+        // droite, 8 px à 200 % de police (WCAG 1.4.4, C-97).
+        className="-mx-3 px-3 sm:-mx-6 sm:px-6"
         title={formatDate(new Date(), {
           weekday: 'long',
           day: 'numeric',

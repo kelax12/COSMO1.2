@@ -44,9 +44,12 @@ test('démo : créer une tâche l\'ajoute à la liste', async ({ demoPage: page 
   const nameField = dialog.getByRole('textbox', { name: /nom de la tâche/i }).first();
   await nameField.fill(taskName);
 
-  // Le CTA de création porte le même libellé sur les deux viewports.
+  // Le CTA de création : « Créer la tâche » en pied de formulaire desktop,
+  // « Créer » dans l'en-tête façon iOS de la feuille mobile. ⚠️ Ce commentaire
+  // disait « le même libellé sur les deux viewports » : c'était faux sur mobile,
+  // et le cas expirait sur WebKit depuis que `mobile-safari` tourne en CI.
   await dialog
-    .getByRole('button', { name: /^créer la tâche$/i })
+    .getByRole('button', { name: /^créer( la tâche)?$/i })
     .filter({ visible: true })
     .first()
     .click();
@@ -69,7 +72,27 @@ test('démo : créer une tâche l\'ajoute à la liste', async ({ demoPage: page 
   await expect(dialog).toBeHidden({ timeout: 5_000 });
 
   // La tâche est bien persistée : on la retrouve par la recherche.
-  await page.getByRole('textbox', { name: /rechercher une tâche par nom/i }).fill(taskName);
+  // Bureau : le champ est dans la barre de filtres. Téléphone : il n'existe
+  // qu'une fois la recherche ouverte (« Ouvrir la recherche », ancrée en bas),
+  // et Entrée la referme pour rendre la liste filtrée.
+  // ⚠️ Le chemin se décide par la LARGEUR, le critère même de `useIsMobile`
+  // (< 768 px), jamais par un `isVisible()` : celui-ci répond sans attendre,
+  // et sous WebKit la fenêtre de création est encore en train de se refermer
+  // à cet instant — le test concluait « bureau » et ne cliquait jamais.
+  const surTelephone = (page.viewportSize()?.width ?? 1280) < 768;
+  if (surTelephone) {
+    await page.getByRole('button', { name: /^ouvrir la recherche$/i }).filter({ visible: true }).first().click({ timeout: 15_000 });
+  }
+  // Bureau : `<input type="text">`, rôle `textbox`. Téléphone : `type="search"`,
+  // rôle `searchbox`. Même nom accessible, deux rôles.
+  const nomRecherche = /rechercher une tâche par nom/i;
+  const recherche = page
+    .getByRole('textbox', { name: nomRecherche })
+    .or(page.getByRole('searchbox', { name: nomRecherche }))
+    .filter({ visible: true })
+    .first();
+  await recherche.fill(taskName);
+  if (surTelephone) await recherche.press('Enter');
   // filter({ visible: true }) : la <table> desktop reste dans le DOM en
   // `hidden md:block`, donc sans ce filtre `.first()` résout le <span> CACHÉ
   // de la ligne de table au lieu de celui de la TaskCard mobile.
