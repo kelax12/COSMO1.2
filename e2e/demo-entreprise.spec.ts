@@ -129,16 +129,22 @@ test.describe('Espace entreprise · navigation', () => {
     await page.waitForURL(/\/entreprise\/members\?ref=e2e/, { timeout: 20_000 });
   });
 
-  test('desktop : replier ne laisse que la bande, le survol la rouvre', async ({ demoPage: page }) => {
+  test("desktop : ouverte à l'arrivée, repliée quand le curseur la quitte, ressortie au bord", async ({ demoPage: page }) => {
     await page.goto('/entreprise/okr');
     const nav = page.getByRole('navigation', { name: /sections de l.entreprise/i });
-    await expect(nav.getByRole('link', { name: /^okr/i })).toHaveAttribute('aria-current', 'page', {
-      timeout: 20_000,
-    });
+    const okr = nav.getByRole('link', { name: /^okr/i });
+    await expect(okr).toHaveAttribute('aria-current', 'page', { timeout: 20_000 });
+    const viewport = page.viewportSize()!;
 
-    await nav.getByRole('button', { name: /replier la navigation/i }).click();
+    // Ouverte à l'arrivée, et un mouvement AILLEURS ne la ferme pas : elle
+    // n'a pas encore été visitée.
+    await page.mouse.move(viewport.width / 3, viewport.height / 2);
+    await expect(nav).toHaveAttribute('data-collapsed', 'false');
+
+    // Visitée puis quittée : repliée, il n'en reste que 10 px au bord.
+    await okr.hover();
+    await page.mouse.move(viewport.width / 3, viewport.height / 2);
     await expect(nav).toHaveAttribute('data-collapsed', 'true');
-    // La carte glisse hors de l'écran : il n'en reste que 10 px au bord.
     await expect
       .poll(async () =>
         nav.evaluate((el) => {
@@ -148,15 +154,17 @@ test.describe('Espace entreprise · navigation', () => {
       )
       .toBeLessThanOrEqual(10);
 
-    // L'état replié survit au rechargement.
-    await page.reload();
-    await expect(nav).toHaveAttribute('data-collapsed', 'true', { timeout: 20_000 });
-
-    // Le curseur sur la bande rouvre le panneau.
-    // En haut de la zone d'approche, hors de la hauteur de la carte.
-    await nav.getByRole('button', { name: /afficher la navigation/i }).hover({ position: { x: 10, y: 10 } });
+    // Le curseur touche le bord, en haut, hors de la hauteur de la carte :
+    // elle ressort. Puis il s'éloigne : elle se replie.
+    await page.mouse.move(viewport.width - 4, 10);
     await expect(nav).toHaveAttribute('data-collapsed', 'false');
     await expect(nav.getByRole('link', { name: /^membres/i })).toBeVisible();
+    await page.mouse.move(viewport.width / 3, 10);
+    await expect(nav).toHaveAttribute('data-collapsed', 'true');
+
+    // Chaque arrivée la rouvre, quel qu'ait été l'état au départ.
+    await page.reload();
+    await expect(nav).toHaveAttribute('data-collapsed', 'false', { timeout: 20_000 });
   });
 
   test('mobile : le sélecteur ouvre une feuille, choisir navigue', async ({ demoPage: page }) => {
