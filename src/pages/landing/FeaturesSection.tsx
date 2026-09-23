@@ -12,13 +12,20 @@ import TaskTableShowcase from '@/components/showcase/TaskTableShowcase';
 import AgendaShowcase from '@/components/showcase/AgendaShowcase';
 import OKRCardShowcase from '@/components/showcase/OKRCardShowcase';
 import HabitHeatmapShowcase from '@/components/showcase/HabitHeatmapShowcase';
-import {
-  TaskCardMobileShowcase,
-  AgendaMobileShowcase,
-  HabitMobileShowcase,
-  OKRMobileShowcase,
-  StatsMobileShowcase,
-} from '@/components/showcase/MobileShowcases';
+// Vitrines MOBILES chargées à la demande (2026-09-23) : 17,5 ko minifiés, soit
+// le plus gros poste du chunk `LandingPage`, qui dépassait son cliquet de
+// budget (21,3 ko pour 21,0). Elles ne sont rendues que sous `isMobile` : un
+// visiteur sur ordinateur les téléchargeait sans jamais les voir. Sur
+// téléphone, l'import part au premier rendu de la section, bien avant que le
+// défilement l'atteigne ; le conteneur qui les porte n'apparaît de toute façon
+// qu'en entrant dans l'écran (`whileInView`). L'écran ne change pas.
+const vitrineMobile = (nom: 'TaskCardMobileShowcase' | 'AgendaMobileShowcase' | 'HabitMobileShowcase' | 'OKRMobileShowcase' | 'StatsMobileShowcase') =>
+  lazy(() => import('@/components/showcase/MobileShowcases').then((m) => ({ default: m[nom] })));
+const TaskCardMobileShowcase = vitrineMobile('TaskCardMobileShowcase');
+const AgendaMobileShowcase = vitrineMobile('AgendaMobileShowcase');
+const HabitMobileShowcase = vitrineMobile('HabitMobileShowcase');
+const OKRMobileShowcase = vitrineMobile('OKRMobileShowcase');
+const StatsMobileShowcase = vitrineMobile('StatsMobileShowcase');
 import { useT } from '@/i18n/useT';
 import WhenVisible from '@/components/showcase/WhenVisible';
 import ShowcaseTheme from '@/components/showcase/ShowcaseTheme';
@@ -337,7 +344,9 @@ const FeaturesSection: React.FC<FeaturesSectionProps> = ({ isMobile, handleFeatu
                             Sans ce fournisseur elles restent sombres, comme sur
                             `/guide`. */}
                         <ShowcaseTheme theme="light">
-                          <Showcase />
+                          <Suspense fallback={null}>
+                            <Showcase />
+                          </Suspense>
                         </ShowcaseTheme>
                       </div>
                     </motion.div>
