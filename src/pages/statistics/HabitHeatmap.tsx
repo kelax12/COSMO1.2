@@ -206,8 +206,20 @@ export const HabitHeatmap = React.memo<{ habits: Habit[]; now: Date; embedded?: 
           </div>
         ))}
       </div>
-      {/* Scrollable weeks (rows) */}
-      <div ref={scrollRef} className={scrollClass} style={scrollStyle}>
+      {/* Scrollable weeks (rows)
+          2026-09-23 · depuis que ce conteneur défile pour de bon (`c2affeeb`),
+          axe relève `scrollable-region-focusable` sous WebKit : aucune case
+          n'est focalisable, donc sous Safari la zone ne défile ni au clavier
+          ni pour un lecteur d'écran piloté au clavier. Le conteneur devient
+          lui-même un arrêt de tabulation, nommé par le titre de la carte. */}
+      <div
+        ref={scrollRef}
+        className={`${scrollClass} rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent-solid))]`}
+        style={scrollStyle}
+        tabIndex={0}
+        role="region"
+        aria-label={t('heatmap.title')}
+      >
         <div style={{ display: 'flex', flexDirection: 'column', gap: GAP }}>
           {weeksRecentFirst.map((week, wi) => (
             <div key={wi} style={{ display: 'flex', gap: GAP, alignItems: 'center', flexShrink: 0 }}>

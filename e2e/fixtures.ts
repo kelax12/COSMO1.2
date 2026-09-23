@@ -340,7 +340,17 @@ export async function navTo(page: Page, name: RegExp, urlPattern: RegExp): Promi
   // Mobile : la section est dans le sheet « Plus » de la MobileTabBar.
   // Les items du sheet sont des <button> (navigate()), pas des <a>, sauf
   // « Entreprise » multi-org, qui est elle aussi un déclencheur de menu.
-  await page.getByRole('button', { name: /plus d'options/i }).click();
+  // 🔴 2026-09-23 · ce clic n'avait AUCUN délai propre : quand WebKit juge le
+  // bouton instable (la barre d'onglets anime ses badges), il héritait du délai
+  // du TEST entier, 120 s, et le cas mourait sur « page fermée » (run
+  // `35847722505`, /statistics). Même délai et même repli que les autres clics
+  // de cette fonction.
+  const plus = page.getByRole('button', { name: /plus d'options/i }).filter({ visible: true }).first();
+  try {
+    await plus.click({ timeout: 15_000 });
+  } catch {
+    await plus.click({ force: true, timeout: 10_000 });
+  }
   // ⚠️ Scoper au sheet est OBLIGATOIRE : la page reste montée DERRIÈRE lui et
   // ses propres contrôles matchent le même `name`. Le Dashboard a par exemple
   // un MobileCollapsible « OKR » qui arrivait avant l'item du sheet en ordre
