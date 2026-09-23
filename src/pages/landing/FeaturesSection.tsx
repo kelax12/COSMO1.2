@@ -381,7 +381,13 @@ const FeaturesSection: React.FC<FeaturesSectionProps> = ({ isMobile, handleFeatu
                     // Panneaux 2-5 masqués dès le rendu (les 5 partagent la
                     // même cellule de grid) : sans ça, ils se chevauchent
                     // visiblement pendant la frame avant le gsap.set.
-                    className={`feature-panel col-start-1 row-start-1 flex flex-row items-center gap-16 pl-10 ${i > 0 ? 'opacity-0' : ''}`}
+                    // Quinconce (2026-09-23) : même ordre que le layout empilé,
+                    // vitrine à gauche pour Agenda et Habitudes (`fromRight`).
+                    // Le deck imposait `flex-row` à tous les panneaux depuis
+                    // juillet, alors que l'inclinaison GSAP ci-dessus alterne
+                    // déjà selon `i % 2`. `pl-10` reste : c'est la place du
+                    // rail de points, toujours à gauche.
+                    className={`feature-panel col-start-1 row-start-1 flex ${feature.fromRight ? 'flex-row-reverse' : 'flex-row'} items-center gap-16 pl-10 ${i > 0 ? 'opacity-0' : ''}`}
                   >
                     <div className="flex-1">
                       <FeatureCopy feature={feature} onCta={() => handleFeatureClick(feature.path)} />
