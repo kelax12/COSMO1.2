@@ -2,6 +2,7 @@ import { Suspense, useEffect, useState } from 'react';
 import { Navigate, useNavigate, useParams, useSearchParams } from 'react-router';
 import { markOrgSeen, useOrgBadges } from '@/lib/hooks/use-org-notifications';
 import { Building2, Pencil, X } from 'lucide-react';
+import { useManagerSectionsToast, useOrgShortcuts } from '@/components/organization/org-page.hooks';
 import { useAuth } from '@/modules/auth/AuthContext';
 import {
   useActiveOrganization,
@@ -45,7 +46,8 @@ import type { KeyOf } from '@/i18n/catalog';
 //
 // `MyWorkTab` reste EAGER : c'est l'onglet par défaut, le rendre paresseux
 // remplacerait l'écran d'arrivée par un squelette à chaque ouverture, pour
-// n'économiser que ce qu'on va charger dans la seconde.
+// n'économiser que ce qu'on va charger dans la seconde. Ses blocs peints, eux,
+// sont chargés à part et préchargés (`MyWorkSections`, 2026-09-24).
 //
 // ⚠️ Second argument à `lazyWithRetry` volontairement vide : les catalogues de
 // cette page sont déclarés par sa ROUTE (`App.tsx`, ligne `OrganizationPage`),
@@ -62,6 +64,8 @@ const OrgBillingTab = lazyWithRetry(() => import('@/components/organization/OrgB
 // chunk, qui dépassait son cliquet (18,3 ko pour 18,0) : seul qui ouvre
 // `/entreprise/members` doit la payer.
 const OrgMembersSection = lazyWithRetry(() => import('@/components/organization/OrgMembersSection'));
+// Paramètres (M13) : même raison, seul qui ouvre `/entreprise/settings` la paie.
+const OrgSettingsSection = lazyWithRetry(() => import('@/components/organization/OrgSettingsSection'));
 
 // Feuilles et dialogues : montés derrière un `&&`, donc déjà conditionnels au
 // rendu. Ils ne l'étaient pas au TÉLÉCHARGEMENT.
@@ -97,9 +101,11 @@ const tabFallback = (tab: OrgTab, t: (key: KeyOf<'org'>) => string) => {
 /** Bannière sièges : dismiss persistant par org (informative, freemium dormant). */
 const seatsBannerKey = (orgId: string) => `cosmo_org_seats_banner_dismissed_${orgId}`;
 
-/** Bannière lancement « gratuit jusqu'au 1er août » : dismiss persistant par org. */
-const launchBannerKey = (orgId: string) => `cosmo_org_launch_banner_dismissed_${orgId}`;
-const LAUNCH_FREE_UNTIL = new Date('2026-08-01T00:00:00');
+// 🗑️ Bannière « gratuit jusqu'au 1er août » retirée le 2026-09-24 : elle ne
+// s'affichait plus depuis le 2026-08-01, son code et ses libellés restaient.
+
+/** Ouvre la palette Ctrl+K (écoutée dans `CommandPalette.tsx`). */
+const openSearch = () => window.dispatchEvent(new CustomEvent('open-command-palette'));
 
 const OrganizationPage = () => {
   const { t, tp } = useT('org');
@@ -117,7 +123,6 @@ const OrganizationPage = () => {
   const [confirmingLeave, setConfirmingLeave] = useState(false);
   const [transferring, setTransferring] = useState(false);
   const [seatsBannerDismissed, setSeatsBannerDismissed] = useState(false);
-  const [launchBannerDismissed, setLaunchBannerDismissed] = useState(false);
   const { activeOrg: myOrg, isLoading } = useActiveOrganization();
   const badges = useOrgBadges();
   // Navigation de droite (ouverte à l'arrivée, repliée, ou ressortie au
@@ -136,6 +141,9 @@ const OrganizationPage = () => {
   }, [myOrg?.id]);
   // `live` : c'est LA page où l'on attend de voir un membre arriver.
   const { data: members = [], isLoading: membersLoading } = useOrgMembers(myOrg?.id, { live: true });
+  // Appelés avant les early returns, comme tous les hooks de la page.
+  useManagerSectionsToast(myOrg?.id, user?.id, members, !membersLoading && members.length > 0, myOrg?.myRole === 'admin');
+  const { shortcuts, togglePin } = useOrgShortcuts(myOrg?.id, user?.id, urlTab, searchParams);
   // Droits explicites de l'utilisateur courant (mig. 115). Monté ici parce que
   // plusieurs onglets s'en servent — le hook ne déclenche qu'une requête,
   // partagée par React Query avec celles des composants enfants.
@@ -246,18 +254,6 @@ const OrganizationPage = () => {
     try { localStorage.setItem(seatsBannerKey(myOrg.id), '1'); } catch { /* no-op */ }
   };
 
-  let launchDismissed = launchBannerDismissed;
-  try {
-    launchDismissed = launchDismissed || !!localStorage.getItem(launchBannerKey(myOrg.id));
-  } catch { /* localStorage indisponible : bannière visible */ }
-
-  const dismissLaunchBanner = () => {
-    setLaunchBannerDismissed(true);
-    try { localStorage.setItem(launchBannerKey(myOrg.id), '1'); } catch { /* no-op */ }
-  };
-
-  const showLaunchBanner = !launchDismissed && Date.now() < LAUNCH_FREE_UNTIL.getTime();
-
   return (
     // `md:pr-[232px]` = carte (208) + ses deux marges (12 + 12). La transition
     // suit la même courbe que la carte, pour que les deux bougent ensemble.
@@ -358,26 +354,6 @@ const OrganizationPage = () => {
         </div>
       )}
 
-      {/* Bannière lancement — gratuit pour tout le monde jusqu'au 1er août,
-          quel que soit le nombre de membres. Se masque d'elle-même après
-          cette date (et reste dismissible avant). */}
-      {showLaunchBanner && (
-        <div className="mb-5 rounded-2xl border border-[rgb(var(--color-accent)/0.3)] bg-[rgb(var(--color-accent)/0.08)] px-4 py-3 flex items-start justify-between gap-3">
-          <p className="text-xs text-[rgb(var(--color-text-secondary))]">
-            <span className="font-semibold text-[rgb(var(--color-text-primary))]">{t('page.launchFree')}</span>
-            {t('page.launchFreeRest')}
-          </p>
-          <button
-            type="button"
-            onClick={dismissLaunchBanner}
-            aria-label={t('page.hideInfo')}
-            className="shrink-0 w-11 h-11 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-surface))] transition-colors"
-          >
-            <X size={14} aria-hidden="true" />
-          </button>
-        </div>
-      )}
-
       {/* Bannière freemium — informative tant que ENTERPRISE_BILLING_ENFORCED
           est false (gate dormant ; le vrai blocage sera côté serveur).
           #5 : dismissible (persistant par org) tant qu'elle est informative. */}
@@ -404,7 +380,7 @@ const OrganizationPage = () => {
 
       {/* Mobile : la section courante devient un sélecteur (maquette M1).
           Desktop : la navigation vit à droite, dans `OrgSideNav`. */}
-      <OrgSectionSwitcher items={navItems} activeId={tab} />
+      <OrgSectionSwitcher items={navItems} activeId={tab} shortcuts={shortcuts} onSearch={openSearch} />
 
       {/* Contenu */}
       {/* Une seule frontière Suspense pour tout le contenu : les onglets sont
@@ -413,7 +389,9 @@ const OrganizationPage = () => {
           tuiles. Un fallback générique pour tous aurait fait clignoter une
           forme qui n'est pas celle qui arrive. */}
       <Suspense fallback={tabFallback(tab, t)}>
-      {tab === 'overview' && <MyWorkTab orgId={myOrg.id} members={members} currentUserId={user?.id} />}
+      {tab === 'overview' && (
+        <MyWorkTab orgId={myOrg.id} members={members} currentUserId={user?.id} isManager={isManager} />
+      )}
       {tab === 'stats' && isManager && (
         <TeamOverviewTab orgId={myOrg.id} members={members} isAdmin={isAdmin} currentUserId={user?.id} />
       )}
@@ -448,14 +426,23 @@ const OrganizationPage = () => {
           org={myOrg}
           members={members}
           currentUserId={user?.id}
-          isOwner={isOwner}
           isAdmin={isAdmin}
           canInvite={canInvite}
           canCreateTeam={myPermissions.can['team.create']}
           seatsFull={seatsFull}
+        />
+      )}
+
+      {tab === 'settings' && (
+        <OrgSettingsSection
+          org={myOrg}
+          members={members}
+          isOwner={isOwner}
+          isAdmin={isAdmin}
           transferPending={transferMutation.isPending}
           deletePending={deleteFlow.isPending}
           leavePending={leaveMutation.isPending}
+          onEditProfile={() => setEditProfile(true)}
           onTransfer={() => setTransferring(true)}
           onDelete={() => setConfirmingDelete(true)}
           onLeave={() => setConfirmingLeave(true)}
@@ -515,6 +502,9 @@ const OrganizationPage = () => {
         activeId={tab}
         mode={navMode}
         onModeChange={setNavMode}
+        shortcuts={shortcuts}
+        onTogglePin={togglePin}
+        onSearch={openSearch}
       />
     </div>
   );

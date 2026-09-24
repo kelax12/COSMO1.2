@@ -57,6 +57,7 @@ export {
   useTeamProjectTemplates,
   useTeamTasks,
   useTeamTaskWorkingSet,
+  useTeamTaskSlice,
   useCreateTeamProject,
   useUpdateTeamProject,
   useCreateTeamTask,

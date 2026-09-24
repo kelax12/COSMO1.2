@@ -153,6 +153,37 @@ export const useTeamTaskWorkingSet = (
   });
 };
 
+/**
+ * Lecture CIBLÉE : le serveur filtre, trie et plafonne avant de répondre.
+ *
+ * C'est la lecture de l'Aperçu (audit du 2026-09-24). Il lisait tout
+ * l'ensemble de travail de l'organisation, plafonné à 1 000 lignes, pour n'en
+ * garder que MES tâches : dans une grande organisation, une tâche à moi
+ * pouvait tomber sous le plafond et disparaître de mon propre écran d'accueil.
+ * Ici chaque bloc demande ses lignes (`assigneeId: moi`, « les 20 prochaines
+ * échéances »…), et le plafond ne s'applique qu'à elles.
+ *
+ * ⚠️ Les filtres entrent dans la clé de cache : ils doivent être STABLES d'un
+ * rendu à l'autre (dates figées au début du jour, `ids` triés). La clé est un
+ * sous-chemin de `teamProjectKeys.tasks(orgId)`, donc toute mutation de tâche
+ * l'invalide déjà.
+ */
+export const useTeamTaskSlice = (
+  orgId: string | undefined,
+  filters: TeamTaskFilters,
+  options?: { live?: boolean; enabled?: boolean },
+) => {
+  const repository = useRepo();
+  return useQuery({
+    queryKey: [...teamProjectKeys.tasks(orgId ?? ''), 'slice', filters],
+    queryFn: () => repository.getTasks(orgId as string, filters),
+    enabled: !!orgId && (options?.enabled ?? true),
+    staleTime: 1000 * 30,
+    ...(options?.live ? { refetchInterval: 20_000 } : {}),
+    refetchOnWindowFocus: true,
+  });
+};
+
 // ─── Mutations ───────────────────────────────────────────────────────
 
 export const useCreateTeamProject = (orgId: string) => {

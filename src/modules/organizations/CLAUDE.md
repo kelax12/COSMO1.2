@@ -17,6 +17,26 @@ Liste des sections : `org-sections.ts` ; chemins et liens : `deep-link.helpers.t
   (`stripe-org-checkout`, `stripe-org-portal`) et les e-mails déjà envoyés par `renewal-notice`
   pointent sur `/entreprise?tab=billing` : ces URLs vivent hors du dépôt.
 - ❌ Ne jamais écrire un lien entreprise à la main : passer par `buildOrgLink`.
+- **Paramètres** (`/entreprise/settings`, M13, 2026-09-24) : profil, organisations, forfait,
+  zone dangereuse (`OrgSettingsSection`). Ce qui règle une PERSONNE reste dans Membres.
+  La garde C-39 (`org-deletion.guard.test.ts`) suit la zone dangereuse jusque-là.
+- **Épinglés / Récents** du panneau (`org-pins.ts`) : préférence par personne et par appareil,
+  donc `localStorage`, jamais la base. Une ouverture `?project=` est notée comme récente.
+- **Toast « Vous encadrez maintenant X »** (`org-page.hooks.ts`) : seul le passage non → oui
+  le déclenche ; la première visite ENREGISTRE l'état sans rien dire.
+
+## 🏠 Aperçu : lectures CIBLÉES, jamais l'organisation entière (2026-09-24)
+
+`MyWorkTab` lisait l'ensemble de travail de toute l'organisation (plafond 1 000) pour n'en
+garder que mes tâches. Chaque bloc passe désormais par `useTeamTaskSlice(orgId, filtres)` :
+`assigneeId: moi`, « 30 prochaines échéances », « mes tâches créées en revue », créations
+récentes, et une lecture par `ids` pour nommer le reste. Le serveur filtre AVANT le plafond.
+
+- ❌ Ne pas y remonter `useTeamTasks` / `useTeamTaskWorkingSet` : une tâche à moi retomberait
+  sous le plafond dans une grande organisation.
+- Le fil d'activité lit `team_task_activity` (mig. 094). Le journal ne voit que les UPDATE :
+  les créations viennent des tâches récentes. Dérivations pures : `my-work.helpers.ts`.
+- `isManager` vient de la PAGE, comme pour Projets et Tâches (l'Aperçu passait `isAdmin`).
 
 ---
 

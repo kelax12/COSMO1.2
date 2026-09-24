@@ -80,7 +80,14 @@
     "orgTeams": "Teams",
     "teamOkrs": "Team OKRs",
     "member": "Member",
-    "tasks": "Tasks"
+    "tasks": "Tasks",
+    "groupOrg": "Company",
+    "goOrgOverview": "Company · Overview",
+    "goOrgTasks": "Company · Tasks",
+    "goOrgProjects": "Company · Projects",
+    "goOrgOkr": "Company · OKRs",
+    "goOrgMembers": "Company · Members",
+    "goOrgSettings": "Company · Settings"
   },
   "firstRun": {
     "title": "Welcome to COSMO",

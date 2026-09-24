@@ -1,4 +1,3 @@
-import { LogOut, Trash2, ArrowRightLeft } from 'lucide-react';
 import type { Organization, OrgMember } from '@/modules/organizations';
 import { lazyWithRetry } from '@/lib/lazy-with-retry';
 import { useT } from '@/i18n/useT';
@@ -24,34 +23,20 @@ interface OrgMembersSectionProps {
   org: Organization;
   members: OrgMember[];
   currentUserId?: string;
-  isOwner: boolean;
   isAdmin: boolean;
   canInvite: boolean;
   canCreateTeam: boolean;
   seatsFull: boolean;
-  transferPending: boolean;
-  deletePending: boolean;
-  leavePending: boolean;
-  onTransfer: () => void;
-  onDelete: () => void;
-  onLeave: () => void;
 }
 
 const OrgMembersSection = ({
   org,
   members,
   currentUserId,
-  isOwner,
   isAdmin,
   canInvite,
   canCreateTeam,
   seatsFull,
-  transferPending,
-  deletePending,
-  leavePending,
-  onTransfer,
-  onDelete,
-  onLeave,
 }: OrgMembersSectionProps) => {
   const { t } = useT('org');
 
@@ -103,62 +88,8 @@ const OrgMembersSection = ({
         />
       </div>
 
-      {/* #5 : le PROPRIETAIRE ne « quitte » pas — il peut supprimer
-          l'entreprise (confirmation extrême, façon GitHub). Tous les
-          autres, admins compris, quittent.
-
-          🔴 C-39 — cette zone etait montee sur `isAdmin`, alors que le
-          bouton « Transferer la propriete » juste a cote etait deja
-          reserve au proprietaire : la restriction existait, elle n'avait
-          pas ete portee sur le geste DESTRUCTEUR. Une entreprise a deux
-          admins ; le second, qui ne paie rien, supprimait l'organisation,
-          et le proprietaire continuait d'etre debite d'un abonnement
-          Stripe qui, lui, court toujours.
-
-          ⚠️ Ce n'est que l'affichage. La regle vit dans
-          `delete_organization` (mig. 138), seule porte vers un DELETE sur
-          `organizations`. */}
-      {isOwner ? (
-        <div className="mt-2 rounded-2xl border border-red-300/60 dark:border-red-700/40 bg-red-50/40 dark:bg-red-900/10 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <h3 className="text-sm font-bold text-red-600 dark:text-red-400">{t('page.dangerZone')}</h3>
-            <p className="text-xs text-[rgb(var(--color-text-muted))] mt-0.5">
-              {t('page.dangerHint')}
-            </p>
-          </div>
-          <div className="flex flex-col sm:flex-row gap-2 shrink-0">
-            {members.length > 1 && (
-              <button
-                type="button"
-                onClick={onTransfer}
-                disabled={transferPending}
-                className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] disabled:opacity-60 transition-colors"
-              >
-                <ArrowRightLeft size={15} aria-hidden="true" /> {t('page.transferOwnership')}
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={onDelete}
-              disabled={deletePending}
-              className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-red-600 hover:bg-red-700 disabled:opacity-60 transition-colors"
-            >
-              <Trash2 size={15} aria-hidden="true" /> {t('page.deleteOrg')}
-            </button>
-          </div>
-        </div>
-      ) : (
-        <div className="pt-2">
-          <button
-            type="button"
-            onClick={onLeave}
-            disabled={leavePending}
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-red-500 hover:text-red-600 transition-colors disabled:opacity-60"
-          >
-            <LogOut size={15} aria-hidden="true" /> {t('page.leaveOrg')}
-          </button>
-        </div>
-      )}
+      {/* Zone dangereuse (transférer, supprimer, quitter) : déplacée dans
+          Paramètres le 2026-09-24 (M13), avec ses gardes C-39 intactes. */}
     </div>
   );
 };
