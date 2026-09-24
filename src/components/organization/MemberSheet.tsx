@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Link as LinkIcon, UserRound, ListTodo, TrendingUp, CalendarDays } from 'lucide-react';
 import { toast } from '@/lib/toast';
-import { isManagerOf, type OrgMember } from '@/modules/organizations';
+import { isManagerOf, useOrgMemberLastActivity, type OrgMember } from '@/modules/organizations';
 import type { OrgTeam } from '@/modules/org-teams';
 import MemberAvatar from './MemberAvatar';
 import { useT } from '@/i18n/useT';
@@ -71,6 +71,18 @@ const MemberSheet = ({
     [canSeeInsights, canSeeAgenda],
   );
   const [tab, setTab] = useState<MemberTab>(() => resolveMemberTab(initialTab, tabs));
+
+  // Dernière activité (mig. 170) : mêmes ayants droit que les onglets Tâches
+  // et Contribution. Même clé de cache que l'annuaire : aucune lecture de plus
+  // quand la fiche s'ouvre depuis lui.
+  const { data: lastActivity } = useOrgMemberLastActivity(orgId, {
+    enabled: canSeeInsights,
+    members,
+    viewerId: currentUserId,
+  });
+  const memberActivity = canSeeInsights
+    ? lastActivity?.find((a) => a.userId === member.userId)
+    : undefined;
 
   // Les droits peuvent rétrécir pendant que la fiche est ouverte (un membre
   // sort du sous-arbre après un déplacement dans la pyramide) : on ne laisse
@@ -207,6 +219,7 @@ const MemberSheet = ({
               members={members}
               teams={teams}
               currentUserId={currentUserId}
+              lastActivity={memberActivity}
               canMove={canMove}
               canAddUnder={canAddUnder}
               onClose={onClose}

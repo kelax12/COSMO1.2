@@ -1,7 +1,15 @@
-import { Mail, Users, Move, UserRoundPlus, Network } from 'lucide-react';
-import { subtreeOf, type OrgMember } from '@/modules/organizations';
+import { formatDistanceToNow } from 'date-fns';
+import { Mail, Users, Move, UserRoundPlus, Network, Clock } from 'lucide-react';
+import { subtreeOf, type MemberLastActivity, type OrgMember } from '@/modules/organizations';
 import type { OrgTeam } from '@/modules/org-teams';
+import { getDateLocale } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
+
+const SOURCE_KEY = {
+  activity: 'directory.activity.sourceActivity',
+  comment: 'directory.activity.sourceComment',
+  completion: 'directory.activity.sourceCompletion',
+} as const;
 
 interface MemberProfileBodyProps {
   member: OrgMember;
@@ -9,6 +17,11 @@ interface MemberProfileBodyProps {
   /** Équipes transverses du membre. */
   teams: OrgTeam[];
   currentUserId?: string;
+  /**
+   * Dernière activité d'équipe (mig. 170). `undefined` : hors périmètre ou pas
+   * encore lue, la ligne n'est pas rendue du tout.
+   */
+  lastActivity?: MemberLastActivity;
   /** Le membre peut-il être déplacé par l'utilisateur courant ? */
   canMove: boolean;
   /** Peut-on ajouter un collaborateur sous ce membre ? */
@@ -26,7 +39,7 @@ interface MemberProfileBodyProps {
  * même écran tant que tous les appelants n'ont pas migré.
  */
 export const MemberProfileBody = ({
-  member, members, teams, currentUserId, canMove, canAddUnder, onClose, onMove, onAddUnder,
+  member, members, teams, currentUserId, lastActivity, canMove, canAddUnder, onClose, onMove, onAddUnder,
 }: MemberProfileBodyProps) => {
   const { t, tp } = useT('org');
   const m = member;
@@ -59,6 +72,19 @@ export const MemberProfileBody = ({
               : tp('pyramid.directCount', directs) + (total > directs ? t('pyramid.totalSuffix', { count: total }) : '')}
           </dd>
         </div>
+        {lastActivity && (
+          <div className="flex items-center gap-2.5 text-sm">
+            <Clock size={15} className="text-[rgb(var(--color-text-muted))] shrink-0" aria-hidden="true" />
+            <dd className="text-[rgb(var(--color-text-secondary))]">
+              {lastActivity.lastActivityAt
+                ? t('directory.activity.sheet', {
+                    when: formatDistanceToNow(new Date(lastActivity.lastActivityAt), { addSuffix: true, locale: getDateLocale() }),
+                    source: lastActivity.source ? t(SOURCE_KEY[lastActivity.source]) : '',
+                  })
+                : t('directory.activity.none')}
+            </dd>
+          </div>
+        )}
       </dl>
 
       {teams.length > 0 && (
