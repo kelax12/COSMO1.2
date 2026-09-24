@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { CalendarClock, UserRound, Plus } from 'lucide-react';
+import { CalendarClock, UserRound, Plus, Check } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { getDateLocale } from '@/i18n/format';
 import type { OrgMember } from '@/modules/organizations';
@@ -18,8 +18,21 @@ interface TeamProjectsKanbanProps {
   /** Remplace la liste des assignés d'une tâche. */
   onSetAssignees: (task: TeamTask, assigneeIds: string[]) => void;
   onOpenTask: (task: TeamTask) => void;
-  /** Ouvre le sheet « attribuer / créer » pour une colonne (null = non assignées). */
-  onAddToColumn: (memberId: string | null) => void;
+  /**
+   * « + » d'une colonne. Par personne : `memberId` (null = non assignées).
+   * Par statut : `status` de la colonne, pour que la tâche naisse LÀ où on a
+   * cliqué. Le projet, lui, n'est jamais deviné ici (audit 2026-09-24) : il
+   * vient du filtre actif, sinon la fiche le demande.
+   */
+  onAddToColumn: (target: { memberId: string | null; status?: TeamTaskStatus }) => void;
+  /**
+   * Mode sélection (actions groupées, toutes vues). Une carte n'est plus
+   * glissable : un clic la coche. Superposer les deux gestes rendrait le
+   * clic ambigu.
+   */
+  selectable?: boolean;
+  selectedIds?: Set<string>;
+  onToggleSelect?: (task: TeamTask) => void;
   /**
    * Portée d'assignation de l'utilisateur courant (mig. 115). Une colonne
    * « personne » hors portée refuse le dépôt et n'affiche pas son « + » :
@@ -54,7 +67,10 @@ interface DragPayload {
  * assignées). Une tâche multi-assignée apparaît dans chaque colonne de ses
  * assignés. Glisser une carte déplace l'assignation d'une colonne à l'autre.
  */
-const TeamProjectsKanban = ({ projects, tasks, members, onSetAssignees, onOpenTask, onAddToColumn, canAssign, groupBy, onSetStatus, assigneeFilter }: TeamProjectsKanbanProps) => {
+const TeamProjectsKanban = ({
+  projects, tasks, members, onSetAssignees, onOpenTask, onAddToColumn, canAssign, groupBy, onSetStatus, assigneeFilter,
+  selectable = false, selectedIds, onToggleSelect,
+}: TeamProjectsKanbanProps) => {
   const { t, tp } = useT('org');
   const [dragOver, setDragOver] = useState<string | null>(null);
 
@@ -179,7 +195,13 @@ const TeamProjectsKanban = ({ projects, tasks, members, onSetAssignees, onOpenTa
                 {(!col.member || canAssign(col.id)) && (
                 <button
                   type="button"
-                  onClick={() => onAddToColumn(col.member ? col.id : null)}
+                  onClick={() =>
+                    onAddToColumn(
+                      groupBy === 'status'
+                        ? { memberId: null, status: col.id as TeamTaskStatus }
+                        : { memberId: col.member ? col.id : null },
+                    )
+                  }
                   aria-label={col.member ? t('kanban.assignTo', { name: col.label }) : t('kanban.addUnassigned')}
                   title={t('kanban.assignOrCreate')}
                   className="w-6 h-6 rounded-md flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-indigo-500 hover:bg-indigo-500/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
@@ -204,27 +226,45 @@ const TeamProjectsKanban = ({ projects, tasks, members, onSetAssignees, onOpenTa
                 const coAssignees = col.member
                   ? task.assigneeIds.filter((id) => id !== col.id)
                   : [];
+                const isSelected = !!selectedIds?.has(task.id);
                 return (
                   <button
                     key={task.id}
                     type="button"
-                    draggable
+                    draggable={!selectable}
                     onDragStart={(e) =>
                       e.dataTransfer.setData('text/plain', JSON.stringify({ taskId: task.id, from: col.id } satisfies DragPayload))
                     }
-                    onClick={() => onOpenTask(task)}
+                    onClick={() => (selectable ? onToggleSelect?.(task) : onOpenTask(task))}
+                    aria-pressed={selectable ? isSelected : undefined}
                     aria-label={
-                      overdueTask
-                        ? t('kanban.editTaskOverdue', { name: task.name })
-                        : t('kanban.editTask', { name: task.name })
+                      selectable
+                        ? t('projects.selectTask', { name: task.name })
+                        : overdueTask
+                          ? t('kanban.editTaskOverdue', { name: task.name })
+                          : t('kanban.editTask', { name: task.name })
                     }
-                    className={`w-full text-left rounded-xl border px-3 py-2 transition-colors cursor-grab active:cursor-grabbing ${
-                      overdueTask
-                        ? 'border-red-400/60 dark:border-red-700/60 bg-red-50 dark:bg-red-900/25 hover:border-red-500'
-                        : 'border-[rgb(var(--color-border))] bg-[rgb(var(--color-background))] hover:border-indigo-400'
+                    className={`w-full text-left rounded-xl border px-3 py-2 transition-colors ${selectable ? 'cursor-pointer' : 'cursor-grab active:cursor-grabbing'} ${
+                      isSelected
+                        ? 'border-indigo-500 ring-2 ring-indigo-500/40 bg-indigo-500/5'
+                        : overdueTask
+                          ? 'border-red-400/60 dark:border-red-700/60 bg-red-50 dark:bg-red-900/25 hover:border-red-500'
+                          : 'border-[rgb(var(--color-border))] bg-[rgb(var(--color-background))] hover:border-indigo-400'
                     }`}
                   >
-                    <p className="text-sm text-[rgb(var(--color-text-primary))] line-clamp-2">{task.name}</p>
+                    <p className="flex items-start gap-2 text-sm text-[rgb(var(--color-text-primary))]">
+                      {selectable && (
+                        <span
+                          className={`mt-0.5 w-4 h-4 rounded border flex items-center justify-center shrink-0 ${
+                            isSelected ? 'bg-indigo-600 border-indigo-600 text-white' : 'border-[rgb(var(--color-border))]'
+                          }`}
+                          aria-hidden="true"
+                        >
+                          {isSelected && <Check size={11} />}
+                        </span>
+                      )}
+                      <span className="line-clamp-2">{task.name}</span>
+                    </p>
                     <div className="flex items-center gap-2 mt-1.5">
                       <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${priority.dot}`} role="img" aria-label={priorityLabelOf(task.priority)} title={priorityLabelOf(task.priority)} />
                       {project && pColor && (

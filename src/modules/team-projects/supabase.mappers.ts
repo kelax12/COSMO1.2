@@ -20,6 +20,9 @@ import {
   TeamSubtask,
   TeamLabel,
   TeamTaskActivity,
+  TeamProjectMilestone,
+  TeamProjectStatus,
+  TeamProjectTemplatePayload,
 } from './types';
 
 export interface ProjectRow {
@@ -32,6 +35,14 @@ export interface ProjectRow {
   created_at: string;
   team_id: string | null;
   category_id: string | null;
+  // Mig. 153 — optionnelles : une ligne lue avant son application ne les a pas.
+  description?: string | null;
+  owner_id?: string | null;
+  status?: string | null;
+  start_date?: string | null;
+  due_date?: string | null;
+  is_template?: boolean | null;
+  template_payload?: TeamProjectTemplatePayload | null;
 }
 
 export interface TaskRow {
@@ -51,6 +62,7 @@ export interface TaskRow {
   created_at: string;
   updated_at: string;
   category_id: string | null;
+  start_date?: string | null;
 }
 
 export const mapProject = (r: ProjectRow): TeamProject => ({
@@ -63,6 +75,35 @@ export const mapProject = (r: ProjectRow): TeamProject => ({
   createdAt: r.created_at,
   teamId: r.team_id,
   categoryId: r.category_id,
+  description: r.description ?? null,
+  ownerId: r.owner_id ?? null,
+  status: (r.status as TeamProjectStatus | null | undefined) ?? 'active',
+  startDate: r.start_date ?? null,
+  dueDate: r.due_date ?? null,
+  isTemplate: r.is_template ?? false,
+  templatePayload: r.template_payload ?? null,
+});
+
+// ─── Jalons (mig. 153) ───────────────────────────────────────────────
+
+export interface MilestoneRow {
+  id: string;
+  org_id: string;
+  project_id: string;
+  name: string;
+  due_date: string;
+  completed_at: string | null;
+  created_at: string;
+}
+
+export const mapMilestone = (r: MilestoneRow): TeamProjectMilestone => ({
+  id: r.id,
+  orgId: r.org_id,
+  projectId: r.project_id,
+  name: r.name,
+  dueDate: r.due_date,
+  completedAt: r.completed_at,
+  createdAt: r.created_at,
 });
 
 export interface CommentRow {
@@ -91,6 +132,7 @@ export const mapTask = (r: TaskRow): TeamTask => ({
   description: r.description ?? undefined,
   priority: r.priority,
   deadline: r.deadline ?? '',
+  startDate: r.start_date ?? '',
   estimatedTime: r.estimated_time ?? undefined,
   assigneeIds: r.assignee_ids ?? [],
   createdBy: r.created_by,

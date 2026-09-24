@@ -25,7 +25,14 @@ import {
   TeamTaskActivity,
   TeamTaskDependency,
   TeamTrashedTask,
+  DraftProjectTask,
+  DraftProjectMilestone,
+  TeamProjectMilestone,
+  CreateTeamProjectMilestoneInput,
+  UpdateTeamProjectMilestoneInput,
+  TeamProjectDependency,
 } from './types';
+import * as portfolio from './supabase.portfolio';
 import {
   mapProject,
   mapComment,
@@ -88,6 +95,14 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
         color: input.color ?? 'blue',
         team_id: input.teamId ?? null,
         category_id: input.categoryId ?? null,
+        // Mig. 153 — n'envoie que ce qui est RENSEIGNÉ : la création rapide
+        // (« + projet » depuis une tâche) ne doit pas dépendre de colonnes
+        // qu'elle n'utilise pas.
+        ...(input.description ? { description: input.description } : {}),
+        ...(input.ownerId ? { owner_id: input.ownerId } : {}),
+        ...(input.status ? { status: input.status } : {}),
+        ...(input.startDate ? { start_date: input.startDate } : {}),
+        ...(input.dueDate ? { due_date: input.dueDate } : {}),
       });
     if (error) throw normalizeApiError(error);
     return {
@@ -100,8 +115,33 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
       createdAt: new Date().toISOString(),
       teamId: input.teamId ?? null,
       categoryId: input.categoryId ?? null,
+      description: input.description ?? null,
+      ownerId: input.ownerId ?? null,
+      status: input.status ?? 'active',
+      startDate: input.startDate ?? null,
+      dueDate: input.dueDate ?? null,
+      isTemplate: false,
+      templatePayload: null,
     };
   }
+
+  createProjectWithTasks(
+    orgId: string,
+    input: CreateTeamProjectInput,
+    tasks?: DraftProjectTask[],
+    milestones?: DraftProjectMilestone[],
+  ): Promise<string> {
+    return portfolio.createProjectWithTasks(orgId, input, tasks, milestones);
+  }
+
+  // ─── Jalons & dépendances entre projets (mig. 153) ─────────────────
+  getMilestones(orgId: string): Promise<TeamProjectMilestone[]> { return portfolio.getMilestones(orgId); }
+  createMilestone(orgId: string, input: CreateTeamProjectMilestoneInput): Promise<void> { return portfolio.createMilestone(orgId, input); }
+  updateMilestone(id: string, input: UpdateTeamProjectMilestoneInput): Promise<void> { return portfolio.updateMilestone(id, input); }
+  deleteMilestone(id: string): Promise<void> { return portfolio.deleteMilestone(id); }
+  getProjectDependencies(orgId: string): Promise<TeamProjectDependency[]> { return portfolio.getProjectDependencies(orgId); }
+  addProjectDependency(projectId: string, dependsOnId: string, orgId: string): Promise<void> { return portfolio.addProjectDependency(projectId, dependsOnId, orgId); }
+  removeProjectDependency(projectId: string, dependsOnId: string): Promise<void> { return portfolio.removeProjectDependency(projectId, dependsOnId); }
 
   async updateProject(projectId: string, input: UpdateTeamProjectInput): Promise<TeamProject> {
     if (!supabase) throw new Error('Supabase not configured');
@@ -112,6 +152,11 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
     if (input.teamId !== undefined) patch.team_id = input.teamId;
     if (input.categoryId !== undefined) patch.category_id = input.categoryId;
     if (input.archived !== undefined) patch.archived_at = input.archived ? new Date().toISOString() : null;
+    if (input.description !== undefined) patch.description = input.description || null;
+    if (input.ownerId !== undefined) patch.owner_id = input.ownerId;
+    if (input.status !== undefined) patch.status = input.status;
+    if (input.startDate !== undefined) patch.start_date = input.startDate || null;
+    if (input.dueDate !== undefined) patch.due_date = input.dueDate || null;
     const { data, error } = await supabase
       .from('team_projects')
       .update(patch)
@@ -160,6 +205,8 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
         description: input.description ?? null,
         priority: input.priority ?? 3,
         deadline: input.deadline || null,
+        // N'envoie la colonne que si elle est renseignée (mig. 153).
+        ...(input.startDate ? { start_date: input.startDate } : {}),
         estimated_time: input.estimatedTime ?? null,
         assignee_ids: input.assigneeIds ?? [],
         status: input.status ?? 'todo',
@@ -179,6 +226,7 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
     if (input.description !== undefined) patch.description = input.description || null;
     if (input.priority !== undefined) patch.priority = input.priority;
     if (input.deadline !== undefined) patch.deadline = input.deadline || null;
+    if (input.startDate !== undefined) patch.start_date = input.startDate || null;
     if (input.estimatedTime !== undefined) patch.estimated_time = input.estimatedTime;
     if (input.assigneeIds !== undefined) patch.assignee_ids = input.assigneeIds;
     if (input.projectId !== undefined) patch.project_id = input.projectId;

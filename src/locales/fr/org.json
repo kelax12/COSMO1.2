@@ -330,7 +330,6 @@
     "timelineView": "Vue chronologique",
     "timelineEmpty": "Aucune échéance à venir. Datez des tâches pour les voir apparaître ici.",
     "timelineToday": "Aujourd'hui",
-    "timelineNotGantt": "Positionne les tâches à leur échéance.",
     "timelineMarker": "{{name}}, échéance le {{date}}",
     "timelineUnscheduled_one": "{{count}} sans date",
     "timelineUnscheduled_many": "{{count}} sans date",
@@ -545,7 +544,11 @@
     "createProjectAria": "Créer un projet",
     "projectNamePlaceholder": "Nom du projet",
     "projectNameTooShort": "Le nom du projet doit contenir au moins 2 caractères",
-    "createProjectCta": "Créer"
+    "createProjectCta": "Créer",
+    "startDate": "Début",
+    "startDatePlaceholder": "Pas de début",
+    "datesInvalid": "Le début doit précéder l'échéance.",
+    "chooseProject": "Choisir un projet…"
   },
   "team": {
     "newTeam": "Nouvelle équipe",
@@ -655,6 +658,149 @@
       "toOrg_many": "Le projet, ses tâches et ses commentaires deviendront visibles par toute l'entreprise, soit {{count}} personnes.",
       "confirm": "Changer d'équipe"
     }
+  },
+  "portfolio": {
+    "viewPortfolio": "Portefeuille",
+    "searchPlaceholder": "Rechercher un projet…",
+    "searchAria": "Rechercher un projet par nom, équipe, catégorie ou responsable",
+    "sortLabel": "Trier",
+    "sort": {
+      "recent": "Plus récents",
+      "name": "Nom",
+      "dueDate": "Échéance",
+      "progress": "Avancement",
+      "status": "Statut"
+    },
+    "noResult": "Aucun projet ne correspond à « {{query}} ».",
+    "manyProjectsHint": "Au-delà de {{count}} projets, les cartes s'ouvrent repliées : le portefeuille les montre toutes d'un coup d'œil.",
+    "col": {
+      "project": "Projet",
+      "owner": "Responsable",
+      "status": "Statut",
+      "dates": "Période",
+      "progress": "Avancement",
+      "next": "Prochain jalon"
+    },
+    "status": {
+      "planned": "Planifié",
+      "active": "En cours",
+      "on_hold": "En pause",
+      "done": "Terminé"
+    },
+    "noOwner": "Sans responsable",
+    "noDates": "Non planifié",
+    "dateRange": "du {{start}} au {{end}}",
+    "startsOn": "Début {{date}}",
+    "dueOn": "Fin {{date}}",
+    "late": "En retard",
+    "blockedBy": "Bloqué par {{names}}",
+    "openProject": "Ouvrir le projet {{name}}",
+    "tableAria": "Portefeuille de projets",
+    "back": "Tous les projets",
+    "notFound": "Ce projet n'existe plus, ou vous n'y avez pas accès.",
+    "tasksTitle": "Tâches",
+    "noDescription": "Aucune description.",
+    "actions": {
+      "open": "Ouvrir la page du projet",
+      "edit": "Modifier le projet",
+      "duplicate": "Dupliquer",
+      "saveTemplate": "Enregistrer comme modèle",
+      "selectTasks": "Sélectionner des tâches"
+    },
+    "archived": "Projet archivé",
+    "duplicated": "Projet dupliqué",
+    "copyName": "{{name}} (copie)",
+    "templateSaved": "Modèle enregistré",
+    "templateName": "{{name}} (modèle)",
+    "edit": {
+      "title": "Modifier le projet",
+      "aria": "Modifier le projet {{name}}",
+      "description": "Description du projet",
+      "descriptionPlaceholder": "Objectif, périmètre, liens utiles…",
+      "owner": "Responsable",
+      "ownerHint": "Le responsable pilote le projet : il le modifie, pose des jalons et des dépendances. Il n'en change ni l'équipe ni le responsable.",
+      "status": "Statut",
+      "startDate": "Début",
+      "dueDate": "Fin",
+      "datesInvalid": "La date de début doit précéder la date de fin.",
+      "color": "Couleur",
+      "categoryHint": "La catégorie s'affiche en pastille, elle ne change plus la couleur du projet.",
+      "save": "Enregistrer",
+      "saving": "Enregistrement…",
+      "cancel": "Annuler",
+      "close": "Fermer"
+    },
+    "milestones": {
+      "title": "Jalons",
+      "empty": "Aucun jalon. Un jalon marque une étape à tenir, sans être une tâche.",
+      "add": "Ajouter le jalon",
+      "namePlaceholder": "Nom du jalon",
+      "nameAria": "Nom du nouveau jalon",
+      "dateAria": "Date du nouveau jalon",
+      "markDone": "Marquer « {{name}} » comme atteint",
+      "markUndone": "Marquer « {{name}} » comme non atteint",
+      "remove": "Supprimer le jalon « {{name}} »",
+      "overdue": "Dépassé",
+      "reached": "Atteint",
+      "failed": "Jalon non enregistré : {{message}}"
+    },
+    "deps": {
+      "title": "Dépendances",
+      "blockedBy": "Ce projet attend",
+      "blocks": "Ce projet bloque",
+      "none": "Aucune dépendance.",
+      "add": "Ajouter un projet dont celui-ci dépend",
+      "pick": "Choisir un projet…",
+      "remove": "Retirer la dépendance à « {{name}} »",
+      "waiting_one": "En attente de {{count}} projet non terminé",
+      "waiting_many": "En attente de {{count}} de projets non terminés",
+      "waiting_other": "En attente de {{count}} projets non terminés"
+    },
+    "templates": {
+      "section": "Modèles ({{count}})",
+      "use": "Nouveau projet depuis ce modèle",
+      "orgGroup": "Modèles de l'entreprise",
+      "builtInGroup": "Modèles COSMO",
+      "taskCount_one": "{{count}} tâche",
+      "taskCount_many": "{{count}} de tâches",
+      "taskCount_other": "{{count}} tâches",
+      "startLabel": "Le projet commence le",
+      "archive": "Retirer le modèle"
+    },
+    "new": {
+      "owner": "Responsable",
+      "startDate": "Début",
+      "dueDate": "Fin",
+      "color": "Couleur",
+      "description": "Description (optionnel)",
+      "atomicHint": "Le projet, ses tâches et ses jalons sont créés ensemble : si l'un échoue, rien n'est créé."
+    },
+    "bulk": {
+      "assign": "Assigner",
+      "assignTo": "Ajouter comme assigné",
+      "unassignAll": "Retirer tous les assignés",
+      "move": "Déplacer",
+      "moveTo": "Déplacer vers le projet",
+      "status": "Statut",
+      "reassigned_one": "{{count}} tâche réassignée",
+      "reassigned_many": "{{count}} de tâches réassignées",
+      "reassigned_other": "{{count}} tâches réassignées",
+      "moved_one": "{{count}} tâche déplacée",
+      "moved_many": "{{count}} de tâches déplacées",
+      "moved_other": "{{count}} tâches déplacées",
+      "statusChanged_one": "{{count}} tâche mise à jour",
+      "statusChanged_many": "{{count}} de tâches mises à jour",
+      "statusChanged_other": "{{count}} tâches mises à jour",
+      "selectToggle": "Sélectionner",
+      "selectToggleAria": "Sélectionner plusieurs tâches"
+    },
+    "timeline": {
+      "legend": "Une barre va du début à l'échéance ; un point est une échéance sans début. Les losanges sont les jalons.",
+      "bar": "{{name}}, du {{start}} au {{end}}",
+      "projectSpan": "Projet {{name}}, du {{start}} au {{end}}",
+      "milestone": "Jalon « {{name}} », le {{date}}"
+    },
+    "kanbanPickProject": "Choisissez le projet de la nouvelle tâche."
   },
   "deleteOrg": {
     "irreversible": "Cette action est irréversible.",
@@ -964,7 +1110,10 @@
     "amber": "Ambre",
     "red": "Rouge",
     "pink": "Rose",
-    "violet": "Violet"
+    "violet": "Violet",
+    "purple": "Pourpre",
+    "green": "Vert",
+    "slate": "Ardoise"
   },
   "templates": {
     "pickLabel": "Partir d'un gabarit",
@@ -1157,9 +1306,11 @@
       },
       "project": {
         "create": "Créer un projet",
-        "createHint": "Créer et renommer un projet d'équipe.",
+        "createHint": "Ouvrir un nouveau projet d'équipe.",
         "delete": "Archiver ou supprimer un projet",
-        "deleteHint": "Sortir un projet de la vue active, ou le supprimer définitivement."
+        "deleteHint": "Sortir un projet de la vue active, ou le supprimer définitivement.",
+        "edit": "Modifier un projet",
+        "editHint": "Renommer, décrire et planifier un projet, changer son équipe ou son responsable."
       },
       "okr": {
         "create": "Créer un OKR",

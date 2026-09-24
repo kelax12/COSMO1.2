@@ -14,12 +14,17 @@
 
 import { isManagerOf, type OrgMember } from './types';
 
-/** Les dix droits réglables. La clé est identique côté SQL (`my_org_perm`). */
+/**
+ * Les onze droits réglables. La clé est identique côté SQL (`my_org_perm`).
+ * `project.edit` (mig. 153) : MODIFIER un projet exigeait jusque-là
+ * `project.create`, dont le nom ne disait pas l'action.
+ */
 export const ORG_PERMISSION_KEYS = [
   'task.create',
   'task.editAny',
   'task.deleteAny',
   'project.create',
+  'project.edit',
   'project.delete',
   'okr.create',
   'okr.delete',

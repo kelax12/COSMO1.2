@@ -1,38 +1,39 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router';
-import { showUndoToast } from '@/lib/undo-toast';
 import { useTeamTasksSelection } from './use-team-tasks-selection';
-import {
-  Plus, FolderKanban, AlarmClock, CircleDashed, CheckCircle2,
-  ChevronDown, ChevronRight, Clock,
-} from 'lucide-react';
+import { Plus, FolderKanban, ChevronDown, ChevronRight, ArrowLeft } from 'lucide-react';
 import {
   useTeamProjects,
+  useTeamProjectTemplates,
   useTeamTasks,
+  useTeamProjectMilestones,
+  useTeamProjectDependencies,
   TEAM_TASKS_READ_LIMIT,
-  useCreateTeamProject,
-  useUpdateTeamProject,
-  useCreateTeamTask,
-  useUpdateTeamTask,
-  useDeleteTeamTask, useRestoreTeamTask,
   type TeamTask,
   type TeamTaskStatus,
   type TeamProject,
-  type CreateTeamProjectInput,
   type CreateTeamTaskInput,
   type UpdateTeamTaskInput,
 } from '@/modules/team-projects';
-import { useOrgTeams, useCreateOrgTeam, useAddTeamMember } from '@/modules/org-teams';
+import { useOrgTeams } from '@/modules/org-teams';
+import { useTeamCategories } from '@/modules/team-categories';
 import { useMyOrgPermissions, type OrgMember } from '@/modules/organizations';
 import {
   useProjectsUiPrefs, isTaskOverdue, completedThisWeek,
-  filterByStatus, sumEstimatedTime, formatDuration, type TaskStatusFilter,
+  filterByStatus, sumEstimatedTime, type TaskStatusFilter,
 } from './team-projects.helpers';
+import { PORTFOLIO_CARD_THRESHOLD, matchesProjectSearch, sortProjects } from './portfolio.helpers';
 import { readEntityParam } from './deep-link.helpers';
+import { useTeamProjectsActions } from './use-team-projects-actions';
+import { ProjectsSkeleton, ProjectsPulse, ProjectsSearchBar } from './ProjectsPulse';
 import TeamProjectCard from './TeamProjectCard';
 import ProjectsToolbar from './ProjectsToolbar';
 import TeamProjectsKanban from './TeamProjectsKanban';
 import TeamProjectsTimeline from './TeamProjectsTimeline';
+import ProjectPortfolioView from './ProjectPortfolioView';
+import ProjectDetailPage from './ProjectDetailPage';
+import ProjectEditDialog from './ProjectEditDialog';
+import ProjectTemplatesSection from './ProjectTemplatesSection';
 import TeamTaskModal from './TeamTaskModal';
 import NewTeamProjectModal from './NewTeamProjectModal';
 import CreateTeamModal from './CreateTeamModal';
@@ -55,92 +56,69 @@ interface TeamProjectsTabProps {
 
 /** État du modal de tâche : création (préréglages) ou édition. */
 type TaskModalState =
-  | { mode: 'create'; projectId?: string; assigneeIds?: string[] }
+  | {
+    mode: 'create';
+    projectId?: string;
+    assigneeIds?: string[];
+    status?: TeamTaskStatus;
+    /** Aucun projet en contexte : la fiche le DEMANDE (kanban, audit 2026-09-24). */
+    requireProject?: boolean;
+  }
   | { mode: 'edit'; task: TeamTask }
   | null;
-
-/** Skeleton de chargement au format carte projet. */
-const ProjectsSkeleton = () => (
-  <div className="space-y-4" aria-hidden="true">
-    {[0, 1, 2].map((i) => (
-      <div key={i} className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4 animate-pulse">
-        <div className="flex items-center gap-3">
-          <div className="w-2.5 h-2.5 rounded-full bg-[rgb(var(--color-hover))]" />
-          <div className="h-4 w-40 rounded bg-[rgb(var(--color-hover))]" />
-          <div className="ml-auto h-3 w-16 rounded bg-[rgb(var(--color-hover))]" />
-        </div>
-        <div className="mt-4 space-y-2.5">
-          <div className="h-3 w-3/4 rounded bg-[rgb(var(--color-hover))]" />
-          <div className="h-3 w-2/3 rounded bg-[rgb(var(--color-hover))]" />
-        </div>
-      </div>
-    ))}
-  </div>
-);
-
-/**
- * Pastille de synthèse cliquable : bascule le filtre de statut.
- *
- * Une statistique qu'on ne peut pas creuser est une statistique morte — c'est
- * tout l'objet de ce composant, les pastilles étant auparavant décoratives.
- */
-const StatPill = ({ active, onClick, label, tone, children }: {
-  active: boolean;
-  onClick: () => void;
-  label: string;
-  tone: 'neutral' | 'danger' | 'success';
-  children: React.ReactNode;
-}) => {
-  const toneClass =
-    tone === 'danger'
-      ? 'bg-red-500/10 text-red-500 font-semibold'
-      : tone === 'success'
-        ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold'
-        : 'bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-secondary))] font-medium';
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={active}
-      title={label}
-      aria-label={label}
-      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]/60 ${toneClass} ${
-        active ? 'ring-2 ring-[rgb(var(--color-accent))]' : 'hover:brightness-110'
-      }`}
-    >
-      {children}
-    </button>
-  );
-};
 
 const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: TeamProjectsTabProps) => {
   const { can, canAssign } = useMyOrgPermissions(orgId);
   const { t, tp } = useT('org');
   const { prefs, updatePrefs } = useProjectsUiPrefs(orgId);
-  const [showNewProject, setShowNewProject] = useState(false);
+  const [showNewProject, setShowNewProject] = useState<false | { templateId?: string }>(false);
   const [showNewTeam, setShowNewTeam] = useState(false);
+  const [editProjectId, setEditProjectId] = useState<string | null>(null);
   const [taskModal, setTaskModal] = useState<TaskModalState>(null);
+  const [query, setQuery] = useState('');
   // Colonne kanban (membre) ciblée par le « + ». La colonne « Non assignées »
-  // ne passe PLUS par ici : avec `member = null`, la sheet ne proposait qu'un
-  // unique bouton « Créer une nouvelle tâche » — un clic de plus pour
-  // rien, elle ouvre directement TaskModal (cf. handler du kanban plus bas).
+  // ne passe pas par ici : elle ouvre directement TaskModal.
   const [assignSheetFor, setAssignSheetFor] = useState<string | 'closed'>('closed');
 
   const { data: allProjects = [], isLoading: loadingProjects } = useTeamProjects(orgId);
+  const { data: templates = [] } = useTeamProjectTemplates(orgId);
   const { data: allTasks = [] } = useTeamTasks(orgId);
   const { data: teams = [] } = useOrgTeams(orgId);
-  const createProject = useCreateTeamProject(orgId);
-  const updateProject = useUpdateTeamProject(orgId);
-  const createTask = useCreateTeamTask(orgId);
-  const updateTask = useUpdateTeamTask(orgId);
-  const deleteTask = useDeleteTeamTask(orgId);
-  // « Annuler » = sortir de la corbeille (mig. 152), à l'identique. L'ancien
-  // « Annuler » recréait une tâche neuve avec sept champs.
-  const restoreTask = useRestoreTeamTask(orgId);
-  const createTeam = useCreateOrgTeam(orgId);
-  const addTeamMember = useAddTeamMember(orgId);
+  const { data: categories = [] } = useTeamCategories(orgId);
+  const { data: milestones = [] } = useTeamProjectMilestones(orgId);
+  const { data: projectDeps = [] } = useTeamProjectDependencies(orgId);
 
-  const { teamFilter, assigneeFilter, view, collapsed, showArchived, statusFilter, kanbanGroupBy, timelineGroupBy } = prefs;
+  const { teamFilter, assigneeFilter, collapsed, showArchived, statusFilter, kanbanGroupBy, timelineGroupBy, sort } = prefs;
+
+  // ─── Page projet : `?project=<id>` (M2) ─────────────────────────────
+  // L'adresse est celle qu'émettent déjà la palette de commandes et le panneau
+  // de droite. Le paramètre RESTE dans l'URL : c'est l'adresse de la page.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const projectParam = readEntityParam(searchParams, 'project');
+  const detailProject = projectParam ? allProjects.find((p) => p.id === projectParam) : undefined;
+  const openProject = (projectId: string) => {
+    const next = new URLSearchParams(searchParams);
+    next.set('project', projectId);
+    setSearchParams(next);
+  };
+  const closeProject = () => {
+    const next = new URLSearchParams(searchParams);
+    next.delete('project');
+    setSearchParams(next);
+  };
+
+  const actions = useTeamProjectsActions({
+    orgId,
+    currentUserId,
+    allTasks,
+    milestones,
+    onTeamCreated: (teamId) => updatePrefs({ teamFilter: teamId }),
+    onOpenProject: openProject,
+  });
+
+  /** `project.edit` (mig. 153), ou responsable du projet. */
+  const canEditProjectFor = (p: TeamProject) =>
+    can['project.edit'] || (!!currentUserId && p.ownerId === currentUserId);
 
   // Un second clic sur la pastille active retire le filtre.
   const toggleStatus = (next: TaskStatusFilter) =>
@@ -154,6 +132,20 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
   };
   const activeProjects = allProjects.filter((p) => !p.archivedAt && matchesTeam(p));
   const archivedProjects = allProjects.filter((p) => !!p.archivedAt && matchesTeam(p));
+  const manyProjects = activeProjects.length > PORTFOLIO_CARD_THRESHOLD;
+  // Sans choix explicite, au-delà de 20 projets, on ouvre sur le portefeuille.
+  const view = prefs.viewChosen ? prefs.view : manyProjects ? 'portfolio' : prefs.view;
+
+  // ─── Recherche et tri (M2) : même ensemble pour cartes et portefeuille ─
+  const shownProjects = useMemo(() => {
+    const teamName = (id?: string | null) => teams.find((tm) => tm.id === id)?.name;
+    const found = activeProjects.filter((p) => matchesProjectSearch(p, query, {
+      teamName: teamName(p.teamId),
+      categoryName: categories.find((c) => c.id === p.categoryId)?.name,
+      ownerName: members.find((m) => m.userId === p.ownerId)?.displayName,
+    }));
+    return sortProjects(found, sort, allTasks);
+  }, [activeProjects, query, sort, allTasks, teams, categories, members]);
 
   // ─── Tâches : stats globales (non filtrées) + vue filtrée par assigné ──
   const activeProjectIds = useMemo(() => new Set(activeProjects.map((p) => p.id)), [activeProjects]);
@@ -165,17 +157,9 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
   const overdueCount = statsTasks.filter(isTaskOverdue).length;
   const doneThisWeek = completedThisWeek(statsTasks);
 
-  // Vue filtrée : équipe (déjà dans `statsTasks`) PUIS assigné (dropdown) PUIS
-  // statut (pastilles). Partir de `statsTasks` et non `allTasks` est
-  // nécessaire : Liste et Planning ne laissaient pas ce trou car ils
-  // itèrent tâche par tâche sur `activeProjects` (déjà filtrés par équipe),
-  // mais le Tableau affiche `visibleTasks` tel quel, toutes équipes
-  // confondues, si la base ne l'est pas déjà.
-  //
-  // Les compteurs des pastilles restent calculés sur `statsTasks` NON filtré
-  // par assigné/statut — sinon cliquer « en retard » ferait tomber son propre
-  // compteur à sa valeur filtrée, et on ne pourrait plus savoir combien il y
-  // en a réellement.
+  // Vue filtrée : équipe (déjà dans `statsTasks`) PUIS assigné PUIS statut.
+  // Les compteurs des pastilles restent calculés sur `statsTasks` NON filtré :
+  // sinon cliquer « en retard » ferait tomber son propre compteur.
   const visibleTasks = useMemo(() => {
     const byAssignee = assigneeFilter
       ? statsTasks.filter((t) => t.assigneeIds.includes(assigneeFilter))
@@ -183,7 +167,6 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
     return filterByStatus(byAssignee, statusFilter);
   }, [statsTasks, assigneeFilter, statusFilter]);
 
-  /** Reste à faire estimé sur le périmètre visible (tâches ouvertes). */
   const totalEstimated = useMemo(
     () => sumEstimatedTime(statsTasks.filter((t) => !t.completed)),
     [statsTasks],
@@ -194,85 +177,29 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
     ? members.find((m) => m.userId === assignSheetFor) ?? null
     : null;
 
-  // ─── Actions ────────────────────────────────────────────────────────
-  // Crée le projet PUIS ses tâches initiales sous son id (séquentiel pour
-  // récupérer l'id du projet avant d'y rattacher les tâches).
-  const handleCreateProjectFull = async (
-    input: CreateTeamProjectInput,
-    draftTasks: { name: string; assigneeIds: string[] }[],
-  ) => {
-    const project = await createProject.mutateAsync(input);
-    for (const t of draftTasks) {
-      await createTask.mutateAsync({ projectId: project.id, name: t.name, assigneeIds: t.assigneeIds });
-    }
-  };
-
-  // Crée l'équipe (nom + couleur) PUIS y ajoute les membres choisis — même
-  // séquence que TeamsSection (onglet Pyramide). La filtre équipe bascule
-  // dessus aussitôt : créer une équipe pour ne pas la voir serait un geste
-  // à vide.
-  const handleCreateTeamFull = async (input: { name: string; color: string }, memberIds: string[]) => {
-    const team = await createTeam.mutateAsync(input);
-    for (const userId of memberIds) {
-      await addTeamMember.mutateAsync({ teamId: team.id, userId });
-    }
-    updatePrefs({ teamFilter: team.id });
-  };
-
-  const toggleComplete = (task: TeamTask) =>
-    updateTask.mutate({ taskId: task.id, input: { completed: !task.completed } });
-  const setAssignees = (task: TeamTask, assigneeIds: string[]) =>
-    updateTask.mutate({ taskId: task.id, input: { assigneeIds } });
-  // `status` seul : le serveur synchronise `completed` (trigger mig. 091).
-  const setStatus = (task: TeamTask, status: TeamTaskStatus) =>
-    updateTask.mutate({ taskId: task.id, input: { status } });
-
-  /**
-   * Réassignation par glisser-déposer (kanban) — avec « Annuler ».
-   *
-   * Un drag se déclenche à la souris sans confirmation : c'est le geste le plus
-   * facile à faire par accident de toute la vue. Il lui fallait donc le même
-   * filet que la suppression, qui l'avait déjà.
-   */
-  const setAssigneesWithUndo = (task: TeamTask, assigneeIds: string[]) => {
-    const previous = task.assigneeIds;
-    updateTask.mutate({ taskId: task.id, input: { assigneeIds } });
-    showUndoToast(t('projects.reassigned'), () =>
-      updateTask.mutate({ taskId: task.id, input: { assigneeIds: previous } }),
-    );
-  };
-
-  // Suppression avec « Annuler » : la tâche est recréée à l'identique.
-  const removeWithUndo = (task: TeamTask) =>
-    deleteTask.mutate(task.id, {
-      onSuccess: () => {
-        showUndoToast(t('projects.taskDeleted'), () =>
-          restoreTask.mutate(task.id),
-        );
-      },
-    });
-
-  // ─── Sélection multiple + actions groupées ──────────────────────────
-  // Le comportement vit dans `use-team-tasks-selection` : c'est un bloc
-  // autonome, et cet onglet est déjà au-dessus du budget de lignes.
+  // ─── Sélection multiple + actions groupées (toutes vues) ───────────
   const {
     selectMode, setSelectMode, selectedIds, selectedTasks,
-    toggleSelect, exitSelectMode, bulkSetCompleted, bulkDelete,
+    toggleSelect, exitSelectMode, bulkSetCompleted, bulkDelete, bulkAssign, bulkMove, bulkSetStatus,
   } = useTeamTasksSelection({
-    visibleTasks,
-    setCompleted: (task, completed) => updateTask.mutate({ taskId: task.id, input: { completed } }),
-    deleteTask: (taskId) => deleteTask.mutate(taskId),
-    restoreTask: (task) => restoreTask.mutate(task.id),
+    visibleTasks: projectParam ? visibleTasks.filter((t) => t.projectId === projectParam) : visibleTasks,
+    setCompleted: (task, completed) => actions.updateTaskInput(task, { completed }),
+    deleteTask: actions.deleteTaskById,
+    restoreTask: actions.restoreDeletedTask,
     deletedLabel: (count) => tp('projects.bulkDeleted', count),
+    updateTask: actions.updateTaskInput,
+    labels: {
+      reassigned: (count) => tp('portfolio.bulk.reassigned', count),
+      moved: (count) => tp('portfolio.bulk.moved', count),
+      statusChanged: (count) => tp('portfolio.bulk.statusChanged', count),
+    },
+    canAssign,
   });
 
   // ─── Deep-link `?task=<id>` ─────────────────────────────────────────
-  const [searchParams, setSearchParams] = useSearchParams();
   const deepTaskId = readEntityParam(searchParams, 'task');
-
   // Ouvre la tâche ciblée par l'URL une fois les données arrivées, puis retire
-  // le paramètre : sans ce nettoyage, refermer le modal le rouvrirait au rendu
-  // suivant, l'URL restant la source de vérité.
+  // le paramètre : sans ce nettoyage, refermer le modal le rouvrirait.
   useEffect(() => {
     if (!deepTaskId) return;
     const target = allTasks.find((t) => t.id === deepTaskId);
@@ -283,28 +210,41 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
     setSearchParams(next, { replace: true });
   }, [deepTaskId, allTasks, searchParams, setSearchParams]);
 
-  const modalCreate = (input: CreateTeamTaskInput) => createTask.mutateAsync(input);
+  const modalCreate = (input: CreateTeamTaskInput) => actions.createTaskAsync(input);
   const modalUpdate = (taskId: string, input: UpdateTeamTaskInput) =>
-    updateTask.mutateAsync({ taskId, input });
+    actions.updateTaskAsync({ taskId, input });
 
+  /**
+   * Projet d'une tâche créée sans contexte de projet (« + » du kanban) : celui
+   * du filtre actif s'il n'en reste qu'un, sinon la fiche le demande. Il
+   * tombait jusque-là dans `activeProjects[0]`, le premier projet venu.
+   */
+  const projectFromFilter = activeProjects.length === 1 ? activeProjects[0].id : undefined;
+  const createWithoutProjectContext = (preset: { assigneeIds: string[]; status?: TeamTaskStatus }) =>
+    setTaskModal({ mode: 'create', projectId: projectFromFilter, requireProject: !projectFromFilter, ...preset });
+
+  // Au-delà de 20 projets, les cartes s'ouvrent REPLIÉES (sauf décision).
+  const isCollapsed = (projectId: string) => collapsed[projectId] ?? manyProjects;
   const toggleCollapse = (projectId: string) =>
-    updatePrefs((prev) => ({ collapsed: { ...prev.collapsed, [projectId]: !prev.collapsed[projectId] } }));
+    updatePrefs((prev) => ({ collapsed: { ...prev.collapsed, [projectId]: !(prev.collapsed[projectId] ?? manyProjects) } }));
 
   // ─── Groupement par équipe (vue liste, sans filtre équipe) ──────────
   const groupedSections = useMemo(() => {
     if (teamFilter || teams.length === 0) return null;
     const sections: { key: string; label: string | null; projects: TeamProject[] }[] = [];
     for (const team of teams) {
-      const ps = activeProjects.filter((p) => p.teamId === team.id);
+      const ps = shownProjects.filter((p) => p.teamId === team.id);
       if (ps.length > 0) sections.push({ key: team.id, label: t('projects.teamSection', { name: team.name }), projects: ps });
     }
-    const orgProjects = activeProjects.filter((p) => !p.teamId || !teams.some((t) => t.id === p.teamId));
+    const orgProjects = shownProjects.filter((p) => !p.teamId || !teams.some((tm) => tm.id === p.teamId));
     if (orgProjects.length > 0) sections.push({ key: 'org', label: sections.length > 0 ? t('projects.orgSection') : null, projects: orgProjects });
     return sections;
     // `t` en dépendance : les en-têtes de section sont traduits ici.
-  }, [teamFilter, teams, activeProjects, t]);
+  }, [teamFilter, teams, shownProjects, t]);
 
   if (loadingProjects) return <ProjectsSkeleton />;
+
+  const editProject = editProjectId ? allProjects.find((p) => p.id === editProjectId) : undefined;
 
   const renderProjectCard = (project: TeamProject) => (
     <TeamProjectCard
@@ -313,77 +253,189 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
       tasks={tasksByProject(project.id)}
       members={members}
       teams={teams}
-      canEditProject={can['project.create']}
+      canEditProject={canEditProjectFor(project)}
+      canChangeTeam={can['project.edit']}
+      canCreateProject={can['project.create']}
       canArchiveProject={can['project.delete']}
-      // Le mode sélection ne vaut que pour la vue liste : superposer des cases
-      // à cocher au glisser-déposer du kanban rendrait le clic ambigu.
-      onStartSelect={view === 'list' ? () => setSelectMode(true) : undefined}
+      onOpenProject={() => openProject(project.id)}
+      onEditProject={() => setEditProjectId(project.id)}
+      onDuplicate={() => actions.duplicateProject(project)}
+      onSaveTemplate={() => actions.saveAsTemplate(project)}
+      onArchive={() => actions.archiveWithUndo(project)}
+      onStartSelect={() => setSelectMode(true)}
       selectable={selectMode}
       selectedIds={selectedIds}
       onToggleSelect={toggleSelect}
-      collapsed={!!collapsed[project.id]}
+      collapsed={isCollapsed(project.id)}
       onToggleCollapse={() => toggleCollapse(project.id)}
       assigneeFiltered={!!assigneeFilter}
       onAddTask={(projectId) =>
         setTaskModal({ mode: 'create', projectId, assigneeIds: currentUserId ? [currentUserId] : [] })
       }
-      onToggleComplete={toggleComplete}
-      onReassign={setAssignees}
-      onDelete={removeWithUndo}
+      onToggleComplete={actions.toggleComplete}
+      onReassign={actions.setAssignees}
+      onDelete={actions.removeWithUndo}
       onOpenTask={(task) => setTaskModal({ mode: 'edit', task })}
-      onUpdateProject={(input) => updateProject.mutate({ projectId: project.id, input })}
+      onUpdateProject={(input) => void actions.patchProject(project, input)}
     />
   );
 
+  // ─── Surfaces communes (modales, barre groupée) ─────────────────────
+  const overlays = (
+    <>
+      {can['project.create'] && showNewProject && (
+        <NewTeamProjectModal
+          orgId={orgId}
+          teams={teams}
+          members={members}
+          currentUserId={currentUserId}
+          defaultTeamId={teamFilter && teamFilter !== 'org' ? teamFilter : ''}
+          templates={templates}
+          initialTemplateId={showNewProject.templateId}
+          onSubmit={actions.createProjectFull}
+          onClose={() => setShowNewProject(false)}
+        />
+      )}
+
+      {can['team.create'] && showNewTeam && (
+        <CreateTeamModal
+          members={members}
+          currentUserId={currentUserId}
+          isAdmin={isAdmin}
+          onSubmit={actions.createTeamFull}
+          onClose={() => setShowNewTeam(false)}
+        />
+      )}
+
+      {editProject && (
+        <ProjectEditDialog
+          project={editProject}
+          members={members}
+          canChangeOwner={can['project.edit']}
+          onSubmit={(input) => actions.patchProject(editProject, input)}
+          onClose={() => setEditProjectId(null)}
+        />
+      )}
+
+      {assignSheetFor !== 'closed' && (
+        <AssignTaskSheet
+          member={assignSheetMember}
+          projects={activeProjects}
+          tasks={statsTasks}
+          onAssign={(task) => {
+            if (assignSheetFor !== 'closed' && !task.assigneeIds.includes(assignSheetFor)) {
+              actions.setAssignees(task, [...task.assigneeIds, assignSheetFor]);
+            }
+          }}
+          onCreateNew={() => {
+            const target = assignSheetFor;
+            setAssignSheetFor('closed');
+            createWithoutProjectContext({ assigneeIds: target !== 'closed' ? [target] : [] });
+          }}
+          onClose={() => setAssignSheetFor('closed')}
+        />
+      )}
+
+      {selectMode && (
+        <BulkActionsBar
+          count={selectedTasks.length}
+          hasOpen={selectedTasks.some((t) => !t.completed)}
+          hasCompleted={selectedTasks.some((t) => t.completed)}
+          onComplete={() => bulkSetCompleted(true)}
+          onReopen={() => bulkSetCompleted(false)}
+          onDelete={bulkDelete}
+          onExit={exitSelectMode}
+          assignableMembers={members.filter((m) => canAssign(m.userId))}
+          onAssign={bulkAssign}
+          projects={activeProjects}
+          onMove={bulkMove}
+          onSetStatus={bulkSetStatus}
+        />
+      )}
+
+      {taskModal && (
+        <TeamTaskModal
+          task={taskModal.mode === 'edit' ? taskModal.task : undefined}
+          isCreating={taskModal.mode === 'create'}
+          projects={activeProjects.length > 0 ? activeProjects : allProjects}
+          members={members}
+          defaultProjectId={taskModal.mode === 'create' ? taskModal.projectId : undefined}
+          defaultAssigneeIds={taskModal.mode === 'create' ? taskModal.assigneeIds : undefined}
+          defaultStatus={taskModal.mode === 'create' ? taskModal.status : undefined}
+          requireProjectChoice={taskModal.mode === 'create' && !!taskModal.requireProject}
+          onCreate={modalCreate}
+          onUpdate={modalUpdate}
+          onDelete={actions.removeWithUndo}
+          isManager={isManager}
+          onClose={() => setTaskModal(null)}
+        />
+      )}
+    </>
+  );
+
+  // ─── Page d'un projet ───────────────────────────────────────────────
+  if (projectParam) {
+    return (
+      <>
+        {detailProject ? (
+          <ProjectDetailPage
+            project={detailProject}
+            tasks={visibleTasks.filter((t) => t.projectId === detailProject.id)
+              .concat(activeProjectIds.has(detailProject.id) ? [] : allTasks.filter((t) => t.projectId === detailProject.id))}
+            allProjectTasks={allTasks.filter((t) => t.projectId === detailProject.id)}
+            members={members}
+            teams={teams}
+            milestones={milestones}
+            dependencies={projectDeps}
+            projects={allProjects}
+            categoryName={categories.find((c) => c.id === detailProject.categoryId)?.name}
+            canEdit={canEditProjectFor(detailProject)}
+            canArchive={can['project.delete']}
+            canCreateProject={can['project.create']}
+            onBack={closeProject}
+            onOpenProject={openProject}
+            onEdit={() => setEditProjectId(detailProject.id)}
+            onDuplicate={() => actions.duplicateProject(detailProject)}
+            onSaveTemplate={() => actions.saveAsTemplate(detailProject)}
+            onArchive={() => actions.archiveWithUndo(detailProject)}
+            onRestore={() => actions.restoreProject(detailProject)}
+            onAddTask={() => setTaskModal({ mode: 'create', projectId: detailProject.id, assigneeIds: currentUserId ? [currentUserId] : [] })}
+            onStartSelect={() => setSelectMode(true)}
+            onToggleComplete={actions.toggleComplete}
+            onReassign={actions.setAssignees}
+            onDelete={actions.removeWithUndo}
+            onOpenTask={(task) => setTaskModal({ mode: 'edit', task })}
+            selectable={selectMode}
+            selectedIds={selectedIds}
+            onToggleSelect={toggleSelect}
+          />
+        ) : (
+          <div className="py-16 text-center space-y-3">
+            <p className="text-sm text-[rgb(var(--color-text-secondary))]">{t('portfolio.notFound')}</p>
+            <button type="button" onClick={closeProject} className="inline-flex items-center gap-1.5 text-sm font-semibold text-indigo-500 hover:text-indigo-600">
+              <ArrowLeft size={15} aria-hidden="true" /> {t('portfolio.back')}
+            </button>
+          </div>
+        )}
+        {overlays}
+      </>
+    );
+  }
+
+  const showSearch = (view === 'list' || view === 'portfolio') && activeProjects.length > 0;
+
   return (
     <div className="space-y-4">
-      {/* Pouls : stats de l'espace projets.
-          Les compteurs QUI NE FILTRENT PAS perdent la forme de pastille et se
-          regroupent en une mention discrète : ils portaient jusqu'ici le style
-          exact des pastilles cliquables, si bien qu'un clic sans effet
-          enseignait que la rangée entière était inerte. */}
       {activeProjects.length > 0 && (
-        <div className="flex items-center gap-2 flex-wrap text-xs">
-          <span className="inline-flex items-center gap-1.5 text-[rgb(var(--color-text-muted))]">
-            <FolderKanban size={12} aria-hidden="true" />
-            {tp('projects.projectCount', activeProjects.length)}
-            {totalEstimated > 0 && (
-              <>
-                <span aria-hidden="true">·</span>
-                <Clock size={12} aria-hidden="true" />
-                {t('projects.estimatedTotal', { duration: formatDuration(totalEstimated) })}
-              </>
-            )}
-          </span>
-          <StatPill
-            active={statusFilter === 'open'}
-            onClick={() => toggleStatus('open')}
-            label={statusFilter === 'open' ? t('projects.filterClear') : t('projects.filterOpen')}
-            tone="neutral"
-          >
-            <CircleDashed size={12} aria-hidden="true" /> {tp('projects.openCount', openCount)}
-          </StatPill>
-          {overdueCount > 0 && (
-            <StatPill
-              active={statusFilter === 'overdue'}
-              onClick={() => toggleStatus('overdue')}
-              label={statusFilter === 'overdue' ? t('projects.filterClear') : t('projects.filterOverdue')}
-              tone="danger"
-            >
-              <AlarmClock size={12} aria-hidden="true" /> {tp('projects.overdueCount', overdueCount)}
-            </StatPill>
-          )}
-          {doneThisWeek > 0 && (
-            <StatPill
-              active={statusFilter === 'doneThisWeek'}
-              onClick={() => toggleStatus('doneThisWeek')}
-              label={statusFilter === 'doneThisWeek' ? t('projects.filterClear') : t('projects.filterDone')}
-              tone="success"
-            >
-              <CheckCircle2 size={12} aria-hidden="true" /> {tp('projects.doneThisWeek', doneThisWeek)}
-            </StatPill>
-          )}
-        </div>
+        <ProjectsPulse
+          projectCount={activeProjects.length}
+          totalEstimated={totalEstimated}
+          openCount={openCount}
+          overdueCount={overdueCount}
+          doneThisWeek={doneThisWeek}
+          statusFilter={statusFilter}
+          onToggleStatus={toggleStatus}
+        />
       )}
 
       {/* Les cartes portent une progression (terminées / total) : elles ont
@@ -393,44 +445,27 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
       {/* Corbeille (M4) : ne s'affiche que s'il y a quelque chose à restaurer. */}
       <div className="flex justify-end"><TeamTrashDialog orgId={orgId} projects={allProjects} members={members} /></div>
 
-      {/* Barre d'outils : périmètre · vue · action primaire (ProjectsToolbar) */}
       <ProjectsToolbar
         members={members}
         teams={teams}
         currentUserId={currentUserId}
         prefs={prefs}
         updatePrefs={updatePrefs}
+        effectiveView={view}
         canCreateProject={can['project.create']}
         canCreateTeam={can['team.create']}
-        onNewProject={() => setShowNewProject(true)}
+        onNewProject={() => setShowNewProject({})}
         onCreateTeam={() => setShowNewTeam(true)}
+        onStartSelect={statsTasks.length > 0 && !selectMode ? () => setSelectMode(true) : undefined}
       />
 
-      {/* Popup nouveau projet (nom, couleur, équipe/collaborateurs, tâches) */}
-      {can['project.create'] && showNewProject && (
-        <NewTeamProjectModal
-          orgId={orgId}
-          teams={teams}
-          members={members}
-          defaultTeamId={teamFilter && teamFilter !== 'org' ? teamFilter : ''}
-          onSubmit={handleCreateProjectFull}
-          onClose={() => setShowNewProject(false)}
-        />
+      {showSearch && (
+        <ProjectsSearchBar query={query} onQueryChange={setQuery} sort={sort} onSortChange={(s) => updatePrefs({ sort: s })} />
+      )}
+      {view === 'list' && manyProjects && (
+        <p className="text-xs text-[rgb(var(--color-text-muted))]">{t('portfolio.manyProjectsHint', { count: PORTFOLIO_CARD_THRESHOLD })}</p>
       )}
 
-      {/* Popup nouvelle équipe — depuis le sélecteur d'équipe de la barre
-          d'outils (même formulaire que l'onglet Pyramide). */}
-      {can['team.create'] && showNewTeam && (
-        <CreateTeamModal
-          members={members}
-          currentUserId={currentUserId}
-          isAdmin={isAdmin}
-          onSubmit={handleCreateTeamFull}
-          onClose={() => setShowNewTeam(false)}
-        />
-      )}
-
-      {/* Contenu */}
       {activeProjects.length === 0 && archivedProjects.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <div className="w-12 h-12 rounded-2xl bg-[rgb(var(--color-hover))] flex items-center justify-center mb-3">
@@ -440,7 +475,7 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
           {can['project.create'] ? (
             <button
               type="button"
-              onClick={() => setShowNewProject(true)}
+              onClick={() => setShowNewProject({})}
               className="mt-3 inline-flex items-center gap-1.5 h-9 px-4 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold"
             >
               <Plus size={15} aria-hidden="true" /> {t('projects.createProject')}
@@ -455,30 +490,53 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
           tasks={visibleTasks}
           members={members}
           groupBy={timelineGroupBy}
+          milestones={milestones}
           onOpenTask={(task) => setTaskModal({ mode: 'edit', task })}
+          selectable={selectMode}
+          selectedIds={selectedIds}
+          onToggleSelect={toggleSelect}
         />
       ) : view === 'kanban' ? (
         <TeamProjectsKanban
           projects={activeProjects}
           tasks={visibleTasks}
           members={members}
-          onSetAssignees={setAssigneesWithUndo}
+          onSetAssignees={actions.setAssigneesWithUndo}
           onOpenTask={(task) => setTaskModal({ mode: 'edit', task })}
           canAssign={canAssign}
-          onAddToColumn={(memberId) =>
+          onAddToColumn={({ memberId, status }) =>
             memberId
               ? setAssignSheetFor(memberId)
-              // Colonne « Non assignées » : la sheet n'aurait proposé qu'un
-              // unique bouton — droit au modal, sans détour.
-              : setTaskModal({ mode: 'create', projectId: activeProjects[0]?.id, assigneeIds: [] })
+              // Colonne « Non assignées » ou colonne de statut : droit au modal,
+              // avec le statut de la colonne et SANS deviner le projet.
+              : createWithoutProjectContext({ assigneeIds: [], status })
           }
           groupBy={kanbanGroupBy}
-          onSetStatus={setStatus}
+          onSetStatus={actions.setStatus}
           assigneeFilter={assigneeFilter}
+          selectable={selectMode}
+          selectedIds={selectedIds}
+          onToggleSelect={toggleSelect}
         />
       ) : (
         <>
-          {groupedSections ? (
+          {query && shownProjects.length === 0 && (
+            <p className="py-8 text-center text-sm text-[rgb(var(--color-text-muted))]">{t('portfolio.noResult', { query })}</p>
+          )}
+          {view === 'portfolio' ? (
+            shownProjects.length > 0 && (
+              <ProjectPortfolioView
+                projects={shownProjects}
+                tasks={allTasks}
+                members={members}
+                teams={teams}
+                milestones={milestones}
+                dependencies={projectDeps}
+                allProjects={allProjects}
+                onOpenProject={openProject}
+              />
+            )
+          ) : groupedSections ? (
             groupedSections.map((section) => (
               <div key={section.key} className="space-y-3">
                 {section.label && (
@@ -490,7 +548,7 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
               </div>
             ))
           ) : (
-            activeProjects.map(renderProjectCard)
+            shownProjects.map(renderProjectCard)
           )}
 
           {/* Archivés */}
@@ -510,62 +568,19 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
               )}
             </div>
           )}
+
+          {/* Modèles (M2) : jamais mêlés aux projets en cours. */}
+          <ProjectTemplatesSection
+            templates={templates}
+            canUse={can['project.create']}
+            canRemove={can['project.delete']}
+            onUse={(templateId) => setShowNewProject({ templateId })}
+            onRemove={actions.archiveTemplate}
+          />
         </>
       )}
 
-      {/* Sheet « attribuer / créer » du kanban */}
-      {assignSheetFor !== 'closed' && (
-        <AssignTaskSheet
-          member={assignSheetMember}
-          projects={activeProjects}
-          tasks={statsTasks}
-          onAssign={(task) => {
-            if (assignSheetFor !== 'closed' && !task.assigneeIds.includes(assignSheetFor)) {
-              setAssignees(task, [...task.assigneeIds, assignSheetFor]);
-            }
-          }}
-          onCreateNew={() => {
-            const target = assignSheetFor;
-            setAssignSheetFor('closed');
-            setTaskModal({
-              mode: 'create',
-              projectId: activeProjects[0]?.id,
-              assigneeIds: target !== 'closed' ? [target] : [],
-            });
-          }}
-          onClose={() => setAssignSheetFor('closed')}
-        />
-      )}
-
-      {/* Barre d'actions groupées (flottante) */}
-      {selectMode && (
-        <BulkActionsBar
-          count={selectedTasks.length}
-          hasOpen={selectedTasks.some((t) => !t.completed)}
-          hasCompleted={selectedTasks.some((t) => t.completed)}
-          onComplete={() => bulkSetCompleted(true)}
-          onReopen={() => bulkSetCompleted(false)}
-          onDelete={bulkDelete}
-          onExit={exitSelectMode}
-        />
-      )}
-
-      {/* Modal de tâche (création / édition) */}
-      {taskModal && (
-        <TeamTaskModal
-          task={taskModal.mode === 'edit' ? taskModal.task : undefined}
-          isCreating={taskModal.mode === 'create'}
-          projects={activeProjects.length > 0 ? activeProjects : allProjects}
-          members={members}
-          defaultProjectId={taskModal.mode === 'create' ? taskModal.projectId : undefined}
-          defaultAssigneeIds={taskModal.mode === 'create' ? taskModal.assigneeIds : undefined}
-          onCreate={modalCreate}
-          onUpdate={modalUpdate}
-          onDelete={removeWithUndo}
-          isManager={isManager}
-          onClose={() => setTaskModal(null)}
-        />
-      )}
+      {overlays}
     </div>
   );
 };

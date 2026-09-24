@@ -24,7 +24,14 @@ import {
   TeamTaskDependency,
   CreateTeamTaskCommentInput,
   TeamTrashedTask,
+  DraftProjectTask,
+  DraftProjectMilestone,
+  TeamProjectMilestone,
+  CreateTeamProjectMilestoneInput,
+  UpdateTeamProjectMilestoneInput,
+  TeamProjectDependency,
 } from './types';
+import * as portfolio from './local.portfolio';
 import {
   TEAM_PROJECTS_STORAGE_KEY, TEAM_TASKS_STORAGE_KEY, TEAM_TASK_COMMENTS_STORAGE_KEY,
   TEAM_TASK_SUBTASKS_STORAGE_KEY,
@@ -105,9 +112,77 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
       createdAt: new Date().toISOString(),
       teamId: input.teamId ?? null,
       categoryId: input.categoryId ?? null,
+      description: input.description ?? null,
+      ownerId: input.ownerId ?? null,
+      status: input.status ?? 'active',
+      startDate: input.startDate || null,
+      dueDate: input.dueDate || null,
+      isTemplate: input.isTemplate ?? false,
+      templatePayload: input.isTemplate ? input.templatePayload ?? null : null,
     };
     this.saveProjects([...projects, project]);
     return project;
+  }
+
+  /**
+   * Même contrat que la RPC `create_team_project_with_tasks` : tout ou rien.
+   * Les projets ET les tâches sont relus, modifiés en mémoire, puis écrits
+   * seulement si chaque élément est valide.
+   */
+  async createProjectWithTasks(
+    orgId: string,
+    input: CreateTeamProjectInput,
+    drafts: DraftProjectTask[] = [],
+    milestones: DraftProjectMilestone[] = [],
+  ): Promise<string> {
+    for (const d of drafts) {
+      if (!d.name.trim()) throw makeApiError('invalid_input');
+      if (d.startDate && d.deadline && d.startDate > d.deadline) throw makeApiError('invalid_input');
+    }
+    if (input.startDate && input.dueDate && input.startDate > input.dueDate) throw makeApiError('invalid_input');
+    const project = await this.createProject(orgId, input);
+    const now = new Date().toISOString();
+    const created: TeamTask[] = drafts.map((d) => ({
+      id: crypto.randomUUID(),
+      orgId,
+      projectId: project.id,
+      name: d.name.trim(),
+      description: d.description,
+      priority: d.priority ?? 3,
+      deadline: d.deadline ?? '',
+      startDate: d.startDate ?? '',
+      estimatedTime: d.estimatedTime,
+      assigneeIds: d.assigneeIds ?? [],
+      createdBy: DEMO_USER_ID,
+      completed: false,
+      status: 'todo',
+      completedAt: null,
+      createdAt: now,
+      updatedAt: now,
+      categoryId: null,
+    }));
+    if (created.length > 0) this.saveTasks([...created, ...this.getTasksArray()]);
+    for (const m of milestones) {
+      portfolio.createMilestone(orgId, { projectId: project.id, name: m.name, dueDate: m.dueDate }, this.getProjectsArray());
+    }
+    return project.id;
+  }
+
+  // ─── Jalons & dépendances entre projets (mig. 153) ─────────────────
+  async getMilestones(orgId: string): Promise<TeamProjectMilestone[]> { return portfolio.getMilestones(orgId); }
+  async createMilestone(orgId: string, input: CreateTeamProjectMilestoneInput): Promise<void> {
+    portfolio.createMilestone(orgId, input, this.getProjectsArray());
+  }
+  async updateMilestone(id: string, input: UpdateTeamProjectMilestoneInput): Promise<void> { portfolio.updateMilestone(id, input); }
+  async deleteMilestone(id: string): Promise<void> { portfolio.deleteMilestone(id); }
+  async getProjectDependencies(orgId: string): Promise<TeamProjectDependency[]> {
+    return portfolio.getProjectDependencies(orgId, this.getProjectsArray());
+  }
+  async addProjectDependency(projectId: string, dependsOnId: string, _orgId: string): Promise<void> {
+    portfolio.addProjectDependency(projectId, dependsOnId, this.getProjectsArray());
+  }
+  async removeProjectDependency(projectId: string, dependsOnId: string): Promise<void> {
+    portfolio.removeProjectDependency(projectId, dependsOnId);
   }
 
   async updateProject(projectId: string, input: UpdateTeamProjectInput): Promise<TeamProject> {
@@ -119,6 +194,13 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
     if (input.teamId !== undefined) p.teamId = input.teamId;
     if (input.categoryId !== undefined) p.categoryId = input.categoryId;
     if (input.archived !== undefined) p.archivedAt = input.archived ? new Date().toISOString() : null;
+    if (input.description !== undefined) p.description = input.description || null;
+    if (input.ownerId !== undefined) p.ownerId = input.ownerId;
+    if (input.status !== undefined) p.status = input.status;
+    if (input.startDate !== undefined) p.startDate = input.startDate || null;
+    if (input.dueDate !== undefined) p.dueDate = input.dueDate || null;
+    // CHECK `team_projects_dates_order` (mig. 153), rejoué ici.
+    if (p.startDate && p.dueDate && p.startDate > p.dueDate) throw makeApiError('invalid_input');
     this.saveProjects(projects);
     return p;
   }
@@ -150,6 +232,7 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
       description: input.description,
       priority: input.priority ?? 3,
       deadline: input.deadline ?? '',
+      startDate: input.startDate ?? '',
       estimatedTime: input.estimatedTime,
       assigneeIds: input.assigneeIds ?? [],
       createdBy: DEMO_USER_ID,
@@ -172,6 +255,9 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
     if (input.description !== undefined) task.description = input.description;
     if (input.priority !== undefined) task.priority = input.priority;
     if (input.deadline !== undefined) task.deadline = input.deadline;
+    if (input.startDate !== undefined) task.startDate = input.startDate;
+    // CHECK `team_tasks_dates_order` (mig. 153), rejoué ici.
+    if (task.startDate && task.deadline && task.startDate > task.deadline) throw makeApiError('invalid_input');
     if (input.estimatedTime !== undefined) task.estimatedTime = input.estimatedTime;
     if (input.assigneeIds !== undefined) task.assigneeIds = input.assigneeIds;
     if (input.projectId !== undefined) task.projectId = input.projectId;
