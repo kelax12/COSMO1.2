@@ -6,7 +6,7 @@ import LegalDocument, { type LegalSection } from './legal/LegalDocument';
 /**
  * Conditions Générales d'Utilisation.
  *
- * Le texte vit dans le catalogue `legal` (fr + en) ; cette page ne déclare que
+ * Le texte vit dans le catalogue `legalTerms` (fr + en) ; cette page ne déclare que
  * la STRUCTURE du document. Voir l'en-tête de `legal/LegalDocument.tsx` pour la
  * raison de ce découpage (risque R-13).
  *
@@ -16,7 +16,7 @@ import LegalDocument, { type LegalSection } from './legal/LegalDocument';
  *   - l'article 11 prévoit un préavis de 30 jours par e-mail pour toute
  *     modification substantielle.
  */
-const SECTIONS: LegalSection[] = [
+const SECTIONS: LegalSection<'legalTerms'>[] = [
   {
     title: 'terms.s1.title',
     blocks: [{ kind: 'p', key: 'terms.s1.p1' }, { kind: 'p', key: 'terms.s1.p2' }],
@@ -129,7 +129,7 @@ const SECTIONS: LegalSection[] = [
 ];
 
 const CGUPage: React.FC = () => {
-  const { t } = useT('legal');
+  const { t } = useT('legalTerms');
   useSeoMeta({
     title: t('terms.seoTitle'),
     description: t('terms.seoDescription'),
@@ -138,6 +138,7 @@ const CGUPage: React.FC = () => {
 
   return (
     <LegalDocument
+      namespace="legalTerms"
       titleKey="terms.title"
       updatedAtKey="terms.updatedAt"
       sections={SECTIONS}

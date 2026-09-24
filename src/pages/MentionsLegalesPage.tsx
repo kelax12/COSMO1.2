@@ -6,7 +6,7 @@ import LegalDocument, { type LegalSection } from './legal/LegalDocument';
 /**
  * Mentions légales.
  *
- * Le texte vit dans le catalogue `legal` (fr + en) ; cette page ne déclare que
+ * Le texte vit dans le catalogue `legalNotice` (fr + en) ; cette page ne déclare que
  * la structure du document. Voir `legal/LegalDocument.tsx` (risque R-13).
  *
  * ⚠️ Les deux premières sections portent des informations FACTUELLES (éditeur,
@@ -14,7 +14,7 @@ import LegalDocument, { type LegalSection } from './legal/LegalDocument';
  * librement : une adresse d'hébergeur inexacte est un défaut de mention légale,
  * pas une maladresse de rédaction.
  */
-const SECTIONS: LegalSection[] = [
+const SECTIONS: LegalSection<'legalNotice'>[] = [
   {
     title: 'notice.s1.title',
     blocks: [
@@ -53,7 +53,7 @@ const SECTIONS: LegalSection[] = [
 ];
 
 const MentionsLegalesPage: React.FC = () => {
-  const { t } = useT('legal');
+  const { t } = useT('legalNotice');
   useSeoMeta({
     title: t('notice.seoTitle'),
     description: t('notice.seoDescription'),
@@ -62,6 +62,7 @@ const MentionsLegalesPage: React.FC = () => {
 
   return (
     <LegalDocument
+      namespace="legalNotice"
       titleKey="notice.title"
       updatedAtKey="notice.updatedAt"
       sections={SECTIONS}

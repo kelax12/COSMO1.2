@@ -215,7 +215,7 @@ describe('QUI peut demander, et ce que la personne LIT', () => {
     const cgu = read('src/pages/CGUPage.tsx');
     expect(cgu).toContain('terms.s5.li5bis');
     for (const locale of ['fr', 'en']) {
-      const legal = JSON.parse(read(`src/locales/${locale}/legal.json`)) as {
+      const legal = JSON.parse(read(`src/locales/${locale}/legalTerms.json`)) as {
         terms: { s5: Record<string, string> };
       };
       expect(legal.terms.s5.li5bis, `${locale} → terms.s5.li5bis`).toBeTruthy();

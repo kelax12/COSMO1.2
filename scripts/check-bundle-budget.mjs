@@ -145,7 +145,8 @@ const BUDGETS = {
  *
  * ⚠️ LA CLÉ EST LE NOM DE BASE, ET LA MESURE EST UNE SOMME. Vite émet
  * plusieurs fichiers sous le même nom de base (huit `index-*`, deux `org-*`,
- * deux `landing-*`, deux `legal-*` au 2026-09-20 : ce sont des barils de
+ * deux `landing-*`, deux `legal-*` au 2026-09-20, puis deux par document
+ * légal depuis le 2026-09-24 : une locale par fichier, ou des barils de
  * modules). Juger le plus gros laisserait un neuvième baril arriver
  * gratuitement. On somme donc tous les fichiers d'un même nom, et le compte
  * est affiché dans le rapport.
@@ -181,7 +182,23 @@ const PLAFONDS_PAR_CHUNK = {
   OrganizationPage: 18_000, // 16 686 o
   TeamProjectsTab: 17_000, // 15 992 o
   UseCasePage: 16_500, // 15 591 o
-  legal: 15_500, // 14 593 o sur 2 chunks
+  // 🔴 `legal` (plafond 15 500) a DISPARU le 2026-09-24 : c'est un DÉCOUPAGE,
+  // pas une remontée. La passe de conformité l'avait porté à 18 527 o
+  // (9 722 fr + 8 805 en, remesuré au build de `3360a455`), et CHAQUE page
+  // contractuelle le téléchargeait en entier pour afficher un seul de ses
+  // trois documents. Un namespace par document désormais (`src/i18n/catalog.ts`).
+  // Ce que télécharge UNE page, fr / en (en = repli fr + en) :
+  //   CGU              9 722 → 4 959 o   ·   18 527 → 9 452 o
+  //   Confidentialité  9 722 → 5 061 o   ·   18 527 → 9 609 o
+  //   Mentions légales 9 722 → 1 500 o   ·   18 527 → 2 829 o
+  // ⚠️ La SOMME des quatre clés ci-dessous (21 428 o) dépasse l'ancien
+  // `legal` : quatre fichiers compressés séparément se paient un en-tête gzip
+  // chacun. Personne ne télécharge cette somme, aucune page ne charge plus
+  // d'un document. Ne pas « regrouper pour économiser » sur ce chiffre-là.
+  legalPrivacy: 9_900, // 9 378 o sur 2 chunks (fr + en)
+  legalTerms: 9_700, // 9 221 o sur 2 chunks
+  legalNotice: 2_800, // 2 598 o sur 2 chunks
+  legalShared: 300, // 231 o sur 2 chunks : « Retour » et « Dernière mise à jour »
   OKRPage: 15_000, // 14 192 o
   'vendor-router': 14_500, // 13 729 o
   TeamTaskModal: 14_500, // 13 345 o
