@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { startOfDay, subDays } from 'date-fns';
-import { X, Plus, Pencil, Trash2, MoreHorizontal, UserPlus, CalendarPlus, MessageSquare } from 'lucide-react';
+import { Pencil, Trash2, MoreHorizontal, UserPlus, CalendarPlus, MessageSquare } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -10,7 +10,6 @@ import {
 import { subtreeOf, useOrgNotifications, useMyOrgPermissions, unreadCommentCountByTask, type OrgMember } from '@/modules/organizations';
 import {
   useTeamProjects, useTeamTaskWorkingSet, TEAM_TASKS_READ_LIMIT, useCreateTeamTask, useUpdateTeamTask, useDeleteTeamTask, useRestoreTeamTask,
-  useCreateTeamProject,
   type TeamTask, type TeamTaskStatus, type CreateTeamTaskInput, type UpdateTeamTaskInput,
 } from '@/modules/team-projects';
 import { showUndoToast } from '@/lib/undo-toast';
@@ -27,6 +26,7 @@ import MemberAvatar from './MemberAvatar';
 import { TeamTasksSkeleton } from './OrgLoadingSkeletons';
 import TeamTasksToolbar, { type SortField } from './TeamTasksToolbar';
 import TruncatedDataNotice from './TruncatedDataNotice';
+import TeamTasksProjectChips from './TeamTasksProjectChips';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { useT } from '@/i18n/useT';
 
@@ -51,19 +51,6 @@ const normalize = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLo
  * toujours sur l'ensemble : seule la PEINTURE est découpée.
  */
 const ROWS_PAGE = 100;
-
-/**
- * Puces de projets visibles avant « +N projets ». Au-delà, la rangée devenait
- * un mur de cinq cents boutons au-dessus du tableau.
- */
-const PROJECT_CHIPS_LIMIT = 12;
-
-const chipBase =
-  'shrink-0 whitespace-nowrap inline-flex items-center gap-2 px-3.5 h-10 sm:h-auto sm:py-2 rounded-lg text-sm font-medium transition-all shadow-sm border';
-const chipActive =
-  'bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] border-[rgb(var(--color-accent-solid))] shadow-md';
-const chipInactive =
-  'bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] border-[rgb(var(--color-border))]';
 
 /**
  * Onglet « Tâches » de l'espace entreprise — entre Pyramide et Projets.
@@ -114,7 +101,6 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
   // « Annuler » = sortir de la corbeille (mig. 152), à l'identique. L'ancien
   // « Annuler » recréait une tâche neuve avec sept champs.
   const restoreTask = useRestoreTeamTask(orgId);
-  const createProject = useCreateTeamProject(orgId);
 
   const projects = useMemo(() => allProjects.filter((p) => !p.archivedAt), [allProjects]);
   const projectById = useMemo(() => new Map(projects.map((p) => [p.id, p])), [projects]);
@@ -152,27 +138,7 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
   // vue perso — ces deux items comblent le manque sans dupliquer le modal.
   const [assigningTask, setAssigningTask] = useState<TeamTask | null>(null);
   const [schedulingTask, setSchedulingTask] = useState<TeamTask | null>(null);
-  // Chip « + Nouveau projet » de l'accès rapide — même pattern que la barre
-  // de listes personnelle (TaskListsBar) : chip pointillée → formulaire
-  // inline (nom seul), pas de modal séparée. Pas de couleur à choisir ici :
-  // ce raccourci ne propose pas de catégorie, le projet créé reste donc sans
-  // catégorie et prend la couleur de repli (`projectColorFromCategory`).
-  const [showCreateProject, setShowCreateProject] = useState(false);
-  const [newProjectName, setNewProjectName] = useState('');
-  const [showAllProjects, setShowAllProjects] = useState(false);
   const [rowsShown, setRowsShown] = useState(ROWS_PAGE);
-
-  // Compteur par projet (chips) : tâches OUVERTES uniquement — même
-  // convention que les chips de listes personnelles, qui comptent le reste
-  // à faire, pas le volume total.
-  const openCountByProject = useMemo(() => {
-    const map = new Map<string, number>();
-    for (const task of tasks) {
-      if (task.completed) continue;
-      map.set(task.projectId, (map.get(task.projectId) ?? 0) + 1);
-    }
-    return map;
-  }, [tasks]);
 
   const visibleTasks = useMemo(() => {
     let result = tasks.filter((task) => projectById.has(task.projectId));
@@ -210,16 +176,6 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
   }, [projectFilter, statusFilter, searchTerm, sortField, sortDirection]);
   const shownTasks = useMemo(() => sortedTasks.slice(0, rowsShown), [sortedTasks, rowsShown]);
   const remainingRows = sortedTasks.length - shownTasks.length;
-
-  // Le projet filtré reste visible même s'il tombe après la coupure : sinon
-  // la puce active disparaîtrait et on ne saurait plus ce qui filtre la table.
-  const shownProjects = useMemo(() => {
-    if (showAllProjects || projects.length <= PROJECT_CHIPS_LIMIT) return projects;
-    const head = projects.slice(0, PROJECT_CHIPS_LIMIT);
-    const active = projectFilter ? projects.find((p) => p.id === projectFilter) : undefined;
-    return active && !head.includes(active) ? [...head, active] : head;
-  }, [projects, showAllProjects, projectFilter]);
-  const hiddenProjects = projects.length - shownProjects.length;
 
   const handleSort = (field: SortField) => {
     if (field === sortField) {
@@ -264,114 +220,14 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
 
   return (
     <div className="space-y-4">
-      {/* Accès rapide aux projets — équivalent entreprise de la barre de
-          listes personnelle : les projets sont déjà l'unité de classement
-          ici, inutile d'inventer un second système de regroupement. */}
-      {projects.length > 0 && (
-        <div>
-          <h2 className="text-sm font-semibold mb-3" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-            {t('projects.tasksTabQuickAccess')}
-          </h2>
-          <div className="flex sm:flex-wrap gap-3 overflow-x-auto sm:overflow-visible -mx-1 px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <button
-              type="button"
-              onClick={() => setProjectFilter(null)}
-              className={`${chipBase} ${!projectFilter ? chipActive : chipInactive}`}
-            >
-              {t('projects.tasksTabAll')}
-            </button>
-            {shownProjects.map((project) => {
-              const color = projectColor(project.color);
-              const active = projectFilter === project.id;
-              return (
-                <button
-                  key={project.id}
-                  type="button"
-                  onClick={() => setProjectFilter(active ? null : project.id)}
-                  className={`${chipBase} ${active ? chipActive : chipInactive}`}
-                >
-                  <span
-                    className={`w-2.5 h-2.5 rounded-full shrink-0 ${active ? 'bg-white/80' : color.dot}`}
-                    aria-hidden="true"
-                  />
-                  <span className="truncate max-w-[160px]">{project.name}</span>
-                  <span className="text-xs opacity-70">{openCountByProject.get(project.id) ?? 0}</span>
-                </button>
-              );
-            })}
-
-            {hiddenProjects > 0 && (
-              <button
-                type="button"
-                onClick={() => setShowAllProjects(true)}
-                className={`${chipBase} ${chipInactive}`}
-              >
-                {tp('projects.tasksTabMoreProjects', hiddenProjects)}
-              </button>
-            )}
-            {showAllProjects && projects.length > PROJECT_CHIPS_LIMIT && (
-              <button
-                type="button"
-                onClick={() => setShowAllProjects(false)}
-                className={`${chipBase} ${chipInactive}`}
-              >
-                {t('projects.tasksTabFewerProjects')}
-              </button>
-            )}
-
-            {!can['project.create'] ? null : !showCreateProject ? (
-              <button
-                type="button"
-                onClick={() => setShowCreateProject(true)}
-                className="shrink-0 whitespace-nowrap inline-flex items-center gap-1.5 h-10 sm:h-auto sm:py-2 px-3.5 rounded-lg border-2 border-dashed border-[rgb(var(--color-border))] bg-transparent text-sm font-medium text-slate-500 dark:text-slate-400 hover:border-[rgb(var(--color-border-strong))] hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-all"
-              >
-                <Plus size={16} aria-hidden="true" /> {t('projects.newProject')}
-              </button>
-            ) : (
-              <form
-                className="flex items-center gap-2 shrink-0"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  const name = newProjectName.trim();
-                  if (!name) return;
-                  createProject.mutate({ name, color: 'slate' }, {
-                    onSuccess: () => {
-                      setNewProjectName('');
-                      setShowCreateProject(false);
-                    },
-                  });
-                }}
-              >
-                <input
-                  autoFocus
-                  type="text"
-                  value={newProjectName}
-                  onChange={(e) => setNewProjectName(e.target.value)}
-                  placeholder={t('project.namePlaceholder')}
-                  className="px-3 py-1.5 text-sm rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-0 w-40"
-                  style={{ backgroundColor: 'rgb(var(--color-surface))', borderColor: 'rgb(var(--color-border))', color: 'rgb(var(--color-text-primary))' }}
-                  onKeyDown={(e) => { if (e.key === 'Escape') { setShowCreateProject(false); setNewProjectName(''); } }}
-                />
-                <button
-                  type="submit"
-                  disabled={!newProjectName.trim() || createProject.isPending}
-                  className="px-3 py-1.5 text-sm rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))] font-medium disabled:opacity-40 transition-all"
-                >
-                  {t('project.create')}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { setShowCreateProject(false); setNewProjectName(''); }}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
-                  aria-label={t('common.cancel')}
-                >
-                  <X size={14} aria-hidden="true" />
-                </button>
-              </form>
-            )}
-          </div>
-        </div>
-      )}
+      <TeamTasksProjectChips
+        orgId={orgId}
+        projects={projects}
+        tasks={tasks}
+        projectFilter={projectFilter}
+        onProjectFilter={setProjectFilter}
+        canCreateProject={can['project.create']}
+      />
 
       <TeamTasksToolbar
         searchTerm={searchTerm}

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { startOfDay } from 'date-fns';
 import { useSearchParams } from 'react-router';
 import { Move, Users, ArrowUpFromLine, UserPlus } from 'lucide-react';
@@ -13,15 +13,10 @@ import {
 } from '@/modules/organizations';
 import {
   UNPLACED_DROP_ID,
-  collapsedStorageKey,
   normalize,
-  readCollapsedIds,
   canManage,
-  LARGE_PYRAMID_THRESHOLD,
-  hasStoredCollapsed,
-  defaultCollapsedIds,
-  ancestorIds,
 } from './pyramid.helpers';
+import { usePyramidCollapse } from './usePyramidCollapse';
 import { usePyramidDnd } from './usePyramidDnd';
 import PyramidToolbar from './PyramidToolbar';
 import UnplacedMembersPanel from './UnplacedMembersPanel';
@@ -137,16 +132,6 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
   }, [showWorkload, workloadTasks, members]);
   // Recherche de membre (surligne + déplie + scrolle jusqu'au premier résultat).
   const [query, setQuery] = useState('');
-  // Nœuds repliés — persistés par organisation (l'org est mémorisée pour ne
-  // pas écraser le storage d'une autre org lors d'un changement d'org active).
-  const [collapsed, setCollapsed] = useState<{ org: string; ids: Set<string> }>(() => ({
-    org: orgId,
-    ids: readCollapsedIds(orgId),
-  }));
-  // Repli par défaut d'un GRAND organigramme, une seule fois, et seulement si
-  // aucune préférence n'existe : lu AVANT que l'effet de persistance n'écrive
-  // (il écrit dès le premier rendu, ce qui ferait croire à une préférence).
-  const defaultCollapsePending = useRef<string | null>(hasStoredCollapsed(orgId) ? null : orgId);
   // Fades de scroll horizontal (desktop) : y a-t-il du contenu hors-champ ?
   const [scrollShadow, setScrollShadow] = useState({ left: false, right: false });
   // Vue : null = toute l'entreprise ; sinon id d'équipe (membres de l'équipe +
@@ -238,41 +223,6 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
   const { roots, unplaced } = buildOrgTree(visibleMembers, ownerId);
   const selfMember = members.find((m) => m.userId === currentUserId) ?? null;
 
-  // ── Replier/déplier (persisté par org) ─────────────────────────────
-  useEffect(() => {
-    if (collapsed.org !== orgId) {
-      defaultCollapsePending.current = hasStoredCollapsed(orgId) ? null : orgId;
-      setCollapsed({ org: orgId, ids: readCollapsedIds(orgId) });
-    }
-  }, [orgId, collapsed.org]);
-
-  // Les membres arrivent en asynchrone : on attend qu'un arbre existe, puis on
-  // décide une fois. Une petite équipe reste dépliée, comme avant.
-  useEffect(() => {
-    if (defaultCollapsePending.current !== orgId || collapsed.org !== orgId || roots.length === 0) return;
-    defaultCollapsePending.current = null;
-    if (members.length > LARGE_PYRAMID_THRESHOLD) {
-      setCollapsed({ org: orgId, ids: defaultCollapsedIds(roots) });
-    }
-  }, [orgId, collapsed.org, roots, members.length]);
-
-  useEffect(() => {
-    if (collapsed.org !== orgId) return;
-    try {
-      localStorage.setItem(collapsedStorageKey(orgId), JSON.stringify([...collapsed.ids]));
-    } catch {
-      // Quota localStorage plein : l'état replié n'est simplement pas persisté.
-    }
-  }, [collapsed, orgId]);
-
-  const toggleCollapse = (id: string) =>
-    setCollapsed((prev) => {
-      const ids = new Set(prev.ids);
-      if (ids.has(id)) ids.delete(id);
-      else ids.add(id);
-      return { org: prev.org, ids };
-    });
-
   // ── Recherche ──────────────────────────────────────────────────────
   const matchIds = useMemo(() => {
     const q = normalize(query.trim());
@@ -280,14 +230,11 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
     return new Set(visibleMembers.filter((m) => normalize(m.displayName).includes(q)).map((m) => m.userId));
   }, [query, visibleMembers]);
 
-  // Pendant une recherche, on déplie le CHEMIN jusqu'aux résultats, pas l'arbre
-  // entier : à mille personnes, tout déplier pour montrer un nom rendait
-  // l'organigramme illisible. Le reste garde le repli choisi.
-  const effectiveCollapsedIds = useMemo(() => {
-    if (matchIds.size === 0) return collapsed.ids;
-    const path = ancestorIds(visibleMembers, matchIds);
-    return new Set([...collapsed.ids].filter((id) => !path.has(id)));
-  }, [matchIds, visibleMembers, collapsed.ids]);
+  // Nœuds repliés : persistance par org, repli par défaut d'un grand
+  // organigramme, et dépliage du seul chemin vers les résultats de recherche.
+  const { effectiveCollapsedIds, toggleCollapse } = usePyramidCollapse({
+    orgId, roots, memberCount: members.length, visibleMembers, matchIds,
+  });
 
   // Scroll doux vers le premier résultat quand la recherche change.
   useEffect(() => {
