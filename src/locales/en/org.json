@@ -561,7 +561,15 @@
       "deleting": "Deleting…",
       "confirm": "Delete team",
       "confirmTransfer": "Move and delete"
-    }
+    },
+    "searchTeams": "Search for a team…",
+    "noTeamMatch": "No team matches.",
+    "showMoreTeams_one": "Show {{count}} more team",
+    "showMoreTeams_other": "Show {{count}} more teams",
+    "showFewerTeams": "Collapse the list",
+    "moreMembers_one": "+{{count}} more",
+    "moreMembers_other": "+{{count}} more",
+    "fewerMembers": "Show fewer"
   },
   "project": {
     "newAria": "New team project",
