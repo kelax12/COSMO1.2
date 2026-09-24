@@ -124,6 +124,14 @@ export interface TeamTaskFilters {
   /** Filtre « assignée à » — matche si l'uid figure dans assigneeIds. */
   assigneeId?: string;
   completed?: boolean;
+  /**
+   * « Ensemble de travail » : les tâches OUVERTES, plus celles terminées depuis
+   * cet instant (ISO). C'est ce que lisent l'Aperçu et les Statistiques : la
+   * lecture par défaut (les 1 000 dernières CRÉÉES, terminées comprises) faisait
+   * sortir une vieille tâche encore ouverte dès que l'organisation en créait
+   * 1 000 autres, et calculait les chiffres sur un extrait.
+   */
+  openOrCompletedSince?: string;
 }
 
 /** Sous-tâche d'une tâche d'équipe (mig. 092) — un seul niveau, pas de récursion. */

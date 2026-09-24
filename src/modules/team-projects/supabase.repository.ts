@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { getCurrentUserId } from '@/lib/auth-user';
 import { makeApiError, normalizeApiError } from '@/lib/normalizeApiError';
 import { warnIfTruncated } from '@/lib/pagination.warning';
+import { TEAM_TASKS_READ_LIMIT } from './constants';
 import type { RestoreCommentOptions } from './repository';
 import { ITeamProjectsRepository } from './repository';
 import {
@@ -132,11 +133,16 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
     if (filters?.projectId) query = query.eq('project_id', filters.projectId);
     if (filters?.assigneeId) query = query.contains('assignee_ids', [filters.assigneeId]);
     if (filters?.completed !== undefined) query = query.eq('completed', filters.completed);
-    const { data, error } = await query.order('created_at', { ascending: false }).limit(1000);
+    // Valeur entre guillemets : un horodatage ISO porte des `:` et des `.`, que
+    // la grammaire de `or=()` de PostgREST ne doit pas avoir à deviner.
+    if (filters?.openOrCompletedSince) {
+      query = query.or(`completed.eq.false,completed_at.gte."${filters.openOrCompletedSince}"`);
+    }
+    const { data, error } = await query.order('created_at', { ascending: false }).limit(TEAM_TASKS_READ_LIMIT);
     if (error) throw normalizeApiError(error);
     // Reco #20 : la limite 1000 était silencieuse — au-delà, on prévient
     // (console dev + toast une fois par session) au lieu de tronquer sans bruit.
-    return warnIfTruncated((data ?? []) as unknown as TaskRow[], 1000, 'team_tasks').map(mapTask);
+    return warnIfTruncated((data ?? []) as unknown as TaskRow[], TEAM_TASKS_READ_LIMIT, 'team_tasks').map(mapTask);
   }
 
   async createTask(orgId: string, input: CreateTeamTaskInput): Promise<TeamTask> {

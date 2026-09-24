@@ -1,13 +1,14 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
-import { format, parseISO, isPast, isToday } from 'date-fns';
+import { format, parseISO, isPast, isToday, startOfDay, subDays } from 'date-fns';
 import { getDateLocale } from '@/i18n/format';
 import {
   ListTodo, CalendarDays, Check, CircleCheck, ChevronRight,
 } from 'lucide-react';
 import {
   useTeamProjects,
-  useTeamTasks,
+  useTeamTaskWorkingSet,
+  TEAM_TASKS_READ_LIMIT,
   useUpdateTeamTask,
   type TeamTask,
   type UpdateTeamTaskInput,
@@ -20,6 +21,7 @@ import type { OrgMember } from '@/modules/organizations';
 import {
   projectColor, PRIORITY_META, sortOpenTasks, sumEstimatedTime, formatDuration, priorityLabelOf } from './team-projects.helpers';
 import WorkSummaryCard from './WorkSummaryCard';
+import TruncatedDataNotice from './TruncatedDataNotice';
 import TeamTaskModal from './TeamTaskModal';
 import TeamActivityFeed from './TeamActivityFeed';
 import { MyWorkSkeleton } from './OrgLoadingSkeletons';
@@ -229,8 +231,16 @@ const MyWorkTab = ({ orgId, members, currentUserId }: MyWorkTabProps) => {
   const { t, tp } = useT('org');
   const tt = t;
   const { data: projects = [], isLoading: loadingProjects } = useTeamProjects(orgId);
+  // Ensemble de travail : TOUTES les tâches ouvertes de l'organisation, plus
+  // celles terminées sur 30 jours. La lecture par défaut (les 1 000 dernières
+  // créées, terminées comprises) faisait sortir de « Mes tâches » une vieille
+  // tâche encore ouverte dès que l'organisation en créait assez d'autres.
+  // Conséquence voulue : « terminées » compte les 30 derniers jours, le flux
+  // d'activité (14 jours) et les échéances à venir (tâches ouvertes) sont
+  // complets. Borne figée au début du jour : elle entre dans la clé de cache.
   // `live` : onglet de travail quotidien, on y attend l'arrivée d'une tâche.
-  const { data: tasks = [], isLoading: loadingTasks } = useTeamTasks(orgId, undefined, { live: true });
+  const workingSince = useMemo(() => startOfDay(subDays(new Date(), 30)).toISOString(), []);
+  const { data: tasks = [], isLoading: loadingTasks } = useTeamTaskWorkingSet(orgId, workingSince, { live: true });
   const { data: okrs = [], isLoading: loadingOkrs } = useTeamOKRs(orgId);
   const { data: teams = [], isLoading: loadingTeams } = useOrgTeams(orgId);
   const upcomingEvents = useUpcomingEvents(5);
@@ -319,6 +329,7 @@ const MyWorkTab = ({ orgId, members, currentUserId }: MyWorkTabProps) => {
 
   return (
     <div className="space-y-5">
+      {tasks.length >= TEAM_TASKS_READ_LIMIT && <TruncatedDataNotice limit={TEAM_TASKS_READ_LIMIT} />}
       {showChecklist && <StartChecklist steps={startSteps} />}
       {showNewcomerHints && <NewcomerHints />}
 

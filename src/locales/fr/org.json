@@ -459,7 +459,14 @@
     "tasksTabStatusAria": "Changer le statut de {{name}}",
     "tasksTabAssignAction": "Attribuer à quelqu'un",
     "tasksTabScheduleAction": "Assigner l'événement",
-    "tasksTabLoading": "Chargement des tâches…"
+    "tasksTabLoading": "Chargement des tâches…",
+    "tasksTabShowMore_one": "Afficher la suite ({{count}} tâche restante)",
+    "tasksTabShowMore_many": "Afficher la suite ({{count}} de tâches restantes)",
+    "tasksTabShowMore_other": "Afficher la suite ({{count}} tâches restantes)",
+    "tasksTabMoreProjects_one": "+{{count}} projet",
+    "tasksTabMoreProjects_many": "+{{count}} de projets",
+    "tasksTabMoreProjects_other": "+{{count}} projets",
+    "tasksTabFewerProjects": "Réduire"
   },
   "insights": {
     "taskDeleted": "Tâche supprimée",
@@ -1146,5 +1153,8 @@
   },
   "members": {
     "removeTitleNamed": "Retirer {{name}} ?"
+  },
+  "truncation": {
+    "tasks": "Seules les {{limit}} tâches les plus récentes sont chargées. L'organisation en compte davantage : ce qui s'affiche ici porte sur cet extrait."
   }
 }

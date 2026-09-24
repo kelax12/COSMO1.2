@@ -433,7 +433,12 @@
     "tasksTabStatusAria": "Change status of {{name}}",
     "tasksTabAssignAction": "Assign to someone",
     "tasksTabScheduleAction": "Schedule event",
-    "tasksTabLoading": "Loading tasks…"
+    "tasksTabLoading": "Loading tasks…",
+    "tasksTabShowMore_one": "Show more ({{count}} task left)",
+    "tasksTabShowMore_other": "Show more ({{count}} tasks left)",
+    "tasksTabMoreProjects_one": "+{{count}} project",
+    "tasksTabMoreProjects_other": "+{{count}} projects",
+    "tasksTabFewerProjects": "Show fewer"
   },
   "insights": {
     "taskDeleted": "Task deleted",
@@ -1106,5 +1111,8 @@
   },
   "members": {
     "removeTitleNamed": "Remove {{name}}?"
+  },
+  "truncation": {
+    "tasks": "Only the {{limit}} most recent tasks are loaded. Your organization has more, so what you see here covers that subset only."
   }
 }

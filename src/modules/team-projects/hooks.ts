@@ -93,6 +93,42 @@ export const useTeamTasks = (
   });
 };
 
+/**
+ * « Ensemble de travail » d'une organisation : toutes les tâches OUVERTES, plus
+ * celles terminées depuis `since` (ISO). `since = null` rend la lecture complète
+ * de `useTeamTasks`, sous la même clé de cache.
+ *
+ * Pourquoi un hook séparé : `useTeamTasks` lit les 1 000 dernières tâches
+ * CRÉÉES, terminées comprises, et filtre ensuite côté client. Passé ce volume,
+ * une vieille tâche encore ouverte sortait de « Mes tâches », et les
+ * statistiques se calculaient sur un extrait (audit du 2026-09-24). Ici le tri
+ * se fait côté serveur, AVANT le plafond : ce qui reste est ce dont l'écran a
+ * besoin, et le plafond ne coupe plus que du travail réellement en cours.
+ *
+ * ⚠️ `since` doit être STABLE d'un rendu à l'autre (un début de jour, pas
+ * `new Date()`) : il entre dans la clé de cache. La clé est un sous-chemin de
+ * `teamProjectKeys.tasks(orgId)`, donc les invalidations existantes des
+ * mutations la couvrent sans rien ajouter.
+ */
+export const useTeamTaskWorkingSet = (
+  orgId: string | undefined,
+  since: string | null,
+  options?: { live?: boolean },
+) => {
+  const repository = useRepo();
+  return useQuery({
+    queryKey: since
+      ? [...teamProjectKeys.tasks(orgId ?? ''), 'working-set', since]
+      : teamProjectKeys.tasks(orgId ?? ''),
+    queryFn: () =>
+      repository.getTasks(orgId as string, since ? { openOrCompletedSince: since } : undefined),
+    enabled: !!orgId,
+    staleTime: 1000 * 30,
+    ...(options?.live ? { refetchInterval: 20_000 } : {}),
+    refetchOnWindowFocus: true,
+  });
+};
+
 // ─── Mutations ───────────────────────────────────────────────────────
 
 export const useCreateTeamProject = (orgId: string) => {
