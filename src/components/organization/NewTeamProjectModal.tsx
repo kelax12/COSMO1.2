@@ -72,6 +72,7 @@ const NewTeamProjectModal = ({
   orgId, teams, members, currentUserId, defaultTeamId, templates, initialTemplateId, onSubmit, onClose,
 }: NewTeamProjectModalProps) => {
   const { t, tp } = useT('org');
+  const { t: pf } = useT('portfolio');
   const initialOrgTemplate = templates.find((tpl) => tpl.id === initialTemplateId);
   const [name, setName] = useState('');
   const [color, setColor] = useState(initialOrgTemplate?.color ?? 'blue');
@@ -95,7 +96,7 @@ const NewTeamProjectModal = ({
     if (choice.startsWith('org:')) return templates.find((tpl) => `org:${tpl.id}` === choice)?.templatePayload ?? null;
     if (choice.startsWith('builtin:')) {
       const def = BUILT_IN_TEMPLATES.find((b) => `builtin:${b.key}` === choice);
-      return def ? builtInPayload(def, (key) => t(key as 'templates.sprint')) : null;
+      return def ? builtInPayload(def, (key) => pf(key as 'builtIn.sprint')) : null;
     }
     return null;
   };
@@ -132,7 +133,7 @@ const NewTeamProjectModal = ({
   const handleSubmit = async () => {
     if (pending) return;
     if (!name.trim()) { setError(t('project.nameRequired')); return; }
-    if (startDate && dueDate && startDate > dueDate) { setError(t('portfolio.edit.datesInvalid')); return; }
+    if (startDate && dueDate && startDate > dueDate) { setError(pf('edit.datesInvalid')); return; }
     setPending(true);
     setError(null);
     // Une tâche en cours de saisie non ajoutée est incluse (évite la perte).
@@ -216,7 +217,7 @@ const NewTeamProjectModal = ({
           <div>
             <label htmlFor="new-project-template" className={labelClass} style={labelStyle}>
               <LayoutTemplate size={12} className="inline-block mr-1 align-[-1px]" aria-hidden="true" />
-              {t('templates.pickLabel')}
+              {pf('builtIn.pickLabel')}
             </label>
             <select
               id="new-project-template"
@@ -225,17 +226,17 @@ const NewTeamProjectModal = ({
               className={inputClass}
               style={inputStyle}
             >
-              <option value="">{t('templates.clear')}</option>
+              <option value="">{pf('builtIn.clear')}</option>
               {templates.length > 0 && (
-                <optgroup label={t('portfolio.templates.orgGroup')}>
+                <optgroup label={pf('templates.orgGroup')}>
                   {templates.map((tpl) => (
                     <option key={tpl.id} value={`org:${tpl.id}`}>{tpl.name}</option>
                   ))}
                 </optgroup>
               )}
-              <optgroup label={t('portfolio.templates.builtInGroup')}>
+              <optgroup label={pf('templates.builtInGroup')}>
                 {BUILT_IN_TEMPLATES.map((b) => (
-                  <option key={b.key} value={`builtin:${b.key}`}>{t(`templates.${b.key}`)}</option>
+                  <option key={b.key} value={`builtin:${b.key}`}>{pf(`builtIn.${b.key}`)}</option>
                 ))}
               </optgroup>
             </select>
@@ -258,8 +259,8 @@ const NewTeamProjectModal = ({
           </div>
 
           <div>
-            <span className={labelClass} style={labelStyle}>{t('portfolio.new.color')}</span>
-            <ProjectColorPicker value={color} onChange={setColor} label={t('portfolio.new.color')} />
+            <span className={labelClass} style={labelStyle}>{pf('new.color')}</span>
+            <ProjectColorPicker value={color} onChange={setColor} label={pf('new.color')} />
           </div>
 
           {/* Catégorie — une étiquette transverse (mig. 111), affichée en
@@ -286,7 +287,7 @@ const NewTeamProjectModal = ({
               </select>
             </div>
             <div>
-              <label htmlFor="new-project-owner" className={labelClass} style={labelStyle}>{t('portfolio.new.owner')}</label>
+              <label htmlFor="new-project-owner" className={labelClass} style={labelStyle}>{pf('new.owner')}</label>
               <select
                 id="new-project-owner"
                 value={ownerId}
@@ -294,9 +295,9 @@ const NewTeamProjectModal = ({
                 className={inputClass}
                 style={inputStyle}
               >
-                <option value="">{t('portfolio.noOwner')}</option>
+                <option value="">{pf('noOwner')}</option>
                 {members.map((m) => (
-                  <option key={m.userId} value={m.userId}>{m.userId === currentUserId ? t('projects.you') : m.displayName}</option>
+                  <option key={m.userId} value={m.userId}>{m.userId === currentUserId ? pf('toolbar.you') : m.displayName}</option>
                 ))}
               </select>
             </div>
@@ -305,25 +306,25 @@ const NewTeamProjectModal = ({
             </p>
             <div>
               <label htmlFor="new-project-start" className={labelClass} style={labelStyle}>
-                {selectedPayload ? t('portfolio.templates.startLabel') : t('portfolio.new.startDate')}
+                {selectedPayload ? pf('templates.startLabel') : pf('new.startDate')}
               </label>
               <DatePicker id="new-project-start" value={startDate} onChange={(v) => { setStartDate(v); setError(null); }} className="h-[2.626275rem]" popoverClassName="z-[10000]" />
             </div>
             <div>
-              <label htmlFor="new-project-due" className={labelClass} style={labelStyle}>{t('portfolio.new.dueDate')}</label>
+              <label htmlFor="new-project-due" className={labelClass} style={labelStyle}>{pf('new.dueDate')}</label>
               <DatePicker id="new-project-due" value={dueDate} onChange={(v) => { setDueDate(v); setError(null); }} className="h-[2.626275rem]" popoverClassName="z-[10000]" minDate={startDate || undefined} />
             </div>
           </div>
 
           <div>
-            <label htmlFor="new-project-description" className={labelClass} style={labelStyle}>{t('portfolio.new.description')}</label>
+            <label htmlFor="new-project-description" className={labelClass} style={labelStyle}>{pf('new.description')}</label>
             <textarea
               id="new-project-description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               maxLength={5000}
               rows={2}
-              placeholder={t('portfolio.edit.descriptionPlaceholder')}
+              placeholder={pf('edit.descriptionPlaceholder')}
               className={`${inputClass} h-auto py-2.5 resize-y`}
               style={inputStyle}
             />
@@ -407,7 +408,7 @@ const NewTeamProjectModal = ({
               </button>
             </div>
             {taskTotal > 0 && (
-              <p className="mt-2 text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>{t('portfolio.new.atomicHint')}</p>
+              <p className="mt-2 text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>{pf('new.atomicHint')}</p>
             )}
           </div>
         </div>

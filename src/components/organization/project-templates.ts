@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════════
 // Modèles de projet livrés avec COSMO (mig. 153, M2)
 //
-// Les catalogues `org.templates.*` existaient déjà, sans aucun écran pour les
+// Les catalogues `portfolio.builtIn.*` (ex-`org.templates.*`) existaient déjà, sans aucun écran pour les
 // proposer. Ils deviennent les modèles « COSMO », à côté de ceux que
 // l'entreprise enregistre elle-même (`team_projects.is_template`).
 //
@@ -61,7 +61,7 @@ export function builtInPayload(
 ): TeamProjectTemplatePayload {
   return {
     tasks: template.tasks.map((task) => ({
-      name: translate(`templates.${task.key}`),
+      name: translate(`builtIn.${task.key}`),
       priority: task.priority ?? 3,
       startOffset: task.startOffset ?? null,
       deadlineOffset: task.deadlineOffset,

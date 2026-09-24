@@ -49,12 +49,16 @@ import type { KeyOf } from '@/i18n/catalog';
 // n'économiser que ce qu'on va charger dans la seconde. Ses blocs peints, eux,
 // sont chargés à part et préchargés (`MyWorkSections`, 2026-09-24).
 //
-// ⚠️ Second argument à `lazyWithRetry` volontairement vide : les catalogues de
-// cette page sont déclarés par sa ROUTE (`App.tsx`, ligne `OrganizationPage`),
-// et `lazy-namespaces.guard.test.ts` ne lit que celles-là. Un catalogue demandé
-// ici et absent là-bas ne serait garanti par rien.
+// ⚠️ Second argument à `lazyWithRetry` VIDE par défaut : les catalogues de cette
+// page sont déclarés par sa ROUTE (`App.tsx`, ligne `OrganizationPage`).
+// Une exception, vérifiée : un onglet qui DÉCLARE sa liste devient une frontière
+// que `lazy-namespaces.guard.test.ts` contrôle comme une route (`TAB_GATE_HOSTS`
+// dans `scripts/i18n-shell-namespaces.mjs`). La liste doit alors couvrir TOUT
+// son sous-arbre, `org` compris.
 const PyramidTab = lazyWithRetry(() => import('@/components/organization/PyramidTab'));
-const TeamProjectsTab = lazyWithRetry(() => import('@/components/organization/TeamProjectsTab'));
+// `portfolio` (M2) n'est payé que par qui ouvre Projets : dans `org`, il pesait
+// 4,7 ko gzip sur chaque visite de /entreprise.
+const TeamProjectsTab = lazyWithRetry(() => import('@/components/organization/TeamProjectsTab'), ['org', 'overlays', 'portfolio']);
 const TeamTasksTab = lazyWithRetry(() => import('@/components/organization/TeamTasksTab'));
 const TeamOKRTab = lazyWithRetry(() => import('@/components/organization/TeamOKRTab'));
 const TeamOverviewTab = lazyWithRetry(() => import('@/components/organization/TeamOverviewTab'));

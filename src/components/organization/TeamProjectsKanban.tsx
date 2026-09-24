@@ -71,7 +71,8 @@ const TeamProjectsKanban = ({
   projects, tasks, members, onSetAssignees, onOpenTask, onAddToColumn, canAssign, groupBy, onSetStatus, assigneeFilter,
   selectable = false, selectedIds, onToggleSelect,
 }: TeamProjectsKanbanProps) => {
-  const { t, tp } = useT('org');
+  const { t } = useT('org');
+  const { t: pf, tp: tpf } = useT('portfolio');
   const [dragOver, setDragOver] = useState<string | null>(null);
 
   const openTasks = useMemo(() => sortOpenTasks(tasks.filter((t) => !t.completed)), [tasks]);
@@ -113,11 +114,11 @@ const TeamProjectsKanban = ({
       (a, b) => (counts.get(b.userId) ?? 0) - (counts.get(a.userId) ?? 0),
     );
     return [
-      { id: KANBAN_UNASSIGNED, label: t('kanban.unassigned'), member: null as OrgMember | null },
+      { id: KANBAN_UNASSIGNED, label: pf('kanban.unassigned'), member: null as OrgMember | null },
       ...memberCols.map((m) => ({ id: m.userId, label: m.displayName, member: m as OrgMember | null })),
     ];
     // `t` en dépendance : les libellés de colonne sont traduits ici.
-  }, [members, openTasks, t, groupBy, assigneeFilter]);
+  }, [members, openTasks, t, pf, groupBy, assigneeFilter]);
 
   const tasksOf = (colId: string) => {
     if (groupBy === 'status') {
@@ -158,7 +159,7 @@ const TeamProjectsKanban = ({
   };
 
   return (
-    <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1" role="list" aria-label={t('kanban.aria')}>
+    <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1" role="list" aria-label={pf('kanban.aria')}>
       {columns.map((col) => {
         const colTasks = tasksOf(col.id);
         const overdue = colTasks.filter(isTaskOverdue).length;
@@ -186,9 +187,9 @@ const TeamProjectsKanban = ({
                 <span className="text-xs text-[rgb(var(--color-text-muted))] tabular-nums">
                   {colTasks.length}
                   {overdue > 0 && (
-                    <span className="text-red-500 font-semibold" title={tp('kanban.overdueTitle', overdue)}>
+                    <span className="text-red-500 font-semibold" title={tpf('kanban.overdueTitle', overdue)}>
                       {' · '}
-                      {t('kanban.overdueBadge', { count: overdue })}
+                      {pf('kanban.overdueBadge', { count: overdue })}
                     </span>
                   )}
                 </span>
@@ -202,8 +203,8 @@ const TeamProjectsKanban = ({
                         : { memberId: col.member ? col.id : null },
                     )
                   }
-                  aria-label={col.member ? t('kanban.assignTo', { name: col.label }) : t('kanban.addUnassigned')}
-                  title={t('kanban.assignOrCreate')}
+                  aria-label={col.member ? pf('kanban.assignTo', { name: col.label }) : pf('kanban.addUnassigned')}
+                  title={pf('kanban.assignOrCreate')}
                   className="w-6 h-6 rounded-md flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-indigo-500 hover:bg-indigo-500/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                 >
                   <Plus size={14} aria-hidden="true" />
@@ -215,7 +216,7 @@ const TeamProjectsKanban = ({
             <div className="p-2 space-y-1.5 min-h-[64px] max-h-[60vh] overflow-y-auto">
               {colTasks.length === 0 && (
                 <p className="text-xs text-[rgb(var(--color-text-muted))] text-center py-4">
-                  {t('kanban.dropHere')}
+                  {pf('kanban.dropHere')}
                 </p>
               )}
               {colTasks.map((task) => {
@@ -241,8 +242,8 @@ const TeamProjectsKanban = ({
                       selectable
                         ? t('projects.selectTask', { name: task.name })
                         : overdueTask
-                          ? t('kanban.editTaskOverdue', { name: task.name })
-                          : t('kanban.editTask', { name: task.name })
+                          ? pf('kanban.editTaskOverdue', { name: task.name })
+                          : pf('kanban.editTask', { name: task.name })
                     }
                     className={`w-full text-left rounded-xl border px-3 py-2 transition-colors ${selectable ? 'cursor-pointer' : 'cursor-grab active:cursor-grabbing'} ${
                       isSelected
@@ -276,7 +277,7 @@ const TeamProjectsKanban = ({
                       {coAssignees.length > 0 && (
                         <span
                           className="flex -space-x-1 shrink-0"
-                          title={t('kanban.alsoAssigned', {
+                          title={pf('kanban.alsoAssigned', {
                             names: coAssignees
                               .map((id) => members.find((m) => m.userId === id)?.displayName)
                               .filter(Boolean)

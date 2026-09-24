@@ -44,6 +44,7 @@ export const useTeamProjectsActions = ({
 }: Options) => {
   const { t } = useT('org');
   const { t: tErrors } = useT('errors');
+  const { t: pf } = useT('portfolio');
   const createProjectWithTasks = useCreateTeamProjectWithTasks(orgId);
   const updateProject = useUpdateTeamProject(orgId);
   const createTask = useCreateTeamTask(orgId);
@@ -83,7 +84,7 @@ export const useTeamProjectsActions = ({
       { projectId: project.id, input: { archived: true } },
       {
         onSuccess: () =>
-          showUndoToast(t('portfolio.archived'), () =>
+          showUndoToast(pf('archived'), () =>
             updateProject.mutate({ projectId: project.id, input: { archived: false } }),
           ),
       },
@@ -94,12 +95,12 @@ export const useTeamProjectsActions = ({
 
   const duplicateProject = (project: TeamProject) => {
     const blueprint = duplicateBlueprint(project, allTasks, milestones, {
-      name: t('portfolio.copyName', { name: project.name }).slice(0, 120),
+      name: pf('copyName', { name: project.name }).slice(0, 120),
       ownerId: currentUserId ?? null,
     });
     createProjectWithTasks.mutate(blueprint, {
       onSuccess: (newId) => {
-        toast.success(t('portfolio.duplicated'));
+        toast.success(pf('duplicated'));
         onOpenProject(newId);
       },
     });
@@ -110,7 +111,7 @@ export const useTeamProjectsActions = ({
     createProjectWithTasks.mutate(
       {
         input: {
-          name: t('portfolio.templateName', { name: project.name }).slice(0, 120),
+          name: pf('templateName', { name: project.name }).slice(0, 120),
           color: project.color,
           teamId: project.teamId ?? null,
           categoryId: project.categoryId ?? null,
@@ -121,7 +122,7 @@ export const useTeamProjectsActions = ({
           templatePayload: buildTemplatePayload(project, allTasks, milestones),
         },
       },
-      { onSuccess: () => toast.success(t('portfolio.templateSaved')) },
+      { onSuccess: () => toast.success(pf('templateSaved')) },
     );
 
   const archiveTemplate = (template: TeamProject) =>

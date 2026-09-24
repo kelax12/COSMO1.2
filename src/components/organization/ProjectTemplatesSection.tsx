@@ -18,7 +18,7 @@ interface ProjectTemplatesSectionProps {
 }
 
 const ProjectTemplatesSection = ({ templates, canUse, canRemove, onUse, onRemove }: ProjectTemplatesSectionProps) => {
-  const { t, tp } = useT('org');
+  const { t: pf, tp: tpf } = useT('portfolio');
   const [open, setOpen] = useState(false);
   if (templates.length === 0) return null;
 
@@ -31,7 +31,7 @@ const ProjectTemplatesSection = ({ templates, canUse, canRemove, onUse, onRemove
         className="inline-flex items-center gap-1.5 px-1 py-1 text-xs font-semibold text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-secondary))] transition-colors"
       >
         {open ? <ChevronDown size={13} aria-hidden="true" /> : <ChevronRight size={13} aria-hidden="true" />}
-        {t('portfolio.templates.section', { count: templates.length })}
+        {pf('templates.section', { count: templates.length })}
       </button>
       {open && (
         <ul className="mt-2 space-y-1.5">
@@ -40,16 +40,16 @@ const ProjectTemplatesSection = ({ templates, canUse, canRemove, onUse, onRemove
               <LayoutTemplate size={14} className="shrink-0 text-[rgb(var(--color-text-muted))]" aria-hidden="true" />
               <span className="flex-1 min-w-0 truncate text-sm text-[rgb(var(--color-text-primary))]">{tpl.name}</span>
               <span className="text-xs text-[rgb(var(--color-text-muted))] shrink-0">
-                {tp('portfolio.templates.taskCount', tpl.templatePayload?.tasks.length ?? 0)}
+                {tpf('templates.taskCount', tpl.templatePayload?.tasks.length ?? 0)}
               </span>
               {canUse && (
                 <button type="button" onClick={() => onUse(tpl.id)} className="text-xs font-semibold text-indigo-500 hover:text-indigo-600 shrink-0">
-                  {t('portfolio.templates.use')}
+                  {pf('templates.use')}
                 </button>
               )}
               {canRemove && (
                 <button type="button" onClick={() => onRemove(tpl)} className="text-xs text-[rgb(var(--color-text-muted))] hover:text-red-500 shrink-0">
-                  {t('portfolio.templates.archive')}
+                  {pf('templates.archive')}
                 </button>
               )}
             </li>
