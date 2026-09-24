@@ -1198,5 +1198,17 @@
   },
   "truncation": {
     "tasks": "Seules les {{limit}} tâches les plus récentes sont chargées. L'organisation en compte davantage : ce qui s'affiche ici porte sur cet extrait."
+  },
+  "trash": {
+    "button_one": "Corbeille ({{count}})",
+    "button_other": "Corbeille ({{count}})",
+    "button_many": "Corbeille ({{count}})",
+    "title": "Corbeille",
+    "description": "Les tâches supprimées y restent {{days}} jours, avec leurs commentaires, sous-tâches et historique. Restaurées, elles reviennent à l'identique.",
+    "meta": "{{project}} · supprimée par {{who}} {{when}}",
+    "unknownProject": "Projet archivé ou supprimé",
+    "someone": "un membre",
+    "restore": "Restaurer",
+    "restoreAria": "Restaurer la tâche {{name}}"
   }
 }

@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { isPast, isToday, parseISO } from 'date-fns';
 import { CheckCircle2, Circle, Plus } from 'lucide-react';
 import {
-  useTeamTasks, useTeamProjects, useCreateTeamTask, useUpdateTeamTask, useDeleteTeamTask,
+  useTeamTasks, useTeamProjects, useCreateTeamTask, useUpdateTeamTask, useDeleteTeamTask, useRestoreTeamTask,
   type TeamTask,
 } from '@/modules/team-projects';
 import { useOrgMembers, type OrgMember } from '@/modules/organizations';
@@ -60,6 +60,9 @@ export const MemberTasksBody = ({ orgId, member, canEdit = false }: MemberBodyPr
   const createTask = useCreateTeamTask(orgId);
   const updateTask = useUpdateTeamTask(orgId);
   const deleteTask = useDeleteTeamTask(orgId);
+  // « Annuler » = sortir de la corbeille (mig. 152), à l'identique. L'ancien
+  // « Annuler » recréait une tâche neuve avec sept champs.
+  const restoreTask = useRestoreTeamTask(orgId);
   const [creatingTask, setCreatingTask] = useState(false);
   const [editingTask, setEditingTask] = useState<TeamTask | null>(null);
   const activeProjects = useMemo(() => projects.filter((p) => !p.archivedAt), [projects]);
@@ -69,15 +72,7 @@ export const MemberTasksBody = ({ orgId, member, canEdit = false }: MemberBodyPr
     deleteTask.mutate(task.id, {
       onSuccess: () => {
         showUndoToast(t('insights.taskDeleted'), () =>
-          createTask.mutate({
-            projectId: task.projectId,
-            name: task.name,
-            description: task.description,
-            priority: task.priority,
-            deadline: task.deadline,
-            estimatedTime: task.estimatedTime,
-            assigneeIds: task.assigneeIds,
-          }),
+          restoreTask.mutate(task.id),
         );
       },
     });

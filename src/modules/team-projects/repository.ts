@@ -17,6 +17,7 @@ import {
   UpdateTeamSubtaskInput,
   TeamTaskDependency,
   TeamTaskActivity,
+  TeamTrashedTask,
 } from './types';
 import type { CreateOptions } from '@/lib/restore-id';
 
@@ -40,7 +41,16 @@ export interface ITeamProjectsRepository {
   getTasks(orgId: string, filters?: TeamTaskFilters): Promise<TeamTask[]>;
   createTask(orgId: string, input: CreateTeamTaskInput): Promise<TeamTask>;
   updateTask(taskId: string, input: UpdateTeamTaskInput): Promise<TeamTask>;
+  /**
+   * Met la tâche à la CORBEILLE (mig. 152), jamais un DELETE : commentaires,
+   * sous-tâches, étiquettes, dépendances et historique restent attachés, et
+   * reviennent intacts avec `restoreTask`. Purge définitive à 30 jours.
+   */
   deleteTask(taskId: string): Promise<void>;
+  /** Sort une tâche de la corbeille, à l'identique (M4). */
+  restoreTask(taskId: string): Promise<void>;
+  /** Les tâches que l'appelant peut restaurer, les plus récentes d'abord. */
+  getTrash(orgId: string): Promise<TeamTrashedTask[]>;
 
   // Commentaires (mig. 082) — journal immuable, delete auteur only.
   getComments(taskId: string): Promise<TeamTaskComment[]>;

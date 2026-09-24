@@ -14,7 +14,7 @@ import {
   useUpdateTeamProject,
   useCreateTeamTask,
   useUpdateTeamTask,
-  useDeleteTeamTask,
+  useDeleteTeamTask, useRestoreTeamTask,
   type TeamTask,
   type TeamTaskStatus,
   type TeamProject,
@@ -39,6 +39,7 @@ import CreateTeamModal from './CreateTeamModal';
 import AssignTaskSheet from './AssignTaskSheet';
 import BulkActionsBar from './BulkActionsBar';
 import TruncatedDataNotice from './TruncatedDataNotice';
+import TeamTrashDialog from './TeamTrashDialog';
 import { useT } from '@/i18n/useT';
 
 interface TeamProjectsTabProps {
@@ -133,6 +134,9 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
   const createTask = useCreateTeamTask(orgId);
   const updateTask = useUpdateTeamTask(orgId);
   const deleteTask = useDeleteTeamTask(orgId);
+  // « Annuler » = sortir de la corbeille (mig. 152), à l'identique. L'ancien
+  // « Annuler » recréait une tâche neuve avec sept champs.
+  const restoreTask = useRestoreTeamTask(orgId);
   const createTeam = useCreateOrgTeam(orgId);
   const addTeamMember = useAddTeamMember(orgId);
 
@@ -243,15 +247,7 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
     deleteTask.mutate(task.id, {
       onSuccess: () => {
         showUndoToast(t('projects.taskDeleted'), () =>
-          createTask.mutate({
-            projectId: task.projectId,
-            name: task.name,
-            description: task.description,
-            priority: task.priority,
-            deadline: task.deadline,
-            estimatedTime: task.estimatedTime,
-            assigneeIds: task.assigneeIds,
-          }),
+          restoreTask.mutate(task.id),
         );
       },
     });
@@ -266,15 +262,7 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
     visibleTasks,
     setCompleted: (task, completed) => updateTask.mutate({ taskId: task.id, input: { completed } }),
     deleteTask: (taskId) => deleteTask.mutate(taskId),
-    restoreTask: (task) => createTask.mutate({
-      projectId: task.projectId,
-      name: task.name,
-      description: task.description,
-      priority: task.priority,
-      deadline: task.deadline,
-      estimatedTime: task.estimatedTime,
-      assigneeIds: task.assigneeIds,
-    }),
+    restoreTask: (task) => restoreTask.mutate(task.id),
     deletedLabel: (count) => tp('projects.bulkDeleted', count),
   });
 
@@ -402,6 +390,8 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
           besoin de TOUTES les tâches, donc de la lecture complète. Au-delà du
           plafond, elles se calculent sur un extrait, et l'écran le dit. */}
       {allTasks.length >= TEAM_TASKS_READ_LIMIT && <TruncatedDataNotice limit={TEAM_TASKS_READ_LIMIT} />}
+      {/* Corbeille (M4) : ne s'affiche que s'il y a quelque chose à restaurer. */}
+      <div className="flex justify-end"><TeamTrashDialog orgId={orgId} projects={allProjects} members={members} /></div>
 
       {/* Barre d'outils : périmètre · vue · action primaire (ProjectsToolbar) */}
       <ProjectsToolbar

@@ -264,14 +264,32 @@ describe('SupabaseTeamProjectsRepository — tâches', () => {
     await expect(repo.updateTask('tk1', { name: 'X' })).rejects.toBeTruthy();
   });
 
-  it('deleteTask: delete ciblé par id ; erreur DB → rejet normalisé', async () => {
-    supabaseMock.queueTable('team_tasks', { data: null });
+  // M4 (mig. 152) : supprimer = mettre à la corbeille. Un `.delete()` direct
+  // emportait commentaires et sous-tâches en cascade, et la policy DELETE ne
+  // s'ouvre plus qu'aux admins.
+  it('deleteTask: passe par trash_team_task, jamais par un DELETE ; erreur → rejet normalisé', async () => {
+    supabaseMock.queueRpc('trash_team_task', { data: null });
     await repo.deleteTask('tk1');
-    expect(supabaseMock.callsFor('team_tasks').map((c) => c.method)).toEqual(['delete', 'eq']);
-    expect(supabaseMock.argsOf('team_tasks', 'eq')).toEqual(['id', 'tk1']);
+    expect(supabaseMock.rpcCalls).toEqual([{ fn: 'trash_team_task', args: { p_task: 'tk1' } }]);
+    expect(supabaseMock.callsFor('team_tasks')).toHaveLength(0);
 
-    supabaseMock.queueTable('team_tasks', { data: null, error: { message: 'denied', code: '42501' } });
+    supabaseMock.queueRpc('trash_team_task', { data: null, error: { message: 'forbidden', code: '42501' } });
     await expect(repo.deleteTask('tk1')).rejects.toBeTruthy();
+  });
+
+  it('restoreTask: passe par restore_team_task', async () => {
+    supabaseMock.queueRpc('restore_team_task', { data: null });
+    await repo.restoreTask('tk1');
+    expect(supabaseMock.rpcCalls).toEqual([{ fn: 'restore_team_task', args: { p_task: 'tk1' } }]);
+  });
+
+  it('getTrash: mappe les lignes de get_team_trash', async () => {
+    supabaseMock.queueRpc('get_team_trash', {
+      data: [{ id: 't', project_id: 'p', name: 'N', deleted_at: '2026-09-24T10:00:00Z', deleted_by: 'u', created_by: 'c' }],
+    });
+    await expect(repo.getTrash('org1')).resolves.toEqual([
+      { id: 't', projectId: 'p', name: 'N', deletedAt: '2026-09-24T10:00:00Z', deletedBy: 'u', createdBy: 'c' },
+    ]);
   });
 });
 

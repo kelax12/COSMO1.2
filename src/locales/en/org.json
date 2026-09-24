@@ -1151,5 +1151,16 @@
   },
   "truncation": {
     "tasks": "Only the {{limit}} most recent tasks are loaded. Your organization has more, so what you see here covers that subset only."
+  },
+  "trash": {
+    "button_one": "Trash ({{count}})",
+    "button_other": "Trash ({{count}})",
+    "title": "Trash",
+    "description": "Deleted tasks stay here for {{days}} days, with their comments, subtasks and history. Restored, they come back exactly as they were.",
+    "meta": "{{project}} · deleted by {{who}} {{when}}",
+    "unknownProject": "Archived or deleted project",
+    "someone": "a member",
+    "restore": "Restore",
+    "restoreAria": "Restore the task {{name}}"
   }
 }

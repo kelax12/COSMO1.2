@@ -23,11 +23,14 @@ export type {
   TeamTaskFilters,
   TeamTaskComment,
   CreateTeamTaskCommentInput,
+  TeamTrashedTask,
 } from './types';
 
 export {
   teamProjectKeys,
   TEAM_TASKS_READ_LIMIT,
+  TEAM_TASK_TRASH_DAYS,
+  TEAM_TASK_TRASH_STORAGE_KEY,
   TEAM_PROJECTS_STORAGE_KEY,
   TEAM_TASKS_STORAGE_KEY,
 } from './constants';
@@ -58,6 +61,8 @@ export {
   useRemoveTaskDependency,
   useOrgActivity,
   useDeleteTeamTask,
+  useRestoreTeamTask,
+  useTeamTrash,
   useTeamTaskComments,
   useAddTeamTaskComment,
   useDeleteTeamTaskComment,

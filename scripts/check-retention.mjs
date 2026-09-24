@@ -103,6 +103,17 @@ export const DUREES_BORNEES = [
     source: 'Registre T6, même durée que les écritures qu elles scellent.',
   },
   {
+    // M4 (mig. 152) : la corbeille des tâches d'équipe. `deleted_at` est NULL
+    // pour toute tâche vivante, donc `min(deleted_at)` ne mesure que la
+    // corbeille. La purge (pg_cron, 03:45 UTC) retire ce qui dépasse 30 jours ;
+    // 31 laisse passer le jour de décalage entre deux purges, rien de plus.
+    table: 'team_tasks',
+    colonne: 'deleted_at',
+    jours: 31,
+    traitement: 'T4',
+    source: 'Registre T4 : « tâches supprimées : 30 jours en corbeille, puis effacement » (mig. 152).',
+  },
+  {
     table: 'rate_limits',
     colonne: 'window_start',
     // 🔴 `null` = AUCUNE DURÉE DÉCLARÉE AU REGISTRE, et c'est un constat, pas

@@ -46,7 +46,14 @@ compilait, la suite passait.
 - ✅ **État au 2026-09-24** : la mig. **`151`** (suppression d équipe, M5) est **appliquée**, ledger
   `20260924081357`, vérifiée par le catalogue (deux clés en `NO ACTION`, deux RPC `INVOKER`, `anon`
   sans `EXECUTE`), après une preuve en transaction annulée (8 cas, dont la suppression d organisation
-  qui reste possible). La prochaine est la **`152`**.
+  qui reste possible).
+- ✅ **La mig. `152`** (corbeille des tâches d équipe, M4) est **appliquée**, ledger `20260924131429`
+  (inscrit à la main après `db query -f`), vérifiée par le catalogue : colonnes, policies SELECT/DELETE,
+  six fonctions qui ignorent la corbeille, `task.deleteAny` en défaut manager, droits des cinq RPC,
+  job `cosmo-purge-team-task-trash`. Preuve en transaction annulée : 14 cas.
+- ⚠️ **Plages de numéros entre sessions (2026-09-24)** : `151`-`159` corbeille/équipes, `153` déjà
+  prise par le portefeuille de projets (worktree `portefeuille`), `160`+ gouvernance/OKR/membres,
+  `170`+ annuaire. **Relire le ledger avant de choisir un numéro.**
 - ✅ **La preuve AVANT a servi à quelque chose, et c est l argument de cette section** : la `150` a
   été jouée dans une transaction annulée, acteur par acteur, avant d être appliquée — insertion,
   catégorie hors énumération refusée (`23514`), non-admin refusé (`42501`), droits effectifs

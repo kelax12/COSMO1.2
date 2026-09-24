@@ -227,3 +227,17 @@ export interface TeamTaskActivity {
   newValue: string | null;
   createdAt: string;
 }
+
+/**
+ * Une tâche à la corbeille (mig. 152), telle que la rend `get_team_trash` :
+ * l'intitulé et qui l'a supprimée, jamais la description. Le contenu revient
+ * avec la restauration.
+ */
+export interface TeamTrashedTask {
+  id: string;
+  projectId: string;
+  name: string;
+  deletedAt: string;
+  deletedBy: string | null;
+  createdBy: string | null;
+}

@@ -24,6 +24,7 @@ import {
   UpdateTeamSubtaskInput,
   TeamTaskActivity,
   TeamTaskDependency,
+  TeamTrashedTask,
 } from './types';
 import {
   mapProject,
@@ -204,8 +205,35 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
 
   async deleteTask(taskId: string): Promise<void> {
     if (!supabase) throw new Error('Supabase not configured');
-    const { error } = await supabase.from('team_tasks').delete().eq('id', taskId);
+    // Corbeille (mig. 152), jamais `.delete()` : un DELETE emportait en cascade
+    // commentaires, sous-tâches et historique, et la policy ne l'ouvre plus
+    // qu'aux admins. La RPC porte l'autorisation (`task.deleteAny` ou créateur).
+    const { error } = await supabase.rpc('trash_team_task', { p_task: taskId });
     if (error) throw normalizeApiError(error);
+  }
+
+  async restoreTask(taskId: string): Promise<void> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const { error } = await supabase.rpc('restore_team_task', { p_task: taskId });
+    if (error) throw normalizeApiError(error);
+  }
+
+  async getTrash(orgId: string): Promise<TeamTrashedTask[]> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const { data, error } = await supabase.rpc('get_team_trash', { p_org: orgId });
+    if (error) throw normalizeApiError(error);
+    const rows = (data ?? []) as {
+      id: string; project_id: string; name: string;
+      deleted_at: string; deleted_by: string | null; created_by: string | null;
+    }[];
+    return rows.map((r) => ({
+      id: r.id,
+      projectId: r.project_id,
+      name: r.name,
+      deletedAt: r.deleted_at,
+      deletedBy: r.deleted_by,
+      createdBy: r.created_by,
+    }));
   }
 
   // ─── Commentaires (mig. 082) ───────────────────────────────────────

@@ -23,12 +23,15 @@ import {
   TeamTaskActivity,
   TeamTaskDependency,
   CreateTeamTaskCommentInput,
+  TeamTrashedTask,
 } from './types';
 import {
   TEAM_PROJECTS_STORAGE_KEY, TEAM_TASKS_STORAGE_KEY, TEAM_TASK_COMMENTS_STORAGE_KEY,
   TEAM_TASK_SUBTASKS_STORAGE_KEY,
   TEAM_TASK_ACTIVITY_STORAGE_KEY,
   TEAM_TASK_DEPENDENCIES_STORAGE_KEY,
+  TEAM_TASK_TRASH_STORAGE_KEY,
+  TEAM_TASK_TRASH_DAYS,
 } from './constants';
 import { localizeSeed } from '@/lib/seed-i18n';
 import { DEPENDENCY_ERRORS, makeDependencyError } from '@/modules/tasks/dependency-errors';
@@ -195,8 +198,59 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
     return task;
   }
 
+  // ─── Corbeille (mig. 152) ──────────────────────────────────────────
+  //
+  // Miroir démo : la tâche SORT du tableau des tâches pour un tableau à part.
+  // Rien d'autre n'est touché (commentaires, sous-tâches, dépendances restent
+  // en place, rattachés à un id absent), donc tout revient à la restauration,
+  // et aucune lecture de tâches n'a à filtrer quoi que ce soit.
+
+  private getTrashArray(): (TeamTask & { deletedAt: string; deletedBy: string })[] {
+    try {
+      const parsed = JSON.parse(safeGetItem(TEAM_TASK_TRASH_STORAGE_KEY) ?? '[]');
+      if (!Array.isArray(parsed)) return [];
+      // Purge à la lecture : la démo n'a pas de pg_cron.
+      const cutoff = Date.now() - TEAM_TASK_TRASH_DAYS * 24 * 60 * 60 * 1000;
+      return parsed.filter((t) => Date.parse(t.deletedAt) > cutoff);
+    } catch {
+      return [];
+    }
+  }
+  private saveTrash(items: (TeamTask & { deletedAt: string; deletedBy: string })[]): void {
+    writeJsonOrThrow(TEAM_TASK_TRASH_STORAGE_KEY, items);
+  }
+
   async deleteTask(taskId: string): Promise<void> {
-    this.saveTasks(this.getTasksArray().filter((x) => x.id !== taskId));
+    const tasks = this.getTasksArray();
+    const task = tasks.find((x) => x.id === taskId);
+    if (!task) throw makeApiError('not_found');
+    this.saveTrash([
+      { ...task, deletedAt: new Date().toISOString(), deletedBy: DEMO_USER_ID },
+      ...this.getTrashArray(),
+    ]);
+    this.saveTasks(tasks.filter((x) => x.id !== taskId));
+  }
+
+  async restoreTask(taskId: string): Promise<void> {
+    const trash = this.getTrashArray();
+    const item = trash.find((x) => x.id === taskId);
+    if (!item) throw makeApiError('not_found');
+    const { deletedAt: _deletedAt, deletedBy: _deletedBy, ...task } = item;
+    this.saveTasks([...this.getTasksArray(), task]);
+    this.saveTrash(trash.filter((x) => x.id !== taskId));
+  }
+
+  async getTrash(orgId: string): Promise<TeamTrashedTask[]> {
+    return this.getTrashArray()
+      .filter((t) => t.orgId === orgId)
+      .map((t) => ({
+        id: t.id,
+        projectId: t.projectId,
+        name: t.name,
+        deletedAt: t.deletedAt,
+        deletedBy: t.deletedBy,
+        createdBy: t.createdBy ?? null,
+      }));
   }
 
   // ─── Commentaires (mig. 082) ───────────────────────────────────────
