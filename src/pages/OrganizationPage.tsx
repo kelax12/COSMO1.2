@@ -1,7 +1,7 @@
 import { Suspense, useEffect, useState } from 'react';
 import { Navigate, useNavigate, useParams, useSearchParams } from 'react-router';
 import { markOrgSeen, useOrgBadges } from '@/lib/hooks/use-org-notifications';
-import { LogOut, Building2, Pencil, Trash2, X, ArrowRightLeft } from 'lucide-react';
+import { Building2, Pencil, X } from 'lucide-react';
 import { useAuth } from '@/modules/auth/AuthContext';
 import {
   useActiveOrganization,
@@ -30,6 +30,7 @@ import {
 } from '@/components/organization/deep-link.helpers';
 import { safeRedirectPath } from '@/lib/safe-redirect';
 import MyWorkTab from '@/components/organization/MyWorkTab';
+import OrgMembersSection from '@/components/organization/OrgMembersSection';
 import OrgPlanChip from '@/components/organization/OrgPlanChip';
 import { MyWorkSkeleton, TeamTasksSkeleton, TeamOverviewSkeleton, OrgTabSkeleton } from '@/components/organization/OrgLoadingSkeletons';
 import { lazyWithRetry } from '@/lib/lazy-with-retry';
@@ -57,14 +58,6 @@ const TeamTasksTab = lazyWithRetry(() => import('@/components/organization/TeamT
 const TeamOKRTab = lazyWithRetry(() => import('@/components/organization/TeamOKRTab'));
 const TeamOverviewTab = lazyWithRetry(() => import('@/components/organization/TeamOverviewTab'));
 const OrgBillingTab = lazyWithRetry(() => import('@/components/organization/OrgBillingTab'));
-
-// Onglet Membres : trois cartes d'invitation, l'annuaire et les équipes. Rendu
-// seulement sur cet onglet, donc jamais téléchargé par qui ne l'ouvre pas.
-const MemberDirectory = lazyWithRetry(() => import('@/components/organization/MemberDirectory'));
-const TeamsSection = lazyWithRetry(() => import('@/components/organization/TeamsSection'));
-const InviteFriendsToOrg = lazyWithRetry(() => import('@/components/organization/InviteFriendsToOrg'));
-const OrgJoinCodeCard = lazyWithRetry(() => import('@/components/organization/OrgJoinCodeCard'));
-const OrgInviteLinkCard = lazyWithRetry(() => import('@/components/organization/OrgInviteLinkCard'));
 
 // Feuilles et dialogues : montés derrière un `&&`, donc déjà conditionnels au
 // rendu. Ils ne l'étaient pas au TÉLÉCHARGEMENT.
@@ -447,110 +440,22 @@ const OrganizationPage = () => {
       )}
 
       {tab === 'members' && (
-        <div className="space-y-6">
-          {/* Inviter : par code (validation admin), par lien direct, ou en
-              faisant venir ses contacts COSMO — trois moyens côte à côte
-              plutôt qu'un troisième bloc qui redescendait toute la page.
-
-              AUD-02 — le lien direct fait entrer quelqu'un SANS validation
-              admin. Il n'est donc proposé qu'aux admins et aux managers
-              (= au moins un subordonné), exactement comme la policy
-              `org_invite_links_insert` de la mig. 084. Sans ce garde, la carte
-              restait visible pour tout le monde et un simple membre recevrait
-              désormais une erreur 403 au clic.
-
-              Faire venir ses contacts reste réservé aux admins : c'est eux qui
-              décident qui entre. `isAdmin` implique `isManager` (dérivé), donc
-              3 colonnes ne s'affichent que pour un admin, jamais 2 colonnes +
-              un member visible seul en dessous. */}
-          <div
-            className={`grid gap-4 items-start ${
-              isAdmin ? 'md:grid-cols-3' : canInvite ? 'md:grid-cols-2' : ''
-            }`}
-          >
-            <OrgJoinCodeCard code={myOrg.joinCode ?? ''} orgId={myOrg.id} isAdmin={isAdmin} seatsFull={seatsFull} />
-            {canInvite && <OrgInviteLinkCard orgId={myOrg.id} managerId={user?.id} seatsFull={seatsFull} />}
-            {isAdmin && <InviteFriendsToOrg orgId={myOrg.id} variant="card" />}
-          </div>
-
-          <TeamsSection
-            orgId={myOrg.id}
-            members={members}
-            currentUserId={user?.id}
-            isAdmin={isAdmin}
-            canCreateTeam={myPermissions.can['team.create']}
-          />
-
-          <div>
-            <h2 className="text-sm font-bold text-[rgb(var(--color-text-primary))] mb-3">
-              {t('page.directoryTitle', { count: members.length })}
-            </h2>
-            <MemberDirectory
-              orgId={myOrg.id}
-              ownerId={myOrg.ownerId}
-              members={members}
-              currentUserId={user?.id}
-              isAdmin={isAdmin}
-            />
-          </div>
-
-          {/* #5 : le PROPRIETAIRE ne « quitte » pas — il peut supprimer
-              l'entreprise (confirmation extrême, façon GitHub). Tous les
-              autres, admins compris, quittent.
-
-              🔴 C-39 — cette zone etait montee sur `isAdmin`, alors que le
-              bouton « Transferer la propriete » juste a cote etait deja
-              reserve au proprietaire : la restriction existait, elle n'avait
-              pas ete portee sur le geste DESTRUCTEUR. Une entreprise a deux
-              admins ; le second, qui ne paie rien, supprimait l'organisation,
-              et le proprietaire continuait d'etre debite d'un abonnement
-              Stripe qui, lui, court toujours.
-
-              ⚠️ Ce n'est que l'affichage. La regle vit dans
-              `delete_organization` (mig. 138), seule porte vers un DELETE sur
-              `organizations`. */}
-          {isOwner ? (
-            <div className="mt-2 rounded-2xl border border-red-300/60 dark:border-red-700/40 bg-red-50/40 dark:bg-red-900/10 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div>
-                <h3 className="text-sm font-bold text-red-600 dark:text-red-400">{t('page.dangerZone')}</h3>
-                <p className="text-xs text-[rgb(var(--color-text-muted))] mt-0.5">
-                  {t('page.dangerHint')}
-                </p>
-              </div>
-              <div className="flex flex-col sm:flex-row gap-2 shrink-0">
-                {members.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => setTransferring(true)}
-                    disabled={transferMutation.isPending}
-                    className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] disabled:opacity-60 transition-colors"
-                  >
-                    <ArrowRightLeft size={15} aria-hidden="true" /> {t('page.transferOwnership')}
-                  </button>
-                )}
-                <button
-                  type="button"
-                  onClick={() => setConfirmingDelete(true)}
-                  disabled={deleteFlow.isPending}
-                  className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-red-600 hover:bg-red-700 disabled:opacity-60 transition-colors"
-                >
-                  <Trash2 size={15} aria-hidden="true" /> {t('page.deleteOrg')}
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="pt-2">
-              <button
-                type="button"
-                onClick={() => setConfirmingLeave(true)}
-                disabled={leaveMutation.isPending}
-                className="inline-flex items-center gap-1.5 text-sm font-medium text-red-500 hover:text-red-600 transition-colors disabled:opacity-60"
-              >
-                <LogOut size={15} aria-hidden="true" /> {t('page.leaveOrg')}
-              </button>
-            </div>
-          )}
-        </div>
+        <OrgMembersSection
+          org={myOrg}
+          members={members}
+          currentUserId={user?.id}
+          isOwner={isOwner}
+          isAdmin={isAdmin}
+          canInvite={canInvite}
+          canCreateTeam={myPermissions.can['team.create']}
+          seatsFull={seatsFull}
+          transferPending={transferMutation.isPending}
+          deletePending={deleteFlow.isPending}
+          leavePending={leaveMutation.isPending}
+          onTransfer={() => setTransferring(true)}
+          onDelete={() => setConfirmingDelete(true)}
+          onLeave={() => setConfirmingLeave(true)}
+        />
       )}
       </Suspense>
 

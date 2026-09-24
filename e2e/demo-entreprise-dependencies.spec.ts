@@ -15,8 +15,11 @@ import { test, expect, navTo } from './fixtures';
  * DÉBUT du libellé, jamais à la fin — le badge de nouveautés entre dans le nom
  * accessible du bouton (« Projets 3 nouveautés »).
  */
+// Navigation entreprise (2026-09-23) : une section = une route, et un LIEN dans
+// `OrgSideNav`. Ces specs cherchaient encore l'ancien bouton d'onglet et
+// `?tab=` : elles expiraient toutes à 2 min sur `main` depuis `a0470c1a`.
 const orgTab = (page: Page, label: RegExp) =>
-  page.getByRole('button', { name: label }).filter({ visible: true }).first();
+  page.getByRole('navigation', { name: /sections de l.entreprise/i }).getByRole('link', { name: label });
 
 /** Passe la vue Projets sur l'un des trois modes de la barre d'outils. */
 const switchView = async (page: Page, name: 'Liste' | 'Tableau' | 'Planning') => {
@@ -47,7 +50,7 @@ test.describe('Entreprise — dépendances et chemin critique (démo)', () => {
     await expect(page.getByRole('heading', { name: /nova studio/i })).toBeVisible({ timeout: 15_000 });
 
     await orgTab(page, /^projets/i).click();
-    await page.waitForURL(/tab=projects/);
+    await page.waitForURL(/\/entreprise\/projects/);
     await switchView(page, 'Planning');
 
     // La légende n'existe QUE s'il y a un chemin — sa présence prouve déjà que
@@ -64,7 +67,7 @@ test.describe('Entreprise — dépendances et chemin critique (démo)', () => {
   test('Planning : le chemin retenu est la branche la plus LONGUE, pas la plus fournie', async ({ demoPage: page }) => {
     await navTo(page, /entreprise/i, /\/entreprise/);
     await orgTab(page, /^projets/i).click();
-    await page.waitForURL(/tab=projects/);
+    await page.waitForURL(/\/entreprise\/projects/);
     await switchView(page, 'Planning');
     await expect(page.getByTitle(/plus longue chaîne de tâches/i)).toBeVisible({ timeout: 15_000 });
 
@@ -86,7 +89,7 @@ test.describe('Entreprise — dépendances et chemin critique (démo)', () => {
   test('Modale : les deux sens de dépendance, et l’alerte de blocage', async ({ demoPage: page }) => {
     await navTo(page, /entreprise/i, /\/entreprise/);
     await orgTab(page, /^projets/i).click();
-    await page.waitForURL(/tab=projects/);
+    await page.waitForURL(/\/entreprise\/projects/);
     await switchView(page, 'Liste');
 
     // « Kit presse » est bloquée par « Plan de communication » dans le seed.
@@ -106,7 +109,7 @@ test.describe('Entreprise — dépendances et chemin critique (démo)', () => {
   test('Modale : une tâche sans blocage annonce qu’elle peut démarrer', async ({ demoPage: page }) => {
     await navTo(page, /entreprise/i, /\/entreprise/);
     await orgTab(page, /^projets/i).click();
-    await page.waitForURL(/tab=projects/);
+    await page.waitForURL(/\/entreprise\/projects/);
     await switchView(page, 'Liste');
 
     // « Plan de communication » ne dépend de rien mais bloque « Kit presse » :
@@ -123,7 +126,7 @@ test.describe('Entreprise — dépendances et chemin critique (démo)', () => {
   test('Ajout : le sélecteur reste dans le projet, et désactive un lien déjà posé', async ({ demoPage: page }) => {
     await navTo(page, /entreprise/i, /\/entreprise/);
     await orgTab(page, /^projets/i).click();
-    await page.waitForURL(/tab=projects/);
+    await page.waitForURL(/\/entreprise\/projects/);
     await switchView(page, 'Liste');
 
     await page.getByRole('button', { name: /Modifier la tâche Plan de communication/i }).click();
@@ -157,7 +160,7 @@ test.describe('Entreprise — dépendances et chemin critique (démo)', () => {
   test('Écriture : ajouter une dépendance rallonge le chemin critique', async ({ demoPage: page }) => {
     await navTo(page, /entreprise/i, /\/entreprise/);
     await orgTab(page, /^projets/i).click();
-    await page.waitForURL(/tab=projects/);
+    await page.waitForURL(/\/entreprise\/projects/);
 
     const readCritical = async () => {
       await switchView(page, 'Planning');
@@ -200,7 +203,7 @@ test.describe('Entreprise — responsable d’équipe (démo)', () => {
   test('Le responsable est visible par tous, pas seulement par ceux qui peuvent le changer', async ({ demoPage: page }) => {
     await navTo(page, /entreprise/i, /\/entreprise/);
     await orgTab(page, /^membres/i).click();
-    await page.waitForURL(/tab=members/);
+    await page.waitForURL(/\/entreprise\/members/);
 
     // Le seed nomme Marie (Design) et Jean (Dev) responsables.
     await expect(page.getByText('Responsable').first()).toBeVisible({ timeout: 15_000 });
@@ -211,7 +214,7 @@ test.describe('Entreprise — responsable d’équipe (démo)', () => {
   test('Nommer un responsable : plusieurs par équipe, et scopé à cette équipe', async ({ demoPage: page }) => {
     await navTo(page, /entreprise/i, /\/entreprise/);
     await orgTab(page, /^membres/i).click();
-    await page.waitForURL(/tab=members/);
+    await page.waitForURL(/\/entreprise\/members/);
     await expect(page.getByText('Responsable').first()).toBeVisible({ timeout: 15_000 });
 
     const before = await page.getByText('Responsable').count();

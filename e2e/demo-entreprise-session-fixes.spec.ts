@@ -15,8 +15,11 @@ import { test, expect, navTo } from './fixtures';
  * ⚠️ Même précaution que les autres specs entreprise : ancrer les onglets au
  * DÉBUT du libellé (le badge de nouveautés entre dans le nom accessible).
  */
+// Navigation entreprise (2026-09-23) : une section = une route, et un LIEN dans
+// `OrgSideNav`. Ces specs cherchaient encore l'ancien bouton d'onglet et
+// `?tab=` : elles expiraient toutes à 2 min sur `main` depuis `a0470c1a`.
 const orgTab = (page: Page, label: RegExp) =>
-  page.getByRole('button', { name: label }).filter({ visible: true }).first();
+  page.getByRole('navigation', { name: /sections de l.entreprise/i }).getByRole('link', { name: label });
 
 /**
  * La liste de tâches de l'agenda d'un membre est REPLIÉE par défaut sous
@@ -41,7 +44,7 @@ test.describe('Entreprise — correctifs de session (démo)', () => {
     await expect(page.getByRole('heading', { name: /nova studio/i })).toBeVisible({ timeout: 15_000 });
 
     await orgTab(page, /^tâches/i).click();
-    await page.waitForURL(/tab=tasks/);
+    await page.waitForURL(/\/entreprise\/tasks/);
     await expect(page.getByRole('columnheader', { name: 'PROJET', exact: true })).toBeVisible({ timeout: 15_000 });
 
     // Ouvre la première tâche (clic sur la ligne, hors cases à stopPropagation).
@@ -79,7 +82,7 @@ test.describe('Entreprise — correctifs de session (démo)', () => {
     await expect(page.getByRole('heading', { name: /nova studio/i })).toBeVisible({ timeout: 15_000 });
 
     await orgTab(page, /^pyramide/i).click();
-    await page.waitForURL(/tab=pyramid/);
+    await page.waitForURL(/\/entreprise\/pyramid/);
 
     await page.getByRole('button', { name: /afficher la charge/i }).click();
 
@@ -96,7 +99,7 @@ test.describe('Entreprise — correctifs de session (démo)', () => {
     await expect(page.getByRole('heading', { name: /nova studio/i })).toBeVisible({ timeout: 15_000 });
 
     await orgTab(page, /^tâches/i).click();
-    await page.waitForURL(/tab=tasks/);
+    await page.waitForURL(/\/entreprise\/tasks/);
     await expect(page.getByRole('columnheader', { name: 'PROJET', exact: true })).toBeVisible({ timeout: 15_000 });
 
     const actionsBtn = page.getByRole('button', { name: /^Actions pour/ }).first();
@@ -119,7 +122,7 @@ test.describe('Entreprise — correctifs de session (démo)', () => {
     await expect(page.getByRole('heading', { name: /nova studio/i })).toBeVisible({ timeout: 15_000 });
 
     await orgTab(page, /^pyramide/i).click();
-    await page.waitForURL(/tab=pyramid/);
+    await page.waitForURL(/\/entreprise\/pyramid/);
 
     // Menu « Actions pour X » → « Voir son agenda » (pyramid.tsx,
     // onOpenMember(m, 'agenda')) — c'est le chemin réel de la fonctionnalité,
@@ -145,7 +148,7 @@ test.describe('Entreprise — correctifs de session (démo)', () => {
     await expect(page.getByRole('heading', { name: /nova studio/i })).toBeVisible({ timeout: 15_000 });
 
     await orgTab(page, /^statistiques/i).click();
-    await page.waitForURL(/tab=stats/);
+    await page.waitForURL(/\/entreprise\/stats/);
 
     // Sanity : l'onglet a bien rendu (sélecteur de période) avant de vérifier
     // l'absence — sinon un onglet vide donnerait un faux positif.
