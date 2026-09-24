@@ -62,6 +62,38 @@ code de `main` et les dix-neuf commits du jour. Les mesures **contre la producti
 refaites ce jour-là, sauf celles inscrites dans les commits eux-mêmes. Détail dans le second
 tableau ci-dessous.
 
+## Mise à jour du 2026-09-24 · **trois gardes muettes parlent enfin, et une cause de LCP est nommée**
+
+**Aucune note ne bouge dans cette passe**, délibérément : elle a réparé et vérifié, elle n'a pas
+réaudité de domaine. Mais trois angles morts remplissent désormais la condition de remboursement
+posée le 2026-09-22 (**un verdict exploitable rendu en CI**), et la prochaine passe de notes doit
+les créditer, pas les redécouvrir.
+
+| Item | Avant | Mesuré le 2026-09-24 | Angles morts qui deviennent remboursables |
+|---|---|---|---|
+| `C-113` · `Sabotages` | jamais vert | ✅ **premier run vert** (`35967766181`), 11 sabotages vus, arbre intact | Tests AM-1, Sécurité AM-5 |
+| `C-112` · `retention` | plantait à chaque run | ✅ **vert** (`35967769869`), **0 orpheline sur 16 couples** | RGPD AM-3 |
+| `C-114` · `edge-smoke` | n'avait jamais sondé | ✅ **8 sondes sur 8 vertes en CI** (`35967773021`) | Sécurité AM-2 |
+| `C-115` · `Visual` | vert **à vide** depuis le 09-23 | ✅ second défaut corrigé (`git diff` ne voit pas les fichiers non suivis) : le run `35967753986` a **committé 17 références** (`cae20b00`). La première **comparaison** aura lieu au run suivant | UI AM-1 à AM-3, A11y AM-5 : **après la première comparaison**, pas avant |
+| `C-116` · LCP mobile | « lent », cause inconnue | 🔴 **cause nommée** : le prérendu n'est jamais peint, FCP = LCP = premier rendu React (5,4 à 5,8 s sur la prod bridée) | aucun : c'est un défaut produit, correctif à arbitrer ([`PERFORMANCE.md`](./PERFORMANCE.md) § « C-116 ») |
+
+🔴 **Deux faux verts trouvés en chemin, de la même famille que les quatre gardes du 2026-09-03.**
+`Visual` finissait vert en n'ayant rien committé ; et **aucun rapport Lighthouse, desktop ou
+mobile, n'a jamais été archivé** (`upload-artifact` ignore les dossiers cachés par défaut). Dans les
+deux cas l'étape « réussissait » sur une absence.
+
+⚠️ **`main` avait été vert une fois, le 2026-09-23 (`869fb05a`)**, puis la navigation par routes
+de l'espace entreprise l'a remis au rouge : `OrganizationPage.tsx` à 615 lignes
+(`architecture.guard` a mordu) et cinq specs e2e encore écrites pour `?tab=`. Corrigé dans
+`bae4ad99`. Le run CI de ce commit est **en cours** à l'écriture : « `main` vert » n'est pas encore
+une mesure.
+
+**Ce qui reste, dans l'ordre** : lire le run CI de `dc879062` et le premier run `Visual` qui COMPARE ; arbitrer le
+levier 1 de `C-116` (peindre le prérendu) ; décider au registre de la durée des 4 invitations
+d'ami sans compte ([`RGPD.md`](./RGPD.md) AM-3) ; `M-61` (redéployer `report-bug`).
+
+---
+
 ## Mise à jour du 2026-09-22 (soir) · **remesure item par item, onze notes rejouées : +25 net**
 
 Consigne d'Axel : « reprends chaque audit, et pour chaque item marqué, vérifie ce qu'il en est
