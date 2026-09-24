@@ -17,7 +17,32 @@ export interface TeamProject {
    * projet lui-même. null = aucune catégorie.
    */
   categoryId?: string | null;
+  // ─── Pilotage (mig. 152) ───────────────────────────────────────────
+  /** Responsable du projet. null = personne (projet d'avant la mig. 152). */
+  ownerId?: string | null;
+  description?: string | null;
+  /** Dates locales 'YYYY-MM-DD'. */
+  startDate?: string | null;
+  targetDate?: string | null;
+  /** Cycle de vie. Absent = `active` (projet d'avant la mig. 152). */
+  status?: TeamProjectStatus;
+  /** Santé DÉCLARÉE par le responsable, pas calculée. null = jamais déclarée. */
+  health?: ProjectHealth | null;
+  healthNote?: string | null;
+  healthUpdatedAt?: string | null;
+  healthUpdatedBy?: string | null;
+  /** Modèle : sert de point de départ à la duplication, sort du portefeuille. */
+  isTemplate?: boolean;
 }
+
+/** Cycle de vie d'un projet (mig. 152). */
+export type TeamProjectStatus = 'planned' | 'active' | 'on_hold' | 'done';
+
+/** Santé déclarée d'un projet ou d'un KR (mig. 152 et 153). Même vocabulaire. */
+export type ProjectHealth = 'on_track' | 'at_risk' | 'off_track';
+
+/** Rôle d'une personne sur UN projet (mig. 152), en plus de ses droits d'organisation. */
+export type ProjectRole = 'lead' | 'contributor' | 'viewer';
 
 export interface CreateTeamProjectInput {
   name: string;
@@ -25,6 +50,12 @@ export interface CreateTeamProjectInput {
   /** null/absent = projet d'org visible par toute l'entreprise. */
   teamId?: string | null;
   categoryId?: string | null;
+  ownerId?: string | null;
+  description?: string | null;
+  startDate?: string | null;
+  targetDate?: string | null;
+  status?: TeamProjectStatus;
+  isTemplate?: boolean;
 }
 
 /** Patch projet (managers only — RLS team_projects_update, mig. 068). */
@@ -33,6 +64,12 @@ export interface UpdateTeamProjectInput {
   color?: string;
   teamId?: string | null;
   categoryId?: string | null;
+  ownerId?: string | null;
+  description?: string | null;
+  startDate?: string | null;
+  targetDate?: string | null;
+  status?: TeamProjectStatus;
+  isTemplate?: boolean;
   /** true = archiver (archived_at → now), false = désarchiver (→ null). */
   archived?: boolean;
 }
@@ -73,6 +110,10 @@ export interface TeamTask {
    * automatiquement). null = aucune catégorie.
    */
   categoryId?: string | null;
+  /** Date de début locale 'YYYY-MM-DD' (mig. 152) — '' si aucune. */
+  startDate?: string;
+  /** Jalon : une échéance qui compte pour le projet entier (mig. 152). */
+  isMilestone?: boolean;
 }
 
 export interface CreateTeamTaskInput {
@@ -85,6 +126,8 @@ export interface CreateTeamTaskInput {
   assigneeIds?: string[];
   status?: TeamTaskStatus;
   categoryId?: string | null;
+  startDate?: string;
+  isMilestone?: boolean;
 }
 
 /** Champs modifiables — jamais orgId/createdBy (whitelist mapToDb). */
@@ -99,6 +142,8 @@ export interface UpdateTeamTaskInput {
   completed?: boolean;
   status?: TeamTaskStatus;
   categoryId?: string | null;
+  startDate?: string;
+  isMilestone?: boolean;
 }
 
 /** Commentaire sur une tâche d'équipe (journal immuable, mig. 082). */

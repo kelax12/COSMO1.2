@@ -10,6 +10,8 @@ export const createTeamKRSchema = z.object({
   assigneeId: z.string().nullable().optional(),
   weight: z.coerce.number().int().min(1, 'validation.okr.weightMin').max(10, 'validation.okr.weightMax').optional(),
   estimatedTime: z.coerce.number().min(0).max(100000).optional(),
+  progressMode: z.enum(['manual', 'tasks']).optional(),
+  contributorIds: z.array(z.string()).max(20).optional(),
 });
 
 export const createTeamOKRSchema = z.object({
@@ -21,6 +23,9 @@ export const createTeamOKRSchema = z.object({
   // Rattachement d'équipes (cloisonnement) — 20 max par garde-fou.
   teamIds: z.array(z.string()).max(20).optional(),
   keyResults: z.array(createTeamKRSchema).min(1, 'validation.okr.atLeastOneKr').max(10, 'validation.okr.tooManyKrs'),
+  // Mig. 153 — sans ces deux lignes, `z.object` les retirerait sans rien dire.
+  cycleId: z.string().nullable().optional(),
+  parentOkrId: z.string().nullable().optional(),
 });
 
 export const updateTeamOKRSchema = z.object({
@@ -30,6 +35,8 @@ export const updateTeamOKRSchema = z.object({
   startDate: z.string().optional(),
   endDate: z.string().optional(),
   teamIds: z.array(z.string()).max(20).optional(),
+  cycleId: z.string().nullable().optional(),
+  parentOkrId: z.string().nullable().optional(),
 });
 
 export const updateTeamKRSchema = z.object({
@@ -41,4 +48,6 @@ export const updateTeamKRSchema = z.object({
   completed: z.boolean().optional(),
   weight: z.coerce.number().int().min(1).max(10).optional(),
   estimatedTime: z.coerce.number().min(0).max(100000).optional(),
+  progressMode: z.enum(['manual', 'tasks']).optional(),
+  contributorIds: z.array(z.string()).max(20).optional(),
 });

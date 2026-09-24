@@ -18,7 +18,16 @@ export interface TeamKeyResult {
   weight?: number;
   /** Durée estimée par unité (min) — parité avec l'OKR perso. Défaut 30. */
   estimatedTime?: number;
+  /**
+   * `tasks` : la progression se CALCULE par les tâches terminées des projets
+   * reliés (mig. 153) ; `manual` : elle se saisit. Absent = `manual`.
+   */
+  progressMode?: KRProgressMode;
+  /** Contributeurs, en plus du responsable `assigneeId` (mig. 153). */
+  contributorIds?: string[];
 }
+
+export type KRProgressMode = 'manual' | 'tasks';
 
 export interface TeamOKR {
   id: string;
@@ -38,6 +47,10 @@ export interface TeamOKR {
    */
   teamIds: string[];
   keyResults: TeamKeyResult[];
+  /** Cycle d'OKR (T1, S2…) — mig. 153. */
+  cycleId?: string | null;
+  /** Objectif auquel celui-ci CONTRIBUE (un objectif d'entreprise, le plus souvent). */
+  parentOkrId?: string | null;
 }
 
 export interface CreateTeamKRInput {
@@ -49,6 +62,8 @@ export interface CreateTeamKRInput {
   assigneeId?: string | null;
   weight?: number;
   estimatedTime?: number;
+  progressMode?: KRProgressMode;
+  contributorIds?: string[];
 }
 
 /** Entrée de synchronisation d'un KR en édition (id présent = KR existant). */
@@ -65,6 +80,8 @@ export interface CreateTeamOKRInput {
   /** [] ou absent = objectif d'entreprise (toutes équipes). */
   teamIds?: string[];
   keyResults: CreateTeamKRInput[];
+  cycleId?: string | null;
+  parentOkrId?: string | null;
 }
 
 export interface UpdateTeamOKRInput {
@@ -74,6 +91,8 @@ export interface UpdateTeamOKRInput {
   startDate?: string;
   endDate?: string;
   teamIds?: string[];
+  cycleId?: string | null;
+  parentOkrId?: string | null;
 }
 
 export interface UpdateTeamKRInput {
@@ -85,4 +104,6 @@ export interface UpdateTeamKRInput {
   completed?: boolean;
   weight?: number;
   estimatedTime?: number;
+  progressMode?: KRProgressMode;
+  contributorIds?: string[];
 }

@@ -20,6 +20,20 @@ const TEAM_TASK_STATUS_EXHAUSTIVE: Record<TeamTaskStatus, true> = {
 };
 const TEAM_TASK_STATUSES = Object.keys(TEAM_TASK_STATUS_EXHAUSTIVE) as [TeamTaskStatus, ...TeamTaskStatus[]];
 
+// ⚠️ `z.object` RETIRE les clés inconnues sans rien dire : un champ ajouté au
+// type sans être ajouté ici arrive au repository… absent. Les champs de la
+// mig. 152 sont donc déclarés un par un.
+const PROJECT_STATUSES = ['planned', 'active', 'on_hold', 'done'] as const;
+const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).or(z.literal(''));
+const projectPilotFields = {
+  ownerId: z.string().nullable().optional(),
+  description: z.string().max(4000, 'validation.teamProject.descriptionTooLong').nullable().optional(),
+  startDate: isoDate.nullable().optional(),
+  targetDate: isoDate.nullable().optional(),
+  status: z.enum(PROJECT_STATUSES).optional(),
+  isTemplate: z.boolean().optional(),
+};
+
 export const createTeamProjectSchema = z.object({
   name: z.string().trim().min(1, 'validation.teamProject.nameRequired').max(120, 'validation.teamProject.nameTooLong'),
   color: z.string().optional(),
@@ -36,6 +50,7 @@ export const updateTeamProjectSchema = z.object({
   teamId: z.string().nullable().optional(),
   categoryId: z.string().nullable().optional(),
   archived: z.boolean().optional(),
+  ...projectPilotFields,
 });
 
 export const createTeamTaskSchema = z.object({
@@ -48,6 +63,8 @@ export const createTeamTaskSchema = z.object({
   assigneeIds: z.array(z.string()).max(20, 'validation.teamProject.tooManyAssignees').optional(),
   status: z.enum(TEAM_TASK_STATUSES).optional(),
   categoryId: z.string().nullable().optional(),
+  startDate: isoDate.optional(),
+  isMilestone: z.boolean().optional(),
 });
 
 export const updateTeamTaskSchema = createTeamTaskSchema.partial().extend({

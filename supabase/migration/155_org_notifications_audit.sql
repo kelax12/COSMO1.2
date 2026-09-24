@@ -575,7 +575,117 @@ DROP POLICY IF EXISTS "org_weekly_reviews_delete" ON public.org_weekly_reviews;
 CREATE POLICY "org_weekly_reviews_delete" ON public.org_weekly_reviews FOR DELETE
   USING (created_by = (SELECT auth.uid()));
 
+-- ─── 7 · Boîte de réception : les nouveaux champs ──────────────────
+--
+-- Reprise de `get_my_org_inbox` (mig. 142) à l'identique, sauf quatre
+-- colonnes de notification ajoutées : sans elles, un avis « projet à risque »
+-- ou « créneau posé dans votre agenda » arriverait sans dire QUOI.
+
+CREATE OR REPLACE FUNCTION public.get_my_org_inbox()
+RETURNS jsonb
+LANGUAGE sql
+STABLE
+SECURITY INVOKER
+SET search_path = public
+AS $fn$
+WITH me AS MATERIALIZED (
+  SELECT (SELECT auth.uid()) AS uid
+),
+-- Ma demande d'adhesion en attente. `user_id = uid` est un filtre METIER,
+-- pas un doublon de la RLS : cf. l'en-tete de la mig. 129.
+mine AS (
+  SELECT r.id, r.org_id, r.user_id, r.requested_at
+  FROM organization_join_requests r, me
+  WHERE r.user_id = me.uid
+    AND r.accepted_at IS NULL
+    AND r.rejected_at IS NULL
+  ORDER BY r.requested_at DESC
+  LIMIT 1
+),
+-- Vue admin : les demandes adressees aux organisations que j'administre.
+admin_reqs AS (
+  SELECT r.id, r.org_id, r.user_id, r.requested_at,
+         row_number() OVER (PARTITION BY r.org_id ORDER BY r.requested_at ASC) AS rn
+  FROM organization_join_requests r
+  WHERE r.accepted_at IS NULL
+    AND r.rejected_at IS NULL
+    AND is_org_admin(r.org_id)
+),
+notifs AS (
+  SELECT n.id, n.org_id, n.actor_id, n.kind, n.task_id, n.read_at, n.created_at,
+         n.project_id, n.kr_id, n.event_id, n.meta,
+         row_number() OVER (PARTITION BY n.org_id ORDER BY n.created_at DESC) AS rn
+  FROM org_notifications n, me
+  WHERE n.user_id = me.uid
+)
+SELECT jsonb_build_object(
+  'invitations', COALESCE((
+    SELECT jsonb_agg(to_jsonb(i) ORDER BY i.created_at DESC)
+    FROM public.get_my_org_invitations() i
+  ), '[]'::jsonb),
+
+  'removal_notices', COALESCE((
+    SELECT jsonb_agg(to_jsonb(n) ORDER BY n.created_at DESC)
+    FROM public.get_my_org_removal_notices() n
+  ), '[]'::jsonb),
+
+  'my_join_request', (
+    SELECT to_jsonb(m) FROM mine m
+  ),
+
+  'join_requests', COALESCE((
+    SELECT jsonb_agg(jsonb_build_object(
+             'id', a.id,
+             'org_id', a.org_id,
+             'user_id', a.user_id,
+             'requested_at', a.requested_at,
+             'requester_name', COALESCE(p.display_name, split_part(p.email, '@', 1)),
+             'requester_email', p.email
+           ) ORDER BY a.org_id, a.requested_at ASC)
+    FROM admin_reqs a
+    LEFT JOIN profiles p ON p.id = a.user_id
+    WHERE a.rn <= 200
+  ), '[]'::jsonb),
+
+  'notifications', COALESCE((
+    SELECT jsonb_agg(jsonb_build_object(
+             'id', x.id,
+             'org_id', x.org_id,
+             'actor_id', x.actor_id,
+             'kind', x.kind,
+             'task_id', x.task_id,
+             'project_id', x.project_id,
+             'kr_id', x.kr_id,
+             'event_id', x.event_id,
+             'meta', x.meta,
+             'read_at', x.read_at,
+             'created_at', x.created_at
+           ) ORDER BY x.org_id, x.created_at DESC)
+    FROM notifs x
+    WHERE x.rn <= 50
+  ), '[]'::jsonb),
+
+  -- Section ajoutee par la mig. 142 : de quoi peindre la pastille sans lire la
+  -- liste des taches d'equipe.
+  'badge_tasks', COALESCE((
+    SELECT jsonb_agg(jsonb_build_object(
+             'org_id', b.org_id,
+             'id', b.id,
+             'name', b.name,
+             'created_at', b.created_at,
+             'kind', b.kind
+           ) ORDER BY b.org_id, b.created_at DESC)
+    FROM public.my_org_badge_tasks() b
+  ), '[]'::jsonb)
+);
+$fn$;
+
+REVOKE ALL ON FUNCTION public.get_my_org_inbox() FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.get_my_org_inbox() FROM anon;
+GRANT EXECUTE ON FUNCTION public.get_my_org_inbox() TO authenticated;
+
 COMMIT;
+
 
 -- ═══════════════════════════════════════════════════════════════════
 -- VÉRIFICATION APRÈS APPLICATION

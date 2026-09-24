@@ -12,6 +12,7 @@
 import { supabase } from '@/lib/supabase';
 import { fetchInChunks } from '@/lib/in-chunks';
 import { warnIfTruncated } from '@/lib/pagination.warning';
+import { fetchAllPages } from '@/lib/fetch-all-pages';
 import { getCurrentUserId } from '@/lib/auth-user';
 import { makeApiError, normalizeApiError } from '@/lib/normalizeApiError';
 import { IOrganizationsRepository } from './repository';
@@ -36,12 +37,17 @@ interface OrgRow {
   avatar_url: string | null;
 }
 
+/** Borne de sécurité de l'annuaire (M1) : la page annuaire pagine à l'affichage. */
+const MEMBERS_MAX = 5000;
+
 interface MemberRow {
   org_id: string;
   user_id: string;
   role: OrgRole;
   joined_at: string;
   manager_id: string | null;
+  suspended_at?: string | null;
+  access_expires_at?: string | null;
 }
 
 interface ProfileRow {
@@ -109,14 +115,21 @@ export class SupabaseOrganizationsRepository implements IOrganizationsRepository
     // Capture locale : le narrowing de `supabase` ne survit pas au passage
     // dans la closure de `fetchInChunks`.
     const db = supabase;
-    const { data: rows, error } = await supabase
-      .from('organization_members')
-      .select('*')
-      .eq('org_id', orgId)
-      .order('joined_at', { ascending: true })
-      .limit(500);
-    if (error) throw normalizeApiError(error);
-    const members = warnIfTruncated((rows ?? []) as MemberRow[], 500, 'org_members');
+    // M1 (audit 2026-09-23) : le plafond était 500, en dessous d'une seule
+    // entreprise moyenne. Et un `.limit` plus haut ne suffit pas : PostgREST
+    // borne en silence chaque réponse à son `max-rows` (1 000 sur Supabase).
+    const rows = await fetchAllPages<MemberRow>(async (from, to) => {
+      const { data, error } = await db
+        .from('organization_members')
+        .select('*')
+        .eq('org_id', orgId)
+        .order('joined_at', { ascending: true })
+        .order('user_id', { ascending: true })
+        .range(from, to);
+      if (error) throw normalizeApiError(error);
+      return (data ?? []) as MemberRow[];
+    }, 1000, MEMBERS_MAX);
+    const members = warnIfTruncated(rows, MEMBERS_MAX, 'org_members');
     if (members.length === 0) return [];
 
     // Enrichir depuis profiles (nom/avatar sanitizés — jamais raw metadata).
@@ -142,6 +155,8 @@ export class SupabaseOrganizationsRepository implements IOrganizationsRepository
         role: m.role,
         joinedAt: m.joined_at,
         managerId: m.manager_id,
+        suspendedAt: m.suspended_at ?? null,
+        accessExpiresAt: m.access_expires_at ?? null,
         displayName: p?.display_name ?? p?.email?.split('@')[0] ?? 'Membre',
         email: p?.email ?? undefined,
         avatar: p?.avatar_url ?? undefined,

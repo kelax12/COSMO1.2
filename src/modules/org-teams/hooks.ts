@@ -6,7 +6,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from '@/lib/toast';
 import { getOrgTeamsRepository } from '@/lib/repository.factory';
 import { orgTeamKeys } from './constants';
-import type { CreateOrgTeamInput } from './types';
+import type { CreateOrgTeamInput, DeleteOrgTeamOptions, UpdateOrgTeamInput } from './types';
 import { translator } from '@/i18n/useT';
 
 const useRepo = () => getOrgTeamsRepository();
@@ -48,13 +48,39 @@ export const useDeleteOrgTeam = (orgId: string) => {
   const queryClient = useQueryClient();
   const repository = useRepo();
   return useMutation({
-    mutationFn: (teamId: string) => repository.deleteTeam(teamId),
+    mutationFn: ({ teamId, ...options }: { teamId: string } & DeleteOrgTeamOptions) =>
+      repository.deleteTeam(teamId, options),
     onSuccess: () => {
       toast.success(translator('errors').t('success.teamDeleted'));
       queryClient.invalidateQueries({ queryKey: orgTeamKeys.teams(orgId) });
       queryClient.invalidateQueries({ queryKey: orgTeamKeys.members(orgId) });
+      // Les projets et OKR ont pu changer d'équipe (mig. 151).
+      queryClient.invalidateQueries({ queryKey: ['team-projects'] });
+      queryClient.invalidateQueries({ queryKey: ['team-okrs'] });
     },
     onError: (error: Error) => toast.error(translator('errors').t('mutation.deleteTeam', { message: error.message })),
+  });
+};
+
+/** Ce qu'une suppression d'équipe emporterait : lu à l'ouverture de la confirmation. */
+export const useTeamDeletionImpact = (teamId: string | null) => {
+  const repository = useRepo();
+  return useQuery({
+    queryKey: [...orgTeamKeys.all, 'deletion-impact', teamId ?? ''] as const,
+    queryFn: () => repository.getTeamDeletionImpact(teamId as string),
+    enabled: !!teamId,
+    staleTime: 0,
+  });
+};
+
+export const useUpdateOrgTeam = (orgId: string) => {
+  const queryClient = useQueryClient();
+  const repository = useRepo();
+  return useMutation({
+    mutationFn: ({ teamId, input }: { teamId: string; input: UpdateOrgTeamInput }) =>
+      repository.updateTeam(teamId, input),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: orgTeamKeys.teams(orgId) }),
+    onError: (error: Error) => toast.error(translator('errors').t('mutation.updateTeam', { message: error.message })),
   });
 };
 

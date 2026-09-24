@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
+  orgItemPath,
   readEntityParam,
   buildOrgLink,
   isOrgPath,
@@ -83,6 +84,13 @@ describe('orgSectionPath / isOrgPath', () => {
     expect(isOrgPath('/entreprise/okr')).toBe(true);
     expect(isOrgPath('/entreprise/onboarding')).toBe(false);
     expect(isOrgPath('/entreprise/okr/x')).toBe(false);
+    // Pages par objet (M7) : projets et équipes seulement, id bien formé.
+    expect(isOrgPath('/entreprise/projects/abc-123')).toBe(true);
+    expect(isOrgPath('/entreprise/teams/t1')).toBe(true);
+    expect(isOrgPath('/entreprise/projects/a/b')).toBe(false);
+    expect(isOrgPath('/entreprise/projects/<x>')).toBe(false);
+    expect(isOrgPath('/entreprise/teams')).toBe(true);
+    expect(isOrgPath('/entreprise/settings')).toBe(true);
     expect(isOrgPath('/entreprise//evil.com')).toBe(false);
   });
 });
@@ -109,5 +117,16 @@ describe('legacyOrgTabRedirect', () => {
   it('renvoie un onglet inconnu ou « overview » sur l\x27aperçu', () => {
     expect(legacyOrgTabRedirect(new URLSearchParams('?tab=overview'))).toBe('/entreprise');
     expect(legacyOrgTabRedirect(new URLSearchParams('?tab=nope&task=a'))).toBe('/entreprise?task=a');
+  });
+});
+
+describe('orgItemPath', () => {
+  it('construit la page d un projet ou d une equipe', () => {
+    expect(orgItemPath('projects', 'p1')).toBe('/entreprise/projects/p1');
+    expect(orgItemPath('teams', 'team-dev')).toBe('/entreprise/teams/team-dev');
+  });
+
+  it('refuse un identifiant qui serait un chemin', () => {
+    expect(orgItemPath('projects', '../admin')).toBe('/entreprise/projects');
   });
 });
