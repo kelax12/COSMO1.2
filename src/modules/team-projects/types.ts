@@ -239,6 +239,29 @@ export interface TeamTaskFilters {
    * 1 000 autres, et calculait les chiffres sur un extrait.
    */
   openOrCompletedSince?: string;
+  /**
+   * Lectures ciblées de l'Aperçu (audit du 2026-09-24) : chaque bloc demande au
+   * serveur SES lignes au lieu de lire toute l'organisation pour en garder
+   * quelques-unes. Tous ces filtres s'appliquent AVANT le plafond.
+   */
+  /** Tâches précises (noms du fil d'activité, tâches qui attendent les miennes). */
+  ids?: string[];
+  createdBy?: string;
+  status?: TeamTaskStatus;
+  /** Échéance ≥ cette date locale 'YYYY-MM-DD'. */
+  deadlineFrom?: string;
+  /** Créées depuis cet instant (ISO). */
+  createdSince?: string;
+  /** Tri serveur : création décroissante (défaut) ou échéance croissante. */
+  orderBy?: 'created' | 'deadline';
+  /** Plafond propre à la lecture, borné par `TEAM_TASKS_READ_LIMIT`. */
+  limit?: number;
+  /**
+   * Recherche dans l'intitulé (palette Ctrl+K), insensible à la casse, faite
+   * par le SERVEUR : la palette cherchait dans le cache des 1 000 dernières
+   * tâches, donc une tâche plus ancienne était introuvable.
+   */
+  search?: string;
 }
 
 /** Sous-tâche d'une tâche d'équipe (mig. 092) — un seul niveau, pas de récursion. */

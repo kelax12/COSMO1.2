@@ -190,6 +190,32 @@ describe('SupabaseTeamProjectsRepository — tâches', () => {
     expect(methods.indexOf('or')).toBeLessThan(methods.indexOf('limit'));
   });
 
+  // Aperçu (2026-09-24) : « mes tâches » ne doit plus dépendre du plafond de
+  // l'ORGANISATION. Chaque filtre part au serveur, avant le `limit`.
+  it('getTasks: lectures ciblées de l Aperçu, filtres serveur puis tri et plafond propres', async () => {
+    supabaseMock.queueRpc('get_my_team_tasks', { data: [] });
+    await repo.getTasks('org1', {
+      assigneeId: 'me', createdBy: 'me', status: 'review', deadlineFrom: '2026-09-24',
+      createdSince: '2026-09-10T00:00:00.000Z', ids: ['a', 'b'], orderBy: 'deadline', limit: 30,
+    });
+    expect(supabaseMock.argsOf('get_my_team_tasks', 'contains')).toEqual(['assignee_ids', ['me']]);
+    expect(supabaseMock.argsOf('get_my_team_tasks', 'in')).toEqual(['id', ['a', 'b']]);
+    expect(supabaseMock.argsOf('get_my_team_tasks', 'gte')).toEqual(['deadline', '2026-09-24']);
+    expect(supabaseMock.argsOf('get_my_team_tasks', 'order')).toEqual(['deadline', { ascending: true }]);
+    expect(supabaseMock.argsOf('get_my_team_tasks', 'limit')).toEqual([30]);
+    const methods = supabaseMock.callsFor('get_my_team_tasks').map((c) => c.method);
+    expect(methods.indexOf('contains')).toBeLessThan(methods.indexOf('limit'));
+  });
+
+  it('getTasks: ids vide ne part pas au serveur ; la recherche échappe les jokers ILIKE', async () => {
+    expect(await repo.getTasks('org1', { ids: [] })).toEqual([]);
+    expect(supabaseMock.rpcCalls).toHaveLength(0);
+
+    supabaseMock.queueRpc('get_my_team_tasks', { data: [] });
+    await repo.getTasks('org1', { search: '50%_off', limit: 8 });
+    expect(supabaseMock.argsOf('get_my_team_tasks', 'ilike')).toEqual(['name', '%50\\%\\_off%']);
+  });
+
   it('getTasks: sans openOrCompletedSince, aucun or= (lecture complète inchangée)', async () => {
     supabaseMock.queueRpc('get_my_team_tasks', { data: [] });
     await repo.getTasks('org1');

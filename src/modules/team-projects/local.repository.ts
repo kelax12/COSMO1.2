@@ -206,7 +206,16 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
   }
 
   async getTasks(orgId: string, filters?: TeamTaskFilters): Promise<TeamTask[]> {
-    return this.getTasksArray().filter((tk) => {
+    // Mêmes filtres, même tri et même plafond que le serveur : la démo doit
+    // montrer ce que la production montrerait, lectures ciblées comprises.
+    const ids = filters?.ids ? new Set(filters.ids) : null;
+    const matched = this.getTasksArray().filter((tk) => {
+      if (ids && !ids.has(tk.id)) return false;
+      if (filters?.createdBy && tk.createdBy !== filters.createdBy) return false;
+      if (filters?.status && tk.status !== filters.status) return false;
+      if (filters?.deadlineFrom && (!tk.deadline || tk.deadline < filters.deadlineFrom)) return false;
+      if (filters?.createdSince && tk.createdAt < filters.createdSince) return false;
+      if (filters?.search && !tk.name.toLowerCase().includes(filters.search.toLowerCase())) return false;
       if (tk.orgId !== orgId) return false;
       if (filters?.projectId && tk.projectId !== filters.projectId) return false;
       if (filters?.assigneeId && !tk.assigneeIds.includes(filters.assigneeId)) return false;
@@ -219,6 +228,12 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
       }
       return true;
     });
+    // Sans tri ni plafond demandés, l'ordre historique de la démo est gardé.
+    if (!filters?.orderBy && !filters?.limit) return matched;
+    const sorted = filters.orderBy === 'deadline'
+      ? [...matched].sort((a, b) => (a.deadline ?? '').localeCompare(b.deadline ?? ''))
+      : [...matched].sort((a, b) => (a.createdAt > b.createdAt ? -1 : 1));
+    return filters.limit ? sorted.slice(0, filters.limit) : sorted;
   }
 
   async createTask(orgId: string, input: CreateTeamTaskInput): Promise<TeamTask> {

@@ -21,6 +21,7 @@ import {
   FolderKanban,
   UserRound,
   UsersRound,
+  Building2,
 } from 'lucide-react';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { useDarkMode } from '@/hooks/useDarkMode';
@@ -34,7 +35,7 @@ import { useActiveOrganization, useOrgMembers } from '@/modules/organizations';
 import { useOrgTeams } from '@/modules/org-teams';
 import { useTeamOKRs } from '@/modules/team-okrs';
 import { buildOrgLink } from '@/components/organization/deep-link.helpers';
-import { useTeamTasks, useTeamProjects } from '@/modules/team-projects';
+import { useTeamTaskSlice, useTeamProjects } from '@/modules/team-projects';
 import { formatDate } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
 import { useModalA11y } from '@/hooks/use-modal-a11y';
@@ -71,7 +72,21 @@ const DataResults: React.FC<{ query: string; onDone: () => void }> = ({ query, o
   // Périmètre équipe (#8 v2) : tâches et projets de l'org active — hooks
   // no-op (enabled: !!orgId) pour un utilisateur sans entreprise.
   const { activeOrg } = useActiveOrganization();
-  const { data: teamTasks = [] } = useTeamTasks(activeOrg?.id);
+  // Tâches d'équipe : recherche SERVEUR, au-delà du plafond de lecture. La
+  // palette cherchait dans le cache des 1 000 dernières tâches créées (et
+  // déclenchait cette lecture complète à la première frappe) : une tâche plus
+  // ancienne était introuvable. 250 ms d'attente : une requête par pause de
+  // frappe, pas une par touche.
+  const [serverQuery, setServerQuery] = useState(query.trim());
+  useEffect(() => {
+    const id = window.setTimeout(() => setServerQuery(query.trim()), 250);
+    return () => window.clearTimeout(id);
+  }, [query]);
+  const { data: teamTasks = [] } = useTeamTaskSlice(
+    activeOrg?.id,
+    { search: serverQuery, limit: MAX_DATA_RESULTS },
+    { enabled: serverQuery.length >= 2 },
+  );
   const { data: teamProjects = [] } = useTeamProjects(activeOrg?.id);
   // Périmètre entreprise élargi : membres, équipes et OKR d'équipe étaient les
   // seules entités de /entreprise introuvables au clavier.
@@ -97,10 +112,9 @@ const DataResults: React.FC<{ query: string; onDone: () => void }> = ({ query, o
     () => okrs.filter((o) => normalize(o.title).includes(q)).slice(0, MAX_DATA_RESULTS),
     [okrs, q]
   );
-  const matchedTeamTasks = useMemo(
-    () => teamTasks.filter((t) => normalize(t.name).includes(q)).slice(0, MAX_DATA_RESULTS),
-    [teamTasks, q]
-  );
+  // Déjà filtrées par le serveur : les refiltrer ici avec la normalisation
+  // sans accents ferait disparaître un résultat serveur exact.
+  const matchedTeamTasks = teamTasks;
   const matchedTeamProjects = useMemo(
     () => teamProjects.filter((p) => !p.archivedAt && normalize(p.name).includes(q)).slice(0, MAX_DATA_RESULTS),
     [teamProjects, q]
@@ -246,6 +260,8 @@ export function CommandPalette() {
   const navigate = useNavigate();
   const { logout, isAuthenticated } = useAuth();
   const { theme, setTheme } = useDarkMode();
+  const { activeOrg } = useActiveOrganization();
+  const hasOrg = isAuthenticated && !!activeOrg;
 
   const commands: PaletteCommand[] = useMemo(() => {
     const nav = (path: string, state?: Record<string, boolean>) => () => {
@@ -268,6 +284,19 @@ export function CommandPalette() {
       { id: 'pref-theme-gris', label: ov.t('palette.themeGrey'), group: ov.t('palette.groupPreferences'), icon: <Circle size={16} />, run: () => { setTheme('gris'); setIsOpen(false); }, keywords: ['theme', 'gris', 'graphite', 'github'] },
       { id: 'pref-theme-noir', label: ov.t('palette.themeBlack'), group: ov.t('palette.groupPreferences'), icon: <MoonStar size={16} />, run: () => { setTheme('noir'); setIsOpen(false); }, keywords: ['theme', 'noir', 'oled', 'amoled', 'monochrome'] },
     ];
+    // Sections de l'espace entreprise (M7) : atteignables au clavier depuis
+    // n'importe quelle page, pour qui appartient à une organisation.
+    if (hasOrg) {
+      const org = ov.t('palette.groupOrg');
+      base.push(
+        { id: 'org-overview', label: ov.t('palette.goOrgOverview'), group: org, icon: <Building2 size={16} />, run: nav(buildOrgLink('overview')), keywords: ['entreprise', 'company', 'aperçu', 'overview', 'mon travail'] },
+        { id: 'org-tasks', label: ov.t('palette.goOrgTasks'), group: org, icon: <CheckSquare size={16} />, run: nav(buildOrgLink('tasks')), keywords: ['entreprise', 'company', 'tâches', 'tasks'] },
+        { id: 'org-projects', label: ov.t('palette.goOrgProjects'), group: org, icon: <FolderKanban size={16} />, run: nav(buildOrgLink('projects')), keywords: ['entreprise', 'company', 'projets', 'projects'] },
+        { id: 'org-okr', label: ov.t('palette.goOrgOkr'), group: org, icon: <Target size={16} />, run: nav(buildOrgLink('okr')), keywords: ['entreprise', 'company', 'okr', 'objectifs'] },
+        { id: 'org-members', label: ov.t('palette.goOrgMembers'), group: org, icon: <UsersRound size={16} />, run: nav(buildOrgLink('members')), keywords: ['entreprise', 'company', 'membres', 'members', 'équipes', 'teams', 'inviter'] },
+        { id: 'org-settings', label: ov.t('palette.goOrgSettings'), group: org, icon: <SettingsIcon size={16} />, run: nav(buildOrgLink('settings')), keywords: ['entreprise', 'company', 'paramètres', 'settings', 'profil', 'quitter', 'supprimer'] },
+      );
+    }
     if (isAuthenticated) {
       base.push(
         {
@@ -332,7 +361,7 @@ export function CommandPalette() {
     }
     return base;
     // `t` en dépendance : toutes les commandes portent un libellé traduit.
-  }, [navigate, setTheme, logout, isAuthenticated, t]);
+  }, [navigate, setTheme, logout, isAuthenticated, hasOrg, t]);
 
   // Filtrage manuel : substring insensible aux accents sur label + keywords.
   const filteredCommands = useMemo(() => {

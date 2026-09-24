@@ -175,6 +175,8 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
     // filtre par `can_access_team_project(project_id)`, non indexable. Les filtres
     // applicatifs restent côté PostgREST — ils s'appliquent au résultat d'une RPC
     // `SETOF` exactement comme à une table.
+    // Aucun identifiant demandé : rien à lire, aucune requête.
+    if (filters?.ids && filters.ids.length === 0) return [];
     let query = supabase.rpc('get_my_team_tasks', { p_org: orgId }).select('*');
     if (filters?.projectId) query = query.eq('project_id', filters.projectId);
     if (filters?.assigneeId) query = query.contains('assignee_ids', [filters.assigneeId]);
@@ -184,11 +186,26 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
     if (filters?.openOrCompletedSince) {
       query = query.or(`completed.eq.false,completed_at.gte."${filters.openOrCompletedSince}"`);
     }
-    const { data, error } = await query.order('created_at', { ascending: false }).limit(TEAM_TASKS_READ_LIMIT);
+    if (filters?.ids) query = query.in('id', filters.ids);
+    if (filters?.createdBy) query = query.eq('created_by', filters.createdBy);
+    if (filters?.status) query = query.eq('status', filters.status);
+    if (filters?.deadlineFrom) query = query.gte('deadline', filters.deadlineFrom);
+    if (filters?.createdSince) query = query.gte('created_at', filters.createdSince);
+    // `%`, `_` et `\` sont des jokers d'ILIKE : échappés, ils cherchent
+    // littéralement ce qu'on a tapé.
+    if (filters?.search) query = query.ilike('name', `%${filters.search.replace(/[\\%_]/g, (c) => `\\${c}`)}%`);
+    const limit = Math.min(filters?.limit ?? TEAM_TASKS_READ_LIMIT, TEAM_TASKS_READ_LIMIT);
+    const ordered = filters?.orderBy === 'deadline'
+      ? query.order('deadline', { ascending: true })
+      : query.order('created_at', { ascending: false });
+    const { data, error } = await ordered.limit(limit);
     if (error) throw normalizeApiError(error);
     // Reco #20 : la limite 1000 était silencieuse — au-delà, on prévient
     // (console dev + toast une fois par session) au lieu de tronquer sans bruit.
-    return warnIfTruncated((data ?? []) as unknown as TaskRow[], TEAM_TASKS_READ_LIMIT, 'team_tasks').map(mapTask);
+    // Une lecture à plafond propre (« les 20 prochaines échéances ») est
+    // tronquée PAR CONSTRUCTION : elle ne doit pas déclencher l'avertissement.
+    const rows = (data ?? []) as unknown as TaskRow[];
+    return (filters?.limit ? rows : warnIfTruncated(rows, TEAM_TASKS_READ_LIMIT, 'team_tasks')).map(mapTask);
   }
 
   async createTask(orgId: string, input: CreateTeamTaskInput): Promise<TeamTask> {
