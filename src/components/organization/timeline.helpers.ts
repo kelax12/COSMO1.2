@@ -1,15 +1,12 @@
 // ═══════════════════════════════════════════════════════════════════
 // Vue chronologique de l'onglet Projets
 //
-// ⚠️ Ce n'est PAS un Gantt, et c'est délibéré. Un Gantt suppose que chaque
-// tâche a un DÉBUT et une FIN ; `TeamTask` ne porte qu'une `deadline`. Dessiner
-// des barres reviendrait à inventer les dates de début — l'écran aurait l'air
-// d'un plan de charge alors qu'il n'en aurait pas la donnée, et on prendrait
-// des décisions dessus.
-//
-// On trace donc ce qu'on sait vraiment : QUAND les choses sont dues, par
-// projet (ou par personne). Le jour où `TeamTask` gagne une date de début,
-// cette même structure accueille de vraies barres sans rien changer d'autre.
+// Depuis la mig. 153 (M2), une tâche porte une date de DÉBUT (`startDate`) et
+// un projet ses dates de début et de fin : la frise trace alors de vraies
+// barres. Elle ne les INVENTE toujours pas : une tâche sans début reste un
+// point à son échéance, un projet sans dates n'a pas de bandeau. C'était la
+// règle de départ (« dessiner des barres reviendrait à inventer les dates de
+// début ») et elle tient : on ne dessine que la donnée qu'on a.
 // ═══════════════════════════════════════════════════════════════════
 
 import {
@@ -17,7 +14,7 @@ import {
   format, startOfMonth, endOfMonth, addMonths,
 } from 'date-fns';
 import { getDateLocale } from '@/i18n/format';
-import type { TeamTask, TeamProject } from '@/modules/team-projects';
+import type { TeamTask, TeamProject, TeamProjectMilestone } from '@/modules/team-projects';
 
 /** Fenêtre affichée par la vue chronologique. */
 export interface TimelineRange {
@@ -42,20 +39,39 @@ export interface TimelineMonthBand {
   widthPercent: number;
 }
 
-/** Un jalon = une tâche datée, positionnée dans la fenêtre. */
+/** Une tâche datée, positionnée dans la fenêtre. */
 export interface TimelineMarker {
   task: TeamTask;
-  /** Position en % depuis le début de la fenêtre (0..100). */
+  /** Position de l'échéance en % depuis le début de la fenêtre (0..100). */
   offsetPercent: number;
+  /**
+   * Position du DÉBUT (mig. 153), si la tâche en a un : la tâche est alors une
+   * barre de `startOffsetPercent` à `offsetPercent`. `null` = un point.
+   */
+  startOffsetPercent: number | null;
   overdue: boolean;
 }
 
-/** Une ligne = un projet, ses jalons datés et ses tâches sans date. */
+/** Bandeau d'un projet daté (mig. 153), de son début à sa fin. */
+export interface TimelineSpan {
+  startPercent: number;
+  endPercent: number;
+}
+
+/** Jalon de projet (mig. 153) placé sur la ligne du projet. */
+export interface TimelineMilestoneMark {
+  milestone: TeamProjectMilestone;
+  offsetPercent: number;
+}
+
+/** Une ligne = un projet, ses tâches datées et ses tâches sans date. */
 export interface TimelineRow {
   project: TeamProject;
   markers: TimelineMarker[];
   /** Tâches ouvertes du projet sans échéance — jamais des jalons fantômes. */
   unscheduled: TeamTask[];
+  span: TimelineSpan | null;
+  milestones: TimelineMilestoneMark[];
 }
 
 /** Une ligne « par personne » — mêmes jalons, groupés par assigné plutôt que par projet. */
@@ -90,10 +106,17 @@ const MIN_WEEKS = 4;
  * démarrer les semaines le dimanche en anglais et décalerait les colonnes d'un
  * utilisateur à l'autre pour les mêmes données.
  */
-export function timelineRange(tasks: TeamTask[], now: Date = new Date()): TimelineRange {
-  const dates = tasks
-    .filter((t) => !t.completed)
-    .map((t) => parse(t.deadline))
+export function timelineRange(
+  tasks: TeamTask[],
+  now: Date = new Date(),
+  /** Dates de projets et de jalons (mig. 153), pour que « Tout » les couvre. */
+  extraDates: (string | null | undefined)[] = [],
+): TimelineRange {
+  const dates = [
+    ...tasks.filter((t) => !t.completed).flatMap((t) => [t.deadline, t.startDate]),
+    ...extraDates,
+  ]
+    .map((d) => parse(d))
     .filter((d): d is Date => d !== null);
 
   const start = startOfWeek(
@@ -137,11 +160,15 @@ export function timelineWindow(fullRange: TimelineRange, zoom: TimelineZoom, now
   return { start, end, days: Math.max(1, differenceInCalendarDays(end, start)) };
 }
 
-/** true si la tâche n'a pas de date, ou si sa date tombe dans la fenêtre. */
+/**
+ * true si la tâche n'a pas de date, ou si elle CROISE la fenêtre : une barre
+ * commencée avant la fenêtre et finie après reste visible, rognée aux bords.
+ */
 export function inWindowOrUnscheduled(task: TeamTask, range: TimelineRange): boolean {
   const d = parse(task.deadline);
   if (!d) return true;
-  return d >= range.start && d <= range.end;
+  const start = parse(task.startDate) ?? d;
+  return start <= range.end && d >= range.start;
 }
 
 /** Colonnes hebdomadaires de l'en-tête. */
@@ -187,6 +214,25 @@ export function timelineMonths(range: TimelineRange): TimelineMonthBand[] {
 const markerOffset = (d: Date, range: TimelineRange): number =>
   Math.max(0, Math.min(100, (differenceInCalendarDays(d, range.start) / range.days) * 100));
 
+/** Marqueur d'une tâche datée : un point, ou une barre si elle a un début. */
+function markerOf(task: TeamTask, deadline: Date, range: TimelineRange, todayStart: Date): TimelineMarker {
+  const start = parse(task.startDate);
+  return {
+    task,
+    offsetPercent: markerOffset(deadline, range),
+    startOffsetPercent: start && start <= deadline ? markerOffset(start, range) : null,
+    overdue: deadline < todayStart,
+  };
+}
+
+/** Bandeau d'un projet : seulement s'il a DEUX dates et qu'il croise la fenêtre. */
+export function projectSpan(project: TeamProject, range: TimelineRange): TimelineSpan | null {
+  const start = parse(project.startDate);
+  const end = parse(project.dueDate);
+  if (!start || !end || end < range.start || start > range.end) return null;
+  return { startPercent: markerOffset(start, range), endPercent: markerOffset(end, range) };
+}
+
 /**
  * Construit les lignes de la timeline : un projet actif par ligne, ses tâches
  * ouvertes en jalons (datées) ou en compteur « sans date ».
@@ -201,6 +247,7 @@ export function timelineRows(
   projects: TeamProject[],
   range: TimelineRange,
   now: Date = new Date(),
+  milestones: TeamProjectMilestone[] = [],
 ): TimelineRow[] {
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
@@ -213,12 +260,19 @@ export function timelineRows(
         if (task.projectId !== project.id || task.completed) continue;
         const d = parse(task.deadline);
         if (!d) { unscheduled.push(task); continue; }
-        markers.push({ task, offsetPercent: markerOffset(d, range), overdue: d < todayStart });
+        markers.push(markerOf(task, d, range, todayStart));
       }
       markers.sort((a, b) => a.offsetPercent - b.offsetPercent);
-      return { project, markers, unscheduled };
+      const marks = milestones
+        .filter((m) => m.projectId === project.id)
+        .map((m) => ({ m, d: parse(m.dueDate) }))
+        .filter((x): x is { m: TeamProjectMilestone; d: Date } => !!x.d && x.d >= range.start && x.d <= range.end)
+        .map(({ m, d }) => ({ milestone: m, offsetPercent: markerOffset(d, range) }));
+      return { project, markers, unscheduled, span: projectSpan(project, range), milestones: marks };
     })
-    .filter((row) => row.markers.length > 0 || row.unscheduled.length > 0);
+    // Un projet daté ou jalonné garde sa ligne même sans tâche ouverte : c'est
+    // un engagement du portefeuille, pas une ligne vide.
+    .filter((row) => row.markers.length > 0 || row.unscheduled.length > 0 || row.span !== null || row.milestones.length > 0);
 }
 
 /**
@@ -248,7 +302,7 @@ export function timelineRowsByAssignee(
     for (const id of ids) {
       const row = ensure(id);
       if (!d) { row.unscheduled.push(task); continue; }
-      row.markers.push({ task, offsetPercent: markerOffset(d, range), overdue: d < todayStart });
+      row.markers.push(markerOf(task, d, range, todayStart));
     }
   }
 

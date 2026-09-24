@@ -12,7 +12,7 @@
 // les commentaires le disent au cas par cas.
 // ═══════════════════════════════════════════════════════════════════
 
-import { Plus, LayoutList, SquareKanban, CalendarRange, UserRound, Users, X } from 'lucide-react';
+import { Plus, LayoutList, SquareKanban, CalendarRange, UserRound, Users, X, Table2, ListChecks } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -41,6 +41,13 @@ interface ProjectsToolbarProps {
   /** Ouvre la création d'équipe — n'existe que si le sélecteur d'équipe est
    *  affiché (au moins une équipe déjà créée). */
   onCreateTeam: () => void;
+  /** Vue réellement affichée (le portefeuille peut s'imposer sans choix, M2). */
+  effectiveView: ProjectsUiPrefs['view'];
+  /**
+   * Entre en sélection multiple — dans TOUTES les vues de tâches depuis le
+   * 2026-09-24. Absent en vue portefeuille, qui n'affiche aucune tâche.
+   */
+  onStartSelect?: () => void;
 }
 
 /** Onglet de vue — un mot, pas un carré : trois icônes de vue se ressemblent
@@ -90,6 +97,7 @@ const FilterChip = ({ label, removeLabel, onRemove }: {
 
 const ProjectsToolbar = ({
   members, teams, currentUserId, prefs, updatePrefs, canCreateProject, canCreateTeam, onNewProject, onCreateTeam,
+  effectiveView, onStartSelect,
 }: ProjectsToolbarProps) => {
   const { t } = useT('org');
   // La barre ne porte QUE le périmètre, la vue et la création. Les deux réglages
@@ -97,7 +105,9 @@ const ProjectsToolbar = ({
   // sélection est passée dans le menu de chaque projet, là où sont les tâches ;
   // `showArchived` reste sur la bascule contextuelle du bas de liste, qui
   // affiche le compte et n'existe que s'il y a des archives.
-  const { assigneeFilter, teamFilter, view, statusFilter, kanbanGroupBy, timelineGroupBy } = prefs;
+  const { assigneeFilter, teamFilter, statusFilter, kanbanGroupBy, timelineGroupBy } = prefs;
+  const view = effectiveView;
+  const chooseView = (next: ProjectsUiPrefs['view']) => updatePrefs({ view: next, viewChosen: true });
 
   // Le périmètre a TROIS branches, pas deux. L'ancienne barre n'en montrait que
   // deux : choisir un collègue laissait « Toutes » et « Mes tâches » également
@@ -277,10 +287,25 @@ const ProjectsToolbar = ({
             role="group"
             aria-label={t('projects.viewLabel')}
           >
-            <ViewTab active={view === 'list'} onClick={() => updatePrefs({ view: 'list' })} label={t('projects.viewList')} Icon={LayoutList} />
-            <ViewTab active={view === 'kanban'} onClick={() => updatePrefs({ view: 'kanban' })} label={t('projects.viewKanban')} Icon={SquareKanban} />
-            <ViewTab active={view === 'timeline'} onClick={() => updatePrefs({ view: 'timeline' })} label={t('projects.viewTimeline')} Icon={CalendarRange} />
+            <ViewTab active={view === 'portfolio'} onClick={() => chooseView('portfolio')} label={t('portfolio.viewPortfolio')} Icon={Table2} />
+            <ViewTab active={view === 'list'} onClick={() => chooseView('list')} label={t('projects.viewList')} Icon={LayoutList} />
+            <ViewTab active={view === 'kanban'} onClick={() => chooseView('kanban')} label={t('projects.viewKanban')} Icon={SquareKanban} />
+            <ViewTab active={view === 'timeline'} onClick={() => chooseView('timeline')} label={t('projects.viewTimeline')} Icon={CalendarRange} />
           </div>
+
+          {/* Sélection multiple, à côté des vues : elle vaut pour les trois vues
+              de tâches (audit 2026-09-24), plus seulement pour la liste. */}
+          {onStartSelect && view !== 'portfolio' && (
+            <button
+              type="button"
+              onClick={onStartSelect}
+              aria-label={t('portfolio.bulk.selectToggleAria')}
+              className="inline-flex items-center gap-1.5 h-9 px-2.5 rounded-lg border border-[rgb(var(--color-border))] text-sm font-medium text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]/60"
+            >
+              <ListChecks size={15} aria-hidden="true" />
+              <span className="hidden sm:inline">{t('portfolio.bulk.selectToggle')}</span>
+            </button>
+          )}
 
           {/* Axe des colonnes du Tableau — juste à côté de l'onglet qui le
               montre, pas loin en dessous : c'est ce qui le rendait invisible.

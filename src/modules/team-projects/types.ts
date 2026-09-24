@@ -17,6 +17,43 @@ export interface TeamProject {
    * projet lui-même. null = aucune catégorie.
    */
   categoryId?: string | null;
+  // ─── Projet riche (mig. 153, M2) ───────────────────────────────────
+  /** Texte libre, 5 000 caractères au plus. */
+  description?: string | null;
+  /** Responsable : pilote le projet (droits d'édition), sans en changer l'audience. */
+  ownerId?: string | null;
+  status?: TeamProjectStatus;
+  /** Date locale 'YYYY-MM-DD'. `startDate <= dueDate` (CHECK serveur). */
+  startDate?: string | null;
+  dueDate?: string | null;
+  /**
+   * Modèle : jamais affiché comme un projet en cours. Son contenu vit dans
+   * `templatePayload`, JAMAIS en vraies tâches (elles remonteraient dans
+   * « Mes tâches » et les statistiques).
+   */
+  isTemplate?: boolean;
+  templatePayload?: TeamProjectTemplatePayload | null;
+}
+
+/** Cycle de vie d'un projet (mig. 153). Défaut serveur : `active`. */
+export type TeamProjectStatus = 'planned' | 'active' | 'on_hold' | 'done';
+
+/**
+ * Contenu d'un modèle : les dates sont des DÉCALAGES en jours depuis le début
+ * du projet instancié, jamais des dates absolues (un modèle sert des mois).
+ */
+export interface TeamProjectTemplatePayload {
+  tasks: {
+    name: string;
+    description?: string;
+    priority?: number;
+    estimatedTime?: number;
+    startOffset?: number | null;
+    deadlineOffset?: number | null;
+  }[];
+  milestones: { name: string; offset: number }[];
+  /** Durée du projet en jours (fin - début), si le projet source en avait une. */
+  durationDays?: number | null;
 }
 
 export interface CreateTeamProjectInput {
@@ -25,9 +62,36 @@ export interface CreateTeamProjectInput {
   /** null/absent = projet d'org visible par toute l'entreprise. */
   teamId?: string | null;
   categoryId?: string | null;
+  description?: string | null;
+  ownerId?: string | null;
+  status?: TeamProjectStatus;
+  startDate?: string | null;
+  dueDate?: string | null;
+  isTemplate?: boolean;
+  templatePayload?: TeamProjectTemplatePayload | null;
 }
 
-/** Patch projet (managers only — RLS team_projects_update, mig. 068). */
+/** Tâche initiale d'une création atomique (RPC `create_team_project_with_tasks`). */
+export interface DraftProjectTask {
+  name: string;
+  description?: string;
+  priority?: number;
+  estimatedTime?: number;
+  startDate?: string;
+  deadline?: string;
+  assigneeIds?: string[];
+}
+
+/** Jalon initial d'une création atomique. */
+export interface DraftProjectMilestone {
+  name: string;
+  dueDate: string;
+}
+
+/**
+ * Patch projet — `project.edit` (mig. 153), ou responsable du projet. Le
+ * responsable ne change ni `teamId`, ni `ownerId`, ni `isTemplate` (trigger).
+ */
 export interface UpdateTeamProjectInput {
   name?: string;
   color?: string;
@@ -35,6 +99,45 @@ export interface UpdateTeamProjectInput {
   categoryId?: string | null;
   /** true = archiver (archived_at → now), false = désarchiver (→ null). */
   archived?: boolean;
+  description?: string | null;
+  ownerId?: string | null;
+  status?: TeamProjectStatus;
+  startDate?: string | null;
+  dueDate?: string | null;
+}
+
+/** Jalon d'un projet (mig. 153). */
+export interface TeamProjectMilestone {
+  id: string;
+  orgId: string;
+  projectId: string;
+  name: string;
+  /** Date locale 'YYYY-MM-DD'. */
+  dueDate: string;
+  completedAt: string | null;
+  createdAt: string;
+}
+
+export interface CreateTeamProjectMilestoneInput {
+  projectId: string;
+  name: string;
+  dueDate: string;
+}
+
+export interface UpdateTeamProjectMilestoneInput {
+  name?: string;
+  dueDate?: string;
+  completed?: boolean;
+}
+
+/**
+ * Arête entre projets (mig. 153) : `projectId` est BLOQUÉ par `dependsOnId`.
+ * Même vocabulaire que `TeamTaskDependency` ; relue à l'envers, elle inverse
+ * le plan sans qu'aucun type ne s'en aperçoive.
+ */
+export interface TeamProjectDependency {
+  projectId: string;
+  dependsOnId: string;
 }
 
 /**
@@ -57,6 +160,8 @@ export interface TeamTask {
   priority: number;
   /** Date locale 'YYYY-MM-DD' ou '' si aucune. */
   deadline?: string;
+  /** Début planifié (mig. 153), 'YYYY-MM-DD' ou '' ; jamais après `deadline`. */
+  startDate?: string;
   estimatedTime?: number;
   /** auth.users.id des assignés — [] si non assignée (multi-assignation, mig. 072). */
   assigneeIds: string[];
@@ -81,6 +186,7 @@ export interface CreateTeamTaskInput {
   description?: string;
   priority?: number;
   deadline?: string;
+  startDate?: string;
   estimatedTime?: number;
   assigneeIds?: string[];
   status?: TeamTaskStatus;
@@ -93,6 +199,7 @@ export interface UpdateTeamTaskInput {
   description?: string;
   priority?: number;
   deadline?: string;
+  startDate?: string;
   estimatedTime?: number;
   assigneeIds?: string[];
   projectId?: string;

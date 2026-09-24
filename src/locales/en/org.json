@@ -309,7 +309,6 @@
     "timelineView": "Timeline view",
     "timelineEmpty": "No upcoming deadlines. Add dates to tasks to see them here.",
     "timelineToday": "Today",
-    "timelineNotGantt": "Places tasks at their deadline.",
     "timelineMarker": "{{name}}, due {{date}}",
     "timelineUnscheduled_one": "{{count}} unscheduled",
     "timelineUnscheduled_other": "{{count}} unscheduled",
@@ -517,7 +516,11 @@
     "createProjectAria": "Create a project",
     "projectNamePlaceholder": "Project name",
     "projectNameTooShort": "The project name must be at least 2 characters",
-    "createProjectCta": "Create"
+    "createProjectCta": "Create",
+    "startDate": "Start",
+    "startDatePlaceholder": "No start date",
+    "datesInvalid": "The start must come before the due date.",
+    "chooseProject": "Choose a project…"
   },
   "team": {
     "newTeam": "New team",
@@ -618,6 +621,144 @@
       "toOrg_other": "The project, its tasks and comments will become visible to the whole company, that is {{count}} people.",
       "confirm": "Change team"
     }
+  },
+  "portfolio": {
+    "viewPortfolio": "Portfolio",
+    "searchPlaceholder": "Search projects…",
+    "searchAria": "Search projects by name, team, category or owner",
+    "sortLabel": "Sort",
+    "sort": {
+      "recent": "Newest",
+      "name": "Name",
+      "dueDate": "Due date",
+      "progress": "Progress",
+      "status": "Status"
+    },
+    "noResult": "No project matches “{{query}}”.",
+    "manyProjectsHint": "Beyond {{count}} projects, cards open collapsed: the portfolio shows them all at a glance.",
+    "col": {
+      "project": "Project",
+      "owner": "Owner",
+      "status": "Status",
+      "dates": "Dates",
+      "progress": "Progress",
+      "next": "Next milestone"
+    },
+    "status": {
+      "planned": "Planned",
+      "active": "In progress",
+      "on_hold": "On hold",
+      "done": "Done"
+    },
+    "noOwner": "No owner",
+    "noDates": "Not scheduled",
+    "dateRange": "{{start}} → {{end}}",
+    "startsOn": "Starts {{date}}",
+    "dueOn": "Due {{date}}",
+    "late": "Late",
+    "blockedBy": "Blocked by {{names}}",
+    "openProject": "Open project {{name}}",
+    "tableAria": "Project portfolio",
+    "back": "All projects",
+    "notFound": "This project no longer exists, or you don't have access to it.",
+    "tasksTitle": "Tasks",
+    "noDescription": "No description.",
+    "actions": {
+      "open": "Open project page",
+      "edit": "Edit project",
+      "duplicate": "Duplicate",
+      "saveTemplate": "Save as template",
+      "selectTasks": "Select tasks"
+    },
+    "archived": "Project archived",
+    "duplicated": "Project duplicated",
+    "copyName": "{{name}} (copy)",
+    "templateSaved": "Template saved",
+    "templateName": "{{name}} (template)",
+    "edit": {
+      "title": "Edit project",
+      "aria": "Edit project {{name}}",
+      "description": "Project description",
+      "descriptionPlaceholder": "Goal, scope, useful links…",
+      "owner": "Owner",
+      "ownerHint": "The owner runs the project: they edit it and set milestones and dependencies. They can't change its team or its owner.",
+      "status": "Status",
+      "startDate": "Start",
+      "dueDate": "End",
+      "datesInvalid": "The start date must come before the end date.",
+      "color": "Color",
+      "categoryHint": "The category shows as a badge; it no longer changes the project color.",
+      "save": "Save",
+      "saving": "Saving…",
+      "cancel": "Cancel",
+      "close": "Close"
+    },
+    "milestones": {
+      "title": "Milestones",
+      "empty": "No milestones. A milestone marks a checkpoint to hit, without being a task.",
+      "add": "Add milestone",
+      "namePlaceholder": "Milestone name",
+      "nameAria": "New milestone name",
+      "dateAria": "New milestone date",
+      "markDone": "Mark “{{name}}” as reached",
+      "markUndone": "Mark “{{name}}” as not reached",
+      "remove": "Delete milestone “{{name}}”",
+      "overdue": "Missed",
+      "reached": "Reached",
+      "failed": "Milestone not saved: {{message}}"
+    },
+    "deps": {
+      "title": "Dependencies",
+      "blockedBy": "This project waits for",
+      "blocks": "This project blocks",
+      "none": "No dependencies.",
+      "add": "Add a project this one depends on",
+      "pick": "Pick a project…",
+      "remove": "Remove dependency on “{{name}}”",
+      "waiting_one": "Waiting for {{count}} unfinished project",
+      "waiting_other": "Waiting for {{count}} unfinished projects"
+    },
+    "templates": {
+      "section": "Templates ({{count}})",
+      "use": "New project from this template",
+      "orgGroup": "Company templates",
+      "builtInGroup": "COSMO templates",
+      "taskCount_one": "{{count}} task",
+      "taskCount_other": "{{count}} tasks",
+      "startLabel": "The project starts on",
+      "archive": "Remove template"
+    },
+    "new": {
+      "owner": "Owner",
+      "startDate": "Start",
+      "dueDate": "End",
+      "color": "Color",
+      "description": "Description (optional)",
+      "atomicHint": "The project, its tasks and its milestones are created together: if one fails, nothing is created."
+    },
+    "bulk": {
+      "assign": "Assign",
+      "assignTo": "Add as assignee",
+      "unassignAll": "Remove all assignees",
+      "move": "Move",
+      "moveTo": "Move to project",
+      "status": "Status",
+      "reassigned_one": "{{count}} task reassigned",
+      "reassigned_other": "{{count}} tasks reassigned",
+      "moved_one": "{{count}} task moved",
+      "moved_other": "{{count}} tasks moved",
+      "statusChanged_one": "{{count}} task updated",
+      "statusChanged_other": "{{count}} tasks updated",
+      "selectToggle": "Select",
+      "selectToggleAria": "Select several tasks"
+    },
+    "timeline": {
+      "legend": "A bar runs from start to due date; a dot is a due date with no start. Diamonds are milestones.",
+      "bar": "{{name}}, from {{start}} to {{end}}",
+      "projectSpan": "Project {{name}}, from {{start}} to {{end}}",
+      "milestone": "Milestone “{{name}}”, on {{date}}"
+    },
+    "kanbanPickProject": "Choose the project for the new task."
   },
   "deleteOrg": {
     "irreversible": "This cannot be undone.",
@@ -919,7 +1060,10 @@
     "amber": "Amber",
     "red": "Red",
     "pink": "Pink",
-    "violet": "Violet"
+    "violet": "Violet",
+    "purple": "Purple",
+    "green": "Green",
+    "slate": "Slate"
   },
   "templates": {
     "pickLabel": "Start from a template",
@@ -1110,9 +1254,11 @@
       },
       "project": {
         "create": "Create a project",
-        "createHint": "Create and rename a team project.",
+        "createHint": "Open a new team project.",
         "delete": "Archive or delete a project",
-        "deleteHint": "Move a project out of the active view, or delete it permanently."
+        "deleteHint": "Move a project out of the active view, or delete it permanently.",
+        "edit": "Edit a project",
+        "editHint": "Rename, describe and schedule a project, change its team or owner."
       },
       "okr": {
         "create": "Create an OKR",

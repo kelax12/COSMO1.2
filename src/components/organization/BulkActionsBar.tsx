@@ -1,4 +1,16 @@
-import { Check, RotateCcw, Trash2, X } from 'lucide-react';
+import { Check, RotateCcw, Trash2, X, UserPlus, FolderInput, CircleDot, UserX } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
+import type { OrgMember } from '@/modules/organizations';
+import type { TeamProject, TeamTaskStatus } from '@/modules/team-projects';
+import { STATUS_ORDER, STATUS_META, projectColor } from './team-projects.helpers';
+import MemberAvatar from './MemberAvatar';
 import { useT } from '@/i18n/useT';
 
 interface BulkActionsBarProps {
@@ -12,24 +24,42 @@ interface BulkActionsBarProps {
   onDelete: () => void;
   /** Quitte le mode sélection (et vide la sélection au passage). */
   onExit: () => void;
+  /**
+   * Réassignation groupée (audit 2026-09-24) : membres À PORTÉE seulement
+   * (mig. 115) — proposer un membre hors portée finirait en erreur RLS.
+   */
+  assignableMembers?: OrgMember[];
+  /** `userId` ajouté à chaque tâche, ou `null` = retirer tous les assignés. */
+  onAssign?: (userId: string | null) => void;
+  /** Projets vers lesquels déplacer la sélection. */
+  projects?: TeamProject[];
+  onMove?: (projectId: string) => void;
+  onSetStatus?: (status: TeamTaskStatus) => void;
 }
+
+const actionClass =
+  'inline-flex items-center gap-1.5 h-9 px-3 rounded-xl text-sm font-medium text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]';
 
 /**
  * Barre d'actions groupées — flottante, apparaît dès qu'une tâche est
- * sélectionnée.
+ * sélectionnée, dans TOUTES les vues de l'onglet Projets (liste, tableau,
+ * planning) depuis le 2026-09-24.
  *
  * Répartir vingt tâches demandait vingt aller-retours de modal ; c'est ce que
- * cette barre supprime. Elle est positionnée au-dessus de la barre d'onglets
- * mobile (`bottom-20` en petit écran) pour ne jamais la recouvrir.
+ * cette barre supprime. Elle ne proposait que terminer, rouvrir et supprimer :
+ * réassigner, déplacer et changer de statut restaient tâche par tâche.
+ * Elle est positionnée au-dessus de la barre d'onglets mobile (`bottom-20` en
+ * petit écran) pour ne jamais la recouvrir.
  */
 const BulkActionsBar = ({
   count, hasCompleted, hasOpen, onComplete, onReopen, onDelete, onExit,
+  assignableMembers = [], onAssign, projects = [], onMove, onSetStatus,
 }: BulkActionsBarProps) => {
   const { t, tp } = useT('org');
   // La barre reste montée même à zéro sélection : elle porte désormais la SEULE
-  // sortie du mode. Depuis que le bouton ⋯ n'existe plus, disparaître ici
-  // enfermerait l'utilisateur dans un mode sélection qu'il ne pourrait plus
-  // quitter tant qu'il n'aurait pas coché puis décoché une tâche.
+  // sortie du mode. Disparaître ici enfermerait l'utilisateur dans un mode
+  // sélection qu'il ne pourrait plus quitter tant qu'il n'aurait pas coché
+  // puis décoché une tâche.
 
   return (
     <div
@@ -50,23 +80,69 @@ const BulkActionsBar = ({
       {count > 0 && <span className="w-px h-6 bg-[rgb(var(--color-border))] shrink-0" aria-hidden="true" />}
 
       {hasOpen && (
-        <button
-          type="button"
-          onClick={onComplete}
-          className="inline-flex items-center gap-1.5 h-9 px-3 rounded-xl text-sm font-medium text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] transition-colors whitespace-nowrap"
-        >
+        <button type="button" onClick={onComplete} className={actionClass}>
           <Check size={15} aria-hidden="true" /> {t('projects.bulkDone')}
         </button>
       )}
 
       {hasCompleted && (
-        <button
-          type="button"
-          onClick={onReopen}
-          className="inline-flex items-center gap-1.5 h-9 px-3 rounded-xl text-sm font-medium text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] transition-colors whitespace-nowrap"
-        >
+        <button type="button" onClick={onReopen} className={actionClass}>
           <RotateCcw size={15} aria-hidden="true" /> {t('projects.bulkReopen')}
         </button>
+      )}
+
+      {count > 0 && onAssign && (
+        <DropdownMenu>
+          <DropdownMenuTrigger className={actionClass}>
+            <UserPlus size={15} aria-hidden="true" /> {t('portfolio.bulk.assign')}
+          </DropdownMenuTrigger>
+          <DropdownMenuContent side="top" align="center" className="w-56 max-h-72 overflow-y-auto">
+            <DropdownMenuLabel>{t('portfolio.bulk.assignTo')}</DropdownMenuLabel>
+            {assignableMembers.map((m) => (
+              <DropdownMenuItem key={m.userId} onClick={() => onAssign(m.userId)}>
+                <MemberAvatar avatar={m.avatar} name={m.displayName} size={20} />
+                <span className="truncate">{m.displayName}</span>
+              </DropdownMenuItem>
+            ))}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => onAssign(null)}>
+              <UserX size={14} aria-hidden="true" /> {t('portfolio.bulk.unassignAll')}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
+
+      {count > 0 && onMove && projects.length > 1 && (
+        <DropdownMenu>
+          <DropdownMenuTrigger className={actionClass}>
+            <FolderInput size={15} aria-hidden="true" /> {t('portfolio.bulk.move')}
+          </DropdownMenuTrigger>
+          <DropdownMenuContent side="top" align="center" className="w-56 max-h-72 overflow-y-auto">
+            <DropdownMenuLabel>{t('portfolio.bulk.moveTo')}</DropdownMenuLabel>
+            {projects.map((p) => (
+              <DropdownMenuItem key={p.id} onClick={() => onMove(p.id)}>
+                <span className={`w-2 h-2 rounded-full shrink-0 ${projectColor(p.color).dot}`} aria-hidden="true" />
+                <span className="truncate">{p.name}</span>
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
+
+      {count > 0 && onSetStatus && (
+        <DropdownMenu>
+          <DropdownMenuTrigger className={actionClass}>
+            <CircleDot size={15} aria-hidden="true" /> {t('portfolio.bulk.status')}
+          </DropdownMenuTrigger>
+          <DropdownMenuContent side="top" align="center" className="w-48">
+            {STATUS_ORDER.map((st) => (
+              <DropdownMenuItem key={st} onClick={() => onSetStatus(st)}>
+                <span className={`w-2 h-2 rounded-full shrink-0 ${STATUS_META[st].dot}`} aria-hidden="true" />
+                {t(STATUS_META[st].labelKey as Parameters<typeof t>[0])}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
       )}
 
       {count > 0 && (

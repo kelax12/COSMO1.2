@@ -62,6 +62,14 @@ interface TeamTaskFieldsProps {
   onPriorityChange: (value: number) => void;
   deadline: string;
   onDeadlineChange: (value: string) => void;
+  /** Début planifié (mig. 153) — '' = aucun. La frise en fait une barre. */
+  startDate: string;
+  onStartDateChange: (value: string) => void;
+  /**
+   * Aucun projet présélectionné (création depuis le kanban, audit 2026-09-24) :
+   * le sélecteur ouvre sur « Choisir un projet… » au lieu du premier venu.
+   */
+  requireProjectChoice?: boolean;
   estimatedTime: string;
   onEstimatedTimeChange: (value: string) => void;
 
@@ -106,6 +114,9 @@ const TeamTaskFields = ({
   onPriorityChange,
   deadline,
   onDeadlineChange,
+  startDate,
+  onStartDateChange,
+  requireProjectChoice = false,
   estimatedTime,
   onEstimatedTimeChange,
   showNewProjectInput,
@@ -179,7 +190,11 @@ const TeamTaskFields = ({
             onChange={(e) => onProjectChange(e.target.value)}
             className={inputClass}
             style={inputStyle}
+            aria-invalid={requireProjectChoice && !projectId ? true : undefined}
           >
+            {(requireProjectChoice || !projectId) && (
+              <option value="" disabled>{t('taskModal.chooseProject')}</option>
+            )}
             {projects.map((p) => (
               <option key={p.id} value={p.id}>{p.name}</option>
             ))}
@@ -241,6 +256,20 @@ const TeamTaskFields = ({
               </button>
             ))}
           </div>
+        </div>
+
+        <div>
+          <label htmlFor="team-task-start" className={labelClass} style={labelStyle}>{t('taskModal.startDate')}</label>
+          {/* Début planifié (mig. 153) : même calendrier, même cran de z-index
+              que l'échéance. Le serveur refuse un début après l'échéance. */}
+          <DatePicker
+            id="team-task-start"
+            value={startDate}
+            onChange={onStartDateChange}
+            placeholder={t('taskModal.startDatePlaceholder')}
+            className={inputHeightClass}
+            popoverClassName="z-[10000]"
+          />
         </div>
 
         <div>
