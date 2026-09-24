@@ -15,8 +15,11 @@ import { test, expect, navTo } from './fixtures';
  * par `getComputedStyle` (pseudo-élément UA). Vérifié manuellement + par
  * lecture de la règle CSS chargée (cf. session).
  */
+// Navigation entreprise (2026-09-23) : une section = une route, et un LIEN dans
+// `OrgSideNav`. Ces specs cherchaient encore l'ancien bouton d'onglet et
+// `?tab=` : elles expiraient toutes à 2 min sur `main` depuis `a0470c1a`.
 const orgTab = (page: Page, label: RegExp) =>
-  page.getByRole('button', { name: label }).filter({ visible: true }).first();
+  page.getByRole('navigation', { name: /sections de l.entreprise/i }).getByRole('link', { name: label });
 
 test.describe('Entreprise — modal OKR (démo)', () => {
   test.describe.configure({ timeout: 120_000 });
@@ -26,7 +29,7 @@ test.describe('Entreprise — modal OKR (démo)', () => {
     await expect(page.getByRole('heading', { name: /nova studio/i })).toBeVisible({ timeout: 15_000 });
 
     await orgTab(page, /^okr/i).click();
-    await page.waitForURL(/tab=okr/);
+    await page.waitForURL(/\/entreprise\/okr/);
 
     await page.getByRole('button', { name: /nouvel objectif/i }).filter({ visible: true }).first().click();
     const dialog = page.getByRole('dialog', { name: /nouvel objectif d'équipe/i });

@@ -107,8 +107,11 @@ async function assertBulkSnoozeFloor(page: Page): Promise<void> {
   await expect(page.getByRole('button', { name: /^aujourd'hui$/i }).first()).toBeVisible();
 }
 
+// Navigation entreprise (2026-09-23) : une section = une route, et un LIEN dans
+// `OrgSideNav`. Ces specs cherchaient encore l'ancien bouton d'onglet et
+// `?tab=` : elles expiraient toutes à 2 min sur `main` depuis `a0470c1a`.
 const orgTab = (page: Page, label: RegExp) =>
-  page.getByRole('button', { name: label }).filter({ visible: true }).first();
+  page.getByRole('navigation', { name: /sections de l.entreprise/i }).getByRole('link', { name: label });
 
 /** Menu d'actions de la première tâche : `…` desktop ou « Options » mobile. */
 async function openFirstRowMenu(page: Page): Promise<void> {
@@ -201,7 +204,7 @@ test.describe('C-27 — le calendrier COSMO, surface par surface (démo)', () =>
   test('surface 5 — l’échéance d’une tâche d’ÉQUIPE', async ({ demoPage: page }) => {
     await navTo(page, /entreprise/i, /\/entreprise/);
     await orgTab(page, /^tâches/i).click();
-    await page.waitForURL(/tab=tasks/);
+    await page.waitForURL(/\/entreprise\/tasks/);
     await page.locator('tbody tr').first().click({ timeout: 15_000 });
 
     const dialog = page.getByRole('dialog').filter({ visible: true }).first();
@@ -213,7 +216,7 @@ test.describe('C-27 — le calendrier COSMO, surface par surface (démo)', () =>
   test('surface 6 — l’échéance de la popup de dépendances d’ÉQUIPE', async ({ demoPage: page }) => {
     await navTo(page, /entreprise/i, /\/entreprise/);
     await orgTab(page, /^tâches/i).click();
-    await page.waitForURL(/tab=tasks/);
+    await page.waitForURL(/\/entreprise\/tasks/);
     await page.locator('tbody tr').first().click({ timeout: 15_000 });
 
     const taskDialog = page.getByRole('dialog').filter({ visible: true }).first();

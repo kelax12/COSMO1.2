@@ -10,8 +10,11 @@ import { test, expect, navTo } from './fixtures';
  * ⚠️ Même précaution que les autres specs entreprise : ancrer les onglets au
  * DÉBUT du libellé (le badge de nouveautés entre dans le nom accessible).
  */
+// Navigation entreprise (2026-09-23) : une section = une route, et un LIEN dans
+// `OrgSideNav`. Ces specs cherchaient encore l'ancien bouton d'onglet et
+// `?tab=` : elles expiraient toutes à 2 min sur `main` depuis `a0470c1a`.
 const orgTab = (page: Page, label: RegExp) =>
-  page.getByRole('button', { name: label }).filter({ visible: true }).first();
+  page.getByRole('navigation', { name: /sections de l.entreprise/i }).getByRole('link', { name: label });
 
 test.describe('Entreprise — onglet Tâches (démo)', () => {
   test.describe.configure({ timeout: 120_000 });
@@ -21,7 +24,7 @@ test.describe('Entreprise — onglet Tâches (démo)', () => {
     await expect(page.getByRole('heading', { name: /nova studio/i })).toBeVisible({ timeout: 15_000 });
 
     await orgTab(page, /^tâches/i).click();
-    await page.waitForURL(/tab=tasks/);
+    await page.waitForURL(/\/entreprise\/tasks/);
     await expect(page.getByRole('columnheader', { name: 'PROJET', exact: true })).toBeVisible({ timeout: 15_000 });
 
     const rows = page.locator('tbody tr');
@@ -46,7 +49,7 @@ test.describe('Entreprise — onglet Tâches (démo)', () => {
   test('Recherche : ne garde que les tâches dont le nom correspond', async ({ demoPage: page }) => {
     await navTo(page, /entreprise/i, /\/entreprise/);
     await orgTab(page, /^tâches/i).click();
-    await page.waitForURL(/tab=tasks/);
+    await page.waitForURL(/\/entreprise\/tasks/);
     await expect(page.getByPlaceholder(/rechercher/i)).toBeVisible({ timeout: 15_000 });
 
     await page.getByPlaceholder(/rechercher/i).fill('budget');
@@ -61,7 +64,7 @@ test.describe('Entreprise — onglet Tâches (démo)', () => {
   test('Tri : cliquer l’en-tête Nom trie alphabétiquement et bascule le sens', async ({ demoPage: page }) => {
     await navTo(page, /entreprise/i, /\/entreprise/);
     await orgTab(page, /^tâches/i).click();
-    await page.waitForURL(/tab=tasks/);
+    await page.waitForURL(/\/entreprise\/tasks/);
     const nameHeader = page.getByRole('columnheader', { name: /nom de la tâche/i });
     await expect(nameHeader).toBeVisible({ timeout: 15_000 });
 
@@ -79,7 +82,7 @@ test.describe('Entreprise — onglet Tâches (démo)', () => {
   test('Nouvelle tâche : le bouton ouvre le modal de création', async ({ demoPage: page }) => {
     await navTo(page, /entreprise/i, /\/entreprise/);
     await orgTab(page, /^tâches/i).click();
-    await page.waitForURL(/tab=tasks/);
+    await page.waitForURL(/\/entreprise\/tasks/);
     await expect(page.getByRole('button', { name: /nouvelle tâche/i })).toBeVisible({ timeout: 15_000 });
 
     await page.getByRole('button', { name: /nouvelle tâche/i }).click();
@@ -89,7 +92,7 @@ test.describe('Entreprise — onglet Tâches (démo)', () => {
   test('Suppression : réversible via le toast Annuler, la ligne revient', async ({ demoPage: page }) => {
     await navTo(page, /entreprise/i, /\/entreprise/);
     await orgTab(page, /^tâches/i).click();
-    await page.waitForURL(/tab=tasks/);
+    await page.waitForURL(/\/entreprise\/tasks/);
     await expect(page.getByRole('columnheader', { name: 'PROJET', exact: true })).toBeVisible({ timeout: 15_000 });
 
     const rows = page.locator('tbody tr');
