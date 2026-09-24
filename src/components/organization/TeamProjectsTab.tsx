@@ -9,6 +9,7 @@ import {
 import {
   useTeamProjects,
   useTeamTasks,
+  TEAM_TASKS_READ_LIMIT,
   useCreateTeamProject,
   useUpdateTeamProject,
   useCreateTeamTask,
@@ -37,6 +38,7 @@ import NewTeamProjectModal from './NewTeamProjectModal';
 import CreateTeamModal from './CreateTeamModal';
 import AssignTaskSheet from './AssignTaskSheet';
 import BulkActionsBar from './BulkActionsBar';
+import TruncatedDataNotice from './TruncatedDataNotice';
 import { useT } from '@/i18n/useT';
 
 interface TeamProjectsTabProps {
@@ -395,6 +397,11 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
           )}
         </div>
       )}
+
+      {/* Les cartes portent une progression (terminées / total) : elles ont
+          besoin de TOUTES les tâches, donc de la lecture complète. Au-delà du
+          plafond, elles se calculent sur un extrait, et l'écran le dit. */}
+      {allTasks.length >= TEAM_TASKS_READ_LIMIT && <TruncatedDataNotice limit={TEAM_TASKS_READ_LIMIT} />}
 
       {/* Barre d'outils : périmètre · vue · action primaire (ProjectsToolbar) */}
       <ProjectsToolbar

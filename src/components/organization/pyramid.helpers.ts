@@ -120,3 +120,60 @@ export function matchesQuery(member: OrgMember, query: string): boolean {
     normalize(member.email ?? '').includes(q)
   );
 }
+
+// ─── Grande organisation : repli par défaut, recherche ciblée ─────────
+//
+// Audit « passage à l'échelle » du 2026-09-24 : le repli par branche existait,
+// mais tout s'ouvrait déplié. À mille personnes, la première lecture était un
+// arbre de mille cartes, et une recherche dépliait TOUT pour montrer un nom.
+
+/** Au-delà de ce nombre de personnes, la pyramide s'ouvre repliée. */
+export const LARGE_PYRAMID_THRESHOLD = 40;
+
+/**
+ * Une préférence de repli a-t-elle déjà été enregistrée pour cette org ?
+ * Distinct de `readCollapsedIds` : « rien de replié » est aussi une
+ * préférence, qu'un repli par défaut ne doit jamais écraser.
+ */
+export function hasStoredCollapsed(orgId: string): boolean {
+  try {
+    return localStorage.getItem(collapsedStorageKey(orgId)) !== null;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Repli par défaut d'un grand organigramme : les racines et leurs rapports
+ * directs restent visibles, chaque nœud de profondeur ≥ 1 qui a des
+ * subordonnés est replié. Déplier un nœud n'ouvre donc qu'UN niveau.
+ */
+export function defaultCollapsedIds(roots: { member: OrgMember; children: unknown[] }[]): Set<string> {
+  const ids = new Set<string>();
+  type Node = { member: OrgMember; children: Node[] };
+  const walk = (node: Node, depth: number) => {
+    if (depth >= 1 && node.children.length > 0) ids.add(node.member.userId);
+    for (const c of node.children) walk(c, depth + 1);
+  };
+  for (const r of roots as Node[]) walk(r, 0);
+  return ids;
+}
+
+/**
+ * Tous les managers au-dessus des personnes trouvées. Pendant une recherche,
+ * on ne déplie QUE ce chemin : le reste de l'arbre garde le repli choisi.
+ * Borné par la taille de l'équipe contre un cycle `manager_id` corrompu.
+ */
+export function ancestorIds(members: OrgMember[], ids: Set<string>): Set<string> {
+  const managerOf = new Map(members.map((m) => [m.userId, m.managerId]));
+  const out = new Set<string>();
+  for (const id of ids) {
+    let cur = managerOf.get(id) ?? null;
+    let guard = members.length;
+    while (cur && guard-- > 0 && !out.has(cur)) {
+      out.add(cur);
+      cur = managerOf.get(cur) ?? null;
+    }
+  }
+  return out;
+}

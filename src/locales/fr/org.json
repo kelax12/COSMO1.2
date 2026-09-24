@@ -704,7 +704,9 @@
     "assigneeCount_one": "{{count}} assigné",
     "assigneeCount_many": "{{count}} d'assignés",
     "assigneeCount_other": "{{count}} assignés",
-    "pickPersonAgenda": "Sélectionnez une personne pour voir son agenda."
+    "pickPersonAgenda": "Sélectionnez une personne pour voir son agenda.",
+    "memberSearch": "Rechercher un membre…",
+    "noMemberMatch": "Aucun membre ne correspond."
   },
   "directory": {
     "searchPlaceholder": "Rechercher un membre (nom, email)…",
