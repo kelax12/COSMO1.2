@@ -63,8 +63,10 @@ export const useTeamProjectMilestones = (orgId: string | undefined) => {
   });
 };
 
+// ⚠️ `org`, pas `portfolio` : ce fichier est exporté par le baril du module,
+// importé par des pages qui ne chargent pas le catalogue du portefeuille.
 const milestoneError = (error: Error) =>
-  toast.error(translator('org').t('portfolio.milestones.failed', { message: error.message }));
+  toast.error(translator('org').t('projects.milestoneFailed', { message: error.message }));
 
 export const useCreateProjectMilestone = (orgId: string) => {
   const queryClient = useQueryClient();

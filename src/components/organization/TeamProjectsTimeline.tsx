@@ -75,7 +75,8 @@ const TeamProjectsTimeline = ({
   projects, tasks, members, groupBy, onOpenTask, milestones = [],
   selectable = false, selectedIds, onToggleSelect,
 }: TeamProjectsTimelineProps) => {
-  const { t, tp } = useT('org');
+  const { t } = useT('org');
+  const { t: pf, tp: tpf } = useT('portfolio');
   const [zoom, setZoom] = useState<TimelineZoom>('default');
   const [openUnscheduled, setOpenUnscheduled] = useState<string | null>(null);
   const [hoverTaskId, setHoverTaskId] = useState<string | null>(null);
@@ -154,7 +155,7 @@ const TeamProjectsTimeline = ({
   /** Avatars + libellé pour la card de survol — jusqu'à 2 avatars, `+N` au-delà. */
   const assigneeSummary = (assigneeIds: string[]) => {
     const resolved = assigneeIds.map((id) => memberById.get(id)).filter((m): m is OrgMember => !!m);
-    if (resolved.length === 0) return { avatars: [] as OrgMember[], overflow: 0, label: t('projects.timelineUnassignedTask') };
+    if (resolved.length === 0) return { avatars: [] as OrgMember[], overflow: 0, label: pf('timeline.unassignedTask') };
     return {
       avatars: resolved.slice(0, 2),
       overflow: Math.max(0, resolved.length - 2),
@@ -170,7 +171,7 @@ const TeamProjectsTimeline = ({
           const member = row.assigneeId === UNASSIGNED_ID ? null : memberById.get(row.assigneeId);
           return {
             key: row.assigneeId,
-            label: member ? member.displayName : t('kanban.unassigned'),
+            label: member ? member.displayName : pf('kanban.unassigned'),
             avatar: member?.avatar ?? null,
             isUnassigned: !member,
             markers: row.markers,
@@ -189,7 +190,7 @@ const TeamProjectsTimeline = ({
       span: row.span,
       milestones: row.milestones,
     }));
-  }, [groupBy, windowedTasks, projects, range, memberById, t, milestones]);
+  }, [groupBy, windowedTasks, projects, range, memberById, pf, milestones]);
 
   const minWidthPx = Math.max(MIN_WIDTH_PX, weeks.length * PX_PER_WEEK);
 
@@ -213,7 +214,7 @@ const TeamProjectsTimeline = ({
           <CalendarRange size={22} className="text-[rgb(var(--color-text-muted))]" aria-hidden="true" />
         </div>
         <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">
-          {t('projects.timelineEmpty')}
+          {pf('timeline.empty')}
         </p>
       </div>
     );
@@ -224,7 +225,7 @@ const TeamProjectsTimeline = ({
       <div className="flex items-center justify-between gap-3 flex-wrap mb-3">
         <div className="flex items-center gap-3 flex-wrap">
           <p className="text-xs text-[rgb(var(--color-text-muted))]">
-            {t('portfolio.timeline.legend')}
+            {pf('timeline.legend')}
           </p>
           {/* Légende montée UNIQUEMENT s'il existe un chemin critique : sans
               dépendance, l'anneau n'apparaît nulle part et expliquer un
@@ -253,16 +254,16 @@ const TeamProjectsTimeline = ({
         <div
           className="inline-flex rounded-lg border border-[rgb(var(--color-border))] p-0.5 gap-0.5 shrink-0"
           role="group"
-          aria-label={t('projects.timelineZoomLabel')}
+          aria-label={pf('timeline.zoomLabel')}
         >
           <button type="button" onClick={() => setZoom('month')} aria-pressed={zoom === 'month'} className={`${zoomBtn} ${zoom === 'month' ? zoomOn : zoomOff}`}>
-            {t('projects.timelineZoomMonth')}
+            {pf('timeline.zoomMonth')}
           </button>
           <button type="button" onClick={() => setZoom('quarter')} aria-pressed={zoom === 'quarter'} className={`${zoomBtn} ${zoom === 'quarter' ? zoomOn : zoomOff}`}>
-            {t('projects.timelineZoomQuarter')}
+            {pf('timeline.zoomQuarter')}
           </button>
           <button type="button" onClick={() => setZoom('all')} aria-pressed={zoom === 'all'} className={`${zoomBtn} ${zoom === 'all' ? zoomOn : zoomOff}`}>
-            {t('projects.timelineZoomAll')}
+            {pf('timeline.zoomAll')}
           </button>
         </div>
       </div>
@@ -318,7 +319,7 @@ const TeamProjectsTimeline = ({
                 <span
                   className="absolute top-0 bottom-0 w-0.5 bg-[rgb(var(--color-accent))]"
                   style={{ left: `${todayOffset}%` }}
-                  title={t('projects.timelineToday')}
+                  title={pf('timeline.today')}
                 />
               )}
             </div>
@@ -354,16 +355,16 @@ const TeamProjectsTimeline = ({
                         <PopoverTrigger asChild>
                           <button
                             type="button"
-                            aria-label={t('projects.timelineUnscheduledAria', { count: row.unscheduled.length })}
+                            aria-label={pf('timeline.unscheduledAria', { count: row.unscheduled.length })}
                             className="self-start inline-flex items-center gap-1 pl-1.5 pr-2 h-[18px] rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 text-caption font-semibold whitespace-nowrap hover:bg-amber-500/25 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
                           >
                             <CalendarOff size={10} aria-hidden="true" />
-                            {tp('projects.timelineUnscheduled', row.unscheduled.length)}
+                            {tpf('timeline.unscheduled', row.unscheduled.length)}
                           </button>
                         </PopoverTrigger>
                         <PopoverContent align="start" className="w-64 p-2">
                           <p className="text-xs font-semibold text-[rgb(var(--color-text-muted))] px-1 pb-1">
-                            {t('projects.timelineUnscheduledTitle')}
+                            {pf('timeline.unscheduledTitle')}
                           </p>
                           <ul className="max-h-56 overflow-y-auto space-y-0.5">
                             {row.unscheduled.map((task) => {
@@ -397,7 +398,7 @@ const TeamProjectsTimeline = ({
                         className={`absolute top-0 bottom-0 rounded-lg opacity-20 ${row.dotClass ?? 'bg-slate-400'}`}
                         style={{ left: `${row.span.startPercent}%`, width: `${Math.max(0.5, row.span.endPercent - row.span.startPercent)}%` }}
                         role="img"
-                        aria-label={t('portfolio.timeline.projectSpan', {
+                        aria-label={pf('timeline.projectSpan', {
                           name: row.label,
                           start: format(parseISO(projectById.get(row.key)?.startDate ?? ''), 'd MMMM', { locale: getDateLocale() }),
                           end: format(parseISO(projectById.get(row.key)?.dueDate ?? ''), 'd MMMM', { locale: getDateLocale() }),
@@ -411,7 +412,7 @@ const TeamProjectsTimeline = ({
                         className="absolute top-0.5 -translate-x-1/2 w-2.5 h-2.5 rotate-45 bg-amber-500 border border-[rgb(var(--color-surface))]"
                         style={{ left: `${mark.offsetPercent}%` }}
                         role="img"
-                        aria-label={t('portfolio.timeline.milestone', {
+                        aria-label={pf('timeline.milestone', {
                           name: mark.milestone.name,
                           date: format(parseISO(mark.milestone.dueDate), 'd MMMM', { locale: getDateLocale() }),
                         })}
@@ -482,12 +483,12 @@ const TeamProjectsTimeline = ({
                                   selectable
                                     ? t('projects.selectTask', { name: marker.task.name })
                                     : marker.task.startDate
-                                      ? t('portfolio.timeline.bar', {
+                                      ? pf('timeline.bar', {
                                           name: marker.task.name,
                                           start: format(parseISO(marker.task.startDate), 'd MMMM', { locale: getDateLocale() }),
                                           end: format(deadline, 'd MMMM', { locale: getDateLocale() }),
                                         })
-                                      : t('projects.timelineMarker', {
+                                      : pf('timeline.marker', {
                                           name: marker.task.name,
                                           date: format(deadline, 'd MMMM', { locale: getDateLocale() }),
                                         })

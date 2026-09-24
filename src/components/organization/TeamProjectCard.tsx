@@ -91,6 +91,7 @@ const TeamProjectCard = ({
   selectable = false, selectedIds, onToggleSelect,
 }: TeamProjectCardProps) => {
   const { t, tp } = useT('org');
+  const { t: pf } = useT('portfolio');
   const [renaming, setRenaming] = useState(false);
   // M5 : un changement d'équipe change QUI LIT le projet. Il passe par une
   // confirmation qui nomme la nouvelle audience, jamais par un clic sec.
@@ -197,22 +198,22 @@ const TeamProjectCard = ({
           )}
           {status !== 'active' && !archived && (
             <span className={`text-caption font-semibold px-1.5 py-0.5 rounded-full shrink-0 ${PROJECT_STATUS_META[status].soft}`}>
-              {t(`portfolio.status.${status}`)}
+              {pf(`status.${status}`)}
             </span>
           )}
           {late && !archived && (
             <span className="text-caption font-bold px-1.5 py-0.5 rounded-full bg-red-500/10 text-red-500 shrink-0">
-              {t('portfolio.late')}
+              {pf('late')}
             </span>
           )}
           {(project.startDate || project.dueDate) && !archived && (
             <span className="hidden md:inline-flex items-center gap-1 text-caption text-[rgb(var(--color-text-muted))] shrink-0">
               <CalendarRange size={10} aria-hidden="true" />
               {project.startDate && project.dueDate
-                ? t('portfolio.dateRange', { start: shortDate(project.startDate), end: shortDate(project.dueDate) })
+                ? pf('dateRange', { start: shortDate(project.startDate), end: shortDate(project.dueDate) })
                 : project.dueDate
-                  ? t('portfolio.dueOn', { date: shortDate(project.dueDate) })
-                  : t('portfolio.startsOn', { date: shortDate(project.startDate!) })}
+                  ? pf('dueOn', { date: shortDate(project.dueDate) })
+                  : pf('startsOn', { date: shortDate(project.startDate!) })}
             </span>
           )}
           {archived && (
@@ -240,7 +241,7 @@ const TeamProjectCard = ({
           {/* Contributeurs (avatars empilés + charge au survol) */}
           <span className="ml-auto flex items-center gap-2 shrink-0">
             {owner && (
-              <span className="hidden sm:inline-flex rounded-full ring-2 ring-indigo-500/60" title={`${t('portfolio.col.owner')} : ${owner.displayName}`}>
+              <span className="hidden sm:inline-flex rounded-full ring-2 ring-indigo-500/60" title={`${pf('col.owner')} : ${owner.displayName}`}>
                 <MemberAvatar avatar={owner.avatar} name={owner.displayName} size={22} />
               </span>
             )}
@@ -292,11 +293,11 @@ const TeamProjectCard = ({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuItem onClick={onOpenProject}>
-                <ExternalLink size={14} aria-hidden="true" /> {t('portfolio.actions.open')}
+                <ExternalLink size={14} aria-hidden="true" /> {pf('actions.open')}
               </DropdownMenuItem>
               {canEditProject && (
                 <DropdownMenuItem onClick={onEditProject}>
-                  <Settings2 size={14} aria-hidden="true" /> {t('portfolio.actions.edit')}
+                  <Settings2 size={14} aria-hidden="true" /> {pf('actions.edit')}
                 </DropdownMenuItem>
               )}
               {canEditProject && (
@@ -347,10 +348,10 @@ const TeamProjectCard = ({
                 <>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={onDuplicate}>
-                    <Copy size={14} aria-hidden="true" /> {t('portfolio.actions.duplicate')}
+                    <Copy size={14} aria-hidden="true" /> {pf('actions.duplicate')}
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={onSaveTemplate}>
-                    <LayoutTemplate size={14} aria-hidden="true" /> {t('portfolio.actions.saveTemplate')}
+                    <LayoutTemplate size={14} aria-hidden="true" /> {pf('actions.saveTemplate')}
                   </DropdownMenuItem>
                 </>
               )}

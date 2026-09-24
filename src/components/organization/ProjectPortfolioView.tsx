@@ -40,21 +40,22 @@ const ProjectPortfolioView = ({
   projects, tasks, members, teams, milestones, dependencies, allProjects, onOpenProject,
 }: ProjectPortfolioViewProps) => {
   const { t } = useT('org');
+  const { t: pf } = useT('portfolio');
   const shortDate = (d: string) => format(parseISO(d), 'd MMM yyyy', { locale: getDateLocale() });
   const memberById = new Map(members.map((m) => [m.userId, m]));
   const teamById = new Map(teams.map((tm) => [tm.id, tm]));
 
   return (
     <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] overflow-x-auto">
-      <table className="w-full text-sm" aria-label={t('portfolio.tableAria')}>
+      <table className="w-full text-sm" aria-label={pf('tableAria')}>
         <thead>
           <tr className="text-left text-xs font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))] border-b border-[rgb(var(--color-border))]">
-            <th scope="col" className="px-3 py-2.5">{t('portfolio.col.project')}</th>
-            <th scope="col" className="px-3 py-2.5 hidden md:table-cell">{t('portfolio.col.owner')}</th>
-            <th scope="col" className="px-3 py-2.5">{t('portfolio.col.status')}</th>
-            <th scope="col" className="px-3 py-2.5 hidden lg:table-cell">{t('portfolio.col.dates')}</th>
-            <th scope="col" className="px-3 py-2.5">{t('portfolio.col.progress')}</th>
-            <th scope="col" className="px-3 py-2.5 hidden xl:table-cell">{t('portfolio.col.next')}</th>
+            <th scope="col" className="px-3 py-2.5">{pf('col.project')}</th>
+            <th scope="col" className="px-3 py-2.5 hidden md:table-cell">{pf('col.owner')}</th>
+            <th scope="col" className="px-3 py-2.5">{pf('col.status')}</th>
+            <th scope="col" className="px-3 py-2.5 hidden lg:table-cell">{pf('col.dates')}</th>
+            <th scope="col" className="px-3 py-2.5">{pf('col.progress')}</th>
+            <th scope="col" className="px-3 py-2.5 hidden xl:table-cell">{pf('col.next')}</th>
           </tr>
         </thead>
         <tbody>
@@ -75,7 +76,7 @@ const ProjectPortfolioView = ({
                   <button
                     type="button"
                     onClick={() => onOpenProject(project.id)}
-                    aria-label={t('portfolio.openProject', { name: project.name })}
+                    aria-label={pf('openProject', { name: project.name })}
                     className="flex items-center gap-2 min-w-0 text-left rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]"
                   >
                     <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${projectColor(project.color).dot}`} aria-hidden="true" />
@@ -87,7 +88,7 @@ const ProjectPortfolioView = ({
                           {blockers.length > 0 && (
                             <span className="inline-flex items-center gap-0.5 text-amber-600 dark:text-amber-400 truncate">
                               <Link2 size={10} aria-hidden="true" />
-                              {t('portfolio.blockedBy', { names: blockers.map((b) => b.name).join(', ') })}
+                              {pf('blockedBy', { names: blockers.map((b) => b.name).join(', ') })}
                             </span>
                           )}
                         </span>
@@ -103,30 +104,30 @@ const ProjectPortfolioView = ({
                     </span>
                   ) : (
                     <span className="inline-flex items-center gap-1 text-xs italic text-[rgb(var(--color-text-muted))]">
-                      <UserRound size={12} aria-hidden="true" /> {t('portfolio.noOwner')}
+                      <UserRound size={12} aria-hidden="true" /> {pf('noOwner')}
                     </span>
                   )}
                 </td>
                 <td className="px-3 py-2.5">
                   <span className="inline-flex flex-wrap items-center gap-1">
                     <span className={`text-caption font-semibold px-1.5 py-0.5 rounded-full whitespace-nowrap ${PROJECT_STATUS_META[status].soft}`}>
-                      {t(`portfolio.status.${status}`)}
+                      {pf(`status.${status}`)}
                     </span>
                     {late && (
                       <span className="text-caption font-bold px-1.5 py-0.5 rounded-full bg-red-500/10 text-red-500 whitespace-nowrap">
-                        {t('portfolio.late')}
+                        {pf('late')}
                       </span>
                     )}
                   </span>
                 </td>
                 <td className="px-3 py-2.5 hidden lg:table-cell text-xs text-[rgb(var(--color-text-secondary))] whitespace-nowrap">
                   {project.startDate && project.dueDate
-                    ? t('portfolio.dateRange', { start: shortDate(project.startDate), end: shortDate(project.dueDate) })
+                    ? pf('dateRange', { start: shortDate(project.startDate), end: shortDate(project.dueDate) })
                     : project.dueDate
-                      ? t('portfolio.dueOn', { date: shortDate(project.dueDate) })
+                      ? pf('dueOn', { date: shortDate(project.dueDate) })
                       : project.startDate
-                        ? t('portfolio.startsOn', { date: shortDate(project.startDate) })
-                        : <span className="italic text-[rgb(var(--color-text-muted))]">{t('portfolio.noDates')}</span>}
+                        ? pf('startsOn', { date: shortDate(project.startDate) })
+                        : <span className="italic text-[rgb(var(--color-text-muted))]">{pf('noDates')}</span>}
                 </td>
                 <td className="px-3 py-2.5">
                   <span className="flex items-center gap-2" title={t('project.doneRatio', { done: progress.done, total: progress.total, percent: progress.percent })}>

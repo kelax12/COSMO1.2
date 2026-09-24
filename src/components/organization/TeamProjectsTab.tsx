@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { useTeamTasksSelection } from './use-team-tasks-selection';
 import { Plus, FolderKanban, ChevronDown, ChevronRight, ArrowLeft } from 'lucide-react';
@@ -27,18 +27,14 @@ import { readEntityParam } from './deep-link.helpers';
 import { useTeamProjectsActions } from './use-team-projects-actions';
 import { ProjectsSkeleton, ProjectsPulse, ProjectsSearchBar } from './ProjectsPulse';
 import TeamProjectCard from './TeamProjectCard';
+// Vues et surfaces à la demande : chargées au premier affichage (budget du chunk).
+import {
+  TeamProjectsKanban, TeamProjectsTimeline, ProjectPortfolioView, ProjectDetailPage,
+  ProjectEditDialog, NewTeamProjectModal, CreateTeamModal, AssignTaskSheet, BulkActionsBar,
+} from './team-projects.lazy';
 import ProjectsToolbar from './ProjectsToolbar';
-import TeamProjectsKanban from './TeamProjectsKanban';
-import TeamProjectsTimeline from './TeamProjectsTimeline';
-import ProjectPortfolioView from './ProjectPortfolioView';
-import ProjectDetailPage from './ProjectDetailPage';
-import ProjectEditDialog from './ProjectEditDialog';
 import ProjectTemplatesSection from './ProjectTemplatesSection';
 import TeamTaskModal from './TeamTaskModal';
-import NewTeamProjectModal from './NewTeamProjectModal';
-import CreateTeamModal from './CreateTeamModal';
-import AssignTaskSheet from './AssignTaskSheet';
-import BulkActionsBar from './BulkActionsBar';
 import TruncatedDataNotice from './TruncatedDataNotice';
 import TeamTrashDialog from './TeamTrashDialog';
 import { useT } from '@/i18n/useT';
@@ -70,6 +66,7 @@ type TaskModalState =
 const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: TeamProjectsTabProps) => {
   const { can, canAssign } = useMyOrgPermissions(orgId);
   const { t, tp } = useT('org');
+  const { t: pf, tp: tpf } = useT('portfolio');
   const { prefs, updatePrefs } = useProjectsUiPrefs(orgId);
   const [showNewProject, setShowNewProject] = useState<false | { templateId?: string }>(false);
   const [showNewTeam, setShowNewTeam] = useState(false);
@@ -189,9 +186,9 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
     deletedLabel: (count) => tp('projects.bulkDeleted', count),
     updateTask: actions.updateTaskInput,
     labels: {
-      reassigned: (count) => tp('portfolio.bulk.reassigned', count),
-      moved: (count) => tp('portfolio.bulk.moved', count),
-      statusChanged: (count) => tp('portfolio.bulk.statusChanged', count),
+      reassigned: (count) => tpf('bulk.reassigned', count),
+      moved: (count) => tpf('bulk.moved', count),
+      statusChanged: (count) => tpf('bulk.statusChanged', count),
     },
     canAssign,
   });
@@ -282,7 +279,7 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
 
   // ─── Surfaces communes (modales, barre groupée) ─────────────────────
   const overlays = (
-    <>
+    <Suspense fallback={null}>
       {can['project.create'] && showNewProject && (
         <NewTeamProjectModal
           orgId={orgId}
@@ -370,13 +367,13 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
           onClose={() => setTaskModal(null)}
         />
       )}
-    </>
+    </Suspense>
   );
 
   // ─── Page d'un projet ───────────────────────────────────────────────
   if (projectParam) {
     return (
-      <>
+      <Suspense fallback={<ProjectsSkeleton />}>
         {detailProject ? (
           <ProjectDetailPage
             project={detailProject}
@@ -411,14 +408,14 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
           />
         ) : (
           <div className="py-16 text-center space-y-3">
-            <p className="text-sm text-[rgb(var(--color-text-secondary))]">{t('portfolio.notFound')}</p>
+            <p className="text-sm text-[rgb(var(--color-text-secondary))]">{pf('notFound')}</p>
             <button type="button" onClick={closeProject} className="inline-flex items-center gap-1.5 text-sm font-semibold text-indigo-500 hover:text-indigo-600">
-              <ArrowLeft size={15} aria-hidden="true" /> {t('portfolio.back')}
+              <ArrowLeft size={15} aria-hidden="true" /> {pf('back')}
             </button>
           </div>
         )}
         {overlays}
-      </>
+      </Suspense>
     );
   }
 
@@ -463,9 +460,10 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
         <ProjectsSearchBar query={query} onQueryChange={setQuery} sort={sort} onSortChange={(s) => updatePrefs({ sort: s })} />
       )}
       {view === 'list' && manyProjects && (
-        <p className="text-xs text-[rgb(var(--color-text-muted))]">{t('portfolio.manyProjectsHint', { count: PORTFOLIO_CARD_THRESHOLD })}</p>
+        <p className="text-xs text-[rgb(var(--color-text-muted))]">{pf('manyProjectsHint', { count: PORTFOLIO_CARD_THRESHOLD })}</p>
       )}
 
+      <Suspense fallback={<ProjectsSkeleton />}>
       {activeProjects.length === 0 && archivedProjects.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <div className="w-12 h-12 rounded-2xl bg-[rgb(var(--color-hover))] flex items-center justify-center mb-3">
@@ -521,7 +519,7 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
       ) : (
         <>
           {query && shownProjects.length === 0 && (
-            <p className="py-8 text-center text-sm text-[rgb(var(--color-text-muted))]">{t('portfolio.noResult', { query })}</p>
+            <p className="py-8 text-center text-sm text-[rgb(var(--color-text-muted))]">{pf('noResult', { query })}</p>
           )}
           {view === 'portfolio' ? (
             shownProjects.length > 0 && (
@@ -579,6 +577,7 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
           />
         </>
       )}
+      </Suspense>
 
       {overlays}
     </div>

@@ -23,7 +23,7 @@ interface ProjectMilestonesSectionProps {
 }
 
 const ProjectMilestonesSection = ({ orgId, projectId, milestones, canEdit }: ProjectMilestonesSectionProps) => {
-  const { t } = useT('org');
+  const { t: pf } = useT('portfolio');
   const create = useCreateProjectMilestone(orgId);
   const update = useUpdateProjectMilestone(orgId);
   const remove = useDeleteProjectMilestone(orgId);
@@ -42,11 +42,11 @@ const ProjectMilestonesSection = ({ orgId, projectId, milestones, canEdit }: Pro
   return (
     <section aria-labelledby={`milestones-${projectId}`} className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4">
       <h3 id={`milestones-${projectId}`} className="flex items-center gap-1.5 text-sm font-bold text-[rgb(var(--color-text-primary))] mb-3">
-        <Flag size={14} aria-hidden="true" /> {t('portfolio.milestones.title')}
+        <Flag size={14} aria-hidden="true" /> {pf('milestones.title')}
       </h3>
 
       {sorted.length === 0 ? (
-        <p className="text-xs text-[rgb(var(--color-text-muted))] mb-3">{t('portfolio.milestones.empty')}</p>
+        <p className="text-xs text-[rgb(var(--color-text-muted))] mb-3">{pf('milestones.empty')}</p>
       ) : (
         <ul className="space-y-1 mb-3">
           {sorted.map((m) => {
@@ -59,7 +59,7 @@ const ProjectMilestonesSection = ({ orgId, projectId, milestones, canEdit }: Pro
                   disabled={!canEdit}
                   onClick={() => update.mutate({ milestoneId: m.id, input: { completed: !reached } })}
                   aria-pressed={reached}
-                  aria-label={reached ? t('portfolio.milestones.markUndone', { name: m.name }) : t('portfolio.milestones.markDone', { name: m.name })}
+                  aria-label={reached ? pf('milestones.markUndone', { name: m.name }) : pf('milestones.markDone', { name: m.name })}
                   className={`w-5 h-5 rotate-45 rounded-[3px] border-2 flex items-center justify-center shrink-0 transition-colors disabled:cursor-default ${
                     reached ? 'bg-emerald-500 border-emerald-500 text-white' : missed ? 'border-red-500' : 'border-[rgb(var(--color-text-muted))]'
                   }`}
@@ -69,8 +69,8 @@ const ProjectMilestonesSection = ({ orgId, projectId, milestones, canEdit }: Pro
                 <span className={`flex-1 min-w-0 truncate text-sm ${reached ? 'line-through text-[rgb(var(--color-text-muted))]' : 'text-[rgb(var(--color-text-primary))]'}`}>
                   {m.name}
                 </span>
-                {missed && <span className="text-caption font-bold text-red-500">{t('portfolio.milestones.overdue')}</span>}
-                {reached && <span className="text-caption font-semibold text-emerald-600 dark:text-emerald-400">{t('portfolio.milestones.reached')}</span>}
+                {missed && <span className="text-caption font-bold text-red-500">{pf('milestones.overdue')}</span>}
+                {reached && <span className="text-caption font-semibold text-emerald-600 dark:text-emerald-400">{pf('milestones.reached')}</span>}
                 <time dateTime={m.dueDate} className="text-xs tabular-nums text-[rgb(var(--color-text-muted))] shrink-0">
                   {format(parseISO(m.dueDate), 'd MMM yyyy', { locale: getDateLocale() })}
                 </time>
@@ -78,7 +78,7 @@ const ProjectMilestonesSection = ({ orgId, projectId, milestones, canEdit }: Pro
                   <button
                     type="button"
                     onClick={() => remove.mutate(m.id)}
-                    aria-label={t('portfolio.milestones.remove', { name: m.name })}
+                    aria-label={pf('milestones.remove', { name: m.name })}
                     className="w-7 h-7 rounded-md flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-red-500 hover:bg-red-500/10 shrink-0"
                   >
                     <Trash2 size={13} aria-hidden="true" />
@@ -100,19 +100,19 @@ const ProjectMilestonesSection = ({ orgId, projectId, milestones, canEdit }: Pro
             value={name}
             onChange={(e) => setName(e.target.value)}
             maxLength={200}
-            placeholder={t('portfolio.milestones.namePlaceholder')}
-            aria-label={t('portfolio.milestones.nameAria')}
+            placeholder={pf('milestones.namePlaceholder')}
+            aria-label={pf('milestones.nameAria')}
             className="flex-1 min-w-[160px] h-10 px-3 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-background))] text-sm text-[rgb(var(--color-text-primary))] focus:outline-none focus:border-[rgb(var(--color-accent-solid))]"
           />
           <div className="w-40">
-            <DatePicker value={date} onChange={setDate} className="h-10" id={`milestone-date-${projectId}`} placeholder={t('portfolio.milestones.dateAria')} />
+            <DatePicker value={date} onChange={setDate} className="h-10" id={`milestone-date-${projectId}`} placeholder={pf('milestones.dateAria')} />
           </div>
           <button
             type="submit"
             disabled={!name.trim() || !date || create.isPending}
             className="h-10 px-3 rounded-lg inline-flex items-center gap-1 text-sm font-semibold bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] hover:bg-[rgb(var(--color-accent-solid-hover))] disabled:opacity-40"
           >
-            <Plus size={14} aria-hidden="true" /> {t('portfolio.milestones.add')}
+            <Plus size={14} aria-hidden="true" /> {pf('milestones.add')}
           </button>
         </form>
       )}

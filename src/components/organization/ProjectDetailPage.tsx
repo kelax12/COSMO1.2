@@ -71,6 +71,7 @@ const ProjectDetailPage = ({
   onToggleComplete, onReassign, onDelete, onOpenTask, selectable, selectedIds, onToggleSelect,
 }: ProjectDetailPageProps) => {
   const { t } = useT('org');
+  const { t: pf } = useT('portfolio');
   const [showCompleted, setShowCompleted] = useState(false);
   const color = projectColor(project.color);
   const status = project.status ?? 'active';
@@ -107,7 +108,7 @@ const ProjectDetailPage = ({
         onClick={onBack}
         className="inline-flex items-center gap-1.5 text-sm font-medium text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-primary))] transition-colors"
       >
-        <ArrowLeft size={15} aria-hidden="true" /> {t('portfolio.back')}
+        <ArrowLeft size={15} aria-hidden="true" /> {pf('back')}
       </button>
 
       <header className={`rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4 sm:p-5 ${archived ? 'opacity-80' : ''}`}>
@@ -117,9 +118,9 @@ const ProjectDetailPage = ({
             <h2 className="text-lg sm:text-xl font-bold text-[rgb(var(--color-text-primary))] break-words">{project.name}</h2>
             <div className="mt-1.5 flex items-center gap-2 flex-wrap text-xs">
               <span className={`font-semibold px-2 py-0.5 rounded-full ${PROJECT_STATUS_META[status].soft}`}>
-                {t(`portfolio.status.${status}`)}
+                {pf(`status.${status}`)}
               </span>
-              {late && <span className="font-bold px-2 py-0.5 rounded-full bg-red-500/10 text-red-500">{t('portfolio.late')}</span>}
+              {late && <span className="font-bold px-2 py-0.5 rounded-full bg-red-500/10 text-red-500">{pf('late')}</span>}
               {archived && <span className="font-semibold px-2 py-0.5 rounded-full bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-muted))]">{t('project.archivedBadge')}</span>}
               <span className="inline-flex items-center gap-1 text-[rgb(var(--color-text-secondary))]">
                 <UsersRound size={12} aria-hidden="true" /> {team?.name ?? t('project.wholeOrg')}
@@ -130,16 +131,16 @@ const ProjectDetailPage = ({
           <div className="flex items-center gap-2 flex-wrap">
             {canEdit && !archived && (
               <button type="button" onClick={onEdit} className={actionBtn}>
-                <Settings2 size={14} aria-hidden="true" /> {t('portfolio.actions.edit')}
+                <Settings2 size={14} aria-hidden="true" /> {pf('actions.edit')}
               </button>
             )}
             {canCreateProject && !archived && (
               <>
                 <button type="button" onClick={onDuplicate} className={actionBtn}>
-                  <Copy size={14} aria-hidden="true" /> {t('portfolio.actions.duplicate')}
+                  <Copy size={14} aria-hidden="true" /> {pf('actions.duplicate')}
                 </button>
                 <button type="button" onClick={onSaveTemplate} className={actionBtn}>
-                  <LayoutTemplate size={14} aria-hidden="true" /> {t('portfolio.actions.saveTemplate')}
+                  <LayoutTemplate size={14} aria-hidden="true" /> {pf('actions.saveTemplate')}
                 </button>
               </>
             )}
@@ -157,30 +158,30 @@ const ProjectDetailPage = ({
 
         <dl className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
           <div>
-            <dt className="text-xs font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))]">{t('portfolio.col.owner')}</dt>
+            <dt className="text-xs font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))]">{pf('col.owner')}</dt>
             <dd className="mt-1 flex items-center gap-1.5 text-[rgb(var(--color-text-primary))]">
               {owner ? (
                 <><MemberAvatar avatar={owner.avatar} name={owner.displayName} size={22} /> {owner.displayName}</>
               ) : (
-                <span className="inline-flex items-center gap-1 italic text-[rgb(var(--color-text-muted))]"><UserRound size={13} aria-hidden="true" /> {t('portfolio.noOwner')}</span>
+                <span className="inline-flex items-center gap-1 italic text-[rgb(var(--color-text-muted))]"><UserRound size={13} aria-hidden="true" /> {pf('noOwner')}</span>
               )}
             </dd>
           </div>
           <div>
-            <dt className="text-xs font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))]">{t('portfolio.col.dates')}</dt>
+            <dt className="text-xs font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))]">{pf('col.dates')}</dt>
             <dd className="mt-1 flex items-center gap-1.5 text-[rgb(var(--color-text-primary))]">
               <CalendarRange size={13} aria-hidden="true" className="text-[rgb(var(--color-text-muted))]" />
               {project.startDate && project.dueDate
-                ? t('portfolio.dateRange', { start: longDate(project.startDate), end: longDate(project.dueDate) })
+                ? pf('dateRange', { start: longDate(project.startDate), end: longDate(project.dueDate) })
                 : project.dueDate
-                  ? t('portfolio.dueOn', { date: longDate(project.dueDate) })
+                  ? pf('dueOn', { date: longDate(project.dueDate) })
                   : project.startDate
-                    ? t('portfolio.startsOn', { date: longDate(project.startDate) })
-                    : <span className="italic text-[rgb(var(--color-text-muted))]">{t('portfolio.noDates')}</span>}
+                    ? pf('startsOn', { date: longDate(project.startDate) })
+                    : <span className="italic text-[rgb(var(--color-text-muted))]">{pf('noDates')}</span>}
             </dd>
           </div>
           <div>
-            <dt className="text-xs font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))]">{t('portfolio.col.progress')}</dt>
+            <dt className="text-xs font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))]">{pf('col.progress')}</dt>
             <dd className="mt-1.5 flex items-center gap-2">
               <span className="flex-1 max-w-[180px] h-2 rounded-full bg-[rgb(var(--color-hover))] overflow-hidden" aria-hidden="true">
                 <span className={`block h-full rounded-full ${color.dot}`} style={{ width: `${progress.percent}%` }} />
@@ -193,7 +194,7 @@ const ProjectDetailPage = ({
         </dl>
 
         <p className={`mt-4 text-sm whitespace-pre-line ${project.description ? 'text-[rgb(var(--color-text-secondary))]' : 'italic text-[rgb(var(--color-text-muted))]'}`}>
-          {project.description || t('portfolio.noDescription')}
+          {project.description || pf('noDescription')}
         </p>
       </header>
 
@@ -201,11 +202,11 @@ const ProjectDetailPage = ({
         <section aria-labelledby={`tasks-${project.id}`} className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-2">
           <div className="flex items-center justify-between gap-2 px-2 py-1.5">
             <h3 id={`tasks-${project.id}`} className="text-sm font-bold text-[rgb(var(--color-text-primary))]">
-              {t('portfolio.tasksTitle')} <span className="font-normal text-[rgb(var(--color-text-muted))]">({tasks.length})</span>
+              {pf('tasksTitle')} <span className="font-normal text-[rgb(var(--color-text-muted))]">({tasks.length})</span>
             </h3>
             {tasks.length > 0 && !selectable && (
               <button type="button" onClick={onStartSelect} className="inline-flex items-center gap-1 text-xs font-semibold text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-primary))]">
-                <ListChecks size={13} aria-hidden="true" /> {t('portfolio.actions.selectTasks')}
+                <ListChecks size={13} aria-hidden="true" /> {pf('actions.selectTasks')}
               </button>
             )}
           </div>

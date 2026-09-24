@@ -137,30 +137,30 @@ export const ProjectsSearchBar = ({ query, onQueryChange, sort, onSortChange }: 
   sort: PortfolioSort;
   onSortChange: (value: PortfolioSort) => void;
 }) => {
-  const { t } = useT('org');
+  const { t: pf } = useT('portfolio');
   return (
     <div className="flex items-center gap-2 flex-wrap">
       <label className="relative flex-1 min-w-[200px] max-w-md">
-        <span className="sr-only">{t('portfolio.searchAria')}</span>
+        <span className="sr-only">{pf('searchAria')}</span>
         <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[rgb(var(--color-text-muted))]" aria-hidden="true" />
         <input
           type="search"
           value={query}
           onChange={(e) => onQueryChange(e.target.value)}
-          placeholder={t('portfolio.searchPlaceholder')}
+          placeholder={pf('searchPlaceholder')}
           className="w-full h-9 pl-8 pr-3 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] text-sm text-[rgb(var(--color-text-primary))] focus:outline-none focus:border-[rgb(var(--color-accent-solid))]"
         />
       </label>
       <label className="inline-flex items-center gap-1.5 text-xs text-[rgb(var(--color-text-muted))]">
         <ArrowUpDown size={13} aria-hidden="true" />
-        <span className="sr-only sm:not-sr-only">{t('portfolio.sortLabel')}</span>
+        <span className="sr-only sm:not-sr-only">{pf('sortLabel')}</span>
         <select
           value={sort}
           onChange={(e) => onSortChange(e.target.value as PortfolioSort)}
           className="h-9 px-2 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] text-sm text-[rgb(var(--color-text-primary))]"
         >
           {SORTS.map((s) => (
-            <option key={s} value={s}>{t(`portfolio.sort.${s}`)}</option>
+            <option key={s} value={s}>{pf(`sort.${s}`)}</option>
           ))}
         </select>
       </label>

@@ -70,6 +70,7 @@ export const ProjectColorPicker = ({ value, onChange, label }: {
 
 const ProjectEditDialog = ({ project, members, canChangeOwner, onSubmit, onClose }: ProjectEditDialogProps) => {
   const { t } = useT('org');
+  const { t: pf } = useT('portfolio');
   const [name, setName] = useState(project.name);
   const [description, setDescription] = useState(project.description ?? '');
   const [color, setColor] = useState(project.color);
@@ -84,13 +85,13 @@ const ProjectEditDialog = ({ project, members, canChangeOwner, onSubmit, onClose
   const { ref, dialogProps } = useModalA11y<HTMLDivElement>({
     open: true,
     onClose: () => { if (!pending) onClose(); },
-    label: t('portfolio.edit.aria', { name: project.name }),
+    label: pf('edit.aria', { name: project.name }),
   });
 
   const submit = async () => {
     if (pending) return;
     if (!name.trim()) { setError(t('project.nameRequired')); return; }
-    if (startDate && dueDate && startDate > dueDate) { setError(t('portfolio.edit.datesInvalid')); return; }
+    if (startDate && dueDate && startDate > dueDate) { setError(pf('edit.datesInvalid')); return; }
     // N'envoie QUE ce qui a changé : un responsable qui renvoie `ownerId`
     // inchangé passerait, mais un patch minimal ne dépend d'aucune garde.
     const patch: UpdateTeamProjectInput = {};
@@ -128,13 +129,13 @@ const ProjectEditDialog = ({ project, members, canChangeOwner, onSubmit, onClose
       >
         <div className="flex justify-between items-center px-4 sm:px-6 py-2 border-b border-[rgb(var(--color-border))] gap-2 shrink-0">
           <h2 className="text-base sm:text-lg font-semibold truncate text-[rgb(var(--color-text-primary))]">
-            {t('portfolio.edit.title')}
+            {pf('edit.title')}
           </h2>
           <button
             type="button"
             onClick={onClose}
             disabled={pending}
-            aria-label={t('portfolio.edit.close')}
+            aria-label={pf('edit.close')}
             className="min-w-11 min-h-11 flex items-center justify-center rounded-lg hover:bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-muted))] disabled:opacity-50"
           >
             <X size={22} aria-hidden="true" />
@@ -163,32 +164,32 @@ const ProjectEditDialog = ({ project, members, canChangeOwner, onSubmit, onClose
           </div>
 
           <div>
-            <label htmlFor="project-edit-description" className={labelClass}>{t('portfolio.edit.description')}</label>
+            <label htmlFor="project-edit-description" className={labelClass}>{pf('edit.description')}</label>
             <textarea
               id="project-edit-description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               maxLength={5000}
               rows={3}
-              placeholder={t('portfolio.edit.descriptionPlaceholder')}
+              placeholder={pf('edit.descriptionPlaceholder')}
               className={`${inputClass} h-auto py-3 resize-y`}
             />
           </div>
 
           <div>
-            <span className={labelClass}>{t('portfolio.edit.color')}</span>
-            <ProjectColorPicker value={color} onChange={setColor} label={t('portfolio.edit.color')} />
+            <span className={labelClass}>{pf('edit.color')}</span>
+            <ProjectColorPicker value={color} onChange={setColor} label={pf('edit.color')} />
           </div>
 
           <div>
             <span className={labelClass}>{t('project.category')}</span>
             <TeamCategoryTreeSelect orgId={project.orgId} value={categoryId} onChange={setCategoryId} />
-            <p className="mt-1.5 text-xs text-[rgb(var(--color-text-muted))]">{t('portfolio.edit.categoryHint')}</p>
+            <p className="mt-1.5 text-xs text-[rgb(var(--color-text-muted))]">{pf('edit.categoryHint')}</p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label htmlFor="project-edit-owner" className={labelClass}>{t('portfolio.edit.owner')}</label>
+              <label htmlFor="project-edit-owner" className={labelClass}>{pf('edit.owner')}</label>
               {canChangeOwner ? (
                 <select
                   id="project-edit-owner"
@@ -196,19 +197,19 @@ const ProjectEditDialog = ({ project, members, canChangeOwner, onSubmit, onClose
                   onChange={(e) => setOwnerId(e.target.value)}
                   className={inputClass}
                 >
-                  <option value="">{t('portfolio.noOwner')}</option>
+                  <option value="">{pf('noOwner')}</option>
                   {members.map((m) => (
                     <option key={m.userId} value={m.userId}>{m.displayName}</option>
                   ))}
                 </select>
               ) : (
                 <p id="project-edit-owner" className="h-11 flex items-center text-sm text-[rgb(var(--color-text-secondary))]">
-                  {owner?.displayName ?? t('portfolio.noOwner')}
+                  {owner?.displayName ?? pf('noOwner')}
                 </p>
               )}
             </div>
             <div>
-              <label htmlFor="project-edit-status" className={labelClass}>{t('portfolio.edit.status')}</label>
+              <label htmlFor="project-edit-status" className={labelClass}>{pf('edit.status')}</label>
               <select
                 id="project-edit-status"
                 value={status}
@@ -216,27 +217,27 @@ const ProjectEditDialog = ({ project, members, canChangeOwner, onSubmit, onClose
                 className={inputClass}
               >
                 {PROJECT_STATUSES.map((s) => (
-                  <option key={s} value={s}>{t(`portfolio.status.${s}`)}</option>
+                  <option key={s} value={s}>{pf(`status.${s}`)}</option>
                 ))}
               </select>
             </div>
             <div>
-              <label htmlFor="project-edit-start" className={labelClass}>{t('portfolio.edit.startDate')}</label>
+              <label htmlFor="project-edit-start" className={labelClass}>{pf('edit.startDate')}</label>
               <DatePicker id="project-edit-start" value={startDate} onChange={(v) => { setStartDate(v); setError(null); }} className="h-11" popoverClassName="z-[10000]" />
             </div>
             <div>
-              <label htmlFor="project-edit-due" className={labelClass}>{t('portfolio.edit.dueDate')}</label>
+              <label htmlFor="project-edit-due" className={labelClass}>{pf('edit.dueDate')}</label>
               <DatePicker id="project-edit-due" value={dueDate} onChange={(v) => { setDueDate(v); setError(null); }} className="h-11" popoverClassName="z-[10000]" minDate={startDate || undefined} />
             </div>
           </div>
-          <p className="text-xs text-[rgb(var(--color-text-muted))]">{t('portfolio.edit.ownerHint')}</p>
+          <p className="text-xs text-[rgb(var(--color-text-muted))]">{pf('edit.ownerHint')}</p>
           {/* Soumission au clavier (Entrée dans un champ) : un bouton submit invisible. */}
           <button type="submit" className="sr-only" tabIndex={-1} aria-hidden="true" />
         </form>
 
         <div className="px-4 sm:px-6 py-3 border-t border-[rgb(var(--color-border))] flex flex-col-reverse sm:flex-row sm:justify-end gap-2 shrink-0 bg-[rgb(var(--color-surface))]">
           <Button type="button" variant="outline" size="lg" onClick={onClose} disabled={pending} className="min-h-11">
-            {t('portfolio.edit.cancel')}
+            {pf('edit.cancel')}
           </Button>
           <Button
             type="button"
@@ -245,7 +246,7 @@ const ProjectEditDialog = ({ project, members, canChangeOwner, onSubmit, onClose
             disabled={pending || !name.trim()}
             className="min-h-11 bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] !text-[rgb(var(--color-accent-solid-foreground))] !border-0 disabled:opacity-40"
           >
-            {pending ? (<><Loader2 size={16} className="animate-spin" aria-hidden="true" /> {t('portfolio.edit.saving')}</>) : t('portfolio.edit.save')}
+            {pending ? (<><Loader2 size={16} className="animate-spin" aria-hidden="true" /> {pf('edit.saving')}</>) : pf('edit.save')}
           </Button>
         </div>
       </div>

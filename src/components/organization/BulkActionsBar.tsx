@@ -56,6 +56,7 @@ const BulkActionsBar = ({
   assignableMembers = [], onAssign, projects = [], onMove, onSetStatus,
 }: BulkActionsBarProps) => {
   const { t, tp } = useT('org');
+  const { t: pf } = useT('portfolio');
   // La barre reste montée même à zéro sélection : elle porte désormais la SEULE
   // sortie du mode. Disparaître ici enfermerait l'utilisateur dans un mode
   // sélection qu'il ne pourrait plus quitter tant qu'il n'aurait pas coché
@@ -94,10 +95,10 @@ const BulkActionsBar = ({
       {count > 0 && onAssign && (
         <DropdownMenu>
           <DropdownMenuTrigger className={actionClass}>
-            <UserPlus size={15} aria-hidden="true" /> {t('portfolio.bulk.assign')}
+            <UserPlus size={15} aria-hidden="true" /> {pf('bulk.assign')}
           </DropdownMenuTrigger>
           <DropdownMenuContent side="top" align="center" className="w-56 max-h-72 overflow-y-auto">
-            <DropdownMenuLabel>{t('portfolio.bulk.assignTo')}</DropdownMenuLabel>
+            <DropdownMenuLabel>{pf('bulk.assignTo')}</DropdownMenuLabel>
             {assignableMembers.map((m) => (
               <DropdownMenuItem key={m.userId} onClick={() => onAssign(m.userId)}>
                 <MemberAvatar avatar={m.avatar} name={m.displayName} size={20} />
@@ -106,7 +107,7 @@ const BulkActionsBar = ({
             ))}
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => onAssign(null)}>
-              <UserX size={14} aria-hidden="true" /> {t('portfolio.bulk.unassignAll')}
+              <UserX size={14} aria-hidden="true" /> {pf('bulk.unassignAll')}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -115,10 +116,10 @@ const BulkActionsBar = ({
       {count > 0 && onMove && projects.length > 1 && (
         <DropdownMenu>
           <DropdownMenuTrigger className={actionClass}>
-            <FolderInput size={15} aria-hidden="true" /> {t('portfolio.bulk.move')}
+            <FolderInput size={15} aria-hidden="true" /> {pf('bulk.move')}
           </DropdownMenuTrigger>
           <DropdownMenuContent side="top" align="center" className="w-56 max-h-72 overflow-y-auto">
-            <DropdownMenuLabel>{t('portfolio.bulk.moveTo')}</DropdownMenuLabel>
+            <DropdownMenuLabel>{pf('bulk.moveTo')}</DropdownMenuLabel>
             {projects.map((p) => (
               <DropdownMenuItem key={p.id} onClick={() => onMove(p.id)}>
                 <span className={`w-2 h-2 rounded-full shrink-0 ${projectColor(p.color).dot}`} aria-hidden="true" />
@@ -132,7 +133,7 @@ const BulkActionsBar = ({
       {count > 0 && onSetStatus && (
         <DropdownMenu>
           <DropdownMenuTrigger className={actionClass}>
-            <CircleDot size={15} aria-hidden="true" /> {t('portfolio.bulk.status')}
+            <CircleDot size={15} aria-hidden="true" /> {pf('bulk.status')}
           </DropdownMenuTrigger>
           <DropdownMenuContent side="top" align="center" className="w-48">
             {STATUS_ORDER.map((st) => (
