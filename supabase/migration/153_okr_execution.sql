@@ -267,7 +267,27 @@ $$;
 REVOKE ALL ON FUNCTION public.insert_kr_checkin_row(uuid, uuid, numeric, text, text) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.insert_kr_checkin_row(uuid, uuid, numeric, text, text) TO authenticated;
 
+-- Lecture indexable des liens KR ↔ projet : un lien n'est rendu que si le
+-- projet est visible (jointure sur `my_team_project_ids`, évaluée une fois)
+-- et l'OKR aussi.
+CREATE OR REPLACE FUNCTION public.get_my_team_kr_projects(p_org uuid)
+RETURNS TABLE (kr_id uuid, project_id uuid)
+LANGUAGE sql
+STABLE SECURITY DEFINER
+SET search_path TO ''
+AS $$
+  SELECT kp.kr_id, kp.project_id
+    FROM public.team_kr_projects kp
+    JOIN public.team_key_results k ON k.id = kp.kr_id
+   WHERE kp.org_id = p_org
+     AND kp.project_id IN (SELECT public.my_team_project_ids(p_org))
+     AND public.can_access_team_okr(k.okr_id);
+$$;
+REVOKE ALL ON FUNCTION public.get_my_team_kr_projects(uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.get_my_team_kr_projects(uuid) TO authenticated;
+
 COMMIT;
+
 
 -- ═══════════════════════════════════════════════════════════════════
 -- VÉRIFICATION APRÈS APPLICATION

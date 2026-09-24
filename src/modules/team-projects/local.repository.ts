@@ -34,6 +34,7 @@ import { localizeSeed } from '@/lib/seed-i18n';
 import { DEPENDENCY_ERRORS, makeDependencyError } from '@/modules/tasks/dependency-errors';
 import { safeGetItem, safeSetItem, writeJsonOrThrow } from '@/lib/safe-json';
 import { makeApiError } from '@/lib/normalizeApiError';
+import { pushLocalTrash } from './portfolio.local.store';
 // Les jeux de démonstration vivent dans `demo-seed.ts` : un jeu de données
 // n'est pas un repository, et il occupait ici 278 lignes sur 712.
 import {
@@ -102,6 +103,13 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
       createdAt: new Date().toISOString(),
       teamId: input.teamId ?? null,
       categoryId: input.categoryId ?? null,
+      ownerId: input.ownerId ?? DEMO_USER_ID,
+      description: input.description ?? null,
+      startDate: input.startDate ?? null,
+      targetDate: input.targetDate ?? null,
+      status: input.status ?? 'active',
+      health: null,
+      isTemplate: input.isTemplate ?? false,
     };
     this.saveProjects([...projects, project]);
     return project;
@@ -115,6 +123,12 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
     if (input.color !== undefined) p.color = input.color;
     if (input.teamId !== undefined) p.teamId = input.teamId;
     if (input.categoryId !== undefined) p.categoryId = input.categoryId;
+    if (input.ownerId !== undefined) p.ownerId = input.ownerId;
+    if (input.description !== undefined) p.description = input.description;
+    if (input.startDate !== undefined) p.startDate = input.startDate;
+    if (input.targetDate !== undefined) p.targetDate = input.targetDate;
+    if (input.status !== undefined) p.status = input.status;
+    if (input.isTemplate !== undefined) p.isTemplate = input.isTemplate;
     if (input.archived !== undefined) p.archivedAt = input.archived ? new Date().toISOString() : null;
     this.saveProjects(projects);
     return p;
@@ -150,6 +164,8 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
       createdAt: now,
       updatedAt: now,
       categoryId: input.categoryId ?? null,
+      startDate: input.startDate ?? '',
+      isMilestone: input.isMilestone ?? false,
     };
     this.saveTasks([task, ...tasks]);
     return task;
@@ -167,6 +183,8 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
     if (input.assigneeIds !== undefined) task.assigneeIds = input.assigneeIds;
     if (input.projectId !== undefined) task.projectId = input.projectId;
     if (input.categoryId !== undefined) task.categoryId = input.categoryId;
+    if (input.startDate !== undefined) task.startDate = input.startDate;
+    if (input.isMilestone !== undefined) task.isMilestone = input.isMilestone;
     // Reproduit le trigger `sync_team_task_status` de la mig. 091 : sans cette
     // symétrie, le mode démo divergerait de la production dès qu'un statut est
     // changé, et le kanban afficherait deux vérités différentes selon le mode.
@@ -190,7 +208,26 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
   }
 
   async deleteTask(taskId: string): Promise<void> {
+    // Miroir du trigger de corbeille (mig. 151) : la tâche et ce qui en
+    // dépend sont photographiés avant d'être retirés, pour que « Annuler » et
+    // la corbeille restaurent la MÊME tâche, pas une copie appauvrie.
+    const task = this.getTasksArray().find((x) => x.id === taskId);
+    if (task) {
+      pushLocalTrash({
+        task,
+        subtasks: this.getSubtasksArray().filter((s) => s.taskId === taskId),
+        comments: this.getCommentsArray().filter((c) => c.taskId === taskId),
+        dependencies: this.getDependenciesArray().filter((d) => d.taskId === taskId || d.dependsOnId === taskId),
+        deletedBy: DEMO_USER_ID,
+        deletedAt: new Date().toISOString(),
+      });
+    }
     this.saveTasks(this.getTasksArray().filter((x) => x.id !== taskId));
+    this.saveSubtasks(this.getSubtasksArray().filter((s) => s.taskId !== taskId));
+    this.saveComments(this.getCommentsArray().filter((c) => c.taskId !== taskId));
+    this.saveDependencies(
+      this.getDependenciesArray().filter((d) => d.taskId !== taskId && d.dependsOnId !== taskId),
+    );
   }
 
   // ─── Commentaires (mig. 082) ───────────────────────────────────────
@@ -322,7 +359,9 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
     const target = tasks.find((t) => t.id === taskId);
     const blocker = tasks.find((t) => t.id === dependsOnId);
     if (!target || !blocker) throw makeDependencyError(DEPENDENCY_ERRORS.taskMissing);
-    if (target.projectId !== blocker.projectId) {
+    // Mig. 152 : les dépendances ENTRE projets d'une même organisation sont
+    // permises. Seule l'organisation doit coïncider.
+    if (target.orgId !== blocker.orgId) {
       throw makeDependencyError(DEPENDENCY_ERRORS.crossProject);
     }
 

@@ -15,6 +15,9 @@
 // dernière page visitée, il vit donc dans le chunk d'entrée.
 // ═══════════════════════════════════════════════════════════════════
 
+/** Forme d'un identifiant d'entité : jamais un chemin, jamais un préfixe libre. */
+const ID_RE = /^[A-Za-z0-9_-]{1,64}$/;
+
 /** Sections adressables par un segment de chemin. L'Aperçu est `/entreprise` lui-même. */
 export const ORG_SECTION_SEGMENTS = [
   'tasks',
@@ -23,6 +26,10 @@ export const ORG_SECTION_SEGMENTS = [
   'stats',
   'pyramid',
   'members',
+  // Audit 2026-09-23 : les équipes ont leur propre section (M7), les
+  // réglages aussi (M13). `billing` reste une route, rangée sous Paramètres.
+  'teams',
+  'settings',
   'billing',
 ] as const;
 
@@ -46,18 +53,38 @@ export const orgSectionPath = (section: string | null | undefined): string =>
 export const isOrgPath = (pathname: string): boolean => {
   if (pathname === '/entreprise') return true;
   const prefix = '/entreprise/';
-  return pathname.startsWith(prefix) && isOrgSectionSegment(pathname.slice(prefix.length));
+  if (!pathname.startsWith(prefix)) return false;
+  const [section, item, ...rest] = pathname.slice(prefix.length).split('/');
+  if (rest.length > 0) return false;
+  if (item === undefined) return isOrgSectionSegment(section);
+  return isOrgItemSection(section) && ID_RE.test(item);
 };
 
+/**
+ * Sections qui ont une page PAR OBJET (M7) : `/entreprise/projects/<id>`,
+ * `/entreprise/teams/<id>`. Liste fermée, comme les sections.
+ */
+export const ORG_ITEM_SECTIONS = ['projects', 'teams'] as const;
+export type OrgItemSection = (typeof ORG_ITEM_SECTIONS)[number];
+
+export const isOrgItemSection = (value: string | null | undefined): value is OrgItemSection =>
+  !!value && (ORG_ITEM_SECTIONS as readonly string[]).includes(value);
+
+/** Vrai si `value` a la forme d'un identifiant (jamais un chemin). */
+export const isEntityId = (value: string | null | undefined): value is string => !!value && ID_RE.test(value);
+
+/** Chemin de la page d'un projet ou d'une équipe. Un id malformé renvoie à la section. */
+export const orgItemPath = (section: OrgItemSection, id: string): string =>
+  isEntityId(id) ? `/entreprise/${section}/${id}` : `/entreprise/${section}`;
+
 /** Entités adressables par l'URL de /entreprise. */
-export type EntityParam = 'task' | 'project' | 'member';
+export type EntityParam = 'task' | 'project' | 'member' | 'okr';
 
 /**
  * Un id vient toujours d'un UUID Supabase. On borne longueur et alphabet : la
  * valeur finit dans un `find()` puis dans du JSX, et une URL est une entrée
  * non fiable comme une autre.
  */
-const ID_RE = /^[A-Za-z0-9_-]{1,64}$/;
 
 /** Lit un id d'entité dans l'URL, ou null si absent / malformé. */
 export const readEntityParam = (

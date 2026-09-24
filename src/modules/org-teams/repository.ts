@@ -2,14 +2,16 @@
 // ORG-TEAMS MODULE - Repository Interface
 // ═══════════════════════════════════════════════════════════════════
 
-import { OrgTeam, OrgTeamMember, CreateOrgTeamInput } from './types';
+import type { OrgTeam, OrgTeamMember, CreateOrgTeamInput, UpdateOrgTeamInput, DeleteOrgTeamOptions, TeamDeletionImpact } from './types';
 
 export interface IOrgTeamsRepository {
   getTeams(orgId: string): Promise<OrgTeam[]>;
   /** Toutes les appartenances de l'org (jointure affichée côté client). */
   getTeamMembers(orgId: string): Promise<OrgTeamMember[]>;
   createTeam(orgId: string, input: CreateOrgTeamInput): Promise<OrgTeam>;
-  deleteTeam(teamId: string): Promise<void>;
+  updateTeam(teamId: string, input: UpdateOrgTeamInput): Promise<OrgTeam>;
+  deleteTeam(teamId: string, options?: DeleteOrgTeamOptions): Promise<void>;
+  getTeamDeletionImpact(teamId: string): Promise<TeamDeletionImpact>;
   addTeamMember(teamId: string, orgId: string, userId: string): Promise<void>;
   removeTeamMember(teamId: string, userId: string): Promise<void>;
   /**

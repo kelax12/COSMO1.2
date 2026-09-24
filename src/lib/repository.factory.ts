@@ -52,6 +52,16 @@ import { SupabaseOrganizationsRepository } from '@/modules/organizations/supabas
 import { ITeamProjectsRepository } from '@/modules/team-projects/repository';
 import { SupabaseTeamProjectsRepository } from '@/modules/team-projects/supabase.repository';
 
+// Portefeuille, gouvernance, exécution des OKR (audit entreprise 2026-09-23,
+// mig. 151 à 155) : trois dépôts de plus plutôt que trois dépôts existants
+// gonflés au-delà de 600 lignes.
+import type { ITeamPortfolioRepository } from '@/modules/team-projects/portfolio.repository';
+import { SupabaseTeamPortfolioRepository } from '@/modules/team-projects/portfolio.supabase.repository';
+import type { IOrgGovernanceRepository } from '@/modules/organizations/governance.repository';
+import { SupabaseOrgGovernanceRepository } from '@/modules/organizations/governance.supabase.repository';
+import type { IOkrExecutionRepository } from '@/modules/team-okrs/execution.repository';
+import { SupabaseOkrExecutionRepository } from '@/modules/team-okrs/execution.supabase.repository';
+
 // Team OKRs (mode entreprise)
 import { ITeamOKRsRepository } from '@/modules/team-okrs/repository';
 import { SupabaseTeamOKRsRepository } from '@/modules/team-okrs/supabase.repository';
@@ -156,6 +166,9 @@ let teamProjectsRepository: ITeamProjectsRepository | null = null;
 let teamOKRsRepository: ITeamOKRsRepository | null = null;
 let orgTeamsRepository: IOrgTeamsRepository | null = null;
 let teamCategoriesRepository: ITeamCategoriesRepository | null = null;
+let teamPortfolioRepository: ITeamPortfolioRepository | null = null;
+let orgGovernanceRepository: IOrgGovernanceRepository | null = null;
+let okrExecutionRepository: IOkrExecutionRepository | null = null;
 let statsRepository: IStatsRepository | null = null;
 
 // Auto-reset singletons whenever the demo flag flips. Without this, any
@@ -175,6 +188,9 @@ appModeStore.subscribe(() => {
   teamOKRsRepository = null;
   orgTeamsRepository = null;
   teamCategoriesRepository = null;
+  teamPortfolioRepository = null;
+  orgGovernanceRepository = null;
+  okrExecutionRepository = null;
   statsRepository = null;
 });
 
@@ -339,6 +355,42 @@ export function getOrgTeamsRepository(): IOrgTeamsRepository {
   return orgTeamsRepository;
 }
 
+/** Portefeuille de projets (rattachements, santé, corbeille, suivi). */
+export function getTeamPortfolioRepository(): ITeamPortfolioRepository {
+  if (!teamPortfolioRepository) {
+    teamPortfolioRepository = appModeStore.isDemo
+      ? lazyDemoRepository<ITeamPortfolioRepository>(() =>
+          import('./demo-repositories').then((m) => m.createDemoTeamPortfolioRepository()),
+        )
+      : new SupabaseTeamPortfolioRepository();
+  }
+  return teamPortfolioRepository;
+}
+
+/** Gouvernance d'organisation (cycle de vie des membres, audit, préférences). */
+export function getOrgGovernanceRepository(): IOrgGovernanceRepository {
+  if (!orgGovernanceRepository) {
+    orgGovernanceRepository = appModeStore.isDemo
+      ? lazyDemoRepository<IOrgGovernanceRepository>(() =>
+          import('./demo-repositories').then((m) => m.createDemoOrgGovernanceRepository()),
+        )
+      : new SupabaseOrgGovernanceRepository();
+  }
+  return orgGovernanceRepository;
+}
+
+/** Exécution des OKR (cycles, points d'étape, projets reliés). */
+export function getOkrExecutionRepository(): IOkrExecutionRepository {
+  if (!okrExecutionRepository) {
+    okrExecutionRepository = appModeStore.isDemo
+      ? lazyDemoRepository<IOkrExecutionRepository>(() =>
+          import('./demo-repositories').then((m) => m.createDemoOkrExecutionRepository()),
+        )
+      : new SupabaseOkrExecutionRepository();
+  }
+  return okrExecutionRepository;
+}
+
 /**
  * Get the Team categories repository based on current mode.
  */
@@ -397,6 +449,9 @@ export function resetRepositories(): void {
   teamOKRsRepository = null;
   orgTeamsRepository = null;
   teamCategoriesRepository = null;
+  teamPortfolioRepository = null;
+  orgGovernanceRepository = null;
+  okrExecutionRepository = null;
   statsRepository = null;
 }
 

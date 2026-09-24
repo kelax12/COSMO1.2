@@ -792,7 +792,70 @@ $$;
 REVOKE ALL ON FUNCTION public.duplicate_team_project(uuid, text, integer, boolean, boolean) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.duplicate_team_project(uuid, text, integer, boolean, boolean) TO authenticated;
 
+-- Un responsable d'équipe (mig. 107) renomme et décrit son équipe : jusqu'ici
+-- seuls l'admin et le créateur le pouvaient.
+DROP POLICY IF EXISTS "org_teams_update" ON public.org_teams;
+CREATE POLICY "org_teams_update"
+  ON public.org_teams FOR UPDATE
+  USING (public.can_manage_team(id))
+  WITH CHECK (public.can_manage_team(id));
+
+-- ─── 8 · Lectures indexables ────────────────────────────────────────
+--
+-- Même règle que la mig. 113 : lire ces tables en direct paierait
+-- `can_access_team_project` PAR LIGNE. Les RPC évaluent le périmètre une
+-- fois (`my_team_project_ids`) et joignent. Les policies restent en place,
+-- en défense en profondeur. `p_org` est un filtre : le périmètre vient de
+-- `auth.uid()` seul.
+
+CREATE OR REPLACE FUNCTION public.get_my_team_project_links(p_org uuid)
+RETURNS jsonb
+LANGUAGE sql
+STABLE SECURITY DEFINER
+SET search_path TO ''
+AS $$
+  WITH visible AS (SELECT public.my_team_project_ids(p_org) AS id)
+  SELECT jsonb_build_object(
+    'teams', COALESCE((
+      SELECT jsonb_agg(jsonb_build_object('projectId', pt.project_id, 'teamId', pt.team_id))
+        FROM public.team_project_teams pt
+       WHERE pt.org_id = p_org AND pt.project_id IN (SELECT id FROM visible)
+    ), '[]'::jsonb),
+    'members', COALESCE((
+      SELECT jsonb_agg(jsonb_build_object('projectId', pm.project_id, 'userId', pm.user_id, 'role', pm.role))
+        FROM public.team_project_members pm
+       WHERE pm.org_id = p_org AND pm.project_id IN (SELECT id FROM visible)
+    ), '[]'::jsonb)
+  );
+$$;
+REVOKE ALL ON FUNCTION public.get_my_team_project_links(uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.get_my_team_project_links(uuid) TO authenticated;
+
+-- Corbeille : ce que je peux restaurer, sur les projets que je vois.
+CREATE OR REPLACE FUNCTION public.get_my_team_task_trash(p_org uuid)
+RETURNS TABLE (task_id uuid, project_id uuid, name text, deleted_by uuid, deleted_at timestamptz)
+LANGUAGE sql
+STABLE SECURITY DEFINER
+SET search_path TO ''
+AS $$
+  WITH visible AS (SELECT public.my_team_project_ids(p_org) AS id)
+  SELECT tr.task_id, tr.project_id, tr.name, tr.deleted_by, tr.deleted_at
+    FROM public.team_task_trash tr
+   WHERE tr.org_id = p_org
+     AND tr.project_id IN (SELECT id FROM visible)
+     AND (
+       tr.deleted_by = auth.uid()
+       OR public.my_org_perm(p_org, 'task.deleteAny')
+       OR public.my_project_role(tr.project_id) = 'lead'
+     )
+   ORDER BY tr.deleted_at DESC
+   LIMIT 500;
+$$;
+REVOKE ALL ON FUNCTION public.get_my_team_task_trash(uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.get_my_team_task_trash(uuid) TO authenticated;
+
 COMMIT;
+
 
 -- ═══════════════════════════════════════════════════════════════════
 -- VÉRIFICATION APRÈS APPLICATION

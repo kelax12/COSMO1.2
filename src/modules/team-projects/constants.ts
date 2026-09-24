@@ -24,4 +24,9 @@ export const teamProjectKeys = {
   dependencies: (orgId: string) => [...teamProjectKeys.all, 'dependencies', orgId] as const,
   orgActivity: (orgId: string, since: string) =>
     [...teamProjectKeys.all, 'org-activity', orgId, since] as const,
+  // Portefeuille (mig. 151, 152, 155)
+  projectLinks: (orgId: string) => [...teamProjectKeys.all, 'project-links', orgId] as const,
+  projectUpdates: (projectId: string) => [...teamProjectKeys.all, 'project-updates', projectId] as const,
+  trash: (orgId: string) => [...teamProjectKeys.all, 'trash', orgId] as const,
+  follows: (orgId: string) => [...teamProjectKeys.all, 'follows', orgId] as const,
 };

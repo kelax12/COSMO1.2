@@ -2,7 +2,7 @@
 // ORG-TEAMS MODULE - Public API
 // ═══════════════════════════════════════════════════════════════════
 
-export type { OrgTeam, OrgTeamMember, CreateOrgTeamInput } from './types';
+export type { OrgTeam, OrgTeamMember, CreateOrgTeamInput, UpdateOrgTeamInput, DeleteOrgTeamOptions, TeamDeletionImpact } from './types';
 
 export {
   orgTeamKeys,
@@ -19,6 +19,8 @@ export {
   useOrgTeamMembers,
   useCreateOrgTeam,
   useDeleteOrgTeam,
+  useTeamDeletionImpact,
+  useUpdateOrgTeam,
   useAddTeamMember,
   useRemoveTeamMember,
   useSetTeamLead,

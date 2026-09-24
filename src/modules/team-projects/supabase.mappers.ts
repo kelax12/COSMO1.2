@@ -32,6 +32,17 @@ export interface ProjectRow {
   created_at: string;
   team_id: string | null;
   category_id: string | null;
+  // Mig. 152 — absentes des lignes d'avant son application : tout est optionnel.
+  owner_id?: string | null;
+  description?: string | null;
+  start_date?: string | null;
+  target_date?: string | null;
+  status?: string | null;
+  health?: string | null;
+  health_note?: string | null;
+  health_updated_at?: string | null;
+  health_updated_by?: string | null;
+  is_template?: boolean | null;
 }
 
 export interface TaskRow {
@@ -51,6 +62,8 @@ export interface TaskRow {
   created_at: string;
   updated_at: string;
   category_id: string | null;
+  start_date?: string | null;
+  is_milestone?: boolean | null;
 }
 
 export const mapProject = (r: ProjectRow): TeamProject => ({
@@ -63,6 +76,16 @@ export const mapProject = (r: ProjectRow): TeamProject => ({
   createdAt: r.created_at,
   teamId: r.team_id,
   categoryId: r.category_id,
+  ownerId: r.owner_id ?? null,
+  description: r.description ?? null,
+  startDate: r.start_date ?? null,
+  targetDate: r.target_date ?? null,
+  status: (r.status as TeamProject['status'] | null) ?? 'active',
+  health: (r.health as TeamProject['health'] | null) ?? null,
+  healthNote: r.health_note ?? null,
+  healthUpdatedAt: r.health_updated_at ?? null,
+  healthUpdatedBy: r.health_updated_by ?? null,
+  isTemplate: r.is_template ?? false,
 });
 
 export interface CommentRow {
@@ -103,6 +126,8 @@ export const mapTask = (r: TaskRow): TeamTask => ({
   createdAt: r.created_at,
   updatedAt: r.updated_at,
   categoryId: r.category_id,
+  startDate: r.start_date ?? '',
+  isMilestone: r.is_milestone ?? false,
 });
 
 

@@ -46,6 +46,12 @@ import { LocalStorageOrganizationsRepository } from '@/modules/organizations/loc
 import { LocalStorageTeamProjectsRepository } from '@/modules/team-projects/local.repository';
 import { LocalStorageTeamOKRsRepository } from '@/modules/team-okrs/local.repository';
 import { LocalStorageOrgTeamsRepository } from '@/modules/org-teams/local.repository';
+import { LocalStorageTeamPortfolioRepository } from '@/modules/team-projects/portfolio.local.repository';
+import { LocalStorageOrgGovernanceRepository } from '@/modules/organizations/governance.local.repository';
+import { LocalStorageOkrExecutionRepository } from '@/modules/team-okrs/execution.local.repository';
+import type { ITeamPortfolioRepository } from '@/modules/team-projects/portfolio.repository';
+import type { IOrgGovernanceRepository } from '@/modules/organizations/governance.repository';
+import type { IOkrExecutionRepository } from '@/modules/team-okrs/execution.repository';
 
 import type { IOrganizationsRepository } from '@/modules/organizations/repository';
 import type { ITeamProjectsRepository } from '@/modules/team-projects/repository';
@@ -69,3 +75,12 @@ export const createDemoTeamOKRsRepository = (): ITeamOKRsRepository =>
 
 export const createDemoOrgTeamsRepository = (): IOrgTeamsRepository =>
   new LocalStorageOrgTeamsRepository();
+
+export const createDemoTeamPortfolioRepository = (): ITeamPortfolioRepository =>
+  new LocalStorageTeamPortfolioRepository();
+
+export const createDemoOrgGovernanceRepository = (): IOrgGovernanceRepository =>
+  new LocalStorageOrgGovernanceRepository();
+
+export const createDemoOkrExecutionRepository = (): IOkrExecutionRepository =>
+  new LocalStorageOkrExecutionRepository();
