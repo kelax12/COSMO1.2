@@ -107,11 +107,57 @@
 
 | # | Angle mort · **énoncé du 2026-09-16, non réécrit** | Vérifié le 2026-09-16 | 🔎 État au 2026-09-21 |
 |---|---|---|---|
-| AM-1 | 🔴 **Lighthouse tourne en preset DESKTOP uniquement.** Aucune mesure de performance **mobile** en continu, alors que c'est le terminal du trafic visé et que [`MOBILE.md`](./MOBILE.md) est le document le moins bien noté du dépôt | `lighthouserc.json` : `"preset": "desktop"` | ✅ **OUTILLÉ le 2026-09-20** · `lighthouserc.mobile.json` + passe mobile de `ci.yml` (`C-84`) — 🔴 ne prouve PAS : que les seuils soient justes : **première pose**, prudente faute de Chrome sur le poste, à rabaisser au mesuré dès le 1ᵉʳ run réel · 🔎 🔴 **2026-09-22 : LCP mobile 5,6 à 8,3 s sur 8 URLs sur 8**, en `warn` donc job vert, et le résumé CI écrit « aucun rapport mobile produit » : jamais lu. → `C-116` |
+| AM-1 | 🔴 **Lighthouse tourne en preset DESKTOP uniquement.** Aucune mesure de performance **mobile** en continu, alors que c'est le terminal du trafic visé et que [`MOBILE.md`](./MOBILE.md) est le document le moins bien noté du dépôt | `lighthouserc.json` : `"preset": "desktop"` | ✅ **OUTILLÉ le 2026-09-20** · `lighthouserc.mobile.json` + passe mobile de `ci.yml` (`C-84`) — 🔴 ne prouve PAS : que les seuils soient justes : **première pose**, prudente faute de Chrome sur le poste, à rabaisser au mesuré dès le 1ᵉʳ run réel · 🔎 🔴 **2026-09-22 : LCP mobile 5,6 à 8,3 s sur 8 URLs sur 8**, en `warn` donc job vert, et le résumé CI écrit « aucun rapport mobile produit » : jamais lu. → `C-116` · 🔎 ✅ **2026-09-24 : cause trouvée**, cf. § « C-116 » juste sous ce tableau. Le résumé lisait un dossier jamais écrit, et l'artefact ignorait un dossier caché : corrigés |
 | AM-2 | **La performance n'est PAS bloquante, et LCP / TBT non plus.** Seuls `accessibility`, `seo` et `cumulative-layout-shift` sont en `error` | `lighthouserc.json` : `"categories:performance": ["warn", …]`, `largest-contentful-paint` et `total-blocking-time` en `warn` | 🟠 **TOUJOURS OUVERT** au 2026-09-21 · **arbitrage assumé, non rendu** : rendre `performance`, LCP et TBT bloquants suppose d'accepter que le runner varie. Aucun item ne le porte — *(jugé outillable le 09-16 : arbitrage assumé (le runner varie), mais l'angle mort doit être nommé)* |
 | AM-3 | **Les chunks LAZY n'ont aucun plafond.** Le budget ne couvre que le chemin critique et l'entrée. Une page lazy peut grossir sans limite | `scripts/check-bundle-budget.mjs` : « Les chunks lazy ne sont payés que par ceux qui ouvrent l'écran correspondant ». `BUDGETS` ne porte que `critical` et `entry` | ✅ **OUTILLÉ le 2026-09-20** · **30 plafonds par chunk**, posés au poids du jour (`C-85`) — 🔴 ne prouve PAS : rien — mais ⚠️ **l'énoncé du 09-16 était périmé** : un plafond générique de 70 ko existait ; ce qui manquait était un plafond **par chunk** · 🔎 ✅ **2026-09-22 : il a mordu** : `TasksPage` 37,7 ko > 37,0 à `HEAD`. → `C-117` |
 | AM-4 | **4 URLs mesurées sur les 45 du sitemap** | `lighthouserc.json` : `/`, `/guide/`, `/blog/`, `/pour-freelances/`. `dist/sitemap.xml` en porte **45** | ✅ **OUTILLÉ le 2026-09-20** · passe mobile Lighthouse, 4 → **8 URLs** (`C-84`) — 🔴 ne prouve PAS : la couverture : 8 URLs restent 8 URLs, la proportion s'améliore sans se fermer |
 | AM-5 | **Aucune mesure du coût SERVEUR en continu.** Les plans d'exécution et les temps de RPC sont rejoués à la main, à chaque passe | aucun workflow ne joue d'`EXPLAIN` | ✅ **OUTILLÉ le 2026-09-20** · `npm run check:db-cost` · EXPLAIN sous RLS, rôle `authenticated`, transaction annulée (`C-87`) — 🔴 ne prouve PAS : le coût **facturé** (Supabase ne l'expose pas) ni la charge réelle (c'est `scalability-volume`) |
+
+### 🔎 C-116 · pourquoi le LCP mobile est lent (mesuré le 2026-09-24)
+
+**Mesuré sur la PRODUCTION** (`https://thecosmo.app`, Brotli, CDN Vercel) avec Chromium bridé par
+CDP comme Lighthouse (4G lente : 150 ms RTT, 1,6 Mbit/s ; CPU ×4), viewport 412 px :
+
+| Page | FCP | LCP | Élément LCP |
+|---|---|---|---|
+| `/guide/` | 5 784 ms | **5 784 ms** | un paragraphe du guide, rendu par React |
+| `/` | 5 372 ms | **5 372 ms** | 🔴 le paragraphe du **bandeau cookies** |
+
+🔴 **FCP = LCP partout : le contenu prérendu n'est JAMAIS peint.** Ce n'est pas un poids de
+contenu, c'est un choix de conception : `index.html` masque `#seo-fallback` (`display:none`) et
+n'affiche que `#boot-screen`, un spinner. Chrome ne compte pas une bordure animée comme du contenu,
+donc le premier rendu « contentful » attend le premier commit de React, et le LCP avec lui. Le
+bloc prérendu ne sert qu'aux robots qui n'appliquent pas la CSS.
+
+**La chaîne mesurée sur `/guide/`** (cascade réseau CDP) :
+
+| Instant | Ce qui se passe |
+|---|---|
+| 0,56 s | HTML reçu |
+| 2,3 s | CSS bloquante reçue (39 ko br), police à 2,5 s |
+| 2,8 s | les sept JS du chemin critique reçus, **dont `vendor-supabase` (56 ko br) et `vendor-animation` (51 ko br) sur une page de texte**, tous en priorité *High*, en concurrence avec la CSS sur le même lien |
+| 3,1 à 3,8 s | **seconde vague** : environ 25 petits chunks découverts seulement après l'exécution de l'entrée (`GuidePage`, `demo-seed`, `local.repository`, sept `hooks-*`…), plus `sentry-client` (50 ko) et deux requêtes Supabase (`/auth/v1/health`, `/rest/v1/`) |
+| 4,7 à 5,8 s | premier rendu React = FCP = LCP |
+
+**Trois leviers, par ordre de gain attendu, et le premier est une décision, pas un correctif :**
+
+1. **Peindre le prérendu.** Le rendre visible (et stylé) jusqu'au montage de React ramènerait le
+   premier rendu vers 2,5 s. ⚠️ Deux risques à peser : un saut visuel quand React remplace le bloc,
+   et un LCP qui peut **se redéclarer** plus tard si React peint un élément plus grand. Le masquage
+   actuel a une raison écrite dans `index.html` (la CSP interdit le script inline, donc tout doit
+   rester en CSS) ; peindre le prérendu reste faisable en CSS seul. **À arbitrer par Axel.**
+2. **Supprimer la seconde vague** : précharger (`modulepreload`) le chunk de la route prérendue dans
+   son HTML, et sortir `demo-seed` / `local.repository` du chemin d'une page publique. Environ un
+   aller-retour et demi gagné.
+3. **Alléger le chemin critique des pages publiques** : ni Supabase ni Framer Motion ne sont
+   nécessaires pour peindre un guide. Gain réseau d'environ 0,7 s, mais c'est l'architecture des
+   providers (`AuthProvider` à la racine) qui est en jeu.
+
+✅ **Corrigé le même jour, côté mesure** : le résumé CI mobile lisait `.lighthouseci-mobile`, un
+dossier jamais écrit (aucun `lhci upload` mobile), et `upload-artifact` ignorait `.lighthouseci/`
+parce que c'est un dossier caché (`include-hidden-files`). Aucun rapport Lighthouse, desktop ou
+mobile, n'avait donc jamais été archivé. Le résumé imprime désormais l'élément LCP et ses phases.
+❌ **Ne pas remonter le seuil de 4 500 ms** : il est dépassé pour une raison nommée.
 
 
 > ### 🔴 2026-09-14 (soir) · −2 : une RPC créditée d'un gain de 71× rend un chiffre faux en production
