@@ -20,6 +20,9 @@ import {
   normalize,
   readCollapsedIds,
   collapsedStorageKey,
+  defaultCollapsedIds,
+  ancestorIds,
+  hasStoredCollapsed,
 } from './pyramid.helpers';
 
 const m = (userId: string, managerId: string | null, displayName = userId, email = `${userId}@x.dev`): OrgMember =>
@@ -131,5 +134,40 @@ describe('readCollapsedIds', () => {
   it('une valeur non-tableau ne fait pas planter', () => {
     localStorage.setItem(collapsedStorageKey('org1'), JSON.stringify({ nope: true }));
     expect(readCollapsedIds('org1').size).toBe(0);
+  });
+});
+
+// ─── Grande organisation (audit du 2026-09-24) ────────────────────────
+
+describe('pyramide à grande échelle', () => {
+  const mk = (userId: string, managerId: string | null) =>
+    ({ orgId: 'o', userId, role: 'member' as const, managerId, joinedAt: '', displayName: userId });
+  // ceo → (a → (a1 → a1x), b), et b n'a personne
+  const members = [mk('ceo', null), mk('a', 'ceo'), mk('b', 'ceo'), mk('a1', 'a'), mk('a1x', 'a1')];
+  interface TestNode { member: ReturnType<typeof mk>; children: TestNode[] }
+  const node = (id: string, children: TestNode[] = []): TestNode =>
+    ({ member: members.find((m) => m.userId === id)!, children });
+  const roots = [node('ceo', [node('a', [node('a1', [node('a1x')])]), node('b')])];
+
+  it('defaultCollapsedIds : racine et rapports directs visibles, tout nœud ≥ 1 avec subordonnés replié', () => {
+    expect([...defaultCollapsedIds(roots)].sort()).toEqual(['a', 'a1']);
+  });
+
+  it('ancestorIds : la chaîne de managers au-dessus des résultats, sans le résultat lui-même', () => {
+    expect([...ancestorIds(members, new Set(['a1x']))].sort()).toEqual(['a', 'a1', 'ceo']);
+    expect([...ancestorIds(members, new Set(['ceo']))]).toEqual([]);
+  });
+
+  it('ancestorIds : un cycle corrompu dans manager_id ne boucle pas', () => {
+    const cyclic = [mk('x', 'y'), mk('y', 'x')];
+    expect([...ancestorIds(cyclic, new Set(['x']))].sort()).toEqual(['x', 'y']);
+  });
+
+  it("hasStoredCollapsed : distingue « aucune préférence » de « rien de replié »", () => {
+    localStorage.removeItem(collapsedStorageKey('big'));
+    expect(hasStoredCollapsed('big')).toBe(false);
+    localStorage.setItem(collapsedStorageKey('big'), '[]');
+    expect(hasStoredCollapsed('big')).toBe(true);
+    localStorage.removeItem(collapsedStorageKey('big'));
   });
 });
