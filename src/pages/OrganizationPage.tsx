@@ -30,7 +30,6 @@ import {
 } from '@/components/organization/deep-link.helpers';
 import { safeRedirectPath } from '@/lib/safe-redirect';
 import MyWorkTab from '@/components/organization/MyWorkTab';
-import OrgMembersSection from '@/components/organization/OrgMembersSection';
 import OrgPlanChip from '@/components/organization/OrgPlanChip';
 import { MyWorkSkeleton, TeamTasksSkeleton, TeamOverviewSkeleton, OrgTabSkeleton } from '@/components/organization/OrgLoadingSkeletons';
 import { lazyWithRetry } from '@/lib/lazy-with-retry';
@@ -58,6 +57,11 @@ const TeamTasksTab = lazyWithRetry(() => import('@/components/organization/TeamT
 const TeamOKRTab = lazyWithRetry(() => import('@/components/organization/TeamOKRTab'));
 const TeamOverviewTab = lazyWithRetry(() => import('@/components/organization/TeamOverviewTab'));
 const OrgBillingTab = lazyWithRetry(() => import('@/components/organization/OrgBillingTab'));
+// Section Membres : sortie de la page le 2026-09-24, et LAZY pour la même
+// raison que les onglets ci-dessus. Importée en dur, elle restait dans ce
+// chunk, qui dépassait son cliquet (18,3 ko pour 18,0) : seul qui ouvre
+// `/entreprise/members` doit la payer.
+const OrgMembersSection = lazyWithRetry(() => import('@/components/organization/OrgMembersSection'));
 
 // Feuilles et dialogues : montés derrière un `&&`, donc déjà conditionnels au
 // rendu. Ils ne l'étaient pas au TÉLÉCHARGEMENT.
