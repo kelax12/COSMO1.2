@@ -1008,7 +1008,12 @@
     "kindComment": "Nouveau commentaire sur une tâche que vous suivez",
     "periodToday": "Aujourd'hui",
     "periodWeek": "Cette semaine",
-    "periodEarlier": "Plus tôt"
+    "periodEarlier": "Plus tôt",
+    "kindStatusChanged": "Le statut d'une tâche que vous suivez a changé",
+    "kindUnblocked": "Une de vos tâches n'attend plus rien",
+    "kindProjectAtRisk": "Un projet dont vous faites partie est signalé à risque",
+    "kindKrDue": "Un résultat clé arrive à échéance dans 3 jours",
+    "kindEventScheduled": "Un créneau a été ajouté à votre agenda"
   },
   "roles": {
     "admin": "Administrateur",

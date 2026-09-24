@@ -963,7 +963,12 @@
     "kindComment": "New comment on a task you're following",
     "periodToday": "Today",
     "periodWeek": "This week",
-    "periodEarlier": "Earlier"
+    "periodEarlier": "Earlier",
+    "kindStatusChanged": "A task you follow changed status",
+    "kindUnblocked": "One of your tasks is no longer blocked",
+    "kindProjectAtRisk": "A project you're part of was flagged at risk",
+    "kindKrDue": "A key result is due in 3 days",
+    "kindEventScheduled": "A time slot was added to your calendar"
   },
   "roles": {
     "admin": "Administrator",

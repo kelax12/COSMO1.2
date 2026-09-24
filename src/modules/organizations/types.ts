@@ -53,7 +53,15 @@ export interface OrgMember {
   avatar?: string;
   /** Supérieur direct dans la pyramide (auth.users.id) — null = non placé. */
   managerId?: string | null;
+  /** Accès coupé, appartenance conservée (mig. 161). */
+  suspendedAt?: string | null;
+  /** Accès temporaire : il cesse à cette date (mig. 161). */
+  accessExpiresAt?: string | null;
 }
+
+/** Un membre a-t-il ACCÈS aujourd'hui ? Miroir de `is_org_member` (mig. 161). */
+export const isMemberActive = (m: Pick<OrgMember, 'suspendedAt' | 'accessExpiresAt'>, now = Date.now()): boolean =>
+  !m.suspendedAt && (!m.accessExpiresAt || Date.parse(m.accessExpiresAt) > now);
 
 /** Nœud de l'arbre hiérarchique (construit côté client depuis managerId). */
 export interface OrgTreeNode {
