@@ -59,16 +59,18 @@ t('project.name')                // clé plate dans le namespace
   navigateur le 2026-09-02 : les quatre liens vers les pages contractuelles (bandeau cookies + pied
   de landing) tombaient tous sur une 404 en anglais. Passer par `useLocalizedPath()`
   (`src/i18n/useLocalizedPath.ts`).
-- 📄 **Les trois pages contractuelles vivent dans le namespace `legal`**, en français et en anglais
-  (CGU, confidentialité, mentions légales). Les pages ne portent plus que la STRUCTURE du document
+- 📄 **Les trois pages contractuelles ont UN namespace chacune** depuis le 2026-09-24 :
+  `legalTerms` (CGU), `legalPrivacy` (confidentialité), `legalNotice` (mentions légales), plus
+  `legalShared` pour les deux libellés de la coquille. Chaque page ne télécharge que son document.
+  ❌ Ne pas les refondre en un seul `legal` : les trois ensemble dépassaient leur plafond de bundle. Les pages ne portent plus que la STRUCTURE du document
   (`src/pages/legal/LegalDocument.tsx`) ; le gras et les liens sont dans le catalogue, en
   `**gras**` et `[libellé](url)`, rendus par `RichText`.
   🔴 **Le français fait foi** : chaque document porte une clause de langue disant que la version
   française prévaut. Modifier le fond d'un de ces documents n'est pas une tâche de traduction —
   c'est modifier un contrat, avec le préavis de 30 jours prévu à son article 11.
   ✅ **Et ça laisse désormais une trace obligatoire** : `npm run check:legal-journal` (`C-107`,
-  2026-09-20) exige qu'une empreinte de `src/locales/{fr,en}/legal.json` soit inscrite et **datée**
-  dans [`docs/LEGAL-JOURNAL.md`](../../docs/LEGAL-JOURNAL.md). Modifier un de ces deux catalogues
+  2026-09-20) exige que l'empreinte des documents réunis de chaque locale (`src/locales/{fr,en}/legal*.json`) soit inscrite et **datée**
+  dans [`docs/LEGAL-JOURNAL.md`](../../docs/LEGAL-JOURNAL.md). Modifier un de ces catalogues
   sans journaliser fait échouer la CI. ⚠️ Elle vérifie la **traçabilité**, jamais la conformité :
   une ligne fausse **et datée** reste verte.
 - ❌ **Ne jamais identifier une erreur par son message en français** — il est traduit.

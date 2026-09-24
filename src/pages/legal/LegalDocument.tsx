@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router';
 import { ArrowLeft } from 'lucide-react';
 import { RichText } from '@/components/ui/rich-text';
 import { useT } from '@/i18n/useT';
-import type { KeyOf } from '@/i18n/catalog';
+import type { KeyOf, Namespace } from '@/i18n/catalog';
 import ManageCookiesButton from '@/components/ManageCookiesButton';
 
 /**
@@ -20,7 +20,8 @@ import ManageCookiesButton from '@/components/ManageCookiesButton';
  *
  * Il ne met AUCUN texte dans le code. Chaque page déclare la STRUCTURE de son
  * document (l'ordre des sections, et pour chacune si le bloc est un paragraphe,
- * une liste ou une note), et le texte vient du catalogue `legal`. C'est la
+ * une liste ou une note), et le texte vient du catalogue de CE document
+ * (`legalTerms`, `legalPrivacy` ou `legalNotice`). C'est la
  * séparation qui permet à une traduction de déplacer une emphase ou un lien
  * sans toucher au rendu.
  *
@@ -31,18 +32,25 @@ import ManageCookiesButton from '@/components/ManageCookiesButton';
  * la phrase qui a été relue.
  */
 
+/**
+ * Un namespace par document contractuel (découpage du 2026-09-24, cf.
+ * `src/i18n/catalog.ts`) : chaque page ne télécharge que SON texte. Les deux
+ * libellés de la coquille vivent à part, dans `legalShared`.
+ */
+export type LegalDocNamespace = Extract<Namespace, 'legalTerms' | 'legalPrivacy' | 'legalNotice'>;
+
 /** Un bloc de contenu à l'intérieur d'une section. */
-export type LegalBlock =
-  | { kind: 'p'; key: KeyOf<'legal'> }
+export type LegalBlock<N extends LegalDocNamespace> =
+  | { kind: 'p'; key: KeyOf<N> }
   /** Paragraphe secondaire, rendu plus discret (précisions, exceptions). */
-  | { kind: 'note'; key: KeyOf<'legal'> }
-  | { kind: 'ul'; items: KeyOf<'legal'>[]; bullets?: boolean }
+  | { kind: 'note'; key: KeyOf<N> }
+  | { kind: 'ul'; items: KeyOf<N>[]; bullets?: boolean }
   /** Bouton qui rouvre le bandeau de consentement (RGPD art. 7.3). */
   | { kind: 'cookie-settings' };
 
-export interface LegalSection {
-  title: KeyOf<'legal'>;
-  blocks: LegalBlock[];
+export interface LegalSection<N extends LegalDocNamespace> {
+  title: KeyOf<N>;
+  blocks: LegalBlock<N>[];
 }
 
 const STRONG = 'text-white font-semibold';
@@ -58,23 +66,33 @@ const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title
   </div>
 );
 
-interface LegalDocumentProps {
-  /** Clé du titre principal, dans le namespace `legal`. */
-  titleKey: KeyOf<'legal'>;
+interface LegalDocumentProps<N extends LegalDocNamespace> {
+  /**
+   * Namespace du document. La route doit le déclarer dans `lazyWithRetry`
+   * (src/App.tsx), avec `legalShared` : c'est ce qui le charge AVANT le rendu.
+   */
+  namespace: N;
+  // ⚠️ `NoInfer` : `N` se déduit de `namespace` SEUL. Laisser TypeScript le
+  // déduire aussi des clés lui fait unifier des unions de plusieurs centaines
+  // de chemins, jusqu'à l'erreur TS2589 (« excessively deep »).
+  /** Clé du titre principal, dans le namespace du document. */
+  titleKey: NoInfer<KeyOf<N>>;
   /** Clé de la date de dernière mise à jour (une chaîne, pas une date). */
-  updatedAtKey: KeyOf<'legal'>;
-  sections: LegalSection[];
+  updatedAtKey: NoInfer<KeyOf<N>>;
+  sections: NoInfer<LegalSection<N>[]>;
 }
 
-export const LegalDocument: React.FC<LegalDocumentProps> = ({
+export function LegalDocument<N extends LegalDocNamespace>({
+  namespace,
   titleKey,
   updatedAtKey,
   sections,
-}) => {
-  const { t } = useT('legal');
+}: LegalDocumentProps<N>) {
+  const { t } = useT(namespace);
+  const { t: tShared } = useT('legalShared');
   const navigate = useNavigate();
 
-  const renderBlock = (block: LegalBlock, i: number) => {
+  const renderBlock = (block: LegalBlock<N>, i: number) => {
     if (block.kind === 'cookie-settings') {
       return (
         <p key={i}>
@@ -113,11 +131,11 @@ export const LegalDocument: React.FC<LegalDocumentProps> = ({
           className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors mb-10 group"
         >
           <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
-          {t('back')}
+          {tShared('back')}
         </button>
 
         <h1 className="text-3xl sm:text-4xl font-bold mb-2 text-white">{t(titleKey)}</h1>
-        <p className="text-slate-400 mb-10">{t('updated', { date: t(updatedAtKey) })}</p>
+        <p className="text-slate-400 mb-10">{tShared('updated', { date: t(updatedAtKey) })}</p>
 
         {sections.map((section) => (
           <Section key={section.title} title={t(section.title)}>
@@ -127,6 +145,6 @@ export const LegalDocument: React.FC<LegalDocumentProps> = ({
       </div>
     </div>
   );
-};
+}
 
 export default LegalDocument;

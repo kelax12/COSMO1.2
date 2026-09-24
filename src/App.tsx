@@ -72,9 +72,9 @@ const StatisticsPage = lazyWithRetry(() => import('@/pages/StatisticsPage'), ['d
 const SettingsPage = lazyWithRetry(() => import('@/pages/SettingsPage'), ['csv', 'org', 'overlays', 'settings', 'tasks']);
 const PremiumPage = lazyWithRetry(() => import('@/pages/PremiumPage'), ['overlays', 'premium']);
 const GuidePage = lazyWithRetry(() => import('@/pages/GuidePage'), ['guide', 'seo']);
-const MentionsLegalesPage = lazyWithRetry(() => import('@/pages/MentionsLegalesPage'), ['legal', 'seo']);
-const PolitiqueConfidentialitePage = lazyWithRetry(() => import('@/pages/PolitiqueConfidentialitePage'), ['legal', 'seo']);
-const CGUPage = lazyWithRetry(() => import('@/pages/CGUPage'), ['legal', 'seo']);
+const MentionsLegalesPage = lazyWithRetry(() => import('@/pages/MentionsLegalesPage'), ['legalNotice', 'legalShared', 'seo']);
+const PolitiqueConfidentialitePage = lazyWithRetry(() => import('@/pages/PolitiqueConfidentialitePage'), ['legalPrivacy', 'legalShared', 'seo']);
+const CGUPage = lazyWithRetry(() => import('@/pages/CGUPage'), ['legalShared', 'legalTerms', 'seo']);
 // `tasks` : même mécanisme que `SettingsPage` ci-dessus, un cran plus loin —
 // `usePreviewShareLink` (`@/modules/friends`) importe `listKeys` du barrel
 // `@/modules/lists`, qui traîne `delete-flow.hooks.ts` et son

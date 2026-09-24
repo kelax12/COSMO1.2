@@ -6,7 +6,7 @@ import LegalDocument, { type LegalSection } from './legal/LegalDocument';
 /**
  * Politique de confidentialité.
  *
- * Le texte vit dans le catalogue `legal` (fr + en) ; cette page ne déclare que
+ * Le texte vit dans le catalogue `legalPrivacy` (fr + en) ; cette page ne déclare que
  * la structure du document. Voir `legal/LegalDocument.tsx` (risque R-13).
  *
  * 🔴 Ce document DÉCRIT DES TRAITEMENTS RÉELS. Chaque phrase y est une
@@ -15,7 +15,7 @@ import LegalDocument, { type LegalSection } from './legal/LegalDocument';
  * modifier ce texte transforme une politique en fausse déclaration. Le registre
  * de l'article 30 (`docs/RGPD-REGISTRE.md`) est l'autre moitié de la paire.
  */
-const SECTIONS: LegalSection[] = [
+const SECTIONS: LegalSection<'legalPrivacy'>[] = [
   { title: 'privacy.s1.title', blocks: [{ kind: 'p', key: 'privacy.s1.p1' }] },
   {
     title: 'privacy.s2.title',
@@ -133,7 +133,7 @@ const SECTIONS: LegalSection[] = [
 ];
 
 const PolitiqueConfidentialitePage: React.FC = () => {
-  const { t } = useT('legal');
+  const { t } = useT('legalPrivacy');
   useSeoMeta({
     title: t('privacy.seoTitle'),
     description: t('privacy.seoDescription'),
@@ -142,6 +142,7 @@ const PolitiqueConfidentialitePage: React.FC = () => {
 
   return (
     <LegalDocument
+      namespace="legalPrivacy"
       titleKey="privacy.title"
       updatedAtKey="privacy.updatedAt"
       sections={SECTIONS}

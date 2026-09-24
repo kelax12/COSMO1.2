@@ -28,14 +28,14 @@
 // `CatalogShapes` est ce qui donne à `t()` ses clés typées. Aucune des deux ne
 // peut être dérivée du glob, dont le type est `Record<string, unknown>`.
 //
-// ─── Chargement : deux namespaces eager, les 21 autres à la demande ───
+// ─── Chargement : deux namespaces eager, les 24 autres à la demande ───
 //
 // Le repli `fr` doit être disponible SYNCHRONIQUEMENT, `t()` ne renvoie pas de
 // promesse, donc un namespace absent afficherait sa clé brute. Mais tous les
 // namespaces ne sont pas nécessaires au même moment : seuls `common` et
 // `errors` sont atteignables depuis le SHELL de l'application (mesuré par
 // `scripts/i18n-shell-namespaces.mjs`, verrouillé par
-// `src/i18n/lazy-namespaces.guard.test.ts`). Les 21 autres appartiennent à une
+// `src/i18n/lazy-namespaces.guard.test.ts`). Les 24 autres appartiennent à une
 // page lazy, et sont chargés en même temps QU'ELLE.
 //
 // Ce que ça change, mesuré (docs/PERFORMANCE.md) : le catalogue `fr` pesait
@@ -73,7 +73,10 @@ interface FrModules {
   habits: typeof import('@/locales/fr/habits.json');
   invite: typeof import('@/locales/fr/invite.json');
   landing: typeof import('@/locales/fr/landing.json');
-  legal: typeof import('@/locales/fr/legal.json');
+  legalNotice: typeof import('@/locales/fr/legalNotice.json');
+  legalPrivacy: typeof import('@/locales/fr/legalPrivacy.json');
+  legalShared: typeof import('@/locales/fr/legalShared.json');
+  legalTerms: typeof import('@/locales/fr/legalTerms.json');
   okr: typeof import('@/locales/fr/okr.json');
   overlays: typeof import('@/locales/fr/overlays.json');
   org: typeof import('@/locales/fr/org.json');
@@ -148,8 +151,29 @@ interface CatalogShapes {
   premium: Shape<'premium'>;
   /** Landing publique + pages marketing (à propos, cas d'usage, blog). */
   landing: Shape<'landing'>;
-  /** Pages contractuelles : CGU, confidentialité, mentions légales. */
-  legal: Shape<'legal'>;
+  /**
+   * Pages contractuelles : UN namespace PAR DOCUMENT, plus `legalShared` pour
+   * les deux libellés de la coquille (`back`, `updated`).
+   *
+   * 🔴 C'était un seul namespace `legal` jusqu'au 2026-09-24. Chaque page
+   * contractuelle téléchargeait donc les TROIS documents pour en afficher un :
+   * un visiteur des mentions légales (3 ko bruts) payait aussi les CGU et la
+   * politique (25 ko bruts). La passe de conformité du 2026-09-24 a fait passer
+   * ce chunk au-dessus de son plafond, et la réponse était de couper, pas de
+   * remonter la borne (`scripts/check-bundle-budget.mjs`).
+   *
+   * ⚠️ Chaque fichier garde sa clé racine (`terms`, `privacy`, `notice`) : les
+   * chemins de clés n'ont pas bougé d'un caractère, et l'empreinte du journal
+   * contractuel se calcule sur la réunion des quatre fichiers
+   * (`scripts/check-legal-journal.mjs`), donc l'historique reste comparable.
+   */
+  legalShared: Shape<'legalShared'>;
+  /** Conditions générales d'utilisation. */
+  legalTerms: Shape<'legalTerms'>;
+  /** Politique de confidentialité. */
+  legalPrivacy: Shape<'legalPrivacy'>;
+  /** Mentions légales. */
+  legalNotice: Shape<'legalNotice'>;
   /** Mode entreprise — pyramide, équipes, projets, OKR d'équipe, invitations. */
   org: Shape<'org'>;
   /** Titres/descriptions des routes publiques — lu aussi par `prerender.mjs`. */
@@ -243,7 +267,8 @@ registry[DEFAULT_LOCALE] = {
 const NAMESPACES: readonly Namespace[] = [
   'admin', 'agenda', 'bugReport', 'common', 'csv', 'dashboard', 'errors', 'eventModal',
   'guide',
-  'habits', 'invite', 'landing', 'legal', 'okr', 'org', 'premium', 'seo',
+  'habits', 'invite', 'landing', 'legalNotice', 'legalPrivacy', 'legalShared', 'legalTerms',
+  'okr', 'org', 'premium', 'seo',
   'overlays',
   'settings', 'statistics', 'taskModal', 'tasks', 'tutorials',
 ];

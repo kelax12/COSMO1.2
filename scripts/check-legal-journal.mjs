@@ -3,7 +3,7 @@
 // ═══════════════════════════════════════════════════════════════════
 //
 // 🔴 LE DÉFAUT. Les CGU, la politique de confidentialité et les mentions
-// légales vivent dans `src/locales/{fr,en}/legal.json`. Pour la CI, c'est un
+// légales vivent dans `src/locales/{fr,en}/legal*.json`. Pour la CI, c'est un
 // catalogue i18n comme un autre : `i18n:check` vérifie la parité des clés,
 // `i18n:identical` les valeurs non traduites. Aucune des deux ne sait qu'une
 // de ces clés porte un ENGAGEMENT CONTRACTUEL.
@@ -35,18 +35,66 @@
 //    s'exécuter tant que le journal ne porte pas la nouvelle empreinte.
 // ═══════════════════════════════════════════════════════════════════
 
-import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { join, sep } from 'node:path';
 
 const RACINE = process.cwd();
 const JOURNAL = join(RACINE, 'docs', 'LEGAL-JOURNAL.md');
 
-/** Les catalogues qui portent un engagement contractuel. */
-export const CATALOGUES = ['src/locales/fr/legal.json', 'src/locales/en/legal.json'];
+/** Les locales dont les documents contractuels sont publiés. */
+export const LOCALES = ['fr', 'en'];
 
 /**
- * L'empreinte d'un catalogue.
+ * Les catalogues qui portent un engagement contractuel, pour une locale :
+ * TOUS les `src/locales/<locale>/legal*.json`.
+ *
+ * 🔴 DÉCOUPAGE DU 2026-09-24. Il n'y avait qu'un `legal.json` par locale ; il
+ * y en a quatre (`legalShared`, `legalTerms`, `legalPrivacy`, `legalNotice`),
+ * pour que chaque page ne télécharge que SON document (`src/i18n/catalog.ts`).
+ * La liste est DÉCOUVERTE par préfixe, pas écrite à la main : un cinquième
+ * document contractuel ajouté demain entre dans l'empreinte sans que personne
+ * ait à se souvenir de cette garde.
+ */
+export function cataloguesDe(locale, racine = RACINE) {
+  return readdirSync(join(racine, 'src', 'locales', locale))
+    .filter((f) => /^legal[A-Za-z]*\.json$/.test(f))
+    .sort()
+    .map((f) => `src/locales/${locale}/${f}`);
+}
+
+/**
+ * Les documents d'une locale, RÉUNIS en un seul objet.
+ *
+ * ⚠️ C'est cette réunion qu'on empreinte, et pas chaque fichier : les clés
+ * racines (`back`, `updated`, `terms`, `privacy`, `notice`) sont celles de
+ * l'ancien `legal.json`, donc l'empreinte d'un contenu inchangé est IDENTIQUE
+ * avant et après le découpage. L'historique du journal reste comparable ligne
+ * à ligne, et un déplacement de fichier ne peut pas passer pour un changement
+ * de contrat (ni l'inverse).
+ *
+ * 🔴 Deux fichiers qui porteraient la même clé racine s'écraseraient en
+ * silence dans la réunion : c'est refusé, pas arbitré.
+ */
+export function documentsReunis(locale, racine = RACINE) {
+  const reunion = {};
+  for (const c of cataloguesDe(locale, racine)) {
+    const j = JSON.parse(readFileSync(join(racine, c), 'utf8'));
+    for (const [cle, valeur] of Object.entries(j)) {
+      if (cle in reunion) {
+        throw new Error(`${c} : clé racine « ${cle} » déjà portée par un autre catalogue légal.`);
+      }
+      reunion[cle] = valeur;
+    }
+  }
+  return reunion;
+}
+
+/** Libellé d'une locale dans les messages de la garde. */
+export const libelle = (locale) => `src/locales/${locale}/legal*.json`;
+
+/**
+ * L'empreinte d'un contenu (les documents réunis d'une locale).
  *
  * ⚠️ Calculée sur le JSON RE-SÉRIALISÉ avec des clés triées, pas sur les
  * octets du fichier. Un reformatage (indentation, ordre des clés, fin de
@@ -54,8 +102,7 @@ export const CATALOGUES = ['src/locales/fr/legal.json', 'src/locales/en/legal.js
  * CONTENU, jamais sur la mise en forme. Sans ça, elle crierait au loup à
  * chaque passage d'un éditeur, et une garde qui crie au loup finit désarmée.
  */
-export function empreinte(chemin) {
-  const j = JSON.parse(readFileSync(chemin, 'utf8'));
+export function empreinte(j) {
   const trier = (v) => {
     if (Array.isArray(v)) return v.map(trier);
     if (v && typeof v === 'object') {
@@ -67,7 +114,16 @@ export function empreinte(chemin) {
 }
 
 export function empreintesActuelles(racine = RACINE) {
-  return Object.fromEntries(CATALOGUES.map((c) => [c, empreinte(join(racine, c))]));
+  return Object.fromEntries(
+    LOCALES.map((l) => {
+      // Une locale sans aucun catalogue légal rendrait l'empreinte de `{}` :
+      // une garde qui répond sans rien mesurer. Refusé.
+      if (cataloguesDe(l, racine).length === 0) {
+        throw new Error(`Aucun catalogue légal trouvé pour « ${l} » (${libelle(l)}).`);
+      }
+      return [libelle(l), empreinte(documentsReunis(l, racine))];
+    }),
+  );
 }
 
 /** Les empreintes citées par le journal, quelle que soit leur position. */
@@ -140,7 +196,7 @@ if (estLanceDirectement) {
 
   console.log('Journal des documents contractuels');
   for (const [c, h] of Object.entries(actuelles)) {
-    console.log(`  ${c.padEnd(30)} ${h}  ${citees.has(h) ? '· au journal' : '· ABSENTE'}`);
+    console.log(`  ${c.padEnd(32)} ${h}  ${citees.has(h) ? '· au journal' : '· ABSENTE'}`);
   }
   console.log(`  ${citees.size} empreinte(s) citée(s) par le journal`);
 

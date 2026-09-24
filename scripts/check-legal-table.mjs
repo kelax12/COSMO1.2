@@ -48,7 +48,7 @@
 //    document en pièce qui ment à un contrôleur, ce qui est exactement le
 //    risque que ce tableau existe pour écarter.
 //
-// ⚠️ Le troisième volet de C-107 — « une modification de fond de `legal.json`
+// ⚠️ Le troisième volet de C-107 — « une modification de fond de `legal*.json`
 // exige une entrée de journal » — vit dans `scripts/check-legal-journal.mjs` :
 // il regarde d'autres fichiers, et mélanger les deux rendrait chacun moins
 // lisible.

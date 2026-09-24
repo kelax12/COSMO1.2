@@ -1,0 +1,44 @@
+{
+  "notice": {
+    "seoTitle": "Mentions légales – Cosmo App",
+    "seoDescription": "Mentions légales de l'application de productivité Cosmo : éditeur, hébergeur, propriété intellectuelle et responsabilités.",
+    "title": "Mentions légales",
+    "updatedAt": "24 septembre 2026",
+    "s1": {
+      "title": "1. Éditeur du site",
+      "intro": "Le site et l'application **Cosmo** sont édités par :",
+      "li1": "**Dénomination :** Cosmo",
+      "li2": "**Adresse e-mail :** axellongattepro@gmail.com",
+      "li3": "**Directeur de la publication :** L'équipe Cosmo"
+    },
+    "s2": {
+      "title": "2. Hébergement",
+      "intro": "L'application Cosmo est hébergée par :",
+      "li1": "**Frontend :** Vercel Inc., 340 Pine Street, Suite 701, San Francisco, CA 94104, USA",
+      "li2": "**Base de données :** Supabase Inc., 970 Toa Payoh North, #07-04, Singapore 318992, sur une infrastructure Amazon Web Services située en Irlande (région eu-west-1)"
+    },
+    "s3": {
+      "title": "3. Propriété intellectuelle",
+      "p1": "L'ensemble des contenus présents sur Cosmo (textes, graphismes, logotypes, icônes, images, sons, données) est la propriété exclusive de Cosmo ou de ses partenaires et est protégé par les lois françaises et internationales relatives à la propriété intellectuelle.",
+      "p2": "Toute reproduction, représentation, modification, publication ou adaptation de tout ou partie des éléments du site, quel que soit le moyen ou le procédé utilisé, est interdite sans autorisation préalable écrite de Cosmo.",
+      "p3": "Cosmo s'appuie sur des composants open source. Leur liste et le texte de leurs licences figurent dans [ce fichier](https://thecosmo.app/third-party-notices.txt), régénéré à chaque mise en ligne."
+    },
+    "s4": {
+      "title": "4. Responsabilité",
+      "p1": "Cosmo s'efforce d'assurer l'exactitude et la mise à jour des informations diffusées sur l'application. Toutefois, Cosmo ne peut garantir l'exactitude, la précision ou l'exhaustivité des informations mises à disposition.",
+      "p2": "Cosmo ne saurait être tenu responsable des dommages directs ou indirects résultant de l'utilisation de l'application ou de l'impossibilité d'y accéder."
+    },
+    "s5": {
+      "title": "5. Droit applicable",
+      "p1": "Les présentes mentions légales sont soumises au droit français. Si vous êtes un consommateur, vous conservez le droit de saisir la juridiction du lieu où vous demeurez."
+    },
+    "s6": {
+      "title": "6. Langue de ce document",
+      "p1": "Ce document est disponible en français et en anglais. **En cas de divergence entre les deux versions, la version française prévaut** : c'est la version d'origine."
+    },
+    "s7": {
+      "title": "7. Contact",
+      "p1": "Pour toute question relative aux présentes mentions légales, vous pouvez nous contacter à l'adresse suivante : [axellongattepro@gmail.com](mailto:axellongattepro@gmail.com)"
+    }
+  }
+}

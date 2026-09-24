@@ -1,0 +1,44 @@
+{
+  "notice": {
+    "seoTitle": "Legal notice – Cosmo App",
+    "seoDescription": "Legal notice for the Cosmo productivity app: publisher, host, intellectual property and responsibilities.",
+    "title": "Legal notice",
+    "updatedAt": "24 September 2026",
+    "s1": {
+      "title": "1. Site publisher",
+      "intro": "The **Cosmo** website and application are published by:",
+      "li1": "**Name:** Cosmo",
+      "li2": "**Email address:** axellongattepro@gmail.com",
+      "li3": "**Publication director:** The Cosmo team"
+    },
+    "s2": {
+      "title": "2. Hosting",
+      "intro": "The Cosmo application is hosted by:",
+      "li1": "**Frontend:** Vercel Inc., 340 Pine Street, Suite 701, San Francisco, CA 94104, USA",
+      "li2": "**Database:** Supabase Inc., 970 Toa Payoh North, #07-04, Singapore 318992, on Amazon Web Services infrastructure located in Ireland (eu-west-1 region)"
+    },
+    "s3": {
+      "title": "3. Intellectual property",
+      "p1": "All content on Cosmo (text, graphics, logos, icons, images, sounds, data) is the exclusive property of Cosmo or of its partners, and is protected by French and international intellectual property law.",
+      "p2": "Any reproduction, representation, modification, publication or adaptation of all or part of the site's elements, by whatever means or process, is prohibited without Cosmo's prior written authorisation.",
+      "p3": "Cosmo relies on open source components. Their list and the text of their licences are available in [this file](https://thecosmo.app/third-party-notices.txt), regenerated at every release."
+    },
+    "s4": {
+      "title": "4. Liability",
+      "p1": "Cosmo endeavours to keep the information published in the application accurate and up to date. Cosmo cannot, however, guarantee the accuracy, precision or completeness of the information made available.",
+      "p2": "Cosmo cannot be held liable for direct or indirect damage arising from the use of the application or from being unable to reach it."
+    },
+    "s5": {
+      "title": "5. Governing law",
+      "p1": "This legal notice is governed by French law. If you are a consumer, you keep the right to bring proceedings before the courts of the place where you live."
+    },
+    "s6": {
+      "title": "6. Language of this document",
+      "p1": "This document is available in French and in English. **If the two versions differ, the French version prevails**: it is the original version."
+    },
+    "s7": {
+      "title": "7. Contact",
+      "p1": "For any question about this legal notice, you can contact us at the following address: [axellongattepro@gmail.com](mailto:axellongattepro@gmail.com)"
+    }
+  }
+}

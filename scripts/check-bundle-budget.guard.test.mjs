@@ -56,6 +56,25 @@ function basesDeclarees() {
   return [...bloc.matchAll(/^\s*'?([A-Za-z][A-Za-z0-9-]*)'?:\s*[\d_]+/gm)].map((m) => m[1]);
 }
 
+/**
+ * Taille du chunk MINUSCULE posé pour une base déclarée : 1 000 octets, ou la
+ * MOITIÉ de son plafond s'il est plus bas.
+ *
+ * 🔴 Un 1 000 fixe supposait qu'aucun plafond ne descend sous ~1 ko. Faux
+ * depuis le 2026-09-24 : `legalShared` (deux libellés, 231 o mesurés) a un
+ * plafond de 300 o, et le témoin rougissait sur son propre remplissage, pas
+ * sur ce qu'il annonce mesurer. La moitié du plafond laisse la marge de
+ * l'en-tête gzip (~20 o) sur des octets aléatoires.
+ */
+function remplissage(base) {
+  const source = readFileSync(GARDE, 'utf8');
+  const bloc = source.slice(source.indexOf('const PLAFONDS_PAR_CHUNK = {'));
+  const ligne = bloc.split(LF).find((l) => l.trim().replace(/'/g, '').startsWith(`${base}:`));
+  const chiffre = ligne ? /:\s*([\d_]+)/.exec(ligne) : null;
+  const plafond = chiffre ? Number(chiffre[1].replace(/_/g, '')) : Infinity;
+  return Math.min(1_000, Math.floor(plafond / 2));
+}
+
 /** Un chunk de `octets` octets incompressibles, nommé comme Vite le nomme. */
 function poserChunk(dossier, base, octets) {
   // 8 caractères de hash exactement : c'est ce que découpe la garde.
@@ -83,7 +102,7 @@ function monterDist(chunks) {
   for (const base of basesDeclarees()) {
     if (base === 'index' || base === 'sentry-client') continue;
     if (base in chunks) continue;
-    poserChunk(assets, base, 1_000);
+    poserChunk(assets, base, remplissage(base));
   }
   for (const [base, octets] of Object.entries(chunks)) poserChunk(assets, base, octets);
 
@@ -192,7 +211,7 @@ describe('témoin — budget de bundle par chunk (C-85)', () => {
       writeFileSync(join(assets, 'sentry-client-Ab3xZ9_q.js'), randomBytes(45_000));
       for (const base of basesDeclarees()) {
         if (base === 'index' || base === 'sentry-client' || base === 'TasksPage') continue;
-        poserChunk(assets, base, 1_000);
+        poserChunk(assets, base, remplissage(base));
       }
       for (const h of ['Aa1aaaaa', 'Bb2bbbbb', 'Cc3ccccc']) {
         writeFileSync(join(assets, `TasksPage-${h}.js`), randomBytes(15_000));
