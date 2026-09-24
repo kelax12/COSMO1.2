@@ -34,10 +34,12 @@ export class SupabaseOrgTeamsRepository implements IOrgTeamsRepository {
       .from('org_teams')
       .select('*')
       .eq('org_id', orgId)
-      .order('created_at', { ascending: true })
+      // Tri DÉCROISSANT puis inversion : un tri croissant sous `limit` garde les
+      // plus anciennes et fait disparaître l'équipe qu'on vient de créer.
+      .order('created_at', { ascending: false })
       .limit(200);
     if (error) throw normalizeApiError(error);
-    return warnIfTruncated((data ?? []) as TeamRow[], 200, 'org_teams').map(mapTeam);
+    return warnIfTruncated((data ?? []) as TeamRow[], 200, 'org_teams').reverse().map(mapTeam);
   }
 
   async getTeamMembers(orgId: string): Promise<OrgTeamMember[]> {

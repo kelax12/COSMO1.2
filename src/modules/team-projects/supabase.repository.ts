@@ -54,13 +54,16 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
     // le sous-arbre managérial qu'UNE fois par organisation. Les policies restent
     // en place sur la table (défense en profondeur), et `p_org` est un filtre :
     // le périmètre vient de `auth.uid()` seul.
+    // Tri DÉCROISSANT puis inversion : avec `limit`, un tri croissant garde les
+    // lignes les PLUS ANCIENNES et fait disparaître les derniers projets créés
+    // dès qu'on passe le plafond. L'affichage reste chronologique.
     const { data, error } = await supabase
       .rpc('get_my_team_projects', { p_org: orgId })
       .select('*')
-      .order('created_at', { ascending: true })
+      .order('created_at', { ascending: false })
       .limit(200);
     if (error) throw normalizeApiError(error);
-    return warnIfTruncated((data ?? []) as unknown as ProjectRow[], 200, 'team_projects').map(mapProject);
+    return warnIfTruncated((data ?? []) as unknown as ProjectRow[], 200, 'team_projects').reverse().map(mapProject);
   }
 
   async createProject(orgId: string, input: CreateTeamProjectInput): Promise<TeamProject> {
@@ -207,10 +210,12 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
       .from('team_task_comments')
       .select('*')
       .eq('task_id', taskId)
-      .order('created_at', { ascending: true })
+      .order('created_at', { ascending: false })
       .limit(200);
     if (error) throw normalizeApiError(error);
-    return warnIfTruncated((data ?? []) as CommentRow[], 200, 'team_task_comments').map(mapComment);
+    // Même règle que `getProjects` : au-delà de 200, ce sont les plus anciens
+    // commentaires qui sortent, jamais celui qu'on vient d'écrire.
+    return warnIfTruncated((data ?? []) as CommentRow[], 200, 'team_task_comments').reverse().map(mapComment);
   }
 
   async addComment(

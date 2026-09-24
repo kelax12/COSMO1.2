@@ -19,18 +19,28 @@ const teamRow = {
 beforeEach(() => supabaseMock.reset());
 
 describe('SupabaseOrgTeamsRepository', () => {
-  it('getTeams: filtre par org_id, ordonne par created_at asc, cap 200, mappe en camelCase', async () => {
+  it('getTeams: filtre par org_id, lit les 200 plus récentes (created_at desc), mappe en camelCase', async () => {
     supabaseMock.queueTable('org_teams', { data: [teamRow] });
     const result = await repo.getTeams('org1');
 
     expect(supabaseMock.argsOf('org_teams', 'select')).toEqual(['*']);
     expect(supabaseMock.argsOf('org_teams', 'eq')).toEqual(['org_id', 'org1']);
-    expect(supabaseMock.argsOf('org_teams', 'order')).toEqual(['created_at', { ascending: true }]);
+    expect(supabaseMock.argsOf('org_teams', 'order')).toEqual(['created_at', { ascending: false }]);
     expect(supabaseMock.argsOf('org_teams', 'limit')).toEqual([200]);
     expect(result).toEqual([{
       id: 't1', orgId: 'org1', name: 'Design', color: 'purple',
       createdBy: 'u1', createdAt: teamRow.created_at,
     }]);
+  });
+
+  // Témoin du défaut du 2026-09-24 : trié croissant sous `limit(200)`, la
+  // 201e équipe créée n'apparaissait nulle part. Le serveur rend désormais les
+  // plus récentes d'abord ; l'écran, lui, doit rester chronologique.
+  it("getTeams: rend l'ordre chronologique alors que le serveur lit les plus récentes", async () => {
+    const newer = { ...teamRow, id: 't2', name: 'Produit', created_at: '2026-08-01T10:00:00.000Z' };
+    supabaseMock.queueTable('org_teams', { data: [newer, teamRow] });
+    const result = await repo.getTeams('org1');
+    expect(result.map((t) => t.id)).toEqual(['t1', 't2']);
   });
 
   it('getTeams: data null → tableau vide', async () => {
