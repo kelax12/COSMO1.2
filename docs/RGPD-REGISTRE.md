@@ -101,7 +101,10 @@ Dix traitements, sur 47 tables applicatives, **toutes protégées par Row Level 
 - **Tables** : `profiles`, schéma `auth` de Supabase, `email_lookup_global`,
   `email_lookup_quota`, `demo_devices`.
 - **Destinataires** : Supabase (hébergeur et fournisseur d'authentification), Google
-  uniquement si l'utilisateur choisit la connexion Google.
+  uniquement si l'utilisateur choisit la connexion Google, **Cloudflare Turnstile** (anti-robot
+  des formulaires de connexion et d'inscription, adresse IP et signaux du navigateur) lorsque
+  `VITE_TURNSTILE_SITE_KEY` est posée. *Ajouté le 2026-09-24 : le composant existait sans que
+  le registre le déclare.*
 - **Conservation** : durée de vie du compte, puis suppression définitive sous 90 jours après
   clôture. La suppression est exécutée par la fonction `delete-account`.
 - **Sécurité** : mot de passe jamais stocké en clair, RLS, jetons de session à expiration.
@@ -158,7 +161,8 @@ Dix traitements, sur 47 tables applicatives, **toutes protégées par Row Level 
 - **Tables** : `subscriptions`, `org_subscriptions`, `billing_flags`,
   `processed_stripe_events`.
 - **Destinataires** : Stripe, qui agit aussi comme responsable de traitement autonome pour ses
-  propres finalités antifraude.
+  propres finalités antifraude. **Resend** pour l'avis avant reconduction (`renewal-notice`,
+  adresse email du propriétaire de l'organisation). *Ajouté le 2026-09-24.*
 - **Conservation** : durée de l'abonnement, puis obligations comptables.
 
 ## T6 · Journal fiscal d'encaissement
@@ -179,9 +183,13 @@ Dix traitements, sur 47 tables applicatives, **toutes protégées par Row Level 
 
 - **Finalité** : traiter les demandes et corriger les anomalies.
 - **Base légale** : intérêt légitime (améliorer et maintenir le service).
-- **Données** : contenu du message et contexte technique fournis par la personne.
-- **Destinataires** : Supabase (fonction `report-bug`).
-- **Conservation** : le temps du traitement, puis suppression.
+- **Données** : contenu du message, captures jointes, contexte technique de la page, et
+  l'adresse email du compte si la personne est connectée (posée en `reply_to`).
+- **Destinataires** : Supabase (fonction `report-bug`), puis **Resend**, qui achemine le message
+  par email vers `contact@thecosmo.app`. 🔴 *Corrigé le 2026-09-24* : cette ligne ne nommait que
+  Supabase, alors que le signalement quitte la base par un sous-traitant américain.
+- **Conservation** : le temps du traitement, puis suppression. ⚠️ Le message vit dans une boîte
+  email : cette durée n'est appliquée par aucun automatisme, elle dépend d'un tri manuel.
 
 ## T8 · Mesure d'audience
 
@@ -198,7 +206,10 @@ Dix traitements, sur 47 tables applicatives, **toutes protégées par Row Level 
   > qui laisse croire à l'absence de traceur est une formulation fausse.
 - **Sous-traitants** : Vesk, Vercel Analytics.
 - **Recueil du consentement** : bandeau. **Rien n'est chargé tant que la personne n'a pas
-  accepté**, et un refus ne charge jamais rien. Le choix est conservé sur l'appareil.
+  accepté**, et un refus ne charge jamais rien. Le choix est conservé **six mois** sur l'appareil
+  (`cosmo_cookie_consent_at`), puis redemandé. **Retrait** : « Gérer les cookies » (pied de page,
+  Paramètres, politique) rouvre le bandeau ; refuser après avoir accepté efface `_a_cid`,
+  `_a_sid`, `_a_sact` et recharge la page (RGPD art. 7.3, livré le 2026-09-24).
 - **Périmètre** : pages de contenu public uniquement. Le script n'est jamais monté sur une
   session ouverte, pour qu'un compromis du fournisseur ne puisse pas lire un jeton de session,
   **ni sur une page portant un formulaire d'identifiants** (création de compte, connexion,
@@ -244,6 +255,8 @@ Dix traitements, sur 47 tables applicatives, **toutes protégées par Row Level 
 | Sentry | États-Unis | Idem, avec minimisation préalable par `beforeSend` |
 | Stripe | Irlande et États-Unis | Idem |
 | Google | Irlande et États-Unis | Uniquement si l'utilisateur choisit la connexion Google |
+| Resend | États-Unis | Clauses contractuelles types via le DPA du prestataire, **non archivé**. Ajouté le 2026-09-24 |
+| Cloudflare (Turnstile) | États-Unis | Idem, **non archivé**, seulement si la clé Turnstile est posée. Ajouté le 2026-09-24 |
 
 > ❌ **Ligne A5 de [`LEGAL.md`](./LEGAL.md) : les DPA ne sont pas encore collectés et archivés.**
 > Ils se signent en tant qu'entreprise, donc après immatriculation. C'est la pièce manquante de

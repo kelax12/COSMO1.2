@@ -5,6 +5,7 @@ import { useAuth, type AccountType } from '@/modules/auth/AuthContext';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
 import { MIN_PASSWORD_LENGTH, passwordStrength } from '@/lib/password-policy';
 import { useT } from '@/i18n/useT';
+import { useLocalizedPath } from '@/i18n/useLocalizedPath';
 import TurnstileWidget from '@/components/TurnstileWidget';
 import { resetTurnstile } from '@/lib/turnstile';
 
@@ -49,6 +50,7 @@ const inputClasses =
  */
 const AuthForm: React.FC<AuthFormProps> = ({ mode, onSwitchMode, onSuccess, headingAs = 'h2', showDemo = true }) => {
   const { t } = useT('common');
+  const localizedPath = useLocalizedPath();
   const Heading = headingAs;
   const isMobile = useIsMobile();
   const [showPassword, setShowPassword] = useState(false);
@@ -414,6 +416,38 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onSwitchMode, onSuccess, head
               : 'Chargement...'
             : mode === 'login' ? t('auth.signIn') : t('auth.createAccount')}
         </button>
+
+        {/* 🔴 Information au point de collecte (RGPD art. 13) et opposabilité
+            des CGU (C. civ. art. 1119). Jusqu'au 2026-09-24, l'inscription ne
+            montrait AUCUN des deux documents : les CGU se disaient acceptées
+            « en créant un compte » sans jamais avoir été présentées.
+            Une seule phrase traduite, les liens posés sur des jetons
+            `{{terms}}` / `{{privacy}}` que chaque langue place où elle veut. Ils
+            s'ouvrent dans un nouvel onglet : ce formulaire vit aussi dans une
+            modale, et la saisie ne doit pas être perdue pour lire un contrat. */}
+        {mode === 'register' && (
+          <p className="text-xs text-center text-[rgb(var(--color-text-muted))] leading-relaxed">
+            {t('auth.legalConsent')
+              .split(/(\{\{terms\}\}|\{\{privacy\}\})/)
+              .map((part, i) => {
+                if (part === '{{terms}}' || part === '{{privacy}}') {
+                  const isTerms = part === '{{terms}}';
+                  return (
+                    <Link
+                      key={i}
+                      to={localizedPath(isTerms ? 'terms' : 'privacy')}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline underline-offset-2 text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))]"
+                    >
+                      {isTerms ? t('auth.legalConsentTerms') : t('auth.legalConsentPrivacy')}
+                    </Link>
+                  );
+                }
+                return <React.Fragment key={i}>{part}</React.Fragment>;
+              })}
+          </p>
+        )}
 
         {mode === 'login' && showDemo && (
           <button

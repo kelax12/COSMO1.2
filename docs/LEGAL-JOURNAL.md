@@ -77,3 +77,48 @@ ligne `A2` du tableau de [`LEGAL.md`](./LEGAL.md) — et elle se vérifie à la 
 🔴 **Les empreintes ci-dessus ne sont pas à recopier d'un tableau.** Elles viennent de
 `node scripts/check-legal-journal.mjs`, exécuté le 2026-09-20. C'est la règle du dépôt : un
 « avant » se reconstruit à sa source, jamais depuis un tableau plus ancien.
+
+### 2026-09-24 · passe de conformité · **FOND** · préavis **dû pour trois clauses**
+
+| Catalogue | Empreinte |
+|---|---|
+| `src/locales/fr/legal.json` | `40a849b623af87e4` |
+| `src/locales/en/legal.json` | `477a96cee124c558` |
+
+Empreintes relevées par `node scripts/check-legal-journal.mjs` le 2026-09-24, pas recopiées.
+Analyse qui l'a motivée : [`LEGAL.md`](./LEGAL.md) § « Audit du 2026-09-24 ».
+
+**CGU**
+
+| Clause | Ce qui a changé | Sens pour l'utilisateur |
+|---|---|---|
+| 2 | « mode Premium » (inexistant) remplacé par l'espace entreprise, gratuit à ce jour | forme, exactitude |
+| 3.2 | suspension « sans préavis ni indemnité » remplacée par : manquement grave, information préalable avec motif, contestation, récupération des données. Supprime la contradiction avec 10.2 | **plus favorable** |
+| 3.3 | **nouvelle** : âge minimum 15 ans, accord parental en dessous | 🔴 **nouvelle condition, préavis dû** |
+| 4 bis | **nouvelle** : signalement de contenu illicite et point de contact DSA (art. 11, 12, 16, 17) | nouveau droit |
+| 5 bis.2 | renonciation à la rétractation réécrite selon L221-25 / L221-28 (prorata, perte du droit à exécution complète) | plus exact, plus favorable |
+| 5 bis.4 | **nouvelle** : modèle de formulaire de rétractation (L221-5) | nouveau droit |
+| 6.3 | **nouvelle** : clause de sous-traitance RGPD art. 28 pour l'espace entreprise | 🔴 **nouvelle répartition des rôles, préavis dû** aux organisations |
+| 6.4 | **nouvelle** : export sans frais pour changer de service | nouveau droit |
+| 8 | « décline toute responsabilité » retiré | **plus favorable** |
+| 9 | plafond de responsabilité réservé aux **professionnels** (dommages directs + 12 mois), consommateurs hors de toute limitation au-delà de la loi (R212-1 6°) | plus favorable aux consommateurs, 🔴 **plus restrictif pour un professionnel (dommages directs), préavis dû** |
+| 11 | « en vigueur dès publication » contradictoire remplacé par : préavis de 30 jours pour une modification substantielle, droit de partir sans frais | **plus favorable** |
+
+**Politique de confidentialité** : Premium et tokens retirés ; données de l'espace entreprise et
+signalements de bug ajoutés ; Resend et Cloudflare Turnstile ajoutés aux destinataires et aux
+transferts ; directives post mortem (loi I&L art. 85) ; âge de 15 ans pour la mesure d'audience ;
+conservation du choix six mois et retrait par « Gérer les cookies ». Information, **pas de
+préavis** (art. 13 et 14 RGPD : l'information doit être exacte tout de suite).
+
+**Mentions légales** : localisation AWS Irlande de la base ; lien vers les notices des licences
+open source (s3, ligne F9 de `LEGAL.md`) ; juridiction du consommateur
+préservée (s5, qui contredisait l'art. 12 des CGU). Forme.
+
+🔴 **Préavis à envoyer par Axel** (CGU art. 11, `a-faire-manuel.md`) : un e-mail aux comptes
+existants qui annonce les clauses 3.3, 6.3 et 9. Ces trois clauses ne sont opposables aux comptes
+existants que 30 jours après cet envoi. Les autres changements sont plus favorables ou informatifs
+et valent dès publication.
+
+⚠️ **Rédigé par un assistant, pas par un juriste.** La clause 6.3 en particulier tient lieu de
+contrat art. 28 : elle couvre les huit éléments de l'art. 28.3, mais un acheteur B2B peut exiger
+un DPA séparé et signé.

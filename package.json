@@ -10,7 +10,7 @@
     "start": "vite --host 127.0.0.1 --port 3000",
     "start:lan": "vite --host 0.0.0.0 --port 3000",
     "dev": "vite",
-    "build": "vite build && node prerender.mjs",
+    "build": "vite build && node scripts/third-party-notices.mjs && node prerender.mjs",
     "lint": "eslint .",
     "typecheck": "tsc -b",
     "preview": "vite preview",

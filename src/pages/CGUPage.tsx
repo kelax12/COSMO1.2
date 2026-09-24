@@ -31,7 +31,11 @@ const SECTIONS: LegalSection[] = [
   },
   {
     title: 'terms.s3.title',
-    blocks: [{ kind: 'p', key: 'terms.s3.p1' }, { kind: 'p', key: 'terms.s3.p2' }],
+    blocks: [
+      { kind: 'p', key: 'terms.s3.p1' },
+      { kind: 'p', key: 'terms.s3.p2' },
+      { kind: 'p', key: 'terms.s3.p3' },
+    ],
   },
   {
     title: 'terms.s4.title',
@@ -44,6 +48,16 @@ const SECTIONS: LegalSection[] = [
           'terms.s4.li4', 'terms.s4.li5', 'terms.s4.li6',
         ],
       },
+    ],
+  },
+  {
+    // DSA art. 11, 12, 16 et 17 : COSMO héberge des contenus que ses
+    // utilisateurs partagent entre eux (tâches, commentaires d'équipe).
+    title: 'terms.s4bis.title',
+    blocks: [
+      { kind: 'p', key: 'terms.s4bis.p1' },
+      { kind: 'p', key: 'terms.s4bis.p2' },
+      { kind: 'p', key: 'terms.s4bis.p3' },
     ],
   },
   {
@@ -65,11 +79,19 @@ const SECTIONS: LegalSection[] = [
       { kind: 'p', key: 'terms.s5bis.p1' },
       { kind: 'p', key: 'terms.s5bis.p2' },
       { kind: 'p', key: 'terms.s5bis.p3' },
+      // Modèle de formulaire de rétractation (C. conso L221-5, annexe R221-1).
+      { kind: 'note', key: 'terms.s5bis.p4' },
     ],
   },
   {
     title: 'terms.s6.title',
-    blocks: [{ kind: 'p', key: 'terms.s6.p1' }, { kind: 'p', key: 'terms.s6.p2' }],
+    blocks: [
+      { kind: 'p', key: 'terms.s6.p1' },
+      { kind: 'p', key: 'terms.s6.p2' },
+      // Clause de sous-traitance (RGPD art. 28) pour l'espace entreprise.
+      { kind: 'p', key: 'terms.s6.p3' },
+      { kind: 'p', key: 'terms.s6.p4' },
+    ],
   },
   { title: 'terms.s7.title', blocks: [{ kind: 'p', key: 'terms.s7.p1' }] },
   { title: 'terms.s8.title', blocks: [{ kind: 'p', key: 'terms.s8.p1' }] },

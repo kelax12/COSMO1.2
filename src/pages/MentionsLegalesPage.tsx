@@ -35,7 +35,13 @@ const SECTIONS: LegalSection[] = [
   },
   {
     title: 'notice.s3.title',
-    blocks: [{ kind: 'p', key: 'notice.s3.p1' }, { kind: 'p', key: 'notice.s3.p2' }],
+    blocks: [
+      { kind: 'p', key: 'notice.s3.p1' },
+      { kind: 'p', key: 'notice.s3.p2' },
+      // Notices des licences tierces (F9), générées au build par
+      // `scripts/third-party-notices.mjs`.
+      { kind: 'p', key: 'notice.s3.p3' },
+    ],
   },
   {
     title: 'notice.s4.title',

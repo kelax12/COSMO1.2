@@ -440,6 +440,7 @@ export function clearDemoStorage(): void {
   // visiteur, son engagement repart de zéro.
   const PRESERVE_KEYS = new Set([
     'cosmo_cookie_consent',
+    'cosmo_cookie_consent_at',
     'cosmo_demo_device_id',
     'cosmo_first_touch',
     'cosmo_demo_bridge_snooze',

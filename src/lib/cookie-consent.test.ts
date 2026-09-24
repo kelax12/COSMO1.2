@@ -2,6 +2,11 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import {
   COOKIE_CONSENT_KEY,
+  COOKIE_CONSENT_AT_KEY,
+  CONSENT_MAX_AGE_MS,
+  requestConsentReview,
+  stampLegacyConsent,
+  subscribeConsentReview,
   readConsent,
   hasConsented,
   setConsent,
@@ -120,6 +125,45 @@ describe('cookie-consent', () => {
       expect(a).toHaveBeenCalledTimes(1);
       expect(b).toHaveBeenCalledTimes(1);
       expect(c).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('expiration a six mois (CNIL, lignes directrices 2020)', () => {
+    it('date chaque reponse enregistree', () => {
+      setConsent('accepted');
+      expect(Number(localStorage.getItem(COOKIE_CONSENT_AT_KEY))).toBeGreaterThan(0);
+    });
+
+    it('redemande une fois la reponse perimee, et ne charge rien d ici la', () => {
+      const t0 = 1_700_000_000_000;
+      localStorage.setItem(COOKIE_CONSENT_KEY, 'accepted');
+      localStorage.setItem(COOKIE_CONSENT_AT_KEY, String(t0));
+      expect(readConsent(undefined, t0 + CONSENT_MAX_AGE_MS - 1)).toBe('accepted');
+      expect(readConsent(undefined, t0 + CONSENT_MAX_AGE_MS + 1)).toBeNull();
+    });
+
+    it('garde valable une reponse sans date, puis la date', () => {
+      // Réponses enregistrées avant l'expiration, et fixtures e2e.
+      localStorage.setItem(COOKIE_CONSENT_KEY, 'refused');
+      expect(readConsent()).toBe('refused');
+      stampLegacyConsent(42);
+      expect(localStorage.getItem(COOKIE_CONSENT_AT_KEY)).toBe('42');
+      stampLegacyConsent(99);
+      expect(localStorage.getItem(COOKIE_CONSENT_AT_KEY)).toBe('42');
+    });
+  });
+
+  describe('requestConsentReview (RGPD art. 7.3)', () => {
+    it('reveille le bandeau, sans toucher a la reponse', () => {
+      localStorage.setItem(COOKIE_CONSENT_KEY, 'accepted');
+      const listener = vi.fn();
+      const unsubscribe = subscribeConsentReview(listener);
+      requestConsentReview();
+      expect(listener).toHaveBeenCalledTimes(1);
+      expect(readConsent()).toBe('accepted');
+      unsubscribe();
+      requestConsentReview();
+      expect(listener).toHaveBeenCalledTimes(1);
     });
   });
 

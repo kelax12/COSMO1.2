@@ -4,6 +4,7 @@ import { Link } from 'react-router';
 import { useT } from '@/i18n/useT';
 import { CONTACT_EMAIL } from '@/lib/contact.mjs';
 import { useLocalizedPath } from '@/i18n/useLocalizedPath';
+import ManageCookiesButton from '@/components/ManageCookiesButton';
 import type { LandingTrack } from './use-landing-track';
 
 interface LandingFooterProps {
@@ -72,6 +73,7 @@ const LandingFooter: React.FC<LandingFooterProps> = ({ track }) => {
               <Link to={localizedPath('legalNotice')} className={`${hover} transition-colors`}>{t('footer.legalNotice')}</Link>
               <Link to={localizedPath('privacy')} className={`${hover} transition-colors`}>{t('footer.privacy')}</Link>
               <Link to={localizedPath('terms')} className={`${hover} transition-colors`}>{t('footer.terms')}</Link>
+              <ManageCookiesButton className={`${hover} transition-colors`} />
             </div>
           </div>
         </div>

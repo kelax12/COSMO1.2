@@ -91,6 +91,7 @@ décision. Rien ici ne se corrige en écrivant du code.
 | [7](#7-vérifications-quaucune-gate-ne-peut-faire) | Ce qu'il faut ouvrir soi-même | appareil réel |
 | [8](#8-déploiements-quun-git-push-ne-fait-pas) | 🔴 Edge Functions **et migrations** : le dépôt ≠ la production | ligne de commande |
 | [9](#9-angles-morts-du-2026-09-16--ce-que-seules-tes-mains-ferment) | 🕳️ **Angles morts du 2026-09-16**, versés le 2026-09-20 | M-45 → M-56, **12 gestes neufs** |
+| [10](#10-audit-juridique-du-2026-09-24--ce-que-le-code-ne-peut-pas-faire) | ⚖️ **Audit juridique du 2026-09-24** | M-62 → M-67, identité, préavis, DPA |
 
 ---
 
@@ -379,3 +380,23 @@ interdit :
 `ci.yml` à `HEAD` depuis `af0190bd`, le 2026-09-16, **le jour même**. `a-faire-code.md` `C-78` est
 clos ; ce qui reste de mobile non mesuré est `C-97` (Android, bridage, paysage) et `M-25`
 (l'appareil réel).
+
+---
+
+## 10. Audit juridique du 2026-09-24 · ce que le code ne peut pas faire
+
+> Le code et les textes ont été corrigés le même jour (détail : `docs/LEGAL.md` § « Audit du
+> 2026-09-24 », et `docs/LEGAL-JOURNAL.md`). Restent six gestes qui n'appartiennent qu'à toi.
+> ⚠️ Rien ici n'est un avis juridique.
+
+| # | Geste | Pourquoi | Ligne |
+|---|---|---|---|
+| M-62 🔴 | **Mettre ton nom** dans les mentions légales (éditeur **et** directeur de la publication, `notice.s1.li1` et `notice.s1.li3`) et dans la politique (responsable de traitement, `privacy.s1.p1`), fr et en | « Cosmo » et « L'équipe Cosmo » n'identifient personne. Exigible **sans** structure (LCEN 6-III, loi de 1982 art. 93-2, RGPD 13.1.a). Le registre art. 30 te nomme déjà, dans un dépôt public. Une modification de `legal.json` passe par `LEGAL-JOURNAL.md` | A2, A3 |
+| M-63 🔴 | **Envoyer le préavis de 30 jours** des CGU aux comptes existants : clauses 3.3 (âge), 6.3 (sous-traitance entreprise), 9 (responsabilité envers un professionnel) | CGU art. 11. Sans lui, ces trois clauses ne sont pas opposables aux inscrits d'avant le 2026-09-24. Les autres changements sont plus favorables et valent dès publication | E11, A13 |
+| M-64 | **DPA** : accepter celui de **Sentry** (Legal & Compliance, rôle Owner), vérifier le plan **Vercel** (Hobby = pas de DPA), obtenir ceux de **Vesk** et **Resend**, et **Cloudflare** si Turnstile est activé. Archiver chaque copie datée | RGPD art. 28 et chap. V | A5, A6 |
+| M-65 | **Téléphone des hébergeurs** (Vercel, Supabase) dans les mentions légales | LCEN 6-III-1. Aucun numéro public trouvé le 2026-09-24 : le demander à leur support | A3 |
+| M-66 | **Conseil en propriété industrielle** sur le nom COSMO | 11 marques antérieures actives en classes 9 et 42. Avant d'investir davantage en acquisition | F1, F2 |
+| M-67 | **Relecture juridique** des CGU réécrites (6.3 surtout) et qualification du **Data Act** | Rédigées par un assistant. Un acheteur B2B demandera un DPA séparé et signable | E11, A13, F8 |
+
+❌ **Ne jamais réarmer `ENTERPRISE_BILLING_ENFORCED`** avant d'avoir aussi réglé E4 (médiateur),
+E5 (portail de résiliation) et E13 (bouton de rétractation, directive 2023/2673).

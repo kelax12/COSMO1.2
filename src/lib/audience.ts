@@ -32,6 +32,35 @@ export const AUDIENCE_SCRIPT_SRC = 'https://www.vesk.dev/a.js';
 export const AUDIENCE_SITE_KEY = '676bad26713b4578aa3e002fd59ebba7';
 
 /**
+ * Ce que le script dépose sur l'appareil, relevé dans `a.js` le 2026-09-24 :
+ * un identifiant persistant (`_a_cid`, localStorage) et deux marqueurs de
+ * visite (`_a_sid`, `_a_sact`, sessionStorage).
+ *
+ * ⚠️ Liste relevée chez un TIERS : si le script change de clés, cette liste
+ * vieillit en silence. `vendor-watch.yml` surveille l'empreinte du script.
+ */
+export const AUDIENCE_LOCAL_KEYS: readonly string[] = ['_a_cid'];
+export const AUDIENCE_SESSION_KEYS: readonly string[] = ['_a_sid', '_a_sact'];
+
+/**
+ * Efface ce que la mesure a déposé, au retrait du consentement.
+ *
+ * Retirer son accord doit aussi retirer l'identifiant qu'il avait autorisé :
+ * sinon un nouvel accord, plus tard, relierait les deux périodes.
+ */
+export function clearAudienceTraces(
+  local: Pick<Storage, 'removeItem'>,
+  session: Pick<Storage, 'removeItem'>,
+): void {
+  for (const key of AUDIENCE_LOCAL_KEYS) {
+    try { local.removeItem(key); } catch { /* stockage indisponible */ }
+  }
+  for (const key of AUDIENCE_SESSION_KEYS) {
+    try { session.removeItem(key); } catch { /* stockage indisponible */ }
+  }
+}
+
+/**
  * Premiers segments des routes exigeant une session (cf. le bloc
  * `<Route element={<ProtectedRoute />}>` de `src/App.tsx`).
  *
