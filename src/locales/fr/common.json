@@ -157,7 +157,10 @@
     "tooManyAttempts": "Trop de tentatives. Réessayez dans quelques minutes.",
     "weakPassword": "Mot de passe trop faible. Choisissez-en un plus long et plus varié.",
     "invalidEmailAddress": "Cette adresse email n'est pas valide.",
-    "captchaFailed": "La vérification anti-robot a échoué. Réessayez."
+    "captchaFailed": "La vérification anti-robot a échoué. Réessayez.",
+    "legalConsent": "En créant un compte, y compris avec Google, vous acceptez les {{terms}} et reconnaissez avoir pris connaissance de la {{privacy}}.",
+    "legalConsentTerms": "conditions générales d'utilisation",
+    "legalConsentPrivacy": "politique de confidentialité"
   },
   "cookies": {
     "banner": "Bannière cookies",
@@ -167,7 +170,8 @@
     "ifYouRefuse": "Si vous refusez, seuls les éléments strictement nécessaires au service sont utilisés (session, préférences).",
     "learnMore": "En savoir plus",
     "decline": "Refuser",
-    "accept": "Accepter"
+    "accept": "Accepter",
+    "manage": "Gérer les cookies"
   },
   "theme": {
     "label": "Thème de l'interface",

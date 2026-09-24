@@ -4,6 +4,7 @@ import { ArrowLeft } from 'lucide-react';
 import { RichText } from '@/components/ui/rich-text';
 import { useT } from '@/i18n/useT';
 import type { KeyOf } from '@/i18n/catalog';
+import ManageCookiesButton from '@/components/ManageCookiesButton';
 
 /**
  * Coquille commune aux trois documents contractuels (CGU, confidentialité,
@@ -35,7 +36,9 @@ export type LegalBlock =
   | { kind: 'p'; key: KeyOf<'legal'> }
   /** Paragraphe secondaire, rendu plus discret (précisions, exceptions). */
   | { kind: 'note'; key: KeyOf<'legal'> }
-  | { kind: 'ul'; items: KeyOf<'legal'>[]; bullets?: boolean };
+  | { kind: 'ul'; items: KeyOf<'legal'>[]; bullets?: boolean }
+  /** Bouton qui rouvre le bandeau de consentement (RGPD art. 7.3). */
+  | { kind: 'cookie-settings' };
 
 export interface LegalSection {
   title: KeyOf<'legal'>;
@@ -72,6 +75,13 @@ export const LegalDocument: React.FC<LegalDocumentProps> = ({
   const navigate = useNavigate();
 
   const renderBlock = (block: LegalBlock, i: number) => {
+    if (block.kind === 'cookie-settings') {
+      return (
+        <p key={i}>
+          <ManageCookiesButton className={LINK} />
+        </p>
+      );
+    }
     if (block.kind === 'ul') {
       const bullets = block.bullets ?? true;
       return (

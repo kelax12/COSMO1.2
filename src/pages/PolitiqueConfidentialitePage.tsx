@@ -25,7 +25,7 @@ const SECTIONS: LegalSection[] = [
         kind: 'ul',
         items: [
           'privacy.s2.li1', 'privacy.s2.li2', 'privacy.s2.li3',
-          'privacy.s2.li4', 'privacy.s2.li5',
+          'privacy.s2.li4', 'privacy.s2.li5', 'privacy.s2.li6', 'privacy.s2.li7',
         ],
       },
       { kind: 'p', key: 'privacy.s2.p1' },
@@ -59,6 +59,7 @@ const SECTIONS: LegalSection[] = [
     blocks: [
       { kind: 'p', key: 'privacy.s5.intro' },
       { kind: 'ul', items: ['privacy.s5.li1', 'privacy.s5.li2', 'privacy.s5.li3'] },
+      { kind: 'note', key: 'privacy.s5.note' },
     ],
   },
   {
@@ -82,7 +83,8 @@ const SECTIONS: LegalSection[] = [
         kind: 'ul',
         items: [
           'privacy.s7.li1', 'privacy.s7.li2', 'privacy.s7.li3', 'privacy.s7.li4',
-          'privacy.s7.li5', 'privacy.s7.li6', 'privacy.s7.li7',
+          'privacy.s7.li5', 'privacy.s7.li6', 'privacy.s7.li7', 'privacy.s7.li8',
+          'privacy.s7.li9',
         ],
       },
       { kind: 'p', key: 'privacy.s7.outro' },
@@ -104,7 +106,7 @@ const SECTIONS: LegalSection[] = [
         kind: 'ul',
         items: [
           'privacy.s8.li1', 'privacy.s8.li2', 'privacy.s8.li3',
-          'privacy.s8.li4', 'privacy.s8.li5', 'privacy.s8.li6',
+          'privacy.s8.li4', 'privacy.s8.li5', 'privacy.s8.li6', 'privacy.s8.li7',
         ],
       },
       { kind: 'p', key: 'privacy.s8.p1' },
@@ -122,6 +124,8 @@ const SECTIONS: LegalSection[] = [
       { kind: 'ul', items: ['privacy.s10.consentLi1'] },
       { kind: 'note', key: 'privacy.s10.note1' },
       { kind: 'note', key: 'privacy.s10.note2' },
+      // Retirer son consentement aussi simplement que le donner (RGPD art. 7.3).
+      { kind: 'cookie-settings' },
     ],
   },
   { title: 'privacy.s11.title', blocks: [{ kind: 'p', key: 'privacy.s11.p1' }] },

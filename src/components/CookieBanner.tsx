@@ -7,9 +7,11 @@ import { useSlideUpEntrance } from '@/lib/motion-safe';
 import {
   readConsent,
   setConsent as persistConsent,
+  stampLegacyConsent,
+  subscribeConsentReview,
   type CookieConsent,
 } from '@/lib/cookie-consent';
-import { mountAudienceScript } from '@/lib/audience';
+import { clearAudienceTraces, mountAudienceScript } from '@/lib/audience';
 import { useLocalizedPath } from '@/i18n/useLocalizedPath';
 
 const CookieBanner: React.FC = () => {
@@ -19,6 +21,9 @@ const CookieBanner: React.FC = () => {
   const localizedPath = useLocalizedPath();
   const [consent, setConsent] = useState<CookieConsent>(null);
   const [visible, setVisible] = useState(false);
+  // Réouverture demandée par « Gérer les cookies » (RGPD art. 7.3) : le bandeau
+  // revient alors même si une réponse existe déjà.
+  const [reviewing, setReviewing] = useState(false);
   const entrance = useSlideUpEntrance();
   // Sur `/` (landing perso, BLANCHE depuis le 2026-09-22), le bandeau ne suit
   // pas le thème du visiteur : en thème sombre il posait une carte noire sur
@@ -35,13 +40,24 @@ const CookieBanner: React.FC = () => {
       const timer = setTimeout(() => setVisible(true), 1200);
       return () => clearTimeout(timer);
     }
+    stampLegacyConsent();
     setConsent(stored);
   }, []);
+
+  useEffect(
+    () =>
+      subscribeConsentReview(() => {
+        setReviewing(true);
+        setVisible(true);
+      }),
+    [],
+  );
 
   const handleAccept = () => {
     persistConsent('accepted');
     setConsent('accepted');
     setVisible(false);
+    setReviewing(false);
     // Monte MAINTENANT ce qui n'avait pas pu l'être au démarrage. Sans cet
     // appel, accepter ne produirait aucune mesure avant le prochain
     // rechargement — l'utilisateur dirait oui, et il ne se passerait rien.
@@ -54,16 +70,38 @@ const CookieBanner: React.FC = () => {
   };
 
   const handleRefuse = () => {
+    const wasAccepted = readConsent() === 'accepted';
     persistConsent('refused');
     setConsent('refused');
     setVisible(false);
+    setReviewing(false);
+    if (wasAccepted) {
+      // RETRAIT d'un accord déjà donné. Les deux mesures sont peut-être déjà
+      // chargées, et on ne décharge pas du JavaScript évalué : on efface ce
+      // qu'elles ont déposé, puis on recharge, ce qui repart sans elles.
+      try { clearAudienceTraces(window.localStorage, window.sessionStorage); } catch { /* stockage indisponible */ }
+      window.location.reload();
+      return;
+    }
     // Rien à démonter : le script n'a jamais été injecté, faute de
     // consentement au démarrage. C'est tout l'intérêt de ne charger qu'après
     // acceptation plutôt que de charger puis regretter — on ne décharge pas
     // du JavaScript déjà évalué.
   };
 
-  if (consent !== null) return null;
+  // Fermer sans choisir. À la PREMIÈRE question, c'est un refus (la croix ne
+  // doit jamais valoir accord). En réouverture, c'est « ne rien changer » :
+  // fermer le bandeau ne doit pas retirer, en silence, un accord existant.
+  const handleDismiss = () => {
+    if (reviewing && consent !== null) {
+      setVisible(false);
+      setReviewing(false);
+      return;
+    }
+    handleRefuse();
+  };
+
+  if (consent !== null && !reviewing) return null;
 
   return (
     <AnimatePresence>
@@ -91,7 +129,7 @@ const CookieBanner: React.FC = () => {
                 </span>
               </div>
               <button
-                onClick={handleRefuse}
+                onClick={handleDismiss}
                 className={`w-11 h-11 rounded-full flex items-center justify-center transition-colors ${pick(
                   'bg-slate-100 text-slate-500 hover:text-slate-700',
                   'bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-secondary))]',
@@ -135,7 +173,7 @@ const CookieBanner: React.FC = () => {
                 <Link
                   to={localizedPath('privacy')}
                   className={`underline underline-offset-2 ${pick('text-blue-700', 'text-blue-700 dark:text-blue-300')}`}
-                  onClick={handleRefuse}
+                  onClick={handleDismiss}
                 >
                   {t('cookies.learnMore')}
                 </Link>.

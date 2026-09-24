@@ -3,7 +3,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import {
   AUDIENCE_SCRIPT_SRC, AUDIENCE_SITE_KEY,
   stripLocale, isPublicPath, hasPersistedSession,
-  shouldLoadAudienceScript, mountAudienceScript,
+  shouldLoadAudienceScript, mountAudienceScript, clearAudienceTraces,
 } from './audience';
 
 /**
@@ -207,5 +207,20 @@ describe('pages à formulaire d’identifiants', () => {
     for (const p of ['/', '/blog', '/blog/mon-article', '/guide', '/a-propos', '/en/blog']) {
       expect(shouldLoadAudienceScript({ pathname: p, storage: consenti })).toBe(true);
     }
+  });
+});
+
+describe('clearAudienceTraces (retrait du consentement)', () => {
+  it('efface l identifiant persistant et les marqueurs de visite, rien d autre', () => {
+    localStorage.setItem('_a_cid', 'x');
+    localStorage.setItem('cosmo_cookie_consent', 'refused');
+    sessionStorage.setItem('_a_sid', 'y');
+    sessionStorage.setItem('_a_sact', '1');
+    clearAudienceTraces(localStorage, sessionStorage);
+    expect(localStorage.getItem('_a_cid')).toBeNull();
+    expect(sessionStorage.getItem('_a_sid')).toBeNull();
+    expect(sessionStorage.getItem('_a_sact')).toBeNull();
+    // Le choix lui-même survit : c'est lui qui porte le refus.
+    expect(localStorage.getItem('cosmo_cookie_consent')).toBe('refused');
   });
 });

@@ -24,6 +24,7 @@ import {
 } from '@/lib/csv-export';
 import { toast } from '@/lib/toast';
 import { useT } from '@/i18n/useT';
+import ManageCookiesButton from '@/components/ManageCookiesButton';
 
 export function DataTab() {
   const { t, tp } = useT('settings');
@@ -147,6 +148,12 @@ export function DataTab() {
         <p className="text-xs text-[rgb(var(--color-text-muted))]">
           <strong className="text-[rgb(var(--color-text-secondary))]">{t('data.importNotice')}</strong>{t('data.importNoticeRest')}
         </p>
+      </div>
+
+      {/* Consentement aux traceurs : revenir sur son choix (RGPD art. 7.3) */}
+      <div className="p-4 rounded-xl border border-[rgb(var(--color-border))] flex items-center justify-between gap-3">
+        <p className="text-xs text-[rgb(var(--color-text-muted))]">{t('data.cookiesHint')}</p>
+        <ManageCookiesButton className="shrink-0 text-sm font-semibold underline underline-offset-2 text-[rgb(var(--color-text-primary))]" />
       </div>
     </motion.div>
   );

@@ -162,6 +162,7 @@
     "importNotice": "Import from Todoist / Notion / TickTick",
     "importNoticeRest": ": coming soon. In the meantime, export your data from the source app as CSV and contact us for a manual import.",
     "exportAll": "Export everything",
-    "exportAllHint": "Seven CSV files: tasks, habits, calendar, OKRs, categories, lists, profile"
+    "exportAllHint": "Seven CSV files: tasks, habits, calendar, OKRs, categories, lists, profile",
+    "cookiesHint": "Audience measurement: you can change your choice to accept or refuse at any time."
   }
 }
