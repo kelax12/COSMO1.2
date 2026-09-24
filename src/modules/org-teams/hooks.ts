@@ -6,7 +6,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from '@/lib/toast';
 import { getOrgTeamsRepository } from '@/lib/repository.factory';
 import { orgTeamKeys } from './constants';
-import type { CreateOrgTeamInput } from './types';
+import type { CreateOrgTeamInput, DeleteTeamInput } from './types';
+import { teamProjectKeys } from '@/modules/team-projects/constants';
+import { teamOkrKeys } from '@/modules/team-okrs/constants';
 import { translator } from '@/i18n/useT';
 
 const useRepo = () => getOrgTeamsRepository();
@@ -44,15 +46,33 @@ export const useCreateOrgTeam = (orgId: string) => {
   });
 };
 
+/**
+ * Ce que la suppression d'une équipe emporterait (mig. 151). Lu à l'ouverture
+ * de la modale seulement, jamais en arrière-plan : `staleTime: 0` parce qu'un
+ * chiffre périmé annoncerait un transfert qui n'est plus le bon.
+ */
+export const useTeamDeletionImpact = (teamId: string | null) => {
+  const repository = useRepo();
+  return useQuery({
+    queryKey: orgTeamKeys.deletionImpact(teamId ?? ''),
+    queryFn: () => repository.getDeletionImpact(teamId as string),
+    enabled: !!teamId,
+    staleTime: 0,
+  });
+};
+
 export const useDeleteOrgTeam = (orgId: string) => {
   const queryClient = useQueryClient();
   const repository = useRepo();
   return useMutation({
-    mutationFn: (teamId: string) => repository.deleteTeam(teamId),
+    mutationFn: (input: DeleteTeamInput) => repository.deleteTeam(input),
     onSuccess: () => {
       toast.success(translator('errors').t('success.teamDeleted'));
       queryClient.invalidateQueries({ queryKey: orgTeamKeys.teams(orgId) });
       queryClient.invalidateQueries({ queryKey: orgTeamKeys.members(orgId) });
+      // Les projets et les OKR ont changé d'équipe : leurs listes aussi.
+      queryClient.invalidateQueries({ queryKey: teamProjectKeys.projects(orgId) });
+      queryClient.invalidateQueries({ queryKey: teamOkrKeys.list(orgId) });
     },
     onError: (error: Error) => toast.error(translator('errors').t('mutation.deleteTeam', { message: error.message })),
   });

@@ -42,7 +42,11 @@ compilait, la suite passait.
   relu en base le 09-21. Un numéro de ledger se copie depuis la base, jamais depuis une note.
 - ✅ **État au 2026-09-21** : la mig. **`150`** est **appliquée**, ledger `20260921075529`, et
   vérifiée par le catalogue (table, RLS sans policy, deux fonctions, droits effectifs). Plus aucune
-  migration du dépôt ne dort. Le dépôt va de `000` à `150`, la prochaine est la **`151`**.
+  migration du dépôt ne dort. Le dépôt va de `000` à `150`.
+- ✅ **État au 2026-09-24** : la mig. **`151`** (suppression d équipe, M5) est **appliquée**, ledger
+  `20260924081357`, vérifiée par le catalogue (deux clés en `NO ACTION`, deux RPC `INVOKER`, `anon`
+  sans `EXECUTE`), après une preuve en transaction annulée (8 cas, dont la suppression d organisation
+  qui reste possible). La prochaine est la **`152`**.
 - ✅ **La preuve AVANT a servi à quelque chose, et c est l argument de cette section** : la `150` a
   été jouée dans une transaction annulée, acteur par acteur, avant d être appliquée — insertion,
   catégorie hors énumération refusée (`23514`), non-admin refusé (`42501`), droits effectifs

@@ -4,10 +4,10 @@ import {
   useOrgTeams,
   useOrgTeamMembers,
   useCreateOrgTeam,
-  useDeleteOrgTeam,
   useAddTeamMember,
   useRemoveTeamMember,
   useSetTeamLead,
+  type OrgTeam,
 } from '@/modules/org-teams';
 import type { OrgMember } from '@/modules/organizations';
 import {
@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import MemberAvatar from './MemberAvatar';
 import CreateTeamModal from './CreateTeamModal';
+import DeleteTeamDialog from './DeleteTeamDialog';
 import { useT } from '@/i18n/useT';
 
 interface TeamsSectionProps {
@@ -63,7 +64,8 @@ const TeamsSection = ({ orgId, members, currentUserId, isAdmin, canCreateTeam }:
   const { data: teams = [], isLoading: loadingTeams } = useOrgTeams(orgId);
   const { data: memberships = [] } = useOrgTeamMembers(orgId);
   const createTeam = useCreateOrgTeam(orgId);
-  const deleteTeam = useDeleteOrgTeam(orgId);
+  // M5 : la suppression passe par une modale d'impact, jamais par un confirm().
+  const [teamToDelete, setTeamToDelete] = useState<OrgTeam | null>(null);
   const addMember = useAddTeamMember(orgId);
   const removeMember = useRemoveTeamMember(orgId);
   const setLead = useSetTeamLead(orgId);
@@ -137,14 +139,14 @@ const TeamsSection = ({ orgId, members, currentUserId, isAdmin, canCreateTeam }:
                   <span className="w-2.5 h-2.5 rounded-full bg-[rgb(var(--color-accent-solid))] shrink-0" aria-hidden="true" />
                   <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))] flex-1 truncate">{team.name}</h3>
                   <span className="text-xs text-[rgb(var(--color-text-muted))]">{teamMemberIds.length} membre{teamMemberIds.length > 1 ? 's' : ''}</span>
-                  {canManageThisTeam && (
+                  {/* Suppression : admin ou créateur SEULEMENT, miroir exact de la
+                      policy `org_teams_delete`. Un responsable gère ses membres,
+                      il ne supprime pas l'équipe : le bouton lui promettait un
+                      geste que le serveur refusait. */}
+                  {(isAdmin || team.createdBy === currentUserId) && (
                     <button
                       type="button"
-                      onClick={() => {
-                        if (window.confirm(t('team.deleteConfirm', { name: team.name }))) {
-                          deleteTeam.mutate(team.id);
-                        }
-                      }}
+                      onClick={() => setTeamToDelete(team)}
                       aria-label={t('team.deleteAria', { name: team.name })}
                       className="w-7 h-7 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-red-500 hover:bg-red-500/10 transition-colors"
                     >
@@ -239,6 +241,14 @@ const TeamsSection = ({ orgId, members, currentUserId, isAdmin, canCreateTeam }:
             );
           })}
         </div>
+      )}
+      {teamToDelete && (
+        <DeleteTeamDialog
+          orgId={orgId}
+          team={teamToDelete}
+          teams={teams}
+          onClose={() => setTeamToDelete(null)}
+        />
       )}
     </div>
   );

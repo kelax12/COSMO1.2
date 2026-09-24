@@ -32,3 +32,24 @@ export interface CreateOrgTeamInput {
   name: string;
   color?: string;
 }
+
+/**
+ * Ce que la suppression d'une équipe emporterait (mig. 151), compté sous RLS :
+ * l'appelant ne compte que ce qu'il voit. Le chiffre sert à ANNONCER ; la
+ * décision reste à la clé étrangère, qui refuse aussi ce qu'il ne voit pas.
+ */
+export interface TeamDeletionImpact {
+  activeProjects: number;
+  archivedProjects: number;
+  /** OKR rattachés à cette SEULE équipe : sans transfert, ils deviendraient des objectifs d'entreprise. */
+  soleOkrs: number;
+  /** OKR partagés avec une autre équipe : ils perdent seulement ce lien. */
+  sharedOkrs: number;
+}
+
+export interface DeleteTeamInput {
+  teamId: string;
+  /** Équipe qui reçoit projets et OKR. Jamais `null` pour « toute l'organisation » : c'est la fuite que M5 ferme. */
+  targetTeamId: string | null;
+  archiveProjects: boolean;
+}

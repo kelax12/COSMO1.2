@@ -2,14 +2,24 @@
 // ORG-TEAMS MODULE - Repository Interface
 // ═══════════════════════════════════════════════════════════════════
 
-import { OrgTeam, OrgTeamMember, CreateOrgTeamInput } from './types';
+import { OrgTeam, OrgTeamMember, CreateOrgTeamInput, TeamDeletionImpact, DeleteTeamInput } from './types';
 
 export interface IOrgTeamsRepository {
   getTeams(orgId: string): Promise<OrgTeam[]>;
   /** Toutes les appartenances de l'org (jointure affichée côté client). */
   getTeamMembers(orgId: string): Promise<OrgTeamMember[]>;
   createTeam(orgId: string, input: CreateOrgTeamInput): Promise<OrgTeam>;
-  deleteTeam(teamId: string): Promise<void>;
+  /** Ce que la suppression emporterait, compté sous RLS (mig. 151). */
+  getDeletionImpact(teamId: string): Promise<TeamDeletionImpact>;
+  /**
+   * Supprime l'équipe après avoir déplacé ses projets et ses OKR vers
+   * `targetTeamId`, en UNE transaction (`delete_team_with_transfer`, mig. 151).
+   *
+   * Sans cible, la base refuse tant que l'équipe porte un projet ou un OKR dont
+   * elle est la seule équipe : la clé étrangère ne rend JAMAIS un projet visible
+   * par toute l'organisation, y compris un projet que l'appelant ne voit pas.
+   */
+  deleteTeam(input: DeleteTeamInput): Promise<void>;
   addTeamMember(teamId: string, orgId: string, userId: string): Promise<void>;
   removeTeamMember(teamId: string, userId: string): Promise<void>;
   /**
