@@ -126,6 +126,12 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
       if (filters?.projectId && tk.projectId !== filters.projectId) return false;
       if (filters?.assigneeId && !tk.assigneeIds.includes(filters.assigneeId)) return false;
       if (filters?.completed !== undefined && tk.completed !== filters.completed) return false;
+      if (filters?.openOrCompletedSince && tk.completed) {
+        // Même règle que le serveur : une tâche terminée sans date de
+        // complétion ne passe pas `completed_at >= since` (NULL).
+        const done = tk.completedAt ? Date.parse(tk.completedAt) : NaN;
+        if (Number.isNaN(done) || done < Date.parse(filters.openOrCompletedSince)) return false;
+      }
       return true;
     });
   }

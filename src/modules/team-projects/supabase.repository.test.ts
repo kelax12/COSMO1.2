@@ -173,6 +173,25 @@ describe('SupabaseTeamProjectsRepository — tâches', () => {
     expect(supabaseMock.argsOf('get_my_team_tasks', 'contains')).toEqual(['assignee_ids', ['u2']]);
   });
 
+  // Audit du 2026-09-24 : l'Aperçu et les Statistiques filtraient côté client
+  // les 1 000 dernières tâches CRÉÉES. Le tri « ouvertes OU terminées depuis »
+  // doit partir au serveur, sinon il s'applique à un extrait déjà coupé.
+  it('getTasks: openOrCompletedSince part au serveur (or=, valeur entre guillemets), avant le plafond', async () => {
+    supabaseMock.queueRpc('get_my_team_tasks', { data: [] });
+    await repo.getTasks('org1', { openOrCompletedSince: '2026-08-25T00:00:00.000Z' });
+
+    expect(supabaseMock.argsOf('get_my_team_tasks', 'or'))
+      .toEqual(['completed.eq.false,completed_at.gte."2026-08-25T00:00:00.000Z"']);
+    const methods = supabaseMock.callsFor('get_my_team_tasks').map((c) => c.method);
+    expect(methods.indexOf('or')).toBeLessThan(methods.indexOf('limit'));
+  });
+
+  it('getTasks: sans openOrCompletedSince, aucun or= (lecture complète inchangée)', async () => {
+    supabaseMock.queueRpc('get_my_team_tasks', { data: [] });
+    await repo.getTasks('org1');
+    expect(supabaseMock.callsFor('get_my_team_tasks').some((c) => c.method === 'or')).toBe(false);
+  });
+
   it('getTasks: mappe les défauts (description/deadline/estimated_time/assignee_ids null)', async () => {
     supabaseMock.queueRpc('get_my_team_tasks', {
       data: [{ ...taskRow, description: null, deadline: null, estimated_time: null, assignee_ids: null }],

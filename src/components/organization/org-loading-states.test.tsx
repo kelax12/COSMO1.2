@@ -24,6 +24,8 @@ const q = <T,>(data: T) => ({ data, isLoading: loading });
 vi.mock('@/modules/team-projects', () => ({
   useTeamProjects: () => q([]),
   useTeamTasks: () => q([]),
+  useTeamTaskWorkingSet: () => q([]),
+  TEAM_TASKS_READ_LIMIT: 1000,
   useUpdateTeamTask: () => ({ mutate: vi.fn(), mutateAsync: vi.fn() }),
 }));
 vi.mock('@/modules/team-okrs', () => ({ useTeamOKRs: () => q([]) }));

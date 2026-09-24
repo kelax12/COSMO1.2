@@ -12,6 +12,13 @@ export const TEAM_TASK_LABELS_STORAGE_KEY = 'cosmo_team_task_labels';
 export const TEAM_TASK_ACTIVITY_STORAGE_KEY = 'cosmo_team_task_activity';
 export const TEAM_TASK_DEPENDENCIES_STORAGE_KEY = 'cosmo_team_task_dependencies';
 
+/**
+ * Plafond d'une lecture de tâches d'équipe. Exporté pour que l'écran puisse
+ * DIRE qu'il montre un extrait : le toast de `warnIfTruncated` ne passe qu'une
+ * fois par session, un bandeau reste tant que c'est vrai.
+ */
+export const TEAM_TASKS_READ_LIMIT = 1000;
+
 export const teamProjectKeys = {
   all: ['team-projects'] as const,
   projects: (orgId: string) => [...teamProjectKeys.all, 'projects', orgId] as const,

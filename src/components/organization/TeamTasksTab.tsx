@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { startOfDay, subDays } from 'date-fns';
 import { X, Plus, Pencil, Trash2, MoreHorizontal, UserPlus, CalendarPlus, MessageSquare } from 'lucide-react';
 import {
   DropdownMenu,
@@ -8,7 +9,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { subtreeOf, useOrgNotifications, useMyOrgPermissions, unreadCommentCountByTask, type OrgMember } from '@/modules/organizations';
 import {
-  useTeamProjects, useTeamTasks, useCreateTeamTask, useUpdateTeamTask, useDeleteTeamTask,
+  useTeamProjects, useTeamTaskWorkingSet, TEAM_TASKS_READ_LIMIT, useCreateTeamTask, useUpdateTeamTask, useDeleteTeamTask,
   useCreateTeamProject,
   type TeamTask, type TeamTaskStatus, type CreateTeamTaskInput, type UpdateTeamTaskInput,
 } from '@/modules/team-projects';
@@ -25,6 +26,7 @@ import AssignEventDialog from './AssignEventDialog';
 import MemberAvatar from './MemberAvatar';
 import { TeamTasksSkeleton } from './OrgLoadingSkeletons';
 import TeamTasksToolbar, { type SortField } from './TeamTasksToolbar';
+import TruncatedDataNotice from './TruncatedDataNotice';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { useT } from '@/i18n/useT';
 
@@ -41,6 +43,20 @@ interface TeamTasksTabProps {
 
 /** Sans accents/casse — même normalisation que MemberDirectory. */
 const normalize = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+
+/**
+ * Rendu par tranches. Le tableau n'a ni virtualisation ni pagination serveur :
+ * mille lignes de neuf cellules, chacune avec deux menus, figeaient l'écran.
+ * On en peint cent, puis la suite à la demande. Le tri et le filtre portent
+ * toujours sur l'ensemble : seule la PEINTURE est découpée.
+ */
+const ROWS_PAGE = 100;
+
+/**
+ * Puces de projets visibles avant « +N projets ». Au-delà, la rangée devenait
+ * un mur de cinq cents boutons au-dessus du tableau.
+ */
+const PROJECT_CHIPS_LIMIT = 12;
 
 const chipBase =
   'shrink-0 whitespace-nowrap inline-flex items-center gap-2 px-3.5 h-10 sm:h-auto sm:py-2 rounded-lg text-sm font-medium transition-all shadow-sm border';
@@ -72,9 +88,26 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
   const { t, tp } = useT('org');
   const { user } = useAuth();
   const { data: allProjects = [], isLoading: loadingProjects } = useTeamProjects(orgId);
+
+  const [searchTerm, setSearchTerm] = useState('');
+  const [projectFilter, setProjectFilter] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<TaskStatusFilter>('open');
+
+  // Lecture ciblée (audit du 2026-09-24) : hors filtre « Toutes », l'écran n'a
+  // besoin que des tâches OUVERTES et de celles terminées récemment (« terminées
+  // cette semaine » lit 7 jours, on en prend 30 de marge). Le serveur trie donc
+  // AVANT le plafond, et une vieille tâche encore ouverte ne sort plus de la
+  // liste parce que l'organisation en a créé mille autres depuis. « Toutes »
+  // reste la lecture complète, plafonnée, et le dit par un bandeau.
+  const recentSince = useMemo(() => startOfDay(subDays(new Date(), 30)).toISOString(), []);
   // `live` : c'est l'écran où l'on regarde la liste arriver (cf. useTeamTasks).
-  const { data: tasks = [], isLoading: loadingTasks } = useTeamTasks(orgId, undefined, { live: true });
+  const { data: tasks = [], isLoading: loadingTasks } = useTeamTaskWorkingSet(
+    orgId,
+    statusFilter === 'all' ? null : recentSince,
+    { live: true },
+  );
   const isLoading = loadingProjects || loadingTasks;
+  const truncated = tasks.length >= TEAM_TASKS_READ_LIMIT;
   const createTask = useCreateTeamTask(orgId);
   const updateTask = useUpdateTeamTask(orgId);
   const deleteTask = useDeleteTeamTask(orgId);
@@ -108,9 +141,6 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
     return self ? [self, ...others] : others;
   }, [members, user, isAdmin]);
 
-  const [searchTerm, setSearchTerm] = useState('');
-  const [projectFilter, setProjectFilter] = useState<string | null>(null);
-  const [statusFilter, setStatusFilter] = useState<TaskStatusFilter>('open');
   const [sortField, setSortField] = useState<SortField>('priority');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [taskModal, setTaskModal] = useState<{ mode: 'create' | 'edit'; task?: TeamTask } | null>(null);
@@ -126,6 +156,8 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
   // catégorie et prend la couleur de repli (`projectColorFromCategory`).
   const [showCreateProject, setShowCreateProject] = useState(false);
   const [newProjectName, setNewProjectName] = useState('');
+  const [showAllProjects, setShowAllProjects] = useState(false);
+  const [rowsShown, setRowsShown] = useState(ROWS_PAGE);
 
   // Compteur par projet (chips) : tâches OUVERTES uniquement — même
   // convention que les chips de listes personnelles, qui comptent le reste
@@ -167,6 +199,24 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
     });
     return sortDirection === 'asc' ? sorted : sorted.reverse();
   }, [visibleTasks, sortField, sortDirection, projectById]);
+
+  // Un nouveau filtre ou un nouveau tri repart de la première tranche : garder
+  // 800 lignes peintes après avoir tapé une recherche annulerait le découpage.
+  useEffect(() => {
+    setRowsShown(ROWS_PAGE);
+  }, [projectFilter, statusFilter, searchTerm, sortField, sortDirection]);
+  const shownTasks = useMemo(() => sortedTasks.slice(0, rowsShown), [sortedTasks, rowsShown]);
+  const remainingRows = sortedTasks.length - shownTasks.length;
+
+  // Le projet filtré reste visible même s'il tombe après la coupure : sinon
+  // la puce active disparaîtrait et on ne saurait plus ce qui filtre la table.
+  const shownProjects = useMemo(() => {
+    if (showAllProjects || projects.length <= PROJECT_CHIPS_LIMIT) return projects;
+    const head = projects.slice(0, PROJECT_CHIPS_LIMIT);
+    const active = projectFilter ? projects.find((p) => p.id === projectFilter) : undefined;
+    return active && !head.includes(active) ? [...head, active] : head;
+  }, [projects, showAllProjects, projectFilter]);
+  const hiddenProjects = projects.length - shownProjects.length;
 
   const handleSort = (field: SortField) => {
     if (field === sortField) {
@@ -235,7 +285,7 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
             >
               {t('projects.tasksTabAll')}
             </button>
-            {projects.map((project) => {
+            {shownProjects.map((project) => {
               const color = projectColor(project.color);
               const active = projectFilter === project.id;
               return (
@@ -254,6 +304,25 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
                 </button>
               );
             })}
+
+            {hiddenProjects > 0 && (
+              <button
+                type="button"
+                onClick={() => setShowAllProjects(true)}
+                className={`${chipBase} ${chipInactive}`}
+              >
+                {tp('projects.tasksTabMoreProjects', hiddenProjects)}
+              </button>
+            )}
+            {showAllProjects && projects.length > PROJECT_CHIPS_LIMIT && (
+              <button
+                type="button"
+                onClick={() => setShowAllProjects(false)}
+                className={`${chipBase} ${chipInactive}`}
+              >
+                {t('projects.tasksTabFewerProjects')}
+              </button>
+            )}
 
             {!can['project.create'] ? null : !showCreateProject ? (
               <button
@@ -327,6 +396,8 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
           : null}
       />
 
+      {!isLoading && truncated && <TruncatedDataNotice limit={TEAM_TASKS_READ_LIMIT} />}
+
       {/* Table */}
       {/* Premier chargement d'abord : `projects.length === 0` est vrai tant que
           la requête n'a pas répondu, et l'écran conseillait alors de « créer un
@@ -366,7 +437,7 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
               </tr>
             </thead>
             <tbody>
-              {sortedTasks.map((task) => {
+              {shownTasks.map((task) => {
                 const project = projectById.get(task.projectId);
                 const color = project ? projectColor(project.color) : projectColor('blue');
                 const overdue = isTaskOverdue(task);
@@ -525,6 +596,17 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
               })}
             </tbody>
           </table>
+          {remainingRows > 0 && (
+            <div className="flex justify-center py-3 border-t border-[rgb(var(--color-border))]">
+              <button
+                type="button"
+                onClick={() => setRowsShown((n) => n + ROWS_PAGE)}
+                className="px-4 py-2 text-sm font-medium rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] transition-colors"
+              >
+                {tp('projects.tasksTabShowMore', remainingRows)}
+              </button>
+            </div>
+          )}
         </div>
       )}
 

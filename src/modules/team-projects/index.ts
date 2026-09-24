@@ -27,6 +27,7 @@ export type {
 
 export {
   teamProjectKeys,
+  TEAM_TASKS_READ_LIMIT,
   TEAM_PROJECTS_STORAGE_KEY,
   TEAM_TASKS_STORAGE_KEY,
 } from './constants';
@@ -43,6 +44,7 @@ export { SupabaseTeamProjectsRepository } from './supabase.repository';
 export {
   useTeamProjects,
   useTeamTasks,
+  useTeamTaskWorkingSet,
   useCreateTeamProject,
   useUpdateTeamProject,
   useCreateTeamTask,

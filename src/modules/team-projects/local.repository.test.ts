@@ -32,6 +32,19 @@ describe('LocalStorageTeamProjectsRepository (démo)', () => {
     expect(mine.every((t) => t.assigneeIds.includes('demo-user'))).toBe(true);
   });
 
+  it('openOrCompletedSince : garde les ouvertes et les terminées depuis, écarte les anciennes (même règle que le serveur)', async () => {
+    const base = { orgId: ORG, projectId: 'p', priority: 3, deadline: '', assigneeIds: [], createdBy: 'demo-user', createdAt: '', updatedAt: '' };
+    localStorage.setItem('cosmo_team_tasks', JSON.stringify([
+      { ...base, id: 'open-old', name: 'Ouverte ancienne', completed: false, completedAt: null },
+      { ...base, id: 'done-recent', name: 'Terminée récente', completed: true, completedAt: '2026-09-20T10:00:00.000Z' },
+      { ...base, id: 'done-old', name: 'Terminée ancienne', completed: true, completedAt: '2026-06-01T10:00:00.000Z' },
+      // completed_at NULL ne passe pas `>= since` côté SQL : pareil ici.
+      { ...base, id: 'done-nodate', name: 'Terminée sans date', completed: true, completedAt: null },
+    ]));
+    const tasks = await repo.getTasks(ORG, { openOrCompletedSince: '2026-09-01T00:00:00.000Z' });
+    expect(tasks.map((t) => t.id).sort()).toEqual(['done-recent', 'open-old']);
+  });
+
   it('coerce le localStorage legacy (assigneeId → assigneeIds) — pas de crash', async () => {
     // Simule un localStorage antérieur à la multi-assignation (mig. 072).
     const legacy = [

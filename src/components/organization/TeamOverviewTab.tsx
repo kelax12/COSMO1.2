@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router';
 import { Bar, BarChart, XAxis, YAxis, CartesianGrid, Line, LineChart } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart';
 import WorkSummaryCard, { ProgressRing } from './WorkSummaryCard';
-import { useTeamTasks, useTeamProjects } from '@/modules/team-projects';
+import { startOfWeek } from 'date-fns';
+import { useTeamTaskWorkingSet, useTeamProjects, TEAM_TASKS_READ_LIMIT } from '@/modules/team-projects';
 import { useTeamOKRs } from '@/modules/team-okrs';
 import { subtreeOf, isManagerOf, type OrgMember } from '@/modules/organizations';
 import { projectColor } from './team-projects.helpers';
@@ -16,6 +17,7 @@ import {
   memberWorkload,
 } from './team-stats.helpers';
 import TeamWorkloadCard from './TeamWorkloadCard';
+import TruncatedDataNotice from './TruncatedDataNotice';
 import WeeklyReviewSheet from './WeeklyReviewSheet';
 import { buildOrgLink } from './deep-link.helpers';
 import { TeamOverviewSkeleton } from './OrgLoadingSkeletons';
@@ -79,11 +81,27 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
   // traduits, une constante de module les figerait au premier import.
   const velocityConfig = { completed: { label: t('overview.completed'), color: velocityColor } } satisfies ChartConfig;
   const trendConfig = { rate: { label: t('overview.completionRate'), color: trendColor } } satisfies ChartConfig;
-  const { data: allTasks = [], isLoading: loadingTasks } = useTeamTasks(orgId);
+  const [period, setPeriod] = useState<StatsPeriod>('30');
+  const start = useMemo(() => periodStart(period), [period]);
+  // Lecture ciblée sur la période (audit du 2026-09-24) : les tâches OUVERTES,
+  // plus celles terminées depuis le lundi de la semaine où commence la
+  // fenêtre (premier seau de `weekBuckets`, et la semaine précédente que lit
+  // la revue hebdomadaire). Avant, l'onglet lisait les 1 000 dernières tâches
+  // CRÉÉES de l'organisation et calculait tout sur cet extrait.
+  // Sur 7, 30 et 90 jours, cartes, charge, répartitions, retards et vélocité
+  // sont exacts. La tendance se calcule sur la même population que les
+  // cartes (les tâches actives dans la fenêtre) : une tâche close avant la
+  // fenêtre n'y figure plus. « Tout » reste une lecture complète, plafonnée,
+  // et le dit par un bandeau.
+  const since = useMemo(
+    () => (start ? startOfWeek(start, { weekStartsOn: 1 }).toISOString() : null),
+    [start],
+  );
+  const { data: allTasks = [], isLoading: loadingTasks } = useTeamTaskWorkingSet(orgId, since);
   const { data: projects = [], isLoading: loadingProjects } = useTeamProjects(orgId);
   const { data: allOkrs = [], isLoading: loadingOkrs } = useTeamOKRs(orgId);
   const isLoading = loadingTasks || loadingProjects || loadingOkrs;
-  const [period, setPeriod] = useState<StatsPeriod>('30');
+  const truncated = allTasks.length >= TEAM_TASKS_READ_LIMIT;
   const [reviewOpen, setReviewOpen] = useState(false);
   const navigate = useNavigate();
 
@@ -113,7 +131,6 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
     return scopeOkrs(allOkrs, scope, isAdmin);
   }, [allOkrs, scopedMembers, isAdmin]);
 
-  const start = useMemo(() => periodStart(period), [period]);
   // Tâches « actives » dans la fenêtre (ouvertes, créées ou terminées dedans) —
   // base des cartes et répartitions (reco #13 : plus de biais createdAt).
   const periodTasks = useMemo(() => filterByActivity(scopedTasks, start), [scopedTasks, start]);
@@ -228,6 +245,7 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
         <TeamOverviewSkeleton label={t('overview.loading')} />
       ) : (
       <>
+      {truncated && <TruncatedDataNotice limit={TEAM_TASKS_READ_LIMIT} />}
       {/* Carte de synthèse « progress-first » */}
       <WorkSummaryCard
         title={tp('summary.taskTotal', summary.total, { period: periodHint })}
