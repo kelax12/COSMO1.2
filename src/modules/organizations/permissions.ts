@@ -33,11 +33,13 @@ export type OrgPermissionKey = (typeof ORG_PERMISSION_KEYS)[number];
 /**
  * Droits dont le défaut est « tout membre ». Tous les autres ont pour défaut
  * « manager » (admin, ou au moins un subordonné direct).
+ *
+ * ❌ `task.deleteAny` n'y est PLUS (mig. 152, M4) : par défaut un membre ne
+ * supprime que les tâches qu'il a créées. Miroir exact de `my_org_perm`.
  */
 const MEMBER_DEFAULT_KEYS: ReadonlySet<string> = new Set<OrgPermissionKey>([
   'task.create',
   'task.editAny',
-  'task.deleteAny',
 ]);
 
 /** Cibles d'assignation cumulables. Tableau vide = « personne ». */

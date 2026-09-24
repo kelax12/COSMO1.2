@@ -11,6 +11,11 @@ export const TEAM_LABELS_STORAGE_KEY = 'cosmo_team_labels';
 export const TEAM_TASK_LABELS_STORAGE_KEY = 'cosmo_team_task_labels';
 export const TEAM_TASK_ACTIVITY_STORAGE_KEY = 'cosmo_team_task_activity';
 export const TEAM_TASK_DEPENDENCIES_STORAGE_KEY = 'cosmo_team_task_dependencies';
+/** Corbeille démo (mig. 152) : les tâches supprimées y attendent 30 jours. */
+export const TEAM_TASK_TRASH_STORAGE_KEY = 'cosmo_team_task_trash';
+
+/** Durée de la corbeille, en jours : celle que `purge_team_task_trash` applique. */
+export const TEAM_TASK_TRASH_DAYS = 30;
 
 /**
  * Plafond d'une lecture de tâches d'équipe. Exporté pour que l'écran puisse
@@ -23,6 +28,7 @@ export const teamProjectKeys = {
   all: ['team-projects'] as const,
   projects: (orgId: string) => [...teamProjectKeys.all, 'projects', orgId] as const,
   tasks: (orgId: string) => [...teamProjectKeys.all, 'tasks', orgId] as const,
+  trash: (orgId: string) => [...teamProjectKeys.all, 'trash', orgId] as const,
   comments: (taskId: string) => [...teamProjectKeys.all, 'comments', taskId] as const,
   subtasks: (taskId: string) => [...teamProjectKeys.all, 'subtasks', taskId] as const,
   labels: (orgId: string) => [...teamProjectKeys.all, 'labels', orgId] as const,

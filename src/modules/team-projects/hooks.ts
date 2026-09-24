@@ -201,8 +201,39 @@ export const useDeleteTeamTask = (orgId: string) => {
     mutationFn: (taskId: string) => repository.deleteTask(taskId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: teamProjectKeys.tasks(orgId) });
+      queryClient.invalidateQueries({ queryKey: teamProjectKeys.trash(orgId) });
     },
     onError: (error: Error) => toast.error(translator('errors').t('mutation.deleteTask', { message: error.message })),
+  });
+};
+
+/**
+ * Sort une tâche de la corbeille (mig. 152). C'est le « Annuler » de toutes
+ * les suppressions : la tâche revient À L'IDENTIQUE, avec son statut, sa
+ * catégorie, ses sous-tâches, ses dépendances, ses commentaires et son
+ * historique. L'ancien « Annuler » recréait une tâche neuve avec sept champs.
+ */
+export const useRestoreTeamTask = (orgId: string) => {
+  const queryClient = useQueryClient();
+  const repository = useRepo();
+  return useMutation({
+    mutationFn: (taskId: string) => repository.restoreTask(taskId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: teamProjectKeys.tasks(orgId) });
+      queryClient.invalidateQueries({ queryKey: teamProjectKeys.trash(orgId) });
+    },
+    onError: (error: Error) => toast.error(translator('errors').t('mutation.restoreTask', { message: error.message })),
+  });
+};
+
+/** La corbeille de l'organisation : ce que l'appelant peut restaurer (30 jours). */
+export const useTeamTrash = (orgId: string | undefined, enabled = true) => {
+  const repository = useRepo();
+  return useQuery({
+    queryKey: teamProjectKeys.trash(orgId ?? ''),
+    queryFn: () => repository.getTrash(orgId as string),
+    enabled: !!orgId && enabled,
+    staleTime: 0,
   });
 };
 

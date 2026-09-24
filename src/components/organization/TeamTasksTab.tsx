@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { subtreeOf, useOrgNotifications, useMyOrgPermissions, unreadCommentCountByTask, type OrgMember } from '@/modules/organizations';
 import {
-  useTeamProjects, useTeamTaskWorkingSet, TEAM_TASKS_READ_LIMIT, useCreateTeamTask, useUpdateTeamTask, useDeleteTeamTask,
+  useTeamProjects, useTeamTaskWorkingSet, TEAM_TASKS_READ_LIMIT, useCreateTeamTask, useUpdateTeamTask, useDeleteTeamTask, useRestoreTeamTask,
   useCreateTeamProject,
   type TeamTask, type TeamTaskStatus, type CreateTeamTaskInput, type UpdateTeamTaskInput,
 } from '@/modules/team-projects';
@@ -111,6 +111,9 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
   const createTask = useCreateTeamTask(orgId);
   const updateTask = useUpdateTeamTask(orgId);
   const deleteTask = useDeleteTeamTask(orgId);
+  // « Annuler » = sortir de la corbeille (mig. 152), à l'identique. L'ancien
+  // « Annuler » recréait une tâche neuve avec sept champs.
+  const restoreTask = useRestoreTeamTask(orgId);
   const createProject = useCreateTeamProject(orgId);
 
   const projects = useMemo(() => allProjects.filter((p) => !p.archivedAt), [allProjects]);
@@ -252,15 +255,7 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
     deleteTask.mutate(task.id, {
       onSuccess: () => {
         showUndoToast(t('projects.taskDeleted'), () =>
-          createTask.mutate({
-            projectId: task.projectId,
-            name: task.name,
-            description: task.description,
-            priority: task.priority,
-            deadline: task.deadline,
-            estimatedTime: task.estimatedTime,
-            assigneeIds: task.assigneeIds,
-          }),
+          restoreTask.mutate(task.id),
         );
       },
     });

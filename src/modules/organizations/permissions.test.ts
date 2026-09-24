@@ -43,12 +43,13 @@ const overrides = (
   ...patch,
 });
 
-describe('effectivePermissions — les défauts reproduisent l’avant-migration 115', () => {
-  it('un membre simple crée/modifie/supprime des tâches, rien d’autre', () => {
+describe('effectivePermissions — les défauts (mig. 115, puis 152)', () => {
+  it('un membre simple crée et modifie des tâches, ne supprime que les siennes (M4)', () => {
     const p = effectivePermissions({ member: CARL, members: MEMBERS });
     expect(p['task.create']).toBe(true);
     expect(p['task.editAny']).toBe(true);
-    expect(p['task.deleteAny']).toBe(true);
+    // mig. 152 : supprimer la tâche d'un autre devient un droit de manager.
+    expect(p['task.deleteAny']).toBe(false);
     expect(p['project.create']).toBe(false);
     expect(p['okr.create']).toBe(false);
     expect(p['category.manage']).toBe(false);

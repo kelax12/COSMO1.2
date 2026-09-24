@@ -151,6 +151,8 @@ Dix traitements, sur 47 tables applicatives, **toutes protégées par Row Level 
 - **Séparation stricte** : un manager ne voit **jamais** les tâches, habitudes ou agenda
   personnels d'un membre. Ce sont deux univers de tables distincts.
 - **Conservation** : jusqu'au départ de l'organisation ou à sa suppression.
+  **Tâches supprimées : 30 jours en corbeille, puis effacement** (`purge_team_task_trash`,
+  pg_cron quotidien, mig. 152). *Ajouté le 2026-09-24.*
 
 ## T5 · Abonnements et facturation
 
