@@ -534,14 +534,34 @@
     "add": "Add a team",
     "emptyManager": "No teams yet. Create one to keep projects separate.",
     "empty": "No teams yet.",
-    "deleteConfirm": "Delete the team “{{name}}”? Its projects will become visible to the whole company.",
     "deleteAria": "Delete the team {{name}}",
     "removeMemberAria": "Remove {{member}} from the team {{team}}",
     "addMemberAria": "Add a member to the team {{team}}",
     "addTo": "Add to {{name}}",
     "emerald": "Emerald",
     "colorNamed": "Colour {{name}}",
-    "membersCount": "Members ({{count}})"
+    "membersCount": "Members ({{count}})",
+    "deleteDialog": {
+      "title": "Delete the “{{name}}” team?",
+      "loading": "Checking what is attached to this team…",
+      "impactFailed": "Could not check what is attached to this team. Try again.",
+      "nothingAttached": "No project or OKR is attached to this team. Its members stay in the company.",
+      "attached": "{{projects}} and {{okrs}} are attached to this team.",
+      "projectsCount_one": "{{count}} project",
+      "projectsCount_other": "{{count}} projects",
+      "okrsCount_one": "{{count}} OKR",
+      "okrsCount_other": "{{count}} OKRs",
+      "sharedOkrsOnly": "Its OKRs are shared with other teams: they only lose this link.",
+      "neverOrgWide": "Nothing will become visible to the whole company: projects and OKRs move to another team, or the deletion is refused.",
+      "noOtherTeam": "Create another team first, to move these projects and OKRs to it.",
+      "targetLabel": "Move to team",
+      "targetPlaceholder": "Choose a team…",
+      "newAudience": "They will be visible to the {{name}} team, its management chain and admins.",
+      "archiveProjects": "Also archive these projects",
+      "deleting": "Deleting…",
+      "confirm": "Delete team",
+      "confirmTransfer": "Move and delete"
+    }
   },
   "project": {
     "newAria": "New team project",
@@ -582,7 +602,14 @@
     "memberOpenOverdue_one": "{{name}}: {{count}} open task, {{overdue}} overdue",
     "memberOpenOverdue_other": "{{name}}: {{count}} open tasks, {{overdue}} overdue",
     "visibleWholeOrg": "Visible to the whole company.",
-    "actionsAria": "Actions for project {{name}}"
+    "actionsAria": "Actions for project {{name}}",
+    "audienceDialog": {
+      "title": "Change the team of “{{name}}”?",
+      "toTeam": "The project, its tasks and comments will be visible to the {{team}} team, its management chain and admins. People who saw it through its current team will lose access.",
+      "toOrg_one": "The project, its tasks and comments will become visible to the whole company, that is {{count}} person.",
+      "toOrg_other": "The project, its tasks and comments will become visible to the whole company, that is {{count}} people.",
+      "confirm": "Change team"
+    }
   },
   "deleteOrg": {
     "irreversible": "This cannot be undone.",

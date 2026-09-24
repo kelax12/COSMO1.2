@@ -44,7 +44,12 @@
     "rate_limit_exceeded": "Trop de requêtes. Veuillez patienter un instant.",
     "seat_limit_reached": "Cette entreprise a atteint son nombre de places. Un administrateur doit faire évoluer l'abonnement pour ajouter un membre.",
     "storage_full": "L'espace de stockage de ce navigateur est plein. Libérez de la place, puis réessayez.",
-    "storage_unavailable": "Ce navigateur refuse d'enregistrer les données du mode démo. Vérifiez qu'il n'est pas en navigation privée stricte."
+    "storage_unavailable": "Ce navigateur refuse d'enregistrer les données du mode démo. Vérifiez qu'il n'est pas en navigation privée stricte.",
+    "team_has_dependents": "Cette équipe porte encore des projets ou des OKR, dont certains ne vous sont peut-être pas visibles. Demandez à un admin de les réaffecter.",
+    "team_not_found": "Cette équipe n'existe plus.",
+    "team_transfer_same_team": "Choisissez une autre équipe que celle que vous supprimez.",
+    "team_transfer_target_invalid": "L'équipe choisie n'appartient pas à cette entreprise.",
+    "team_delete_forbidden": "Seuls un admin ou le créateur de l'équipe peuvent la supprimer."
   },
   "validation": {
     "fallback": "Données invalides",

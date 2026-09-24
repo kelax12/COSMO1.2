@@ -7,7 +7,7 @@ import { warnIfTruncated } from '@/lib/pagination.warning';
 import { getCurrentUserId } from '@/lib/auth-user';
 import { makeApiError, normalizeApiError } from '@/lib/normalizeApiError';
 import { IOrgTeamsRepository } from './repository';
-import { OrgTeam, OrgTeamMember, CreateOrgTeamInput } from './types';
+import { OrgTeam, OrgTeamMember, CreateOrgTeamInput, TeamDeletionImpact, DeleteTeamInput } from './types';
 
 interface TeamRow {
   id: string;
@@ -78,10 +78,34 @@ export class SupabaseOrgTeamsRepository implements IOrgTeamsRepository {
     return mapTeam(data as TeamRow);
   }
 
-  async deleteTeam(teamId: string): Promise<void> {
+  async getDeletionImpact(teamId: string): Promise<TeamDeletionImpact> {
     if (!supabase) throw new Error('Supabase not configured');
-    const { error } = await supabase.from('org_teams').delete().eq('id', teamId);
+    const { data, error } = await supabase.rpc('get_team_deletion_impact', { p_team: teamId });
     if (error) throw normalizeApiError(error);
+    const row = (Array.isArray(data) ? data[0] : data) as
+      | { active_projects: number; archived_projects: number; sole_okrs: number; shared_okrs: number }
+      | undefined;
+    return {
+      activeProjects: row?.active_projects ?? 0,
+      archivedProjects: row?.archived_projects ?? 0,
+      soleOkrs: row?.sole_okrs ?? 0,
+      sharedOkrs: row?.shared_okrs ?? 0,
+    };
+  }
+
+  async deleteTeam({ teamId, targetTeamId, archiveProjects }: DeleteTeamInput): Promise<void> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const { error } = await supabase.rpc('delete_team_with_transfer', {
+      p_team: teamId,
+      p_target: targetTeamId,
+      p_archive_projects: archiveProjects,
+    });
+    if (!error) return;
+    // 23503 = la clé étrangère (mig. 151) a refusé : il reste un projet ou un
+    // OKR rattaché, peut-être invisible pour l'appelant. On le dit en clair
+    // plutôt que « dépendances existantes ».
+    if (error.code === '23503') throw makeApiError('team_has_dependents', error.message);
+    throw normalizeApiError(error);
   }
 
   async addTeamMember(teamId: string, orgId: string, userId: string): Promise<void> {

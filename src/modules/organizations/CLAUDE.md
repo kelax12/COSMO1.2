@@ -51,6 +51,13 @@ Les droits du mode entreprise sont **dérivés par défaut** (`is_org_admin`, `i
 - ⚠️ Le contrôle des assignations ne porte que sur les **AJOUTS** : retirer un assigné reste
   toujours permis, sinon une tâche héritée devient ingérable et les purges RGPD cassent. Les
   sélecteurs de membres appliquent la même règle (`canAssign(id) || déjà assigné`).
+- 🔴 **Supprimer une équipe ne rend JAMAIS rien visible par toute l'organisation** (mig. 151, M5).
+  `team_projects.team_id` et `team_okr_teams.team_id` sont en `NO ACTION` : la base refuse tant
+  qu'un projet ou un OKR y est rattaché, y compris ceux que l'appelant ne voit pas. La sortie est
+  `delete_team_with_transfer` (INVOKER, atomique), via `DeleteTeamDialog`.
+  ❌ Ne jamais remettre `SET NULL`/`CASCADE`, ni proposer « toute l'entreprise » comme cible : `NULL`
+  y signifie « visible par tous ». Un changement d'équipe de projet passe par
+  `ConfirmProjectAudienceDialog`, qui nomme la nouvelle audience.
 - ⚠️ **L'archivage d'un projet est un UPDATE**, pas un DELETE, et l'application ne supprime
   jamais un projet : c'est le trigger `enforce_team_project_archive_scope` qui rattache
   l'archivage à `project.delete`. Une policy, qui juge la ligne entière, ne sait pas le faire.

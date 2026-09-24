@@ -562,14 +562,36 @@
     "add": "Ajouter une équipe",
     "emptyManager": "Aucune équipe. Créez-en une pour cloisonner des projets.",
     "empty": "Aucune équipe.",
-    "deleteConfirm": "Supprimer l'équipe « {{name}} » ? Ses projets deviendront visibles par toute l'entreprise.",
     "deleteAria": "Supprimer l'équipe {{name}}",
     "removeMemberAria": "Retirer {{member}} de l'équipe {{team}}",
     "addMemberAria": "Ajouter un membre à l'équipe {{team}}",
     "addTo": "Ajouter à {{name}}",
     "emerald": "Émeraude",
     "colorNamed": "Couleur {{name}}",
-    "membersCount": "Membres ({{count}})"
+    "membersCount": "Membres ({{count}})",
+    "deleteDialog": {
+      "title": "Supprimer l'équipe « {{name}} » ?",
+      "loading": "Vérification de ce qui est rattaché à cette équipe…",
+      "impactFailed": "Impossible de vérifier ce qui est rattaché à cette équipe. Réessayez.",
+      "nothingAttached": "Aucun projet ni OKR n'est rattaché à cette équipe. Ses membres restent dans l'entreprise.",
+      "attached": "{{projects}} et {{okrs}} sont rattachés à cette équipe.",
+      "projectsCount_one": "{{count}} projet",
+      "projectsCount_other": "{{count}} projets",
+      "projectsCount_many": "{{count}} projets",
+      "okrsCount_one": "{{count}} objectif OKR",
+      "okrsCount_other": "{{count}} objectifs OKR",
+      "okrsCount_many": "{{count}} objectifs OKR",
+      "sharedOkrsOnly": "Ses OKR sont partagés avec d'autres équipes : ils perdent seulement ce rattachement.",
+      "neverOrgWide": "Rien ne deviendra visible par toute l'entreprise : les projets et OKR changent d'équipe, ou la suppression est refusée.",
+      "noOtherTeam": "Créez d'abord une autre équipe pour lui réaffecter ces projets et OKR.",
+      "targetLabel": "Réaffecter à l'équipe",
+      "targetPlaceholder": "Choisir une équipe…",
+      "newAudience": "Ils seront visibles par l'équipe {{name}}, sa hiérarchie et les admins.",
+      "archiveProjects": "Archiver aussi ces projets",
+      "deleting": "Suppression…",
+      "confirm": "Supprimer l'équipe",
+      "confirmTransfer": "Réaffecter et supprimer"
+    }
   },
   "project": {
     "newAria": "Nouveau projet d'équipe",
@@ -614,7 +636,15 @@
     "memberOpen_many": "{{name}} : {{count}} de tâches ouvertes",
     "memberOpenOverdue_many": "{{name}} : {{count}} de tâches ouvertes, {{overdue}} en retard",
     "visibleWholeOrg": "Visible par toute l'entreprise.",
-    "actionsAria": "Actions du projet {{name}}"
+    "actionsAria": "Actions du projet {{name}}",
+    "audienceDialog": {
+      "title": "Changer l'équipe de « {{name}} » ?",
+      "toTeam": "Le projet, ses tâches et ses commentaires seront visibles par l'équipe {{team}}, sa hiérarchie et les admins. Les personnes qui le voyaient par son équipe actuelle n'y auront plus accès.",
+      "toOrg_one": "Le projet, ses tâches et ses commentaires deviendront visibles par toute l'entreprise, soit {{count}} personne.",
+      "toOrg_other": "Le projet, ses tâches et ses commentaires deviendront visibles par toute l'entreprise, soit {{count}} personnes.",
+      "toOrg_many": "Le projet, ses tâches et ses commentaires deviendront visibles par toute l'entreprise, soit {{count}} personnes.",
+      "confirm": "Changer d'équipe"
+    }
   },
   "deleteOrg": {
     "irreversible": "Cette action est irréversible.",

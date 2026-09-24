@@ -44,7 +44,12 @@
     "rate_limit_exceeded": "Too many requests. Please wait a moment.",
     "seat_limit_reached": "This company has reached its seat limit. An administrator needs to upgrade the plan before adding a member.",
     "storage_full": "This browser's storage is full. Free some space, then try again.",
-    "storage_unavailable": "This browser refuses to store demo data. Check that it isn't in strict private browsing mode."
+    "storage_unavailable": "This browser refuses to store demo data. Check that it isn't in strict private browsing mode.",
+    "team_has_dependents": "This team still carries projects or OKRs, some of which you may not see. Ask an admin to move them.",
+    "team_not_found": "This team no longer exists.",
+    "team_transfer_same_team": "Choose a team other than the one you are deleting.",
+    "team_transfer_target_invalid": "The chosen team does not belong to this company.",
+    "team_delete_forbidden": "Only an admin or the team's creator can delete it."
   },
   "validation": {
     "fallback": "Invalid data",

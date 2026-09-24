@@ -126,18 +126,41 @@ describe('SupabaseOrgTeamsRepository', () => {
     await expect(repo.createTeam('org1', { name: 'X' })).rejects.toBeTruthy();
   });
 
-  it('deleteTeam: delete ciblé par id', async () => {
-    supabaseMock.queueTable('org_teams', { data: null });
-    await repo.deleteTeam('t1');
+  // M5 (mig. 151) : la suppression passe par une RPC atomique qui déplace
+  // projets et OKR avant de supprimer. Plus jamais de DELETE direct, qui
+  // laissait `ON DELETE SET NULL` rendre les projets visibles par toute l'org.
+  it('deleteTeam: passe par delete_team_with_transfer, jamais par un DELETE direct', async () => {
+    supabaseMock.queueRpc('delete_team_with_transfer', { data: null });
+    await repo.deleteTeam({ teamId: 't1', targetTeamId: 't2', archiveProjects: true });
 
-    const calls = supabaseMock.callsFor('org_teams');
-    expect(calls.map((c) => c.method)).toEqual(['delete', 'eq']);
-    expect(supabaseMock.argsOf('org_teams', 'eq')).toEqual(['id', 't1']);
+    expect(supabaseMock.rpcCalls).toEqual([
+      { fn: 'delete_team_with_transfer', args: { p_team: 't1', p_target: 't2', p_archive_projects: true } },
+    ]);
+    expect(supabaseMock.callsFor('org_teams')).toHaveLength(0);
   });
 
-  it('deleteTeam: normalise les erreurs DB', async () => {
-    supabaseMock.queueTable('org_teams', { data: null, error: { message: 'denied', code: '42501' } });
-    await expect(repo.deleteTeam('t1')).rejects.toBeTruthy();
+  it('deleteTeam: un refus de clé étrangère devient team_has_dependents', async () => {
+    supabaseMock.queueRpc('delete_team_with_transfer', { data: null, error: { message: 'fk', code: '23503' } });
+    await expect(
+      repo.deleteTeam({ teamId: 't1', targetTeamId: null, archiveProjects: false }),
+    ).rejects.toMatchObject({ code: 'team_has_dependents' });
+  });
+
+  it('deleteTeam: normalise les autres erreurs DB', async () => {
+    supabaseMock.queueRpc('delete_team_with_transfer', { data: null, error: { message: 'denied', code: '42501' } });
+    await expect(
+      repo.deleteTeam({ teamId: 't1', targetTeamId: 't2', archiveProjects: false }),
+    ).rejects.toBeTruthy();
+  });
+
+  it('getDeletionImpact: mappe la ligne de la RPC', async () => {
+    supabaseMock.queueRpc('get_team_deletion_impact', {
+      data: [{ active_projects: 3, archived_projects: 1, sole_okrs: 2, shared_okrs: 4 }],
+    });
+    await expect(repo.getDeletionImpact('t1')).resolves.toEqual({
+      activeProjects: 3, archivedProjects: 1, soleOkrs: 2, sharedOkrs: 4,
+    });
+    expect(supabaseMock.rpcCalls[0]).toEqual({ fn: 'get_team_deletion_impact', args: { p_team: 't1' } });
   });
 
   it('addTeamMember: insert avec les 3 clés explicites uniquement', async () => {

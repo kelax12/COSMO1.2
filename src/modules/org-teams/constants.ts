@@ -10,4 +10,5 @@ export const orgTeamKeys = {
   all: ['org-teams'] as const,
   teams: (orgId: string) => [...orgTeamKeys.all, 'teams', orgId] as const,
   members: (orgId: string) => [...orgTeamKeys.all, 'members', orgId] as const,
+  deletionImpact: (teamId: string) => [...orgTeamKeys.all, 'deletion-impact', teamId] as const,
 };

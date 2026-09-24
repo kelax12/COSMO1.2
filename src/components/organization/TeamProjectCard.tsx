@@ -23,6 +23,7 @@ import {
 } from './team-projects.helpers';
 import MemberAvatar from './MemberAvatar';
 import TeamTaskRow from './TeamTaskRow';
+import ConfirmProjectAudienceDialog from './ConfirmProjectAudienceDialog';
 import { useTeamCategories } from '@/modules/team-categories';
 import { useT } from '@/i18n/useT';
 
@@ -66,6 +67,14 @@ const TeamProjectCard = ({
 }: TeamProjectCardProps) => {
   const { t, tp } = useT('org');
   const [renaming, setRenaming] = useState(false);
+  // M5 : un changement d'équipe change QUI LIT le projet. Il passe par une
+  // confirmation qui nomme la nouvelle audience, jamais par un clic sec.
+  // `undefined` = rien en attente ; `null` = vers toute l'organisation.
+  const [pendingTeamId, setPendingTeamId] = useState<string | null | undefined>(undefined);
+  const requestTeamChange = (teamId: string | null) => {
+    if (teamId === (project.teamId ?? null)) return;
+    setPendingTeamId(teamId);
+  };
   const [renameValue, setRenameValue] = useState(project.name);
   const [showCompleted, setShowCompleted] = useState(false);
   const { data: categories = [] } = useTeamCategories(project.orgId);
@@ -231,13 +240,13 @@ const TeamProjectCard = ({
                     <UsersRound size={14} aria-hidden="true" /> {t('project.teamBadge')}
                   </DropdownMenuSubTrigger>
                   <DropdownMenuSubContent className="w-48">
-                    <DropdownMenuItem onClick={() => onUpdateProject({ teamId: null })}>
-                      Toute l'entreprise {!project.teamId && <span className="ml-auto text-xs">✓</span>}
+                    <DropdownMenuItem onClick={() => requestTeamChange(null)}>
+                      {t('project.wholeOrg')} {!project.teamId && <span className="ml-auto text-xs">✓</span>}
                     </DropdownMenuItem>
-                    {teams.map((t) => (
-                      <DropdownMenuItem key={t.id} onClick={() => onUpdateProject({ teamId: t.id })}>
-                        <span className="truncate">{t.name}</span>
-                        {project.teamId === t.id && <span className="ml-auto text-xs">✓</span>}
+                    {teams.map((team) => (
+                      <DropdownMenuItem key={team.id} onClick={() => requestTeamChange(team.id)}>
+                        <span className="truncate">{team.name}</span>
+                        {project.teamId === team.id && <span className="ml-auto text-xs">✓</span>}
                       </DropdownMenuItem>
                     ))}
                   </DropdownMenuSubContent>
@@ -365,6 +374,15 @@ const TeamProjectCard = ({
             </button>
           )}
         </div>
+      )}
+      {pendingTeamId !== undefined && (
+        <ConfirmProjectAudienceDialog
+          projectName={project.name}
+          targetTeamName={pendingTeamId ? teams.find((team) => team.id === pendingTeamId)?.name ?? null : null}
+          orgMemberCount={members.length}
+          onConfirm={() => { onUpdateProject({ teamId: pendingTeamId }); setPendingTeamId(undefined); }}
+          onCancel={() => setPendingTeamId(undefined)}
+        />
       )}
     </section>
   );
