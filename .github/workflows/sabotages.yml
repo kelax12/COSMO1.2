@@ -71,14 +71,19 @@ jobs:
       - run: npm ci
 
       - name: Rejouer les sabotages connus
+        # 🔴 C-113 · le journal s'écrit dans `$RUNNER_TEMP`, JAMAIS dans l'arbre.
+        # Écrit à la racine, il rendait `git status` sale et faisait échouer
+        # l'étape suivante à chaque run, alors que les 11 sabotages étaient vus :
+        # le seul run (2026-09-21) était rouge pour cette raison-là.
         run: |
           set -o pipefail
-          if npm run check:sabotages 2>&1 | tee sabotages.log; then
+          LOG="$RUNNER_TEMP/sabotages.log"
+          if npm run check:sabotages 2>&1 | tee "$LOG"; then
             {
               echo '### Rejeu des sabotages'
               echo ''
               echo '```'
-              cat sabotages.log
+              cat "$LOG"
               echo '```'
             } >> "$GITHUB_STEP_SUMMARY"
             exit 0
@@ -87,10 +92,10 @@ jobs:
             echo '### ✖ Un temoin ne detecte plus'
             echo ''
             echo '```'
-            tail -n 60 sabotages.log
+            tail -n 60 "$LOG"
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
-          tail -n 25 sabotages.log | while IFS= read -r LIGNE; do
+          tail -n 25 "$LOG" | while IFS= read -r LIGNE; do
             echo "::error title=sabotage::${LIGNE}"
           done
           exit 1

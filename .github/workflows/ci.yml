@@ -673,6 +673,9 @@ jobs:
         with:
           name: lighthouse
           path: .lighthouseci/
+          # Dossier CACHÉ : sans ce drapeau, upload-artifact l'ignore en silence
+          # (« No files were found »), et aucun rapport n'a jamais été archivé.
+          include-hidden-files: true
           retention-days: 7
 
       # ═══ C-84 · LA PASSE MOBILE ════════════════════════════
@@ -698,8 +701,15 @@ jobs:
           node -e '
             const fs = require("fs");
             const NL = String.fromCharCode(10);
-            const d = ".lighthouseci-mobile";
-            if (!fs.existsSync(d)) { console.log("::warning title=lhci-mobile::aucun rapport mobile produit"); process.exit(0); }
+            // 🔴 C-116 · `.lighthouseci`, PAS `.lighthouseci-mobile` : ce dernier
+            // n est ecrit que par un `lhci upload`, qui n existe pas pour la passe
+            // mobile. Le resume ecrivait donc « aucun rapport mobile produit »
+            // depuis sa pose (2026-09-20), alors que le LCP mobile etait MAUVAIS
+            // sur les 8 URLs : mesure, et lu par personne. Le collect mobile
+            // remplace le dossier du collect desktop, donc ce qu on lit ici est
+            // bien la passe mobile.
+            const d = ".lighthouseci";
+            if (!fs.existsSync(d)) { console.log("::error title=lhci-mobile::aucun rapport mobile produit"); process.exit(1); }
             const lignes = [];
             for (const f of fs.readdirSync(d).filter((f) => f.startsWith("lhr-") && f.endsWith(".json"))) {
               const r = JSON.parse(fs.readFileSync(d + "/" + f, "utf8"));
@@ -710,7 +720,16 @@ jobs:
                 " lcp=" + Math.round(r.audits["largest-contentful-paint"].numericValue) + "ms" +
                 " tbt=" + Math.round(r.audits["total-blocking-time"].numericValue) + "ms" +
                 " cls=" + r.audits["cumulative-layout-shift"].numericValue);
+              // L element LCP et ses phases : sans eux, un LCP a 6 s ne dit pas
+              // s il attend le reseau, le JS ou une police.
+              const el = r.audits["largest-contentful-paint-element"];
+              const items = (el && el.details && el.details.items) || [];
+              const noeud = items[0] && items[0].items && items[0].items[0] && items[0].items[0].node;
+              const phases = items[1] && items[1].items ? items[1].items.map((p) => p.phase + "=" + Math.round(p.timing) + "ms").join(" ") : "";
+              if (noeud) lignes.push("   element LCP : " + (noeud.snippet || noeud.selector || "?").slice(0, 140));
+              if (phases) lignes.push("   phases : " + phases);
             }
+            if (lignes.length === 0) { console.log("::error title=lhci-mobile::dossier present mais aucun lhr-*.json"); process.exit(1); }
             for (const l of lignes) console.log("::notice title=lhci-mobile::" + l);
             fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,
               "### Scores Lighthouse — MOBILE" + NL + NL + "```" + NL + lignes.join(NL) + NL + "```" + NL);
@@ -739,5 +758,8 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: lighthouse-mobile
-          path: .lighthouseci-mobile/
+          path: .lighthouseci/
+          # Dossier CACHÉ : sans ce drapeau, upload-artifact l'ignore en silence
+          # (« No files were found »), et aucun rapport n'a jamais été archivé.
+          include-hidden-files: true
           retention-days: 7
