@@ -78,16 +78,30 @@ export const useDeleteOrgTeam = (orgId: string) => {
   });
 };
 
+/**
+ * `bulk` : l'appelant fait partie d'un lot (actions groupées de l'annuaire) et
+ * affiche UN toast récapitulatif. Sans ce drapeau, cinquante échecs donnaient
+ * cinquante toasts.
+ */
+interface TeamMemberVariables {
+  teamId: string;
+  userId: string;
+  bulk?: boolean;
+}
+
 export const useAddTeamMember = (orgId: string) => {
   const queryClient = useQueryClient();
   const repository = useRepo();
   return useMutation({
-    mutationFn: ({ teamId, userId }: { teamId: string; userId: string }) =>
+    mutationFn: ({ teamId, userId }: TeamMemberVariables) =>
       repository.addTeamMember(teamId, orgId, userId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: orgTeamKeys.members(orgId) });
     },
-    onError: (error: Error) => toast.error(translator('errors').t('mutation.addTeamMember', { message: error.message })),
+    onError: (error: Error, variables) => {
+      if (variables.bulk) return;
+      toast.error(translator('errors').t('mutation.addTeamMember', { message: error.message }));
+    },
   });
 };
 
@@ -95,12 +109,15 @@ export const useRemoveTeamMember = (orgId: string) => {
   const queryClient = useQueryClient();
   const repository = useRepo();
   return useMutation({
-    mutationFn: ({ teamId, userId }: { teamId: string; userId: string }) =>
+    mutationFn: ({ teamId, userId }: TeamMemberVariables) =>
       repository.removeTeamMember(teamId, userId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: orgTeamKeys.members(orgId) });
     },
-    onError: (error: Error) => toast.error(translator('errors').t('mutation.removeMember', { message: error.message })),
+    onError: (error: Error, variables) => {
+      if (variables.bulk) return;
+      toast.error(translator('errors').t('mutation.removeMember', { message: error.message }));
+    },
   });
 };
 

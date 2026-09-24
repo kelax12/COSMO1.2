@@ -45,4 +45,6 @@ export const orgKeys = {
   inbox: () => [...orgKeys.all, 'inbox'] as const,
   /** Surcharges de permissions posées dans cette org (mig. 115). */
   permissions: (orgId: string) => [...orgKeys.all, 'permissions', orgId] as const,
+  /** Dernière activité des membres visibles par l'appelant (mig. 170). */
+  memberLastActivity: (orgId: string) => [...orgKeys.all, 'memberLastActivity', orgId] as const,
 };

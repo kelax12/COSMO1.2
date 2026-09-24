@@ -1,31 +1,17 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import {
-  Shield, UserCog, UserRound, MoreVertical, LogOut, ShieldCheck,
-  ListTodo, CalendarDays, TrendingUp, ClipboardList, Search, X,
-} from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-} from '@/components/ui/dropdown-menu';
-import {
   useRemoveMember,
   useSetMemberManager,
   useSetMemberRole,
   useOrgMemberPermissions,
   useSetMemberPermissions,
   useMyOrgPermissions,
+  useOrgMemberLastActivity,
   canEditPermissionsOf,
   effectivePermissions,
-  isManagerOf,
   subtreeOf,
   type OrgMember,
-  type OrgRole,
 } from '@/modules/organizations';
 import { useOrgTeams, useOrgTeamMembers, type OrgTeam } from '@/modules/org-teams';
 import {
@@ -36,7 +22,7 @@ import {
   type TeamTask,
   type CreateTeamTaskInput,
 } from '@/modules/team-projects';
-import MemberAvatar from './MemberAvatar';
+import { downloadCSV } from '@/lib/csv-export';
 import { readEntityParam } from './deep-link.helpers';
 import MemberSheet from './MemberSheet';
 import { MEMBER_TAB_PARAM, type MemberTab } from './member-sheet.helpers';
@@ -45,6 +31,20 @@ import TeamTaskModal from './TeamTaskModal';
 import ReassignManagerSheet from './ReassignManagerSheet';
 import ConfirmRemoveMemberDialog from './ConfirmRemoveMemberDialog';
 import MemberPermissionsSheet from './MemberPermissionsSheet';
+import MemberDirectoryRow from './MemberDirectoryRow';
+import MemberDirectoryToolbar from './MemberDirectoryToolbar';
+import MemberBulkBar from './MemberBulkBar';
+import MemberBulkPicker from './MemberBulkPicker';
+import { useMemberBulkActions } from './use-member-bulk-actions';
+import {
+  applyDirectoryFilters,
+  directManagers,
+  directoryRoleOf,
+  readDirectoryFilters,
+  writeDirectoryFilters,
+  type DirectoryFilters,
+} from './member-directory.filters';
+import { buildDirectoryCsv } from './member-directory.export';
 import { useT } from '@/i18n/useT';
 
 interface MemberDirectoryProps {
@@ -57,33 +57,14 @@ interface MemberDirectoryProps {
   isAdmin: boolean;
 }
 
-// « Manager » n'est pas un rôle stocké : il est dérivé de la pyramide (a ≥ 1
-// subordonné). Le badge est purement informatif — la position ne se modifie
-// QUE depuis la pyramide (#1 : plus de changement de rôle depuis l'annuaire).
-const BADGE_META = {
-  admin: { labelKey: 'roles.adminShort', Icon: Shield, className: 'text-indigo-600 dark:text-indigo-400 bg-indigo-500/10' },
-  manager: { labelKey: 'roles.manager', Icon: UserCog, className: 'text-blue-600 dark:text-blue-400 bg-[rgb(var(--color-accent-solid))]/10' },
-  member: { labelKey: 'roles.member', Icon: UserRound, className: 'text-slate-600 dark:text-slate-400 bg-slate-500/10' },
-} as const;
-
-/** Normalisation pour la recherche : minuscules, sans accents (diacritiques combinants). */
-const normalize = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
-
-const RoleBadge = ({ kind }: { kind: keyof typeof BADGE_META }) => {
-  const { t } = useT('org');
-  const { labelKey, Icon, className } = BADGE_META[kind];
-  return (
-    <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full ${className}`}>
-      <Icon size={11} aria-hidden="true" /> {t(labelKey)}
-    </span>
-  );
-};
-
 /**
  * Annuaire des membres. Clic sur une ligne → fiche profil (comme la pyramide,
- * #11). Menu « … » réservé aux supérieurs hiérarchiques (#4) : attribuer une
- * tâche, voir tâches / agenda / contribution ; retrait (admin) confirmé par
- * un vrai modal (#3). La hiérarchie (rôles) ne se modifie plus ici (#1).
+ * #11). Menu « … » réservé aux supérieurs hiérarchiques (#4). La hiérarchie
+ * (rôles) ne se modifie plus ici (#1), sauf par l'action groupée « changer de
+ * manager », bornée à la portée de l'appelant.
+ *
+ * Audit « passage à l'échelle » (2026-09-23) : filtres partageables par l'URL,
+ * sélection + actions groupées, export CSV (admins), dernière activité.
  */
 const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin }: MemberDirectoryProps) => {
   const { t } = useT('org');
@@ -101,7 +82,6 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin }: Me
   const createTask = useCreateTeamTask(orgId);
   const updateTask = useUpdateTeamTask(orgId);
 
-  const [query, setQuery] = useState('');
   // Fiche membre unifiee (item #18) — meme sheet que la pyramide, ouvert sur
   // l'onglet demande. `tab` reste brut : seul `MemberSheet` connait les onglets
   // AUTORISES pour ce membre, et c'est lui qui valide.
@@ -112,12 +92,16 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin }: Me
   const [reassigning, setReassigning] = useState<OrgMember | null>(null);
   const [editingPerms, setEditingPerms] = useState<OrgMember | null>(null);
 
-  // ─── Deep-link `?member=<id>` ───────────────────────────────────────
-  // Même contrat que `?task=` : on ouvre la fiche puis on retire le paramètre,
-  // sinon refermer le sheet le rouvrirait au rendu suivant.
+  // ─── URL : deep-link `?member=<id>` et filtres `?dir…` ──────────────
+  // `?member=` : on ouvre la fiche puis on retire le paramètre, sinon refermer
+  // le sheet le rouvrirait au rendu suivant. Les filtres, eux, RESTENT dans
+  // l'URL : c'est ce qui les rend partageables par un lien.
   const [searchParams, setSearchParams] = useSearchParams();
   const deepMemberId = readEntityParam(searchParams, 'member');
   const deepMemberTab = searchParams.get(MEMBER_TAB_PARAM);
+  const filters = useMemo(() => readDirectoryFilters(searchParams), [searchParams]);
+  const setFilters = (next: DirectoryFilters) =>
+    setSearchParams(writeDirectoryFilters(searchParams, next), { replace: true });
 
   useEffect(() => {
     if (!deepMemberId) return;
@@ -138,11 +122,7 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin }: Me
     [members, currentUserId],
   );
 
-  /**
-   * Supérieur hiérarchique de `m` ? (admin partout ; manager sur son sous-arbre,
-   * jamais soi-même). Remonté au niveau du composant depuis la boucle de rendu :
-   * la fiche membre unifiée en a besoin hors de la ligne qui l'a ouverte.
-   */
+  /** Supérieur hiérarchique de `m` ? (admin partout ; manager sur son sous-arbre, jamais soi-même). */
   const isAbove = (m: OrgMember) =>
     m.userId !== currentUserId && (isAdmin || mySubtree.has(m.userId));
 
@@ -156,7 +136,7 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin }: Me
   }, [members, orgPermissions, currentUserId]);
 
   const teamsByUser = useMemo(() => {
-    const byId = new Map(orgTeams.map((t) => [t.id, t]));
+    const byId = new Map(orgTeams.map((team) => [team.id, team]));
     const map = new Map<string, OrgTeam[]>();
     for (const tm of orgTeamMembers) {
       const team = byId.get(tm.teamId);
@@ -168,14 +148,53 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin }: Me
     return map;
   }, [orgTeams, orgTeamMembers]);
 
-  // Recherche par nom ou email (insensible aux accents/casse).
   const filteredMembers = useMemo(() => {
-    const q = normalize(query.trim());
-    if (!q) return members;
-    return members.filter(
-      (m) => normalize(m.displayName).includes(q) || (m.email ? normalize(m.email).includes(q) : false),
+    const teamIdsByUser = new Map(
+      [...teamsByUser].map(([uid, teams]) => [uid, new Set(teams.map((team) => team.id))]),
     );
-  }, [members, query]);
+    return applyDirectoryFilters(members, filters, {
+      ownerId,
+      teamIds: new Set(orgTeams.map((team) => team.id)),
+      teamIdsByUser,
+      now: Date.now(),
+    });
+  }, [members, filters, ownerId, orgTeams, teamsByUser]);
+
+  const managers = useMemo(() => directManagers(members), [members]);
+
+  // Dernière activité : seulement si l'appelant a quelqu'un à voir (admin, ou
+  // manager d'au moins une personne). Le serveur borne de toute façon.
+  const { data: lastActivity = [] } = useOrgMemberLastActivity(orgId, {
+    enabled: isAdmin || mySubtree.size > 0,
+    members,
+    viewerId: currentUserId,
+  });
+  const activityByUser = useMemo(() => new Map(lastActivity.map((a) => [a.userId, a])), [lastActivity]);
+
+  const bulk = useMemberBulkActions({
+    orgId,
+    members,
+    visibleMembers: filteredMembers,
+    teams: orgTeams,
+    memberships: orgTeamMembers,
+    currentUserId,
+    isAdmin,
+  });
+
+  const exportCsv = () => {
+    const { headers, rows } = buildDirectoryCsv(filteredMembers, members, teamsByUser, {
+      headers: {
+        name: t('directory.export.colName'),
+        email: t('directory.export.colEmail'),
+        role: t('directory.export.colRole'),
+        manager: t('directory.export.colManager'),
+        teams: t('directory.export.colTeams'),
+        joinedAt: t('directory.export.colJoinedAt'),
+      },
+      roles: { admin: t('roles.admin'), manager: t('roles.manager'), member: t('roles.member') },
+    });
+    downloadCSV(t('directory.export.fileName'), headers, rows);
+  };
 
   const activeProjects = projects.filter((p) => !p.archivedAt);
 
@@ -204,188 +223,84 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin }: Me
 
   return (
     <>
-      {/* Recherche (visible dès que l'annuaire compte quelques membres) */}
-      {members.length > 3 && (
-        <div className="relative mb-3">
-          <Search
-            size={15}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-[rgb(var(--color-text-muted))] pointer-events-none"
-            aria-hidden="true"
-          />
-          <input
-            type="search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder={t('directory.searchPlaceholder')}
-            aria-label={t('directory.searchAria')}
-            className="w-full pl-9 pr-9 py-2.5 text-sm rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-primary))] placeholder:text-[rgb(var(--color-text-muted))] focus:outline-none focus:border-indigo-400 [&::-webkit-search-cancel-button]:hidden"
-          />
-          {query && (
-            <button
-              type="button"
-              onClick={() => setQuery('')}
-              aria-label={t('directory.clearSearch')}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 w-6 h-6 rounded-md flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))]"
-            >
-              <X size={14} aria-hidden="true" />
-            </button>
-          )}
-        </div>
+      {/* La barre n'apparaît que si l'annuaire compte quelques membres, SAUF si
+          un lien arrive déjà filtré : il faut pouvoir voir et retirer le filtre. */}
+      {(members.length > 3 || filteredMembers.length !== members.length) && (
+        <MemberDirectoryToolbar
+          filters={filters}
+          onChange={setFilters}
+          teams={orgTeams}
+          managers={managers}
+          shown={filteredMembers.length}
+          total={members.length}
+          canSelect={bulk.canSelect}
+          selectMode={bulk.selectMode}
+          onToggleSelectMode={bulk.toggleSelectMode}
+          onExport={isAdmin ? exportCsv : undefined}
+        />
       )}
 
       {filteredMembers.length === 0 ? (
         <p className="text-sm text-[rgb(var(--color-text-muted))] py-8 text-center">
-          {t('directory.noMatch', { query: query.trim() })}
+          {filters.query.trim()
+            ? t('directory.noMatch', { query: filters.query.trim() })
+            : t('directory.filters.noMatch')}
         </p>
       ) : (
-      <ul className="space-y-2">
-        {filteredMembers.map((m) => {
-          const isSelf = m.userId === currentUserId;
-          // Supérieur hiérarchique de m ? (admin partout ; manager : son sous-arbre)
-          return (
+        <ul className={`space-y-2 ${bulk.selectMode ? 'pb-24' : ''}`}>
+          {filteredMembers.map((m) => (
             <li key={m.userId}>
-              <div
-                role="button"
-                tabIndex={0}
-                onClick={(e) => {
-                  if ((e.target as HTMLElement).closest('button,[role="menu"]')) return;
-                  openMember(m, 'profile');
+              <MemberDirectoryRow
+                member={m}
+                role={directoryRoleOf(m, members)}
+                rights={{
+                  isSelf: m.userId === currentUserId,
+                  canChangeRole: isAdmin && m.userId !== currentUserId,
+                  isAbove: isAbove(m),
+                  // Attribuer : seulement dans la portée d'assignation (mig.
+                  // 115), sinon le sheet s'ouvrirait pour finir en erreur RLS.
+                  canAssign: myPermissions.canAssign(m.userId),
+                  canEditPermissions: canEditPermissionsOf({ actorId: currentUserId, actorIsAdmin: isAdmin, target: m, members }),
+                  canRemove: isAdmin,
                 }}
-                onKeyDown={(e) => {
-                  if ((e.key === 'Enter' || e.key === ' ') && e.target === e.currentTarget) {
-                    e.preventDefault();
-                    openMember(m, 'profile');
-                  }
-                }}
-                aria-label={t('common.seeProfileOf', { name: m.displayName })}
-                className="flex items-center gap-3 p-3 rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] cursor-pointer hover:border-indigo-400/60 hover:bg-[rgb(var(--color-hover))] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
-              >
-                <MemberAvatar avatar={m.avatar} name={m.displayName} size={40} />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm font-bold text-[rgb(var(--color-text-primary))] truncate">
-                      {m.displayName}
-                    </p>
-                    {isSelf && (
-                      <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-muted))]">
-                        {t('common.youBadge')}
-                      </span>
-                    )}
-                  </div>
-                  {m.email && (
-                    <p className="text-xs text-[rgb(var(--color-text-muted))] truncate">{m.email}</p>
-                  )}
-                </div>
-
-                {isAdmin && !isSelf ? (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger
-                      className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
-                      aria-label={t('directory.changeRoleAria', { name: m.displayName })}
-                    >
-                      <RoleBadge
-                        kind={m.role === 'admin' ? 'admin' : isManagerOf(members, m.userId) ? 'manager' : 'member'}
-                      />
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-48">
-                      <DropdownMenuRadioGroup
-                        value={m.role}
-                        onValueChange={(value) => {
-                          if (value === m.role) return;
-                          setRole.mutate({ orgId, userId: m.userId, role: value as OrgRole });
-                        }}
-                      >
-                        <DropdownMenuRadioItem value="admin">{t('roles.admin')}</DropdownMenuRadioItem>
-                        <DropdownMenuRadioItem value="member">{t('roles.member')}</DropdownMenuRadioItem>
-                      </DropdownMenuRadioGroup>
-                      {canEditPermissionsOf({ actorId: currentUserId, actorIsAdmin: isAdmin, target: m, members }) && (
-                        <>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={() => setEditingPerms(m)}>
-                            <ShieldCheck size={14} aria-hidden="true" />
-                            {t('directory.customizeRole')}
-                          </DropdownMenuItem>
-                        </>
-                      )}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                ) : (
-                  <RoleBadge
-                    kind={m.role === 'admin' ? 'admin' : isManagerOf(members, m.userId) ? 'manager' : 'member'}
-                  />
-                )}
-
-                {isAbove(m) && (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger
-                      className="w-8 h-8 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
-                      aria-label={t('common.actionsFor', { name: m.displayName })}
-                    >
-                      <MoreVertical size={16} aria-hidden="true" />
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-56">
-                      {/* Icônes SANS classe de couleur : le composant
-                          DropdownMenuItem applique déjà `text-muted-foreground`
-                          à tout svg qui n'en porte pas (cf. dropdown-menu.tsx),
-                          exactement le style neutre du menu d'actions de
-                          TaskTable. Seul l'item destructeur reste coloré. */}
-                      {/* Attribuer : seulement si ce membre est dans la portée
-                          d'assignation de l'utilisateur courant (mig. 115) —
-                          sinon le sheet s'ouvrirait pour finir en erreur RLS. */}
-                      {myPermissions.canAssign(m.userId) && (
-                        <>
-                          <DropdownMenuItem onClick={() => setAssigning(m)}>
-                            <ClipboardList size={14} aria-hidden="true" />
-                            {t('directory.assignTask')}
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                        </>
-                      )}
-                      <DropdownMenuItem onClick={() => openMember(m, 'tasks')}>
-                        <ListTodo size={14} aria-hidden="true" />
-                        {t('directory.seeTasks')}
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => openMember(m, 'agenda')}>
-                        <CalendarDays size={14} aria-hidden="true" />
-                        {t('directory.seeAgenda')}
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => openMember(m, 'contribution')}>
-                        <TrendingUp size={14} aria-hidden="true" />
-                        {t('directory.seeContribution')}
-                      </DropdownMenuItem>
-                      {canEditPermissionsOf({ actorId: currentUserId, actorIsAdmin: isAdmin, target: m, members }) && (
-                        <>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={() => setEditingPerms(m)}>
-                            <ShieldCheck size={14} aria-hidden="true" />
-                            {t('permissions.menuItem')}
-                          </DropdownMenuItem>
-                        </>
-                      )}
-                      {isAdmin && (
-                        <>
-                          <DropdownMenuSeparator />
-                          {/* `!text-red-500` explicite : le sélecteur Tailwind
-                              `data-[variant=destructive]:*:[svg]:!text-destructive`
-                              du composant ne colore pas l'icône (constaté),
-                              même override que TaskTable pour « Supprimer ». */}
-                          <DropdownMenuItem
-                            variant="destructive"
-                            onClick={() => handleRemove(m)}
-                            className="!text-red-500 focus:!text-red-500"
-                          >
-                            <LogOut className="!text-red-500" size={14} aria-hidden="true" /> {t('directory.removeFromOrg')}
-                          </DropdownMenuItem>
-                        </>
-                      )}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                )}
-              </div>
+                lastActivity={activityByUser.get(m.userId)}
+                selectMode={bulk.selectMode}
+                selected={bulk.selectedIds.has(m.userId)}
+                onToggleSelect={() => bulk.toggle(m.userId)}
+                onOpen={(tab) => openMember(m, tab)}
+                onSetRole={(role) => setRole.mutate({ orgId, userId: m.userId, role })}
+                onAssign={() => setAssigning(m)}
+                onEditPermissions={() => setEditingPerms(m)}
+                onRemove={() => handleRemove(m)}
+              />
             </li>
-          );
-        })}
-      </ul>
+          ))}
+        </ul>
+      )}
+
+      {bulk.selectMode && (
+        <MemberBulkBar
+          count={bulk.selected.length}
+          visibleCount={filteredMembers.length}
+          allVisibleSelected={bulk.allVisibleSelected}
+          canAddToTeam={bulk.canAddToTeam}
+          canChangeManager={bulk.canChangeManager}
+          onToggleAll={bulk.toggleAll}
+          onAddToTeam={() => bulk.setPicker('team')}
+          onChangeManager={() => bulk.setPicker('manager')}
+          onExit={bulk.exit}
+        />
+      )}
+
+      {bulk.picker && (
+        <MemberBulkPicker
+          mode={bulk.picker}
+          selectedCount={bulk.selected.length}
+          options={bulk.pickerOptions}
+          pending={bulk.pending}
+          onPick={bulk.pick}
+          onClose={() => bulk.setPicker(null)}
+        />
       )}
 
       {sheet && (
