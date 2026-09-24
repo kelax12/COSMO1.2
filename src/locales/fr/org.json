@@ -591,7 +591,17 @@
       "deleting": "Suppression…",
       "confirm": "Supprimer l'équipe",
       "confirmTransfer": "Réaffecter et supprimer"
-    }
+    },
+    "searchTeams": "Rechercher une équipe…",
+    "noTeamMatch": "Aucune équipe ne correspond.",
+    "showMoreTeams_one": "Afficher {{count}} équipe de plus",
+    "showMoreTeams_many": "Afficher {{count}} d'équipes de plus",
+    "showMoreTeams_other": "Afficher {{count}} équipes de plus",
+    "showFewerTeams": "Réduire la liste",
+    "moreMembers_one": "+{{count}} autre",
+    "moreMembers_many": "+{{count}} de plus",
+    "moreMembers_other": "+{{count}} autres",
+    "fewerMembers": "Réduire"
   },
   "project": {
     "newAria": "Nouveau projet d'équipe",
