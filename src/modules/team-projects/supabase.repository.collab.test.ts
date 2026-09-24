@@ -45,12 +45,12 @@ const ordersOf = (table: string) =>
 beforeEach(() => supabaseMock.reset());
 
 describe('team-projects — commentaires', () => {
-  it('getComments: filtre task_id, ordre chronologique, cap 200, mappe en camelCase', async () => {
+  it('getComments: filtre task_id, lit les 200 plus récents (desc), mappe en camelCase', async () => {
     supabaseMock.queueTable('team_task_comments', { data: [commentRow] });
     const result = await repo.getComments('tk1');
 
     expect(supabaseMock.argsOf('team_task_comments', 'eq')).toEqual(['task_id', 'tk1']);
-    expect(supabaseMock.argsOf('team_task_comments', 'order')).toEqual(['created_at', { ascending: true }]);
+    expect(supabaseMock.argsOf('team_task_comments', 'order')).toEqual(['created_at', { ascending: false }]);
     expect(supabaseMock.argsOf('team_task_comments', 'limit')).toEqual([200]);
     expect(result).toEqual([{
       id: 'cm1', taskId: 'tk1', authorId: 'u1', body: 'Relu, ok pour moi.',

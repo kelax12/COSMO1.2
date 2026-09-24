@@ -40,18 +40,28 @@ describe('SupabaseTeamProjectsRepository — projets', () => {
     expect(supabaseMock.queries.filter((q) => q.table === 'team_projects')).toHaveLength(0);
   });
 
-  it('getProjects: passe org_id en argument de RPC, ordonne created_at asc, cap 200, mappe en camelCase', async () => {
+  it('getProjects: passe org_id en argument de RPC, lit les 200 plus récents (created_at desc), mappe en camelCase', async () => {
     supabaseMock.queueRpc('get_my_team_projects', { data: [projectRow] });
     const result = await repo.getProjects('org1');
 
     expect(supabaseMock.rpcCalls.find((c) => c.fn === 'get_my_team_projects')?.args)
       .toEqual({ p_org: 'org1' });
-    expect(supabaseMock.argsOf('get_my_team_projects', 'order')).toEqual(['created_at', { ascending: true }]);
+    expect(supabaseMock.argsOf('get_my_team_projects', 'order')).toEqual(['created_at', { ascending: false }]);
     expect(supabaseMock.argsOf('get_my_team_projects', 'limit')).toEqual([200]);
     expect(result).toEqual([{
       id: 'p1', orgId: 'org1', name: 'Site web', color: 'green',
       createdBy: 'u1', archivedAt: null, createdAt: projectRow.created_at, teamId: 't1',
     }]);
+  });
+
+  // Témoin du défaut relevé le 2026-09-24 : `order asc + limit(200)` gardait
+  // les 200 PLUS ANCIENS, donc une organisation qui passait 200 projets ne
+  // voyait plus ceux qu'elle venait de créer. L'affichage reste chronologique.
+  it("getProjects: rend l'ordre chronologique alors que le serveur lit les plus récents", async () => {
+    const newer = { ...projectRow, id: 'p2', created_at: '2026-08-01T10:00:00.000Z' };
+    supabaseMock.queueRpc('get_my_team_projects', { data: [newer, projectRow] });
+    const result = await repo.getProjects('org1');
+    expect(result.map((p) => p.id)).toEqual(['p1', 'p2']);
   });
 
   it('getProjects: data null → tableau vide, erreur DB → rejet normalisé', async () => {

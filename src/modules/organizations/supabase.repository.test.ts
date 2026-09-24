@@ -97,7 +97,7 @@ describe('SupabaseOrganizationsRepository — lecture', () => {
     const result = await repo.getMembers('org1');
 
     expect(supabaseMock.argsOf('organization_members', 'eq')).toEqual(['org_id', 'org1']);
-    expect(supabaseMock.argsOf('organization_members', 'order')).toEqual(['joined_at', { ascending: true }]);
+    expect(supabaseMock.argsOf('organization_members', 'order')).toEqual(['joined_at', { ascending: false }]);
     expect(supabaseMock.argsOf('organization_members', 'limit')).toEqual([500]);
     expect(supabaseMock.argsOf('profiles', 'select')).toEqual(['id, email, display_name, avatar_url']);
     expect(supabaseMock.argsOf('profiles', 'in')).toEqual(['id', ['u2']]);
@@ -108,8 +108,10 @@ describe('SupabaseOrganizationsRepository — lecture', () => {
   });
 
   it('getMembers: fallbacks displayName — préfixe email sans display_name, "Membre" sans profil', async () => {
+    // Le serveur rend les plus récents d'abord (`joined_at` desc) ; u3 est donc
+    // en tête de la réponse et en queue du résultat.
     supabaseMock.queueTable('organization_members', {
-      data: [memberRow, { ...memberRow, user_id: 'u3' }],
+      data: [{ ...memberRow, user_id: 'u3' }, memberRow],
     });
     supabaseMock.queueTable('profiles', { data: [{ ...profileRow, display_name: null }] });
 
@@ -148,6 +150,29 @@ describe('SupabaseOrganizationsRepository — lecture', () => {
       status: 'pending', requesterName: 'Bob', requesterEmail: 'bob@test.dev',
       requesterAvatar: 'https://a.io/b.png',
     }]);
+  });
+
+  // Témoin du défaut relevé le 2026-09-24 : trié croissant sous `limit(500)`,
+  // c'est la personne arrivée EN DERNIER qui disparaissait de l'annuaire.
+  it("getMembers: garde l'ordre d'arrivée alors que le serveur lit les plus récents", async () => {
+    const newer = { ...memberRow, user_id: 'u3', joined_at: '2026-08-02T10:00:00.000Z' };
+    supabaseMock.queueTable('organization_members', { data: [newer, memberRow] });
+    supabaseMock.queueTable('profiles', { data: [profileRow] });
+    const result = await repo.getMembers('org1');
+    expect(result.map((m) => m.userId)).toEqual(['u2', 'u3']);
+  });
+
+  it("getPendingJoinRequests: lit les plus récentes (desc), rend l'ordre chronologique", async () => {
+    supabaseMock.queueTable('organization_join_requests', {
+      data: [
+        { id: 'r2', org_id: 'org1', user_id: 'u2', requested_at: '2026-07-04T10:00:00.000Z' },
+        { id: 'r1', org_id: 'org1', user_id: 'u2', requested_at: '2026-07-03T10:00:00.000Z' },
+      ],
+    });
+    supabaseMock.queueTable('profiles', { data: [profileRow] });
+    const result = await repo.getPendingJoinRequests('org1');
+    expect(supabaseMock.argsOf('organization_join_requests', 'order')).toEqual(['requested_at', { ascending: false }]);
+    expect(result.map((r) => r.id)).toEqual(['r1', 'r2']);
   });
 
   it('getPendingJoinRequests: [] si aucune demande ; erreur DB → rejet', async () => {

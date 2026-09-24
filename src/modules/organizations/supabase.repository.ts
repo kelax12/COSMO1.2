@@ -113,10 +113,13 @@ export class SupabaseOrganizationsRepository implements IOrganizationsRepository
       .from('organization_members')
       .select('*')
       .eq('org_id', orgId)
-      .order('joined_at', { ascending: true })
+      // Tri DÉCROISSANT puis inversion : un tri croissant sous `limit` garde les
+      // 500 PLUS ANCIENS, donc la personne qui vient d'accepter l'invitation
+      // est celle qui n'apparaît nulle part. L'ordre affiché reste celui d'arrivée.
+      .order('joined_at', { ascending: false })
       .limit(500);
     if (error) throw normalizeApiError(error);
-    const members = warnIfTruncated((rows ?? []) as MemberRow[], 500, 'org_members');
+    const members = warnIfTruncated((rows ?? []) as MemberRow[], 500, 'org_members').reverse();
     if (members.length === 0) return [];
 
     // Enrichir depuis profiles (nom/avatar sanitizés — jamais raw metadata).
@@ -160,14 +163,16 @@ export class SupabaseOrganizationsRepository implements IOrganizationsRepository
       .eq('org_id', orgId)
       .is('accepted_at', null)
       .is('rejected_at', null)
-      .order('requested_at', { ascending: true })
+      // Même règle que `getMembers` : sous `limit`, on garde la demande la plus
+      // RÉCENTE, celle de quelqu'un qui attend une réponse.
+      .order('requested_at', { ascending: false })
       .limit(200);
     if (error) throw normalizeApiError(error);
     const requests = warnIfTruncated(
       (rows ?? []) as { id: string; org_id: string; user_id: string; requested_at: string }[],
       200,
       'org_join_requests',
-    );
+    ).reverse();
     if (requests.length === 0) return [];
 
     const ids = requests.map((r) => r.user_id);
