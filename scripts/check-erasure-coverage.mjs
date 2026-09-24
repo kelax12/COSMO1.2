@@ -94,6 +94,13 @@ const DECISIONS = {
   organization_members: { decision: 'cascade' },
   task_dependencies: { decision: 'cascade' },
   user_activity_days: { decision: 'cascade' },
+  // Audit entreprise 2026-09-23 (mig. 152 et 155) : rattachement direct à un
+  // projet, suivis et préférences de notification. Aucune n'a de valeur une
+  // fois le compte parti, elles disparaissent avec lui.
+  team_project_members: { decision: 'cascade' },
+  team_task_followers: { decision: 'cascade' },
+  team_project_followers: { decision: 'cascade' },
+  org_notification_settings: { decision: 'cascade' },
 
   // ── Conservées, par obligation légale ───────────────────────────
   payment_records: {
