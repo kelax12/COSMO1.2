@@ -85,8 +85,12 @@ deux cas l'étape « réussissait » sur une absence.
 ⚠️ **`main` avait été vert une fois, le 2026-09-23 (`869fb05a`)**, puis la navigation par routes
 de l'espace entreprise l'a remis au rouge : `OrganizationPage.tsx` à 615 lignes
 (`architecture.guard` a mordu) et cinq specs e2e encore écrites pour `?tab=`. Corrigé dans
-`bae4ad99`. Le run CI de ce commit est **en cours** à l'écriture : « `main` vert » n'est pas encore
-une mesure.
+`bae4ad99`, puis `8ad6802d` : une fois `architecture.guard` passé, `check:bundle` a révélé le chunk
+`OrganizationPage` au-delà de son cliquet (18,3 ko pour 18,0). 🔴 **Et un second dépassement, hors
+de ce chantier** : le chunk `legal` fait **18,5 ko pour un cliquet à 15,5**, depuis l'audit
+juridique du jour (`3360a455`, CGU et politique de confidentialité enrichies). Tant qu'il n'est pas
+traité, **`main` reste rouge**. Levier probable : un catalogue par document (`terms`, `privacy`,
+`notice`), chaque page ne chargeant que le sien. ❌ Pas de relèvement du cliquet.
 
 **Ce qui reste, dans l'ordre** : lire le run CI de `dc879062` et le premier run `Visual` qui COMPARE ; arbitrer le
 levier 1 de `C-116` (peindre le prérendu) ; décider au registre de la durée des 4 invitations
