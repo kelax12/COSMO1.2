@@ -1,0 +1,54 @@
+# ═══════════════════════════════════════════════════════════════════
+# Notifications d entreprise par e-mail (mig. 162, audit 2026-09-23, M14)
+#
+# Declenche l Edge Function `org-digest` :
+#   · toutes les heures, mode `hourly` : les types que chacun a choisi de
+#     recevoir aussi par e-mail ;
+#   · une fois par jour, mode `daily` : le resume de ce qui reste non lu.
+#
+# Pourquoi la CI et pas pg_cron : meme raison que `renewal-notice.yml`,
+# appeler une Edge Function depuis Postgres exigerait pg_net, non installe.
+#
+# ⚠️ Secret absent = ECHEC, jamais un silence vert (cf. renewal-notice.yml).
+# ═══════════════════════════════════════════════════════════════════
+name: org-digest
+
+on:
+  schedule:
+    # Minute 23 : decalee des autres crons du depot.
+    - cron: '23 * * * *'
+    # 07:41 UTC : le resume quotidien.
+    - cron: '41 7 * * *'
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'hourly ou daily'
+        required: false
+        default: 'hourly'
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Envoyer les notifications par e-mail
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL || 'https://ykeugqfgklejcdbrmawy.supabase.co' }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          SCHEDULE: ${{ github.event.schedule }}
+          INPUT_MODE: ${{ github.event.inputs.mode }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$CRON_SECRET" ]; then
+            echo "::error::CRON_SECRET absent des secrets Actions : AUCUNE notification par e-mail ne part."
+            exit 1
+          fi
+          MODE="hourly"
+          if [ "$SCHEDULE" = "41 7 * * *" ] || [ "$INPUT_MODE" = "daily" ]; then MODE="daily"; fi
+          code=$(curl -s -o /tmp/out.json -w '%{http_code}' -X POST \
+            "$SUPABASE_URL/functions/v1/org-digest?mode=$MODE" \
+            -H "x-cron-secret: $CRON_SECRET")
+          echo "HTTP $code ($MODE)"; cat /tmp/out.json; echo
+          case "$code" in
+            [0-9][0-9][0-9]) ;;
+            *) echo "::error::Aucun code HTTP : l appel n a pas eu lieu."; exit 1 ;;
+          esac
+          [ "$code" = "200" ]
