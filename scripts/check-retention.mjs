@@ -63,7 +63,14 @@ export const DUREE_DE_VIE_DU_COMPTE = [
   { table: 'user_activity_days', colonne: 'user_id', traitement: 'T10' },
   { table: 'task_dependencies', colonne: 'user_id', traitement: 'T2' },
   { table: 'friends', colonne: 'user_id', traitement: 'T3' },
-  { table: 'friend_requests', colonne: 'user_id', traitement: 'T3' },
+  // 🔴 C-112 · `friend_requests` n'a PAS de `user_id` : elle porte les DEUX
+  // comptes, `sender_id` et `receiver_id` (relu dans `information_schema` le
+  // 2026-09-24). L'ancienne ligne `user_id` faisait échouer toute l'UNION en
+  // 42703 : AUCUNE table n'était contrôlée, à chaque run, depuis la pose.
+  // Chaque colonne est une ligne : une demande survit à son émetteur comme à
+  // son destinataire, et les deux sont des orphelines.
+  { table: 'friend_requests', colonne: 'sender_id', traitement: 'T3' },
+  { table: 'friend_requests', colonne: 'receiver_id', traitement: 'T3' },
   { table: 'subscriptions', colonne: 'user_id', traitement: 'T5' },
   { table: 'organization_members', colonne: 'user_id', traitement: 'T4' },
   { table: 'org_notifications', colonne: 'user_id', traitement: 'T4' },
@@ -148,13 +155,26 @@ export async function interroger(sql, { token, projet, fetchImpl = fetch }) {
   return res.json();
 }
 
-/** Le SQL du contrôle A : une ligne par table, le compte des orphelines. */
+/**
+ * Le libellé d'une ligne du contrôle A. Une table peut porter DEUX colonnes de
+ * compte (`friend_requests`) : la clé est donc `table.colonne`, jamais la
+ * table seule, sinon la seconde écraserait la première dans le résultat.
+ */
+export const libelle = ({ table, colonne }) => `${table}.${colonne}`;
+
+/** Le SQL du contrôle A : une ligne par couple table/colonne, le compte des orphelines. */
 export function sqlOrphelines(tables = DUREE_DE_VIE_DU_COMPTE) {
   return tables
     .map(
       ({ table, colonne }) =>
-        `SELECT '${table}' AS t, count(*)::int AS n FROM public.${table} x`
-        + ` LEFT JOIN auth.users u ON u.id = x.${colonne} WHERE u.id IS NULL`,
+        `SELECT '${libelle({ table, colonne })}' AS t, count(*)::int AS n FROM public.${table} x`
+        + ` LEFT JOIN auth.users u ON u.id = x.${colonne}`
+        // 🔴 `IS NOT NULL` : une colonne de compte NULLE n'a jamais désigné de
+        // compte, donc elle ne peut pas lui survivre. Mesuré le 2026-09-24 :
+        // les 4 « orphelines » de `friend_requests.receiver_id` ont toutes un
+        // destinataire NULL (invitation vers une adresse sans compte). Sans ce
+        // filtre, la garde rougissait au premier run pour une fausse raison.
+        + ` WHERE x.${colonne} IS NOT NULL AND u.id IS NULL`,
     )
     .join('\nUNION ALL ');
 }
@@ -205,9 +225,9 @@ if (estLanceDirectement) {
     );
   }
   console.log('Conservation · A. lignes survivant à leur compte (RGPD art. 17)');
-  for (const { table, traitement } of DUREE_DE_VIE_DU_COMPTE) {
-    const n = parTable.get(table);
-    console.log(`  ${traitement} ${table.padEnd(24)} ${n ?? '—'} orpheline(s)`);
+  for (const { table, colonne, traitement } of DUREE_DE_VIE_DU_COMPTE) {
+    const n = parTable.get(libelle({ table, colonne }));
+    console.log(`  ${traitement} ${libelle({ table, colonne }).padEnd(32)} ${n ?? '—'} orpheline(s)`);
     if (n > 0 && !PREUVES.has(table)) {
       erreurs.push(
         `\`${table}\` : ${n} ligne(s) dont le compte n'existe plus (${traitement}).\n`

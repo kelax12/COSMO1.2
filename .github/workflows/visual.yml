@@ -159,7 +159,18 @@ jobs:
         if: ${{ (steps.ref.outputs.existent == 'false' || inputs.regenerer) && github.ref == 'refs/heads/main' }}
         run: |
           set -euo pipefail
-          if git diff --quiet -- e2e/__screenshots__; then
+          # 🔴 C-115 · `git status`, JAMAIS `git diff --quiet` : au bootstrap les
+          # références sont des fichiers NON SUIVIS, que `git diff` ne voit pas.
+          # Les runs du 2026-09-23 ont écrit 19 captures, conclu « aucune
+          # référence modifiée » et fini VERTS sans rien committer : chaque run
+          # suivant repartait en bootstrap, et rien n'était jamais comparé.
+          if [ -z "$(git status --porcelain -- e2e/__screenshots__)" ]; then
+            # Au bootstrap, « rien à committer » n'est pas un succès : c'est
+            # exactement le vert silencieux du 2026-09-23.
+            if [ "${{ steps.ref.outputs.existent }}" = 'false' ]; then
+              echo "::error title=visual::Bootstrap sans aucune reference a committer."
+              exit 1
+            fi
             echo "Aucune reference modifiee."
             exit 0
           fi

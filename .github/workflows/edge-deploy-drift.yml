@@ -144,9 +144,12 @@ jobs:
       # manque — pas de `::warning::` dans un run vert.
       - name: Sondes de fumee · les fonctions repondent-elles vraiment ?
         if: ${{ !cancelled() }}
+        # 🔴 C-114 · `secrets.VITE_SUPABASE_ANON_KEY` n'existe pas au dépôt : la
+        # sonde s'arrêtait avant de sonder, depuis sa pose. Elle lit désormais
+        # la clé anon (publique) par l'API Management, avec le jeton déjà
+        # utilisé par l'étape `check:edge`. L'URL retombe sur le projet de prod.
         env:
-          SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
         run: npm run check:edge-smoke
 
       - name: Temoin · le comparateur compare-t-il encore quelque chose ?

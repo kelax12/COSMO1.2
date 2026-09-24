@@ -25,9 +25,9 @@ import { tmpdir } from 'node:os';
 
 import { resumerAdvisors, comparerAdvisors, REGLAGES_SURVEILLES } from './check-supabase-posture.mjs';
 import { grilleDuCode, palierDe, rapprocher, prixStripe } from './check-stripe-prices.mjs';
-import { sqlOrphelines, sqlAges, DUREE_DE_VIE_DU_COMPTE, DUREES_BORNEES, PREUVES } from './check-retention.mjs';
+import { sqlOrphelines, sqlAges, DUREE_DE_VIE_DU_COMPTE, DUREES_BORNEES, PREUVES, libelle } from './check-retention.mjs';
 import { sqlExplain, extraire, pente, REQUETES } from './check-db-cost.mjs';
-import { SONDES, jouer } from './check-edge-smoke.mjs';
+import { SONDES, jouer, cleAnonDepuisApi } from './check-edge-smoke.mjs';
 import { variablesLues, variablesDeLExemple } from './check-env-contract.mjs';
 import { lignesAnnuaires, dateDeRemesure, ETATS } from './check-acquisition.mjs';
 import { lireMarqueur, lirePhrase, documents } from './check-docs-scored.mjs';
@@ -203,7 +203,18 @@ describe('témoin — durées de conservation (C-93)', () => {
     // Une jointure GAUCHE sur `auth.users` : c'est elle qui trouve les lignes
     // dont le compte n'existe plus.
     expect(sql).toContain('LEFT JOIN auth.users');
-    expect(sql).toContain('WHERE u.id IS NULL');
+    expect(sql).toContain('IS NOT NULL AND u.id IS NULL');
+  });
+
+  it('C-112 · chaque couple table/colonne a un libellé UNIQUE, et friend_requests est lue sur ses deux comptes', () => {
+    // 🔴 La garde a planté à chaque run du 2026-09-20 au 2026-09-24 sur
+    // `friend_requests.user_id`, une colonne qui n'existe pas. Les deux vraies
+    // colonnes sont relues ici : retirer l'une ou revenir à `user_id` rougit.
+    const libelles = DUREE_DE_VIE_DU_COMPTE.map(libelle);
+    expect(new Set(libelles).size).toBe(libelles.length);
+    expect(libelles).toContain('friend_requests.sender_id');
+    expect(libelles).toContain('friend_requests.receiver_id');
+    expect(libelles).not.toContain('friend_requests.user_id');
   });
 
   it('le SQL des âges utilise la VRAIE colonne de date de chaque table', () => {
@@ -492,5 +503,26 @@ describe('témoin — pages et pluriels i18n (C-99)', () => {
     } finally {
       rmSync(tmp, { recursive: true, force: true });
     }
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════
+describe('témoin — la sonde de fumée trouve sa clé anon (C-114)', () => {
+  it('lit la clé nommée « anon » par l API Management', async () => {
+    const vues = [];
+    const fetchImpl = async (url, init) => {
+      vues.push({ url, auth: init.headers.Authorization });
+      return { ok: true, json: async () => [{ name: 'service_role', api_key: 'NON' }, { name: 'anon', api_key: 'cle-anon' }] };
+    };
+    expect(await cleAnonDepuisApi({ token: 'jeton', projet: 'p', fetchImpl })).toBe('cle-anon');
+    expect(vues[0].url).toBe('https://api.supabase.com/v1/projects/p/api-keys');
+    expect(vues[0].auth).toBe('Bearer jeton');
+  });
+
+  it('échoue plutôt que de sonder sans clé : refus de l API, ou aucune clé anon', async () => {
+    const refus = async () => ({ ok: false, status: 401 });
+    await expect(cleAnonDepuisApi({ token: 'x', fetchImpl: refus })).rejects.toThrow(/401/);
+    const sansAnon = async () => ({ ok: true, json: async () => [{ name: 'service_role', api_key: 'NON' }] });
+    await expect(cleAnonDepuisApi({ token: 'x', fetchImpl: sansAnon })).rejects.toThrow(/anon/);
   });
 });

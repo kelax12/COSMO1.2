@@ -46,6 +46,33 @@ import { sep } from 'node:path';
 
 /** Le projet de production. Publique : elle est dans le bundle client. */
 const URL_DEFAUT = 'https://ykeugqfgklejcdbrmawy.supabase.co';
+const PROJET_DEFAUT = 'ykeugqfgklejcdbrmawy';
+
+/**
+ * 🔴 C-114 · La clé anon lue par l'API Management, avec le jeton déjà posé.
+ *
+ * La sonde n'a JAMAIS sondé en CI depuis sa pose (2026-09-20) : le workflow
+ * lisait `secrets.VITE_SUPABASE_ANON_KEY`, un secret qui n'existe pas au
+ * dépôt (relu le 2026-09-24 : seuls `CRON_SECRET`, `OPS_ALERT_WEBHOOK_URL`,
+ * `SUPABASE_ACCESS_TOKEN` et `SUPABASE_DB_URL` y sont). La clé anon est
+ * publique, elle est dans le bundle : la redemander à un humain ne protège
+ * rien. On la lit donc là où elle fait foi, par le jeton qui sert déjà à
+ * `check:edge`. Une clé fournie explicitement reste prioritaire.
+ */
+export async function cleAnonDepuisApi({ token, projet = PROJET_DEFAUT, fetchImpl = fetch }) {
+  const res = await fetchImpl(`https://api.supabase.com/v1/projects/${projet}/api-keys`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    throw new Error(`API Management : ${res.status} en lisant les clés du projet ${projet}`);
+  }
+  const cles = await res.json();
+  const anon = Array.isArray(cles) ? cles.find((c) => c.name === 'anon') : null;
+  if (!anon?.api_key) {
+    throw new Error("API Management : aucune clé nommée « anon » dans la réponse");
+  }
+  return anon.api_key;
+}
 
 /**
  * LES SONDES.
@@ -191,7 +218,14 @@ const estLanceDirectement =
 
 if (estLanceDirectement) {
   const base = (process.env.SUPABASE_URL || URL_DEFAUT).replace(/\/+$/, '');
-  const anon = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+  let anon = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+  if (!anon && process.env.SUPABASE_ACCESS_TOKEN) {
+    anon = await cleAnonDepuisApi({
+      token: process.env.SUPABASE_ACCESS_TOKEN,
+      projet: process.env.SUPABASE_PROJECT_REF || PROJET_DEFAUT,
+    });
+    console.log('Clé anon lue par l API Management (aucune clé fournie).');
+  }
 
   // 🔴 Pas de repli silencieux. La clé anon est PUBLIQUE, mais elle n'est pas
   // dans le dépôt : sans elle, toutes les sondes se feraient refuser par
@@ -202,7 +236,8 @@ if (estLanceDirectement) {
       '✖ SUPABASE_ANON_KEY absente. Sans elle, `verify_jwt` refuse AVANT la\n'
         + '  fonction : la sonde mesurerait Supabase et non le code déployé.\n'
         + '  Cette clé est publique (elle est dans le bundle client) ; elle est\n'
-        + '  passée par le secret de dépôt `VITE_SUPABASE_ANON_KEY`.',
+        + '  passée par `SUPABASE_ANON_KEY`, ou lue par l API Management quand\n'
+        + '  `SUPABASE_ACCESS_TOKEN` est posé.',
     );
     process.exit(1);
   }
