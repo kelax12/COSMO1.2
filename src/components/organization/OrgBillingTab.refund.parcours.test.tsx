@@ -84,10 +84,21 @@ vi.mock('@/modules/billing/org-billing.repository', () => ({
     stripeCustomerId: 'cus_test',
     stripeSubscriptionId: 'sub_test',
   }),
+  // Mig. 180 : historique et contact, hors du parcours de remboursement.
+  getOrgBillingHistory: async () => [],
+  getOrgBillingContact: async () => null,
 }));
 
 import { appModeStore } from '@/lib/app-mode.store';
 import { OrgBillingTab } from './OrgBillingTab';
+
+const SEVEN_MEMBERS = Array.from({ length: 7 }, (_, i) => ({
+  orgId: 'org-1',
+  userId: `u-${i}`,
+  role: i === 0 ? ('admin' as const) : ('member' as const),
+  joinedAt: `2026-09-0${i + 1}T00:00:00.000Z`,
+  displayName: `Membre ${i}`,
+}));
 
 function renderTab(isOwner = true) {
   const qc = new QueryClient({
@@ -96,7 +107,7 @@ function renderTab(isOwner = true) {
   return render(
     <MemoryRouter>
       <QueryClientProvider client={qc}>
-        <OrgBillingTab orgId="org-1" isOwner={isOwner} memberCount={7} />
+        <OrgBillingTab orgId="org-1" isOwner={isOwner} ownerId="u-0" members={SEVEN_MEMBERS} />
       </QueryClientProvider>
     </MemoryRouter>,
   );

@@ -418,7 +418,10 @@ const OrganizationPage = () => {
         <OrgBillingTab
           orgId={myOrg.id}
           isOwner={isOwner}
-          memberCount={members.length}
+          ownerId={myOrg.ownerId}
+          members={members}
+          ownerEmail={user?.email}
+          userId={user?.id}
           onBack={() => setTab('overview')}
         />
       )}
