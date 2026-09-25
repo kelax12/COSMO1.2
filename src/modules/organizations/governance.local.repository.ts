@@ -13,6 +13,11 @@ import type { IOrgGovernanceRepository } from './governance.repository';
 import {
   DEFAULT_NOTIFICATION_SETTINGS,
   type AuditEntry,
+  type AuditLogQuery,
+  type OrgSearchResult,
+  type SavedView,
+  type SaveViewInput,
+  type SavedViewScope,
   type CreateEmailInvitationsInput,
   type DepartureImpact,
   type EmailInvitation,
@@ -34,6 +39,9 @@ const EMAIL_INVITES_KEY = 'cosmo_org_email_invitations';
 const NOTIF_SETTINGS_KEY = 'cosmo_org_notification_settings';
 const WEEKLY_REVIEWS_KEY = 'cosmo_org_weekly_reviews';
 const AUDIT_KEY = 'cosmo_org_audit_log';
+const SAVED_VIEWS_KEY = 'cosmo_org_saved_views';
+/** Même borne que le trigger de la mig. 192. */
+const SAVED_VIEWS_LIMIT = 50;
 const DEMO_USER_ID = 'demo-user';
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 
@@ -64,18 +72,21 @@ export class LocalStorageOrgGovernanceRepository implements IOrgGovernanceReposi
   }
 
   async getDepartureImpact(orgId: string, userId: string): Promise<DepartureImpact> {
-    const [members, tasks, memberships, okrs] = await Promise.all([
+    const [members, tasks, memberships, okrs, projects, projectMembers] = await Promise.all([
       this.members(orgId),
       this.projects.getTasks(orgId),
       this.teams.getTeamMembers(orgId),
       this.okrs.getAll(orgId),
+      this.projects.getProjects(orgId),
+      this.projects.getProjectMembers(orgId),
     ]);
     return {
       tasks: tasks.filter((t) => !t.completed && t.assigneeIds.includes(userId)).length,
       reports: members.filter((m) => m.orgId === orgId && m.managerId === userId).length,
       leads: memberships.filter((m) => m.userId === userId && m.isLead).length,
-      // Projets portés : arrive avec le responsable de projet (M2).
-      projects: 0,
+      // Projets portés et co-pilotages (mig. 190).
+      projects: projects.filter((p) => p.ownerId === userId).length
+        + projectMembers.filter((m) => m.userId === userId && m.role === 'lead').length,
       krs: okrs.flatMap((o) => o.keyResults).filter((k) => k.assigneeId === userId).length,
     };
   }
@@ -108,6 +119,16 @@ export class LocalStorageOrgGovernanceRepository implements IOrgGovernanceReposi
         await this.teams.addTeamMember(m.teamId, orgId, input.leadsTo);
         await this.teams.setTeamLead(m.teamId, input.leadsTo, true);
       }
+    }
+
+    // Projets portés (mig. 190) : responsable et co-pilotages transmis.
+    for (const p of await this.projects.getProjects(orgId)) {
+      if (p.ownerId === userId) await this.projects.updateProject(p.id, { ownerId: input.projectsTo ?? null });
+    }
+    for (const m of await this.projects.getProjectMembers(orgId)) {
+      if (m.userId !== userId) continue;
+      if (input.projectsTo && m.role === 'lead') await this.projects.setProjectMember(m.projectId, input.projectsTo, 'lead');
+      if (input.mode === 'remove') await this.projects.removeProjectMember(m.projectId, userId);
     }
 
     for (const okr of await this.okrs.getAll(orgId)) {
@@ -185,10 +206,13 @@ export class LocalStorageOrgGovernanceRepository implements IOrgGovernanceReposi
     writeJsonOrThrow(EMAIL_INVITES_KEY, this.invites().filter((i) => i.token !== token));
   }
 
-  async getAuditLog(orgId: string, options?: { targetUserId?: string; limit?: number }): Promise<AuditEntry[]> {
+  async getAuditLog(orgId: string, options?: AuditLogQuery): Promise<AuditEntry[]> {
     return (readJsonArray<AuditEntry & { orgId: string }>(AUDIT_KEY) ?? [])
-      .filter((e) => e.orgId === orgId && (!options?.targetUserId || e.targetUserId === options.targetUserId))
-      .slice(0, options?.limit ?? 200);
+      .filter((e) => e.orgId === orgId
+        && (!options?.targetUserId || e.targetUserId === options.targetUserId)
+        && (!options?.before || e.createdAt < options.before)
+        && (!options?.actionPrefix || e.action.startsWith(options.actionPrefix)))
+      .slice(0, Math.min(options?.limit ?? 200, 1000));
   }
 
   async getNotificationSettings(orgId: string): Promise<NotificationSettings> {
@@ -214,5 +238,81 @@ export class LocalStorageOrgGovernanceRepository implements IOrgGovernanceReposi
       },
       ...all,
     ].slice(0, 52));
+  }
+
+  // ─── Vues enregistrées (mig. 192) ──────────────────────────────────
+
+  async getSavedViews(orgId: string, scope: SavedViewScope): Promise<SavedView[]> {
+    return (readJsonArray<SavedView & { orgId: string }>(SAVED_VIEWS_KEY) ?? [])
+      .filter((v) => v.orgId === orgId && v.scope === scope)
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }
+
+  async saveView(orgId: string, input: SaveViewInput): Promise<SavedView> {
+    const name = input.name.trim();
+    if (!name || name.length > 60) throw makeApiError('invalid_input');
+    const all = readJsonArray<SavedView & { orgId: string }>(SAVED_VIEWS_KEY) ?? [];
+    const now = new Date().toISOString();
+    const existing = all.find((v) => v.orgId === orgId && v.scope === input.scope && v.name === name);
+    if (existing) {
+      existing.filters = input.filters;
+      existing.updatedAt = now;
+      writeJsonOrThrow(SAVED_VIEWS_KEY, all);
+      return existing;
+    }
+    if (all.filter((v) => v.orgId === orgId && v.scope === input.scope).length >= SAVED_VIEWS_LIMIT) {
+      throw makeApiError('saved_views_limit');
+    }
+    const view = { id: crypto.randomUUID(), orgId, scope: input.scope, name, filters: input.filters, createdAt: now, updatedAt: now };
+    writeJsonOrThrow(SAVED_VIEWS_KEY, [...all, view]);
+    return view;
+  }
+
+  async deleteView(viewId: string): Promise<void> {
+    writeJsonOrThrow(
+      SAVED_VIEWS_KEY,
+      (readJsonArray<SavedView>(SAVED_VIEWS_KEY) ?? []).filter((v) => v.id !== viewId),
+    );
+  }
+
+  // ─── Recherche globale (mig. 191) ──────────────────────────────────
+
+  async search(orgId: string, query: string, limitPerKind = 8): Promise<OrgSearchResult[]> {
+    const q = query.trim().toLowerCase().slice(0, 100);
+    if (q.length < 2) return [];
+    const limit = Math.min(Math.max(limitPerKind, 1), 20);
+    const has = (v: string | null | undefined) => !!v && v.toLowerCase().includes(q);
+    const [projects, milestones, tasks, okrs, teams, members] = await Promise.all([
+      this.projects.getProjects(orgId),
+      this.projects.getMilestones(orgId),
+      this.projects.getTasks(orgId),
+      this.okrs.getAll(orgId),
+      this.teams.getTeams(orgId),
+      this.members(orgId),
+    ]);
+    const take = <T,>(rows: T[], map: (row: T) => OrgSearchResult) => rows.slice(0, limit).map(map);
+    return [
+      ...take(projects.filter((p) => !p.isTemplate && (has(p.name) || has(p.description))), (p) => ({
+        kind: 'project', id: p.id, label: p.name, detail: p.archivedAt ? 'archived' : p.status ?? 'active', parentId: null,
+      })),
+      ...take(milestones.filter((m) => has(m.name)), (m) => ({
+        kind: 'milestone', id: m.id, label: m.name, detail: m.dueDate, parentId: m.projectId,
+      })),
+      ...take(tasks.filter((t) => has(t.name)), (t) => ({
+        kind: 'task', id: t.id, label: t.name, detail: t.completed ? 'done' : t.status, parentId: t.projectId,
+      })),
+      ...take(okrs.filter((o) => has(o.title) || has(o.description)), (o) => ({
+        kind: 'okr', id: o.id, label: o.title, detail: o.endDate ?? null, parentId: null,
+      })),
+      ...take(okrs.flatMap((o) => o.keyResults).filter((k) => has(k.title)), (k) => ({
+        kind: 'kr', id: k.id, label: k.title, detail: null, parentId: k.okrId,
+      })),
+      ...take(teams.filter((tm) => has(tm.name)), (tm) => ({
+        kind: 'team', id: tm.id, label: tm.name, detail: null, parentId: null,
+      })),
+      ...take(members.filter((m) => m.orgId === orgId && (has(m.displayName) || has(m.email))), (m) => ({
+        kind: 'member', id: m.userId, label: m.displayName, detail: m.email ?? null, parentId: null,
+      })),
+    ];
   }
 }

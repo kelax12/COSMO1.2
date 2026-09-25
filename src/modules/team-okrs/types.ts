@@ -25,6 +25,9 @@ export interface TeamKeyResult {
   progressMode?: KRProgressMode;
   /** Contributeurs, en plus du responsable `assigneeId` (mig. 160). */
   contributorIds?: string[];
+  /** État du DERNIER point d'étape (mig. 160), recopié sur le KR par `post_kr_checkin`. */
+  health?: 'on_track' | 'at_risk' | 'off_track' | null;
+  healthUpdatedAt?: string | null;
 }
 
 export type KRProgressMode = 'manual' | 'tasks';
@@ -106,4 +109,16 @@ export interface UpdateTeamKRInput {
   estimatedTime?: number;
   progressMode?: KRProgressMode;
   contributorIds?: string[];
+}
+
+/**
+ * Objectif à la corbeille (mig. 193) : intitulé et métadonnées de suppression
+ * seulement. Le contenu revient avec la restauration, jamais avant.
+ */
+export interface TrashedTeamOKR {
+  id: string;
+  title: string;
+  deletedAt: string;
+  deletedBy: string | null;
+  createdBy: string | null;
 }

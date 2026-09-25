@@ -22,6 +22,7 @@ import {
   TeamTaskActivity,
   TeamProjectMilestone,
   TeamProjectStatus,
+  TeamProjectHealth,
   TeamProjectTemplatePayload,
 } from './types';
 
@@ -43,6 +44,10 @@ export interface ProjectRow {
   due_date?: string | null;
   is_template?: boolean | null;
   template_payload?: TeamProjectTemplatePayload | null;
+  health?: string | null;
+  health_note?: string | null;
+  health_updated_at?: string | null;
+  health_updated_by?: string | null;
 }
 
 export interface TaskRow {
@@ -82,6 +87,10 @@ export const mapProject = (r: ProjectRow): TeamProject => ({
   dueDate: r.due_date ?? null,
   isTemplate: r.is_template ?? false,
   templatePayload: r.template_payload ?? null,
+  health: (r.health as TeamProjectHealth | null | undefined) ?? null,
+  healthNote: r.health_note ?? null,
+  healthUpdatedAt: r.health_updated_at ?? null,
+  healthUpdatedBy: r.health_updated_by ?? null,
 });
 
 // ─── Jalons (mig. 153) ───────────────────────────────────────────────

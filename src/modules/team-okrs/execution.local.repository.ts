@@ -58,7 +58,9 @@ export class LocalStorageOkrExecutionRepository implements IOkrExecutionReposito
   async postCheckin(input: PostKRCheckinInput): Promise<void> {
     // Même geste qu'en production (`post_kr_checkin`) : la valeur du KR ET le
     // point d'étape, ensemble.
-    await new LocalStorageTeamOKRsRepository().updateKeyResult(input.krId, { currentValue: input.value });
+    const okrs = new LocalStorageTeamOKRsRepository();
+    await okrs.updateKeyResult(input.krId, { currentValue: input.value });
+    okrs.setKeyResultHealth(input.krId, input.status);
     const checkin: KRCheckin = {
       id: crypto.randomUUID(),
       krId: input.krId,

@@ -30,8 +30,13 @@ import {
   CreateTeamProjectMilestoneInput,
   UpdateTeamProjectMilestoneInput,
   TeamProjectDependency,
+  TeamProjectMember,
+  TeamProjectRole,
+  TeamProjectTaskStats,
+  TeamMemberWorkload,
 } from './types';
 import * as portfolio from './local.portfolio';
+import * as access from './local.access';
 import {
   TEAM_PROJECTS_STORAGE_KEY, TEAM_TASKS_STORAGE_KEY, TEAM_TASK_COMMENTS_STORAGE_KEY,
   TEAM_TASK_SUBTASKS_STORAGE_KEY,
@@ -185,6 +190,19 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
     portfolio.removeProjectDependency(projectId, dependsOnId);
   }
 
+  // ─── Membres de projet et chiffres (mig. 190, 191) ─────────────────
+  async getProjectMembers(orgId: string): Promise<TeamProjectMember[]> { return access.getProjectMembers(orgId); }
+  async setProjectMember(projectId: string, userId: string, role: TeamProjectRole): Promise<void> {
+    access.setProjectMember(projectId, userId, role, this.getProjectsArray());
+  }
+  async removeProjectMember(projectId: string, userId: string): Promise<void> { access.removeProjectMember(projectId, userId); }
+  async getProjectTaskStats(orgId: string, today: string): Promise<TeamProjectTaskStats[]> {
+    return access.computeProjectTaskStats(this.getTasksArray().filter((t) => t.orgId === orgId), today);
+  }
+  async getMemberWorkload(orgId: string, today: string): Promise<TeamMemberWorkload[]> {
+    return access.computeMemberWorkload(this.getTasksArray().filter((t) => t.orgId === orgId), today);
+  }
+
   async updateProject(projectId: string, input: UpdateTeamProjectInput): Promise<TeamProject> {
     const projects = this.getProjectsArray();
     const p = projects.find((x) => x.id === projectId);
@@ -199,6 +217,18 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
     if (input.status !== undefined) p.status = input.status;
     if (input.startDate !== undefined) p.startDate = input.startDate || null;
     if (input.dueDate !== undefined) p.dueDate = input.dueDate || null;
+    // Santé (mig. 190) : horodatage et auteur posés comme par le trigger.
+    if (input.health !== undefined || input.healthNote !== undefined) {
+      const health = input.health !== undefined ? input.health : p.health ?? null;
+      const note = input.healthNote !== undefined ? input.healthNote || null : p.healthNote ?? null;
+      if (note && note.length > 1000) throw makeApiError('invalid_input');
+      if (health !== (p.health ?? null) || note !== (p.healthNote ?? null)) {
+        p.health = health;
+        p.healthNote = note;
+        p.healthUpdatedAt = new Date().toISOString();
+        p.healthUpdatedBy = DEMO_USER_ID;
+      }
+    }
     // CHECK `team_projects_dates_order` (mig. 153), rejoué ici.
     if (p.startDate && p.dueDate && p.startDate > p.dueDate) throw makeApiError('invalid_input');
     this.saveProjects(projects);
@@ -229,11 +259,13 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
       return true;
     });
     // Sans tri ni plafond demandés, l'ordre historique de la démo est gardé.
-    if (!filters?.orderBy && !filters?.limit) return matched;
+    if (!filters?.orderBy && !filters?.limit && !filters?.offset) return matched;
     const sorted = filters.orderBy === 'deadline'
-      ? [...matched].sort((a, b) => (a.deadline ?? '').localeCompare(b.deadline ?? ''))
-      : [...matched].sort((a, b) => (a.createdAt > b.createdAt ? -1 : 1));
-    return filters.limit ? sorted.slice(0, filters.limit) : sorted;
+      ? [...matched].sort((a, b) => (a.deadline ?? '').localeCompare(b.deadline ?? '') || a.id.localeCompare(b.id))
+      : [...matched].sort((a, b) => (a.createdAt === b.createdAt ? a.id.localeCompare(b.id) : a.createdAt > b.createdAt ? -1 : 1));
+    // Page (mig. 191) : même découpe que `range` côté serveur.
+    const offset = Math.max(0, Math.floor(filters.offset ?? 0));
+    return filters.limit ? sorted.slice(offset, offset + filters.limit) : sorted.slice(offset);
   }
 
   async createTask(orgId: string, input: CreateTeamTaskInput): Promise<TeamTask> {
@@ -339,6 +371,10 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
     const { deletedAt: _deletedAt, deletedBy: _deletedBy, ...task } = item;
     this.saveTasks([...this.getTasksArray(), task]);
     this.saveTrash(trash.filter((x) => x.id !== taskId));
+  }
+
+  async purgeTask(taskId: string): Promise<void> {
+    this.saveTrash(this.getTrashArray().filter((x) => x.id !== taskId));
   }
 
   async getTrash(orgId: string): Promise<TeamTrashedTask[]> {
