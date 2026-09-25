@@ -12,11 +12,20 @@ import { effectiveQuota, effectiveTierKey } from '@/modules/billing/org-billing.
 import { ORG_TIER_LABEL_KEYS } from '@/modules/billing/org-tier-labels';
 import { EnterpriseTierGrid } from './EnterpriseTierGrid';
 import { BillingIntervalToggle } from './BillingIntervalToggle';
+import { OrgBillingSeats } from './OrgBillingSeats';
+import { OrgBillingHistory } from './OrgBillingHistory';
+import { OrgBillingContactCard } from './OrgBillingContactCard';
+import type { OrgMember } from '@/modules/organizations';
 
 interface Props {
   orgId: string;
   isOwner: boolean;
-  memberCount: number;
+  ownerId: string;
+  /** Chaque membre occupe un siège : la liste « Qui compte » les nomme. */
+  members: OrgMember[];
+  /** Adresse du propriétaire courant, destinataire des factures sans contact. */
+  ownerEmail?: string;
+  userId?: string;
   /** Retour à l'espace entreprise — cette vue n'a plus d'onglet actif. */
   onBack?: () => void;
 }
@@ -29,7 +38,8 @@ interface Props {
  * condition — pas « actif si les variables d'environnement existent » : on doit
  * pouvoir dire d'un coup d'œil si le produit facture ou non.
  */
-export function OrgBillingTab({ orgId, isOwner, memberCount, onBack }: Props) {
+export function OrgBillingTab({ orgId, isOwner, ownerId, members, ownerEmail, userId, onBack }: Props) {
+  const memberCount = members.length;
   const { t } = useT('org');
   const { t: tc } = useT('common');
   const [searchParams, setSearchParams] = useSearchParams();
@@ -154,6 +164,11 @@ export function OrgBillingTab({ orgId, isOwner, memberCount, onBack }: Props) {
           </p>
         )}
       </section>
+
+      {/* Qui compte : les sièges nommés, pas seulement leur nombre. Visible
+          de tout ce qui atteint cet écran (le propriétaire, cf. la page) :
+          l'annuaire les montre déjà à tous les membres. */}
+      <OrgBillingSeats members={members} ownerId={ownerId} quota={quota} />
 
       {/* Une seule rangée au-dessus de la grille : le statut de l'offre à
           gauche, le sélecteur de périodicité à droite. Les deux commentent le
@@ -342,6 +357,17 @@ export function OrgBillingTab({ orgId, isOwner, memberCount, onBack }: Props) {
           >
             {refund.isPending ? t('billing.refundPending') : t('billing.refundCta')}
           </button>
+        </div>
+      )}
+
+      {/* Historique et destinataire des factures : propriétaire seul, les
+          deux lectures le refusent à tout autre compte (mig. 180). Montés
+          même quand la facturation dort : l'historique dit alors « aucun
+          paiement », ce qui est exact, et le contact se prépare d'avance. */}
+      {isOwner && (
+        <div className="grid gap-4 md:grid-cols-2 items-start">
+          <OrgBillingHistory orgId={orgId} />
+          <OrgBillingContactCard orgId={orgId} ownerEmail={ownerEmail} userId={userId} />
         </div>
       )}
     </div>

@@ -1,8 +1,10 @@
 import { useNavigate } from 'react-router';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, CreditCard } from 'lucide-react';
+import { useAuth } from '@/modules/auth/AuthContext';
 import { useActiveOrganization } from '@/modules/organizations';
 import CreateOrJoinOrganization from './CreateOrJoinOrganization';
 import { useT } from '@/i18n/useT';
+import { buildOrgLink } from './deep-link.helpers';
 
 /** Clé de libellé par rôle stocké — « manager » est dérivé, jamais stocké. */
 const ROLE_KEYS = {
@@ -14,6 +16,10 @@ const ROLE_KEYS = {
 /**
  * Section « Entreprise » des Réglages (onglet Profil).
  *   • Membre d'une entreprise → carte info + accès à /entreprise.
+ *   • Propriétaire → en plus, l'accès à la facturation. C'est ICI qu'on
+ *     cherche un abonnement ; dans l'espace entreprise, la facturation n'a
+ *     pas d'entrée de navigation (un seul compte la concerne) et n'était
+ *     atteinte que par la pastille de forfait de l'en-tête.
  *   • Compte particulier → composant de conversion (créer / rejoindre).
  *
  * Rend son propre titre ; à insérer dans un <SectionCard> côté SettingsPage.
@@ -22,6 +28,8 @@ const OrganizationSettingsCard = () => {
   const { t } = useT('org');
   const navigate = useNavigate();
   const { activeOrg: myOrg, isLoading } = useActiveOrganization();
+  const { user } = useAuth();
+  const isOwner = !!myOrg && !!user?.id && myOrg.ownerId === user.id;
 
   return (
     <>
@@ -41,6 +49,16 @@ const OrganizationSettingsCard = () => {
               {t(ROLE_KEYS[myOrg.myRole as keyof typeof ROLE_KEYS] ?? 'roles.member')}
             </p>
           </div>
+          <div className="flex flex-col sm:flex-row gap-2 shrink-0">
+          {isOwner && (
+            <button
+              type="button"
+              onClick={() => navigate(buildOrgLink('billing'))}
+              className="shrink-0 inline-flex items-center justify-center gap-1.5 px-4 min-h-touch sm:min-h-0 sm:py-2.5 rounded-xl text-sm font-semibold border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] transition-colors"
+            >
+              <CreditCard size={15} aria-hidden="true" /> {t('settingsCard.billing')}
+            </button>
+          )}
           <button
             type="button"
             onClick={() => navigate('/entreprise')}
@@ -48,6 +66,7 @@ const OrganizationSettingsCard = () => {
           >
             {t('settingsCard.access')} <ArrowRight size={15} aria-hidden="true" />
           </button>
+          </div>
         </div>
       ) : (
         <div className="mt-3">

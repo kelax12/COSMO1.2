@@ -25,3 +25,27 @@ export interface OrgSubscription {
   /** Code promo appliqué — informatif, jamais utilisé pour un calcul. */
   discountCode: string | null;
 }
+
+/**
+ * Une ligne de l'historique de facturation, lue dans le journal fiscal
+ * (`get_org_billing_history`, mig. 180). Montant en CENTIMES, négatif pour un
+ * remboursement : c'est ainsi que le journal l'écrit, et l'écran ne recalcule
+ * rien.
+ */
+export interface OrgBillingHistoryEntry {
+  id: number;
+  /** `invoice.payment_succeeded`, `invoice.payment_failed`, `charge.refunded`… */
+  eventType: string;
+  invoiceNumber: string | null;
+  hostedInvoiceUrl: string | null;
+  amountCents: number;
+  currency: string;
+  occurredAt: string;
+}
+
+/** Contact de facturation distinct du propriétaire (mig. 180). */
+export interface OrgBillingContact {
+  orgId: string;
+  name: string | null;
+  email: string;
+}
