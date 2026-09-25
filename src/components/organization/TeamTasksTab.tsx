@@ -221,7 +221,6 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
   return (
     <div className="space-y-4">
       <TeamTasksProjectChips
-        orgId={orgId}
         projects={projects}
         tasks={tasks}
         projectFilter={projectFilter}

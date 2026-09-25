@@ -3,7 +3,7 @@
 // (cloisonnement). Un OKR ne s'assigne PAS à une personne (#10) : le travail
 // individuel passe par les tâches de projet.
 import { useEffect, useState } from 'react';
-import { Plus, Trash2, Building2, X } from 'lucide-react';
+import { Plus, Trash2, Building2 } from 'lucide-react';
 import {
   Sheet,
   SheetContent,
@@ -27,9 +27,11 @@ import {
   type CreateTeamKRInput,
   type SyncTeamKRInput,
 } from '@/modules/team-okrs';
-import { useOrgTeams, useCreateOrgTeam } from '@/modules/org-teams';
+import { useOrgTeams, useCreateTeamWithMembers } from '@/modules/org-teams';
 import TeamCategoryTreeSelect from './TeamCategoryTreeSelect';
-import { TEAM_COLORS } from './CreateTeamModal';
+import { CreateTeamForm } from './CreateTeamModal';
+import { useAuth } from '@/modules/auth/AuthContext';
+import { useActiveOrganization, useOrgMembers } from '@/modules/organizations';
 import { useT } from '@/i18n/useT';
 import TeamColorDot from './TeamColorDot';
 
@@ -66,10 +68,11 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
   const { data: teams = [] } = useOrgTeams(orgId);
   const createOKR = useCreateTeamOKR(orgId);
   const editOKR = useEditTeamOKR(orgId);
-  const createTeam = useCreateOrgTeam(orgId);
+  const createTeamWithMembers = useCreateTeamWithMembers(orgId);
   const [creatingTeam, setCreatingTeam] = useState(false);
-  const [newTeamName, setNewTeamName] = useState('');
-  const [newTeamColor, setNewTeamColor] = useState<string>(TEAM_COLORS[0].value);
+  const { user } = useAuth();
+  const { activeOrg } = useActiveOrganization();
+  const { data: orgMembers = [] } = useOrgMembers(orgId);
 
   // Monté fermé puis ouvert au tick suivant : la transition false→true permet à
   // Radix de jouer le slide-in (un Sheet monté déjà ouvert reste hors-écran
@@ -102,23 +105,6 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
   const toggleTeam = (teamId: string) =>
     setTeamIds((prev) => (prev.includes(teamId) ? prev.filter((t) => t !== teamId) : [...prev, teamId]));
 
-  // Même geste que « + Nouvelle catégorie » (TeamCategoryTreeSelect) : créer
-  // sans quitter le modal, puis sélectionner immédiatement la nouvelle équipe.
-  const handleCreateTeam = () => {
-    const name = newTeamName.trim();
-    if (!name) return;
-    createTeam.mutate(
-      { name, color: newTeamColor },
-      {
-        onSuccess: (team) => {
-          setTeamIds((prev) => [...prev, team.id]);
-          setNewTeamName('');
-          setNewTeamColor(TEAM_COLORS[0].value);
-          setCreatingTeam(false);
-        },
-      },
-    );
-  };
 
   // Un objectif sans résultat clé mesurable n'est pas valide : ≥ 1 KR nommé + cible > 0.
   const hasKeyResult = keyResults.some((k) => k.title.trim() && Number(k.targetValue) > 0);
@@ -265,51 +251,20 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
                 )}
               </div>
 
+              {/* LE formulaire d'équipe (nom, couleur, MEMBRES), intégré : un
+                  panneau Radix ne laisse pas une autre modale prendre le focus. */}
               {creatingTeam && (
-                <div className="flex flex-wrap items-center gap-2 rounded-lg border border-[rgb(var(--color-border))] p-2">
-                  <input
-                    type="text"
-                    value={newTeamName}
-                    onChange={(e) => setNewTeamName(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') { e.preventDefault(); handleCreateTeam(); }
-                      if (e.key === 'Escape') setCreatingTeam(false);
-                    }}
-                    placeholder={t('team.namePlaceholder')}
-                    autoFocus
-                    maxLength={80}
-                    className="flex-1 min-w-[140px] h-8 px-2.5 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-background))] text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/40"
-                  />
-                  <div className="flex items-center gap-1">
-                    {TEAM_COLORS.map((c) => (
-                      <button
-                        key={c.value}
-                        type="button"
-                        aria-label={t('team.colorNamed', { name: t(c.labelKey) })}
-                        aria-pressed={newTeamColor === c.value}
-                        onClick={() => setNewTeamColor(c.value)}
-                        className={`w-5 h-5 rounded-full transition-transform hover:scale-110 ${newTeamColor === c.value ? 'ring-2 ring-offset-1 ring-offset-[rgb(var(--color-surface))] ring-blue-500' : ''}`}
-                        style={{ backgroundColor: c.value }}
-                      />
-                    ))}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleCreateTeam}
-                    disabled={!newTeamName.trim() || createTeam.isPending}
-                    className="h-8 px-3 rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] disabled:opacity-50 text-[rgb(var(--color-accent-solid-foreground))] text-xs font-semibold"
-                  >
-                    {t('team.create')}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setCreatingTeam(false)}
-                    aria-label={t('common.cancel')}
-                    className="w-8 h-8 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))]"
-                  >
-                    <X size={14} aria-hidden="true" />
-                  </button>
-                </div>
+                <CreateTeamForm
+                  inline
+                  members={orgMembers}
+                  currentUserId={user?.id}
+                  isAdmin={activeOrg?.id === orgId && activeOrg.myRole === 'admin'}
+                  onSubmit={async (input, memberIds) => {
+                    const team = await createTeamWithMembers(input, memberIds);
+                    setTeamIds((prev) => [...prev, team.id]);
+                  }}
+                  onClose={() => setCreatingTeam(false)}
+                />
               )}
 
               <p className="text-muted-foreground text-xs">

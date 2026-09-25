@@ -29,6 +29,7 @@ import TeamAssigneeGroups from './TeamAssigneeGroups';
 import { PRIORITY_META, projectColor } from './team-projects.helpers';
 
 import { useT } from '@/i18n/useT';
+import { useOrgCreate } from './org-create.context';
 import { TAP_AREA_44_Y } from '@/components/mobile/tap-area';
 
 const labelClass = 'block text-xs font-semibold uppercase tracking-wider mb-2';
@@ -73,14 +74,11 @@ interface TeamTaskFieldsProps {
   estimatedTime: string;
   onEstimatedTimeChange: (value: string) => void;
 
-  /** Création de projet en ligne, sans quitter la tâche. */
-  showNewProjectInput: boolean;
-  onOpenNewProject: () => void;
-  onCancelNewProject: () => void;
-  newProjectName: string;
-  onNewProjectNameChange: (value: string) => void;
-  onSubmitNewProject: () => void;
-  isCreatingProject: boolean;
+  /**
+   * Créer un projet sans quitter la tâche : ouvre LE formulaire de projet
+   * (org-create.context), puis sélectionne le projet créé. Absent = pas le droit.
+   */
+  onProjectCreated?: (projectId: string) => void;
 
   assigneeIds: string[];
   onAssigneeIdsChange: (ids: string[]) => void;
@@ -119,13 +117,7 @@ const TeamTaskFields = ({
   requireProjectChoice = false,
   estimatedTime,
   onEstimatedTimeChange,
-  showNewProjectInput,
-  onOpenNewProject,
-  onCancelNewProject,
-  newProjectName,
-  onNewProjectNameChange,
-  onSubmitNewProject,
-  isCreatingProject,
+  onProjectCreated,
   assigneeIds,
   onAssigneeIdsChange,
   assignableMembers,
@@ -137,6 +129,7 @@ const TeamTaskFields = ({
   onSubmit,
 }: TeamTaskFieldsProps) => {
   const { t } = useT('org');
+  const create = useOrgCreate();
 
   return (
     <form onSubmit={(e) => { e.preventDefault(); onSubmit(); }} className="space-y-5">
@@ -180,9 +173,14 @@ const TeamTaskFields = ({
         <div>
           <div className="flex items-center justify-between mb-2">
             <label htmlFor="team-task-project" className={labelClass} style={{ ...labelStyle, marginBottom: 0 }}>{t('taskModal.project')}</label>
-            {/* Créer un projet sans quitter la tâche — même pattern que
-                « + Ajouter » pour une catégorie côté tâche personnelle. */}
-            <AddCategoryButton onClick={onOpenNewProject} ariaLabel={t('taskModal.createProjectAria')} />
+            {/* Créer un projet sans quitter la tâche : le formulaire complet,
+                pas un champ « nom seul » qui créait un projet gris sans équipe. */}
+            {onProjectCreated && (
+              <AddCategoryButton
+                onClick={() => create.openProject({ onCreated: onProjectCreated })}
+                ariaLabel={t('taskModal.createProjectAria')}
+              />
+            )}
           </div>
           <select
             id="team-task-project"
@@ -199,31 +197,6 @@ const TeamTaskFields = ({
               <option key={p.id} value={p.id}>{p.name}</option>
             ))}
           </select>
-          {showNewProjectInput && (
-            <div className="flex items-center gap-2 mt-2">
-              <input
-                type="text"
-                autoFocus
-                value={newProjectName}
-                onChange={(e) => onNewProjectNameChange(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); onSubmitNewProject(); }
-                  else if (e.key === 'Escape') onCancelNewProject();
-                }}
-                placeholder={t('taskModal.projectNamePlaceholder')}
-                className="flex-1 min-w-0 px-3 py-1.5 text-sm border rounded-lg focus:outline-none focus:border-[rgb(var(--color-accent))] border-[rgb(var(--color-border))]"
-                style={{ backgroundColor: 'rgb(var(--color-surface))', color: 'rgb(var(--color-text-primary))' }}
-              />
-              <button
-                type="button"
-                disabled={newProjectName.trim().length < 2 || isCreatingProject}
-                onClick={onSubmitNewProject}
-                className="shrink-0 px-3 py-1.5 rounded-lg text-sm font-semibold bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] hover:bg-[rgb(var(--color-accent-solid-hover))] disabled:opacity-40 transition-colors"
-              >
-                {t('taskModal.createProjectCta')}
-              </button>
-            </div>
-          )}
           {projectId && (
             <span className="inline-flex items-center gap-1.5 mt-1.5 text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
               <span className={`w-2 h-2 rounded-full ${projectColor(projects.find((p) => p.id === projectId)?.color ?? 'blue').dot}`} aria-hidden="true" />

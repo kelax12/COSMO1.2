@@ -19,6 +19,7 @@ import OrgNotificationsBell from '@/components/organization/OrgNotificationsBell
 import OrgTabBadge from '@/components/organization/OrgTabBadge';
 import OrgSideNav from '@/components/organization/OrgSideNav';
 import OrgDeepLinkHost from '@/components/organization/OrgDeepLinkHost';
+import { OrgCreateProvider } from '@/components/organization/org-create.context';
 import { useOrgNavMode } from '@/components/organization/use-org-nav-mode';
 import OrgSectionSwitcher from '@/components/organization/OrgSectionSwitcher';
 import { ORG_SECTIONS, type OrgSection, type OrgNavItem } from '@/components/organization/org-sections';
@@ -258,8 +259,10 @@ const OrganizationPage = () => {
   };
 
   return (
-    // `md:pr-[232px]` = carte (208) + ses deux marges (12 + 12). La transition
-    // suit la même courbe que la carte, pour que les deux bougent ensemble.
+    // Création projet / équipe : UN formulaire, ouvrable depuis toute section.
+    <OrgCreateProvider orgId={myOrg.id}>
+    {/* `md:pr-[232px]` = carte (208) + ses deux marges (12 + 12). La transition
+        suit la même courbe que la carte, pour que les deux bougent ensemble. */}
     <div
       className={`max-w-[1600px] mx-auto px-4 sm:px-6 py-6 md:transition-[padding] md:duration-300 motion-reduce:transition-none ${
         navMode === 'open' ? 'md:pr-[232px]' : ''
@@ -412,7 +415,7 @@ const OrganizationPage = () => {
         <TeamTasksTab orgId={myOrg.id} members={members} currentUserId={user?.id} isManager={isManager} isAdmin={isAdmin} />
       )}
       {tab === 'projects' && (
-        <TeamProjectsTab orgId={myOrg.id} members={members} currentUserId={user?.id} isManager={isManager} isAdmin={isAdmin} />
+        <TeamProjectsTab orgId={myOrg.id} members={members} currentUserId={user?.id} isManager={isManager} />
       )}
       {tab === 'okr' && <TeamOKRTab orgId={myOrg.id} />}
       {tab === 'billing' && (
@@ -492,6 +495,7 @@ const OrganizationPage = () => {
         isManager={isManager}
       />
     </div>
+    </OrgCreateProvider>
   );
 };
 
