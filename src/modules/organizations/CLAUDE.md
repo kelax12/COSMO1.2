@@ -161,3 +161,26 @@ coupé le 2026-08-27 (`background`), la **lecture** pas.
   compteur TOMBE quand la source serveur est vidée — sans lui, le fichier passerait encore si plus
   aucune source n'alimentait rien).
 
+
+---
+
+## 🪟 Popups entreprise (audit du 2026-09-25)
+
+- ❌ **Un seul sélecteur de plusieurs personnes : `MemberPickList`** (recherche au-delà de
+  `MEMBER_SEARCH_THRESHOLD`, groupes d'équipe, affichage par tranches de 50). Fiche de tâche,
+  « Attribuer à quelqu'un » et création d'équipe l'utilisent ; ne pas en réécrire un quatrième.
+  Une personne cochée puis masquée reste choisie, et le compte des cochés masqués est affiché.
+- ❌ **Ne jamais recréer une tâche EN SILENCE.** Le premier commentaire d'une fiche en création
+  passe par « Créer et commenter » ; après, « Annuler » devient « Fermer ».
+- ❌ **Ne jamais remettre une création d'équipe ou de projet DANS une autre fiche** (tâche, OKR).
+  Ces chemins créaient une équipe vide ou un projet visible par toute l'entreprise.
+- ✅ Sous-tâches, dépendances (« bloquée par ») et étiquettes se saisissent DÈS la création :
+  brouillon appliqué par `useApplyTeamTaskDraft` une fois l'id connu.
+- ✅ Étiquettes (mig. 093) et historique par tâche (mig. 094) rebranchés : `task-extras.hooks.ts`.
+  La jonction se lit PAR TÂCHE (`eq('task_id')`, tête de PK), jamais pour toute l'organisation.
+- ✅ Audience d'un projet et portée d'un droit : `audience.helpers.ts` (`projectAudience`,
+  `memberReach`), miroir d'affichage de `can_access_team_project`. La RLS reste la frontière.
+- ⚠️ Les droits de `org_member_permissions` valent pour **toute l'organisation** ; la fiche le dit.
+  Des droits par projet demanderaient une migration et une réécriture des policies : non faits.
+- `PyramidPlacementSheet` remplace `MemberPlacementSheet` et `AddUnderSheet` (deux sens :
+  « son responsable », « sous cette personne » avec invitation).

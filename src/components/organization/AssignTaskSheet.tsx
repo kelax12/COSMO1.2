@@ -18,8 +18,11 @@ interface AssignTaskSheetProps {
   tasks: TeamTask[];
   /** Ajoute le membre aux assignés d'une tâche existante. */
   onAssign: (task: TeamTask) => void;
-  /** Bascule vers le modal de création (assigné présélectionné). */
-  onCreateNew: () => void;
+  /**
+   * Bascule vers le modal de création (assigné présélectionné), dans le
+   * projet choisi ici. `null` : aucun choix, la fiche le demandera.
+   */
+  onCreateNew: (projectId: string | null) => void;
   onClose: () => void;
 }
 
@@ -27,19 +30,26 @@ interface AssignTaskSheetProps {
  * Kanban « + » d'une colonne : attribuer une tâche EXISTANTE au membre
  * (liste des ouvertes où il ne figure pas encore, filtrable) ou en créer
  * une nouvelle via le modal complet.
+ *
+ * Le projet se CHOISIT ici (audit des popups, 2026-09-25) : la création
+ * tombait dans le premier projet de la liste quand on n'en disait rien. Il
+ * filtre aussi les tâches existantes. Un seul projet ouvert : il est pris.
  */
 const AssignTaskSheet = ({ member, projects, tasks, onAssign, onCreateNew, onClose }: AssignTaskSheetProps) => {
   const { t, tp } = useT('org');
   const [search, setSearch] = useState('');
+  const [projectId, setProjectId] = useState<string>(projects.length === 1 ? projects[0].id : '');
 
   const projectById = useMemo(() => new Map(projects.map((p) => [p.id, p])), [projects]);
 
   // Candidates : ouvertes, pas déjà assignées au membre cible.
   const candidates = useMemo(() => {
-    const base = tasks.filter((t) => !t.completed && (!member || !t.assigneeIds.includes(member.userId)));
+    const base = tasks.filter(
+      (t) => !t.completed && (!member || !t.assigneeIds.includes(member.userId)) && (!projectId || t.projectId === projectId),
+    );
     const q = search.trim().toLowerCase();
     return q ? base.filter((t) => t.name.toLowerCase().includes(q)) : base;
-  }, [tasks, member, search]);
+  }, [tasks, member, search, projectId]);
 
   // C-53 — piege de focus, restitution du focus au declencheur, Echap et
   // semantique ARIA. Le nom accessible est celui que la surface portait deja.
@@ -81,18 +91,45 @@ const AssignTaskSheet = ({ member, projects, tasks, onAssign, onCreateNew, onClo
           </button>
         </div>
 
+        {/* Projet : filtre les tâches existantes et range la nouvelle. */}
+        {projects.length > 1 && (
+          <div className="px-3 pt-3">
+            <label htmlFor="assign-sheet-project" className="block text-xs font-semibold text-[rgb(var(--color-text-secondary))] mb-1">
+              {t('popups.assignSheet.project')}
+            </label>
+            <select
+              id="assign-sheet-project"
+              value={projectId}
+              onChange={(e) => setProjectId(e.target.value)}
+              className="w-full h-10 px-3 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-background))] text-sm text-[rgb(var(--color-text-primary))]"
+            >
+              <option value="">{t('popups.assignSheet.allProjects')}</option>
+              {projects.map((p) => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
+          </div>
+        )}
+
         {/* Créer une nouvelle tâche */}
         <div className="p-3 pb-0">
           <button
             type="button"
-            onClick={onCreateNew}
+            onClick={() => onCreateNew(projectId || null)}
             className="w-full flex items-center gap-2.5 p-3 rounded-xl border border-dashed border-[rgb(var(--color-border))] hover:border-indigo-400 hover:bg-[rgb(var(--color-hover))] transition-colors text-left"
           >
             <span className="w-8 h-8 rounded-lg bg-indigo-500/10 text-indigo-500 flex items-center justify-center shrink-0">
               <Plus size={16} aria-hidden="true" />
             </span>
-            <span className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">
-              {t('assign.createNew')}
+            <span className="min-w-0">
+              <span className="block text-sm font-semibold text-[rgb(var(--color-text-primary))]">
+                {t('assign.createNew')}
+              </span>
+              <span className="block text-xs text-[rgb(var(--color-text-muted))] truncate">
+                {projectId
+                  ? t('popups.assignSheet.inProject', { name: projects.find((p) => p.id === projectId)?.name ?? '' })
+                  : t('popups.assignSheet.pickLater')}
+              </span>
             </span>
           </button>
         </div>

@@ -1,9 +1,11 @@
 import { useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Loader2, Check } from 'lucide-react';
+import { X, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { subtreeOf, type OrgMember } from '@/modules/organizations';
-import MemberAvatar from './MemberAvatar';
+import MemberPickList from './MemberPickList';
+import MemberSelectField from './MemberSelectField';
+import type { CreateTeamFullInput } from './use-create-team-full';
 import { useT } from '@/i18n/useT';
 import type { KeyOf } from '@/i18n/catalog';
 import { useModalA11y } from '@/hooks/use-modal-a11y';
@@ -27,8 +29,8 @@ interface CreateTeamModalProps {
   currentUserId?: string;
   /** Admin : peut ajouter n'importe qui ; manager : soi + son sous-arbre (miroir RLS). */
   isAdmin: boolean;
-  /** Crée l'équipe PUIS y ajoute les membres choisis. Rejette en cas d'échec. */
-  onSubmit: (input: { name: string; color: string }, memberIds: string[]) => Promise<void>;
+  /** Crée l'équipe, y ajoute les membres, nomme le responsable. Rejette en cas d'échec. */
+  onSubmit: (input: CreateTeamFullInput) => Promise<void>;
   onClose: () => void;
 }
 
@@ -36,14 +38,22 @@ const labelClass = 'block text-xs font-semibold uppercase tracking-wider mb-2';
 const labelStyle = { color: 'rgb(var(--color-text-secondary))' };
 
 /**
- * Formulaire de création d'équipe (#2) : nom, couleur, membres — même langage
- * visuel que NewTeamProjectModal (bottom-sheet mobile / modal desktop).
+ * Formulaire de création d'équipe (#2) : nom, couleur, responsable, membres,
+ * même langage visuel que NewTeamProjectModal (bottom-sheet mobile / modal
+ * desktop).
+ *
+ * Audit des popups du 2026-09-25 : le responsable se choisit ICI (il ne se
+ * nommait qu'après coup, depuis la section Équipes), et la liste des membres
+ * passe par `MemberPickList` : recherche et affichage par tranches, là où
+ * elle rendait mille lignes d'un bloc.
  */
 const CreateTeamModal = ({ members, currentUserId, isAdmin, onSubmit, onClose }: CreateTeamModalProps) => {
   const { t } = useT('org');
   const [name, setName] = useState('');
   const [color, setColor] = useState<string>(TEAM_COLORS[0].value);
   const [selected, setSelected] = useState<string[]>(currentUserId ? [currentUserId] : []);
+  // Par défaut, celui qui crée l'équipe en répond : c'est le cas courant.
+  const [leadId, setLeadId] = useState(currentUserId ?? '');
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
@@ -54,8 +64,11 @@ const CreateTeamModal = ({ members, currentUserId, isAdmin, onSubmit, onClose }:
     return members.filter((m) => m.userId === currentUserId || mine.has(m.userId));
   }, [members, currentUserId, isAdmin]);
 
-  const toggle = (userId: string) =>
-    setSelected((prev) => (prev.includes(userId) ? prev.filter((id) => id !== userId) : [...prev, userId]));
+  // Choisir un responsable l'ajoute aux membres (il le serait de toute façon).
+  const pickLead = (userId: string) => {
+    setLeadId(userId);
+    if (userId && !selected.includes(userId)) setSelected((prev) => [...prev, userId]);
+  };
 
   const handleSubmit = async () => {
     if (pending) return;
@@ -64,7 +77,7 @@ const CreateTeamModal = ({ members, currentUserId, isAdmin, onSubmit, onClose }:
     setPending(true);
     setError(null);
     try {
-      await onSubmit({ name: n, color }, selected);
+      await onSubmit({ name: n, color, memberIds: selected, leadId: leadId || null });
       onClose();
     } catch {
       setPending(false); // erreur déjà notifiée par les hooks (toast)
@@ -158,6 +171,16 @@ const CreateTeamModal = ({ members, currentUserId, isAdmin, onSubmit, onClose }:
             </div>
           </div>
 
+          {/* Responsable : gère les membres et les projets de l'équipe (mig. 107). */}
+          <MemberSelectField
+            label={t('popups.team.lead')}
+            members={addable}
+            value={leadId}
+            onChange={pickLead}
+            emptyLabel={t('popups.team.noLead')}
+            hint={t('popups.team.leadHint')}
+          />
+
           {/* Membres */}
           <div>
             <span className={labelClass} style={labelStyle}>
@@ -168,39 +191,15 @@ const CreateTeamModal = ({ members, currentUserId, isAdmin, onSubmit, onClose }:
                 {t('team.noMember')}
               </p>
             ) : (
-              <ul className="space-y-1.5">
-                {addable.map((m) => {
-                  const checked = selected.includes(m.userId);
-                  return (
-                    <li key={m.userId}>
-                      <button
-                        type="button"
-                        onClick={() => toggle(m.userId)}
-                        aria-pressed={checked}
-                        className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl border text-left transition-colors ${
-                          checked
-                            ? 'border-[rgb(var(--color-accent-solid))] bg-[rgb(var(--color-accent-solid))]/5'
-                            : 'border-[rgb(var(--color-border))] hover:bg-[rgb(var(--color-hover))]'
-                        }`}
-                        style={{ backgroundColor: checked ? undefined : 'rgb(var(--color-surface))' }}
-                      >
-                        <MemberAvatar avatar={m.avatar} name={m.displayName} size={28} />
-                        <span className="flex-1 min-w-0 truncate text-sm" style={{ color: 'rgb(var(--color-text-primary))' }}>
-                          {m.userId === currentUserId ? t('common.youBadge') : m.displayName}
-                        </span>
-                        <span
-                          className={`w-6 h-6 rounded-md border flex items-center justify-center shrink-0 ${
-                            checked ? 'bg-[rgb(var(--color-accent-solid))] border-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))]' : 'border-[rgb(var(--color-border))]'
-                          }`}
-                          aria-hidden="true"
-                        >
-                          {checked && <Check size={13} />}
-                        </span>
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
+              <div className="rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] max-h-72 overflow-y-auto">
+                <MemberPickList
+                  members={addable}
+                  value={selected}
+                  onChange={setSelected}
+                  currentUserId={currentUserId}
+                  label={t('team.membersCount', { count: selected.length })}
+                />
+              </div>
             )}
           </div>
         </div>

@@ -465,10 +465,6 @@
     "assignTask": "Assigner la tâche",
     "nameRequired": "Le nom de la tâche est requis",
     "projectRequired": "Choisissez un projet",
-    "createProjectAria": "Créer un projet",
-    "projectNamePlaceholder": "Nom du projet",
-    "projectNameTooShort": "Le nom du projet doit contenir au moins 2 caractères",
-    "createProjectCta": "Créer",
     "startDate": "Début",
     "startDatePlaceholder": "Pas de début",
     "datesInvalid": "Le début doit précéder l'échéance.",
@@ -1351,5 +1347,151 @@
     "resendWait": "Une relance par heure au plus",
     "resendFor": "Relancer {{email}}",
     "revokeFor": "Révoquer l'invitation de {{email}}"
+  },
+  "picker": {
+    "showMore": "Afficher {{count}} de plus",
+    "hiddenSelected_one": "{{count}} personne cochée n'est pas affichée ici.",
+    "hiddenSelected_many": "{{count}} de personnes cochées ne sont pas affichées ici.",
+    "hiddenSelected_other": "{{count}} personnes cochées ne sont pas affichées ici."
+  },
+  "popups": {
+    "task": {
+      "status": "Statut",
+      "tabsAria": "Sections de la tâche",
+      "tabDetails": "Détails",
+      "tabSubtasks": "Sous-tâches",
+      "tabDependencies": "Dépendances",
+      "tabHistory": "Historique",
+      "created": "Tâche créée",
+      "commentsTitle": "Commentaires",
+      "createAndComment": "Créer et commenter",
+      "createAndCommentHint": "Publier ce commentaire crée la tâche avec les champs saisis."
+    },
+    "labels": {
+      "title": "Étiquettes",
+      "add": "Étiquette",
+      "empty": "Aucune étiquette dans l'entreprise pour l'instant.",
+      "namePlaceholder": "Nom de l'étiquette",
+      "color": "Couleur de l'étiquette",
+      "create": "Créer"
+    },
+    "draft": {
+      "subtasksHint": "Les étapes seront ajoutées à la création de la tâche.",
+      "depsHint": "Cochez les tâches du projet qui doivent se terminer avant celle-ci.",
+      "depsSearch": "Chercher une tâche du projet",
+      "depsNone": "Aucune tâche ouverte dans ce projet.",
+      "depsReadOnly": "Seul un manager règle les dépendances. Elles se liront ici une fois la tâche créée.",
+      "depsNeedProject": "Choisissez d'abord un projet dans l'onglet Détails."
+    },
+    "history": {
+      "loading": "Chargement de l'historique…",
+      "empty": "Aucun changement enregistré sur cette tâche.",
+      "none": "aucun",
+      "system": "le système",
+      "formerMember": "ancien membre",
+      "formerProject": "projet supprimé",
+      "renamed": "{{actor}} a renommé la tâche",
+      "changed": "{{actor}} a modifié : {{field}}",
+      "becomes": "devient",
+      "field": {
+        "status": "statut",
+        "assignees": "assignés",
+        "deadline": "échéance",
+        "priority": "priorité",
+        "project": "projet",
+        "name": "nom"
+      }
+    },
+    "team": {
+      "lead": "Responsable de l'équipe",
+      "noLead": "Pas de responsable",
+      "leadHint": "Il gère les membres et les projets de l'équipe, et il est ajouté aux membres."
+    },
+    "project": {
+      "audienceOrg_one": "Visible par toute l'entreprise, soit {{count}} personne.",
+      "audienceOrg_many": "Visible par toute l'entreprise, soit {{count}} de personnes.",
+      "audienceOrg_other": "Visible par toute l'entreprise, soit {{count}} personnes.",
+      "audienceTeam_one": "Visible par l'équipe {{team}}, sa hiérarchie et les admins, soit {{count}} personne.",
+      "audienceTeam_many": "Visible par l'équipe {{team}}, sa hiérarchie et les admins, soit {{count}} de personnes.",
+      "audienceTeam_other": "Visible par l'équipe {{team}}, sa hiérarchie et les admins, soit {{count}} personnes."
+    },
+    "assignSheet": {
+      "project": "Projet",
+      "allProjects": "Tous les projets",
+      "inProject": "Dans « {{name}} »",
+      "pickLater": "Le projet sera demandé dans la fiche"
+    },
+    "event": {
+      "willBeNotified": "{{name}} reçoit une notification pour chaque créneau posé dans son agenda, et peut le refuser.",
+      "slot": "« {{title}} », {{when}}",
+      "decline": "Refuser ce créneau",
+      "declined": "Créneau retiré de votre agenda."
+    },
+    "okr": {
+      "cycle": "Cycle d’OKR",
+      "noCycle": "Aucun cycle",
+      "newCycle": "Nouveau cycle",
+      "cycleOption": "{{name}} ({{start}} au {{end}})",
+      "cycleNamePlaceholder": "Nom du cycle, par exemple T1 2027",
+      "cycleStart": "Début",
+      "cycleEnd": "Fin",
+      "createCycle": "Créer le cycle",
+      "parent": "Contribue à l'objectif",
+      "noParent": "Aucun objectif parent",
+      "parentHint": "Rattache cet objectif à celui qu'il sert, souvent un objectif d'entreprise.",
+      "linkProjects": "Relier des projets",
+      "projectsLinked": "Projets reliés : {{count}}",
+      "progressByTasks": "Faire avancer ce résultat clé avec les tâches terminées de ces projets"
+    },
+    "member": {
+      "tabWork": "Équipes et projets",
+      "tabHistory": "Historique",
+      "teams": "Équipes",
+      "noTeam": "Dans aucune équipe.",
+      "lead": "responsable",
+      "projects": "Projets",
+      "noProject": "Ne pilote aucun projet et n'a aucune tâche ouverte.",
+      "owner": "Responsable",
+      "openTasks": "Tâches ouvertes : {{count}}",
+      "projectsPeerHint": "Projets dont la personne est responsable. Ses tâches ne sont visibles que par sa hiérarchie.",
+      "historyScope": "Ce que la personne a changé sur les tâches ces {{days}} derniers jours.",
+      "historyEmpty": "Aucun changement sur les tâches ces {{days}} derniers jours.",
+      "historyEntry": "A modifié : {{field}}, sur « {{task}} »",
+      "hiddenTask": "une tâche que vous ne voyez pas"
+    },
+    "perms": {
+      "scope": "Ces droits valent pour toute l'entreprise, dans tous les projets que la personne voit. Ils ne se règlent pas projet par projet.",
+      "taskEditAny_one": "Peut modifier les tâches de {{count}} projet.",
+      "taskEditAny_many": "Peut modifier les tâches de {{count}} de projets.",
+      "taskEditAny_other": "Peut modifier les tâches de {{count}} projets.",
+      "taskDeleteAny_one": "Peut supprimer les tâches de {{count}} projet.",
+      "taskDeleteAny_many": "Peut supprimer les tâches de {{count}} de projets.",
+      "taskDeleteAny_other": "Peut supprimer les tâches de {{count}} projets.",
+      "projectEdit_one": "Peut modifier {{count}} projet.",
+      "projectEdit_many": "Peut modifier {{count}} de projets.",
+      "projectEdit_other": "Peut modifier {{count}} projets.",
+      "projectDelete_one": "Peut archiver {{count}} projet.",
+      "projectDelete_many": "Peut archiver {{count}} de projets.",
+      "projectDelete_other": "Peut archiver {{count}} projets.",
+      "okrDelete_one": "Peut supprimer {{count}} objectif.",
+      "okrDelete_many": "Peut supprimer {{count}} d'objectifs.",
+      "okrDelete_other": "Peut supprimer {{count}} objectifs.",
+      "assignCount_one": "Peut assigner des tâches à {{count}} personne.",
+      "assignCount_many": "Peut assigner des tâches à {{count}} de personnes.",
+      "assignCount_other": "Peut assigner des tâches à {{count}} personnes."
+    },
+    "placement": {
+      "title": "Placer {{name}} dans la pyramide",
+      "directionAria": "Sens du placement",
+      "up": "Son responsable",
+      "down": "Sous cette personne",
+      "upHint": "Choisissez à qui {{name}} rend compte directement.",
+      "downHint": "Rattachez sous {{name}} une personne déjà dans l'entreprise, ou invitez-en une nouvelle.",
+      "unplaced": "Non placé",
+      "under": "Sous {{name}}",
+      "nobodyToPlace": "Personne que vous puissiez rattacher ici.",
+      "inviteTitle": "Inviter une nouvelle personne",
+      "titleSelf": "Placer quelqu'un sous vous"
+    }
   }
 }

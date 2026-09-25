@@ -3,7 +3,6 @@ import { Plus, Trash2, UserMinus, Crown, Search } from 'lucide-react';
 import {
   useOrgTeams,
   useOrgTeamMembers,
-  useCreateOrgTeam,
   useAddTeamMember,
   useRemoveTeamMember,
   useSetTeamLead,
@@ -19,6 +18,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import MemberAvatar from './MemberAvatar';
 import CreateTeamModal from './CreateTeamModal';
+import { useCreateTeamFull, type CreateTeamFullInput } from './use-create-team-full';
 import DeleteTeamDialog from './DeleteTeamDialog';
 import { MEMBER_SEARCH_THRESHOLD, filterMembersByQuery } from './member-search.helpers';
 import { normalize } from './pyramid.helpers';
@@ -127,7 +127,6 @@ const TeamsSection = ({ orgId, members, currentUserId, isAdmin, canCreateTeam }:
   // `[]` est indistinguable d'un compte reellement vide.
   const { data: teams = [], isLoading: loadingTeams } = useOrgTeams(orgId);
   const { data: memberships = [] } = useOrgTeamMembers(orgId);
-  const createTeam = useCreateOrgTeam(orgId);
   // M5 : la suppression passe par une modale d'impact, jamais par un confirm().
   const [teamToDelete, setTeamToDelete] = useState<OrgTeam | null>(null);
   const addMember = useAddTeamMember(orgId);
@@ -156,11 +155,9 @@ const TeamsSection = ({ orgId, members, currentUserId, isAdmin, canCreateTeam }:
   const memberOf = (userId: string) => members.find((m) => m.userId === userId);
 
   // Crée l'équipe (nom + couleur) PUIS y ajoute les membres choisis (#2).
-  const handleCreateFull = async (input: { name: string; color: string }, memberIds: string[]) => {
-    const team = await createTeam.mutateAsync(input);
-    for (const userId of memberIds) {
-      await addMember.mutateAsync({ teamId: team.id, userId });
-    }
+  const createTeamFull = useCreateTeamFull(orgId);
+  const handleCreateFull = async (input: CreateTeamFullInput) => {
+    await createTeamFull(input);
   };
 
   return (

@@ -1,74 +1,34 @@
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X, AlertCircle, Trash2, Loader2, Check, Send } from 'lucide-react';
-import { toast } from '@/lib/toast';
+import { X, AlertCircle, Trash2, Loader2, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useMyOrgPermissions } from '@/modules/organizations';
 import { useMarkTaskNotificationsRead, type OrgMember } from '@/modules/organizations';
-import type { TeamProject, TeamTask, TeamTaskStatus, CreateTeamTaskInput, UpdateTeamTaskInput } from '@/modules/team-projects';
-import { useCreateTeamProject } from '@/modules/team-projects';
+import {
+  useApplyTeamTaskDraft,
+  useTaskLabels,
+  useToggleTaskLabel,
+  type TeamProject,
+  type TeamTask,
+  type TeamTaskStatus,
+  type CreateTeamTaskInput,
+  type UpdateTeamTaskInput,
+} from '@/modules/team-projects';
 import { priorityLabelOf } from './team-projects.helpers';
-import MemberAvatar from './MemberAvatar';
 import TaskCommentsSection from './TaskCommentsSection';
-import TeamAssigneeGroups from './TeamAssigneeGroups';
+import MemberPickList from './MemberPickList';
 import TeamTaskFields from './TeamTaskFields';
+import TeamTaskLabelsField from './TeamTaskLabelsField';
+import TeamTaskHistoryPanel from './TeamTaskHistoryPanel';
 import TeamSubtasksSection from './TeamSubtasksSection';
 import TeamTaskDependenciesSection from './TeamTaskDependenciesSection';
+import { DraftSubtasksEditor, DraftDependenciesEditor } from './TeamTaskDraftSections';
+import PreCreateCommentComposer from './PreCreateCommentComposer';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { useT } from '@/i18n/useT';
 import { useModalA11y } from '@/hooks/use-modal-a11y';
 
-/**
- * Composeur affiché à la place de `TaskCommentsSection` tant que la tâche
- * n'existe pas encore (item #3) — un commentaire référence `taskId` (mig.
- * 082), impossible avant le premier enregistrement. Poster ici crée la
- * tâche EN SILENCE (`onSubmit`, côté TeamTaskModal) puis poste le
- * commentaire dans la foulée : du point de vue de l'utilisateur, ça
- * fonctionne « même si la tâche n'est pas encore créée ».
- */
-const PreCreateCommentComposer = ({ onSubmit, pending }: { onSubmit: (body: string) => void; pending: boolean }) => {
-  const { t } = useT('org');
-  const [body, setBody] = useState('');
-
-  const submit = () => {
-    const text = body.trim();
-    if (!text || pending) return;
-    onSubmit(text);
-    setBody('');
-  };
-
-  return (
-    <div className="flex flex-col h-full min-h-0 mt-5">
-      <h3 className="text-sm font-semibold mb-3 shrink-0" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-        Commentaires
-      </h3>
-      <div className="flex flex-col min-h-[8rem] border-t pt-4" style={{ borderColor: 'rgb(var(--color-border))' }}>
-      <div className="flex-1" /><div className="flex items-end gap-2">
-        <textarea
-          value={body}
-          onChange={(e) => setBody(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit(); }
-          }}
-          rows={2}
-          maxLength={2000}
-          placeholder={t('comments.placeholder')}
-          className="flex-1 px-3 py-2 text-sm rounded-xl border resize-none focus:outline-none focus:border-[rgb(var(--color-accent))]"
-          style={{ borderColor: 'rgb(var(--color-border))', backgroundColor: 'rgb(var(--color-surface))', color: 'rgb(var(--color-text-primary))' }}
-        />
-        <button
-          type="button"
-          onClick={submit}
-          disabled={!body.trim() || pending}
-          aria-label={t('comments.sendAria')}
-          className="shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition-colors disabled:opacity-40 bg-[rgb(var(--color-accent))] text-[rgb(var(--color-background))] hover:opacity-90"
-        >
-          <Send size={16} aria-hidden="true" />
-        </button>
-      </div></div>
-    </div>
-  );
-};
+type TaskTab = 'details' | 'subtasks' | 'dependencies' | 'history';
 
 interface TeamTaskModalProps {
   /** Tâche à éditer — absente en création. */
@@ -93,18 +53,30 @@ interface TeamTaskModalProps {
   onDelete?: (task: TeamTask) => void;
   onClose: () => void;
   /**
-   * Manager/admin — conditionne la CRÉATION de labels (policy
-   * `team_labels_insert`, mig. 093). Poser un label existant reste ouvert à
-   * quiconque peut éditer la tâche. Défaut `false` : un appelant qui l'oublie
-   * masque un bouton plutôt que d'exposer une action qui renverrait 403.
+   * Manager/admin — conditionne la CRÉATION d'étiquettes (policy
+   * `team_labels_insert`, mig. 093) et l'édition du graphe de dépendances.
+   * Défaut `false` : un appelant qui l'oublie masque un bouton plutôt que
+   * d'exposer une action qui renverrait 403.
    */
   isManager?: boolean;
 }
 
+const sameSet = (a: string[], b: string[]) => a.length === b.length && a.every((x) => b.includes(x));
+
 /**
- * Modal de tâche d'équipe — même langage visuel que le TaskModal personnel
- * (header sticky, fond background, labels uppercase, footer boutons), branché
- * sur le module team-projects : projet, priorité P1..P5, multi-assignation.
+ * Fiche de tâche d'équipe : même langage visuel que le TaskModal personnel,
+ * branchée sur le module team-projects.
+ *
+ * Audit des popups du 2026-09-25, tout traité ici :
+ *   • le STATUT arrive en tête des champs ;
+ *   • plus de création SILENCIEUSE au premier commentaire : le bouton dit
+ *     « Créer et commenter », et une fois la tâche créée « Annuler » devient
+ *     « Fermer » (plus rien à annuler) ;
+ *   • onglets Détails · Sous-tâches · Dépendances · Historique, les deux
+ *     premiers disponibles DÈS la création (brouillon appliqué après) ;
+ *   • étiquettes (mig. 093) et historique (mig. 094) rebranchés ;
+ *   • plus de création de projet intégrée (troisième chemin, sans équipe) ;
+ *   • assignés via `MemberPickList` (recherche, équipes, pagination).
  */
 const TeamTaskModal = ({
   task, isCreating = false, projects, members,
@@ -112,6 +84,8 @@ const TeamTaskModal = ({
   onCreate, onUpdate, onDelete, onClose, isManager = false,
 }: TeamTaskModalProps) => {
   const { t } = useT('org');
+  const [tab, setTab] = useState<TaskTab>('details');
+  const [status, setStatus] = useState<TeamTaskStatus>(task?.status ?? defaultStatus ?? 'todo');
   const [name, setName] = useState(task?.name ?? '');
   const [description, setDescription] = useState(task?.description ?? '');
   // Pas de présélection en création : tant que l'utilisateur n'a pas cliqué
@@ -133,26 +107,34 @@ const TeamTaskModal = ({
   const [pending, setPending] = useState(false);
   const { user } = useAuth();
 
-  // Tâche créée EN SILENCE dès le premier commentaire tapé en création (item
-  // #3) : un commentaire référence `taskId` (mig. 082), impossible avant le
-  // premier enregistrement. Une fois posée, la tâche existe déjà en base —
-  // le bouton « Créer la tâche » du footer bascule alors sur une mise à jour
-  // de CETTE tâche plutôt que d'en créer une seconde. `task` (prop) reste
-  // intact : le reste du modal (sous-tâches, historique) continue de suivre
-  // la sémantique « pas encore créée » pour ne pas changer de comportement
-  // au-delà du strict nécessaire.
+  // Tâche créée EXPLICITEMENT par « Créer et commenter ». Une fois posée,
+  // la fiche bascule en édition de CETTE tâche : « Créer » devient
+  // « Enregistrer », et les onglets passent sur les vraies données.
   const [draftTask, setDraftTask] = useState<TeamTask | null>(null);
-  const commentsTask = task ?? draftTask;
-  // Texte tapé dans le composeur « pré-création » — posté par
-  // `TaskCommentsSection` dès qu'elle monte avec le vrai id (cf. son
-  // `autoSubmitDraft`), une fois `draftTask` posé plus bas.
+  const liveTask = task ?? draftTask;
+  const creating = isCreating && !liveTask;
   const [pendingCommentDraft, setPendingCommentDraft] = useState<string | null>(null);
 
+  // Brouillon des éléments qui ont besoin de l'id (appliqué après création).
+  const [draftSubtasks, setDraftSubtasks] = useState<string[]>([]);
+  const [draftBlockedBy, setDraftBlockedBy] = useState<string[]>([]);
+
+  // Étiquettes : état de la fiche, écrit à l'enregistrement. `baseLabelIds`
+  // est ce qui est en base, pour n'écrire que la différence.
+  const { data: serverLabels } = useTaskLabels(task?.id);
+  const [labelIds, setLabelIds] = useState<string[]>([]);
+  const [baseLabelIds, setBaseLabelIds] = useState<string[] | null>(task ? null : []);
+  useEffect(() => {
+    if (baseLabelIds === null && serverLabels) {
+      const ids = serverLabels.map((l) => l.labelId);
+      setBaseLabelIds(ids);
+      setLabelIds(ids);
+    }
+  }, [serverLabels, baseLabelIds]);
+
   // Bascule assignés/commentaires : panneaux latéraux dès `lg` (1024px), sinon
-  // repliés dans le modal. Un SEUL point de montage — pas un rendu CSS dupliqué
-  // caché/affiché par breakpoint : un brouillon de commentaire tapé côté panneau
-  // se serait perdu en repassant sous `lg` (la version mobile eût démarré vide),
-  // et un `getByPlaceholder` de test aurait résolu deux éléments.
+  // repliés dans le modal. Un SEUL point de montage, jamais un rendu CSS
+  // dupliqué : un brouillon de commentaire se perdrait en changeant de largeur.
   const [isWide, setIsWide] = useState(
     () => typeof window !== 'undefined' && window.matchMedia('(min-width: 1024px)').matches,
   );
@@ -163,19 +145,15 @@ const TeamTaskModal = ({
     return () => mql.removeEventListener('change', onChange);
   }, []);
 
-  // Créer un projet sans quitter la tâche — même pattern que « + Ajouter »
-  // pour une catégorie (DesktopDetailsStep). L'orgId ne vient jamais d'un
-  // prop dédié : tous les projets listés ici partagent déjà celui de la
-  // tâche (édition) ou de la liste passée par l'appelant (création).
+  // L'orgId ne vient jamais d'un prop dédié : tous les projets listés ici
+  // partagent déjà celui de la tâche (édition) ou de la liste de l'appelant.
   const orgId = task?.orgId ?? projects[0]?.orgId ?? '';
   const { canAssign } = useMyOrgPermissions(orgId);
-  const createProject = useCreateTeamProject(orgId);
-  const [showNewProjectInput, setShowNewProjectInput] = useState(false);
-  const [newProjectName, setNewProjectName] = useState('');
+  const applyDraft = useApplyTeamTaskDraft(orgId);
+  const toggleLabel = useToggleTaskLabel();
 
   // Ouvrir une tâche EXISTANTE fait disparaître son badge « commentaires non
-  // lus » (mig. 109) — pas la tâche en cours de création, qui n'a encore
-  // aucune notification à marquer.
+  // lus » (mig. 109), pas une tâche en cours de création.
   const markTaskNotificationsRead = useMarkTaskNotificationsRead(orgId);
   useEffect(() => {
     if (task) markTaskNotificationsRead.mutate(task.id);
@@ -185,85 +163,32 @@ const TeamTaskModal = ({
        Seule l identite de la tache decide qu il faut marquer lu, et elle y est. */
   }, [task?.id]);
 
-  const submitNewProject = () => {
-    const projectName = newProjectName.trim();
-    if (projectName.length < 2) {
-      toast.error(t('taskModal.projectNameTooShort'));
-      return;
-    }
-    createProject.mutate(
-      { name: projectName },
-      {
-        onSuccess: (created) => {
-          setProjectId(created.id);
-          setShowNewProjectInput(false);
-          setNewProjectName('');
-        },
-      },
-    );
-  };
-
   const hasChanges = useMemo(() => {
-    if (isCreating) return true;
-    if (!task) return false;
+    if (creating) return true;
+    const ref = liveTask;
+    if (!ref) return false;
     const minutes = estimatedTime.trim() === '' ? undefined : Number(estimatedTime);
     return (
-      name !== task.name ||
-      description !== (task.description ?? '') ||
-      priority !== task.priority ||
-      deadline !== (task.deadline ?? '') ||
-      startDate !== (task.startDate ?? '') ||
-      (minutes ?? 0) !== (task.estimatedTime ?? 0) ||
-      projectId !== task.projectId ||
-      categoryId !== (task.categoryId ?? null) ||
-      JSON.stringify([...assigneeIds].sort()) !== JSON.stringify([...task.assigneeIds].sort())
+      status !== ref.status ||
+      name !== ref.name ||
+      description !== (ref.description ?? '') ||
+      priority !== ref.priority ||
+      deadline !== (ref.deadline ?? '') ||
+      startDate !== (ref.startDate ?? '') ||
+      (minutes ?? 0) !== (ref.estimatedTime ?? 0) ||
+      projectId !== ref.projectId ||
+      categoryId !== (ref.categoryId ?? null) ||
+      !sameSet(assigneeIds, ref.assigneeIds) ||
+      (baseLabelIds !== null && !sameSet(labelIds, baseLabelIds))
     );
-  }, [isCreating, task, name, description, priority, deadline, startDate, estimatedTime, projectId, categoryId, assigneeIds]);
-
-  const toggleAssignee = (userId: string) =>
-    setAssigneeIds((prev) => (prev.includes(userId) ? prev.filter((id) => id !== userId) : [...prev, userId]));
+  }, [creating, liveTask, status, name, description, priority, deadline, startDate, estimatedTime, projectId, categoryId, assigneeIds, labelIds, baseLabelIds]);
 
   // Portée d'assignation (mig. 115) : on ne propose que les membres à portée,
-  // en gardant ceux DÉJÀ assignés — le serveur ne contrôle que les ajouts, et
-  // masquer un assigné existant rendrait son retrait impossible.
+  // en gardant ceux DÉJÀ assignés — le serveur ne contrôle que les ajouts.
   const assignableMembers = members.filter(
     (m) => canAssign(m.userId) || assigneeIds.includes(m.userId),
   );
 
-  // Une seule ligne pour les deux rendus (disclosure mobile ET panneau
-  // desktop) : même état (`assigneeIds`), même comportement, pas de logique
-  // dupliquée qui pourrait diverger.
-  const renderAssigneeRow = (m: OrgMember) => {
-    const checked = assigneeIds.includes(m.userId);
-    return (
-      <button
-        key={m.userId}
-        type="button"
-        onClick={() => toggleAssignee(m.userId)}
-        aria-pressed={checked}
-        // `min-h-11` : l'avatar fait 26 px et `py-2` en ajoute 16, soit 42 —
-        // deux pixels sous la cible WCAG 2.5.5 (C-70). Un minimum plutôt qu'une
-        // hauteur fixe : un nom qui passe à la ligne doit pouvoir grandir.
-        className="w-full flex items-center gap-2.5 px-3 py-2 min-h-11 hover:bg-[rgb(var(--color-hover))] transition-colors text-left"
-      >
-        <MemberAvatar avatar={m.avatar} name={m.displayName} size={26} />
-        <span className="text-sm truncate flex-1" style={{ color: 'rgb(var(--color-text-primary))' }}>
-          {m.displayName}
-        </span>
-        <span
-          className={`w-6 h-6 rounded-md border flex items-center justify-center shrink-0 transition-colors ${
-            checked ? 'bg-[rgb(var(--color-accent-solid))] border-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))]' : 'border-[rgb(var(--color-border))]'
-          }`}
-          aria-hidden="true"
-        >
-          {checked && <Check size={13} />}
-        </span>
-      </button>
-    );
-  };
-
-  // Champs communs create/update — factorisé pour être rejoué tel quel par
-  // la création silencieuse déclenchée depuis le premier commentaire.
   const buildCommon = () => {
     const minutes = estimatedTime.trim() === '' ? undefined : Number(estimatedTime);
     return {
@@ -272,95 +197,117 @@ const TeamTaskModal = ({
       ...(priority !== null ? { priority } : {}),
       deadline,
       startDate,
-      // Le statut de la colonne n'a de sens qu'à la création.
-      ...(!task && defaultStatus ? { status: defaultStatus } : {}),
+      status,
       ...(minutes !== undefined && !Number.isNaN(minutes) ? { estimatedTime: minutes } : {}),
       assigneeIds,
       categoryId,
     };
   };
 
-  const handleSave = async () => {
-    if (pending) return;
-    if (!name.trim()) { setError(t('taskModal.nameRequired')); return; }
-    if (!projectId) { setError(t('taskModal.projectRequired')); return; }
+  const validate = (): boolean => {
+    if (!name.trim()) { setError(t('taskModal.nameRequired')); setTab('details'); return false; }
+    if (!projectId) { setError(t('taskModal.projectRequired')); setTab('details'); return false; }
     // CHECK `team_tasks_dates_order` (mig. 153) : le dire ici plutôt qu'en toast d'erreur SQL.
-    if (startDate && deadline && startDate > deadline) { setError(t('taskModal.datesInvalid')); return; }
+    if (startDate && deadline && startDate > deadline) { setError(t('taskModal.datesInvalid')); setTab('details'); return false; }
+    return true;
+  };
+
+  /** Crée la tâche puis applique le brouillon. Renvoie la tâche, ou null (erreur déjà dite). */
+  const createWithDraft = async (): Promise<TeamTask | null> => {
+    const created = await onCreate?.({ projectId, ...buildCommon() });
+    if (!created) return null;
+    const draft = { subtasks: draftSubtasks, blockedByIds: draftBlockedBy, labelIds };
+    if (draft.subtasks.length + draft.blockedByIds.length + draft.labelIds.length > 0) {
+      // La tâche existe : un échec partiel est dit par le hook, il n'annule rien.
+      await applyDraft.mutateAsync({ taskId: created.id, draft }).catch(() => undefined);
+    }
+    return created;
+  };
+
+  const syncLabels = async (taskId: string) => {
+    const base = baseLabelIds ?? [];
+    const changes = [
+      ...labelIds.filter((id) => !base.includes(id)).map((labelId) => ({ taskId, labelId, attached: false })),
+      ...base.filter((id) => !labelIds.includes(id)).map((labelId) => ({ taskId, labelId, attached: true })),
+    ];
+    await Promise.all(changes.map((c) => toggleLabel.mutateAsync(c)));
+  };
+
+  const handleSave = async () => {
+    if (pending || !validate()) return;
     setPending(true);
     setError(null);
-    const common = buildCommon();
     try {
-      if (draftTask) await onUpdate?.(draftTask.id, { projectId, ...common });
-      else if (isCreating) await onCreate?.({ projectId, ...common });
-      else if (task) await onUpdate?.(task.id, { projectId, ...common });
+      if (creating) {
+        await createWithDraft();
+      } else if (liveTask) {
+        await onUpdate?.(liveTask.id, { projectId, ...buildCommon() });
+        await syncLabels(liveTask.id);
+      }
       onClose();
     } catch {
       setPending(false); // l'erreur est déjà notifiée par le hook (toast)
     }
   };
 
-  // Premier commentaire tapé alors que la tâche n'existe pas encore : la crée
-  // silencieusement (mêmes champs que le formulaire à cet instant) puis
-  // renvoie son id pour que l'appelant poste le commentaire dans la foulée.
-  const ensureTaskForComment = async (): Promise<string | null> => {
-    if (commentsTask) return commentsTask.id;
-    if (!name.trim()) { setError(t('taskModal.nameRequired')); return null; }
-    if (!projectId) { setError(t('taskModal.projectRequired')); return null; }
+  // « Créer et commenter » : création EXPLICITE (le bouton le dit), puis le
+  // commentaire part dès que `TaskCommentsSection` monte avec le vrai id.
+  const createAndComment = (body: string) => {
+    if (pending || !validate()) return;
     setError(null);
     setPending(true);
-    try {
-      const created = await onCreate?.({ projectId, ...buildCommon() });
-      if (!created) return null;
-      setDraftTask(created);
-      return created.id;
-    } catch {
-      return null; // l'erreur est déjà notifiée par le hook (toast)
-    } finally {
-      setPending(false);
-    }
-  };
-
-  // Envoi depuis le composeur « pré-création » : met le texte en file puis
-  // déclenche la création silencieuse. `TaskCommentsSection` postera
-  // réellement le commentaire une fois montée avec le vrai `taskId` (son
-  // `autoSubmitDraft`) — voir le rendu des panneaux Commentaires plus bas.
-  const submitFirstComment = (body: string) => {
     setPendingCommentDraft(body);
-    void ensureTaskForComment().then((id) => {
-      if (!id) setPendingCommentDraft(null); // création échouée, ne pas garder la file
-    });
+    void createWithDraft()
+      .then((created) => {
+        if (!created) { setPendingCommentDraft(null); return; }
+        setDraftTask(created);
+        setBaseLabelIds(labelIds);
+        setDraftSubtasks([]);
+        setDraftBlockedBy([]);
+      })
+      .catch(() => setPendingCommentDraft(null))
+      .finally(() => setPending(false));
   };
 
-  // Panneaux latéraux (`lg` et plus) : même chrome que le modal (rounded-2xl,
-  // bordure, shadow-2xl, fond surface), mais jamais collés à lui — un `gap-4`
-  // sur la ligne qui les contient les sépare visuellement, sinon un panneau
-  // externe se lit comme un onglet du modal plutôt que comme un groupe à part.
   const sidePanelClass =
     'flex flex-col w-72 max-h-[85vh] rounded-2xl border shadow-2xl overflow-hidden shrink-0';
   const sidePanelStyle = { backgroundColor: 'rgb(var(--color-surface))', borderColor: 'rgb(var(--color-border))' };
 
-  // C-53 — piege de focus, Echap, restitution au declencheur.
-  // Le voile refuse de fermer pendant l'enregistrement (`pending`) : Echap
-  // suit la MEME regle, sinon la touche ferait ce qu'aucun clic ne peut faire.
+  const comments = liveTask ? (
+    <TaskCommentsSection
+      taskId={liveTask.id}
+      members={members}
+      currentUserId={user?.id}
+      autoSubmitDraft={pendingCommentDraft}
+      onAutoSubmitted={() => setPendingCommentDraft(null)}
+    />
+  ) : (
+    <PreCreateCommentComposer onSubmit={createAndComment} pending={pending} canSubmit={!!name.trim() && !!projectId} />
+  );
+
+  // C-53 — piège de focus, Échap, restitution au déclencheur. Le voile refuse
+  // de fermer pendant l'enregistrement : Échap suit la MÊME règle.
   const { ref: modalA11yRef, dialogProps: modalA11yProps } = useModalA11y<HTMLDivElement>({
     open: true,
     onClose: () => { if (!pending) onClose(); },
     label: isCreating ? t('taskModal.newAria') : t('taskModal.editAria', { name: task?.name ?? '' }),
   });
 
+  const tabs: { id: TaskTab; label: string }[] = [
+    { id: 'details', label: t('popups.task.tabDetails') },
+    { id: 'subtasks', label: creating && draftSubtasks.length > 0 ? `${t('popups.task.tabSubtasks')} (${draftSubtasks.length})` : t('popups.task.tabSubtasks') },
+    { id: 'dependencies', label: creating && draftBlockedBy.length > 0 ? `${t('popups.task.tabDependencies')} (${draftBlockedBy.length})` : t('popups.task.tabDependencies') },
+    ...(liveTask ? [{ id: 'history' as const, label: t('popups.task.tabHistory') }] : []),
+  ];
+
   return createPortal(
     <div
       className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-0 sm:p-4"
       onClick={pending ? undefined : onClose}
     >
-      {/* items-start (pas items-stretch) : chaque panneau garde sa hauteur de
-          contenu au lieu d'être étiré à celle du modal central — sinon un
-          panneau avec peu d'éléments (2-3 membres, aucun commentaire) traîne
-          un grand vide sous sa liste. */}
+      {/* items-start : chaque panneau garde sa hauteur de contenu au lieu
+          d'être étiré à celle du modal central. */}
       <div className="flex items-start justify-center gap-4 w-full sm:w-auto">
-        {/* Panneau gauche : assignés, en permanence visible dès `lg` — la
-            tâche EN COURS DE CRÉATION en a besoin aussi (photo7), pas
-            seulement l'édition. */}
         {isWide && (
           <div className={sidePanelClass} style={sidePanelStyle} onClick={(e) => e.stopPropagation()}>
             <div className="px-4 py-3 border-b shrink-0" style={{ borderColor: 'rgb(var(--color-border))' }}>
@@ -373,9 +320,14 @@ const TeamTaskModal = ({
                 )}
               </h3>
             </div>
-            <div className="overflow-y-auto flex-1 min-h-0 py-1">
-              <TeamAssigneeGroups orgId={orgId} value={assigneeIds} onChange={setAssigneeIds} />
-              {assignableMembers.map(renderAssigneeRow)}
+            <div className="overflow-y-auto flex-1 min-h-0">
+              <MemberPickList
+                members={assignableMembers}
+                value={assigneeIds}
+                onChange={setAssigneeIds}
+                teamGroupsOrgId={orgId}
+                label={t('taskModal.assignTask')}
+              />
             </div>
           </div>
         )}
@@ -390,16 +342,20 @@ const TeamTaskModal = ({
         {/* Poignée de glissement RETIRÉE, pas oubliée : elle ne faisait rien, et le geste n'a pas sa place sur un formulaire (docs/MOBILE.md §3). */}
         <div className="sm:hidden pt-3 shrink-0" aria-hidden="true" />
 
-        {/* Header — sticky */}
         <div
           className="flex justify-between items-center px-4 sm:px-6 py-[0.420204rem] sm:py-[0.560272rem] border-b gap-2 shrink-0"
           style={{ borderColor: 'rgb(var(--color-border))' }}
         >
           <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
             <h2 className="text-base sm:text-lg font-semibold truncate" style={{ color: 'rgb(var(--color-text-primary))' }}>
-              {isCreating ? t('taskModal.new') : t('taskModal.edit')}
+              {creating ? t('taskModal.new') : t('taskModal.edit')}
             </h2>
-            {hasChanges && !isCreating && (
+            {draftTask && (
+              <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 text-xs font-medium bg-emerald-500/10 px-2 py-1 rounded-md shrink-0" role="status">
+                <CheckCircle2 size={12} aria-hidden="true" /> {t('popups.task.created')}
+              </span>
+            )}
+            {hasChanges && !creating && (
               <div className="hidden xs:flex items-center gap-1 text-orange-500 text-xs font-medium bg-orange-500/10 px-2 py-1 rounded-md shrink-0">
                 <AlertCircle size={12} aria-hidden="true" />
                 <span className="hidden sm:inline">{t('taskModal.unsaved')}</span>
@@ -417,8 +373,34 @@ const TeamTaskModal = ({
           </button>
         </div>
 
-        {/* Corps */}
-        <div className="p-4 sm:p-6 overflow-y-auto flex-1 min-h-0" style={{ backgroundColor: 'rgb(var(--color-background))' }}>
+        <div role="tablist" aria-label={t('popups.task.tabsAria')} className="flex gap-1 px-3 overflow-x-auto border-b shrink-0" style={{ borderColor: 'rgb(var(--color-border))' }}>
+          {tabs.map(({ id, label }) => (
+            <button
+              key={id}
+              type="button"
+              role="tab"
+              id={`team-task-tab-${id}`}
+              aria-selected={tab === id}
+              aria-controls="team-task-tabpanel"
+              onClick={() => setTab(id)}
+              className={`min-h-11 px-3 text-sm font-medium border-b-2 -mb-px whitespace-nowrap transition-colors ${
+                tab === id
+                  ? 'border-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-text-primary))]'
+                  : 'border-transparent text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-secondary))]'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        <div
+          id="team-task-tabpanel"
+          role="tabpanel"
+          aria-labelledby={`team-task-tab-${tab}`}
+          className="p-4 sm:p-6 overflow-y-auto flex-1 min-h-0"
+          style={{ backgroundColor: 'rgb(var(--color-background))' }}
+        >
           {error && (
             <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg" role="alert">
               <div className="flex items-center gap-2 text-red-700 dark:text-red-300 text-sm">
@@ -428,77 +410,58 @@ const TeamTaskModal = ({
             </div>
           )}
 
-          <TeamTaskFields
-            orgId={orgId}
-            projects={projects}
-            name={name}
-            onNameChange={(v) => { setName(v); setError(null); }}
-            description={description}
-            onDescriptionChange={setDescription}
-            categoryId={categoryId}
-            onCategoryChange={setCategoryId}
-            projectId={projectId}
-            onProjectChange={setProjectId}
-            priority={priority}
-            onPriorityChange={setPriority}
-            deadline={deadline}
-            onDeadlineChange={setDeadline}
-            startDate={startDate}
-            onStartDateChange={(v) => { setStartDate(v); setError(null); }}
-            requireProjectChoice={requireProjectChoice}
-            estimatedTime={estimatedTime}
-            onEstimatedTimeChange={setEstimatedTime}
-            showNewProjectInput={showNewProjectInput}
-            onOpenNewProject={() => { setShowNewProjectInput(true); setNewProjectName(''); }}
-            onCancelNewProject={() => { setShowNewProjectInput(false); setNewProjectName(''); }}
-            newProjectName={newProjectName}
-            onNewProjectNameChange={setNewProjectName}
-            onSubmitNewProject={submitNewProject}
-            isCreatingProject={createProject.isPending}
-            assigneeIds={assigneeIds}
-            onAssigneeIdsChange={setAssigneeIds}
-            assignableMembers={assignableMembers}
-            renderAssigneeRow={renderAssigneeRow}
-            showAssignees={showAssignees}
-            onToggleAssignees={() => setShowAssignees((v) => !v)}
-            isWide={isWide}
-            priorityLabelOf={priorityLabelOf}
-            onSubmit={handleSave}
-          />
-
-          {/* Commentaires (reco #9) — visible dès la CRÉATION (placeholder tant
-              que la tâche n'existe pas), pas seulement en édition : le panneau
-              assignés (à gauche) est déjà présent en création, cacher celui-ci
-              rendait la mise en page asymétrique et laissait croire que les
-              commentaires n'existaient qu'en modification. Seulement en
-              dessous de `lg` : au-delà, le panneau de droite les affiche déjà
-              en permanence. */}
-          {!isWide && (
-            commentsTask ? (
-              <TaskCommentsSection
-                taskId={commentsTask.id}
-                members={members}
-                currentUserId={user?.id}
-                autoSubmitDraft={pendingCommentDraft}
-                onAutoSubmitted={() => setPendingCommentDraft(null)}
+          {tab === 'details' && (
+            <>
+              <TeamTaskFields
+                orgId={orgId}
+                projects={projects}
+                status={status}
+                onStatusChange={setStatus}
+                name={name}
+                onNameChange={(v) => { setName(v); setError(null); }}
+                description={description}
+                onDescriptionChange={setDescription}
+                categoryId={categoryId}
+                onCategoryChange={setCategoryId}
+                labelsField={<TeamTaskLabelsField orgId={orgId} value={labelIds} onChange={setLabelIds} canCreate={isManager} />}
+                projectId={projectId}
+                onProjectChange={(v) => { setProjectId(v); setDraftBlockedBy([]); }}
+                priority={priority}
+                onPriorityChange={setPriority}
+                deadline={deadline}
+                onDeadlineChange={setDeadline}
+                startDate={startDate}
+                onStartDateChange={(v) => { setStartDate(v); setError(null); }}
+                requireProjectChoice={requireProjectChoice}
+                estimatedTime={estimatedTime}
+                onEstimatedTimeChange={setEstimatedTime}
+                assigneeIds={assigneeIds}
+                onAssigneeIdsChange={setAssigneeIds}
+                assignableMembers={assignableMembers}
+                showAssignees={showAssignees}
+                onToggleAssignees={() => setShowAssignees((v) => !v)}
+                isWide={isWide}
+                priorityLabelOf={priorityLabelOf}
+                onSubmit={handleSave}
               />
-            ) : (
-              <PreCreateCommentComposer onSubmit={submitFirstComment} pending={pending} />
-            )
+              {/* Sous `lg`, les commentaires vivent ici ; au-delà, dans le panneau de droite. */}
+              {!isWide && comments}
+            </>
           )}
 
-          {/* Sous-tâches (mig. 092) — édition uniquement : une sous-tâche a
-              besoin de l'id de sa tâche parente, qui n'existe pas encore en
-              création. */}
-          {!isCreating && task && (
-            <div className="px-5 pb-4 border-t border-[rgb(var(--color-border))] pt-4 space-y-4">
-              <TeamSubtasksSection taskId={task.id} />
-              <TeamTaskDependenciesSection task={task} isManager={isManager} />
-            </div>
+          {tab === 'subtasks' && (liveTask
+            ? <TeamSubtasksSection taskId={liveTask.id} />
+            : <DraftSubtasksEditor value={draftSubtasks} onChange={setDraftSubtasks} />)}
+
+          {tab === 'dependencies' && (liveTask
+            ? <TeamTaskDependenciesSection task={liveTask} isManager={isManager} defaultOpen />
+            : <DraftDependenciesEditor orgId={orgId} projectId={projectId} value={draftBlockedBy} onChange={setDraftBlockedBy} canEdit={isManager} />)}
+
+          {tab === 'history' && liveTask && (
+            <TeamTaskHistoryPanel taskId={liveTask.id} members={members} projects={projects} />
           )}
         </div>
 
-        {/* Footer — mêmes boutons que TaskModal */}
         <div
           className="px-4 sm:px-6 pt-[0.6555rem] pb-[0.6555rem] sm:pb-[0.874rem] border-t flex flex-col-reverse sm:flex-row sm:justify-between items-stretch sm:items-center gap-2 sm:gap-3 shrink-0"
           style={{
@@ -520,16 +483,18 @@ const TeamTaskModal = ({
             </Button>
           ) : <span className="hidden sm:block" />}
           <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
+            {/* La tâche créée par « Créer et commenter » existe : il n'y a plus
+                rien à annuler, et le bouton ne doit pas prétendre le contraire. */}
             <Button type="button" variant="outline" size="lg" onClick={onClose} disabled={pending} className="min-h-11 w-full sm:w-auto">
-              {t('common.cancel')}
+              {draftTask ? t('common.close') : t('common.cancel')}
             </Button>
             <Button
               type="button"
               size="lg"
               onClick={handleSave}
-              disabled={pending || !name.trim() || (!hasChanges && !isCreating)}
+              disabled={pending || !name.trim() || (!hasChanges && !creating)}
               className={`min-h-11 w-full sm:w-auto ${
-                pending || !name.trim() || (!hasChanges && !isCreating)
+                pending || !name.trim() || (!hasChanges && !creating)
                   ? '!bg-[rgb(var(--color-accent-solid))] !text-[rgb(var(--color-accent-solid-foreground))] !opacity-40 !border-0'
                   : 'bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] !text-[rgb(var(--color-accent-solid-foreground))] !border-0'
               }`}
@@ -537,34 +502,19 @@ const TeamTaskModal = ({
               {pending ? (
                 <>
                   <Loader2 size={16} className="animate-spin" data-icon="inline-start" />
-                  <span>{isCreating ? t('taskModal.creating') : t('taskModal.saving')}</span>
+                  <span>{creating ? t('taskModal.creating') : t('taskModal.saving')}</span>
                 </>
               ) : (
-                isCreating ? t('taskModal.create') : t('taskModal.save')
+                creating ? t('taskModal.create') : t('taskModal.save')
               )}
             </Button>
           </div>
         </div>
       </div>
 
-        {/* Panneau droit : commentaires — visible dès la CRÉATION (placeholder
-            tant que la tâche n'existe pas) pour rester symétrique avec le
-            panneau assignés à gauche, déjà présent en création. */}
         {isWide && (
           <div className={sidePanelClass} style={sidePanelStyle} onClick={(e) => e.stopPropagation()}>
-            <div className="px-4 py-3 flex flex-col flex-1 min-h-0">
-              {commentsTask ? (
-                <TaskCommentsSection
-                  taskId={commentsTask.id}
-                  members={members}
-                  currentUserId={user?.id}
-                  autoSubmitDraft={pendingCommentDraft}
-                  onAutoSubmitted={() => setPendingCommentDraft(null)}
-                />
-              ) : (
-                <PreCreateCommentComposer onSubmit={submitFirstComment} pending={pending} />
-              )}
-            </div>
+            <div className="px-4 py-3 flex flex-col flex-1 min-h-0">{comments}</div>
           </div>
         )}
       </div>
