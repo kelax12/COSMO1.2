@@ -187,8 +187,12 @@ export class LocalStorageTeamOKRsRepository implements ITeamOKRsRepository {
           completedAt: current >= target ? new Date().toISOString() : null,
           weight: kr.weight && kr.weight >= 1 ? Math.min(10, Math.round(kr.weight)) : 1,
           estimatedTime: kr.estimatedTime && kr.estimatedTime > 0 ? Math.round(kr.estimatedTime) : 30,
+          progressMode: kr.progressMode ?? 'manual',
+          contributorIds: kr.contributorIds ?? [],
         };
       }),
+      cycleId: input.cycleId ?? null,
+      parentOkrId: input.parentOkrId ?? null,
     };
     this.save([okr, ...okrs]);
     return okr;
@@ -204,6 +208,17 @@ export class LocalStorageTeamOKRsRepository implements ITeamOKRsRepository {
     if (input.startDate !== undefined) okr.startDate = input.startDate;
     if (input.endDate !== undefined) okr.endDate = input.endDate;
     if (input.teamIds !== undefined) okr.teamIds = input.teamIds;
+    if (input.cycleId !== undefined) okr.cycleId = input.cycleId;
+    if (input.parentOkrId !== undefined) {
+      // Miroir du trigger `validate_team_okr_parent` (mig. 153) : ni soi-même,
+      // ni un descendant.
+      let cursor = input.parentOkrId;
+      for (let depth = 0; cursor && depth < 20; depth++) {
+        if (cursor === okrId) throw makeApiError('okr_parent_cycle');
+        cursor = okrs.find((o) => o.id === cursor)?.parentOkrId ?? null;
+      }
+      okr.parentOkrId = input.parentOkrId;
+    }
     this.save(okrs);
   }
 
@@ -223,6 +238,8 @@ export class LocalStorageTeamOKRsRepository implements ITeamOKRsRepository {
       if (input.assigneeId !== undefined) kr.assigneeId = input.assigneeId;
       if (input.weight !== undefined) kr.weight = input.weight >= 1 ? Math.min(10, Math.round(input.weight)) : 1;
       if (input.estimatedTime !== undefined) kr.estimatedTime = input.estimatedTime > 0 ? Math.round(input.estimatedTime) : 30;
+      if (input.progressMode !== undefined) kr.progressMode = input.progressMode;
+      if (input.contributorIds !== undefined) kr.contributorIds = [...new Set(input.contributorIds)];
       if (input.completed !== undefined) {
         kr.completed = input.completed;
         kr.completedAt = input.completed ? new Date().toISOString() : null;
@@ -256,6 +273,8 @@ export class LocalStorageTeamOKRsRepository implements ITeamOKRsRepository {
         completedAt: completed ? (prev?.completed ? prev.completedAt : new Date().toISOString()) : null,
         weight: input.weight && input.weight >= 1 ? Math.min(10, Math.round(input.weight)) : 1,
         estimatedTime: input.estimatedTime && input.estimatedTime > 0 ? Math.round(input.estimatedTime) : 30,
+        progressMode: input.progressMode ?? prev?.progressMode ?? 'manual',
+        contributorIds: input.contributorIds ?? prev?.contributorIds ?? [],
       };
     });
     okr.keyResults = next;

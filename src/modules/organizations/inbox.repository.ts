@@ -26,6 +26,8 @@ export interface OrgInboxRow {
   notifications?: Array<{
     id: string; org_id: string; actor_id: string | null; kind: string;
     task_id: string | null; read_at: string | null; created_at: string;
+    project_id?: string | null; kr_id?: string | null; event_id?: string | null;
+    meta?: Record<string, unknown> | null;
   }>;
   /** mig. 142 — `my_org_badge_tasks()`, agregee dans la meme lecture. */
   badge_tasks?: Array<{
@@ -72,6 +74,10 @@ export function mapOrgInbox(raw: OrgInboxRow): OrgInbox {
       actorId: r.actor_id,
       kind: r.kind as OrgNotification['kind'],
       taskId: r.task_id,
+      projectId: r.project_id ?? null,
+      krId: r.kr_id ?? null,
+      eventId: r.event_id ?? null,
+      meta: r.meta ?? null,
       readAt: r.read_at,
       createdAt: r.created_at,
     })),

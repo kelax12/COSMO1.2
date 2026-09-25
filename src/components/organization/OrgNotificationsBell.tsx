@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { formatDistanceToNow, parseISO } from 'date-fns';
 import { getDateLocale } from '@/i18n/format';
-import { Bell, UserPlus, AtSign, AlarmClock, MessageSquare } from 'lucide-react';
+import { Bell, UserPlus, AtSign, AlarmClock, MessageSquare, ArrowRightLeft, Unlock, TriangleAlert, Target, CalendarPlus } from 'lucide-react';
 import {
   useOrgNotifications,
   useMarkNotificationsRead,
@@ -27,7 +27,17 @@ const KIND_META: Record<OrgNotificationKind, { Icon: typeof Bell; labelKey: KeyO
   mention: { Icon: AtSign, labelKey: 'notifications.kindMention' },
   task_overdue: { Icon: AlarmClock, labelKey: 'notifications.kindOverdue' },
   comment: { Icon: MessageSquare, labelKey: 'notifications.kindComment' },
+  // Mig. 162 (audit 2026-09-23, M14).
+  status_changed: { Icon: ArrowRightLeft, labelKey: 'notifications.kindStatusChanged' },
+  unblocked: { Icon: Unlock, labelKey: 'notifications.kindUnblocked' },
+  project_at_risk: { Icon: TriangleAlert, labelKey: 'notifications.kindProjectAtRisk' },
+  kr_due: { Icon: Target, labelKey: 'notifications.kindKrDue' },
+  event_scheduled: { Icon: CalendarPlus, labelKey: 'notifications.kindEventScheduled' },
 };
+
+/** Une notification mène-t-elle quelque part ? */
+const hasTarget = (n: OrgNotification): boolean =>
+  !!(n.taskId || n.projectId || n.krId || n.eventId);
 
 /**
  * Cloche de notifications d'entreprise (mig. 095 + 096).
@@ -97,6 +107,9 @@ const OrgNotificationsBell = ({ orgId, members }: OrgNotificationsBellProps) => 
   const openNotification = (notification: OrgNotification) => {
     setOpen(false);
     if (notification.taskId) navigate(buildOrgLink('projects', { task: notification.taskId }));
+    else if (notification.projectId) navigate(buildOrgLink('projects', { project: notification.projectId }));
+    else if (notification.krId) navigate(buildOrgLink('okr'));
+    else if (notification.eventId) navigate('/agenda');
   };
 
   return (
@@ -134,7 +147,9 @@ const OrgNotificationsBell = ({ orgId, members }: OrgNotificationsBellProps) => 
             </p>
             <ul className="space-y-1">
             {group.items.map((notification) => {
-              const { Icon, labelKey } = KIND_META[notification.kind];
+              // Un type inconnu (base plus récente que le client) ne fait pas
+              // tomber la cloche : il prend l'apparence générique.
+              const { Icon, labelKey } = KIND_META[notification.kind] ?? { Icon: Bell, labelKey: 'notifications.title' as const };
               // `task_overdue` vient de pg_cron : son `actorId` est TOUJOURS
               // null. Afficher un auteur serait un mensonge — c'est le temps
               // qui passe, personne ne l'a fait.
@@ -144,9 +159,9 @@ const OrgNotificationsBell = ({ orgId, members }: OrgNotificationsBellProps) => 
                   <button
                     type="button"
                     onClick={() => openNotification(notification)}
-                    disabled={!notification.taskId}
+                    disabled={!hasTarget(notification)}
                     className={`w-full flex items-start gap-2.5 p-2.5 rounded-xl text-left transition-colors ${
-                      notification.taskId ? 'hover:bg-[rgb(var(--color-hover))]' : 'cursor-default'
+                      hasTarget(notification) ? 'hover:bg-[rgb(var(--color-hover))]' : 'cursor-default'
                     } ${notification.readAt === null ? 'bg-[rgb(var(--color-accent)/0.08)]' : ''}`}
                   >
                     <Icon size={15} className="mt-0.5 shrink-0 text-[rgb(var(--color-accent))]" aria-hidden="true" />
