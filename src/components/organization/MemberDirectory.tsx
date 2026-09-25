@@ -87,7 +87,7 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin }: Me
   // AUTORISES pour ce membre, et c'est lui qui valide.
   const [sheet, setSheet] = useState<{ member: OrgMember; tab: string | null } | null>(null);
   const [assigning, setAssigning] = useState<OrgMember | null>(null);
-  const [creatingTaskFor, setCreatingTaskFor] = useState<OrgMember | null>(null);
+  const [creatingTaskFor, setCreatingTaskFor] = useState<{ member: OrgMember; projectId: string | null } | null>(null);
   const [removing, setRemoving] = useState<OrgMember | null>(null);
   const [reassigning, setReassigning] = useState<OrgMember | null>(null);
   const [editingPerms, setEditingPerms] = useState<OrgMember | null>(null);
@@ -329,8 +329,8 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin }: Me
           projects={activeProjects}
           tasks={tasks}
           onAssign={(task) => assignToMember(task, assigning)}
-          onCreateNew={() => {
-            setCreatingTaskFor(assigning);
+          onCreateNew={(projectId) => {
+            setCreatingTaskFor({ member: assigning, projectId });
             setAssigning(null);
           }}
           onClose={() => setAssigning(null)}
@@ -342,8 +342,11 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin }: Me
           isCreating
           projects={activeProjects.length > 0 ? activeProjects : projects}
           members={members}
-          defaultProjectId={activeProjects[0]?.id}
-          defaultAssigneeIds={[creatingTaskFor.userId]}
+          // Plus jamais « le premier projet venu » : celui choisi dans la
+          // feuille, sinon la fiche demande (audit des popups, 2026-09-25).
+          defaultProjectId={creatingTaskFor.projectId ?? undefined}
+          requireProjectChoice={!creatingTaskFor.projectId}
+          defaultAssigneeIds={[creatingTaskFor.member.userId]}
           onCreate={modalCreate}
           onClose={() => setCreatingTaskFor(null)}
         />

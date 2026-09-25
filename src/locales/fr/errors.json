@@ -189,7 +189,8 @@
     "memberAccess": "Impossible de modifier l'accès : {{message}}",
     "emailInvite": "Impossible d'envoyer l'invitation : {{message}}",
     "notificationSettings": "Impossible d'enregistrer vos préférences : {{message}}",
-    "weeklyReview": "Impossible d'enregistrer la revue : {{message}}"
+    "weeklyReview": "Impossible d'enregistrer la revue : {{message}}",
+    "teamTaskDraft": "La tâche est créée, mais une partie de son contenu n'a pas été enregistrée : {{message}}"
   },
   "success": {
     "orgCreated": "Entreprise créée",

@@ -3,19 +3,24 @@ import { visibleMemberTabs, isValidMemberTab, resolveMemberTab, MEMBER_TAB_PARAM
 import { buildOrgLink } from './deep-link.helpers';
 
 describe('visibleMemberTabs', () => {
-  it('un pair ne voit que le profil', () => {
+  it('un pair voit le profil, les équipes et les projets, rien de plus', () => {
     expect(visibleMemberTabs({ canSeeInsights: false, canSeeAgenda: false }))
-      .toEqual(['profile']);
+      .toEqual(['profile', 'work']);
   });
 
-  it('un supérieur voit tout', () => {
+  it('un supérieur voit tout, historique compris', () => {
     expect(visibleMemberTabs({ canSeeInsights: true, canSeeAgenda: true }))
-      .toEqual(['profile', 'tasks', 'contribution', 'agenda']);
+      .toEqual(['profile', 'work', 'tasks', 'contribution', 'history', 'agenda']);
   });
 
   it("l'agenda peut être refusé indépendamment des tâches", () => {
     expect(visibleMemberTabs({ canSeeInsights: true, canSeeAgenda: false }))
-      .toEqual(['profile', 'tasks', 'contribution']);
+      .toEqual(['profile', 'work', 'tasks', 'contribution', 'history']);
+  });
+
+  it("l'historique ne s'ouvre jamais à un pair par l'URL", () => {
+    expect(resolveMemberTab('history', visibleMemberTabs({ canSeeInsights: false, canSeeAgenda: false })))
+      .toBe('profile');
   });
 });
 

@@ -438,10 +438,6 @@
     "assignTask": "Assign task",
     "nameRequired": "The task name is required",
     "projectRequired": "Choose a project",
-    "createProjectAria": "Create a project",
-    "projectNamePlaceholder": "Project name",
-    "projectNameTooShort": "The project name must be at least 2 characters",
-    "createProjectCta": "Create",
     "startDate": "Start",
     "startDatePlaceholder": "No start date",
     "datesInvalid": "The start must come before the due date.",
@@ -1286,5 +1282,142 @@
     "resendWait": "At most one reminder per hour",
     "resendFor": "Resend to {{email}}",
     "revokeFor": "Revoke the invitation for {{email}}"
+  },
+  "picker": {
+    "showMore": "Show {{count}} more",
+    "hiddenSelected_one": "{{count}} selected person is not shown here.",
+    "hiddenSelected_other": "{{count}} selected people are not shown here."
+  },
+  "popups": {
+    "task": {
+      "status": "Status",
+      "tabsAria": "Task sections",
+      "tabDetails": "Details",
+      "tabSubtasks": "Subtasks",
+      "tabDependencies": "Dependencies",
+      "tabHistory": "History",
+      "created": "Task created",
+      "commentsTitle": "Comments",
+      "createAndComment": "Create and comment",
+      "createAndCommentHint": "Posting this comment creates the task with the fields filled in."
+    },
+    "labels": {
+      "title": "Labels",
+      "add": "Label",
+      "empty": "No labels in the company yet.",
+      "namePlaceholder": "Label name",
+      "color": "Label color",
+      "create": "Create"
+    },
+    "draft": {
+      "subtasksHint": "These steps will be added when the task is created.",
+      "depsHint": "Tick the project tasks that must finish before this one.",
+      "depsSearch": "Search a task in the project",
+      "depsNone": "No open task in this project.",
+      "depsReadOnly": "Only a manager sets dependencies. They will show here once the task exists.",
+      "depsNeedProject": "Pick a project in the Details tab first."
+    },
+    "history": {
+      "loading": "Loading history…",
+      "empty": "No change recorded on this task.",
+      "none": "none",
+      "system": "the system",
+      "formerMember": "former member",
+      "formerProject": "deleted project",
+      "renamed": "{{actor}} renamed the task",
+      "changed": "{{actor}} changed: {{field}}",
+      "becomes": "becomes",
+      "field": {
+        "status": "status",
+        "assignees": "assignees",
+        "deadline": "due date",
+        "priority": "priority",
+        "project": "project",
+        "name": "name"
+      }
+    },
+    "team": {
+      "lead": "Team lead",
+      "noLead": "No lead",
+      "leadHint": "Manages the team's members and projects, and is added to the members."
+    },
+    "project": {
+      "audienceOrg_one": "Visible to the whole company, {{count}} person.",
+      "audienceOrg_other": "Visible to the whole company, {{count}} people.",
+      "audienceTeam_one": "Visible to the {{team}} team, its managers and the admins, {{count}} person.",
+      "audienceTeam_other": "Visible to the {{team}} team, its managers and the admins, {{count}} people."
+    },
+    "assignSheet": {
+      "project": "Project",
+      "allProjects": "All projects",
+      "inProject": "In \"{{name}}\"",
+      "pickLater": "The task form will ask for a project"
+    },
+    "event": {
+      "willBeNotified": "{{name}} is notified of every slot added to their calendar, and can decline it.",
+      "slot": "\"{{title}}\", {{when}}",
+      "decline": "Decline this slot",
+      "declined": "Slot removed from your calendar."
+    },
+    "okr": {
+      "cycle": "OKR cycle",
+      "noCycle": "No cycle",
+      "newCycle": "New cycle",
+      "cycleOption": "{{name}} ({{start}} to {{end}})",
+      "cycleNamePlaceholder": "Cycle name, e.g. Q1 2027",
+      "cycleStart": "Start",
+      "cycleEnd": "End",
+      "createCycle": "Create cycle",
+      "parent": "Contributes to objective",
+      "noParent": "No parent objective",
+      "parentHint": "Links this objective to the one it serves, often a company objective.",
+      "linkProjects": "Link projects",
+      "projectsLinked": "Linked projects: {{count}}",
+      "progressByTasks": "Move this key result forward with the completed tasks of these projects"
+    },
+    "member": {
+      "tabWork": "Teams and projects",
+      "tabHistory": "History",
+      "teams": "Teams",
+      "noTeam": "In no team.",
+      "lead": "lead",
+      "projects": "Projects",
+      "noProject": "Owns no project and has no open task.",
+      "owner": "Owner",
+      "openTasks": "Open tasks: {{count}}",
+      "projectsPeerHint": "Projects this person owns. Their tasks are only visible to their managers.",
+      "historyScope": "What this person changed on tasks over the last {{days}} days.",
+      "historyEmpty": "No task change over the last {{days}} days.",
+      "historyEntry": "Changed {{field}} on \"{{task}}\"",
+      "hiddenTask": "a task you cannot see"
+    },
+    "perms": {
+      "scope": "These permissions apply to the whole company, in every project this person can see. They are not set project by project.",
+      "taskEditAny_one": "Can edit the tasks of {{count}} project.",
+      "taskEditAny_other": "Can edit the tasks of {{count}} projects.",
+      "taskDeleteAny_one": "Can delete the tasks of {{count}} project.",
+      "taskDeleteAny_other": "Can delete the tasks of {{count}} projects.",
+      "projectEdit_one": "Can edit {{count}} project.",
+      "projectEdit_other": "Can edit {{count}} projects.",
+      "projectDelete_one": "Can archive {{count}} project.",
+      "projectDelete_other": "Can archive {{count}} projects.",
+      "okrDelete_one": "Can delete {{count}} objective.",
+      "okrDelete_other": "Can delete {{count}} objectives.",
+      "assignCount_one": "Can assign tasks to {{count}} person.",
+      "assignCount_other": "Can assign tasks to {{count}} people."
+    },
+    "placement": {
+      "title": "Place {{name}} in the org chart",
+      "directionAria": "Placement direction",
+      "up": "Their manager",
+      "down": "Below them",
+      "upHint": "Choose who {{name}} reports to directly.",
+      "downHint": "Place someone already in the company below {{name}}, or invite someone new.",
+      "unplaced": "Not placed",
+      "under": "Under {{name}}",
+      "nobodyToPlace": "Nobody you can place here.",
+      "inviteTitle": "Invite someone new",
+      "titleSelf": "Place someone below you"
+    }
   }
 }

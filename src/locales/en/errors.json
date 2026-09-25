@@ -189,7 +189,8 @@
     "memberAccess": "Couldn't change the access: {{message}}",
     "emailInvite": "Couldn't send the invitation: {{message}}",
     "notificationSettings": "Couldn't save your preferences: {{message}}",
-    "weeklyReview": "Couldn't save the review: {{message}}"
+    "weeklyReview": "Couldn't save the review: {{message}}",
+    "teamTaskDraft": "The task was created, but part of its content was not saved: {{message}}"
   },
   "success": {
     "orgCreated": "Company created",

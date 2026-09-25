@@ -8,7 +8,7 @@
 // la seule chose qui DÉCIDE quoi que ce soit — quels onglets sont ouverts.
 // ═══════════════════════════════════════════════════════════════════
 
-export type MemberTab = 'profile' | 'tasks' | 'contribution' | 'agenda';
+export type MemberTab = 'profile' | 'work' | 'tasks' | 'contribution' | 'history' | 'agenda';
 
 export interface MemberTabAccess {
   /** Supérieur hiérarchique : voit tâches et contribution. */
@@ -18,12 +18,14 @@ export interface MemberTabAccess {
 }
 
 /**
- * Onglets visibles, dans l'ordre d'affichage. Le profil est toujours là :
- * c'est le seul contenu qu'un pair a le droit de voir.
+ * Onglets visibles, dans l'ordre d'affichage. Le profil est toujours là, et
+ * « Équipes et projets » aussi (audit des popups, 2026-09-25) : les équipes
+ * et les projets pilotés sont déjà publics dans l'organisation. L'historique
+ * dit ce qu'une personne a FAIT : il suit le même droit que ses tâches.
  */
 export const visibleMemberTabs = (access: MemberTabAccess): MemberTab[] => {
-  const tabs: MemberTab[] = ['profile'];
-  if (access.canSeeInsights) tabs.push('tasks', 'contribution');
+  const tabs: MemberTab[] = ['profile', 'work'];
+  if (access.canSeeInsights) tabs.push('tasks', 'contribution', 'history');
   if (access.canSeeAgenda) tabs.push('agenda');
   return tabs;
 };

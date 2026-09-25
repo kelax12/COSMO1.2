@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Plus, Loader2, Trash2, ListTodo, LayoutTemplate } from 'lucide-react';
+import { X, Plus, Loader2, Trash2, ListTodo, LayoutTemplate, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DatePicker } from '@/components/ui/date-picker';
 import type { OrgMember } from '@/modules/organizations';
-import type { OrgTeam } from '@/modules/org-teams';
+import { useOrgTeamMembers, type OrgTeam } from '@/modules/org-teams';
 import type {
   CreateTeamProjectInput,
   DraftProjectMilestone,
@@ -16,6 +16,8 @@ import { PRIORITY_META } from './team-projects.helpers';
 import { instantiateTemplate, todayLocal } from './portfolio.helpers';
 import { BUILT_IN_TEMPLATES, builtInPayload } from './project-templates';
 import AssigneesPicker from './AssigneesPicker';
+import MemberSelectField from './MemberSelectField';
+import { projectAudience } from './audience.helpers';
 import TeamCategoryTreeSelect from './TeamCategoryTreeSelect';
 import { ProjectColorPicker } from './ProjectEditDialog';
 import { useT } from '@/i18n/useT';
@@ -91,6 +93,13 @@ const NewTeamProjectModal = ({
   const [composerAssignees, setComposerAssignees] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  // Audience DITE, chiffrée (audit des popups, 2026-09-25) : la visibilité ne
+  // se devinait qu'à l'option « Toute l'entreprise » du sélecteur d'équipe.
+  const { data: teamMembers = [] } = useOrgTeamMembers(orgId);
+  const audience = projectAudience(
+    members,
+    teamId ? teamMembers.filter((tm) => tm.teamId === teamId).map((tm) => tm.userId) : null,
+  );
 
   const payloadOf = (choice: TemplateChoice): TeamProjectTemplatePayload | null => {
     if (choice.startsWith('org:')) return templates.find((tpl) => `org:${tpl.id}` === choice)?.templatePayload ?? null;
@@ -286,23 +295,25 @@ const NewTeamProjectModal = ({
                 ))}
               </select>
             </div>
-            <div>
-              <label htmlFor="new-project-owner" className={labelClass} style={labelStyle}>{pf('new.owner')}</label>
-              <select
-                id="new-project-owner"
-                value={ownerId}
-                onChange={(e) => setOwnerId(e.target.value)}
-                className={inputClass}
-                style={inputStyle}
-              >
-                <option value="">{pf('noOwner')}</option>
-                {members.map((m) => (
-                  <option key={m.userId} value={m.userId}>{m.userId === currentUserId ? pf('toolbar.you') : m.displayName}</option>
-                ))}
-              </select>
-            </div>
-            <p className="sm:col-span-2 -mt-2 text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
-              {teamId ? t('project.teamHint') : t('project.visibleWholeOrg')}
+            <MemberSelectField
+              label={pf('new.owner')}
+              members={members}
+              value={ownerId}
+              onChange={setOwnerId}
+              emptyLabel={pf('noOwner')}
+            />
+            <p
+              className={`sm:col-span-2 -mt-2 flex items-start gap-1.5 rounded-lg px-2.5 py-2 text-xs ${
+                audience.wholeOrg ? 'bg-amber-500/10 text-amber-700 dark:text-amber-300' : 'bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-secondary))]'
+              }`}
+              role="status"
+            >
+              <Eye size={13} className="mt-px shrink-0" aria-hidden="true" />
+              <span>
+                {audience.wholeOrg
+                  ? tp('popups.project.audienceOrg', audience.count)
+                  : tp('popups.project.audienceTeam', audience.count, { team: teams.find((tm) => tm.id === teamId)?.name ?? '' })}
+              </span>
             </p>
             <div>
               <label htmlFor="new-project-start" className={labelClass} style={labelStyle}>

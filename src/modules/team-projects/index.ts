@@ -92,3 +92,14 @@ export {
 
 // Restauration d'un commentaire supprime (« Annuler », C-42).
 export { useRestoreComment } from './restore-comment.hooks';
+
+// Étiquettes et historique par tâche (mig. 093, 094), fiche de tâche d'équipe.
+export {
+  useTeamLabels,
+  useTaskLabels,
+  useCreateTeamLabel,
+  useToggleTaskLabel,
+  useTeamTaskActivity,
+  useApplyTeamTaskDraft,
+  type TeamTaskDraftExtras,
+} from './task-extras.hooks';

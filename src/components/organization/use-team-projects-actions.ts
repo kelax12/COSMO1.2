@@ -24,7 +24,7 @@ import {
   type TeamTaskStatus,
   type UpdateTeamProjectInput,
 } from '@/modules/team-projects';
-import { useCreateOrgTeam, useAddTeamMember } from '@/modules/org-teams';
+import { useCreateTeamFull, type CreateTeamFullInput } from './use-create-team-full';
 import { buildTemplatePayload, duplicateBlueprint } from './portfolio.helpers';
 import { useT } from '@/i18n/useT';
 
@@ -53,8 +53,7 @@ export const useTeamProjectsActions = ({
   // « Annuler » = sortir de la corbeille (mig. 152), à l'identique : commentaires,
   // sous-tâches et historique compris. L'ancien « Annuler » recréait une tâche neuve.
   const restoreTask = useRestoreTeamTask(orgId);
-  const createTeam = useCreateOrgTeam(orgId);
-  const addTeamMember = useAddTeamMember(orgId);
+  const createTeamWithMembers = useCreateTeamFull(orgId);
 
   // ─── Projets ────────────────────────────────────────────────────────
 
@@ -131,11 +130,8 @@ export const useTeamProjectsActions = ({
   // Crée l'équipe (nom + couleur) PUIS y ajoute les membres choisis — même
   // séquence que TeamsSection (onglet Pyramide). Le filtre équipe bascule
   // dessus aussitôt : créer une équipe pour ne pas la voir serait un geste à vide.
-  const createTeamFull = async (input: { name: string; color: string }, memberIds: string[]) => {
-    const team = await createTeam.mutateAsync(input);
-    for (const userId of memberIds) {
-      await addTeamMember.mutateAsync({ teamId: team.id, userId });
-    }
+  const createTeamFull = async (input: CreateTeamFullInput) => {
+    const team = await createTeamWithMembers(input);
     onTeamCreated(team.id);
   };
 

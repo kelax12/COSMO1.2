@@ -324,10 +324,13 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
               actions.setAssignees(task, [...task.assigneeIds, assignSheetFor]);
             }
           }}
-          onCreateNew={() => {
+          onCreateNew={(projectId) => {
             const target = assignSheetFor;
+            const assigneeIds = target !== 'closed' ? [target] : [];
             setAssignSheetFor('closed');
-            createWithoutProjectContext({ assigneeIds: target !== 'closed' ? [target] : [] });
+            // Le projet choisi dans la feuille l'emporte sur le filtre courant.
+            if (projectId) setTaskModal({ mode: 'create', projectId, requireProject: false, assigneeIds });
+            else createWithoutProjectContext({ assigneeIds });
           }}
           onClose={() => setAssignSheetFor('closed')}
         />

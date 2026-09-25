@@ -5,9 +5,9 @@ import { test, expect, navTo } from './fixtures';
  * Modal « Nouvel objectif d'équipe » (TeamOKRModal) — mode démo, org « Nova
  * Studio ». Couvre deux correctifs de session (2026-08-24) :
  *   - le KR (métrique) n'a plus d'unité pré-remplie ("%") ;
- *   - la section Visibilité propose « + Nouvelle équipe », même geste que
- *     « + Nouvelle catégorie » (OKRCategoryPicker) : créer sans quitter le
- *     modal, l'équipe créée est immédiatement sélectionnée.
+ *   - 🔴 la section Visibilité NE propose PLUS « + Nouvelle équipe » (audit
+ *     des popups du 2026-09-25) : l'équipe y naissait sans membres ni
+ *     responsable. À la place, cycle et objectif parent (mig. 160).
  *
  * Le redesign du champ Échéance (style aligné sur TeamTaskModal + icône
  * teintée) n'est pas vérifiable en e2e : la popup native `<input type=date>`
@@ -24,7 +24,7 @@ const orgTab = (page: Page, label: RegExp) =>
 test.describe('Entreprise — modal OKR (démo)', () => {
   test.describe.configure({ timeout: 120_000 });
 
-  test('KR sans unité par défaut + création d\'équipe inline depuis la Visibilité', async ({ demoPage: page }) => {
+  test('KR sans unité par défaut, cycle et parent, plus de création d\'équipe', async ({ demoPage: page }) => {
     await navTo(page, /entreprise/i, /\/entreprise/);
     await expect(page.getByRole('heading', { name: /nova studio/i })).toBeVisible({ timeout: 15_000 });
 
@@ -38,15 +38,12 @@ test.describe('Entreprise — modal OKR (démo)', () => {
     // Unité du 1er KR vide (placeholder "%" toléré, valeur non pré-remplie).
     await expect(dialog.getByPlaceholder('%')).toHaveValue('');
 
-    // « + Nouvelle équipe » — même geste que « + Nouvelle catégorie ».
-    await dialog.getByRole('button', { name: /nouvelle équipe/i }).click();
-    await dialog.getByPlaceholder(/ex\s*:\s*marketing/i).fill('QA Team');
-    await dialog.getByRole('button', { name: /créer l'équipe/i }).click();
+    // Plus de création d'équipe depuis la fiche d'OKR.
+    await expect(dialog.getByRole('button', { name: /nouvelle équipe/i })).toHaveCount(0);
 
-    // La nouvelle équipe apparaît dans les chips de visibilité, sélectionnée.
-    const teamChip = dialog.getByRole('button', { name: /^QA Team$/i });
-    await expect(teamChip).toBeVisible({ timeout: 10_000 });
-    await expect(teamChip).toHaveClass(/bg-\[rgb\(var\(--color-accent-solid\)\)\]/);
+    // Cycle et objectif parent (mig. 160), jusqu'ici sans écran.
+    await expect(dialog.getByLabel(/^cycle d.okr$/i)).toBeVisible();
+    await expect(dialog.getByLabel(/contribue à l'objectif/i)).toBeVisible();
 
     await expect(page.locator('[data-sonner-toast][data-type="error"]')).toHaveCount(0);
   });
