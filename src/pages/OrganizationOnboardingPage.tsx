@@ -39,12 +39,16 @@ const OrganizationOnboardingPage = () => {
   const screen = parseSetupScreen(searchParams.get('step'));
   // Sans `replace` : chaque étape est une entrée d'historique, le bouton
   // précédent ramène à la précédente au lieu de quitter l'assistant.
+  //
+  // ⚠️ La navigation part de `setupOrg.id`, jamais de `setupOrgId` : ce
+  // dernier est lu dans l'URL, tel quel. `setupOrg` est une organisation de MA
+  // liste, que j'administre (cf. `no-open-redirect.test.ts`).
   const goToScreen = (next: OrgSetupScreen) => {
-    if (!setupOrgId) return;
-    navigate(orgSetupPath(setupOrgId, next));
+    if (!setupOrg) return;
+    navigate(orgSetupPath(setupOrg.id, next));
   };
   const finishSetup = () => {
-    if (setupOrgId) setActiveOrgId(setupOrgId);
+    if (setupOrg) setActiveOrgId(setupOrg.id);
     navigate('/entreprise');
   };
 
