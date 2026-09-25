@@ -174,3 +174,38 @@ describe('buildWeeklyReview — tension et arbitrages', () => {
     });
   });
 });
+
+// ─── Périmètre et résumé enregistré (audit du 2026-09-24) ─────────────
+import { scopeReview, reviewSummary } from './weekly-review.helpers';
+
+describe('scopeReview — revue par équipe ou par projet', () => {
+  const tasks = [
+    task({ id: 'a', projectId: 'p1', assigneeIds: ['u1'] }),
+    task({ id: 'b', projectId: 'p2', assigneeIds: ['u2'] }),
+  ];
+  const teamsOfProject = (projectId: string) => new Set(projectId === 'p1' ? ['T1'] : ['T2']);
+  const memberships = [{ teamId: 'T1', userId: 'u1' }, { teamId: 'T2', userId: 'u2' }];
+
+  it('le périmètre de base ne change rien', () => {
+    const out = scopeReview({ scope: { kind: 'base' }, tasks, members, memberships, teamsOfProject });
+    expect(out.tasks).toBe(tasks);
+    expect(out.members).toBe(members);
+  });
+
+  it('une équipe : ses projets et ses membres', () => {
+    const out = scopeReview({ scope: { kind: 'team', teamId: 'T1' }, tasks, members, memberships, teamsOfProject });
+    expect(out.tasks.map((t) => t.id)).toEqual(['a']);
+    expect(out.members.map((m) => m.userId)).toEqual(['u1']);
+  });
+
+  it('un projet : ses tâches et ses assignés', () => {
+    const out = scopeReview({ scope: { kind: 'project', projectId: 'p2' }, tasks, members, memberships, teamsOfProject });
+    expect(out.tasks.map((t) => t.id)).toEqual(['b']);
+    expect(out.members.map((m) => m.userId)).toEqual(['u2']);
+  });
+
+  it('le résumé enregistré ne contient que des nombres', () => {
+    const summary = reviewSummary(buildWeeklyReview(tasks, members, [], NOW));
+    expect(Object.values(summary).every((v) => typeof v === 'number')).toBe(true);
+  });
+});

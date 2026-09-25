@@ -22,6 +22,7 @@ import { getColorHex } from '@/lib/category-colors';
 import CategoryFilterBar from '@/pages/okr/CategoryFilterBar';
 import DeleteTeamCategoryConfirm from './DeleteTeamCategoryConfirm';
 import TeamOKRModal from './TeamOKRModal';
+import DeleteTeamOkrConfirm from './DeleteTeamOkrConfirm';
 import { useMyOrgPermissions } from '@/modules/organizations';
 import { useT } from '@/i18n/useT';
 
@@ -131,6 +132,7 @@ const TeamOKRTab = ({ orgId }: TeamOKRTabProps) => {
   const { t } = useT('org');
   const [showCreate, setShowCreate] = useState(false);
   const [editingOKR, setEditingOKR] = useState<TeamOKR | null>(null);
+  const [deletingOkr, setDeletingOkr] = useState<TeamOKR | null>(null);
   // `live` : c'est l'écran où l'on regarde les OKR (cf. useTeamOKRs).
   const { data: okrs = [], isLoading } = useTeamOKRs(orgId, { live: true });
   const { data: teams = [] } = useOrgTeams(orgId);
@@ -357,9 +359,7 @@ const TeamOKRTab = ({ orgId }: TeamOKRTabProps) => {
                     {can['okr.delete'] && (
                     <button
                       type="button"
-                      onClick={() => {
-                        if (window.confirm(t('common.deleteOkrConfirm', { title: okr.title }))) deleteOKR.mutate(okr.id);
-                      }}
+                      onClick={() => setDeletingOkr(okr)}
                       aria-label={t('common.deleteOkrAria', { title: okr.title })}
                       className="w-8 h-8 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-red-500 hover:bg-red-500/10 transition-colors"
                     >
@@ -396,6 +396,16 @@ const TeamOKRTab = ({ orgId }: TeamOKRTabProps) => {
       )}
       {editingOKR && (
         <TeamOKRModal orgId={orgId} editingOKR={editingOKR} onClose={() => setEditingOKR(null)} />
+      )}
+      {deletingOkr && (
+        <DeleteTeamOkrConfirm
+          orgId={orgId}
+          okr={deletingOkr}
+          okrs={okrs}
+          pending={deleteOKR.isPending}
+          onConfirm={() => deleteOKR.mutate(deletingOkr.id, { onSettled: () => setDeletingOkr(null) })}
+          onCancel={() => setDeletingOkr(null)}
+        />
       )}
     </div>
   );

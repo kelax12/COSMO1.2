@@ -26,6 +26,7 @@ import MemberAvatar from './MemberAvatar';
 import TeamTaskRow from './TeamTaskRow';
 import ProjectMilestonesSection from './ProjectMilestonesSection';
 import ProjectDependenciesSection from './ProjectDependenciesSection';
+import ProjectAudienceActions from './ProjectAudienceActions';
 import { useT } from '@/i18n/useT';
 
 interface ProjectDetailPageProps {
@@ -43,6 +44,8 @@ interface ProjectDetailPageProps {
   canEdit: boolean;
   canArchive: boolean;
   canCreateProject: boolean;
+  /** `project.edit` : équipes associées (mig. 164). */
+  canManageAudience?: boolean;
   onBack: () => void;
   onOpenProject: (projectId: string) => void;
   onEdit: () => void;
@@ -66,7 +69,7 @@ const actionBtn =
 
 const ProjectDetailPage = ({
   project, tasks, allProjectTasks, members, teams, milestones, dependencies, projects, categoryName,
-  canEdit, canArchive, canCreateProject,
+  canEdit, canArchive, canCreateProject, canManageAudience = false,
   onBack, onOpenProject, onEdit, onDuplicate, onSaveTemplate, onArchive, onRestore, onAddTask, onStartSelect,
   onToggleComplete, onReassign, onDelete, onOpenTask, selectable, selectedIds, onToggleSelect,
 }: ProjectDetailPageProps) => {
@@ -155,6 +158,15 @@ const ProjectDetailPage = ({
             ))}
           </div>
         </div>
+
+        <ProjectAudienceActions
+          project={project}
+          teams={teams}
+          canManageAudience={canManageAudience}
+          canPurge={canArchive}
+          taskCount={allProjectTasks.length}
+          onPurged={onBack}
+        />
 
         <dl className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
           <div>

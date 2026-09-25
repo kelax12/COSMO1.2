@@ -87,6 +87,7 @@ const RoleBadge = ({ kind }: { kind: keyof typeof BADGE_META }) => {
  */
 const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin }: MemberDirectoryProps) => {
   const { t } = useT('org');
+  const { t: ta } = useT('orgAdmin');
   const setRole = useSetMemberRole();
   // Départ, suspension, accès borné, transfert de responsabilités (mig. 161,
   // 164). « Organiser le départ » REMPLACE l'ancien retrait nu, qui laissait
@@ -208,7 +209,7 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin }: Me
             onClick={() => setSelectMode(true)}
             className="inline-flex items-center gap-1.5 min-h-11 px-2 text-sm font-medium text-[rgb(var(--color-accent))] hover:underline"
           >
-            <CheckSquare size={15} aria-hidden="true" /> {t('bulk.selectMembers')}
+            <CheckSquare size={15} aria-hidden="true" /> {ta('bulk.selectMembers')}
           </button>
         </div>
       )}
@@ -273,7 +274,7 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin }: Me
                     checked={selectedIds.has(m.userId)}
                     onChange={() => toggleSelected(m.userId)}
                     onClick={(e) => e.stopPropagation()}
-                    aria-label={t('bulk.selectMember', { name: m.displayName })}
+                    aria-label={ta('bulk.selectMember', { name: m.displayName })}
                     className="w-4 h-4 shrink-0 accent-[rgb(var(--color-accent))]"
                   />
                 )}
@@ -377,7 +378,7 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin }: Me
                           <DropdownMenuSeparator />
                           <DropdownMenuItem onClick={() => setEditingPerms(m)}>
                             <ShieldCheck size={14} aria-hidden="true" />
-                            {t('permissions.menuItem')}
+                            {ta('permissions.menuItem')}
                           </DropdownMenuItem>
                         </>
                       )}

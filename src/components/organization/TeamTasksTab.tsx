@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { startOfDay, subDays } from 'date-fns';
-import { Pencil, Trash2, MoreHorizontal, UserPlus, CalendarPlus, MessageSquare } from 'lucide-react';
+import { Pencil, Trash2, MoreHorizontal, UserPlus, CalendarPlus, MessageSquare, CheckSquare } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -26,6 +26,9 @@ import MemberAvatar from './MemberAvatar';
 import { TeamTasksSkeleton } from './OrgLoadingSkeletons';
 import TeamTasksToolbar, { type SortField } from './TeamTasksToolbar';
 import TruncatedDataNotice from './TruncatedDataNotice';
+import { canDeleteTeamTask, canEditTeamTask } from './team-task-rights';
+import BulkActionsBar from './BulkActionsBar';
+import { useTeamTasksSelection } from './use-team-tasks-selection';
 import TeamTasksProjectChips from './TeamTasksProjectChips';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { useT } from '@/i18n/useT';
@@ -73,6 +76,7 @@ const ROWS_PAGE = 100;
 const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: TeamTasksTabProps) => {
   const { can, canAssign } = useMyOrgPermissions(orgId);
   const { t, tp } = useT('org');
+  const { t: ta, tp: tpa } = useT('orgAdmin');
   const { user } = useAuth();
   const { data: allProjects = [], isLoading: loadingProjects } = useTeamProjects(orgId);
 
@@ -216,6 +220,24 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
       },
     });
 
+  // Actions groupées, AUSSI dans la section Tâches (audit du 2026-09-24 :
+  // la barre n'existait que dans Projets). Même hook, même barre, mêmes
+  // « Annuler ».
+  const { selectMode, setSelectMode, selectedIds, toggleSelect, bulkBarProps } = useTeamTasksSelection({
+    visibleTasks: sortedTasks,
+    setCompleted: (task, completed) => updateTask.mutate({ taskId: task.id, input: { completed } }),
+    deleteTask: (taskId) => deleteTask.mutate(taskId),
+    restoreTask: (task) => restoreTask.mutate(task.id),
+    deletedLabel: (count) => tp('projects.bulkDeleted', count),
+    updateTask: (task, input) => updateTask.mutate({ taskId: task.id, input }),
+    labels: {
+      reassigned: (count) => tpa('bulk.reassigned', count),
+      moved: (count) => tpa('bulk.moved', count),
+      statusChanged: (count) => tpa('bulk.statusChanged', count),
+    },
+    canAssign,
+  });
+
   const hasActiveFilter = !!projectFilter || searchTerm.trim() !== '' || statusFilter !== 'open';
 
   return (
@@ -248,6 +270,19 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
       />
 
       {!isLoading && truncated && <TruncatedDataNotice limit={TEAM_TASKS_READ_LIMIT} />}
+
+      {!isLoading && sortedTasks.length > 0 && !selectMode && (
+        <div className="flex justify-end -mt-2">
+          <button
+            type="button"
+            onClick={() => setSelectMode(true)}
+            aria-label={ta('bulk.selectToggleAria')}
+            className="inline-flex items-center gap-1.5 min-h-11 px-2 text-sm font-medium text-[rgb(var(--color-accent))] hover:underline"
+          >
+            <CheckSquare size={15} aria-hidden="true" /> {ta('bulk.selectToggle')}
+          </button>
+        </div>
+      )}
 
       {/* Table */}
       {/* Premier chargement d'abord : `projects.length === 0` est vrai tant que
@@ -296,17 +331,27 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
                   <tr
                     key={task.id}
                     className="transition-colors cursor-pointer hover:bg-[rgb(var(--color-hover))]"
-                    onClick={() => setTaskModal({ mode: 'edit', task })}
+                    onClick={() => (selectMode ? toggleSelect(task) : setTaskModal({ mode: 'edit', task }))}
                     style={{ borderLeft: overdue ? '4px solid rgb(var(--color-error))' : '3px solid transparent' }}
                   >
                     <td className="px-2 py-4 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                      {selectMode ? (
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.has(task.id)}
+                          onChange={() => toggleSelect(task)}
+                          aria-label={t('projects.selectTask', { name: task.name })}
+                          className="w-4 h-4 accent-[rgb(var(--color-accent))] cursor-pointer"
+                        />
+                      ) : (
                       <button
                         type="button"
                         onClick={() => toggleComplete(task)}
+                        disabled={!canEditTeamTask(can, currentUserId, task)}
                         role="checkbox"
                         aria-checked={task.completed}
                         aria-label={task.completed ? t('projects.markIncomplete') : t('projects.markComplete')}
-                        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all shrink-0 ${
+                        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all shrink-0 disabled:opacity-40 disabled:cursor-not-allowed ${
                           task.completed
                             ? 'bg-[rgb(var(--color-accent-solid))] border-[rgb(var(--color-accent-solid))]'
                             : 'border-[rgb(var(--color-border-strong))] hover:border-[rgb(var(--color-accent))]'
@@ -318,6 +363,7 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
                           </svg>
                         )}
                       </button>
+                      )}
                     </td>
                     <td className="px-2 py-4">
                       <div className="flex justify-center">
@@ -375,7 +421,8 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
                         return (
                           <DropdownMenu>
                             <DropdownMenuTrigger
-                              className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-semibold border transition-colors hover:bg-[rgb(var(--color-hover))]"
+                              disabled={!canEditTeamTask(can, currentUserId, task)}
+                              className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-semibold border transition-colors hover:bg-[rgb(var(--color-hover))] disabled:opacity-50 disabled:cursor-not-allowed"
                               style={{ borderColor: 'rgb(var(--color-border))', color: 'rgb(var(--color-text-secondary))' }}
                               aria-label={t('projects.tasksTabStatusAria', { name: task.name })}
                             >
@@ -419,7 +466,14 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
                           </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => setTaskModal({ mode: 'edit', task })}>
+                          {/* Grisé plutôt que masqué : ouvrir la tâche reste
+                              possible par la ligne (lecture), c'est l'édition
+                              que le serveur refuserait (audit du 2026-09-24). */}
+                          <DropdownMenuItem
+                            disabled={!canEditTeamTask(can, currentUserId, task)}
+                            title={canEditTeamTask(can, currentUserId, task) ? undefined : t('rights.editTaskDenied')}
+                            onClick={() => setTaskModal({ mode: 'edit', task })}
+                          >
                             <Pencil aria-hidden="true" /> {t('projects.tasksTabEdit')}
                           </DropdownMenuItem>
                           {members.some((m) => canAssign(m.userId)) && (
@@ -430,7 +484,7 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
                           <DropdownMenuItem onClick={() => setSchedulingTask(task)}>
                             <CalendarPlus aria-hidden="true" /> {t('projects.tasksTabScheduleAction')}
                           </DropdownMenuItem>
-                          {(can['task.deleteAny'] || task.createdBy === currentUserId) && (
+                          {canDeleteTeamTask(can, currentUserId, task) && (
                             <DropdownMenuItem
                               variant="destructive"
                               onClick={() => removeWithUndo(task)}
@@ -473,6 +527,14 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
           onDelete={removeWithUndo}
           onClose={() => setTaskModal(null)}
           isManager={isManager}
+        />
+      )}
+
+      {selectMode && (
+        <BulkActionsBar
+          {...bulkBarProps}
+          assignableMembers={members.filter((m) => canAssign(m.userId))}
+          projects={projects}
         />
       )}
 

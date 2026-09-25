@@ -21,15 +21,15 @@ interface PyramidPendingConfirmProps {
  *   personne concernée est aussi prévenue par notification (mig. 164).
  */
 const PyramidPendingConfirm = ({ pending, onConfirm, onCancel }: PyramidPendingConfirmProps) => {
-  const { t, tp } = useT('org');
+  const { t: ta, tp: tpa } = useT('orgAdmin');
   if (!pending) return null;
 
   if (pending.kind === 'undo') {
     return (
       <OrgConfirmDialog
-        title={t('pyramid.undoTitle')}
-        description={tp('pyramid.undoConfirm', pending.count)}
-        confirmLabel={t('pyramid.undoAction')}
+        title={ta('pyramid.undoTitle')}
+        description={tpa('pyramid.undoConfirm', pending.count)}
+        confirmLabel={ta('pyramid.undoAction')}
         tone="accent"
         onConfirm={onConfirm}
         onCancel={onCancel}
@@ -39,15 +39,15 @@ const PyramidPendingConfirm = ({ pending, onConfirm, onCancel }: PyramidPendingC
 
   const { losesManagerRole, becomesManager } = pending.change;
   const impact = [
-    ...(losesManagerRole ? [t('pyramid.positionLoses', { name: losesManagerRole.displayName })] : []),
-    ...(becomesManager ? [t('pyramid.positionGains', { name: becomesManager.displayName })] : []),
+    ...(losesManagerRole ? [ta('pyramid.positionLoses', { name: losesManagerRole.displayName })] : []),
+    ...(becomesManager ? [ta('pyramid.positionGains', { name: becomesManager.displayName })] : []),
   ];
   return (
     <OrgConfirmDialog
-      title={t('pyramid.positionTitle', { name: pending.memberName })}
-      description={t('pyramid.positionBody')}
+      title={ta('pyramid.positionTitle', { name: pending.memberName })}
+      description={ta('pyramid.positionBody')}
       impact={impact}
-      confirmLabel={t('pyramid.positionConfirm')}
+      confirmLabel={ta('pyramid.positionConfirm')}
       tone="accent"
       onConfirm={onConfirm}
       onCancel={onCancel}

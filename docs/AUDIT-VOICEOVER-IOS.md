@@ -323,7 +323,7 @@ vérifie**. Et **quinze** des 52 surfaces câblées vivent ici.
 | 9.5 | barre d'onglets de l'organisation | l'onglet actif dit « page active » | `aria-current="page"` posé à la main dans `OrgTabsBar` |
 | 9.6 | annuaire › fiche d'un membre | `MemberSheet` : M1 « **Fiche de \<nom\>** » | |
 | 9.7 | annuaire › « … » › modifier les permissions | `MemberPermissionsSheet` : M1 « **Modifier les permissions de \<nom\>** », et chaque droit est une « case à cocher » avec son état | dix droits plus une portée d'assignation : le formulaire le plus dense du produit |
-| 9.8 | annuaire › « … » › réassigner le manager | `ReassignManagerSheet` : M1 « **Réassigner l'équipe de \<nom\>** ». ⚠️ **exception M4** pendant l'opération | |
+| 9.8 | annuaire › « … » › organiser le départ | `ReassignManagerSheet` **retirée le 2026-09-25** : le retrait passe par `OffboardMemberDialog` (assistant de départ), à mesurer | |
 | 9.9 | pyramide › ajouter sous quelqu'un | `AddUnderSheet` : M1 « **Ajouter sous \<nom\>** » | |
 | 9.10 | pyramide › placer un membre | `MemberPlacementSheet` : M1 « **Placer \<nom\>** » | 🇫🇷 nom écrit en dur en français |
 | 9.11 | créer une équipe | `CreateTeamModal` : M1 « **Nouvelle équipe** », et chaque pastille de couleur dit son état | `aria-checked` posé sur les couleurs |

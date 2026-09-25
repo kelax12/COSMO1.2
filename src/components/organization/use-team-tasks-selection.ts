@@ -13,6 +13,7 @@
 
 import { useMemo, useState } from 'react';
 import { showUndoToast } from '@/lib/undo-toast';
+import { useT } from '@/i18n/useT';
 import type { TeamTask, TeamTaskStatus, UpdateTeamTaskInput } from '@/modules/team-projects';
 
 interface Options {
@@ -50,6 +51,7 @@ export const nextAssignees = (current: string[], userId: string | null): string[
 export const useTeamTasksSelection = ({
   visibleTasks, setCompleted, deleteTask, restoreTask, deletedLabel, updateTask, labels, canAssign,
 }: Options) => {
+  const { tp: tpa } = useT('orgAdmin');
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
 
@@ -148,7 +150,48 @@ export const useTeamTasksSelection = ({
       labels?.statusChanged,
     );
 
+  // Priorité et échéance en lot (audit du 2026-09-24 : « trois actions
+  // seulement »). Même filet que les autres gestes : un « Annuler » qui réécrit
+  // la valeur d'avant, tâche par tâche.
+  const bulkSetPriority = (priority: number) =>
+    applyWithUndo(
+      (task) => (task.priority === priority ? null : { priority }),
+      (task) => ({ priority: task.priority }),
+      (count) => tpa('bulk.priorityChanged', count),
+    );
+
+  /** `''` retire l'échéance. Une date de début postérieure est ramenée à l'échéance (CHECK mig. 153). */
+  const bulkSetDeadline = (deadline: string) =>
+    applyWithUndo(
+      (task) => {
+        if ((task.deadline ?? '') === deadline) return null;
+        const clampStart = !!deadline && !!task.startDate && task.startDate > deadline;
+        return clampStart ? { deadline, startDate: deadline } : { deadline };
+      },
+      (task) => ({ deadline: task.deadline ?? '', startDate: task.startDate ?? '' }),
+      (count) => tpa('bulk.deadlineChanged', count),
+    );
+
+  /** Tout ce que `BulkActionsBar` consomme, d'un seul tenant. */
+  const bulkBarProps = {
+    count: selectedTasks.length,
+    hasOpen: selectedTasks.some((t) => !t.completed),
+    hasCompleted: selectedTasks.some((t) => t.completed),
+    onComplete: () => bulkSetCompleted(true),
+    onReopen: () => bulkSetCompleted(false),
+    onDelete: bulkDelete,
+    onExit: exitSelectMode,
+    onAssign: bulkAssign,
+    onMove: bulkMove,
+    onSetStatus: bulkSetStatus,
+    onSetPriority: bulkSetPriority,
+    onSetDeadline: bulkSetDeadline,
+  };
+
   return {
+    bulkBarProps,
+    bulkSetPriority,
+    bulkSetDeadline,
     selectMode,
     setSelectMode,
     selectedIds,

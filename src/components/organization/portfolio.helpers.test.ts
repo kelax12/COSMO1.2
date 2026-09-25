@@ -145,3 +145,16 @@ describe('modèles', () => {
     expect(inst.tasks[0].startDate! <= inst.tasks[0].deadline!).toBe(true);
   });
 });
+
+// « Mes projets » (audit du 2026-09-24, une personne sur plusieurs projets).
+import { isMyProject } from './portfolio.helpers';
+
+describe('isMyProject', () => {
+  it('responsable, ou au moins une tâche OUVERTE assignée', () => {
+    expect(isMyProject(project({ ownerId: 'me' }), 'me', [])).toBe(true);
+    expect(isMyProject(project({}), 'me', [task({ assigneeIds: ['me'] })])).toBe(true);
+    expect(isMyProject(project({}), 'me', [task({ assigneeIds: ['me'], completed: true })])).toBe(false);
+    expect(isMyProject(project({}), 'me', [task({ assigneeIds: ['me'], projectId: 'other' })])).toBe(false);
+    expect(isMyProject(project({ ownerId: 'me' }), undefined, [])).toBe(false);
+  });
+});

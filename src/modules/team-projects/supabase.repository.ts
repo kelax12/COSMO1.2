@@ -34,7 +34,8 @@ import {
   TeamProjectTeam,
 } from './types';
 import * as portfolio from './supabase.portfolio';
-import * as audience from './audience.repository';
+
+const audience = () => import('./audience.repository');
 import {
   mapProject,
   mapComment,
@@ -156,11 +157,12 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
   addProjectDependency(projectId: string, dependsOnId: string, orgId: string): Promise<void> { return portfolio.addProjectDependency(projectId, dependsOnId, orgId); }
   removeProjectDependency(projectId: string, dependsOnId: string): Promise<void> { return portfolio.removeProjectDependency(projectId, dependsOnId); }
 
-  // Équipes associées et purge (mig. 164).
-  getProjectTeams(orgId: string): Promise<TeamProjectTeam[]> { return audience.getProjectTeams(orgId); }
-  addProjectTeam(orgId: string, projectId: string, teamId: string): Promise<void> { return audience.addProjectTeam(orgId, projectId, teamId); }
-  removeProjectTeam(projectId: string, teamId: string): Promise<void> { return audience.removeProjectTeam(projectId, teamId); }
-  purgeArchivedProject(projectId: string): Promise<void> { return audience.purgeArchivedProject(projectId); }
+  // Équipes associées et purge (mig. 164) — chargées à la demande : ce
+  // repository vit dans le chunk d'entrée, pas ces quatre gestes.
+  async getProjectTeams(orgId: string): Promise<TeamProjectTeam[]> { return (await audience()).getProjectTeams(orgId); }
+  async addProjectTeam(orgId: string, projectId: string, teamId: string): Promise<void> { return (await audience()).addProjectTeam(orgId, projectId, teamId); }
+  async removeProjectTeam(projectId: string, teamId: string): Promise<void> { return (await audience()).removeProjectTeam(projectId, teamId); }
+  async purgeArchivedProject(projectId: string): Promise<void> { return (await audience()).purgeArchivedProject(projectId); }
 
   async updateProject(projectId: string, input: UpdateTeamProjectInput): Promise<TeamProject> {
     if (!supabase) throw new Error('Supabase not configured');

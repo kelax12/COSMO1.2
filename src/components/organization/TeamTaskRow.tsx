@@ -5,6 +5,8 @@ import { useMyOrgPermissions, type OrgMember } from '@/modules/organizations';
 import type { TeamTask } from '@/modules/team-projects';
 import { PRIORITY_META, isTaskOverdue, taskDisplayStatus, priorityLabelOf } from './team-projects.helpers';
 import AssigneesPicker from './AssigneesPicker';
+import { canDeleteTeamTask, canEditTeamTask } from './team-task-rights';
+import { useAuth } from '@/modules/auth/AuthContext';
 import { useT } from '@/i18n/useT';
 
 interface TeamTaskRowProps {
@@ -28,7 +30,12 @@ const TeamTaskRow = ({
 }: TeamTaskRowProps) => {
   // Portée d'assignation : la ligne ne connaît que sa tâche, et `task.orgId`
   // suffit — le hook résout l'utilisateur courant lui-même.
-  const { canAssign } = useMyOrgPermissions(task.orgId);
+  const { canAssign, can } = useMyOrgPermissions(task.orgId);
+  const { user } = useAuth();
+  // Audit du 2026-09-24 : une action que le serveur refusera n'est plus
+  // proposée (suppression) ou se grise (complétion), au lieu d'échouer après.
+  const canEdit = canEditTeamTask(can, user?.id, task);
+  const canDelete = canDeleteTeamTask(can, user?.id, task);
   const { t } = useT('org');
   const deadlineDate = task.deadline ? parseISO(task.deadline) : null;
   const overdue = isTaskOverdue(task);
@@ -57,9 +64,11 @@ const TeamTaskRow = ({
       <button
         type="button"
         onClick={() => onToggleComplete(task)}
+        disabled={!canEdit}
+        title={canEdit ? undefined : t('rights.editTaskDenied')}
         aria-label={task.completed ? t('projects.markIncomplete') : t('projects.markComplete')}
         aria-pressed={task.completed}
-        className={`w-6 h-6 rounded-md border flex items-center justify-center shrink-0 transition-colors ${
+        className={`w-6 h-6 rounded-md border flex items-center justify-center shrink-0 transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
           task.completed
             ? 'bg-indigo-600 border-indigo-600 text-white'
             : 'border-[rgb(var(--color-border))] hover:border-indigo-500'
@@ -124,7 +133,8 @@ const TeamTaskRow = ({
         revealAddOnHover
       />
 
-      {/* Supprimer */}
+      {/* Supprimer — absent sans le droit : un bouton qui échoue est pire. */}
+      {canDelete && (
       <button
         type="button"
         onClick={() => onDelete(task)}
@@ -133,6 +143,7 @@ const TeamTaskRow = ({
       >
         <Trash2 size={15} aria-hidden="true" />
       </button>
+      )}
     </div>
   );
 };

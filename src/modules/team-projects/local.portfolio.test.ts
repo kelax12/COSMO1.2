@@ -58,3 +58,33 @@ describe('portefeuille en démo (mig. 153)', () => {
     expect(tpl?.templatePayload?.tasks).toHaveLength(1);
   });
 });
+
+// Mig. 164 en démo : équipes associées, purge d'un projet archivé.
+describe('audience et purge en démo (mig. 164)', () => {
+  beforeEach(() => localStorage.clear());
+
+  it('associe et retire une équipe, sans doublon', async () => {
+    const repo = new LocalStorageTeamProjectsRepository();
+    await repo.addProjectTeam('org-demo-1', 'tproj-1', 'team-x');
+    await repo.addProjectTeam('org-demo-1', 'tproj-1', 'team-x');
+    expect(await repo.getProjectTeams('org-demo-1')).toEqual([{ projectId: 'tproj-1', teamId: 'team-x' }]);
+    await repo.removeProjectTeam('tproj-1', 'team-x');
+    expect(await repo.getProjectTeams('org-demo-1')).toEqual([]);
+  });
+
+  it('refuse une association hors de l’organisation du projet', async () => {
+    const repo = new LocalStorageTeamProjectsRepository();
+    await expect(repo.addProjectTeam('autre-org', 'tproj-1', 'team-x')).rejects.toBeTruthy();
+  });
+
+  it('refuse de purger un projet ACTIF, purge un archivé avec ses tâches', async () => {
+    const repo = new LocalStorageTeamProjectsRepository();
+    await expect(repo.purgeArchivedProject('tproj-1')).rejects.toBeTruthy();
+    const tasksBefore = (await repo.getTasks('org-demo-1')).filter((t) => t.projectId === 'tproj-1');
+    expect(tasksBefore.length).toBeGreaterThan(0);
+    await repo.updateProject('tproj-1', { archived: true });
+    await repo.purgeArchivedProject('tproj-1');
+    expect((await repo.getProjects('org-demo-1')).some((p) => p.id === 'tproj-1')).toBe(false);
+    expect((await repo.getTasks('org-demo-1')).some((t) => t.projectId === 'tproj-1')).toBe(false);
+  });
+});

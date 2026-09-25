@@ -112,12 +112,6 @@
     "atomicHint": "The project, its tasks and its milestones are created together: if one fails, nothing is created."
   },
   "bulk": {
-    "assign": "Assign",
-    "assignTo": "Add as assignee",
-    "unassignAll": "Remove all assignees",
-    "move": "Move",
-    "moveTo": "Move to project",
-    "status": "Status",
     "reassigned_one": "{{count}} task reassigned",
     "reassigned_other": "{{count}} tasks reassigned",
     "moved_one": "{{count}} task moved",

@@ -56,9 +56,7 @@ import { SupabaseTeamProjectsRepository } from '@/modules/team-projects/supabase
 // 2026-09-23, mig. 160 à 162) : deux dépôts de plus plutôt que deux dépôts
 // existants gonflés au-delà de 600 lignes.
 import type { IOrgGovernanceRepository } from '@/modules/organizations/governance.repository';
-import { SupabaseOrgGovernanceRepository } from '@/modules/organizations/governance.supabase.repository';
 import type { IOkrExecutionRepository } from '@/modules/team-okrs/execution.repository';
-import { SupabaseOkrExecutionRepository } from '@/modules/team-okrs/execution.supabase.repository';
 
 // Team OKRs (mode entreprise)
 import { ITeamOKRsRepository } from '@/modules/team-okrs/repository';
@@ -358,7 +356,13 @@ export function getOrgGovernanceRepository(): IOrgGovernanceRepository {
       ? lazyDemoRepository<IOrgGovernanceRepository>(() =>
           import('./demo-repositories').then((m) => m.createDemoOrgGovernanceRepository()),
         )
-      : new SupabaseOrgGovernanceRepository();
+      // Chargé à la demande AUSSI en production (2026-09-25) : importé en dur,
+      // ce repository entrait dans le chunk d'ENTRÉE dès qu'un écran lazy s'en
+      // servait (+1,9 ko gzip), pour des gestes d'admin que la plupart des
+      // visites ne font jamais. L'interface est 100 % asynchrone.
+      : lazyDemoRepository<IOrgGovernanceRepository>(() =>
+          import('@/modules/organizations/governance.supabase.repository').then((m) => new m.SupabaseOrgGovernanceRepository()),
+        );
   }
   return orgGovernanceRepository;
 }
@@ -370,7 +374,10 @@ export function getOkrExecutionRepository(): IOkrExecutionRepository {
       ? lazyDemoRepository<IOkrExecutionRepository>(() =>
           import('./demo-repositories').then((m) => m.createDemoOkrExecutionRepository()),
         )
-      : new SupabaseOkrExecutionRepository();
+      // Même raison que la gouvernance : hors du chunk d'entrée.
+      : lazyDemoRepository<IOkrExecutionRepository>(() =>
+          import('@/modules/team-okrs/execution.supabase.repository').then((m) => new m.SupabaseOkrExecutionRepository()),
+        );
   }
   return okrExecutionRepository;
 }

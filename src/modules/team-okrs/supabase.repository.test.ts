@@ -35,7 +35,8 @@ describe('SupabaseTeamOKRsRepository — getAll', () => {
 
     expect(supabaseMock.argsOf('team_okrs', 'eq')).toEqual(['org_id', 'org1']);
     expect(supabaseMock.argsOf('team_okrs', 'order')).toEqual(['created_at', { ascending: false }]);
-    expect(supabaseMock.argsOf('team_okrs', 'limit')).toEqual([200]);
+    // M1 (gouvernance) : lecture paginée, plus de plafond silencieux à 200.
+    expect(supabaseMock.argsOf('team_okrs', 'range')).toEqual([0, 999]);
     expect(supabaseMock.argsOf('team_key_results', 'eq')).toEqual(['org_id', 'org1']);
     expect(supabaseMock.argsOf('team_okr_teams', 'select')).toEqual(['okr_id, team_id']);
     expect(supabaseMock.argsOf('team_okr_teams', 'eq')).toEqual(['org_id', 'org1']);
@@ -44,10 +45,13 @@ describe('SupabaseTeamOKRsRepository — getAll', () => {
       id: 'o1', orgId: 'org1', title: 'Croissance', description: 'desc', categoryId: 'cat1',
       startDate: '2026-07-01', endDate: '2026-09-30', createdBy: 'u1',
       createdAt: okrRow.created_at, teamIds: ['t1'],
+      // Mig. 160 : cycle et objectif parent, absents de la ligne → null.
+      cycleId: null, parentOkrId: null,
       keyResults: [{
         id: 'kr1', okrId: 'o1', orgId: 'org1', title: 'MRR', currentValue: 5,
         targetValue: 10, unit: 'k€', assigneeId: 'u2', completed: false,
         completedAt: null, weight: 3, estimatedTime: 45,
+        progressMode: 'manual', contributorIds: [],
       }],
     }]);
   });

@@ -3,6 +3,7 @@ import { Copy, Check, RefreshCw } from 'lucide-react';
 import { toast } from '@/lib/toast';
 import { useRegenerateJoinCode } from '@/modules/organizations';
 import { useT } from '@/i18n/useT';
+import OrgConfirmDialog from './OrgConfirmDialog';
 
 interface OrgJoinCodeCardProps {
   code: string;
@@ -20,6 +21,7 @@ interface OrgJoinCodeCardProps {
 const OrgJoinCodeCard = ({ code, orgId, isAdmin = false, seatsFull = false }: OrgJoinCodeCardProps) => {
   const { t } = useT('org');
   const [copied, setCopied] = useState(false);
+  const [confirming, setConfirming] = useState(false);
   const regenerateMutation = useRegenerateJoinCode();
 
   const copy = async () => {
@@ -33,10 +35,9 @@ const OrgJoinCodeCard = ({ code, orgId, isAdmin = false, seatsFull = false }: Or
     }
   };
 
-  const regenerate = () => {
-    if (!window.confirm(t('invite.regenerateConfirm'))) return;
-    regenerateMutation.mutate(orgId);
-  };
+  // Confirmation au thème (audit du 2026-09-24) : `window.confirm` ne disait
+  // pas que les demandes déjà envoyées avec l'ancien code restent valables.
+  const regenerate = () => setConfirming(true);
 
   return (
     <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4">
@@ -74,6 +75,18 @@ const OrgJoinCodeCard = ({ code, orgId, isAdmin = false, seatsFull = false }: Or
           </button>
         )}
       </div>
+      {confirming && (
+        <OrgConfirmDialog
+          title={t('invite.regenerate')}
+          description={t('invite.regenerateConfirm')}
+          impact={[t('invite.regenerateImpactOld'), t('invite.regenerateImpactPending')]}
+          confirmLabel={t('invite.regenerate')}
+          tone="accent"
+          pending={regenerateMutation.isPending}
+          onConfirm={() => regenerateMutation.mutate(orgId, { onSettled: () => setConfirming(false) })}
+          onCancel={() => setConfirming(false)}
+        />
+      )}
     </div>
   );
 };

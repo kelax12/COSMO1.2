@@ -14,11 +14,11 @@ interface MemberAccessBadgeProps {
  * ordinaire : l'annuaire ne doit pas se couvrir d'étiquettes qui ne disent rien.
  */
 const MemberAccessBadge = ({ member }: MemberAccessBadgeProps) => {
-  const { t } = useT('org');
+  const { t: ta } = useT('orgAdmin');
   if (member.suspendedAt) {
     return (
       <span className="inline-flex items-center gap-1 shrink-0 rounded-full px-2 py-0.5 text-caption font-semibold bg-amber-500/15 text-amber-700 dark:text-amber-300">
-        <PauseCircle size={11} aria-hidden="true" /> {t('lifecycle.badgeSuspended')}
+        <PauseCircle size={11} aria-hidden="true" /> {ta('lifecycle.badgeSuspended')}
       </span>
     );
   }
@@ -34,7 +34,7 @@ const MemberAccessBadge = ({ member }: MemberAccessBadgeProps) => {
         }`}
       >
         <Clock size={11} aria-hidden="true" />
-        {expired ? t('lifecycle.badgeExpired', { date }) : t('lifecycle.badgeUntil', { date })}
+        {expired ? ta('lifecycle.badgeExpired', { date }) : ta('lifecycle.badgeUntil', { date })}
       </span>
     );
   }

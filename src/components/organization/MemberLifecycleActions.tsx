@@ -42,7 +42,7 @@ interface MemberLifecycle {
 export const useMemberLifecycle = ({
   orgId, members, ownerId, currentUserId, isAdmin,
 }: UseMemberLifecycleArgs): MemberLifecycle => {
-  const { t } = useT('org');
+  const { t: ta } = useT('orgAdmin');
   const [accessFor, setAccessFor] = useState<OrgMember | null>(null);
   const [departureFor, setDepartureFor] = useState<{ member: OrgMember; mode: 'remove' | 'transfer' } | null>(null);
 
@@ -52,19 +52,19 @@ export const useMemberLifecycle = ({
       <>
         <DropdownMenuItem onClick={() => setAccessFor(member)}>
           <ShieldOff size={14} aria-hidden="true" />
-          {member.suspendedAt ? t('lifecycle.menuReactivate') : t('lifecycle.menuAccess')}
+          {member.suspendedAt ? ta('lifecycle.menuReactivate') : ta('lifecycle.menuAccess')}
         </DropdownMenuItem>
         {/* Transfert de responsabilité (audit du 2026-09-24) : tâches, subordonnés,
             équipes, projets et KR passent à quelqu'un d'autre, la personne reste. */}
         <DropdownMenuItem onClick={() => setDepartureFor({ member, mode: 'transfer' })}>
-          <ArrowRightLeft size={14} aria-hidden="true" /> {t('lifecycle.menuTransfer')}
+          <ArrowRightLeft size={14} aria-hidden="true" /> {ta('lifecycle.menuTransfer')}
         </DropdownMenuItem>
         <DropdownMenuItem
           variant="destructive"
           onClick={() => setDepartureFor({ member, mode: 'remove' })}
           className="!text-red-500 focus:!text-red-500"
         >
-          <LogOut size={14} className="!text-red-500" aria-hidden="true" /> {t('lifecycle.menuOffboard')}
+          <LogOut size={14} className="!text-red-500" aria-hidden="true" /> {ta('lifecycle.menuOffboard')}
         </DropdownMenuItem>
       </>
     );

@@ -92,79 +92,9 @@
     "orgCodeTitle": "Organization invitation code",
     "seatsFullLink": "This company has reached its seat limit: a new member could not join with this link. Upgrade the plan to add more.",
     "seatsFullCode": "This company has reached its seat limit: a request made with this code could not be accepted.",
-    "seatsFullTitle": "No seats left"
-  },
-  "pyramid": {
-    "directReports_one": ", {{count}} direct report",
-    "directReports_other": ", {{count}} direct reports",
-    "dragToMove": "Drag to move {{name}}",
-    "expandTeam": "Expand {{name}}'s team",
-    "collapseTeam": "Collapse {{name}}'s team",
-    "move": "Move",
-    "nowUnder": "{{name}} now reports to {{manager}}",
-    "detached": "{{name}} is detached from the pyramid",
-    "moved": "{{name}} moved",
-    "reorgSaved": "Reorganisation saved",
-    "undoConfirm_one": "Undo the reorganisation? The move you made will be reverted.",
-    "undoConfirm_other": "Undo the reorganisation? The {{count}} moves you made will be reverted.",
-    "undone": "Changes undone",
-    "dragBanner": "Drag **{{name}}** onto their new manager, or tap a highlighted card.",
-    "detachAria": "Detach {{name}} (unplaced)",
-    "detach": "Detach (unplaced)",
-    "unplaced": "Unplaced ({{count}})",
-    "unplacedHintAdmin": "These members don't report to anyone. Place them in the pyramid.",
-    "unplacedHintMember": "These members don't report to anyone. An administrator needs to place them.",
-    "intro": "The pyramid shows who works with whom: each member reports to a direct manager. Invite your colleagues to build it.",
-    "results_one": "{{count}} result",
-    "results_other": "{{count}} results",
-    "moveCount_one": "{{count}} change",
-    "moveCount_other": "{{count}} changes",
-    "display": "Show",
-    "byTeam": "By team",
-    "chooseView": "Choose the pyramid view",
-    "done": "Done",
-    "reorgBanner": "Reorganisation mode: drag any card onto its new manager.",
-    "noMemberInTeam": "No member placed in this team",
-    "addMembersHint": "Add members to the team from the Members tab.",
-    "toPlaceAria": "Members to place in the pyramid",
-    "toPlace": "To place ({{count}})",
-    "searchPlaceholder": "Search a member…",
-    "searchAria": "Search a member in the pyramid",
-    "clearSearch": "Clear the search",
-    "wholeOrg": "The whole company",
-    "add": "Add",
-    "edit": "Edit",
-    "you": "You",
-    "roleAdmin": "admin",
-    "roleManager": "manager",
-    "roleMember": "member",
-    "cardAria": "{{name}}, {{role}}{{reports}}",
-    "placeUnder": "Place {{member}} under {{target}}",
-    "badgeAdmin": "Admin",
-    "badgeManager": "Manager",
-    "badgeMember": "Member",
-    "directCount_one": "{{count}} direct report",
-    "directCount_other": "{{count}} direct reports",
-    "totalSuffix": " · {{count}} in total",
-    "dragEachHint": "Drag each person onto their manager in the pyramid.",
-    "place": "Place",
-    "overlayToggle": "Show workload",
-    "overlayHint": "Colors cards by estimated time left",
-    "seeTasksAction": "See their tasks",
-    "emptyTitle": "Your pyramid is empty",
-    "inviteFirst": "Invite your first teammate",
-    "workloadTitle_one": "{{duration}} · {{count}} open",
-    "workloadTitle_other": "{{duration}} · {{count}} open",
-    "workloadTitleOverdue_one": "{{duration}} · {{count}} open · {{overdue}} overdue",
-    "workloadTitleOverdue_other": "{{duration}} · {{count}} open · {{overdue}} overdue",
-    "dragHint": "Drag {{name}} into the pyramid",
-    "undoTitle": "Undo the reorganisation?",
-    "undoAction": "Revert",
-    "positionTitle": "Move {{name}}?",
-    "positionBody": "This move changes who manages whom. The people involved will be notified.",
-    "positionLoses": "{{name}} will no longer manage anyone: their team's Org chart and Statistics will be closed to them.",
-    "positionGains": "{{name}} will become a manager: Org chart and Statistics will open to them.",
-    "positionConfirm": "Move"
+    "seatsFullTitle": "No seats left",
+    "regenerateImpactOld": "The old code stops working immediately: you will need to share the new one.",
+    "regenerateImpactPending": "Join requests already sent still await approval."
   },
   "overview": {
     "completed": "Completed",
@@ -583,7 +513,9 @@
     "moreMembers_one": "+{{count}} more",
     "moreMembers_other": "+{{count}} more",
     "fewerMembers": "Show fewer",
-    "emerald": "Emerald"
+    "emerald": "Emerald",
+    "memberCount_one": "{{count}} member",
+    "memberCount_other": "{{count}} members"
   },
   "project": {
     "newAria": "New team project",
@@ -632,20 +564,6 @@
       "confirm": "Change team"
     },
     "colorAria": "Project colour"
-  },
-  "deleteOrg": {
-    "irreversible": "This cannot be undone.",
-    "membersLose_one": "The {{count}} member loses access immediately.",
-    "membersLose_other": "The {{count}} members lose access immediately.",
-    "projectsDeleted": "All projects, team tasks and OKRs are permanently deleted.",
-    "teamsErased": "Teams, invitations and the pyramid are erased.",
-    "subscriptionFirst": "An ongoing subscription must be cancelled FIRST: deletion is refused while it is active.",
-    "evidenceKept": "Renewal notices and withdrawal waivers are kept: they are legal records, not company data.",
-    "personalSafe": "Members' personal data is not affected.",
-    "confirmPrefix": "To confirm, type",
-    "confirmSuffix": "below:",
-    "confirmAction": "Delete this company",
-    "deleting": "Deleting…"
   },
   "consent": {
     "visibility": "Members see your name, your avatar and your activity on team projects (tasks, comments).",
@@ -814,20 +732,6 @@
     "selfMoved": "You moved ",
     "theTeam": "The team"
   },
-  "transfer": {
-    "title": "Transfer ownership of {{org}}",
-    "body": "The chosen member becomes owner and administrator. You remain an administrator, but only the new owner will be able to transfer again or delete the company.",
-    "newOwner": "New owner",
-    "choose": "Choose a member…",
-    "pending": "Transferring…",
-    "confirm": "Transfer ownership",
-    "billingTitle": "Billing follows the owner",
-    "billingSubscription": "The company subscription continues without interruption: the new owner will manage it (plan, cancellation, refund).",
-    "billingNoSubscription": "No paid subscription is running; if one is taken out, the new owner will manage it.",
-    "billingInvoices": "Past and future invoices will be available to the new owner, from the Billing tab.",
-    "billingCard": "The saved payment method stays the current one until the new owner changes it: remember to tell them.",
-    "billingYou": "You will lose access to billing as soon as you confirm."
-  },
   "summary": {
     "barLabel": "{{completed}} completed, {{inProgress}} in progress, {{overdue}} overdue",
     "empty": "No data.",
@@ -853,22 +757,6 @@
     "formerMember": "Former member",
     "deleted": "Comment deleted",
     "saveFirst": "Save the task to add comments."
-  },
-  "leaveDialog": {
-    "body": "You'll immediately lose access to the team's projects, tasks and OKRs. Your personal data (tasks, habits, calendar) is not affected. You can come back with a new invitation code.",
-    "title": "Leave {{org}}?",
-    "impactTitle": "What you leave behind",
-    "impactTasks_one": "{{count}} open task assigned to you will be unassigned",
-    "impactTasks_other": "{{count}} open tasks assigned to you will be unassigned",
-    "impactReports_one": "{{count}} direct report will move up under your manager",
-    "impactReports_other": "{{count}} direct reports will move up under your manager",
-    "impactLeads_one": "{{count}} team will lose its lead",
-    "impactLeads_other": "{{count}} teams will lose their lead",
-    "impactProjects_one": "{{count}} project you own will have no owner",
-    "impactProjects_other": "{{count}} projects you own will have no owner",
-    "organize": "Hand over my work first",
-    "confirm": "Leave the company",
-    "pending": "Leaving…"
   },
   "removeMemberDialog": {
     "body": "This person will immediately lose access to the company's projects, tasks and OKRs. Their personal data (tasks, habits, calendar) is not affected. They can come back with a new invitation code."
@@ -967,24 +855,6 @@
     "purple": "Purple",
     "green": "Green",
     "slate": "Slate"
-  },
-  "weeklyReview": {
-    "title": "Weekly review",
-    "subtitle": "Four questions to prepare your Monday.",
-    "open": "Weekly review",
-    "progressTitle": "What moved forward",
-    "vsLastWeek": "{{change}}% vs last week",
-    "noComparison": "Nothing to compare",
-    "lastWeekCount_one": "{{count}} completed last week",
-    "lastWeekCount_other": "{{count}} completed last week",
-    "slippedTitle": "What slipped",
-    "slippedEmpty": "No deadline pushed back over the last two weeks.",
-    "tensionTitle": "Who is under pressure",
-    "tensionEmpty": "Nobody above the team's median workload.",
-    "workload": "{{duration}} · {{open}} open",
-    "arbitrageTitle": "Decisions",
-    "arbitrageEmpty": "No overdue task, nothing to decide.",
-    "arbitrageHint": "Open each task to reschedule, reassign or drop it."
   },
   "notifications": {
     "title": "Notifications",
@@ -1126,73 +996,6 @@
     "removeLead": "Remove the lead role",
     "leadHint": "Manages this team's members and projects, without being a company administrator."
   },
-  "permissions": {
-    "title": "{{name}}'s permissions",
-    "aria": "Edit {{name}}'s permissions",
-    "menuItem": "Edit permissions",
-    "intro": "These settings override the rights inferred from the pyramid. A row left on “Default” follows the member's position in the company.",
-    "sectionCreate": "Create",
-    "sectionDelete": "Delete and archive",
-    "sectionOrg": "Organisation",
-    "sectionAssign": "Assign tasks to",
-    "inherited": "Default",
-    "inheritedOn": "Default: allowed",
-    "inheritedOff": "Default: denied",
-    "reset": "Back to default",
-    "ceiling": "You cannot grant a right you do not hold yourself.",
-    "assignNobody": "Nobody — this member cannot assign any task.",
-    "save": "Save",
-    "saving": "Saving…",
-    "cancel": "Cancel",
-    "key": {
-      "task": {
-        "create": "Create tasks",
-        "createHint": "Add a task to a team project.",
-        "editAny": "Edit an unassigned task",
-        "editAnyHint": "Edit a task they neither created nor were assigned. Their own tasks always stay editable.",
-        "deleteAny": "Delete a task",
-        "deleteAnyHint": "Delete a team task created by someone else."
-      },
-      "project": {
-        "create": "Create a project",
-        "createHint": "Open a new team project.",
-        "delete": "Archive or delete a project",
-        "deleteHint": "Move a project out of the active view, or delete it permanently.",
-        "edit": "Edit a project",
-        "editHint": "Rename, describe and schedule a project, change its team or owner."
-      },
-      "okr": {
-        "create": "Create an OKR",
-        "createHint": "Create a team objective and its key results.",
-        "delete": "Delete an OKR",
-        "deleteHint": "Delete a team objective or one of its key results."
-      },
-      "category": {
-        "manage": "Manage categories",
-        "manageHint": "Create, rename and delete project and OKR categories."
-      },
-      "team": {
-        "create": "Create a team",
-        "createHint": "Create a cross-functional team and set its members."
-      },
-      "member": {
-        "invite": "Invite members",
-        "inviteHint": "Generate an invite link to a seat in the pyramid."
-      }
-    },
-    "target": {
-      "self": "Themselves",
-      "selfHint": "They can assign a task to themselves.",
-      "peers": "People at the same level",
-      "peersHint": "Members who report to the same direct manager.",
-      "manager": "Their direct manager",
-      "managerHint": "The person right above them in the pyramid.",
-      "subordinates": "Their reports",
-      "subordinatesHint": "Everyone placed below them, at any depth.",
-      "everyone": "Everyone",
-      "everyoneHint": "Any member of the company. Makes the other boxes irrelevant."
-    }
-  },
   "members": {
     "removeTitleNamed": "Remove {{name}}?"
   },
@@ -1248,17 +1051,6 @@
     "membersLink": "Open Members",
     "notificationsHint": "Mute a notification type, get it by email, daily digest."
   },
-  "trash": {
-    "button_one": "Trash ({{count}})",
-    "button_other": "Trash ({{count}})",
-    "title": "Trash",
-    "description": "Deleted tasks stay here for {{days}} days, with their comments, subtasks and history. Restored, they come back exactly as they were.",
-    "meta": "{{project}} · deleted by {{who}} {{when}}",
-    "unknownProject": "Archived or deleted project",
-    "someone": "a member",
-    "restore": "Restore",
-    "restoreAria": "Restore the task {{name}}"
-  },
   "kanban": {
     "unassigned": "Unassigned",
     "aria": "Kanban by assignee",
@@ -1293,110 +1085,12 @@
     "sprintT3": "Testing",
     "sprintT4": "Retrospective"
   },
-  "lifecycle": {
-    "badgeSuspended": "Suspended",
-    "badgeUntil": "Access until {{date}}",
-    "badgeExpired": "Access expired on {{date}}",
-    "menuAccess": "Access and suspension",
-    "menuReactivate": "Restore access",
-    "menuOffboard": "Plan the departure",
-    "accessTitle": "Access for {{name}}",
-    "accessIntro": "Suspending cuts access without removing the person: their tasks, place in the org chart and teams stay as they are.",
-    "accessState": "Access state",
-    "stateActive": "Active",
-    "stateActiveHint": "The person sees and edits what their permissions allow.",
-    "stateSuspended": "Suspended",
-    "stateSuspendedHint": "No access to the organization until access is restored.",
-    "accessUntil": "Access until (optional)",
-    "accessUntilNone": "No limit",
-    "accessUntilHint": "For a contractor or an intern: after this date, access ends on its own.",
-    "accessSave": "Save",
-    "searchPerson": "Search for a person",
-    "searchPersonAria": "Search for a person for \"{{field}}\"",
-    "offboardTitle": "{{name}} is leaving",
-    "offboardIntro": "Choose who takes over their work, then remove the person or simply suspend their access.",
-    "impactTitle": "What will be handed over",
-    "impactLoading": "Calculating…",
-    "impactNone": "Nothing to hand over: no open task, no direct report, no lead role, no key result.",
-    "impactTasks_one": "{{count}} open task assigned",
-    "impactTasks_other": "{{count}} open tasks assigned",
-    "impactReports_one": "{{count}} direct report",
-    "impactReports_other": "{{count}} direct reports",
-    "impactLeads_one": "{{count}} team they lead",
-    "impactLeads_other": "{{count}} teams they lead",
-    "impactKrs_one": "{{count}} key result they own",
-    "impactKrs_other": "{{count}} key results they own",
-    "tasksTo": "Their open tasks go to",
-    "reportsTo": "Their direct reports move under",
-    "leadsTo": "New lead for their teams",
-    "leadsToHint": "The chosen person is added to the team if they aren't in it yet.",
-    "krsTo": "Their key results go to",
-    "nobody": "Nobody",
-    "nobodyUnassign": "Nobody (tasks unassigned)",
-    "theirManager": "Their manager, {{name}}",
-    "unplaced": "Unplaced in the org chart",
-    "modeLegend": "Then",
-    "modeRemove": "Remove from the organization",
-    "modeRemoveHint": "The person is notified and loses all access. They can come back with a new invitation.",
-    "modeSuspend": "Only suspend",
-    "modeSuspendHint": "Access is cut, membership is kept: it can be restored.",
-    "offboardPending": "Handing over…",
-    "offboardRemove": "Hand over and remove",
-    "offboardSuspend": "Hand over and suspend",
-    "impactProjects_one": "{{count}} project they own",
-    "impactProjects_other": "{{count}} projects they own",
-    "projectsTo": "Their projects go to",
-    "keepAsIs": "Leave unchanged",
-    "transferTitle": "Hand over {{name}}'s responsibilities",
-    "transferIntro": "Choose who takes over what. The person stays in the company; only the responsibilities change hands.",
-    "modeTransfer": "Hand over only",
-    "modeTransferHint": "The person stays, with their access. A field left on “Leave unchanged” is not touched.",
-    "offboardTransfer": "Hand over",
-    "menuTransfer": "Hand over responsibilities"
-  },
-  "invites": {
-    "emailTitle": "Invite by email",
-    "emailIntro": "Each address gets a personal link, valid for 7 days, that only its recipient can use.",
-    "emailsLabel": "Email addresses",
-    "emailsPlaceholder": "first.last@company.com, one per line or separated by commas",
-    "emailsCount": "{{count}} address(es) found, {{max}} at most",
-    "placement": "Place in the org chart",
-    "placementHint": "The person will arrive directly under this manager.",
-    "unplaced": "Unplaced",
-    "underMe": "Under me",
-    "teams": "Teams to join",
-    "access": "Access duration",
-    "accessPermanent": "Permanent",
-    "accessDays": "{{count}} days after accepting",
-    "send": "Invite ({{count}})",
-    "sending": "Sending…",
-    "done": "Done",
-    "mailUnavailable": "The links were created, but sending emails isn't set up yet. Copy the links to share them yourself.",
-    "statusSent": "Invitation sent",
-    "statusCreatedNotSent": "Link created, email not sent",
-    "statusCreatedMaybe": "Link created, sending may have failed: resend it from Settings",
-    "statusAlreadyMember": "Already a member",
-    "statusAlreadyInvited": "An invitation is already pending",
-    "statusInvalid": "Invalid address",
-    "copyLinkFor": "Copy the invitation link for {{email}}",
-    "listLoading": "Loading invitations…",
-    "listEmpty": "No email invitations yet.",
-    "stateClaimed": "Accepted on {{date}}",
-    "stateExpired": "Expired on {{date}}",
-    "statePending": "Pending, expires on {{date}} · sent {{sent}} time(s)",
-    "resend": "Resend",
-    "resendWait": "At most one reminder per hour",
-    "resendFor": "Resend to {{email}}",
-    "revokeFor": "Revoke the invitation for {{email}}"
-  },
-  "projectTeams": {
-    "failed": "Could not change the project's teams: {{message}}"
-  },
-  "projectPurge": {
-    "failed": "Could not permanently delete the project: {{message}}"
-  },
   "follow": {
-    "failed": "Could not change what you follow: {{message}}"
+    "failed": "Could not change what you follow: {{message}}",
+    "follow": "Follow",
+    "unfollow": "Unfollow",
+    "followTask": "Follow this task",
+    "unfollowTask": "Unfollow this task"
   },
   "notifSettings": {
     "title": "Notification preferences",
@@ -1426,38 +1120,13 @@
     "impactTitle": "What this will affect",
     "typeToConfirm": "Type “{{name}}” to confirm"
   },
-  "bulk": {
-    "done_one": "{{count}} change applied",
-    "done_other": "{{count}} changes applied",
-    "partial_one": "{{count}} failed, {{done}} applied: the server refused the rest",
-    "partial_other": "{{count}} failed, {{done}} applied: the server refused the rest",
-    "membersSelected_one": "{{count}} member selected",
-    "membersSelected_other": "{{count}} members selected",
-    "membersSelectHint": "Tick some members",
-    "selectMembers": "Select several members",
-    "selectMember": "Select {{name}}",
-    "addToTeam": "Add to a team",
-    "placeUnder": "Place under…",
-    "detach": "Detach (unplaced)",
-    "suspend": "Suspend",
-    "reactivate": "Reactivate",
-    "accessUntil": "Access until…",
-    "exit": "Leave selection",
-    "suspendTitle_one": "Suspend {{count}} member?",
-    "suspendTitle_other": "Suspend {{count}} members?",
-    "accessUntilTitle_one": "Limit access for {{count}} member",
-    "accessUntilTitle_other": "Limit access for {{count}} members"
+  "rights": {
+    "editTaskDenied": "Right required: edit a task you neither created nor are assigned to"
   },
-  "myRights": {
-    "title": "My rights",
-    "hint": "What you can do in this company, and why. A right “set for you” overrides the one from your position.",
-    "adminHint": "Administrator: every right, no exception. No override applies to an admin.",
-    "sourceAdmin": "Administrator",
-    "sourceOverride": "Set for you",
-    "sourceManager": "Manager default",
-    "sourceMember": "Member default",
-    "allowed": "allowed",
-    "denied": "denied",
-    "assignNobody": "nobody"
+  "projectTeams": {
+    "failed": "Could not change the project's teams: {{message}}"
+  },
+  "projectPurge": {
+    "failed": "Could not permanently delete the project: {{message}}"
   }
 }

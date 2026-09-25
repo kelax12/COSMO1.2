@@ -49,7 +49,16 @@
     "team_not_found": "This team no longer exists.",
     "team_transfer_same_team": "Choose a team other than the one you are deleting.",
     "team_transfer_target_invalid": "The chosen team does not belong to this company.",
-    "team_delete_forbidden": "Only an admin or the team's creator can delete it."
+    "team_delete_forbidden": "Only an admin or the team's creator can delete it.",
+    "cannot_restrict_self": "You cannot suspend or limit your own access.",
+    "cannot_restrict_owner": "The company owner's access cannot be suspended: transfer ownership first.",
+    "okr_parent_cycle": "This objective cannot contribute to one of its own sub-objectives.",
+    "invalid_target": "The person chosen to take over this work is not in the company.",
+    "invalid_mode": "Unknown departure mode.",
+    "member_not_found": "This person is no longer in the company.",
+    "project_not_archived": "Only an archived project can be deleted permanently: archive it first.",
+    "project_not_found": "This project no longer exists.",
+    "not_allowed": "You are not allowed to do this."
   },
   "validation": {
     "fallback": "Invalid data",

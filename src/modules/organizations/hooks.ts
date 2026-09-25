@@ -260,21 +260,10 @@ export const useSetMemberRole = () => {
   });
 };
 
-export const useRemoveMember = () => {
-  const queryClient = useQueryClient();
-  const repository = useOrgRepository();
-  return useMutation({
-    mutationFn: ({ orgId, userId }: { orgId: string; userId: string }) =>
-      repository.removeMember(orgId, userId),
-    onSuccess: () => {
-      toast.success(translator('errors').t('success.memberRemoved'));
-      queryClient.invalidateQueries({ queryKey: orgKeys.all });
-    },
-    onError: (error: Error) => {
-      toast.error(translator('errors').t('mutation.removeMember', { message: error.message }));
-    },
-  });
-};
+// 🗑️ `useRemoveMember` retiré le 2026-09-25 : un retrait passe TOUJOURS par
+// l'assistant de départ (`useOffboardMember`, mig. 161/164), qui transmet
+// tâches, subordonnés, équipes, projets et KR avant de retirer. Le retrait nu
+// laissait des assignations fantômes (audit du 2026-09-24, étape 4).
 
 export const useLeaveOrganization = () => {
   const queryClient = useQueryClient();

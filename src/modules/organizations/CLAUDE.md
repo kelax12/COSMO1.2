@@ -161,3 +161,25 @@ coupé le 2026-08-27 (`background`), la **lecture** pas.
   compteur TOMBE quand la source serveur est vidée — sans lui, le fichier passerait encore si plus
   aucune source n'alimentait rien).
 
+
+---
+
+## 🧱 Cas limites et cohérence (audit 2026-09-24, étapes 3-4, mig. 164)
+
+- **Confirmer ou annuler, jamais les deux styles au hasard** : un geste réversible part tout de
+  suite avec `showUndoToast` ; un geste irréversible passe par `OrgConfirmDialog` (impact listé,
+  saisie du nom). ❌ `window.confirm` : refusé par `org-confirm.guard.test.ts`.
+- 🔴 **Un retrait passe TOUJOURS par l'assistant de départ** (`useMemberLifecycle`) : il annonce
+  l'impact et fait choisir qui reprend. Côté base, `release_member_work` libère tâches OUVERTES,
+  projets portés et abonnements au retrait et au départ volontaire (plus d'assigné fantôme).
+- Mode `transfer` de `offboard_org_member` : ne touche QUE les champs nommés ; la personne reste.
+  ❌ Ne jamais le proposer en `suspend`/`remove` sur soi-même (`modes={['transfer']}`).
+- **Équipes associées** (`team_project_teams`) : elles ÉLARGISSENT la lecture (CASCADE sûr,
+  contrairement à `team_id`, M5). Ajout/retrait = `project.edit`, jamais le responsable seul.
+- **Purge** : `purge_archived_team_project` (INVOKER), projet archivé seulement.
+- Droits d'une tâche (menus, glisser) : `team-task-rights.ts`, jamais recalculés à la main.
+- 🔴 **Namespace `orgAdmin`** : départs, invitations, lots, droits, pyramide, revue, corbeille.
+  Chaque section/dialogue qui s'en sert le DÉCLARE dans `OrganizationPage` (`lazyWithRetry(…,
+  [..., 'orgAdmin'])`). ❌ Ne pas remettre ces groupes dans `org` : plafond de 30 ko.
+- ⚠️ **Mig. `164` écrite le 2026-09-25, NON appliquée** : l'appliquer AVANT de déployer ce front
+  (équipes associées, purge, mode `transfer` en dépendent).

@@ -96,8 +96,15 @@ function consumerCount(name: string): number {
  * chaque entrée doit dire pourquoi le code vit sans consommateur direct.
  */
 const ALLOWED_ORPHANS = new Map<string, string>([
-  // Aucun pour l'instant. `useFilteredTasks` n'y figure pas : il EST consommé,
-  // par `usePendingTasks`, dans son propre fichier — la garde le voit.
+  // `useFilteredTasks` n'y figure pas : il EST consommé, par `usePendingTasks`,
+  // dans son propre fichier — la garde le voit.
+  ['useOkrCycles', "Socle de la branche feat/entreprise-gouvernance (mig. 160, M3 exécution des OKR) : couche données livrée et appliquée en production le 2026-09-25, écran pas encore écrit. Hors du périmètre de l'audit du 2026-09-24 (étapes 3 et 4). À brancher ou supprimer avec l'écran OKR."],
+  ['useCreateOkrCycle', "Socle de la branche feat/entreprise-gouvernance (mig. 160, M3 exécution des OKR) : couche données livrée et appliquée en production le 2026-09-25, écran pas encore écrit. Hors du périmètre de l'audit du 2026-09-24 (étapes 3 et 4). À brancher ou supprimer avec l'écran OKR."],
+  ['useDeleteOkrCycle', "Socle de la branche feat/entreprise-gouvernance (mig. 160, M3 exécution des OKR) : couche données livrée et appliquée en production le 2026-09-25, écran pas encore écrit. Hors du périmètre de l'audit du 2026-09-24 (étapes 3 et 4). À brancher ou supprimer avec l'écran OKR."],
+  ['useKRCheckins', "Socle de la branche feat/entreprise-gouvernance (mig. 160, M3 exécution des OKR) : couche données livrée et appliquée en production le 2026-09-25, écran pas encore écrit. Hors du périmètre de l'audit du 2026-09-24 (étapes 3 et 4). À brancher ou supprimer avec l'écran OKR."],
+  ['usePostKRCheckin', "Socle de la branche feat/entreprise-gouvernance (mig. 160, M3 exécution des OKR) : couche données livrée et appliquée en production le 2026-09-25, écran pas encore écrit. Hors du périmètre de l'audit du 2026-09-24 (étapes 3 et 4). À brancher ou supprimer avec l'écran OKR."],
+  ['useSetKRProjects', "Socle de la branche feat/entreprise-gouvernance (mig. 160, M3 exécution des OKR) : couche données livrée et appliquée en production le 2026-09-25, écran pas encore écrit. Hors du périmètre de l'audit du 2026-09-24 (étapes 3 et 4). À brancher ou supprimer avec l'écran OKR."],
+  ['useAuditLog', "Socle de la branche feat/entreprise-gouvernance (mig. 162, M13 journal d'audit) : table et lecture en production depuis le 2026-09-25, écran admin pas encore écrit. Hors du périmètre de l'audit du 2026-09-24 (étapes 3 et 4)."],
 ]);
 
 describe('modules — aucun hook exporté sans consommateur (C-49)', () => {

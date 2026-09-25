@@ -13,6 +13,7 @@ import TaskCommentsSection from './TaskCommentsSection';
 import TeamAssigneeGroups from './TeamAssigneeGroups';
 import TeamTaskFields from './TeamTaskFields';
 import TeamSubtasksSection from './TeamSubtasksSection';
+import FollowTaskToggle from './FollowTaskToggle';
 import TeamTaskDependenciesSection from './TeamTaskDependenciesSection';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { useT } from '@/i18n/useT';
@@ -492,6 +493,7 @@ const TeamTaskModal = ({
               création. */}
           {!isCreating && task && (
             <div className="px-5 pb-4 border-t border-[rgb(var(--color-border))] pt-4 space-y-4">
+              <FollowTaskToggle orgId={orgId} taskId={task.id} />
               <TeamSubtasksSection taskId={task.id} />
               <TeamTaskDependenciesSection task={task} isManager={isManager} />
             </div>
