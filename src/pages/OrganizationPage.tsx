@@ -60,7 +60,7 @@ const TeamProjectsTab = lazyWithRetry(() => import('@/components/organization/Te
 const TeamTasksTab = lazyWithRetry(() => import('@/components/organization/TeamTasksTab'));
 const TeamOKRTab = lazyWithRetry(() => import('@/components/organization/TeamOKRTab'));
 const TeamOverviewTab = lazyWithRetry(() => import('@/components/organization/TeamOverviewTab'));
-const OrgBillingTab = lazyWithRetry(() => import('@/components/organization/OrgBillingTab'), ['org', 'orgBilling', 'overlays']);
+const OrgBillingTab = lazyWithRetry(() => import('@/components/organization/OrgBillingTab'), ['org', 'orgAccount', 'overlays']);
 // Section Membres : sortie de la page le 2026-09-24, et LAZY pour la même
 // raison que les onglets ci-dessus. Importée en dur, elle restait dans ce
 // chunk, qui dépassait son cliquet (18,3 ko pour 18,0) : seul qui ouvre

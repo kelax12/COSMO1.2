@@ -45,7 +45,7 @@ type TemplateKey = (typeof BUILT_IN_TEMPLATES)[number]['key'];
  *     tout reprendre depuis le début.
  */
 const OrgSetupWizard = ({ orgId, orgName, currentUserId, screen, onScreen, onFinish }: OrgSetupWizardProps) => {
-  const { t, tp } = useT('orgSetup');
+  const { t, tp } = useT('orgAccount');
   const { t: pf } = useT('portfolio');
   const current = setupStepIndex(screen);
 
@@ -148,7 +148,7 @@ const OrgSetupWizard = ({ orgId, orgName, currentUserId, screen, onScreen, onFin
 // ─── Étape 2 : inviter par e-mail ─────────────────────────────────────
 
 const InviteStep = ({ orgId, onDone, onSkip }: { orgId: string; onDone: (count: number) => void; onSkip: () => void }) => {
-  const { t, tp } = useT('orgSetup');
+  const { t, tp } = useT('orgAccount');
   const invite = useInviteByEmail(orgId);
   const [raw, setRaw] = useState('');
   const [sent, setSent] = useState<{ created: number; sending: SendInvitationsResult } | null>(null);
@@ -220,7 +220,7 @@ const TeamStep = ({ orgId, onDone, onSkip }: {
   onDone: (teamId: string, name: string) => void;
   onSkip: () => void;
 }) => {
-  const { t } = useT('orgSetup');
+  const { t } = useT('orgAccount');
   const createTeam = useCreateOrgTeam(orgId);
   const [name, setName] = useState('');
   const valid = name.trim().length >= 2;
@@ -273,7 +273,7 @@ const ProjectStep = ({ orgId, currentUserId, createdTeamId, templateLabel, trans
   onDone: (name: string) => void;
   onSkip: () => void;
 }) => {
-  const { t } = useT('orgSetup');
+  const { t } = useT('orgAccount');
   const createProject = useCreateTeamProjectWithTasks(orgId);
   const { data: teams = [] } = useOrgTeams(orgId);
   const [templateKey, setTemplateKey] = useState<TemplateKey>(BUILT_IN_TEMPLATES[0].key);

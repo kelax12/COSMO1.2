@@ -84,7 +84,7 @@ export const useSaveOrgBillingContact = (orgId: string, userId: string | undefin
       return saveOrgBillingContact(orgId, input, userId);
     },
     // Les toasts sont posés par l'écran (`OrgBillingContactCard`) : ses textes
-    // vivent dans `orgBilling`, chargé avec lui seul, et ce module-ci est lu
+    // vivent dans `orgAccount`, chargé avec lui seul, et ce module-ci est lu
     // sur toutes les pages de /entreprise (pastille de forfait).
     onSuccess: (contact) => {
       queryClient.setQueryData(orgBillingAccountKeys.contact(orgId), contact);
