@@ -56,9 +56,7 @@ import { SupabaseTeamProjectsRepository } from '@/modules/team-projects/supabase
 // 2026-09-23, mig. 160 à 162) : deux dépôts de plus plutôt que deux dépôts
 // existants gonflés au-delà de 600 lignes.
 import type { IOrgGovernanceRepository } from '@/modules/organizations/governance.repository';
-import { SupabaseOrgGovernanceRepository } from '@/modules/organizations/governance.supabase.repository';
 import type { IOkrExecutionRepository } from '@/modules/team-okrs/execution.repository';
-import { SupabaseOkrExecutionRepository } from '@/modules/team-okrs/execution.supabase.repository';
 
 // Team OKRs (mode entreprise)
 import { ITeamOKRsRepository } from '@/modules/team-okrs/repository';
@@ -103,8 +101,12 @@ import { SupabaseStatsRepository } from '@/modules/stats/supabase.repository';
 // synchrone — une propriété, un getter — et le mandataire cesse d'être
 // transparent pour lui : il faudra alors renoncer au différé pour ce module.
 //
-// ⚠️ Le mode PRODUCTION ne passe jamais ici : il instancie directement sa
-// classe Supabase, importée statiquement comme avant.
+// ⚠️ Le mode PRODUCTION ne passe ici que pour DEUX dépôts : gouvernance et
+// exécution des OKR (2026-09-25). Leurs écrans sont rares (départ, journal,
+// vues, cycles, points d'étape), leurs interfaces 100 % asynchrones, et leurs
+// classes Supabase pesaient dans le chunk d'ENTRÉE, payé par toutes les pages.
+// Les autres instancient directement leur classe Supabase, importée
+// statiquement comme avant.
 
 /**
  * Mandataire synchrone d'un dépôt dont le module arrive plus tard.
@@ -137,7 +139,7 @@ function lazyDemoRepository<T extends object>(load: () => Promise<T>): T {
           const method = (repo as Record<string | symbol, unknown>)[prop];
           if (typeof method !== 'function') {
             throw new Error(
-              `demo-repositories: « ${String(prop)} » n'est pas une méthode. ` +
+              `dépôt différé : « ${String(prop)} » n'est pas une méthode. ` +
                 'Le chargement différé suppose une interface 100 % asynchrone.',
             );
           }
@@ -358,7 +360,9 @@ export function getOrgGovernanceRepository(): IOrgGovernanceRepository {
       ? lazyDemoRepository<IOrgGovernanceRepository>(() =>
           import('./demo-repositories').then((m) => m.createDemoOrgGovernanceRepository()),
         )
-      : new SupabaseOrgGovernanceRepository();
+      : lazyDemoRepository<IOrgGovernanceRepository>(() =>
+          import('@/modules/organizations/governance.supabase.repository').then((m) => new m.SupabaseOrgGovernanceRepository()),
+        );
   }
   return orgGovernanceRepository;
 }
@@ -370,7 +374,9 @@ export function getOkrExecutionRepository(): IOkrExecutionRepository {
       ? lazyDemoRepository<IOkrExecutionRepository>(() =>
           import('./demo-repositories').then((m) => m.createDemoOkrExecutionRepository()),
         )
-      : new SupabaseOkrExecutionRepository();
+      : lazyDemoRepository<IOkrExecutionRepository>(() =>
+          import('@/modules/team-okrs/execution.supabase.repository').then((m) => new m.SupabaseOkrExecutionRepository()),
+        );
   }
   return okrExecutionRepository;
 }

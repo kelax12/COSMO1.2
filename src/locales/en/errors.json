@@ -52,7 +52,9 @@
     "team_delete_forbidden": "Only an admin or the team's creator can delete it.",
     "not_allowed": "You are not allowed to make this change.",
     "cannot_restrict_self": "You cannot suspend or limit your own access.",
-    "okr_parent_cycle": "This objective cannot contribute to one of its own sub-objectives."
+    "okr_parent_cycle": "This objective cannot contribute to one of its own sub-objectives.",
+    "project_viewer_read_only": "You are a viewer on this project: you can only change the tasks assigned to you.",
+    "saved_views_limit": "You have reached 50 saved views for this screen. Delete one to create a new one."
   },
   "validation": {
     "fallback": "Invalid data",
@@ -92,7 +94,8 @@
       "descriptionTooLong": "Description too long",
       "priorityRange": "Invalid priority (1 to 5)",
       "durationNegative": "Negative duration",
-      "tooManyAssignees": "20 assignees maximum"
+      "tooManyAssignees": "20 assignees maximum",
+      "healthNoteTooLong": "Note too long (1,000 characters max)"
     },
     "organization": {
       "nameTooShort": "Company name must be at least 2 characters",
@@ -192,7 +195,12 @@
     "memberAccess": "Couldn't change the access: {{message}}",
     "emailInvite": "Couldn't send the invitation: {{message}}",
     "notificationSettings": "Couldn't save your preferences: {{message}}",
-    "weeklyReview": "Couldn't save the review: {{message}}"
+    "weeklyReview": "Couldn't save the review: {{message}}",
+    "projectMember": "Could not update the project members: {{message}}",
+    "savedView": "Could not save the view: {{message}}",
+    "trashTeamOkr": "Could not delete the objective: {{message}}",
+    "restoreTeamOkr": "Could not restore the objective: {{message}}",
+    "purgeTask": "Could not permanently delete the task: {{message}}"
   },
   "success": {
     "orgCreated": "Company created",
@@ -210,7 +218,6 @@
     "orgProfileUpdated": "Company profile updated",
     "objectiveCreated": "Objective created",
     "objectiveUpdated": "Objective updated",
-    "objectiveDeleted": "Objective deleted",
     "projectCreated": "Project created",
     "projectArchived": "Project archived",
     "projectRestored": "Project restored",
@@ -228,7 +235,8 @@
     "memberOffboarded": "Departure completed, the work was handed over",
     "memberAccessUpdated": "Access updated",
     "notificationSettingsSaved": "Preferences saved",
-    "weeklyReviewSaved": "Review saved"
+    "weeklyReviewSaved": "Review saved",
+    "objectiveTrashed": "Objective moved to the trash (30 days to restore it)"
   },
   "friends": {
     "notAuthenticated": "You must be signed in to do this.",

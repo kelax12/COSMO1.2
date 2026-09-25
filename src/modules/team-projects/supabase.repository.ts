@@ -31,8 +31,13 @@ import {
   CreateTeamProjectMilestoneInput,
   UpdateTeamProjectMilestoneInput,
   TeamProjectDependency,
+  TeamProjectMember,
+  TeamProjectRole,
+  TeamProjectTaskStats,
+  TeamMemberWorkload,
 } from './types';
 import * as portfolio from './supabase.portfolio';
+import * as access from './supabase.access';
 import {
   mapProject,
   mapComment,
@@ -143,6 +148,13 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
   addProjectDependency(projectId: string, dependsOnId: string, orgId: string): Promise<void> { return portfolio.addProjectDependency(projectId, dependsOnId, orgId); }
   removeProjectDependency(projectId: string, dependsOnId: string): Promise<void> { return portfolio.removeProjectDependency(projectId, dependsOnId); }
 
+  // ─── Membres de projet et chiffres serveur (mig. 190, 191) ─────────
+  getProjectMembers(orgId: string): Promise<TeamProjectMember[]> { return access.getProjectMembers(orgId); }
+  setProjectMember(projectId: string, userId: string, role: TeamProjectRole): Promise<void> { return access.setProjectMember(projectId, userId, role); }
+  removeProjectMember(projectId: string, userId: string): Promise<void> { return access.removeProjectMember(projectId, userId); }
+  getProjectTaskStats(orgId: string, today: string): Promise<TeamProjectTaskStats[]> { return access.getProjectTaskStats(orgId, today); }
+  getMemberWorkload(orgId: string, today: string): Promise<TeamMemberWorkload[]> { return access.getMemberWorkload(orgId, today); }
+
   async updateProject(projectId: string, input: UpdateTeamProjectInput): Promise<TeamProject> {
     if (!supabase) throw new Error('Supabase not configured');
     // Whitelist explicite — jamais org_id/created_by (mass-assignment V1).
@@ -157,6 +169,9 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
     if (input.status !== undefined) patch.status = input.status;
     if (input.startDate !== undefined) patch.start_date = input.startDate || null;
     if (input.dueDate !== undefined) patch.due_date = input.dueDate || null;
+    // Santé (mig. 190) : l'horodatage et l'auteur sont posés par le trigger.
+    if (input.health !== undefined) patch.health = input.health;
+    if (input.healthNote !== undefined) patch.health_note = input.healthNote || null;
     const { data, error } = await supabase
       .from('team_projects')
       .update(patch)
@@ -195,10 +210,16 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
     // littéralement ce qu'on a tapé.
     if (filters?.search) query = query.ilike('name', `%${filters.search.replace(/[\\%_]/g, (c) => `\\${c}`)}%`);
     const limit = Math.min(filters?.limit ?? TEAM_TASKS_READ_LIMIT, TEAM_TASKS_READ_LIMIT);
-    const ordered = filters?.orderBy === 'deadline'
+    // Clé de départage `id` : sans elle, deux tâches créées dans la même
+    // milliseconde peuvent changer de page d'une lecture à l'autre.
+    const ordered = (filters?.orderBy === 'deadline'
       ? query.order('deadline', { ascending: true })
-      : query.order('created_at', { ascending: false });
-    const { data, error } = await ordered.limit(limit);
+      : query.order('created_at', { ascending: false })).order('id', { ascending: true });
+    // Page (mig. 191) : `range` plutôt que `limit` dès qu'un décalage est demandé.
+    const offset = Math.max(0, Math.floor(filters?.offset ?? 0));
+    const { data, error } = offset > 0
+      ? await ordered.range(offset, offset + limit - 1)
+      : await ordered.limit(limit);
     if (error) throw normalizeApiError(error);
     // Reco #20 : la limite 1000 était silencieuse — au-delà, on prévient
     // (console dev + toast une fois par session) au lieu de tronquer sans bruit.
@@ -280,6 +301,12 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
   async restoreTask(taskId: string): Promise<void> {
     if (!supabase) throw new Error('Supabase not configured');
     const { error } = await supabase.rpc('restore_team_task', { p_task: taskId });
+    if (error) throw normalizeApiError(error);
+  }
+
+  async purgeTask(taskId: string): Promise<void> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const { error } = await supabase.rpc('purge_team_task', { p_task: taskId });
     if (error) throw normalizeApiError(error);
   }
 

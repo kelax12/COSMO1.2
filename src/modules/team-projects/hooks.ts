@@ -2,11 +2,11 @@
 // TEAM-PROJECTS MODULE - React Query hooks
 // ═══════════════════════════════════════════════════════════════════
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from '@/lib/toast';
 import { getTeamProjectsRepository } from '@/lib/repository.factory';
 import { validateAsync } from '@/lib/validation/lazy';
-import { teamProjectKeys } from './constants';
+import { teamProjectKeys, TEAM_TASKS_READ_LIMIT } from './constants';
 import type { UpdateTeamSubtaskInput } from './types';
 import type { CreateTeamProjectInput, UpdateTeamProjectInput, CreateTeamTaskInput, UpdateTeamTaskInput, TeamTaskFilters, TeamProject } from './types';
 import { translator } from '@/i18n/useT';
@@ -154,6 +154,40 @@ export const useTeamTaskWorkingSet = (
 };
 
 /**
+ * Ensemble de travail PAGINÉ (mig. 191, « lectures côté serveur ») : même
+ * lecture que `useTeamTaskWorkingSet`, par pages de `TEAM_TASKS_READ_LIMIT`,
+ * dans l'ordre serveur (création décroissante, puis id). Au-delà de mille
+ * tâches, l'écran montrait un bandeau « liste tronquée » et rien d'autre :
+ * les suivantes étaient lisibles par personne. `fetchNextPage` les charge.
+ *
+ * La clé est un sous-chemin de `teamProjectKeys.tasks(orgId)` : toute mutation
+ * de tâche l'invalide déjà, et React Query relit alors CHAQUE page chargée.
+ */
+export const useTeamTaskPages = (
+  orgId: string | undefined,
+  since: string | null,
+  options?: { live?: boolean },
+) => {
+  const repository = useRepo();
+  return useInfiniteQuery({
+    queryKey: [...teamProjectKeys.tasks(orgId ?? ''), 'pages', since ?? 'all'],
+    queryFn: ({ pageParam }) =>
+      repository.getTasks(orgId as string, {
+        ...(since ? { openOrCompletedSince: since } : {}),
+        limit: TEAM_TASKS_READ_LIMIT,
+        offset: pageParam,
+      }),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, pages) =>
+      lastPage.length < TEAM_TASKS_READ_LIMIT ? undefined : pages.length * TEAM_TASKS_READ_LIMIT,
+    enabled: !!orgId,
+    staleTime: 1000 * 30,
+    ...(options?.live ? { refetchInterval: 20_000 } : {}),
+    refetchOnWindowFocus: true,
+  });
+};
+
+/**
  * Lecture CIBLÉE : le serveur filtre, trie et plafonne avant de répondre.
  *
  * C'est la lecture de l'Aperçu (audit du 2026-09-24). Il lisait tout
@@ -280,6 +314,17 @@ export const useRestoreTeamTask = (orgId: string) => {
       queryClient.invalidateQueries({ queryKey: teamProjectKeys.trash(orgId) });
     },
     onError: (error: Error) => toast.error(translator('errors').t('mutation.restoreTask', { message: error.message })),
+  });
+};
+
+/** Suppression définitive d'une tâche à la corbeille (admin, mig. 193). */
+export const usePurgeTeamTask = (orgId: string) => {
+  const queryClient = useQueryClient();
+  const repository = useRepo();
+  return useMutation({
+    mutationFn: (taskId: string) => repository.purgeTask(taskId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: teamProjectKeys.trash(orgId) }),
+    onError: (error: Error) => toast.error(translator('errors').t('mutation.purgeTask', { message: error.message })),
   });
 };
 

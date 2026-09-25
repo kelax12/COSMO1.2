@@ -33,6 +33,52 @@ export interface TeamProject {
    */
   isTemplate?: boolean;
   templatePayload?: TeamProjectTemplatePayload | null;
+  // ─── Santé déclarée (mig. 190) ──────────────────────────────────────
+  /** null = jamais déclarée. Horodatage et auteur posés par le SERVEUR. */
+  health?: TeamProjectHealth | null;
+  healthNote?: string | null;
+  healthUpdatedAt?: string | null;
+  healthUpdatedBy?: string | null;
+}
+
+/** Santé déclarée d'un projet (mig. 190) — même vocabulaire que les KR (160). */
+export type TeamProjectHealth = 'on_track' | 'at_risk' | 'off_track';
+
+/**
+ * Rôle d'une personne sur UN projet (mig. 190). `lead` co-pilote ; `contributor`
+ * crée et modifie les tâches du projet même sans droit d'organisation ;
+ * `viewer` lit seulement (sauf une tâche qui lui est assignée).
+ */
+export type TeamProjectRole = 'lead' | 'contributor' | 'viewer';
+
+export interface TeamProjectMember {
+  projectId: string;
+  userId: string;
+  orgId: string;
+  role: TeamProjectRole;
+  addedBy: string | null;
+  addedAt: string;
+}
+
+/** Avancement d'un projet, COMPTÉ PAR LE SERVEUR (mig. 191), jamais sur un extrait. */
+export interface TeamProjectTaskStats {
+  projectId: string;
+  total: number;
+  completed: number;
+  overdue: number;
+  inReview: number;
+  /** Prochaine échéance ouverte, date locale 'YYYY-MM-DD'. */
+  nextDeadline: string | null;
+}
+
+/** Charge d'un membre, comptée par le serveur (mig. 191). */
+export interface TeamMemberWorkload {
+  userId: string;
+  openTasks: number;
+  overdue: number;
+  dueIn7Days: number;
+  /** Somme des durées estimées des tâches ouvertes, en minutes. */
+  estimatedMinutes: number;
 }
 
 /** Cycle de vie d'un projet (mig. 153). Défaut serveur : `active`. */
@@ -104,6 +150,8 @@ export interface UpdateTeamProjectInput {
   status?: TeamProjectStatus;
   startDate?: string | null;
   dueDate?: string | null;
+  health?: TeamProjectHealth | null;
+  healthNote?: string | null;
 }
 
 /** Jalon d'un projet (mig. 153). */
@@ -262,6 +310,11 @@ export interface TeamTaskFilters {
    * tâches, donc une tâche plus ancienne était introuvable.
    */
   search?: string;
+  /**
+   * Pagination (mig. 191, « lectures côté serveur ») : saute les `offset`
+   * premières lignes de l'ordre demandé. Avec `limit`, lit une PAGE.
+   */
+  offset?: number;
 }
 
 /** Sous-tâche d'une tâche d'équipe (mig. 092) — un seul niveau, pas de récursion. */

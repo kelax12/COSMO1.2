@@ -2,7 +2,7 @@
 // ORGANIZATIONS · Gouvernance — hooks React Query
 // ═══════════════════════════════════════════════════════════════════
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from '@/lib/toast';
 import { getOrgGovernanceRepository } from '@/lib/repository.factory';
 import { translator } from '@/i18n/useT';
@@ -11,7 +11,9 @@ import type {
   CreateEmailInvitationsInput,
   NotificationSettings,
   OffboardInput,
+  SaveViewInput,
   SaveWeeklyReviewInput,
+  SavedViewScope,
 } from './governance.types';
 
 const useRepo = () => getOrgGovernanceRepository();
@@ -20,9 +22,11 @@ export const governanceKeys = {
   all: ['org-governance'] as const,
   departure: (orgId: string, userId: string) => [...governanceKeys.all, 'departure', orgId, userId] as const,
   invitations: (orgId: string) => [...governanceKeys.all, 'invitations', orgId] as const,
-  audit: (orgId: string, userId?: string) => [...governanceKeys.all, 'audit', orgId, userId ?? ''] as const,
   notifSettings: (orgId: string) => [...governanceKeys.all, 'notif-settings', orgId] as const,
   reviews: (orgId: string) => [...governanceKeys.all, 'reviews', orgId] as const,
+  auditPages: (orgId: string, actionPrefix: string, targetUserId: string) =>
+    [...governanceKeys.all, 'audit-pages', orgId, actionPrefix, targetUserId] as const,
+  savedViews: (orgId: string, scope: SavedViewScope) => [...governanceKeys.all, 'saved-views', orgId, scope] as const,
 };
 
 /** Tout ce qu'un changement de membre peut toucher, invalidé d'un coup. */
@@ -127,13 +131,67 @@ export const useRevokeEmailInvitation = (orgId: string) => {
 
 // ─── Journal d'audit ─────────────────────────────────────────────────
 
-export const useAuditLog = (orgId: string | undefined, options?: { targetUserId?: string; enabled?: boolean }) => {
+/** Taille d'une page du journal : assez pour un écran, assez peu pour ne rien payer d'inutile. */
+export const AUDIT_PAGE_SIZE = 50;
+
+/**
+ * Journal d'audit PAGINÉ par curseur (`created_at` de la dernière entrée lue),
+ * filtrable par famille d'action. Lisible par les admins seuls (RLS) : un
+ * non-admin reçoit une liste vide, jamais une erreur.
+ */
+export const useAuditLogPages = (
+  orgId: string | undefined,
+  filters: { actionPrefix?: string; targetUserId?: string } = {},
+  options?: { enabled?: boolean },
+) => {
   const repository = useRepo();
-  return useQuery({
-    queryKey: governanceKeys.audit(orgId ?? '', options?.targetUserId),
-    queryFn: () => repository.getAuditLog(orgId as string, { targetUserId: options?.targetUserId }),
+  const actionPrefix = filters.actionPrefix ?? '';
+  const targetUserId = filters.targetUserId ?? '';
+  return useInfiniteQuery({
+    queryKey: governanceKeys.auditPages(orgId ?? '', actionPrefix, targetUserId),
+    queryFn: ({ pageParam }) => repository.getAuditLog(orgId as string, {
+      limit: AUDIT_PAGE_SIZE,
+      before: pageParam || undefined,
+      actionPrefix: actionPrefix || undefined,
+      targetUserId: targetUserId || undefined,
+    }),
+    initialPageParam: '',
+    getNextPageParam: (lastPage) =>
+      lastPage.length < AUDIT_PAGE_SIZE ? undefined : lastPage[lastPage.length - 1]?.createdAt,
     enabled: !!orgId && (options?.enabled ?? true),
     staleTime: 1000 * 30,
+  });
+};
+
+// ─── Vues enregistrées (mig. 192) ────────────────────────────────────
+
+export const useSavedViews = (orgId: string | undefined, scope: SavedViewScope) => {
+  const repository = useRepo();
+  return useQuery({
+    queryKey: governanceKeys.savedViews(orgId ?? '', scope),
+    queryFn: () => repository.getSavedViews(orgId as string, scope),
+    enabled: !!orgId,
+    staleTime: 1000 * 60 * 5,
+  });
+};
+
+export const useSaveView = (orgId: string) => {
+  const repository = useRepo();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: SaveViewInput) => repository.saveView(orgId, input),
+    onSuccess: (_view, input) => queryClient.invalidateQueries({ queryKey: governanceKeys.savedViews(orgId, input.scope) }),
+    onError: (error: Error) => toast.error(translator('errors').t('mutation.savedView', { message: error.message })),
+  });
+};
+
+export const useDeleteView = (orgId: string, scope: SavedViewScope) => {
+  const repository = useRepo();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (viewId: string) => repository.deleteView(viewId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: governanceKeys.savedViews(orgId, scope) }),
+    onError: (error: Error) => toast.error(translator('errors').t('mutation.savedView', { message: error.message })),
   });
 };
 
