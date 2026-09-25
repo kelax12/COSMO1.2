@@ -24,6 +24,13 @@ export const TEAM_TASK_TRASH_DAYS = 30;
  */
 export const TEAM_TASKS_READ_LIMIT = 1000;
 
+/**
+ * Projets : lecture paginée par pages de 500 (audit du 2026-09-24). Un
+ * plafond unique de 200 masquait le reste d'un portefeuille de 500 projets.
+ */
+export const TEAM_PROJECTS_PAGE = 500;
+export const TEAM_PROJECTS_READ_LIMIT = 5000;
+
 export const teamProjectKeys = {
   all: ['team-projects'] as const,
   projects: (orgId: string) => [...teamProjectKeys.all, 'projects', orgId] as const,
@@ -38,6 +45,8 @@ export const teamProjectKeys = {
   // Portefeuille (mig. 153).
   milestones: (orgId: string) => [...teamProjectKeys.all, 'milestones', orgId] as const,
   projectDependencies: (orgId: string) => [...teamProjectKeys.all, 'project-dependencies', orgId] as const,
+  // Équipes associées (mig. 164).
+  projectTeams: (orgId: string) => [...teamProjectKeys.all, 'project-teams', orgId] as const,
   orgActivity: (orgId: string, since: string) =>
     [...teamProjectKeys.all, 'org-activity', orgId, since] as const,
 };

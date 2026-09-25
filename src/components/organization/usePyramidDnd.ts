@@ -24,7 +24,7 @@ import {
   useSetMemberManager,
   type OrgMember,
 } from '@/modules/organizations';
-import { UNPLACED_DROP_ID, isValidDestination } from './pyramid.helpers';
+import { UNPLACED_DROP_ID, isValidDestination, positionChange, type PositionChange } from './pyramid.helpers';
 import type { DragState } from './PyramidNodeCard';
 import { useT } from '@/i18n/useT';
 
@@ -36,7 +36,7 @@ interface Params {
 }
 
 export function usePyramidDnd({ orgId, members, currentUserId, isAdmin }: Params) {
-  const { t, tp } = useT('org');
+  const { t } = useT('org');
   const isMobile = useIsMobile();
   const setManager = useSetMemberManager();
 
@@ -130,9 +130,28 @@ export function usePyramidDnd({ orgId, members, currentUserId, isAdmin }: Params
     flashTimerRef.current = setTimeout(() => setFlashId(null), 1600);
   };
 
-  const drop = (dropId: string) => {
+  /**
+   * Confirmation EN ATTENTE (audit du 2026-09-24) : annuler une réorganisation,
+   * ou un déplacement qui fait perdre / gagner la position de manager. Rendue
+   * par `PyramidPendingConfirm` avec `OrgConfirmDialog` : `window.confirm` ne se
+   * mettait pas au thème et ne disait rien de l'impact.
+   */
+  const [pendingConfirm, setPendingConfirm] = useState<
+    | { kind: 'undo'; count: number }
+    | { kind: 'position'; dropId: string; change: PositionChange; memberName: string }
+    | null
+  >(null);
+
+  const drop = (dropId: string, confirmed = false) => {
     const target = draggingRef.current;
     if (!target || dropGuardRef.current) return;
+    if (!confirmed) {
+      const change = positionChange(members, target.userId, dropId === UNPLACED_DROP_ID ? null : dropId);
+      if (change.losesManagerRole || change.becomesManager) {
+        setPendingConfirm({ kind: 'position', dropId, change, memberName: target.displayName });
+        return;
+      }
+    }
     dropGuardRef.current = true;
     const previousManagerId = target.managerId ?? null;
     setManager.mutate(
@@ -282,24 +301,41 @@ export function usePyramidDnd({ orgId, members, currentUserId, isAdmin }: Params
     resetEditState();
   };
 
-  const cancelEdit = async () => {
+  const undoMoves = async () => {
+    const moves = sessionMovesRef.current;
+    // Rétablissement dans l'ordre inverse (évite les faux cycles serveur).
+    for (const mv of [...moves].reverse()) {
+      try {
+        await setManager.mutateAsync({ orgId, userId: mv.userId, managerId: mv.prevManagerId, silent: true });
+      } catch {
+        break; // l'erreur est déjà remontée par le toast du hook
+      }
+    }
+    toast.success(t('pyramid.undone'));
+    resetEditState();
+  };
+
+  const cancelEdit = () => {
     const moves = sessionMovesRef.current;
     if (moves.length > 0) {
-      const ok = window.confirm(
-        moves.length > 1 ? tp('pyramid.undoConfirm', moves.length) : tp('pyramid.undoConfirm', 1),
-      );
-      if (!ok) return;
-      // Rétablissement dans l'ordre inverse (évite les faux cycles serveur).
-      for (const mv of [...moves].reverse()) {
-        try {
-          await setManager.mutateAsync({ orgId, userId: mv.userId, managerId: mv.prevManagerId, silent: true });
-        } catch {
-          break; // l'erreur est déjà remontée par le toast du hook
-        }
-      }
-      toast.success(t('pyramid.undone'));
+      setPendingConfirm({ kind: 'undo', count: moves.length });
+      return;
     }
     resetEditState();
+  };
+
+  const confirmPending = () => {
+    const pending = pendingConfirm;
+    setPendingConfirm(null);
+    if (!pending) return;
+    if (pending.kind === 'undo') void undoMoves();
+    else drop(pending.dropId, true);
+  };
+
+  const dismissPending = () => {
+    // Un déplacement refusé laisse la carte là où elle était : on lâche la prise.
+    if (pendingConfirm?.kind === 'position') setDragging(null);
+    setPendingConfirm(null);
   };
 
   const drag: DragState | null = dragging
@@ -326,6 +362,9 @@ export function usePyramidDnd({ orgId, members, currentUserId, isAdmin }: Params
     startEdit,
     finishEdit,
     cancelEdit,
+    pendingConfirm,
+    confirmPending,
+    dismissPending,
     grabMember,
     drop,
     drag,

@@ -10,6 +10,7 @@ import {
   useLeaveOrganization,
   useTransferOwnership,
   useMyOrgPermissions,
+  useOrgNotifications,
   isManagerOf,
 } from '@/modules/organizations';
 import { ENTERPRISE_BILLING_ENFORCED } from '@/modules/billing/premium-config';
@@ -24,6 +25,7 @@ import OrgSideNav from '@/components/organization/OrgSideNav';
 import { useOrgNavMode } from '@/components/organization/use-org-nav-mode';
 import OrgSectionSwitcher from '@/components/organization/OrgSectionSwitcher';
 import { ORG_SECTIONS, type OrgSection, type OrgNavItem } from '@/components/organization/org-sections';
+import { sectionNotificationBadges, type BadgeSection } from '@/components/organization/notifications.helpers';
 import {
   isOrgSectionSegment,
   legacyOrgTabRedirect,
@@ -73,10 +75,10 @@ const OrgSettingsSection = lazyWithRetry(() => import('@/components/organization
 
 // Feuilles et dialogues : montés derrière un `&&`, donc déjà conditionnels au
 // rendu. Ils ne l'étaient pas au TÉLÉCHARGEMENT.
-const OrgProfileSheet = lazyWithRetry(() => import('@/components/organization/OrgProfileSheet'));
 const DeleteOrganizationDialog = lazyWithRetry(() => import('@/components/organization/DeleteOrganizationDialog'));
 const ConfirmLeaveOrgDialog = lazyWithRetry(() => import('@/components/organization/ConfirmLeaveOrgDialog'));
 const TransferOwnershipDialog = lazyWithRetry(() => import('@/components/organization/TransferOwnershipDialog'));
+const OffboardMemberDialog = lazyWithRetry(() => import('@/components/organization/OffboardMemberDialog'));
 
 type OrgTab = OrgSection;
 
@@ -122,13 +124,15 @@ const OrganizationPage = () => {
   const urlTab: OrgTab = isOrgSectionSegment(section) ? section : 'overview';
   // Sans `replace` : chaque section est une page, le bouton précédent y revient.
   const setTab = (id: OrgTab) => navigate(orgSectionPath(id));
-  const [editProfile, setEditProfile] = useState(false);
+  // Admin qui part : transmettre son travail AVANT (assistant, mode transfert).
+  const [organizingLeave, setOrganizingLeave] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [confirmingLeave, setConfirmingLeave] = useState(false);
   const [transferring, setTransferring] = useState(false);
   const [seatsBannerDismissed, setSeatsBannerDismissed] = useState(false);
   const { activeOrg: myOrg, isLoading } = useActiveOrganization();
   const badges = useOrgBadges();
+  const { data: orgNotifications = [] } = useOrgNotifications(myOrg?.id);
   // Navigation de droite (ouverte à l'arrivée, repliée, ou ressortie au
   // survol). Porté ici : la page réserve la place de la carte ouverte à
   // l'arrivée, sinon elle recouvrirait la colonne de droite du contenu.
@@ -206,11 +210,21 @@ const OrganizationPage = () => {
       : urlTab;
 
   // Entrées de navigation, partagées par le panneau desktop et le sélecteur
-  // mobile. Seuls Projets (tâches nouvellement assignées) et Membres (demandes
-  // d'adhésion en attente) portent un compteur.
+  // mobile. Projets (tâches nouvellement assignées) et Membres (demandes
+  // d'adhésion) ont leur compteur dérivé ; depuis l'audit du 2026-09-24, les
+  // autres sections comptent leurs notifications non lues (aucune requête de
+  // plus : la boîte de réception les porte déjà).
+  const sectionBadges = sectionNotificationBadges(orgNotifications);
+  const badgeOf = (id: OrgSection): { count: number; items: string[] } => {
+    const extra = (id in sectionBadges) ? sectionBadges[id as BadgeSection] : null;
+    const extraItems = extra ? extra.kinds.map((k) => t(`notifSettings.kind.${k}` as KeyOf<'org'>)) : [];
+    if (id === 'projects') return { count: badges.projects + (extra?.count ?? 0), items: [...badges.projectItems, ...extraItems] };
+    if (id === 'members') return { count: badges.members, items: badges.memberItems };
+    return { count: extra?.count ?? 0, items: extraItems };
+  };
   const navItems: OrgNavItem[] = ORG_SECTIONS.filter((item) => !item.managerOnly || isManager).map(
     ({ id, labelKey, Icon, group }) => {
-      const badgeCount = id === 'projects' ? badges.projects : id === 'members' ? badges.members : 0;
+      const { count: badgeCount, items } = badgeOf(id);
       const badgeAriaLabel = badgeCount > 0 ? tp('page.badgeCount', badgeCount) : undefined;
       return {
         id,
@@ -222,8 +236,8 @@ const OrganizationPage = () => {
         badge: badgeCount > 0 ? (
           <OrgTabBadge
             count={badgeCount}
-            items={id === 'projects' ? badges.projectItems : badges.memberItems}
-            title={t(id === 'projects' ? 'page.badgePreviewProjects' : 'page.badgePreviewMembers')}
+            items={items}
+            title={t(id === 'members' ? 'page.badgePreviewMembers' : id === 'projects' ? 'page.badgePreviewProjects' : 'page.badgePreviewSection')}
             ariaLabel={badgeAriaLabel ?? ''}
             side="left"
             onAccent={tab === id}
@@ -281,7 +295,7 @@ const OrganizationPage = () => {
             {isAdmin && (
               <button
                 type="button"
-                onClick={() => setEditProfile(true)}
+                onClick={() => setTab('settings')}
                 aria-label={t('page.editProfile')}
                 className="min-w-11 min-h-11 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-accent))] hover:bg-[rgb(var(--color-hover))] transition-colors shrink-0"
               >
@@ -308,7 +322,7 @@ const OrganizationPage = () => {
             {isAdmin && (
               <button
                 type="button"
-                onClick={() => setEditProfile(true)}
+                onClick={() => setTab('settings')}
                 aria-label={t('page.editProfile')}
                 className="w-7 h-7 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-accent))] hover:bg-[rgb(var(--color-hover))] transition-colors shrink-0"
               >
@@ -441,12 +455,12 @@ const OrganizationPage = () => {
         <OrgSettingsSection
           org={myOrg}
           members={members}
+          currentUserId={user?.id}
           isOwner={isOwner}
           isAdmin={isAdmin}
           transferPending={transferMutation.isPending}
           deletePending={deleteFlow.isPending}
           leavePending={leaveMutation.isPending}
-          onEditProfile={() => setEditProfile(true)}
           onTransfer={() => setTransferring(true)}
           onDelete={() => setConfirmingDelete(true)}
           onLeave={() => setConfirmingLeave(true)}
@@ -459,12 +473,12 @@ const OrganizationPage = () => {
           clignoter une carte fantôme au milieu de la page pendant que le
           chunk arrive. */}
       <Suspense fallback={null}>
-      {editProfile && <OrgProfileSheet org={myOrg} onClose={() => setEditProfile(false)} />}
 
       {transferring && (
         <TransferOwnershipDialog
           orgName={myOrg.name}
           candidates={members.filter((m) => m.userId !== myOrg.ownerId)}
+          hasSubscription={!!orgSubscription && orgSubscription.status !== 'cancelled'}
           pending={transferMutation.isPending}
           onConfirm={(newOwnerId) =>
             transferMutation.mutate(
@@ -478,12 +492,28 @@ const OrganizationPage = () => {
 
       {confirmingLeave && (
         <ConfirmLeaveOrgDialog
+          orgId={myOrg.id}
           orgName={myOrg.name}
+          currentUserId={user?.id}
+          members={members}
+          canOrganize={isAdmin}
           pending={leaveMutation.isPending}
+          onOrganize={() => { setConfirmingLeave(false); setOrganizingLeave(true); }}
           onConfirm={() =>
             leaveMutation.mutate(myOrg.id, { onSettled: () => setConfirmingLeave(false) })
           }
           onCancel={() => setConfirmingLeave(false)}
+        />
+      )}
+
+      {organizingLeave && user?.id && members.some((m) => m.userId === user.id) && (
+        <OffboardMemberDialog
+          orgId={myOrg.id}
+          member={members.find((m) => m.userId === user.id) as (typeof members)[number]}
+          members={members}
+          initialMode="transfer"
+          modes={['transfer']}
+          onClose={() => setOrganizingLeave(false)}
         />
       )}
 

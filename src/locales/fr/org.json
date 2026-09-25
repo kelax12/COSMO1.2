@@ -28,7 +28,8 @@
     "tabLoading": "Chargement de l’onglet…",
     "managerToast": "Vous encadrez maintenant {{names}} : les sections Statistiques et Pyramide sont disponibles.",
     "launchFree": "COSMO Entreprise est gratuit",
-    "launchFreeRest": " jusqu'au 1er août, profitez-en avec toute votre équipe, sans limite."
+    "launchFreeRest": " jusqu'au 1er août, profitez-en avec toute votre équipe, sans limite.",
+    "badgePreviewSection": "Non lu dans cette section"
   },
   "onboarding": {
     "intro": "Créez votre entreprise ou rejoignez-en une pour collaborer avec votre équipe.",
@@ -168,7 +169,14 @@
     "workloadTitleOverdue_other": "{{duration}} · {{count}} ouvertes · {{overdue}} en retard",
     "workloadTitle_many": "{{duration}} · {{count}} d'ouvertes",
     "workloadTitleOverdue_many": "{{duration}} · {{count}} d'ouvertes · {{overdue}} en retard",
-    "dragHint": "Glisser {{name}} dans la pyramide"
+    "dragHint": "Glisser {{name}} dans la pyramide",
+    "undoTitle": "Annuler la réorganisation ?",
+    "undoAction": "Rétablir",
+    "positionTitle": "Déplacer {{name}} ?",
+    "positionBody": "Ce déplacement change qui encadre qui. Les personnes concernées seront prévenues.",
+    "positionLoses": "{{name}} n'encadrera plus personne : Pyramide et Statistiques de son équipe ne lui seront plus ouvertes.",
+    "positionGains": "{{name}} deviendra manager : Pyramide et Statistiques lui seront ouvertes.",
+    "positionConfirm": "Déplacer"
   },
   "overview": {
     "completed": "Terminées",
@@ -695,7 +703,8 @@
     "avatarChange": "Changer l'image de l'entreprise",
     "fileInvalid": "Fichier invalide",
     "imageUnreadable": "Image illisible",
-    "changeImage": "Changer l'image"
+    "changeImage": "Changer l'image",
+    "description": "Description"
   },
   "assign": {
     "assignTo": "Attribuer une tâche à {{name}}",
@@ -735,7 +744,10 @@
     "seeContribution": "Voir sa contribution",
     "removeFromOrg": "Retirer de l'entreprise",
     "changeRoleAria": "Modifier le rôle de {{name}}",
-    "customizeRole": "Personnaliser…"
+    "customizeRole": "Personnaliser…",
+    "demoteTitle": "Retirer le rôle d'administrateur à {{name}} ?",
+    "demoteBody": "{{name}} ne pourra plus gérer les membres, la facturation ni les réglages de l'entreprise. Ses droits suivront à nouveau sa position dans la pyramide et ses éventuelles surcharges.",
+    "demoteConfirm": "Retirer le rôle"
   },
   "member": {
     "detach": "Détacher (non placé)",
@@ -849,7 +861,13 @@
     "newOwner": "Nouveau propriétaire",
     "choose": "Choisir un membre…",
     "pending": "Transfert…",
-    "confirm": "Transférer la propriété"
+    "confirm": "Transférer la propriété",
+    "billingTitle": "La facturation suit le propriétaire",
+    "billingSubscription": "L'abonnement de l'entreprise continue sans interruption : c'est le nouveau propriétaire qui le gérera (forfait, résiliation, remboursement).",
+    "billingNoSubscription": "Aucun abonnement payant n'est en cours ; s'il en souscrit un, c'est le nouveau propriétaire qui le gérera.",
+    "billingInvoices": "Les factures passées et à venir seront consultables par le nouveau propriétaire, depuis l'onglet Facturation.",
+    "billingCard": "Le moyen de paiement enregistré reste celui d'aujourd'hui tant que le nouveau propriétaire ne le change pas : pensez à le lui signaler.",
+    "billingYou": "Vous perdrez l'accès à la facturation dès la confirmation."
   },
   "summary": {
     "barLabel": "{{completed}} terminées, {{inProgress}} en cours, {{overdue}} en retard",
@@ -880,7 +898,24 @@
     "saveFirst": "Enregistrez la tâche pour ajouter des commentaires."
   },
   "leaveDialog": {
-    "body": "Vous perdrez immédiatement l'accès aux projets, tâches et OKR de l'équipe. Vos données personnelles (tâches, habitudes, agenda) ne sont pas affectées. Vous pourrez revenir avec un nouveau code d'invitation."
+    "body": "Vous perdrez immédiatement l'accès aux projets, tâches et OKR de l'équipe. Vos données personnelles (tâches, habitudes, agenda) ne sont pas affectées. Vous pourrez revenir avec un nouveau code d'invitation.",
+    "title": "Quitter {{org}} ?",
+    "impactTitle": "Ce que vous laissez derrière vous",
+    "impactTasks_one": "{{count}} tâche ouverte qui vous est assignée sera désassignée",
+    "impactTasks_many": "{{count}} de tâches ouvertes qui vous sont assignées seront désassignées",
+    "impactTasks_other": "{{count}} tâches ouvertes qui vous sont assignées seront désassignées",
+    "impactReports_one": "{{count}} subordonné direct remontera sous votre manager",
+    "impactReports_many": "{{count}} de subordonnés directs remonteront sous votre manager",
+    "impactReports_other": "{{count}} subordonnés directs remonteront sous votre manager",
+    "impactLeads_one": "{{count}} équipe perdra son responsable",
+    "impactLeads_many": "{{count}} d'équipes perdront leur responsable",
+    "impactLeads_other": "{{count}} équipes perdront leur responsable",
+    "impactProjects_one": "{{count}} projet que vous portez n'aura plus de responsable",
+    "impactProjects_many": "{{count}} de projets que vous portez n'auront plus de responsable",
+    "impactProjects_other": "{{count}} projets que vous portez n'auront plus de responsable",
+    "organize": "Transmettre mon travail d'abord",
+    "confirm": "Quitter l'entreprise",
+    "pending": "Sortie…"
   },
   "removeMemberDialog": {
     "body": "Cette personne perdra immédiatement l'accès aux projets, tâches et OKR de l'entreprise. Ses données personnelles (tâches, habitudes, agenda) ne sont pas affectées. Elle pourra revenir avec un nouveau code d'invitation."
@@ -1018,7 +1053,20 @@
     "kindUnblocked": "Une de vos tâches n'attend plus rien",
     "kindProjectAtRisk": "Un projet dont vous faites partie est signalé à risque",
     "kindKrDue": "Un résultat clé arrive à échéance dans 3 jours",
-    "kindEventScheduled": "Un créneau a été ajouté à votre agenda"
+    "kindEventScheduled": "Un créneau a été ajouté à votre agenda",
+    "kindProjectArchived": "Un projet où vous avez du travail a été archivé",
+    "kindProjectArchivedNamed": "Le projet « {{name}} » a été archivé : ses tâches ont quitté vos listes",
+    "kindRoleManagerChanged": "Votre supérieur direct a changé dans la pyramide",
+    "kindRoleNowManager": "Vous encadrez désormais quelqu'un : Pyramide et Statistiques vous sont ouvertes",
+    "kindRoleNoLongerManager": "Vous n'encadrez plus personne : Pyramide et Statistiques ne vous sont plus ouvertes",
+    "settings": "Préférences de notification",
+    "filterLabel": "Filtrer les notifications",
+    "filterAll": "Tout",
+    "filterWork": "Mes tâches",
+    "filterMentions": "Mentions",
+    "filterDeadlines": "Échéances",
+    "filterProjects": "Projets",
+    "filterOrg": "Organisation"
   },
   "roles": {
     "admin": "Administrateur",
@@ -1253,7 +1301,8 @@
     "planHint": "Visible du seul propriétaire de l'organisation.",
     "membersTitle": "Membres, équipes et droits",
     "membersHint": "Les invitations, les équipes et les permissions de chaque membre se règlent dans la section Membres.",
-    "membersLink": "Ouvrir Membres"
+    "membersLink": "Ouvrir Membres",
+    "notificationsHint": "Couper un type de notification, le recevoir par e-mail, résumé quotidien."
   },
   "trash": {
     "button_one": "Corbeille ({{count}})",
@@ -1355,7 +1404,18 @@
     "modeSuspendHint": "L'accès est coupé, l'appartenance est conservée : on peut la réactiver.",
     "offboardPending": "Transmission en cours…",
     "offboardRemove": "Transmettre et retirer",
-    "offboardSuspend": "Transmettre et suspendre"
+    "offboardSuspend": "Transmettre et suspendre",
+    "impactProjects_one": "{{count}} projet dont la personne est responsable",
+    "impactProjects_many": "{{count}} de projets dont la personne est responsable",
+    "impactProjects_other": "{{count}} projets dont la personne est responsable",
+    "projectsTo": "Ses projets passent à",
+    "keepAsIs": "Ne pas changer",
+    "transferTitle": "Transmettre les responsabilités de {{name}}",
+    "transferIntro": "Choisissez qui reprend quoi. La personne reste dans l'entreprise ; seules les responsabilités changent de mains.",
+    "modeTransfer": "Transmettre seulement",
+    "modeTransferHint": "La personne reste, avec ses accès. Un champ laissé sur « Ne pas changer » n'est pas touché.",
+    "offboardTransfer": "Transmettre",
+    "menuTransfer": "Transmettre ses responsabilités"
   },
   "invites": {
     "emailTitle": "Inviter par e-mail",
@@ -1391,5 +1451,81 @@
     "resendWait": "Une relance par heure au plus",
     "resendFor": "Relancer {{email}}",
     "revokeFor": "Révoquer l'invitation de {{email}}"
+  },
+  "projectTeams": {
+    "failed": "Impossible de modifier les équipes du projet : {{message}}"
+  },
+  "projectPurge": {
+    "failed": "Impossible de supprimer définitivement le projet : {{message}}"
+  },
+  "follow": {
+    "failed": "Impossible de modifier le suivi : {{message}}"
+  },
+  "notifSettings": {
+    "title": "Préférences de notification",
+    "description": "Pour cette entreprise seulement. Un type décoché « Dans l'app » n'est plus créé du tout ; l'e-mail part au plus une fois par heure.",
+    "colType": "Type",
+    "colApp": "Dans l'app",
+    "colEmail": "E-mail",
+    "appFor": "{{type}} dans l'application",
+    "emailFor": "{{type}} par e-mail",
+    "digest": "Résumé quotidien par e-mail",
+    "digestHint": "Un e-mail par jour qui reprend ce que vous n'avez pas lu.",
+    "kind": {
+      "task_assigned": "Tâche assignée",
+      "mention": "Mention",
+      "comment": "Commentaire",
+      "status_changed": "Statut d'une tâche suivie",
+      "unblocked": "Tâche débloquée",
+      "task_overdue": "Tâche en retard",
+      "project_at_risk": "Projet à risque",
+      "project_archived": "Projet archivé",
+      "kr_due": "Échéance d'un résultat clé",
+      "event_scheduled": "Créneau ajouté à mon agenda",
+      "role_changed": "Changement de position dans la pyramide"
+    }
+  },
+  "confirm": {
+    "impactTitle": "Ce que ce geste emporte",
+    "typeToConfirm": "Saisissez « {{name}} » pour confirmer"
+  },
+  "bulk": {
+    "done_one": "{{count}} modification appliquée",
+    "done_many": "{{count}} de modifications appliquées",
+    "done_other": "{{count}} modifications appliquées",
+    "partial_one": "{{count}} échec, {{done}} appliquée(s) : le serveur a refusé le reste",
+    "partial_many": "{{count}} d'échecs, {{done}} appliquée(s) : le serveur a refusé le reste",
+    "partial_other": "{{count}} échecs, {{done}} appliquée(s) : le serveur a refusé le reste",
+    "membersSelected_one": "{{count}} membre sélectionné",
+    "membersSelected_many": "{{count}} de membres sélectionnés",
+    "membersSelected_other": "{{count}} membres sélectionnés",
+    "membersSelectHint": "Cochez des membres",
+    "selectMembers": "Sélectionner plusieurs membres",
+    "selectMember": "Sélectionner {{name}}",
+    "addToTeam": "Ajouter à une équipe",
+    "placeUnder": "Placer sous…",
+    "detach": "Détacher (non placés)",
+    "suspend": "Suspendre",
+    "reactivate": "Réactiver",
+    "accessUntil": "Accès jusqu'au…",
+    "exit": "Quitter la sélection",
+    "suspendTitle_one": "Suspendre {{count}} membre ?",
+    "suspendTitle_many": "Suspendre {{count}} de membres ?",
+    "suspendTitle_other": "Suspendre {{count}} membres ?",
+    "accessUntilTitle_one": "Borner l'accès de {{count}} membre",
+    "accessUntilTitle_many": "Borner l'accès de {{count}} de membres",
+    "accessUntilTitle_other": "Borner l'accès de {{count}} membres"
+  },
+  "myRights": {
+    "title": "Mes droits",
+    "hint": "Ce que vous pouvez faire dans cette entreprise, et pourquoi. Un droit « décidé pour vous » remplace celui de votre position.",
+    "adminHint": "Administrateur : tous les droits, sans exception. Aucune surcharge ne s'applique à un admin.",
+    "sourceAdmin": "Administrateur",
+    "sourceOverride": "Décidé pour vous",
+    "sourceManager": "Défaut de manager",
+    "sourceMember": "Défaut de membre",
+    "allowed": "autorisé",
+    "denied": "refusé",
+    "assignNobody": "personne"
   }
 }

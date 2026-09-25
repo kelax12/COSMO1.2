@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react';
-import { LogOut, ShieldOff } from 'lucide-react';
+import { ArrowRightLeft, LogOut, ShieldOff } from 'lucide-react';
 import { DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import type { OrgMember } from '@/modules/organizations';
 import MemberAccessDialog from './MemberAccessDialog';
@@ -23,6 +23,8 @@ interface MemberLifecycle {
   menuItems: (member: OrgMember) => ReactNode;
   /** Les dialogues, à monter UNE fois hors du menu (un menu se démonte en se fermant). */
   dialogs: ReactNode;
+  /** Ouvre l'assistant sans passer par le menu (confirmation de retrait, départ). */
+  openDeparture: (member: OrgMember, mode?: 'remove' | 'transfer') => void;
 }
 
 /**
@@ -42,7 +44,7 @@ export const useMemberLifecycle = ({
 }: UseMemberLifecycleArgs): MemberLifecycle => {
   const { t } = useT('org');
   const [accessFor, setAccessFor] = useState<OrgMember | null>(null);
-  const [departureFor, setDepartureFor] = useState<OrgMember | null>(null);
+  const [departureFor, setDepartureFor] = useState<{ member: OrgMember; mode: 'remove' | 'transfer' } | null>(null);
 
   const menuItems = (member: OrgMember): ReactNode => {
     if (!isAdmin || member.userId === currentUserId || member.userId === ownerId) return null;
@@ -52,9 +54,14 @@ export const useMemberLifecycle = ({
           <ShieldOff size={14} aria-hidden="true" />
           {member.suspendedAt ? t('lifecycle.menuReactivate') : t('lifecycle.menuAccess')}
         </DropdownMenuItem>
+        {/* Transfert de responsabilité (audit du 2026-09-24) : tâches, subordonnés,
+            équipes, projets et KR passent à quelqu'un d'autre, la personne reste. */}
+        <DropdownMenuItem onClick={() => setDepartureFor({ member, mode: 'transfer' })}>
+          <ArrowRightLeft size={14} aria-hidden="true" /> {t('lifecycle.menuTransfer')}
+        </DropdownMenuItem>
         <DropdownMenuItem
           variant="destructive"
-          onClick={() => setDepartureFor(member)}
+          onClick={() => setDepartureFor({ member, mode: 'remove' })}
           className="!text-red-500 focus:!text-red-500"
         >
           <LogOut size={14} className="!text-red-500" aria-hidden="true" /> {t('lifecycle.menuOffboard')}
@@ -69,13 +76,17 @@ export const useMemberLifecycle = ({
       {departureFor && (
         <OffboardMemberDialog
           orgId={orgId}
-          member={departureFor}
+          member={departureFor.member}
           members={members}
+          initialMode={departureFor.mode}
           onClose={() => setDepartureFor(null)}
         />
       )}
     </>
   );
 
-  return { menuItems, dialogs };
+  const openDeparture = (member: OrgMember, mode: 'remove' | 'transfer' = 'remove') =>
+    setDepartureFor({ member, mode });
+
+  return { menuItems, dialogs, openDeparture };
 };

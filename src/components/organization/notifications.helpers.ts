@@ -8,7 +8,7 @@
 // composant, et le calcul est ici pour être testé sans DOM.
 // ═══════════════════════════════════════════════════════════════════
 
-import type { OrgNotification } from '@/modules/organizations';
+import type { OrgNotification, OrgNotificationKind } from '@/modules/organizations';
 import type { KeyOf } from '@/i18n/catalog';
 
 export type NotificationPeriod = 'today' | 'week' | 'earlier';
@@ -77,4 +77,88 @@ export const groupNotifications = (
       ? [{ period, labelKey: PERIOD_LABEL[period], items }]
       : [];
   });
+};
+
+// ─── Filtre par type (audit du 2026-09-24, M14) ──────────────────────
+//
+// Douze types dans un seul flux : on ne retrouvait plus « qui m'a mentionné ».
+// Les filtres regroupent les types par QUESTION qu'on se pose, pas un bouton
+// par type technique.
+
+export type NotificationFilter = 'all' | 'work' | 'mentions' | 'deadlines' | 'projects' | 'org';
+
+const FILTER_KINDS: Record<Exclude<NotificationFilter, 'all'>, readonly OrgNotificationKind[]> = {
+  work: ['task_assigned', 'status_changed', 'unblocked'],
+  mentions: ['mention', 'comment'],
+  deadlines: ['task_overdue', 'kr_due', 'event_scheduled'],
+  projects: ['project_at_risk', 'project_archived'],
+  org: ['role_changed'],
+};
+
+export const NOTIFICATION_FILTERS: readonly NotificationFilter[] = ['all', 'work', 'mentions', 'deadlines', 'projects', 'org'];
+
+export const NOTIFICATION_FILTER_LABEL: Record<NotificationFilter, KeyOf<'org'>> = {
+  all: 'notifications.filterAll',
+  work: 'notifications.filterWork',
+  mentions: 'notifications.filterMentions',
+  deadlines: 'notifications.filterDeadlines',
+  projects: 'notifications.filterProjects',
+  org: 'notifications.filterOrg',
+};
+
+/** Un type inconnu (base plus récente que le client) reste visible sous « Tout ». */
+export const filterNotifications = (
+  notifications: OrgNotification[],
+  filter: NotificationFilter,
+): OrgNotification[] =>
+  filter === 'all' ? notifications : notifications.filter((n) => FILTER_KINDS[filter].includes(n.kind));
+
+/** Les filtres qui ont au moins une notification : un filtre vide est un clic pour rien. */
+export const availableFilters = (notifications: OrgNotification[]): NotificationFilter[] =>
+  NOTIFICATION_FILTERS.filter((f) => f === 'all' || filterNotifications(notifications, f).length > 0);
+
+/**
+ * Libellé d'une notification. `role_changed` (mig. 164) en porte trois, selon
+ * `meta.change` : sans cette distinction, « votre position a changé » ne dit
+ * pas si l'on gagne ou perd la vue sur une équipe.
+ */
+export const notificationLabelKey = (n: OrgNotification, fallback: KeyOf<'org'>): KeyOf<'org'> => {
+  if (n.kind !== 'role_changed') return fallback;
+  const change = (n.meta as { change?: string } | null | undefined)?.change;
+  if (change === 'now_manager') return 'notifications.kindRoleNowManager';
+  if (change === 'no_longer_manager') return 'notifications.kindRoleNoLongerManager';
+  return 'notifications.kindRoleManagerChanged';
+};
+
+// ─── Pastilles de section (audit du 2026-09-24) ──────────────────────
+//
+// Seuls Projets et Membres portaient un compteur. Les autres sections se
+// déduisent des notifications NON LUES déjà lues par la boîte de réception :
+// aucune requête de plus. `task_assigned` n'y figure PAS : il nourrit déjà la
+// pastille Projets (`useOrgBadges`), le compter ici le montrerait deux fois.
+
+export type BadgeSection = 'tasks' | 'projects' | 'okr' | 'pyramid';
+
+const SECTION_KINDS: Record<BadgeSection, readonly OrgNotificationKind[]> = {
+  tasks: ['mention', 'comment', 'status_changed', 'unblocked', 'task_overdue'],
+  projects: ['project_at_risk', 'project_archived'],
+  okr: ['kr_due'],
+  pyramid: ['role_changed'],
+};
+
+export interface SectionBadge {
+  count: number;
+  /** Types présents, pour nommer l'aperçu sans relire la liste. */
+  kinds: OrgNotificationKind[];
+}
+
+export const sectionNotificationBadges = (
+  notifications: OrgNotification[],
+): Record<BadgeSection, SectionBadge> => {
+  const out = {} as Record<BadgeSection, SectionBadge>;
+  for (const section of Object.keys(SECTION_KINDS) as BadgeSection[]) {
+    const unread = notifications.filter((n) => n.readAt === null && SECTION_KINDS[section].includes(n.kind));
+    out[section] = { count: unread.length, kinds: [...new Set(unread.map((n) => n.kind))] };
+  }
+  return out;
 };

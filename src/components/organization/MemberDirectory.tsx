@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import {
-  Shield, UserCog, UserRound, MoreVertical, LogOut, ShieldCheck,
-  ListTodo, CalendarDays, TrendingUp, ClipboardList, Search, X,
+  Shield, UserCog, UserRound, MoreVertical, ShieldCheck,
+  ListTodo, CalendarDays, TrendingUp, ClipboardList, Search, X, CheckSquare,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -14,8 +14,6 @@ import {
   DropdownMenuRadioItem,
 } from '@/components/ui/dropdown-menu';
 import {
-  useRemoveMember,
-  useSetMemberManager,
   useSetMemberRole,
   useOrgMemberPermissions,
   useSetMemberPermissions,
@@ -42,9 +40,11 @@ import MemberSheet from './MemberSheet';
 import { MEMBER_TAB_PARAM, type MemberTab } from './member-sheet.helpers';
 import AssignTaskSheet from './AssignTaskSheet';
 import TeamTaskModal from './TeamTaskModal';
-import ReassignManagerSheet from './ReassignManagerSheet';
-import ConfirmRemoveMemberDialog from './ConfirmRemoveMemberDialog';
 import MemberPermissionsSheet from './MemberPermissionsSheet';
+import MemberAccessBadge from './MemberAccessBadge';
+import MemberBulkBar from './MemberBulkBar';
+import OrgConfirmDialog from './OrgConfirmDialog';
+import { useMemberLifecycle } from './MemberLifecycleActions';
 import { useT } from '@/i18n/useT';
 
 interface MemberDirectoryProps {
@@ -87,9 +87,23 @@ const RoleBadge = ({ kind }: { kind: keyof typeof BADGE_META }) => {
  */
 const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin }: MemberDirectoryProps) => {
   const { t } = useT('org');
-  const removeMutation = useRemoveMember();
-  const setManager = useSetMemberManager();
   const setRole = useSetMemberRole();
+  // Départ, suspension, accès borné, transfert de responsabilités (mig. 161,
+  // 164). « Organiser le départ » REMPLACE l'ancien retrait nu, qui laissait
+  // tâches, subordonnés et rôles orphelins.
+  const lifecycle = useMemberLifecycle({ orgId, members, ownerId, currentUserId, isAdmin });
+  // Sélection multiple (admin) : configuration EN MASSE (audit du 2026-09-24).
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
+  const toggleSelected = (id: string) =>
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  // Un admin rétrogradé perd la main sur l'organisation : on le confirme.
+  const [demoting, setDemoting] = useState<OrgMember | null>(null);
   const { data: orgPermissions = [] } = useOrgMemberPermissions(orgId);
   const setPermissions = useSetMemberPermissions();
   const myPermissions = useMyOrgPermissions(orgId);
@@ -108,8 +122,6 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin }: Me
   const [sheet, setSheet] = useState<{ member: OrgMember; tab: string | null } | null>(null);
   const [assigning, setAssigning] = useState<OrgMember | null>(null);
   const [creatingTaskFor, setCreatingTaskFor] = useState<OrgMember | null>(null);
-  const [removing, setRemoving] = useState<OrgMember | null>(null);
-  const [reassigning, setReassigning] = useState<OrgMember | null>(null);
   const [editingPerms, setEditingPerms] = useState<OrgMember | null>(null);
 
   // ─── Deep-link `?member=<id>` ───────────────────────────────────────
@@ -179,22 +191,6 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin }: Me
 
   const activeProjects = projects.filter((p) => !p.archivedAt);
 
-  const handleRemove = (m: OrgMember) => {
-    // Membre avec subordonnés : choisir d'abord leur nouveau responsable
-    // (même parcours que la pyramide — la hiérarchie sous eux est préservée).
-    if (members.some((x) => x.managerId === m.userId)) setReassigning(m);
-    else setRemoving(m);
-  };
-
-  const performRemoveWithReassign = async (member: OrgMember, newManagerId: string | null) => {
-    const directs = members.filter((x) => x.managerId === member.userId);
-    for (const c of directs) {
-      await setManager.mutateAsync({ orgId, userId: c.userId, managerId: newManagerId, silent: true });
-    }
-    await removeMutation.mutateAsync({ orgId, userId: member.userId });
-    setReassigning(null);
-  };
-
   const assignToMember = (task: TeamTask, member: OrgMember) => {
     if (task.assigneeIds.includes(member.userId)) return;
     updateTask.mutate({ taskId: task.id, input: { assigneeIds: [...task.assigneeIds, member.userId] } });
@@ -205,6 +201,17 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin }: Me
   return (
     <>
       {/* Recherche (visible dès que l'annuaire compte quelques membres) */}
+      {isAdmin && members.length > 1 && !selectMode && (
+        <div className="flex justify-end mb-2">
+          <button
+            type="button"
+            onClick={() => setSelectMode(true)}
+            className="inline-flex items-center gap-1.5 min-h-11 px-2 text-sm font-medium text-[rgb(var(--color-accent))] hover:underline"
+          >
+            <CheckSquare size={15} aria-hidden="true" /> {t('bulk.selectMembers')}
+          </button>
+        </div>
+      )}
       {members.length > 3 && (
         <div className="relative mb-3">
           <Search
@@ -260,6 +267,16 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin }: Me
                 aria-label={t('common.seeProfileOf', { name: m.displayName })}
                 className="flex items-center gap-3 p-3 rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] cursor-pointer hover:border-indigo-400/60 hover:bg-[rgb(var(--color-hover))] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
               >
+                {selectMode && (
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.has(m.userId)}
+                    onChange={() => toggleSelected(m.userId)}
+                    onClick={(e) => e.stopPropagation()}
+                    aria-label={t('bulk.selectMember', { name: m.displayName })}
+                    className="w-4 h-4 shrink-0 accent-[rgb(var(--color-accent))]"
+                  />
+                )}
                 <MemberAvatar avatar={m.avatar} name={m.displayName} size={40} />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
@@ -271,6 +288,7 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin }: Me
                         {t('common.youBadge')}
                       </span>
                     )}
+                    <MemberAccessBadge member={m} />
                   </div>
                   {m.email && (
                     <p className="text-xs text-[rgb(var(--color-text-muted))] truncate">{m.email}</p>
@@ -292,6 +310,7 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin }: Me
                         value={m.role}
                         onValueChange={(value) => {
                           if (value === m.role) return;
+                          if (value === 'member') { setDemoting(m); return; }
                           setRole.mutate({ orgId, userId: m.userId, role: value as OrgRole });
                         }}
                       >
@@ -362,20 +381,10 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin }: Me
                           </DropdownMenuItem>
                         </>
                       )}
-                      {isAdmin && (
+                      {isAdmin && m.userId !== ownerId && (
                         <>
                           <DropdownMenuSeparator />
-                          {/* `!text-red-500` explicite : le sélecteur Tailwind
-                              `data-[variant=destructive]:*:[svg]:!text-destructive`
-                              du composant ne colore pas l'icône (constaté),
-                              même override que TaskTable pour « Supprimer ». */}
-                          <DropdownMenuItem
-                            variant="destructive"
-                            onClick={() => handleRemove(m)}
-                            className="!text-red-500 focus:!text-red-500"
-                          >
-                            <LogOut className="!text-red-500" size={14} aria-hidden="true" /> {t('directory.removeFromOrg')}
-                          </DropdownMenuItem>
+                          {lifecycle.menuItems(m)}
                         </>
                       )}
                     </DropdownMenuContent>
@@ -434,20 +443,6 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin }: Me
         />
       )}
 
-      {removing && (
-        <ConfirmRemoveMemberDialog
-          member={removing}
-          pending={removeMutation.isPending}
-          onConfirm={() =>
-            removeMutation.mutate(
-              { orgId, userId: removing.userId },
-              { onSettled: () => setRemoving(null) },
-            )
-          }
-          onCancel={() => setRemoving(null)}
-        />
-      )}
-
       {editingPerms && myEffective && (
         <MemberPermissionsSheet
           member={editingPerms}
@@ -467,14 +462,33 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin }: Me
         />
       )}
 
-      {reassigning && (
-        <ReassignManagerSheet
-          member={reassigning}
-          members={members}
+      {lifecycle.dialogs}
+
+      {demoting && (
+        <OrgConfirmDialog
+          title={t('directory.demoteTitle', { name: demoting.displayName })}
+          description={t('directory.demoteBody')}
+          confirmLabel={t('directory.demoteConfirm')}
+          pending={setRole.isPending}
+          onConfirm={() =>
+            setRole.mutate(
+              { orgId, userId: demoting.userId, role: 'member' },
+              { onSettled: () => setDemoting(null) },
+            )
+          }
+          onCancel={() => setDemoting(null)}
+        />
+      )}
+
+      {selectMode && (
+        <MemberBulkBar
+          orgId={orgId}
           ownerId={ownerId}
           currentUserId={currentUserId}
-          onConfirm={(newManagerId) => performRemoveWithReassign(reassigning, newManagerId)}
-          onCancel={() => setReassigning(null)}
+          selected={members.filter((m) => selectedIds.has(m.userId))}
+          members={members}
+          teams={orgTeams}
+          onExit={() => { setSelectMode(false); setSelectedIds(new Set()); }}
         />
       )}
     </>

@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { getCurrentUserId } from '@/lib/auth-user';
 import { makeApiError, normalizeApiError } from '@/lib/normalizeApiError';
 import { warnIfTruncated } from '@/lib/pagination.warning';
-import { TEAM_TASKS_READ_LIMIT } from './constants';
+import { TEAM_TASKS_READ_LIMIT, TEAM_PROJECTS_PAGE, TEAM_PROJECTS_READ_LIMIT } from './constants';
 import type { RestoreCommentOptions } from './repository';
 import { ITeamProjectsRepository } from './repository';
 import {
@@ -31,8 +31,10 @@ import {
   CreateTeamProjectMilestoneInput,
   UpdateTeamProjectMilestoneInput,
   TeamProjectDependency,
+  TeamProjectTeam,
 } from './types';
 import * as portfolio from './supabase.portfolio';
+import * as audience from './audience.repository';
 import {
   mapProject,
   mapComment,
@@ -66,13 +68,24 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
     // Tri DÉCROISSANT puis inversion : avec `limit`, un tri croissant garde les
     // lignes les PLUS ANCIENNES et fait disparaître les derniers projets créés
     // dès qu'on passe le plafond. L'affichage reste chronologique.
-    const { data, error } = await supabase
-      .rpc('get_my_team_projects', { p_org: orgId })
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(200);
-    if (error) throw normalizeApiError(error);
-    return warnIfTruncated((data ?? []) as unknown as ProjectRow[], 200, 'team_projects').reverse().map(mapProject);
+    //
+    // Lecture PAGINÉE (audit du 2026-09-24, « entreprise avec 500 projets ») :
+    // un plafond unique de 200 masquait le reste du portefeuille. Des pages de
+    // 500 jusqu'à la dernière, bornées à `TEAM_PROJECTS_READ_LIMIT` pour qu'une
+    // base anormale ne fasse pas tourner la boucle sans fin.
+    const rows: ProjectRow[] = [];
+    for (let from = 0; from < TEAM_PROJECTS_READ_LIMIT; from += TEAM_PROJECTS_PAGE) {
+      const { data, error } = await supabase
+        .rpc('get_my_team_projects', { p_org: orgId })
+        .select('*')
+        .order('created_at', { ascending: false })
+        .range(from, from + TEAM_PROJECTS_PAGE - 1);
+      if (error) throw normalizeApiError(error);
+      const page = (data ?? []) as unknown as ProjectRow[];
+      rows.push(...page);
+      if (page.length < TEAM_PROJECTS_PAGE) break;
+    }
+    return warnIfTruncated(rows, TEAM_PROJECTS_READ_LIMIT, 'team_projects').reverse().map(mapProject);
   }
 
   async createProject(orgId: string, input: CreateTeamProjectInput): Promise<TeamProject> {
@@ -142,6 +155,12 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
   getProjectDependencies(orgId: string): Promise<TeamProjectDependency[]> { return portfolio.getProjectDependencies(orgId); }
   addProjectDependency(projectId: string, dependsOnId: string, orgId: string): Promise<void> { return portfolio.addProjectDependency(projectId, dependsOnId, orgId); }
   removeProjectDependency(projectId: string, dependsOnId: string): Promise<void> { return portfolio.removeProjectDependency(projectId, dependsOnId); }
+
+  // Équipes associées et purge (mig. 164).
+  getProjectTeams(orgId: string): Promise<TeamProjectTeam[]> { return audience.getProjectTeams(orgId); }
+  addProjectTeam(orgId: string, projectId: string, teamId: string): Promise<void> { return audience.addProjectTeam(orgId, projectId, teamId); }
+  removeProjectTeam(projectId: string, teamId: string): Promise<void> { return audience.removeProjectTeam(projectId, teamId); }
+  purgeArchivedProject(projectId: string): Promise<void> { return audience.purgeArchivedProject(projectId); }
 
   async updateProject(projectId: string, input: UpdateTeamProjectInput): Promise<TeamProject> {
     if (!supabase) throw new Error('Supabase not configured');

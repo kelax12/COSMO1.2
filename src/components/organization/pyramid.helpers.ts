@@ -177,3 +177,32 @@ export function ancestorIds(members: OrgMember[], ids: Set<string>): Set<string>
   }
   return out;
 }
+
+/**
+ * Ce qu'un déplacement change aux POSITIONS (audit du 2026-09-24, étape 4) :
+ * « manager » est dérivé de la pyramide, donc déplacer quelqu'un peut faire
+ * perdre à son ancien manager sa vue sur la Pyramide et les Statistiques, ou
+ * la donner au nouveau, sans qu'aucun écran ne l'ait dit.
+ */
+export interface PositionChange {
+  /** L'ancien manager, s'il n'encadrera plus personne. */
+  losesManagerRole: OrgMember | null;
+  /** Le nouveau manager, s'il encadre quelqu'un pour la première fois. */
+  becomesManager: OrgMember | null;
+}
+
+export function positionChange(
+  members: OrgMember[],
+  userId: string,
+  newManagerId: string | null,
+): PositionChange {
+  const moved = members.find((m) => m.userId === userId);
+  const oldManagerId = moved?.managerId ?? null;
+  if (!moved || oldManagerId === newManagerId) return { losesManagerRole: null, becomesManager: null };
+  const reportsOf = (id: string) => members.filter((m) => m.managerId === id).length;
+  const byId = (id: string | null) => (id ? members.find((m) => m.userId === id) ?? null : null);
+  return {
+    losesManagerRole: oldManagerId && reportsOf(oldManagerId) === 1 ? byId(oldManagerId) : null,
+    becomesManager: newManagerId && reportsOf(newManagerId) === 0 ? byId(newManagerId) : null,
+  };
+}

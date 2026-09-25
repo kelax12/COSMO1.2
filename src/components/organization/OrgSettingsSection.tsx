@@ -1,19 +1,25 @@
+import { Suspense, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
-import { ArrowRightLeft, Building2, Check, ChevronRight, LogOut, Pencil, Plus, Trash2, Users } from 'lucide-react';
+import { ArrowRightLeft, Bell, Building2, Check, ChevronRight, LogOut, Plus, Trash2, Users } from 'lucide-react';
 import { useActiveOrganization, type Organization, type OrgMember } from '@/modules/organizations';
 import { useT } from '@/i18n/useT';
 import { buildOrgLink } from './deep-link.helpers';
 import OrgPlanChip from './OrgPlanChip';
+import OrgProfileForm from './OrgProfileForm';
+import MyPermissionsCard from './MyPermissionsCard';
+import { lazyWithRetry } from '@/lib/lazy-with-retry';
+
+const OrgNotificationSettingsDialog = lazyWithRetry(() => import('./OrgNotificationSettingsDialog'));
 
 interface OrgSettingsSectionProps {
   org: Organization;
   members: OrgMember[];
+  currentUserId?: string;
   isOwner: boolean;
   isAdmin: boolean;
   transferPending: boolean;
   deletePending: boolean;
   leavePending: boolean;
-  onEditProfile: () => void;
   onTransfer: () => void;
   onDelete: () => void;
   onLeave: () => void;
@@ -38,47 +44,75 @@ const HINT = 'text-xs text-[rgb(var(--color-text-muted))] mt-0.5';
  * l'affichage : les règles vivent côté serveur (`delete_organization`, mig. 138).
  */
 const OrgSettingsSection = ({
-  org, members, isOwner, isAdmin,
+  org, members, currentUserId, isOwner, isAdmin,
   transferPending, deletePending, leavePending,
-  onEditProfile, onTransfer, onDelete, onLeave,
+  onTransfer, onDelete, onLeave,
 }: OrgSettingsSectionProps) => {
   const { t } = useT('org');
+  const [notifOpen, setNotifOpen] = useState(false);
   const navigate = useNavigate();
   const { organizations, setActiveOrgId } = useActiveOrganization();
 
   return (
     <div className="space-y-5 max-w-3xl">
-      {/* Profil */}
+      {/* Profil : ÉDITÉ ici depuis l'audit du 2026-09-24 (il vivait dans une
+          feuille ouverte par un crayon de l'en-tête, qui mène désormais ici). */}
+      <section className={CARD} id="org-profile">
+        <h2 className={TITLE}>{t('orgSettings.profileTitle')}</h2>
+        {isAdmin ? (
+          <div className="mt-3"><OrgProfileForm org={org} /></div>
+        ) : (
+          <div className="flex items-start gap-3 mt-2">
+            <div className="w-12 h-12 rounded-2xl bg-[rgb(var(--color-hover))] border border-[rgb(var(--color-border))] flex items-center justify-center shrink-0 overflow-hidden">
+              {org.avatarUrl ? (
+                <img src={org.avatarUrl} alt="" className="w-full h-full object-cover" />
+              ) : (
+                <Building2 size={22} aria-hidden="true" />
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm text-[rgb(var(--color-text-primary))] truncate">
+                {org.name}
+                {org.industry ? <span className="text-[rgb(var(--color-text-muted))]"> · {org.industry}</span> : null}
+              </p>
+              <p className="text-xs text-[rgb(var(--color-text-secondary))] mt-0.5">
+                {org.description || t('orgSettings.noDescription')}
+              </p>
+              <p className={HINT}>{t('orgSettings.profileReadOnly')}</p>
+            </div>
+          </div>
+        )}
+      </section>
+
+      {/* Mes droits (audit du 2026-09-24) : la règle surcharge > défaut >
+          admin était juste mais invisible pour la personne concernée. */}
       <section className={CARD}>
-        <div className="flex items-start gap-3">
-          <div className="w-12 h-12 rounded-2xl bg-[rgb(var(--color-hover))] border border-[rgb(var(--color-border))] flex items-center justify-center shrink-0 overflow-hidden">
-            {org.avatarUrl ? (
-              <img src={org.avatarUrl} alt="" className="w-full h-full object-cover" />
-            ) : (
-              <Building2 size={22} aria-hidden="true" />
-            )}
-          </div>
-          <div className="flex-1 min-w-0">
-            <h2 className={TITLE}>{t('orgSettings.profileTitle')}</h2>
-            <p className="text-sm text-[rgb(var(--color-text-primary))] mt-1 truncate">
-              {org.name}
-              {org.industry ? <span className="text-[rgb(var(--color-text-muted))]"> · {org.industry}</span> : null}
-            </p>
-            <p className="text-xs text-[rgb(var(--color-text-secondary))] mt-0.5">
-              {org.description || t('orgSettings.noDescription')}
-            </p>
-            {!isAdmin && <p className={HINT}>{t('orgSettings.profileReadOnly')}</p>}
-          </div>
-          {isAdmin && (
-            <button
-              type="button"
-              onClick={onEditProfile}
-              className="shrink-0 inline-flex items-center gap-1.5 px-3 min-h-11 rounded-xl text-sm font-semibold border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] transition-colors"
-            >
-              <Pencil size={14} aria-hidden="true" /> {t('page.editProfile')}
-            </button>
-          )}
+        <h2 className={TITLE}>{t('myRights.title')}</h2>
+        <div className="mt-2">
+          <MyPermissionsCard orgId={org.id} members={members} currentUserId={currentUserId} />
         </div>
+      </section>
+
+      {/* Notifications (M14) : la cloche disparaît quand elle est vide, ses
+          préférences doivent rester atteignables. */}
+      <section className={CARD}>
+        <button
+          type="button"
+          onClick={() => setNotifOpen(true)}
+          className="w-full flex items-center gap-3 -m-1 p-1 rounded-xl text-left hover:bg-[rgb(var(--color-hover))] transition-colors"
+        >
+          <Bell size={18} aria-hidden="true" className="text-[rgb(var(--color-text-muted))] shrink-0" />
+          <span className="flex-1 min-w-0">
+            <span className={`block ${TITLE}`}>{t('notifSettings.title')}</span>
+            <span className={`block ${HINT}`}>{t('orgSettings.notificationsHint')}</span>
+          </span>
+          <ChevronRight size={16} aria-hidden="true" className="text-[rgb(var(--color-text-muted))] shrink-0" />
+        </button>
+        {notifOpen && (
+          <Suspense fallback={null}>
+            <OrgNotificationSettingsDialog orgId={org.id} open={notifOpen} onOpenChange={setNotifOpen} />
+          </Suspense>
+        )}
       </section>
 
       {/* Mes organisations : le changement vivait dans la barre latérale de

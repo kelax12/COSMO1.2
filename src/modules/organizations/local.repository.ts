@@ -29,7 +29,31 @@ import {
 } from './constants';
 import type { OrgMemberPermissions, SetOrgPermissionsInput } from './permissions';
 import { isEnglishSeed, localizeSeed } from '@/lib/seed-i18n';
-import { safeGetItem, safeSetItem, writeJsonOrThrow } from '@/lib/safe-json';
+import { readJsonArray, safeGetItem, safeSetItem, writeJsonOrThrow } from '@/lib/safe-json';
+import { TEAM_PROJECTS_STORAGE_KEY, TEAM_TASKS_STORAGE_KEY } from '@/modules/team-projects/constants';
+import type { TeamProject, TeamTask } from '@/modules/team-projects/types';
+
+/**
+ * Miroir de `release_member_work` (mig. 164) : quelqu'un qui n'a plus accès ne
+ * reste assigné à aucune tâche OUVERTE, ni responsable d'aucun projet. Les
+ * tâches terminées gardent leur assigné : c'est l'historique.
+ */
+function releaseMemberWork(orgId: string, userId: string): void {
+  const tasks = readJsonArray<TeamTask>(TEAM_TASKS_STORAGE_KEY);
+  if (tasks) {
+    writeJsonOrThrow(TEAM_TASKS_STORAGE_KEY, tasks.map((t) =>
+      t.orgId === orgId && !t.completed && t.assigneeIds?.includes(userId)
+        ? { ...t, assigneeIds: t.assigneeIds.filter((id) => id !== userId) }
+        : t,
+    ));
+  }
+  const projects = readJsonArray<TeamProject>(TEAM_PROJECTS_STORAGE_KEY);
+  if (projects) {
+    writeJsonOrThrow(TEAM_PROJECTS_STORAGE_KEY, projects.map((p) =>
+      p.orgId === orgId && p.ownerId === userId ? { ...p, ownerId: null } : p,
+    ));
+  }
+}
 import { makeApiError } from '@/lib/normalizeApiError';
 
 const DEMO_USER_ID = 'demo-user';
@@ -373,6 +397,7 @@ export class LocalStorageOrganizationsRepository implements IOrganizationsReposi
       )
       .filter((m) => !(m.orgId === orgId && m.userId === userId));
     this.saveMembers(next);
+    releaseMemberWork(orgId, userId);
   }
 
   async leaveOrganization(orgId: string): Promise<void> {
@@ -389,6 +414,7 @@ export class LocalStorageOrganizationsRepository implements IOrganizationsReposi
       )
       .filter((m) => !(m.orgId === orgId && m.userId === DEMO_USER_ID));
     this.saveMembers(next);
+    releaseMemberWork(orgId, DEMO_USER_ID);
   }
 
   // ─── Pyramide (v2) ────────────────────────────────────────────────

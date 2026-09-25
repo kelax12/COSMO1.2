@@ -24,7 +24,8 @@
     "tabLoading": "Loading tab…",
     "managerToast": "You now manage {{names}}: the Statistics and Pyramid sections are available.",
     "launchFree": "COSMO for companies is free",
-    "launchFreeRest": " until 1 August, enjoy it with your whole team, no limits."
+    "launchFreeRest": " until 1 August, enjoy it with your whole team, no limits.",
+    "badgePreviewSection": "Unread in this section"
   },
   "onboarding": {
     "intro": "Create your company or join one to collaborate with your team.",
@@ -156,7 +157,14 @@
     "workloadTitle_other": "{{duration}} · {{count}} open",
     "workloadTitleOverdue_one": "{{duration}} · {{count}} open · {{overdue}} overdue",
     "workloadTitleOverdue_other": "{{duration}} · {{count}} open · {{overdue}} overdue",
-    "dragHint": "Drag {{name}} into the pyramid"
+    "dragHint": "Drag {{name}} into the pyramid",
+    "undoTitle": "Undo the reorganisation?",
+    "undoAction": "Revert",
+    "positionTitle": "Move {{name}}?",
+    "positionBody": "This move changes who manages whom. The people involved will be notified.",
+    "positionLoses": "{{name}} will no longer manage anyone: their team's Org chart and Statistics will be closed to them.",
+    "positionGains": "{{name}} will become a manager: Org chart and Statistics will open to them.",
+    "positionConfirm": "Move"
   },
   "overview": {
     "completed": "Completed",
@@ -657,7 +665,8 @@
     "avatarChange": "Change the company image",
     "fileInvalid": "Invalid file",
     "imageUnreadable": "Unreadable image",
-    "changeImage": "Change image"
+    "changeImage": "Change image",
+    "description": "Description"
   },
   "assign": {
     "assignTo": "Assign a task to {{name}}",
@@ -695,7 +704,10 @@
     "seeContribution": "See their contribution",
     "removeFromOrg": "Remove from organization",
     "changeRoleAria": "Change {{name}}'s role",
-    "customizeRole": "Customize…"
+    "customizeRole": "Customize…",
+    "demoteTitle": "Remove {{name}}'s administrator role?",
+    "demoteBody": "{{name}} will no longer manage members, billing or company settings. Their rights will follow their position in the org chart and any overrides again.",
+    "demoteConfirm": "Remove the role"
   },
   "member": {
     "detach": "Detach (unplaced)",
@@ -808,7 +820,13 @@
     "newOwner": "New owner",
     "choose": "Choose a member…",
     "pending": "Transferring…",
-    "confirm": "Transfer ownership"
+    "confirm": "Transfer ownership",
+    "billingTitle": "Billing follows the owner",
+    "billingSubscription": "The company subscription continues without interruption: the new owner will manage it (plan, cancellation, refund).",
+    "billingNoSubscription": "No paid subscription is running; if one is taken out, the new owner will manage it.",
+    "billingInvoices": "Past and future invoices will be available to the new owner, from the Billing tab.",
+    "billingCard": "The saved payment method stays the current one until the new owner changes it: remember to tell them.",
+    "billingYou": "You will lose access to billing as soon as you confirm."
   },
   "summary": {
     "barLabel": "{{completed}} completed, {{inProgress}} in progress, {{overdue}} overdue",
@@ -837,7 +855,20 @@
     "saveFirst": "Save the task to add comments."
   },
   "leaveDialog": {
-    "body": "You'll immediately lose access to the team's projects, tasks and OKRs. Your personal data (tasks, habits, calendar) is not affected. You can come back with a new invitation code."
+    "body": "You'll immediately lose access to the team's projects, tasks and OKRs. Your personal data (tasks, habits, calendar) is not affected. You can come back with a new invitation code.",
+    "title": "Leave {{org}}?",
+    "impactTitle": "What you leave behind",
+    "impactTasks_one": "{{count}} open task assigned to you will be unassigned",
+    "impactTasks_other": "{{count}} open tasks assigned to you will be unassigned",
+    "impactReports_one": "{{count}} direct report will move up under your manager",
+    "impactReports_other": "{{count}} direct reports will move up under your manager",
+    "impactLeads_one": "{{count}} team will lose its lead",
+    "impactLeads_other": "{{count}} teams will lose their lead",
+    "impactProjects_one": "{{count}} project you own will have no owner",
+    "impactProjects_other": "{{count}} projects you own will have no owner",
+    "organize": "Hand over my work first",
+    "confirm": "Leave the company",
+    "pending": "Leaving…"
   },
   "removeMemberDialog": {
     "body": "This person will immediately lose access to the company's projects, tasks and OKRs. Their personal data (tasks, habits, calendar) is not affected. They can come back with a new invitation code."
@@ -972,7 +1003,20 @@
     "kindUnblocked": "One of your tasks is no longer blocked",
     "kindProjectAtRisk": "A project you're part of was flagged at risk",
     "kindKrDue": "A key result is due in 3 days",
-    "kindEventScheduled": "A time slot was added to your calendar"
+    "kindEventScheduled": "A time slot was added to your calendar",
+    "kindProjectArchived": "A project where you have work was archived",
+    "kindProjectArchivedNamed": "Project “{{name}}” was archived: its tasks left your lists",
+    "kindRoleManagerChanged": "Your direct manager changed in the org chart",
+    "kindRoleNowManager": "You now manage someone: Org chart and Statistics are open to you",
+    "kindRoleNoLongerManager": "You no longer manage anyone: Org chart and Statistics are closed to you",
+    "settings": "Notification preferences",
+    "filterLabel": "Filter notifications",
+    "filterAll": "All",
+    "filterWork": "My tasks",
+    "filterMentions": "Mentions",
+    "filterDeadlines": "Deadlines",
+    "filterProjects": "Projects",
+    "filterOrg": "Organization"
   },
   "roles": {
     "admin": "Administrator",
@@ -1201,7 +1245,8 @@
     "planHint": "Only visible to the organization owner.",
     "membersTitle": "Members, teams and permissions",
     "membersHint": "Invitations, teams and each member's permissions are managed in the Members section.",
-    "membersLink": "Open Members"
+    "membersLink": "Open Members",
+    "notificationsHint": "Mute a notification type, get it by email, daily digest."
   },
   "trash": {
     "button_one": "Trash ({{count}})",
@@ -1297,7 +1342,17 @@
     "modeSuspendHint": "Access is cut, membership is kept: it can be restored.",
     "offboardPending": "Handing over…",
     "offboardRemove": "Hand over and remove",
-    "offboardSuspend": "Hand over and suspend"
+    "offboardSuspend": "Hand over and suspend",
+    "impactProjects_one": "{{count}} project they own",
+    "impactProjects_other": "{{count}} projects they own",
+    "projectsTo": "Their projects go to",
+    "keepAsIs": "Leave unchanged",
+    "transferTitle": "Hand over {{name}}'s responsibilities",
+    "transferIntro": "Choose who takes over what. The person stays in the company; only the responsibilities change hands.",
+    "modeTransfer": "Hand over only",
+    "modeTransferHint": "The person stays, with their access. A field left on “Leave unchanged” is not touched.",
+    "offboardTransfer": "Hand over",
+    "menuTransfer": "Hand over responsibilities"
   },
   "invites": {
     "emailTitle": "Invite by email",
@@ -1333,5 +1388,76 @@
     "resendWait": "At most one reminder per hour",
     "resendFor": "Resend to {{email}}",
     "revokeFor": "Revoke the invitation for {{email}}"
+  },
+  "projectTeams": {
+    "failed": "Could not change the project's teams: {{message}}"
+  },
+  "projectPurge": {
+    "failed": "Could not permanently delete the project: {{message}}"
+  },
+  "follow": {
+    "failed": "Could not change what you follow: {{message}}"
+  },
+  "notifSettings": {
+    "title": "Notification preferences",
+    "description": "For this company only. A type unchecked under “In app” is no longer created at all; emails go out at most once an hour.",
+    "colType": "Type",
+    "colApp": "In app",
+    "colEmail": "Email",
+    "appFor": "{{type}} in the app",
+    "emailFor": "{{type}} by email",
+    "digest": "Daily email digest",
+    "digestHint": "One email a day recapping what you haven't read.",
+    "kind": {
+      "task_assigned": "Task assigned",
+      "mention": "Mention",
+      "comment": "Comment",
+      "status_changed": "Status of a followed task",
+      "unblocked": "Task unblocked",
+      "task_overdue": "Overdue task",
+      "project_at_risk": "Project at risk",
+      "project_archived": "Project archived",
+      "kr_due": "Key result due",
+      "event_scheduled": "Slot added to my calendar",
+      "role_changed": "Change of position in the org chart"
+    }
+  },
+  "confirm": {
+    "impactTitle": "What this will affect",
+    "typeToConfirm": "Type “{{name}}” to confirm"
+  },
+  "bulk": {
+    "done_one": "{{count}} change applied",
+    "done_other": "{{count}} changes applied",
+    "partial_one": "{{count}} failed, {{done}} applied: the server refused the rest",
+    "partial_other": "{{count}} failed, {{done}} applied: the server refused the rest",
+    "membersSelected_one": "{{count}} member selected",
+    "membersSelected_other": "{{count}} members selected",
+    "membersSelectHint": "Tick some members",
+    "selectMembers": "Select several members",
+    "selectMember": "Select {{name}}",
+    "addToTeam": "Add to a team",
+    "placeUnder": "Place under…",
+    "detach": "Detach (unplaced)",
+    "suspend": "Suspend",
+    "reactivate": "Reactivate",
+    "accessUntil": "Access until…",
+    "exit": "Leave selection",
+    "suspendTitle_one": "Suspend {{count}} member?",
+    "suspendTitle_other": "Suspend {{count}} members?",
+    "accessUntilTitle_one": "Limit access for {{count}} member",
+    "accessUntilTitle_other": "Limit access for {{count}} members"
+  },
+  "myRights": {
+    "title": "My rights",
+    "hint": "What you can do in this company, and why. A right “set for you” overrides the one from your position.",
+    "adminHint": "Administrator: every right, no exception. No override applies to an admin.",
+    "sourceAdmin": "Administrator",
+    "sourceOverride": "Set for you",
+    "sourceManager": "Manager default",
+    "sourceMember": "Member default",
+    "allowed": "allowed",
+    "denied": "denied",
+    "assignNobody": "nobody"
   }
 }
