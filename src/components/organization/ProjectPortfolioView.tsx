@@ -11,8 +11,9 @@
 // la liste de cartes et ce tableau montrent exactement le même ensemble.
 // ═══════════════════════════════════════════════════════════════════
 
+import { useState } from 'react';
 import { format, parseISO } from 'date-fns';
-import { Flag, Link2, UserRound } from 'lucide-react';
+import { CheckSquare, Flag, Link2, UserRound } from 'lucide-react';
 import { getDateLocale } from '@/i18n/format';
 import type { OrgMember } from '@/modules/organizations';
 import type { OrgTeam } from '@/modules/org-teams';
@@ -22,6 +23,7 @@ import {
   PROJECT_STATUS_META, projectProgress, isProjectLate, nextMilestone, openBlockers,
 } from './portfolio.helpers';
 import MemberAvatar from './MemberAvatar';
+import ProjectBulkBar from './ProjectBulkBar';
 import { useT } from '@/i18n/useT';
 
 interface ProjectPortfolioViewProps {
@@ -34,22 +36,55 @@ interface ProjectPortfolioViewProps {
   /** Tous les projets visibles, pour nommer un bloqueur hors du filtre courant. */
   allProjects: TeamProject[];
   onOpenProject: (projectId: string) => void;
+  /**
+   * Actions groupées (audit du 2026-09-24) : `project.edit` pour le statut et
+   * le responsable, `project.delete` pour l'archivage. Sans l'un ni l'autre,
+   * la sélection n'est pas proposée.
+   */
+  canBulkEdit?: boolean;
+  canBulkArchive?: boolean;
 }
 
 const ProjectPortfolioView = ({
   projects, tasks, members, teams, milestones, dependencies, allProjects, onOpenProject,
+  canBulkEdit = false, canBulkArchive = false,
 }: ProjectPortfolioViewProps) => {
   const { t } = useT('org');
+  const { t: ta } = useT('orgAdmin');
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
+  const toggle = (id: string) =>
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  const exitSelect = () => { setSelectMode(false); setSelectedIds(new Set()); };
+  const canBulk = canBulkEdit || canBulkArchive;
   const { t: pf } = useT('portfolio');
   const shortDate = (d: string) => format(parseISO(d), 'd MMM yyyy', { locale: getDateLocale() });
   const memberById = new Map(members.map((m) => [m.userId, m]));
   const teamById = new Map(teams.map((tm) => [tm.id, tm]));
 
   return (
+    <>
+    {canBulk && projects.length > 1 && !selectMode && (
+      <div className="flex justify-end mb-1">
+        <button
+          type="button"
+          onClick={() => setSelectMode(true)}
+          className="inline-flex items-center gap-1.5 min-h-11 px-2 text-sm font-medium text-[rgb(var(--color-accent))] hover:underline"
+        >
+          <CheckSquare size={15} aria-hidden="true" /> {ta('bulk.selectProjects')}
+        </button>
+      </div>
+    )}
     <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] overflow-x-auto">
       <table className="w-full text-sm" aria-label={pf('tableAria')}>
         <thead>
           <tr className="text-left text-xs font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))] border-b border-[rgb(var(--color-border))]">
+            {selectMode && <th scope="col" className="px-3 py-2.5 w-8"><span className="sr-only">{ta('bulk.selectProjects')}</span></th>}
             <th scope="col" className="px-3 py-2.5">{pf('col.project')}</th>
             <th scope="col" className="px-3 py-2.5 hidden md:table-cell">{pf('col.owner')}</th>
             <th scope="col" className="px-3 py-2.5">{pf('col.status')}</th>
@@ -72,6 +107,17 @@ const ProjectPortfolioView = ({
                 key={project.id}
                 className="border-b last:border-b-0 border-[rgb(var(--color-border))] hover:bg-[rgb(var(--color-hover))]/60 transition-colors"
               >
+                {selectMode && (
+                  <td className="px-3 py-2.5">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(project.id)}
+                      onChange={() => toggle(project.id)}
+                      aria-label={ta('bulk.selectProject', { name: project.name })}
+                      className="w-4 h-4 accent-[rgb(var(--color-accent))]"
+                    />
+                  </td>
+                )}
                 <td className="px-3 py-2.5 max-w-[280px]">
                   <button
                     type="button"
@@ -154,6 +200,17 @@ const ProjectPortfolioView = ({
         </tbody>
       </table>
     </div>
+    {selectMode && (
+      <ProjectBulkBar
+        selected={projects.filter((p) => selectedIds.has(p.id))}
+        members={members}
+        canEdit={canBulkEdit}
+        canArchive={canBulkArchive}
+        onDone={() => setSelectedIds(new Set())}
+        onExit={exitSelect}
+      />
+    )}
+    </>
   );
 };
 

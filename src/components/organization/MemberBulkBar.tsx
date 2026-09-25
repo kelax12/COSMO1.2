@@ -44,7 +44,7 @@ const endOfLocalDay = (date: string): string => new Date(`${date}T23:59:59`).toI
  * l'écran pouvait éviter.
  */
 const MemberBulkBar = ({ orgId, ownerId, currentUserId, selected, members, teams, onExit }: MemberBulkBarProps) => {
-  const { t, tp } = useT('org');
+  const { t: ta, tp: tpa } = useT('orgAdmin');
   const { execute, pending } = useBulkRun([orgKeys.all, orgTeamKeys.all, governanceKeys.all]);
   const [confirmSuspend, setConfirmSuspend] = useState(false);
   const [expiryOpen, setExpiryOpen] = useState(false);
@@ -79,11 +79,11 @@ const MemberBulkBar = ({ orgId, ownerId, currentUserId, selected, members, teams
     <>
       <div
         role="toolbar"
-        aria-label={selected.length > 0 ? tp('bulk.membersSelected', selected.length) : t('bulk.membersSelectHint')}
+        aria-label={selected.length > 0 ? tpa('bulk.membersSelected', selected.length) : ta('bulk.membersSelectHint')}
         className="fixed left-1/2 -translate-x-1/2 bottom-20 sm:bottom-6 z-40 flex items-center gap-1 px-2 py-2 rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] shadow-lg max-w-[calc(100vw-2rem)] overflow-x-auto hide-scrollbar"
       >
         <span className="px-2 text-sm whitespace-nowrap tabular-nums font-semibold text-[rgb(var(--color-text-primary))]">
-          {selected.length > 0 ? tp('bulk.membersSelected', selected.length) : t('bulk.membersSelectHint')}
+          {selected.length > 0 ? tpa('bulk.membersSelected', selected.length) : ta('bulk.membersSelectHint')}
         </span>
 
         {selected.length > 0 && (
@@ -92,10 +92,10 @@ const MemberBulkBar = ({ orgId, ownerId, currentUserId, selected, members, teams
             {teams.length > 0 && (
               <DropdownMenu>
                 <DropdownMenuTrigger className={actionClass} disabled={pending}>
-                  <Users size={15} aria-hidden="true" /> {t('bulk.addToTeam')}
+                  <Users size={15} aria-hidden="true" /> {ta('bulk.addToTeam')}
                 </DropdownMenuTrigger>
                 <DropdownMenuContent side="top" align="center" className="w-56 max-h-72 overflow-y-auto">
-                  <DropdownMenuLabel>{t('bulk.addToTeam')}</DropdownMenuLabel>
+                  <DropdownMenuLabel>{ta('bulk.addToTeam')}</DropdownMenuLabel>
                   {teams.map((team) => (
                     <DropdownMenuItem key={team.id} onClick={() => addToTeam(team)}>
                       <span className="truncate">{team.name}</span>
@@ -107,10 +107,10 @@ const MemberBulkBar = ({ orgId, ownerId, currentUserId, selected, members, teams
 
             <DropdownMenu>
               <DropdownMenuTrigger className={actionClass} disabled={pending}>
-                <Network size={15} aria-hidden="true" /> {t('bulk.placeUnder')}
+                <Network size={15} aria-hidden="true" /> {ta('bulk.placeUnder')}
               </DropdownMenuTrigger>
               <DropdownMenuContent side="top" align="center" className="w-60 max-h-72 overflow-y-auto">
-                <DropdownMenuLabel>{t('bulk.placeUnder')}</DropdownMenuLabel>
+                <DropdownMenuLabel>{ta('bulk.placeUnder')}</DropdownMenuLabel>
                 {members.filter((m) => !selectedIds.has(m.userId)).map((m) => (
                   <DropdownMenuItem key={m.userId} onClick={() => placeUnder(m.userId)}>
                     <MemberAvatar avatar={m.avatar} name={m.displayName} size={20} />
@@ -118,22 +118,22 @@ const MemberBulkBar = ({ orgId, ownerId, currentUserId, selected, members, teams
                   </DropdownMenuItem>
                 ))}
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => placeUnder(null)}>{t('bulk.detach')}</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => placeUnder(null)}>{ta('bulk.detach')}</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
 
             {restrictable.length > 0 && (
               <>
                 <button type="button" className={actionClass} disabled={pending} onClick={() => setConfirmSuspend(true)}>
-                  <PauseCircle size={15} aria-hidden="true" /> {t('bulk.suspend')}
+                  <PauseCircle size={15} aria-hidden="true" /> {ta('bulk.suspend')}
                 </button>
                 {restrictable.some((m) => m.suspendedAt) && (
                   <button type="button" className={actionClass} disabled={pending} onClick={() => setSuspended(false)}>
-                    <PlayCircle size={15} aria-hidden="true" /> {t('bulk.reactivate')}
+                    <PlayCircle size={15} aria-hidden="true" /> {ta('bulk.reactivate')}
                   </button>
                 )}
                 <button type="button" className={actionClass} disabled={pending} onClick={() => setExpiryOpen(true)}>
-                  <Clock size={15} aria-hidden="true" /> {t('bulk.accessUntil')}
+                  <Clock size={15} aria-hidden="true" /> {ta('bulk.accessUntil')}
                 </button>
               </>
             )}
@@ -143,8 +143,8 @@ const MemberBulkBar = ({ orgId, ownerId, currentUserId, selected, members, teams
         <button
           type="button"
           onClick={onExit}
-          aria-label={t('bulk.exit')}
-          title={t('bulk.exit')}
+          aria-label={ta('bulk.exit')}
+          title={ta('bulk.exit')}
           className="w-9 h-9 rounded-xl flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))] transition-colors shrink-0"
         >
           <X size={16} aria-hidden="true" />
@@ -153,10 +153,10 @@ const MemberBulkBar = ({ orgId, ownerId, currentUserId, selected, members, teams
 
       {confirmSuspend && (
         <OrgConfirmDialog
-          title={tp('bulk.suspendTitle', restrictable.length)}
-          description={t('lifecycle.stateSuspendedHint')}
+          title={tpa('bulk.suspendTitle', restrictable.length)}
+          description={ta('lifecycle.stateSuspendedHint')}
           impact={restrictable.slice(0, 8).map((m) => m.displayName)}
-          confirmLabel={t('bulk.suspend')}
+          confirmLabel={ta('bulk.suspend')}
           onConfirm={() => { setConfirmSuspend(false); setSuspended(true); }}
           onCancel={() => setConfirmSuspend(false)}
         />
@@ -164,9 +164,9 @@ const MemberBulkBar = ({ orgId, ownerId, currentUserId, selected, members, teams
 
       {expiryOpen && (
         <OrgConfirmDialog
-          title={tp('bulk.accessUntilTitle', restrictable.length)}
-          description={t('lifecycle.accessUntilHint')}
-          confirmLabel={t('lifecycle.accessSave')}
+          title={tpa('bulk.accessUntilTitle', restrictable.length)}
+          description={ta('lifecycle.accessUntilHint')}
+          confirmLabel={ta('lifecycle.accessSave')}
           tone="accent"
           onConfirm={applyExpiry}
           onCancel={() => setExpiryOpen(false)}
@@ -175,7 +175,7 @@ const MemberBulkBar = ({ orgId, ownerId, currentUserId, selected, members, teams
             id="bulk-access-until"
             value={expiry}
             onChange={(v) => setExpiry(v ?? '')}
-            placeholder={t('lifecycle.accessUntilNone')}
+            placeholder={ta('lifecycle.accessUntilNone')}
             minDate={new Date().toLocaleDateString('en-CA')}
           />
         </OrgConfirmDialog>

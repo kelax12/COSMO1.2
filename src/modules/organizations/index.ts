@@ -77,7 +77,6 @@ export {
   useRespondJoinRequest,
   useCancelJoinRequest,
   useSetMemberRole,
-  useRemoveMember,
   useLeaveOrganization,
   useDeleteOrganization,
   useTransferOwnership,

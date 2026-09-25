@@ -20,7 +20,7 @@ interface MemberSelectFieldProps {
  * l'exclut, pour qu'une recherche ne vide pas silencieusement le choix.
  */
 const MemberSelectField = ({ label, members, value, onChange, emptyLabel, hint }: MemberSelectFieldProps) => {
-  const { t } = useT('org');
+  const { t: ta } = useT('orgAdmin');
   const id = useId();
   const [query, setQuery] = useState('');
   const searchable = members.length > MEMBER_SEARCH_THRESHOLD;
@@ -40,8 +40,8 @@ const MemberSelectField = ({ label, members, value, onChange, emptyLabel, hint }
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder={t('lifecycle.searchPerson')}
-          aria-label={t('lifecycle.searchPersonAria', { field: label })}
+          placeholder={ta('lifecycle.searchPerson')}
+          aria-label={ta('lifecycle.searchPersonAria', { field: label })}
           className="w-full mb-1.5 rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] px-3 py-2 text-sm text-[rgb(var(--color-text-primary))]"
         />
       )}

@@ -34,7 +34,7 @@ export async function runBulk<T>(items: T[], run: (item: T) => Promise<unknown>)
  * équipes, projets…). Rend `pending` pour griser la barre pendant le lot.
  */
 export const useBulkRun = (invalidate: readonly (readonly unknown[])[]) => {
-  const { tp } = useT('org');
+  const { tp: tpa } = useT('orgAdmin');
   const queryClient = useQueryClient();
   const [pending, setPending] = useState(false);
 
@@ -42,8 +42,8 @@ export const useBulkRun = (invalidate: readonly (readonly unknown[])[]) => {
     setPending(true);
     try {
       const outcome = await runBulk(items, run);
-      if (outcome.failed === 0) toast.success(tp('bulk.done', outcome.done));
-      else toast.error(tp('bulk.partial', outcome.failed, { done: outcome.done }));
+      if (outcome.failed === 0) toast.success(tpa('bulk.done', outcome.done));
+      else toast.error(tpa('bulk.partial', outcome.failed, { done: outcome.done }));
       return outcome;
     } finally {
       for (const key of invalidate) queryClient.invalidateQueries({ queryKey: key });

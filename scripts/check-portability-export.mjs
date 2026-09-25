@@ -216,6 +216,11 @@ const TABLES_NON_EXPORTEES = {
   org_team_members: "Appartenance décidée par l'organisation.",
   organization_join_requests: "Contient les identifiants de l'organisation, donc de tiers.",
   organization_members: "Appartenance décidée par l'organisation.",
+  // Mig. 162 (branche gouvernance), déclarées le 2026-09-25 : la garde les voyait
+  // sans décision depuis la fusion de cette branche.
+  team_task_followers: "Abonnements aux notifications d'une tâche d'équipe : un réglage d'interface qui pointe vers des données de l'organisation, pas un contenu fourni par la personne. ⚠️ Discutable, comme `org_notification_settings` : à rouvrir si l'export doit restituer les préférences.",
+  team_project_followers: "Abonnements aux notifications d'un projet d'équipe : même raison que `team_task_followers`.",
+  org_notification_settings: "Préférences de notification par organisation (types coupés, e-mail, résumé) : réglage d'interface, pas une donnée fournie au sens de l'art. 20. ⚠️ Discutable : à rouvrir si l'export doit restituer les réglages.",
 };
 
 // ── Lecture du schéma ──────────────────────────────────────────────

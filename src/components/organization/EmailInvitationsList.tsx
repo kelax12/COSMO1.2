@@ -29,15 +29,15 @@ const canResend = (i: EmailInvitation, now = Date.now()): boolean =>
  * (créateur ou admin) : un manager ne voit que les siennes.
  */
 const EmailInvitationsList = ({ orgId }: EmailInvitationsListProps) => {
-  const { t } = useT('org');
+  const { t: ta } = useT('orgAdmin');
   const { data: invitations = [], isLoading } = useEmailInvitations(orgId);
   const resend = useResendInvitation(orgId);
   const revoke = useRevokeEmailInvitation(orgId);
   const [copied, setCopied] = useState<string | null>(null);
 
-  if (isLoading) return <p className="text-sm text-[rgb(var(--color-text-muted))] py-4">{t('invites.listLoading')}</p>;
+  if (isLoading) return <p className="text-sm text-[rgb(var(--color-text-muted))] py-4">{ta('invites.listLoading')}</p>;
   if (invitations.length === 0) {
-    return <p className="text-sm text-[rgb(var(--color-text-muted))] py-4">{t('invites.listEmpty')}</p>;
+    return <p className="text-sm text-[rgb(var(--color-text-muted))] py-4">{ta('invites.listEmpty')}</p>;
   }
 
   const date = (iso: string) => formatDate(parseISO(iso), { day: 'numeric', month: 'short' });
@@ -58,10 +58,10 @@ const EmailInvitationsList = ({ orgId }: EmailInvitationsListProps) => {
               <span className="block text-sm font-medium text-[rgb(var(--color-text-primary))] truncate">{i.email}</span>
               <span className="block text-xs text-[rgb(var(--color-text-muted))]">
                 {state === 'claimed'
-                  ? t('invites.stateClaimed', { date: date(i.claimedAt as string) })
+                  ? ta('invites.stateClaimed', { date: date(i.claimedAt as string) })
                   : state === 'expired'
-                    ? t('invites.stateExpired', { date: date(i.expiresAt) })
-                    : t('invites.statePending', { date: date(i.expiresAt), sent: i.sentCount })}
+                    ? ta('invites.stateExpired', { date: date(i.expiresAt) })
+                    : ta('invites.statePending', { date: date(i.expiresAt), sent: i.sentCount })}
               </span>
             </span>
             {state !== 'claimed' && (
@@ -70,7 +70,7 @@ const EmailInvitationsList = ({ orgId }: EmailInvitationsListProps) => {
                   <button
                     type="button"
                     onClick={() => copy(i.token)}
-                    aria-label={t('invites.copyLinkFor', { email: i.email })}
+                    aria-label={ta('invites.copyLinkFor', { email: i.email })}
                     className="min-w-11 min-h-11 flex items-center justify-center rounded-lg text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))]"
                   >
                     {copied === i.token ? <Check size={16} aria-hidden="true" /> : <Copy size={16} aria-hidden="true" />}
@@ -80,8 +80,8 @@ const EmailInvitationsList = ({ orgId }: EmailInvitationsListProps) => {
                   type="button"
                   onClick={() => resend.mutate(i.token)}
                   disabled={!canResend(i) || resend.isPending}
-                  aria-label={t('invites.resendFor', { email: i.email })}
-                  title={canResend(i) ? t('invites.resend') : t('invites.resendWait')}
+                  aria-label={ta('invites.resendFor', { email: i.email })}
+                  title={canResend(i) ? ta('invites.resend') : ta('invites.resendWait')}
                   className="min-w-11 min-h-11 flex items-center justify-center rounded-lg text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))] disabled:opacity-40"
                 >
                   <RotateCw size={16} aria-hidden="true" />
@@ -90,7 +90,7 @@ const EmailInvitationsList = ({ orgId }: EmailInvitationsListProps) => {
                   type="button"
                   onClick={() => revoke.mutate(i.token)}
                   disabled={revoke.isPending}
-                  aria-label={t('invites.revokeFor', { email: i.email })}
+                  aria-label={ta('invites.revokeFor', { email: i.email })}
                   className="min-w-11 min-h-11 flex items-center justify-center rounded-lg text-red-500 hover:bg-red-500/10"
                 >
                   <Trash2 size={16} aria-hidden="true" />

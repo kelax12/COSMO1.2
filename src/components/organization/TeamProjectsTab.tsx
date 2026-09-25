@@ -22,7 +22,7 @@ import {
   useProjectsUiPrefs, isTaskOverdue, completedThisWeek,
   filterByStatus, sumEstimatedTime, type TaskStatusFilter,
 } from './team-projects.helpers';
-import { PORTFOLIO_CARD_THRESHOLD, matchesProjectSearch, sortProjects } from './portfolio.helpers';
+import { PORTFOLIO_CARD_THRESHOLD, isMyProject, matchesProjectSearch, sortProjects } from './portfolio.helpers';
 import { readEntityParam } from './deep-link.helpers';
 import { useTeamProjectsActions } from './use-team-projects-actions';
 import { ProjectsSkeleton, ProjectsPulse, ProjectsSearchBar } from './ProjectsPulse';
@@ -73,6 +73,7 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
   const [editProjectId, setEditProjectId] = useState<string | null>(null);
   const [taskModal, setTaskModal] = useState<TaskModalState>(null);
   const [query, setQuery] = useState('');
+  const [mineOnly, setMineOnly] = useState(false);
   // Colonne kanban (membre) ciblée par le « + ». La colonne « Non assignées »
   // ne passe pas par ici : elle ouvre directement TaskModal.
   const [assignSheetFor, setAssignSheetFor] = useState<string | 'closed'>('closed');
@@ -136,13 +137,13 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
   // ─── Recherche et tri (M2) : même ensemble pour cartes et portefeuille ─
   const shownProjects = useMemo(() => {
     const teamName = (id?: string | null) => teams.find((tm) => tm.id === id)?.name;
-    const found = activeProjects.filter((p) => matchesProjectSearch(p, query, {
+    const found = activeProjects.filter((p) => (!mineOnly || isMyProject(p, currentUserId, allTasks)) && matchesProjectSearch(p, query, {
       teamName: teamName(p.teamId),
       categoryName: categories.find((c) => c.id === p.categoryId)?.name,
       ownerName: members.find((m) => m.userId === p.ownerId)?.displayName,
     }));
     return sortProjects(found, sort, allTasks);
-  }, [activeProjects, query, sort, allTasks, teams, categories, members]);
+  }, [activeProjects, query, sort, allTasks, teams, categories, members, mineOnly, currentUserId]);
 
   // ─── Tâches : stats globales (non filtrées) + vue filtrée par assigné ──
   const activeProjectIds = useMemo(() => new Set(activeProjects.map((p) => p.id)), [activeProjects]);
@@ -176,8 +177,7 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
 
   // ─── Sélection multiple + actions groupées (toutes vues) ───────────
   const {
-    selectMode, setSelectMode, selectedIds, selectedTasks,
-    toggleSelect, exitSelectMode, bulkSetCompleted, bulkDelete, bulkAssign, bulkMove, bulkSetStatus,
+    selectMode, setSelectMode, selectedIds, toggleSelect, bulkBarProps,
   } = useTeamTasksSelection({
     visibleTasks: projectParam ? visibleTasks.filter((t) => t.projectId === projectParam) : visibleTasks,
     setCompleted: (task, completed) => actions.updateTaskInput(task, { completed }),
@@ -335,18 +335,9 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
 
       {selectMode && (
         <BulkActionsBar
-          count={selectedTasks.length}
-          hasOpen={selectedTasks.some((t) => !t.completed)}
-          hasCompleted={selectedTasks.some((t) => t.completed)}
-          onComplete={() => bulkSetCompleted(true)}
-          onReopen={() => bulkSetCompleted(false)}
-          onDelete={bulkDelete}
-          onExit={exitSelectMode}
+          {...bulkBarProps}
           assignableMembers={members.filter((m) => canAssign(m.userId))}
-          onAssign={bulkAssign}
           projects={activeProjects}
-          onMove={bulkMove}
-          onSetStatus={bulkSetStatus}
         />
       )}
 
@@ -388,6 +379,7 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
             categoryName={categories.find((c) => c.id === detailProject.categoryId)?.name}
             canEdit={canEditProjectFor(detailProject)}
             canArchive={can['project.delete']}
+            canManageAudience={can['project.edit']}
             canCreateProject={can['project.create']}
             onBack={closeProject}
             onOpenProject={openProject}
@@ -457,7 +449,7 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
       />
 
       {showSearch && (
-        <ProjectsSearchBar query={query} onQueryChange={setQuery} sort={sort} onSortChange={(s) => updatePrefs({ sort: s })} />
+        <ProjectsSearchBar query={query} onQueryChange={setQuery} sort={sort} onSortChange={(s) => updatePrefs({ sort: s })} mineOnly={mineOnly} onMineOnlyChange={setMineOnly} />
       )}
       {view === 'list' && manyProjects && (
         <p className="text-xs text-[rgb(var(--color-text-muted))]">{pf('manyProjectsHint', { count: PORTFOLIO_CARD_THRESHOLD })}</p>
@@ -532,6 +524,8 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
                 dependencies={projectDeps}
                 allProjects={allProjects}
                 onOpenProject={openProject}
+                canBulkEdit={can['project.edit']}
+                canBulkArchive={can['project.delete']}
               />
             )
           ) : groupedSections ? (

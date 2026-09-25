@@ -2,7 +2,9 @@ import { useMemo, useState } from 'react';
 import { CalendarClock, UserRound, Plus, Check } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { getDateLocale } from '@/i18n/format';
-import type { OrgMember } from '@/modules/organizations';
+import { useMyOrgPermissions, type OrgMember } from '@/modules/organizations';
+import { useAuth } from '@/modules/auth/AuthContext';
+import { canEditTeamTask } from './team-task-rights';
 import type { TeamProject, TeamTask, TeamTaskStatus } from '@/modules/team-projects';
 import {
   projectColor, PRIORITY_META, isTaskOverdue, sortOpenTasks, sortCompletedTasks,
@@ -72,6 +74,10 @@ const TeamProjectsKanban = ({
   selectable = false, selectedIds, onToggleSelect,
 }: TeamProjectsKanbanProps) => {
   const { t } = useT('org');
+  // Glisser une carte MODIFIE la tâche (statut, assigné) : sans le droit, la
+  // carte ne se glisse pas, au lieu d'échouer au dépôt (audit du 2026-09-24).
+  const { can } = useMyOrgPermissions(members[0]?.orgId);
+  const { user } = useAuth();
   const { t: pf, tp: tpf } = useT('portfolio');
   const [dragOver, setDragOver] = useState<string | null>(null);
 
@@ -232,7 +238,7 @@ const TeamProjectsKanban = ({
                   <button
                     key={task.id}
                     type="button"
-                    draggable={!selectable}
+                    draggable={!selectable && canEditTeamTask(can, user?.id, task)}
                     onDragStart={(e) =>
                       e.dataTransfer.setData('text/plain', JSON.stringify({ taskId: task.id, from: col.id } satisfies DragPayload))
                     }

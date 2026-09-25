@@ -23,6 +23,11 @@ import DeleteTeamDialog from './DeleteTeamDialog';
 import { MEMBER_SEARCH_THRESHOLD, filterMembersByQuery } from './member-search.helpers';
 import { normalize } from './pyramid.helpers';
 import { useT } from '@/i18n/useT';
+import { showUndoToast } from '@/lib/undo-toast';
+import { useTeamProjects, useTeamProjectTeams } from '@/modules/team-projects';
+import { projectsLostOnTeamLeave } from './team-audience.helpers';
+import LeaveTeamConfirm from './LeaveTeamConfirm';
+import TeamBulkAddDialog from './TeamBulkAddDialog';
 
 interface TeamsSectionProps {
   orgId: string;
@@ -120,6 +125,7 @@ const AddTeamMemberMenu = ({ teamName, addable, currentUserId, onAdd }: {
  */
 const TeamsSection = ({ orgId, members, currentUserId, isAdmin, canCreateTeam }: TeamsSectionProps) => {
   const { t, tp } = useT('org');
+  const { t: ta } = useT('orgAdmin');
   const [showNewTeam, setShowNewTeam] = useState(false);
 
   // C-40 — sans `isLoading`, l'ecran AFFIRME une absence qu'il ne connait pas
@@ -133,6 +139,37 @@ const TeamsSection = ({ orgId, members, currentUserId, isAdmin, canCreateTeam }:
   const addMember = useAddTeamMember(orgId);
   const removeMember = useRemoveTeamMember(orgId);
   const setLead = useSetTeamLead(orgId);
+  const { data: projects = [] } = useTeamProjects(orgId);
+  const { data: projectTeams = [] } = useTeamProjectTeams(orgId);
+  // Retrait qui coupe la vue sur des projets : confirmé, avec la liste.
+  const [leaving, setLeaving] = useState<{ team: OrgTeam; member: OrgMember; lost: ReturnType<typeof projectsLostOnTeamLeave> } | null>(null);
+
+  // Équipes : chaque geste réversible a son « Annuler » (audit du 2026-09-24,
+  // cohérence des popups). Les tâches l'avaient, les équipes rien.
+  const addWithUndo = (team: OrgTeam, userId: string) =>
+    addMember.mutate({ teamId: team.id, userId }, {
+      onSuccess: () => showUndoToast(ta('teamUndo.added', { team: team.name }), () =>
+        removeMember.mutate({ teamId: team.id, userId })),
+    });
+  const removeWithUndo = (team: OrgTeam, userId: string, wasLead: boolean) =>
+    removeMember.mutate({ teamId: team.id, userId }, {
+      onSuccess: () => showUndoToast(ta('teamUndo.removed', { team: team.name }), () =>
+        addMember.mutate({ teamId: team.id, userId }, {
+          onSuccess: () => { if (wasLead) setLead.mutate({ teamId: team.id, userId, isLead: true }); },
+        })),
+    });
+  const toggleLeadWithUndo = (team: OrgTeam, userId: string, isLead: boolean) =>
+    setLead.mutate({ teamId: team.id, userId, isLead }, {
+      onSuccess: () => showUndoToast(ta(isLead ? 'teamUndo.leadSet' : 'teamUndo.leadRemoved'), () =>
+        setLead.mutate({ teamId: team.id, userId, isLead: !isLead })),
+    });
+  const requestRemove = (team: OrgTeam, member: OrgMember, wasLead: boolean) => {
+    const lost = projectsLostOnTeamLeave({
+      userId: member.userId, teamId: team.id, members, memberships, projects, projectTeams,
+    });
+    if (lost.length === 0) removeWithUndo(team, member.userId, wasLead);
+    else setLeaving({ team, member, lost });
+  };
   const [teamQuery, setTeamQuery] = useState('');
   const [showAllTeams, setShowAllTeams] = useState(false);
   const [expandedTeams, setExpandedTeams] = useState<Set<string>>(() => new Set());
@@ -239,7 +276,7 @@ const TeamsSection = ({ orgId, members, currentUserId, isAdmin, canCreateTeam }:
                 <div className="flex items-center gap-2 mb-2.5">
                   <span className="w-2.5 h-2.5 rounded-full bg-[rgb(var(--color-accent-solid))] shrink-0" aria-hidden="true" />
                   <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))] flex-1 truncate">{team.name}</h3>
-                  <span className="text-xs text-[rgb(var(--color-text-muted))]">{teamMemberIds.length} membre{teamMemberIds.length > 1 ? 's' : ''}</span>
+                  <span className="text-xs text-[rgb(var(--color-text-muted))]">{tp('team.memberCount', teamMemberIds.length)}</span>
                   {/* Suppression : admin ou créateur SEULEMENT, miroir exact de la
                       policy `org_teams_delete`. Un responsable gère ses membres,
                       il ne supprime pas l'équipe : le bouton lui promettait un
@@ -287,7 +324,7 @@ const TeamsSection = ({ orgId, members, currentUserId, isAdmin, canCreateTeam }:
                         {canManageThisTeam && (
                           <button
                             type="button"
-                            onClick={() => setLead.mutate({ teamId: team.id, userId: uid, isLead: !isLead })}
+                            onClick={() => toggleLeadWithUndo(team, uid, !isLead)}
                             aria-label={
                               isLead
                                 ? t('teams.removeLead')
@@ -305,7 +342,7 @@ const TeamsSection = ({ orgId, members, currentUserId, isAdmin, canCreateTeam }:
                         {canManageThisTeam && (
                           <button
                             type="button"
-                            onClick={() => removeMember.mutate({ teamId: team.id, userId: uid })}
+                            onClick={() => requestRemove(team, m, isLead)}
                             aria-label={t('team.removeMemberAria', { member: m.displayName, team: team.name })}
                             className="text-[rgb(var(--color-text-muted))] hover:text-red-500"
                           >
@@ -330,9 +367,10 @@ const TeamsSection = ({ orgId, members, currentUserId, isAdmin, canCreateTeam }:
                       teamName={team.name}
                       addable={addable}
                       currentUserId={currentUserId}
-                      onAdd={(userId) => addMember.mutate({ teamId: team.id, userId })}
+                      onAdd={(userId) => addWithUndo(team, userId)}
                     />
                   )}
+                  <TeamBulkAddDialog orgId={orgId} team={team} addable={addable} />
                 </div>
               </div>
             );
@@ -348,6 +386,21 @@ const TeamsSection = ({ orgId, members, currentUserId, isAdmin, canCreateTeam }:
             </button>
           )}
         </div>
+      )}
+      {leaving && (
+        <LeaveTeamConfirm
+          orgId={orgId}
+          memberName={leaving.member.displayName}
+          userId={leaving.member.userId}
+          teamName={leaving.team.name}
+          lostProjects={leaving.lost}
+          onConfirm={() => {
+            const wasLead = memberships.some((m) => m.teamId === leaving.team.id && m.userId === leaving.member.userId && m.isLead);
+            removeWithUndo(leaving.team, leaving.member.userId, wasLead);
+            setLeaving(null);
+          }}
+          onCancel={() => setLeaving(null)}
+        />
       )}
       {teamToDelete && (
         <DeleteTeamDialog

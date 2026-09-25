@@ -129,6 +129,8 @@ const NON_MESUREES: Record<string, string> = {
   'components/organization/DeleteTeamCategoryConfirm.tsx': 'mode entreprise.',
   'components/organization/InviteOrJoinModal.tsx': 'mode entreprise.',
   'components/organization/MemberPermissionsSheet.tsx': 'mode entreprise.',
+  'components/organization/InviteByEmailDialog.tsx': 'mode entreprise : exige une organisation et le droit `member.invite`.',
+  'components/organization/OffboardMemberDialog.tsx': 'mode entreprise, admin seulement : exige un second membre à faire partir.',
   'components/organization/MemberPlacementSheet.tsx': 'mode entreprise.',
   'components/organization/MemberSheet.tsx': 'mode entreprise.',
   'components/organization/NewTeamProjectModal.tsx': 'mode entreprise.',

@@ -49,6 +49,7 @@ const OrgSettingsSection = ({
   onTransfer, onDelete, onLeave,
 }: OrgSettingsSectionProps) => {
   const { t } = useT('org');
+  const { t: ta } = useT('orgAdmin');
   const [notifOpen, setNotifOpen] = useState(false);
   const navigate = useNavigate();
   const { organizations, setActiveOrgId } = useActiveOrganization();
@@ -87,7 +88,7 @@ const OrgSettingsSection = ({
       {/* Mes droits (audit du 2026-09-24) : la règle surcharge > défaut >
           admin était juste mais invisible pour la personne concernée. */}
       <section className={CARD}>
-        <h2 className={TITLE}>{t('myRights.title')}</h2>
+        <h2 className={TITLE}>{ta('myRights.title')}</h2>
         <div className="mt-2">
           <MyPermissionsCard orgId={org.id} members={members} currentUserId={currentUserId} />
         </div>

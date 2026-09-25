@@ -1,3 +1,5 @@
+import { useState } from 'react';
+import { Mail } from 'lucide-react';
 import type { Organization, OrgMember } from '@/modules/organizations';
 import { lazyWithRetry } from '@/lib/lazy-with-retry';
 import { useT } from '@/i18n/useT';
@@ -18,6 +20,11 @@ const TeamsSection = lazyWithRetry(() => import('@/components/organization/Teams
 const InviteFriendsToOrg = lazyWithRetry(() => import('@/components/organization/InviteFriendsToOrg'));
 const OrgJoinCodeCard = lazyWithRetry(() => import('@/components/organization/OrgJoinCodeCard'));
 const OrgInviteLinkCard = lazyWithRetry(() => import('@/components/organization/OrgInviteLinkCard'));
+// Invitation par e-mail, placée et éventuellement BORNÉE dans le temps (invité,
+// prestataire) : mig. 161, écrite sans être montée. Audit du 2026-09-24, cas
+// « accès temporaire : ni invité ni expiration ».
+const InviteByEmailDialog = lazyWithRetry(() => import('@/components/organization/InviteByEmailDialog'));
+const EmailInvitationsList = lazyWithRetry(() => import('@/components/organization/EmailInvitationsList'));
 
 interface OrgMembersSectionProps {
   org: Organization;
@@ -39,6 +46,8 @@ const OrgMembersSection = ({
   seatsFull,
 }: OrgMembersSectionProps) => {
   const { t } = useT('org');
+  const { t: ta } = useT('orgAdmin');
+  const [invitingByEmail, setInvitingByEmail] = useState(false);
 
   return (
     <div className="space-y-6">
@@ -66,6 +75,35 @@ const OrgMembersSection = ({
         {canInvite && <OrgInviteLinkCard orgId={org.id} managerId={currentUserId} seatsFull={seatsFull} />}
         {isAdmin && <InviteFriendsToOrg orgId={org.id} variant="card" />}
       </div>
+
+      {canInvite && (
+        <section className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4 space-y-3">
+          <div className="flex items-start justify-between gap-3 flex-wrap">
+            <div>
+              <h3 className="text-sm font-bold text-[rgb(var(--color-text-primary))]">{ta('invites.emailCardTitle')}</h3>
+              <p className="text-xs text-[rgb(var(--color-text-muted))] mt-0.5">{ta('invites.emailCardHint')}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setInvitingByEmail(true)}
+              disabled={seatsFull}
+              className="inline-flex items-center gap-1.5 min-h-11 px-3 rounded-xl text-sm font-semibold bg-[rgb(var(--color-accent))] text-[rgb(var(--color-background))] hover:opacity-90 disabled:opacity-50"
+            >
+              <Mail size={15} aria-hidden="true" /> {ta('invites.emailCardAction')}
+            </button>
+          </div>
+          <EmailInvitationsList orgId={org.id} />
+        </section>
+      )}
+      {invitingByEmail && (
+        <InviteByEmailDialog
+          orgId={org.id}
+          members={members}
+          currentUserId={currentUserId}
+          isAdmin={isAdmin}
+          onClose={() => setInvitingByEmail(false)}
+        />
+      )}
 
       <TeamsSection
         orgId={org.id}

@@ -36,7 +36,7 @@ interface Params {
 }
 
 export function usePyramidDnd({ orgId, members, currentUserId, isAdmin }: Params) {
-  const { t } = useT('org');
+  const { t: ta } = useT('orgAdmin');
   const isMobile = useIsMobile();
   const setManager = useSetMemberManager();
 
@@ -168,15 +168,15 @@ export function usePyramidDnd({ orgId, members, currentUserId, isAdmin }: Params
             dropId === UNPLACED_DROP_ID ? null : members.find((u) => u.userId === dropId)?.displayName;
           setAnnouncement(
             destName
-              ? t('pyramid.nowUnder', { name: target.displayName, manager: destName })
-              : t('pyramid.detached', { name: target.displayName }),
+              ? ta('pyramid.nowUnder', { name: target.displayName, manager: destName })
+              : ta('pyramid.detached', { name: target.displayName }),
           );
           if (editModeRef.current) {
             // Mode réorganisation : on journalise pour « Annuler », pas de toast.
             sessionMovesRef.current.push({ userId: target.userId, prevManagerId: previousManagerId });
             setMoveCount(sessionMovesRef.current.length);
           } else {
-            showUndoToast(t('pyramid.moved', { name: target.displayName }), () => {
+            showUndoToast(ta('pyramid.moved', { name: target.displayName }), () => {
               setManager.mutate({ orgId, userId: target.userId, managerId: previousManagerId });
               flashCard(target.userId);
             });
@@ -297,7 +297,7 @@ export function usePyramidDnd({ orgId, members, currentUserId, isAdmin }: Params
   };
 
   const finishEdit = () => {
-    if (sessionMovesRef.current.length > 0) toast.success(t('pyramid.reorgSaved'));
+    if (sessionMovesRef.current.length > 0) toast.success(ta('pyramid.reorgSaved'));
     resetEditState();
   };
 
@@ -311,7 +311,7 @@ export function usePyramidDnd({ orgId, members, currentUserId, isAdmin }: Params
         break; // l'erreur est déjà remontée par le toast du hook
       }
     }
-    toast.success(t('pyramid.undone'));
+    toast.success(ta('pyramid.undone'));
     resetEditState();
   };
 

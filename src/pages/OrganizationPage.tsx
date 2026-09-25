@@ -25,7 +25,7 @@ import OrgSideNav from '@/components/organization/OrgSideNav';
 import { useOrgNavMode } from '@/components/organization/use-org-nav-mode';
 import OrgSectionSwitcher from '@/components/organization/OrgSectionSwitcher';
 import { ORG_SECTIONS, type OrgSection, type OrgNavItem } from '@/components/organization/org-sections';
-import { sectionNotificationBadges, type BadgeSection } from '@/components/organization/notifications.helpers';
+import { sectionNotificationBadges, type BadgeSection } from '@/components/organization/org-section-badges';
 import {
   isOrgSectionSegment,
   legacyOrgTabRedirect,
@@ -57,28 +57,28 @@ import type { KeyOf } from '@/i18n/catalog';
 // que `lazy-namespaces.guard.test.ts` contrôle comme une route (`TAB_GATE_HOSTS`
 // dans `scripts/i18n-shell-namespaces.mjs`). La liste doit alors couvrir TOUT
 // son sous-arbre, `org` compris.
-const PyramidTab = lazyWithRetry(() => import('@/components/organization/PyramidTab'));
+const PyramidTab = lazyWithRetry(() => import('@/components/organization/PyramidTab'), ['eventModal', 'org', 'orgAdmin', 'overlays', 'tasks']);
 // `portfolio` (M2) n'est payé que par qui ouvre Projets : dans `org`, il pesait
 // 4,7 ko gzip sur chaque visite de /entreprise.
-const TeamProjectsTab = lazyWithRetry(() => import('@/components/organization/TeamProjectsTab'), ['org', 'overlays', 'portfolio']);
-const TeamTasksTab = lazyWithRetry(() => import('@/components/organization/TeamTasksTab'));
-const TeamOKRTab = lazyWithRetry(() => import('@/components/organization/TeamOKRTab'));
-const TeamOverviewTab = lazyWithRetry(() => import('@/components/organization/TeamOverviewTab'));
+const TeamProjectsTab = lazyWithRetry(() => import('@/components/organization/TeamProjectsTab'), ['org', 'orgAdmin', 'overlays', 'portfolio']);
+const TeamTasksTab = lazyWithRetry(() => import('@/components/organization/TeamTasksTab'), ['eventModal', 'org', 'orgAdmin', 'overlays', 'tasks']);
+const TeamOKRTab = lazyWithRetry(() => import('@/components/organization/TeamOKRTab'), ['okr', 'org', 'orgAdmin', 'overlays']);
+const TeamOverviewTab = lazyWithRetry(() => import('@/components/organization/TeamOverviewTab'), ['csv', 'org', 'orgAdmin', 'overlays', 'tasks']);
 const OrgBillingTab = lazyWithRetry(() => import('@/components/organization/OrgBillingTab'));
 // Section Membres : sortie de la page le 2026-09-24, et LAZY pour la même
 // raison que les onglets ci-dessus. Importée en dur, elle restait dans ce
 // chunk, qui dépassait son cliquet (18,3 ko pour 18,0) : seul qui ouvre
 // `/entreprise/members` doit la payer.
-const OrgMembersSection = lazyWithRetry(() => import('@/components/organization/OrgMembersSection'));
+const OrgMembersSection = lazyWithRetry(() => import('@/components/organization/OrgMembersSection'), ['eventModal', 'org', 'orgAdmin', 'overlays', 'tasks']);
 // Paramètres (M13) : même raison, seul qui ouvre `/entreprise/settings` la paie.
-const OrgSettingsSection = lazyWithRetry(() => import('@/components/organization/OrgSettingsSection'));
+const OrgSettingsSection = lazyWithRetry(() => import('@/components/organization/OrgSettingsSection'), ['org', 'orgAdmin', 'overlays']);
 
 // Feuilles et dialogues : montés derrière un `&&`, donc déjà conditionnels au
 // rendu. Ils ne l'étaient pas au TÉLÉCHARGEMENT.
-const DeleteOrganizationDialog = lazyWithRetry(() => import('@/components/organization/DeleteOrganizationDialog'));
-const ConfirmLeaveOrgDialog = lazyWithRetry(() => import('@/components/organization/ConfirmLeaveOrgDialog'));
-const TransferOwnershipDialog = lazyWithRetry(() => import('@/components/organization/TransferOwnershipDialog'));
-const OffboardMemberDialog = lazyWithRetry(() => import('@/components/organization/OffboardMemberDialog'));
+const DeleteOrganizationDialog = lazyWithRetry(() => import('@/components/organization/DeleteOrganizationDialog'), ['org', 'orgAdmin', 'overlays']);
+const ConfirmLeaveOrgDialog = lazyWithRetry(() => import('@/components/organization/ConfirmLeaveOrgDialog'), ['org', 'orgAdmin', 'overlays']);
+const TransferOwnershipDialog = lazyWithRetry(() => import('@/components/organization/TransferOwnershipDialog'), ['org', 'orgAdmin', 'overlays']);
+const OffboardMemberDialog = lazyWithRetry(() => import('@/components/organization/OffboardMemberDialog'), ['org', 'orgAdmin', 'overlays']);
 
 type OrgTab = OrgSection;
 

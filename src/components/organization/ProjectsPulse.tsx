@@ -131,13 +131,17 @@ export const ProjectsPulse = ({
 const SORTS: PortfolioSort[] = ['recent', 'name', 'dueDate', 'progress', 'status'];
 
 /** Recherche et tri des projets — liste de cartes et portefeuille (M2). */
-export const ProjectsSearchBar = ({ query, onQueryChange, sort, onSortChange }: {
+export const ProjectsSearchBar = ({ query, onQueryChange, sort, onSortChange, mineOnly, onMineOnlyChange }: {
   query: string;
   onQueryChange: (value: string) => void;
   sort: PortfolioSort;
   onSortChange: (value: PortfolioSort) => void;
+  /** « Mes projets » (audit du 2026-09-24). */
+  mineOnly?: boolean;
+  onMineOnlyChange?: (value: boolean) => void;
 }) => {
   const { t: pf } = useT('portfolio');
+  const { t } = useT('org');
   return (
     <div className="flex items-center gap-2 flex-wrap">
       <label className="relative flex-1 min-w-[200px] max-w-md">
@@ -151,6 +155,20 @@ export const ProjectsSearchBar = ({ query, onQueryChange, sort, onSortChange }: 
           className="w-full h-9 pl-8 pr-3 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] text-sm text-[rgb(var(--color-text-primary))] focus:outline-none focus:border-[rgb(var(--color-accent-solid))]"
         />
       </label>
+      {onMineOnlyChange && (
+        <button
+          type="button"
+          aria-pressed={!!mineOnly}
+          onClick={() => onMineOnlyChange(!mineOnly)}
+          className={`h-9 px-3 rounded-lg border text-sm font-medium transition-colors ${
+            mineOnly
+              ? 'border-[rgb(var(--color-accent))] bg-[rgb(var(--color-accent)/0.1)] text-[rgb(var(--color-accent))]'
+              : 'border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]'
+          }`}
+        >
+          {t('myProjects.title')}
+        </button>
+      )}
       <label className="inline-flex items-center gap-1.5 text-xs text-[rgb(var(--color-text-muted))]">
         <ArrowUpDown size={13} aria-hidden="true" />
         <span className="sr-only sm:not-sr-only">{pf('sortLabel')}</span>

@@ -30,7 +30,7 @@ interface ConfirmLeaveOrgDialogProps {
 const ConfirmLeaveOrgDialog = ({
   orgId, orgName, currentUserId, members, canOrganize, pending, onOrganize, onConfirm, onCancel,
 }: ConfirmLeaveOrgDialogProps) => {
-  const { t, tp } = useT('org');
+  const { t: ta, tp: tpa } = useT('orgAdmin');
   // Filtres STABLES : ils entrent dans la clé de cache.
   const filters = useMemo(() => ({ assigneeId: currentUserId, completed: false }), [currentUserId]);
   const { data: myTasks = [] } = useTeamTaskSlice(orgId, filters, { enabled: !!currentUserId });
@@ -43,23 +43,23 @@ const ConfirmLeaveOrgDialog = ({
     const leads = teamMembers.filter((m) => m.userId === currentUserId && m.isLead).length;
     const owned = projects.filter((p) => p.ownerId === currentUserId && !p.archivedAt).length;
     return [
-      ...(myTasks.length > 0 ? [tp('leaveDialog.impactTasks', myTasks.length)] : []),
-      ...(reports > 0 ? [tp('leaveDialog.impactReports', reports)] : []),
-      ...(leads > 0 ? [tp('leaveDialog.impactLeads', leads)] : []),
-      ...(owned > 0 ? [tp('leaveDialog.impactProjects', owned)] : []),
+      ...(myTasks.length > 0 ? [tpa('leaveDialog.impactTasks', myTasks.length)] : []),
+      ...(reports > 0 ? [tpa('leaveDialog.impactReports', reports)] : []),
+      ...(leads > 0 ? [tpa('leaveDialog.impactLeads', leads)] : []),
+      ...(owned > 0 ? [tpa('leaveDialog.impactProjects', owned)] : []),
     ];
-  }, [currentUserId, members, teamMembers, projects, myTasks, tp]);
+  }, [currentUserId, members, teamMembers, projects, myTasks, tpa]);
 
   return (
     <OrgConfirmDialog
-      title={t('leaveDialog.title', { org: orgName })}
-      description={t('leaveDialog.body')}
+      title={ta('leaveDialog.title', { org: orgName })}
+      description={ta('leaveDialog.body')}
       impact={impact}
-      impactTitle={t('leaveDialog.impactTitle')}
-      confirmLabel={t('leaveDialog.confirm')}
-      pendingLabel={t('leaveDialog.pending')}
+      impactTitle={ta('leaveDialog.impactTitle')}
+      confirmLabel={ta('leaveDialog.confirm')}
+      pendingLabel={ta('leaveDialog.pending')}
       pending={pending}
-      secondaryAction={canOrganize && impact.length > 0 ? { label: t('leaveDialog.organize'), onClick: onOrganize } : undefined}
+      secondaryAction={canOrganize && impact.length > 0 ? { label: ta('leaveDialog.organize'), onClick: onOrganize } : undefined}
       onConfirm={onConfirm}
       onCancel={onCancel}
     />

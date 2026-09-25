@@ -241,6 +241,18 @@
       "categorie": "mot-identique",
       "valeur": "Contribution"
     },
+    "org.notifSettings.colType": {
+      "categorie": "mot-identique",
+      "valeur": "Type"
+    },
+    "org.notifSettings.kind.mention": {
+      "categorie": "mot-identique",
+      "valeur": "Mention"
+    },
+    "org.notifications.filterMentions": {
+      "categorie": "mot-identique",
+      "valeur": "Mentions"
+    },
     "org.notifications.title": {
       "categorie": "mot-identique",
       "valeur": "Notifications"
@@ -253,33 +265,13 @@
       "categorie": "mot-identique",
       "valeur": "Total"
     },
-    "org.permissions.sectionOrg": {
+    "org.profile.description": {
       "categorie": "mot-identique",
-      "valeur": "Organisation"
+      "valeur": "Description"
     },
     "org.projects.tasksTabColActions": {
       "categorie": "mot-identique",
       "valeur": "ACTIONS"
-    },
-    "org.pyramid.badgeAdmin": {
-      "categorie": "mot-identique",
-      "valeur": "Admin"
-    },
-    "org.pyramid.badgeManager": {
-      "categorie": "anglicisme-fr",
-      "valeur": "Manager"
-    },
-    "org.pyramid.cardAria": {
-      "categorie": "symbole-ou-format",
-      "valeur": "{{name}}, {{role}}{{reports}}"
-    },
-    "org.pyramid.roleAdmin": {
-      "categorie": "mot-identique",
-      "valeur": "admin"
-    },
-    "org.pyramid.roleManager": {
-      "categorie": "anglicisme-fr",
-      "valeur": "manager"
     },
     "org.roles.adminShort": {
       "categorie": "mot-identique",
@@ -293,9 +285,37 @@
       "categorie": "mot-identique",
       "valeur": "Description"
     },
-    "portfolio.builtIn.sprint": {
+    "org.taskModal.labelsTitle": {
+      "categorie": "mot-identique",
+      "valeur": "Labels"
+    },
+    "org.templates.sprint": {
       "categorie": "anglicisme-fr",
       "valeur": "Sprint"
+    },
+    "orgAdmin.permissions.sectionOrg": {
+      "categorie": "mot-identique",
+      "valeur": "Organisation"
+    },
+    "orgAdmin.pyramid.badgeAdmin": {
+      "categorie": "mot-identique",
+      "valeur": "Admin"
+    },
+    "orgAdmin.pyramid.badgeManager": {
+      "categorie": "anglicisme-fr",
+      "valeur": "Manager"
+    },
+    "orgAdmin.pyramid.cardAria": {
+      "categorie": "symbole-ou-format",
+      "valeur": "{{name}}, {{role}}{{reports}}"
+    },
+    "orgAdmin.pyramid.roleAdmin": {
+      "categorie": "mot-identique",
+      "valeur": "admin"
+    },
+    "orgAdmin.pyramid.roleManager": {
+      "categorie": "anglicisme-fr",
+      "valeur": "manager"
     },
     "overlays.palette.groupNavigation": {
       "categorie": "mot-identique",
@@ -304,6 +324,10 @@
     "overlays.removeFriend.bodyAfter": {
       "categorie": "symbole-ou-format",
       "valeur": "."
+    },
+    "portfolio.builtIn.sprint": {
+      "categorie": "anglicisme-fr",
+      "valeur": "Sprint"
     },
     "premium.page.heroTitle": {
       "categorie": "nom-propre",

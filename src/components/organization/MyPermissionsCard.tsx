@@ -30,7 +30,7 @@ interface MyPermissionsCardProps {
  * cette carte n'invente aucune règle.
  */
 const MyPermissionsCard = ({ orgId, members, currentUserId }: MyPermissionsCardProps) => {
-  const { t } = useT('org');
+  const { t: ta } = useT('orgAdmin');
   const { data: overrides = [] } = useOrgMemberPermissions(orgId);
   const me = members.find((m) => m.userId === currentUserId);
 
@@ -40,7 +40,7 @@ const MyPermissionsCard = ({ orgId, members, currentUserId }: MyPermissionsCardP
     const effective = effectivePermissions({ member: me, members, overrides: mine });
     return ORG_PERMISSION_KEYS.map((key: OrgPermissionKey) => {
       const decided = mine?.overrides?.[key];
-      const source: KeyOf<'org'> = me.role === 'admin'
+      const source: KeyOf<'orgAdmin'> = me.role === 'admin'
         ? 'myRights.sourceAdmin'
         : decided === true || decided === false
           ? 'myRights.sourceOverride'
@@ -60,7 +60,7 @@ const MyPermissionsCard = ({ orgId, members, currentUserId }: MyPermissionsCardP
   return (
     <div>
       <p className="text-xs text-[rgb(var(--color-text-muted))] mb-3">
-        {t(me.role === 'admin' ? 'myRights.adminHint' : 'myRights.hint')}
+        {ta(me.role === 'admin' ? 'myRights.adminHint' : 'myRights.hint')}
       </p>
       <ul className="divide-y divide-[rgb(var(--color-border))]">
         {rows.map(({ key, allowed, source }) => (
@@ -71,18 +71,18 @@ const MyPermissionsCard = ({ orgId, members, currentUserId }: MyPermissionsCardP
               <Minus size={15} className="text-[rgb(var(--color-text-muted))] shrink-0" aria-hidden="true" />
             )}
             <span className="flex-1 min-w-0 text-sm text-[rgb(var(--color-text-primary))]">
-              {t(`permissions.key.${key}` as KeyOf<'org'>)}
-              <span className="sr-only"> : {t(allowed ? 'myRights.allowed' : 'myRights.denied')}</span>
+              {ta(`permissions.key.${key}` as KeyOf<'orgAdmin'>)}
+              <span className="sr-only"> : {ta(allowed ? 'myRights.allowed' : 'myRights.denied')}</span>
             </span>
-            <span className="text-caption text-[rgb(var(--color-text-muted))] shrink-0">{t(source)}</span>
+            <span className="text-caption text-[rgb(var(--color-text-muted))] shrink-0">{ta(source)}</span>
           </li>
         ))}
       </ul>
       <p className="mt-3 text-xs text-[rgb(var(--color-text-secondary))]">
-        <span className="font-semibold">{t('permissions.sectionAssign')}</span>{' '}
+        <span className="font-semibold">{ta('permissions.sectionAssign')}</span>{' '}
         {targets.length === 0
-          ? t('myRights.assignNobody')
-          : targets.map((target) => t(`permissions.target.${target}` as KeyOf<'org'>)).join(' · ')}
+          ? ta('myRights.assignNobody')
+          : targets.map((target) => ta(`permissions.target.${target}` as KeyOf<'orgAdmin'>)).join(' · ')}
       </p>
     </div>
   );

@@ -36,7 +36,7 @@ interface TeamTrashDialogProps {
  *    avec la restauration, pas avant (`get_team_trash`).
  */
 const TeamTrashDialog = ({ orgId, projects, members }: TeamTrashDialogProps) => {
-  const { t, tp } = useT('org');
+  const { t: ta, tp: tpa } = useT('orgAdmin');
   const locale = useLocale();
   const [open, setOpen] = useState(false);
   const { data: trash = [], isLoading } = useTeamTrash(orgId);
@@ -57,14 +57,14 @@ const TeamTrashDialog = ({ orgId, projects, members }: TeamTrashDialogProps) => 
         className="inline-flex items-center gap-1.5 text-xs font-medium text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-primary))] transition-colors"
       >
         <Trash2 size={13} aria-hidden="true" />
-        {tp('trash.button', trash.length)}
+        {tpa('trash.button', trash.length)}
       </button>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>{t('trash.title')}</DialogTitle>
-            <DialogDescription>{t('trash.description', { days: TEAM_TASK_TRASH_DAYS })}</DialogDescription>
+            <DialogTitle>{ta('trash.title')}</DialogTitle>
+            <DialogDescription>{ta('trash.description', { days: TEAM_TASK_TRASH_DAYS })}</DialogDescription>
           </DialogHeader>
           <ul className="max-h-80 overflow-y-auto divide-y divide-[rgb(var(--color-border))] rounded-xl border border-[rgb(var(--color-border))]">
             {trash.map((item) => (
@@ -72,9 +72,9 @@ const TeamTrashDialog = ({ orgId, projects, members }: TeamTrashDialogProps) => 
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium truncate text-[rgb(var(--color-text-primary))]">{item.name}</p>
                   <p className="text-xs truncate text-[rgb(var(--color-text-muted))]">
-                    {t('trash.meta', {
-                      project: projectName.get(item.projectId) ?? t('trash.unknownProject'),
-                      who: (item.deletedBy && memberName.get(item.deletedBy)) || t('trash.someone'),
+                    {ta('trash.meta', {
+                      project: projectName.get(item.projectId) ?? ta('trash.unknownProject'),
+                      who: (item.deletedBy && memberName.get(item.deletedBy)) || ta('trash.someone'),
                       when: formatRelativeTime(item.deletedAt, locale),
                     })}
                   </p>
@@ -83,10 +83,10 @@ const TeamTrashDialog = ({ orgId, projects, members }: TeamTrashDialogProps) => 
                   type="button"
                   disabled={restore.isPending}
                   onClick={() => restore.mutate(item.id)}
-                  aria-label={t('trash.restoreAria', { name: item.name })}
+                  aria-label={ta('trash.restoreAria', { name: item.name })}
                   className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] disabled:opacity-50"
                 >
-                  <RotateCcw size={12} aria-hidden="true" /> {t('trash.restore')}
+                  <RotateCcw size={12} aria-hidden="true" /> {ta('trash.restore')}
                 </button>
               </li>
             ))}

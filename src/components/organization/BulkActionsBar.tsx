@@ -1,4 +1,5 @@
-import { Check, RotateCcw, Trash2, X, UserPlus, FolderInput, CircleDot, UserX } from 'lucide-react';
+import { Check, RotateCcw, Trash2, X, UserPlus, FolderInput, CircleDot, UserX, Flag, CalendarClock } from 'lucide-react';
+import { addDays, format, nextMonday } from 'date-fns';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -35,7 +36,14 @@ interface BulkActionsBarProps {
   projects?: TeamProject[];
   onMove?: (projectId: string) => void;
   onSetStatus?: (status: TeamTaskStatus) => void;
+  /** Priorité 1..5 (audit du 2026-09-24). */
+  onSetPriority?: (priority: number) => void;
+  /** Échéance 'YYYY-MM-DD', `''` = la retirer. */
+  onSetDeadline?: (deadline: string) => void;
 }
+
+/** Date locale 'YYYY-MM-DD' — jamais `toISOString`, qui décale d'un jour le soir. */
+const localDay = (d: Date) => format(d, 'yyyy-MM-dd');
 
 const actionClass =
   'inline-flex items-center gap-1.5 h-9 px-3 rounded-xl text-sm font-medium text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]';
@@ -53,10 +61,10 @@ const actionClass =
  */
 const BulkActionsBar = ({
   count, hasCompleted, hasOpen, onComplete, onReopen, onDelete, onExit,
-  assignableMembers = [], onAssign, projects = [], onMove, onSetStatus,
+  assignableMembers = [], onAssign, projects = [], onMove, onSetStatus, onSetPriority, onSetDeadline,
 }: BulkActionsBarProps) => {
   const { t, tp } = useT('org');
-  const { t: pf } = useT('portfolio');
+  const { t: ta } = useT('orgAdmin');
   // La barre reste montée même à zéro sélection : elle porte désormais la SEULE
   // sortie du mode. Disparaître ici enfermerait l'utilisateur dans un mode
   // sélection qu'il ne pourrait plus quitter tant qu'il n'aurait pas coché
@@ -95,10 +103,10 @@ const BulkActionsBar = ({
       {count > 0 && onAssign && (
         <DropdownMenu>
           <DropdownMenuTrigger className={actionClass}>
-            <UserPlus size={15} aria-hidden="true" /> {pf('bulk.assign')}
+            <UserPlus size={15} aria-hidden="true" /> {ta('bulk.assign')}
           </DropdownMenuTrigger>
           <DropdownMenuContent side="top" align="center" className="w-56 max-h-72 overflow-y-auto">
-            <DropdownMenuLabel>{pf('bulk.assignTo')}</DropdownMenuLabel>
+            <DropdownMenuLabel>{ta('bulk.assignTo')}</DropdownMenuLabel>
             {assignableMembers.map((m) => (
               <DropdownMenuItem key={m.userId} onClick={() => onAssign(m.userId)}>
                 <MemberAvatar avatar={m.avatar} name={m.displayName} size={20} />
@@ -107,7 +115,7 @@ const BulkActionsBar = ({
             ))}
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => onAssign(null)}>
-              <UserX size={14} aria-hidden="true" /> {pf('bulk.unassignAll')}
+              <UserX size={14} aria-hidden="true" /> {ta('bulk.unassignAll')}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -116,10 +124,10 @@ const BulkActionsBar = ({
       {count > 0 && onMove && projects.length > 1 && (
         <DropdownMenu>
           <DropdownMenuTrigger className={actionClass}>
-            <FolderInput size={15} aria-hidden="true" /> {pf('bulk.move')}
+            <FolderInput size={15} aria-hidden="true" /> {ta('bulk.move')}
           </DropdownMenuTrigger>
           <DropdownMenuContent side="top" align="center" className="w-56 max-h-72 overflow-y-auto">
-            <DropdownMenuLabel>{pf('bulk.moveTo')}</DropdownMenuLabel>
+            <DropdownMenuLabel>{ta('bulk.moveTo')}</DropdownMenuLabel>
             {projects.map((p) => (
               <DropdownMenuItem key={p.id} onClick={() => onMove(p.id)}>
                 <span className={`w-2 h-2 rounded-full shrink-0 ${projectColor(p.color).dot}`} aria-hidden="true" />
@@ -133,7 +141,7 @@ const BulkActionsBar = ({
       {count > 0 && onSetStatus && (
         <DropdownMenu>
           <DropdownMenuTrigger className={actionClass}>
-            <CircleDot size={15} aria-hidden="true" /> {pf('bulk.status')}
+            <CircleDot size={15} aria-hidden="true" /> {ta('bulk.status')}
           </DropdownMenuTrigger>
           <DropdownMenuContent side="top" align="center" className="w-48">
             {STATUS_ORDER.map((st) => (
@@ -142,6 +150,38 @@ const BulkActionsBar = ({
                 {t(STATUS_META[st].labelKey as Parameters<typeof t>[0])}
               </DropdownMenuItem>
             ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
+
+      {count > 0 && onSetPriority && (
+        <DropdownMenu>
+          <DropdownMenuTrigger className={actionClass}>
+            <Flag size={15} aria-hidden="true" /> {ta('bulk.priority')}
+          </DropdownMenuTrigger>
+          <DropdownMenuContent side="top" align="center" className="w-40">
+            {[1, 2, 3, 4, 5].map((p) => (
+              <DropdownMenuItem key={p} onClick={() => onSetPriority(p)}>
+                <span className={`inline-flex items-center justify-center w-5 h-5 rounded-full text-caption font-bold task-priority-${p}`}>{p}</span>
+                {ta('bulk.priorityLevel', { level: p })}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
+
+      {count > 0 && onSetDeadline && (
+        <DropdownMenu>
+          <DropdownMenuTrigger className={actionClass}>
+            <CalendarClock size={15} aria-hidden="true" /> {ta('bulk.deadline')}
+          </DropdownMenuTrigger>
+          <DropdownMenuContent side="top" align="center" className="w-48">
+            <DropdownMenuItem onClick={() => onSetDeadline(localDay(new Date()))}>{ta('bulk.deadlineToday')}</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onSetDeadline(localDay(addDays(new Date(), 1)))}>{ta('bulk.deadlineTomorrow')}</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onSetDeadline(localDay(nextMonday(new Date())))}>{ta('bulk.deadlineNextWeek')}</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onSetDeadline(localDay(addDays(new Date(), 30)))}>{ta('bulk.deadlineMonth')}</DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => onSetDeadline('')}>{ta('bulk.deadlineClear')}</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       )}

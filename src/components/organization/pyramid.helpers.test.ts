@@ -171,3 +171,40 @@ describe('pyramide à grande échelle', () => {
     localStorage.removeItem(collapsedStorageKey('big'));
   });
 });
+
+// ─── Changement de POSITION (audit du 2026-09-24, étape 4) ────────────
+// « Le passage manager → membre se fait par la pyramide, en silence. »
+import { positionChange } from './pyramid.helpers';
+
+describe('positionChange — qui perd ou gagne la position de manager', () => {
+  const org = [m('ceo', null), m('a', 'ceo'), m('b', 'ceo'), m('a1', 'a'), m('solo', null)];
+
+  it("déplacer le DERNIER subordonné d'un manager lui fait perdre la position", () => {
+    const change = positionChange(org, 'a1', 'b');
+    expect(change.losesManagerRole?.userId).toBe('a');
+    // b n'avait personne : il devient manager.
+    expect(change.becomesManager?.userId).toBe('b');
+  });
+
+  it("un manager qui garde d'autres subordonnés ne perd rien", () => {
+    const change = positionChange(org, 'a', 'b');
+    expect(change.losesManagerRole).toBeNull();
+    expect(change.becomesManager?.userId).toBe('b');
+  });
+
+  it('placer sous quelqu’un qui encadre déjà ne signale aucun gain', () => {
+    expect(positionChange(org, 'solo', 'ceo')).toEqual({ losesManagerRole: null, becomesManager: null });
+  });
+
+  it('détacher (null) peut faire perdre, jamais gagner', () => {
+    expect(positionChange(org, 'a1', null)).toEqual({
+      losesManagerRole: expect.objectContaining({ userId: 'a' }),
+      becomesManager: null,
+    });
+  });
+
+  it('un non-déplacement ne signale rien', () => {
+    expect(positionChange(org, 'a1', 'a')).toEqual({ losesManagerRole: null, becomesManager: null });
+    expect(positionChange(org, 'inconnu', 'a')).toEqual({ losesManagerRole: null, becomesManager: null });
+  });
+});

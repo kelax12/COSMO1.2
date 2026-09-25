@@ -114,12 +114,6 @@
     "atomicHint": "Le projet, ses tâches et ses jalons sont créés ensemble : si l'un échoue, rien n'est créé."
   },
   "bulk": {
-    "assign": "Assigner",
-    "assignTo": "Ajouter comme assigné",
-    "unassignAll": "Retirer tous les assignés",
-    "move": "Déplacer",
-    "moveTo": "Déplacer vers le projet",
-    "status": "Statut",
     "reassigned_one": "{{count}} tâche réassignée",
     "reassigned_many": "{{count}} de tâches réassignées",
     "reassigned_other": "{{count}} tâches réassignées",

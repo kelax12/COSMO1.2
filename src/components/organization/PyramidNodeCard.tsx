@@ -114,7 +114,8 @@ export interface NodeCardProps {
 }
 
 export const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, onAddUnder, onRemove, onGrab, drag, flashId, collapsedIds, onToggleCollapse, matchIds, teamsByUser, onOpenMember, editMode, depth, mobile, workloadByUser }: NodeCardProps) => {
-  const { t, tp } = useT('org');
+  const { t } = useT('org');
+  const { t: ta, tp: tpa } = useT('orgAdmin');
   const collapsed = collapsedIds.has(node.member.userId);
   // Radix ferme le menu sur pointerup PUIS le navigateur émet un `click` sur
   // l'élément sous le pointeur (la carte) → sinon la fiche s'ouvrait en plus de
@@ -266,11 +267,11 @@ export const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, o
       data-card="true"
       aria-label={
         isDropTarget
-          ? t('pyramid.placeUnder', { member: drag.member.displayName, target: m.displayName })
-          : t('pyramid.cardAria', {
-              name: isMe ? t('pyramid.you') : m.displayName,
-              role: m.role === 'admin' ? t('pyramid.roleAdmin') : manager ? t('pyramid.roleManager') : t('pyramid.roleMember'),
-              reports: node.children.length > 0 ? tp('pyramid.directReports', node.children.length) : '',
+          ? ta('pyramid.placeUnder', { member: drag.member.displayName, target: m.displayName })
+          : ta('pyramid.cardAria', {
+              name: isMe ? ta('pyramid.you') : m.displayName,
+              role: m.role === 'admin' ? ta('pyramid.roleAdmin') : manager ? ta('pyramid.roleManager') : ta('pyramid.roleMember'),
+              reports: node.children.length > 0 ? tpa('pyramid.directReports', node.children.length) : '',
             })
       }
       style={isDragSource || editDraggable ? { touchAction: 'none' } : undefined}
@@ -290,7 +291,7 @@ export const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, o
             e.preventDefault();
             onGrab(m, e);
           }}
-          title={t('pyramid.dragToMove', { name: m.displayName })}
+          title={ta('pyramid.dragToMove', { name: m.displayName })}
           data-grip="true"
           className="cursor-grab text-[rgb(var(--color-text-muted))]/50 hover:text-indigo-500 -ml-1 shrink-0 touch-none"
           aria-hidden="true"
@@ -305,7 +306,7 @@ export const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, o
             e.stopPropagation();
             onToggleCollapse(m.userId);
           }}
-          aria-label={collapsed ? t('pyramid.expandTeam', { name: m.displayName }) : t('pyramid.collapseTeam', { name: m.displayName })}
+          aria-label={collapsed ? ta('pyramid.expandTeam', { name: m.displayName }) : ta('pyramid.collapseTeam', { name: m.displayName })}
           aria-expanded={!collapsed}
           className="w-6 h-6 rounded-md flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))] shrink-0"
         >
@@ -315,7 +316,7 @@ export const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, o
       <MemberAvatar avatar={m.avatar} name={m.displayName} size={34} />
       <div className="min-w-0">
           <p className="text-sm font-bold text-[rgb(var(--color-text-primary))] truncate max-w-[140px]">
-            {isMe ? t('pyramid.you') : m.displayName}
+            {isMe ? ta('pyramid.you') : m.displayName}
           </p>
           {/* Calque de charge : voir l'organisation ET sa santé sur le même
               écran. Rendu seulement si la personne a des tâches ouvertes —
@@ -325,11 +326,11 @@ export const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, o
               className="flex items-center gap-1 mt-0.5"
               title={
                 myWorkload.overdue > 0
-                  ? tp('pyramid.workloadTitleOverdue', myWorkload.open, {
+                  ? tpa('pyramid.workloadTitleOverdue', myWorkload.open, {
                       duration: formatDuration(myWorkload.estimatedMinutes),
                       overdue: myWorkload.overdue,
                     })
-                  : tp('pyramid.workloadTitle', myWorkload.open, {
+                  : tpa('pyramid.workloadTitle', myWorkload.open, {
                       duration: formatDuration(myWorkload.estimatedMinutes),
                     })
               }
@@ -361,14 +362,14 @@ export const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, o
             className="text-[10px] font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))] inline-flex items-center gap-1.5"
             title={
               totalReports > node.children.length
-                ? tp('pyramid.directCount', node.children.length) + t('pyramid.totalSuffix', { count: totalReports })
+                ? tpa('pyramid.directCount', node.children.length) + ta('pyramid.totalSuffix', { count: totalReports })
                 : undefined
             }
           >
             <span>
-              {m.role === 'admin' ? t('pyramid.badgeAdmin') : manager ? t('pyramid.badgeManager') : t('pyramid.badgeMember')}
+              {m.role === 'admin' ? ta('pyramid.badgeAdmin') : manager ? ta('pyramid.badgeManager') : ta('pyramid.badgeMember')}
               {node.children.length > 0 ? ` · ${node.children.length}` : ''}
-              {totalReports > node.children.length ? t('pyramid.totalSuffix', { count: totalReports }) : ''}
+              {totalReports > node.children.length ? ta('pyramid.totalSuffix', { count: totalReports }) : ''}
             </span>
             {myTeams.length > 0 && (
               <span className="inline-flex items-center gap-1 shrink-0">
@@ -411,7 +412,7 @@ export const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, o
             {movable && (
               <DropdownMenuItem onClick={() => onStartDrag(m)}>
                 <Move size={14} aria-hidden="true" />
-                {t('pyramid.move')}
+                {ta('pyramid.move')}
               </DropdownMenuItem>
             )}
             {canSeeInsights && (
@@ -419,7 +420,7 @@ export const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, o
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => onOpenMember(m, 'tasks')}>
                   <ListTodo size={14} aria-hidden="true" />
-                  {t('pyramid.seeTasksAction')}
+                  {ta('pyramid.seeTasksAction')}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => onOpenMember(m, 'agenda')}>
                   <CalendarDays size={14} aria-hidden="true" />
