@@ -60,6 +60,10 @@ function codeOnly(source: string): string {
 }
 const reportBug = codeOnly(read('report-bug'));
 const renewalNotice = codeOnly(read('renewal-notice'));
+// Audit entreprise 2026-09-23 (M11, M14) : deux fonctions d'envoi de plus,
+// soumises aux trois mêmes interdits dès leur naissance.
+const sendOrgInvite = codeOnly(read('send-org-invite'));
+const orgDigest = codeOnly(read('org-digest'));
 
 /** Un `Deno.env.get('…FROM…')` muni d une valeur par defaut. */
 const SENDER_WITH_DEFAULT = /Deno[.]env[.]get[(]'[A-Z_]*FROM'[)]\s*[?][?]/;
@@ -72,6 +76,8 @@ describe('garde — report-bug et renewal-notice (C-36)', () => {
   it('lit bien les deux sources', () => {
     expect(reportBug.length).toBeGreaterThan(1000);
     expect(renewalNotice.length).toBeGreaterThan(1000);
+    expect(sendOrgInvite.length).toBeGreaterThan(1000);
+    expect(orgDigest.length).toBeGreaterThan(1000);
   });
 
   it('TEMOIN : les trois detecteurs voient le defaut qu ils cherchent', () => {
@@ -85,7 +91,12 @@ describe('garde — report-bug et renewal-notice (C-36)', () => {
     expect(PROVIDER_BODY_RELAYED.test("json({ error: 'send_failed' }, 502, req)")).toBe(false);
   });
 
-  for (const [name, source] of [['report-bug', reportBug], ['renewal-notice', renewalNotice]] as const) {
+  for (const [name, source] of [
+    ['report-bug', reportBug],
+    ['renewal-notice', renewalNotice],
+    ['send-org-invite', sendOrgInvite],
+    ['org-digest', orgDigest],
+  ] as const) {
     describe(name, () => {
       it('n a AUCUNE valeur par defaut d expediteur', () => {
         // Le domaine par defaut ne serait jamais signe : l envoi ne serait pas
@@ -115,6 +126,35 @@ describe('garde — report-bug et renewal-notice (C-36)', () => {
 
     it('compare le secret par egalite stricte, pas par presence', () => {
       expect(renewalNotice).toMatch(/x-cron-secret'[)]\s*!==\s*CRON_SECRET/);
+    });
+  });
+
+  describe('org-digest — appelee par la CI, fermee sans son secret', () => {
+    it('refuse tout appel quand CRON_SECRET est absent, et compare par egalite', () => {
+      expect(orgDigest).toMatch(/if\s*[(]!CRON_SECRET[)]/);
+      expect(orgDigest).toMatch(/x-cron-secret'[)]\s*!==\s*CRON_SECRET/);
+    });
+
+    it('note l envoi APRES l envoi, jamais avant', () => {
+      // Poser `emailed_at` avant l'appel au fournisseur perdrait en silence
+      // toute notification dont l'envoi échoue.
+      // `codeOnly` coupe une ligne à son premier `//` : l'URL ne survit pas, l'appel si.
+      const send = orgDigest.indexOf('await fetch(');
+      const mark = orgDigest.indexOf('emailed_at');
+      expect(send).toBeGreaterThan(0);
+      expect(orgDigest.indexOf('emailed_at', send)).toBeGreaterThan(send);
+      expect(mark).toBeGreaterThan(0);
+    });
+  });
+
+  describe('send-org-invite — l inviteur vient du JWT', () => {
+    it('resout l appelant par getUser et distingue la panne du non-connecte', () => {
+      expect(sendOrgInvite).toContain('auth.getUser()');
+      expect(sendOrgInvite).toContain('auth_unavailable');
+    });
+
+    it('verifie, lien par lien, que l appelant l a cree ou administre l organisation', () => {
+      expect(sendOrgInvite).toMatch(/!isAdmin\s*&&\s*link[.]created_by\s*!==\s*caller[.]id/);
     });
   });
 

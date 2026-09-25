@@ -22,7 +22,9 @@
     "badgePreviewMore_one": "and {{count}} more",
     "badgePreviewMore_other": "and {{count}} more",
     "tabLoading": "Loading tab…",
-    "managerToast": "You now manage {{names}}: the Statistics and Pyramid sections are available."
+    "managerToast": "You now manage {{names}}: the Statistics and Pyramid sections are available.",
+    "launchFree": "COSMO for companies is free",
+    "launchFreeRest": " until 1 August, enjoy it with your whole team, no limits."
   },
   "onboarding": {
     "intro": "Create your company or join one to collaborate with your team.",
@@ -88,7 +90,8 @@
     "copyCodeAria": "Copy invitation code",
     "orgCodeTitle": "Organization invitation code",
     "seatsFullLink": "This company has reached its seat limit: a new member could not join with this link. Upgrade the plan to add more.",
-    "seatsFullCode": "This company has reached its seat limit: a request made with this code could not be accepted."
+    "seatsFullCode": "This company has reached its seat limit: a request made with this code could not be accepted.",
+    "seatsFullTitle": "No seats left"
   },
   "pyramid": {
     "directReports_one": ", {{count}} direct report",
@@ -384,7 +387,60 @@
     "tasksTabMoreProjects_other": "+{{count}} projects",
     "tasksTabFewerProjects": "Show fewer",
     "selectTask": "Select \"{{name}}\"",
-    "milestoneFailed": "Milestone not saved: {{message}}"
+    "milestoneFailed": "Milestone not saved: {{message}}",
+    "filterAssignee": "Filter by assignee",
+    "seeTasksOf": "See tasks from",
+    "everyone": "Everyone",
+    "filterTeam": "Filter by team",
+    "allTeams": "All teams",
+    "orgNoTeam": "Company (no team)",
+    "createTeamOption": "+ Create a team",
+    "kanbanByAssignee": "Kanban view by assignee",
+    "myTasks": "My tasks",
+    "tasksOf": "Tasks of…",
+    "listView": "List view",
+    "bulkClear": "Clear selection",
+    "selectAll": "Select all",
+    "timelineView": "Timeline view",
+    "timelineEmpty": "No upcoming deadlines. Add dates to tasks to see them here.",
+    "timelineToday": "Today",
+    "timelineNotGantt": "Places tasks at their deadline.",
+    "timelineMarker": "{{name}}, due {{date}}",
+    "timelineUnscheduled_one": "{{count}} unscheduled",
+    "timelineUnscheduled_other": "{{count}} unscheduled",
+    "timelineUnscheduledAria": "{{count}} task(s) without a deadline, click to set a date",
+    "timelineUnscheduledTitle": "Unscheduled",
+    "timelineDeadlineLabel": "Due {{date}}",
+    "timelineUnassignedTask": "Unassigned",
+    "timelineZoomLabel": "Zoom:",
+    "timelineZoomMonth": "1 month",
+    "timelineZoomQuarter": "3 months",
+    "timelineZoomAll": "All",
+    "rowsLabel": "Rows:",
+    "groupByAssignee": "Person",
+    "groupByProject": "Project",
+    "groupByStatus": "Status",
+    "statusLabel": "Status",
+    "scopeAll": "All",
+    "scopeMine": "Me",
+    "scopeMember": "Someone",
+    "you": "You",
+    "teamLabel": "Team",
+    "viewLabel": "View",
+    "viewList": "List",
+    "viewKanban": "Board",
+    "viewTimeline": "Schedule",
+    "columnsLabel": "Columns:",
+    "activeFilters": "Active filters:",
+    "clearAll": "Clear all",
+    "removeFilter": "Remove the “{{name}}” filter",
+    "chipAssignee": "Assignee: {{name}}",
+    "chipTeam": "Team: {{name}}",
+    "chipOpen": "Open",
+    "chipOverdue": "Overdue",
+    "chipDone": "Completed this week",
+    "criticalBadge": "Critical",
+    "sameProjectOnly": "Only tasks from the same project can be linked."
   },
   "insights": {
     "taskDeleted": "Task deleted",
@@ -401,7 +457,9 @@
     "addTask": "Add a task",
     "inProgress": "In progress ({{count}})",
     "inProgressShort": "In progress",
-    "overdueShort": "Overdue"
+    "overdueShort": "Overdue",
+    "noUpcoming": "No upcoming due dates.",
+    "privacyNote": "Only team task due dates are visible (the personal calendar stays private)."
   },
   "taskModal": {
     "newAria": "New team task",
@@ -445,7 +503,27 @@
     "startDate": "Start",
     "startDatePlaceholder": "No start date",
     "datesInvalid": "The start must come before the due date.",
-    "chooseProject": "Choose a project…"
+    "chooseProject": "Choose a project…",
+    "labelsTitle": "Labels",
+    "labelsNone": "No label",
+    "labelsPick": "Pick labels",
+    "labelsCreate": "Create \"{{name}}\"",
+    "labelsSearch": "Search or create…",
+    "labelsManagerOnly": "Only a manager can create a label.",
+    "historyTitle": "History",
+    "historyEmpty": "No recorded change.",
+    "historyStatus": "changed the status",
+    "historyAssignees": "changed assignees",
+    "historyDeadline": "changed the deadline",
+    "historyPriority": "changed the priority",
+    "historyProject": "moved the task",
+    "historyName": "renamed the task",
+    "historyFrom": "from {{from}}",
+    "historyTo": "to {{to}}",
+    "historyUnknownActor": "Someone",
+    "historyRemovedMember": "a removed member",
+    "historyRemovedProject": "a deleted project",
+    "historyNone": "none"
   },
   "team": {
     "newTeam": "New team",
@@ -496,7 +574,8 @@
     "showFewerTeams": "Collapse the list",
     "moreMembers_one": "+{{count}} more",
     "moreMembers_other": "+{{count}} more",
-    "fewerMembers": "Show fewer"
+    "fewerMembers": "Show fewer",
+    "emerald": "Emerald"
   },
   "project": {
     "newAria": "New team project",
@@ -543,7 +622,8 @@
       "toOrg_one": "The project, its tasks and comments will become visible to the whole company, that is {{count}} person.",
       "toOrg_other": "The project, its tasks and comments will become visible to the whole company, that is {{count}} people.",
       "confirm": "Change team"
-    }
+    },
+    "colorAria": "Project colour"
   },
   "deleteOrg": {
     "irreversible": "This cannot be undone.",
@@ -676,7 +756,9 @@
     "moveConfirm": "Move",
     "moveCancel": "Cancel",
     "moved": "Category moved",
-    "rename": "Rename"
+    "rename": "Rename",
+    "renameAria": "Rename the {{name}} category",
+    "deleteAria": "Delete the {{name}} category"
   },
   "okrTab": {
     "fallbackTeam": "Team",
@@ -717,7 +799,8 @@
     "selfAssigned": "You assigned ",
     "selfPostponed": "You postponed ",
     "selfAdvanced": "You brought forward ",
-    "selfMoved": "You moved "
+    "selfMoved": "You moved ",
+    "theTeam": "The team"
   },
   "transfer": {
     "title": "Transfer ownership of {{org}}",
@@ -737,7 +820,8 @@
     "taskTotal_one": "{{count}} task · {{period}}",
     "taskTotal_other": "{{count}} tasks · {{period}}",
     "completedOf_one": "{{count}} of {{total}} done",
-    "completedOf_other": "{{count}} of {{total}} done"
+    "completedOf_other": "{{count}} of {{total}} done",
+    "completedPercent": "{{percent}}% completed"
   },
   "comments": {
     "loading": "Loading…",
@@ -749,7 +833,8 @@
     "mentionAria": "Mention a member",
     "sendAria": "Send comment",
     "formerMember": "Former member",
-    "deleted": "Comment deleted"
+    "deleted": "Comment deleted",
+    "saveFirst": "Save the task to add comments."
   },
   "leaveDialog": {
     "body": "You'll immediately lose access to the team's projects, tasks and OKRs. Your personal data (tasks, habits, calendar) is not affected. You can come back with a new invitation code."
@@ -768,7 +853,8 @@
     "today": "Today",
     "dragHint": "Drag a task onto the calendar to schedule it.",
     "noTasks": "No team task assigned.",
-    "tasksTitle": "Tasks"
+    "tasksTitle": "Tasks",
+    "managerHint": "You manage this calendar: create, drag their tasks, move or edit their events."
   },
   "common": {
     "close": "Close",
@@ -835,7 +921,8 @@
     "groupRecent": "Recent",
     "search": "Search",
     "unpin": "Unpin {{name}}",
-    "pin": "Pin {{name}}"
+    "pin": "Pin {{name}}",
+    "sheetTitle": "Go to"
   },
   "colors": {
     "indigo": "Indigo",
@@ -880,7 +967,12 @@
     "kindComment": "New comment on a task you're following",
     "periodToday": "Today",
     "periodWeek": "This week",
-    "periodEarlier": "Earlier"
+    "periodEarlier": "Earlier",
+    "kindStatusChanged": "A task you follow changed status",
+    "kindUnblocked": "One of your tasks is no longer blocked",
+    "kindProjectAtRisk": "A project you're part of was flagged at risk",
+    "kindKrDue": "A key result is due in 3 days",
+    "kindEventScheduled": "A time slot was added to your calendar"
   },
   "roles": {
     "admin": "Administrator",
@@ -940,7 +1032,8 @@
     "refundTitle": "Cancel and get a refund",
     "refundExplain": "You get the current period back, with no reason to give and no need to write to us. Access stops immediately, since the period is refunded.",
     "refundCta": "Cancel and refund the current period",
-    "refundPending": "Cancelling…"
+    "refundPending": "Cancelling…",
+    "currentTierFree": "You are on the free tier."
   },
   "inviteJoin": {
     "title": "Create or join a company",
@@ -976,7 +1069,9 @@
     "removedBy": "Removed by {{name}}",
     "removedDismiss": "Got it",
     "inviteCtaPending": "Pending",
-    "inviteCtaPendingAria": "Invitation sent to {{name}}, awaiting response"
+    "inviteCtaPendingAria": "Invitation sent to {{name}}, awaiting response",
+    "noOrgYet": "You don't belong to a company yet. Create one, or join one with a code, to invite your contacts to it.",
+    "navHint": "Create a company, or join one with a code"
   },
   "teams": {
     "leadNamed": "Team lead assigned",
@@ -1118,5 +1213,125 @@
     "someone": "a member",
     "restore": "Restore",
     "restoreAria": "Restore the task {{name}}"
+  },
+  "kanban": {
+    "unassigned": "Unassigned",
+    "aria": "Kanban by assignee",
+    "assignTo": "Assign a task to {{name}}",
+    "addUnassigned": "Add an unassigned task",
+    "assignOrCreate": "Assign or create a task",
+    "dropHere": "Drop a task here",
+    "alsoAssigned": "Also assigned to {{names}}",
+    "overdueBadge": "{{count}} overdue",
+    "overdueTitle_one": "{{count}} overdue task",
+    "overdueTitle_other": "{{count}} overdue tasks",
+    "editTask": "Edit task {{name}}",
+    "editTaskOverdue": "Edit task {{name}} (overdue)"
+  },
+  "templates": {
+    "pickLabel": "Start from a template",
+    "clear": "Start from scratch",
+    "onboarding": "Client onboarding",
+    "onboardingT1": "Kick-off meeting",
+    "onboardingT2": "Collect access and documents",
+    "onboardingT3": "Set up the account",
+    "onboardingT4": "30-day check-in",
+    "launch": "Product launch",
+    "launchT1": "Define positioning",
+    "launchT2": "Prepare communication assets",
+    "launchT3": "Pre-release testing",
+    "launchT4": "Go live",
+    "launchT5": "Post-launch review",
+    "sprint": "Sprint",
+    "sprintT1": "Scoping and prioritisation",
+    "sprintT2": "Development",
+    "sprintT3": "Testing",
+    "sprintT4": "Retrospective"
+  },
+  "lifecycle": {
+    "badgeSuspended": "Suspended",
+    "badgeUntil": "Access until {{date}}",
+    "badgeExpired": "Access expired on {{date}}",
+    "menuAccess": "Access and suspension",
+    "menuReactivate": "Restore access",
+    "menuOffboard": "Plan the departure",
+    "accessTitle": "Access for {{name}}",
+    "accessIntro": "Suspending cuts access without removing the person: their tasks, place in the org chart and teams stay as they are.",
+    "accessState": "Access state",
+    "stateActive": "Active",
+    "stateActiveHint": "The person sees and edits what their permissions allow.",
+    "stateSuspended": "Suspended",
+    "stateSuspendedHint": "No access to the organization until access is restored.",
+    "accessUntil": "Access until (optional)",
+    "accessUntilNone": "No limit",
+    "accessUntilHint": "For a contractor or an intern: after this date, access ends on its own.",
+    "accessSave": "Save",
+    "searchPerson": "Search for a person",
+    "searchPersonAria": "Search for a person for \"{{field}}\"",
+    "offboardTitle": "{{name}} is leaving",
+    "offboardIntro": "Choose who takes over their work, then remove the person or simply suspend their access.",
+    "impactTitle": "What will be handed over",
+    "impactLoading": "Calculating…",
+    "impactNone": "Nothing to hand over: no open task, no direct report, no lead role, no key result.",
+    "impactTasks_one": "{{count}} open task assigned",
+    "impactTasks_other": "{{count}} open tasks assigned",
+    "impactReports_one": "{{count}} direct report",
+    "impactReports_other": "{{count}} direct reports",
+    "impactLeads_one": "{{count}} team they lead",
+    "impactLeads_other": "{{count}} teams they lead",
+    "impactKrs_one": "{{count}} key result they own",
+    "impactKrs_other": "{{count}} key results they own",
+    "tasksTo": "Their open tasks go to",
+    "reportsTo": "Their direct reports move under",
+    "leadsTo": "New lead for their teams",
+    "leadsToHint": "The chosen person is added to the team if they aren't in it yet.",
+    "krsTo": "Their key results go to",
+    "nobody": "Nobody",
+    "nobodyUnassign": "Nobody (tasks unassigned)",
+    "theirManager": "Their manager, {{name}}",
+    "unplaced": "Unplaced in the org chart",
+    "modeLegend": "Then",
+    "modeRemove": "Remove from the organization",
+    "modeRemoveHint": "The person is notified and loses all access. They can come back with a new invitation.",
+    "modeSuspend": "Only suspend",
+    "modeSuspendHint": "Access is cut, membership is kept: it can be restored.",
+    "offboardPending": "Handing over…",
+    "offboardRemove": "Hand over and remove",
+    "offboardSuspend": "Hand over and suspend"
+  },
+  "invites": {
+    "emailTitle": "Invite by email",
+    "emailIntro": "Each address gets a personal link, valid for 7 days, that only its recipient can use.",
+    "emailsLabel": "Email addresses",
+    "emailsPlaceholder": "first.last@company.com, one per line or separated by commas",
+    "emailsCount": "{{count}} address(es) found, {{max}} at most",
+    "placement": "Place in the org chart",
+    "placementHint": "The person will arrive directly under this manager.",
+    "unplaced": "Unplaced",
+    "underMe": "Under me",
+    "teams": "Teams to join",
+    "access": "Access duration",
+    "accessPermanent": "Permanent",
+    "accessDays": "{{count}} days after accepting",
+    "send": "Invite ({{count}})",
+    "sending": "Sending…",
+    "done": "Done",
+    "mailUnavailable": "The links were created, but sending emails isn't set up yet. Copy the links to share them yourself.",
+    "statusSent": "Invitation sent",
+    "statusCreatedNotSent": "Link created, email not sent",
+    "statusCreatedMaybe": "Link created, sending may have failed: resend it from Settings",
+    "statusAlreadyMember": "Already a member",
+    "statusAlreadyInvited": "An invitation is already pending",
+    "statusInvalid": "Invalid address",
+    "copyLinkFor": "Copy the invitation link for {{email}}",
+    "listLoading": "Loading invitations…",
+    "listEmpty": "No email invitations yet.",
+    "stateClaimed": "Accepted on {{date}}",
+    "stateExpired": "Expired on {{date}}",
+    "statePending": "Pending, expires on {{date}} · sent {{sent}} time(s)",
+    "resend": "Resend",
+    "resendWait": "At most one reminder per hour",
+    "resendFor": "Resend to {{email}}",
+    "revokeFor": "Revoke the invitation for {{email}}"
   }
 }

@@ -181,7 +181,15 @@
     "restoreList": "Impossible de restaurer la liste : {{message}}",
     "restoreEvent": "Impossible de restaurer l'événement : {{message}}",
     "restoreOkr": "Impossible de restaurer l'objectif : {{message}}",
-    "restoreComment": "Impossible de restaurer le commentaire : {{message}}"
+    "restoreComment": "Impossible de restaurer le commentaire : {{message}}",
+    "okrCycle": "Impossible d'enregistrer le cycle : {{message}}",
+    "krProjects": "Impossible de relier les projets : {{message}}",
+    "krCheckin": "Impossible d'enregistrer le point d'étape : {{message}}",
+    "offboard": "Impossible de finaliser le départ : {{message}}",
+    "memberAccess": "Impossible de modifier l'accès : {{message}}",
+    "emailInvite": "Impossible d'envoyer l'invitation : {{message}}",
+    "notificationSettings": "Impossible d'enregistrer vos préférences : {{message}}",
+    "weeklyReview": "Impossible d'enregistrer la revue : {{message}}"
   },
   "success": {
     "orgCreated": "Entreprise créée",
@@ -212,7 +220,12 @@
     "friendRequestSent": "Demande d'ami envoyée à {{email}}",
     "listShared": "Liste partagée",
     "listAccepted": "Liste acceptée",
-    "permissionsUpdated": "Permissions mises à jour"
+    "permissionsUpdated": "Permissions mises à jour",
+    "checkinPosted": "Point d'étape enregistré",
+    "memberOffboarded": "Départ finalisé, le travail a été transmis",
+    "memberAccessUpdated": "Accès mis à jour",
+    "notificationSettingsSaved": "Préférences enregistrées",
+    "weeklyReviewSaved": "Revue enregistrée"
   },
   "friends": {
     "notAuthenticated": "Vous devez être connecté pour effectuer cette action.",

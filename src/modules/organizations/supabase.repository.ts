@@ -42,6 +42,9 @@ interface MemberRow {
   role: OrgRole;
   joined_at: string;
   manager_id: string | null;
+  // Mig. 161 : absentes avant son application.
+  suspended_at?: string | null;
+  access_expires_at?: string | null;
 }
 
 interface ProfileRow {
@@ -145,6 +148,8 @@ export class SupabaseOrganizationsRepository implements IOrganizationsRepository
         role: m.role,
         joinedAt: m.joined_at,
         managerId: m.manager_id,
+        suspendedAt: m.suspended_at ?? null,
+        accessExpiresAt: m.access_expires_at ?? null,
         displayName: p?.display_name ?? p?.email?.split('@')[0] ?? 'Membre',
         email: p?.email ?? undefined,
         avatar: p?.avatar_url ?? undefined,

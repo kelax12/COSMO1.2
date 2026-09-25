@@ -181,7 +181,15 @@
     "restoreList": "Couldn't restore the list: {{message}}",
     "restoreEvent": "Couldn't restore the event: {{message}}",
     "restoreOkr": "Couldn't restore the objective: {{message}}",
-    "restoreComment": "Couldn't restore the comment: {{message}}"
+    "restoreComment": "Couldn't restore the comment: {{message}}",
+    "okrCycle": "Couldn't save the cycle: {{message}}",
+    "krProjects": "Couldn't link the projects: {{message}}",
+    "krCheckin": "Couldn't save the check-in: {{message}}",
+    "offboard": "Couldn't complete the departure: {{message}}",
+    "memberAccess": "Couldn't change the access: {{message}}",
+    "emailInvite": "Couldn't send the invitation: {{message}}",
+    "notificationSettings": "Couldn't save your preferences: {{message}}",
+    "weeklyReview": "Couldn't save the review: {{message}}"
   },
   "success": {
     "orgCreated": "Company created",
@@ -212,7 +220,12 @@
     "friendRequestSent": "Friend request sent to {{email}}",
     "listShared": "List shared",
     "listAccepted": "List accepted",
-    "permissionsUpdated": "Permissions updated"
+    "permissionsUpdated": "Permissions updated",
+    "checkinPosted": "Check-in saved",
+    "memberOffboarded": "Departure completed, the work was handed over",
+    "memberAccessUpdated": "Access updated",
+    "notificationSettingsSaved": "Preferences saved",
+    "weeklyReviewSaved": "Review saved"
   },
   "friends": {
     "notAuthenticated": "You must be signed in to do this.",

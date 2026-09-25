@@ -26,7 +26,9 @@
     "badgePreviewMore_other": "et {{count}} autres",
     "badgePreviewMore_many": "et {{count}} d'autres",
     "tabLoading": "Chargement de l’onglet…",
-    "managerToast": "Vous encadrez maintenant {{names}} : les sections Statistiques et Pyramide sont disponibles."
+    "managerToast": "Vous encadrez maintenant {{names}} : les sections Statistiques et Pyramide sont disponibles.",
+    "launchFree": "COSMO Entreprise est gratuit",
+    "launchFreeRest": " jusqu'au 1er août, profitez-en avec toute votre équipe, sans limite."
   },
   "onboarding": {
     "intro": "Créez votre entreprise ou rejoignez-en une pour collaborer avec votre équipe.",
@@ -93,7 +95,8 @@
     "copyCodeAria": "Copier le code d'invitation",
     "orgCodeTitle": "Code d'invitation de l'entreprise",
     "seatsFullLink": "Cette entreprise a atteint son nombre de places : un nouveau membre ne pourrait pas rejoindre avec ce lien. Faites évoluer l'abonnement pour en ajouter.",
-    "seatsFullCode": "Cette entreprise a atteint son nombre de places : une demande faite avec ce code ne pourrait pas être acceptée."
+    "seatsFullCode": "Cette entreprise a atteint son nombre de places : une demande faite avec ce code ne pourrait pas être acceptée.",
+    "seatsFullTitle": "Places épuisées"
   },
   "pyramid": {
     "directReports_one": ", {{count}} subordonné direct",
@@ -411,7 +414,61 @@
     "tasksTabMoreProjects_other": "+{{count}} projets",
     "tasksTabFewerProjects": "Réduire",
     "selectTask": "Sélectionner « {{name}} »",
-    "milestoneFailed": "Jalon non enregistré : {{message}}"
+    "milestoneFailed": "Jalon non enregistré : {{message}}",
+    "filterAssignee": "Filtrer par assigné",
+    "seeTasksOf": "Voir les tâches de",
+    "everyone": "Tout le monde",
+    "filterTeam": "Filtrer par équipe",
+    "allTeams": "Toutes les équipes",
+    "orgNoTeam": "Entreprise (sans équipe)",
+    "createTeamOption": "+ Créer une équipe",
+    "kanbanByAssignee": "Vue kanban par assigné",
+    "myTasks": "Mes tâches",
+    "tasksOf": "Tâches de…",
+    "listView": "Vue liste",
+    "bulkClear": "Tout désélectionner",
+    "selectAll": "Tout sélectionner",
+    "timelineView": "Vue chronologique",
+    "timelineEmpty": "Aucune échéance à venir. Datez des tâches pour les voir apparaître ici.",
+    "timelineToday": "Aujourd'hui",
+    "timelineNotGantt": "Positionne les tâches à leur échéance.",
+    "timelineMarker": "{{name}}, échéance le {{date}}",
+    "timelineUnscheduled_one": "{{count}} sans date",
+    "timelineUnscheduled_many": "{{count}} sans date",
+    "timelineUnscheduled_other": "{{count}} sans date",
+    "timelineUnscheduledAria": "{{count}} tâche(s) sans échéance, cliquer pour les dater",
+    "timelineUnscheduledTitle": "Sans date",
+    "timelineDeadlineLabel": "Échéance le {{date}}",
+    "timelineUnassignedTask": "Non assignée",
+    "timelineZoomLabel": "Zoom :",
+    "timelineZoomMonth": "1 mois",
+    "timelineZoomQuarter": "3 mois",
+    "timelineZoomAll": "Tout",
+    "rowsLabel": "Lignes :",
+    "groupByAssignee": "Personne",
+    "groupByProject": "Projet",
+    "groupByStatus": "Statut",
+    "statusLabel": "Statut",
+    "scopeAll": "Tout",
+    "scopeMine": "Moi",
+    "scopeMember": "Une personne",
+    "you": "Vous",
+    "teamLabel": "Équipe",
+    "viewLabel": "Vue",
+    "viewList": "Liste",
+    "viewKanban": "Tableau",
+    "viewTimeline": "Planning",
+    "columnsLabel": "Colonnes :",
+    "activeFilters": "Filtres actifs :",
+    "clearAll": "Tout effacer",
+    "removeFilter": "Retirer le filtre « {{name}} »",
+    "chipAssignee": "Assigné : {{name}}",
+    "chipTeam": "Équipe : {{name}}",
+    "chipOpen": "Ouvertes",
+    "chipOverdue": "En retard",
+    "chipDone": "Terminées cette semaine",
+    "criticalBadge": "Critique",
+    "sameProjectOnly": "Seules les tâches du même projet peuvent être liées."
   },
   "insights": {
     "taskDeleted": "Tâche supprimée",
@@ -428,7 +485,9 @@
     "addTask": "Ajouter une tâche",
     "inProgress": "En cours ({{count}})",
     "inProgressShort": "En cours",
-    "overdueShort": "En retard"
+    "overdueShort": "En retard",
+    "noUpcoming": "Aucune échéance à venir.",
+    "privacyNote": "Seules les échéances des tâches d'équipe sont visibles (le calendrier personnel reste privé)."
   },
   "taskModal": {
     "newAria": "Nouvelle tâche d'équipe",
@@ -472,7 +531,27 @@
     "startDate": "Début",
     "startDatePlaceholder": "Pas de début",
     "datesInvalid": "Le début doit précéder l'échéance.",
-    "chooseProject": "Choisir un projet…"
+    "chooseProject": "Choisir un projet…",
+    "labelsTitle": "Labels",
+    "labelsNone": "Aucun label",
+    "labelsPick": "Choisir des labels",
+    "labelsCreate": "Créer « {{name}} »",
+    "labelsSearch": "Rechercher ou créer…",
+    "labelsManagerOnly": "Seul un manager peut créer un label.",
+    "historyTitle": "Historique",
+    "historyEmpty": "Aucune modification enregistrée.",
+    "historyStatus": "a changé le statut",
+    "historyAssignees": "a modifié les assignés",
+    "historyDeadline": "a changé l'échéance",
+    "historyPriority": "a changé la priorité",
+    "historyProject": "a déplacé la tâche",
+    "historyName": "a renommé la tâche",
+    "historyFrom": "de {{from}}",
+    "historyTo": "à {{to}}",
+    "historyUnknownActor": "Quelqu'un",
+    "historyRemovedMember": "un membre retiré",
+    "historyRemovedProject": "un projet supprimé",
+    "historyNone": "aucune"
   },
   "team": {
     "newTeam": "Nouvelle équipe",
@@ -527,7 +606,8 @@
     "moreMembers_one": "+{{count}} autre",
     "moreMembers_many": "+{{count}} de plus",
     "moreMembers_other": "+{{count}} autres",
-    "fewerMembers": "Réduire"
+    "fewerMembers": "Réduire",
+    "emerald": "Émeraude"
   },
   "project": {
     "newAria": "Nouveau projet d'équipe",
@@ -579,7 +659,8 @@
       "toOrg_other": "Le projet, ses tâches et ses commentaires deviendront visibles par toute l'entreprise, soit {{count}} personnes.",
       "toOrg_many": "Le projet, ses tâches et ses commentaires deviendront visibles par toute l'entreprise, soit {{count}} personnes.",
       "confirm": "Changer d'équipe"
-    }
+    },
+    "colorAria": "Couleur du projet"
   },
   "deleteOrg": {
     "irreversible": "Cette action est irréversible.",
@@ -716,7 +797,9 @@
     "moveConfirm": "Déplacer",
     "moveCancel": "Annuler",
     "moved": "Catégorie déplacée",
-    "rename": "Renommer"
+    "rename": "Renommer",
+    "renameAria": "Renommer la catégorie {{name}}",
+    "deleteAria": "Supprimer la catégorie {{name}}"
   },
   "okrTab": {
     "fallbackTeam": "Équipe",
@@ -757,7 +840,8 @@
     "selfAssigned": "Vous avez assigné ",
     "selfPostponed": "Vous avez reporté ",
     "selfAdvanced": "Vous avez avancé ",
-    "selfMoved": "Vous avez déplacé "
+    "selfMoved": "Vous avez déplacé ",
+    "theTeam": "L'équipe"
   },
   "transfer": {
     "title": "Transférer la propriété de {{org}}",
@@ -779,7 +863,8 @@
     "taskTotal_other": "{{count}} tâches · {{period}}",
     "completedOf_one": "{{count}} terminée sur {{total}}",
     "completedOf_many": "{{count}} de terminées sur {{total}}",
-    "completedOf_other": "{{count}} terminées sur {{total}}"
+    "completedOf_other": "{{count}} terminées sur {{total}}",
+    "completedPercent": "{{percent}}% terminées"
   },
   "comments": {
     "loading": "Chargement…",
@@ -791,7 +876,8 @@
     "mentionAria": "Mentionner un membre",
     "sendAria": "Envoyer le commentaire",
     "formerMember": "Ancien membre",
-    "deleted": "Commentaire supprimé"
+    "deleted": "Commentaire supprimé",
+    "saveFirst": "Enregistrez la tâche pour ajouter des commentaires."
   },
   "leaveDialog": {
     "body": "Vous perdrez immédiatement l'accès aux projets, tâches et OKR de l'équipe. Vos données personnelles (tâches, habitudes, agenda) ne sont pas affectées. Vous pourrez revenir avec un nouveau code d'invitation."
@@ -810,7 +896,8 @@
     "today": "Aujourd'hui",
     "dragHint": "Glissez une tâche sur le calendrier pour la planifier.",
     "noTasks": "Aucune tâche d'équipe assignée.",
-    "tasksTitle": "Tâches"
+    "tasksTitle": "Tâches",
+    "managerHint": "Vous gérez cet agenda : créez, glissez ses tâches, déplacez ou modifiez ses événements."
   },
   "common": {
     "close": "Fermer",
@@ -878,7 +965,8 @@
     "groupRecent": "Récents",
     "search": "Rechercher",
     "unpin": "Désépingler {{name}}",
-    "pin": "Épingler {{name}}"
+    "pin": "Épingler {{name}}",
+    "sheetTitle": "Aller à"
   },
   "colors": {
     "indigo": "Indigo",
@@ -925,7 +1013,12 @@
     "kindComment": "Nouveau commentaire sur une tâche que vous suivez",
     "periodToday": "Aujourd'hui",
     "periodWeek": "Cette semaine",
-    "periodEarlier": "Plus tôt"
+    "periodEarlier": "Plus tôt",
+    "kindStatusChanged": "Le statut d'une tâche que vous suivez a changé",
+    "kindUnblocked": "Une de vos tâches n'attend plus rien",
+    "kindProjectAtRisk": "Un projet dont vous faites partie est signalé à risque",
+    "kindKrDue": "Un résultat clé arrive à échéance dans 3 jours",
+    "kindEventScheduled": "Un créneau a été ajouté à votre agenda"
   },
   "roles": {
     "admin": "Administrateur",
@@ -985,7 +1078,8 @@
     "refundTitle": "Résilier et être remboursé",
     "refundExplain": "Vous récupérez la période en cours, sans motif à donner et sans nous écrire. L'accès s'arrête immédiatement, puisque la période est remboursée.",
     "refundCta": "Résilier et être remboursé de la période en cours",
-    "refundPending": "Résiliation en cours…"
+    "refundPending": "Résiliation en cours…",
+    "currentTierFree": "Vous êtes sur le palier gratuit."
   },
   "inviteJoin": {
     "title": "Créer ou rejoindre une entreprise",
@@ -1021,7 +1115,9 @@
     "removedBy": "Retrait effectué par {{name}}",
     "removedDismiss": "J'ai compris",
     "inviteCtaPending": "En attente",
-    "inviteCtaPendingAria": "Invitation envoyée à {{name}}, en attente de réponse"
+    "inviteCtaPendingAria": "Invitation envoyée à {{name}}, en attente de réponse",
+    "noOrgYet": "Vous n'appartenez à aucune entreprise pour l'instant. Créez-en une ou rejoignez-en une avec un code pour pouvoir y inviter vos contacts.",
+    "navHint": "Créer une entreprise ou en rejoindre une avec un code"
   },
   "teams": {
     "leadNamed": "Responsable d'équipe nommé",
@@ -1170,5 +1266,130 @@
     "someone": "un membre",
     "restore": "Restaurer",
     "restoreAria": "Restaurer la tâche {{name}}"
+  },
+  "kanban": {
+    "unassigned": "Non assignées",
+    "aria": "Kanban par assigné",
+    "assignTo": "Attribuer une tâche à {{name}}",
+    "addUnassigned": "Ajouter une tâche non assignée",
+    "assignOrCreate": "Attribuer ou créer une tâche",
+    "dropHere": "Déposez une tâche ici",
+    "alsoAssigned": "Aussi assignée à {{names}}",
+    "overdueBadge": "{{count}} retard",
+    "overdueTitle_one": "{{count}} tâche en retard",
+    "overdueTitle_other": "{{count}} tâches en retard",
+    "overdueTitle_many": "{{count}} de tâches en retard",
+    "editTask": "Modifier la tâche {{name}}",
+    "editTaskOverdue": "Modifier la tâche {{name}} (en retard)"
+  },
+  "templates": {
+    "pickLabel": "Partir d'un gabarit",
+    "clear": "Repartir de zéro",
+    "onboarding": "Onboarding client",
+    "onboardingT1": "Réunion de lancement",
+    "onboardingT2": "Collecter les accès et documents",
+    "onboardingT3": "Configurer le compte",
+    "onboardingT4": "Point de suivi à 30 jours",
+    "launch": "Lancement produit",
+    "launchT1": "Cadrer le positionnement",
+    "launchT2": "Préparer les supports de communication",
+    "launchT3": "Recette avant mise en ligne",
+    "launchT4": "Mise en ligne",
+    "launchT5": "Bilan post-lancement",
+    "sprint": "Sprint",
+    "sprintT1": "Cadrage et priorisation",
+    "sprintT2": "Développement",
+    "sprintT3": "Recette",
+    "sprintT4": "Rétrospective"
+  },
+  "lifecycle": {
+    "badgeSuspended": "Suspendu",
+    "badgeUntil": "Accès jusqu'au {{date}}",
+    "badgeExpired": "Accès expiré le {{date}}",
+    "menuAccess": "Accès et suspension",
+    "menuReactivate": "Réactiver l'accès",
+    "menuOffboard": "Organiser le départ",
+    "accessTitle": "Accès de {{name}}",
+    "accessIntro": "Suspendre coupe l'accès sans retirer la personne : ses tâches, sa place dans la pyramide et ses équipes restent en place.",
+    "accessState": "État de l'accès",
+    "stateActive": "Actif",
+    "stateActiveHint": "La personne voit et modifie ce que ses droits lui permettent.",
+    "stateSuspended": "Suspendu",
+    "stateSuspendedHint": "Plus aucun accès à l'entreprise, jusqu'à réactivation.",
+    "accessUntil": "Accès jusqu'au (facultatif)",
+    "accessUntilNone": "Sans limite",
+    "accessUntilHint": "Pour un prestataire ou un stagiaire : après cette date, l'accès cesse tout seul.",
+    "accessSave": "Enregistrer",
+    "searchPerson": "Rechercher une personne",
+    "searchPersonAria": "Rechercher une personne pour « {{field}} »",
+    "offboardTitle": "Départ de {{name}}",
+    "offboardIntro": "Choisissez à qui transmettre son travail, puis retirez la personne ou suspendez simplement son accès.",
+    "impactTitle": "Ce qui sera transmis",
+    "impactLoading": "Calcul en cours…",
+    "impactNone": "Rien à transmettre : aucune tâche ouverte, aucun subordonné, aucun rôle de responsable, aucun résultat clé.",
+    "impactTasks_one": "{{count}} tâche ouverte assignée",
+    "impactTasks_many": "{{count}} de tâches ouvertes assignées",
+    "impactTasks_other": "{{count}} tâches ouvertes assignées",
+    "impactReports_one": "{{count}} subordonné direct",
+    "impactReports_many": "{{count}} de subordonnés directs",
+    "impactReports_other": "{{count}} subordonnés directs",
+    "impactLeads_one": "{{count}} équipe dont la personne est responsable",
+    "impactLeads_many": "{{count}} d'équipes dont la personne est responsable",
+    "impactLeads_other": "{{count}} équipes dont la personne est responsable",
+    "impactKrs_one": "{{count}} résultat clé dont la personne est responsable",
+    "impactKrs_many": "{{count}} de résultats clés dont la personne est responsable",
+    "impactKrs_other": "{{count}} résultats clés dont la personne est responsable",
+    "tasksTo": "Ses tâches ouvertes passent à",
+    "reportsTo": "Ses subordonnés passent sous",
+    "leadsTo": "Nouveau responsable de ses équipes",
+    "leadsToHint": "La personne choisie est ajoutée à l'équipe si elle n'en fait pas partie.",
+    "krsTo": "Ses résultats clés passent à",
+    "nobody": "Personne",
+    "nobodyUnassign": "Personne (tâches désassignées)",
+    "theirManager": "Son manager, {{name}}",
+    "unplaced": "Non placés dans la pyramide",
+    "modeLegend": "Ensuite",
+    "modeRemove": "Retirer de l'entreprise",
+    "modeRemoveHint": "La personne est prévenue et perd tout accès. Elle pourra revenir avec une nouvelle invitation.",
+    "modeSuspend": "Suspendre seulement",
+    "modeSuspendHint": "L'accès est coupé, l'appartenance est conservée : on peut la réactiver.",
+    "offboardPending": "Transmission en cours…",
+    "offboardRemove": "Transmettre et retirer",
+    "offboardSuspend": "Transmettre et suspendre"
+  },
+  "invites": {
+    "emailTitle": "Inviter par e-mail",
+    "emailIntro": "Chaque adresse reçoit un lien personnel, valable 7 jours, que seul son destinataire peut utiliser.",
+    "emailsLabel": "Adresses e-mail",
+    "emailsPlaceholder": "prenom.nom@entreprise.fr, une par ligne ou séparées par des virgules",
+    "emailsCount": "{{count}} adresse(s) reconnue(s), {{max}} au plus",
+    "placement": "Place dans la pyramide",
+    "placementHint": "La personne arrivera directement sous ce responsable.",
+    "unplaced": "Non placé",
+    "underMe": "Sous moi",
+    "teams": "Équipes à rejoindre",
+    "access": "Durée d'accès",
+    "accessPermanent": "Permanente",
+    "accessDays": "{{count}} jours après l'acceptation",
+    "send": "Inviter ({{count}})",
+    "sending": "Envoi…",
+    "done": "Terminé",
+    "mailUnavailable": "Les liens sont créés, mais l'envoi d'e-mails n'est pas encore configuré. Copiez les liens pour les transmettre vous-même.",
+    "statusSent": "Invitation envoyée",
+    "statusCreatedNotSent": "Lien créé, e-mail non envoyé",
+    "statusCreatedMaybe": "Lien créé, l'envoi a pu échouer : relancez depuis Paramètres",
+    "statusAlreadyMember": "Déjà membre de l'organisation",
+    "statusAlreadyInvited": "Une invitation est déjà en attente",
+    "statusInvalid": "Adresse invalide",
+    "copyLinkFor": "Copier le lien d'invitation de {{email}}",
+    "listLoading": "Chargement des invitations…",
+    "listEmpty": "Aucune invitation par e-mail pour l'instant.",
+    "stateClaimed": "Acceptée le {{date}}",
+    "stateExpired": "Expirée le {{date}}",
+    "statePending": "En attente, expire le {{date}} · {{sent}} envoi(s)",
+    "resend": "Relancer",
+    "resendWait": "Une relance par heure au plus",
+    "resendFor": "Relancer {{email}}",
+    "revokeFor": "Révoquer l'invitation de {{email}}"
   }
 }
