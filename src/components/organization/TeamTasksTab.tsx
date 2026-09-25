@@ -17,7 +17,6 @@ import { formatDeadlineSmart } from '@/components/task-table/helpers';
 import {
   projectColor, isTaskOverdue, filterByStatus, formatDuration,
   STATUS_ORDER, STATUS_META, taskDisplayStatus,
-  type TaskStatusFilter,
 } from './team-projects.helpers';
 import TeamTaskModal from './TeamTaskModal';
 import AssignMembersDialog from './AssignMembersDialog';
@@ -27,6 +26,9 @@ import { TeamTasksSkeleton } from './OrgLoadingSkeletons';
 import TeamTasksToolbar, { type SortField } from './TeamTasksToolbar';
 import TruncatedDataNotice from './TruncatedDataNotice';
 import TeamTasksProjectChips from './TeamTasksProjectChips';
+import OrgTaskFilterBar from './OrgTaskFilterBar';
+import { useOrgTaskFilters, hasActiveTaskFilter, matchesScope } from './task-filters';
+import { useOrgTeams } from '@/modules/org-teams';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { useT } from '@/i18n/useT';
 
@@ -76,9 +78,10 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
   const { user } = useAuth();
   const { data: allProjects = [], isLoading: loadingProjects } = useTeamProjects(orgId);
 
-  const [searchTerm, setSearchTerm] = useState('');
-  const [projectFilter, setProjectFilter] = useState<string | null>(null);
-  const [statusFilter, setStatusFilter] = useState<TaskStatusFilter>('open');
+  // Filtres : le MÊME état que l'onglet Projets, dans l'URL (task-filters.ts).
+  const { filters, setFilters } = useOrgTaskFilters('open');
+  const { project: projectFilter, status: statusFilter, q: searchTerm } = filters;
+  const { data: teams = [] } = useOrgTeams(orgId);
 
   // Lecture ciblée (audit du 2026-09-24) : hors filtre « Toutes », l'écran n'a
   // besoin que des tâches OUVERTES et de celles terminées récemment (« terminées
@@ -143,11 +146,12 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
   const visibleTasks = useMemo(() => {
     let result = tasks.filter((task) => projectById.has(task.projectId));
     if (projectFilter) result = result.filter((task) => task.projectId === projectFilter);
+    result = result.filter((task) => matchesScope(task, filters, (id) => projectById.get(id)?.teamId));
     result = filterByStatus(result, statusFilter);
     const q = normalize(searchTerm.trim());
     if (q) result = result.filter((task) => normalize(task.name).includes(q));
     return result;
-  }, [tasks, projectById, projectFilter, statusFilter, searchTerm]);
+  }, [tasks, projectById, projectFilter, statusFilter, searchTerm, filters]);
 
   const sortedTasks = useMemo(() => {
     const withValue = (task: TeamTask): string | number => {
@@ -173,7 +177,7 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
   // 800 lignes peintes après avoir tapé une recherche annulerait le découpage.
   useEffect(() => {
     setRowsShown(ROWS_PAGE);
-  }, [projectFilter, statusFilter, searchTerm, sortField, sortDirection]);
+  }, [filters, sortField, sortDirection]);
   const shownTasks = useMemo(() => sortedTasks.slice(0, rowsShown), [sortedTasks, rowsShown]);
   const remainingRows = sortedTasks.length - shownTasks.length;
 
@@ -216,7 +220,7 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
       },
     });
 
-  const hasActiveFilter = !!projectFilter || searchTerm.trim() !== '' || statusFilter !== 'open';
+  const hasActiveFilter = hasActiveTaskFilter(filters, 'open');
 
   return (
     <div className="space-y-4">
@@ -224,19 +228,27 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
         projects={projects}
         tasks={tasks}
         projectFilter={projectFilter}
-        onProjectFilter={setProjectFilter}
+        onProjectFilter={(project) => setFilters({ project })}
         canCreateProject={can['project.create']}
       />
 
+      <OrgTaskFilterBar
+        filters={filters}
+        setFilters={setFilters}
+        defaultStatus="open"
+        members={members}
+        teams={teams}
+        projects={projects}
+        currentUserId={currentUserId}
+        searchPlaceholder={t('projects.tasksTabSearchPlaceholder')}
+        searchAria={t('projects.tasksTabSearchAria')}
+      />
+
       <TeamTasksToolbar
-        searchTerm={searchTerm}
-        onSearchTerm={setSearchTerm}
         sortField={sortField}
         onSortField={setSortField}
         sortDirection={sortDirection}
         onToggleSortDirection={() => setSortDirection((d) => (d === 'asc' ? 'desc' : 'asc'))}
-        statusFilter={statusFilter}
-        onStatusFilter={setStatusFilter}
         canCreate={projects.length > 0 && can['task.create']}
         onCreate={() => setTaskModal({ mode: 'create' })}
         // `!isLoading` : « 0 sur 0 affichées » est un chiffre, donc une

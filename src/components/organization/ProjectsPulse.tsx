@@ -5,8 +5,7 @@
 // de 600 lignes. Rien n'a changé dans le comportement des pastilles.
 // ═══════════════════════════════════════════════════════════════════
 
-import { FolderKanban, AlarmClock, CircleDashed, CheckCircle2, Clock, Search, ArrowUpDown } from 'lucide-react';
-import type { TaskStatusFilter } from './team-projects.helpers';
+import { FolderKanban, Clock, ArrowUpDown } from 'lucide-react';
 import { formatDuration } from './team-projects.helpers';
 import type { PortfolioSort } from './portfolio.helpers';
 import { useT } from '@/i18n/useT';
@@ -31,126 +30,43 @@ export const ProjectsSkeleton = () => (
 );
 
 /**
- * Pastille de synthèse cliquable : bascule le filtre de statut.
- *
- * Une statistique qu'on ne peut pas creuser est une statistique morte — c'est
- * tout l'objet de ce composant, les pastilles étant auparavant décoratives.
+ * Pouls : ce qui ne filtre pas (nombre de projets, reste à faire estimé). Les
+ * pastilles d'état qui vivaient ici, avec leurs compteurs, sont passées dans
+ * `OrgTaskFilterBar`, la barre partagée avec l'onglet Tâches (2026-09-25).
  */
-const StatPill = ({ active, onClick, label, tone, children }: {
-  active: boolean;
-  onClick: () => void;
-  label: string;
-  tone: 'neutral' | 'danger' | 'success';
-  children: React.ReactNode;
-}) => {
-  const toneClass =
-    tone === 'danger'
-      ? 'bg-red-500/10 text-red-500 font-semibold'
-      : tone === 'success'
-        ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold'
-        : 'bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-secondary))] font-medium';
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={active}
-      title={label}
-      aria-label={label}
-      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]/60 ${toneClass} ${
-        active ? 'ring-2 ring-[rgb(var(--color-accent))]' : 'hover:brightness-110'
-      }`}
-    >
-      {children}
-    </button>
-  );
-};
-
-/**
- * Pouls : stats de l'espace projets. Les compteurs QUI NE FILTRENT PAS perdent
- * la forme de pastille et se regroupent en une mention discrète : ils
- * portaient le style exact des pastilles cliquables, si bien qu'un clic sans
- * effet enseignait que la rangée entière était inerte.
- */
-export const ProjectsPulse = ({
-  projectCount, totalEstimated, openCount, overdueCount, doneThisWeek, statusFilter, onToggleStatus,
-}: {
+export const ProjectsPulse = ({ projectCount, totalEstimated }: {
   projectCount: number;
   totalEstimated: number;
-  openCount: number;
-  overdueCount: number;
-  doneThisWeek: number;
-  statusFilter: TaskStatusFilter;
-  onToggleStatus: (next: TaskStatusFilter) => void;
 }) => {
   const { t, tp } = useT('org');
   return (
-    <div className="flex items-center gap-2 flex-wrap text-xs">
-      <span className="inline-flex items-center gap-1.5 text-[rgb(var(--color-text-muted))]">
-        <FolderKanban size={12} aria-hidden="true" />
-        {tp('projects.projectCount', projectCount)}
-        {totalEstimated > 0 && (
-          <>
-            <span aria-hidden="true">·</span>
-            <Clock size={12} aria-hidden="true" />
-            {t('projects.estimatedTotal', { duration: formatDuration(totalEstimated) })}
-          </>
-        )}
-      </span>
-      <StatPill
-        active={statusFilter === 'open'}
-        onClick={() => onToggleStatus('open')}
-        label={statusFilter === 'open' ? t('projects.filterClear') : t('projects.filterOpen')}
-        tone="neutral"
-      >
-        <CircleDashed size={12} aria-hidden="true" /> {tp('projects.openCount', openCount)}
-      </StatPill>
-      {overdueCount > 0 && (
-        <StatPill
-          active={statusFilter === 'overdue'}
-          onClick={() => onToggleStatus('overdue')}
-          label={statusFilter === 'overdue' ? t('projects.filterClear') : t('projects.filterOverdue')}
-          tone="danger"
-        >
-          <AlarmClock size={12} aria-hidden="true" /> {tp('projects.overdueCount', overdueCount)}
-        </StatPill>
+    <p className="inline-flex items-center gap-1.5 text-xs text-[rgb(var(--color-text-muted))]">
+      <FolderKanban size={12} aria-hidden="true" />
+      {tp('projects.projectCount', projectCount)}
+      {totalEstimated > 0 && (
+        <>
+          <span aria-hidden="true">·</span>
+          <Clock size={12} aria-hidden="true" />
+          {t('projects.estimatedTotal', { duration: formatDuration(totalEstimated) })}
+        </>
       )}
-      {doneThisWeek > 0 && (
-        <StatPill
-          active={statusFilter === 'doneThisWeek'}
-          onClick={() => onToggleStatus('doneThisWeek')}
-          label={statusFilter === 'doneThisWeek' ? t('projects.filterClear') : t('projects.filterDone')}
-          tone="success"
-        >
-          <CheckCircle2 size={12} aria-hidden="true" /> {tp('projects.doneThisWeek', doneThisWeek)}
-        </StatPill>
-      )}
-    </div>
+    </p>
   );
 };
 
 const SORTS: PortfolioSort[] = ['recent', 'name', 'dueDate', 'progress', 'status'];
 
-/** Recherche et tri des projets — liste de cartes et portefeuille (M2). */
-export const ProjectsSearchBar = ({ query, onQueryChange, sort, onSortChange }: {
-  query: string;
-  onQueryChange: (value: string) => void;
+/**
+ * Tri des projets — liste de cartes et portefeuille (M2). La recherche est
+ * passée dans `OrgTaskFilterBar` (`?fQ=`), avec les autres filtres.
+ */
+export const ProjectsSearchBar = ({ sort, onSortChange }: {
   sort: PortfolioSort;
   onSortChange: (value: PortfolioSort) => void;
 }) => {
   const { t: pf } = useT('portfolio');
   return (
-    <div className="flex items-center gap-2 flex-wrap">
-      <label className="relative flex-1 min-w-[200px] max-w-md">
-        <span className="sr-only">{pf('searchAria')}</span>
-        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[rgb(var(--color-text-muted))]" aria-hidden="true" />
-        <input
-          type="search"
-          value={query}
-          onChange={(e) => onQueryChange(e.target.value)}
-          placeholder={pf('searchPlaceholder')}
-          className="w-full h-9 pl-8 pr-3 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] text-sm text-[rgb(var(--color-text-primary))] focus:outline-none focus:border-[rgb(var(--color-accent-solid))]"
-        />
-      </label>
+    <div className="flex items-center justify-end gap-2 flex-wrap">
       <label className="inline-flex items-center gap-1.5 text-xs text-[rgb(var(--color-text-muted))]">
         <ArrowUpDown size={13} aria-hidden="true" />
         <span className="sr-only sm:not-sr-only">{pf('sortLabel')}</span>

@@ -166,7 +166,10 @@ export const formatDuration = (minutes: number): string => {
   return `${h} h ${String(m).padStart(2, '0')}`;
 };
 
-// ─── Prefs UI persistées (filtres, vue, projets repliés) ─────────────
+// ─── Prefs UI persistées (vue, tri, projets repliés) ──────────────────
+// Les FILTRES n'y sont plus (2026-09-25) : ils vivent dans l'URL, partagés
+// avec l'onglet Tâches (`task-filters.ts`). Une ancienne valeur enregistrée
+// (`teamFilter`, `assigneeFilter`, `statusFilter`) est relue et ignorée.
 
 export interface ProjectsUiPrefs {
   /** `portfolio` (M2) : une ligne par projet, sans ses tâches. */
@@ -178,14 +181,8 @@ export interface ProjectsUiPrefs {
   viewChosen: boolean;
   /** Tri du portefeuille et de la liste de cartes. */
   sort: 'recent' | 'name' | 'dueDate' | 'progress' | 'status';
-  /** null = toutes les tâches ; sinon userId de l'assigné filtré. */
-  assigneeFilter: string | null;
-  /** '' = toutes équipes, 'org' = sans équipe, sinon teamId. */
-  teamFilter: string;
   collapsed: Record<string, boolean>;
   showArchived: boolean;
-  /** Pastille de synthèse active. */
-  statusFilter: TaskStatusFilter;
   /** Axe des colonnes du kanban : charge par personne, ou flux par statut. */
   kanbanGroupBy: 'assignee' | 'status';
   /** Axe des lignes du Planning : une ligne par projet, ou par personne. */
@@ -196,11 +193,8 @@ const DEFAULT_PREFS: ProjectsUiPrefs = {
   view: 'list',
   viewChosen: false,
   sort: 'recent',
-  assigneeFilter: null,
-  teamFilter: '',
   collapsed: {},
   showArchived: false,
-  statusFilter: 'all',
   // Par défaut le FLUX : c'est la lecture attendue d'un kanban. La vue par
   // personne reste à un clic, mais elle répond à « qui fait quoi », pas à
   // « où en est-on » — et c'est la seconde question qu'un kanban doit servir.

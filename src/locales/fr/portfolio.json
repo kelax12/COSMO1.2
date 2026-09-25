@@ -187,11 +187,7 @@
     "editTaskOverdue": "Modifier la tâche {{name}} (en retard)"
   },
   "toolbar": {
-    "scopeAll": "Tout",
-    "scopeMine": "Moi",
-    "scopeMember": "Une personne",
     "you": "Vous",
-    "teamLabel": "Équipe",
     "viewLabel": "Vue",
     "viewList": "Liste",
     "viewKanban": "Tableau",
@@ -200,21 +196,6 @@
     "rowsLabel": "Lignes :",
     "groupByAssignee": "Personne",
     "groupByProject": "Projet",
-    "groupByStatus": "Statut",
-    "activeFilters": "Filtres actifs :",
-    "clearAll": "Tout effacer",
-    "removeFilter": "Retirer le filtre « {{name}} »",
-    "chipAssignee": "Assigné : {{name}}",
-    "chipTeam": "Équipe : {{name}}",
-    "chipOpen": "Ouvertes",
-    "chipOverdue": "En retard",
-    "chipDone": "Terminées cette semaine",
-    "filterAssignee": "Filtrer par assigné",
-    "seeTasksOf": "Voir les tâches de",
-    "everyone": "Tout le monde",
-    "filterTeam": "Filtrer par équipe",
-    "allTeams": "Toutes les équipes",
-    "orgNoTeam": "Entreprise (sans équipe)",
-    "createTeamOption": "+ Créer une équipe"
+    "groupByStatus": "Statut"
   }
 }

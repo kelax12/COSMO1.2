@@ -20,7 +20,7 @@ import { useTeamCategories } from '@/modules/team-categories';
 import { useMyOrgPermissions, type OrgMember } from '@/modules/organizations';
 import {
   useProjectsUiPrefs, isTaskOverdue, completedThisWeek,
-  filterByStatus, sumEstimatedTime, type TaskStatusFilter,
+  filterByStatus, sumEstimatedTime,
 } from './team-projects.helpers';
 import { PORTFOLIO_CARD_THRESHOLD, matchesProjectSearch, sortProjects } from './portfolio.helpers';
 import { readEntityParam } from './deep-link.helpers';
@@ -33,6 +33,8 @@ import {
   ProjectEditDialog, AssignTaskSheet, BulkActionsBar,
 } from './team-projects.lazy';
 import ProjectsToolbar from './ProjectsToolbar';
+import OrgTaskFilterBar from './OrgTaskFilterBar';
+import { useOrgTaskFilters } from './task-filters';
 import ProjectTemplatesSection from './ProjectTemplatesSection';
 import TeamTaskModal from './TeamTaskModal';
 import TruncatedDataNotice from './TruncatedDataNotice';
@@ -72,7 +74,11 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
   const create = useOrgCreate();
   const [editProjectId, setEditProjectId] = useState<string | null>(null);
   const [taskModal, setTaskModal] = useState<TaskModalState>(null);
-  const [query, setQuery] = useState('');
+  // Filtres : le MÊME état que l'onglet Tâches, dans l'URL (task-filters.ts).
+  // Ils vivaient dans les préférences enregistrées, et revenaient trois jours
+  // plus tard sur une liste filtrée sans qu'on s'en souvienne.
+  const { filters, setFilters } = useOrgTaskFilters('all');
+  const { team: teamFilter, assignee: assigneeFilter, status: statusFilter, q: query } = filters;
   // Colonne kanban (membre) ciblée par le « + ». La colonne « Non assignées »
   // ne passe pas par ici : elle ouvre directement TaskModal.
   const [assignSheetFor, setAssignSheetFor] = useState<string | 'closed'>('closed');
@@ -85,7 +91,7 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
   const { data: milestones = [] } = useTeamProjectMilestones(orgId);
   const { data: projectDeps = [] } = useTeamProjectDependencies(orgId);
 
-  const { teamFilter, assigneeFilter, collapsed, showArchived, statusFilter, kanbanGroupBy, timelineGroupBy, sort } = prefs;
+  const { collapsed, showArchived, kanbanGroupBy, timelineGroupBy, sort } = prefs;
 
   // ─── Page projet : `?project=<id>` (M2) ─────────────────────────────
   // L'adresse est celle qu'émettent déjà la palette de commandes et le panneau
@@ -120,15 +126,11 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
       templateId,
       onCreated: openProject,
     });
-  const newTeam = () => create.openTeam({ onCreated: (teamId) => updatePrefs({ teamFilter: teamId }) });
+  const newTeam = () => create.openTeam({ onCreated: (team) => setFilters({ team }) });
 
   /** `project.edit` (mig. 153), ou responsable du projet. */
   const canEditProjectFor = (p: TeamProject) =>
     can['project.edit'] || (!!currentUserId && p.ownerId === currentUserId);
-
-  // Un second clic sur la pastille active retire le filtre.
-  const toggleStatus = (next: TaskStatusFilter) =>
-    updatePrefs({ statusFilter: statusFilter === next ? 'all' : next });
 
   // ─── Projets visibles (filtre équipe + actifs/archivés) ────────────
   const matchesTeam = (p: TeamProject) => {
@@ -166,12 +168,20 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
   // Vue filtrée : équipe (déjà dans `statsTasks`) PUIS assigné PUIS statut.
   // Les compteurs des pastilles restent calculés sur `statsTasks` NON filtré :
   // sinon cliquer « en retard » ferait tomber son propre compteur.
+  // En Tableau et en Planning, la recherche porte sur les TÂCHES (leur nom ou
+  // celui de leur projet) : il n'y a pas de liste de projets à réduire.
+  const searchTasks = (view === 'kanban' || view === 'timeline') && query.trim() !== '';
   const visibleTasks = useMemo(() => {
     const byAssignee = assigneeFilter
       ? statsTasks.filter((t) => t.assigneeIds.includes(assigneeFilter))
       : statsTasks;
-    return filterByStatus(byAssignee, statusFilter);
-  }, [statsTasks, assigneeFilter, statusFilter]);
+    const byStatus = filterByStatus(byAssignee, statusFilter);
+    if (!searchTasks) return byStatus;
+    const needle = query.trim().toLocaleLowerCase();
+    const projectName = new Map(activeProjects.map((p) => [p.id, p.name.toLocaleLowerCase()]));
+    return byStatus.filter((t) =>
+      t.name.toLocaleLowerCase().includes(needle) || (projectName.get(t.projectId) ?? '').includes(needle));
+  }, [statsTasks, assigneeFilter, statusFilter, searchTasks, query, activeProjects]);
 
   const totalEstimated = useMemo(
     () => sumEstimatedTime(statsTasks.filter((t) => !t.completed)),
@@ -398,16 +408,21 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
   return (
     <div className="space-y-4">
       {activeProjects.length > 0 && (
-        <ProjectsPulse
-          projectCount={activeProjects.length}
-          totalEstimated={totalEstimated}
-          openCount={openCount}
-          overdueCount={overdueCount}
-          doneThisWeek={doneThisWeek}
-          statusFilter={statusFilter}
-          onToggleStatus={toggleStatus}
-        />
+        <ProjectsPulse projectCount={activeProjects.length} totalEstimated={totalEstimated} />
       )}
+
+      <OrgTaskFilterBar
+        filters={filters}
+        setFilters={setFilters}
+        defaultStatus="all"
+        members={members}
+        teams={teams}
+        currentUserId={currentUserId}
+        searchPlaceholder={pf('searchPlaceholder')}
+        searchAria={pf('searchAria')}
+        counts={{ open: openCount, overdue: overdueCount, doneThisWeek }}
+        onCreateTeam={can['team.create'] ? newTeam : undefined}
+      />
 
       {/* Les cartes portent une progression (terminées / total) : elles ont
           besoin de TOUTES les tâches, donc de la lecture complète. Au-delà du
@@ -417,21 +432,16 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
       <div className="flex justify-end"><TeamTrashDialog orgId={orgId} projects={allProjects} members={members} /></div>
 
       <ProjectsToolbar
-        members={members}
-        teams={teams}
-        currentUserId={currentUserId}
         prefs={prefs}
         updatePrefs={updatePrefs}
         effectiveView={view}
         canCreateProject={can['project.create']}
-        canCreateTeam={can['team.create']}
-        onNewProject={newProject}
-        onCreateTeam={newTeam}
+        onNewProject={() => newProject()}
         onStartSelect={statsTasks.length > 0 && !selectMode ? () => setSelectMode(true) : undefined}
       />
 
       {showSearch && (
-        <ProjectsSearchBar query={query} onQueryChange={setQuery} sort={sort} onSortChange={(s) => updatePrefs({ sort: s })} />
+        <ProjectsSearchBar sort={sort} onSortChange={(s) => updatePrefs({ sort: s })} />
       )}
       {view === 'list' && manyProjects && (
         <p className="text-xs text-[rgb(var(--color-text-muted))]">{pf('manyProjectsHint', { count: PORTFOLIO_CARD_THRESHOLD })}</p>
