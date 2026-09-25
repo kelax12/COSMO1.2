@@ -24,6 +24,14 @@ export type {
   TeamTaskComment,
   CreateTeamTaskCommentInput,
   TeamTrashedTask,
+  TeamProjectStatus,
+  TeamProjectTemplatePayload,
+  TeamProjectMilestone,
+  CreateTeamProjectMilestoneInput,
+  UpdateTeamProjectMilestoneInput,
+  TeamProjectDependency,
+  DraftProjectTask,
+  DraftProjectMilestone,
 } from './types';
 
 export {
@@ -46,8 +54,10 @@ export { SupabaseTeamProjectsRepository } from './supabase.repository';
 
 export {
   useTeamProjects,
+  useTeamProjectTemplates,
   useTeamTasks,
   useTeamTaskWorkingSet,
+  useTeamTaskSlice,
   useCreateTeamProject,
   useUpdateTeamProject,
   useCreateTeamTask,
@@ -67,6 +77,18 @@ export {
   useAddTeamTaskComment,
   useDeleteTeamTaskComment,
 } from './hooks';
+
+// Portefeuille (mig. 153, M2) : création atomique, jalons, dépendances.
+export {
+  useCreateTeamProjectWithTasks,
+  useTeamProjectMilestones,
+  useCreateProjectMilestone,
+  useUpdateProjectMilestone,
+  useDeleteProjectMilestone,
+  useTeamProjectDependencies,
+  useAddProjectDependency,
+  useRemoveProjectDependency,
+} from './portfolio.hooks';
 
 // Restauration d'un commentaire supprime (« Annuler », C-42).
 export { useRestoreComment } from './restore-comment.hooks';

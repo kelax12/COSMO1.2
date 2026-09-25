@@ -12,7 +12,7 @@
 // libellés d'état vide, pas sur la présence du placeholder seul.
 // ═══════════════════════════════════════════════════════════════════
 import { describe, it, expect, beforeAll, beforeEach, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { ensureNamespaces } from '@/i18n/catalog';
 
@@ -25,12 +25,20 @@ vi.mock('@/modules/team-projects', () => ({
   useTeamProjects: () => q([]),
   useTeamTasks: () => q([]),
   useTeamTaskWorkingSet: () => q([]),
+  // Lectures ciblées de l'Aperçu (2026-09-24).
+  useTeamTaskSlice: () => q([]),
+  useTeamTaskDependencies: () => q([]),
+  useOrgActivity: () => q([]),
   TEAM_TASKS_READ_LIMIT: 1000,
   useUpdateTeamTask: () => ({ mutate: vi.fn(), mutateAsync: vi.fn() }),
 }));
 vi.mock('@/modules/team-okrs', () => ({ useTeamOKRs: () => q([]) }));
 vi.mock('@/modules/org-teams', () => ({ useOrgTeams: () => q([]) }));
 vi.mock('@/modules/events', () => ({ useUpcomingEvents: () => [] }));
+vi.mock('@/modules/organizations', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/modules/organizations')>()),
+  useOrgNotifications: () => ({ data: [] }),
+}));
 
 // Importés APRÈS les mocks (hoistés par vitest, mais l'ordre reste lisible).
 const { default: MyWorkTab } = await import('./MyWorkTab');
@@ -54,19 +62,21 @@ describe('onglets entreprise — aucune affirmation pendant le chargement', () =
   });
 
   it('Aperçu : pas d’état vide tant que les requêtes n’ont pas répondu', () => {
-    renderIn(<MyWorkTab orgId="o1" members={MEMBERS} currentUserId="u1" />);
+    renderIn(<MyWorkTab orgId="o1" members={MEMBERS} currentUserId="u1" isManager />);
 
     expect(screen.queryByText(/Aucune tâche/i)).toBeNull();
     expect(screen.getByRole('status')).toBeTruthy();
   });
 
-  it('Aperçu : l’état vide revient une fois le chargement terminé', () => {
+  it('Aperçu : l’état vide revient une fois le chargement terminé', async () => {
     loading = false;
-    renderIn(<MyWorkTab orgId="o1" members={MEMBERS} currentUserId="u1" />);
+    renderIn(<MyWorkTab orgId="o1" members={MEMBERS} currentUserId="u1" isManager />);
 
     // Données réellement vides : là, le message est VRAI, il doit s'afficher.
     // `getAllBy` : l'écran vide et la checklist de démarrage le disent tous deux.
-    expect(screen.queryByRole('status')).toBeNull();
+    // Les blocs peints arrivent dans leur propre chunk (`MyWorkSections`) : on
+    // attend qu'il soit là, sinon on lirait le squelette de son Suspense.
+    await waitFor(() => expect(screen.queryByRole('status')).toBeNull());
     expect(screen.getAllByText(/Aucune tâche/i).length).toBeGreaterThan(0);
   });
 

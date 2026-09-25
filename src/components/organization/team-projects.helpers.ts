@@ -208,7 +208,15 @@ export const formatDuration = (minutes: number): string => {
 // ─── Prefs UI persistées (filtres, vue, projets repliés) ─────────────
 
 export interface ProjectsUiPrefs {
-  view: 'list' | 'kanban' | 'timeline';
+  /** `portfolio` (M2) : une ligne par projet, sans ses tâches. */
+  view: 'list' | 'kanban' | 'timeline' | 'portfolio';
+  /**
+   * La vue a-t-elle été CHOISIE ? Sans choix, au-delà de 20 projets, l'onglet
+   * ouvre sur le portefeuille : la liste de cartes y devient interminable.
+   */
+  viewChosen: boolean;
+  /** Tri du portefeuille et de la liste de cartes. */
+  sort: 'recent' | 'name' | 'dueDate' | 'progress' | 'status';
   /** null = toutes les tâches ; sinon userId de l'assigné filtré. */
   assigneeFilter: string | null;
   /** '' = toutes équipes, 'org' = sans équipe, sinon teamId. */
@@ -225,6 +233,8 @@ export interface ProjectsUiPrefs {
 
 const DEFAULT_PREFS: ProjectsUiPrefs = {
   view: 'list',
+  viewChosen: false,
+  sort: 'recent',
   assigneeFilter: null,
   teamFilter: '',
   collapsed: {},

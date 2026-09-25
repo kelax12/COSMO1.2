@@ -30,6 +30,8 @@ import type {
   TeamTaskActivity,
   TeamTaskDependency,
   TeamActivityField,
+  TeamProjectMilestone,
+  TeamProjectDependency,
 } from './types';
 
 export const DEMO_ORG_ID = 'org-demo-1';
@@ -45,18 +47,47 @@ const MEMBERS = ['demo-user', 'friend-1', 'friend-2', 'friend-3', 'user-lucas', 
 
 // Cloisonnement (v2, 1d) : Refonte → équipe Dev, Lancement → équipe Design,
 // Interne → projet d'ORG (team_id null, visible par toute l'entreprise).
+// Projet riche (mig. 153) : responsable, statut, début et fin, description.
 export const DEMO_PROJECTS: TeamProject[] = [
-  { id: 'tproj-1', orgId: DEMO_ORG_ID, name: 'Refonte du site', color: 'blue', createdBy: DEMO_USER_ID, archivedAt: null, createdAt: iso(-40), teamId: 'team-dev' },
-  { id: 'tproj-2', orgId: DEMO_ORG_ID, name: 'Lancement produit', color: 'purple', createdBy: DEMO_USER_ID, archivedAt: null, createdAt: iso(-25), teamId: 'team-design' },
-  { id: 'tproj-3', orgId: DEMO_ORG_ID, name: 'Interne', color: 'green', createdBy: 'friend-1', archivedAt: null, createdAt: iso(-15), teamId: null },
+  {
+    id: 'tproj-1', orgId: DEMO_ORG_ID, name: 'Refonte du site', color: 'blue', createdBy: DEMO_USER_ID, archivedAt: null, createdAt: iso(-40), teamId: 'team-dev',
+    description: 'Nouveau site vitrine : maquettes, intégration, performances et suivi d’audience.',
+    ownerId: DEMO_USER_ID, status: 'active', startDate: dateStr(-30), dueDate: dateStr(21),
+  },
+  {
+    id: 'tproj-2', orgId: DEMO_ORG_ID, name: 'Lancement produit', color: 'purple', createdBy: DEMO_USER_ID, archivedAt: null, createdAt: iso(-25), teamId: 'team-design',
+    description: 'Mise sur le marché de la nouvelle offre : communication, presse et démonstrations.',
+    ownerId: 'friend-2', status: 'planned', startDate: dateStr(-5), dueDate: dateStr(45),
+  },
+  {
+    id: 'tproj-3', orgId: DEMO_ORG_ID, name: 'Interne', color: 'green', createdBy: 'friend-1', archivedAt: null, createdAt: iso(-15), teamId: null,
+    ownerId: 'friend-1', status: 'active',
+  },
 ];
 
 // Overlay anglais — cf. src/lib/seed-i18n.ts.
 export const DEMO_PROJECTS_EN: Record<string, Partial<TeamProject>> = {
-  'tproj-1': { name: 'Website redesign' },
-  'tproj-2': { name: 'Product launch' },
+  'tproj-1': { name: 'Website redesign', description: 'New showcase site: mockups, integration, performance and audience tracking.' },
+  'tproj-2': { name: 'Product launch', description: 'Bringing the new offer to market: communication, press and demos.' },
   'tproj-3': { name: 'Internal' },
 };
+
+export const DEMO_MILESTONES: TeamProjectMilestone[] = [
+  { id: 'tms-1', orgId: DEMO_ORG_ID, projectId: 'tproj-1', name: 'Maquettes validées', dueDate: dateStr(-10), completedAt: iso(-11), createdAt: iso(-30) },
+  { id: 'tms-2', orgId: DEMO_ORG_ID, projectId: 'tproj-1', name: 'Mise en ligne', dueDate: dateStr(21), completedAt: null, createdAt: iso(-30) },
+  { id: 'tms-3', orgId: DEMO_ORG_ID, projectId: 'tproj-2', name: 'Annonce publique', dueDate: dateStr(30), completedAt: null, createdAt: iso(-5) },
+];
+
+export const DEMO_MILESTONES_EN: Record<string, Partial<TeamProjectMilestone>> = {
+  'tms-1': { name: 'Mockups approved' },
+  'tms-2': { name: 'Go live' },
+  'tms-3': { name: 'Public announcement' },
+};
+
+// Le lancement attend le nouveau site : `tproj-2` est BLOQUÉ par `tproj-1`.
+export const DEMO_PROJECT_DEPENDENCIES: TeamProjectDependency[] = [
+  { projectId: 'tproj-2', dependsOnId: 'tproj-1' },
+];
 
 // Fabrique une tâche seed déterministe. Une tâche sur quatre reçoit un
 // second assigné (démonstration de la multi-assignation).
@@ -90,6 +121,9 @@ const t = (
     name,
     priority,
     deadline: deadlineOffset === null ? '' : dateStr(deadlineOffset),
+    // Début planifié (mig. 153) : deux à quatre jours avant l'échéance, pour
+    // que la frise montre de vraies barres et non plus des points seuls.
+    startDate: deadlineOffset === null ? '' : dateStr(deadlineOffset - 2 - (seq % 3)),
     estimatedTime: 30 + (seq % 4) * 15,
     assigneeIds,
     createdBy: DEMO_USER_ID,
