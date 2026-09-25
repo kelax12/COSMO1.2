@@ -5,7 +5,6 @@ import { useActiveOrganization } from '@/modules/organizations';
 import CreateOrJoinOrganization from './CreateOrJoinOrganization';
 import { useT } from '@/i18n/useT';
 import { buildOrgLink } from './deep-link.helpers';
-import { orgSetupPath } from './org-setup.helpers';
 
 /** Clé de libellé par rôle stocké — « manager » est dérivé, jamais stocké. */
 const ROLE_KEYS = {
@@ -25,6 +24,10 @@ const ROLE_KEYS = {
  *
  * Rend son propre titre ; à insérer dans un <SectionCard> côté SettingsPage.
  */
+// Entrée de l'assistant de démarrage, écrite en toutes lettres plutôt
+// qu'importée d'`org-setup.helpers` : ce module, partagé avec cet écran,
+// deviendrait un chunk de plus dans la table de préchargement du chunk
+// d'ENTRÉE (mesuré le 2026-09-25). Même forme que `orgSetupPath`, testée là-bas.
 const OrganizationSettingsCard = () => {
   const { t } = useT('org');
   const navigate = useNavigate();
@@ -75,7 +78,7 @@ const OrganizationSettingsCard = () => {
             {t('settingsCard.hint')}
           </p>
           {/* Une création ouvre l'assistant de démarrage, sur sa propre page. */}
-          <CreateOrJoinOrganization onCreated={(org) => navigate(orgSetupPath(org.id))} />
+          <CreateOrJoinOrganization onCreated={(org) => navigate(`/entreprise/onboarding?setup=${encodeURIComponent(org.id)}`)} />
         </div>
       )}
     </>
