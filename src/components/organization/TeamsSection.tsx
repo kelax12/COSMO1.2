@@ -4,14 +4,12 @@ import { Plus, Trash2, Search, Crown, ChevronRight } from 'lucide-react';
 import {
   useOrgTeams,
   useOrgTeamMembers,
-  useCreateOrgTeam,
-  useAddTeamMember,
   type OrgTeam,
 } from '@/modules/org-teams';
 import type { OrgMember } from '@/modules/organizations';
 import { useTeamProjects } from '@/modules/team-projects';
 import MemberAvatar from './MemberAvatar';
-import CreateTeamModal from './CreateTeamModal';
+import { useOrgCreate } from './org-create.context';
 import DeleteTeamDialog from './DeleteTeamDialog';
 import { orgTeamPath } from './deep-link.helpers';
 import { teamProjectsOf } from './team-page.helpers';
@@ -43,7 +41,7 @@ const LEADS_SHOWN = 3;
  */
 const TeamsSection = ({ orgId, members, currentUserId, isAdmin, canCreateTeam }: TeamsSectionProps) => {
   const { t, tp } = useT('org');
-  const [showNewTeam, setShowNewTeam] = useState(false);
+  const create = useOrgCreate();
 
   // C-40 — sans `isLoading`, l'ecran AFFIRME une absence qu'il ne connait pas
   // encore : le premier rendu arrive avant la reponse, et la valeur par defaut
@@ -51,8 +49,6 @@ const TeamsSection = ({ orgId, members, currentUserId, isAdmin, canCreateTeam }:
   const { data: teams = [], isLoading: loadingTeams } = useOrgTeams(orgId);
   const { data: memberships = [] } = useOrgTeamMembers(orgId);
   const { data: projects = [] } = useTeamProjects(orgId);
-  const createTeam = useCreateOrgTeam(orgId);
-  const addMember = useAddTeamMember(orgId);
   // M5 : la suppression passe par une modale d'impact, jamais par un confirm().
   const [teamToDelete, setTeamToDelete] = useState<OrgTeam | null>(null);
   const [teamQuery, setTeamQuery] = useState('');
@@ -69,14 +65,6 @@ const TeamsSection = ({ orgId, members, currentUserId, isAdmin, canCreateTeam }:
   const hiddenTeams = matchingTeams.length - shownTeams.length;
   const memberById = new Map(members.map((m) => [m.userId, m]));
 
-  // Crée l'équipe (nom + couleur) PUIS y ajoute les membres choisis (#2).
-  const handleCreateFull = async (input: { name: string; color: string }, memberIds: string[]) => {
-    const team = await createTeam.mutateAsync(input);
-    for (const userId of memberIds) {
-      await addMember.mutateAsync({ teamId: team.id, userId });
-    }
-  };
-
   return (
     <div>
       <div className="flex items-center justify-between mb-3">
@@ -86,7 +74,7 @@ const TeamsSection = ({ orgId, members, currentUserId, isAdmin, canCreateTeam }:
         {canCreateTeam && (
           <button
             type="button"
-            onClick={() => setShowNewTeam(true)}
+            onClick={() => create.openTeam()}
             className="inline-flex items-center gap-1 text-sm font-semibold text-blue-500 hover:text-blue-600 transition-colors"
           >
             <Plus size={14} aria-hidden="true" /> {t('team.add')}
@@ -94,15 +82,6 @@ const TeamsSection = ({ orgId, members, currentUserId, isAdmin, canCreateTeam }:
         )}
       </div>
 
-      {showNewTeam && (
-        <CreateTeamModal
-          members={members}
-          currentUserId={currentUserId}
-          isAdmin={isAdmin}
-          onSubmit={handleCreateFull}
-          onClose={() => setShowNewTeam(false)}
-        />
-      )}
 
       {loadingTeams ? null : teams.length === 0 ? (
         <p className="text-xs text-[rgb(var(--color-text-muted))] py-3">

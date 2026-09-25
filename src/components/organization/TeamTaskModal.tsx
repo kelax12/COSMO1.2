@@ -1,15 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X, AlertCircle, Trash2, Loader2, Check, Send } from 'lucide-react';
-import { toast } from '@/lib/toast';
 import { Button } from '@/components/ui/button';
 import { useMyOrgPermissions } from '@/modules/organizations';
 import { useMarkTaskNotificationsRead, type OrgMember } from '@/modules/organizations';
 import type { TeamProject, TeamTask, TeamTaskStatus, CreateTeamTaskInput, UpdateTeamTaskInput } from '@/modules/team-projects';
-import { useCreateTeamProject } from '@/modules/team-projects';
 import { priorityLabelOf } from './team-projects.helpers';
 import MemberAvatar from './MemberAvatar';
 import TaskCommentsSection from './TaskCommentsSection';
+import { OrgCreateBoundary } from './org-create.context';
 import TeamAssigneeGroups from './TeamAssigneeGroups';
 import TeamTaskFields from './TeamTaskFields';
 import TeamSubtasksSection from './TeamSubtasksSection';
@@ -168,10 +167,7 @@ const TeamTaskModal = ({
   // prop dédié : tous les projets listés ici partagent déjà celui de la
   // tâche (édition) ou de la liste passée par l'appelant (création).
   const orgId = task?.orgId ?? projects[0]?.orgId ?? '';
-  const { canAssign } = useMyOrgPermissions(orgId);
-  const createProject = useCreateTeamProject(orgId);
-  const [showNewProjectInput, setShowNewProjectInput] = useState(false);
-  const [newProjectName, setNewProjectName] = useState('');
+  const { can, canAssign } = useMyOrgPermissions(orgId);
 
   // Ouvrir une tâche EXISTANTE fait disparaître son badge « commentaires non
   // lus » (mig. 109) — pas la tâche en cours de création, qui n'a encore
@@ -184,24 +180,6 @@ const TeamTaskModal = ({
        chaque rendu : la mettre en dependance relancerait l ecriture en boucle.
        Seule l identite de la tache decide qu il faut marquer lu, et elle y est. */
   }, [task?.id]);
-
-  const submitNewProject = () => {
-    const projectName = newProjectName.trim();
-    if (projectName.length < 2) {
-      toast.error(t('taskModal.projectNameTooShort'));
-      return;
-    }
-    createProject.mutate(
-      { name: projectName },
-      {
-        onSuccess: (created) => {
-          setProjectId(created.id);
-          setShowNewProjectInput(false);
-          setNewProjectName('');
-        },
-      },
-    );
-  };
 
   const hasChanges = useMemo(() => {
     if (isCreating) return true;
@@ -348,7 +326,10 @@ const TeamTaskModal = ({
     label: isCreating ? t('taskModal.newAria') : t('taskModal.editAria', { name: task?.name ?? '' }),
   });
 
+  // `OrgCreateBoundary` : le formulaire de projet s'ouvre aussi quand ce modal
+  // vient de la page Tâches personnelle, hors de /entreprise.
   return createPortal(
+    <OrgCreateBoundary orgId={orgId}>
     <div
       className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-0 sm:p-4"
       onClick={pending ? undefined : onClose}
@@ -448,13 +429,7 @@ const TeamTaskModal = ({
             requireProjectChoice={requireProjectChoice}
             estimatedTime={estimatedTime}
             onEstimatedTimeChange={setEstimatedTime}
-            showNewProjectInput={showNewProjectInput}
-            onOpenNewProject={() => { setShowNewProjectInput(true); setNewProjectName(''); }}
-            onCancelNewProject={() => { setShowNewProjectInput(false); setNewProjectName(''); }}
-            newProjectName={newProjectName}
-            onNewProjectNameChange={setNewProjectName}
-            onSubmitNewProject={submitNewProject}
-            isCreatingProject={createProject.isPending}
+            onProjectCreated={can['project.create'] ? setProjectId : undefined}
             assigneeIds={assigneeIds}
             onAssigneeIdsChange={setAssigneeIds}
             assignableMembers={assignableMembers}
@@ -568,7 +543,8 @@ const TeamTaskModal = ({
           </div>
         )}
       </div>
-    </div>,
+    </div>
+    </OrgCreateBoundary>,
     document.body,
   );
 };

@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react';
-import { X, Plus } from 'lucide-react';
-import { useCreateTeamProject, type TeamProject, type TeamTask } from '@/modules/team-projects';
+import { Plus } from 'lucide-react';
+import type { TeamProject, TeamTask } from '@/modules/team-projects';
 import { projectColor } from './team-projects.helpers';
 import { useT } from '@/i18n/useT';
+import { useOrgCreate } from './org-create.context';
 
 /**
  * Puces de projets visibles avant « +N projets ». Au-delà, la rangée devenait
@@ -18,7 +19,6 @@ const chipInactive =
   'bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] border-[rgb(var(--color-border))]';
 
 interface TeamTasksProjectChipsProps {
-  orgId: string;
   /** Projets actifs (non archivés). */
   projects: TeamProject[];
   tasks: TeamTask[];
@@ -35,16 +35,12 @@ interface TeamTasksProjectChipsProps {
  * Extrait de `TeamTasksTab` (plafond de 600 lignes d'`architecture.guard`).
  */
 const TeamTasksProjectChips = ({
-  orgId, projects, tasks, projectFilter, onProjectFilter, canCreateProject,
+  projects, tasks, projectFilter, onProjectFilter, canCreateProject,
 }: TeamTasksProjectChipsProps) => {
   const { t, tp } = useT('org');
-  const createProject = useCreateTeamProject(orgId);
-  // Chip « + Nouveau projet » : même pattern que la barre de listes
-  // personnelle (TaskListsBar), chip pointillée → formulaire inline (nom
-  // seul). Pas de couleur à choisir : le projet créé reste sans catégorie et
-  // prend la couleur de repli (`projectColorFromCategory`).
-  const [showCreateProject, setShowCreateProject] = useState(false);
-  const [newProjectName, setNewProjectName] = useState('');
+  // « + Nouveau projet » ouvrait ici un champ « nom seul » qui créait un
+  // projet gris, sans équipe ni responsable (cohérence globale, 2026-09-25).
+  const create = useOrgCreate();
   const [showAllProjects, setShowAllProjects] = useState(false);
 
   // Compteur par projet : tâches OUVERTES uniquement, même convention que
@@ -68,7 +64,6 @@ const TeamTasksProjectChips = ({
   }, [projects, showAllProjects, projectFilter]);
   const hiddenProjects = projects.length - shownProjects.length;
 
-  const cancelCreate = () => { setShowCreateProject(false); setNewProjectName(''); };
 
   if (projects.length === 0) return null;
 
@@ -124,50 +119,16 @@ const TeamTasksProjectChips = ({
           </button>
         )}
 
-        {!canCreateProject ? null : !showCreateProject ? (
+        {canCreateProject && (
           <button
             type="button"
-            onClick={() => setShowCreateProject(true)}
+            // LE formulaire de projet (org-create.context) : couleur, équipe,
+            // responsable. Le projet créé devient aussitôt le filtre.
+            onClick={() => create.openProject({ onCreated: onProjectFilter })}
             className="shrink-0 whitespace-nowrap inline-flex items-center gap-1.5 h-10 sm:h-auto sm:py-2 px-3.5 rounded-lg border-2 border-dashed border-[rgb(var(--color-border))] bg-transparent text-sm font-medium text-slate-500 dark:text-slate-400 hover:border-[rgb(var(--color-border-strong))] hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-all"
           >
             <Plus size={16} aria-hidden="true" /> {t('projects.newProject')}
           </button>
-        ) : (
-          <form
-            className="flex items-center gap-2 shrink-0"
-            onSubmit={(e) => {
-              e.preventDefault();
-              const name = newProjectName.trim();
-              if (!name) return;
-              createProject.mutate({ name, color: 'slate' }, { onSuccess: cancelCreate });
-            }}
-          >
-            <input
-              autoFocus
-              type="text"
-              value={newProjectName}
-              onChange={(e) => setNewProjectName(e.target.value)}
-              placeholder={t('project.namePlaceholder')}
-              className="px-3 py-1.5 text-sm rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-0 w-40"
-              style={{ backgroundColor: 'rgb(var(--color-surface))', borderColor: 'rgb(var(--color-border))', color: 'rgb(var(--color-text-primary))' }}
-              onKeyDown={(e) => { if (e.key === 'Escape') cancelCreate(); }}
-            />
-            <button
-              type="submit"
-              disabled={!newProjectName.trim() || createProject.isPending}
-              className="px-3 py-1.5 text-sm rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))] font-medium disabled:opacity-40 transition-all"
-            >
-              {t('project.create')}
-            </button>
-            <button
-              type="button"
-              onClick={cancelCreate}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
-              aria-label={t('common.cancel')}
-            >
-              <X size={14} aria-hidden="true" />
-            </button>
-          </form>
         )}
       </div>
     </div>

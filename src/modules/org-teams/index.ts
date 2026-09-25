@@ -18,6 +18,7 @@ export {
   useOrgTeams,
   useOrgTeamMembers,
   useCreateOrgTeam,
+  useCreateTeamWithMembers,
   useUpdateOrgTeam,
   useDeleteOrgTeam,
   useTeamDeletionImpact,

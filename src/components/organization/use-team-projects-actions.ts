@@ -15,16 +15,12 @@ import {
   useUpdateTeamTask,
   useDeleteTeamTask,
   useRestoreTeamTask,
-  type CreateTeamProjectInput,
-  type DraftProjectMilestone,
-  type DraftProjectTask,
   type TeamProject,
   type TeamProjectMilestone,
   type TeamTask,
   type TeamTaskStatus,
   type UpdateTeamProjectInput,
 } from '@/modules/team-projects';
-import { useCreateOrgTeam, useAddTeamMember } from '@/modules/org-teams';
 import { buildTemplatePayload, duplicateBlueprint } from './portfolio.helpers';
 import { useT } from '@/i18n/useT';
 
@@ -33,17 +29,14 @@ interface Options {
   currentUserId?: string;
   allTasks: TeamTask[];
   milestones: TeamProjectMilestone[];
-  /** Bascule le filtre d'équipe sur une équipe créée depuis l'onglet. */
-  onTeamCreated: (teamId: string) => void;
   /** Ouvre la page d'un projet (après duplication). */
   onOpenProject: (projectId: string) => void;
 }
 
 export const useTeamProjectsActions = ({
-  orgId, currentUserId, allTasks, milestones, onTeamCreated, onOpenProject,
+  orgId, currentUserId, allTasks, milestones, onOpenProject,
 }: Options) => {
   const { t } = useT('org');
-  const { t: tErrors } = useT('errors');
   const { t: pf } = useT('portfolio');
   const createProjectWithTasks = useCreateTeamProjectWithTasks(orgId);
   const updateProject = useUpdateTeamProject(orgId);
@@ -53,24 +46,8 @@ export const useTeamProjectsActions = ({
   // « Annuler » = sortir de la corbeille (mig. 152), à l'identique : commentaires,
   // sous-tâches et historique compris. L'ancien « Annuler » recréait une tâche neuve.
   const restoreTask = useRestoreTeamTask(orgId);
-  const createTeam = useCreateOrgTeam(orgId);
-  const addTeamMember = useAddTeamMember(orgId);
 
   // ─── Projets ────────────────────────────────────────────────────────
-
-  /**
-   * Projet + tâches initiales + jalons en UNE transaction serveur (mig. 153).
-   * Remplace la boucle de `mutateAsync` qui laissait un projet à moitié créé
-   * au premier échec (audit Projets, 2026-09-24).
-   */
-  const createProjectFull = async (
-    input: CreateTeamProjectInput,
-    tasks: DraftProjectTask[],
-    projectMilestones: DraftProjectMilestone[],
-  ) => {
-    await createProjectWithTasks.mutateAsync({ input, tasks, milestones: projectMilestones });
-    toast.success(tErrors('success.projectCreated'));
-  };
 
   const patchProject = (project: TeamProject, input: UpdateTeamProjectInput) =>
     updateProject.mutateAsync({ projectId: project.id, input });
@@ -128,17 +105,6 @@ export const useTeamProjectsActions = ({
   const archiveTemplate = (template: TeamProject) =>
     updateProject.mutate({ projectId: template.id, input: { archived: true } });
 
-  // Crée l'équipe (nom + couleur) PUIS y ajoute les membres choisis — même
-  // séquence que TeamsSection (onglet Pyramide). Le filtre équipe bascule
-  // dessus aussitôt : créer une équipe pour ne pas la voir serait un geste à vide.
-  const createTeamFull = async (input: { name: string; color: string }, memberIds: string[]) => {
-    const team = await createTeam.mutateAsync(input);
-    for (const userId of memberIds) {
-      await addTeamMember.mutateAsync({ teamId: team.id, userId });
-    }
-    onTeamCreated(team.id);
-  };
-
   // ─── Tâches ─────────────────────────────────────────────────────────
 
   const toggleComplete = (task: TeamTask) =>
@@ -171,14 +137,12 @@ export const useTeamProjectsActions = ({
     });
 
   return {
-    createProjectFull,
     patchProject,
     archiveWithUndo,
     restoreProject,
     duplicateProject,
     saveAsTemplate,
     archiveTemplate,
-    createTeamFull,
     toggleComplete,
     setAssignees,
     setStatus,

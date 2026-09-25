@@ -46,6 +46,24 @@ export const useCreateOrgTeam = (orgId: string) => {
   });
 };
 
+/**
+ * Crée une équipe PUIS y ajoute les membres choisis : LE résultat de tout
+ * formulaire « Nouvelle équipe », d'où qu'on l'ouvre (cohérence globale,
+ * 2026-09-25). Le mini-formulaire du modal d'OKR créait une équipe sans
+ * aucun membre ; celui de Membres, de Pyramide et de Projets, avec.
+ */
+export const useCreateTeamWithMembers = (orgId: string) => {
+  const createTeam = useCreateOrgTeam(orgId);
+  const addTeamMember = useAddTeamMember(orgId);
+  return async (input: CreateOrgTeamInput, memberIds: string[]) => {
+    const team = await createTeam.mutateAsync(input);
+    for (const userId of memberIds) {
+      await addTeamMember.mutateAsync({ teamId: team.id, userId });
+    }
+    return team;
+  };
+};
+
 /** Fiche d'une équipe : nom, couleur, description (mig. 163). */
 export const useUpdateOrgTeam = (orgId: string) => {
   const queryClient = useQueryClient();

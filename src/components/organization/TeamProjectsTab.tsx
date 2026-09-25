@@ -30,7 +30,7 @@ import TeamProjectCard from './TeamProjectCard';
 // Vues et surfaces à la demande : chargées au premier affichage (budget du chunk).
 import {
   TeamProjectsKanban, TeamProjectsTimeline, ProjectPortfolioView, ProjectDetailPage,
-  ProjectEditDialog, NewTeamProjectModal, CreateTeamModal, AssignTaskSheet, BulkActionsBar,
+  ProjectEditDialog, AssignTaskSheet, BulkActionsBar,
 } from './team-projects.lazy';
 import ProjectsToolbar from './ProjectsToolbar';
 import ProjectTemplatesSection from './ProjectTemplatesSection';
@@ -39,6 +39,7 @@ import TruncatedDataNotice from './TruncatedDataNotice';
 import TeamTrashDialog from './TeamTrashDialog';
 import { useT } from '@/i18n/useT';
 import TeamColorDot from './TeamColorDot';
+import { useOrgCreate } from './org-create.context';
 
 interface TeamProjectsTabProps {
   orgId: string;
@@ -47,8 +48,6 @@ interface TeamProjectsTabProps {
   /** Manager/admin — sert encore aux surfaces HIÉRARCHIQUES (dépendances de
    *  tâches), jamais aux droits de création : ceux-ci viennent de la mig. 115. */
   isManager: boolean;
-  /** Admin : peut ajouter n'importe qui à une équipe créée depuis ici (miroir RLS). */
-  isAdmin: boolean;
 }
 
 /** État du modal de tâche : création (préréglages) ou édition. */
@@ -64,13 +63,13 @@ type TaskModalState =
   | { mode: 'edit'; task: TeamTask }
   | null;
 
-const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: TeamProjectsTabProps) => {
+const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProjectsTabProps) => {
   const { can, canAssign } = useMyOrgPermissions(orgId);
   const { t, tp } = useT('org');
   const { t: pf, tp: tpf } = useT('portfolio');
   const { prefs, updatePrefs } = useProjectsUiPrefs(orgId);
-  const [showNewProject, setShowNewProject] = useState<false | { templateId?: string }>(false);
-  const [showNewTeam, setShowNewTeam] = useState(false);
+  // Création : LE formulaire unique de l'organisation (org-create.context).
+  const create = useOrgCreate();
   const [editProjectId, setEditProjectId] = useState<string | null>(null);
   const [taskModal, setTaskModal] = useState<TaskModalState>(null);
   const [query, setQuery] = useState('');
@@ -110,9 +109,18 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
     currentUserId,
     allTasks,
     milestones,
-    onTeamCreated: (teamId) => updatePrefs({ teamFilter: teamId }),
     onOpenProject: openProject,
   });
+
+  // L'équipe filtrée devient l'équipe par défaut du projet ; une équipe créée
+  // d'ici devient le filtre : la créer pour ne pas la voir serait un geste à vide.
+  const newProject = (templateId?: string) =>
+    create.openProject({
+      defaultTeamId: teamFilter && teamFilter !== 'org' ? teamFilter : '',
+      templateId,
+      onCreated: openProject,
+    });
+  const newTeam = () => create.openTeam({ onCreated: (teamId) => updatePrefs({ teamFilter: teamId }) });
 
   /** `project.edit` (mig. 153), ou responsable du projet. */
   const canEditProjectFor = (p: TeamProject) =>
@@ -270,30 +278,6 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
   // ─── Surfaces communes (modales, barre groupée) ─────────────────────
   const overlays = (
     <Suspense fallback={null}>
-      {can['project.create'] && showNewProject && (
-        <NewTeamProjectModal
-          orgId={orgId}
-          teams={teams}
-          members={members}
-          currentUserId={currentUserId}
-          defaultTeamId={teamFilter && teamFilter !== 'org' ? teamFilter : ''}
-          templates={templates}
-          initialTemplateId={showNewProject.templateId}
-          onSubmit={actions.createProjectFull}
-          onClose={() => setShowNewProject(false)}
-        />
-      )}
-
-      {can['team.create'] && showNewTeam && (
-        <CreateTeamModal
-          members={members}
-          currentUserId={currentUserId}
-          isAdmin={isAdmin}
-          onSubmit={actions.createTeamFull}
-          onClose={() => setShowNewTeam(false)}
-        />
-      )}
-
       {editProject && (
         <ProjectEditDialog
           project={editProject}
@@ -441,8 +425,8 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
         effectiveView={view}
         canCreateProject={can['project.create']}
         canCreateTeam={can['team.create']}
-        onNewProject={() => setShowNewProject({})}
-        onCreateTeam={() => setShowNewTeam(true)}
+        onNewProject={newProject}
+        onCreateTeam={newTeam}
         onStartSelect={statsTasks.length > 0 && !selectMode ? () => setSelectMode(true) : undefined}
       />
 
@@ -463,7 +447,7 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
           {can['project.create'] ? (
             <button
               type="button"
-              onClick={() => setShowNewProject({})}
+              onClick={() => newProject()}
               className="mt-3 inline-flex items-center gap-1.5 h-9 px-4 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold"
             >
               <Plus size={15} aria-hidden="true" /> {t('projects.createProject')}
@@ -563,7 +547,7 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
             templates={templates}
             canUse={can['project.create']}
             canRemove={can['project.delete']}
-            onUse={(templateId) => setShowNewProject({ templateId })}
+            onUse={(templateId) => newProject(templateId)}
             onRemove={actions.archiveTemplate}
           />
         </>

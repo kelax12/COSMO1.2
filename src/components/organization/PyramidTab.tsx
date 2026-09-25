@@ -3,9 +3,9 @@ import { startOfDay } from 'date-fns';
 import { useSearchParams } from 'react-router';
 import { Move, Users, ArrowUpFromLine, UserPlus } from 'lucide-react';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
-import { useOrgTeams, useOrgTeamMembers, useCreateOrgTeam, useAddTeamMember, type OrgTeam } from '@/modules/org-teams';
-import CreateTeamModal from './CreateTeamModal';
+import { useOrgTeams, useOrgTeamMembers, type OrgTeam } from '@/modules/org-teams';
 import OrgConfirmDialog from './OrgConfirmDialog';
+import { useOrgCreate } from './org-create.context';
 import {
   buildOrgTree,
   type OrgMember,
@@ -139,21 +139,8 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
   const [viewTeamId, setViewTeamId] = useState<string | null>(null);
   const { data: orgTeams = [] } = useOrgTeams(orgId);
   const { data: orgTeamMembers = [] } = useOrgTeamMembers(orgId);
-  const createTeam = useCreateOrgTeam(orgId);
-  const addTeamMember = useAddTeamMember(orgId);
-  const [showNewTeam, setShowNewTeam] = useState(false);
-
-  // Crée l'équipe PUIS y ajoute les membres choisis — même séquence que
-  // TeamsSection.handleCreateFull, seul point d'entrée dupliqué ici parce que
-  // le sélecteur de vue de la pyramide est un second endroit légitime pour
-  // créer une équipe (on y regarde déjà « par équipe »).
-  const handleCreateTeamFull = async (input: { name: string; color: string }, memberIds: string[]) => {
-    const team = await createTeam.mutateAsync(input);
-    for (const userId of memberIds) {
-      await addTeamMember.mutateAsync({ teamId: team.id, userId });
-    }
-    setViewTeamId(team.id);
-  };
+  // Une équipe créée d'ici devient la vue affichée (formulaire unique).
+  const create = useOrgCreate();
 
   // Membres visibles selon la vue. Vue équipe : chaque membre de l'équipe + ses
   // ancêtres jusqu'à la racine (les liens managerId restent donc intacts).
@@ -332,7 +319,7 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
             viewTeamId={viewTeamId}
             onViewTeamChange={setViewTeamId}
             isAdmin={isAdmin}
-            onCreateTeam={() => setShowNewTeam(true)}
+            onCreateTeam={() => create.openTeam({ onCreated: setViewTeamId })}
             canEdit={canEdit}
             editMode={editMode}
             moveCount={moveCount}
@@ -353,15 +340,6 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
               pending={undoing}
               onConfirm={() => { void confirmUndo(); }}
               onCancel={dismissUndo}
-            />
-          )}
-          {showNewTeam && (
-            <CreateTeamModal
-              members={members}
-              currentUserId={currentUserId}
-              isAdmin={isAdmin}
-              onSubmit={handleCreateTeamFull}
-              onClose={() => setShowNewTeam(false)}
             />
           )}
 

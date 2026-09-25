@@ -36,10 +36,15 @@ const labelClass = 'block text-xs font-semibold uppercase tracking-wider mb-2';
 const labelStyle = { color: 'rgb(var(--color-text-secondary))' };
 
 /**
- * Formulaire de création d'équipe (#2) : nom, couleur, membres — même langage
- * visuel que NewTeamProjectModal (bottom-sheet mobile / modal desktop).
+ * LE formulaire de création d'équipe (#2) : nom, couleur, membres. Monté par
+ * la modale ci-dessous, ou intégré tel quel là où une modale ne peut pas en
+ * ouvrir une autre (le panneau Radix des OKR). Un seul formulaire, un seul
+ * résultat : `useCreateTeamWithMembers` (cohérence globale, 2026-09-25).
  */
-const CreateTeamModal = ({ members, currentUserId, isAdmin, onSubmit, onClose }: CreateTeamModalProps) => {
+export const CreateTeamForm = ({ members, currentUserId, isAdmin, onSubmit, onClose, inline = false }: CreateTeamModalProps & {
+  /** Intégré dans une autre surface : pas de défilement propre, bords arrondis. */
+  inline?: boolean;
+}) => {
   const { t } = useT('org');
   const [name, setName] = useState('');
   const [color, setColor] = useState<string>(TEAM_COLORS[0].value);
@@ -71,50 +76,10 @@ const CreateTeamModal = ({ members, currentUserId, isAdmin, onSubmit, onClose }:
     }
   };
 
-  // C-53 — piege de focus, restitution du focus au declencheur, Echap et
-  // semantique ARIA. Le nom accessible est celui que la surface portait deja.
-  const { ref: modalA11yRef, dialogProps: modalA11yProps } = useModalA11y<HTMLDivElement>({
-    open: true,
-    onClose: onClose,
-    label: t('team.newTeam'),
-  });
-
-  return createPortal(
-    <div
-      className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-0 sm:p-4"
-      onClick={pending ? undefined : onClose}
-    >
-      <div
-        className="flex flex-col w-full sm:max-w-md max-h-[92vh] sm:max-h-[85vh] rounded-t-[28px] sm:rounded-2xl shadow-2xl overflow-hidden"
-        style={{ backgroundColor: 'rgb(var(--color-surface))' }}
-        onClick={(e) => e.stopPropagation()}
-        ref={modalA11yRef}
-        {...modalA11yProps}
-      >
-        {/* Poignée de glissement RETIRÉE, pas oubliée : elle ne faisait rien, et le geste n'a pas sa place sur un formulaire (docs/MOBILE.md §3). */}
-        <div className="sm:hidden pt-3 shrink-0" aria-hidden="true" />
-
-        {/* Header */}
-        <div
-          className="flex justify-between items-center px-4 sm:px-6 py-[0.420204rem] sm:py-[0.560272rem] border-b gap-2 shrink-0"
-          style={{ borderColor: 'rgb(var(--color-border))' }}
-        >
-          <h2 className="text-base sm:text-lg font-semibold" style={{ color: 'rgb(var(--color-text-primary))' }}>
-            {t('team.newTeam')}
-          </h2>
-          <button
-            onClick={onClose}
-            disabled={pending}
-            aria-label={t('team.closeForm')}
-            className="min-w-11 min-h-11 flex items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0 disabled:opacity-50"
-            style={{ color: 'rgb(var(--color-text-muted))' }}
-          >
-            <X size={22} aria-hidden="true" />
-          </button>
-        </div>
-
+  return (
+    <div className={inline ? 'rounded-xl border border-[rgb(var(--color-border))] overflow-hidden' : 'contents'}>
         {/* Corps */}
-        <div className="p-4 sm:p-6 overflow-y-auto flex-1 min-h-0 space-y-5" style={{ backgroundColor: 'rgb(var(--color-background))' }}>
+        <div className={inline ? 'p-3 space-y-4' : 'p-4 sm:p-6 overflow-y-auto flex-1 min-h-0 space-y-5'} style={{ backgroundColor: 'rgb(var(--color-background))' }}>
           {error && (
             <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-300 font-medium" role="alert">
               {error}
@@ -238,6 +203,57 @@ const CreateTeamModal = ({ members, currentUserId, isAdmin, onSubmit, onClose }:
             )}
           </Button>
         </div>
+    </div>
+  );
+};
+
+/** Modale autour de `CreateTeamForm` (bottom-sheet mobile / modal desktop). */
+const CreateTeamModal = (props: CreateTeamModalProps) => {
+  const { t } = useT('org');
+  const { onClose } = props;
+
+  // C-53 — piege de focus, restitution du focus au declencheur, Echap et
+  // semantique ARIA. Le nom accessible est celui que la surface portait deja.
+  const { ref: modalA11yRef, dialogProps: modalA11yProps } = useModalA11y<HTMLDivElement>({
+    open: true,
+    onClose: onClose,
+    label: t('team.newTeam'),
+  });
+
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-0 sm:p-4"
+      onClick={onClose}
+    >
+      <div
+        className="flex flex-col w-full sm:max-w-md max-h-[92vh] sm:max-h-[85vh] rounded-t-[28px] sm:rounded-2xl shadow-2xl overflow-hidden"
+        style={{ backgroundColor: 'rgb(var(--color-surface))' }}
+        onClick={(e) => e.stopPropagation()}
+        ref={modalA11yRef}
+        {...modalA11yProps}
+      >
+        {/* Poignée de glissement RETIRÉE, pas oubliée : elle ne faisait rien, et le geste n'a pas sa place sur un formulaire (docs/MOBILE.md §3). */}
+        <div className="sm:hidden pt-3 shrink-0" aria-hidden="true" />
+
+        {/* Header */}
+        <div
+          className="flex justify-between items-center px-4 sm:px-6 py-[0.420204rem] sm:py-[0.560272rem] border-b gap-2 shrink-0"
+          style={{ borderColor: 'rgb(var(--color-border))' }}
+        >
+          <h2 className="text-base sm:text-lg font-semibold" style={{ color: 'rgb(var(--color-text-primary))' }}>
+            {t('team.newTeam')}
+          </h2>
+          <button
+            onClick={onClose}
+            aria-label={t('team.closeForm')}
+            className="min-w-11 min-h-11 flex items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0 disabled:opacity-50"
+            style={{ color: 'rgb(var(--color-text-muted))' }}
+          >
+            <X size={22} aria-hidden="true" />
+          </button>
+        </div>
+
+        <CreateTeamForm {...props} />
       </div>
     </div>,
     document.body,
