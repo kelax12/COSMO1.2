@@ -104,6 +104,8 @@ describe('SupabaseOrganizationsRepository — lecture', () => {
     expect(result).toEqual([{
       orgId: 'org1', userId: 'u2', role: 'member', joinedAt: memberRow.joined_at,
       managerId: 'u1', displayName: 'Bob', email: 'bob@test.dev', avatar: 'https://a.io/b.png',
+      // Mig. 161 : ni suspendu ni borné quand la ligne ne le dit pas.
+      suspendedAt: null, accessExpiresAt: null,
     }]);
   });
 

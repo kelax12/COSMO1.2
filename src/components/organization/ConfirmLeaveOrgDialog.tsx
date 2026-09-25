@@ -19,7 +19,7 @@ interface ConfirmLeaveOrgDialogProps {
 
 /**
  * Confirmation avant de quitter l'entreprise — remplace le window.confirm
- * (même pattern que ConfirmRemoveMemberDialog).
+ * (même pattern que les autres AlertDialog du mode entreprise).
  */
 const ConfirmLeaveOrgDialog = ({ orgName, pending, onConfirm, onCancel }: ConfirmLeaveOrgDialogProps) => {
   const { t } = useT('org');

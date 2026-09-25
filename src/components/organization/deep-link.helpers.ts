@@ -22,7 +22,12 @@ export const ORG_SECTION_SEGMENTS = [
   'okr',
   'stats',
   'pyramid',
+  // Audit Membres du 2026-09-24 : « quatre pages en une ». Personnes garde
+  // l'adresse historique `members` (liens et e-mails déjà envoyés), Équipes et
+  // Paramètres en sortent.
   'members',
+  'teams',
+  'settings',
   'billing',
 ] as const;
 
@@ -37,7 +42,22 @@ export const orgSectionPath = (section: string | null | undefined): string =>
   isOrgSectionSegment(section) ? `/entreprise/${section}` : '/entreprise';
 
 /**
- * Chemin `/entreprise` ou `/entreprise/<section connue>` ?
+ * Un id vient toujours d'un UUID Supabase. On borne longueur et alphabet : la
+ * valeur finit dans un `find()` puis dans du JSX, et une URL est une entrée
+ * non fiable comme une autre.
+ */
+const ID_RE = /^[A-Za-z0-9_-]{1,64}$/;
+
+/** Page d'une équipe : `/entreprise/teams/<id>`. */
+export const orgTeamPath = (teamId: string): string => `/entreprise/teams/${teamId}`;
+
+/** Id d'équipe lu dans le chemin, ou null s'il est absent ou malformé. */
+export const readTeamIdSegment = (value: string | null | undefined): string | null =>
+  value && ID_RE.test(value) ? value : null;
+
+/**
+ * Chemin `/entreprise`, `/entreprise/<section connue>` ou
+ * `/entreprise/teams/<id>` ?
  *
  * Sert à `RESUMABLE_PAGES` : la dernière page visitée est une valeur relue du
  * stockage local, donc une entrée non fiable. On la valide contre la liste des
@@ -46,18 +66,15 @@ export const orgSectionPath = (section: string | null | undefined): string =>
 export const isOrgPath = (pathname: string): boolean => {
   if (pathname === '/entreprise') return true;
   const prefix = '/entreprise/';
-  return pathname.startsWith(prefix) && isOrgSectionSegment(pathname.slice(prefix.length));
+  if (!pathname.startsWith(prefix)) return false;
+  const rest = pathname.slice(prefix.length);
+  if (isOrgSectionSegment(rest)) return true;
+  const teamPrefix = 'teams/';
+  return rest.startsWith(teamPrefix) && readTeamIdSegment(rest.slice(teamPrefix.length)) !== null;
 };
 
 /** Entités adressables par l'URL de /entreprise. */
 export type EntityParam = 'task' | 'project' | 'member';
-
-/**
- * Un id vient toujours d'un UUID Supabase. On borne longueur et alphabet : la
- * valeur finit dans un `find()` puis dans du JSX, et une URL est une entrée
- * non fiable comme une autre.
- */
-const ID_RE = /^[A-Za-z0-9_-]{1,64}$/;
 
 /** Lit un id d'entité dans l'URL, ou null si absent / malformé. */
 export const readEntityParam = (

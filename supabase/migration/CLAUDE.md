@@ -51,6 +51,11 @@ compilait, la suite passait.
   (inscrit à la main après `db query -f`), vérifiée par le catalogue : colonnes, policies SELECT/DELETE,
   six fonctions qui ignorent la corbeille, `task.deleteAny` en défaut manager, droits des cinq RPC,
   job `cosmo-purge-team-task-trash`. Preuve en transaction annulée : 14 cas.
+- ✅ **État au 2026-09-25** : `160`, `161`, `162`, `170` (branches gouvernance et annuaire) et
+  `163` (page d équipe) sont **appliquées**, ledger `20260925063127`, `…063147`, `…063202`,
+  `…063218`, `…064540`, relues au catalogue après une preuve en transaction annulée (18 cas pour
+  les quatre premières, 8 pour la 163). La 161 a été corrigée AVANT application : elle
+  transmettait aussi les tâches à la corbeille (mig. 152).
 - ⚠️ **Plages de numéros entre sessions (2026-09-24)** : `151`-`159` corbeille/équipes, `153` déjà
   prise par le portefeuille de projets (worktree `portefeuille`), `160`+ gouvernance/OKR/membres,
   `170`+ annuaire. **Relire le ledger avant de choisir un numéro.**

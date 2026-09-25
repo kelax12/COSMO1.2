@@ -17,6 +17,16 @@ Liste des sections : `org-sections.ts` ; chemins et liens : `deep-link.helpers.t
   (`stripe-org-checkout`, `stripe-org-portal`) et les e-mails déjà envoyés par `renewal-notice`
   pointent sur `/entreprise?tab=billing` : ces URLs vivent hors du dépôt.
 - ❌ Ne jamais écrire un lien entreprise à la main : passer par `buildOrgLink`.
+- **Personnes · Équipes · Paramètres** (audit Membres du 2026-09-24, « quatre pages en une ») :
+  `members` ne porte plus que l'annuaire, `teams` la liste des équipes et `teams/<id>` la page
+  d'une équipe (`TeamPage`, id lu par `readTeamIdSegment`), `settings` les invitations et la zone
+  de danger. ❌ Ne jamais renommer le segment `members` : des liens `?member=` et des e-mails y
+  pointent. Une seule route `entreprise/:section?/:entityId?`, pour ne pas remonter la page.
+- **Page d'équipe** : fiche éditable (nom, couleur, description, mig. 163) par `can_manage_team`
+  (admin, créateur, responsable). `org_id` et `created_by` d'une équipe sont figés par trigger.
+- **Retirer un membre passe TOUJOURS par l'assistant de départ** (`OffboardMemberDialog`,
+  `offboard_org_member`, mig. 161), depuis l'annuaire comme depuis la pyramide. ❌ Ne jamais
+  remonter un retrait nu : il laissait tâches, subordonnés, rôles de responsable et KR orphelins.
 
 ---
 

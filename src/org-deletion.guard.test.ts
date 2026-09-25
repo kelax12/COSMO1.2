@@ -226,13 +226,14 @@ describe('garde — supprimer une entreprise est un geste de PROPRIETAIRE (C-39)
     // Ce n'est que l'affichage — la regle vit dans la RPC — mais un ecran qui
     // propose un geste que le serveur refusera est une impasse.
     //
-    // La zone vit dans `OrgMembersSection` depuis le 2026-09-24 (sortie de la
-    // page, 615 lignes). La garde suit donc les DEUX bouts : la section monte
-    // la zone sur `isOwner`, et la page lui passe bien le proprietaire, pas
-    // l'admin. Un seul des deux ne suffit pas : `isOwner={isAdmin}` dans la
-    // page rouvrirait exactement C-39 avec une section parfaitement juste.
+    // La zone vit dans `OrgSettingsSection` depuis le 2026-09-25 (section
+    // Paramètres, audit Membres : « quatre pages en une »). La garde suit
+    // donc les DEUX bouts : la section monte la zone sur `isOwner`, et la page
+    // lui passe bien le proprietaire, pas l'admin. Un seul des deux ne suffit
+    // pas : `isOwner={isAdmin}` dans la page rouvrirait exactement C-39 avec
+    // une section parfaitement juste.
     const section = readFileSync(
-      join(process.cwd(), 'src/components/organization/OrgMembersSection.tsx'),
+      join(process.cwd(), 'src/components/organization/OrgSettingsSection.tsx'),
       'utf-8',
     );
     expect(section).toContain('{isOwner ? (');
@@ -242,7 +243,7 @@ describe('garde — supprimer une entreprise est un geste de PROPRIETAIRE (C-39)
     );
     // Borné au bloc de la section : `OrgBillingTab` porte aussi
     // `isOwner={isOwner}`, un `toContain` sur toute la page passerait seul.
-    const bloc = page.match(/<OrgMembersSection[\s\S]*?\/>/)?.[0] ?? '';
+    const bloc = page.match(/<OrgSettingsSection[\s\S]*?\/>/)?.[0] ?? '';
     expect(bloc).toContain('isOwner={isOwner}');
     expect(page).toContain('const isOwner = user?.id === myOrg.ownerId;');
   });

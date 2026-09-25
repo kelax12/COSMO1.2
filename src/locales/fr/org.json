@@ -601,7 +601,14 @@
     "moreMembers_one": "+{{count}} autre",
     "moreMembers_many": "+{{count}} de plus",
     "moreMembers_other": "+{{count}} autres",
-    "fewerMembers": "Réduire"
+    "fewerMembers": "Réduire",
+    "memberCount_one": "{{count}} membre",
+    "memberCount_many": "{{count}} de membres",
+    "memberCount_other": "{{count}} membres",
+    "projectCount_one": "{{count}} projet",
+    "projectCount_many": "{{count}} de projets",
+    "projectCount_other": "{{count}} projets",
+    "leadsMore": "{{names}} et {{count}} de plus"
   },
   "project": {
     "newAria": "Nouveau projet d'équipe",
@@ -1027,8 +1034,10 @@
     "projects": "Projets",
     "okr": "OKR",
     "stats": "Statistiques",
-    "members": "Membres",
-    "tasks": "Tâches"
+    "members": "Personnes",
+    "tasks": "Tâches",
+    "teams": "Équipes",
+    "settings": "Paramètres"
   },
   "sideNav": {
     "groupMine": "Mon travail",
@@ -1391,5 +1400,48 @@
     "resendWait": "Une relance par heure au plus",
     "resendFor": "Relancer {{email}}",
     "revokeFor": "Révoquer l'invitation de {{email}}"
+  },
+  "settings": {
+    "inviteTitle": "Inviter",
+    "inviteHint": "Par e-mail, par code d'adhésion, par lien direct ou parmi vos contacts COSMO.",
+    "inviteByEmail": "Inviter par e-mail",
+    "otherInvites": "Inviter autrement",
+    "leaveTitle": "Quitter l'entreprise"
+  },
+  "teamPage": {
+    "back": "Toutes les équipes",
+    "notFound": "Cette équipe n'existe pas, ou plus. Elle a pu être supprimée.",
+    "edit": "Modifier l'équipe",
+    "nameLabel": "Nom",
+    "descriptionLabel": "Description",
+    "descriptionPlaceholder": "Ce que fait l'équipe, ce qu'on peut lui demander.",
+    "save": "Enregistrer",
+    "saving": "Enregistrement…",
+    "saved": "Équipe enregistrée",
+    "saveFailed": "Impossible d'enregistrer l'équipe : {{message}}",
+    "noDescription": "Aucune description.",
+    "noDescriptionManager": "Aucune description. Le crayon permet d'en écrire une.",
+    "statsTitle": "Activité des {{days}} derniers jours",
+    "statsEmpty": "L'équipe ne porte encore aucun projet : rien à mesurer.",
+    "statOpen": "Tâches ouvertes",
+    "statOverdue": "En retard",
+    "statDone": "Terminées",
+    "statRate": "Taux de complétion",
+    "statOkr": "Avancement OKR",
+    "peopleTitle": "Responsables et membres",
+    "noLead": "Aucun responsable",
+    "noLeadManager": "Aucun responsable : la couronne d'un membre le nomme.",
+    "noMembers": "Personne dans l'équipe pour l'instant.",
+    "projectsTitle": "Projets",
+    "projectsEmpty": "Aucun projet actif rattaché à l'équipe.",
+    "openTasks_one": "{{count}} ouverte",
+    "openTasks_many": "{{count}} d’ouvertes",
+    "openTasks_other": "{{count}} ouvertes",
+    "archivedProjects_one": "{{count}} projet archivé",
+    "archivedProjects_many": "{{count}} de projets archivés",
+    "archivedProjects_other": "{{count}} projets archivés",
+    "okrTitle": "OKR",
+    "okrEmpty": "Aucun OKR rattaché à l'équipe.",
+    "okrProgressAria": "Avancement de {{title}}"
   }
 }

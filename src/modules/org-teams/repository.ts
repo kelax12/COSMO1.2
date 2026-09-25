@@ -2,13 +2,18 @@
 // ORG-TEAMS MODULE - Repository Interface
 // ═══════════════════════════════════════════════════════════════════
 
-import { OrgTeam, OrgTeamMember, CreateOrgTeamInput, TeamDeletionImpact, DeleteTeamInput } from './types';
+import { OrgTeam, OrgTeamMember, CreateOrgTeamInput, UpdateOrgTeamInput, TeamDeletionImpact, DeleteTeamInput } from './types';
 
 export interface IOrgTeamsRepository {
   getTeams(orgId: string): Promise<OrgTeam[]>;
   /** Toutes les appartenances de l'org (jointure affichée côté client). */
   getTeamMembers(orgId: string): Promise<OrgTeamMember[]>;
   createTeam(orgId: string, input: CreateOrgTeamInput): Promise<OrgTeam>;
+  /**
+   * Nom, couleur, description (mig. 163). Admin, créateur ou responsable de
+   * l'équipe (`can_manage_team`) ; un autre appel ne modifie aucune ligne.
+   */
+  updateTeam(teamId: string, input: UpdateOrgTeamInput): Promise<void>;
   /** Ce que la suppression emporterait, compté sous RLS (mig. 151). */
   getDeletionImpact(teamId: string): Promise<TeamDeletionImpact>;
   /**

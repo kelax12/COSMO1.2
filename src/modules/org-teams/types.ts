@@ -7,6 +7,8 @@ export interface OrgTeam {
   orgId: string;
   name: string;
   color: string;
+  /** Ce que fait l'équipe (mig. 163), 500 caractères au plus. `null` : rien d'écrit. */
+  description?: string | null;
   /** Créateur (gestionnaire de l'équipe avec les admins). */
   createdBy: string | null;
   createdAt: string;
@@ -31,6 +33,16 @@ export interface OrgTeamMember {
 export interface CreateOrgTeamInput {
   name: string;
   color?: string;
+}
+
+/**
+ * Fiche d'une équipe (page d'équipe, mig. 163). Seuls ces trois champs
+ * s'écrivent : `org_id` et `created_by` sont figés par un trigger.
+ */
+export interface UpdateOrgTeamInput {
+  name?: string;
+  color?: string;
+  description?: string | null;
 }
 
 /**

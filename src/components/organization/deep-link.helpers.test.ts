@@ -84,6 +84,14 @@ describe('orgSectionPath / isOrgPath', () => {
     expect(isOrgPath('/entreprise/onboarding')).toBe(false);
     expect(isOrgPath('/entreprise/okr/x')).toBe(false);
     expect(isOrgPath('/entreprise//evil.com')).toBe(false);
+    // Page d'équipe : un seul segment d'id, jamais un chemin libre.
+    expect(isOrgPath('/entreprise/teams')).toBe(true);
+    expect(isOrgPath('/entreprise/settings')).toBe(true);
+    expect(isOrgPath('/entreprise/teams/0b6c1f1e-9d2a-4b1e-9f4e-2d1c0a9b8e7f')).toBe(true);
+    expect(isOrgPath('/entreprise/teams/a/b')).toBe(false);
+    expect(isOrgPath('/entreprise/teams/')).toBe(false);
+    expect(isOrgPath('/entreprise/teams//evil.com')).toBe(false);
+    expect(isOrgPath('/entreprise/teams/%2F%2Fevil.com')).toBe(false);
   });
 });
 

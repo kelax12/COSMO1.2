@@ -1,8 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import {
-  useRemoveMember,
-  useSetMemberManager,
   useSetMemberRole,
   useOrgMemberPermissions,
   useSetMemberPermissions,
@@ -28,8 +26,7 @@ import MemberSheet from './MemberSheet';
 import { MEMBER_TAB_PARAM, type MemberTab } from './member-sheet.helpers';
 import AssignTaskSheet from './AssignTaskSheet';
 import TeamTaskModal from './TeamTaskModal';
-import ReassignManagerSheet from './ReassignManagerSheet';
-import ConfirmRemoveMemberDialog from './ConfirmRemoveMemberDialog';
+import { useMemberLifecycle } from './MemberLifecycleActions';
 import MemberPermissionsSheet from './MemberPermissionsSheet';
 import MemberDirectoryRow from './MemberDirectoryRow';
 import MemberDirectoryToolbar from './MemberDirectoryToolbar';
@@ -68,8 +65,6 @@ interface MemberDirectoryProps {
  */
 const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin }: MemberDirectoryProps) => {
   const { t } = useT('org');
-  const removeMutation = useRemoveMember();
-  const setManager = useSetMemberManager();
   const setRole = useSetMemberRole();
   const { data: orgPermissions = [] } = useOrgMemberPermissions(orgId);
   const setPermissions = useSetMemberPermissions();
@@ -88,8 +83,6 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin }: Me
   const [sheet, setSheet] = useState<{ member: OrgMember; tab: string | null } | null>(null);
   const [assigning, setAssigning] = useState<OrgMember | null>(null);
   const [creatingTaskFor, setCreatingTaskFor] = useState<OrgMember | null>(null);
-  const [removing, setRemoving] = useState<OrgMember | null>(null);
-  const [reassigning, setReassigning] = useState<OrgMember | null>(null);
   const [editingPerms, setEditingPerms] = useState<OrgMember | null>(null);
 
   // ─── URL : deep-link `?member=<id>` et filtres `?dir…` ──────────────
@@ -198,21 +191,10 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin }: Me
 
   const activeProjects = projects.filter((p) => !p.archivedAt);
 
-  const handleRemove = (m: OrgMember) => {
-    // Membre avec subordonnés : choisir d'abord leur nouveau responsable
-    // (même parcours que la pyramide — la hiérarchie sous eux est préservée).
-    if (members.some((x) => x.managerId === m.userId)) setReassigning(m);
-    else setRemoving(m);
-  };
-
-  const performRemoveWithReassign = async (member: OrgMember, newManagerId: string | null) => {
-    const directs = members.filter((x) => x.managerId === member.userId);
-    for (const c of directs) {
-      await setManager.mutateAsync({ orgId, userId: c.userId, managerId: newManagerId, silent: true });
-    }
-    await removeMutation.mutateAsync({ orgId, userId: member.userId });
-    setReassigning(null);
-  };
+  // M10 : retirer quelqu'un passe par l'assistant de départ, qui transmet
+  // tâches, subordonnés, rôles de responsable et KR en une transaction
+  // (`offboard_org_member`). L'ancien retrait nu les laissait orphelins.
+  const lifecycle = useMemberLifecycle({ orgId, members, ownerId, currentUserId, isAdmin });
 
   const assignToMember = (task: TeamTask, member: OrgMember) => {
     if (task.assigneeIds.includes(member.userId)) return;
@@ -261,7 +243,6 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin }: Me
                   // 115), sinon le sheet s'ouvrirait pour finir en erreur RLS.
                   canAssign: myPermissions.canAssign(m.userId),
                   canEditPermissions: canEditPermissionsOf({ actorId: currentUserId, actorIsAdmin: isAdmin, target: m, members }),
-                  canRemove: isAdmin,
                 }}
                 lastActivity={activityByUser.get(m.userId)}
                 selectMode={bulk.selectMode}
@@ -271,7 +252,7 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin }: Me
                 onSetRole={(role) => setRole.mutate({ orgId, userId: m.userId, role })}
                 onAssign={() => setAssigning(m)}
                 onEditPermissions={() => setEditingPerms(m)}
-                onRemove={() => handleRemove(m)}
+                lifecycleItems={lifecycle.menuItems(m)}
               />
             </li>
           ))}
@@ -349,20 +330,6 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin }: Me
         />
       )}
 
-      {removing && (
-        <ConfirmRemoveMemberDialog
-          member={removing}
-          pending={removeMutation.isPending}
-          onConfirm={() =>
-            removeMutation.mutate(
-              { orgId, userId: removing.userId },
-              { onSettled: () => setRemoving(null) },
-            )
-          }
-          onCancel={() => setRemoving(null)}
-        />
-      )}
-
       {editingPerms && myEffective && (
         <MemberPermissionsSheet
           member={editingPerms}
@@ -382,16 +349,7 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin }: Me
         />
       )}
 
-      {reassigning && (
-        <ReassignManagerSheet
-          member={reassigning}
-          members={members}
-          ownerId={ownerId}
-          currentUserId={currentUserId}
-          onConfirm={(newManagerId) => performRemoveWithReassign(reassigning, newManagerId)}
-          onCancel={() => setReassigning(null)}
-        />
-      )}
+      {lifecycle.dialogs}
     </>
   );
 };

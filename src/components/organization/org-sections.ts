@@ -1,6 +1,6 @@
 import type React from 'react';
 import type { LucideIcon } from 'lucide-react';
-import { LayoutDashboard, Users, FolderKanban, Target, Network, BarChart3, ListTodo } from 'lucide-react';
+import { LayoutDashboard, Users, UsersRound, Settings, FolderKanban, Target, Network, BarChart3, ListTodo } from 'lucide-react';
 import type { KeyOf } from '@/i18n/catalog';
 import type { OrgSectionSegment } from './deep-link.helpers';
 
@@ -45,7 +45,13 @@ export const ORG_SECTIONS: OrgSectionDef[] = [
   { id: 'stats', labelKey: 'tabs.stats', Icon: BarChart3, group: 'steer', managerOnly: true },
   // Un membre sans subordonné n'a rien à y arbitrer.
   { id: 'pyramid', labelKey: 'tabs.pyramid', Icon: Network, group: 'steer', managerOnly: true },
+  // Audit Membres du 2026-09-24 : la section tenait « quatre pages en une »
+  // (invitations, équipes, annuaire, zone de danger). Personnes garde
+  // l'annuaire ; les équipes et les réglages ont leur propre adresse.
   { id: 'members', labelKey: 'tabs.members', Icon: Users, group: 'org' },
+  { id: 'teams', labelKey: 'tabs.teams', Icon: UsersRound, group: 'org' },
+  // Visible par tous : quitter l'organisation y vit aussi.
+  { id: 'settings', labelKey: 'tabs.settings', Icon: Settings, group: 'org' },
 ];
 
 /** Une entrée prête à peindre, construite par la page (libellé traduit, pastilles). */

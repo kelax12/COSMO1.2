@@ -7,13 +7,15 @@ import { warnIfTruncated } from '@/lib/pagination.warning';
 import { getCurrentUserId } from '@/lib/auth-user';
 import { makeApiError, normalizeApiError } from '@/lib/normalizeApiError';
 import { IOrgTeamsRepository } from './repository';
-import { OrgTeam, OrgTeamMember, CreateOrgTeamInput, TeamDeletionImpact, DeleteTeamInput } from './types';
+import { OrgTeam, OrgTeamMember, CreateOrgTeamInput, UpdateOrgTeamInput, TeamDeletionImpact, DeleteTeamInput } from './types';
 
 interface TeamRow {
   id: string;
   org_id: string;
   name: string;
   color: string;
+  // Mig. 163 : absente d'une réponse antérieure à son application.
+  description?: string | null;
   created_by: string | null;
   created_at: string;
 }
@@ -23,6 +25,7 @@ const mapTeam = (r: TeamRow): OrgTeam => ({
   orgId: r.org_id,
   name: r.name,
   color: r.color,
+  description: r.description ?? null,
   createdBy: r.created_by,
   createdAt: r.created_at,
 });
@@ -76,6 +79,23 @@ export class SupabaseOrgTeamsRepository implements IOrgTeamsRepository {
       .single();
     if (error) throw normalizeApiError(error);
     return mapTeam(data as TeamRow);
+  }
+
+  async updateTeam(teamId: string, input: UpdateOrgTeamInput): Promise<void> {
+    if (!supabase) throw new Error('Supabase not configured');
+    // Whitelist explicite : jamais org_id ni created_by (figés par
+    // `org_team_before_update`, mig. 163), jamais un champ absent de l'input.
+    const patch: Record<string, unknown> = {};
+    if (input.name !== undefined) patch.name = input.name.trim();
+    if (input.color !== undefined) patch.color = input.color;
+    if (input.description !== undefined) patch.description = input.description?.trim() || null;
+    if (Object.keys(patch).length === 0) return;
+    // `.select('id')` : une policy UPDATE qui refuse ne lève rien, elle ne
+    // modifie simplement aucune ligne. Sans ce contrôle, l'écran annoncerait
+    // « enregistré » pour une fiche restée intacte.
+    const { data, error } = await supabase.from('org_teams').update(patch).eq('id', teamId).select('id');
+    if (error) throw normalizeApiError(error);
+    if (!data || data.length === 0) throw makeApiError('not_allowed');
   }
 
   async getDeletionImpact(teamId: string): Promise<TeamDeletionImpact> {

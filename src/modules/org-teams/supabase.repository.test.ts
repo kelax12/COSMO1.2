@@ -29,6 +29,8 @@ describe('SupabaseOrgTeamsRepository', () => {
     expect(supabaseMock.argsOf('org_teams', 'limit')).toEqual([200]);
     expect(result).toEqual([{
       id: 't1', orgId: 'org1', name: 'Design', color: 'purple',
+      // Mig. 163 : absente d'une réponse antérieure, rendue `null`.
+      description: null,
       createdBy: 'u1', createdAt: teamRow.created_at,
     }]);
   });
@@ -41,6 +43,22 @@ describe('SupabaseOrgTeamsRepository', () => {
     supabaseMock.queueTable('org_teams', { data: [newer, teamRow] });
     const result = await repo.getTeams('org1');
     expect(result.map((t) => t.id)).toEqual(['t1', 't2']);
+  });
+
+  it('updateTeam: whitelist nom/couleur/description, jamais org_id ni created_by', async () => {
+    supabaseMock.queueTable('org_teams', { data: [{ id: 't1' }] });
+    await repo.updateTeam('t1', { name: '  Produit ', color: '#14b8a6', description: '  ' });
+    expect(supabaseMock.argsOf('org_teams', 'update')).toEqual([
+      { name: 'Produit', color: '#14b8a6', description: null },
+    ]);
+    expect(supabaseMock.argsOf('org_teams', 'eq')).toEqual(['id', 't1']);
+  });
+
+  // Une policy UPDATE qui refuse ne lève rien : elle ne modifie aucune ligne.
+  // Sans ce contrôle, l'écran annoncerait « enregistré » pour rien.
+  it('updateTeam: aucune ligne modifiée → erreur, pas un faux succès', async () => {
+    supabaseMock.queueTable('org_teams', { data: [] });
+    await expect(repo.updateTeam('t1', { description: 'x' })).rejects.toBeTruthy();
   });
 
   it('getTeams: data null → tableau vide', async () => {
