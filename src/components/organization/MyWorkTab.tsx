@@ -27,6 +27,7 @@ import TeamTaskModal from './TeamTaskModal';
 import { MyWorkSkeleton } from './OrgLoadingSkeletons';
 import { useT } from '@/i18n/useT';
 import { buildOrgLink } from './deep-link.helpers';
+import { orgSetupPath } from './org-setup.helpers';
 import { lazyWithRetry } from '@/lib/lazy-with-retry';
 
 interface MyWorkTabProps {
@@ -188,10 +189,13 @@ const AgendaEventsCard = ({ events }: { events: CalendarEvent[] }) => {
   );
 };
 
-const StartChecklist = ({ steps }: { steps: StartStep[] }) => {
+const StartChecklist = ({ steps, orgId }: { steps: StartStep[]; orgId: string }) => {
   const { t } = useT('org');
   const navigate = useNavigate();
   const doneCount = steps.filter((s) => s.done).length;
+  // L'assistant couvre les trois premières étapes (inviter, équipe, projet) :
+  // proposé tant que l'une d'elles reste à faire.
+  const wizardUseful = steps.some((s) => !s.done && (s.id === 'invite' || s.id === 'team' || s.id === 'project'));
   return (
     <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4">
       <div className="flex items-center justify-between gap-2 mb-3">
@@ -222,6 +226,15 @@ const StartChecklist = ({ steps }: { steps: StartStep[] }) => {
           </li>
         ))}
       </ul>
+      {wizardUseful && (
+        <button
+          type="button"
+          onClick={() => navigate(orgSetupPath(orgId))}
+          className="mt-2 w-full rounded-xl border border-[rgb(var(--color-border))] px-3 py-2 text-sm font-medium text-[rgb(var(--color-accent))] hover:bg-[rgb(var(--color-hover))] transition-colors"
+        >
+          {t('setup.resume')}
+        </button>
+      )}
     </div>
   );
 };
@@ -334,7 +347,7 @@ const MyWorkTab = ({ orgId, members, currentUserId, isManager }: MyWorkTabProps)
   return (
     <div className="space-y-5">
       {mine.length >= TEAM_TASKS_READ_LIMIT && <TruncatedDataNotice limit={TEAM_TASKS_READ_LIMIT} />}
-      {showChecklist && <StartChecklist steps={startSteps} />}
+      {showChecklist && <StartChecklist steps={startSteps} orgId={orgId} />}
       {showNewcomerHints && <NewcomerHints />}
 
       {/* Carte de synthèse « progress-first » */}

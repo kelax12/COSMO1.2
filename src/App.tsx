@@ -81,7 +81,7 @@ const CGUPage = lazyWithRetry(() => import('@/pages/CGUPage'), ['legal', 'seo'])
 // `translator('tasks')`.
 const InvitePage = lazyWithRetry(() => import('@/pages/InvitePage'), ['invite', 'overlays', 'tasks']);
 const AdminPage = lazyWithRetry(() => import('@/pages/AdminPage'), ['admin', 'overlays']);
-const OrganizationOnboardingPage = lazyWithRetry(() => import('@/pages/OrganizationOnboardingPage'), ['org', 'overlays']);
+const OrganizationOnboardingPage = lazyWithRetry(() => import('@/pages/OrganizationOnboardingPage'), ['org', 'orgSetup', 'overlays', 'portfolio']);
 const OrganizationPage = lazyWithRetry(() => import('@/pages/OrganizationPage'), ['csv', 'eventModal', 'okr', 'org', 'overlays', 'tasks']);
 const ClaimOrgInvitePage = lazyWithRetry(() => import('@/pages/ClaimOrgInvitePage'), ['org', 'overlays']);
 const NotFoundPage = lazyWithRetry(() => import('@/pages/NotFoundPage'), ['seo']);

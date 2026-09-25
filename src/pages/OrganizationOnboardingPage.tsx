@@ -1,15 +1,29 @@
-import { useNavigate } from 'react-router';
+import { Suspense } from 'react';
+import { useNavigate, useSearchParams } from 'react-router';
 import { ArrowRight } from 'lucide-react';
+import { useAuth } from '@/modules/auth/AuthContext';
+import { lazyWithRetry } from '@/lib/lazy-with-retry';
+import { orgSetupPath, parseSetupScreen, type OrgSetupScreen } from '@/components/organization/org-setup.helpers';
 import Logo from '@/components/Logo';
 import CreateOrJoinOrganization from '@/components/organization/CreateOrJoinOrganization';
 import { useActiveOrganization } from '@/modules/organizations';
 import { useT } from '@/i18n/useT';
 import { NAME_SLOT, splitAroundName } from '@/i18n/name-slot';
 
+// L'assistant n'est téléchargé que par qui vient de créer une entreprise.
+// Catalogues déclarés par la ROUTE (`App.tsx`), seule lue par
+// `lazy-namespaces.guard.test.ts`.
+const OrgSetupWizard = lazyWithRetry(() => import('@/components/organization/OrgSetupWizard'));
+
 /**
  * Onboarding entreprise — affiché juste après une inscription « Entreprise »
  * (SignupPage / LoginModal redirigent ici). L'utilisateur crée son entreprise
  * (code généré à partager) ou rejoint via un code (demande envoyée à l'admin).
+ *
+ * Après une CRÉATION, la page devient l'assistant de démarrage (`?setup=<org>`,
+ * étape dans `?step=`) : inviter par e-mail, une première équipe, un premier
+ * projet à partir d'un modèle. Réservé à un admin de cette organisation, soit
+ * celui qui vient de la créer ; tout autre cas retombe sur l'écran ordinaire.
  *
  * Page standalone plein écran (hors Layout) — l'utilisateur n'a pas encore
  * d'entreprise et n'a pas besoin de la nav applicative.
@@ -17,7 +31,22 @@ import { NAME_SLOT, splitAroundName } from '@/i18n/name-slot';
 const OrganizationOnboardingPage = () => {
   const { t, tp } = useT('org');
   const navigate = useNavigate();
-  const { activeOrg, organizations, isLoading } = useActiveOrganization();
+  const { activeOrg, organizations, isLoading, setActiveOrgId } = useActiveOrganization();
+  const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const setupOrgId = searchParams.get('setup');
+  const setupOrg = setupOrgId ? organizations.find((o) => o.id === setupOrgId && o.myRole === 'admin') : undefined;
+  const screen = parseSetupScreen(searchParams.get('step'));
+  // Sans `replace` : chaque étape est une entrée d'historique, le bouton
+  // précédent ramène à la précédente au lieu de quitter l'assistant.
+  const goToScreen = (next: OrgSetupScreen) => {
+    if (!setupOrgId) return;
+    navigate(orgSetupPath(setupOrgId, next));
+  };
+  const finishSetup = () => {
+    if (setupOrgId) setActiveOrgId(setupOrgId);
+    navigate('/entreprise');
+  };
 
   const [orgSentenceBefore, orgSentenceAfter] = splitAroundName(
     t('onboarding.memberOfOrg', { name: NAME_SLOT }),
@@ -39,6 +68,23 @@ const OrganizationOnboardingPage = () => {
           </p>
         </div>
 
+        {setupOrgId && (isLoading || setupOrg) ? (
+          setupOrg ? (
+            <Suspense fallback={<div className="h-40" aria-hidden="true" />}>
+              <OrgSetupWizard
+                orgId={setupOrg.id}
+                orgName={setupOrg.name}
+                currentUserId={user?.id}
+                screen={screen}
+                onScreen={goToScreen}
+                onFinish={finishSetup}
+              />
+            </Suspense>
+          ) : (
+            <div className="h-40" aria-hidden="true" />
+          )
+        ) : (
+        <>
         {/* Multi-org : déjà membre → raccourci vers l'org active, MAIS on
             peut toujours en créer/rejoindre une autre en dessous. */}
         {!isLoading && activeOrg && (
@@ -66,12 +112,16 @@ const OrganizationOnboardingPage = () => {
             <p className="text-xs text-[rgb(var(--color-text-muted))]">{t('onboarding.orCreateAnother')}</p>
           </div>
         )}
-        <CreateOrJoinOrganization onCreated={() => { /* le code s'affiche dans le composant */ }} />
+        <CreateOrJoinOrganization
+          onCreated={(org) => setSearchParams({ setup: org.id })}
+        />
+        </>
+        )}
 
         <div className="mt-6 pt-6 border-t border-[rgb(var(--color-border))] text-center">
           <button
             type="button"
-            onClick={() => navigate('/dashboard')}
+            onClick={() => (setupOrg ? finishSetup() : navigate('/dashboard'))}
             className="text-sm font-medium text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))] transition-colors"
           >
             {t('onboarding.later')}
