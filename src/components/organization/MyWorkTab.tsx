@@ -27,7 +27,6 @@ import TeamTaskModal from './TeamTaskModal';
 import { MyWorkSkeleton } from './OrgLoadingSkeletons';
 import { useT } from '@/i18n/useT';
 import { buildOrgLink } from './deep-link.helpers';
-import { orgSetupPath } from './org-setup.helpers';
 import { lazyWithRetry } from '@/lib/lazy-with-retry';
 
 interface MyWorkTabProps {
@@ -189,6 +188,10 @@ const AgendaEventsCard = ({ events }: { events: CalendarEvent[] }) => {
   );
 };
 
+// Entrée de l'assistant de démarrage, écrite en toutes lettres plutôt
+// qu'importée d'`org-setup.helpers` : ce module, partagé avec cet écran,
+// deviendrait un chunk de plus dans la table de préchargement du chunk
+// d'ENTRÉE (mesuré le 2026-09-25). Même forme que `orgSetupPath`, testée là-bas.
 const StartChecklist = ({ steps, orgId }: { steps: StartStep[]; orgId: string }) => {
   const { t } = useT('org');
   const navigate = useNavigate();
@@ -229,7 +232,7 @@ const StartChecklist = ({ steps, orgId }: { steps: StartStep[]; orgId: string })
       {wizardUseful && (
         <button
           type="button"
-          onClick={() => navigate(orgSetupPath(orgId))}
+          onClick={() => navigate(`/entreprise/onboarding?setup=${encodeURIComponent(orgId)}`)}
           className="mt-2 w-full rounded-xl border border-[rgb(var(--color-border))] px-3 py-2 text-sm font-medium text-[rgb(var(--color-accent))] hover:bg-[rgb(var(--color-hover))] transition-colors"
         >
           {t('setup.resume')}

@@ -22,7 +22,8 @@ describe('assistant de démarrage : ordre des étapes', () => {
   });
 
   it('écrit le chemin sans étape pour la première, avec elle ensuite', () => {
-    expect(orgSetupPath('org-1')).toBe('/entreprise/onboarding?setup=org-1');
+    // Forme recopiée en toutes lettres par Réglages et l'Aperçu (cf. leur note).
+    expect(orgSetupPath('org-1')).toBe(`/entreprise/onboarding?setup=${encodeURIComponent('org-1')}`);
     expect(orgSetupPath('org-1', 'team')).toBe('/entreprise/onboarding?setup=org-1&step=team');
   });
 });
