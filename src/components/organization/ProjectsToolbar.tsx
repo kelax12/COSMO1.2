@@ -1,47 +1,22 @@
 // ═══════════════════════════════════════════════════════════════════
 // Onglet Projets — barre d'outils
 //
-// Une ligne, trois questions, dans cet ordre de lecture :
-//   1. « qu'est-ce que je regarde ? »  → périmètre (personne, équipe)
-//   2. « comment je le regarde ? »     → vue + réglages rares (menu ⋯)
-//   3. « qu'est-ce que je crée ? »     → action primaire, seule pleine
-//
-// L'ancienne barre alignait 12 contrôles dans quatre grammaires visuelles
-// différentes (pastille, segment, select, icône seule) pour exprimer la même
-// chose. Chaque regroupement ci-dessous corrige un état illisible précis —
-// les commentaires le disent au cas par cas.
+// « Comment je le regarde ? » (vue, colonnes, lignes, sélection) et « qu'est-ce
+// que je crée ? ». « Qu'est-ce que je regarde ? » (personne, équipe, état,
+// recherche) est passé le 2026-09-25 dans `OrgTaskFilterBar`, la barre de
+// filtres partagée avec l'onglet Tâches, et dans l'URL.
 // ═══════════════════════════════════════════════════════════════════
 
-import { Plus, LayoutList, SquareKanban, CalendarRange, UserRound, Users, X, Table2, ListChecks } from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-} from '@/components/ui/dropdown-menu';
-import type { OrgMember } from '@/modules/organizations';
-import type { OrgTeam } from '@/modules/org-teams';
-import MemberAvatar from './MemberAvatar';
-import type { ProjectsUiPrefs, TaskStatusFilter } from './team-projects.helpers';
+import { Plus, LayoutList, SquareKanban, CalendarRange, Table2, ListChecks } from 'lucide-react';
+import type { ProjectsUiPrefs } from './team-projects.helpers';
 import { useT } from '@/i18n/useT';
-import TeamColorDot from './TeamColorDot';
 
 interface ProjectsToolbarProps {
-  members: OrgMember[];
-  teams: OrgTeam[];
-  currentUserId?: string;
   prefs: ProjectsUiPrefs;
   updatePrefs: (patch: Partial<ProjectsUiPrefs>) => void;
   /** Droit `project.create` — affiche « Nouveau projet ». */
   canCreateProject: boolean;
-  /** Droit `team.create` — affiche « Créer une équipe » dans le sélecteur. */
-  canCreateTeam: boolean;
   onNewProject: () => void;
-  /** Ouvre la création d'équipe — n'existe que si le sélecteur d'équipe est
-   *  affiché (au moins une équipe déjà créée). */
-  onCreateTeam: () => void;
   /** Vue réellement affichée (le portefeuille peut s'imposer sans choix, M2). */
   effectiveView: ProjectsUiPrefs['view'];
   /**
@@ -77,28 +52,8 @@ const ViewTab = ({ active, onClick, label, Icon }: {
   </button>
 );
 
-/** Chip de filtre actif : lecture + retrait, jamais d'activation. */
-const FilterChip = ({ label, removeLabel, onRemove }: {
-  label: string;
-  removeLabel: string;
-  onRemove: () => void;
-}) => (
-  <span className="inline-flex items-center gap-1 pl-2.5 pr-1 py-0.5 rounded-full bg-indigo-500/12 text-indigo-600 dark:text-indigo-300 text-xs font-medium">
-    {label}
-    <button
-      type="button"
-      onClick={onRemove}
-      aria-label={removeLabel}
-      className="w-4 h-4 rounded-full inline-flex items-center justify-center opacity-60 hover:opacity-100 hover:bg-indigo-500/20 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
-    >
-      <X size={11} aria-hidden="true" />
-    </button>
-  </span>
-);
-
 const ProjectsToolbar = ({
-  members, teams, currentUserId, prefs, updatePrefs, canCreateProject, canCreateTeam, onNewProject, onCreateTeam,
-  effectiveView, onStartSelect,
+  prefs, updatePrefs, canCreateProject, onNewProject, effectiveView, onStartSelect,
 }: ProjectsToolbarProps) => {
   const { t } = useT('org');
   const { t: pf } = useT('portfolio');
@@ -107,182 +62,17 @@ const ProjectsToolbar = ({
   // sélection est passée dans le menu de chaque projet, là où sont les tâches ;
   // `showArchived` reste sur la bascule contextuelle du bas de liste, qui
   // affiche le compte et n'existe que s'il y a des archives.
-  const { assigneeFilter, teamFilter, statusFilter, kanbanGroupBy, timelineGroupBy } = prefs;
+  const { kanbanGroupBy, timelineGroupBy } = prefs;
   const view = effectiveView;
   const chooseView = (next: ProjectsUiPrefs['view']) => updatePrefs({ view: next, viewChosen: true });
-
-  // Le périmètre a TROIS branches, pas deux. L'ancienne barre n'en montrait que
-  // deux : choisir un collègue laissait « Toutes » et « Mes tâches » également
-  // éteints, et plus rien ne disait que la liste était filtrée.
-  const scopeIsAll = assigneeFilter === null;
-  const scopeIsMine = !!currentUserId && assigneeFilter === currentUserId;
-  const scopeIsMember = !!assigneeFilter && assigneeFilter !== currentUserId;
-  const filteredMember = members.find((m) => m.userId === assigneeFilter);
 
   const segBase = 'h-8 px-2.5 rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]/60';
   const segOn = 'bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-primary))]';
   const segOff = 'text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-secondary))]';
 
-  const selectedTeam = teams.find((tm) => tm.id === teamFilter);
-  const teamLabel =
-    teamFilter === '' ? pf('toolbar.allTeams')
-      : teamFilter === 'org' ? pf('toolbar.orgNoTeam')
-        : selectedTeam?.name ?? pf('toolbar.allTeams');
-
-  // ─── Chips des filtres actifs ────────────────────────────────────
-  // Un seul endroit pour voir CE QUI filtre et tout retirer. Les quatre axes
-  // sont persistés par organisation : sans ce récapitulatif, on revient trois
-  // jours plus tard sur une liste filtrée sans se rappeler l'avoir filtrée.
-  const statusChipLabel: Record<Exclude<TaskStatusFilter, 'all'>, string> = {
-    open: pf('toolbar.chipOpen'),
-    overdue: pf('toolbar.chipOverdue'),
-    doneThisWeek: pf('toolbar.chipDone'),
-  };
-
-  const chips: { key: string; label: string; onRemove: () => void }[] = [];
-  if (scopeIsMember && filteredMember) {
-    chips.push({
-      key: 'assignee',
-      label: pf('toolbar.chipAssignee', { name: filteredMember.displayName }),
-      onRemove: () => updatePrefs({ assigneeFilter: null }),
-    });
-  }
-  if (teamFilter !== '') {
-    chips.push({
-      key: 'team',
-      label: pf('toolbar.chipTeam', { name: teamLabel }),
-      onRemove: () => updatePrefs({ teamFilter: '' }),
-    });
-  }
-  if (statusFilter !== 'all') {
-    chips.push({
-      key: 'status',
-      label: statusChipLabel[statusFilter],
-      onRemove: () => updatePrefs({ statusFilter: 'all' }),
-    });
-  }
-
-  const clearAll = () =>
-    updatePrefs({ assigneeFilter: null, teamFilter: '', statusFilter: 'all' });
-
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        {/* ── Périmètre : qu'est-ce que je regarde ? ─────────────── */}
-        <div className="flex items-center gap-2 flex-wrap">
-          <div className="inline-flex rounded-lg border border-[rgb(var(--color-border))] p-0.5 gap-0.5">
-            <button
-              type="button"
-              onClick={() => updatePrefs({ assigneeFilter: null, teamFilter: '' })}
-              aria-pressed={scopeIsAll && teamFilter === ''}
-              className={`${segBase} ${scopeIsAll && teamFilter === '' ? segOn : segOff}`}
-            >
-              {pf('toolbar.scopeAll')}
-            </button>
-            {currentUserId && (
-              <button
-                type="button"
-                onClick={() => updatePrefs({ assigneeFilter: currentUserId, teamFilter: '' })}
-                aria-pressed={scopeIsMine && teamFilter === ''}
-                className={`${segBase} ${scopeIsMine && teamFilter === '' ? segOn : segOff}`}
-              >
-                {pf('toolbar.scopeMine')}
-              </button>
-            )}
-
-            {/* Le 3ᵉ segment EST le menu des membres : il porte l'avatar de la
-                personne filtrée, donc l'état ne peut plus être muet. */}
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                aria-label={pf('toolbar.filterAssignee')}
-                aria-pressed={scopeIsMember && teamFilter === ''}
-                className={`${segBase} inline-flex items-center gap-1.5 ${scopeIsMember && teamFilter === '' ? segOn : segOff}`}
-              >
-                {scopeIsMember && teamFilter === '' && filteredMember ? (
-                  <>
-                    <MemberAvatar avatar={filteredMember.avatar} name={filteredMember.displayName} size={18} />
-                    <span className="max-w-[100px] truncate">{filteredMember.displayName}</span>
-                  </>
-                ) : (
-                  <>
-                    <UserRound size={14} aria-hidden="true" />
-                    <span className="hidden sm:inline">{pf('toolbar.scopeMember')}</span>
-                  </>
-                )}
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-56 max-h-72 overflow-y-auto">
-                <DropdownMenuLabel>{pf('toolbar.seeTasksOf')}</DropdownMenuLabel>
-                <DropdownMenuItem onClick={() => updatePrefs({ assigneeFilter: null, teamFilter: '' })}>
-                  <span className="text-[rgb(var(--color-text-muted))]">{pf('toolbar.everyone')}</span>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                {members.map((m) => (
-                  <DropdownMenuItem key={m.userId} onClick={() => updatePrefs({ assigneeFilter: m.userId, teamFilter: '' })}>
-                    <MemberAvatar avatar={m.avatar} name={m.displayName} size={22} />
-                    <span className="truncate">{m.userId === currentUserId ? pf('toolbar.you') : m.displayName}</span>
-                    {m.userId === assigneeFilter && (
-                      <span className="ml-auto text-xs text-[rgb(var(--color-text-muted))]" aria-hidden="true">✓</span>
-                    )}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            {/* 4ᵉ segment : équipe, même grammaire que « Une personne » — un
-                menu dont le déclencheur porte l'état sélectionné. Avant, ce
-                filtre vivait dans un `<select>` séparé hors du groupe : rien
-                ne disait qu'il appartenait au même axe « qu'est-ce que je
-                regarde ? » que Tout / Moi / Une personne. */}
-            {teams.length > 0 && (
-              <DropdownMenu>
-                <DropdownMenuTrigger
-                  aria-label={pf('toolbar.filterTeam')}
-                  aria-pressed={teamFilter !== ''}
-                  className={`${segBase} inline-flex items-center gap-1.5 ${teamFilter !== '' ? segOn : segOff}`}
-                >
-                  <Users size={14} aria-hidden="true" />
-                  <span className="hidden sm:inline max-w-[100px] truncate">
-                    {teamFilter === '' ? pf('toolbar.teamLabel') : teamLabel}
-                  </span>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-56 max-h-72 overflow-y-auto">
-                  <DropdownMenuLabel>{pf('toolbar.filterTeam')}</DropdownMenuLabel>
-                  <DropdownMenuItem onClick={() => updatePrefs({ teamFilter: '' })}>
-                    <span className="text-[rgb(var(--color-text-muted))]">{pf('toolbar.allTeams')}</span>
-                    {teamFilter === '' && (
-                      <span className="ml-auto text-xs text-[rgb(var(--color-text-muted))]" aria-hidden="true">✓</span>
-                    )}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => updatePrefs({ teamFilter: 'org', assigneeFilter: null })}>
-                    <span>{pf('toolbar.orgNoTeam')}</span>
-                    {teamFilter === 'org' && (
-                      <span className="ml-auto text-xs text-[rgb(var(--color-text-muted))]" aria-hidden="true">✓</span>
-                    )}
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  {teams.map((tm) => (
-                    <DropdownMenuItem key={tm.id} onClick={() => updatePrefs({ teamFilter: tm.id, assigneeFilter: null })}>
-                      <TeamColorDot color={tm.color} />
-                      <span className="truncate">{tm.name}</span>
-                      {tm.id === teamFilter && (
-                        <span className="ml-auto text-xs text-[rgb(var(--color-text-muted))]" aria-hidden="true">✓</span>
-                      )}
-                    </DropdownMenuItem>
-                  ))}
-                  {canCreateTeam && (
-                    <>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={onCreateTeam}>
-                        <span className="text-indigo-600 dark:text-indigo-400">{pf('toolbar.createTeamOption')}</span>
-                      </DropdownMenuItem>
-                    </>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
-          </div>
-        </div>
-
         {/* ── Vue, réglages rares, action primaire ───────────────── */}
         <div className="flex items-center gap-2 flex-wrap">
           <div
@@ -388,27 +178,6 @@ const ProjectsToolbar = ({
         </div>
       </div>
 
-      {/* Rangée de chips — n'existe que s'il y a quelque chose à dire. */}
-      {chips.length > 0 && (
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="text-xs text-[rgb(var(--color-text-muted))]">{pf('toolbar.activeFilters')}</span>
-          {chips.map((chip) => (
-            <FilterChip
-              key={chip.key}
-              label={chip.label}
-              removeLabel={pf('toolbar.removeFilter', { name: chip.label })}
-              onRemove={chip.onRemove}
-            />
-          ))}
-          <button
-            type="button"
-            onClick={clearAll}
-            className="text-xs text-[rgb(var(--color-text-muted))] underline underline-offset-2 hover:text-[rgb(var(--color-text-secondary))] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded"
-          >
-            {pf('toolbar.clearAll')}
-          </button>
-        </div>
-      )}
     </div>
   );
 };

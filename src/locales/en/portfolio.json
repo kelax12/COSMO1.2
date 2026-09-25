@@ -180,11 +180,7 @@
     "editTaskOverdue": "Edit task {{name}} (overdue)"
   },
   "toolbar": {
-    "scopeAll": "All",
-    "scopeMine": "Me",
-    "scopeMember": "Someone",
     "you": "You",
-    "teamLabel": "Team",
     "viewLabel": "View",
     "viewList": "List",
     "viewKanban": "Board",
@@ -193,21 +189,6 @@
     "rowsLabel": "Rows:",
     "groupByAssignee": "Person",
     "groupByProject": "Project",
-    "groupByStatus": "Status",
-    "activeFilters": "Active filters:",
-    "clearAll": "Clear all",
-    "removeFilter": "Remove the “{{name}}” filter",
-    "chipAssignee": "Assignee: {{name}}",
-    "chipTeam": "Team: {{name}}",
-    "chipOpen": "Open",
-    "chipOverdue": "Overdue",
-    "chipDone": "Completed this week",
-    "filterAssignee": "Filter by assignee",
-    "seeTasksOf": "See tasks from",
-    "everyone": "Everyone",
-    "filterTeam": "Filter by team",
-    "allTeams": "All teams",
-    "orgNoTeam": "Company (no team)",
-    "createTeamOption": "+ Create a team"
+    "groupByStatus": "Status"
   }
 }
