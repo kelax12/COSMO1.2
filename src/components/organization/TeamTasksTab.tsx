@@ -27,6 +27,7 @@ import TeamTasksToolbar, { type SortField } from './TeamTasksToolbar';
 import TruncatedDataNotice from './TruncatedDataNotice';
 import TeamTasksProjectChips from './TeamTasksProjectChips';
 import OrgTaskFilterBar from './OrgTaskFilterBar';
+import { usePermissionHints } from './permission-hints';
 import TaskSelectCheckbox from './TaskSelectCheckbox';
 import { useTeamTasksBulk } from './use-team-tasks-bulk';
 import { TeamTasksBulkLayer } from './team-tasks-bulk.lazy';
@@ -77,6 +78,7 @@ const ROWS_PAGE = 100;
  */
 const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: TeamTasksTabProps) => {
   const { can, canAssign } = useMyOrgPermissions(orgId);
+  const hints = usePermissionHints(orgId);
   const { t, tp } = useT('org');
   const { user } = useAuth();
   const { data: allProjects = [], isLoading: loadingProjects } = useTeamProjects(orgId);
@@ -234,6 +236,7 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
         projectFilter={projectFilter}
         onProjectFilter={(project) => setFilters({ project })}
         canCreateProject={can['project.create']}
+        createDeniedReason={hints.deniedReason('project.create')}
       />
 
       <OrgTaskFilterBar
@@ -254,6 +257,7 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
         sortDirection={sortDirection}
         onToggleSortDirection={() => setSortDirection((d) => (d === 'asc' ? 'desc' : 'asc'))}
         canCreate={projects.length > 0 && can['task.create']}
+        createDeniedReason={projects.length === 0 ? t('projects.tasksTabNoProject') : hints.deniedReason('task.create')}
         onStartSelect={sortedTasks.length > 0 && !bulk.selectMode ? () => bulk.setSelectMode(true) : undefined}
         onCreate={() => setTaskModal({ mode: 'create' })}
         // `!isLoading` : « 0 sur 0 affichées » est un chiffre, donc une
@@ -322,6 +326,9 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
                       <button
                         type="button"
                         onClick={() => toggleComplete(task)}
+                        // Droits : grisée ET expliquée, jamais refusée après coup.
+                        disabled={!!hints.taskEditReason(task)}
+                        title={hints.taskEditReason(task)}
                         role="checkbox"
                         aria-checked={task.completed}
                         aria-label={task.completed ? t('projects.markIncomplete') : t('projects.markComplete')}
@@ -395,7 +402,9 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
                         return (
                           <DropdownMenu>
                             <DropdownMenuTrigger
-                              className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-semibold border transition-colors hover:bg-[rgb(var(--color-hover))]"
+                              disabled={!!hints.taskEditReason(task)}
+                              title={hints.taskEditReason(task)}
+                              className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-semibold border transition-colors hover:bg-[rgb(var(--color-hover))] disabled:opacity-50 disabled:cursor-not-allowed"
                               style={{ borderColor: 'rgb(var(--color-border))', color: 'rgb(var(--color-text-secondary))' }}
                               aria-label={t('projects.tasksTabStatusAria', { name: task.name })}
                             >
@@ -450,15 +459,20 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
                           <DropdownMenuItem onClick={() => setSchedulingTask(task)}>
                             <CalendarPlus aria-hidden="true" /> {t('projects.tasksTabScheduleAction')}
                           </DropdownMenuItem>
-                          {(can['task.deleteAny'] || task.createdBy === currentUserId) && (
-                            <DropdownMenuItem
-                              variant="destructive"
-                              onClick={() => removeWithUndo(task)}
-                              className="!text-red-500 focus:!text-red-500"
-                            >
-                              <Trash2 className="!text-red-500" aria-hidden="true" /> {t('common.deleteAction')}
-                            </DropdownMenuItem>
-                          )}
+                          {/* Toujours présent : grisé avec sa raison plutôt que masqué. */}
+                          <DropdownMenuItem
+                            variant="destructive"
+                            disabled={!!hints.taskDeleteReason(task)}
+                            onClick={() => removeWithUndo(task)}
+                            className="!text-red-500 focus:!text-red-500 flex-wrap"
+                          >
+                            <Trash2 className="!text-red-500" aria-hidden="true" /> {t('common.deleteAction')}
+                            {hints.taskDeleteReason(task) && (
+                              <span className="basis-full text-caption font-normal text-[rgb(var(--color-text-muted))] max-w-56">
+                                {hints.taskDeleteReason(task)}
+                              </span>
+                            )}
+                          </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </td>

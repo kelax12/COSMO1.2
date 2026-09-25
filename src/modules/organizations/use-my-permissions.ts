@@ -15,6 +15,9 @@ import {
   DEFAULT_ASSIGN_TARGETS,
   ORG_PERMISSION_KEYS,
   canAssignTo,
+  canDeleteTeamTask,
+  canEditTeamTask,
+  type TaskOwnership,
   effectiveAssignTargets,
   effectivePermissions,
   type EffectiveOrgPermissions,
@@ -31,6 +34,10 @@ export interface MyOrgPermissions {
   canAssign: (targetUserId: string) => boolean;
   /** Les membres à qui il peut assigner une tâche (annuaire filtré). */
   assignableMembers: OrgMember[];
+  /** Puis-je modifier cette tâche ? (miroir de `team_tasks_update`) */
+  canEditTask: (task: TaskOwnership) => boolean;
+  /** Puis-je supprimer cette tâche ? (miroir de `delete_team_task`) */
+  canDeleteTask: (task: TaskOwnership) => boolean;
   /** `true` tant que l'annuaire ou les surcharges ne sont pas chargés. */
   isLoading: boolean;
 }
@@ -67,6 +74,8 @@ export const useMyOrgPermissions = (orgId: string | undefined): MyOrgPermissions
         assignTargets: [...DEFAULT_ASSIGN_TARGETS],
         canAssign: () => true,
         assignableMembers: members,
+        canEditTask: () => true,
+        canDeleteTask: () => true,
         isLoading,
       };
     }
@@ -88,6 +97,8 @@ export const useMyOrgPermissions = (orgId: string | undefined): MyOrgPermissions
       assignableMembers: members.filter((m) =>
         canAssignTo({ actor: me, target: m, members, targets: assignTargets }),
       ),
+      canEditTask: (task: TaskOwnership) => canEditTeamTask(can, me.userId, task),
+      canDeleteTask: (task: TaskOwnership) => canDeleteTeamTask(can, me.userId, task),
       isLoading,
     };
   }, [members, overrides, currentUserId, isLoading]);

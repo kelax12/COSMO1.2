@@ -2,13 +2,13 @@ import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X, AlertCircle, Trash2, Loader2, Check, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useMyOrgPermissions } from '@/modules/organizations';
 import { useMarkTaskNotificationsRead, type OrgMember } from '@/modules/organizations';
 import type { TeamProject, TeamTask, TeamTaskStatus, CreateTeamTaskInput, UpdateTeamTaskInput } from '@/modules/team-projects';
 import { priorityLabelOf } from './team-projects.helpers';
 import MemberAvatar from './MemberAvatar';
 import TaskCommentsSection from './TaskCommentsSection';
 import { OrgCreateBoundary } from './org-create.context';
+import { usePermissionHints } from './permission-hints';
 import TeamAssigneeGroups from './TeamAssigneeGroups';
 import TeamTaskFields from './TeamTaskFields';
 import TeamSubtasksSection from './TeamSubtasksSection';
@@ -167,7 +167,11 @@ const TeamTaskModal = ({
   // prop dédié : tous les projets listés ici partagent déjà celui de la
   // tâche (édition) ou de la liste passée par l'appelant (création).
   const orgId = task?.orgId ?? projects[0]?.orgId ?? '';
-  const { can, canAssign } = useMyOrgPermissions(orgId);
+  const { can, canAssign, taskEditReason, taskDeleteReason } = usePermissionHints(orgId);
+  // Une tâche existante qu'on ne peut pas modifier s'ouvre en LECTURE : le
+  // bouton d'enregistrement est grisé et dit pourquoi, au lieu d'un refus serveur.
+  const editReason = !isCreating && task ? taskEditReason(task) : undefined;
+  const deleteReason = !isCreating && task ? taskDeleteReason(task) : undefined;
 
   // Ouvrir une tâche EXISTANTE fait disparaître son badge « commentaires non
   // lus » (mig. 109) — pas la tâche en cours de création, qui n'a encore
@@ -400,6 +404,11 @@ const TeamTaskModal = ({
 
         {/* Corps */}
         <div className="p-4 sm:p-6 overflow-y-auto flex-1 min-h-0" style={{ backgroundColor: 'rgb(var(--color-background))' }}>
+          {editReason && (
+            <p className="mb-4 p-3 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-hover))] text-xs text-[rgb(var(--color-text-secondary))]" role="note">
+              {editReason}
+            </p>
+          )}
           {error && (
             <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg" role="alert">
               <div className="flex items-center gap-2 text-red-700 dark:text-red-300 text-sm">
@@ -488,7 +497,8 @@ const TeamTaskModal = ({
               variant="ghost"
               size="lg"
               onClick={() => { onDelete(task); onClose(); }}
-              disabled={pending}
+              disabled={pending || !!deleteReason}
+              title={deleteReason}
               className="min-h-11 w-full sm:w-auto text-red-500 hover:text-red-600 hover:bg-red-500/10"
             >
               <Trash2 size={16} data-icon="inline-start" /> {t('common.deleteAction')}
@@ -502,9 +512,10 @@ const TeamTaskModal = ({
               type="button"
               size="lg"
               onClick={handleSave}
-              disabled={pending || !name.trim() || (!hasChanges && !isCreating)}
+              disabled={pending || !name.trim() || (!hasChanges && !isCreating) || !!editReason}
+              title={editReason}
               className={`min-h-11 w-full sm:w-auto ${
-                pending || !name.trim() || (!hasChanges && !isCreating)
+                pending || !name.trim() || (!hasChanges && !isCreating) || !!editReason
                   ? '!bg-[rgb(var(--color-accent-solid))] !text-[rgb(var(--color-accent-solid-foreground))] !opacity-40 !border-0'
                   : 'bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] !text-[rgb(var(--color-accent-solid-foreground))] !border-0'
               }`}

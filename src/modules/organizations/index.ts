@@ -35,6 +35,8 @@ export {
   canAssignTo,
   canGrant,
   canEditPermissionsOf,
+  canEditTeamTask,
+  canDeleteTeamTask,
 } from './permissions';
 
 // ─── Constants & query keys ──────────────────────────────────────────

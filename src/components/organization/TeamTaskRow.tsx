@@ -1,11 +1,12 @@
 import { Check, Trash2, CalendarClock, AlignLeft } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { getDateLocale } from '@/i18n/format';
-import { useMyOrgPermissions, type OrgMember } from '@/modules/organizations';
+import type { OrgMember } from '@/modules/organizations';
 import type { TeamTask } from '@/modules/team-projects';
 import { PRIORITY_META, isTaskOverdue, taskDisplayStatus, priorityLabelOf } from './team-projects.helpers';
 import AssigneesPicker from './AssigneesPicker';
 import { useT } from '@/i18n/useT';
+import { usePermissionHints } from './permission-hints';
 
 interface TeamTaskRowProps {
   task: TeamTask;
@@ -28,7 +29,10 @@ const TeamTaskRow = ({
 }: TeamTaskRowProps) => {
   // Portée d'assignation : la ligne ne connaît que sa tâche, et `task.orgId`
   // suffit — le hook résout l'utilisateur courant lui-même.
-  const { canAssign } = useMyOrgPermissions(task.orgId);
+  const { canAssign, taskEditReason, taskDeleteReason } = usePermissionHints(task.orgId);
+  // Grisés ET expliqués, jamais proposés puis refusés par le serveur.
+  const editReason = taskEditReason(task);
+  const deleteReason = taskDeleteReason(task);
   const { t } = useT('org');
   const deadlineDate = task.deadline ? parseISO(task.deadline) : null;
   const overdue = isTaskOverdue(task);
@@ -57,9 +61,11 @@ const TeamTaskRow = ({
       <button
         type="button"
         onClick={() => onToggleComplete(task)}
+        disabled={!!editReason}
+        title={editReason}
         aria-label={task.completed ? t('projects.markIncomplete') : t('projects.markComplete')}
         aria-pressed={task.completed}
-        className={`w-6 h-6 rounded-md border flex items-center justify-center shrink-0 transition-colors ${
+        className={`disabled:opacity-50 disabled:cursor-not-allowed w-6 h-6 rounded-md border flex items-center justify-center shrink-0 transition-colors ${
           task.completed
             ? 'bg-indigo-600 border-indigo-600 text-white'
             : 'border-[rgb(var(--color-border))] hover:border-indigo-500'
@@ -120,7 +126,7 @@ const TeamTaskRow = ({
         members={members}
         value={task.assigneeIds}
         onChange={(ids) => onReassign(task, ids)}
-        canAssign={canAssign}
+        canAssign={editReason ? () => false : canAssign}
         revealAddOnHover
       />
 
@@ -128,8 +134,10 @@ const TeamTaskRow = ({
       <button
         type="button"
         onClick={() => onDelete(task)}
+        disabled={!!deleteReason}
+        title={deleteReason}
         aria-label={t('projects.deleteTaskAria', { name: task.name })}
-        className="w-8 h-8 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-red-500 hover:bg-red-500/10 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-all"
+        className="disabled:cursor-not-allowed disabled:hover:text-[rgb(var(--color-text-muted))] disabled:hover:bg-transparent w-8 h-8 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-red-500 hover:bg-red-500/10 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-all"
       >
         <Trash2 size={15} aria-hidden="true" />
       </button>

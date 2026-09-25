@@ -1,5 +1,6 @@
 import { ArrowUpDown, ChevronDown, ListChecks, Plus } from 'lucide-react';
 import { useT } from '@/i18n/useT';
+import { PermissionGate } from './permission-hints';
 
 export type SortField = 'priority' | 'deadline' | 'name' | 'estimatedTime' | 'project';
 
@@ -10,6 +11,8 @@ interface TeamTasksToolbarProps {
   onToggleSortDirection: () => void;
   /** Nouvelle tâche : désactivée sans projet ou sans le droit `task.create`. */
   canCreate: boolean;
+  /** Pourquoi « Nouvelle tâche » est grisée : pas de projet, ou pas le droit. */
+  createDeniedReason?: string;
   onCreate: () => void;
   /** Entre en sélection multiple (actions groupées) ; absent si rien à sélectionner. */
   onStartSelect?: () => void;
@@ -39,6 +42,7 @@ const TeamTasksToolbar = ({
   sortDirection,
   onToggleSortDirection,
   canCreate,
+  createDeniedReason,
   onCreate,
   onStartSelect,
   shownLabel,
@@ -90,6 +94,7 @@ const TeamTasksToolbar = ({
           </button>
         )}
 
+        <PermissionGate reason={canCreate ? undefined : createDeniedReason}>
         <button
           type="button"
           onClick={onCreate}
@@ -99,6 +104,7 @@ const TeamTasksToolbar = ({
           <Plus size={18} aria-hidden="true" />
           {t('projects.tasksTabNewTask')}
         </button>
+        </PermissionGate>
       </div>
 
       <div className="flex items-center gap-2 flex-wrap">

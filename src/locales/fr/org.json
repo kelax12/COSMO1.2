@@ -1198,7 +1198,12 @@
       "subordinatesHint": "Toutes les personnes placées sous lui, à tous les niveaux.",
       "everyone": "Tout le monde",
       "everyoneHint": "N'importe quel membre de l'entreprise. Rend les autres cases inutiles."
-    }
+    },
+    "denied": "Il vous faut le droit « {{right}} ». Un administrateur peut vous l'accorder depuis Membres.",
+    "deniedTaskEdit": "Vous modifiez les tâches que vous avez créées ou qui vous sont assignées. Au-delà, il faut le droit « {{right}} ».",
+    "deniedTaskDelete": "Vous supprimez les tâches que vous avez créées. Au-delà, il faut le droit « {{right}} ».",
+    "deniedAdmin": "Réservé aux administrateurs de l'entreprise.",
+    "deniedTeamDelete": "Une équipe se supprime par un administrateur ou par la personne qui l’a créée."
   },
   "members": {
     "removeTitleNamed": "Retirer {{name}} ?"

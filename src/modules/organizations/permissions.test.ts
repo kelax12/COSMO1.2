@@ -6,6 +6,9 @@ import {
   canAssignTo,
   canGrant,
   canEditPermissionsOf,
+  canEditTeamTask,
+  canDeleteTeamTask,
+  type EffectiveOrgPermissions,
   type OrgMemberPermissions,
 } from './permissions';
 import type { OrgMember } from './types';
@@ -216,5 +219,27 @@ describe('canEditPermissionsOf', () => {
 
   it('jamais sur soi-même', () => {
     expect(canEditPermissionsOf({ actorId: 'boss', actorIsAdmin: true, target: BOSS, members: MEMBERS })).toBe(false);
+  });
+});
+
+// ─── Droits sur UNE tâche (cohérence globale, 2026-09-25) ─────────────
+// Miroirs de `team_tasks_update` (mig. 115) et `delete_team_task` (mig. 152) :
+// sans eux, l'interface proposait des gestes que le serveur refusait après coup.
+describe('canEditTeamTask / canDeleteTeamTask', () => {
+  const none = Object.fromEntries(ORG_PERMISSION_KEYS.map((k) => [k, false])) as EffectiveOrgPermissions;
+  const task = { createdBy: 'author', assigneeIds: ['doer'] };
+
+  it('modifier : créateur, assigné, ou task.editAny ; personne d autre', () => {
+    expect(canEditTeamTask(none, 'author', task)).toBe(true);
+    expect(canEditTeamTask(none, 'doer', task)).toBe(true);
+    expect(canEditTeamTask(none, 'stranger', task)).toBe(false);
+    expect(canEditTeamTask({ ...none, 'task.editAny': true }, 'stranger', task)).toBe(true);
+    expect(canEditTeamTask(none, undefined, task)).toBe(false);
+  });
+
+  it('supprimer : créateur ou task.deleteAny — un assigné NE supprime PAS', () => {
+    expect(canDeleteTeamTask(none, 'author', task)).toBe(true);
+    expect(canDeleteTeamTask(none, 'doer', task)).toBe(false);
+    expect(canDeleteTeamTask({ ...none, 'task.deleteAny': true }, 'doer', task)).toBe(true);
   });
 });
