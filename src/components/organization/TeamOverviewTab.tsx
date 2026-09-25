@@ -183,7 +183,7 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
     ), 150);
     setTimeout(() => downloadCSV(
       'cosmo-stats-okr',
-      ['Objectif', 'Progression (%)', 'Nb KR'],
+      [t('overview.csvObjective'), t('overview.csvProgress'), t('overview.csvKrCount')],
       okrStats.map((o) => [o.title, o.progress, o.krCount]),
     ), 300);
   };
@@ -253,7 +253,7 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
         inProgress={Math.max(0, summary.total - summary.completed - summary.overdueCount)}
         overdue={summary.overdueCount}
         emptyLabel={t('overview.emptyPeriod')}
-        aside={<ProgressRing value={okrProgress} label="Progression OKR" />}
+        aside={<ProgressRing value={okrProgress} label={t('overview.okrProgressLabel')} />}
       />
 
       {/* Charge de l'équipe — placée juste sous la synthèse : c'est la question

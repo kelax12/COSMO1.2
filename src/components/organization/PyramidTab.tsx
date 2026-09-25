@@ -5,6 +5,7 @@ import { Move, Users, ArrowUpFromLine, UserPlus } from 'lucide-react';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
 import { useOrgTeams, useOrgTeamMembers, useCreateOrgTeam, useAddTeamMember, type OrgTeam } from '@/modules/org-teams';
 import CreateTeamModal from './CreateTeamModal';
+import OrgConfirmDialog from './OrgConfirmDialog';
 import {
   buildOrgTree,
   type OrgMember,
@@ -57,7 +58,7 @@ const EMPTY_SET = new Set<string>();
  * cibles valides surlignées et zone « Détacher » pour les admins.
  */
 const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }: PyramidTabProps) => {
-  const { t } = useT('org');
+  const { t, tp } = useT('org');
   const isMobile = useIsMobile();
   // Le GESTE (saisir une carte, la suivre au pointeur, valider ou annuler un
   // déplacement) vit dans `usePyramidDnd` : il ne connaît ni la recherche, ni
@@ -75,6 +76,10 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
     startEdit,
     finishEdit,
     cancelEdit,
+    confirmingUndo,
+    undoing,
+    confirmUndo,
+    dismissUndo,
     grabMember,
     drop,
     drag,
@@ -339,6 +344,17 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
             showWorkload={showWorkload}
             onToggleWorkload={() => setShowWorkload((v) => !v)}
           />
+          {confirmingUndo && (
+            <OrgConfirmDialog
+              title={t('pyramid.undoTitle')}
+              impact={[tp('pyramid.undoImpact', moveCount), t('pyramid.undoImpactManagers')]}
+              confirmLabel={t('pyramid.undoAction')}
+              tone="warning"
+              pending={undoing}
+              onConfirm={() => { void confirmUndo(); }}
+              onCancel={dismissUndo}
+            />
+          )}
           {showNewTeam && (
             <CreateTeamModal
               members={members}

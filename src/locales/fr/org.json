@@ -83,7 +83,6 @@
     "codeHint": "Partagez ce code pour que de nouveaux membres demandent à rejoindre l'entreprise. Chaque demande doit être validée par un administrateur.",
     "regenerate": "Régénérer le code",
     "regenerateAria": "Régénérer le code (invalide l'ancien)",
-    "regenerateConfirm": "Régénérer le code ? L'ancien code ne fonctionnera plus pour rejoindre l'entreprise.",
     "addUnderHint": "Invitez une nouvelle personne à rejoindre l'entreprise à cette place.",
     "personalLink": "Lien d'invitation personnalisé",
     "personalLinkHint": "Usage unique, valable 7 jours. Après création de son compte, la personne rejoint directement l'entreprise, rattachée à {{name}}.",
@@ -93,7 +92,12 @@
     "copyCodeAria": "Copier le code d'invitation",
     "orgCodeTitle": "Code d'invitation de l'entreprise",
     "seatsFullLink": "Cette entreprise a atteint son nombre de places : un nouveau membre ne pourrait pas rejoindre avec ce lien. Faites évoluer l'abonnement pour en ajouter.",
-    "seatsFullCode": "Cette entreprise a atteint son nombre de places : une demande faite avec ce code ne pourrait pas être acceptée."
+    "seatsFullCode": "Cette entreprise a atteint son nombre de places : une demande faite avec ce code ne pourrait pas être acceptée.",
+    "regenerateTitle": "Régénérer le code d'invitation ?",
+    "regenerateImpactOld": "L'ancien code cesse immédiatement de fonctionner.",
+    "regenerateImpactShared": "Les personnes à qui vous l'avez transmis devront recevoir le nouveau.",
+    "regenerateImpactPending": "Les demandes déjà envoyées restent en attente de validation.",
+    "regenerateAction": "Régénérer"
   },
   "pyramid": {
     "directReports_one": ", {{count}} subordonné direct",
@@ -107,9 +111,6 @@
     "detached": "{{name}} est détaché(e) de la pyramide",
     "moved": "{{name}} déplacé(e)",
     "reorgSaved": "Réorganisation enregistrée",
-    "undoConfirm_one": "Annuler la réorganisation ? Le déplacement effectué sera rétabli.",
-    "undoConfirm_many": "Annuler la réorganisation ? Les {{count}} de déplacements effectués seront rétablis.",
-    "undoConfirm_other": "Annuler la réorganisation ? Les {{count}} déplacements effectués seront rétablis.",
     "undone": "Modifications annulées",
     "dragBanner": "Glissez **{{name}}** sur son nouveau responsable, ou touchez une carte surlignée.",
     "detachAria": "Détacher {{name}} (non placé)",
@@ -165,7 +166,13 @@
     "workloadTitleOverdue_other": "{{duration}} · {{count}} ouvertes · {{overdue}} en retard",
     "workloadTitle_many": "{{duration}} · {{count}} d'ouvertes",
     "workloadTitleOverdue_many": "{{duration}} · {{count}} d'ouvertes · {{overdue}} en retard",
-    "dragHint": "Glisser {{name}} dans la pyramide"
+    "dragHint": "Glisser {{name}} dans la pyramide",
+    "undoTitle": "Annuler la réorganisation ?",
+    "undoImpact_one": "{{count}} déplacement sera rétabli.",
+    "undoImpact_many": "{{count}} de déplacements seront rétablis.",
+    "undoImpact_other": "{{count}} déplacements seront rétablis.",
+    "undoImpactManagers": "Chaque personne retrouve le responsable qu'elle avait avant.",
+    "undoAction": "Rétablir"
   },
   "overview": {
     "completed": "Terminées",
@@ -211,7 +218,11 @@
     "csvProject": "Projet",
     "loading": "Chargement des statistiques…",
     "periodDays": "{{count}} j",
-    "periodAll": "Tout"
+    "periodAll": "Tout",
+    "csvObjective": "Objectif",
+    "csvProgress": "Progression (%)",
+    "csvKrCount": "Nb KR",
+    "okrProgressLabel": "Progression OKR"
   },
   "myWork": {
     "upToDate": "À jour",
@@ -794,7 +805,9 @@
     "save": "Enregistrer",
     "deleteTitle": "Supprimer la catégorie « {{name}} » ?",
     "deleteImpact": "Projets concernés : {{projects}} · Tâches concernées : {{tasks}} · Objectifs concernés : {{okrs}}. Rien d'autre n'est supprimé : ces éléments perdent simplement leur étiquette.",
-    "deleteImpactSubcategories": " {{count}} sous-catégorie(s) seront supprimées avec elle.",
+    "deleteImpactSubcategories_one": " {{count}} sous-catégorie sera supprimée avec elle.",
+    "deleteImpactSubcategories_many": " {{count}} de sous-catégories seront supprimées avec elle.",
+    "deleteImpactSubcategories_other": " {{count}} sous-catégories seront supprimées avec elle.",
     "deleteConfirm": "Supprimer",
     "noCategory": "Aucune catégorie",
     "picker": "Catégorie",
@@ -888,7 +901,10 @@
     "deleted": "Commentaire supprimé"
   },
   "leaveDialog": {
-    "body": "Vous perdrez immédiatement l'accès aux projets, tâches et OKR de l'équipe. Vos données personnelles (tâches, habitudes, agenda) ne sont pas affectées. Vous pourrez revenir avec un nouveau code d'invitation."
+    "body": "Vous perdrez immédiatement l'accès aux projets, tâches et OKR de l'équipe. Vos données personnelles (tâches, habitudes, agenda) ne sont pas affectées. Vous pourrez revenir avec un nouveau code d'invitation.",
+    "title": "Quitter {{name}} ?",
+    "pending": "Sortie…",
+    "confirm": "Quitter l'entreprise"
   },
   "removeMemberDialog": {
     "body": "Cette personne perdra immédiatement l'accès aux projets, tâches et OKR de l'entreprise. Ses données personnelles (tâches, habitudes, agenda) ne sont pas affectées. Elle pourra revenir avec un nouveau code d'invitation."
@@ -938,7 +954,6 @@
     "addUnderTitle": "Ajouter sous {{name}}",
     "deleteOrgTitle": "Supprimer {{name}} ?",
     "deleteOrgAria": "Supprimer l'entreprise {{name}}",
-    "deleteOkrConfirm": "Supprimer l'objectif « {{title}} » ?",
     "deleteOkrAria": "Supprimer l'objectif {{title}}",
     "editOkrAria": "Modifier l'objectif {{title}}",
     "save": "Enregistrer",
@@ -946,7 +961,13 @@
     "unreadComments_one": "{{count}} commentaire non lu",
     "unreadComments_many": "{{count}} de commentaires non lus",
     "unreadComments_other": "{{count}} commentaires non lus",
-    "backToChoice": "Retour"
+    "backToChoice": "Retour",
+    "deleteOkrTitle": "Supprimer l'objectif « {{title}} » ?",
+    "deleteOkrImpactKrs_one": "{{count}} résultat clé est supprimé avec lui.",
+    "deleteOkrImpactKrs_many": "{{count}} de résultats clés sont supprimés avec lui.",
+    "deleteOkrImpactKrs_other": "{{count}} résultats clés sont supprimés avec lui.",
+    "deleteOkrImpactHistory": "Sa progression et son historique sont perdus. Il n'y a pas de corbeille pour les objectifs.",
+    "deleteOkrAction": "Supprimer l'objectif"
   },
   "tabs": {
     "overview": "Aperçu",
@@ -1277,7 +1298,9 @@
     "emailIntro": "Chaque adresse reçoit un lien personnel, valable 7 jours, que seul son destinataire peut utiliser.",
     "emailsLabel": "Adresses e-mail",
     "emailsPlaceholder": "prenom.nom@entreprise.fr, une par ligne ou séparées par des virgules",
-    "emailsCount": "{{count}} adresse(s) reconnue(s), {{max}} au plus",
+    "emailsCount_one": "{{count}} adresse reconnue, {{max}} au plus",
+    "emailsCount_many": "{{count}} d'adresses reconnues, {{max}} au plus",
+    "emailsCount_other": "{{count}} adresses reconnues, {{max}} au plus",
     "placement": "Place dans la pyramide",
     "placementHint": "La personne arrivera directement sous ce responsable.",
     "unplaced": "Non placé",
@@ -1301,7 +1324,9 @@
     "listEmpty": "Aucune invitation par e-mail pour l'instant.",
     "stateClaimed": "Acceptée le {{date}}",
     "stateExpired": "Expirée le {{date}}",
-    "statePending": "En attente, expire le {{date}} · {{sent}} envoi(s)",
+    "statePending_one": "En attente, expire le {{date}} · {{count}} envoi",
+    "statePending_many": "En attente, expire le {{date}} · {{count}} d'envois",
+    "statePending_other": "En attente, expire le {{date}} · {{count}} envois",
     "resend": "Relancer",
     "resendWait": "Une relance par heure au plus",
     "resendFor": "Relancer {{email}}",
@@ -1406,5 +1431,9 @@
   },
   "setup": {
     "resume": "Reprendre l'assistant de démarrage"
+  },
+  "confirm": {
+    "impactTitle": "Ce qui va se passer",
+    "typeName": "Pour confirmer, saisissez « {{name}} »"
   }
 }

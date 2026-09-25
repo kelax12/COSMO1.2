@@ -65,7 +65,7 @@ type PendingForm =
   | null;
 
 const TeamCategoryTreeSelect: React.FC<TeamCategoryTreeSelectProps> = ({ orgId, value, onChange }) => {
-  const { t } = useT('org');
+  const { t, tp } = useT('org');
   const { can } = useMyOrgPermissions(orgId);
   const canManage = can['category.manage'];
 
@@ -351,7 +351,7 @@ const TeamCategoryTreeSelect: React.FC<TeamCategoryTreeSelectProps> = ({ orgId, 
           >
             <p className="flex-1 min-w-[160px] text-xs text-[rgb(var(--color-text-secondary))]">
               {t('teamCategory.deleteImpact', { projects: impact.projects, tasks: impact.tasks, okrs: impact.okrs })}
-              {impact.subcategories > 0 ? t('teamCategory.deleteImpactSubcategories', { count: impact.subcategories }) : ''}
+              {impact.subcategories > 0 ? tp('teamCategory.deleteImpactSubcategories', impact.subcategories) : ''}
             </p>
             <button
               type="button"

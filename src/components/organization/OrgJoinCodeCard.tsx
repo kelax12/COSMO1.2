@@ -3,6 +3,7 @@ import { Copy, Check, RefreshCw } from 'lucide-react';
 import { toast } from '@/lib/toast';
 import { useRegenerateJoinCode } from '@/modules/organizations';
 import { useT } from '@/i18n/useT';
+import OrgConfirmDialog from './OrgConfirmDialog';
 
 interface OrgJoinCodeCardProps {
   code: string;
@@ -20,6 +21,7 @@ interface OrgJoinCodeCardProps {
 const OrgJoinCodeCard = ({ code, orgId, isAdmin = false, seatsFull = false }: OrgJoinCodeCardProps) => {
   const { t } = useT('org');
   const [copied, setCopied] = useState(false);
+  const [confirming, setConfirming] = useState(false);
   const regenerateMutation = useRegenerateJoinCode();
 
   const copy = async () => {
@@ -33,10 +35,9 @@ const OrgJoinCodeCard = ({ code, orgId, isAdmin = false, seatsFull = false }: Or
     }
   };
 
-  const regenerate = () => {
-    if (!window.confirm(t('invite.regenerateConfirm'))) return;
-    regenerateMutation.mutate(orgId);
-  };
+  // Niveau LOURD (cf. OrgConfirmDialog) : l'ancien code meurt, on le dit avant.
+  const regenerate = () =>
+    regenerateMutation.mutate(orgId, { onSettled: () => setConfirming(false) });
 
   return (
     <div className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4">
@@ -64,7 +65,7 @@ const OrgJoinCodeCard = ({ code, orgId, isAdmin = false, seatsFull = false }: Or
         {isAdmin && (
           <button
             type="button"
-            onClick={regenerate}
+            onClick={() => setConfirming(true)}
             disabled={regenerateMutation.isPending}
             className="w-11 h-11 rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-hover))] hover:bg-[rgb(var(--color-border))] hover:text-amber-500 flex items-center justify-center text-[rgb(var(--color-text-secondary))] transition-colors disabled:opacity-50"
             aria-label={t('invite.regenerateAria')}
@@ -74,6 +75,17 @@ const OrgJoinCodeCard = ({ code, orgId, isAdmin = false, seatsFull = false }: Or
           </button>
         )}
       </div>
+      {confirming && (
+        <OrgConfirmDialog
+          title={t('invite.regenerateTitle')}
+          impact={[t('invite.regenerateImpactOld'), t('invite.regenerateImpactShared'), t('invite.regenerateImpactPending')]}
+          confirmLabel={t('invite.regenerateAction')}
+          tone="warning"
+          pending={regenerateMutation.isPending}
+          onConfirm={regenerate}
+          onCancel={() => setConfirming(false)}
+        />
+      )}
     </div>
   );
 };
