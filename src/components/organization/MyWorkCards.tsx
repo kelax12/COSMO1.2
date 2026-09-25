@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { useNavigate } from 'react-router';
 import { format, parseISO } from 'date-fns';
 import { getDateLocale } from '@/i18n/format';
-import { AtSign, Check, ChevronRight, Eye, Hourglass, ListTodo, CircleCheckBig, Pin, PinOff } from 'lucide-react';
+import { AtSign, Check, ChevronRight, Eye, Hourglass, ListChecks, ListTodo, CircleCheckBig, Pin, PinOff } from 'lucide-react';
 import type { TeamProject, TeamTask } from '@/modules/team-projects';
 import type { OrgMember, OrgNotification } from '@/modules/organizations';
 import { useT } from '@/i18n/useT';
@@ -11,6 +11,7 @@ import { buildOrgLink } from './deep-link.helpers';
 import { projectColor, PRIORITY_META, priorityLabelOf, formatDuration } from './team-projects.helpers';
 import type { BlockingEntry, Horizon, MyKeyResult, MyProjectSummary } from './my-work.helpers';
 import { useOrgPins } from './org-pins';
+import TaskSelectCheckbox from './TaskSelectCheckbox';
 
 // Cartes de l'Aperçu entreprise (audit du 2026-09-24). Les dérivations sont
 // dans `my-work.helpers.ts` ; ce fichier ne fait que peindre.
@@ -162,6 +163,13 @@ interface MyTasksProps {
   projectById: Map<string, TeamProject>;
   onToggle: (task: TeamTask) => void;
   onOpenTask: (task: TeamTask) => void;
+  /** Sélection multiple (actions groupées), comme partout où il y a une liste. */
+  selection?: {
+    active: boolean;
+    selectedIds: Set<string>;
+    onToggle: (task: TeamTask) => void;
+    onStart: () => void;
+  };
 }
 
 /**
@@ -169,11 +177,13 @@ interface MyTasksProps {
  * semaine, plus tard, sans échéance. La liste était à plat ; elle répond
  * maintenant à « qu'est-ce que je fais aujourd'hui, et cette semaine ? ».
  */
-export const MyTasksCard = ({ groups, openCount, hasAny, estimated, projectById, onToggle, onOpenTask }: MyTasksProps) => {
+export const MyTasksCard = ({ groups, openCount, hasAny, estimated, projectById, onToggle, onOpenTask, selection }: MyTasksProps) => {
+  const selecting = !!selection?.active;
   const { t } = useT('org');
   return (
     <div className={CARD}>
-      <h3 className={`${TITLE} mb-3`}>
+      <div className="flex items-start justify-between gap-2 mb-3">
+      <h3 className={TITLE}>
         {t('myWork.myTasksSection', { count: openCount })}
         {estimated > 0 && (
           // `{' '}` : le `ml-2` sépare visuellement mais pas dans le
@@ -184,6 +194,17 @@ export const MyTasksCard = ({ groups, openCount, hasAny, estimated, projectById,
           </>
         )}
       </h3>
+      {selection && openCount > 0 && !selecting && (
+        <button
+          type="button"
+          onClick={selection.onStart}
+          aria-label={t('projects.selectMultiple')}
+          className="inline-flex items-center gap-1 h-8 px-2 rounded-lg text-xs font-medium text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))] hover:text-[rgb(var(--color-text-secondary))] transition-colors shrink-0"
+        >
+          <ListChecks size={14} aria-hidden="true" /> {t('projects.selectMode')}
+        </button>
+      )}
+      </div>
       {!hasAny ? (
         <div className="flex flex-col items-center justify-center py-8 text-center">
           <div className="w-12 h-12 rounded-2xl bg-[rgb(var(--color-hover))] flex items-center justify-center mb-3">
@@ -211,7 +232,10 @@ export const MyTasksCard = ({ groups, openCount, hasAny, estimated, projectById,
                   const priority = PRIORITY_META[task.priority] ?? PRIORITY_META[3];
                   return (
                     <li key={task.id} className="flex items-center gap-2.5 py-1.5 px-1 rounded-lg hover:bg-[rgb(var(--color-hover))] transition-colors">
-                      {/* C-57 : la bordure fait 24 px, la cible 44 (WCAG 2.5.5). */}
+                      {selecting && selection ? (
+                        <TaskSelectCheckbox name={task.name} checked={selection.selectedIds.has(task.id)} onToggle={() => selection.onToggle(task)} />
+                      ) : (
+                      /* C-57 : la bordure fait 24 px, la cible 44 (WCAG 2.5.5). */
                       <TouchTarget
                         onClick={() => onToggle(task)}
                         aria-label={t('myWork.markDone', { name: task.name })}
@@ -221,10 +245,11 @@ export const MyTasksCard = ({ groups, openCount, hasAny, estimated, projectById,
                           {task.completed && <Check size={13} aria-hidden="true" />}
                         </span>
                       </TouchTarget>
+                      )}
                       <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${priority.dot}`} role="img" aria-label={priorityLabelOf(task.priority)} title={priorityLabelOf(task.priority)} />
                       <button
                         type="button"
-                        onClick={() => onOpenTask(task)}
+                        onClick={() => (selecting && selection ? selection.onToggle(task) : onOpenTask(task))}
                         className="flex-1 min-w-0 min-h-touch flex flex-col justify-center text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]/60 rounded-md"
                       >
                         <span className="block text-sm text-[rgb(var(--color-text-primary))] truncate">{task.name}</span>

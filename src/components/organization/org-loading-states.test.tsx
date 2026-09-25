@@ -31,6 +31,9 @@ vi.mock('@/modules/team-projects', () => ({
   useOrgActivity: () => q([]),
   TEAM_TASKS_READ_LIMIT: 1000,
   useUpdateTeamTask: () => ({ mutate: vi.fn(), mutateAsync: vi.fn() }),
+  // Actions groupées de « Mes tâches » (cohérence globale, 2026-09-25).
+  useDeleteTeamTask: () => ({ mutate: vi.fn() }),
+  useRestoreTeamTask: () => ({ mutate: vi.fn() }),
 }));
 vi.mock('@/modules/team-okrs', () => ({ useTeamOKRs: () => q([]) }));
 vi.mock('@/modules/org-teams', () => ({ useOrgTeams: () => q([]) }));
@@ -38,6 +41,7 @@ vi.mock('@/modules/events', () => ({ useUpcomingEvents: () => [] }));
 vi.mock('@/modules/organizations', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/modules/organizations')>()),
   useOrgNotifications: () => ({ data: [] }),
+  useMyOrgPermissions: () => ({ can: {}, canAssign: () => true }),
 }));
 
 // Importés APRÈS les mocks (hoistés par vitest, mais l'ordre reste lisible).
