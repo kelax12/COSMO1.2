@@ -309,6 +309,9 @@ BEGIN
          )
    WHERE t.org_id = p_org
      AND NOT t.completed
+     -- Corbeille (mig. 152) : une tache supprimee ne se transmet pas. Elle
+     -- reviendrait restauree avec un assigne que personne n a choisi.
+     AND t.deleted_at IS NULL
      AND p_user = ANY (t.assignee_ids);
   GET DIAGNOSTICS v_tasks = ROW_COUNT;
 
@@ -372,7 +375,8 @@ SET search_path TO ''
 AS $$
   SELECT CASE WHEN NOT public.is_org_admin(p_org) THEN NULL ELSE jsonb_build_object(
     'tasks', (SELECT count(*) FROM public.team_tasks
-               WHERE org_id = p_org AND NOT completed AND p_user = ANY (assignee_ids)),
+               WHERE org_id = p_org AND NOT completed AND deleted_at IS NULL
+                 AND p_user = ANY (assignee_ids)),
     'reports', (SELECT count(*) FROM public.organization_members
                  WHERE org_id = p_org AND manager_id = p_user),
     'leads', (SELECT count(*) FROM public.org_team_members

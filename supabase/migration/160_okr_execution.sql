@@ -48,7 +48,14 @@ CREATE INDEX IF NOT EXISTS idx_team_okrs_cycle ON public.team_okrs (cycle_id) WH
 
 ALTER TABLE public.team_key_results
   ADD COLUMN IF NOT EXISTS progress_mode TEXT NOT NULL DEFAULT 'manual',
-  ADD COLUMN IF NOT EXISTS contributor_ids UUID[] NOT NULL DEFAULT '{}';
+  ADD COLUMN IF NOT EXISTS contributor_ids UUID[] NOT NULL DEFAULT '{}',
+  -- État du DERNIER point d'étape, recopié sur le KR par `post_kr_checkin` :
+  -- l'écran l'affiche sur chaque KR sans lire l'historique de chacun.
+  ADD COLUMN IF NOT EXISTS health TEXT,
+  ADD COLUMN IF NOT EXISTS health_updated_at TIMESTAMPTZ;
+ALTER TABLE public.team_key_results DROP CONSTRAINT IF EXISTS team_key_results_health_check;
+ALTER TABLE public.team_key_results ADD CONSTRAINT team_key_results_health_check
+  CHECK (health IS NULL OR health IN ('on_track', 'at_risk', 'off_track'));
 ALTER TABLE public.team_key_results DROP CONSTRAINT IF EXISTS team_key_results_progress_mode_check;
 ALTER TABLE public.team_key_results ADD CONSTRAINT team_key_results_progress_mode_check
   CHECK (progress_mode IN ('manual', 'tasks'));
@@ -235,7 +242,11 @@ AS $$
 DECLARE
   v_org uuid;
 BEGIN
-  UPDATE public.team_key_results SET current_value = p_value WHERE id = p_kr
+  UPDATE public.team_key_results
+     SET current_value = p_value,
+         health = p_status,
+         health_updated_at = now()
+   WHERE id = p_kr
   RETURNING org_id INTO v_org;
   IF v_org IS NULL THEN
     RAISE EXCEPTION 'not_found' USING ERRCODE = 'P0002';
@@ -270,6 +281,26 @@ END;
 $$;
 REVOKE ALL ON FUNCTION public.insert_kr_checkin_row(uuid, uuid, numeric, text, text) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.insert_kr_checkin_row(uuid, uuid, numeric, text, text) TO authenticated;
+
+-- Avancement des projets, compté en base (M1 + M9) : un KR en mode
+-- `tasks` avance avec les tâches terminées de ses projets. Compter côté client
+-- exigerait de charger toutes les tâches de l'organisation, et le chiffre
+-- serait faux au-delà de la première page. Périmètre : les projets visibles.
+CREATE OR REPLACE FUNCTION public.get_my_team_project_progress(p_org uuid)
+RETURNS TABLE (project_id uuid, total integer, done integer)
+LANGUAGE sql
+STABLE SECURITY DEFINER
+SET search_path TO ''
+AS $$
+  SELECT t.project_id, count(*)::int, count(*) FILTER (WHERE t.completed)::int
+    FROM public.team_tasks t
+   WHERE t.org_id = p_org
+     AND t.deleted_at IS NULL
+     AND t.project_id IN (SELECT public.my_team_project_ids(p_org))
+   GROUP BY t.project_id;
+$$;
+REVOKE ALL ON FUNCTION public.get_my_team_project_progress(uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.get_my_team_project_progress(uuid) TO authenticated;
 
 -- Lecture indexable des liens KR ↔ projet : un lien n'est rendu que si le
 -- projet est visible (jointure sur `my_team_project_ids`, évaluée une fois)
