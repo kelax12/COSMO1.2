@@ -260,21 +260,10 @@ export const useSetMemberRole = () => {
   });
 };
 
-export const useRemoveMember = () => {
-  const queryClient = useQueryClient();
-  const repository = useOrgRepository();
-  return useMutation({
-    mutationFn: ({ orgId, userId }: { orgId: string; userId: string }) =>
-      repository.removeMember(orgId, userId),
-    onSuccess: () => {
-      toast.success(translator('errors').t('success.memberRemoved'));
-      queryClient.invalidateQueries({ queryKey: orgKeys.all });
-    },
-    onError: (error: Error) => {
-      toast.error(translator('errors').t('mutation.removeMember', { message: error.message }));
-    },
-  });
-};
+// Plus de `useRemoveMember` (2026-09-25) : retirer quelqu'un passe par
+// l'assistant de départ (`useOffboardMember`, `offboard_org_member`, mig. 161),
+// qui transmet tâches, subordonnés, rôles et KR avant le retrait. Un retrait
+// nu depuis l'écran les laissait orphelins (M10).
 
 export const useLeaveOrganization = () => {
   const queryClient = useQueryClient();
