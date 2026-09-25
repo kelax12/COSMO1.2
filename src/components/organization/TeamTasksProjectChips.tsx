@@ -4,6 +4,7 @@ import type { TeamProject, TeamTask } from '@/modules/team-projects';
 import { projectColor } from './team-projects.helpers';
 import { useT } from '@/i18n/useT';
 import { useOrgCreate } from './org-create.context';
+import { PermissionGate } from './permission-hints';
 
 /**
  * Puces de projets visibles avant « +N projets ». Au-delà, la rangée devenait
@@ -25,6 +26,8 @@ interface TeamTasksProjectChipsProps {
   projectFilter: string | null;
   onProjectFilter: (projectId: string | null) => void;
   canCreateProject: boolean;
+  /** Pourquoi « Nouveau projet » est grisé, quand il l'est. */
+  createDeniedReason?: string;
 }
 
 /**
@@ -35,7 +38,7 @@ interface TeamTasksProjectChipsProps {
  * Extrait de `TeamTasksTab` (plafond de 600 lignes d'`architecture.guard`).
  */
 const TeamTasksProjectChips = ({
-  projects, tasks, projectFilter, onProjectFilter, canCreateProject,
+  projects, tasks, projectFilter, onProjectFilter, canCreateProject, createDeniedReason,
 }: TeamTasksProjectChipsProps) => {
   const { t, tp } = useT('org');
   // « + Nouveau projet » ouvrait ici un champ « nom seul » qui créait un
@@ -119,7 +122,7 @@ const TeamTasksProjectChips = ({
           </button>
         )}
 
-        {canCreateProject && (
+        <PermissionGate reason={canCreateProject ? undefined : createDeniedReason}>
           <button
             type="button"
             // LE formulaire de projet (org-create.context) : couleur, équipe,
@@ -129,7 +132,7 @@ const TeamTasksProjectChips = ({
           >
             <Plus size={16} aria-hidden="true" /> {t('projects.newProject')}
           </button>
-        )}
+        </PermissionGate>
       </div>
     </div>
   );

@@ -26,6 +26,7 @@ import TeamOKRModal from './TeamOKRModal';
 import { useMyOrgPermissions } from '@/modules/organizations';
 import { useT } from '@/i18n/useT';
 import OrgConfirmDialog from './OrgConfirmDialog';
+import { PermissionGate, usePermissionHints } from './permission-hints';
 import { readEntityParam } from './deep-link.helpers';
 import TeamColorDot from './TeamColorDot';
 
@@ -132,6 +133,7 @@ const TeamKRRow = ({ kr, onCommit }: TeamKRRowProps) => {
 
 const TeamOKRTab = ({ orgId }: TeamOKRTabProps) => {
   const { can } = useMyOrgPermissions(orgId);
+  const hints = usePermissionHints(orgId);
   const { t, tp } = useT('org');
   const [showCreate, setShowCreate] = useState(false);
   const [editingOKR, setEditingOKR] = useState<TeamOKR | null>(null);
@@ -292,7 +294,7 @@ const TeamOKRTab = ({ orgId }: TeamOKRTabProps) => {
             accentAllActive
           />
         )}
-        {can['okr.create'] && (
+        <PermissionGate reason={hints.deniedReason('okr.create')}>
           <button
             type="button"
             onClick={() => setShowCreate(true)}
@@ -300,7 +302,7 @@ const TeamOKRTab = ({ orgId }: TeamOKRTabProps) => {
           >
             <Plus size={15} aria-hidden="true" /> {t('okrTab.newObjective')}
           </button>
-        )}
+        </PermissionGate>
       </div>
 
       {okrs.length === 0 ? (
@@ -372,9 +374,9 @@ const TeamOKRTab = ({ orgId }: TeamOKRTabProps) => {
                 <div className="text-right shrink-0">
                   <span className="text-lg font-bold text-blue-600 dark:text-blue-400">{avg}%</span>
                 </div>
-                {(can['okr.create'] || can['okr.delete']) && (
+                <>
                   <div className="flex items-center gap-1 shrink-0">
-                    {can['okr.create'] && (
+                    <PermissionGate reason={hints.deniedReason('okr.create')}>
                     <button
                       type="button"
                       onClick={() => setEditingOKR(okr)}
@@ -383,8 +385,8 @@ const TeamOKRTab = ({ orgId }: TeamOKRTabProps) => {
                     >
                       <Pencil size={15} aria-hidden="true" />
                     </button>
-                    )}
-                    {can['okr.delete'] && (
+                    </PermissionGate>
+                    <PermissionGate reason={hints.deniedReason('okr.delete')}>
                     <button
                       type="button"
                       onClick={() => setDeletingOKR(okr)}
@@ -393,9 +395,9 @@ const TeamOKRTab = ({ orgId }: TeamOKRTabProps) => {
                     >
                       <Trash2 size={15} aria-hidden="true" />
                     </button>
-                    )}
+                    </PermissionGate>
                   </div>
-                )}
+                </>
               </div>
 
               <div className="space-y-3">

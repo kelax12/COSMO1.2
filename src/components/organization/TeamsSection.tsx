@@ -10,6 +10,7 @@ import type { OrgMember } from '@/modules/organizations';
 import { useTeamProjects } from '@/modules/team-projects';
 import MemberAvatar from './MemberAvatar';
 import { useOrgCreate } from './org-create.context';
+import { PermissionGate, usePermissionHints } from './permission-hints';
 import DeleteTeamDialog from './DeleteTeamDialog';
 import { orgTeamPath } from './deep-link.helpers';
 import { teamProjectsOf } from './team-page.helpers';
@@ -42,6 +43,7 @@ const LEADS_SHOWN = 3;
 const TeamsSection = ({ orgId, members, currentUserId, isAdmin, canCreateTeam }: TeamsSectionProps) => {
   const { t, tp } = useT('org');
   const create = useOrgCreate();
+  const hints = usePermissionHints(orgId);
 
   // C-40 — sans `isLoading`, l'ecran AFFIRME une absence qu'il ne connait pas
   // encore : le premier rendu arrive avant la reponse, et la valeur par defaut
@@ -71,7 +73,7 @@ const TeamsSection = ({ orgId, members, currentUserId, isAdmin, canCreateTeam }:
         <h2 className="text-sm font-bold text-[rgb(var(--color-text-primary))]">
           {t('team.sectionTitle', { count: teams.length })}
         </h2>
-        {canCreateTeam && (
+        <PermissionGate reason={hints.deniedReason('team.create')}>
           <button
             type="button"
             onClick={() => create.openTeam()}
@@ -79,7 +81,7 @@ const TeamsSection = ({ orgId, members, currentUserId, isAdmin, canCreateTeam }:
           >
             <Plus size={14} aria-hidden="true" /> {t('team.add')}
           </button>
-        )}
+        </PermissionGate>
       </div>
 
 
@@ -144,7 +146,7 @@ const TeamsSection = ({ orgId, members, currentUserId, isAdmin, canCreateTeam }:
                     {/* Suppression : admin ou créateur SEULEMENT, miroir exact de
                         la policy `org_teams_delete`. Un responsable gère son
                         équipe, il ne la supprime pas. */}
-                    {(isAdmin || team.createdBy === currentUserId) && (
+                    <PermissionGate reason={isAdmin || team.createdBy === currentUserId ? undefined : t('permissions.deniedTeamDelete')} className="relative z-10">
                       <button
                         type="button"
                         onClick={() => setTeamToDelete(team)}
@@ -153,7 +155,7 @@ const TeamsSection = ({ orgId, members, currentUserId, isAdmin, canCreateTeam }:
                       >
                         <Trash2 size={13} aria-hidden="true" />
                       </button>
-                    )}
+                    </PermissionGate>
                     <ChevronRight size={15} className="text-[rgb(var(--color-text-muted))] shrink-0" aria-hidden="true" />
                   </div>
                   {team.description && (

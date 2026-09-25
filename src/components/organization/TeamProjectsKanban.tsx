@@ -9,6 +9,7 @@ import {
   STATUS_ORDER, STATUS_META, priorityLabelOf } from './team-projects.helpers';
 import MemberAvatar from './MemberAvatar';
 import { useT } from '@/i18n/useT';
+import { usePermissionHints } from './permission-hints';
 
 interface TeamProjectsKanbanProps {
   projects: TeamProject[];
@@ -73,6 +74,9 @@ const TeamProjectsKanban = ({
 }: TeamProjectsKanbanProps) => {
   const { t } = useT('org');
   const { t: pf, tp: tpf } = useT('portfolio');
+  // Une carte qu'on n'a pas le droit de modifier ne se glisse pas : le serveur
+  // refuserait le déplacement APRÈS coup. Elle le dit au survol.
+  const hints = usePermissionHints(projects[0]?.orgId ?? tasks[0]?.orgId);
   const [dragOver, setDragOver] = useState<string | null>(null);
 
   const openTasks = useMemo(() => sortOpenTasks(tasks.filter((t) => !t.completed)), [tasks]);
@@ -232,7 +236,8 @@ const TeamProjectsKanban = ({
                   <button
                     key={task.id}
                     type="button"
-                    draggable={!selectable}
+                    draggable={!selectable && !hints.taskEditReason(task)}
+                    title={selectable ? undefined : hints.taskEditReason(task)}
                     onDragStart={(e) =>
                       e.dataTransfer.setData('text/plain', JSON.stringify({ taskId: task.id, from: col.id } satisfies DragPayload))
                     }

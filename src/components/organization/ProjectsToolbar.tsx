@@ -10,12 +10,15 @@
 import { Plus, LayoutList, SquareKanban, CalendarRange, Table2, ListChecks } from 'lucide-react';
 import type { ProjectsUiPrefs } from './team-projects.helpers';
 import { useT } from '@/i18n/useT';
+import { PermissionGate } from './permission-hints';
 
 interface ProjectsToolbarProps {
   prefs: ProjectsUiPrefs;
   updatePrefs: (patch: Partial<ProjectsUiPrefs>) => void;
   /** Droit `project.create` — affiche « Nouveau projet ». */
   canCreateProject: boolean;
+  /** Pourquoi « Nouveau projet » est grisé, quand il l'est. */
+  createDeniedReason?: string;
   onNewProject: () => void;
   /** Vue réellement affichée (le portefeuille peut s'imposer sans choix, M2). */
   effectiveView: ProjectsUiPrefs['view'];
@@ -53,7 +56,7 @@ const ViewTab = ({ active, onClick, label, Icon }: {
 );
 
 const ProjectsToolbar = ({
-  prefs, updatePrefs, canCreateProject, onNewProject, effectiveView, onStartSelect,
+  prefs, updatePrefs, canCreateProject, createDeniedReason, onNewProject, effectiveView, onStartSelect,
 }: ProjectsToolbarProps) => {
   const { t } = useT('org');
   const { t: pf } = useT('portfolio');
@@ -164,7 +167,7 @@ const ProjectsToolbar = ({
           {/* La seule action créative de la page — et donc le seul bouton plein.
               L'état vide proposait déjà cet indigo : la barre s'aligne dessus
               au lieu de peindre « Nouveau projet » comme un réglage. */}
-          {canCreateProject && (
+          <PermissionGate reason={canCreateProject ? undefined : createDeniedReason}>
             <button
               type="button"
               onClick={onNewProject}
@@ -174,7 +177,7 @@ const ProjectsToolbar = ({
               <Plus size={15} aria-hidden="true" />
               <span className="hidden sm:inline">{t('projects.newProject')}</span>
             </button>
-          )}
+          </PermissionGate>
         </div>
       </div>
 

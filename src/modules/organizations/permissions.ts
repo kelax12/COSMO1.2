@@ -218,3 +218,24 @@ export const canEditPermissionsOf = ({
   if (target.role === 'admin') return false;
   return actorIsAdmin || isBelow(members, actorId, target.userId);
 };
+
+/** Ce qu'une règle de tâche a besoin de savoir d'une tâche d'équipe. */
+export interface TaskOwnership {
+  createdBy?: string | null;
+  assigneeIds: readonly string[];
+}
+
+/**
+ * « Puis-je MODIFIER cette tâche ? » — miroir exact de la policy
+ * `team_tasks_update` (mig. 115) : `task.editAny`, ou créateur, ou assigné.
+ *
+ * Sans lui, l'interface proposait de cocher, de changer le statut ou de
+ * glisser n'importe quelle tâche, et le serveur refusait après coup
+ * (cohérence globale, 2026-09-25 : « tantôt masqué, tantôt affiché puis refusé »).
+ */
+export const canEditTeamTask = (can: EffectiveOrgPermissions, userId: string | undefined, task: TaskOwnership): boolean =>
+  can['task.editAny'] || (!!userId && (task.createdBy === userId || task.assigneeIds.includes(userId)));
+
+/** « Puis-je supprimer cette tâche ? » — miroir de `team_tasks_delete` / `delete_team_task` (mig. 152). */
+export const canDeleteTeamTask = (can: EffectiveOrgPermissions, userId: string | undefined, task: TaskOwnership): boolean =>
+  can['task.deleteAny'] || (!!userId && task.createdBy === userId);

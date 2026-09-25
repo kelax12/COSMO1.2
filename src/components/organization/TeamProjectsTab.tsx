@@ -34,6 +34,7 @@ import {
 } from './team-projects.lazy';
 import ProjectsToolbar from './ProjectsToolbar';
 import OrgTaskFilterBar from './OrgTaskFilterBar';
+import { usePermissionHints } from './permission-hints';
 import { useOrgTaskFilters } from './task-filters';
 import ProjectTemplatesSection from './ProjectTemplatesSection';
 import TeamTaskModal from './TeamTaskModal';
@@ -67,6 +68,7 @@ type TaskModalState =
 
 const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProjectsTabProps) => {
   const { can, canAssign } = useMyOrgPermissions(orgId);
+  const hints = usePermissionHints(orgId);
   const { t, tp } = useT('org');
   const { t: pf, tp: tpf } = useT('portfolio');
   const { prefs, updatePrefs } = useProjectsUiPrefs(orgId);
@@ -436,6 +438,7 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
         updatePrefs={updatePrefs}
         effectiveView={view}
         canCreateProject={can['project.create']}
+        createDeniedReason={hints.deniedReason('project.create')}
         onNewProject={() => newProject()}
         onStartSelect={statsTasks.length > 0 && !selectMode ? () => setSelectMode(true) : undefined}
       />

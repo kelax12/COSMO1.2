@@ -1143,7 +1143,12 @@
       "subordinatesHint": "Everyone placed below them, at any depth.",
       "everyone": "Everyone",
       "everyoneHint": "Any member of the company. Makes the other boxes irrelevant."
-    }
+    },
+    "denied": "You need the “{{right}}” permission. An administrator can grant it from Members.",
+    "deniedTaskEdit": "You can edit the tasks you created or that are assigned to you. Beyond that, you need the “{{right}}” permission.",
+    "deniedTaskDelete": "You can delete the tasks you created. Beyond that, you need the “{{right}}” permission.",
+    "deniedAdmin": "Reserved for company administrators.",
+    "deniedTeamDelete": "A team can be deleted by an administrator or by the person who created it."
   },
   "members": {
     "removeTitleNamed": "Remove {{name}}?"
