@@ -4,6 +4,7 @@
 
 import { supabase } from '@/lib/supabase';
 import { warnIfTruncated } from '@/lib/pagination.warning';
+import { fetchAllPages } from '@/lib/fetch-all-pages';
 import { getCurrentUserId } from '@/lib/auth-user';
 import { makeApiError, normalizeApiError } from '@/lib/normalizeApiError';
 import { ITeamOKRsRepository } from './repository';
@@ -26,6 +27,8 @@ interface OkrRow {
   end_date: string | null;
   created_by: string;
   created_at: string;
+  cycle_id?: string | null;
+  parent_okr_id?: string | null;
 }
 
 interface KrRow {
@@ -41,6 +44,8 @@ interface KrRow {
   completed_at: string | null;
   weight: number | null;
   estimated_time: number | null;
+  progress_mode?: string | null;
+  contributor_ids?: string[] | null;
 }
 
 // Coefficient effectif : entier borné [1, 10], défaut 1 (rétrocompat).
@@ -64,29 +69,44 @@ const mapKr = (r: KrRow): TeamKeyResult => ({
   completedAt: r.completed_at,
   weight: clampWeight(r.weight),
   estimatedTime: Number(r.estimated_time) > 0 ? Number(r.estimated_time) : 30,
+  progressMode: r.progress_mode === 'tasks' ? 'tasks' : 'manual',
+  contributorIds: r.contributor_ids ?? [],
 });
 
 export class SupabaseTeamOKRsRepository implements ITeamOKRsRepository {
   async getAll(orgId: string): Promise<TeamOKR[]> {
     if (!supabase) throw new Error('Supabase not configured');
-    const { data: okrRows, error } = await supabase
-      .from('team_okrs')
-      .select('*')
-      .eq('org_id', orgId)
-      .order('created_at', { ascending: false })
-      .limit(200);
-    if (error) throw normalizeApiError(error);
-    const okrs = warnIfTruncated((okrRows ?? []) as OkrRow[], 200, 'team_okrs');
+    // M1 (audit 2026-09-23) : plus de plafond silencieux à 200 objectifs.
+    const db = supabase;
+    const okrRows = await fetchAllPages<OkrRow>(async (from, to) => {
+      const { data, error } = await db
+        .from('team_okrs')
+        .select('*')
+        .eq('org_id', orgId)
+        .order('created_at', { ascending: false })
+        .order('id', { ascending: true })
+        .range(from, to);
+      if (error) throw normalizeApiError(error);
+      return (data ?? []) as OkrRow[];
+    }, 1000, 5000);
+    const okrs = warnIfTruncated(okrRows, 5000, 'team_okrs');
     if (okrs.length === 0) return [];
 
-    const { data: krRows, error: krErr } = await supabase
-      .from('team_key_results')
-      .select('*')
-      .eq('org_id', orgId)
-      .order('created_at', { ascending: true });
-    if (krErr) throw normalizeApiError(krErr);
+    // Sans `.range`, PostgREST plafonne en silence à son `max-rows` (1 000 sur
+    // Supabase) : une organisation à 300 OKR de 4 KR perdait des KR sans erreur.
+    const krRows = await fetchAllPages<KrRow>(async (from, to) => {
+      const { data, error: krErr } = await db
+        .from('team_key_results')
+        .select('*')
+        .eq('org_id', orgId)
+        .order('created_at', { ascending: true })
+        .order('id', { ascending: true })
+        .range(from, to);
+      if (krErr) throw normalizeApiError(krErr);
+      return (data ?? []) as KrRow[];
+    }, 1000, 50000);
     const krsByOkr = new Map<string, TeamKeyResult[]>();
-    for (const kr of (krRows ?? []) as KrRow[]) {
+    for (const kr of krRows) {
       const arr = krsByOkr.get(kr.okr_id) ?? [];
       arr.push(mapKr(kr));
       krsByOkr.set(kr.okr_id, arr);
@@ -118,6 +138,8 @@ export class SupabaseTeamOKRsRepository implements ITeamOKRsRepository {
       createdAt: o.created_at,
       teamIds: teamsByOkr.get(o.id) ?? [],
       keyResults: krsByOkr.get(o.id) ?? [],
+      cycleId: o.cycle_id ?? null,
+      parentOkrId: o.parent_okr_id ?? null,
     }));
   }
 
@@ -143,6 +165,8 @@ export class SupabaseTeamOKRsRepository implements ITeamOKRsRepository {
         category_id: input.categoryId ?? null,
         start_date: input.startDate || null,
         end_date: input.endDate || null,
+        ...(input.cycleId ? { cycle_id: input.cycleId } : {}),
+        ...(input.parentOkrId ? { parent_okr_id: input.parentOkrId } : {}),
       });
     if (error) throw normalizeApiError(error);
 
@@ -171,6 +195,8 @@ export class SupabaseTeamOKRsRepository implements ITeamOKRsRepository {
           assignee_id: kr.assigneeId ?? null,
           weight: clampWeight(kr.weight),
           estimated_time: kr.estimatedTime && kr.estimatedTime > 0 ? Math.round(kr.estimatedTime) : 30,
+          progress_mode: kr.progressMode ?? 'manual',
+          contributor_ids: kr.contributorIds ?? [],
           completed: current >= target,
           completed_at: current >= target ? new Date().toISOString() : null,
         };
@@ -192,6 +218,8 @@ export class SupabaseTeamOKRsRepository implements ITeamOKRsRepository {
       createdAt: new Date().toISOString(),
       teamIds,
       keyResults,
+      cycleId: input.cycleId ?? null,
+      parentOkrId: input.parentOkrId ?? null,
     };
   }
 
@@ -203,6 +231,8 @@ export class SupabaseTeamOKRsRepository implements ITeamOKRsRepository {
     if (input.categoryId !== undefined) patch.category_id = input.categoryId;
     if (input.startDate !== undefined) patch.start_date = input.startDate || null;
     if (input.endDate !== undefined) patch.end_date = input.endDate || null;
+    if (input.cycleId !== undefined) patch.cycle_id = input.cycleId;
+    if (input.parentOkrId !== undefined) patch.parent_okr_id = input.parentOkrId;
     if (Object.keys(patch).length > 0) {
       const { error } = await supabase.from('team_okrs').update(patch).eq('id', okrId);
       if (error) throw normalizeApiError(error);
@@ -247,6 +277,8 @@ export class SupabaseTeamOKRsRepository implements ITeamOKRsRepository {
     if (input.assigneeId !== undefined) patch.assignee_id = input.assigneeId;
     if (input.weight !== undefined) patch.weight = clampWeight(input.weight);
     if (input.estimatedTime !== undefined) patch.estimated_time = input.estimatedTime > 0 ? Math.round(input.estimatedTime) : 30;
+    if (input.progressMode !== undefined) patch.progress_mode = input.progressMode;
+    if (input.contributorIds !== undefined) patch.contributor_ids = input.contributorIds;
     if (input.completed !== undefined) {
       patch.completed = input.completed;
       patch.completed_at = input.completed ? new Date().toISOString() : null;
@@ -288,6 +320,8 @@ export class SupabaseTeamOKRsRepository implements ITeamOKRsRepository {
         assignee_id: input.assigneeId ?? null,
         weight: clampWeight(input.weight),
         estimated_time: input.estimatedTime && input.estimatedTime > 0 ? Math.round(input.estimatedTime) : 30,
+        progress_mode: input.progressMode ?? 'manual',
+        contributor_ids: input.contributorIds ?? [],
         completed,
       };
       if (input.id && existingIds.has(input.id)) {
