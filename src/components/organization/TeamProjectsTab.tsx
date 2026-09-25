@@ -37,6 +37,7 @@ import ProjectTemplatesSection from './ProjectTemplatesSection';
 import TeamTaskModal from './TeamTaskModal';
 import TruncatedDataNotice from './TruncatedDataNotice';
 import TeamTrashDialog from './TeamTrashDialog';
+import { useProjectAccess } from './use-project-access';
 import { useT } from '@/i18n/useT';
 
 interface TeamProjectsTabProps {
@@ -84,6 +85,7 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
   const { data: categories = [] } = useTeamCategories(orgId);
   const { data: milestones = [] } = useTeamProjectMilestones(orgId);
   const { data: projectDeps = [] } = useTeamProjectDependencies(orgId);
+  const { projectMembers, statsById, isLeadOf } = useProjectAccess(orgId, currentUserId); // mig. 190, 191
 
   const { teamFilter, assigneeFilter, collapsed, showArchived, statusFilter, kanbanGroupBy, timelineGroupBy, sort } = prefs;
 
@@ -113,9 +115,9 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
     onOpenProject: openProject,
   });
 
-  /** `project.edit` (mig. 153), ou responsable du projet. */
+  /** `project.edit` (mig. 153), responsable, ou co-pilote (mig. 190). */
   const canEditProjectFor = (p: TeamProject) =>
-    can['project.edit'] || (!!currentUserId && p.ownerId === currentUserId);
+    can['project.edit'] || (!!currentUserId && p.ownerId === currentUserId) || isLeadOf(p);
 
   // Un second clic sur la pastille active retire le filtre.
   const toggleStatus = (next: TaskStatusFilter) =>
@@ -141,8 +143,8 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
       categoryName: categories.find((c) => c.id === p.categoryId)?.name,
       ownerName: members.find((m) => m.userId === p.ownerId)?.displayName,
     }));
-    return sortProjects(found, sort, allTasks);
-  }, [activeProjects, query, sort, allTasks, teams, categories, members]);
+    return sortProjects(found, sort, allTasks, statsById);
+  }, [activeProjects, query, sort, allTasks, teams, categories, members, statsById]);
 
   // ─── Tâches : stats globales (non filtrées) + vue filtrée par assigné ──
   const activeProjectIds = useMemo(() => new Set(activeProjects.map((p) => p.id)), [activeProjects]);
@@ -380,6 +382,11 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
             tasks={visibleTasks.filter((t) => t.projectId === detailProject.id)
               .concat(activeProjectIds.has(detailProject.id) ? [] : allTasks.filter((t) => t.projectId === detailProject.id))}
             allProjectTasks={allTasks.filter((t) => t.projectId === detailProject.id)}
+            stats={statsById?.get(detailProject.id)}
+            projectMembers={projectMembers.filter((m) => m.projectId === detailProject.id)}
+            currentUserId={currentUserId}
+            isAdmin={isAdmin}
+            canCreateTask={can['task.create']}
             members={members}
             teams={teams}
             milestones={milestones}
@@ -443,6 +450,7 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
       <div className="flex justify-end"><TeamTrashDialog orgId={orgId} projects={allProjects} members={members} /></div>
 
       <ProjectsToolbar
+        orgId={orgId}
         members={members}
         teams={teams}
         currentUserId={currentUserId}
@@ -526,6 +534,7 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
               <ProjectPortfolioView
                 projects={shownProjects}
                 tasks={allTasks}
+                statsById={statsById}
                 members={members}
                 teams={teams}
                 milestones={milestones}

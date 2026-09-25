@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { subtreeOf, useOrgNotifications, useMyOrgPermissions, unreadCommentCountByTask, type OrgMember } from '@/modules/organizations';
 import {
-  useTeamProjects, useTeamTaskWorkingSet, TEAM_TASKS_READ_LIMIT, useCreateTeamTask, useUpdateTeamTask, useDeleteTeamTask, useRestoreTeamTask,
+  useTeamProjects, useTeamTaskPages, TEAM_TASKS_READ_LIMIT, useCreateTeamTask, useUpdateTeamTask, useDeleteTeamTask, useRestoreTeamTask,
   type TeamTask, type TeamTaskStatus, type CreateTeamTaskInput, type UpdateTeamTaskInput,
 } from '@/modules/team-projects';
 import { showUndoToast } from '@/lib/undo-toast';
@@ -27,6 +27,8 @@ import { TeamTasksSkeleton } from './OrgLoadingSkeletons';
 import TeamTasksToolbar, { type SortField } from './TeamTasksToolbar';
 import TruncatedDataNotice from './TruncatedDataNotice';
 import TeamTasksProjectChips from './TeamTasksProjectChips';
+import SavedViewsMenu from './SavedViewsMenu';
+import { useUrlFilters, oneOf, anId, aText } from './use-url-filters';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { useT } from '@/i18n/useT';
 
@@ -53,6 +55,19 @@ const normalize = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLo
 const ROWS_PAGE = 100;
 
 /**
+ * Filtres de l'onglet dans l'URL (vues enregistrées, mig. 192) : ils survivent
+ * au rechargement, se partagent par lien et se nomment. Module : la spec doit
+ * être STABLE d'un rendu à l'autre.
+ */
+const TASK_FILTERS = {
+  searchTerm: { param: 'q', defaultValue: '', parse: aText(100) },
+  projectFilter: { param: 'inProject', defaultValue: null as string | null, parse: anId(null), serialize: (v: string | null) => v ?? '' },
+  statusFilter: { param: 'status', defaultValue: 'open' as TaskStatusFilter, parse: oneOf<TaskStatusFilter>(['all', 'open', 'overdue', 'doneThisWeek'], 'open') },
+  sortField: { param: 'sort', defaultValue: 'priority' as SortField, parse: oneOf<SortField>(['priority', 'deadline', 'name', 'estimatedTime', 'project'], 'priority') },
+  sortDirection: { param: 'dir', defaultValue: 'asc' as 'asc' | 'desc', parse: oneOf<'asc' | 'desc'>(['asc', 'desc'], 'asc') },
+};
+
+/**
  * Onglet « Tâches » de l'espace entreprise — entre Pyramide et Projets.
  *
  * Même langage visuel que la page Tâches personnelle (TasksPage + TaskTable) :
@@ -76,9 +91,12 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
   const { user } = useAuth();
   const { data: allProjects = [], isLoading: loadingProjects } = useTeamProjects(orgId);
 
-  const [searchTerm, setSearchTerm] = useState('');
-  const [projectFilter, setProjectFilter] = useState<string | null>(null);
-  const [statusFilter, setStatusFilter] = useState<TaskStatusFilter>('open');
+  const { values: filters, setFilters, currentParams, applyParams } = useUrlFilters(TASK_FILTERS);
+  const { searchTerm, projectFilter, statusFilter, sortField, sortDirection } = filters;
+  const setSearchTerm = (v: string) => setFilters({ searchTerm: v });
+  const setProjectFilter = (v: string | null) => setFilters({ projectFilter: v });
+  const setStatusFilter = (v: TaskStatusFilter) => setFilters({ statusFilter: v });
+  const setSortField = (v: SortField) => setFilters({ sortField: v });
 
   // Lecture ciblée (audit du 2026-09-24) : hors filtre « Toutes », l'écran n'a
   // besoin que des tâches OUVERTES et de celles terminées récemment (« terminées
@@ -88,13 +106,14 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
   // reste la lecture complète, plafonnée, et le dit par un bandeau.
   const recentSince = useMemo(() => startOfDay(subDays(new Date(), 30)).toISOString(), []);
   // `live` : c'est l'écran où l'on regarde la liste arriver (cf. useTeamTasks).
-  const { data: tasks = [], isLoading: loadingTasks } = useTeamTaskWorkingSet(
-    orgId,
-    statusFilter === 'all' ? null : recentSince,
-    { live: true },
-  );
+  // Pages serveur (mig. 191) : au-delà de mille, « Charger plus » lit la page
+  // suivante au lieu de laisser les tâches suivantes hors de portée.
+  const {
+    data: taskPages, isLoading: loadingTasks, hasNextPage, fetchNextPage, isFetchingNextPage,
+  } = useTeamTaskPages(orgId, statusFilter === 'all' ? null : recentSince, { live: true });
+  const tasks = useMemo(() => taskPages?.pages.flat() ?? [], [taskPages]);
   const isLoading = loadingProjects || loadingTasks;
-  const truncated = tasks.length >= TEAM_TASKS_READ_LIMIT;
+  const truncated = !!hasNextPage;
   const createTask = useCreateTeamTask(orgId);
   const updateTask = useUpdateTeamTask(orgId);
   const deleteTask = useDeleteTeamTask(orgId);
@@ -130,8 +149,6 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
     return self ? [self, ...others] : others;
   }, [members, user, isAdmin]);
 
-  const [sortField, setSortField] = useState<SortField>('priority');
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [taskModal, setTaskModal] = useState<{ mode: 'create' | 'edit'; task?: TeamTask } | null>(null);
   // Actions dédiées du menu ⋯ (remplace « Marquer comme terminée », cf. photo1) :
   // cette table n'a ni colonne assignés ni raccourci agenda, contrairement à la
@@ -179,10 +196,9 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
 
   const handleSort = (field: SortField) => {
     if (field === sortField) {
-      setSortDirection((d) => (d === 'asc' ? 'desc' : 'asc'));
+      setFilters({ sortDirection: sortDirection === 'asc' ? 'desc' : 'asc' });
     } else {
-      setSortField(field);
-      setSortDirection('asc');
+      setFilters({ sortField: field, sortDirection: 'asc' });
     }
   };
 
@@ -235,7 +251,7 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
         sortField={sortField}
         onSortField={setSortField}
         sortDirection={sortDirection}
-        onToggleSortDirection={() => setSortDirection((d) => (d === 'asc' ? 'desc' : 'asc'))}
+        onToggleSortDirection={() => setFilters({ sortDirection: sortDirection === 'asc' ? 'desc' : 'asc' })}
         statusFilter={statusFilter}
         onStatusFilter={setStatusFilter}
         canCreate={projects.length > 0 && can['task.create']}
@@ -247,7 +263,23 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
           : null}
       />
 
-      {!isLoading && truncated && <TruncatedDataNotice limit={TEAM_TASKS_READ_LIMIT} />}
+      <div className="flex justify-end -mt-2">
+        <SavedViewsMenu orgId={orgId} scope="tasks" current={currentParams} onApply={applyParams} />
+      </div>
+
+      {!isLoading && truncated && (
+        <div className="space-y-2">
+          <TruncatedDataNotice limit={tasks.length} />
+          <button
+            type="button"
+            onClick={() => fetchNextPage()}
+            disabled={isFetchingNextPage}
+            className="w-full h-9 rounded-lg text-sm font-semibold border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] disabled:opacity-60"
+          >
+            {isFetchingNextPage ? t('projects.loadingMoreTasks') : t('projects.loadMoreTasks', { count: TEAM_TASKS_READ_LIMIT })}
+          </button>
+        </div>
+      )}
 
       {/* Table */}
       {/* Premier chargement d'abord : `projects.length === 0` est vrai tant que

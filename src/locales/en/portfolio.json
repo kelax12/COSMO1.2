@@ -209,5 +209,104 @@
     "allTeams": "All teams",
     "orgNoTeam": "Company (no team)",
     "createTeamOption": "+ Create a team"
+  },
+  "health": {
+    "title": "Health",
+    "on_track": "On track",
+    "at_risk": "At risk",
+    "off_track": "Off track",
+    "declare": "Declare",
+    "update": "Update",
+    "none": "Not declared yet. Health says whether the project will hold; progress only says what is done.",
+    "updatedBy": "Declared by {{name}} on {{date}}",
+    "someone": "a former member",
+    "noteLabel": "Note on the project's health",
+    "notePlaceholder": "Why? What would unblock it?",
+    "notifyHint": "The owner, co-leads and people following the project will be notified.",
+    "cancel": "Cancel",
+    "save": "Save"
+  },
+  "members": {
+    "title": "Project members",
+    "help": "Open this project to a specific person, even outside their team, with a role.",
+    "empty": "Nobody has a role on this project yet.",
+    "formerMember": "Former member",
+    "you": "you",
+    "roleOf": "Role of {{name}}",
+    "remove": "Remove {{name}} from the project",
+    "leave": "Leave this project",
+    "addLabel": "Add a person",
+    "choose": "Choose…",
+    "roleLabel": "Role",
+    "add": "Add",
+    "role": {
+      "lead": "Co-lead",
+      "contributor": "Contributor",
+      "viewer": "Viewer"
+    },
+    "roleHelp": {
+      "lead": "Runs the project like its owner (description, dates, health, milestones, members), without changing its team or owner.",
+      "contributor": "Creates and edits this project's tasks, even without that permission in the company.",
+      "viewer": "Read-only on this project; can only move forward the tasks assigned to them."
+    },
+    "yourRole": "Your role: {{role}}"
+  },
+  "krExec": {
+    "description": "Link this key result to the projects that move it forward, and post dated check-ins.",
+    "openAria": "Execution and check-ins of “{{title}}”",
+    "modeTitle": "Progress mode",
+    "mode": {
+      "manual": "Manual",
+      "tasks": "Project tasks"
+    },
+    "modeHelp": {
+      "manual": "Progress is the value entered at each check-in.",
+      "tasks": "Progress is measured: completed tasks over the tasks of the linked projects. It is no longer entered."
+    },
+    "projectsTitle": "Linked projects",
+    "tasksProgress": "{{done}} tasks completed out of {{total}}",
+    "tasksShort": "{{done}}/{{total}} tasks",
+    "noProject": "No active project to link.",
+    "saveProjects": "Save linked projects",
+    "checkinTitle": "New check-in",
+    "value": "Value (target: {{target}} {{unit}})",
+    "statusLabel": "Status",
+    "noteLabel": "Check-in note",
+    "notePlaceholder": "What moved, what is blocked, what comes next.",
+    "postCheckin": "Post check-in",
+    "historyTitle": "History",
+    "historyEmpty": "No check-in yet.",
+    "byOn": "by {{name}}, on {{date}}"
+  },
+  "okrCycles": {
+    "filterLabel": "OKR cycle",
+    "all": "All cycles",
+    "none": "No cycle",
+    "manage": "Cycles…",
+    "title": "OKR cycles",
+    "description": "The organization's periods (Q1, H2…). An objective belongs to a cycle; deleting a cycle detaches its objectives without deleting them.",
+    "empty": "No cycle yet.",
+    "nameLabel": "Name",
+    "namePlaceholder": "E.g. Q1 2027",
+    "start": "Start",
+    "end": "End",
+    "datesOrder": "The end must come after the start.",
+    "add": "Add cycle",
+    "deleteConfirm": "Delete the cycle “{{name}}”? Its objectives stay, without a cycle.",
+    "deleteAria": "Delete the cycle {{name}}"
+  },
+  "okrCard": {
+    "weightTitle": "Importance weight ×{{weight}}",
+    "contributesTo": "Contributes to: {{title}}",
+    "childrenCount_one": "{{count}} objective contributes to it",
+    "childrenCount_other": "{{count}} objectives contribute to it",
+    "childrenCount_many": "{{count}} objectives contribute to it",
+    "noKr": "No key result."
+  },
+  "okrModal": {
+    "cycle": "Cycle",
+    "noCycle": "No cycle",
+    "parent": "Contributes to",
+    "noParent": "No objective (top-level objective)"
   }
 }

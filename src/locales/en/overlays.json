@@ -51,9 +51,6 @@
     "groupNavigation": "Navigation",
     "groupPreferences": "Preferences",
     "events": "Events",
-    "teamTasks": "Team tasks",
-    "team": "Team",
-    "teamProjects": "Team projects",
     "goHome": "Go to home",
     "goAgenda": "Go to the calendar",
     "goSettings": "Go to settings",
@@ -76,10 +73,6 @@
     "navigate": "navigate",
     "open": "open",
     "close": "close",
-    "orgMembers": "Members",
-    "orgTeams": "Teams",
-    "teamOkrs": "Team OKRs",
-    "member": "Member",
     "tasks": "Tasks",
     "groupOrg": "Company",
     "goOrgOverview": "Company · Overview",
@@ -87,7 +80,31 @@
     "goOrgProjects": "Company · Projects",
     "goOrgOkr": "Company · OKRs",
     "goOrgMembers": "Company · Members",
-    "goOrgSettings": "Company · Settings"
+    "goOrgSettings": "Company · Settings",
+    "orgSearch": {
+      "project": "Projects",
+      "task": "Team tasks",
+      "milestone": "Milestones",
+      "okr": "Company objectives",
+      "kr": "Key results",
+      "member": "Members",
+      "team": "Teams",
+      "keyResult": "Key result",
+      "projectStatus": {
+        "planned": "Planned",
+        "active": "Active",
+        "on_hold": "On hold",
+        "done": "Done",
+        "archived": "Archived"
+      },
+      "taskStatus": {
+        "todo": "To do",
+        "in_progress": "In progress",
+        "review": "In review",
+        "blocked": "Blocked",
+        "done": "Done"
+      }
+    }
   },
   "firstRun": {
     "title": "Welcome to COSMO",

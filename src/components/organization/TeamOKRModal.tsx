@@ -23,12 +23,15 @@ import { Slider } from '@/components/ui/slider';
 import {
   useCreateTeamOKR,
   useEditTeamOKR,
+  useTeamOKRs,
+  useOkrCycles,
   type TeamOKR,
   type CreateTeamKRInput,
   type SyncTeamKRInput,
 } from '@/modules/team-okrs';
 import { useOrgTeams, useCreateOrgTeam } from '@/modules/org-teams';
 import TeamCategoryTreeSelect from './TeamCategoryTreeSelect';
+import { parentCandidates } from './okr-execution.helpers';
 import { TEAM_COLORS } from './CreateTeamModal';
 import { useT } from '@/i18n/useT';
 
@@ -61,6 +64,7 @@ const newKR = (): KRDraft => ({
 
 export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModalProps) {
   const { t } = useT('org');
+  const { t: pf } = useT('portfolio');
   const isEdit = !!editingOKR;
   const { data: teams = [] } = useOrgTeams(orgId);
   const createOKR = useCreateTeamOKR(orgId);
@@ -80,6 +84,12 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
   const [categoryId, setCategoryId] = useState<string | null>(editingOKR?.categoryId ?? null);
   const [endDate, setEndDate] = useState(editingOKR?.endDate ? editingOKR.endDate.slice(0, 10) : '');
   const [teamIds, setTeamIds] = useState<string[]>(editingOKR?.teamIds ?? []);
+  // Exécution (mig. 160) : cycle et objectif auquel celui-ci contribue.
+  const [cycleId, setCycleId] = useState<string>(editingOKR?.cycleId ?? '');
+  const [parentOkrId, setParentOkrId] = useState<string>(editingOKR?.parentOkrId ?? '');
+  const { data: cycles = [] } = useOkrCycles(orgId);
+  const { data: allOkrs = [] } = useTeamOKRs(orgId);
+  const parents = parentCandidates(allOkrs, editingOKR?.id);
   const [keyResults, setKeyResults] = useState<KRDraft[]>(
     editingOKR && editingOKR.keyResults.length > 0
       ? editingOKR.keyResults.map((k) => ({
@@ -151,6 +161,8 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
             description: description.trim(),
             endDate: endDate || undefined,
             teamIds,
+            cycleId: cycleId || null,
+            parentOkrId: parentOkrId || null,
           },
           keyResults: krs,
         },
@@ -173,6 +185,8 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
         description: description.trim() || undefined,
         endDate: endDate || undefined,
         teamIds,
+        cycleId: cycleId || null,
+        parentOkrId: parentOkrId || null,
         keyResults: krs,
       },
       { onSuccess: handleClose },
@@ -219,6 +233,35 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
             <div className="grid gap-2">
               <Label htmlFor="tokr-desc">{t('okrModal.descriptionLabel')}</Label>
               <Textarea id="tokr-desc" rows={2} value={description} placeholder={t('okrModal.descPlaceholder')} onChange={(e) => setDescription(e.target.value)} />
+            </div>
+
+            {/* Cycle et contribution (mig. 160) : un objectif d'équipe CONTRIBUE à
+                un objectif d'entreprise, dans un cycle. */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid gap-2">
+                <Label htmlFor="tokr-cycle">{pf('okrModal.cycle')}</Label>
+                <select
+                  id="tokr-cycle"
+                  value={cycleId}
+                  onChange={(e) => setCycleId(e.target.value)}
+                  className="h-9 rounded-md border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] px-2 text-sm"
+                >
+                  <option value="">{pf('okrModal.noCycle')}</option>
+                  {cycles.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </select>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="tokr-parent">{pf('okrModal.parent')}</Label>
+                <select
+                  id="tokr-parent"
+                  value={parentOkrId}
+                  onChange={(e) => setParentOkrId(e.target.value)}
+                  className="h-9 rounded-md border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] px-2 text-sm"
+                >
+                  <option value="">{pf('okrModal.noParent')}</option>
+                  {parents.map((o) => <option key={o.id} value={o.id}>{o.title}</option>)}
+                </select>
+              </div>
             </div>
 
             {/* Rattachement d'équipes (cloisonnement de visibilité) */}

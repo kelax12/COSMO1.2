@@ -411,7 +411,9 @@
     "tasksTabMoreProjects_many": "+{{count}} de projets",
     "tasksTabMoreProjects_other": "+{{count}} projets",
     "tasksTabFewerProjects": "Réduire",
-    "milestoneFailed": "Jalon non enregistré : {{message}}"
+    "milestoneFailed": "Jalon non enregistré : {{message}}",
+    "loadMoreTasks": "Charger {{count}} tâches de plus",
+    "loadingMoreTasks": "Chargement…"
   },
   "insights": {
     "taskDeleted": "Tâche supprimée",
@@ -938,7 +940,6 @@
     "addUnderTitle": "Ajouter sous {{name}}",
     "deleteOrgTitle": "Supprimer {{name}} ?",
     "deleteOrgAria": "Supprimer l'entreprise {{name}}",
-    "deleteOkrConfirm": "Supprimer l'objectif « {{title}} » ?",
     "deleteOkrAria": "Supprimer l'objectif {{title}}",
     "editOkrAria": "Modifier l'objectif {{title}}",
     "save": "Enregistrer",
@@ -1210,12 +1211,15 @@
     "button_other": "Corbeille ({{count}})",
     "button_many": "Corbeille ({{count}})",
     "title": "Corbeille",
-    "description": "Les tâches supprimées y restent {{days}} jours, avec leurs commentaires, sous-tâches et historique. Restaurées, elles reviennent à l'identique.",
-    "meta": "{{project}} · supprimée par {{who}} {{when}}",
+    "description": "Les tâches et objectifs supprimés y restent {{days}} jours, avec leurs commentaires, sous-tâches, résultats clés et historique. Restaurés, ils reviennent à l'identique.",
+    "meta": "{{project}} · supprimé par {{who}} {{when}}",
     "unknownProject": "Projet archivé ou supprimé",
     "someone": "un membre",
     "restore": "Restaurer",
-    "restoreAria": "Restaurer la tâche {{name}}"
+    "restoreAria": "Restaurer « {{name}} »",
+    "objective": "Objectif d'entreprise",
+    "purgeAria": "Supprimer définitivement « {{name}} »",
+    "confirmPurge": "Supprimer définitivement"
   },
   "lifecycle": {
     "badgeSuspended": "Suspendu",
@@ -1406,5 +1410,16 @@
   },
   "setup": {
     "resume": "Reprendre l'assistant de démarrage"
+  },
+  "savedViews": {
+    "trigger": "Vues",
+    "empty": "Aucune vue enregistrée. Réglez vos filtres, puis enregistrez-les ici.",
+    "saveCurrent": "Enregistrer les filtres actuels…",
+    "reset": "Revenir aux filtres par défaut",
+    "nameLabel": "Nom de la vue",
+    "namePlaceholder": "Ex. : En retard, mon équipe",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "delete": "Supprimer la vue « {{name}} »"
   }
 }

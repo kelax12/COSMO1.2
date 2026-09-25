@@ -297,6 +297,18 @@
       "categorie": "mot-identique",
       "valeur": "Description"
     },
+    "orgAccount.audit.csv.action": {
+      "categorie": "mot-identique",
+      "valeur": "Action"
+    },
+    "orgAccount.audit.csv.date": {
+      "categorie": "mot-identique",
+      "valeur": "Date"
+    },
+    "orgAccount.audit.system": {
+      "categorie": "nom-propre",
+      "valeur": "COSMO"
+    },
     "overlays.palette.groupNavigation": {
       "categorie": "mot-identique",
       "valeur": "Navigation"
@@ -308,6 +320,14 @@
     "portfolio.builtIn.sprint": {
       "categorie": "anglicisme-fr",
       "valeur": "Sprint"
+    },
+    "portfolio.okrCycles.manage": {
+      "categorie": "mot-identique",
+      "valeur": "Cycles…"
+    },
+    "portfolio.okrModal.cycle": {
+      "categorie": "mot-identique",
+      "valeur": "Cycle"
     },
     "premium.page.heroTitle": {
       "categorie": "nom-propre",

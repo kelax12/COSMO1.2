@@ -274,7 +274,33 @@ export function memberWorkload(
     estimatedMinutes: minutes.get(m.userId) ?? 0,
     loadRatio: 0,
   }));
+  return rankWorkload(rows);
+}
 
+/**
+ * Même charge, à partir des chiffres COMPTÉS PAR LE SERVEUR (mig. 191) sur
+ * toutes les tâches ouvertes : le calcul local ci-dessus ne voit que l'extrait
+ * que le client a pu lire.
+ */
+export function memberWorkloadFromServer(
+  server: { userId: string; openTasks: number; overdue: number; estimatedMinutes: number }[],
+  members: OrgMember[],
+): MemberWorkload[] {
+  const byUser = new Map(server.map((w) => [w.userId, w]));
+  return rankWorkload(members.map((m) => {
+    const w = byUser.get(m.userId);
+    return {
+      userId: m.userId,
+      name: firstName(m.displayName),
+      open: w?.openTasks ?? 0,
+      overdue: w?.overdue ?? 0,
+      estimatedMinutes: w?.estimatedMinutes ?? 0,
+      loadRatio: 0,
+    };
+  }));
+}
+
+function rankWorkload(rows: MemberWorkload[]): MemberWorkload[] {
   // La médiane ne porte que sur les personnes qui ont effectivement de la
   // charge estimée : inclure les zéros ferait passer la médiane à 0 dès qu'une
   // moitié de l'équipe n'a rien, et tout le monde deviendrait « en surcharge ».
