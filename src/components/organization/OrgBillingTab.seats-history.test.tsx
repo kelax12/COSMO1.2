@@ -10,6 +10,8 @@ const saveContact = vi.fn();
 const history = vi.fn();
 vi.mock('@/modules/billing/org-billing.repository', () => ({
   getOrgSubscription: async () => null,
+}));
+vi.mock('@/modules/billing/org-billing-account.repository', () => ({
   getOrgBillingHistory: (...a: unknown[]) => history(...a),
   getOrgBillingContact: async () => null,
   saveOrgBillingContact: async (orgId: string, input: { name: string | null; email: string }) => {
@@ -17,6 +19,14 @@ vi.mock('@/modules/billing/org-billing.repository', () => ({
     return { orgId, ...input };
   },
   deleteOrgBillingContact: vi.fn(),
+}));
+vi.mock('@/modules/auth/AuthContext', () => ({
+  useAuth: () => ({ user: { id: 'u-0', email: 'owner@acme.fr' } }),
+}));
+vi.mock('@/modules/organizations', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/modules/organizations')>()),
+  useActiveOrganization: () => ({ activeOrg: { id: 'org-1', ownerId: 'u-0' } }),
+  useOrgMembers: () => ({ data: members }),
 }));
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn(), info: vi.fn() } }));
 
@@ -40,10 +50,7 @@ function renderTab(isOwner = true) {
         <OrgBillingTab
           orgId="org-1"
           isOwner={isOwner}
-          ownerId="u-0"
-          members={members}
-          ownerEmail="owner@acme.fr"
-          userId="u-0"
+         
         />
       </QueryClientProvider>
     </MemoryRouter>,

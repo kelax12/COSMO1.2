@@ -15,17 +15,12 @@ import { BillingIntervalToggle } from './BillingIntervalToggle';
 import { OrgBillingSeats } from './OrgBillingSeats';
 import { OrgBillingHistory } from './OrgBillingHistory';
 import { OrgBillingContactCard } from './OrgBillingContactCard';
-import type { OrgMember } from '@/modules/organizations';
+import { useActiveOrganization, useOrgMembers } from '@/modules/organizations';
+import { useAuth } from '@/modules/auth/AuthContext';
 
 interface Props {
   orgId: string;
   isOwner: boolean;
-  ownerId: string;
-  /** Chaque membre occupe un siège : la liste « Qui compte » les nomme. */
-  members: OrgMember[];
-  /** Adresse du propriétaire courant, destinataire des factures sans contact. */
-  ownerEmail?: string;
-  userId?: string;
   /** Retour à l'espace entreprise — cette vue n'a plus d'onglet actif. */
   onBack?: () => void;
 }
@@ -38,8 +33,16 @@ interface Props {
  * condition — pas « actif si les variables d'environnement existent » : on doit
  * pouvoir dire d'un coup d'œil si le produit facture ou non.
  */
-export function OrgBillingTab({ orgId, isOwner, ownerId, members, ownerEmail, userId, onBack }: Props) {
+export function OrgBillingTab({ orgId, isOwner, onBack }: Props) {
+  // Lus ici plutôt que passés par la page : le chunk `OrganizationPage` est à
+  // son cliquet (18 ko), et ces valeurs ne servent qu'à cet écran. Les membres
+  // viennent du cache que la page a déjà rempli (même clé React Query) :
+  // aucune requête de plus. Chaque membre occupe un siège.
+  const { data: members = [] } = useOrgMembers(orgId);
   const memberCount = members.length;
+  const { user } = useAuth();
+  const { activeOrg } = useActiveOrganization();
+  const ownerId = activeOrg?.ownerId ?? '';
   const { t } = useT('org');
   const { t: tc } = useT('common');
   const [searchParams, setSearchParams] = useSearchParams();
@@ -367,7 +370,7 @@ export function OrgBillingTab({ orgId, isOwner, ownerId, members, ownerEmail, us
       {isOwner && (
         <div className="grid gap-4 md:grid-cols-2 items-start">
           <OrgBillingHistory orgId={orgId} />
-          <OrgBillingContactCard orgId={orgId} ownerEmail={ownerEmail} userId={userId} />
+          <OrgBillingContactCard orgId={orgId} ownerEmail={user?.email} userId={user?.id} />
         </div>
       )}
     </div>

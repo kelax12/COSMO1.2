@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Mail } from 'lucide-react';
 import { useT } from '@/i18n/useT';
-import { useOrgBillingContact, useSaveOrgBillingContact } from '@/modules/billing/org-billing.hooks';
+import { toast } from '@/lib/toast';
+import { useOrgBillingContact, useSaveOrgBillingContact } from '@/modules/billing/org-billing-account.hooks';
 
 interface Props {
   orgId: string;
@@ -29,7 +30,7 @@ const inputClass =
  * promettre un envoi immédiat qu'aucun appel ne fait.
  */
 export function OrgBillingContactCard({ orgId, ownerEmail, userId }: Props) {
-  const { t } = useT('org');
+  const { t } = useT('orgBilling');
   const { data: contact, isLoading } = useOrgBillingContact(orgId, true);
   const save = useSaveOrgBillingContact(orgId, userId);
   const [name, setName] = useState('');
@@ -50,7 +51,11 @@ export function OrgBillingContactCard({ orgId, ownerEmail, userId }: Props) {
     e.preventDefault();
     setTouched(true);
     if (!trimmed || invalid) return;
-    save.mutate({ name: name.trim() || null, email: trimmed });
+    save.mutate({ name: name.trim() || null, email: trimmed }, feedback);
+  };
+  const feedback = {
+    onSuccess: (saved: unknown) => toast.success(t(saved ? 'contactSaved' : 'contactRemoved')),
+    onError: () => toast.error(t('contactError')),
   };
 
   const recipient = contact?.email ?? ownerEmail;
@@ -62,13 +67,13 @@ export function OrgBillingContactCard({ orgId, ownerEmail, userId }: Props) {
     >
       <h3 id="org-billing-contact" className="flex items-center gap-2 text-sm font-semibold text-[rgb(var(--color-text-primary))]">
         <Mail size={15} aria-hidden="true" />
-        {t('billing.contactTitle')}
+        {t('contactTitle')}
       </h3>
       {!isLoading && recipient && (
         <p className="text-xs text-[rgb(var(--color-text-secondary))]">
           {contact
-            ? t('billing.contactCurrent', { email: recipient })
-            : t('billing.contactOwnerDefault', { email: recipient })}
+            ? t('contactCurrent', { email: recipient })
+            : t('contactOwnerDefault', { email: recipient })}
         </p>
       )}
 
@@ -76,7 +81,7 @@ export function OrgBillingContactCard({ orgId, ownerEmail, userId }: Props) {
         <div className="grid gap-2 sm:grid-cols-2">
           <div className="flex flex-col gap-1">
             <label htmlFor="org-billing-contact-name" className="text-xs font-medium text-[rgb(var(--color-text-secondary))]">
-              {t('billing.contactName')}
+              {t('contactName')}
             </label>
             <input
               id="org-billing-contact-name"
@@ -85,13 +90,13 @@ export function OrgBillingContactCard({ orgId, ownerEmail, userId }: Props) {
               onChange={(e) => setName(e.target.value)}
               maxLength={120}
               autoComplete="organization"
-              placeholder={t('billing.contactNamePlaceholder')}
+              placeholder={t('contactNamePlaceholder')}
               className={inputClass}
             />
           </div>
           <div className="flex flex-col gap-1">
             <label htmlFor="org-billing-contact-email" className="text-xs font-medium text-[rgb(var(--color-text-secondary))]">
-              {t('billing.contactEmail')}
+              {t('contactEmail')}
             </label>
             <input
               id="org-billing-contact-email"
@@ -110,26 +115,26 @@ export function OrgBillingContactCard({ orgId, ownerEmail, userId }: Props) {
         </div>
         {touched && invalid && (
           <p id="org-billing-contact-error" role="alert" className="text-xs text-red-600 dark:text-red-400">
-            {t('billing.contactInvalid')}
+            {t('contactInvalid')}
           </p>
         )}
-        <p className="text-xs text-[rgb(var(--color-text-muted))]">{t('billing.contactHint')}</p>
+        <p className="text-xs text-[rgb(var(--color-text-muted))]">{t('contactHint')}</p>
         <div className="flex flex-wrap gap-2">
           <button
             type="submit"
             disabled={save.isPending || !trimmed || invalid || unchanged}
             className="rounded-lg bg-[rgb(var(--color-accent-solid))] px-3 py-2 text-sm font-semibold text-[rgb(var(--color-accent-solid-foreground))] hover:bg-[rgb(var(--color-accent-solid-hover))] disabled:opacity-60 transition-colors"
           >
-            {t('billing.contactSave')}
+            {t('contactSave')}
           </button>
           {contact && (
             <button
               type="button"
               disabled={save.isPending}
-              onClick={() => save.mutate(null)}
+              onClick={() => save.mutate(null, feedback)}
               className="rounded-lg border border-[rgb(var(--color-border))] px-3 py-2 text-sm text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))] disabled:opacity-60 transition-colors"
             >
-              {t('billing.contactRemove')}
+              {t('contactRemove')}
             </button>
           )}
         </div>
