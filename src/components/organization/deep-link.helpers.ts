@@ -27,6 +27,8 @@ export const ORG_SECTION_SEGMENTS = [
   // Paramètres en sortent.
   'members',
   'teams',
+  // Paramètres de l'organisation (M13, audit du 2026-09-24) : profil,
+  // organisations, forfait et zone dangereuse, réunis au même endroit.
   'settings',
   'billing',
 ] as const;

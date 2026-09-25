@@ -1,11 +1,11 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Link } from 'react-router';
-import { ChevronsRight } from 'lucide-react';
+import { ChevronsRight, Pin, PinOff, Search } from 'lucide-react';
 import { useT } from '@/i18n/useT';
 import { PAGE_RIGHT_RAIL_ID } from '@/components/layout/page-right-rail';
 import { orgSectionPath } from './deep-link.helpers';
-import { ORG_SECTION_GROUPS, type OrgNavItem } from './org-sections';
+import { ORG_SECTION_GROUPS, type OrgNavItem, type OrgShortcutGroup } from './org-sections';
 import type { OrgNavMode } from './use-org-nav-mode';
 
 interface Props {
@@ -14,6 +14,11 @@ interface Props {
   /** État porté par la page (`useOrgNavMode`) : elle réserve la place de la carte ouverte à l'arrivée. */
   mode: OrgNavMode;
   onModeChange: (mode: OrgNavMode) => void;
+  /** Épinglés, ou récents tant que rien n'est épinglé. Absent ou vide : pas de groupe. */
+  shortcuts?: OrgShortcutGroup;
+  onTogglePin?: (projectId: string) => void;
+  /** Ouvre la palette de recherche (Ctrl+K). */
+  onSearch?: () => void;
 }
 
 /** Largeur de la carte, marge au bord, et ce qu'il en reste de visible une fois repliée. */
@@ -71,7 +76,7 @@ const EASE = 'cubic-bezier(0.22, 1, 0.36, 1)';
  * ⚠️ Pas de `role="tablist"` : ce sont des liens vers des routes, et
  * `aria-current="page"` dit lequel est actif, ce qui est exact.
  */
-const OrgSideNav: React.FC<Props> = ({ items, activeId, mode, onModeChange }) => {
+const OrgSideNav: React.FC<Props> = ({ items, activeId, mode, onModeChange, shortcuts, onTogglePin, onSearch }) => {
   const collapsed = mode === 'collapsed';
   const { t } = useT('org');
   const card = useRef<HTMLDivElement>(null);
@@ -181,6 +186,22 @@ const OrgSideNav: React.FC<Props> = ({ items, activeId, mode, onModeChange }) =>
           </button>
         </div>
 
+        {/* Recherche : la palette Ctrl+K cherche dans les tâches (côté
+            serveur, au-delà du plafond de lecture), les projets, les membres,
+            les équipes et les OKR. Le raccourci ne se devine pas : il est dit. */}
+        {onSearch && (
+          <button
+            type="button"
+            onClick={onSearch}
+            aria-keyshortcuts="Control+K Meta+K"
+            className="mx-1 mt-1 flex items-center gap-2 px-3 min-h-11 rounded-xl border border-[rgb(var(--color-border))] text-sm text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] transition-colors"
+          >
+            <Search size={15} aria-hidden="true" className="shrink-0" />
+            <span className="flex-1 text-left">{t('sideNav.search')}</span>
+            <kbd className="text-caption px-1.5 py-0.5 rounded border border-[rgb(var(--color-border))]">Ctrl K</kbd>
+          </button>
+        )}
+
         {ORG_SECTION_GROUPS.map((group) => {
           const groupItems = items.filter((item) => item.group === group.id);
           if (groupItems.length === 0) return null;
@@ -215,6 +236,38 @@ const OrgSideNav: React.FC<Props> = ({ items, activeId, mode, onModeChange }) =>
             </div>
           );
         })}
+
+        {shortcuts && shortcuts.items.length > 0 && (
+          <div className="mt-2" data-org-shortcuts={shortcuts.kind}>
+            <p className="px-3 pb-1 text-caption font-semibold uppercase tracking-wider text-[rgb(var(--color-text-muted))]">
+              {t(shortcuts.kind === 'pinned' ? 'sideNav.groupPinned' : 'sideNav.groupRecent')}
+            </p>
+            <ul className="space-y-0.5">
+              {shortcuts.items.map((item) => (
+                <li key={item.id} className="group flex items-center rounded-xl hover:bg-[rgb(var(--color-hover))] transition-colors">
+                  <Link
+                    to={item.href}
+                    className="flex-1 min-w-0 flex items-center gap-2.5 pl-3 pr-1 min-h-11 text-sm text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))]"
+                  >
+                    <span className={`w-2 h-2 rounded-full shrink-0 ${item.dotClass}`} aria-hidden="true" />
+                    <span className="flex-1 min-w-0 truncate">{item.label}</span>
+                  </Link>
+                  {onTogglePin && (
+                    <button
+                      type="button"
+                      onClick={() => onTogglePin(item.id)}
+                      aria-label={t(item.pinned ? 'sideNav.unpin' : 'sideNav.pin', { name: item.label })}
+                      title={t(item.pinned ? 'sideNav.unpin' : 'sideNav.pin', { name: item.label })}
+                      className="min-w-11 min-h-11 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] opacity-60 group-hover:opacity-100 focus-visible:opacity-100 hover:text-[rgb(var(--color-text-primary))] transition-opacity"
+                    >
+                      {item.pinned ? <PinOff size={14} aria-hidden="true" /> : <Pin size={14} aria-hidden="true" />}
+                    </button>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
     </nav>,
     slot,

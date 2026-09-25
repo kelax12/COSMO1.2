@@ -51,6 +51,8 @@ describe('effectivePermissions — les défauts (mig. 115, puis 152)', () => {
     // mig. 152 : supprimer la tâche d'un autre devient un droit de manager.
     expect(p['task.deleteAny']).toBe(false);
     expect(p['project.create']).toBe(false);
+    // Mig. 153 : modifier un projet est un droit à part, défaut manager.
+    expect(p['project.edit']).toBe(false);
     expect(p['okr.create']).toBe(false);
     expect(p['category.manage']).toBe(false);
     expect(p['team.create']).toBe(false);
@@ -64,6 +66,18 @@ describe('effectivePermissions — les défauts (mig. 115, puis 152)', () => {
 
   it('un membre non placé n’est pas manager', () => {
     expect(effectivePermissions({ member: SOLO, members: MEMBERS })['project.create']).toBe(false);
+  });
+});
+
+describe('project.edit (mig. 153)', () => {
+  it('se règle indépendamment de project.create', () => {
+    const p = effectivePermissions({
+      member: CARL,
+      members: MEMBERS,
+      overrides: overrides('carl', { overrides: { 'project.edit': true } }),
+    });
+    expect(p['project.edit']).toBe(true);
+    expect(p['project.create']).toBe(false);
   });
 });
 

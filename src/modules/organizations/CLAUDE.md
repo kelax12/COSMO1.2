@@ -27,6 +27,26 @@ Liste des sections : `org-sections.ts` ; chemins et liens : `deep-link.helpers.t
 - **Retirer un membre passe TOUJOURS par l'assistant de départ** (`OffboardMemberDialog`,
   `offboard_org_member`, mig. 161), depuis l'annuaire comme depuis la pyramide. ❌ Ne jamais
   remonter un retrait nu : il laissait tâches, subordonnés, rôles de responsable et KR orphelins.
+- **Paramètres** (`/entreprise/settings`, M13, 2026-09-24) : profil, organisations, forfait,
+  zone dangereuse, et les invitations depuis l'audit Membres (`OrgSettingsSection`).
+  La garde C-39 (`org-deletion.guard.test.ts`) suit la zone dangereuse jusque-là.
+- **Épinglés / Récents** du panneau (`org-pins.ts`) : préférence par personne et par appareil,
+  donc `localStorage`, jamais la base. Une ouverture `?project=` est notée comme récente.
+- **Toast « Vous encadrez maintenant X »** (`org-page.hooks.ts`) : seul le passage non → oui
+  le déclenche ; la première visite ENREGISTRE l'état sans rien dire.
+
+## 🏠 Aperçu : lectures CIBLÉES, jamais l'organisation entière (2026-09-24)
+
+`MyWorkTab` lisait l'ensemble de travail de toute l'organisation (plafond 1 000) pour n'en
+garder que mes tâches. Chaque bloc passe désormais par `useTeamTaskSlice(orgId, filtres)` :
+`assigneeId: moi`, « 30 prochaines échéances », « mes tâches créées en revue », créations
+récentes, et une lecture par `ids` pour nommer le reste. Le serveur filtre AVANT le plafond.
+
+- ❌ Ne pas y remonter `useTeamTasks` / `useTeamTaskWorkingSet` : une tâche à moi retomberait
+  sous le plafond dans une grande organisation.
+- Le fil d'activité lit `team_task_activity` (mig. 094). Le journal ne voit que les UPDATE :
+  les créations viennent des tâches récentes. Dérivations pures : `my-work.helpers.ts`.
+- `isManager` vient de la PAGE, comme pour Projets et Tâches (l'Aperçu passait `isAdmin`).
 
 ---
 
@@ -39,8 +59,8 @@ Les droits du mode entreprise sont **dérivés par défaut** (`is_org_admin`, `i
   `NULL` = suit le défaut dérivé, `true`/`false` = décision explicite. Une organisation sans
   aucune ligne se comporte **exactement** comme avant la mig. 115 — c'est ce qui rend le
   déploiement réversible.
-- Dix droits (`task.create` · `task.editAny` · `task.deleteAny` · `project.create` ·
-  `project.delete` · `okr.create` · `okr.delete` · `category.manage` · `team.create` ·
+- Onze droits (`task.create` · `task.editAny` · `task.deleteAny` · `project.create` ·
+  `project.edit` · `project.delete` · `okr.create` · `okr.delete` · `category.manage` · `team.create` ·
   `member.invite`) + une portée d'assignation cumulable
   (`self` · `peers` · `manager` · `subordinates` · `everyone`, `{}` = personne).
 - Côté client, **une seule source de vérité** : `src/modules/organizations/permissions.ts`
@@ -50,7 +70,7 @@ Les droits du mode entreprise sont **dérivés par défaut** (`is_org_admin`, `i
 - ❌ **Ne jamais gater une création/suppression par `isManager`.** `isManager` ne désigne plus
   qu'une **position** (onglets Pyramide et Statistiques, dépendances de tâches) ; un droit passe
   par `can['<clé>']`.
-- ❌ **Ne jamais enregistrer un instantané des dix droits.** La fiche n'écrit que les lignes
+- ❌ **Ne jamais enregistrer un instantané des onze droits.** La fiche n'écrit que les lignes
   DÉCIDÉES : figer les droits d'un manager le jour où on ouvre sa fiche ferait qu'un
   déplacement dans la pyramide ne les lui retirerait plus jamais.
 - ❌ **Ne jamais confondre `assign_targets = NULL` (aucune décision → tout le monde) et `{}`
@@ -74,6 +94,28 @@ Les droits du mode entreprise sont **dérivés par défaut** (`is_org_admin`, `i
 
 
 ---
+
+### 📁 Projet riche, portefeuille, page projet (mig. 153, M2, 2026-09-24)
+
+Un projet porte `description`, `owner_id` (responsable), `status`, `start_date`, `due_date`,
+`is_template` + `template_payload`. Une tâche porte `start_date` (≤ `deadline`, CHECK). Jalons
+(`team_project_milestones`) et dépendances entre projets (`team_project_dependencies`, même
+vocabulaire que les tâches : `project_id` est BLOQUÉ par `depends_on_id`). Page projet :
+`/entreprise/projects?project=<id>`, le paramètre RESTE dans l'URL (palette et panneau l'émettent).
+
+- 🔴 **Modifier un projet = `project.edit`, OU responsable encore membre.** Plus `project.create`.
+  Le responsable ne change ni `team_id` (audience, M5), ni `owner_id`, ni `is_template` : c'est le
+  trigger `enforce_team_project_edit_scope` (INVOKER), une policy ne sait pas juger une colonne.
+- 🔴 **Créer un projet avec tâches ou jalons passe par `create_team_project_with_tasks`** (INVOKER,
+  une transaction). ❌ Ne jamais revenir à une boucle de `mutateAsync` : un échec au milieu laissait
+  un projet à moitié créé. Duplication et « partir d'un modèle » empruntent la même RPC.
+- ❌ **Un modèle ne contient JAMAIS de vraies tâches** : son contenu est `template_payload`
+  (décalages en jours). De vraies tâches remonteraient dans « Mes tâches » et les statistiques.
+  `useTeamProjects` EXCLUT les modèles (`select`) ; ils se lisent par `useTeamProjectTemplates`.
+- ❌ **La catégorie ne réécrit plus `color`.** Elle s'affiche en pastille à sa propre couleur ;
+  `projectColorFromCategory` n'a plus d'appelant dans l'onglet Projets.
+- ⚠️ `my_org_perm` de la 153 part du corps de la **152** (`task.deleteAny` = manager) : appliquer
+  la 152 AVANT, sinon la 152 retirerait `project.edit`.
 
 ### 📬 Agréger des lectures, oui. Agréger des AUTORISATIONS, jamais (mig. 129)
 

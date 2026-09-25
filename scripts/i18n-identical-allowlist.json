@@ -293,17 +293,9 @@
       "categorie": "mot-identique",
       "valeur": "Description"
     },
-    "org.taskModal.labelsTitle": {
-      "categorie": "anglicisme-fr",
-      "valeur": "Labels"
-    },
     "org.teamPage.descriptionLabel": {
       "categorie": "mot-identique",
       "valeur": "Description"
-    },
-    "org.templates.sprint": {
-      "categorie": "anglicisme-fr",
-      "valeur": "Sprint"
     },
     "overlays.palette.groupNavigation": {
       "categorie": "mot-identique",
@@ -312,6 +304,10 @@
     "overlays.removeFriend.bodyAfter": {
       "categorie": "symbole-ou-format",
       "valeur": "."
+    },
+    "portfolio.builtIn.sprint": {
+      "categorie": "anglicisme-fr",
+      "valeur": "Sprint"
     },
     "premium.page.heroTitle": {
       "categorie": "nom-propre",

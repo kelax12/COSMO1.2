@@ -31,3 +31,37 @@ describe('createTeamTaskSchema', () => {
     expect(result.status).toBe('review');
   });
 });
+
+// Mig. 153 (M2) : chaque champ du projet riche doit TRAVERSER le schéma. Un
+// champ oublié ici est stripé sans erreur, et l'écran croit avoir enregistré.
+describe('schémas projet riche (mig. 153)', () => {
+  const rich = {
+    description: 'Contexte',
+    ownerId: 'u1',
+    status: 'on_hold',
+    startDate: '2026-10-01',
+    dueDate: '2026-10-31',
+  } as const;
+
+  it('updateTeamProjectSchema conserve chaque champ', async () => {
+    const { updateTeamProjectSchema } = await import('./team-task.schema');
+    expect(updateTeamProjectSchema.parse(rich)).toEqual(rich);
+  });
+
+  it('createTeamProjectSchema conserve chaque champ, modèle compris', async () => {
+    const { createTeamProjectSchema } = await import('./team-task.schema');
+    const payload = { tasks: [{ name: 't', deadlineOffset: 3 }], milestones: [] };
+    const parsed = createTeamProjectSchema.parse({ name: 'P', ...rich, isTemplate: true, templatePayload: payload });
+    expect(parsed).toMatchObject({ ...rich, isTemplate: true, templatePayload: payload });
+  });
+
+  it('refuse un statut de projet inconnu', async () => {
+    const { updateTeamProjectSchema } = await import('./team-task.schema');
+    expect(() => updateTeamProjectSchema.parse({ status: 'archived' })).toThrow();
+  });
+
+  it('createTeamTaskSchema conserve startDate', () => {
+    expect(createTeamTaskSchema.parse({ projectId: 'p', name: 'T', startDate: '2026-10-01' }).startDate)
+      .toBe('2026-10-01');
+  });
+});

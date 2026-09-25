@@ -536,6 +536,7 @@ export class SupabaseOrganizationsRepository implements IOrganizationsRepository
     'task.editAny': 'can_edit_any_task',
     'task.deleteAny': 'can_delete_task',
     'project.create': 'can_create_project',
+    'project.edit': 'can_edit_project',
     'project.delete': 'can_delete_project',
     'okr.create': 'can_create_okr',
     'okr.delete': 'can_delete_okr',

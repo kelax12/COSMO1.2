@@ -5,7 +5,7 @@ import { toast } from '@/lib/toast';
 import { Button } from '@/components/ui/button';
 import { useMyOrgPermissions } from '@/modules/organizations';
 import { useMarkTaskNotificationsRead, type OrgMember } from '@/modules/organizations';
-import type { TeamProject, TeamTask, CreateTeamTaskInput, UpdateTeamTaskInput } from '@/modules/team-projects';
+import type { TeamProject, TeamTask, TeamTaskStatus, CreateTeamTaskInput, UpdateTeamTaskInput } from '@/modules/team-projects';
 import { useCreateTeamProject } from '@/modules/team-projects';
 import { priorityLabelOf } from './team-projects.helpers';
 import MemberAvatar from './MemberAvatar';
@@ -80,6 +80,14 @@ interface TeamTaskModalProps {
   defaultProjectId?: string;
   /** Assignés présélectionnés en création (ex. colonne kanban). */
   defaultAssigneeIds?: string[];
+  /** Statut présélectionné en création (colonne du kanban par statut). */
+  defaultStatus?: TeamTaskStatus;
+  /**
+   * N'ouvre PAS sur le premier projet : le « + » d'une colonne de kanban
+   * n'a aucun projet en contexte, et y déposer la tâche en silence la
+   * rangeait au mauvais endroit (audit Projets, 2026-09-24).
+   */
+  requireProjectChoice?: boolean;
   onCreate?: (input: CreateTeamTaskInput) => Promise<TeamTask>;
   onUpdate?: (taskId: string, input: UpdateTeamTaskInput) => Promise<unknown>;
   onDelete?: (task: TeamTask) => void;
@@ -100,7 +108,7 @@ interface TeamTaskModalProps {
  */
 const TeamTaskModal = ({
   task, isCreating = false, projects, members,
-  defaultProjectId, defaultAssigneeIds,
+  defaultProjectId, defaultAssigneeIds, defaultStatus, requireProjectChoice = false,
   onCreate, onUpdate, onDelete, onClose, isManager = false,
 }: TeamTaskModalProps) => {
   const { t } = useT('org');
@@ -111,8 +119,11 @@ const TeamTaskModal = ({
   // mig. 062) n'intervient qu'au save, si le champ reste vraiment vide.
   const [priority, setPriority] = useState<number | null>(task?.priority ?? null);
   const [deadline, setDeadline] = useState(task?.deadline ?? '');
+  const [startDate, setStartDate] = useState(task?.startDate ?? '');
   const [estimatedTime, setEstimatedTime] = useState(task?.estimatedTime?.toString() ?? '');
-  const [projectId, setProjectId] = useState(task?.projectId ?? defaultProjectId ?? projects[0]?.id ?? '');
+  const [projectId, setProjectId] = useState(
+    task?.projectId ?? defaultProjectId ?? (requireProjectChoice ? '' : projects[0]?.id ?? ''),
+  );
   // Catégorie (mig. 111) — indépendante du projet : la tâche ne l'hérite
   // jamais automatiquement, même en changeant de projet.
   const [categoryId, setCategoryId] = useState<string | null>(task?.categoryId ?? null);
@@ -201,12 +212,13 @@ const TeamTaskModal = ({
       description !== (task.description ?? '') ||
       priority !== task.priority ||
       deadline !== (task.deadline ?? '') ||
+      startDate !== (task.startDate ?? '') ||
       (minutes ?? 0) !== (task.estimatedTime ?? 0) ||
       projectId !== task.projectId ||
       categoryId !== (task.categoryId ?? null) ||
       JSON.stringify([...assigneeIds].sort()) !== JSON.stringify([...task.assigneeIds].sort())
     );
-  }, [isCreating, task, name, description, priority, deadline, estimatedTime, projectId, categoryId, assigneeIds]);
+  }, [isCreating, task, name, description, priority, deadline, startDate, estimatedTime, projectId, categoryId, assigneeIds]);
 
   const toggleAssignee = (userId: string) =>
     setAssigneeIds((prev) => (prev.includes(userId) ? prev.filter((id) => id !== userId) : [...prev, userId]));
@@ -259,6 +271,9 @@ const TeamTaskModal = ({
       description: description.trim(),
       ...(priority !== null ? { priority } : {}),
       deadline,
+      startDate,
+      // Le statut de la colonne n'a de sens qu'à la création.
+      ...(!task && defaultStatus ? { status: defaultStatus } : {}),
       ...(minutes !== undefined && !Number.isNaN(minutes) ? { estimatedTime: minutes } : {}),
       assigneeIds,
       categoryId,
@@ -269,6 +284,8 @@ const TeamTaskModal = ({
     if (pending) return;
     if (!name.trim()) { setError(t('taskModal.nameRequired')); return; }
     if (!projectId) { setError(t('taskModal.projectRequired')); return; }
+    // CHECK `team_tasks_dates_order` (mig. 153) : le dire ici plutôt qu'en toast d'erreur SQL.
+    if (startDate && deadline && startDate > deadline) { setError(t('taskModal.datesInvalid')); return; }
     setPending(true);
     setError(null);
     const common = buildCommon();
@@ -426,6 +443,9 @@ const TeamTaskModal = ({
             onPriorityChange={setPriority}
             deadline={deadline}
             onDeadlineChange={setDeadline}
+            startDate={startDate}
+            onStartDateChange={(v) => { setStartDate(v); setError(null); }}
+            requireProjectChoice={requireProjectChoice}
             estimatedTime={estimatedTime}
             onEstimatedTimeChange={setEstimatedTime}
             showNewProjectInput={showNewProjectInput}

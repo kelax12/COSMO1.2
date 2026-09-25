@@ -8,7 +8,7 @@ import { getTeamProjectsRepository } from '@/lib/repository.factory';
 import { validateAsync } from '@/lib/validation/lazy';
 import { teamProjectKeys } from './constants';
 import type { UpdateTeamSubtaskInput } from './types';
-import type { CreateTeamProjectInput, UpdateTeamProjectInput, CreateTeamTaskInput, UpdateTeamTaskInput, TeamTaskFilters } from './types';
+import type { CreateTeamProjectInput, UpdateTeamProjectInput, CreateTeamTaskInput, UpdateTeamTaskInput, TeamTaskFilters, TeamProject } from './types';
 import { translator } from '@/i18n/useT';
 import { dependencyErrorCode } from '@/modules/tasks/dependency-errors';
 
@@ -16,6 +16,14 @@ const useRepo = () => getTeamProjectsRepository();
 
 // ─── Read ────────────────────────────────────────────────────────────
 
+/**
+ * Projets de l'organisation, archivés compris, MODÈLES EXCLUS (mig. 153).
+ *
+ * Un modèle est une ligne de `team_projects` : sans ce filtre, il apparaîtrait
+ * dans chaque sélecteur de projet, chaque statistique et la palette de
+ * commandes comme un projet en cours. Les modèles se lisent par
+ * `useTeamProjectTemplates`, sur la MÊME clé de cache (une seule requête).
+ */
 export const useTeamProjects = (orgId: string | undefined) => {
   const repository = useRepo();
   return useQuery({
@@ -25,6 +33,22 @@ export const useTeamProjects = (orgId: string | undefined) => {
     staleTime: 1000 * 60 * 5,
     // Donnée partagée : au retour sur l'onglet, on resynchronise (reco #12).
     refetchOnWindowFocus: true,
+    select: selectRealProjects,
+  });
+};
+
+const selectRealProjects = (projects: TeamProject[]) => projects.filter((p) => !p.isTemplate);
+const selectTemplates = (projects: TeamProject[]) => projects.filter((p) => p.isTemplate && !p.archivedAt);
+
+/** Modèles de projet de l'organisation (mig. 153), hors archivés. */
+export const useTeamProjectTemplates = (orgId: string | undefined) => {
+  const repository = useRepo();
+  return useQuery({
+    queryKey: teamProjectKeys.projects(orgId ?? ''),
+    queryFn: () => repository.getProjects(orgId as string),
+    enabled: !!orgId,
+    staleTime: 1000 * 60 * 5,
+    select: selectTemplates,
   });
 };
 
@@ -129,6 +153,37 @@ export const useTeamTaskWorkingSet = (
   });
 };
 
+/**
+ * Lecture CIBLÉE : le serveur filtre, trie et plafonne avant de répondre.
+ *
+ * C'est la lecture de l'Aperçu (audit du 2026-09-24). Il lisait tout
+ * l'ensemble de travail de l'organisation, plafonné à 1 000 lignes, pour n'en
+ * garder que MES tâches : dans une grande organisation, une tâche à moi
+ * pouvait tomber sous le plafond et disparaître de mon propre écran d'accueil.
+ * Ici chaque bloc demande ses lignes (`assigneeId: moi`, « les 20 prochaines
+ * échéances »…), et le plafond ne s'applique qu'à elles.
+ *
+ * ⚠️ Les filtres entrent dans la clé de cache : ils doivent être STABLES d'un
+ * rendu à l'autre (dates figées au début du jour, `ids` triés). La clé est un
+ * sous-chemin de `teamProjectKeys.tasks(orgId)`, donc toute mutation de tâche
+ * l'invalide déjà.
+ */
+export const useTeamTaskSlice = (
+  orgId: string | undefined,
+  filters: TeamTaskFilters,
+  options?: { live?: boolean; enabled?: boolean },
+) => {
+  const repository = useRepo();
+  return useQuery({
+    queryKey: [...teamProjectKeys.tasks(orgId ?? ''), 'slice', filters],
+    queryFn: () => repository.getTasks(orgId as string, filters),
+    enabled: !!orgId && (options?.enabled ?? true),
+    staleTime: 1000 * 30,
+    ...(options?.live ? { refetchInterval: 20_000 } : {}),
+    refetchOnWindowFocus: true,
+  });
+};
+
 // ─── Mutations ───────────────────────────────────────────────────────
 
 export const useCreateTeamProject = (orgId: string) => {
@@ -156,8 +211,10 @@ export const useUpdateTeamProject = (orgId: string) => {
       return repository.updateProject(projectId, valid as UpdateTeamProjectInput);
     },
     onSuccess: (_project, { input }) => {
-      if (input.archived === true) toast.success(translator('errors').t('success.projectArchived'));
-      else if (input.archived === false) toast.success(translator('errors').t('success.projectRestored'));
+      // Archiver ne toaste PLUS ici : l'écran qui archive montre un toast
+      // « Annuler » (audit Projets, 2026-09-24), et deux toasts pour un geste
+      // en feraient un de trop.
+      if (input.archived === false) toast.success(translator('errors').t('success.projectRestored'));
       queryClient.invalidateQueries({ queryKey: teamProjectKeys.projects(orgId) });
     },
     onError: (error: Error) => toast.error(translator('errors').t('mutation.updateProject', { message: error.message })),

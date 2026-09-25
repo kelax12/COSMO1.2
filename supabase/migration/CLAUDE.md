@@ -51,6 +51,10 @@ compilait, la suite passait.
   (inscrit à la main après `db query -f`), vérifiée par le catalogue : colonnes, policies SELECT/DELETE,
   six fonctions qui ignorent la corbeille, `task.deleteAny` en défaut manager, droits des cinq RPC,
   job `cosmo-purge-team-task-trash`. Preuve en transaction annulée : 14 cas.
+- ✅ **La mig. `153`** (portefeuille de projets, M2) est **appliquée**, ledger `20260924121637`, AVANT
+  la `152`, relue au catalogue après elle : policy `team_projects_update`, plafond, `my_project_edit_perm`
+  intacts. Preuve en transaction annulée : 19 cas. 🔴 `project.edit` n est PAS une clé de `my_org_perm`
+  (que la 152 réécrit en entier) : une fonction dédiée, pour que l ordre d application n efface rien.
 - ✅ **État au 2026-09-25** : `160`, `161`, `162`, `170` (branches gouvernance et annuaire) et
   `163` (page d équipe) sont **appliquées**, ledger `20260925063127`, `…063147`, `…063202`,
   `…063218`, `…064540`, relues au catalogue après une preuve en transaction annulée (18 cas pour

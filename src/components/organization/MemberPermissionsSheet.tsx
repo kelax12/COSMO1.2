@@ -39,7 +39,7 @@ const SECTIONS: {
 }[] = [
   {
     titleKey: 'permissions.sectionCreate',
-    keys: ['task.create', 'project.create', 'okr.create', 'category.manage', 'team.create'],
+    keys: ['task.create', 'project.create', 'project.edit', 'okr.create', 'category.manage', 'team.create'],
   },
   {
     titleKey: 'permissions.sectionDelete',

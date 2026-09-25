@@ -297,3 +297,54 @@ describe('todayOffsetPercent', () => {
     expect(todayOffsetPercent(range, new Date(2027, 0, 1))).toBeNull();
   });
 });
+
+// ─── Mig. 153 (M2) : dates de début, bandeaux de projet, jalons ──────
+describe('frise avec dates de début', () => {
+  const range = timelineRange([], NOW);
+
+  it('une tâche avec un début devient une BARRE, sans début un point', () => {
+    const rows = timelineRows(
+      [
+        task({ id: 'bar', startDate: '2026-07-16', deadline: '2026-07-20' }),
+        task({ id: 'dot', deadline: '2026-07-22' }),
+      ],
+      [project({})],
+      range,
+      NOW,
+    );
+    const bar = rows[0].markers.find((m) => m.task.id === 'bar')!;
+    const dot = rows[0].markers.find((m) => m.task.id === 'dot')!;
+    expect(bar.startOffsetPercent).not.toBeNull();
+    expect(bar.startOffsetPercent!).toBeLessThan(bar.offsetPercent);
+    expect(dot.startOffsetPercent).toBeNull();
+  });
+
+  it('une barre qui CROISE la fenêtre reste visible', () => {
+    const window = timelineWindow(range, 'month', NOW);
+    expect(inWindowOrUnscheduled(task({ startDate: '2026-01-01', deadline: '2026-12-31' }), window)).toBe(true);
+    expect(inWindowOrUnscheduled(task({ startDate: '2026-01-01', deadline: '2026-01-10' }), window)).toBe(false);
+  });
+
+  it('un projet daté a son bandeau et garde sa ligne sans tâche ouverte', () => {
+    const rows = timelineRows([], [project({ startDate: '2026-07-14', dueDate: '2026-07-28' })], range, NOW);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].span!.startPercent).toBeLessThan(rows[0].span!.endPercent);
+  });
+
+  it('un projet avec UNE seule date n’a pas de bandeau (jamais inventé)', () => {
+    const rows = timelineRows([task({ deadline: '2026-07-20' })], [project({ dueDate: '2026-07-28' })], range, NOW);
+    expect(rows[0].span).toBeNull();
+  });
+
+  it('les jalons se posent sur la ligne de leur projet', () => {
+    const rows = timelineRows([], [project({})], range, NOW, [
+      { id: 'm', orgId: 'o', projectId: 'p1', name: 'J', dueDate: '2026-07-20', completedAt: null, createdAt: '' },
+    ]);
+    expect(rows[0].milestones).toHaveLength(1);
+  });
+
+  it('« Tout » couvre aussi les dates de projets et de jalons', () => {
+    const r = timelineRange([], NOW, ['2027-03-01']);
+    expect(r.end.getTime()).toBeGreaterThanOrEqual(new Date(2027, 2, 1).getTime());
+  });
+});
