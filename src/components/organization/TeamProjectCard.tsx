@@ -31,6 +31,7 @@ import TeamTaskRow from './TeamTaskRow';
 import ConfirmProjectAudienceDialog from './ConfirmProjectAudienceDialog';
 import { useTeamCategories } from '@/modules/team-categories';
 import { useT } from '@/i18n/useT';
+import TeamColorDot from './TeamColorDot';
 
 interface TeamProjectCardProps {
   project: TeamProject;
@@ -106,7 +107,8 @@ const TeamProjectCard = ({
   const { data: categories = [] } = useTeamCategories(project.orgId);
 
   const color = projectColor(project.color);
-  const teamName = teams.find((t) => t.id === project.teamId)?.name;
+  const projectTeam = teams.find((t) => t.id === project.teamId);
+  const teamName = projectTeam?.name;
   const category = categories.find((c) => c.id === project.categoryId);
   const archived = !!project.archivedAt;
   const status = project.status ?? 'active';
@@ -180,8 +182,10 @@ const TeamProjectCard = ({
             <span className="text-sm font-bold text-[rgb(var(--color-text-primary))] truncate">{project.name}</span>
           )}
           {teamName && (
-            <span className={`inline-flex items-center gap-1 text-caption font-semibold px-1.5 py-0.5 rounded-full shrink-0 ${color.soft}`}>
-              <UsersRound size={10} aria-hidden="true" /> {teamName}
+            // Couleur de l'ÉQUIPE, pas du projet : c'était la couleur du projet
+            // qui habillait le nom de l'équipe (cohérence globale, 2026-09-25).
+            <span className="inline-flex items-center gap-1 text-caption font-semibold px-1.5 py-0.5 rounded-full shrink-0 bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-secondary))]">
+              <TeamColorDot color={projectTeam?.color} size={6} /> {teamName}
             </span>
           )}
           {/* La catégorie est une PASTILLE à sa propre couleur : elle n'écrase
@@ -316,6 +320,7 @@ const TeamProjectCard = ({
                     </DropdownMenuItem>
                     {teams.map((team) => (
                       <DropdownMenuItem key={team.id} onClick={() => requestTeamChange(team.id)}>
+                        <TeamColorDot color={team.color} />
                         <span className="truncate">{team.name}</span>
                         {project.teamId === team.id && <span className="ml-auto text-xs">✓</span>}
                       </DropdownMenuItem>

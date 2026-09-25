@@ -26,6 +26,7 @@ import type { OrgTeam } from '@/modules/org-teams';
 import MemberAvatar from './MemberAvatar';
 import type { ProjectsUiPrefs, TaskStatusFilter } from './team-projects.helpers';
 import { useT } from '@/i18n/useT';
+import TeamColorDot from './TeamColorDot';
 
 interface ProjectsToolbarProps {
   members: OrgMember[];
@@ -261,6 +262,7 @@ const ProjectsToolbar = ({
                   <DropdownMenuSeparator />
                   {teams.map((tm) => (
                     <DropdownMenuItem key={tm.id} onClick={() => updatePrefs({ teamFilter: tm.id, assigneeFilter: null })}>
+                      <TeamColorDot color={tm.color} />
                       <span className="truncate">{tm.name}</span>
                       {tm.id === teamFilter && (
                         <span className="ml-auto text-xs text-[rgb(var(--color-text-muted))]" aria-hidden="true">✓</span>

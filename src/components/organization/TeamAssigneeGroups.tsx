@@ -71,7 +71,10 @@ const TeamAssigneeGroups = ({ orgId, value, onChange }: TeamAssigneeGroupsProps)
             // `TeamTaskModal` : 42 px mesurés, cible WCAG 2.5.5 à 44 (C-70).
             className="w-full flex items-center gap-2.5 px-3 py-2 min-h-11 hover:bg-[rgb(var(--color-hover))] transition-colors text-left disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            <span className="w-[26px] h-[26px] rounded-full bg-indigo-500/10 text-indigo-500 flex items-center justify-center shrink-0">
+            <span
+              className="w-[26px] h-[26px] rounded-full flex items-center justify-center shrink-0"
+              style={{ backgroundColor: `${team.color}1f`, color: team.color }}
+            >
               <Users2 size={13} aria-hidden="true" />
             </span>
             <span className="text-sm truncate flex-1" style={{ color: 'rgb(var(--color-text-primary))' }}>

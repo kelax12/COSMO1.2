@@ -3,7 +3,7 @@
 // (cloisonnement). Un OKR ne s'assigne PAS à une personne (#10) : le travail
 // individuel passe par les tâches de projet.
 import { useEffect, useState } from 'react';
-import { Plus, Trash2, Users, Building2, X } from 'lucide-react';
+import { Plus, Trash2, Building2, X } from 'lucide-react';
 import {
   Sheet,
   SheetContent,
@@ -31,6 +31,7 @@ import { useOrgTeams, useCreateOrgTeam } from '@/modules/org-teams';
 import TeamCategoryTreeSelect from './TeamCategoryTreeSelect';
 import { TEAM_COLORS } from './CreateTeamModal';
 import { useT } from '@/i18n/useT';
+import TeamColorDot from './TeamColorDot';
 
 interface TeamOKRModalProps {
   orgId: string;
@@ -249,7 +250,7 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
                           : 'border-border text-muted-foreground hover:border-[rgb(var(--color-accent))] hover:text-blue-600 dark:hover:text-blue-400'
                       }`}
                     >
-                      <Users size={13} aria-hidden="true" /> {team.name}
+                      <TeamColorDot color={team.color} /> {team.name}
                     </button>
                   );
                 })}
