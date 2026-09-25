@@ -32,7 +32,7 @@ const DeleteTeamCategoryConfirm: React.FC<DeleteTeamCategoryConfirmProps> = ({
   onConfirm,
   isWorking = false,
 }) => {
-  const { t } = useT('org');
+  const { t, tp } = useT('org');
 
   const { ref: modalA11yRef, dialogProps: modalA11yProps } = useModalA11y<HTMLDivElement>({
     open,
@@ -69,7 +69,7 @@ const DeleteTeamCategoryConfirm: React.FC<DeleteTeamCategoryConfirmProps> = ({
 
               <p className="text-sm leading-relaxed mb-5 text-[rgb(var(--color-text-secondary))]">
                 {t('teamCategory.deleteImpact', { projects: impact.projects, tasks: impact.tasks, okrs: impact.okrs })}
-                {impact.subcategories > 0 ? t('teamCategory.deleteImpactSubcategories', { count: impact.subcategories }) : ''}
+                {impact.subcategories > 0 ? tp('teamCategory.deleteImpactSubcategories', impact.subcategories) : ''}
               </p>
 
               <div className="flex gap-3">

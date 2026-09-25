@@ -28,7 +28,7 @@ const ConfirmLeaveOrgDialog = ({ orgName, pending, onConfirm, onCancel }: Confir
     <AlertDialogContent className="bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl text-[rgb(var(--color-text-primary))] shadow-xl">
       <AlertDialogHeader>
         <AlertDialogTitle className="text-xl font-bold">
-          Quitter {orgName} ?
+          {t('leaveDialog.title', { name: orgName })}
         </AlertDialogTitle>
         <AlertDialogDescription className="text-[rgb(var(--color-text-secondary))] text-sm leading-relaxed">
           {t('leaveDialog.body')}
@@ -43,7 +43,7 @@ const ConfirmLeaveOrgDialog = ({ orgName, pending, onConfirm, onCancel }: Confir
           onClick={onConfirm}
           className="rounded-xl font-semibold text-sm bg-red-500 hover:bg-red-600 text-white disabled:opacity-50"
         >
-          {pending ? 'Sortie…' : 'Quitter l\'entreprise'}
+          {pending ? t('leaveDialog.pending') : t('leaveDialog.confirm')}
         </AlertDialogAction>
       </AlertDialogFooter>
     </AlertDialogContent>

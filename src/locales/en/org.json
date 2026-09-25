@@ -78,7 +78,6 @@
     "codeHint": "Share this code so new members can request to join the company. Every request must be approved by an administrator.",
     "regenerate": "Regenerate the code",
     "regenerateAria": "Regenerate the code (invalidates the old one)",
-    "regenerateConfirm": "Regenerate the code? The old code will no longer work to join the company.",
     "addUnderHint": "Invite a new person to join the company at this position.",
     "personalLink": "Personal invitation link",
     "personalLinkHint": "Single-use, valid for 7 days. Once they create their account, the person joins the company directly, reporting to {{name}}.",
@@ -88,7 +87,12 @@
     "copyCodeAria": "Copy invitation code",
     "orgCodeTitle": "Organization invitation code",
     "seatsFullLink": "This company has reached its seat limit: a new member could not join with this link. Upgrade the plan to add more.",
-    "seatsFullCode": "This company has reached its seat limit: a request made with this code could not be accepted."
+    "seatsFullCode": "This company has reached its seat limit: a request made with this code could not be accepted.",
+    "regenerateTitle": "Regenerate the invitation code?",
+    "regenerateImpactOld": "The old code stops working immediately.",
+    "regenerateImpactShared": "People you shared it with will need the new one.",
+    "regenerateImpactPending": "Requests already sent stay pending approval.",
+    "regenerateAction": "Regenerate"
   },
   "pyramid": {
     "directReports_one": ", {{count}} direct report",
@@ -101,8 +105,6 @@
     "detached": "{{name}} is detached from the pyramid",
     "moved": "{{name}} moved",
     "reorgSaved": "Reorganisation saved",
-    "undoConfirm_one": "Undo the reorganisation? The move you made will be reverted.",
-    "undoConfirm_other": "Undo the reorganisation? The {{count}} moves you made will be reverted.",
     "undone": "Changes undone",
     "dragBanner": "Drag **{{name}}** onto their new manager, or tap a highlighted card.",
     "detachAria": "Detach {{name}} (unplaced)",
@@ -153,7 +155,12 @@
     "workloadTitle_other": "{{duration}} · {{count}} open",
     "workloadTitleOverdue_one": "{{duration}} · {{count}} open · {{overdue}} overdue",
     "workloadTitleOverdue_other": "{{duration}} · {{count}} open · {{overdue}} overdue",
-    "dragHint": "Drag {{name}} into the pyramid"
+    "dragHint": "Drag {{name}} into the pyramid",
+    "undoTitle": "Undo the reorganisation?",
+    "undoImpact_one": "{{count}} move will be reverted.",
+    "undoImpact_other": "{{count}} moves will be reverted.",
+    "undoImpactManagers": "Everyone gets back the manager they had before.",
+    "undoAction": "Revert"
   },
   "overview": {
     "completed": "Completed",
@@ -198,7 +205,11 @@
     "csvProject": "Project",
     "loading": "Loading statistics…",
     "periodDays": "{{count}}d",
-    "periodAll": "All"
+    "periodAll": "All",
+    "csvObjective": "Objective",
+    "csvProgress": "Progress (%)",
+    "csvKrCount": "KR count",
+    "okrProgressLabel": "OKR progress"
   },
   "myWork": {
     "upToDate": "Up to date",
@@ -743,7 +754,8 @@
     "save": "Save",
     "deleteTitle": "Delete the “{{name}}” category?",
     "deleteImpact": "Projects affected: {{projects}} · Tasks affected: {{tasks}} · Objectives affected: {{okrs}}. Nothing else is deleted: those items simply lose their label.",
-    "deleteImpactSubcategories": " {{count}} subcategory(ies) will be deleted with it.",
+    "deleteImpactSubcategories_one": " {{count}} subcategory will be deleted with it.",
+    "deleteImpactSubcategories_other": " {{count}} subcategories will be deleted with it.",
     "deleteConfirm": "Delete",
     "noCategory": "No category",
     "picker": "Category",
@@ -835,7 +847,10 @@
     "deleted": "Comment deleted"
   },
   "leaveDialog": {
-    "body": "You'll immediately lose access to the team's projects, tasks and OKRs. Your personal data (tasks, habits, calendar) is not affected. You can come back with a new invitation code."
+    "body": "You'll immediately lose access to the team's projects, tasks and OKRs. Your personal data (tasks, habits, calendar) is not affected. You can come back with a new invitation code.",
+    "title": "Leave {{name}}?",
+    "pending": "Leaving…",
+    "confirm": "Leave the company"
   },
   "removeMemberDialog": {
     "body": "This person will immediately lose access to the company's projects, tasks and OKRs. Their personal data (tasks, habits, calendar) is not affected. They can come back with a new invitation code."
@@ -885,14 +900,18 @@
     "addUnderTitle": "Add under {{name}}",
     "deleteOrgTitle": "Delete {{name}}?",
     "deleteOrgAria": "Delete the company {{name}}",
-    "deleteOkrConfirm": "Delete the objective “{{title}}”?",
     "deleteOkrAria": "Delete the objective {{title}}",
     "editOkrAria": "Edit the objective {{title}}",
     "save": "Save",
     "saving": "Saving…",
     "unreadComments_one": "{{count}} unread comment",
     "unreadComments_other": "{{count}} unread comments",
-    "backToChoice": "Back"
+    "backToChoice": "Back",
+    "deleteOkrTitle": "Delete the objective “{{title}}”?",
+    "deleteOkrImpactKrs_one": "{{count}} key result is deleted with it.",
+    "deleteOkrImpactKrs_other": "{{count}} key results are deleted with it.",
+    "deleteOkrImpactHistory": "Its progress and history are lost. There is no trash for objectives.",
+    "deleteOkrAction": "Delete objective"
   },
   "tabs": {
     "overview": "Overview",
@@ -1216,7 +1235,8 @@
     "emailIntro": "Each address gets a personal link, valid for 7 days, that only its recipient can use.",
     "emailsLabel": "Email addresses",
     "emailsPlaceholder": "first.last@company.com, one per line or separated by commas",
-    "emailsCount": "{{count}} address(es) found, {{max}} at most",
+    "emailsCount_one": "{{count}} address found, {{max}} at most",
+    "emailsCount_other": "{{count}} addresses found, {{max}} at most",
     "placement": "Place in the org chart",
     "placementHint": "The person will arrive directly under this manager.",
     "unplaced": "Unplaced",
@@ -1240,7 +1260,8 @@
     "listEmpty": "No email invitations yet.",
     "stateClaimed": "Accepted on {{date}}",
     "stateExpired": "Expired on {{date}}",
-    "statePending": "Pending, expires on {{date}} · sent {{sent}} time(s)",
+    "statePending_one": "Pending, expires on {{date}} · sent {{count}} time",
+    "statePending_other": "Pending, expires on {{date}} · sent {{count}} times",
     "resend": "Resend",
     "resendWait": "At most one reminder per hour",
     "resendFor": "Resend to {{email}}",
@@ -1337,5 +1358,9 @@
   },
   "setup": {
     "resume": "Resume the setup assistant"
+  },
+  "confirm": {
+    "impactTitle": "What will happen",
+    "typeName": "To confirm, type “{{name}}”"
   }
 }

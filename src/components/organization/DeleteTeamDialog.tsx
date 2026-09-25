@@ -39,6 +39,10 @@ const DeleteTeamDialog = ({ orgId, team, teams, onClose }: DeleteTeamDialogProps
   const others = teams.filter((x) => x.id !== team.id);
   const [targetId, setTargetId] = useState('');
   const [archive, setArchive] = useState(false);
+  // Niveau DESTRUCTEUR (cf. OrgConfirmDialog) : une équipe supprimée ne revient
+  // pas. On fait saisir son nom, comme pour l'entreprise.
+  const [typedName, setTypedName] = useState('');
+  const nameOk = typedName.trim() === team.name.trim();
 
   const projects = (impact?.activeProjects ?? 0) + (impact?.archivedProjects ?? 0);
   const okrs = (impact?.soleOkrs ?? 0) + (impact?.sharedOkrs ?? 0);
@@ -46,7 +50,7 @@ const DeleteTeamDialog = ({ orgId, team, teams, onClose }: DeleteTeamDialogProps
   // Ce sont les projets et les OKR dont c'est la SEULE équipe qui exigent une cible.
   const needsTarget = projects > 0 || (impact?.soleOkrs ?? 0) > 0;
   const target = others.find((x) => x.id === targetId);
-  const canConfirm = !isLoading && !isError && (!needsTarget || !!target) && !deleteTeam.isPending;
+  const canConfirm = !isLoading && !isError && nameOk && (!needsTarget || !!target) && !deleteTeam.isPending;
 
   const confirm = () => {
     deleteTeam.mutate(
@@ -128,6 +132,19 @@ const DeleteTeamDialog = ({ orgId, team, teams, onClose }: DeleteTeamDialogProps
             </div>
           )
         )}
+
+        <div>
+          <label htmlFor="delete-team-name" className="block text-xs font-semibold mb-1.5 text-[rgb(var(--color-text-secondary))]">
+            {t('confirm.typeName', { name: team.name })}
+          </label>
+          <input
+            id="delete-team-name"
+            value={typedName}
+            onChange={(e) => setTypedName(e.target.value)}
+            autoComplete="off"
+            className={fieldClass}
+          />
+        </div>
 
         <AlertDialogFooter className="gap-2">
           <AlertDialogCancel className="rounded-xl border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] hover:bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-primary))] font-semibold text-sm">

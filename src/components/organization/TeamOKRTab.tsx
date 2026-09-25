@@ -24,6 +24,7 @@ import DeleteTeamCategoryConfirm from './DeleteTeamCategoryConfirm';
 import TeamOKRModal from './TeamOKRModal';
 import { useMyOrgPermissions } from '@/modules/organizations';
 import { useT } from '@/i18n/useT';
+import OrgConfirmDialog from './OrgConfirmDialog';
 
 interface TeamOKRTabProps {
   orgId: string;
@@ -128,9 +129,11 @@ const TeamKRRow = ({ kr, onCommit }: TeamKRRowProps) => {
 
 const TeamOKRTab = ({ orgId }: TeamOKRTabProps) => {
   const { can } = useMyOrgPermissions(orgId);
-  const { t } = useT('org');
+  const { t, tp } = useT('org');
   const [showCreate, setShowCreate] = useState(false);
   const [editingOKR, setEditingOKR] = useState<TeamOKR | null>(null);
+  // Niveau LOURD (cf. OrgConfirmDialog) : un objectif n'a pas de corbeille.
+  const [deletingOKR, setDeletingOKR] = useState<TeamOKR | null>(null);
   // `live` : c'est l'écran où l'on regarde les OKR (cf. useTeamOKRs).
   const { data: okrs = [], isLoading } = useTeamOKRs(orgId, { live: true });
   const { data: teams = [] } = useOrgTeams(orgId);
@@ -357,9 +360,7 @@ const TeamOKRTab = ({ orgId }: TeamOKRTabProps) => {
                     {can['okr.delete'] && (
                     <button
                       type="button"
-                      onClick={() => {
-                        if (window.confirm(t('common.deleteOkrConfirm', { title: okr.title }))) deleteOKR.mutate(okr.id);
-                      }}
+                      onClick={() => setDeletingOKR(okr)}
                       aria-label={t('common.deleteOkrAria', { title: okr.title })}
                       className="w-8 h-8 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-red-500 hover:bg-red-500/10 transition-colors"
                     >
@@ -396,6 +397,19 @@ const TeamOKRTab = ({ orgId }: TeamOKRTabProps) => {
       )}
       {editingOKR && (
         <TeamOKRModal orgId={orgId} editingOKR={editingOKR} onClose={() => setEditingOKR(null)} />
+      )}
+      {deletingOKR && (
+        <OrgConfirmDialog
+          title={t('common.deleteOkrTitle', { title: deletingOKR.title })}
+          impact={[
+            ...(deletingOKR.keyResults.length > 0 ? [tp('common.deleteOkrImpactKrs', deletingOKR.keyResults.length)] : []),
+            t('common.deleteOkrImpactHistory'),
+          ]}
+          confirmLabel={t('common.deleteOkrAction')}
+          pending={deleteOKR.isPending}
+          onConfirm={() => deleteOKR.mutate(deletingOKR.id, { onSettled: () => setDeletingOKR(null) })}
+          onCancel={() => setDeletingOKR(null)}
+        />
       )}
     </div>
   );

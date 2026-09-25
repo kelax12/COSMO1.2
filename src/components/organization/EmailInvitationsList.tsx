@@ -29,7 +29,7 @@ const canResend = (i: EmailInvitation, now = Date.now()): boolean =>
  * (créateur ou admin) : un manager ne voit que les siennes.
  */
 const EmailInvitationsList = ({ orgId }: EmailInvitationsListProps) => {
-  const { t } = useT('org');
+  const { t, tp } = useT('org');
   const { data: invitations = [], isLoading } = useEmailInvitations(orgId);
   const resend = useResendInvitation(orgId);
   const revoke = useRevokeEmailInvitation(orgId);
@@ -61,7 +61,7 @@ const EmailInvitationsList = ({ orgId }: EmailInvitationsListProps) => {
                   ? t('invites.stateClaimed', { date: date(i.claimedAt as string) })
                   : state === 'expired'
                     ? t('invites.stateExpired', { date: date(i.expiresAt) })
-                    : t('invites.statePending', { date: date(i.expiresAt), sent: i.sentCount })}
+                    : tp('invites.statePending', i.sentCount, { date: date(i.expiresAt) })}
               </span>
             </span>
             {state !== 'claimed' && (

@@ -36,7 +36,7 @@ interface Params {
 }
 
 export function usePyramidDnd({ orgId, members, currentUserId, isAdmin }: Params) {
-  const { t, tp } = useT('org');
+  const { t } = useT('org');
   const isMobile = useIsMobile();
   const setManager = useSetMemberManager();
 
@@ -282,13 +282,19 @@ export function usePyramidDnd({ orgId, members, currentUserId, isAdmin }: Params
     resetEditState();
   };
 
-  const cancelEdit = async () => {
+  // Niveau LOURD (cf. OrgConfirmDialog) : défaire N déplacements se confirme
+  // dans un dialogue qui chiffre l'impact. Sans déplacement, rien à demander.
+  const [confirmingUndo, setConfirmingUndo] = useState(false);
+  const [undoing, setUndoing] = useState(false);
+  const cancelEdit = () => {
+    if (sessionMovesRef.current.length > 0) setConfirmingUndo(true);
+    else resetEditState();
+  };
+
+  const confirmUndo = async () => {
     const moves = sessionMovesRef.current;
+    setUndoing(true);
     if (moves.length > 0) {
-      const ok = window.confirm(
-        moves.length > 1 ? tp('pyramid.undoConfirm', moves.length) : tp('pyramid.undoConfirm', 1),
-      );
-      if (!ok) return;
       // Rétablissement dans l'ordre inverse (évite les faux cycles serveur).
       for (const mv of [...moves].reverse()) {
         try {
@@ -299,6 +305,8 @@ export function usePyramidDnd({ orgId, members, currentUserId, isAdmin }: Params
       }
       toast.success(t('pyramid.undone'));
     }
+    setUndoing(false);
+    setConfirmingUndo(false);
     resetEditState();
   };
 
@@ -326,6 +334,10 @@ export function usePyramidDnd({ orgId, members, currentUserId, isAdmin }: Params
     startEdit,
     finishEdit,
     cancelEdit,
+    confirmingUndo,
+    undoing,
+    confirmUndo,
+    dismissUndo: () => setConfirmingUndo(false),
     grabMember,
     drop,
     drag,
