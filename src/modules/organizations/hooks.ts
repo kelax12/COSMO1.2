@@ -326,14 +326,17 @@ export const useSetMemberManager = () => {
   const queryClient = useQueryClient();
   const repository = useOrgRepository();
   return useMutation({
-    mutationFn: ({ orgId, userId, managerId }: { orgId: string; userId: string; managerId: string | null; silent?: boolean }) =>
+    mutationFn: ({ orgId, userId, managerId }: { orgId: string; userId: string; managerId: string | null; silent?: boolean; bulk?: boolean }) =>
       repository.setMemberManager(orgId, userId, managerId),
     onSuccess: (_d, variables) => {
       // silent : l'appelant affiche son propre feedback (ex. toast d'annulation pyramide).
-      if (!variables.silent) toast.success(translator('errors').t('success.positionUpdated'));
+      if (!variables.silent && !variables.bulk) toast.success(translator('errors').t('success.positionUpdated'));
       queryClient.invalidateQueries({ queryKey: orgKeys.members(variables.orgId) });
     },
-    onError: (error: Error) => {
+    onError: (error: Error, variables) => {
+      // bulk : actions groupées de l'annuaire, qui résument succès ET échecs
+      // en un seul toast. `silent` ne coupe QUE le succès (pyramide).
+      if (variables.bulk) return;
       toast.error(translator('errors').t('mutation.moveMember', { message: error.message }));
     },
   });

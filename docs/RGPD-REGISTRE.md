@@ -150,6 +150,17 @@ Dix traitements, sur 47 tables applicatives, **toutes protégées par Row Level 
   appliquée **en base** par la RLS, pas seulement masquée dans l'interface.
 - **Séparation stricte** : un manager ne voit **jamais** les tâches, habitudes ou agenda
   personnels d'un membre. Ce sont deux univers de tables distincts.
+- **Export de l'annuaire** (2026-09-24) : un **admin** de l'organisation peut télécharger en CSV
+  le résultat filtré de l'annuaire. Six colonnes fermées : nom, e-mail, rôle, manager direct,
+  équipes, date d'arrivée. Aucun identifiant interne, aucune activité. C'est un export de
+  données **de tiers** fait pour administrer l'organisation (base : exécution du contrat,
+  l'organisation co-responsable désigne ses admins), **pas** l'export de portabilité de l'art. 20.
+  Le fichier quitte COSMO : sa conservation relève ensuite de l'organisation.
+- **Dernière activité** (mig. 170) : date de la dernière trace de **travail d'équipe** (journal de
+  tâche, commentaire, tâche assignée terminée), visible des admins et des managers pour leur
+  sous-arbre seulement. ❌ Jamais la date de connexion (`auth.users.last_sign_in_at`, traitement
+  T1) : un annuaire d'entreprise n'est pas un outil de surveillance des connexions. Aucune donnée
+  nouvelle n'est stockée, la date est calculée à la lecture.
 - **Conservation** : jusqu'au départ de l'organisation ou à sa suppression.
   **Tâches supprimées : 30 jours en corbeille, puis effacement** (`purge_team_task_trash`,
   pg_cron quotidien, mig. 152). *Ajouté le 2026-09-24.*
