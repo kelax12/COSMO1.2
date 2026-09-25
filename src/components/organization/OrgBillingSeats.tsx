@@ -26,7 +26,7 @@ const PREVIEW = 8;
  * palier.
  */
 export function OrgBillingSeats({ members, ownerId, quota }: Props) {
-  const { t, tp } = useT('orgBilling');
+  const { t, tp } = useT('orgAccount');
   const { t: tOrg } = useT('org');
   const [expanded, setExpanded] = useState(false);
 

@@ -65,8 +65,7 @@ type Shape<P extends string> = P extends keyof FrModules ? FrModules[P] : never;
 interface FrModules {
   admin: typeof import('@/locales/fr/admin.json');
   portfolio: typeof import('@/locales/fr/portfolio.json');
-  orgBilling: typeof import('@/locales/fr/orgBilling.json');
-  orgSetup: typeof import('@/locales/fr/orgSetup.json');
+  orgAccount: typeof import('@/locales/fr/orgAccount.json');
   agenda: typeof import('@/locales/fr/agenda.json');
   dashboard: typeof import('@/locales/fr/dashboard.json');
   bugReport: typeof import('@/locales/fr/bugReport.json');
@@ -166,17 +165,16 @@ interface CatalogShapes {
    */
   portfolio: Shape<'portfolio'>;
   /**
-   * Facturation entreprise : sièges, historique, contact (mig. 180). À part
-   * comme `portfolio` : seul le propriétaire ouvre cet écran, `org` est payé
-   * par toute visite de /entreprise.
+   * Surfaces RARES du propriétaire ou du créateur d'une entreprise : écran
+   * Facturation (sièges, historique, contact, mig. 180) et assistant de
+   * démarrage (/entreprise/onboarding?setup=).
+   *
+   * 🔴 À part de `org`, qui est payé par toute visite de /entreprise. Et UN
+   * seul namespace pour les deux, pas deux : chaque namespace ajoute ses
+   * chargeurs fr/en à la table `import.meta.glob` du chunk d'ENTRÉE (mesuré
+   * le 2026-09-25 : +0,14 ko gzip pour le second), payée par toutes les pages.
    */
-  orgBilling: Shape<'orgBilling'>;
-  /**
-   * Assistant de démarrage d'une entreprise (/entreprise/onboarding?setup=).
-   * À part pour la même raison que `portfolio` : seul qui vient de créer une
-   * entreprise l'affiche, `org` est payé par toute visite de /entreprise.
-   */
-  orgSetup: Shape<'orgSetup'>;
+  orgAccount: Shape<'orgAccount'>;
   /** Titres/descriptions des routes publiques — lu aussi par `prerender.mjs`. */
   seo: Shape<'seo'>;
   /** Réglages — profil, sécurité, apparence, modules, données, aide. */
@@ -268,7 +266,7 @@ registry[DEFAULT_LOCALE] = {
 const NAMESPACES: readonly Namespace[] = [
   'admin', 'agenda', 'bugReport', 'common', 'csv', 'dashboard', 'errors', 'eventModal',
   'guide',
-  'habits', 'invite', 'landing', 'legal', 'okr', 'org', 'orgBilling', 'orgSetup', 'portfolio', 'premium', 'seo',
+  'habits', 'invite', 'landing', 'legal', 'okr', 'org', 'orgAccount', 'portfolio', 'premium', 'seo',
   'overlays',
   'settings', 'statistics', 'taskModal', 'tasks', 'tutorials',
 ];

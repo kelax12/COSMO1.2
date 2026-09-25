@@ -10,7 +10,7 @@ interface Props {
 }
 
 /** Libellé d'une ligne du journal. Un type inconnu reste lisible, jamais masqué. */
-const EVENT_KEYS: Record<string, KeyOf<'orgBilling'>> = {
+const EVENT_KEYS: Record<string, KeyOf<'orgAccount'>> = {
   'invoice.payment_succeeded': 'historyPaid',
   'invoice.payment_failed': 'historyFailed',
   'charge.refunded': 'historyRefund',
@@ -25,7 +25,7 @@ const EVENT_KEYS: Record<string, KeyOf<'orgBilling'>> = {
  * montant DÛ, barré, parce que rien n'a été encaissé.
  */
 export function OrgBillingHistory({ orgId }: Props) {
-  const { t } = useT('orgBilling');
+  const { t } = useT('orgAccount');
   const { data: entries = [], isLoading, isError } = useOrgBillingHistory(orgId, true);
 
   const amount = (e: OrgBillingHistoryEntry) =>

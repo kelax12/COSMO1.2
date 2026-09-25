@@ -30,7 +30,7 @@ const inputClass =
  * promettre un envoi immédiat qu'aucun appel ne fait.
  */
 export function OrgBillingContactCard({ orgId, ownerEmail, userId }: Props) {
-  const { t } = useT('orgBilling');
+  const { t } = useT('orgAccount');
   const { data: contact, isLoading } = useOrgBillingContact(orgId, true);
   const save = useSaveOrgBillingContact(orgId, userId);
   const [name, setName] = useState('');
