@@ -49,7 +49,10 @@
     "team_not_found": "This team no longer exists.",
     "team_transfer_same_team": "Choose a team other than the one you are deleting.",
     "team_transfer_target_invalid": "The chosen team does not belong to this company.",
-    "team_delete_forbidden": "Only an admin or the team's creator can delete it."
+    "team_delete_forbidden": "Only an admin or the team's creator can delete it.",
+    "not_allowed": "You are not allowed to make this change.",
+    "cannot_restrict_self": "You cannot suspend or limit your own access.",
+    "okr_parent_cycle": "This objective cannot contribute to one of its own sub-objectives."
   },
   "validation": {
     "fallback": "Invalid data",

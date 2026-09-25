@@ -49,7 +49,10 @@
     "team_not_found": "Cette équipe n'existe plus.",
     "team_transfer_same_team": "Choisissez une autre équipe que celle que vous supprimez.",
     "team_transfer_target_invalid": "L'équipe choisie n'appartient pas à cette entreprise.",
-    "team_delete_forbidden": "Seuls un admin ou le créateur de l'équipe peuvent la supprimer."
+    "team_delete_forbidden": "Seuls un admin ou le créateur de l'équipe peuvent la supprimer.",
+    "not_allowed": "Vous n’avez pas le droit de faire ce changement.",
+    "cannot_restrict_self": "Vous ne pouvez pas suspendre ni borner votre propre accès.",
+    "okr_parent_cycle": "Cet objectif ne peut pas contribuer à l’un de ses propres sous-objectifs."
   },
   "validation": {
     "fallback": "Données invalides",
