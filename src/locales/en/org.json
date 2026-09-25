@@ -1378,5 +1378,54 @@
     "statusDoneThisWeek": "Completed this week",
     "statusAll": "All",
     "clearSearch": "Clear search"
+  },
+  "glossary": {
+    "title": "Company glossary",
+    "intro": "Every COSMO word has a precise meaning. A role says what you CAN do; a position in the org chart says whom you manage.",
+    "open": "Glossary",
+    "openAria": "Open the company glossary",
+    "close": "Close the glossary",
+    "seeAll": "See the full glossary",
+    "termHelp": "What is “{{term}}”?",
+    "sectionRoles": "Roles and positions",
+    "sectionObjects": "Objects",
+    "terms": {
+      "owner": {
+        "name": "Owner",
+        "def": "The person who created the company in COSMO and holds its subscription. There is only one; they can hand this role over. They are also an administrator."
+      },
+      "admin": {
+        "name": "Administrator",
+        "def": "A ROLE: full rights (invite, organise the org chart, set everyone’s permissions). There can be several."
+      },
+      "manager": {
+        "name": "Manager",
+        "def": "A POSITION, not a role: anyone with at least one person reporting to them in the org chart. They see Statistics and the Org chart for their scope."
+      },
+      "teamLead": {
+        "name": "Team lead",
+        "def": "The person appointed to run a cross-functional team. It is neither a role nor a reporting position: you can lead a team without managing anyone in the org chart."
+      },
+      "member": {
+        "name": "Member",
+        "def": "Anyone in the company. Their default rights can be widened or narrowed by an administrator (Members → Edit permissions)."
+      },
+      "team": {
+        "name": "Team",
+        "def": "A group of people, independent from the org chart (someone can belong to several teams). A project or objective attached to a team is visible to that team only."
+      },
+      "project": {
+        "name": "Project",
+        "def": "A set of tasks with an owner, dates and a chosen colour. Every team task belongs to a project."
+      },
+      "category": {
+        "name": "Category",
+        "def": "A thematic classification shared by projects, tasks and objectives, organised as a tree. It has its own colour and does not change a project’s colour."
+      },
+      "label": {
+        "name": "Label",
+        "def": "A free marker placed on a task (“urgent”, “client”…). Unlike a category, it has no hierarchy and applies to tasks only."
+      }
+    }
   }
 }

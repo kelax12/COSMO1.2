@@ -16,6 +16,7 @@ import {
 import type { MemberLastActivity, OrgMember, OrgRole } from '@/modules/organizations';
 import { getDateLocale } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
+import RoleTerm from './RoleTerm';
 import MemberAvatar from './MemberAvatar';
 import MemberAccessBadge from './MemberAccessBadge';
 import type { MemberTab } from './member-sheet.helpers';
@@ -35,7 +36,7 @@ const RoleBadge = ({ kind }: { kind: DirectoryRole }) => {
   const { labelKey, Icon, className } = BADGE_META[kind];
   return (
     <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full ${className}`}>
-      <Icon size={11} aria-hidden="true" /> {t(labelKey)}
+      <Icon size={11} aria-hidden="true" /> <RoleTerm term={kind}>{t(labelKey)}</RoleTerm>
     </span>
   );
 };

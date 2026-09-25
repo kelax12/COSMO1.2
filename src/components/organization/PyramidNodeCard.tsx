@@ -54,6 +54,7 @@ import { formatDuration } from './team-projects.helpers';
 import MemberAvatar from './MemberAvatar';
 import { type MemberTab } from './member-sheet.helpers';
 import { useT } from '@/i18n/useT';
+import RoleTerm from './RoleTerm';
 
 // Logique pure extraite dans `pyramid.helpers.ts` (audit archi 2026-08-07, M1) :
 // ce sont les seules fonctions de ce fichier qui DÉCIDENT quelque chose
@@ -366,7 +367,9 @@ export const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, o
             }
           >
             <span>
-              {m.role === 'admin' ? t('pyramid.badgeAdmin') : manager ? t('pyramid.badgeManager') : t('pyramid.badgeMember')}
+              <RoleTerm term={m.role === 'admin' ? 'admin' : manager ? 'manager' : 'member'}>
+                {m.role === 'admin' ? t('pyramid.badgeAdmin') : manager ? t('pyramid.badgeManager') : t('pyramid.badgeMember')}
+              </RoleTerm>
               {node.children.length > 0 ? ` · ${node.children.length}` : ''}
               {totalReports > node.children.length ? t('pyramid.totalSuffix', { count: totalReports }) : ''}
             </span>

@@ -19,6 +19,7 @@ import MemberAvatar from './MemberAvatar';
 import { MEMBER_SEARCH_THRESHOLD, filterMembersByQuery } from './member-search.helpers';
 import { sortTeamMembers } from './team-page.helpers';
 import { useT } from '@/i18n/useT';
+import RoleTerm from './RoleTerm';
 
 /**
  * Au-delà, les pastilles se coupent avec un « +N » (audit « passage à
@@ -153,7 +154,7 @@ const TeamMembersPanel = ({ orgId, team, members, memberships, currentUserId, is
                 title={t('teams.leadHint')}
                 className="inline-flex items-center gap-0.5 text-caption font-semibold text-amber-600 dark:text-amber-400"
               >
-                <Crown size={10} aria-hidden="true" /> {t('teams.leadBadge')}
+                <Crown size={10} aria-hidden="true" /> <RoleTerm term="teamLead">{t('teams.leadBadge')}</RoleTerm>
               </span>
             )}
             {canManage && (

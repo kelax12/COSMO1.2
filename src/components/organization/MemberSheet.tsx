@@ -6,6 +6,7 @@ import { isManagerOf, useOrgMemberLastActivity, type OrgMember } from '@/modules
 import type { OrgTeam } from '@/modules/org-teams';
 import MemberAvatar from './MemberAvatar';
 import { useT } from '@/i18n/useT';
+import RoleTerm from './RoleTerm';
 import { buildOrgLink } from './deep-link.helpers';
 import {
   MEMBER_TAB_PARAM,
@@ -112,11 +113,9 @@ const MemberSheet = ({
   };
 
   const isMe = member.userId === currentUserId;
-  const roleLabel = member.role === 'admin'
-    ? t('pyramid.roleAdmin')
-    : isManagerOf(members, member.userId)
-      ? t('pyramid.roleManager')
-      : t('pyramid.roleMember');
+  // Mêmes mots que l'annuaire et le glossaire (cohérence globale, 2026-09-25).
+  const roleTerm = member.role === 'admin' ? 'admin' : isManagerOf(members, member.userId) ? 'manager' : 'member';
+  const roleLabel = <RoleTerm term={roleTerm}>{t(`roles.${roleTerm}`)}</RoleTerm>;
 
   // L'agenda est un calendrier plein écran, pas une carte : FullCalendar ne
   // sait se dimensionner que dans un conteneur à hauteur DÉFINIE. Le panneau
