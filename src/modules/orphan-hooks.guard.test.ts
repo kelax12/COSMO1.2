@@ -95,9 +95,31 @@ function consumerCount(name: string): number {
  * Orphelins TOLÉRÉS, chacun avec sa raison. La liste doit rester courte, et
  * chaque entrée doit dire pourquoi le code vit sans consommateur direct.
  */
+// ⚠️ Tolérance DATÉE, décidée par Axel le 2026-09-25 : la couche données de la
+// gouvernance (mig. 160 et 162, appliquées en prod) est arrivée sur main avec
+// la branche `feat/entreprise-gouvernance`, SANS ses écrans. Ceux-ci existent,
+// non commités, dans le worktree `entreprise-gov` (Paramètres › journal
+// d'audit et notifications, OKR › cycles et points d'étape, revue
+// hebdomadaire). 🔴 Chaque entrée se RETIRE au branchement de son écran ; si
+// elles sont encore là dans un mois, c'est que l'écran n'arrivera pas, et le
+// hook doit partir.
+const GOV_PENDING = 'couche données gouvernance sans écran (2026-09-25), UI en cours dans le worktree entreprise-gov';
+
 const ALLOWED_ORPHANS = new Map<string, string>([
-  // Aucun pour l'instant. `useFilteredTasks` n'y figure pas : il EST consommé,
-  // par `usePendingTasks`, dans son propre fichier — la garde le voit.
+  // `useFilteredTasks` n'y figure pas : il EST consommé, par `usePendingTasks`,
+  // dans son propre fichier — la garde le voit.
+  ['useAuditLog', GOV_PENDING],
+  ['useNotificationSettings', GOV_PENDING],
+  ['useSaveNotificationSettings', GOV_PENDING],
+  ['useSaveWeeklyReview', GOV_PENDING],
+  ['useWeeklyReviews', GOV_PENDING],
+  ['useOkrCycles', GOV_PENDING],
+  ['useCreateOkrCycle', GOV_PENDING],
+  ['useDeleteOkrCycle', GOV_PENDING],
+  ['useKRCheckins', GOV_PENDING],
+  ['usePostKRCheckin', GOV_PENDING],
+  ['useKRProjects', GOV_PENDING],
+  ['useSetKRProjects', GOV_PENDING],
 ]);
 
 describe('modules — aucun hook exporté sans consommateur (C-49)', () => {
