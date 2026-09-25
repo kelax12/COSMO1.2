@@ -171,6 +171,7 @@ interface CatalogShapes {
    * par toute visite de /entreprise.
    */
   orgBilling: Shape<'orgBilling'>;
+  /**
    * Assistant de démarrage d'une entreprise (/entreprise/onboarding?setup=).
    * À part pour la même raison que `portfolio` : seul qui vient de créer une
    * entreprise l'affiche, `org` est payé par toute visite de /entreprise.
