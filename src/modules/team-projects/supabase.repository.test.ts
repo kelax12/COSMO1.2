@@ -51,6 +51,10 @@ describe('SupabaseTeamProjectsRepository — projets', () => {
     expect(result).toEqual([{
       id: 'p1', orgId: 'org1', name: 'Site web', color: 'green',
       createdBy: 'u1', archivedAt: null, createdAt: projectRow.created_at, teamId: 't1',
+      // Mig. 153 : une ligne lue AVANT son application n'a pas ces colonnes ;
+      // le mapper leur donne le défaut serveur, jamais `undefined`.
+      description: null, ownerId: null, status: 'active', startDate: null, dueDate: null,
+      isTemplate: false, templatePayload: null,
     }]);
   });
 
@@ -156,7 +160,7 @@ describe('SupabaseTeamProjectsRepository — tâches', () => {
       id: 'tk1', orgId: 'org1', projectId: 'p1', name: 'Maquette',
       description: 'desc', priority: 2, deadline: '2026-07-20', estimatedTime: 60,
       assigneeIds: ['u2'], createdBy: 'u1', completed: false, status: 'todo', completedAt: null,
-      createdAt: taskRow.created_at, updatedAt: taskRow.updated_at,
+      createdAt: taskRow.created_at, updatedAt: taskRow.updated_at, startDate: '',
     }]);
   });
 
@@ -184,6 +188,32 @@ describe('SupabaseTeamProjectsRepository — tâches', () => {
       .toEqual(['completed.eq.false,completed_at.gte."2026-08-25T00:00:00.000Z"']);
     const methods = supabaseMock.callsFor('get_my_team_tasks').map((c) => c.method);
     expect(methods.indexOf('or')).toBeLessThan(methods.indexOf('limit'));
+  });
+
+  // Aperçu (2026-09-24) : « mes tâches » ne doit plus dépendre du plafond de
+  // l'ORGANISATION. Chaque filtre part au serveur, avant le `limit`.
+  it('getTasks: lectures ciblées de l Aperçu, filtres serveur puis tri et plafond propres', async () => {
+    supabaseMock.queueRpc('get_my_team_tasks', { data: [] });
+    await repo.getTasks('org1', {
+      assigneeId: 'me', createdBy: 'me', status: 'review', deadlineFrom: '2026-09-24',
+      createdSince: '2026-09-10T00:00:00.000Z', ids: ['a', 'b'], orderBy: 'deadline', limit: 30,
+    });
+    expect(supabaseMock.argsOf('get_my_team_tasks', 'contains')).toEqual(['assignee_ids', ['me']]);
+    expect(supabaseMock.argsOf('get_my_team_tasks', 'in')).toEqual(['id', ['a', 'b']]);
+    expect(supabaseMock.argsOf('get_my_team_tasks', 'gte')).toEqual(['deadline', '2026-09-24']);
+    expect(supabaseMock.argsOf('get_my_team_tasks', 'order')).toEqual(['deadline', { ascending: true }]);
+    expect(supabaseMock.argsOf('get_my_team_tasks', 'limit')).toEqual([30]);
+    const methods = supabaseMock.callsFor('get_my_team_tasks').map((c) => c.method);
+    expect(methods.indexOf('contains')).toBeLessThan(methods.indexOf('limit'));
+  });
+
+  it('getTasks: ids vide ne part pas au serveur ; la recherche échappe les jokers ILIKE', async () => {
+    expect(await repo.getTasks('org1', { ids: [] })).toEqual([]);
+    expect(supabaseMock.rpcCalls).toHaveLength(0);
+
+    supabaseMock.queueRpc('get_my_team_tasks', { data: [] });
+    await repo.getTasks('org1', { search: '50%_off', limit: 8 });
+    expect(supabaseMock.argsOf('get_my_team_tasks', 'ilike')).toEqual(['name', '%50\\%\\_off%']);
   });
 
   it('getTasks: sans openOrCompletedSince, aucun or= (lecture complète inchangée)', async () => {
@@ -369,5 +399,46 @@ describe('SupabaseTeamProjectsRepository — écriture des dépendances', () => 
       error: { message: 'permission denied', code: '42501' },
     });
     await expect(repo.removeTaskDependency('tk1', 'tk2')).rejects.toBeTruthy();
+  });
+});
+
+// ─── Portefeuille (mig. 153, M2) ─────────────────────────────────────
+describe('SupabaseTeamProjectsRepository — portefeuille', () => {
+  it('createProjectWithTasks: UNE RPC, champs whitelistés, jamais org/created_by dans le projet', async () => {
+    supabaseMock.queueRpc('create_team_project_with_tasks', { data: 'new-id' });
+    const id = await repo.createProjectWithTasks(
+      'org1',
+      { name: 'P', ownerId: 'u2', startDate: '2026-10-01', dueDate: '2026-10-31', orgId: 'attacker' } as never,
+      [{ name: 'T', startDate: '2026-10-01', deadline: '2026-10-02', assigneeIds: ['u3'] }],
+      [{ name: 'J', dueDate: '2026-10-15' }],
+    );
+    expect(id).toBe('new-id');
+    const args = supabaseMock.rpcCalls.find((c) => c.fn === 'create_team_project_with_tasks')?.args as Record<string, unknown>;
+    expect(args.p_org).toBe('org1');
+    expect(Object.keys(args.p_project as object).sort()).toEqual([
+      'category_id', 'color', 'description', 'due_date', 'is_template', 'name', 'owner_id',
+      'start_date', 'status', 'team_id', 'template_payload',
+    ]);
+    expect(args.p_tasks).toEqual([{
+      name: 'T', description: null, priority: 3, estimated_time: null,
+      start_date: '2026-10-01', deadline: '2026-10-02', assignee_ids: ['u3'],
+    }]);
+    expect(args.p_milestones).toEqual([{ name: 'J', due_date: '2026-10-15' }]);
+    // Aucune écriture directe : tout passe par la transaction serveur.
+    expect(supabaseMock.queries.filter((q) => q.table === 'team_tasks' || q.table === 'team_projects')).toHaveLength(0);
+  });
+
+  it('updateProject: transmet les champs riches, et rien d’autre', async () => {
+    supabaseMock.queueTable('team_projects', { data: projectRow });
+    await repo.updateProject('p1', { description: '', ownerId: 'u2', status: 'on_hold', startDate: '2026-10-01', dueDate: '' });
+    const patch = supabaseMock.argsOf('team_projects', 'update')?.[0] as Record<string, unknown>;
+    expect(patch).toEqual({ description: null, owner_id: 'u2', status: 'on_hold', start_date: '2026-10-01', due_date: null });
+  });
+
+  it('getMilestones: RPC indexable, jamais la table', async () => {
+    supabaseMock.queueRpc('get_my_team_project_milestones', { data: [] });
+    await repo.getMilestones('org1');
+    expect(supabaseMock.rpcCalls.find((c) => c.fn === 'get_my_team_project_milestones')?.args).toEqual({ p_org: 'org1' });
+    expect(supabaseMock.queries.filter((q) => q.table === 'team_project_milestones')).toHaveLength(0);
   });
 });

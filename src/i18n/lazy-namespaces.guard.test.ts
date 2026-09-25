@@ -25,19 +25,33 @@ import { join } from 'node:path';
 import {
   shellNamespaces,
   pageNamespaces,
+  TAB_GATE_HOSTS,
   // @ts-expect-error, script Node en .mjs, sans déclarations de types
 } from '../../scripts/i18n-shell-namespaces.mjs';
 import { EAGER_NAMESPACES, listNamespaces } from './catalog';
 
 const ROOT = process.cwd();
 
-/** Déclarations `lazyWithRetry(() => import('…'), [ns…])` lues dans App.tsx. */
+/**
+ * Déclarations `lazyWithRetry(() => import('…'), [ns…])` lues dans App.tsx,
+ * puis celles des onglets qui déclarent LEUR liste (`TAB_GATE_HOSTS`).
+ * Les chemins relatifs (`./X`) d'une page hôte sont ramenés à `src/…`.
+ */
 function declaredByRoute(): Map<string, string[]> {
-  const app = readFileSync(join(ROOT, 'src/App.tsx'), 'utf8');
+  const sources: { text: string; dir: string; requireList: boolean }[] = [
+    { text: readFileSync(join(ROOT, 'src/App.tsx'), 'utf8'), dir: 'src', requireList: false },
+    ...(TAB_GATE_HOSTS as string[]).map((host) => ({
+      text: readFileSync(join(ROOT, 'src', host), 'utf8'),
+      dir: join('src', host, '..').replace(/\\/g, '/'),
+      requireList: true,
+    })),
+  ];
   const out = new Map<string, string[]>();
   const re =
     /lazyWithRetry\(\s*\(\)\s*=>\s*import\(\s*['"]([^'"]+)['"]\s*\)\s*(?:,\s*\[([^\]]*)\])?\s*\)/g;
-  for (const m of app.matchAll(re)) {
+  for (const { text, dir, requireList } of sources) for (const m of text.matchAll(re)) {
+    if (requireList && m[2] === undefined) continue;
+    if (m[1].startsWith('./')) m[1] = `${dir}/${m[1].slice(2)}`;
     // `@/pages/X` → `src/pages/X`, sans extension : le script résout les
     // extensions, la regex non. On compare donc des clés sans suffixe.
     const spec = m[1].replace('@/', 'src/');

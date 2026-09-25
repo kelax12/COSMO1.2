@@ -293,11 +293,7 @@
       "categorie": "mot-identique",
       "valeur": "Description"
     },
-    "org.taskModal.labelsTitle": {
-      "categorie": "anglicisme-fr",
-      "valeur": "Labels"
-    },
-    "org.templates.sprint": {
+    "portfolio.builtIn.sprint": {
       "categorie": "anglicisme-fr",
       "valeur": "Sprint"
     },
