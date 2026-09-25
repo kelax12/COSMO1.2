@@ -14,6 +14,7 @@ import type {
   DraftProjectTask,
   TeamProject,
   TeamProjectDependency,
+  TeamProjectTaskStats,
   TeamProjectMilestone,
   TeamProjectStatus,
   TeamProjectTemplatePayload,
@@ -76,6 +77,25 @@ export function projectProgress(projectId: string, tasks: TeamTask[]): ProjectPr
   return { done, total, percent: total > 0 ? Math.round((done / total) * 100) : 0 };
 }
 
+/**
+ * Avancement COMPTÉ PAR LE SERVEUR (mig. 191) quand il est connu : toutes les
+ * tâches du projet, jamais l'extrait plafonné à 1 000 lignes. Le calcul local
+ * ne sert que tant que la réponse n'est pas arrivée.
+ */
+export function progressFromStats(stats: TeamProjectTaskStats | undefined): ProjectProgress {
+  const total = stats?.total ?? 0;
+  const done = stats?.completed ?? 0;
+  return { done, total, percent: total > 0 ? Math.round((done / total) * 100) : 0 };
+}
+
+export function projectProgressOf(
+  projectId: string,
+  tasks: TeamTask[],
+  statsById?: Map<string, TeamProjectTaskStats>,
+): ProjectProgress {
+  return statsById ? progressFromStats(statsById.get(projectId)) : projectProgress(projectId, tasks);
+}
+
 const parseDate = (s: string | null | undefined): Date | null => {
   if (!s) return null;
   const d = parseISO(s);
@@ -117,9 +137,10 @@ export function sortProjects(
   projects: TeamProject[],
   sort: PortfolioSort,
   tasks: TeamTask[],
+  statsById?: Map<string, TeamProjectTaskStats>,
 ): TeamProject[] {
   const recent = (a: TeamProject, b: TeamProject) => b.createdAt.localeCompare(a.createdAt);
-  const progressOf = new Map(projects.map((p) => [p.id, projectProgress(p.id, tasks).percent]));
+  const progressOf = new Map(projects.map((p) => [p.id, projectProgressOf(p.id, tasks, statsById).percent]));
   const cmp: Record<PortfolioSort, (a: TeamProject, b: TeamProject) => number> = {
     recent,
     name: (a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }),

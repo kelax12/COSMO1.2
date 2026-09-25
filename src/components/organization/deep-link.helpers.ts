@@ -75,8 +75,8 @@ export const isOrgPath = (pathname: string): boolean => {
   return rest.startsWith(teamPrefix) && readTeamIdSegment(rest.slice(teamPrefix.length)) !== null;
 };
 
-/** Entités adressables par l'URL de /entreprise. */
-export type EntityParam = 'task' | 'project' | 'member';
+/** Entités adressables par l'URL de /entreprise. `okr` : recherche globale (mig. 191). */
+export type EntityParam = 'task' | 'project' | 'member' | 'okr';
 
 /** Lit un id d'entité dans l'URL, ou null si absent / malformé. */
 export const readEntityParam = (

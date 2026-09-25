@@ -30,6 +30,11 @@ const InviteByEmailDialog = lazyWithRetry(() => import('@/components/organizatio
 const DeleteOrganizationDialog = lazyWithRetry(() => import('@/components/organization/DeleteOrganizationDialog'));
 const ConfirmLeaveOrgDialog = lazyWithRetry(() => import('@/components/organization/ConfirmLeaveOrgDialog'));
 const TransferOwnershipDialog = lazyWithRetry(() => import('@/components/organization/TransferOwnershipDialog'));
+// Journal d'audit (mig. 162) : admins seuls, chargé à l'ouverture de Paramètres.
+// Ses textes vivent dans `orgAccount` (surfaces rares) : `org` est payé par
+// toute visite de /entreprise, pas le journal. Le catalogue est déclaré sur la
+// section, dans `OrganizationPage` (seul hôte que la garde des namespaces lit).
+const OrgAuditLogSection = lazyWithRetry(() => import('@/components/organization/OrgAuditLogSection'));
 
 interface OrgSettingsSectionProps {
   org: MyOrganization;
@@ -243,6 +248,13 @@ const OrgSettingsSection = ({
           </div>
         </Suspense>
       </section>
+
+      {/* Journal d'audit : lisible par les admins seuls (RLS `org_audit_log`). */}
+      {isAdmin && (
+        <Suspense fallback={null}>
+          <OrgAuditLogSection orgId={org.id} members={members} />
+        </Suspense>
+      )}
 
       {/* #5 : le PROPRIETAIRE ne « quitte » pas — il peut supprimer
           l'entreprise (confirmation extrême, façon GitHub). Tous les

@@ -19,9 +19,13 @@ import {
 import { getDateLocale } from '@/i18n/format';
 import type { OrgMember } from '@/modules/organizations';
 import type { OrgTeam } from '@/modules/org-teams';
-import type { TeamProject, TeamProjectDependency, TeamProjectMilestone, TeamTask } from '@/modules/team-projects';
+import type {
+  TeamProject, TeamProjectDependency, TeamProjectMember, TeamProjectMilestone, TeamProjectTaskStats, TeamTask,
+} from '@/modules/team-projects';
 import { projectColor, sortOpenTasks, sortCompletedTasks } from './team-projects.helpers';
-import { PROJECT_STATUS_META, isProjectLate, projectProgress } from './portfolio.helpers';
+import { PROJECT_STATUS_META, isProjectLate, progressFromStats, projectProgress } from './portfolio.helpers';
+import ProjectHealthSection, { ProjectHealthBadge } from './ProjectHealthSection';
+import ProjectMembersSection from './ProjectMembersSection';
 import MemberAvatar from './MemberAvatar';
 import TeamTaskRow from './TeamTaskRow';
 import ProjectMilestonesSection from './ProjectMilestonesSection';
@@ -34,6 +38,15 @@ interface ProjectDetailPageProps {
   tasks: TeamTask[];
   /** Toutes les tâches du projet, pour l'avancement (non filtré). */
   allProjectTasks: TeamTask[];
+  /** Avancement compté par le serveur (mig. 191) ; prioritaire sur `allProjectTasks`. */
+  stats?: TeamProjectTaskStats;
+  /** Membres de CE projet et leur rôle (mig. 190). */
+  projectMembers: TeamProjectMember[];
+  currentUserId?: string;
+  /** Un admin n'est jamais restreint par un rôle de projet. */
+  isAdmin: boolean;
+  /** `task.create` dans l'organisation. */
+  canCreateTask: boolean;
   members: OrgMember[];
   teams: OrgTeam[];
   milestones: TeamProjectMilestone[];
@@ -65,7 +78,8 @@ const actionBtn =
   'inline-flex items-center gap-1.5 h-9 px-3 rounded-lg text-sm font-medium border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]';
 
 const ProjectDetailPage = ({
-  project, tasks, allProjectTasks, members, teams, milestones, dependencies, projects, categoryName,
+  project, tasks, allProjectTasks, stats, projectMembers, currentUserId, isAdmin, canCreateTask,
+  members, teams, milestones, dependencies, projects, categoryName,
   canEdit, canArchive, canCreateProject,
   onBack, onOpenProject, onEdit, onDuplicate, onSaveTemplate, onArchive, onRestore, onAddTask, onStartSelect,
   onToggleComplete, onReassign, onDelete, onOpenTask, selectable, selectedIds, onToggleSelect,
@@ -78,7 +92,12 @@ const ProjectDetailPage = ({
   const archived = !!project.archivedAt;
   const owner = project.ownerId ? members.find((m) => m.userId === project.ownerId) : undefined;
   const team = project.teamId ? teams.find((tm) => tm.id === project.teamId) : undefined;
-  const progress = projectProgress(project.id, allProjectTasks);
+  const progress = stats ? progressFromStats(stats) : projectProgress(project.id, allProjectTasks);
+  // Rôle de projet (mig. 190) : le lecteur ne crée pas ; le contributeur crée
+  // même sans `task.create`. Miroir de la policy et du trigger, pour ne pas
+  // proposer un bouton que la base refuserait.
+  const myRole = projectMembers.find((m) => m.userId === currentUserId)?.role;
+  const canAddTask = isAdmin || (myRole !== 'viewer' && (canCreateTask || myRole === 'lead' || myRole === 'contributor'));
   const late = isProjectLate(project);
   const longDate = (d: string) => format(parseISO(d), 'd MMMM yyyy', { locale: getDateLocale() });
 
@@ -120,7 +139,13 @@ const ProjectDetailPage = ({
               <span className={`font-semibold px-2 py-0.5 rounded-full ${PROJECT_STATUS_META[status].soft}`}>
                 {pf(`status.${status}`)}
               </span>
+              <ProjectHealthBadge health={project.health} />
               {late && <span className="font-bold px-2 py-0.5 rounded-full bg-red-500/10 text-red-500">{pf('late')}</span>}
+              {myRole && (
+                <span className="font-semibold px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+                  {pf('members.yourRole', { role: pf(`members.role.${myRole}`) })}
+                </span>
+              )}
               {archived && <span className="font-semibold px-2 py-0.5 rounded-full bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-muted))]">{t('project.archivedBadge')}</span>}
               <span className="inline-flex items-center gap-1 text-[rgb(var(--color-text-secondary))]">
                 <UsersRound size={12} aria-hidden="true" /> {team?.name ?? t('project.wholeOrg')}
@@ -226,7 +251,7 @@ const ProjectDetailPage = ({
               {showCompleted && completedTasks.map(row)}
             </div>
           )}
-          {!archived && (
+          {!archived && canAddTask && (
             <button
               type="button"
               onClick={onAddTask}
@@ -238,6 +263,14 @@ const ProjectDetailPage = ({
         </section>
 
         <div className="space-y-4">
+          <ProjectHealthSection project={project} members={members} canEdit={canEdit && !archived} />
+          <ProjectMembersSection
+            project={project}
+            projectMembers={projectMembers}
+            orgMembers={members}
+            canManage={canEdit && !archived}
+            currentUserId={currentUserId}
+          />
           <ProjectMilestonesSection orgId={project.orgId} projectId={project.id} milestones={projectMilestones} canEdit={canEdit && !archived} />
           <ProjectDependenciesSection
             orgId={project.orgId}

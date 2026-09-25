@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react';
-import { startOfDay } from 'date-fns';
 import { useSearchParams } from 'react-router';
 import { Move, Users, ArrowUpFromLine, UserPlus } from 'lucide-react';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
@@ -18,9 +17,9 @@ import { usePyramidCollapse } from './usePyramidCollapse';
 import { usePyramidDnd } from './usePyramidDnd';
 import PyramidToolbar from './PyramidToolbar';
 import UnplacedMembersPanel from './UnplacedMembersPanel';
-import { useTeamTaskWorkingSet } from '@/modules/team-projects';
+import { useTeamMemberWorkload } from '@/modules/team-projects';
 import { readEntityParam } from './deep-link.helpers';
-import { memberWorkload } from './team-stats.helpers';
+import { memberWorkloadFromServer } from './team-stats.helpers';
 import MemberAvatar from './MemberAvatar';
 import MemberPlacementSheet from './MemberPlacementSheet';
 import AddUnderSheet from './AddUnderSheet';
@@ -117,14 +116,13 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
   // Désactivé par défaut : la pyramide sert d'abord à lire l'organisation, et
   // une barre sur chaque carte en permanence brouillerait cette lecture.
   const [showWorkload, setShowWorkload] = useState(false);
-  // Le calque ne compte que les tâches OUVERTES : la lecture ciblée évite de
-  // les chercher dans les 1 000 dernières créées, terminées comprises.
-  const todayStart = useMemo(() => startOfDay(new Date()).toISOString(), []);
-  const { data: workloadTasks = [] } = useTeamTaskWorkingSet(showWorkload ? orgId : undefined, todayStart);
+  // Le calque compte les tâches OUVERTES côté SERVEUR (mig. 191), sur toutes
+  // les tâches : le calcul local ne voyait que l'extrait plafonné à 1 000.
+  const { data: serverWorkload = [] } = useTeamMemberWorkload(showWorkload ? orgId : undefined);
   const workloadByUser = useMemo(() => {
     if (!showWorkload) return undefined;
-    return new Map(memberWorkload(workloadTasks, members).map((w) => [w.userId, w]));
-  }, [showWorkload, workloadTasks, members]);
+    return new Map(memberWorkloadFromServer(serverWorkload, members).map((w) => [w.userId, w]));
+  }, [showWorkload, serverWorkload, members]);
   // Recherche de membre (surligne + déplie + scrolle jusqu'au premier résultat).
   const [query, setQuery] = useState('');
   // Fades de scroll horizontal (desktop) : y a-t-il du contenu hors-champ ?

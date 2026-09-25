@@ -384,7 +384,9 @@
     "tasksTabMoreProjects_one": "+{{count}} project",
     "tasksTabMoreProjects_other": "+{{count}} projects",
     "tasksTabFewerProjects": "Show fewer",
-    "milestoneFailed": "Milestone not saved: {{message}}"
+    "milestoneFailed": "Milestone not saved: {{message}}",
+    "loadMoreTasks": "Load {{count}} more tasks",
+    "loadingMoreTasks": "Loading…"
   },
   "insights": {
     "taskDeleted": "Task deleted",
@@ -885,7 +887,6 @@
     "addUnderTitle": "Add under {{name}}",
     "deleteOrgTitle": "Delete {{name}}?",
     "deleteOrgAria": "Delete the company {{name}}",
-    "deleteOkrConfirm": "Delete the objective “{{title}}”?",
     "deleteOkrAria": "Delete the objective {{title}}",
     "editOkrAria": "Edit the objective {{title}}",
     "save": "Save",
@@ -1153,12 +1154,15 @@
     "button_one": "Trash ({{count}})",
     "button_other": "Trash ({{count}})",
     "title": "Trash",
-    "description": "Deleted tasks stay here for {{days}} days, with their comments, subtasks and history. Restored, they come back exactly as they were.",
+    "description": "Deleted tasks and objectives stay here for {{days}} days, with their comments, subtasks, key results and history. Restored, they come back exactly as they were.",
     "meta": "{{project}} · deleted by {{who}} {{when}}",
     "unknownProject": "Archived or deleted project",
     "someone": "a member",
     "restore": "Restore",
-    "restoreAria": "Restore the task {{name}}"
+    "restoreAria": "Restore “{{name}}”",
+    "objective": "Company objective",
+    "purgeAria": "Permanently delete “{{name}}”",
+    "confirmPurge": "Delete permanently"
   },
   "lifecycle": {
     "badgeSuspended": "Suspended",
@@ -1337,5 +1341,16 @@
   },
   "setup": {
     "resume": "Resume the setup assistant"
+  },
+  "savedViews": {
+    "trigger": "Views",
+    "empty": "No saved view yet. Set your filters, then save them here.",
+    "saveCurrent": "Save current filters…",
+    "reset": "Back to default filters",
+    "nameLabel": "View name",
+    "namePlaceholder": "E.g. Overdue, my team",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete the view “{{name}}”"
   }
 }

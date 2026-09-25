@@ -117,6 +117,16 @@ vocabulaire que les tâches : `project_id` est BLOQUÉ par `depends_on_id`). Pag
 - ⚠️ `my_org_perm` de la 153 part du corps de la **152** (`task.deleteAny` = manager) : appliquer
   la 152 AVANT, sinon la 152 retirerait `project.edit`.
 
+### 🧭 Étape 6 (mig. 190-193, 2026-09-25, NON appliquées) : rôles de projet, recherche, vues
+
+- 🔴 `team_project_members` : `lead`/`contributor`/`viewer`. Le lecteur est refusé par TRIGGER
+  (une policy PERMISSIVE ne retire rien) ; un admin n'est jamais restreint ; tout helper exige un
+  membre ACTIF. Preuve : `supabase/proofs/190-193.proof.sql` (55 cas).
+- ❌ Ne pas recalculer un avancement ou une charge sur `useTeamTasks` : `useTeamProjectTaskStats`
+  / `useTeamMemberWorkload` comptent en base, sur TOUTES les tâches.
+- La palette lit `search_org` par `search.hooks.ts` : ❌ jamais `governance.hooks` depuis l'entrée.
+- Une vue enregistrée ne DONNE rien : ses filtres se relisent sous la RLS, et se valident (URL).
+
 ### 📬 Agréger des lectures, oui. Agréger des AUTORISATIONS, jamais (mig. 129)
 
 `get_my_org_inbox()` remplace **cinq** lectures qui partaient à chaque ouverture de

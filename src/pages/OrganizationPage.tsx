@@ -58,7 +58,7 @@ const PyramidTab = lazyWithRetry(() => import('@/components/organization/Pyramid
 // 4,7 ko gzip sur chaque visite de /entreprise.
 const TeamProjectsTab = lazyWithRetry(() => import('@/components/organization/TeamProjectsTab'), ['org', 'overlays', 'portfolio']);
 const TeamTasksTab = lazyWithRetry(() => import('@/components/organization/TeamTasksTab'));
-const TeamOKRTab = lazyWithRetry(() => import('@/components/organization/TeamOKRTab'));
+const TeamOKRTab = lazyWithRetry(() => import('@/components/organization/TeamOKRTab'), ['okr', 'org', 'overlays', 'portfolio']);
 const TeamOverviewTab = lazyWithRetry(() => import('@/components/organization/TeamOverviewTab'));
 const OrgBillingTab = lazyWithRetry(() => import('@/components/organization/OrgBillingTab'), ['org', 'orgAccount', 'overlays']);
 // Section Membres : sortie de la page le 2026-09-24, et LAZY pour la même
@@ -71,7 +71,7 @@ const OrgMembersSection = lazyWithRetry(() => import('@/components/organization/
 // leur chunk.
 const TeamsSection = lazyWithRetry(() => import('@/components/organization/TeamsSection'));
 const TeamPage = lazyWithRetry(() => import('@/components/organization/TeamPage'));
-const OrgSettingsSection = lazyWithRetry(() => import('@/components/organization/OrgSettingsSection'));
+const OrgSettingsSection = lazyWithRetry(() => import('@/components/organization/OrgSettingsSection'), ['csv', 'org', 'orgAccount', 'overlays', 'tasks']);
 
 // Feuilles et dialogues : montés derrière un `&&`, donc déjà conditionnels au
 // rendu. Ils ne l'étaient pas au TÉLÉCHARGEMENT.

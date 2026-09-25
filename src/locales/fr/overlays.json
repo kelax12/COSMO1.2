@@ -55,9 +55,6 @@
     "groupNavigation": "Navigation",
     "groupPreferences": "Préférences",
     "events": "Événements",
-    "teamTasks": "Tâches d'équipe",
-    "team": "Équipe",
-    "teamProjects": "Projets d'équipe",
     "goHome": "Aller à l'accueil",
     "goAgenda": "Aller à l'agenda",
     "goSettings": "Aller aux paramètres",
@@ -80,10 +77,6 @@
     "navigate": "naviguer",
     "open": "ouvrir",
     "close": "fermer",
-    "orgMembers": "Membres",
-    "orgTeams": "Équipes",
-    "teamOkrs": "OKR d'équipe",
-    "member": "Membre",
     "tasks": "Tâches",
     "groupOrg": "Entreprise",
     "goOrgOverview": "Entreprise · Aperçu",
@@ -91,7 +84,31 @@
     "goOrgProjects": "Entreprise · Projets",
     "goOrgOkr": "Entreprise · OKR",
     "goOrgMembers": "Entreprise · Membres",
-    "goOrgSettings": "Entreprise · Paramètres"
+    "goOrgSettings": "Entreprise · Paramètres",
+    "orgSearch": {
+      "project": "Projets",
+      "task": "Tâches d'équipe",
+      "milestone": "Jalons",
+      "okr": "Objectifs d'entreprise",
+      "kr": "Résultats clés",
+      "member": "Membres",
+      "team": "Équipes",
+      "keyResult": "Résultat clé",
+      "projectStatus": {
+        "planned": "Prévu",
+        "active": "En cours",
+        "on_hold": "En pause",
+        "done": "Terminé",
+        "archived": "Archivé"
+      },
+      "taskStatus": {
+        "todo": "À faire",
+        "in_progress": "En cours",
+        "review": "En revue",
+        "blocked": "Bloquée",
+        "done": "Terminée"
+      }
+    }
   },
   "firstRun": {
     "title": "Bienvenue dans COSMO",

@@ -24,10 +24,13 @@ import {
 import type { OrgMember } from '@/modules/organizations';
 import type { OrgTeam } from '@/modules/org-teams';
 import MemberAvatar from './MemberAvatar';
-import type { ProjectsUiPrefs, TaskStatusFilter } from './team-projects.helpers';
+import { projectPrefsToViewParams, viewParamsToProjectPrefs, type ProjectsUiPrefs, type TaskStatusFilter } from './team-projects.helpers';
+import SavedViewsMenu from './SavedViewsMenu';
 import { useT } from '@/i18n/useT';
 
 interface ProjectsToolbarProps {
+  /** Vues enregistrées (mig. 192) — absent : pas de menu « Vues ». */
+  orgId?: string;
   members: OrgMember[];
   teams: OrgTeam[];
   currentUserId?: string;
@@ -96,7 +99,7 @@ const FilterChip = ({ label, removeLabel, onRemove }: {
 );
 
 const ProjectsToolbar = ({
-  members, teams, currentUserId, prefs, updatePrefs, canCreateProject, canCreateTeam, onNewProject, onCreateTeam,
+  orgId, members, teams, currentUserId, prefs, updatePrefs, canCreateProject, canCreateTeam, onNewProject, onCreateTeam,
   effectiveView, onStartSelect,
 }: ProjectsToolbarProps) => {
   const { t } = useT('org');
@@ -367,6 +370,15 @@ const ProjectsToolbar = ({
                 </button>
               </div>
             </div>
+          )}
+
+          {orgId && (
+            <SavedViewsMenu
+              orgId={orgId}
+              scope="projects"
+              current={projectPrefsToViewParams(prefs)}
+              onApply={(params) => updatePrefs(viewParamsToProjectPrefs(params))}
+            />
           )}
 
           {/* La seule action créative de la page — et donc le seul bouton plein.

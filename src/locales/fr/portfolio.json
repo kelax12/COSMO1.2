@@ -216,5 +216,104 @@
     "allTeams": "Toutes les équipes",
     "orgNoTeam": "Entreprise (sans équipe)",
     "createTeamOption": "+ Créer une équipe"
+  },
+  "health": {
+    "title": "Santé",
+    "on_track": "Dans les temps",
+    "at_risk": "À risque",
+    "off_track": "En difficulté",
+    "declare": "Déclarer",
+    "update": "Mettre à jour",
+    "none": "Pas encore déclarée. La santé dit si le projet tiendra ; l'avancement ne dit que ce qui est fait.",
+    "updatedBy": "Déclarée par {{name}} le {{date}}",
+    "someone": "un ancien membre",
+    "noteLabel": "Note sur la santé du projet",
+    "notePlaceholder": "Pourquoi ? Qu'est-ce qui débloquerait la situation ?",
+    "notifyHint": "Le responsable, les co-pilotes et les personnes qui suivent le projet seront prévenus.",
+    "cancel": "Annuler",
+    "save": "Enregistrer"
+  },
+  "members": {
+    "title": "Membres du projet",
+    "help": "Ouvrez ce projet à une personne précise, même hors de son équipe, avec un rôle.",
+    "empty": "Personne n'a encore de rôle sur ce projet.",
+    "formerMember": "Ancien membre",
+    "you": "vous",
+    "roleOf": "Rôle de {{name}}",
+    "remove": "Retirer {{name}} du projet",
+    "leave": "Quitter ce projet",
+    "addLabel": "Ajouter une personne",
+    "choose": "Choisir…",
+    "roleLabel": "Rôle",
+    "add": "Ajouter",
+    "role": {
+      "lead": "Co-pilote",
+      "contributor": "Contributeur",
+      "viewer": "Lecteur"
+    },
+    "roleHelp": {
+      "lead": "Pilote le projet comme son responsable (description, dates, santé, jalons, membres), sans en changer l'équipe ni le responsable.",
+      "contributor": "Crée et modifie les tâches de ce projet, même sans ce droit dans l'entreprise.",
+      "viewer": "Lecture seule sur ce projet ; ne peut faire avancer que les tâches qui lui sont assignées."
+    },
+    "yourRole": "Votre rôle : {{role}}"
+  },
+  "krExec": {
+    "description": "Reliez ce résultat clé aux projets qui le font avancer, et posez des points d'étape datés.",
+    "openAria": "Exécution et points d'étape de « {{title}} »",
+    "modeTitle": "Mode de progression",
+    "mode": {
+      "manual": "Saisie",
+      "tasks": "Tâches des projets"
+    },
+    "modeHelp": {
+      "manual": "L'avancement est la valeur saisie à chaque point d'étape.",
+      "tasks": "L'avancement se mesure : tâches terminées sur tâches des projets reliés. Il ne se saisit plus."
+    },
+    "projectsTitle": "Projets reliés",
+    "tasksProgress": "{{done}} tâches terminées sur {{total}}",
+    "tasksShort": "{{done}}/{{total}} tâches",
+    "noProject": "Aucun projet actif à relier.",
+    "saveProjects": "Enregistrer les projets reliés",
+    "checkinTitle": "Nouveau point d'étape",
+    "value": "Valeur (objectif : {{target}} {{unit}})",
+    "statusLabel": "État",
+    "noteLabel": "Note du point d'étape",
+    "notePlaceholder": "Ce qui a avancé, ce qui bloque, ce qui vient.",
+    "postCheckin": "Poser le point d'étape",
+    "historyTitle": "Historique",
+    "historyEmpty": "Aucun point d'étape pour l'instant.",
+    "byOn": "par {{name}}, le {{date}}"
+  },
+  "okrCycles": {
+    "filterLabel": "Cycle d'OKR",
+    "all": "Tous les cycles",
+    "none": "Sans cycle",
+    "manage": "Cycles…",
+    "title": "Cycles d'OKR",
+    "description": "Les périodes de l'organisation (T1, S2…). Un objectif se rattache à un cycle ; supprimer un cycle détache ses objectifs sans les supprimer.",
+    "empty": "Aucun cycle pour l'instant.",
+    "nameLabel": "Nom",
+    "namePlaceholder": "Ex. : T1 2027",
+    "start": "Début",
+    "end": "Fin",
+    "datesOrder": "La fin doit suivre le début.",
+    "add": "Ajouter le cycle",
+    "deleteConfirm": "Supprimer le cycle « {{name}} » ? Ses objectifs restent, sans cycle.",
+    "deleteAria": "Supprimer le cycle {{name}}"
+  },
+  "okrCard": {
+    "weightTitle": "Coefficient d'importance ×{{weight}}",
+    "contributesTo": "Contribue à : {{title}}",
+    "childrenCount_one": "{{count}} objectif y contribue",
+    "childrenCount_other": "{{count}} objectifs y contribuent",
+    "childrenCount_many": "{{count}} objectifs y contribuent",
+    "noKr": "Aucun résultat clé."
+  },
+  "okrModal": {
+    "cycle": "Cycle",
+    "noCycle": "Sans cycle",
+    "parent": "Contribue à",
+    "noParent": "Aucun objectif (objectif de premier niveau)"
   }
 }

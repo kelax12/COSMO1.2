@@ -22,6 +22,8 @@ import {
   UserRound,
   UsersRound,
   Building2,
+  Flag,
+  Crosshair,
 } from 'lucide-react';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { useDarkMode } from '@/hooks/useDarkMode';
@@ -31,11 +33,14 @@ import { useTasks } from '@/modules/tasks';
 import { useHabits } from '@/modules/habits';
 import { useEvents } from '@/modules/events';
 import { useOkrs } from '@/modules/okrs';
-import { useActiveOrganization, useOrgMembers } from '@/modules/organizations';
-import { useOrgTeams } from '@/modules/org-teams';
-import { useTeamOKRs } from '@/modules/team-okrs';
+import { parseISO } from 'date-fns';
+import { useActiveOrganization } from '@/modules/organizations';
+import { useOrgSearch } from '@/modules/organizations/search.hooks';
+import type { OrgSearchKind, OrgSearchResult } from '@/modules/organizations/governance.types';
+import {
+  ORG_SEARCH_ORDER, groupOrgResults, orgSearchLink, isProjectDetail, isTaskDetail, isDayKey,
+} from '@/components/organization/org-search.helpers';
 import { buildOrgLink } from '@/components/organization/deep-link.helpers';
-import { useTeamTaskSlice, useTeamProjects } from '@/modules/team-projects';
 import { formatDate } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
 import { useModalA11y } from '@/hooks/use-modal-a11y';
@@ -49,6 +54,17 @@ interface PaletteCommand {
   run: () => void;
   keywords?: string[];
 }
+
+/** Icône de chaque groupe de la recherche d'entreprise. */
+const ORG_SEARCH_ICON: Record<OrgSearchKind, typeof CheckSquare> = {
+  project: FolderKanban,
+  milestone: Flag,
+  task: CheckSquare,
+  okr: Target,
+  kr: Crosshair,
+  member: UserRound,
+  team: UsersRound,
+};
 
 /** Normalisation accent/casse-insensible pour la recherche. */
 const normalize = (s: string) =>
@@ -69,30 +85,20 @@ const DataResults: React.FC<{ query: string; onDone: () => void }> = ({ query, o
   const { data: habits = [] } = useHabits();
   const { data: events = [] } = useEvents();
   const { data: okrs = [] } = useOkrs();
-  // Périmètre équipe (#8 v2) : tâches et projets de l'org active — hooks
-  // no-op (enabled: !!orgId) pour un utilisateur sans entreprise.
+  // Périmètre entreprise : UNE recherche SERVEUR (mig. 191, `search_org`),
+  // sous les droits de qui cherche. Projets, membres, équipes et OKR étaient
+  // filtrés ici dans des caches que la palette faisait CHARGER EN ENTIER à la
+  // première frappe (jusqu'à 1 000 tâches, 500 membres, 5 000 OKR) ; jalons et
+  // résultats clés n'étaient pas cherchables du tout. 250 ms d'attente : une
+  // requête par pause de frappe, pas une par touche.
   const { activeOrg } = useActiveOrganization();
-  // Tâches d'équipe : recherche SERVEUR, au-delà du plafond de lecture. La
-  // palette cherchait dans le cache des 1 000 dernières tâches créées (et
-  // déclenchait cette lecture complète à la première frappe) : une tâche plus
-  // ancienne était introuvable. 250 ms d'attente : une requête par pause de
-  // frappe, pas une par touche.
   const [serverQuery, setServerQuery] = useState(query.trim());
   useEffect(() => {
     const id = window.setTimeout(() => setServerQuery(query.trim()), 250);
     return () => window.clearTimeout(id);
   }, [query]);
-  const { data: teamTasks = [] } = useTeamTaskSlice(
-    activeOrg?.id,
-    { search: serverQuery, limit: MAX_DATA_RESULTS },
-    { enabled: serverQuery.length >= 2 },
-  );
-  const { data: teamProjects = [] } = useTeamProjects(activeOrg?.id);
-  // Périmètre entreprise élargi : membres, équipes et OKR d'équipe étaient les
-  // seules entités de /entreprise introuvables au clavier.
-  const { data: orgMembers = [] } = useOrgMembers(activeOrg?.id);
-  const { data: orgTeams = [] } = useOrgTeams(activeOrg?.id);
-  const { data: teamOkrs = [] } = useTeamOKRs(activeOrg?.id);
+  const { data: orgResults = [] } = useOrgSearch(activeOrg?.id, serverQuery);
+  const orgGroups = useMemo(() => groupOrgResults(orgResults), [orgResults]);
 
   const q = normalize(query);
 
@@ -112,29 +118,19 @@ const DataResults: React.FC<{ query: string; onDone: () => void }> = ({ query, o
     () => okrs.filter((o) => normalize(o.title).includes(q)).slice(0, MAX_DATA_RESULTS),
     [okrs, q]
   );
-  // Déjà filtrées par le serveur : les refiltrer ici avec la normalisation
-  // sans accents ferait disparaître un résultat serveur exact.
-  const matchedTeamTasks = teamTasks;
-  const matchedTeamProjects = useMemo(
-    () => teamProjects.filter((p) => !p.archivedAt && normalize(p.name).includes(q)).slice(0, MAX_DATA_RESULTS),
-    [teamProjects, q]
-  );
-  // Un membre se cherche aussi par email : c'est souvent la seule chose qu'on
-  // connaisse de quelqu'un qu'on vient d'inviter.
-  const matchedMembers = useMemo(
-    () => orgMembers
-      .filter((m) => normalize(m.displayName).includes(q) || normalize(m.email ?? '').includes(q))
-      .slice(0, MAX_DATA_RESULTS),
-    [orgMembers, q]
-  );
-  const matchedTeams = useMemo(
-    () => orgTeams.filter((tm) => normalize(tm.name).includes(q)).slice(0, MAX_DATA_RESULTS),
-    [orgTeams, q]
-  );
-  const matchedTeamOkrs = useMemo(
-    () => teamOkrs.filter((o) => normalize(o.title).includes(q)).slice(0, MAX_DATA_RESULTS),
-    [teamOkrs, q]
-  );
+  // Le détail vient du serveur : il n'est affiché que traduit, jamais brut
+  // (un statut inconnu d'une base plus récente ne s'affiche pas).
+  const orgDetail = (r: OrgSearchResult): string => {
+    switch (r.kind) {
+      case 'member': return r.detail ?? '';
+      case 'milestone':
+      case 'okr': return isDayKey(r.detail) ? formatDate(parseISO(r.detail), { day: 'numeric', month: 'short' }) : '';
+      case 'project': return isProjectDetail(r.detail) ? ov.t(`palette.orgSearch.projectStatus.${r.detail}`) : '';
+      case 'task': return isTaskDetail(r.detail) ? ov.t(`palette.orgSearch.taskStatus.${r.detail}`) : '';
+      case 'kr': return ov.t('palette.orgSearch.keyResult');
+      default: return '';
+    }
+  };
 
   const go = (path: string, state?: Record<string, string>) => {
     navigate(path, state ? { state } : undefined);
@@ -186,58 +182,22 @@ const DataResults: React.FC<{ query: string; onDone: () => void }> = ({ query, o
           ))}
         </CommandGroup>
       )}
-      {matchedTeamTasks.length > 0 && (
-        <CommandGroup heading={ov.t('palette.teamTasks')}>
-          {matchedTeamTasks.map((teamTask) => (
-            <CommandItem key={`team-task-${teamTask.id}`} value={`team-task-${teamTask.id}`} onSelect={() => go(buildOrgLink('projects', { task: teamTask.id }))}>
-              <CheckSquare size={16} className={teamTask.completed ? 'opacity-40' : ''} aria-hidden="true" />
-              <span className={`flex-1 ${teamTask.completed ? 'line-through opacity-60' : ''}`}>{teamTask.name}</span>
-              <span className="text-xs text-[rgb(var(--color-text-muted))]">{ov.t('palette.team')}</span>
-            </CommandItem>
-          ))}
-        </CommandGroup>
-      )}
-      {matchedTeamProjects.length > 0 && (
-        <CommandGroup heading={ov.t('palette.teamProjects')}>
-          {matchedTeamProjects.map((p) => (
-            <CommandItem key={`team-project-${p.id}`} value={`team-project-${p.id}`} onSelect={() => go(buildOrgLink('projects', { project: p.id }))}>
-              <FolderKanban size={16} aria-hidden="true" />
-              <span>{p.name}</span>
-            </CommandItem>
-          ))}
-        </CommandGroup>
-      )}
-      {matchedMembers.length > 0 && (
-        <CommandGroup heading={ov.t('palette.orgMembers')}>
-          {matchedMembers.map((m) => (
-            <CommandItem key={`org-member-${m.userId}`} value={`org-member-${m.userId}`} onSelect={() => go(buildOrgLink('members', { member: m.userId }))}>
-              <UserRound size={16} aria-hidden="true" />
-              <span className="flex-1">{m.displayName}</span>
-              <span className="text-xs text-[rgb(var(--color-text-muted))]">{ov.t('palette.member')}</span>
-            </CommandItem>
-          ))}
-        </CommandGroup>
-      )}
-      {matchedTeams.length > 0 && (
-        <CommandGroup heading={ov.t('palette.orgTeams')}>
-          {matchedTeams.map((tm) => (
-            <CommandItem key={`org-team-${tm.id}`} value={`org-team-${tm.id}`} onSelect={() => go(buildOrgLink('members'))}>
-              <UsersRound size={16} aria-hidden="true" />
-              <span>{tm.name}</span>
-            </CommandItem>
-          ))}
-        </CommandGroup>
-      )}
-      {matchedTeamOkrs.length > 0 && (
-        <CommandGroup heading={ov.t('palette.teamOkrs')}>
-          {matchedTeamOkrs.map((o) => (
-            <CommandItem key={`team-okr-${o.id}`} value={`team-okr-${o.id}`} onSelect={() => go(buildOrgLink('okr'))}>
-              <Target size={16} aria-hidden="true" />
-              <span>{o.title}</span>
-            </CommandItem>
-          ))}
-        </CommandGroup>
-      )}
+      {ORG_SEARCH_ORDER.map((kind) => {
+        const rows = orgGroups.get(kind);
+        if (!rows || rows.length === 0) return null;
+        const Icon = ORG_SEARCH_ICON[kind];
+        return (
+          <CommandGroup key={kind} heading={ov.t(`palette.orgSearch.${kind}`)}>
+            {rows.map((r) => (
+              <CommandItem key={`org-${kind}-${r.id}`} value={`org-${kind}-${r.id}`} onSelect={() => go(orgSearchLink(r))}>
+                <Icon size={16} className={r.detail === 'done' ? 'opacity-40' : ''} aria-hidden="true" />
+                <span className={`flex-1 truncate ${r.detail === 'done' ? 'line-through opacity-60' : ''}`}>{r.label}</span>
+                <span className="text-xs text-[rgb(var(--color-text-muted))] truncate max-w-[40%]">{orgDetail(r)}</span>
+              </CommandItem>
+            ))}
+          </CommandGroup>
+        );
+      })}
     </>
   );
 };

@@ -397,3 +397,42 @@ export const resolveActivityValue = (
       return raw;
   }
 };
+
+// ─── Vues enregistrées de l'onglet Projets (mig. 192) ─────────────────
+//
+// Les filtres de Projets vivent dans des préférences locales (par appareil) :
+// une vue les enregistre sous forme de paramètres texte, et les réapplique en
+// validant chaque valeur (une vue relue du serveur est une entrée non fiable).
+
+const VIEW_VALUES: readonly ProjectsUiPrefs['view'][] = ['list', 'kanban', 'timeline', 'portfolio'];
+const SORT_VALUES: readonly ProjectsUiPrefs['sort'][] = ['recent', 'name', 'dueDate', 'progress', 'status'];
+const STATUS_FILTER_VALUES: readonly TaskStatusFilter[] = ['all', 'open', 'overdue', 'doneThisWeek'];
+const PREF_ID_RE = /^[A-Za-z0-9_-]{1,64}$/;
+
+/** Préférences → paramètres d'une vue (seuls les écarts au défaut). */
+export function projectPrefsToViewParams(prefs: ProjectsUiPrefs): Record<string, string> {
+  const out: Record<string, string> = {};
+  if (prefs.viewChosen) out.view = prefs.view;
+  if (prefs.sort !== DEFAULT_PREFS.sort) out.sort = prefs.sort;
+  if (prefs.teamFilter) out.team = prefs.teamFilter;
+  if (prefs.assigneeFilter) out.assignee = prefs.assigneeFilter;
+  if (prefs.statusFilter !== DEFAULT_PREFS.statusFilter) out.status = prefs.statusFilter;
+  if (prefs.showArchived) out.archived = '1';
+  return out;
+}
+
+/** Paramètres d'une vue → préférences à appliquer (tout ce qui manque revient au défaut). */
+export function viewParamsToProjectPrefs(params: Record<string, string>): Partial<ProjectsUiPrefs> {
+  const pick = <T extends string>(allowed: readonly T[], raw: string | undefined, fallback: T): T =>
+    raw && (allowed as readonly string[]).includes(raw) ? (raw as T) : fallback;
+  const view = pick(VIEW_VALUES, params.view, DEFAULT_PREFS.view);
+  return {
+    view,
+    viewChosen: !!params.view && view === params.view,
+    sort: pick(SORT_VALUES, params.sort, DEFAULT_PREFS.sort),
+    teamFilter: params.team === 'org' || (params.team && PREF_ID_RE.test(params.team)) ? params.team : '',
+    assigneeFilter: params.assignee && PREF_ID_RE.test(params.assignee) ? params.assignee : null,
+    statusFilter: pick(STATUS_FILTER_VALUES, params.status, DEFAULT_PREFS.statusFilter),
+    showArchived: params.archived === '1',
+  };
+}
