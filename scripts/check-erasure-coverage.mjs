@@ -99,6 +99,10 @@ const DECISIONS = {
   team_task_followers: { decision: 'cascade' },
   team_project_followers: { decision: 'cascade' },
   org_notification_settings: { decision: 'cascade' },
+  // Recommandations de l'étape 6 (mig. 190, 192) : rôle d'une personne sur un
+  // projet, et ses vues enregistrées. Rien à garder une fois le compte parti.
+  team_project_members: { decision: 'cascade' },
+  org_saved_views: { decision: 'cascade' },
 
   // ── Conservées, par obligation légale ───────────────────────────
   payment_records: {

@@ -60,6 +60,11 @@ compilait, la suite passait.
   `…063218`, `…064540`, relues au catalogue après une preuve en transaction annulée (18 cas pour
   les quatre premières, 8 pour la 163). La 161 a été corrigée AVANT application : elle
   transmettait aussi les tâches à la corbeille (mig. 152).
+- 🔴 **`190` à `193` (étape 6, 2026-09-25) sont COMMITÉES, PAS APPLIQUÉES.** Ordre : 190, 191,
+  192, 193, AVANT le front qui les lit. Prouvées hors prod : les 167 fichiers rejoués sur un
+  Postgres 16 local (`supabase/proofs/supabase-shim.sql`), puis `190-193.proof.sql`, transaction
+  annulée, 55 cas acteur par acteur. ⚠️ Le shim imite `auth.uid()` et `pg_cron` : la preuve en
+  prod reste à faire, et le ledger à relire AVANT (d'autres sessions écrivent).
 - ⚠️ **Plages de numéros entre sessions (2026-09-24)** : `151`-`159` corbeille/équipes, `153` déjà
   prise par le portefeuille de projets (worktree `portefeuille`), `160`+ gouvernance/OKR/membres,
   `170`+ annuaire. **Relire le ledger avant de choisir un numéro.**

@@ -216,6 +216,11 @@ const TABLES_NON_EXPORTEES = {
   org_team_members: "Appartenance décidée par l'organisation.",
   organization_join_requests: "Contient les identifiants de l'organisation, donc de tiers.",
   organization_members: "Appartenance décidée par l'organisation.",
+  team_task_followers: "Abonnements aux notifications d'une tâche d'équipe (mig. 162) : un réglage, sans contenu de travail.",
+  team_project_followers: "Abonnements aux notifications d'un projet d'équipe (mig. 162) : un réglage, sans contenu de travail.",
+  org_notification_settings: "Préférences de notification par organisation (mig. 162) : un réglage d'interface.",
+  team_project_members: "Rôle sur un projet, décidé par qui pilote le projet (mig. 190), pas fourni par la personne.",
+  org_saved_views: "Combinaisons de filtres nommées (mig. 192) : un réglage d'interface, sans contenu de travail.",
 };
 
 // ── Lecture du schéma ──────────────────────────────────────────────
