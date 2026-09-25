@@ -1,6 +1,7 @@
+import type { ReactNode } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import {
-  Shield, UserCog, UserRound, MoreVertical, LogOut, ShieldCheck,
+  Shield, UserCog, UserRound, MoreVertical, ShieldCheck,
   ListTodo, CalendarDays, TrendingUp, ClipboardList,
 } from 'lucide-react';
 import {
@@ -16,6 +17,7 @@ import type { MemberLastActivity, OrgMember, OrgRole } from '@/modules/organizat
 import { getDateLocale } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
 import MemberAvatar from './MemberAvatar';
+import MemberAccessBadge from './MemberAccessBadge';
 import type { MemberTab } from './member-sheet.helpers';
 import type { DirectoryRole } from './member-directory.filters';
 
@@ -46,7 +48,6 @@ export interface MemberRowRights {
   isAbove: boolean;
   canAssign: boolean;
   canEditPermissions: boolean;
-  canRemove: boolean;
 }
 
 interface MemberDirectoryRowProps {
@@ -62,21 +63,24 @@ interface MemberDirectoryRowProps {
   onSetRole: (role: OrgRole) => void;
   onAssign: () => void;
   onEditPermissions: () => void;
-  onRemove: () => void;
+  /**
+   * Gestes de cycle de vie (`useMemberLifecycle`, mig. 161) : accès et départ.
+   * `null` quand l'appelant n'y a pas droit. Ils REMPLACENT l'ancien retrait
+   * nu, qui ne transmettait rien (M10).
+   */
+  lifecycleItems?: ReactNode;
 }
 
 /**
  * Une ligne de l'annuaire. Clic → fiche profil ; en mode sélection, clic →
  * coche. Le menu « … » reste réservé aux supérieurs hiérarchiques (#4).
  *
- * ⚠️ Emplacements réservés à la session « Audit UI/UX/Features »
- * (feat/entreprise-gouvernance) : la pastille d'accès (`MemberAccessBadge`)
- * se monte à côté du nom, et les gestes de cycle de vie
- * (`MemberLifecycleActions`) dans le menu « … », juste avant le retrait.
+ * La pastille d'accès (`MemberAccessBadge`, suspendu ou accès borné) se
+ * monte à côté du nom ; les gestes de cycle de vie ferment le menu « … ».
  */
 const MemberDirectoryRow = ({
   member: m, role, rights, lastActivity, selectMode, selected,
-  onToggleSelect, onOpen, onSetRole, onAssign, onEditPermissions, onRemove,
+  onToggleSelect, onOpen, onSetRole, onAssign, onEditPermissions, lifecycleItems,
 }: MemberDirectoryRowProps) => {
   const { t } = useT('org');
   const primary = () => (selectMode ? onToggleSelect() : onOpen('profile'));
@@ -119,6 +123,7 @@ const MemberDirectoryRow = ({
               {t('common.youBadge')}
             </span>
           )}
+          <MemberAccessBadge member={m} />
         </div>
         {m.email && <p className="text-xs text-[rgb(var(--color-text-muted))] truncate">{m.email}</p>}
         {lastActivity && (
@@ -208,14 +213,10 @@ const MemberDirectoryRow = ({
                 </DropdownMenuItem>
               </>
             )}
-            {rights.canRemove && (
+            {lifecycleItems && (
               <>
                 <DropdownMenuSeparator />
-                {/* `!text-red-500` explicite : le sélecteur du composant ne
-                    colore pas l'icône (constaté), même override que TaskTable. */}
-                <DropdownMenuItem variant="destructive" onClick={onRemove} className="!text-red-500 focus:!text-red-500">
-                  <LogOut className="!text-red-500" size={14} aria-hidden="true" /> {t('directory.removeFromOrg')}
-                </DropdownMenuItem>
+                {lifecycleItems}
               </>
             )}
           </DropdownMenuContent>

@@ -95,17 +95,32 @@ test.describe('Espace entreprise (démo)', () => {
     await expect(page.locator('[data-sonner-toast][data-type="error"]')).toHaveCount(0);
   });
 
-  test('Membres : annuaire + cartes d\'invitation', async ({ demoPage: page }) => {
+  // Audit Membres du 2026-09-24 : « quatre pages en une ». Personnes garde
+  // l'annuaire ; Équipes et Paramètres (invitations, zone de danger) en sortent.
+  test('Personnes, Équipes, Paramètres : trois sections et une page d\'équipe', async ({ demoPage: page }) => {
     await navTo(page, /entreprise/i, /\/entreprise/);
     await expect(page.getByRole('heading', { name: /nova studio/i })).toBeVisible({ timeout: 15_000 });
 
-    await orgTab(page, /^membres/i).click();
+    await orgTab(page, /^personnes/i).click();
     await page.waitForURL(/\/entreprise\/members/);
-
-    // Annuaire des 6 membres seedés + les deux moyens d'inviter
     await expect(page.getByRole('heading', { name: /annuaire/i })).toBeVisible({ timeout: 10_000 });
     await expect(page.getByText(/marie dupont/i).first()).toBeVisible();
-    await expect(page.getByText(/code d'invitation/i).first()).toBeVisible();
+    // Les invitations ne sont plus au-dessus de l'annuaire.
+    await expect(page.getByText(/code d'invitation/i)).toHaveCount(0);
+
+    await orgTab(page, /^équipes/i).click();
+    await page.waitForURL(/\/entreprise\/teams$/);
+    await page.getByRole('link', { name: /^design$/i }).click();
+    await page.waitForURL(/\/entreprise\/teams\/team-design/);
+    await expect(page.getByRole('heading', { name: /^design$/i })).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByRole('heading', { name: /responsables et membres/i })).toBeVisible();
+
+    // Par l'URL : après un clic dans la page, la carte de navigation s'est
+    // repliée (curseur sorti, comportement voulu du 2026-09-23).
+    await page.goto('/entreprise/settings');
+    // Rechargement complet : même délai que les autres arrivées par `goto`.
+    await expect(page.getByRole('heading', { name: /nova studio/i })).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText(/code d'invitation/i).first()).toBeVisible({ timeout: 20_000 });
 
     await expect(page.locator('[data-sonner-toast][data-type="error"]')).toHaveCount(0);
   });
@@ -158,7 +173,7 @@ test.describe('Espace entreprise · navigation', () => {
     // elle ressort. Puis il s'éloigne : elle se replie.
     await page.mouse.move(viewport.width - 4, 10);
     await expect(nav).toHaveAttribute('data-collapsed', 'false');
-    await expect(nav.getByRole('link', { name: /^membres/i })).toBeVisible();
+    await expect(nav.getByRole('link', { name: /^personnes/i })).toBeVisible();
     await page.mouse.move(viewport.width / 3, 10);
     await expect(nav).toHaveAttribute('data-collapsed', 'true');
 
@@ -173,7 +188,7 @@ test.describe('Espace entreprise · navigation', () => {
 
     const switcher = page.locator('[data-org-section-switcher]');
     await expect(switcher).toBeVisible({ timeout: 20_000 });
-    await expect(switcher).toContainText(/membres/i);
+    await expect(switcher).toContainText(/personnes/i);
 
     await switcher.click();
     const sheet = page.locator('[data-org-section-sheet]');

@@ -127,13 +127,15 @@ const NON_MESUREES: Record<string, string> = {
     'mode entreprise, et destructrice : elle est parcourue par `e2e/stubbed/delete-org.spec.ts`, '
     + 'mais à la souris, pas au clavier.',
   'components/organization/DeleteTeamCategoryConfirm.tsx': 'mode entreprise.',
+  'components/organization/InviteByEmailDialog.tsx': 'mode entreprise, et hors démo : exige `create_org_email_invitations` (mig. 161).',
   'components/organization/InviteOrJoinModal.tsx': 'mode entreprise.',
   'components/organization/MemberPermissionsSheet.tsx': 'mode entreprise.',
   'components/organization/MemberPlacementSheet.tsx': 'mode entreprise.',
   'components/organization/MemberSheet.tsx': 'mode entreprise.',
   'components/organization/NewTeamProjectModal.tsx': 'mode entreprise.',
+  'components/organization/OffboardMemberDialog.tsx':
+    'mode entreprise, admin seulement, et destructrice (assistant de départ, mig. 161).',
   'components/organization/OrgProfileSheet.tsx': 'mode entreprise.',
-  'components/organization/ReassignManagerSheet.tsx': 'mode entreprise.',
   'components/organization/TeamTaskModal.tsx':
     'mode entreprise. ⚠️ Elle EST mesurée par `touch-targets.spec.ts` (cibles '
     + 'tactiles), donc atteignable : c est de la dette, pas un obstacle.',

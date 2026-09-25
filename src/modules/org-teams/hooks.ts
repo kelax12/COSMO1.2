@@ -6,7 +6,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from '@/lib/toast';
 import { getOrgTeamsRepository } from '@/lib/repository.factory';
 import { orgTeamKeys } from './constants';
-import type { CreateOrgTeamInput, DeleteTeamInput } from './types';
+import type { CreateOrgTeamInput, DeleteTeamInput, UpdateOrgTeamInput } from './types';
 import { teamProjectKeys } from '@/modules/team-projects/constants';
 import { teamOkrKeys } from '@/modules/team-okrs/constants';
 import { translator } from '@/i18n/useT';
@@ -43,6 +43,21 @@ export const useCreateOrgTeam = (orgId: string) => {
       queryClient.invalidateQueries({ queryKey: orgTeamKeys.teams(orgId) });
     },
     onError: (error: Error) => toast.error(translator('errors').t('mutation.createTeam', { message: error.message })),
+  });
+};
+
+/** Fiche d'une équipe : nom, couleur, description (mig. 163). */
+export const useUpdateOrgTeam = (orgId: string) => {
+  const queryClient = useQueryClient();
+  const repository = useRepo();
+  return useMutation({
+    mutationFn: ({ teamId, input }: { teamId: string; input: UpdateOrgTeamInput }) =>
+      repository.updateTeam(teamId, input),
+    onSuccess: () => {
+      toast.success(translator('org').t('teamPage.saved'));
+      queryClient.invalidateQueries({ queryKey: orgTeamKeys.teams(orgId) });
+    },
+    onError: (error: Error) => toast.error(translator('org').t('teamPage.saveFailed', { message: error.message })),
   });
 };
 

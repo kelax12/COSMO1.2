@@ -115,7 +115,9 @@ async function openMembers(
 
   await gotoStubbed(
     page,
-    '/entreprise?tab=members',
+    // La zone de danger vit dans Paramètres depuis le 2026-09-25. L'ancienne
+    // forme `?tab=` est gardée exprès : elle passe aussi par la redirection.
+    '/entreprise?tab=settings',
     options.shell
       ? options.shell(page)
       : page.getByRole('heading', { name: DANGER_ZONE }),
@@ -239,7 +241,7 @@ test.describe('C-39 — supprimer une entreprise : rembourser, puis supprimer', 
     // DELETE sur `organizations`. Mais l'affichage était le chemin COURT, et
     // c'est lui qu'on mesure ici.
     //
-    // Ancre : on attend que l'onglet Membres soit peint avant de conclure à une
+    // Ancre : on attend que la section Paramètres soit peinte avant de conclure à une
     // absence. Une assertion négative sur un écran vide est vraie pour tout le
     // monde, et le repère ne peut pas être la zone de danger elle-même.
     const stub = await openMembers(page, {

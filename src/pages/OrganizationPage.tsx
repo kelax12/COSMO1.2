@@ -6,13 +6,10 @@ import { useAuth } from '@/modules/auth/AuthContext';
 import {
   useActiveOrganization,
   useOrgMembers,
-  useLeaveOrganization,
-  useTransferOwnership,
   useMyOrgPermissions,
   isManagerOf,
 } from '@/modules/organizations';
 import { ENTERPRISE_BILLING_ENFORCED } from '@/modules/billing/premium-config';
-import { useDeleteOrgFlow } from './organization/useDeleteOrgFlow';
 import { useOrgSubscription } from '@/modules/billing/org-billing.hooks';
 import { isQuotaReached, effectiveQuota } from '@/modules/billing/org-billing.logic';
 import { PageHeading } from '@/components/ui/typography';
@@ -27,6 +24,7 @@ import {
   isOrgSectionSegment,
   legacyOrgTabRedirect,
   orgSectionPath,
+  readTeamIdSegment,
 } from '@/components/organization/deep-link.helpers';
 import { safeRedirectPath } from '@/lib/safe-redirect';
 import MyWorkTab from '@/components/organization/MyWorkTab';
@@ -62,13 +60,16 @@ const OrgBillingTab = lazyWithRetry(() => import('@/components/organization/OrgB
 // chunk, qui dépassait son cliquet (18,3 ko pour 18,0) : seul qui ouvre
 // `/entreprise/members` doit la payer.
 const OrgMembersSection = lazyWithRetry(() => import('@/components/organization/OrgMembersSection'));
+// Audit Membres du 2026-09-24 : la section Membres tenait quatre pages en une.
+// Équipes (et la page de chaque équipe) et Paramètres ont leur adresse, et
+// leur chunk.
+const TeamsSection = lazyWithRetry(() => import('@/components/organization/TeamsSection'));
+const TeamPage = lazyWithRetry(() => import('@/components/organization/TeamPage'));
+const OrgSettingsSection = lazyWithRetry(() => import('@/components/organization/OrgSettingsSection'));
 
 // Feuilles et dialogues : montés derrière un `&&`, donc déjà conditionnels au
 // rendu. Ils ne l'étaient pas au TÉLÉCHARGEMENT.
 const OrgProfileSheet = lazyWithRetry(() => import('@/components/organization/OrgProfileSheet'));
-const DeleteOrganizationDialog = lazyWithRetry(() => import('@/components/organization/DeleteOrganizationDialog'));
-const ConfirmLeaveOrgDialog = lazyWithRetry(() => import('@/components/organization/ConfirmLeaveOrgDialog'));
-const TransferOwnershipDialog = lazyWithRetry(() => import('@/components/organization/TransferOwnershipDialog'));
 
 type OrgTab = OrgSection;
 
@@ -106,16 +107,15 @@ const OrganizationPage = () => {
   const { user } = useAuth();
   // Section active = segment de chemin. `billing` en fait partie : c'est une
   // route sans entrée de navigation, où Stripe renvoie après un paiement.
-  const { section } = useParams<{ section?: string }>();
+  // `entityId` : second segment, qui n'existe que pour la page d'une équipe
+  // (`/entreprise/teams/<id>`).
+  const { section, entityId } = useParams<{ section?: string; entityId?: string }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const urlTab: OrgTab = isOrgSectionSegment(section) ? section : 'overview';
   // Sans `replace` : chaque section est une page, le bouton précédent y revient.
   const setTab = (id: OrgTab) => navigate(orgSectionPath(id));
   const [editProfile, setEditProfile] = useState(false);
-  const [confirmingDelete, setConfirmingDelete] = useState(false);
-  const [confirmingLeave, setConfirmingLeave] = useState(false);
-  const [transferring, setTransferring] = useState(false);
   const [seatsBannerDismissed, setSeatsBannerDismissed] = useState(false);
   const [launchBannerDismissed, setLaunchBannerDismissed] = useState(false);
   const { activeOrg: myOrg, isLoading } = useActiveOrganization();
@@ -143,12 +143,6 @@ const OrganizationPage = () => {
   // Appelé ICI, avant les early returns `isLoading` / `!myOrg` : un hook placé
   // plus bas ne serait pas monté sur tous les rendus.
   const { data: orgSubscription } = useOrgSubscription(myOrg?.id);
-  const leaveMutation = useLeaveOrganization();
-  // C-39 — « la suppression resilie ET REMBOURSE » (arbitrage du 2026-09-03) :
-  // un seul geste, aucun debit orphelin. L'enchainement et son ordre vivent
-  // dans `useDeleteOrgFlow`, avec la raison de cet ordre.
-  const deleteFlow = useDeleteOrgFlow(() => setConfirmingDelete(false));
-  const transferMutation = useTransferOwnership();
 
   // Ancienne forme `/entreprise?tab=X` → `/entreprise/X`, les autres
   // paramètres conservés. ⚠️ À GARDER POUR TOUJOURS : Stripe renvoie sur
@@ -163,6 +157,12 @@ const OrganizationPage = () => {
   // à sa vraie adresse plutôt qu'un contenu d'aperçu sous une URL fausse.
   if (section !== undefined && !isOrgSectionSegment(section)) {
     return <Navigate to="/entreprise" replace />;
+  }
+  // Un second segment n'a de sens que sous `teams`, et seulement s'il a la
+  // forme d'un id : sinon, la section elle-même.
+  const teamId = section === 'teams' ? readTeamIdSegment(entityId) : null;
+  if (entityId !== undefined && !teamId) {
+    return <Navigate to={orgSectionPath(section)} replace />;
   }
 
   if (isLoading) {
@@ -448,17 +448,33 @@ const OrganizationPage = () => {
           org={myOrg}
           members={members}
           currentUserId={user?.id}
+          isAdmin={isAdmin}
+          isManager={isManager}
+          canInvite={canInvite}
+          seatsFull={seatsFull}
+        />
+      )}
+      {tab === 'teams' && (teamId ? (
+        <TeamPage orgId={myOrg.id} teamId={teamId} members={members} currentUserId={user?.id} isAdmin={isAdmin} />
+      ) : (
+        <TeamsSection
+          orgId={myOrg.id}
+          members={members}
+          currentUserId={user?.id}
+          isAdmin={isAdmin}
+          canCreateTeam={myPermissions.can['team.create']}
+        />
+      ))}
+      {tab === 'settings' && (
+        <OrgSettingsSection
+          org={myOrg}
+          members={members}
+          currentUserId={user?.id}
           isOwner={isOwner}
           isAdmin={isAdmin}
+          isManager={isManager}
           canInvite={canInvite}
-          canCreateTeam={myPermissions.can['team.create']}
           seatsFull={seatsFull}
-          transferPending={transferMutation.isPending}
-          deletePending={deleteFlow.isPending}
-          leavePending={leaveMutation.isPending}
-          onTransfer={() => setTransferring(true)}
-          onDelete={() => setConfirmingDelete(true)}
-          onLeave={() => setConfirmingLeave(true)}
         />
       )}
       </Suspense>
@@ -469,42 +485,6 @@ const OrganizationPage = () => {
           chunk arrive. */}
       <Suspense fallback={null}>
       {editProfile && <OrgProfileSheet org={myOrg} onClose={() => setEditProfile(false)} />}
-
-      {transferring && (
-        <TransferOwnershipDialog
-          orgName={myOrg.name}
-          candidates={members.filter((m) => m.userId !== myOrg.ownerId)}
-          pending={transferMutation.isPending}
-          onConfirm={(newOwnerId) =>
-            transferMutation.mutate(
-              { orgId: myOrg.id, newOwnerId },
-              { onSuccess: () => setTransferring(false) },
-            )
-          }
-          onCancel={() => setTransferring(false)}
-        />
-      )}
-
-      {confirmingLeave && (
-        <ConfirmLeaveOrgDialog
-          orgName={myOrg.name}
-          pending={leaveMutation.isPending}
-          onConfirm={() =>
-            leaveMutation.mutate(myOrg.id, { onSettled: () => setConfirmingLeave(false) })
-          }
-          onCancel={() => setConfirmingLeave(false)}
-        />
-      )}
-
-      {confirmingDelete && (
-        <DeleteOrganizationDialog
-          org={myOrg}
-          memberCount={members.length}
-          pending={deleteFlow.isPending}
-          onConfirm={() => deleteFlow.run(myOrg.id)}
-          onCancel={() => setConfirmingDelete(false)}
-        />
-      )}
       </Suspense>
 
       {/* Desktop : la navigation vit à DROITE, hors de la zone qui défile.

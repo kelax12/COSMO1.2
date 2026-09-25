@@ -569,7 +569,12 @@
     "showFewerTeams": "Collapse the list",
     "moreMembers_one": "+{{count}} more",
     "moreMembers_other": "+{{count}} more",
-    "fewerMembers": "Show fewer"
+    "fewerMembers": "Show fewer",
+    "memberCount_one": "{{count}} member",
+    "memberCount_other": "{{count}} members",
+    "projectCount_one": "{{count}} project",
+    "projectCount_other": "{{count}} projects",
+    "leadsMore": "{{names}} and {{count}} more"
   },
   "project": {
     "newAria": "New team project",
@@ -973,8 +978,10 @@
     "projects": "Projects",
     "okr": "OKRs",
     "stats": "Statistics",
-    "members": "Members",
-    "tasks": "Tasks"
+    "members": "People",
+    "tasks": "Tasks",
+    "teams": "Teams",
+    "settings": "Settings"
   },
   "sideNav": {
     "groupMine": "My work",
@@ -1330,5 +1337,46 @@
     "resendWait": "At most one reminder per hour",
     "resendFor": "Resend to {{email}}",
     "revokeFor": "Revoke the invitation for {{email}}"
+  },
+  "settings": {
+    "inviteTitle": "Invite",
+    "inviteHint": "By email, with a join code, with a direct link or from your COSMO contacts.",
+    "inviteByEmail": "Invite by email",
+    "otherInvites": "Other ways to invite",
+    "leaveTitle": "Leave the company"
+  },
+  "teamPage": {
+    "back": "All teams",
+    "notFound": "This team does not exist, or no longer does. It may have been deleted.",
+    "edit": "Edit team",
+    "nameLabel": "Name",
+    "descriptionLabel": "Description",
+    "descriptionPlaceholder": "What the team does, and what people can ask it for.",
+    "save": "Save",
+    "saving": "Saving…",
+    "saved": "Team saved",
+    "saveFailed": "Could not save the team: {{message}}",
+    "noDescription": "No description.",
+    "noDescriptionManager": "No description yet. Use the pencil to write one.",
+    "statsTitle": "Activity over the last {{days}} days",
+    "statsEmpty": "The team does not own any project yet: nothing to measure.",
+    "statOpen": "Open tasks",
+    "statOverdue": "Overdue",
+    "statDone": "Completed",
+    "statRate": "Completion rate",
+    "statOkr": "OKR progress",
+    "peopleTitle": "Leads and members",
+    "noLead": "No lead",
+    "noLeadManager": "No lead: a member's crown makes them one.",
+    "noMembers": "Nobody in the team yet.",
+    "projectsTitle": "Projects",
+    "projectsEmpty": "No active project belongs to the team.",
+    "openTasks_one": "{{count}} open",
+    "openTasks_other": "{{count}} open",
+    "archivedProjects_one": "{{count}} archived project",
+    "archivedProjects_other": "{{count}} archived projects",
+    "okrTitle": "OKRs",
+    "okrEmpty": "No OKR is linked to the team.",
+    "okrProgressAria": "Progress of {{title}}"
   }
 }

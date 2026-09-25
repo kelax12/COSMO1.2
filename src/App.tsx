@@ -370,7 +370,11 @@ const AppRoutes = () => {
             une seule route, donc changer de section ne remonte pas la page.
             `entreprise/onboarding`, plus haut, est un segment STATIQUE : le
             routeur le préfère toujours à ce segment dynamique. */}
-        <Route path="entreprise/:section?" element={<PageWithSuspense><OrganizationPage /></PageWithSuspense>} />
+        {/* Second segment optionnel : la page d'une équipe,
+            `/entreprise/teams/<id>` (audit Membres du 2026-09-24). Toujours la
+            MÊME route, pour qu'ouvrir une équipe ne remonte pas la page ;
+            `OrganizationPage` renvoie tout autre `/<section>/<x>` à la section. */}
+        <Route path="entreprise/:section?/:entityId?" element={<PageWithSuspense><OrganizationPage /></PageWithSuspense>} />
         {/* Admin — URL non référencée (aucun lien dans l'UI), gating réel
             côté serveur : la RPC get_admin_stats rejette les non-admins. */}
         <Route path="admin" element={<PageWithSuspense><AdminPage /></PageWithSuspense>} />

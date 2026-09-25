@@ -6,7 +6,7 @@
 // « Dev » avec Jean/Lucas). Rechargées à chaque loginDemo().
 
 import { IOrgTeamsRepository } from './repository';
-import { OrgTeam, OrgTeamMember, CreateOrgTeamInput, TeamDeletionImpact, DeleteTeamInput } from './types';
+import { OrgTeam, OrgTeamMember, CreateOrgTeamInput, UpdateOrgTeamInput, TeamDeletionImpact, DeleteTeamInput } from './types';
 import { ORG_TEAMS_STORAGE_KEY, ORG_TEAM_MEMBERS_STORAGE_KEY } from './constants';
 import { TEAM_PROJECTS_STORAGE_KEY } from '@/modules/team-projects/constants';
 import { TEAM_OKRS_STORAGE_KEY } from '@/modules/team-okrs/constants';
@@ -34,8 +34,8 @@ function readArray<T>(key: string): T[] {
 }
 
 const DEMO_TEAMS: OrgTeam[] = [
-  { id: 'team-design', orgId: DEMO_ORG_ID, name: 'Design', color: 'purple', createdBy: DEMO_USER_ID, createdAt: new Date(Date.now() - 40 * DAY).toISOString() },
-  { id: 'team-dev', orgId: DEMO_ORG_ID, name: 'Dev', color: 'blue', createdBy: DEMO_USER_ID, createdAt: new Date(Date.now() - 40 * DAY).toISOString() },
+  { id: 'team-design', orgId: DEMO_ORG_ID, name: 'Design', color: 'purple', description: null, createdBy: DEMO_USER_ID, createdAt: new Date(Date.now() - 40 * DAY).toISOString() },
+  { id: 'team-dev', orgId: DEMO_ORG_ID, name: 'Dev', color: 'blue', description: null, createdBy: DEMO_USER_ID, createdAt: new Date(Date.now() - 40 * DAY).toISOString() },
 ];
 
 // Chaque équipe a un responsable (mig. 107) : une organisation de démo dont
@@ -67,7 +67,8 @@ function readOrSeed<T>(key: string, seed: T): T {
 
 export class LocalStorageOrgTeamsRepository implements IOrgTeamsRepository {
   private getTeamsArray(): OrgTeam[] {
-    return readOrSeed<OrgTeam[]>(ORG_TEAMS_STORAGE_KEY, DEMO_TEAMS);
+    // `description` (mig. 163) manque aux équipes écrites avant elle.
+    return readOrSeed<OrgTeam[]>(ORG_TEAMS_STORAGE_KEY, DEMO_TEAMS).map((t) => ({ ...t, description: t.description ?? null }));
   }
   private saveTeams(teams: OrgTeam[]): void {
     writeJsonOrThrow(ORG_TEAMS_STORAGE_KEY, teams);
@@ -93,11 +94,29 @@ export class LocalStorageOrgTeamsRepository implements IOrgTeamsRepository {
       orgId,
       name: input.name,
       color: input.color ?? 'blue',
+      description: null,
       createdBy: DEMO_USER_ID,
       createdAt: new Date().toISOString(),
     };
     this.saveTeams([...this.getTeamsArray(), team]);
     return team;
+  }
+
+  async updateTeam(teamId: string, input: UpdateOrgTeamInput): Promise<void> {
+    const teams = this.getTeamsArray();
+    if (!teams.some((t) => t.id === teamId)) throw makeApiError('team_not_found');
+    this.saveTeams(
+      teams.map((t) =>
+        t.id === teamId
+          ? {
+              ...t,
+              ...(input.name !== undefined ? { name: input.name.trim() } : {}),
+              ...(input.color !== undefined ? { color: input.color } : {}),
+              ...(input.description !== undefined ? { description: input.description?.trim() || null } : {}),
+            }
+          : t,
+      ),
+    );
   }
 
   /**

@@ -297,6 +297,10 @@
       "categorie": "anglicisme-fr",
       "valeur": "Labels"
     },
+    "org.teamPage.descriptionLabel": {
+      "categorie": "mot-identique",
+      "valeur": "Description"
+    },
     "org.templates.sprint": {
       "categorie": "anglicisme-fr",
       "valeur": "Sprint"
