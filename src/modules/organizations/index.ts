@@ -103,4 +103,8 @@ export {
 export type { OrgNotification, OrgNotificationKind } from './notifications';
 
 export { useOrgInbox, useOrgBadgeTasks } from './inbox';
+
+// Dernière activité des membres (mig. 170) — admins et managers seulement.
+export { useOrgMemberLastActivity, lastActivityScope } from './member-activity';
+export type { MemberLastActivity, MemberActivitySource } from './member-activity.types';
 export { mapOrgInbox, type OrgInboxRow } from './inbox.repository';
