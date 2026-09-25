@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { toast } from '@/lib/toast';
-import { Plus, Target, Trash2, Pencil, Users, Building2 } from 'lucide-react';
+import { Plus, Target, Trash2, Pencil, Building2 } from 'lucide-react';
 import {
   useTeamOKRs,
   useUpdateTeamKR,
@@ -27,6 +27,7 @@ import { useMyOrgPermissions } from '@/modules/organizations';
 import { useT } from '@/i18n/useT';
 import OrgConfirmDialog from './OrgConfirmDialog';
 import { readEntityParam } from './deep-link.helpers';
+import TeamColorDot from './TeamColorDot';
 
 interface TeamOKRTabProps {
   orgId: string;
@@ -174,6 +175,7 @@ const TeamOKRTab = ({ orgId }: TeamOKRTabProps) => {
   );
 
   const teamName = (id: string) => teams.find((x) => x.id === id)?.name ?? t('okrTab.fallbackTeam');
+  const teamColor = (id: string) => teams.find((x) => x.id === id)?.color;
   // Couleur d'une catégorie par son id (badge coloré, parité mode perso).
   const colorById = useMemo(() => {
     const m = new Map<string, { name: string; color: string }>();
@@ -360,8 +362,8 @@ const TeamOKRTab = ({ orgId }: TeamOKRTabProps) => {
                       </span>
                     ) : (
                       okr.teamIds.map((tid) => (
-                        <span key={tid} className="inline-flex items-center gap-1 text-caption font-medium px-2 py-0.5 rounded-full bg-[rgb(var(--color-accent-solid))]/10 text-blue-600 dark:text-blue-400">
-                          <Users size={11} aria-hidden="true" /> {teamName(tid)}
+                        <span key={tid} className="inline-flex items-center gap-1.5 text-caption font-medium px-2 py-0.5 rounded-full bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-secondary))]">
+                          <TeamColorDot color={teamColor(tid)} size={7} /> {teamName(tid)}
                         </span>
                       ))
                     )}

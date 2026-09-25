@@ -38,6 +38,7 @@ import TeamTaskModal from './TeamTaskModal';
 import TruncatedDataNotice from './TruncatedDataNotice';
 import TeamTrashDialog from './TeamTrashDialog';
 import { useT } from '@/i18n/useT';
+import TeamColorDot from './TeamColorDot';
 
 interface TeamProjectsTabProps {
   orgId: string;
@@ -217,10 +218,10 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
   // ─── Groupement par équipe (vue liste, sans filtre équipe) ──────────
   const groupedSections = useMemo(() => {
     if (teamFilter || teams.length === 0) return null;
-    const sections: { key: string; label: string | null; projects: TeamProject[] }[] = [];
+    const sections: { key: string; label: string | null; color?: string; projects: TeamProject[] }[] = [];
     for (const team of teams) {
       const ps = shownProjects.filter((p) => p.teamId === team.id);
-      if (ps.length > 0) sections.push({ key: team.id, label: t('projects.teamSection', { name: team.name }), projects: ps });
+      if (ps.length > 0) sections.push({ key: team.id, label: t('projects.teamSection', { name: team.name }), color: team.color, projects: ps });
     }
     const orgProjects = shownProjects.filter((p) => !p.teamId || !teams.some((tm) => tm.id === p.teamId));
     if (orgProjects.length > 0) sections.push({ key: 'org', label: sections.length > 0 ? t('projects.orgSection') : null, projects: orgProjects });
@@ -527,7 +528,8 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
             groupedSections.map((section) => (
               <div key={section.key} className="space-y-3">
                 {section.label && (
-                  <h3 className="text-xs font-bold uppercase tracking-wide text-[rgb(var(--color-text-muted))] px-1 pt-1">
+                  <h3 className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-[rgb(var(--color-text-muted))] px-1 pt-1">
+                    {section.color && <TeamColorDot color={section.color} />}
                     {section.label}
                   </h3>
                 )}

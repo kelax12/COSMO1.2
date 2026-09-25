@@ -23,6 +23,7 @@ import {
 } from './portfolio.helpers';
 import MemberAvatar from './MemberAvatar';
 import { useT } from '@/i18n/useT';
+import TeamColorDot from './TeamColorDot';
 
 interface ProjectPortfolioViewProps {
   projects: TeamProject[];
@@ -84,7 +85,7 @@ const ProjectPortfolioView = ({
                       <span className="block font-semibold text-[rgb(var(--color-text-primary))] truncate hover:underline">{project.name}</span>
                       {(team || blockers.length > 0) && (
                         <span className="flex items-center gap-2 text-caption text-[rgb(var(--color-text-muted))] truncate">
-                          {team && <span className="truncate">{team.name}</span>}
+                          {team && <span className="inline-flex items-center gap-1 truncate"><TeamColorDot color={team.color} size={6} />{team.name}</span>}
                           {blockers.length > 0 && (
                             <span className="inline-flex items-center gap-0.5 text-amber-600 dark:text-amber-400 truncate">
                               <Link2 size={10} aria-hidden="true" />

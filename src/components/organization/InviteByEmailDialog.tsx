@@ -9,6 +9,7 @@ import { useModalA11y } from '@/hooks/use-modal-a11y';
 import MemberSelectField from './MemberSelectField';
 import { splitEmails } from './invite-email.helpers';
 import { useT } from '@/i18n/useT';
+import TeamColorDot from './TeamColorDot';
 
 interface InviteByEmailDialogProps {
   orgId: string;
@@ -187,7 +188,7 @@ const InviteByEmailDialog = ({ orgId, members, currentUserId, isAdmin, onClose }
                             : 'border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]'
                         }`}
                       >
-                        {team.name}
+                        <span className="inline-flex items-center gap-1.5"><TeamColorDot color={team.color} />{team.name}</span>
                       </button>
                     );
                   })}
