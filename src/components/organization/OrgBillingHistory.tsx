@@ -2,7 +2,7 @@ import { ExternalLink, Receipt } from 'lucide-react';
 import { useT } from '@/i18n/useT';
 import { formatCurrency, formatDate } from '@/i18n/format';
 import type { KeyOf } from '@/i18n/catalog';
-import { useOrgBillingHistory } from '@/modules/billing/org-billing.hooks';
+import { useOrgBillingHistory } from '@/modules/billing/org-billing-account.hooks';
 import type { OrgBillingHistoryEntry } from '@/modules/billing/org-billing.types';
 
 interface Props {
@@ -10,10 +10,10 @@ interface Props {
 }
 
 /** Libellé d'une ligne du journal. Un type inconnu reste lisible, jamais masqué. */
-const EVENT_KEYS: Record<string, KeyOf<'org'>> = {
-  'invoice.payment_succeeded': 'billing.historyPaid',
-  'invoice.payment_failed': 'billing.historyFailed',
-  'charge.refunded': 'billing.historyRefund',
+const EVENT_KEYS: Record<string, KeyOf<'orgBilling'>> = {
+  'invoice.payment_succeeded': 'historyPaid',
+  'invoice.payment_failed': 'historyFailed',
+  'charge.refunded': 'historyRefund',
 };
 
 /**
@@ -25,7 +25,7 @@ const EVENT_KEYS: Record<string, KeyOf<'org'>> = {
  * montant DÛ, barré, parce que rien n'a été encaissé.
  */
 export function OrgBillingHistory({ orgId }: Props) {
-  const { t } = useT('org');
+  const { t } = useT('orgBilling');
   const { data: entries = [], isLoading, isError } = useOrgBillingHistory(orgId, true);
 
   const amount = (e: OrgBillingHistoryEntry) =>
@@ -38,15 +38,15 @@ export function OrgBillingHistory({ orgId }: Props) {
     >
       <h3 id="org-billing-history" className="flex items-center gap-2 text-sm font-semibold text-[rgb(var(--color-text-primary))]">
         <Receipt size={15} aria-hidden="true" />
-        {t('billing.historyTitle')}
+        {t('historyTitle')}
       </h3>
 
       {isLoading ? (
-        <p className="text-xs text-[rgb(var(--color-text-muted))]">{t('billing.historyLoading')}</p>
+        <p className="text-xs text-[rgb(var(--color-text-muted))]">{t('historyLoading')}</p>
       ) : isError ? (
-        <p className="text-xs text-[rgb(var(--color-text-secondary))]">{t('billing.historyError')}</p>
+        <p className="text-xs text-[rgb(var(--color-text-secondary))]">{t('historyError')}</p>
       ) : entries.length === 0 ? (
-        <p className="text-xs text-[rgb(var(--color-text-secondary))]">{t('billing.historyEmpty')}</p>
+        <p className="text-xs text-[rgb(var(--color-text-secondary))]">{t('historyEmpty')}</p>
       ) : (
         <ul className="divide-y divide-[rgb(var(--color-border))]">
           {entries.map((e) => {
@@ -55,7 +55,7 @@ export function OrgBillingHistory({ orgId }: Props) {
               <li key={e.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2">
                 <div className="min-w-0 flex-1">
                   <p className="text-sm text-[rgb(var(--color-text-primary))]">
-                    {t(EVENT_KEYS[e.eventType] ?? 'billing.historyOther')}
+                    {t(EVENT_KEYS[e.eventType] ?? 'historyOther')}
                     {e.invoiceNumber && (
                       <span className="text-[rgb(var(--color-text-muted))]"> · {e.invoiceNumber}</span>
                     )}
@@ -82,8 +82,8 @@ export function OrgBillingHistory({ orgId }: Props) {
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1 text-xs font-medium text-[rgb(var(--color-accent))] hover:underline"
                   >
-                    {t('billing.historyInvoice')} <ExternalLink size={12} aria-hidden="true" />
-                    <span className="sr-only">{t('billing.historyNewTab')}</span>
+                    {t('historyInvoice')} <ExternalLink size={12} aria-hidden="true" />
+                    <span className="sr-only">{t('historyNewTab')}</span>
                   </a>
                 )}
               </li>

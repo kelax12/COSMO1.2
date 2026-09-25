@@ -65,6 +65,7 @@ type Shape<P extends string> = P extends keyof FrModules ? FrModules[P] : never;
 interface FrModules {
   admin: typeof import('@/locales/fr/admin.json');
   portfolio: typeof import('@/locales/fr/portfolio.json');
+  orgBilling: typeof import('@/locales/fr/orgBilling.json');
   agenda: typeof import('@/locales/fr/agenda.json');
   dashboard: typeof import('@/locales/fr/dashboard.json');
   bugReport: typeof import('@/locales/fr/bugReport.json');
@@ -163,6 +164,12 @@ interface CatalogShapes {
    * n'affichent jamais.
    */
   portfolio: Shape<'portfolio'>;
+  /**
+   * Facturation entreprise : sièges, historique, contact (mig. 180). À part
+   * comme `portfolio` : seul le propriétaire ouvre cet écran, `org` est payé
+   * par toute visite de /entreprise.
+   */
+  orgBilling: Shape<'orgBilling'>;
   /** Titres/descriptions des routes publiques — lu aussi par `prerender.mjs`. */
   seo: Shape<'seo'>;
   /** Réglages — profil, sécurité, apparence, modules, données, aide. */
@@ -254,7 +261,7 @@ registry[DEFAULT_LOCALE] = {
 const NAMESPACES: readonly Namespace[] = [
   'admin', 'agenda', 'bugReport', 'common', 'csv', 'dashboard', 'errors', 'eventModal',
   'guide',
-  'habits', 'invite', 'landing', 'legal', 'okr', 'org', 'portfolio', 'premium', 'seo',
+  'habits', 'invite', 'landing', 'legal', 'okr', 'org', 'orgBilling', 'portfolio', 'premium', 'seo',
   'overlays',
   'settings', 'statistics', 'taskModal', 'tasks', 'tutorials',
 ];

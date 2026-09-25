@@ -26,7 +26,8 @@ const PREVIEW = 8;
  * palier.
  */
 export function OrgBillingSeats({ members, ownerId, quota }: Props) {
-  const { t, tp } = useT('org');
+  const { t, tp } = useT('orgBilling');
+  const { t: tOrg } = useT('org');
   const [expanded, setExpanded] = useState(false);
 
   // Ordre d'arrivée : c'est l'ordre dans lequel les sièges ont été pris.
@@ -36,7 +37,7 @@ export function OrgBillingSeats({ members, ownerId, quota }: Props) {
   );
   const visible = expanded ? sorted : sorted.slice(0, PREVIEW);
   const roleLabel = (m: OrgMember) =>
-    m.userId === ownerId ? t('billing.seatsOwner') : m.role === 'admin' ? t('roles.admin') : t('roles.member');
+    m.userId === ownerId ? t('seatsOwner') : m.role === 'admin' ? tOrg('roles.admin') : tOrg('roles.member');
 
   return (
     <section
@@ -46,15 +47,15 @@ export function OrgBillingSeats({ members, ownerId, quota }: Props) {
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h3 id="org-billing-seats" className="flex items-center gap-2 text-sm font-semibold text-[rgb(var(--color-text-primary))]">
           <Users size={15} aria-hidden="true" />
-          {t('billing.seatsTitle')}
+          {t('seatsTitle')}
         </h3>
         <span className="text-xs text-[rgb(var(--color-text-secondary))]">
           {quota === null
-            ? tp('billing.seatsCountUnlimited', members.length)
-            : t('billing.seatsCount', { count: members.length, quota })}
+            ? tp('seatsCountUnlimited', members.length)
+            : tp('seatsCount', members.length, { quota })}
         </span>
       </div>
-      <p className="text-xs text-[rgb(var(--color-text-secondary))]">{t('billing.seatsRule')}</p>
+      <p className="text-xs text-[rgb(var(--color-text-secondary))]">{t('seatsRule')}</p>
 
       <ul className="divide-y divide-[rgb(var(--color-border))]">
         {visible.map((m) => (
@@ -69,7 +70,7 @@ export function OrgBillingSeats({ members, ownerId, quota }: Props) {
             <div className="shrink-0 text-right">
               <p className="text-xs font-medium text-[rgb(var(--color-text-secondary))]">{roleLabel(m)}</p>
               <p className="text-[11px] text-[rgb(var(--color-text-muted))]">
-                {t('billing.seatsSince', { date: formatDate(new Date(m.joinedAt)) })}
+                {t('seatsSince', { date: formatDate(new Date(m.joinedAt)) })}
               </p>
             </div>
           </li>
@@ -83,7 +84,7 @@ export function OrgBillingSeats({ members, ownerId, quota }: Props) {
           aria-expanded={expanded}
           className="self-start text-sm font-medium text-[rgb(var(--color-accent))] hover:underline"
         >
-          {expanded ? t('billing.seatsShowLess') : tp('billing.seatsShowAll', sorted.length)}
+          {expanded ? t('seatsShowLess') : tp('seatsShowAll', sorted.length)}
         </button>
       )}
     </section>
