@@ -5,6 +5,7 @@ import { useActiveOrganization } from '@/modules/organizations';
 import CreateOrJoinOrganization from './CreateOrJoinOrganization';
 import { useT } from '@/i18n/useT';
 import { buildOrgLink } from './deep-link.helpers';
+import { orgSetupPath } from './org-setup.helpers';
 
 /** Clé de libellé par rôle stocké — « manager » est dérivé, jamais stocké. */
 const ROLE_KEYS = {
@@ -73,7 +74,8 @@ const OrganizationSettingsCard = () => {
           <p className="text-xs text-[rgb(var(--color-text-secondary))] mb-4">
             {t('settingsCard.hint')}
           </p>
-          <CreateOrJoinOrganization onCreated={() => { /* code affiché dans le composant */ }} />
+          {/* Une création ouvre l'assistant de démarrage, sur sa propre page. */}
+          <CreateOrJoinOrganization onCreated={(org) => navigate(orgSetupPath(org.id))} />
         </div>
       )}
     </>

@@ -1403,5 +1403,8 @@
     "membersTitle": "Personnes et équipes",
     "membersHint": "La place, les droits et le départ de chaque membre se règlent dans Personnes, les équipes dans Équipes.",
     "membersLink": "Ouvrir Personnes"
+  },
+  "setup": {
+    "resume": "Reprendre l'assistant de démarrage"
   }
 }

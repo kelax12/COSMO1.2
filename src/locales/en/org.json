@@ -1334,5 +1334,8 @@
     "membersTitle": "People and teams",
     "membersHint": "Each member’s placement, permissions and departure are handled in People, teams in Teams.",
     "membersLink": "Open People"
+  },
+  "setup": {
+    "resume": "Resume the setup assistant"
   }
 }

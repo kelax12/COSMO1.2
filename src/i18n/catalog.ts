@@ -66,6 +66,7 @@ interface FrModules {
   admin: typeof import('@/locales/fr/admin.json');
   portfolio: typeof import('@/locales/fr/portfolio.json');
   orgBilling: typeof import('@/locales/fr/orgBilling.json');
+  orgSetup: typeof import('@/locales/fr/orgSetup.json');
   agenda: typeof import('@/locales/fr/agenda.json');
   dashboard: typeof import('@/locales/fr/dashboard.json');
   bugReport: typeof import('@/locales/fr/bugReport.json');
@@ -170,6 +171,11 @@ interface CatalogShapes {
    * par toute visite de /entreprise.
    */
   orgBilling: Shape<'orgBilling'>;
+   * Assistant de démarrage d'une entreprise (/entreprise/onboarding?setup=).
+   * À part pour la même raison que `portfolio` : seul qui vient de créer une
+   * entreprise l'affiche, `org` est payé par toute visite de /entreprise.
+   */
+  orgSetup: Shape<'orgSetup'>;
   /** Titres/descriptions des routes publiques — lu aussi par `prerender.mjs`. */
   seo: Shape<'seo'>;
   /** Réglages — profil, sécurité, apparence, modules, données, aide. */
@@ -261,7 +267,7 @@ registry[DEFAULT_LOCALE] = {
 const NAMESPACES: readonly Namespace[] = [
   'admin', 'agenda', 'bugReport', 'common', 'csv', 'dashboard', 'errors', 'eventModal',
   'guide',
-  'habits', 'invite', 'landing', 'legal', 'okr', 'org', 'orgBilling', 'portfolio', 'premium', 'seo',
+  'habits', 'invite', 'landing', 'legal', 'okr', 'org', 'orgBilling', 'orgSetup', 'portfolio', 'premium', 'seo',
   'overlays',
   'settings', 'statistics', 'taskModal', 'tasks', 'tutorials',
 ];
