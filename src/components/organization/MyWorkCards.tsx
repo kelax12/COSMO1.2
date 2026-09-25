@@ -320,7 +320,7 @@ export const MyKeyResultsCard = ({ items }: { items: MyKeyResult[] }) => {
           <li key={kr.id}>
             <button
               type="button"
-              onClick={() => navigate(buildOrgLink('okr'))}
+              onClick={() => navigate(buildOrgLink('okr', { okr: okr.id }))}
               className="w-full min-h-touch flex flex-col justify-center gap-1 px-2 py-1.5 rounded-lg text-left hover:bg-[rgb(var(--color-hover))] transition-colors"
             >
               <span className="flex items-center gap-2 w-full">

@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useMemo, useState } from 'react';
+import { Suspense, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { useTeamTasksSelection } from './use-team-tasks-selection';
 import { Plus, FolderKanban, ChevronDown, ChevronRight, ArrowLeft } from 'lucide-react';
@@ -193,19 +193,8 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
     canAssign,
   });
 
-  // ─── Deep-link `?task=<id>` ─────────────────────────────────────────
-  const deepTaskId = readEntityParam(searchParams, 'task');
-  // Ouvre la tâche ciblée par l'URL une fois les données arrivées, puis retire
-  // le paramètre : sans ce nettoyage, refermer le modal le rouvrirait.
-  useEffect(() => {
-    if (!deepTaskId) return;
-    const target = allTasks.find((t) => t.id === deepTaskId);
-    if (!target) return;
-    setTaskModal({ mode: 'edit', task: target });
-    const next = new URLSearchParams(searchParams);
-    next.delete('task');
-    setSearchParams(next, { replace: true });
-  }, [deepTaskId, allTasks, searchParams, setSearchParams]);
+  // `?task=<id>` n'est plus lu ici : `OrgDeepLinkHost` l'ouvre depuis TOUTES
+  // les sections (cohérence globale, 2026-09-25).
 
   const modalCreate = (input: CreateTeamTaskInput) => actions.createTaskAsync(input);
   const modalUpdate = (taskId: string, input: UpdateTeamTaskInput) =>

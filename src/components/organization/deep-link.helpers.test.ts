@@ -5,6 +5,7 @@ import {
   isOrgPath,
   legacyOrgTabRedirect,
   orgSectionPath,
+  entityRedirect,
 } from './deep-link.helpers';
 
 describe('readEntityParam', () => {
@@ -117,5 +118,36 @@ describe('legacyOrgTabRedirect', () => {
   it('renvoie un onglet inconnu ou « overview » sur l\x27aperçu', () => {
     expect(legacyOrgTabRedirect(new URLSearchParams('?tab=overview'))).toBe('/entreprise');
     expect(legacyOrgTabRedirect(new URLSearchParams('?tab=nope&task=a'))).toBe('/entreprise?task=a');
+  });
+});
+
+describe('entityRedirect (une URL d objet ouvre sa fiche depuis toute section)', () => {
+  const p = (q: string) => new URLSearchParams(q);
+
+  it('une équipe mène toujours à sa page', () => {
+    expect(entityRedirect('tasks', p('?team=t1'))).toBe('/entreprise/teams/t1');
+  });
+
+  it('un projet demandé hors de Projets y mène, avec son id', () => {
+    expect(entityRedirect('overview', p('?project=p1'))).toBe('/entreprise/projects?project=p1');
+    expect(entityRedirect('okr', p('?project=p1'))).toBe('/entreprise/projects?project=p1');
+  });
+
+  it('un projet demandé DANS Projets ne redirige pas (la page projet s y ouvre)', () => {
+    expect(entityRedirect('projects', p('?project=p1'))).toBeNull();
+  });
+
+  it('un objectif mène à la section OKR, sauf si on y est déjà', () => {
+    expect(entityRedirect('tasks', p('?okr=o1'))).toBe('/entreprise/okr?okr=o1');
+    expect(entityRedirect('okr', p('?okr=o1'))).toBeNull();
+  });
+
+  it('une tâche et un membre s ouvrent sur place : aucune redirection', () => {
+    expect(entityRedirect('tasks', p('?task=x'))).toBeNull();
+    expect(entityRedirect('stats', p('?member=m'))).toBeNull();
+  });
+
+  it('un id malformé est ignoré, comme partout', () => {
+    expect(entityRedirect('tasks', p('?team=../x'))).toBeNull();
   });
 });

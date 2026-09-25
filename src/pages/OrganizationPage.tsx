@@ -18,6 +18,7 @@ import { MobileHeader } from '@/components/mobile';
 import OrgNotificationsBell from '@/components/organization/OrgNotificationsBell';
 import OrgTabBadge from '@/components/organization/OrgTabBadge';
 import OrgSideNav from '@/components/organization/OrgSideNav';
+import OrgDeepLinkHost from '@/components/organization/OrgDeepLinkHost';
 import { useOrgNavMode } from '@/components/organization/use-org-nav-mode';
 import OrgSectionSwitcher from '@/components/organization/OrgSectionSwitcher';
 import { ORG_SECTIONS, type OrgSection, type OrgNavItem } from '@/components/organization/org-sections';
@@ -478,6 +479,17 @@ const OrganizationPage = () => {
         shortcuts={shortcuts}
         onTogglePin={togglePin}
         onSearch={openSearch}
+      />
+
+      {/* Liens profonds : `?task=`, `?member=`, `?project=`, `?okr=`, `?team=`
+          ouvrent leur fiche quelle que soit la section affichée. */}
+      <OrgDeepLinkHost
+        orgId={myOrg.id}
+        section={teamId ? 'teams' : tab}
+        members={members}
+        currentUserId={user?.id}
+        isAdmin={isAdmin}
+        isManager={isManager}
       />
     </div>
   );

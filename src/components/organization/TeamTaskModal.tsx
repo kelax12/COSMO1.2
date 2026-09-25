@@ -40,7 +40,7 @@ const PreCreateCommentComposer = ({ onSubmit, pending }: { onSubmit: (body: stri
   return (
     <div className="flex flex-col h-full min-h-0 mt-5">
       <h3 className="text-sm font-semibold mb-3 shrink-0" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-        Commentaires
+        {t('comments.title')}
       </h3>
       <div className="flex flex-col min-h-[8rem] border-t pt-4" style={{ borderColor: 'rgb(var(--color-border))' }}>
       <div className="flex-1" /><div className="flex items-end gap-2">
