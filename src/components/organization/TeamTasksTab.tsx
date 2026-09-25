@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import { startOfDay, subDays } from 'date-fns';
 import { Pencil, Trash2, MoreHorizontal, UserPlus, CalendarPlus, MessageSquare } from 'lucide-react';
 import {
@@ -27,6 +27,9 @@ import TeamTasksToolbar, { type SortField } from './TeamTasksToolbar';
 import TruncatedDataNotice from './TruncatedDataNotice';
 import TeamTasksProjectChips from './TeamTasksProjectChips';
 import OrgTaskFilterBar from './OrgTaskFilterBar';
+import TaskSelectCheckbox from './TaskSelectCheckbox';
+import { useTeamTasksBulk } from './use-team-tasks-bulk';
+import { TeamTasksBulkLayer } from './team-tasks-bulk.lazy';
 import { useOrgTaskFilters, hasActiveTaskFilter, matchesScope } from './task-filters';
 import { useOrgTeams } from '@/modules/org-teams';
 import { useAuth } from '@/modules/auth/AuthContext';
@@ -178,6 +181,7 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
   useEffect(() => {
     setRowsShown(ROWS_PAGE);
   }, [filters, sortField, sortDirection]);
+  const bulk = useTeamTasksBulk(orgId, sortedTasks);
   const shownTasks = useMemo(() => sortedTasks.slice(0, rowsShown), [sortedTasks, rowsShown]);
   const remainingRows = sortedTasks.length - shownTasks.length;
 
@@ -250,6 +254,7 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
         sortDirection={sortDirection}
         onToggleSortDirection={() => setSortDirection((d) => (d === 'asc' ? 'desc' : 'asc'))}
         canCreate={projects.length > 0 && can['task.create']}
+        onStartSelect={sortedTasks.length > 0 && !bulk.selectMode ? () => bulk.setSelectMode(true) : undefined}
         onCreate={() => setTaskModal({ mode: 'create' })}
         // `!isLoading` : « 0 sur 0 affichées » est un chiffre, donc une
         // affirmation. Tant que rien n'est arrivé, on n'en fait aucune.
@@ -307,10 +312,13 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
                   <tr
                     key={task.id}
                     className="transition-colors cursor-pointer hover:bg-[rgb(var(--color-hover))]"
-                    onClick={() => setTaskModal({ mode: 'edit', task })}
+                    onClick={() => (bulk.selectMode ? bulk.toggleSelect(task) : setTaskModal({ mode: 'edit', task }))}
                     style={{ borderLeft: overdue ? '4px solid rgb(var(--color-error))' : '3px solid transparent' }}
                   >
                     <td className="px-2 py-4 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                      {bulk.selectMode ? (
+                        <TaskSelectCheckbox name={task.name} checked={bulk.selectedIds.has(task.id)} onToggle={() => bulk.toggleSelect(task)} />
+                      ) : (
                       <button
                         type="button"
                         onClick={() => toggleComplete(task)}
@@ -329,6 +337,7 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
                           </svg>
                         )}
                       </button>
+                      )}
                     </td>
                     <td className="px-2 py-4">
                       <div className="flex justify-center">
@@ -485,6 +494,13 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
           onClose={() => setTaskModal(null)}
           isManager={isManager}
         />
+      )}
+
+      {/* Actions groupées : la même barre que Projets (cohérence globale). */}
+      {bulk.selectMode && (
+        <Suspense fallback={null}>
+          <TeamTasksBulkLayer bulk={bulk} members={members} projects={projects} />
+        </Suspense>
       )}
 
       <AssignMembersDialog

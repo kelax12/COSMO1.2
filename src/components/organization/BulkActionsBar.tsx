@@ -35,6 +35,12 @@ interface BulkActionsBarProps {
   projects?: TeamProject[];
   onMove?: (projectId: string) => void;
   onSetStatus?: (status: TeamTaskStatus) => void;
+  /**
+   * `inline` : dans une surface modale (fiche membre, `z-[9999]`), la barre
+   * flottante `z-40` et ses menus `z-50` passeraient DESSOUS. Elle s'y colle
+   * alors au bas du contenu, et ses menus montent au-dessus de la modale.
+   */
+  placement?: 'floating' | 'inline';
 }
 
 const actionClass =
@@ -53,8 +59,10 @@ const actionClass =
  */
 const BulkActionsBar = ({
   count, hasCompleted, hasOpen, onComplete, onReopen, onDelete, onExit,
-  assignableMembers = [], onAssign, projects = [], onMove, onSetStatus,
+  assignableMembers = [], onAssign, projects = [], onMove, onSetStatus, placement = 'floating',
 }: BulkActionsBarProps) => {
+  const inline = placement === 'inline';
+  const menuZ = inline ? ' z-[10001]' : '';
   const { t, tp } = useT('org');
   const { t: pf } = useT('portfolio');
   // La barre reste montée même à zéro sélection : elle porte désormais la SEULE
@@ -66,7 +74,7 @@ const BulkActionsBar = ({
     <div
       role="toolbar"
       aria-label={count > 0 ? tp('projects.selected', count) : t('projects.selectHint')}
-      className="fixed left-1/2 -translate-x-1/2 bottom-20 sm:bottom-6 z-40 flex items-center gap-1 px-2 py-2 rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] shadow-lg max-w-[calc(100vw-2rem)] overflow-x-auto hide-scrollbar"
+      className={`${inline ? 'sticky bottom-0 z-10 w-full' : 'fixed left-1/2 -translate-x-1/2 bottom-20 sm:bottom-6 z-40 max-w-[calc(100vw-2rem)]'} flex items-center gap-1 px-2 py-2 rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] shadow-lg overflow-x-auto hide-scrollbar`}
     >
       <span
         className={`px-2 text-sm whitespace-nowrap tabular-nums ${
@@ -97,7 +105,7 @@ const BulkActionsBar = ({
           <DropdownMenuTrigger className={actionClass}>
             <UserPlus size={15} aria-hidden="true" /> {pf('bulk.assign')}
           </DropdownMenuTrigger>
-          <DropdownMenuContent side="top" align="center" className="w-56 max-h-72 overflow-y-auto">
+          <DropdownMenuContent side="top" align="center" className={`w-56 max-h-72 overflow-y-auto${menuZ}`}>
             <DropdownMenuLabel>{pf('bulk.assignTo')}</DropdownMenuLabel>
             {assignableMembers.map((m) => (
               <DropdownMenuItem key={m.userId} onClick={() => onAssign(m.userId)}>
@@ -118,7 +126,7 @@ const BulkActionsBar = ({
           <DropdownMenuTrigger className={actionClass}>
             <FolderInput size={15} aria-hidden="true" /> {pf('bulk.move')}
           </DropdownMenuTrigger>
-          <DropdownMenuContent side="top" align="center" className="w-56 max-h-72 overflow-y-auto">
+          <DropdownMenuContent side="top" align="center" className={`w-56 max-h-72 overflow-y-auto${menuZ}`}>
             <DropdownMenuLabel>{pf('bulk.moveTo')}</DropdownMenuLabel>
             {projects.map((p) => (
               <DropdownMenuItem key={p.id} onClick={() => onMove(p.id)}>
@@ -135,7 +143,7 @@ const BulkActionsBar = ({
           <DropdownMenuTrigger className={actionClass}>
             <CircleDot size={15} aria-hidden="true" /> {pf('bulk.status')}
           </DropdownMenuTrigger>
-          <DropdownMenuContent side="top" align="center" className="w-48">
+          <DropdownMenuContent side="top" align="center" className={`w-48${menuZ}`}>
             {STATUS_ORDER.map((st) => (
               <DropdownMenuItem key={st} onClick={() => onSetStatus(st)}>
                 <span className={`w-2 h-2 rounded-full shrink-0 ${STATUS_META[st].dot}`} aria-hidden="true" />

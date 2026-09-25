@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react';
+import { Suspense, useMemo, useState } from 'react';
 import { isPast, isToday, parseISO } from 'date-fns';
-import { CheckCircle2, Circle, Plus } from 'lucide-react';
+import { CheckCircle2, Circle, ListChecks, Plus } from 'lucide-react';
 import {
   useTeamTasks, useTeamProjects, useCreateTeamTask, useUpdateTeamTask, useDeleteTeamTask, useRestoreTeamTask,
   type TeamTask,
@@ -8,6 +8,9 @@ import {
 import { useOrgMembers, type OrgMember } from '@/modules/organizations';
 import { showUndoToast } from '@/lib/undo-toast';
 import TeamTaskModal from './TeamTaskModal';
+import TaskSelectCheckbox from './TaskSelectCheckbox';
+import { useTeamTasksBulk } from './use-team-tasks-bulk';
+import { TeamTasksBulkLayer } from './team-tasks-bulk.lazy';
 import { useT } from '@/i18n/useT';
 
 interface MemberBodyProps {
@@ -66,6 +69,9 @@ export const MemberTasksBody = ({ orgId, member, canEdit = false }: MemberBodyPr
   const [creatingTask, setCreatingTask] = useState(false);
   const [editingTask, setEditingTask] = useState<TeamTask | null>(null);
   const activeProjects = useMemo(() => projects.filter((p) => !p.archivedAt), [projects]);
+  // Actions groupées : ce qui est affiché (ouvertes + 20 dernières terminées).
+  const listed = useMemo(() => [...open, ...done.slice(0, 20)], [open, done]);
+  const bulk = useTeamTasksBulk(orgId, listed);
 
   // Suppression avec « Annuler » : la tâche est recréée à l'identique (même pattern que TeamProjectsTab).
   const removeWithUndo = (task: TeamTask) =>
@@ -89,7 +95,18 @@ export const MemberTasksBody = ({ orgId, member, canEdit = false }: MemberBodyPr
         canEdit={canEdit}
         onAddTask={() => setCreatingTask(true)}
         onEditTask={setEditingTask}
+        selection={canEdit ? {
+          active: bulk.selectMode,
+          selectedIds: bulk.selectedIds,
+          onToggle: bulk.toggleSelect,
+          onStart: () => bulk.setSelectMode(true),
+        } : undefined}
       />
+      {bulk.selectMode && (
+        <Suspense fallback={null}>
+          <TeamTasksBulkLayer bulk={bulk} members={orgMembers} projects={projects} placement="inline" />
+        </Suspense>
+      )}
       {creatingTask && (
         <TeamTaskModal
           isCreating
@@ -147,8 +164,23 @@ const priorityLabel = (p: number) => `P${Math.min(5, Math.max(1, Math.round(p)))
 
 // La prop de tâche s'appelait `t` — elle masquait le traducteur `t` dès qu'on
 // a voulu traduire « En retard ». Renommée `task`.
-const TaskRow = ({ task, canEdit, onEdit }: { task: TeamTask; canEdit: boolean; onEdit: (task: TeamTask) => void }) => {
+interface RowSelection {
+  active: boolean;
+  selectedIds: Set<string>;
+  onToggle: (task: TeamTask) => void;
+  onStart: () => void;
+}
+
+const TaskRow = ({ task, canEdit, onEdit, selection }: { task: TeamTask; canEdit: boolean; onEdit: (task: TeamTask) => void; selection?: RowSelection }) => {
   const { t } = useT('org');
+  if (selection?.active) {
+    return (
+      <li className="flex items-center gap-2.5 p-2.5 rounded-xl border border-[rgb(var(--color-border))] cursor-pointer hover:bg-[rgb(var(--color-hover))]" onClick={() => selection.onToggle(task)}>
+        <TaskSelectCheckbox name={task.name} checked={selection.selectedIds.has(task.id)} onToggle={() => selection.onToggle(task)} />
+        <span className="text-sm flex-1 truncate text-[rgb(var(--color-text-primary))]">{task.name}</span>
+      </li>
+    );
+  }
   const content = (
     <>
       {task.completed ? (
@@ -202,9 +234,10 @@ const AddTaskButton = ({ onAddTask }: { onAddTask: () => void }) => {
 };
 
 const TasksView = ({
-  open, done, canEdit, onAddTask, onEditTask,
+  open, done, canEdit, onAddTask, onEditTask, selection,
 }: {
   open: TeamTask[]; done: TeamTask[]; canEdit: boolean; onAddTask: () => void; onEditTask: (t: TeamTask) => void;
+  selection?: RowSelection;
 }) => {
   const { t } = useT('org');
   if (open.length === 0 && done.length === 0) {
@@ -217,7 +250,19 @@ const TasksView = ({
   }
   return (
     <div className="space-y-4">
-      <AddTaskButton onAddTask={onAddTask} />
+      <div className="flex items-center gap-2">
+        <div className="flex-1"><AddTaskButton onAddTask={onAddTask} /></div>
+        {selection && !selection.active && (
+          <button
+            type="button"
+            onClick={selection.onStart}
+            aria-label={t('projects.selectMultiple')}
+            className="shrink-0 inline-flex items-center gap-1.5 py-2 px-3 rounded-xl border border-[rgb(var(--color-border))] text-sm font-semibold text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] transition-colors"
+          >
+            <ListChecks size={14} aria-hidden="true" /> {t('projects.selectMode')}
+          </button>
+        )}
+      </div>
       <section>
         <h3 className="text-xs font-bold uppercase tracking-wide text-[rgb(var(--color-text-muted))] mb-2">
           {t('insights.inProgress', { count: open.length })}
@@ -226,7 +271,7 @@ const TasksView = ({
           <p className="text-xs text-[rgb(var(--color-text-muted))]">{t('insights.noOpenTask')}</p>
         ) : (
           <ul className="space-y-1.5">
-            {open.map((t) => <TaskRow key={t.id} task={t} canEdit={canEdit} onEdit={onEditTask} />)}
+            {open.map((t) => <TaskRow key={t.id} task={t} canEdit={canEdit} onEdit={onEditTask} selection={selection} />)}
           </ul>
         )}
       </section>
@@ -236,7 +281,7 @@ const TasksView = ({
             {t('insights.completed', { count: done.length })}
           </h3>
           <ul className="space-y-1.5">
-            {done.slice(0, 20).map((t) => <TaskRow key={t.id} task={t} canEdit={canEdit} onEdit={onEditTask} />)}
+            {done.slice(0, 20).map((t) => <TaskRow key={t.id} task={t} canEdit={canEdit} onEdit={onEditTask} selection={selection} />)}
           </ul>
         </section>
       )}

@@ -1,4 +1,4 @@
-import { useMemo, type ReactNode } from 'react';
+import { Suspense, useMemo, type ReactNode } from 'react';
 import {
   useTeamTaskSlice,
   type TeamProject,
@@ -12,6 +12,8 @@ import TeamActivityFeed from './TeamActivityFeed';
 import OrgEventsTimeline from './OrgEventsTimeline';
 import { MyKeyResultsCard, MyProjectsCard, MyTasksCard, WaitingForMeCard } from './MyWorkCards';
 import { buildOrgEvents } from './org-events.helpers';
+import { useTeamTasksBulk } from './use-team-tasks-bulk';
+import { TeamTasksBulkLayer } from './team-tasks-bulk.lazy';
 import {
   buildActivityItems,
   computeBlocking,
@@ -73,6 +75,8 @@ const MyWorkSections = ({
   );
   const projectById = useMemo(() => new Map(projects.map((p) => [p.id, p])), [projects]);
   const groups = useMemo(() => groupByHorizon(open), [open]);
+  // Actions groupées sur « Mes tâches », comme partout où il y a une liste.
+  const bulk = useTeamTasksBulk(orgId, open);
   const activityItems = useMemo(() => buildActivityItems(activity, recentlyCreated), [activity, recentlyCreated]);
   const mentions = useMemo(() => unreadMentions(notifications), [notifications]);
 
@@ -151,6 +155,12 @@ const MyWorkSections = ({
           projectById={projectById}
           onToggle={onToggle}
           onOpenTask={onOpenTask}
+          selection={{
+            active: bulk.selectMode,
+            selectedIds: bulk.selectedIds,
+            onToggle: bulk.toggleSelect,
+            onStart: () => bulk.setSelectMode(true),
+          }}
         />
         {agenda}
       </div>
@@ -160,6 +170,12 @@ const MyWorkSections = ({
           <MyProjectsCard summaries={myProjects} orgId={orgId} userId={currentUserId} />
           <MyKeyResultsCard items={krs} />
         </div>
+      )}
+
+      {bulk.selectMode && (
+        <Suspense fallback={null}>
+          <TeamTasksBulkLayer bulk={bulk} members={members} projects={projects} />
+        </Suspense>
       )}
 
       {/* Activité de l'équipe : lue dans le journal (mig. 094), 14 jours. */}

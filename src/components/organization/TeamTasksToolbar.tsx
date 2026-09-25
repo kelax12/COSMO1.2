@@ -1,4 +1,4 @@
-import { ArrowUpDown, ChevronDown, Plus } from 'lucide-react';
+import { ArrowUpDown, ChevronDown, ListChecks, Plus } from 'lucide-react';
 import { useT } from '@/i18n/useT';
 
 export type SortField = 'priority' | 'deadline' | 'name' | 'estimatedTime' | 'project';
@@ -11,6 +11,8 @@ interface TeamTasksToolbarProps {
   /** Nouvelle tâche : désactivée sans projet ou sans le droit `task.create`. */
   canCreate: boolean;
   onCreate: () => void;
+  /** Entre en sélection multiple (actions groupées) ; absent si rien à sélectionner. */
+  onStartSelect?: () => void;
   /** Compteur « x sur y affichées », déjà résolu par l'appelant (ou null). */
   shownLabel: string | null;
 }
@@ -38,6 +40,7 @@ const TeamTasksToolbar = ({
   onToggleSortDirection,
   canCreate,
   onCreate,
+  onStartSelect,
   shownLabel,
 }: TeamTasksToolbarProps) => {
   const { t } = useT('org');
@@ -74,6 +77,18 @@ const TeamTasksToolbar = ({
             <ArrowUpDown size={15} aria-hidden="true" />
           </button>
         </div>
+
+        {onStartSelect && (
+          <button
+            type="button"
+            onClick={onStartSelect}
+            aria-label={t('projects.selectMultiple')}
+            className="inline-flex items-center gap-1.5 px-3 py-2.5 rounded-lg border border-[rgb(var(--color-border))] text-sm font-medium text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] transition-colors"
+          >
+            <ListChecks size={16} aria-hidden="true" />
+            <span className="hidden sm:inline">{t('projects.selectMode')}</span>
+          </button>
+        )}
 
         <button
           type="button"
