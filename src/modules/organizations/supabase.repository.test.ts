@@ -104,6 +104,8 @@ describe('SupabaseOrganizationsRepository — lecture', () => {
     expect(result).toEqual([{
       orgId: 'org1', userId: 'u2', role: 'member', joinedAt: memberRow.joined_at,
       managerId: 'u1', displayName: 'Bob', email: 'bob@test.dev', avatar: 'https://a.io/b.png',
+      // Mig. 161 : l'état d'accès traverse l'annuaire, `null` = accès normal.
+      suspendedAt: null, accessExpiresAt: null,
     }]);
   });
 

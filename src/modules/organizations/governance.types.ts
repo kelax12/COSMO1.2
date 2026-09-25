@@ -31,8 +31,12 @@ export interface OffboardInput {
   leadsTo?: string | null;
   projectsTo?: string | null;
   krsTo?: string | null;
-  /** `remove` : retrait (avis envoyé). `suspend` : accès coupé, appartenance gardée. */
-  mode: 'remove' | 'suspend';
+  /**
+   * `remove` : retrait (avis envoyé). `suspend` : accès coupé, appartenance
+   * gardée. `transfer` (mig. 164) : transmettre ses responsabilités SANS
+   * partir ; une cible absente y veut dire « ne pas toucher ».
+   */
+  mode: 'remove' | 'suspend' | 'transfer';
 }
 
 export interface EmailInvitation {

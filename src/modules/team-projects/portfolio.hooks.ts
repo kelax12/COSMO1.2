@@ -141,3 +141,73 @@ export const useRemoveProjectDependency = (orgId: string) => {
     onError: projectDependencyError,
   });
 };
+
+// ─── Équipes associées (mig. 164) ────────────────────────────────────
+
+/** Toutes les associations projet ↔ équipe de l'organisation, en UNE lecture. */
+export const useTeamProjectTeams = (orgId: string | undefined) => {
+  const repository = useRepo();
+  return useQuery({
+    queryKey: teamProjectKeys.projectTeams(orgId ?? ''),
+    queryFn: () => repository.getProjectTeams(orgId as string),
+    enabled: !!orgId,
+    staleTime: 1000 * 60,
+    refetchOnWindowFocus: true,
+  });
+};
+
+const audienceError = (error: Error) =>
+  toast.error(translator('org').t('projectTeams.failed', { message: error.message }));
+
+/**
+ * Associer ou retirer une équipe change QUI LIT le projet et ses tâches : les
+ * deux listes sont relues, sinon l'écran montrerait l'ancienne audience.
+ */
+const useAudienceInvalidation = (orgId: string) => {
+  const queryClient = useQueryClient();
+  return () => {
+    queryClient.invalidateQueries({ queryKey: teamProjectKeys.projectTeams(orgId) });
+    queryClient.invalidateQueries({ queryKey: teamProjectKeys.projects(orgId) });
+    queryClient.invalidateQueries({ queryKey: teamProjectKeys.tasks(orgId) });
+  };
+};
+
+export const useAddProjectTeam = (orgId: string) => {
+  const repository = useRepo();
+  const invalidate = useAudienceInvalidation(orgId);
+  return useMutation({
+    mutationFn: ({ projectId, teamId }: { projectId: string; teamId: string }) =>
+      repository.addProjectTeam(orgId, projectId, teamId),
+    onSuccess: invalidate,
+    onError: audienceError,
+  });
+};
+
+export const useRemoveProjectTeam = (orgId: string) => {
+  const repository = useRepo();
+  const invalidate = useAudienceInvalidation(orgId);
+  return useMutation({
+    mutationFn: ({ projectId, teamId }: { projectId: string; teamId: string }) =>
+      repository.removeProjectTeam(projectId, teamId),
+    onSuccess: invalidate,
+    onError: audienceError,
+  });
+};
+
+// ─── Purge d'un projet archivé (mig. 164) ────────────────────────────
+
+export const usePurgeArchivedProject = (orgId: string) => {
+  const queryClient = useQueryClient();
+  const repository = useRepo();
+  return useMutation({
+    mutationFn: (projectId: string) => repository.purgeArchivedProject(projectId),
+    onSuccess: () => {
+      for (const key of [
+        teamProjectKeys.projects(orgId), teamProjectKeys.tasks(orgId), teamProjectKeys.milestones(orgId),
+        teamProjectKeys.projectDependencies(orgId), teamProjectKeys.projectTeams(orgId), teamProjectKeys.trash(orgId),
+      ]) queryClient.invalidateQueries({ queryKey: key });
+    },
+    onError: (error: Error) =>
+      toast.error(translator('org').t('projectPurge.failed', { message: error.message })),
+  });
+};

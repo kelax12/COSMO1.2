@@ -132,8 +132,6 @@ const NON_MESUREES: Record<string, string> = {
   'components/organization/MemberPlacementSheet.tsx': 'mode entreprise.',
   'components/organization/MemberSheet.tsx': 'mode entreprise.',
   'components/organization/NewTeamProjectModal.tsx': 'mode entreprise.',
-  'components/organization/OrgProfileSheet.tsx': 'mode entreprise.',
-  'components/organization/ReassignManagerSheet.tsx': 'mode entreprise.',
   'components/organization/TeamTaskModal.tsx':
     'mode entreprise. ⚠️ Elle EST mesurée par `touch-targets.spec.ts` (cibles '
     + 'tactiles), donc atteignable : c est de la dette, pas un obstacle.',

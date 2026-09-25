@@ -30,12 +30,16 @@ export type OrgNotificationKind =
   | 'task_assigned' | 'mention' | 'task_overdue' | 'comment'
   // Mig. 155 : statut d'une tâche suivie, tâche débloquée, projet à risque,
   // échéance de KR, créneau posé dans MON agenda par un responsable.
-  | 'status_changed' | 'unblocked' | 'project_at_risk' | 'kr_due' | 'event_scheduled';
+  | 'status_changed' | 'unblocked' | 'project_at_risk' | 'kr_due' | 'event_scheduled'
+  // Mig. 164 : un projet où j'ai du travail est archivé ; ma position dans la
+  // pyramide a changé (manager changé, je deviens ou cesse d'être manager).
+  | 'project_archived' | 'role_changed';
 
 /** Tous les types, dans l'ordre des préférences (écran Notifications). */
 export const ORG_NOTIFICATION_KINDS: readonly OrgNotificationKind[] = [
   'task_assigned', 'mention', 'comment', 'status_changed', 'unblocked',
-  'task_overdue', 'project_at_risk', 'kr_due', 'event_scheduled',
+  'task_overdue', 'project_at_risk', 'project_archived', 'kr_due', 'event_scheduled',
+  'role_changed',
 ];
 
 export interface OrgNotification {

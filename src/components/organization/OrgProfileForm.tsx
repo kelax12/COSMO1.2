@@ -1,22 +1,25 @@
 import { useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
-import { X, Camera, Building2, Trash2 } from 'lucide-react';
+import { Camera, Building2, Trash2 } from 'lucide-react';
 import { toast } from '@/lib/toast';
 import { validateAvatarFile, computeAvatarDimensions } from '@/lib/avatar-upload';
-import { useUpdateOrganization, type MyOrganization } from '@/modules/organizations';
+import { useUpdateOrganization, type Organization } from '@/modules/organizations';
 import { useT } from '@/i18n/useT';
-import { useModalA11y } from '@/hooks/use-modal-a11y';
 
-interface OrgProfileSheetProps {
-  org: MyOrganization;
-  onClose: () => void;
+interface OrgProfileFormProps {
+  org: Organization;
 }
 
 const inputClasses =
   'w-full px-3 py-2.5 rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-background))] text-sm text-[rgb(var(--color-text-primary))] placeholder-[rgb(var(--color-text-muted))] focus:outline-none focus:ring-2 focus:ring-indigo-500/40';
 
-/** Édition du profil d'entreprise (admin) : image (#12), nom, description, secteur. */
-const OrgProfileSheet = ({ org, onClose }: OrgProfileSheetProps) => {
+/**
+ * Profil d'entreprise (admin) : image (#12), nom, description, secteur.
+ *
+ * Audit du 2026-09-24 : c'était une feuille ouverte par un crayon de
+ * l'en-tête, à côté de Paramètres qui ne faisait que la rouvrir. Le profil
+ * vit désormais DANS Paramètres, en formulaire ; le crayon y mène.
+ */
+const OrgProfileForm = ({ org }: OrgProfileFormProps) => {
   const { t } = useT('org');
   const [name, setName] = useState(org.name);
   const [description, setDescription] = useState(org.description ?? '');
@@ -25,6 +28,19 @@ const OrgProfileSheet = ({ org, onClose }: OrgProfileSheetProps) => {
   const [avatarDraft, setAvatarDraft] = useState<string | null | undefined>(undefined);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const updateMutation = useUpdateOrganization();
+
+  const dirty =
+    avatarDraft !== undefined
+    || name.trim() !== org.name
+    || description.trim() !== (org.description ?? '')
+    || industry.trim() !== (org.industry ?? '');
+
+  const reset = () => {
+    setName(org.name);
+    setDescription(org.description ?? '');
+    setIndustry(org.industry ?? '');
+    setAvatarDraft(undefined);
+  };
 
   const shownAvatar = avatarDraft === undefined ? org.avatarUrl : avatarDraft ?? undefined;
 
@@ -73,41 +89,12 @@ const OrgProfileSheet = ({ org, onClose }: OrgProfileSheetProps) => {
           ...(avatarDraft !== undefined ? { avatarUrl: avatarDraft } : {}),
         },
       },
-      { onSuccess: () => onClose() },
+      { onSuccess: () => setAvatarDraft(undefined) },
     );
   };
 
-  // C-53 — piege de focus, restitution du focus au declencheur, Echap et
-  // semantique ARIA. Le nom accessible est celui que la surface portait deja.
-  const { ref: modalA11yRef, dialogProps: modalA11yProps } = useModalA11y<HTMLDivElement>({
-    open: true,
-    onClose: onClose,
-    label: t('common.orgProfileAria'),
-  });
-
-  return createPortal(
-    <div
-      className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-0 sm:p-4"
-      onClick={onClose}
-    >
-      <div
-        className="bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-t-[24px] sm:rounded-2xl w-full sm:max-w-md p-6 shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
-        ref={modalA11yRef}
-        {...modalA11yProps}
-      >
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold text-[rgb(var(--color-text-primary))]">{t('profile.title')}</h2>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label={t('common.close')}
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))]"
-          >
-            <X size={18} aria-hidden="true" />
-          </button>
-        </div>
-
+  return (
+    <div>
         <div className="space-y-3">
           {/* Image de profil (#12) */}
           <div className="flex items-center gap-3">
@@ -175,7 +162,7 @@ const OrgProfileSheet = ({ org, onClose }: OrgProfileSheetProps) => {
           </div>
           <div>
             <label htmlFor="org-profile-description" className="block text-xs font-medium text-[rgb(var(--color-text-secondary))] mb-1.5">
-              Description
+              {t('profile.description')}
             </label>
             <textarea
               id="org-profile-description"
@@ -192,24 +179,23 @@ const OrgProfileSheet = ({ org, onClose }: OrgProfileSheetProps) => {
         <div className="flex justify-end gap-2 mt-5">
           <button
             type="button"
-            onClick={onClose}
-            className="px-4 py-2.5 rounded-xl text-sm font-medium text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] transition-colors"
+            onClick={reset}
+            disabled={!dirty || updateMutation.isPending}
+            className="px-4 py-2.5 rounded-xl text-sm font-medium text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] disabled:opacity-50 transition-colors"
           >
             {t('common.cancel')}
           </button>
           <button
             type="button"
             onClick={handleSave}
-            disabled={name.trim().length < 2 || updateMutation.isPending}
+            disabled={!dirty || name.trim().length < 2 || updateMutation.isPending}
             className="px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 transition-colors"
           >
             {updateMutation.isPending ? t('common.saving') : t('common.save')}
           </button>
         </div>
-      </div>
-    </div>,
-    document.body,
+    </div>
   );
 };
 
-export default OrgProfileSheet;
+export default OrgProfileForm;

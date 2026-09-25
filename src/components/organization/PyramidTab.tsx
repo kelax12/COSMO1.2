@@ -7,8 +7,6 @@ import { useOrgTeams, useOrgTeamMembers, useCreateOrgTeam, useAddTeamMember, typ
 import CreateTeamModal from './CreateTeamModal';
 import {
   buildOrgTree,
-  useSetMemberManager,
-  useRemoveMember,
   type OrgMember,
 } from '@/modules/organizations';
 import {
@@ -18,6 +16,7 @@ import {
 } from './pyramid.helpers';
 import { usePyramidCollapse } from './usePyramidCollapse';
 import { usePyramidDnd } from './usePyramidDnd';
+import PyramidPendingConfirm from './PyramidPendingConfirm';
 import PyramidToolbar from './PyramidToolbar';
 import UnplacedMembersPanel from './UnplacedMembersPanel';
 import { useTeamTaskWorkingSet } from '@/modules/team-projects';
@@ -28,8 +27,7 @@ import MemberPlacementSheet from './MemberPlacementSheet';
 import AddUnderSheet from './AddUnderSheet';
 import MemberSheet from './MemberSheet';
 import { MEMBER_TAB_PARAM } from './member-sheet.helpers';
-import ReassignManagerSheet from './ReassignManagerSheet';
-import ConfirmRemoveMemberDialog from './ConfirmRemoveMemberDialog';
+import { useMemberLifecycle } from './MemberLifecycleActions';
 import { useT } from '@/i18n/useT';
 import RichText from '@/components/ui/rich-text';
 import { NodeCard, PyramidSkeleton } from './PyramidNodeCard';
@@ -78,6 +76,9 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
     startEdit,
     finishEdit,
     cancelEdit,
+    pendingConfirm,
+    confirmPending,
+    dismissPending,
     grabMember,
     drop,
     drag,
@@ -113,10 +114,6 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
     next.delete(MEMBER_TAB_PARAM);
     setSearchParams(next, { replace: true });
   }, [deepMemberId, deepMemberTab, members, searchParams, setSearchParams]);
-  // Retrait d'un membre AVEC subordonnés : on choisit d'abord leur nouveau manager.
-  const [reassigning, setReassigning] = useState<OrgMember | null>(null);
-  // Retrait d'un membre SANS subordonné : modal de confirmation (#3).
-  const [removing, setRemoving] = useState<OrgMember | null>(null);
 
   // ─── Calque de charge (item #28) ────────────────────────────────────
   // Désactivé par défaut : la pyramide sert d'abord à lire l'organisation, et
@@ -137,8 +134,9 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
   // Vue : null = toute l'entreprise ; sinon id d'équipe (membres de l'équipe +
   // leur chaîne hiérarchique jusqu'à l'admin).
   const [viewTeamId, setViewTeamId] = useState<string | null>(null);
-  const setManager = useSetMemberManager();
-  const removeMember = useRemoveMember();
+  // Retrait = assistant de départ (mig. 161/164) : il annonce l'impact
+  // (tâches, subordonnés, équipes, projets, KR) et fait choisir qui reprend.
+  const lifecycle = useMemberLifecycle({ orgId, members, ownerId, currentUserId, isAdmin });
   const { data: orgTeams = [] } = useOrgTeams(orgId);
   const { data: orgTeamMembers = [] } = useOrgTeamMembers(orgId);
   const createTeam = useCreateOrgTeam(orgId);
@@ -184,26 +182,9 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
     }
   }, [viewTeamId, orgTeams]);
 
-  // Retrait d'un membre (admin). Sans subordonné direct : modal de
-  // confirmation (#3). Avec subordonnés : d'abord le choix de leur nouveau
-  // responsable (ReassignManagerSheet).
-  const handleRemove = (m: OrgMember) => {
-    const hasReports = members.some((x) => x.managerId === m.userId);
-    if (hasReports) setReassigning(m);
-    else setRemoving(m);
-  };
-
-  // Réassigne les subordonnés directs de `member` à `newManagerId` (null =
-  // détacher), puis retire `member`. La hiérarchie SOUS ces subordonnés est
-  // préservée (on ne touche qu'à leur rattachement de premier niveau).
-  const performRemoveWithReassign = async (member: OrgMember, newManagerId: string | null) => {
-    const directs = members.filter((x) => x.managerId === member.userId);
-    for (const c of directs) {
-      await setManager.mutateAsync({ orgId, userId: c.userId, managerId: newManagerId, silent: true });
-    }
-    await removeMember.mutateAsync({ orgId, userId: member.userId });
-    setReassigning(null);
-  };
+  // Retrait d'un membre (admin) : l'assistant de départ, qui transmet tâches,
+  // subordonnés, rôles, projets et KR AVANT de retirer (audit du 2026-09-24).
+  const handleRemove = (m: OrgMember) => lifecycle.openDeparture(m, 'remove');
 
   // Équipes transverses par membre (pastilles couleur sur les cartes).
   const teamsByUser = useMemo(() => {
@@ -511,30 +492,8 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
         />
       )}
 
-      {removing && (
-        <ConfirmRemoveMemberDialog
-          member={removing}
-          pending={removeMember.isPending}
-          onConfirm={() =>
-            removeMember.mutate(
-              { orgId, userId: removing.userId },
-              { onSettled: () => setRemoving(null) },
-            )
-          }
-          onCancel={() => setRemoving(null)}
-        />
-      )}
-
-      {reassigning && (
-        <ReassignManagerSheet
-          member={reassigning}
-          members={members}
-          ownerId={ownerId}
-          currentUserId={currentUserId}
-          onConfirm={(newManagerId) => performRemoveWithReassign(reassigning, newManagerId)}
-          onCancel={() => setReassigning(null)}
-        />
-      )}
+      {lifecycle.dialogs}
+      <PyramidPendingConfirm pending={pendingConfirm} onConfirm={confirmPending} onCancel={dismissPending} />
 
       {addingUnder && (
         <AddUnderSheet

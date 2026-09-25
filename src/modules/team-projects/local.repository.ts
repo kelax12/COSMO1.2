@@ -30,6 +30,7 @@ import {
   CreateTeamProjectMilestoneInput,
   UpdateTeamProjectMilestoneInput,
   TeamProjectDependency,
+  TeamProjectTeam,
 } from './types';
 import * as portfolio from './local.portfolio';
 import {
@@ -183,6 +184,23 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
   }
   async removeProjectDependency(projectId: string, dependsOnId: string): Promise<void> {
     portfolio.removeProjectDependency(projectId, dependsOnId);
+  }
+
+  // Équipes associées et purge (mig. 164).
+  async getProjectTeams(orgId: string): Promise<TeamProjectTeam[]> { return portfolio.getProjectTeams(orgId); }
+  async addProjectTeam(orgId: string, projectId: string, teamId: string): Promise<void> {
+    portfolio.addProjectTeam(orgId, projectId, teamId, this.getProjectsArray());
+  }
+  async removeProjectTeam(projectId: string, teamId: string): Promise<void> { portfolio.removeProjectTeam(projectId, teamId); }
+  async purgeArchivedProject(projectId: string): Promise<void> {
+    const projects = this.getProjectsArray();
+    const project = projects.find((p) => p.id === projectId);
+    if (!project) throw makeApiError('not_found');
+    // Même refus que `purge_archived_team_project` : un projet actif ne se purge pas.
+    if (!project.archivedAt) throw makeApiError('invalid_input');
+    this.saveProjects(projects.filter((p) => p.id !== projectId));
+    this.saveTasks(this.getTasksArray().filter((t) => t.projectId !== projectId));
+    portfolio.purgeProjectPortfolio(projectId);
   }
 
   async updateProject(projectId: string, input: UpdateTeamProjectInput): Promise<TeamProject> {

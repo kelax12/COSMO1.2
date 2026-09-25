@@ -6,16 +6,40 @@ import { useDepartureImpact, useOffboardMember } from '@/modules/organizations/g
 import { useModalA11y } from '@/hooks/use-modal-a11y';
 import MemberSelectField from './MemberSelectField';
 import { useT } from '@/i18n/useT';
+import type { KeyOf } from '@/i18n/catalog';
 
 interface OffboardMemberDialogProps {
   orgId: string;
   member: OrgMember;
   /** Membres de l'organisation, la personne qui part comprise. */
   members: OrgMember[];
+  /**
+   * `transfer` (mig. 164) : « Transmettre ses responsabilités » sans faire
+   * partir la personne — changement de poste, reprise d'un projet, congé.
+   */
+  initialMode?: Mode;
+  /**
+   * Modes proposés. Sur SOI-MÊME, seulement `transfer` : `offboard_org_member`
+   * ne refuse pas l'auto-suspension, et un admin qui se suspend se verrouille
+   * dehors sans chemin de retour.
+   */
+  modes?: readonly Mode[];
   onClose: () => void;
 }
 
-type Mode = 'remove' | 'suspend';
+type Mode = 'remove' | 'suspend' | 'transfer';
+
+const ALL_MODES: readonly Mode[] = ['transfer', 'suspend', 'remove'];
+
+const MODE_LABEL: Record<Mode, KeyOf<'org'>> = {
+  transfer: 'lifecycle.modeTransfer', suspend: 'lifecycle.modeSuspend', remove: 'lifecycle.modeRemove',
+};
+const MODE_HINT: Record<Mode, KeyOf<'org'>> = {
+  transfer: 'lifecycle.modeTransferHint', suspend: 'lifecycle.modeSuspendHint', remove: 'lifecycle.modeRemoveHint',
+};
+const MODE_SUBMIT: Record<Mode, KeyOf<'org'>> = {
+  transfer: 'lifecycle.offboardTransfer', suspend: 'lifecycle.offboardSuspend', remove: 'lifecycle.offboardRemove',
+};
 
 /**
  * Assistant de départ (mig. 161, M10).
@@ -26,7 +50,7 @@ type Mode = 'remove' | 'suspend';
  * ce qui sera touché (`member_departure_impact`), fait choisir à qui le
  * transmettre, puis retire ou suspend, en une seule transaction côté serveur.
  */
-const OffboardMemberDialog = ({ orgId, member, members, onClose }: OffboardMemberDialogProps) => {
+const OffboardMemberDialog = ({ orgId, member, members, initialMode = 'remove', modes = ALL_MODES, onClose }: OffboardMemberDialogProps) => {
   const { t, tp } = useT('org');
   const { data: impact, isLoading } = useDepartureImpact(orgId, member.userId);
   const offboard = useOffboardMember();
@@ -34,16 +58,18 @@ const OffboardMemberDialog = ({ orgId, member, members, onClose }: OffboardMembe
   const [reportsTo, setReportsTo] = useState('');
   const [leadsTo, setLeadsTo] = useState('');
   const [krsTo, setKrsTo] = useState('');
-  const [mode, setMode] = useState<Mode>('remove');
+  const [projectsTo, setProjectsTo] = useState('');
+  const [mode, setMode] = useState<Mode>(initialMode);
+  const transfer = mode === 'transfer';
   const { ref, dialogProps } = useModalA11y<HTMLDivElement>({
     open: true,
     onClose: () => { if (!offboard.isPending) onClose(); },
-    label: t('lifecycle.offboardTitle', { name: member.displayName }),
+    label: t(initialMode === 'transfer' ? 'lifecycle.transferTitle' : 'lifecycle.offboardTitle', { name: member.displayName }),
   });
 
   const others = members.filter((m) => m.userId !== member.userId);
   const manager = members.find((m) => m.userId === member.managerId);
-  const nothingToHandOver = !!impact && impact.tasks + impact.reports + impact.leads + impact.krs === 0;
+  const nothingToHandOver = !!impact && impact.tasks + impact.reports + impact.leads + impact.projects + impact.krs === 0;
 
   const submit = () =>
     offboard.mutate(
@@ -54,6 +80,7 @@ const OffboardMemberDialog = ({ orgId, member, members, onClose }: OffboardMembe
         reportsTo: reportsTo || null,
         leadsTo: leadsTo || null,
         krsTo: krsTo || null,
+        projectsTo: projectsTo || null,
         mode,
       },
       { onSuccess: onClose },
@@ -73,9 +100,11 @@ const OffboardMemberDialog = ({ orgId, member, members, onClose }: OffboardMembe
         <div className="flex items-start justify-between gap-3">
           <div>
             <h2 className="text-lg font-bold text-[rgb(var(--color-text-primary))]">
-              {t('lifecycle.offboardTitle', { name: member.displayName })}
+              {t(initialMode === 'transfer' ? 'lifecycle.transferTitle' : 'lifecycle.offboardTitle', { name: member.displayName })}
             </h2>
-            <p className="text-sm text-[rgb(var(--color-text-secondary))] mt-1">{t('lifecycle.offboardIntro')}</p>
+            <p className="text-sm text-[rgb(var(--color-text-secondary))] mt-1">
+              {t(initialMode === 'transfer' ? 'lifecycle.transferIntro' : 'lifecycle.offboardIntro')}
+            </p>
           </div>
           <button
             type="button"
@@ -101,6 +130,7 @@ const OffboardMemberDialog = ({ orgId, member, members, onClose }: OffboardMembe
               {impact.tasks > 0 && <li>{tp('lifecycle.impactTasks', impact.tasks)}</li>}
               {impact.reports > 0 && <li>{tp('lifecycle.impactReports', impact.reports)}</li>}
               {impact.leads > 0 && <li>{tp('lifecycle.impactLeads', impact.leads)}</li>}
+              {impact.projects > 0 && <li>{tp('lifecycle.impactProjects', impact.projects)}</li>}
               {impact.krs > 0 && <li>{tp('lifecycle.impactKrs', impact.krs)}</li>}
             </ul>
           )}
@@ -112,7 +142,7 @@ const OffboardMemberDialog = ({ orgId, member, members, onClose }: OffboardMembe
             members={others}
             value={tasksTo}
             onChange={setTasksTo}
-            emptyLabel={t('lifecycle.nobodyUnassign')}
+            emptyLabel={t(transfer ? 'lifecycle.keepAsIs' : 'lifecycle.nobodyUnassign')}
           />
         )}
         {impact && impact.reports > 0 && (
@@ -121,7 +151,9 @@ const OffboardMemberDialog = ({ orgId, member, members, onClose }: OffboardMembe
             members={others}
             value={reportsTo}
             onChange={setReportsTo}
-            emptyLabel={manager ? t('lifecycle.theirManager', { name: manager.displayName }) : t('lifecycle.unplaced')}
+            emptyLabel={transfer
+              ? t('lifecycle.keepAsIs')
+              : manager ? t('lifecycle.theirManager', { name: manager.displayName }) : t('lifecycle.unplaced')}
           />
         )}
         {impact && impact.leads > 0 && (
@@ -134,27 +166,36 @@ const OffboardMemberDialog = ({ orgId, member, members, onClose }: OffboardMembe
             hint={t('lifecycle.leadsToHint')}
           />
         )}
+        {impact && impact.projects > 0 && (
+          <MemberSelectField
+            label={t('lifecycle.projectsTo')}
+            members={others}
+            value={projectsTo}
+            onChange={setProjectsTo}
+            emptyLabel={t(transfer ? 'lifecycle.keepAsIs' : 'lifecycle.nobody')}
+          />
+        )}
         {impact && impact.krs > 0 && (
           <MemberSelectField
             label={t('lifecycle.krsTo')}
             members={others}
             value={krsTo}
             onChange={setKrsTo}
-            emptyLabel={t('lifecycle.nobody')}
+            emptyLabel={t(transfer ? 'lifecycle.keepAsIs' : 'lifecycle.nobody')}
           />
         )}
 
         <fieldset className="space-y-2">
           <legend className="text-xs font-semibold text-[rgb(var(--color-text-secondary))] mb-1">{t('lifecycle.modeLegend')}</legend>
-          {(['remove', 'suspend'] as const).map((value) => (
+          {modes.map((value) => (
             <label key={value} className="flex items-start gap-2.5 p-2.5 rounded-xl border border-[rgb(var(--color-border))] cursor-pointer has-[:checked]:border-[rgb(var(--color-accent))]">
               <input type="radio" name="offboard-mode" checked={mode === value} onChange={() => setMode(value)} className="mt-1" />
               <span className="text-sm">
                 <span className="block font-semibold text-[rgb(var(--color-text-primary))]">
-                  {value === 'remove' ? t('lifecycle.modeRemove') : t('lifecycle.modeSuspend')}
+                  {t(MODE_LABEL[value])}
                 </span>
                 <span className="block text-xs text-[rgb(var(--color-text-muted))]">
-                  {value === 'remove' ? t('lifecycle.modeRemoveHint') : t('lifecycle.modeSuspendHint')}
+                  {t(MODE_HINT[value])}
                 </span>
               </span>
             </label>
@@ -175,12 +216,10 @@ const OffboardMemberDialog = ({ orgId, member, members, onClose }: OffboardMembe
             onClick={submit}
             disabled={offboard.isPending || isLoading}
             className={`min-h-11 px-4 rounded-xl text-sm font-semibold text-white disabled:opacity-50 ${
-              mode === 'remove' ? 'bg-red-600 hover:bg-red-700' : 'bg-amber-600 hover:bg-amber-700'
+              mode === 'remove' ? 'bg-red-600 hover:bg-red-700' : mode === 'suspend' ? 'bg-amber-600 hover:bg-amber-700' : 'bg-indigo-600 hover:bg-indigo-700'
             }`}
           >
-            {offboard.isPending
-              ? t('lifecycle.offboardPending')
-              : mode === 'remove' ? t('lifecycle.offboardRemove') : t('lifecycle.offboardSuspend')}
+            {offboard.isPending ? t('lifecycle.offboardPending') : t(MODE_SUBMIT[mode])}
           </button>
         </div>
       </div>

@@ -106,6 +106,16 @@ export interface UpdateTeamProjectInput {
   dueDate?: string | null;
 }
 
+/**
+ * Équipe ASSOCIÉE à un projet (mig. 164) : un projet mené par plusieurs
+ * équipes. `TeamProject.teamId` reste l'équipe principale ; une équipe
+ * associée ne fait qu'ÉLARGIR la lecture, et la retirer la rétrécit.
+ */
+export interface TeamProjectTeam {
+  projectId: string;
+  teamId: string;
+}
+
 /** Jalon d'un projet (mig. 153). */
 export interface TeamProjectMilestone {
   id: string;

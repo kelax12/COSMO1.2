@@ -24,6 +24,7 @@ import {
   CreateTeamProjectMilestoneInput,
   UpdateTeamProjectMilestoneInput,
   TeamProjectDependency,
+  TeamProjectTeam,
 } from './types';
 import type { CreateOptions } from '@/lib/restore-id';
 
@@ -63,6 +64,17 @@ export interface ITeamProjectsRepository {
   getProjectDependencies(orgId: string): Promise<TeamProjectDependency[]>;
   addProjectDependency(projectId: string, dependsOnId: string, orgId: string): Promise<void>;
   removeProjectDependency(projectId: string, dependsOnId: string): Promise<void>;
+
+  // Équipes associées (mig. 164) — un projet mené par plusieurs équipes.
+  // Associer ou retirer une équipe change QUI LIT le projet : `project.edit`.
+  getProjectTeams(orgId: string): Promise<TeamProjectTeam[]>;
+  addProjectTeam(orgId: string, projectId: string, teamId: string): Promise<void>;
+  removeProjectTeam(projectId: string, teamId: string): Promise<void>;
+  /**
+   * Supprime DÉFINITIVEMENT un projet déjà archivé, ses tâches et jalons avec
+   * lui (`purge_archived_team_project`, mig. 164). Refusé sur un projet actif.
+   */
+  purgeArchivedProject(projectId: string): Promise<void>;
 
   // Tâches d'équipe
   getTasks(orgId: string, filters?: TeamTaskFilters): Promise<TeamTask[]>;

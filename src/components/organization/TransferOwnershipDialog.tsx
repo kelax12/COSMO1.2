@@ -16,6 +16,11 @@ interface TransferOwnershipDialogProps {
   orgName: string;
   /** Membres candidats (tous sauf l'owner actuel). */
   candidates: OrgMember[];
+  /**
+   * Un abonnement payant existe (actif ou en retard de paiement). Il SUIT le
+   * propriétaire : le dialogue le dit au lieu de le laisser découvrir.
+   */
+  hasSubscription?: boolean;
   pending?: boolean;
   onConfirm: (newOwnerId: string) => void;
   onCancel: () => void;
@@ -25,8 +30,15 @@ interface TransferOwnershipDialogProps {
  * Transfert de propriété de l'entreprise (reco #18, mig. 081) — réservé à
  * l'owner actuel. Le destinataire devient admin ; l'owner sortant reste
  * admin et peut ensuite se rétrograder ou quitter.
+ *
+ * Audit du 2026-09-24 : le dialogue ne disait rien de la FACTURATION, qui suit
+ * le propriétaire. Seul `organizations.owner_id` ouvre le portail Stripe
+ * (`stripe-org-portal`) et souscrit (`stripe-org-checkout`) ; le client Stripe,
+ * lui, appartient à l'organisation. Donc : l'abonnement continue, ses factures
+ * et le moyen de paiement enregistré se gèrent désormais par le nouveau
+ * propriétaire, et l'ancien n'y a plus accès.
  */
-const TransferOwnershipDialog = ({ orgName, candidates, pending, onConfirm, onCancel }: TransferOwnershipDialogProps) => {
+const TransferOwnershipDialog = ({ orgName, candidates, hasSubscription = false, pending, onConfirm, onCancel }: TransferOwnershipDialogProps) => {
   const { t } = useT('org');
   const [selected, setSelected] = useState('');
   return (
@@ -40,6 +52,15 @@ const TransferOwnershipDialog = ({ orgName, candidates, pending, onConfirm, onCa
             {t('transfer.body')}
           </AlertDialogDescription>
         </AlertDialogHeader>
+        <div className="rounded-xl border border-amber-300/60 dark:border-amber-700/40 bg-amber-50/60 dark:bg-amber-900/10 px-4 py-3">
+          <p className="text-xs font-semibold text-[rgb(var(--color-text-primary))] mb-1">{t('transfer.billingTitle')}</p>
+          <ul className="text-xs text-[rgb(var(--color-text-secondary))] space-y-1 list-disc pl-4">
+            <li>{t(hasSubscription ? 'transfer.billingSubscription' : 'transfer.billingNoSubscription')}</li>
+            <li>{t('transfer.billingInvoices')}</li>
+            {hasSubscription && <li>{t('transfer.billingCard')}</li>}
+            <li>{t('transfer.billingYou')}</li>
+          </ul>
+        </div>
         <label className="block text-xs font-semibold text-[rgb(var(--color-text-secondary))] mb-1" htmlFor="transfer-owner-select">
           {t('transfer.newOwner')}
         </label>
