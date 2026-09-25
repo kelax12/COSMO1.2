@@ -844,7 +844,8 @@
     "mentionAria": "Mention a member",
     "sendAria": "Send comment",
     "formerMember": "Former member",
-    "deleted": "Comment deleted"
+    "deleted": "Comment deleted",
+    "title": "Comments"
   },
   "leaveDialog": {
     "body": "You'll immediately lose access to the team's projects, tasks and OKRs. Your personal data (tasks, habits, calendar) is not affected. You can come back with a new invitation code.",

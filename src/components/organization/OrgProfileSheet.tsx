@@ -175,7 +175,7 @@ const OrgProfileSheet = ({ org, onClose }: OrgProfileSheetProps) => {
           </div>
           <div>
             <label htmlFor="org-profile-description" className="block text-xs font-medium text-[rgb(var(--color-text-secondary))] mb-1.5">
-              Description
+              {t('teamPage.descriptionLabel')}
             </label>
             <textarea
               id="org-profile-description"

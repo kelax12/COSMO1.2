@@ -221,7 +221,7 @@ const DataResults: React.FC<{ query: string; onDone: () => void }> = ({ query, o
       {matchedTeams.length > 0 && (
         <CommandGroup heading={ov.t('palette.orgTeams')}>
           {matchedTeams.map((tm) => (
-            <CommandItem key={`org-team-${tm.id}`} value={`org-team-${tm.id}`} onSelect={() => go(buildOrgLink('members'))}>
+            <CommandItem key={`org-team-${tm.id}`} value={`org-team-${tm.id}`} onSelect={() => go(buildOrgLink('members', { team: tm.id }))}>
               <UsersRound size={16} aria-hidden="true" />
               <span>{tm.name}</span>
             </CommandItem>
@@ -231,7 +231,7 @@ const DataResults: React.FC<{ query: string; onDone: () => void }> = ({ query, o
       {matchedTeamOkrs.length > 0 && (
         <CommandGroup heading={ov.t('palette.teamOkrs')}>
           {matchedTeamOkrs.map((o) => (
-            <CommandItem key={`team-okr-${o.id}`} value={`team-okr-${o.id}`} onSelect={() => go(buildOrgLink('okr'))}>
+            <CommandItem key={`team-okr-${o.id}`} value={`team-okr-${o.id}`} onSelect={() => go(buildOrgLink('okr', { okr: o.id }))}>
               <Target size={16} aria-hidden="true" />
               <span>{o.title}</span>
             </CommandItem>

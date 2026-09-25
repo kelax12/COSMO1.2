@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router';
 import { toast } from '@/lib/toast';
 import { Plus, Target, Trash2, Pencil, Users, Building2 } from 'lucide-react';
 import {
@@ -25,6 +26,7 @@ import TeamOKRModal from './TeamOKRModal';
 import { useMyOrgPermissions } from '@/modules/organizations';
 import { useT } from '@/i18n/useT';
 import OrgConfirmDialog from './OrgConfirmDialog';
+import { readEntityParam } from './deep-link.helpers';
 
 interface TeamOKRTabProps {
   orgId: string;
@@ -134,6 +136,10 @@ const TeamOKRTab = ({ orgId }: TeamOKRTabProps) => {
   const [editingOKR, setEditingOKR] = useState<TeamOKR | null>(null);
   // Niveau LOURD (cf. OrgConfirmDialog) : un objectif n'a pas de corbeille.
   const [deletingOKR, setDeletingOKR] = useState<TeamOKR | null>(null);
+  // `?okr=<id>` : l'adresse d'un objectif (OrgDeepLinkHost y mène depuis toute
+  // section). Il reste dans l'URL, comme `?project=` : c'est une adresse.
+  const [searchParams] = useSearchParams();
+  const focusedOkrId = readEntityParam(searchParams, 'okr');
   // `live` : c'est l'écran où l'on regarde les OKR (cf. useTeamOKRs).
   const { data: okrs = [], isLoading } = useTeamOKRs(orgId, { live: true });
   const { data: teams = [] } = useOrgTeams(orgId);
@@ -184,6 +190,18 @@ const TeamOKRTab = ({ orgId }: TeamOKRTabProps) => {
     () => (activeCategoryIds.size === 0 ? okrs : okrs.filter((o) => !!o.categoryId && activeCategoryIds.has(o.categoryId))),
     [okrs, activeCategoryIds],
   );
+
+  // L'objectif demandé par l'URL : un filtre de catégorie qui le cacherait est
+  // levé, puis on l'amène à l'écran une fois les données arrivées.
+  const focusedLoaded = !!focusedOkrId && okrs.some((o) => o.id === focusedOkrId);
+  const focusedHidden = focusedLoaded && !visibleOKRs.some((o) => o.id === focusedOkrId);
+  useEffect(() => {
+    if (focusedHidden) setActiveCategoryIds(new Set());
+  }, [focusedHidden]);
+  useEffect(() => {
+    if (!focusedLoaded || focusedHidden) return;
+    document.getElementById(`okr-${focusedOkrId}`)?.scrollIntoView({ block: 'center' });
+  }, [focusedLoaded, focusedHidden, focusedOkrId]);
 
   // ── Handlers catégories (mêmes noms/comportements que OKRPage) ──────
   const startEditCategory = (cat: { id: string; name: string; color: string }) => {
@@ -309,7 +327,14 @@ const TeamOKRTab = ({ orgId }: TeamOKRTabProps) => {
           const avg = okrProgress(okr.keyResults);
           const cat = okr.categoryId ? colorById.get(okr.categoryId) : undefined;
           return (
-            <section key={okr.id} className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4">
+            <section
+              key={okr.id}
+              id={`okr-${okr.id}`}
+              aria-current={okr.id === focusedOkrId ? 'true' : undefined}
+              className={`rounded-2xl border bg-[rgb(var(--color-surface))] p-4 scroll-mt-24 ${
+                okr.id === focusedOkrId ? 'border-[rgb(var(--color-accent))] ring-2 ring-[rgb(var(--color-accent))]/40' : 'border-[rgb(var(--color-border))]'
+              }`}
+            >
               <div className="flex items-start gap-3 mb-3">
                 <div className="flex-1 min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
