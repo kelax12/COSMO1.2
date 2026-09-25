@@ -285,6 +285,10 @@
       "categorie": "mot-identique",
       "valeur": "Admin"
     },
+    "org.glossary.terms.manager.name": {
+      "categorie": "anglicisme-fr",
+      "valeur": "Manager"
+    },
     "org.roles.manager": {
       "categorie": "anglicisme-fr",
       "valeur": "Manager"
