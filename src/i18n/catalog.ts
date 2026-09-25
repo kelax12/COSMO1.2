@@ -64,6 +64,7 @@ import frErrors from '@/locales/fr/errors.json';
 type Shape<P extends string> = P extends keyof FrModules ? FrModules[P] : never;
 interface FrModules {
   admin: typeof import('@/locales/fr/admin.json');
+  portfolio: typeof import('@/locales/fr/portfolio.json');
   agenda: typeof import('@/locales/fr/agenda.json');
   dashboard: typeof import('@/locales/fr/dashboard.json');
   bugReport: typeof import('@/locales/fr/bugReport.json');
@@ -152,6 +153,16 @@ interface CatalogShapes {
   legal: Shape<'legal'>;
   /** Mode entreprise — pyramide, équipes, projets, OKR d'équipe, invitations. */
   org: Shape<'org'>;
+  /**
+   * Portefeuille de projets (M2) : vues, page projet, jalons, modèles.
+   *
+   * 🔴 Namespace À PART, chargé avec le SEUL onglet Projets
+   * (`OrganizationPage`, `lazyWithRetry(…, ['portfolio'])`). Dans `org`, il
+   * faisait passer ce catalogue de 28,5 à 33,2 ko gzip, payés par toute visite
+   * de /entreprise, Aperçu et Pyramide compris, pour des textes qu'elles
+   * n'affichent jamais.
+   */
+  portfolio: Shape<'portfolio'>;
   /** Titres/descriptions des routes publiques — lu aussi par `prerender.mjs`. */
   seo: Shape<'seo'>;
   /** Réglages — profil, sécurité, apparence, modules, données, aide. */
@@ -243,7 +254,7 @@ registry[DEFAULT_LOCALE] = {
 const NAMESPACES: readonly Namespace[] = [
   'admin', 'agenda', 'bugReport', 'common', 'csv', 'dashboard', 'errors', 'eventModal',
   'guide',
-  'habits', 'invite', 'landing', 'legal', 'okr', 'org', 'premium', 'seo',
+  'habits', 'invite', 'landing', 'legal', 'okr', 'org', 'portfolio', 'premium', 'seo',
   'overlays',
   'settings', 'statistics', 'taskModal', 'tasks', 'tutorials',
 ];

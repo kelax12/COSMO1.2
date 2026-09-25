@@ -50,7 +50,9 @@ export const ORG_SECTIONS: OrgSectionDef[] = [
   // l'annuaire ; les équipes et les réglages ont leur propre adresse.
   { id: 'members', labelKey: 'tabs.members', Icon: Users, group: 'org' },
   { id: 'teams', labelKey: 'tabs.teams', Icon: UsersRound, group: 'org' },
-  // Visible par tous : quitter l'organisation y vit aussi.
+  // M13 : un admin ne savait pas où chercher un réglage (profil sous un
+  // crayon de l'en-tête, zone dangereuse au pied de l'annuaire, changement
+  // d'organisation dans la barre latérale de l'app). Tout est ici.
   { id: 'settings', labelKey: 'tabs.settings', Icon: Settings, group: 'org' },
 ];
 
@@ -66,4 +68,23 @@ export interface OrgNavItem {
   badgeAriaLabel?: string;
   /** Pastille desktop avec aperçu au survol, déjà construite par la page. */
   badge?: React.ReactNode;
+}
+
+/**
+ * Raccourci vers un projet, dans le groupe « Épinglés » (ou « Récents » tant
+ * que rien n'est épinglé) du panneau de droite et du sélecteur mobile.
+ */
+export interface OrgShortcut {
+  id: string;
+  label: string;
+  /** Classe de pastille de couleur du projet (`projectColor(...).dot`). */
+  dotClass: string;
+  href: string;
+  pinned: boolean;
+}
+
+/** Le groupe à peindre : ses entrées, et s'il s'agit d'épinglés ou de récents. */
+export interface OrgShortcutGroup {
+  kind: 'pinned' | 'recent';
+  items: OrgShortcut[];
 }

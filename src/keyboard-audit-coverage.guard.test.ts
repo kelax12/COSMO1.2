@@ -97,6 +97,9 @@ const NON_MESUREES: Record<string, string> = {
     'inatteignable : `PREMIUM_ENFORCED` est à false, aucune gate ne s ouvre '
     + '(décision 2026-06-11, le partage est gratuit).',
   'components/QuickAddBar.tsx': 'dette : atteignable en démo.',
+  'components/organization/ProjectEditDialog.tsx':
+    'dette : atteignable en démo (/entreprise/projects, page projet, « Modifier le projet »), '
+    + 'câblée sur useModalA11y, jamais parcourue au clavier.',
   'components/RemoveFriendConfirm.tsx': 'dette : atteignable depuis les amis.',
   'components/ShareInviteClaimer.tsx':
     'inatteignable en démo : exige un lien d invitation valide, donc le '

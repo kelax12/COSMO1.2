@@ -3,13 +3,17 @@
 // ═══════════════════════════════════════════════════════════════════
 //
 // Extrait de `TeamProjectsTab` : un bloc autonome (un mode, un ensemble d'ids,
-// deux actions de lot) qui n'a besoin de rien du reste de l'onglet sinon la
+// des actions de lot) qui n'a besoin de rien du reste de l'onglet sinon la
 // liste visible et les mutations. Le sortir garde l'onglet lisible et rend ce
 // comportement testable sans monter tout l'écran.
+//
+// Depuis le 2026-09-24, la sélection vaut pour TOUTES les vues (liste, tableau,
+// planning) et le lot sait réassigner, déplacer et changer de statut, chaque
+// geste avec son « Annuler » : c'est le même filet que la suppression.
 
 import { useMemo, useState } from 'react';
 import { showUndoToast } from '@/lib/undo-toast';
-import type { TeamTask } from '@/modules/team-projects';
+import type { TeamTask, TeamTaskStatus, UpdateTeamTaskInput } from '@/modules/team-projects';
 
 interface Options {
   /** Tâches actuellement affichées — une sélection ne survit pas au filtre. */
@@ -20,10 +24,31 @@ interface Options {
   restoreTask: (task: TeamTask) => void;
   /** Libellé de l'annulation groupée, déjà pluralisé par l'appelant. */
   deletedLabel: (count: number) => string;
+  /** Patch d'une tâche — réassigner, déplacer, changer de statut. */
+  updateTask?: (task: TeamTask, input: UpdateTeamTaskInput) => void;
+  /** Libellés d'annulation des trois gestes de lot, déjà pluralisés. */
+  labels?: {
+    reassigned: (count: number) => string;
+    moved: (count: number) => string;
+    statusChanged: (count: number) => string;
+  };
+  /**
+   * Portée d'assignation (mig. 115) : un ajout hors portée est ignoré plutôt
+   * que d'échouer tâche par tâche sur la RLS.
+   */
+  canAssign?: (userId: string) => boolean;
 }
 
+/**
+ * Nouvelle liste d'assignés d'une tâche pour un geste de lot. `null` retire
+ * tout le monde ; sinon on AJOUTE la personne (une réassignation de lot ne
+ * doit pas retirer silencieusement les co-assignés d'une tâche partagée).
+ */
+export const nextAssignees = (current: string[], userId: string | null): string[] =>
+  userId === null ? [] : current.includes(userId) ? current : [...current, userId];
+
 export const useTeamTasksSelection = ({
-  visibleTasks, setCompleted, deleteTask, restoreTask, deletedLabel,
+  visibleTasks, setCompleted, deleteTask, restoreTask, deletedLabel, updateTask, labels, canAssign,
 }: Options) => {
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
@@ -69,6 +94,60 @@ export const useTeamTasksSelection = ({
     });
   };
 
+  /**
+   * Applique un patch à chaque tâche du lot qui CHANGE réellement, puis
+   * propose d'annuler en réécrivant l'état d'avant, tâche par tâche.
+   */
+  const applyWithUndo = (
+    patchOf: (task: TeamTask) => UpdateTeamTaskInput | null,
+    undoOf: (task: TeamTask) => UpdateTeamTaskInput,
+    label: ((count: number) => string) | undefined,
+  ) => {
+    if (!updateTask) return;
+    const changed: TeamTask[] = [];
+    for (const task of selectedTasks) {
+      const patch = patchOf(task);
+      if (!patch) continue;
+      updateTask(task, patch);
+      changed.push(task);
+    }
+    clearSelection();
+    if (changed.length > 0 && label) {
+      showUndoToast(label(changed.length), () => {
+        for (const task of changed) updateTask(task, undoOf(task));
+      });
+    }
+  };
+
+  const bulkAssign = (userId: string | null) => {
+    if (userId !== null && canAssign && !canAssign(userId)) return;
+    applyWithUndo(
+      (task) => {
+        const next = nextAssignees(task.assigneeIds, userId);
+        return next.length === task.assigneeIds.length && next.every((id) => task.assigneeIds.includes(id))
+          ? null
+          : { assigneeIds: next };
+      },
+      (task) => ({ assigneeIds: task.assigneeIds }),
+      labels?.reassigned,
+    );
+  };
+
+  const bulkMove = (projectId: string) =>
+    applyWithUndo(
+      (task) => (task.projectId === projectId ? null : { projectId }),
+      (task) => ({ projectId: task.projectId }),
+      labels?.moved,
+    );
+
+  // `status` seul : le serveur synchronise `completed` (trigger mig. 091).
+  const bulkSetStatus = (status: TeamTaskStatus) =>
+    applyWithUndo(
+      (task) => (task.status === status ? null : { status }),
+      (task) => ({ status: task.status }),
+      labels?.statusChanged,
+    );
+
   return {
     selectMode,
     setSelectMode,
@@ -79,5 +158,8 @@ export const useTeamTasksSelection = ({
     exitSelectMode,
     bulkSetCompleted,
     bulkDelete,
+    bulkAssign,
+    bulkMove,
+    bulkSetStatus,
   };
 };

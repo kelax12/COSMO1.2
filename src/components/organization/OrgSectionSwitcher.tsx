@@ -1,17 +1,20 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Search } from 'lucide-react';
 import { useT } from '@/i18n/useT';
 import { useBottomSheet } from '@/hooks/use-bottom-sheet';
 import { useSheetMotion } from '@/components/mobile/mobile-motion';
 import { useModalA11y, mergeRefs } from '@/hooks/use-modal-a11y';
 import { orgSectionPath } from './deep-link.helpers';
-import { ORG_SECTION_GROUPS, type OrgNavItem } from './org-sections';
+import { ORG_SECTION_GROUPS, type OrgNavItem, type OrgShortcutGroup } from './org-sections';
 
 interface Props {
   items: OrgNavItem[];
   activeId: string;
+  /** Même groupe « Épinglés / Récents » que le panneau desktop. */
+  shortcuts?: OrgShortcutGroup;
+  onSearch?: () => void;
 }
 
 /**
@@ -27,7 +30,7 @@ interface Props {
  * réduit), `useBottomSheet` (la poignée tient son geste, C-07) et
  * `useModalA11y` (piège de focus, Échap, C-53).
  */
-const OrgSectionSwitcher: React.FC<Props> = ({ items, activeId }) => {
+const OrgSectionSwitcher: React.FC<Props> = ({ items, activeId, shortcuts, onSearch }) => {
   const { t } = useT('org');
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
@@ -67,11 +70,17 @@ const OrgSectionSwitcher: React.FC<Props> = ({ items, activeId }) => {
           <SectionSheet
             items={items}
             activeId={activeId}
+            shortcuts={shortcuts}
             onClose={() => setOpen(false)}
             onSelect={(id) => {
               setOpen(false);
               navigate(orgSectionPath(id));
             }}
+            onGo={(href) => {
+              setOpen(false);
+              navigate(href);
+            }}
+            onSearch={onSearch ? () => { setOpen(false); onSearch(); } : undefined}
           />
         )}
       </AnimatePresence>
@@ -82,11 +91,14 @@ const OrgSectionSwitcher: React.FC<Props> = ({ items, activeId }) => {
 interface SheetProps {
   items: OrgNavItem[];
   activeId: string;
+  shortcuts?: OrgShortcutGroup;
   onClose: () => void;
   onSelect: (id: string) => void;
+  onGo: (href: string) => void;
+  onSearch?: () => void;
 }
 
-const SectionSheet: React.FC<SheetProps> = ({ items, activeId, onClose, onSelect }) => {
+const SectionSheet: React.FC<SheetProps> = ({ items, activeId, shortcuts, onClose, onSelect, onGo, onSearch }) => {
   const { t } = useT('org');
   const sheetMotion = useSheetMotion();
   const { sheetRef, backdropOpacity, handleBarWidth, sheetDragProps } = useBottomSheet(onClose);
@@ -120,6 +132,16 @@ const SectionSheet: React.FC<SheetProps> = ({ items, activeId, onClose, onSelect
         </div>
 
         <div className="px-4 pb-5 flex flex-col gap-3" data-scroll-area>
+          {onSearch && (
+            <button
+              type="button"
+              onClick={onSearch}
+              className="w-full flex items-center gap-2.5 px-4 min-h-touch rounded-2xl bg-[rgb(var(--color-surface))] text-body text-[rgb(var(--color-text-muted))] active:bg-[rgb(var(--color-hover))]"
+            >
+              <Search size={18} aria-hidden="true" />
+              {t('sideNav.search')}
+            </button>
+          )}
           {ORG_SECTION_GROUPS.map((group) => {
             const groupItems = items.filter((item) => item.group === group.id);
             if (groupItems.length === 0) return null;
@@ -165,6 +187,28 @@ const SectionSheet: React.FC<SheetProps> = ({ items, activeId, onClose, onSelect
               </div>
             );
           })}
+
+          {shortcuts && shortcuts.items.length > 0 && (
+            <div>
+              <p className="px-1 pt-1 pb-1.5 text-caption font-semibold uppercase tracking-wider text-[rgb(var(--color-text-muted))]">
+                {t(shortcuts.kind === 'pinned' ? 'sideNav.groupPinned' : 'sideNav.groupRecent')}
+              </p>
+              <ul className="space-y-1">
+                {shortcuts.items.map((item) => (
+                  <li key={item.id}>
+                    <button
+                      type="button"
+                      onClick={() => onGo(item.href)}
+                      className="w-full flex items-center gap-2.5 px-4 min-h-touch rounded-2xl bg-[rgb(var(--color-surface))] text-left text-body text-[rgb(var(--color-text-secondary))] active:bg-[rgb(var(--color-hover))]"
+                    >
+                      <span className={`w-2 h-2 rounded-full shrink-0 ${item.dotClass}`} aria-hidden="true" />
+                      <span className="flex-1 min-w-0 truncate">{item.label}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       </motion.div>
     </>

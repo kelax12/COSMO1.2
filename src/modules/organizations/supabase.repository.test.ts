@@ -368,6 +368,7 @@ describe('SupabaseOrganizationsRepository — permissions par membre (mig. 115)'
     can_edit_any_task: null,
     can_delete_task: null,
     can_create_project: true,
+    can_edit_project: null,
     can_delete_project: null,
     can_create_okr: null,
     can_delete_okr: null,
@@ -391,6 +392,7 @@ describe('SupabaseOrganizationsRepository — permissions par membre (mig. 115)'
           'task.editAny': null,
           'task.deleteAny': null,
           'project.create': true,
+          'project.edit': null,
           'project.delete': null,
           'okr.create': null,
           'okr.delete': null,
@@ -414,7 +416,7 @@ describe('SupabaseOrganizationsRepository — permissions par membre (mig. 115)'
     expect(result[0].assignTargets).toBeNull();
   });
 
-  it('setMemberPermissions: whitelist stricte — les dix colonnes, rien d’autre', async () => {
+  it('setMemberPermissions: whitelist stricte — les onze colonnes (mig. 153), rien d’autre', async () => {
     supabaseMock.queueTable('org_member_permissions', { data: null });
     await repo.setMemberPermissions('org1', 'u2', {
       // Une clé inconnue soumise par un appelant négligent ne doit pas
@@ -431,6 +433,7 @@ describe('SupabaseOrganizationsRepository — permissions par membre (mig. 115)'
       can_edit_any_task: null,
       can_delete_task: null,
       can_create_project: true,
+      can_edit_project: null,
       can_delete_project: null,
       can_create_okr: null,
       can_delete_okr: null,

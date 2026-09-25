@@ -2,7 +2,11 @@ import { useMemo, useState } from 'react';
 import {
   Plus, ChevronDown, ChevronRight, UsersRound, MoreHorizontal,
   Pencil, Archive, ArchiveRestore, Clock, ListChecks, Tag,
+  ExternalLink, Settings2, Copy, LayoutTemplate, CalendarRange,
 } from 'lucide-react';
+import { format, parseISO } from 'date-fns';
+import { getDateLocale } from '@/i18n/format';
+import { getColorHex } from '@/lib/category-colors';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -17,10 +21,11 @@ import type { OrgMember } from '@/modules/organizations';
 import type { OrgTeam } from '@/modules/org-teams';
 import type { TeamProject, TeamTask, UpdateTeamProjectInput } from '@/modules/team-projects';
 import {
-  projectColor, projectColorFromCategory,
+  projectColor,
   sortOpenTasks, sortCompletedTasks, isTaskOverdue,
   sumEstimatedTime, formatDuration,
 } from './team-projects.helpers';
+import { PROJECT_STATUS_META, isProjectLate } from './portfolio.helpers';
 import MemberAvatar from './MemberAvatar';
 import TeamTaskRow from './TeamTaskRow';
 import ConfirmProjectAudienceDialog from './ConfirmProjectAudienceDialog';
@@ -33,8 +38,27 @@ interface TeamProjectCardProps {
   tasks: TeamTask[];
   members: OrgMember[];
   teams: OrgTeam[];
-  /** Renommer, recolorer, rattacher à une équipe/catégorie (`project.create`). */
+  /**
+   * Renommer, décrire, planifier, recolorer, catégoriser : `project.edit`
+   * (mig. 153) OU responsable du projet. Jusque-là, c'était `project.create`,
+   * dont le nom ne disait pas l'action.
+   */
   canEditProject: boolean;
+  /**
+   * Changer l'ÉQUIPE (donc l'audience, M5) : `project.edit` seul. Le
+   * responsable pilote son projet sans pouvoir l'ouvrir à d'autres (trigger
+   * `enforce_team_project_edit_scope`).
+   */
+  canChangeTeam: boolean;
+  /** Dupliquer / enregistrer comme modèle CRÉENT un projet : `project.create`. */
+  canCreateProject: boolean;
+  /** Ouvre la page du projet (`?project=<id>`). */
+  onOpenProject: () => void;
+  onEditProject: () => void;
+  onDuplicate: () => void;
+  onSaveTemplate: () => void;
+  /** Archive avec « Annuler » : c'est le parent qui montre le toast. */
+  onArchive: () => void;
   /** Archiver ou restaurer (`project.delete` — l'archivage EST la suppression ici). */
   canArchiveProject: boolean;
   collapsed: boolean;
@@ -60,12 +84,14 @@ interface TeamProjectCardProps {
 /** Carte d'un projet : header (couleur, progression, contributeurs, retard, menu) + tâches triées. */
 const TeamProjectCard = ({
   project, tasks, members, teams, canEditProject, canArchiveProject,
+  canChangeTeam, canCreateProject, onOpenProject, onEditProject, onDuplicate, onSaveTemplate, onArchive,
   collapsed, onToggleCollapse, assigneeFiltered,
   onAddTask, onToggleComplete, onReassign, onDelete, onOpenTask,
   onUpdateProject, onStartSelect,
   selectable = false, selectedIds, onToggleSelect,
 }: TeamProjectCardProps) => {
   const { t, tp } = useT('org');
+  const { t: pf } = useT('portfolio');
   const [renaming, setRenaming] = useState(false);
   // M5 : un changement d'équipe change QUI LIT le projet. Il passe par une
   // confirmation qui nomme la nouvelle audience, jamais par un clic sec.
@@ -81,8 +107,12 @@ const TeamProjectCard = ({
 
   const color = projectColor(project.color);
   const teamName = teams.find((t) => t.id === project.teamId)?.name;
-  const categoryName = categories.find((c) => c.id === project.categoryId)?.name;
+  const category = categories.find((c) => c.id === project.categoryId);
   const archived = !!project.archivedAt;
+  const status = project.status ?? 'active';
+  const owner = project.ownerId ? members.find((m) => m.userId === project.ownerId) : undefined;
+  const late = isProjectLate(project);
+  const shortDate = (d: string) => format(parseISO(d), 'd MMM', { locale: getDateLocale() });
 
   const openTasks = useMemo(() => sortOpenTasks(tasks.filter((t) => !t.completed)), [tasks]);
   const completedTasks = useMemo(() => sortCompletedTasks(tasks.filter((t) => t.completed)), [tasks]);
@@ -154,9 +184,36 @@ const TeamProjectCard = ({
               <UsersRound size={10} aria-hidden="true" /> {teamName}
             </span>
           )}
-          {categoryName && (
-            <span className="inline-flex items-center gap-1 text-caption font-semibold px-1.5 py-0.5 rounded-full shrink-0 border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))]">
-              <Tag size={10} aria-hidden="true" /> {categoryName}
+          {/* La catégorie est une PASTILLE à sa propre couleur : elle n'écrase
+              plus la couleur du projet (audit 2026-09-24). */}
+          {category && (
+            <span className="hidden sm:inline-flex items-center gap-1 text-caption font-semibold px-1.5 py-0.5 rounded-full shrink-0 border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))]">
+              <span
+                className="w-1.5 h-1.5 rounded-full"
+                style={{ backgroundColor: category.color.startsWith('#') ? category.color : getColorHex(category.color) }}
+                aria-hidden="true"
+              />
+              <Tag size={10} aria-hidden="true" /> {category.name}
+            </span>
+          )}
+          {status !== 'active' && !archived && (
+            <span className={`text-caption font-semibold px-1.5 py-0.5 rounded-full shrink-0 ${PROJECT_STATUS_META[status].soft}`}>
+              {pf(`status.${status}`)}
+            </span>
+          )}
+          {late && !archived && (
+            <span className="text-caption font-bold px-1.5 py-0.5 rounded-full bg-red-500/10 text-red-500 shrink-0">
+              {pf('late')}
+            </span>
+          )}
+          {(project.startDate || project.dueDate) && !archived && (
+            <span className="hidden md:inline-flex items-center gap-1 text-caption text-[rgb(var(--color-text-muted))] shrink-0">
+              <CalendarRange size={10} aria-hidden="true" />
+              {project.startDate && project.dueDate
+                ? pf('dateRange', { start: shortDate(project.startDate), end: shortDate(project.dueDate) })
+                : project.dueDate
+                  ? pf('dueOn', { date: shortDate(project.dueDate) })
+                  : pf('startsOn', { date: shortDate(project.startDate!) })}
             </span>
           )}
           {archived && (
@@ -183,6 +240,11 @@ const TeamProjectCard = ({
 
           {/* Contributeurs (avatars empilés + charge au survol) */}
           <span className="ml-auto flex items-center gap-2 shrink-0">
+            {owner && (
+              <span className="hidden sm:inline-flex rounded-full ring-2 ring-indigo-500/60" title={`${pf('col.owner')} : ${owner.displayName}`}>
+                <MemberAvatar avatar={owner.avatar} name={owner.displayName} size={22} />
+              </span>
+            )}
             {contributors.length > 0 && (
               <span className="flex -space-x-1.5" aria-label={`${contributors.length} contributeurs`}>
                 {contributors.slice(0, 4).map(({ member, open, overdue }) => (
@@ -220,7 +282,8 @@ const TeamProjectCard = ({
             bouton ⋯ de la barre d'outils — un contributeur doit garder l'accès
             aux actions groupées. Les entrées d'administration restent gardées
             par les droits une à une. */}
-        {(canEditProject || canArchiveProject || !!onStartSelect) && (
+        {/* « Ouvrir la page » existe pour tous : le menu est toujours monté. */}
+        {(
           <DropdownMenu>
             <DropdownMenuTrigger
               aria-label={t('project.actionsAria', { name: project.name })}
@@ -228,13 +291,21 @@ const TeamProjectCard = ({
             >
               <MoreHorizontal size={16} aria-hidden="true" />
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-52">
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuItem onClick={onOpenProject}>
+                <ExternalLink size={14} aria-hidden="true" /> {pf('actions.open')}
+              </DropdownMenuItem>
+              {canEditProject && (
+                <DropdownMenuItem onClick={onEditProject}>
+                  <Settings2 size={14} aria-hidden="true" /> {pf('actions.edit')}
+                </DropdownMenuItem>
+              )}
               {canEditProject && (
                 <DropdownMenuItem onClick={() => { setRenameValue(project.name); setRenaming(true); }}>
                   <Pencil size={14} aria-hidden="true" /> {t('project.rename')}
                 </DropdownMenuItem>
               )}
-              {canEditProject && teams.length > 0 && (
+              {canChangeTeam && teams.length > 0 && (
                 <DropdownMenuSub>
                   <DropdownMenuSubTrigger>
                     <UsersRound size={14} aria-hidden="true" /> {t('project.teamBadge')}
@@ -258,14 +329,13 @@ const TeamProjectCard = ({
                     <Tag size={14} aria-hidden="true" /> {t('project.category')}
                   </DropdownMenuSubTrigger>
                   <DropdownMenuSubContent className="w-48">
-                    {/* La couleur suit la catégorie (plus de sélecteur manuel,
-                        cf. team-projects.helpers.ts § projectColorFromCategory) :
-                        chaque choix ici recalcule aussi `color`. */}
-                    <DropdownMenuItem onClick={() => onUpdateProject({ categoryId: null, color: projectColorFromCategory(null, categories) })}>
+                    {/* La catégorie ne touche PLUS à `color` : la réécrire ici
+                        effaçait la couleur choisie par l'équipe (audit 2026-09-24). */}
+                    <DropdownMenuItem onClick={() => onUpdateProject({ categoryId: null })}>
                       {t('project.noCategory')} {!project.categoryId && <span className="ml-auto text-xs">✓</span>}
                     </DropdownMenuItem>
                     {categories.map((c) => (
-                      <DropdownMenuItem key={c.id} onClick={() => onUpdateProject({ categoryId: c.id, color: projectColorFromCategory(c.id, categories) })}>
+                      <DropdownMenuItem key={c.id} onClick={() => onUpdateProject({ categoryId: c.id })}>
                         <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: c.color }} aria-hidden="true" />
                         <span className="truncate">{c.name}</span>
                         {project.categoryId === c.id && <span className="ml-auto text-xs">✓</span>}
@@ -274,11 +344,22 @@ const TeamProjectCard = ({
                   </DropdownMenuSubContent>
                 </DropdownMenuSub>
               )}
+              {canCreateProject && !archived && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={onDuplicate}>
+                    <Copy size={14} aria-hidden="true" /> {pf('actions.duplicate')}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={onSaveTemplate}>
+                    <LayoutTemplate size={14} aria-hidden="true" /> {pf('actions.saveTemplate')}
+                  </DropdownMenuItem>
+                </>
+              )}
               {/* Actions groupées — ouvertes à tous, et seulement quand il y a
                   des tâches à cocher. */}
               {onStartSelect && tasks.length > 0 && (
                 <>
-                  {canEditProject && <DropdownMenuSeparator />}
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={onStartSelect}>
                     <ListChecks size={14} aria-hidden="true" /> {t('projects.selectMultiple')}
                   </DropdownMenuItem>
@@ -290,7 +371,7 @@ const TeamProjectCard = ({
                   <ArchiveRestore size={14} aria-hidden="true" /> {t('project.restore')}
                 </DropdownMenuItem>
               ) : (
-                <DropdownMenuItem onClick={() => onUpdateProject({ archived: true })}>
+                <DropdownMenuItem onClick={onArchive}>
                   <Archive size={14} aria-hidden="true" /> {t('project.archive')}
                 </DropdownMenuItem>
               ))}

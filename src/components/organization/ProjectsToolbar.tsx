@@ -12,7 +12,7 @@
 // les commentaires le disent au cas par cas.
 // ═══════════════════════════════════════════════════════════════════
 
-import { Plus, LayoutList, SquareKanban, CalendarRange, UserRound, Users, X } from 'lucide-react';
+import { Plus, LayoutList, SquareKanban, CalendarRange, UserRound, Users, X, Table2, ListChecks } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -41,6 +41,13 @@ interface ProjectsToolbarProps {
   /** Ouvre la création d'équipe — n'existe que si le sélecteur d'équipe est
    *  affiché (au moins une équipe déjà créée). */
   onCreateTeam: () => void;
+  /** Vue réellement affichée (le portefeuille peut s'imposer sans choix, M2). */
+  effectiveView: ProjectsUiPrefs['view'];
+  /**
+   * Entre en sélection multiple — dans TOUTES les vues de tâches depuis le
+   * 2026-09-24. Absent en vue portefeuille, qui n'affiche aucune tâche.
+   */
+  onStartSelect?: () => void;
 }
 
 /** Onglet de vue — un mot, pas un carré : trois icônes de vue se ressemblent
@@ -90,14 +97,18 @@ const FilterChip = ({ label, removeLabel, onRemove }: {
 
 const ProjectsToolbar = ({
   members, teams, currentUserId, prefs, updatePrefs, canCreateProject, canCreateTeam, onNewProject, onCreateTeam,
+  effectiveView, onStartSelect,
 }: ProjectsToolbarProps) => {
   const { t } = useT('org');
+  const { t: pf } = useT('portfolio');
   // La barre ne porte QUE le périmètre, la vue et la création. Les deux réglages
   // rares qui vivaient ici (densité, sélection multiple) n'y sont plus : la
   // sélection est passée dans le menu de chaque projet, là où sont les tâches ;
   // `showArchived` reste sur la bascule contextuelle du bas de liste, qui
   // affiche le compte et n'existe que s'il y a des archives.
-  const { assigneeFilter, teamFilter, view, statusFilter, kanbanGroupBy, timelineGroupBy } = prefs;
+  const { assigneeFilter, teamFilter, statusFilter, kanbanGroupBy, timelineGroupBy } = prefs;
+  const view = effectiveView;
+  const chooseView = (next: ProjectsUiPrefs['view']) => updatePrefs({ view: next, viewChosen: true });
 
   // Le périmètre a TROIS branches, pas deux. L'ancienne barre n'en montrait que
   // deux : choisir un collègue laissait « Toutes » et « Mes tâches » également
@@ -113,32 +124,32 @@ const ProjectsToolbar = ({
 
   const selectedTeam = teams.find((tm) => tm.id === teamFilter);
   const teamLabel =
-    teamFilter === '' ? t('projects.allTeams')
-      : teamFilter === 'org' ? t('projects.orgNoTeam')
-        : selectedTeam?.name ?? t('projects.allTeams');
+    teamFilter === '' ? pf('toolbar.allTeams')
+      : teamFilter === 'org' ? pf('toolbar.orgNoTeam')
+        : selectedTeam?.name ?? pf('toolbar.allTeams');
 
   // ─── Chips des filtres actifs ────────────────────────────────────
   // Un seul endroit pour voir CE QUI filtre et tout retirer. Les quatre axes
   // sont persistés par organisation : sans ce récapitulatif, on revient trois
   // jours plus tard sur une liste filtrée sans se rappeler l'avoir filtrée.
   const statusChipLabel: Record<Exclude<TaskStatusFilter, 'all'>, string> = {
-    open: t('projects.chipOpen'),
-    overdue: t('projects.chipOverdue'),
-    doneThisWeek: t('projects.chipDone'),
+    open: pf('toolbar.chipOpen'),
+    overdue: pf('toolbar.chipOverdue'),
+    doneThisWeek: pf('toolbar.chipDone'),
   };
 
   const chips: { key: string; label: string; onRemove: () => void }[] = [];
   if (scopeIsMember && filteredMember) {
     chips.push({
       key: 'assignee',
-      label: t('projects.chipAssignee', { name: filteredMember.displayName }),
+      label: pf('toolbar.chipAssignee', { name: filteredMember.displayName }),
       onRemove: () => updatePrefs({ assigneeFilter: null }),
     });
   }
   if (teamFilter !== '') {
     chips.push({
       key: 'team',
-      label: t('projects.chipTeam', { name: teamLabel }),
+      label: pf('toolbar.chipTeam', { name: teamLabel }),
       onRemove: () => updatePrefs({ teamFilter: '' }),
     });
   }
@@ -165,7 +176,7 @@ const ProjectsToolbar = ({
               aria-pressed={scopeIsAll && teamFilter === ''}
               className={`${segBase} ${scopeIsAll && teamFilter === '' ? segOn : segOff}`}
             >
-              {t('projects.scopeAll')}
+              {pf('toolbar.scopeAll')}
             </button>
             {currentUserId && (
               <button
@@ -174,7 +185,7 @@ const ProjectsToolbar = ({
                 aria-pressed={scopeIsMine && teamFilter === ''}
                 className={`${segBase} ${scopeIsMine && teamFilter === '' ? segOn : segOff}`}
               >
-                {t('projects.scopeMine')}
+                {pf('toolbar.scopeMine')}
               </button>
             )}
 
@@ -182,7 +193,7 @@ const ProjectsToolbar = ({
                 personne filtrée, donc l'état ne peut plus être muet. */}
             <DropdownMenu>
               <DropdownMenuTrigger
-                aria-label={t('projects.filterAssignee')}
+                aria-label={pf('toolbar.filterAssignee')}
                 aria-pressed={scopeIsMember && teamFilter === ''}
                 className={`${segBase} inline-flex items-center gap-1.5 ${scopeIsMember && teamFilter === '' ? segOn : segOff}`}
               >
@@ -194,20 +205,20 @@ const ProjectsToolbar = ({
                 ) : (
                   <>
                     <UserRound size={14} aria-hidden="true" />
-                    <span className="hidden sm:inline">{t('projects.scopeMember')}</span>
+                    <span className="hidden sm:inline">{pf('toolbar.scopeMember')}</span>
                   </>
                 )}
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-56 max-h-72 overflow-y-auto">
-                <DropdownMenuLabel>{t('projects.seeTasksOf')}</DropdownMenuLabel>
+                <DropdownMenuLabel>{pf('toolbar.seeTasksOf')}</DropdownMenuLabel>
                 <DropdownMenuItem onClick={() => updatePrefs({ assigneeFilter: null, teamFilter: '' })}>
-                  <span className="text-[rgb(var(--color-text-muted))]">{t('projects.everyone')}</span>
+                  <span className="text-[rgb(var(--color-text-muted))]">{pf('toolbar.everyone')}</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 {members.map((m) => (
                   <DropdownMenuItem key={m.userId} onClick={() => updatePrefs({ assigneeFilter: m.userId, teamFilter: '' })}>
                     <MemberAvatar avatar={m.avatar} name={m.displayName} size={22} />
-                    <span className="truncate">{m.userId === currentUserId ? t('projects.you') : m.displayName}</span>
+                    <span className="truncate">{m.userId === currentUserId ? pf('toolbar.you') : m.displayName}</span>
                     {m.userId === assigneeFilter && (
                       <span className="ml-auto text-xs text-[rgb(var(--color-text-muted))]" aria-hidden="true">✓</span>
                     )}
@@ -224,25 +235,25 @@ const ProjectsToolbar = ({
             {teams.length > 0 && (
               <DropdownMenu>
                 <DropdownMenuTrigger
-                  aria-label={t('projects.filterTeam')}
+                  aria-label={pf('toolbar.filterTeam')}
                   aria-pressed={teamFilter !== ''}
                   className={`${segBase} inline-flex items-center gap-1.5 ${teamFilter !== '' ? segOn : segOff}`}
                 >
                   <Users size={14} aria-hidden="true" />
                   <span className="hidden sm:inline max-w-[100px] truncate">
-                    {teamFilter === '' ? t('projects.teamLabel') : teamLabel}
+                    {teamFilter === '' ? pf('toolbar.teamLabel') : teamLabel}
                   </span>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start" className="w-56 max-h-72 overflow-y-auto">
-                  <DropdownMenuLabel>{t('projects.filterTeam')}</DropdownMenuLabel>
+                  <DropdownMenuLabel>{pf('toolbar.filterTeam')}</DropdownMenuLabel>
                   <DropdownMenuItem onClick={() => updatePrefs({ teamFilter: '' })}>
-                    <span className="text-[rgb(var(--color-text-muted))]">{t('projects.allTeams')}</span>
+                    <span className="text-[rgb(var(--color-text-muted))]">{pf('toolbar.allTeams')}</span>
                     {teamFilter === '' && (
                       <span className="ml-auto text-xs text-[rgb(var(--color-text-muted))]" aria-hidden="true">✓</span>
                     )}
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => updatePrefs({ teamFilter: 'org', assigneeFilter: null })}>
-                    <span>{t('projects.orgNoTeam')}</span>
+                    <span>{pf('toolbar.orgNoTeam')}</span>
                     {teamFilter === 'org' && (
                       <span className="ml-auto text-xs text-[rgb(var(--color-text-muted))]" aria-hidden="true">✓</span>
                     )}
@@ -260,7 +271,7 @@ const ProjectsToolbar = ({
                     <>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={onCreateTeam}>
-                        <span className="text-indigo-600 dark:text-indigo-400">{t('projects.createTeamOption')}</span>
+                        <span className="text-indigo-600 dark:text-indigo-400">{pf('toolbar.createTeamOption')}</span>
                       </DropdownMenuItem>
                     </>
                   )}
@@ -275,23 +286,38 @@ const ProjectsToolbar = ({
           <div
             className="inline-flex rounded-lg border border-[rgb(var(--color-border))] p-0.5 gap-0.5"
             role="group"
-            aria-label={t('projects.viewLabel')}
+            aria-label={pf('toolbar.viewLabel')}
           >
-            <ViewTab active={view === 'list'} onClick={() => updatePrefs({ view: 'list' })} label={t('projects.viewList')} Icon={LayoutList} />
-            <ViewTab active={view === 'kanban'} onClick={() => updatePrefs({ view: 'kanban' })} label={t('projects.viewKanban')} Icon={SquareKanban} />
-            <ViewTab active={view === 'timeline'} onClick={() => updatePrefs({ view: 'timeline' })} label={t('projects.viewTimeline')} Icon={CalendarRange} />
+            <ViewTab active={view === 'portfolio'} onClick={() => chooseView('portfolio')} label={pf('viewPortfolio')} Icon={Table2} />
+            <ViewTab active={view === 'list'} onClick={() => chooseView('list')} label={pf('toolbar.viewList')} Icon={LayoutList} />
+            <ViewTab active={view === 'kanban'} onClick={() => chooseView('kanban')} label={pf('toolbar.viewKanban')} Icon={SquareKanban} />
+            <ViewTab active={view === 'timeline'} onClick={() => chooseView('timeline')} label={pf('toolbar.viewTimeline')} Icon={CalendarRange} />
           </div>
+
+          {/* Sélection multiple, à côté des vues : elle vaut pour les trois vues
+              de tâches (audit 2026-09-24), plus seulement pour la liste. */}
+          {onStartSelect && view !== 'portfolio' && (
+            <button
+              type="button"
+              onClick={onStartSelect}
+              aria-label={pf('bulk.selectToggleAria')}
+              className="inline-flex items-center gap-1.5 h-9 px-2.5 rounded-lg border border-[rgb(var(--color-border))] text-sm font-medium text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]/60"
+            >
+              <ListChecks size={15} aria-hidden="true" />
+              <span className="hidden sm:inline">{pf('bulk.selectToggle')}</span>
+            </button>
+          )}
 
           {/* Axe des colonnes du Tableau — juste à côté de l'onglet qui le
               montre, pas loin en dessous : c'est ce qui le rendait invisible.
               N'existe QUE quand « Tableau » est actif, disparaît sinon. */}
           {view === 'kanban' && (
             <div className="inline-flex items-center gap-1.5">
-              <span className="hidden md:inline text-xs text-[rgb(var(--color-text-muted))]">{t('projects.columnsLabel')}</span>
+              <span className="hidden md:inline text-xs text-[rgb(var(--color-text-muted))]">{pf('toolbar.columnsLabel')}</span>
               <div
                 className="inline-flex rounded-lg border border-[rgb(var(--color-border))] p-0.5 gap-0.5"
                 role="group"
-                aria-label={t('projects.columnsLabel')}
+                aria-label={pf('toolbar.columnsLabel')}
               >
                 <button
                   type="button"
@@ -299,7 +325,7 @@ const ProjectsToolbar = ({
                   aria-pressed={kanbanGroupBy === 'status'}
                   className={`${segBase} ${kanbanGroupBy === 'status' ? segOn : segOff}`}
                 >
-                  {t('projects.groupByStatus')}
+                  {pf('toolbar.groupByStatus')}
                 </button>
                 <button
                   type="button"
@@ -307,7 +333,7 @@ const ProjectsToolbar = ({
                   aria-pressed={kanbanGroupBy === 'assignee'}
                   className={`${segBase} ${kanbanGroupBy === 'assignee' ? segOn : segOff}`}
                 >
-                  {t('projects.groupByAssignee')}
+                  {pf('toolbar.groupByAssignee')}
                 </button>
               </div>
             </div>
@@ -317,11 +343,11 @@ const ProjectsToolbar = ({
               « Colonnes » ci-dessus. N'existe QUE quand « Planning » est actif. */}
           {view === 'timeline' && (
             <div className="inline-flex items-center gap-1.5">
-              <span className="hidden md:inline text-xs text-[rgb(var(--color-text-muted))]">{t('projects.rowsLabel')}</span>
+              <span className="hidden md:inline text-xs text-[rgb(var(--color-text-muted))]">{pf('toolbar.rowsLabel')}</span>
               <div
                 className="inline-flex rounded-lg border border-[rgb(var(--color-border))] p-0.5 gap-0.5"
                 role="group"
-                aria-label={t('projects.rowsLabel')}
+                aria-label={pf('toolbar.rowsLabel')}
               >
                 <button
                   type="button"
@@ -329,7 +355,7 @@ const ProjectsToolbar = ({
                   aria-pressed={timelineGroupBy === 'project'}
                   className={`${segBase} ${timelineGroupBy === 'project' ? segOn : segOff}`}
                 >
-                  {t('projects.groupByProject')}
+                  {pf('toolbar.groupByProject')}
                 </button>
                 <button
                   type="button"
@@ -337,7 +363,7 @@ const ProjectsToolbar = ({
                   aria-pressed={timelineGroupBy === 'assignee'}
                   className={`${segBase} ${timelineGroupBy === 'assignee' ? segOn : segOff}`}
                 >
-                  {t('projects.groupByAssignee')}
+                  {pf('toolbar.groupByAssignee')}
                 </button>
               </div>
             </div>
@@ -363,12 +389,12 @@ const ProjectsToolbar = ({
       {/* Rangée de chips — n'existe que s'il y a quelque chose à dire. */}
       {chips.length > 0 && (
         <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="text-xs text-[rgb(var(--color-text-muted))]">{t('projects.activeFilters')}</span>
+          <span className="text-xs text-[rgb(var(--color-text-muted))]">{pf('toolbar.activeFilters')}</span>
           {chips.map((chip) => (
             <FilterChip
               key={chip.key}
               label={chip.label}
-              removeLabel={t('projects.removeFilter', { name: chip.label })}
+              removeLabel={pf('toolbar.removeFilter', { name: chip.label })}
               onRemove={chip.onRemove}
             />
           ))}
@@ -377,7 +403,7 @@ const ProjectsToolbar = ({
             onClick={clearAll}
             className="text-xs text-[rgb(var(--color-text-muted))] underline underline-offset-2 hover:text-[rgb(var(--color-text-secondary))] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded"
           >
-            {t('projects.clearAll')}
+            {pf('toolbar.clearAll')}
           </button>
         </div>
       )}
