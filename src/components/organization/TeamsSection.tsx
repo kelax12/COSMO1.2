@@ -9,7 +9,7 @@ import {
 import type { OrgMember } from '@/modules/organizations';
 import { useTeamProjects } from '@/modules/team-projects';
 import MemberAvatar from './MemberAvatar';
-import { useOrgCreate } from './org-create.context';
+import { OrgCreateBoundary, useOrgCreate } from './org-create.context';
 import { PermissionGate, usePermissionHints } from './permission-hints';
 import DeleteTeamDialog from './DeleteTeamDialog';
 import { orgTeamPath } from './deep-link.helpers';
@@ -209,4 +209,12 @@ const TeamsSection = ({ orgId, members, currentUserId, isAdmin, canCreateTeam }:
   );
 };
 
-export default TeamsSection;
+// Frontière du formulaire unique de création (org-create.context) : posée par
+// chaque écran qui crée, pas par la page, dont le chunk a un cliquet.
+const TeamsSectionWithCreate = (props: TeamsSectionProps) => (
+  <OrgCreateBoundary orgId={props.orgId}>
+    <TeamsSection {...props} />
+  </OrgCreateBoundary>
+);
+
+export default TeamsSectionWithCreate;

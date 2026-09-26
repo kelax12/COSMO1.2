@@ -42,7 +42,7 @@ import TruncatedDataNotice from './TruncatedDataNotice';
 import TeamTrashDialog from './TeamTrashDialog';
 import { useT } from '@/i18n/useT';
 import TeamColorDot from './TeamColorDot';
-import { useOrgCreate } from './org-create.context';
+import { OrgCreateBoundary, useOrgCreate } from './org-create.context';
 
 interface TeamProjectsTabProps {
   orgId: string;
@@ -572,4 +572,12 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
   );
 };
 
-export default TeamProjectsTab;
+// Frontière du formulaire unique de création (org-create.context) : posée par
+// chaque écran qui crée, pas par la page, dont le chunk a un cliquet.
+const TeamProjectsTabWithCreate = (props: TeamProjectsTabProps) => (
+  <OrgCreateBoundary orgId={props.orgId}>
+    <TeamProjectsTab {...props} />
+  </OrgCreateBoundary>
+);
+
+export default TeamProjectsTabWithCreate;

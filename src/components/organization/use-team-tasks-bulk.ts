@@ -18,9 +18,6 @@ import { useTeamTasksSelection } from './use-team-tasks-selection';
 export const useTeamTasksBulk = (orgId: string, visibleTasks: TeamTask[]) => {
   const { canAssign } = useMyOrgPermissions(orgId);
   const { tp } = useT('org');
-  // Libellés d'annulation lus au moment du geste : la barre, chargée avec le
-  // catalogue `portfolio`, est toujours montée avant qu'un geste soit possible.
-  const { tp: tpf } = useT('portfolio');
   const updateTask = useUpdateTeamTask(orgId);
   const deleteTask = useDeleteTeamTask(orgId);
   const restoreTask = useRestoreTeamTask(orgId);
@@ -32,9 +29,13 @@ export const useTeamTasksBulk = (orgId: string, visibleTasks: TeamTask[]) => {
     deletedLabel: (count) => tp('projects.bulkDeleted', count),
     updateTask: (task, input) => updateTask.mutate({ taskId: task.id, input }),
     labels: {
-      reassigned: (count) => tpf('bulk.reassigned', count),
-      moved: (count) => tpf('bulk.moved', count),
-      statusChanged: (count) => tpf('bulk.statusChanged', count),
+      // Dans `org`, pas `portfolio` : chaque liste qui monte ce hook porterait
+      // sinon ce catalogue (cf. lazy-namespaces.guard).
+      // Un seul libellé pour les trois gestes : le toast dit ce qui s'annule
+      // (« 3 tâches mises à jour »), le geste vient d'être fait sous les yeux.
+      reassigned: (count) => tp('bulkUndo.updated', count),
+      moved: (count) => tp('bulkUndo.updated', count),
+      statusChanged: (count) => tp('bulkUndo.updated', count),
     },
     canAssign,
   });

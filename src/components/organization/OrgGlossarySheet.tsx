@@ -7,8 +7,9 @@ import { OBJECT_TERMS, ROLE_TERMS, termDefKey, termNameKey, type OrgTerm } from 
 
 /** Le glossaire de l'entreprise : chaque rôle, chaque objet, une définition. */
 const OrgGlossarySheet = ({ focusTerm, onClose }: { focusTerm?: OrgTerm; onClose: () => void }) => {
-  const { t } = useT('org');
-  const { ref, dialogProps } = useModalA11y<HTMLDivElement>({ open: true, onClose, label: t('glossary.title') });
+  // Titres et définitions : catalogue `orgAccount`, chargé avec cette feuille.
+  const { t: ta } = useT('orgAccount');
+  const { ref, dialogProps } = useModalA11y<HTMLDivElement>({ open: true, onClose, label: ta('glossary.title') });
   const focusRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     focusRef.current?.scrollIntoView({ block: 'center' });
@@ -16,7 +17,7 @@ const OrgGlossarySheet = ({ focusTerm, onClose }: { focusTerm?: OrgTerm; onClose
 
   const section = (titleKey: 'glossary.sectionRoles' | 'glossary.sectionObjects', terms: readonly OrgTerm[]) => (
     <section>
-      <h3 className="text-xs font-bold uppercase tracking-wide text-[rgb(var(--color-text-muted))] mb-2">{t(titleKey)}</h3>
+      <h3 className="text-xs font-bold uppercase tracking-wide text-[rgb(var(--color-text-muted))] mb-2">{ta(titleKey)}</h3>
       <dl className="space-y-3">
         {terms.map((term) => (
           <div
@@ -24,8 +25,8 @@ const OrgGlossarySheet = ({ focusTerm, onClose }: { focusTerm?: OrgTerm; onClose
             ref={term === focusTerm ? focusRef : undefined}
             className={`rounded-xl border p-3 ${term === focusTerm ? 'border-[rgb(var(--color-accent))] bg-[rgb(var(--color-accent)/0.06)]' : 'border-[rgb(var(--color-border))]'}`}
           >
-            <dt className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">{t(termNameKey(term))}</dt>
-            <dd className="text-xs leading-relaxed text-[rgb(var(--color-text-secondary))] mt-1">{t(termDefKey(term))}</dd>
+            <dt className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">{ta(termNameKey(term))}</dt>
+            <dd className="text-xs leading-relaxed text-[rgb(var(--color-text-secondary))] mt-1">{ta(termDefKey(term))}</dd>
           </div>
         ))}
       </dl>
@@ -42,19 +43,19 @@ const OrgGlossarySheet = ({ focusTerm, onClose }: { focusTerm?: OrgTerm; onClose
       >
         <div className="flex items-center justify-between gap-2 px-4 sm:px-6 py-2 border-b border-[rgb(var(--color-border))]">
           <h2 className="inline-flex items-center gap-2 text-base sm:text-lg font-semibold text-[rgb(var(--color-text-primary))]">
-            <BookOpen size={18} aria-hidden="true" /> {t('glossary.title')}
+            <BookOpen size={18} aria-hidden="true" /> {ta('glossary.title')}
           </h2>
           <button
             type="button"
             onClick={onClose}
-            aria-label={t('glossary.close')}
+            aria-label={ta('glossary.close')}
             className="min-w-11 min-h-11 flex items-center justify-center rounded-lg text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))]"
           >
             <X size={20} aria-hidden="true" />
           </button>
         </div>
         <div className="p-4 sm:p-6 overflow-y-auto space-y-5 bg-[rgb(var(--color-background))]">
-          <p className="text-sm text-[rgb(var(--color-text-secondary))]">{t('glossary.intro')}</p>
+          <p className="text-sm text-[rgb(var(--color-text-secondary))]">{ta('glossary.intro')}</p>
           {section('glossary.sectionRoles', ROLE_TERMS)}
           {section('glossary.sectionObjects', OBJECT_TERMS)}
         </div>

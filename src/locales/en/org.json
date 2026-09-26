@@ -88,11 +88,8 @@
     "orgCodeTitle": "Organization invitation code",
     "seatsFullLink": "This company has reached its seat limit: a new member could not join with this link. Upgrade the plan to add more.",
     "seatsFullCode": "This company has reached its seat limit: a request made with this code could not be accepted.",
-    "regenerateTitle": "Regenerate the invitation code?",
-    "regenerateImpactOld": "The old code stops working immediately.",
-    "regenerateImpactShared": "People you shared it with will need the new one.",
-    "regenerateImpactPending": "Requests already sent stay pending approval.",
-    "regenerateAction": "Regenerate"
+    "regenerateImpactOld": "The old code stops working at once.",
+    "regenerateImpactShared": "Those who received it will need the new one."
   },
   "pyramid": {
     "directReports_one": ", {{count}} direct report",
@@ -159,7 +156,6 @@
     "undoTitle": "Undo the reorganisation?",
     "undoImpact_one": "{{count}} move will be reverted.",
     "undoImpact_other": "{{count}} moves will be reverted.",
-    "undoImpactManagers": "Everyone gets back the manager they had before.",
     "undoAction": "Revert"
   },
   "overview": {
@@ -206,7 +202,6 @@
     "loading": "Loading statistics…",
     "periodDays": "{{count}}d",
     "periodAll": "All",
-    "csvObjective": "Objective",
     "csvProgress": "Progress (%)",
     "csvKrCount": "KR count",
     "okrProgressLabel": "OKR progress"
@@ -297,7 +292,6 @@
     "statusReview": "In review",
     "statusBlocked": "Blocked",
     "statusDone": "Done",
-    "groupBy": "Group by",
     "selectMultiple": "Select multiple tasks",
     "selectHint": "Select tasks",
     "markComplete": "Mark as done",
@@ -611,7 +605,6 @@
     "seeTasks": "See their tasks",
     "seeAgenda": "See their calendar",
     "seeContribution": "See their contribution",
-    "removeFromOrg": "Remove from organization",
     "changeRoleAria": "Change {{name}}'s role",
     "customizeRole": "Customize…",
     "filters": {
@@ -702,13 +695,6 @@
     "noDirectReport": "No direct reports",
     "crossTeams": "Cross-functional teams",
     "move": "Move",
-    "toRemove": " · to remove",
-    "reassignAria": "Reassign {{name}}'s team",
-    "reassignHint_one": "{{count}} direct report: choose their new manager in the pyramid. Their own team stays with them.",
-    "reassignHint_other": "{{count}} direct reports: choose their new manager in the pyramid. Their own team stays with them.",
-    "detachThem": "Detach them (unplaced)",
-    "reassigning": "Reassigning…",
-    "willBeRemoved": "{{name}} will be permanently removed from the company.",
     "copyLink": "Copy link to this profile",
     "copyLinkDone": "Link copied",
     "placementHint": "Pick their new direct manager in the pyramid.",
@@ -718,10 +704,7 @@
     "tabProfile": "Profile",
     "tabTasks": "Tasks",
     "tabContribution": "Contribution",
-    "tabAgenda": "Calendar",
-    "removeTitle": "Remove {{name}}",
-    "removeFromOrgAction": "Remove from company",
-    "removing": "Removing…"
+    "tabAgenda": "Calendar"
   },
   "okrCategory": {
     "new": "New category",
@@ -891,10 +874,9 @@
     "unreadComments_other": "{{count}} unread comments",
     "backToChoice": "Back",
     "deleteOkrTitle": "Delete the objective “{{title}}”?",
-    "deleteOkrImpactKrs_one": "{{count}} key result is deleted with it.",
-    "deleteOkrImpactKrs_other": "{{count}} key results are deleted with it.",
-    "deleteOkrImpactHistory": "Its progress and history are lost. There is no trash for objectives.",
-    "deleteOkrAction": "Delete objective"
+    "deleteOkrImpactKrs_one": "{{count}} key result deleted with it.",
+    "deleteOkrImpactKrs_other": "{{count}} key results deleted with it.",
+    "deleteOkrImpactHistory": "Progress and history are lost, with no trash."
   },
   "tabs": {
     "overview": "Overview",
@@ -1144,15 +1126,12 @@
       "everyone": "Everyone",
       "everyoneHint": "Any member of the company. Makes the other boxes irrelevant."
     },
-    "denied": "You need the “{{right}}” permission. An administrator can grant it from Members.",
-    "deniedTaskEdit": "You can edit the tasks you created or that are assigned to you. Beyond that, you need the “{{right}}” permission.",
-    "deniedTaskDelete": "You can delete the tasks you created. Beyond that, you need the “{{right}}” permission.",
-    "deniedAdmin": "Reserved for company administrators.",
-    "deniedTeamDelete": "A team can be deleted by an administrator or by the person who created it."
+    "denied": "Requires the “{{right}}” permission. An administrator can grant it.",
+    "deniedTaskEdit": "Without “{{right}}”, you can only edit tasks you created or are assigned to.",
+    "deniedTaskDelete": "Without “{{right}}”, you can only delete tasks you created.",
+    "deniedTeamDelete": "Reserved for administrators and the team’s creator."
   },
-  "members": {
-    "removeTitleNamed": "Remove {{name}}?"
-  },
+  "members": {},
   "truncation": {
     "tasks": "Only the {{limit}} most recent tasks are loaded. Your organization has more, so what you see here covers that subset only."
   },
@@ -1348,84 +1327,14 @@
     "resume": "Resume the setup assistant"
   },
   "confirm": {
-    "impactTitle": "What will happen",
     "typeName": "To confirm, type “{{name}}”"
   },
-  "filters": {
-    "barAria": "Task filters",
-    "scopeAll": "All",
-    "scopeMine": "Me",
-    "scopeMember": "Someone",
-    "you": "You",
-    "teamLabel": "Team",
-    "activeFilters": "Active filters:",
-    "clearAll": "Clear all",
-    "removeFilter": "Remove the “{{name}}” filter",
-    "chipAssignee": "Assignee: {{name}}",
-    "chipTeam": "Team: {{name}}",
-    "chipProject": "Project: {{name}}",
-    "chipSearch": "“{{query}}”",
-    "filterAssignee": "Filter by assignee",
-    "seeTasksOf": "See tasks from",
-    "everyone": "Everyone",
-    "filterTeam": "Filter by team",
-    "allTeams": "All teams",
-    "orgNoTeam": "Company (no team)",
-    "createTeamOption": "+ Create a team",
-    "statusAria": "Filter by state",
-    "statusOpen": "Open",
-    "statusOverdue": "Overdue",
-    "statusDoneThisWeek": "Completed this week",
-    "statusAll": "All",
-    "clearSearch": "Clear search"
-  },
   "glossary": {
-    "title": "Company glossary",
-    "intro": "Every COSMO word has a precise meaning. A role says what you CAN do; a position in the org chart says whom you manage.",
     "open": "Glossary",
-    "openAria": "Open the company glossary",
-    "close": "Close the glossary",
-    "seeAll": "See the full glossary",
-    "termHelp": "What is “{{term}}”?",
-    "sectionRoles": "Roles and positions",
-    "sectionObjects": "Objects",
-    "terms": {
-      "owner": {
-        "name": "Owner",
-        "def": "The person who created the company in COSMO and holds its subscription. There is only one; they can hand this role over. They are also an administrator."
-      },
-      "admin": {
-        "name": "Administrator",
-        "def": "A ROLE: full rights (invite, organise the org chart, set everyone’s permissions). There can be several."
-      },
-      "manager": {
-        "name": "Manager",
-        "def": "A POSITION, not a role: anyone with at least one person reporting to them in the org chart. They see Statistics and the Org chart for their scope."
-      },
-      "teamLead": {
-        "name": "Team lead",
-        "def": "The person appointed to run a cross-functional team. It is neither a role nor a reporting position: you can lead a team without managing anyone in the org chart."
-      },
-      "member": {
-        "name": "Member",
-        "def": "Anyone in the company. Their default rights can be widened or narrowed by an administrator (Members → Edit permissions)."
-      },
-      "team": {
-        "name": "Team",
-        "def": "A group of people, independent from the org chart (someone can belong to several teams). A project or objective attached to a team is visible to that team only."
-      },
-      "project": {
-        "name": "Project",
-        "def": "A set of tasks with an owner, dates and a chosen colour. Every team task belongs to a project."
-      },
-      "category": {
-        "name": "Category",
-        "def": "A thematic classification shared by projects, tasks and objectives, organised as a tree. It has its own colour and does not change a project’s colour."
-      },
-      "label": {
-        "name": "Label",
-        "def": "A free marker placed on a task (“urgent”, “client”…). Unlike a category, it has no hierarchy and applies to tasks only."
-      }
-    }
+    "termHelp": "Definition: {{term}}"
+  },
+  "bulkUndo": {
+    "updated_one": "{{count}} task updated",
+    "updated_other": "{{count}} tasks updated"
   }
 }

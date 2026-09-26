@@ -5,8 +5,8 @@ import {
   isOrgPath,
   legacyOrgTabRedirect,
   orgSectionPath,
-  entityRedirect,
 } from './deep-link.helpers';
+import { entityRedirect } from './entity-redirect';
 
 describe('readEntityParam', () => {
   it('lit un id de tâche', () => {

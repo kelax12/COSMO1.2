@@ -29,7 +29,6 @@ import TeamAssigneeGroups from './TeamAssigneeGroups';
 import { PRIORITY_META, projectColor } from './team-projects.helpers';
 
 import { useT } from '@/i18n/useT';
-import RoleTerm from './RoleTerm';
 import { useOrgCreate } from './org-create.context';
 import { TAP_AREA_44_Y } from '@/components/mobile/tap-area';
 
@@ -166,7 +165,7 @@ const TeamTaskFields = ({
       {/* Catégorie (mig. 111) — distincte du projet, jamais héritée de
           lui : une tâche porte sa propre catégorie. */}
       <div>
-        <span className={labelClass} style={labelStyle}><RoleTerm term="category">{t('project.category')}</RoleTerm></span>
+        <span className={labelClass} style={labelStyle}>{t('project.category')}</span>
         <TeamCategoryTreeSelect orgId={orgId} value={categoryId} onChange={onCategoryChange} />
       </div>
 

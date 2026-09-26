@@ -2,7 +2,9 @@ import { Suspense } from 'react';
 import { Navigate, useSearchParams } from 'react-router';
 import type { OrgMember } from '@/modules/organizations';
 import { lazyWithRetry } from '@/lib/lazy-with-retry';
-import { entityRedirect, readEntityParam } from './deep-link.helpers';
+import { safeRedirectPath } from '@/lib/safe-redirect';
+import { readEntityParam } from './deep-link.helpers';
+import { entityRedirect } from './entity-redirect';
 
 // ═══════════════════════════════════════════════════════════════════
 // Liens profonds de /entreprise : UN lecteur, pour toutes les sections
@@ -40,8 +42,14 @@ interface OrgDeepLinkHostProps {
 
 const OrgDeepLinkHost = ({ orgId, section, members, currentUserId, isAdmin, isManager }: OrgDeepLinkHostProps) => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const redirect = entityRedirect(section, searchParams);
+  // `safeRedirectPath` comme toute destination lue dans l'URL, même construite
+  // ici depuis une liste fermée (cf. no-open-redirect.test.ts).
+  const redirect = safeRedirectPath(entityRedirect(section, searchParams));
   if (redirect) return <Navigate to={redirect} replace />;
+
+  // Ce qui suit s'ouvre SUR PLACE : tâche (modal) et membre (fiche), jamais
+  // une navigation. Les deux lectures d'URL ci-dessous ne nourrissent que des
+  // identifiants, bornés par `readEntityParam`.
 
   const taskId = readEntityParam(searchParams, 'task');
   const memberId = MEMBER_SECTIONS.has(section) ? null : readEntityParam(searchParams, 'member');

@@ -5,7 +5,7 @@ import { Move, Users, ArrowUpFromLine, UserPlus } from 'lucide-react';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
 import { useOrgTeams, useOrgTeamMembers, type OrgTeam } from '@/modules/org-teams';
 import OrgConfirmDialog from './OrgConfirmDialog';
-import { useOrgCreate } from './org-create.context';
+import { OrgCreateBoundary, useOrgCreate } from './org-create.context';
 import {
   buildOrgTree,
   type OrgMember,
@@ -334,7 +334,7 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
           {confirmingUndo && (
             <OrgConfirmDialog
               title={t('pyramid.undoTitle')}
-              impact={[tp('pyramid.undoImpact', moveCount), t('pyramid.undoImpactManagers')]}
+              impact={[tp('pyramid.undoImpact', moveCount)]}
               confirmLabel={t('pyramid.undoAction')}
               tone="warning"
               pending={undoing}
@@ -504,4 +504,12 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
   );
 };
 
-export default PyramidTab;
+// Frontière du formulaire unique de création (org-create.context) : posée par
+// chaque écran qui crée, pas par la page, dont le chunk a un cliquet.
+const PyramidTabWithCreate = (props: PyramidTabProps) => (
+  <OrgCreateBoundary orgId={props.orgId}>
+    <PyramidTab {...props} />
+  </OrgCreateBoundary>
+);
+
+export default PyramidTabWithCreate;

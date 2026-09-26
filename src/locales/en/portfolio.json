@@ -190,5 +190,32 @@
     "groupByAssignee": "Person",
     "groupByProject": "Project",
     "groupByStatus": "Status"
+  },
+  "filters": {
+    "barAria": "Task filters",
+    "scopeAll": "All",
+    "scopeMine": "Me",
+    "scopeMember": "Someone",
+    "you": "You",
+    "teamLabel": "Team",
+    "activeFilters": "Active filters:",
+    "clearAll": "Clear all",
+    "removeFilter": "Remove the “{{name}}” filter",
+    "chipAssignee": "Assignee: {{name}}",
+    "chipTeam": "Team: {{name}}",
+    "chipProject": "Project: {{name}}",
+    "chipSearch": "“{{query}}”",
+    "filterAssignee": "Filter by assignee",
+    "seeTasksOf": "See tasks from",
+    "everyone": "Everyone",
+    "filterTeam": "Filter by team",
+    "allTeams": "All teams",
+    "orgNoTeam": "Company (no team)",
+    "createTeamOption": "+ Create a team",
+    "statusAria": "Filter by state",
+    "statusOpen": "Open",
+    "statusOverdue": "Overdue",
+    "statusDoneThisWeek": "Completed this week",
+    "statusAll": "All"
   }
 }

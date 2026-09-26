@@ -434,7 +434,7 @@ const TeamOKRTab = ({ orgId }: TeamOKRTabProps) => {
             ...(deletingOKR.keyResults.length > 0 ? [tp('common.deleteOkrImpactKrs', deletingOKR.keyResults.length)] : []),
             t('common.deleteOkrImpactHistory'),
           ]}
-          confirmLabel={t('common.deleteOkrAction')}
+          confirmLabel={t('common.deleteAction')}
           pending={deleteOKR.isPending}
           onConfirm={() => deleteOKR.mutate(deletingOKR.id, { onSettled: () => setDeletingOKR(null) })}
           onCancel={() => setDeletingOKR(null)}

@@ -9,7 +9,8 @@
 //
 // ⚠️ Le TÉMOIN reste le plus important : « Tout » ne doit jamais se désactiver
 // lui-même, sinon on retire la seule sortie explicite vers l'ensemble.
-import { describe, it, expect, vi } from 'vitest';
+import { beforeAll, describe, it, expect, vi } from 'vitest';
+import { ensureNamespaces } from '@/i18n/catalog';
 import { render, screen, fireEvent } from '@testing-library/react';
 import OrgTaskFilterBar from './OrgTaskFilterBar';
 import {
@@ -42,6 +43,11 @@ const statusButtons = () =>
   Array.from(screen.getByRole('group', { name: /état|state/i }).querySelectorAll('button'));
 
 describe('OrgTaskFilterBar — une seule grammaire de filtre', () => {
+  // Les libellés de la barre vivent dans `portfolio`, chargé avec les onglets.
+  beforeAll(async () => {
+    await ensureNamespaces(['portfolio'], 'fr');
+  });
+
   it('re-cliquer une pastille ACTIVE revient à « Tout »', () => {
     const setFilters = renderBar('overdue');
     const active = statusButtons().filter((b) => b.getAttribute('aria-pressed') === 'true');

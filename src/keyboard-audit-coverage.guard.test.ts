@@ -74,6 +74,8 @@ const MESUREES: Record<string, string> = {
  *   · NON MESURÉE, SANS OBSTACLE — la dette. Elle est nommée comme telle.
  */
 const NON_MESUREES: Record<string, string> = {
+  'components/organization/OrgGlossarySheet.tsx':
+    'dette : glossaire de /entreprise (bouton d en-tête, 2026-09-25), jamais parcouru au clavier.',
   'components/BugReportModal.tsx':
     'dette : atteignable en démo, jamais parcourue au clavier.',
   'components/CollaborativeTasks.tsx':

@@ -7,20 +7,17 @@
 // POSITION dans la pyramide, l'animation d'une équipe). Règle : un glossaire
 // dans le produit, et une info-bulle au premier affichage de chaque rôle.
 //
-// Aucun import lourd : la page lit ce module (bouton « Glossaire »).
+// Le glossaire s'ouvre du bouton d'en-tête (page) et de chaque info-bulle (`RoleTerm`).
 // ═══════════════════════════════════════════════════════════════════
 
 export const ROLE_TERMS = ['owner', 'admin', 'manager', 'teamLead', 'member'] as const;
 export const OBJECT_TERMS = ['team', 'project', 'category', 'label'] as const;
 export type OrgTerm = (typeof ROLE_TERMS)[number] | (typeof OBJECT_TERMS)[number];
 
-export const termNameKey = (term: OrgTerm) => `glossary.terms.${term}.name` as const;
-export const termDefKey = (term: OrgTerm) => `glossary.terms.${term}.def` as const;
-
-/** Ouvre le glossaire, d'où qu'on soit dans /entreprise (écouté par `OrganizationPage`). */
-export const OPEN_GLOSSARY_EVENT = 'open-org-glossary';
-export const openOrgGlossary = (term?: OrgTerm) =>
-  window.dispatchEvent(new CustomEvent(OPEN_GLOSSARY_EVENT, { detail: term }));
+export const termNameKey = (term: OrgTerm) => `glossary.names.${term}` as const;
+/** Nom et définition : dans `orgAccount` (catalogue chargé à la demande), pas
+ *  dans `org`, payé par toute visite de /entreprise (cliquet du chunk `org`). */
+export const termDefKey = (term: OrgTerm) => `glossary.defs.${term}` as const;
 
 const SEEN_KEY = 'cosmo_org_terms_seen_v1';
 

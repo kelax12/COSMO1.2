@@ -93,11 +93,8 @@
     "orgCodeTitle": "Code d'invitation de l'entreprise",
     "seatsFullLink": "Cette entreprise a atteint son nombre de places : un nouveau membre ne pourrait pas rejoindre avec ce lien. Faites évoluer l'abonnement pour en ajouter.",
     "seatsFullCode": "Cette entreprise a atteint son nombre de places : une demande faite avec ce code ne pourrait pas être acceptée.",
-    "regenerateTitle": "Régénérer le code d'invitation ?",
-    "regenerateImpactOld": "L'ancien code cesse immédiatement de fonctionner.",
-    "regenerateImpactShared": "Les personnes à qui vous l'avez transmis devront recevoir le nouveau.",
-    "regenerateImpactPending": "Les demandes déjà envoyées restent en attente de validation.",
-    "regenerateAction": "Régénérer"
+    "regenerateImpactOld": "L'ancien code cesse aussitôt de fonctionner.",
+    "regenerateImpactShared": "Ceux qui l'ont reçu devront avoir le nouveau."
   },
   "pyramid": {
     "directReports_one": ", {{count}} subordonné direct",
@@ -171,7 +168,6 @@
     "undoImpact_one": "{{count}} déplacement sera rétabli.",
     "undoImpact_many": "{{count}} de déplacements seront rétablis.",
     "undoImpact_other": "{{count}} déplacements seront rétablis.",
-    "undoImpactManagers": "Chaque personne retrouve le responsable qu'elle avait avant.",
     "undoAction": "Rétablir"
   },
   "overview": {
@@ -219,7 +215,6 @@
     "loading": "Chargement des statistiques…",
     "periodDays": "{{count}} j",
     "periodAll": "Tout",
-    "csvObjective": "Objectif",
     "csvProgress": "Progression (%)",
     "csvKrCount": "Nb KR",
     "okrProgressLabel": "Progression OKR"
@@ -315,7 +310,6 @@
     "statusReview": "En relecture",
     "statusBlocked": "Bloquée",
     "statusDone": "Terminée",
-    "groupBy": "Grouper par",
     "selectMultiple": "Sélectionner plusieurs tâches",
     "selectHint": "Sélectionnez des tâches",
     "markComplete": "Marquer comme terminée",
@@ -649,7 +643,6 @@
     "seeTasks": "Voir ses tâches",
     "seeAgenda": "Voir son agenda",
     "seeContribution": "Voir sa contribution",
-    "removeFromOrg": "Retirer de l'entreprise",
     "changeRoleAria": "Modifier le rôle de {{name}}",
     "customizeRole": "Personnaliser…",
     "filters": {
@@ -749,14 +742,6 @@
     "noDirectReport": "Aucun subordonné direct",
     "crossTeams": "Équipes transverses",
     "move": "Déplacer",
-    "toRemove": " · à retirer",
-    "reassignAria": "Réassigner l'équipe de {{name}}",
-    "reassignHint_one": "{{count}} subordonné direct : choisissez leur nouveau responsable dans la pyramide. Leur équipe reste rattachée à eux.",
-    "reassignHint_many": "{{count}} de subordonnés directs : choisissez leur nouveau responsable dans la pyramide. Leur équipe reste rattachée à eux.",
-    "reassignHint_other": "{{count}} subordonnés directs : choisissez leur nouveau responsable dans la pyramide. Leur équipe reste rattachée à eux.",
-    "detachThem": "Les détacher (non placés)",
-    "reassigning": "Réassignation en cours…",
-    "willBeRemoved": "{{name}} sera définitivement retiré de l'entreprise.",
     "copyLink": "Copier le lien vers cette fiche",
     "copyLinkDone": "Lien copié",
     "placementHint": "Choisissez son nouveau responsable direct dans la pyramide.",
@@ -766,10 +751,7 @@
     "tabProfile": "Profil",
     "tabTasks": "Tâches",
     "tabContribution": "Contribution",
-    "tabAgenda": "Agenda",
-    "removeTitle": "Retirer {{name}}",
-    "removeFromOrgAction": "Retirer de l'entreprise",
-    "removing": "Retrait…"
+    "tabAgenda": "Agenda"
   },
   "okrCategory": {
     "new": "Nouvelle catégorie",
@@ -943,11 +925,10 @@
     "unreadComments_other": "{{count}} commentaires non lus",
     "backToChoice": "Retour",
     "deleteOkrTitle": "Supprimer l'objectif « {{title}} » ?",
-    "deleteOkrImpactKrs_one": "{{count}} résultat clé est supprimé avec lui.",
-    "deleteOkrImpactKrs_many": "{{count}} de résultats clés sont supprimés avec lui.",
-    "deleteOkrImpactKrs_other": "{{count}} résultats clés sont supprimés avec lui.",
-    "deleteOkrImpactHistory": "Sa progression et son historique sont perdus. Il n'y a pas de corbeille pour les objectifs.",
-    "deleteOkrAction": "Supprimer l'objectif"
+    "deleteOkrImpactKrs_one": "{{count}} résultat clé supprimé avec lui.",
+    "deleteOkrImpactKrs_many": "{{count}} de résultats clés supprimés avec lui.",
+    "deleteOkrImpactKrs_other": "{{count}} résultats clés supprimés avec lui.",
+    "deleteOkrImpactHistory": "Progression et historique perdus, sans corbeille."
   },
   "tabs": {
     "overview": "Aperçu",
@@ -1199,15 +1180,12 @@
       "everyone": "Tout le monde",
       "everyoneHint": "N'importe quel membre de l'entreprise. Rend les autres cases inutiles."
     },
-    "denied": "Il vous faut le droit « {{right}} ». Un administrateur peut vous l'accorder depuis Membres.",
-    "deniedTaskEdit": "Vous modifiez les tâches que vous avez créées ou qui vous sont assignées. Au-delà, il faut le droit « {{right}} ».",
-    "deniedTaskDelete": "Vous supprimez les tâches que vous avez créées. Au-delà, il faut le droit « {{right}} ».",
-    "deniedAdmin": "Réservé aux administrateurs de l'entreprise.",
-    "deniedTeamDelete": "Une équipe se supprime par un administrateur ou par la personne qui l’a créée."
+    "denied": "Droit requis : « {{right}} ». Un administrateur peut l'accorder.",
+    "deniedTaskEdit": "Seules vos tâches (créées ou assignées) sont modifiables sans le droit « {{right}} ».",
+    "deniedTaskDelete": "Seules les tâches que vous avez créées sont supprimables sans le droit « {{right}} ».",
+    "deniedTeamDelete": "Réservé aux administrateurs et au créateur de l'équipe."
   },
-  "members": {
-    "removeTitleNamed": "Retirer {{name}} ?"
-  },
+  "members": {},
   "truncation": {
     "tasks": "Seules les {{limit}} tâches les plus récentes sont chargées. L'organisation en compte davantage : ce qui s'affiche ici porte sur cet extrait."
   },
@@ -1418,84 +1396,15 @@
     "resume": "Reprendre l'assistant de démarrage"
   },
   "confirm": {
-    "impactTitle": "Ce qui va se passer",
     "typeName": "Pour confirmer, saisissez « {{name}} »"
   },
-  "filters": {
-    "barAria": "Filtres des tâches",
-    "scopeAll": "Tout",
-    "scopeMine": "Moi",
-    "scopeMember": "Une personne",
-    "you": "Vous",
-    "teamLabel": "Équipe",
-    "activeFilters": "Filtres actifs :",
-    "clearAll": "Tout effacer",
-    "removeFilter": "Retirer le filtre « {{name}} »",
-    "chipAssignee": "Assigné : {{name}}",
-    "chipTeam": "Équipe : {{name}}",
-    "chipProject": "Projet : {{name}}",
-    "chipSearch": "« {{query}} »",
-    "filterAssignee": "Filtrer par assigné",
-    "seeTasksOf": "Voir les tâches de",
-    "everyone": "Tout le monde",
-    "filterTeam": "Filtrer par équipe",
-    "allTeams": "Toutes les équipes",
-    "orgNoTeam": "Entreprise (sans équipe)",
-    "createTeamOption": "+ Créer une équipe",
-    "statusAria": "Filtrer par état",
-    "statusOpen": "Ouvertes",
-    "statusOverdue": "En retard",
-    "statusDoneThisWeek": "Terminées cette semaine",
-    "statusAll": "Tout",
-    "clearSearch": "Effacer la recherche"
-  },
   "glossary": {
-    "title": "Glossaire de l’entreprise",
-    "intro": "Les mots de COSMO ont chacun un sens précis. Un rôle dit ce qu’on PEUT faire ; une position dans la pyramide dit qui on encadre.",
     "open": "Glossaire",
-    "openAria": "Ouvrir le glossaire de l’entreprise",
-    "close": "Fermer le glossaire",
-    "seeAll": "Voir tout le glossaire",
-    "termHelp": "Qu’est-ce que « {{term}} » ?",
-    "sectionRoles": "Rôles et positions",
-    "sectionObjects": "Objets",
-    "terms": {
-      "owner": {
-        "name": "Propriétaire",
-        "def": "La personne qui a créé l’entreprise dans COSMO et en détient l’abonnement. Il n’y en a qu’une ; elle peut transmettre ce rôle. Elle est aussi administratrice."
-      },
-      "admin": {
-        "name": "Administrateur",
-        "def": "Un RÔLE : il a tous les droits (inviter, organiser la pyramide, régler les permissions de chacun). Il peut y en avoir plusieurs."
-      },
-      "manager": {
-        "name": "Manager",
-        "def": "Une POSITION, pas un rôle : toute personne qui a au moins un collaborateur rattaché sous elle dans la pyramide. Elle voit les Statistiques et la Pyramide de son périmètre."
-      },
-      "teamLead": {
-        "name": "Responsable d’équipe",
-        "def": "La personne désignée pour animer une équipe transverse. Ce n’est ni un rôle ni une position hiérarchique : on peut être responsable d’équipe sans encadrer personne dans la pyramide."
-      },
-      "member": {
-        "name": "Membre",
-        "def": "Toute personne de l’entreprise. Ses droits par défaut peuvent être élargis ou restreints par un administrateur (Membres → Modifier les permissions)."
-      },
-      "team": {
-        "name": "Équipe",
-        "def": "Un groupe de personnes, indépendant de la pyramide (une personne peut être dans plusieurs équipes). Un projet ou un objectif rattaché à une équipe n’est visible que d’elle."
-      },
-      "project": {
-        "name": "Projet",
-        "def": "Un ensemble de tâches avec un responsable, des dates et une couleur choisie. Toute tâche d’équipe appartient à un projet."
-      },
-      "category": {
-        "name": "Catégorie",
-        "def": "Un classement thématique, partagé par les projets, les tâches et les objectifs, organisé en arbre. Elle a sa propre couleur et ne change pas celle d’un projet."
-      },
-      "label": {
-        "name": "Étiquette",
-        "def": "Un repère libre posé sur une tâche (« urgent », « client »…). Contrairement à la catégorie, elle ne se hiérarchise pas et ne concerne que les tâches."
-      }
-    }
+    "termHelp": "Définition : {{term}}"
+  },
+  "bulkUndo": {
+    "updated_one": "{{count}} tâche mise à jour",
+    "updated_many": "{{count}} de tâches mises à jour",
+    "updated_other": "{{count}} tâches mises à jour"
   }
 }

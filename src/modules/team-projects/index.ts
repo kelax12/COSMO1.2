@@ -58,7 +58,6 @@ export {
   useTeamTasks,
   useTeamTaskWorkingSet,
   useTeamTaskSlice,
-  useCreateTeamProject,
   useUpdateTeamProject,
   useCreateTeamTask,
   useUpdateTeamTask,

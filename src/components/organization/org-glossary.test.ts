@@ -37,10 +37,10 @@ describe('claimFirstSight', () => {
 describe('glossaire : chaque terme est défini dans les deux langues', () => {
   for (const locale of ['fr', 'en']) {
     it(locale, () => {
-      const org = JSON.parse(readFileSync(`src/locales/${locale}/org.json`, 'utf8'));
+      const account = JSON.parse(readFileSync(`src/locales/${locale}/orgAccount.json`, 'utf8'));
       for (const term of [...ROLE_TERMS, ...OBJECT_TERMS]) {
-        expect(org.glossary.terms[term].name, term).toBeTruthy();
-        expect(org.glossary.terms[term].def, term).toBeTruthy();
+        expect(account.glossary.names[term], term).toBeTruthy();
+        expect(account.glossary.defs[term], term).toBeTruthy();
       }
     });
   }
