@@ -1,4 +1,4 @@
-import { Columns3, Download, Rows3 } from 'lucide-react';
+import { SlidersHorizontal, Download, LayoutList } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -50,7 +50,7 @@ const TeamTasksViewControls = ({ columns, onColumnsChange, group, onGroupChange,
     <div className="inline-flex items-center gap-1.5 flex-wrap">
       <DropdownMenu>
         <DropdownMenuTrigger aria-label={t('taskTable.groupAria')} className={btn}>
-          <Rows3 size={13} aria-hidden="true" />
+          <LayoutList size={13} aria-hidden="true" />
           {group === 'none' ? t('taskTable.groupBy') : groupLabel[group]}
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-52">
@@ -64,7 +64,7 @@ const TeamTasksViewControls = ({ columns, onColumnsChange, group, onGroupChange,
 
       <DropdownMenu>
         <DropdownMenuTrigger aria-label={t('taskTable.columnsAria')} className={btn}>
-          <Columns3 size={13} aria-hidden="true" />
+          <SlidersHorizontal size={13} aria-hidden="true" />
           {t('taskTable.columns')}
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-52">

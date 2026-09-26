@@ -19,6 +19,7 @@
 // ═══════════════════════════════════════════════════════════════════
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { opsAlert } from '../_shared/alert.ts'
+import { describeRow, digestFooter, digestSeeAll, digestSubject, type DigestLocale } from '../_shared/org-digest-text.ts'
 
 const APP_URL = Deno.env.get('APP_URL') ?? 'https://thecosmo.app'
 const MAIL_FROM = Deno.env.get('BUG_REPORT_FROM')
@@ -37,28 +38,8 @@ interface Row {
   created_at: string
 }
 
-/** Libellés du courriel. Le produit parle français à ses clients par e-mail (cf. `renewal-notice`). */
-const KIND_LABEL: Record<string, string> = {
-  task_assigned: 'Une tâche vous a été assignée',
-  mention: 'Vous avez été mentionné',
-  task_overdue: 'Une tâche est en retard',
-  comment: 'Nouveau commentaire',
-  status_changed: 'Changement de statut',
-  unblocked: 'Une tâche n\'attend plus rien',
-  project_at_risk: 'Projet signalé à risque',
-  kr_due: 'Résultat clé bientôt à échéance',
-  event_scheduled: 'Créneau ajouté à votre agenda',
-}
-
 function escapeHtml(s: string): string {
   return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] as string)
-}
-
-function describe(r: Row): string {
-  const label = KIND_LABEL[r.kind] ?? 'Notification'
-  const subject = r.task_name ?? r.project_name
-  const who = r.actor_name ? ` (${r.actor_name})` : ''
-  return subject ? `${label} : ${subject}${who}` : `${label}${who}`
 }
 
 function json(body: unknown, status: number): Response {
@@ -100,20 +81,30 @@ Deno.serve(async (req) => {
     else batches.set(key, [r])
   }
 
+  // Langue et fuseau de chaque organisation (mig. 195). Table absente (mig.
+  // non appliquée) ou lecture en échec : français et Europe/Paris, le courriel
+  // d'avant. Un réglage d'affichage n'empêche jamais l'envoi.
+  const orgIds = [...new Set([...batches.values()].map((rows) => rows[0].org_id))]
+  const orgPrefs = new Map<string, { locale: DigestLocale; timezone: string }>()
+  if (orgIds.length > 0) {
+    const { data: settings } = await admin.from('org_settings').select('org_id, locale, timezone').in('org_id', orgIds)
+    for (const s of (settings ?? []) as { org_id: string; locale: string; timezone: string }[]) {
+      orgPrefs.set(s.org_id, { locale: s.locale === 'en' ? 'en' : 'fr', timezone: s.timezone || 'Europe/Paris' })
+    }
+  }
+
   let sent = 0
   let failed = 0
   for (const rows of batches.values()) {
     const first = rows[0]
-    const lines = rows.map(describe)
+    const { locale, timezone } = orgPrefs.get(first.org_id) ?? { locale: 'fr' as DigestLocale, timezone: 'Europe/Paris' }
+    const lines = rows.map((r) => describeRow(r, locale, timezone))
     const link = `${APP_URL}/entreprise`
-    const subject = mode === 'daily'
-      ? `Votre résumé ${first.org_name} : ${rows.length} notification(s) non lue(s)`
-      : `${first.org_name} : ${lines[0]}`
-    const text = [...lines.map((l) => `- ${l}`), '', `Tout voir : ${link}`, '',
-      'Vous recevez ce message parce que vous l\'avez choisi dans les préférences de notification de l\'organisation.'].join('\n')
+    const subject = digestSubject(mode, first.org_name, rows.length, lines[0], locale)
+    const text = [...lines.map((l) => `- ${l}`), '', `${digestSeeAll(locale)} : ${link}`, '', digestFooter(locale)].join('\n')
     const html = `<ul>${lines.map((l) => `<li>${escapeHtml(l)}</li>`).join('')}</ul>`
-      + `<p><a href="${link}">Tout voir</a></p>`
-      + '<p style="color:#666;font-size:12px">Vous recevez ce message parce que vous l\'avez choisi dans les préférences de notification de l\'organisation.</p>'
+      + `<p><a href="${link}">${digestSeeAll(locale)}</a></p>`
+      + `<p style="color:#666;font-size:12px">${escapeHtml(digestFooter(locale))}</p>`
     try {
       const res = await fetch('https://api.resend.com/emails', {
         method: 'POST',

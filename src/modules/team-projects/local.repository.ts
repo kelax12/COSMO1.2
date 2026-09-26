@@ -41,6 +41,7 @@ import {
 } from './types';
 import * as portfolio from './local.portfolio';
 import * as labels from './local.labels';
+import { applyDemoTaskRules } from './local.task-rules';
 import * as subtasks from './local.subtasks';
 import * as access from './local.access';
 import {
@@ -311,8 +312,10 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
       updatedAt: now,
       categoryId: input.categoryId ?? null,
     };
-    this.saveTasks([task, ...tasks]);
-    return task;
+    // Règles « à la création » (mig. 198), avant l'enregistrement comme en base.
+    const saved = applyDemoTaskRules(task, null);
+    this.saveTasks([saved, ...tasks]);
+    return saved;
   }
 
   async updateTask(taskId: string, input: UpdateTeamTaskInput): Promise<TeamTask> {
@@ -320,6 +323,7 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
     const task = tasks.find((x) => x.id === taskId);
     if (!task) throw makeApiError('not_found');
     const previousStatus = task.status;
+    const before = { ...task, assigneeIds: [...task.assigneeIds] };
     if (input.name !== undefined) task.name = input.name;
     if (input.description !== undefined) task.description = input.description;
     if (input.priority !== undefined) task.priority = input.priority;
@@ -348,6 +352,9 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
       task.status = input.completed ? 'done' : 'todo';
       task.completedAt = input.completed ? new Date().toISOString() : null;
     }
+    // Statut propre (mig. 197) puis règles (mig. 198), comme les triggers.
+    if (input.customStatusId !== undefined) task.customStatusId = input.customStatusId;
+    Object.assign(task, applyDemoTaskRules(task, before));
     task.updatedAt = new Date().toISOString();
     this.saveTasks(tasks);
     // Miroir du trigger `log_team_task_activity` (mig. 094), pour le statut :

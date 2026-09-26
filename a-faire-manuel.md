@@ -245,6 +245,15 @@ un correctif committé, testé et vert peut ne pas exister pour les utilisateurs
 > vérifier par `pg_get_functiondef` : `offboard_org_member`, `remove_member`, `leave_organization`,
 > `my_team_project_ids`, `can_access_team_project`.
 
+> 🆕 **2026-09-26 · mig. `195` à `199` (points rouges de l'audit entreprise) écrites, NON appliquées,
+> NON prouvées** (branche `feat/entreprise-audit-rouges`). Ordre : APRÈS `164`, `181`, `190`-`194`,
+> puis `195` → `199`, AVANT le front. 🔴 **La preuve `supabase/proofs/195-199.proof.sql` n'a jamais
+> tourné** (aucun Postgres sur le poste) : la jouer par `replay.sh`, la voir échouer sur un sabotage,
+> puis relire au catalogue. Ensuite, **déployer deux Edge Functions** : `verify-org-domain`
+> (vérification DNS d'un domaine) et `org-webhook-dispatch` (envoi des webhooks, appelée par
+> `.github/workflows/org-webhook-dispatch.yml` avec `CRON_SECRET`, déjà posé pour `org-digest`).
+> Tant qu'elles ne le sont pas, `check:edge` et ce job sont rouges, et c'est juste.
+
 *État du 2026-09-03, conservé à sa date :*
 
 | Fonction | Déployée | Ce qui tournait en production le 2026-09-03 |

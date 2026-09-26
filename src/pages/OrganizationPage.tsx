@@ -61,7 +61,7 @@ const PyramidTab = lazyWithRetry(() => import('@/components/organization/Pyramid
 // `portfolio` (M2) n'est payé que par qui ouvre Projets : dans `org`, il pesait
 // 4,7 ko gzip sur chaque visite de /entreprise.
 const TeamProjectsTab = lazyWithRetry(() => import('@/components/organization/TeamProjectsTab'), ['org', 'orgAdmin', 'overlays', 'portfolio']);
-const TeamTasksTab = lazyWithRetry(() => import('@/components/organization/TeamTasksTab'), ['eventModal', 'org', 'orgAdmin', 'overlays', 'portfolio', 'tasks']);
+const TeamTasksTab = lazyWithRetry(() => import('@/components/organization/TeamTasksTab'), ['csv', 'eventModal', 'org', 'orgAdmin', 'overlays', 'portfolio', 'tasks']);
 const TeamOKRTab = lazyWithRetry(() => import('@/components/organization/TeamOKRTab'), ['okr', 'org', 'orgAdmin', 'overlays', 'portfolio']);
 const TeamOverviewTab = lazyWithRetry(() => import('@/components/organization/TeamOverviewTab'));
 const OrgBillingTab = lazyWithRetry(() => import('@/components/organization/OrgBillingTab'), ['org', 'orgAccount', 'overlays']);

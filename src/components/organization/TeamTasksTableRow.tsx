@@ -5,11 +5,13 @@ import {
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { DateCalendarPanel, DATE_PANEL_CLASS } from '@/components/ui/date-picker';
 import type { OrgMember } from '@/modules/organizations';
 import type { TeamProject, TeamTask, TeamTaskStatus } from '@/modules/team-projects';
+import type { ProjectStatus } from '@/modules/org-config';
 import { formatDeadlineSmart } from '@/components/task-table/helpers';
 import { useT } from '@/i18n/useT';
 import {
@@ -24,6 +26,8 @@ export interface TeamTasksRowHandlers {
   open: (task: TeamTask) => void;
   toggleComplete: (task: TeamTask) => void;
   setStatus: (task: TeamTask, status: TeamTaskStatus) => void;
+  /** Statut propre au projet (mig. 197) ; il écrit le statut COSMO correspondant. */
+  setCustomStatus: (task: TeamTask, statusId: string) => void;
   setPriority: (task: TeamTask, priority: number) => void;
   setDeadline: (task: TeamTask, deadline: string) => void;
   assign?: (task: TeamTask) => void;
@@ -41,6 +45,8 @@ interface TeamTasksTableRowProps {
   memberById: Map<string, OrgMember>;
   currentUserId?: string;
   categoryName?: string;
+  /** Statuts propres du projet de la tâche (mig. 197), [] = les cinq statuts COSMO. */
+  projectStatuses: readonly ProjectStatus[];
   unreadComments: number;
   selectMode: boolean;
   selected: boolean;
@@ -124,7 +130,7 @@ const DeadlineCell = ({ task, disabledReason, onChange }: { task: TeamTask; disa
 };
 
 const TeamTasksTableRow = forwardRef<HTMLTableRowElement, TeamTasksTableRowProps>(({
-  task, project, columns, memberById, currentUserId, categoryName, unreadComments,
+  task, project, columns, memberById, currentUserId, categoryName, projectStatuses, unreadComments,
   selectMode, selected, handlers, index,
 }, ref) => {
   const { t, tp } = useT('org');
@@ -135,6 +141,7 @@ const TeamTasksTableRow = forwardRef<HTMLTableRowElement, TeamTasksTableRowProps
   const deleteReason = handlers.deleteReason(task);
   const show = (c: TaskColumnId) => columns.includes(c);
   const display = taskDisplayStatus(task);
+  const custom = task.customStatusId ? projectStatuses.find((s) => s.id === task.customStatusId) : undefined;
 
   return (
     <tr
@@ -209,10 +216,21 @@ const TeamTasksTableRow = forwardRef<HTMLTableRowElement, TeamTasksTableRowProps
               style={{ borderColor: 'rgb(var(--color-border))', color: 'rgb(var(--color-text-secondary))' }}
               aria-label={t('projects.tasksTabStatusAria', { name: task.name })}
             >
-              <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${display.dot}`} aria-hidden="true" />
-              <span className="truncate max-w-[90px]">{t(display.labelKey as Parameters<typeof t>[0])}</span>
+              {custom ? (
+                <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: custom.color }} aria-hidden="true" />
+              ) : (
+                <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${display.dot}`} aria-hidden="true" />
+              )}
+              <span className="truncate max-w-[90px]">{custom?.name ?? t(display.labelKey as Parameters<typeof t>[0])}</span>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start">
+              {projectStatuses.map((s) => (
+                <DropdownMenuItem key={s.id} onClick={() => s.id !== task.customStatusId && handlers.setCustomStatus(task, s.id)}>
+                  <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: s.color }} aria-hidden="true" />
+                  {s.name}
+                </DropdownMenuItem>
+              ))}
+              {projectStatuses.length > 0 && <DropdownMenuSeparator />}
               {STATUS_ORDER.map((st) => (
                 <DropdownMenuItem key={st} onClick={() => handlers.setStatus(task, st)}>
                   <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${STATUS_META[st].dot}`} aria-hidden="true" />

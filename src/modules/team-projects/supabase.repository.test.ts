@@ -172,7 +172,7 @@ describe('SupabaseTeamProjectsRepository — tâches', () => {
     expect(result).toEqual([{
       id: 'tk1', orgId: 'org1', projectId: 'p1', name: 'Maquette',
       description: 'desc', priority: 2, deadline: '2026-07-20', estimatedTime: 60,
-      assigneeIds: ['u2'], createdBy: 'u1', completed: false, status: 'todo', completedAt: null,
+      assigneeIds: ['u2'], createdBy: 'u1', completed: false, status: 'todo', completedAt: null, customStatusId: null,
       createdAt: taskRow.created_at, updatedAt: taskRow.updated_at, startDate: '',
     }]);
   });

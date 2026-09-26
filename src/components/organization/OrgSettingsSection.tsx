@@ -11,6 +11,7 @@ import {
 } from '@/modules/organizations';
 import { useDeleteOrgFlow } from '@/pages/organization/useDeleteOrgFlow';
 import { lazyWithRetry } from '@/lib/lazy-with-retry';
+import { OrgConfigSettings } from '@/components/organization/org-config.lazy';
 import { buildOrgLink } from './deep-link.helpers';
 import OrgPlanChip from './OrgPlanChip';
 import OrgProfileForm from './OrgProfileForm';
@@ -43,6 +44,8 @@ const OrgSettingsPermissions = lazyWithRetry(() => import('@/components/organiza
 // toute visite de /entreprise, pas le journal. Le catalogue est déclaré sur la
 // section, dans `OrganizationPage` (seul hôte que la garde des namespaces lit).
 const OrgAuditLogSection = lazyWithRetry(() => import('@/components/organization/OrgAuditLogSection'));
+// Réglages, Sécurité, champs, automatisations, intégrations (mig. 195-199) :
+// leur catalogue `orgConfig` voyage avec eux (`org-config.lazy.ts`).
 
 interface OrgSettingsSectionProps {
   org: MyOrganization;
@@ -178,6 +181,12 @@ const OrgSettingsSection = ({
           </div>
         </section>
       )}
+
+      {/* Configuration d'entreprise (audit du 2026-09-24) : réglages propres,
+          rubrique Sécurité (M13), champs, automatisations, intégrations. */}
+      <Suspense fallback={null}>
+        <OrgConfigSettings orgId={org.id} members={members} currentUserId={currentUserId} isAdmin={isAdmin} />
+      </Suspense>
 
       {/* Notifications (M14) : la cloche disparaît quand elle est vide, ses
           préférences doivent rester atteignables. */}

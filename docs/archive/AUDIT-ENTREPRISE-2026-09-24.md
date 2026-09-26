@@ -3,10 +3,12 @@
 > des branches `feat/entreprise-popups`, `claude/recommandations-mode-entreprise-swgi0u`,
 > `claude/recommandations-mode-entreprise-do9du9`, `coherence/journal-181` et du travail
 > interrompu de `.worktrees/entreprise-gov` (sauvé sur `wip/entreprise-gov-ui`).
-> **Mise à jour du 2026-09-26 (après-midi)** : les 🔴 des onglets Tâches et OKR, et la pastille
-> de visibilité (M12) et l'annuaire au-delà de 500 membres, sont réalisés
-> sur la branche `feat/entreprise-audit-rouges` (non fusionnée) ; les pastilles
-> concernées portent la mention « branche `audit-rouges` ».
+> **Mise à jour du 2026-09-26 (soir)** : TOUS les 🔴 sont réalisés sur la branche
+> `feat/entreprise-audit-rouges` (non fusionnée), sauf SSO/SAML/SCIM, écarté d'un commun accord
+> (plan Supabase Pro et configuration Dashboard). Les pastilles concernées portent la mention
+> « branche `audit-rouges` ». ⏳ `mig. 195` à `199` : **écrites, NON appliquées, NON prouvées**
+> (`supabase/proofs/195-199.proof.sql` prête, jamais jouée), à appliquer après `194`. Deux Edge
+> Functions à déployer (`verify-org-domain`, `org-webhook-dispatch`) et `org-digest` à redéployer.
 > Le code fait foi contre ce document. Sources vivantes : [`CLAUDE.md`](../../CLAUDE.md) ·
 > [`faille.md`](../../faille.md) · [`docs/`](../README.md).
 
@@ -35,12 +37,11 @@
    `offboard_org_member` : appliquée en second, chacune effaçait l'ajout de l'autre. 194 en fait
    l'union. Non prouvée en transaction annulée.
 
-**Bilan** : sur les 14 faiblesses macro, 11 ✅, 3 🟠, 0 🔴 (M8 et M12 passent ✅ avec la branche `audit-rouges`). Les 4 problèmes critiques de la
-synthèse : 3 ✅, 1 🟠 (M1, lectures côté serveur). Restent 🔴 surtout des fonctionnalités de
-l'étape 6 classées « optionnelles » (capacité, champs personnalisés, automatisations,
-intégrations, SSO) et quelques détails d'écran (lien hiérarchique secondaire, rubrique
-Sécurité). La colonne Assignés et les autres 🔴 de l'onglet Tâches sont
-faits (branche `audit-rouges`).
+**Bilan** : sur les 14 faiblesses macro, 12 ✅, 2 🟠, 0 🔴 (M8, M12 et M13 passent ✅ avec la branche `audit-rouges`). Plus aucun 🔴 hors SSO/SAML/SCIM, écarté. Les 4 problèmes critiques de la
+synthèse : 3 ✅, 1 🟠 (M1, lectures côté serveur). Les 🔴 restants au matin (capacité, champs
+personnalisés, automatisations, intégrations, lien hiérarchique secondaire, rubrique Sécurité,
+réglages propres) sont faits sur la branche `audit-rouges`, derrière les mig. 195 à 199 ; seul
+SSO/SAML/SCIM reste 🔴, écarté volontairement.
 
 **Méthode.** J'ai lu le code du mode Entreprise, soit environ 17 500 lignes : les 70 composants de
 src/components/organization/, les modules organizations, org-teams, team-projects, team-okrs et
@@ -56,10 +57,10 @@ d'une mesure à l'écran. Je n'ai modifié aucun fichier.
 
 | Concept | Ce qu'il est dans le code | Ce qui lui manque | État 2026-09-26 |
 |---|---|---|---|
-| Organisation | Nom, description, secteur, avatar, un propriétaire, des admins, un code permanent COSMO-XXXXXX | Paramètres propres à l'organisation (langue, fuseau, semaine de travail, règles par défaut) | 🔴 Toujours aucun réglage propre à l'organisation |
+| Organisation | Nom, description, secteur, avatar, un propriétaire, des admins, un code permanent COSMO-XXXXXX | Paramètres propres à l'organisation (langue, fuseau, semaine de travail, règles par défaut) | ✅ ⏳ mig. 195 : langue et fuseau des e-mails (lus par `org-digest`), premier jour de semaine (filtre « Cette semaine »), jours ouvrés, priorité d'une tâche neuve, audience proposée d'un projet, accès proposé d'un invité (branche `audit-rouges`) |
 | Rôle stocké | admin ou member, rien d'autre | | |
 | Manager | Rôle calculé : toute personne qui a au moins un subordonné dans la pyramide | Rien ne l'annonce à l'utilisateur | ✅ Toast « vous encadrez maintenant… », glossaire, info-bulle au premier affichage du rôle |
-| Pyramide | Un seul manager_id par membre, 50 niveaux au plus. Ceux qui ne sont pas placés apparaissent à part | Pas de lien hiérarchique secondaire (organisation matricielle) | 🔴 |
+| Pyramide | Un seul manager_id par membre, 50 niveaux au plus. Ceux qui ne sont pas placés apparaissent à part | Pas de lien hiérarchique secondaire (organisation matricielle) | ✅ ⏳ mig. 196 : trois liens en pointillé au plus, affichés sur la carte, sans AUCUN droit (branche `audit-rouges`) |
 | Équipe | org_teams : nom, couleur, membres, un ou plusieurs responsables (isLead). Équipes transverses | Pas de description, pas de page d'équipe, pas de liste de ses projets | ✅ Page d'équipe `/entreprise/teams/:id` avec description, responsables, projets, OKR, activité (mig. 163) |
 | Projet | Nom, couleur, 0 ou 1 équipe, une catégorie, archivé ou non | Pas de responsable, de membres, de dates, de statut, de description, d'objectif | ✅ Responsable, dates, statut, santé, description (mig. 153) ; membres et rôles ⏳ mig. 190 ; plusieurs équipes ⏳ mig. 164 |
 | Tâche d'équipe | Un seul projet, cinq statuts, plusieurs assignés, etc. | Étiquettes (mig. 093) et historique (mig. 094) sans interface | ✅ Étiquettes et onglet Historique dans la fiche de tâche |
@@ -225,11 +226,12 @@ Liste collée, placement dans la pyramide, équipes, accès borné, relances ; E
   objectif ; un clic dit qui voit et pourquoi (équipe, membre du projet, hiérarchie, admin).
   Miroir de `can_access_team_project` (mig. 194), branche `audit-rouges`.
 
-#### M13 · Des réglages mal rangés (Moyenne) · 🟠
+#### M13 · Des réglages mal rangés (Moyenne) · ✅
 
 Section Paramètres : ✅ profil édité sur place, ✅ catégories, ✅ rôles et permissions, ✅ mes
 droits, ✅ notifications, ✅ forfait (lien vers Facturation), ✅ invitations, ✅ journal d'audit
-(⏳ mig. 190 pour ses nouvelles familles), ✅ zone de danger. 🔴 Pas de rubrique Sécurité.
+(⏳ mig. 190 pour ses nouvelles familles), ✅ zone de danger, ✅ rubrique Sécurité : domaines
+vérifiés par DNS et invitations limitées à ces domaines (⏳ mig. 195, branche `audit-rouges`).
 
 #### M14 · Des notifications trop pauvres (Moyenne) · ✅
 
@@ -250,7 +252,7 @@ canal (application, e-mail, résumé quotidien), suivre une tâche ou un projet,
 | Aucune recherche globale | Haute | Palette Ctrl+K (M7) | ✅ ⏳ mig. 191 |
 | Sections qui apparaissent sans prévenir | Moyenne | Toast une seule fois | ✅ |
 | Pas de favoris ni de récents | Moyenne | Groupe « Épinglés » | ✅ |
-| Réglages éparpillés | Moyenne | Section Paramètres (M13) | ✅ (rubrique Sécurité absente, cf. M13) |
+| Réglages éparpillés | Moyenne | Section Paramètres (M13) | ✅ (rubrique Sécurité : branche `audit-rouges`, ⏳ mig. 195) |
 | Bandeau de lancement mort | Faible | Supprimer | ✅ |
 
 ### Aperçu (`/entreprise`)
@@ -323,13 +325,13 @@ responsable et à 30 min la durée de chacun de ses KR (la fiche ne renvoyait pa
 | Calcul sur des données tronquées | Critique | Agrégats serveur | 🟠 Ensemble de travail borné ; agrégats serveur seulement pour projets et charge |
 | Pas de filtre par équipe ni par projet | Haute | Filtres portée · équipe · projet | ✅ |
 | Accès réservé à la hiérarchie | Haute | M3 | ✅ |
-| Pas de charge au regard d'une capacité | Moyenne | Capacité hebdomadaire | 🔴 |
+| Pas de charge au regard d'une capacité | Moyenne | Capacité hebdomadaire | ✅ ⏳ mig. 196 : carte « Charge et capacité », en semaines de travail, déclarée par la personne, un admin ou quelqu'un au-dessus d'elle (branche `audit-rouges`) |
 
 ### Pyramide (`/entreprise/pyramid`)
 
 | Problème | Gravité | Solution proposée | État 2026-09-26 |
 |---|---|---|---|
-| Un seul manager | Moyenne | Lien secondaire en pointillé | 🔴 |
+| Un seul manager | Moyenne | Lien secondaire en pointillé | ✅ ⏳ mig. 196 (branche `audit-rouges`) |
 | Pas de replier par branche ni de mini-carte | Haute (grandes org.) | Branches repliées, « centrer sur… » | 🟠 Branches repliables et repliées à grande échelle, recherche qui amène la carte à l'écran ; pas de mini-carte |
 | Glisser-déposer seul pour les grands déplacements | Moyenne | « Déplacer la sélection sous… » | ✅ Depuis l'annuaire : sélection multiple puis « Changer de manager » |
 
@@ -451,11 +453,11 @@ saisie du nom), « Annuler » aussi sur les équipes et les projets.
 | Dépendances entre projets et jalons | Importante | ✅ |
 | Journal d'audit de l'organisation | Importante | ✅ (familles étendues ⏳ mig. 190) |
 | Préférences de notification, suivre un objet, résumé par e-mail | Importante | ✅ |
-| Capacité et charge planifiée | Optionnelle | 🟠 Charge comptée en base (⏳ mig. 191) ; aucune capacité par membre |
-| Champs personnalisés et statuts de flux par projet | Optionnelle | 🔴 |
-| Automatisations simples | Optionnelle | 🔴 (seul le rappel de retard de la mig. 096 existe) |
-| Intégrations (Slack, calendrier, export CSV complet) | Optionnelle | 🔴 Pas de webhook ; exports CSV partiels (annuaire, statistiques, journal d'audit) |
-| SSO/SAML, SCIM, domaine vérifié | Optionnelle | 🔴 |
+| Capacité et charge planifiée | Optionnelle | ✅ Charge comptée en base (⏳ mig. 191), capacité par membre (⏳ mig. 196, branche `audit-rouges`) |
+| Champs personnalisés et statuts de flux par projet | Optionnelle | ✅ ⏳ mig. 197 : champs d'entreprise ou de projet (texte, nombre, date, liste, case), statuts propres qui écrivent un des cinq statuts COSMO (branche `audit-rouges`) |
+| Automatisations simples | Optionnelle | ✅ ⏳ mig. 198 : « à la création » ou « quand le statut passe à… », assigner, changer la priorité ou le statut ; trigger INVOKER sur la ligne écrite (branche `audit-rouges`) |
+| Intégrations (Slack, calendrier, export CSV complet) | Optionnelle | ✅ ⏳ mig. 199 : webhooks Slack ou JSON signé (file + `org-webhook-dispatch`, à déployer) ; export CSV complet ; échéances en .ics (branche `audit-rouges`) |
+| SSO/SAML, SCIM, domaine vérifié | Optionnelle | 🟠 Domaine vérifié ✅ ⏳ mig. 195 (branche `audit-rouges`) ; 🔴 SSO/SAML/SCIM écarté le 2026-09-26 (plan Supabase Pro, configuration Dashboard) |
 
 ---
 
@@ -475,7 +477,7 @@ saisie du nom), « Annuler » aussi sur les équipes et les projets.
 - ✅ OKR liés à l'exécution (M9) · ✅ processus de départ (M10) · ✅ invitation par e-mail (M11).
 - ✅ Visibilité (M12, pastille cliquable) · ✅ création rapide d'un projet visible par tous.
 - ✅ Modale de tâche (statut, création explicite, étiquettes, historique).
-- ✅ Sélecteurs avec recherche · ✅ page Membres découpée · 🟠 réglages (Sécurité absente).
+- ✅ Sélecteurs avec recherche · ✅ page Membres découpée · ✅ réglages (Sécurité : branche `audit-rouges`).
 
 ### 3. Opportunités
 
@@ -494,7 +496,7 @@ Navigation idéale :
 - ✅ Moi : Aperçu, Mes tâches, Mes projets.
 - 🟠 Travail : ✅ portefeuille, 🟠 espace Travail (tableau, kanban, frise dans Projets ; Tâches reste à part), ✅ Objectifs.
 - ✅ Organisation : Personnes, Équipes, Pyramide, Statistiques.
-- 🟠 Paramètres : ✅ Profil, Catégories, Permissions, Facturation (lien), Journal d'audit, Zone de danger ; 🔴 Sécurité.
+- ✅ Paramètres : ✅ Profil, Catégories, Permissions, Facturation (lien), Journal d'audit, Zone de danger, Sécurité, Réglages, Champs, Automatisations, Intégrations (branche `audit-rouges`).
 - ✅ Plus : Ctrl+K partout, Épinglés et Récents.
 
 Workflows clés : ✅ Démarrer · ✅ Planifier · ✅ Exécuter · ✅ Piloter · ✅ Faire évoluer.

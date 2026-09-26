@@ -60,7 +60,9 @@
     "project_not_archived": "Only an archived project can be deleted permanently: archive it first.",
     "project_not_found": "This project no longer exists.",
     "project_viewer_read_only": "You are a viewer on this project: you can only change the tasks assigned to you.",
-    "saved_views_limit": "You have reached 50 saved views for this screen. Delete one to create a new one."
+    "saved_views_limit": "You have reached 50 saved views for this screen. Delete one to create a new one.",
+    "domain_taken": "This domain is already verified by another company.",
+    "email_domain_not_allowed": "This company only invites addresses from its verified domains."
   },
   "validation": {
     "fallback": "Invalid data",

@@ -28,7 +28,10 @@ import { useModalA11y } from '@/hooks/use-modal-a11y';
 const TeamTaskTabPanels = lazyWithRetry(() => import('./TeamTaskTabPanels'));
 // Étiquettes et « Suivre » : même raison, hors du premier affichage de la fiche.
 const TeamTaskLabelsField = lazyWithRetry(() => import('./TeamTaskLabelsField'));
-const FollowTaskToggle = lazyWithRetry(() => import('./FollowTaskToggle'));
+// Suivre (mig. 162) et champs personnalisés (mig. 197) : UN chargement pour les
+// deux, catalogue compris (`TAB_GATE_HOSTS` : cette fiche déclare sa liste).
+const TaskDetailsExtras = lazyWithRetry(() => import('./TaskDetailsExtras'), ['org', 'orgConfig', 'overlays']);
+
 
 type TaskTab = 'details' | 'subtasks' | 'dependencies' | 'history';
 
@@ -467,9 +470,7 @@ const TeamTaskModal = ({
           {/* Suivre une tâche (mig. 162, M14) : ses changements de statut
               arrivent dans la cloche même quand on n'y est pas assigné. */}
           {tab === 'details' && liveTask && (
-            <div className="mt-4">
-              <Suspense fallback={null}><FollowTaskToggle orgId={orgId} taskId={liveTask.id} /></Suspense>
-            </div>
+            <Suspense fallback={null}><TaskDetailsExtras orgId={orgId} task={liveTask} canEdit={!taskEditReason(liveTask)} /></Suspense>
           )}
 
           {/* Sous-tâches, dépendances, historique : chargés à la première

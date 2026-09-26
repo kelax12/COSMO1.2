@@ -223,6 +223,8 @@ const TABLES_NON_EXPORTEES = {
   org_notification_settings: "Préférences de notification par organisation (types coupés, e-mail, résumé) : réglage d'interface, pas une donnée fournie au sens de l'art. 20. ⚠️ Discutable : à rouvrir si l'export doit restituer les réglages.",
   team_project_members: "Rôle sur un projet, décidé par qui pilote le projet (mig. 190), pas fourni par la personne.",
   org_saved_views: "Combinaisons de filtres nommées (mig. 192) : un réglage d'interface, sans contenu de travail.",
+  org_member_capacity: "Capacité hebdomadaire déclarée pour la personne, le plus souvent PAR son responsable (mig. 196) : une donnée de planification de l'organisation. ⚠️ Discutable quand la personne l'a saisie elle-même : à rouvrir si l'export doit restituer les réglages.",
+  org_member_secondary_managers: "Lien hiérarchique secondaire décidé par l'organisation (mig. 196), qui désigne une AUTRE personne.",
 };
 
 // ── Lecture du schéma ──────────────────────────────────────────────

@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Plus, Loader2, Trash2, ListTodo, LayoutTemplate, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DatePicker } from '@/components/ui/date-picker';
 import type { OrgMember } from '@/modules/organizations';
 import { useOrgTeamMembers, type OrgTeam } from '@/modules/org-teams';
+import { useOrgSettings } from '@/modules/org-config';
 import type {
   CreateTeamProjectInput,
   DraftProjectMilestone,
@@ -96,6 +97,17 @@ const NewTeamProjectModal = ({
   // Audience DITE, chiffrée (audit des popups, 2026-09-25) : la visibilité ne
   // se devinait qu'à l'option « Toute l'entreprise » du sélecteur d'équipe.
   const { data: teamMembers = [] } = useOrgTeamMembers(orgId);
+  // Audience PROPOSÉE (mig. 195) : « une équipe » présélectionne la première
+  // équipe du créateur, une seule fois, sans écraser un choix, un modèle ou une
+  // équipe imposée. L'audience reste affichée et modifiable (M12).
+  const { data: orgSettings } = useOrgSettings(orgId);
+  const [teamTouched, setTeamTouched] = useState(false);
+  useEffect(() => {
+    if (teamTouched || teamId || initialOrgTemplate || defaultTeamId) return;
+    if (orgSettings?.defaultProjectAudience !== 'team') return;
+    const mine = teamMembers.find((tm) => tm.userId === currentUserId);
+    if (mine) setTeamId(mine.teamId);
+  }, [orgSettings?.defaultProjectAudience, teamMembers, currentUserId, teamTouched, teamId, initialOrgTemplate, defaultTeamId]);
   const audience = projectAudience(
     members,
     teamId ? teamMembers.filter((tm) => tm.teamId === teamId).map((tm) => tm.userId) : null,
@@ -285,7 +297,7 @@ const NewTeamProjectModal = ({
               <select
                 id="new-project-team"
                 value={teamId}
-                onChange={(e) => setTeamId(e.target.value)}
+                onChange={(e) => { setTeamTouched(true); setTeamId(e.target.value); }}
                 className={inputClass}
                 style={inputStyle}
               >

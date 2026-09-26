@@ -204,6 +204,9 @@ export const TAB_GATE_HOSTS = [
   'components/organization/team-tasks-bulk.lazy.ts',
   // Définitions du glossaire, dans `orgAccount`, chargées à l'ouverture d'une info-bulle.
   'components/organization/RoleTerm.tsx',
+  // Configuration d'entreprise (mig. 195-199) : `orgConfig` voyage avec ses écrans.
+  'components/organization/org-config.lazy.ts',
+  'components/organization/TeamTaskModal.tsx',
 ];
 
 /** Chemins absolus des modules gatés : routes d'`App.tsx`, onglets déclarants. */
