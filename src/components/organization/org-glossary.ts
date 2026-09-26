@@ -29,19 +29,29 @@ const SEEN_KEY = 'cosmo_org_terms_seen_v1';
 const claimed = new Set<string>();
 
 /**
+ * Une info-bulle de premier affichage à la fois : l'annuaire montre Admin,
+ * Manager et Membre d'un coup, et trois bulles ouvertes se recouvraient
+ * (mesuré dans le navigateur, 2026-09-25). Les autres termes attendent un
+ * prochain affichage ; ils ne sont PAS marqués vus.
+ */
+let showingFirstSight = false;
+export const releaseFirstSight = () => { showingFirstSight = false; };
+
+/**
  * Premier affichage de ce terme sur cet appareil ? Vrai UNE fois : l'appel le
  * marque comme vu. Sans stockage (navigation privée qui le bloque), jamais
  * vrai : une info-bulle qui reviendrait à chaque visite serait pire qu'aucune.
  */
 export const claimFirstSight = (term: OrgTerm): boolean => {
-  if (claimed.has(term)) return false;
-  claimed.add(term);
+  if (claimed.has(term) || showingFirstSight) return false;
   try {
     const raw = localStorage.getItem(SEEN_KEY);
     const seen: unknown = raw ? JSON.parse(raw) : [];
     const list = Array.isArray(seen) ? seen.filter((x): x is string => typeof x === 'string') : [];
-    if (list.includes(term)) return false;
+    if (list.includes(term)) { claimed.add(term); return false; }
     localStorage.setItem(SEEN_KEY, JSON.stringify([...list, term]));
+    claimed.add(term);
+    showingFirstSight = true;
     return true;
   } catch {
     return false;
@@ -49,4 +59,4 @@ export const claimFirstSight = (term: OrgTerm): boolean => {
 };
 
 /** Pour les tests : oublie les réservations de ce chargement. */
-export const resetTermClaimsForTests = () => claimed.clear();
+export const resetTermClaimsForTests = () => { claimed.clear(); showingFirstSight = false; };

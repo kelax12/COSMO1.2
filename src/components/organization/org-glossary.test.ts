@@ -2,7 +2,7 @@
 // Info-bulle au PREMIER affichage de chaque rôle (cohérence globale, 2026-09-25).
 import { beforeEach, describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { claimFirstSight, resetTermClaimsForTests, ROLE_TERMS, OBJECT_TERMS } from './org-glossary';
+import { claimFirstSight, releaseFirstSight, resetTermClaimsForTests, ROLE_TERMS, OBJECT_TERMS } from './org-glossary';
 
 describe('claimFirstSight', () => {
   beforeEach(() => {
@@ -23,9 +23,13 @@ describe('claimFirstSight', () => {
     expect(opened).toHaveLength(1);
   });
 
-  it('chaque terme est indépendant', () => {
+  it('une seule bulle à la fois ; la suivante attend, sans être marquée vue', () => {
     expect(claimFirstSight('admin')).toBe(true);
-    expect(claimFirstSight('teamLead')).toBe(true);
+    expect(claimFirstSight('teamLead')).toBe(false);
+    releaseFirstSight();
+    resetTermClaimsForTests();
+    expect(claimFirstSight('admin')).toBe(false); // déjà vue
+    expect(claimFirstSight('teamLead')).toBe(true); // son tour est venu
   });
 
   it('un stockage illisible ne rouvre jamais tout', () => {

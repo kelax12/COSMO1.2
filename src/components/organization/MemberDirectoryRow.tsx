@@ -31,12 +31,12 @@ const BADGE_META = {
   member: { labelKey: 'roles.member', Icon: UserRound, className: 'text-slate-600 dark:text-slate-400 bg-slate-500/10' },
 } as const;
 
-const RoleBadge = ({ kind }: { kind: DirectoryRole }) => {
+const RoleBadge = ({ kind, help = true }: { kind: DirectoryRole; help?: boolean }) => {
   const { t } = useT('org');
   const { labelKey, Icon, className } = BADGE_META[kind];
   return (
     <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full ${className}`}>
-      <Icon size={11} aria-hidden="true" /> <RoleTerm term={kind}>{t(labelKey)}</RoleTerm>
+      <Icon size={11} aria-hidden="true" /> {help ? <RoleTerm term={kind}>{t(labelKey)}</RoleTerm> : t(labelKey)}
     </span>
   );
 };
@@ -139,12 +139,14 @@ const MemberDirectoryRow = ({
       </div>
 
       {rights.canChangeRole && !selectMode ? (
+        <span className="inline-flex items-center gap-0.5">
         <DropdownMenu>
           <DropdownMenuTrigger
             className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
             aria-label={t('directory.changeRoleAria', { name: m.displayName })}
           >
-            <RoleBadge kind={role} />
+            {/* Le « ? » du terme est À CÔTÉ du bouton, jamais dedans. */}
+            <RoleBadge kind={role} help={false} />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
             <DropdownMenuRadioGroup
@@ -167,6 +169,8 @@ const MemberDirectoryRow = ({
             )}
           </DropdownMenuContent>
         </DropdownMenu>
+        <RoleTerm term={role} label={t(BADGE_META[role].labelKey)} className="text-[rgb(var(--color-text-muted))]" />
+        </span>
       ) : (
         <RoleBadge kind={role} />
       )}
