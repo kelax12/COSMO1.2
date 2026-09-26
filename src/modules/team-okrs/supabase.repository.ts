@@ -15,6 +15,7 @@ import {
   UpdateTeamOKRInput,
   UpdateTeamKRInput,
   SyncTeamKRInput,
+  TrashedTeamOKR,
 } from './types';
 
 interface OkrRow {
@@ -46,6 +47,8 @@ interface KrRow {
   estimated_time: number | null;
   progress_mode?: string | null;
   contributor_ids?: string[] | null;
+  health?: string | null;
+  health_updated_at?: string | null;
 }
 
 // Coefficient effectif : entier borné [1, 10], défaut 1 (rétrocompat).
@@ -71,6 +74,8 @@ const mapKr = (r: KrRow): TeamKeyResult => ({
   estimatedTime: Number(r.estimated_time) > 0 ? Number(r.estimated_time) : 30,
   progressMode: r.progress_mode === 'tasks' ? 'tasks' : 'manual',
   contributorIds: r.contributor_ids ?? [],
+  health: r.health === 'on_track' || r.health === 'at_risk' || r.health === 'off_track' ? r.health : null,
+  healthUpdatedAt: r.health_updated_at ?? null,
 });
 
 export class SupabaseTeamOKRsRepository implements ITeamOKRsRepository {
@@ -263,7 +268,29 @@ export class SupabaseTeamOKRsRepository implements ITeamOKRsRepository {
 
   async remove(okrId: string): Promise<void> {
     if (!supabase) throw new Error('Supabase not configured');
-    const { error } = await supabase.from('team_okrs').delete().eq('id', okrId);
+    // Corbeille (mig. 193) : la policy DELETE est désormais réservée à
+    // l'admin, et un DELETE direct effacerait KR et points d'étape sans retour.
+    const { error } = await supabase.rpc('trash_team_okr', { p_okr: okrId });
+    if (error) throw normalizeApiError(error);
+  }
+
+  async getTrash(orgId: string): Promise<TrashedTeamOKR[]> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const { data, error } = await supabase.rpc('get_team_okr_trash', { p_org: orgId });
+    if (error) throw normalizeApiError(error);
+    return ((data ?? []) as { id: string; title: string; deleted_at: string; deleted_by: string | null; created_by: string | null }[])
+      .map((r) => ({ id: r.id, title: r.title, deletedAt: r.deleted_at, deletedBy: r.deleted_by, createdBy: r.created_by }));
+  }
+
+  async restore(okrId: string): Promise<void> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const { error } = await supabase.rpc('restore_team_okr', { p_okr: okrId });
+    if (error) throw normalizeApiError(error);
+  }
+
+  async purge(okrId: string): Promise<void> {
+    if (!supabase) throw new Error('Supabase not configured');
+    const { error } = await supabase.rpc('purge_team_okr', { p_okr: okrId });
     if (error) throw normalizeApiError(error);
   }
 

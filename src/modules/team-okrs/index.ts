@@ -4,6 +4,7 @@
 
 export type {
   TeamOKR,
+  TrashedTeamOKR,
   TeamKeyResult,
   CreateTeamOKRInput,
   CreateTeamKRInput,
@@ -28,15 +29,27 @@ export {
   useCreateTeamOKR,
   useEditTeamOKR,
   useDeleteTeamOKR,
+  useTeamOKRTrash,
+  useRestoreTeamOKR,
+  usePurgeTeamOKR,
   useUpdateTeamKR,
 } from './hooks';
 
-// Exécution (mig. 160, M3) : cycles et projets reliés aux KR, branchés sur la
-// fiche d'OKR d'équipe (audit des popups, 2026-09-25).
-export type { OkrCycle, KRProjectLink } from './execution.types';
+// Exécution (mig. 160) : cycles, projets reliés à un KR, points d'étape.
+export type {
+  OkrCycle,
+  CreateOkrCycleInput,
+  KRProjectLink,
+  KRCheckin,
+  PostKRCheckinInput,
+  ProjectHealth,
+} from './execution.types';
 export {
   useOkrCycles,
   useCreateOkrCycle,
+  useDeleteOkrCycle,
   useKRProjects,
   useSetKRProjects,
+  useKRCheckins,
+  usePostKRCheckin,
 } from './execution.hooks';

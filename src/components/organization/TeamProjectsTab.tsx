@@ -40,6 +40,7 @@ import ProjectTemplatesSection from './ProjectTemplatesSection';
 import TeamTaskModal from './TeamTaskModal';
 import TruncatedDataNotice from './TruncatedDataNotice';
 import TeamTrashDialog from './TeamTrashDialog';
+import { useProjectAccess } from './use-project-access';
 import { useT } from '@/i18n/useT';
 import TeamColorDot from './TeamColorDot';
 import { OrgCreateBoundary, useOrgCreate } from './org-create.context';
@@ -51,6 +52,8 @@ interface TeamProjectsTabProps {
   /** Manager/admin — sert encore aux surfaces HIÉRARCHIQUES (dépendances de
    *  tâches), jamais aux droits de création : ceux-ci viennent de la mig. 115. */
   isManager: boolean;
+  /** Admin : rôles de projet et purge de la corbeille (mig. 190, 193). */
+  isAdmin: boolean;
 }
 
 /** État du modal de tâche : création (préréglages) ou édition. */
@@ -66,7 +69,7 @@ type TaskModalState =
   | { mode: 'edit'; task: TeamTask }
   | null;
 
-const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProjectsTabProps) => {
+const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: TeamProjectsTabProps) => {
   const { can, canAssign } = useMyOrgPermissions(orgId);
   const hints = usePermissionHints(orgId);
   const { t, tp } = useT('org');
@@ -95,6 +98,7 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
   const { data: categories = [] } = useTeamCategories(orgId);
   const { data: milestones = [] } = useTeamProjectMilestones(orgId);
   const { data: projectDeps = [] } = useTeamProjectDependencies(orgId);
+  const { projectMembers, statsById, isLeadOf } = useProjectAccess(orgId, currentUserId); // mig. 190, 191
 
   const { collapsed, showArchived, kanbanGroupBy, timelineGroupBy, sort } = prefs;
 
@@ -133,9 +137,9 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
     });
   const newTeam = () => create.openTeam({ onCreated: (team) => setFilters({ team }) });
 
-  /** `project.edit` (mig. 153), ou responsable du projet. */
+  /** `project.edit` (mig. 153), responsable, ou co-pilote (mig. 190). */
   const canEditProjectFor = (p: TeamProject) =>
-    can['project.edit'] || (!!currentUserId && p.ownerId === currentUserId);
+    can['project.edit'] || (!!currentUserId && p.ownerId === currentUserId) || isLeadOf(p);
 
   // ─── Projets visibles (filtre équipe + actifs/archivés) ────────────
   const matchesTeam = (p: TeamProject) => {
@@ -157,8 +161,8 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
       categoryName: categories.find((c) => c.id === p.categoryId)?.name,
       ownerName: members.find((m) => m.userId === p.ownerId)?.displayName,
     }));
-    return sortProjects(found, sort, allTasks);
-  }, [activeProjects, query, sort, allTasks, teams, categories, members, mineOnly, currentUserId]);
+    return sortProjects(found, sort, allTasks, statsById);
+  }, [activeProjects, query, sort, allTasks, teams, categories, members, mineOnly, currentUserId, statsById]);
 
   // ─── Tâches : stats globales (non filtrées) + vue filtrée par assigné ──
   const activeProjectIds = useMemo(() => new Set(activeProjects.map((p) => p.id)), [activeProjects]);
@@ -362,6 +366,11 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
             tasks={visibleTasks.filter((t) => t.projectId === detailProject.id)
               .concat(activeProjectIds.has(detailProject.id) ? [] : allTasks.filter((t) => t.projectId === detailProject.id))}
             allProjectTasks={allTasks.filter((t) => t.projectId === detailProject.id)}
+            stats={statsById?.get(detailProject.id)}
+            projectMembers={projectMembers.filter((m) => m.projectId === detailProject.id)}
+            currentUserId={currentUserId}
+            isAdmin={isAdmin}
+            canCreateTask={can['task.create']}
             members={members}
             teams={teams}
             milestones={milestones}
@@ -431,6 +440,7 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
       <div className="flex justify-end"><TeamTrashDialog orgId={orgId} projects={allProjects} members={members} /></div>
 
       <ProjectsToolbar
+        savedViewsOrgId={orgId}
         prefs={prefs}
         updatePrefs={updatePrefs}
         effectiveView={view}
@@ -510,6 +520,7 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager }: TeamProje
               <ProjectPortfolioView
                 projects={shownProjects}
                 tasks={allTasks}
+                statsById={statsById}
                 members={members}
                 teams={teams}
                 milestones={milestones}

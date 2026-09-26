@@ -432,6 +432,26 @@
     "tutorials.habitsMobile.step5Title": {
       "categorie": "anglicisme-fr",
       "valeur": "Mini heatmap"
+    },
+    "orgAccount.audit.csv.action": {
+      "categorie": "mot-identique",
+      "valeur": "Action"
+    },
+    "orgAccount.audit.csv.date": {
+      "categorie": "mot-identique",
+      "valeur": "Date"
+    },
+    "orgAccount.audit.system": {
+      "categorie": "nom-propre",
+      "valeur": "COSMO"
+    },
+    "portfolio.okrCycles.manage": {
+      "categorie": "mot-identique",
+      "valeur": "Cycles…"
+    },
+    "portfolio.okrModal.cycle": {
+      "categorie": "mot-identique",
+      "valeur": "Cycle"
     }
   }
 }

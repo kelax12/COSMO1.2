@@ -87,16 +87,55 @@ export const useEditTeamOKR = (orgId: string) => {
   });
 };
 
+/**
+ * « Supprimer » met l'objectif à la CORBEILLE (mig. 193) : 30 jours pour le
+ * restaurer, KR, points d'étape et liens de projets compris.
+ */
 export const useDeleteTeamOKR = (orgId: string) => {
   const queryClient = useQueryClient();
   const repository = useRepo();
   return useMutation({
     mutationFn: (okrId: string) => repository.remove(okrId),
     onSuccess: () => {
-      toast.success(translator('errors').t('success.objectiveDeleted'));
+      toast.success(translator('errors').t('success.objectiveTrashed'));
       queryClient.invalidateQueries({ queryKey: teamOkrKeys.list(orgId) });
+      queryClient.invalidateQueries({ queryKey: teamOkrKeys.trash(orgId) });
     },
     onError: (error: Error) => toast.error(translator('errors').t('mutation.deleteTeamObjective', { message: error.message })),
+  });
+};
+
+export const useTeamOKRTrash = (orgId: string | undefined, options?: { enabled?: boolean }) => {
+  const repository = useRepo();
+  return useQuery({
+    queryKey: teamOkrKeys.trash(orgId ?? ''),
+    queryFn: () => repository.getTrash(orgId as string),
+    enabled: !!orgId && (options?.enabled ?? true),
+    staleTime: 1000 * 30,
+  });
+};
+
+export const useRestoreTeamOKR = (orgId: string) => {
+  const queryClient = useQueryClient();
+  const repository = useRepo();
+  return useMutation({
+    mutationFn: (okrId: string) => repository.restore(okrId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: teamOkrKeys.list(orgId) });
+      queryClient.invalidateQueries({ queryKey: teamOkrKeys.trash(orgId) });
+    },
+    onError: (error: Error) => toast.error(translator('errors').t('mutation.restoreTeamOkr', { message: error.message })),
+  });
+};
+
+/** Suppression définitive depuis la corbeille (admin). */
+export const usePurgeTeamOKR = (orgId: string) => {
+  const queryClient = useQueryClient();
+  const repository = useRepo();
+  return useMutation({
+    mutationFn: (okrId: string) => repository.purge(okrId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: teamOkrKeys.trash(orgId) }),
+    onError: (error: Error) => toast.error(translator('errors').t('mutation.trashTeamOkr', { message: error.message })),
   });
 };
 

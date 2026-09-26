@@ -52,6 +52,8 @@ describe('SupabaseTeamOKRsRepository — getAll', () => {
         targetValue: 10, unit: 'k€', assigneeId: 'u2', completed: false,
         completedAt: null, weight: 3, estimatedTime: 45,
         progressMode: 'manual', contributorIds: [],
+        // Mig. 160 : état du dernier point d'étape — null tant qu'aucun n'est posé.
+        health: null, healthUpdatedAt: null,
       }],
     }]);
   });
@@ -233,14 +235,30 @@ describe('SupabaseTeamOKRsRepository — update / remove', () => {
     expect(supabaseMock.queries.filter((q) => q.table === 'team_okr_teams')).toHaveLength(1);
   });
 
-  it('remove: delete ciblé par id ; erreur DB → rejet normalisé', async () => {
-    supabaseMock.queueTable('team_okrs', { data: null });
+  // Mig. 193 : « supprimer » passe par la CORBEILLE. Un DELETE direct
+  // effacerait KR, points d'étape et liens de projets sans retour possible.
+  it('remove: met à la corbeille par RPC, jamais de DELETE ; erreur DB → rejet normalisé', async () => {
+    supabaseMock.queueRpc('trash_team_okr', { data: null });
     await repo.remove('o1');
-    expect(supabaseMock.callsFor('team_okrs').map((c) => c.method)).toEqual(['delete', 'eq']);
-    expect(supabaseMock.argsOf('team_okrs', 'eq')).toEqual(['id', 'o1']);
+    expect(supabaseMock.rpcCalls.find((c) => c.fn === 'trash_team_okr')?.args).toEqual({ p_okr: 'o1' });
+    expect(supabaseMock.callsFor('team_okrs')).toHaveLength(0);
 
-    supabaseMock.queueTable('team_okrs', { data: null, error: { message: 'denied', code: '42501' } });
+    supabaseMock.queueRpc('trash_team_okr', { data: null, error: { message: 'forbidden', code: '42501' } });
     await expect(repo.remove('o1')).rejects.toBeTruthy();
+  });
+
+  it('getTrash / restore / purge : trois RPC, mappage camelCase', async () => {
+    supabaseMock.queueRpc('get_team_okr_trash', {
+      data: [{ id: 'o1', title: 'T4', deleted_at: '2026-09-20T10:00:00Z', deleted_by: 'u1', created_by: 'u2' }],
+    });
+    expect(await repo.getTrash('org1')).toEqual([
+      { id: 'o1', title: 'T4', deletedAt: '2026-09-20T10:00:00Z', deletedBy: 'u1', createdBy: 'u2' },
+    ]);
+    supabaseMock.queueRpc('restore_team_okr', { data: null });
+    await repo.restore('o1');
+    supabaseMock.queueRpc('purge_team_okr', { data: null });
+    await repo.purge('o1');
+    expect(supabaseMock.rpcCalls.map((c) => c.fn)).toEqual(['get_team_okr_trash', 'restore_team_okr', 'purge_team_okr']);
   });
 });
 

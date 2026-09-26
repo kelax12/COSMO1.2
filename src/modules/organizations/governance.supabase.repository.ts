@@ -9,6 +9,12 @@ import type { IOrgGovernanceRepository } from './governance.repository';
 import {
   DEFAULT_NOTIFICATION_SETTINGS,
   type AuditEntry,
+  type AuditLogQuery,
+  type OrgSearchKind,
+  type OrgSearchResult,
+  type SavedView,
+  type SaveViewInput,
+  type SavedViewScope,
   type CreateEmailInvitationsInput,
   type DepartureImpact,
   type EmailInvitation,
@@ -118,12 +124,17 @@ export class SupabaseOrgGovernanceRepository implements IOrgGovernanceRepository
     if (error) throw normalizeApiError(error);
   }
 
-  async getAuditLog(orgId: string, options?: { targetUserId?: string; limit?: number }): Promise<AuditEntry[]> {
+  async getAuditLog(orgId: string, options?: AuditLogQuery): Promise<AuditEntry[]> {
     let query = db()
       .from('org_audit_log')
       .select('id, actor_id, action, target_type, target_id, target_user_id, meta, created_at')
       .eq('org_id', orgId);
     if (options?.targetUserId) query = query.eq('target_user_id', options.targetUserId);
+    // Page suivante par CURSEUR (index `org_id, created_at DESC`) : un décalage
+    // ferait relire les N premières lignes à chaque page.
+    if (options?.before) query = query.lt('created_at', options.before);
+    // Famille d'action (`member.`, `project.`…) : préfixe littéral, jokers échappés.
+    if (options?.actionPrefix) query = query.like('action', `${options.actionPrefix.replace(/[\\%_]/g, (c) => `\\${c}`)}%`);
     const { data, error } = await query
       .order('created_at', { ascending: false })
       .limit(Math.min(options?.limit ?? 200, 1000));
@@ -206,4 +217,83 @@ export class SupabaseOrgGovernanceRepository implements IOrgGovernanceRepository
     });
     if (error) throw normalizeApiError(error);
   }
+
+  // ─── Vues enregistrées (mig. 192) ──────────────────────────────────
+
+  async getSavedViews(orgId: string, scope: SavedViewScope): Promise<SavedView[]> {
+    const { data, error } = await db()
+      .from('org_saved_views')
+      .select('id, scope, name, filters, created_at, updated_at')
+      .eq('org_id', orgId)
+      .eq('scope', scope)
+      .order('name', { ascending: true })
+      .limit(50);
+    if (error) throw normalizeApiError(error);
+    return (data ?? []).map(mapSavedView);
+  }
+
+  async saveView(orgId: string, input: SaveViewInput): Promise<SavedView> {
+    // `user_id` : défaut serveur `auth.uid()`, jamais envoyé par le client.
+    // Même nom = mise à jour des filtres (contrainte d'unicité).
+    const { data, error } = await db()
+      .from('org_saved_views')
+      .upsert(
+        { org_id: orgId, scope: input.scope, name: input.name.trim(), filters: input.filters },
+        { onConflict: 'org_id,user_id,scope,name' },
+      )
+      .select('id, scope, name, filters, created_at, updated_at')
+      .single();
+    if (error) throw normalizeApiError(error);
+    return mapSavedView(data);
+  }
+
+  async deleteView(viewId: string): Promise<void> {
+    const { error } = await db().from('org_saved_views').delete().eq('id', viewId);
+    if (error) throw normalizeApiError(error);
+  }
+
+  // ─── Recherche globale (mig. 191) ──────────────────────────────────
+
+  async search(orgId: string, query: string, limitPerKind = 8): Promise<OrgSearchResult[]> {
+    const q = query.trim();
+    if (q.length < 2) return [];
+    const { data, error } = await db().rpc('search_org', { p_org: orgId, p_query: q, p_limit: limitPerKind });
+    if (error) throw normalizeApiError(error);
+    return ((data ?? []) as SearchRow[])
+      .filter((r) => (SEARCH_KINDS as readonly string[]).includes(r.kind))
+      .map((r) => ({
+        kind: r.kind as OrgSearchKind,
+        id: r.id,
+        label: r.label,
+        detail: r.detail,
+        parentId: r.parent_id,
+      }));
+  }
 }
+
+interface SearchRow {
+  kind: string;
+  id: string;
+  label: string;
+  detail: string | null;
+  parent_id: string | null;
+}
+
+const SEARCH_KINDS: readonly OrgSearchKind[] = ['project', 'milestone', 'task', 'okr', 'kr', 'team', 'member'];
+
+/** Seules des chaînes survivent : une vue ne rejoue que des paramètres d'URL. */
+const toStringRecord = (raw: unknown): Record<string, string> => {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {};
+  return Object.fromEntries(
+    Object.entries(raw as Record<string, unknown>).filter((e): e is [string, string] => typeof e[1] === 'string'),
+  );
+};
+
+const mapSavedView = (r: Record<string, unknown>): SavedView => ({
+  id: r.id as string,
+  scope: r.scope as SavedViewScope,
+  name: r.name as string,
+  filters: toStringRecord(r.filters),
+  createdAt: r.created_at as string,
+  updatedAt: r.updated_at as string,
+});

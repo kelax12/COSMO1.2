@@ -58,7 +58,9 @@
     "invalid_mode": "Mode de départ inconnu.",
     "member_not_found": "Cette personne ne fait plus partie de l'entreprise.",
     "project_not_archived": "Seul un projet archivé peut être supprimé définitivement : archivez-le d'abord.",
-    "project_not_found": "Ce projet n'existe plus."
+    "project_not_found": "Ce projet n'existe plus.",
+    "project_viewer_read_only": "Vous êtes lecteur de ce projet : vous ne pouvez modifier que les tâches qui vous sont assignées.",
+    "saved_views_limit": "Vous avez atteint 50 vues enregistrées pour cet écran. Supprimez-en une pour en créer une nouvelle."
   },
   "validation": {
     "fallback": "Données invalides",
@@ -98,7 +100,8 @@
       "descriptionTooLong": "Description trop longue",
       "priorityRange": "Priorité invalide (1 à 5)",
       "durationNegative": "Durée négative",
-      "tooManyAssignees": "20 assignés maximum"
+      "tooManyAssignees": "20 assignés maximum",
+      "healthNoteTooLong": "Note trop longue (1 000 caractères max)"
     },
     "organization": {
       "nameTooShort": "Le nom de l'entreprise doit faire au moins 2 caractères",
@@ -199,7 +202,12 @@
     "emailInvite": "Impossible d'envoyer l'invitation : {{message}}",
     "notificationSettings": "Impossible d'enregistrer vos préférences : {{message}}",
     "weeklyReview": "Impossible d'enregistrer la revue : {{message}}",
-    "teamTaskDraft": "La tâche est créée, mais une partie de son contenu n'a pas été enregistrée : {{message}}"
+    "teamTaskDraft": "La tâche est créée, mais une partie de son contenu n'a pas été enregistrée : {{message}}",
+    "projectMember": "Impossible de modifier les membres du projet : {{message}}",
+    "savedView": "Impossible d'enregistrer la vue : {{message}}",
+    "trashTeamOkr": "Impossible de supprimer l'objectif : {{message}}",
+    "restoreTeamOkr": "Impossible de restaurer l'objectif : {{message}}",
+    "purgeTask": "Impossible de supprimer définitivement la tâche : {{message}}"
   },
   "success": {
     "orgCreated": "Entreprise créée",
@@ -217,7 +225,6 @@
     "orgProfileUpdated": "Profil de l'entreprise mis à jour",
     "objectiveCreated": "Objectif créé",
     "objectiveUpdated": "Objectif mis à jour",
-    "objectiveDeleted": "Objectif supprimé",
     "projectCreated": "Projet créé",
     "projectArchived": "Projet archivé",
     "projectRestored": "Projet restauré",
@@ -235,7 +242,8 @@
     "memberOffboarded": "Départ finalisé, le travail a été transmis",
     "memberAccessUpdated": "Accès mis à jour",
     "notificationSettingsSaved": "Préférences enregistrées",
-    "weeklyReviewSaved": "Revue enregistrée"
+    "weeklyReviewSaved": "Revue enregistrée",
+    "objectiveTrashed": "Objectif placé dans la corbeille (30 jours pour le restaurer)"
   },
   "friends": {
     "notAuthenticated": "Vous devez être connecté pour effectuer cette action.",

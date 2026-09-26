@@ -28,6 +28,10 @@ import {
   UpdateTeamProjectMilestoneInput,
   TeamProjectDependency,
   TeamProjectTeam,
+  TeamProjectMember,
+  TeamProjectRole,
+  TeamProjectTaskStats,
+  TeamMemberWorkload,
 } from './types';
 import type { CreateOptions } from '@/lib/restore-id';
 
@@ -78,6 +82,15 @@ export interface ITeamProjectsRepository {
    * lui (`purge_archived_team_project`, mig. 164). Refusé sur un projet actif.
    */
   purgeArchivedProject(projectId: string): Promise<void>;
+  // Membres d'un projet et leur rôle (mig. 190) — toute l'organisation en UNE lecture.
+  getProjectMembers(orgId: string): Promise<TeamProjectMember[]>;
+  /** Ajoute la personne au projet, ou change son rôle. */
+  setProjectMember(projectId: string, userId: string, role: TeamProjectRole): Promise<void>;
+  removeProjectMember(projectId: string, userId: string): Promise<void>;
+
+  // Chiffres comptés par le SERVEUR (mig. 191) — `today` : date locale 'YYYY-MM-DD'.
+  getProjectTaskStats(orgId: string, today: string): Promise<TeamProjectTaskStats[]>;
+  getMemberWorkload(orgId: string, today: string): Promise<TeamMemberWorkload[]>;
 
   // Tâches d'équipe
   getTasks(orgId: string, filters?: TeamTaskFilters): Promise<TeamTask[]>;
@@ -93,6 +106,8 @@ export interface ITeamProjectsRepository {
   restoreTask(taskId: string): Promise<void>;
   /** Les tâches que l'appelant peut restaurer, les plus récentes d'abord. */
   getTrash(orgId: string): Promise<TeamTrashedTask[]>;
+  /** Suppression DÉFINITIVE depuis la corbeille — admin seulement (mig. 193). */
+  purgeTask(taskId: string): Promise<void>;
 
   // Commentaires (mig. 082) — journal immuable, delete auteur only.
   getComments(taskId: string): Promise<TeamTaskComment[]>;

@@ -55,6 +55,8 @@ describe('SupabaseTeamProjectsRepository — projets', () => {
       // le mapper leur donne le défaut serveur, jamais `undefined`.
       description: null, ownerId: null, status: 'active', startDate: null, dueDate: null,
       isTemplate: false, templatePayload: null,
+      // Mig. 190 : même règle pour la santé déclarée.
+      health: null, healthNote: null, healthUpdatedAt: null, healthUpdatedBy: null,
     }]);
   });
 

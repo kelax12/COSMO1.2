@@ -1,7 +1,7 @@
 // Schémas zod — garde UX côté client (messages FR). Pas la frontière de
 // sécurité (RLS + triggers + whitelist mapToDb).
 import { z } from 'zod';
-import type { TeamProjectStatus, TeamTaskStatus } from './types';
+import type { TeamProjectHealth, TeamProjectStatus, TeamTaskStatus } from './types';
 
 // `z.enum` veut un tableau littéral ; ce Record garantit à la COMPILATION que
 // la liste couvre exactement les valeurs de `TeamTaskStatus` (types.ts) — ni
@@ -27,6 +27,14 @@ const TEAM_PROJECT_STATUS_EXHAUSTIVE: Record<TeamProjectStatus, true> = {
   done: true,
 };
 const TEAM_PROJECT_STATUSES = Object.keys(TEAM_PROJECT_STATUS_EXHAUSTIVE) as [TeamProjectStatus, ...TeamProjectStatus[]];
+
+// Santé (mig. 190) : même garantie d'exhaustivité que les statuts.
+const TEAM_PROJECT_HEALTH_EXHAUSTIVE: Record<TeamProjectHealth, true> = {
+  on_track: true,
+  at_risk: true,
+  off_track: true,
+};
+const TEAM_PROJECT_HEALTHS = Object.keys(TEAM_PROJECT_HEALTH_EXHAUSTIVE) as [TeamProjectHealth, ...TeamProjectHealth[]];
 
 // Champs du projet riche (mig. 153). ⚠️ Même piège que `teamId` : un champ
 // absent d'ici est STRIPPÉ par zod avant le repository, sans erreur.
@@ -59,6 +67,9 @@ export const updateTeamProjectSchema = z.object({
   categoryId: z.string().nullable().optional(),
   archived: z.boolean().optional(),
   ...richProjectFields,
+  // Santé déclarée (mig. 190) — absente d'ici, zod la stripperait.
+  health: z.enum(TEAM_PROJECT_HEALTHS).nullable().optional(),
+  healthNote: z.string().max(1000, 'validation.teamProject.healthNoteTooLong').nullable().optional(),
 });
 
 export const createTeamTaskSchema = z.object({
