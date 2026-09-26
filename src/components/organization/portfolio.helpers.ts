@@ -255,3 +255,14 @@ export function instantiateTemplate(
 
 /** Date locale du jour, 'YYYY-MM-DD' (convention `en-CA` du projet). */
 export const todayLocal = (): string => new Date().toLocaleDateString('en-CA');
+
+/**
+ * « Mes projets » (audit du 2026-09-24, cas « une personne sur plusieurs
+ * projets ») : ceux dont je suis responsable, ou où j'ai au moins une tâche
+ * ouverte. La vue n'était jamais proposée dans l'onglet Projets.
+ */
+export const isMyProject = (project: TeamProject, userId: string | undefined, tasks: TeamTask[]): boolean =>
+  !!userId && (
+    project.ownerId === userId
+    || tasks.some((t) => t.projectId === project.id && !t.completed && t.assigneeIds.includes(userId))
+  );

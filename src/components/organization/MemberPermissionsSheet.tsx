@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { X, ShieldCheck, RotateCcw, Globe2 } from 'lucide-react';
 import {
   ORG_ASSIGN_TARGETS,
+  ORG_PERMISSION_KEYS,
   DEFAULT_ASSIGN_TARGETS,
   canAssignTo,
   canGrant,
@@ -116,6 +117,7 @@ const MemberPermissionsSheet = ({
     () => memberReach({ member, members, memberships, projects, okrs }),
     [member, members, memberships, projects, okrs],
   );
+  const { t: ta } = useT('orgAdmin');
 
   const [overrides, setOverrides] = useState<Partial<Record<OrgPermissionKey, boolean | null>>>(
     () => ({ ...(current?.overrides ?? {}) }),
@@ -174,6 +176,21 @@ const MemberPermissionsSheet = ({
     setTargets(next);
   };
 
+  /**
+   * Profils prêts à l'emploi (audit du 2026-09-24, « accès temporaire : ni
+   * invité ni expiration »). « Invité » ne crée, ne supprime et n'invite rien,
+   * et ne s'assigne qu'à lui-même ; la durée se règle dans « Accès et
+   * suspension ». Ce sont des SURCHARGES, donc réversibles ligne à ligne.
+   */
+  const applyGuestPreset = () => {
+    setOverrides(Object.fromEntries(ORG_PERMISSION_KEYS.map((key) => [key, false])));
+    setTargets(['self']);
+  };
+  const applyDefaults = () => {
+    setOverrides(Object.fromEntries(ORG_PERMISSION_KEYS.map((key) => [key, null])));
+    setTargets(null);
+  };
+
   const save = () => {
     if (pending) return;
     onSave({ overrides, assignTargets: targets });
@@ -189,7 +206,7 @@ const MemberPermissionsSheet = ({
       <div key={key} className="flex items-start gap-3 py-3 border-b border-[rgb(var(--color-border))] last:border-0">
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">
-            {t(labelKey(key))}
+            {ta(labelKey(key))}
           </p>
           <p className="text-xs text-[rgb(var(--color-text-muted))] mt-0.5">{t(hintKey(key))}</p>
           {effective[key] && impactOf(key) && (
@@ -197,7 +214,7 @@ const MemberPermissionsSheet = ({
           )}
           <div className="flex items-center gap-2 mt-1">
             <span className="text-caption text-[rgb(var(--color-text-muted))]">
-              {inherited[key] ? t('permissions.inheritedOn') : t('permissions.inheritedOff')}
+              {inherited[key] ? ta('permissions.inheritedOn') : ta('permissions.inheritedOff')}
             </span>
             {decided && (
               <button
@@ -206,12 +223,12 @@ const MemberPermissionsSheet = ({
                 disabled={pending}
                 className="inline-flex items-center gap-1 text-caption font-semibold text-indigo-600 dark:text-indigo-400 hover:underline disabled:opacity-50"
               >
-                <RotateCcw size={11} aria-hidden="true" /> {t('permissions.reset')}
+                <RotateCcw size={11} aria-hidden="true" /> {ta('permissions.reset')}
               </button>
             )}
             {!allowed && !effective[key] && (
               <span className="text-caption text-amber-600 dark:text-amber-400">
-                {t('permissions.ceiling')}
+                {ta('permissions.ceiling')}
               </span>
             )}
           </div>
@@ -219,7 +236,7 @@ const MemberPermissionsSheet = ({
         <Switch
           checked={effective[key]}
           disabled={disabled}
-          label={t(labelKey(key))}
+          label={ta(labelKey(key))}
           onToggle={() => toggle(key)}
         />
       </div>
@@ -231,7 +248,7 @@ const MemberPermissionsSheet = ({
   const { ref: modalA11yRef, dialogProps: modalA11yProps } = useModalA11y<HTMLDivElement>({
     open: true,
     onClose: onClose,
-    label: t('permissions.aria', { name: member.displayName }),
+    label: ta('permissions.aria', { name: member.displayName }),
   });
 
   return createPortal(
@@ -250,7 +267,7 @@ const MemberPermissionsSheet = ({
             <MemberAvatar avatar={member.avatar} name={member.displayName} size={40} />
             <div className="min-w-0">
               <h2 className="text-base font-bold text-[rgb(var(--color-text-primary))] truncate flex items-center gap-1.5">
-                <ShieldCheck size={16} aria-hidden="true" /> {t('permissions.title', { name: member.displayName })}
+                <ShieldCheck size={16} aria-hidden="true" /> {ta('permissions.title', { name: member.displayName })}
               </h2>
             </div>
           </div>
@@ -272,11 +289,30 @@ const MemberPermissionsSheet = ({
             <Globe2 size={14} className="mt-px shrink-0" aria-hidden="true" />
             {t('popups.perms.scope')}
           </p>
+          <div className="flex flex-wrap gap-2 mb-4" role="group" aria-label={ta('permissions.presets')}>
+            <button
+              type="button"
+              onClick={applyGuestPreset}
+              disabled={pending}
+              title={ta('permissions.presetGuestHint')}
+              className="px-3 min-h-9 rounded-lg text-xs font-semibold border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] disabled:opacity-50"
+            >
+              {ta('permissions.presetGuest')}
+            </button>
+            <button
+              type="button"
+              onClick={applyDefaults}
+              disabled={pending}
+              className="px-3 min-h-9 rounded-lg text-xs font-semibold border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] disabled:opacity-50"
+            >
+              {ta('permissions.presetDefaults')}
+            </button>
+          </div>
 
           {SECTIONS.map(({ titleKey, keys }) => (
             <section key={titleKey} className="mb-5">
               <h3 className="text-xs font-bold uppercase tracking-wide text-[rgb(var(--color-text-muted))] mb-1">
-                {t(titleKey)}
+                {ta(titleKey)}
               </h3>
               {keys.map(renderRow)}
             </section>
@@ -284,7 +320,7 @@ const MemberPermissionsSheet = ({
 
           <section>
             <h3 className="text-xs font-bold uppercase tracking-wide text-[rgb(var(--color-text-muted))] mb-1">
-              {t('permissions.sectionAssign')}
+              {ta('permissions.sectionAssign')}
             </h3>
             {ORG_ASSIGN_TARGETS.map((target) => {
               const checked = effectiveTargets.includes(target);
@@ -309,10 +345,10 @@ const MemberPermissionsSheet = ({
                   />
                   <span className="min-w-0">
                     <span className="block text-sm font-semibold text-[rgb(var(--color-text-primary))]">
-                      {t(targetKey(target))}
+                      {ta(targetKey(target))}
                     </span>
                     <span className="block text-xs text-[rgb(var(--color-text-muted))]">
-                      {t(targetHintKey(target))}
+                      {ta(targetHintKey(target))}
                     </span>
                   </span>
                 </label>
@@ -323,7 +359,7 @@ const MemberPermissionsSheet = ({
             </p>
             {targetsDecided && effectiveTargets.length === 0 && (
               <p className="text-xs font-semibold text-amber-600 dark:text-amber-400 mt-2">
-                {t('permissions.assignNobody')}
+                {ta('permissions.assignNobody')}
               </p>
             )}
           </section>
@@ -336,7 +372,7 @@ const MemberPermissionsSheet = ({
             disabled={pending}
             className="px-4 py-2 text-sm font-semibold rounded-xl text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] disabled:opacity-50"
           >
-            {t('permissions.cancel')}
+            {ta('permissions.cancel')}
           </button>
           <button
             type="button"
@@ -344,7 +380,7 @@ const MemberPermissionsSheet = ({
             disabled={pending}
             className="px-4 py-2 text-sm font-semibold rounded-xl bg-[rgb(var(--color-accent-solid))] text-white hover:opacity-90 disabled:opacity-50"
           >
-            {pending ? t('permissions.saving') : t('permissions.save')}
+            {pending ? ta('permissions.saving') : ta('permissions.save')}
           </button>
         </div>
       </div>

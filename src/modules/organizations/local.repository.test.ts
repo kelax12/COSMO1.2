@@ -189,6 +189,26 @@ describe('LocalStorageOrganizationsRepository (démo, multi-org v2)', () => {
     expect(members.find((m) => m.userId === 'friend-3')?.managerId).toBe('demo-user');
   });
 
+  // Audit du 2026-09-24, cas « utilisateur supprimé » : les assignations
+  // pointaient vers un fantôme. Miroir de `release_member_work` (mig. 164).
+  it("removeMember libère les tâches OUVERTES et les projets portés, garde l'historique", async () => {
+    const { LocalStorageTeamProjectsRepository } = await import('@/modules/team-projects/local.repository');
+    const projects = new LocalStorageTeamProjectsRepository();
+    const all = await projects.getTasks(DEMO_ORG_ID);
+    const open = all.find((t) => !t.completed && t.assigneeIds.length > 0);
+    const done = all.find((t) => t.completed && t.assigneeIds.length > 0);
+    expect(open && done).toBeTruthy();
+    const leaver = open!.assigneeIds[0];
+    await projects.updateTask(done!.id, { assigneeIds: [leaver] });
+    await projects.updateProject(open!.projectId, { ownerId: leaver });
+    await repo.removeMember(DEMO_ORG_ID, leaver);
+
+    const after = await projects.getTasks(DEMO_ORG_ID);
+    expect(after.filter((t) => !t.completed && t.assigneeIds.includes(leaver))).toEqual([]);
+    expect(after.find((t) => t.id === done!.id)?.assigneeIds).toContain(leaver);
+    expect((await projects.getProjects(DEMO_ORG_ID)).find((p) => p.id === open!.projectId)?.ownerId).toBeNull();
+  });
+
   // ─── Invitations placées + code (v2, lot 1c) ────────────────────────
 
   it('createInviteLink : lien placé sous Marie, expire à J+7, révocable', async () => {

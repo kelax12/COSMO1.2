@@ -33,6 +33,7 @@ const endOfLocalDay = (date: string): string => new Date(`${date}T23:59:59`).toI
  */
 const MemberAccessDialog = ({ orgId, member, onClose }: MemberAccessDialogProps) => {
   const { t } = useT('org');
+  const { t: ta } = useT('orgAdmin');
   const setAccess = useSetMemberAccess();
   const [suspended, setSuspended] = useState(!!member.suspendedAt);
   const [until, setUntil] = useState(member.accessExpiresAt ? member.accessExpiresAt.slice(0, 10) : '');
@@ -48,16 +49,16 @@ const MemberAccessDialog = ({ orgId, member, onClose }: MemberAccessDialogProps)
       <AlertDialogContent className="bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl text-[rgb(var(--color-text-primary))] shadow-xl">
         <AlertDialogHeader>
           <AlertDialogTitle className="text-xl font-bold">
-            {t('lifecycle.accessTitle', { name: member.displayName })}
+            {ta('lifecycle.accessTitle', { name: member.displayName })}
           </AlertDialogTitle>
           <AlertDialogDescription className="text-[rgb(var(--color-text-secondary))] text-sm leading-relaxed">
-            {t('lifecycle.accessIntro')}
+            {ta('lifecycle.accessIntro')}
           </AlertDialogDescription>
         </AlertDialogHeader>
 
         <fieldset className="space-y-2">
           <legend className="text-xs font-semibold text-[rgb(var(--color-text-secondary))] mb-1">
-            {t('lifecycle.accessState')}
+            {ta('lifecycle.accessState')}
           </legend>
           {[false, true].map((value) => (
             <label key={String(value)} className="flex items-start gap-2.5 p-2.5 rounded-xl border border-[rgb(var(--color-border))] cursor-pointer has-[:checked]:border-[rgb(var(--color-accent))]">
@@ -70,10 +71,10 @@ const MemberAccessDialog = ({ orgId, member, onClose }: MemberAccessDialogProps)
               />
               <span className="text-sm">
                 <span className="block font-semibold">
-                  {value ? t('lifecycle.stateSuspended') : t('lifecycle.stateActive')}
+                  {value ? ta('lifecycle.stateSuspended') : ta('lifecycle.stateActive')}
                 </span>
                 <span className="block text-xs text-[rgb(var(--color-text-muted))]">
-                  {value ? t('lifecycle.stateSuspendedHint') : t('lifecycle.stateActiveHint')}
+                  {value ? ta('lifecycle.stateSuspendedHint') : ta('lifecycle.stateActiveHint')}
                 </span>
               </span>
             </label>
@@ -82,16 +83,16 @@ const MemberAccessDialog = ({ orgId, member, onClose }: MemberAccessDialogProps)
 
         <div>
           <label htmlFor="member-access-until" className="block text-xs font-semibold text-[rgb(var(--color-text-secondary))] mb-1">
-            {t('lifecycle.accessUntil')}
+            {ta('lifecycle.accessUntil')}
           </label>
           <DatePicker
             id="member-access-until"
             value={until}
             onChange={(v) => setUntil(v ?? '')}
-            placeholder={t('lifecycle.accessUntilNone')}
+            placeholder={ta('lifecycle.accessUntilNone')}
             minDate={new Date().toLocaleDateString('en-CA')}
           />
-          <p className="mt-1 text-xs text-[rgb(var(--color-text-muted))]">{t('lifecycle.accessUntilHint')}</p>
+          <p className="mt-1 text-xs text-[rgb(var(--color-text-muted))]">{ta('lifecycle.accessUntilHint')}</p>
         </div>
 
         <AlertDialogFooter className="gap-2">
@@ -103,7 +104,7 @@ const MemberAccessDialog = ({ orgId, member, onClose }: MemberAccessDialogProps)
             onClick={(e) => { e.preventDefault(); save(); }}
             className="rounded-xl font-semibold text-sm bg-[rgb(var(--color-accent))] text-[rgb(var(--color-background))] hover:opacity-90 disabled:opacity-50"
           >
-            {t('lifecycle.accessSave')}
+            {ta('lifecycle.accessSave')}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

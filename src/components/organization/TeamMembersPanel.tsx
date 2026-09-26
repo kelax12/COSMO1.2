@@ -4,6 +4,7 @@ import {
   useAddTeamMember,
   useRemoveTeamMember,
   useSetTeamLead,
+  useOrgTeamMembers,
   type OrgTeam,
   type OrgTeamMember,
 } from '@/modules/org-teams';
@@ -20,6 +21,11 @@ import { MEMBER_SEARCH_THRESHOLD, filterMembersByQuery } from './member-search.h
 import { sortTeamMembers } from './team-page.helpers';
 import { useT } from '@/i18n/useT';
 import RoleTerm from './RoleTerm';
+import { showUndoToast } from '@/lib/undo-toast';
+import { useTeamProjects, useTeamProjectTeams, type TeamProject } from '@/modules/team-projects';
+import { projectsLostOnTeamLeave } from './team-audience.helpers';
+import LeaveTeamConfirm from './LeaveTeamConfirm';
+import TeamBulkAddDialog from './TeamBulkAddDialog';
 
 /**
  * Au-delà, les pastilles se coupent avec un « +N » (audit « passage à
@@ -106,6 +112,41 @@ const TeamMembersPanel = ({ orgId, team, members, memberships, currentUserId, is
   const removeMember = useRemoveTeamMember(orgId);
   const setLead = useSetTeamLead(orgId);
   const [expanded, setExpanded] = useState(false);
+  const { t: ta } = useT('orgAdmin');
+  const { data: allMemberships = [] } = useOrgTeamMembers(orgId);
+  const { data: projects = [] } = useTeamProjects(orgId);
+  const { data: projectTeams = [] } = useTeamProjectTeams(orgId);
+  // Retrait qui coupe la vue sur des projets : confirmé, avec la liste.
+  const [leaving, setLeaving] = useState<{ member: OrgMember; wasLead: boolean; lost: TeamProject[] } | null>(null);
+
+  // Chaque geste réversible a son « Annuler » (audit du 2026-09-24, cohérence
+  // des popups). Les tâches l'avaient, les équipes rien.
+  const addWithUndo = (userId: string) =>
+    addMember.mutate({ teamId: team.id, userId }, {
+      onSuccess: () => showUndoToast(ta('teamUndo.added', { team: team.name }), () =>
+        removeMember.mutate({ teamId: team.id, userId })),
+    });
+  const removeWithUndo = (userId: string, wasLead: boolean) =>
+    removeMember.mutate({ teamId: team.id, userId }, {
+      onSuccess: () => showUndoToast(ta('teamUndo.removed', { team: team.name }), () =>
+        addMember.mutate({ teamId: team.id, userId }, {
+          onSuccess: () => { if (wasLead) setLead.mutate({ teamId: team.id, userId, isLead: true }); },
+        })),
+    });
+  const toggleLeadWithUndo = (userId: string, isLead: boolean) =>
+    setLead.mutate({ teamId: team.id, userId, isLead }, {
+      onSuccess: () => showUndoToast(ta(isLead ? 'teamUndo.leadSet' : 'teamUndo.leadRemoved'), () =>
+        setLead.mutate({ teamId: team.id, userId, isLead: !isLead })),
+    });
+  // Changement d'équipe (audit, étape 4) : les projets qu'on ne verra plus
+  // sont nommés AVANT, au lieu d'une perte de visibilité silencieuse.
+  const requestRemove = (member: OrgMember, wasLead: boolean) => {
+    const lost = projectsLostOnTeamLeave({
+      userId: member.userId, teamId: team.id, members, memberships: allMemberships, projects, projectTeams,
+    });
+    if (lost.length === 0) removeWithUndo(member.userId, wasLead);
+    else setLeaving({ member, wasLead, lost });
+  };
 
   const memberIds = new Set(memberships.map((m) => m.userId));
   const leadIds = new Set(memberships.filter((m) => m.isLead).map((m) => m.userId));
@@ -160,7 +201,7 @@ const TeamMembersPanel = ({ orgId, team, members, memberships, currentUserId, is
             {canManage && (
               <button
                 type="button"
-                onClick={() => setLead.mutate({ teamId: team.id, userId: m.userId, isLead: !isLead })}
+                onClick={() => toggleLeadWithUndo(m.userId, !isLead)}
                 aria-label={isLead ? t('teams.removeLead') : t('teams.makeLead')}
                 className={`transition-colors ${
                   isLead ? 'text-amber-500 hover:text-amber-600' : 'text-[rgb(var(--color-text-muted))] hover:text-amber-500'
@@ -172,7 +213,7 @@ const TeamMembersPanel = ({ orgId, team, members, memberships, currentUserId, is
             {canManage && (
               <button
                 type="button"
-                onClick={() => removeMember.mutate({ teamId: team.id, userId: m.userId })}
+                onClick={() => requestRemove(m, isLead)}
                 aria-label={t('team.removeMemberAria', { member: m.displayName, team: team.name })}
                 className="text-[rgb(var(--color-text-muted))] hover:text-red-500"
               >
@@ -197,7 +238,21 @@ const TeamMembersPanel = ({ orgId, team, members, memberships, currentUserId, is
           teamName={team.name}
           addable={addable}
           currentUserId={currentUserId}
-          onAdd={(userId) => addMember.mutate({ teamId: team.id, userId })}
+          onAdd={addWithUndo}
+        />
+      )}
+      {/* Ajout EN LOT (audit, étape 4 : « configuration en masse ») : au-delà
+          d'une poignée de personnes, le menu un par un ne tient plus. */}
+      {addable.length > 1 && <TeamBulkAddDialog orgId={orgId} team={team} addable={addable} />}
+      {leaving && (
+        <LeaveTeamConfirm
+          orgId={orgId}
+          memberName={leaving.member.displayName}
+          userId={leaving.member.userId}
+          teamName={team.name}
+          lostProjects={leaving.lost}
+          onConfirm={() => { removeWithUndo(leaving.member.userId, leaving.wasLead); setLeaving(null); }}
+          onCancel={() => setLeaving(null)}
         />
       )}
     </div>

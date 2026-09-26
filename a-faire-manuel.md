@@ -237,6 +237,14 @@ un correctif committé, testé et vert peut ne pas exister pour les utilisateurs
 > **sans jamais avoir comparé quoi que ce soit** — 14 fois. Un tableau tenu à la main aurait
 > continué à vieillir en silence.
 
+> 🆕 **2026-09-25 · mig. `164` (cas limites du mode entreprise) écrite, NON appliquée.** Branche
+> `claude/recommandations-mode-entreprise-swgi0u`. 🔴 **L'appliquer AVANT de déployer ce front** :
+> équipes associées d'un projet, purge d'un projet archivé, mode « transmettre » de l'assistant de
+> départ et notifications `project_archived` / `role_changed` en dépendent (sans elle : erreur au
+> clic, rien de silencieux). Relire le ledger d'abord (d'autres sessions appliquent `16x`), puis
+> vérifier par `pg_get_functiondef` : `offboard_org_member`, `remove_member`, `leave_organization`,
+> `my_team_project_ids`, `can_access_team_project`.
+
 *État du 2026-09-03, conservé à sa date :*
 
 | Fonction | Déployée | Ce qui tournait en production le 2026-09-03 |

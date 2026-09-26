@@ -23,9 +23,9 @@ import { getColorHex } from '@/lib/category-colors';
 import CategoryFilterBar from '@/pages/okr/CategoryFilterBar';
 import DeleteTeamCategoryConfirm from './DeleteTeamCategoryConfirm';
 import TeamOKRModal from './TeamOKRModal';
+import DeleteTeamOkrConfirm from './DeleteTeamOkrConfirm';
 import { useMyOrgPermissions } from '@/modules/organizations';
 import { useT } from '@/i18n/useT';
-import OrgConfirmDialog from './OrgConfirmDialog';
 import { PermissionGate, usePermissionHints } from './permission-hints';
 import { readEntityParam } from './deep-link.helpers';
 import TeamColorDot from './TeamColorDot';
@@ -134,7 +134,7 @@ const TeamKRRow = ({ kr, onCommit }: TeamKRRowProps) => {
 const TeamOKRTab = ({ orgId }: TeamOKRTabProps) => {
   const { can } = useMyOrgPermissions(orgId);
   const hints = usePermissionHints(orgId);
-  const { t, tp } = useT('org');
+  const { t } = useT('org');
   const [showCreate, setShowCreate] = useState(false);
   const [editingOKR, setEditingOKR] = useState<TeamOKR | null>(null);
   // Niveau LOURD (cf. OrgConfirmDialog) : un objectif n'a pas de corbeille.
@@ -428,13 +428,10 @@ const TeamOKRTab = ({ orgId }: TeamOKRTabProps) => {
         <TeamOKRModal orgId={orgId} editingOKR={editingOKR} onClose={() => setEditingOKR(null)} />
       )}
       {deletingOKR && (
-        <OrgConfirmDialog
-          title={t('common.deleteOkrTitle', { title: deletingOKR.title })}
-          impact={[
-            ...(deletingOKR.keyResults.length > 0 ? [tp('common.deleteOkrImpactKrs', deletingOKR.keyResults.length)] : []),
-            t('common.deleteOkrImpactHistory'),
-          ]}
-          confirmLabel={t('common.deleteAction')}
+        <DeleteTeamOkrConfirm
+          orgId={orgId}
+          okr={deletingOKR}
+          okrs={okrs}
           pending={deleteOKR.isPending}
           onConfirm={() => deleteOKR.mutate(deletingOKR.id, { onSettled: () => setDeletingOKR(null) })}
           onCancel={() => setDeletingOKR(null)}

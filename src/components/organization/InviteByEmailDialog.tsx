@@ -32,6 +32,7 @@ const ACCESS_CHOICES = [null, 7, 30, 90, 180] as const;
  */
 const InviteByEmailDialog = ({ orgId, members, currentUserId, isAdmin, onClose }: InviteByEmailDialogProps) => {
   const { t, tp } = useT('org');
+  const { t: ta } = useT('orgAdmin');
   const invite = useInviteByEmail(orgId);
   const { data: teams = [] } = useOrgTeams(orgId);
   const [raw, setRaw] = useState('');
@@ -45,7 +46,7 @@ const InviteByEmailDialog = ({ orgId, members, currentUserId, isAdmin, onClose }
   const { ref, dialogProps } = useModalA11y<HTMLDivElement>({
     open: true,
     onClose: () => { if (!invite.isPending) onClose(); },
-    label: t('invites.emailTitle'),
+    label: ta('invites.emailTitle'),
   });
 
   const emails = useMemo(() => splitEmails(raw), [raw]);
@@ -70,12 +71,12 @@ const InviteByEmailDialog = ({ orgId, members, currentUserId, isAdmin, onClose }
 
   const statusLabel = (r: EmailInvitationResult): string => {
     if (r.status === 'created') {
-      if (done?.sending.unavailable) return t('invites.statusCreatedNotSent');
-      return done && done.sending.failed > 0 ? t('invites.statusCreatedMaybe') : t('invites.statusSent');
+      if (done?.sending.unavailable) return ta('invites.statusCreatedNotSent');
+      return done && done.sending.failed > 0 ? ta('invites.statusCreatedMaybe') : ta('invites.statusSent');
     }
-    if (r.status === 'already_member') return t('invites.statusAlreadyMember');
-    if (r.status === 'already_invited') return t('invites.statusAlreadyInvited');
-    return t('invites.statusInvalid');
+    if (r.status === 'already_member') return ta('invites.statusAlreadyMember');
+    if (r.status === 'already_invited') return ta('invites.statusAlreadyInvited');
+    return ta('invites.statusInvalid');
   };
 
   return createPortal(
@@ -91,8 +92,8 @@ const InviteByEmailDialog = ({ orgId, members, currentUserId, isAdmin, onClose }
       >
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h2 className="text-lg font-bold text-[rgb(var(--color-text-primary))]">{t('invites.emailTitle')}</h2>
-            <p className="text-sm text-[rgb(var(--color-text-secondary))] mt-1">{t('invites.emailIntro')}</p>
+            <h2 className="text-lg font-bold text-[rgb(var(--color-text-primary))]">{ta('invites.emailTitle')}</h2>
+            <p className="text-sm text-[rgb(var(--color-text-secondary))] mt-1">{ta('invites.emailIntro')}</p>
           </div>
           <button
             type="button"
@@ -109,7 +110,7 @@ const InviteByEmailDialog = ({ orgId, members, currentUserId, isAdmin, onClose }
           <>
             {done.sending.unavailable && (
               <p role="status" className="rounded-xl bg-amber-500/10 text-amber-800 dark:text-amber-200 text-sm p-3">
-                {t('invites.mailUnavailable')}
+                {ta('invites.mailUnavailable')}
               </p>
             )}
             <ul className="space-y-1.5">
@@ -123,7 +124,7 @@ const InviteByEmailDialog = ({ orgId, members, currentUserId, isAdmin, onClose }
                     <button
                       type="button"
                       onClick={() => copyLink(r.token as string)}
-                      aria-label={t('invites.copyLinkFor', { email: r.email })}
+                      aria-label={ta('invites.copyLinkFor', { email: r.email })}
                       className="min-w-11 min-h-11 flex items-center justify-center rounded-lg text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))]"
                     >
                       {copied === r.token ? <Check size={16} aria-hidden="true" /> : <Copy size={16} aria-hidden="true" />}
@@ -138,7 +139,7 @@ const InviteByEmailDialog = ({ orgId, members, currentUserId, isAdmin, onClose }
                 onClick={onClose}
                 className="min-h-11 px-4 rounded-xl text-sm font-semibold bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))]"
               >
-                {t('invites.done')}
+                {ta('invites.done')}
               </button>
             </div>
           </>
@@ -146,14 +147,14 @@ const InviteByEmailDialog = ({ orgId, members, currentUserId, isAdmin, onClose }
           <>
             <div>
               <label htmlFor="invite-emails" className="block text-xs font-semibold text-[rgb(var(--color-text-secondary))] mb-1">
-                {t('invites.emailsLabel')}
+                {ta('invites.emailsLabel')}
               </label>
               <textarea
                 id="invite-emails"
                 value={raw}
                 onChange={(e) => setRaw(e.target.value)}
                 rows={4}
-                placeholder={t('invites.emailsPlaceholder')}
+                placeholder={ta('invites.emailsPlaceholder')}
                 className="w-full rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] px-3 py-2 text-sm text-[rgb(var(--color-text-primary))]"
               />
               <p className="mt-1 text-xs text-[rgb(var(--color-text-muted))]">
@@ -162,17 +163,17 @@ const InviteByEmailDialog = ({ orgId, members, currentUserId, isAdmin, onClose }
             </div>
 
             <MemberSelectField
-              label={t('invites.placement')}
+              label={ta('invites.placement')}
               members={placeable}
               value={managerId}
               onChange={setManagerId}
-              emptyLabel={isAdmin ? t('invites.unplaced') : t('invites.underMe')}
-              hint={t('invites.placementHint')}
+              emptyLabel={isAdmin ? ta('invites.unplaced') : ta('invites.underMe')}
+              hint={ta('invites.placementHint')}
             />
 
             {teams.length > 0 && (
               <fieldset>
-                <legend className="text-xs font-semibold text-[rgb(var(--color-text-secondary))] mb-1">{t('invites.teams')}</legend>
+                <legend className="text-xs font-semibold text-[rgb(var(--color-text-secondary))] mb-1">{ta('invites.teams')}</legend>
                 <div className="flex flex-wrap gap-1.5 max-h-40 overflow-y-auto">
                   {teams.map((team) => {
                     const on = teamIds.includes(team.id);
@@ -198,7 +199,7 @@ const InviteByEmailDialog = ({ orgId, members, currentUserId, isAdmin, onClose }
 
             <div>
               <label htmlFor="invite-access" className="block text-xs font-semibold text-[rgb(var(--color-text-secondary))] mb-1">
-                {t('invites.access')}
+                {ta('invites.access')}
               </label>
               <select
                 id="invite-access"
@@ -208,7 +209,7 @@ const InviteByEmailDialog = ({ orgId, members, currentUserId, isAdmin, onClose }
               >
                 {ACCESS_CHOICES.map((d) => (
                   <option key={d ?? 'none'} value={d ?? ''}>
-                    {d === null ? t('invites.accessPermanent') : t('invites.accessDays', { count: d })}
+                    {d === null ? ta('invites.accessPermanent') : ta('invites.accessDays', { count: d })}
                   </option>
                 ))}
               </select>
@@ -228,7 +229,7 @@ const InviteByEmailDialog = ({ orgId, members, currentUserId, isAdmin, onClose }
                 disabled={invite.isPending || emails.length === 0 || emails.length > 50 || (!isAdmin && !managerId)}
                 className="min-h-11 px-4 rounded-xl text-sm font-semibold bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] disabled:opacity-50"
               >
-                {invite.isPending ? t('invites.sending') : t('invites.send', { count: emails.length })}
+                {invite.isPending ? ta('invites.sending') : ta('invites.send', { count: emails.length })}
               </button>
             </div>
           </>

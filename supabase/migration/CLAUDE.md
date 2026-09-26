@@ -60,6 +60,9 @@ compilait, la suite passait.
   `…063218`, `…064540`, relues au catalogue après une preuve en transaction annulée (18 cas pour
   les quatre premières, 8 pour la 163). La 161 a été corrigée AVANT application : elle
   transmettait aussi les tâches à la corbeille (mig. 152).
+- ⚠️ **`164`** (cas limites du mode entreprise : équipes associées, purge d un projet archivé,
+  mode `transfer` du départ, `release_member_work`) est **écrite, NON appliquée** au 2026-09-26 :
+  ses corps de fonctions partent du catalogue relu le 2026-09-25, pas des fichiers `161`/`162`.
 - ⚠️ **Plages de numéros entre sessions (2026-09-24)** : `151`-`159` corbeille/équipes, `153` déjà
   prise par le portefeuille de projets (worktree `portefeuille`), `160`+ gouvernance/OKR/membres,
   `170`+ annuaire. **Relire le ledger avant de choisir un numéro.**

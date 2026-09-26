@@ -138,7 +138,6 @@ const NON_MESUREES: Record<string, string> = {
   'components/organization/NewTeamProjectModal.tsx': 'mode entreprise.',
   'components/organization/OffboardMemberDialog.tsx':
     'mode entreprise, admin seulement, et destructrice (assistant de départ, mig. 161).',
-  'components/organization/OrgProfileSheet.tsx': 'mode entreprise.',
   'components/organization/PyramidPlacementSheet.tsx':
     'mode entreprise : exige une organisation peuplée (fusion de MemberPlacementSheet et AddUnderSheet).',
   'components/organization/TeamTaskModal.tsx':

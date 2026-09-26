@@ -4,7 +4,6 @@ import { useSearchParams } from 'react-router';
 import { Move, Users, ArrowUpFromLine, UserPlus } from 'lucide-react';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
 import { useOrgTeams, useOrgTeamMembers, type OrgTeam } from '@/modules/org-teams';
-import OrgConfirmDialog from './OrgConfirmDialog';
 import { OrgCreateBoundary, useOrgCreate } from './org-create.context';
 import {
   buildOrgTree,
@@ -17,6 +16,7 @@ import {
 } from './pyramid.helpers';
 import { usePyramidCollapse } from './usePyramidCollapse';
 import { usePyramidDnd } from './usePyramidDnd';
+import PyramidPendingConfirm from './PyramidPendingConfirm';
 import PyramidToolbar from './PyramidToolbar';
 import UnplacedMembersPanel from './UnplacedMembersPanel';
 import { useTeamTaskWorkingSet } from '@/modules/team-projects';
@@ -26,7 +26,7 @@ import MemberAvatar from './MemberAvatar';
 import PyramidPlacementSheet, { type PlacementDirection } from './PyramidPlacementSheet';
 import MemberSheet from './MemberSheet';
 import { MEMBER_TAB_PARAM } from './member-sheet.helpers';
-import OffboardMemberDialog from './OffboardMemberDialog';
+import { useMemberLifecycle } from './MemberLifecycleActions';
 import { useT } from '@/i18n/useT';
 import RichText from '@/components/ui/rich-text';
 import { NodeCard, PyramidSkeleton } from './PyramidNodeCard';
@@ -57,7 +57,8 @@ const EMPTY_SET = new Set<string>();
  * cibles valides surlignées et zone « Détacher » pour les admins.
  */
 const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }: PyramidTabProps) => {
-  const { t, tp } = useT('org');
+  const { t } = useT('org');
+  const { t: ta } = useT('orgAdmin');
   const isMobile = useIsMobile();
   // Le GESTE (saisir une carte, la suivre au pointeur, valider ou annuler un
   // déplacement) vit dans `usePyramidDnd` : il ne connaît ni la recherche, ni
@@ -75,10 +76,9 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
     startEdit,
     finishEdit,
     cancelEdit,
-    confirmingUndo,
-    undoing,
-    confirmUndo,
-    dismissUndo,
+    pendingConfirm,
+    confirmPending,
+    dismissPending,
     grabMember,
     drop,
     drag,
@@ -118,8 +118,6 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
     next.delete(MEMBER_TAB_PARAM);
     setSearchParams(next, { replace: true });
   }, [deepMemberId, deepMemberTab, members, searchParams, setSearchParams]);
-  // Retrait d'un membre : assistant de départ (M10, mig. 161).
-  const [departing, setDeparting] = useState<OrgMember | null>(null);
 
   // ─── Calque de charge (item #28) ────────────────────────────────────
   // Désactivé par défaut : la pyramide sert d'abord à lire l'organisation, et
@@ -140,6 +138,9 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
   // Vue : null = toute l'entreprise ; sinon id d'équipe (membres de l'équipe +
   // leur chaîne hiérarchique jusqu'à l'admin).
   const [viewTeamId, setViewTeamId] = useState<string | null>(null);
+  // Retrait = assistant de départ (mig. 161/164) : il annonce l'impact
+  // (tâches, subordonnés, équipes, projets, KR) et fait choisir qui reprend.
+  const lifecycle = useMemberLifecycle({ orgId, members, ownerId, currentUserId, isAdmin });
   const { data: orgTeams = [] } = useOrgTeams(orgId);
   const { data: orgTeamMembers = [] } = useOrgTeamMembers(orgId);
   // Une équipe créée d'ici devient la vue affichée (formulaire unique).
@@ -172,11 +173,9 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
     }
   }, [viewTeamId, orgTeams]);
 
-  // Retrait d'un membre (admin) : l'assistant de départ annonce ce qui sera
-  // transmis (tâches ouvertes, subordonnés, rôles de responsable, KR), fait
-  // choisir à qui, puis retire ou suspend en une transaction. L'ancien
-  // parcours ne réassignait que les subordonnés, et laissait le reste orphelin.
-  const handleRemove = (m: OrgMember) => setDeparting(m);
+  // Retrait d'un membre (admin) : l'assistant de départ, qui transmet tâches,
+  // subordonnés, rôles, projets et KR AVANT de retirer (audit du 2026-09-24).
+  const handleRemove = (m: OrgMember) => lifecycle.openDeparture(m, 'remove');
 
   // Équipes transverses par membre (pastilles couleur sur les cartes).
   const teamsByUser = useMemo(() => {
@@ -247,7 +246,7 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
           <p className="text-sm text-[rgb(var(--color-text-primary))] inline-flex items-center gap-2 min-w-0">
             <Move size={15} className="text-indigo-500 shrink-0" aria-hidden="true" />
             <span className="truncate">
-              <RichText strongClassName="font-semibold">{t('pyramid.dragBanner', { name: dragging.displayName })}</RichText>
+              <RichText strongClassName="font-semibold">{ta('pyramid.dragBanner', { name: dragging.displayName })}</RichText>
             </span>
           </p>
           <button
@@ -266,14 +265,14 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
           type="button"
           data-drop-id={UNPLACED_DROP_ID}
           onClick={() => drop(UNPLACED_DROP_ID)}
-          aria-label={t('pyramid.detachAria', { name: dragging.displayName })}
+          aria-label={ta('pyramid.detachAria', { name: dragging.displayName })}
           className={`w-full flex items-center justify-center gap-2 rounded-2xl border border-dashed px-4 py-3 text-sm transition-colors ${
             hoverDropId === UNPLACED_DROP_ID
               ? 'border-amber-500 ring-2 ring-amber-500/40 text-amber-600 dark:text-amber-400'
               : 'border-amber-400/60 text-[rgb(var(--color-text-muted))] hover:border-amber-500'
           }`}
         >
-          <ArrowUpFromLine size={15} aria-hidden="true" /> {t('pyramid.detach')}
+          <ArrowUpFromLine size={15} aria-hidden="true" /> {ta('pyramid.detach')}
         </button>
       )}
 
@@ -294,10 +293,10 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
             <Users size={26} className="text-[rgb(var(--color-text-muted))]" aria-hidden="true" />
           </div>
           <p className="text-base font-bold text-[rgb(var(--color-text-primary))] mb-1.5">
-            {t('pyramid.emptyTitle')}
+            {ta('pyramid.emptyTitle')}
           </p>
           <p className="text-sm text-[rgb(var(--color-text-muted))] max-w-sm mb-5">
-            {t('pyramid.intro')}
+            {ta('pyramid.intro')}
           </p>
           {selfMember && canEdit && (
             <button
@@ -305,7 +304,7 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
               onClick={() => setAddingUnder(selfMember)}
               className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors"
             >
-              <UserPlus size={16} aria-hidden="true" /> {t('pyramid.inviteFirst')}
+              <UserPlus size={16} aria-hidden="true" /> {ta('pyramid.inviteFirst')}
             </button>
           )}
         </div>
@@ -334,24 +333,12 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
             showWorkload={showWorkload}
             onToggleWorkload={() => setShowWorkload((v) => !v)}
           />
-          {confirmingUndo && (
-            <OrgConfirmDialog
-              title={t('pyramid.undoTitle')}
-              impact={[tp('pyramid.undoImpact', moveCount)]}
-              confirmLabel={t('pyramid.undoAction')}
-              tone="warning"
-              pending={undoing}
-              onConfirm={() => { void confirmUndo(); }}
-              onCancel={dismissUndo}
-            />
-          )}
-
           {/* Bandeau mode réorganisation */}
           {editMode && !dragging && (
             <div className="flex items-center gap-2 rounded-2xl border border-indigo-400/60 bg-indigo-50/60 dark:bg-indigo-900/15 px-4 py-3 mb-3">
               <Move size={15} className="text-indigo-500 shrink-0" aria-hidden="true" />
               <p className="text-sm text-[rgb(var(--color-text-primary))]">
-                {t('pyramid.reorgBanner')}
+                {ta('pyramid.reorgBanner')}
               </p>
             </div>
           )}
@@ -383,10 +370,10 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
           {roots.length === 0 ? (
             <div className="py-12 text-center">
               <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">
-                {t('pyramid.noMemberInTeam')}
+                {ta('pyramid.noMemberInTeam')}
               </p>
               <p className="text-xs text-[rgb(var(--color-text-muted))] mt-1">
-                {t('pyramid.addMembersHint')}
+                {ta('pyramid.addMembersHint')}
               </p>
             </div>
           ) : (
@@ -489,14 +476,8 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
         />
       )}
 
-      {departing && (
-        <OffboardMemberDialog
-          orgId={orgId}
-          member={departing}
-          members={members}
-          onClose={() => setDeparting(null)}
-        />
-      )}
+      {lifecycle.dialogs}
+      <PyramidPendingConfirm pending={pendingConfirm} onConfirm={confirmPending} onCancel={dismissPending} />
 
     </div>
   );

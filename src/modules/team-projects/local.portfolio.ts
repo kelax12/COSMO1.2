@@ -18,6 +18,7 @@ import type {
   TeamProject,
   TeamProjectDependency,
   TeamProjectMilestone,
+  TeamProjectTeam,
   UpdateTeamProjectMilestoneInput,
 } from './types';
 import { DEMO_MILESTONES, DEMO_MILESTONES_EN, DEMO_PROJECT_DEPENDENCIES } from './demo-seed';
@@ -126,4 +127,43 @@ export function removeProjectDependency(projectId: string, dependsOnId: string):
     TEAM_PROJECT_DEPENDENCIES_STORAGE_KEY,
     readDependencies().filter((d) => !(d.projectId === projectId && d.dependsOnId === dependsOnId)),
   );
+}
+
+// ─── Équipes associées (mig. 164) ────────────────────────────────────
+
+export const TEAM_PROJECT_TEAMS_STORAGE_KEY = 'cosmo_team_project_teams';
+
+const readProjectTeams = (): (TeamProjectTeam & { orgId: string })[] =>
+  readOrSeed<(TeamProjectTeam & { orgId: string })[]>(TEAM_PROJECT_TEAMS_STORAGE_KEY, []);
+
+export function getProjectTeams(orgId: string): TeamProjectTeam[] {
+  return readProjectTeams()
+    .filter((r) => r.orgId === orgId)
+    .map(({ projectId, teamId }) => ({ projectId, teamId }));
+}
+
+export function addProjectTeam(orgId: string, projectId: string, teamId: string, projects: TeamProject[]): void {
+  // Même organisation, comme la policy INSERT de la mig. 164.
+  const project = projects.find((p) => p.id === projectId);
+  if (!project || project.orgId !== orgId) throw makeApiError('not_found');
+  const rows = readProjectTeams();
+  if (rows.some((r) => r.projectId === projectId && r.teamId === teamId)) return;
+  writeJsonOrThrow(TEAM_PROJECT_TEAMS_STORAGE_KEY, [...rows, { orgId, projectId, teamId }]);
+}
+
+export function removeProjectTeam(projectId: string, teamId: string): void {
+  writeJsonOrThrow(
+    TEAM_PROJECT_TEAMS_STORAGE_KEY,
+    readProjectTeams().filter((r) => !(r.projectId === projectId && r.teamId === teamId)),
+  );
+}
+
+/** CASCADE de la purge d'un projet : jalons, dépendances, équipes associées. */
+export function purgeProjectPortfolio(projectId: string): void {
+  writeJsonOrThrow(TEAM_PROJECT_MILESTONES_STORAGE_KEY, readMilestones().filter((m) => m.projectId !== projectId));
+  writeJsonOrThrow(
+    TEAM_PROJECT_DEPENDENCIES_STORAGE_KEY,
+    readDependencies().filter((d) => d.projectId !== projectId && d.dependsOnId !== projectId),
+  );
+  writeJsonOrThrow(TEAM_PROJECT_TEAMS_STORAGE_KEY, readProjectTeams().filter((r) => r.projectId !== projectId));
 }

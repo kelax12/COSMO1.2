@@ -40,14 +40,14 @@ describe('SupabaseTeamProjectsRepository — projets', () => {
     expect(supabaseMock.queries.filter((q) => q.table === 'team_projects')).toHaveLength(0);
   });
 
-  it('getProjects: passe org_id en argument de RPC, lit les 200 plus récents (created_at desc), mappe en camelCase', async () => {
+  it('getProjects: passe org_id en argument de RPC, lit par pages de 500 (created_at desc), mappe en camelCase', async () => {
     supabaseMock.queueRpc('get_my_team_projects', { data: [projectRow] });
     const result = await repo.getProjects('org1');
 
     expect(supabaseMock.rpcCalls.find((c) => c.fn === 'get_my_team_projects')?.args)
       .toEqual({ p_org: 'org1' });
     expect(supabaseMock.argsOf('get_my_team_projects', 'order')).toEqual(['created_at', { ascending: false }]);
-    expect(supabaseMock.argsOf('get_my_team_projects', 'limit')).toEqual([200]);
+    expect(supabaseMock.argsOf('get_my_team_projects', 'range')).toEqual([0, 499]);
     expect(result).toEqual([{
       id: 'p1', orgId: 'org1', name: 'Site web', color: 'green',
       createdBy: 'u1', archivedAt: null, createdAt: projectRow.created_at, teamId: 't1',
@@ -56,6 +56,17 @@ describe('SupabaseTeamProjectsRepository — projets', () => {
       description: null, ownerId: null, status: 'active', startDate: null, dueDate: null,
       isTemplate: false, templatePayload: null,
     }]);
+  });
+
+  // « Entreprise avec 500 projets » (audit du 2026-09-24) : un plafond unique
+  // de 200 masquait le reste du portefeuille. Une page pleine en appelle une autre.
+  it('getProjects: une page pleine déclenche la page suivante, rien n est masqué', async () => {
+    const page = Array.from({ length: 500 }, (_, i) => ({ ...projectRow, id: `p${i}` }));
+    supabaseMock.queueRpc('get_my_team_projects', { data: page });
+    supabaseMock.queueRpc('get_my_team_projects', { data: [{ ...projectRow, id: 'p500' }] });
+    const result = await repo.getProjects('org1');
+    expect(result).toHaveLength(501);
+    expect(supabaseMock.argsOf('get_my_team_projects', 'range', 1)).toEqual([500, 999]);
   });
 
   // Témoin du défaut relevé le 2026-09-24 : `order asc + limit(200)` gardait

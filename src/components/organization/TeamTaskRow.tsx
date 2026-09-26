@@ -130,7 +130,7 @@ const TeamTaskRow = ({
         revealAddOnHover
       />
 
-      {/* Supprimer */}
+      {/* Supprimer — absent sans le droit : un bouton qui échoue est pire. */}
       <button
         type="button"
         onClick={() => onDelete(task)}

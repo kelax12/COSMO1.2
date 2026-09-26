@@ -66,6 +66,7 @@ interface FrModules {
   admin: typeof import('@/locales/fr/admin.json');
   portfolio: typeof import('@/locales/fr/portfolio.json');
   orgAccount: typeof import('@/locales/fr/orgAccount.json');
+  orgAdmin: typeof import('@/locales/fr/orgAdmin.json');
   agenda: typeof import('@/locales/fr/agenda.json');
   dashboard: typeof import('@/locales/fr/dashboard.json');
   bugReport: typeof import('@/locales/fr/bugReport.json');
@@ -175,6 +176,18 @@ interface CatalogShapes {
    * le 2026-09-25 : +0,14 ko gzip pour le second), payée par toutes les pages.
    */
   orgAccount: Shape<'orgAccount'>;
+  /**
+   * Gestes d'ADMINISTRATION du mode entreprise (2026-09-25) : départ et
+   * suspension, invitations par e-mail, actions en masse, droits, transfert de
+   * propriété, pyramide, revue hebdomadaire, corbeille.
+   *
+   * 🔴 Namespace À PART, pour la même raison que `portfolio` : l'audit du
+   * 2026-09-24 (étapes 3 et 4) et la branche gouvernance faisaient passer `org`
+   * à 41,3 ko gzip pour un plafond de 30. Chargé par les SEULES sections et
+   * dialogues qui s'en servent (`lazyWithRetry(…, [..., 'orgAdmin'])` dans
+   * `OrganizationPage`), jamais par l'Aperçu.
+   */
+  orgAdmin: Shape<'orgAdmin'>;
   /** Titres/descriptions des routes publiques — lu aussi par `prerender.mjs`. */
   seo: Shape<'seo'>;
   /** Réglages — profil, sécurité, apparence, modules, données, aide. */
@@ -266,7 +279,7 @@ registry[DEFAULT_LOCALE] = {
 const NAMESPACES: readonly Namespace[] = [
   'admin', 'agenda', 'bugReport', 'common', 'csv', 'dashboard', 'errors', 'eventModal',
   'guide',
-  'habits', 'invite', 'landing', 'legal', 'okr', 'org', 'orgAccount', 'portfolio', 'premium', 'seo',
+  'habits', 'invite', 'landing', 'legal', 'okr', 'org', 'orgAccount', 'orgAdmin', 'portfolio', 'premium', 'seo',
   'overlays',
   'settings', 'statistics', 'taskModal', 'tasks', 'tutorials',
 ];

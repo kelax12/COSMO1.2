@@ -42,7 +42,7 @@ const UnplacedMembersPanel = ({
   draggingId,
   isDragging = false,
 }: UnplacedMembersPanelProps) => {
-  const { t } = useT('org');
+  const { t: ta } = useT('orgAdmin');
 
   if (members.length === 0) return null;
 
@@ -50,10 +50,10 @@ const UnplacedMembersPanel = ({
     return (
       <section className="rounded-2xl border border-amber-300/60 dark:border-amber-700/40 bg-amber-50/50 dark:bg-amber-900/10 p-4">
         <h3 className="text-sm font-bold text-amber-700 dark:text-amber-400 mb-1 inline-flex items-center gap-1.5">
-          <UserPlus size={15} aria-hidden="true" /> {t('pyramid.unplaced', { count: members.length })}
+          <UserPlus size={15} aria-hidden="true" /> {ta('pyramid.unplaced', { count: members.length })}
         </h3>
         <p className="text-xs text-[rgb(var(--color-text-muted))] mb-3">
-          {isAdmin ? t('pyramid.unplacedHintAdmin') : t('pyramid.unplacedHintMember')}
+          {isAdmin ? ta('pyramid.unplacedHintAdmin') : ta('pyramid.unplacedHintMember')}
         </p>
         <div className="flex flex-wrap gap-2">
           {members.map((m) => (
@@ -66,7 +66,7 @@ const UnplacedMembersPanel = ({
                   onClick={() => onPlace(m)}
                   className="ml-1 text-xs font-semibold text-indigo-500 hover:text-indigo-600 transition-colors"
                 >
-                  {t('pyramid.place')}
+                  {ta('pyramid.place')}
                 </button>
               )}
             </div>
@@ -79,13 +79,13 @@ const UnplacedMembersPanel = ({
   return (
     <aside
       className="w-60 shrink-0 sticky top-4 rounded-2xl border border-amber-300/60 dark:border-amber-700/40 bg-amber-50/50 dark:bg-amber-900/10 p-4"
-      aria-label={t('pyramid.toPlaceAria')}
+      aria-label={ta('pyramid.toPlaceAria')}
     >
       <h3 className="text-sm font-bold text-amber-700 dark:text-amber-400 mb-1 inline-flex items-center gap-1.5">
-        <UserPlus size={15} aria-hidden="true" /> {t('pyramid.toPlace', { count: members.length })}
+        <UserPlus size={15} aria-hidden="true" /> {ta('pyramid.toPlace', { count: members.length })}
       </h3>
       <p className="text-xs text-[rgb(var(--color-text-muted))] mb-3">
-        {isAdmin ? t('pyramid.dragEachHint') : t('pyramid.unplacedHintMember')}
+        {isAdmin ? ta('pyramid.dragEachHint') : ta('pyramid.unplacedHintMember')}
       </p>
       <ul className="space-y-2">
         {members.map((m) => {
@@ -104,7 +104,7 @@ const UnplacedMembersPanel = ({
                     : undefined
                 }
                 style={isAdmin ? { touchAction: 'none' } : undefined}
-                title={isAdmin ? t('pyramid.dragHint', { name: m.displayName }) : undefined}
+                title={isAdmin ? ta('pyramid.dragHint', { name: m.displayName }) : undefined}
                 className={`flex items-center gap-2 rounded-xl border bg-[rgb(var(--color-surface))] px-2.5 py-2 transition-colors ${
                   isBeingDragged
                     ? 'border-indigo-400 ring-2 ring-indigo-400/30 opacity-40'
@@ -124,7 +124,7 @@ const UnplacedMembersPanel = ({
                     onClick={() => onPlace(m)}
                     className="text-[11px] font-semibold text-indigo-500 hover:text-indigo-600 transition-colors shrink-0"
                   >
-                    {t('pyramid.place')}
+                    {ta('pyramid.place')}
                   </button>
                 )}
               </div>

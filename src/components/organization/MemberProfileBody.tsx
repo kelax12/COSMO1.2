@@ -41,7 +41,8 @@ interface MemberProfileBodyProps {
 export const MemberProfileBody = ({
   member, members, teams, currentUserId, lastActivity, canMove, canAddUnder, onClose, onMove, onAddUnder,
 }: MemberProfileBodyProps) => {
-  const { t, tp } = useT('org');
+  const { t } = useT('org');
+  const { t: ta, tp: tpa } = useT('orgAdmin');
   const m = member;
   const managerMember = m.managerId ? members.find((x) => x.userId === m.managerId) : null;
   const directs = members.filter((x) => x.managerId === m.userId).length;
@@ -69,7 +70,7 @@ export const MemberProfileBody = ({
           <dd className="text-[rgb(var(--color-text-secondary))]">
             {directs === 0
               ? t('member.noDirectReport')
-              : tp('pyramid.directCount', directs) + (total > directs ? t('pyramid.totalSuffix', { count: total }) : '')}
+              : tpa('pyramid.directCount', directs) + (total > directs ? ta('pyramid.totalSuffix', { count: total }) : '')}
           </dd>
         </div>
         {lastActivity && (

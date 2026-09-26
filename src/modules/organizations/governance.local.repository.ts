@@ -64,18 +64,19 @@ export class LocalStorageOrgGovernanceRepository implements IOrgGovernanceReposi
   }
 
   async getDepartureImpact(orgId: string, userId: string): Promise<DepartureImpact> {
-    const [members, tasks, memberships, okrs] = await Promise.all([
+    const [members, tasks, memberships, okrs, projects] = await Promise.all([
       this.members(orgId),
       this.projects.getTasks(orgId),
       this.teams.getTeamMembers(orgId),
       this.okrs.getAll(orgId),
+      this.projects.getProjects(orgId),
     ]);
     return {
       tasks: tasks.filter((t) => !t.completed && t.assigneeIds.includes(userId)).length,
       reports: members.filter((m) => m.orgId === orgId && m.managerId === userId).length,
       leads: memberships.filter((m) => m.userId === userId && m.isLead).length,
-      // Projets portés : arrive avec le responsable de projet (M2).
-      projects: 0,
+      // Projets PORTÉS (M2, mig. 164) : actifs, hors modèles, comme le SQL.
+      projects: projects.filter((p) => p.ownerId === userId && !p.archivedAt && !p.isTemplate).length,
       krs: okrs.flatMap((o) => o.keyResults).filter((k) => k.assigneeId === userId).length,
     };
   }
@@ -83,48 +84,66 @@ export class LocalStorageOrgGovernanceRepository implements IOrgGovernanceReposi
   async offboardMember(input: OffboardInput): Promise<DepartureImpact> {
     const impact = await this.getDepartureImpact(input.orgId, input.userId);
     const { orgId, userId } = input;
+    // Mig. 164 : en `transfer`, une cible absente veut dire « ne pas toucher ».
+    const transfer = input.mode === 'transfer';
 
-    for (const t of await this.projects.getTasks(orgId)) {
-      if (t.completed || !t.assigneeIds.includes(userId)) continue;
-      const next = t.assigneeIds.filter((id) => id !== userId);
-      if (input.tasksTo && !next.includes(input.tasksTo)) next.push(input.tasksTo);
-      await this.projects.updateTask(t.id, { assigneeIds: next });
+    if (!transfer || input.tasksTo) {
+      for (const t of await this.projects.getTasks(orgId)) {
+        if (t.completed || !t.assigneeIds.includes(userId)) continue;
+        const next = t.assigneeIds.filter((id) => id !== userId);
+        if (input.tasksTo && !next.includes(input.tasksTo)) next.push(input.tasksTo);
+        await this.projects.updateTask(t.id, { assigneeIds: next });
+      }
     }
 
     const members = await this.members(orgId);
     const leaver = members.find((m) => m.orgId === orgId && m.userId === userId);
-    const parent = leaver?.managerId ?? null;
-    const newManager = input.reportsTo ?? parent;
-    writeJsonOrThrow(ORG_MEMBERS_STORAGE_KEY, members.map((m) => {
-      if (m.orgId !== orgId) return m;
-      if (m.userId === input.reportsTo && m.managerId === userId) return { ...m, managerId: parent };
-      if (m.managerId === userId) return { ...m, managerId: newManager };
-      return m;
-    }));
+    if (!transfer || input.reportsTo) {
+      const parent = leaver?.managerId ?? null;
+      const newManager = input.reportsTo ?? parent;
+      writeJsonOrThrow(ORG_MEMBERS_STORAGE_KEY, members.map((m) => {
+        if (m.orgId !== orgId) return m;
+        if (m.userId === input.reportsTo && m.managerId === userId) return { ...m, managerId: parent };
+        if (m.managerId === userId) return { ...m, managerId: newManager };
+        return m;
+      }));
+    }
 
     if (input.leadsTo) {
       for (const m of await this.teams.getTeamMembers(orgId)) {
         if (m.userId !== userId || !m.isLead) continue;
         await this.teams.addTeamMember(m.teamId, orgId, input.leadsTo);
         await this.teams.setTeamLead(m.teamId, input.leadsTo, true);
+        // Le rôle PASSE : la source ne le garde pas (mig. 164).
+        await this.teams.setTeamLead(m.teamId, userId, false);
+      }
+    }
+
+    if (!transfer || input.projectsTo) {
+      for (const p of await this.projects.getProjects(orgId)) {
+        if (p.ownerId === userId) await this.projects.updateProject(p.id, { ownerId: input.projectsTo ?? null });
       }
     }
 
     for (const okr of await this.okrs.getAll(orgId)) {
       for (const kr of okr.keyResults) {
         const patch: { assigneeId?: string | null; contributorIds?: string[] } = {};
-        if (kr.assigneeId === userId) patch.assigneeId = input.krsTo ?? null;
-        if (kr.contributorIds?.includes(userId)) patch.contributorIds = kr.contributorIds.filter((id) => id !== userId);
+        if (kr.assigneeId === userId && (!transfer || input.krsTo)) patch.assigneeId = input.krsTo ?? null;
+        if (!transfer && kr.contributorIds?.includes(userId)) patch.contributorIds = kr.contributorIds.filter((id) => id !== userId);
         if (Object.keys(patch).length > 0) await this.okrs.updateKeyResult(kr.id, patch);
       }
     }
 
     if (input.mode === 'remove') {
       await this.orgs.removeMember(orgId, userId);
-    } else {
+    } else if (input.mode === 'suspend') {
       await this.setMemberAccess(orgId, userId, true, leaver?.accessExpiresAt ?? null);
     }
-    audit(orgId, input.mode === 'remove' ? 'member.removed' : 'member.access_changed', userId);
+    audit(
+      orgId,
+      input.mode === 'remove' ? 'member.removed' : input.mode === 'suspend' ? 'member.access_changed' : 'member.work_transferred',
+      userId,
+    );
     return impact;
   }
 
