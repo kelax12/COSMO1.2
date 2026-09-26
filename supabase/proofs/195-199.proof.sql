@@ -2,8 +2,10 @@
 -- ANNULÉE : admin A, manager B (au-dessus de M), membre M, membre Z sans lien.
 -- Rejouer : `supabase/proofs/replay.sh 195-199.proof.sql` (après 164, 181, 190-194).
 --
--- ⚠️ ÉCRITE LE 2026-09-26 ET NON JOUÉE : aucun Postgres n'était disponible sur
--- le poste. Une preuve qu'on n'a pas vue passer (ni ÉCHOUER) n'est pas une preuve.
+-- JOUÉE le 2026-09-26 sur PGlite (Postgres 17 en WASM, shim + 196 migrations) :
+-- 28/28 vertes. Premier passage : la mig. 197 ne s'appliquait PAS (`IF NOT CASE
+-- ... END THEN`, PL/pgSQL coupe au THEN du CASE), corrigée. Sabotage vu : retirer
+-- le RAISE `invalid_field_value` fait échouer l'assertion 18.
 
 \set ON_ERROR_STOP 1
 BEGIN;
