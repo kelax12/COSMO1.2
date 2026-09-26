@@ -443,7 +443,9 @@
     "positionBody": "Ce déplacement change qui encadre qui. Les personnes concernées seront prévenues.",
     "positionLoses": "{{name}} n'encadrera plus personne : Pyramide et Statistiques de son équipe ne lui seront plus ouvertes.",
     "positionGains": "{{name}} deviendra manager : Pyramide et Statistiques lui seront ouvertes.",
-    "positionConfirm": "Déplacer"
+    "positionConfirm": "Déplacer",
+    "secondaryAlso": "Aussi : {{names}}",
+    "secondaryOpen": "Liens secondaires"
   },
   "weeklyReview": {
     "title": "Revue de la semaine",

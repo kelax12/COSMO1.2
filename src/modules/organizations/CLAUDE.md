@@ -170,6 +170,12 @@ coupé le 2026-08-27 (`background`), la **lecture** pas.
 
 ---
 
+## ⚙️ Configuration d'entreprise (mig. 195-199, non appliquées)
+
+Module `org-config`, écrans `components/organization/config/`, via `org-config.lazy.ts`.
+- ❌ `getOrgConfigRepository` hors de `repository.factory` (chunk d'entrée).
+- 🔴 Un lien hiérarchique secondaire ne donne AUCUN droit.
+
 ## 🪟 Popups, confirmations, cas limites (audit 2026-09-24)
 
 Détail : [`docs/UI-PATTERNS.md`](../../../docs/UI-PATTERNS.md) § « Mode entreprise ».

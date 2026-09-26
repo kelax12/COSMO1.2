@@ -73,6 +73,10 @@ compilait, la suite passait.
   Postgres 16 local (`supabase/proofs/supabase-shim.sql`), puis `190-193.proof.sql`, transaction
   annulée, 55 cas acteur par acteur. ⚠️ Le shim imite `auth.uid()` et `pg_cron` : la preuve en
   prod reste à faire, et le ledger à relire AVANT (d'autres sessions écrivent).
+- 🔴 **`195` à `199` (points rouges de l'audit entreprise, 2026-09-26) : écrites, NON appliquées,
+  NON prouvées.** Réglages et sécurité, capacité et lien secondaire, statuts et champs par projet,
+  automatisations, webhooks. Ordre : après `194`. Preuve prête, jamais jouée :
+  `supabase/proofs/195-199.proof.sql`. 🔴 Le lien secondaire (196) ne passe par AUCUNE policy.
 - ⚠️ **Plages de numéros entre sessions (2026-09-24)** : `151`-`159` corbeille/équipes, `153` déjà
   prise par le portefeuille de projets (worktree `portefeuille`), `160`+ gouvernance/OKR/membres,
   `170`+ annuaire. **Relire le ledger avant de choisir un numéro.**

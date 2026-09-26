@@ -161,6 +161,18 @@ Dix traitements, sur 47 tables applicatives, **toutes protégées par Row Level 
   sous-arbre seulement. ❌ Jamais la date de connexion (`auth.users.last_sign_in_at`, traitement
   T1) : un annuaire d'entreprise n'est pas un outil de surveillance des connexions. Aucune donnée
   nouvelle n'est stockée, la date est calculée à la lecture.
+- **Configuration d'organisation** (mig. 195-199, 2026-09-26, **non appliquées**) : réglages,
+  domaines vérifiés, capacité hebdomadaire (`org_member_capacity`), liens hiérarchiques
+  secondaires (`org_member_secondary_managers`), champs personnalisés et leurs valeurs, statuts
+  de projet, automatisations. Capacité et liens partent avec l'appartenance (clé étrangère en
+  cascade sur `organization_members`) et avec le compte.
+- **Webhooks** (mig. 199) : un **admin** peut faire sortir, vers une adresse HTTPS **qu'il
+  choisit** (Slack ou son propre service), le nom, le statut, la priorité et l'échéance des
+  tâches et le nom du projet. Jamais d'e-mail, de description, de commentaire ni d'identifiant
+  de personne. **Destinataire choisi par l'organisation**, co-responsable : c'est elle qui
+  répond de ce tiers. File d'envoi purgée à 7 jours (pg_cron).
+- **Export complet** (2026-09-26) : un admin télécharge projets, tâches, objectifs, équipes et
+  membres (nom, e-mail, rôle, responsable) en CSV. Même régime que l'export de l'annuaire.
 - **Conservation** : jusqu'au départ de l'organisation ou à sa suppression.
   **Tâches supprimées : 30 jours en corbeille, puis effacement** (`purge_team_task_trash`,
   pg_cron quotidien, mig. 152). *Ajouté le 2026-09-24.*

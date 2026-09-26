@@ -7,6 +7,7 @@ import {
   type TeamTask, type TeamTaskStatus, type CreateTeamTaskInput, type UpdateTeamTaskInput,
 } from '@/modules/team-projects';
 import { useTeamCategories, descendantIdSet, categoryPath, formatPath } from '@/modules/team-categories';
+import { useOrgSettings, useProjectStatuses } from '@/modules/org-config';
 import { showUndoToast } from '@/lib/undo-toast';
 import { filterByStatus, STATUS_META, PRIORITY_META, priorityLabelOf, taskDisplayStatus } from './team-projects.helpers';
 import TeamTaskModal from './TeamTaskModal';
@@ -81,6 +82,14 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
   const pf = useT('portfolio');
   const { data: categories = [] } = useTeamCategories(orgId);
   const { data: labelTaskIds } = useTaskIdsWithLabel(filters.label);
+  // Réglages de l'entreprise (mig. 195) et statuts propres des projets (mig. 197).
+  const { data: orgSettings } = useOrgSettings(orgId);
+  const { data: projectStatuses = [] } = useProjectStatuses(orgId);
+  const statusesByProject = useMemo(() => {
+    const m = new Map<string, typeof projectStatuses>();
+    for (const s of projectStatuses) m.set(s.projectId, [...(m.get(s.projectId) ?? []), s]);
+    return m;
+  }, [projectStatuses]);
   const categoryIds = useMemo(
     () => (filters.category ? descendantIdSet(filters.category, categories) : undefined),
     [filters.category, categories],
@@ -249,7 +258,9 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
   const sortIndicator = (field: SortField) =>
     field === sortField ? (sortDirection === 'asc' ? ' ↑' : ' ↓') : '';
 
-  const handleCreate = (input: CreateTeamTaskInput) => createTask.mutateAsync(input);
+  // Priorité non choisie : celle que l'entreprise a réglée (mig. 195), pas P3 en dur.
+  const handleCreate = (input: CreateTeamTaskInput) =>
+    createTask.mutateAsync({ ...input, priority: input.priority ?? orgSettings?.defaultTaskPriority });
 
   const handleUpdate = async (taskId: string, input: UpdateTeamTaskInput) => {
     await updateTask.mutateAsync({ taskId, input });
@@ -265,6 +276,8 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
     updateTask.mutate({ taskId: task.id, input: { assigneeIds } });
 
   // Édition EN LIGNE (audit 2026-09-24) : priorité et échéance sans ouvrir la fiche.
+  const setCustomStatus = (task: TeamTask, customStatusId: string) =>
+    updateTask.mutate({ taskId: task.id, input: { customStatusId } });
   const setPriority = (task: TeamTask, priority: number) =>
     updateTask.mutate({ taskId: task.id, input: { priority } });
   const setDeadline = (task: TeamTask, deadline: string) =>
@@ -289,6 +302,7 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
     open: (task) => setTaskModal({ mode: 'edit', task }),
     toggleComplete,
     setStatus,
+    setCustomStatus,
     setPriority,
     setDeadline,
     assign: canAssignSomeone ? setAssigningTask : undefined,
@@ -392,6 +406,7 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
           projectById={projectById}
           memberById={memberById}
           categoryNameOf={categoryNameOf}
+          statusesByProject={statusesByProject}
           currentUserId={currentUserId ?? user?.id}
           unreadCommentsByTask={unreadCommentsByTask}
           selectMode={bulk.selectMode}

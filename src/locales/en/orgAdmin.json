@@ -406,7 +406,9 @@
     "positionBody": "This move changes who manages whom. The people involved will be notified.",
     "positionLoses": "{{name}} will no longer manage anyone: their team's Org chart and Statistics will be closed to them.",
     "positionGains": "{{name}} will become a manager: Org chart and Statistics will open to them.",
-    "positionConfirm": "Move"
+    "positionConfirm": "Move",
+    "secondaryAlso": "Also: {{names}}",
+    "secondaryOpen": "Secondary links"
   },
   "weeklyReview": {
     "title": "Weekly review",

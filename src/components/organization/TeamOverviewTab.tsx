@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { Suspense, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { Bar, BarChart, XAxis, YAxis, CartesianGrid, Line, LineChart } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart';
@@ -18,6 +18,7 @@ import {
   memberWorkload,
 } from './team-stats.helpers';
 import TeamWorkloadCard from './TeamWorkloadCard';
+import { MemberCapacityCard } from './org-config.lazy';
 import TruncatedDataNotice from './TruncatedDataNotice';
 import WeeklyReviewSheet from './WeeklyReviewSheet';
 import { buildOrgLink } from './deep-link.helpers';
@@ -270,6 +271,11 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
       {/* Charge de l'équipe — placée juste sous la synthèse : c'est la question
           la plus opérationnelle de l'onglet, elle ne doit pas se mériter. */}
       <TeamWorkloadCard rows={workload} members={scopedMembers} />
+
+      {/* Charge AU REGARD d'une capacité hebdomadaire déclarée (mig. 196). */}
+      <Suspense fallback={null}>
+        <MemberCapacityCard orgId={orgId} rows={workload} members={scopedMembers} currentUserId={currentUserId} isAdmin={isAdmin} />
+      </Suspense>
 
       {/* Par membre + Par projet */}
       <div className="grid lg:grid-cols-2 gap-5 items-start">

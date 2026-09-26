@@ -236,6 +236,8 @@ export interface TeamTask {
    * automatiquement). null = aucune catégorie.
    */
   categoryId?: string | null;
+  /** Statut propre au projet (mig. 197) ; il écrit `status`. null = aucun. */
+  customStatusId?: string | null;
 }
 
 export interface CreateTeamTaskInput {
@@ -264,6 +266,8 @@ export interface UpdateTeamTaskInput {
   completed?: boolean;
   status?: TeamTaskStatus;
   categoryId?: string | null;
+  /** Statut propre au projet (mig. 197). */
+  customStatusId?: string | null;
 }
 
 /** Commentaire sur une tâche d'équipe (journal immuable, mig. 082). */

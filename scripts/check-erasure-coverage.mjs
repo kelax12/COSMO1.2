@@ -103,6 +103,10 @@ const DECISIONS = {
   // projet, et ses vues enregistrées. Rien à garder une fois le compte parti.
   team_project_members: { decision: 'cascade' },
   org_saved_views: { decision: 'cascade' },
+  // Audit entreprise, points rouges (mig. 196, 2026-09-26) : capacité
+  // hebdomadaire et liens hiérarchiques secondaires. Rien à garder.
+  org_member_capacity: { decision: 'cascade' },
+  org_member_secondary_managers: { decision: 'cascade' },
 
   // ── Conservées, par obligation légale ───────────────────────────
   payment_records: {

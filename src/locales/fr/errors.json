@@ -60,7 +60,9 @@
     "project_not_archived": "Seul un projet archivé peut être supprimé définitivement : archivez-le d'abord.",
     "project_not_found": "Ce projet n'existe plus.",
     "project_viewer_read_only": "Vous êtes lecteur de ce projet : vous ne pouvez modifier que les tâches qui vous sont assignées.",
-    "saved_views_limit": "Vous avez atteint 50 vues enregistrées pour cet écran. Supprimez-en une pour en créer une nouvelle."
+    "saved_views_limit": "Vous avez atteint 50 vues enregistrées pour cet écran. Supprimez-en une pour en créer une nouvelle.",
+    "domain_taken": "Ce domaine est déjà vérifié par une autre entreprise.",
+    "email_domain_not_allowed": "Cette entreprise n'invite que des adresses de ses domaines vérifiés."
   },
   "validation": {
     "fallback": "Données invalides",

@@ -67,6 +67,7 @@ interface FrModules {
   portfolio: typeof import('@/locales/fr/portfolio.json');
   orgAccount: typeof import('@/locales/fr/orgAccount.json');
   orgAdmin: typeof import('@/locales/fr/orgAdmin.json');
+  orgConfig: typeof import('@/locales/fr/orgConfig.json');
   agenda: typeof import('@/locales/fr/agenda.json');
   dashboard: typeof import('@/locales/fr/dashboard.json');
   bugReport: typeof import('@/locales/fr/bugReport.json');
@@ -188,6 +189,13 @@ interface CatalogShapes {
    * `OrganizationPage`), jamais par l'Aperçu.
    */
   orgAdmin: Shape<'orgAdmin'>;
+  /**
+   * Configuration d'entreprise (mig. 195-199, audit du 2026-09-24) : réglages,
+   * sécurité, champs et statuts, automatisations, intégrations, capacité,
+   * liens secondaires. À part d'`orgAdmin`, que la ROUTE /entreprise charge
+   * pour toute visite : ces écrans le chargent eux-mêmes (`org-config.lazy.ts`).
+   */
+  orgConfig: Shape<'orgConfig'>;
   /** Titres/descriptions des routes publiques — lu aussi par `prerender.mjs`. */
   seo: Shape<'seo'>;
   /** Réglages — profil, sécurité, apparence, modules, données, aide. */
@@ -279,7 +287,7 @@ registry[DEFAULT_LOCALE] = {
 const NAMESPACES: readonly Namespace[] = [
   'admin', 'agenda', 'bugReport', 'common', 'csv', 'dashboard', 'errors', 'eventModal',
   'guide',
-  'habits', 'invite', 'landing', 'legal', 'okr', 'org', 'orgAccount', 'orgAdmin', 'portfolio', 'premium', 'seo',
+  'habits', 'invite', 'landing', 'legal', 'okr', 'org', 'orgAccount', 'orgAdmin', 'orgConfig', 'portfolio', 'premium', 'seo',
   'overlays',
   'settings', 'statistics', 'taskModal', 'tasks', 'tutorials',
 ];

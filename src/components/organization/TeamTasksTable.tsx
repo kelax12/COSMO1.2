@@ -16,6 +16,7 @@ import { useWindowVirtualizer } from '@tanstack/react-virtual';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import type { OrgMember } from '@/modules/organizations';
 import type { TeamProject } from '@/modules/team-projects';
+import type { ProjectStatus } from '@/modules/org-config';
 import { useT } from '@/i18n/useT';
 import TeamTasksTableRow, { type TeamTasksRowHandlers } from './TeamTasksTableRow';
 import type { TaskColumnId, TaskTableLine } from './team-tasks-table.helpers';
@@ -26,6 +27,8 @@ interface TeamTasksTableProps {
   projectById: Map<string, TeamProject>;
   memberById: Map<string, OrgMember>;
   categoryNameOf: (id: string) => string | undefined;
+  /** Statuts propres par projet (mig. 197). */
+  statusesByProject: Map<string, ProjectStatus[]>;
   currentUserId?: string;
   unreadCommentsByTask: Map<string, number>;
   selectMode: boolean;
@@ -39,9 +42,10 @@ interface TeamTasksTableProps {
 }
 
 const ESTIMATED_ROW = 58;
+const NO_STATUSES: ProjectStatus[] = [];
 
 const TeamTasksTable = ({
-  lines, columns, projectById, memberById, categoryNameOf, currentUserId, unreadCommentsByTask,
+  lines, columns, projectById, memberById, categoryNameOf, statusesByProject, currentUserId, unreadCommentsByTask,
   selectMode, selectedIds, handlers, groupLabel, onToggleGroup, sortIndicator, onSort,
 }: TeamTasksTableProps) => {
   const { t } = useT('org');
@@ -136,6 +140,7 @@ const TeamTasksTable = ({
                 memberById={memberById}
                 currentUserId={currentUserId}
                 categoryName={task.categoryId ? categoryNameOf(task.categoryId) : undefined}
+                projectStatuses={statusesByProject.get(task.projectId) ?? NO_STATUSES}
                 unreadComments={unreadCommentsByTask.get(task.id) ?? 0}
                 selectMode={selectMode}
                 selected={selectedIds.has(task.id)}

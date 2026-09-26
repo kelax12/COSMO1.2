@@ -10,8 +10,8 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { useMemo } from 'react';
-import { addDays, endOfWeek, format, parseISO, startOfWeek } from 'date-fns';
-import { CalendarRange, Flag, FolderTree, Tag, X } from 'lucide-react';
+import { format, parseISO } from 'date-fns';
+import { CalendarRange, Flag, Layers, Tag, X } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -23,6 +23,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useTeamLabels } from '@/modules/team-projects';
 import { useTeamCategories, categoryPath, formatPath } from '@/modules/team-categories';
+import { useOrgSettings } from '@/modules/org-config';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { DatePicker } from '@/components/ui/date-picker';
 import { getDateLocale } from '@/i18n/format';
@@ -42,11 +43,13 @@ const off = 'border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] te
 const presetBtn = 'w-full text-left px-2 py-1.5 rounded-md text-sm text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))]';
 
 const iso = (d: Date) => format(d, 'yyyy-MM-dd');
+/** Décalage en jours sur une date locale (sans date-fns : `vendor-utils` a un cliquet). */
+const shift = (d: Date, days: number) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + days);
 const short = (day: string) => format(parseISO(day), 'd MMM', { locale: getDateLocale() });
 
 const TaskAttributeFilters = ({ orgId, filters, setFilters }: TaskAttributeFiltersProps) => {
   const { t } = useT('portfolio');
-  const { data: labels = [] } = useTeamLabels(orgId);
+  const { data: labels = [], isSuccess: labelsLoaded } = useTeamLabels(orgId);
   const { data: categories = [] } = useTeamCategories(orgId);
   const { priorities, dueFrom, dueTo, noDue, category, label } = filters;
 
@@ -72,7 +75,11 @@ const TaskAttributeFilters = ({ orgId, filters, setFilters }: TaskAttributeFilte
         : dueTo ? t('attrFilters.rangeTo', { date: short(dueTo) }) : '';
 
   const today = new Date();
-  const weekOpts = { weekStartsOn: 1 as const };
+  // « Cette semaine » commence au premier jour réglé par l'entreprise (mig. 195,
+  // lundi par défaut) ; `getDay()` vaut 0 le dimanche.
+  const { data: orgSettings } = useOrgSettings(orgId);
+  const weekStart = orgSettings?.weekStart ?? 1;
+  const monday = shift(today, -((today.getDay() - weekStart + 7) % 7));
 
   const chips: { key: string; label: string; clear: Partial<OrgTaskFilters> }[] = [];
   if (priorities.length) {
@@ -117,11 +124,11 @@ const TaskAttributeFilters = ({ orgId, filters, setFilters }: TaskAttributeFilte
           </PopoverTrigger>
           <PopoverContent align="start" className="w-64 p-2 space-y-1">
             <button type="button" className={presetBtn}
-              onClick={() => setFilters({ noDue: false, dueFrom: iso(startOfWeek(today, weekOpts)), dueTo: iso(endOfWeek(today, weekOpts)) })}>
+              onClick={() => setFilters({ noDue: false, dueFrom: iso(monday), dueTo: iso(shift(monday, 6)) })}>
               {t('attrFilters.dueThisWeek')}
             </button>
             <button type="button" className={presetBtn}
-              onClick={() => setFilters({ noDue: false, dueFrom: iso(today), dueTo: iso(addDays(today, 30)) })}>
+              onClick={() => setFilters({ noDue: false, dueFrom: iso(today), dueTo: iso(shift(today, 30)) })}>
               {t('attrFilters.dueNext30')}
             </button>
             <button type="button" aria-pressed={noDue} className={`${presetBtn} ${noDue ? 'font-semibold' : ''}`}
@@ -150,7 +157,7 @@ const TaskAttributeFilters = ({ orgId, filters, setFilters }: TaskAttributeFilte
         {categoryOptions.length > 0 && (
           <DropdownMenu>
             <DropdownMenuTrigger aria-label={t('attrFilters.categoryAria')} className={`${trigger} ${category ? on : off}`}>
-              <FolderTree size={13} aria-hidden="true" />
+              <Layers size={13} aria-hidden="true" />
               <span className="max-w-[140px] truncate">{categoryName ?? t('attrFilters.category')}</span>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-64 max-h-72 overflow-y-auto">
@@ -174,7 +181,7 @@ const TaskAttributeFilters = ({ orgId, filters, setFilters }: TaskAttributeFilte
             <span className="max-w-[120px] truncate">{labelObj?.name ?? t('attrFilters.label')}</span>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-56 max-h-72 overflow-y-auto">
-            {labels.length === 0 ? (
+            {labelsLoaded && labels.length === 0 ? (
               <DropdownMenuLabel className="font-normal text-[rgb(var(--color-text-muted))]">{t('attrFilters.noLabels')}</DropdownMenuLabel>
             ) : (
               <>

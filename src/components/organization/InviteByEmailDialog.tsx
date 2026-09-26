@@ -1,8 +1,9 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Check, Copy, X } from 'lucide-react';
 import { subtreeOf, type OrgMember } from '@/modules/organizations';
 import { useOrgTeams } from '@/modules/org-teams';
+import { useOrgSettings } from '@/modules/org-config';
 import { useInviteByEmail } from '@/modules/organizations/governance.hooks';
 import type { EmailInvitationResult, SendInvitationsResult } from '@/modules/organizations/governance.types';
 import { useModalA11y } from '@/hooks/use-modal-a11y';
@@ -41,6 +42,13 @@ const InviteByEmailDialog = ({ orgId, members, currentUserId, isAdmin, onClose }
   const [managerId, setManagerId] = useState(isAdmin ? '' : currentUserId ?? '');
   const [teamIds, setTeamIds] = useState<string[]>([]);
   const [accessDays, setAccessDays] = useState<number | null>(null);
+  // Durée d'accès PROPOSÉE par l'entreprise (mig. 195), appliquée une fois à
+  // l'arrivée du réglage, jamais par-dessus un choix déjà fait.
+  const { data: orgSettings } = useOrgSettings(orgId);
+  const [accessTouched, setAccessTouched] = useState(false);
+  useEffect(() => {
+    if (!accessTouched && orgSettings?.defaultGuestDays != null) setAccessDays(orgSettings.defaultGuestDays);
+  }, [orgSettings?.defaultGuestDays, accessTouched]);
   const [done, setDone] = useState<{ results: EmailInvitationResult[]; sending: SendInvitationsResult } | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
   const { ref, dialogProps } = useModalA11y<HTMLDivElement>({
@@ -204,7 +212,7 @@ const InviteByEmailDialog = ({ orgId, members, currentUserId, isAdmin, onClose }
               <select
                 id="invite-access"
                 value={accessDays ?? ''}
-                onChange={(e) => setAccessDays(e.target.value ? Number(e.target.value) : null)}
+                onChange={(e) => { setAccessTouched(true); setAccessDays(e.target.value ? Number(e.target.value) : null); }}
                 className="w-full rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] px-3 py-2.5 text-sm text-[rgb(var(--color-text-primary))]"
               >
                 {ACCESS_CHOICES.map((d) => (

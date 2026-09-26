@@ -120,10 +120,10 @@ export {
   useTaskLabels,
   useCreateTeamLabel,
   useToggleTaskLabel,
-  useTaskIdsWithLabel,
   useTeamTaskActivity,
   useApplyTeamTaskDraft,
   type TeamTaskDraftExtras,
 } from './task-extras.hooks';
+export { useTaskIdsWithLabel } from './label-filter.hooks';
 // Suivre une tâche ou un projet (mig. 162, M14).
 export { useMyFollows, useToggleFollow, type FollowTarget, type MyFollows } from './follows.hooks';

@@ -10,7 +10,7 @@
 // jalons et ses dépendances.
 // ═══════════════════════════════════════════════════════════════════
 
-import { useMemo, useState } from 'react';
+import { Suspense, useMemo, useState } from 'react';
 import { format, parseISO } from 'date-fns';
 import {
   ArrowLeft, Settings2, Copy, LayoutTemplate, Archive, ArchiveRestore, Plus,
@@ -28,6 +28,7 @@ import ProjectHealthSection, { ProjectHealthBadge } from './ProjectHealthSection
 import ProjectMembersSection from './ProjectMembersSection';
 import MemberAvatar from './MemberAvatar';
 import VisibilityPill from './VisibilityPill';
+import { ProjectWorkflowSection } from './org-config.lazy';
 import TeamTaskRow from './TeamTaskRow';
 import ProjectMilestonesSection from './ProjectMilestonesSection';
 import ProjectDependenciesSection from './ProjectDependenciesSection';
@@ -295,6 +296,10 @@ const ProjectDetailPage = ({
             canEdit={canEdit && !archived}
             onOpenProject={onOpenProject}
           />
+          {/* Statuts propres, champs et règles du projet (mig. 197, 198). */}
+          <Suspense fallback={null}>
+            <ProjectWorkflowSection project={project} members={members} canEdit={canEdit && !archived} />
+          </Suspense>
         </div>
       </div>
     </div>

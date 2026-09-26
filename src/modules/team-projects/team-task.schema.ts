@@ -87,4 +87,6 @@ export const createTeamTaskSchema = z.object({
 
 export const updateTeamTaskSchema = createTeamTaskSchema.partial().extend({
   completed: z.boolean().optional(),
+  // Statut propre au projet (mig. 197), absent d'ici, zod le stripperait.
+  customStatusId: z.string().nullable().optional(),
 });
