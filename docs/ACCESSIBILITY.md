@@ -606,7 +606,8 @@ le détecteur rendrait le fichier **vert**. Et elle a été vue échouer, en ret
   `closeAfter`, `onOpenChange(false)`, ou un `setState`. Échap doit emprunter **exactement** le
   chemin du voile et de la croix, jamais un raccourci.
 - ❌ **Une surface qui refuse de fermer pendant une opération refuse aussi Échap.**
-  `ReassignManagerSheet`, `TeamTaskModal` et `BugReportModal` gardent leur fermeture derrière un
+  `TeamTaskModal` et `BugReportModal` (et `ReassignManagerSheet`, retirée le 2026-09-25 au profit de
+  l'assistant de départ) gardent leur fermeture derrière un
   `pending` / `sending` : sans la même garde sur la touche, Échap ferait ce qu'aucun clic ne peut
   faire — abandonner un réattachement en cours, ou perdre une saisie sans savoir si le mail est
   parti.

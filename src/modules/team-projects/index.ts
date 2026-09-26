@@ -30,6 +30,7 @@ export type {
   CreateTeamProjectMilestoneInput,
   UpdateTeamProjectMilestoneInput,
   TeamProjectDependency,
+  TeamProjectTeam,
   DraftProjectTask,
   DraftProjectMilestone,
 } from './types';
@@ -87,6 +88,11 @@ export {
   useTeamProjectDependencies,
   useAddProjectDependency,
   useRemoveProjectDependency,
+  // Mig. 164 : équipes associées, purge d'un projet archivé.
+  useTeamProjectTeams,
+  useAddProjectTeam,
+  useRemoveProjectTeam,
+  usePurgeArchivedProject,
 } from './portfolio.hooks';
 
 // Restauration d'un commentaire supprime (« Annuler », C-42).
@@ -102,3 +108,5 @@ export {
   useApplyTeamTaskDraft,
   type TeamTaskDraftExtras,
 } from './task-extras.hooks';
+// Suivre une tâche ou un projet (mig. 162, M14).
+export { useMyFollows, useToggleFollow, type FollowTarget, type MyFollows } from './follows.hooks';

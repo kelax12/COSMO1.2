@@ -70,6 +70,7 @@ const MemberSheet = ({
   initialTab, onClose, onMove, onAddUnder,
 }: MemberSheetProps) => {
   const { t } = useT('org');
+  const { t: ta } = useT('orgAdmin');
 
   const tabs = useMemo(
     () => visibleMemberTabs({ canSeeInsights, canSeeAgenda }),
@@ -153,7 +154,7 @@ const MemberSheet = ({
             <MemberAvatar avatar={member.avatar} name={member.displayName} size={44} />
             <div className="min-w-0">
               <h2 className="text-base font-bold text-[rgb(var(--color-text-primary))] truncate">
-                {isMe ? t('pyramid.you') : member.displayName}
+                {isMe ? ta('pyramid.you') : member.displayName}
               </h2>
               <p className="text-xs font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))]">
                 {roleLabel}

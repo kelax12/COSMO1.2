@@ -52,7 +52,13 @@
     "team_delete_forbidden": "Seuls un admin ou le créateur de l'équipe peuvent la supprimer.",
     "not_allowed": "Vous n’avez pas le droit de faire ce changement.",
     "cannot_restrict_self": "Vous ne pouvez pas suspendre ni borner votre propre accès.",
-    "okr_parent_cycle": "Cet objectif ne peut pas contribuer à l’un de ses propres sous-objectifs."
+    "okr_parent_cycle": "Cet objectif ne peut pas contribuer à l’un de ses propres sous-objectifs.",
+    "cannot_restrict_owner": "L'accès du propriétaire de l'entreprise ne se suspend pas : transférez d'abord la propriété.",
+    "invalid_target": "La personne choisie pour reprendre ce travail ne fait pas partie de l'entreprise.",
+    "invalid_mode": "Mode de départ inconnu.",
+    "member_not_found": "Cette personne ne fait plus partie de l'entreprise.",
+    "project_not_archived": "Seul un projet archivé peut être supprimé définitivement : archivez-le d'abord.",
+    "project_not_found": "Ce projet n'existe plus."
   },
   "validation": {
     "fallback": "Données invalides",

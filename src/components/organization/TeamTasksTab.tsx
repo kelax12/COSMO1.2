@@ -333,7 +333,7 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
                         role="checkbox"
                         aria-checked={task.completed}
                         aria-label={task.completed ? t('projects.markIncomplete') : t('projects.markComplete')}
-                        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all shrink-0 ${
+                        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all shrink-0 disabled:opacity-40 disabled:cursor-not-allowed ${
                           task.completed
                             ? 'bg-[rgb(var(--color-accent-solid))] border-[rgb(var(--color-accent-solid))]'
                             : 'border-[rgb(var(--color-border-strong))] hover:border-[rgb(var(--color-accent))]'
@@ -449,7 +449,14 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
                           </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => setTaskModal({ mode: 'edit', task })}>
+                          {/* Grisé plutôt que masqué : ouvrir la tâche reste
+                              possible par la ligne (lecture), c'est l'édition
+                              que le serveur refuserait (audit du 2026-09-24). */}
+                          <DropdownMenuItem
+                            disabled={!!hints.taskEditReason(task)}
+                            title={hints.taskEditReason(task)}
+                            onClick={() => setTaskModal({ mode: 'edit', task })}
+                          >
                             <Pencil aria-hidden="true" /> {t('projects.tasksTabEdit')}
                           </DropdownMenuItem>
                           {members.some((m) => canAssign(m.userId)) && (

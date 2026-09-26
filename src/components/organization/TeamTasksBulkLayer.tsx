@@ -29,6 +29,8 @@ const TeamTasksBulkLayer = ({ bulk, members, projects, placement }: TeamTasksBul
     projects={projects.filter((p) => !p.archivedAt)}
     onMove={bulk.bulkMove}
     onSetStatus={bulk.bulkSetStatus}
+    onSetPriority={bulk.bulkSetPriority}
+    onSetDeadline={bulk.bulkSetDeadline}
     placement={placement}
   />
 );

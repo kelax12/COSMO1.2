@@ -80,7 +80,8 @@ const PyramidToolbar = ({
   showWorkload,
   onToggleWorkload,
 }: PyramidToolbarProps) => {
-  const { t, tp } = useT('org');
+  const { t } = useT('org');
+  const { t: ta, tp: tpa } = useT('orgAdmin');
 
   return (
     <div className="flex items-center gap-2 mb-3 flex-wrap">
@@ -94,15 +95,15 @@ const PyramidToolbar = ({
           type="search"
           value={query}
           onChange={(e) => onQueryChange(e.target.value)}
-          placeholder={t('pyramid.searchPlaceholder')}
-          aria-label={t('pyramid.searchAria')}
+          placeholder={ta('pyramid.searchPlaceholder')}
+          aria-label={ta('pyramid.searchAria')}
           className="w-full pl-9 pr-8 py-2 text-sm rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-primary))] placeholder:text-[rgb(var(--color-text-muted))] focus:outline-none focus:border-indigo-400 [&::-webkit-search-cancel-button]:hidden"
         />
         {query && (
           <button
             type="button"
             onClick={() => onQueryChange('')}
-            aria-label={t('pyramid.clearSearch')}
+            aria-label={ta('pyramid.clearSearch')}
             className="absolute right-2 top-1/2 -translate-y-1/2 w-5 h-5 rounded-md flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))]"
           >
             <X size={12} aria-hidden="true" />
@@ -111,13 +112,13 @@ const PyramidToolbar = ({
       </div>
       {query.trim() && (
         <span className="text-xs text-[rgb(var(--color-text-muted))]" aria-live="polite">
-          {tp('pyramid.results', matchCount)}
+          {tpa('pyramid.results', matchCount)}
         </span>
       )}
       {teams.length > 0 && (
         <DropdownMenu>
           <DropdownMenuTrigger
-            aria-label={t('pyramid.chooseView')}
+            aria-label={ta('pyramid.chooseView')}
             className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium border transition-colors ${
               activeTeam
                 ? 'border-transparent text-white'
@@ -132,20 +133,20 @@ const PyramidToolbar = ({
               </>
             ) : (
               <>
-                <Users size={14} aria-hidden="true" /> {t('pyramid.wholeOrg')}
+                <Users size={14} aria-hidden="true" /> {ta('pyramid.wholeOrg')}
               </>
             )}
             <ChevronDown size={13} aria-hidden="true" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-56 max-h-72 overflow-y-auto">
-            <DropdownMenuLabel>{t('pyramid.display')}</DropdownMenuLabel>
+            <DropdownMenuLabel>{ta('pyramid.display')}</DropdownMenuLabel>
             <DropdownMenuItem onClick={() => onViewTeamChange(null)}>
               <Users size={14} className="text-[rgb(var(--color-text-muted))]" aria-hidden="true" />
-              {t('pyramid.wholeOrg')}
+              {ta('pyramid.wholeOrg')}
               {!viewTeamId && <Check size={14} className="ml-auto text-indigo-500" aria-hidden="true" />}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuLabel>{t('pyramid.byTeam')}</DropdownMenuLabel>
+            <DropdownMenuLabel>{ta('pyramid.byTeam')}</DropdownMenuLabel>
             {teams.map((team) => (
               <DropdownMenuItem key={team.id} onClick={() => onViewTeamChange(team.id)}>
                 <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: team.color }} aria-hidden="true" />
@@ -173,7 +174,7 @@ const PyramidToolbar = ({
         <div className="ml-auto flex items-center gap-2">
           {editMode && moveCount > 0 && (
             <span className="text-xs font-semibold text-indigo-500 tabular-nums">
-              {tp('pyramid.moveCount', moveCount)}
+              {tpa('pyramid.moveCount', moveCount)}
             </span>
           )}
           {!editMode && canAddUnderSelf && (
@@ -182,7 +183,7 @@ const PyramidToolbar = ({
               onClick={onAddUnderSelf}
               className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] transition-colors"
             >
-              <UserPlus size={14} aria-hidden="true" /> {t('pyramid.add')}
+              <UserPlus size={14} aria-hidden="true" /> {ta('pyramid.add')}
             </button>
           )}
           {editMode && (
@@ -191,7 +192,7 @@ const PyramidToolbar = ({
               onClick={onFinishEdit}
               className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 transition-colors"
             >
-              <Check size={15} aria-hidden="true" /> {t('pyramid.done')}
+              <Check size={15} aria-hidden="true" /> {ta('pyramid.done')}
             </button>
           )}
           {/* Calque de charge — masqué en mode réorganisation : deux
@@ -201,14 +202,14 @@ const PyramidToolbar = ({
               type="button"
               onClick={onToggleWorkload}
               aria-pressed={showWorkload}
-              title={t('pyramid.overlayHint')}
+              title={ta('pyramid.overlayHint')}
               className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold border transition-colors ${
                 showWorkload
                   ? 'border-[rgb(var(--color-accent))] text-[rgb(var(--color-text-primary))] bg-[rgb(var(--color-hover))]'
                   : 'border-[rgb(var(--color-border))] text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))]'
               }`}
             >
-              <TrendingUp size={14} aria-hidden="true" /> {t('pyramid.overlayToggle')}
+              <TrendingUp size={14} aria-hidden="true" /> {ta('pyramid.overlayToggle')}
             </button>
           )}
           <button
@@ -226,7 +227,7 @@ const PyramidToolbar = ({
               </>
             ) : (
               <>
-                <Pencil size={14} aria-hidden="true" /> {t('pyramid.edit')}
+                <Pencil size={14} aria-hidden="true" /> {ta('pyramid.edit')}
               </>
             )}
           </button>

@@ -1,44 +1,22 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate } from 'react-router';
-import { format, formatDistanceToNow, parseISO } from 'date-fns';
-import { getDateLocale } from '@/i18n/format';
-import { Bell, UserPlus, AtSign, AlarmClock, MessageSquare, ArrowRightLeft, Unlock, TriangleAlert, Target, CalendarPlus, CalendarX } from 'lucide-react';
-import { useDeleteEvent } from '@/modules/events';
+import { Suspense, useEffect, useRef, useState } from 'react';
+import { Bell } from 'lucide-react';
+import { lazyWithRetry } from '@/lib/lazy-with-retry';
 import {
   useOrgNotifications,
   useMarkNotificationsRead,
   unreadCount,
-  type OrgNotification,
-  type OrgNotificationKind,
   type OrgMember,
 } from '@/modules/organizations';
-import { buildOrgLink } from './deep-link.helpers';
-import { groupNotifications } from './notifications.helpers';
 import { useT } from '@/i18n/useT';
-import type { KeyOf } from '@/i18n/catalog';
+
+// Chargés à l'ouverture seulement : la cloche est montée sur chaque visite.
+const OrgNotificationsPanel = lazyWithRetry(() => import('./OrgNotificationsPanel'));
+const OrgNotificationSettingsDialog = lazyWithRetry(() => import('./OrgNotificationSettingsDialog'));
 
 interface OrgNotificationsBellProps {
   orgId: string;
   members: OrgMember[];
 }
-
-/** Icône et libellé par type — le trigger n'écrit que ceux-là. */
-const KIND_META: Record<OrgNotificationKind, { Icon: typeof Bell; labelKey: KeyOf<'org'> }> = {
-  task_assigned: { Icon: UserPlus, labelKey: 'notifications.kindAssigned' },
-  mention: { Icon: AtSign, labelKey: 'notifications.kindMention' },
-  task_overdue: { Icon: AlarmClock, labelKey: 'notifications.kindOverdue' },
-  comment: { Icon: MessageSquare, labelKey: 'notifications.kindComment' },
-  // Mig. 162 (audit 2026-09-23, M14).
-  status_changed: { Icon: ArrowRightLeft, labelKey: 'notifications.kindStatusChanged' },
-  unblocked: { Icon: Unlock, labelKey: 'notifications.kindUnblocked' },
-  project_at_risk: { Icon: TriangleAlert, labelKey: 'notifications.kindProjectAtRisk' },
-  kr_due: { Icon: Target, labelKey: 'notifications.kindKrDue' },
-  event_scheduled: { Icon: CalendarPlus, labelKey: 'notifications.kindEventScheduled' },
-};
-
-/** Une notification mène-t-elle quelque part ? */
-const hasTarget = (n: OrgNotification): boolean =>
-  !!(n.taskId || n.projectId || n.krId || n.eventId);
 
 /**
  * Cloche de notifications d'entreprise (mig. 095 + 096).
@@ -56,29 +34,12 @@ const hasTarget = (n: OrgNotification): boolean =>
  */
 const OrgNotificationsBell = ({ orgId, members }: OrgNotificationsBellProps) => {
   const { t, tp } = useT('org');
-  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
-  // Refuser un créneau posé par quelqu'un d'autre (mig. 162) : la personne
-  // POSSÈDE l'événement, elle peut le retirer de son agenda. Audit des popups
-  // du 2026-09-25 : la notification existait, le refus n'avait aucun bouton.
-  const deleteEvent = useDeleteEvent();
-  const [declined, setDeclined] = useState<Set<string>>(() => new Set());
-  const decline = (eventId: string) =>
-    deleteEvent.mutate(eventId, { onSuccess: () => setDeclined((prev) => new Set(prev).add(eventId)) });
-
   const { data: notifications = [] } = useOrgNotifications(orgId);
   const markRead = useMarkNotificationsRead(orgId);
   const unread = unreadCount(notifications);
-
-  const nameById = useMemo(
-    () => new Map(members.map((m) => [m.userId, m.displayName])),
-    [members],
-  );
-
-  // Sections de récence. Recalculées à chaque changement de la liste — donc au
-  // plus une fois par poll, jamais à chaque rendu du panneau.
-  const groups = useMemo(() => groupNotifications(notifications), [notifications]);
 
   // Fermeture au clic extérieur et à Échap — un panneau ancré qui ne se ferme
   // que par son propre bouton piège le pointeur.
@@ -112,14 +73,6 @@ const OrgNotificationsBell = ({ orgId, members }: OrgNotificationsBellProps) => 
     });
   };
 
-  const openNotification = (notification: OrgNotification) => {
-    setOpen(false);
-    if (notification.taskId) navigate(buildOrgLink('projects', { task: notification.taskId }));
-    else if (notification.projectId) navigate(buildOrgLink('projects', { project: notification.projectId }));
-    else if (notification.krId) navigate(buildOrgLink('okr'));
-    else if (notification.eventId) navigate('/agenda');
-  };
-
   return (
     <div className="relative shrink-0" ref={panelRef}>
       <button
@@ -138,86 +91,19 @@ const OrgNotificationsBell = ({ orgId, members }: OrgNotificationsBellProps) => 
       </button>
 
       {open && (
-        <div
-          role="dialog"
-          aria-label={t('notifications.title')}
-          className="absolute right-0 top-11 z-50 w-[min(22rem,calc(100vw-2rem))] max-h-[24rem] overflow-y-auto rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] shadow-2xl p-2"
-        >
-          <p className="px-2 py-1.5 text-caption font-bold uppercase tracking-wide text-[rgb(var(--color-text-muted))]">
-            {t('notifications.title')}
-          </p>
-          {groups.map((group) => (
-          <section key={group.period} aria-label={t(group.labelKey)}>
-            {/* Un flux plat ne dit pas si « il y a 2 jours » est récent ou
-                vieux pour cette organisation. Les sections donnent l'échelle. */}
-            <p className="px-2 pt-2 pb-1 text-caption font-semibold text-[rgb(var(--color-text-muted))]">
-              {t(group.labelKey)}
-            </p>
-            <ul className="space-y-1">
-            {group.items.map((notification) => {
-              // Un type inconnu (base plus récente que le client) ne fait pas
-              // tomber la cloche : il prend l'apparence générique.
-              const { Icon, labelKey } = KIND_META[notification.kind] ?? { Icon: Bell, labelKey: 'notifications.title' as const };
-              // `task_overdue` vient de pg_cron : son `actorId` est TOUJOURS
-              // null. Afficher un auteur serait un mensonge — c'est le temps
-              // qui passe, personne ne l'a fait.
-              const actor = notification.actorId ? nameById.get(notification.actorId) : null;
-              return (
-                <li key={notification.id}>
-                  <button
-                    type="button"
-                    onClick={() => openNotification(notification)}
-                    disabled={!hasTarget(notification)}
-                    className={`w-full flex items-start gap-2.5 p-2.5 rounded-xl text-left transition-colors ${
-                      hasTarget(notification) ? 'hover:bg-[rgb(var(--color-hover))]' : 'cursor-default'
-                    } ${notification.readAt === null ? 'bg-[rgb(var(--color-accent)/0.08)]' : ''}`}
-                  >
-                    <Icon size={15} className="mt-0.5 shrink-0 text-[rgb(var(--color-accent))]" aria-hidden="true" />
-                    <span className="min-w-0 flex-1">
-                      <span className="block text-label text-[rgb(var(--color-text-primary))]">
-                        {actor
-                          ? t('notifications.byActor', { actor, label: t(labelKey) })
-                          : t(labelKey)}
-                      </span>
-                      {notification.kind === 'event_scheduled' && typeof notification.meta?.title === 'string' && (
-                        <span className="block text-caption text-[rgb(var(--color-text-secondary))] truncate">
-                          {typeof notification.meta.start === 'string'
-                            ? t('popups.event.slot', {
-                                title: notification.meta.title,
-                                when: format(parseISO(notification.meta.start), 'EEE d MMM, HH:mm', { locale: getDateLocale() }),
-                              })
-                            : notification.meta.title}
-                        </span>
-                      )}
-                      <span className="block text-caption text-[rgb(var(--color-text-muted))]">
-                        {formatDistanceToNow(parseISO(notification.createdAt), {
-                          addSuffix: true,
-                          locale: getDateLocale(),
-                        })}
-                      </span>
-                    </span>
-                  </button>
-                  {notification.kind === 'event_scheduled' && notification.eventId && (
-                    declined.has(notification.eventId) ? (
-                      <p className="pl-8 pb-1 text-caption text-[rgb(var(--color-text-muted))]" role="status">{t('popups.event.declined')}</p>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => decline(notification.eventId as string)}
-                        disabled={deleteEvent.isPending}
-                        className="ml-8 mb-1 inline-flex items-center gap-1 min-h-9 px-2 rounded-lg text-caption font-semibold text-red-600 dark:text-red-400 hover:bg-red-500/10 disabled:opacity-50"
-                      >
-                        <CalendarX size={13} aria-hidden="true" /> {t('popups.event.decline')}
-                      </button>
-                    )
-                  )}
-                </li>
-              );
-            })}
-            </ul>
-          </section>
-          ))}
-        </div>
+        <Suspense fallback={null}>
+          <OrgNotificationsPanel
+            notifications={notifications}
+            members={members}
+            onClose={() => setOpen(false)}
+            onOpenSettings={() => { setOpen(false); setSettingsOpen(true); }}
+          />
+        </Suspense>
+      )}
+      {settingsOpen && (
+        <Suspense fallback={null}>
+          <OrgNotificationSettingsDialog orgId={orgId} open={settingsOpen} onOpenChange={setSettingsOpen} />
+        </Suspense>
       )}
     </div>
   );

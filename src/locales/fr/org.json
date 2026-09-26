@@ -26,7 +26,10 @@
     "badgePreviewMore_other": "et {{count}} autres",
     "badgePreviewMore_many": "et {{count}} d'autres",
     "tabLoading": "Chargement de l’onglet…",
-    "managerToast": "Vous encadrez maintenant {{names}} : les sections Statistiques et Pyramide sont disponibles."
+    "managerToast": "Vous encadrez maintenant {{names}} : les sections Statistiques et Pyramide sont disponibles.",
+    "launchFree": "COSMO Entreprise est gratuit",
+    "launchFreeRest": " jusqu'au 1er août, profitez-en avec toute votre équipe, sans limite.",
+    "badgePreviewSection": "Non lu dans cette section"
   },
   "onboarding": {
     "intro": "Créez votre entreprise ou rejoignez-en une pour collaborer avec votre équipe.",
@@ -94,7 +97,9 @@
     "seatsFullLink": "Cette entreprise a atteint son nombre de places : un nouveau membre ne pourrait pas rejoindre avec ce lien. Faites évoluer l'abonnement pour en ajouter.",
     "seatsFullCode": "Cette entreprise a atteint son nombre de places : une demande faite avec ce code ne pourrait pas être acceptée.",
     "regenerateImpactOld": "L'ancien code cesse aussitôt de fonctionner.",
-    "regenerateImpactShared": "Ceux qui l'ont reçu devront avoir le nouveau."
+    "regenerateImpactShared": "Ceux qui l'ont reçu devront avoir le nouveau.",
+    "seatsFullTitle": "Places épuisées",
+    "regenerateImpactPending": "Les demandes d'adhésion déjà envoyées restent à valider."
   },
   "pyramid": {
     "directReports_one": ", {{count}} subordonné direct",
@@ -398,7 +403,61 @@
     "tasksTabMoreProjects_many": "+{{count}} de projets",
     "tasksTabMoreProjects_other": "+{{count}} projets",
     "tasksTabFewerProjects": "Réduire",
-    "milestoneFailed": "Jalon non enregistré : {{message}}"
+    "milestoneFailed": "Jalon non enregistré : {{message}}",
+    "filterAssignee": "Filtrer par assigné",
+    "seeTasksOf": "Voir les tâches de",
+    "everyone": "Tout le monde",
+    "filterTeam": "Filtrer par équipe",
+    "allTeams": "Toutes les équipes",
+    "orgNoTeam": "Entreprise (sans équipe)",
+    "createTeamOption": "+ Créer une équipe",
+    "kanbanByAssignee": "Vue kanban par assigné",
+    "myTasks": "Mes tâches",
+    "tasksOf": "Tâches de…",
+    "listView": "Vue liste",
+    "bulkClear": "Tout désélectionner",
+    "selectAll": "Tout sélectionner",
+    "timelineView": "Vue chronologique",
+    "timelineEmpty": "Aucune échéance à venir. Datez des tâches pour les voir apparaître ici.",
+    "timelineToday": "Aujourd'hui",
+    "timelineNotGantt": "Positionne les tâches à leur échéance.",
+    "timelineMarker": "{{name}}, échéance le {{date}}",
+    "timelineUnscheduled_one": "{{count}} sans date",
+    "timelineUnscheduled_many": "{{count}} sans date",
+    "timelineUnscheduled_other": "{{count}} sans date",
+    "timelineUnscheduledAria": "{{count}} tâche(s) sans échéance, cliquer pour les dater",
+    "timelineUnscheduledTitle": "Sans date",
+    "timelineDeadlineLabel": "Échéance le {{date}}",
+    "timelineUnassignedTask": "Non assignée",
+    "timelineZoomLabel": "Zoom :",
+    "timelineZoomMonth": "1 mois",
+    "timelineZoomQuarter": "3 mois",
+    "timelineZoomAll": "Tout",
+    "rowsLabel": "Lignes :",
+    "groupByAssignee": "Personne",
+    "groupByProject": "Projet",
+    "groupByStatus": "Statut",
+    "statusLabel": "Statut",
+    "scopeAll": "Tout",
+    "scopeMine": "Moi",
+    "scopeMember": "Une personne",
+    "you": "Vous",
+    "teamLabel": "Équipe",
+    "viewLabel": "Vue",
+    "viewList": "Liste",
+    "viewKanban": "Tableau",
+    "viewTimeline": "Planning",
+    "columnsLabel": "Colonnes :",
+    "activeFilters": "Filtres actifs :",
+    "clearAll": "Tout effacer",
+    "removeFilter": "Retirer le filtre « {{name}} »",
+    "chipAssignee": "Assigné : {{name}}",
+    "chipTeam": "Équipe : {{name}}",
+    "chipOpen": "Ouvertes",
+    "chipOverdue": "En retard",
+    "chipDone": "Terminées cette semaine",
+    "criticalBadge": "Critique",
+    "sameProjectOnly": "Seules les tâches du même projet peuvent être liées."
   },
   "insights": {
     "taskDeleted": "Tâche supprimée",
@@ -415,7 +474,9 @@
     "addTask": "Ajouter une tâche",
     "inProgress": "En cours ({{count}})",
     "inProgressShort": "En cours",
-    "overdueShort": "En retard"
+    "overdueShort": "En retard",
+    "noUpcoming": "Aucune échéance à venir.",
+    "privacyNote": "Seules les échéances des tâches d'équipe sont visibles (le calendrier personnel reste privé)."
   },
   "taskModal": {
     "newAria": "Nouvelle tâche d'équipe",
@@ -456,7 +517,27 @@
     "startDate": "Début",
     "startDatePlaceholder": "Pas de début",
     "datesInvalid": "Le début doit précéder l'échéance.",
-    "chooseProject": "Choisir un projet…"
+    "chooseProject": "Choisir un projet…",
+    "labelsTitle": "Labels",
+    "labelsNone": "Aucun label",
+    "labelsPick": "Choisir des labels",
+    "labelsCreate": "Créer « {{name}} »",
+    "labelsSearch": "Rechercher ou créer…",
+    "labelsManagerOnly": "Seul un manager peut créer un label.",
+    "historyTitle": "Historique",
+    "historyEmpty": "Aucune modification enregistrée.",
+    "historyStatus": "a changé le statut",
+    "historyAssignees": "a modifié les assignés",
+    "historyDeadline": "a changé l'échéance",
+    "historyPriority": "a changé la priorité",
+    "historyProject": "a déplacé la tâche",
+    "historyName": "a renommé la tâche",
+    "historyFrom": "de {{from}}",
+    "historyTo": "à {{to}}",
+    "historyUnknownActor": "Quelqu'un",
+    "historyRemovedMember": "un membre retiré",
+    "historyRemovedProject": "un projet supprimé",
+    "historyNone": "aucune"
   },
   "team": {
     "newTeam": "Nouvelle équipe",
@@ -518,7 +599,8 @@
     "projectCount_one": "{{count}} projet",
     "projectCount_many": "{{count}} de projets",
     "projectCount_other": "{{count}} projets",
-    "leadsMore": "{{names}} et {{count}} de plus"
+    "leadsMore": "{{names}} et {{count}} de plus",
+    "emerald": "Émeraude"
   },
   "project": {
     "newAria": "Nouveau projet d'équipe",
@@ -570,22 +652,8 @@
       "toOrg_other": "Le projet, ses tâches et ses commentaires deviendront visibles par toute l'entreprise, soit {{count}} personnes.",
       "toOrg_many": "Le projet, ses tâches et ses commentaires deviendront visibles par toute l'entreprise, soit {{count}} personnes.",
       "confirm": "Changer d'équipe"
-    }
-  },
-  "deleteOrg": {
-    "irreversible": "Cette action est irréversible.",
-    "membersLose_one": "Le {{count}} membre perd l'accès immédiatement.",
-    "membersLose_many": "Les {{count}} de membres perdent l'accès immédiatement.",
-    "membersLose_other": "Les {{count}} membres perdent l'accès immédiatement.",
-    "projectsDeleted": "Tous les projets, tâches d'équipe et OKR sont supprimés définitivement.",
-    "teamsErased": "Les équipes, invitations et la pyramide sont effacées.",
-    "subscriptionFirst": "Un abonnement en cours doit être résilié AVANT : la suppression sera refusée tant qu'il est actif.",
-    "evidenceKept": "Les avis de reconduction et les renonciations au droit de rétractation sont conservés : ce sont des pièces légales, pas des données d'entreprise.",
-    "personalSafe": "Les données personnelles des membres ne sont pas affectées.",
-    "confirmPrefix": "Pour confirmer, tapez",
-    "confirmSuffix": "ci-dessous :",
-    "confirmAction": "Supprimer cette entreprise",
-    "deleting": "Suppression…"
+    },
+    "colorAria": "Couleur du projet"
   },
   "consent": {
     "visibility": "Les membres voient votre nom, votre avatar et votre activité sur les projets d'équipe (tâches, commentaires).",
@@ -605,7 +673,8 @@
     "avatarChange": "Changer l'image de l'entreprise",
     "fileInvalid": "Fichier invalide",
     "imageUnreadable": "Image illisible",
-    "changeImage": "Changer l'image"
+    "changeImage": "Changer l'image",
+    "description": "Description"
   },
   "assign": {
     "assignTo": "Attribuer une tâche à {{name}}",
@@ -730,7 +799,10 @@
       "sourceActivity": "tâche modifiée",
       "sourceComment": "commentaire",
       "sourceCompletion": "tâche terminée"
-    }
+    },
+    "demoteTitle": "Retirer le rôle d'administrateur à {{name}} ?",
+    "demoteBody": "{{name}} ne pourra plus gérer les membres, la facturation ni les réglages de l'entreprise. Ses droits suivront à nouveau sa position dans la pyramide et ses éventuelles surcharges.",
+    "demoteConfirm": "Retirer le rôle"
   },
   "member": {
     "detach": "Détacher (non placé)",
@@ -783,7 +855,9 @@
     "moveConfirm": "Déplacer",
     "moveCancel": "Annuler",
     "moved": "Catégorie déplacée",
-    "rename": "Renommer"
+    "rename": "Renommer",
+    "renameAria": "Renommer la catégorie {{name}}",
+    "deleteAria": "Supprimer la catégorie {{name}}"
   },
   "okrTab": {
     "fallbackTeam": "Équipe",
@@ -825,15 +899,8 @@
     "selfAssigned": "Vous avez assigné ",
     "selfPostponed": "Vous avez reporté ",
     "selfAdvanced": "Vous avez avancé ",
-    "selfMoved": "Vous avez déplacé "
-  },
-  "transfer": {
-    "title": "Transférer la propriété de {{org}}",
-    "body": "Le membre choisi devient propriétaire et administrateur. Vous restez administrateur, mais seul le nouveau propriétaire pourra transférer à nouveau ou supprimer l'entreprise.",
-    "newOwner": "Nouveau propriétaire",
-    "choose": "Choisir un membre…",
-    "pending": "Transfert…",
-    "confirm": "Transférer la propriété"
+    "selfMoved": "Vous avez déplacé ",
+    "theTeam": "L'équipe"
   },
   "summary": {
     "barLabel": "{{completed}} terminées, {{inProgress}} en cours, {{overdue}} en retard",
@@ -847,7 +914,8 @@
     "taskTotal_other": "{{count}} tâches · {{period}}",
     "completedOf_one": "{{count}} terminée sur {{total}}",
     "completedOf_many": "{{count}} de terminées sur {{total}}",
-    "completedOf_other": "{{count}} terminées sur {{total}}"
+    "completedOf_other": "{{count}} terminées sur {{total}}",
+    "completedPercent": "{{percent}}% terminées"
   },
   "comments": {
     "loading": "Chargement…",
@@ -860,7 +928,8 @@
     "sendAria": "Envoyer le commentaire",
     "formerMember": "Ancien membre",
     "deleted": "Commentaire supprimé",
-    "title": "Commentaires"
+    "title": "Commentaires",
+    "saveFirst": "Enregistrez la tâche pour ajouter des commentaires."
   },
   "leaveDialog": {
     "body": "Vous perdrez immédiatement l'accès aux projets, tâches et OKR de l'équipe. Vos données personnelles (tâches, habitudes, agenda) ne sont pas affectées. Vous pourrez revenir avec un nouveau code d'invitation.",
@@ -882,7 +951,8 @@
     "today": "Aujourd'hui",
     "dragHint": "Glissez une tâche sur le calendrier pour la planifier.",
     "noTasks": "Aucune tâche d'équipe assignée.",
-    "tasksTitle": "Tâches"
+    "tasksTitle": "Tâches",
+    "managerHint": "Vous gérez cet agenda : créez, glissez ses tâches, déplacez ou modifiez ses événements."
   },
   "common": {
     "close": "Fermer",
@@ -955,7 +1025,8 @@
     "groupRecent": "Récents",
     "search": "Rechercher",
     "unpin": "Désépingler {{name}}",
-    "pin": "Épingler {{name}}"
+    "pin": "Épingler {{name}}",
+    "sheetTitle": "Aller à"
   },
   "colors": {
     "indigo": "Indigo",
@@ -969,25 +1040,6 @@
     "purple": "Pourpre",
     "green": "Vert",
     "slate": "Ardoise"
-  },
-  "weeklyReview": {
-    "title": "Revue de la semaine",
-    "subtitle": "Quatre questions pour préparer votre lundi.",
-    "open": "Revue de la semaine",
-    "progressTitle": "Ce qui a avancé",
-    "vsLastWeek": "{{change}} % vs la semaine passée",
-    "noComparison": "Rien à comparer",
-    "lastWeekCount_one": "{{count}} terminée la semaine passée",
-    "lastWeekCount_many": "{{count}} de terminées la semaine passée",
-    "lastWeekCount_other": "{{count}} terminées la semaine passée",
-    "slippedTitle": "Ce qui a dérapé",
-    "slippedEmpty": "Aucune échéance repoussée sur les deux dernières semaines.",
-    "tensionTitle": "Qui est en tension",
-    "tensionEmpty": "Personne au-dessus de la charge médiane de l'équipe.",
-    "workload": "{{duration}} · {{open}} ouvertes",
-    "arbitrageTitle": "Arbitrages",
-    "arbitrageEmpty": "Aucune tâche en retard, rien à arbitrer.",
-    "arbitrageHint": "Ouvrez chaque tâche pour la replanifier, la réassigner ou l'abandonner."
   },
   "notifications": {
     "title": "Notifications",
@@ -1007,7 +1059,20 @@
     "kindUnblocked": "Une de vos tâches n'attend plus rien",
     "kindProjectAtRisk": "Un projet dont vous faites partie est signalé à risque",
     "kindKrDue": "Un résultat clé arrive à échéance dans 3 jours",
-    "kindEventScheduled": "Un créneau a été ajouté à votre agenda"
+    "kindEventScheduled": "Un créneau a été ajouté à votre agenda",
+    "kindProjectArchived": "Un projet où vous avez du travail a été archivé",
+    "kindProjectArchivedNamed": "Le projet « {{name}} » a été archivé : ses tâches ont quitté vos listes",
+    "kindRoleManagerChanged": "Votre supérieur direct a changé dans la pyramide",
+    "kindRoleNowManager": "Vous encadrez désormais quelqu'un : Pyramide et Statistiques vous sont ouvertes",
+    "kindRoleNoLongerManager": "Vous n'encadrez plus personne : Pyramide et Statistiques ne vous sont plus ouvertes",
+    "settings": "Préférences de notification",
+    "filterLabel": "Filtrer les notifications",
+    "filterAll": "Tout",
+    "filterWork": "Mes tâches",
+    "filterMentions": "Mentions",
+    "filterDeadlines": "Échéances",
+    "filterProjects": "Projets",
+    "filterOrg": "Organisation"
   },
   "roles": {
     "admin": "Administrateur",
@@ -1067,7 +1132,8 @@
     "refundTitle": "Résilier et être remboursé",
     "refundExplain": "Vous récupérez la période en cours, sans motif à donner et sans nous écrire. L'accès s'arrête immédiatement, puisque la période est remboursée.",
     "refundCta": "Résilier et être remboursé de la période en cours",
-    "refundPending": "Résiliation en cours…"
+    "refundPending": "Résiliation en cours…",
+    "currentTierFree": "Vous êtes sur le palier gratuit."
   },
   "inviteJoin": {
     "title": "Créer ou rejoindre une entreprise",
@@ -1103,7 +1169,9 @@
     "removedBy": "Retrait effectué par {{name}}",
     "removedDismiss": "J'ai compris",
     "inviteCtaPending": "En attente",
-    "inviteCtaPendingAria": "Invitation envoyée à {{name}}, en attente de réponse"
+    "inviteCtaPendingAria": "Invitation envoyée à {{name}}, en attente de réponse",
+    "noOrgYet": "Vous n'appartenez à aucune entreprise pour l'instant. Créez-en une ou rejoignez-en une avec un code pour pouvoir y inviter vos contacts.",
+    "navHint": "Créer une entreprise ou en rejoindre une avec un code"
   },
   "teams": {
     "leadNamed": "Responsable d'équipe nommé",
@@ -1188,18 +1256,6 @@
   "members": {},
   "truncation": {
     "tasks": "Seules les {{limit}} tâches les plus récentes sont chargées. L'organisation en compte davantage : ce qui s'affiche ici porte sur cet extrait."
-  },
-  "trash": {
-    "button_one": "Corbeille ({{count}})",
-    "button_other": "Corbeille ({{count}})",
-    "button_many": "Corbeille ({{count}})",
-    "title": "Corbeille",
-    "description": "Les tâches supprimées y restent {{days}} jours, avec leurs commentaires, sous-tâches et historique. Restaurées, elles reviennent à l'identique.",
-    "meta": "{{project}} · supprimée par {{who}} {{when}}",
-    "unknownProject": "Projet archivé ou supprimé",
-    "someone": "un membre",
-    "restore": "Restaurer",
-    "restoreAria": "Restaurer la tâche {{name}}"
   },
   "lifecycle": {
     "badgeSuspended": "Suspendu",
@@ -1390,13 +1446,16 @@
     "planHint": "Visible du seul propriétaire de l'organisation.",
     "membersTitle": "Personnes et équipes",
     "membersHint": "La place, les droits et le départ de chaque membre se règlent dans Personnes, les équipes dans Équipes.",
-    "membersLink": "Ouvrir Personnes"
+    "membersLink": "Ouvrir Personnes",
+    "notificationsHint": "Couper un type de notification, le recevoir par e-mail, résumé quotidien."
   },
   "setup": {
     "resume": "Reprendre l'assistant de démarrage"
   },
   "confirm": {
-    "typeName": "Pour confirmer, saisissez « {{name}} »"
+    "typeName": "Pour confirmer, saisissez « {{name}} »",
+    "impactTitle": "Ce que ce geste emporte",
+    "typeToConfirm": "Saisissez « {{name}} » pour confirmer"
   },
   "glossary": {
     "open": "Glossaire",
@@ -1552,5 +1611,80 @@
       "inviteTitle": "Inviter une nouvelle personne",
       "titleSelf": "Placer quelqu'un sous vous"
     }
+  },
+  "kanban": {
+    "unassigned": "Non assignées",
+    "aria": "Kanban par assigné",
+    "assignTo": "Attribuer une tâche à {{name}}",
+    "addUnassigned": "Ajouter une tâche non assignée",
+    "assignOrCreate": "Attribuer ou créer une tâche",
+    "dropHere": "Déposez une tâche ici",
+    "alsoAssigned": "Aussi assignée à {{names}}",
+    "overdueBadge": "{{count}} retard",
+    "overdueTitle_one": "{{count}} tâche en retard",
+    "overdueTitle_other": "{{count}} tâches en retard",
+    "overdueTitle_many": "{{count}} de tâches en retard",
+    "editTask": "Modifier la tâche {{name}}",
+    "editTaskOverdue": "Modifier la tâche {{name}} (en retard)"
+  },
+  "templates": {
+    "pickLabel": "Partir d'un gabarit",
+    "clear": "Repartir de zéro",
+    "onboarding": "Onboarding client",
+    "onboardingT1": "Réunion de lancement",
+    "onboardingT2": "Collecter les accès et documents",
+    "onboardingT3": "Configurer le compte",
+    "onboardingT4": "Point de suivi à 30 jours",
+    "launch": "Lancement produit",
+    "launchT1": "Cadrer le positionnement",
+    "launchT2": "Préparer les supports de communication",
+    "launchT3": "Recette avant mise en ligne",
+    "launchT4": "Mise en ligne",
+    "launchT5": "Bilan post-lancement",
+    "sprint": "Sprint",
+    "sprintT1": "Cadrage et priorisation",
+    "sprintT2": "Développement",
+    "sprintT3": "Recette",
+    "sprintT4": "Rétrospective"
+  },
+  "follow": {
+    "failed": "Impossible de modifier le suivi : {{message}}",
+    "follow": "Suivre",
+    "unfollow": "Ne plus suivre",
+    "followTask": "Suivre cette tâche",
+    "unfollowTask": "Ne plus suivre cette tâche"
+  },
+  "notifSettings": {
+    "title": "Préférences de notification",
+    "description": "Pour cette entreprise seulement. Un type décoché « Dans l'app » n'est plus créé du tout ; l'e-mail part au plus une fois par heure.",
+    "colType": "Type",
+    "colApp": "Dans l'app",
+    "colEmail": "E-mail",
+    "appFor": "{{type}} dans l'application",
+    "emailFor": "{{type}} par e-mail",
+    "digest": "Résumé quotidien par e-mail",
+    "digestHint": "Un e-mail par jour qui reprend ce que vous n'avez pas lu.",
+    "kind": {
+      "task_assigned": "Tâche assignée",
+      "mention": "Mention",
+      "comment": "Commentaire",
+      "status_changed": "Statut d'une tâche suivie",
+      "unblocked": "Tâche débloquée",
+      "task_overdue": "Tâche en retard",
+      "project_at_risk": "Projet à risque",
+      "project_archived": "Projet archivé",
+      "kr_due": "Échéance d'un résultat clé",
+      "event_scheduled": "Créneau ajouté à mon agenda",
+      "role_changed": "Changement de position dans la pyramide"
+    }
+  },
+  "rights": {
+    "editTaskDenied": "Droit requis : modifier une tâche dont vous n'êtes ni créateur ni assigné"
+  },
+  "projectTeams": {
+    "failed": "Impossible de modifier les équipes du projet : {{message}}"
+  },
+  "projectPurge": {
+    "failed": "Impossible de supprimer définitivement le projet : {{message}}"
   }
 }

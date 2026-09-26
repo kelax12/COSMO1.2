@@ -43,6 +43,11 @@ import {
 } from './member-directory.filters';
 import { buildDirectoryCsv } from './member-directory.export';
 import { useT } from '@/i18n/useT';
+import OrgConfirmDialog from './OrgConfirmDialog';
+import { useBulkRun } from './use-bulk-run';
+import { getOrgGovernanceRepository } from '@/lib/repository.factory';
+import { orgKeys } from '@/modules/organizations';
+import { governanceKeys } from '@/modules/organizations/governance.hooks';
 
 interface MemberDirectoryProps {
   orgId: string;
@@ -66,6 +71,8 @@ interface MemberDirectoryProps {
 const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin }: MemberDirectoryProps) => {
   const { t } = useT('org');
   const setRole = useSetMemberRole();
+  // Un admin rétrogradé perd la main sur l'organisation : on le confirme.
+  const [demoting, setDemoting] = useState<OrgMember | null>(null);
   const { data: orgPermissions = [] } = useOrgMemberPermissions(orgId);
   const setPermissions = useSetMemberPermissions();
   const myPermissions = useMyOrgPermissions(orgId);
@@ -196,6 +203,17 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin }: Me
   // (`offboard_org_member`). L'ancien retrait nu les laissait orphelins.
   const lifecycle = useMemberLifecycle({ orgId, members, ownerId, currentUserId, isAdmin });
 
+  // Suspension EN MASSE (audit du 2026-09-24, étape 4 : « configuration en
+  // masse »). Le propriétaire et soi-même sont écartés AVANT l'appel : le
+  // serveur (`set_member_access`) les refuserait un par un.
+  const accessRun = useBulkRun([orgKeys.all, governanceKeys.all]);
+  const setAccessInBulk = (suspended: boolean) => {
+    const targets = bulk.selected.filter((m) => m.userId !== ownerId && m.userId !== currentUserId);
+    void accessRun.execute(targets, (m) =>
+      getOrgGovernanceRepository().setMemberAccess(orgId, m.userId, suspended, m.accessExpiresAt ?? null),
+    );
+  };
+
   const assignToMember = (task: TeamTask, member: OrgMember) => {
     if (task.assigneeIds.includes(member.userId)) return;
     updateTask.mutate({ taskId: task.id, input: { assigneeIds: [...task.assigneeIds, member.userId] } });
@@ -249,7 +267,7 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin }: Me
                 selected={bulk.selectedIds.has(m.userId)}
                 onToggleSelect={() => bulk.toggle(m.userId)}
                 onOpen={(tab) => openMember(m, tab)}
-                onSetRole={(role) => setRole.mutate({ orgId, userId: m.userId, role })}
+                onSetRole={(role) => (role === 'member' && m.role === 'admin' ? setDemoting(m) : setRole.mutate({ orgId, userId: m.userId, role }))}
                 onAssign={() => setAssigning(m)}
                 onEditPermissions={() => setEditingPerms(m)}
                 lifecycleItems={lifecycle.menuItems(m)}
@@ -269,7 +287,29 @@ const MemberDirectory = ({ orgId, ownerId, members, currentUserId, isAdmin }: Me
           onToggleAll={bulk.toggleAll}
           onAddToTeam={() => bulk.setPicker('team')}
           onChangeManager={() => bulk.setPicker('manager')}
+          canRestrictAccess={isAdmin}
+          accessPending={accessRun.pending}
+          onSuspend={() => setAccessInBulk(true)}
+          onReactivate={() => setAccessInBulk(false)}
           onExit={bulk.exit}
+        />
+      )}
+
+      {/* Un admin rétrogradé perd la main sur l'organisation : niveau LOURD. */}
+      {demoting && (
+        <OrgConfirmDialog
+          title={t('directory.demoteTitle', { name: demoting.displayName })}
+          description={t('directory.demoteBody', { name: demoting.displayName })}
+          confirmLabel={t('directory.demoteConfirm')}
+          tone="warning"
+          pending={setRole.isPending}
+          onConfirm={() =>
+            setRole.mutate(
+              { orgId, userId: demoting.userId, role: 'member' },
+              { onSettled: () => setDemoting(null) },
+            )
+          }
+          onCancel={() => setDemoting(null)}
         />
       )}
 

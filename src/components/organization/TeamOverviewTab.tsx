@@ -77,6 +77,7 @@ const MiniBar = ({ ratio, colorClass }: { ratio: number; colorClass: string }) =
  */
 const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOverviewTabProps) => {
   const { t, tp } = useT('org');
+  const { t: ta } = useT('orgAdmin');
   // Configs de graphique construites au RENDU : elles portent des libellés
   // traduits, une constante de module les figerait au premier import.
   const velocityConfig = { completed: { label: t('overview.completed'), color: velocityColor } } satisfies ChartConfig;
@@ -220,7 +221,7 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
               onClick={() => setReviewOpen(true)}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 transition-colors"
             >
-              <ClipboardCheck size={13} aria-hidden="true" /> {t('weeklyReview.open')}
+              <ClipboardCheck size={13} aria-hidden="true" /> {ta('weeklyReview.open')}
             </button>
           )}
           {/* Bouton masqué (pas la fonctionnalité) — remise en place possible
@@ -432,6 +433,7 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
           // ne doit pas montrer une equipe plus large que l'onglet qui la porte.
           tasks={scopedTasks}
           members={scopedMembers}
+          baseScope={isAdmin ? 'org' : 'subtree'}
           onOpenTask={(taskId) => {
             setReviewOpen(false);
             navigate(buildOrgLink('projects', { task: taskId }));

@@ -8,6 +8,7 @@ import {
   useActiveOrganization,
   useOrgMembers,
   useMyOrgPermissions,
+  useOrgNotifications,
   isManagerOf,
 } from '@/modules/organizations';
 import { ENTERPRISE_BILLING_ENFORCED } from '@/modules/billing/premium-config';
@@ -21,6 +22,7 @@ import OrgSideNav from '@/components/organization/OrgSideNav';
 import { useOrgNavMode } from '@/components/organization/use-org-nav-mode';
 import OrgSectionSwitcher from '@/components/organization/OrgSectionSwitcher';
 import { ORG_SECTIONS, type OrgSection, type OrgNavItem } from '@/components/organization/org-sections';
+import { sectionNotificationBadges, type BadgeSection } from '@/components/organization/org-section-badges';
 import {
   isOrgSectionSegment,
   legacyOrgTabRedirect,
@@ -53,11 +55,11 @@ import type { KeyOf } from '@/i18n/catalog';
 // que `lazy-namespaces.guard.test.ts` contrôle comme une route (`TAB_GATE_HOSTS`
 // dans `scripts/i18n-shell-namespaces.mjs`). La liste doit alors couvrir TOUT
 // son sous-arbre, `org` compris.
-const PyramidTab = lazyWithRetry(() => import('@/components/organization/PyramidTab'));
+const PyramidTab = lazyWithRetry(() => import('@/components/organization/PyramidTab'), ['eventModal', 'org', 'orgAdmin', 'overlays', 'tasks']);
 // `portfolio` (M2) n'est payé que par qui ouvre Projets : dans `org`, il pesait
 // 4,7 ko gzip sur chaque visite de /entreprise.
-const TeamProjectsTab = lazyWithRetry(() => import('@/components/organization/TeamProjectsTab'), ['org', 'overlays', 'portfolio']);
-const TeamTasksTab = lazyWithRetry(() => import('@/components/organization/TeamTasksTab'), ['eventModal', 'org', 'overlays', 'portfolio', 'tasks']);
+const TeamProjectsTab = lazyWithRetry(() => import('@/components/organization/TeamProjectsTab'), ['org', 'orgAdmin', 'overlays', 'portfolio']);
+const TeamTasksTab = lazyWithRetry(() => import('@/components/organization/TeamTasksTab'), ['eventModal', 'org', 'orgAdmin', 'overlays', 'portfolio', 'tasks']);
 const TeamOKRTab = lazyWithRetry(() => import('@/components/organization/TeamOKRTab'));
 const TeamOverviewTab = lazyWithRetry(() => import('@/components/organization/TeamOverviewTab'));
 const OrgBillingTab = lazyWithRetry(() => import('@/components/organization/OrgBillingTab'), ['org', 'orgAccount', 'overlays']);
@@ -77,7 +79,7 @@ const OrgSettingsSection = lazyWithRetry(() => import('@/components/organization
 // rendu. Ils ne l'étaient pas au TÉLÉCHARGEMENT.
 // Glossaire et liens profonds (`?task=`…) : UNE entrée paresseuse pour les deux,
 // chargée seulement quand l'un sert (cf. `OrgPageOverlays`).
-const OrgPageOverlays = lazyWithRetry(() => import('@/components/organization/OrgPageOverlays'), ['eventModal', 'org', 'orgAccount', 'overlays', 'tasks']);
+const OrgPageOverlays = lazyWithRetry(() => import('@/components/organization/OrgPageOverlays'), ['eventModal', 'org', 'orgAccount', 'orgAdmin', 'overlays', 'tasks']);
 
 type OrgTab = OrgSection;
 
@@ -125,13 +127,13 @@ const OrganizationPage = () => {
   const urlTab: OrgTab = isOrgSectionSegment(section) ? section : 'overview';
   // Sans `replace` : chaque section est une page, le bouton précédent y revient.
   const setTab = (id: OrgTab) => navigate(orgSectionPath(id));
-  const [editProfile, setEditProfile] = useState(false);
   // Glossaire (cohérence globale) : ouvert par le bouton d'en-tête. Les
   // info-bulles de rôle l'ouvrent elles-mêmes, sur leur terme (`RoleTerm`).
   const [glossary, setGlossary] = useState(false);
   const [seatsBannerDismissed, setSeatsBannerDismissed] = useState(false);
   const { activeOrg: myOrg, isLoading } = useActiveOrganization();
   const badges = useOrgBadges();
+  const { data: orgNotifications = [] } = useOrgNotifications(myOrg?.id);
   // Navigation de droite (ouverte à l'arrivée, repliée, ou ressortie au
   // survol). Porté ici : la page réserve la place de la carte ouverte à
   // l'arrivée, sinon elle recouvrirait la colonne de droite du contenu.
@@ -209,11 +211,21 @@ const OrganizationPage = () => {
       : urlTab;
 
   // Entrées de navigation, partagées par le panneau desktop et le sélecteur
-  // mobile. Seuls Projets (tâches nouvellement assignées) et Membres (demandes
-  // d'adhésion en attente) portent un compteur.
+  // mobile. Projets (tâches nouvellement assignées) et Membres (demandes
+  // d'adhésion) ont leur compteur dérivé ; depuis l'audit du 2026-09-24, les
+  // autres sections comptent leurs notifications non lues (aucune requête de
+  // plus : la boîte de réception les porte déjà).
+  const sectionBadges = sectionNotificationBadges(orgNotifications);
+  const badgeOf = (id: OrgSection): { count: number; items: string[] } => {
+    const extra = (id in sectionBadges) ? sectionBadges[id as BadgeSection] : null;
+    const extraItems = extra ? extra.kinds.map((k) => t(`notifSettings.kind.${k}` as KeyOf<'org'>)) : [];
+    if (id === 'projects') return { count: badges.projects + (extra?.count ?? 0), items: [...badges.projectItems, ...extraItems] };
+    if (id === 'members') return { count: badges.members, items: badges.memberItems };
+    return { count: extra?.count ?? 0, items: extraItems };
+  };
   const navItems: OrgNavItem[] = ORG_SECTIONS.filter((item) => !item.managerOnly || isManager).map(
     ({ id, labelKey, Icon, group }) => {
-      const badgeCount = id === 'projects' ? badges.projects : id === 'members' ? badges.members : 0;
+      const { count: badgeCount, items } = badgeOf(id);
       const badgeAriaLabel = badgeCount > 0 ? tp('page.badgeCount', badgeCount) : undefined;
       return {
         id,
@@ -225,8 +237,8 @@ const OrganizationPage = () => {
         badge: badgeCount > 0 ? (
           <OrgTabBadge
             count={badgeCount}
-            items={id === 'projects' ? badges.projectItems : badges.memberItems}
-            title={t(id === 'projects' ? 'page.badgePreviewProjects' : 'page.badgePreviewMembers')}
+            items={items}
+            title={t(id === 'members' ? 'page.badgePreviewMembers' : id === 'projects' ? 'page.badgePreviewProjects' : 'page.badgePreviewSection')}
             ariaLabel={badgeAriaLabel ?? ''}
             side="left"
             onAccent={tab === id}
@@ -296,7 +308,7 @@ const OrganizationPage = () => {
             {isAdmin && (
               <button
                 type="button"
-                onClick={() => setEditProfile(true)}
+                onClick={() => setTab('settings')}
                 aria-label={t('page.editProfile')}
                 className="min-w-11 min-h-11 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-accent))] hover:bg-[rgb(var(--color-hover))] transition-colors shrink-0"
               >
@@ -324,7 +336,7 @@ const OrganizationPage = () => {
             {isAdmin && (
               <button
                 type="button"
-                onClick={() => setEditProfile(true)}
+                onClick={() => setTab('settings')}
                 aria-label={t('page.editProfile')}
                 className="w-7 h-7 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-accent))] hover:bg-[rgb(var(--color-hover))] transition-colors shrink-0"
               >
@@ -474,7 +486,6 @@ const OrganizationPage = () => {
           isManager={isManager}
           canInvite={canInvite}
           seatsFull={seatsFull}
-          onEditProfile={() => setEditProfile(true)}
         />
       )}
       </Suspense>
@@ -501,13 +512,11 @@ const OrganizationPage = () => {
 
       {/* Liens profonds : `?task=`, `?member=`, `?project=`, `?okr=`, `?team=`
           ouvrent leur fiche quelle que soit la section affichée. */}
-      {(glossary || editProfile || hasEntityParam) && (
+      {(glossary || hasEntityParam) && (
         <Suspense fallback={null}>
           <OrgPageOverlays
             glossaryOpen={glossary}
             onCloseGlossary={() => setGlossary(false)}
-            profileOrg={editProfile ? myOrg : null}
-            onCloseProfile={() => setEditProfile(false)}
             deepLink={hasEntityParam
               ? { orgId: myOrg.id, section: teamId ? 'teams' : tab, members, currentUserId: user?.id, isAdmin, isManager }
               : null}

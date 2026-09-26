@@ -20,6 +20,7 @@ import TeamTaskFields from './TeamTaskFields';
 import TeamTaskLabelsField from './TeamTaskLabelsField';
 import TeamTaskHistoryPanel from './TeamTaskHistoryPanel';
 import TeamSubtasksSection from './TeamSubtasksSection';
+import FollowTaskToggle from './FollowTaskToggle';
 import TeamTaskDependenciesSection from './TeamTaskDependenciesSection';
 import { DraftSubtasksEditor, DraftDependenciesEditor } from './TeamTaskDraftSections';
 import PreCreateCommentComposer from './PreCreateCommentComposer';
@@ -461,6 +462,14 @@ const TeamTaskModal = ({
               {/* Sous `lg`, les commentaires vivent ici ; au-delà, dans le panneau de droite. */}
               {!isWide && comments}
             </>
+          )}
+
+          {/* Suivre une tâche (mig. 162, M14) : ses changements de statut
+              arrivent dans la cloche même quand on n'y est pas assigné. */}
+          {tab === 'details' && liveTask && (
+            <div className="mt-4">
+              <FollowTaskToggle orgId={orgId} taskId={liveTask.id} />
+            </div>
           )}
 
           {tab === 'subtasks' && (liveTask

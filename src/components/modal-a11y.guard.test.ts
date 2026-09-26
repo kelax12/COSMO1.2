@@ -41,8 +41,8 @@ const EXEMPTS: Record<string, string> = {
   'components/InboxMenu.tsx':
     "POPOVER ancre au declencheur, non modal : pas de voile, pas d'aria-modal. Piéger le focus dans un popover empêcherait d'en sortir en tabulant, ce qui est justement sa maniere de se fermer.",
   'components/task-table/TasksInboxMenu.tsx': 'meme popover, cote page Taches.',
-  'components/organization/OrgNotificationsBell.tsx':
-    'popover de notifications ancre a la cloche, non modal.',
+  'components/organization/OrgNotificationsPanel.tsx':
+    'popover de notifications ancre a la cloche, non modal (sorti de OrgNotificationsBell le 2026-09-25, charge a l ouverture).',
   'components/organization/TeamCategoryTreeSelect.tsx':
     "confirmation EN LIGNE (une bande dans le flux d'un Popover Radix deja piege, pas un calque) : elle porte alertdialog pour etre annoncee, mais elle ne recouvre rien et un second piege se disputerait le focus avec celui du Popover.",
   'components/tutorial/TutorialCard.tsx':

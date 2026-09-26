@@ -52,7 +52,13 @@
     "team_delete_forbidden": "Only an admin or the team's creator can delete it.",
     "not_allowed": "You are not allowed to make this change.",
     "cannot_restrict_self": "You cannot suspend or limit your own access.",
-    "okr_parent_cycle": "This objective cannot contribute to one of its own sub-objectives."
+    "okr_parent_cycle": "This objective cannot contribute to one of its own sub-objectives.",
+    "cannot_restrict_owner": "The company owner's access cannot be suspended: transfer ownership first.",
+    "invalid_target": "The person chosen to take over this work is not in the company.",
+    "invalid_mode": "Unknown departure mode.",
+    "member_not_found": "This person is no longer in the company.",
+    "project_not_archived": "Only an archived project can be deleted permanently: archive it first.",
+    "project_not_found": "This project no longer exists."
   },
   "validation": {
     "fallback": "Invalid data",

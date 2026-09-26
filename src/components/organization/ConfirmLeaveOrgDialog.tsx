@@ -1,53 +1,68 @@
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+import { useMemo } from 'react';
+import type { OrgMember } from '@/modules/organizations';
+import { useOrgTeamMembers } from '@/modules/org-teams';
+import { useTeamProjects, useTeamTaskSlice } from '@/modules/team-projects';
+import OrgConfirmDialog from './OrgConfirmDialog';
 import { useT } from '@/i18n/useT';
 
 interface ConfirmLeaveOrgDialogProps {
+  orgId: string;
   orgName: string;
+  currentUserId?: string;
+  members: OrgMember[];
+  /** Admin : peut passer par l'assistant de départ pour tout transmettre AVANT. */
+  canOrganize: boolean;
   pending?: boolean;
+  onOrganize: () => void;
   onConfirm: () => void;
   onCancel: () => void;
 }
 
 /**
- * Confirmation avant de quitter l'entreprise — remplace le window.confirm
- * (même pattern que les autres AlertDialog du mode entreprise).
+ * Confirmation avant de quitter l'entreprise (audit du 2026-09-24, étape 3).
+ *
+ * Le dialogue ne disait rien de ce qu'on laisse derrière soi. Il compte
+ * désormais, avec ce que la personne VOIT : ses tâches ouvertes (qui seront
+ * désassignées, mig. 164), ses subordonnés (remontés d'un cran), ses rôles de
+ * responsable d'équipe (perdus) et ses projets portés (sans responsable).
+ * Un admin peut passer par l'assistant de départ pour tout transmettre avant.
  */
-const ConfirmLeaveOrgDialog = ({ orgName, pending, onConfirm, onCancel }: ConfirmLeaveOrgDialogProps) => {
-  const { t } = useT('org');
+const ConfirmLeaveOrgDialog = ({
+  orgId, orgName, currentUserId, members, canOrganize, pending, onOrganize, onConfirm, onCancel,
+}: ConfirmLeaveOrgDialogProps) => {
+  const { t: ta, tp: tpa } = useT('orgAdmin');
+  // Filtres STABLES : ils entrent dans la clé de cache.
+  const filters = useMemo(() => ({ assigneeId: currentUserId, completed: false }), [currentUserId]);
+  const { data: myTasks = [] } = useTeamTaskSlice(orgId, filters, { enabled: !!currentUserId });
+  const { data: teamMembers = [] } = useOrgTeamMembers(orgId);
+  const { data: projects = [] } = useTeamProjects(orgId);
+
+  const impact = useMemo(() => {
+    if (!currentUserId) return [];
+    const reports = members.filter((m) => m.managerId === currentUserId).length;
+    const leads = teamMembers.filter((m) => m.userId === currentUserId && m.isLead).length;
+    const owned = projects.filter((p) => p.ownerId === currentUserId && !p.archivedAt).length;
+    return [
+      ...(myTasks.length > 0 ? [tpa('leaveDialog.impactTasks', myTasks.length)] : []),
+      ...(reports > 0 ? [tpa('leaveDialog.impactReports', reports)] : []),
+      ...(leads > 0 ? [tpa('leaveDialog.impactLeads', leads)] : []),
+      ...(owned > 0 ? [tpa('leaveDialog.impactProjects', owned)] : []),
+    ];
+  }, [currentUserId, members, teamMembers, projects, myTasks, tpa]);
+
   return (
-  <AlertDialog open onOpenChange={(open) => { if (!open) onCancel(); }}>
-    <AlertDialogContent className="bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] rounded-2xl text-[rgb(var(--color-text-primary))] shadow-xl">
-      <AlertDialogHeader>
-        <AlertDialogTitle className="text-xl font-bold">
-          {t('leaveDialog.title', { name: orgName })}
-        </AlertDialogTitle>
-        <AlertDialogDescription className="text-[rgb(var(--color-text-secondary))] text-sm leading-relaxed">
-          {t('leaveDialog.body')}
-        </AlertDialogDescription>
-      </AlertDialogHeader>
-      <AlertDialogFooter className="gap-2">
-        <AlertDialogCancel className="rounded-xl border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] hover:bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-primary))] font-semibold text-sm">
-          {t('common.cancel')}
-        </AlertDialogCancel>
-        <AlertDialogAction
-          disabled={pending}
-          onClick={onConfirm}
-          className="rounded-xl font-semibold text-sm bg-red-500 hover:bg-red-600 text-white disabled:opacity-50"
-        >
-          {pending ? t('leaveDialog.pending') : t('leaveDialog.confirm')}
-        </AlertDialogAction>
-      </AlertDialogFooter>
-    </AlertDialogContent>
-  </AlertDialog>
+    <OrgConfirmDialog
+      title={ta('leaveDialog.title', { org: orgName })}
+      description={ta('leaveDialog.body')}
+      impact={impact}
+      impactTitle={ta('leaveDialog.impactTitle')}
+      confirmLabel={ta('leaveDialog.confirm')}
+      pendingLabel={ta('leaveDialog.pending')}
+      pending={pending}
+      secondaryAction={canOrganize && impact.length > 0 ? { label: ta('leaveDialog.organize'), onClick: onOrganize } : undefined}
+      onConfirm={onConfirm}
+      onCancel={onCancel}
+    />
   );
 };
 
