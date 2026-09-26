@@ -13,7 +13,6 @@ import { lazyWithRetry } from '@/lib/lazy-with-retry';
 import { buildOrgLink } from './deep-link.helpers';
 import OrgPlanChip from './OrgPlanChip';
 import { useT } from '@/i18n/useT';
-import RoleTerm from './RoleTerm';
 
 // Section Paramètres, `/entreprise/settings` (audit Membres du 2026-09-24 :
 // « quatre pages en une »). Elle reprend à `/entreprise/members` les
@@ -144,7 +143,7 @@ const OrgSettingsSection = ({
                   <span className="flex-1 min-w-0 truncate text-sm text-[rgb(var(--color-text-primary))]">{o.name}</span>
                   {o.myRole === 'admin' && (
                     <span className="text-caption font-semibold px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
-                      <RoleTerm term="admin">{t('common.adminBadge')}</RoleTerm>
+                      {t('common.adminBadge')}
                     </span>
                   )}
                   {current ? (

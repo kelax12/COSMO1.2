@@ -3,7 +3,7 @@ import { HelpCircle } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useT } from '@/i18n/useT';
 import { lazyWithRetry } from '@/lib/lazy-with-retry';
-import { claimFirstSight, type OrgTerm } from './org-glossary';
+import { claimFirstSight, releaseFirstSight, type OrgTerm } from './org-glossary';
 
 const RoleTermCard = lazyWithRetry(() => import('./RoleTermCard'), ['org', 'orgAccount']);
 const OrgGlossarySheet = lazyWithRetry(() => import('./OrgGlossarySheet'), ['org', 'orgAccount']);
@@ -14,16 +14,30 @@ const OrgGlossarySheet = lazyWithRetry(() => import('./OrgGlossarySheet'), ['org
  * Au PREMIER affichage de ce terme sur l'appareil, la définition s'ouvre
  * d'elle-même, une fois (cf. `claimFirstSight`). Ensuite, le « ? » suffit.
  */
-const RoleTerm = ({ term, children, className = '' }: { term: OrgTerm; children: string; className?: string }) => {
+const RoleTerm = ({ term, children, label, className = '' }: {
+  term: OrgTerm;
+  /** Libellé affiché avant le « ? ». Absent : le « ? » seul (à côté d'un bouton,
+   *  jamais DANS un bouton : deux contrôles imbriqués). */
+  children?: string;
+  /** Nom du terme pour le lecteur d'écran quand rien n'est affiché. */
+  label?: string;
+  className?: string;
+}) => {
   const { t } = useT('org');
   const [open, setOpen] = useState(false);
   // « Voir tout le glossaire » : la feuille s'ouvre d'ici, sur ce terme.
   const [glossary, setGlossary] = useState(false);
+  const [firstSight, setFirstSight] = useState(false);
   useEffect(() => {
-    if (claimFirstSight(term)) setOpen(true);
+    if (claimFirstSight(term)) { setFirstSight(true); setOpen(true); }
   }, [term]);
+  // La bulle de premier affichage refermée (ou démontée) laisse la place à la suivante.
+  useEffect(() => {
+    if (firstSight && !open) releaseFirstSight();
+    return () => { if (firstSight) releaseFirstSight(); };
+  }, [firstSight, open]);
   // Le libellé affiché nomme le terme : la définition, elle, se charge à l'ouverture.
-  const name = children;
+  const name = children ?? label ?? '';
 
   return (
     <span className={`inline-flex items-center gap-0.5 ${className}`}>
