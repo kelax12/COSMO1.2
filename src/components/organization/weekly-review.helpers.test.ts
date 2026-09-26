@@ -22,6 +22,10 @@ const entry = (over: Partial<TeamTaskActivity>): TeamTaskActivity => ({
   ...over,
 });
 
+/** Complétion journalisée (mig. 094) : c'est elle que compte la revue. */
+const done = (taskId: string, daysAgo: number): TeamTaskActivity =>
+  entry({ id: `d-${taskId}-${daysAgo}`, taskId, field: 'status', oldValue: 'in_progress', newValue: 'done', createdAt: iso(daysAgo) });
+
 const members: OrgMember[] = [
   { userId: 'u1', displayName: 'Marie Dupont', role: 'member', managerId: null } as OrgMember,
   { userId: 'u2', displayName: 'Jean Martin', role: 'member', managerId: null } as OrgMember,
@@ -43,14 +47,9 @@ describe('reviewWindow', () => {
   });
 });
 
-describe('buildWeeklyReview — vélocité', () => {
+describe('buildWeeklyReview — vélocité (lue dans le journal)', () => {
   it('compte les tâches terminées de chaque semaine', () => {
-    const tasks = [
-      task({ id: 'a', completed: true, completedAt: iso(1) }),   // mardi 14 → cette semaine
-      task({ id: 'b', completed: true, completedAt: iso(2) }),   // lundi 13 → cette semaine
-      task({ id: 'c', completed: true, completedAt: iso(5) }),   // vendredi 10 → semaine passée
-    ];
-    const r = buildWeeklyReview(tasks, members, [], NOW);
+    const r = buildWeeklyReview([], members, [done('a', 1), done('b', 2), done('c', 5)], NOW);
     expect(r.completedThisWeek).toBe(2);
     expect(r.completedLastWeek).toBe(1);
     expect(r.velocityChange).toBe(100);
@@ -59,8 +58,7 @@ describe('buildWeeklyReview — vélocité', () => {
   it("vaut null — ni 0 ni Infinity — quand la semaine précédente est à 0", () => {
     // Une équipe qui passe de 0 à 5 n'a pas fait « +∞ % » : il n'y a pas de
     // variation calculable, et afficher 0 % mentirait dans l'autre sens.
-    const tasks = [task({ id: 'a', completed: true, completedAt: iso(1) })];
-    const r = buildWeeklyReview(tasks, members, [], NOW);
+    const r = buildWeeklyReview([], members, [done('a', 1)], NOW);
     expect(r.completedLastWeek).toBe(0);
     expect(r.velocityChange).toBeNull();
   });
@@ -71,16 +69,22 @@ describe('buildWeeklyReview — vélocité', () => {
   });
 
   it('rend une variation négative quand la vélocité baisse', () => {
-    const tasks = [
-      task({ id: 'a', completed: true, completedAt: iso(1) }),
-      task({ id: 'b', completed: true, completedAt: iso(5) }),
-      task({ id: 'c', completed: true, completedAt: iso(6) }),
-      task({ id: 'd', completed: true, completedAt: iso(7) }),
-    ];
-    const r = buildWeeklyReview(tasks, members, [], NOW);
+    const r = buildWeeklyReview([], members, [done('a', 1), done('b', 5), done('c', 6), done('d', 7)], NOW);
     expect(r.completedThisWeek).toBe(1);
     expect(r.completedLastWeek).toBe(3);
     expect(r.velocityChange).toBe(-67);
+  });
+
+  it('une tâche terminée, rouverte puis re-terminée compte UNE fois, à sa dernière complétion', () => {
+    const r = buildWeeklyReview([], members, [done('a', 5), done('a', 1)], NOW);
+    expect(r.completedThisWeek).toBe(1);
+    expect(r.completedLastWeek).toBe(0);
+  });
+
+  // TÉMOIN : une seule source. Un `completedAt` sans ligne de journal ne compte pas.
+  it("n'invente aucune complétion hors du journal", () => {
+    const r = buildWeeklyReview([task({ id: 'a', completed: true, completedAt: iso(1) })], members, [], NOW);
+    expect(r.completedThisWeek).toBe(0);
   });
 });
 

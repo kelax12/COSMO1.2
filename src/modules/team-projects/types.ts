@@ -336,9 +336,12 @@ export interface TeamTaskDependency {
 
 // ─── Historique (mig. 094) ───────────────────────────────────────────
 
-/** Champs journalisés par le trigger `log_team_task_activity`. */
+/**
+ * Champs journalisés par `log_team_task_activity` (UPDATE, mig. 094) et
+ * `log_team_task_creation` (INSERT, mig. 181 : `created`, valeurs nulles).
+ */
 export type TeamActivityField =
-  | 'status' | 'assignees' | 'deadline' | 'priority' | 'project' | 'name';
+  | 'created' | 'status' | 'assignees' | 'deadline' | 'priority' | 'project' | 'name';
 
 /**
  * Entrée du journal append-only. `oldValue`/`newValue` sont du texte : le

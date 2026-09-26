@@ -34,7 +34,6 @@ export interface MyWorkSectionsProps {
   mine: TeamTask[];
   upcoming: TeamTask[];
   createdInReview: TeamTask[];
-  recentlyCreated: TeamTask[];
   activity: TeamTaskActivity[];
   deps: TeamTaskDependency[];
   notifications: OrgNotification[];
@@ -64,7 +63,7 @@ export interface MyWorkSectionsProps {
  * des requêtes : son attente est couverte par le squelette de données.
  */
 const MyWorkSections = ({
-  orgId, currentUserId, open, mine, upcoming, createdInReview, recentlyCreated,
+  orgId, currentUserId, open, mine, upcoming, createdInReview,
   activity, deps, notifications, okrs, projects, members, hasAny, estimated,
   agenda, onToggle, onOpenTask,
 }: MyWorkSectionsProps) => {
@@ -77,7 +76,7 @@ const MyWorkSections = ({
   const groups = useMemo(() => groupByHorizon(open), [open]);
   // Actions groupées sur « Mes tâches », comme partout où il y a une liste.
   const bulk = useTeamTasksBulk(orgId, open);
-  const activityItems = useMemo(() => buildActivityItems(activity, recentlyCreated), [activity, recentlyCreated]);
+  const activityItems = useMemo(() => buildActivityItems(activity), [activity]);
   const mentions = useMemo(() => unreadMentions(notifications), [notifications]);
 
   // Tâches à nommer sans les avoir encore : celles qui attendent les miennes,
@@ -85,11 +84,11 @@ const MyWorkSections = ({
   // identifiants, triés pour que la clé de cache ne bouge pas.
   const known = useMemo(() => {
     const map = new Map<string, TeamTask>();
-    for (const list of [recentlyCreated, createdInReview, upcoming, mine]) {
+    for (const list of [createdInReview, upcoming, mine]) {
       for (const task of list) map.set(task.id, task);
     }
     return map;
-  }, [recentlyCreated, createdInReview, upcoming, mine]);
+  }, [createdInReview, upcoming, mine]);
   const missingIds = useMemo(() => {
     const wanted = new Set([
       ...dependentIdsOf(open, deps),
