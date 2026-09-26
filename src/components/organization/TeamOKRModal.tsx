@@ -39,7 +39,9 @@ import {
 } from '@/modules/team-okrs';
 import { useOrgTeams } from '@/modules/org-teams';
 import { useTeamProjects } from '@/modules/team-projects';
-import { useMyOrgPermissions } from '@/modules/organizations';
+import { useMyOrgPermissions, useOrgMembers } from '@/modules/organizations';
+import { useAuth } from '@/modules/auth/AuthContext';
+import KRContributorsField from './KRContributorsField';
 import TeamCategoryTreeSelect from './TeamCategoryTreeSelect';
 import { OkrCycleField, OkrParentField, KRProjectsField } from './TeamOKRLinkFields';
 import { useT } from '@/i18n/useT';
@@ -62,6 +64,16 @@ interface KRDraft {
   /** Projets reliés (mig. 160), écrits après l'enregistrement de l'OKR. */
   projectIds: string[];
   byTasks: boolean;
+  /** Contributeurs (mig. 160, `contributor_ids`). */
+  contributorIds: string[];
+  /**
+   * Responsable et durée par unité : la fiche ne les montre pas, mais la
+   * synchronisation écrit TOUS les champs du KR. Sans les reporter, modifier
+   * un objectif remettait `assignee_id` à NULL et la durée à 30 min sur
+   * chacun de ses KR (constaté le 2026-09-26).
+   */
+  assigneeId?: string | null;
+  estimatedTime?: number;
 }
 
 const newKR = (): KRDraft => ({
@@ -75,6 +87,7 @@ const newKR = (): KRDraft => ({
   weight: 1,
   projectIds: [],
   byTasks: false,
+  contributorIds: [],
 });
 
 export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModalProps) {
@@ -89,6 +102,8 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
   const { data: krLinks = [], isSuccess: krLinksLoaded } = useKRProjects(orgId);
   const setKRProjects = useSetKRProjects(orgId);
   const { can } = useMyOrgPermissions(orgId);
+  const { data: members = [] } = useOrgMembers(orgId);
+  const { user } = useAuth();
   const queryClient = useQueryClient();
 
   // Monté fermé puis ouvert au tick suivant : la transition false→true permet à
@@ -114,6 +129,9 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
           weight: k.weight ?? 1,
           projectIds: krLinks.filter((l) => l.krId === k.id).map((l) => l.projectId),
           byTasks: k.progressMode === 'tasks',
+          contributorIds: k.contributorIds ?? [],
+          assigneeId: k.assigneeId ?? null,
+          estimatedTime: k.estimatedTime,
         }))
       : [newKR()],
   );
@@ -156,6 +174,9 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
     weight: Math.min(10, Math.max(1, Math.round(Number(k.weight) || 1))),
     // Avancer « par les tâches » n'a de sens qu'avec au moins un projet relié.
     progressMode: k.byTasks && k.projectIds.length > 0 ? 'tasks' : 'manual',
+    contributorIds: k.contributorIds,
+    assigneeId: k.assigneeId ?? null,
+    estimatedTime: k.estimatedTime,
   });
 
   /** Écrit les liens KR ↔ projet qui ont changé (une écriture par KR touché). */
@@ -373,9 +394,16 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
                     byTasks={kr.byTasks}
                     onByTasksChange={(byTasks) => setKR(idx, { byTasks })}
                   />
-                  {/* #10 : un OKR ne s'assigne pas à une personne — il se
-                      rattache à des équipes ; le travail individuel passe par
-                      les tâches de projet. */}
+                  {/* #10 : un OKR ne s'assigne pas à une personne, il se
+                      rattache à des équipes. Ses KR, eux, ont des contributeurs
+                      (mig. 160, audit du 2026-09-24). */}
+                  <KRContributorsField
+                    orgId={orgId}
+                    members={members}
+                    value={kr.contributorIds}
+                    onChange={(contributorIds) => setKR(idx, { contributorIds })}
+                    currentUserId={user?.id}
+                  />
                 </div>
               ))}
             </div>

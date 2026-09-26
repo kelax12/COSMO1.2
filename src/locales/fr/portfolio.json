@@ -380,5 +380,33 @@
     "rangeTo": "jusqu'au {{date}}",
     "rangeBoth": "du {{from}} au {{to}}",
     "clearDue": "Effacer l'échéance"
+  },
+  "okrFilters": {
+    "barAria": "Filtrer les objectifs",
+    "team": "Équipe",
+    "teamAria": "Filtrer par équipe",
+    "allTeams": "Toutes les équipes",
+    "orgWide": "Objectifs d'entreprise",
+    "person": "Porté par",
+    "personAria": "Filtrer par personne qui porte un résultat clé",
+    "anyone": "Tout le monde",
+    "mine": "Moi",
+    "state": "État",
+    "stateAria": "Filtrer par état",
+    "anyState": "Tous les états",
+    "stateOnTrack": "En bonne voie",
+    "stateAtRisk": "À risque",
+    "stateOffTrack": "Hors trajectoire",
+    "stateNoCheckin": "Sans point d'étape",
+    "stateDone": "Atteint"
+  },
+  "krContrib": {
+    "label": "Contributeurs",
+    "none": "aucun",
+    "aria": "Contributeurs du résultat clé",
+    "max_one": "{{count}} contributeur au plus",
+    "max_many": "{{count}} de contributeurs au plus",
+    "max_other": "{{count}} contributeurs au plus",
+    "carriers": "Porté par {{names}}"
   }
 }

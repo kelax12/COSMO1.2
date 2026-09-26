@@ -7,6 +7,8 @@ import { useEffect, useState } from 'react';
 import { Target, Trash2, Pencil, Building2, CalendarRange, CornerLeftUp, Activity } from 'lucide-react';
 import type { KRProjectLink, OkrCycle, TeamKeyResult, TeamOKR } from '@/modules/team-okrs';
 import type { TeamProjectTaskStats } from '@/modules/team-projects';
+import type { OrgMember } from '@/modules/organizations';
+import MemberAvatar from './MemberAvatar';
 import { PermissionGate } from './permission-hints';
 import TeamColorDot from './TeamColorDot';
 import { useT } from '@/i18n/useT';
@@ -20,9 +22,10 @@ interface TeamKRRowProps {
   statsById: Map<string, TeamProjectTaskStats>;
   onCommit: (value: number) => void;
   onOpenExecution: () => void;
+  personOf?: (userId: string) => OrgMember | undefined;
 }
 
-const TeamKRRow = ({ kr, links, statsById, onCommit, onOpenExecution }: TeamKRRowProps) => {
+const TeamKRRow = ({ kr, links, statsById, onCommit, onOpenExecution, personOf }: TeamKRRowProps) => {
   const { t } = useT('org');
   const { t: pf } = useT('portfolio');
   const [value, setValue] = useState<string>(String(kr.currentValue));
@@ -65,6 +68,21 @@ const TeamKRRow = ({ kr, links, statsById, onCommit, onOpenExecution }: TeamKRRo
             </span>
           )}
           {kr.health && <span className="shrink-0 text-caption"><ProjectHealthBadge health={kr.health} /></span>}
+          {/* Porteurs du KR : responsable puis contributeurs (mig. 160). */}
+          {personOf && (() => {
+            const ids = [...new Set([kr.assigneeId, ...(kr.contributorIds ?? [])].filter((x): x is string => !!x))];
+            const people = ids.map(personOf).filter((m): m is OrgMember => !!m);
+            if (people.length === 0) return null;
+            return (
+              <span className="flex -space-x-1.5 shrink-0" title={pf('krContrib.carriers', { names: people.map((m) => m.displayName).join(', ') })}>
+                {people.slice(0, 4).map((m) => (
+                  <span key={m.userId} className="rounded-full ring-2 ring-[rgb(var(--color-surface))]">
+                    <MemberAvatar avatar={m.avatar} name={m.displayName} size={18} />
+                  </span>
+                ))}
+              </span>
+            );
+          })()}
           <span className="ml-auto text-xs font-mono text-[rgb(var(--color-text-muted))] shrink-0">
             {measured && taskProgress
               ? pf('krExec.tasksShort', { done: taskProgress.done, total: taskProgress.total })
@@ -121,11 +139,12 @@ interface TeamOKRCardProps {
   onCommitKR: (kr: TeamKeyResult, value: number) => void;
   onOpenKR: (kr: TeamKeyResult) => void;
   onOpenOkr: (okrId: string) => void;
+  personOf?: (userId: string) => OrgMember | undefined;
 }
 
 const TeamOKRCard = ({
   okr, okrs, cycles, links, statsById, category, teamName, teamColor, editDeniedReason, deleteDeniedReason, highlighted,
-  onEdit, onDelete, onCommitKR, onOpenKR, onOpenOkr,
+  onEdit, onDelete, onCommitKR, onOpenKR, onOpenOkr, personOf,
 }: TeamOKRCardProps) => {
   const { t } = useT('org');
   const { t: pf, tp: tpf } = useT('portfolio');
@@ -234,6 +253,7 @@ const TeamOKRCard = ({
               statsById={statsById}
               onCommit={(v) => onCommitKR(kr, v)}
               onOpenExecution={() => onOpenKR(kr)}
+              personOf={personOf}
             />
           ))}
         </div>
