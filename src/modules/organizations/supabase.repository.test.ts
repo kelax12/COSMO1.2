@@ -97,8 +97,9 @@ describe('SupabaseOrganizationsRepository — lecture', () => {
     const result = await repo.getMembers('org1');
 
     expect(supabaseMock.argsOf('organization_members', 'eq')).toEqual(['org_id', 'org1']);
-    expect(supabaseMock.argsOf('organization_members', 'order')).toEqual(['joined_at', { ascending: false }]);
-    expect(supabaseMock.argsOf('organization_members', 'limit')).toEqual([500]);
+    const orders = supabaseMock.callsFor('organization_members').filter((c) => c.method === 'order').map((c) => c.args);
+    expect(orders).toEqual([['joined_at', { ascending: false }], ['user_id', { ascending: true }]]);
+    expect(supabaseMock.argsOf('organization_members', 'range')).toEqual([0, 999]);
     expect(supabaseMock.argsOf('profiles', 'select')).toEqual(['id, email, display_name, avatar_url']);
     expect(supabaseMock.argsOf('profiles', 'in')).toEqual(['id', ['u2']]);
     expect(result).toEqual([{
@@ -152,6 +153,21 @@ describe('SupabaseOrganizationsRepository — lecture', () => {
       status: 'pending', requesterName: 'Bob', requesterEmail: 'bob@test.dev',
       requesterAvatar: 'https://a.io/b.png',
     }]);
+  });
+
+  // Audit du 2026-09-24 : « membres, 500 ». Une page PLEINE en appelle une
+  // suivante ; la 1 001e personne existe pour l'annuaire.
+  it('getMembers: lit la page suivante tant que la précédente est pleine', async () => {
+    const page1 = Array.from({ length: 1000 }, (_, i) => ({ ...memberRow, user_id: `a${i}` }));
+    supabaseMock.queueTable('organization_members', { data: page1 });
+    supabaseMock.queueTable('organization_members', { data: [{ ...memberRow, user_id: 'last' }] });
+    supabaseMock.queueTable('profiles', { data: [] });
+    const result = await repo.getMembers('org1');
+    expect(result).toHaveLength(1001);
+    expect(supabaseMock.argsOf('organization_members', 'range', 0)).toEqual([0, 999]);
+    expect(supabaseMock.argsOf('organization_members', 'range', 1)).toEqual([1000, 1999]);
+    // Page incomplète : pas de troisième lecture.
+    expect(supabaseMock.callsFor('organization_members', 2)).toEqual([]);
   });
 
   // Témoin du défaut relevé le 2026-09-24 : trié croissant sous `limit(500)`,
