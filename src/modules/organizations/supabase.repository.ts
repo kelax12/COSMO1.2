@@ -54,6 +54,11 @@ interface ProfileRow {
   avatar_url: string | null;
 }
 
+/** Page de lecture des membres (plafond PostgREST par défaut). */
+const MEMBERS_PAGE = 1000;
+/** Plafond total : dix pages. Une organisation plus grande est signalée par `warnIfTruncated`. */
+const MEMBERS_READ_MAX = 10_000;
+
 export class SupabaseOrganizationsRepository implements IOrganizationsRepository {
   private mapOrg(row: OrgRow): Organization {
     return {
@@ -112,17 +117,28 @@ export class SupabaseOrganizationsRepository implements IOrganizationsRepository
     // Capture locale : le narrowing de `supabase` ne survit pas au passage
     // dans la closure de `fetchInChunks`.
     const db = supabase;
-    const { data: rows, error } = await supabase
-      .from('organization_members')
-      .select('*')
-      .eq('org_id', orgId)
-      // Tri DÉCROISSANT puis inversion : un tri croissant sous `limit` garde les
-      // 500 PLUS ANCIENS, donc la personne qui vient d'accepter l'invitation
-      // est celle qui n'apparaît nulle part. L'ordre affiché reste celui d'arrivée.
-      .order('joined_at', { ascending: false })
-      .limit(500);
-    if (error) throw normalizeApiError(error);
-    const members = warnIfTruncated((rows ?? []) as MemberRow[], 500, 'org_members').reverse();
+    // Lecture PAGINÉE (audit du 2026-09-24, « membres : 500 ») : au-delà de 500
+    // personnes, les suivantes n'existaient pour aucun écran, ni annuaire, ni
+    // pyramide, ni sélecteur. Pages de 1 000 (le plafond PostgREST par défaut),
+    // jusqu'à MEMBERS_READ_MAX. Tri DÉCROISSANT puis inversion : si le plafond
+    // est atteint, ce sont les PLUS ANCIENS qui manquent, jamais la personne qui
+    // vient d'accepter l'invitation. `user_id` départage deux arrivées à la
+    // même seconde, sans quoi une page pourrait en répéter une et perdre l'autre.
+    const rows: MemberRow[] = [];
+    for (let from = 0; from < MEMBERS_READ_MAX; from += MEMBERS_PAGE) {
+      const { data, error } = await supabase
+        .from('organization_members')
+        .select('*')
+        .eq('org_id', orgId)
+        .order('joined_at', { ascending: false })
+        .order('user_id', { ascending: true })
+        .range(from, Math.min(from + MEMBERS_PAGE, MEMBERS_READ_MAX) - 1);
+      if (error) throw normalizeApiError(error);
+      const page = (data ?? []) as MemberRow[];
+      rows.push(...page);
+      if (page.length < MEMBERS_PAGE) break;
+    }
+    const members = warnIfTruncated(rows, MEMBERS_READ_MAX, 'org_members').reverse();
     if (members.length === 0) return [];
 
     // Enrichir depuis profiles (nom/avatar sanitizés — jamais raw metadata).

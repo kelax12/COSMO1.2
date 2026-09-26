@@ -4,7 +4,7 @@
 > `claude/recommandations-mode-entreprise-do9du9`, `coherence/journal-181` et du travail
 > interrompu de `.worktrees/entreprise-gov` (sauvé sur `wip/entreprise-gov-ui`).
 > **Mise à jour du 2026-09-26 (après-midi)** : les 🔴 des onglets Tâches et OKR, et la pastille
-> de visibilité (M12), sont réalisés
+> de visibilité (M12) et l'annuaire au-delà de 500 membres, sont réalisés
 > sur la branche `feat/entreprise-audit-rouges` (non fusionnée) ; les pastilles
 > concernées portent la mention « branche `audit-rouges` ».
 > Le code fait foi contre ce document. Sources vivantes : [`CLAUDE.md`](../../CLAUDE.md) ·
@@ -118,7 +118,7 @@ Concepts implicites que l'utilisateur ne voit pas :
 
 | Lecture | Plafond constaté | État 2026-09-26 |
 |---|---|---|
-| Membres | 500 | 🔴 Toujours 500 ; ce sont désormais les plus récents qui restent (`reverse`), mais les suivants restent invisibles |
+| Membres | 500 | ✅ Lecture paginée par pages de 1 000, jusqu'à 10 000 membres, départage stable par `user_id` (branche `audit-rouges`) |
 | Projets | 200, les plus récents disparaissaient | ✅ Lecture paginée, tri décroissant, plafond porté à 5 000 |
 | Tâches | 1 000, extrait tous projets confondus | 🟠 « Mes tâches » lues filtrées côté serveur ; onglet Tâches paginé (« Charger plus », ⏳ mig. 191) ; Statistiques toujours calculées dans le navigateur sur un ensemble de travail |
 | OKR, équipes | 200 | 🟠 OKR en lecture paginée ; équipes toujours plafonnées à 200 |
@@ -148,7 +148,7 @@ Solution proposée :
    (⏳ mig. 191) ; l'onglet Statistiques calcule encore dans le navigateur.
 3. ✅ Projets triés du plus récent, paginés, archivés inclus sur demande.
 4. ✅ Sélecteurs de membres avec recherche (seuil 8, pas 50). La recherche reste locale ;
-   l'annuaire reste plafonné à 500 membres.
+   l'annuaire n'est plus plafonné à 500 membres (lecture paginée, branche `audit-rouges`).
 5. ✅ Virtualisation du tableau (`TeamTasksTable`, branche `audit-rouges`).
 
 #### M2 · Le projet n'est pas un véritable objet (Critique pour le multi-projets) · ✅
