@@ -740,6 +740,69 @@ Les composants dans `src/components/ui/` sont normalement **non modifiés** (gé
 
 Toute nouvelle modif doit s'ajouter dans cette table.
 
+## Mode entreprise : popups, confirmations, cas limites
+
+> Descendu de `src/modules/organizations/CLAUDE.md` le 2026-09-26 (plafond de 14 000 o dépassé
+> après la fusion des branches de l'audit du 2026-09-24). Le CLAUDE.md garde les interdits.
+
+### Archivage d'un projet
+
+- ⚠️ **L'archivage d'un projet est un UPDATE**, pas un DELETE, et l'application ne supprime
+  jamais un projet : c'est le trigger `enforce_team_project_archive_scope` qui rattache
+  l'archivage à `project.delete`. Une policy, qui juge la ligne entière, ne sait pas le faire.
+
+
+---
+
+### 📁 Projet riche, portefeuille, page projet (mig. 153, M2, 2026-09-24)
+
+Un projet porte `description`, `owner_id` (responsable), `status`, `start_date`, `due_date`,
+`is_template` + `template_payload`. Une tâche porte `start_date` (≤ `deadline`, CHECK). Jalons
+(`team_project_milestones`) et dépendances entre projets (`team_project_dependencies`, même
+vocabulaire que les tâches : `project_id` est BLOQUÉ par `depends_on_id`). Page projet :
+`/entreprise/projects?project=<id>`, le paramètre RESTE dans l'URL (palette et panneau l'émettent).
+
+
+### 🪟 Popups entreprise (audit du 2026-09-25)
+
+- ❌ **Un seul sélecteur de plusieurs personnes : `MemberPickList`** (recherche au-delà de
+  `MEMBER_SEARCH_THRESHOLD`, groupes d'équipe, affichage par tranches de 50). Fiche de tâche,
+  « Attribuer à quelqu'un » et création d'équipe l'utilisent ; ne pas en réécrire un quatrième.
+  Une personne cochée puis masquée reste choisie, et le compte des cochés masqués est affiché.
+- ❌ **Ne jamais recréer une tâche EN SILENCE.** Le premier commentaire d'une fiche en création
+  passe par « Créer et commenter » ; après, « Annuler » devient « Fermer ».
+- ❌ **Ne jamais remettre une création d'équipe ou de projet DANS une autre fiche** (tâche, OKR).
+  Ces chemins créaient une équipe vide ou un projet visible par toute l'entreprise.
+- ✅ Sous-tâches, dépendances (« bloquée par ») et étiquettes se saisissent DÈS la création :
+  brouillon appliqué par `useApplyTeamTaskDraft` une fois l'id connu.
+- ✅ Étiquettes (mig. 093) et historique par tâche (mig. 094) rebranchés : `task-extras.hooks.ts`.
+  La jonction se lit PAR TÂCHE (`eq('task_id')`, tête de PK), jamais pour toute l'organisation.
+- ✅ Audience d'un projet et portée d'un droit : `audience.helpers.ts` (`projectAudience`,
+  `memberReach`), miroir d'affichage de `can_access_team_project`. La RLS reste la frontière.
+- ⚠️ Les droits de `org_member_permissions` valent pour **toute l'organisation** ; la fiche le dit.
+  Des droits par projet demanderaient une migration et une réécriture des policies : non faits.
+- `PyramidPlacementSheet` remplace `MemberPlacementSheet` et `AddUnderSheet` (deux sens :
+  « son responsable », « sous cette personne » avec invitation).
+### 🧱 Cas limites et cohérence (audit 2026-09-24, étapes 3-4, mig. 164)
+
+- **Confirmer ou annuler, jamais les deux styles au hasard** : un geste réversible part tout de
+  suite avec `showUndoToast` ; un geste irréversible passe par `OrgConfirmDialog` (impact listé,
+  saisie du nom). ❌ `window.confirm` : refusé par `org-confirm.guard.test.ts`.
+- 🔴 **Un retrait passe TOUJOURS par l'assistant de départ** (`useMemberLifecycle`) : il annonce
+  l'impact et fait choisir qui reprend. Côté base, `release_member_work` libère tâches OUVERTES,
+  projets portés et abonnements au retrait et au départ volontaire (plus d'assigné fantôme).
+- Mode `transfer` de `offboard_org_member` : ne touche QUE les champs nommés ; la personne reste.
+  ❌ Ne jamais le proposer en `suspend`/`remove` sur soi-même (`modes={['transfer']}`).
+- **Équipes associées** (`team_project_teams`) : elles ÉLARGISSENT la lecture (CASCADE sûr,
+  contrairement à `team_id`, M5). Ajout/retrait = `project.edit`, jamais le responsable seul.
+- **Purge** : `purge_archived_team_project` (INVOKER), projet archivé seulement.
+- Droits d'une tâche (menus, glisser) : `team-task-rights.ts`, jamais recalculés à la main.
+- 🔴 **Namespace `orgAdmin`** : départs, invitations, lots, droits, pyramide, revue, corbeille.
+  Chaque section/dialogue qui s'en sert le DÉCLARE dans `OrganizationPage` (`lazyWithRetry(…,
+  [..., 'orgAdmin'])`). ❌ Ne pas remettre ces groupes dans `org` : plafond de 30 ko.
+- ⚠️ **Mig. `164` écrite le 2026-09-25, NON appliquée** : l'appliquer AVANT de déployer ce front
+  (équipes associées, purge, mode `transfer` en dépendent).
+
 ## Ne jamais faire — UI
 
 ### 🎨 Convention code
