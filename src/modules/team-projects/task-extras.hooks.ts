@@ -65,6 +65,17 @@ export const useToggleTaskLabel = () => {
   });
 };
 
+/** Ids des tâches qui portent une étiquette : filtre de l'onglet Tâches. `null` = aucun filtre. */
+export const useTaskIdsWithLabel = (labelId: string | null) => {
+  const repository = useRepo();
+  return useQuery({
+    queryKey: [...teamProjectKeys.all, 'label-tasks', labelId ?? ''] as const,
+    queryFn: async () => new Set(await repository.getTaskIdsWithLabel(labelId as string)),
+    enabled: !!labelId,
+    staleTime: 1000 * 30,
+  });
+};
+
 /** Journal d'une tâche (onglet Historique). Écrit par trigger, jamais par l'app. */
 export const useTeamTaskActivity = (taskId: string | undefined) => {
   const repository = useRepo();

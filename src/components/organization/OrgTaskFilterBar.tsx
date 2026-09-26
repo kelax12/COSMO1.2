@@ -26,7 +26,7 @@ import { useT } from '@/i18n/useT';
 import MemberAvatar from './MemberAvatar';
 import TeamColorDot from './TeamColorDot';
 import type { TaskStatusFilter } from './team-projects.helpers';
-import { TASK_STATUS_FILTERS, type OrgTaskFilters } from './task-filters';
+import { TASK_STATUS_FILTERS, CLEARED_ATTRIBUTE_FILTERS, type OrgTaskFilters } from './task-filters';
 
 interface OrgTaskFilterBarProps {
   filters: OrgTaskFilters;
@@ -93,7 +93,9 @@ const OrgTaskFilterBar = ({
   if (project && projectName) chips.push({ key: 'project', label: t('filters.chipProject', { name: projectName }), clear: { project: null } });
   if (status !== defaultStatus) chips.push({ key: 'status', label: statusLabel[status], clear: { status: defaultStatus } });
 
-  const clearAll = () => setFilters({ team: '', assignee: null, project: null, status: defaultStatus, q: '' });
+  // Efface aussi les filtres d'attributs (priorité, échéance, catégorie,
+  // étiquette) : « Tout effacer » ne doit rien laisser filtrer en silence.
+  const clearAll = () => setFilters({ team: '', assignee: null, project: null, status: defaultStatus, q: '', ...CLEARED_ATTRIBUTE_FILTERS });
 
   return (
     <div className="space-y-2" role="group" aria-label={t('filters.barAria')}>

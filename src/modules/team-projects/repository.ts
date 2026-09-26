@@ -144,6 +144,11 @@ export interface ITeamProjectsRepository {
   getTaskLabels(taskId: string): Promise<TeamTaskLabel[]>;
   addTaskLabel(taskId: string, labelId: string): Promise<void>;
   removeTaskLabel(taskId: string, labelId: string): Promise<void>;
+  /**
+   * Tâches qui portent UNE étiquette : filtre « étiquette » de l'onglet Tâches.
+   * Lecture par l'index `idx_team_task_labels_label`, bornée à 5 000 lignes.
+   */
+  getTaskIdsWithLabel(labelId: string): Promise<string[]>;
 
   // Historique (mig. 094) : lecture seule, la table est append-only, écrite par trigger.
   /** Journal d'UNE tâche, onglet Historique de la fiche (100 dernières entrées). */

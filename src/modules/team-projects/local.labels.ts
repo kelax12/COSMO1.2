@@ -66,6 +66,9 @@ export const createLabel = (orgId: string, input: CreateTeamLabelInput): TeamLab
 export const getTaskLabels = (taskId: string): TeamTaskLabel[] =>
   taskLabelsArray().filter((tl) => tl.taskId === taskId);
 
+export const getTaskIdsWithLabel = (labelId: string): string[] =>
+  taskLabelsArray().filter((tl) => tl.labelId === labelId).map((tl) => tl.taskId);
+
 export const addTaskLabel = (taskId: string, labelId: string): void => {
   const all = taskLabelsArray();
   // Miroir de la PK composite : poser deux fois la même étiquette est un no-op.

@@ -120,6 +120,7 @@ export {
   useTaskLabels,
   useCreateTeamLabel,
   useToggleTaskLabel,
+  useTaskIdsWithLabel,
   useTeamTaskActivity,
   useApplyTeamTaskDraft,
   type TeamTaskDraftExtras,

@@ -61,6 +61,22 @@ export async function getTaskLabels(taskId: string): Promise<TeamTaskLabel[]> {
   return (data as { task_id: string; label_id: string }[]).map((r) => ({ taskId: r.task_id, labelId: r.label_id }));
 }
 
+/**
+ * Tâches qui portent UNE étiquette. Filtre sur `label_id` : l'index
+ * `idx_team_task_labels_label` porte la lecture, et la RLS de la jonction
+ * (`can_access_team_task`) ne rend que les tâches que je vois déjà.
+ */
+export async function getTaskIdsWithLabel(labelId: string): Promise<string[]> {
+  const LIMIT = 5000;
+  const { data, error } = await client()
+    .from('team_task_labels')
+    .select('task_id')
+    .eq('label_id', labelId)
+    .limit(LIMIT);
+  if (error) throw normalizeApiError(error);
+  return warnIfTruncated(data as { task_id: string }[], LIMIT, 'team_task_labels').map((r) => r.task_id);
+}
+
 export async function addTaskLabel(taskId: string, labelId: string): Promise<void> {
   const { error } = await client().from('team_task_labels').insert({ task_id: taskId, label_id: labelId });
   if (error) throw normalizeApiError(error);

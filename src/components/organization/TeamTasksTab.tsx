@@ -1,37 +1,35 @@
-import { Suspense, useEffect, useMemo, useState } from 'react';
+import { Suspense, useCallback, useMemo, useState } from 'react';
 import { startOfDay, subDays } from 'date-fns';
-import { Pencil, Trash2, MoreHorizontal, UserPlus, CalendarPlus, MessageSquare } from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-} from '@/components/ui/dropdown-menu';
 import { subtreeOf, useOrgNotifications, useMyOrgPermissions, unreadCommentCountByTask, type OrgMember } from '@/modules/organizations';
 import {
   useTeamProjects, useTeamTaskPages, TEAM_TASKS_READ_LIMIT, useCreateTeamTask, useUpdateTeamTask, useDeleteTeamTask, useRestoreTeamTask,
+  useTaskIdsWithLabel,
   type TeamTask, type TeamTaskStatus, type CreateTeamTaskInput, type UpdateTeamTaskInput,
 } from '@/modules/team-projects';
+import { useTeamCategories, descendantIdSet, categoryPath, formatPath } from '@/modules/team-categories';
 import { showUndoToast } from '@/lib/undo-toast';
-import { formatDeadlineSmart } from '@/components/task-table/helpers';
-import {
-  projectColor, isTaskOverdue, filterByStatus, formatDuration,
-  STATUS_ORDER, STATUS_META, taskDisplayStatus,
-} from './team-projects.helpers';
+import { filterByStatus, STATUS_META, PRIORITY_META, priorityLabelOf, taskDisplayStatus } from './team-projects.helpers';
 import TeamTaskModal from './TeamTaskModal';
 import AssignMembersDialog from './AssignMembersDialog';
 import AssignEventDialog from './AssignEventDialog';
-import MemberAvatar from './MemberAvatar';
 import { TeamTasksSkeleton } from './OrgLoadingSkeletons';
 import TeamTasksToolbar, { type SortField } from './TeamTasksToolbar';
 import TruncatedDataNotice from './TruncatedDataNotice';
 import TeamTasksProjectChips from './TeamTasksProjectChips';
 import OrgTaskFilterBar from './OrgTaskFilterBar';
+import TaskAttributeFilters from './TaskAttributeFilters';
+import TeamTasksTable from './TeamTasksTable';
+import TeamTasksViewControls from './TeamTasksViewControls';
+import type { TeamTasksRowHandlers } from './TeamTasksTableRow';
 import { usePermissionHints } from './permission-hints';
-import TaskSelectCheckbox from './TaskSelectCheckbox';
 import { useTeamTasksBulk } from './use-team-tasks-bulk';
 import { TeamTasksBulkLayer } from './team-tasks-bulk.lazy';
-import { useOrgTaskFilters, hasActiveTaskFilter, matchesScope, taskFiltersToViewParams, viewParamsToTaskFilters } from './task-filters';
+import {
+  useOrgTaskFilters, hasActiveTaskFilter, matchesScope, matchesAttributes, taskFiltersToViewParams, viewParamsToTaskFilters,
+} from './task-filters';
+import {
+  readTaskColumns, writeTaskColumns, groupTasks, flattenGroups, buildTasksCsv, UNASSIGNED_GROUP, type TaskColumnId,
+} from './team-tasks-table.helpers';
 import SavedViewsMenu from './SavedViewsMenu';
 import { useOrgTeams } from '@/modules/org-teams';
 import { useAuth } from '@/modules/auth/AuthContext';
@@ -53,14 +51,6 @@ interface TeamTasksTabProps {
 const normalize = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
 /**
- * Rendu par tranches. Le tableau n'a ni virtualisation ni pagination serveur :
- * mille lignes de neuf cellules, chacune avec deux menus, figeaient l'écran.
- * On en peint cent, puis la suite à la demande. Le tri et le filtre portent
- * toujours sur l'ensemble : seule la PEINTURE est découpée.
- */
-const ROWS_PAGE = 100;
-
-/**
  * Onglet « Tâches » de l'espace entreprise — entre Pyramide et Projets.
  *
  * Même langage visuel que la page Tâches personnelle (TasksPage + TaskTable) :
@@ -72,11 +62,10 @@ const ROWS_PAGE = 100;
  *   - la colonne « Catégorie » devient « Projet » — c'est la même position
  *     dans la ligne, mais la donnée qui la remplit n'est plus au même endroit
  *     du modèle (task.category → task.projectId).
- * Le popup « Filtres » (plage de priorité) de la page perso n'a pas
- * d'équivalent ici : la plage de priorité s'y règle par une préférence
- * globale (`usePriorityRange`) propre au module tasks personnel, qu'il
- * n'y avait pas de raison de dupliquer pour cinq priorités déjà triables
- * par simple clic d'en-tête.
+ * Priorité, plage d'échéance, catégorie et étiquette se filtrent sous la barre
+ * commune (`TaskAttributeFilters`, audit du 2026-09-24), dans l'URL comme le
+ * reste. Le tableau (`TeamTasksTable`) est virtualisé, ses colonnes se
+ * choisissent, ses lignes se regroupent et s'exportent.
  */
 const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: TeamTasksTabProps) => {
   const { can, canAssign } = useMyOrgPermissions(orgId);
@@ -89,6 +78,17 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
   const { filters, setFilters } = useOrgTaskFilters('open');
   const { project: projectFilter, status: statusFilter, q: searchTerm } = filters;
   const { data: teams = [] } = useOrgTeams(orgId);
+  const pf = useT('portfolio');
+  const { data: categories = [] } = useTeamCategories(orgId);
+  const { data: labelTaskIds } = useTaskIdsWithLabel(filters.label);
+  const categoryIds = useMemo(
+    () => (filters.category ? descendantIdSet(filters.category, categories) : undefined),
+    [filters.category, categories],
+  );
+  const categoryNameOf = useCallback(
+    (id: string) => (categories.some((c) => c.id === id) ? formatPath(categoryPath(id, categories)) : undefined),
+    [categories],
+  );
 
   // Lecture ciblée (audit du 2026-09-24) : hors filtre « Toutes », l'écran n'a
   // besoin que des tâches OUVERTES et de celles terminées récemment (« terminées
@@ -149,17 +149,23 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
   // vue perso — ces deux items comblent le manque sans dupliquer le modal.
   const [assigningTask, setAssigningTask] = useState<TeamTask | null>(null);
   const [schedulingTask, setSchedulingTask] = useState<TeamTask | null>(null);
-  const [rowsShown, setRowsShown] = useState(ROWS_PAGE);
+  const [columns, setColumnsState] = useState<TaskColumnId[]>(() => readTaskColumns(orgId));
+  const setColumns = (next: TaskColumnId[]) => {
+    setColumnsState(next);
+    writeTaskColumns(orgId, next);
+  };
+  const [collapsedGroups, setCollapsedGroups] = useState<ReadonlySet<string>>(new Set());
 
   const visibleTasks = useMemo(() => {
     let result = tasks.filter((task) => projectById.has(task.projectId));
     if (projectFilter) result = result.filter((task) => task.projectId === projectFilter);
     result = result.filter((task) => matchesScope(task, filters, (id) => projectById.get(id)?.teamId));
     result = filterByStatus(result, statusFilter);
+    result = result.filter((task) => matchesAttributes(task, filters, { categoryIds, labelTaskIds }));
     const q = normalize(searchTerm.trim());
     if (q) result = result.filter((task) => normalize(task.name).includes(q));
     return result;
-  }, [tasks, projectById, projectFilter, statusFilter, searchTerm, filters]);
+  }, [tasks, projectById, projectFilter, statusFilter, searchTerm, filters, categoryIds, labelTaskIds]);
 
   const sortedTasks = useMemo(() => {
     const withValue = (task: TeamTask): string | number => {
@@ -181,14 +187,55 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
     return sortDirection === 'asc' ? sorted : sorted.reverse();
   }, [visibleTasks, sortField, sortDirection, projectById]);
 
-  // Un nouveau filtre ou un nouveau tri repart de la première tranche : garder
-  // 800 lignes peintes après avoir tapé une recherche annulerait le découpage.
-  useEffect(() => {
-    setRowsShown(ROWS_PAGE);
-  }, [filters, sortField, sortDirection]);
   const bulk = useTeamTasksBulk(orgId, sortedTasks);
-  const shownTasks = useMemo(() => sortedTasks.slice(0, rowsShown), [sortedTasks, rowsShown]);
-  const remainingRows = sortedTasks.length - shownTasks.length;
+
+  // Regroupement : l'ordre du tri vaut À L'INTÉRIEUR de chaque groupe.
+  const lines = useMemo(() => {
+    const nameOf = (key: string) =>
+      filters.group === 'project' ? projectById.get(key)?.name ?? ''
+        : filters.group === 'assignee' ? memberById.get(key)?.displayName ?? '' : key;
+    return flattenGroups(groupTasks(sortedTasks, filters.group, nameOf), filters.group !== 'none', collapsedGroups);
+  }, [sortedTasks, filters.group, projectById, memberById, collapsedGroups]);
+
+  const groupLabel = (key: string): { label: string; dot?: string } => {
+    switch (filters.group) {
+      case 'project': return { label: projectById.get(key)?.name ?? '—' };
+      case 'status': return { label: t(STATUS_META[key as TeamTaskStatus].labelKey as Parameters<typeof t>[0]), dot: STATUS_META[key as TeamTaskStatus].dot };
+      case 'priority': return { label: priorityLabelOf(Number(key)), dot: PRIORITY_META[Number(key)]?.dot };
+      case 'assignee':
+        if (key === UNASSIGNED_GROUP) return { label: pf.t('taskTable.groupUnassigned') };
+        return { label: key === (currentUserId ?? user?.id) ? pf.t('taskTable.you') : memberById.get(key)?.displayName ?? '—' };
+      default: return { label: '' };
+    }
+  };
+  const toggleGroup = (key: string) =>
+    setCollapsedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+
+  // Export : les tâches AFFICHÉES, filtres et tri appliqués. Le module CSV est
+  // chargé au clic, pas avec l'onglet.
+  const exportCsv = async () => {
+    const { downloadCSV } = await import('@/lib/csv-export');
+    const h = pf.t;
+    const { headers, rows } = buildTasksCsv(sortedTasks, {
+      headers: {
+        name: h('taskTable.exportHeaders.name'), project: h('taskTable.exportHeaders.project'),
+        status: h('taskTable.exportHeaders.status'), priority: h('taskTable.exportHeaders.priority'),
+        start: h('taskTable.exportHeaders.start'), deadline: h('taskTable.exportHeaders.deadline'),
+        duration: h('taskTable.exportHeaders.duration'), assignees: h('taskTable.exportHeaders.assignees'),
+        category: h('taskTable.exportHeaders.category'), createdAt: h('taskTable.exportHeaders.createdAt'),
+      },
+      statusOf: (task) => t(taskDisplayStatus(task).labelKey as Parameters<typeof t>[0]),
+      projectOf: (id) => projectById.get(id)?.name ?? '',
+      personOf: (id) => memberById.get(id)?.displayName ?? '',
+      categoryOf: (id) => categoryNameOf(id) ?? '',
+    });
+    downloadCSV(pf.t('taskTable.exportFile'), headers, rows);
+  };
 
   const handleSort = (field: SortField) => {
     if (field === sortField) {
@@ -217,6 +264,12 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
   const setAssignees = (task: TeamTask, assigneeIds: string[]) =>
     updateTask.mutate({ taskId: task.id, input: { assigneeIds } });
 
+  // Édition EN LIGNE (audit 2026-09-24) : priorité et échéance sans ouvrir la fiche.
+  const setPriority = (task: TeamTask, priority: number) =>
+    updateTask.mutate({ taskId: task.id, input: { priority } });
+  const setDeadline = (task: TeamTask, deadline: string) =>
+    updateTask.mutate({ taskId: task.id, input: { deadline } });
+
   // Suppression réversible (toast Annuler) — même pattern que TeamProjectsTab,
   // pas de confirm() bloquant pour un geste qu'on peut défaire dans les
   // secondes qui suivent.
@@ -230,6 +283,21 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
     });
 
   const hasActiveFilter = hasActiveTaskFilter(filters, 'open');
+  const canAssignSomeone = members.some((m) => canAssign(m.userId));
+
+  const handlers: TeamTasksRowHandlers = {
+    open: (task) => setTaskModal({ mode: 'edit', task }),
+    toggleComplete,
+    setStatus,
+    setPriority,
+    setDeadline,
+    assign: canAssignSomeone ? setAssigningTask : undefined,
+    schedule: setSchedulingTask,
+    remove: removeWithUndo,
+    toggleSelect: bulk.toggleSelect,
+    editReason: hints.taskEditReason,
+    deleteReason: hints.taskDeleteReason,
+  };
 
   return (
     <div className="space-y-4">
@@ -254,6 +322,8 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
         searchAria={t('projects.tasksTabSearchAria')}
       />
 
+      <TaskAttributeFilters orgId={orgId} filters={filters} setFilters={setFilters} />
+
       <TeamTasksToolbar
         sortField={sortField}
         onSortField={setSortField}
@@ -271,7 +341,14 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
       />
 
       {/* Vues enregistrées (mig. 192) : les filtres de l'URL, nommés. */}
-      <div className="flex justify-end -mt-2">
+      <div className="flex justify-end items-center gap-1.5 flex-wrap -mt-2">
+        <TeamTasksViewControls
+          columns={columns}
+          onColumnsChange={setColumns}
+          group={filters.group}
+          onGroupChange={(group) => setFilters({ group })}
+          onExport={sortedTasks.length > 0 ? () => void exportCsv() : undefined}
+        />
         <SavedViewsMenu
           orgId={orgId}
           scope="tasks"
@@ -309,222 +386,22 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
           {t('projects.tasksTabEmpty')}
         </p>
       ) : (
-        <div className="table-container shadow-sm overflow-x-auto">
-          <table className="data-table w-full" style={{ minWidth: '1050px' }}>
-            <thead>
-              <tr>
-                <th className="px-2 py-3" style={{ width: '40px' }}><span className="sr-only">{t('projects.tasksTabColComplete')}</span></th>
-                <th className="px-2 py-3" style={{ width: '48px' }}><span className="sr-only">{t('projects.tasksTabColProjectColor')}</span></th>
-                <th className="cursor-pointer px-2 py-3" onClick={() => handleSort('name')}>
-                  {t('projects.tasksTabColName')}{sortIndicator('name')}
-                </th>
-                <th className="px-2 py-3" style={{ width: '160px' }}>{t('projects.tasksTabColProject')}</th>
-                <th className="px-2 py-3" style={{ width: '140px' }}>{t('projects.tasksTabColStatus')}</th>
-                <th className="cursor-pointer text-center px-1 py-3" style={{ width: '70px' }} onClick={() => handleSort('priority')}>
-                  {t('projects.tasksTabColPriority')}{sortIndicator('priority')}
-                </th>
-                <th className="cursor-pointer px-2 py-3" style={{ width: '110px' }} onClick={() => handleSort('deadline')}>
-                  {t('projects.tasksTabColDeadline')}{sortIndicator('deadline')}
-                </th>
-                <th className="cursor-pointer text-center px-1 py-3" style={{ width: '80px' }} onClick={() => handleSort('estimatedTime')}>
-                  {t('projects.tasksTabColDuration')}{sortIndicator('estimatedTime')}
-                </th>
-                <th className="text-center px-1 py-3" style={{ width: '70px' }}>{t('projects.tasksTabColActions')}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {shownTasks.map((task) => {
-                const project = projectById.get(task.projectId);
-                const color = project ? projectColor(project.color) : projectColor('blue');
-                const overdue = isTaskOverdue(task);
-                return (
-                  <tr
-                    key={task.id}
-                    className="transition-colors cursor-pointer hover:bg-[rgb(var(--color-hover))]"
-                    onClick={() => (bulk.selectMode ? bulk.toggleSelect(task) : setTaskModal({ mode: 'edit', task }))}
-                    style={{ borderLeft: overdue ? '4px solid rgb(var(--color-error))' : '3px solid transparent' }}
-                  >
-                    <td className="px-2 py-4 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
-                      {bulk.selectMode ? (
-                        <TaskSelectCheckbox name={task.name} checked={bulk.selectedIds.has(task.id)} onToggle={() => bulk.toggleSelect(task)} />
-                      ) : (
-                      <button
-                        type="button"
-                        onClick={() => toggleComplete(task)}
-                        // Droits : grisée ET expliquée, jamais refusée après coup.
-                        disabled={!!hints.taskEditReason(task)}
-                        title={hints.taskEditReason(task)}
-                        role="checkbox"
-                        aria-checked={task.completed}
-                        aria-label={task.completed ? t('projects.markIncomplete') : t('projects.markComplete')}
-                        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all shrink-0 disabled:opacity-40 disabled:cursor-not-allowed ${
-                          task.completed
-                            ? 'bg-[rgb(var(--color-accent-solid))] border-[rgb(var(--color-accent-solid))]'
-                            : 'border-[rgb(var(--color-border-strong))] hover:border-[rgb(var(--color-accent))]'
-                        }`}
-                      >
-                        {task.completed && (
-                          <svg className="w-3 h-3 text-[rgb(var(--color-accent-solid-foreground))]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                          </svg>
-                        )}
-                      </button>
-                      )}
-                    </td>
-                    <td className="px-2 py-4">
-                      <div className="flex justify-center">
-                        <span className={`w-4 h-4 rounded-full shrink-0 ${color.dot}`} aria-hidden="true" />
-                      </div>
-                    </td>
-                    <td className={`font-medium px-2 py-4 text-base ${task.completed ? 'line-through' : ''}`}
-                        style={{ color: task.completed ? 'rgb(var(--color-text-muted))' : 'rgb(var(--color-text-primary))' }}>
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span className="truncate" title={task.name}>{task.name}</span>
-                        {/* Commentaires non lus (mig. 109) — disparaît dès que la tâche
-                            est ouverte (useMarkTaskNotificationsRead, TeamTaskModal). */}
-                        {(unreadCommentsByTask.get(task.id) ?? 0) > 0 && (
-                          <span
-                            className="inline-flex items-center gap-1 shrink-0 rounded-full bg-red-500 text-white text-caption font-bold px-1.5 py-0.5"
-                            title={tp('common.unreadComments', unreadCommentsByTask.get(task.id) ?? 0)}
-                          >
-                            <MessageSquare size={10} aria-hidden="true" />
-                            {unreadCommentsByTask.get(task.id)}
-                          </span>
-                        )}
-                        {/* Collaborateurs (hors nous) — visibilité immédiate de qui est
-                            dessus sans ouvrir la tâche. */}
-                        {(() => {
-                          const others = task.assigneeIds.filter((id) => id !== user?.id);
-                          if (others.length === 0) return null;
-                          return (
-                            <span className="flex -space-x-1.5 shrink-0" title={others.map((id) => memberById.get(id)?.displayName).filter(Boolean).join(', ')}>
-                              {others.slice(0, 3).map((id) => {
-                                const m = memberById.get(id);
-                                return m ? (
-                                  <span key={id} className="rounded-full ring-2 ring-[rgb(var(--color-surface))]">
-                                    <MemberAvatar avatar={m.avatar} name={m.displayName} size={22} />
-                                  </span>
-                                ) : null;
-                              })}
-                              {others.length > 3 && (
-                                <span className="w-[22px] h-[22px] rounded-full bg-[rgb(var(--color-hover))] ring-2 ring-[rgb(var(--color-surface))] flex items-center justify-center text-caption font-bold text-[rgb(var(--color-text-muted))]">
-                                  +{others.length - 3}
-                                </span>
-                              )}
-                            </span>
-                          );
-                        })()}
-                      </div>
-                    </td>
-                    <td className="px-2 py-4 whitespace-nowrap">
-                      <span className="inline-flex items-center gap-2 text-sm truncate" style={{ color: 'rgb(var(--color-text-secondary))' }}>
-                        {project?.name ?? '—'}
-                      </span>
-                    </td>
-                    <td onClick={(e) => e.stopPropagation()} className="px-2 py-4 whitespace-nowrap">
-                      {(() => {
-                        const display = taskDisplayStatus(task);
-                        return (
-                          <DropdownMenu>
-                            <DropdownMenuTrigger
-                              disabled={!!hints.taskEditReason(task)}
-                              title={hints.taskEditReason(task)}
-                              className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-semibold border transition-colors hover:bg-[rgb(var(--color-hover))] disabled:opacity-50 disabled:cursor-not-allowed"
-                              style={{ borderColor: 'rgb(var(--color-border))', color: 'rgb(var(--color-text-secondary))' }}
-                              aria-label={t('projects.tasksTabStatusAria', { name: task.name })}
-                            >
-                              <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${display.dot}`} aria-hidden="true" />
-                              <span className="truncate max-w-[90px]">{t(display.labelKey as Parameters<typeof t>[0])}</span>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="start">
-                              {STATUS_ORDER.map((st) => (
-                                <DropdownMenuItem key={st} onClick={() => setStatus(task, st)}>
-                                  <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${STATUS_META[st].dot}`} aria-hidden="true" />
-                                  {t(STATUS_META[st].labelKey as Parameters<typeof t>[0])}
-                                </DropdownMenuItem>
-                              ))}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        );
-                      })()}
-                    </td>
-                    <td className="text-center px-1 py-4 whitespace-nowrap">
-                      <span className={`inline-flex justify-center items-center w-8 h-8 rounded-full task-priority-${task.priority} text-base font-bold`}>
-                        {task.priority}
-                      </span>
-                    </td>
-                    <td className="px-2 py-4 whitespace-nowrap text-base font-medium">
-                      {task.deadline
-                        ? <span className={overdue ? 'text-red-500 font-semibold' : ''}>{formatDeadlineSmart(task.deadline)}</span>
-                        : <span className="text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>{t('projects.tasksTabNoDeadline')}</span>}
-                    </td>
-                    <td className="text-center px-1 py-4 whitespace-nowrap text-base font-medium" style={{ color: 'rgb(var(--color-text-primary))' }}>
-                      {formatDuration(task.estimatedTime ?? 0)}
-                    </td>
-                    <td onClick={(e) => e.stopPropagation()} className="px-2 py-4 whitespace-nowrap text-center">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <button
-                            aria-label={t('projects.tasksTabActionsAria', { name: task.name })}
-                            className="inline-flex items-center justify-center w-8 h-8 rounded-md transition-colors hover:bg-[rgb(var(--color-hover))]"
-                            style={{ color: 'rgb(var(--color-text-muted))' }}
-                          >
-                            <MoreHorizontal size={18} />
-                          </button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          {/* Grisé plutôt que masqué : ouvrir la tâche reste
-                              possible par la ligne (lecture), c'est l'édition
-                              que le serveur refuserait (audit du 2026-09-24). */}
-                          <DropdownMenuItem
-                            disabled={!!hints.taskEditReason(task)}
-                            title={hints.taskEditReason(task)}
-                            onClick={() => setTaskModal({ mode: 'edit', task })}
-                          >
-                            <Pencil aria-hidden="true" /> {t('projects.tasksTabEdit')}
-                          </DropdownMenuItem>
-                          {members.some((m) => canAssign(m.userId)) && (
-                            <DropdownMenuItem onClick={() => setAssigningTask(task)}>
-                              <UserPlus aria-hidden="true" /> {t('projects.tasksTabAssignAction')}
-                            </DropdownMenuItem>
-                          )}
-                          <DropdownMenuItem onClick={() => setSchedulingTask(task)}>
-                            <CalendarPlus aria-hidden="true" /> {t('projects.tasksTabScheduleAction')}
-                          </DropdownMenuItem>
-                          {/* Toujours présent : grisé avec sa raison plutôt que masqué. */}
-                          <DropdownMenuItem
-                            variant="destructive"
-                            disabled={!!hints.taskDeleteReason(task)}
-                            onClick={() => removeWithUndo(task)}
-                            className="!text-red-500 focus:!text-red-500 flex-wrap"
-                          >
-                            <Trash2 className="!text-red-500" aria-hidden="true" /> {t('common.deleteAction')}
-                            {hints.taskDeleteReason(task) && (
-                              <span className="basis-full text-caption font-normal text-[rgb(var(--color-text-muted))] max-w-56">
-                                {hints.taskDeleteReason(task)}
-                              </span>
-                            )}
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-          {remainingRows > 0 && (
-            <div className="flex justify-center py-3 border-t border-[rgb(var(--color-border))]">
-              <button
-                type="button"
-                onClick={() => setRowsShown((n) => n + ROWS_PAGE)}
-                className="px-4 py-2 text-sm font-medium rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] transition-colors"
-              >
-                {tp('projects.tasksTabShowMore', remainingRows)}
-              </button>
-            </div>
-          )}
-        </div>
+        <TeamTasksTable
+          lines={lines}
+          columns={columns}
+          projectById={projectById}
+          memberById={memberById}
+          categoryNameOf={categoryNameOf}
+          currentUserId={currentUserId ?? user?.id}
+          unreadCommentsByTask={unreadCommentsByTask}
+          selectMode={bulk.selectMode}
+          selectedIds={bulk.selectedIds}
+          handlers={handlers}
+          groupLabel={groupLabel}
+          onToggleGroup={toggleGroup}
+          sortIndicator={sortIndicator}
+          onSort={handleSort}
+        />
       )}
 
       {taskModal && (
