@@ -266,6 +266,7 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
     const tasks = this.getTasksArray();
     const task = tasks.find((x) => x.id === taskId);
     if (!task) throw makeApiError('not_found');
+    const previousStatus = task.status;
     if (input.name !== undefined) task.name = input.name;
     if (input.description !== undefined) task.description = input.description;
     if (input.priority !== undefined) task.priority = input.priority;
@@ -296,6 +297,22 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
     }
     task.updatedAt = new Date().toISOString();
     this.saveTasks(tasks);
+    // Miroir du trigger `log_team_task_activity` (mig. 094), pour le statut :
+    // la revue hebdomadaire et le fil de l'Aperçu lisent le journal, seul.
+    if (task.status !== previousStatus) {
+      const log = readOrSeed<TeamTaskActivity[]>(TEAM_TASK_ACTIVITY_STORAGE_KEY, DEMO_ACTIVITY);
+      log.push({
+        id: `act-${taskId}-${Date.now()}`,
+        taskId,
+        orgId: task.orgId,
+        actorId: DEMO_USER_ID,
+        field: 'status',
+        oldValue: previousStatus,
+        newValue: task.status,
+        createdAt: task.updatedAt,
+      });
+      safeSetItem(TEAM_TASK_ACTIVITY_STORAGE_KEY, JSON.stringify(log));
+    }
     return task;
   }
 
@@ -443,7 +460,37 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
 
   /** Même contrat qu'en production : borné à l'org et à la fenêtre demandée. */
   async getOrgActivity(orgId: string, since: string): Promise<TeamTaskActivity[]> {
-    return readOrSeed<TeamTaskActivity[]>(TEAM_TASK_ACTIVITY_STORAGE_KEY, DEMO_ACTIVITY)
+    // Miroir du trigger AFTER INSERT de la mig. 181 (et de sa reprise) : chaque
+    // tâche a sa ligne `created`, datée de sa création, écrite par son auteur.
+    const created: TeamTaskActivity[] = this.getTasksArray()
+      .filter((tk) => tk.orgId === orgId && !!tk.createdAt)
+      .map((tk) => ({
+        id: `created-${tk.id}`,
+        taskId: tk.id,
+        orgId: tk.orgId,
+        actorId: tk.createdBy ?? null,
+        field: 'created' as const,
+        oldValue: null,
+        newValue: null,
+        createdAt: tk.createdAt,
+      }));
+    // Et, pour les tâches déjà terminées au chargement de la démo, la complétion
+    // que le journal de production aurait enregistrée.
+    const stored = readOrSeed<TeamTaskActivity[]>(TEAM_TASK_ACTIVITY_STORAGE_KEY, DEMO_ACTIVITY);
+    const loggedDone = new Set(stored.filter((a) => a.field === 'status' && a.newValue === 'done').map((a) => a.taskId));
+    const seededDone: TeamTaskActivity[] = this.getTasksArray()
+      .filter((tk) => tk.orgId === orgId && tk.completed && !!tk.completedAt && !loggedDone.has(tk.id))
+      .map((tk) => ({
+        id: `done-${tk.id}`,
+        taskId: tk.id,
+        orgId: tk.orgId,
+        actorId: tk.assigneeIds[0] ?? tk.createdBy ?? null,
+        field: 'status' as const,
+        oldValue: 'in_progress',
+        newValue: 'done',
+        createdAt: tk.completedAt as string,
+      }));
+    return [...stored, ...created, ...seededDone]
       .filter((a) => a.orgId === orgId && a.createdAt >= since)
       .sort((a, b) => (a.createdAt > b.createdAt ? -1 : 1));
   }
