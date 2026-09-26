@@ -60,7 +60,9 @@ const OrgTaskFilterBar = ({
   filters, setFilters, defaultStatus, members, teams, projects = [], currentUserId,
   searchPlaceholder, searchAria, counts, onCreateTeam,
 }: OrgTaskFilterBarProps) => {
-  const { t } = useT('org');
+  // Catalogue `portfolio`, chargé avec les deux seuls onglets qui montrent cette
+  // barre (Tâches, Projets) : `org` est payé par toute visite de /entreprise.
+  const { t } = useT('portfolio');
   const { team, assignee, project, status, q } = filters;
 
   const scopeIsAll = assignee === null && team === '';

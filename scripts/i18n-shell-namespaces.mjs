@@ -195,7 +195,16 @@ export function namespacesForEntry(entryRelative, stopAt = gatedModules()) {
  * Premier cas : l'onglet Projets et le namespace `portfolio`, qui dans `org`
  * était payé par toute visite de /entreprise.
  */
-export const TAB_GATE_HOSTS = ['pages/OrganizationPage.tsx'];
+export const TAB_GATE_HOSTS = [
+  'pages/OrganizationPage.tsx',
+  // 2026-09-25 (cohérence globale) : le formulaire unique de création de projet,
+  // monté aussi depuis le modal de tâche de /tasks, et la barre d'actions
+  // groupées chargent `portfolio` AVEC eux, au lieu de le faire payer à la route.
+  'components/organization/org-create.context.tsx',
+  'components/organization/team-tasks-bulk.lazy.ts',
+  // Définitions du glossaire, dans `orgAccount`, chargées à l'ouverture d'une info-bulle.
+  'components/organization/RoleTerm.tsx',
+];
 
 /** Chemins absolus des modules gatés : routes d'`App.tsx`, onglets déclarants. */
 export function gatedModules() {

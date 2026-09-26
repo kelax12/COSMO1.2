@@ -58,14 +58,9 @@ const OrgConfirmDialog = ({
             <div className="space-y-2 text-sm leading-relaxed text-[rgb(var(--color-text-secondary))]">
               {description && <p>{description}</p>}
               {impact.length > 0 && (
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-[rgb(var(--color-text-muted))] mb-1">
-                    {t('confirm.impactTitle')}
-                  </p>
-                  <ul className="list-disc pl-5 space-y-0.5">
-                    {impact.map((line) => <li key={line}>{line}</li>)}
-                  </ul>
-                </div>
+                <ul className="list-disc pl-5 space-y-0.5">
+                  {impact.map((line) => <li key={line}>{line}</li>)}
+                </ul>
               )}
             </div>
           </AlertDialogDescription>

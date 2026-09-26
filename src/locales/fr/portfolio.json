@@ -197,5 +197,32 @@
     "groupByAssignee": "Personne",
     "groupByProject": "Projet",
     "groupByStatus": "Statut"
+  },
+  "filters": {
+    "barAria": "Filtres des tâches",
+    "scopeAll": "Tout",
+    "scopeMine": "Moi",
+    "scopeMember": "Une personne",
+    "you": "Vous",
+    "teamLabel": "Équipe",
+    "activeFilters": "Filtres actifs :",
+    "clearAll": "Tout effacer",
+    "removeFilter": "Retirer le filtre « {{name}} »",
+    "chipAssignee": "Assigné : {{name}}",
+    "chipTeam": "Équipe : {{name}}",
+    "chipProject": "Projet : {{name}}",
+    "chipSearch": "« {{query}} »",
+    "filterAssignee": "Filtrer par assigné",
+    "seeTasksOf": "Voir les tâches de",
+    "everyone": "Tout le monde",
+    "filterTeam": "Filtrer par équipe",
+    "allTeams": "Toutes les équipes",
+    "orgNoTeam": "Entreprise (sans équipe)",
+    "createTeamOption": "+ Créer une équipe",
+    "statusAria": "Filtrer par état",
+    "statusOpen": "Ouvertes",
+    "statusOverdue": "En retard",
+    "statusDoneThisWeek": "Terminées cette semaine",
+    "statusAll": "Tout"
   }
 }

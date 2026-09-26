@@ -43,7 +43,9 @@ interface OrgCreateApi {
 
 const OrgCreateContext = createContext<OrgCreateApi | null>(null);
 
-const OrgCreateForms = lazyWithRetry(() => import('./OrgCreateForms'));
+// Avec les catalogues qu'il lit : le formulaire de projet parle `portfolio`, et
+// ce fournisseur est aussi monté hors de /entreprise (modal de tâche de /tasks).
+const OrgCreateForms = lazyWithRetry(() => import('./OrgCreateForms'), ['org', 'overlays', 'portfolio']);
 
 /**
  * Porte l'unique formulaire de création projet / équipe d'une organisation.

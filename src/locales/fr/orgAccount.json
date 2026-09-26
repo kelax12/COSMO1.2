@@ -77,5 +77,35 @@
   "doneTeam": "Équipe « {{name}} » créée",
   "doneProject": "Projet « {{name}} » créé",
   "doneNothing": "Tout se reprend depuis l'Aperçu, quand vous voulez.",
-  "finish": "Ouvrir l'espace entreprise"
+  "finish": "Ouvrir l'espace entreprise",
+  "glossary": {
+    "title": "Glossaire de l’entreprise",
+    "intro": "Les mots de COSMO ont chacun un sens précis. Un rôle dit ce qu’on PEUT faire ; une position dans la pyramide dit qui on encadre.",
+    "seeAll": "Voir tout le glossaire",
+    "close": "Fermer le glossaire",
+    "sectionRoles": "Rôles et positions",
+    "sectionObjects": "Objets",
+    "defs": {
+      "owner": "La personne qui a créé l’entreprise dans COSMO et en détient l’abonnement. Il n’y en a qu’une ; elle peut transmettre ce rôle. Elle est aussi administratrice.",
+      "admin": "Un RÔLE : il a tous les droits (inviter, organiser la pyramide, régler les permissions de chacun). Il peut y en avoir plusieurs.",
+      "manager": "Une POSITION, pas un rôle : toute personne qui a au moins un collaborateur rattaché sous elle dans la pyramide. Elle voit les Statistiques et la Pyramide de son périmètre.",
+      "teamLead": "La personne désignée pour animer une équipe transverse. Ce n’est ni un rôle ni une position hiérarchique : on peut être responsable d’équipe sans encadrer personne dans la pyramide.",
+      "member": "Toute personne de l’entreprise. Ses droits par défaut peuvent être élargis ou restreints par un administrateur (Membres → Modifier les permissions).",
+      "team": "Un groupe de personnes, indépendant de la pyramide (une personne peut être dans plusieurs équipes). Un projet ou un objectif rattaché à une équipe n’est visible que d’elle.",
+      "project": "Un ensemble de tâches avec un responsable, des dates et une couleur choisie. Toute tâche d’équipe appartient à un projet.",
+      "category": "Un classement thématique, partagé par les projets, les tâches et les objectifs, organisé en arbre. Elle a sa propre couleur et ne change pas celle d’un projet.",
+      "label": "Un repère libre posé sur une tâche (« urgent », « client »…). Contrairement à la catégorie, elle ne se hiérarchise pas et ne concerne que les tâches."
+    },
+    "names": {
+      "owner": "Propriétaire",
+      "admin": "Administrateur",
+      "manager": "Manager",
+      "teamLead": "Responsable d’équipe",
+      "member": "Membre",
+      "team": "Équipe",
+      "project": "Projet",
+      "category": "Catégorie",
+      "label": "Étiquette"
+    }
+  }
 }

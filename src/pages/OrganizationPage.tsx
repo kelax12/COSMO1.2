@@ -18,9 +18,6 @@ import { MobileHeader } from '@/components/mobile';
 import OrgNotificationsBell from '@/components/organization/OrgNotificationsBell';
 import OrgTabBadge from '@/components/organization/OrgTabBadge';
 import OrgSideNav from '@/components/organization/OrgSideNav';
-import OrgDeepLinkHost from '@/components/organization/OrgDeepLinkHost';
-import { OPEN_GLOSSARY_EVENT, type OrgTerm } from '@/components/organization/org-glossary';
-import { OrgCreateProvider } from '@/components/organization/org-create.context';
 import { useOrgNavMode } from '@/components/organization/use-org-nav-mode';
 import OrgSectionSwitcher from '@/components/organization/OrgSectionSwitcher';
 import { ORG_SECTIONS, type OrgSection, type OrgNavItem } from '@/components/organization/org-sections';
@@ -60,7 +57,7 @@ const PyramidTab = lazyWithRetry(() => import('@/components/organization/Pyramid
 // `portfolio` (M2) n'est payé que par qui ouvre Projets : dans `org`, il pesait
 // 4,7 ko gzip sur chaque visite de /entreprise.
 const TeamProjectsTab = lazyWithRetry(() => import('@/components/organization/TeamProjectsTab'), ['org', 'overlays', 'portfolio']);
-const TeamTasksTab = lazyWithRetry(() => import('@/components/organization/TeamTasksTab'));
+const TeamTasksTab = lazyWithRetry(() => import('@/components/organization/TeamTasksTab'), ['eventModal', 'org', 'overlays', 'portfolio', 'tasks']);
 const TeamOKRTab = lazyWithRetry(() => import('@/components/organization/TeamOKRTab'));
 const TeamOverviewTab = lazyWithRetry(() => import('@/components/organization/TeamOverviewTab'));
 const OrgBillingTab = lazyWithRetry(() => import('@/components/organization/OrgBillingTab'), ['org', 'orgAccount', 'overlays']);
@@ -78,8 +75,9 @@ const OrgSettingsSection = lazyWithRetry(() => import('@/components/organization
 
 // Feuilles et dialogues : montés derrière un `&&`, donc déjà conditionnels au
 // rendu. Ils ne l'étaient pas au TÉLÉCHARGEMENT.
-const OrgProfileSheet = lazyWithRetry(() => import('@/components/organization/OrgProfileSheet'));
-const OrgGlossarySheet = lazyWithRetry(() => import('@/components/organization/OrgGlossarySheet'));
+// Glossaire et liens profonds (`?task=`…) : UNE entrée paresseuse pour les deux,
+// chargée seulement quand l'un sert (cf. `OrgPageOverlays`).
+const OrgPageOverlays = lazyWithRetry(() => import('@/components/organization/OrgPageOverlays'), ['eventModal', 'org', 'orgAccount', 'overlays', 'tasks']);
 
 type OrgTab = OrgSection;
 
@@ -128,14 +126,9 @@ const OrganizationPage = () => {
   // Sans `replace` : chaque section est une page, le bouton précédent y revient.
   const setTab = (id: OrgTab) => navigate(orgSectionPath(id));
   const [editProfile, setEditProfile] = useState(false);
-  // Glossaire : ouvert par le bouton d'en-tête ou par « Voir tout le glossaire »
-  // d'une info-bulle de rôle (`openOrgGlossary`), sur le terme demandé.
-  const [glossary, setGlossary] = useState<{ term?: OrgTerm } | null>(null);
-  useEffect(() => {
-    const onOpen = (e: Event) => setGlossary({ term: (e as CustomEvent<OrgTerm | undefined>).detail });
-    window.addEventListener(OPEN_GLOSSARY_EVENT, onOpen);
-    return () => window.removeEventListener(OPEN_GLOSSARY_EVENT, onOpen);
-  }, []);
+  // Glossaire (cohérence globale) : ouvert par le bouton d'en-tête. Les
+  // info-bulles de rôle l'ouvrent elles-mêmes, sur leur terme (`RoleTerm`).
+  const [glossary, setGlossary] = useState(false);
   const [seatsBannerDismissed, setSeatsBannerDismissed] = useState(false);
   const { activeOrg: myOrg, isLoading } = useActiveOrganization();
   const badges = useOrgBadges();
@@ -268,11 +261,21 @@ const OrganizationPage = () => {
     try { localStorage.setItem(seatsBannerKey(myOrg.id), '1'); } catch { /* no-op */ }
   };
 
+  const hasEntityParam = ['task', 'member', 'project', 'okr', 'team'].some((k) => searchParams.has(k));
+  const glossaryButton = (
+    <button
+      type="button"
+      onClick={() => setGlossary(true)}
+      aria-label={t('glossary.open')}
+      className="min-w-11 min-h-11 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-accent))] hover:bg-[rgb(var(--color-hover))] transition-colors shrink-0"
+    >
+      <BookOpen size={18} />
+    </button>
+  );
+
   return (
-    // Création projet / équipe : UN formulaire, ouvrable depuis toute section.
-    <OrgCreateProvider orgId={myOrg.id}>
-    {/* `md:pr-[232px]` = carte (208) + ses deux marges (12 + 12). La transition
-        suit la même courbe que la carte, pour que les deux bougent ensemble. */}
+    // `md:pr-[232px]` = carte (208) + ses deux marges (12 + 12). La transition
+    // suit la même courbe que la carte, pour que les deux bougent ensemble.
     <div
       className={`max-w-[1600px] mx-auto px-4 sm:px-6 py-6 md:transition-[padding] md:duration-300 motion-reduce:transition-none ${
         navMode === 'open' ? 'md:pr-[232px]' : ''
@@ -300,15 +303,7 @@ const OrganizationPage = () => {
                 <Pencil size={18} aria-hidden="true" />
               </button>
             )}
-            <button
-              type="button"
-              onClick={() => setGlossary({ term: undefined })}
-              aria-label={t('glossary.openAria')}
-              title={t('glossary.open')}
-              className="min-w-11 min-h-11 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-accent))] hover:bg-[rgb(var(--color-hover))] transition-colors shrink-0"
-            >
-              <BookOpen size={18} aria-hidden="true" />
-            </button>
+            {glossaryButton}
             <OrgNotificationsBell orgId={myOrg.id} members={members} />
           </>
         }
@@ -363,14 +358,7 @@ const OrganizationPage = () => {
         {/* Les triggers de la mig. 095 et le job pg_cron de la 096 ecrivaient
             dans `org_notifications` sans qu'aucun ecran ne les lise. */}
         {/* Glossaire (cohérence globale) : les mots du mode entreprise, définis. */}
-        <button
-          type="button"
-          onClick={() => setGlossary({ term: undefined })}
-          aria-label={t('glossary.openAria')}
-          className="inline-flex items-center gap-1.5 h-9 px-2.5 rounded-lg text-sm font-medium text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-accent))] hover:bg-[rgb(var(--color-hover))] transition-colors"
-        >
-          <BookOpen size={16} aria-hidden="true" /> {t('glossary.open')}
-        </button>
+        {glossaryButton}
         <OrgNotificationsBell orgId={myOrg.id} members={members} />
       </header>
 
@@ -496,8 +484,6 @@ const OrganizationPage = () => {
           clignoter une carte fantôme au milieu de la page pendant que le
           chunk arrive. */}
       <Suspense fallback={null}>
-      {editProfile && <OrgProfileSheet org={myOrg} onClose={() => setEditProfile(false)} />}
-      {glossary && <OrgGlossarySheet focusTerm={glossary.term} onClose={() => setGlossary(null)} />}
       </Suspense>
 
       {/* Desktop : la navigation vit à DROITE, hors de la zone qui défile.
@@ -515,16 +501,20 @@ const OrganizationPage = () => {
 
       {/* Liens profonds : `?task=`, `?member=`, `?project=`, `?okr=`, `?team=`
           ouvrent leur fiche quelle que soit la section affichée. */}
-      <OrgDeepLinkHost
-        orgId={myOrg.id}
-        section={teamId ? 'teams' : tab}
-        members={members}
-        currentUserId={user?.id}
-        isAdmin={isAdmin}
-        isManager={isManager}
-      />
+      {(glossary || editProfile || hasEntityParam) && (
+        <Suspense fallback={null}>
+          <OrgPageOverlays
+            glossaryOpen={glossary}
+            onCloseGlossary={() => setGlossary(false)}
+            profileOrg={editProfile ? myOrg : null}
+            onCloseProfile={() => setEditProfile(false)}
+            deepLink={hasEntityParam
+              ? { orgId: myOrg.id, section: teamId ? 'teams' : tab, members, currentUserId: user?.id, isAdmin, isManager }
+              : null}
+          />
+        </Suspense>
+      )}
     </div>
-    </OrgCreateProvider>
   );
 };
 

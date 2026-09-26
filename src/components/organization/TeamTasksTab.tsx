@@ -35,6 +35,7 @@ import { useOrgTaskFilters, hasActiveTaskFilter, matchesScope } from './task-fil
 import { useOrgTeams } from '@/modules/org-teams';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { useT } from '@/i18n/useT';
+import { OrgCreateBoundary } from './org-create.context';
 
 interface TeamTasksTabProps {
   orgId: string;
@@ -535,4 +536,12 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
   );
 };
 
-export default TeamTasksTab;
+// Frontière du formulaire unique de création (org-create.context) : posée par
+// chaque écran qui crée, pas par la page, dont le chunk a un cliquet.
+const TeamTasksTabWithCreate = (props: TeamTasksTabProps) => (
+  <OrgCreateBoundary orgId={props.orgId}>
+    <TeamTasksTab {...props} />
+  </OrgCreateBoundary>
+);
+
+export default TeamTasksTabWithCreate;

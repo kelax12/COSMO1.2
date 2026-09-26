@@ -1,8 +1,12 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { HelpCircle } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useT } from '@/i18n/useT';
-import { claimFirstSight, openOrgGlossary, termDefKey, termNameKey, type OrgTerm } from './org-glossary';
+import { lazyWithRetry } from '@/lib/lazy-with-retry';
+import { claimFirstSight, type OrgTerm } from './org-glossary';
+
+const RoleTermCard = lazyWithRetry(() => import('./RoleTermCard'), ['org', 'orgAccount']);
+const OrgGlossarySheet = lazyWithRetry(() => import('./OrgGlossarySheet'), ['org', 'orgAccount']);
 
 /**
  * Un rôle (ou un objet) nommé à l'écran, avec sa définition à portée de clic.
@@ -10,13 +14,16 @@ import { claimFirstSight, openOrgGlossary, termDefKey, termNameKey, type OrgTerm
  * Au PREMIER affichage de ce terme sur l'appareil, la définition s'ouvre
  * d'elle-même, une fois (cf. `claimFirstSight`). Ensuite, le « ? » suffit.
  */
-const RoleTerm = ({ term, children, className = '' }: { term: OrgTerm; children: ReactNode; className?: string }) => {
+const RoleTerm = ({ term, children, className = '' }: { term: OrgTerm; children: string; className?: string }) => {
   const { t } = useT('org');
   const [open, setOpen] = useState(false);
+  // « Voir tout le glossaire » : la feuille s'ouvre d'ici, sur ce terme.
+  const [glossary, setGlossary] = useState(false);
   useEffect(() => {
     if (claimFirstSight(term)) setOpen(true);
   }, [term]);
-  const name = t(termNameKey(term));
+  // Le libellé affiché nomme le terme : la définition, elle, se charge à l'ouverture.
+  const name = children;
 
   return (
     <span className={`inline-flex items-center gap-0.5 ${className}`}>
@@ -36,17 +43,16 @@ const RoleTerm = ({ term, children, className = '' }: { term: OrgTerm; children:
           className="z-[10001] w-72 text-xs normal-case tracking-normal font-normal bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-secondary))] border-[rgb(var(--color-border))]"
           onClick={(e) => e.stopPropagation()}
         >
-          <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))] mb-1">{name}</p>
-          <p className="leading-relaxed">{t(termDefKey(term))}</p>
-          <button
-            type="button"
-            onClick={() => { setOpen(false); openOrgGlossary(term); }}
-            className="mt-2 text-xs font-semibold text-[rgb(var(--color-accent))] hover:underline"
-          >
-            {t('glossary.seeAll')}
-          </button>
+          <Suspense fallback={<p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">{name}</p>}>
+            <RoleTermCard term={term} onOpenGlossary={() => { setOpen(false); setGlossary(true); }} />
+          </Suspense>
         </PopoverContent>
       </Popover>
+      {glossary && (
+        <Suspense fallback={null}>
+          <OrgGlossarySheet focusTerm={term} onClose={() => setGlossary(false)} />
+        </Suspense>
+      )}
     </span>
   );
 };

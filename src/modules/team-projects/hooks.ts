@@ -8,7 +8,7 @@ import { getTeamProjectsRepository } from '@/lib/repository.factory';
 import { validateAsync } from '@/lib/validation/lazy';
 import { teamProjectKeys } from './constants';
 import type { UpdateTeamSubtaskInput } from './types';
-import type { CreateTeamProjectInput, UpdateTeamProjectInput, CreateTeamTaskInput, UpdateTeamTaskInput, TeamTaskFilters, TeamProject } from './types';
+import type { UpdateTeamProjectInput, CreateTeamTaskInput, UpdateTeamTaskInput, TeamTaskFilters, TeamProject } from './types';
 import { translator } from '@/i18n/useT';
 import { dependencyErrorCode } from '@/modules/tasks/dependency-errors';
 
@@ -186,21 +186,10 @@ export const useTeamTaskSlice = (
 
 // ─── Mutations ───────────────────────────────────────────────────────
 
-export const useCreateTeamProject = (orgId: string) => {
-  const queryClient = useQueryClient();
-  const repository = useRepo();
-  return useMutation({
-    mutationFn: async (input: CreateTeamProjectInput) => {
-      const valid = await validateAsync('teamProject.create', input);
-      return repository.createProject(orgId, valid);
-    },
-    onSuccess: () => {
-      toast.success(translator('errors').t('success.projectCreated'));
-      queryClient.invalidateQueries({ queryKey: teamProjectKeys.projects(orgId) });
-    },
-    onError: (error: Error) => toast.error(translator('errors').t('mutation.createProject', { message: error.message })),
-  });
-};
+// 🗑️ `useCreateTeamProject` retiré le 2026-09-25 : un projet ne se crée plus
+// que par LE formulaire (`OrgCreateForms`), qui passe par
+// `useCreateTeamProjectWithTasks` (une transaction). Les champs « nom seul »
+// qui l'appelaient créaient des projets gris, sans équipe ni responsable.
 
 export const useUpdateTeamProject = (orgId: string) => {
   const queryClient = useQueryClient();

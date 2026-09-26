@@ -183,7 +183,7 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
     ), 150);
     setTimeout(() => downloadCSV(
       'cosmo-stats-okr',
-      [t('overview.csvObjective'), t('overview.csvProgress'), t('overview.csvKrCount')],
+      [t('okrModal.objective'), t('overview.csvProgress'), t('overview.csvKrCount')],
       okrStats.map((o) => [o.title, o.progress, o.krCount]),
     ), 300);
   };

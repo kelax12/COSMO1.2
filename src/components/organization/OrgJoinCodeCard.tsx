@@ -77,9 +77,9 @@ const OrgJoinCodeCard = ({ code, orgId, isAdmin = false, seatsFull = false }: Or
       </div>
       {confirming && (
         <OrgConfirmDialog
-          title={t('invite.regenerateTitle')}
-          impact={[t('invite.regenerateImpactOld'), t('invite.regenerateImpactShared'), t('invite.regenerateImpactPending')]}
-          confirmLabel={t('invite.regenerateAction')}
+          title={t('invite.regenerate')}
+          impact={[t('invite.regenerateImpactOld'), t('invite.regenerateImpactShared')]}
+          confirmLabel={t('invite.regenerate')}
           tone="warning"
           pending={regenerateMutation.isPending}
           onConfirm={regenerate}
