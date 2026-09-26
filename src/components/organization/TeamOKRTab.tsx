@@ -21,6 +21,10 @@ import OkrCyclesBar from './OkrCyclesBar';
 import KRExecutionDialog from './KRExecutionDialog';
 import TeamTrashDialog from './TeamTrashDialog';
 import { filterOkrsByCycle } from './okr-execution.helpers';
+import { filterOkrs, OKR_STATES, type OkrState } from './okr-filters.helpers';
+import OkrFilterBar from './OkrFilterBar';
+import { useUrlFilters, anId, oneOf } from './use-url-filters';
+import { useAuth } from '@/modules/auth/AuthContext';
 import { readEntityParam } from './deep-link.helpers';
 import { useMyOrgPermissions, useOrgMembers } from '@/modules/organizations';
 import { useT } from '@/i18n/useT';
@@ -30,6 +34,14 @@ interface TeamOKRTabProps {
   orgId: string;
 
 }
+
+// Filtres équipe · porteur · état (audit 2026-09-24), dans l'URL : un lien
+// partage ce qu'on voit. Hors composant pour garder des spécifications stables.
+const OKR_FILTER_SPECS = {
+  team: { param: 'oTeam', defaultValue: '', parse: (raw: string) => (raw === 'org' ? 'org' : anId('')(raw) ?? '') },
+  person: { param: 'oPerson', defaultValue: '', parse: (raw: string) => anId('')(raw) ?? '' },
+  state: { param: 'oState', defaultValue: '' as OkrState | '', parse: oneOf<OkrState | ''>(['', ...OKR_STATES], '') },
+};
 
 // Résout une couleur : hex tel quel, sinon nom → hex (parité mode perso).
 const resolveColor = (color: string) => (color.startsWith('#') ? color : getColorHex(color));
@@ -53,6 +65,9 @@ const TeamOKRTab = ({ orgId }: TeamOKRTabProps) => {
   const { data: statsRows = [] } = useTeamProjectTaskStats(orgId);
   const { data: members = [] } = useOrgMembers(orgId);
   const statsById = useMemo(() => new Map(statsRows.map((r) => [r.projectId, r])), [statsRows]);
+  const memberById = useMemo(() => new Map(members.map((m) => [m.userId, m])), [members]);
+  const { user } = useAuth();
+  const { values: okrFilters, setFilters: setOkrFilters } = useUrlFilters(OKR_FILTER_SPECS);
   const [cycleFilter, setCycleFilter] = useState('');
   const [openKrId, setOpenKrId] = useState<string | null>(null);
   const openKr = useMemo(
@@ -90,16 +105,18 @@ const TeamOKRTab = ({ orgId }: TeamOKRTabProps) => {
   // depuis que `team_okrs.category_id` est un vrai FK (mig. 148).
   const visibleOKRs = useMemo(() => {
     const byCategory = activeCategoryIds.size === 0 ? okrs : okrs.filter((o) => !!o.categoryId && activeCategoryIds.has(o.categoryId));
-    return filterOkrsByCycle(byCategory, cycleFilter);
-  }, [okrs, activeCategoryIds, cycleFilter]);
+    return filterOkrs(filterOkrsByCycle(byCategory, cycleFilter), okrFilters, krLinks, statsById);
+  }, [okrs, activeCategoryIds, cycleFilter, okrFilters, krLinks, statsById]);
 
   // L'objectif demandé par l'URL : un filtre de catégorie qui le cacherait est
   // levé, puis on l'amène à l'écran une fois les données arrivées.
   const focusedLoaded = !!focusedOkrId && okrs.some((o) => o.id === focusedOkrId);
   const focusedHidden = focusedLoaded && !visibleOKRs.some((o) => o.id === focusedOkrId);
   useEffect(() => {
-    if (focusedHidden) setActiveCategoryIds(new Set());
-  }, [focusedHidden]);
+    if (!focusedHidden) return;
+    setActiveCategoryIds(new Set());
+    setOkrFilters({ team: '', person: '', state: '' });
+  }, [focusedHidden, setOkrFilters]);
   useEffect(() => {
     if (!focusedLoaded || focusedHidden) return;
     document.getElementById(`okr-${focusedOkrId}`)?.scrollIntoView({ block: 'center' });
@@ -140,6 +157,7 @@ const TeamOKRTab = ({ orgId }: TeamOKRTabProps) => {
       {/* Cycles (mig. 160) et corbeille des objectifs (mig. 193). */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <OkrCyclesBar orgId={orgId} cycles={cycles} value={cycleFilter} onChange={setCycleFilter} canManage={can['okr.create']} />
+        <OkrFilterBar filters={okrFilters} setFilters={setOkrFilters} teams={teams} members={members} currentUserId={user?.id} />
         <TeamTrashDialog orgId={orgId} projects={allProjects} members={members} />
       </div>
 
@@ -158,7 +176,10 @@ const TeamOKRTab = ({ orgId }: TeamOKRTabProps) => {
           <p className="text-sm font-semibold text-[rgb(var(--color-text-primary))]">{t('okrTab.emptyCategory')}</p>
           <button
             type="button"
-            onClick={() => setActiveCategoryIds(new Set())}
+            onClick={() => {
+              setActiveCategoryIds(new Set());
+              setOkrFilters({ team: '', person: '', state: '' });
+            }}
             className="mt-2 text-xs font-semibold text-blue-500 hover:text-blue-600"
           >
             {t('okrTab.seeAll')}
@@ -185,6 +206,7 @@ const TeamOKRTab = ({ orgId }: TeamOKRTabProps) => {
             onCommitKR={setCurrent}
             onOpenKR={(kr) => setOpenKrId(kr.id)}
             onOpenOkr={openOkr}
+            personOf={(id) => memberById.get(id)}
           />
         ))
       )}

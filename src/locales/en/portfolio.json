@@ -373,5 +373,32 @@
     "rangeTo": "until {{date}}",
     "rangeBoth": "{{from}} to {{to}}",
     "clearDue": "Clear the due date"
+  },
+  "okrFilters": {
+    "barAria": "Filter objectives",
+    "team": "Team",
+    "teamAria": "Filter by team",
+    "allTeams": "All teams",
+    "orgWide": "Company-wide objectives",
+    "person": "Carried by",
+    "personAria": "Filter by person carrying a key result",
+    "anyone": "Everyone",
+    "mine": "Me",
+    "state": "Status",
+    "stateAria": "Filter by status",
+    "anyState": "All statuses",
+    "stateOnTrack": "On track",
+    "stateAtRisk": "At risk",
+    "stateOffTrack": "Off track",
+    "stateNoCheckin": "No check-in",
+    "stateDone": "Achieved"
+  },
+  "krContrib": {
+    "label": "Contributors",
+    "none": "none",
+    "aria": "Key result contributors",
+    "max_one": "At most {{count}} contributor",
+    "max_other": "At most {{count}} contributors",
+    "carriers": "Carried by {{names}}"
   }
 }

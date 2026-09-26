@@ -3,8 +3,8 @@
 > des branches `feat/entreprise-popups`, `claude/recommandations-mode-entreprise-swgi0u`,
 > `claude/recommandations-mode-entreprise-do9du9`, `coherence/journal-181` et du travail
 > interrompu de `.worktrees/entreprise-gov` (sauvé sur `wip/entreprise-gov-ui`).
-> **Mise à jour du 2026-09-26 (après-midi)** : les 🔴 de l'onglet Tâches sont réalisés sur la
-> branche `feat/entreprise-audit-rouges` (commit `fe2a1dd6`, non fusionnée) ; les pastilles
+> **Mise à jour du 2026-09-26 (après-midi)** : les 🔴 des onglets Tâches et OKR sont réalisés
+> sur la branche `feat/entreprise-audit-rouges` (non fusionnée) ; les pastilles
 > concernées portent la mention « branche `audit-rouges` ».
 > Le code fait foi contre ce document. Sources vivantes : [`CLAUDE.md`](../../CLAUDE.md) ·
 > [`faille.md`](../../faille.md) · [`docs/`](../README.md).
@@ -308,9 +308,11 @@ de début et de fin, ✅ dépendances entre projets.
 | Pas de cycles | Moyenne | `okr_cycles` | ✅ |
 
 Fonctionnalités : ✅ cycles, ✅ points d'étape avec confiance, ✅ états « à risque », ✅ lien KR
-vers projets, 🔴 KR à plusieurs contributeurs (colonne en base depuis la mig. 160, aucun écran),
+vers projets, ✅ KR à plusieurs contributeurs (`KRContributorsField`, branche `audit-rouges`),
 ✅ alignement parent, ✅ historique des points d'étape. Filtres : ✅ catégorie et cycle ;
-🔴 équipe, responsable, état.
+✅ équipe, porteur (responsable ou contributeur d'un KR) et état, dans l'URL (branche
+`audit-rouges`). Trouvé en chemin et corrigé : modifier un objectif remettait à NULL le
+responsable et à 30 min la durée de chacun de ses KR (la fiche ne renvoyait pas ces champs).
 
 ### Statistiques (`/entreprise/stats`)
 
