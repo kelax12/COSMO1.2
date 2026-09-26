@@ -478,6 +478,7 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
   async getTaskLabels(taskId: string): Promise<TeamTaskLabel[]> { return labels.getTaskLabels(taskId); }
   async addTaskLabel(taskId: string, labelId: string): Promise<void> { labels.addTaskLabel(taskId, labelId); }
   async removeTaskLabel(taskId: string, labelId: string): Promise<void> { labels.removeTaskLabel(taskId, labelId); }
+  async getTaskIdsWithLabel(labelId: string): Promise<string[]> { return labels.getTaskIdsWithLabel(labelId); }
   async getTaskActivity(taskId: string): Promise<TeamTaskActivity[]> { return labels.getTaskActivity(taskId); }
 
   // ─── Historique (mig. 094) ─────────────────────────────────────────

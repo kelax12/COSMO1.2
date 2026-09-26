@@ -33,7 +33,10 @@ describe('vues enregistrées (mig. 192) — filtres lus dans une URL non fiable'
   });
 
   it('Filtres : les mêmes clés qu un lien partagé, et une valeur forgée ne passe pas', () => {
-    const f = { team: 't1', assignee: 'u1', project: null, status: 'overdue' as const, q: 'devis' };
+    const f = {
+      team: 't1', assignee: 'u1', project: null, status: 'overdue' as const, q: 'devis',
+      priorities: [], dueFrom: '', dueTo: '', noDue: false, category: null, label: null, group: 'none' as const,
+    };
     const params = taskFiltersToViewParams(f, 'all');
     expect(params).toEqual({ fTeam: 't1', fAssignee: 'u1', fStatus: 'overdue', fQ: 'devis' });
     expect(viewParamsToTaskFilters(params, 'all')).toEqual(f);

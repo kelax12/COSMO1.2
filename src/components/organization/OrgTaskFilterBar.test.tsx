@@ -14,13 +14,16 @@ import { ensureNamespaces } from '@/i18n/catalog';
 import { render, screen, fireEvent } from '@testing-library/react';
 import OrgTaskFilterBar from './OrgTaskFilterBar';
 import {
-  readTaskFilters, writeTaskFilters, hasActiveTaskFilter, matchesScope, type OrgTaskFilters,
+  readTaskFilters, writeTaskFilters, hasActiveTaskFilter, matchesScope, matchesAttributes, type OrgTaskFilters,
 } from './task-filters';
 import type { TaskStatusFilter } from './team-projects.helpers';
 
 vi.mock('@/lib/hooks/use-mobile', () => ({ useIsMobile: () => false }));
 
-const base: OrgTaskFilters = { team: '', assignee: null, project: null, status: 'all', q: '' };
+const base: OrgTaskFilters = {
+  team: '', assignee: null, project: null, status: 'all', q: '',
+  priorities: [], dueFrom: '', dueTo: '', noDue: false, category: null, label: null, group: 'none',
+};
 
 const renderBar = (status: TaskStatusFilter) => {
   const setFilters = vi.fn();
@@ -75,7 +78,7 @@ describe('OrgTaskFilterBar — une seule grammaire de filtre', () => {
 
 describe("task-filters — l'état vit dans l'URL", () => {
   it('relit ce qu il écrit, sans toucher aux adresses d objet', () => {
-    const f: OrgTaskFilters = { team: 't1', assignee: 'u1', project: 'p1', status: 'overdue', q: 'devis' };
+    const f: OrgTaskFilters = { ...base, team: 't1', assignee: 'u1', project: 'p1', status: 'overdue', q: 'devis' };
     const url = writeTaskFilters(new URLSearchParams('?project=pageProjet&task=x'), f, 'open');
     expect(readTaskFilters(url, 'open')).toEqual(f);
     expect(url.get('project')).toBe('pageProjet');
@@ -110,5 +113,43 @@ describe("task-filters — l'état vit dans l'URL", () => {
     expect(matchesScope(task('pB'), { team: 't1', assignee: null }, teamOf)).toBe(false);
     expect(matchesScope(task('pB'), { team: 'org', assignee: null }, teamOf)).toBe(true);
     expect(matchesScope(task('pA', ['u1']), { team: '', assignee: 'u2' }, teamOf)).toBe(false);
+  });
+});
+
+describe("task-filters — attributs de la tâche (audit 2026-09-24)", () => {
+  const task = (over: Partial<{ priority: number; deadline: string; categoryId: string | null; id: string }> = {}) =>
+    ({ id: 't', priority: 3, deadline: '', categoryId: null, ...over });
+
+  it('priorité, plage et « sans échéance » passent par l URL, et en reviennent', () => {
+    const f: OrgTaskFilters = { ...base, priorities: [4, 1], dueFrom: '2026-09-01', dueTo: '2026-09-30', category: 'c1', label: 'l1', group: 'assignee' };
+    const back = readTaskFilters(writeTaskFilters(new URLSearchParams(), f, 'all'), 'all');
+    expect(back).toEqual({ ...f, priorities: [1, 4] });
+    expect(hasActiveTaskFilter({ ...base, priorities: [2] }, 'all')).toBe(true);
+  });
+
+  it('une URL hostile ne fabrique ni priorité ni date ni regroupement', () => {
+    const f = readTaskFilters(new URLSearchParams('?fPrio=0,9,x,2&fDueFrom=hier&fGroup=drop'), 'all');
+    expect(f.priorities).toEqual([2]);
+    expect(f.dueFrom).toBe('');
+    expect(f.group).toBe('none');
+  });
+
+  it('matchesAttributes : bornes incluses, sans échéance exclue d une plage', () => {
+    const f = { priorities: [], dueFrom: '2026-09-10', dueTo: '2026-09-20', noDue: false, category: null, label: null };
+    expect(matchesAttributes(task({ deadline: '2026-09-10' }), f)).toBe(true);
+    expect(matchesAttributes(task({ deadline: '2026-09-20' }), f)).toBe(true);
+    expect(matchesAttributes(task({ deadline: '2026-09-21' }), f)).toBe(false);
+    expect(matchesAttributes(task({ deadline: '' }), f)).toBe(false);
+    expect(matchesAttributes(task({ deadline: '' }), { ...f, dueFrom: '', dueTo: '', noDue: true })).toBe(true);
+  });
+
+  it('matchesAttributes : une sous-catégorie est dans sa mère ; étiquette non encore lue = rien', () => {
+    const f = { priorities: [], dueFrom: '', dueTo: '', noDue: false, category: 'mere', label: null };
+    expect(matchesAttributes(task({ categoryId: 'fille' }), f, { categoryIds: new Set(['mere', 'fille']) })).toBe(true);
+    expect(matchesAttributes(task({ categoryId: null }), f, { categoryIds: new Set(['mere']) })).toBe(false);
+    const withLabel = { ...f, category: null, label: 'l1' };
+    // TÉMOIN : tant que la jonction n'est pas lue, le filtre ne laisse RIEN passer.
+    expect(matchesAttributes(task({ id: 'a' }), withLabel)).toBe(false);
+    expect(matchesAttributes(task({ id: 'a' }), withLabel, { labelTaskIds: new Set(['a']) })).toBe(true);
   });
 });

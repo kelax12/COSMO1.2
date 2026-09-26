@@ -473,6 +473,7 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
   async getTaskLabels(taskId: string): Promise<TeamTaskLabel[]> { return (await labels()).getTaskLabels(taskId); }
   async addTaskLabel(taskId: string, labelId: string): Promise<void> { return (await labels()).addTaskLabel(taskId, labelId); }
   async removeTaskLabel(taskId: string, labelId: string): Promise<void> { return (await labels()).removeTaskLabel(taskId, labelId); }
+  async getTaskIdsWithLabel(labelId: string): Promise<string[]> { return (await labels()).getTaskIdsWithLabel(labelId); }
   async getTaskActivity(taskId: string): Promise<TeamTaskActivity[]> { return (await labels()).getTaskActivity(taskId); }
 
   // ─── Historique (mig. 094) — lecture seule ───────────────────────
