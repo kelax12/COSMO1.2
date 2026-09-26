@@ -1519,8 +1519,10 @@
         "deadline": "échéance",
         "priority": "priorité",
         "project": "projet",
-        "name": "nom"
-      }
+        "name": "nom",
+        "created": "création"
+      },
+      "created": "{{actor}} a créé la tâche"
     },
     "team": {
       "lead": "Responsable de l'équipe",
@@ -1577,7 +1579,8 @@
       "historyScope": "Ce que la personne a changé sur les tâches ces {{days}} derniers jours.",
       "historyEmpty": "Aucun changement sur les tâches ces {{days}} derniers jours.",
       "historyEntry": "A modifié : {{field}}, sur « {{task}} »",
-      "hiddenTask": "une tâche que vous ne voyez pas"
+      "hiddenTask": "une tâche que vous ne voyez pas",
+      "historyCreated": "A créé « {{task}} »"
     },
     "perms": {
       "scope": "Ces droits valent pour toute l'entreprise, dans tous les projets que la personne voit. Ils ne se règlent pas projet par projet.",

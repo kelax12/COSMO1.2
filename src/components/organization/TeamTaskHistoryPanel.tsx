@@ -20,6 +20,7 @@ const FIELD_KEY: Record<TeamActivityField, `popups.history.field.${TeamActivityF
   priority: 'popups.history.field.priority',
   project: 'popups.history.field.project',
   name: 'popups.history.field.name',
+  created: 'popups.history.field.created',
 };
 
 /**
@@ -64,11 +65,13 @@ const TeamTaskHistoryPanel = ({ taskId, members, projects }: TeamTaskHistoryPane
             <span className="mt-1.5 w-2 h-2 rounded-full bg-[rgb(var(--color-accent))] shrink-0" aria-hidden="true" />
             <div className="min-w-0 flex-1">
               <p className="text-sm text-[rgb(var(--color-text-primary))]">
-                {entry.field === 'name'
+                {entry.field === 'created'
+                  ? t('popups.history.created', { actor })
+                  : entry.field === 'name'
                   ? t('popups.history.renamed', { actor })
                   : t('popups.history.changed', { actor, field: t(FIELD_KEY[entry.field]) })}
               </p>
-              {entry.field !== 'name' && (
+              {entry.field !== 'name' && entry.field !== 'created' && (
                 <p className="text-xs text-[rgb(var(--color-text-secondary))] break-words">
                   <span className="line-through opacity-70">{before}</span>
                   <span aria-hidden="true"> → </span>

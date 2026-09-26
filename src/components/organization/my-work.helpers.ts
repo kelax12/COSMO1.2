@@ -191,23 +191,23 @@ export interface ActivityItem {
 const splitIds = (v: string | null): string[] => (v ? v.split(',').filter(Boolean) : []);
 
 /**
- * Fil d'activité lu dans le JOURNAL (`team_task_activity`, mig. 094) et non
- * plus reconstruit depuis l'état courant des tâches : réassignations,
- * changements de statut et reports d'échéance y apparaissent enfin.
- *
- * Le journal ne connaît que les UPDATE (trigger AFTER UPDATE). Les créations
- * viennent donc des tâches récentes. Priorité, projet et intitulé sont écartés :
- * utiles à l'historique d'une tâche, du bruit dans un fil d'équipe.
+ * Fil d'activité lu dans le JOURNAL (`team_task_activity`), SEULE source
+ * (cohérence globale, 2026-09-25). Les créations y figurent depuis la mig. 181
+ * (trigger AFTER INSERT) : elles ne sont plus reconstruites depuis l'état
+ * courant des tâches, qui oubliait une tâche supprimée et ne connaissait pas
+ * son auteur réel. Priorité, projet et intitulé sont écartés : utiles à
+ * l'historique d'une tâche, du bruit dans un fil d'équipe.
  */
 export const buildActivityItems = (
   activity: TeamTaskActivity[],
-  created: TeamTask[],
   max = 8,
 ): ActivityItem[] => {
   const out: ActivityItem[] = [];
   for (const e of activity) {
     const base = { id: e.id, date: e.createdAt, taskId: e.taskId, actorId: e.actorId };
-    if (e.field === 'status') {
+    if (e.field === 'created') {
+      out.push({ ...base, kind: 'created' });
+    } else if (e.field === 'status') {
       if (e.newValue === 'done') out.push({ ...base, kind: 'completed' });
       else if (e.oldValue === 'done') out.push({ ...base, kind: 'reopened' });
       else if (e.newValue) out.push({ ...base, kind: 'status', detail: e.newValue });
@@ -218,9 +218,6 @@ export const buildActivityItems = (
     } else if (e.field === 'deadline' && e.oldValue && e.newValue) {
       out.push({ ...base, kind: e.newValue > e.oldValue ? 'postponed' : 'advanced', detail: e.newValue });
     }
-  }
-  for (const t of created) {
-    out.push({ id: `created-${t.id}`, date: t.createdAt, kind: 'created', taskId: t.id, actorId: t.createdBy });
   }
   return out.sort((a, b) => (a.date > b.date ? -1 : 1)).slice(0, max);
 };

@@ -111,6 +111,7 @@ const FIELD_KEY: Record<TeamActivityField, `popups.history.field.${TeamActivityF
   priority: 'popups.history.field.priority',
   project: 'popups.history.field.project',
   name: 'popups.history.field.name',
+  created: 'popups.history.field.created',
 };
 
 /** Fenêtre de l'historique d'une personne : trente jours, bornée côté serveur (500 lignes). */
@@ -149,10 +150,12 @@ export const MemberHistoryBody = ({ orgId, member }: { orgId: string; member: Or
             <span className="mt-1.5 w-2 h-2 rounded-full bg-[rgb(var(--color-accent))] shrink-0" aria-hidden="true" />
             <div className="min-w-0 flex-1">
               <p className="text-sm text-[rgb(var(--color-text-primary))] break-words">
-                {t('popups.member.historyEntry', {
-                  field: t(FIELD_KEY[entry.field]),
-                  task: taskName.get(entry.taskId) ?? t('popups.member.hiddenTask'),
-                })}
+                {entry.field === 'created'
+                  ? t('popups.member.historyCreated', { task: taskName.get(entry.taskId) ?? t('popups.member.hiddenTask') })
+                  : t('popups.member.historyEntry', {
+                    field: t(FIELD_KEY[entry.field]),
+                    task: taskName.get(entry.taskId) ?? t('popups.member.hiddenTask'),
+                  })}
               </p>
               <p className="text-caption text-[rgb(var(--color-text-muted))]">
                 {formatDistanceToNow(parseISO(entry.createdAt), { addSuffix: true, locale: getDateLocale() })}

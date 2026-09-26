@@ -1450,8 +1450,10 @@
         "deadline": "due date",
         "priority": "priority",
         "project": "project",
-        "name": "name"
-      }
+        "name": "name",
+        "created": "creation"
+      },
+      "created": "{{actor}} created the task"
     },
     "team": {
       "lead": "Team lead",
@@ -1506,7 +1508,8 @@
       "historyScope": "What this person changed on tasks over the last {{days}} days.",
       "historyEmpty": "No task change over the last {{days}} days.",
       "historyEntry": "Changed {{field}} on \"{{task}}\"",
-      "hiddenTask": "a task you cannot see"
+      "hiddenTask": "a task you cannot see",
+      "historyCreated": "Created “{{task}}”"
     },
     "perms": {
       "scope": "These permissions apply to the whole company, in every project this person can see. They are not set project by project.",
