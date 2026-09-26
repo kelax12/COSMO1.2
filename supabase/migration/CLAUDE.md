@@ -63,6 +63,16 @@ compilait, la suite passait.
 - ⚠️ **`164`** (cas limites du mode entreprise : équipes associées, purge d un projet archivé,
   mode `transfer` du départ, `release_member_work`) est **écrite, NON appliquée** au 2026-09-26 :
   ses corps de fonctions partent du catalogue relu le 2026-09-25, pas des fichiers `161`/`162`.
+- 🔴 **`194` réconcilie `164` et `190`** (2026-09-26) : écrites en parallèle, elles redéfinissent
+  toutes deux `can_access_team_project`, `my_team_project_ids`, `member_departure_impact` et
+  `offboard_org_member`, et la seconde appliquée effaçait l'ajout de l'autre (équipes associées OU
+  membres de projet, mode `transfer`). Ordre : `164`, `181`, `190` à `193`, **puis `194`**.
+  NON appliquée, NON prouvée.
+- 🔴 **`190` à `193` (étape 6, 2026-09-25) sont COMMITÉES, PAS APPLIQUÉES.** Ordre : 190, 191,
+  192, 193, AVANT le front qui les lit. Prouvées hors prod : les 167 fichiers rejoués sur un
+  Postgres 16 local (`supabase/proofs/supabase-shim.sql`), puis `190-193.proof.sql`, transaction
+  annulée, 55 cas acteur par acteur. ⚠️ Le shim imite `auth.uid()` et `pg_cron` : la preuve en
+  prod reste à faire, et le ledger à relire AVANT (d'autres sessions écrivent).
 - ⚠️ **Plages de numéros entre sessions (2026-09-24)** : `151`-`159` corbeille/équipes, `153` déjà
   prise par le portefeuille de projets (worktree `portefeuille`), `160`+ gouvernance/OKR/membres,
   `170`+ annuaire. **Relire le ledger avant de choisir un numéro.**

@@ -16,7 +16,7 @@ export type {
   UpdateOrganizationInput,
   OrgInviteLink,
 } from './types';
-export { buildOrgTree, isManagerOf, subtreeOf } from './types';
+export { buildOrgTree, isManagerOf, subtreeOf, isMemberActive } from './types';
 
 // ─── Permissions par membre (mig. 115) ───────────────────────────────
 export type {

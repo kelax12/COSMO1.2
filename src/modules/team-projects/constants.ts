@@ -47,6 +47,8 @@ export const teamProjectKeys = {
   projectDependencies: (orgId: string) => [...teamProjectKeys.all, 'project-dependencies', orgId] as const,
   // Équipes associées (mig. 164).
   projectTeams: (orgId: string) => [...teamProjectKeys.all, 'project-teams', orgId] as const,
+  // Membres de projet (mig. 190).
+  projectMembers: (orgId: string) => [...teamProjectKeys.all, 'project-members', orgId] as const,
   orgActivity: (orgId: string, since: string) =>
     [...teamProjectKeys.all, 'org-activity', orgId, since] as const,
 };

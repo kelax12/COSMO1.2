@@ -101,8 +101,12 @@ import { SupabaseStatsRepository } from '@/modules/stats/supabase.repository';
 // synchrone — une propriété, un getter — et le mandataire cesse d'être
 // transparent pour lui : il faudra alors renoncer au différé pour ce module.
 //
-// ⚠️ Le mode PRODUCTION ne passe jamais ici : il instancie directement sa
-// classe Supabase, importée statiquement comme avant.
+// ⚠️ Le mode PRODUCTION ne passe ici que pour DEUX dépôts : gouvernance et
+// exécution des OKR (2026-09-25). Leurs écrans sont rares (départ, journal,
+// vues, cycles, points d'étape), leurs interfaces 100 % asynchrones, et leurs
+// classes Supabase pesaient dans le chunk d'ENTRÉE, payé par toutes les pages.
+// Les autres instancient directement leur classe Supabase, importée
+// statiquement comme avant.
 
 /**
  * Mandataire synchrone d'un dépôt dont le module arrive plus tard.
@@ -135,7 +139,7 @@ function lazyDemoRepository<T extends object>(load: () => Promise<T>): T {
           const method = (repo as Record<string | symbol, unknown>)[prop];
           if (typeof method !== 'function') {
             throw new Error(
-              `demo-repositories: « ${String(prop)} » n'est pas une méthode. ` +
+              `dépôt différé : « ${String(prop)} » n'est pas une méthode. ` +
                 'Le chargement différé suppose une interface 100 % asynchrone.',
             );
           }

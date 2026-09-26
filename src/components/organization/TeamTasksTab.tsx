@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { subtreeOf, useOrgNotifications, useMyOrgPermissions, unreadCommentCountByTask, type OrgMember } from '@/modules/organizations';
 import {
-  useTeamProjects, useTeamTaskWorkingSet, TEAM_TASKS_READ_LIMIT, useCreateTeamTask, useUpdateTeamTask, useDeleteTeamTask, useRestoreTeamTask,
+  useTeamProjects, useTeamTaskPages, TEAM_TASKS_READ_LIMIT, useCreateTeamTask, useUpdateTeamTask, useDeleteTeamTask, useRestoreTeamTask,
   type TeamTask, type TeamTaskStatus, type CreateTeamTaskInput, type UpdateTeamTaskInput,
 } from '@/modules/team-projects';
 import { showUndoToast } from '@/lib/undo-toast';
@@ -31,7 +31,8 @@ import { usePermissionHints } from './permission-hints';
 import TaskSelectCheckbox from './TaskSelectCheckbox';
 import { useTeamTasksBulk } from './use-team-tasks-bulk';
 import { TeamTasksBulkLayer } from './team-tasks-bulk.lazy';
-import { useOrgTaskFilters, hasActiveTaskFilter, matchesScope } from './task-filters';
+import { useOrgTaskFilters, hasActiveTaskFilter, matchesScope, taskFiltersToViewParams, viewParamsToTaskFilters } from './task-filters';
+import SavedViewsMenu from './SavedViewsMenu';
 import { useOrgTeams } from '@/modules/org-teams';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { useT } from '@/i18n/useT';
@@ -97,13 +98,14 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
   // reste la lecture complète, plafonnée, et le dit par un bandeau.
   const recentSince = useMemo(() => startOfDay(subDays(new Date(), 30)).toISOString(), []);
   // `live` : c'est l'écran où l'on regarde la liste arriver (cf. useTeamTasks).
-  const { data: tasks = [], isLoading: loadingTasks } = useTeamTaskWorkingSet(
-    orgId,
-    statusFilter === 'all' ? null : recentSince,
-    { live: true },
-  );
+  // Pages serveur (mig. 191) : au-delà de mille, « Charger plus » lit la page
+  // suivante au lieu de laisser les tâches suivantes hors de portée.
+  const {
+    data: taskPages, isLoading: loadingTasks, hasNextPage, fetchNextPage, isFetchingNextPage,
+  } = useTeamTaskPages(orgId, statusFilter === 'all' ? null : recentSince, { live: true });
+  const tasks = useMemo(() => taskPages?.pages.flat() ?? [], [taskPages]);
   const isLoading = loadingProjects || loadingTasks;
-  const truncated = tasks.length >= TEAM_TASKS_READ_LIMIT;
+  const truncated = !!hasNextPage;
   const createTask = useCreateTeamTask(orgId);
   const updateTask = useUpdateTeamTask(orgId);
   const deleteTask = useDeleteTeamTask(orgId);
@@ -268,7 +270,29 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
           : null}
       />
 
-      {!isLoading && truncated && <TruncatedDataNotice limit={TEAM_TASKS_READ_LIMIT} />}
+      {/* Vues enregistrées (mig. 192) : les filtres de l'URL, nommés. */}
+      <div className="flex justify-end -mt-2">
+        <SavedViewsMenu
+          orgId={orgId}
+          scope="tasks"
+          current={taskFiltersToViewParams(filters, 'open')}
+          onApply={(params) => setFilters(viewParamsToTaskFilters(params, 'open'))}
+        />
+      </div>
+
+      {!isLoading && truncated && (
+        <div className="space-y-2">
+          <TruncatedDataNotice limit={tasks.length} />
+          <button
+            type="button"
+            onClick={() => fetchNextPage()}
+            disabled={isFetchingNextPage}
+            className="w-full h-9 rounded-lg text-sm font-semibold border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] disabled:opacity-60"
+          >
+            {isFetchingNextPage ? t('projects.loadingMoreTasks') : t('projects.loadMoreTasks', { count: TEAM_TASKS_READ_LIMIT })}
+          </button>
+        </div>
+      )}
 
       {/* Table */}
       {/* Premier chargement d'abord : `projects.length === 0` est vrai tant que

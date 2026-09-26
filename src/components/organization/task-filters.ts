@@ -115,3 +115,17 @@ export const useOrgTaskFilters = (defaultStatus: TaskStatusFilter) => {
   );
   return { filters, setFilters };
 };
+
+/**
+ * Filtres → paramètres d'une vue enregistrée (mig. 192) : les mêmes clés que
+ * l'URL, seulement celles qui s'écartent du défaut. Une vue et un lien
+ * partagé disent donc la même chose.
+ */
+export function taskFiltersToViewParams(f: OrgTaskFilters, defaultStatus: TaskStatusFilter): Record<string, string> {
+  return Object.fromEntries(writeTaskFilters(new URLSearchParams(), f, defaultStatus).entries());
+}
+
+/** Paramètres d'une vue → filtres ; ce qui manque revient au défaut, ce qui est invalide est ignoré. */
+export function viewParamsToTaskFilters(params: Record<string, string>, defaultStatus: TaskStatusFilter): OrgTaskFilters {
+  return readTaskFilters(new URLSearchParams(params), defaultStatus);
+}

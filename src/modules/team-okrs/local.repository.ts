@@ -13,11 +13,32 @@ import {
   UpdateTeamOKRInput,
   UpdateTeamKRInput,
   SyncTeamKRInput,
+  TrashedTeamOKR,
 } from './types';
-import { TEAM_OKRS_STORAGE_KEY } from './constants';
+import { TEAM_OKRS_STORAGE_KEY, TEAM_OKR_TRASH_DAYS, TEAM_OKR_TRASH_STORAGE_KEY } from './constants';
 import { isEnglishSeed } from '@/lib/seed-i18n';
 import { safeGetItem, safeSetItem, writeJsonOrThrow } from '@/lib/safe-json';
 import { makeApiError } from '@/lib/normalizeApiError';
+
+/** Qui a supprimé, en démo : l'unique utilisateur de démonstration. */
+const DEMO_TRASH_USER_ID = 'demo-user';
+
+interface TrashEntry {
+  okr: TeamOKR;
+  deletedAt: string;
+  deletedBy: string | null;
+}
+
+const readTrash = (): TrashEntry[] => {
+  const raw = safeGetItem(TEAM_OKR_TRASH_STORAGE_KEY);
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    return Array.isArray(parsed) ? (parsed as TrashEntry[]) : [];
+  } catch {
+    return [];
+  }
+};
 
 const DEMO_ORG_ID = 'org-demo-1';
 const DEMO_USER_ID = 'demo-user';
@@ -223,7 +244,47 @@ export class LocalStorageTeamOKRsRepository implements ITeamOKRsRepository {
   }
 
   async remove(okrId: string): Promise<void> {
-    this.save(readOrSeed().filter((o) => o.id !== okrId));
+    // Corbeille (mig. 193) : l'objectif ENTIER (KR compris) attend 30 jours.
+    const okrs = readOrSeed();
+    const okr = okrs.find((o) => o.id === okrId);
+    if (!okr) throw makeApiError('not_found');
+    writeJsonOrThrow(TEAM_OKR_TRASH_STORAGE_KEY, [
+      { okr, deletedAt: new Date().toISOString(), deletedBy: DEMO_TRASH_USER_ID },
+      ...readTrash(),
+    ]);
+    this.save(okrs.filter((o) => o.id !== okrId));
+  }
+
+  /** Démo seulement : recopie l'état du dernier point d'étape sur le KR, comme `post_kr_checkin`. */
+  setKeyResultHealth(krId: string, health: TeamKeyResult['health']): void {
+    const okrs = readOrSeed();
+    for (const okr of okrs) {
+      const kr = okr.keyResults.find((k) => k.id === krId);
+      if (!kr) continue;
+      kr.health = health;
+      kr.healthUpdatedAt = new Date().toISOString();
+      this.save(okrs);
+      return;
+    }
+  }
+
+  async getTrash(orgId: string): Promise<TrashedTeamOKR[]> {
+    const since = Date.now() - TEAM_OKR_TRASH_DAYS * 86_400_000;
+    return readTrash()
+      .filter((e) => e.okr.orgId === orgId && Date.parse(e.deletedAt) > since)
+      .map((e) => ({ id: e.okr.id, title: e.okr.title, deletedAt: e.deletedAt, deletedBy: e.deletedBy, createdBy: e.okr.createdBy }));
+  }
+
+  async restore(okrId: string): Promise<void> {
+    const trash = readTrash();
+    const entry = trash.find((e) => e.okr.id === okrId);
+    if (!entry) throw makeApiError('not_found');
+    this.save([entry.okr, ...readOrSeed()]);
+    writeJsonOrThrow(TEAM_OKR_TRASH_STORAGE_KEY, trash.filter((e) => e.okr.id !== okrId));
+  }
+
+  async purge(okrId: string): Promise<void> {
+    writeJsonOrThrow(TEAM_OKR_TRASH_STORAGE_KEY, readTrash().filter((e) => e.okr.id !== okrId));
   }
 
   async updateKeyResult(krId: string, input: UpdateTeamKRInput): Promise<void> {

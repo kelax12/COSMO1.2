@@ -17,19 +17,22 @@ import { CheckSquare, Flag, Link2, UserRound } from 'lucide-react';
 import { getDateLocale } from '@/i18n/format';
 import type { OrgMember } from '@/modules/organizations';
 import type { OrgTeam } from '@/modules/org-teams';
-import type { TeamProject, TeamProjectDependency, TeamProjectMilestone, TeamTask } from '@/modules/team-projects';
+import type { TeamProject, TeamProjectDependency, TeamProjectMilestone, TeamProjectTaskStats, TeamTask } from '@/modules/team-projects';
 import { projectColor } from './team-projects.helpers';
 import {
-  PROJECT_STATUS_META, projectProgress, isProjectLate, nextMilestone, openBlockers,
+  PROJECT_STATUS_META, projectProgressOf, isProjectLate, nextMilestone, openBlockers,
 } from './portfolio.helpers';
 import MemberAvatar from './MemberAvatar';
 import ProjectBulkBar from './ProjectBulkBar';
+import { ProjectHealthBadge } from './ProjectHealthSection';
 import { useT } from '@/i18n/useT';
 import TeamColorDot from './TeamColorDot';
 
 interface ProjectPortfolioViewProps {
   projects: TeamProject[];
   tasks: TeamTask[];
+  /** Avancement compté par le serveur (mig. 191) — prioritaire sur `tasks`. */
+  statsById?: Map<string, TeamProjectTaskStats>;
   members: OrgMember[];
   teams: OrgTeam[];
   milestones: TeamProjectMilestone[];
@@ -47,7 +50,7 @@ interface ProjectPortfolioViewProps {
 }
 
 const ProjectPortfolioView = ({
-  projects, tasks, members, teams, milestones, dependencies, allProjects, onOpenProject,
+  projects, tasks, statsById, members, teams, milestones, dependencies, allProjects, onOpenProject,
   canBulkEdit = false, canBulkArchive = false,
 }: ProjectPortfolioViewProps) => {
   const { t } = useT('org');
@@ -98,7 +101,7 @@ const ProjectPortfolioView = ({
           {projects.map((project) => {
             const status = project.status ?? 'active';
             const owner = project.ownerId ? memberById.get(project.ownerId) : undefined;
-            const progress = projectProgress(project.id, tasks);
+            const progress = projectProgressOf(project.id, tasks, statsById);
             const late = isProjectLate(project);
             const next = nextMilestone(project.id, milestones);
             const blockers = openBlockers(project.id, dependencies, allProjects);
@@ -165,6 +168,8 @@ const ProjectPortfolioView = ({
                         {pf('late')}
                       </span>
                     )}
+                    {/* Santé déclarée (mig. 190) : un portefeuille se lit d'abord par ses projets à risque. */}
+                    <span className="text-caption whitespace-nowrap"><ProjectHealthBadge health={project.health} /></span>
                   </span>
                 </td>
                 <td className="px-3 py-2.5 hidden lg:table-cell text-xs text-[rgb(var(--color-text-secondary))] whitespace-nowrap">

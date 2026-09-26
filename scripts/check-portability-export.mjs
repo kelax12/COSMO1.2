@@ -221,6 +221,8 @@ const TABLES_NON_EXPORTEES = {
   team_task_followers: "Abonnements aux notifications d'une tâche d'équipe : un réglage d'interface qui pointe vers des données de l'organisation, pas un contenu fourni par la personne. ⚠️ Discutable, comme `org_notification_settings` : à rouvrir si l'export doit restituer les préférences.",
   team_project_followers: "Abonnements aux notifications d'un projet d'équipe : même raison que `team_task_followers`.",
   org_notification_settings: "Préférences de notification par organisation (types coupés, e-mail, résumé) : réglage d'interface, pas une donnée fournie au sens de l'art. 20. ⚠️ Discutable : à rouvrir si l'export doit restituer les réglages.",
+  team_project_members: "Rôle sur un projet, décidé par qui pilote le projet (mig. 190), pas fourni par la personne.",
+  org_saved_views: "Combinaisons de filtres nommées (mig. 192) : un réglage d'interface, sans contenu de travail.",
 };
 
 // ── Lecture du schéma ──────────────────────────────────────────────
