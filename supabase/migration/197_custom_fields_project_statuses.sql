@@ -298,14 +298,16 @@ BEGIN
     RAISE EXCEPTION 'project_viewer_read_only' USING ERRCODE = '42501';
   END IF;
   -- La valeur respecte le type du champ.
-  IF NOT CASE v_field.kind
+  -- Parenthèses obligatoires : sans elles, PL/pgSQL coupe la condition au
+  -- premier THEN, celui du CASE (« syntax error at end of input »).
+  IF NOT (CASE v_field.kind
     WHEN 'text'     THEN jsonb_typeof(NEW.value) = 'string' AND char_length(NEW.value #>> '{}') <= 500
     WHEN 'number'   THEN jsonb_typeof(NEW.value) = 'number'
     WHEN 'checkbox' THEN jsonb_typeof(NEW.value) = 'boolean'
     WHEN 'date'     THEN jsonb_typeof(NEW.value) = 'string' AND (NEW.value #>> '{}') ~ '^\d{4}-\d{2}-\d{2}$'
     WHEN 'select'   THEN jsonb_typeof(NEW.value) = 'string' AND (NEW.value #>> '{}') = ANY (v_field.options)
     ELSE false
-  END THEN
+  END) THEN
     RAISE EXCEPTION 'invalid_field_value' USING ERRCODE = '22023';
   END IF;
   NEW.org_id := v_task_org;
