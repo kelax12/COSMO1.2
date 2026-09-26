@@ -27,6 +27,7 @@ import { PROJECT_STATUS_META, isProjectLate, progressFromStats, projectProgress 
 import ProjectHealthSection, { ProjectHealthBadge } from './ProjectHealthSection';
 import ProjectMembersSection from './ProjectMembersSection';
 import MemberAvatar from './MemberAvatar';
+import VisibilityPill from './VisibilityPill';
 import TeamTaskRow from './TeamTaskRow';
 import ProjectMilestonesSection from './ProjectMilestonesSection';
 import ProjectDependenciesSection from './ProjectDependenciesSection';
@@ -153,6 +154,8 @@ const ProjectDetailPage = ({
               <span className="inline-flex items-center gap-1 text-[rgb(var(--color-text-secondary))]">
                 <UsersRound size={12} aria-hidden="true" /> {team?.name ?? t('project.wholeOrg')}
               </span>
+              {/* Qui voit ce projet, et pourquoi (M12). */}
+              <VisibilityPill orgId={project.orgId} teamIds={project.teamId ? [project.teamId] : []} projectId={project.id} />
               {categoryName && <span className="text-[rgb(var(--color-text-secondary))]">· {categoryName}</span>}
             </div>
           </div>

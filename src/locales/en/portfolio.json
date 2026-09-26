@@ -400,5 +400,26 @@
     "max_one": "At most {{count}} contributor",
     "max_other": "At most {{count}} contributors",
     "carriers": "Carried by {{names}}"
+  },
+  "visibility": {
+    "pill": "Visible to {{scope}}",
+    "aria": "Visible to {{scope}}, {{count}} people. See who",
+    "wholeOrg": "the whole company",
+    "teamsHierarchy": "{{teams}} + management",
+    "teamsHierarchyMembers": "{{teams}} + management + project members",
+    "people_one": "{{count}} person",
+    "people_other": "{{count}} people",
+    "title_one": "{{count}} person sees this",
+    "title_other": "{{count}} people see this",
+    "ruleOrg": "With no team, every active company member sees it.",
+    "ruleTeams": "Team members, their managers, admins and, for a project, its direct members.",
+    "search": "Search for a person",
+    "reasonTeam": "team",
+    "reasonDirect": "project member",
+    "reasonHierarchy": "management",
+    "reasonAdmin": "admin",
+    "reasonOrg": "company",
+    "more_one": "and {{count}} more",
+    "more_other": "and {{count}} more"
   }
 }

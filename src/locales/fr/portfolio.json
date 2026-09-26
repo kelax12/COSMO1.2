@@ -408,5 +408,29 @@
     "max_many": "{{count}} de contributeurs au plus",
     "max_other": "{{count}} contributeurs au plus",
     "carriers": "Porté par {{names}}"
+  },
+  "visibility": {
+    "pill": "Visible : {{scope}}",
+    "aria": "Visible par {{scope}}, {{count}} personnes. Voir qui",
+    "wholeOrg": "toute l'entreprise",
+    "teamsHierarchy": "{{teams}} + hiérarchie",
+    "teamsHierarchyMembers": "{{teams}} + hiérarchie + membres du projet",
+    "people_one": "{{count}} personne",
+    "people_many": "{{count}} de personnes",
+    "people_other": "{{count}} personnes",
+    "title_one": "{{count}} personne voit ceci",
+    "title_many": "{{count}} de personnes voient ceci",
+    "title_other": "{{count}} personnes voient ceci",
+    "ruleOrg": "Sans équipe, tout membre actif de l'entreprise le voit.",
+    "ruleTeams": "Les membres des équipes, leur hiérarchie, les admins et, pour un projet, ses membres directs.",
+    "search": "Chercher une personne",
+    "reasonTeam": "équipe",
+    "reasonDirect": "membre du projet",
+    "reasonHierarchy": "hiérarchie",
+    "reasonAdmin": "administrateur",
+    "reasonOrg": "entreprise",
+    "more_one": "et {{count}} autre",
+    "more_many": "et {{count}} d'autres",
+    "more_other": "et {{count}} autres"
   }
 }

@@ -3,7 +3,8 @@
 > des branches `feat/entreprise-popups`, `claude/recommandations-mode-entreprise-swgi0u`,
 > `claude/recommandations-mode-entreprise-do9du9`, `coherence/journal-181` et du travail
 > interrompu de `.worktrees/entreprise-gov` (sauvé sur `wip/entreprise-gov-ui`).
-> **Mise à jour du 2026-09-26 (après-midi)** : les 🔴 des onglets Tâches et OKR sont réalisés
+> **Mise à jour du 2026-09-26 (après-midi)** : les 🔴 des onglets Tâches et OKR, et la pastille
+> de visibilité (M12), sont réalisés
 > sur la branche `feat/entreprise-audit-rouges` (non fusionnée) ; les pastilles
 > concernées portent la mention « branche `audit-rouges` ».
 > Le code fait foi contre ce document. Sources vivantes : [`CLAUDE.md`](../../CLAUDE.md) ·
@@ -34,11 +35,11 @@
    `offboard_org_member` : appliquée en second, chacune effaçait l'ajout de l'autre. 194 en fait
    l'union. Non prouvée en transaction annulée.
 
-**Bilan** : sur les 14 faiblesses macro, 10 ✅, 4 🟠, 0 🔴 (M8 passe ✅ avec la branche `audit-rouges`). Les 4 problèmes critiques de la
+**Bilan** : sur les 14 faiblesses macro, 11 ✅, 3 🟠, 0 🔴 (M8 et M12 passent ✅ avec la branche `audit-rouges`). Les 4 problèmes critiques de la
 synthèse : 3 ✅, 1 🟠 (M1, lectures côté serveur). Restent 🔴 surtout des fonctionnalités de
 l'étape 6 classées « optionnelles » (capacité, champs personnalisés, automatisations,
-intégrations, SSO) et quelques détails d'écran (lien hiérarchique secondaire, pastille de
-visibilité, rubrique Sécurité). La colonne Assignés et les autres 🔴 de l'onglet Tâches sont
+intégrations, SSO) et quelques détails d'écran (lien hiérarchique secondaire, rubrique
+Sécurité). La colonne Assignés et les autres 🔴 de l'onglet Tâches sont
 faits (branche `audit-rouges`).
 
 **Méthode.** J'ai lu le code du mode Entreprise, soit environ 17 500 lignes : les 70 composants de
@@ -216,12 +217,13 @@ fantômes ⏳ mig. 164 (+ 194).
 Liste collée, placement dans la pyramide, équipes, accès borné, relances ; Edge Function
 `send-org-invite` déployée le 2026-09-25.
 
-#### M12 · La visibilité ne s'affiche nulle part (Haute) · 🟠
+#### M12 · La visibilité ne s'affiche nulle part (Haute) · ✅
 
 - ✅ À la création d'un projet : audience explicite et chiffrée, plus de valeur implicite.
 - ✅ Changement d'équipe : la nouvelle audience est nommée.
-- 🔴 Pas de pastille « Visible : équipe Produit + hiérarchie · 14 personnes » cliquable sur un
-  projet ou un OKR existant.
+- ✅ Pastille « Visible : Produit + hiérarchie · 14 personnes » sur la page projet et sur chaque
+  objectif ; un clic dit qui voit et pourquoi (équipe, membre du projet, hiérarchie, admin).
+  Miroir de `can_access_team_project` (mig. 194), branche `audit-rouges`.
 
 #### M13 · Des réglages mal rangés (Moyenne) · 🟠
 
@@ -471,7 +473,7 @@ saisie du nom), « Annuler » aussi sur les équipes et les projets.
 - 🟠 Onglets Tâches et Projets qui se concurrencent (M6 ; filtres complets dans Tâches) · ✅ recherche globale et page par objet (M7).
 - ✅ Pyramide et équipes, statistiques des responsables d'équipe (M3).
 - ✅ OKR liés à l'exécution (M9) · ✅ processus de départ (M10) · ✅ invitation par e-mail (M11).
-- 🟠 Visibilité (M12) · ✅ création rapide d'un projet visible par tous.
+- ✅ Visibilité (M12, pastille cliquable) · ✅ création rapide d'un projet visible par tous.
 - ✅ Modale de tâche (statut, création explicite, étiquettes, historique).
 - ✅ Sélecteurs avec recherche · ✅ page Membres découpée · 🟠 réglages (Sécurité absente).
 
@@ -481,7 +483,7 @@ saisie du nom), « Annuler » aussi sur les équipes et les projets.
 - ✅ Puissance : vues enregistrées, actions groupées partout, modèles de projet, lien OKR vers projets.
 - ✅ Productivité : Ctrl+K, « En attente de moi », suivre un objet, résumé quotidien.
 - 🟠 Passage à l'échelle : RPC paginées et agrégées (partiel), ✅ virtualisation (branche `audit-rouges`), ✅ branches repliables.
-- 🟠 Compréhension : 🔴 pastille de visibilité, ✅ glossaire des rôles, ✅ toast quand on devient manager.
+- ✅ Compréhension : ✅ pastille de visibilité (branche `audit-rouges`), ✅ glossaire des rôles, ✅ toast quand on devient manager.
 - ✅ Collaboration : page d'équipe, planification dans l'agenda avec accord, revue hebdomadaire par équipe.
 - ✅ Déjà construit, à exposer : ✅ historique par tâche, ✅ journal de l'organisation, ✅ étiquettes (filtre, branche `audit-rouges`).
 

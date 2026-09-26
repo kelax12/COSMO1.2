@@ -9,6 +9,7 @@ import type { KRProjectLink, OkrCycle, TeamKeyResult, TeamOKR } from '@/modules/
 import type { TeamProjectTaskStats } from '@/modules/team-projects';
 import type { OrgMember } from '@/modules/organizations';
 import MemberAvatar from './MemberAvatar';
+import VisibilityPill from './VisibilityPill';
 import { PermissionGate } from './permission-hints';
 import TeamColorDot from './TeamColorDot';
 import { useT } from '@/i18n/useT';
@@ -189,6 +190,8 @@ const TeamOKRCard = ({
                 </span>
               ))
             )}
+            {/* Qui voit cet objectif, et pourquoi (M12). */}
+            <VisibilityPill orgId={okr.orgId} teamIds={okr.teamIds} />
             {cycle && (
               <span className="inline-flex items-center gap-1 text-caption font-medium px-2 py-0.5 rounded-full border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))]">
                 <CalendarRange size={11} aria-hidden="true" /> {cycle.name}
