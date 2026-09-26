@@ -41,8 +41,11 @@ import {
   TeamMemberWorkload,
 } from './types';
 import * as portfolio from './supabase.portfolio';
-import * as labels from './supabase.labels';
-import * as access from './supabase.access';
+// Chargés à la demande : ce repository vit dans le chunk d'ENTRÉE (il sert
+// l'Aperçu), pas les étiquettes (fiche de tâche) ni les rôles et chiffres
+// serveur (Projets, OKR, Pyramide). Même règle que `audience.repository`.
+const labels = () => import('./supabase.labels');
+const access = () => import('./supabase.access');
 
 const audience = () => import('./audience.repository');
 import {
@@ -174,11 +177,11 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
   async purgeArchivedProject(projectId: string): Promise<void> { return (await audience()).purgeArchivedProject(projectId); }
 
   // ─── Membres de projet et chiffres serveur (mig. 190, 191) ─────────
-  getProjectMembers(orgId: string): Promise<TeamProjectMember[]> { return access.getProjectMembers(orgId); }
-  setProjectMember(projectId: string, userId: string, role: TeamProjectRole): Promise<void> { return access.setProjectMember(projectId, userId, role); }
-  removeProjectMember(projectId: string, userId: string): Promise<void> { return access.removeProjectMember(projectId, userId); }
-  getProjectTaskStats(orgId: string, today: string): Promise<TeamProjectTaskStats[]> { return access.getProjectTaskStats(orgId, today); }
-  getMemberWorkload(orgId: string, today: string): Promise<TeamMemberWorkload[]> { return access.getMemberWorkload(orgId, today); }
+  async getProjectMembers(orgId: string): Promise<TeamProjectMember[]> { return (await access()).getProjectMembers(orgId); }
+  async setProjectMember(projectId: string, userId: string, role: TeamProjectRole): Promise<void> { return (await access()).setProjectMember(projectId, userId, role); }
+  async removeProjectMember(projectId: string, userId: string): Promise<void> { return (await access()).removeProjectMember(projectId, userId); }
+  async getProjectTaskStats(orgId: string, today: string): Promise<TeamProjectTaskStats[]> { return (await access()).getProjectTaskStats(orgId, today); }
+  async getMemberWorkload(orgId: string, today: string): Promise<TeamMemberWorkload[]> { return (await access()).getMemberWorkload(orgId, today); }
 
   async updateProject(projectId: string, input: UpdateTeamProjectInput): Promise<TeamProject> {
     if (!supabase) throw new Error('Supabase not configured');
@@ -465,12 +468,12 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
   }
 
   // ─── Étiquettes et historique par tâche (mig. 093, 094) ──────────
-  getLabels(orgId: string): Promise<TeamLabel[]> { return labels.getLabels(orgId); }
-  createLabel(orgId: string, input: CreateTeamLabelInput): Promise<TeamLabel> { return labels.createLabel(orgId, input); }
-  getTaskLabels(taskId: string): Promise<TeamTaskLabel[]> { return labels.getTaskLabels(taskId); }
-  addTaskLabel(taskId: string, labelId: string): Promise<void> { return labels.addTaskLabel(taskId, labelId); }
-  removeTaskLabel(taskId: string, labelId: string): Promise<void> { return labels.removeTaskLabel(taskId, labelId); }
-  getTaskActivity(taskId: string): Promise<TeamTaskActivity[]> { return labels.getTaskActivity(taskId); }
+  async getLabels(orgId: string): Promise<TeamLabel[]> { return (await labels()).getLabels(orgId); }
+  async createLabel(orgId: string, input: CreateTeamLabelInput): Promise<TeamLabel> { return (await labels()).createLabel(orgId, input); }
+  async getTaskLabels(taskId: string): Promise<TeamTaskLabel[]> { return (await labels()).getTaskLabels(taskId); }
+  async addTaskLabel(taskId: string, labelId: string): Promise<void> { return (await labels()).addTaskLabel(taskId, labelId); }
+  async removeTaskLabel(taskId: string, labelId: string): Promise<void> { return (await labels()).removeTaskLabel(taskId, labelId); }
+  async getTaskActivity(taskId: string): Promise<TeamTaskActivity[]> { return (await labels()).getTaskActivity(taskId); }
 
   // ─── Historique (mig. 094) — lecture seule ───────────────────────
 
