@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router';
-import { toast } from '@/lib/toast';
 import { Plus, Target } from 'lucide-react';
 import {
   useTeamOKRs,
@@ -12,18 +11,10 @@ import {
   type TeamKeyResult,
 } from '@/modules/team-okrs';
 import { useOrgTeams } from '@/modules/org-teams';
-import {
-  useTeamCategories,
-  useCreateTeamCategory,
-  useUpdateTeamCategory,
-  useDeleteTeamCategory,
-  TEAM_CATEGORY_COLORS,
-  teamCategoryImpact,
-} from '@/modules/team-categories';
-import { useTeamProjects, useTeamTasks, useTeamProjectTaskStats } from '@/modules/team-projects';
+import { useTeamCategories } from '@/modules/team-categories';
+import { useTeamProjects, useTeamProjectTaskStats } from '@/modules/team-projects';
 import { getColorHex } from '@/lib/category-colors';
-import CategoryFilterBar from '@/pages/okr/CategoryFilterBar';
-import DeleteTeamCategoryConfirm from './DeleteTeamCategoryConfirm';
+import TeamCategoryFilterBar from './TeamCategoryFilterBar';
 import TeamOKRModal from './TeamOKRModal';
 import TeamOKRCard from './TeamOKRCard';
 import OkrCyclesBar from './OkrCyclesBar';
@@ -40,8 +31,6 @@ interface TeamOKRTabProps {
 
 }
 
-// Palette hex (value === color) — les catégories d'entreprise stockent l'hex.
-const OKR_COLOR_OPTIONS = TEAM_CATEGORY_COLORS.map((hex) => ({ value: hex, color: hex }));
 // Résout une couleur : hex tel quel, sinon nom → hex (parité mode perso).
 const resolveColor = (color: string) => (color.startsWith('#') ? color : getColorHex(color));
 
@@ -55,13 +44,6 @@ const TeamOKRTab = ({ orgId }: TeamOKRTabProps) => {
   const { data: okrs = [], isLoading } = useTeamOKRs(orgId, { live: true });
   const { data: teams = [] } = useOrgTeams(orgId);
   const { data: categories = [] } = useTeamCategories(orgId);
-  const createCategory = useCreateTeamCategory(orgId);
-  const updateCategory = useUpdateTeamCategory(orgId);
-  const deleteCategory = useDeleteTeamCategory(orgId);
-  // Impact d'une suppression — mêmes lectures que `TeamCategoryTreeSelect`,
-  // réservées à qui peut gérer les catégories.
-  const { data: impactProjects = [] } = useTeamProjects(can['category.manage'] ? orgId : undefined);
-  const { data: impactTasks = [] } = useTeamTasks(can['category.manage'] ? orgId : undefined, undefined, { background: true });
   const updateKR = useUpdateTeamKR(orgId);
   const deleteOKR = useDeleteTeamOKR(orgId);
   // Exécution (mig. 160) : cycles, KR reliés à des projets, avancement serveur.
@@ -81,10 +63,6 @@ const TeamOKRTab = ({ orgId }: TeamOKRTabProps) => {
   // amenée à l'écran et soulignée.
   const [searchParams, setSearchParams] = useSearchParams();
   const focusedOkrId = readEntityParam(searchParams, 'okr');
-  useEffect(() => {
-    if (!focusedOkrId || isLoading) return;
-    document.getElementById(`okr-${focusedOkrId}`)?.scrollIntoView({ block: 'start', behavior: 'smooth' });
-  }, [focusedOkrId, isLoading]);
   const openOkr = (okrId: string) => {
     const next = new URLSearchParams(searchParams);
     next.set('okr', okrId);
@@ -95,20 +73,6 @@ const TeamOKRTab = ({ orgId }: TeamOKRTabProps) => {
   // `team_categories` est hiérarchique depuis la mig. 148 : le filtre cascade
   // désormais réellement sur les sous-catégories (cf. CategoryFilterBar).
   const [activeCategoryIds, setActiveCategoryIds] = useState<Set<string>>(new Set());
-  const [hoveredCategoryId, setHoveredCategoryId] = useState<string | null>(null);
-  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
-  const [editCategoryName, setEditCategoryName] = useState('');
-  const [editCategoryColor, setEditCategoryColor] = useState<string>(TEAM_CATEGORY_COLORS[0]);
-  const [showCreateCategory, setShowCreateCategory] = useState(false);
-  const [newCategoryName, setNewCategoryName] = useState('');
-  const [newCategoryColor, setNewCategoryColor] = useState<string>(TEAM_CATEGORY_COLORS[0]);
-  const [categoryToDeleteId, setCategoryToDeleteId] = useState<string | null>(null);
-
-  const categoryToDelete = categories.find((c) => c.id === categoryToDeleteId);
-  const deleteImpact = useMemo(
-    () => teamCategoryImpact(categoryToDeleteId, impactTasks, impactProjects, okrs, categories),
-    [categoryToDeleteId, impactTasks, impactProjects, okrs, categories],
-  );
 
   const teamName = (id: string) => teams.find((x) => x.id === id)?.name ?? t('okrTab.fallbackTeam');
   const teamColor = (id: string) => teams.find((x) => x.id === id)?.color;
@@ -141,52 +105,6 @@ const TeamOKRTab = ({ orgId }: TeamOKRTabProps) => {
     document.getElementById(`okr-${focusedOkrId}`)?.scrollIntoView({ block: 'center' });
   }, [focusedLoaded, focusedHidden, focusedOkrId]);
 
-  // ── Handlers catégories (mêmes noms/comportements que OKRPage) ──────
-  const startEditCategory = (cat: { id: string; name: string; color: string }) => {
-    setEditingCategoryId(cat.id);
-    setEditCategoryName(cat.name);
-    setEditCategoryColor(cat.color);
-    setHoveredCategoryId(null);
-  };
-  const cancelEditCategory = () => {
-    setEditingCategoryId(null);
-    setEditCategoryName('');
-    setEditCategoryColor(TEAM_CATEGORY_COLORS[0]);
-  };
-  const submitEditCategory = () => {
-    if (!editingCategoryId) return;
-    const name = editCategoryName.trim();
-    if (name.length < 2) {
-      toast.error(t('okrCategory.nameTooShort'));
-      return;
-    }
-    // Aucune cascade à faire ici : `team_okrs.category_id` est un FK (mig.
-    // 148), renommer la catégorie suffit à ce que tout ce qui la référence
-    // affiche le nouveau nom.
-    updateCategory.mutate(
-      { categoryId: editingCategoryId, input: { name, color: editCategoryColor } },
-      {
-        onSuccess: () => {
-          cancelEditCategory();
-          toast.success(t('okrCategory.updated'));
-        },
-      },
-    );
-  };
-  const confirmDeleteCategory = () => {
-    if (!categoryToDeleteId) return;
-    deleteCategory.mutate(categoryToDeleteId, {
-      onSuccess: () => {
-        setActiveCategoryIds((prev) => {
-          if (!prev.has(categoryToDeleteId)) return prev;
-          const next = new Set(prev);
-          next.delete(categoryToDeleteId);
-          return next;
-        });
-        setCategoryToDeleteId(null);
-      },
-    });
-  };
   if (isLoading) {
     return <div className="py-10 text-center text-sm text-[rgb(var(--color-text-muted))]">{t('okrTab.loading')}</div>;
   }
@@ -199,35 +117,15 @@ const TeamOKRTab = ({ orgId }: TeamOKRTabProps) => {
           Toujours rendu (même sans catégorie) pour que la barre occupe sa place
           normale : sinon les boutons/cartes en dessous remontaient (#4). */}
       <div className="flex items-start justify-between gap-3 flex-wrap">
-        {(
-          <CategoryFilterBar
-            categories={categories.map((c) => ({ id: c.id, name: c.name, color: c.color, parentId: c.parentId }))}
-            activeCategoryIds={activeCategoryIds}
-            setActiveCategoryIds={setActiveCategoryIds}
-            hoveredCategoryId={hoveredCategoryId}
-            setHoveredCategoryId={setHoveredCategoryId}
-            editingCategoryId={editingCategoryId}
-            editCategoryName={editCategoryName}
-            setEditCategoryName={setEditCategoryName}
-            editCategoryColor={editCategoryColor}
-            setEditCategoryColor={setEditCategoryColor}
-            startEditCategory={startEditCategory}
-            cancelEditCategory={cancelEditCategory}
-            submitEditCategory={submitEditCategory}
-            setCategoryToDeleteId={setCategoryToDeleteId}
-            colorOptions={OKR_COLOR_OPTIONS}
-            resolveColor={resolveColor}
-            showCreateCategory={showCreateCategory}
-            setShowCreateCategory={setShowCreateCategory}
-            newCategoryName={newCategoryName}
-            setNewCategoryName={setNewCategoryName}
-            newCategoryColor={newCategoryColor}
-            setNewCategoryColor={setNewCategoryColor}
-            createCategoryMutation={createCategory}
-            canManage={can['category.manage']}
-            accentAllActive
-          />
-        )}
+        {/* Filtre seulement : créer, renommer ou supprimer une catégorie se
+            fait dans Paramètres → Catégories (M13). Elles classent aussi
+            projets et tâches, leur gestion n'avait rien à faire ici. */}
+        <TeamCategoryFilterBar
+          orgId={orgId}
+          activeCategoryIds={activeCategoryIds}
+          setActiveCategoryIds={setActiveCategoryIds}
+          canManage={false}
+        />
         <PermissionGate reason={hints.deniedReason('okr.create')}>
           <button
             type="button"
@@ -291,16 +189,6 @@ const TeamOKRTab = ({ orgId }: TeamOKRTabProps) => {
         ))
       )}
 
-      {/* Dialog suppression catégorie (mig. 148 : team_categories, FK partagé
-          tâches/projets/OKR — plus de réaffectation à proposer). */}
-      <DeleteTeamCategoryConfirm
-        open={!!categoryToDeleteId}
-        categoryName={categoryToDelete?.name}
-        impact={deleteImpact}
-        onCancel={() => setCategoryToDeleteId(null)}
-        onConfirm={confirmDeleteCategory}
-        isWorking={deleteCategory.isPending}
-      />
 
       {showCreate && (
         <TeamOKRModal orgId={orgId} onClose={() => setShowCreate(false)} />

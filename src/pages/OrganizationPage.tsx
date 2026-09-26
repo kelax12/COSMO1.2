@@ -30,6 +30,8 @@ import {
   readTeamIdSegment,
 } from '@/components/organization/deep-link.helpers';
 import { safeRedirectPath } from '@/lib/safe-redirect';
+import { canSeeStats } from '@/components/organization/stats-scope.helpers';
+import { useOrgTeams, useOrgTeamMembers } from '@/modules/org-teams';
 import MyWorkTab from '@/components/organization/MyWorkTab';
 import OrgPlanChip from '@/components/organization/OrgPlanChip';
 import { MyWorkSkeleton, TeamTasksSkeleton, TeamOverviewSkeleton, OrgTabSkeleton } from '@/components/organization/OrgLoadingSkeletons';
@@ -73,7 +75,7 @@ const OrgMembersSection = lazyWithRetry(() => import('@/components/organization/
 // leur chunk.
 const TeamsSection = lazyWithRetry(() => import('@/components/organization/TeamsSection'));
 const TeamPage = lazyWithRetry(() => import('@/components/organization/TeamPage'));
-const OrgSettingsSection = lazyWithRetry(() => import('@/components/organization/OrgSettingsSection'), ['csv', 'org', 'orgAccount', 'orgAdmin', 'overlays', 'tasks']);
+const OrgSettingsSection = lazyWithRetry(() => import('@/components/organization/OrgSettingsSection'), ['csv', 'okr', 'org', 'orgAccount', 'orgAdmin', 'overlays', 'tasks']);
 
 // Feuilles et dialogues : montés derrière un `&&`, donc déjà conditionnels au
 // rendu. Ils ne l'étaient pas au TÉLÉCHARGEMENT.
@@ -160,6 +162,10 @@ const OrganizationPage = () => {
   // Appelé ICI, avant les early returns `isLoading` / `!myOrg` : un hook placé
   // plus bas ne serait pas monté sur tous les rendus.
   const { data: orgSubscription } = useOrgSubscription(myOrg?.id);
+  // Statistiques (M3) : ouvertes aussi aux responsables d'équipe, qui n'ont
+  // pas forcément de subordonné dans la pyramide.
+  const { data: teams = [], isLoading: teamsLoading } = useOrgTeams(myOrg?.id);
+  const { data: teamMembers = [] } = useOrgTeamMembers(myOrg?.id);
 
   // Ancienne forme `/entreprise?tab=X` → `/entreprise/X`, les autres
   // paramètres conservés. ⚠️ À GARDER POUR TOUJOURS : Stripe renvoie sur
@@ -201,12 +207,17 @@ const OrganizationPage = () => {
   // HIÉRARCHIQUES (onglets Pyramide et Statistiques) : voir l'équipe qu'on
   // encadre n'est pas une permission réglable, c'est une position.
   const canInvite = myPermissions.can['member.invite'];
+  // La pyramide dit qui encadre qui, l'équipe qui travaille ensemble (M3) :
+  // un responsable d'équipe regarde les statistiques de SON équipe.
+  // Tant que les équipes chargent, un lien vers `stats` n'est pas renvoyé
+  // à l'aperçu (le droit n'est pas encore connu).
+  const canStats = teamsLoading || canSeeStats(teams, { members, teamMembers, currentUserId: user?.id, isAdmin });
   // Un membre qui arrive sur `/entreprise/billing` (lien partagé, ancien
   // favori) ou sur `pyramid` / `stats` (favori d'un ancien manager, lien
   // copié) sans en avoir le droit ne voit pas un écran vide : il retombe sur
   // l'aperçu.
   const tab: OrgTab =
-    (urlTab === 'billing' && !isOwner) || ((urlTab === 'pyramid' || urlTab === 'stats') && !isManager)
+    (urlTab === 'billing' && !isOwner) || (urlTab === 'pyramid' && !isManager) || (urlTab === 'stats' && !canStats)
       ? 'overview'
       : urlTab;
 
@@ -223,7 +234,7 @@ const OrganizationPage = () => {
     if (id === 'members') return { count: badges.members, items: badges.memberItems };
     return { count: extra?.count ?? 0, items: extraItems };
   };
-  const navItems: OrgNavItem[] = ORG_SECTIONS.filter((item) => !item.managerOnly || isManager).map(
+  const navItems: OrgNavItem[] = ORG_SECTIONS.filter((item) => (item.id === 'stats' ? canStats : !item.managerOnly || isManager)).map(
     ({ id, labelKey, Icon, group }) => {
       const { count: badgeCount, items } = badgeOf(id);
       const badgeAriaLabel = badgeCount > 0 ? tp('page.badgeCount', badgeCount) : undefined;
@@ -426,7 +437,7 @@ const OrganizationPage = () => {
       {tab === 'overview' && (
         <MyWorkTab orgId={myOrg.id} members={members} currentUserId={user?.id} isManager={isManager} />
       )}
-      {tab === 'stats' && isManager && (
+      {tab === 'stats' && canStats && (
         <TeamOverviewTab orgId={myOrg.id} members={members} isAdmin={isAdmin} currentUserId={user?.id} />
       )}
       {tab === 'pyramid' && isManager && (

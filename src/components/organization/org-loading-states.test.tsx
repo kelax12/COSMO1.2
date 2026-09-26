@@ -36,7 +36,7 @@ vi.mock('@/modules/team-projects', () => ({
   useRestoreTeamTask: () => ({ mutate: vi.fn() }),
 }));
 vi.mock('@/modules/team-okrs', () => ({ useTeamOKRs: () => q([]) }));
-vi.mock('@/modules/org-teams', () => ({ useOrgTeams: () => q([]) }));
+vi.mock('@/modules/org-teams', () => ({ useOrgTeams: () => q([]), useOrgTeamMembers: () => q([]) }));
 vi.mock('@/modules/events', () => ({ useUpcomingEvents: () => [] }));
 vi.mock('@/modules/organizations', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/modules/organizations')>()),

@@ -1358,7 +1358,20 @@
     "inviteHint": "Par e-mail, par code d'adhésion, par lien direct ou parmi vos contacts COSMO.",
     "inviteByEmail": "Inviter par e-mail",
     "otherInvites": "Inviter autrement",
-    "leaveTitle": "Quitter l'entreprise"
+    "leaveTitle": "Quitter l'entreprise",
+    "loading": "Chargement…",
+    "tab_categories": "Catégories",
+    "tab_permissions": "Rôles et permissions",
+    "categoriesIntro": "Les catégories classent les projets, les tâches et les objectifs de toute l'organisation.",
+    "permissionsIntro": "Qui a des droits différents de son rôle. Un admin a toujours tous les droits.",
+    "permissionsSearch": "Rechercher un membre",
+    "permissionsOnlyCustom": "Droits personnalisés seulement",
+    "permissionsEmpty": "Personne ne correspond.",
+    "permissionsAdminAll": "tous les droits",
+    "permissionsDefault": "droits de son rôle",
+    "permissionsCustom_one": "{{count}} droit personnalisé",
+    "permissionsCustom_many": "{{count}} de droits personnalisés",
+    "permissionsCustom_other": "{{count}} droits personnalisés"
   },
   "teamPage": {
     "back": "Toutes les équipes",
@@ -1717,5 +1730,18 @@
     "save": "Enregistrer",
     "cancel": "Annuler",
     "delete": "Supprimer la vue « {{name}} »"
+  },
+  "statsScope": {
+    "label": "Périmètre des statistiques",
+    "wholeOrg": "Toute l'organisation",
+    "mySubtree": "Moi et mon équipe hiérarchique",
+    "teams": "Équipes",
+    "projects": "Projets",
+    "why": "Pourquoi je vois ceci ?",
+    "whyAdmin": "Vous êtes admin : vous voyez tout le travail de l'organisation.",
+    "whyManager": "Vous voyez vos propres tâches et celles des personnes que vous encadrez dans la pyramide.",
+    "whyTeamAdmin": "Les tâches assignées aux membres de cette équipe.",
+    "whyTeamLead": "Vous dirigez cette équipe : vous voyez les tâches assignées à ses membres, même s'ils ne dépendent pas de vous dans la pyramide.",
+    "whyProject": "Toutes les tâches de ce projet, quels que soient leurs assignés."
   }
 }

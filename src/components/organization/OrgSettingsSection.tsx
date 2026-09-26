@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router';
 import { ArrowRightLeft, Bell, Building2, Check, ChevronRight, LogOut, Mail, Plus, Trash2, Users } from 'lucide-react';
 import {
   useActiveOrganization,
+  useMyOrgPermissions,
   useLeaveOrganization,
   useTransferOwnership,
   type MyOrganization,
@@ -34,6 +35,9 @@ const ConfirmLeaveOrgDialog = lazyWithRetry(() => import('@/components/organizat
 const TransferOwnershipDialog = lazyWithRetry(() => import('@/components/organization/TransferOwnershipDialog'));
 const OrgNotificationSettingsDialog = lazyWithRetry(() => import('@/components/organization/OrgNotificationSettingsDialog'));
 const OffboardMemberDialog = lazyWithRetry(() => import('@/components/organization/OffboardMemberDialog'));
+// M13 : catégories et droits quittent l'onglet OKR et l'annuaire pour Paramètres.
+const TeamCategoryFilterBar = lazyWithRetry(() => import('@/components/organization/TeamCategoryFilterBar'));
+const OrgSettingsPermissions = lazyWithRetry(() => import('@/components/organization/OrgSettingsPermissions'));
 // Journal d'audit (mig. 162) : admins seuls, chargé à l'ouverture de Paramètres.
 // Ses textes vivent dans `orgAccount` (surfaces rares) : `org` est payé par
 // toute visite de /entreprise, pas le journal. Le catalogue est déclaré sur la
@@ -84,6 +88,10 @@ const OrgSettingsSection = ({
   // retirer soi-même.
   const [organizingLeave, setOrganizingLeave] = useState(false);
   const me = members.find((m) => m.userId === currentUserId);
+  const { can } = useMyOrgPermissions(org.id);
+  const canManageCategories = isAdmin || can['category.manage'];
+  // Ici la barre ne filtre rien : son état de sélection reste local.
+  const [categoryFilter, setCategoryFilter] = useState<Set<string>>(() => new Set());
   const navigate = useNavigate();
   const { organizations, setActiveOrgId } = useActiveOrganization();
   const [invitingByEmail, setInvitingByEmail] = useState(false);
@@ -140,6 +148,36 @@ const OrgSettingsSection = ({
           <MyPermissionsCard orgId={org.id} members={members} currentUserId={currentUserId} />
         </div>
       </section>
+
+      {/* Catégories (M13) : elles classent projets, tâches ET objectifs de
+          toute l'organisation ; leur gestion vivait sous l'onglet OKR. */}
+      {canManageCategories && (
+        <section className={CARD}>
+          <h2 className={TITLE}>{t('settings.tab_categories')}</h2>
+          <p className={`${HINT} mb-3`}>{t('settings.categoriesIntro')}</p>
+          <Suspense fallback={null}>
+            <TeamCategoryFilterBar
+              orgId={org.id}
+              activeCategoryIds={categoryFilter}
+              setActiveCategoryIds={setCategoryFilter}
+              canManage
+            />
+          </Suspense>
+        </section>
+      )}
+
+      {/* Rôles et permissions (M13) : qui a des droits différents de son rôle,
+          en un tableau, au lieu d'ouvrir chaque fiche de l'annuaire. */}
+      {isAdmin && (
+        <section className={CARD}>
+          <h2 className={TITLE}>{t('settings.tab_permissions')}</h2>
+          <div className="mt-2">
+            <Suspense fallback={null}>
+              <OrgSettingsPermissions orgId={org.id} members={members} currentUserId={currentUserId} isAdmin={isAdmin} />
+            </Suspense>
+          </div>
+        </section>
+      )}
 
       {/* Notifications (M14) : la cloche disparaît quand elle est vide, ses
           préférences doivent rester atteignables. */}
