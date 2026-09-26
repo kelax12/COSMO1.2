@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X, AlertCircle, Trash2, Loader2, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -17,18 +17,18 @@ import { priorityLabelOf } from './team-projects.helpers';
 import TaskCommentsSection from './TaskCommentsSection';
 import MemberPickList from './MemberPickList';
 import TeamTaskFields from './TeamTaskFields';
-import TeamTaskLabelsField from './TeamTaskLabelsField';
-import TeamTaskHistoryPanel from './TeamTaskHistoryPanel';
-import TeamSubtasksSection from './TeamSubtasksSection';
-import FollowTaskToggle from './FollowTaskToggle';
-import TeamTaskDependenciesSection from './TeamTaskDependenciesSection';
-import { DraftSubtasksEditor, DraftDependenciesEditor } from './TeamTaskDraftSections';
+import { lazyWithRetry } from '@/lib/lazy-with-retry';
 import PreCreateCommentComposer from './PreCreateCommentComposer';
 import { OrgCreateBoundary } from './org-create.context';
 import { usePermissionHints } from './permission-hints';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { useT } from '@/i18n/useT';
 import { useModalA11y } from '@/hooks/use-modal-a11y';
+
+const TeamTaskTabPanels = lazyWithRetry(() => import('./TeamTaskTabPanels'));
+// Étiquettes et « Suivre » : même raison, hors du premier affichage de la fiche.
+const TeamTaskLabelsField = lazyWithRetry(() => import('./TeamTaskLabelsField'));
+const FollowTaskToggle = lazyWithRetry(() => import('./FollowTaskToggle'));
 
 type TaskTab = 'details' | 'subtasks' | 'dependencies' | 'history';
 
@@ -437,7 +437,7 @@ const TeamTaskModal = ({
                 onDescriptionChange={setDescription}
                 categoryId={categoryId}
                 onCategoryChange={setCategoryId}
-                labelsField={<TeamTaskLabelsField orgId={orgId} value={labelIds} onChange={setLabelIds} canCreate={isManager} />}
+                labelsField={<Suspense fallback={null}><TeamTaskLabelsField orgId={orgId} value={labelIds} onChange={setLabelIds} canCreate={isManager} /></Suspense>}
                 projectId={projectId}
                 onProjectChange={(v) => { setProjectId(v); setDraftBlockedBy([]); }}
                 priority={priority}
@@ -468,20 +468,28 @@ const TeamTaskModal = ({
               arrivent dans la cloche même quand on n'y est pas assigné. */}
           {tab === 'details' && liveTask && (
             <div className="mt-4">
-              <FollowTaskToggle orgId={orgId} taskId={liveTask.id} />
+              <Suspense fallback={null}><FollowTaskToggle orgId={orgId} taskId={liveTask.id} /></Suspense>
             </div>
           )}
 
-          {tab === 'subtasks' && (liveTask
-            ? <TeamSubtasksSection taskId={liveTask.id} />
-            : <DraftSubtasksEditor value={draftSubtasks} onChange={setDraftSubtasks} />)}
-
-          {tab === 'dependencies' && (liveTask
-            ? <TeamTaskDependenciesSection task={liveTask} isManager={isManager} defaultOpen />
-            : <DraftDependenciesEditor orgId={orgId} projectId={projectId} value={draftBlockedBy} onChange={setDraftBlockedBy} canEdit={isManager} />)}
-
-          {tab === 'history' && liveTask && (
-            <TeamTaskHistoryPanel taskId={liveTask.id} members={members} projects={projects} />
+          {/* Sous-tâches, dépendances, historique : chargés à la première
+              ouverture de leur onglet (cf. TeamTaskTabPanels). */}
+          {tab !== 'details' && (
+            <Suspense fallback={null}>
+              <TeamTaskTabPanels
+                tab={tab}
+                orgId={orgId}
+                liveTask={liveTask}
+                isManager={isManager}
+                projectId={projectId}
+                members={members}
+                projects={projects}
+                draftSubtasks={draftSubtasks}
+                onDraftSubtasksChange={setDraftSubtasks}
+                draftBlockedBy={draftBlockedBy}
+                onDraftBlockedByChange={setDraftBlockedBy}
+              />
+            </Suspense>
           )}
         </div>
 

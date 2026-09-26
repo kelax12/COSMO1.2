@@ -265,10 +265,6 @@
       "categorie": "mot-identique",
       "valeur": "Total"
     },
-    "org.permissions.sectionOrg": {
-      "categorie": "mot-identique",
-      "valeur": "Organisation"
-    },
     "org.profile.description": {
       "categorie": "mot-identique",
       "valeur": "Description"
@@ -284,18 +280,6 @@
     "org.pyramid.badgeManager": {
       "categorie": "anglicisme-fr",
       "valeur": "Manager"
-    },
-    "org.pyramid.cardAria": {
-      "categorie": "symbole-ou-format",
-      "valeur": "{{name}}, {{role}}{{reports}}"
-    },
-    "org.pyramid.roleAdmin": {
-      "categorie": "mot-identique",
-      "valeur": "admin"
-    },
-    "org.pyramid.roleManager": {
-      "categorie": "anglicisme-fr",
-      "valeur": "manager"
     },
     "org.roles.adminShort": {
       "categorie": "mot-identique",
