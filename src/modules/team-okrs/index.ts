@@ -30,3 +30,13 @@ export {
   useDeleteTeamOKR,
   useUpdateTeamKR,
 } from './hooks';
+
+// Exécution (mig. 160, M3) : cycles et projets reliés aux KR, branchés sur la
+// fiche d'OKR d'équipe (audit des popups, 2026-09-25).
+export type { OkrCycle, KRProjectLink } from './execution.types';
+export {
+  useOkrCycles,
+  useCreateOkrCycle,
+  useKRProjects,
+  useSetKRProjects,
+} from './execution.hooks';

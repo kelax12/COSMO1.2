@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Link as LinkIcon, UserRound, ListTodo, TrendingUp, CalendarDays } from 'lucide-react';
+import { X, Link as LinkIcon, UserRound, ListTodo, TrendingUp, CalendarDays, Briefcase, History } from 'lucide-react';
 import { toast } from '@/lib/toast';
 import { isManagerOf, useOrgMemberLastActivity, type OrgMember } from '@/modules/organizations';
 import type { OrgTeam } from '@/modules/org-teams';
 import MemberAvatar from './MemberAvatar';
 import { useT } from '@/i18n/useT';
 import RoleTerm from './RoleTerm';
+import type { KeyOf } from '@/i18n/catalog';
 import { buildOrgLink } from './deep-link.helpers';
 import {
   MEMBER_TAB_PARAM,
@@ -17,6 +18,7 @@ import {
 import { MemberProfileBody } from './MemberProfileBody';
 import { MemberTasksBody, MemberContributionBody } from './MemberInsightsBodies';
 import { MemberAgendaBody } from './MemberAgendaBody';
+import { MemberWorkBody, MemberHistoryBody } from './MemberWorkBodies';
 import { useModalA11y } from '@/hooks/use-modal-a11y';
 
 interface MemberSheetProps {
@@ -41,10 +43,12 @@ interface MemberSheetProps {
   onAddUnder: (m: OrgMember) => void;
 }
 
-const TAB_META: Record<MemberTab, { labelKey: 'member.tabProfile' | 'member.tabTasks' | 'member.tabContribution' | 'member.tabAgenda'; Icon: typeof UserRound }> = {
+const TAB_META: Record<MemberTab, { labelKey: KeyOf<'org'>; Icon: typeof UserRound }> = {
   profile: { labelKey: 'member.tabProfile', Icon: UserRound },
+  work: { labelKey: 'popups.member.tabWork', Icon: Briefcase },
   tasks: { labelKey: 'member.tabTasks', Icon: ListTodo },
   contribution: { labelKey: 'member.tabContribution', Icon: TrendingUp },
+  history: { labelKey: 'popups.member.tabHistory', Icon: History },
   agenda: { labelKey: 'member.tabAgenda', Icon: CalendarDays },
 };
 
@@ -226,6 +230,8 @@ const MemberSheet = ({
               onAddUnder={onAddUnder}
             />
           )}
+          {tab === 'work' && <MemberWorkBody orgId={orgId} member={member} teams={teams} canSeeInsights={canSeeInsights} />}
+          {tab === 'history' && <MemberHistoryBody orgId={orgId} member={member} />}
           {tab === 'tasks' && <MemberTasksBody orgId={orgId} member={member} canEdit={canSeeInsights} />}
           {tab === 'contribution' && <MemberContributionBody orgId={orgId} member={member} />}
           {tab === 'agenda' && <MemberAgendaBody member={member} />}

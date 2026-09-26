@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Search, X } from 'lucide-react';
+import { BellRing, Search, X } from 'lucide-react';
 import type { OrgMember } from '@/modules/organizations';
 import type { TeamTask } from '@/modules/team-projects';
 import MemberAvatar from './MemberAvatar';
@@ -99,6 +99,16 @@ const AssignEventDialog = ({ task, members, currentUserId, onClose }: AssignEven
             <X size={20} aria-hidden="true" />
           </button>
         </div>
+
+        {/* Planifier dans l'agenda d'autrui : la personne est PRÉVENUE et peut
+            refuser (mig. 162, `notify_event_scheduled`). Audit des popups du
+            2026-09-25 : rien ne le disait à celui qui planifie. */}
+        {selectedMember && selectedMember.userId !== currentUserId && (
+          <p className="flex items-center gap-2 px-4 sm:px-6 py-2 text-xs border-b border-[rgb(var(--color-border))] bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-secondary))] shrink-0" role="status">
+            <BellRing size={14} className="shrink-0 text-[rgb(var(--color-accent))]" aria-hidden="true" />
+            {t('popups.event.willBeNotified', { name: selectedMember.displayName })}
+          </p>
+        )}
 
         {/* Corps : agenda de la personne sélectionnée + panneau de choix */}
         <div className="flex-1 min-h-0 flex overflow-hidden">

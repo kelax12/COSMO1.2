@@ -17,6 +17,9 @@ import {
   UpdateTeamSubtaskInput,
   TeamTaskDependency,
   TeamTaskActivity,
+  TeamLabel,
+  CreateTeamLabelInput,
+  TeamTaskLabel,
   TeamTrashedTask,
   DraftProjectTask,
   DraftProjectMilestone,
@@ -105,14 +108,19 @@ export interface ITeamProjectsRepository {
   updateSubtask(subtaskId: string, input: UpdateTeamSubtaskInput): Promise<TeamSubtask>;
   deleteSubtask(subtaskId: string): Promise<void>;
 
-  // 🗑️ Les étiquettes (mig. 093) ont été retirées de cette interface le
-  // 2026-09-05 (C-49) : `getLabels`, `createLabel`, `updateLabel`,
-  // `deleteLabel`, `getTaskLabels`, `addTaskLabel`, `removeTaskLabel`. Aucun
-  // écran ne montait leurs hooks, donc aucun appelant. La TABLE reste en base.
+  // Étiquettes (mig. 093). Retirées le 2026-09-05 (C-49) faute d'écran,
+  // rebranchées le 2026-09-25 par la fiche de tâche. Pas de renommage ni de
+  // suppression d'étiquette : aucun écran ne les propose, donc aucun appelant.
+  getLabels(orgId: string): Promise<TeamLabel[]>;
+  createLabel(orgId: string, input: CreateTeamLabelInput): Promise<TeamLabel>;
+  /** Étiquettes posées sur UNE tâche (lecture indexée par la PK de la jonction). */
+  getTaskLabels(taskId: string): Promise<TeamTaskLabel[]>;
+  addTaskLabel(taskId: string, labelId: string): Promise<void>;
+  removeTaskLabel(taskId: string, labelId: string): Promise<void>;
 
-  // Historique (mig. 094) — lecture seule : la table est append-only, écrite par trigger.
-  // 🗑️ `getTaskActivity` (journal PAR TÂCHE) retiré le 2026-09-05 (C-49) :
-  // sans appelant. `getOrgActivity` ci-dessous sert la revue hebdomadaire.
+  // Historique (mig. 094) : lecture seule, la table est append-only, écrite par trigger.
+  /** Journal d'UNE tâche, onglet Historique de la fiche (100 dernières entrées). */
+  getTaskActivity(taskId: string): Promise<TeamTaskActivity[]>;
   /**
    * Journal de TOUTE l'organisation depuis `since` (ISO) — revue hebdomadaire
    * (#26). Borné côté serveur : la revue lit deux semaines, pas l'historique.

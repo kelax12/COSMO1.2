@@ -22,6 +22,9 @@ import {
   UpdateTeamSubtaskInput,
   TeamTaskActivity,
   TeamTaskDependency,
+  TeamLabel,
+  CreateTeamLabelInput,
+  TeamTaskLabel,
   CreateTeamTaskCommentInput,
   TeamTrashedTask,
   DraftProjectTask,
@@ -32,6 +35,7 @@ import {
   TeamProjectDependency,
 } from './types';
 import * as portfolio from './local.portfolio';
+import * as labels from './local.labels';
 import {
   TEAM_PROJECTS_STORAGE_KEY, TEAM_TASKS_STORAGE_KEY, TEAM_TASK_COMMENTS_STORAGE_KEY,
   TEAM_TASK_SUBTASKS_STORAGE_KEY,
@@ -438,6 +442,14 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
   async deleteSubtask(subtaskId: string): Promise<void> {
     this.saveSubtasks(this.getSubtasksArray().filter((s) => s.id !== subtaskId));
   }
+
+  // ─── Étiquettes et historique par tâche (mig. 093, 094) ────────────
+  async getLabels(orgId: string): Promise<TeamLabel[]> { return labels.getLabels(orgId); }
+  async createLabel(orgId: string, input: CreateTeamLabelInput): Promise<TeamLabel> { return labels.createLabel(orgId, input); }
+  async getTaskLabels(taskId: string): Promise<TeamTaskLabel[]> { return labels.getTaskLabels(taskId); }
+  async addTaskLabel(taskId: string, labelId: string): Promise<void> { labels.addTaskLabel(taskId, labelId); }
+  async removeTaskLabel(taskId: string, labelId: string): Promise<void> { labels.removeTaskLabel(taskId, labelId); }
+  async getTaskActivity(taskId: string): Promise<TeamTaskActivity[]> { return labels.getTaskActivity(taskId); }
 
   // ─── Historique (mig. 094) ─────────────────────────────────────────
 

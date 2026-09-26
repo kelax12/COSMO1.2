@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X, ShieldCheck, RotateCcw } from 'lucide-react';
+import { X, ShieldCheck, RotateCcw, Globe2 } from 'lucide-react';
 import {
   ORG_ASSIGN_TARGETS,
   DEFAULT_ASSIGN_TARGETS,
+  canAssignTo,
   canGrant,
   effectivePermissions,
   type EffectiveOrgPermissions,
@@ -13,7 +14,11 @@ import {
   type OrgPermissionKey,
   type SetOrgPermissionsInput,
 } from '@/modules/organizations';
+import { useTeamProjects } from '@/modules/team-projects';
+import { useTeamOKRs } from '@/modules/team-okrs';
+import { useOrgTeamMembers } from '@/modules/org-teams';
 import MemberAvatar from './MemberAvatar';
+import { memberReach } from './audience.helpers';
 import { useT } from '@/i18n/useT';
 import { useModalA11y } from '@/hooks/use-modal-a11y';
 
@@ -99,7 +104,18 @@ const MemberPermissionsSheet = ({
   member, members, current, actorPermissions, actorIsAdmin,
   actorAssignTargets, pending, onSave, onClose,
 }: MemberPermissionsSheetProps) => {
-  const { t } = useT('org');
+  const { t, tp } = useT('org');
+
+  // Aperçu de l'EFFET (audit des popups, 2026-09-25) : un interrupteur
+  // « supprimer n'importe quelle tâche » ne dit pas sur combien de projets il
+  // porte. On compte ce que CETTE personne voit : c'est là que le droit s'exerce.
+  const { data: projects = [] } = useTeamProjects(member.orgId);
+  const { data: okrs = [] } = useTeamOKRs(member.orgId);
+  const { data: memberships = [] } = useOrgTeamMembers(member.orgId);
+  const reach = useMemo(
+    () => memberReach({ member, members, memberships, projects, okrs }),
+    [member, members, memberships, projects, okrs],
+  );
 
   const [overrides, setOverrides] = useState<Partial<Record<OrgPermissionKey, boolean | null>>>(
     () => ({ ...(current?.overrides ?? {}) }),
@@ -125,8 +141,23 @@ const MemberPermissionsSheet = ({
     [member, members],
   );
 
-  const effectiveTargets = targets ?? [...DEFAULT_ASSIGN_TARGETS];
+  const effectiveTargets = useMemo(() => targets ?? [...DEFAULT_ASSIGN_TARGETS], [targets]);
   const targetsDecided = targets !== null;
+  const assignableCount = useMemo(
+    () => members.filter((target) => canAssignTo({ actor: member, target, members, targets: effectiveTargets })).length,
+    [member, members, effectiveTargets],
+  );
+
+  const impactOf = (key: OrgPermissionKey): string | null => {
+    switch (key) {
+      case 'task.editAny': return tp('popups.perms.taskEditAny', reach.projects);
+      case 'task.deleteAny': return tp('popups.perms.taskDeleteAny', reach.projects);
+      case 'project.edit': return tp('popups.perms.projectEdit', reach.projects);
+      case 'project.delete': return tp('popups.perms.projectDelete', reach.projects);
+      case 'okr.delete': return tp('popups.perms.okrDelete', reach.okrs);
+      default: return null;
+    }
+  };
 
   const toggle = (key: OrgPermissionKey) => {
     setOverrides((prev) => ({ ...prev, [key]: !effective[key] }));
@@ -161,6 +192,9 @@ const MemberPermissionsSheet = ({
             {t(labelKey(key))}
           </p>
           <p className="text-xs text-[rgb(var(--color-text-muted))] mt-0.5">{t(hintKey(key))}</p>
+          {effective[key] && impactOf(key) && (
+            <p className="text-xs font-semibold text-[rgb(var(--color-accent))] mt-0.5">{impactOf(key)}</p>
+          )}
           <div className="flex items-center gap-2 mt-1">
             <span className="text-caption text-[rgb(var(--color-text-muted))]">
               {inherited[key] ? t('permissions.inheritedOn') : t('permissions.inheritedOff')}
@@ -231,7 +265,13 @@ const MemberPermissionsSheet = ({
         </div>
 
         <div className="flex-1 min-h-0 overflow-y-auto px-5 pb-4">
-          <p className="text-xs text-[rgb(var(--color-text-muted))] mb-4">{t('permissions.intro')}</p>
+          <p className="text-xs text-[rgb(var(--color-text-muted))] mb-3">{t('permissions.intro')}</p>
+          {/* Ces droits ne se découpent pas par projet : le dire, plutôt que de
+              laisser croire qu'un interrupteur vaut pour une seule équipe. */}
+          <p className="flex items-start gap-2 text-xs rounded-lg px-3 py-2 mb-4 bg-amber-500/10 text-amber-800 dark:text-amber-300">
+            <Globe2 size={14} className="mt-px shrink-0" aria-hidden="true" />
+            {t('popups.perms.scope')}
+          </p>
 
           {SECTIONS.map(({ titleKey, keys }) => (
             <section key={titleKey} className="mb-5">
@@ -278,6 +318,9 @@ const MemberPermissionsSheet = ({
                 </label>
               );
             })}
+            <p className="text-xs font-semibold text-[rgb(var(--color-accent))] mt-2" role="status">
+              {tp('popups.perms.assignCount', assignableCount)}
+            </p>
             {targetsDecided && effectiveTargets.length === 0 && (
               <p className="text-xs font-semibold text-amber-600 dark:text-amber-400 mt-2">
                 {t('permissions.assignNobody')}

@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
-import { formatDistanceToNow, parseISO } from 'date-fns';
+import { format, formatDistanceToNow, parseISO } from 'date-fns';
 import { getDateLocale } from '@/i18n/format';
-import { Bell, UserPlus, AtSign, AlarmClock, MessageSquare, ArrowRightLeft, Unlock, TriangleAlert, Target, CalendarPlus } from 'lucide-react';
+import { Bell, UserPlus, AtSign, AlarmClock, MessageSquare, ArrowRightLeft, Unlock, TriangleAlert, Target, CalendarPlus, CalendarX } from 'lucide-react';
+import { useDeleteEvent } from '@/modules/events';
 import {
   useOrgNotifications,
   useMarkNotificationsRead,
@@ -58,6 +59,13 @@ const OrgNotificationsBell = ({ orgId, members }: OrgNotificationsBellProps) => 
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
+  // Refuser un créneau posé par quelqu'un d'autre (mig. 162) : la personne
+  // POSSÈDE l'événement, elle peut le retirer de son agenda. Audit des popups
+  // du 2026-09-25 : la notification existait, le refus n'avait aucun bouton.
+  const deleteEvent = useDeleteEvent();
+  const [declined, setDeclined] = useState<Set<string>>(() => new Set());
+  const decline = (eventId: string) =>
+    deleteEvent.mutate(eventId, { onSuccess: () => setDeclined((prev) => new Set(prev).add(eventId)) });
 
   const { data: notifications = [] } = useOrgNotifications(orgId);
   const markRead = useMarkNotificationsRead(orgId);
@@ -171,6 +179,16 @@ const OrgNotificationsBell = ({ orgId, members }: OrgNotificationsBellProps) => 
                           ? t('notifications.byActor', { actor, label: t(labelKey) })
                           : t(labelKey)}
                       </span>
+                      {notification.kind === 'event_scheduled' && typeof notification.meta?.title === 'string' && (
+                        <span className="block text-caption text-[rgb(var(--color-text-secondary))] truncate">
+                          {typeof notification.meta.start === 'string'
+                            ? t('popups.event.slot', {
+                                title: notification.meta.title,
+                                when: format(parseISO(notification.meta.start), 'EEE d MMM, HH:mm', { locale: getDateLocale() }),
+                              })
+                            : notification.meta.title}
+                        </span>
+                      )}
                       <span className="block text-caption text-[rgb(var(--color-text-muted))]">
                         {formatDistanceToNow(parseISO(notification.createdAt), {
                           addSuffix: true,
@@ -179,6 +197,20 @@ const OrgNotificationsBell = ({ orgId, members }: OrgNotificationsBellProps) => 
                       </span>
                     </span>
                   </button>
+                  {notification.kind === 'event_scheduled' && notification.eventId && (
+                    declined.has(notification.eventId) ? (
+                      <p className="pl-8 pb-1 text-caption text-[rgb(var(--color-text-muted))]" role="status">{t('popups.event.declined')}</p>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => decline(notification.eventId as string)}
+                        disabled={deleteEvent.isPending}
+                        className="ml-8 mb-1 inline-flex items-center gap-1 min-h-9 px-2 rounded-lg text-caption font-semibold text-red-600 dark:text-red-400 hover:bg-red-500/10 disabled:opacity-50"
+                      >
+                        <CalendarX size={13} aria-hidden="true" /> {t('popups.event.decline')}
+                      </button>
+                    )
+                  )}
                 </li>
               );
             })}
