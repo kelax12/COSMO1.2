@@ -1299,7 +1299,19 @@
     "inviteHint": "By email, with a join code, with a direct link or from your COSMO contacts.",
     "inviteByEmail": "Invite by email",
     "otherInvites": "Other ways to invite",
-    "leaveTitle": "Leave the company"
+    "leaveTitle": "Leave the company",
+    "loading": "Loading…",
+    "tab_categories": "Categories",
+    "tab_permissions": "Roles and permissions",
+    "categoriesIntro": "Categories classify projects, tasks and objectives across the whole organization.",
+    "permissionsIntro": "Who has permissions that differ from their role. An admin always has every permission.",
+    "permissionsSearch": "Search for a member",
+    "permissionsOnlyCustom": "Custom permissions only",
+    "permissionsEmpty": "Nobody matches.",
+    "permissionsAdminAll": "every permission",
+    "permissionsDefault": "role permissions",
+    "permissionsCustom_one": "{{count}} custom permission",
+    "permissionsCustom_other": "{{count}} custom permissions"
   },
   "teamPage": {
     "back": "All teams",
@@ -1638,5 +1650,18 @@
     "save": "Save",
     "cancel": "Cancel",
     "delete": "Delete the view “{{name}}”"
+  },
+  "statsScope": {
+    "label": "Statistics scope",
+    "wholeOrg": "Whole organization",
+    "mySubtree": "Me and my reports",
+    "teams": "Teams",
+    "projects": "Projects",
+    "why": "Why am I seeing this?",
+    "whyAdmin": "You're an admin: you see all the organization's work.",
+    "whyManager": "You see your own tasks and those of the people you manage in the org chart.",
+    "whyTeamAdmin": "Tasks assigned to this team's members.",
+    "whyTeamLead": "You lead this team: you see tasks assigned to its members, even if they don't report to you in the org chart.",
+    "whyProject": "All of this project's tasks, whoever they're assigned to."
   }
 }

@@ -41,10 +41,10 @@ import {
 } from './types';
 import * as portfolio from './local.portfolio';
 import * as labels from './local.labels';
+import * as subtasks from './local.subtasks';
 import * as access from './local.access';
 import {
   TEAM_PROJECTS_STORAGE_KEY, TEAM_TASKS_STORAGE_KEY, TEAM_TASK_COMMENTS_STORAGE_KEY,
-  TEAM_TASK_SUBTASKS_STORAGE_KEY,
   TEAM_TASK_ACTIVITY_STORAGE_KEY,
   TEAM_TASK_DEPENDENCIES_STORAGE_KEY,
   TEAM_TASK_TRASH_STORAGE_KEY,
@@ -61,7 +61,6 @@ import {
   DEMO_PROJECTS, DEMO_PROJECTS_EN,
   DEMO_TASKS, DEMO_TASKS_EN,
   DEMO_COMMENTS, DEMO_COMMENTS_EN,
-  DEMO_SUBTASKS, DEMO_SUBTASKS_EN,
   DEMO_ACTIVITY,
   DEMO_TASK_DEPENDENCIES,
 } from './demo-seed';
@@ -467,52 +466,11 @@ export class LocalStorageTeamProjectsRepository implements ITeamProjectsReposito
     this.saveComments(this.getCommentsArray().filter((c) => c.id !== commentId));
   }
 
-  // ─── Sous-tâches (mig. 092) ────────────────────────────────────────
-
-  private getSubtasksArray(): TeamSubtask[] {
-    return readOrSeed<TeamSubtask[]>(TEAM_TASK_SUBTASKS_STORAGE_KEY, localizeSeed(DEMO_SUBTASKS, DEMO_SUBTASKS_EN));
-  }
-  private saveSubtasks(s: TeamSubtask[]): void {
-    writeJsonOrThrow(TEAM_TASK_SUBTASKS_STORAGE_KEY, s);
-  }
-
-  async getSubtasks(taskId: string): Promise<TeamSubtask[]> {
-    // Même ordre que la requête Supabase (position, puis création) : la démo
-    // et la prod doivent afficher la liste identiquement.
-    return this.getSubtasksArray()
-      .filter((s) => s.taskId === taskId)
-      .sort((a, b) => a.position - b.position || (a.createdAt < b.createdAt ? -1 : 1));
-  }
-
-  async createSubtask(input: CreateTeamSubtaskInput): Promise<TeamSubtask> {
-    const all = this.getSubtasksArray();
-    const subtask: TeamSubtask = {
-      id: crypto.randomUUID(),
-      taskId: input.taskId,
-      title: input.title,
-      completed: false,
-      position: input.position ?? all.filter((s) => s.taskId === input.taskId).length,
-      createdBy: DEMO_USER_ID,
-      createdAt: new Date().toISOString(),
-    };
-    this.saveSubtasks([...all, subtask]);
-    return subtask;
-  }
-
-  async updateSubtask(subtaskId: string, input: UpdateTeamSubtaskInput): Promise<TeamSubtask> {
-    const all = this.getSubtasksArray();
-    const subtask = all.find((s) => s.id === subtaskId);
-    if (!subtask) throw makeApiError('not_found');
-    if (input.title !== undefined) subtask.title = input.title;
-    if (input.completed !== undefined) subtask.completed = input.completed;
-    if (input.position !== undefined) subtask.position = input.position;
-    this.saveSubtasks(all);
-    return subtask;
-  }
-
-  async deleteSubtask(subtaskId: string): Promise<void> {
-    this.saveSubtasks(this.getSubtasksArray().filter((s) => s.id !== subtaskId));
-  }
+  // ─── Sous-tâches (mig. 092) : `local.subtasks.ts` ───────────────────
+  async getSubtasks(taskId: string): Promise<TeamSubtask[]> { return subtasks.getSubtasks(taskId); }
+  async createSubtask(input: CreateTeamSubtaskInput): Promise<TeamSubtask> { return subtasks.createSubtask(input); }
+  async updateSubtask(subtaskId: string, input: UpdateTeamSubtaskInput): Promise<TeamSubtask> { return subtasks.updateSubtask(subtaskId, input); }
+  async deleteSubtask(subtaskId: string): Promise<void> { subtasks.deleteSubtask(subtaskId); }
 
   // ─── Étiquettes et historique par tâche (mig. 093, 094) ────────────
   async getLabels(orgId: string): Promise<TeamLabel[]> { return labels.getLabels(orgId); }
