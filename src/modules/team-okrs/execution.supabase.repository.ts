@@ -12,6 +12,7 @@ import type {
   KRProjectLink,
   OkrCycle,
   PostKRCheckinInput,
+  ProjectProgress,
 } from './execution.types';
 import type { ProjectHealth } from './execution.types';
 
@@ -85,6 +86,18 @@ export class SupabaseOkrExecutionRepository implements IOkrExecutionRepository {
       .from('team_kr_projects')
       .insert(unique.map((projectId) => ({ kr_id: krId, project_id: projectId, org_id: orgId })));
     if (error) throw normalizeApiError(error);
+  }
+
+  async getProjectProgress(orgId: string): Promise<ProjectProgress[]> {
+    // Agrégat en base (mig. 160) : compter côté client exigerait de lire
+    // toutes les tâches de l'organisation.
+    const { data, error } = await db().rpc('get_my_team_project_progress', { p_org: orgId });
+    if (error) throw normalizeApiError(error);
+    return ((data ?? []) as { project_id: string; total: number; done: number }[]).map((r) => ({
+      projectId: r.project_id,
+      total: Number(r.total),
+      done: Number(r.done),
+    }));
   }
 
   async getCheckins(krId: string): Promise<KRCheckin[]> {

@@ -46,6 +46,8 @@ interface KrRow {
   estimated_time: number | null;
   progress_mode?: string | null;
   contributor_ids?: string[] | null;
+  health?: string | null;
+  health_updated_at?: string | null;
 }
 
 // Coefficient effectif : entier borné [1, 10], défaut 1 (rétrocompat).
@@ -71,6 +73,8 @@ const mapKr = (r: KrRow): TeamKeyResult => ({
   estimatedTime: Number(r.estimated_time) > 0 ? Number(r.estimated_time) : 30,
   progressMode: r.progress_mode === 'tasks' ? 'tasks' : 'manual',
   contributorIds: r.contributor_ids ?? [],
+  health: (r.health as TeamKeyResult['health']) ?? null,
+  healthUpdatedAt: r.health_updated_at ?? null,
 });
 
 export class SupabaseTeamOKRsRepository implements ITeamOKRsRepository {
@@ -287,7 +291,7 @@ export class SupabaseTeamOKRsRepository implements ITeamOKRsRepository {
     if (error) throw normalizeApiError(error);
   }
 
-  async syncKeyResults(okrId: string, orgId: string, krs: SyncTeamKRInput[]): Promise<void> {
+  async syncKeyResults(okrId: string, orgId: string, krs: SyncTeamKRInput[]): Promise<string[]> {
     if (!supabase) throw new Error('Supabase not configured');
     const bounded = krs.slice(0, 10);
 
@@ -308,6 +312,7 @@ export class SupabaseTeamOKRsRepository implements ITeamOKRsRepository {
     }
 
     // Mises à jour + insertions.
+    const ids: string[] = [];
     for (const input of bounded) {
       const target = input.targetValue > 0 ? input.targetValue : 1;
       const current = Math.max(0, Math.min(input.currentValue ?? 0, target));
@@ -325,13 +330,18 @@ export class SupabaseTeamOKRsRepository implements ITeamOKRsRepository {
         completed,
       };
       if (input.id && existingIds.has(input.id)) {
+        ids.push(input.id);
         const { error: upErr } = await supabase
           .from('team_key_results')
           .update({ ...fields, completed_at: completed ? new Date().toISOString() : null })
           .eq('id', input.id);
         if (upErr) throw normalizeApiError(upErr);
       } else {
+        // Id généré ICI, jamais repris de la saisie (règle R-08).
+        const newId = crypto.randomUUID();
+        ids.push(newId);
         const { error: insErr } = await supabase.from('team_key_results').insert({
+          id: newId,
           ...fields,
           okr_id: okrId,
           org_id: orgId,
@@ -340,5 +350,6 @@ export class SupabaseTeamOKRsRepository implements ITeamOKRsRepository {
         if (insErr) throw normalizeApiError(insErr);
       }
     }
+    return ids;
   }
 }

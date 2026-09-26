@@ -6,13 +6,10 @@ import { useAuth } from '@/modules/auth/AuthContext';
 import {
   useActiveOrganization,
   useOrgMembers,
-  useLeaveOrganization,
-  useTransferOwnership,
   useMyOrgPermissions,
   isManagerOf,
 } from '@/modules/organizations';
 import { ENTERPRISE_BILLING_ENFORCED } from '@/modules/billing/premium-config';
-import { useDeleteOrgFlow } from './organization/useDeleteOrgFlow';
 import { useOrgSubscription } from '@/modules/billing/org-billing.hooks';
 import { isQuotaReached, effectiveQuota } from '@/modules/billing/org-billing.logic';
 import { PageHeading } from '@/components/ui/typography';
@@ -23,6 +20,8 @@ import OrgSideNav from '@/components/organization/OrgSideNav';
 import { useOrgNavMode } from '@/components/organization/use-org-nav-mode';
 import OrgSectionSwitcher from '@/components/organization/OrgSectionSwitcher';
 import { ORG_SECTIONS, type OrgSection, type OrgNavItem } from '@/components/organization/org-sections';
+import { canSeeStats } from '@/components/organization/stats-scope.helpers';
+import { useOrgTeams, useOrgTeamMembers } from '@/modules/org-teams';
 import {
   isOrgSectionSegment,
   legacyOrgTabRedirect,
@@ -62,13 +61,10 @@ const OrgBillingTab = lazyWithRetry(() => import('@/components/organization/OrgB
 // chunk, qui dépassait son cliquet (18,3 ko pour 18,0) : seul qui ouvre
 // `/entreprise/members` doit la payer.
 const OrgMembersSection = lazyWithRetry(() => import('@/components/organization/OrgMembersSection'));
+const OrgSettingsSection = lazyWithRetry(() => import('@/components/organization/OrgSettingsSection'));
 
 // Feuilles et dialogues : montés derrière un `&&`, donc déjà conditionnels au
 // rendu. Ils ne l'étaient pas au TÉLÉCHARGEMENT.
-const OrgProfileSheet = lazyWithRetry(() => import('@/components/organization/OrgProfileSheet'));
-const DeleteOrganizationDialog = lazyWithRetry(() => import('@/components/organization/DeleteOrganizationDialog'));
-const ConfirmLeaveOrgDialog = lazyWithRetry(() => import('@/components/organization/ConfirmLeaveOrgDialog'));
-const TransferOwnershipDialog = lazyWithRetry(() => import('@/components/organization/TransferOwnershipDialog'));
 
 type OrgTab = OrgSection;
 
@@ -112,10 +108,6 @@ const OrganizationPage = () => {
   const urlTab: OrgTab = isOrgSectionSegment(section) ? section : 'overview';
   // Sans `replace` : chaque section est une page, le bouton précédent y revient.
   const setTab = (id: OrgTab) => navigate(orgSectionPath(id));
-  const [editProfile, setEditProfile] = useState(false);
-  const [confirmingDelete, setConfirmingDelete] = useState(false);
-  const [confirmingLeave, setConfirmingLeave] = useState(false);
-  const [transferring, setTransferring] = useState(false);
   const [seatsBannerDismissed, setSeatsBannerDismissed] = useState(false);
   const [launchBannerDismissed, setLaunchBannerDismissed] = useState(false);
   const { activeOrg: myOrg, isLoading } = useActiveOrganization();
@@ -140,15 +132,13 @@ const OrganizationPage = () => {
   // plusieurs onglets s'en servent — le hook ne déclenche qu'une requête,
   // partagée par React Query avec celles des composants enfants.
   const myPermissions = useMyOrgPermissions(myOrg?.id);
+  // Statistiques ouvertes aux responsables d'équipe (M3) : il faut savoir qui
+  // dirige quoi. Deux lectures déjà mises en cache par les autres onglets.
+  const { data: teams = [] } = useOrgTeams(myOrg?.id);
+  const { data: teamMembers = [] } = useOrgTeamMembers(myOrg?.id);
   // Appelé ICI, avant les early returns `isLoading` / `!myOrg` : un hook placé
   // plus bas ne serait pas monté sur tous les rendus.
   const { data: orgSubscription } = useOrgSubscription(myOrg?.id);
-  const leaveMutation = useLeaveOrganization();
-  // C-39 — « la suppression resilie ET REMBOURSE » (arbitrage du 2026-09-03) :
-  // un seul geste, aucun debit orphelin. L'enchainement et son ordre vivent
-  // dans `useDeleteOrgFlow`, avec la raison de cet ordre.
-  const deleteFlow = useDeleteOrgFlow(() => setConfirmingDelete(false));
-  const transferMutation = useTransferOwnership();
 
   // Ancienne forme `/entreprise?tab=X` → `/entreprise/X`, les autres
   // paramètres conservés. ⚠️ À GARDER POUR TOUJOURS : Stripe renvoie sur
@@ -188,15 +178,16 @@ const OrganizationPage = () => {
   // favori) ou sur `pyramid` / `stats` (favori d'un ancien manager, lien
   // copié) sans en avoir le droit ne voit pas un écran vide : il retombe sur
   // l'aperçu.
+  const canStats = canSeeStats(teams, { members, teamMembers, currentUserId: user?.id, isAdmin });
   const tab: OrgTab =
-    (urlTab === 'billing' && !isOwner) || ((urlTab === 'pyramid' || urlTab === 'stats') && !isManager)
+    (urlTab === 'billing' && !isOwner) || (urlTab === 'pyramid' && !isManager) || (urlTab === 'stats' && !canStats)
       ? 'overview'
       : urlTab;
 
   // Entrées de navigation, partagées par le panneau desktop et le sélecteur
   // mobile. Seuls Projets (tâches nouvellement assignées) et Membres (demandes
   // d'adhésion en attente) portent un compteur.
-  const navItems: OrgNavItem[] = ORG_SECTIONS.filter((item) => !item.managerOnly || isManager).map(
+  const navItems: OrgNavItem[] = ORG_SECTIONS.filter((item) => (item.id === 'stats' ? canStats : !item.managerOnly || isManager)).map(
     ({ id, labelKey, Icon, group }) => {
       const badgeCount = id === 'projects' ? badges.projects : id === 'members' ? badges.members : 0;
       const badgeAriaLabel = badgeCount > 0 ? tp('page.badgeCount', badgeCount) : undefined;
@@ -281,7 +272,7 @@ const OrganizationPage = () => {
             {isAdmin && (
               <button
                 type="button"
-                onClick={() => setEditProfile(true)}
+                onClick={() => navigate(`${orgSectionPath('settings')}?tab=profile`)}
                 aria-label={t('page.editProfile')}
                 className="min-w-11 min-h-11 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-accent))] hover:bg-[rgb(var(--color-hover))] transition-colors shrink-0"
               >
@@ -308,7 +299,7 @@ const OrganizationPage = () => {
             {isAdmin && (
               <button
                 type="button"
-                onClick={() => setEditProfile(true)}
+                onClick={() => navigate(`${orgSectionPath('settings')}?tab=profile`)}
                 aria-label={t('page.editProfile')}
                 className="w-7 h-7 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-accent))] hover:bg-[rgb(var(--color-hover))] transition-colors shrink-0"
               >
@@ -414,7 +405,7 @@ const OrganizationPage = () => {
           forme qui n'est pas celle qui arrive. */}
       <Suspense fallback={tabFallback(tab, t)}>
       {tab === 'overview' && <MyWorkTab orgId={myOrg.id} members={members} currentUserId={user?.id} />}
-      {tab === 'stats' && isManager && (
+      {tab === 'stats' && canStats && (
         <TeamOverviewTab orgId={myOrg.id} members={members} isAdmin={isAdmin} currentUserId={user?.id} />
       )}
       {tab === 'pyramid' && isManager && (
@@ -443,6 +434,17 @@ const OrganizationPage = () => {
         />
       )}
 
+      {tab === 'settings' && (
+        <OrgSettingsSection
+          org={myOrg}
+          members={members}
+          currentUserId={user?.id}
+          isOwner={isOwner}
+          isAdmin={isAdmin}
+          seatsFull={seatsFull}
+        />
+      )}
+
       {tab === 'members' && (
         <OrgMembersSection
           org={myOrg}
@@ -453,60 +455,14 @@ const OrganizationPage = () => {
           canInvite={canInvite}
           canCreateTeam={myPermissions.can['team.create']}
           seatsFull={seatsFull}
-          transferPending={transferMutation.isPending}
-          deletePending={deleteFlow.isPending}
-          leavePending={leaveMutation.isPending}
-          onTransfer={() => setTransferring(true)}
-          onDelete={() => setConfirmingDelete(true)}
-          onLeave={() => setConfirmingLeave(true)}
         />
       )}
       </Suspense>
 
-      {/* Feuilles et dialogues : leur propre frontière, avec un fallback nul.
-          Ils s'ouvrent par-dessus l'écran ; y poser un squelette ferait
-          clignoter une carte fantôme au milieu de la page pendant que le
-          chunk arrive. */}
-      <Suspense fallback={null}>
-      {editProfile && <OrgProfileSheet org={myOrg} onClose={() => setEditProfile(false)} />}
-
-      {transferring && (
-        <TransferOwnershipDialog
-          orgName={myOrg.name}
-          candidates={members.filter((m) => m.userId !== myOrg.ownerId)}
-          pending={transferMutation.isPending}
-          onConfirm={(newOwnerId) =>
-            transferMutation.mutate(
-              { orgId: myOrg.id, newOwnerId },
-              { onSuccess: () => setTransferring(false) },
-            )
-          }
-          onCancel={() => setTransferring(false)}
-        />
-      )}
-
-      {confirmingLeave && (
-        <ConfirmLeaveOrgDialog
-          orgName={myOrg.name}
-          pending={leaveMutation.isPending}
-          onConfirm={() =>
-            leaveMutation.mutate(myOrg.id, { onSettled: () => setConfirmingLeave(false) })
-          }
-          onCancel={() => setConfirmingLeave(false)}
-        />
-      )}
-
-      {confirmingDelete && (
-        <DeleteOrganizationDialog
-          org={myOrg}
-          memberCount={members.length}
-          pending={deleteFlow.isPending}
-          onConfirm={() => deleteFlow.run(myOrg.id)}
-          onCancel={() => setConfirmingDelete(false)}
-        />
-      )}
-      </Suspense>
-
+      {/* Transfert, suppression et départ vivent dans Paramètres → Zone de
+          danger (`OrgDangerZone`, audit 2026-09-23 M13), avec leurs dialogues.
+          🔴 C-39 : la zone se monte sur le PROPRIÉTAIRE, et la page passe
+          `isOwner={isOwner}` à `OrgSettingsSection`. */}
       {/* Desktop : la navigation vit à DROITE, hors de la zone qui défile.
           Rendue par portail dans l'emplacement de `Layout`, donc sa place
           dans cet arbre ne dit rien de sa place à l'écran. */}

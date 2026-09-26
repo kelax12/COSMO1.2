@@ -261,8 +261,12 @@ BEGIN
          jsonb_build_object('title', left(k.title, 120), 'endDate', o.end_date)
     FROM public.team_key_results k
     JOIN public.team_okrs o ON o.id = k.okr_id
+    -- Un OKR d'équipe ne s'assigne pas à une personne (décision produit
+    -- #10) : l'avis va à qui a posé l'objectif, et au responsable du KR s'il
+    -- y en a un.
     CROSS JOIN LATERAL (
-      SELECT k.assignee_id AS uid
+      SELECT o.created_by AS uid
+      UNION SELECT k.assignee_id
       UNION SELECT unnest(k.contributor_ids)
     ) r
    WHERE NOT k.completed

@@ -6,7 +6,8 @@ import WorkSummaryCard, { ProgressRing } from './WorkSummaryCard';
 import { startOfWeek } from 'date-fns';
 import { useTeamTaskWorkingSet, useTeamProjects, TEAM_TASKS_READ_LIMIT } from '@/modules/team-projects';
 import { useTeamOKRs } from '@/modules/team-okrs';
-import { subtreeOf, isManagerOf, type OrgMember } from '@/modules/organizations';
+import { isManagerOf, type OrgMember } from '@/modules/organizations';
+import { useOrgTeams, useOrgTeamMembers } from '@/modules/org-teams';
 import { projectColor } from './team-projects.helpers';
 import { Download, ClipboardCheck } from 'lucide-react';
 import { downloadCSV } from '@/lib/csv-export';
@@ -21,6 +22,8 @@ import TruncatedDataNotice from './TruncatedDataNotice';
 import WeeklyReviewSheet from './WeeklyReviewSheet';
 import { buildOrgLink } from './deep-link.helpers';
 import { TeamOverviewSkeleton } from './OrgLoadingSkeletons';
+import StatsScopeSelect from './StatsScopeSelect';
+import { defaultScope, scopeMembers, scopeTasks, type StatsScope } from './stats-scope.helpers';
 import { useT } from '@/i18n/useT';
 
 interface TeamOverviewTabProps {
@@ -104,32 +107,35 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
   const truncated = allTasks.length >= TEAM_TASKS_READ_LIMIT;
   const [reviewOpen, setReviewOpen] = useState(false);
   const navigate = useNavigate();
+  const { data: teams = [] } = useOrgTeams(orgId);
+  const { data: teamMembers = [] } = useOrgTeamMembers(orgId);
+  const scopeCtx = useMemo(
+    () => ({ members, teamMembers, currentUserId, isAdmin }),
+    [members, teamMembers, currentUserId, isAdmin],
+  );
+  // Périmètre (M3) : hiérarchie, équipe ou projet. `null` = pas encore choisi,
+  // on suit le défaut (qui dépend des équipes, chargées après le premier rendu).
+  const [chosenScope, setChosenScope] = useState<StatsScope | null>(null);
+  const scope = chosenScope ?? defaultScope(teams, scopeCtx);
 
   // Revue hebdomadaire (#26) : elle sert a arbitrer la charge d'AUTRES
   // personnes. Un membre sans subordonne n'a rien a y arbitrer — le bouton ne
   // lui est donc pas propose.
   const canReview = isAdmin || (!!currentUserId && isManagerOf(members, currentUserId));
 
-  // Périmètre : admin → tous les membres ; manager → soi + sous-arbre.
-  const scopedMembers = useMemo(() => {
-    if (isAdmin || !currentUserId) return members;
-    const mine = subtreeOf(members, currentUserId);
-    return members.filter((m) => m.userId === currentUserId || mine.has(m.userId));
-  }, [members, isAdmin, currentUserId]);
-
-  // Tâches du périmètre (tous horizons) — base des séries temporelles.
-  const scopedTasks = useMemo(() => {
-    if (isAdmin) return allTasks;
-    const scope = new Set(scopedMembers.map((m) => m.userId));
-    return allTasks.filter((t) => t.assigneeIds.some((id) => scope.has(id)));
-  }, [allTasks, scopedMembers, isAdmin]);
+  // Membres et tâches du périmètre choisi (règles : stats-scope.helpers.ts).
+  const scopedMembers = useMemo(() => scopeMembers(scope, scopeCtx, allTasks), [scope, scopeCtx, allTasks]);
+  const scopedTasks = useMemo(
+    () => scopeTasks(scope, scopeCtx, allTasks, scopedMembers),
+    [scope, scopeCtx, allTasks, scopedMembers],
+  );
 
   // OKR du périmètre : admin → tout ; manager → KR assignés à son sous-arbre
   // + objectifs collectifs (reco #15, cohérence avec tâches/membres).
   const okrs = useMemo(() => {
-    const scope = new Set(scopedMembers.map((m) => m.userId));
-    return scopeOkrs(allOkrs, scope, isAdmin);
-  }, [allOkrs, scopedMembers, isAdmin]);
+    const memberIds = new Set(scopedMembers.map((m) => m.userId));
+    return scopeOkrs(allOkrs, memberIds, isAdmin && chosenScope?.kind !== 'team' && chosenScope?.kind !== 'project');
+  }, [allOkrs, scopedMembers, isAdmin, chosenScope]);
 
   // Tâches « actives » dans la fenêtre (ouvertes, créées ou terminées dedans) —
   // base des cartes et répartitions (reco #13 : plus de biais createdAt).
@@ -192,9 +198,13 @@ const TeamOverviewTab = ({ orgId, members, isAdmin, currentUserId }: TeamOvervie
     <div className="space-y-5">
       {/* En-tête : sélecteur de période */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        <p className="text-xs text-[rgb(var(--color-text-muted))]">
-          {isAdmin ? t('overview.scopeAdmin') : t('overview.scopeMember')}
-        </p>
+        <StatsScopeSelect
+          orgId={orgId}
+          scope={scope}
+          onScope={setChosenScope}
+          teams={teams}
+          ctx={scopeCtx}
+        />
         <div className="flex items-center gap-2">
           <div className="inline-flex items-center rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-0.5" role="tablist" aria-label={t('overview.period')}>
             {STATS_PERIODS.map((p) => (

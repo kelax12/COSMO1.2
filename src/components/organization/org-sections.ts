@@ -1,6 +1,6 @@
 import type React from 'react';
 import type { LucideIcon } from 'lucide-react';
-import { LayoutDashboard, Users, FolderKanban, Target, Network, BarChart3, ListTodo } from 'lucide-react';
+import { LayoutDashboard, Users, FolderKanban, Target, Network, BarChart3, ListTodo, Settings } from 'lucide-react';
 import type { KeyOf } from '@/i18n/catalog';
 import type { OrgSectionSegment } from './deep-link.helpers';
 
@@ -41,11 +41,16 @@ export const ORG_SECTIONS: OrgSectionDef[] = [
   { id: 'tasks', labelKey: 'tabs.tasks', Icon: ListTodo, group: 'mine' },
   { id: 'projects', labelKey: 'tabs.projects', Icon: FolderKanban, group: 'steer' },
   { id: 'okr', labelKey: 'tabs.okr', Icon: Target, group: 'steer' },
-  // #13 : statistiques collectives — admin (toute l'org) / manager (son périmètre).
-  { id: 'stats', labelKey: 'tabs.stats', Icon: BarChart3, group: 'steer', managerOnly: true },
+  // #13 : statistiques collectives. Ouvertes depuis l'audit 2026-09-23 (M3)
+  // aux responsables d'équipe, qui n'encadrent pas forcément dans la pyramide :
+  // la page décide par `canSeeStats`, pas par `managerOnly`.
+  { id: 'stats', labelKey: 'tabs.stats', Icon: BarChart3, group: 'steer' },
   // Un membre sans subordonné n'a rien à y arbitrer.
   { id: 'pyramid', labelKey: 'tabs.pyramid', Icon: Network, group: 'steer', managerOnly: true },
   { id: 'members', labelKey: 'tabs.members', Icon: Users, group: 'org' },
+  // M13 : les réglages ont une adresse. Visible par tous (préférences de
+  // notification, quitter l'organisation) ; les onglets s'ouvrent selon les droits.
+  { id: 'settings', labelKey: 'tabs.settings', Icon: Settings, group: 'org' },
 ];
 
 /** Une entrée prête à peindre, construite par la page (libellé traduit, pastilles). */

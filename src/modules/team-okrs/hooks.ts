@@ -77,7 +77,7 @@ export const useEditTeamOKR = (orgId: string) => {
     }) => {
       const validMeta = await validateAsync('teamOkr.update', meta);
       await repository.update(okrId, validMeta as UpdateTeamOKRInput);
-      await repository.syncKeyResults(okrId, orgId, keyResults);
+      return repository.syncKeyResults(okrId, orgId, keyResults);
     },
     onSuccess: () => {
       toast.success(translator('errors').t('success.objectiveUpdated'));

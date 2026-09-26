@@ -15,6 +15,19 @@ const keys = {
   cycles: (orgId: string) => [...teamOkrKeys.all, 'cycles', orgId] as const,
   krProjects: (orgId: string) => [...teamOkrKeys.all, 'kr-projects', orgId] as const,
   checkins: (krId: string) => [...teamOkrKeys.all, 'checkins', krId] as const,
+  progress: (orgId: string) => [...teamOkrKeys.all, 'project-progress', orgId] as const,
+};
+
+/** Avancement des projets (tâches terminées / totales), pour les KR calculés. */
+export const useProjectProgress = (orgId: string | undefined, enabled = true) => {
+  const repository = useRepo();
+  return useQuery({
+    queryKey: keys.progress(orgId ?? ''),
+    queryFn: () => repository.getProjectProgress(orgId as string),
+    enabled: !!orgId && enabled,
+    staleTime: 1000 * 60,
+    refetchOnWindowFocus: true,
+  });
 };
 
 export const useOkrCycles = (orgId: string | undefined) => {

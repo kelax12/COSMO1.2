@@ -23,6 +23,9 @@ export const ORG_SECTION_SEGMENTS = [
   'stats',
   'pyramid',
   'members',
+  // Paramètres de l'organisation (audit 2026-09-23, M13) : profil,
+  // invitations, catégories, permissions, notifications, audit, danger.
+  'settings',
   'billing',
 ] as const;
 

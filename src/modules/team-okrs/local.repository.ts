@@ -250,7 +250,7 @@ export class LocalStorageTeamOKRsRepository implements ITeamOKRsRepository {
     throw makeApiError('not_found');
   }
 
-  async syncKeyResults(okrId: string, orgId: string, krs: SyncTeamKRInput[]): Promise<void> {
+  async syncKeyResults(okrId: string, orgId: string, krs: SyncTeamKRInput[]): Promise<string[]> {
     const okrs = readOrSeed();
     const okr = okrs.find((o) => o.id === okrId);
     if (!okr) throw makeApiError('not_found');
@@ -279,5 +279,6 @@ export class LocalStorageTeamOKRsRepository implements ITeamOKRsRepository {
     });
     okr.keyResults = next;
     this.save(okrs);
+    return next.map((k) => k.id);
   }
 }

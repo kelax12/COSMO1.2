@@ -39,6 +39,11 @@ const TransferOwnershipDialog = ({ orgName, candidates, pending, onConfirm, onCa
           <AlertDialogDescription className="text-[rgb(var(--color-text-secondary))] text-sm leading-relaxed">
             {t('transfer.body')}
           </AlertDialogDescription>
+          {/* Étape 3 de l'audit : l'abonnement suit la propriété. Le dire AVANT,
+              sinon le nouveau propriétaire découvre la facturation après coup. */}
+          <p className="text-sm leading-relaxed text-amber-700 dark:text-amber-300 bg-amber-500/10 rounded-xl px-3 py-2">
+            {t('transfer.billingNote')}
+          </p>
         </AlertDialogHeader>
         <label className="block text-xs font-semibold text-[rgb(var(--color-text-secondary))] mb-1" htmlFor="transfer-owner-select">
           {t('transfer.newOwner')}

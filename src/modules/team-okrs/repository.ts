@@ -20,5 +20,10 @@ export interface ITeamOKRsRepository {
    * Synchronise l'ensemble des KR d'un OKR (édition) : met à jour les KR
    * existants (id présent), insère les nouveaux, supprime les absents.
    */
-  syncKeyResults(okrId: string, orgId: string, krs: SyncTeamKRInput[]): Promise<void>;
+  /**
+   * Remplace les KR d'un objectif. Rend les identifiants dans l'ordre de
+   * `krs` (existant ou créé), pour qu'on puisse y relier des projets : un
+   * identifiant de KR neuf est généré par le dépôt, jamais pris dans la saisie.
+   */
+  syncKeyResults(okrId: string, orgId: string, krs: SyncTeamKRInput[]): Promise<string[]>;
 }
