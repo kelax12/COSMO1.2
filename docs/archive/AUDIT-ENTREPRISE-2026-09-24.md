@@ -3,6 +3,9 @@
 > des branches `feat/entreprise-popups`, `claude/recommandations-mode-entreprise-swgi0u`,
 > `claude/recommandations-mode-entreprise-do9du9`, `coherence/journal-181` et du travail
 > interrompu de `.worktrees/entreprise-gov` (sauvé sur `wip/entreprise-gov-ui`).
+> **Mise à jour du 2026-09-26 (après-midi)** : les 🔴 de l'onglet Tâches sont réalisés sur la
+> branche `feat/entreprise-audit-rouges` (commit `fe2a1dd6`, non fusionnée) ; les pastilles
+> concernées portent la mention « branche `audit-rouges` ».
 > Le code fait foi contre ce document. Sources vivantes : [`CLAUDE.md`](../../CLAUDE.md) ·
 > [`faille.md`](../../faille.md) · [`docs/`](../README.md).
 
@@ -31,10 +34,12 @@
    `offboard_org_member` : appliquée en second, chacune effaçait l'ajout de l'autre. 194 en fait
    l'union. Non prouvée en transaction annulée.
 
-**Bilan** : sur les 14 faiblesses macro, 9 ✅, 5 🟠, 0 🔴. Les 4 problèmes critiques de la
+**Bilan** : sur les 14 faiblesses macro, 10 ✅, 4 🟠, 0 🔴 (M8 passe ✅ avec la branche `audit-rouges`). Les 4 problèmes critiques de la
 synthèse : 3 ✅, 1 🟠 (M1, lectures côté serveur). Restent 🔴 surtout des fonctionnalités de
 l'étape 6 classées « optionnelles » (capacité, champs personnalisés, automatisations,
-intégrations, SSO) et quelques détails d'écran (colonne Assignés, lien hiérarchique secondaire).
+intégrations, SSO) et quelques détails d'écran (lien hiérarchique secondaire, pastille de
+visibilité, rubrique Sécurité). La colonne Assignés et les autres 🔴 de l'onglet Tâches sont
+faits (branche `audit-rouges`).
 
 **Méthode.** J'ai lu le code du mode Entreprise, soit environ 17 500 lignes : les 70 composants de
 src/components/organization/, les modules organizations, org-teams, team-projects, team-okrs et
@@ -121,7 +126,7 @@ Concepts implicites que l'utilisateur ne voit pas :
 | Élément à 1 000 personnes | Constat | État 2026-09-26 |
 |---|---|---|
 | Puces de projets (onglet Tâches) | 500 puces à la suite | 🟠 12 puces puis « +N projets » ; le filtre de projet est aussi dans la barre de filtres ; pas de sélecteur avec recherche dédié |
-| Tableau des tâches | 1 000 lignes sans virtualisation ni pagination | 🟠 Affichage par tranches et pagination serveur ; pas de virtualisation |
+| Tableau des tâches | 1 000 lignes sans virtualisation ni pagination | ✅ Pagination serveur et tableau virtualisé (`useWindowVirtualizer`, branche `audit-rouges`) |
 | Sélecteurs de membres | Sans recherche | ✅ `MemberPickList` : recherche, groupes d'équipe, tranches de 50 |
 | Liste des équipes | 100 cartes au-dessus de l'annuaire | ✅ Section Équipes à part, recherche, six cartes puis « voir plus » |
 | Pyramide | Arbre de 1 000 nœuds sans replier | ✅ Branches repliées à grande échelle, recherche |
@@ -143,7 +148,7 @@ Solution proposée :
 3. ✅ Projets triés du plus récent, paginés, archivés inclus sur demande.
 4. ✅ Sélecteurs de membres avec recherche (seuil 8, pas 50). La recherche reste locale ;
    l'annuaire reste plafonné à 500 membres.
-5. 🔴 Virtualisation du tableau.
+5. ✅ Virtualisation du tableau (`TeamTasksTable`, branche `audit-rouges`).
 
 #### M2 · Le projet n'est pas un véritable objet (Critique pour le multi-projets) · ✅
 
@@ -177,9 +182,9 @@ Confirmation qui nomme la nouvelle audience quand on change l'équipe d'un proje
 - ✅ Une barre de filtres unique (`OrgTaskFilterBar`), filtres dans l'URL, vues enregistrées
   (⏳ mig. 192), actions groupées dans toutes les vues.
 - ✅ Projets devient un portefeuille qui mène à la page projet.
-- 🟠 La barre filtre par projet, équipe, assigné, statut et texte ; pas encore par priorité,
-  échéance, catégorie ni étiquette. Tâches et Projets restent deux onglets, pas un seul espace
-  Travail.
+- 🟠 La barre filtre par projet, équipe, assigné, statut et texte ; ✅ priorité, plage
+  d'échéance, catégorie et étiquette dans l'onglet Tâches (`TaskAttributeFilters`, branche
+  `audit-rouges`). Tâches et Projets restent deux onglets, pas un seul espace Travail.
 
 #### M7 · Aucune recherche ni navigation par objet (Haute) · ✅
 
@@ -187,9 +192,10 @@ Ctrl+K sur `search_org` (projets, jalons, tâches, OKR, KR, membres, équipes, �
 `?task=`, `?project=`, `?okr=`, `?member=`, `?team=` ouvrent leur fiche depuis n'importe quelle
 section. Épinglés et Récents dans le panneau de droite.
 
-#### M8 · Des capacités déjà construites mais invisibles (Moyenne à haute) · 🟠
+#### M8 · Des capacités déjà construites mais invisibles (Moyenne à haute) · ✅
 
-- 🟠 Étiquettes : champ de la fiche de tâche ✅ ; pas de filtre par étiquette.
+- ✅ Étiquettes : champ de la fiche de tâche, et filtre par étiquette dans l'onglet Tâches
+  (branche `audit-rouges`, lecture de `team_task_labels` par `label_id`, sans migration).
 - ✅ Historique par tâche : onglet Historique.
 - ✅ Statut de flux en tête de la fiche de tâche.
 
@@ -266,13 +272,14 @@ Fonctionnalités manquantes : ✅ Aujourd'hui / cette semaine, ✅ « Je bloque 
 | Pas de filtre par assigné ni « moi » | Haute | Barre de filtres unifiée | ✅ |
 | Création rapide d'un projet visible par tous | Haute | Ouvrir le vrai formulaire | ✅ |
 | Actions montrées sans en avoir le droit | Moyenne | Griser avec explication | ✅ |
-| Pas de colonne Assignés, et je n'y figure pas | Moyenne | Colonne avec « Vous » | 🔴 Les avatars restent dans la cellule du nom, sans moi |
+| Pas de colonne Assignés, et je n'y figure pas | Moyenne | Colonne avec « Vous » | ✅ Colonne Assignés, « Vous » en toutes lettres (branche `audit-rouges`) |
 | Pas d'actions groupées | Haute | Barre groupée | ✅ Statut, assignés, échéance, priorité, projet, suppression |
 | Filtres non enregistrés | Moyenne | URL et vues enregistrées | ✅ ⏳ mig. 192 pour les vues |
 
-Fonctionnalités manquantes : ✅ filtres assigné, « moi », équipe ; 🔴 priorité, plage
-d'échéance, catégorie, étiquette ; 🔴 colonnes configurables ; 🔴 regroupement ; 🔴 export ;
-🔴 édition en ligne de l'échéance et de la priorité (le lot le permet, pas la ligne).
+Fonctionnalités manquantes : ✅ filtres assigné, « moi », équipe. Branche `audit-rouges` :
+✅ priorité, plage d'échéance, catégorie, étiquette ; ✅ colonnes configurables (préférence
+locale) ; ✅ regroupement (projet, statut, assigné, priorité) ; ✅ export CSV des tâches
+affichées ; ✅ édition en ligne de l'échéance et de la priorité.
 
 ### Projets (`/entreprise/projects`)
 
@@ -459,7 +466,7 @@ saisie du nom), « Annuler » aussi sur les équipes et les projets.
 
 ### 2. Problèmes importants
 
-- 🟠 Onglets Tâches et Projets qui se concurrencent (M6) · ✅ recherche globale et page par objet (M7).
+- 🟠 Onglets Tâches et Projets qui se concurrencent (M6 ; filtres complets dans Tâches) · ✅ recherche globale et page par objet (M7).
 - ✅ Pyramide et équipes, statistiques des responsables d'équipe (M3).
 - ✅ OKR liés à l'exécution (M9) · ✅ processus de départ (M10) · ✅ invitation par e-mail (M11).
 - 🟠 Visibilité (M12) · ✅ création rapide d'un projet visible par tous.
@@ -471,10 +478,10 @@ saisie du nom), « Annuler » aussi sur les équipes et les projets.
 - ✅ Simplicité : un seul formulaire par objet, une barre de filtres unique, trois niveaux de confirmation.
 - ✅ Puissance : vues enregistrées, actions groupées partout, modèles de projet, lien OKR vers projets.
 - ✅ Productivité : Ctrl+K, « En attente de moi », suivre un objet, résumé quotidien.
-- 🟠 Passage à l'échelle : RPC paginées et agrégées (partiel), 🔴 virtualisation, ✅ branches repliables.
+- 🟠 Passage à l'échelle : RPC paginées et agrégées (partiel), ✅ virtualisation (branche `audit-rouges`), ✅ branches repliables.
 - 🟠 Compréhension : 🔴 pastille de visibilité, ✅ glossaire des rôles, ✅ toast quand on devient manager.
 - ✅ Collaboration : page d'équipe, planification dans l'agenda avec accord, revue hebdomadaire par équipe.
-- 🟠 Déjà construit, à exposer : ✅ historique par tâche, ✅ journal de l'organisation, 🟠 étiquettes (pas de filtre).
+- ✅ Déjà construit, à exposer : ✅ historique par tâche, ✅ journal de l'organisation, ✅ étiquettes (filtre, branche `audit-rouges`).
 
 ### 4. Vision cible
 
