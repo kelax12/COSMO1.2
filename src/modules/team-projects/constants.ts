@@ -32,7 +32,7 @@ export const teamProjectKeys = {
   comments: (taskId: string) => [...teamProjectKeys.all, 'comments', taskId] as const,
   subtasks: (taskId: string) => [...teamProjectKeys.all, 'subtasks', taskId] as const,
   labels: (orgId: string) => [...teamProjectKeys.all, 'labels', orgId] as const,
-  taskLabels: (orgId: string) => [...teamProjectKeys.all, 'task-labels', orgId] as const,
+  taskLabels: (taskId: string) => [...teamProjectKeys.all, 'task-labels', taskId] as const,
   activity: (taskId: string) => [...teamProjectKeys.all, 'activity', taskId] as const,
   dependencies: (orgId: string) => [...teamProjectKeys.all, 'dependencies', orgId] as const,
   // Portefeuille (mig. 153).

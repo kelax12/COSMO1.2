@@ -124,7 +124,6 @@ const NON_MESUREES: Record<string, string> = {
   'components/onboarding/FirstRunSetup.tsx':
     'inatteignable en démo par conception (`!isDemo`) — c est même le parcours '
     + 'qui a motivé la création du project `supabase-stub`.',
-  'components/organization/AddUnderSheet.tsx': 'mode entreprise : exige une organisation peuplée.',
   'components/organization/AssignEventDialog.tsx': 'mode entreprise.',
   'components/organization/AssignTaskSheet.tsx': 'mode entreprise.',
   'components/organization/CreateTeamModal.tsx': 'mode entreprise.',
@@ -135,12 +134,13 @@ const NON_MESUREES: Record<string, string> = {
   'components/organization/InviteByEmailDialog.tsx': 'mode entreprise, et hors démo : exige `create_org_email_invitations` (mig. 161).',
   'components/organization/InviteOrJoinModal.tsx': 'mode entreprise.',
   'components/organization/MemberPermissionsSheet.tsx': 'mode entreprise.',
-  'components/organization/MemberPlacementSheet.tsx': 'mode entreprise.',
   'components/organization/MemberSheet.tsx': 'mode entreprise.',
   'components/organization/NewTeamProjectModal.tsx': 'mode entreprise.',
   'components/organization/OffboardMemberDialog.tsx':
     'mode entreprise, admin seulement, et destructrice (assistant de départ, mig. 161).',
   'components/organization/OrgProfileSheet.tsx': 'mode entreprise.',
+  'components/organization/PyramidPlacementSheet.tsx':
+    'mode entreprise : exige une organisation peuplée (fusion de MemberPlacementSheet et AddUnderSheet).',
   'components/organization/TeamTaskModal.tsx':
     'mode entreprise. ⚠️ Elle EST mesurée par `touch-targets.spec.ts` (cibles '
     + 'tactiles), donc atteignable : c est de la dette, pas un obstacle.',

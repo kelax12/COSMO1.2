@@ -8,7 +8,7 @@
 import { toast } from '@/lib/toast';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { useActiveOrganization, useMyOrgPermissions, useOrgMembers } from '@/modules/organizations';
-import { useCreateTeamWithMembers, useOrgTeams } from '@/modules/org-teams';
+import { useCreateTeamWithMembers, useOrgTeams, type CreateTeamFullInput } from '@/modules/org-teams';
 import {
   useCreateTeamProjectWithTasks, useTeamProjectTemplates,
   type CreateTeamProjectInput, type DraftProjectMilestone, type DraftProjectTask,
@@ -66,8 +66,8 @@ const OrgCreateForms = ({ orgId, request, onClose }: OrgCreateFormsProps) => {
 
   if (!can['team.create']) return null;
   // Le succès est déjà annoncé par `useCreateOrgTeam`.
-  const submitTeam = async (input: { name: string; color: string }, memberIds: string[]) => {
-    const team = await createTeamWithMembers(input, memberIds);
+  const submitTeam = async (input: CreateTeamFullInput) => {
+    const team = await createTeamWithMembers(input);
     request.options.onCreated?.(team.id);
   };
   return (

@@ -2,8 +2,8 @@
 // Les CHAMPS d'une tâche d'équipe
 //
 // FRONTIÈRE : ce composant ne sait ni enregistrer, ni fermer, ni commenter.
-// Il rend un formulaire — nom, description, catégorie, projet, priorité,
-// échéance, durée, assignés — et remonte chaque saisie. `TeamTaskModal` garde
+// Il rend un formulaire (statut, nom, description, catégorie, étiquettes,
+// projet, priorité, dates, durée, assignés) et remonte chaque saisie. `TeamTaskModal` garde
 // l'enveloppe : la sauvegarde, les commentaires, les sous-tâches, le panneau
 // latéral, et la création silencieuse déclenchée par un premier commentaire.
 //
@@ -11,22 +11,26 @@
 //   • l'échéance passe par le calendrier COSMO, JAMAIS le picker natif (il
 //     ignore le thème, la locale de l'app et les presets) — et son popover
 //     monte à `z-[10000]`, un cran au-dessus de la modale à `z-[9999]` ;
-//   • la ligne d'assigné est rendue par UNE fonction (`renderAssigneeRow`,
-//     fournie par l'appelant) partagée avec le panneau latéral desktop :
-//     même état, même comportement, aucune copie qui pourrait diverger.
+//   • les assignés passent par `MemberPickList`, le MÊME sélecteur que le
+//     panneau latéral desktop et que « Attribuer à quelqu'un » : recherche,
+//     groupes d'équipe, pagination, aucune copie qui pourrait diverger.
+//
+// 2026-09-25 (audit des popups) : le statut arrive EN TÊTE, et la création de
+// projet en ligne est retirée. C'était un troisième chemin de création de
+// projet, sans équipe : le projet naissait visible par toute l'entreprise.
 //
 // Extrait le 2026-09-05 (C-09).
 // ═══════════════════════════════════════════════════════════════════
 import React from 'react';
 import { ChevronRight, Minus, Plus } from 'lucide-react';
-import type { TeamProject } from '@/modules/team-projects';
+import type { TeamProject, TeamTaskStatus } from '@/modules/team-projects';
 import type { OrgMember } from '@/modules/organizations';
 import { DatePicker } from '@/components/ui/date-picker';
 import DescriptionField from '@/components/DescriptionField';
 import AddCategoryButton from '@/components/AddCategoryButton';
 import TeamCategoryTreeSelect from './TeamCategoryTreeSelect';
-import TeamAssigneeGroups from './TeamAssigneeGroups';
-import { PRIORITY_META, projectColor } from './team-projects.helpers';
+import MemberPickList from './MemberPickList';
+import { PRIORITY_META, STATUS_META, STATUS_ORDER, projectColor } from './team-projects.helpers';
 
 import { useT } from '@/i18n/useT';
 import { useOrgCreate } from './org-create.context';
@@ -51,6 +55,8 @@ interface TeamTaskFieldsProps {
   orgId: string;
   projects: TeamProject[];
 
+  status: TeamTaskStatus;
+  onStatusChange: (value: TeamTaskStatus) => void;
   name: string;
   onNameChange: (value: string) => void;
   description: string;
@@ -79,12 +85,13 @@ interface TeamTaskFieldsProps {
    * (org-create.context), puis sélectionne le projet créé. Absent = pas le droit.
    */
   onProjectCreated?: (projectId: string) => void;
+  /** Étiquettes (mig. 093), rendues sous la catégorie. */
+  labelsField?: React.ReactNode;
 
   assigneeIds: string[];
   onAssigneeIdsChange: (ids: string[]) => void;
   /** Membres à portée d'assignation (mig. 115), assignés existants compris. */
   assignableMembers: OrgMember[];
-  renderAssigneeRow: (member: OrgMember) => React.ReactNode;
   showAssignees: boolean;
   onToggleAssignees: () => void;
   /**
@@ -100,6 +107,8 @@ interface TeamTaskFieldsProps {
 const TeamTaskFields = ({
   orgId,
   projects,
+  status,
+  onStatusChange,
   name,
   onNameChange,
   description,
@@ -118,10 +127,10 @@ const TeamTaskFields = ({
   estimatedTime,
   onEstimatedTimeChange,
   onProjectCreated,
+  labelsField,
   assigneeIds,
   onAssigneeIdsChange,
   assignableMembers,
-  renderAssigneeRow,
   showAssignees,
   onToggleAssignees,
   isWide,
@@ -133,6 +142,31 @@ const TeamTaskFields = ({
 
   return (
     <form onSubmit={(e) => { e.preventDefault(); onSubmit(); }} className="space-y-5">
+      {/* Statut EN TÊTE : c'est la première chose qu'on vient changer sur une
+          tâche existante, et la fiche ne permettait pas de le faire. */}
+      <div>
+        <span className={labelClass} style={labelStyle}>{t('popups.task.status')}</span>
+        <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label={t('popups.task.status')}>
+          {STATUS_ORDER.map((s) => (
+            <button
+              key={s}
+              type="button"
+              role="radio"
+              aria-checked={status === s}
+              onClick={() => onStatusChange(s)}
+              className={`inline-flex items-center gap-1.5 min-h-11 px-3 rounded-lg border text-xs font-semibold transition-colors ${
+                status === s
+                  ? 'border-[rgb(var(--color-accent-solid))] bg-[rgb(var(--color-accent-solid))]/10 text-[rgb(var(--color-text-primary))]'
+                  : 'border-slate-200 dark:border-slate-700 bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))]'
+              }`}
+            >
+              <span className={`w-2 h-2 rounded-full ${STATUS_META[s].dot}`} aria-hidden="true" />
+              {t(STATUS_META[s].labelKey as Parameters<typeof t>[0])}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div>
         <label htmlFor="team-task-name" className={labelClass} style={labelStyle}>{t('taskModal.name')}</label>
         <input
@@ -168,6 +202,8 @@ const TeamTaskFields = ({
         <span className={labelClass} style={labelStyle}>{t('project.category')}</span>
         <TeamCategoryTreeSelect orgId={orgId} value={categoryId} onChange={onCategoryChange} />
       </div>
+
+      {labelsField}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
@@ -310,7 +346,7 @@ const TeamTaskFields = ({
       {/* Assignés — disclosure mobile/tablette uniquement : à partir de
           `lg`, un panneau dédié à gauche du modal reprend ce rôle en
           permanence (pas besoin de replier ce qu'il y a la place de
-          montrer). Même état, même `renderAssigneeRow`. */}
+          montrer). Même état, même `MemberPickList`. */}
       {!isWide && (
         <div className="border-t pt-4" style={{ borderColor: 'rgb(var(--color-border))' }}>
           <button
@@ -331,9 +367,14 @@ const TeamTaskFields = ({
             )}
           </button>
           {showAssignees && (
-            <div className="mt-3 rounded-xl border overflow-hidden max-h-56 overflow-y-auto" style={{ borderColor: 'rgb(var(--color-border))', backgroundColor: 'rgb(var(--color-surface))' }}>
-              <TeamAssigneeGroups orgId={orgId} value={assigneeIds} onChange={onAssigneeIdsChange} />
-              {assignableMembers.map(renderAssigneeRow)}
+            <div className="mt-3 rounded-xl border overflow-hidden max-h-72 overflow-y-auto" style={{ borderColor: 'rgb(var(--color-border))', backgroundColor: 'rgb(var(--color-surface))' }}>
+              <MemberPickList
+                members={assignableMembers}
+                value={assigneeIds}
+                onChange={onAssigneeIdsChange}
+                teamGroupsOrgId={orgId}
+                label={t('taskModal.assignTask')}
+              />
             </div>
           )}
         </div>

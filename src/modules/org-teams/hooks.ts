@@ -46,20 +46,37 @@ export const useCreateOrgTeam = (orgId: string) => {
   });
 };
 
+/** Ce que rend le formulaire « Nouvelle équipe » : l'équipe, ses membres, son responsable. */
+export interface CreateTeamFullInput {
+  name: string;
+  color: string;
+  memberIds: string[];
+  /** Responsable d'équipe (mig. 107) : gère ses membres et ses projets. */
+  leadId: string | null;
+}
+
 /**
- * Crée une équipe PUIS y ajoute les membres choisis : LE résultat de tout
- * formulaire « Nouvelle équipe », d'où qu'on l'ouvre (cohérence globale,
- * 2026-09-25). Le mini-formulaire du modal d'OKR créait une équipe sans
- * aucun membre ; celui de Membres, de Pyramide et de Projets, avec.
+ * Crée une équipe PUIS y ajoute les membres choisis, puis nomme son
+ * responsable : LE résultat de tout formulaire « Nouvelle équipe », d'où
+ * qu'on l'ouvre (cohérence globale, 2026-09-25). Le mini-formulaire du modal
+ * d'OKR créait une équipe sans aucun membre ; celui de Membres, de Pyramide
+ * et de Projets, avec.
+ *
+ * Audit des popups du 2026-09-25 : le responsable se nomme à la création. Il
+ * est ajouté aux membres s'il n'y figurait pas, un responsable hors de son
+ * équipe n'aurait aucun sens pour la RLS (mig. 107).
  */
 export const useCreateTeamWithMembers = (orgId: string) => {
   const createTeam = useCreateOrgTeam(orgId);
   const addTeamMember = useAddTeamMember(orgId);
-  return async (input: CreateOrgTeamInput, memberIds: string[]) => {
-    const team = await createTeam.mutateAsync(input);
-    for (const userId of memberIds) {
+  const setTeamLead = useSetTeamLead(orgId);
+  return async ({ name, color, memberIds, leadId }: CreateTeamFullInput) => {
+    const team = await createTeam.mutateAsync({ name, color });
+    const ids = leadId && !memberIds.includes(leadId) ? [...memberIds, leadId] : memberIds;
+    for (const userId of ids) {
       await addTeamMember.mutateAsync({ teamId: team.id, userId });
     }
+    if (leadId) await setTeamLead.mutateAsync({ teamId: team.id, userId: leadId, isLead: true });
     return team;
   };
 };

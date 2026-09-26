@@ -19,6 +19,7 @@ export {
   useOrgTeamMembers,
   useCreateOrgTeam,
   useCreateTeamWithMembers,
+  type CreateTeamFullInput,
   useUpdateOrgTeam,
   useDeleteOrgTeam,
   useTeamDeletionImpact,

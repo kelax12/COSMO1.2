@@ -23,8 +23,7 @@ import { useTeamTaskWorkingSet } from '@/modules/team-projects';
 import { readEntityParam } from './deep-link.helpers';
 import { memberWorkload } from './team-stats.helpers';
 import MemberAvatar from './MemberAvatar';
-import MemberPlacementSheet from './MemberPlacementSheet';
-import AddUnderSheet from './AddUnderSheet';
+import PyramidPlacementSheet, { type PlacementDirection } from './PyramidPlacementSheet';
 import MemberSheet from './MemberSheet';
 import { MEMBER_TAB_PARAM } from './member-sheet.helpers';
 import OffboardMemberDialog from './OffboardMemberDialog';
@@ -86,8 +85,12 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
     scrollContainerRef,
     onBackgroundPointerDown,
   } = usePyramidDnd({ orgId, members, currentUserId, isAdmin });
-  const [placing, setPlacing] = useState<OrgMember | null>(null);
-  const [addingUnder, setAddingUnder] = useState<OrgMember | null>(null);
+  // « Placer dans la pyramide », une feuille pour les deux sens (audit des
+  // popups, 2026-09-25) : ex-MemberPlacementSheet (au-dessus) et
+  // ex-AddUnderSheet (en dessous).
+  const [placement, setPlacement] = useState<{ member: OrgMember; direction: PlacementDirection } | null>(null);
+  const setPlacing = (member: OrgMember) => setPlacement({ member, direction: 'up' });
+  const setAddingUnder = (member: OrgMember) => setPlacement({ member, direction: 'down' });
   // Fiche membre unifiée (item #18) : profil, tâches, contribution, agenda —
   // un seul sheet, ouvert sur l'onglet demandé. `tab` reste une chaîne brute
   // ici : seul `MemberSheet` connaît les onglets AUTORISÉS pour ce membre, et
@@ -447,14 +450,17 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
         </div>
       )}
 
-      {placing && (
-        <MemberPlacementSheet
+      {placement && (
+        <PyramidPlacementSheet
           orgId={orgId}
-          target={placing}
+          target={placement.member}
           members={members}
           currentUserId={currentUserId}
           isAdmin={isAdmin}
-          onClose={() => setPlacing(null)}
+          initialDirection={placement.direction}
+          canMoveTarget={isAdmin || canManage(placement.member, members, currentUserId, isAdmin)}
+          canPlaceUnder={isAdmin || placement.member.userId === currentUserId || canManage(placement.member, members, currentUserId, isAdmin)}
+          onClose={() => setPlacement(null)}
         />
       )}
 
@@ -492,14 +498,6 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
         />
       )}
 
-      {addingUnder && (
-        <AddUnderSheet
-          orgId={orgId}
-          under={addingUnder}
-          currentUserId={currentUserId}
-          onClose={() => setAddingUnder(null)}
-        />
-      )}
     </div>
   );
 };

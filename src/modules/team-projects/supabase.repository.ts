@@ -24,6 +24,9 @@ import {
   UpdateTeamSubtaskInput,
   TeamTaskActivity,
   TeamTaskDependency,
+  TeamLabel,
+  CreateTeamLabelInput,
+  TeamTaskLabel,
   TeamTrashedTask,
   DraftProjectTask,
   DraftProjectMilestone,
@@ -33,6 +36,7 @@ import {
   TeamProjectDependency,
 } from './types';
 import * as portfolio from './supabase.portfolio';
+import * as labels from './supabase.labels';
 import {
   mapProject,
   mapComment,
@@ -412,7 +416,13 @@ export class SupabaseTeamProjectsRepository implements ITeamProjectsRepository {
     if (error) throw normalizeApiError(error);
   }
 
-  // ─── Labels (mig. 093) ───────────────────────────────────────────
+  // ─── Étiquettes et historique par tâche (mig. 093, 094) ──────────
+  getLabels(orgId: string): Promise<TeamLabel[]> { return labels.getLabels(orgId); }
+  createLabel(orgId: string, input: CreateTeamLabelInput): Promise<TeamLabel> { return labels.createLabel(orgId, input); }
+  getTaskLabels(taskId: string): Promise<TeamTaskLabel[]> { return labels.getTaskLabels(taskId); }
+  addTaskLabel(taskId: string, labelId: string): Promise<void> { return labels.addTaskLabel(taskId, labelId); }
+  removeTaskLabel(taskId: string, labelId: string): Promise<void> { return labels.removeTaskLabel(taskId, labelId); }
+  getTaskActivity(taskId: string): Promise<TeamTaskActivity[]> { return labels.getTaskActivity(taskId); }
 
   // ─── Historique (mig. 094) — lecture seule ───────────────────────
 
