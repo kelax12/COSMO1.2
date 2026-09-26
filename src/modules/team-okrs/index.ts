@@ -10,6 +10,7 @@ export type {
   UpdateTeamOKRInput,
   UpdateTeamKRInput,
   SyncTeamKRInput,
+  KRProgressMode,
 } from './types';
 
 export { teamOkrKeys, TEAM_OKRS_STORAGE_KEY } from './constants';

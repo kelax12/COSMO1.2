@@ -8,6 +8,7 @@ import type {
   KRProjectLink,
   OkrCycle,
   PostKRCheckinInput,
+  ProjectProgress,
 } from './execution.types';
 
 export interface IOkrExecutionRepository {
@@ -18,6 +19,9 @@ export interface IOkrExecutionRepository {
   getKRProjects(orgId: string): Promise<KRProjectLink[]>;
   /** Remplace les projets reliés à un KR. */
   setKRProjects(orgId: string, krId: string, projectIds: string[]): Promise<void>;
+
+  /** Tâches terminées / totales par projet visible : base d'un KR calculé. */
+  getProjectProgress(orgId: string): Promise<ProjectProgress[]>;
 
   getCheckins(krId: string): Promise<KRCheckin[]>;
   postCheckin(input: PostKRCheckinInput): Promise<void>;

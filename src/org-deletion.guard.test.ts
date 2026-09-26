@@ -226,23 +226,20 @@ describe('garde — supprimer une entreprise est un geste de PROPRIETAIRE (C-39)
     // Ce n'est que l'affichage — la regle vit dans la RPC — mais un ecran qui
     // propose un geste que le serveur refusera est une impasse.
     //
-    // La zone vit dans `OrgMembersSection` depuis le 2026-09-24 (sortie de la
-    // page, 615 lignes). La garde suit donc les DEUX bouts : la section monte
-    // la zone sur `isOwner`, et la page lui passe bien le proprietaire, pas
-    // l'admin. Un seul des deux ne suffit pas : `isOwner={isAdmin}` dans la
-    // page rouvrirait exactement C-39 avec une section parfaitement juste.
-    const section = readFileSync(
-      join(process.cwd(), 'src/components/organization/OrgMembersSection.tsx'),
-      'utf-8',
-    );
-    expect(section).toContain('{isOwner ? (');
-    const page = readFileSync(
-      join(process.cwd(), 'src/pages/OrganizationPage.tsx'),
-      'utf-8',
-    );
+    // La zone vit dans `OrgDangerZone`, onglet de Parametres, depuis l'audit du
+    // 2026-09-23 (M13). La garde suit la CHAINE entiere : la zone se monte sur
+    // `isOwner`, la section Parametres lui passe `isOwner`, et la page passe le
+    // PROPRIETAIRE a la section. Un seul maillon a `isAdmin` rouvrirait C-39
+    // avec des composants parfaitement justes pris un par un.
+    const zone = readFileSync(join(process.cwd(), 'src/components/organization/OrgDangerZone.tsx'), 'utf-8');
+    expect(zone).toContain('{isOwner ? (');
+    const settings = readFileSync(join(process.cwd(), 'src/components/organization/OrgSettingsSection.tsx'), 'utf-8');
+    const zoneBloc = settings.match(/<OrgDangerZone[\s\S]*?\/>/)?.[0] ?? '';
+    expect(zoneBloc).toContain('isOwner={isOwner}');
+    const page = readFileSync(join(process.cwd(), 'src/pages/OrganizationPage.tsx'), 'utf-8');
     // Borné au bloc de la section : `OrgBillingTab` porte aussi
     // `isOwner={isOwner}`, un `toContain` sur toute la page passerait seul.
-    const bloc = page.match(/<OrgMembersSection[\s\S]*?\/>/)?.[0] ?? '';
+    const bloc = page.match(/<OrgSettingsSection[\s\S]*?\/>/)?.[0] ?? '';
     expect(bloc).toContain('isOwner={isOwner}');
     expect(page).toContain('const isOwner = user?.id === myOrg.ownerId;');
   });

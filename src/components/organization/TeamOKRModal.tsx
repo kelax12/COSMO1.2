@@ -1,9 +1,5 @@
-// Créer / Modifier un OKR d'équipe — Sheet latéral droit (calqué sur
-// OKRModalSheet de la page OKR perso), enrichi du rattachement à des équipes
-// (cloisonnement). Un OKR ne s'assigne PAS à une personne (#10) : le travail
-// individuel passe par les tâches de projet.
 import { useEffect, useState } from 'react';
-import { Plus, Trash2, Users, Building2, X } from 'lucide-react';
+import { Users, Building2 } from 'lucide-react';
 import {
   Sheet,
   SheetContent,
@@ -19,7 +15,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Slider } from '@/components/ui/slider';
 import {
   useCreateTeamOKR,
   useEditTeamOKR,
@@ -27,52 +22,49 @@ import {
   type CreateTeamKRInput,
   type SyncTeamKRInput,
 } from '@/modules/team-okrs';
-import { useOrgTeams, useCreateOrgTeam } from '@/modules/org-teams';
+import { useOrgTeams } from '@/modules/org-teams';
+import { useTeamProjects } from '@/modules/team-projects';
+import { useKRProjects, useOkrCycles, useSetKRProjects } from '@/modules/team-okrs/execution.hooks';
 import TeamCategoryTreeSelect from './TeamCategoryTreeSelect';
-import { TEAM_COLORS } from './CreateTeamModal';
+import TeamOKRKeyResultsEditor, { newKR, type KRDraft } from './TeamOKRKeyResultsEditor';
+import { currentCycle, parentCandidates } from './okr-execution.helpers';
 import { useT } from '@/i18n/useT';
 
 interface TeamOKRModalProps {
   orgId: string;
-  /** OKR à modifier — absent = création. */
+  /** OKR à modifier. Absent = création. */
   editingOKR?: TeamOKR | null;
+  /** Objectifs visibles : candidats au rôle de parent (M9). */
+  allOkrs?: TeamOKR[];
   onClose: () => void;
 }
 
-interface KRDraft {
-  id?: string;
-  title: string;
-  currentValue: number;
-  targetValue: number;
-  unit: string;
-  weight: number;
-}
+const clampWeight = (w: number) => Math.min(10, Math.max(1, Math.round(Number(w) || 1)));
 
-const newKR = (): KRDraft => ({
-  title: '',
-  currentValue: 0,
-  targetValue: 100,
-  // Pas d'unité par défaut — « % » n'a de sens que pour une partie des KR
-  // (taux, pourcentages) ; les autres (nombre, montant, durée) hériteraient
-  // sinon d'un symbole faux tant que l'utilisateur ne l'efface pas lui-même.
-  unit: '',
-  weight: 1,
-});
-
-export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModalProps) {
+/**
+ * Créer ou modifier un objectif d'entreprise.
+ *
+ * Audit 2026-09-23 :
+ *   · M9 : cycle, objectif parent, KR calculés à partir de projets reliés ;
+ *   · étape 3 : la création d'équipe intégrée est RETIRÉE. Une équipe créée
+ *     depuis un formulaire d'objectif naissait sans membre ni responsable ;
+ *     elle se crée dans la section Équipes.
+ */
+export default function TeamOKRModal({ orgId, editingOKR, allOkrs = [], onClose }: TeamOKRModalProps) {
   const { t } = useT('org');
   const isEdit = !!editingOKR;
   const { data: teams = [] } = useOrgTeams(orgId);
+  const { data: cycles = [] } = useOkrCycles(orgId);
+  const { data: projects = [] } = useTeamProjects(orgId);
+  const { data: links = [] } = useKRProjects(orgId);
   const createOKR = useCreateTeamOKR(orgId);
   const editOKR = useEditTeamOKR(orgId);
-  const createTeam = useCreateOrgTeam(orgId);
-  const [creatingTeam, setCreatingTeam] = useState(false);
-  const [newTeamName, setNewTeamName] = useState('');
-  const [newTeamColor, setNewTeamColor] = useState<string>(TEAM_COLORS[0].value);
+  const setKRProjects = useSetKRProjects(orgId);
+  const activeProjects = projects.filter((p) => !p.archivedAt);
 
   // Monté fermé puis ouvert au tick suivant : la transition false→true permet à
   // Radix de jouer le slide-in (un Sheet monté déjà ouvert reste hors-écran
-  // sous prefers-reduced-motion — l'animation d'entrée ne se déclenche pas).
+  // sous prefers-reduced-motion : l'animation d'entrée ne se déclenche pas).
   const [open, setOpen] = useState(false);
   useEffect(() => { setOpen(true); }, []);
   const [title, setTitle] = useState(editingOKR?.title ?? '');
@@ -80,6 +72,8 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
   const [categoryId, setCategoryId] = useState<string | null>(editingOKR?.categoryId ?? null);
   const [endDate, setEndDate] = useState(editingOKR?.endDate ? editingOKR.endDate.slice(0, 10) : '');
   const [teamIds, setTeamIds] = useState<string[]>(editingOKR?.teamIds ?? []);
+  const [cycleId, setCycleId] = useState<string>(editingOKR?.cycleId ?? '');
+  const [parentOkrId, setParentOkrId] = useState<string>(editingOKR?.parentOkrId ?? '');
   const [keyResults, setKeyResults] = useState<KRDraft[]>(
     editingOKR && editingOKR.keyResults.length > 0
       ? editingOKR.keyResults.map((k) => ({
@@ -89,49 +83,67 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
           targetValue: k.targetValue,
           unit: k.unit ?? '',
           weight: k.weight ?? 1,
+          progressMode: k.progressMode ?? 'manual',
+          projectIds: [],
         }))
       : [newKR()],
   );
 
-  const isPending = createOKR.isPending || editOKR.isPending;
+  // Un nouvel objectif se range par défaut dans le cycle en cours.
+  const [cycleDefaulted, setCycleDefaulted] = useState(isEdit);
+  useEffect(() => {
+    if (cycleDefaulted || cycles.length === 0) return;
+    setCycleId(currentCycle(cycles)?.id ?? '');
+    setCycleDefaulted(true);
+  }, [cycles, cycleDefaulted]);
 
-  const setKR = (idx: number, patch: Partial<KRDraft>) =>
-    setKeyResults((prev) => prev.map((k, i) => (i === idx ? { ...k, ...patch } : k)));
+  // Les liens KR ↔ projets arrivent après le premier rendu : recopiés une fois.
+  const [linksCopied, setLinksCopied] = useState(!isEdit);
+  useEffect(() => {
+    if (linksCopied || links.length === 0) return;
+    setKeyResults((prev) => prev.map((k) =>
+      k.id ? { ...k, projectIds: links.filter((l) => l.krId === k.id).map((l) => l.projectId) } : k,
+    ));
+    setLinksCopied(true);
+  }, [links, linksCopied]);
 
+  const parents = parentCandidates(allOkrs, editingOKR?.id);
+  const isPending = createOKR.isPending || editOKR.isPending || setKRProjects.isPending;
   const toggleTeam = (teamId: string) =>
-    setTeamIds((prev) => (prev.includes(teamId) ? prev.filter((t) => t !== teamId) : [...prev, teamId]));
-
-  // Même geste que « + Nouvelle catégorie » (TeamCategoryTreeSelect) : créer
-  // sans quitter le modal, puis sélectionner immédiatement la nouvelle équipe.
-  const handleCreateTeam = () => {
-    const name = newTeamName.trim();
-    if (!name) return;
-    createTeam.mutate(
-      { name, color: newTeamColor },
-      {
-        onSuccess: (team) => {
-          setTeamIds((prev) => [...prev, team.id]);
-          setNewTeamName('');
-          setNewTeamColor(TEAM_COLORS[0].value);
-          setCreatingTeam(false);
-        },
-      },
-    );
-  };
+    setTeamIds((prev) => (prev.includes(teamId) ? prev.filter((x) => x !== teamId) : [...prev, teamId]));
 
   // Un objectif sans résultat clé mesurable n'est pas valide : ≥ 1 KR nommé + cible > 0.
   const hasKeyResult = keyResults.some((k) => k.title.trim() && Number(k.targetValue) > 0);
   const canSave = title.trim().length > 0 && hasKeyResult;
 
-  // Fermeture animée (slide-out) puis démontage par le parent.
   const handleClose = () => {
     setOpen(false);
     setTimeout(onClose, 200);
   };
 
+  /** Projets reliés de chaque KR, remplacés APRÈS l'enregistrement (il faut leur id). */
+  const syncProjectLinks = async (ids: string[], drafts: KRDraft[]) => {
+    for (let i = 0; i < ids.length; i++) {
+      const draft = drafts[i];
+      if (!draft) continue;
+      const wanted = draft.progressMode === 'tasks' ? draft.projectIds : [];
+      const had = links.filter((l) => l.krId === ids[i]).map((l) => l.projectId);
+      if (wanted.length === 0 && had.length === 0) continue;
+      await setKRProjects.mutateAsync({ krId: ids[i], projectIds: wanted });
+    }
+  };
+
   const handleSave = () => {
     if (!canSave) return;
     const valid = keyResults.filter((k) => k.title.trim() && Number(k.targetValue) > 0);
+    const meta = {
+      title: title.trim(),
+      categoryId,
+      endDate: endDate || undefined,
+      teamIds,
+      cycleId: cycleId || null,
+      parentOkrId: parentOkrId || null,
+    };
 
     if (isEdit && editingOKR) {
       const krs: SyncTeamKRInput[] = valid.map((k) => ({
@@ -140,21 +152,12 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
         targetValue: Number(k.targetValue),
         currentValue: Number(k.currentValue) || 0,
         unit: k.unit.trim() || undefined,
-        weight: Math.min(10, Math.max(1, Math.round(Number(k.weight) || 1))),
+        weight: clampWeight(k.weight),
+        progressMode: k.progressMode,
       }));
       editOKR.mutate(
-        {
-          okrId: editingOKR.id,
-          meta: {
-            title: title.trim(),
-            categoryId,
-            description: description.trim(),
-            endDate: endDate || undefined,
-            teamIds,
-          },
-          keyResults: krs,
-        },
-        { onSuccess: handleClose },
+        { okrId: editingOKR.id, meta: { ...meta, description: description.trim() }, keyResults: krs },
+        { onSuccess: async (ids) => { await syncProjectLinks(ids, valid); handleClose(); } },
       );
       return;
     }
@@ -164,20 +167,26 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
       targetValue: Number(k.targetValue),
       currentValue: Number(k.currentValue) || 0,
       unit: k.unit.trim() || undefined,
-      weight: Math.min(10, Math.max(1, Math.round(Number(k.weight) || 1))),
+      weight: clampWeight(k.weight),
+      progressMode: k.progressMode,
     }));
     createOKR.mutate(
+      { ...meta, description: description.trim() || undefined, keyResults: krs },
       {
-        title: title.trim(),
-        categoryId,
-        description: description.trim() || undefined,
-        endDate: endDate || undefined,
-        teamIds,
-        keyResults: krs,
+        onSuccess: async (created) => {
+          await syncProjectLinks(created.keyResults.map((k) => k.id), valid);
+          handleClose();
+        },
       },
-      { onSuccess: handleClose },
     );
   };
+
+  const chip = (active: boolean) =>
+    `inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+      active
+        ? 'bg-[rgb(var(--color-accent-solid))] border-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))]'
+        : 'border-border text-muted-foreground hover:border-[rgb(var(--color-accent))] hover:text-blue-600 dark:hover:text-blue-400'
+    }`;
 
   return (
     <Sheet open={open} onOpenChange={(o) => { if (!o) handleClose(); }}>
@@ -196,21 +205,44 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
               <Input id="tokr-title" value={title} autoFocus placeholder={t('okrModal.objectivePlaceholder')} onChange={(e) => setTitle(e.target.value)} />
             </div>
 
-            <div className="grid gap-2">
-              <Label htmlFor="tokr-end">{t('okrModal.deadline')}</Label>
-              {/* Même composant que la page Tâches perso (DesktopDetailsStep) et
-                  que OKRModalSheet (OKR perso) : Popover + Calendar, pas l'input
-                  natif du navigateur — c'est LE calendrier de l'app, pas une
-                  variante entreprise. Icône teintée en accent via `[&_svg]`
-                  (le composant partagé n'expose pas de prop dédiée). */}
-              <DatePicker
-                value={endDate}
-                onChange={setEndDate}
-                className="w-full [&_svg]:text-[rgb(var(--color-accent))]"
-              />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid gap-2">
+                <Label htmlFor="tokr-cycle">{t('okrExec.cycleLabel')}</Label>
+                <select
+                  id="tokr-cycle"
+                  value={cycleId}
+                  onChange={(e) => setCycleId(e.target.value)}
+                  className="h-9 rounded-md border border-border bg-transparent px-2 text-sm"
+                >
+                  <option value="">{t('okrExec.noCycle')}</option>
+                  {cycles.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </select>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="tokr-end">{t('okrModal.deadline')}</Label>
+                <DatePicker
+                  id="tokr-end"
+                  value={endDate}
+                  onChange={setEndDate}
+                  className="w-full [&_svg]:text-[rgb(var(--color-accent))]"
+                />
+              </div>
             </div>
 
-            {/* Catégorie — vrai système partagé (parité mode perso, #C) */}
+            <div className="grid gap-2">
+              <Label htmlFor="tokr-parent">{t('okrExec.parentLabel')}</Label>
+              <select
+                id="tokr-parent"
+                value={parentOkrId}
+                onChange={(e) => setParentOkrId(e.target.value)}
+                className="h-9 rounded-md border border-border bg-transparent px-2 text-sm"
+              >
+                <option value="">{t('okrExec.noParent')}</option>
+                {parents.map((o) => <option key={o.id} value={o.id}>{o.title}</option>)}
+              </select>
+              <p className="text-muted-foreground text-xs">{t('okrExec.parentHint')}</p>
+            </div>
+
             <div className="grid gap-2">
               <Label>{t('okrModal.category')}</Label>
               <TeamCategoryTreeSelect orgId={orgId} value={categoryId} onChange={setCategoryId} />
@@ -225,169 +257,23 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
             <div className="grid gap-2">
               <Label>{t('okrModal.visibility')}</Label>
               <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={() => setTeamIds([])}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
-                    teamIds.length === 0
-                      ? 'bg-[rgb(var(--color-accent-solid))] border-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))]'
-                      : 'border-border text-muted-foreground hover:border-[rgb(var(--color-accent))] hover:text-blue-600 dark:hover:text-blue-400'
-                  }`}
-                >
+                <button type="button" onClick={() => setTeamIds([])} className={chip(teamIds.length === 0)}>
                   <Building2 size={13} aria-hidden="true" /> {t('okrModal.wholeOrg')}
                 </button>
-                {teams.map((team) => {
-                  const active = teamIds.includes(team.id);
-                  return (
-                    <button
-                      key={team.id}
-                      type="button"
-                      onClick={() => toggleTeam(team.id)}
-                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
-                        active
-                          ? 'bg-[rgb(var(--color-accent-solid))] border-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))]'
-                          : 'border-border text-muted-foreground hover:border-[rgb(var(--color-accent))] hover:text-blue-600 dark:hover:text-blue-400'
-                      }`}
-                    >
-                      <Users size={13} aria-hidden="true" /> {team.name}
-                    </button>
-                  );
-                })}
-                {!creatingTeam && (
-                  <button
-                    type="button"
-                    onClick={() => setCreatingTeam(true)}
-                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium border border-dashed border-[rgb(var(--color-border))] text-[rgb(var(--color-text-muted))] hover:text-blue-500 hover:border-[rgb(var(--color-accent-solid-hover))] transition-colors"
-                  >
-                    <Plus size={12} aria-hidden="true" /> {t('team.newTeam')}
+                {teams.map((team) => (
+                  <button key={team.id} type="button" onClick={() => toggleTeam(team.id)} className={chip(teamIds.includes(team.id))}>
+                    <Users size={13} aria-hidden="true" /> {team.name}
                   </button>
-                )}
+                ))}
               </div>
-
-              {creatingTeam && (
-                <div className="flex flex-wrap items-center gap-2 rounded-lg border border-[rgb(var(--color-border))] p-2">
-                  <input
-                    type="text"
-                    value={newTeamName}
-                    onChange={(e) => setNewTeamName(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') { e.preventDefault(); handleCreateTeam(); }
-                      if (e.key === 'Escape') setCreatingTeam(false);
-                    }}
-                    placeholder={t('team.namePlaceholder')}
-                    autoFocus
-                    maxLength={80}
-                    className="flex-1 min-w-[140px] h-8 px-2.5 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-background))] text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/40"
-                  />
-                  <div className="flex items-center gap-1">
-                    {TEAM_COLORS.map((c) => (
-                      <button
-                        key={c.value}
-                        type="button"
-                        aria-label={t('team.colorNamed', { name: t(c.labelKey) })}
-                        aria-pressed={newTeamColor === c.value}
-                        onClick={() => setNewTeamColor(c.value)}
-                        className={`w-5 h-5 rounded-full transition-transform hover:scale-110 ${newTeamColor === c.value ? 'ring-2 ring-offset-1 ring-offset-[rgb(var(--color-surface))] ring-blue-500' : ''}`}
-                        style={{ backgroundColor: c.value }}
-                      />
-                    ))}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleCreateTeam}
-                    disabled={!newTeamName.trim() || createTeam.isPending}
-                    className="h-8 px-3 rounded-lg bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] disabled:opacity-50 text-[rgb(var(--color-accent-solid-foreground))] text-xs font-semibold"
-                  >
-                    {t('team.create')}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setCreatingTeam(false)}
-                    aria-label={t('common.cancel')}
-                    className="w-8 h-8 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:bg-[rgb(var(--color-hover))]"
-                  >
-                    <X size={14} aria-hidden="true" />
-                  </button>
-                </div>
-              )}
-
               <p className="text-muted-foreground text-xs">
-                {teamIds.length === 0
-                  ? t('okrModal.visibilityWholeOrg')
-                  : t('okrModal.visibilityTeams')}
+                {teamIds.length === 0 ? t('okrModal.visibilityWholeOrg') : t('okrModal.visibilityTeams')}
               </p>
             </div>
 
             <Separator />
 
-            <div className="flex items-center justify-between">
-              <Label>{t('okrModal.keyResults')}</Label>
-              <Button
-                type="button"
-                size="sm"
-                onClick={() => setKeyResults((p) => (p.length < 10 ? [...p, newKR()] : p))}
-                disabled={keyResults.length >= 10}
-                className="bg-[rgb(var(--color-accent-solid))] hover:bg-[rgb(var(--color-accent-solid-hover))] text-[rgb(var(--color-accent-solid-foreground))] border-0"
-              >
-                <Plus aria-hidden="true" /> {t('common.add')}
-              </Button>
-            </div>
-
-            <div className="grid gap-3">
-              {keyResults.map((kr, idx) => (
-                <div key={kr.id ?? idx} className="border-border grid gap-3 rounded-lg border p-3">
-                  <div className="flex items-center gap-2">
-                    <Input value={kr.title} placeholder={t('okrModal.krPlaceholder')} className="h-8" onChange={(e) => setKR(idx, { title: e.target.value })} />
-                    {keyResults.length > 1 && (
-                      <Button type="button" variant="destructive" size="icon-sm" aria-label={t('common.removeKr')} onClick={() => setKeyResults((p) => p.filter((_, i) => i !== idx))}>
-                        <Trash2 aria-hidden="true" />
-                      </Button>
-                    )}
-                  </div>
-                  <div className="grid gap-1.5">
-                    <div className="text-muted-foreground flex items-center justify-between text-xs">
-                      <span>{t('okrModal.progress')}</span>
-                      <span className="tabular-nums">{kr.currentValue} / {kr.targetValue} {kr.unit}</span>
-                    </div>
-                    <Slider
-                      min={0}
-                      max={Math.max(kr.targetValue, 1)}
-                      step={1}
-                      value={[Math.min(kr.currentValue, kr.targetValue)]}
-                      onValueChange={(v) => setKR(idx, { currentValue: v[0] })}
-                      className="[&_[data-slot=slider-track]]:bg-blue-200 dark:[&_[data-slot=slider-track]]:bg-blue-900/40 [&_[data-slot=slider-range]]:bg-blue-500 [&_[data-slot=slider-thumb]]:border-blue-500 [&_[data-slot=slider-thumb]]:bg-blue-500"
-                    />
-                  </div>
-                  {/* Durée retirée : un OKR d'équipe est à l'échelle équipe /
-                      entreprise, la notion de temps de réalisation n'a pas de sens. */}
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                    <div className="grid gap-1">
-                      <Label className="text-muted-foreground text-xs">{t('okrModal.target')}</Label>
-                      <Input type="number" className="h-8" value={kr.targetValue} onChange={(e) => setKR(idx, { targetValue: Number(e.target.value) })} />
-                    </div>
-                    <div className="grid gap-1">
-                      <Label className="text-muted-foreground text-xs">{t('okrModal.unit')}</Label>
-                      <Input className="h-8" value={kr.unit} placeholder="%" onChange={(e) => setKR(idx, { unit: e.target.value })} />
-                    </div>
-                    <div className="grid gap-1">
-                      <Label className="text-muted-foreground text-xs" title={t('okrModal.weightHint')}>{t('okrModal.weight')}</Label>
-                      <Input
-                        type="number"
-                        min={1}
-                        max={10}
-                        step={1}
-                        className="h-8"
-                        value={kr.weight}
-                        onChange={(e) => setKR(idx, { weight: Number(e.target.value) })}
-                      />
-                    </div>
-                  </div>
-                  {/* #10 : un OKR ne s'assigne pas à une personne — il se
-                      rattache à des équipes ; le travail individuel passe par
-                      les tâches de projet. */}
-                </div>
-              ))}
-            </div>
+            <TeamOKRKeyResultsEditor keyResults={keyResults} onChange={setKeyResults} projects={activeProjects} />
           </div>
         </ScrollArea>
 

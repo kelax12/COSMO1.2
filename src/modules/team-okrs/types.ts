@@ -25,6 +25,9 @@ export interface TeamKeyResult {
   progressMode?: KRProgressMode;
   /** Contributeurs, en plus du responsable `assigneeId` (mig. 160). */
   contributorIds?: string[];
+  /** État déclaré au dernier point d'étape (mig. 160). null = jamais déclaré. */
+  health?: 'on_track' | 'at_risk' | 'off_track' | null;
+  healthUpdatedAt?: string | null;
 }
 
 export type KRProgressMode = 'manual' | 'tasks';

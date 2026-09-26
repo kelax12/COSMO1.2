@@ -29,6 +29,13 @@ export interface KRProjectLink {
   projectId: string;
 }
 
+/** Avancement d'un projet, compté en base (`get_my_team_project_progress`). */
+export interface ProjectProgress {
+  projectId: string;
+  total: number;
+  done: number;
+}
+
 /** Point d'étape daté d'un KR : valeur, état déclaré, note. */
 export interface KRCheckin {
   id: string;
