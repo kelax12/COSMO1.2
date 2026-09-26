@@ -159,10 +159,18 @@ describe('buildActivityItems', () => {
         e({ id: '4', field: 'assignees', oldValue: 'a,b', newValue: 'a', createdAt: '2026-09-20T04:00:00.000Z' }),
         e({ id: '5', field: 'deadline', oldValue: '2026-09-20', newValue: '2026-09-27', createdAt: '2026-09-20T05:00:00.000Z' }),
         e({ id: '6', field: 'priority', oldValue: '3', newValue: '1', createdAt: '2026-09-20T06:00:00.000Z' }),
+        // Création : une ligne du journal (mig. 181), plus une tâche relue.
+        e({ id: '7', taskId: 'new', field: 'created', oldValue: null, newValue: null, createdAt: '2026-09-20T07:00:00.000Z' }),
       ],
-      [task({ id: 'new', createdAt: '2026-09-20T07:00:00.000Z' })],
     );
     expect(items.map((i) => i.kind)).toEqual(['created', 'postponed', 'assigned', 'reopened', 'completed']);
     expect(items.find((i) => i.kind === 'assigned')?.addedIds).toEqual(['b']);
+    expect(items[0]).toMatchObject({ taskId: 'new', actorId: 'bob' });
+  });
+
+  // TÉMOIN : une seule source. Sans ligne de journal, aucune création n'apparaît,
+  // même si une tâche récente existe quelque part.
+  it("n'invente aucune création hors du journal", () => {
+    expect(buildActivityItems([])).toEqual([]);
   });
 });

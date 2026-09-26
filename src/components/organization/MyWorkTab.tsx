@@ -295,10 +295,7 @@ const MyWorkTab = ({ orgId, members, currentUserId, isManager }: MyWorkTabProps)
     { createdBy: me, status: 'review', limit: 50 },
     { enabled: !!me },
   );
-  // Créations récentes : le journal ne voit que les UPDATE.
-  const { data: recentlyCreated = [] } = useTeamTaskSlice(orgId, {
-    createdSince: bounds.activitySince, limit: 20,
-  });
+  // Créations : dans le journal depuis la mig. 181, plus relues à part.
   const { data: activity = [] } = useOrgActivity(orgId, bounds.activitySince);
   const { data: deps = [] } = useTeamTaskDependencies(orgId);
   const { data: notifications = [] } = useOrgNotifications(orgId);
@@ -371,7 +368,6 @@ const MyWorkTab = ({ orgId, members, currentUserId, isManager }: MyWorkTabProps)
           mine={mine}
           upcoming={upcoming}
           createdInReview={createdInReview}
-          recentlyCreated={recentlyCreated}
           activity={activity}
           deps={deps}
           notifications={notifications}
