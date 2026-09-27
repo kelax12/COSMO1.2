@@ -81,7 +81,7 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
   const { filters, setFilters } = useOrgTaskFilters('open');
   useRememberedTaskFilters(orgId, 'tasks');
   const { project: projectFilter, status: statusFilter, q: searchTerm } = filters;
-  const { data: taskDependencies = [] } = useTeamTaskDependencies(orgId);
+  const { data: taskDependencies = [], isLoading: loadingDependencies } = useTeamTaskDependencies(orgId);
   const { data: teams = [] } = useOrgTeams(orgId);
   const pf = useT('portfolio');
   const { data: categories = [] } = useTeamCategories(orgId);
@@ -117,7 +117,7 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
     data: taskPages, isLoading: loadingTasks, hasNextPage, fetchNextPage, isFetchingNextPage,
   } = useTeamTaskPages(orgId, statusFilter === 'all' ? null : recentSince, { live: true });
   const tasks = useMemo(() => taskPages?.pages.flat() ?? [], [taskPages]);
-  const isLoading = loadingProjects || loadingTasks;
+  const isLoading = loadingProjects || loadingTasks || loadingDependencies;
   const truncated = !!hasNextPage;
   const createTask = useCreateTeamTask(orgId);
   const updateTask = useUpdateTeamTask(orgId);
