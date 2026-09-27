@@ -23,6 +23,7 @@ import TodayUnified from '@/components/TodayUnified';
 import TodayMoments from '@/components/TodayMoments';
 import { useActiveOrganization } from '@/modules/organizations';
 import CollaborativeTasks from '@/components/CollaborativeTasks';
+import { selectCollaborativeTasks } from '@/components/collaborative-tasks.helpers';
 import ActiveOKRs from '@/components/ActiveOKRs';
 import MiniBarChart from '@/components/MiniBarChart';
 import TextType from '@/components/TextType';
@@ -72,7 +73,7 @@ const DashboardPage: React.FC = () => {
   // l'anti-pattern rétention n°1 — le réflexe devient « fermer sans lire »).
   const [playTyping] = useState(shouldPlayTypingToday);
 
-  const { data: tasks = [] } = useTasks();
+  const { data: tasks = [], isLoading: isLoadingTasks } = useTasks();
   const { data: krCompletions = [] } = useKRCompletions();
   const { data: events = [] } = useEvents();
   const { user: authUser } = useAuth();
@@ -88,6 +89,13 @@ const DashboardPage: React.FC = () => {
 
   // Les quatre tuiles de statistiques — derivation pure, extraite.
   const statCards = useStatCards({ tasks, events, habits, krCompletions, viewMode, today, t });
+
+  // Section « Tâches collaboratives » masquée quand elle est vide (2026-09-27) :
+  // gagner de la place plutôt que montrer une carte vide en permanence.
+  // Tant que les tâches chargent, on ne rend rien pour éviter un flash de la
+  // carte vide avant que `tasks` n'arrive.
+  const collaborativeTasks = selectCollaborativeTasks(tasks, authUser?.name);
+  const hasCollaborativeTasks = !isLoadingTasks && collaborativeTasks.length > 0;
 
   // Animation variants
   // ⚠️ Variantes derivees de `useRevealVariants` et NON ecrites en dur : sous
@@ -419,9 +427,11 @@ const DashboardPage: React.FC = () => {
                     <DashboardBarChart viewMode={viewMode} />
                   </Suspense>
                 )}
-                <MobileCollapsible title={t('sections.collaborativeTasks')}>
-                  <CollaborativeTasks />
-                </MobileCollapsible>
+                {hasCollaborativeTasks && (
+                  <MobileCollapsible title={t('sections.collaborativeTasks')}>
+                    <CollaborativeTasks />
+                  </MobileCollapsible>
+                )}
               </>
             )}
 
