@@ -60,18 +60,18 @@ const TeamWorkloadSection = ({ tasks, projectIds, members, currentUserId }: Team
     const bucket = loadBucketOf(task, now);
     const d = task.deadline ? parseISO(task.deadline) : null;
     if (!d || !isValid(d)) {
-      return <span className="text-[11px] text-[rgb(var(--color-text-muted))] shrink-0">{t('teamPage.loadNoDate')}</span>;
+      return <span className="text-xs text-[rgb(var(--color-text-muted))] shrink-0">{t('teamPage.loadNoDate')}</span>;
     }
     if (bucket === 'overdue') {
       return (
-        <span className="text-[11px] rounded-md px-1.5 bg-red-500/10 text-red-600 dark:text-red-400 shrink-0">
+        <span className="text-xs rounded-md px-1.5 bg-red-500/10 text-red-600 dark:text-red-400 shrink-0">
           {t('teamPage.loadLateDays', { count: differenceInCalendarDays(now, d) })}
         </span>
       );
     }
     return (
       <span
-        className={`text-[11px] rounded-md px-1.5 shrink-0 ${bucket === 'thisWeek' ? 'bg-amber-500/10 text-amber-700 dark:text-amber-400' : 'text-[rgb(var(--color-text-muted))]'}`}
+        className={`text-xs rounded-md px-1.5 shrink-0 ${bucket === 'thisWeek' ? 'bg-amber-500/10 text-amber-700 dark:text-amber-400' : 'text-[rgb(var(--color-text-muted))]'}`}
       >
         {shortDate.format(d)}
       </span>
@@ -95,36 +95,36 @@ const TeamWorkloadSection = ({ tasks, projectIds, members, currentUserId }: Team
 
   return (
     <section
-      className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4"
+      className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-6"
       aria-labelledby="team-load-title"
     >
-      <h3 id="team-load-title" className="text-sm font-bold text-[rgb(var(--color-text-primary))] mb-2">
+      <h3 id="team-load-title" className="text-lg font-bold text-[rgb(var(--color-text-primary))] mb-3">
         {t('teamPage.loadTitle')}
       </h3>
       {empty ? (
-        <p className="text-xs text-[rgb(var(--color-text-muted))]">{t('teamPage.loadEmpty')}</p>
+        <p className="text-sm text-[rgb(var(--color-text-muted))]">{t('teamPage.loadEmpty')}</p>
       ) : (
         <>
-          <ul className="flex flex-wrap gap-x-4 gap-y-1 mb-3 text-xs text-[rgb(var(--color-text-secondary))]" aria-hidden="true">
+          <ul className="flex flex-wrap gap-x-5 gap-y-1 mb-5 text-sm text-[rgb(var(--color-text-secondary))]" aria-hidden="true">
             {LOAD_BUCKETS.map((b) => (
               <li key={b} className="inline-flex items-center gap-1.5">
-                <span className={`w-2 h-2 rounded-sm ${BUCKET_COLOR[b]}`} />
+                <span className={`w-2.5 h-2.5 rounded-sm ${BUCKET_COLOR[b]}`} />
                 {t(BUCKET_LABEL[b])}
               </li>
             ))}
           </ul>
 
-          <ul className="space-y-2 mb-4">
+          <ul className="space-y-4 mb-6">
             {visibleRows.map((row) => (
-              <li key={row.userId ?? 'unassigned'} className="flex items-center gap-2 text-sm">
-                {avatarOf(row.userId, 24)}
+              <li key={row.userId ?? 'unassigned'} className="flex items-center gap-3 text-[15px]">
+                {avatarOf(row.userId, 32)}
                 <span
-                  className={`w-28 sm:w-36 truncate shrink-0 ${row.userId ? 'text-[rgb(var(--color-text-primary))]' : 'text-[rgb(var(--color-text-muted))]'}`}
+                  className={`w-32 sm:w-44 truncate font-medium shrink-0 ${row.userId ? 'text-[rgb(var(--color-text-primary))]' : 'text-[rgb(var(--color-text-muted))]'}`}
                 >
                   {nameOf(row.userId)}
                 </span>
                 <div
-                  className="flex-1 flex h-2.5 rounded-full bg-[rgb(var(--color-hover))] overflow-hidden"
+                  className="flex-1 flex h-3.5 rounded-full bg-[rgb(var(--color-hover))] overflow-hidden"
                   role="img"
                   aria-label={t('teamPage.loadBarAria', { name: nameOf(row.userId), count: row.total })}
                 >
@@ -138,20 +138,20 @@ const TeamWorkloadSection = ({ tasks, projectIds, members, currentUserId }: Team
             ))}
           </ul>
 
-          <div className="grid gap-2 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
             {visibleRows.map((row) => (
-              <div key={row.userId ?? 'unassigned'} className="rounded-xl bg-[rgb(var(--color-hover))] p-2.5 flex flex-col gap-1.5 min-w-0">
-                <p className="flex items-center gap-1.5 text-xs font-semibold text-[rgb(var(--color-text-primary))]">
-                  {avatarOf(row.userId, 18)}
+              <div key={row.userId ?? 'unassigned'} className="rounded-xl bg-[rgb(var(--color-hover))] p-4 flex flex-col gap-2.5 min-w-0">
+                <p className="flex items-center gap-2 text-sm font-semibold text-[rgb(var(--color-text-primary))]">
+                  {avatarOf(row.userId, 24)}
                   <span className="truncate">{nameOf(row.userId)}</span>
                   <span className="text-[rgb(var(--color-text-muted))] font-normal">· {row.total}</span>
                 </p>
-                <ul className="flex flex-col gap-1.5">
+                <ul className="flex flex-col gap-2">
                   {row.tasks.slice(0, TASKS_PER_COLUMN).map((task) => (
                     <li key={task.id}>
                       <Link
                         to={buildOrgLink('projects', { project: task.projectId })}
-                        className="flex items-center gap-2 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] px-2.5 py-1.5 text-xs hover:border-[rgb(var(--color-accent))]"
+                        className="flex items-center gap-2 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] px-3 py-2.5 text-sm hover:border-[rgb(var(--color-accent))]"
                       >
                         <span className="flex-1 truncate text-[rgb(var(--color-text-primary))]">{task.name}</span>
                         {deadlineTag(task)}
@@ -160,7 +160,7 @@ const TeamWorkloadSection = ({ tasks, projectIds, members, currentUserId }: Team
                   ))}
                 </ul>
                 {row.tasks.length > TASKS_PER_COLUMN && (
-                  <p className="text-center text-xs text-[rgb(var(--color-text-muted))]">
+                  <p className="text-center text-sm text-[rgb(var(--color-text-muted))]">
                     {tp('teamPage.loadMore', row.tasks.length - TASKS_PER_COLUMN)}
                   </p>
                 )}
