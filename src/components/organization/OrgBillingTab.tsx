@@ -7,7 +7,8 @@ import { useT } from '@/i18n/useT';
 import { formatDate } from '@/i18n/format';
 import { ENTERPRISE_BILLING_ENFORCED } from '@/modules/billing/premium-config';
 import type { OrgBillingInterval } from '@/modules/billing/premium-config';
-import { useOrgSubscription, useStartOrgCheckout, useOpenOrgPortal, useCancelAndRefundOrg, orgBillingKeys } from '@/modules/billing/org-billing.hooks';
+import { useOrgSubscription, orgBillingKeys } from '@/modules/billing/org-billing.hooks';
+import { useStartOrgCheckout, useOpenOrgPortal, useCancelAndRefundOrg } from '@/modules/billing/org-billing.checkout.hooks';
 import { effectiveQuota, effectiveTierKey } from '@/modules/billing/org-billing.logic';
 import { ORG_TIER_LABEL_KEYS } from '@/modules/billing/org-tier-labels';
 import { EnterpriseTierGrid } from './EnterpriseTierGrid';
@@ -43,7 +44,7 @@ export function OrgBillingTab({ orgId, isOwner, onBack }: Props) {
   const { user } = useAuth();
   const { activeOrg } = useActiveOrganization();
   const ownerId = activeOrg?.ownerId ?? '';
-  const { t } = useT('org');
+  const { t } = useT('orgBilling');
   const { t: tc } = useT('common');
   const [searchParams, setSearchParams] = useSearchParams();
   const { data: subscription } = useOrgSubscription(orgId);

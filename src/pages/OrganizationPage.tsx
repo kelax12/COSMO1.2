@@ -63,7 +63,7 @@ const TeamProjectsTab = lazyWithRetry(() => import('@/components/organization/Te
 const TeamTasksTab = lazyWithRetry(() => import('@/components/organization/TeamTasksTab'), ['csv', 'eventModal', 'org', 'orgAdmin', 'overlays', 'portfolio', 'tasks']);
 const TeamOKRTab = lazyWithRetry(() => import('@/components/organization/TeamOKRTab'), ['okr', 'org', 'orgAdmin', 'overlays', 'portfolio']);
 const TeamOverviewTab = lazyWithRetry(() => import('@/components/organization/TeamOverviewTab'));
-const OrgBillingTab = lazyWithRetry(() => import('@/components/organization/OrgBillingTab'), ['org', 'orgAccount', 'overlays']);
+const OrgBillingTab = lazyWithRetry(() => import('@/components/organization/OrgBillingTab'), ['org', 'orgAccount', 'orgBilling', 'overlays']);
 // Section Membres : sortie de la page le 2026-09-24, et LAZY pour la même
 // raison que les onglets ci-dessus. Importée en dur, elle restait dans ce
 // chunk, qui dépassait son cliquet (18,3 ko pour 18,0) : seul qui ouvre
@@ -74,7 +74,7 @@ const OrgMembersSection = lazyWithRetry(() => import('@/components/organization/
 // leur chunk.
 const TeamsSection = lazyWithRetry(() => import('@/components/organization/TeamsSection'));
 const TeamPage = lazyWithRetry(() => import('@/components/organization/TeamPage'));
-const OrgSettingsSection = lazyWithRetry(() => import('@/components/organization/OrgSettingsSection'), ['csv', 'okr', 'org', 'orgAccount', 'orgAdmin', 'overlays', 'tasks']);
+const OrgSettingsSection = lazyWithRetry(() => import('@/components/organization/OrgSettingsSection'), ['csv', 'okr', 'org', 'orgAccount', 'orgAdmin', 'orgBilling', 'overlays', 'tasks']);
 
 // Feuilles et dialogues : montés derrière un `&&`, donc déjà conditionnels au
 // rendu. Ils ne l'étaient pas au TÉLÉCHARGEMENT.
@@ -474,13 +474,6 @@ const OrganizationPage = () => {
           seatsFull={seatsFull}
         />
       )}
-      </Suspense>
-
-      {/* Feuilles et dialogues : leur propre frontière, avec un fallback nul.
-          Ils s'ouvrent par-dessus l'écran ; y poser un squelette ferait
-          clignoter une carte fantôme au milieu de la page pendant que le
-          chunk arrive. */}
-      <Suspense fallback={null}>
       </Suspense>
 
       {/* Desktop : la navigation vit à DROITE, hors de la zone qui défile.

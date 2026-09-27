@@ -49,7 +49,7 @@ export function EnterpriseTierGrid({
   dormant,
   interval = 'monthly',
 }: Props) {
-  const { t } = useT('org');
+  const { t } = useT('orgBilling');
   const { t: tc } = useT('common');
 
   return (

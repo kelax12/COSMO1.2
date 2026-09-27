@@ -81,6 +81,7 @@ interface FrModules {
   okr: typeof import('@/locales/fr/okr.json');
   overlays: typeof import('@/locales/fr/overlays.json');
   org: typeof import('@/locales/fr/org.json');
+  orgBilling: typeof import('@/locales/fr/orgBilling.json');
   premium: typeof import('@/locales/fr/premium.json');
   seo: typeof import('@/locales/fr/seo.json');
   settings: typeof import('@/locales/fr/settings.json');
@@ -156,6 +157,16 @@ interface CatalogShapes {
   legal: Shape<'legal'>;
   /** Mode entreprise — pyramide, équipes, projets, OKR d'équipe, invitations. */
   org: Shape<'org'>;
+  /**
+   * Facturation entreprise (checkout, sièges, résiliation, remboursement) :
+   * `OrgBillingTab`, `OrgPlanChip` (dans Paramètres) et leurs sous-composants.
+   *
+   * 🔴 À part de `org`, qui est payé par toute visite de /entreprise. Mesuré
+   * le 2026-09-27 : `billing.*` pesait 7,0 ko bruts (fr+en) dans `org`, pour
+   * un onglet que la plupart des visites n'ouvrent jamais — même raison que
+   * `orgAccount`, `orgAdmin`, `orgConfig`.
+   */
+  orgBilling: Shape<'orgBilling'>;
   /**
    * Portefeuille de projets (M2) : vues, page projet, jalons, modèles.
    *
@@ -287,7 +298,7 @@ registry[DEFAULT_LOCALE] = {
 const NAMESPACES: readonly Namespace[] = [
   'admin', 'agenda', 'bugReport', 'common', 'csv', 'dashboard', 'errors', 'eventModal',
   'guide',
-  'habits', 'invite', 'landing', 'legal', 'okr', 'org', 'orgAccount', 'orgAdmin', 'orgConfig', 'portfolio', 'premium', 'seo',
+  'habits', 'invite', 'landing', 'legal', 'okr', 'org', 'orgAccount', 'orgAdmin', 'orgBilling', 'orgConfig', 'portfolio', 'premium', 'seo',
   'overlays',
   'settings', 'statistics', 'taskModal', 'tasks', 'tutorials',
 ];
