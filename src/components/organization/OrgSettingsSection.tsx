@@ -1,6 +1,10 @@
 import { Suspense, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
-import { ArrowRightLeft, Bell, Building2, Check, ChevronRight, LogOut, Mail, Plus, Trash2, Users } from 'lucide-react';
+import {
+  AlertTriangle, ArrowRightLeft, ArrowUpRight, Bell, Building2, Check, ChevronRight, History, KeyRound, ListPlus,
+  Lock, LogOut, Mail, Plug, Plus, Receipt, Repeat, ShieldCheck, SlidersHorizontal, Tags, Trash2, UserPlus, Users, Zap,
+  type LucideIcon,
+} from 'lucide-react';
 import {
   useActiveOrganization,
   useMyOrgPermissions,
@@ -59,6 +63,18 @@ interface OrgSettingsSectionProps {
   seatsFull: boolean;
 }
 
+type ConfigPart = 'general' | 'security' | 'fields' | 'automations' | 'integrations';
+type PanelId =
+  | ConfigPart
+  | 'profile' | 'orgs' | 'invite' | 'myRights' | 'permissions' | 'categories'
+  | 'notifications' | 'audit' | 'plan' | 'danger';
+interface NavGroup {
+  label: string;
+  items: { id: PanelId; icon: LucideIcon; label: string }[];
+}
+const CONFIG_PARTS: readonly string[] = ['general', 'security', 'fields', 'automations', 'integrations'];
+const isConfigPart = (id: PanelId): id is ConfigPart => CONFIG_PARTS.includes(id);
+
 const CARD = 'rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4';
 const TITLE = 'text-sm font-bold text-[rgb(var(--color-text-primary))]';
 const HINT = 'text-xs text-[rgb(var(--color-text-muted))] mt-0.5';
@@ -112,10 +128,89 @@ const OrgSettingsSection = ({
   // manager qui a le droit `member.invite` (il place alors sous lui-même).
   const canInviteByEmail = isAdmin || (canInvite && isManager);
 
+  // Barre latérale (maquette du 2026-09-27) : une rubrique à la fois. Chaque
+  // entrée porte la MÊME garde que le bloc qu'elle ouvre : une rubrique
+  // invisible n'apparaît pas non plus dans le menu.
+  const allGroups: NavGroup[] = [
+    { label: t('orgSettings.groupCompany'), items: [
+      { id: 'profile', icon: Building2, label: t('orgSettings.navProfile') },
+      { id: 'general', icon: SlidersHorizontal, label: t('orgSettings.navGeneral') },
+      { id: 'orgs', icon: Repeat, label: t('orgSettings.navOrgs') },
+    ] },
+    { label: t('orgSettings.groupAccess'), items: [
+      { id: 'invite', icon: UserPlus, label: t('orgSettings.navInvite') },
+      { id: 'myRights', icon: ShieldCheck, label: t('orgSettings.navMyRights') },
+      ...(isAdmin ? [{ id: 'permissions' as const, icon: KeyRound, label: t('orgSettings.navPermissions') }] : []),
+      ...(isAdmin ? [{ id: 'security' as const, icon: Lock, label: t('orgSettings.navSecurity') }] : []),
+    ] },
+    { label: t('orgSettings.groupWork'), items: [
+      ...(canManageCategories ? [{ id: 'categories' as const, icon: Tags, label: t('orgSettings.navCategories') }] : []),
+      ...(isAdmin ? [{ id: 'fields' as const, icon: ListPlus, label: t('orgSettings.navFields') }] : []),
+      ...(isAdmin ? [{ id: 'automations' as const, icon: Zap, label: t('orgSettings.navAutomations') }] : []),
+    ] },
+    { label: t('orgSettings.groupTracking'), items: [
+      { id: 'integrations', icon: Plug, label: t('orgSettings.navIntegrations') },
+      { id: 'notifications', icon: Bell, label: t('orgSettings.navNotifications') },
+      ...(isAdmin ? [{ id: 'audit' as const, icon: History, label: t('orgSettings.navAudit') }] : []),
+      ...(isOwner ? [{ id: 'plan' as const, icon: Receipt, label: t('orgSettings.navPlan') }] : []),
+    ] },
+  ];
+  const groups = allGroups.filter((g) => g.items.length > 0);
+  const visibleIds = new Set<PanelId>(['danger', ...groups.flatMap((g) => g.items.map((i) => i.id))]);
+  const [requested, setActive] = useState<PanelId>('profile');
+  // Un droit retiré en cours de visite referme la rubrique, il ne l'affiche pas vide.
+  const active: PanelId = visibleIds.has(requested) ? requested : 'profile';
+
+  const navButton = (id: PanelId, Icon: LucideIcon, label: string, danger = false) => (
+    <button
+      key={id}
+      type="button"
+      onClick={() => setActive(id)}
+      aria-current={active === id ? 'page' : undefined}
+      className={`shrink-0 md:w-full min-h-9 flex items-center gap-2 px-2.5 rounded-lg text-sm text-left whitespace-nowrap transition-colors ${
+        active === id
+          ? 'bg-[rgb(var(--color-accent))]/10 text-[rgb(var(--color-accent))] font-semibold'
+          : danger
+            ? 'text-red-600 dark:text-red-400 hover:bg-red-500/10'
+            : 'text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]'
+      }`}
+    >
+      <Icon size={15} aria-hidden="true" className="shrink-0" />
+      <span className="truncate">{label}</span>
+    </button>
+  );
+
   return (
-    <div className="space-y-5 max-w-4xl">
+    <div className="max-w-5xl md:grid md:grid-cols-[220px_minmax(0,1fr)] md:gap-6 md:items-start">
+      <nav
+        aria-label={t('orgSettings.navLabel')}
+        className="mb-4 md:mb-0 md:sticky md:top-4 flex md:block gap-1 overflow-x-auto [scrollbar-width:none] md:overflow-visible -mx-1 px-1 pb-1 md:p-3 md:mx-0 md:rounded-2xl md:border md:border-[rgb(var(--color-border))] md:bg-[rgb(var(--color-surface))]"
+      >
+        {groups.map((g) => (
+          <div key={g.label} className="contents md:block md:mb-3">
+            <p className="hidden md:block px-2.5 mb-1 text-caption font-semibold text-[rgb(var(--color-text-muted))]">{g.label}</p>
+            {g.items.map((i) => navButton(i.id, i.icon, i.label))}
+            {g.label === t('orgSettings.groupAccess') && (
+              <Link
+                to={buildOrgLink('members')}
+                className="shrink-0 md:w-full min-h-9 flex items-center gap-2 px-2.5 rounded-lg text-sm whitespace-nowrap text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] transition-colors"
+              >
+                <Users size={15} aria-hidden="true" className="shrink-0" />
+                <span className="truncate">{t('orgSettings.navPeople')}</span>
+                <ArrowUpRight size={13} aria-hidden="true" className="shrink-0 text-[rgb(var(--color-text-muted))]" />
+              </Link>
+            )}
+          </div>
+        ))}
+        <div className="contents md:block md:pt-2 md:border-t md:border-[rgb(var(--color-border))]">
+          {navButton('danger', isOwner ? AlertTriangle : LogOut, isOwner ? t('orgSettings.navDanger') : t('orgSettings.navLeave'), true)}
+        </div>
+      </nav>
+
+      <div className="space-y-5 min-w-0">
       {/* Profil : ÉDITÉ ici depuis l'audit du 2026-09-24 (il vivait dans une
           feuille ouverte par un crayon de l'en-tête, qui mène désormais ici). */}
+      {active === 'profile' && (
       <section className={CARD} id="org-profile">
         <h2 className={TITLE}>{t('orgSettings.profileTitle')}</h2>
         {isAdmin ? (
@@ -142,19 +237,22 @@ const OrgSettingsSection = ({
           </div>
         )}
       </section>
+      )}
 
       {/* Mes droits (audit du 2026-09-24) : la règle surcharge > défaut >
           admin était juste mais invisible pour la personne concernée. */}
+      {active === 'myRights' && (
       <section className={CARD}>
         <h2 className={TITLE}>{ta('myRights.title')}</h2>
         <div className="mt-2">
           <MyPermissionsCard orgId={org.id} members={members} currentUserId={currentUserId} />
         </div>
       </section>
+      )}
 
       {/* Catégories (M13) : elles classent projets, tâches ET objectifs de
           toute l'organisation ; leur gestion vivait sous l'onglet OKR. */}
-      {canManageCategories && (
+      {active === 'categories' && canManageCategories && (
         <section className={CARD}>
           <h2 className={TITLE}>{t('settings.tab_categories')}</h2>
           <p className={`${HINT} mb-3`}>{t('settings.categoriesIntro')}</p>
@@ -171,7 +269,7 @@ const OrgSettingsSection = ({
 
       {/* Rôles et permissions (M13) : qui a des droits différents de son rôle,
           en un tableau, au lieu d'ouvrir chaque fiche de l'annuaire. */}
-      {isAdmin && (
+      {active === 'permissions' && isAdmin && (
         <section className={CARD}>
           <h2 className={TITLE}>{t('settings.tab_permissions')}</h2>
           <div className="mt-2">
@@ -184,12 +282,15 @@ const OrgSettingsSection = ({
 
       {/* Configuration d'entreprise (audit du 2026-09-24) : réglages propres,
           rubrique Sécurité (M13), champs, automatisations, intégrations. */}
-      <Suspense fallback={null}>
-        <OrgConfigSettings orgId={org.id} members={members} currentUserId={currentUserId} isAdmin={isAdmin} />
-      </Suspense>
+      {isConfigPart(active) && (
+        <Suspense fallback={null}>
+          <OrgConfigSettings orgId={org.id} members={members} currentUserId={currentUserId} isAdmin={isAdmin} part={active} />
+        </Suspense>
+      )}
 
       {/* Notifications (M14) : la cloche disparaît quand elle est vide, ses
           préférences doivent rester atteignables. */}
+      {active === 'notifications' && (
       <section className={CARD}>
         <button
           type="button"
@@ -204,9 +305,11 @@ const OrgSettingsSection = ({
           <ChevronRight size={16} aria-hidden="true" className="text-[rgb(var(--color-text-muted))] shrink-0" />
         </button>
       </section>
+      )}
 
       {/* Mes organisations : le changement vivait dans la barre latérale de
           l'application, et seulement quand on en avait plusieurs. */}
+      {active === 'orgs' && (
       <section className={CARD}>
         <h2 className={TITLE}>{t('orgSettings.orgsTitle')}</h2>
         <p className={HINT}>{t('orgSettings.orgsHint')}</p>
@@ -247,9 +350,10 @@ const OrgSettingsSection = ({
           <Plus size={14} aria-hidden="true" /> {t('switcher.createOrJoin')}
         </Link>
       </section>
+      )}
 
       {/* Forfait : au seul propriétaire, comme la pastille de l'en-tête. */}
-      {isOwner && (
+      {active === 'plan' && isOwner && (
         <section className={CARD}>
           <h2 className={TITLE}>{t('orgSettings.planTitle')}</h2>
           <p className={`${HINT} mb-3`}>{t('orgSettings.planHint')}</p>
@@ -258,9 +362,11 @@ const OrgSettingsSection = ({
       )}
 
       {/* Ce qui règle une PERSONNE (droits, place, départ) vit dans
-          Personnes, les équipes dans Équipes : on y renvoie. */}
-      <section className={CARD}>
-        <Link to={buildOrgLink('members')} className="flex items-center gap-3 -m-1 p-1 rounded-xl hover:bg-[rgb(var(--color-hover))] transition-colors">
+          Personnes, les équipes dans Équipes : la barre latérale y renvoie,
+          et la rubrique Inviter le rappelle. */}
+      {active === 'invite' && (
+      <section aria-labelledby="org-invite-title" className="space-y-4">
+        <Link to={buildOrgLink('members')} className={`${CARD} flex items-center gap-3 hover:bg-[rgb(var(--color-hover))] transition-colors`}>
           <Users size={18} aria-hidden="true" className="text-[rgb(var(--color-text-muted))] shrink-0" />
           <span className="flex-1 min-w-0">
             <span className={`block ${TITLE}`}>{t('orgSettings.membersTitle')}</span>
@@ -269,9 +375,7 @@ const OrgSettingsSection = ({
           <span className="sr-only">{t('orgSettings.membersLink')}</span>
           <ChevronRight size={16} aria-hidden="true" className="text-[rgb(var(--color-text-muted))] shrink-0" />
         </Link>
-      </section>
 
-      <section aria-labelledby="org-invite-title" className="space-y-4 pt-3">
         <div>
           <h2 id="org-invite-title" className="text-sm font-bold text-[rgb(var(--color-text-primary))]">
             {t('settings.inviteTitle')}
@@ -325,9 +429,10 @@ const OrgSettingsSection = ({
           </div>
         </Suspense>
       </section>
+      )}
 
       {/* Journal d'audit : lisible par les admins seuls (RLS `org_audit_log`). */}
-      {isAdmin && (
+      {active === 'audit' && isAdmin && (
         <Suspense fallback={null}>
           <OrgAuditLogSection orgId={org.id} members={members} />
         </Suspense>
@@ -348,6 +453,7 @@ const OrgSettingsSection = ({
           ⚠️ Ce n'est que l'affichage. La regle vit dans
           `delete_organization` (mig. 138), seule porte vers un DELETE sur
           `organizations`. */}
+      {active === 'danger' && (
       <section aria-labelledby="org-danger-title">
         {isOwner ? (
           <div className="rounded-2xl border border-red-300/60 dark:border-red-700/40 bg-red-50/40 dark:bg-red-900/10 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -392,6 +498,8 @@ const OrgSettingsSection = ({
           </div>
         )}
       </section>
+      )}
+      </div>
 
       {/* Dialogues : leur propre frontière, fallback nul (ils s'ouvrent par-dessus). */}
       <Suspense fallback={null}>
