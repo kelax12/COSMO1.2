@@ -1,6 +1,15 @@
-import { useState } from 'react';
-import { Link } from 'react-router';
-import { Plus, Trash2, Search, Crown, ChevronRight } from 'lucide-react';
+import { Suspense, useState } from 'react';
+import { Link, useNavigate } from 'react-router';
+import { Plus, Trash2, Search, ChevronRight, MoreHorizontal, Pencil, Users, FolderKanban, ClipboardList } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
+import { useCreateTeamTask, useUpdateTeamTask } from '@/modules/team-projects';
+import { lazyWithRetry } from '@/lib/lazy-with-retry';
 import {
   useOrgTeams,
   useOrgTeamMembers,
@@ -13,7 +22,8 @@ import { OrgCreateBoundary, useOrgCreate } from './org-create.context';
 import { PermissionGate, usePermissionHints } from './permission-hints';
 import DeleteTeamDialog from './DeleteTeamDialog';
 import { orgTeamPath } from './deep-link.helpers';
-import { teamProjectsOf } from './team-page.helpers';
+import { teamProjectsOf, canManageTeam } from './team-page.helpers';
+import TeamProfileEditor from './TeamProfileEditor';
 import { normalize } from './pyramid.helpers';
 import { useT } from '@/i18n/useT';
 
@@ -33,6 +43,11 @@ interface TeamsSectionProps {
 const TEAMS_LIMIT = 6;
 /** Responsables nommés sur la carte ; au-delà, « +N ». */
 const LEADS_SHOWN = 3;
+/** Avatars empilés sur la carte (responsables d'abord) ; au-delà, « +N ». */
+const AVATARS_SHOWN = 6;
+
+// Fiche de tâche : chargée seulement quand « Assigner une tâche » est choisi.
+const TeamTaskModal = lazyWithRetry(() => import('./TeamTaskModal'));
 
 /**
  * Équipes transverses de l'entreprise, section `/entreprise/teams`. Une carte
@@ -55,6 +70,11 @@ const TeamsSection = ({ orgId, members, currentUserId, isAdmin, canCreateTeam }:
   const [teamToDelete, setTeamToDelete] = useState<OrgTeam | null>(null);
   const [teamQuery, setTeamQuery] = useState('');
   const [showAllTeams, setShowAllTeams] = useState(false);
+  const [editingTeamId, setEditingTeamId] = useState<string | null>(null);
+  const [taskForTeam, setTaskForTeam] = useState<OrgTeam | null>(null);
+  const navigate = useNavigate();
+  const createTask = useCreateTeamTask(orgId);
+  const updateTask = useUpdateTeamTask(orgId);
 
   const teamsSearchable = teams.length > TEAMS_LIMIT;
   const q = normalize(teamQuery.trim());
@@ -110,15 +130,26 @@ const TeamsSection = ({ orgId, members, currentUserId, isAdmin, canCreateTeam }:
           <ul className="grid gap-3 md:grid-cols-2">
             {shownTeams.map((team) => {
               const teamMemberships = memberships.filter((m) => m.teamId === team.id);
-              const leads = teamMemberships
-                .filter((m) => m.isLead)
-                .map((m) => memberById.get(m.userId))
-                .filter((m): m is OrgMember => !!m);
+              // Responsables d'abord, puis le reste de l'équipe.
+              const ordered = [...teamMemberships]
+                .sort((a, b) => Number(b.isLead) - Number(a.isLead))
+                .map((m) => ({ member: memberById.get(m.userId), isLead: m.isLead }))
+                .filter((x): x is { member: OrgMember; isLead: boolean } => !!x.member);
+              const leads = ordered.filter((x) => x.isLead).map((x) => x.member);
               const projectCount = teamProjectsOf(team, projects).filter((p) => !p.archivedAt).length;
               const leadNames = leads
                 .slice(0, LEADS_SHOWN)
                 .map((m) => (m.userId === currentUserId ? t('common.youBadge') : m.displayName))
                 .join(', ');
+              const canManage = canManageTeam(team, teamMemberships, currentUserId, isAdmin);
+              const canDelete = isAdmin || team.createdBy === currentUserId;
+              if (editingTeamId === team.id) {
+                return (
+                  <li key={team.id}>
+                    <TeamProfileEditor orgId={orgId} team={team} onDone={() => setEditingTeamId(null)} />
+                  </li>
+                );
+              }
               return (
                 <li
                   key={team.id}
@@ -143,38 +174,76 @@ const TeamsSection = ({ orgId, members, currentUserId, isAdmin, canCreateTeam }:
                     <span className="text-xs text-[rgb(var(--color-text-muted))] shrink-0">
                       {tp('team.memberCount', teamMemberships.length)}
                     </span>
-                    {/* Suppression : admin ou créateur SEULEMENT, miroir exact de
-                        la policy `org_teams_delete`. Un responsable gère son
-                        équipe, il ne la supprime pas. */}
-                    <PermissionGate reason={isAdmin || team.createdBy === currentUserId ? undefined : t('permissions.deniedTeamDelete')} className="relative z-10">
-                      <button
-                        type="button"
-                        onClick={() => setTeamToDelete(team)}
-                        aria-label={t('team.deleteAria', { name: team.name })}
-                        className="relative z-10 w-7 h-7 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-red-500 hover:bg-red-500/10 transition-colors"
-                      >
-                        <Trash2 size={13} aria-hidden="true" />
-                      </button>
-                    </PermissionGate>
+                    {/* Options. Suppression : admin ou créateur SEULEMENT, miroir
+                        exact de la policy `org_teams_delete`. Un responsable
+                        gère son équipe, il ne la supprime pas. */}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button
+                          type="button"
+                          aria-label={t('team.optionsAria', { name: team.name })}
+                          className="relative z-10 w-7 h-7 rounded-lg flex items-center justify-center text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-hover))] data-[state=open]:bg-[rgb(var(--color-hover))] transition-colors"
+                        >
+                          <MoreHorizontal size={15} aria-hidden="true" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-56">
+                        {canManage && (
+                          <DropdownMenuItem onClick={() => setEditingTeamId(team.id)}>
+                            <Pencil size={14} aria-hidden="true" /> {t('team.menu.edit')}
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuItem onClick={() => navigate(orgTeamPath(team.id))}>
+                          <Users size={14} aria-hidden="true" /> {t('team.menu.members')}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => create.openProject({ defaultTeamId: team.id })}>
+                          <FolderKanban size={14} aria-hidden="true" /> {t('team.menu.assignProject')}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setTaskForTeam(team)}>
+                          <ClipboardList size={14} aria-hidden="true" /> {t('team.menu.assignTask')}
+                        </DropdownMenuItem>
+                        {canDelete && (
+                          <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={() => setTeamToDelete(team)}
+                              className="text-red-500 focus:text-red-500 focus:bg-red-500/10"
+                            >
+                              <Trash2 size={14} className="text-red-500" aria-hidden="true" /> {t('team.menu.delete')}
+                            </DropdownMenuItem>
+                          </>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                     <ChevronRight size={15} className="text-[rgb(var(--color-text-muted))] shrink-0" aria-hidden="true" />
                   </div>
                   {team.description && (
                     <p className="mt-1.5 text-xs text-[rgb(var(--color-text-secondary))] line-clamp-2">{team.description}</p>
                   )}
                   <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[rgb(var(--color-text-muted))]">
+                    {ordered.length > 0 && (
+                      <span className="flex items-center shrink-0" aria-hidden="true">
+                        {ordered.slice(0, AVATARS_SHOWN).map(({ member, isLead }, i) => (
+                          <span
+                            key={member.userId}
+                            title={member.displayName}
+                            className={`relative flex rounded-full border-2 border-[rgb(var(--color-surface))] ${i > 0 ? '-ml-1.5' : ''} ${isLead ? 'z-10 ring-2 ring-amber-400' : ''}`}
+                          >
+                            <MemberAvatar avatar={member.avatar} name={member.displayName} size={22} />
+                          </span>
+                        ))}
+                        {ordered.length > AVATARS_SHOWN && (
+                          <span className="-ml-1.5 w-[26px] h-[26px] rounded-full border-2 border-[rgb(var(--color-surface))] bg-[rgb(var(--color-hover))] text-[10px] font-semibold text-[rgb(var(--color-text-secondary))] flex items-center justify-center">
+                            +{ordered.length - AVATARS_SHOWN}
+                          </span>
+                        )}
+                      </span>
+                    )}
                     {leads.length > 0 ? (
-                      <span className="inline-flex items-center gap-1.5 min-w-0">
-                        <Crown size={11} className="text-amber-500 shrink-0" aria-hidden="true" />
-                        <span className="flex -space-x-1.5 shrink-0" aria-hidden="true">
-                          {leads.slice(0, LEADS_SHOWN).map((m) => (
-                            <MemberAvatar key={m.userId} avatar={m.avatar} name={m.displayName} size={18} />
-                          ))}
-                        </span>
-                        <span className="truncate">
-                          {leads.length > LEADS_SHOWN
-                            ? t('team.leadsMore', { names: leadNames, count: leads.length - LEADS_SHOWN })
-                            : leadNames}
-                        </span>
+                      <span className="truncate text-[rgb(var(--color-text-secondary))]">
+                        {leads.length > LEADS_SHOWN
+                          ? t('team.leadsMore', { names: leadNames, count: leads.length - LEADS_SHOWN })
+                          : leadNames}
                       </span>
                     ) : (
                       <span>{t('teamPage.noLead')}</span>
@@ -196,6 +265,20 @@ const TeamsSection = ({ orgId, members, currentUserId, isAdmin, canCreateTeam }:
             </button>
           )}
         </div>
+      )}
+      {taskForTeam && (
+        <Suspense fallback={null}>
+          <TeamTaskModal
+            isCreating
+            projects={teamProjectsOf(taskForTeam, projects).filter((p) => !p.archivedAt)}
+            members={members}
+            requireProjectChoice
+            onCreate={(input) => createTask.mutateAsync(input)}
+            onUpdate={(taskId, input) => updateTask.mutateAsync({ taskId, input })}
+            onClose={() => setTaskForTeam(null)}
+            isManager={isAdmin}
+          />
+        </Suspense>
       )}
       {teamToDelete && (
         <DeleteTeamDialog
