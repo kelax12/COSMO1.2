@@ -281,23 +281,6 @@
     "historyEmpty": "No check-in yet.",
     "byOn": "by {{name}}, on {{date}}"
   },
-  "okrCycles": {
-    "filterLabel": "OKR cycle",
-    "all": "All cycles",
-    "none": "No cycle",
-    "manage": "Cycles…",
-    "title": "OKR cycles",
-    "description": "The organization's periods (Q1, H2…). An objective belongs to a cycle; deleting a cycle detaches its objectives without deleting them.",
-    "empty": "No cycle yet.",
-    "nameLabel": "Name",
-    "namePlaceholder": "E.g. Q1 2027",
-    "start": "Start",
-    "end": "End",
-    "datesOrder": "The end must come after the start.",
-    "add": "Add cycle",
-    "deleteConfirm": "Delete the cycle “{{name}}”? Its objectives stay, without a cycle.",
-    "deleteAria": "Delete the cycle {{name}}"
-  },
   "okrCard": {
     "weightTitle": "Importance weight ×{{weight}}",
     "contributesTo": "Contributes to: {{title}}",
@@ -307,8 +290,6 @@
     "noKr": "No key result."
   },
   "okrModal": {
-    "cycle": "Cycle",
-    "noCycle": "No cycle",
     "parent": "Contributes to",
     "noParent": "No objective (top-level objective)"
   },

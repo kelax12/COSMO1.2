@@ -10,5 +10,3 @@ import { lazyWithRetry } from '@/lib/lazy-with-retry';
 
 export const OrgConfigSettings = lazyWithRetry(() => import('./config/OrgConfigSettings'), ['csv', 'org', 'orgConfig', 'overlays', 'tasks']);
 export const ProjectWorkflowSection = lazyWithRetry(() => import('./config/ProjectWorkflowSection'), ['org', 'orgConfig', 'overlays']);
-export const MemberCapacityCard = lazyWithRetry(() => import('./config/MemberCapacityCard'), ['org', 'orgConfig', 'overlays']);
-export const SecondaryManagersDialog = lazyWithRetry(() => import('./config/SecondaryManagersDialog'), ['org', 'orgConfig', 'overlays']);

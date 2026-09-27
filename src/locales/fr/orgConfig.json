@@ -165,25 +165,5 @@
       "unit": "Unité"
     },
     "exportFile": "entreprise"
-  },
-  "capacity": {
-    "title": "Charge et capacité",
-    "hint": "Temps estimé restant de chacun, en regard de ce qu'il peut tenir par semaine. Sans capacité déclarée, rien n'est jugé.",
-    "hours": "h / sem.",
-    "unknown": "Capacité non déclarée",
-    "edit": "Capacité de {{name}} en heures par semaine",
-    "over": "Au-delà d'une semaine de capacité",
-    "weeks": "{{weeks}} sem. de travail",
-    "empty": "Aucune tâche ouverte avec une estimation."
-  },
-  "secondary": {
-    "title": "Liens secondaires",
-    "hint": "Un second responsable en pointillé (chef de projet transverse, référent). Il ne donne AUCUN droit : la visibilité suit le responsable principal.",
-    "open": "Liens secondaires",
-    "also": "Aussi : {{names}}",
-    "add": "Ajouter un lien secondaire pour {{name}}",
-    "remove": "Retirer le lien vers {{name}}",
-    "none": "Aucun lien secondaire.",
-    "max": "Trois liens au plus."
   }
 }

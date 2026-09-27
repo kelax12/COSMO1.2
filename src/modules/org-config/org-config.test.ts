@@ -74,20 +74,6 @@ describe('dépôt démo', () => {
     expect((await repo.getDomains('o'))[0].domain).toBe('exemple.fr');
   });
 
-  it('liens secondaires : trois au plus, jamais soi-même', async () => {
-    await expect(repo.addSecondaryManager('o', 'u', 'u')).rejects.toBeTruthy();
-    for (const m of ['a', 'b', 'c']) await repo.addSecondaryManager('o', 'u', m);
-    await expect(repo.addSecondaryManager('o', 'u', 'd')).rejects.toBeTruthy();
-  });
-
-  it('capacité : null la retire, hors bornes refusée', async () => {
-    await repo.setCapacity('o', 'u', 2400);
-    expect(await repo.getCapacities('o')).toEqual([{ orgId: 'o', userId: 'u', weeklyMinutes: 2400 }]);
-    await repo.setCapacity('o', 'u', null);
-    expect(await repo.getCapacities('o')).toEqual([]);
-    await expect(repo.setCapacity('o', 'u', 99999)).rejects.toBeTruthy();
-  });
-
   it('champs : une liste exige des options, une valeur respecte le type', async () => {
     await expect(repo.createCustomField('o', { projectId: null, name: 'Client', kind: 'select', options: [] })).rejects.toBeTruthy();
     const f = await repo.createCustomField('o', { projectId: null, name: 'Client', kind: 'select', options: ['A', 'B', 'A'] });

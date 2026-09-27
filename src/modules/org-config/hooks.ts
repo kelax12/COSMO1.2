@@ -65,31 +65,6 @@ export const useVerifyOrgDomain = (orgId: string) => {
   });
 };
 
-// ── 196 ──
-export const useMemberCapacities = (orgId: string | undefined) => {
-  const repo = useRepo();
-  return useOrgRead(orgConfigKeys.capacities(orgId ?? ''), orgId, (id) => repo.getCapacities(id));
-};
-export const useSetMemberCapacity = (orgId: string) => {
-  const repo = useRepo();
-  return useWrite(
-    ({ userId, weeklyMinutes }: { userId: string; weeklyMinutes: number | null }) => repo.setCapacity(orgId, userId, weeklyMinutes),
-    [orgConfigKeys.capacities(orgId)],
-  );
-};
-export const useSecondaryManagers = (orgId: string | undefined) => {
-  const repo = useRepo();
-  return useOrgRead(orgConfigKeys.secondary(orgId ?? ''), orgId, (id) => repo.getSecondaryManagers(id));
-};
-export const useToggleSecondaryManager = (orgId: string) => {
-  const repo = useRepo();
-  return useWrite(
-    ({ userId, managerId, linked }: { userId: string; managerId: string; linked: boolean }) =>
-      (linked ? repo.removeSecondaryManager(orgId, userId, managerId) : repo.addSecondaryManager(orgId, userId, managerId)),
-    [orgConfigKeys.secondary(orgId)],
-  );
-};
-
 // ── 197 ──
 export const useProjectStatuses = (orgId: string | undefined) => {
   const repo = useRepo();

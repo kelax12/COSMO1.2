@@ -15,9 +15,9 @@ import type { IOrgConfigRepository } from './repository';
 import {
   defaultOrgSettings,
   type Automation, type CreateAutomationInput, type CreateCustomFieldInput, type CreateProjectStatusInput,
-  type CreateWebhookInput, type CustomField, type CustomFieldKind, type FieldValue, type MemberCapacity,
+  type CreateWebhookInput, type CustomField, type CustomFieldKind, type FieldValue,
   type OrgDomain, type OrgSettings, type OrgSettingsPatch, type OrgWebhook, type ProjectStatus,
-  type SecondaryManagerLink, type TaskFieldValue, type WebhookEvent, type WebhookFormat,
+  type TaskFieldValue, type WebhookEvent, type WebhookFormat,
 } from './types';
 
 const client = () => {
@@ -127,40 +127,6 @@ export class SupabaseOrgConfigRepository implements IOrgConfigRepository {
       throw makeApiError(typeof body?.error === 'string' ? body.error : 'GENERIC_ERROR');
     }
     return { verified: !!(data as { verified?: boolean })?.verified };
-  }
-
-  // ── 196 ──
-  async getCapacities(orgId: string): Promise<MemberCapacity[]> {
-    const { data, error } = await client().from('org_member_capacity').select('org_id, user_id, weekly_minutes').eq('org_id', orgId).limit(10000);
-    if (error) throw normalizeApiError(error);
-    return warnIfTruncated(data as { org_id: string; user_id: string; weekly_minutes: number }[], 10000, 'org_member_capacity')
-      .map((r) => ({ orgId: r.org_id, userId: r.user_id, weeklyMinutes: r.weekly_minutes }));
-  }
-
-  async setCapacity(orgId: string, userId: string, weeklyMinutes: number | null): Promise<void> {
-    const q = client().from('org_member_capacity');
-    const { error } = weeklyMinutes === null
-      ? await q.delete().eq('org_id', orgId).eq('user_id', userId)
-      : await q.upsert({ org_id: orgId, user_id: userId, weekly_minutes: weeklyMinutes }, { onConflict: 'org_id,user_id' });
-    if (error) throw normalizeApiError(error);
-  }
-
-  async getSecondaryManagers(orgId: string): Promise<SecondaryManagerLink[]> {
-    const { data, error } = await client().from('org_member_secondary_managers').select('org_id, user_id, manager_id').eq('org_id', orgId).limit(10000);
-    if (error) throw normalizeApiError(error);
-    return warnIfTruncated(data as { org_id: string; user_id: string; manager_id: string }[], 10000, 'org_member_secondary_managers')
-      .map((r) => ({ orgId: r.org_id, userId: r.user_id, managerId: r.manager_id }));
-  }
-
-  async addSecondaryManager(orgId: string, userId: string, managerId: string): Promise<void> {
-    const { error } = await client().from('org_member_secondary_managers').insert({ org_id: orgId, user_id: userId, manager_id: managerId });
-    if (error) throw normalizeApiError(error);
-  }
-
-  async removeSecondaryManager(orgId: string, userId: string, managerId: string): Promise<void> {
-    const { error } = await client().from('org_member_secondary_managers').delete()
-      .eq('org_id', orgId).eq('user_id', userId).eq('manager_id', managerId);
-    if (error) throw normalizeApiError(error);
   }
 
   // ── 197 ──

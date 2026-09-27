@@ -45,8 +45,8 @@ describe('SupabaseTeamOKRsRepository — getAll', () => {
       id: 'o1', orgId: 'org1', title: 'Croissance', description: 'desc', categoryId: 'cat1',
       startDate: '2026-07-01', endDate: '2026-09-30', createdBy: 'u1',
       createdAt: okrRow.created_at, teamIds: ['t1'],
-      // Mig. 160 : absentes de la ligne, rendues neutres.
-      cycleId: null, parentOkrId: null,
+      // Mig. 160 : absent de la ligne, rendu neutre.
+      parentOkrId: null,
       keyResults: [{
         id: 'kr1', okrId: 'o1', orgId: 'org1', title: 'MRR', currentValue: 5,
         targetValue: 10, unit: 'k€', assigneeId: 'u2', completed: false,

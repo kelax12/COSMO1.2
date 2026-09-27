@@ -23,8 +23,7 @@ export const createTeamOKRSchema = z.object({
   // Rattachement d'équipes (cloisonnement) — 20 max par garde-fou.
   teamIds: z.array(z.string()).max(20).optional(),
   keyResults: z.array(createTeamKRSchema).min(1, 'validation.okr.atLeastOneKr').max(10, 'validation.okr.tooManyKrs'),
-  // Mig. 153 — sans ces deux lignes, `z.object` les retirerait sans rien dire.
-  cycleId: z.string().nullable().optional(),
+  // Mig. 153 — sans cette ligne, `z.object` les retirerait sans rien dire.
   parentOkrId: z.string().nullable().optional(),
 });
 
@@ -35,7 +34,6 @@ export const updateTeamOKRSchema = z.object({
   startDate: z.string().optional(),
   endDate: z.string().optional(),
   teamIds: z.array(z.string()).max(20).optional(),
-  cycleId: z.string().nullable().optional(),
   parentOkrId: z.string().nullable().optional(),
 });
 

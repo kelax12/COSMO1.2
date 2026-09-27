@@ -5,38 +5,16 @@
 import { readJsonArray, writeJsonOrThrow } from '@/lib/safe-json';
 import type { IOkrExecutionRepository } from './execution.repository';
 import type {
-  CreateOkrCycleInput,
   KRCheckin,
   KRProjectLink,
-  OkrCycle,
   PostKRCheckinInput,
 } from './execution.types';
 import { LocalStorageTeamOKRsRepository } from './local.repository';
 
-export const OKR_CYCLES_STORAGE_KEY = 'cosmo_team_okr_cycles';
 export const KR_PROJECTS_STORAGE_KEY = 'cosmo_team_kr_projects';
 export const KR_CHECKINS_STORAGE_KEY = 'cosmo_team_kr_checkins';
 
 export class LocalStorageOkrExecutionRepository implements IOkrExecutionRepository {
-  async getCycles(orgId: string): Promise<OkrCycle[]> {
-    return (readJsonArray<OkrCycle>(OKR_CYCLES_STORAGE_KEY) ?? [])
-      .filter((c) => c.orgId === orgId)
-      .sort((a, b) => (a.startDate < b.startDate ? 1 : -1));
-  }
-
-  async createCycle(orgId: string, input: CreateOkrCycleInput): Promise<OkrCycle> {
-    const cycle: OkrCycle = { id: crypto.randomUUID(), orgId, ...input };
-    writeJsonOrThrow(OKR_CYCLES_STORAGE_KEY, [cycle, ...(readJsonArray<OkrCycle>(OKR_CYCLES_STORAGE_KEY) ?? [])]);
-    return cycle;
-  }
-
-  async deleteCycle(cycleId: string): Promise<void> {
-    writeJsonOrThrow(
-      OKR_CYCLES_STORAGE_KEY,
-      (readJsonArray<OkrCycle>(OKR_CYCLES_STORAGE_KEY) ?? []).filter((c) => c.id !== cycleId),
-    );
-  }
-
   async getKRProjects(_orgId: string): Promise<KRProjectLink[]> {
     return readJsonArray<KRProjectLink>(KR_PROJECTS_STORAGE_KEY) ?? [];
   }

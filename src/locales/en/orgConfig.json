@@ -164,25 +164,5 @@
       "unit": "Unit of measure"
     },
     "exportFile": "company"
-  },
-  "capacity": {
-    "title": "Workload and capacity",
-    "hint": "Each person's remaining estimated time, against what they can take on per week. Without a declared capacity, nothing is judged.",
-    "hours": "h / wk",
-    "unknown": "Capacity not declared",
-    "edit": "Capacity of {{name}} in hours per week",
-    "over": "More than a week of capacity",
-    "weeks": "{{weeks}} wk of work",
-    "empty": "No open task with an estimate."
-  },
-  "secondary": {
-    "title": "Secondary links",
-    "hint": "A dotted-line second manager (cross-team project lead, referent). It grants NO rights: visibility follows the main manager.",
-    "open": "Secondary links",
-    "also": "Also: {{names}}",
-    "add": "Add a secondary link for {{name}}",
-    "remove": "Remove the link to {{name}}",
-    "none": "No secondary link.",
-    "max": "At most three links."
   }
 }

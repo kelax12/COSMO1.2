@@ -288,23 +288,6 @@
     "historyEmpty": "Aucun point d'étape pour l'instant.",
     "byOn": "par {{name}}, le {{date}}"
   },
-  "okrCycles": {
-    "filterLabel": "Cycle d'OKR",
-    "all": "Tous les cycles",
-    "none": "Sans cycle",
-    "manage": "Cycles…",
-    "title": "Cycles d'OKR",
-    "description": "Les périodes de l'organisation (T1, S2…). Un objectif se rattache à un cycle ; supprimer un cycle détache ses objectifs sans les supprimer.",
-    "empty": "Aucun cycle pour l'instant.",
-    "nameLabel": "Nom",
-    "namePlaceholder": "Ex. : T1 2027",
-    "start": "Début",
-    "end": "Fin",
-    "datesOrder": "La fin doit suivre le début.",
-    "add": "Ajouter le cycle",
-    "deleteConfirm": "Supprimer le cycle « {{name}} » ? Ses objectifs restent, sans cycle.",
-    "deleteAria": "Supprimer le cycle {{name}}"
-  },
   "okrCard": {
     "weightTitle": "Coefficient d'importance ×{{weight}}",
     "contributesTo": "Contribue à : {{title}}",
@@ -314,8 +297,6 @@
     "noKr": "Aucun résultat clé."
   },
   "okrModal": {
-    "cycle": "Cycle",
-    "noCycle": "Sans cycle",
     "parent": "Contribue à",
     "noParent": "Aucun objectif (objectif de premier niveau)"
   },

@@ -5,7 +5,7 @@
 // mig. 191) : compter côté client exigerait toutes les tâches de
 // l'organisation, et serait faux au-delà de la première page.
 
-import type { KRProjectLink, OkrCycle } from '@/modules/team-okrs';
+import type { KRProjectLink } from '@/modules/team-okrs';
 import type { TeamKeyResult, TeamOKR } from '@/modules/team-okrs';
 import type { TeamProjectTaskStats } from '@/modules/team-projects';
 
@@ -75,22 +75,6 @@ export function okrRatioPercent(
     weighted += effectiveKrRatio(kr, links, statsById) * w;
   }
   return totalWeight > 0 ? Math.round((weighted / totalWeight) * 100) : 0;
-}
-
-/** Filtre de cycle : `''` tous, `'none'` sans cycle, sinon l'id d'un cycle. */
-export type CycleFilter = string;
-
-export function filterOkrsByCycle(okrs: TeamOKR[], filter: CycleFilter): TeamOKR[] {
-  if (!filter) return okrs;
-  if (filter === 'none') return okrs.filter((o) => !o.cycleId);
-  return okrs.filter((o) => o.cycleId === filter);
-}
-
-/** Le cycle qui contient `today` ('YYYY-MM-DD'), le plus récent s'ils se chevauchent. */
-export function currentCycle(cycles: OkrCycle[], today: string): OkrCycle | null {
-  return cycles
-    .filter((c) => c.startDate <= today && today <= c.endDate)
-    .sort((a, b) => b.startDate.localeCompare(a.startDate))[0] ?? null;
 }
 
 /**

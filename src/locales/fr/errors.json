@@ -195,7 +195,6 @@
     "restoreEvent": "Impossible de restaurer l'événement : {{message}}",
     "restoreOkr": "Impossible de restaurer l'objectif : {{message}}",
     "restoreComment": "Impossible de restaurer le commentaire : {{message}}",
-    "okrCycle": "Impossible d'enregistrer le cycle : {{message}}",
     "krProjects": "Impossible de relier les projets : {{message}}",
     "krCheckin": "Impossible d'enregistrer le point d'étape : {{message}}",
     "offboard": "Impossible de finaliser le départ : {{message}}",

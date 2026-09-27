@@ -39,11 +39,11 @@ import {
 } from '@/modules/team-okrs';
 import { useOrgTeams } from '@/modules/org-teams';
 import { useTeamProjects } from '@/modules/team-projects';
-import { useMyOrgPermissions, useOrgMembers } from '@/modules/organizations';
+import { useOrgMembers } from '@/modules/organizations';
 import { useAuth } from '@/modules/auth/AuthContext';
 import KRContributorsField from './KRContributorsField';
 import TeamCategoryTreeSelect from './TeamCategoryTreeSelect';
-import { OkrCycleField, OkrParentField, KRProjectsField } from './TeamOKRLinkFields';
+import { OkrParentField, KRProjectsField } from './TeamOKRLinkFields';
 import { useT } from '@/i18n/useT';
 import TeamColorDot from './TeamColorDot';
 
@@ -101,7 +101,6 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
   const activeProjects = projects.filter((p) => !p.archivedAt);
   const { data: krLinks = [], isSuccess: krLinksLoaded } = useKRProjects(orgId);
   const setKRProjects = useSetKRProjects(orgId);
-  const { can } = useMyOrgPermissions(orgId);
   const { data: members = [] } = useOrgMembers(orgId);
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -116,7 +115,6 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
   const [categoryId, setCategoryId] = useState<string | null>(editingOKR?.categoryId ?? null);
   const [endDate, setEndDate] = useState(editingOKR?.endDate ? editingOKR.endDate.slice(0, 10) : '');
   const [teamIds, setTeamIds] = useState<string[]>(editingOKR?.teamIds ?? []);
-  const [cycleId, setCycleId] = useState<string | null>(editingOKR?.cycleId ?? null);
   const [parentOkrId, setParentOkrId] = useState<string | null>(editingOKR?.parentOkrId ?? null);
   const [keyResults, setKeyResults] = useState<KRDraft[]>(
     editingOKR && editingOKR.keyResults.length > 0
@@ -196,7 +194,6 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
       categoryId,
       endDate: endDate || undefined,
       teamIds,
-      cycleId,
       parentOkrId,
     };
     setSaving(true);
@@ -266,9 +263,7 @@ export default function TeamOKRModal({ orgId, editingOKR, onClose }: TeamOKRModa
               />
             </div>
 
-            {/* Cycle et objectif parent (mig. 160) : sans eux, un OKR d'équipe
-                ne se rattachait ni à une période ni à l'objectif qu'il sert. */}
-            <OkrCycleField orgId={orgId} value={cycleId} onChange={setCycleId} canCreate={can['okr.create']} />
+            {/* Objectif parent (mig. 160) : l'objectif que cet OKR sert. */}
             <OkrParentField okrs={allOkrs} selfId={editingOKR?.id} value={parentOkrId} onChange={setParentOkrId} />
 
             {/* Catégorie — vrai système partagé (parité mode perso, #C) */}

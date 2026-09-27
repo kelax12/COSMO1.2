@@ -3,14 +3,11 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { supabase } from '@/lib/supabase';
-import { getCurrentUserId } from '@/lib/auth-user';
-import { makeApiError, normalizeApiError } from '@/lib/normalizeApiError';
+import { normalizeApiError } from '@/lib/normalizeApiError';
 import type { IOkrExecutionRepository } from './execution.repository';
 import type {
-  CreateOkrCycleInput,
   KRCheckin,
   KRProjectLink,
-  OkrCycle,
   PostKRCheckinInput,
 } from './execution.types';
 import type { ProjectHealth } from './execution.types';
@@ -20,51 +17,7 @@ const db = () => {
   return supabase;
 };
 
-interface CycleRow {
-  id: string;
-  org_id: string;
-  name: string;
-  start_date: string;
-  end_date: string;
-}
-
-const mapCycle = (r: CycleRow): OkrCycle => ({
-  id: r.id,
-  orgId: r.org_id,
-  name: r.name,
-  startDate: r.start_date,
-  endDate: r.end_date,
-});
-
 export class SupabaseOkrExecutionRepository implements IOkrExecutionRepository {
-  async getCycles(orgId: string): Promise<OkrCycle[]> {
-    const { data, error } = await db()
-      .from('okr_cycles')
-      .select('id, org_id, name, start_date, end_date')
-      .eq('org_id', orgId)
-      .order('start_date', { ascending: false })
-      .limit(200);
-    if (error) throw normalizeApiError(error);
-    return ((data ?? []) as CycleRow[]).map(mapCycle);
-  }
-
-  async createCycle(orgId: string, input: CreateOkrCycleInput): Promise<OkrCycle> {
-    const uid = await getCurrentUserId();
-    if (!uid) throw makeApiError('not_authenticated');
-    const { data, error } = await db()
-      .from('okr_cycles')
-      .insert({ org_id: orgId, created_by: uid, name: input.name, start_date: input.startDate, end_date: input.endDate })
-      .select('id, org_id, name, start_date, end_date')
-      .single();
-    if (error) throw normalizeApiError(error);
-    return mapCycle(data as CycleRow);
-  }
-
-  async deleteCycle(cycleId: string): Promise<void> {
-    const { error } = await db().from('okr_cycles').delete().eq('id', cycleId);
-    if (error) throw normalizeApiError(error);
-  }
-
   async getKRProjects(orgId: string): Promise<KRProjectLink[]> {
     // RPC indexable (mig. 160) : un lien n'est rendu que si le projet ET
     // l'objectif sont visibles.

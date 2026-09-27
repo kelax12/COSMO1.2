@@ -28,7 +28,6 @@ interface OkrRow {
   end_date: string | null;
   created_by: string;
   created_at: string;
-  cycle_id?: string | null;
   parent_okr_id?: string | null;
 }
 
@@ -143,7 +142,6 @@ export class SupabaseTeamOKRsRepository implements ITeamOKRsRepository {
       createdAt: o.created_at,
       teamIds: teamsByOkr.get(o.id) ?? [],
       keyResults: krsByOkr.get(o.id) ?? [],
-      cycleId: o.cycle_id ?? null,
       parentOkrId: o.parent_okr_id ?? null,
     }));
   }
@@ -170,7 +168,6 @@ export class SupabaseTeamOKRsRepository implements ITeamOKRsRepository {
         category_id: input.categoryId ?? null,
         start_date: input.startDate || null,
         end_date: input.endDate || null,
-        ...(input.cycleId ? { cycle_id: input.cycleId } : {}),
         ...(input.parentOkrId ? { parent_okr_id: input.parentOkrId } : {}),
       });
     if (error) throw normalizeApiError(error);
@@ -223,7 +220,6 @@ export class SupabaseTeamOKRsRepository implements ITeamOKRsRepository {
       createdAt: new Date().toISOString(),
       teamIds,
       keyResults,
-      cycleId: input.cycleId ?? null,
       parentOkrId: input.parentOkrId ?? null,
     };
   }
@@ -236,7 +232,6 @@ export class SupabaseTeamOKRsRepository implements ITeamOKRsRepository {
     if (input.categoryId !== undefined) patch.category_id = input.categoryId;
     if (input.startDate !== undefined) patch.start_date = input.startDate || null;
     if (input.endDate !== undefined) patch.end_date = input.endDate || null;
-    if (input.cycleId !== undefined) patch.cycle_id = input.cycleId;
     if (input.parentOkrId !== undefined) patch.parent_okr_id = input.parentOkrId;
     if (Object.keys(patch).length > 0) {
       const { error } = await supabase.from('team_okrs').update(patch).eq('id', okrId);

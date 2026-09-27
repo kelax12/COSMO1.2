@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════════
 // ORG-CONFIG : configuration d'une organisation (mig. 195 à 199)
 //
-// Réglages et sécurité (195), capacité et lien secondaire (196), statuts et
+// Réglages et sécurité (195), statuts et
 // champs personnalisés (197), automatisations (198), webhooks (199). Un
 // module à part d'`organizations` : ces surfaces ne servent qu'aux écrans
 // d'administration et à la fiche de tâche, jamais à l'entrée de l'app.
@@ -56,22 +56,6 @@ export interface OrgDomain {
   verifiedAt: string | null;
   lastCheckedAt: string | null;
   createdAt: string;
-}
-
-// ─── 196 · Capacité, lien secondaire ──────────────────────────────────
-
-export interface MemberCapacity {
-  orgId: string;
-  userId: string;
-  /** Minutes par semaine. */
-  weeklyMinutes: number;
-}
-
-/** Lien EN POINTILLÉ : il ne donne aucun droit (mig. 196). */
-export interface SecondaryManagerLink {
-  orgId: string;
-  userId: string;
-  managerId: string;
 }
 
 // ─── 197 · Statuts et champs personnalisés ────────────────────────────
