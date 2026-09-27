@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { TeamKeyResult, TeamOKR } from '@/modules/team-okrs';
 import type { TeamProjectTaskStats } from '@/modules/team-projects';
 import {
-  currentCycle, effectiveKrRatio, filterOkrsByCycle, krTaskProgress, okrRatioPercent, parentCandidates,
+  effectiveKrRatio, krTaskProgress, okrRatioPercent, parentCandidates,
 } from './okr-execution.helpers';
 
 const kr = (over: Partial<TeamKeyResult> = {}): TeamKeyResult => ({
@@ -48,23 +48,6 @@ describe('okr-execution.helpers', () => {
     const krs = [kr({ id: 'a', currentValue: 10, weight: 3 }), kr({ id: 'b', currentValue: 0, weight: 1 })];
     expect(okrRatioPercent(krs, [], statsById)).toBe(75);
     expect(okrRatioPercent([], [], statsById)).toBe(0);
-  });
-
-  it('filtre de cycle : tous, sans cycle, un cycle', () => {
-    const okrs = [okr('a', { cycleId: 'c1' }), okr('b'), okr('c', { cycleId: 'c2' })];
-    expect(filterOkrsByCycle(okrs, '').map((o) => o.id)).toEqual(['a', 'b', 'c']);
-    expect(filterOkrsByCycle(okrs, 'none').map((o) => o.id)).toEqual(['b']);
-    expect(filterOkrsByCycle(okrs, 'c2').map((o) => o.id)).toEqual(['c']);
-  });
-
-  it('cycle courant : celui qui contient aujourd’hui, le plus récent en cas de chevauchement', () => {
-    const cycles = [
-      { id: 'y', orgId: 'org', name: '2026', startDate: '2026-01-01', endDate: '2026-12-31' },
-      { id: 'q', orgId: 'org', name: 'T3', startDate: '2026-07-01', endDate: '2026-09-30' },
-    ];
-    expect(currentCycle(cycles, '2026-08-15')?.id).toBe('q');
-    expect(currentCycle(cycles, '2026-11-02')?.id).toBe('y');
-    expect(currentCycle(cycles, '2027-01-01')).toBeNull();
   });
 
   it('un objectif ne peut contribuer ni à lui-même ni à un descendant', () => {

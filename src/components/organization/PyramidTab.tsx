@@ -1,6 +1,6 @@
-import { Suspense, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router';
-import { Move, Users, ArrowUpFromLine, UserPlus, Network } from 'lucide-react';
+import { Move, Users, ArrowUpFromLine, UserPlus } from 'lucide-react';
 import { useIsMobile } from '@/lib/hooks/use-mobile';
 import { useOrgTeams, useOrgTeamMembers, type OrgTeam } from '@/modules/org-teams';
 import { OrgCreateBoundary, useOrgCreate } from './org-create.context';
@@ -29,9 +29,6 @@ import { useMemberLifecycle } from './MemberLifecycleActions';
 import { useT } from '@/i18n/useT';
 import RichText from '@/components/ui/rich-text';
 import { NodeCard, PyramidSkeleton } from './PyramidNodeCard';
-import { SecondaryManagersContext } from './pyramid-secondary.context';
-import { SecondaryManagersDialog } from './org-config.lazy';
-import { useSecondaryManagers } from '@/modules/org-config';
 
 interface PyramidTabProps {
   orgId: string;
@@ -129,18 +126,6 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
   // les tâches : le calcul local ne voyait que l'extrait plafonné à 1 000.
   const { data: serverWorkload = [] } = useTeamMemberWorkload(showWorkload ? orgId : undefined);
 
-  // Liens secondaires (mig. 196) : lus une fois, fournis aux cartes par contexte.
-  const { data: secondaryLinks = [] } = useSecondaryManagers(orgId);
-  const [secondaryOpen, setSecondaryOpen] = useState(false);
-  const secondaryNames = useMemo(() => {
-    const nameOf = new Map(members.map((m) => [m.userId, m.displayName]));
-    const out = new Map<string, string[]>();
-    for (const l of secondaryLinks) {
-      const name = nameOf.get(l.managerId);
-      if (name) out.set(l.userId, [...(out.get(l.userId) ?? []), name]);
-    }
-    return out;
-  }, [secondaryLinks, members]);
   const workloadByUser = useMemo(() => {
     if (!showWorkload) return undefined;
     return new Map(memberWorkloadFromServer(serverWorkload, members).map((w) => [w.userId, w]));
@@ -253,7 +238,6 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
   if (loading) return <PyramidSkeleton />;
 
   return (
-    <SecondaryManagersContext.Provider value={secondaryNames}>
     <div className="space-y-6">
       {/* Bandeau mode déplacement — sticky pour rester visible en scrollant */}
       {dragging && (
@@ -348,16 +332,6 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
             showWorkload={showWorkload}
             onToggleWorkload={() => setShowWorkload((v) => !v)}
           />
-          {/* Organisation matricielle : un second responsable EN POINTILLÉ. */}
-          <div className="flex justify-end -mt-1 mb-2">
-            <button
-              type="button"
-              onClick={() => setSecondaryOpen(true)}
-              className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-lg text-xs font-semibold border border-dashed border-[rgb(var(--color-border-strong))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]"
-            >
-              <Network size={13} aria-hidden="true" /> {ta('pyramid.secondaryOpen')}
-            </button>
-          </div>
           {/* Bandeau mode réorganisation */}
           {editMode && !dragging && (
             <div className="flex items-center gap-2 rounded-2xl border border-indigo-400/60 bg-indigo-50/60 dark:bg-indigo-900/15 px-4 py-3 mb-3">
@@ -504,13 +478,7 @@ const PyramidTab = ({ orgId, ownerId, members, currentUserId, isAdmin, loading }
       {lifecycle.dialogs}
       <PyramidPendingConfirm pending={pendingConfirm} onConfirm={confirmPending} onCancel={dismissPending} />
 
-      {secondaryOpen && (
-        <Suspense fallback={null}>
-          <SecondaryManagersDialog orgId={orgId} members={members} isAdmin={isAdmin} open onOpenChange={setSecondaryOpen} />
-        </Suspense>
-      )}
     </div>
-    </SecondaryManagersContext.Provider>
   );
 };
 

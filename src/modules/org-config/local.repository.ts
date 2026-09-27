@@ -13,8 +13,8 @@ import { ORG_CONFIG_STORAGE_KEYS as K } from './constants';
 import {
   defaultOrgSettings,
   type Automation, type CreateAutomationInput, type CreateCustomFieldInput, type CreateProjectStatusInput,
-  type CreateWebhookInput, type CustomField, type FieldValue, type MemberCapacity, type OrgDomain,
-  type OrgSettings, type OrgSettingsPatch, type OrgWebhook, type ProjectStatus, type SecondaryManagerLink,
+  type CreateWebhookInput, type CustomField, type FieldValue, type OrgDomain,
+  type OrgSettings, type OrgSettingsPatch, type OrgWebhook, type ProjectStatus,
   type TaskFieldValue, type WebhookEvent,
 } from './types';
 
@@ -83,36 +83,6 @@ export class LocalStorageOrgConfigRepository implements IOrgConfigRepository {
       ? { ...d, lastCheckedAt: now(), verifiedAt: verified ? now() : d.verifiedAt }
       : d)));
     return { verified };
-  }
-
-  // ── 196 ──
-  async getCapacities(orgId: string): Promise<MemberCapacity[]> {
-    return read<MemberCapacity[]>(K.capacities, []).filter((c) => c.orgId === orgId);
-  }
-
-  async setCapacity(orgId: string, userId: string, weeklyMinutes: number | null): Promise<void> {
-    const rest = read<MemberCapacity[]>(K.capacities, []).filter((c) => !(c.orgId === orgId && c.userId === userId));
-    if (weeklyMinutes === null) return write(K.capacities, rest);
-    if (!Number.isInteger(weeklyMinutes) || weeklyMinutes < 0 || weeklyMinutes > 6000) throw makeApiError('invalid_input');
-    write(K.capacities, [...rest, { orgId, userId, weeklyMinutes }]);
-  }
-
-  async getSecondaryManagers(orgId: string): Promise<SecondaryManagerLink[]> {
-    return read<SecondaryManagerLink[]>(K.secondary, []).filter((l) => l.orgId === orgId);
-  }
-
-  async addSecondaryManager(orgId: string, userId: string, managerId: string): Promise<void> {
-    if (userId === managerId) throw makeApiError('invalid_input');
-    const all = read<SecondaryManagerLink[]>(K.secondary, []);
-    const mine = all.filter((l) => l.orgId === orgId && l.userId === userId);
-    if (mine.some((l) => l.managerId === managerId)) return;
-    if (mine.length >= 3) throw makeApiError('invalid_input');
-    write(K.secondary, [...all, { orgId, userId, managerId }]);
-  }
-
-  async removeSecondaryManager(orgId: string, userId: string, managerId: string): Promise<void> {
-    write(K.secondary, read<SecondaryManagerLink[]>(K.secondary, [])
-      .filter((l) => !(l.orgId === orgId && l.userId === userId && l.managerId === managerId)));
   }
 
   // ── 197 ──

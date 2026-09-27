@@ -195,7 +195,6 @@
     "restoreEvent": "Couldn't restore the event: {{message}}",
     "restoreOkr": "Couldn't restore the objective: {{message}}",
     "restoreComment": "Couldn't restore the comment: {{message}}",
-    "okrCycle": "Couldn't save the cycle: {{message}}",
     "krProjects": "Couldn't link the projects: {{message}}",
     "krCheckin": "Couldn't save the check-in: {{message}}",
     "offboard": "Couldn't complete the departure: {{message}}",

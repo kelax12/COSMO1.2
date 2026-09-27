@@ -5,8 +5,8 @@
 
 import type {
   Automation, CreateAutomationInput, CreateCustomFieldInput, CreateProjectStatusInput, CreateWebhookInput,
-  CustomField, FieldValue, MemberCapacity, OrgDomain, OrgSettings, OrgSettingsPatch, OrgWebhook, ProjectStatus,
-  SecondaryManagerLink, TaskFieldValue, WebhookEvent,
+  CustomField, FieldValue, OrgDomain, OrgSettings, OrgSettingsPatch, OrgWebhook, ProjectStatus,
+  TaskFieldValue, WebhookEvent,
 } from './types';
 
 export interface IOrgConfigRepository {
@@ -20,12 +20,6 @@ export interface IOrgConfigRepository {
   verifyDomain(domainId: string): Promise<{ verified: boolean }>;
 
   // 196
-  getCapacities(orgId: string): Promise<MemberCapacity[]>;
-  /** `null` retire la capacité déclarée (elle redevient inconnue). */
-  setCapacity(orgId: string, userId: string, weeklyMinutes: number | null): Promise<void>;
-  getSecondaryManagers(orgId: string): Promise<SecondaryManagerLink[]>;
-  addSecondaryManager(orgId: string, userId: string, managerId: string): Promise<void>;
-  removeSecondaryManager(orgId: string, userId: string, managerId: string): Promise<void>;
 
   // 197
   getProjectStatuses(orgId: string): Promise<ProjectStatus[]>;

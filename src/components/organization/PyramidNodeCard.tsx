@@ -19,7 +19,6 @@
 // deux fichiers à importer un troisième.
 // ═══════════════════════════════════════════════════════════════════
 import { useRef } from 'react';
-import { useSecondaryManagerNames } from './pyramid-secondary.context';
 import {
   ChevronDown,
   ChevronRight,
@@ -184,8 +183,6 @@ export const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, o
                 : 'border-[rgb(var(--color-border))]';
 
   const myTeams = teamsByUser.get(m.userId) ?? [];
-  // Lien EN POINTILLÉ (mig. 196) : affiché, jamais compté dans l'arbre.
-  const secondaryNames = useSecondaryManagerNames(m.userId);
   const myWorkload = workloadByUser?.get(m.userId);
 
   const card = (
@@ -386,14 +383,6 @@ export const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, o
               </span>
             )}
           </p>
-          {secondaryNames.length > 0 && (
-            <p
-              className="mt-0.5 inline-flex max-w-full items-center rounded-full border border-dashed border-[rgb(var(--color-border-strong))] px-1.5 text-[10px] text-[rgb(var(--color-text-muted))]"
-              title={ta('pyramid.secondaryAlso', { names: secondaryNames.join(', ') })}
-            >
-              <span className="truncate">{ta('pyramid.secondaryAlso', { names: secondaryNames.join(', ') })}</span>
-            </p>
-          )}
         </div>
       {!drag && (movable || canAddUnder || canRemove) && (
         <DropdownMenu>

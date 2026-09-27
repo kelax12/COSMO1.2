@@ -212,7 +212,6 @@ export class LocalStorageTeamOKRsRepository implements ITeamOKRsRepository {
           contributorIds: kr.contributorIds ?? [],
         };
       }),
-      cycleId: input.cycleId ?? null,
       parentOkrId: input.parentOkrId ?? null,
     };
     this.save([okr, ...okrs]);
@@ -229,7 +228,6 @@ export class LocalStorageTeamOKRsRepository implements ITeamOKRsRepository {
     if (input.startDate !== undefined) okr.startDate = input.startDate;
     if (input.endDate !== undefined) okr.endDate = input.endDate;
     if (input.teamIds !== undefined) okr.teamIds = input.teamIds;
-    if (input.cycleId !== undefined) okr.cycleId = input.cycleId;
     if (input.parentOkrId !== undefined) {
       // Miroir du trigger `validate_team_okr_parent` (mig. 153) : ni soi-même,
       // ni un descendant.

@@ -4,8 +4,8 @@
 // catégories ; la carte, la lecture d'UN objectif.
 
 import { useEffect, useState } from 'react';
-import { Target, Trash2, Pencil, Building2, CalendarRange, CornerLeftUp, Activity } from 'lucide-react';
-import type { KRProjectLink, OkrCycle, TeamKeyResult, TeamOKR } from '@/modules/team-okrs';
+import { Target, Trash2, Pencil, Building2, CornerLeftUp, Activity } from 'lucide-react';
+import type { KRProjectLink, TeamKeyResult, TeamOKR } from '@/modules/team-okrs';
 import type { TeamProjectTaskStats } from '@/modules/team-projects';
 import type { OrgMember } from '@/modules/organizations';
 import MemberAvatar from './MemberAvatar';
@@ -124,7 +124,6 @@ const TeamKRRow = ({ kr, links, statsById, onCommit, onOpenExecution, personOf }
 interface TeamOKRCardProps {
   okr: TeamOKR;
   okrs: TeamOKR[];
-  cycles: OkrCycle[];
   links: KRProjectLink[];
   statsById: Map<string, TeamProjectTaskStats>;
   category?: { name: string; color: string };
@@ -144,13 +143,12 @@ interface TeamOKRCardProps {
 }
 
 const TeamOKRCard = ({
-  okr, okrs, cycles, links, statsById, category, teamName, teamColor, editDeniedReason, deleteDeniedReason, highlighted,
+  okr, okrs, links, statsById, category, teamName, teamColor, editDeniedReason, deleteDeniedReason, highlighted,
   onEdit, onDelete, onCommitKR, onOpenKR, onOpenOkr, personOf,
 }: TeamOKRCardProps) => {
   const { t } = useT('org');
   const { t: pf, tp: tpf } = useT('portfolio');
   const avg = okrRatioPercent(okr.keyResults, links, statsById);
-  const cycle = okr.cycleId ? cycles.find((c) => c.id === okr.cycleId) : undefined;
   const parent = okr.parentOkrId ? okrs.find((o) => o.id === okr.parentOkrId) : undefined;
   const children = okrs.filter((o) => o.parentOkrId === okr.id);
 
@@ -192,11 +190,6 @@ const TeamOKRCard = ({
             )}
             {/* Qui voit cet objectif, et pourquoi (M12). */}
             <VisibilityPill orgId={okr.orgId} teamIds={okr.teamIds} />
-            {cycle && (
-              <span className="inline-flex items-center gap-1 text-caption font-medium px-2 py-0.5 rounded-full border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))]">
-                <CalendarRange size={11} aria-hidden="true" /> {cycle.name}
-              </span>
-            )}
             {parent && (
               <button
                 type="button"

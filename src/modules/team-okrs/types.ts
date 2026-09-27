@@ -50,8 +50,6 @@ export interface TeamOKR {
    */
   teamIds: string[];
   keyResults: TeamKeyResult[];
-  /** Cycle d'OKR (T1, S2…) — mig. 160. */
-  cycleId?: string | null;
   /** Objectif auquel celui-ci CONTRIBUE (un objectif d'entreprise, le plus souvent). */
   parentOkrId?: string | null;
 }
@@ -83,7 +81,6 @@ export interface CreateTeamOKRInput {
   /** [] ou absent = objectif d'entreprise (toutes équipes). */
   teamIds?: string[];
   keyResults: CreateTeamKRInput[];
-  cycleId?: string | null;
   parentOkrId?: string | null;
 }
 
@@ -94,7 +91,6 @@ export interface UpdateTeamOKRInput {
   startDate?: string;
   endDate?: string;
   teamIds?: string[];
-  cycleId?: string | null;
   parentOkrId?: string | null;
 }
 

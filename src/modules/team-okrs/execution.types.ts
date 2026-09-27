@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════
-// TEAM-OKRS · Exécution (mig. 160) — cycles, projets reliés, points d'étape
+// TEAM-OKRS · Exécution (mig. 160) — projets reliés, points d'étape
 // ═══════════════════════════════════════════════════════════════════
 
 /**
@@ -7,21 +7,6 @@
  * projet (M2), défini ici pour ne pas dépendre d'un module qui ne l'a pas encore.
  */
 export type ProjectHealth = 'on_track' | 'at_risk' | 'off_track';
-
-/** Période d'OKR de l'organisation (T1, S2…). Dates locales 'YYYY-MM-DD'. */
-export interface OkrCycle {
-  id: string;
-  orgId: string;
-  name: string;
-  startDate: string;
-  endDate: string;
-}
-
-export interface CreateOkrCycleInput {
-  name: string;
-  startDate: string;
-  endDate: string;
-}
 
 /** Lien KR ↔ projet : le KR avance avec les tâches terminées du projet. */
 export interface KRProjectLink {

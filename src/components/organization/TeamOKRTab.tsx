@@ -5,7 +5,6 @@ import {
   useTeamOKRs,
   useUpdateTeamKR,
   useDeleteTeamOKR,
-  useOkrCycles,
   useKRProjects,
   type TeamOKR,
   type TeamKeyResult,
@@ -17,10 +16,8 @@ import { getColorHex } from '@/lib/category-colors';
 import TeamCategoryFilterBar from './TeamCategoryFilterBar';
 import TeamOKRModal from './TeamOKRModal';
 import TeamOKRCard from './TeamOKRCard';
-import OkrCyclesBar from './OkrCyclesBar';
 import KRExecutionDialog from './KRExecutionDialog';
 import TeamTrashDialog from './TeamTrashDialog';
-import { filterOkrsByCycle } from './okr-execution.helpers';
 import { filterOkrs, OKR_STATES, type OkrState } from './okr-filters.helpers';
 import OkrFilterBar from './OkrFilterBar';
 import { useUrlFilters, anId, oneOf } from './use-url-filters';
@@ -58,8 +55,7 @@ const TeamOKRTab = ({ orgId }: TeamOKRTabProps) => {
   const { data: categories = [] } = useTeamCategories(orgId);
   const updateKR = useUpdateTeamKR(orgId);
   const deleteOKR = useDeleteTeamOKR(orgId);
-  // Exécution (mig. 160) : cycles, KR reliés à des projets, avancement serveur.
-  const { data: cycles = [] } = useOkrCycles(orgId);
+  // Exécution (mig. 160) : KR reliés à des projets, avancement serveur.
   const { data: krLinks = [] } = useKRProjects(orgId);
   const { data: allProjects = [] } = useTeamProjects(orgId);
   const { data: statsRows = [] } = useTeamProjectTaskStats(orgId);
@@ -68,7 +64,6 @@ const TeamOKRTab = ({ orgId }: TeamOKRTabProps) => {
   const memberById = useMemo(() => new Map(members.map((m) => [m.userId, m])), [members]);
   const { user } = useAuth();
   const { values: okrFilters, setFilters: setOkrFilters } = useUrlFilters(OKR_FILTER_SPECS);
-  const [cycleFilter, setCycleFilter] = useState('');
   const [openKrId, setOpenKrId] = useState<string | null>(null);
   const openKr = useMemo(
     () => okrs.flatMap((o) => o.keyResults).find((k) => k.id === openKrId) ?? null,
@@ -105,8 +100,8 @@ const TeamOKRTab = ({ orgId }: TeamOKRTabProps) => {
   // depuis que `team_okrs.category_id` est un vrai FK (mig. 148).
   const visibleOKRs = useMemo(() => {
     const byCategory = activeCategoryIds.size === 0 ? okrs : okrs.filter((o) => !!o.categoryId && activeCategoryIds.has(o.categoryId));
-    return filterOkrs(filterOkrsByCycle(byCategory, cycleFilter), okrFilters, krLinks, statsById);
-  }, [okrs, activeCategoryIds, cycleFilter, okrFilters, krLinks, statsById]);
+    return filterOkrs(byCategory, okrFilters, krLinks, statsById);
+  }, [okrs, activeCategoryIds, okrFilters, krLinks, statsById]);
 
   // L'objectif demandé par l'URL : un filtre de catégorie qui le cacherait est
   // levé, puis on l'amène à l'écran une fois les données arrivées.
@@ -154,9 +149,8 @@ const TeamOKRTab = ({ orgId }: TeamOKRTabProps) => {
         </PermissionGate>
       </div>
 
-      {/* Cycles (mig. 160) et corbeille des objectifs (mig. 193). */}
+      {/* Filtres et corbeille des objectifs (mig. 193). */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        <OkrCyclesBar orgId={orgId} cycles={cycles} value={cycleFilter} onChange={setCycleFilter} canManage={can['okr.create']} />
         <OkrFilterBar filters={okrFilters} setFilters={setOkrFilters} teams={teams} members={members} currentUserId={user?.id} />
         <TeamTrashDialog orgId={orgId} projects={allProjects} members={members} />
       </div>
@@ -191,7 +185,6 @@ const TeamOKRTab = ({ orgId }: TeamOKRTabProps) => {
             key={okr.id}
             okr={okr}
             okrs={okrs}
-            cycles={cycles}
             links={krLinks}
             statsById={statsById}
             category={okr.categoryId ? colorById.get(okr.categoryId) : undefined}
