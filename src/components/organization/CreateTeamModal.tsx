@@ -4,7 +4,6 @@ import { X, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { subtreeOf, type OrgMember } from '@/modules/organizations';
 import MemberPickList from './MemberPickList';
-import MemberSelectField from './MemberSelectField';
 import type { CreateTeamFullInput } from '@/modules/org-teams';
 import { useT } from '@/i18n/useT';
 import type { KeyOf } from '@/i18n/catalog';
@@ -68,10 +67,15 @@ export const CreateTeamForm = ({ members, currentUserId, isAdmin, onSubmit, onCl
     return members.filter((m) => m.userId === currentUserId || mine.has(m.userId));
   }, [members, currentUserId, isAdmin]);
 
-  // Choisir un responsable l'ajoute aux membres (il le serait de toute façon).
+  // Couronner quelqu'un l'ajoute aux membres (il le serait de toute façon).
   const pickLead = (userId: string) => {
     setLeadId(userId);
     if (userId && !selected.includes(userId)) setSelected((prev) => [...prev, userId]);
+  };
+  // Décocher le responsable lui retire la couronne : il ne peut répondre d'une équipe dont il n'est pas.
+  const pickMembers = (next: string[]) => {
+    setSelected(next);
+    if (leadId && !next.includes(leadId)) setLeadId('');
   };
 
   const handleSubmit = async () => {
@@ -135,21 +139,18 @@ export const CreateTeamForm = ({ members, currentUserId, isAdmin, onSubmit, onCl
             </div>
           </div>
 
-          {/* Responsable : gère les membres et les projets de l'équipe (mig. 107). */}
-          <MemberSelectField
-            label={t('popups.team.lead')}
-            members={addable}
-            value={leadId}
-            onChange={pickLead}
-            emptyLabel={t('popups.team.noLead')}
-            hint={t('popups.team.leadHint')}
-          />
-
           {/* Membres */}
           <div>
             <span className={labelClass} style={labelStyle}>
               {t('team.membersCount', { count: selected.length })}
             </span>
+            {/* Responsable : gère les membres et les projets de l'équipe (mig. 107).
+                Il se désigne dans la liste même, par la couronne (maquette 1, 2026-09-27). */}
+            {addable.length > 0 && (
+              <p className="text-xs mb-2 -mt-1" style={{ color: 'rgb(var(--color-text-muted))' }}>
+                {t('popups.team.leadHint')}
+              </p>
+            )}
             {addable.length === 0 ? (
               <p className="text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
                 {t('team.noMember')}
@@ -159,8 +160,9 @@ export const CreateTeamForm = ({ members, currentUserId, isAdmin, onSubmit, onCl
                 <MemberPickList
                   members={addable}
                   value={selected}
-                  onChange={setSelected}
+                  onChange={pickMembers}
                   currentUserId={currentUserId}
+                  lead={{ id: leadId, onChange: pickLead }}
                   label={t('team.membersCount', { count: selected.length })}
                 />
               </div>

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Check, Search } from 'lucide-react';
+import { Check, Crown, Search } from 'lucide-react';
 import type { OrgMember } from '@/modules/organizations';
 import MemberAvatar from './MemberAvatar';
 import TeamAssigneeGroups from './TeamAssigneeGroups';
@@ -19,6 +19,11 @@ interface MemberPickListProps {
   currentUserId?: string;
   /** Nom accessible du groupe de cases. */
   label: string;
+  /**
+   * Création d'équipe : une couronne par ligne désigne le responsable, dans la
+   * liste même (maquette 1 du 2026-09-27) au lieu d'un menu séparé.
+   */
+  lead?: { id: string; onChange: (userId: string) => void };
 }
 
 /**
@@ -31,7 +36,7 @@ interface MemberPickListProps {
  * sélection : une personne cochée puis masquée reste choisie, et le compte
  * des cochés masqués est dit pour qu'elle ne disparaisse pas en silence.
  */
-const MemberPickList = ({ members, value, onChange, teamGroupsOrgId, currentUserId, label }: MemberPickListProps) => {
+const MemberPickList = ({ members, value, onChange, teamGroupsOrgId, currentUserId, label, lead }: MemberPickListProps) => {
   const { t, tp } = useT('org');
   const [query, setQuery] = useState('');
   const [limit, setLimit] = useState(MEMBER_PICK_PAGE);
@@ -69,7 +74,9 @@ const MemberPickList = ({ members, value, onChange, teamGroupsOrgId, currentUser
       )}
       {shown.map((m) => {
         const checked = value.includes(m.userId);
-        return (
+        const name = m.userId === currentUserId ? t('common.youBadge') : m.displayName;
+        const isLead = lead?.id === m.userId;
+        const row = (
           <button
             key={m.userId}
             type="button"
@@ -80,7 +87,12 @@ const MemberPickList = ({ members, value, onChange, teamGroupsOrgId, currentUser
           >
             <MemberAvatar avatar={m.avatar} name={m.displayName} size={26} />
             <span className="text-sm truncate flex-1 text-[rgb(var(--color-text-primary))]">
-              {m.userId === currentUserId ? t('common.youBadge') : m.displayName}
+              {name}
+              {isLead && (
+                <span className="ml-2 text-caption font-semibold px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200">
+                  {t('teams.leadBadge')}
+                </span>
+              )}
             </span>
             <span
               className={`w-6 h-6 rounded-md border flex items-center justify-center shrink-0 transition-colors ${
@@ -91,6 +103,27 @@ const MemberPickList = ({ members, value, onChange, teamGroupsOrgId, currentUser
               {checked && <Check size={13} />}
             </span>
           </button>
+        );
+        if (!lead) return row;
+        // Deux boutons frères : un bouton ne peut pas en contenir un autre.
+        return (
+          <div key={m.userId} className="flex items-center">
+            <button
+              type="button"
+              onClick={() => lead.onChange(isLead ? '' : m.userId)}
+              aria-pressed={isLead}
+              aria-label={t(isLead ? 'popups.team.unsetLead' : 'popups.team.makeLead', { name })}
+              title={t(isLead ? 'popups.team.unsetLead' : 'popups.team.makeLead', { name })}
+              className="min-w-11 min-h-11 flex items-center justify-center shrink-0 hover:bg-[rgb(var(--color-hover))] transition-colors"
+            >
+              <Crown
+                size={16}
+                aria-hidden="true"
+                className={isLead ? 'text-amber-500 fill-amber-400' : 'text-[rgb(var(--color-text-muted))]'}
+              />
+            </button>
+            <div className="flex-1 min-w-0">{row}</div>
+          </div>
         );
       })}
       {found.length > shown.length && (
