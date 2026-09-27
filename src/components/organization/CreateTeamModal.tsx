@@ -146,11 +146,6 @@ export const CreateTeamForm = ({ members, currentUserId, isAdmin, onSubmit, onCl
             </span>
             {/* Responsable : gère les membres et les projets de l'équipe (mig. 107).
                 Il se désigne dans la liste même, par la couronne (maquette 1, 2026-09-27). */}
-            {addable.length > 0 && (
-              <p className="text-xs mb-2 -mt-1" style={{ color: 'rgb(var(--color-text-muted))' }}>
-                {t('popups.team.leadHint')}
-              </p>
-            )}
             {addable.length === 0 ? (
               <p className="text-xs" style={{ color: 'rgb(var(--color-text-muted))' }}>
                 {t('team.noMember')}
@@ -163,6 +158,7 @@ export const CreateTeamForm = ({ members, currentUserId, isAdmin, onSubmit, onCl
                   onChange={pickMembers}
                   currentUserId={currentUserId}
                   lead={{ id: leadId, onChange: pickLead }}
+                  alwaysSearchable
                   label={t('team.membersCount', { count: selected.length })}
                 />
               </div>

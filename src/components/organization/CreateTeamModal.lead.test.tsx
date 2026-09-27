@@ -33,6 +33,11 @@ describe('CreateTeamForm, couronne du responsable', () => {
     expect(onSubmit.mock.calls[0][0]).toMatchObject({ leadId: 'marie', memberIds: ['me', 'marie'] });
   });
 
+  it('affiche la recherche même avec trois membres', () => {
+    setup();
+    expect(screen.getByRole('searchbox')).toBeTruthy();
+  });
+
   it('décocher le responsable lui retire la couronne', async () => {
     const onSubmit = setup();
     fireEvent.click(screen.getByRole('button', { name: 'Nommer Marie Dupont responsable' }));
