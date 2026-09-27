@@ -1539,7 +1539,6 @@
   },
   "filterPresets": {
     "mine": "Mes tâches",
-    "mineProjects": "Mes projets",
     "overdue": "En retard",
     "thisWeek": "Cette semaine",
     "blocked": "Bloquées",

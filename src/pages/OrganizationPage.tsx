@@ -33,7 +33,6 @@ import { safeRedirectPath } from '@/lib/safe-redirect';
 import { canSeeStats } from '@/components/organization/stats-scope.helpers';
 import { useOrgTeams, useOrgTeamMembers } from '@/modules/org-teams';
 import MyWorkTab from '@/components/organization/MyWorkTab';
-import OrgPlanChip from '@/components/organization/OrgPlanChip';
 import { MyWorkSkeleton, TeamTasksSkeleton, TeamOverviewSkeleton, OrgTabSkeleton } from '@/components/organization/OrgLoadingSkeletons';
 import { lazyWithRetry } from '@/lib/lazy-with-retry';
 import { useT } from '@/i18n/useT';
@@ -363,41 +362,17 @@ const OrganizationPage = () => {
             <p className="text-xs text-[rgb(var(--color-text-secondary))] mt-0.5 line-clamp-1">{myOrg.description}</p>
           )}
         </div>
-        {/* Forfait : visible du seul propriétaire, à côté de la cloche. C'est
-            un raccourci, pas un onglet — la facturation ne concerne qu'un
-            compte sur toute l'organisation. */}
-        {/* Mobile : la pastille passe à la ligne (`basis-full` + `order-last`)
-            plutôt que de disputer 122 px au nom de l'organisation, qui tombait
-            à 93 px de large sur un écran de 375 px — mesuré, pas supposé. */}
-        {isOwner && (
-          <div className="order-last basis-full sm:order-none sm:basis-auto">
-            <OrgPlanChip
-              orgId={myOrg.id}
-              active={tab === 'billing'}
-              onOpen={() => setTab('billing')}
-            />
-          </div>
-        )}
+        {/* La pastille « Forfait » est retirée de l'en-tête (maquette du
+            2026-09-27) : le forfait reste atteignable, pour le seul
+            propriétaire, depuis Paramètres (`OrgSettingsSection`, section
+            « Forfait et facturation »), qui est une section de navigation
+            ordinaire, donc accessible en desktop comme en mobile. */}
         {/* Les triggers de la mig. 095 et le job pg_cron de la 096 ecrivaient
             dans `org_notifications` sans qu'aucun ecran ne les lise. */}
         {/* Glossaire (cohérence globale) : les mots du mode entreprise, définis. */}
         {glossaryButton}
         <OrgNotificationsBell orgId={myOrg.id} members={members} />
       </header>
-
-      {/* Forfait sur mobile : le header ci-dessus est masqué sous `md`, la
-          pastille y serait donc devenue inatteignable — or c'est le SEUL
-          point d'entrée vers la facturation, et seulement pour le
-          propriétaire. Elle est reprise ici, en pleine largeur. */}
-      {isOwner && (
-        <div className="md:hidden mb-4">
-          <OrgPlanChip
-            orgId={myOrg.id}
-            active={tab === 'billing'}
-            onOpen={() => setTab('billing')}
-          />
-        </div>
-      )}
 
       {/* Bannière freemium — informative tant que ENTERPRISE_BILLING_ENFORCED
           est false (gate dormant ; le vrai blocage sera côté serveur).

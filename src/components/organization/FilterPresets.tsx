@@ -79,10 +79,15 @@ const PRESETS: Preset[] = [
  * Rangée de presets fixes + copie du lien courant. Cliquer un preset déjà
  * actif le désactive (retour à l'état nu) ; cliquer un autre preset REMPLACE
  * les filtres de portée/attributs, pour donner un départ net à chaque fois.
+ *
+ * Côté Projets (`entity="projects"`), le preset « Mes tâches » est retiré :
+ * « Moi », dans la barre de filtres juste au-dessus, fait déjà exactement le
+ * même filtre pour les projets (maquette validée du 2026-09-27).
  */
 const FilterPresets = ({ filters, setFilters, defaultStatus, currentUserId, showBlocked = true, entity = 'tasks' }: FilterPresetsProps) => {
   const { t } = useT('org');
-  const presets = showBlocked ? PRESETS : PRESETS.filter((p) => p.key !== 'blocked');
+  const presets = (showBlocked ? PRESETS : PRESETS.filter((p) => p.key !== 'blocked'))
+    .filter((p) => entity !== 'projects' || p.key !== 'mine');
 
   const togglePreset = (preset: Preset) => {
     const base = cleanState(filters, defaultStatus);
@@ -120,20 +125,20 @@ const FilterPresets = ({ filters, setFilters, defaultStatus, currentUserId, show
                 : 'border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]'
             }`}
           >
-            {entity === 'projects' && preset.key === 'mine'
-              ? t('filterPresets.mineProjects')
-              : t(preset.labelKey as Parameters<typeof t>[0])}
+            {t(preset.labelKey as Parameters<typeof t>[0])}
           </button>
         );
       })}
-      <button
-        type="button"
-        onClick={() => void copyLink()}
-        className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg text-sm font-medium border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]/60"
-      >
-        <LinkIcon size={14} aria-hidden="true" />
-        {t('filterPresets.copyLink')}
-      </button>
+      {entity !== 'projects' && (
+        <button
+          type="button"
+          onClick={() => void copyLink()}
+          className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg text-sm font-medium border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]/60"
+        >
+          <LinkIcon size={14} aria-hidden="true" />
+          {t('filterPresets.copyLink')}
+        </button>
+      )}
     </div>
   );
 };
