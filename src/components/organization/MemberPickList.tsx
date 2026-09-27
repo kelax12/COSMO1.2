@@ -24,6 +24,8 @@ interface MemberPickListProps {
    * liste même (maquette 1 du 2026-09-27) au lieu d'un menu séparé.
    */
   lead?: { id: string; onChange: (userId: string) => void };
+  /** Recherche affichée quel que soit l'effectif (sinon au-delà du seuil). */
+  alwaysSearchable?: boolean;
 }
 
 /**
@@ -36,11 +38,11 @@ interface MemberPickListProps {
  * sélection : une personne cochée puis masquée reste choisie, et le compte
  * des cochés masqués est dit pour qu'elle ne disparaisse pas en silence.
  */
-const MemberPickList = ({ members, value, onChange, teamGroupsOrgId, currentUserId, label, lead }: MemberPickListProps) => {
+const MemberPickList = ({ members, value, onChange, teamGroupsOrgId, currentUserId, label, lead, alwaysSearchable = false }: MemberPickListProps) => {
   const { t, tp } = useT('org');
   const [query, setQuery] = useState('');
   const [limit, setLimit] = useState(MEMBER_PICK_PAGE);
-  const searchable = members.length > MEMBER_SEARCH_THRESHOLD;
+  const searchable = alwaysSearchable || members.length > MEMBER_SEARCH_THRESHOLD;
   const found = searchable ? filterMembersByQuery(members, query) : members;
   const shown = found.slice(0, limit);
   const hiddenSelected = value.filter((id) => !shown.some((m) => m.userId === id) && members.some((m) => m.userId === id)).length;
