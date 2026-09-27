@@ -15,9 +15,6 @@ import {
   type AuditEntry,
   type AuditLogQuery,
   type OrgSearchResult,
-  type SavedView,
-  type SaveViewInput,
-  type SavedViewScope,
   type CreateEmailInvitationsInput,
   type DepartureImpact,
   type EmailInvitation,
@@ -39,9 +36,6 @@ const EMAIL_INVITES_KEY = 'cosmo_org_email_invitations';
 const NOTIF_SETTINGS_KEY = 'cosmo_org_notification_settings';
 const WEEKLY_REVIEWS_KEY = 'cosmo_org_weekly_reviews';
 const AUDIT_KEY = 'cosmo_org_audit_log';
-const SAVED_VIEWS_KEY = 'cosmo_org_saved_views';
-/** Même borne que le trigger de la mig. 192. */
-const SAVED_VIEWS_LIMIT = 50;
 const DEMO_USER_ID = 'demo-user';
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 
@@ -257,41 +251,6 @@ export class LocalStorageOrgGovernanceRepository implements IOrgGovernanceReposi
       },
       ...all,
     ].slice(0, 52));
-  }
-
-  // ─── Vues enregistrées (mig. 192) ──────────────────────────────────
-
-  async getSavedViews(orgId: string, scope: SavedViewScope): Promise<SavedView[]> {
-    return (readJsonArray<SavedView & { orgId: string }>(SAVED_VIEWS_KEY) ?? [])
-      .filter((v) => v.orgId === orgId && v.scope === scope)
-      .sort((a, b) => a.name.localeCompare(b.name));
-  }
-
-  async saveView(orgId: string, input: SaveViewInput): Promise<SavedView> {
-    const name = input.name.trim();
-    if (!name || name.length > 60) throw makeApiError('invalid_input');
-    const all = readJsonArray<SavedView & { orgId: string }>(SAVED_VIEWS_KEY) ?? [];
-    const now = new Date().toISOString();
-    const existing = all.find((v) => v.orgId === orgId && v.scope === input.scope && v.name === name);
-    if (existing) {
-      existing.filters = input.filters;
-      existing.updatedAt = now;
-      writeJsonOrThrow(SAVED_VIEWS_KEY, all);
-      return existing;
-    }
-    if (all.filter((v) => v.orgId === orgId && v.scope === input.scope).length >= SAVED_VIEWS_LIMIT) {
-      throw makeApiError('saved_views_limit');
-    }
-    const view = { id: crypto.randomUUID(), orgId, scope: input.scope, name, filters: input.filters, createdAt: now, updatedAt: now };
-    writeJsonOrThrow(SAVED_VIEWS_KEY, [...all, view]);
-    return view;
-  }
-
-  async deleteView(viewId: string): Promise<void> {
-    writeJsonOrThrow(
-      SAVED_VIEWS_KEY,
-      (readJsonArray<SavedView>(SAVED_VIEWS_KEY) ?? []).filter((v) => v.id !== viewId),
-    );
   }
 
   // ─── Recherche globale (mig. 191) ──────────────────────────────────

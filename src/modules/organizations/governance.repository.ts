@@ -6,9 +6,6 @@ import type {
   AuditEntry,
   AuditLogQuery,
   OrgSearchResult,
-  SavedView,
-  SaveViewInput,
-  SavedViewScope,
   CreateEmailInvitationsInput,
   DepartureImpact,
   EmailInvitation,
@@ -37,12 +34,6 @@ export interface IOrgGovernanceRepository {
 
   getWeeklyReviews(orgId: string): Promise<WeeklyReview[]>;
   saveWeeklyReview(orgId: string, input: SaveWeeklyReviewInput): Promise<void>;
-
-  // Vues enregistrées (mig. 192) — personnelles, par écran.
-  getSavedViews(orgId: string, scope: SavedViewScope): Promise<SavedView[]>;
-  /** Crée la vue, ou remplace les filtres d'une vue du même nom. */
-  saveView(orgId: string, input: SaveViewInput): Promise<SavedView>;
-  deleteView(viewId: string): Promise<void>;
 
   // Recherche globale (mig. 191) — requête d'au moins 2 caractères.
   search(orgId: string, query: string, limitPerKind?: number): Promise<OrgSearchResult[]>;
