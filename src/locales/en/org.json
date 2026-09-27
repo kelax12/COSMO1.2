@@ -1469,6 +1469,7 @@
   },
   "filterPresets": {
     "mine": "My tasks",
+    "mineProjects": "My projects",
     "overdue": "Overdue",
     "thisWeek": "This week",
     "blocked": "Blocked",

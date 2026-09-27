@@ -7,7 +7,7 @@
 // filtres partagée avec l'onglet Tâches, et dans l'URL.
 // ═══════════════════════════════════════════════════════════════════
 
-import { Plus, LayoutList, SquareKanban, CalendarRange, Table2, ListChecks } from 'lucide-react';
+import { Plus, LayoutList, CalendarRange, Table2, ListChecks } from 'lucide-react';
 import { type ProjectsUiPrefs } from './team-projects.helpers';
 import { useT } from '@/i18n/useT';
 import { PermissionGate } from './permission-hints';
@@ -71,7 +71,7 @@ const ProjectsToolbar = ({
   // sélection est passée dans le menu de chaque projet, là où sont les tâches ;
   // `showArchived` reste sur la bascule contextuelle du bas de liste, qui
   // affiche le compte et n'existe que s'il y a des archives.
-  const { kanbanGroupBy, timelineGroupBy } = prefs;
+  const { timelineGroupBy } = prefs;
   const view = effectiveView;
   const chooseView = (next: ProjectsUiPrefs['view']) => updatePrefs({ view: next, viewChosen: true });
 
@@ -91,7 +91,6 @@ const ProjectsToolbar = ({
           >
             <ViewTab active={view === 'portfolio'} onClick={() => chooseView('portfolio')} label={pf('viewPortfolio')} Icon={Table2} />
             <ViewTab active={view === 'list'} onClick={() => chooseView('list')} label={pf('toolbar.viewList')} Icon={LayoutList} />
-            <ViewTab active={view === 'kanban'} onClick={() => chooseView('kanban')} label={pf('toolbar.viewKanban')} Icon={SquareKanban} />
             <ViewTab active={view === 'timeline'} onClick={() => chooseView('timeline')} label={pf('toolbar.viewTimeline')} Icon={CalendarRange} />
           </div>
 
@@ -107,37 +106,6 @@ const ProjectsToolbar = ({
               <ListChecks size={15} aria-hidden="true" />
               <span className="hidden sm:inline">{pf('bulk.selectToggle')}</span>
             </button>
-          )}
-
-          {/* Axe des colonnes du Tableau — juste à côté de l'onglet qui le
-              montre, pas loin en dessous : c'est ce qui le rendait invisible.
-              N'existe QUE quand « Tableau » est actif, disparaît sinon. */}
-          {view === 'kanban' && (
-            <div className="inline-flex items-center gap-1.5">
-              <span className="hidden md:inline text-xs text-[rgb(var(--color-text-muted))]">{pf('toolbar.columnsLabel')}</span>
-              <div
-                className="inline-flex rounded-lg border border-[rgb(var(--color-border))] p-0.5 gap-0.5"
-                role="group"
-                aria-label={pf('toolbar.columnsLabel')}
-              >
-                <button
-                  type="button"
-                  onClick={() => updatePrefs({ kanbanGroupBy: 'status' })}
-                  aria-pressed={kanbanGroupBy === 'status'}
-                  className={`${segBase} ${kanbanGroupBy === 'status' ? segOn : segOff}`}
-                >
-                  {pf('toolbar.groupByStatus')}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => updatePrefs({ kanbanGroupBy: 'assignee' })}
-                  aria-pressed={kanbanGroupBy === 'assignee'}
-                  className={`${segBase} ${kanbanGroupBy === 'assignee' ? segOn : segOff}`}
-                >
-                  {pf('toolbar.groupByAssignee')}
-                </button>
-              </div>
-            </div>
           )}
 
           {/* Axe des lignes du Planning — même geste, même vocabulaire que
@@ -187,8 +155,10 @@ const ProjectsToolbar = ({
         </div>
       </div>
 
-      {/* Bloquées exclue ici : la vue Projets ne filtre pas tâche par tâche. */}
-      <FilterPresets filters={filters} setFilters={setFilters} defaultStatus="all" currentUserId={currentUserId} showBlocked={false} />
+      {/* Préréglages appliqués aux PROJETS (project-filters.ts). Bloquées
+          exclue : c'est une lecture tâche par tâche. Le Tableau (kanban) est
+          passé dans l'onglet Tâches le 2026-09-27. */}
+      <FilterPresets filters={filters} setFilters={setFilters} defaultStatus="all" currentUserId={currentUserId} showBlocked={false} entity="projects" />
     </div>
   );
 };

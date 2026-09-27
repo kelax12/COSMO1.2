@@ -18,19 +18,17 @@ import {
 import { useOrgTeams } from '@/modules/org-teams';
 import { useTeamCategories } from '@/modules/team-categories';
 import { useMyOrgPermissions, type OrgMember } from '@/modules/organizations';
-import {
-  useProjectsUiPrefs, isTaskOverdue, completedThisWeek,
-  filterByStatus, sumEstimatedTime,
-} from './team-projects.helpers';
-import { PORTFOLIO_CARD_THRESHOLD, isMyProject, matchesProjectSearch, sortProjects } from './portfolio.helpers';
+import { useProjectsUiPrefs, sumEstimatedTime } from './team-projects.helpers';
+import { PORTFOLIO_CARD_THRESHOLD, matchesProjectSearch, sortProjects } from './portfolio.helpers';
+import { matchesProjectFilters } from './project-filters';
 import { readEntityParam } from './deep-link.helpers';
 import { useTeamProjectsActions } from './use-team-projects-actions';
 import { ProjectsSkeleton, ProjectsPulse, ProjectsSearchBar } from './ProjectsPulse';
 import TeamProjectCard from './TeamProjectCard';
 // Vues et surfaces à la demande : chargées au premier affichage (budget du chunk).
 import {
-  TeamProjectsKanban, TeamProjectsTimeline, ProjectPortfolioView, ProjectDetailPage,
-  ProjectEditDialog, AssignTaskSheet, BulkActionsBar,
+  TeamProjectsTimeline, ProjectPortfolioView, ProjectDetailPage,
+  ProjectEditDialog, BulkActionsBar,
 } from './team-projects.lazy';
 import ProjectsToolbar from './ProjectsToolbar';
 import OrgTaskFilterBar from './OrgTaskFilterBar';
@@ -64,8 +62,6 @@ type TaskModalState =
     projectId?: string;
     assigneeIds?: string[];
     status?: TeamTaskStatus;
-    /** Aucun projet en contexte : la fiche le DEMANDE (kanban, audit 2026-09-24). */
-    requireProject?: boolean;
   }
   | { mode: 'edit'; task: TeamTask }
   | null;
@@ -80,18 +76,12 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
   const create = useOrgCreate();
   const [editProjectId, setEditProjectId] = useState<string | null>(null);
   const [taskModal, setTaskModal] = useState<TaskModalState>(null);
-  // Filtres : le MÊME état que l'onglet Tâches, dans l'URL (task-filters.ts).
-  // Ils vivaient dans les préférences enregistrées, et revenaient trois jours
-  // plus tard sur une liste filtrée sans qu'on s'en souvienne.
+  // Filtres : le MÊME état d'URL que l'onglet Tâches (task-filters.ts), mais
+  // ils trient ici des PROJETS (project-filters.ts, répartition du 2026-09-27) :
+  // personne, équipe, recherche, « En retard », « Cette semaine ».
   const { filters, setFilters } = useOrgTaskFilters('all');
   useRememberedTaskFilters(orgId, 'projects');
-  const { team: teamFilter, assignee: assigneeFilter, status: statusFilter, q: query } = filters;
-  // « Mes projets » (audit du 2026-09-24, cas limites) : ceux que je porte ou
-  // où j'ai une tâche. Filtre d'affichage, il ne part pas dans l'URL.
-  const [mineOnly, setMineOnly] = useState(false);
-  // Colonne kanban (membre) ciblée par le « + ». La colonne « Non assignées »
-  // ne passe pas par ici : elle ouvre directement TaskModal.
-  const [assignSheetFor, setAssignSheetFor] = useState<string | 'closed'>('closed');
+  const { team: teamFilter, q: query } = filters;
 
   const { data: allProjects = [], isLoading: loadingProjects } = useTeamProjects(orgId);
   const { data: templates = [] } = useTeamProjectTemplates(orgId);
@@ -102,7 +92,7 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
   const { data: projectDeps = [] } = useTeamProjectDependencies(orgId);
   const { projectMembers, statsById, isLeadOf } = useProjectAccess(orgId, currentUserId); // mig. 190, 191
 
-  const { collapsed, showArchived, kanbanGroupBy, timelineGroupBy, sort } = prefs;
+  const { collapsed, showArchived, timelineGroupBy, sort } = prefs;
 
   // ─── Page projet : `?project=<id>` (M2) ─────────────────────────────
   // L'adresse est celle qu'émettent déjà la palette de commandes et le panneau
@@ -153,62 +143,46 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
   const archivedProjects = allProjects.filter((p) => !!p.archivedAt && matchesTeam(p));
   const manyProjects = activeProjects.length > PORTFOLIO_CARD_THRESHOLD;
   // Sans choix explicite, au-delà de 20 projets, on ouvre sur le portefeuille.
-  const view = prefs.viewChosen ? prefs.view : manyProjects ? 'portfolio' : prefs.view;
+  // Le Tableau (kanban) est passé dans l'onglet Tâches : une préférence
+  // enregistrée « kanban » retombe sur la liste.
+  const storedView = prefs.view === 'kanban' ? 'list' : prefs.view;
+  const view = prefs.viewChosen ? storedView : manyProjects ? 'portfolio' : storedView;
 
   // ─── Recherche et tri (M2) : même ensemble pour cartes et portefeuille ─
   const shownProjects = useMemo(() => {
     const teamName = (id?: string | null) => teams.find((tm) => tm.id === id)?.name;
-    const found = activeProjects.filter((p) => (!mineOnly || isMyProject(p, currentUserId, allTasks)) && matchesProjectSearch(p, query, {
+    const found = activeProjects.filter((p) => matchesProjectFilters(p, filters, allTasks) && matchesProjectSearch(p, query, {
       teamName: teamName(p.teamId),
       categoryName: categories.find((c) => c.id === p.categoryId)?.name,
       ownerName: members.find((m) => m.userId === p.ownerId)?.displayName,
     }));
     return sortProjects(found, sort, allTasks, statsById);
-  }, [activeProjects, query, sort, allTasks, teams, categories, members, mineOnly, currentUserId, statsById]);
+  }, [activeProjects, query, sort, allTasks, teams, categories, members, filters, statsById]);
 
-  // ─── Tâches : stats globales (non filtrées) + vue filtrée par assigné ──
+  // ─── Tâches : celles des projets affichés, sans filtre propre ────────
+  // Les filtres trient des projets : un projet retenu montre TOUTES ses tâches.
   const activeProjectIds = useMemo(() => new Set(activeProjects.map((p) => p.id)), [activeProjects]);
   const statsTasks = useMemo(
     () => allTasks.filter((t) => activeProjectIds.has(t.projectId)),
     [allTasks, activeProjectIds],
   );
-  const openCount = statsTasks.filter((t) => !t.completed).length;
-  const overdueCount = statsTasks.filter(isTaskOverdue).length;
-  const doneThisWeek = completedThisWeek(statsTasks);
-
-  // Vue filtrée : équipe (déjà dans `statsTasks`) PUIS assigné PUIS statut.
-  // Les compteurs des pastilles restent calculés sur `statsTasks` NON filtré :
-  // sinon cliquer « en retard » ferait tomber son propre compteur.
-  // En Tableau et en Planning, la recherche porte sur les TÂCHES (leur nom ou
-  // celui de leur projet) : il n'y a pas de liste de projets à réduire.
-  const searchTasks = (view === 'kanban' || view === 'timeline') && query.trim() !== '';
-  const visibleTasks = useMemo(() => {
-    const byAssignee = assigneeFilter
-      ? statsTasks.filter((t) => t.assigneeIds.includes(assigneeFilter))
-      : statsTasks;
-    const byStatus = filterByStatus(byAssignee, statusFilter);
-    if (!searchTasks) return byStatus;
-    const needle = query.trim().toLocaleLowerCase();
-    const projectName = new Map(activeProjects.map((p) => [p.id, p.name.toLocaleLowerCase()]));
-    return byStatus.filter((t) =>
-      t.name.toLocaleLowerCase().includes(needle) || (projectName.get(t.projectId) ?? '').includes(needle));
-  }, [statsTasks, assigneeFilter, statusFilter, searchTasks, query, activeProjects]);
+  const shownProjectIds = useMemo(() => new Set(shownProjects.map((p) => p.id)), [shownProjects]);
+  const visibleTasks = useMemo(
+    () => statsTasks.filter((t) => shownProjectIds.has(t.projectId)),
+    [statsTasks, shownProjectIds],
+  );
 
   const totalEstimated = useMemo(
     () => sumEstimatedTime(statsTasks.filter((t) => !t.completed)),
     [statsTasks],
   );
-  const tasksByProject = (projectId: string) => visibleTasks.filter((t) => t.projectId === projectId);
-
-  const assignSheetMember = assignSheetFor !== 'closed'
-    ? members.find((m) => m.userId === assignSheetFor) ?? null
-    : null;
+  const tasksByProject = (projectId: string) => statsTasks.filter((t) => t.projectId === projectId);
 
   // ─── Sélection multiple + actions groupées (toutes vues) ───────────
   const {
     selectMode, setSelectMode, selectedIds, toggleSelect, bulkBarProps,
   } = useTeamTasksSelection({
-    visibleTasks: projectParam ? visibleTasks.filter((t) => t.projectId === projectParam) : visibleTasks,
+    visibleTasks: projectParam ? allTasks.filter((t) => t.projectId === projectParam) : visibleTasks,
     setCompleted: (task, completed) => actions.updateTaskInput(task, { completed }),
     deleteTask: actions.deleteTaskById,
     restoreTask: actions.restoreDeletedTask,
@@ -228,15 +202,6 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
   const modalCreate = (input: CreateTeamTaskInput) => actions.createTaskAsync(input);
   const modalUpdate = (taskId: string, input: UpdateTeamTaskInput) =>
     actions.updateTaskAsync({ taskId, input });
-
-  /**
-   * Projet d'une tâche créée sans contexte de projet (« + » du kanban) : celui
-   * du filtre actif s'il n'en reste qu'un, sinon la fiche le demande. Il
-   * tombait jusque-là dans `activeProjects[0]`, le premier projet venu.
-   */
-  const projectFromFilter = activeProjects.length === 1 ? activeProjects[0].id : undefined;
-  const createWithoutProjectContext = (preset: { assigneeIds: string[]; status?: TeamTaskStatus }) =>
-    setTaskModal({ mode: 'create', projectId: projectFromFilter, requireProject: !projectFromFilter, ...preset });
 
   // Au-delà de 20 projets, les cartes s'ouvrent REPLIÉES (sauf décision).
   const isCollapsed = (projectId: string) => collapsed[projectId] ?? manyProjects;
@@ -283,7 +248,7 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
       onToggleSelect={toggleSelect}
       collapsed={isCollapsed(project.id)}
       onToggleCollapse={() => toggleCollapse(project.id)}
-      assigneeFiltered={!!assigneeFilter}
+      assigneeFiltered={false}
       onAddTask={(projectId) =>
         setTaskModal({ mode: 'create', projectId, assigneeIds: currentUserId ? [currentUserId] : [] })
       }
@@ -308,28 +273,6 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
         />
       )}
 
-      {assignSheetFor !== 'closed' && (
-        <AssignTaskSheet
-          member={assignSheetMember}
-          projects={activeProjects}
-          tasks={statsTasks}
-          onAssign={(task) => {
-            if (assignSheetFor !== 'closed' && !task.assigneeIds.includes(assignSheetFor)) {
-              actions.setAssignees(task, [...task.assigneeIds, assignSheetFor]);
-            }
-          }}
-          onCreateNew={(projectId) => {
-            const target = assignSheetFor;
-            const assigneeIds = target !== 'closed' ? [target] : [];
-            setAssignSheetFor('closed');
-            // Le projet choisi dans la feuille l'emporte sur le filtre courant.
-            if (projectId) setTaskModal({ mode: 'create', projectId, requireProject: false, assigneeIds });
-            else createWithoutProjectContext({ assigneeIds });
-          }}
-          onClose={() => setAssignSheetFor('closed')}
-        />
-      )}
-
       {selectMode && (
         <BulkActionsBar
           {...bulkBarProps}
@@ -347,7 +290,6 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
           defaultProjectId={taskModal.mode === 'create' ? taskModal.projectId : undefined}
           defaultAssigneeIds={taskModal.mode === 'create' ? taskModal.assigneeIds : undefined}
           defaultStatus={taskModal.mode === 'create' ? taskModal.status : undefined}
-          requireProjectChoice={taskModal.mode === 'create' && !!taskModal.requireProject}
           onCreate={modalCreate}
           onUpdate={modalUpdate}
           onDelete={actions.removeWithUndo}
@@ -365,8 +307,7 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
         {detailProject ? (
           <ProjectDetailPage
             project={detailProject}
-            tasks={visibleTasks.filter((t) => t.projectId === detailProject.id)
-              .concat(activeProjectIds.has(detailProject.id) ? [] : allTasks.filter((t) => t.projectId === detailProject.id))}
+            tasks={allTasks.filter((t) => t.projectId === detailProject.id)}
             allProjectTasks={allTasks.filter((t) => t.projectId === detailProject.id)}
             stats={statsById?.get(detailProject.id)}
             projectMembers={projectMembers.filter((m) => m.projectId === detailProject.id)}
@@ -430,7 +371,7 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
         currentUserId={currentUserId}
         searchPlaceholder={pf('searchPlaceholder')}
         searchAria={pf('searchAria')}
-        counts={{ open: openCount, overdue: overdueCount, doneThisWeek }}
+        entity="projects"
         onCreateTeam={can['team.create'] ? newTeam : undefined}
       />
 
@@ -449,11 +390,11 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
         canCreateProject={can['project.create']}
         createDeniedReason={hints.deniedReason('project.create')}
         onNewProject={() => newProject()}
-        onStartSelect={statsTasks.length > 0 && !selectMode ? () => setSelectMode(true) : undefined}
+        onStartSelect={visibleTasks.length > 0 && !selectMode ? () => setSelectMode(true) : undefined}
       />
 
       {showSearch && (
-        <ProjectsSearchBar sort={sort} onSortChange={(s) => updatePrefs({ sort: s })} mineOnly={mineOnly} onMineOnlyChange={setMineOnly} />
+        <ProjectsSearchBar sort={sort} onSortChange={(s) => updatePrefs({ sort: s })} />
       )}
       {view === 'list' && manyProjects && (
         <p className="text-xs text-[rgb(var(--color-text-muted))]">{pf('manyProjectsHint', { count: PORTFOLIO_CARD_THRESHOLD })}</p>
@@ -480,34 +421,12 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
         </div>
       ) : view === 'timeline' ? (
         <TeamProjectsTimeline
-          projects={activeProjects}
+          projects={shownProjects}
           tasks={visibleTasks}
           members={members}
           groupBy={timelineGroupBy}
           milestones={milestones}
           onOpenTask={(task) => setTaskModal({ mode: 'edit', task })}
-          selectable={selectMode}
-          selectedIds={selectedIds}
-          onToggleSelect={toggleSelect}
-        />
-      ) : view === 'kanban' ? (
-        <TeamProjectsKanban
-          projects={activeProjects}
-          tasks={visibleTasks}
-          members={members}
-          onSetAssignees={actions.setAssigneesWithUndo}
-          onOpenTask={(task) => setTaskModal({ mode: 'edit', task })}
-          canAssign={canAssign}
-          onAddToColumn={({ memberId, status }) =>
-            memberId
-              ? setAssignSheetFor(memberId)
-              // Colonne « Non assignées » ou colonne de statut : droit au modal,
-              // avec le statut de la colonne et SANS deviner le projet.
-              : createWithoutProjectContext({ assigneeIds: [], status })
-          }
-          groupBy={kanbanGroupBy}
-          onSetStatus={actions.setStatus}
-          assigneeFilter={assigneeFilter}
           selectable={selectMode}
           selectedIds={selectedIds}
           onToggleSelect={toggleSelect}

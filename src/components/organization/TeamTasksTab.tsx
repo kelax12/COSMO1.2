@@ -9,7 +9,7 @@ import {
 import { useTeamCategories, descendantIdSet, categoryPath, formatPath } from '@/modules/team-categories';
 import { useOrgSettings, useProjectStatuses } from '@/modules/org-config';
 import { showUndoToast } from '@/lib/undo-toast';
-import { filterByStatus, STATUS_META, PRIORITY_META, priorityLabelOf, taskDisplayStatus } from './team-projects.helpers';
+import { filterByStatus, useProjectsUiPrefs, STATUS_META, PRIORITY_META, priorityLabelOf, taskDisplayStatus } from './team-projects.helpers';
 import TeamTaskModal from './TeamTaskModal';
 import AssignMembersDialog from './AssignMembersDialog';
 import AssignEventDialog from './AssignEventDialog';
@@ -25,6 +25,7 @@ import type { TeamTasksRowHandlers } from './TeamTasksTableRow';
 import { usePermissionHints } from './permission-hints';
 import { useTeamTasksBulk } from './use-team-tasks-bulk';
 import { TeamTasksBulkLayer } from './team-tasks-bulk.lazy';
+import { TeamProjectsKanban } from './team-projects.lazy';
 import {
   useOrgTaskFilters, hasActiveTaskFilter, matchesScope, matchesAttributes,
 } from './task-filters';
@@ -155,7 +156,12 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
 
   const [sortField, setSortField] = useState<SortField>('priority');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
-  const [taskModal, setTaskModal] = useState<{ mode: 'create' | 'edit'; task?: TeamTask } | null>(null);
+  const [taskModal, setTaskModal] = useState<{
+    mode: 'create' | 'edit'; task?: TeamTask; assigneeIds?: string[]; status?: TeamTaskStatus; fromKanban?: boolean;
+  } | null>(null);
+  // Vue Table / Tableau (kanban venu de l'onglet Projets le 2026-09-27).
+  const { prefs: uiPrefs, updatePrefs: updateUiPrefs } = useProjectsUiPrefs(orgId);
+  const { tasksView, kanbanGroupBy } = uiPrefs;
   // Actions dédiées du menu ⋯ (remplace « Marquer comme terminée », cf. photo1) :
   // cette table n'a ni colonne assignés ni raccourci agenda, contrairement à la
   // vue perso — ces deux items comblent le manque sans dupliquer le modal.
@@ -383,6 +389,10 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
           group={filters.group}
           onGroupChange={(group) => setFilters({ group })}
           onExport={sortedTasks.length > 0 ? () => void exportCsv() : undefined}
+          view={tasksView}
+          onViewChange={(v) => updateUiPrefs({ tasksView: v })}
+          kanbanGroupBy={kanbanGroupBy}
+          onKanbanGroupByChange={(g) => updateUiPrefs({ kanbanGroupBy: g })}
         />
       </div>
 
@@ -414,6 +424,26 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
         <p className="text-sm text-[rgb(var(--color-text-muted))] py-10 text-center">
           {t('projects.tasksTabEmpty')}
         </p>
+      ) : tasksView === 'kanban' ? (
+        <Suspense fallback={<TeamTasksSkeleton label={t('projects.tasksTabLoading')} />}>
+          <TeamProjectsKanban
+            projects={projects}
+            tasks={sortedTasks}
+            members={members}
+            onSetAssignees={setAssignees}
+            onOpenTask={(task) => setTaskModal({ mode: 'edit', task })}
+            canAssign={canAssign}
+            // Le projet n'est jamais deviné : celui du filtre, sinon la fiche le demande.
+            onAddToColumn={({ memberId, status }) =>
+              setTaskModal({ mode: 'create', assigneeIds: memberId ? [memberId] : [], status, fromKanban: true })}
+            groupBy={kanbanGroupBy}
+            onSetStatus={setStatus}
+            assigneeFilter={filters.assignee}
+            selectable={bulk.selectMode}
+            selectedIds={bulk.selectedIds}
+            onToggleSelect={bulk.toggleSelect}
+          />
+        </Suspense>
       ) : (
         <TeamTasksTable
           lines={lines}
@@ -441,6 +471,9 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
           projects={projects}
           members={members}
           defaultProjectId={projectFilter ?? undefined}
+          defaultAssigneeIds={taskModal.assigneeIds}
+          defaultStatus={taskModal.status}
+          requireProjectChoice={taskModal.mode === 'create' && !projectFilter && !!taskModal.fromKanban}
           onCreate={handleCreate}
           onUpdate={handleUpdate}
           onDelete={removeWithUndo}

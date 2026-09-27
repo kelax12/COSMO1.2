@@ -19,6 +19,8 @@ interface FilterPresetsProps {
   currentUserId?: string;
   /** Le preset « Bloquées » n'a de sens que là où les tâches se filtrent une à une (onglet Tâches). */
   showBlocked?: boolean;
+  /** Onglet Projets : les préréglages y trient des projets (« Mes projets »). */
+  entity?: 'tasks' | 'projects';
 }
 
 /** État nu : ce que chaque preset patch au-dessus. Le regroupement (`group`) est un
@@ -78,7 +80,7 @@ const PRESETS: Preset[] = [
  * actif le désactive (retour à l'état nu) ; cliquer un autre preset REMPLACE
  * les filtres de portée/attributs, pour donner un départ net à chaque fois.
  */
-const FilterPresets = ({ filters, setFilters, defaultStatus, currentUserId, showBlocked = true }: FilterPresetsProps) => {
+const FilterPresets = ({ filters, setFilters, defaultStatus, currentUserId, showBlocked = true, entity = 'tasks' }: FilterPresetsProps) => {
   const { t } = useT('org');
   const presets = showBlocked ? PRESETS : PRESETS.filter((p) => p.key !== 'blocked');
 
@@ -118,7 +120,9 @@ const FilterPresets = ({ filters, setFilters, defaultStatus, currentUserId, show
                 : 'border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]'
             }`}
           >
-            {t(preset.labelKey as Parameters<typeof t>[0])}
+            {entity === 'projects' && preset.key === 'mine'
+              ? t('filterPresets.mineProjects')
+              : t(preset.labelKey as Parameters<typeof t>[0])}
           </button>
         );
       })}
