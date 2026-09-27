@@ -31,6 +31,7 @@ import {
   ListTodo,
   CalendarDays,
   TrendingUp,
+  AlarmClock,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { type OrgTeam } from '@/modules/org-teams';
@@ -50,7 +51,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
-import { workloadTone, type MemberWorkload } from './team-stats.helpers';
+import { type MemberWorkload } from './team-stats.helpers';
 import { formatDuration } from './team-projects.helpers';
 import MemberAvatar from './MemberAvatar';
 import { type MemberTab } from './member-sheet.helpers';
@@ -339,27 +340,22 @@ export const NodeCard = ({ node, members, currentUserId, isAdmin, onStartDrag, o
                     })
               }
             >
-              <span className="w-10 h-1 rounded-full bg-[rgb(var(--color-hover))] overflow-hidden shrink-0">
+              <span
+                className="inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-caption tabular-nums font-semibold leading-none bg-[rgb(var(--color-accent)/0.12)] text-[rgb(var(--color-accent))]"
+                aria-label={tpa('pyramid.workloadOpenAria', myWorkload.open, { count: myWorkload.open })}
+              >
+                <ListTodo className="w-3 h-3" aria-hidden="true" />
+                {myWorkload.open}
+              </span>
+              {myWorkload.overdue > 0 && (
                 <span
-                  className={`block h-full rounded-full ${
-                    workloadTone(myWorkload.loadRatio) === 'over'
-                      ? 'bg-red-500'
-                      : workloadTone(myWorkload.loadRatio) === 'under'
-                        ? 'bg-[rgb(var(--color-text-muted))]'
-                        : 'bg-[rgb(var(--color-accent))]'
-                  }`}
-                  style={{ width: `${Math.min(100, Math.round(myWorkload.loadRatio * 66))}%` }}
-                />
-              </span>
-              {/* Format x/y : x = tâches ouvertes non en retard, y = en
-                  retard. Le "/" est un séparateur littéral, pas un symbole
-                  de division. */}
-              <span className="text-caption tabular-nums" style={{ color: 'rgb(var(--color-text-muted))' }}>
-                {myWorkload.open - myWorkload.overdue}
-                <span className={myWorkload.overdue > 0 ? 'font-bold text-red-500' : ''}>
-                  /{myWorkload.overdue}
+                  className="inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-caption tabular-nums font-semibold leading-none bg-red-500/10 text-red-600 dark:text-red-400"
+                  aria-label={tpa('pyramid.workloadOverdueAria', myWorkload.overdue, { count: myWorkload.overdue })}
+                >
+                  <AlarmClock className="w-3 h-3" aria-hidden="true" />
+                  {myWorkload.overdue}
                 </span>
-              </span>
+              )}
             </span>
           )}
           <p
