@@ -6,7 +6,7 @@ import {
 const BASE: OrgTaskFilters = {
   team: '', assignee: null, project: null, status: 'open', q: '',
   priorities: [], dueFrom: '', dueTo: '', noDue: false, category: null, label: null,
-  group: 'none', blocked: false,
+  group: 'priority', blocked: false,
 };
 
 describe('task-filters — filtre « bloquée » (fBlocked)', () => {

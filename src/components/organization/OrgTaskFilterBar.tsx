@@ -10,7 +10,7 @@
 // Composant présentationnel : il affiche et modifie `filters`, il ne filtre rien.
 // ═══════════════════════════════════════════════════════════════════
 
-import { Search, UserRound, Users, X, AlarmClock, CircleDashed, CheckCircle2 } from 'lucide-react';
+import { Search, UserRound, Users, X, CheckCircle2 } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -26,7 +26,13 @@ import { useT } from '@/i18n/useT';
 import MemberAvatar from './MemberAvatar';
 import TeamColorDot from './TeamColorDot';
 import type { TaskStatusFilter } from './team-projects.helpers';
-import { TASK_STATUS_FILTERS, CLEARED_ATTRIBUTE_FILTERS, type OrgTaskFilters } from './task-filters';
+import { CLEARED_ATTRIBUTE_FILTERS, type OrgTaskFilters } from './task-filters';
+
+// « Ouvertes » est le filtre CONTRAIRE de « Terminées cette semaine » (retiré,
+// 2026-09-27) : sans pastille active, l'onglet montre déjà les tâches
+// ouvertes (défaut de l'onglet). « En retard » reste accessible, comme
+// préréglage sous la barre (`FilterPresets`), pour ne pas le montrer deux fois.
+const VISIBLE_STATUS_FILTERS: readonly Extract<TaskStatusFilter, 'doneThisWeek' | 'all'>[] = ['doneThisWeek', 'all'];
 
 interface OrgTaskFilterBarProps {
   filters: OrgTaskFilters;
@@ -53,9 +59,7 @@ const segBase = 'h-8 px-2.5 rounded-md text-sm font-medium transition-colors foc
 const segOn = 'bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-primary))]';
 const segOff = 'text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-secondary))]';
 
-const STATUS_ICON: Record<Exclude<TaskStatusFilter, 'all'>, typeof CircleDashed> = {
-  open: CircleDashed,
-  overdue: AlarmClock,
+const STATUS_ICON: Record<Extract<TaskStatusFilter, 'doneThisWeek'>, typeof CheckCircle2> = {
   doneThisWeek: CheckCircle2,
 };
 
@@ -214,7 +218,7 @@ const OrgTaskFilterBar = ({
         {/* État : onglet Tâches seulement. Côté Projets, « En retard » passe
             par les préréglages. */}
         {entity === 'tasks' && <div className="inline-flex items-center gap-1.5 flex-wrap" role="group" aria-label={t('filters.statusAria')}>
-          {TASK_STATUS_FILTERS.map((f) => {
+          {VISIBLE_STATUS_FILTERS.map((f) => {
             const Icon = f === 'all' ? null : STATUS_ICON[f];
             const count = counts?.[f];
             const active = status === f;
@@ -229,9 +233,7 @@ const OrgTaskFilterBar = ({
                 className={`inline-flex items-center gap-1.5 h-8 px-2.5 rounded-full text-xs font-semibold border transition-colors ${
                   active
                     ? 'bg-[rgb(var(--color-accent-solid))] text-[rgb(var(--color-accent-solid-foreground))] border-[rgb(var(--color-accent-solid))]'
-                    : f === 'overdue' && (count ?? 0) > 0
-                      ? 'border-red-500/30 text-red-500 hover:bg-red-500/10'
-                      : 'bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] border-[rgb(var(--color-border))]'
+                    : 'bg-[rgb(var(--color-surface))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] border-[rgb(var(--color-border))]'
                 }`}
               >
                 {Icon && <Icon size={12} aria-hidden="true" />}

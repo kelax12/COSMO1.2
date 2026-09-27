@@ -9,16 +9,15 @@ import {
 import { useTeamCategories, descendantIdSet, categoryPath, formatPath } from '@/modules/team-categories';
 import { useOrgSettings, useProjectStatuses } from '@/modules/org-config';
 import { showUndoToast } from '@/lib/undo-toast';
-import { filterByStatus, useProjectsUiPrefs, STATUS_META, PRIORITY_META, priorityLabelOf, taskDisplayStatus } from './team-projects.helpers';
+import { filterByStatus, useProjectsUiPrefs, STATUS_META, STATUS_ORDER, PRIORITY_META, priorityLabelOf, taskDisplayStatus } from './team-projects.helpers';
 import TeamTaskModal from './TeamTaskModal';
 import AssignMembersDialog from './AssignMembersDialog';
 import AssignEventDialog from './AssignEventDialog';
 import { TeamTasksSkeleton } from './OrgLoadingSkeletons';
-import TeamTasksToolbar, { type SortField } from './TeamTasksToolbar';
+import TeamTasksToolbar, { TeamTasksSelectRow } from './TeamTasksToolbar';
 import TruncatedDataNotice from './TruncatedDataNotice';
 import TeamTasksProjectChips from './TeamTasksProjectChips';
 import OrgTaskFilterBar from './OrgTaskFilterBar';
-import TaskAttributeFilters from './TaskAttributeFilters';
 import TeamTasksTable from './TeamTasksTable';
 import TeamTasksViewControls from './TeamTasksViewControls';
 import type { TeamTasksRowHandlers } from './TeamTasksTableRow';
@@ -27,7 +26,8 @@ import { useTeamTasksBulk } from './use-team-tasks-bulk';
 import { TeamTasksBulkLayer } from './team-tasks-bulk.lazy';
 import { TeamProjectsKanban } from './team-projects.lazy';
 import {
-  useOrgTaskFilters, hasActiveTaskFilter, matchesScope, matchesAttributes,
+  useOrgTaskFilters, hasActiveTaskFilter, matchesScope, matchesAttributes, isGroupableSort,
+  type TaskSortCriterion, type DeadlineBucket,
 } from './task-filters';
 import { useRememberedTaskFilters } from './remembered-task-filters';
 import {
@@ -65,10 +65,11 @@ const normalize = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLo
  *   - la colonne « Catégorie » devient « Projet » — c'est la même position
  *     dans la ligne, mais la donnée qui la remplit n'est plus au même endroit
  *     du modèle (task.category → task.projectId).
- * Priorité, plage d'échéance, catégorie et étiquette se filtrent sous la barre
- * commune (`TaskAttributeFilters`, audit du 2026-09-24), dans l'URL comme le
- * reste. Le tableau (`TeamTasksTable`) est virtualisé, ses colonnes se
- * choisissent, ses lignes se regroupent et s'exportent.
+ * Tri et regroupement du tableau ne font plus qu'un menu (2026-09-27) : le
+ * critère choisi (`filters.group`, dans l'URL) trie TOUJOURS la liste, et les
+ * cinq critères groupables y ajoutent une ligne d'en-tête. Le tableau
+ * (`TeamTasksTable`) est virtualisé, ses colonnes se choisissent et
+ * s'exportent.
  */
 const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: TeamTasksTabProps) => {
   const { can, canAssign } = useMyOrgPermissions(orgId);
@@ -154,7 +155,9 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
     return self ? [self, ...others] : others;
   }, [members, user, isAdmin]);
 
-  const [sortField, setSortField] = useState<SortField>('priority');
+  // Tri ET regroupement (UN critère, fusion du 2026-09-27) : `filters.group`,
+  // dans l'URL. Seul le sens du tri reste un état local, comme avant.
+  const sortField = filters.group;
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [taskModal, setTaskModal] = useState<{
     mode: 'create' | 'edit'; task?: TeamTask; assigneeIds?: string[]; status?: TeamTaskStatus; fromKanban?: boolean;
@@ -204,40 +207,62 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
   }, [tasks, projectById, projectFilter, statusFilter, searchTerm, filters, categoryIds, labelTaskIds, blockedTaskIds]);
 
   const sortedTasks = useMemo(() => {
-    const withValue = (task: TeamTask): string | number => {
+    // Clé primaire = le critère choisi ; clé secondaire = l'échéance (l'ordre
+    // À L'INTÉRIEUR d'un groupe), sauf si le critère EST déjà l'échéance, où
+    // la priorité sert de départage — même logique qu'avant la fusion, qui
+    // triait par priorité par défaut.
+    const primary = (task: TeamTask): string | number => {
       switch (sortField) {
         case 'priority': return task.priority;
         case 'deadline': return task.deadline || '9999-99-99';
         case 'name': return normalize(task.name);
         case 'estimatedTime': return task.estimatedTime ?? 0;
         case 'project': return normalize(projectById.get(task.projectId)?.name ?? '');
+        case 'assignee': return normalize(memberById.get(task.assigneeIds[0] ?? '')?.displayName ?? '');
+        case 'status': return STATUS_ORDER.indexOf(task.status);
       }
     };
+    const secondary = (task: TeamTask): string | number =>
+      sortField === 'deadline' ? task.priority : (task.deadline || '9999-99-99');
     const sorted = [...visibleTasks].sort((a, b) => {
-      const va = withValue(a);
-      const vb = withValue(b);
-      if (va < vb) return -1;
-      if (va > vb) return 1;
+      const pa = primary(a);
+      const pb = primary(b);
+      if (pa < pb) return -1;
+      if (pa > pb) return 1;
+      const sa = secondary(a);
+      const sb = secondary(b);
+      if (sa < sb) return -1;
+      if (sa > sb) return 1;
       return 0;
     });
     return sortDirection === 'asc' ? sorted : sorted.reverse();
-  }, [visibleTasks, sortField, sortDirection, projectById]);
+  }, [visibleTasks, sortField, sortDirection, projectById, memberById]);
 
   const bulk = useTeamTasksBulk(orgId, sortedTasks);
 
   // Regroupement : l'ordre du tri vaut À L'INTÉRIEUR de chaque groupe.
+  const grouped = isGroupableSort(filters.group);
   const lines = useMemo(() => {
     const nameOf = (key: string) =>
       filters.group === 'project' ? projectById.get(key)?.name ?? ''
         : filters.group === 'assignee' ? memberById.get(key)?.displayName ?? '' : key;
-    return flattenGroups(groupTasks(sortedTasks, filters.group, nameOf), filters.group !== 'none', collapsedGroups);
-  }, [sortedTasks, filters.group, projectById, memberById, collapsedGroups]);
+    return flattenGroups(groupTasks(sortedTasks, filters.group, nameOf), grouped, collapsedGroups);
+  }, [sortedTasks, filters.group, grouped, projectById, memberById, collapsedGroups]);
+
+  const deadlineGroupLabel: Record<DeadlineBucket, string> = {
+    overdue: t('projects.deadlineGroupOverdue'),
+    today: t('projects.deadlineGroupToday'),
+    thisWeek: t('projects.deadlineGroupThisWeek'),
+    later: t('projects.deadlineGroupLater'),
+    noDue: t('projects.deadlineGroupNoDue'),
+  };
 
   const groupLabel = (key: string): { label: string; dot?: string } => {
     switch (filters.group) {
       case 'project': return { label: projectById.get(key)?.name ?? '—' };
       case 'status': return { label: t(STATUS_META[key as TeamTaskStatus].labelKey as Parameters<typeof t>[0]), dot: STATUS_META[key as TeamTaskStatus].dot };
       case 'priority': return { label: priorityLabelOf(Number(key)), dot: PRIORITY_META[Number(key)]?.dot };
+      case 'deadline': return { label: deadlineGroupLabel[key as DeadlineBucket] ?? key };
       case 'assignee':
         if (key === UNASSIGNED_GROUP) return { label: pf.t('taskTable.groupUnassigned') };
         return { label: key === (currentUserId ?? user?.id) ? pf.t('taskTable.you') : memberById.get(key)?.displayName ?? '—' };
@@ -273,16 +298,16 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
     downloadCSV(pf.t('taskTable.exportFile'), headers, rows);
   };
 
-  const handleSort = (field: SortField) => {
+  const handleSort = (field: TaskSortCriterion) => {
     if (field === sortField) {
       setSortDirection((d) => (d === 'asc' ? 'desc' : 'asc'));
     } else {
-      setSortField(field);
+      setFilters({ group: field });
       setSortDirection('asc');
     }
   };
 
-  const sortIndicator = (field: SortField) =>
+  const sortIndicator = (field: TaskSortCriterion) =>
     field === sortField ? (sortDirection === 'asc' ? ' ↑' : ' ↓') : '';
 
   // Priorité non choisie : celle que l'entreprise a réglée (mig. 195), pas P3 en dur.
@@ -363,22 +388,14 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
         searchAria={t('projects.tasksTabSearchAria')}
       />
 
-      <TaskAttributeFilters orgId={orgId} filters={filters} setFilters={setFilters} />
-
       <TeamTasksToolbar
         sortField={sortField}
-        onSortField={setSortField}
+        onSortField={(group) => setFilters({ group })}
         sortDirection={sortDirection}
         onToggleSortDirection={() => setSortDirection((d) => (d === 'asc' ? 'desc' : 'asc'))}
         canCreate={projects.length > 0 && can['task.create']}
         createDeniedReason={projects.length === 0 ? t('projects.tasksTabNoProject') : hints.deniedReason('task.create')}
-        onStartSelect={sortedTasks.length > 0 && !bulk.selectMode ? () => bulk.setSelectMode(true) : undefined}
         onCreate={() => setTaskModal({ mode: 'create' })}
-        // `!isLoading` : « 0 sur 0 affichées » est un chiffre, donc une
-        // affirmation. Tant que rien n'est arrivé, on n'en fait aucune.
-        shownLabel={hasActiveFilter && !isLoading
-          ? tp('projects.tasksTabShown', sortedTasks.length, { total: tasks.length })
-          : null}
       />
 
       <div className="flex items-center justify-between gap-1.5 flex-wrap -mt-2">
@@ -386,8 +403,6 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
         <TeamTasksViewControls
           columns={columns}
           onColumnsChange={setColumns}
-          group={filters.group}
-          onGroupChange={(group) => setFilters({ group })}
           onExport={sortedTasks.length > 0 ? () => void exportCsv() : undefined}
           view={tasksView}
           onViewChange={(v) => updateUiPrefs({ tasksView: v })}
@@ -395,6 +410,15 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
           onKanbanGroupByChange={(g) => updateUiPrefs({ kanbanGroupBy: g })}
         />
       </div>
+
+      <TeamTasksSelectRow
+        onStartSelect={sortedTasks.length > 0 && !bulk.selectMode ? () => bulk.setSelectMode(true) : undefined}
+        // `!isLoading` : « 0 sur 0 affichées » est un chiffre, donc une
+        // affirmation. Tant que rien n'est arrivé, on n'en fait aucune.
+        shownLabel={hasActiveFilter && !isLoading
+          ? tp('projects.tasksTabShown', sortedTasks.length, { total: tasks.length })
+          : null}
+      />
 
       {!isLoading && truncated && (
         <div className="space-y-2">

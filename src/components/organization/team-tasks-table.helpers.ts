@@ -5,8 +5,11 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import type { TeamTask } from '@/modules/team-projects';
-import type { TaskGroupBy } from './task-filters';
+import { isGroupableSort, deadlineBucketOf, DEADLINE_BUCKETS, type TaskSortCriterion } from './task-filters';
 import { STATUS_ORDER } from './team-projects.helpers';
+
+/** Date locale du jour, convention en-CA du projet (`YYYY-MM-DD`). */
+const todayIsoDefault = (): string => new Date().toLocaleDateString('en-CA');
 
 /** Colonnes qu'on peut masquer. Nom, case, pastille et actions restent toujours. */
 export type TaskColumnId = 'project' | 'status' | 'assignees' | 'priority' | 'start' | 'deadline' | 'duration' | 'category';
@@ -49,21 +52,24 @@ export const UNASSIGNED_GROUP = '__none__';
 
 /**
  * Découpe une liste DÉJÀ triée en groupes, sans changer l'ordre interne.
+ * `by` qui n'est pas dans `GROUPABLE_SORT_CRITERIA` (nom, durée) rend un seul
+ * groupe : liste plate, comme l'ancien `'none'`.
  *
  * Par assigné, une tâche à plusieurs personnes apparaît sous CHACUNE : c'est
  * la question que pose ce regroupement (« qu'a chacun sur les bras ? »). Les
  * autres regroupements sont des partitions.
  *
  * Ordre des groupes : celui du flux pour les statuts, P1→P5 pour les
- * priorités, `orderOf` (le nom) pour projets et personnes, « personne » en
- * dernier.
+ * priorités, en retard→sans date pour l'échéance, `orderOf` (le nom) pour
+ * projets et personnes, « personne » en dernier.
  */
 export function groupTasks(
   tasks: readonly TeamTask[],
-  by: TaskGroupBy,
+  by: TaskSortCriterion,
   orderOf: (key: string) => string = (k) => k,
+  todayIso: string = todayIsoDefault(),
 ): TaskGroup[] {
-  if (by === 'none') return [{ key: 'all', tasks: [...tasks] }];
+  if (!isGroupableSort(by)) return [{ key: 'all', tasks: [...tasks] }];
   const groups = new Map<string, TeamTask[]>();
   const push = (key: string, task: TeamTask) => {
     const list = groups.get(key);
@@ -74,12 +80,14 @@ export function groupTasks(
     if (by === 'project') push(task.projectId, task);
     else if (by === 'status') push(task.status, task);
     else if (by === 'priority') push(String(task.priority), task);
+    else if (by === 'deadline') push(deadlineBucketOf(task.deadline, todayIso), task);
     else if (task.assigneeIds.length === 0) push(UNASSIGNED_GROUP, task);
     else for (const id of task.assigneeIds) push(id, task);
   }
   const keys = [...groups.keys()];
   if (by === 'status') keys.sort((a, b) => STATUS_ORDER.indexOf(a as TeamTask['status']) - STATUS_ORDER.indexOf(b as TeamTask['status']));
   else if (by === 'priority') keys.sort((a, b) => Number(a) - Number(b));
+  else if (by === 'deadline') keys.sort((a, b) => DEADLINE_BUCKETS.indexOf(a as typeof DEADLINE_BUCKETS[number]) - DEADLINE_BUCKETS.indexOf(b as typeof DEADLINE_BUCKETS[number]));
   else {
     keys.sort((a, b) => {
       if (a === UNASSIGNED_GROUP) return 1;

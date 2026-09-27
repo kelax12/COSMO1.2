@@ -1,12 +1,13 @@
 // ═══════════════════════════════════════════════════════════════════
 // Presets de filtres (remplace les vues enregistrées, mig. 192 retirée du
-// front) — quatre raccourcis fixes + un lien copiable. L'écran se souvient
-// déjà de ses derniers filtres (`useRememberedTaskFilters`) : ce qui manquait
-// n'était pas la mémoire, c'était un départ rapide et un partage en un clic.
+// front) — quatre raccourcis fixes. L'écran se souvient déjà de ses derniers
+// filtres (`useRememberedTaskFilters`) : ce qui manquait n'était pas la
+// mémoire, c'était un départ rapide.
+//
+// ❌ Le lien copiable a été retiré le 2026-09-27 (redondant avec le partage
+// d'URL natif du navigateur, et jamais le premier geste attendu ici).
 // ═══════════════════════════════════════════════════════════════════
 
-import { Link as LinkIcon } from 'lucide-react';
-import { toast } from '@/lib/toast';
 import { useT } from '@/i18n/useT';
 import { todayStr } from '@/lib/date-presets';
 import type { TaskStatusFilter } from './team-projects.helpers';
@@ -76,16 +77,14 @@ const PRESETS: Preset[] = [
 ];
 
 /**
- * Rangée de presets fixes + copie du lien courant. Cliquer un preset déjà
- * actif le désactive (retour à l'état nu) ; cliquer un autre preset REMPLACE
- * les filtres de portée/attributs, pour donner un départ net à chaque fois.
- *
- * Côté Projets (`entity="projects"`), le preset « Mes tâches » est retiré :
- * « Moi », dans la barre de filtres juste au-dessus, fait déjà exactement le
- * même filtre pour les projets (maquette validée du 2026-09-27).
+ * Rangée de presets fixes. Cliquer un preset déjà actif le désactive (retour
+ * à l'état nu) ; cliquer un autre preset REMPLACE les filtres de
+ * portée/attributs, pour donner un départ net à chaque fois.
  */
 const FilterPresets = ({ filters, setFilters, defaultStatus, currentUserId, showBlocked = true, entity = 'tasks' }: FilterPresetsProps) => {
   const { t } = useT('org');
+  // Côté Projets, « Moi » (dans la barre de filtres) fait déjà le même filtre
+  // que « Mes projets » : le doublon est retiré (maquette du 2026-09-27).
   const presets = (showBlocked ? PRESETS : PRESETS.filter((p) => p.key !== 'blocked'))
     .filter((p) => entity !== 'projects' || p.key !== 'mine');
 
@@ -96,15 +95,6 @@ const FilterPresets = ({ filters, setFilters, defaultStatus, currentUserId, show
       return;
     }
     setFilters(preset.apply(base, currentUserId));
-  };
-
-  const copyLink = async () => {
-    try {
-      await navigator.clipboard.writeText(window.location.href);
-      toast.success(t('filterPresets.linkCopied'));
-    } catch {
-      toast.error(t('filterPresets.linkCopyFailed'));
-    }
   };
 
   return (
@@ -129,16 +119,6 @@ const FilterPresets = ({ filters, setFilters, defaultStatus, currentUserId, show
           </button>
         );
       })}
-      {entity !== 'projects' && (
-        <button
-          type="button"
-          onClick={() => void copyLink()}
-          className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg text-sm font-medium border border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]/60"
-        >
-          <LinkIcon size={14} aria-hidden="true" />
-          {t('filterPresets.copyLink')}
-        </button>
-      )}
     </div>
   );
 };
