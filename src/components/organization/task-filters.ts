@@ -43,14 +43,43 @@ export interface OrgTaskFilters {
   category: string | null;
   /** Étiquette, ou null. */
   label: string | null;
-  /** Regroupement du tableau. */
-  group: TaskGroupBy;
+  /** Tri ET regroupement du tableau : UN seul critère (fusion du 2026-09-27,
+   *  cf. `GROUPABLE_SORT_CRITERIA`). */
+  group: TaskSortCriterion;
   /** Seulement les tâches bloquées par une dépendance non terminée (onglet Tâches). */
   blocked: boolean;
 }
 
-export type TaskGroupBy = 'none' | 'project' | 'status' | 'assignee' | 'priority';
-export const TASK_GROUP_BYS: readonly TaskGroupBy[] = ['none', 'project', 'status', 'assignee', 'priority'];
+/**
+ * Le tableau ne connaît plus deux menus (« Trier » et « Regrouper ») : un
+ * seul critère fait les deux. Les cinq premiers affichent une ligne d'en-tête
+ * de groupe dans la liste (`GROUPABLE_SORT_CRITERIA`) ; nom et durée restent
+ * une liste plate — grouper par nom ou par durée n'apporte rien.
+ */
+export type TaskSortCriterion = 'priority' | 'deadline' | 'project' | 'assignee' | 'status' | 'name' | 'estimatedTime';
+export const TASK_SORT_CRITERIA: readonly TaskSortCriterion[] = ['priority', 'deadline', 'project', 'assignee', 'status', 'name', 'estimatedTime'];
+export const GROUPABLE_SORT_CRITERIA: readonly TaskSortCriterion[] = ['priority', 'deadline', 'project', 'assignee', 'status'];
+export const isGroupableSort = (c: TaskSortCriterion): boolean => (GROUPABLE_SORT_CRITERIA as readonly string[]).includes(c);
+
+/** Tranches d'échéance du regroupement « Par échéance ». Mêmes 6 jours que
+ *  le préréglage « Cette semaine » (`FilterPresets.in6Days`). */
+export const DEADLINE_BUCKETS = ['overdue', 'today', 'thisWeek', 'later', 'noDue'] as const;
+export type DeadlineBucket = typeof DEADLINE_BUCKETS[number];
+
+const parseLocalIso = (iso: string): Date => {
+  const [y, m, d] = iso.split('-').map(Number);
+  return new Date(y, m - 1, d);
+};
+
+/** Bucket d'une échéance par rapport à `todayIso` (date locale, 'YYYY-MM-DD'). */
+export function deadlineBucketOf(deadline: string | undefined, todayIso: string): DeadlineBucket {
+  if (!deadline) return 'noDue';
+  const diffDays = Math.round((parseLocalIso(deadline).getTime() - parseLocalIso(todayIso).getTime()) / 86400000);
+  if (diffDays < 0) return 'overdue';
+  if (diffDays === 0) return 'today';
+  if (diffDays <= 6) return 'thisWeek';
+  return 'later';
+}
 
 export const TASK_FILTER_PARAMS = {
   team: 'fTeam',
@@ -96,9 +125,12 @@ export function readTaskFilters(params: URLSearchParams, defaultStatus: TaskStat
     noDue: params.get(TASK_FILTER_PARAMS.noDue) === '1',
     category: idOrNull(params.get(TASK_FILTER_PARAMS.category)),
     label: idOrNull(params.get(TASK_FILTER_PARAMS.label)),
-    group: (TASK_GROUP_BYS as readonly string[]).includes(params.get(TASK_FILTER_PARAMS.group) ?? '')
-      ? (params.get(TASK_FILTER_PARAMS.group) as TaskGroupBy)
-      : 'none',
+    group: (TASK_SORT_CRITERIA as readonly string[]).includes(params.get(TASK_FILTER_PARAMS.group) ?? '')
+      ? (params.get(TASK_FILTER_PARAMS.group) as TaskSortCriterion)
+      // Défaut ET repli d'une ancienne valeur (l'ex-'none' du regroupement
+      // séparé, retiré le 2026-09-27) : « Par priorité » était déjà le tri
+      // par défaut, donc rien ne change pour qui n'avait jamais regroupé.
+      : 'priority',
     blocked: params.get(TASK_FILTER_PARAMS.blocked) === '1',
   };
 }
@@ -129,7 +161,7 @@ export function writeTaskFilters(
   set(TASK_FILTER_PARAMS.noDue, filters.noDue ? '1' : null);
   set(TASK_FILTER_PARAMS.category, filters.category);
   set(TASK_FILTER_PARAMS.label, filters.label);
-  set(TASK_FILTER_PARAMS.group, filters.group === 'none' ? null : filters.group);
+  set(TASK_FILTER_PARAMS.group, filters.group === 'priority' ? null : filters.group);
   set(TASK_FILTER_PARAMS.blocked, filters.blocked ? '1' : null);
   return next;
 }

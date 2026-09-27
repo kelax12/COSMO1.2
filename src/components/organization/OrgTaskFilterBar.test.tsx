@@ -22,7 +22,7 @@ vi.mock('@/lib/hooks/use-mobile', () => ({ useIsMobile: () => false }));
 
 const base: OrgTaskFilters = {
   team: '', assignee: null, project: null, status: 'all', q: '',
-  priorities: [], dueFrom: '', dueTo: '', noDue: false, category: null, label: null, group: 'none', blocked: false,
+  priorities: [], dueFrom: '', dueTo: '', noDue: false, category: null, label: null, group: 'priority', blocked: false,
 };
 
 const renderBar = (status: TaskStatusFilter) => {
@@ -52,7 +52,10 @@ describe('OrgTaskFilterBar — une seule grammaire de filtre', () => {
   });
 
   it('re-cliquer une pastille ACTIVE revient à « Tout »', () => {
-    const setFilters = renderBar('overdue');
+    // Ouvertes/En retard ne sont plus rendues ici (mig. UI 2026-09-27, En
+    // retard reste un préréglage) : la seule pastille non-« Tout » restante
+    // est « Terminées cette semaine ».
+    const setFilters = renderBar('doneThisWeek');
     const active = statusButtons().filter((b) => b.getAttribute('aria-pressed') === 'true');
     expect(active).toHaveLength(1);
     fireEvent.click(active[0]);
@@ -127,11 +130,11 @@ describe("task-filters — attributs de la tâche (audit 2026-09-24)", () => {
     expect(hasActiveTaskFilter({ ...base, priorities: [2] }, 'all')).toBe(true);
   });
 
-  it('une URL hostile ne fabrique ni priorité ni date ni regroupement', () => {
+  it('une URL hostile ne fabrique ni priorité ni date ni tri', () => {
     const f = readTaskFilters(new URLSearchParams('?fPrio=0,9,x,2&fDueFrom=hier&fGroup=drop'), 'all');
     expect(f.priorities).toEqual([2]);
     expect(f.dueFrom).toBe('');
-    expect(f.group).toBe('none');
+    expect(f.group).toBe('priority');
   });
 
   it('matchesAttributes : bornes incluses, sans échéance exclue d une plage', () => {

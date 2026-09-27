@@ -32,6 +32,24 @@ describe('groupTasks', () => {
   });
 });
 
+describe('groupTasks — échéance (fusion tri/regroupement du 2026-09-27)', () => {
+  it('range en retard / aujourd hui / cette semaine / plus tard / sans date, dans cet ordre', () => {
+    const groups = groupTasks([
+      task('later', { deadline: '2026-09-20' }),
+      task('overdue', { deadline: '2026-09-01' }),
+      task('none', { deadline: '' }),
+      task('today', { deadline: '2026-09-10' }),
+      task('week', { deadline: '2026-09-14' }),
+    ], 'deadline', undefined, '2026-09-10');
+    expect(groups.map((g) => g.key)).toEqual(['overdue', 'today', 'thisWeek', 'later', 'noDue']);
+  });
+
+  it('nom et durée restent une liste plate, comme l ancien « none »', () => {
+    expect(groupTasks([task('a'), task('b')], 'name').map((g) => g.key)).toEqual(['all']);
+    expect(groupTasks([task('a'), task('b')], 'estimatedTime').map((g) => g.key)).toEqual(['all']);
+  });
+});
+
 describe('colonnes, préférence locale', () => {
   beforeEach(() => localStorage.clear());
   it('une valeur corrompue rend les colonnes par défaut, une valeur inconnue est ignorée', () => {
