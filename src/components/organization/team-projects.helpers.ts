@@ -185,6 +185,9 @@ export interface ProjectsUiPrefs {
   showArchived: boolean;
   /** Axe des colonnes du kanban : charge par personne, ou flux par statut. */
   kanbanGroupBy: 'assignee' | 'status';
+  /** Vue de l'onglet Tâches : la table, ou le Tableau (kanban, venu de
+   *  l'onglet Projets le 2026-09-27). */
+  tasksView: 'table' | 'kanban';
   /** Axe des lignes du Planning : une ligne par projet, ou par personne. */
   timelineGroupBy: 'project' | 'assignee';
 }
@@ -199,6 +202,7 @@ const DEFAULT_PREFS: ProjectsUiPrefs = {
   // personne reste à un clic, mais elle répond à « qui fait quoi », pas à
   // « où en est-on » — et c'est la seconde question qu'un kanban doit servir.
   kanbanGroupBy: 'status',
+  tasksView: 'table',
   // Par défaut, PAR PROJET : c'est la lecture qui répond à « où en est ce
   // projet », la question la plus fréquente en ouvrant le Planning. « Par
   // personne » répond à « qui est chargé quand » et reste à un clic.

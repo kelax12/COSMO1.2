@@ -1,4 +1,4 @@
-import { SlidersHorizontal, Download, LayoutList } from 'lucide-react';
+import { SlidersHorizontal, Download, LayoutList, SquareKanban } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -18,12 +18,25 @@ interface TeamTasksViewControlsProps {
   onGroupChange: (group: TaskGroupBy) => void;
   /** Absent = rien à exporter (liste vide). */
   onExport?: () => void;
+  /** Table ou Tableau (kanban). */
+  view: 'table' | 'kanban';
+  onViewChange: (view: 'table' | 'kanban') => void;
+  /** Axe des colonnes du Tableau. */
+  kanbanGroupBy: 'assignee' | 'status';
+  onKanbanGroupByChange: (groupBy: 'assignee' | 'status') => void;
 }
+
+const segBase = 'inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]/60';
+const segOn = 'bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-primary))]';
+const segOff = 'text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-secondary))]';
+const segGroup = 'inline-flex rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-0.5 gap-0.5';
 
 const btn = 'inline-flex items-center gap-1.5 h-8 px-2.5 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] text-xs font-semibold text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]/60';
 
 /** Colonnes, regroupement et export du tableau des tâches (audit 2026-09-24). */
-const TeamTasksViewControls = ({ columns, onColumnsChange, group, onGroupChange, onExport }: TeamTasksViewControlsProps) => {
+const TeamTasksViewControls = ({
+  columns, onColumnsChange, group, onGroupChange, onExport, view, onViewChange, kanbanGroupBy, onKanbanGroupByChange,
+}: TeamTasksViewControlsProps) => {
   const { t } = useT('portfolio');
   const org = useT('org');
   const columnLabel: Record<TaskColumnId, string> = {
@@ -48,6 +61,27 @@ const TeamTasksViewControls = ({ columns, onColumnsChange, group, onGroupChange,
 
   return (
     <div className="inline-flex items-center gap-1.5 flex-wrap">
+      <div className={segGroup} role="group" aria-label={t('toolbar.viewLabel')}>
+        <button type="button" onClick={() => onViewChange('table')} aria-pressed={view === 'table'} className={`${segBase} ${view === 'table' ? segOn : segOff}`}>
+          <LayoutList size={13} aria-hidden="true" />
+          {t('toolbar.viewList')}
+        </button>
+        <button type="button" onClick={() => onViewChange('kanban')} aria-pressed={view === 'kanban'} className={`${segBase} ${view === 'kanban' ? segOn : segOff}`}>
+          <SquareKanban size={13} aria-hidden="true" />
+          {t('toolbar.viewKanban')}
+        </button>
+      </div>
+
+      {view === 'kanban' ? (
+        <div className={segGroup} role="group" aria-label={t('toolbar.columnsLabel')}>
+          <button type="button" onClick={() => onKanbanGroupByChange('status')} aria-pressed={kanbanGroupBy === 'status'} className={`${segBase} ${kanbanGroupBy === 'status' ? segOn : segOff}`}>
+            {t('toolbar.groupByStatus')}
+          </button>
+          <button type="button" onClick={() => onKanbanGroupByChange('assignee')} aria-pressed={kanbanGroupBy === 'assignee'} className={`${segBase} ${kanbanGroupBy === 'assignee' ? segOn : segOff}`}>
+            {t('toolbar.groupByAssignee')}
+          </button>
+        </div>
+      ) : (<>
       <DropdownMenu>
         <DropdownMenuTrigger aria-label={t('taskTable.groupAria')} className={btn}>
           <LayoutList size={13} aria-hidden="true" />
@@ -81,6 +115,7 @@ const TeamTasksViewControls = ({ columns, onColumnsChange, group, onGroupChange,
           ))}
         </DropdownMenuContent>
       </DropdownMenu>
+      </>)}
 
       <button type="button" onClick={onExport} disabled={!onExport} aria-label={t('taskTable.exportAria')} className={btn}>
         <Download size={13} aria-hidden="true" />

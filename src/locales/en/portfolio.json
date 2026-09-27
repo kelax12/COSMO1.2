@@ -201,6 +201,7 @@
     "chipSearch": "“{{query}}”",
     "filterAssignee": "Filter by assignee",
     "seeTasksOf": "See tasks from",
+    "seeProjectsOf": "See projects from",
     "everyone": "Everyone",
     "filterTeam": "Filter by team",
     "allTeams": "All teams",

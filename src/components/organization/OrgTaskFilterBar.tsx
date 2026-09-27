@@ -44,6 +44,9 @@ interface OrgTaskFilterBarProps {
   counts?: Partial<Record<TaskStatusFilter, number>>;
   /** « + Créer une équipe » au bas du menu d'équipe, si le droit existe. */
   onCreateTeam?: () => void;
+  /** Ce que la barre trie. `projects` : onglet Projets, sans pastilles d'état
+   *  (répartition Projets / Tâches du 2026-09-27). */
+  entity?: 'tasks' | 'projects';
 }
 
 const segBase = 'h-8 px-2.5 rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]/60';
@@ -58,7 +61,7 @@ const STATUS_ICON: Record<Exclude<TaskStatusFilter, 'all'>, typeof CircleDashed>
 
 const OrgTaskFilterBar = ({
   filters, setFilters, defaultStatus, members, teams, projects = [], currentUserId,
-  searchPlaceholder, searchAria, counts, onCreateTeam,
+  searchPlaceholder, searchAria, counts, onCreateTeam, entity = 'tasks',
 }: OrgTaskFilterBarProps) => {
   // Catalogue `portfolio`, chargé avec les deux seuls onglets qui montrent cette
   // barre (Tâches, Projets) : `org` est payé par toute visite de /entreprise.
@@ -152,7 +155,7 @@ const OrgTaskFilterBar = ({
               )}
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-56 max-h-72 overflow-y-auto">
-              <DropdownMenuLabel>{t('filters.seeTasksOf')}</DropdownMenuLabel>
+              <DropdownMenuLabel>{entity === 'projects' ? t('filters.seeProjectsOf') : t('filters.seeTasksOf')}</DropdownMenuLabel>
               <DropdownMenuItem onClick={() => setFilters({ assignee: null })}>
                 <span className="text-[rgb(var(--color-text-muted))]">{t('filters.everyone')}</span>
               </DropdownMenuItem>
@@ -208,8 +211,9 @@ const OrgTaskFilterBar = ({
           )}
         </div>
 
-        {/* État : même geste dans les deux onglets */}
-        <div className="inline-flex items-center gap-1.5 flex-wrap" role="group" aria-label={t('filters.statusAria')}>
+        {/* État : onglet Tâches seulement. Côté Projets, « En retard » passe
+            par les préréglages. */}
+        {entity === 'tasks' && <div className="inline-flex items-center gap-1.5 flex-wrap" role="group" aria-label={t('filters.statusAria')}>
           {TASK_STATUS_FILTERS.map((f) => {
             const Icon = f === 'all' ? null : STATUS_ICON[f];
             const count = counts?.[f];
@@ -236,7 +240,7 @@ const OrgTaskFilterBar = ({
               </button>
             );
           })}
-        </div>
+        </div>}
       </div>
 
       {chips.length > 0 && (
