@@ -500,6 +500,14 @@
     "emptyManager": "Aucune équipe. Créez-en une pour cloisonner des projets.",
     "empty": "Aucune équipe.",
     "deleteAria": "Supprimer l'équipe {{name}}",
+    "optionsAria": "Options de l'équipe {{name}}",
+    "menu": {
+      "edit": "Modifier (pastille et nom)",
+      "members": "Gérer les membres",
+      "assignProject": "Assigner un projet",
+      "assignTask": "Assigner une tâche",
+      "delete": "Supprimer l'équipe"
+    },
     "removeMemberAria": "Retirer {{member}} de l'équipe {{team}}",
     "addMemberAria": "Ajouter un membre à l'équipe {{team}}",
     "addTo": "Ajouter à {{name}}",
@@ -1233,7 +1241,22 @@
     "archivedProjects_other": "{{count}} projets archivés",
     "okrTitle": "OKR",
     "okrEmpty": "Aucun OKR rattaché à l'équipe.",
-    "okrProgressAria": "Avancement de {{title}}"
+    "okrProgressAria": "Avancement de {{title}}",
+    "showKrs": "Voir les résultats clés",
+    "hideKrs": "Masquer les résultats clés",
+    "krEmpty": "Aucun résultat clé.",
+    "loadTitle": "Charge de l'équipe",
+    "loadEmpty": "Aucune tâche ouverte dans les projets de l'équipe.",
+    "loadOverdue": "En retard",
+    "loadThisWeek": "Cette semaine",
+    "loadLater": "Plus tard",
+    "loadNoDate": "Sans date",
+    "loadUnassigned": "Non assignées",
+    "loadBarAria": "{{name}} : {{count}} tâches ouvertes",
+    "loadLateDays": "-{{count}} j",
+    "loadMore_one": "+{{count}} autre",
+    "loadMore_many": "+{{count}} d'autres",
+    "loadMore_other": "+{{count}} autres"
   },
   "waiting": {
     "title": "En attente de moi",
@@ -1366,7 +1389,9 @@
     "team": {
       "lead": "Responsable de l'équipe",
       "noLead": "Pas de responsable",
-      "leadHint": "Il gère les membres et les projets de l'équipe, et il est ajouté aux membres."
+      "leadHint": "La couronne désigne le responsable : il gère les membres et les projets de l'équipe.",
+      "makeLead": "Nommer {{name}} responsable",
+      "unsetLead": "Retirer {{name}} du rôle de responsable"
     },
     "project": {
       "audienceOrg_one": "Visible par toute l'entreprise, soit {{count}} personne.",

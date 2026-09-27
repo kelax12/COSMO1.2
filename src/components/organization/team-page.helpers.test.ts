@@ -5,6 +5,8 @@ import type { OrgTeamMember } from '@/modules/org-teams';
 import {
   averageOkrProgress,
   canManageTeam,
+  computeTeamLoad,
+  loadBucketOf,
   computeTeamStats,
   sortTeamMembers,
   teamOkrsOf,
@@ -115,5 +117,38 @@ describe('canManageTeam (miroir de can_manage_team)', () => {
     expect(canManageTeam(team, memberships, 'plain', false)).toBe(false);
     expect(canManageTeam(team, memberships, 'lead-ailleurs', false)).toBe(false);
     expect(canManageTeam(team, memberships, undefined, false)).toBe(false);
+  });
+});
+
+describe('loadBucketOf', () => {
+  it('range une échéance passée, proche, lointaine ou absente', () => {
+    expect(loadBucketOf({ deadline: '2026-09-24' }, NOW)).toBe('overdue');
+    expect(loadBucketOf({ deadline: '2026-09-25' }, NOW)).toBe('thisWeek');
+    expect(loadBucketOf({ deadline: '2026-10-01' }, NOW)).toBe('thisWeek');
+    expect(loadBucketOf({ deadline: '2026-10-02' }, NOW)).toBe('later');
+    expect(loadBucketOf({ deadline: '' }, NOW)).toBe('noDate');
+  });
+});
+
+describe('computeTeamLoad', () => {
+  const projects = new Set(['p1']);
+  it('compte les ouvertes par membre, les non assignées à part, et ignore le reste', () => {
+    const rows = computeTeamLoad(
+      [
+        task({ assigneeIds: ['a', 'b'], deadline: '2026-09-20' }),
+        task({ assigneeIds: ['a'], deadline: '' }),
+        task({ assigneeIds: ['a'], deadline: '2026-09-26' }),
+        task({ assigneeIds: [] }),
+        task({ assigneeIds: ['x'] }),
+        task({ assigneeIds: ['a'], completed: true }),
+        task({ assigneeIds: ['a'], projectId: 'autre' }),
+      ],
+      projects,
+      ['a', 'b'],
+      NOW,
+    );
+    expect(rows.map((r) => [r.userId, r.total])).toEqual([['a', 3], ['b', 1], [null, 1]]);
+    expect(rows[0].counts).toEqual({ overdue: 1, thisWeek: 1, later: 0, noDate: 1 });
+    expect(rows[0].tasks.map((t) => t.deadline)).toEqual(['2026-09-20', '2026-09-26', '']);
   });
 });

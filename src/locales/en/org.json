@@ -481,6 +481,14 @@
     "emptyManager": "No teams yet. Create one to keep projects separate.",
     "empty": "No teams yet.",
     "deleteAria": "Delete the team {{name}}",
+    "optionsAria": "Options for team {{name}}",
+    "menu": {
+      "edit": "Edit (color and name)",
+      "members": "Manage members",
+      "assignProject": "Assign a project",
+      "assignTask": "Assign a task",
+      "delete": "Delete team"
+    },
     "removeMemberAria": "Remove {{member}} from the team {{team}}",
     "addMemberAria": "Add a member to the team {{team}}",
     "addTo": "Add to {{name}}",
@@ -1181,7 +1189,21 @@
     "archivedProjects_other": "{{count}} archived projects",
     "okrTitle": "OKRs",
     "okrEmpty": "No OKR is linked to the team.",
-    "okrProgressAria": "Progress of {{title}}"
+    "okrProgressAria": "Progress of {{title}}",
+    "showKrs": "Show key results",
+    "hideKrs": "Hide key results",
+    "krEmpty": "No key results.",
+    "loadTitle": "Team workload",
+    "loadEmpty": "No open task in the team's projects.",
+    "loadOverdue": "Overdue",
+    "loadThisWeek": "This week",
+    "loadLater": "Later",
+    "loadNoDate": "No date",
+    "loadUnassigned": "Unassigned",
+    "loadBarAria": "{{name}}: {{count}} open tasks",
+    "loadLateDays": "-{{count}} d",
+    "loadMore_one": "+{{count}} more",
+    "loadMore_other": "+{{count}} more"
   },
   "waiting": {
     "title": "Waiting on me",
@@ -1306,7 +1328,9 @@
     "team": {
       "lead": "Team lead",
       "noLead": "No lead",
-      "leadHint": "Manages the team's members and projects, and is added to the members."
+      "leadHint": "The crown marks the lead, who manages the team's members and projects.",
+      "makeLead": "Make {{name}} the lead",
+      "unsetLead": "Remove {{name}} as lead"
     },
     "project": {
       "audienceOrg_one": "Visible to the whole company, {{count}} person.",
