@@ -170,6 +170,7 @@ const PLAFONDS_PAR_CHUNK = {
   TasksPage: 37_000, // 35 039 o — la plus grosse page du produit
   'vendor-utils': 33_000, // 31 053 o
   org: 30_000, // 28 494 o sur 2 chunks
+  orgBilling: 4_000, // billing.* extrait d'`org` le 2026-09-27, chargé par OrgBillingTab et OrgPlanChip seuls
   TaskModal: 29_000, // 27 183 o
   landing: 24_000, // 22 853 o sur 2 chunks
   'dropdown-menu': 22_000, // 20 526 o

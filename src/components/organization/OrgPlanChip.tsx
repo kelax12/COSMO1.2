@@ -23,7 +23,7 @@ interface Props {
  * exactement comme le serveur le traite.
  */
 export function OrgPlanChip({ orgId, active, onOpen }: Props) {
-  const { t } = useT('org');
+  const { t } = useT('orgBilling');
   const { t: tc } = useT('common');
   const { data: subscription } = useOrgSubscription(orgId);
   const sub = subscription ?? null;

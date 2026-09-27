@@ -23,7 +23,7 @@ const INTERVALS: OrgBillingInterval[] = ['monthly', 'yearly'];
  * être annoncé, pas seulement peint.
  */
 export function BillingIntervalToggle({ value, onChange, disabled }: Props) {
-  const { t } = useT('org');
+  const { t } = useT('orgBilling');
 
   return (
     <div

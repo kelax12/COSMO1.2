@@ -32,13 +32,19 @@ import { PREMIUM_ENFORCED } from '@/modules/billing/premium-config';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import CookieBanner from '@/components/CookieBanner';
 import NewVersionBanner from '@/components/NewVersionBanner';
-import ShareInviteClaimer from '@/components/ShareInviteClaimer';
 import { isOrgPath } from '@/components/organization/deep-link.helpers';
 // Audit perf 2026-05-29 — CommandPalette only renders on Ctrl/Cmd+K. Lazy-load
 // it so its imports (framer-motion subset, lucide icons, fuzzy search) don't
 // land in the entry chunk. Suspense fallback is null because the palette
 // itself is invisible until opened.
 const CommandPalette = lazy(() => import('@/components/CommandPalette'));
+// ShareInviteClaimer ne peint quelque chose que si un token d'invitation est
+// EN ATTENTE (localStorage, posé par InvitePage) — le cas courant est un
+// rendu qui renvoie `null`. Ses dépendances (framer-motion, react-query,
+// friends/tasks hooks) traînaient 8,4 ko bruts dans l'entrée pour une popup
+// que la quasi-totalité des visiteurs ne verra jamais. Fallback nul : rien à
+// peindre en attendant, comme la palette de commandes.
+const ShareInviteClaimer = lazy(() => import('@/components/ShareInviteClaimer'));
 
 // Sonner sort du chemin critique (66,6 ko bruts dans l'entrée, payés par tout
 // visiteur qui arrive sur la landing et repart). Le `<Toaster>` ne peint rien
@@ -466,9 +472,15 @@ const App: React.FC = () => {
                   Monté ici, une seule fois : c'est une propriété de
                   l'application, pas d'un écran. */}
               <NewVersionBanner />
-              {/* Popup d'invitation de partage — niveau App pour survivre aux
-                  changements de route (claim après login OU fin d'inscription). */}
-              <ShareInviteClaimer />
+            </AppErrorBoundary>
+            {/* Popup d'invitation de partage — niveau App pour survivre aux
+                changements de route (claim après login OU fin d'inscription).
+                Boundary propre, comme CommandPalette : un chunk périmé ne
+                doit pas blanchir toute l'app pour un composant secondaire. */}
+            <AppErrorBoundary fallback={null}>
+              <Suspense fallback={null}>
+                <ShareInviteClaimer />
+              </Suspense>
             </AppErrorBoundary>
             {/* AppErrorBoundary ici, PAS seulement le Suspense : un chunk périmé
                 (déploiement récent, vieil index.html en cache) fait échouer ce
