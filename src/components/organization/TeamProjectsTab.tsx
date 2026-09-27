@@ -354,7 +354,14 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
     );
   }
 
-  const showSearch = (view === 'list' || view === 'portfolio') && activeProjects.length > 0;
+  // Ligne « Sélectionner / Trier » (maquette du 2026-09-27) : le tri n'a de
+  // sens qu'en Liste et Portefeuille ; la sélection multiple vaut pour la
+  // Liste et le Planning (des tâches y sont visibles), jamais le Portefeuille
+  // (aucune tâche affichée).
+  const showSort = (view === 'list' || view === 'portfolio') && activeProjects.length > 0;
+  const onStartSelect = view !== 'portfolio' && visibleTasks.length > 0 && !selectMode
+    ? () => setSelectMode(true)
+    : undefined;
 
   return (
     <div className="space-y-4">
@@ -390,11 +397,14 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
         canCreateProject={can['project.create']}
         createDeniedReason={hints.deniedReason('project.create')}
         onNewProject={() => newProject()}
-        onStartSelect={visibleTasks.length > 0 && !selectMode ? () => setSelectMode(true) : undefined}
       />
 
-      {showSearch && (
-        <ProjectsSearchBar sort={sort} onSortChange={(s) => updatePrefs({ sort: s })} />
+      {(showSort || onStartSelect) && (
+        <ProjectsSearchBar
+          sort={sort}
+          onSortChange={showSort ? (s) => updatePrefs({ sort: s }) : undefined}
+          onStartSelect={onStartSelect}
+        />
       )}
       {view === 'list' && manyProjects && (
         <p className="text-xs text-[rgb(var(--color-text-muted))]">{pf('manyProjectsHint', { count: PORTFOLIO_CARD_THRESHOLD })}</p>

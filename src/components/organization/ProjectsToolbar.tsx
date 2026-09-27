@@ -7,7 +7,7 @@
 // filtres partagée avec l'onglet Tâches, et dans l'URL.
 // ═══════════════════════════════════════════════════════════════════
 
-import { Plus, LayoutList, CalendarRange, Table2, ListChecks } from 'lucide-react';
+import { Plus, LayoutList, CalendarRange, Table2 } from 'lucide-react';
 import { type ProjectsUiPrefs } from './team-projects.helpers';
 import { useT } from '@/i18n/useT';
 import { PermissionGate } from './permission-hints';
@@ -24,11 +24,6 @@ interface ProjectsToolbarProps {
   onNewProject: () => void;
   /** Vue réellement affichée (le portefeuille peut s'imposer sans choix, M2). */
   effectiveView: ProjectsUiPrefs['view'];
-  /**
-   * Entre en sélection multiple — dans TOUTES les vues de tâches depuis le
-   * 2026-09-24. Absent en vue portefeuille, qui n'affiche aucune tâche.
-   */
-  onStartSelect?: () => void;
   /** Utilisateur courant, pour le preset « Mes tâches ». Absent : pas de rangée de presets. */
   currentUserId?: string;
 }
@@ -60,17 +55,16 @@ const ViewTab = ({ active, onClick, label, Icon }: {
 );
 
 const ProjectsToolbar = ({
-  prefs, updatePrefs, canCreateProject, createDeniedReason, onNewProject, effectiveView, onStartSelect, currentUserId,
+  prefs, updatePrefs, canCreateProject, createDeniedReason, onNewProject, effectiveView, currentUserId,
 }: ProjectsToolbarProps) => {
   // Même état que la barre de filtres de l'onglet : l'URL (task-filters.ts).
   const { filters, setFilters } = useOrgTaskFilters('all');
   const { t } = useT('org');
   const { t: pf } = useT('portfolio');
-  // La barre ne porte QUE le périmètre, la vue et la création. Les deux réglages
-  // rares qui vivaient ici (densité, sélection multiple) n'y sont plus : la
-  // sélection est passée dans le menu de chaque projet, là où sont les tâches ;
-  // `showArchived` reste sur la bascule contextuelle du bas de liste, qui
-  // affiche le compte et n'existe que s'il y a des archives.
+  // La barre porte le périmètre (vue, presets) et la création, poussée à
+  // droite (maquette du 2026-09-27). « Sélectionner » est passé à côté du tri
+  // (`ProjectsSearchBar`) ; `showArchived` reste sur la bascule contextuelle
+  // du bas de liste, qui affiche le compte et n'existe que s'il y a des archives.
   const { timelineGroupBy } = prefs;
   const view = effectiveView;
   const chooseView = (next: ProjectsUiPrefs['view']) => updatePrefs({ view: next, viewChosen: true });
@@ -80,85 +74,74 @@ const ProjectsToolbar = ({
   const segOff = 'text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-secondary))]';
 
   return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between gap-3 flex-wrap">
-        {/* ── Vue, réglages rares, action primaire ───────────────── */}
-        <div className="flex items-center gap-2 flex-wrap">
+    <div className="flex items-center gap-2 flex-wrap">
+      {/* ── Vue, réglages rares ──────────────────────────────────── */}
+      <div
+        className="inline-flex rounded-lg border border-[rgb(var(--color-border))] p-0.5 gap-0.5"
+        role="group"
+        aria-label={pf('toolbar.viewLabel')}
+      >
+        <ViewTab active={view === 'portfolio'} onClick={() => chooseView('portfolio')} label={pf('viewPortfolio')} Icon={Table2} />
+        <ViewTab active={view === 'list'} onClick={() => chooseView('list')} label={pf('toolbar.viewList')} Icon={LayoutList} />
+        <ViewTab active={view === 'timeline'} onClick={() => chooseView('timeline')} label={pf('toolbar.viewTimeline')} Icon={CalendarRange} />
+      </div>
+
+      {/* Axe des lignes du Planning — même geste, même vocabulaire que
+          « Colonnes » du Tableau (onglet Tâches). N'existe QUE quand
+          « Planning » est actif. */}
+      {view === 'timeline' && (
+        <div className="inline-flex items-center gap-1.5">
+          <span className="hidden md:inline text-xs text-[rgb(var(--color-text-muted))]">{pf('toolbar.rowsLabel')}</span>
           <div
             className="inline-flex rounded-lg border border-[rgb(var(--color-border))] p-0.5 gap-0.5"
             role="group"
-            aria-label={pf('toolbar.viewLabel')}
+            aria-label={pf('toolbar.rowsLabel')}
           >
-            <ViewTab active={view === 'portfolio'} onClick={() => chooseView('portfolio')} label={pf('viewPortfolio')} Icon={Table2} />
-            <ViewTab active={view === 'list'} onClick={() => chooseView('list')} label={pf('toolbar.viewList')} Icon={LayoutList} />
-            <ViewTab active={view === 'timeline'} onClick={() => chooseView('timeline')} label={pf('toolbar.viewTimeline')} Icon={CalendarRange} />
+            <button
+              type="button"
+              onClick={() => updatePrefs({ timelineGroupBy: 'project' })}
+              aria-pressed={timelineGroupBy === 'project'}
+              className={`${segBase} ${timelineGroupBy === 'project' ? segOn : segOff}`}
+            >
+              {pf('toolbar.groupByProject')}
+            </button>
+            <button
+              type="button"
+              onClick={() => updatePrefs({ timelineGroupBy: 'assignee' })}
+              aria-pressed={timelineGroupBy === 'assignee'}
+              className={`${segBase} ${timelineGroupBy === 'assignee' ? segOn : segOff}`}
+            >
+              {pf('toolbar.groupByAssignee')}
+            </button>
           </div>
-
-          {/* Sélection multiple, à côté des vues : elle vaut pour les trois vues
-              de tâches (audit 2026-09-24), plus seulement pour la liste. */}
-          {onStartSelect && view !== 'portfolio' && (
-            <button
-              type="button"
-              onClick={onStartSelect}
-              aria-label={pf('bulk.selectToggleAria')}
-              className="inline-flex items-center gap-1.5 h-9 px-2.5 rounded-lg border border-[rgb(var(--color-border))] text-sm font-medium text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]/60"
-            >
-              <ListChecks size={15} aria-hidden="true" />
-              <span className="hidden sm:inline">{pf('bulk.selectToggle')}</span>
-            </button>
-          )}
-
-          {/* Axe des lignes du Planning — même geste, même vocabulaire que
-              « Colonnes » ci-dessus. N'existe QUE quand « Planning » est actif. */}
-          {view === 'timeline' && (
-            <div className="inline-flex items-center gap-1.5">
-              <span className="hidden md:inline text-xs text-[rgb(var(--color-text-muted))]">{pf('toolbar.rowsLabel')}</span>
-              <div
-                className="inline-flex rounded-lg border border-[rgb(var(--color-border))] p-0.5 gap-0.5"
-                role="group"
-                aria-label={pf('toolbar.rowsLabel')}
-              >
-                <button
-                  type="button"
-                  onClick={() => updatePrefs({ timelineGroupBy: 'project' })}
-                  aria-pressed={timelineGroupBy === 'project'}
-                  className={`${segBase} ${timelineGroupBy === 'project' ? segOn : segOff}`}
-                >
-                  {pf('toolbar.groupByProject')}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => updatePrefs({ timelineGroupBy: 'assignee' })}
-                  aria-pressed={timelineGroupBy === 'assignee'}
-                  className={`${segBase} ${timelineGroupBy === 'assignee' ? segOn : segOff}`}
-                >
-                  {pf('toolbar.groupByAssignee')}
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* La seule action créative de la page — et donc le seul bouton plein.
-              L'état vide proposait déjà cet indigo : la barre s'aligne dessus
-              au lieu de peindre « Nouveau projet » comme un réglage. */}
-          <PermissionGate reason={canCreateProject ? undefined : createDeniedReason}>
-            <button
-              type="button"
-              onClick={onNewProject}
-              className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[rgb(var(--color-background))]"
-              aria-label={t('projects.newProject')}
-            >
-              <Plus size={15} aria-hidden="true" />
-              <span className="hidden sm:inline">{t('projects.newProject')}</span>
-            </button>
-          </PermissionGate>
         </div>
-      </div>
+      )}
 
       {/* Préréglages appliqués aux PROJETS (project-filters.ts). Bloquées
           exclue : c'est une lecture tâche par tâche. Le Tableau (kanban) est
           passé dans l'onglet Tâches le 2026-09-27. */}
       <FilterPresets filters={filters} setFilters={setFilters} defaultStatus="all" currentUserId={currentUserId} showBlocked={false} entity="projects" />
+
+      {/* La seule action créative de la page — et donc le seul bouton plein.
+          Poussée à droite (maquette du 2026-09-27) : c'est la seule action
+          qui n'est pas un réglage de vue ou un filtre.
+          `PermissionGate` ne rend son enveloppe QUE si `reason` est défini
+          (droit refusé) — le cas courant (droit accordé) renvoie l'enfant nu,
+          où un `className` passé au Gate n'aurait aucun effet. Le `ml-auto`
+          vit donc sur un conteneur qu'on pose nous-mêmes, toujours présent. */}
+      <div className="ml-auto">
+        <PermissionGate reason={canCreateProject ? undefined : createDeniedReason}>
+          <button
+            type="button"
+            onClick={onNewProject}
+            className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[rgb(var(--color-background))]"
+            aria-label={t('projects.newProject')}
+          >
+            <Plus size={15} aria-hidden="true" />
+            <span className="hidden sm:inline">{t('projects.newProject')}</span>
+          </button>
+        </PermissionGate>
+      </div>
     </div>
   );
 };

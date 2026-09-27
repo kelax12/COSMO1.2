@@ -5,7 +5,7 @@
 // de 600 lignes. Rien n'a changé dans le comportement des pastilles.
 // ═══════════════════════════════════════════════════════════════════
 
-import { FolderKanban, Clock, ArrowUpDown } from 'lucide-react';
+import { FolderKanban, Clock, ArrowUpDown, ListChecks } from 'lucide-react';
 import { formatDuration } from './team-projects.helpers';
 import type { PortfolioSort } from './portfolio.helpers';
 import { useT } from '@/i18n/useT';
@@ -57,47 +57,47 @@ export const ProjectsPulse = ({ projectCount, totalEstimated }: {
 const SORTS: PortfolioSort[] = ['recent', 'name', 'dueDate', 'progress', 'status'];
 
 /**
- * Tri des projets — liste de cartes et portefeuille (M2). La recherche est
- * passée dans `OrgTaskFilterBar` (`?fQ=`), avec les autres filtres.
+ * Ligne de droite de l'onglet Projets : sélection multiple, puis tri.
+ * La recherche est dans `OrgTaskFilterBar` (`?fQ=`), avec les autres filtres.
+ * Le tri (`sort`/`onSortChange`) n'a de sens qu'en Liste et Portefeuille ;
+ * absent, seul « Sélectionner » s'affiche (rendu aussi en Planning, maquette
+ * du 2026-09-27, pour ne pas perdre l'accès aux actions groupées).
  */
-export const ProjectsSearchBar = ({ sort, onSortChange, mineOnly, onMineOnlyChange }: {
-  sort: PortfolioSort;
-  onSortChange: (value: PortfolioSort) => void;
-  /** « Mes projets » (audit du 2026-09-24). */
-  mineOnly?: boolean;
-  onMineOnlyChange?: (value: boolean) => void;
+export const ProjectsSearchBar = ({ sort, onSortChange, onStartSelect }: {
+  sort?: PortfolioSort;
+  onSortChange?: (value: PortfolioSort) => void;
+  /** Entre en sélection multiple. Absent : pas de bouton (ex. vue portefeuille, sans tâche). */
+  onStartSelect?: () => void;
 }) => {
   const { t: pf } = useT('portfolio');
-  const { t } = useT('org');
   return (
     <div className="flex items-center justify-end gap-2 flex-wrap">
-      {onMineOnlyChange && (
+      {onStartSelect && (
         <button
           type="button"
-          aria-pressed={!!mineOnly}
-          onClick={() => onMineOnlyChange(!mineOnly)}
-          className={`h-9 px-3 rounded-lg border text-sm font-medium transition-colors ${
-            mineOnly
-              ? 'border-[rgb(var(--color-accent))] bg-[rgb(var(--color-accent)/0.1)] text-[rgb(var(--color-accent))]'
-              : 'border-[rgb(var(--color-border))] text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))]'
-          }`}
+          onClick={onStartSelect}
+          aria-label={pf('bulk.selectToggleAria')}
+          className="inline-flex items-center gap-1.5 h-9 px-2.5 rounded-lg border border-[rgb(var(--color-border))] text-sm font-medium text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-hover))] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--color-accent))]/60"
         >
-          {t('myProjects.title')}
+          <ListChecks size={15} aria-hidden="true" />
+          <span className="hidden sm:inline">{pf('bulk.selectToggle')}</span>
         </button>
       )}
-      <label className="inline-flex items-center gap-1.5 text-xs text-[rgb(var(--color-text-muted))]">
-        <ArrowUpDown size={13} aria-hidden="true" />
-        <span className="sr-only sm:not-sr-only">{pf('sortLabel')}</span>
-        <select
-          value={sort}
-          onChange={(e) => onSortChange(e.target.value as PortfolioSort)}
-          className="h-9 px-2 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] text-sm text-[rgb(var(--color-text-primary))]"
-        >
-          {SORTS.map((s) => (
-            <option key={s} value={s}>{pf(`sort.${s}`)}</option>
-          ))}
-        </select>
-      </label>
+      {onSortChange && (
+        <label className="inline-flex items-center gap-1.5 text-xs text-[rgb(var(--color-text-muted))]">
+          <ArrowUpDown size={13} aria-hidden="true" />
+          <span className="sr-only sm:not-sr-only">{pf('sortLabel')}</span>
+          <select
+            value={sort}
+            onChange={(e) => onSortChange(e.target.value as PortfolioSort)}
+            className="h-9 px-2 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] text-sm text-[rgb(var(--color-text-primary))]"
+          >
+            {SORTS.map((s) => (
+              <option key={s} value={s}>{pf(`sort.${s}`)}</option>
+            ))}
+          </select>
+        </label>
+      )}
     </div>
   );
 };
