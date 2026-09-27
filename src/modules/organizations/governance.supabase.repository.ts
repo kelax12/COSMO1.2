@@ -12,9 +12,6 @@ import {
   type AuditLogQuery,
   type OrgSearchKind,
   type OrgSearchResult,
-  type SavedView,
-  type SaveViewInput,
-  type SavedViewScope,
   type CreateEmailInvitationsInput,
   type DepartureImpact,
   type EmailInvitation,
@@ -218,40 +215,6 @@ export class SupabaseOrgGovernanceRepository implements IOrgGovernanceRepository
     if (error) throw normalizeApiError(error);
   }
 
-  // ─── Vues enregistrées (mig. 192) ──────────────────────────────────
-
-  async getSavedViews(orgId: string, scope: SavedViewScope): Promise<SavedView[]> {
-    const { data, error } = await db()
-      .from('org_saved_views')
-      .select('id, scope, name, filters, created_at, updated_at')
-      .eq('org_id', orgId)
-      .eq('scope', scope)
-      .order('name', { ascending: true })
-      .limit(50);
-    if (error) throw normalizeApiError(error);
-    return (data ?? []).map(mapSavedView);
-  }
-
-  async saveView(orgId: string, input: SaveViewInput): Promise<SavedView> {
-    // `user_id` : défaut serveur `auth.uid()`, jamais envoyé par le client.
-    // Même nom = mise à jour des filtres (contrainte d'unicité).
-    const { data, error } = await db()
-      .from('org_saved_views')
-      .upsert(
-        { org_id: orgId, scope: input.scope, name: input.name.trim(), filters: input.filters },
-        { onConflict: 'org_id,user_id,scope,name' },
-      )
-      .select('id, scope, name, filters, created_at, updated_at')
-      .single();
-    if (error) throw normalizeApiError(error);
-    return mapSavedView(data);
-  }
-
-  async deleteView(viewId: string): Promise<void> {
-    const { error } = await db().from('org_saved_views').delete().eq('id', viewId);
-    if (error) throw normalizeApiError(error);
-  }
-
   // ─── Recherche globale (mig. 191) ──────────────────────────────────
 
   async search(orgId: string, query: string, limitPerKind = 8): Promise<OrgSearchResult[]> {
@@ -280,20 +243,3 @@ interface SearchRow {
 }
 
 const SEARCH_KINDS: readonly OrgSearchKind[] = ['project', 'milestone', 'task', 'okr', 'kr', 'team', 'member'];
-
-/** Seules des chaînes survivent : une vue ne rejoue que des paramètres d'URL. */
-const toStringRecord = (raw: unknown): Record<string, string> => {
-  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {};
-  return Object.fromEntries(
-    Object.entries(raw as Record<string, unknown>).filter((e): e is [string, string] => typeof e[1] === 'string'),
-  );
-};
-
-const mapSavedView = (r: Record<string, unknown>): SavedView => ({
-  id: r.id as string,
-  scope: r.scope as SavedViewScope,
-  name: r.name as string,
-  filters: toStringRecord(r.filters),
-  createdAt: r.created_at as string,
-  updatedAt: r.updated_at as string,
-});

@@ -22,7 +22,7 @@ vi.mock('@/lib/hooks/use-mobile', () => ({ useIsMobile: () => false }));
 
 const base: OrgTaskFilters = {
   team: '', assignee: null, project: null, status: 'all', q: '',
-  priorities: [], dueFrom: '', dueTo: '', noDue: false, category: null, label: null, group: 'none',
+  priorities: [], dueFrom: '', dueTo: '', noDue: false, category: null, label: null, group: 'none', blocked: false,
 };
 
 const renderBar = (status: TaskStatusFilter) => {

@@ -8,11 +8,11 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { Plus, LayoutList, SquareKanban, CalendarRange, Table2, ListChecks } from 'lucide-react';
-import { projectDisplayViewParams, viewParamsToProjectDisplay, type ProjectsUiPrefs } from './team-projects.helpers';
+import { type ProjectsUiPrefs } from './team-projects.helpers';
 import { useT } from '@/i18n/useT';
 import { PermissionGate } from './permission-hints';
-import SavedViewsMenu from './SavedViewsMenu';
-import { useOrgTaskFilters, taskFiltersToViewParams, viewParamsToTaskFilters } from './task-filters';
+import FilterPresets from './FilterPresets';
+import { useOrgTaskFilters } from './task-filters';
 
 interface ProjectsToolbarProps {
   prefs: ProjectsUiPrefs;
@@ -29,8 +29,8 @@ interface ProjectsToolbarProps {
    * 2026-09-24. Absent en vue portefeuille, qui n'affiche aucune tâche.
    */
   onStartSelect?: () => void;
-  /** Vues enregistrées (mig. 192) — absent : pas de menu « Vues ». */
-  savedViewsOrgId?: string;
+  /** Utilisateur courant, pour le preset « Mes tâches ». Absent : pas de rangée de presets. */
+  currentUserId?: string;
 }
 
 /** Onglet de vue — un mot, pas un carré : trois icônes de vue se ressemblent
@@ -60,7 +60,7 @@ const ViewTab = ({ active, onClick, label, Icon }: {
 );
 
 const ProjectsToolbar = ({
-  prefs, updatePrefs, canCreateProject, createDeniedReason, onNewProject, effectiveView, onStartSelect, savedViewsOrgId,
+  prefs, updatePrefs, canCreateProject, createDeniedReason, onNewProject, effectiveView, onStartSelect, currentUserId,
 }: ProjectsToolbarProps) => {
   // Même état que la barre de filtres de l'onglet : l'URL (task-filters.ts).
   const { filters, setFilters } = useOrgTaskFilters('all');
@@ -173,20 +173,6 @@ const ProjectsToolbar = ({
           {/* La seule action créative de la page — et donc le seul bouton plein.
               L'état vide proposait déjà cet indigo : la barre s'aligne dessus
               au lieu de peindre « Nouveau projet » comme un réglage. */}
-          {/* Une vue de projets = l'affichage (vue, tri, archivés) ET les
-              filtres de l'URL, sous les mêmes clés qu'un lien partagé. */}
-          {savedViewsOrgId && (
-            <SavedViewsMenu
-              orgId={savedViewsOrgId}
-              scope="projects"
-              current={{ ...projectDisplayViewParams(prefs), ...taskFiltersToViewParams(filters, 'all') }}
-              onApply={(params) => {
-                updatePrefs(viewParamsToProjectDisplay(params));
-                setFilters(viewParamsToTaskFilters(params, 'all'));
-              }}
-            />
-          )}
-
           <PermissionGate reason={canCreateProject ? undefined : createDeniedReason}>
             <button
               type="button"
@@ -201,6 +187,8 @@ const ProjectsToolbar = ({
         </div>
       </div>
 
+      {/* Bloquées exclue ici : la vue Projets ne filtre pas tâche par tâche. */}
+      <FilterPresets filters={filters} setFilters={setFilters} defaultStatus="all" currentUserId={currentUserId} showBlocked={false} />
     </div>
   );
 };

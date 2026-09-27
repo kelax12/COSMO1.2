@@ -43,8 +43,10 @@ export interface OrgTaskFilters {
   category: string | null;
   /** Étiquette, ou null. */
   label: string | null;
-  /** Regroupement du tableau : un choix d'affichage qu'une vue enregistrée garde. */
+  /** Regroupement du tableau. */
   group: TaskGroupBy;
+  /** Seulement les tâches bloquées par une dépendance non terminée (onglet Tâches). */
+  blocked: boolean;
 }
 
 export type TaskGroupBy = 'none' | 'project' | 'status' | 'assignee' | 'priority';
@@ -63,6 +65,7 @@ export const TASK_FILTER_PARAMS = {
   category: 'fCat',
   label: 'fLabel',
   group: 'fGroup',
+  blocked: 'fBlocked',
 } as const satisfies Record<keyof OrgTaskFilters, string>;
 
 const ID_RE = /^[A-Za-z0-9_-]{1,64}$/;
@@ -96,6 +99,7 @@ export function readTaskFilters(params: URLSearchParams, defaultStatus: TaskStat
     group: (TASK_GROUP_BYS as readonly string[]).includes(params.get(TASK_FILTER_PARAMS.group) ?? '')
       ? (params.get(TASK_FILTER_PARAMS.group) as TaskGroupBy)
       : 'none',
+    blocked: params.get(TASK_FILTER_PARAMS.blocked) === '1',
   };
 }
 
@@ -126,13 +130,14 @@ export function writeTaskFilters(
   set(TASK_FILTER_PARAMS.category, filters.category);
   set(TASK_FILTER_PARAMS.label, filters.label);
   set(TASK_FILTER_PARAMS.group, filters.group === 'none' ? null : filters.group);
+  set(TASK_FILTER_PARAMS.blocked, filters.blocked ? '1' : null);
   return next;
 }
 
 /** Un filtre (hors défaut) est-il actif ? */
 export const hasActiveTaskFilter = (f: OrgTaskFilters, defaultStatus: TaskStatusFilter): boolean =>
   f.team !== '' || f.assignee !== null || f.project !== null || f.status !== defaultStatus || f.q.trim() !== ''
-  || hasAttributeFilter(f);
+  || f.blocked || hasAttributeFilter(f);
 
 /** Un filtre sur les attributs de la tâche (priorité, échéance, catégorie, étiquette) est-il actif ? */
 export const hasAttributeFilter = (f: OrgTaskFilters): boolean =>
@@ -198,17 +203,3 @@ export const useOrgTaskFilters = (defaultStatus: TaskStatusFilter) => {
   );
   return { filters, setFilters };
 };
-
-/**
- * Filtres → paramètres d'une vue enregistrée (mig. 192) : les mêmes clés que
- * l'URL, seulement celles qui s'écartent du défaut. Une vue et un lien
- * partagé disent donc la même chose.
- */
-export function taskFiltersToViewParams(f: OrgTaskFilters, defaultStatus: TaskStatusFilter): Record<string, string> {
-  return Object.fromEntries(writeTaskFilters(new URLSearchParams(), f, defaultStatus).entries());
-}
-
-/** Paramètres d'une vue → filtres ; ce qui manque revient au défaut, ce qui est invalide est ignoré. */
-export function viewParamsToTaskFilters(params: Record<string, string>, defaultStatus: TaskStatusFilter): OrgTaskFilters {
-  return readTaskFilters(new URLSearchParams(params), defaultStatus);
-}

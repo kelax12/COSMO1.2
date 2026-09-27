@@ -352,36 +352,3 @@ export const resolveActivityValue = (
       return raw;
   }
 };
-
-// ─── Vues enregistrées de l'onglet Projets (mig. 192) ─────────────────
-//
-// Les FILTRES de Projets vivent dans l'URL (`task-filters.ts`, cohérence
-// globale) ; l'AFFICHAGE (vue, tri, archivés) dans des préférences locales.
-// Une vue enregistre les deux sous forme de paramètres texte ; cette paire ne
-// porte que l'affichage, et valide chaque valeur (une vue relue du serveur est
-// une entrée non fiable).
-
-const VIEW_VALUES: readonly ProjectsUiPrefs['view'][] = ['list', 'kanban', 'timeline', 'portfolio'];
-const SORT_VALUES: readonly ProjectsUiPrefs['sort'][] = ['recent', 'name', 'dueDate', 'progress', 'status'];
-
-/** Affichage → paramètres d'une vue (seuls les écarts au défaut). */
-export function projectDisplayViewParams(prefs: ProjectsUiPrefs): Record<string, string> {
-  const out: Record<string, string> = {};
-  if (prefs.viewChosen) out.view = prefs.view;
-  if (prefs.sort !== DEFAULT_PREFS.sort) out.sort = prefs.sort;
-  if (prefs.showArchived) out.archived = '1';
-  return out;
-}
-
-/** Paramètres d'une vue → affichage à appliquer (tout ce qui manque revient au défaut). */
-export function viewParamsToProjectDisplay(params: Record<string, string>): Pick<ProjectsUiPrefs, 'view' | 'viewChosen' | 'sort' | 'showArchived'> {
-  const pick = <T extends string>(allowed: readonly T[], raw: string | undefined, fallback: T): T =>
-    raw && (allowed as readonly string[]).includes(raw) ? (raw as T) : fallback;
-  const view = pick(VIEW_VALUES, params.view, DEFAULT_PREFS.view);
-  return {
-    view,
-    viewChosen: !!params.view && view === params.view,
-    sort: pick(SORT_VALUES, params.sort, DEFAULT_PREFS.sort),
-    showArchived: params.archived === '1',
-  };
-}

@@ -3,7 +3,7 @@ import { startOfDay, subDays } from 'date-fns';
 import { subtreeOf, useOrgNotifications, useMyOrgPermissions, unreadCommentCountByTask, type OrgMember } from '@/modules/organizations';
 import {
   useTeamProjects, useTeamTaskPages, TEAM_TASKS_READ_LIMIT, useCreateTeamTask, useUpdateTeamTask, useDeleteTeamTask, useRestoreTeamTask,
-  useTaskIdsWithLabel,
+  useTaskIdsWithLabel, useTeamTaskDependencies,
   type TeamTask, type TeamTaskStatus, type CreateTeamTaskInput, type UpdateTeamTaskInput,
 } from '@/modules/team-projects';
 import { useTeamCategories, descendantIdSet, categoryPath, formatPath } from '@/modules/team-categories';
@@ -26,12 +26,13 @@ import { usePermissionHints } from './permission-hints';
 import { useTeamTasksBulk } from './use-team-tasks-bulk';
 import { TeamTasksBulkLayer } from './team-tasks-bulk.lazy';
 import {
-  useOrgTaskFilters, hasActiveTaskFilter, matchesScope, matchesAttributes, taskFiltersToViewParams, viewParamsToTaskFilters,
+  useOrgTaskFilters, hasActiveTaskFilter, matchesScope, matchesAttributes,
 } from './task-filters';
+import { useRememberedTaskFilters } from './remembered-task-filters';
 import {
   readTaskColumns, writeTaskColumns, groupTasks, flattenGroups, buildTasksCsv, UNASSIGNED_GROUP, type TaskColumnId,
 } from './team-tasks-table.helpers';
-import SavedViewsMenu from './SavedViewsMenu';
+import FilterPresets from './FilterPresets';
 import { useOrgTeams } from '@/modules/org-teams';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { useT } from '@/i18n/useT';
@@ -77,7 +78,9 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
 
   // Filtres : le MÊME état que l'onglet Projets, dans l'URL (task-filters.ts).
   const { filters, setFilters } = useOrgTaskFilters('open');
+  useRememberedTaskFilters(orgId, 'tasks');
   const { project: projectFilter, status: statusFilter, q: searchTerm } = filters;
+  const { data: taskDependencies = [] } = useTeamTaskDependencies(orgId);
   const { data: teams = [] } = useOrgTeams(orgId);
   const pf = useT('portfolio');
   const { data: categories = [] } = useTeamCategories(orgId);
@@ -165,16 +168,34 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
   };
   const [collapsedGroups, setCollapsedGroups] = useState<ReadonlySet<string>>(new Set());
 
+  // Tâche « bloquée » : au moins une dépendance dont la cible n'est pas terminée
+  // (même lecture que TeamTaskDependenciesSection). Calculé sur TOUTES les
+  // tâches connues, pas seulement les visibles : une bloqueuse peut être filtrée
+  // ailleurs (autre projet, autre statut) tout en bloquant encore celle-ci.
+  const blockedTaskIds = useMemo(() => {
+    if (taskDependencies.length === 0) return new Set<string>();
+    const completedById = new Map(tasks.map((t) => [t.id, t.completed]));
+    const ids = new Set<string>();
+    for (const dep of taskDependencies) {
+      // Seule une bloqueuse CHARGÉE et non terminée compte. La lecture ciblée
+      // « ouvertes » ne charge pas les tâches terminées : traiter une bloqueuse
+      // absente comme ouverte marquerait bloquée toute tâche déjà débloquée.
+      if (completedById.get(dep.dependsOnId) === false) ids.add(dep.taskId);
+    }
+    return ids;
+  }, [taskDependencies, tasks]);
+
   const visibleTasks = useMemo(() => {
     let result = tasks.filter((task) => projectById.has(task.projectId));
     if (projectFilter) result = result.filter((task) => task.projectId === projectFilter);
     result = result.filter((task) => matchesScope(task, filters, (id) => projectById.get(id)?.teamId));
     result = filterByStatus(result, statusFilter);
     result = result.filter((task) => matchesAttributes(task, filters, { categoryIds, labelTaskIds }));
+    if (filters.blocked) result = result.filter((task) => blockedTaskIds.has(task.id));
     const q = normalize(searchTerm.trim());
     if (q) result = result.filter((task) => normalize(task.name).includes(q));
     return result;
-  }, [tasks, projectById, projectFilter, statusFilter, searchTerm, filters, categoryIds, labelTaskIds]);
+  }, [tasks, projectById, projectFilter, statusFilter, searchTerm, filters, categoryIds, labelTaskIds, blockedTaskIds]);
 
   const sortedTasks = useMemo(() => {
     const withValue = (task: TeamTask): string | number => {
@@ -354,20 +375,14 @@ const TeamTasksTab = ({ orgId, members, currentUserId, isManager, isAdmin }: Tea
           : null}
       />
 
-      {/* Vues enregistrées (mig. 192) : les filtres de l'URL, nommés. */}
-      <div className="flex justify-end items-center gap-1.5 flex-wrap -mt-2">
+      <div className="flex items-center justify-between gap-1.5 flex-wrap -mt-2">
+        <FilterPresets filters={filters} setFilters={setFilters} defaultStatus="open" currentUserId={currentUserId ?? user?.id} />
         <TeamTasksViewControls
           columns={columns}
           onColumnsChange={setColumns}
           group={filters.group}
           onGroupChange={(group) => setFilters({ group })}
           onExport={sortedTasks.length > 0 ? () => void exportCsv() : undefined}
-        />
-        <SavedViewsMenu
-          orgId={orgId}
-          scope="tasks"
-          current={taskFiltersToViewParams(filters, 'open')}
-          onApply={(params) => setFilters(viewParamsToTaskFilters(params, 'open'))}
         />
       </div>
 

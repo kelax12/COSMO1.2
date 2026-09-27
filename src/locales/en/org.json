@@ -1467,16 +1467,14 @@
     "purgeAria": "Permanently delete “{{name}}”",
     "confirmPurge": "Delete permanently"
   },
-  "savedViews": {
-    "trigger": "Views",
-    "empty": "No saved view yet. Set your filters, then save them here.",
-    "saveCurrent": "Save current filters…",
-    "reset": "Back to default filters",
-    "nameLabel": "View name",
-    "namePlaceholder": "E.g. Overdue, my team",
-    "save": "Save",
-    "cancel": "Cancel",
-    "delete": "Delete the view “{{name}}”"
+  "filterPresets": {
+    "mine": "My tasks",
+    "overdue": "Overdue",
+    "thisWeek": "This week",
+    "blocked": "Blocked",
+    "copyLink": "Copy link",
+    "linkCopied": "Link copied",
+    "linkCopyFailed": "Could not copy the link"
   },
   "statsScope": {
     "label": "Statistics scope",

@@ -134,31 +134,6 @@ export interface SaveWeeklyReviewInput {
   note?: string;
 }
 
-// ─── Vues enregistrées (mig. 192) ──────────────────────────────────
-
-/** Écran auquel une vue s'applique. */
-export type SavedViewScope = 'tasks' | 'projects';
-
-/**
- * Combinaison de filtres NOMMÉE, personnelle. `filters` reprend exactement les
- * paramètres d'URL de l'écran (clé → valeur) : ouvrir une vue, c'est réécrire
- * l'URL, et partager une vue, c'est partager cette URL.
- */
-export interface SavedView {
-  id: string;
-  scope: SavedViewScope;
-  name: string;
-  filters: Record<string, string>;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface SaveViewInput {
-  scope: SavedViewScope;
-  name: string;
-  filters: Record<string, string>;
-}
-
 // ─── Recherche globale (mig. 191) ──────────────────────────────────
 
 export type OrgSearchKind = 'project' | 'milestone' | 'task' | 'okr' | 'kr' | 'team' | 'member';

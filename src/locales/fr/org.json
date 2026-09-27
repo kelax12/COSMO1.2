@@ -1537,16 +1537,14 @@
     "purgeAria": "Supprimer définitivement « {{name}} »",
     "confirmPurge": "Supprimer définitivement"
   },
-  "savedViews": {
-    "trigger": "Vues",
-    "empty": "Aucune vue enregistrée. Réglez vos filtres, puis enregistrez-les ici.",
-    "saveCurrent": "Enregistrer les filtres actuels…",
-    "reset": "Revenir aux filtres par défaut",
-    "nameLabel": "Nom de la vue",
-    "namePlaceholder": "Ex. : En retard, mon équipe",
-    "save": "Enregistrer",
-    "cancel": "Annuler",
-    "delete": "Supprimer la vue « {{name}} »"
+  "filterPresets": {
+    "mine": "Mes tâches",
+    "overdue": "En retard",
+    "thisWeek": "Cette semaine",
+    "blocked": "Bloquées",
+    "copyLink": "Copier le lien",
+    "linkCopied": "Lien copié",
+    "linkCopyFailed": "Impossible de copier le lien"
   },
   "statsScope": {
     "label": "Périmètre des statistiques",

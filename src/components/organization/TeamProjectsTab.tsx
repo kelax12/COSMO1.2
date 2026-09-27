@@ -36,6 +36,7 @@ import ProjectsToolbar from './ProjectsToolbar';
 import OrgTaskFilterBar from './OrgTaskFilterBar';
 import { usePermissionHints } from './permission-hints';
 import { useOrgTaskFilters } from './task-filters';
+import { useRememberedTaskFilters } from './remembered-task-filters';
 import ProjectTemplatesSection from './ProjectTemplatesSection';
 import TeamTaskModal from './TeamTaskModal';
 import TruncatedDataNotice from './TruncatedDataNotice';
@@ -83,6 +84,7 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
   // Ils vivaient dans les préférences enregistrées, et revenaient trois jours
   // plus tard sur une liste filtrée sans qu'on s'en souvienne.
   const { filters, setFilters } = useOrgTaskFilters('all');
+  useRememberedTaskFilters(orgId, 'projects');
   const { team: teamFilter, assignee: assigneeFilter, status: statusFilter, q: query } = filters;
   // « Mes projets » (audit du 2026-09-24, cas limites) : ceux que je porte ou
   // où j'ai une tâche. Filtre d'affichage, il ne part pas dans l'URL.
@@ -440,7 +442,7 @@ const TeamProjectsTab = ({ orgId, members, currentUserId, isManager, isAdmin }: 
       <div className="flex justify-end"><TeamTrashDialog orgId={orgId} projects={allProjects} members={members} /></div>
 
       <ProjectsToolbar
-        savedViewsOrgId={orgId}
+        currentUserId={currentUserId}
         prefs={prefs}
         updatePrefs={updatePrefs}
         effectiveView={view}

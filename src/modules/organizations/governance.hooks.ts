@@ -11,9 +11,7 @@ import type {
   CreateEmailInvitationsInput,
   NotificationSettings,
   OffboardInput,
-  SaveViewInput,
   SaveWeeklyReviewInput,
-  SavedViewScope,
 } from './governance.types';
 
 const useRepo = () => getOrgGovernanceRepository();
@@ -26,7 +24,6 @@ export const governanceKeys = {
   reviews: (orgId: string) => [...governanceKeys.all, 'reviews', orgId] as const,
   auditPages: (orgId: string, actionPrefix: string, targetUserId: string) =>
     [...governanceKeys.all, 'audit-pages', orgId, actionPrefix, targetUserId] as const,
-  savedViews: (orgId: string, scope: SavedViewScope) => [...governanceKeys.all, 'saved-views', orgId, scope] as const,
 };
 
 /** Tout ce qu'un changement de membre peut toucher, invalidé d'un coup. */
@@ -160,38 +157,6 @@ export const useAuditLogPages = (
       lastPage.length < AUDIT_PAGE_SIZE ? undefined : lastPage[lastPage.length - 1]?.createdAt,
     enabled: !!orgId && (options?.enabled ?? true),
     staleTime: 1000 * 30,
-  });
-};
-
-// ─── Vues enregistrées (mig. 192) ────────────────────────────────────
-
-export const useSavedViews = (orgId: string | undefined, scope: SavedViewScope) => {
-  const repository = useRepo();
-  return useQuery({
-    queryKey: governanceKeys.savedViews(orgId ?? '', scope),
-    queryFn: () => repository.getSavedViews(orgId as string, scope),
-    enabled: !!orgId,
-    staleTime: 1000 * 60 * 5,
-  });
-};
-
-export const useSaveView = (orgId: string) => {
-  const repository = useRepo();
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (input: SaveViewInput) => repository.saveView(orgId, input),
-    onSuccess: (_view, input) => queryClient.invalidateQueries({ queryKey: governanceKeys.savedViews(orgId, input.scope) }),
-    onError: (error: Error) => toast.error(translator('errors').t('mutation.savedView', { message: error.message })),
-  });
-};
-
-export const useDeleteView = (orgId: string, scope: SavedViewScope) => {
-  const repository = useRepo();
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (viewId: string) => repository.deleteView(viewId),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: governanceKeys.savedViews(orgId, scope) }),
-    onError: (error: Error) => toast.error(translator('errors').t('mutation.savedView', { message: error.message })),
   });
 };
 
