@@ -25,6 +25,7 @@ import { useFriends, useSharesByTask } from '@/modules/friends';
 import { formatRelativeTime } from '@/i18n/format';
 import { useT } from '@/i18n/useT';
 import { useModalA11y } from '@/hooks/use-modal-a11y';
+import { selectCollaborativeTasks } from './collaborative-tasks.helpers';
 
 const CollaborativeTasks: React.FC = () => {
   const { t, tp } = useT('dashboard');
@@ -73,9 +74,7 @@ const CollaborativeTasks: React.FC = () => {
   };
 
   // Exclude tasks assigned by others that haven't been accepted yet (still pending in SocialRequests)
-  const collaborativeTasks = tasks.filter(task =>
-    task.isCollaborative && (!task.sharedBy || task.sharedBy === user?.name)
-  );
+  const collaborativeTasks = selectCollaborativeTasks(tasks, user?.name);
 
   const isOwner = (task: Task) => {
     return !task.sharedBy || task.sharedBy === user?.name;
