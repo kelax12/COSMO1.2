@@ -118,5 +118,75 @@ export function canManageTeam(
   return memberships.some((m) => m.teamId === team.id && m.userId === currentUserId && m.isLead);
 }
 
+/** Tranche d'échéance d'une tâche ouverte, dans l'ordre d'affichage. */
+export type LoadBucket = 'overdue' | 'thisWeek' | 'later' | 'noDate';
+export const LOAD_BUCKETS: readonly LoadBucket[] = ['overdue', 'thisWeek', 'later', 'noDate'];
+
+export interface MemberLoad {
+  /** `null` = la ligne « non assignées ». */
+  userId: string | null;
+  counts: Record<LoadBucket, number>;
+  total: number;
+  /** Tâches ouvertes, les plus urgentes d'abord (échéance croissante, sans date en dernier). */
+  tasks: TeamTask[];
+}
+
+/** Tranche d'échéance ; « cette semaine » = aujourd'hui et les 6 jours suivants. */
+export function loadBucketOf(task: Pick<TeamTask, 'deadline'>, now: Date = new Date()): LoadBucket {
+  const deadline = parse(task.deadline);
+  if (!deadline) return 'noDate';
+  const today = startOfDay(now);
+  if (deadline < today) return 'overdue';
+  const weekEnd = startOfDay(subDays(today, -7));
+  return deadline < weekEnd ? 'thisWeek' : 'later';
+}
+
+/**
+ * Charge de l'équipe : les tâches OUVERTES des projets de l'équipe, par
+ * membre. Une tâche à plusieurs assignés compte pour chacun d'eux : c'est du
+ * travail que chacun porte. Un assigné hors de l'équipe n'a pas de ligne, et
+ * sa tâche n'est pas « non assignée » pour autant. Ordre des membres : celui
+ * de `memberIds`, puis la ligne des non assignées.
+ */
+export function computeTeamLoad(
+  tasks: TeamTask[],
+  projectIds: ReadonlySet<string>,
+  memberIds: string[],
+  now: Date = new Date(),
+): MemberLoad[] {
+  const empty = (userId: string | null): MemberLoad => ({
+    userId,
+    counts: { overdue: 0, thisWeek: 0, later: 0, noDate: 0 },
+    total: 0,
+    tasks: [],
+  });
+  const byMember = new Map(memberIds.map((id) => [id, empty(id)]));
+  const unassigned = empty(null);
+  const add = (load: MemberLoad, task: TeamTask) => {
+    load.counts[loadBucketOf(task, now)] += 1;
+    load.total += 1;
+    load.tasks.push(task);
+  };
+  for (const task of tasks) {
+    if (task.completed || !projectIds.has(task.projectId)) continue;
+    if (task.assigneeIds.length === 0) {
+      add(unassigned, task);
+      continue;
+    }
+    for (const id of task.assigneeIds) {
+      const load = byMember.get(id);
+      if (load) add(load, task);
+    }
+  }
+  const byUrgency = (a: TeamTask, b: TeamTask) => {
+    if (!a.deadline) return b.deadline ? 1 : 0;
+    if (!b.deadline) return -1;
+    return a.deadline.localeCompare(b.deadline);
+  };
+  const rows = [...byMember.values(), unassigned];
+  for (const row of rows) row.tasks.sort(byUrgency);
+  return rows;
+}
+
 /** Longueur maximale d'une description (contrainte `org_teams_description_length`). */
 export const TEAM_DESCRIPTION_MAX = 500;

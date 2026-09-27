@@ -1,0 +1,176 @@
+import { useMemo } from 'react';
+import { Link } from 'react-router';
+import { differenceInCalendarDays, parseISO, isValid } from 'date-fns';
+import { UserX } from 'lucide-react';
+import type { OrgMember } from '@/modules/organizations';
+import type { TeamTask } from '@/modules/team-projects';
+import MemberAvatar from './MemberAvatar';
+import { buildOrgLink } from './deep-link.helpers';
+import { LOAD_BUCKETS, computeTeamLoad, loadBucketOf, type LoadBucket } from './team-page.helpers';
+import { useT } from '@/i18n/useT';
+
+interface TeamWorkloadSectionProps {
+  tasks: TeamTask[];
+  projectIds: ReadonlySet<string>;
+  /** Membres de l'équipe, dans l'ordre d'affichage (responsables d'abord). */
+  members: OrgMember[];
+  currentUserId?: string;
+}
+
+/** Tâches montrées par colonne avant « +N autres ». */
+const TASKS_PER_COLUMN = 3;
+
+const BUCKET_COLOR: Record<LoadBucket, string> = {
+  overdue: 'bg-red-500',
+  thisWeek: 'bg-amber-400',
+  later: 'bg-violet-300',
+  noDate: 'bg-[rgb(var(--color-border))]',
+};
+
+const BUCKET_LABEL: Record<LoadBucket, 'teamPage.loadOverdue' | 'teamPage.loadThisWeek' | 'teamPage.loadLater' | 'teamPage.loadNoDate'> = {
+  overdue: 'teamPage.loadOverdue',
+  thisWeek: 'teamPage.loadThisWeek',
+  later: 'teamPage.loadLater',
+  noDate: 'teamPage.loadNoDate',
+};
+
+/**
+ * Charge de l'équipe (maquette du 2026-09-27) : une jauge par membre, puis
+ * une colonne de tâches par membre, pour voir qui porte quoi et répartir.
+ */
+const TeamWorkloadSection = ({ tasks, projectIds, members, currentUserId }: TeamWorkloadSectionProps) => {
+  const { t, tp, locale } = useT('org');
+  const now = useMemo(() => new Date(), []);
+  const rows = useMemo(
+    () => computeTeamLoad(tasks, projectIds, members.map((m) => m.userId), now),
+    [tasks, projectIds, members, now],
+  );
+  const memberById = new Map(members.map((m) => [m.userId, m]));
+  const max = Math.max(1, ...rows.map((r) => r.total));
+  const shortDate = new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short' });
+  const nameOf = (userId: string | null) => {
+    if (!userId) return t('teamPage.loadUnassigned');
+    if (userId === currentUserId) return t('common.youBadge');
+    return memberById.get(userId)?.displayName ?? '';
+  };
+  const visibleRows = rows.filter((r) => r.userId !== null || r.total > 0);
+  const empty = rows.every((r) => r.total === 0);
+
+  const deadlineTag = (task: TeamTask) => {
+    const bucket = loadBucketOf(task, now);
+    const d = task.deadline ? parseISO(task.deadline) : null;
+    if (!d || !isValid(d)) {
+      return <span className="text-[11px] text-[rgb(var(--color-text-muted))] shrink-0">{t('teamPage.loadNoDate')}</span>;
+    }
+    if (bucket === 'overdue') {
+      return (
+        <span className="text-[11px] rounded-md px-1.5 bg-red-500/10 text-red-600 dark:text-red-400 shrink-0">
+          {t('teamPage.loadLateDays', { count: differenceInCalendarDays(now, d) })}
+        </span>
+      );
+    }
+    return (
+      <span
+        className={`text-[11px] rounded-md px-1.5 shrink-0 ${bucket === 'thisWeek' ? 'bg-amber-500/10 text-amber-700 dark:text-amber-400' : 'text-[rgb(var(--color-text-muted))]'}`}
+      >
+        {shortDate.format(d)}
+      </span>
+    );
+  };
+
+  const avatarOf = (userId: string | null, size: number) => {
+    const m = userId ? memberById.get(userId) : undefined;
+    return m ? (
+      <MemberAvatar avatar={m.avatar} name={m.displayName} size={size} />
+    ) : (
+      <span
+        className="rounded-full flex items-center justify-center bg-[rgb(var(--color-hover))] text-[rgb(var(--color-text-muted))] shrink-0"
+        style={{ width: size, height: size }}
+        aria-hidden="true"
+      >
+        <UserX size={Math.round(size * 0.55)} />
+      </span>
+    );
+  };
+
+  return (
+    <section
+      className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4"
+      aria-labelledby="team-load-title"
+    >
+      <h3 id="team-load-title" className="text-sm font-bold text-[rgb(var(--color-text-primary))] mb-2">
+        {t('teamPage.loadTitle')}
+      </h3>
+      {empty ? (
+        <p className="text-xs text-[rgb(var(--color-text-muted))]">{t('teamPage.loadEmpty')}</p>
+      ) : (
+        <>
+          <ul className="flex flex-wrap gap-x-4 gap-y-1 mb-3 text-xs text-[rgb(var(--color-text-secondary))]" aria-hidden="true">
+            {LOAD_BUCKETS.map((b) => (
+              <li key={b} className="inline-flex items-center gap-1.5">
+                <span className={`w-2 h-2 rounded-sm ${BUCKET_COLOR[b]}`} />
+                {t(BUCKET_LABEL[b])}
+              </li>
+            ))}
+          </ul>
+
+          <ul className="space-y-2 mb-4">
+            {visibleRows.map((row) => (
+              <li key={row.userId ?? 'unassigned'} className="flex items-center gap-2 text-sm">
+                {avatarOf(row.userId, 24)}
+                <span
+                  className={`w-28 sm:w-36 truncate shrink-0 ${row.userId ? 'text-[rgb(var(--color-text-primary))]' : 'text-[rgb(var(--color-text-muted))]'}`}
+                >
+                  {nameOf(row.userId)}
+                </span>
+                <div
+                  className="flex-1 flex h-2.5 rounded-full bg-[rgb(var(--color-hover))] overflow-hidden"
+                  role="img"
+                  aria-label={t('teamPage.loadBarAria', { name: nameOf(row.userId), count: row.total })}
+                >
+                  {LOAD_BUCKETS.map((b) =>
+                    row.counts[b] > 0 ? (
+                      <span key={b} className={`h-full ${BUCKET_COLOR[b]}`} style={{ width: `${(row.counts[b] / max) * 100}%` }} />
+                    ) : null,
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
+
+          <div className="grid gap-2 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
+            {visibleRows.map((row) => (
+              <div key={row.userId ?? 'unassigned'} className="rounded-xl bg-[rgb(var(--color-hover))] p-2.5 flex flex-col gap-1.5 min-w-0">
+                <p className="flex items-center gap-1.5 text-xs font-semibold text-[rgb(var(--color-text-primary))]">
+                  {avatarOf(row.userId, 18)}
+                  <span className="truncate">{nameOf(row.userId)}</span>
+                  <span className="text-[rgb(var(--color-text-muted))] font-normal">· {row.total}</span>
+                </p>
+                <ul className="flex flex-col gap-1.5">
+                  {row.tasks.slice(0, TASKS_PER_COLUMN).map((task) => (
+                    <li key={task.id}>
+                      <Link
+                        to={buildOrgLink('projects', { project: task.projectId })}
+                        className="flex items-center gap-2 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] px-2.5 py-1.5 text-xs hover:border-[rgb(var(--color-accent))]"
+                      >
+                        <span className="flex-1 truncate text-[rgb(var(--color-text-primary))]">{task.name}</span>
+                        {deadlineTag(task)}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+                {row.tasks.length > TASKS_PER_COLUMN && (
+                  <p className="text-center text-xs text-[rgb(var(--color-text-muted))]">
+                    {tp('teamPage.loadMore', row.tasks.length - TASKS_PER_COLUMN)}
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+    </section>
+  );
+};
+
+export default TeamWorkloadSection;
