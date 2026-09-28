@@ -117,7 +117,16 @@
     "accept": "Accepter",
     "refuse": "Refuser",
     "refuseFor": "Refuser la demande de {{name}}",
-    "acceptFor": "Accepter la demande de {{name}}"
+    "acceptFor": "Accepter la demande de {{name}}",
+    "seatsUsed": "{{used}} / {{max}} places",
+    "seatsUnlimited_one": "{{count}} membre, places illimitées",
+    "seatsUnlimited_many": "{{count}} de membres, places illimitées",
+    "seatsUnlimited_other": "{{count}} membres, places illimitées",
+    "seatsLeft_one": "{{count}} place restante",
+    "seatsLeft_many": "{{count}} de places restantes",
+    "seatsLeft_other": "{{count}} places restantes",
+    "seatsOver": "Au-delà de l'offre gratuite. Rien ne change aujourd'hui.",
+    "seatsFullNow": "Plus de place : faites évoluer le forfait."
   },
   "pyramid": {
     "undoImpact_one": "{{count}} déplacement sera rétabli.",

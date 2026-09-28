@@ -112,7 +112,14 @@
     "accept": "Accept",
     "refuse": "Decline",
     "refuseFor": "Decline {{name}}'s request",
-    "acceptFor": "Accept {{name}}'s request"
+    "acceptFor": "Accept {{name}}'s request",
+    "seatsUsed": "{{used}} / {{max}} seats",
+    "seatsUnlimited_one": "{{count}} member, unlimited seats",
+    "seatsUnlimited_other": "{{count}} members, unlimited seats",
+    "seatsLeft_one": "{{count}} seat left",
+    "seatsLeft_other": "{{count}} seats left",
+    "seatsOver": "Past the free plan. Nothing changes today.",
+    "seatsFullNow": "No seats left: upgrade the plan."
   },
   "pyramid": {
     "undoImpact_one": "{{count}} move will be reverted.",

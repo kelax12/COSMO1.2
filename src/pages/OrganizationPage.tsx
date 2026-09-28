@@ -472,6 +472,7 @@ const OrganizationPage = () => {
           isManager={isManager}
           canInvite={canInvite}
           seatsFull={seatsFull}
+          seatsQuota={seatsQuota}
         />
       )}
       </Suspense>
