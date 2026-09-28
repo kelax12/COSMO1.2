@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router';
 import {
   AlertTriangle, ArrowRightLeft, ArrowUpRight, Bell, Building2, Check, ChevronRight, Download, History, KeyRound, ListPlus,
   Lock, LogOut, Plug, Plus, Receipt, Repeat, ShieldCheck, SlidersHorizontal, Tags, Trash2, UserPlus, Users, Zap,
+  FileText,
   type LucideIcon,
 } from 'lucide-react';
 import {
@@ -44,6 +45,7 @@ const OrgSettingsPermissions = lazyWithRetry(() => import('@/components/organiza
 // Ses textes vivent dans `orgAccount` (surfaces rares) : `org` est payé par
 // toute visite de /entreprise, pas le journal. Le catalogue est déclaré sur la
 // section, dans `OrganizationPage` (seul hôte que la garde des namespaces lit).
+const OrgReportsSection = lazyWithRetry(() => import('@/components/organization/OrgReportsSection'));
 const OrgAuditLogSection = lazyWithRetry(() => import('@/components/organization/OrgAuditLogSection'));
 // Export CSV des tâches : quitte la barre de l'onglet Tâches (2026-09-28).
 const OrgTasksExportSection = lazyWithRetry(() => import('@/components/organization/OrgTasksExportSection'));
@@ -62,13 +64,17 @@ interface OrgSettingsSectionProps {
   seatsFull: boolean;
   /** Places du forfait en vigueur (`effectiveQuota`), `null` = illimité. */
   seatsQuota: number | null;
+  /** Droit de lire au moins un rapport d'activité (entreprise ou équipe). */
+  canReports?: boolean;
+  /** Panneau ouvert à l'arrivée (ancienne adresse `/entreprise/reports`). */
+  initialPanel?: 'reports';
 }
 
 type ConfigPart = 'general' | 'security' | 'fields' | 'automations' | 'integrations';
 type PanelId =
   | ConfigPart
   | 'profile' | 'orgs' | 'invite' | 'myRights' | 'permissions' | 'categories'
-  | 'notifications' | 'export' | 'audit' | 'plan' | 'danger';
+  | 'notifications' | 'export' | 'reports' | 'audit' | 'plan' | 'danger';
 interface NavGroup {
   label: string;
   items: { id: PanelId; icon: LucideIcon; label: string }[];
@@ -100,6 +106,8 @@ const OrgSettingsSection = ({
   canInvite,
   seatsFull,
   seatsQuota,
+  canReports = false,
+  initialPanel,
 }: OrgSettingsSectionProps) => {
   const { t } = useT('org');
   const { t: ta } = useT('orgAdmin');
@@ -153,6 +161,7 @@ const OrgSettingsSection = ({
     { label: t('orgSettings.groupTracking'), items: [
       { id: 'integrations', icon: Plug, label: t('orgSettings.navIntegrations') },
       { id: 'notifications', icon: Bell, label: t('orgSettings.navNotifications') },
+      ...(canReports ? [{ id: 'reports' as const, icon: FileText, label: t('orgSettings.navReports') }] : []),
       { id: 'export', icon: Download, label: t('orgSettings.navExport') },
       ...(isAdmin ? [{ id: 'audit' as const, icon: History, label: t('orgSettings.navAudit') }] : []),
       ...(isOwner ? [{ id: 'plan' as const, icon: Receipt, label: t('orgSettings.navPlan') }] : []),
@@ -160,7 +169,7 @@ const OrgSettingsSection = ({
   ];
   const groups = allGroups.filter((g) => g.items.length > 0);
   const visibleIds = new Set<PanelId>(['danger', ...groups.flatMap((g) => g.items.map((i) => i.id))]);
-  const [requested, setActive] = useState<PanelId>('profile');
+  const [requested, setActive] = useState<PanelId>(initialPanel ?? 'profile');
   // Un droit retiré en cours de visite referme la rubrique, il ne l'affiche pas vide.
   const active: PanelId = visibleIds.has(requested) ? requested : 'profile';
 
@@ -380,6 +389,24 @@ const OrgSettingsSection = ({
         <Suspense fallback={null}>
           <OrgTasksExportSection orgId={org.id} members={members} />
         </Suspense>
+      )}
+
+      {/* Rapports d'activité (bêta) : l'utilisateur choisit le périmètre dans le panneau. */}
+      {active === 'reports' && canReports && (
+        <section className="rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4 md:p-5 space-y-4">
+          <div>
+            <h2 className="flex items-center gap-2 text-base font-bold text-[rgb(var(--color-text-primary))]">
+              {t('reports.title')}
+              <span className="px-1.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide bg-[rgb(var(--color-accent)/0.12)] text-[rgb(var(--color-accent))]">
+                {t('reports.beta')}
+              </span>
+            </h2>
+            <p className="text-sm text-[rgb(var(--color-text-muted))]">{t('reports.betaHint')}</p>
+          </div>
+          <Suspense fallback={null}>
+            <OrgReportsSection orgId={org.id} members={members} currentUserId={currentUserId} />
+          </Suspense>
+        </section>
       )}
 
       {/* Journal d'audit : lisible par les admins seuls (RLS `org_audit_log`). */}
