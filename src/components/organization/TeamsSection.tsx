@@ -1,6 +1,6 @@
 import { Suspense, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
-import { Plus, Trash2, Search, ChevronRight, MoreHorizontal, Pencil, Users, FolderKanban, ClipboardList } from 'lucide-react';
+import { Plus, Trash2, Search, ChevronRight, MoreHorizontal, Pencil, Users } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -23,6 +23,7 @@ import { PermissionGate, usePermissionHints } from './permission-hints';
 import DeleteTeamDialog from './DeleteTeamDialog';
 import { orgTeamPath } from './deep-link.helpers';
 import { teamProjectsOf, canManageTeam } from './team-page.helpers';
+import TeamAssignMenus from './TeamAssignMenus';
 import TeamProfileEditor from './TeamProfileEditor';
 import { normalize } from './pyramid.helpers';
 import { useT } from '@/i18n/useT';
@@ -196,12 +197,13 @@ const TeamsSection = ({ orgId, members, currentUserId, isAdmin, canCreateTeam }:
                         <DropdownMenuItem onClick={() => navigate(orgTeamPath(team.id))}>
                           <Users size={14} aria-hidden="true" /> {t('team.menu.members')}
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => create.openProject({ defaultTeamId: team.id })}>
-                          <FolderKanban size={14} aria-hidden="true" /> {t('team.menu.assignProject')}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setTaskForTeam(team)}>
-                          <ClipboardList size={14} aria-hidden="true" /> {t('team.menu.assignTask')}
-                        </DropdownMenuItem>
+                        <TeamAssignMenus
+                          orgId={orgId}
+                          team={team}
+                          projects={projects}
+                          onNewProject={() => create.openProject({ defaultTeamId: team.id })}
+                          onNewTask={() => setTaskForTeam(team)}
+                        />
                         {canDelete && (
                           <>
                             <DropdownMenuSeparator />
