@@ -27,6 +27,8 @@ interface OrgReportsSectionProps {
   orgId: string;
   members: OrgMember[];
   currentUserId?: string;
+  /** Ouvert depuis la page d'une équipe : le rapport part sur cette équipe si elle est permise. */
+  initialTeamId?: string;
 }
 
 const card = 'rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4 md:p-5';
@@ -61,7 +63,7 @@ const BlockTitle = ({ Icon, children }: { Icon: typeof CircleCheck; children: Re
  * sur une période. Chaque journée est figée par le serveur à minuit ; semaine,
  * mois et période libre sont l'agrégat de ces journées.
  */
-const OrgReportsSection = ({ orgId, members, currentUserId }: OrgReportsSectionProps) => {
+const OrgReportsSection = ({ orgId, members, currentUserId, initialTeamId }: OrgReportsSectionProps) => {
   const { t, tp, locale } = useT('orgAdmin');
   const { can, isLoading: permsLoading } = useMyOrgPermissions(orgId);
   const { data: teams = [], isLoading: teamsLoading } = useOrgTeams(orgId);
@@ -73,7 +75,7 @@ const OrgReportsSection = ({ orgId, members, currentUserId }: OrgReportsSectionP
   const [kind, setKind] = useState<ReportPeriodKind>('week');
   const [anchor, setAnchor] = useState(lastDay);
   const [custom, setCustom] = useState({ from: addDays(lastDay, -13), to: lastDay });
-  const [pickedScope, setPickedScope] = useState<ReportScope | null>(null);
+  const [pickedScope, setPickedScope] = useState<ReportScope | null>(initialTeamId ? { kind: 'team', teamId: initialTeamId } : null);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
   // Périmètre effectif : le choix, s'il est encore permis, sinon le premier permis.
