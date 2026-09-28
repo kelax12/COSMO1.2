@@ -10,6 +10,7 @@ import {
 import { projectColor } from './team-projects.helpers';
 import { PROJECT_STATUS_META, openBlockers } from './portfolio.helpers';
 import { useT } from '@/i18n/useT';
+import MenuSelect from '@/components/organization/MenuSelect';
 
 interface ProjectDependenciesSectionProps {
   orgId: string;
@@ -105,7 +106,7 @@ const ProjectDependenciesSection = ({
       {canEdit && candidates.length > 0 && (
         <div className="mt-3">
           <label htmlFor={`deps-add-${project.id}`} className="sr-only">{pf('deps.add')}</label>
-          <select
+          <MenuSelect
             id={`deps-add-${project.id}`}
             value=""
             onChange={(e) => { if (e.target.value) add.mutate({ projectId: project.id, dependsOnId: e.target.value }); }}
@@ -115,7 +116,7 @@ const ProjectDependenciesSection = ({
             {candidates.map((p) => (
               <option key={p.id} value={p.id}>{p.name}</option>
             ))}
-          </select>
+          </MenuSelect>
         </div>
       )}
     </section>

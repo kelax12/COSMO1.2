@@ -3,6 +3,7 @@ import { priorityLabelOf } from '../team-projects.helpers';
 import { useT } from '@/i18n/useT';
 import { toast } from '@/lib/toast';
 import { CARD, TITLE, HINT, FIELD, LABEL } from './config-ui';
+import MenuSelect from '@/components/organization/MenuSelect';
 
 /** Fuseaux proposés : ceux des clients probables, puis celui du navigateur s'il manque. */
 const TIMEZONES = [
@@ -47,23 +48,23 @@ const OrgGeneralSettingsCard = ({ orgId, isAdmin }: Props) => {
       <div className="grid sm:grid-cols-2 gap-3 mt-3">
         <label className={LABEL}>
           {t('general.locale')}
-          <select className={FIELD} disabled={disabled} value={settings.locale}
+          <MenuSelect className={FIELD} disabled={disabled} value={settings.locale}
             onChange={(e) => set({ locale: e.target.value as 'fr' | 'en' })}>
             <option value="fr">{t('general.localeFr')}</option>
             <option value="en">{t('general.localeEn')}</option>
-          </select>
+          </MenuSelect>
         </label>
         <label className={LABEL}>
           {t('general.timezone')}
-          <select className={FIELD} disabled={disabled} value={settings.timezone} onChange={(e) => set({ timezone: e.target.value })}>
+          <MenuSelect className={FIELD} disabled={disabled} value={settings.timezone} onChange={(e) => set({ timezone: e.target.value })}>
             {zones.map((z) => <option key={z} value={z}>{z}</option>)}
-          </select>
+          </MenuSelect>
         </label>
         <label className={LABEL}>
           {t('general.weekStart')}
-          <select className={FIELD} disabled={disabled} value={settings.weekStart} onChange={(e) => set({ weekStart: Number(e.target.value) })}>
+          <MenuSelect className={FIELD} disabled={disabled} value={settings.weekStart} onChange={(e) => set({ weekStart: Number(e.target.value) })}>
             {DAYS.map((d) => <option key={d} value={d}>{dayLabel(d)}</option>)}
-          </select>
+          </MenuSelect>
         </label>
         <fieldset className={LABEL}>
           <legend>{t('general.workDays')}</legend>
@@ -83,26 +84,26 @@ const OrgGeneralSettingsCard = ({ orgId, isAdmin }: Props) => {
         </fieldset>
         <label className={LABEL}>
           {t('general.defaultPriority')}
-          <select className={FIELD} disabled={disabled} value={settings.defaultTaskPriority}
+          <MenuSelect className={FIELD} disabled={disabled} value={settings.defaultTaskPriority}
             onChange={(e) => set({ defaultTaskPriority: Number(e.target.value) })}>
             {[1, 2, 3, 4, 5].map((p) => <option key={p} value={p}>{priorityLabelOf(p)}</option>)}
-          </select>
+          </MenuSelect>
         </label>
         <label className={LABEL}>
           {t('general.defaultAudience')}
-          <select className={FIELD} disabled={disabled} value={settings.defaultProjectAudience}
+          <MenuSelect className={FIELD} disabled={disabled} value={settings.defaultProjectAudience}
             onChange={(e) => set({ defaultProjectAudience: e.target.value as 'org' | 'team' })}>
             <option value="team">{t('general.audienceTeam')}</option>
             <option value="org">{t('general.audienceOrg')}</option>
-          </select>
+          </MenuSelect>
         </label>
         <label className={LABEL}>
           {t('general.defaultGuestDays')}
-          <select className={FIELD} disabled={disabled} value={settings.defaultGuestDays ?? ''}
+          <MenuSelect className={FIELD} disabled={disabled} value={settings.defaultGuestDays ?? ''}
             onChange={(e) => set({ defaultGuestDays: e.target.value ? Number(e.target.value) : null })}>
             <option value="">{t('general.guestNoLimit')}</option>
             {GUEST_DAYS.map((d) => <option key={d} value={d}>{tp('general.guestDays', d)}</option>)}
-          </select>
+          </MenuSelect>
         </label>
       </div>
     </section>

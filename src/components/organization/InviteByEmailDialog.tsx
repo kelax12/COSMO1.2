@@ -11,6 +11,7 @@ import MemberSelectField from './MemberSelectField';
 import { splitEmails } from './invite-email.helpers';
 import { useT } from '@/i18n/useT';
 import TeamColorDot from './TeamColorDot';
+import MenuSelect from '@/components/organization/MenuSelect';
 
 interface InviteByEmailDialogProps {
   orgId: string;
@@ -211,7 +212,7 @@ const InviteByEmailDialog = ({ orgId, members, currentUserId, isAdmin, initialEm
               <label htmlFor="invite-access" className="block text-xs font-semibold text-[rgb(var(--color-text-secondary))] mb-1">
                 {ta('invites.access')}
               </label>
-              <select
+              <MenuSelect
                 id="invite-access"
                 value={accessDays ?? ''}
                 onChange={(e) => { setAccessTouched(true); setAccessDays(e.target.value ? Number(e.target.value) : null); }}
@@ -222,7 +223,7 @@ const InviteByEmailDialog = ({ orgId, members, currentUserId, isAdmin, initialEm
                     {d === null ? ta('invites.accessPermanent') : ta('invites.accessDays', { count: d })}
                   </option>
                 ))}
-              </select>
+              </MenuSelect>
             </div>
 
             <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">

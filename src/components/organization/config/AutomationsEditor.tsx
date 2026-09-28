@@ -9,6 +9,7 @@ import type { TeamProject, TeamTaskStatus } from '@/modules/team-projects';
 import { useT } from '@/i18n/useT';
 import { STATUS_ORDER, STATUS_META } from '../team-projects.helpers';
 import { FIELD, BUTTON, ICON_BTN, LABEL, HINT } from './config-ui';
+import MenuSelect from '@/components/organization/MenuSelect';
 
 interface Props {
   orgId: string;
@@ -107,41 +108,41 @@ const AutomationsEditor = ({ orgId, members, projects, projectId, canEdit }: Pro
           {!projectId && (
             <label className={LABEL}>
               {t('automations.scope')}
-              <select className={FIELD} value={scope} onChange={(e) => setScope(e.target.value)}>
+              <MenuSelect className={FIELD} value={scope} onChange={(e) => setScope(e.target.value)}>
                 <option value="">{t('automations.scopeOrg')}</option>
                 {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-              </select>
+              </MenuSelect>
             </label>
           )}
           <label className={LABEL}>
             {t('automations.when')}
-            <select className={FIELD} value={trigger === 'task_created' ? 'created' : triggerStatus}
+            <MenuSelect className={FIELD} value={trigger === 'task_created' ? 'created' : triggerStatus}
               onChange={(e) => {
                 if (e.target.value === 'created') setTrigger('task_created');
                 else { setTrigger('status_changed'); setTriggerStatus(e.target.value as TeamTaskStatus); }
               }}>
               <option value="created">{t('automations.triggerCreated')}</option>
               {STATUS_ORDER.map((s) => <option key={s} value={s}>{t('automations.triggerStatus', { status: statusLabel(s) })}</option>)}
-            </select>
+            </MenuSelect>
           </label>
           <div className="grid grid-cols-2 gap-2">
             <label className={LABEL}>
               {t('automations.then')}
-              <select className={FIELD} value={action} onChange={(e) => changeAction(e.target.value as AutomationAction)}>
+              <MenuSelect className={FIELD} value={action} onChange={(e) => changeAction(e.target.value as AutomationAction)}>
                 <option value="set_priority">{t('automations.kindPriority')}</option>
                 <option value="add_assignee">{t('automations.kindAssign')}</option>
                 <option value="notify_member">{t('automations.kindNotify')}</option>
                 <option value="set_status" disabled={trigger === 'status_changed'}>{t('automations.kindStatus')}</option>
-              </select>
+              </MenuSelect>
             </label>
             <label className={LABEL}>
               <span aria-hidden="true">&nbsp;</span>
-              <select className={FIELD} value={value} aria-label={t('automations.then')} onChange={(e) => setValue(e.target.value)}>
+              <MenuSelect className={FIELD} value={value} aria-label={t('automations.then')} onChange={(e) => setValue(e.target.value)}>
                 {action === 'set_priority' && [1, 2, 3, 4, 5].map((p) => <option key={p} value={String(p)}>P{p}</option>)}
                 {action === 'set_status' && STATUS_ORDER.map((s) => <option key={s} value={s}>{statusLabel(s)}</option>)}
                 {action === 'notify_member' && <option value="assignees">{t('automations.notifyAssignees')}</option>}
                 {(action === 'add_assignee' || action === 'notify_member') && members.map((m) => <option key={m.userId} value={m.userId}>{m.displayName}</option>)}
-              </select>
+              </MenuSelect>
             </label>
           </div>
           {echo && <p className="text-xs text-amber-600 dark:text-amber-400 sm:col-span-2" role="status">{t('automations.echo')}</p>}

@@ -12,6 +12,7 @@ import { buildWeeklyReview, reviewSummary, reviewWindow, scopeReview, type Revie
 import { teamsOfProject } from './team-audience.helpers';
 import { useT } from '@/i18n/useT';
 import { useModalA11y } from '@/hooks/use-modal-a11y';
+import MenuSelect from '@/components/organization/MenuSelect';
 
 interface WeeklyReviewSheetProps {
   orgId: string;
@@ -151,7 +152,7 @@ const WeeklyReviewSheet = ({ orgId, tasks: baseTasks, members: baseMembers, base
         <div className="overflow-y-auto p-5 space-y-4">
           <label className="flex items-center gap-2 text-xs text-[rgb(var(--color-text-muted))]">
             <span className="font-semibold">{ta('weeklyReview.scopeLabel')}</span>
-            <select
+            <MenuSelect
               value={scopeValue}
               onChange={(e) => setScopeValue(e.target.value)}
               className="flex-1 min-w-0 h-9 px-2 rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] text-sm text-[rgb(var(--color-text-primary))]"
@@ -167,7 +168,7 @@ const WeeklyReviewSheet = ({ orgId, tasks: baseTasks, members: baseMembers, base
                   {reviewProjects.map((p) => <option key={p.id} value={`project:${p.id}`}>{p.name}</option>)}
                 </optgroup>
               )}
-            </select>
+            </MenuSelect>
           </label>
 
           {/* 1. Ce qui a avancé */}

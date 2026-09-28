@@ -22,6 +22,7 @@ import { useT } from '@/i18n/useT';
 import { DatePicker } from '@/components/ui/date-picker';
 import { projectColorHex } from './team-projects.helpers';
 import { reportAccess } from './report-access.helpers';
+import MenuSelect from '@/components/organization/MenuSelect';
 
 interface OrgReportsSectionProps {
   orgId: string;
@@ -165,14 +166,14 @@ const OrgReportsSection = ({ orgId, members, currentUserId, initialTeamId }: Org
           </div>
         )}
         {scope.kind === 'team' && access.teams.length > 1 && (
-          <select
+          <MenuSelect
             aria-label={t('reports.teamSelect')}
             className={input}
             value={scope.teamId}
             onChange={(e) => setPickedScope({ kind: 'team', teamId: e.target.value })}
           >
             {access.teams.map((tm) => <option key={tm.id} value={tm.id}>{tm.name}</option>)}
-          </select>
+          </MenuSelect>
         )}
         {scope.kind === 'team' && access.teams.length === 1 && (
           <span className={`text-sm font-semibold ${primary}`}>{access.teams[0].name}</span>

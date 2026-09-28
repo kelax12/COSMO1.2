@@ -21,6 +21,7 @@ import {
   AUDIT_FAMILIES, auditActionKey, auditFamilyKey, auditObjectName, auditPersonName, buildAuditCsv, isKnownAuditAction,
   type AuditFamily, type AuditLookups,
 } from './audit-log.helpers';
+import MenuSelect from '@/components/organization/MenuSelect';
 
 interface OrgAuditLogSectionProps {
   orgId: string;
@@ -77,7 +78,7 @@ const OrgAuditLogSection = ({ orgId, members }: OrgAuditLogSectionProps) => {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         <label className="block">
           <span className="block text-xs font-semibold text-[rgb(var(--color-text-secondary))] mb-1">{t('audit.familyLabel')}</span>
-          <select
+          <MenuSelect
             value={family}
             onChange={(e) => setFamily(e.target.value as AuditFamily | '')}
             className="w-full rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] px-3 py-2.5 text-sm text-[rgb(var(--color-text-primary))]"
@@ -86,7 +87,7 @@ const OrgAuditLogSection = ({ orgId, members }: OrgAuditLogSectionProps) => {
             {AUDIT_FAMILIES.map((f) => (
               <option key={f} value={f}>{t(`audit.family.${auditFamilyKey(f)}`)}</option>
             ))}
-          </select>
+          </MenuSelect>
         </label>
         <MemberSelectField
           label={t('audit.personLabel')}

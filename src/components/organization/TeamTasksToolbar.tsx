@@ -2,6 +2,7 @@ import { ArrowUpDown, ChevronDown, ListChecks, Plus } from 'lucide-react';
 import { useT } from '@/i18n/useT';
 import { PermissionGate } from './permission-hints';
 import { TASK_SORT_CRITERIA, GROUPABLE_SORT_CRITERIA, type TaskSortCriterion } from './task-filters';
+import MenuSelect from '@/components/organization/MenuSelect';
 
 interface TeamTasksToolbarProps {
   sortField: TaskSortCriterion;
@@ -56,7 +57,7 @@ const TeamTasksToolbar = ({
   return (
     <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
       <div className="relative w-48 shrink-0">
-        <select
+        <MenuSelect
           value={sortField}
           onChange={(e) => onSortField(e.target.value as TaskSortCriterion)}
           aria-label={t('projects.tasksTabSortAria')}
@@ -69,7 +70,7 @@ const TeamTasksToolbar = ({
           <optgroup label={t('projects.tasksTabSortFlatOptgroup')}>
             {flat.map((c) => <option key={c} value={c}>{criterionLabel[c]}</option>)}
           </optgroup>
-        </select>
+        </MenuSelect>
         <div className="pointer-events-none absolute inset-y-0 right-9 flex items-center" style={{ color: 'rgb(var(--color-text-muted))' }}>
           <ChevronDown size={16} aria-hidden="true" />
         </div>

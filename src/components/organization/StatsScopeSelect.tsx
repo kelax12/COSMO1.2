@@ -11,6 +11,7 @@ import {
   type StatsScope,
 } from './stats-scope.helpers';
 import { useT } from '@/i18n/useT';
+import MenuSelect from '@/components/organization/MenuSelect';
 
 interface StatsScopeSelectProps {
   orgId: string;
@@ -44,7 +45,7 @@ const StatsScopeSelect = ({ orgId, scope, onScope, teams, ctx }: StatsScopeSelec
     <div className="min-w-0">
       <div className="flex items-center gap-1.5">
         <label htmlFor="stats-scope" className="sr-only">{t('statsScope.label')}</label>
-        <select
+        <MenuSelect
           id="stats-scope"
           value={scopeKey(scope)}
           onChange={(e) => onScope(parseScopeKey(e.target.value))}
@@ -63,7 +64,7 @@ const StatsScopeSelect = ({ orgId, scope, onScope, teams, ctx }: StatsScopeSelec
               {activeProjects.map((p) => <option key={p.id} value={`project:${p.id}`}>{p.name}</option>)}
             </optgroup>
           )}
-        </select>
+        </MenuSelect>
         <button
           type="button"
           onClick={() => setExplain((v) => !v)}

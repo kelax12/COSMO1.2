@@ -11,6 +11,7 @@ import {
   type DirectoryRole,
   type JoinedPeriod,
 } from './member-directory.filters';
+import MenuSelect from '@/components/organization/MenuSelect';
 
 interface MemberDirectoryToolbarProps {
   filters: DirectoryFilters;
@@ -61,14 +62,13 @@ interface FilterPillProps {
 }
 
 /**
- * Une puce qui porte un `<select>` natif invisible : le clavier, les lecteurs
- * d'écran et la roue système du téléphone restent ceux du navigateur.
+ * Une puce qui porte un `MenuSelect` invisible : il ouvre le menu COSMO, ancré sur la puce.
  */
 const FilterPill = ({ label, activeLabel, value, onSelect, onClear, clearAria, options, anyLabel }: FilterPillProps) => (
   <span className={`${PILL} ${activeLabel ? PILL_ON : PILL_IDLE}`}>
     <span aria-hidden="true">{activeLabel ?? label}</span>
     {!activeLabel && <ChevronDown size={13} aria-hidden="true" />}
-    <select
+    <MenuSelect
       aria-label={label}
       value={value}
       onChange={(e) => onSelect(e.target.value)}
@@ -76,7 +76,7 @@ const FilterPill = ({ label, activeLabel, value, onSelect, onClear, clearAria, o
     >
       <option value="">{anyLabel}</option>
       {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-    </select>
+    </MenuSelect>
     {activeLabel && (
       <button
         type="button"

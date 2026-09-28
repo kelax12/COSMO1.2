@@ -13,6 +13,7 @@ import { useT } from '@/i18n/useT';
 import { toast } from '@/lib/toast';
 import { buildOrgExport, buildTasksIcs } from './org-export';
 import { CARD, TITLE, HINT, FIELD, BUTTON, GHOST, ICON_BTN, LABEL } from './config-ui';
+import MenuSelect from '@/components/organization/MenuSelect';
 
 interface Props {
   orgId: string;
@@ -166,10 +167,10 @@ const OrgIntegrationsCard = ({ orgId, members, currentUserId, isAdmin }: Props) 
         </label>
         <label className={LABEL}>
           {t('integrations.format')}
-          <select className={FIELD} value={format} onChange={(e) => setFormat(e.target.value as WebhookFormat)}>
+          <MenuSelect className={FIELD} value={format} onChange={(e) => setFormat(e.target.value as WebhookFormat)}>
             <option value="slack">{t('integrations.formatSlack')}</option>
             <option value="json">{t('integrations.formatJson')}</option>
-          </select>
+          </MenuSelect>
         </label>
         <label className={`${LABEL} sm:col-span-2`}>
           {t('integrations.url')}

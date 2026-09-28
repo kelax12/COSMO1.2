@@ -5,6 +5,7 @@ import type { TeamOKR } from '@/modules/team-okrs';
 import type { TeamProject } from '@/modules/team-projects';
 import { useT } from '@/i18n/useT';
 import { parentCandidates } from './okr-links.helpers';
+import MenuSelect from '@/components/organization/MenuSelect';
 
 // ═══════════════════════════════════════════════════════════════════
 // Rattachements d'un OKR d'équipe (mig. 160, M3) : objectif parent,
@@ -28,12 +29,12 @@ export const OkrParentField = ({ okrs, selfId, value, onChange }: ParentFieldPro
   return (
     <div className="grid gap-2">
       <Label htmlFor="tokr-parent">{t('popups.okr.parent')}</Label>
-      <select id="tokr-parent" value={value ?? ''} onChange={(e) => onChange(e.target.value || null)} className={selectClass}>
+      <MenuSelect id="tokr-parent" value={value ?? ''} onChange={(e) => onChange(e.target.value || null)} className={selectClass}>
         <option value="">{t('popups.okr.noParent')}</option>
         {options.map((o) => (
           <option key={o.id} value={o.id}>{o.title}</option>
         ))}
-      </select>
+      </MenuSelect>
       <p className="text-muted-foreground text-xs">{t('popups.okr.parentHint')}</p>
     </div>
   );

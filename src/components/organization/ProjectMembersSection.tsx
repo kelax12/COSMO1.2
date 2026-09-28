@@ -14,6 +14,7 @@ import { isMemberActive, type OrgMember } from '@/modules/organizations';
 import MemberAvatar from './MemberAvatar';
 import MemberSelectField from './MemberSelectField';
 import { useT } from '@/i18n/useT';
+import MenuSelect from '@/components/organization/MenuSelect';
 
 const ROLES: TeamProjectRole[] = ['lead', 'contributor', 'viewer'];
 
@@ -76,14 +77,14 @@ const ProjectMembersSection = ({ project, projectMembers, orgMembers, canManage,
                   {name}{self && <span className="text-[rgb(var(--color-text-muted))]"> · {pf('members.you')}</span>}
                 </span>
                 {canManage ? (
-                  <select
+                  <MenuSelect
                     value={pm.role}
                     aria-label={pf('members.roleOf', { name })}
                     onChange={(e) => setMember.mutate({ projectId: project.id, userId: pm.userId, role: e.target.value as TeamProjectRole })}
                     className={selectCls}
                   >
                     {ROLES.map((r) => <option key={r} value={r}>{pf(`members.role.${r}`)}</option>)}
-                  </select>
+                  </MenuSelect>
                 ) : (
                   <span className="text-xs font-semibold text-[rgb(var(--color-text-secondary))]">{pf(`members.role.${pm.role}`)}</span>
                 )}
@@ -116,9 +117,9 @@ const ProjectMembersSection = ({ project, projectMembers, orgMembers, canManage,
           <div className="flex items-center gap-2">
             <label className="flex-1">
               <span className="sr-only">{pf('members.roleLabel')}</span>
-              <select value={role} onChange={(e) => setRole(e.target.value as TeamProjectRole)} className={`${selectCls} w-full py-2`}>
+              <MenuSelect value={role} onChange={(e) => setRole(e.target.value as TeamProjectRole)} className={`${selectCls} w-full py-2`}>
                 {ROLES.map((r) => <option key={r} value={r}>{pf(`members.role.${r}`)}</option>)}
-              </select>
+              </MenuSelect>
             </label>
             <button
               type="button"
